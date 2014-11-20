@@ -1,0 +1,8 @@
+.DS_Store
+Build
+Santa.xcworkspace
+Pods
+Podfile.lock
+Santa.xcodeproj/xcuserdata
+Santa.xcodeproj/project.xcworkspace
+

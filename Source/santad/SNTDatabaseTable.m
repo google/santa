@@ -1,0 +1,69 @@
+/// Copyright 2014 Google Inc. All rights reserved.
+///
+/// Licensed under the Apache License, Version 2.0 (the "License");
+/// you may not use this file except in compliance with the License.
+/// You may obtain a copy of the License at
+///
+///    http://www.apache.org/licenses/LICENSE-2.0
+///
+///    Unless required by applicable law or agreed to in writing, software
+///    distributed under the License is distributed on an "AS IS" BASIS,
+///    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+///    See the License for the specific language governing permissions and
+///    limitations under the License.
+
+#import "SNTDatabaseTable.h"
+
+#import "SNTLogging.h"
+
+@interface SNTDatabaseTable ()
+@property FMDatabaseQueue *dbQ;
+@end
+
+@implementation SNTDatabaseTable
+
+- (instancetype)initWithDatabaseQueue:(FMDatabaseQueue *)db {
+  if (!db) return nil;
+
+  self = [super init];
+  if (self) {
+    _dbQ = db;
+    [self updateTableSchema];
+  }
+  return self;
+}
+
+- (instancetype)init {
+  [self doesNotRecognizeSelector:_cmd];
+  return nil;
+}
+
+- (int)initializeDatabase:(FMDatabase *)db fromVersion:(int)version {
+  [self doesNotRecognizeSelector:_cmd];
+  return -1;
+}
+
+/// Called at the end of initialization to ensure the table in the
+/// database exists and uses the latest schema.
+- (void)updateTableSchema {
+  [self inTransaction:^(FMDatabase *db, BOOL *rollback) {
+
+      int currentVersion = [db userVersion];
+      int newVersion = [self initializeDatabase:db fromVersion:currentVersion];
+      if (newVersion < 1) return;
+
+      LOGD(@"Updated %@ from version %d to %d", [self className], currentVersion, newVersion);
+
+      [db setUserVersion:newVersion];
+  }];
+}
+
+- (void)inDatabase:(void (^)(FMDatabase *db))block {
+  [self.dbQ inDatabase:block];
+}
+
+- (void)inTransaction:(void (^)(FMDatabase *db, BOOL *rollback))block {
+  [self.dbQ inTransaction:block];
+}
+
+@end
