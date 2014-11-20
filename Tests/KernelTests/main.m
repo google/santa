@@ -64,7 +64,7 @@
 
 #pragma mark - Driver Helpers
 
-/// Call in-kernel function: |kSantaUserClientReceive| passing the |action| and |sha1| via a
+/// Call in-kernel function: |kSantaUserClientReceive| passing the |action| and |vnodeId| via a
 /// |santa_message_t| struct.
 - (void)postToKernelAction:(santa_action_t)action forVnodeID:(uint64_t)vnodeid {
   if (action == ACTION_RESPOND_CHECKBW_ALLOW) {
