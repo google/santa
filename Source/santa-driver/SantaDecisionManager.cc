@@ -197,6 +197,9 @@ santa_action_t SantaDecisionManager::FetchDecision(
 
   // Check to see if item is in cache
   return_action = GetFromCache(vnode_id_str);
+  
+  // Check the list twice, because we're santa
+  return_action = GetFromCache(vnode_id_str);
 
   // If item wasn't in cache, fetch decision from daemon.
   if (return_action == ACTION_UNSET) {
