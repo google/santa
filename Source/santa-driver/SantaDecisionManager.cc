@@ -204,12 +204,11 @@ santa_action_t SantaDecisionManager::FetchDecision(
     AddToCache(vnode_id_str, ACTION_REQUEST_CHECKBW, 0);
 
     // Get SHA-1
-    // TODO(rah): Investigate possible race condition where file is modified
-    // in between SHA-1 being calculated and response for said file being
-    // received.
     char sha[MAX_SHA1_STRING];
     if (!CalculateSHA1ForVnode(credential, vfs_context, vnode, sha)) {
       LOGD("Unable to get SHA-1 for file, denying execution");
+      // invalidate cache entry
+      CacheCheck(vnode_id_str);
       return ACTION_RESPOND_CHECKBW_DENY;
     }
 
@@ -234,6 +233,8 @@ santa_action_t SantaDecisionManager::FetchDecision(
       // Send request to daemon...
       if (!PostToQueue(message)) {
         LOGE("Failed to queue request for %s.", path);
+        // invalidate cache entry
+        CacheCheck(vnode_id_str);
         return ACTION_ERROR;
       }
 
@@ -249,6 +250,8 @@ santa_action_t SantaDecisionManager::FetchDecision(
     if (return_action == ACTION_UNSET || return_action == ACTION_ERROR) {
       LOGE("Daemon process did not respond correctly. Allowing executions "
            "until it comes back.");
+      // invalidate cache entry
+      CacheCheck(vnode_id_str);
       return ACTION_ERROR;
     }
   }
@@ -457,7 +460,15 @@ extern int vnode_scope_callback(kauth_cred_t credential,
     char vnode_id_str[MAX_VNODE_ID_STR];
     snprintf(vnode_id_str, MAX_VNODE_ID_STR, "%llu",
              sdm->GetVnodeIDForVnode(vfs_context, vnode));
-
+    // If this file has a pending request do not let write happen
+    santa_action_t return_action = sdm->GetFromCache(vnode_id_str);
+    // pending requests ACTION_REQUEST_CHECKBW return ACTION_UNSET
+    if (return_action == ACTION_UNSET)
+    {
+        *(reinterpret_cast<int *>(arg3)) = EACCES;
+        return KAUTH_RESULT_DENY;
+    }
+    // For all other writes in a cached file just invalidate the cache entry
     sdm->CacheCheck(vnode_id_str);
 
     return returnResult;
