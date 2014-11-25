@@ -131,7 +131,7 @@ pre-signed kext.
 Contributing
 ============
 
-Patches to this project are very much welcome. Please see the [CONTRIBUTING](https://github.com/google/santa/blob/master/CONTRIBUTING)
+Patches to this project are very much welcome. Please see the [CONTRIBUTING](https://github.com/google/santa/blob/master/CONTRIBUTING.md)
 file.
 
 Disclaimer
