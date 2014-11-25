@@ -131,25 +131,8 @@ pre-signed kext.
 Contributing
 ============
 
-Patches to this project are very much welcome.
-
-Before sending a patch or pull request, we ask you to fill out _one_ of the
-Contributor License Agreements:
-
-* [Google Individual Contributor License Agreement, v1.1](https://developers.google.com/open-source/cla/individual)
-* [Google Software Grant and Corporate Contributor License Agreement, v1.1](https://developers.google.com/open-source/cla/corporate)
-
-Also, if your change is large it would be a good idea to open an [Issue](https://github.com/google/santa/issues/new)
-with a short description of your proposed change so we can quickly review it.
-This is optional but it might save everyone time in the long run.
-
-Before making a pull request it's usually a good idea to run the tests, which
-you can do with the following commands:
-
-```sh
-rake tests:logic
-rake tests:kernel  # only necessary if you're changing the kext code
-```
+Patches to this project are very much welcome. Please see the [CONTRIBUTING](https://github.com/google/santa/blob/master/CONTRIBUTING)
+file.
 
 Disclaimer
 ==========
