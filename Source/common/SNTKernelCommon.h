@@ -58,6 +58,9 @@ typedef enum {
   ACTION_ERROR = 99,
 } santa_action_t;
 
+#define RESPONSE_VALID(x) (x == ACTION_RESPOND_CHECKBW_ALLOW || \
+  x == ACTION_RESPOND_CHECKBW_DENY)
+
 // Message struct that is sent down the IODataQueue.
 typedef struct {
   santa_action_t action;

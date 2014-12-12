@@ -142,8 +142,7 @@ santa_action_t SantaDecisionManager::GetFromCache(const char *identifier) {
   }
   IORWLockUnlock(cached_decisions_lock_);
 
-  if (result == ACTION_RESPOND_CHECKBW_ALLOW ||
-      result == ACTION_RESPOND_CHECKBW_DENY) {
+  if (RESPONSE_VALID(result)) {
     uint64_t diff_time = GetCurrentUptime();
 
     if (result == ACTION_RESPOND_CHECKBW_ALLOW) {
@@ -195,14 +194,10 @@ santa_action_t SantaDecisionManager::FetchDecision(
   return_action = GetFromCache(vnode_id_str);
 
   // If item wasn't in cache, fetch decision from daemon.
-  if (return_action == ACTION_UNSET) {
+  if (!RESPONSE_VALID(return_action)) {
     // Add pending request to cache
     AddToCache(vnode_id_str, ACTION_REQUEST_CHECKBW, 0);
 
-    // Get SHA-1
-    // TODO(rah): Investigate possible race condition where file is modified
-    // in between SHA-1 being calculated and response for said file being
-    // received.
     char sha[MAX_SHA1_STRING];
     if (!CalculateSHA1ForVnode(credential, vfs_context, vnode, sha)) {
       LOGD("Unable to get SHA-1 for file, denying execution");
@@ -240,11 +235,11 @@ santa_action_t SantaDecisionManager::FetchDecision(
       for (int i = 0; i < kMaxRequestLoops; ++i) {
         IOSleep(kRequestLoopSleepMilliseconds);
         return_action = GetFromCache(vnode_id_str);
-        if (return_action != ACTION_REQUEST_CHECKBW) break;
+        if (RESPONSE_VALID(return_action)) break;
       }
-    } while (return_action == ACTION_REQUEST_CHECKBW && proc_exiting(owning_proc_) == 0);
+    } while (!RESPONSE_VALID(return_action) && proc_exiting(owning_proc_) == 0);
 
-    if (return_action == ACTION_UNSET || return_action == ACTION_ERROR) {
+    if (!RESPONSE_VALID(return_action)) {
       LOGE("Daemon process did not respond correctly. Allowing executions "
            "until it comes back.");
       CacheCheck(vnode_id_str);
