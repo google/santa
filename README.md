@@ -110,12 +110,7 @@ Kext Signing
 if the kext is not signed with one of these special certificates a warning will
 be shown when loading the kext for the first time. In 10.10 this is a hard error
 and the kext will not load at all unless the machine is booted with a debug
-boot-arg. If you want to test with the boot arg run the following command and
-reboot:
-
-```sh
-sudo nvram boot-args="kext-dev-mode=1"
-```
+boot-arg.
 
 There are two possible solutions for this:
 
