@@ -112,7 +112,7 @@ be shown when loading the kext for the first time. In 10.10 this is a hard error
 and the kext will not load at all unless the machine is booted with a debug
 boot-arg.
 
-There are two possible solutions for this:
+There are two possible solutions for this, for distribution purposes:
 
 1) Use a pre-built, pre-signed version of the kext that we supply. Each time
 changes are made to the kext code we will update the pre-built version that you
@@ -122,6 +122,12 @@ a pull request, we can merge them in and distribute a new version of the
 pre-signed kext.
 
 2) Apply for your own [kext signing certificate](https://developer.apple.com/contact/kext/).
+Apple will only grant this for broad distribution within an organization, they
+won't issue them just for testing purposes.
+
+If you just want to locally test changes to the kext code, you should enable
+kext-dev mode, instructions for which can be found on the Apple developer site.
+
 
 Contributing
 ============
