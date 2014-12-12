@@ -127,7 +127,7 @@ namespace :tests do
     puts "Running kernel tests with a #{timeout} second timeout"
     begin
       Timeout::timeout(timeout) {
-        system "sudo #{OUTPUT_PATH}/Build/Products/Debug/KernelTests"
+        system "sudo #{OUTPUT_PATH}/Products/Debug/KernelTests"
       }
     rescue Timeout::Error
       puts "ERROR: tests ran for longer than #{timeout} seconds and were killed."
