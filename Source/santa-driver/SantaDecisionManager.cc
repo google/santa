@@ -142,10 +142,6 @@ santa_action_t SantaDecisionManager::GetFromCache(const char *identifier) {
   }
   IORWLockUnlock(cached_decisions_lock_);
 
-  if (result == ACTION_REQUEST_CHECKBW) {
-    return ACTION_UNSET;
-  }
-
   if (result == ACTION_RESPOND_CHECKBW_ALLOW ||
       result == ACTION_RESPOND_CHECKBW_DENY) {
     uint64_t diff_time = GetCurrentUptime();
@@ -210,6 +206,7 @@ santa_action_t SantaDecisionManager::FetchDecision(
     char sha[MAX_SHA1_STRING];
     if (!CalculateSHA1ForVnode(credential, vfs_context, vnode, sha)) {
       LOGD("Unable to get SHA-1 for file, denying execution");
+      CacheCheck(vnode_id_str);
       return ACTION_RESPOND_CHECKBW_DENY;
     }
 
@@ -234,6 +231,7 @@ santa_action_t SantaDecisionManager::FetchDecision(
       // Send request to daemon...
       if (!PostToQueue(message)) {
         LOGE("Failed to queue request for %s.", path);
+        CacheCheck(vnode_id_str);
         return ACTION_ERROR;
       }
 
@@ -242,13 +240,14 @@ santa_action_t SantaDecisionManager::FetchDecision(
       for (int i = 0; i < kMaxRequestLoops; ++i) {
         IOSleep(kRequestLoopSleepMilliseconds);
         return_action = GetFromCache(vnode_id_str);
-        if (return_action != ACTION_UNSET) break;
+        if (return_action != ACTION_REQUEST_CHECKBW) break;
       }
-    } while (return_action == ACTION_UNSET && proc_exiting(owning_proc_) == 0);
+    } while (return_action == ACTION_REQUEST_CHECKBW && proc_exiting(owning_proc_) == 0);
 
     if (return_action == ACTION_UNSET || return_action == ACTION_ERROR) {
       LOGE("Daemon process did not respond correctly. Allowing executions "
            "until it comes back.");
+      CacheCheck(vnode_id_str);
       return ACTION_ERROR;
     }
   }
@@ -458,6 +457,13 @@ extern int vnode_scope_callback(kauth_cred_t credential,
     snprintf(vnode_id_str, MAX_VNODE_ID_STR, "%llu",
              sdm->GetVnodeIDForVnode(vfs_context, vnode));
 
+    // If an execution request is pending, deny write
+    if (sdm->GetFromCache(vnode_id_str) == ACTION_REQUEST_CHECKBW) {
+      *(reinterpret_cast<int *>(arg3)) = EACCES;
+      return KAUTH_RESULT_DENY;
+    }
+
+    // Otherwise remove from cache
     sdm->CacheCheck(vnode_id_str);
 
     return returnResult;
