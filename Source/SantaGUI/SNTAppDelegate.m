@@ -61,7 +61,9 @@
 - (void)attemptReconnection {
   // TODO(rah): Make this smarter.
   sleep(10);
-  [self createConnection];
+  [self performSelectorOnMainThread:@selector(createConnection)
+                         withObject:nil
+                      waitUntilDone:NO];
 }
 
 #pragma mark Menu Management
