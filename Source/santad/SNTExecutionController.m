@@ -253,6 +253,7 @@
   pid_t child = fork();
   if (child == 0) {
     fclose(stdout);
+    fclose(stderr);
 
     // Ensure we have no privileges
     if (!DropRootPrivileges()) {
