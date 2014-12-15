@@ -1508,7 +1508,7 @@
 				INFOPLIST_FILE = "Source/santa-driver/Resources/santa-driver-Info.plist";
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited)";
 				MODULE_NAME = "com.google.santa-driver";
-				MODULE_VERSION = 0.7;
+				MODULE_VERSION = 0.7.1;
 				OTHER_LDFLAGS = "";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
@@ -1540,7 +1540,7 @@
 				INFOPLIST_FILE = "Source/santa-driver/Resources/santa-driver-Info.plist";
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited)";
 				MODULE_NAME = "com.google.santa-driver";
-				MODULE_VERSION = 0.7;
+				MODULE_VERSION = 0.7.1;
 				OTHER_LDFLAGS = "";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				WARNING_CFLAGS = "-Wno-deprecated-register";
