@@ -2,7 +2,9 @@ require 'timeout'
 
 WORKSPACE       = 'Santa.xcworkspace'
 DEFAULT_SCHEME  = 'All'
-OUTPUT_PATH     = 'build'
+OUTPUT_PATH     = 'Build'
+DIST_PATH       = 'Dist'
+BINARIES        = ['Santa.app', 'santa-driver.kext', 'santad', 'santactl']
 PLISTS          = ['Source/SantaGUI/Resources/Santa-Info.plist',
                    'Source/santad/Resources/santad-Info.plist',
                    'Source/santa-driver/Resources/santa-driver-Info.plist',
@@ -60,6 +62,7 @@ task :clean => :init do
   puts "Cleaning"
   run_and_output_on_fail("xcodebuild #{XCODE_DEFAULTS} clean")
   FileUtils.rm_rf(OUTPUT_PATH)
+  FileUtils.rm_rf(DIST_PATH)
 end
 
 # Build
@@ -108,6 +111,28 @@ namespace :install do
     system "sudo cp #{OUTPUT_PATH}/Products/#{config}/santad /usr/libexec"
     system "sudo cp #{OUTPUT_PATH}/Products/#{config}/santactl /usr/sbin"
   end
+end
+
+# Dist
+task :dist do
+  desc "Create distribution folder"
+
+  Rake::Task['build:build'].invoke("Release")
+
+  FileUtils.rm_rf(DIST_PATH)
+
+  FileUtils.mkdir_p("#{DIST_PATH}/binaries")
+  FileUtils.mkdir_p("#{DIST_PATH}/conf")
+  FileUtils.mkdir_p("#{DIST_PATH}/dsym")
+
+  BINARIES.each do |x|
+    FileUtils.cp_r("#{OUTPUT_PATH}/Products/Release/#{x}", "#{DIST_PATH}/binaries")
+    FileUtils.cp_r("#{OUTPUT_PATH}/Products/Release/#{x}.dSYM", "#{DIST_PATH}/dsym")
+  end
+
+  Dir.glob("Conf/*") {|x| FileUtils.cp(x, "#{DIST_PATH}/conf")}
+
+  puts "Distribution folder created"
 end
 
 # Tests
