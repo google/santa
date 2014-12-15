@@ -114,12 +114,12 @@ boot-arg.
 
 There are two possible solutions for this, for distribution purposes:
 
-1) Use a pre-built, pre-signed version of the kext that we supply. Each time
-changes are made to the kext code we will update the pre-built version that you
-can make use of. This doesn't prevent you from making changes to the non-kext
-parts of Santa and distributing those. If you make changes to the kext and make
-a pull request, we can merge them in and distribute a new version of the
-pre-signed kext.
+1) Use a [pre-built, pre-signed version](https://github.com/google/santa/releases)
+of the kext that we supply. Each time changes are made to the kext code we will
+update the pre-built version that you can make use of. This doesn't prevent you
+from making changes to the non-kext parts of Santa and distributing those.
+If you make changes to the kext and make a pull request, we can merge them in
+and distribute a new version of the pre-signed kext.
 
 2) Apply for your own [kext signing certificate](https://developer.apple.com/contact/kext/).
 Apple will only grant this for broad distribution within an organization, they
