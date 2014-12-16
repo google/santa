@@ -48,6 +48,11 @@
     _operatingMode = operatingMode;
     _notifierConnection = notifier;
     LOGI(@"Log format: Decision (A|D), Reason (B|C), SHA-1, Path, Cert SHA-1, Cert CN");
+
+    // Workaround for xpcproxy/libsecurity bug on Yosemite
+    // This establishes the XPC connection between libsecurity and syspolicyd.
+    // Not doing this causes a deadlock as establishing this link goes through xpcproxy.
+    (void)[[SNTCodesignChecker alloc] initWithSelf];
   }
   return self;
 }
