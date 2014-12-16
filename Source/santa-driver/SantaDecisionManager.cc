@@ -234,6 +234,7 @@ santa_action_t SantaDecisionManager::FetchDecision(
       }
     } while (!RESPONSE_VALID(return_action) && proc_exiting(owning_proc_) == 0);
 
+    // If response is still not valid, the daemon exited
     if (!RESPONSE_VALID(return_action)) {
       LOGE("Daemon process did not respond correctly. Allowing executions "
            "until it comes back.");
@@ -439,6 +440,7 @@ extern int vnode_scope_callback(kauth_cred_t credential,
   vtype vt = vnode_vtype(vnode);
   if (vt != VREG) return returnResult;
 
+  // Don't operate on ACCESS events, as they're advisory
   if (action & KAUTH_VNODE_ACCESS) return returnResult;
 
   // Filter for only WRITE_DATA actions
@@ -449,6 +451,7 @@ extern int vnode_scope_callback(kauth_cred_t credential,
 
     // If an execution request is pending, deny write
     if (sdm->GetFromCache(vnode_id_str) == ACTION_REQUEST_CHECKBW) {
+      LOGD("Denying write due to pending execution: %s", vnode_id_str);
       *(reinterpret_cast<int *>(arg3)) = EACCES;
       return KAUTH_RESULT_DENY;
     }
