@@ -73,7 +73,7 @@ void SantaDecisionManager::free() {
 
 # pragma mark Cache Management
 
-bool SantaDecisionManager::AddToCache(
+void SantaDecisionManager::AddToCache(
     const char *identifier, santa_action_t decision, uint64_t microsecs) {
   IORWLockWrite(cached_decisions_lock_);
 
@@ -87,25 +87,20 @@ bool SantaDecisionManager::AddToCache(
     cached_decisions_->flushCollection();
   }
 
-  bool result = false;
-
   if (decision == ACTION_REQUEST_CHECKBW) {
     SantaMessage *pending = new SantaMessage();
     pending->setAction(ACTION_REQUEST_CHECKBW, 0);
-    result = cached_decisions_->setObject(identifier, pending);
+    cached_decisions_->setObject(identifier, pending);
     pending->release();  // it was retained when added to the dictionary
   } else {
     SantaMessage *pending = OSDynamicCast(
         SantaMessage, cached_decisions_->getObject(identifier));
     if (pending) {
       pending->setAction(decision, microsecs);
-      result = true;
     }
   }
 
   IORWLockUnlock(cached_decisions_lock_);
-
-  return result;
 }
 
 void SantaDecisionManager::CacheCheck(const char *identifier) {

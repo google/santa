@@ -80,7 +80,7 @@ class SantaDecisionManager : public OSObject {
   uint64_t GetVnodeIDForVnode(const vfs_context_t context, const vnode_t vp);
 
   // Cache management
-  bool AddToCache(const char *identifier,
+  void AddToCache(const char *identifier,
                   const santa_action_t decision,
                   const uint64_t microsecs);
   void CacheCheck(const char *identifier);
