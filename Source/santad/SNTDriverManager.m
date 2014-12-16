@@ -49,6 +49,7 @@
       serviceObject = IOServiceGetMatchingService(kIOMasterPortDefault, classToMatch);
 
       if (!serviceObject) {
+        LOGD(@"Waiting for Santa driver to become available");
         sleep(10);
       }
     } while (!serviceObject);
