@@ -8,10 +8,6 @@
 				<array>
 					<string>/Applications/Santa.app/Contents/MacOS/Santa</string>
 				</array>
-				<key>StandardOutPath</key>
-				<string>/var/log/santa.log</string>
-				<key>StandardErrorPath</key>
-				<string>/var/log/santa.log</string>
 				<key>RunAtLoad</key>
 				<true/>
 </dict>
