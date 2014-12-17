@@ -45,7 +45,7 @@ end
 
 task :init do
   unless File.exists?(WORKSPACE) and File.exists?('Pods')
-    puts "Workspace is missing, running 'pod install'"
+    puts "Pods missing, running 'pod install'"
     system "pod install" or raise "CocoaPods is not installed. Install with 'sudo gem install cocoapods'"
   end
 end

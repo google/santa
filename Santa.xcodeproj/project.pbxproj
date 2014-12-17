@@ -834,24 +834,8 @@
 			attributes = {
 				LastUpgradeCheck = 0510;
 				TargetAttributes = {
-					0D0016A1192BCD3C005E7FCD = {
-						DevelopmentTeam = 48U5E5R4XN;
-					};
 					0D260DAB18B68E12002A0B55 = {
-						DevelopmentTeam = 48U5E5R4XN;
 						TestTargetID = 0D385DB5180DE4A900418BC6;
-					};
-					0D35BD9D18FD71CE00921A21 = {
-						DevelopmentTeam = 48U5E5R4XN;
-					};
-					0D385DB5180DE4A900418BC6 = {
-						DevelopmentTeam = 48U5E5R4XN;
-					};
-					0D91BCB3174E8A7E00131A7D = {
-						DevelopmentTeam = 48U5E5R4XN;
-					};
-					0D9A7F3C1759330400035EB5 = {
-						DevelopmentTeam = 48U5E5R4XN;
 					};
 				};
 			};

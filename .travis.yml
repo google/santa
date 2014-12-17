@@ -1,0 +1,10 @@
+---
+language: objective-c
+
+before_install:
+ - gem install cocoapods
+ - brew update
+ - brew upgrade xctool
+
+script:
+ - xctool -workspace Santa.xcworkspace -scheme All build test CODE_SIGN_IDENTITY=''

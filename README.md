@@ -1,4 +1,4 @@
-Santa
+Santa  [![Build Status](https://travis-ci.org/google/santa.png?branch=master)](https://travis-ci.org/google/santa)
 =====
 
 Santa is a binary whitelisting/blacklisting system for Mac OS X. It consists of
