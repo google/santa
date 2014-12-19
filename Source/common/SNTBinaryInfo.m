@@ -55,6 +55,18 @@
   return buf;
 }
 
+- (NSString *)SHA256 {
+  unsigned char sha2[CC_SHA256_DIGEST_LENGTH];
+  CC_SHA256(self.fileData.bytes, (unsigned int)self.fileData.length, sha2);
+
+  NSMutableString *buf = [[NSMutableString alloc] initWithCapacity:CC_SHA256_DIGEST_LENGTH *2];
+  for (int i = 0; i < CC_SHA256_DIGEST_LENGTH; i++) {
+    [buf appendFormat:@"%02x", (unsigned char)sha2[i]];
+  }
+
+  return buf;
+}
+
 - (NSString *)machoType {
   if ([self isDylib])   { return @"Dynamic Library"; }
   if ([self isKext])    { return @"Kernel Extension"; }
