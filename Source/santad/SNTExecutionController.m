@@ -59,8 +59,7 @@
 
 #pragma mark Binary Validation
 
-- (void)validateBinaryWithSHA1:(NSString *)sha1
-                          path:(NSString *)path
+- (void)validateBinaryWithPath:(NSString *)path
                       userName:(NSString *)userName
                            pid:(NSNumber *)pid
                        vnodeId:(uint64_t)vnodeId {
@@ -70,6 +69,9 @@
     LOGD(@"File out of scope: %@", path);
     return;
   }
+
+  SNTBinaryInfo *binInfo = [[SNTBinaryInfo alloc] initWithPath:path];
+  NSString *sha1 = [binInfo SHA1];
 
   // These will be filled in either in step 2, 3 or 4.
   santa_action_t respondedAction = ACTION_UNSET;
@@ -82,7 +84,6 @@
     [self.driverManager postToKernelAction:respondedAction forVnodeID:vnodeId];
   }
 
-  SNTBinaryInfo *binInfo = [[SNTBinaryInfo alloc] initWithPath:path];
   SNTCodesignChecker *csInfo = [[SNTCodesignChecker alloc] initWithBinaryPath:path];
 
   // Step 3 - cert rule?

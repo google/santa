@@ -64,6 +64,20 @@
   return t;
 }
 
+- (NSString *)sha1ForPath:(NSString *)path {
+  unsigned char sha1[CC_SHA1_DIGEST_LENGTH];
+  NSData *psData = [NSData dataWithContentsOfFile:path
+                                          options:NSDataReadingMappedIfSafe
+                                            error:nil];
+  CC_SHA1([psData bytes], (unsigned int)[psData length], sha1);
+  char buf[CC_SHA1_DIGEST_LENGTH * 2 + 1];
+  for (int i = 0; i < CC_SHA1_DIGEST_LENGTH; i++) {
+    snprintf(buf + (2*i), 4, "%02x", (unsigned char)sha1[i]);
+  }
+  buf[CC_SHA1_DIGEST_LENGTH * 2] = '\0';
+  return @(buf);
+}
+
 #pragma mark - Driver Helpers
 
 /// Call in-kernel function: |kSantaUserClientReceive| passing the |action| and |vnodeId| via a
@@ -175,17 +189,7 @@
   TPASS();
 
   // Fetch the SHA-1 of /bin/ps, as we'll be using that for the cache invalidation test.
-  unsigned char sha1[CC_SHA1_DIGEST_LENGTH];
-  NSData *psData = [NSData dataWithContentsOfFile:@"/bin/ps"
-                                          options:NSDataReadingMappedIfSafe
-                                            error:nil];
-  CC_SHA1([psData bytes], (unsigned int)[psData length], sha1);
-  char buf[CC_SHA1_DIGEST_LENGTH * 2 + 1];
-  for (int i = 0; i < CC_SHA1_DIGEST_LENGTH; i++) {
-    snprintf(buf + (2*i), 4, "%02x", (unsigned char)sha1[i]);
-  }
-  buf[CC_SHA1_DIGEST_LENGTH * 2] = '\0';
-  NSString *psSHA = [NSString stringWithUTF8String:buf];
+  NSString *psSHA = [self sha1ForPath:@"/bin/ps"];
 
   /// Begin listening for events
   queueMemory = (IODataQueueMemory *)address;
@@ -194,7 +198,7 @@
       dataSize = sizeof(vdata);
       kr = IODataQueueDequeue(queueMemory, &vdata, &dataSize);
       if (kr == kIOReturnSuccess) {
-        if ([psSHA isEqual:@(vdata.sha1)]) {
+        if ([[self sha1ForPath:@(vdata.path)] isEqual:psSHA]) {
           [self postToKernelAction:ACTION_RESPOND_CHECKBW_DENY forVnodeID:vdata.vnode_id];
         } else if (strncmp("/bin/mv", vdata.path, strlen("/bin/mv")) == 0) {
           [self postToKernelAction:ACTION_RESPOND_CHECKBW_DENY forVnodeID:vdata.vnode_id];
@@ -209,13 +213,6 @@
           self.timesSeenCat++;
         } else if (strncmp("/bin/ln", vdata.path, strlen("/bin/ln")) == 0) {
           [self postToKernelAction:ACTION_RESPOND_CHECKBW_ALLOW forVnodeID:vdata.vnode_id];
-
-          NSString *shatest1 = @(vdata.sha1);
-          TSTART("Sends valid, lowercase SHA-1 hash");
-          if ([shatest1 length] != 40 || ![shatest1 isEqual:[shatest1 lowercaseString]]) {
-            TFAILINFO("Received bad SHA-1: '%s'", vdata.sha1);
-          }
-          TPASS();
 
           TSTART("Sends valid pid/ppid");
           if (vdata.pid < 1 || vdata.ppid < 1) {

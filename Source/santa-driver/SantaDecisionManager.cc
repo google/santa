@@ -193,13 +193,6 @@ santa_action_t SantaDecisionManager::FetchDecision(
     // Add pending request to cache
     AddToCache(vnode_id_str, ACTION_REQUEST_CHECKBW, 0);
 
-    char sha[MAX_SHA1_STRING];
-    if (!CalculateSHA1ForVnode(credential, vfs_context, vnode, sha)) {
-      LOGD("Unable to get SHA-1 for file, denying execution");
-      CacheCheck(vnode_id_str);
-      return ACTION_RESPOND_CHECKBW_DENY;
-    }
-
     // Get path
     char path[MAX_PATH_LEN];
     int name_len = MAX_PATH_LEN;
@@ -209,7 +202,6 @@ santa_action_t SantaDecisionManager::FetchDecision(
 
     // Prepare to send message to daemon
     santa_message_t message;
-    strncpy(message.sha1, sha, MAX_SHA1_STRING);
     strncpy(message.path, path, MAX_PATH_LEN);
     message.userId = kauth_cred_getuid(credential);
     message.pid = proc_selfpid();
@@ -248,76 +240,6 @@ santa_action_t SantaDecisionManager::FetchDecision(
 }
 
 # pragma mark Misc
-
-bool SantaDecisionManager::CalculateSHA1ForVnode(const kauth_cred_t credential,
-                                                 const vfs_context_t context,
-                                                 const vnode_t vp,
-                                                 char *out) {
-  out[0] = '\0';
-
-  // Get binary size
-  uint64_t binary_size;
-  struct vnode_attr vap;
-  VATTR_INIT(&vap);
-  VATTR_WANTED(&vap, va_data_size);
-  vnode_getattr(vp, &vap, context);
-  binary_size = vap.va_data_size;
-
-  uio_t uio = uio_create(1, 0, UIO_SYSSPACE, UIO_READ);
-  if (!uio) return false;
-
-  // Initialize the SHA1 context
-  SHA1_CTX sha1_ctx;
-  SHA1Init(&sha1_ctx);
-
-  void *readChunk = IOMalloc(page_size);
-  if (readChunk == NULL) return false;
-
-  // Read the file in chunks, updating the SHA as we go
-  for (uint64_t offset = 0; offset < binary_size; offset += page_size) {
-    vm_size_t readSize;
-    if (offset + page_size > binary_size) {
-      readSize = (int)(binary_size - offset);
-    } else {
-      readSize = page_size;
-    }
-
-    uio_reset(uio, offset, UIO_SYSSPACE, UIO_READ);
-
-    int error = uio_addiov(uio, CAST_USER_ADDR_T(readChunk), readSize);
-    if (error) {
-      uio_free(uio);
-      IOFree(readChunk, page_size);
-      return false;
-    }
-
-    error = VNOP_READ(vp, uio, IO_SYNC, context);
-    if (error) {
-      uio_free(uio);
-      IOFree(readChunk, page_size);
-      return false;
-    }
-
-    SHA1Update(&sha1_ctx, readChunk, readSize);
-  }
-
-  // Free |uio|
-  uio_free(uio);
-
-  // Free |readChunk|
-  IOFree(readChunk, page_size);
-
-  // Finalize the SHA-1 into |buf|
-  char buf[MAX_SHA1_LEN];
-  SHA1Final(buf, &sha1_ctx);
-
-  // Convert the binary SHA into a hex digest string
-  for (int i = 0; i < MAX_SHA1_LEN; i++) {
-    snprintf(out + (2*i), 3, "%02x", (unsigned char)buf[i]);
-  }
-
-  return true;
-}
 
 uint64_t SantaDecisionManager::GetVnodeIDForVnode(const vfs_context_t context,
                                                   const vnode_t vp) {

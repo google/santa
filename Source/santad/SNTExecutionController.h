@@ -47,8 +47,7 @@
 // Handles the logic of deciding whether to allow the binary to run or not, sends the response to
 // the kernel, logs the event to the log and if necessary stores the event in the database and
 // sends a notification to the GUI agent.
-- (void)validateBinaryWithSHA1:(NSString *)sha1
-                          path:(NSString *)path
+- (void)validateBinaryWithPath:(NSString *)path
                       userName:(NSString *)userName
                            pid:(NSNumber *)pid
                        vnodeId:(uint64_t)vnodeId;

@@ -18,7 +18,6 @@
 #include <IOKit/IOLib.h>
 #include <IOKit/IOSharedDataQueue.h>
 #include <libkern/c++/OSDictionary.h>
-#include <libkern/crypto/sha1.h>
 #include <sys/kauth.h>
 #include <sys/proc.h>
 #include <sys/vnode.h>
@@ -69,12 +68,6 @@ class SantaDecisionManager : public OSObject {
   santa_action_t FetchDecision(const kauth_cred_t credential,
                                const vfs_context_t vfs_context,
                                const vnode_t vnode);
-
-  // Hash calculation
-  bool CalculateSHA1ForVnode(const kauth_cred_t credential,
-                             const vfs_context_t context,
-                             const vnode_t vnode,
-                             char *out);
 
   // Vnode ID string
   uint64_t GetVnodeIDForVnode(const vfs_context_t context, const vnode_t vp);

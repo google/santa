@@ -78,8 +78,7 @@
   rule.state = RULESTATE_WHITELIST;
   OCMStub([self.mockRuleDatabase binaryRuleForSHA1:@"a"]).andReturn(rule);
 
-  [self.sut validateBinaryWithSHA1:@"a"
-                              path:@"/a/file"
+  [self.sut validateBinaryWithPath:@"/a/file"
                           userName:@"nobody"
                                pid:@(12)
                            vnodeId:1234];
@@ -92,12 +91,15 @@
   id mockSut = OCMPartialMock(self.sut);
   OCMStub([mockSut fileIsInScope:OCMOCK_ANY]).andReturn(YES);
 
+  [[[self.mockBinaryInfo stub] andReturn:self.mockBinaryInfo] alloc];
+  (void)[[[self.mockBinaryInfo stub] andReturn:self.mockBinaryInfo] initWithPath:[OCMArg any]];
+  [[[self.mockBinaryInfo stub] andReturn:@"a"] SHA1];
+
   SNTRule *rule = [[SNTRule alloc] init];
   rule.state = RULESTATE_BLACKLIST;
   OCMStub([self.mockRuleDatabase binaryRuleForSHA1:@"a"]).andReturn(rule);
 
-  [self.sut validateBinaryWithSHA1:@"a"
-                              path:@"/a/file"
+  [self.sut validateBinaryWithPath:@"/a/file"
                           userName:@"nobody"
                                pid:@(12)
                            vnodeId:1234];
@@ -121,8 +123,7 @@
   rule.state = RULESTATE_WHITELIST;
   OCMStub([self.mockRuleDatabase certificateRuleForSHA1:@"a"]).andReturn(rule);
 
-  [self.sut validateBinaryWithSHA1:@"a"
-                              path:@"/a/file"
+  [self.sut validateBinaryWithPath:@"/a/file"
                           userName:@"nobody"
                                pid:@(12)
                            vnodeId:1234];
@@ -146,8 +147,7 @@
   rule.state = RULESTATE_BLACKLIST;
   OCMStub([self.mockRuleDatabase certificateRuleForSHA1:@"a"]).andReturn(rule);
 
-  [self.sut validateBinaryWithSHA1:@"a"
-                              path:@"/a/file"
+  [self.sut validateBinaryWithPath:@"/a/file"
                           userName:@"nobody"
                                pid:@(12)
                            vnodeId:1234];
@@ -161,8 +161,7 @@
   OCMStub([mockSut fileIsInScope:OCMOCK_ANY]).andReturn(YES);
 
   [self.sut setOperatingMode:CLIENTMODE_MONITOR];
-  [self.sut validateBinaryWithSHA1:@"a"
-                              path:@"/a/file"
+  [self.sut validateBinaryWithPath:@"/a/file"
                           userName:@"nobody"
                                pid:@(12)
                            vnodeId:1234];
@@ -170,8 +169,7 @@
                                             forVnodeID:1234]);
 
   [self.sut setOperatingMode:CLIENTMODE_LOCKDOWN];
-  [self.sut validateBinaryWithSHA1:@"a"
-                              path:@"/a/file"
+  [self.sut validateBinaryWithPath:@"/a/file"
                           userName:@"nobody"
                                pid:@(12)
                            vnodeId:1234];

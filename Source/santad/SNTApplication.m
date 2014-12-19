@@ -135,8 +135,7 @@
                   userName = @(user->pw_name);
                 }
 
-                [self.execController validateBinaryWithSHA1:@(message.sha1)
-                                                       path:@(message.path)
+                [self.execController validateBinaryWithPath:@(message.path)
                                                    userName:userName
                                                         pid:@(message.pid)
                                                     vnodeId:message.vnode_id];

@@ -19,8 +19,6 @@
 
 // Defines the lengths of paths and Vnode IDs passed around.
 #define MAX_PATH_LEN 1024    // ==PATH_LEN from syslimits.h
-#define MAX_SHA1_LEN 20
-#define MAX_SHA1_STRING 41
 #define MAX_VNODE_ID_STR 21  // digits in UINT64_MAX + 1 for NULL-terminator
 
 // Defines the name of the userclient class and the driver bundle ID.
@@ -68,7 +66,6 @@ typedef struct {
   uid_t userId;
   pid_t pid;
   pid_t ppid;
-  char sha1[MAX_SHA1_STRING];
   char path[MAX_PATH_LEN];
 } santa_message_t;
 
