@@ -131,7 +131,7 @@
             rule.SHA1, @(rule.type)];
       } else {
         [db executeUpdate:@"INSERT OR REPLACE INTO rules (sha1, state, type, customMsg) "
-            @"VALUES (?, ?, ?, ?);", rule.SHA1, [NSNumber numberWithInt: rule.state], [NSNumber numberWithInt: rule.type], rule.customMsg];
+            @"VALUES (?, ?, ?, ?);", rule.SHA1, @(rule.state), @(rule.type), rule.customMsg];
       }
   }];
 }
