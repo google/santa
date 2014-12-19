@@ -444,7 +444,9 @@ extern int vnode_scope_callback(kauth_cred_t credential,
   if (action & KAUTH_VNODE_ACCESS) return returnResult;
 
   // Filter for only WRITE_DATA actions
-  if (action & KAUTH_VNODE_WRITE_DATA || action & KAUTH_VNODE_APPEND_DATA) {
+  if (action & KAUTH_VNODE_WRITE_DATA ||
+      action & KAUTH_VNODE_APPEND_DATA ||
+      action & KAUTH_VNODE_DELETE) {
     char vnode_id_str[MAX_VNODE_ID_STR];
     snprintf(vnode_id_str, MAX_VNODE_ID_STR, "%llu",
              sdm->GetVnodeIDForVnode(vfs_context, vnode));
