@@ -266,28 +266,26 @@ bool SantaDecisionManager::CalculateSHA1ForVnode(const kauth_cred_t credential,
   SHA1_CTX sha1_ctx;
   SHA1Init(&sha1_ctx);
 
-  // |chunkSize| should equal one page so that where possible
-  // the kernel can offload the calculation to dedicated hardware.
-  int chunkSize = PAGE_SIZE_64;
-  void *readChunk = IOMalloc(chunkSize);
+  void *readChunk = IOMalloc(page_size);
+  if (readChunk == NULL) return false;
 
   // Credentials needed for vn_rdwr
   kauth_cred_t kerncred = vfs_context_ucred(context);
   proc_t p = vfs_context_proc(context);
 
   // Read the file in chunks, updating the SHA as we go
-  for (uint64_t offset = 0; offset < binary_size; offset += chunkSize) {
-    int readSize;
-    if (offset + chunkSize > binary_size) {
+  for (uint64_t offset = 0; offset < binary_size; offset += page_size) {
+    vm_size_t readSize;
+    if (offset + page_size > binary_size) {
       readSize = (int)(binary_size - offset);
     } else {
-      readSize = chunkSize;
+      readSize = page_size;
     }
 
     int resid;  // unused
-    if (vn_rdwr(UIO_READ, vp, (caddr_t)readChunk, readSize, offset,
+    if (vn_rdwr(UIO_READ, vp, (caddr_t)readChunk, (int)readSize, offset,
                 UIO_SYSSPACE, IO_NOAUTH, kerncred, &resid, p) != 0) {
-      IOFree(readChunk, chunkSize);
+      IOFree(readChunk, page_size);
       return false;
     }
 
@@ -295,7 +293,7 @@ bool SantaDecisionManager::CalculateSHA1ForVnode(const kauth_cred_t credential,
   }
 
   // Free |readChunk|
-  IOFree(readChunk, chunkSize);
+  IOFree(readChunk, page_size);
 
   // Finalize the SHA-1 into |buf|
   char buf[MAX_SHA1_LEN];
