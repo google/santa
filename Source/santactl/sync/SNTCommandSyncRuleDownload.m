@@ -56,6 +56,7 @@
                                                        options:0
                                                          error:nil]];
   [req setHTTPMethod:@"POST"];
+  [req setValue:@"application/json" forHTTPHeaderField:@"Content-Type"];
   [[session dataTaskWithRequest:req completionHandler:^(NSData *data,
                                                         NSURLResponse *response,
                                                         NSError *error) {
