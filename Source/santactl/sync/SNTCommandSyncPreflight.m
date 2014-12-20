@@ -44,6 +44,7 @@
                                                           error:nil];
   NSMutableURLRequest *req = [[NSMutableURLRequest alloc] initWithURL:url];
   [req setHTTPMethod:@"POST"];
+  [req setValue:@"application/json" forHTTPHeaderField:@"Content-Type"];
   [req setHTTPBody:requestBody];
 
   [[session dataTaskWithRequest:req completionHandler:^(NSData *data,
