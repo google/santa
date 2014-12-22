@@ -88,6 +88,7 @@
       completionHandler(NSURLSessionAuthChallengeUseCredential, cred);
       return;
     } else {
+      LOGE(@"Servers asks for client authentication, no usable client certificates found.");
       completionHandler(NSURLSessionAuthChallengeRejectProtectionSpace, nil);
       return;
     }
@@ -97,6 +98,7 @@
       completionHandler(NSURLSessionAuthChallengeUseCredential, cred);
       return;
     } else {
+      LOGE(@"Servers asks for client authentication, no usable client certificates found.");
       completionHandler(NSURLSessionAuthChallengeRejectProtectionSpace, nil);
       return;
     }
@@ -228,7 +230,7 @@
     // Set this array of certs as the anchors to trust.
     err = SecTrustSetAnchorCertificates(serverTrust, (__bridge CFArrayRef)certRefs);
     if (err != errSecSuccess) {
-      LOGE(@"Server Trust: Could not set anchor certificates");
+      LOGE(@"Server Trust: Could not set anchor certificates: %d");
       return nil;
     }
   }
@@ -237,7 +239,7 @@
   SecTrustResultType result = kSecTrustResultInvalid;
   err = SecTrustEvaluate(serverTrust, &result);
   if (err != errSecSuccess) {
-    LOGE(@"Server Trust: Unable to evaluate certificate chain for server");
+    LOGE(@"Server Trust: Unable to evaluate certificate chain for server: %d", err);
     return nil;
   }
 
