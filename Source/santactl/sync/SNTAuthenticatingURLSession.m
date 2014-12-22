@@ -82,7 +82,7 @@
 
   NSString *authMethod = [protectionSpace authenticationMethod];
 
-  if (authMethod == NSURLAuthenticationMethodClientCertificate && NO) {
+  if (authMethod == NSURLAuthenticationMethodClientCertificate) {
     NSURLCredential *cred = [self clientCredentialForProtectionSpace:protectionSpace];
     if (cred) {
       completionHandler(NSURLSessionAuthChallengeUseCredential, cred);
