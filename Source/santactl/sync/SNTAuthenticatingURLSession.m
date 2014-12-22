@@ -171,27 +171,25 @@
     SecCertificateRef certificate = NULL;
     err = SecIdentityCopyCertificate(identityRef, &certificate);
     if (err != errSecSuccess) {
-      LOGD(@"Client Trust: Failed to read certificate data: %d. Skipping identity", (int)err);
+      LOGD(@"Client Trust: Failed to read certificate data: %d. Skipping identity.", (int)err);
       return;
     }
 
     SNTCertificate *clientCert = [[SNTCertificate alloc] initWithSecCertificateRef:certificate];
     CFRelease(certificate);
-
+    
     // Switch identity finding method depending on config
-    if (self.clientCertCommonName) {
+    if (self.clientCertCommonName && clientCert.commonName) {
       if ([clientCert.commonName compare:self.clientCertCommonName
-                                 options:NSCaseInsensitiveSearch]) {
-        LOGD(@"Client Trust: Valid client identity %@", clientCert);
+                                 options:NSCaseInsensitiveSearch] == NSOrderedSame) {
         _foundIdentity = identityRef;
         CFRetain(_foundIdentity);
         *stop = YES;
         return;  // return from enumeration block
       }
-    } else if (self.clientCertIssuerCn) {
+    } else if (self.clientCertIssuerCn && clientCert.issuerCommonName) {
       if ([clientCert.issuerCommonName compare:self.clientCertIssuerCn
-                                       options:NSCaseInsensitiveSearch]) {
-        LOGD(@"Client Trust: Valid client identity %@", clientCert);
+                                       options:NSCaseInsensitiveSearch] == NSOrderedSame) {
         _foundIdentity = identityRef;
         CFRetain(_foundIdentity);
         *stop = YES;
@@ -205,7 +203,7 @@
             [clientCert.issuerCountryName isEqual:decoder.countryName] &&
             [clientCert.issuerOrgName isEqual:decoder.organizationName] &&
             [clientCert.issuerOrgUnit isEqual:decoder.organizationalUnit]) {
-          LOGD(@"Client Trust: Valid client identity %@", clientCert);
+
           _foundIdentity = identityRef;
           CFRetain(_foundIdentity);
           *stop = YES;
@@ -214,8 +212,9 @@
       }
     }
   }];
-
+  
   if (_foundIdentity == NULL) {
+    LOGD(@"No client identity found.");
     return nil;
   }
 
