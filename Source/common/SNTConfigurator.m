@@ -27,6 +27,8 @@ static NSString * const kConfigFilePath = @"/var/db/santa/config.plist";
 
 /// The keys in the config file
 static NSString * const kSyncBaseURLKey = @"SyncBaseURL";
+static NSString * const kClientAuthCertificateFileKey = @"ClientAuthCertificateFile";
+static NSString * const kClientAuthCertificatePasswordKey = @"ClientAuthCertificatePassword";
 static NSString * const kClientAuthCertificateCNKey = @"ClientAuthCertificateCN";
 static NSString * const kClientAuthCertificateIssuerKey = @"ClientAuthCertificateIssuerCN";
 static NSString * const kServerAuthRootsDataKey = @"ServerAuthRootsData";
@@ -66,6 +68,14 @@ static NSString * const kMachineIDPlistKeyKey = @"MachineIDKey";
 
 - (NSURL *)syncBaseURL {
   return [NSURL URLWithString:self.configData[kSyncBaseURLKey]];
+}
+
+- (NSString *)syncClientAuthCertificateFile {
+  return self.configData[kClientAuthCertificateFileKey];
+}
+
+- (NSString *)syncClientAuthCertificatePassword {
+  return self.configData[kClientAuthCertificatePasswordKey];
 }
 
 - (NSString *)syncClientAuthCertificateCn {

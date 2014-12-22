@@ -112,30 +112,57 @@
 /// Handles the process of locating a valid client certificate for authentication.
 /// Operates in one of three modes, depending on the configuration in config.plist
 ///
-/// Mode 1: if syncClientAuthCertificateCn is set, look for an identity in the keychain with a
+/// Mode 1: if syncClientAuthCertificate is set, use the identity in the pkcs file
+/// Mode 2: if syncClientAuthCertificateCn is set, look for an identity in the keychain with a
 ///         matching common name and return it.
-/// Mode 2: if syncClientAuthCertificateIssuer is set, look for an identity in the keychain with a
+/// Mode 3: if syncClientAuthCertificateIssuer is set, look for an identity in the keychain with a
 ///         matching issuer common name and return it.
-/// Mode 3: use the list of issuer details sent down by the server to find an identity in the
+/// Mode 4: use the list of issuer details sent down by the server to find an identity in the
 ///         keychain.
 ///
 /// If a valid identity cannot be found, returns nil.
 - (NSURLCredential *)clientCredentialForProtectionSpace:(NSURLProtectionSpace *)protectionSpace {
   __block OSStatus err = errSecSuccess;
+  __block SecIdentityRef _foundIdentity;
+  
+  if (self.clientCertFile) {
+    NSError *error = nil;
+    
+    NSData *data = [NSData dataWithContentsOfFile:self.clientCertFile options:0 error:&error];
+    if (error) {
+      LOGE(@"Couldn't open client certificate %@ : %@",  self.clientCertFile, [error localizedDescription]);
+      return (nil);
+    }
+    
+    CFDataRef inPKCS12Data = (__bridge CFDataRef)data;
+    
+    SecTrustRef trust = nil;
+    err = extractIdentityAndTrust(inPKCS12Data, self.clientCertPassword, &_foundIdentity, &trust);
+    if (err != errSecSuccess) {
+      LOGE(@"Couldn't load client certificate %@ : %d", self.clientCertFile, err);
+      return (nil);
+    }
+    
+    CFRetain(_foundIdentity);
+    
+    return [NSURLCredential credentialWithIdentity:_foundIdentity
+                                      certificates:nil
+                                       persistence:NSURLCredentialPersistenceForSession];
+  }
+  
   CFArrayRef cfIdentities = NULL;
   err = SecItemCopyMatching((__bridge CFDictionaryRef)@{
-      (id)kSecClass : (id)kSecClassIdentity,
-      (id)kSecReturnRef : @YES,
-      (id)kSecMatchLimit : (id)kSecMatchLimitAll }, (CFTypeRef *)&cfIdentities);
-
+                                                        (id)kSecClass : (id)kSecClassIdentity,
+                                                        (id)kSecReturnRef : @YES,
+                                                        (id)kSecMatchLimit : (id)kSecMatchLimitAll }, (CFTypeRef *)&cfIdentities);
+  
   if (err != noErr) {
     LOGD(@"Client Trust: Failed to load client identities, SecItemCopyMatching returned: %d",
          (int)err);
     return nil;
   }
+  
   NSArray *identities = CFBridgingRelease(cfIdentities);
-
-  __block SecIdentityRef _foundIdentity;
 
   // Manually iterate through available identities to find one with an allowed issuer.
   [identities enumerateObjectsUsingBlock:^(id obj, NSUInteger idx, BOOL *stop) {
@@ -196,6 +223,24 @@
                                     certificates:nil
                                      persistence:NSURLCredentialPersistenceForSession];
 }
+
+OSStatus extractIdentityAndTrust(CFDataRef inP12data, NSString* password, SecIdentityRef *identity, SecTrustRef *trust)
+{
+  NSDictionary *options = (password ? @{(__bridge id)kSecImportExportPassphrase: password} : @{});
+  
+  CFArrayRef items = nil;
+  
+  OSStatus err = SecPKCS12Import(inP12data, (__bridge CFDictionaryRef) options, &items);
+  
+  if (err == errSecSuccess) {
+      CFDictionaryRef myIdentityAndTrust = CFArrayGetValueAtIndex(items, 0);
+      *identity = (SecIdentityRef) CFDictionaryGetValue(myIdentityAndTrust, kSecImportItemIdentity);
+      *trust = (SecTrustRef)CFDictionaryGetValue(myIdentityAndTrust, kSecImportItemTrust);
+  }
+  
+  return err;
+}
+
 
 /// Handles the process of evaluating the server's certificate chain.
 /// Operates in one of three modes, depending on the configuration in config.plist

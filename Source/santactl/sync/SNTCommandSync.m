@@ -91,7 +91,10 @@ REGISTER_COMMAND_NAME(@"sync");
   }
 
   // Configure client auth
-  if ([config syncClientAuthCertificateCn]) {
+  if ([config syncClientAuthCertificateFile]) {
+    authURLSession.clientCertFile = [config syncClientAuthCertificateFile];
+    authURLSession.clientCertPassword = [config syncClientAuthCertificatePassword];
+  } else if ([config syncClientAuthCertificateCn]) {
     authURLSession.clientCertCommonName = [config syncClientAuthCertificateCn];
   } else if ([config syncClientAuthCertificateIssuer]) {
     authURLSession.clientCertIssuerCn = [config syncClientAuthCertificateIssuer];
