@@ -75,7 +75,7 @@
   }
 
   if (!protectionSpace.receivesCredentialSecurely) {
-    LOGD(@"Protection Space: secure authentication or protocol cannot be established");
+    LOGD(@"Protection Space: secure authentication or protocol cannot be established.");
     completionHandler(NSURLSessionAuthChallengeRejectProtectionSpace, nil);
     return;
   }
@@ -88,7 +88,7 @@
       completionHandler(NSURLSessionAuthChallengeUseCredential, cred);
       return;
     } else {
-      LOGE(@"Servers asks for client authentication, no usable client certificates found.");
+      LOGE(@"Server asks for client authentication, no usable client certificate found.");
       completionHandler(NSURLSessionAuthChallengeRejectProtectionSpace, nil);
       return;
     }
@@ -98,7 +98,7 @@
       completionHandler(NSURLSessionAuthChallengeUseCredential, cred);
       return;
     } else {
-      LOGE(@"Servers asks for client authentication, no usable client certificates found.");
+      LOGE(@"Servers asks for client authentication, no usable client certificate found.");
       completionHandler(NSURLSessionAuthChallengeRejectProtectionSpace, nil);
       return;
     }
@@ -110,9 +110,9 @@
 #pragma mark Private Helpers for URLSession:didReceiveChallenge:completionHandler:
 
 /// Handles the process of locating a valid client certificate for authentication.
-/// Operates in one of three modes, depending on the configuration in config.plist
+/// Operates in one of four modes, depending on the configuration in config.plist
 ///
-/// Mode 1: if syncClientAuthCertificate is set, use the identity in the pkcs file
+/// Mode 1: if syncClientAuthCertificateFile is set, use the identity in the pkcs file
 /// Mode 2: if syncClientAuthCertificateCn is set, look for an identity in the keychain with a
 ///         matching common name and return it.
 /// Mode 3: if syncClientAuthCertificateIssuer is set, look for an identity in the keychain with a
@@ -131,7 +131,7 @@
     NSData *data = [NSData dataWithContentsOfFile:self.clientCertFile options:0 error:&error];
     if (error) {
       LOGE(@"Couldn't open client certificate %@ : %@",  self.clientCertFile, [error localizedDescription]);
-      return (nil);
+      return nil;
     }
     
     CFDataRef inPKCS12Data = (__bridge CFDataRef)data;
@@ -140,7 +140,7 @@
     err = extractIdentityAndTrust(inPKCS12Data, self.clientCertPassword, &_foundIdentity, &trust);
     if (err != errSecSuccess) {
       LOGE(@"Couldn't load client certificate %@ : %d", self.clientCertFile, err);
-      return (nil);
+      return nil;
     }
     
     CFRetain(_foundIdentity);
@@ -152,9 +152,9 @@
   
   CFArrayRef cfIdentities = NULL;
   err = SecItemCopyMatching((__bridge CFDictionaryRef)@{
-                                                        (id)kSecClass : (id)kSecClassIdentity,
-                                                        (id)kSecReturnRef : @YES,
-                                                        (id)kSecMatchLimit : (id)kSecMatchLimitAll }, (CFTypeRef *)&cfIdentities);
+        (id)kSecClass : (id)kSecClassIdentity,
+        (id)kSecReturnRef : @YES,
+        (id)kSecMatchLimit : (id)kSecMatchLimitAll }, (CFTypeRef *)&cfIdentities);
   
   if (err != noErr) {
     LOGD(@"Client Trust: Failed to load client identities, SecItemCopyMatching returned: %d",
@@ -213,18 +213,19 @@
     }
   }];
   
-  if (_foundIdentity == NULL) {
-    LOGD(@"No client identity found.");
-    return nil;
-  }
-
-  return [NSURLCredential credentialWithIdentity:_foundIdentity
+  if (_foundIdentity) {
+    LOGD(@"Client Trust: Valid client identity %@.", _foundIdentity);
+    return [NSURLCredential credentialWithIdentity:_foundIdentity
                                     certificates:nil
                                      persistence:NSURLCredentialPersistenceForSession];
+  } else {
+    LOGD(@"Client Trust: No valid identity found.");
+    return nil;
+  }
 }
 
-OSStatus extractIdentityAndTrust(CFDataRef inP12data, NSString* password, SecIdentityRef *identity, SecTrustRef *trust)
-{
+OSStatus extractIdentityAndTrust(CFDataRef inP12data, NSString *password, 
+                                        SecIdentityRef *identity, SecTrustRef *trust) {
   NSDictionary *options = (password ? @{(__bridge id)kSecImportExportPassphrase: password} : @{});
   
   CFArrayRef items = nil;
@@ -274,7 +275,7 @@ OSStatus extractIdentityAndTrust(CFDataRef inP12data, NSString* password, SecIde
     // Set this array of certs as the anchors to trust.
     err = SecTrustSetAnchorCertificates(serverTrust, (__bridge CFArrayRef)certRefs);
     if (err != errSecSuccess) {
-      LOGE(@"Server Trust: Could not set anchor certificates: %d");
+      LOGE(@"Server Trust: Could not set anchor certificates: %d", err);
       return nil;
     }
   }

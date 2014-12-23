@@ -77,9 +77,9 @@ REGISTER_COMMAND_NAME(@"sync");
 
   // Configure server auth
   if ([config syncServerAuthRootsFile]) {
-    NSError* error = nil;
+    NSError *error = nil;
 
-    NSData *rootsData = [NSData dataWithContentsOfFile:[config syncServerAuthRootsFile] options: 0 error: &error];
+    NSData *rootsData = [NSData dataWithContentsOfFile:[config syncServerAuthRootsFile] options:0 error:&error];
     authURLSession.serverRootsPemData = rootsData;
       
     if (rootsData == nil) {
