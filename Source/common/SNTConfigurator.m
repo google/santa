@@ -146,7 +146,8 @@ static NSString * const kMachineIDPlistKeyKey = @"MachineIDKey";
   NSData *readData = [NSData dataWithContentsOfFile:kConfigFilePath options:0 error:&error];
 
   if (error) {
-    fprintf(stderr, "%s\n", [[NSString stringWithFormat:@"Could not open configuration file %@: %@", kConfigFilePath, [error localizedDescription]] UTF8String]);
+    fprintf(stderr, "%s\n", [[NSString stringWithFormat:@"Could not open configuration file %@: %@", 
+            kConfigFilePath, [error localizedDescription]] UTF8String]);
 
     _configData = [NSMutableDictionary dictionary];
     return;
@@ -154,10 +155,12 @@ static NSString * const kMachineIDPlistKeyKey = @"MachineIDKey";
 
   CFErrorRef parseError = NULL;
 
-  NSDictionary *dictionary = (__bridge_transfer NSDictionary *)CFPropertyListCreateWithData(kCFAllocatorDefault, (__bridge CFDataRef)readData, kCFPropertyListImmutable, NULL, (CFErrorRef *)&parseError);
+  NSDictionary *dictionary = (__bridge_transfer NSDictionary *)CFPropertyListCreateWithData(kCFAllocatorDefault, 
+          (__bridge CFDataRef)readData, kCFPropertyListImmutable, NULL, (CFErrorRef *)&parseError);
 
   if (parseError) {
-    fprintf(stderr, "%s\n", [[NSString stringWithFormat:@"Could not parse configuration file %@: %@", kConfigFilePath, [(__bridge NSError *)parseError localizedDescription]] UTF8String]);
+    fprintf(stderr, "%s\n", [[NSString stringWithFormat:@"Could not parse configuration file %@: %@", 
+            kConfigFilePath, [(__bridge NSError *)parseError localizedDescription]] UTF8String]);
 
     _configData = [NSMutableDictionary dictionary];
     return;
