@@ -141,11 +141,32 @@ static NSString * const kMachineIDPlistKeyKey = @"MachineIDKey";
 }
 
 - (void)reloadConfigData {
-  _configData = [[NSDictionary dictionaryWithContentsOfFile:kConfigFilePath] mutableCopy];
+  NSError* error = nil;
 
-  if (!_configData) {
+  NSData *readData = [NSData dataWithContentsOfFile:kConfigFilePath options:0 error:&error];
+
+  if (error) {
+    fprintf(stderr, "%s\n", [[NSString stringWithFormat:@"Could not open configuration file %@: %@", 
+            kConfigFilePath, [error localizedDescription]] UTF8String]);
+
     _configData = [NSMutableDictionary dictionary];
+    return;
   }
+
+  CFErrorRef parseError = NULL;
+
+  NSDictionary *dictionary = (__bridge_transfer NSDictionary *)CFPropertyListCreateWithData(kCFAllocatorDefault, 
+          (__bridge CFDataRef)readData, kCFPropertyListImmutable, NULL, (CFErrorRef *)&parseError);
+
+  if (parseError) {
+    fprintf(stderr, "%s\n", [[NSString stringWithFormat:@"Could not parse configuration file %@: %@", 
+            kConfigFilePath, [(__bridge NSError *)parseError localizedDescription]] UTF8String]);
+
+    _configData = [NSMutableDictionary dictionary];
+    return;
+  }
+
+  _configData = [dictionary mutableCopy];
 }
 
 @end

@@ -77,8 +77,15 @@ REGISTER_COMMAND_NAME(@"sync");
 
   // Configure server auth
   if ([config syncServerAuthRootsFile]) {
-    NSData *rootsData = [NSData dataWithContentsOfFile:[config syncServerAuthRootsFile]];
+    NSError* error = nil;
+
+    NSData *rootsData = [NSData dataWithContentsOfFile:[config syncServerAuthRootsFile] options:0 error:&error];
     authURLSession.serverRootsPemData = rootsData;
+      
+    if (rootsData == nil) {
+        LOGE(@"Couldn't open server root certificate file %@ with error: %@.", [config syncServerAuthRootsFile], [error localizedDescription]);
+        exit(1);
+    }
   } else if ([config syncServerAuthRootsData]) {
     authURLSession.serverRootsPemData = [config syncServerAuthRootsData];
   }
