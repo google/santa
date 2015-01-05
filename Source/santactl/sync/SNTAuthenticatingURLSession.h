@@ -31,6 +31,14 @@
 /// certificate chain. This will override the trusted roots in the System Roots.
 @property(nonatomic) NSData *serverRootsPemData;
 
+/// If set and client certificate authentication is needed, the pkcs#12 file will be
+/// loaded
+@property(nonatomic) NSString *clientCertFile;
+
+/// If set and client certificate authentication is needed, the password being used for
+/// loading the clientCertFile
+@property(nonatomic) NSString *clientCertPassword;
+
 /// If set and client certificate authentication is needed, will search the keychain for a
 /// certificate matching this common name and use that for authentication
 /// @note: Not case sensitive

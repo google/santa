@@ -27,6 +27,8 @@ static NSString * const kConfigFilePath = @"/var/db/santa/config.plist";
 
 /// The keys in the config file
 static NSString * const kSyncBaseURLKey = @"SyncBaseURL";
+static NSString * const kClientAuthCertificateFileKey = @"ClientAuthCertificateFile";
+static NSString * const kClientAuthCertificatePasswordKey = @"ClientAuthCertificatePassword";
 static NSString * const kClientAuthCertificateCNKey = @"ClientAuthCertificateCN";
 static NSString * const kClientAuthCertificateIssuerKey = @"ClientAuthCertificateIssuerCN";
 static NSString * const kServerAuthRootsDataKey = @"ServerAuthRootsData";
@@ -66,6 +68,14 @@ static NSString * const kMachineIDPlistKeyKey = @"MachineIDKey";
 
 - (NSURL *)syncBaseURL {
   return [NSURL URLWithString:self.configData[kSyncBaseURLKey]];
+}
+
+- (NSString *)syncClientAuthCertificateFile {
+  return self.configData[kClientAuthCertificateFileKey];
+}
+
+- (NSString *)syncClientAuthCertificatePassword {
+  return self.configData[kClientAuthCertificatePasswordKey];
 }
 
 - (NSString *)syncClientAuthCertificateCn {
@@ -141,11 +151,32 @@ static NSString * const kMachineIDPlistKeyKey = @"MachineIDKey";
 }
 
 - (void)reloadConfigData {
-  _configData = [[NSDictionary dictionaryWithContentsOfFile:kConfigFilePath] mutableCopy];
+  NSError* error = nil;
 
-  if (!_configData) {
+  NSData *readData = [NSData dataWithContentsOfFile:kConfigFilePath options:0 error:&error];
+
+  if (error) {
+    fprintf(stderr, "%s\n", [[NSString stringWithFormat:@"Could not open configuration file %@: %@", 
+            kConfigFilePath, [error localizedDescription]] UTF8String]);
+
     _configData = [NSMutableDictionary dictionary];
+    return;
   }
+
+  CFErrorRef parseError = NULL;
+
+  NSDictionary *dictionary = (__bridge_transfer NSDictionary *)CFPropertyListCreateWithData(kCFAllocatorDefault, 
+          (__bridge CFDataRef)readData, kCFPropertyListImmutable, NULL, (CFErrorRef *)&parseError);
+
+  if (parseError) {
+    fprintf(stderr, "%s\n", [[NSString stringWithFormat:@"Could not parse configuration file %@: %@", 
+            kConfigFilePath, [(__bridge NSError *)parseError localizedDescription]] UTF8String]);
+
+    _configData = [NSMutableDictionary dictionary];
+    return;
+  }
+
+  _configData = [dictionary mutableCopy];
 }
 
 @end

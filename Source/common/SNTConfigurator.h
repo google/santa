@@ -46,6 +46,13 @@
 
 # pragma mark Client Auth Settings
 
+/// If set, this contains the location of a pkcs#12 certificate to be used for
+/// sync authentication.
+@property(readonly) NSString *syncClientAuthCertificateFile;
+
+/// Contains the password for the pkcs#12 certificate.
+@property(readonly) NSString *syncClientAuthCertificatePassword;
+
 /// If set, this is the Common Name of a certificate in the System keychain to be used for
 /// sync authentication. The corresponding private key must also be in the keychain.
 @property(readonly) NSString *syncClientAuthCertificateCn;
