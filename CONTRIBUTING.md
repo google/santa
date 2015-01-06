@@ -16,13 +16,6 @@ us first through the [issue tracker](https://github.com/google/santa/issues)
 with your idea so that we can help out and possibly guide you. Coordinating up 
 front makes it much easier to avoid frustration later on.
 
-### Style
-
-Most importantly all code submissions should try to match the surrounding code.
-Wherever possible, code should adhere to either the
-[Google Objective-C Style Guide](http://google-styleguide.googlecode.com/svn/trunk/objcguide.xml)
-or the [Google C++ Style Guide](http://google-styleguide.googlecode.com/svn/trunk/cppguide.html).
-
 ### Code reviews
 All submissions, including submissions by project members, require review. We
 use GitHub pull requests for this purpose. It's also a good idea to run the
@@ -32,6 +25,12 @@ tests beforehand, which you can do with the following commands:
 rake tests:logic
 rake tests:kernel  # only necessary if you're changing the kext code
 ```
+### Code Style
+
+All code submissions should try to match the surrounding code.  Wherever possible,
+code should adhere to either the
+[Google Objective-C Style Guide](http://google-styleguide.googlecode.com/svn/trunk/objcguide.xml)
+or the [Google C++ Style Guide](http://google-styleguide.googlecode.com/svn/trunk/cppguide.html).
 
 ### The small print
 Contributions made by corporations are covered by a different agreement than
