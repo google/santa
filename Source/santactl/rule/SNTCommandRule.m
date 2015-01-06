@@ -62,7 +62,12 @@ REGISTER_COMMAND_NAME(@"rule");
     LOGE(@"Failed to drop root privileges. Exiting.");
     exit(1);
   }
-
+  
+  if ([config syncBaseURL] != nil) {
+    LOGE(@"SyncBaseURL is set, rules are managed centrally");
+    exit(1);
+  }
+  
   NSString *action = [arguments firstObject];
   
   // add or remove
