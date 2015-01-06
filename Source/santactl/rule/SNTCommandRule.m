@@ -164,9 +164,9 @@ REGISTER_COMMAND_NAME(@"rule");
   
   [[daemonConn remoteObjectProxy] databaseRuleAddRule:newRule withReply:^{
     LOGI(@"Added rule for SHA1: %@", [newRule SHA1]);
+    exit(0);
   }];
 
-  exit(0);
 }
 
 @end
