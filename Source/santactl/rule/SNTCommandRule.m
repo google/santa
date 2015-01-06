@@ -160,7 +160,7 @@ REGISTER_COMMAND_NAME(@"rule");
   newRule.SHA1 = SHA1;
   newRule.state = state;
   newRule.type = RULETYPE_BINARY;
-  newRule.customMsg = @"";
+  newRule.customMsg = customMsg;
   
   [[daemonConn remoteObjectProxy] databaseRuleAddRule:newRule withReply:^{
     LOGI(@"Added rule for SHA1: %@", [newRule SHA1]);
