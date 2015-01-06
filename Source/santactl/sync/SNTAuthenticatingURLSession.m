@@ -88,7 +88,7 @@
       completionHandler(NSURLSessionAuthChallengeUseCredential, cred);
       return;
     } else {
-      LOGE(@"Server asks for client authentication, no usable client certificate found.");
+      LOGE(@"Server asked for client authentication but no usable client certificate found.");
       completionHandler(NSURLSessionAuthChallengeRejectProtectionSpace, nil);
       return;
     }
@@ -98,7 +98,7 @@
       completionHandler(NSURLSessionAuthChallengeUseCredential, cred);
       return;
     } else {
-      LOGE(@"Server asks for client authentication, no usable client certificate found.");
+      LOGE(@"Server asked for client authentication but no usable client certificate found.");
       completionHandler(NSURLSessionAuthChallengeRejectProtectionSpace, nil);
       return;
     }
@@ -126,11 +126,12 @@
   __block SecIdentityRef _foundIdentity;
   
   if (self.clientCertFile) {
-    NSError *error = nil;
-    
+    NSError *error;
     NSData *data = [NSData dataWithContentsOfFile:self.clientCertFile options:0 error:&error];
     if (error) {
-      LOGE(@"Couldn't open client certificate %@ : %@",  self.clientCertFile, [error localizedDescription]);
+      LOGE(@"Client Trust: Couldn't open client certificate %@: %@",
+           self.clientCertFile,
+           [error localizedDescription]);
       return nil;
     }
     
@@ -139,7 +140,7 @@
     SecTrustRef trust = nil;
     err = extractIdentityAndTrust(inPKCS12Data, self.clientCertPassword, &_foundIdentity, &trust);
     if (err != errSecSuccess) {
-      LOGE(@"Couldn't load client certificate %@ : %d", self.clientCertFile, err);
+      LOGE(@"Client Trust: Couldn't load client certificate %@: %d", self.clientCertFile, err);
       return nil;
     }
     
