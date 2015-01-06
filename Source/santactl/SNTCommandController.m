@@ -48,6 +48,7 @@ static NSMutableDictionary *registeredCommands;
                            [cmdName UTF8String], [cmd shortHelpText]];
   }
 
+  [helpText appendFormat:@"\nSee 'santactl help <command>' to read about a specific subcommand."];
   return helpText;
 }
 
