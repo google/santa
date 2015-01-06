@@ -123,8 +123,8 @@
 /// If a valid identity cannot be found, returns nil.
 - (NSURLCredential *)clientCredentialForProtectionSpace:(NSURLProtectionSpace *)protectionSpace {
   __block OSStatus err = errSecSuccess;
-  __block SecIdentityRef _foundIdentity;
-  
+  __block SecIdentityRef foundIdentity;
+
   if (self.clientCertFile) {
     NSError *error;
     NSData *data = [NSData dataWithContentsOfFile:self.clientCertFile options:0 error:&error];
@@ -134,114 +134,94 @@
            [error localizedDescription]);
       return nil;
     }
-    
-    CFDataRef inPKCS12Data = (__bridge CFDataRef)data;
-    
-    SecTrustRef trust = nil;
-    err = extractIdentityAndTrust(inPKCS12Data, self.clientCertPassword, &_foundIdentity, &trust);
+
+    NSDictionary *options = (self.clientCertPassword ?
+        @{(__bridge id)kSecImportExportPassphrase: self.clientCertPassword} :
+        @{});
+
+    CFArrayRef cfIdentities;
+    err = SecPKCS12Import(
+        (__bridge CFDataRef)data, (__bridge CFDictionaryRef)options, &cfIdentities);
+    NSArray *identities = CFBridgingRelease(cfIdentities);
+
     if (err != errSecSuccess) {
       LOGE(@"Client Trust: Couldn't load client certificate %@: %d", self.clientCertFile, err);
       return nil;
     }
-    
-    CFRetain(_foundIdentity);
-    
-    return [NSURLCredential credentialWithIdentity:_foundIdentity
-                                      certificates:nil
-                                       persistence:NSURLCredentialPersistenceForSession];
-  }
-  
-  CFArrayRef cfIdentities = NULL;
-  err = SecItemCopyMatching((__bridge CFDictionaryRef)@{
-        (id)kSecClass : (id)kSecClassIdentity,
-        (id)kSecReturnRef : @YES,
-        (id)kSecMatchLimit : (id)kSecMatchLimitAll }, (CFTypeRef *)&cfIdentities);
-  
-  if (err != noErr) {
-    LOGD(@"Client Trust: Failed to load client identities, SecItemCopyMatching returned: %d",
-         (int)err);
-    return nil;
-  }
-  
-  NSArray *identities = CFBridgingRelease(cfIdentities);
 
-  // Manually iterate through available identities to find one with an allowed issuer.
-  [identities enumerateObjectsUsingBlock:^(id obj, NSUInteger idx, BOOL *stop) {
-    SecIdentityRef identityRef = (__bridge SecIdentityRef)obj;
+    foundIdentity = (__bridge SecIdentityRef)identities[0][(__bridge id)kSecImportItemIdentity];
+  } else {
+    CFArrayRef cfIdentities;
+    err = SecItemCopyMatching((__bridge CFDictionaryRef)@{
+          (id)kSecClass : (id)kSecClassIdentity,
+          (id)kSecReturnRef : @YES,
+          (id)kSecMatchLimit : (id)kSecMatchLimitAll }, (CFTypeRef *)&cfIdentities);
 
-    SecCertificateRef certificate = NULL;
-    err = SecIdentityCopyCertificate(identityRef, &certificate);
     if (err != errSecSuccess) {
-      LOGD(@"Client Trust: Failed to read certificate data: %d. Skipping identity.", (int)err);
-      return;
+      LOGD(@"Client Trust: Failed to load client identities, SecItemCopyMatching returned: %d",
+           (int)err);
+      return nil;
     }
 
-    SNTCertificate *clientCert = [[SNTCertificate alloc] initWithSecCertificateRef:certificate];
-    CFRelease(certificate);
-    
-    // Switch identity finding method depending on config
-    if (self.clientCertCommonName && clientCert.commonName) {
-      if ([clientCert.commonName compare:self.clientCertCommonName
-                                 options:NSCaseInsensitiveSearch] == NSOrderedSame) {
-        _foundIdentity = identityRef;
-        CFRetain(_foundIdentity);
-        *stop = YES;
-        return;  // return from enumeration block
-      }
-    } else if (self.clientCertIssuerCn && clientCert.issuerCommonName) {
-      if ([clientCert.issuerCommonName compare:self.clientCertIssuerCn
-                                       options:NSCaseInsensitiveSearch] == NSOrderedSame) {
-        _foundIdentity = identityRef;
-        CFRetain(_foundIdentity);
-        *stop = YES;
-        return;  // return from enumeration block
-      }
-    } else {
-      for (NSData *allowedIssuer in protectionSpace.distinguishedNames) {
-        SNTDERDecoder *decoder = [[SNTDERDecoder alloc] initWithData:allowedIssuer];
-        if (!decoder) continue;
-        if ([clientCert.issuerCommonName isEqual:decoder.commonName] &&
-            [clientCert.issuerCountryName isEqual:decoder.countryName] &&
-            [clientCert.issuerOrgName isEqual:decoder.organizationName] &&
-            [clientCert.issuerOrgUnit isEqual:decoder.organizationalUnit]) {
+    NSArray *identities = CFBridgingRelease(cfIdentities);
 
-          _foundIdentity = identityRef;
-          CFRetain(_foundIdentity);
+    // Manually iterate through available identities to find one with an allowed issuer.
+    [identities enumerateObjectsUsingBlock:^(id obj, NSUInteger idx, BOOL *stop) {
+      SecIdentityRef identityRef = (__bridge SecIdentityRef)obj;
+
+      SecCertificateRef certificate = NULL;
+      err = SecIdentityCopyCertificate(identityRef, &certificate);
+      if (err != errSecSuccess) {
+        LOGD(@"Client Trust: Failed to read certificate data: %d. Skipping identity.", (int)err);
+        return;
+      }
+
+      SNTCertificate *clientCert = [[SNTCertificate alloc] initWithSecCertificateRef:certificate];
+      CFRelease(certificate);
+
+      // Switch identity finding method depending on config
+      if (self.clientCertCommonName && clientCert.commonName) {
+        if ([clientCert.commonName compare:self.clientCertCommonName
+                                   options:NSCaseInsensitiveSearch] == NSOrderedSame) {
+          foundIdentity = identityRef;
           *stop = YES;
           return;  // return from enumeration block
         }
+      } else if (self.clientCertIssuerCn && clientCert.issuerCommonName) {
+        if ([clientCert.issuerCommonName compare:self.clientCertIssuerCn
+                                         options:NSCaseInsensitiveSearch] == NSOrderedSame) {
+          foundIdentity = identityRef;
+          *stop = YES;
+          return;  // return from enumeration block
+        }
+      } else {
+        for (NSData *allowedIssuer in protectionSpace.distinguishedNames) {
+          SNTDERDecoder *decoder = [[SNTDERDecoder alloc] initWithData:allowedIssuer];
+          if (!decoder) continue;
+          if ([clientCert.issuerCommonName isEqual:decoder.commonName] &&
+              [clientCert.issuerCountryName isEqual:decoder.countryName] &&
+              [clientCert.issuerOrgName isEqual:decoder.organizationName] &&
+              [clientCert.issuerOrgUnit isEqual:decoder.organizationalUnit]) {
+
+            foundIdentity = identityRef;
+            *stop = YES;
+            return;  // return from enumeration block
+          }
+        }
       }
-    }
-  }];
-  
-  if (_foundIdentity) {
-    LOGD(@"Client Trust: Valid client identity %@.", _foundIdentity);
-    return [NSURLCredential credentialWithIdentity:_foundIdentity
-                                    certificates:nil
-                                     persistence:NSURLCredentialPersistenceForSession];
+    }];
+  }
+
+  if (foundIdentity) {
+    LOGD(@"Client Trust: Valid client identity %@.", foundIdentity);
+    return [NSURLCredential credentialWithIdentity:foundIdentity
+                                      certificates:nil
+                                       persistence:NSURLCredentialPersistenceForSession];
   } else {
     LOGD(@"Client Trust: No valid identity found.");
     return nil;
   }
 }
-
-OSStatus extractIdentityAndTrust(CFDataRef inP12data, NSString *password, 
-                                        SecIdentityRef *identity, SecTrustRef *trust) {
-  NSDictionary *options = (password ? @{(__bridge id)kSecImportExportPassphrase: password} : @{});
-  
-  CFArrayRef items = nil;
-  
-  OSStatus err = SecPKCS12Import(inP12data, (__bridge CFDictionaryRef) options, &items);
-  
-  if (err == errSecSuccess) {
-      CFDictionaryRef myIdentityAndTrust = CFArrayGetValueAtIndex(items, 0);
-      *identity = (SecIdentityRef) CFDictionaryGetValue(myIdentityAndTrust, kSecImportItemIdentity);
-      *trust = (SecTrustRef)CFDictionaryGetValue(myIdentityAndTrust, kSecImportItemTrust);
-  }
-  
-  return err;
-}
-
 
 /// Handles the process of evaluating the server's certificate chain.
 /// Operates in one of three modes, depending on the configuration in config.plist
