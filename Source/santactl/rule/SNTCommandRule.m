@@ -44,7 +44,7 @@ REGISTER_COMMAND_NAME(@"rule");
 }
 
 + (NSString *)longHelpText {
-  return (@"santactl rules {add|remove}\n"
+  return (@"santactl rule {add|remove}\n"
           @"--whitelist: add to whitelist\n"
           @"--blacklist: add to blacklist\n"
           @"--silent-blacklist: add to silent blacklist\n"
