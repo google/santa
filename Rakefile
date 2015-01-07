@@ -5,10 +5,6 @@ DEFAULT_SCHEME  = 'All'
 OUTPUT_PATH     = 'Build'
 DIST_PATH       = 'Dist'
 BINARIES        = ['Santa.app', 'santa-driver.kext', 'santad', 'santactl']
-PLISTS          = ['Source/SantaGUI/Resources/Santa-Info.plist',
-                   'Source/santad/Resources/santad-Info.plist',
-                   'Source/santa-driver/Resources/santa-driver-Info.plist',
-                   'Source/santactl/Resources/santactl-Info.plist']
 XCODE_DEFAULTS  = "-workspace #{WORKSPACE} -scheme #{DEFAULT_SCHEME} -derivedDataPath #{OUTPUT_PATH} -parallelizeTargets"
 
 task :default do
@@ -212,24 +208,4 @@ namespace :reload do
     Rake::Task['install:release'].invoke()
     Rake::Task['load'].invoke()
   end
-end
-
-# Versioning
-desc "Update version, version should be of the form rake version[\\d{1,4}.\\d{1,2}(?:.\\d{1,2})?]"
-task :version, :version do |t, args|
-  response = args[:version]
-
-  unless response =~ /^\d{1,4}\.\d{1,2}(?:\.\d{1,2})?$/
-    raise "Version number must be of form: xxxx.xx[.xx]. E.g: rake version[1.0.2], rake version[1.7]"
-  end
-
-  system "sed -i -e 's/MODULE_VERSION = .*;/MODULE_VERSION = #{response};/g' Santa.xcodeproj/project.pbxproj"
-
-  PLISTS.each do |plist|
-    system "defaults write $PWD/#{plist} CFBundleVersion #{response}"
-    system "defaults write $PWD/#{plist} CFBundleShortVersionString #{response}"
-    system "plutil -convert xml1 $PWD/#{plist}"
-  end
-
-  puts "Updated version to #{response}"
 end

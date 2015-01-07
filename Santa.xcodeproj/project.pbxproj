@@ -193,18 +193,6 @@
 		};
 /* End PBXContainerItemProxy section */
 
-/* Begin PBXCopyFilesBuildPhase section */
-		0D9A7F3B1759330400035EB5 /* CopyFiles */ = {
-			isa = PBXCopyFilesBuildPhase;
-			buildActionMask = 2147483647;
-			dstPath = /usr/share/man/man1/;
-			dstSubfolderSpec = 0;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 1;
-		};
-/* End PBXCopyFilesBuildPhase section */
-
 /* Begin PBXFileReference section */
 		0A84545E322F475FA0B505D5 /* libPods-santad.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-santad.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		0D0016A2192BCD3C005E7FCD /* KernelTests */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = KernelTests; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -242,7 +230,7 @@
 		0D37C10E18F6029A0069BC61 /* SNTDatabaseTable.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SNTDatabaseTable.m; sourceTree = "<group>"; };
 		0D385DB6180DE4A900418BC6 /* Santa.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Santa.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		0D385DB7180DE4A900418BC6 /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = System/Library/Frameworks/Cocoa.framework; sourceTree = SDKROOT; };
-		0D385DBF180DE4A900418BC6 /* Santa-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "Santa-Info.plist"; sourceTree = "<group>"; };
+		0D385DBF180DE4A900418BC6 /* SantaGUI-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "SantaGUI-Info.plist"; sourceTree = "<group>"; };
 		0D385DC3180DE4A900418BC6 /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
 		0D385DC5180DE4A900418BC6 /* Santa-Prefix.pch */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "Santa-Prefix.pch"; sourceTree = "<group>"; };
 		0D385DCF180DE4A900418BC6 /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Images.xcassets; sourceTree = "<group>"; };
@@ -449,8 +437,8 @@
 		0D35BDA318FD71CE00921A21 /* Resources */ = {
 			isa = PBXGroup;
 			children = (
-				0D35BDA418FD71CE00921A21 /* santactl-Prefix.pch */,
 				0D28E5E41926B55600280F87 /* santactl-Info.plist */,
+				0D35BDA418FD71CE00921A21 /* santactl-Prefix.pch */,
 			);
 			path = Resources;
 			sourceTree = "<group>";
@@ -503,7 +491,7 @@
 			isa = PBXGroup;
 			children = (
 				0D385DCF180DE4A900418BC6 /* Images.xcassets */,
-				0D385DBF180DE4A900418BC6 /* Santa-Info.plist */,
+				0D385DBF180DE4A900418BC6 /* SantaGUI-Info.plist */,
 				0D385DC5180DE4A900418BC6 /* Santa-Prefix.pch */,
 				0D1B476F19A53419008CADD3 /* AboutWindow.xib */,
 				0D385DE9180DE51600418BC6 /* MessageWindow.xib */,
@@ -762,6 +750,7 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = 0D35BDA918FD71CE00921A21 /* Build configuration list for PBXNativeTarget "santactl" */;
 			buildPhases = (
+				0DD98E671A5DD02000A754C6 /* Update Version Info */,
 				0D35BD9A18FD71CE00921A21 /* Sources */,
 				0D35BD9B18FD71CE00921A21 /* Frameworks */,
 			);
@@ -778,6 +767,7 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = 0D385DE3180DE4A900418BC6 /* Build configuration list for PBXNativeTarget "Santa" */;
 			buildPhases = (
+				0DD98E681A5DD03E00A754C6 /* Update Version Info */,
 				0D385DB2180DE4A900418BC6 /* Sources */,
 				0D385DB3180DE4A900418BC6 /* Frameworks */,
 				0D385DB4180DE4A900418BC6 /* Resources */,
@@ -795,6 +785,8 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = 0D91BCC3174E8A7E00131A7D /* Build configuration list for PBXNativeTarget "santa-driver" */;
 			buildPhases = (
+				0D45F4271A5DCB7A00BF4375 /* Update Version Info */,
+				0DD98E691A5DD5C900A754C6 /* Update Module Version */,
 				0D91BCAE174E8A7E00131A7D /* Sources */,
 				0D91BCB0174E8A7E00131A7D /* Headers */,
 			);
@@ -812,9 +804,9 @@
 			buildConfigurationList = 0D9A7F471759330500035EB5 /* Build configuration list for PBXNativeTarget "santad" */;
 			buildPhases = (
 				34C9C9E8C5454BBE980DF8A9 /* Check Pods Manifest.lock */,
+				0DD98E661A5DCED300A754C6 /* Update Version Info */,
 				0D9A7F391759330400035EB5 /* Sources */,
 				0D9A7F3A1759330400035EB5 /* Frameworks */,
-				0D9A7F3B1759330400035EB5 /* CopyFiles */,
 				3CDBFA3554E7465D93EAA5C8 /* Copy Pods Resources */,
 			);
 			buildRules = (
@@ -888,6 +880,22 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXShellScriptBuildPhase section */
+		0D45F4271A5DCB7A00BF4375 /* Update Version Info */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+				"$(SRCROOT)/Source/santa-driver/Resources/santa-driver-Info.plist",
+			);
+			name = "Update Version Info";
+			outputPaths = (
+				"$(DERIVED_FILE_DIR)/santa-driver-Info.plist",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "GIT_TAG=$(git describe --abbrev=0 --tags)\nGIT_COMMIT=$(git rev-parse --short HEAD)\n\ncp ${SCRIPT_INPUT_FILE_0} ${SCRIPT_OUTPUT_FILE_0}\n\nif [ $CONFIGURATION = \"Debug\" ]; then\n  newVersion=\"${GIT_TAG}d${GIT_COMMIT}\"\nelse\n  newVersion=\"${GIT_TAG}\"\nfi\n\n/usr/libexec/PlistBuddy -c \"Set :CFBundleVersion ${GIT_TAG}\" ${SCRIPT_OUTPUT_FILE_0}\n/usr/libexec/PlistBuddy -c \"Set :CFBundleShortVersionString ${newVersion}\" ${SCRIPT_OUTPUT_FILE_0}";
+		};
 		0D673DAD18FC9017009C5B06 /* Delete existing coverage files */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
@@ -902,6 +910,68 @@
 			shellPath = /bin/sh;
 			shellScript = "# Delete existing gcda files to prevent the build log being filled with hundreds of lines\n# of \"profiling:invalid arc tag\".\n# TODO(rah): Remove when Xcode fixes this.\nfind . -name \"*.gcda\" -print0 | xargs -0 rm";
 			showEnvVarsInLog = 0;
+		};
+		0DD98E661A5DCED300A754C6 /* Update Version Info */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+				"$(SRCROOT)/Source/santad/Resources/santad-Info.plist",
+			);
+			name = "Update Version Info";
+			outputPaths = (
+				"$(DERIVED_FILE_DIR)/santad-Info.plist",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "GIT_TAG=$(git describe --abbrev=0 --tags)\nGIT_COMMIT=$(git rev-parse --short HEAD)\n\ncp ${SCRIPT_INPUT_FILE_0} ${SCRIPT_OUTPUT_FILE_0}\n\nif [ $CONFIGURATION = \"Debug\" ]; then\nnewVersion=\"${GIT_TAG}d${GIT_COMMIT}\"\nelse\nnewVersion=\"${GIT_TAG}\"\nfi\n\n/usr/libexec/PlistBuddy -c \"Set :CFBundleVersion ${GIT_TAG}\" ${SCRIPT_OUTPUT_FILE_0}\n/usr/libexec/PlistBuddy -c \"Set :CFBundleShortVersionString ${newVersion}\" ${SCRIPT_OUTPUT_FILE_0}";
+		};
+		0DD98E671A5DD02000A754C6 /* Update Version Info */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+				"$(SRCROOT)/Source/santactl/Resources/santactl-Info.plist",
+			);
+			name = "Update Version Info";
+			outputPaths = (
+				"$(DERIVED_FILE_DIR)/santactl-Info.plist",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "GIT_TAG=$(git describe --abbrev=0 --tags)\nGIT_COMMIT=$(git rev-parse --short HEAD)\n\ncp ${SCRIPT_INPUT_FILE_0} ${SCRIPT_OUTPUT_FILE_0}\n\nif [ $CONFIGURATION = \"Debug\" ]; then\nnewVersion=\"${GIT_TAG}d${GIT_COMMIT}\"\nelse\nnewVersion=\"${GIT_TAG}\"\nfi\n\n/usr/libexec/PlistBuddy -c \"Set :CFBundleVersion ${GIT_TAG}\" ${SCRIPT_OUTPUT_FILE_0}\n/usr/libexec/PlistBuddy -c \"Set :CFBundleShortVersionString ${newVersion}\" ${SCRIPT_OUTPUT_FILE_0}";
+		};
+		0DD98E681A5DD03E00A754C6 /* Update Version Info */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+				"$(SRCROOT)/Source/SantaGUI/Resources/SantaGUI-Info.plist",
+			);
+			name = "Update Version Info";
+			outputPaths = (
+				"$(DERIVED_FILE_DIR)/SantaGUI-Info.plist",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "GIT_TAG=$(git describe --abbrev=0 --tags)\nGIT_COMMIT=$(git rev-parse --short HEAD)\n\ncp ${SCRIPT_INPUT_FILE_0} ${SCRIPT_OUTPUT_FILE_0}\n\nif [ $CONFIGURATION = \"Debug\" ]; then\nnewVersion=\"${GIT_TAG}d${GIT_COMMIT}\"\nelse\nnewVersion=\"${GIT_TAG}\"\nfi\n\n/usr/libexec/PlistBuddy -c \"Set :CFBundleVersion ${GIT_TAG}\" ${SCRIPT_OUTPUT_FILE_0}\n/usr/libexec/PlistBuddy -c \"Set :CFBundleShortVersionString ${newVersion}\" ${SCRIPT_OUTPUT_FILE_0}";
+		};
+		0DD98E691A5DD5C900A754C6 /* Update Module Version */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			name = "Update Module Version";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "GIT_TAG=$(git describe --abbrev=0 --tags)\nsed -i '' \"s/TO.BE.FILLED/${GIT_TAG}/\" ${DERIVED_FILE_DIR}/santa-driver_info.c";
 		};
 		34C9C9E8C5454BBE980DF8A9 /* Check Pods Manifest.lock */ = {
 			isa = PBXShellScriptBuildPhase;
@@ -1324,7 +1394,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				INFOPLIST_FILE = "Source/santactl/Resources/santactl-Info.plist";
+				INFOPLIST_FILE = "${DERIVED_FILE_DIR}/santactl-Info.plist";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE = "";
 			};
@@ -1356,7 +1426,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				INFOPLIST_FILE = "Source/santactl/Resources/santactl-Info.plist";
+				INFOPLIST_FILE = "${DERIVED_FILE_DIR}/santactl-Info.plist";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE = "";
 			};
@@ -1395,7 +1465,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				INFOPLIST_FILE = "Source/SantaGUI/Resources/Santa-Info.plist";
+				INFOPLIST_FILE = "${DERIVED_FILE_DIR}/SantaGUI-Info.plist";
 				PRODUCT_NAME = "${TARGET_NAME}";
 				PROVISIONING_PROFILE = "";
 				WRAPPER_EXTENSION = app;
@@ -1429,7 +1499,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				INFOPLIST_FILE = "Source/SantaGUI/Resources/Santa-Info.plist";
+				INFOPLIST_FILE = "${DERIVED_FILE_DIR}/SantaGUI-Info.plist";
 				PRODUCT_NAME = "${TARGET_NAME}";
 				PROVISIONING_PROFILE = "";
 				WRAPPER_EXTENSION = app;
@@ -1488,10 +1558,10 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = NO;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				HEADER_SEARCH_PATHS = "";
-				INFOPLIST_FILE = "Source/santa-driver/Resources/santa-driver-Info.plist";
+				INFOPLIST_FILE = "${DERIVED_FILE_DIR}/santa-driver-Info.plist";
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited)";
 				MODULE_NAME = "com.google.santa-driver";
-				MODULE_VERSION = 0.7.1;
+				MODULE_VERSION = TO.BE.FILLED;
 				OTHER_LDFLAGS = "";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
@@ -1519,10 +1589,10 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				HEADER_SEARCH_PATHS = "";
-				INFOPLIST_FILE = "Source/santa-driver/Resources/santa-driver-Info.plist";
+				INFOPLIST_FILE = "${DERIVED_FILE_DIR}/santa-driver-Info.plist";
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited)";
 				MODULE_NAME = "com.google.santa-driver";
-				MODULE_VERSION = 0.7.1;
+				MODULE_VERSION = TO.BE.FILLED;
 				OTHER_LDFLAGS = "";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				WARNING_CFLAGS = "-Wno-deprecated-register";
@@ -1571,7 +1641,7 @@
 				GCC_WARN_ABOUT_RETURN_TYPE = YES;
 				GCC_WARN_UNINITIALIZED_AUTOS = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				INFOPLIST_FILE = "Source/santad/Resources/santad-Info.plist";
+				INFOPLIST_FILE = "${DERIVED_FILE_DIR}/santad-Info.plist";
 				INSTALL_PATH = /usr/sbin;
 				LIBRARY_SEARCH_PATHS = "$(inherited)";
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -1598,7 +1668,7 @@
 				GCC_WARN_ABOUT_RETURN_TYPE = YES;
 				GCC_WARN_UNINITIALIZED_AUTOS = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				INFOPLIST_FILE = "Source/santad/Resources/santad-Info.plist";
+				INFOPLIST_FILE = "${DERIVED_FILE_DIR}/santad-Info.plist";
 				INSTALL_PATH = /usr/sbin;
 				LIBRARY_SEARCH_PATHS = "$(inherited)";
 				PRODUCT_NAME = "$(TARGET_NAME)";
