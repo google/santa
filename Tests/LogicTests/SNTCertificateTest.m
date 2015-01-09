@@ -208,7 +208,7 @@
 
 - (void)testCachingAccessors {
   SNTCertificate *sut = [[SNTCertificate alloc] initWithCertificateDataPEM:self.testDataPEM1];
-  id sutMock = [OCMockObject partialMockForObject:sut];
+  id sutMock = OCMPartialMock(sut);
 
   // Access each of the properties to get them cached
   (void)sut.orgName;
@@ -216,8 +216,8 @@
   (void)sut.validFrom;
 
   // Now break some of the properties
-  [[[sutMock stub] andReturn:nil] x509ValueForLabel:OCMOCK_ANY fromDictionary:OCMOCK_ANY];
-  [[[sutMock stub] andReturn:nil] dateForX509Key:OCMOCK_ANY];
+  OCMStub([sutMock x509ValueForLabel:OCMOCK_ANY fromDictionary:OCMOCK_ANY]);
+  OCMStub([sutMock dateForX509Key:OCMOCK_ANY]);
 
   XCTAssertEqualObjects(sut.orgName, @"Google Inc");
   XCTAssertEqualObjects(sut.issuerCommonName, @"GeoTrust Global CA");

@@ -47,11 +47,11 @@
 
   fclose(stdout);
 
-  self.mockBinaryInfo = [OCMockObject niceMockForClass:[SNTBinaryInfo class]];
-  self.mockCodesignChecker = [OCMockObject niceMockForClass:[SNTCodesignChecker class]];
-  self.mockDriverManager = [OCMockObject niceMockForClass:[SNTDriverManager class]];
-  self.mockRuleDatabase = [OCMockObject niceMockForClass:[SNTRuleTable class]];
-  self.mockEventDatabase = [OCMockObject niceMockForClass:[SNTEventTable class]];
+  self.mockBinaryInfo = OCMClassMock([SNTBinaryInfo class]);
+  self.mockCodesignChecker = OCMClassMock([SNTCodesignChecker class]);
+  self.mockDriverManager = OCMClassMock([SNTDriverManager class]);
+  self.mockRuleDatabase = OCMClassMock([SNTRuleTable class]);
+  self.mockEventDatabase = OCMClassMock([SNTEventTable class]);
 
   self.sut = [[SNTExecutionController alloc] initWithDriverManager:self.mockDriverManager
                                                          ruleTable:self.mockRuleDatabase
@@ -61,12 +61,6 @@
 }
 
 - (void)tearDown {
-  [self.mockBinaryInfo verify];
-  [self.mockCodesignChecker verify];
-  [self.mockDriverManager verify];
-  [self.mockRuleDatabase verify];
-  [self.mockEventDatabase verify];
-
   [self.mockBinaryInfo stopMocking];
   [self.mockCodesignChecker stopMocking];
   [self.mockDriverManager stopMocking];
@@ -77,112 +71,117 @@
 }
 
 - (void)testBinaryWhitelistRule {
-  id mockSut = [OCMockObject partialMockForObject:self.sut];
-  [[[mockSut stub] andReturnValue:OCMOCK_VALUE(YES)] fileIsInScope:OCMOCK_ANY];
+  id mockSut = OCMPartialMock(self.sut);
+  OCMStub([mockSut fileIsInScope:OCMOCK_ANY]).andReturn(YES);
 
   SNTRule *rule = [[SNTRule alloc] init];
   rule.state = RULESTATE_WHITELIST;
-  [[[self.mockRuleDatabase stub] andReturn:rule] binaryRuleForSHA1:@"a"];
-
-  [[self.mockDriverManager expect] postToKernelAction:ACTION_RESPOND_CHECKBW_ALLOW
-                                            forVnodeID:1234];
+  OCMStub([self.mockRuleDatabase binaryRuleForSHA1:@"a"]).andReturn(rule);
 
   [self.sut validateBinaryWithSHA1:@"a"
                               path:@"/a/file"
                           userName:@"nobody"
                                pid:@(12)
                            vnodeId:1234];
+
+  OCMVerify([self.mockDriverManager postToKernelAction:ACTION_RESPOND_CHECKBW_ALLOW
+                                            forVnodeID:1234]);
 }
 
 - (void)testBinaryBlacklistRule {
-  id mockSut = [OCMockObject partialMockForObject:self.sut];
-  [[[mockSut stub] andReturnValue:OCMOCK_VALUE(YES)] fileIsInScope:OCMOCK_ANY];
+  id mockSut = OCMPartialMock(self.sut);
+  OCMStub([mockSut fileIsInScope:OCMOCK_ANY]).andReturn(YES);
 
   SNTRule *rule = [[SNTRule alloc] init];
   rule.state = RULESTATE_BLACKLIST;
-  [[[self.mockRuleDatabase stub] andReturn:rule] binaryRuleForSHA1:@"a"];
-
-  [[self.mockDriverManager expect] postToKernelAction:ACTION_RESPOND_CHECKBW_DENY
-                                           forVnodeID:1234];
+  OCMStub([self.mockRuleDatabase binaryRuleForSHA1:@"a"]).andReturn(rule);
 
   [self.sut validateBinaryWithSHA1:@"a"
                               path:@"/a/file"
                           userName:@"nobody"
                                pid:@(12)
                            vnodeId:1234];
+
+  OCMVerify([self.mockDriverManager postToKernelAction:ACTION_RESPOND_CHECKBW_DENY
+                                            forVnodeID:1234]);
 }
 
 - (void)testCertificateWhitelistRule {
-  id mockSut = [OCMockObject partialMockForObject:self.sut];
-  [[[mockSut stub] andReturnValue:OCMOCK_VALUE(YES)] fileIsInScope:OCMOCK_ANY];
+  id mockSut = OCMPartialMock(self.sut);
+  OCMStub([mockSut fileIsInScope:OCMOCK_ANY]).andReturn(YES);
 
-  id cert = [OCMockObject niceMockForClass:[SNTCertificate class]];
-  [[[self.mockCodesignChecker stub] andReturn:self.mockCodesignChecker] alloc];
-  (void)[[[self.mockCodesignChecker stub] andReturn:self.mockCodesignChecker]
-         initWithBinaryPath:[OCMArg any]];
-  [[[self.mockCodesignChecker stub] andReturn:cert] leafCertificate];
-  [[[cert stub] andReturn:@"a"] SHA1];
+  id cert = OCMClassMock([SNTCertificate class]);
+  OCMStub([self.mockCodesignChecker alloc]).andReturn(self.mockCodesignChecker);
+  OCMStub([self.mockCodesignChecker initWithBinaryPath:OCMOCK_ANY])
+      .andReturn(self.mockCodesignChecker);
+  OCMStub([self.mockCodesignChecker leafCertificate]).andReturn(cert);
+  OCMStub([cert SHA1]).andReturn(@"a");
 
   SNTRule *rule = [[SNTRule alloc] init];
   rule.state = RULESTATE_WHITELIST;
-  [[[self.mockRuleDatabase stub] andReturn:rule] certificateRuleForSHA1:@"a"];
-
-  [[self.mockDriverManager expect] postToKernelAction:ACTION_RESPOND_CHECKBW_ALLOW
-                                           forVnodeID:1234];
+  OCMStub([self.mockRuleDatabase certificateRuleForSHA1:@"a"]).andReturn(rule);
 
   [self.sut validateBinaryWithSHA1:@"a"
                               path:@"/a/file"
                           userName:@"nobody"
                                pid:@(12)
                            vnodeId:1234];
+
+  OCMVerify([self.mockDriverManager postToKernelAction:ACTION_RESPOND_CHECKBW_ALLOW
+                                            forVnodeID:1234]);
 }
 
 - (void)testCertificateBlacklistRule {
-  id mockSut = [OCMockObject partialMockForObject:self.sut];
-  [[[mockSut stub] andReturnValue:OCMOCK_VALUE(YES)] fileIsInScope:OCMOCK_ANY];
+  id mockSut = OCMPartialMock(self.sut);
+  OCMStub([mockSut fileIsInScope:OCMOCK_ANY]).andReturn(YES);
 
-  id cert = [OCMockObject niceMockForClass:[SNTCertificate class]];
-  [[[self.mockCodesignChecker stub] andReturn:self.mockCodesignChecker] alloc];
-  (void)[[[self.mockCodesignChecker stub] andReturn:self.mockCodesignChecker]
-         initWithBinaryPath:[OCMArg any]];
-  [[[self.mockCodesignChecker stub] andReturn:cert] leafCertificate];
-  [[[cert stub] andReturn:@"a"] SHA1];
+  id cert = OCMClassMock([SNTCertificate class]);
+  OCMStub([self.mockCodesignChecker alloc]).andReturn(self.mockCodesignChecker);
+  OCMStub([self.mockCodesignChecker initWithBinaryPath:OCMOCK_ANY])
+    .andReturn(self.mockCodesignChecker);
+  OCMStub([self.mockCodesignChecker leafCertificate]).andReturn(cert);
+  OCMStub([cert SHA1]).andReturn(@"a");
 
   SNTRule *rule = [[SNTRule alloc] init];
   rule.state = RULESTATE_BLACKLIST;
-  [[[self.mockRuleDatabase stub] andReturn:rule] certificateRuleForSHA1:@"a"];
-
-  [[self.mockDriverManager expect] postToKernelAction:ACTION_RESPOND_CHECKBW_DENY
-                                           forVnodeID:1234];
+  OCMStub([self.mockRuleDatabase certificateRuleForSHA1:@"a"]).andReturn(rule);
 
   [self.sut validateBinaryWithSHA1:@"a"
                               path:@"/a/file"
                           userName:@"nobody"
                                pid:@(12)
                            vnodeId:1234];
+
+  OCMVerify([self.mockDriverManager postToKernelAction:ACTION_RESPOND_CHECKBW_DENY
+                                            forVnodeID:1234]);
 }
 
 - (void)testDefaultDecision {
-  id mockSut = [OCMockObject partialMockForObject:self.sut];
-  [[[mockSut stub] andReturnValue:OCMOCK_VALUE(YES)] fileIsInScope:OCMOCK_ANY];
+  id mockSut = OCMPartialMock(self.sut);
+  OCMStub([mockSut fileIsInScope:OCMOCK_ANY]).andReturn(YES);
 
   [self.sut setOperatingMode:CLIENTMODE_MONITOR];
-  [[self.mockDriverManager expect] postToKernelAction:ACTION_RESPOND_CHECKBW_ALLOW
-                                              forVnodeID:1234];
   [self.sut validateBinaryWithSHA1:@"a"
                               path:@"/a/file"
                           userName:@"nobody"
                                pid:@(12)
                            vnodeId:1234];
+  OCMVerify([self.mockDriverManager postToKernelAction:ACTION_RESPOND_CHECKBW_ALLOW
+                                            forVnodeID:1234]);
 
   [self.sut setOperatingMode:CLIENTMODE_LOCKDOWN];
-  [[self.mockDriverManager expect] postToKernelAction:ACTION_RESPOND_CHECKBW_DENY
-                                              forVnodeID:1234];
   [self.sut validateBinaryWithSHA1:@"a"
                               path:@"/a/file"
                           userName:@"nobody"
                                pid:@(12)
                            vnodeId:1234];
+  OCMVerify([self.mockDriverManager postToKernelAction:ACTION_RESPOND_CHECKBW_DENY
+                                            forVnodeID:1234]);
+}
+
+- (void)testOutOfScope {
+  id mockSut = OCMPartialMock(self.sut);
+  OCMStub([mockSut fileIsInScope:OCMOCK_ANY]).andReturn(NO);
 
 }
 
