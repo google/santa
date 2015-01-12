@@ -144,6 +144,7 @@
 		0DE50F6D191303E3007B2B0C /* SNTNotificationMessage.m in Sources */ = {isa = PBXBuildFile; fileRef = 0DBE65F018BEA3CC00AC994C /* SNTNotificationMessage.m */; };
 		0DE50F6E191304E0007B2B0C /* SNTRule.m in Sources */ = {isa = PBXBuildFile; fileRef = 0DE50F671912716A007B2B0C /* SNTRule.m */; };
 		0DE6788D1784A8C2007A9E52 /* SNTExecutionController.m in Sources */ = {isa = PBXBuildFile; fileRef = 0DE6788C1784A8C2007A9E52 /* SNTExecutionController.m */; };
+		4092327A1A51B66400A04527 /* SNTCommandRule.m in Sources */ = {isa = PBXBuildFile; fileRef = 409232791A51B65D00A04527 /* SNTCommandRule.m */; };
 		8BFD9B39112F4D16B3D0EFFB /* libPods-LogicTests.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 752301D17AA44BDE8B6D0541 /* libPods-LogicTests.a */; };
 		E86AE075D7F24FB88FB627C5 /* libPods-santad.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 0A84545E322F475FA0B505D5 /* libPods-santad.a */; };
 /* End PBXBuildFile section */
@@ -321,6 +322,7 @@
 		0DE6788B1784A8C2007A9E52 /* SNTExecutionController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SNTExecutionController.h; sourceTree = "<group>"; };
 		0DE6788C1784A8C2007A9E52 /* SNTExecutionController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; lineEnding = 0; path = SNTExecutionController.m; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objc; };
 		13A4FE400F3857C0F5831498 /* Pods-LogicTests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-LogicTests.debug.xcconfig"; path = "Pods/Target Support Files/Pods-LogicTests/Pods-LogicTests.debug.xcconfig"; sourceTree = "<group>"; };
+		409232791A51B65D00A04527 /* SNTCommandRule.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = SNTCommandRule.m; path = rule/SNTCommandRule.m; sourceTree = "<group>"; };
 		627BB4EC9917DC20E89D718C /* Pods-santad.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-santad.debug.xcconfig"; path = "Pods/Target Support Files/Pods-santad/Pods-santad.debug.xcconfig"; sourceTree = "<group>"; };
 		752301D17AA44BDE8B6D0541 /* libPods-LogicTests.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-LogicTests.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		8003CA1D3E46447BCEA56440 /* Pods-santad.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-santad.release.xcconfig"; path = "Pods/Target Support Files/Pods-santad/Pods-santad.release.xcconfig"; sourceTree = "<group>"; };
@@ -421,6 +423,7 @@
 		0D35BDA018FD71CE00921A21 /* santactl */ = {
 			isa = PBXGroup;
 			children = (
+				409232751A51914400A04527 /* rule */,
 				0D35BDA118FD71CE00921A21 /* main.m */,
 				0D35BDAA18FD7CFD00921A21 /* SNTCommandController.h */,
 				0D35BDAB18FD7CFD00921A21 /* SNTCommandController.m */,
@@ -691,6 +694,14 @@
 				8003CA1D3E46447BCEA56440 /* Pods-santad.release.xcconfig */,
 			);
 			name = Pods;
+			sourceTree = "<group>";
+		};
+		409232751A51914400A04527 /* rule */ = {
+			isa = PBXGroup;
+			children = (
+				409232791A51B65D00A04527 /* SNTCommandRule.m */,
+			);
+			name = rule;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -1095,6 +1106,7 @@
 				0D42D2B919D2042900955F08 /* SNTConfigurator.m in Sources */,
 				0D10BE871A0AABD600C0C944 /* SNTDropRootPrivs.m in Sources */,
 				0DE4C8A618FF3B1700466D04 /* SNTCommandFlushCache.m in Sources */,
+				4092327A1A51B66400A04527 /* SNTCommandRule.m in Sources */,
 				0D416401191974F1006A356A /* SNTCommandSyncStatus.m in Sources */,
 				0DC5D871192160180078A5C0 /* SNTCommandSyncLogUpload.m in Sources */,
 				0D35BDA218FD71CE00921A21 /* main.m in Sources */,
