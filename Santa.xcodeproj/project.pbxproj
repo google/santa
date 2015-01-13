@@ -40,8 +40,6 @@
 		0D1AF478187C7A2C00D3298D /* SNTCertificate.m in Sources */ = {isa = PBXBuildFile; fileRef = 0D1AF476187C7A2C00D3298D /* SNTCertificate.m */; };
 		0D1B477019A53419008CADD3 /* SNTAboutWindowController.m in Sources */ = {isa = PBXBuildFile; fileRef = 0D1B476E19A53419008CADD3 /* SNTAboutWindowController.m */; };
 		0D1B477119A53419008CADD3 /* AboutWindow.xib in Resources */ = {isa = PBXBuildFile; fileRef = 0D1B476F19A53419008CADD3 /* AboutWindow.xib */; };
-		0D260DAE18B68E12002A0B55 /* XCTest.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0D260DAD18B68E12002A0B55 /* XCTest.framework */; };
-		0D260DC118B69078002A0B55 /* Security.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0D260DC018B69078002A0B55 /* Security.framework */; };
 		0D28D53819D9F5910015C5EB /* SNTConfigurator.m in Sources */ = {isa = PBXBuildFile; fileRef = 0D42D2B719D2042900955F08 /* SNTConfigurator.m */; };
 		0D31DF4718D254B3002B300D /* SNTCodesignChecker.m in Sources */ = {isa = PBXBuildFile; fileRef = 0D59C0E317710E6000748EBF /* SNTCodesignChecker.m */; };
 		0D35BD9F18FD71CE00921A21 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0D9A7F3E1759330500035EB5 /* Foundation.framework */; };
@@ -211,10 +209,8 @@
 		0D1B476E19A53419008CADD3 /* SNTAboutWindowController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SNTAboutWindowController.m; sourceTree = "<group>"; };
 		0D1B476F19A53419008CADD3 /* AboutWindow.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = AboutWindow.xib; sourceTree = "<group>"; };
 		0D260DAC18B68E12002A0B55 /* LogicTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = LogicTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-		0D260DAD18B68E12002A0B55 /* XCTest.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = XCTest.framework; path = Library/Frameworks/XCTest.framework; sourceTree = DEVELOPER_DIR; };
 		0D260DB118B68E12002A0B55 /* Tests-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "Tests-Info.plist"; sourceTree = "<group>"; };
 		0D260DB718B68E12002A0B55 /* Tests-Prefix.pch */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "Tests-Prefix.pch"; sourceTree = "<group>"; };
-		0D260DC018B69078002A0B55 /* Security.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Security.framework; path = Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.8.sdk/System/Library/Frameworks/Security.framework; sourceTree = DEVELOPER_DIR; };
 		0D28E5E119269B3600280F87 /* SNTLogging.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SNTLogging.h; sourceTree = "<group>"; };
 		0D28E5E31926AFE400280F87 /* SNTKernelCommon.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SNTKernelCommon.h; sourceTree = "<group>"; };
 		0D28E5E41926B55600280F87 /* santactl-Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = "santactl-Info.plist"; sourceTree = "<group>"; };
@@ -345,8 +341,6 @@
 			files = (
 				0D3AFBF618FB4C7E0087BCEE /* Cocoa.framework in Frameworks */,
 				0D3AFBF818FB4C870087BCEE /* IOKit.framework in Frameworks */,
-				0D260DC118B69078002A0B55 /* Security.framework in Frameworks */,
-				0D260DAE18B68E12002A0B55 /* XCTest.framework in Frameworks */,
 				8BFD9B39112F4D16B3D0EFFB /* libPods-LogicTests.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -561,13 +555,11 @@
 			children = (
 				0DCD5F771909C659006B445C /* SecurityInterface.framework */,
 				0D3AFBF718FB4C870087BCEE /* IOKit.framework */,
-				0D260DC018B69078002A0B55 /* Security.framework */,
 				0D8C200B180F359A00CE2BF8 /* Security.framework */,
 				0D4A5006176A4602004F63BF /* Security.framework */,
 				0D91BCB8174E8A7E00131A7D /* Kernel.framework */,
 				0D9A7F3E1759330500035EB5 /* Foundation.framework */,
 				0D385DB7180DE4A900418BC6 /* Cocoa.framework */,
-				0D260DAD18B68E12002A0B55 /* XCTest.framework */,
 				752301D17AA44BDE8B6D0541 /* libPods-LogicTests.a */,
 				0A84545E322F475FA0B505D5 /* libPods-santad.a */,
 			);
