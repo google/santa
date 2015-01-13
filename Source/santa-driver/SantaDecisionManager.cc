@@ -213,6 +213,7 @@ santa_action_t SantaDecisionManager::FetchDecision(
     strncpy(message.path, path, MAX_PATH_LEN);
     message.userId = kauth_cred_getuid(credential);
     message.pid = proc_selfpid();
+    message.ppid = proc_selfppid();
     message.action = ACTION_REQUEST_CHECKBW;
     message.vnode_id = vnode_id;
 

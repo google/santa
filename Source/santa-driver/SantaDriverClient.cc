@@ -71,6 +71,7 @@ bool SantaDriverClient::terminate(IOOptionBits options) {
     message.action = ACTION_REQUEST_SHUTDOWN;
     message.userId = 0;
     message.pid = 0;
+    message.ppid = 0;    
     message.vnode_id = 0;
     fSDM->PostToQueue(message);
 

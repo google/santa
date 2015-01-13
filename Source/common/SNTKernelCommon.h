@@ -67,6 +67,7 @@ typedef struct {
   uint64_t vnode_id;
   uid_t userId;
   pid_t pid;
+  pid_t ppid;
   char sha1[MAX_SHA1_STRING];
   char path[MAX_PATH_LEN];
 } santa_message_t;

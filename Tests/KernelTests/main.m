@@ -32,6 +32,8 @@
     printf("   %-50s ", testName);
 #define TPASS() \
     printf("\x1b[32mPASS\x1b[0m\n");
+#define TPASSINFO(fmt, ...) \
+    printf("\x1b[32mPASS\x1b[0m\n      " fmt "\n", ##__VA_ARGS__);
 #define TFAIL() \
     printf("\x1b[31mFAIL\x1b[0m\n"); \
     exit(1);
@@ -214,6 +216,12 @@
             TFAILINFO("Received bad SHA-1: '%s'", vdata.sha1);
           }
           TPASS();
+
+          TSTART("Sends valid pid/ppid");
+          if (vdata.pid < 1 || vdata.ppid < 1) {
+            TFAIL();
+          }
+          TPASSINFO("Received pid, ppid: %d, %d", vdata.pid, vdata.ppid);
         } else {
           // Allow everything not related to our testing.
           [self postToKernelAction:ACTION_RESPOND_CHECKBW_ALLOW forVnodeID:vdata.vnode_id];
