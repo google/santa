@@ -262,18 +262,15 @@ bool SantaDecisionManager::CalculateSHA1ForVnode(const kauth_cred_t credential,
   vnode_getattr(vp, &vap, context);
   binary_size = vap.va_data_size;
 
+  uio_t uio = uio_create(1, 0, UIO_SYSSPACE, UIO_READ);
+  if (!uio) return false;
+
   // Initialize the SHA1 context
   SHA1_CTX sha1_ctx;
   SHA1Init(&sha1_ctx);
 
   void *readChunk = IOMalloc(page_size);
   if (readChunk == NULL) return false;
-
-  // Credentials needed for vn_rdwr
-  kauth_cred_t kerncred = vfs_context_ucred(context);
-  proc_t p = vfs_context_proc(context);
-
-  vnode_get(vp);
 
   // Read the file in chunks, updating the SHA as we go
   for (uint64_t offset = 0; offset < binary_size; offset += page_size) {
@@ -284,10 +281,18 @@ bool SantaDecisionManager::CalculateSHA1ForVnode(const kauth_cred_t credential,
       readSize = page_size;
     }
 
-    int resid;  // unused
-    if (vn_rdwr(UIO_READ, vp, (caddr_t)readChunk, (int)readSize, offset,
-                UIO_SYSSPACE, IO_NOAUTH, kerncred, &resid, p) != 0) {
-      vnode_put(vp);
+    uio_reset(uio, offset, UIO_SYSSPACE, UIO_READ);
+
+    int error = uio_addiov(uio, CAST_USER_ADDR_T(readChunk), readSize);
+    if (error) {
+      uio_free(uio);
+      IOFree(readChunk, page_size);
+      return false;
+    }
+
+    error = VNOP_READ(vp, uio, IO_SYNC, context);
+    if (error) {
+      uio_free(uio);
       IOFree(readChunk, page_size);
       return false;
     }
@@ -295,7 +300,8 @@ bool SantaDecisionManager::CalculateSHA1ForVnode(const kauth_cred_t credential,
     SHA1Update(&sha1_ctx, readChunk, readSize);
   }
 
-  vnode_put(vp);
+  // Free |uio|
+  uio_free(uio);
 
   // Free |readChunk|
   IOFree(readChunk, page_size);
