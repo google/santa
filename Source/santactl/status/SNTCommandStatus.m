@@ -54,30 +54,34 @@ REGISTER_COMMAND_NAME(@"status");
   LOGI(@"");
 
   // Kext status
-  __block uint64_t cacheCount = -1;
-  [[daemonConn remoteObjectProxy] cacheCount:^(uint64_t count) {
-      cacheCount = count;
-  }];
-  do { usleep(5000); } while (cacheCount == -1);
-  LOGI(@">>> Kernel Info");
-  LOGI(@"%-30s | %d", "Kernel cache count", cacheCount);
-  LOGI(@"");
+  if (daemonConn) {
+    __block uint64_t cacheCount = -1;
+    [[daemonConn remoteObjectProxy] cacheCount:^(uint64_t count) {
+        cacheCount = count;
+    }];
+    do { usleep(5000); } while (cacheCount == -1);
+    LOGI(@">>> Kernel Info");
+    LOGI(@"%-30s | %d", "Kernel cache count", cacheCount);
+    LOGI(@"");
 
-  // Database counts
-  __block uint64_t eventCount = 1, binaryRuleCount = -1, certRuleCount = -1;
-  [[daemonConn remoteObjectProxy] databaseRuleCounts:^(uint64_t binary, uint64_t certificate) {
-      binaryRuleCount = binary;
-      certRuleCount = certificate;
-  }];
-  [[daemonConn remoteObjectProxy] databaseEventCount:^(uint64_t count) {
-      eventCount = count;
-  }];
-  do { usleep(5000); } while (eventCount == -1 || binaryRuleCount == -1 || certRuleCount == -1);
-  LOGI(@">>> Database Info");
-  LOGI(@"%-30s | %d", "Binary Rules", binaryRuleCount);
-  LOGI(@"%-30s | %d", "Certificate Rules", certRuleCount);
-  LOGI(@"%-30s | %d", "Events Pending Upload", eventCount);
-  LOGI(@"");
+    // Database counts
+    __block uint64_t eventCount = 1, binaryRuleCount = -1, certRuleCount = -1;
+    [[daemonConn remoteObjectProxy] databaseRuleCounts:^(uint64_t binary, uint64_t certificate) {
+        binaryRuleCount = binary;
+        certRuleCount = certificate;
+    }];
+    [[daemonConn remoteObjectProxy] databaseEventCount:^(uint64_t count) {
+        eventCount = count;
+    }];
+    do { usleep(5000); } while (eventCount == -1 || binaryRuleCount == -1 || certRuleCount == -1);
+    LOGI(@">>> Database Info");
+    LOGI(@"%-30s | %d", "Binary Rules", binaryRuleCount);
+    LOGI(@"%-30s | %d", "Certificate Rules", certRuleCount);
+    LOGI(@"%-30s | %d", "Events Pending Upload", eventCount);
+    LOGI(@"");
+  } else {
+    LOGI(@">>> santad is not running, cannot provide any more information.");
+  }
 
   exit(0);
 }
