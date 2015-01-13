@@ -70,4 +70,8 @@
 /// Returns the CFBundleShortVersionString from this file's Info.plist
 - (NSString *)bundleShortVersionString;
 
+/// Returns any URLs this file may have been downloaded from, using the
+/// |com.apple.metadata:kMDItemWhereFroms extended attribute
+- (NSArray *)downloadURLs;
+
 @end

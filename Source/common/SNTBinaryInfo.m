@@ -18,6 +18,7 @@
 
 #include <mach-o/loader.h>
 #include <mach-o/swap.h>
+#include <sys/xattr.h>
 
 @interface SNTBinaryInfo ()
 @property NSString *path;
@@ -218,6 +219,31 @@
 
 - (NSString *)bundleShortVersionString {
   return [[self infoPlist] objectForKey:@"CFBundleShortVersionString"];
+}
+
+- (NSArray *)downloadURLs {
+  char *path = (char *)[self.path fileSystemRepresentation];
+  size_t size = getxattr(path, "com.apple.metadata:kMDItemWhereFroms", NULL, 0, 0, 0);
+  char *value = malloc(size);
+  if (!value) return nil;
+
+  if (getxattr(path, "com.apple.metadata:kMDItemWhereFroms", value, size, 0, 0) == -1) {
+    free(value);
+    return nil;
+  }
+
+  NSData *data = [NSData dataWithBytes:value length:size];
+	free(value);
+
+  if (data) {
+    NSArray *urls = [NSPropertyListSerialization propertyListWithData:data
+                                                              options:NSPropertyListImmutable
+                                                               format:NULL
+                                                                error:NULL];
+    return urls;
+  }
+
+  return nil;
 }
 
 # pragma mark Internal Methods
