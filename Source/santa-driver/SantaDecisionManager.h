@@ -119,38 +119,28 @@ class SantaDecisionManager : public OSObject {
   kauth_listener_t process_listener_;
 };
 
-extern "C" {
-  /// The callback function for the Vnode scope
-  /// @param actor's credentials
-  /// @param data that was passed when the listener was registered
-  /// @param action that was requested
-  /// @param VFS context
-  /// @param Vnode being operated on
-  /// @param Parent Vnode. May be NULL.
-  /// @param Pointer to an errno-style error.
-  extern int vnode_scope_callback(kauth_cred_t credential,
-                                  void *idata,
-                                  kauth_action_t action,
-                                  uintptr_t arg0,
-                                  uintptr_t arg1,
-                                  uintptr_t arg2,
-                                  uintptr_t arg3);
+/// The kauth callback function for the Vnode scope
+/// @param actor's credentials
+/// @param data that was passed when the listener was registered
+/// @param action that was requested
+/// @param VFS context
+/// @param Vnode being operated on
+/// @param Parent Vnode. May be NULL.
+/// @param Pointer to an errno-style error.
+extern "C" int vnode_scope_callback(
+    kauth_cred_t credential, void *idata, kauth_action_t action,
+    uintptr_t arg0, uintptr_t arg1, uintptr_t arg2, uintptr_t arg3);
 
-  /// The callback function for the Process scope
-  /// @param actor's credentials
-  /// @param data that was passed when the listener was registered
-  /// @param action that was requested (KAUTH_PROCESS_{CANTRACE,CANSIGNAL})
-  /// @param target process
-  /// @param Pointer to an errno-style error.
-  /// @param unused
-  /// @param unused
-  extern int process_scope_callback(kauth_cred_t credential,
-                                    void *idata,
-                                    kauth_action_t action,
-                                    uintptr_t arg0,
-                                    uintptr_t arg1,
-                                    uintptr_t arg2,
-                                    uintptr_t arg3);
-}  // extern C
+/// The kauth callback function for the Process scope
+/// @param actor's credentials
+/// @param data that was passed when the listener was registered
+/// @param action that was requested (KAUTH_PROCESS_{CANTRACE,CANSIGNAL})
+/// @param target process
+/// @param Pointer to an errno-style error.
+/// @param unused
+/// @param unused
+extern "C" int process_scope_callback(
+    kauth_cred_t credential, void *idata, kauth_action_t action,
+    uintptr_t arg0, uintptr_t arg1, uintptr_t arg2, uintptr_t arg3);
 
 #endif  // SANTA__SANTA_DRIVER__SANTADECISIONMANAGER_H

@@ -395,13 +395,9 @@ kern_return_t SantaDecisionManager::StopListener() {
 
 #pragma mark Kauth Callbacks
 
-extern int process_scope_callback(kauth_cred_t credential,
-                                  void *idata,
-                                  kauth_action_t action,
-                                  uintptr_t arg0,
-                                  uintptr_t arg1,
-                                  uintptr_t arg2,
-                                  uintptr_t arg3) {
+extern "C" int process_scope_callback(
+    kauth_cred_t credential, void *idata, kauth_action_t action,
+    uintptr_t arg0, uintptr_t arg1, uintptr_t arg2, uintptr_t arg3) {
   if (idata == NULL) {
     LOGE("Process callback established without valid decision manager.");
     return KAUTH_RESULT_ALLOW;
@@ -424,14 +420,9 @@ extern int process_scope_callback(kauth_cred_t credential,
   return KAUTH_RESULT_ALLOW;
 }
 
-
-extern int vnode_scope_callback(kauth_cred_t credential,
-                                void *idata,
-                                kauth_action_t action,
-                                uintptr_t arg0,
-                                uintptr_t arg1,
-                                uintptr_t arg2,
-                                uintptr_t arg3) {
+extern "C" int vnode_scope_callback(
+    kauth_cred_t credential, void *idata, kauth_action_t action,
+    uintptr_t arg0, uintptr_t arg1, uintptr_t arg2, uintptr_t arg3) {
   // The default action is to defer
   int returnResult = KAUTH_RESULT_DEFER;
 
