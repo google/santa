@@ -388,6 +388,7 @@ kern_return_t SantaDecisionManager::StopListener() {
   ClearCache();
 
   LOGD("Vnode listener stopped.");
+  LOGD("Process listener stopped.");
 
   return kIOReturnSuccess;
 }
