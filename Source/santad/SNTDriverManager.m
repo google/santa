@@ -83,7 +83,7 @@
 
 # pragma mark Incoming messages
 
-- (void)listenWithBlock:(BOOL (^)(santa_message_t message))callback {
+- (void)listenWithBlock:(void (^)(santa_message_t message))callback {
   kern_return_t kr;
   santa_message_t vdata;
   UInt32 dataSize;
@@ -117,27 +117,18 @@
   }
 
   self.queueMemory = (IODataQueueMemory *)address;
-  BOOL breakOut = NO;
+  dataSize = sizeof(vdata);
 
   while (IODataQueueWaitForAvailableData(self.queueMemory,
                                          self.receivePort) == kIOReturnSuccess) {
     while (IODataQueueDataAvailable(self.queueMemory)) {
-      dataSize = sizeof(vdata);
       kr = IODataQueueDequeue(self.queueMemory, &vdata, &dataSize);
       if (kr == kIOReturnSuccess) {
-        if (! callback(vdata)) {
-          breakOut = YES;
-          break;
-        }
+        callback(vdata);
       } else {
         LOGD(@"Error receiving data: %d", kr);
-        breakOut = YES;
-        break;
+        exit(2);
       }
-    }
-
-    if (breakOut) {
-      break;
     }
   }
 

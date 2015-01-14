@@ -35,6 +35,4 @@ int main(int argc, const char *argv[]) {
 
     [[NSRunLoop mainRunLoop] run];
   }
-
-  return 0;
 }

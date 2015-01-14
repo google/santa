@@ -20,9 +20,8 @@
 @interface SNTDriverManager : NSObject
 
 /// Handles requests from the kernel using the given block.
-/// @note Loops indefinitely until either the callback block returns @c NO or there is an error
-/// trying to read data from the data queue.
-- (void)listenWithBlock:(BOOL (^)(santa_message_t message))callback;
+/// @note Loops indefinitely unless there is an error trying to read data from the data queue.
+- (void)listenWithBlock:(void (^)(santa_message_t message))callback;
 
 /// Sends a response to a query back to the kernel.
 - (kern_return_t)postToKernelAction:(santa_action_t)action forVnodeID:(uint64_t)vnodeId;

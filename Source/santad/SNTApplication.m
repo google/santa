@@ -111,20 +111,19 @@
   }
 }
 
-- (int)run {
+- (void)run {
   LOGI(@"Connected to driver, activating.");
 
   dispatch_queue_t q = dispatch_queue_create("com.google.santad.driver_queue",
                                              DISPATCH_QUEUE_CONCURRENT);
 
-  [self.driverManager listenWithBlock:^BOOL(santa_message_t message) {
+  [self.driverManager listenWithBlock:^(santa_message_t message) {
       @autoreleasepool {
         switch (message.action) {
           case ACTION_REQUEST_SHUTDOWN: {
             LOGI(@"Driver requested a shutdown");
             // Sleep before exiting to give driver chance to ready itself
-            sleep(10);
-            return NO;
+            exit(0);
           }
           case ACTION_REQUEST_CHECKBW: {
             // Validate the binary aynchronously on a concurrent queue so we don't
@@ -142,17 +141,15 @@
                                                         pid:@(message.pid)
                                                     vnodeId:message.vnode_id];
             });
-            return YES;
+            break;
           }
           default: {
-            LOGE(@"Received request without an action");
-            return NO;
+            LOGE(@"Received request without a valid action: %d", message.action);
+            exit(1);
           }
         }
       }
   }];
-
-  return 0;
 }
 
 @end

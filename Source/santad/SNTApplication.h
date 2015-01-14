@@ -16,6 +16,6 @@
 @interface SNTApplication : NSObject
 
 /// Begins fielding requests from the driver
-- (int)run;
+- (void)run;
 
 @end
