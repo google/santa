@@ -107,6 +107,14 @@
           self.currentConnection = nil;
         }
     }];
+
+    // Wait for validation to complete, at most 5s
+    int sleepLoops = 0;
+    do {
+      usleep(5000);
+      sleepLoops++;
+    } while (self.currentConnection.remoteObjectInterface == _validatorInterface &&
+             sleepLoops < 1000);
   }
 }
 
