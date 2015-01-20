@@ -68,4 +68,10 @@
  */
 + (instancetype)configurator;
 
+/**
+ *  Designated initializer
+ *  @param filePath The path to the file to use as a backing store.
+ */
+- (instancetype)initWithFilePath:(NSString *)filePath;
+
 @end

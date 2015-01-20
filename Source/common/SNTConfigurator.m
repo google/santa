@@ -17,6 +17,7 @@
 #import "SNTLogging.h"
 
 @interface SNTConfigurator ()
+@property NSString *configFilePath;
 @property NSMutableDictionary *configData;
 @end
 
@@ -45,9 +46,10 @@ static NSString * const kMachineOwnerPlistKeyKey = @"MachineOwnerKey";
 static NSString * const kMachineIDPlistFileKey = @"MachineIDPlist";
 static NSString * const kMachineIDPlistKeyKey = @"MachineIDKey";
 
-- (instancetype)init {
+- (instancetype)initWithFilePath:(NSString *)filePath {
   self = [super init];
   if (self) {
+    _configFilePath = filePath;
     [self reloadConfigData];
   }
   return self;
@@ -59,7 +61,7 @@ static NSString * const kMachineIDPlistKeyKey = @"MachineIDKey";
   static SNTConfigurator *sharedConfigurator = nil;
   static dispatch_once_t onceToken;
   dispatch_once(&onceToken, ^{
-    sharedConfigurator = [[SNTConfigurator alloc] init];
+    sharedConfigurator = [[SNTConfigurator alloc] initWithFilePath:kConfigFilePath];
   });
   return sharedConfigurator;
 }
@@ -153,39 +155,57 @@ static NSString * const kMachineIDPlistKeyKey = @"MachineIDKey";
   [self.configData writeToFile:kConfigFilePath atomically:YES];
 }
 
+/**
+ *  Populate @c _configData, using the config file on disk if possible, otherwise an empty
+ *  mutable dictionary.
+ *
+ *  If the config file's permissions are not `0644`, will attempt to set them but will fail silently
+ *  if this cannot be done.
+ */
 - (void)reloadConfigData {
+  NSFileManager *fm = [NSFileManager defaultManager];
+
+  if (![fm fileExistsAtPath:self.configFilePath]) {
+    _configData = [NSMutableDictionary dictionary];
+    return;
+  }
+
+  // Ensure the config file permissions are 0644. Fail silently if they can't be changed.
+  NSDictionary *fileAttrs = [fm attributesOfItemAtPath:self.configFilePath error:nil];
+  if ([fileAttrs filePosixPermissions] != 0644) {
+    [fm setAttributes:@{ NSFilePosixPermissions: @(0644) }
+         ofItemAtPath:self.configFilePath
+                error:nil];
+  }
+
   NSError *error;
-
-  NSData *readData = [NSData dataWithContentsOfFile:kConfigFilePath options:0 error:&error];
-
+  NSData *readData = [NSData dataWithContentsOfFile:self.configFilePath
+                                            options:NSDataReadingMappedIfSafe
+                                              error:&error];
   if (error) {
-    fprintf(stderr, "%s\n", [[NSString stringWithFormat:@"Could not open configuration file %@: %@",
-            kConfigFilePath, [error localizedDescription]] UTF8String]);
+    fprintf(stderr, "%s\n", [[NSString stringWithFormat:@"Could not read configuration file %@: %@",
+            self.configFilePath, [error localizedDescription]] UTF8String]);
 
     _configData = [NSMutableDictionary dictionary];
     return;
   }
 
-  CFErrorRef parseError = NULL;
-
-  NSDictionary *dictionary = (__bridge_transfer NSDictionary *)CFPropertyListCreateWithData(
-      kCFAllocatorDefault,
-      (__bridge CFDataRef)readData,
-      kCFPropertyListImmutable,
-      NULL,
-      &parseError);
-
-  if (parseError) {
+  NSDictionary *configData =
+      [NSPropertyListSerialization propertyListWithData:readData
+                                                options:kCFPropertyListImmutable
+                                                 format:nil
+                                                  error:&error];
+  if (error) {
     fprintf(stderr, "%s\n",
         [[NSString stringWithFormat:@"Could not parse configuration file %@: %@",
-            kConfigFilePath,
-            [(__bridge NSError *)parseError localizedDescription]] UTF8String]);
+            self.configFilePath,
+            [error localizedDescription]] UTF8String]);
 
     _configData = [NSMutableDictionary dictionary];
     return;
   }
 
-  _configData = [dictionary mutableCopy];
+  _configData = [configData mutableCopy];
 }
 
 @end
