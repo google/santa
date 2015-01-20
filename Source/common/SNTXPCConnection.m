@@ -88,6 +88,7 @@
 
     [connection resume];
 
+    __block BOOL verificationComplete = NO;
     [[connection remoteObjectProxy] isConnectionValidWithBlock:^void(BOOL response) {
         pid_t pid = self.currentConnection.processIdentifier;
 
@@ -101,20 +102,19 @@
           self.currentConnection.exportedObject = self.exportedObject;
           [self invokeAcceptedHandler];
           [self.currentConnection resume];
+          verificationComplete = YES;
         } else {
           [self invokeRejectedHandler];
           [self.currentConnection invalidate];
           self.currentConnection = nil;
+          verificationComplete = NO;
         }
     }];
 
     // Wait for validation to complete, at most 5s
-    int sleepLoops = 0;
-    do {
+    for (int sleepLoops = 0; sleepLoops < 1000 && !verificationComplete; sleepLoops++) {
       usleep(5000);
-      sleepLoops++;
-    } while (self.currentConnection.remoteObjectInterface == _validatorInterface &&
-             sleepLoops < 1000);
+    }
   }
 }
 

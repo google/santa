@@ -72,36 +72,18 @@ static NSMutableDictionary *registeredCommands;
                                            options:NSXPCConnectionPrivileged];
   daemonConn.remoteInterface = [SNTXPCControlInterface controlInterface];
 
-  __block int connected = -1;
-  daemonConn.acceptedHandler = ^{
-      connected = 1;
-  };
-
   daemonConn.rejectedHandler = ^{
-      connected = 0;
       printf("The daemon rejected the connection\n");
       exit(1);
   };
 
   daemonConn.invalidationHandler = ^{
-      connected = 0;
       printf("An error occurred communicating with the daemon\n");
       exit(1);
   };
 
   [daemonConn resume];
-
-  int idx = 10;
-  do {
-    [[NSRunLoop currentRunLoop] runUntilDate:[NSDate dateWithTimeIntervalSinceNow:0.1]];
-    --idx;
-  } while (connected == -1 && idx > 0);
-
-  if (connected > 0) {
-    return daemonConn;
-  } else {
-    return nil;
-  }
+  return daemonConn;
 }
 
 + (BOOL)hasCommandWithName:(NSString *)commandName {
