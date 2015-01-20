@@ -90,26 +90,23 @@ static NSMutableDictionary *registeredCommands;
   return ([registeredCommands objectForKey:commandName] != nil);
 }
 
-+ (int)runCommandWithName:(NSString *)commandName arguments:(NSArray *)arguments {
++ (void)runCommandWithName:(NSString *)commandName arguments:(NSArray *)arguments {
   Class<SNTCommand> command = registeredCommands[commandName];
-  if (command) {
-    if ([command requiresRoot] && getuid() != 0) {
-      printf("The command '%s' requires root privileges.\n", [commandName UTF8String]);
-      return 2;
-    }
 
-    if ([(id)command respondsToSelector:@selector(runWithArguments:daemonConnection:)]) {
-      [command runWithArguments:arguments daemonConnection:[self connectToDaemon]];
-    } else if ([(id)command respondsToSelector:@selector(runWithArguments:)]) {
-      [command runWithArguments:arguments];
-    } else {
-      printf("The command '%s' has not been implemented correctly.\n", [commandName UTF8String]);
-    }
-
-    // The command is responsible for quitting.
-    [[NSRunLoop mainRunLoop] run];
+  if ([command requiresRoot] && getuid() != 0) {
+    printf("The command '%s' requires root privileges.\n", [commandName UTF8String]);
+    exit(2);
   }
-  return 128;
+
+  SNTXPCConnection *daemonConn;
+  if ([command requiresDaemonConn]) {
+    daemonConn = [self connectToDaemon];
+  }
+
+  [command runWithArguments:arguments daemonConnection:daemonConn];
+
+  // The command is responsible for quitting.
+  [[NSRunLoop mainRunLoop] run];
 }
 
 @end

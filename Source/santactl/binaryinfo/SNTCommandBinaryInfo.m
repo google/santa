@@ -31,6 +31,10 @@ REGISTER_COMMAND_NAME(@"binaryinfo");
   return NO;
 }
 
++ (BOOL)requiresDaemonConn {
+  return NO;
+}
+
 + (NSString *)shortHelpText {
   return @"Prints information about the given binary.";
 }
@@ -40,7 +44,7 @@ REGISTER_COMMAND_NAME(@"binaryinfo");
           @"This includes SHA-1, code signing information and the type of binary");
 }
 
-+ (void)runWithArguments:(NSArray *)arguments {
++ (void)runWithArguments:(NSArray *)arguments daemonConnection:(SNTXPCConnection *)daemonConn {
   NSString *filePath = [arguments firstObject];
 
   if (!filePath) {

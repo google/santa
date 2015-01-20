@@ -75,6 +75,6 @@ int main(int argc, const char *argv[]) {
       return 128;
     }
 
-    return [SNTCommandController runCommandWithName:commandName arguments:arguments];
+    [SNTCommandController runCommandWithName:commandName arguments:arguments];
   }
 }

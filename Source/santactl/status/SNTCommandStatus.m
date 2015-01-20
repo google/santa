@@ -33,6 +33,10 @@ REGISTER_COMMAND_NAME(@"status");
   return NO;
 }
 
++ (BOOL)requiresDaemonConn {
+  return YES;
+}
+
 + (NSString *)shortHelpText {
   return @"Get status about Santa";
 }

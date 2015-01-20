@@ -42,6 +42,10 @@ REGISTER_COMMAND_NAME(@"sync");
   return NO;
 }
 
++ (BOOL)requiresDaemonConn {
+  return YES;
+}
+
 + (NSString *)shortHelpText {
   return @"Synchronizes Santa with the server";
 }

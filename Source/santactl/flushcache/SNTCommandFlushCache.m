@@ -29,6 +29,10 @@ REGISTER_COMMAND_NAME(@"flushcache");
   return YES;
 }
 
++ (BOOL)requiresDaemonConn {
+  return YES;
+}
+
 + (NSString *)shortHelpText {
   return @"Flush the kernel cache";
 }

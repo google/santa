@@ -31,15 +31,6 @@
 /// A longer description of the command when the user runs <tt>santactl help x</tt>
 + (NSString *)longHelpText;
 
-@optional
-
-/// Either of the following two methods needs to be implemented
-
-/// Called when the user is running the command
-/// @param arguments an array of arguments passed in
-/// @note This method (or one of the methods it calls) is responsible for calling exit().
-+ (void)runWithArguments:(NSArray *)arguments;
-
 /**
  *  Called when the user is running the command
  *  @param arguments an array of arguments passed in
@@ -74,12 +65,12 @@
 /// Returns YES if @c commandName exists.
 + (BOOL)hasCommandWithName:(NSString *)commandName;
 
-+ (int)runCommandWithName:(NSString *)commandName arguments:(NSArray *)arguments;
 /** 
  *  Runs the given command with the given arguments.
  *  @param commandName the name of a previously-registered command
  *  @param arguments an array of arguments to pass to the command
  */
++ (void)runCommandWithName:(NSString *)commandName arguments:(NSArray *)arguments;
 
 @end
 

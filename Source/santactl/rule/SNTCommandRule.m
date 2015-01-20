@@ -36,7 +36,11 @@
 REGISTER_COMMAND_NAME(@"rule");
 
 + (BOOL)requiresRoot {
-  return TRUE;
+  return YES;
+}
+
++ (BOOL)requiresDaemonConn {
+  return YES;
 }
 
 + (NSString *)shortHelpText {
