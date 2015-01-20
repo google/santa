@@ -14,14 +14,16 @@
 
 #include "SNTCommonEnums.h"
 
-/// Singleton that provides an interface for managing configuration values on disk
-/// n.b: This class is designed as a singleton but is not enforced.
+/*
+ *  Singleton that provides an interface for managing configuration values on disk
+ *  @note This class is designed as a singleton but that is not enforced.
+ */
 @interface SNTConfigurator : NSObject
 
 /// The operating mode
 @property santa_clientmode_t clientMode;
 
-/// If YES, debug logging is enabled
+/// If @c YES, debug logging is enabled
 @property(readonly) BOOL debugLogging;
 
 # pragma mark - Sync Settings
@@ -46,7 +48,7 @@
 
 # pragma mark Client Auth Settings
 
-/// If set, this contains the location of a pkcs#12 certificate to be used for
+/// If set, this contains the location of a PKCS#12 certificate to be used for
 /// sync authentication.
 @property(readonly) NSString *syncClientAuthCertificateFile;
 
@@ -61,8 +63,9 @@
 /// sync authentication. The corresponding private key must also be in the keychain.
 @property(readonly) NSString *syncClientAuthCertificateIssuer;
 
-
-/// Retrieve the initialized singleton configurator object
+/**
+ *  Retrieve an initialized singleton configurator object using the default file path
+ */
 + (instancetype)configurator;
 
 @end

@@ -146,6 +146,9 @@ static NSString * const kMachineIDPlistKeyKey = @"MachineIDKey";
 
 #pragma mark Private
 
+/**
+ *  Saves the current @c _configData to disk.
+ */
 - (void)saveConfigToDisk {
   [self.configData writeToFile:kConfigFilePath atomically:YES];
 }

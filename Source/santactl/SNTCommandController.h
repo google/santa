@@ -14,15 +14,21 @@
 
 @class SNTXPCConnection;
 
-/// Protocol that each command must adhere to.
+/**
+ *  Protocol that each command must adhere to.
+ */
 @protocol SNTCommand <NSObject>
-/// Return YES if command requires root.
+
+/// Return @c YES if command requires root.
 + (BOOL)requiresRoot;
+
+/// Return @c YES if command requires connection to santad.
++ (BOOL)requiresDaemonConn;
 
 /// A small summary of the command, to be printed with the list of available commands
 + (NSString *)shortHelpText;
 
-/// A longer description of the command when the user runs "santactl help x"
+/// A longer description of the command when the user runs <tt>santactl help x</tt>
 + (NSString *)longHelpText;
 
 @optional
@@ -34,21 +40,28 @@
 /// @note This method (or one of the methods it calls) is responsible for calling exit().
 + (void)runWithArguments:(NSArray *)arguments;
 
-/// Called when the user is running the command
-/// @param arguments an array of arguments passed in
-/// @param connection to santad. Will be nil if connection failed.
-/// @note This method (or one of the methods it calls) is responsible for calling exit().
+/**
+ *  Called when the user is running the command
+ *  @param arguments an array of arguments passed in
+ *  @param daemonConn connection to santad. Will be nil if connection 
+ *                    failed or if @c requiresDaemonConn is @c NO
+ *  @note This method (or one of the methods it calls) is responsible for calling exit().
+ */
 + (void)runWithArguments:(NSArray *)arguments daemonConnection:(SNTXPCConnection *)daemonConn;
 @end
 
-/// Responsible for maintaining the list of available commands by name, printing their help text
-/// when requested and launching them when requested. All of the methods in this class are
-/// class methods because the @c registerCommand:named: method is called by the @c +load method
-/// of each command class and so we cannot rely on its instantiation.
+/**
+ *  Responsible for maintaining the list of available commands by name, printing their help text
+ *  when requested and launching them when requested. All of the methods in this class are
+ *  class methods because the @c registerCommand:named: method is called by the @c +load method
+ *  of each command class and so we cannot rely on its instantiation.
+ */
 @interface SNTCommandController : NSObject
 
-/// Register a new command with the specified name. Do not use this directly, use the
-/// @c REGISTER_COMMAND_NAME macro instead.
+/** 
+ *  Register a new command with the specified name. Do not use this directly, use the
+ *  @c REGISTER_COMMAND_NAME macro instead.
+ */
 + (void)registerCommand:(Class<SNTCommand>)command named:(NSString *)name;
 
 /// Returns a usage string listing all of the available commands
@@ -61,16 +74,19 @@
 /// Returns YES if @c commandName exists.
 + (BOOL)hasCommandWithName:(NSString *)commandName;
 
-/// Runs the given command with the given arguments.
-/// @c commandName the name of a previously-registered command
-/// @c arguments an array of arguments to pass to the command
-/// @return an integer return code to exit with.
 + (int)runCommandWithName:(NSString *)commandName arguments:(NSArray *)arguments;
+/** 
+ *  Runs the given command with the given arguments.
+ *  @param commandName the name of a previously-registered command
+ *  @param arguments an array of arguments to pass to the command
+ */
 
 @end
 
-/// This macro registers a given class as a command with the name passed in @c a (which must be an
-/// NSString). Must be placed just inside the implementation of the class, ideally at the top.
-/// The class that uses this macro must implement the SNTCommand protcol.
+/**
+ *  This macro registers a given class as a command with the name passed in @c a (which must be an
+ *  NSString). Must be placed just inside the implementation of the class, ideally at the top.
+ *  The class that uses this macro must implement the @c SNTCommand protcol.
+ */
 #define REGISTER_COMMAND_NAME(a) \
     + (void)load { [SNTCommandController registerCommand:[self class] named:a]; }
