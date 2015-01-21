@@ -233,7 +233,7 @@
   }
 
   NSData *data = [NSData dataWithBytes:value length:size];
-	free(value);
+  free(value);
 
   if (data) {
     NSArray *urls = [NSPropertyListSerialization propertyListWithData:data
