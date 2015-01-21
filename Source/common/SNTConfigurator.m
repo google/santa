@@ -193,7 +193,7 @@ static NSString * const kMachineIDPlistKeyKey = @"MachineIDKey";
   NSDictionary *configData =
       [NSPropertyListSerialization propertyListWithData:readData
                                                 options:kCFPropertyListImmutable
-                                                 format:nil
+                                                 format:NULL
                                                   error:&error];
   if (error) {
     fprintf(stderr, "%s\n",
