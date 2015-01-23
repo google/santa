@@ -12,23 +12,42 @@
 ///    See the License for the specific language governing permissions and
 ///    limitations under the License.
 
-/// SNTCertificate wraps a @c SecCertificateRef to provide Objective-C accessors to
-/// commonly used certificate data. Accessors cache data for repeated access.
+/**
+ *  SNTCertificate wraps a @c SecCertificateRef to provide Objective-C accessors to
+ *  commonly used certificate data. Accessors cache data for repeated access.
+ */
 @interface SNTCertificate : NSObject<NSSecureCoding>
 
-/// Initialize a SNTCertificate object with a valid SecCertificateRef. Designated initializer.
+/**
+ *  Initialize a SNTCertificate object with a valid SecCertificateRef. Designated initializer.
+ *
+ *  @param certRef valid SecCertificateRef, which will be retained.
+ */
 - (instancetype)initWithSecCertificateRef:(SecCertificateRef)certRef;
 
-/// Initialize a SNTCertificate object with certificate data in DER format.
-/// Returns nil if |certData| is invalid.
+/**
+ *  Initialize a SNTCertificate object with certificate data in DER format.
+ *
+ *  @param certData DER-encoded certificate data.
+ *  @return initialized SNTCertificate or nil if certData is not a DER-encoded certificate.
+ */
 - (instancetype)initWithCertificateDataDER:(NSData *)certData;
 
-/// Initialize a SNTCertificate object with certificate data in PEM format.
-/// If multiple PEM certificates exist within the string, the first is used.
-/// Returns nil if |certData| is invalid.
+/**
+ *  Initialize a SNTCertificate object with certificate data in PEM format.
+ *  If multiple PEM certificates exist within the string, the first is used.
+ *
+ *  @param certData PEM-encoded certificate data.
+ *  @return initialized SNTCertifcate or nil if certData is not a PEM-encoded certificate.
+ */
 - (instancetype)initWithCertificateDataPEM:(NSString *)certData;
 
-/// Returns an array of SNTCertificate's for all of the certificates in |pemData|.
+/**
+ *  Returns an array of SNTCertificate's for all of the certificates in |pemData|.
+ *
+ *  @param pemData PEM-encoded certificates.
+ *  @return array of SNTCertificate objects.
+ */
 + (NSArray *)certificatesFromPEM:(NSString *)pemData;
 
 /// Access the underlying certificate ref.

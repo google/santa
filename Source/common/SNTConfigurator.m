@@ -159,8 +159,8 @@ static NSString * const kMachineIDPlistKeyKey = @"MachineIDKey";
  *  Populate @c _configData, using the config file on disk if possible, otherwise an empty
  *  mutable dictionary.
  *
- *  If the config file's permissions are not `0644`, will attempt to set them but will fail silently
- *  if this cannot be done.
+ *  If the config file's permissions are not `0644`, will attempt to set them
+ *  but will fail silently if this cannot be done.
  */
 - (void)reloadConfigData {
   NSFileManager *fm = [NSFileManager defaultManager];

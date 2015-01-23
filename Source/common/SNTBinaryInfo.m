@@ -248,9 +248,11 @@
 
 # pragma mark Internal Methods
 
-/// Look through the file for the first mach_header. If the file is thin, this will be the
-/// header at the beginning of the file. If the file is fat, it will be the first
-/// architecture-specific header.
+/**
+ *  Look through the file for the first mach_header. If the file is thin, this will be the
+ *  header at the beginning of the file. If the file is fat, it will be the first
+ *  architecture-specific header.
+ */
 - (struct mach_header *)firstMachHeader {
   if (![self isMachO]) return NULL;
 
@@ -287,8 +289,10 @@
   return (header->magic == FAT_MAGIC || header->magic == FAT_CIGAM);
 }
 
-/// Wrap subdataWithRange: in a @try/@catch, returning nil on exception.
-/// Useful for when the range is beyond the end of the file.
+/**
+ *  Wrap @c subdataWithRange: in a @@try/@@catch, returning nil on exception.
+ *  Useful for when the range is beyond the end of the file.
+ */
 - (NSData *)safeSubdataWithRange:(NSRange)range {
   @try {
     return [self.fileData subdataWithRange:range];

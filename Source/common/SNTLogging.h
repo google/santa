@@ -35,11 +35,14 @@
 #define LOG_LEVEL_INFO    3
 #define LOG_LEVEL_DEBUG   4
 
-/// Logging function.
-/// level is one of the levels defined above
-/// error is the destination a FILE, generally should be stdout or stderr
-/// format is the printf style format string
-/// ... is the arguments to format.
+/**
+ *  Logging function.
+ *
+ *  @param level one of the levels defined above
+ *  @param error destination a FILE, generally should be stdout or stderr
+ *  @param format the printf style format string
+ *  @param ... the arguments to format.
+ */
 void logMessage(int level, FILE *destination, NSString *format, ...);
 
 /// Simple logging macros

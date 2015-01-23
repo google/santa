@@ -14,9 +14,11 @@
 
 @class SNTCertificate;
 
-/// An SNTEvent is created when Santa is making a decision about an execution request.
-/// All of the information required to make that decision, log it, notify the user etc. must be
-/// encapsulated within this class.
+/**
+ *  An SNTEvent is created when Santa is making a decision about an execution request.
+ *  All of the information required to make that decision, log it, notify the user etc. must be
+ *  encapsulated within this class.
+ */
 @interface SNTNotificationMessage : NSObject<NSSecureCoding>
 
 /// The path of the binary that was blocked.

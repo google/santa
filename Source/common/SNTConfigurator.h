@@ -48,8 +48,7 @@
 
 # pragma mark Client Auth Settings
 
-/// If set, this contains the location of a PKCS#12 certificate to be used for
-/// sync authentication.
+/// If set, this contains the location of a PKCS#12 certificate to be used for sync authentication.
 @property(readonly) NSString *syncClientAuthCertificateFile;
 
 /// Contains the password for the pkcs#12 certificate.
@@ -70,6 +69,7 @@
 
 /**
  *  Designated initializer
+ *
  *  @param filePath The path to the file to use as a backing store.
  */
 - (instancetype)initWithFilePath:(NSString *)filePath;

@@ -12,18 +12,26 @@
 ///    See the License for the specific language governing permissions and
 ///    limitations under the License.
 
-/// SNTBinaryInfo represents a binary on disk, providing access to details about that binary such as
-/// the SHA-1, the Info.plist and the Mach-O data.
+/**
+ *  SNTBinaryInfo represents a binary on disk, providing access to details about that binary such as
+ *  the SHA-1, the Info.plist and the Mach-O data.
+ */
 @interface SNTBinaryInfo : NSObject
 
-/// Designated initializer
+/**
+ *  Designated initializer
+ *
+ *  @param path the path of the file this SNTBinaryInfo represents
+ */
 - (instancetype)initWithPath:(NSString *)path;
 
 /// Return SHA-1 hash of this binary
 - (NSString *)SHA1;
 
-/// Returns the type of Mach-O file:
-///  Dynamic Library, Kernel Extension, Fat Binary, Thin Binary
+/**
+ *  Returns the type of Mach-O file:
+ *  Dynamic Library, Kernel Extension, Fat Binary, Thin Binary
+ */
 - (NSString *)machoType;
 
 /// Returns the architectures included in this binary (e.g. x86_64, ppc)
@@ -53,9 +61,11 @@
 /// Returns the path to the bundle this file is a part of, if any.
 - (NSString *)bundlePath;
 
-/// Returns either the Info.plist in the bundle this file is part of, or an embedded plist if there
-/// is one. In the odd case that a file has both an embedded Info.plist and is part of a bundle,
-/// the Info.plist from the bundle will be returned.
+/**
+ *  Returns either the Info.plist in the bundle this file is part of, or an embedded plist if there
+ *  is one. In the odd case that a file has both an embedded Info.plist and is part of a bundle,
+ *  the Info.plist from the bundle will be returned.
+ */
 - (NSDictionary *)infoPlist;
 
 /// Returns the CFBundleIdentifier from this file's Info.plist

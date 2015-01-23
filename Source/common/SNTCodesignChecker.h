@@ -14,8 +14,10 @@
 
 @class SNTCertificate;
 
-/// SNTCodesignChecker validates a binary (either on-disk or in memory) has been signed
-/// and if so allows for pulling out the certificates that were used to sign it.
+/**
+ *  SNTCodesignChecker validates a binary (either on-disk or in memory) has been signed
+ *  and if so allows for pulling out the certificates that were used to sign it.
+ */
 @interface SNTCodesignChecker : NSObject
 
 /// The SecStaticCodeRef that this SNTCodesignChecker is working around
@@ -33,23 +35,46 @@
 /// Returns the on-disk path of this binary.
 @property(readonly) NSString *binaryPath;
 
-/// Initialize an @c SNTCodesignChecker with a SecStaticCodeRef
-/// Designated initializer.
-/// Takes ownership of @c codeRef.
+/**
+ *  Designated initializer
+ *  Takes ownership of the codeRef reference.
+ *
+ *  @param codeRef a SecStaticCodeRef or SecCodeRef representing a binary.
+ *  @return an initialized SNTCodesignChecker if the binary is validly signed, nil otherwise.
+ */
 - (instancetype)initWithSecStaticCodeRef:(SecStaticCodeRef)codeRef;
 
-/// Initialize an @c SNTCodesignChecker with a binary on disk.
-/// Returns nil if @c binaryPath does not exist, is not a binary or is not codesigned.
+/**
+ *  Convenience initializer for a binary on disk.
+ *
+ *  @param binaryPath A binary file on disk
+ *  @return an initialized SNTCodesignChecker if file is a binary and is signed, nil otherwise.
+ */
 - (instancetype)initWithBinaryPath:(NSString *)binaryPath;
 
-/// Initialize an @c SNTCodesignChecker with the PID of a running process.
+/**
+ *  Convenience initializer for a binary that is running, by its process ID.
+ *
+ *  @param PID Id of a running process.
+ *  @return an initialized SNTCodesignChecker if binary is signed, nil otherwise.
+ */
 - (instancetype)initWithPID:(pid_t)PID;
 
-/// Initialize an @c SNTCodesignChecker for the currently-running process.
+/**
+ *  Convenience initializer for the currently running process.
+ *
+ *  @return an initialized SNTCodesignChecker if current binary is signed, nil otherwise.
+ */
 - (instancetype)initWithSelf;
 
-/// Returns true if the binary represented by @c otherChecker has signing information that matches
-/// this binary.
+/**
+ *  Compares the signatures of the binaries represented by this SNTCodesignChecker and 
+ *  @c otherChecker.
+ *
+ *  If both binaries are correctly signed and the leaf signatures are identical.
+ *
+ *  @return YES if both binaries are signed with the same leaf certificate.
+ */
 - (BOOL)signingInformationMatches:(SNTCodesignChecker *)otherChecker;
 
 @end

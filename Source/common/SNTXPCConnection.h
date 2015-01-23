@@ -57,6 +57,7 @@ typedef void (^SNTXPCRejectedBlock)(void);
 
 /**
  *  A proxy to the object at the other end of the connection.
+ *  
  *  @warning Do not send a message to this object if you didn't set @c remoteInterface above
  *  before calling the @c resume method. Doing so will throw an exception.
  */

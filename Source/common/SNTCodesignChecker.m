@@ -19,36 +19,41 @@
 #import "SNTCertificate.h"
 
 
-// kStaticSigningFlags are the flags used when validating signatures on disk.
-//
-// Don't validate resources but do validate nested code. Ignoring resources _dramatically_ speeds
-// up validation (see below) but does mean images, plists, etc will not be checked and modifying
-// these will not be considered invalid. To ensure any code inside the binary is still checked,
-// we check nested code.
-//
-// Timings with different flags:
-//   Checking Xcode 5.1.1 bundle:
-//      kSecCSDefaultFlags:                                   3.895s
-//      kSecCSDoNotValidateResources:                         0.013s
-//      kSecCSDoNotValidateResources | kSecCSCheckNestedCode: 0.013s
-//
-//   Checking Google Chrome 36.0.1985.143 bundle:
-//      kSecCSDefaultFlags:                                   0.529s
-//      kSecCSDoNotValidateResources:                         0.032s
-//      kSecCSDoNotValidateResources | kSecCSCheckNestedCode: 0.033s
-//
+/**
+ *  kStaticSigningFlags are the flags used when validating signatures on disk.
+ *
+ *  Don't validate resources but do validate nested code. Ignoring resources _dramatically_ speeds
+ *  up validation (see below) but does mean images, plists, etc will not be checked and modifying
+ *  these will not be considered invalid. To ensure any code inside the binary is still checked,
+ *  we check nested code.
+ *
+ *  Timings with different flags:
+ *    Checking Xcode 5.1.1 bundle:
+ *       kSecCSDefaultFlags:                                   3.895s
+ *       kSecCSDoNotValidateResources:                         0.013s
+ *       kSecCSDoNotValidateResources | kSecCSCheckNestedCode: 0.013s
+ *
+ *    Checking Google Chrome 36.0.1985.143 bundle:
+ *       kSecCSDefaultFlags:                                   0.529s
+ *       kSecCSDoNotValidateResources:                         0.032s
+ *       kSecCSDoNotValidateResources | kSecCSCheckNestedCode: 0.033s
+ */
 const SecCSFlags kStaticSigningFlags = kSecCSDoNotValidateResources | kSecCSCheckNestedCode;
 
-// kSigningFlags are the flags used when validating signatures for running binaries.
-//
-// No special flags needed currently.
+/**
+ *  kSigningFlags are the flags used when validating signatures for running binaries.
+ *
+ *  No special flags needed currently.
+ */
 const SecCSFlags kSigningFlags = kSecCSDefaultFlags;
 
 
-@implementation SNTCodesignChecker {
-  /// Array of @c SNTCertificate's representing the chain of certs this executable was signed with.
-  NSMutableArray *_certificates;
-}
+@interface SNTCodesignChecker ()
+/// Array of @c SNTCertificate's representing the chain of certs this executable was signed with.
+@property NSMutableArray *certificates;
+@end
+
+@implementation SNTCodesignChecker
 
 #pragma mark Init/dealloc
 
