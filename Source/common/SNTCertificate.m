@@ -170,9 +170,10 @@ static NSString *const kCertDataKey = @"certData";
 - (id)memoizedSelector:(SEL)selector forBlock:(id (^)(void))block {
   NSString *selName = NSStringFromSelector(selector);
 
-  if (!self.memoizedData) {
+  static dispatch_once_t onceToken;
+  dispatch_once(&onceToken, ^{
     self.memoizedData = [NSMutableDictionary dictionary];
-  }
+  });
 
   if (!self.memoizedData[selName]) {
     id val = block();
@@ -250,12 +251,29 @@ static NSString *const kCertDataKey = @"certData";
 
       CC_SHA1([self.certData bytes], (CC_LONG)[self.certData length], [SHA1Buffer mutableBytes]);
 
-      const unsigned char *bytes = (const unsigned char *)[SHA1Buffer bytes];
-      return [NSString stringWithFormat:
-          @"%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x",
-          bytes[0], bytes[1], bytes[2], bytes[3], bytes[4], bytes[5], bytes[6], bytes[7], bytes[8],
-          bytes[9], bytes[10], bytes[11], bytes[12], bytes[13], bytes[14], bytes[15], bytes[16],
-          bytes[17], bytes[18], bytes[19]];
+    const unsigned char *bytes = (const unsigned char *)[SHA1Buffer bytes];
+    NSMutableString *hexDigest = [NSMutableString stringWithCapacity:CC_SHA1_DIGEST_LENGTH * 2];
+    for (int i = 0; i < CC_SHA1_DIGEST_LENGTH; i++) {
+      [hexDigest appendFormat:@"%02x", bytes[i]];
+    }
+
+    return hexDigest;
+  }];
+}
+
+- (NSString *)SHA256 {
+  return [self memoizedSelector:_cmd forBlock:^id{
+    NSMutableData *SHA256Buffer = [[NSMutableData alloc] initWithCapacity:CC_SHA256_DIGEST_LENGTH];
+
+    CC_SHA256([self.certData bytes], (CC_LONG)[self.certData length], [SHA256Buffer mutableBytes]);
+
+    const unsigned char *bytes = (const unsigned char *)[SHA256Buffer bytes];
+    NSMutableString *hexDigest = [NSMutableString stringWithCapacity:CC_SHA256_DIGEST_LENGTH * 2];
+    for (int i = 0; i < CC_SHA256_DIGEST_LENGTH; i++) {
+      [hexDigest appendFormat:@"%02x", bytes[i]];
+    }
+
+    return hexDigest;
   }];
 }
 

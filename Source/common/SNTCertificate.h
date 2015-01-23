@@ -56,6 +56,9 @@
 /// SHA-1 hash of the certificate data.
 @property(readonly) NSString *SHA1;
 
+/// SHA-256 hash of the certificate data.
+@property(readonly) NSString *SHA256;
+
 /// Certificate data.
 @property(readonly) NSData *certData;
 
