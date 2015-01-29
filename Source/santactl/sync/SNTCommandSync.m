@@ -143,18 +143,18 @@ REGISTER_COMMAND_NAME(@"sync");
                                        progress:self.progress
                                      daemonConn:self.daemonConn
                               completionHandler:^(BOOL success) {
-                                  if (success) {
-                                    LOGI(@"Preflight complete");
-                                    if (self.progress.uploadLogURL) {
-                                      [self logUpload];
-                                    } else {
-                                      [self eventUpload];
-                                    }
-                                  } else {
-                                    LOGE(@"Preflight failed, aborting run");
-                                    exit(1);
-                                  }
-                              }];
+      if (success) {
+        LOGI(@"Preflight complete");
+        if (self.progress.uploadLogURL) {
+          [self logUpload];
+        } else {
+          [self eventUpload];
+        }
+      } else {
+        LOGE(@"Preflight failed, aborting run");
+        exit(1);
+      }
+  }];
 }
 
 - (void)logUpload {
@@ -162,14 +162,14 @@ REGISTER_COMMAND_NAME(@"sync");
                                        progress:self.progress
                                      daemonConn:self.daemonConn
                               completionHandler:^(BOOL success) {
-                                  if (success) {
-                                    LOGI(@"Log upload complete");
-                                    [self eventUpload];
-                                  } else {
-                                    LOGE(@"Log upload failed, aborting run");
-                                    exit(1);
-                                  }
-                              }];
+      if (success) {
+        LOGI(@"Log upload complete");
+        [self eventUpload];
+      } else {
+        LOGE(@"Log upload failed, aborting run");
+        exit(1);
+      }
+  }];
 }
 
 - (void)eventUpload {
@@ -177,14 +177,14 @@ REGISTER_COMMAND_NAME(@"sync");
                                          progress:self.progress
                                        daemonConn:self.daemonConn
                                 completionHandler:^(BOOL success) {
-                                    if (success) {
-                                      LOGI(@"Event upload complete");
-                                      [self ruleDownload];
-                                    } else {
-                                      LOGE(@"Event upload failed, aborting run");
-                                      exit(1);
-                                    }
-                                }];
+      if (success) {
+        LOGI(@"Event upload complete");
+        [self ruleDownload];
+      } else {
+        LOGE(@"Event upload failed, aborting run");
+        exit(1);
+      }
+  }];
 }
 
 - (void)eventUploadSingleEvent:(NSString *)sha256 {
@@ -193,6 +193,14 @@ REGISTER_COMMAND_NAME(@"sync");
                                                 progress:self.progress
                                               daemonConn:self.daemonConn
                                        completionHandler:^(BOOL success) {
+      if (success) {
+       LOGI(@"Event upload complete");
+       exit(0);
+      } else {
+       LOGW(@"Event upload failed");
+       exit(1);
+      }
+  }];
 }
 
 - (void)ruleDownload {
@@ -200,14 +208,14 @@ REGISTER_COMMAND_NAME(@"sync");
                                           progress:self.progress
                                         daemonConn:self.daemonConn
                                  completionHandler:^(BOOL success) {
-                                     if (success) {
-                                       LOGI(@"Rule download complete");
-                                       [self postflight];
-                                     } else {
-                                       LOGE(@"Rule download failed, aborting run");
-                                       exit(1);
-                                     }
-                                 }];
+      if (success) {
+        LOGI(@"Rule download complete");
+        [self postflight];
+      } else {
+        LOGE(@"Rule download failed, aborting run");
+        exit(1);
+      }
+  }];
 }
 
 - (void)postflight {
@@ -215,15 +223,15 @@ REGISTER_COMMAND_NAME(@"sync");
                                         progress:self.progress
                                       daemonConn:self.daemonConn
                                completionHandler:^(BOOL success) {
-                                   if (success) {
-                                     LOGI(@"Postflight complete");
-                                     LOGI(@"Sync completed successfully");
-                                     exit(0);
-                                   } else {
-                                     LOGE(@"Postflight failed");
-                                     exit(1);
-                                   }
-                               }];
+      if (success) {
+        LOGI(@"Postflight complete");
+        LOGI(@"Sync completed successfully");
+        exit(0);
+      } else {
+        LOGE(@"Postflight failed");
+        exit(1);
+      }
+  }];
 }
 
 @end
