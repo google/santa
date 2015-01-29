@@ -47,7 +47,7 @@
     _eventTable = eventTable;
     _operatingMode = operatingMode;
     _notifierConnection = notifier;
-    LOGI(@"Log format: Decision (A|D), Reason (B|C), SHA-1, Path, Cert SHA-1, Cert CN");
+    LOGI(@"Log format: Decision (A|D), Reason (B|C|S|?), SHA-1, Path, Cert SHA-1, Cert CN");
 
     // Workaround for xpcproxy/libsecurity bug on Yosemite
     // This establishes the XPC connection between libsecurity and syspolicyd.
@@ -63,15 +63,16 @@
                       userName:(NSString *)userName
                            pid:(NSNumber *)pid
                        vnodeId:(uint64_t)vnodeId {
+  SNTBinaryInfo *binInfo = [[SNTBinaryInfo alloc] initWithPath:path];
+  NSString *sha256 = [binInfo SHA256];
+
   // Step 1 - in scope?
   if (![self fileIsInScope:path]) {
     [self.driverManager postToKernelAction:ACTION_RESPOND_CHECKBW_ALLOW forVnodeID:vnodeId];
-    LOGD(@"File out of scope: %@", path);
+    // TODO(rah): Have logDecision handle this
+    LOGI(@"A,S,%@,%@", sha256, path);
     return;
   }
-
-  SNTBinaryInfo *binInfo = [[SNTBinaryInfo alloc] initWithPath:path];
-  NSString *sha256 = [binInfo SHA256];
 
   // These will be filled in either in step 2, 3 or 4.
   santa_action_t respondedAction = ACTION_UNSET;
