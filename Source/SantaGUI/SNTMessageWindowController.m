@@ -107,12 +107,4 @@
   }
 }
 
-- (NSImage *)bundleIcon {
-  SNTBinaryInfo *bi = [[SNTBinaryInfo alloc] initWithPath:self.event.path];
-
-  if (!bi || !bi.bundle) return nil;
-
-  return [[NSWorkspace sharedWorkspace] iconForFile:bi.bundlePath];
-}
-
 @end

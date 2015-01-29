@@ -39,7 +39,4 @@
 /// An optional message to display with this block.
 @property(readonly) IBOutlet NSAttributedString *attributedCustomMessage;
 
-/// If the binary is part of a bundle, this is the icon for that bundle
-@property(readonly) IBOutlet NSImage *bundleIcon;
-
 @end
