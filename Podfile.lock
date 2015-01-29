@@ -1,17 +1,17 @@
 PODS:
-  - FMDB (2.4):
-    - FMDB/standard (= 2.4)
-  - FMDB/common (2.4)
-  - FMDB/standard (2.4):
+  - FMDB (2.5):
+    - FMDB/standard (= 2.5)
+  - FMDB/common (2.5)
+  - FMDB/standard (2.5):
     - FMDB/common
-  - OCMock (3.1.1)
+  - OCMock (3.1.2)
 
 DEPENDENCIES:
   - FMDB
   - OCMock
 
 SPEC CHECKSUMS:
-  FMDB: 0b2fa25e5264ef177973c0cb8c02c711107979aa
-  OCMock: f6cb8c162ab9d5620dddf411282c7b2c0ee78854
+  FMDB: 0efa188cf0dd1ce82c27a478cd5f5fa245308677
+  OCMock: ecdd510b73ef397f2f97274785c1e87fd147c49f
 
 COCOAPODS: 0.35.0
