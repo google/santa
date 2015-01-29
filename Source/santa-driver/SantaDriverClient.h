@@ -19,7 +19,6 @@
 #include <IOKit/IOSharedDataQueue.h>
 #include <IOKit/IOLib.h>
 #include <IOKit/IODataQueueShared.h>
-#include <libkern/crypto/sha1.h>
 #include <sys/kauth.h>
 #include <sys/vnode.h>
 #include <sys/proc.h>
