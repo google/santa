@@ -14,8 +14,6 @@
 
 #import "SNTLogging.h"
 
-#import "SNTConfigurator.h"
-
 #ifdef DEBUG
 static int logLevel = LOG_LEVEL_DEBUG;  // default to info
 #else
@@ -35,7 +33,7 @@ void logMessage(int level, FILE *destination, NSString *format, ...) {
       binaryName = [[NSProcessInfo processInfo] processName];
 
       // If debug logging is enabled, the process must be restarted.
-      if ([[SNTConfigurator configurator] debugLogging]) {
+      if ([[[NSProcessInfo processInfo] arguments] containsObject:@"--debug"]) {
         logLevel = LOG_LEVEL_DEBUG;
       }
   });
