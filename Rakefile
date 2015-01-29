@@ -5,10 +5,15 @@ DEFAULT_SCHEME  = 'All'
 OUTPUT_PATH     = 'Build'
 DIST_PATH       = 'Dist'
 BINARIES        = ['Santa.app', 'santa-driver.kext', 'santad', 'santactl']
+XCTOOL_DEFAULTS = "-workspace #{WORKSPACE} -scheme #{DEFAULT_SCHEME}"
 XCODE_DEFAULTS  = "-workspace #{WORKSPACE} -scheme #{DEFAULT_SCHEME} -derivedDataPath #{OUTPUT_PATH} -parallelizeTargets"
 
 task :default do
   system("rake -sT")
+end
+
+def xctool_available
+  return system 'xctool --version >/dev/null 2>&1'
 end
 
 def run_and_output_on_fail(cmd)
@@ -56,7 +61,7 @@ end
 desc "Clean"
 task :clean => :init do
   puts "Cleaning"
-  run_and_output_on_fail("xcodebuild #{XCODE_DEFAULTS} clean")
+  system "xcodebuild #{XCODE_DEFAULTS} clean"
   FileUtils.rm_rf(OUTPUT_PATH)
   FileUtils.rm_rf(DIST_PATH)
 end
@@ -76,7 +81,11 @@ namespace :build do
   task :build, [:configuration] => :init do |t, args|
     config = args[:configuration]
     puts "Building with configuration: #{config}"
-    run_and_output_on_fail("xcodebuild #{XCODE_DEFAULTS} -configuration #{config} build")
+    if xctool_available
+      system "xctool #{XCTOOL_DEFAULTS} -configuration #{config} build"
+    else
+      system "xcodebuild #{XCODE_DEFAULTS} -configuration #{config} build"
+    end
   end
 end
 
@@ -136,7 +145,11 @@ namespace :tests do
   desc "Tests: Logic"
   task :logic => [:init] do
     puts "Running logic tests"
-    run_and_output_with_color("xcodebuild #{XCODE_DEFAULTS} test")
+    if xctool_available
+      system "xctool #{XCTOOL_DEFAULTS} test"
+    else
+      system "xcodebuild #{XCODE_DEFAULTS} test"
+    end
   end
 
   desc "Tests: Kernel"
