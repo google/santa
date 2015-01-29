@@ -187,20 +187,12 @@ REGISTER_COMMAND_NAME(@"sync");
                                 }];
 }
 
-- (void)eventUploadSingleEvent:(NSString *)sha1 {
-  [SNTCommandSyncEventUpload uploadSingleEventWithSHA1:sha1
-                                               session:self.session
-                                              progress:self.progress
-                                            daemonConn:self.daemonConn
-                                     completionHandler:^(BOOL success) {
-                                       if (success) {
-                                         LOGI(@"Event upload complete");
-                                         exit(0);
-                                       } else {
-                                         LOGW(@"Event upload failed");
-                                         exit(1);
-                                       }
-                                     }];
+- (void)eventUploadSingleEvent:(NSString *)sha256 {
+  [SNTCommandSyncEventUpload uploadSingleEventWithSHA256:sha256
+                                                 session:self.session
+                                                progress:self.progress
+                                              daemonConn:self.daemonConn
+                                       completionHandler:^(BOOL success) {
 }
 
 - (void)ruleDownload {

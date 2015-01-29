@@ -16,18 +16,18 @@
 
 @implementation SNTRule
 
-static NSString *const kSHA1Key = @"sha1";
+static NSString *const kShasumKey = @"shasum";
 static NSString *const kStateKey = @"state";
 static NSString *const kTypeKey = @"type";
 static NSString *const kCustomMessageKey = @"custommsg";
 
-- (instancetype)initWithSHA1:(NSString *)SHA1
-                       state:(santa_rulestate_t)state
-                        type:(santa_ruletype_t)type
-                   customMsg:(NSString *)customMsg {
+- (instancetype)initWithShasum:(NSString *)shasum
+                         state:(santa_rulestate_t)state
+                          type:(santa_ruletype_t)type
+                     customMsg:(NSString *)customMsg {
   self = [super init];
   if (self) {
-    _SHA1  = SHA1;
+    _shasum  = shasum;
     _state = state;
     _type = type;
     _customMsg = customMsg;
@@ -40,7 +40,7 @@ static NSString *const kCustomMessageKey = @"custommsg";
 + (BOOL)supportsSecureCoding { return YES; }
 
 - (void)encodeWithCoder:(NSCoder *)coder {
-  [coder encodeObject:self.SHA1 forKey:kSHA1Key];
+  [coder encodeObject:self.shasum forKey:kShasumKey];
   [coder encodeInt:self.state forKey:kStateKey];
   [coder encodeInt:self.type forKey:kTypeKey];
   [coder encodeObject:self.customMsg forKey:kCustomMessageKey];
@@ -49,7 +49,7 @@ static NSString *const kCustomMessageKey = @"custommsg";
 - (instancetype)initWithCoder:(NSCoder *)decoder {
   NSSet *stringPlusNull = [NSSet setWithObjects:[NSString class], [NSNull class], nil];
 
-  _SHA1 = [decoder decodeObjectOfClass:[NSString class] forKey:kSHA1Key];
+  _shasum = [decoder decodeObjectOfClass:[NSString class] forKey:kShasumKey];
   _state = [decoder decodeIntForKey:kStateKey];
   _type = [decoder decodeIntForKey:kTypeKey];
   _customMsg = [decoder decodeObjectOfClasses:stringPlusNull forKey:kCustomMessageKey];

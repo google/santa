@@ -77,7 +77,7 @@
 
         for (NSDictionary *rule in receivedRules) {
           SNTRule *newRule = [[SNTRule alloc] init];
-          newRule.SHA1 = rule[@"sha1"];
+          newRule.shasum = rule[@"sha1"];
 
           newRule.state = [rule[@"state"] intValue];
           if (newRule.state <= RULESTATE_UNKNOWN || newRule.state >= RULESTATE_MAX) continue;

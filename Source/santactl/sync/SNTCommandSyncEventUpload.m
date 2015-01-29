@@ -44,14 +44,14 @@
   }];
 }
 
-+ (void)uploadSingleEventWithSHA1:(NSString *)SHA1
-                          session:(NSURLSession *)session
-                         progress:(SNTCommandSyncStatus *)progress
-                       daemonConn:(SNTXPCConnection *)daemonConn
-                completionHandler:(void (^)(BOOL success))handler {
++ (void)uploadSingleEventWithSHA256:(NSString *)SHA256
+                            session:(NSURLSession *)session
+                           progress:(SNTCommandSyncStatus *)progress
+                         daemonConn:(SNTXPCConnection *)daemonConn
+                  completionHandler:(void (^)(BOOL success))handler {
   NSURL *url = [NSURL URLWithString:[@"eventupload/" stringByAppendingString:progress.machineID]
                       relativeToURL:progress.syncBaseURL];
-  [[daemonConn remoteObjectProxy] databaseEventForSHA1:SHA1 withReply:^(SNTStoredEvent *event) {
+  [[daemonConn remoteObjectProxy] databaseEventForSHA256:SHA256 withReply:^(SNTStoredEvent *event) {
       if (!event) {
         handler(YES);
         return;
@@ -77,7 +77,7 @@
   NSMutableArray *eventIds = [NSMutableArray arrayWithCapacity:events.count];
   for (SNTStoredEvent *event in events) {
     NSMutableDictionary *newEvent = [@{
-        @"file_sha1": event.fileSHA1,
+        @"file_sha256": event.fileSHA256,
         @"file_path": [event.filePath stringByDeletingLastPathComponent],
         @"file_name": [event.filePath lastPathComponent],
         @"executing_user": event.executingUser,

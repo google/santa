@@ -71,14 +71,14 @@
   }
 
   SNTBinaryInfo *binInfo = [[SNTBinaryInfo alloc] initWithPath:path];
-  NSString *sha1 = [binInfo SHA1];
+  NSString *sha256 = [binInfo SHA256];
 
   // These will be filled in either in step 2, 3 or 4.
   santa_action_t respondedAction = ACTION_UNSET;
   SNTRule *rule;
 
   // Step 2 - binary rule?
-  rule = [self.ruleTable binaryRuleForSHA1:sha1];
+  rule = [self.ruleTable binaryRuleForSHA256:sha256];
   if (rule) {
     respondedAction = [self actionForRuleState:rule.state];
     [self.driverManager postToKernelAction:respondedAction forVnodeID:vnodeId];
@@ -104,7 +104,7 @@
   // Step 5 - log to database
   if (respondedAction == ACTION_RESPOND_CHECKBW_DENY || !rule) {
     SNTStoredEvent *se = [[SNTStoredEvent alloc] init];
-    se.fileSHA1 = sha1;
+    se.fileSHA256 = sha256;
     se.filePath = path;
     se.fileBundleID = [binInfo bundleIdentifier];
     se.fileBundleName = [binInfo bundleName];
@@ -138,7 +138,7 @@
 
   // Step 6 - log to log file
   [self logDecisionForEventState:[self eventStateForDecision:respondedAction type:rule.type]
-                            sha1:sha1
+                          sha256:sha256
                             path:path
                         leafCert:csInfo.leafCertificate];
 
@@ -149,12 +149,12 @@
     // The event upload is skipped if the full path is equal to that of /usr/sbin/santactl so that
     /// on the off chance that santactl is not whitelisted, we don't get into an infinite loop.
     if (![path isEqual:@"/usr/sbin/santactl"]) {
-      [self initiateEventUploadForSHA1:sha1];
+      [self initiateEventUploadForSHA256:sha256];
     }
 
     SNTNotificationMessage *notMsg = [[SNTNotificationMessage alloc] init];
     notMsg.path = path;
-    notMsg.SHA1 = sha1;
+    notMsg.SHA256 = sha256;
     notMsg.customMessage = rule.customMsg;
     notMsg.certificates = csInfo.certificates;
     [[self.notifierConnection remoteObjectProxy] postBlockNotification:notMsg];
@@ -214,7 +214,7 @@
 }
 
 - (void)logDecisionForEventState:(santa_eventstate_t)eventState
-                            sha1:(NSString *)sha1
+                          sha256:(NSString *)sha256
                             path:(NSString *)path
                         leafCert:(SNTCertificate *)cert {
   NSString *d, *r, *outLog;
@@ -243,10 +243,10 @@
     // Also ensure there are no commas in the cert's common name.
     NSString *printCommonName = [cert.commonName stringByReplacingOccurrencesOfString:@","
                                                                            withString:@"<comma>"];
-    outLog = [NSString stringWithFormat:@"%@,%@,%@,%@,%@,%@", d, r, sha1, printPath,
+    outLog = [NSString stringWithFormat:@"%@,%@,%@,%@,%@,%@", d, r, sha256, printPath,
                  cert.SHA1, printCommonName];
   } else {
-    outLog = [NSString stringWithFormat:@"%@,%@,%@,%@", d, r, sha1, printPath];
+    outLog = [NSString stringWithFormat:@"%@,%@,%@,%@", d, r, sha256, printPath];
   }
 
   // Now make sure none of the log line has a newline in it.
@@ -254,7 +254,7 @@
                                    componentsJoinedByString:@" "]);
 }
 
-- (void)initiateEventUploadForSHA1:(NSString *)sha1 {
+- (void)initiateEventUploadForSHA256:(NSString *)sha256 {
   signal(SIGCHLD, SIG_IGN);
   pid_t child = fork();
   if (child == 0) {
@@ -267,7 +267,7 @@
     }
 
     exit(execl("/usr/sbin/santactl", "/usr/sbin/santactl", "sync",
-               "singleevent", [sha1 UTF8String], NULL));
+               "singleevent", [sha256 UTF8String], NULL));
   }
 }
 

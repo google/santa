@@ -31,8 +31,8 @@
 /// @return Number of certificate rules in the database
 - (long)certificateRuleCount;
 
-/// @return Rule for binary with given SHA-1
-- (SNTRule *)binaryRuleForSHA1:(NSString *)SHA1;
+/// @return Rule for binary with given SHA-256
+- (SNTRule *)binaryRuleForSHA256:(NSString *)SHA256;
 
 /// @return Rule for certificate with given SHA-1
 - (SNTRule *)certificateRuleForSHA1:(NSString *)SHA1;

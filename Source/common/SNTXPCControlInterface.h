@@ -30,7 +30,7 @@
 - (void)databaseRuleAddRules:(NSArray *)rules withReply:(void (^)())reply;
 
 - (void)databaseEventCount:(void (^)(uint64_t count))reply;
-- (void)databaseEventForSHA1:(NSString *)sha1 withReply:(void (^)(SNTStoredEvent *))reply;
+- (void)databaseEventForSHA256:(NSString *)sha256 withReply:(void (^)(SNTStoredEvent *))reply;
 - (void)databaseEventsPending:(void (^)(NSArray *events))reply;
 - (void)databaseRemoveEventsWithIDs:(NSArray *)ids;
 

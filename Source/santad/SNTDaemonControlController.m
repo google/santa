@@ -64,8 +64,8 @@
   reply([[SNTDatabaseController eventTable] eventsPendingCount]);
 }
 
-- (void)databaseEventForSHA1:(NSString *)sha1 withReply:(void (^)(SNTStoredEvent *))reply {
-  reply([[SNTDatabaseController eventTable] latestEventForSHA1:sha1]);
+- (void)databaseEventForSHA256:(NSString *)sha256 withReply:(void (^)(SNTStoredEvent *))reply {
+  reply([[SNTDatabaseController eventTable] latestEventForSHA256:sha256]);
 }
 
 - (void)databaseEventsPending:(void (^)(NSArray *events))reply {

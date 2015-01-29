@@ -18,7 +18,7 @@
 @interface SNTStoredEvent : NSObject<NSSecureCoding>
 
 @property NSNumber *idx;
-@property NSString *fileSHA1;
+@property NSString *fileSHA256;
 @property NSString *filePath;
 @property NSString *fileBundleName;
 @property NSString *fileBundleID;

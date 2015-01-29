@@ -17,8 +17,8 @@
 /// Represents a Rule.
 @interface SNTRule : NSObject<NSSecureCoding>
 
-/// The SHA-1 hash of the object this rule is for
-@property NSString *SHA1;
+/// The hash of the object this rule is for
+@property NSString *shasum;
 
 /// The state of this rule
 @property santa_rulestate_t state;
@@ -30,9 +30,9 @@
 @property NSString *customMsg;
 
 /// Designated initializer.
-- (instancetype)initWithSHA1:(NSString *)SHA1
-                       state:(santa_rulestate_t)state
-                        type:(santa_ruletype_t)type
-                   customMsg:(NSString *)customMsg;
+- (instancetype)initWithShasum:(NSString *)shasum
+                         state:(santa_rulestate_t)state
+                          type:(santa_ruletype_t)type
+                     customMsg:(NSString *)customMsg;
 
 @end

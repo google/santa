@@ -50,7 +50,7 @@
 
 - (void)postBlockNotification:(SNTNotificationMessage *)event {
   // See if this binary is already in the list of pending notifications.
-  NSPredicate *predicate = [NSPredicate predicateWithFormat:@"event.SHA1==%@", event.SHA1];
+  NSPredicate *predicate = [NSPredicate predicateWithFormat:@"event.SHA256==%@", event.SHA256];
   if ([[self.pendingNotifications filteredArrayUsingPredicate:predicate] count]) return;
 
   // Notifications arrive on a background thread but UI updates must happen on the main thread.

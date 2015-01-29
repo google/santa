@@ -28,6 +28,13 @@
   XCTAssertEqual(sut.SHA1.length, 40);
 }
 
+- (void)testSHA256 {
+  SNTBinaryInfo *sut = [[SNTBinaryInfo alloc] initWithPath:@"/sbin/launchd"];
+
+  XCTAssertNotNil(sut.SHA256);
+  XCTAssertEqual(sut.SHA256.length, 64);
+}
+
 - (void)testExecutable {
   SNTBinaryInfo *sut = [[SNTBinaryInfo alloc] initWithPath:@"/sbin/launchd"];
 

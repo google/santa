@@ -19,7 +19,7 @@
 @implementation SNTNotificationMessage
 
 static NSString *const kPathKey = @"path";
-static NSString *const kSHA1Key = @"sha1";
+static NSString *const kSHA256Key = @"sha256";
 static NSString *const kCertificatesKey = @"certificates";
 static NSString *const kCustomMessageKey = @"custommessage";
 
@@ -31,14 +31,14 @@ static NSString *const kCustomMessageKey = @"custommessage";
 
 - (void)encodeWithCoder:(NSCoder *)coder {
   [coder encodeObject:self.path forKey:kPathKey];
-  [coder encodeObject:self.SHA1 forKey:kSHA1Key];
+  [coder encodeObject:self.SHA256 forKey:kSHA256Key];
   [coder encodeObject:self.customMessage forKey:kCustomMessageKey];
   [coder encodeObject:self.certificates forKey:kCertificatesKey];
 }
 
 - (instancetype)initWithCoder:(NSCoder *)decoder {
   _path = [decoder decodeObjectOfClass:[NSString class] forKey:kPathKey];
-  _SHA1 = [decoder decodeObjectOfClass:[NSString class] forKey:kSHA1Key];
+  _SHA256 = [decoder decodeObjectOfClass:[NSString class] forKey:kSHA256Key];
   _customMessage = [decoder decodeObjectOfClass:[NSString class] forKey:kCustomMessageKey];
 
   NSSet *certClasses = [NSSet setWithObjects:[NSArray class], [SNTCertificate class], nil];

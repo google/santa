@@ -76,7 +76,7 @@
 
   SNTRule *rule = [[SNTRule alloc] init];
   rule.state = RULESTATE_WHITELIST;
-  OCMStub([self.mockRuleDatabase binaryRuleForSHA1:@"a"]).andReturn(rule);
+  OCMStub([self.mockRuleDatabase binaryRuleForSHA256:@"a"]).andReturn(rule);
 
   [self.sut validateBinaryWithPath:@"/a/file"
                           userName:@"nobody"
@@ -93,11 +93,11 @@
 
   [[[self.mockBinaryInfo stub] andReturn:self.mockBinaryInfo] alloc];
   (void)[[[self.mockBinaryInfo stub] andReturn:self.mockBinaryInfo] initWithPath:[OCMArg any]];
-  [[[self.mockBinaryInfo stub] andReturn:@"a"] SHA1];
+  [[[self.mockBinaryInfo stub] andReturn:@"a"] SHA256];
 
   SNTRule *rule = [[SNTRule alloc] init];
   rule.state = RULESTATE_BLACKLIST;
-  OCMStub([self.mockRuleDatabase binaryRuleForSHA1:@"a"]).andReturn(rule);
+  OCMStub([self.mockRuleDatabase binaryRuleForSHA256:@"a"]).andReturn(rule);
 
   [self.sut validateBinaryWithPath:@"/a/file"
                           userName:@"nobody"

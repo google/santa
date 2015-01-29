@@ -24,8 +24,8 @@
 /// The path of the binary that was blocked.
 @property(copy) NSString *path;
 
-/// The SHA-1 of the binary that was blocked.
-@property(copy) NSString *SHA1;
+/// The SHA-256 of the binary that was blocked.
+@property(copy) NSString *SHA256;
 
 /// An array of @c SNTCertificate objects representing the certificate chain the binary was signed with.
 @property(copy) NSArray *certificates;

@@ -27,7 +27,7 @@
   if (version < 1) {
     [db executeUpdate:@"CREATE TABLE 'events' ("
         "'idx' INTEGER PRIMARY KEY AUTOINCREMENT,"
-        "'fileSHA1' TEXT NOT NULL,"
+        "'fileSHA256' TEXT NOT NULL,"
         "'filePath' TEXT NOT NULL,"
         "'fileBundleID' TEXT,"
         "'fileBundleVersion' TEXT,"
@@ -45,7 +45,7 @@
         "'loggedInUsers' BLOB,"
         "'currentSessions' BLOB"
         @");"];
-    [db executeUpdate:@"CREATE INDEX event_filesha1 ON events (fileSHA1);"];
+    [db executeUpdate:@"CREATE INDEX event_filesha256 ON events (fileSHA256);"];
 
     newVersion = 1;
   }
@@ -56,13 +56,13 @@
 #pragma mark Loading / Storing
 
 - (void)addStoredEvent:(SNTStoredEvent *)event {
-  if (!event.fileSHA1 ||
+  if (!event.fileSHA256 ||
       !event.filePath ||
       !event.occurrenceDate ||
       !event.executingUser ||
       !event.decision) return;
 
-  NSMutableDictionary *parameters = [@{@"fileSHA1": event.fileSHA1,
+  NSMutableDictionary *parameters = [@{@"fileSHA256": event.fileSHA256,
                                        @"filePath": event.filePath,
                                        @"occurrenceDate": event.occurrenceDate,
                                        @"executingUser": event.executingUser,
@@ -112,7 +112,7 @@
   SNTStoredEvent *event = [[SNTStoredEvent alloc] init];
 
   event.idx = @([rs intForColumn:@"idx"]);
-  event.fileSHA1 = [rs stringForColumn:@"fileSHA1"];
+  event.fileSHA256 = [rs stringForColumn:@"fileSHA256"];
   event.filePath = [rs stringForColumn:@"filePath"];
   event.occurrenceDate = [rs dateForColumn:@"occurrenceDate"];
   event.executingUser = [rs stringForColumn:@"executingUser"];
@@ -163,12 +163,12 @@
   return result;
 }
 
-- (SNTStoredEvent *)latestEventForSHA1:(NSString *)sha1 {
+- (SNTStoredEvent *)latestEventForSHA256:(NSString *)sha256 {
   __block SNTStoredEvent *storedEvent;
 
   [self inDatabase:^(FMDatabase *db) {
-      FMResultSet *rs = [db executeQuery:@"SELECT * FROM events WHERE fileSHA1=? "
-                                         @"ORDER BY occurrenceDate DESC LIMIT 1;", sha1];
+      FMResultSet *rs = [db executeQuery:@"SELECT * FROM events WHERE fileSHA256=? "
+                                         @"ORDER BY occurrenceDate DESC LIMIT 1;", sha256];
 
       if ([rs next]) {
         storedEvent = [self eventFromResultSet:rs];

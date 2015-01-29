@@ -28,6 +28,9 @@
 /// Return SHA-1 hash of this binary
 - (NSString *)SHA1;
 
+/// Return SHA-256 hash of this binary
+- (NSString *)SHA256;
+
 /**
  *  Returns the type of Mach-O file:
  *  Dynamic Library, Kernel Extension, Fat Binary, Thin Binary

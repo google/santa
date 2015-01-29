@@ -32,7 +32,7 @@
 
 /// Retrieve an event from the database.
 /// @return a single SNTStoredEvent
-- (SNTStoredEvent *)latestEventForSHA1:(NSString *)sha1;
+- (SNTStoredEvent *)latestEventForSHA256:(NSString *)sha256;
 
 /// Delete a single event from the database using its index.
 - (void)deleteEventWithIndex:(NSNumber *)index;

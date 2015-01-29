@@ -20,7 +20,7 @@
 
 - (void)encodeWithCoder:(NSCoder *)coder {
   [coder encodeObject:self.idx forKey:@"idx"];
-  [coder encodeObject:self.fileSHA1 forKey:@"fileSHA1"];
+  [coder encodeObject:self.fileSHA256 forKey:@"fileSHA256"];
   [coder encodeObject:self.filePath forKey:@"filePath"];
 
   if (self.fileBundleName) [coder encodeObject:self.fileBundleName forKey:@"fileBundleName"];
@@ -53,7 +53,7 @@
 
 - (instancetype)initWithCoder:(NSCoder *)decoder {
   _idx = [decoder decodeObjectOfClass:[NSNumber class] forKey:@"idx"];
-  _fileSHA1 = [decoder decodeObjectOfClass:[NSString class] forKey:@"fileSHA1"];
+  _fileSHA256 = [decoder decodeObjectOfClass:[NSString class] forKey:@"fileSHA256"];
   _filePath = [decoder decodeObjectOfClass:[NSString class] forKey:@"filePath"];
   _fileBundleName = [decoder decodeObjectOfClass:[NSString class] forKey:@"fileBundleName"];
 
@@ -82,7 +82,7 @@
 - (BOOL)isEqual:(SNTStoredEvent *)other {
   if (other == self) return YES;
   if (![other isKindOfClass:[SNTStoredEvent class]]) return NO;
-  return ([self.fileSHA1 isEqual:other.fileSHA1] &&
+  return ([self.fileSHA256 isEqual:other.fileSHA256] &&
           [self.idx isEqual:other.idx]);
 }
 
@@ -90,13 +90,14 @@
   NSUInteger prime = 31;
   NSUInteger result = 1;
   result = prime * result + [self.idx hash];
-  result = prime * result + [self.fileSHA1 hash];
+  result = prime * result + [self.fileSHA256 hash];
   result = prime * result + [self.filePath hash];
   return result;
 }
 
 - (NSString *)description {
-  return [NSString stringWithFormat:@"SNTStoredEvent[%@] with SHA-1: %@", self.idx, self.fileSHA1];
+  return [NSString stringWithFormat:@"SNTStoredEvent[%@] with SHA-256: %@",
+          self.idx, self.fileSHA256];
 }
 
 @end

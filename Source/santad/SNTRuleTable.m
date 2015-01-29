@@ -26,7 +26,7 @@
 
   if (version < 1) {
     [db executeUpdate:@"CREATE TABLE 'rules' ("
-        @"'sha1' TEXT NOT NULL, "
+        @"'hash' TEXT NOT NULL, "
         @"'state' INTEGER NOT NULL, "
         @"'type' INTEGER NOT NULL, "
         @"'customMsg' TEXT"
@@ -42,9 +42,9 @@
     // is empty. This 'initial database' will then be cleared on the first successful sync.
     NSString *santadSHA = [[[[SNTCodesignChecker alloc] initWithSelf] leafCertificate] SHA1];
     NSString *launchdSHA = [[[[SNTCodesignChecker alloc] initWithPID:1] leafCertificate] SHA1];
-    [db executeUpdate:@"INSERT INTO rules (sha1, state, type) VALUES (?, ?, ?)",
+    [db executeUpdate:@"INSERT INTO rules (hash, state, type) VALUES (?, ?, ?)",
         santadSHA, @(RULESTATE_WHITELIST), @(RULETYPE_CERT)];
-    [db executeUpdate:@"INSERT INTO rules (sha1, state, type) VALUES (?, ?, ?)",
+    [db executeUpdate:@"INSERT INTO rules (hash, state, type) VALUES (?, ?, ?)",
         launchdSHA, @(RULESTATE_WHITELIST), @(RULETYPE_CERT)];
 
     newVersion = 1;
@@ -82,7 +82,7 @@
 - (SNTRule *)ruleFromResultSet:(FMResultSet *)rs {
   SNTRule *rule = [[SNTRule alloc] init];
 
-  rule.SHA1 = [rs stringForColumn:@"sha1"];
+  rule.shasum = [rs stringForColumn:@"hash"];
   rule.type = [rs intForColumn:@"type"];
   rule.state = [rs intForColumn:@"state"];
   rule.customMsg = [rs stringForColumn:@"customMsg"];
@@ -94,7 +94,7 @@
   __block SNTRule *rule;
 
   [self inDatabase:^(FMDatabase *db) {
-      FMResultSet *rs = [db executeQuery:@"SELECT * FROM certrules WHERE sha1=? LIMIT 1", SHA1];
+      FMResultSet *rs = [db executeQuery:@"SELECT * FROM certrules WHERE hash=? LIMIT 1", SHA1];
       if ([rs next]) {
           rule = [self ruleFromResultSet:rs];
       }
@@ -104,11 +104,11 @@
   return rule;
 }
 
-- (SNTRule *)binaryRuleForSHA1:(NSString *)SHA1 {
+- (SNTRule *)binaryRuleForSHA256:(NSString *)SHA1 {
   __block SNTRule *rule;
 
   [self inDatabase:^(FMDatabase *db) {
-      FMResultSet *rs = [db executeQuery:@"SELECT * FROM binrules WHERE sha1=? LIMIT 1", SHA1];
+      FMResultSet *rs = [db executeQuery:@"SELECT * FROM binrules WHERE hash=? LIMIT 1", SHA1];
       if ([rs next]) {
         rule = [self ruleFromResultSet:rs];
       }
@@ -121,17 +121,17 @@
 #pragma mark Adding
 
 - (void)addRule:(SNTRule *)rule {
-  if (!rule.SHA1 || [rule.SHA1 length] == 0) return;
+  if (!rule.shasum || [rule.shasum length] == 0) return;
   if (rule.state == RULESTATE_UNKNOWN) return;
   if (rule.type == RULETYPE_UNKNOWN) return;
 
   [self inTransaction:^(FMDatabase *db, BOOL *rollback) {
       if (rule.state == RULESTATE_REMOVE) {
         [db executeUpdate:@"DELETE FROM rules WHERE SHA1=? AND type=?",
-            rule.SHA1, @(rule.type)];
+            rule.shasum, @(rule.type)];
       } else {
         [db executeUpdate:@"INSERT OR REPLACE INTO rules (sha1, state, type, customMsg) "
-            @"VALUES (?, ?, ?, ?);", rule.SHA1, @(rule.state), @(rule.type), rule.customMsg];
+            @"VALUES (?, ?, ?, ?);", rule.shasum, @(rule.state), @(rule.type), rule.customMsg];
       }
   }];
 }

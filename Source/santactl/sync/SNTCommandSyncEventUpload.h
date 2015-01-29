@@ -22,10 +22,10 @@
                   daemonConn:(SNTXPCConnection *)daemonConn
            completionHandler:(void (^)(BOOL success))handler;
 
-+ (void)uploadSingleEventWithSHA1:(NSString *)SHA1
-                          session:(NSURLSession *)session
-                         progress:(SNTCommandSyncStatus *)progress
-                       daemonConn:(SNTXPCConnection *)daemonConn
-                completionHandler:(void (^)(BOOL success))handler;
++ (void)uploadSingleEventWithSHA256:(NSString *)SHA256
+                            session:(NSURLSession *)session
+                           progress:(SNTCommandSyncStatus *)progress
+                         daemonConn:(SNTXPCConnection *)daemonConn
+                  completionHandler:(void (^)(BOOL success))handler;
 
 @end

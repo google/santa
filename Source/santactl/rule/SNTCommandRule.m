@@ -54,7 +54,7 @@ REGISTER_COMMAND_NAME(@"rule");
           @"--silent-blacklist: add to silent blacklist\n"
           @"--message {message}: custom message\n"
           @"--path {path}: path of binary to add\n"
-          @"--sha1 {sha1}: hash to add\n"
+          @"--sha256 {sha256}: hash to add\n"
           );
 }
 
@@ -91,7 +91,7 @@ REGISTER_COMMAND_NAME(@"rule");
   }
   
   NSString *customMsg = @"";
-  NSString *SHA1 = nil;
+  NSString *SHA256 = nil;
   NSString *filePath = nil;
   
   // parse arguments
@@ -116,12 +116,12 @@ REGISTER_COMMAND_NAME(@"rule");
       }
       
       filePath = [arguments objectAtIndex:i];
-    } else if ([argument compare:@"--sha1" options:NSCaseInsensitiveSearch] == NSOrderedSame) {
+    } else if ([argument compare:@"--sha256" options:NSCaseInsensitiveSearch] == NSOrderedSame) {
       if (++i > ([arguments count])) {
-        LOGI(@"No sha1 specified");
+        LOGI(@"No SHA-256 specified");
       }
       
-      SHA1 = [arguments objectAtIndex:i];
+      SHA256 = [arguments objectAtIndex:i];
     } else {
       LOGI(@"Unknown argument %@", argument);
       exit(1);
@@ -153,21 +153,21 @@ REGISTER_COMMAND_NAME(@"rule");
     }
     
     SNTBinaryInfo *ftd = [[SNTBinaryInfo alloc] initWithPath:filePath];
-    SHA1 = [ftd.SHA1 copy];
-  } else if (SHA1) {
+    SHA256 = [ftd.SHA256 copy];
+  } else if (SHA256) {
   } else {
-    LOGI(@"No SHA1 or binary specified");
+    LOGI(@"No SHA-256 or binary specified");
     exit(1);
   }
   
   SNTRule *newRule = [[SNTRule alloc] init];
-  newRule.SHA1 = SHA1;
+  newRule.shasum = SHA256;
   newRule.state = state;
   newRule.type = RULETYPE_BINARY;
   newRule.customMsg = customMsg;
   
   [[daemonConn remoteObjectProxy] databaseRuleAddRule:newRule withReply:^{
-    LOGI(@"Added rule for SHA1: %@", [newRule SHA1]);
+    LOGI(@"Added rule for SHA-256: %@", [newRule hash]);
     exit(0);
   }];
 
