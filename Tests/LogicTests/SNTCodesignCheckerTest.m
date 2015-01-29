@@ -70,7 +70,7 @@
 - (void)testDescription {
   SNTCodesignChecker *sut = [[SNTCodesignChecker alloc] initWithPID:1];
   XCTAssertEqualObjects([sut description],
-                       @"In-memory binary, signed by Apple Inc., located at: /sbin/launchd");
+                        @"In-memory binary, signed by Apple Inc., located at: /sbin/launchd");
 }
 
 - (void)testLeafCertificate {
