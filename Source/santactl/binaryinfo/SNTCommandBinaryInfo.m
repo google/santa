@@ -41,7 +41,7 @@ REGISTER_COMMAND_NAME(@"binaryinfo");
 
 + (NSString *)longHelpText {
   return (@"The details provided will be the same ones Santa uses to make a decision about binaries"
-          @"This includes SHA-1, code signing information and the type of binary");
+          @"This includes SHA-1, SHA-256, code signing information and the type of binary");
 }
 
 + (void)runWithArguments:(NSArray *)arguments daemonConnection:(SNTXPCConnection *)daemonConn {
@@ -52,21 +52,29 @@ REGISTER_COMMAND_NAME(@"binaryinfo");
     exit(1);
   }
 
+  NSFileManager *fm = [NSFileManager defaultManager];
+
   BOOL directory;
-  if (![[NSFileManager defaultManager] fileExistsAtPath:filePath isDirectory:&directory]) {
+  if (![fm fileExistsAtPath:filePath isDirectory:&directory]) {
     LOGI(@"File does not exist");
     exit(1);
-  }
-
-  if (directory) {
-    LOGI(@"Not a regular file");
-    exit(1);
+  } else if (directory) {
+    // Check if directory is a bundle and if so locate its executable.
+    NSString *infoPath = [filePath stringByAppendingPathComponent:@"Contents/Info.plist"];
+    NSDictionary *d = [NSDictionary dictionaryWithContentsOfFile:infoPath];
+    if (d && d[@"CFBundleExecutable"]) {
+      filePath = [filePath stringByAppendingPathComponent:@"Contents/MacOS"];
+      filePath = [filePath stringByAppendingPathComponent:d[@"CFBundleExecutable"]];
+    } else {
+      LOGI(@"Not a regular file");
+      exit(1);
+    }
   }
 
   // Convert to absolute, standardized path
   filePath = [filePath stringByStandardizingPath];
   if (![filePath isAbsolutePath]) {
-    NSString *cwd = [[NSFileManager defaultManager] currentDirectoryPath];
+    NSString *cwd = [fm currentDirectoryPath];
     filePath = [cwd stringByAppendingPathComponent:filePath];
   }
 
