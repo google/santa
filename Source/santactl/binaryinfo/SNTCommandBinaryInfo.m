@@ -76,6 +76,7 @@ REGISTER_COMMAND_NAME(@"binaryinfo");
   SNTBinaryInfo *ftd = [[SNTBinaryInfo alloc] initWithPath:filePath];
 
   LOGI(@"%-20s: %@", "SHA-1", [ftd SHA1]);
+  LOGI(@"%-20s: %@", "SHA-256", [ftd SHA256]);
 
   NSArray *archs = [ftd architectures];
   if (archs) {
