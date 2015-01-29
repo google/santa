@@ -64,17 +64,17 @@
   return t;
 }
 
-- (NSString *)sha1ForPath:(NSString *)path {
-  unsigned char sha1[CC_SHA1_DIGEST_LENGTH];
+- (NSString *)sha256ForPath:(NSString *)path {
+  unsigned char sha256[CC_SHA256_DIGEST_LENGTH];
   NSData *psData = [NSData dataWithContentsOfFile:path
                                           options:NSDataReadingMappedIfSafe
                                             error:nil];
-  CC_SHA1([psData bytes], (unsigned int)[psData length], sha1);
-  char buf[CC_SHA1_DIGEST_LENGTH * 2 + 1];
-  for (int i = 0; i < CC_SHA1_DIGEST_LENGTH; i++) {
-    snprintf(buf + (2*i), 4, "%02x", (unsigned char)sha1[i]);
+  CC_SHA256([psData bytes], (unsigned int)[psData length], sha256);
+  char buf[CC_SHA256_DIGEST_LENGTH * 2 + 1];
+  for (int i = 0; i < CC_SHA256_DIGEST_LENGTH; i++) {
+    snprintf(buf + (2*i), 4, "%02x", (unsigned char)sha256[i]);
   }
-  buf[CC_SHA1_DIGEST_LENGTH * 2] = '\0';
+  buf[CC_SHA256_DIGEST_LENGTH * 2] = '\0';
   return @(buf);
 }
 
@@ -188,8 +188,8 @@
   }
   TPASS();
 
-  // Fetch the SHA-1 of /bin/ps, as we'll be using that for the cache invalidation test.
-  NSString *psSHA = [self sha1ForPath:@"/bin/ps"];
+  // Fetch the SHA-256 of /bin/ps, as we'll be using that for the cache invalidation test.
+  NSString *psSHA = [self sha256ForPath:@"/bin/ps"];
 
   /// Begin listening for events
   queueMemory = (IODataQueueMemory *)address;
@@ -198,7 +198,7 @@
       dataSize = sizeof(vdata);
       kr = IODataQueueDequeue(queueMemory, &vdata, &dataSize);
       if (kr == kIOReturnSuccess) {
-        if ([[self sha1ForPath:@(vdata.path)] isEqual:psSHA]) {
+        if ([[self sha256ForPath:@(vdata.path)] isEqual:psSHA]) {
           [self postToKernelAction:ACTION_RESPOND_CHECKBW_DENY forVnodeID:vdata.vnode_id];
         } else if (strncmp("/bin/mv", vdata.path, strlen("/bin/mv")) == 0) {
           [self postToKernelAction:ACTION_RESPOND_CHECKBW_DENY forVnodeID:vdata.vnode_id];
@@ -234,13 +234,6 @@
 }
 
 #pragma mark - Functional Tests
-
-/// Tests that the kernel sends a valid SHA-1 with an execution request
-- (void)receivesSHA1Tests {
-  NSTask *ln = [self taskWithPath:@"/bin/ln"];
-  [ln launch];
-  [ln waitUntilExit];
-}
 
 /// Tests that blocking works correctly
 - (void)receiveAndBlockTests {
@@ -398,7 +391,6 @@
   sleep(1.0);
   printf("\n-> Functional tests:\033[m\n");
 
-  [self receivesSHA1Tests];
   [self receiveAndBlockTests];
   [self receiveAndCacheTests];
   [self invalidatesCacheTests];
