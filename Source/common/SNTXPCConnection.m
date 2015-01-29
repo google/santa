@@ -115,7 +115,7 @@
           [self invokeRejectedHandler];
           [self.currentConnection invalidate];
           self.currentConnection = nil;
-          verificationComplete = NO;
+          verificationComplete = YES;
         }
     }];
 
