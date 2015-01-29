@@ -189,15 +189,15 @@
 
 #pragma mark Deleting
 
-- (void)deleteEventWithIndex:(NSNumber *)index {
+- (void)deleteEventWithId:(NSNumber *)index {
   [self inDatabase:^(FMDatabase *db) {
       [db executeUpdate:@"DELETE FROM events WHERE idx=?", index];
   }];
 }
 
-- (void)deleteEventsWithIndexes:(NSArray *)indexes {
+- (void)deleteEventsWithIds:(NSArray *)indexes {
   for (NSNumber *index in indexes) {
-    [self deleteEventWithIndex:index];
+    [self deleteEventWithId:index];
   }
 }
 
