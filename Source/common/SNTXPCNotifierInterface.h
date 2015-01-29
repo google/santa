@@ -20,11 +20,15 @@
 
 @interface SNTXPCNotifierInterface : NSObject
 
-/// Returns the MachService ID for this service.
+///
+///  @return the MachService ID for this service.
+///
 + (NSString *)serviceId;
 
-/// Returns an initialized NSXPCInterface for the SNTNotifierXPC protocol.
-/// Ensures any methods that accept custom classes as arguments are set-up before returning
+///
+///  @return an initialized NSXPCInterface for the SNTNotifierXPC protocol.
+///  Ensures any methods that accept custom classes as arguments are set-up before returning
+///
 + (NSXPCInterface *)notifierInterface;
 
 @end

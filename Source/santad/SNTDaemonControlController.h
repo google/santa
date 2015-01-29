@@ -16,7 +16,9 @@
 
 @class SNTDriverManager;
 
-/// SNTDaemonControlController handles all of the RPCs from santactl
+///
+///  SNTDaemonControlController handles all of the RPCs from santactl
+///
 @interface SNTDaemonControlController : NSObject<SNTDaemonControlXPC>
 
 @property SNTDriverManager *driverManager;

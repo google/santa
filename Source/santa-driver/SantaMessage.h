@@ -19,8 +19,10 @@
 
 #include "SNTKernelCommon.h"
 
-/// An OSObject wrapper around a @c santa_action_t and a time.
-/// Only OSObject subclasses can be inserted into an OSDictionary.
+///
+///  An OSObject wrapper around a @c santa_action_t and a time.
+///  Only OSObject subclasses can be inserted into an OSDictionary.
+///
 class SantaMessage : public OSObject {
   OSDeclareDefaultStructors(SantaMessage)
 

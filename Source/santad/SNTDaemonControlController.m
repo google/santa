@@ -73,7 +73,7 @@
 }
 
 - (void)databaseRemoveEventsWithIDs:(NSArray *)ids {
-  [[SNTDatabaseController eventTable] deleteEventsWithIndexes:ids];
+  [[SNTDatabaseController eventTable] deleteEventsWithIds:ids];
 }
 
 #pragma mark Misc

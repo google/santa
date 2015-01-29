@@ -12,7 +12,7 @@
 ///    See the License for the specific language governing permissions and
 ///    limitations under the License.
 
-// These imports are in the header rather than implementation to keep them in one place, saving
+// This is imported in the header rather than implementation to saves
 // classes that use this one from also having to import FMDB stuff.
 #import <FMDB/FMDB.h>
 
@@ -20,12 +20,16 @@
 @class SNTEventTable;
 @class SNTRuleTable;
 
-/// Provides methods to get an instance of one of the database table controllers with a
-/// pre-configured database queue.
+///
+///  Provides methods to get an instance of one of the database table controllers with a
+///  pre-configured database queue.
+///
 @interface SNTDatabaseController : NSObject
 
-/// Returns an instance of the respective table class initialized with an appropriate database queue
-/// Will initialize only once, regardless of calling thread.
+///
+///  Returns an instance of the respective table class initialized with an appropriate
+///  database queue. Will initialize only once, regardless of calling thread.
+///
 + (SNTEventTable *)eventTable;
 + (SNTRuleTable *)ruleTable;
 

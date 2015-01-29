@@ -14,7 +14,9 @@
 
 #include "SNTCommonEnums.h"
 
-/// Represents an event stored in the database.
+///
+///  Represents an event stored in the database.
+///
 @interface SNTStoredEvent : NSObject<NSSecureCoding>
 
 @property NSNumber *idx;

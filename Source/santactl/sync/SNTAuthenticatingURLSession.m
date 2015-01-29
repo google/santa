@@ -109,18 +109,20 @@
 
 #pragma mark Private Helpers for URLSession:didReceiveChallenge:completionHandler:
 
-/// Handles the process of locating a valid client certificate for authentication.
-/// Operates in one of four modes, depending on the configuration in config.plist
 ///
-/// Mode 1: if syncClientAuthCertificateFile is set, use the identity in the pkcs file
-/// Mode 2: if syncClientAuthCertificateCn is set, look for an identity in the keychain with a
-///         matching common name and return it.
-/// Mode 3: if syncClientAuthCertificateIssuer is set, look for an identity in the keychain with a
-///         matching issuer common name and return it.
-/// Mode 4: use the list of issuer details sent down by the server to find an identity in the
-///         keychain.
+///  Handles the process of locating a valid client certificate for authentication.
+///  Operates in one of four modes, depending on the configuration in config.plist
 ///
-/// If a valid identity cannot be found, returns nil.
+///  Mode 1: if syncClientAuthCertificateFile is set, use the identity in the pkcs file
+///  Mode 2: if syncClientAuthCertificateCn is set, look for an identity in the keychain with a
+///          matching common name and return it.
+///  Mode 3: if syncClientAuthCertificateIssuer is set, look for an identity in the keychain with a
+///          matching issuer common name and return it.
+///  Mode 4: use the list of issuer details sent down by the server to find an identity in the
+///          keychain.
+///
+///  If a valid identity cannot be found, returns nil.
+///
 - (NSURLCredential *)clientCredentialForProtectionSpace:(NSURLProtectionSpace *)protectionSpace {
   __block OSStatus err = errSecSuccess;
   __block SecIdentityRef foundIdentity;
@@ -223,16 +225,18 @@
   }
 }
 
-/// Handles the process of evaluating the server's certificate chain.
-/// Operates in one of three modes, depending on the configuration in config.plist
 ///
-/// Mode 1: if syncServerAuthRootsData is set, evaluates the server's certificate chain contains
-///         one of the certificates in the PEM data in the config plist.
-/// Mode 2: if syncServerAuthRootsFile is set, evaluates the server's certificate chain contains
-///         one of the certificates in the PEM data in the file specified.
-/// Mode 3: evaluates the server's certificate chain is trusted by the keychain.
+///  Handles the process of evaluating the server's certificate chain.
+///  Operates in one of three modes, depending on the configuration in config.plist
 ///
-/// If the server's certificate chain does not evaluate for any reason, returns nil.
+///  Mode 1: if syncServerAuthRootsData is set, evaluates the server's certificate chain contains
+///          one of the certificates in the PEM data in the config plist.
+///  Mode 2: if syncServerAuthRootsFile is set, evaluates the server's certificate chain contains
+///          one of the certificates in the PEM data in the file specified.
+///  Mode 3: evaluates the server's certificate chain is trusted by the keychain.
+///
+///  If the server's certificate chain does not evaluate for any reason, returns nil.
+///
 - (NSURLCredential *)serverCredentialForProtectionSpace:(NSURLProtectionSpace *)protectionSpace {
   SecTrustRef serverTrust = protectionSpace.serverTrust;
   if (serverTrust == NULL) {

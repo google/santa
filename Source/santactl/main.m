@@ -14,13 +14,13 @@
 
 #import "SNTCommandController.h"
 
-/**
-*  santactl is a command-line utility for managing Santa.
-*  As it can be used for a number of distinct operations, its operation is split into different
-*  'commands' which are expected to be the first argument to the binary. The main function below
-*  is simply responsible for either passing control to the specified command or printing a useful
-*  usage string.
-**/
+///
+///  santactl is a command-line utility for managing Santa.
+///  As it can be used for a number of distinct operations, its operation is split into different
+///  'commands' which are expected to be the first argument to the binary. The main function below
+///  is simply responsible for either passing control to the specified command or printing a useful
+///  usage string.
+///
 
 void print_usage() {
   printf("Usage: santactl:\n%s\n", [[SNTCommandController usage] UTF8String]);

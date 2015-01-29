@@ -86,12 +86,13 @@ const SecCSFlags kSigningFlags = kSecCSDefaultFlags;
     if (!certs) return nil;
 
     // Wrap SecCertificateRef objects in SNTCertificate and put in a new NSArray
-    _certificates = [[NSMutableArray alloc] initWithCapacity:certs.count];
+    NSMutableArray *mutableCerts = [[NSMutableArray alloc] initWithCapacity:certs.count];
     for (int i = 0; i < certs.count; ++i) {
       SecCertificateRef certRef = (__bridge SecCertificateRef)certs[i];
       SNTCertificate *newCert = [[SNTCertificate alloc] initWithSecCertificateRef:certRef];
-      [_certificates addObject:newCert];
+      [mutableCerts addObject:newCert];
     }
+    _certificates = [mutableCerts copy];
 
     _codeRef = codeRef;
     CFRetain(_codeRef);

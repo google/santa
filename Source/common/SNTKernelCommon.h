@@ -12,7 +12,9 @@
 ///    See the License for the specific language governing permissions and
 ///    limitations under the License.
 
+///
 /// Common defines between kernel <-> userspace
+///
 
 #ifndef SANTA__COMMON__KERNELCOMMON_H
 #define SANTA__COMMON__KERNELCOMMON_H

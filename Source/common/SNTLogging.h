@@ -12,7 +12,9 @@
 ///    See the License for the specific language governing permissions and
 ///    limitations under the License.
 
+///
 /// Logging definitions, for both kernel and user space.
+///
 
 #ifndef SANTA__COMMON__LOGGING_H
 #define SANTA__COMMON__LOGGING_H
@@ -35,14 +37,14 @@
 #define LOG_LEVEL_INFO    3
 #define LOG_LEVEL_DEBUG   4
 
-/**
- *  Logging function.
- *
- *  @param level one of the levels defined above
- *  @param error destination a FILE, generally should be stdout or stderr
- *  @param format the printf style format string
- *  @param ... the arguments to format.
- */
+///
+///  Logging function.
+///
+///  @param level one of the levels defined above
+///  @param destination a FILE, generally should be stdout or stderr
+///  @param format the printf style format string
+///  @param ... the arguments to format.
+///
 void logMessage(int level, FILE *destination, NSString *format, ...);
 
 /// Simple logging macros

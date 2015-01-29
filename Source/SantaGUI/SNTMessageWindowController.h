@@ -18,7 +18,9 @@
 - (void)windowDidClose;
 @end
 
-/// Controller for a single message window.
+///
+///  Controller for a single message window.
+///
 @interface SNTMessageWindowController : NSWindowController
 
 - (instancetype)initWithEvent:(SNTNotificationMessage *)event;
@@ -27,16 +29,24 @@
 - (IBAction)closeWindow:(id)sender;
 - (IBAction)showCertInfo:(id)sender;
 
-/// The execution event that this window is for
+///
+///  The execution event that this window is for
+///
 @property SNTNotificationMessage *event;
 
-/// The delegate to inform when the notification is dismissed
+///
+///  The delegate to inform when the notification is dismissed
+///
 @property(weak) id<SNTMessageWindowControllerDelegate> delegate;
 
-/// A 'friendly' string representing the certificate information
+///
+///  A 'friendly' string representing the certificate information
+///
 @property(readonly) IBOutlet NSString *binaryCert;
 
-/// An optional message to display with this block.
+///
+///  An optional message to display with this block.
+///
 @property(readonly) IBOutlet NSAttributedString *attributedCustomMessage;
 
 @end

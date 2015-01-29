@@ -17,10 +17,14 @@
 #import "SNTNotificationMessage.h"
 
 @interface SNTNotificationManager ()
-/// The currently displayed notification
+///
+///  The currently displayed notification
+///
 @property SNTMessageWindowController *currentWindowController;
 
-/// The queue of pending notifications
+///
+///  The queue of pending notifications
+///
 @property(readonly) NSMutableArray *pendingNotifications;
 @end
 

@@ -19,28 +19,44 @@
 @class SNTRule;
 @class SNTNotificationMessage;
 
-/// Responsible for managing the cache tables in the Santa database (certificates & binaries)
+///
+///  Responsible for managing the cache tables in the Santa database (certificates & binaries)
+///
 @interface SNTRuleTable : SNTDatabaseTable
 
-/// @return Number of rules in the database
+///
+///  @return Number of rules in the database
+///
 - (long)ruleCount;
 
-/// @return Number of binary rules in the database
+///
+///  @return Number of binary rules in the database
+///
 - (long)binaryRuleCount;
 
-/// @return Number of certificate rules in the database
+///
+///  @return Number of certificate rules in the database
+///
 - (long)certificateRuleCount;
 
-/// @return Rule for binary with given SHA-256
+///
+///  @return Rule for binary with given SHA-256
+///
 - (SNTRule *)binaryRuleForSHA256:(NSString *)SHA256;
 
-/// @return Rule for certificate with given SHA-1
+///
+///  @return Rule for certificate with given SHA-1
+///
 - (SNTRule *)certificateRuleForSHA1:(NSString *)SHA1;
 
-/// Add a single rule to the database
+///
+///  Add a single rule to the database
+///
 - (void)addRule:(SNTRule *)rule;
 
-/// Add an array of rules to the database
+///
+///  Add an array of rules to the database
+///
 - (void)addRules:(NSArray *)rules;
 
 @end

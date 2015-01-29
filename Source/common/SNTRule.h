@@ -14,22 +14,34 @@
 
 #include "SNTCommonEnums.h"
 
-/// Represents a Rule.
+///
+///  Represents a Rule.
+///
 @interface SNTRule : NSObject<NSSecureCoding>
 
-/// The hash of the object this rule is for
+///
+///  The hash of the object this rule is for
+///
 @property NSString *shasum;
 
-/// The state of this rule
+///
+///  The state of this rule
+///
 @property santa_rulestate_t state;
 
-/// The type of object this rule is for (binary, certificate)
+///
+///  The type of object this rule is for (binary, certificate)
+///
 @property santa_ruletype_t type;
 
-/// A custom message that will be displayed if this rule blocks a binary from executing
+///
+///  A custom message that will be displayed if this rule blocks a binary from executing
+///
 @property NSString *customMsg;
 
-/// Designated initializer.
+///
+///  Designated initializer.
+///
 - (instancetype)initWithShasum:(NSString *)shasum
                          state:(santa_rulestate_t)state
                           type:(santa_ruletype_t)type

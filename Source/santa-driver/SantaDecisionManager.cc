@@ -329,7 +329,7 @@ extern "C" int process_scope_callback(
   SantaDecisionManager *sdm = OSDynamicCast(
       SantaDecisionManager, reinterpret_cast<OSObject *>(idata));
 
-  // Note: this prevents a debugger from attaching to an existing santad
+  // NOTE: this prevents a debugger from attaching to an existing santad
   // process but doesn't prevent starting santad under a debugger. This check
   // is only here to try and prevent the user from deadlocking their machine
   // by attaching a debugger, so if they work around it and end up deadlocking,

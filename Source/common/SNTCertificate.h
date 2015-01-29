@@ -12,78 +12,100 @@
 ///    See the License for the specific language governing permissions and
 ///    limitations under the License.
 
-/**
- *  SNTCertificate wraps a @c SecCertificateRef to provide Objective-C accessors to
- *  commonly used certificate data. Accessors cache data for repeated access.
- */
+///
+///  SNTCertificate wraps a @c SecCertificateRef to provide Objective-C accessors to
+///  commonly used certificate data. Accessors cache data for repeated access.
+///
 @interface SNTCertificate : NSObject<NSSecureCoding>
 
-/**
- *  Initialize a SNTCertificate object with a valid SecCertificateRef. Designated initializer.
- *
- *  @param certRef valid SecCertificateRef, which will be retained.
- */
+///
+///  Initialize a SNTCertificate object with a valid SecCertificateRef. Designated initializer.
+///
+///  @param certRef valid SecCertificateRef, which will be retained.
+///
 - (instancetype)initWithSecCertificateRef:(SecCertificateRef)certRef;
 
-/**
- *  Initialize a SNTCertificate object with certificate data in DER format.
- *
- *  @param certData DER-encoded certificate data.
- *  @return initialized SNTCertificate or nil if certData is not a DER-encoded certificate.
- */
+///
+///  Initialize a SNTCertificate object with certificate data in DER format.
+///
+///  @param certData DER-encoded certificate data.
+///  @return initialized SNTCertificate or nil if certData is not a DER-encoded certificate.
+///
 - (instancetype)initWithCertificateDataDER:(NSData *)certData;
 
-/**
- *  Initialize a SNTCertificate object with certificate data in PEM format.
- *  If multiple PEM certificates exist within the string, the first is used.
- *
- *  @param certData PEM-encoded certificate data.
- *  @return initialized SNTCertifcate or nil if certData is not a PEM-encoded certificate.
- */
+///
+///  Initialize a SNTCertificate object with certificate data in PEM format.
+///  If multiple PEM certificates exist within the string, the first is used.
+///
+///  @param certData PEM-encoded certificate data.
+///  @return initialized SNTCertifcate or nil if certData is not a PEM-encoded certificate.
+///
 - (instancetype)initWithCertificateDataPEM:(NSString *)certData;
 
-/**
- *  Returns an array of SNTCertificate's for all of the certificates in |pemData|.
- *
- *  @param pemData PEM-encoded certificates.
- *  @return array of SNTCertificate objects.
- */
+///
+///  Returns an array of SNTCertificate's for all of the certificates in @c pemData.
+///
+///  @param pemData PEM-encoded certificates.
+///  @return array of SNTCertificate objects.
+///
 + (NSArray *)certificatesFromPEM:(NSString *)pemData;
 
-/// Access the underlying certificate ref.
+///
+///  Access the underlying certificate ref.
+///
 @property(readonly) SecCertificateRef certRef;
 
-/// SHA-1 hash of the certificate data.
+///
+///  SHA-1 hash of the certificate data.
+///
 @property(readonly) NSString *SHA1;
 
-/// SHA-256 hash of the certificate data.
+///
+///  SHA-256 hash of the certificate data.
+///
 @property(readonly) NSString *SHA256;
 
-/// Certificate data.
+///
+///  Certificate data.
+///
 @property(readonly) NSData *certData;
 
-/// Common Name e.g: "Software Signing"
+///
+///  Common Name e.g: "Software Signing"
+///
 @property(readonly) NSString *commonName;
 
-/// Country Name e.g: "US"
+///
+///  Country Name e.g: "US"
+///
 @property(readonly) NSString *countryName;
 
-/// Organizational Name e.g: "Apple Inc."
+///
+///  Organizational Name e.g: "Apple Inc."
+///
 @property(readonly) NSString *orgName;
 
-/// Organizational Unit Name e.g: "Apple Software"
+///
+///  Organizational Unit Name e.g: "Apple Software"
+///
 @property(readonly) NSString *orgUnit;
 
-/// Issuer details, same fields as above.
+///
+///  Issuer details, same fields as above.
+///
 @property(readonly) NSString *issuerCommonName;
 @property(readonly) NSString *issuerCountryName;
 @property(readonly) NSString *issuerOrgName;
 @property(readonly) NSString *issuerOrgUnit;
 
-/// Validity Not Before
+///
+///  Validity Not Before
+///
 @property(readonly) NSDate *validFrom;
 
-/// Validity Not After
+///
+///  Validity Not After
+///
 @property(readonly) NSDate *validUntil;
 
 @end

@@ -17,27 +17,43 @@
 @class SNTNotificationMessage;
 @class SNTStoredEvent;
 
+///
 /// Responsible for managing the event table in the Santa database.
+///
 @interface SNTEventTable : SNTDatabaseTable
 
-/// Add event to the database
+///
+///  Add event to the database
+///  @param event the event to store
+///
 - (void)addStoredEvent:(SNTStoredEvent *)event;
 
+///
 /// Number of events in database.
+///
 - (int)eventsPendingCount;
 
-/// Retrieves all events in the database
-/// @return NSArray of SNTStoredEvent
+///
+///  Retrieves all events in the database
+///  @return NSArray of SNTStoredEvent
+///
 - (NSArray *)pendingEvents;
 
-/// Retrieve an event from the database.
-/// @return a single SNTStoredEvent
+///
+///  Retrieve an event from the database.
+///  @return a single SNTStoredEvent
+///
 - (SNTStoredEvent *)latestEventForSHA256:(NSString *)sha256;
 
-/// Delete a single event from the database using its index.
-- (void)deleteEventWithIndex:(NSNumber *)index;
+///
+///  Delete a single event from the database using its index.
+///
+- (void)deleteEventWithId:(NSNumber *)id;
 
-/// Delete multiple events from the database with an array of indexes.
-- (void)deleteEventsWithIndexes:(NSArray *)indexes;
+///
+///  Delete multiple events from the database with an array of IDs
+///  @param indexes an array of event IDs
+///
+- (void)deleteEventsWithIds:(NSArray *)ids;
 
 @end

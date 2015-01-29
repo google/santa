@@ -34,7 +34,6 @@ static NSString * const kClientAuthCertificateCNKey = @"ClientAuthCertificateCN"
 static NSString * const kClientAuthCertificateIssuerKey = @"ClientAuthCertificateIssuerCN";
 static NSString * const kServerAuthRootsDataKey = @"ServerAuthRootsData";
 static NSString * const kServerAuthRootsFileKey = @"ServerAuthRootsFile";
-static NSString * const kDebugLoggingKey = @"DebugLogging";
 static NSString * const kClientModeKey = @"ClientMode";
 
 static NSString * const kMachineOwnerKey = @"MachineOwner";
@@ -124,10 +123,6 @@ static NSString * const kMachineIDPlistKeyKey = @"MachineIDKey";
   return @"";
 }
 
-- (BOOL)debugLogging {
-  return [self.configData[kDebugLoggingKey] boolValue];
-}
-
 - (santa_clientmode_t)clientMode {
   int cm = [self.configData[kClientModeKey] intValue];
   if (cm > CLIENTMODE_UNKNOWN && cm < CLIENTMODE_MAX) {
@@ -148,20 +143,20 @@ static NSString * const kMachineIDPlistKeyKey = @"MachineIDKey";
 
 #pragma mark Private
 
-/**
- *  Saves the current @c _configData to disk.
- */
+///
+///  Saves the current @c _configData to disk.
+///
 - (void)saveConfigToDisk {
   [self.configData writeToFile:kConfigFilePath atomically:YES];
 }
 
-/**
- *  Populate @c _configData, using the config file on disk if possible, otherwise an empty
- *  mutable dictionary.
- *
- *  If the config file's permissions are not `0644`, will attempt to set them
- *  but will fail silently if this cannot be done.
- */
+///
+///  Populate @c self.configData, using the config file on disk if possible,
+///  otherwise an empty mutable dictionary.
+///
+///  If the config file's permissions are not @c 0644, will attempt to set them
+///  but will fail silently if this cannot be done.
+///
 - (void)reloadConfigData {
   NSFileManager *fm = [NSFileManager defaultManager];
 

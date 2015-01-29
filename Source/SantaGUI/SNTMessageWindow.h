@@ -12,13 +12,19 @@
 ///    See the License for the specific language governing permissions and
 ///    limitations under the License.
 
-/// An NSPanel that can become key/main and can fade in/out.
+///
+///  An NSPanel that can become key/main and can fade in/out.
+///
 @interface SNTMessageWindow : NSPanel
 
-/// Fade the window in
+///
+///  Fade the window in
+///
 - (IBAction)fadeIn:(id)sender;
 
-/// Fade the window out
+///
+///  Fade the window out
+///
 - (IBAction)fadeOut:(id)sender;
 
 @end

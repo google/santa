@@ -16,20 +16,30 @@
 
 @class SNTNotificationMessage;
 
-/// Manages the connection between daemon and kernel.
+///
+///  Manages the connection between daemon and kernel.
+///
 @interface SNTDriverManager : NSObject
 
-/// Handles requests from the kernel using the given block.
-/// @note Loops indefinitely unless there is an error trying to read data from the data queue.
+///
+///  Handles requests from the kernel using the given block.
+///  @note Loops indefinitely unless there is an error trying to read data from the data queue.
+///
 - (void)listenWithBlock:(void (^)(santa_message_t message))callback;
 
-/// Sends a response to a query back to the kernel.
+///
+///  Sends a response to a query back to the kernel.
+///
 - (kern_return_t)postToKernelAction:(santa_action_t)action forVnodeID:(uint64_t)vnodeId;
 
-/// Get the number of binaries in the kernel's cache.
+///
+///  Get the number of binaries in the kernel's cache.
+///
 - (uint64_t)cacheCount;
 
-/// Flush the kernel's binary cache.
+///
+///  Flush the kernel's binary cache.
+///
 - (BOOL)flushCache;
 
 @end

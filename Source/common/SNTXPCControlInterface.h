@@ -17,14 +17,20 @@
 @class SNTRule;
 @class SNTStoredEvent;
 
-/// Protocol implemented by santad and utilized by santactl
+///
+///  Protocol implemented by santad and utilized by santactl
+///
 @protocol SNTDaemonControlXPC
 
-/// Kernel ops
+///
+///  Kernel ops
+///
 - (void)cacheCount:(void (^)(uint64_t))reply;
 - (void)flushCache:(void (^)(BOOL))reply;
 
-/// Database ops
+///
+///  Database ops
+///
 - (void)databaseRuleCounts:(void (^)(uint64_t binary, uint64_t certificate))reply;
 - (void)databaseRuleAddRule:(SNTRule *)rule withReply:(void (^)())reply;
 - (void)databaseRuleAddRules:(NSArray *)rules withReply:(void (^)())reply;
@@ -34,7 +40,9 @@
 - (void)databaseEventsPending:(void (^)(NSArray *events))reply;
 - (void)databaseRemoveEventsWithIDs:(NSArray *)ids;
 
-/// Misc ops
+///
+///  Misc ops
+///
 - (void)clientMode:(void (^)(santa_clientmode_t))reply;
 - (void)setClientMode:(santa_clientmode_t)mode withReply:(void (^)())reply;
 
@@ -42,11 +50,15 @@
 
 @interface SNTXPCControlInterface : NSObject
 
-/// Returns the MachService ID for this service.
+///
+///  Returns the MachService ID for this service.
+///
 + (NSString *)serviceId;
 
-/// Returns an initialized NSXPCInterface for the SNTDaemonControlXPC protocol.
-/// Ensures any methods that accept custom classes as arguments are set-up before returning
+///
+///  Returns an initialized NSXPCInterface for the SNTDaemonControlXPC protocol.
+///  Ensures any methods that accept custom classes as arguments are set-up before returning
+///
 + (NSXPCInterface *)controlInterface;
 
 @end

@@ -12,17 +12,39 @@
 ///    See the License for the specific language governing permissions and
 ///    limitations under the License.
 
-/// Simple class for fetching system information
+///
+///  Simple class for fetching system information
+///
 @interface SNTSystemInfo : NSObject
 
+///
+///  @return System serial number
+///
 + (NSString *)serialNumber;
 
+///
+///  @return System hardware UUID
+///
 + (NSString *)hardwareUUID;
 
+///
+///  @return OS Version, e.g.: 10.10.2
+///
 + (NSString *)osVersion;
+
+///
+///  @return OS Build, e.g.: 14C109
+///
 + (NSString *)osBuild;
 
+///
+///  @return Short hostname
+///
 + (NSString *)shortHostname;
+
+///
+///  @return Long hostname
+///
 + (NSString *)longHostname;
 
 @end

@@ -12,10 +12,14 @@
 ///    See the License for the specific language governing permissions and
 ///    limitations under the License.
 
-/// The main controller class for santad
+///
+///  The main controller class for santad
+///
 @interface SNTApplication : NSObject
 
-/// Begins fielding requests from the driver
+///
+///  Begins fielding requests from the driver
+///
 - (void)run;
 
 @end

@@ -15,13 +15,13 @@
 #ifndef SANTA__COMMON__COMMONENUMS_H
 #define SANTA__COMMON__COMMONENUMS_H
 
-/**
- *  These enums are used in various places throughout the Santa client code.
- *  The integer values are also stored in the database and so shouldn't be changed.
- *
- *  Each enum contains an _UNKNOWN and a _MAX value, which the valid values must be between so that
- *  the code can easily verify valid values.
- */
+///
+///  These enums are used in various places throughout the Santa client code.
+///  The integer values are also stored in the database and so shouldn't be changed.
+///
+///  Each enum contains an _UNKNOWN and a _MAX value, which the valid values must be between
+///  so that the code can easily verify valid values.
+///
 
 typedef enum {
   RULETYPE_UNKNOWN,

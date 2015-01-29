@@ -12,23 +12,29 @@
 ///    See the License for the specific language governing permissions and
 ///    limitations under the License.
 
-// These imports are in the header rather than implementation to keep them in one place, saving
+// This is imported in the header rather than implementation to saves
 // classes that use this one from also having to import FMDB stuff.
 #import <FMDB/FMDB.h>
 
 @interface SNTDatabaseTable : NSObject
 
-/// Designated initializer.
+///
+///  Designated initializer.
+///
 - (instancetype)initWithDatabaseQueue:(FMDatabaseQueue *)db;
 
-/// Subclasses should override this method to apply schema updates. The passed in version nubmer
-/// is the current version of the table. The return value is the new version of the table. If
-/// updating the table failed, return a negative number. If there was no update to apply, return 0.
+///
+///  Subclasses should override this method to apply schema updates. The passed in version nubmer
+///  is the current version of the table. The return value is the new version of the table. If
+///  updating the table failed, return a negative number. If there was no update to apply, return 0.
+///
 - (int)initializeDatabase:(FMDatabase *)db fromVersion:(int)version;
 
-/// Wrappers around the respective FMDatabaseQueue methods. If the object we initialized with was
-/// a database queue, these just pass through. If the object we initialized with was an FMDatabase
-/// we just call the block with the database, potentially wrapping in a transaction.
+///
+///  Wrappers around the respective FMDatabaseQueue methods. If the object we initialized with was
+///  a database queue, these just pass through. If the object we initialized with was an FMDatabase
+///  we just call the block with the database, potentially wrapping in a transaction.
+///
 - (void)inDatabase:(void (^)(FMDatabase *db))block;
 - (void)inTransaction:(void (^)(FMDatabase *db, BOOL *rollback))block;
 

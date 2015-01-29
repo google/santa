@@ -18,7 +18,9 @@
 #import <Security/Security.h>
 
 @interface SNTCertificate ()
-/// A container for cached property values
+///
+///  A container for cached property values
+///
 @property NSMutableDictionary *memoizedData;
 @end
 
@@ -42,7 +44,7 @@ static NSString *const kCertDataKey = @"certData";
 
   if (cert) {
     // Despite the header file claiming that SecCertificateCreateWithData will return NULL if
-    // |certData| doesn't contain a valid DER-encoded X509 cert, this isn't always true.
+    // @c certData doesn't contain a valid DER-encoded X509 cert, this isn't always true.
     // radar://problem/16124651
     // To workaround, check that the certificate serial number can be retrieved.
     NSData *ser = CFBridgingRelease(SecCertificateCopySerialNumber(cert, NULL));
@@ -164,16 +166,17 @@ static NSString *const kCertDataKey = @"certData";
 
 #pragma mark Private Accessors
 
+///
 /// For a given selector, caches the value that selector would return on subsequent invocations,
 /// using the provided block to get the value on the first invocation.
 /// Assumes the selector's value will never change.
+///
 - (id)memoizedSelector:(SEL)selector forBlock:(id (^)(void))block {
   NSString *selName = NSStringFromSelector(selector);
 
-  static dispatch_once_t onceToken;
-  dispatch_once(&onceToken, ^{
+  if (!self.memoizedData) {
     self.memoizedData = [NSMutableDictionary dictionary];
-  });
+  }
 
   if (!self.memoizedData[selName]) {
     id val = block();
@@ -206,10 +209,13 @@ static NSString *const kCertDataKey = @"certData";
   }];
 }
 
-/// Retrieve the value with the specified label from the X509 dictionary provided
-/// @param desiredLabel The label you want, e.g: kSecOIDOrganizationName.
-/// @param dict The dictionary to look in (Subject or Issuer)
-/// @returns An @c NSString, the value for the specified label.
+///
+///  Retrieve the value with the specified label from the X509 dictionary provided
+///
+///  @param desiredLabel The label you want, e.g: kSecOIDOrganizationName.
+///  @param dict The dictionary to look in (Subject or Issuer)
+///  @return An @c NSString, the value for the specified label.
+///
 - (NSString *)x509ValueForLabel:(NSString *)desiredLabel fromDictionary:(NSDictionary *)dict {
   @try {
     NSArray *valArray = dict[(__bridge NSString *)kSecPropertyKeyValue];
@@ -227,10 +233,13 @@ static NSString *const kCertDataKey = @"certData";
   }
 }
 
+///
 /// Retrieve the specified date from the certificate's values and convert from a reference date
 /// to an NSDate object.
+///
 /// @param key The identifier for the date: @c kSecOIDX509V1ValiditityNot{Before,After}
 /// @return An @c NSDate representing the date and time the certificate is valid from or expires.
+///
 - (NSDate *)dateForX509Key:(NSString *)key {
   NSDictionary *curCertVal = [self allCertificateValues][key];
   NSNumber *value = curCertVal[(__bridge NSString *)kSecPropertyKeyValue];

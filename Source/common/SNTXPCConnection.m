@@ -21,14 +21,22 @@
 @end
 
 @interface SNTXPCConnection ()
+
+///
 /// The XPC listener (used on server-side only).
+///
 @property NSXPCListener *listenerObject;
 
+///
 /// The current connection object.
+///
 @property NSXPCConnection *currentConnection;
 
+///
 /// The remote interface to use while the connection hasn't been validated.
+///
 @property NSXPCInterface *validatorInterface;
+
 @end
 
 @implementation SNTXPCConnection
@@ -160,11 +168,11 @@
 
     [self invokeAcceptedHandler];
 
-    // Let remote end know that we accepted. Note: in acception this must come last otherwise
+    // Let remote end know that we accepted. In acception this must come last otherwise
     // the remote end might start sending messages before the interface is fully set-up.
     block(YES);
   } else {
-    // Let remote end know that we rejected. Note: in rejection this must come first otherwise
+    // Let remote end know that we rejected. In rejection this must come first otherwise
     // the connection is invalidated before the client ever realizes.
     block(NO);
 

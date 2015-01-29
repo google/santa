@@ -12,48 +12,65 @@
 ///    See the License for the specific language governing permissions and
 ///    limitations under the License.
 
-/// An authenticating NSURLSession, which can do both pinned verification of the SSL server
-/// and handle client certificate authentication from the keychain.
+///
+///  An authenticating NSURLSession, which can do both pinned verification of the SSL server
+///  and handle client certificate authentication from the keychain.
+///
 @interface SNTAuthenticatingURLSession : NSObject<NSURLSessionDelegate>
 
-/// The underlying session. Pass this session to NSURLRequest methods.
+///
+///  The underlying session. Pass this session to NSURLRequest methods.
+///
 @property(readonly) NSURLSession *session;
 
-/// If set, this is the user-agent to send with requests, otherwise remains the default
-/// CFNetwork-based name.
+///
+///  If set, this is the user-agent to send with requests, otherwise remains the default
+///  CFNetwork-based name.
+///
 @property(nonatomic) NSString *userAgent;
 
-/// If set, the server that we connect to _must_ match this string. Redirects to other
-/// hosts will not be allowed.
+///
+///  If set, the server that we connect to _must_ match this string. Redirects to other
+///  hosts will not be allowed.
+///
 @property(nonatomic) NSString *serverHostname;
 
-/// This should be PEM data containing one or more certificates to use to verify the server's
-/// certificate chain. This will override the trusted roots in the System Roots.
+///
+///  This should be PEM data containing one or more certificates to use to verify the server's
+///  certificate chain. This will override the trusted roots in the System Roots.
+///
 @property(nonatomic) NSData *serverRootsPemData;
 
-/// If set and client certificate authentication is needed, the pkcs#12 file will be
-/// loaded
+///
+///  If set and client certificate authentication is needed, the pkcs#12 file will be loaded
+///
 @property(nonatomic) NSString *clientCertFile;
 
-/// If set and client certificate authentication is needed, the password being used for
-/// loading the clientCertFile
+///
+///  If set and client certificate authentication is needed, the password being used for
+///  loading the clientCertFile
+///
 @property(nonatomic) NSString *clientCertPassword;
 
-/// If set and client certificate authentication is needed, will search the keychain for a
-/// certificate matching this common name and use that for authentication
-/// @note: Not case sensitive
-/// @note: If multiple matching certificates are found, the first one is used.
-/// @note: If this property is not set and neither is |clientCertIssuerCn|, the allowed issuers
-/// provided by the server will be used to find a matching certificate.
+///
+///  If set and client certificate authentication is needed, will search the keychain for a
+///  certificate matching this common name and use that for authentication
+///  @note Not case sensitive
+///  @note If multiple matching certificates are found, the first one is used.
+///  @note If this property is not set and neither is |clientCertIssuerCn|, the allowed issuers
+///  provided by the server will be used to find a matching certificate.
+///
 @property(nonatomic) NSString *clientCertCommonName;
 
-/// If set and client certificate authentication is needed, will search the keychain for a
-/// certificate issued by an issuer with this name and use that for authentication.
 ///
-/// @note: Not case sensitive
-/// @note: If multiple matching certificates are found, the first one is used.
-/// @note: If this property is not set and neither is |clientCertCommonName|, the allowed issuers
-/// provided by the server will be used to find a matching certificate.
+///  If set and client certificate authentication is needed, will search the keychain for a
+///  certificate issued by an issuer with this name and use that for authentication.
+///
+///  @note Not case sensitive
+///  @note If multiple matching certificates are found, the first one is used.
+///  @note If this property is not set and neither is |clientCertCommonName|, the allowed issuers
+///      provided by the server will be used to find a matching certificate.
+///
 @property(nonatomic) NSString *clientCertIssuerCn;
 
 /// Designated initializer

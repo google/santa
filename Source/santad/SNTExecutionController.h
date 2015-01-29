@@ -20,15 +20,16 @@
 @class SNTRuleTable;
 @class SNTXPCConnection;
 
-/// SNTExecutionController is responsible for everything that happens when a request to execute
-/// a binary occurs:
-///   + Making a decision about whether to allow or deny this binary based on any existing rules for
-///     that specific binary, its signing certificate and the operating mode of santad.
-///   + Sending the decision to the kernel as soon as possible
-///   + (If denied or unknown) Storing details about the execution event to the database
-///     for upload and spwaning santactl to quickly try and send that to the server.
-///   + (If denied) Potentially sending a message to SantaGUI to notify the user
-///   + Logging the event to the log file
+///
+///  SNTExecutionController is responsible for everything that happens when a request to execute
+///  a binary occurs:
+///    + Making a decision about whether to allow or deny this binary based on any existing rules
+///      for that specific binary, its signing certificate and the operating mode of santad.
+///    + Sending the decision to the kernel as soon as possible
+///    + (If denied or unknown) Storing details about the execution event to the database
+///      for upload and spwaning santactl to quickly try and send that to the server.
+///    + (If denied) Potentially sending a message to SantaGUI to notify the user
+///    + Logging the event to the log file
 ///
 @interface SNTExecutionController : NSObject
 
@@ -44,9 +45,16 @@
                         operatingMode:(santa_clientmode_t)operating_mode
                    notifierConnection:(SNTXPCConnection *)notifierConn;
 
-// Handles the logic of deciding whether to allow the binary to run or not, sends the response to
-// the kernel, logs the event to the log and if necessary stores the event in the database and
-// sends a notification to the GUI agent.
+///
+///  Handles the logic of deciding whether to allow the binary to run or not, sends the response to
+///  the kernel, logs the event to the log and if necessary stores the event in the database and
+///  sends a notification to the GUI agent.
+///
+///  @param path the binary that's being executed
+///  @param userName the user who's executing the binary
+///  @param pid the process id being executed
+///  @param vnoteId the id of the vnode being executed
+///
 - (void)validateBinaryWithPath:(NSString *)path
                       userName:(NSString *)userName
                            pid:(NSNumber *)pid

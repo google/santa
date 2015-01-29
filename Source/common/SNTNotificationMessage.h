@@ -14,26 +14,37 @@
 
 @class SNTCertificate;
 
-/**
- *  An SNTEvent is created when Santa is making a decision about an execution request.
- *  All of the information required to make that decision, log it, notify the user etc. must be
- *  encapsulated within this class.
- */
+///
+///  An SNTEvent is created when Santa is making a decision about an execution request.
+///  All of the information required to make that decision, log it, notify the user etc. must be
+///  encapsulated within this class.
+///
 @interface SNTNotificationMessage : NSObject<NSSecureCoding>
 
-/// The path of the binary that was blocked.
+///
+///  The path of the binary that was blocked.
+///
 @property(copy) NSString *path;
 
-/// The SHA-256 of the binary that was blocked.
+///
+///  The SHA-256 of the binary that was blocked.
+///
 @property(copy) NSString *SHA256;
 
-/// An array of @c SNTCertificate objects representing the certificate chain the binary was signed with.
+///
+///  An array of @c SNTCertificate objects representing the certificate chain
+///  the binary was signed with.
+///
 @property(copy) NSArray *certificates;
 
-/// A custom message to display to the user when blocking this binary, if any.
+///
+///  A custom message to display to the user when blocking this binary, if any.
+///
 @property(copy) NSString *customMessage;
 
-// A convenience accessor to the first certificate in @c certificates.
+///
+///  A convenience accessor to the first certificate in @c certificates.
+///
 @property(readonly) SNTCertificate *leafCertificate;
 
 @end

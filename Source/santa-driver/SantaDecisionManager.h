@@ -26,30 +26,42 @@
 #include "SNTKernelCommon.h"
 #include "SNTLogging.h"
 
-/// The maximum number of milliseconds a cached deny message should be
-/// considered valid.
+///
+///  The maximum number of milliseconds a cached deny message should be
+///  considered valid.
+///
 const uint64_t kMaxDenyCacheTimeMilliseconds = 500;
 
-/// The maximum number of milliseconds a cached allow message should be
-/// considered valid.
+///
+///  The maximum number of milliseconds a cached allow message should be
+///  considered valid.
+///
 const uint64_t kMaxAllowCacheTimeMilliseconds = 1000 * 60 * 60 * 24;
 
-/// While waiting for a response from the daemon, this is the number of
-/// milliseconds to sleep for before checking the cache for a response.
+///
+///  While waiting for a response from the daemon, this is the number of
+///  milliseconds to sleep for before checking the cache for a response.
+///
 const int kRequestLoopSleepMilliseconds = 10;
 
-/// While waiting for a response from the daemon, this is the maximum number
-/// of loops to wait before sending the request again.
+///
+///  While waiting for a response from the daemon, this is the maximum number
+///  of loops to wait before sending the request again.
+///
 const int kMaxRequestLoops = 50;
 
-/// Maximum number of entries in the in-kernel cache.
+///
+///  Maximum number of entries in the in-kernel cache.
+///
 const int kMaxCacheSize = 10000;
 
-/// SantaDecisionManager is responsible for intercepting Vnode execute actions
-/// and responding to the request appropriately.
 ///
-/// Documentation on the Kauth parts can be found here:
-/// https://developer.apple.com/library/mac/technotes/tn2127/_index.html
+///  SantaDecisionManager is responsible for intercepting Vnode execute actions
+///  and responding to the request appropriately.
+///
+///  Documentation on the Kauth parts can be found here:
+///  https://developer.apple.com/library/mac/technotes/tn2127/_index.html
+///
 class SantaDecisionManager : public OSObject {
   OSDeclareDefaultStructors(SantaDecisionManager);
 
@@ -112,26 +124,30 @@ class SantaDecisionManager : public OSObject {
   kauth_listener_t process_listener_;
 };
 
-/// The kauth callback function for the Vnode scope
-/// @param actor's credentials
-/// @param data that was passed when the listener was registered
-/// @param action that was requested
-/// @param VFS context
-/// @param Vnode being operated on
-/// @param Parent Vnode. May be NULL.
-/// @param Pointer to an errno-style error.
+///
+///  The kauth callback function for the Vnode scope
+///  @param actor's credentials
+///  @param data that was passed when the listener was registered
+///  @param action that was requested
+///  @param VFS context
+///  @param Vnode being operated on
+///  @param Parent Vnode. May be NULL.
+///  @param Pointer to an errno-style error.
+///
 extern "C" int vnode_scope_callback(
     kauth_cred_t credential, void *idata, kauth_action_t action,
     uintptr_t arg0, uintptr_t arg1, uintptr_t arg2, uintptr_t arg3);
 
-/// The kauth callback function for the Process scope
-/// @param actor's credentials
-/// @param data that was passed when the listener was registered
-/// @param action that was requested (KAUTH_PROCESS_{CANTRACE,CANSIGNAL})
-/// @param target process
-/// @param Pointer to an errno-style error.
-/// @param unused
-/// @param unused
+///
+///  The kauth callback function for the Process scope
+///  @param actor's credentials
+///  @param data that was passed when the listener was registered
+///  @param action that was requested (KAUTH_PROCESS_{CANTRACE,CANSIGNAL})
+///  @param target process
+///  @param Pointer to an errno-style error.
+///  @param unused
+///  @param unused
+///
 extern "C" int process_scope_callback(
     kauth_cred_t credential, void *idata, kauth_action_t action,
     uintptr_t arg0, uintptr_t arg1, uintptr_t arg2, uintptr_t arg3);

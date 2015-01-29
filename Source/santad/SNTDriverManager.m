@@ -55,7 +55,7 @@
     } while (!serviceObject);
     CFRelease(classToMatch);
 
-    // This calls |initWithTask|, |attach| and |start| in |SantaDriverClient|
+    // This calls @c initWithTask, @c attach and @c start in @c SantaDriverClient
     kr = IOServiceOpen(serviceObject, mach_task_self(), 0, &_connection);
     IOObjectRelease(serviceObject);
     if (kr != kIOReturnSuccess) {
@@ -63,7 +63,7 @@
       return nil;
     }
 
-    // Call |open| in |SantaDriverClient|
+    // Call @c open in @c SantaDriverClient
     kr = IOConnectCallMethod(_connection, kSantaUserClientOpen, 0, 0, 0, 0, 0, 0, 0, 0);
 
     if (kr == kIOReturnExclusiveAccess) {

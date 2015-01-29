@@ -21,7 +21,9 @@
 #include "SantaDecisionManager.h"
 #include "SNTLogging.h"
 
-/// The driver class, which provides just the start/stop functions.
+///
+///  The driver class, which provides just the start/stop functions.
+///
 class com_google_SantaDriver : public IOService {
   OSDeclareDefaultStructors(com_google_SantaDriver);
 

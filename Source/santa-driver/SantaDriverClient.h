@@ -31,13 +31,15 @@
 // The maximum number of messages can be kept in the IODataQueue at any time.
 const int kMaxQueueEvents = 64;
 
-/// This class is instantiated by IOKit when a new client process attempts to
-/// connect to the driver. Starting, stopping, handling connections, allocating
-/// shared memory and establishing a data queue is handled here.
 ///
-/// Documentation on how the IOUserClient parts of this code work can be found
-/// here:
-/// @link https://developer.apple.com/library/mac/samplecode/SimpleUserClient/Listings/User_Client_Info_txt.html
+///  This class is instantiated by IOKit when a new client process attempts to
+///  connect to the driver. Starting, stopping, handling connections, allocating
+///  shared memory and establishing a data queue is handled here.
+///
+///  Documentation on how the IOUserClient parts of this code work can be found
+///  here:
+///  @link https://developer.apple.com/library/mac/samplecode/SimpleUserClient/Listings/User_Client_Info_txt.html
+///
 class com_google_SantaDriverClient : public IOUserClient {
   OSDeclareDefaultStructors(com_google_SantaDriverClient);
 

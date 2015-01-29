@@ -12,9 +12,9 @@
 ///    See the License for the specific language governing permissions and
 ///    limitations under the License.
 
-/**
- *  Simple function to check and drop root privileges.
- *
- *  @return YES if dropping was successful or unnecessary.
- */
+///
+///  Simple function to check and drop root privileges.
+///
+///  @return YES if dropping was successful or unnecessary.
+///
 BOOL DropRootPrivileges();

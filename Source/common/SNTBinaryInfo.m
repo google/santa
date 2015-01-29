@@ -161,26 +161,26 @@
 
 # pragma mark Bundle Information
 
-/**
- *  Try and determine the bundle that the represented executable is contained within, if any.
- *
- *  Rationale: An NSBundle has a method executablePath for discovering the main binary within a
- *  bundle but provides no way to get an NSBundle object when only the executablePath is known. Also,
- *  a bundle can contain multiple binaries within the MacOS folder and we want any of these to count
- *  as being part of the bundle.
- *
- *  This method relies on executable bundles being laid out as follows:
- *
- *@code
- *  Bundle.app/
- *     Contents/
- *        MacOS/
- *          executable
- *@endcode
- *
- *  If @c self.path is the full path to @c executable above, this method would return an
- *  NSBundle reference for Bundle.app.
- */
+///
+///  Try and determine the bundle that the represented executable is contained within, if any.
+///
+///  Rationale: An NSBundle has a method executablePath for discovering the main binary within a
+///  bundle but provides no way to get an NSBundle object when only the executablePath is known. Also,
+///  a bundle can contain multiple binaries within the MacOS folder and we want any of these to count
+///  as being part of the bundle.
+///
+///  This method relies on executable bundles being laid out as follows:
+///
+/// @code
+/// Bundle.app/
+///    Contents/
+///       MacOS/
+///         executable
+/// @endcode
+///
+///  If @c self.path is the full path to @c executable above, this method would return an
+///  NSBundle reference for Bundle.app.
+///
 - (NSBundle *)bundle {
   if (self.bundleRef) return self.bundleRef;
 
@@ -260,11 +260,11 @@
 
 # pragma mark Internal Methods
 
-/**
- *  Look through the file for the first mach_header. If the file is thin, this will be the
- *  header at the beginning of the file. If the file is fat, it will be the first
- *  architecture-specific header.
- */
+///
+///  Look through the file for the first mach_header. If the file is thin, this will be the
+///  header at the beginning of the file. If the file is fat, it will be the first
+///  architecture-specific header.
+///
 - (struct mach_header *)firstMachHeader {
   if (![self isMachO]) return NULL;
 
@@ -301,10 +301,10 @@
   return (header->magic == FAT_MAGIC || header->magic == FAT_CIGAM);
 }
 
-/**
- *  Wrap @c subdataWithRange: in a @@try/@@catch, returning nil on exception.
- *  Useful for when the range is beyond the end of the file.
- */
+///
+///  Wrap @c subdataWithRange: in a @@try/@@catch, returning nil on exception.
+///  Useful for when the range is beyond the end of the file.
+///
 - (NSData *)safeSubdataWithRange:(NSRange)range {
   @try {
     return [self.fileData subdataWithRange:range];

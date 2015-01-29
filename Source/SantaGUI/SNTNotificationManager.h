@@ -15,7 +15,9 @@
 #import "SNTMessageWindowController.h"
 #import "SNTXPCNotifierInterface.h"
 
-/// Keeps track of pending notifications and ensures only one is presented to the user at a time.
+///
+///  Keeps track of pending notifications and ensures only one is presented to the user at a time.
+///
 @interface SNTNotificationManager : NSObject<SNTMessageWindowControllerDelegate, SNTNotifierXPC>
 
 
