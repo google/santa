@@ -297,7 +297,7 @@
   }
 
   // Now replace the contents of the test file (which is cached) with the contents of /bin/ps,
-  // which is 'blacklisted' by SHA-1 during the tests.
+  // which is 'blacklisted' by SHA-256 during the tests.
   FILE *infile = fopen("/bin/ps", "r");
   FILE *outfile = fopen("santakerneltests_tmp", "w");
   int ch;

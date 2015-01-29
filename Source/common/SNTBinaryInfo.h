@@ -13,8 +13,8 @@
 ///    limitations under the License.
 
 ///
-///  SNTBinaryInfo represents a binary on disk, providing access to details about that binary such as
-///  the SHA-1, the Info.plist and the Mach-O data.
+///  SNTBinaryInfo represents a binary on disk, providing access to details about that binary
+///  such as the SHA-1, SHA-256, Info.plist and the Mach-O data.
 ///
 @interface SNTBinaryInfo : NSObject
 
