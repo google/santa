@@ -154,15 +154,6 @@
   return eventsPending;
 }
 
-- (BOOL)existingEventForBinary:(SNTNotificationMessage *)event {
-  __block BOOL result = NO;
-  NSString *qry = @"SELECT fileSHA1 FROM events WHERE fileSHA1=? LIMIT 1";
-  [self inDatabase:^(FMDatabase *db) {
-      result = [db boolForQuery:qry, event.SHA1];
-  }];
-  return result;
-}
-
 - (SNTStoredEvent *)latestEventForSHA256:(NSString *)sha256 {
   __block SNTStoredEvent *storedEvent;
 
