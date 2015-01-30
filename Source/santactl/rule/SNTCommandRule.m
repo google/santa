@@ -167,7 +167,11 @@ REGISTER_COMMAND_NAME(@"rule");
   newRule.customMsg = customMsg;
   
   [[daemonConn remoteObjectProxy] databaseRuleAddRule:newRule withReply:^{
-    LOGI(@"Added rule for SHA-256: %@", [newRule shasum]);
+    if (state == RULESTATE_REMOVE) {
+      LOGI(@"Removed rule for SHA-256: %@", [newRule shasum]);
+    } else {
+      LOGI(@"Added rule for SHA-256: %@", [newRule shasum]);
+    }
     exit(0);
   }];
 
