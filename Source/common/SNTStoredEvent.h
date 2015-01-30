@@ -20,73 +20,73 @@
 @interface SNTStoredEvent : NSObject<NSSecureCoding>
 
 ///
-/// An index for this event, empty unless the event came from the database.
+///  An index for this event, empty unless the event came from the database.
 ///
 @property NSNumber *idx;
 
 ///
-/// The SHA-256 of the executed file.
+///  The SHA-256 of the executed file.
 ///
 @property NSString *fileSHA256;
 
 ///
-/// The full path of the executed file.
+///  The full path of the executed file.
 ///
 @property NSString *filePath;
 
 ///
-/// If the executed file was part of the bundle, this is the CFBundleName.
+///  If the executed file was part of the bundle, this is the CFBundleName.
 ///
 @property NSString *fileBundleName;
 
 ///
-/// If the executed file was part of the bundle, this is the CFBundleID.
+///  If the executed file was part of the bundle, this is the CFBundleID.
 ///
 @property NSString *fileBundleID;
 
 ///
-/// If the executed file was part of the bundle, this is the CFBundleVersion.
+///  If the executed file was part of the bundle, this is the CFBundleVersion.
 ///
 @property NSString *fileBundleVersion;
 
 ///
-/// If the executed file was part of the bundle, this is the CFBundleShortVersionString.
+///  If the executed file was part of the bundle, this is the CFBundleShortVersionString.
 ///
 @property NSString *fileBundleVersionString;
 
 ///
-/// If the executed file was signed, this is an NSArray of SNTCertificate's
-/// representing the signing chain.
+///  If the executed file was signed, this is an NSArray of SNTCertificate's
+///  representing the signing chain.
 ///
 @property NSArray *signingChain;
 
 ///
-/// The user who executed the binary.
+///  The user who executed the binary.
 ///
 @property NSString *executingUser;
 
 ///
-/// The date and time the execution request was received by santad.
+///  The date and time the execution request was received by santad.
 ///
 @property NSDate *occurrenceDate;
 
 ///
-/// The decision santad returned.
+///  The decision santad returned.
 ///
 @property santa_eventstate_t decision;
 
 ///
-/// NSArray of logged in users when the decision was made.
+///  NSArray of logged in users when the decision was made.
 ///
 @property NSArray *loggedInUsers;
 
 ///
-/// NSArray of sessions when the decision was made (e.g. nobody@console, nobody@ttys000).
+///  NSArray of sessions when the decision was made (e.g. nobody@console, nobody@ttys000).
 ///
 @property NSArray *currentSessions;
 
 ///
-/// The process ID of the binary being executed.
+///  The process ID of the binary being executed.
 ///
 @property NSNumber *pid;
 

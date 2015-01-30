@@ -16,11 +16,6 @@
 
 @implementation SNTRule
 
-static NSString *const kShasumKey = @"shasum";
-static NSString *const kStateKey = @"state";
-static NSString *const kTypeKey = @"type";
-static NSString *const kCustomMessageKey = @"custommsg";
-
 - (instancetype)initWithShasum:(NSString *)shasum
                          state:(santa_rulestate_t)state
                           type:(santa_ruletype_t)type
@@ -37,22 +32,29 @@ static NSString *const kCustomMessageKey = @"custommsg";
 
 #pragma mark NSSecureCoding
 
+#define ENCODE(obj, key) if (obj) [coder encodeObject:obj forKey:key]
+#define DECODE(cls, key) [decoder decodeObjectOfClass:[cls class] forKey:key]
+#define DECODEARRAY(cls, key) \
+    [decoder decodeObjectOfClasses:[NSSet setWithObjects:[NSArray class], [cls class], nil] \
+                            forKey:key]
+
 + (BOOL)supportsSecureCoding { return YES; }
 
 - (void)encodeWithCoder:(NSCoder *)coder {
-  [coder encodeObject:self.shasum forKey:kShasumKey];
-  [coder encodeInt:self.state forKey:kStateKey];
-  [coder encodeInt:self.type forKey:kTypeKey];
-  [coder encodeObject:self.customMsg forKey:kCustomMessageKey];
+  ENCODE(self.shasum, @"shasum");
+  ENCODE(@(self.state), @"state");
+  ENCODE(@(self.type), @"type");
+  ENCODE(self.customMsg, @"custommsg");
 }
 
 - (instancetype)initWithCoder:(NSCoder *)decoder {
-  NSSet *stringPlusNull = [NSSet setWithObjects:[NSString class], [NSNull class], nil];
-
-  _shasum = [decoder decodeObjectOfClass:[NSString class] forKey:kShasumKey];
-  _state = [decoder decodeIntForKey:kStateKey];
-  _type = [decoder decodeIntForKey:kTypeKey];
-  _customMsg = [decoder decodeObjectOfClasses:stringPlusNull forKey:kCustomMessageKey];
+  self = [super init];
+  if (self) {
+    _shasum = DECODE(NSString, @"shasum");
+    _state = [DECODE(NSNumber, @"state") intValue];
+    _type = [DECODE(NSNumber, @"type") intValue];
+    _customMsg = DECODE(NSString, @"custommsg");
+  }
   return self;
 }
 

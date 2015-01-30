@@ -41,29 +41,32 @@
   ENCODE(self.executingUser, @"executingUser");
   ENCODE(self.occurrenceDate, @"occurrenceDate");
   ENCODE(@(self.decision), @"decision");
+
   ENCODE(self.loggedInUsers, @"loggedInUsers");
   ENCODE(self.currentSessions, @"currentSessions");
 }
 
 - (instancetype)initWithCoder:(NSCoder *)decoder {
-  _idx = DECODE(NSNumber, @"idx");
-  _fileSHA256 = DECODE(NSString, @"fileSHA256");
-  _filePath = DECODE(NSString, @"filePath");
+  self = [super init];
+  if (self) {
+    _idx = DECODE(NSNumber, @"idx");
+    _fileSHA256 = DECODE(NSString, @"fileSHA256");
+    _filePath = DECODE(NSString, @"filePath");
 
-  _fileBundleName = DECODE(NSString, @"fileBundleName");
-  _fileBundleID = DECODE(NSString, @"fileBundleID");
-  _fileBundleVersion = DECODE(NSString, @"fileBundleVersion");
-  _fileBundleVersionString = DECODE(NSString, @"fileBundleVersionString");
+    _fileBundleName = DECODE(NSString, @"fileBundleName");
+    _fileBundleID = DECODE(NSString, @"fileBundleID");
+    _fileBundleVersion = DECODE(NSString, @"fileBundleVersion");
+    _fileBundleVersionString = DECODE(NSString, @"fileBundleVersionString");
 
-  _signingChain = DECODEARRAY(SNTCertificate, @"signingChain");
+    _signingChain = DECODEARRAY(SNTCertificate, @"signingChain");
 
-  _executingUser = DECODE(NSString, @"executingUser");
-  _occurrenceDate = DECODE(NSDate, @"occurrenceDate");
-  _decision = [DECODE(NSNumber, @"decision") intValue];
+    _executingUser = DECODE(NSString, @"executingUser");
+    _occurrenceDate = DECODE(NSDate, @"occurrenceDate");
+    _decision = [DECODE(NSNumber, @"decision") intValue];
 
-  _loggedInUsers = DECODEARRAY(NSString, @"loggedInUsers");
-  _currentSessions = DECODEARRAY(NSString, @"currentSessions");
-
+    _loggedInUsers = DECODEARRAY(NSString, @"loggedInUsers");
+    _currentSessions = DECODEARRAY(NSString, @"currentSessions");
+  }
   return self;
 }
 
