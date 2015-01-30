@@ -137,7 +137,7 @@ santa_action_t SantaDecisionManager::GetFromCache(const char *identifier) {
   }
   IORWLockUnlock(cached_decisions_lock_);
 
-  if (RESPONSE_VALID(result)) {
+  if (CHECKBW_RESPONSE_VALID(result)) {
     uint64_t diff_time = GetCurrentUptime();
 
     if (result == ACTION_RESPOND_CHECKBW_ALLOW) {
@@ -189,7 +189,7 @@ santa_action_t SantaDecisionManager::FetchDecision(
   return_action = GetFromCache(vnode_id_str);
 
   // If item wasn't in cache, fetch decision from daemon.
-  if (!RESPONSE_VALID(return_action)) {
+  if (!CHECKBW_RESPONSE_VALID(return_action)) {
     // Add pending request to cache
     AddToCache(vnode_id_str, ACTION_REQUEST_CHECKBW, 0);
 
@@ -223,12 +223,13 @@ santa_action_t SantaDecisionManager::FetchDecision(
       for (int i = 0; i < kMaxRequestLoops; ++i) {
         IOSleep(kRequestLoopSleepMilliseconds);
         return_action = GetFromCache(vnode_id_str);
-        if (RESPONSE_VALID(return_action)) break;
+        if (CHECKBW_RESPONSE_VALID(return_action)) break;
       }
-    } while (!RESPONSE_VALID(return_action) && proc_exiting(owning_proc_) == 0);
+    } while (!CHECKBW_RESPONSE_VALID(return_action) &&
+             proc_exiting(owning_proc_) == 0);
 
     // If response is still not valid, the daemon exited
-    if (!RESPONSE_VALID(return_action)) {
+    if (!CHECKBW_RESPONSE_VALID(return_action)) {
       LOGE("Daemon process did not respond correctly. Allowing executions "
            "until it comes back.");
       CacheCheck(vnode_id_str);
