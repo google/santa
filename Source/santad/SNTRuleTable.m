@@ -35,7 +35,7 @@
     [db executeUpdate:@"CREATE VIEW binrules AS SELECT * FROM rules WHERE type=1"];
     [db executeUpdate:@"CREATE VIEW certrules AS SELECT * FROM rules WHERE type=2"];
 
-    [db executeUpdate:@"CREATE UNIQUE INDEX rulesunique ON rules (sha1, type)"];
+    [db executeUpdate:@"CREATE UNIQUE INDEX rulesunique ON rules (hash, type)"];
 
     // Insert the codesigning certs for the running santad and launchd into the initial database.
     // This helps prevent accidentally denying critical system components while the database
@@ -104,11 +104,11 @@
   return rule;
 }
 
-- (SNTRule *)binaryRuleForSHA256:(NSString *)SHA1 {
+- (SNTRule *)binaryRuleForSHA256:(NSString *)SHA256 {
   __block SNTRule *rule;
 
   [self inDatabase:^(FMDatabase *db) {
-      FMResultSet *rs = [db executeQuery:@"SELECT * FROM binrules WHERE hash=? LIMIT 1", SHA1];
+      FMResultSet *rs = [db executeQuery:@"SELECT * FROM binrules WHERE hash=? LIMIT 1", SHA256];
       if ([rs next]) {
         rule = [self ruleFromResultSet:rs];
       }
@@ -127,10 +127,10 @@
 
   [self inTransaction:^(FMDatabase *db, BOOL *rollback) {
       if (rule.state == RULESTATE_REMOVE) {
-        [db executeUpdate:@"DELETE FROM rules WHERE SHA1=? AND type=?",
+        [db executeUpdate:@"DELETE FROM rules WHERE hash=? AND type=?",
             rule.shasum, @(rule.type)];
       } else {
-        [db executeUpdate:@"INSERT OR REPLACE INTO rules (sha1, state, type, customMsg) "
+        [db executeUpdate:@"INSERT OR REPLACE INTO rules (hash, state, type, customMsg) "
             @"VALUES (?, ?, ?, ?);", rule.shasum, @(rule.state), @(rule.type), rule.customMsg];
       }
   }];
