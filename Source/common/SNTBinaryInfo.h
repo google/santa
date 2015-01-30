@@ -36,13 +36,13 @@
 - (NSString *)SHA256;
 
 ///
-///  @return the type of Mach-O file, one of:
+///  @return The type of Mach-O file, one of:
 ///  Dynamic Library, Kernel Extension, Fat Binary or Thin Binary
 ///
 - (NSString *)machoType;
 
 ///
-///  @return the architectures included in this binary (e.g. x86_64, ppc)
+///  @return The architectures included in this binary (e.g. x86_64, ppc)
 ///
 - (NSArray *)architectures;
 
@@ -77,17 +77,17 @@
 - (BOOL)isScript;
 
 ///
-///  @return an NSBundle if this file is part of a bundle.
+///  @return An NSBundle if this file is part of a bundle.
 ///
 - (NSBundle *)bundle;
 
 ///
-///  @return the path to the bundle this file is a part of, if any.
+///  @return The path to the bundle this file is a part of, if any.
 ///
 - (NSString *)bundlePath;
 
 ///
-///  @return either the Info.plist in the bundle this file is part of, or an embedded plist if there
+///  @return Either the Info.plist in the bundle this file is part of, or an embedded plist if there
 ///  is one. In the odd case that a file has both an embedded Info.plist and is part of a bundle,
 ///  the Info.plist from the bundle will be returned.
 ///
