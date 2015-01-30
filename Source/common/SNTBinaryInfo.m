@@ -33,9 +33,32 @@
   self = [super init];
 
   if (self) {
-    _path = path;
+    // Convert to absolute, standardized path
+    path = [path stringByStandardizingPath];
+    if (![path isAbsolutePath]) {
+      NSString *cwd = [[NSFileManager defaultManager] currentDirectoryPath];
+      path = [cwd stringByAppendingPathComponent:path];
+    }
 
-    _fileData = [NSData dataWithContentsOfFile:path options:NSDataReadingMappedIfSafe error:nil];
+    // Determine if file exists.
+    // If path is actually a directory, check to see if it's a bundle and has a CFBundleExecutable.
+    BOOL directory;
+    if (![[NSFileManager defaultManager] fileExistsAtPath:path isDirectory:&directory]) {
+      return nil;
+    } else if (directory) {
+      NSString *infoPath = [path stringByAppendingPathComponent:@"Contents/Info.plist"];
+      NSDictionary *d = [NSDictionary dictionaryWithContentsOfFile:infoPath];
+      if (d && d[@"CFBundleExecutable"]) {
+        path = [path stringByAppendingPathComponent:@"Contents/MacOS"];
+        _path = [path stringByAppendingPathComponent:d[@"CFBundleExecutable"]];
+      } else {
+        return nil;
+      }
+    } else {
+      _path = path;
+    }
+
+    _fileData = [NSData dataWithContentsOfFile:_path options:NSDataReadingMappedIfSafe error:nil];
     if (!_fileData) return nil;
   }
 

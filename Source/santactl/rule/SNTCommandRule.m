@@ -134,26 +134,13 @@ REGISTER_COMMAND_NAME(@"rule");
   }
   
   if (filePath) {
-    BOOL directory;
-    if (![[NSFileManager defaultManager] fileExistsAtPath:filePath isDirectory:&directory]) {
-      LOGI(@"File does not exist");
-      exit(1);
-    }
-    
-    if (directory) {
-      LOGI(@"Not a regular file");
-      exit(1);
-    }
-    
-    // Convert to absolute, standardized path
-    filePath = [filePath stringByStandardizingPath];
-    if (![filePath isAbsolutePath]) {
-      NSString *cwd = [[NSFileManager defaultManager] currentDirectoryPath];
-      filePath = [cwd stringByAppendingPathComponent:filePath];
-    }
-    
     SNTBinaryInfo *ftd = [[SNTBinaryInfo alloc] initWithPath:filePath];
-    SHA256 = [ftd.SHA256 copy];
+    if (!ftd) {
+      LOGI(@"Not a regular file or executable bundle");
+      exit(1);
+    }
+
+    SHA256 = [ftd SHA256];
   } else if (SHA256) {
   } else {
     LOGI(@"No SHA-256 or binary specified");

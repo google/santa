@@ -26,6 +26,11 @@
 - (instancetype)initWithPath:(NSString *)path;
 
 ///
+///  @return Path of this file
+///
+- (NSString *)path;
+
+///
 ///  @return SHA-1 hash of this binary
 ///
 - (NSString *)SHA1;

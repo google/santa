@@ -52,37 +52,14 @@ REGISTER_COMMAND_NAME(@"binaryinfo");
     exit(1);
   }
 
-  NSFileManager *fm = [NSFileManager defaultManager];
-
-  BOOL directory;
-  if (![fm fileExistsAtPath:filePath isDirectory:&directory]) {
-    LOGI(@"File does not exist");
-    exit(1);
-  } else if (directory) {
-    // Check if directory is a bundle and if so locate its executable.
-    NSString *infoPath = [filePath stringByAppendingPathComponent:@"Contents/Info.plist"];
-    NSDictionary *d = [NSDictionary dictionaryWithContentsOfFile:infoPath];
-    if (d && d[@"CFBundleExecutable"]) {
-      filePath = [filePath stringByAppendingPathComponent:@"Contents/MacOS"];
-      filePath = [filePath stringByAppendingPathComponent:d[@"CFBundleExecutable"]];
-    } else {
-      LOGI(@"Not a regular file");
-      exit(1);
-    }
-  }
-
-  // Convert to absolute, standardized path
-  filePath = [filePath stringByStandardizingPath];
-  if (![filePath isAbsolutePath]) {
-    NSString *cwd = [fm currentDirectoryPath];
-    filePath = [cwd stringByAppendingPathComponent:filePath];
-  }
-
-  LOGI(@"Info for file: %@", filePath);
-  LOGI(@"-----------------------------------------------------------");
-
   SNTBinaryInfo *ftd = [[SNTBinaryInfo alloc] initWithPath:filePath];
+  if (!ftd) {
+    LOGI(@"Invalid file");
+    exit(1);
+  }
 
+  LOGI(@"Info for file: %@", [ftd path]);
+  LOGI(@"-----------------------------------------------------------");
   LOGI(@"%-20s: %@", "SHA-1", [ftd SHA1]);
   LOGI(@"%-20s: %@", "SHA-256", [ftd SHA256]);
 
