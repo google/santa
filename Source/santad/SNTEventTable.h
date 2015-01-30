@@ -23,25 +23,27 @@
 @interface SNTEventTable : SNTDatabaseTable
 
 ///
-///  Add event to the database
-///  @param event the event to store
+///  Add event to the database.
+///  @param event the event to store.
+///  @return YES if event was successfully stored.
 ///
-- (void)addStoredEvent:(SNTStoredEvent *)event;
-
-///
-/// Number of events in database.
-///
-- (int)eventsPendingCount;
+- (BOOL)addStoredEvent:(SNTStoredEvent *)event;
 
 ///
 ///  Retrieves all events in the database
-///  @return NSArray of SNTStoredEvent
+///  @return NSArray of SNTStoredEvent's
 ///
 - (NSArray *)pendingEvents;
 
 ///
+///  Retrieves number of events in database without fetching every event.
+///  @return Number of events in database.
+///
+- (NSUInteger)pendingEventsCount;
+
+///
 ///  Retrieve an event from the database.
-///  @return a single SNTStoredEvent
+///  @return a single SNTStoredEvent.
 ///
 - (SNTStoredEvent *)latestEventForSHA256:(NSString *)sha256;
 
@@ -51,8 +53,8 @@
 - (void)deleteEventWithId:(NSNumber *)id;
 
 ///
-///  Delete multiple events from the database with an array of IDs
-///  @param indexes an array of event IDs
+///  Delete multiple events from the database with an array of IDs.
+///  @param indexes an array of event IDs.
 ///
 - (void)deleteEventsWithIds:(NSArray *)ids;
 

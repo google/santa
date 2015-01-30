@@ -61,7 +61,7 @@
 }
 
 - (void)databaseEventCount:(void (^)(uint64_t count))reply {
-  reply([[SNTDatabaseController eventTable] eventsPendingCount]);
+  reply([[SNTDatabaseController eventTable] pendingEventsCount]);
 }
 
 - (void)databaseEventForSHA256:(NSString *)sha256 withReply:(void (^)(SNTStoredEvent *))reply {

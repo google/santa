@@ -16,6 +16,7 @@
 
 #include "SNTLogging.h"
 
+#import "SNTCertificate.h"
 #import "SNTCommandSyncStatus.h"
 #import "SNTStoredEvent.h"
 #import "SNTXPCConnection.h"
@@ -94,15 +95,18 @@
       newEvent[@"file_bundle_version_string"] = event.fileBundleVersionString;
     }
 
-    if (event.certSHA1) newEvent[@"cert_sha1"] = event.certSHA1;
-    if (event.certCN) newEvent[@"cert_cn"] = event.certCN;
-    if (event.certOrg) newEvent[@"cert_org"] = event.certOrg;
-    if (event.certOU) newEvent[@"cert_ou"] = event.certOU;
-    if (event.certValidFromDate) {
-      newEvent[@"cert_valid_from"] = @([event.certValidFromDate timeIntervalSince1970]);
-    }
-    if (event.certValidUntilDate) {
-      newEvent[@"cert_valid_until"] = @([event.certValidUntilDate timeIntervalSince1970]);
+    for (int i = 0; i < event.signingChain.count; i++) {
+      SNTCertificate *cert = [event.signingChain objectAtIndex:i];
+      NSString *certStr = [@"cert" stringByAppendingFormat:@"%d", i];
+
+      if (cert.SHA1) newEvent[[certStr stringByAppendingString:@"_sha1"]] = cert.SHA1;
+      if (cert.commonName) newEvent[[certStr stringByAppendingString:@"_cn"]] = cert.commonName;
+      if (cert.orgName) newEvent[[certStr stringByAppendingString:@"_org"]] = cert.orgName;
+      if (cert.orgUnit) newEvent[[certStr stringByAppendingString:@"_ou"]] = cert.orgUnit;
+      if (cert.validFrom) newEvent[[certStr stringByAppendingString:@"_valid_from"]] =
+          @([cert.validFrom timeIntervalSince1970]);
+      if (cert.validUntil) newEvent[[certStr stringByAppendingString:@"_valid_until"]] =
+          @([cert.validUntil timeIntervalSince1970]);
     }
 
     [uploadEvents addObject:newEvent];

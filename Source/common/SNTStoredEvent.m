@@ -14,67 +14,55 @@
 
 #import "SNTStoredEvent.h"
 
+#import "SNTCertificate.h"
+
 @implementation SNTStoredEvent
+
+#define ENCODE(obj, key) if (obj) [coder encodeObject:obj forKey:key]
+#define DECODE(cls, key) [decoder decodeObjectOfClass:[cls class] forKey:key]
+#define DECODEARRAY(cls, key) \
+    [decoder decodeObjectOfClasses:[NSSet setWithObjects:[NSArray class], [cls class], nil] \
+                                                  forKey:key]
 
 + (BOOL)supportsSecureCoding {  return YES; }
 
 - (void)encodeWithCoder:(NSCoder *)coder {
-  [coder encodeObject:self.idx forKey:@"idx"];
-  [coder encodeObject:self.fileSHA256 forKey:@"fileSHA256"];
-  [coder encodeObject:self.filePath forKey:@"filePath"];
+  ENCODE(self.idx, @"idx");
+  ENCODE(self.fileSHA256, @"fileSHA256");
+  ENCODE(self.filePath, @"filePath");
 
-  if (self.fileBundleName) [coder encodeObject:self.fileBundleName forKey:@"fileBundleName"];
-  if (self.fileBundleID) [coder encodeObject:self.fileBundleID forKey:@"fileBundleID"];
-  if (self.fileBundleVersion) {
-    [coder encodeObject:self.fileBundleVersion forKey:@"fileBundleVersion"];
-  }
-  if (self.fileBundleVersionString) {
-    [coder encodeObject:self.fileBundleVersionString forKey:@"fileBundleVersionString"];
-  }
+  ENCODE(self.fileBundleName, @"fileBundleName");
+  ENCODE(self.fileBundleID, @"fileBundleID");
+  ENCODE(self.fileBundleVersion, @"fileBundleVersion");
+  ENCODE(self.fileBundleVersionString, @"fileBundleVersionString");
 
-  if (self.certSHA1) [coder encodeObject:self.certSHA1 forKey:@"certSHA1"];
-  if (self.certCN) [coder encodeObject:self.certCN forKey:@"certCN"];
-  if (self.certOrg) [coder encodeObject:self.certOrg forKey:@"certOrg"];
-  if (self.certOU) [coder encodeObject:self.certOU forKey:@"certOU"];
-  if (self.certValidFromDate) {
-    [coder encodeObject:self.certValidFromDate forKey:@"certValidFromDate"];
-  }
-  if (self.certValidUntilDate) {
-    [coder encodeObject:self.certValidUntilDate forKey:@"certValidUntilDate"];
-  }
+  ENCODE(self.signingChain, @"signingChain");
 
-  [coder encodeObject:self.executingUser forKey:@"executingUser"];
-  [coder encodeObject:self.occurrenceDate forKey:@"occurrenceDate"];
-  [coder encodeInt:self.decision forKey:@"decision"];
-
-  if (self.loggedInUsers) [coder encodeObject:self.loggedInUsers forKey:@"loggedInUsers"];
-  if (self.currentSessions) [coder encodeObject:self.currentSessions forKey:@"currentSessions"];
+  ENCODE(self.executingUser, @"executingUser");
+  ENCODE(self.occurrenceDate, @"occurrenceDate");
+  ENCODE(@(self.decision), @"decision");
+  ENCODE(self.loggedInUsers, @"loggedInUsers");
+  ENCODE(self.currentSessions, @"currentSessions");
 }
 
 - (instancetype)initWithCoder:(NSCoder *)decoder {
-  _idx = [decoder decodeObjectOfClass:[NSNumber class] forKey:@"idx"];
-  _fileSHA256 = [decoder decodeObjectOfClass:[NSString class] forKey:@"fileSHA256"];
-  _filePath = [decoder decodeObjectOfClass:[NSString class] forKey:@"filePath"];
-  _fileBundleName = [decoder decodeObjectOfClass:[NSString class] forKey:@"fileBundleName"];
+  _idx = DECODE(NSNumber, @"idx");
+  _fileSHA256 = DECODE(NSString, @"fileSHA256");
+  _filePath = DECODE(NSString, @"filePath");
 
-  _fileBundleID = [decoder decodeObjectOfClass:[NSString class] forKey:@"fileBundleID"];
-  _fileBundleVersion = [decoder decodeObjectOfClass:[NSString class] forKey:@"fileBundleVersion"];
-  _fileBundleVersionString =
-      [decoder decodeObjectOfClass:[NSString class] forKey:@"fileBundleVersionString"];
-  _certSHA1 = [decoder decodeObjectOfClass:[NSString class] forKey:@"certSHA1"];
-  _certCN = [decoder decodeObjectOfClass:[NSString class] forKey:@"certCN"];
-  _certOrg = [decoder decodeObjectOfClass:[NSString class] forKey:@"certOrg"];
-  _certOU = [decoder decodeObjectOfClass:[NSString class] forKey:@"certOU"];
-  _certValidFromDate = [decoder decodeObjectOfClass:[NSDate class] forKey:@"certValidFromDate"];
-  _certValidUntilDate = [decoder decodeObjectOfClass:[NSDate class] forKey:@"certValidUntilDate"];
-  _executingUser = [decoder decodeObjectOfClass:[NSString class] forKey:@"executingUser"];
-  _occurrenceDate = [decoder decodeObjectOfClass:[NSDate class] forKey:@"occurrenceDate"];
-  _decision = [decoder decodeIntForKey:@"decision"];
+  _fileBundleName = DECODE(NSString, @"fileBundleName");
+  _fileBundleID = DECODE(NSString, @"fileBundleID");
+  _fileBundleVersion = DECODE(NSString, @"fileBundleVersion");
+  _fileBundleVersionString = DECODE(NSString, @"fileBundleVersionString");
 
-  NSSet *stringAndArrayClasses = [NSSet setWithObjects:[NSArray class], [NSString class], nil];
-  _loggedInUsers = [decoder decodeObjectOfClasses:stringAndArrayClasses forKey:@"loggedInUsers"];
-  _currentSessions = [decoder decodeObjectOfClasses:stringAndArrayClasses
-                                             forKey:@"currentSessions"];
+  _signingChain = DECODEARRAY(SNTCertificate, @"signingChain");
+
+  _executingUser = DECODE(NSString, @"executingUser");
+  _occurrenceDate = DECODE(NSDate, @"occurrenceDate");
+  _decision = [DECODE(NSNumber, @"decision") intValue];
+
+  _loggedInUsers = DECODEARRAY(NSString, @"loggedInUsers");
+  _currentSessions = DECODEARRAY(NSString, @"currentSessions");
 
   return self;
 }
@@ -91,7 +79,7 @@
   NSUInteger result = 1;
   result = prime * result + [self.idx hash];
   result = prime * result + [self.fileSHA256 hash];
-  result = prime * result + [self.filePath hash];
+  result = prime * result + [self.occurrenceDate hash];
   return result;
 }
 

@@ -28,22 +28,7 @@
     [db executeUpdate:@"CREATE TABLE 'events' ("
         "'idx' INTEGER PRIMARY KEY AUTOINCREMENT,"
         "'fileSHA256' TEXT NOT NULL,"
-        "'filePath' TEXT NOT NULL,"
-        "'fileBundleID' TEXT,"
-        "'fileBundleVersion' TEXT,"
-        "'fileBundleVersionString' TEXT,"
-        "'fileBundleName' TEXT,"
-        "'certSHA1' TEXT,"
-        "'certCN' TEXT,"
-        "'certOrg' TEXT,"
-        "'certOU' TEXT,"
-        "'certValidFromDate' REAL,"
-        "'certValidUntilDate' REAL,"
-        "'occurrenceDate' REAL,"
-        "'executingUser' TEXT,"
-        "'decision' INT,"
-        "'loggedInUsers' BLOB,"
-        "'currentSessions' BLOB"
+        "'eventData' BLOB"
         @");"];
     [db executeUpdate:@"CREATE INDEX event_filesha256 ON events (fileSHA256);"];
 
@@ -55,99 +40,43 @@
 
 #pragma mark Loading / Storing
 
-- (void)addStoredEvent:(SNTStoredEvent *)event {
+- (BOOL)addStoredEvent:(SNTStoredEvent *)event {
   if (!event.fileSHA256 ||
       !event.filePath ||
       !event.occurrenceDate ||
       !event.executingUser ||
-      !event.decision) return;
+      !event.decision) return NO;
 
-  NSMutableDictionary *parameters = [@{@"fileSHA256": event.fileSHA256,
-                                       @"filePath": event.filePath,
-                                       @"occurrenceDate": event.occurrenceDate,
-                                       @"executingUser": event.executingUser,
-                                       @"decision": @(event.decision)} mutableCopy];
+  NSData *eventData = [NSKeyedArchiver archivedDataWithRootObject:event];
 
-  if (event.certSHA1) parameters[@"certSHA1"] = event.certSHA1;
-  if (event.certCN) parameters[@"certCN"] = event.certCN;
-  if (event.certOrg) parameters[@"certOrg"] = event.certOrg;
-  if (event.certOU) parameters[@"certOU"] = event.certOU;
-  if (event.certValidFromDate) parameters[@"certValidFromDate"] = event.certValidFromDate;
-  if (event.certValidUntilDate) parameters[@"certValidUntilDate"] = event.certValidUntilDate;
-
-  if (event.fileBundleID) parameters[@"fileBundleID"] = event.fileBundleID;
-  if (event.fileBundleName) parameters[@"fileBundleName"] = event.fileBundleName;
-  if (event.fileBundleVersion) parameters[@"fileBundleVersion"] = event.fileBundleVersion;
-  if (event.fileBundleVersionString) {
-    parameters[@"fileBundleVersionString"] = event.fileBundleVersionString;
-  }
-
-  if (event.loggedInUsers) {
-    NSData *usersData = [NSKeyedArchiver archivedDataWithRootObject:event.loggedInUsers];
-    parameters[@"loggedInUsers"] = usersData;
-  }
-
-  if (event.currentSessions ) {
-    NSData *sessionsData = [NSKeyedArchiver archivedDataWithRootObject:event.currentSessions];
-    parameters[@"currentSessions"] = sessionsData;
-  }
-
-  NSString *paramString = [[parameters allKeys] componentsJoinedByString:@","];
-  NSString *paramStringColon = [paramString stringByReplacingOccurrencesOfString:@","
-                                                                      withString:@",:"];
-  paramStringColon = [@":" stringByAppendingString:paramStringColon];
-
-  NSString *sql = [NSString stringWithFormat:@"INSERT INTO 'events' (%@) VALUES (%@)",
-                      paramString,
-                      paramStringColon];
-
+  __block BOOL result = NO;
   [self inTransaction:^(FMDatabase *db, BOOL *rollback) {
-      if (![db executeUpdate:sql withParameterDictionary:parameters]) {
-        LOGD(@"Failed to save event");
+      if (![db executeUpdate:@"INSERT INTO 'events' (fileSHA256, eventData) VALUES (?, ?)",
+            event.fileSHA256, eventData]) {
+        LOGD(@"Failed to save event with SHA-256: %@", event.fileSHA256);
+        result = NO;
+      } else {
+        result = YES;
       }
   }];
+
+  return result;
 }
 
 - (SNTStoredEvent *)eventFromResultSet:(FMResultSet *)rs {
-  SNTStoredEvent *event = [[SNTStoredEvent alloc] init];
+  NSData *eventData = [rs dataForColumn:@"eventData"];
+  if (!eventData) return nil;
 
+  SNTStoredEvent *event = [NSKeyedUnarchiver unarchiveObjectWithData:eventData];
   event.idx = @([rs intForColumn:@"idx"]);
-  event.fileSHA256 = [rs stringForColumn:@"fileSHA256"];
-  event.filePath = [rs stringForColumn:@"filePath"];
-  event.occurrenceDate = [rs dateForColumn:@"occurrenceDate"];
-  event.executingUser = [rs stringForColumn:@"executingUser"];
-  event.decision = [rs intForColumn:@"decision"];
-
-  event.certSHA1 = [rs stringForColumn:@"certSHA1"];
-  event.certCN = [rs stringForColumn:@"certCN"];
-  event.certOrg = [rs stringForColumn:@"certOrg"];
-  event.certOU = [rs stringForColumn:@"certOU"];
-  event.certValidFromDate = [rs dateForColumn:@"certValidFromDate"];
-  event.certValidUntilDate = [rs dateForColumn:@"certValidUntilDate"];
-
-  event.fileBundleID = [rs stringForColumn:@"fileBundleID"];
-  event.fileBundleName = [rs stringForColumn:@"fileBundleName"];
-  event.fileBundleVersion = [rs stringForColumn:@"fileBundleVersion"];
-  event.fileBundleVersionString = [rs stringForColumn:@"fileBundleVersionString"];
-
-  NSData *currentSessions = [rs dataForColumn:@"currentSessions"];
-  NSData *loggedInUsers = [rs dataForColumn:@"loggedInUsers"];
-
-  if (currentSessions) {
-    event.currentSessions = [NSKeyedUnarchiver unarchiveObjectWithData:currentSessions];
-  }
-
-  if (loggedInUsers) {
-    event.loggedInUsers = [NSKeyedUnarchiver unarchiveObjectWithData:loggedInUsers];
-  }
 
   return event;
 }
 
 #pragma mark Querying/Retreiving
 
-- (int)eventsPendingCount {
-  __block int eventsPending = 0;
+- (NSUInteger)pendingEventsCount {
+  __block NSUInteger eventsPending = 0;
   [self inDatabase:^(FMDatabase *db) {
       eventsPending = [db intForQuery:@"SELECT COUNT(*) FROM events"];
   }];
@@ -158,8 +87,8 @@
   __block SNTStoredEvent *storedEvent;
 
   [self inDatabase:^(FMDatabase *db) {
-      FMResultSet *rs = [db executeQuery:@"SELECT * FROM events WHERE fileSHA256=? "
-                                         @"ORDER BY occurrenceDate DESC LIMIT 1;", sha256];
+      FMResultSet *rs = [db executeQuery:@"SELECT * FROM events WHERE fileSHA256=? LIMIT 1;",
+                         sha256];
 
       if ([rs next]) {
         storedEvent = [self eventFromResultSet:rs];

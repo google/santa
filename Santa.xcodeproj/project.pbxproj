@@ -69,6 +69,7 @@
 		0D3AFBF818FB4C870087BCEE /* IOKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0D3AFBF718FB4C870087BCEE /* IOKit.framework */; };
 		0D416401191974F1006A356A /* SNTCommandSyncStatus.m in Sources */ = {isa = PBXBuildFile; fileRef = 0D416400191974F1006A356A /* SNTCommandSyncStatus.m */; };
 		0D41640519197AD7006A356A /* SNTCommandSyncEventUpload.m in Sources */ = {isa = PBXBuildFile; fileRef = 0D41640419197AD7006A356A /* SNTCommandSyncEventUpload.m */; };
+		0D41DAD41A7C28C800A890FE /* SNTEventTableTest.m in Sources */ = {isa = PBXBuildFile; fileRef = 0D41DAD31A7C28C800A890FE /* SNTEventTableTest.m */; };
 		0D42D2B519D1D98A00955F08 /* SNTSystemInfo.m in Sources */ = {isa = PBXBuildFile; fileRef = 0D42D2B419D1D98A00955F08 /* SNTSystemInfo.m */; };
 		0D42D2B819D2042900955F08 /* SNTConfigurator.m in Sources */ = {isa = PBXBuildFile; fileRef = 0D42D2B719D2042900955F08 /* SNTConfigurator.m */; };
 		0D42D2B919D2042900955F08 /* SNTConfigurator.m in Sources */ = {isa = PBXBuildFile; fileRef = 0D42D2B719D2042900955F08 /* SNTConfigurator.m */; };
@@ -244,6 +245,7 @@
 		0D416400191974F1006A356A /* SNTCommandSyncStatus.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SNTCommandSyncStatus.m; sourceTree = "<group>"; };
 		0D41640319197AD7006A356A /* SNTCommandSyncEventUpload.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SNTCommandSyncEventUpload.h; sourceTree = "<group>"; };
 		0D41640419197AD7006A356A /* SNTCommandSyncEventUpload.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SNTCommandSyncEventUpload.m; sourceTree = "<group>"; };
+		0D41DAD31A7C28C800A890FE /* SNTEventTableTest.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SNTEventTableTest.m; sourceTree = "<group>"; };
 		0D42D2B319D1D98A00955F08 /* SNTSystemInfo.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SNTSystemInfo.h; sourceTree = "<group>"; };
 		0D42D2B419D1D98A00955F08 /* SNTSystemInfo.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SNTSystemInfo.m; sourceTree = "<group>"; };
 		0D42D2B619D2042900955F08 /* SNTConfigurator.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SNTConfigurator.h; sourceTree = "<group>"; };
@@ -395,6 +397,7 @@
 				0DD0D48A194F6193005F27EB /* SNTCertificateTest.m */,
 				0DD0D48C194F6D5B005F27EB /* SNTCodesignCheckerTest.m */,
 				0D10BE8A1A0AB23300C0C944 /* SNTDERDecoderTest.m */,
+				0D41DAD31A7C28C800A890FE /* SNTEventTableTest.m */,
 				0DD0D490194F9947005F27EB /* SNTExecutionControllerTest.m */,
 				0D3AFBE618FB32CB0087BCEE /* SNTXPCConnectionTest.m */,
 			);
@@ -1068,6 +1071,7 @@
 				0D28D53819D9F5910015C5EB /* SNTConfigurator.m in Sources */,
 				0D3AFBE718FB32CB0087BCEE /* SNTXPCConnectionTest.m in Sources */,
 				0DCD605719115E54006B445C /* SNTDaemonControlController.m in Sources */,
+				0D41DAD41A7C28C800A890FE /* SNTEventTableTest.m in Sources */,
 				0D3AFBEE18FB4C6C0087BCEE /* SNTApplication.m in Sources */,
 				0DD0D48F194F78F8005F27EB /* SNTBinaryInfoTest.m in Sources */,
 				0DC5D86E191AED220078A5C0 /* SNTRuleTable.m in Sources */,

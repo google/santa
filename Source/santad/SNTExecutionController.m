@@ -118,12 +118,7 @@
       se.fileBundleVersion = [binInfo bundleVersion];
     }
 
-    se.certSHA1 = csInfo.leafCertificate.SHA1;
-    se.certCN = csInfo.leafCertificate.commonName;
-    se.certOrg = csInfo.leafCertificate.orgName;
-    se.certOU = csInfo.leafCertificate.orgUnit;
-    se.certValidFromDate = csInfo.leafCertificate.validFrom;
-    se.certValidUntilDate = csInfo.leafCertificate.validUntil;
+    se.signingChain = csInfo.certificates;
     se.executingUser = userName;
     se.occurrenceDate = [[NSDate alloc] init];
     se.decision = [self eventStateForDecision:respondedAction type:rule.type];
