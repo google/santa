@@ -19,14 +19,15 @@
 #import "SNTBinaryInfo.h"
 #import "SNTCertificate.h"
 #import "SNTMessageWindow.h"
-#import "SNTNotificationMessage.h"
+#import "SNTStoredEvent.h"
 
 @implementation SNTMessageWindowController
 
-- (instancetype)initWithEvent:(SNTNotificationMessage *)event {
+- (instancetype)initWithEvent:(SNTStoredEvent *)event andMessage:(NSString *)message {
   self = [super initWithWindowNibName:@"MessageWindow"];
   if (self) {
     _event = event;
+    _customMessage = message;
     [self.window setMovableByWindowBackground:NO];
     [self.window setLevel:NSPopUpMenuWindowLevel];
     [self.window center];
@@ -48,8 +49,8 @@
 
 - (IBAction)showCertInfo:(id)sender {
   // SFCertificatePanel expects an NSArray of SecCertificateRef's
-  NSMutableArray *certArray = [NSMutableArray arrayWithCapacity:[self.event.certificates count]];
-  for (SNTCertificate *cert in self.event.certificates) {
+  NSMutableArray *certArray = [NSMutableArray arrayWithCapacity:[self.event.signingChain count]];
+  for (SNTCertificate *cert in self.event.signingChain) {
     [certArray addObject:(id)cert.certRef];
   }
 
@@ -71,8 +72,8 @@
   }
 }
 
-- (NSString *)binaryCert {
-  SNTCertificate *leafCert = self.event.leafCertificate;
+- (NSString *)publisherInfo {
+  SNTCertificate *leafCert = [self.event.signingChain firstObject];
 
   if (leafCert.commonName && leafCert.orgName) {
     return [NSString stringWithFormat:@"%@ - %@", leafCert.commonName, leafCert.orgName];
@@ -86,25 +87,31 @@
 }
 
 - (NSAttributedString *)attributedCustomMessage {
-  if (self.event.customMessage) {
-    NSString *htmlHeader = @"<html><head><style>"
-                           @"body {"
-                           @"  font-family: 'Lucida Grande', 'Helvetica', sans-serif;"
-                           @"  font-size: 13px;"
-                           @"  color: #666;"
-                           @"  text-align: center;"
-                           @"}"
-                           @"</style></head><body>";
-    NSString *htmlFooter = @"</body></html>";
-    NSString *fullHtml = [NSString stringWithFormat:@"%@%@%@", htmlHeader,
-                          self.event.customMessage, htmlFooter];
-    NSData *htmlData = [fullHtml dataUsingEncoding:NSUTF8StringEncoding];
-    NSAttributedString *returnStr = [[NSAttributedString alloc] initWithHTML:htmlData
-                                                          documentAttributes:NULL];
-    return returnStr;
+  NSString *htmlHeader = @"<html><head><style>"
+                         @"body {"
+                         @"  font-family: 'Lucida Grande', 'Helvetica', sans-serif;"
+                         @"  font-size: 13px;"
+                         @"  color: #AAA;"
+                         @"  text-align: center;"
+                         @"}"
+                         @"</style></head><body>";
+  NSString *htmlFooter = @"</body></html>";
+
+  NSString *message;
+  if (self.customMessage && ![self.customMessage isEqual:@""]) {
+    message = self.customMessage;
   } else {
-    return nil;
+    message = @"The following application has been blocked from executing<br />"
+              @"because its trustworthiness cannot be determined.";
   }
+
+  NSString *fullHTML = [NSString stringWithFormat:@"%@%@%@", htmlHeader, message, htmlFooter];
+
+  NSData *htmlData = [fullHTML dataUsingEncoding:NSUTF8StringEncoding];
+  NSAttributedString *returnStr = [[NSAttributedString alloc] initWithHTML:htmlData
+                                                        documentAttributes:NULL];
+  return returnStr;
+
 }
 
 @end

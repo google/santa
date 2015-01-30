@@ -15,14 +15,14 @@
         <customObject id="-3" userLabel="Application" customClass="NSObject"/>
         <window allowsToolTipsWhenApplicationIsInactive="NO" autorecalculatesKeyViewLoop="NO" oneShot="NO" showsToolbarButton="NO" visibleAtLaunch="NO" animationBehavior="none" id="9Bq-yh-54f" customClass="SNTMessageWindow">
             <windowStyleMask key="styleMask" utility="YES"/>
-            <rect key="contentRect" x="167" y="107" width="500" height="292"/>
-            <rect key="screenRect" x="0.0" y="0.0" width="1680" height="1027"/>
+            <rect key="contentRect" x="167" y="107" width="620" height="275"/>
+            <rect key="screenRect" x="0.0" y="0.0" width="2560" height="1577"/>
             <view key="contentView" id="Iwq-Lx-rLv">
-                <rect key="frame" x="0.0" y="0.0" width="500" height="292"/>
+                <rect key="frame" x="0.0" y="0.0" width="620" height="275"/>
                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                 <subviews>
                     <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="t8c-Fx-e5h">
-                        <rect key="frame" x="209" y="227" width="83" height="40"/>
+                        <rect key="frame" x="269" y="210" width="83" height="40"/>
                         <constraints>
                             <constraint firstAttribute="height" constant="40" id="KoG-v6-GfK"/>
                             <constraint firstAttribute="width" constant="79" id="oS3-CE-1vv"/>
@@ -34,22 +34,18 @@
                         </textFieldCell>
                     </textField>
                     <textField verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" setsMaxLayoutWidthAtFirstLayout="YES" translatesAutoresizingMaskIntoConstraints="NO" id="cD5-Su-lXR">
-                        <rect key="frame" x="23" y="185" width="454" height="17"/>
+                        <rect key="frame" x="23" y="168" width="574" height="17"/>
                         <textFieldCell key="cell" allowsUndo="NO" sendsActionOnEndEditing="YES" alignment="center" title="A message to the user goes here..." allowsEditingTextAttributes="YES" id="5tH-bG-UJA">
                             <font key="font" metaFont="system"/>
                             <color key="textColor" red="0.40000000000000002" green="0.40000000000000002" blue="0.40000000000000002" alpha="1" colorSpace="calibratedRGB"/>
                             <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                         </textFieldCell>
                         <connections>
-                            <binding destination="-2" name="value" keyPath="self.attributedCustomMessage" id="U0m-7d-GtI">
-                                <dictionary key="options">
-                                    <string key="NSNullPlaceholder">The following application has been blocked from executing because its trustworthiness cannot be determined.</string>
-                                </dictionary>
-                            </binding>
+                            <binding destination="-2" name="value" keyPath="self.attributedCustomMessage" id="376-sj-4Q1"/>
                         </connections>
                     </textField>
                     <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="d9e-Wv-Y5H">
-                        <rect key="frame" x="55" y="143" width="34" height="17"/>
+                        <rect key="frame" x="55" y="126" width="34" height="17"/>
                         <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Path" id="KgY-X1-ESG">
                             <font key="font" metaFont="systemBold"/>
                             <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
@@ -57,7 +53,7 @@
                         </textFieldCell>
                     </textField>
                     <textField horizontalHuggingPriority="1000" verticalHuggingPriority="1000" horizontalCompressionResistancePriority="1000" verticalCompressionResistancePriority="1000" setsMaxLayoutWidthAtFirstLayout="YES" translatesAutoresizingMaskIntoConstraints="NO" id="pc8-G9-4pJ">
-                        <rect key="frame" x="98" y="143" width="350" height="17"/>
+                        <rect key="frame" x="98" y="126" width="350" height="17"/>
                         <constraints>
                             <constraint firstAttribute="width" constant="346" id="BYY-2q-Lmb"/>
                         </constraints>
@@ -67,11 +63,11 @@
                             <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                         </textFieldCell>
                         <connections>
-                            <binding destination="-2" name="value" keyPath="self.event.path" id="4Nh-Ue-aCb"/>
+                            <binding destination="-2" name="value" keyPath="self.event.filePath" id="qfp-sR-Nmu"/>
                         </connections>
                     </textField>
                     <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="KEB-eH-x2Y">
-                        <rect key="frame" x="28" y="106" width="61" height="17"/>
+                        <rect key="frame" x="28" y="97" width="61" height="17"/>
                         <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="SHA-256" id="eKN-Ic-5zy">
                             <font key="font" metaFont="systemBold"/>
                             <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
@@ -79,14 +75,17 @@
                         </textFieldCell>
                     </textField>
                     <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" setsMaxLayoutWidthAtFirstLayout="YES" translatesAutoresizingMaskIntoConstraints="NO" id="PXc-xv-A28">
-                        <rect key="frame" x="98" y="99" width="347" height="34"/>
-                        <textFieldCell key="cell" lineBreakMode="charWrapping" selectable="YES" sendsActionOnEndEditing="YES" title="d5cc4aee4203c5d7bd7b2da9aeec257a377aaa2b80d8597206400f0d941cc7c5" id="X4W-9e-eIu">
+                        <rect key="frame" x="98" y="99" width="504" height="17"/>
+                        <constraints>
+                            <constraint firstAttribute="width" constant="500" id="7Cb-pK-hBQ"/>
+                        </constraints>
+                        <textFieldCell key="cell" lineBreakMode="charWrapping" selectable="YES" sendsActionOnEndEditing="YES" title="File SHA-256" id="X4W-9e-eIu">
                             <font key="font" metaFont="system"/>
                             <color key="textColor" white="0.0" alpha="0.5" colorSpace="deviceWhite"/>
                             <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                         </textFieldCell>
                         <connections>
-                            <binding destination="-2" name="value" keyPath="self.event.SHA256" id="Jmt-Oj-Ciq"/>
+                            <binding destination="-2" name="value" keyPath="self.event.fileSHA256" id="SzX-Ep-rBa"/>
                         </connections>
                     </textField>
                     <button toolTip="Show code signing certificate chain" translatesAutoresizingMaskIntoConstraints="NO" id="cJf-k6-OxS">
@@ -101,7 +100,7 @@
                         </buttonCell>
                         <connections>
                             <action selector="showCertInfo:" target="-2" id="dB0-a3-X31"/>
-                            <binding destination="-2" name="hidden" keyPath="self.binaryCert" id="xpJ-jl-aUN">
+                            <binding destination="-2" name="hidden" keyPath="self.publisherInfo" id="fFR-f3-Oiw">
                                 <dictionary key="options">
                                     <string key="NSValueTransformerName">NSIsNil</string>
                                 </dictionary>
@@ -109,7 +108,7 @@
                         </connections>
                     </button>
                     <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="BbV-3h-mmL">
-                        <rect key="frame" x="195" y="23" width="110" height="25"/>
+                        <rect key="frame" x="255" y="23" width="110" height="25"/>
                         <constraints>
                             <constraint firstAttribute="width" constant="110" id="HdL-6x-X4f"/>
                             <constraint firstAttribute="height" constant="22" id="YYm-GI-ojT"/>
@@ -137,7 +136,7 @@ DQ
                             <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                         </textFieldCell>
                         <connections>
-                            <binding destination="-2" name="value" keyPath="self.binaryCert" id="eFt-oy-SXL">
+                            <binding destination="-2" name="value" keyPath="self.publisherInfo" id="CEI-Cu-7pC">
                                 <dictionary key="options">
                                     <string key="NSNullPlaceholder">Not code-signed</string>
                                 </dictionary>
@@ -180,7 +179,7 @@ DQ
                     <constraint firstItem="cD5-Su-lXR" firstAttribute="leading" secondItem="Iwq-Lx-rLv" secondAttribute="leading" constant="25" id="zWz-9i-bUG"/>
                 </constraints>
             </view>
-            <point key="canvasLocation" x="149" y="226"/>
+            <point key="canvasLocation" x="167" y="226.5"/>
         </window>
     </objects>
     <resources>

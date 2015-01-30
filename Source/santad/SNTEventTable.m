@@ -16,7 +16,6 @@
 
 #import "SNTCertificate.h"
 #import "SNTLogging.h"
-#import "SNTNotificationMessage.h"
 #import "SNTStoredEvent.h"
 
 @implementation SNTEventTable

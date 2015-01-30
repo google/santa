@@ -22,7 +22,6 @@
 #import "SNTCodesignChecker.h"
 #import "SNTDriverManager.h"
 #import "SNTEventTable.h"
-#import "SNTNotificationMessage.h"
 #import "SNTRule.h"
 #import "SNTRuleTable.h"
 

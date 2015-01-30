@@ -12,7 +12,7 @@
 ///    See the License for the specific language governing permissions and
 ///    limitations under the License.
 
-@class SNTNotificationMessage;
+@class SNTStoredEvent;
 
 @protocol SNTMessageWindowControllerDelegate
 - (void)windowDidClose;
@@ -23,7 +23,7 @@
 ///
 @interface SNTMessageWindowController : NSWindowController
 
-- (instancetype)initWithEvent:(SNTNotificationMessage *)event;
+- (instancetype)initWithEvent:(SNTStoredEvent *)event andMessage:(NSString *)message;
 
 - (IBAction)showWindow:(id)sender;
 - (IBAction)closeWindow:(id)sender;
@@ -32,7 +32,12 @@
 ///
 ///  The execution event that this window is for
 ///
-@property SNTNotificationMessage *event;
+@property SNTStoredEvent *event;
+
+///
+///  The custom message to display for this event
+///
+@property NSString *customMessage;
 
 ///
 ///  The delegate to inform when the notification is dismissed
@@ -42,7 +47,7 @@
 ///
 ///  A 'friendly' string representing the certificate information
 ///
-@property(readonly) IBOutlet NSString *binaryCert;
+@property(readonly) IBOutlet NSString *publisherInfo;
 
 ///
 ///  An optional message to display with this block.

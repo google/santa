@@ -19,8 +19,6 @@
 
 #include "SNTLogging.h"
 
-#import "SNTNotificationMessage.h"
-
 @interface SNTDriverManager ()
 @property IODataQueueMemory *queueMemory;
 @property io_connect_t connection;

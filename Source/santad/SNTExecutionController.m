@@ -24,7 +24,6 @@
 #import "SNTDriverManager.h"
 #import "SNTDropRootPrivs.h"
 #import "SNTEventTable.h"
-#import "SNTNotificationMessage.h"
 #import "SNTRule.h"
 #import "SNTRuleTable.h"
 #import "SNTStoredEvent.h"
@@ -102,7 +101,7 @@
     [self.driverManager postToKernelAction:respondedAction forVnodeID:vnodeId];
   }
 
-  // Step 5 - log to database
+  // Step 5 - log to database and potentially alert user
   if (respondedAction == ACTION_RESPOND_CHECKBW_DENY || !rule) {
     SNTStoredEvent *se = [[SNTStoredEvent alloc] init];
     se.fileSHA256 = sha256;
@@ -130,6 +129,19 @@
     se.loggedInUsers = loggedInUsers;
 
     [self.eventTable addStoredEvent:se];
+
+    if (respondedAction == ACTION_RESPOND_CHECKBW_DENY) {
+      // So the server has something to show the user straight away, initiate an event
+      // upload for the blocked binary rather than waiting for the next sync.
+      // The event upload is skipped if the full path is equal to that of /usr/sbin/santactl so that
+      /// on the off chance that santactl is not whitelisted, we don't get into an infinite loop.
+      if (![path isEqual:@"/usr/sbin/santactl"]) {
+        [self initiateEventUploadForSHA256:sha256];
+      }
+
+      [[self.notifierConnection remoteObjectProxy] postBlockNotification:se
+                                                       withCustomMessage:rule.customMsg];
+    }
   }
 
   // Step 6 - log to log file
@@ -137,24 +149,6 @@
                           sha256:sha256
                             path:path
                         leafCert:csInfo.leafCertificate];
-
-  // Step 7 - alert user
-  if (respondedAction == ACTION_RESPOND_CHECKBW_DENY) {
-    // So the server has something to show the user straight away, initiate an event
-    // upload for the blocked binary rather than waiting for the next sync.
-    // The event upload is skipped if the full path is equal to that of /usr/sbin/santactl so that
-    /// on the off chance that santactl is not whitelisted, we don't get into an infinite loop.
-    if (![path isEqual:@"/usr/sbin/santactl"]) {
-      [self initiateEventUploadForSHA256:sha256];
-    }
-
-    SNTNotificationMessage *notMsg = [[SNTNotificationMessage alloc] init];
-    notMsg.path = path;
-    notMsg.SHA256 = sha256;
-    notMsg.customMessage = rule.customMsg;
-    notMsg.certificates = csInfo.certificates;
-    [[self.notifierConnection remoteObjectProxy] postBlockNotification:notMsg];
-  }
 }
 
 /**

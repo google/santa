@@ -13,9 +13,9 @@
 ///    limitations under the License.
 
 /// Protocol implemented by SantaNotifier and utilized by santad
-@class SNTNotificationMessage;
+@class SNTStoredEvent;
 @protocol SNTNotifierXPC
-- (void)postBlockNotification:(SNTNotificationMessage *)event;
+- (void)postBlockNotification:(SNTStoredEvent *)event withCustomMessage:(NSString *)message;
 @end
 
 @interface SNTXPCNotifierInterface : NSObject

@@ -16,7 +16,6 @@
 
 #import "SNTCertificate.h"
 #import "SNTCodesignChecker.h"
-#import "SNTNotificationMessage.h"
 #import "SNTRule.h"
 
 @implementation SNTRuleTable
