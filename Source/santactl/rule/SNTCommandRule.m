@@ -167,7 +167,7 @@ REGISTER_COMMAND_NAME(@"rule");
   newRule.customMsg = customMsg;
   
   [[daemonConn remoteObjectProxy] databaseRuleAddRule:newRule withReply:^{
-    LOGI(@"Added rule for SHA-256: %@", [newRule hash]);
+    LOGI(@"Added rule for SHA-256: %@", [newRule shasum]);
     exit(0);
   }];
 
