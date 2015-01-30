@@ -19,9 +19,6 @@
 ///  These enums are used in various places throughout the Santa client code.
 ///  The integer values are also stored in the database and so shouldn't be changed.
 ///
-///  Each enum contains an _UNKNOWN and a _MAX value, which the valid values must be between
-///  so that the code can easily verify valid values.
-///
 
 typedef enum {
   RULETYPE_UNKNOWN,
@@ -58,9 +55,12 @@ typedef enum {
   EVENTSTATE_ALLOW_UNKNOWN     = 1,
   EVENTSTATE_ALLOW_BINARY      = 2,
   EVENTSTATE_ALLOW_CERTIFICATE = 3,
-  EVENTSTATE_BLOCK_UNKNOWN     = 4,
-  EVENTSTATE_BLOCK_BINARY      = 5,
-  EVENTSTATE_BLOCK_CERTIFICATE = 6,
+  EVENTSTATE_ALLOW_SCOPE       = 4,
+
+  EVENTSTATE_BLOCK_UNKNOWN     = 5,
+  EVENTSTATE_BLOCK_BINARY      = 6,
+  EVENTSTATE_BLOCK_CERTIFICATE = 7,
+  EVENTSTATE_BLOCK_SCOPE       = 8,
 
   EVENTSTATE_MAX
 } santa_eventstate_t;
