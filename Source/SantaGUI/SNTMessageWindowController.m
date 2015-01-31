@@ -16,8 +16,8 @@
 
 #import <SecurityInterface/SFCertificatePanel.h>
 
-#import "SNTBinaryInfo.h"
 #import "SNTCertificate.h"
+#import "SNTFileInfo.h"
 #import "SNTMessageWindow.h"
 #import "SNTStoredEvent.h"
 

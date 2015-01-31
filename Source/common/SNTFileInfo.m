@@ -12,7 +12,7 @@
 ///    See the License for the specific language governing permissions and
 ///    limitations under the License.
 
-#import "SNTBinaryInfo.h"
+#import "SNTFileInfo.h"
 
 #import <CommonCrypto/CommonDigest.h>
 
@@ -20,25 +20,26 @@
 #include <mach-o/swap.h>
 #include <sys/xattr.h>
 
-@interface SNTBinaryInfo ()
+@interface SNTFileInfo ()
 @property NSString *path;
 @property NSData *fileData;
 @property NSBundle *bundleRef;
 @property NSDictionary *infoDict;
 @end
 
-@implementation SNTBinaryInfo
+@implementation SNTFileInfo
 
 - (instancetype)initWithPath:(NSString *)path {
   self = [super init];
 
   if (self) {
     // Convert to absolute, standardized path
-    path = [path stringByStandardizingPath];
+    path = [path stringByResolvingSymlinksInPath];
     if (![path isAbsolutePath]) {
       NSString *cwd = [[NSFileManager defaultManager] currentDirectoryPath];
       path = [cwd stringByAppendingPathComponent:path];
     }
+    path = [path stringByStandardizingPath];
 
     // Determine if file exists.
     // If path is actually a directory, check to see if it's a bundle and has a CFBundleExecutable.

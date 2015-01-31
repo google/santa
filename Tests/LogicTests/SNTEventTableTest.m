@@ -14,9 +14,9 @@
 
 #import <XCTest/XCTest.h>
 
-#import "SNTBinaryInfo.h"
 #import "SNTCodesignChecker.h"
 #import "SNTEventTable.h"
+#import "SNTFileInfo.h"
 #import "SNTStoredEvent.h"
 
 /// This test case actually tests SNTEventTable and SNTStoredEvent.
@@ -24,7 +24,7 @@
 /// Adding/Retrieving events relies on SNTStoredEvent coding to work correctly
 /// so if that is broken, these tests will fail.
 ///
-/// Depends on on SNTBinaryInfo and SNTCodesignChecker (and by extension
+/// Depends on on SNTFileInfo and SNTCodesignChecker (and by extension
 /// SNTCertificate) to avoid duplicating code into these tests.
 ///
 @interface SNTEventTableTest : XCTestCase
@@ -42,7 +42,7 @@
 }
 
 - (SNTStoredEvent *)createTestEvent {
-  SNTBinaryInfo *binInfo = [[SNTBinaryInfo alloc] initWithPath:@"/usr/bin/false"];
+  SNTFileInfo *binInfo = [[SNTFileInfo alloc] initWithPath:@"/usr/bin/false"];
   SNTCodesignChecker *csInfo = [[SNTCodesignChecker alloc] initWithBinaryPath:@"/usr/bin/false"];
   SNTStoredEvent *event;
   event = [[SNTStoredEvent alloc] init];

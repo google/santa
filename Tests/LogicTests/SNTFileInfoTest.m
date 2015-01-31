@@ -14,29 +14,42 @@
 
 #import <XCTest/XCTest.h>
 
-#import "SNTBinaryInfo.h"
+#import "SNTFileInfo.h"
 
-@interface SNTBinaryInfoTest : XCTestCase
+@interface SNTFileInfoTest : XCTestCase
 @end
 
-@implementation SNTBinaryInfoTest
+@implementation SNTFileInfoTest
+
+- (void)testPathStandardizing {
+  SNTFileInfo *sut = [[SNTFileInfo alloc] initWithPath:@"/Applications/Safari.app"];
+  XCTAssertNotNil(sut);
+  XCTAssertEqualObjects(sut.path, @"/Applications/Safari.app/Contents/MacOS/Safari");
+
+  sut = [[SNTFileInfo alloc] initWithPath:@"../../../../../../../../../bin/ls"];
+  XCTAssertEqualObjects(sut.path, @"/bin/ls");
+
+  sut = [[SNTFileInfo alloc] initWithPath:@"/usr/bin/qlmanage"];
+  XCTAssertEqualObjects(sut.path, @"/System/Library/Frameworks/QuickLook.framework/Versions/A/"
+                                  @"Resources/quicklookd.app/Contents/MacOS/qlmanage");
+}
 
 - (void)testSHA1 {
-  SNTBinaryInfo *sut = [[SNTBinaryInfo alloc] initWithPath:@"/sbin/launchd"];
+  SNTFileInfo *sut = [[SNTFileInfo alloc] initWithPath:@"/sbin/launchd"];
 
   XCTAssertNotNil(sut.SHA1);
   XCTAssertEqual(sut.SHA1.length, 40);
 }
 
 - (void)testSHA256 {
-  SNTBinaryInfo *sut = [[SNTBinaryInfo alloc] initWithPath:@"/sbin/launchd"];
+  SNTFileInfo *sut = [[SNTFileInfo alloc] initWithPath:@"/sbin/launchd"];
 
   XCTAssertNotNil(sut.SHA256);
   XCTAssertEqual(sut.SHA256.length, 64);
 }
 
 - (void)testExecutable {
-  SNTBinaryInfo *sut = [[SNTBinaryInfo alloc] initWithPath:@"/sbin/launchd"];
+  SNTFileInfo *sut = [[SNTFileInfo alloc] initWithPath:@"/sbin/launchd"];
 
   XCTAssertTrue(sut.isMachO);
   XCTAssertTrue(sut.isExecutable);
@@ -48,8 +61,8 @@
 }
 
 - (void)testKext {
-  SNTBinaryInfo *sut =
-      [[SNTBinaryInfo alloc] initWithPath:
+  SNTFileInfo *sut =
+      [[SNTFileInfo alloc] initWithPath:
           @"/System/Library/Extensions/AppleAPIC.kext/Contents/MacOS/AppleAPIC"];
 
   XCTAssertTrue(sut.isMachO);
@@ -62,7 +75,7 @@
 }
 
 - (void)testDylibs {
-  SNTBinaryInfo *sut = [[SNTBinaryInfo alloc] initWithPath:@"/usr/lib/libsqlite3.dylib"];
+  SNTFileInfo *sut = [[SNTFileInfo alloc] initWithPath:@"/usr/lib/libsqlite3.dylib"];
 
   XCTAssertTrue(sut.isMachO);
   XCTAssertTrue(sut.isDylib);
@@ -74,7 +87,7 @@
 }
 
 - (void)testScript {
-  SNTBinaryInfo *sut = [[SNTBinaryInfo alloc] initWithPath:@"/usr/bin/h2ph"];
+  SNTFileInfo *sut = [[SNTFileInfo alloc] initWithPath:@"/usr/bin/h2ph"];
 
   XCTAssertTrue(sut.isScript);
 
@@ -86,8 +99,8 @@
 }
 
 - (void)testBundle {
-  SNTBinaryInfo *sut =
-      [[SNTBinaryInfo alloc] initWithPath:@"/Applications/Safari.app/Contents/MacOS/Safari"];
+  SNTFileInfo *sut =
+      [[SNTFileInfo alloc] initWithPath:@"/Applications/Safari.app/Contents/MacOS/Safari"];
 
   XCTAssertNotNil([sut bundle]);
 
@@ -101,7 +114,7 @@
 - (void)testEmbeddedInfoPlist {
   // csreq is installed on all machines with Xcode installed. If you're running these tests,
   // it should be available..
-  SNTBinaryInfo *sut = [[SNTBinaryInfo alloc] initWithPath:@"/usr/bin/csreq"];
+  SNTFileInfo *sut = [[SNTFileInfo alloc] initWithPath:@"/usr/bin/csreq"];
 
   XCTAssertNotNil([sut infoPlist]);
 }

@@ -13,71 +13,72 @@
 ///    limitations under the License.
 
 ///
-///  SNTBinaryInfo represents a binary on disk, providing access to details about that binary
+///  Represents a binary on disk, providing access to details about that binary
 ///  such as the SHA-1, SHA-256, Info.plist and the Mach-O data.
 ///
-@interface SNTBinaryInfo : NSObject
+@interface SNTFileInfo : NSObject
 
 ///
-///  Designated initializer
+///  Designated initializer.
 ///
-///  @param path the path of the file this SNTBinaryInfo represents
+///  @param path The path of the file this instance is to represent. The path will be
+///      converted to an absolute, standardized path if it isn't already.
 ///
 - (instancetype)initWithPath:(NSString *)path;
 
 ///
-///  @return Path of this file
+///  @return Path of this file.
 ///
 - (NSString *)path;
 
 ///
-///  @return SHA-1 hash of this binary
+///  @return SHA-1 hash of this binary.
 ///
 - (NSString *)SHA1;
 
 ///
-///  @return SHA-256 hash of this binary
+///  @return SHA-256 hash of this binary.
 ///
 - (NSString *)SHA256;
 
 ///
 ///  @return The type of Mach-O file, one of:
-///  Dynamic Library, Kernel Extension, Fat Binary or Thin Binary
+///  Dynamic Library, Kernel Extension, Fat Binary or Thin Binary.
 ///
 - (NSString *)machoType;
 
 ///
-///  @return The architectures included in this binary (e.g. x86_64, ppc)
+///  @return The architectures included in this binary (e.g. x86_64, ppc).
 ///
 - (NSArray *)architectures;
 
 ///
-///  @return YES if this file is a Mach-O file
+///  @return YES if this file is a Mach-O file.
 ///
 - (BOOL)isMachO;
 
 ///
-///  @return YES if this file contains multiple architectures
+///  @return YES if this file contains multiple architectures.
 ///
 - (BOOL)isFat;
 
 ///
-///  @return YES if this file is an executable Mach-O file
+///  @return YES if this file is an executable Mach-O file.
 ///
 - (BOOL)isExecutable;
 
 ///
-///  @return YES if this file is a dynamic library
+///  @return YES if this file is a dynamic library.
 ///
 - (BOOL)isDylib;
 
 ///
-///  @return YES if this file is a kernel extension
+///  @return YES if this file is a kernel extension.
 ///
 - (BOOL)isKext;
 
 ///
-///  @return YES if this file is a script (e.g. it begins #!)
+///  @return YES if this file is a script (e.g. it begins #!).
 ///
 - (BOOL)isScript;
 
@@ -99,28 +100,28 @@
 - (NSDictionary *)infoPlist;
 
 ///
-///  @return the CFBundleIdentifier from this file's Info.plist
+///  @return the CFBundleIdentifier from this file's Info.plist.
 ///
 - (NSString *)bundleIdentifier;
 
 ///
-///  @return the CFBundleName from this file's Info.plist
+///  @return the CFBundleName from this file's Info.plist.
 ///
 - (NSString *)bundleName;
 
 ///
-///  @return the CFBundleVersion from this file's Info.plist
+///  @return the CFBundleVersion from this file's Info.plist.
 ///
 - (NSString *)bundleVersion;
 
 ///
-///  @return the CFBundleShortVersionString from this file's Info.plist
+///  @return the CFBundleShortVersionString from this file's Info.plist.
 ///
 - (NSString *)bundleShortVersionString;
 
 ///
 ///  @return any URLs this file may have been downloaded from, using the
-///  @c com.apple.metadata:kMDItemWhereFroms extended attribute
+///  @c com.apple.metadata:kMDItemWhereFroms extended attribute.
 ///
 - (NSArray *)downloadURLs;
 

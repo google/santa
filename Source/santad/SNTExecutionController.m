@@ -18,12 +18,12 @@
 
 #include "SNTLogging.h"
 
-#import "SNTBinaryInfo.h"
 #import "SNTCertificate.h"
 #import "SNTCodesignChecker.h"
 #import "SNTDriverManager.h"
 #import "SNTDropRootPrivs.h"
 #import "SNTEventTable.h"
+#import "SNTFileInfo.h"
 #import "SNTRule.h"
 #import "SNTRuleTable.h"
 #import "SNTStoredEvent.h"
@@ -62,7 +62,7 @@
                       userName:(NSString *)userName
                            pid:(NSNumber *)pid
                        vnodeId:(uint64_t)vnodeId {
-  SNTBinaryInfo *binInfo = [[SNTBinaryInfo alloc] initWithPath:path];
+  SNTFileInfo *binInfo = [[SNTFileInfo alloc] initWithPath:path];
   NSString *sha256 = [binInfo SHA256];
 
   // Step 1 - in scope?
@@ -168,7 +168,7 @@
 
   // If file is not a Mach-O file, we're not interested.
   // TODO(rah): Consider adding an option to check scripts
-  SNTBinaryInfo *binInfo = [[SNTBinaryInfo alloc] initWithPath:path];
+  SNTFileInfo *binInfo = [[SNTFileInfo alloc] initWithPath:path];
   if (![binInfo isMachO]) {
     return NO;
   }

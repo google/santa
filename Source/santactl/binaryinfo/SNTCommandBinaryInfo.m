@@ -16,9 +16,9 @@
 
 #include "SNTLogging.h"
 
-#import "SNTBinaryInfo.h"
 #import "SNTCertificate.h"
 #import "SNTCodesignChecker.h"
+#import "SNTFileInfo.h"
 
 @interface SNTCommandBinaryInfo : NSObject<SNTCommand>
 @end
@@ -52,22 +52,22 @@ REGISTER_COMMAND_NAME(@"binaryinfo");
     exit(1);
   }
 
-  SNTBinaryInfo *ftd = [[SNTBinaryInfo alloc] initWithPath:filePath];
-  if (!ftd) {
+  SNTFileInfo *fileInfo = [[SNTFileInfo alloc] initWithPath:filePath];
+  if (!fileInfo) {
     LOGI(@"Invalid file");
     exit(1);
   }
 
-  LOGI(@"Info for file: %@", [ftd path]);
+  LOGI(@"Info for file: %@", [fileInfo path]);
   LOGI(@"-----------------------------------------------------------");
-  LOGI(@"%-20s: %@", "SHA-1", [ftd SHA1]);
-  LOGI(@"%-20s: %@", "SHA-256", [ftd SHA256]);
+  LOGI(@"%-20s: %@", "SHA-1", [fileInfo SHA1]);
+  LOGI(@"%-20s: %@", "SHA-256", [fileInfo SHA256]);
 
-  NSArray *archs = [ftd architectures];
+  NSArray *archs = [fileInfo architectures];
   if (archs) {
-    LOGI(@"%-20s: %@ (%@)", "Type", [ftd machoType], [archs componentsJoinedByString:@", "]);
+    LOGI(@"%-20s: %@ (%@)", "Type", [fileInfo machoType], [archs componentsJoinedByString:@", "]);
   } else {
-    LOGI(@"%-20s: %@", "Type", [ftd machoType]);
+    LOGI(@"%-20s: %@", "Type", [fileInfo machoType]);
   }
 
   SNTCodesignChecker *csc = [[SNTCodesignChecker alloc] initWithBinaryPath:filePath];

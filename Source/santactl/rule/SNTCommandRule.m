@@ -16,15 +16,14 @@
 
 #include "SNTLogging.h"
 
-#import "SNTBinaryInfo.h"
 #import "SNTCertificate.h"
 #import "SNTCodesignChecker.h"
-
+#import "SNTConfigurator.h"
+#import "SNTDropRootPrivs.h"
+#import "SNTFileInfo.h"
 #import "SNTRule.h"
 #import "SNTXPCConnection.h"
 #import "SNTXPCControlInterface.h"
-#import "SNTConfigurator.h"
-#import "SNTDropRootPrivs.h"
 
 
 @interface SNTCommandRule : NSObject<SNTCommand>
@@ -134,13 +133,13 @@ REGISTER_COMMAND_NAME(@"rule");
   }
   
   if (filePath) {
-    SNTBinaryInfo *ftd = [[SNTBinaryInfo alloc] initWithPath:filePath];
-    if (!ftd) {
+    SNTFileInfo *fileInfo = [[SNTFileInfo alloc] initWithPath:filePath];
+    if (!fileInfo) {
       LOGI(@"Not a regular file or executable bundle");
       exit(1);
     }
 
-    SHA256 = [ftd SHA256];
+    SHA256 = [fileInfo SHA256];
   } else if (SHA256) {
   } else {
     LOGI(@"No SHA-256 or binary specified");

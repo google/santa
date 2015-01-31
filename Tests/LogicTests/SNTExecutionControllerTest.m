@@ -17,11 +17,11 @@
 
 #import "SNTExecutionController.h"
 
-#import "SNTBinaryInfo.h"
 #import "SNTCertificate.h"
 #import "SNTCodesignChecker.h"
 #import "SNTDriverManager.h"
 #import "SNTEventTable.h"
+#import "SNTFileInfo.h"
 #import "SNTRule.h"
 #import "SNTRuleTable.h"
 
@@ -30,9 +30,9 @@
 @end
 
 @interface SNTExecutionControllerTest : XCTestCase
-@property id mockBinaryInfo;
 @property id mockCodesignChecker;
 @property id mockDriverManager;
+@property id mockFileInfo;
 @property id mockRuleDatabase;
 @property id mockEventDatabase;
 
@@ -46,9 +46,9 @@
 
   fclose(stdout);
 
-  self.mockBinaryInfo = OCMClassMock([SNTBinaryInfo class]);
   self.mockCodesignChecker = OCMClassMock([SNTCodesignChecker class]);
   self.mockDriverManager = OCMClassMock([SNTDriverManager class]);
+  self.mockFileInfo = OCMClassMock([SNTFileInfo class]);  
   self.mockRuleDatabase = OCMClassMock([SNTRuleTable class]);
   self.mockEventDatabase = OCMClassMock([SNTEventTable class]);
 
@@ -60,7 +60,7 @@
 }
 
 - (void)tearDown {
-  [self.mockBinaryInfo stopMocking];
+  [self.mockFileInfo stopMocking];
   [self.mockCodesignChecker stopMocking];
   [self.mockDriverManager stopMocking];
   [self.mockRuleDatabase stopMocking];
@@ -90,9 +90,9 @@
   id mockSut = OCMPartialMock(self.sut);
   OCMStub([mockSut fileIsInScope:OCMOCK_ANY]).andReturn(YES);
 
-  [[[self.mockBinaryInfo stub] andReturn:self.mockBinaryInfo] alloc];
-  (void)[[[self.mockBinaryInfo stub] andReturn:self.mockBinaryInfo] initWithPath:[OCMArg any]];
-  [[[self.mockBinaryInfo stub] andReturn:@"a"] SHA256];
+  [[[self.mockFileInfo stub] andReturn:self.mockFileInfo] alloc];
+  (void)[[[self.mockFileInfo stub] andReturn:self.mockFileInfo] initWithPath:[OCMArg any]];
+  [[[self.mockFileInfo stub] andReturn:@"a"] SHA256];
 
   SNTRule *rule = [[SNTRule alloc] init];
   rule.state = RULESTATE_BLACKLIST;
