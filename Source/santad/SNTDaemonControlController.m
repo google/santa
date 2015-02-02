@@ -51,12 +51,19 @@
 }
 
 - (void)databaseRuleAddRule:(SNTRule *)rule withReply:(void (^)())reply {
-  [[SNTDatabaseController ruleTable] addRule:rule];
-  reply();
+  [self databaseRuleAddRules:@[ rule ] withReply:reply];
 }
 
 - (void)databaseRuleAddRules:(NSArray *)rules withReply:(void (^)())reply {
   [[SNTDatabaseController ruleTable] addRules:rules];
+
+  // If any rules were added that were not whitelist, flush cache.
+  NSPredicate *p = [NSPredicate predicateWithFormat:@"SELF.state != %d", RULESTATE_WHITELIST];
+  if ([rules filteredArrayUsingPredicate:p].count) {
+    LOGI(@"Received non-whitelist rule, flushing cache");
+    [self.driverManager flushCache];
+  }
+
   reply();
 }
 
