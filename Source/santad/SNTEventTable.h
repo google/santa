@@ -18,7 +18,7 @@
 @class SNTStoredEvent;
 
 ///
-/// Responsible for managing the event table in the Santa database.
+/// Responsible for managing the event table.
 ///
 @interface SNTEventTable : SNTDatabaseTable
 
@@ -45,7 +45,7 @@
 ///  Retrieve an event from the database.
 ///  @return a single SNTStoredEvent.
 ///
-- (SNTStoredEvent *)latestEventForSHA256:(NSString *)sha256;
+- (SNTStoredEvent *)pendingEventForSHA256:(NSString *)sha256;
 
 ///
 ///  Delete a single event from the database using its index.

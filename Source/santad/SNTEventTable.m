@@ -26,10 +26,10 @@
   if (version < 1) {
     [db executeUpdate:@"CREATE TABLE 'events' ("
         "'idx' INTEGER PRIMARY KEY AUTOINCREMENT,"
-        "'fileSHA256' TEXT NOT NULL,"
-        "'eventData' BLOB"
+        "'filesha256' TEXT NOT NULL,"
+        "'eventdata' BLOB"
         @");"];
-    [db executeUpdate:@"CREATE INDEX event_filesha256 ON events (fileSHA256);"];
+    [db executeUpdate:@"CREATE INDEX filesha256 ON events (filesha256);"];
 
     newVersion = 1;
   }
@@ -48,22 +48,17 @@
 
   NSData *eventData = [NSKeyedArchiver archivedDataWithRootObject:event];
 
-  __block BOOL result = NO;
+  __block BOOL success = NO;
   [self inTransaction:^(FMDatabase *db, BOOL *rollback) {
-      if (![db executeUpdate:@"INSERT INTO 'events' (fileSHA256, eventData) VALUES (?, ?)",
-            event.fileSHA256, eventData]) {
-        LOGD(@"Failed to save event with SHA-256: %@", event.fileSHA256);
-        result = NO;
-      } else {
-        result = YES;
-      }
+      success = [db executeUpdate:@"INSERT INTO 'events' (filesha256, eventdata) VALUES (?, ?)",
+                    event.fileSHA256, eventData];
   }];
 
-  return result;
+  return success;
 }
 
 - (SNTStoredEvent *)eventFromResultSet:(FMResultSet *)rs {
-  NSData *eventData = [rs dataForColumn:@"eventData"];
+  NSData *eventData = [rs dataForColumn:@"eventdata"];
   if (!eventData) return nil;
 
   SNTStoredEvent *event = [NSKeyedUnarchiver unarchiveObjectWithData:eventData];
@@ -82,12 +77,12 @@
   return eventsPending;
 }
 
-- (SNTStoredEvent *)latestEventForSHA256:(NSString *)sha256 {
+- (SNTStoredEvent *)pendingEventForSHA256:(NSString *)sha256 {
   __block SNTStoredEvent *storedEvent;
 
   [self inDatabase:^(FMDatabase *db) {
-      FMResultSet *rs = [db executeQuery:@"SELECT * FROM events WHERE fileSHA256=? LIMIT 1;",
-                         sha256];
+      FMResultSet *rs = [db executeQuery:@"SELECT * FROM events WHERE filesha256=? LIMIT 1;",
+                            sha256];
 
       if ([rs next]) {
         storedEvent = [self eventFromResultSet:rs];
