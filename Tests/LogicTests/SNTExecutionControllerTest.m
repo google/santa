@@ -180,6 +180,10 @@
   id mockSut = OCMPartialMock(self.sut);
   OCMStub([mockSut fileIsInScope:OCMOCK_ANY]).andReturn(NO);
 
+  [self.sut setOperatingMode:CLIENTMODE_LOCKDOWN];
+  [self.sut validateBinaryWithPath:@"/a/file" userName:@"nobody" pid:@(24) vnodeId:1234];
+  OCMVerify([self.mockDriverManager postToKernelAction:ACTION_RESPOND_CHECKBW_ALLOW
+                                            forVnodeID:1234]);
 }
 
 @end
