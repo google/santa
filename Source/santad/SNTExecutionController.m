@@ -68,8 +68,7 @@
   // Step 1 - in scope?
   if (![self fileIsInScope:path]) {
     [self.driverManager postToKernelAction:ACTION_RESPOND_CHECKBW_ALLOW forVnodeID:vnodeId];
-    // TODO(rah): Have logDecision handle this
-    LOGI(@"A,S,%@,%@", sha256, path);
+    [self logDecisionForEventState:EVENTSTATE_ALLOW_SCOPE sha256:sha256 path:path leafCert:nil];
     return;
   }
 
@@ -226,17 +225,17 @@
       d = @"?"; r = @"?"; break;
   }
 
-  // Ensure there are no commas in the path name (as this will be confusing in the log)
-  NSString *printPath = [path stringByReplacingOccurrencesOfString:@"," withString:@"<comma>"];
+  // Ensure there are no pipes in the path name (as this will be confusing in the log)
+  NSString *printPath = [path stringByReplacingOccurrencesOfString:@"|" withString:@"<pipe>"];
 
   if (cert && cert.SHA256 && cert.commonName) {
-    // Also ensure there are no commas in the cert's common name.
-    NSString *printCommonName = [cert.commonName stringByReplacingOccurrencesOfString:@","
-                                                                           withString:@"<comma>"];
-    outLog = [NSString stringWithFormat:@"%@,%@,%@,%@,%@,%@",
+    // Also ensure there are no pipes in the cert's common name.
+    NSString *printCommonName = [cert.commonName stringByReplacingOccurrencesOfString:@"|"
+                                                                           withString:@"<pipe>"];
+    outLog = [NSString stringWithFormat:@"%@|%@|%@|%@|%@|%@",
                  d, r, sha256, printPath, cert.SHA256, printCommonName];
   } else {
-    outLog = [NSString stringWithFormat:@"%@,%@,%@,%@", d, r, sha256, printPath];
+    outLog = [NSString stringWithFormat:@"%@|%@|%@|%@", d, r, sha256, printPath];
   }
 
   // Now make sure none of the log line has a newline in it.
