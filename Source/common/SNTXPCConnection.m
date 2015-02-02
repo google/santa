@@ -210,4 +210,13 @@
   }
 }
 
+#pragma mark Connection tear-down
+
+- (void)invalidate {
+  if (self.currentConnection) {
+    [self.currentConnection invalidate];
+    self.currentConnection = nil;
+  }
+}
+
 @end

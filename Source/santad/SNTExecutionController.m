@@ -150,15 +150,15 @@
                         leafCert:csInfo.leafCertificate];
 }
 
-/**
- Checks whether the file at @c path is in-scope for checking with Santa.
-
- Files that are out of scope:
-   + Non Mach-O files
-   + Files in whitelisted directories.
-
- @return @c YES if file is in scope, @c NO otherwise.
-**/
+///
+///  Checks whether the file at @c path is in-scope for checking with Santa.
+///
+///  Files that are out of scope:
+///    + Non Mach-O files
+///    + Files in whitelisted directories.
+///
+///  @return @c YES if file is in scope, @c NO otherwise.
+///
 - (BOOL)fileIsInScope:(NSString *)path {
   // Determine if file is within a whitelisted directory.
   if ([self pathIsInWhitelistedDir:path]) {

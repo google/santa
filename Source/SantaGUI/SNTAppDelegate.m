@@ -32,6 +32,17 @@
   [self setupMenu];
   self.aboutWindowController = [[SNTAboutWindowController alloc] init];
   self.notificationManager = [[SNTNotificationManager alloc] init];
+
+  NSNotificationCenter *workspaceNotifications = [[NSWorkspace sharedWorkspace] notificationCenter];
+  [workspaceNotifications addObserver:self
+                             selector:@selector(killConnection)
+                                 name:NSWorkspaceSessionDidResignActiveNotification
+                               object:nil];
+  [workspaceNotifications addObserver:self
+                             selector:@selector(createConnection)
+                                 name:NSWorkspaceSessionDidBecomeActiveNotification
+                               object:nil];
+
   [self createConnection];
 }
 
@@ -56,6 +67,13 @@
   };
   self.listener.invalidationHandler = self.listener.rejectedHandler;
   [self.listener resume];
+}
+
+- (void)killConnection {
+  self.listener.invalidationHandler = nil;
+  [self.listener invalidate];
+  self.listener = nil;
+  NSLog(@"KILLING CONNECTION");
 }
 
 - (void)attemptReconnection {
