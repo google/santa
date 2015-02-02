@@ -67,7 +67,7 @@
   SNTStoredEvent *event = [self createTestEvent];
   [self.sut addStoredEvent:event];
 
-  SNTStoredEvent *storedEvent = [self.sut latestEventForSHA256:event.fileSHA256];
+  SNTStoredEvent *storedEvent = [self.sut pendingEventForSHA256:event.fileSHA256];
   XCTAssertNotNil(storedEvent);
   XCTAssertEqualObjects(event.filePath, storedEvent.filePath);
   XCTAssertEqualObjects(event.signingChain, storedEvent.signingChain);
@@ -81,7 +81,7 @@
   [self.sut addStoredEvent:newEvent];
   XCTAssertEqual(self.sut.pendingEventsCount, 1);
 
-  SNTStoredEvent *storedEvent = [self.sut latestEventForSHA256:newEvent.fileSHA256];
+  SNTStoredEvent *storedEvent = [self.sut pendingEventForSHA256:newEvent.fileSHA256];
   [self.sut deleteEventWithId:storedEvent.idx];
   XCTAssertEqual(self.sut.pendingEventsCount, 0);
 }
