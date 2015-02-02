@@ -111,7 +111,6 @@
 
         NSArray *nextEvents = [events subarrayWithRange:NSMakeRange(eventIds.count,
                                                                     events.count - eventIds.count)];
-
         if (nextEvents.count == 0) {
           handler(YES);
         } else {

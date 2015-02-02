@@ -34,7 +34,8 @@
   NSMutableDictionary *requestDict = [NSMutableDictionary dictionary];
   requestDict[@"serial_no"] = [SNTSystemInfo serialNumber];
   requestDict[@"hostname"] = [SNTSystemInfo shortHostname];
-  requestDict[@"santa_version"] = [[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleVersion"];
+  requestDict[@"santa_version"] =
+      [[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleVersion"];
   requestDict[@"os_version"] = [SNTSystemInfo osVersion];
   requestDict[@"os_build"] = [SNTSystemInfo osBuild];
   requestDict[@"primary_user"] = progress.machineOwner;
