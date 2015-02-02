@@ -213,6 +213,8 @@
       d = @"A"; r = @"B"; break;
     case EVENTSTATE_ALLOW_CERTIFICATE:
       d = @"A"; r = @"C"; break;
+    case EVENTSTATE_ALLOW_SCOPE:
+      d = @"A"; r = @"S"; break;
     case EVENTSTATE_ALLOW_UNKNOWN:
       d = @"A"; r = @"?"; break;
     case EVENTSTATE_BLOCK_BINARY:
