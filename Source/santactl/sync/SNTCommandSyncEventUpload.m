@@ -77,41 +77,7 @@
 
   NSMutableArray *eventIds = [NSMutableArray arrayWithCapacity:events.count];
   for (SNTStoredEvent *event in events) {
-    NSMutableDictionary *newEvent = [@{
-        @"file_sha256": event.fileSHA256,
-        @"file_path": [event.filePath stringByDeletingLastPathComponent],
-        @"file_name": [event.filePath lastPathComponent],
-        @"executing_user": event.executingUser,
-        @"execution_time": @([event.occurrenceDate timeIntervalSince1970]),
-        @"decision": @(event.decision),
-        @"logged_in_users": event.loggedInUsers,
-        @"current_sessions": event.currentSessions} mutableCopy];
-
-
-    if (event.fileBundleID) newEvent[@"file_bundle_id"] = event.fileBundleID;
-    if (event.fileBundleName) newEvent[@"file_bundle_name"] = event.fileBundleName;
-    if (event.fileBundleVersion) newEvent[@"file_bundle_version"] = event.fileBundleVersion;
-    if (event.fileBundleVersionString) {
-      newEvent[@"file_bundle_version_string"] = event.fileBundleVersionString;
-    }
-
-    NSMutableArray *signingChain = [NSMutableArray arrayWithCapacity:event.signingChain.count];
-    for (int i = 0; i < event.signingChain.count; i++) {
-      SNTCertificate *cert = [event.signingChain objectAtIndex:i];
-
-      NSMutableDictionary *certDict = [NSMutableDictionary dictionary];
-      if (cert.SHA256) certDict[@"sha256"] = cert.SHA256;
-      if (cert.commonName) certDict[@"cn"] = cert.commonName;
-      if (cert.orgName) certDict[@"org"] = cert.orgName;
-      if (cert.orgUnit) certDict[@"ou"] = cert.orgUnit;
-      if (cert.validFrom) certDict[@"valid_from"] = @([cert.validFrom timeIntervalSince1970]);
-      if (cert.validUntil) certDict[@"valid_until"] = @([cert.validUntil timeIntervalSince1970]);
-
-      [signingChain addObject:certDict];
-    }
-    newEvent[@"signing_chain"] = signingChain;
-
-    [uploadEvents addObject:newEvent];
+    [uploadEvents addObject:[self dictionaryForEvent:event]];
     [eventIds addObject:event.idx];
 
     if (eventIds.count >= batchSize) break;
@@ -158,6 +124,44 @@
         }
       }
   }] resume];
+}
+
++ (NSDictionary *)dictionaryForEvent:(SNTStoredEvent *)event {
+#define ADDKEY(dict, key, value) if (value) dict[key] = value
+  NSMutableDictionary *newEvent = [NSMutableDictionary dictionary];
+
+  ADDKEY(newEvent, @"file_sha256", event.fileSHA256);
+  ADDKEY(newEvent, @"file_path", [event.filePath stringByDeletingLastPathComponent]);
+  ADDKEY(newEvent, @"file_name", [event.filePath lastPathComponent]);
+  ADDKEY(newEvent, @"executing_user", event.executingUser);
+  ADDKEY(newEvent, @"execution_time", @([event.occurrenceDate timeIntervalSince1970]));
+  ADDKEY(newEvent, @"decision", @(event.decision));
+  ADDKEY(newEvent, @"logged_in_users", event.loggedInUsers);
+  ADDKEY(newEvent, @"current_sessions", event.currentSessions);
+
+  ADDKEY(newEvent, @"file_bundle_id", event.fileBundleID);
+  ADDKEY(newEvent, @"file_bundle_name", event.fileBundleName);
+  ADDKEY(newEvent, @"file_bundle_version", event.fileBundleVersion);
+  ADDKEY(newEvent, @"file_bundle_version_string", event.fileBundleVersionString);
+
+  NSMutableArray *signingChain = [NSMutableArray arrayWithCapacity:event.signingChain.count];
+  for (int i = 0; i < event.signingChain.count; i++) {
+    SNTCertificate *cert = [event.signingChain objectAtIndex:i];
+
+    NSMutableDictionary *certDict = [NSMutableDictionary dictionary];
+    ADDKEY(certDict, @"sha256", cert.SHA256);
+    ADDKEY(certDict, @"cn", cert.commonName);
+    ADDKEY(certDict, @"org", cert.orgName);
+    ADDKEY(certDict, @"ou", cert.orgUnit);
+    ADDKEY(certDict, @"valid_from", @([cert.validFrom timeIntervalSince1970]));
+    ADDKEY(certDict, @"valid_until", @([cert.validUntil timeIntervalSince1970]));
+
+    [signingChain addObject:certDict];
+  }
+  newEvent[@"signing_chain"] = signingChain;
+
+  return newEvent;
+#undef ADDKEY
 }
 
 @end
