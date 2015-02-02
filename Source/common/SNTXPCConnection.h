@@ -111,4 +111,9 @@ typedef void (^SNTXPCRejectedBlock)(void);
 ///
 - (void)resume;
 
+///
+///  Invalidate the connection. This must be done before the connection can be released.
+///
+- (void)invalidate;
+
 @end
