@@ -65,18 +65,11 @@
   SNTFileInfo *binInfo = [[SNTFileInfo alloc] initWithPath:path];
   NSString *sha256 = [binInfo SHA256];
 
-  // Step 1 - in scope?
-  if (![self fileIsInScope:path]) {
-    [self.driverManager postToKernelAction:ACTION_RESPOND_CHECKBW_ALLOW forVnodeID:vnodeId];
-    [self logDecisionForEventState:EVENTSTATE_ALLOW_SCOPE sha256:sha256 path:path leafCert:nil];
-    return;
-  }
-
-  // These will be filled in either in step 2, 3 or 4.
+  // These will be filled in either in later steps
   santa_action_t respondedAction = ACTION_UNSET;
   SNTRule *rule;
 
-  // Step 2 - binary rule?
+  // Step 1 - binary rule?
   rule = [self.ruleTable binaryRuleForSHA256:sha256];
   if (rule) {
     respondedAction = [self actionForRuleState:rule.state];
@@ -85,13 +78,20 @@
 
   SNTCodesignChecker *csInfo = [[SNTCodesignChecker alloc] initWithBinaryPath:path];
 
-  // Step 3 - cert rule?
+  // Step 2 - cert rule?
   if (!rule) {
     rule = [self.ruleTable certificateRuleForSHA256:csInfo.leafCertificate.SHA256];
     if (rule) {
       respondedAction = [self actionForRuleState:rule.state];
       [self.driverManager postToKernelAction:respondedAction forVnodeID:vnodeId];
     }
+  }
+
+  // Step 3 - in scope?
+  if (![self fileIsInScope:path]) {
+    [self.driverManager postToKernelAction:ACTION_RESPOND_CHECKBW_ALLOW forVnodeID:vnodeId];
+    [self logDecisionForEventState:EVENTSTATE_ALLOW_SCOPE sha256:sha256 path:path leafCert:nil];
+    return;
   }
 
   // Step 4 - default rule :-(
