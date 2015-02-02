@@ -44,17 +44,16 @@
                     daemonConn:(SNTXPCConnection *)daemonConn
              completionHandler:(void (^)(BOOL success))handler {
 
-  NSDictionary *requestDict;
-  if (cursor) {
-    requestDict = @{@"cursor": cursor};
-  } else {
-    requestDict = @{};
+  NSDictionary *requestDict = (cursor ? @{ @"cursor": cursor } : @{});
+
+  if (!progress.downloadedRules) {
+    progress.downloadedRules = [NSMutableArray array];
   }
 
   NSMutableURLRequest *req = [[NSMutableURLRequest alloc] initWithURL:url];
   [req setHTTPBody:[NSJSONSerialization dataWithJSONObject:requestDict
-                                                       options:0
-                                                         error:nil]];
+                                                   options:0
+                                                     error:nil]];
   [req setHTTPMethod:@"POST"];
   [req setValue:@"application/json" forHTTPHeaderField:@"Content-Type"];
   [[session dataTaskWithRequest:req completionHandler:^(NSData *data,
@@ -65,17 +64,16 @@
         handler(NO);
       } else {
         NSDictionary *resp = [NSJSONSerialization JSONObjectWithData:data options:0 error:nil];
+        if (!resp) {
+          LOGE(@"Failed to decode server's response");
+          handler(NO);
+        }
 
         NSArray *receivedRules = resp[@"rules"];
 
-        if (receivedRules.count == 0) {
-          handler(YES);
-          return;
-        }
-
-        NSMutableArray *rules = [[NSMutableArray alloc] initWithCapacity:receivedRules.count];
-
         for (NSDictionary *rule in receivedRules) {
+          if (![rule isKindOfClass:[NSDictionary class]]) continue;
+
           SNTRule *newRule = [[SNTRule alloc] init];
           newRule.shasum = rule[@"shasum"];
 
@@ -90,23 +88,22 @@
             newRule.customMsg = customMsg;
           }
 
-          [rules addObject:newRule];
+          [progress.downloadedRules addObject:newRule];
         }
 
-        [[daemonConn remoteObjectProxy] databaseRuleAddRules:rules withReply:^{
-            LOGI(@"Downloaded %d rule(s)", rules.count);
-
-            if (resp[@"cursor"]) {
-              [self ruleDownloadWithCursor:resp[@"cursor"]
-                                       url:url
-                                   session:session
-                                  progress:progress
-                                daemonConn:daemonConn
-                         completionHandler:handler];
-            } else {
+        if (resp[@"cursor"]) {
+          [self ruleDownloadWithCursor:resp[@"cursor"]
+                                   url:url
+                               session:session
+                              progress:progress
+                            daemonConn:daemonConn
+                     completionHandler:handler];
+        } else {
+          [[daemonConn remoteObjectProxy] databaseRuleAddRules:progress.downloadedRules withReply:^{
+              LOGI(@"Added %d rule(s)", progress.downloadedRules.count);
               handler(YES);
-            }
-        }];
+          }];
+        }
       }
   }] resume];
 }

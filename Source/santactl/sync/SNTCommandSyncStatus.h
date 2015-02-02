@@ -29,4 +29,7 @@
 /// Log upload URL sent from server
 @property NSURL *uploadLogURL;
 
+/// Rules downloaded from server
+@property NSMutableArray *downloadedRules;
+
 @end
