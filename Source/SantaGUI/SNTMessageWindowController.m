@@ -76,7 +76,7 @@
   SNTCertificate *leafCert = [self.event.signingChain firstObject];
 
   if (leafCert.commonName && leafCert.orgName) {
-    return [NSString stringWithFormat:@"%@ - %@", leafCert.commonName, leafCert.orgName];
+    return [NSString stringWithFormat:@"%@ - %@", leafCert.orgName, leafCert.commonName];
   } else if (leafCert.commonName) {
     return leafCert.commonName;
   } else if (leafCert.orgName) {
