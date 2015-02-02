@@ -95,34 +95,36 @@
       newEvent[@"file_bundle_version_string"] = event.fileBundleVersionString;
     }
 
+    NSMutableArray *signingChain = [NSMutableArray arrayWithCapacity:event.signingChain.count];
     for (int i = 0; i < event.signingChain.count; i++) {
       SNTCertificate *cert = [event.signingChain objectAtIndex:i];
-      NSString *certStr = [@"cert" stringByAppendingFormat:@"%d", i];
 
-      if (cert.SHA1) newEvent[[certStr stringByAppendingString:@"_sha1"]] = cert.SHA1;
-      if (cert.commonName) newEvent[[certStr stringByAppendingString:@"_cn"]] = cert.commonName;
-      if (cert.orgName) newEvent[[certStr stringByAppendingString:@"_org"]] = cert.orgName;
-      if (cert.orgUnit) newEvent[[certStr stringByAppendingString:@"_ou"]] = cert.orgUnit;
-      if (cert.validFrom) newEvent[[certStr stringByAppendingString:@"_valid_from"]] =
-          @([cert.validFrom timeIntervalSince1970]);
-      if (cert.validUntil) newEvent[[certStr stringByAppendingString:@"_valid_until"]] =
-          @([cert.validUntil timeIntervalSince1970]);
+      NSMutableDictionary *certDict = [NSMutableDictionary dictionary];
+      if (cert.SHA256) certDict[@"sha256"] = cert.SHA256;
+      if (cert.commonName) certDict[@"cn"] = cert.commonName;
+      if (cert.orgName) certDict[@"org"] = cert.orgName;
+      if (cert.orgUnit) certDict[@"ou"] = cert.orgUnit;
+      if (cert.validFrom) certDict[@"valid_from"] = @([cert.validFrom timeIntervalSince1970]);
+      if (cert.validUntil) certDict[@"valid_until"] = @([cert.validUntil timeIntervalSince1970]);
+
+      [signingChain addObject:certDict];
     }
+    newEvent[@"signing_chain"] = signingChain;
 
     [uploadEvents addObject:newEvent];
-
     [eventIds addObject:event.idx];
 
     if (eventIds.count >= batchSize) break;
   }
 
-  NSDictionary *uploadReq = @{@"events": uploadEvents};
+  NSDictionary *uploadReq = @{ @"events": uploadEvents };
 
   NSData *requestBody;
   @try {
     requestBody = [NSJSONSerialization dataWithJSONObject:uploadReq options:0 error:nil];
   } @catch (NSException *exception) {
-    LOGE(@"Failed to parse event into JSON");
+    LOGE(@"Failed to parse event(s) into JSON");
+    LOGD(@"Parsing error: %@", [exception reason]);
   }
 
   NSMutableURLRequest *req = [[NSMutableURLRequest alloc] initWithURL:url];
