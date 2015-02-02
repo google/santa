@@ -46,7 +46,7 @@
     _eventTable = eventTable;
     _operatingMode = operatingMode;
     _notifierConnection = notifier;
-    LOGI(@"Log format: Decision (A|D), Reason (B|C|S|?), SHA-256, Path, Cert SHA-1, Cert CN");
+    LOGI(@"Log format: Decision (A|D), Reason (B|C|S|?), SHA-256, Path, Cert SHA-256, Cert CN");
 
     // Workaround for xpcproxy/libsecurity bug on Yosemite
     // This establishes the XPC connection between libsecurity and syspolicyd.
@@ -88,7 +88,7 @@
 
   // Step 3 - cert rule?
   if (!rule) {
-    rule = [self.ruleTable certificateRuleForSHA1:csInfo.leafCertificate.SHA1];
+    rule = [self.ruleTable certificateRuleForSHA256:csInfo.leafCertificate.SHA256];
     if (rule) {
       respondedAction = [self actionForRuleState:rule.state];
       [self.driverManager postToKernelAction:respondedAction forVnodeID:vnodeId];
@@ -229,12 +229,12 @@
   // Ensure there are no commas in the path name (as this will be confusing in the log)
   NSString *printPath = [path stringByReplacingOccurrencesOfString:@"," withString:@"<comma>"];
 
-  if (cert && cert.SHA1 && cert.commonName) {
+  if (cert && cert.SHA256 && cert.commonName) {
     // Also ensure there are no commas in the cert's common name.
     NSString *printCommonName = [cert.commonName stringByReplacingOccurrencesOfString:@","
                                                                            withString:@"<comma>"];
-    outLog = [NSString stringWithFormat:@"%@,%@,%@,%@,%@,%@", d, r, sha256, printPath,
-                 cert.SHA1, printCommonName];
+    outLog = [NSString stringWithFormat:@"%@,%@,%@,%@,%@,%@",
+                 d, r, sha256, printPath, cert.SHA256, printCommonName];
   } else {
     outLog = [NSString stringWithFormat:@"%@,%@,%@,%@", d, r, sha256, printPath];
   }

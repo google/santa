@@ -116,11 +116,11 @@
   OCMStub([self.mockCodesignChecker initWithBinaryPath:OCMOCK_ANY])
       .andReturn(self.mockCodesignChecker);
   OCMStub([self.mockCodesignChecker leafCertificate]).andReturn(cert);
-  OCMStub([cert SHA1]).andReturn(@"a");
+  OCMStub([cert SHA256]).andReturn(@"a");
 
   SNTRule *rule = [[SNTRule alloc] init];
   rule.state = RULESTATE_WHITELIST;
-  OCMStub([self.mockRuleDatabase certificateRuleForSHA1:@"a"]).andReturn(rule);
+  OCMStub([self.mockRuleDatabase certificateRuleForSHA256:@"a"]).andReturn(rule);
 
   [self.sut validateBinaryWithPath:@"/a/file"
                           userName:@"nobody"
@@ -140,11 +140,11 @@
   OCMStub([self.mockCodesignChecker initWithBinaryPath:OCMOCK_ANY])
     .andReturn(self.mockCodesignChecker);
   OCMStub([self.mockCodesignChecker leafCertificate]).andReturn(cert);
-  OCMStub([cert SHA1]).andReturn(@"a");
+  OCMStub([cert SHA256]).andReturn(@"a");
 
   SNTRule *rule = [[SNTRule alloc] init];
   rule.state = RULESTATE_BLACKLIST;
-  OCMStub([self.mockRuleDatabase certificateRuleForSHA1:@"a"]).andReturn(rule);
+  OCMStub([self.mockRuleDatabase certificateRuleForSHA256:@"a"]).andReturn(rule);
 
   [self.sut validateBinaryWithPath:@"/a/file"
                           userName:@"nobody"
@@ -160,10 +160,7 @@
   OCMStub([mockSut fileIsInScope:OCMOCK_ANY]).andReturn(YES);
 
   [self.sut setOperatingMode:CLIENTMODE_MONITOR];
-  [self.sut validateBinaryWithPath:@"/a/file"
-                          userName:@"nobody"
-                               pid:@(12)
-                           vnodeId:1234];
+  [self.sut validateBinaryWithPath:@"/a/file" userName:@"nobody" pid:@(12) vnodeId:1234];
   OCMVerify([self.mockDriverManager postToKernelAction:ACTION_RESPOND_CHECKBW_ALLOW
                                             forVnodeID:1234]);
 

@@ -25,25 +25,25 @@
 
   if (version < 1) {
     [db executeUpdate:@"CREATE TABLE 'rules' ("
-        @"'hash' TEXT NOT NULL, "
+        @"'shasum' TEXT NOT NULL, "
         @"'state' INTEGER NOT NULL, "
         @"'type' INTEGER NOT NULL, "
-        @"'customMsg' TEXT"
+        @"'custommsg' TEXT"
         @")"];
 
     [db executeUpdate:@"CREATE VIEW binrules AS SELECT * FROM rules WHERE type=1"];
     [db executeUpdate:@"CREATE VIEW certrules AS SELECT * FROM rules WHERE type=2"];
 
-    [db executeUpdate:@"CREATE UNIQUE INDEX rulesunique ON rules (hash, type)"];
+    [db executeUpdate:@"CREATE UNIQUE INDEX rulesunique ON rules (shasum, type)"];
 
     // Insert the codesigning certs for the running santad and launchd into the initial database.
     // This helps prevent accidentally denying critical system components while the database
     // is empty. This 'initial database' will then be cleared on the first successful sync.
-    NSString *santadSHA = [[[[SNTCodesignChecker alloc] initWithSelf] leafCertificate] SHA1];
-    NSString *launchdSHA = [[[[SNTCodesignChecker alloc] initWithPID:1] leafCertificate] SHA1];
-    [db executeUpdate:@"INSERT INTO rules (hash, state, type) VALUES (?, ?, ?)",
+    NSString *santadSHA = [[[[SNTCodesignChecker alloc] initWithSelf] leafCertificate] SHA256];
+    NSString *launchdSHA = [[[[SNTCodesignChecker alloc] initWithPID:1] leafCertificate] SHA256];
+    [db executeUpdate:@"INSERT INTO rules (shasum, state, type) VALUES (?, ?, ?)",
         santadSHA, @(RULESTATE_WHITELIST), @(RULETYPE_CERT)];
-    [db executeUpdate:@"INSERT INTO rules (hash, state, type) VALUES (?, ?, ?)",
+    [db executeUpdate:@"INSERT INTO rules (shasum, state, type) VALUES (?, ?, ?)",
         launchdSHA, @(RULESTATE_WHITELIST), @(RULETYPE_CERT)];
 
     newVersion = 1;
@@ -81,19 +81,19 @@
 - (SNTRule *)ruleFromResultSet:(FMResultSet *)rs {
   SNTRule *rule = [[SNTRule alloc] init];
 
-  rule.shasum = [rs stringForColumn:@"hash"];
+  rule.shasum = [rs stringForColumn:@"shasum"];
   rule.type = [rs intForColumn:@"type"];
   rule.state = [rs intForColumn:@"state"];
-  rule.customMsg = [rs stringForColumn:@"customMsg"];
+  rule.customMsg = [rs stringForColumn:@"custommsg"];
 
   return rule;
 }
 
-- (SNTRule *)certificateRuleForSHA1:(NSString *)SHA1 {
+- (SNTRule *)certificateRuleForSHA256:(NSString *)SHA256 {
   __block SNTRule *rule;
 
   [self inDatabase:^(FMDatabase *db) {
-      FMResultSet *rs = [db executeQuery:@"SELECT * FROM certrules WHERE hash=? LIMIT 1", SHA1];
+      FMResultSet *rs = [db executeQuery:@"SELECT * FROM certrules WHERE shasum=? LIMIT 1", SHA256];
       if ([rs next]) {
           rule = [self ruleFromResultSet:rs];
       }
@@ -107,7 +107,7 @@
   __block SNTRule *rule;
 
   [self inDatabase:^(FMDatabase *db) {
-      FMResultSet *rs = [db executeQuery:@"SELECT * FROM binrules WHERE hash=? LIMIT 1", SHA256];
+      FMResultSet *rs = [db executeQuery:@"SELECT * FROM binrules WHERE shasum=? LIMIT 1", SHA256];
       if ([rs next]) {
         rule = [self ruleFromResultSet:rs];
       }
@@ -119,27 +119,37 @@
 
 #pragma mark Adding
 
-- (void)addRule:(SNTRule *)rule {
-  if (!rule.shasum || [rule.shasum length] == 0) return;
-  if (rule.state == RULESTATE_UNKNOWN) return;
-  if (rule.type == RULETYPE_UNKNOWN) return;
+- (BOOL)addRules:(NSArray *)rules {
+  __block BOOL failed = NO;
 
   [self inTransaction:^(FMDatabase *db, BOOL *rollback) {
-      if (rule.state == RULESTATE_REMOVE) {
-        [db executeUpdate:@"DELETE FROM rules WHERE hash=? AND type=?",
-            rule.shasum, @(rule.type)];
-      } else {
-        [db executeUpdate:@"INSERT OR REPLACE INTO rules (hash, state, type, customMsg) "
-            @"VALUES (?, ?, ?, ?);", rule.shasum, @(rule.state), @(rule.type), rule.customMsg];
+      for (SNTRule *rule in rules) {
+        if (![rule isKindOfClass:[SNTRule class]] ||
+            !rule.shasum || rule.shasum.length == 0 ||
+            rule.state == RULESTATE_UNKNOWN || rule.type == RULETYPE_UNKNOWN) {
+          *rollback = failed = YES;
+          return;
+        }
+
+        if (rule.state == RULESTATE_REMOVE) {
+          if (![db executeUpdate:@"DELETE FROM rules WHERE shasum=? AND type=?",
+                  rule.shasum, @(rule.type)]) {
+            *rollback = failed = YES;
+            return;
+          }
+        } else {
+          if (![db executeUpdate:@"INSERT OR REPLACE INTO rules "
+                                @"(shasum, state, type, custommsg) "
+                                @"VALUES (?, ?, ?, ?);",
+                  rule.shasum, @(rule.state), @(rule.type), rule.customMsg]) {
+            *rollback = failed = YES;
+            return;
+          }
+        }
       }
   }];
-}
 
-- (void)addRules:(NSArray *)rules {
-  for (SNTRule *rule in rules) {
-    if (![rule isKindOfClass:[SNTRule class]]) return;
-    [self addRule:rule];
-  }
+  return !failed;
 }
 
 @end
