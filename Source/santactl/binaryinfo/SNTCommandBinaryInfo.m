@@ -82,6 +82,7 @@ REGISTER_COMMAND_NAME(@"binaryinfo");
                                                    BOOL *stop) {
         idx++;  // index from 1
         LOGI(@"    %2lu. %-20s: %@", idx, "SHA-1", c.SHA1);
+        LOGI(@"    %2lu. %-20s: %@", idx, "SHA-256", c.SHA256);
         LOGI(@"        %-20s: %@", "Common Name", c.commonName);
         LOGI(@"        %-20s: %@", "Organization", c.orgName);
         LOGI(@"        %-20s: %@", "Organizational Unit", c.orgUnit);
