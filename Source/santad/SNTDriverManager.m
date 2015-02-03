@@ -48,7 +48,7 @@
 
       if (!serviceObject) {
         LOGD(@"Waiting for Santa driver to become available");
-        sleep(10);
+        sleep(5);
       }
     } while (!serviceObject);
     CFRelease(classToMatch);
