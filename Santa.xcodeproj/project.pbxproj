@@ -894,7 +894,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "GIT_TAG=$(git describe --abbrev=0 --tags)\nGIT_COMMIT=$(git rev-parse --short HEAD)\n\ncp ${SCRIPT_INPUT_FILE_0} ${SCRIPT_OUTPUT_FILE_0}\n\nif [ $CONFIGURATION = \"Debug\" ]; then\n  newVersion=\"${GIT_TAG}d${GIT_COMMIT}\"\nelse\n  newVersion=\"${GIT_TAG}\"\nfi\n\n/usr/libexec/PlistBuddy -c \"Set :CFBundleVersion ${GIT_TAG}\" ${SCRIPT_OUTPUT_FILE_0}\n/usr/libexec/PlistBuddy -c \"Set :CFBundleShortVersionString ${newVersion}\" ${SCRIPT_OUTPUT_FILE_0}";
+			shellScript = "GIT_TAG=$(git describe --abbrev=0 --tags)\nGIT_COMMIT=$(git rev-parse --short HEAD)\n\ncp ${SCRIPT_INPUT_FILE_0} ${SCRIPT_OUTPUT_FILE_0}\n\nif [ $CONFIGURATION = \"Debug\" ]; then\n  newVersion=\"${GIT_TAG}d ${GIT_COMMIT}\"\nelse\n  newVersion=\"${GIT_TAG}\"\nfi\n\n/usr/libexec/PlistBuddy -c \"Set :CFBundleVersion ${GIT_TAG}\" ${SCRIPT_OUTPUT_FILE_0}\n/usr/libexec/PlistBuddy -c \"Set :CFBundleShortVersionString ${newVersion}\" ${SCRIPT_OUTPUT_FILE_0}";
 		};
 		0D673DAD18FC9017009C5B06 /* Delete existing coverage files */ = {
 			isa = PBXShellScriptBuildPhase;
@@ -925,7 +925,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "GIT_TAG=$(git describe --abbrev=0 --tags)\nGIT_COMMIT=$(git rev-parse --short HEAD)\n\ncp ${SCRIPT_INPUT_FILE_0} ${SCRIPT_OUTPUT_FILE_0}\n\nif [ $CONFIGURATION = \"Debug\" ]; then\nnewVersion=\"${GIT_TAG}d${GIT_COMMIT}\"\nelse\nnewVersion=\"${GIT_TAG}\"\nfi\n\n/usr/libexec/PlistBuddy -c \"Set :CFBundleVersion ${GIT_TAG}\" ${SCRIPT_OUTPUT_FILE_0}\n/usr/libexec/PlistBuddy -c \"Set :CFBundleShortVersionString ${newVersion}\" ${SCRIPT_OUTPUT_FILE_0}";
+			shellScript = "GIT_TAG=$(git describe --abbrev=0 --tags)\nGIT_COMMIT=$(git rev-parse --short HEAD)\n\ncp ${SCRIPT_INPUT_FILE_0} ${SCRIPT_OUTPUT_FILE_0}\n\nif [ $CONFIGURATION = \"Debug\" ]; then\nnewVersion=\"${GIT_TAG}d ${GIT_COMMIT}\"\nelse\nnewVersion=\"${GIT_TAG}\"\nfi\n\n/usr/libexec/PlistBuddy -c \"Set :CFBundleVersion ${GIT_TAG}\" ${SCRIPT_OUTPUT_FILE_0}\n/usr/libexec/PlistBuddy -c \"Set :CFBundleShortVersionString ${newVersion}\" ${SCRIPT_OUTPUT_FILE_0}";
 		};
 		0DD98E671A5DD02000A754C6 /* Update Version Info */ = {
 			isa = PBXShellScriptBuildPhase;
@@ -941,7 +941,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "GIT_TAG=$(git describe --abbrev=0 --tags)\nGIT_COMMIT=$(git rev-parse --short HEAD)\n\ncp ${SCRIPT_INPUT_FILE_0} ${SCRIPT_OUTPUT_FILE_0}\n\nif [ $CONFIGURATION = \"Debug\" ]; then\nnewVersion=\"${GIT_TAG}d${GIT_COMMIT}\"\nelse\nnewVersion=\"${GIT_TAG}\"\nfi\n\n/usr/libexec/PlistBuddy -c \"Set :CFBundleVersion ${GIT_TAG}\" ${SCRIPT_OUTPUT_FILE_0}\n/usr/libexec/PlistBuddy -c \"Set :CFBundleShortVersionString ${newVersion}\" ${SCRIPT_OUTPUT_FILE_0}";
+			shellScript = "GIT_TAG=$(git describe --abbrev=0 --tags)\nGIT_COMMIT=$(git rev-parse --short HEAD)\n\ncp ${SCRIPT_INPUT_FILE_0} ${SCRIPT_OUTPUT_FILE_0}\n\nif [ $CONFIGURATION = \"Debug\" ]; then\nnewVersion=\"${GIT_TAG}d ${GIT_COMMIT}\"\nelse\nnewVersion=\"${GIT_TAG}\"\nfi\n\n/usr/libexec/PlistBuddy -c \"Set :CFBundleVersion ${GIT_TAG}\" ${SCRIPT_OUTPUT_FILE_0}\n/usr/libexec/PlistBuddy -c \"Set :CFBundleShortVersionString ${newVersion}\" ${SCRIPT_OUTPUT_FILE_0}";
 		};
 		0DD98E681A5DD03E00A754C6 /* Update Version Info */ = {
 			isa = PBXShellScriptBuildPhase;
@@ -957,7 +957,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "GIT_TAG=$(git describe --abbrev=0 --tags)\nGIT_COMMIT=$(git rev-parse --short HEAD)\n\ncp ${SCRIPT_INPUT_FILE_0} ${SCRIPT_OUTPUT_FILE_0}\n\nif [ $CONFIGURATION = \"Debug\" ]; then\nnewVersion=\"${GIT_TAG}d${GIT_COMMIT}\"\nelse\nnewVersion=\"${GIT_TAG}\"\nfi\n\n/usr/libexec/PlistBuddy -c \"Set :CFBundleVersion ${GIT_TAG}\" ${SCRIPT_OUTPUT_FILE_0}\n/usr/libexec/PlistBuddy -c \"Set :CFBundleShortVersionString ${newVersion}\" ${SCRIPT_OUTPUT_FILE_0}";
+			shellScript = "GIT_TAG=$(git describe --abbrev=0 --tags)\nGIT_COMMIT=$(git rev-parse --short HEAD)\n\ncp ${SCRIPT_INPUT_FILE_0} ${SCRIPT_OUTPUT_FILE_0}\n\nif [ $CONFIGURATION = \"Debug\" ]; then\nnewVersion=\"${GIT_TAG}d ${GIT_COMMIT}\"\nelse\nnewVersion=\"${GIT_TAG}\"\nfi\n\n/usr/libexec/PlistBuddy -c \"Set :CFBundleVersion ${GIT_TAG}\" ${SCRIPT_OUTPUT_FILE_0}\n/usr/libexec/PlistBuddy -c \"Set :CFBundleShortVersionString ${newVersion}\" ${SCRIPT_OUTPUT_FILE_0}";
 		};
 		0DD98E691A5DD5C900A754C6 /* Update Module Version */ = {
 			isa = PBXShellScriptBuildPhase;
