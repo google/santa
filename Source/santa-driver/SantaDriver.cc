@@ -23,6 +23,10 @@ OSDefineMetaClassAndStructors(com_google_SantaDriver, IOService);
 bool SantaDriver::start(IOService *provider) {
   if (!super::start(provider)) return false;
 
+  santaDecisionManager = new SantaDecisionManager;
+  santaDecisionManager->init();
+  santaDecisionManager->StartListener();
+
   registerService();
 
   LOGI("Loaded, version %s.", OSKextGetCurrentVersionString());
@@ -31,7 +35,17 @@ bool SantaDriver::start(IOService *provider) {
 }
 
 void SantaDriver::stop(IOService *provider) {
+  santaDecisionManager->StopListener();
+  santaDecisionManager->release();
+  santaDecisionManager = NULL;
+
   LOGI("Unloaded.");
+
+  super::stop(provider);
+}
+
+SantaDecisionManager* SantaDriver::GetDecisionManager() {
+  return santaDecisionManager;
 }
 
 #undef super

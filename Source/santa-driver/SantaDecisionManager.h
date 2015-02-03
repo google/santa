@@ -66,47 +66,77 @@ class SantaDecisionManager : public OSObject {
   OSDeclareDefaultStructors(SantaDecisionManager);
 
  public:
-  // Convenience constructor
-  // Queue remains owned by caller but must exist for lifetime of
-  // SantaDecisionManager instance.
-  static SantaDecisionManager *WithQueueAndPID(
-      IOSharedDataQueue *queue, pid_t pid);
+  ///  Used for initialization after instantiation. Required because
+  ///  constructors cannot throw inside kernel-space.
+  bool init();
 
-  bool InitWithQueueAndPID(IOSharedDataQueue *queue, pid_t pid);
+  ///  Called automatically when retain count drops to 0.
   void free();
 
-  // Decision Fetching / Daemon Communication
+  ///  Called by SantaDriverClient when a client connects, providing the data
+  ///  queue used to pass messages and the pid of the client process.
+  void ConnectClient(IOSharedDataQueue *queue, pid_t pid);
+
+  ///  Called by SantaDriverClient when a client disconnects
+  void DisconnectClient();
+
+  ///  Returns whether a client is currently connected or not.
+  bool ClientConnected();
+
+  ///  Starts both kauth listeners.
+  kern_return_t StartListener();
+
+  ///  Stops both kauth listeners. After stopping new callback requests,
+  ///  waits until all current invocations have finished before clearing the
+  ///  cache and returning.
+  kern_return_t StopListener();
+  
+  ///  Adds a decision to the cache, with a timestamp.
+  void AddToCache(const char *identifier,
+                  const santa_action_t decision,
+                  const uint64_t microsecs);
+
+  ///  Checks to see if a given identifier is in the cache and removes it.
+  void CacheCheck(const char *identifier);
+
+  ///  Returns the number of entries in the cache.
+  uint64_t CacheCount();
+
+  ///  Clears the cache.
+  void ClearCache();
+
+  ///  Fetches a response from the cache, first checking to see if the
+  ///  entry has expired.
+  santa_action_t GetFromCache(const char *identifier);
+
+  ///  Posts the requested message to the client data queue, if there is one.
+  ///  Uses dataqueue_lock_ to ensure two threads don't try to write to the
+  ///  queue at the same time.
   bool PostToQueue(santa_message_t);
+
+  ///  Fetches an execution decision for a file, first using the cache and then
+  ///  by sending a message to the daemon and waiting until a response arrives.
+  ///  If a daemon isn't connected, will allow execution and cache, logging
+  ///  the path to the executed file.
   santa_action_t FetchDecision(const kauth_cred_t credential,
                                const vfs_context_t vfs_context,
                                const vnode_t vnode);
 
-  // Vnode ID string
+  ///  Fetches the vnode_id for a given vnode.
   uint64_t GetVnodeIDForVnode(const vfs_context_t context, const vnode_t vp);
 
-  // Cache management
-  void AddToCache(const char *identifier,
-                  const santa_action_t decision,
-                  const uint64_t microsecs);
-  void CacheCheck(const char *identifier);
-  uint64_t CacheCount();
-  void ClearCache();
-  santa_action_t GetFromCache(const char *identifier);
-
-  // Listener invocation management
-  SInt32 GetListenerInvocations();
-  void IncrementListenerInvocations();
-  void DecrementListenerInvocations();
-
-  // Owning PID comparison
-  bool MatchesOwningPID(const pid_t other_pid);
-
-  // Returns the current system uptime in microseconds
+  ///  Returns the current system uptime in microseconds
   uint64_t GetCurrentUptime();
 
-  // Starting and stopping the listener
-  kern_return_t StartListener();
-  kern_return_t StopListener();
+
+  ///  Increments the count of active vnode callback's pending.
+  void IncrementListenerInvocations();
+
+  ///  Decrements the count of active vnode callback's pending.
+  void DecrementListenerInvocations();
+
+  ///  Returns true if other_pid is the same as the current client pid.
+  bool MatchesOwningPID(const pid_t other_pid);
 
  private:
   OSDictionary *cached_decisions_;

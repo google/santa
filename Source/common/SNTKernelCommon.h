@@ -30,7 +30,6 @@
 // List of methods supported by the driver.
 enum SantaDriverMethods {
   kSantaUserClientOpen,
-  kSantaUserClientClose,
   kSantaUserClientAllowBinary,
   kSantaUserClientDenyBinary,
   kSantaUserClientClearCache,

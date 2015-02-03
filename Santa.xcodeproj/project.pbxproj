@@ -568,12 +568,12 @@
 		0D91BCB9174E8A7E00131A7D /* santa-driver */ = {
 			isa = PBXGroup;
 			children = (
-				0D4644C4182AF81700098690 /* SantaDecisionManager.h */,
-				0D4644C3182AF81700098690 /* SantaDecisionManager.cc */,
 				0D9A7F321759144800035EB5 /* SantaDriver.h */,
 				0D9A7F311759144800035EB5 /* SantaDriver.cc */,
 				0D9A7F361759148E00035EB5 /* SantaDriverClient.h */,
 				0D9A7F351759148E00035EB5 /* SantaDriverClient.cc */,
+				0D4644C4182AF81700098690 /* SantaDecisionManager.h */,
+				0D4644C3182AF81700098690 /* SantaDecisionManager.cc */,
 				0D7A7AF2174FCF4C00B77646 /* SantaMessage.h */,
 				0D7A7AF1174FCF4C00B77646 /* SantaMessage.cc */,
 				0DA36C1F199EA46600A129D6 /* Resources */,

@@ -20,7 +20,7 @@
 // The defines above can'be used in this function, must use the full names.
 OSDefineMetaClassAndStructors(com_google_SantaDriverClient, IOUserClient);
 
-# pragma mark Driver Management
+#pragma mark Driver Management
 
 bool SantaDriverClient::initWithTask(
     task_t owningTask, void *securityID, UInt32 type) {
@@ -41,51 +41,37 @@ bool SantaDriverClient::start(IOService *provider) {
   if (!fProvider) return false;
   if (!super::start(provider)) return false;
 
-  fSDMLock = IOLockAlloc();
+  fSDM = fProvider->GetDecisionManager();
 
   return true;
 }
 
 void SantaDriverClient::stop(IOService *provider) {
   super::stop(provider);
+  fProvider = NULL;
 }
 
 IOReturn SantaDriverClient::clientClose() {
-  close();
   terminate(kIOServiceSynchronous);
-
-  fProvider = NULL;
-
   return kIOReturnSuccess;
 }
 
 bool SantaDriverClient::terminate(IOOptionBits options) {
-  // We have to lock before this check in case the client exits and the kext
-  // is unloaded very shortly afterwards.
-  IOLockLock(fSDMLock);
-  if (fSDM) {
-    fSDM->StopListener();
+  fSDM->DisconnectClient();
+  LOGI("Client disconnected.");
 
-    // Ask santad to shutdown
-    santa_message_t message;
-    message.action = ACTION_REQUEST_SHUTDOWN;
-    message.userId = 0;
-    message.pid = 0;
-    message.ppid = 0;    
-    message.vnode_id = 0;
-    fSDM->PostToQueue(message);
+  fSharedMemory->release();
+  fDataQueue->release();
 
-    LOGI("Client disconnected.");
-
-    fSDM->release();
-    fSDM = NULL;
-  }
-  IOLockUnlock(fSDMLock);
+  fSharedMemory = NULL;
+  fDataQueue = NULL;
 
   if (fProvider && fProvider->isOpen(this)) fProvider->close(this);
 
   return super::terminate(options);
 }
+
+#pragma mark Fetching memory and data queue notifications
 
 IOReturn SantaDriverClient::registerNotificationPort(mach_port_t port,
                                                      UInt32 type,
@@ -108,7 +94,7 @@ IOReturn SantaDriverClient::clientMemoryForType(UInt32 type,
     fSharedMemory->retain();  // client will decrement this ref
     *memory = fSharedMemory;
 
-    return fSDM->StartListener();
+    return kIOReturnSuccess;
   }
 
   return kIOReturnNoMemory;
@@ -136,9 +122,7 @@ IOReturn SantaDriverClient::open() {
     return kIOReturnVMError;
   }
 
-  IOLockLock(fSDMLock);
-  fSDM = SantaDecisionManager::WithQueueAndPID(fDataQueue, proc_selfpid());
-  IOLockUnlock(fSDMLock);
+  fSDM->ConnectClient(fDataQueue, proc_selfpid());
 
   LOGI("Client connected, PID: %d.", proc_selfpid());
 
@@ -151,21 +135,6 @@ IOReturn SantaDriverClient::static_open(
     IOExternalMethodArguments *arguments) {
   if (!target) return kIOReturnBadArgument;
   return target->open();
-}
-
-IOReturn SantaDriverClient::close() {
-  if (!fProvider) return kIOReturnNotAttached;
-  if (fProvider->isOpen(this)) fProvider->close(this);
-
-  return kIOReturnSuccess;
-}
-
-IOReturn SantaDriverClient::static_close(
-    SantaDriverClient *target,
-    void *reference,
-    IOExternalMethodArguments *arguments) {
-  if (!target) return kIOReturnBadArgument;
-  return target->close();
 }
 
 IOReturn SantaDriverClient::allow_binary(const uint64_t vnode_id) {
@@ -240,8 +209,8 @@ IOReturn SantaDriverClient::externalMethod(
     IOExternalMethodDispatch *dispatch,
     OSObject *target,
     void *reference) {
-  // Array of methods callable by clients. The order of these must match the
-  // order of the items in |SantaDriverMethods| in SNTKernelCommon.h
+  ///  Array of methods callable by clients. The order of these must match the
+  ///  order of the items in SantaDriverMethods in SNTKernelCommon.h
   IOExternalMethodDispatch sMethods[kSantaUserClientNMethods] = {
     {
       reinterpret_cast<IOExternalMethodAction>(&SantaDriverClient::static_open),
@@ -249,14 +218,6 @@ IOReturn SantaDriverClient::externalMethod(
       0,  // input struct
       0,  // output scalar
       0   // output struct
-    },
-    {
-      reinterpret_cast<IOExternalMethodAction>(
-          &SantaDriverClient::static_close),
-      0,
-      0,
-      0,
-      0
     },
     {
       reinterpret_cast<IOExternalMethodAction>(

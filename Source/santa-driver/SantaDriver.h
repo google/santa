@@ -22,14 +22,26 @@
 #include "SNTLogging.h"
 
 ///
-///  The driver class, which provides just the start/stop functions.
+///  The driver class, which provides the start/stop functions and holds
+///  the SantaDecisionManager instance which the connected client
+///  communicates with.
 ///
 class com_google_SantaDriver : public IOService {
   OSDeclareDefaultStructors(com_google_SantaDriver);
 
  public:
+  ///  Called by the kernel when the kext is loaded
   bool start(IOService *provider);
+
+  ///  Called by the kernel when the kext is unloaded
   void stop(IOService *provider);
+
+  ///  Returns a pointer to the SantaDecisionManager created in start().
+  SantaDecisionManager* GetDecisionManager();
+
+ private:
+  SantaDecisionManager *santaDecisionManager;
+
 };
 
 #endif  // SANTA__SANTA_DRIVER__SANTADRIVER_H
