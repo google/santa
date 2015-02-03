@@ -19,40 +19,15 @@ OSDefineMetaClassAndStructors(SantaDecisionManager, OSObject);
 
 #pragma mark Object Lifecycle
 
-SantaDecisionManager *SantaDecisionManager::WithQueueAndPID(
-    IOSharedDataQueue *queue, pid_t pid) {
-  SantaDecisionManager *me = new SantaDecisionManager;
+bool SantaDecisionManager::init() {
+  dataqueue_lock_ = IORWLockAlloc();
+  cached_decisions_lock_ = IORWLockAlloc();
+  cached_decisions_ = OSDictionary::withCapacity(1000);
 
-  if (me && !me->InitWithQueueAndPID(queue, pid)) {
-    me->free();
-    return NULL;
-  }
-
-  return me;
-}
-
-bool SantaDecisionManager::InitWithQueueAndPID(
-    IOSharedDataQueue *queue, pid_t pid) {
-  if (!super::init()) return false;
-
-  if (!pid) return false;
-  if (!queue) return false;
-
-  listener_invocations_ = 0;
-  dataqueue_ = queue;
-  owning_pid_ = pid;
-  owning_proc_ = proc_find(pid);
-
-  if (!(dataqueue_lock_ = IORWLockAlloc())) return FALSE;
-  if (!(cached_decisions_lock_ = IORWLockAlloc())) return FALSE;
-  if (!(cached_decisions_ = OSDictionary::withCapacity(1000))) return FALSE;
-
-  return TRUE;
+  return kIOReturnSuccess;
 }
 
 void SantaDecisionManager::free() {
-  proc_rele(owning_proc_);
-
   if (cached_decisions_) {
     cached_decisions_->release();
     cached_decisions_ = NULL;
@@ -63,7 +38,7 @@ void SantaDecisionManager::free() {
     cached_decisions_lock_ = NULL;
   }
 
-  if (dataqueue_lock_) {
+  if (dataqueue_lock_ ) {
     IORWLockFree(dataqueue_lock_);
     dataqueue_lock_ = NULL;
   }
@@ -71,7 +46,87 @@ void SantaDecisionManager::free() {
   super::free();
 }
 
-# pragma mark Cache Management
+#pragma mark Client Management
+
+void SantaDecisionManager::ConnectClient(IOSharedDataQueue *queue, pid_t pid) {
+  if (!pid) return;
+  if (!queue) return;
+
+  // Any decisions made while the daemon wasn't
+  // connected should be cleared
+  cached_decisions_->flushCollection();
+
+  dataqueue_ = queue;
+  dataqueue_->retain();
+
+  owning_pid_ = pid;
+  owning_proc_ = proc_find(pid);
+}
+
+void SantaDecisionManager::DisconnectClient() {
+  owning_pid_ = -1;
+
+  // Ask santad to shutdown, in case it's running.
+  santa_message_t message;
+  message.action = ACTION_REQUEST_SHUTDOWN;
+  message.userId = 0;
+  message.pid = 0;
+  message.ppid = 0;
+  message.vnode_id = 0;
+  PostToQueue(message);
+
+  dataqueue_->release();
+  dataqueue_ = NULL;
+
+  proc_rele(owning_proc_);
+  owning_proc_ = NULL;
+}
+
+bool SantaDecisionManager::ClientConnected() {
+  return owning_pid_ > 0;
+}
+
+# pragma mark Listener Control
+
+kern_return_t SantaDecisionManager::StartListener() {
+  process_listener_ = kauth_listen_scope(KAUTH_SCOPE_PROCESS,
+                                         process_scope_callback,
+                                         reinterpret_cast<void *>(this));
+  if (!process_listener_) return kIOReturnInternalError;
+  LOGD("Process listener started.");
+
+  vnode_listener_ = kauth_listen_scope(KAUTH_SCOPE_VNODE,
+                                       vnode_scope_callback,
+                                       reinterpret_cast<void *>(this));
+  if (!vnode_listener_) return kIOReturnInternalError;
+
+  LOGD("Vnode listener started.");
+
+  return kIOReturnSuccess;
+}
+
+kern_return_t SantaDecisionManager::StopListener() {
+  kauth_unlisten_scope(vnode_listener_);
+  vnode_listener_ = NULL;
+
+  kauth_unlisten_scope(process_listener_);
+  process_listener_ = NULL;
+
+  // Wait for any active invocations to finish before returning
+  do {
+    IOSleep(5);
+  } while (listener_invocations_);
+
+  // Delete any cached decisions
+  ClearCache();
+
+  LOGD("Vnode listener stopped.");
+  LOGD("Process listener stopped.");
+
+  return kIOReturnSuccess;
+}
+
+#pragma mark Cache Management
 
 void SantaDecisionManager::AddToCache(
     const char *identifier, santa_action_t decision, uint64_t microsecs) {
@@ -169,7 +224,10 @@ santa_action_t SantaDecisionManager::GetFromCache(const char *identifier) {
 
 bool SantaDecisionManager::PostToQueue(santa_message_t message) {
   IORWLockWrite(dataqueue_lock_);
-  bool kr = dataqueue_->enqueue(&message, sizeof(message));
+  bool kr = false;
+  if (dataqueue_) {
+    kr = dataqueue_->enqueue(&message, sizeof(message));
+  }
   IORWLockUnlock(dataqueue_lock_);
   return kr;
 }
@@ -198,6 +256,15 @@ santa_action_t SantaDecisionManager::FetchDecision(
     int name_len = MAX_PATH_LEN;
     if (vn_getpath(vnode, path, &name_len) != 0) {
       path[0] = '\0';
+    }
+
+    // If daemon isn't connected, allow and cache
+    if (owning_pid_ < 1) {
+      LOGI("Exeuction request without daemon running: %s", path);
+      AddToCache(vnode_id_str,
+                 ACTION_RESPOND_CHECKBW_ALLOW,
+                 GetCurrentUptime());
+      return ACTION_RESPOND_CHECKBW_ALLOW;
     }
 
     // Prepare to send message to daemon
@@ -260,10 +327,6 @@ uint64_t SantaDecisionManager::GetCurrentUptime() {
 
 # pragma mark Invocation Tracking & PID comparison
 
-SInt32 SantaDecisionManager::GetListenerInvocations() {
-  return listener_invocations_;
-}
-
 void SantaDecisionManager::IncrementListenerInvocations() {
   OSIncrementAtomic(&listener_invocations_);
 }
@@ -274,46 +337,6 @@ void SantaDecisionManager::DecrementListenerInvocations() {
 
 bool SantaDecisionManager::MatchesOwningPID(const pid_t other_pid) {
   return (owning_pid_ == other_pid);
-}
-
-# pragma mark Listener Control
-
-kern_return_t SantaDecisionManager::StartListener() {
-  process_listener_ = kauth_listen_scope(KAUTH_SCOPE_PROCESS,
-                                         process_scope_callback,
-                                         reinterpret_cast<void *>(this));
-  if (!process_listener_) return kIOReturnInternalError;
-  LOGD("Process listener started.");
-
-  vnode_listener_ = kauth_listen_scope(KAUTH_SCOPE_VNODE,
-                                       vnode_scope_callback,
-                                       reinterpret_cast<void *>(this));
-  if (!vnode_listener_) return kIOReturnInternalError;
-
-  LOGD("Vnode listener started.");
-
-  return kIOReturnSuccess;
-}
-
-kern_return_t SantaDecisionManager::StopListener() {
-  kauth_unlisten_scope(vnode_listener_);
-  vnode_listener_ = NULL;
-
-  kauth_unlisten_scope(process_listener_);
-  process_listener_ = NULL;
-
-  // Wait for any active invocations to finish before returning
-  do {
-    IOSleep(5);
-  } while (GetListenerInvocations());
-
-  // Delete any cached decisions
-  ClearCache();
-
-  LOGD("Vnode listener stopped.");
-  LOGD("Process listener stopped.");
-
-  return kIOReturnSuccess;
 }
 
 #undef super

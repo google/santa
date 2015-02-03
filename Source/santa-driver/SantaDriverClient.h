@@ -38,7 +38,7 @@ const int kMaxQueueEvents = 64;
 ///
 ///  Documentation on how the IOUserClient parts of this code work can be found
 ///  here:
-///  @link https://developer.apple.com/library/mac/samplecode/SimpleUserClient/Listings/User_Client_Info_txt.html
+///  https://developer.apple.com/library/mac/samplecode/SimpleUserClient/Listings/User_Client_Info_txt.html
 ///
 class com_google_SantaDriverClient : public IOUserClient {
   OSDeclareDefaultStructors(com_google_SantaDriverClient);
@@ -48,61 +48,75 @@ class com_google_SantaDriverClient : public IOUserClient {
   IOMemoryDescriptor *fSharedMemory;
   com_google_SantaDriver *fProvider;
   SantaDecisionManager *fSDM;
-  IOLock *fSDMLock;
 
  public:
-  bool start(IOService *provider);
-  void stop(IOService *provider);
-  IOReturn clientClose();
-  bool terminate(IOOptionBits options);
+  ///  Called as part of IOServiceOpen in clients
   bool initWithTask(task_t owningTask, void *securityID, UInt32 type);
 
+  ///  Called after initWithTask as part of IOServiceOpen
+  bool start(IOService *provider);
+
+  ///  Called when this class is stopping
+  void stop(IOService *provider);
+
+  ///  Called when a client disconnects
+  IOReturn clientClose();
+
+  ///  Called when the driver is shutting down
+  bool terminate(IOOptionBits options);
+
+  ///  Called in clients with IOConnectSetNotificationPort
   IOReturn registerNotificationPort(
       mach_port_t port, UInt32 type, UInt32 refCon);
 
+  ///  Called in clients with IOConnectMapMemory
   IOReturn clientMemoryForType(
       UInt32 type, IOOptionBits *options, IOMemoryDescriptor **memory);
 
+  ///  Called in clients with IOConnectCallScalarMethod etc. Dispatches
+  ///  to the requested selector using the SantaDriverMethods enum in
+  ///  SNTKernelCommon.
   IOReturn externalMethod(
       UInt32 selector,
       IOExternalMethodArguments *arguments,
       IOExternalMethodDispatch *dispatch,
       OSObject *target, void *reference);
 
+  ///
+  ///  The userpsace callable methods are below. Each method corresponds
+  ///  to an entry in SantaDriverMethods. Each method has a static version
+  ///  which just calls the method on the provided target.
+  ///
+
+  ///  Called during client connection
   IOReturn open();
   static IOReturn static_open(
       com_google_SantaDriverClient *target,
       void *reference,
       IOExternalMethodArguments *arguments);
 
-  IOReturn close();
-  static IOReturn static_close(
-      com_google_SantaDriverClient *target,
-      void *reference,
-      IOExternalMethodArguments *arguments);
-
-  /// The daemon calls this to allow a binary.
+  ///  The daemon calls this to allow a binary.
   IOReturn allow_binary(uint64_t vnode_id);
   static IOReturn static_allow_binary(
       com_google_SantaDriverClient *target,
       void *reference,
       IOExternalMethodArguments *arguments);
 
-  /// The daemon calls this to deny a binary.
+  ///  The daemon calls this to deny a binary.
   IOReturn deny_binary(uint64_t vnode_id);
   static IOReturn static_deny_binary(
       com_google_SantaDriverClient *target,
       void *reference,
       IOExternalMethodArguments *arguments);
 
-  /// The daemon calls this to empty the cache.
+  ///  The daemon calls this to empty the cache.
   IOReturn clear_cache();
   static IOReturn static_clear_cache(
       com_google_SantaDriverClient *target,
       void *reference,
       IOExternalMethodArguments *arguments);
 
-  /// The daemon calls this to find out how many items are in the cache
+  ///  The daemon calls this to find out how many items are in the cache
   IOReturn cache_count(uint64_t *output);
   static IOReturn static_cache_count(
       com_google_SantaDriverClient *target,
