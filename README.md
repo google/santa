@@ -51,16 +51,9 @@ Known Issues
 
 Santa is not yet a 1.0 and we have some known issues to be aware of:
 
-* Potential race-condition: we currently have a single TODO in the kext code to
-investigate a potential race condition where a binary is executed and then very
-quickly modified between the kext getting the SHA-1 and the decision being made.
-
 * Kext communication security: the kext will only accept a connection from a
 single client at a time and said client must be running as root. We haven't yet
-found a good way to ensure the kext only accepts connections from a valid client,
-short of hardcoding the SHA-1 in the kext. This shouldn't present a huge problem
-as the daemon is loaded on boot-up by launchd, so any later attempts to connect
-will be blocked.
+found a good way to ensure the kext only accepts connections from a valid client.
 
 * Database protection: the SQLite database is installed with permissions so that
 only the root user can read/write it. We're considering approaches to secure
