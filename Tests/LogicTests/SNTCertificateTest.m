@@ -80,9 +80,11 @@
   XCTAssertEqualObjects(sut.commonName, @"Google Internet Authority G2");
   XCTAssertEqualObjects(sut.orgUnit, nil);
   XCTAssertEqualObjects(sut.orgName, @"Google Inc");
+  XCTAssertEqualObjects(sut.countryName, @"US");
   XCTAssertEqualObjects(sut.issuerCommonName, @"GeoTrust Global CA");
   XCTAssertEqualObjects(sut.issuerOrgName, @"GeoTrust Inc.");
   XCTAssertEqualObjects(sut.issuerOrgUnit, nil);
+  XCTAssertEqualObjects(sut.issuerCountryName, @"US");
   XCTAssertEqualObjects(sut.SHA1, @"d83c1a7f4d0446bb2081b81a1670f8183451ca24");
   XCTAssertEqualObjects(sut.SHA256,
       @"a047a37fa2d2e118a4f5095fe074d6cfe0e352425a7632bf8659c03919a6c81d");
@@ -97,6 +99,7 @@
                         @"Ulusal Elektronik ve Kriptoloji Araştırma Enstitüsü - UEKAE");
   XCTAssertEqualObjects(sut.orgName,
                         @"Türkiye Bilimsel ve Teknolojik Araştırma Kurumu - TÜBİTAK");
+  XCTAssertEqualObjects(sut.countryName, @"TR");
 }
 
 - (void)testInitWithValidPEM {
@@ -219,6 +222,8 @@
   (void)sut.orgName;
   (void)sut.issuerCommonName;
   (void)sut.validFrom;
+  (void)sut.countryName;
+  (void)sut.issuerCountryName;
 
   // Now break some of the properties
   OCMStub([sutMock x509ValueForLabel:OCMOCK_ANY fromDictionary:OCMOCK_ANY]);
@@ -227,6 +232,8 @@
   XCTAssertEqualObjects(sut.orgName, @"Google Inc");
   XCTAssertEqualObjects(sut.issuerCommonName, @"GeoTrust Global CA");
   XCTAssertEqualObjects(sut.validFrom, [NSDate dateWithString:@"2013-04-05 15:15:55 +0000"]);
+  XCTAssertEqualObjects(sut.countryName, @"US");
+  XCTAssertEqualObjects(sut.issuerCountryName, @"US");
 }
 
 @end

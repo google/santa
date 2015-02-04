@@ -33,6 +33,17 @@
   [super tearDown];
 }
 
+- (void)testAllFields {
+  NSString *file = [[NSBundle bundleForClass:[self class]] pathForResource:@"dn" ofType:@"plist"];
+  NSArray *distinguishedNames = [NSArray arrayWithContentsOfFile:file];
+
+  SNTDERDecoder *sut = [[SNTDERDecoder alloc] initWithData:[distinguishedNames firstObject]];
+  XCTAssertEqualObjects(sut.commonName, @"auth.server.com");
+  XCTAssertEqualObjects(sut.organizationName, @"Internet Widgits Pty Ltd");
+  XCTAssertEqualObjects(sut.organizationalUnit, @"Awesome Authentication Authority");
+  XCTAssertEqualObjects(sut.countryName, @"US");
+}
+
 - (void)testOIDDecoding {
   unsigned char oidBytes1[] = {0x2b, 0x06, 0x01, 0x04, 0x01, 0x82, 0x37, 0x15, 0x14};
   NSString *oidStr = [SNTDERDecoder decodeOIDWithBytes:oidBytes1 length:sizeof(oidBytes1)];

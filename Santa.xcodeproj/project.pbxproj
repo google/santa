@@ -42,6 +42,7 @@
 		0D1B477119A53419008CADD3 /* AboutWindow.xib in Resources */ = {isa = PBXBuildFile; fileRef = 0D1B476F19A53419008CADD3 /* AboutWindow.xib */; };
 		0D20710E1A7C4A86008B0A9A /* SNTStoredEvent.m in Sources */ = {isa = PBXBuildFile; fileRef = 0DCD604A19105433006B445C /* SNTStoredEvent.m */; };
 		0D28D53819D9F5910015C5EB /* SNTConfigurator.m in Sources */ = {isa = PBXBuildFile; fileRef = 0D42D2B719D2042900955F08 /* SNTConfigurator.m */; };
+		0D2CD4611A81C7B100C9C910 /* dn.plist in Resources */ = {isa = PBXBuildFile; fileRef = 0D2CD4601A81C7B100C9C910 /* dn.plist */; };
 		0D31DF4718D254B3002B300D /* SNTCodesignChecker.m in Sources */ = {isa = PBXBuildFile; fileRef = 0D59C0E317710E6000748EBF /* SNTCodesignChecker.m */; };
 		0D35BD9F18FD71CE00921A21 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0D9A7F3E1759330500035EB5 /* Foundation.framework */; };
 		0D35BDA218FD71CE00921A21 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 0D35BDA118FD71CE00921A21 /* main.m */; };
@@ -213,6 +214,7 @@
 		0D28E5E119269B3600280F87 /* SNTLogging.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SNTLogging.h; sourceTree = "<group>"; };
 		0D28E5E31926AFE400280F87 /* SNTKernelCommon.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SNTKernelCommon.h; sourceTree = "<group>"; };
 		0D28E5E41926B55600280F87 /* santactl-Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = "santactl-Info.plist"; sourceTree = "<group>"; };
+		0D2CD4601A81C7B100C9C910 /* dn.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = dn.plist; sourceTree = "<group>"; };
 		0D35BD9E18FD71CE00921A21 /* santactl */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = santactl; sourceTree = BUILT_PRODUCTS_DIR; };
 		0D35BDA118FD71CE00921A21 /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
 		0D35BDA418FD71CE00921A21 /* santactl-Prefix.pch */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "santactl-Prefix.pch"; sourceTree = "<group>"; };
@@ -403,6 +405,7 @@
 		0D260DB018B68E12002A0B55 /* Resources */ = {
 			isa = PBXGroup;
 			children = (
+				0D2CD4601A81C7B100C9C910 /* dn.plist */,
 				0D6FDC8618C6913D0044685C /* apple.pem */,
 				0D6FDC8218C68D7E0044685C /* GIAG2.crt */,
 				0D6FDC8418C68E500044685C /* GIAG2.pem */,
@@ -863,6 +866,7 @@
 				0D6FDC8518C68E500044685C /* GIAG2.pem in Resources */,
 				0D6FDC8318C68D7E0044685C /* GIAG2.crt in Resources */,
 				0D6F12DA19EDE51E006B218E /* tubitak.crt in Resources */,
+				0D2CD4611A81C7B100C9C910 /* dn.plist in Resources */,
 				0D6FDC8718C6913D0044685C /* apple.pem in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

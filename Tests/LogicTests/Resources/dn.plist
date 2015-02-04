@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<array>
+	<data>
+	MIGcMQswCQYDVQQGEwJVUzERMA8GA1UECAwIVGhlIE1vb24xEjAQBgNVBAcMCU1vb24g
+	QmFzZTEhMB8GA1UECgwYSW50ZXJuZXQgV2lkZ2l0cyBQdHkgTHRkMSkwJwYDVQQLDCBB
+	d2Vzb21lIEF1dGhlbnRpY2F0aW9uIEF1dGhvcml0eTEYMBYGA1UEAwwPYXV0aC5zZXJ2
+	ZXIuY29t
+	</data>
+</array>
+</plist>
