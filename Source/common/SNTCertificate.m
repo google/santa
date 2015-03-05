@@ -18,9 +18,7 @@
 #import <Security/Security.h>
 
 @interface SNTCertificate ()
-///
 ///  A container for cached property values
-///
 @property NSMutableDictionary *memoizedData;
 @end
 
@@ -46,7 +44,8 @@ static NSString *const kCertDataKey = @"certData";
     // Despite the header file claiming that SecCertificateCreateWithData will return NULL if
     // @c certData doesn't contain a valid DER-encoded X509 cert, this isn't always true.
     // radar://problem/16124651
-    // To workaround, check that the certificate serial number can be retrieved.
+    // To workaround, check that the certificate serial number can be retrieved. According to
+    // RFC5280, the serial number field is required.
     NSData *ser = CFBridgingRelease(SecCertificateCopySerialNumber(cert, NULL));
     if (ser) {
       self = [self initWithSecCertificateRef:cert];
