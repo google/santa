@@ -152,6 +152,7 @@
     }
 
     foundIdentity = (__bridge SecIdentityRef)identities[0][(__bridge id)kSecImportItemIdentity];
+    CFRetain(foundIdentity);
   } else {
     CFArrayRef cfIdentities;
     err = SecItemCopyMatching((__bridge CFDictionaryRef)@{
@@ -186,6 +187,7 @@
         if ([clientCert.commonName compare:self.clientCertCommonName
                                    options:NSCaseInsensitiveSearch] == NSOrderedSame) {
           foundIdentity = identityRef;
+          CFRetain(foundIdentity);
           *stop = YES;
           return;  // return from enumeration block
         }
@@ -193,6 +195,7 @@
         if ([clientCert.issuerCommonName compare:self.clientCertIssuerCn
                                          options:NSCaseInsensitiveSearch] == NSOrderedSame) {
           foundIdentity = identityRef;
+          CFRetain(foundIdentity);
           *stop = YES;
           return;  // return from enumeration block
         }
@@ -206,6 +209,7 @@
               [clientCert.issuerOrgUnit isEqual:decoder.organizationalUnit]) {
 
             foundIdentity = identityRef;
+            CFRetain(foundIdentity);
             *stop = YES;
             return;  // return from enumeration block
           }
@@ -216,9 +220,12 @@
 
   if (foundIdentity) {
     LOGD(@"Client Trust: Valid client identity %@.", foundIdentity);
-    return [NSURLCredential credentialWithIdentity:foundIdentity
-                                      certificates:nil
-                                       persistence:NSURLCredentialPersistenceForSession];
+    NSURLCredential *cred =
+        [NSURLCredential credentialWithIdentity:foundIdentity
+                                   certificates:nil
+                                    persistence:NSURLCredentialPersistenceForSession];
+    CFRelease(foundIdentity);
+    return cred;
   } else {
     LOGD(@"Client Trust: No valid identity found.");
     return nil;
