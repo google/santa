@@ -30,6 +30,11 @@
 @property(nonatomic) NSString *userAgent;
 
 ///
+///  If set to YES, this session refuses redirect requests. Defaults to NO.
+///
+@property(nonatomic) BOOL refusesRedirects;
+
+///
 ///  If set, the server that we connect to _must_ match this string. Redirects to other
 ///  hosts will not be allowed.
 ///

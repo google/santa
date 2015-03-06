@@ -106,6 +106,18 @@
   completionHandler(NSURLSessionAuthChallengePerformDefaultHandling, nil);
 }
 
+- (void)URLSession:(NSURLSession *)session
+                          task:(NSURLSessionTask *)task
+    willPerformHTTPRedirection:(NSHTTPURLResponse *)response
+                    newRequest:(NSURLRequest *)request
+             completionHandler:(void (^)(NSURLRequest *))completionHandler {
+  if (self.refusesRedirects) {
+    completionHandler(NULL);
+  } else {
+    completionHandler(request);
+  }
+}
+
 #pragma mark Private Helpers for URLSession:didReceiveChallenge:completionHandler:
 
 ///

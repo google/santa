@@ -78,6 +78,7 @@ REGISTER_COMMAND_NAME(@"sync");
   if (santactlVersion) {
      authURLSession.userAgent = [authURLSession.userAgent stringByAppendingString:santactlVersion];
   }
+  authURLSession.refusesRedirects = YES;
 
   // Configure server auth
   if ([config syncServerAuthRootsFile]) {
