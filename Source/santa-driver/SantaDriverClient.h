@@ -29,7 +29,7 @@
 #include "SNTKernelCommon.h"
 
 // The maximum number of messages can be kept in the IODataQueue at any time.
-const int kMaxQueueEvents = 64;
+const int kMaxQueueEvents = 256;
 
 ///
 ///  This class is instantiated by IOKit when a new client process attempts to
