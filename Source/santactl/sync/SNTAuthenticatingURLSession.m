@@ -15,7 +15,6 @@
 #import "SNTAuthenticatingURLSession.h"
 
 #import "SNTCertificate.h"
-#import "SNTConfigurator.h"
 #import "SNTDERDecoder.h"
 #import "SNTLogging.h"
 
