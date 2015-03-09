@@ -41,6 +41,8 @@
   ENCODE(self.executingUser, @"executingUser");
   ENCODE(self.occurrenceDate, @"occurrenceDate");
   ENCODE(@(self.decision), @"decision");
+  ENCODE(self.pid, @"pid");
+  ENCODE(self.ppid, @"ppid");
 
   ENCODE(self.loggedInUsers, @"loggedInUsers");
   ENCODE(self.currentSessions, @"currentSessions");
@@ -63,6 +65,8 @@
     _executingUser = DECODE(NSString, @"executingUser");
     _occurrenceDate = DECODE(NSDate, @"occurrenceDate");
     _decision = [DECODE(NSNumber, @"decision") intValue];
+    _pid = DECODE(NSNumber, @"pid");
+    _ppid = DECODE(NSNumber, @"ppid");
 
     _loggedInUsers = DECODEARRAY(NSString, @"loggedInUsers");
     _currentSessions = DECODEARRAY(NSString, @"currentSessions");
