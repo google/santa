@@ -80,6 +80,7 @@
   [self.sut validateBinaryWithPath:@"/a/file"
                           userName:@"nobody"
                                pid:@(12)
+                              ppid:@(1)
                            vnodeId:1234];
 
   OCMVerify([self.mockDriverManager postToKernelAction:ACTION_RESPOND_CHECKBW_ALLOW
@@ -101,6 +102,7 @@
   [self.sut validateBinaryWithPath:@"/a/file"
                           userName:@"nobody"
                                pid:@(12)
+                              ppid:@(1)
                            vnodeId:1234];
 
   OCMVerify([self.mockDriverManager postToKernelAction:ACTION_RESPOND_CHECKBW_DENY
@@ -125,6 +127,7 @@
   [self.sut validateBinaryWithPath:@"/a/file"
                           userName:@"nobody"
                                pid:@(12)
+                              ppid:@(1)
                            vnodeId:1234];
 
   OCMVerify([self.mockDriverManager postToKernelAction:ACTION_RESPOND_CHECKBW_ALLOW
@@ -149,6 +152,7 @@
   [self.sut validateBinaryWithPath:@"/a/file"
                           userName:@"nobody"
                                pid:@(12)
+                              ppid:@(1)
                            vnodeId:1234];
 
   OCMVerify([self.mockDriverManager postToKernelAction:ACTION_RESPOND_CHECKBW_DENY
@@ -160,7 +164,11 @@
   OCMStub([mockSut fileIsInScope:OCMOCK_ANY]).andReturn(YES);
 
   [self.sut setOperatingMode:CLIENTMODE_MONITOR];
-  [self.sut validateBinaryWithPath:@"/a/file" userName:@"nobody" pid:@(12) vnodeId:1234];
+  [self.sut validateBinaryWithPath:@"/a/file"
+                          userName:@"nobody"
+                               pid:@(12)
+                              ppid:@(1)
+                           vnodeId:1234];
   OCMVerify([self.mockDriverManager postToKernelAction:ACTION_RESPOND_CHECKBW_ALLOW
                                             forVnodeID:1234]);
 
@@ -168,6 +176,7 @@
   [self.sut validateBinaryWithPath:@"/a/file"
                           userName:@"nobody"
                                pid:@(12)
+                              ppid:@(1)
                            vnodeId:1234];
   OCMVerify([self.mockDriverManager postToKernelAction:ACTION_RESPOND_CHECKBW_DENY
                                             forVnodeID:1234]);
@@ -178,7 +187,11 @@
   OCMStub([mockSut fileIsInScope:OCMOCK_ANY]).andReturn(NO);
 
   [self.sut setOperatingMode:CLIENTMODE_LOCKDOWN];
-  [self.sut validateBinaryWithPath:@"/a/file" userName:@"nobody" pid:@(24) vnodeId:1234];
+  [self.sut validateBinaryWithPath:@"/a/file"
+                          userName:@"nobody"
+                               pid:@(24)
+                              ppid:@(1)   
+                           vnodeId:1234];
   OCMVerify([self.mockDriverManager postToKernelAction:ACTION_RESPOND_CHECKBW_ALLOW
                                             forVnodeID:1234]);
 }

@@ -61,6 +61,7 @@
 - (void)validateBinaryWithPath:(NSString *)path
                       userName:(NSString *)userName
                            pid:(NSNumber *)pid
+                          ppid:(NSNumber *)ppid
                        vnodeId:(uint64_t)vnodeId {
   SNTFileInfo *binInfo = [[SNTFileInfo alloc] initWithPath:path];
   NSString *sha256 = [binInfo SHA256];
@@ -121,6 +122,7 @@
     se.occurrenceDate = [[NSDate alloc] init];
     se.decision = [self eventStateForDecision:respondedAction type:rule.type];
     se.pid = pid;
+    se.ppid = ppid;
 
     NSArray *loggedInUsers, *currentSessions;
     [self loggedInUsers:&loggedInUsers sessions:&currentSessions];

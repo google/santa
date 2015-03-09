@@ -138,6 +138,7 @@
                 [self.execController validateBinaryWithPath:@(message.path)
                                                    userName:userName
                                                         pid:@(message.pid)
+                                                       ppid:@(message.ppid)
                                                     vnodeId:message.vnode_id];
             });
             break;

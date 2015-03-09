@@ -143,6 +143,9 @@
   ADDKEY(newEvent, @"file_bundle_version", event.fileBundleVersion);
   ADDKEY(newEvent, @"file_bundle_version_string", event.fileBundleVersionString);
 
+  ADDKEY(newEvent, @"pid", event.pid);
+  ADDKEY(newEvent, @"ppid", event.ppid);
+
   NSMutableArray *signingChain = [NSMutableArray arrayWithCapacity:event.signingChain.count];
   for (int i = 0; i < event.signingChain.count; i++) {
     SNTCertificate *cert = [event.signingChain objectAtIndex:i];
