@@ -89,12 +89,6 @@ bool SantaDecisionManager::ClientConnected() {
 # pragma mark Listener Control
 
 kern_return_t SantaDecisionManager::StartListener() {
-  process_listener_ = kauth_listen_scope(KAUTH_SCOPE_PROCESS,
-                                         process_scope_callback,
-                                         reinterpret_cast<void *>(this));
-  if (!process_listener_) return kIOReturnInternalError;
-  LOGD("Process listener started.");
-
   vnode_listener_ = kauth_listen_scope(KAUTH_SCOPE_VNODE,
                                        vnode_scope_callback,
                                        reinterpret_cast<void *>(this));
@@ -109,9 +103,6 @@ kern_return_t SantaDecisionManager::StopListener() {
   kauth_unlisten_scope(vnode_listener_);
   vnode_listener_ = NULL;
 
-  kauth_unlisten_scope(process_listener_);
-  process_listener_ = NULL;
-
   // Wait for any active invocations to finish before returning
   do {
     IOSleep(5);
@@ -121,7 +112,6 @@ kern_return_t SantaDecisionManager::StopListener() {
   ClearCache();
 
   LOGD("Vnode listener stopped.");
-  LOGD("Process listener stopped.");
 
   return kIOReturnSuccess;
 }
@@ -335,38 +325,9 @@ void SantaDecisionManager::DecrementListenerInvocations() {
   OSDecrementAtomic(&listener_invocations_);
 }
 
-bool SantaDecisionManager::MatchesOwningPID(const pid_t other_pid) {
-  return (owning_pid_ == other_pid);
-}
-
 #undef super
 
-#pragma mark Kauth Callbacks
-
-extern "C" int process_scope_callback(
-    kauth_cred_t credential, void *idata, kauth_action_t action,
-    uintptr_t arg0, uintptr_t arg1, uintptr_t arg2, uintptr_t arg3) {
-  if (idata == NULL) {
-    LOGE("Process callback established without valid decision manager.");
-    return KAUTH_RESULT_ALLOW;
-  }
-  SantaDecisionManager *sdm = OSDynamicCast(
-      SantaDecisionManager, reinterpret_cast<OSObject *>(idata));
-
-  // NOTE: this prevents a debugger from attaching to an existing santad
-  // process but doesn't prevent starting santad under a debugger. This check
-  // is only here to try and prevent the user from deadlocking their machine
-  // by attaching a debugger, so if they work around it and end up deadlocking,
-  // that's their problem.
-  if (action == KAUTH_PROCESS_CANTRACE &&
-      sdm->MatchesOwningPID(proc_pid((proc_t)arg0))) {
-    *(reinterpret_cast<int *>(arg1)) = EPERM;
-    LOGD("Denied debugger access");
-    return KAUTH_RESULT_DENY;
-  }
-
-  return KAUTH_RESULT_ALLOW;
-}
+#pragma mark Kauth Callback
 
 extern "C" int vnode_scope_callback(
     kauth_cred_t credential, void *idata, kauth_action_t action,

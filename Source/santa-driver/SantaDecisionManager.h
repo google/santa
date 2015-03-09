@@ -83,10 +83,10 @@ class SantaDecisionManager : public OSObject {
   ///  Returns whether a client is currently connected or not.
   bool ClientConnected();
 
-  ///  Starts both kauth listeners.
+  ///  Starts the kauth listener.
   kern_return_t StartListener();
 
-  ///  Stops both kauth listeners. After stopping new callback requests,
+  ///  Stops the kauth listener. After stopping new callback requests,
   ///  waits until all current invocations have finished before clearing the
   ///  cache and returning.
   kern_return_t StopListener();
@@ -128,15 +128,11 @@ class SantaDecisionManager : public OSObject {
   ///  Returns the current system uptime in microseconds
   uint64_t GetCurrentUptime();
 
-
   ///  Increments the count of active vnode callback's pending.
   void IncrementListenerInvocations();
 
   ///  Decrements the count of active vnode callback's pending.
   void DecrementListenerInvocations();
-
-  ///  Returns true if other_pid is the same as the current client pid.
-  bool MatchesOwningPID(const pid_t other_pid);
 
  private:
   OSDictionary *cached_decisions_;
@@ -151,7 +147,6 @@ class SantaDecisionManager : public OSObject {
   proc_t owning_proc_;
 
   kauth_listener_t vnode_listener_;
-  kauth_listener_t process_listener_;
 };
 
 ///
@@ -165,20 +160,6 @@ class SantaDecisionManager : public OSObject {
 ///  @param Pointer to an errno-style error.
 ///
 extern "C" int vnode_scope_callback(
-    kauth_cred_t credential, void *idata, kauth_action_t action,
-    uintptr_t arg0, uintptr_t arg1, uintptr_t arg2, uintptr_t arg3);
-
-///
-///  The kauth callback function for the Process scope
-///  @param actor's credentials
-///  @param data that was passed when the listener was registered
-///  @param action that was requested (KAUTH_PROCESS_{CANTRACE,CANSIGNAL})
-///  @param target process
-///  @param Pointer to an errno-style error.
-///  @param unused
-///  @param unused
-///
-extern "C" int process_scope_callback(
     kauth_cred_t credential, void *idata, kauth_action_t action,
     uintptr_t arg0, uintptr_t arg1, uintptr_t arg2, uintptr_t arg3);
 
