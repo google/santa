@@ -260,7 +260,7 @@ santa_action_t SantaDecisionManager::FetchDecision(
 
     // If daemon isn't connected, allow and cache
     if (owning_pid_ < 1) {
-      LOGI("Exeuction request without daemon running: %s", path);
+      LOGI("Execution request without daemon running: %s", path);
       AddToCache(vnode_id_str,
                  ACTION_RESPOND_CHECKBW_ALLOW,
                  GetCurrentUptime());
