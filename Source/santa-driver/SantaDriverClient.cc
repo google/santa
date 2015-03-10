@@ -94,6 +94,9 @@ IOReturn SantaDriverClient::clientMemoryForType(UInt32 type,
     fSharedMemory->retain();  // client will decrement this ref
     *memory = fSharedMemory;
 
+    fSDM->ConnectClient(fDataQueue, proc_selfpid());
+    LOGI("Client connected, PID: %d.", proc_selfpid());
+
     return kIOReturnSuccess;
   }
 
@@ -121,10 +124,6 @@ IOReturn SantaDriverClient::open() {
     fDataQueue = NULL;
     return kIOReturnVMError;
   }
-
-  fSDM->ConnectClient(fDataQueue, proc_selfpid());
-
-  LOGI("Client connected, PID: %d.", proc_selfpid());
 
   return kIOReturnSuccess;
 }
