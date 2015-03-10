@@ -248,8 +248,7 @@ santa_action_t SantaDecisionManager::FetchDecision(
       path[0] = '\0';
     }
 
-    // If daemon isn't connected, allow and cache
-    if (owning_pid_ < 1) {
+    if (!ClientConnected()) {
       LOGI("Execution request without daemon running: %s", path);
       AddToCache(vnode_id_str,
                  ACTION_RESPOND_CHECKBW_ALLOW,
@@ -352,7 +351,7 @@ extern "C" int vnode_scope_callback(
   // Don't operate on ACCESS events, as they're advisory
   if (action & KAUTH_VNODE_ACCESS) return returnResult;
 
-  // Filter for only WRITE_DATA actions
+  // Filter for only writes
   if (action & KAUTH_VNODE_WRITE_DATA ||
       action & KAUTH_VNODE_APPEND_DATA ||
       action & KAUTH_VNODE_DELETE) {
@@ -392,17 +391,7 @@ extern "C" int vnode_scope_callback(
       default:
         // NOTE: Any unknown response or error condition causes us to fail open.
         // Whilst from a security perspective this is bad, it's important that
-        // we don't break user's machines. Every fallen open response will come
-        // through this code path and cause this log entry to be created, so we
-        // can investigate each case and try to fix the root cause.
-        char path[MAX_PATH_LEN];
-        int name_len = MAX_PATH_LEN;
-        if (vn_getpath(vnode, path, &name_len) != 0) {
-          path[0] = '\0';
-        }
-        LOGW("Didn't receive a valid response for %s. Received: %d.",
-             path,
-             returnedAction);
+        // we don't break user's machines.
         break;
     }
 
