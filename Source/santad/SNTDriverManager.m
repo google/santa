@@ -27,6 +27,8 @@
 
 @implementation SNTDriverManager
 
+static const int MAX_DELAY = 15;
+
 #pragma mark init/dealloc
 
 - (instancetype)init {
@@ -42,13 +44,15 @@
     }
 
     // Locate driver. Wait for it if necessary.
+    int delay = 1;
     do {
       CFRetain(classToMatch);  // this ref is released by IOServiceGetMatchingService
       serviceObject = IOServiceGetMatchingService(kIOMasterPortDefault, classToMatch);
 
       if (!serviceObject) {
         LOGD(@"Waiting for Santa driver to become available");
-        sleep(5);
+        sleep(delay);
+        if (delay < MAX_DELAY) delay *= 2;
       }
     } while (!serviceObject);
     CFRelease(classToMatch);
