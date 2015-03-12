@@ -48,47 +48,49 @@ REGISTER_COMMAND_NAME(@"binaryinfo");
   NSString *filePath = [arguments firstObject];
 
   if (!filePath) {
-    LOGI(@"Missing file path");
+    printf("Missing file path\n");
     exit(1);
   }
 
   SNTFileInfo *fileInfo = [[SNTFileInfo alloc] initWithPath:filePath];
   if (!fileInfo) {
-    LOGI(@"Invalid file");
+    printf("Invalid file\n");
     exit(1);
   }
 
-  LOGI(@"Info for file: %@", [fileInfo path]);
-  LOGI(@"-----------------------------------------------------------");
-  LOGI(@"%-20s: %@", "SHA-1", [fileInfo SHA1]);
-  LOGI(@"%-20s: %@", "SHA-256", [fileInfo SHA256]);
+  printf("Info for file: %s\n", [[fileInfo path] UTF8String]);
+  printf("-----------------------------------------------------------");
+  printf("%-20s: %s\n", "SHA-1", [[fileInfo SHA1] UTF8String]);
+  printf("%-20s: %s\n", "SHA-256", [[fileInfo SHA256] UTF8String]);
 
   NSArray *archs = [fileInfo architectures];
   if (archs) {
-    LOGI(@"%-20s: %@ (%@)", "Type", [fileInfo machoType], [archs componentsJoinedByString:@", "]);
+    printf("%-20s: %s (%s)\n", "Type",
+           [[fileInfo machoType] UTF8String],
+           [[archs componentsJoinedByString:@", "] UTF8String]);
   } else {
-    LOGI(@"%-20s: %@", "Type", [fileInfo machoType]);
+    printf("%-20s: %s\n", "Type", [[fileInfo machoType] UTF8String]);
   }
 
   SNTCodesignChecker *csc = [[SNTCodesignChecker alloc] initWithBinaryPath:filePath];
 
-  LOGI(@"%-20s: %s", "Code-signed", (csc) ? "Yes" : "No");
+  printf("%-20s: %s\n", "Code-signed", (csc) ? "Yes" : "No");
 
   if (csc) {
-    LOGI(@"Signing chain\n");
+    printf("Signing chain\n");
 
     [csc.certificates enumerateObjectsUsingBlock:^(SNTCertificate *c,
                                                    unsigned long idx,
                                                    BOOL *stop) {
         idx++;  // index from 1
-        LOGI(@"    %2lu. %-20s: %@", idx, "SHA-1", c.SHA1);
-        LOGI(@"        %-20s: %@", "SHA-256", c.SHA256);
-        LOGI(@"        %-20s: %@", "Common Name", c.commonName);
-        LOGI(@"        %-20s: %@", "Organization", c.orgName);
-        LOGI(@"        %-20s: %@", "Organizational Unit", c.orgUnit);
-        LOGI(@"        %-20s: %@", "Valid From", c.validFrom);
-        LOGI(@"        %-20s: %@", "Valid Until", c.validUntil);
-        LOGI(@"");
+        printf("    %2lu. %-20s: %s\n", idx, "SHA-1", [c.SHA1 UTF8String]);
+        printf("        %-20s: %s\n", "SHA-256", [c.SHA256 UTF8String]);
+        printf("        %-20s: %s\n", "Common Name", [c.commonName UTF8String]);
+        printf("        %-20s: %s\n", "Organization", [c.orgName UTF8String]);
+        printf("        %-20s: %s\n", "Organizational Unit", [c.orgUnit UTF8String]);
+        printf("        %-20s: %s\n", "Valid From", [[c.validFrom description] UTF8String]);
+        printf("        %-20s: %s\n", "Valid Until", [[c.validUntil description] UTF8String]);
+        printf("");
     }];
   }
 

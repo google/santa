@@ -14,11 +14,6 @@
 
 #import "SNTCommandController.h"
 
-#include <IOKit/kext/KextManager.h>
-
-#import "SNTFileInfo.h"
-#import "SNTKernelCommon.h"
-#import "SNTLogging.h"
 #import "SNTXPCConnection.h"
 #import "SNTXPCControlInterface.h"
 
@@ -46,77 +41,32 @@ REGISTER_COMMAND_NAME(@"status");
 }
 
 + (void)runWithArguments:(NSArray *)arguments daemonConnection:(SNTXPCConnection *)daemonConn {
-
-  // Version information
-  LOGI(@">>> Versions");
-  LOGI(@"%-30s | %@", "santa-driver version", [self kextVersion]);
-  LOGI(@"%-30s | %@", "santad version", [self daemonVersion]);
-  LOGI(@"%-30s | %@",
-       "santactl version",
-       [[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleVersion"]);
-  LOGI(@"%-30s | %@", "SantaGUI version", [self guiVersion]);
-  LOGI(@"");
-
   // Kext status
-  if (daemonConn) {
-    __block uint64_t cacheCount = -1;
-    [[daemonConn remoteObjectProxy] cacheCount:^(uint64_t count) {
-        cacheCount = count;
-    }];
-    do { usleep(5000); } while (cacheCount == -1);
-    LOGI(@">>> Kernel Info");
-    LOGI(@"%-30s | %d", "Kernel cache count", cacheCount);
-    LOGI(@"");
+  __block uint64_t cacheCount = -1;
+  [[daemonConn remoteObjectProxy] cacheCount:^(uint64_t count) {
+      cacheCount = count;
+  }];
+  do { usleep(5000); } while (cacheCount == -1);
+  printf(">>> Kernel Info\n");
+  printf("  %-25s | %lld\n", "Kernel cache count", cacheCount);
 
-    // Database counts
-    __block uint64_t eventCount = 1, binaryRuleCount = -1, certRuleCount = -1;
-    [[daemonConn remoteObjectProxy] databaseRuleCounts:^(uint64_t binary, uint64_t certificate) {
-        binaryRuleCount = binary;
-        certRuleCount = certificate;
-    }];
-    [[daemonConn remoteObjectProxy] databaseEventCount:^(uint64_t count) {
-        eventCount = count;
-    }];
-    do { usleep(5000); } while (eventCount == -1 || binaryRuleCount == -1 || certRuleCount == -1);
-    LOGI(@">>> Database Info");
-    LOGI(@"%-30s | %d", "Binary Rules", binaryRuleCount);
-    LOGI(@"%-30s | %d", "Certificate Rules", certRuleCount);
-    LOGI(@"%-30s | %d", "Events Pending Upload", eventCount);
-    LOGI(@"");
-  } else {
-    LOGI(@">>> santad is not running, cannot provide any more information.");
-  }
+  // Database counts
+  __block uint64_t eventCount = 1, binaryRuleCount = -1, certRuleCount = -1;
+  [[daemonConn remoteObjectProxy] databaseRuleCounts:^(uint64_t binary, uint64_t certificate) {
+      binaryRuleCount = binary;
+      certRuleCount = certificate;
+  }];
+  [[daemonConn remoteObjectProxy] databaseEventCount:^(uint64_t count) {
+      eventCount = count;
+  }];
+  do { usleep(5000); } while (eventCount == -1 || binaryRuleCount == -1 || certRuleCount == -1);
+
+  printf(">>> Database Info\n");
+  printf("  %-25s | %lld\n", "Binary Rules", binaryRuleCount);
+  printf("  %-25s | %lld\n", "Certificate Rules", certRuleCount);
+  printf("  %-25s | %lld\n", "Events Pending Upload", eventCount);
 
   exit(0);
-}
-
-+ (NSString *)kextVersion {
-  NSDictionary *loadedKexts = CFBridgingRelease(
-      KextManagerCopyLoadedKextInfo((__bridge CFArrayRef)@[ @(USERCLIENT_ID) ],
-                                    (__bridge CFArrayRef)@[ @"CFBundleVersion" ]));
-
-  if (loadedKexts[@(USERCLIENT_ID)] && loadedKexts[@(USERCLIENT_ID)][@"CFBundleVersion"]) {
-    return loadedKexts[@(USERCLIENT_ID)][@"CFBundleVersion"];
-  }
-
-  SNTFileInfo *driverInfo =
-      [[SNTFileInfo alloc] initWithPath:@"/Library/Extensions/santa-driver.kext"];
-  if (driverInfo) {
-    return [driverInfo.bundleVersion stringByAppendingString:@" (unloaded)"];
-  }
-
-  return @"not found";
-}
-
-+ (NSString *)daemonVersion {
-  SNTFileInfo *daemonInfo = [[SNTFileInfo alloc] initWithPath:@"/usr/libexec/santad"];
-  return daemonInfo.bundleVersion;
-}
-
-+ (NSString *)guiVersion {
-  SNTFileInfo *guiInfo =
-      [[SNTFileInfo alloc] initWithPath:@"/Applications/Santa.app/Contents/MacOS/Santa"];
-  return guiInfo.bundleVersion;
 }
 
 @end

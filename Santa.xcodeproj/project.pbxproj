@@ -108,6 +108,7 @@
 		0DA73C9F1934F8100056D7C4 /* SNTLogging.m in Sources */ = {isa = PBXBuildFile; fileRef = 0DA73C9E1934F8100056D7C4 /* SNTLogging.m */; };
 		0DA73CA11934F8100056D7C4 /* SNTLogging.m in Sources */ = {isa = PBXBuildFile; fileRef = 0DA73C9E1934F8100056D7C4 /* SNTLogging.m */; };
 		0DA73CA21934F88D0056D7C4 /* SNTLogging.m in Sources */ = {isa = PBXBuildFile; fileRef = 0DA73C9E1934F8100056D7C4 /* SNTLogging.m */; };
+		0DB390991AB1E11400614002 /* SNTCommandVersion.m in Sources */ = {isa = PBXBuildFile; fileRef = 0DB390981AB1E11400614002 /* SNTCommandVersion.m */; };
 		0DB8ACC1185662DC00FEF9C7 /* SNTApplication.m in Sources */ = {isa = PBXBuildFile; fileRef = 0DB8ACC0185662DC00FEF9C7 /* SNTApplication.m */; };
 		0DC5D86D191AED220078A5C0 /* SNTRuleTable.m in Sources */ = {isa = PBXBuildFile; fileRef = 0DC5D86C191AED220078A5C0 /* SNTRuleTable.m */; };
 		0DC5D86E191AED220078A5C0 /* SNTRuleTable.m in Sources */ = {isa = PBXBuildFile; fileRef = 0DC5D86C191AED220078A5C0 /* SNTRuleTable.m */; };
@@ -288,6 +289,7 @@
 		0D9A7F411759330500035EB5 /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; lineEnding = 0; path = main.m; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objc; };
 		0DA73C9E1934F8100056D7C4 /* SNTLogging.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SNTLogging.m; sourceTree = "<group>"; };
 		0DB2B92318085753001C01D9 /* santad-Prefix.pch */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "santad-Prefix.pch"; sourceTree = "<group>"; };
+		0DB390981AB1E11400614002 /* SNTCommandVersion.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = SNTCommandVersion.m; path = version/SNTCommandVersion.m; sourceTree = "<group>"; };
 		0DB8ACBF185662DC00FEF9C7 /* SNTApplication.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SNTApplication.h; sourceTree = "<group>"; };
 		0DB8ACC0185662DC00FEF9C7 /* SNTApplication.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; lineEnding = 0; path = SNTApplication.m; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objc; };
 		0DB8ACE41858D73000FEF9C7 /* santad-Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = "santad-Info.plist"; sourceTree = "<group>"; };
@@ -419,15 +421,16 @@
 		0D35BDA018FD71CE00921A21 /* santactl */ = {
 			isa = PBXGroup;
 			children = (
-				409232751A51914400A04527 /* rule */,
 				0D35BDA118FD71CE00921A21 /* main.m */,
 				0D35BDAA18FD7CFD00921A21 /* SNTCommandController.h */,
 				0D35BDAB18FD7CFD00921A21 /* SNTCommandController.m */,
 				0DCD5FBC1909D4FD006B445C /* binaryinfo */,
 				0DE4C8A318FF3AFA00466D04 /* flushcache */,
+				0D35BDA318FD71CE00921A21 /* Resources */,
+				409232751A51914400A04527 /* rule */,
 				0D827E6819DF4F3F006EC811 /* status */,
 				0D35BDB618FD84FC00921A21 /* sync */,
-				0D35BDA318FD71CE00921A21 /* Resources */,
+				0DB390971AB1E0F200614002 /* version */,
 			);
 			name = santactl;
 			path = Source/santactl;
@@ -659,6 +662,14 @@
 				0DC5D86C191AED220078A5C0 /* SNTRuleTable.m */,
 			);
 			name = DataLayer;
+			sourceTree = "<group>";
+		};
+		0DB390971AB1E0F200614002 /* version */ = {
+			isa = PBXGroup;
+			children = (
+				0DB390981AB1E11400614002 /* SNTCommandVersion.m */,
+			);
+			name = version;
 			sourceTree = "<group>";
 		};
 		0DCD5FBC1909D4FD006B445C /* binaryinfo */ = {
@@ -1107,6 +1118,7 @@
 				0DE50F6E191304E0007B2B0C /* SNTRule.m in Sources */,
 				0D0A1EC3191998C900B8450F /* SNTCommandSyncRuleDownload.m in Sources */,
 				0D35BDC018FDA5C800921A21 /* SNTCertificate.m in Sources */,
+				0DB390991AB1E11400614002 /* SNTCommandVersion.m in Sources */,
 				0D42D2B519D1D98A00955F08 /* SNTSystemInfo.m in Sources */,
 				0D827E6719DF3C74006EC811 /* SNTCommandStatus.m in Sources */,
 				0D0A1EC6191AB9B000B8450F /* SNTCommandSyncPostflight.m in Sources */,

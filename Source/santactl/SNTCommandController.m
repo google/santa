@@ -75,7 +75,7 @@ static NSMutableDictionary *registeredCommands;
   };
 
   daemonConn.invalidationHandler = ^{
-      printf("An error occurred communicating with the daemon\n");
+      printf("An error occurred communicating with the daemon, is it running?\n");
       exit(1);
   };
 
