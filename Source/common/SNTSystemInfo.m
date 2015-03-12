@@ -26,9 +26,9 @@
                                       CFSTR(kIOPlatformSerialNumberKey),
                                       kCFAllocatorDefault,
                                       0));
-  
+
   IOObjectRelease(platformExpert);
-  
+
   return serial;
 }
 
@@ -60,7 +60,9 @@
 }
 
 + (NSString *)longHostname {
-  return [[NSHost currentHost] name];
+  char hostname[MAXHOSTNAMELEN];
+  gethostname(hostname, (int)sizeof(hostname));
+  return @(hostname);
 }
 
 # pragma mark - Internal
