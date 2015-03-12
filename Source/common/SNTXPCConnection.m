@@ -123,6 +123,7 @@
     for (int sleepLoops = 0; sleepLoops < 1000 && !verificationComplete; sleepLoops++) {
       usleep(5000);
     }
+    if (!verificationComplete) [self invalidate];
   }
 }
 
