@@ -64,9 +64,6 @@ static NSMutableDictionary *registeredCommands;
 }
 
 + (SNTXPCConnection *)connectToDaemon {
-  // TODO(rah): Re-factor this so that successfully establishing the connection runs the command,
-  // instead of having to sleep until the connection is made.
-
   SNTXPCConnection *daemonConn =
       [[SNTXPCConnection alloc] initClientWithName:[SNTXPCControlInterface serviceId]
                                            options:NSXPCConnectionPrivileged];
