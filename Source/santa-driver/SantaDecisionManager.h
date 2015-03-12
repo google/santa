@@ -135,11 +135,13 @@ class SantaDecisionManager : public OSObject {
   void DecrementListenerInvocations();
 
  private:
+  lck_grp_t *sdm_lock_grp_;
+  lck_rw_t *cached_decisions_lock_;
+  lck_mtx_t *dataqueue_lock_;
+
   OSDictionary *cached_decisions_;
-  IORWLock *cached_decisions_lock_;
 
   IOSharedDataQueue *dataqueue_;
-  IORWLock *dataqueue_lock_;
 
   SInt32 listener_invocations_;
 

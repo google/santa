@@ -20,8 +20,10 @@ OSDefineMetaClassAndStructors(SantaDecisionManager, OSObject);
 #pragma mark Object Lifecycle
 
 bool SantaDecisionManager::init() {
-  dataqueue_lock_ = IORWLockAlloc();
-  cached_decisions_lock_ = IORWLockAlloc();
+  sdm_lock_grp_ = lck_grp_alloc_init("santa-locks", lck_grp_attr_alloc_init());
+  dataqueue_lock_ = lck_mtx_alloc_init(sdm_lock_grp_, lck_attr_alloc_init());
+  cached_decisions_lock_ = lck_rw_alloc_init(sdm_lock_grp_, lck_attr_alloc_init());
+
   cached_decisions_ = OSDictionary::withCapacity(1000);
 
   return kIOReturnSuccess;
@@ -34,13 +36,18 @@ void SantaDecisionManager::free() {
   }
 
   if (cached_decisions_lock_) {
-    IORWLockFree(cached_decisions_lock_);
+    lck_rw_free(cached_decisions_lock_, sdm_lock_grp_);
     cached_decisions_lock_ = NULL;
   }
 
   if (dataqueue_lock_ ) {
-    IORWLockFree(dataqueue_lock_);
+    lck_mtx_free(dataqueue_lock_, sdm_lock_grp_);
     dataqueue_lock_ = NULL;
+  }
+
+  if (sdm_lock_grp_) {
+    lck_grp_free(sdm_lock_grp_);
+    sdm_lock_grp_ = NULL;
   }
 
   super::free();
@@ -54,7 +61,7 @@ void SantaDecisionManager::ConnectClient(IOSharedDataQueue *queue, pid_t pid) {
 
   // Any decisions made while the daemon wasn't
   // connected should be cleared
-  cached_decisions_->flushCollection();
+  ClearCache();
 
   dataqueue_ = queue;
   dataqueue_->retain();
@@ -120,7 +127,7 @@ kern_return_t SantaDecisionManager::StopListener() {
 
 void SantaDecisionManager::AddToCache(
     const char *identifier, santa_action_t decision, uint64_t microsecs) {
-  IORWLockWrite(cached_decisions_lock_);
+  lck_rw_lock_exclusive(cached_decisions_lock_);
 
   if (cached_decisions_->getCount() > kMaxCacheSize) {
     // This could be made a _lot_ smarter, say only removing entries older
@@ -145,17 +152,18 @@ void SantaDecisionManager::AddToCache(
     }
   }
 
-  IORWLockUnlock(cached_decisions_lock_);
+  lck_rw_unlock_exclusive(cached_decisions_lock_);
 }
 
 void SantaDecisionManager::CacheCheck(const char *identifier) {
-  IORWLockRead(cached_decisions_lock_);
+  lck_rw_lock_shared(cached_decisions_lock_);
   bool shouldInvalidate = (cached_decisions_->getObject(identifier) != NULL);
-  IORWLockUnlock(cached_decisions_lock_);
   if (shouldInvalidate) {
-    IORWLockWrite(cached_decisions_lock_);
+    lck_rw_lock_shared_to_exclusive(cached_decisions_lock_);
     cached_decisions_->removeObject(identifier);
-    IORWLockUnlock(cached_decisions_lock_);
+    lck_rw_unlock_exclusive(cached_decisions_lock_);
+  } else {
+    lck_rw_unlock_shared(cached_decisions_lock_);
   }
 }
 
@@ -164,23 +172,23 @@ uint64_t SantaDecisionManager::CacheCount() {
 }
 
 void SantaDecisionManager::ClearCache() {
-  IORWLockWrite(cached_decisions_lock_);
+  lck_rw_lock_exclusive(cached_decisions_lock_);
   cached_decisions_->flushCollection();
-  IORWLockUnlock(cached_decisions_lock_);
+  lck_rw_unlock_exclusive(cached_decisions_lock_);
 }
 
 santa_action_t SantaDecisionManager::GetFromCache(const char *identifier) {
   santa_action_t result = ACTION_UNSET;
   uint64_t decision_time = 0;
 
-  IORWLockRead(cached_decisions_lock_);
+  lck_rw_lock_shared(cached_decisions_lock_);
   SantaMessage *cached_decision = OSDynamicCast(
       SantaMessage, cached_decisions_->getObject(identifier));
   if (cached_decision) {
     result = cached_decision->getAction();
     decision_time = cached_decision->getMicrosecs();
   }
-  IORWLockUnlock(cached_decisions_lock_);
+  lck_rw_unlock_shared(cached_decisions_lock_);
 
   if (CHECKBW_RESPONSE_VALID(result)) {
     uint64_t diff_time = GetCurrentUptime();
@@ -200,9 +208,9 @@ santa_action_t SantaDecisionManager::GetFromCache(const char *identifier) {
     }
 
     if (decision_time < diff_time) {
-      IORWLockWrite(cached_decisions_lock_);
+      lck_rw_lock_exclusive(cached_decisions_lock_);
       cached_decisions_->removeObject(identifier);
-      IORWLockUnlock(cached_decisions_lock_);
+      lck_rw_unlock_exclusive(cached_decisions_lock_);
       return ACTION_UNSET;
     }
   }
@@ -213,12 +221,12 @@ santa_action_t SantaDecisionManager::GetFromCache(const char *identifier) {
 # pragma mark Queue Management
 
 bool SantaDecisionManager::PostToQueue(santa_message_t message) {
-  IORWLockWrite(dataqueue_lock_);
+  lck_mtx_lock(dataqueue_lock_);
   bool kr = false;
   if (dataqueue_) {
     kr = dataqueue_->enqueue(&message, sizeof(message));
   }
-  IORWLockUnlock(dataqueue_lock_);
+  lck_mtx_unlock(dataqueue_lock_);
   return kr;
 }
 
