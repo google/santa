@@ -45,7 +45,7 @@
 ///
 ///  If set, this over-rides the default machine ID used for syncing
 ///
-@property(readonly) NSString *machineIDOverride;
+@property(readonly) NSString *machineID;
 
 # pragma mark Server Auth Settings
 

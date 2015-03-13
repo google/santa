@@ -122,7 +122,7 @@ REGISTER_COMMAND_NAME(@"sync");
   }
   authURLSession.serverHostname = s.progress.syncBaseURL.host;
 
-  s.progress.machineID = config.machineIDOverride;
+  s.progress.machineID = config.machineID;
   if (!s.progress.machineID || [s.progress.machineID isEqual:@""]) {
     s.progress.machineID = [SNTSystemInfo hardwareUUID];
   }

@@ -112,7 +112,7 @@ static NSString * const kMachineIDPlistKeyKey = @"MachineIDKey";
   return @"";
 }
 
-- (NSString *)machineIDOverride {
+- (NSString *)machineID {
   if (self.configData[kMachineIDPlistFileKey] && self.configData[kMachineIDPlistKeyKey]) {
     NSDictionary *plist =
         [NSDictionary dictionaryWithContentsOfFile:self.configData[kMachineIDPlistFileKey]];
