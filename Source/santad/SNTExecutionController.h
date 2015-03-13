@@ -38,11 +38,13 @@
 @property SNTEventTable *eventTable;
 @property SNTXPCConnection *notifierConnection;
 @property santa_clientmode_t operatingMode;
+@property BOOL logAllEvents;
 
 - (instancetype)initWithDriverManager:(SNTDriverManager *)driverManager
                             ruleTable:(SNTRuleTable *)ruleTable
                            eventTable:(SNTEventTable *)eventTable
                         operatingMode:(santa_clientmode_t)operating_mode
+                         logAllEvents:(BOOL)logAllEvents
                    notifierConnection:(SNTXPCConnection *)notifierConn;
 
 ///

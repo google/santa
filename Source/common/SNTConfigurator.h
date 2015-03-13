@@ -25,6 +25,11 @@
 ///
 @property santa_clientmode_t clientMode;
 
+///
+///  Whether or not to log all events, even for whitelisted binaries.
+///
+@property BOOL logAllEvents;
+
 # pragma mark - Sync Settings
 
 ///

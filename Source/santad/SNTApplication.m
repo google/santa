@@ -85,6 +85,7 @@
     // Get client mode and begin observing for updates
     SNTConfigurator *configurator = [SNTConfigurator configurator];
     santa_clientmode_t clientMode = [configurator clientMode];
+    BOOL logAllEvents = [configurator logAllEvents];
     [configurator addObserver:self
                    forKeyPath:@"clientMode"
                       options:NSKeyValueObservingOptionNew
@@ -95,6 +96,7 @@
                                                                   ruleTable:_ruleTable
                                                                  eventTable:_eventTable
                                                               operatingMode:clientMode
+                                                               logAllEvents:logAllEvents
                                                          notifierConnection:_notifierConnection];
     if (!_execController) return nil;
   }

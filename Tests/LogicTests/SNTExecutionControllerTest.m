@@ -56,6 +56,7 @@
                                                          ruleTable:self.mockRuleDatabase
                                                         eventTable:self.mockEventDatabase
                                                      operatingMode:CLIENTMODE_MONITOR
+                                                      logAllEvents:NO
                                                 notifierConnection:nil];
 }
 
@@ -72,6 +73,10 @@
 - (void)testBinaryWhitelistRule {
   id mockSut = OCMPartialMock(self.sut);
   OCMStub([mockSut fileIsInScope:OCMOCK_ANY]).andReturn(YES);
+
+  [[[self.mockFileInfo stub] andReturn:self.mockFileInfo] alloc];
+  (void)[[[self.mockFileInfo stub] andReturn:self.mockFileInfo] initWithPath:[OCMArg any]];
+  [[[self.mockFileInfo stub] andReturn:@"a"] SHA256];
 
   SNTRule *rule = [[SNTRule alloc] init];
   rule.state = RULESTATE_WHITELIST;

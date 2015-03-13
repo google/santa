@@ -38,6 +38,7 @@
                             ruleTable:(SNTRuleTable *)ruleTable
                            eventTable:(SNTEventTable *)eventTable
                         operatingMode:(santa_clientmode_t)operatingMode
+                         logAllEvents:(BOOL)logAllEvents
                    notifierConnection:(SNTXPCConnection *)notifier {
   self = [super init];
   if (self) {
@@ -45,6 +46,7 @@
     _ruleTable = ruleTable;
     _eventTable = eventTable;
     _operatingMode = operatingMode;
+    _logAllEvents = logAllEvents;
     _notifierConnection = notifier;
     LOGI(@"Log format: Decision (A|D), Reason (B|C|S|?), SHA-256, Path, Cert SHA-256, Cert CN");
 
@@ -52,6 +54,10 @@
     // This establishes the XPC connection between libsecurity and syspolicyd.
     // Not doing this causes a deadlock as establishing this link goes through xpcproxy.
     (void)[[SNTCodesignChecker alloc] initWithSelf];
+
+    if (_logAllEvents) {
+      LOGI(@"Saving events for ALL executions due to configuration");
+    }
   }
   return self;
 }
@@ -102,7 +108,7 @@
   }
 
   // Step 5 - log to database and potentially alert user
-  if (respondedAction == ACTION_RESPOND_CHECKBW_DENY || !rule) {
+  if (respondedAction == ACTION_RESPOND_CHECKBW_DENY || !rule || self.logAllEvents) {
     SNTStoredEvent *se = [[SNTStoredEvent alloc] init];
     se.fileSHA256 = sha256;
     se.filePath = path;

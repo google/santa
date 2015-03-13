@@ -27,6 +27,10 @@
 static NSString * const kConfigFilePath = @"/var/db/santa/config.plist";
 
 /// The keys in the config file
+static NSString * const kClientModeKey = @"ClientMode";
+
+static NSString * const kLogAllEventsKey = @"LogAllEvents";
+
 static NSString * const kSyncBaseURLKey = @"SyncBaseURL";
 static NSString * const kClientAuthCertificateFileKey = @"ClientAuthCertificateFile";
 static NSString * const kClientAuthCertificatePasswordKey = @"ClientAuthCertificatePassword";
@@ -34,7 +38,6 @@ static NSString * const kClientAuthCertificateCNKey = @"ClientAuthCertificateCN"
 static NSString * const kClientAuthCertificateIssuerKey = @"ClientAuthCertificateIssuerCN";
 static NSString * const kServerAuthRootsDataKey = @"ServerAuthRootsData";
 static NSString * const kServerAuthRootsFileKey = @"ServerAuthRootsFile";
-static NSString * const kClientModeKey = @"ClientMode";
 
 static NSString * const kMachineOwnerKey = @"MachineOwner";
 static NSString * const kMachineIDKey = @"MachineID";
@@ -139,6 +142,16 @@ static NSString * const kMachineIDPlistKeyKey = @"MachineIDKey";
     self.configData[kClientModeKey] = @(newMode);
     [self saveConfigToDisk];
   }
+}
+
+- (BOOL)logAllEvents {
+  return [self.configData[kLogAllEventsKey] boolValue];
+}
+
+- (void)setLogAllEvents:(BOOL)logAllEvents {
+  [self reloadConfigData];
+  self.configData[kLogAllEventsKey] = @(logAllEvents);
+  [self saveConfigToDisk];
 }
 
 #pragma mark Private
