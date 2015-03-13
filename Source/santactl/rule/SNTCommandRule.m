@@ -61,12 +61,12 @@ REGISTER_COMMAND_NAME(@"rule");
   
   // Ensure we have no privileges
   if (!DropRootPrivileges()) {
-    LOGE(@"Failed to drop root privileges. Exiting.");
+    printf("Failed to drop root privileges.");
     exit(1);
   }
   
   if ([config syncBaseURL] != nil) {
-    LOGE(@"SyncBaseURL is set, rules are managed centrally");
+    printf("SyncBaseURL is set, rules are managed centrally.");
     exit(1);
   }
   
@@ -74,7 +74,7 @@ REGISTER_COMMAND_NAME(@"rule");
   
   // add or remove
   if (!action) {
-    LOGI(@"Missing action");
+    printf("Missing action - add or remove?");
     exit(1);
   }
 
@@ -84,7 +84,7 @@ REGISTER_COMMAND_NAME(@"rule");
   } else if ([action compare:@"remove" options:NSCaseInsensitiveSearch] == NSOrderedSame) {
     state = RULESTATE_REMOVE;
   } else {
-    LOGI(@"Unknown action, expected add or remove");
+    printf("Unknown action, expected add or remove.");
     exit(1);
   }
   
@@ -104,44 +104,44 @@ REGISTER_COMMAND_NAME(@"rule");
       state = RULESTATE_SILENT_BLACKLIST;
     } else if ([argument compare:@"--message" options:NSCaseInsensitiveSearch] == NSOrderedSame) {
       if (++i > ([arguments count])) {
-        LOGI(@"No message specified");
+        printf("No message specified.");
       }
       
       customMsg = [arguments objectAtIndex:i];
     } else if ([argument compare:@"--path" options:NSCaseInsensitiveSearch] == NSOrderedSame) {
       if (++i > ([arguments count])) {
-        LOGI(@"No path specified");
+        printf("No path specified.");
       }
       
       filePath = [arguments objectAtIndex:i];
     } else if ([argument compare:@"--sha256" options:NSCaseInsensitiveSearch] == NSOrderedSame) {
       if (++i > ([arguments count])) {
-        LOGI(@"No SHA-256 specified");
+        printf("No SHA-256 specified.");
       }
       
       SHA256 = [arguments objectAtIndex:i];
     } else {
-      LOGI(@"Unknown argument %@", argument);
+      printf("Unknown argument %s.", [argument UTF8String]);
       exit(1);
     }
   }
   
   if (state == RULESTATE_UNKNOWN) {
-    LOGI(@"No state specified");
+    printf("No state specified.");
     exit(1);
   }
   
   if (filePath) {
     SNTFileInfo *fileInfo = [[SNTFileInfo alloc] initWithPath:filePath];
     if (!fileInfo) {
-      LOGI(@"Not a regular file or executable bundle");
+      printf("Not a regular file or executable bundle.");
       exit(1);
     }
 
     SHA256 = [fileInfo SHA256];
   } else if (SHA256) {
   } else {
-    LOGI(@"No SHA-256 or binary specified");
+    printf("No SHA-256 or binary specified.");
     exit(1);
   }
   
@@ -153,9 +153,9 @@ REGISTER_COMMAND_NAME(@"rule");
   
   [[daemonConn remoteObjectProxy] databaseRuleAddRule:newRule withReply:^{
     if (state == RULESTATE_REMOVE) {
-      LOGI(@"Removed rule for SHA-256: %@", [newRule shasum]);
+      printf("Removed rule for SHA-256: %s.", [newRule.shasum UTF8String]);
     } else {
-      LOGI(@"Added rule for SHA-256: %@", [newRule shasum]);
+      printf("Added rule for SHA-256: %s.", [newRule.shasum UTF8String]);
     }
     exit(0);
   }];

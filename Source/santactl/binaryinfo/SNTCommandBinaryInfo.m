@@ -59,39 +59,38 @@ REGISTER_COMMAND_NAME(@"binaryinfo");
     exit(1);
   }
 
-  printf("Info for file: %s\n", [[fileInfo path] UTF8String]);
-  printf("-----------------------------------------------------------");
-  printf("%-20s: %s\n", "SHA-1", [[fileInfo SHA1] UTF8String]);
-  printf("%-20s: %s\n", "SHA-256", [[fileInfo SHA256] UTF8String]);
+  printf("%-12s: %s\n", "Path", [[fileInfo path] UTF8String]);
+  printf("%-12s: %s\n", "SHA-256", [[fileInfo SHA256] UTF8String]);
+  printf("%-12s: %s\n", "SHA-1", [[fileInfo SHA1] UTF8String]);
 
   NSArray *archs = [fileInfo architectures];
   if (archs) {
-    printf("%-20s: %s (%s)\n", "Type",
+    printf("%-12s: %s (%s)\n", "Type",
            [[fileInfo machoType] UTF8String],
            [[archs componentsJoinedByString:@", "] UTF8String]);
   } else {
-    printf("%-20s: %s\n", "Type", [[fileInfo machoType] UTF8String]);
+    printf("%-12s: %s\n", "Type", [[fileInfo machoType] UTF8String]);
   }
 
   SNTCodesignChecker *csc = [[SNTCodesignChecker alloc] initWithBinaryPath:filePath];
 
-  printf("%-20s: %s\n", "Code-signed", (csc) ? "Yes" : "No");
+  printf("%-12s: %s\n", "Code-signed", (csc) ? "Yes" : "No");
 
   if (csc) {
-    printf("Signing chain\n");
+    printf("Signing chain:\n");
 
     [csc.certificates enumerateObjectsUsingBlock:^(SNTCertificate *c,
                                                    unsigned long idx,
                                                    BOOL *stop) {
         idx++;  // index from 1
-        printf("    %2lu. %-20s: %s\n", idx, "SHA-1", [c.SHA1 UTF8String]);
-        printf("        %-20s: %s\n", "SHA-256", [c.SHA256 UTF8String]);
+        printf("    %2lu. %-20s: %s\n", idx, "SHA-256", [c.SHA256 UTF8String]);
+        printf("        %-20s: %s\n", "SHA-1", [c.SHA1 UTF8String]);
         printf("        %-20s: %s\n", "Common Name", [c.commonName UTF8String]);
         printf("        %-20s: %s\n", "Organization", [c.orgName UTF8String]);
         printf("        %-20s: %s\n", "Organizational Unit", [c.orgUnit UTF8String]);
         printf("        %-20s: %s\n", "Valid From", [[c.validFrom description] UTF8String]);
         printf("        %-20s: %s\n", "Valid Until", [[c.validUntil description] UTF8String]);
-        printf("");
+        printf("\n");
     }];
   }
 
