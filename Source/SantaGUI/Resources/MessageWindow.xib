@@ -70,24 +70,6 @@
                             <binding destination="-2" name="value" keyPath="self.event.fileSHA256" id="SzX-Ep-rBa"/>
                         </connections>
                     </textField>
-                    <button toolTip="Show code signing certificate chain" translatesAutoresizingMaskIntoConstraints="NO" id="cJf-k6-OxS" userLabel="Publisher Certs">
-                        <rect key="frame" x="490" y="143" width="10" height="15"/>
-                        <constraints>
-                            <constraint firstAttribute="width" constant="10" id="QTm-Iv-m5p"/>
-                        </constraints>
-                        <buttonCell key="cell" type="bevel" bezelStyle="regularSquare" image="NSFollowLinkFreestandingTemplate" imagePosition="overlaps" alignment="center" refusesFirstResponder="YES" imageScaling="proportionallyDown" inset="2" id="R72-Qy-Xbb">
-                            <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
-                            <font key="font" metaFont="system"/>
-                        </buttonCell>
-                        <connections>
-                            <action selector="showCertInfo:" target="-2" id="dB0-a3-X31"/>
-                            <binding destination="-2" name="hidden" keyPath="self.publisherInfo" id="fFR-f3-Oiw">
-                                <dictionary key="options">
-                                    <string key="NSValueTransformerName">NSIsNil</string>
-                                </dictionary>
-                            </binding>
-                        </connections>
-                    </button>
                     <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="BbV-3h-mmL">
                         <rect key="frame" x="220" y="33" width="110" height="25"/>
                         <constraints>
@@ -106,9 +88,12 @@ DQ
                             <action selector="closeWindow:" target="-2" id="qQq-gh-8lw"/>
                         </connections>
                     </button>
-                    <textField horizontalCompressionResistancePriority="250" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="C3G-wL-u7w">
+                    <textField horizontalCompressionResistancePriority="250" verticalCompressionResistancePriority="1000" setsMaxLayoutWidthAtFirstLayout="YES" translatesAutoresizingMaskIntoConstraints="NO" id="C3G-wL-u7w">
                         <rect key="frame" x="175" y="142" width="309" height="17"/>
-                        <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" allowsUndo="NO" sendsActionOnEndEditing="YES" title="Code signing information" placeholderString="" id="ztA-La-XgT">
+                        <constraints>
+                            <constraint firstAttribute="width" constant="305" id="Dem-wH-KHm"/>
+                        </constraints>
+                        <textFieldCell key="cell" selectable="YES" allowsUndo="NO" sendsActionOnEndEditing="YES" title="Code signing information" placeholderString="" id="ztA-La-XgT">
                             <font key="font" metaFont="system"/>
                             <color key="textColor" white="0.0" alpha="0.5" colorSpace="deviceWhite"/>
                             <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
@@ -176,6 +161,25 @@ DQ
                         <color key="fillColor" white="0.0" alpha="0.0" colorSpace="calibratedWhite"/>
                         <font key="titleFont" metaFont="system"/>
                     </box>
+                    <button toolTip="Show code signing certificate chain" translatesAutoresizingMaskIntoConstraints="NO" id="cJf-k6-OxS" userLabel="Publisher Certs">
+                        <rect key="frame" x="51" y="143" width="14" height="14"/>
+                        <constraints>
+                            <constraint firstAttribute="width" constant="14" id="QTm-Iv-m5p"/>
+                            <constraint firstAttribute="height" constant="14" id="YwG-0s-jop"/>
+                        </constraints>
+                        <buttonCell key="cell" type="bevel" bezelStyle="regularSquare" image="NSInfo" imagePosition="overlaps" alignment="center" refusesFirstResponder="YES" imageScaling="proportionallyDown" inset="2" id="R72-Qy-Xbb">
+                            <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
+                            <font key="font" metaFont="system"/>
+                        </buttonCell>
+                        <connections>
+                            <action selector="showCertInfo:" target="-2" id="dB0-a3-X31"/>
+                            <binding destination="-2" name="hidden" keyPath="self.publisherInfo" id="fFR-f3-Oiw">
+                                <dictionary key="options">
+                                    <string key="NSValueTransformerName">NSIsNil</string>
+                                </dictionary>
+                            </binding>
+                        </connections>
+                    </button>
                 </subviews>
                 <constraints>
                     <constraint firstItem="h6f-PY-cc0" firstAttribute="bottom" secondItem="4Li-ul-zIi" secondAttribute="bottom" id="1Nc-gl-xMe"/>
@@ -183,12 +187,13 @@ DQ
                     <constraint firstItem="C3G-wL-u7w" firstAttribute="leading" secondItem="4Li-ul-zIi" secondAttribute="trailing" constant="20" id="ALv-0v-szi"/>
                     <constraint firstItem="cJf-k6-OxS" firstAttribute="centerY" secondItem="C3G-wL-u7w" secondAttribute="centerY" id="FdL-ZZ-Vbe"/>
                     <constraint firstItem="t8c-Fx-e5h" firstAttribute="top" secondItem="Iwq-Lx-rLv" secondAttribute="top" constant="30" id="FuB-GX-0jg"/>
+                    <constraint firstItem="lvJ-Rk-UT5" firstAttribute="leading" secondItem="cJf-k6-OxS" secondAttribute="trailing" constant="-45" id="GD2-Ka-deo"/>
                     <constraint firstItem="h6f-PY-cc0" firstAttribute="centerY" secondItem="oFj-ol-xpL" secondAttribute="centerY" id="GXI-pT-FM1"/>
                     <constraint firstItem="oFj-ol-xpL" firstAttribute="leading" secondItem="Iwq-Lx-rLv" secondAttribute="leading" constant="20" id="IwX-ja-ZIs"/>
-                    <constraint firstItem="pc8-G9-4pJ" firstAttribute="centerY" secondItem="d9e-Wv-Y5H" secondAttribute="centerY" id="JeD-9X-ULA"/>
                     <constraint firstItem="oFj-ol-xpL" firstAttribute="leading" secondItem="d9e-Wv-Y5H" secondAttribute="leading" priority="999" id="MVr-jY-GDj"/>
                     <constraint firstItem="pc8-G9-4pJ" firstAttribute="top" secondItem="cD5-Su-lXR" secondAttribute="bottom" constant="30" id="Nsl-zf-poH"/>
                     <constraint firstItem="pc8-G9-4pJ" firstAttribute="leading" secondItem="4Li-ul-zIi" secondAttribute="trailing" constant="20" id="SCl-Ky-VmT"/>
+                    <constraint firstItem="4Li-ul-zIi" firstAttribute="leading" secondItem="KEB-eH-x2Y" secondAttribute="trailing" constant="20" id="Seb-c0-MUL"/>
                     <constraint firstAttribute="centerX" secondItem="cD5-Su-lXR" secondAttribute="centerX" id="V0a-Py-iEc"/>
                     <constraint firstItem="oFj-ol-xpL" firstAttribute="leading" secondItem="lvJ-Rk-UT5" secondAttribute="leading" priority="999" id="Z6G-l9-G4a"/>
                     <constraint firstAttribute="centerX" secondItem="BbV-3h-mmL" secondAttribute="centerX" id="acs-5J-vQY"/>
@@ -200,14 +205,16 @@ DQ
                     <constraint firstAttribute="centerX" secondItem="t8c-Fx-e5h" secondAttribute="centerX" constant="-0.5" id="h3d-Kc-q88"/>
                     <constraint firstItem="C3G-wL-u7w" firstAttribute="centerY" secondItem="lvJ-Rk-UT5" secondAttribute="centerY" id="jfs-YI-7Ae"/>
                     <constraint firstItem="lvJ-Rk-UT5" firstAttribute="trailing" secondItem="KEB-eH-x2Y" secondAttribute="trailing" id="jlD-Lo-abc"/>
+                    <constraint firstItem="4Li-ul-zIi" firstAttribute="leading" secondItem="oFj-ol-xpL" secondAttribute="trailing" constant="20" id="kOG-Cj-hFG"/>
                     <constraint firstItem="oFj-ol-xpL" firstAttribute="trailing" secondItem="lvJ-Rk-UT5" secondAttribute="trailing" id="lse-kg-lA2"/>
                     <constraint firstItem="d9e-Wv-Y5H" firstAttribute="trailing" secondItem="KEB-eH-x2Y" secondAttribute="trailing" id="pdq-a6-Y73"/>
                     <constraint firstItem="4Li-ul-zIi" firstAttribute="leading" secondItem="lvJ-Rk-UT5" secondAttribute="trailing" constant="20" id="qKi-KT-jzJ"/>
                     <constraint firstItem="PXc-xv-A28" firstAttribute="bottom" secondItem="h6f-PY-cc0" secondAttribute="top" constant="-8" id="sG1-gQ-Qoo"/>
                     <constraint firstItem="C3G-wL-u7w" firstAttribute="bottom" secondItem="PXc-xv-A28" secondAttribute="top" constant="-8" id="snd-8T-LjC"/>
+                    <constraint firstItem="4Li-ul-zIi" firstAttribute="leading" secondItem="d9e-Wv-Y5H" secondAttribute="trailing" constant="20" id="stz-Vm-Kxo"/>
                     <constraint firstItem="PXc-xv-A28" firstAttribute="leading" secondItem="4Li-ul-zIi" secondAttribute="trailing" constant="20" id="tAa-1s-xVZ"/>
                     <constraint firstAttribute="bottom" secondItem="BbV-3h-mmL" secondAttribute="bottom" constant="35" id="ukF-FH-DE8"/>
-                    <constraint firstItem="cJf-k6-OxS" firstAttribute="leading" secondItem="C3G-wL-u7w" secondAttribute="trailing" constant="8" id="wsf-ru-MoA"/>
+                    <constraint firstItem="d9e-Wv-Y5H" firstAttribute="baseline" secondItem="pc8-G9-4pJ" secondAttribute="baseline" id="xGd-Xr-3Z0"/>
                     <constraint firstItem="pc8-G9-4pJ" firstAttribute="bottom" secondItem="C3G-wL-u7w" secondAttribute="top" constant="-8" id="zst-nc-VqA"/>
                 </constraints>
             </view>
@@ -215,6 +222,6 @@ DQ
         </window>
     </objects>
     <resources>
-        <image name="NSFollowLinkFreestandingTemplate" width="14" height="14"/>
+        <image name="NSInfo" width="32" height="32"/>
     </resources>
 </document>
