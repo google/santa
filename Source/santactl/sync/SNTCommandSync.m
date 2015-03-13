@@ -47,11 +47,11 @@ REGISTER_COMMAND_NAME(@"sync");
 }
 
 + (NSString *)shortHelpText {
-  return @"Synchronizes Santa with the server";
+  return @"Synchronizes Santa with the server.";
 }
 
 + (NSString *)longHelpText {
-  return @"";
+  return nil;
 }
 
 + (void)runWithArguments:(NSArray *)arguments daemonConnection:(SNTXPCConnection *)daemonConn {

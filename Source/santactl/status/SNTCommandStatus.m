@@ -33,11 +33,11 @@ REGISTER_COMMAND_NAME(@"status");
 }
 
 + (NSString *)shortHelpText {
-  return @"Get status about Santa";
+  return @"Show Santa status information.";
 }
 
 + (NSString *)longHelpText {
-  return @"Returns status information about Santa.";
+  return nil;
 }
 
 + (void)runWithArguments:(NSArray *)arguments daemonConnection:(SNTXPCConnection *)daemonConn {

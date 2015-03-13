@@ -426,11 +426,11 @@
 				0D35BDAB18FD7CFD00921A21 /* SNTCommandController.m */,
 				0DCD5FBC1909D4FD006B445C /* binaryinfo */,
 				0DE4C8A318FF3AFA00466D04 /* flushcache */,
-				0D35BDA318FD71CE00921A21 /* Resources */,
 				409232751A51914400A04527 /* rule */,
 				0D827E6819DF4F3F006EC811 /* status */,
 				0D35BDB618FD84FC00921A21 /* sync */,
 				0DB390971AB1E0F200614002 /* version */,
+				0D35BDA318FD71CE00921A21 /* Resources */,
 			);
 			name = santactl;
 			path = Source/santactl;

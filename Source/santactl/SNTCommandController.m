@@ -55,10 +55,12 @@ static NSMutableDictionary *registeredCommands;
 + (NSString *)helpForCommandWithName:(NSString *)commandName {
   Class<SNTCommand> command = registeredCommands[commandName];
   if (command) {
-    NSMutableString *helpText = [[NSMutableString alloc] init];
-    [helpText appendFormat:@"Help for '%@':\n", commandName];
-    [helpText appendString:[command longHelpText]];
-    return helpText;
+    NSString *longHelp = [command longHelpText];
+    if (longHelp) {
+      return [NSString stringWithFormat:@"Help for '%@':\n%@", commandName, longHelp];
+    } else {
+      return @"This command does not have any help information.";
+    }
   }
   return nil;
 }

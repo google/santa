@@ -36,11 +36,11 @@ REGISTER_COMMAND_NAME(@"version");
 }
 
 + (NSString *)shortHelpText {
-  return @"Show Santa component versions";
+  return @"Show Santa component versions.";
 }
 
 + (NSString *)longHelpText {
-  return @"Show Santa component versions";
+  return nil;
 }
 
 + (void)runWithArguments:(NSArray *)arguments daemonConnection:(SNTXPCConnection *)daemonConn {

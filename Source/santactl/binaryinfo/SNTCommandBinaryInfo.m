@@ -36,12 +36,13 @@ REGISTER_COMMAND_NAME(@"binaryinfo");
 }
 
 + (NSString *)shortHelpText {
-  return @"Prints information about the given binary.";
+  return @"Prints information about a binary.";
 }
 
 + (NSString *)longHelpText {
-  return (@"The details provided will be the same ones Santa uses to make a decision about binaries"
-          @"This includes SHA-1, SHA-256, code signing information and the type of binary");
+  return (@"The details provided will be the same ones Santa uses to make a decision\n"
+          @"about binaries. This includes SHA-256, SHA-1, code signing information and\n"
+          @"the type of binary.");
 }
 
 + (void)runWithArguments:(NSArray *)arguments daemonConnection:(SNTXPCConnection *)daemonConn {

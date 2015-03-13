@@ -34,12 +34,12 @@ REGISTER_COMMAND_NAME(@"flushcache");
 }
 
 + (NSString *)shortHelpText {
-  return @"Flush the kernel cache";
+  return @"Flush the kernel cache.";
 }
 
 + (NSString *)longHelpText {
-  return @"Flushes the in-kernel cache of whitelisted binaries.\n\n"
-         @"Returns 0 if successful, 1 otherwise";
+  return (@"Flushes the in-kernel cache of whitelisted binaries.\n"
+          @"Returns 0 if successful, 1 otherwise");
 }
 
 + (void)runWithArguments:(NSArray *)arguments daemonConnection:(SNTXPCConnection *)daemonConn {

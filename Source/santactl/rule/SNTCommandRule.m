@@ -43,18 +43,17 @@ REGISTER_COMMAND_NAME(@"rule");
 }
 
 + (NSString *)shortHelpText {
-  return @"Adds a rule for the given binary or hash.";
+  return @"Manually add/remove rules.";
 }
 
 + (NSString *)longHelpText {
-  return (@"santactl rule {add|remove}\n"
-          @"--whitelist: add to whitelist\n"
-          @"--blacklist: add to blacklist\n"
-          @"--silent-blacklist: add to silent blacklist\n"
-          @"--message {message}: custom message\n"
-          @"--path {path}: path of binary to add\n"
-          @"--sha256 {sha256}: hash to add\n"
-          );
+  return (@"Usage: santactl rule {add|remove} [options]\n"
+          @"  --whitelist: add to whitelist\n"
+          @"  --blacklist: add to blacklist\n"
+          @"  --silent-blacklist: add to silent blacklist\n"
+          @"  --message {message}: custom message\n"
+          @"  --path {path}: path of binary to add\n"
+          @"  --sha256 {sha256}: hash to add\n");
 }
 
 + (void)runWithArguments:(NSArray *)arguments daemonConnection:(SNTXPCConnection *)daemonConn {
