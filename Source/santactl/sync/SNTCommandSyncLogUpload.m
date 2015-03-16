@@ -14,11 +14,12 @@
 
 #import "SNTCommandSyncLogUpload.h"
 
+#import "NSData+Zlib.h"
+
 #include "SNTCommonEnums.h"
 #include "SNTLogging.h"
 
 #import "SNTCommandSyncStatus.h"
-
 
 @implementation SNTCommandSyncLogUpload
 
@@ -29,12 +30,47 @@
   NSURL *url = progress.uploadLogURL;
   NSMutableURLRequest *req = [[NSMutableURLRequest alloc] initWithURL:url];
   [req setHTTPMethod:@"POST"];
-  NSString *boundary = @"santa-sync-upload-boundary";
+  NSString *boundary = @"----santa-sync-upload-boundary";
 
   NSString *contentType =
       [NSString stringWithFormat:@"multipart/form-data; charset=UTF-8; boundary=%@", boundary];
   [req setValue:contentType forHTTPHeaderField:@"Content-Type"];
 
+  // Prepare the body of the request, encoded as a multipart/form-data.
+  // Along the way, gzip the individual log files and append .gz to their filenames.
+  NSMutableData *reqBody = [[NSMutableData alloc] init];
+  NSArray *logsToUpload = [SNTCommandSyncLogUpload logsToUpload];
+  for (NSString *log in logsToUpload) {
+    [reqBody appendData:
+        [[NSString stringWithFormat:@"--%@\r\n", boundary] dataUsingEncoding:NSUTF8StringEncoding]];
+    [reqBody appendData:
+        [[NSString stringWithFormat:@"Content-Disposition: form-data; "
+            @"name=\"files\"; "
+            @"filename=\"%@.gz\"\r\n", [log lastPathComponent]]
+         dataUsingEncoding:NSUTF8StringEncoding]];
+    [reqBody appendData:
+        [@"Content-Type: application/x-gzip\r\n\r\n" dataUsingEncoding:NSUTF8StringEncoding]];
+    [reqBody appendData:[[NSData dataWithContentsOfFile:log] gzipCompressed]];
+    [reqBody appendData:[@"\r\n" dataUsingEncoding:NSUTF8StringEncoding]];
+  }
+  [reqBody appendData:
+     [[NSString stringWithFormat:@"--%@--\r\n", boundary] dataUsingEncoding:NSUTF8StringEncoding]];
+
+  // Upload the logs
+  [[session uploadTaskWithRequest:req
+                         fromData:reqBody
+                completionHandler:^(NSData *data, NSURLResponse *response, NSError *error) {
+      if ([(NSHTTPURLResponse *)response statusCode] != 200) {
+        LOGD(@"HTTP Response Code: %d", [(NSHTTPURLResponse *)response statusCode]);
+        handler(NO);
+      } else {
+        LOGI(@"Uploaded %d logs", [logsToUpload count]);
+        handler(YES);
+      }
+  }] resume];
+}
+
++ (NSArray *)logsToUpload {
   // General logs
   NSMutableArray *logsToUpload = [@[ @"/var/log/santa.log",
                                      @"/var/log/system.log" ] mutableCopy];
@@ -51,38 +87,7 @@
     }
   }
 
-  // Prepare the body of the request, encoded as a multipart/form-data.
-  // Along the way, gzip the individual log files (they'll be stored in blobstore gzipped, which is
-  // what we want) and append .gz to their filenames.
-  NSMutableData *reqBody = [[NSMutableData alloc] init];
-  for (NSString *log in logsToUpload) {
-    [reqBody appendData:
-        [[NSString stringWithFormat:@"--%@\r\n", boundary] dataUsingEncoding:NSUTF8StringEncoding]];
-    [reqBody appendData:
-        [[NSString stringWithFormat:@"Content-Disposition: multipart/form-data; "
-            @"name=\"files\"; "
-            @"filename=\"%@.gz\"\r\n", [log lastPathComponent]]
-         dataUsingEncoding:NSUTF8StringEncoding]];
-    [reqBody appendData:
-        [@"Content-Type: application/x-gzip\r\n\r\n" dataUsingEncoding:NSUTF8StringEncoding]];
-    [reqBody appendData:[NSData dataWithContentsOfFile:log]];
-    [reqBody appendData:[@"\r\n" dataUsingEncoding:NSUTF8StringEncoding]];
-  }
-  [reqBody appendData:
-     [[NSString stringWithFormat:@"--%@--\r\n", boundary] dataUsingEncoding:NSUTF8StringEncoding]];
-
-  // Upload the logs
-  [[session uploadTaskWithRequest:req
-                         fromData:reqBody
-                completionHandler:^(NSData *data, NSURLResponse *response, NSError *error) {
-                    if ([(NSHTTPURLResponse *)response statusCode] != 200) {
-                      LOGD(@"HTTP Response Code: %d", [(NSHTTPURLResponse *)response statusCode]);
-                      handler(NO);
-                    } else {
-                      LOGI(@"Uploaded %d logs", [logsToUpload count]);
-                      handler(YES);
-                    }
-                }] resume];
+  return logsToUpload;
 }
 
 @end
