@@ -178,7 +178,7 @@ end
 
 task :unload_kext do
   puts "Unloading kernel extension"
-  system "sudo kextunload /santa-driver.kext 2>/dev/null"
+  system "sudo kextunload -b com.google.santa-driver 2>/dev/null"
 end
 
 task :unload_gui do
