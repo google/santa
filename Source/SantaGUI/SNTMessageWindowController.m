@@ -27,7 +27,7 @@
   self = [super initWithWindowNibName:@"MessageWindow"];
   if (self) {
     _event = event;
-    _customMessage = message;
+    _customMessage = (message != (NSString *)[NSNull null] ? message : nil);
     [self.window setMovableByWindowBackground:NO];
     [self.window setLevel:NSPopUpMenuWindowLevel];
     [self.window center];

@@ -73,7 +73,6 @@
   self.listener.invalidationHandler = nil;
   [self.listener invalidate];
   self.listener = nil;
-  NSLog(@"KILLING CONNECTION");
 }
 
 - (void)attemptReconnection {

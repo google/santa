@@ -58,6 +58,12 @@
                                event.fileSHA256];
   if ([[self.pendingNotifications filteredArrayUsingPredicate:predicate] count]) return;
 
+  if (!event) {
+    NSLog(@"Error: Missing event object in message received from daemon!");
+    return;
+  }
+  if (!message) message = (NSString *)[NSNull null];
+
   // Notifications arrive on a background thread but UI updates must happen on the main thread.
   // This includes making windows.
   [self performSelectorOnMainThread:@selector(postBlockNotificationMainThread:)
