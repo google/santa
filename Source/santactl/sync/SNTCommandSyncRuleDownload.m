@@ -70,18 +70,31 @@
         }
 
         NSArray *receivedRules = resp[@"rules"];
-
         for (NSDictionary *rule in receivedRules) {
           if (![rule isKindOfClass:[NSDictionary class]]) continue;
 
           SNTRule *newRule = [[SNTRule alloc] init];
-          newRule.shasum = rule[@"shasum"];
+          newRule.shasum = rule[@"sha256"];
 
-          newRule.state = [rule[@"state"] intValue];
-          if (newRule.state <= RULESTATE_UNKNOWN || newRule.state >= RULESTATE_MAX) continue;
+          if ([rule[@"policy"] isEqual:@"WHITELIST"]) {
+            newRule.state = RULESTATE_WHITELIST;
+          } else if ([rule[@"policy"] isEqual:@"BLACKLIST"]) {
+            newRule.state = RULESTATE_BLACKLIST;
+          } else if ([rule[@"policy"] isEqual:@"SILENT_BLACKLIST"]) {
+            newRule.state = RULESTATE_SILENT_BLACKLIST;
+          } else if ([rule[@"policy"] isEqual:@"REMOVE"]) {
+            newRule.state = RULESTATE_REMOVE;
+          } else {
+            continue;
+          }
 
-          newRule.type = [rule[@"type"] intValue];
-          if (newRule.type <= RULETYPE_UNKNOWN || newRule.type >= RULETYPE_MAX) continue;
+          if ([rule[@"rule_type"] isEqual:@"BINARY"]) {
+            newRule.type = RULETYPE_BINARY;
+          } else if ([rule[@"rule_type"] isEqual:@"CERTIFICATE"]) {
+            newRule.type = RULETYPE_CERT;
+          } else {
+            continue;
+          }
 
           NSString *customMsg = rule[@"custom_msg"];
           if (customMsg) {
@@ -100,7 +113,9 @@
                      completionHandler:handler];
         } else {
           [[daemonConn remoteObjectProxy] databaseRuleAddRules:progress.downloadedRules withReply:^{
-              LOGI(@"Added %d rule(s)", progress.downloadedRules.count);
+              if (progress.downloadedRules.count) {
+                LOGI(@"Added %d rule(s)", progress.downloadedRules.count);
+              }
               handler(YES);
           }];
         }
