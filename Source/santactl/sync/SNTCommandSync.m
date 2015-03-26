@@ -130,7 +130,12 @@ REGISTER_COMMAND_NAME(@"sync");
     LOGE(@"Missing Machine ID. Can't sync without it.");
     exit(1);
   }
+
   s.progress.machineOwner = config.machineOwner;
+  if (!s.progress.machineOwner) {
+    s.progress.machineOwner = @"";
+    LOGW(@"Missing Machine Owner.");  
+  }
 
   if (arguments.count == 2 && [[arguments firstObject] isEqual:@"singleevent"]) {
     [s eventUploadSingleEvent:arguments[1]];

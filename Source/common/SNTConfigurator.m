@@ -102,7 +102,7 @@ static NSString * const kMachineIDPlistKeyKey = @"MachineIDKey";
   if (self.configData[kMachineOwnerPlistFileKey] && self.configData[kMachineOwnerPlistKeyKey]) {
     NSDictionary *plist =
         [NSDictionary dictionaryWithContentsOfFile:self.configData[kMachineOwnerPlistFileKey]];
-    return plist[kMachineOwnerPlistKeyKey];
+    return plist[self.configData[kMachineOwnerPlistKeyKey]];
   }
 
   if (self.configData[kMachineOwnerKey]) {
