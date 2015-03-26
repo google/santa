@@ -97,6 +97,10 @@
 		0D7FFD4B1A017D4B00F34435 /* SNTDERDecoder.m in Sources */ = {isa = PBXBuildFile; fileRef = 0D7FFD4A1A017D4B00F34435 /* SNTDERDecoder.m */; };
 		0D827E6519DF392E006EC811 /* SNTConfigurator.m in Sources */ = {isa = PBXBuildFile; fileRef = 0D42D2B719D2042900955F08 /* SNTConfigurator.m */; };
 		0D827E6719DF3C74006EC811 /* SNTCommandStatus.m in Sources */ = {isa = PBXBuildFile; fileRef = 0D827E6619DF3C74006EC811 /* SNTCommandStatus.m */; };
+		0D8868091AC48A1100B86659 /* SNTSystemInfo.m in Sources */ = {isa = PBXBuildFile; fileRef = 0D42D2B419D1D98A00955F08 /* SNTSystemInfo.m */; };
+		0D88680A1AC48A1200B86659 /* SNTSystemInfo.m in Sources */ = {isa = PBXBuildFile; fileRef = 0D42D2B419D1D98A00955F08 /* SNTSystemInfo.m */; };
+		0D88680C1AC48A1400B86659 /* SNTSystemInfo.m in Sources */ = {isa = PBXBuildFile; fileRef = 0D42D2B419D1D98A00955F08 /* SNTSystemInfo.m */; };
+		0D88680D1AC48A5D00B86659 /* IOKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0D3AFBF718FB4C870087BCEE /* IOKit.framework */; };
 		0D8C200C180F359A00CE2BF8 /* Security.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0D8C200B180F359A00CE2BF8 /* Security.framework */; };
 		0D8E18CD19107B56000F89B8 /* SNTDaemonControlController.m in Sources */ = {isa = PBXBuildFile; fileRef = 0D8E18CC19107B56000F89B8 /* SNTDaemonControlController.m */; };
 		0D9A7F331759144800035EB5 /* SantaDriver.cc in Sources */ = {isa = PBXBuildFile; fileRef = 0D9A7F311759144800035EB5 /* SantaDriver.cc */; };
@@ -367,6 +371,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				0D88680D1AC48A5D00B86659 /* IOKit.framework in Frameworks */,
 				0D6F12D819EC8822006B218E /* SecurityInterface.framework in Frameworks */,
 				0D8C200C180F359A00CE2BF8 /* Security.framework in Frameworks */,
 				0D385DB8180DE4A900418BC6 /* Cocoa.framework in Frameworks */,
@@ -1072,6 +1077,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				0D88680C1AC48A1400B86659 /* SNTSystemInfo.m in Sources */,
 				0D63DD5E1906FCB400D346C4 /* SNTDatabaseController.m in Sources */,
 				0D3AFBF018FB4C6C0087BCEE /* SNTDriverManager.m in Sources */,
 				0DCD6044190ACCB8006B445C /* SNTFileInfo.m in Sources */,
@@ -1144,6 +1150,7 @@
 				0D54E0B11976F8D3000BB59F /* SNTFileInfo.m in Sources */,
 				0DCA552718C95928002A7DAE /* SNTXPCConnection.m in Sources */,
 				0D385DF1180DE51600418BC6 /* SNTAppDelegate.m in Sources */,
+				0D88680A1AC48A1200B86659 /* SNTSystemInfo.m in Sources */,
 				0DCD605119115A06006B445C /* SNTXPCNotifierInterface.m in Sources */,
 				0D827E6519DF392E006EC811 /* SNTConfigurator.m in Sources */,
 				0D385DF2180DE51600418BC6 /* SNTMessageWindowController.m in Sources */,
@@ -1173,6 +1180,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				0D8868091AC48A1100B86659 /* SNTSystemInfo.m in Sources */,
 				0DE6788D1784A8C2007A9E52 /* SNTExecutionController.m in Sources */,
 				0D10BE861A0AABD600C0C944 /* SNTDropRootPrivs.m in Sources */,
 				0D63DD5C1906FCB400D346C4 /* SNTDatabaseController.m in Sources */,

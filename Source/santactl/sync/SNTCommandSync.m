@@ -24,7 +24,6 @@
 #import "SNTConfigurator.h"
 #import "SNTDropRootPrivs.h"
 #import "SNTLogging.h"
-#import "SNTSystemInfo.h"
 #import "SNTXPCConnection.h"
 #import "SNTXPCControlInterface.h"
 
@@ -123,9 +122,6 @@ REGISTER_COMMAND_NAME(@"sync");
   authURLSession.serverHostname = s.progress.syncBaseURL.host;
 
   s.progress.machineID = config.machineID;
-  if (!s.progress.machineID || [s.progress.machineID isEqual:@""]) {
-    s.progress.machineID = [SNTSystemInfo hardwareUUID];
-  }
   if (!s.progress.machineID || [s.progress.machineID isEqual:@""]) {
     LOGE(@"Missing Machine ID. Can't sync without it.");
     exit(1);

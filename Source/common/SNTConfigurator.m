@@ -15,6 +15,7 @@
 #import "SNTConfigurator.h"
 
 #import "SNTLogging.h"
+#import "SNTSystemInfo.h"
 
 @interface SNTConfigurator ()
 @property NSString *configFilePath;
@@ -113,17 +114,23 @@ static NSString * const kMachineIDPlistKeyKey = @"MachineIDKey";
 }
 
 - (NSString *)machineID {
+  NSString *machineId;
+
   if (self.configData[kMachineIDPlistFileKey] && self.configData[kMachineIDPlistKeyKey]) {
     NSDictionary *plist =
         [NSDictionary dictionaryWithContentsOfFile:self.configData[kMachineIDPlistFileKey]];
-    return plist[kMachineIDPlistKeyKey];
+    machineId = plist[kMachineIDPlistKeyKey];
   }
 
   if (self.configData[kMachineIDKey]) {
-    return self.configData[kMachineIDKey];
+    machineId = self.configData[kMachineIDKey];
   }
 
-  return @"";
+  if (!machineId || [machineId isEqual:@""]) {
+    machineId = [SNTSystemInfo hardwareUUID];
+  }
+
+  return machineId;
 }
 
 - (santa_clientmode_t)clientMode {
