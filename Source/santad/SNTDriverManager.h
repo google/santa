@@ -22,6 +22,13 @@
 @interface SNTDriverManager : NSObject
 
 ///
+///  Handles locating and connecting to the driver. If driver is not loaded, will
+///  sleep until it is. If driver is loaded but connection fails (like if a client is
+///  already connected), will return nil.
+///
+- (instancetype)init;
+
+///
 ///  Handles requests from the kernel using the given block.
 ///  @note Loops indefinitely unless there is an error trying to read data from the data queue.
 ///

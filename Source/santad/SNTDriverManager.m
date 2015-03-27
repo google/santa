@@ -108,8 +108,9 @@ static const int MAX_DELAY = 15;
     return;
   }
 
-  // This will call clientMemoryForType() inside our user client class,
-  // which activates the Kauth listeners.
+  // This will call clientMemoryForType() inside our user client class.
+  // The Kauth listener will start intercepting at this point and sending requests
+  // to our queue.
   kr = IOConnectMapMemory(self.connection, kIODefaultMemoryType, mach_task_self(),
                           &address, &size, kIOMapAnywhere);
   if (kr != kIOReturnSuccess) {
