@@ -63,8 +63,10 @@ void SantaDecisionManager::ConnectClient(IOSharedDataQueue *queue, pid_t pid) {
   // connected should be cleared
   ClearCache();
 
+  lck_mtx_lock(dataqueue_lock_);
   dataqueue_ = queue;
   dataqueue_->retain();
+  lck_mtx_unlock(dataqueue_lock_);
 
   owning_pid_ = pid;
   owning_proc_ = proc_find(pid);
@@ -82,8 +84,10 @@ void SantaDecisionManager::DisconnectClient() {
   message.vnode_id = 0;
   PostToQueue(message);
 
+  lck_mtx_lock(dataqueue_lock_);
   dataqueue_->release();
   dataqueue_ = NULL;
+  lck_mtx_unlock(dataqueue_lock_);
 
   proc_rele(owning_proc_);
   owning_proc_ = NULL;
