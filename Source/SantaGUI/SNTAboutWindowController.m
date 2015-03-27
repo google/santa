@@ -30,8 +30,8 @@
 }
 
 - (IBAction)openMoreInfoURL:(id)sender {
-  [self.window orderOut:sender];  
   [[NSWorkspace sharedWorkspace] openURL:[[SNTConfigurator configurator] moreInfoURL]];
+  [self close];
 }
 
 @end

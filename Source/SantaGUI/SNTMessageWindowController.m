@@ -88,8 +88,7 @@
                                            withString:[[SNTConfigurator configurator] machineID]];
 
   [[NSWorkspace sharedWorkspace] openURL:[NSURL URLWithString:formatStr]];
-
-  [self closeWindow:sender];
+  [self close];
 }
 
 #pragma mark Generated properties
