@@ -20,6 +20,8 @@
 ///
 @interface SNTConfigurator : NSObject
 
+#pragma mark - Daemon Settings
+
 ///
 ///  The operating mode
 ///
@@ -29,6 +31,35 @@
 ///  Whether or not to log all events, even for whitelisted binaries.
 ///
 @property BOOL logAllEvents;
+
+# pragma mark - GUI Settings
+
+///
+///  The URL to open when the user clicks "More Info..." when opening Santa.app.
+///  If unset, the button will not be displayed.
+///
+@property(readonly) NSURL *moreInfoURL;
+
+///
+///  When the user gets a block notification, a button can be displayed which will
+///  take them to a web page with more information about that event.
+///  This property contains a kind of format string to be turned into the URL to send them to.
+///  The following sequences will be replaced in the final URL:
+///
+///  %file_sha%    -- SHA-256 of the file that was blocked.
+///  %machine_id%  -- ID of the machine.
+///  %username%    -- executing user.
+///
+///  @note: This is not an NSURL because the format-string parsing is done elsewhere.
+///
+///  If this item isn't set, the Open Event button will not be displayed.
+///
+@property(readonly) NSString *eventDetailURL;
+
+///
+///  Related to the above property, this string represents the text to show on the button.
+///
+@property(readonly) NSString *eventDetailText;
 
 # pragma mark - Sync Settings
 

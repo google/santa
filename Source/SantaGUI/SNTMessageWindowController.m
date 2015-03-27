@@ -17,6 +17,7 @@
 #import <SecurityInterface/SFCertificatePanel.h>
 
 #import "SNTCertificate.h"
+#import "SNTConfigurator.h"
 #import "SNTFileInfo.h"
 #import "SNTMessageWindow.h"
 #import "SNTStoredEvent.h"
@@ -28,11 +29,24 @@
   if (self) {
     _event = event;
     _customMessage = (message != (NSString *)[NSNull null] ? message : nil);
-    [self.window setMovableByWindowBackground:NO];
-    [self.window setLevel:NSPopUpMenuWindowLevel];
-    [self.window center];
   }
   return self;
+}
+
+- (void)loadWindow {
+  [super loadWindow];
+  [self.window setMovableByWindowBackground:NO];
+  [self.window setLevel:NSPopUpMenuWindowLevel];
+  [self.window center];
+
+  if (![[SNTConfigurator configurator] eventDetailURL]) {
+    [self.openEventButton removeFromSuperview];
+  } else {
+    NSString *eventDetailText = [[SNTConfigurator configurator] eventDetailText];
+    if (eventDetailText) {
+      [self.openEventButton setTitle:eventDetailText];
+    }
+  }
 }
 
 - (IBAction)showWindow:(id)sender {
@@ -60,6 +74,22 @@
                                              contextInfo:nil
                                             certificates:certArray
                                                showGroup:YES];
+}
+
+- (IBAction)openEventDetails:(id)sender {
+  NSString *formatStr = [[SNTConfigurator configurator] eventDetailURL];
+
+  formatStr = [formatStr stringByReplacingOccurrencesOfString:@"%file_sha%"
+                                                   withString:self.event.fileSHA256];
+  formatStr = [formatStr stringByReplacingOccurrencesOfString:@"%username%"
+                                                   withString:self.event.executingUser];
+  formatStr =
+      [formatStr stringByReplacingOccurrencesOfString:@"%machine_id%"
+                                           withString:[[SNTConfigurator configurator] machineID]];
+
+  [[NSWorkspace sharedWorkspace] openURL:[NSURL URLWithString:formatStr]];
+
+  [self closeWindow:sender];
 }
 
 #pragma mark Generated properties
@@ -111,7 +141,6 @@
   NSAttributedString *returnStr = [[NSAttributedString alloc] initWithHTML:htmlData
                                                         documentAttributes:NULL];
   return returnStr;
-
 }
 
 @end

@@ -14,4 +14,8 @@
 
 @interface SNTAboutWindowController : NSWindowController
 
+@property IBOutlet NSButton *moreInfoButton;
+
+- (IBAction)openMoreInfoURL:(id)sender;
+
 @end

@@ -1,12 +1,13 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="6250" systemVersion="13F34" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES">
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="6254" systemVersion="14C1514" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES">
     <dependencies>
         <deployment identifier="macosx"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="6250"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="6254"/>
     </dependencies>
     <objects>
         <customObject id="-2" userLabel="File's Owner" customClass="SNTAboutWindowController">
             <connections>
+                <outlet property="moreInfoButton" destination="SRu-Kf-vu5" id="Vj2-9Q-05d"/>
                 <outlet property="window" destination="F0z-JX-Cv5" id="gIp-Ho-8D9"/>
             </connections>
         </customObject>
@@ -15,7 +16,7 @@
         <window title="Santa" allowsToolTipsWhenApplicationIsInactive="NO" autorecalculatesKeyViewLoop="NO" oneShot="NO" releasedWhenClosed="NO" visibleAtLaunch="NO" animationBehavior="default" id="F0z-JX-Cv5">
             <windowStyleMask key="styleMask" titled="YES"/>
             <rect key="contentRect" x="196" y="240" width="480" height="200"/>
-            <rect key="screenRect" x="0.0" y="0.0" width="2560" height="1578"/>
+            <rect key="screenRect" x="0.0" y="0.0" width="2560" height="1577"/>
             <view key="contentView" id="se5-gp-TjO">
                 <rect key="frame" x="0.0" y="0.0" width="480" height="200"/>
                 <autoresizingMask key="autoresizingMask"/>
@@ -36,19 +37,32 @@
                         <rect key="frame" x="18" y="65" width="444" height="60"/>
                         <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="center" id="CcT-ul-1eA">
                             <font key="font" metaFont="system"/>
-                            <string key="title">Santa is a binary whitelisting system for Mac OS X.
+                            <string key="title">Santa is an application whitelisting system for Mac OS X.
 
 There are no user-configurable settings.</string>
                             <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
                             <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                         </textFieldCell>
                     </textField>
-                    <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="Udo-BY-n7e">
-                        <rect key="frame" x="196" y="21" width="88" height="32"/>
+                    <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="SRu-Kf-vu5">
+                        <rect key="frame" x="130" y="21" width="111" height="32"/>
                         <constraints>
-                            <constraint firstAttribute="width" constant="76" id="2Xc-ax-2bV"/>
+                            <constraint firstAttribute="width" constant="99" id="JHv-2J-QSe"/>
                         </constraints>
-                        <buttonCell key="cell" type="push" title="OK" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="uSw-o1-lWW">
+                        <buttonCell key="cell" type="push" title="More Info..." bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="6fe-ju-aET">
+                            <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
+                            <font key="font" metaFont="system"/>
+                        </buttonCell>
+                        <connections>
+                            <action selector="openMoreInfoURL:" target="-2" id="dps-TN-rkS"/>
+                        </connections>
+                    </button>
+                    <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="Udo-BY-n7e">
+                        <rect key="frame" x="240" y="21" width="111" height="32"/>
+                        <constraints>
+                            <constraint firstAttribute="width" constant="99" id="2Xc-ax-2bV"/>
+                        </constraints>
+                        <buttonCell key="cell" type="push" title="Dismiss" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="uSw-o1-lWW">
                             <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
                             <font key="font" metaFont="system"/>
                         </buttonCell>
@@ -58,10 +72,13 @@ There are no user-configurable settings.</string>
                     </button>
                 </subviews>
                 <constraints>
+                    <constraint firstItem="Udo-BY-n7e" firstAttribute="leading" secondItem="se5-gp-TjO" secondAttribute="leading" priority="900" constant="191" id="1T4-DB-Dz8"/>
+                    <constraint firstItem="SRu-Kf-vu5" firstAttribute="leading" secondItem="se5-gp-TjO" secondAttribute="leading" constant="136" id="Ake-nU-qhW"/>
                     <constraint firstItem="BnL-ZS-kXw" firstAttribute="top" secondItem="se5-gp-TjO" secondAttribute="top" constant="20" symbolic="YES" id="Fj1-SG-mzF"/>
                     <constraint firstAttribute="bottom" secondItem="Udo-BY-n7e" secondAttribute="bottom" constant="28" id="bpF-hC-haN"/>
-                    <constraint firstItem="BnL-ZS-kXw" firstAttribute="centerX" secondItem="Udo-BY-n7e" secondAttribute="centerX" constant="0.5" id="csK-2p-W94"/>
+                    <constraint firstAttribute="bottom" secondItem="SRu-Kf-vu5" secondAttribute="bottom" constant="28" id="fCB-02-SEt"/>
                     <constraint firstItem="BnL-ZS-kXw" firstAttribute="centerX" secondItem="se5-gp-TjO" secondAttribute="centerX" id="kez-S0-6Gg"/>
+                    <constraint firstItem="Udo-BY-n7e" firstAttribute="leading" secondItem="SRu-Kf-vu5" secondAttribute="trailing" constant="11" id="sYO-yY-w9w"/>
                 </constraints>
             </view>
             <connections>

@@ -32,6 +32,10 @@ static NSString * const kClientModeKey = @"ClientMode";
 
 static NSString * const kLogAllEventsKey = @"LogAllEvents";
 
+static NSString * const kMoreInfoURLKey = @"MoreInfoURL";
+static NSString * const kEventDetailURLKey = @"EventDetailURL";
+static NSString * const kEventDetailTextKey = @"EventDetailText";
+
 static NSString * const kSyncBaseURLKey = @"SyncBaseURL";
 static NSString * const kClientAuthCertificateFileKey = @"ClientAuthCertificateFile";
 static NSString * const kClientAuthCertificatePasswordKey = @"ClientAuthCertificatePassword";
@@ -159,6 +163,18 @@ static NSString * const kMachineIDPlistKeyKey = @"MachineIDKey";
   [self reloadConfigData];
   self.configData[kLogAllEventsKey] = @(logAllEvents);
   [self saveConfigToDisk];
+}
+
+- (NSURL *)moreInfoURL {
+  return [NSURL URLWithString:self.configData[kMoreInfoURLKey]];
+}
+
+- (NSString *)eventDetailURL {
+  return self.configData[kEventDetailURLKey];
+}
+
+- (NSString *)eventDetailText {
+  return self.configData[kEventDetailTextKey];
 }
 
 #pragma mark Private

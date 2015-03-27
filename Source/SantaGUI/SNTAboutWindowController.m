@@ -14,10 +14,24 @@
 
 #import "SNTAboutWindowController.h"
 
+#import "SNTConfigurator.h"
+
 @implementation SNTAboutWindowController
 
 - (instancetype)init {
   return [super initWithWindowNibName:@"AboutWindow"];
+}
+
+- (void)loadWindow {
+  [super loadWindow];
+  if (![[SNTConfigurator configurator] moreInfoURL]) {
+    [self.moreInfoButton removeFromSuperview];
+  }
+}
+
+- (IBAction)openMoreInfoURL:(id)sender {
+  [self.window orderOut:sender];  
+  [[NSWorkspace sharedWorkspace] openURL:[[SNTConfigurator configurator] moreInfoURL]];
 }
 
 @end
