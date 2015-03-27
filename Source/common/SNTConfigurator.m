@@ -20,6 +20,11 @@
 @interface SNTConfigurator ()
 @property NSString *configFilePath;
 @property NSMutableDictionary *configData;
+
+@property dispatch_source_t fileMonitoringSource;
+@property(strong) void (^fileEventHandler)(void);
+@property(strong) void (^fileCancelHandler)(void);
+
 @end
 
 @implementation SNTConfigurator
@@ -57,7 +62,7 @@ static NSString * const kMachineIDPlistKeyKey = @"MachineIDKey";
   self = [super init];
   if (self) {
     _configFilePath = filePath;
-    [self reloadConfigData];
+    [self beginWatchingConfigFile];
   }
   return self;
 }
@@ -149,7 +154,6 @@ static NSString * const kMachineIDPlistKeyKey = @"MachineIDKey";
 
 - (void)setClientMode:(santa_clientmode_t)newMode {
   if (newMode > CLIENTMODE_UNKNOWN && newMode < CLIENTMODE_MAX) {
-    [self reloadConfigData];
     self.configData[kClientModeKey] = @(newMode);
     [self saveConfigToDisk];
   }
@@ -160,7 +164,6 @@ static NSString * const kMachineIDPlistKeyKey = @"MachineIDKey";
 }
 
 - (void)setLogAllEvents:(BOOL)logAllEvents {
-  [self reloadConfigData];
   self.configData[kLogAllEventsKey] = @(logAllEvents);
   [self saveConfigToDisk];
 }
@@ -194,12 +197,10 @@ static NSString * const kMachineIDPlistKeyKey = @"MachineIDKey";
 ///  but will fail silently if this cannot be done.
 ///
 - (void)reloadConfigData {
-  NSFileManager *fm = [NSFileManager defaultManager];
+  if (!self.configData) self.configData = [NSMutableDictionary dictionary];
 
-  if (![fm fileExistsAtPath:self.configFilePath]) {
-    _configData = [NSMutableDictionary dictionary];
-    return;
-  }
+  NSFileManager *fm = [NSFileManager defaultManager];
+  if (![fm fileExistsAtPath:self.configFilePath]) return;
 
   // Ensure the config file permissions are 0644. Fail silently if they can't be changed.
   NSDictionary *fileAttrs = [fm attributesOfItemAtPath:self.configFilePath error:nil];
@@ -214,10 +215,7 @@ static NSString * const kMachineIDPlistKeyKey = @"MachineIDKey";
                                             options:NSDataReadingMappedIfSafe
                                               error:&error];
   if (error) {
-    fprintf(stderr, "%s\n", [[NSString stringWithFormat:@"Could not read configuration file %@: %@",
-            self.configFilePath, [error localizedDescription]] UTF8String]);
-
-    _configData = [NSMutableDictionary dictionary];
+    LOGE(@"Could not read configuration file: %@", [error localizedDescription]);
     return;
   }
 
@@ -227,16 +225,62 @@ static NSString * const kMachineIDPlistKeyKey = @"MachineIDKey";
                                                  format:NULL
                                                   error:&error];
   if (error) {
-    fprintf(stderr, "%s\n",
-        [[NSString stringWithFormat:@"Could not parse configuration file %@: %@",
-            self.configFilePath,
-            [error localizedDescription]] UTF8String]);
-
-    _configData = [NSMutableDictionary dictionary];
+    LOGE(@"Could not parse configuration file: %@", [error localizedDescription]);
     return;
   }
 
-  _configData = [configData mutableCopy];
+  // Ensure user isn't trying to change the client mode while running, only santactl can do that.
+  if (self.configData[kClientModeKey] && configData[kClientModeKey] &&
+      ![self.configData[kClientModeKey] isEqual:configData[kClientModeKey]]) {
+    LOGW(@"Client mode in config file was changed behind our back, resetting.");
+    NSMutableDictionary *configDataMutable = [configData mutableCopy];
+    configDataMutable[kClientModeKey] = self.configData[kClientModeKey];
+    self.configData = configDataMutable;
+    [self saveConfigToDisk];
+  } else {
+    self.configData = [configData mutableCopy];
+  }
+}
+
+- (void)beginWatchingConfigFile {
+  if (self.fileMonitoringSource) return;
+
+  dispatch_queue_t queue = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_BACKGROUND, 0);
+  if (!queue) return;
+
+  __weak typeof(self) weakSelf = self;
+  int mask = (DISPATCH_VNODE_DELETE | DISPATCH_VNODE_WRITE |
+              DISPATCH_VNODE_EXTEND | DISPATCH_VNODE_RENAME);
+
+  self.fileEventHandler = ^{
+    unsigned long l = dispatch_source_get_data(weakSelf.fileMonitoringSource);
+    if (l & DISPATCH_VNODE_DELETE || l & DISPATCH_VNODE_RENAME) {
+      dispatch_source_cancel(weakSelf.fileMonitoringSource);
+    } else {
+      [weakSelf reloadConfigData];
+    }
+  };
+
+  self.fileCancelHandler = ^{
+    int fd;
+    if (weakSelf.fileMonitoringSource) {
+      fd = (int)dispatch_source_get_handle(weakSelf.fileMonitoringSource);
+      close(fd);
+    }
+
+    while ((fd = open([weakSelf.configFilePath fileSystemRepresentation], O_EVTONLY)) < 0) {
+      sleep(1);
+    }
+
+    weakSelf.fileMonitoringSource = dispatch_source_create(
+        DISPATCH_SOURCE_TYPE_VNODE, fd, mask, queue);
+    dispatch_source_set_event_handler(weakSelf.fileMonitoringSource, weakSelf.fileEventHandler);
+    dispatch_source_set_cancel_handler(weakSelf.fileMonitoringSource, weakSelf.fileCancelHandler);
+    dispatch_resume(weakSelf.fileMonitoringSource);
+    [weakSelf reloadConfigData];
+  };
+
+  self.fileCancelHandler();
 }
 
 @end
