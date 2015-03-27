@@ -226,8 +226,8 @@
   (void)sut.issuerCountryName;
 
   // Now break some of the properties
-  OCMStub([sutMock x509ValueForLabel:OCMOCK_ANY fromDictionary:OCMOCK_ANY]);
-  OCMStub([sutMock dateForX509Key:OCMOCK_ANY]);
+  OCMExpect([sutMock x509ValueForLabel:OCMOCK_ANY fromDictionary:OCMOCK_ANY]);
+  OCMExpect([sutMock dateForX509Key:OCMOCK_ANY]);
 
   XCTAssertEqualObjects(sut.orgName, @"Google Inc");
   XCTAssertEqualObjects(sut.issuerCommonName, @"GeoTrust Global CA");

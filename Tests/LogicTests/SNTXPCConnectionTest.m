@@ -52,8 +52,8 @@
 }
 
 - (void)testInitClient {
-  OCMStub([self.mockConnection initWithMachServiceName:@"TestClient"
-                                               options:NSXPCConnectionPrivileged])
+  OCMExpect([self.mockConnection initWithMachServiceName:@"TestClient"
+                                                 options:NSXPCConnectionPrivileged])
       .andReturn(self.mockConnection);
 
   SNTXPCConnection *sut = [[SNTXPCConnection alloc] initClientWithName:@"TestClient"
@@ -63,14 +63,14 @@
 }
 
 - (void)testInitServer {
-  OCMStub([self.mockListener initWithMachServiceName:@"TestServer"]).andReturn(self.mockListener);
+  OCMExpect([self.mockListener initWithMachServiceName:@"TestServer"]).andReturn(self.mockListener);
   SNTXPCConnection *sut = [[SNTXPCConnection alloc] initServerWithName:@"TestServer"];
   XCTAssertNotNil(sut);
   OCMVerifyAll(self.mockListener);
 }
 
 - (void)testResume {
-  OCMStub([self.mockListener initWithMachServiceName:OCMOCK_ANY]).andReturn(self.mockListener);
+  OCMExpect([self.mockListener initWithMachServiceName:OCMOCK_ANY]).andReturn(self.mockListener);
   SNTXPCConnection *sut = [[SNTXPCConnection alloc] initServerWithName:@"TestServer"];
 
   [sut resume];
@@ -80,7 +80,7 @@
 }
 
 - (void)testListenerShouldAcceptNewConnection {
-  OCMStub([self.mockListener initWithMachServiceName:OCMOCK_ANY]).andReturn(self.mockListener);
+  OCMExpect([self.mockListener initWithMachServiceName:OCMOCK_ANY]).andReturn(self.mockListener);
   SNTXPCConnection *sut = [[SNTXPCConnection alloc] initServerWithName:@"TestServer"];
 
   XCTAssertTrue([sut listener:self.mockListener shouldAcceptNewConnection:self.mockConnection]);
@@ -93,16 +93,16 @@
 }
 
 - (void)testIsConnectionValidFalse {
-  OCMStub([self.mockListener initWithMachServiceName:OCMOCK_ANY]).andReturn(self.mockListener);
+  OCMExpect([self.mockListener initWithMachServiceName:OCMOCK_ANY]).andReturn(self.mockListener);
   SNTXPCConnection *sut = [[SNTXPCConnection alloc] initServerWithName:@"TestServer"];
 
   [sut setCurrentConnection:self.mockConnection];
 
-  OCMStub([self.mockConnection processIdentifier]).andReturn(1);
+  OCMExpect([self.mockConnection processIdentifier]).andReturn(1);
 
   id mockCodesignChecker = OCMClassMock([SNTCodesignChecker class]);
-  OCMStub([mockCodesignChecker alloc]).andReturn(mockCodesignChecker);
-  OCMStub([mockCodesignChecker signingInformationMatches:OCMOCK_ANY]).andReturn(NO);
+  OCMExpect([mockCodesignChecker alloc]).andReturn(mockCodesignChecker);
+  OCMExpect([mockCodesignChecker signingInformationMatches:OCMOCK_ANY]).andReturn(NO);
 
   [sut isConnectionValidWithBlock:^(BOOL input) {
       XCTAssertFalse(input);
@@ -115,13 +115,13 @@
 }
 
 - (void)testIsConnectionValidTrue {
-  OCMStub([self.mockListener initWithMachServiceName:OCMOCK_ANY]).andReturn(self.mockListener);
+  OCMExpect([self.mockListener initWithMachServiceName:OCMOCK_ANY]).andReturn(self.mockListener);
   SNTXPCConnection *sut = [[SNTXPCConnection alloc] initServerWithName:@"TestServer"];
 
   [sut setCurrentConnection:self.mockConnection];
 
   pid_t mypid = [[NSProcessInfo processInfo] processIdentifier];
-  OCMStub([self.mockConnection processIdentifier]).andReturn(mypid);
+  OCMExpect([self.mockConnection processIdentifier]).andReturn(mypid);
 
   [sut isConnectionValidWithBlock:^(BOOL input) {
     XCTAssertTrue(input);
