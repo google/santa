@@ -82,21 +82,10 @@
         [[SNTDaemonControlController alloc] initWithDriverManager:_driverManager];
     [_controlConnection resume];
 
-    // Get client mode and begin observing for updates
-    SNTConfigurator *configurator = [SNTConfigurator configurator];
-    santa_clientmode_t clientMode = [configurator clientMode];
-    BOOL logAllEvents = [configurator logAllEvents];
-    [configurator addObserver:self
-                   forKeyPath:@"clientMode"
-                      options:NSKeyValueObservingOptionNew
-                      context:NULL];
-
     // Initialize the binary checker object
     _execController = [[SNTExecutionController alloc] initWithDriverManager:_driverManager
                                                                   ruleTable:_ruleTable
                                                                  eventTable:_eventTable
-                                                              operatingMode:clientMode
-                                                               logAllEvents:logAllEvents
                                                          notifierConnection:_notifierConnection];
     if (!_execController) return nil;
   }
@@ -104,20 +93,13 @@
   return self;
 }
 
-- (void)observeValueForKeyPath:(NSString *)keyPath
-                      ofObject:(id)object
-                        change:(NSDictionary *)change
-                       context:(void *)context {
-  if ([keyPath isEqual:@"clientMode"]) {
-    self.execController.operatingMode = [change[NSKeyValueChangeNewKey] intValue];
-  }
-}
-
 - (void)run {
   LOGI(@"Connected to driver, activating.");
 
+  // Create a concurrent queue to put requests on, then set its priority to high.
   dispatch_queue_t q = dispatch_queue_create("com.google.santad.driver_queue",
                                              DISPATCH_QUEUE_CONCURRENT);
+  dispatch_set_target_queue(q, dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_HIGH, 0));
 
   [self.driverManager listenWithBlock:^(santa_message_t message) {
       @autoreleasepool {

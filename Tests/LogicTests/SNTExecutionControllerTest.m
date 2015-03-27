@@ -19,6 +19,7 @@
 
 #import "SNTCertificate.h"
 #import "SNTCodesignChecker.h"
+#import "SNTConfigurator.h"
 #import "SNTDriverManager.h"
 #import "SNTEventTable.h"
 #import "SNTFileInfo.h"
@@ -30,6 +31,7 @@
 @end
 
 @interface SNTExecutionControllerTest : XCTestCase
+@property id mockConfigurator;
 @property id mockCodesignChecker;
 @property id mockDriverManager;
 @property id mockFileInfo;
@@ -47,16 +49,25 @@
   fclose(stdout);
 
   self.mockCodesignChecker = OCMClassMock([SNTCodesignChecker class]);
+  OCMStub([self.mockCodesignChecker alloc]).andReturn(self.mockCodesignChecker);
+  OCMStub([self.mockCodesignChecker initWithBinaryPath:OCMOCK_ANY])
+      .andReturn(self.mockCodesignChecker);
+
+  self.mockConfigurator = OCMClassMock([SNTConfigurator class]);
+  OCMStub([self.mockConfigurator configurator]).andReturn(self.mockConfigurator);
+
   self.mockDriverManager = OCMClassMock([SNTDriverManager class]);
-  self.mockFileInfo = OCMClassMock([SNTFileInfo class]);  
+
+  self.mockFileInfo = OCMClassMock([SNTFileInfo class]);
+  OCMStub([self.mockFileInfo alloc]).andReturn(self.mockFileInfo);
+  OCMStub([self.mockFileInfo initWithPath:OCMOCK_ANY]).andReturn(self.mockFileInfo);
+
   self.mockRuleDatabase = OCMClassMock([SNTRuleTable class]);
   self.mockEventDatabase = OCMClassMock([SNTEventTable class]);
 
   self.sut = [[SNTExecutionController alloc] initWithDriverManager:self.mockDriverManager
                                                          ruleTable:self.mockRuleDatabase
                                                         eventTable:self.mockEventDatabase
-                                                     operatingMode:CLIENTMODE_MONITOR
-                                                      logAllEvents:NO
                                                 notifierConnection:nil];
 }
 
@@ -74,13 +85,11 @@
   id mockSut = OCMPartialMock(self.sut);
   OCMStub([mockSut fileIsInScope:OCMOCK_ANY]).andReturn(YES);
 
-  [[[self.mockFileInfo stub] andReturn:self.mockFileInfo] alloc];
-  (void)[[[self.mockFileInfo stub] andReturn:self.mockFileInfo] initWithPath:[OCMArg any]];
-  [[[self.mockFileInfo stub] andReturn:@"a"] SHA256];
+  OCMExpect([self.mockFileInfo SHA256]).andReturn(@"a");
 
   SNTRule *rule = [[SNTRule alloc] init];
   rule.state = RULESTATE_WHITELIST;
-  OCMStub([self.mockRuleDatabase binaryRuleForSHA256:@"a"]).andReturn(rule);
+  OCMExpect([self.mockRuleDatabase binaryRuleForSHA256:@"a"]).andReturn(rule);
 
   [self.sut validateBinaryWithPath:@"/a/file"
                           userName:@"nobody"
@@ -96,13 +105,11 @@
   id mockSut = OCMPartialMock(self.sut);
   OCMStub([mockSut fileIsInScope:OCMOCK_ANY]).andReturn(YES);
 
-  [[[self.mockFileInfo stub] andReturn:self.mockFileInfo] alloc];
-  (void)[[[self.mockFileInfo stub] andReturn:self.mockFileInfo] initWithPath:[OCMArg any]];
-  [[[self.mockFileInfo stub] andReturn:@"a"] SHA256];
+  OCMExpect([self.mockFileInfo SHA256]).andReturn(@"a");
 
   SNTRule *rule = [[SNTRule alloc] init];
   rule.state = RULESTATE_BLACKLIST;
-  OCMStub([self.mockRuleDatabase binaryRuleForSHA256:@"a"]).andReturn(rule);
+  OCMExpect([self.mockRuleDatabase binaryRuleForSHA256:@"a"]).andReturn(rule);
 
   [self.sut validateBinaryWithPath:@"/a/file"
                           userName:@"nobody"
@@ -119,15 +126,12 @@
   OCMStub([mockSut fileIsInScope:OCMOCK_ANY]).andReturn(YES);
 
   id cert = OCMClassMock([SNTCertificate class]);
-  OCMStub([self.mockCodesignChecker alloc]).andReturn(self.mockCodesignChecker);
-  OCMStub([self.mockCodesignChecker initWithBinaryPath:OCMOCK_ANY])
-      .andReturn(self.mockCodesignChecker);
-  OCMStub([self.mockCodesignChecker leafCertificate]).andReturn(cert);
-  OCMStub([cert SHA256]).andReturn(@"a");
+  OCMExpect([self.mockCodesignChecker leafCertificate]).andReturn(cert);
+  OCMExpect([cert SHA256]).andReturn(@"a");
 
   SNTRule *rule = [[SNTRule alloc] init];
   rule.state = RULESTATE_WHITELIST;
-  OCMStub([self.mockRuleDatabase certificateRuleForSHA256:@"a"]).andReturn(rule);
+  OCMExpect([self.mockRuleDatabase certificateRuleForSHA256:@"a"]).andReturn(rule);
 
   [self.sut validateBinaryWithPath:@"/a/file"
                           userName:@"nobody"
@@ -144,15 +148,12 @@
   OCMStub([mockSut fileIsInScope:OCMOCK_ANY]).andReturn(YES);
 
   id cert = OCMClassMock([SNTCertificate class]);
-  OCMStub([self.mockCodesignChecker alloc]).andReturn(self.mockCodesignChecker);
-  OCMStub([self.mockCodesignChecker initWithBinaryPath:OCMOCK_ANY])
-    .andReturn(self.mockCodesignChecker);
-  OCMStub([self.mockCodesignChecker leafCertificate]).andReturn(cert);
-  OCMStub([cert SHA256]).andReturn(@"a");
+  OCMExpect([self.mockCodesignChecker leafCertificate]).andReturn(cert);
+  OCMExpect([cert SHA256]).andReturn(@"a");
 
   SNTRule *rule = [[SNTRule alloc] init];
   rule.state = RULESTATE_BLACKLIST;
-  OCMStub([self.mockRuleDatabase certificateRuleForSHA256:@"a"]).andReturn(rule);
+  OCMExpect([self.mockRuleDatabase certificateRuleForSHA256:@"a"]).andReturn(rule);
 
   [self.sut validateBinaryWithPath:@"/a/file"
                           userName:@"nobody"
@@ -168,7 +169,7 @@
   id mockSut = OCMPartialMock(self.sut);
   OCMStub([mockSut fileIsInScope:OCMOCK_ANY]).andReturn(YES);
 
-  [self.sut setOperatingMode:CLIENTMODE_MONITOR];
+  OCMExpect([self.mockConfigurator clientMode]).andReturn(CLIENTMODE_MONITOR);
   [self.sut validateBinaryWithPath:@"/a/file"
                           userName:@"nobody"
                                pid:@(12)
@@ -177,7 +178,7 @@
   OCMVerify([self.mockDriverManager postToKernelAction:ACTION_RESPOND_CHECKBW_ALLOW
                                             forVnodeID:1234]);
 
-  [self.sut setOperatingMode:CLIENTMODE_LOCKDOWN];
+  OCMExpect([self.mockConfigurator clientMode]).andReturn(CLIENTMODE_LOCKDOWN);
   [self.sut validateBinaryWithPath:@"/a/file"
                           userName:@"nobody"
                                pid:@(12)
@@ -191,7 +192,7 @@
   id mockSut = OCMPartialMock(self.sut);
   OCMStub([mockSut fileIsInScope:OCMOCK_ANY]).andReturn(NO);
 
-  [self.sut setOperatingMode:CLIENTMODE_LOCKDOWN];
+  OCMExpect([self.mockConfigurator clientMode]).andReturn(CLIENTMODE_LOCKDOWN);
   [self.sut validateBinaryWithPath:@"/a/file"
                           userName:@"nobody"
                                pid:@(24)
