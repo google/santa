@@ -73,6 +73,8 @@ void SantaDecisionManager::ConnectClient(IOSharedDataQueue *queue, pid_t pid) {
 }
 
 void SantaDecisionManager::DisconnectClient() {
+  if (owning_pid_ < 1) return;
+
   owning_pid_ = -1;
 
   // Ask santad to shutdown, in case it's running.
