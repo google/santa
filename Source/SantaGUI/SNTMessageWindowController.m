@@ -35,7 +35,6 @@
 
 - (void)loadWindow {
   [super loadWindow];
-  [self.window setMovableByWindowBackground:NO];
   [self.window setLevel:NSPopUpMenuWindowLevel];
   [self.window center];
 
@@ -87,14 +86,14 @@
       [formatStr stringByReplacingOccurrencesOfString:@"%machine_id%"
                                            withString:[[SNTConfigurator configurator] machineID]];
 
+  [self closeWindow:sender];
   [[NSWorkspace sharedWorkspace] openURL:[NSURL URLWithString:formatStr]];
-  [self close];
 }
 
 #pragma mark Generated properties
 
 + (NSSet *)keyPathsForValuesAffectingValueForKey:(NSString *)key {
-  if (! [key isEqualToString:@"event"]) {
+  if (![key isEqualToString:@"event"]) {
     return [NSSet setWithObject:@"event"];
   } else {
     return nil;

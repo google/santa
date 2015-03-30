@@ -15,6 +15,7 @@
 #import "SNTAppDelegate.h"
 
 #import "SNTAboutWindowController.h"
+#import "SNTConfigurator.h"
 #import "SNTNotificationManager.h"
 #import "SNTXPCConnection.h"
 
@@ -44,6 +45,9 @@
                                object:nil];
 
   [self createConnection];
+
+  // Load configuration from disk ready for first message.
+  (void)[SNTConfigurator configurator];
 }
 
 - (BOOL)applicationShouldHandleReopen:(NSApplication *)sender hasVisibleWindows:(BOOL)flag {
