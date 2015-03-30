@@ -280,7 +280,7 @@ static NSString * const kMachineIDPlistKeyKey = @"MachineIDKey";
     [weakSelf reloadConfigData];
   };
 
-  self.fileCancelHandler();
+  dispatch_async(queue, self.fileCancelHandler);
 }
 
 @end
