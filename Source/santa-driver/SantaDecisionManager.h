@@ -56,6 +56,11 @@ const int kMaxRequestLoops = 50;
 const int kMaxCacheSize = 10000;
 
 ///
+///  Maximum number of PostToQueue failures to allow.
+///
+const int kMaxQueueFailures = 10;
+
+///
 ///  SantaDecisionManager is responsible for intercepting Vnode execute actions
 ///  and responding to the request appropriately.
 ///
@@ -142,6 +147,7 @@ class SantaDecisionManager : public OSObject {
   OSDictionary *cached_decisions_;
 
   IOSharedDataQueue *dataqueue_;
+  SInt32 failed_queue_requests_;
 
   SInt32 listener_invocations_;
 

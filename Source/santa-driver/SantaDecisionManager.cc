@@ -26,6 +26,8 @@ bool SantaDecisionManager::init() {
 
   cached_decisions_ = OSDictionary::withCapacity(1000);
 
+  owning_pid_ = 0;
+
   return kIOReturnSuccess;
 }
 
@@ -70,6 +72,7 @@ void SantaDecisionManager::ConnectClient(IOSharedDataQueue *queue, pid_t pid) {
 
   owning_pid_ = pid;
   owning_proc_ = proc_find(pid);
+  failed_queue_requests_ = 0;
 }
 
 void SantaDecisionManager::DisconnectClient() {
@@ -283,6 +286,11 @@ santa_action_t SantaDecisionManager::FetchDecision(
     do {
       // Send request to daemon...
       if (!PostToQueue(message)) {
+        OSIncrementAtomic(&failed_queue_requests_);
+        if (failed_queue_requests_ > kMaxQueueFailures) {
+          LOGE("Failed to queue more than %d requests, killing daemon", kMaxQueueFailures);
+          proc_signal(owning_pid_, SIGKILL);
+        }
         LOGE("Failed to queue request for %s.", path);
         CacheCheck(vnode_id_str);
         return ACTION_ERROR;

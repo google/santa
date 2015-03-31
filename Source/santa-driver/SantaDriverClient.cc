@@ -49,7 +49,6 @@ bool SantaDriverClient::start(IOService *provider) {
 void SantaDriverClient::stop(IOService *provider) {
   super::stop(provider);
 
-  fSDM = NULL;
   fProvider = NULL;
 }
 
