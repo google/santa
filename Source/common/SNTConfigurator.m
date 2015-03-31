@@ -109,7 +109,7 @@ static NSString * const kMachineIDPlistKeyKey = @"MachineIDKey";
 }
 
 - (NSString *)machineOwner {
-  NSString *machineOwner = @"";
+  NSString *machineOwner;
 
   if (self.configData[kMachineOwnerPlistFileKey] && self.configData[kMachineOwnerPlistKeyKey]) {
     NSDictionary *plist =
@@ -120,6 +120,8 @@ static NSString * const kMachineIDPlistKeyKey = @"MachineIDKey";
   if (self.configData[kMachineOwnerKey]) {
     machineOwner = self.configData[kMachineOwnerKey];
   }
+
+  if (!machineOwner) machineOwner = @"";
 
   return machineOwner;
 }
