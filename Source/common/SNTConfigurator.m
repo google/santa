@@ -109,17 +109,19 @@ static NSString * const kMachineIDPlistKeyKey = @"MachineIDKey";
 }
 
 - (NSString *)machineOwner {
+  NSString *machineOwner = @"";
+
   if (self.configData[kMachineOwnerPlistFileKey] && self.configData[kMachineOwnerPlistKeyKey]) {
     NSDictionary *plist =
         [NSDictionary dictionaryWithContentsOfFile:self.configData[kMachineOwnerPlistFileKey]];
-    return plist[self.configData[kMachineOwnerPlistKeyKey]];
+    machineOwner = plist[self.configData[kMachineOwnerPlistKeyKey]];
   }
 
   if (self.configData[kMachineOwnerKey]) {
-    return self.configData[kMachineOwnerKey];
+    machineOwner = self.configData[kMachineOwnerKey];
   }
 
-  return @"";
+  return machineOwner;
 }
 
 - (NSString *)machineID {
@@ -128,7 +130,7 @@ static NSString * const kMachineIDPlistKeyKey = @"MachineIDKey";
   if (self.configData[kMachineIDPlistFileKey] && self.configData[kMachineIDPlistKeyKey]) {
     NSDictionary *plist =
         [NSDictionary dictionaryWithContentsOfFile:self.configData[kMachineIDPlistFileKey]];
-    machineId = plist[kMachineIDPlistKeyKey];
+    machineId = plist[self.configData[kMachineIDPlistKeyKey]];
   }
 
   if (self.configData[kMachineIDKey]) {
