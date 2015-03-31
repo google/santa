@@ -231,7 +231,8 @@ static NSString * const kMachineIDPlistKeyKey = @"MachineIDKey";
 
   // Ensure user isn't trying to change the client mode while running, only santactl can do that.
   if (self.configData[kClientModeKey] && configData[kClientModeKey] &&
-      ![self.configData[kClientModeKey] isEqual:configData[kClientModeKey]]) {
+      ![self.configData[kClientModeKey] isEqual:configData[kClientModeKey]] &&
+      [[[NSProcessInfo processInfo] processName] isEqual:@"santad"]) {
     LOGW(@"Client mode in config file was changed behind our back, resetting.");
     NSMutableDictionary *configDataMutable = [configData mutableCopy];
     configDataMutable[kClientModeKey] = self.configData[kClientModeKey];
