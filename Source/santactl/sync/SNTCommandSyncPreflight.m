@@ -17,6 +17,7 @@
 #include "SNTKernelCommon.h"
 #include "SNTLogging.h"
 
+#import "SNTCommandSyncConstants.h"
 #import "SNTCommandSyncStatus.h"
 #import "SNTSystemInfo.h"
 #import "SNTXPCConnection.h"
@@ -28,17 +29,16 @@
                     progress:(SNTCommandSyncStatus *)progress
                   daemonConn:(SNTXPCConnection *)daemonConn
            completionHandler:(void (^)(BOOL success))handler {
-  NSURL *url = [NSURL URLWithString:[@"preflight/" stringByAppendingString:progress.machineID]
+  NSURL *url = [NSURL URLWithString:[kURLPreflight stringByAppendingString:progress.machineID]
                       relativeToURL:progress.syncBaseURL];
 
   NSMutableDictionary *requestDict = [NSMutableDictionary dictionary];
-  requestDict[@"serial_no"] = [SNTSystemInfo serialNumber];
-  requestDict[@"hostname"] = [SNTSystemInfo shortHostname];
-  requestDict[@"santa_version"] =
-      [[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleVersion"];
-  requestDict[@"os_version"] = [SNTSystemInfo osVersion];
-  requestDict[@"os_build"] = [SNTSystemInfo osBuild];
-  requestDict[@"primary_user"] = progress.machineOwner;
+  requestDict[kSerialNumber] = [SNTSystemInfo serialNumber];
+  requestDict[kHostname] = [SNTSystemInfo shortHostname];
+  requestDict[kSantaVer] = [[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleVersion"];
+  requestDict[kOSVer] = [SNTSystemInfo osVersion];
+  requestDict[kOSBuild] = [SNTSystemInfo osBuild];
+  requestDict[kPrimaryUser] = progress.machineOwner;
 
   NSData *requestBody = [NSJSONSerialization dataWithJSONObject:requestDict
                                                         options:0
@@ -59,11 +59,13 @@
       } else {
         NSDictionary *r = [NSJSONSerialization JSONObjectWithData:data options:0 error:nil];
 
-        progress.eventBatchSize = [r[@"batch_size"] intValue];
-        progress.uploadLogURL = [NSURL URLWithString:r[@"upload_logs_url"]];
+        progress.eventBatchSize = [r[kBatchSize] intValue];
+        progress.uploadLogURL = [NSURL URLWithString:r[kUploadLogsURL]];
 
-        if (r[@"client_mode"]) {
-          [[daemonConn remoteObjectProxy] setClientMode:[r[@"client_mode"] intValue] withReply:^{}];
+        if (r[kClientMode] && [r[kClientMode] isEqual:kClientModeMonitor]) {
+            [[daemonConn remoteObjectProxy] setClientMode:CLIENTMODE_MONITOR withReply:^{}];
+        } else if (r[kClientMode] && [r[kClientMode] isEqual:kClientModeLockdown]) {
+            [[daemonConn remoteObjectProxy] setClientMode:CLIENTMODE_LOCKDOWN withReply:^{}];
         }
 
         handler(YES);

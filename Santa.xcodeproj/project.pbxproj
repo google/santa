@@ -147,6 +147,7 @@
 		0DE50F6C19130358007B2B0C /* SNTStoredEvent.m in Sources */ = {isa = PBXBuildFile; fileRef = 0DCD604A19105433006B445C /* SNTStoredEvent.m */; };
 		0DE50F6E191304E0007B2B0C /* SNTRule.m in Sources */ = {isa = PBXBuildFile; fileRef = 0DE50F671912716A007B2B0C /* SNTRule.m */; };
 		0DE6788D1784A8C2007A9E52 /* SNTExecutionController.m in Sources */ = {isa = PBXBuildFile; fileRef = 0DE6788C1784A8C2007A9E52 /* SNTExecutionController.m */; };
+		0DEFB7C01ACB28B000B92AAE /* SNTCommandSyncConstants.m in Sources */ = {isa = PBXBuildFile; fileRef = 0DEFB7BF1ACB28B000B92AAE /* SNTCommandSyncConstants.m */; };
 		0DF395641AB76A7900CBC520 /* NSData+Zlib.m in Sources */ = {isa = PBXBuildFile; fileRef = 0DF395631AB76A7900CBC520 /* NSData+Zlib.m */; };
 		0DF395661AB76ABC00CBC520 /* libz.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 0DF395651AB76ABC00CBC520 /* libz.dylib */; };
 		4092327A1A51B66400A04527 /* SNTCommandRule.m in Sources */ = {isa = PBXBuildFile; fileRef = 409232791A51B65D00A04527 /* SNTCommandRule.m */; };
@@ -325,6 +326,8 @@
 		0DE50F671912716A007B2B0C /* SNTRule.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SNTRule.m; sourceTree = "<group>"; };
 		0DE6788B1784A8C2007A9E52 /* SNTExecutionController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SNTExecutionController.h; sourceTree = "<group>"; };
 		0DE6788C1784A8C2007A9E52 /* SNTExecutionController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; lineEnding = 0; path = SNTExecutionController.m; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objc; };
+		0DEFB7BF1ACB28B000B92AAE /* SNTCommandSyncConstants.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SNTCommandSyncConstants.m; sourceTree = "<group>"; };
+		0DEFB7C11ACB28BC00B92AAE /* SNTCommandSyncConstants.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SNTCommandSyncConstants.h; sourceTree = "<group>"; };
 		0DF395621AB76A7900CBC520 /* NSData+Zlib.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSData+Zlib.h"; sourceTree = "<group>"; };
 		0DF395631AB76A7900CBC520 /* NSData+Zlib.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSData+Zlib.m"; sourceTree = "<group>"; };
 		0DF395651AB76ABC00CBC520 /* libz.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libz.dylib; path = usr/lib/libz.dylib; sourceTree = SDKROOT; };
@@ -464,6 +467,8 @@
 				0DCD6060191188B1006B445C /* SNTAuthenticatingURLSession.h */,
 				0DCD6061191188B1006B445C /* SNTAuthenticatingURLSession.m */,
 				0D35BDB418FD84F600921A21 /* SNTCommandSync.m */,
+				0DEFB7C11ACB28BC00B92AAE /* SNTCommandSyncConstants.h */,
+				0DEFB7BF1ACB28B000B92AAE /* SNTCommandSyncConstants.m */,
 				0D41640319197AD7006A356A /* SNTCommandSyncEventUpload.h */,
 				0D41640419197AD7006A356A /* SNTCommandSyncEventUpload.m */,
 				0DC5D86F192160180078A5C0 /* SNTCommandSyncLogUpload.h */,
@@ -1116,6 +1121,7 @@
 				0D35BDC218FDA5D100921A21 /* SNTCodesignChecker.m in Sources */,
 				0D35BDB518FD84F600921A21 /* SNTCommandSync.m in Sources */,
 				0DCD5FBF1909D64A006B445C /* SNTCommandBinaryInfo.m in Sources */,
+				0DEFB7C01ACB28B000B92AAE /* SNTCommandSyncConstants.m in Sources */,
 				0DCD6062191188B1006B445C /* SNTAuthenticatingURLSession.m in Sources */,
 				0DCD605619115D17006B445C /* SNTXPCControlInterface.m in Sources */,
 				0DE50F6C19130358007B2B0C /* SNTStoredEvent.m in Sources */,

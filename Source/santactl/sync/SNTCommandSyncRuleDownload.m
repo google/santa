@@ -14,6 +14,7 @@
 
 #import "SNTCommandSyncRuleDownload.h"
 
+#import "SNTCommandSyncConstants.h"
 #import "SNTCommandSyncStatus.h"
 #import "SNTRule.h"
 #import "SNTXPCConnection.h"
@@ -27,7 +28,7 @@
                     progress:(SNTCommandSyncStatus *)progress
                   daemonConn:(SNTXPCConnection *)daemonConn
            completionHandler:(void (^)(BOOL success))handler {
-  NSURL *url = [NSURL URLWithString:[@"ruledownload/" stringByAppendingString:progress.machineID]
+  NSURL *url = [NSURL URLWithString:[kURLRuleDownload stringByAppendingString:progress.machineID]
                       relativeToURL:progress.syncBaseURL];
   [self ruleDownloadWithCursor:nil
                            url:url
@@ -44,7 +45,7 @@
                     daemonConn:(SNTXPCConnection *)daemonConn
              completionHandler:(void (^)(BOOL success))handler {
 
-  NSDictionary *requestDict = (cursor ? @{ @"cursor": cursor } : @{});
+  NSDictionary *requestDict = (cursor ? @{ kCursor: cursor } : @{});
 
   if (!progress.downloadedRules) {
     progress.downloadedRules = [NSMutableArray array];
@@ -69,34 +70,34 @@
           handler(NO);
         }
 
-        NSArray *receivedRules = resp[@"rules"];
+        NSArray *receivedRules = resp[kRules];
         for (NSDictionary *rule in receivedRules) {
           if (![rule isKindOfClass:[NSDictionary class]]) continue;
 
           SNTRule *newRule = [[SNTRule alloc] init];
-          newRule.shasum = rule[@"sha256"];
+          newRule.shasum = rule[kRuleSHA256];
 
-          if ([rule[@"policy"] isEqual:@"WHITELIST"]) {
+          if ([rule[kRulePolicy] isEqual:kRulePolicyWhitelist]) {
             newRule.state = RULESTATE_WHITELIST;
-          } else if ([rule[@"policy"] isEqual:@"BLACKLIST"]) {
+          } else if ([rule[kRulePolicy] isEqual:kRulePolicyBlacklist]) {
             newRule.state = RULESTATE_BLACKLIST;
-          } else if ([rule[@"policy"] isEqual:@"SILENT_BLACKLIST"]) {
+          } else if ([rule[kRulePolicy] isEqual:kRulePolicySilentBlacklist]) {
             newRule.state = RULESTATE_SILENT_BLACKLIST;
-          } else if ([rule[@"policy"] isEqual:@"REMOVE"]) {
+          } else if ([rule[kRulePolicy] isEqual:kRulePolicyRemove]) {
             newRule.state = RULESTATE_REMOVE;
           } else {
             continue;
           }
 
-          if ([rule[@"rule_type"] isEqual:@"BINARY"]) {
+          if ([rule[kRuleType] isEqual:kRuleTypeBinary]) {
             newRule.type = RULETYPE_BINARY;
-          } else if ([rule[@"rule_type"] isEqual:@"CERTIFICATE"]) {
+          } else if ([rule[kRuleType] isEqual:kRuleTypeCertificate]) {
             newRule.type = RULETYPE_CERT;
           } else {
             continue;
           }
 
-          NSString *customMsg = rule[@"custom_msg"];
+          NSString *customMsg = rule[kRuleCustomMsg];
           if (customMsg) {
             newRule.customMsg = customMsg;
           }
@@ -104,8 +105,8 @@
           [progress.downloadedRules addObject:newRule];
         }
 
-        if (resp[@"cursor"]) {
-          [self ruleDownloadWithCursor:resp[@"cursor"]
+        if (resp[kCursor]) {
+          [self ruleDownloadWithCursor:resp[kCursor]
                                    url:url
                                session:session
                               progress:progress

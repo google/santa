@@ -1,0 +1,70 @@
+/// Copyright 2015 Google Inc. All rights reserved.
+///
+/// Licensed under the Apache License, Version 2.0 (the "License");
+/// you may not use this file except in compliance with the License.
+/// You may obtain a copy of the License at
+///
+///    http://www.apache.org/licenses/LICENSE-2.0
+///
+///    Unless required by applicable law or agreed to in writing, software
+///    distributed under the License is distributed on an "AS IS" BASIS,
+///    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+///    See the License for the specific language governing permissions and
+///    limitations under the License.
+
+#import "SNTCommandSyncConstants.h"
+
+NSString * const kURLPreflight = @"preflight/";
+NSString * const kURLEventUpload = @"eventupload/";
+NSString * const kURLRuleDownload = @"ruledownload/";
+NSString * const kURLPostflight = @"postflight/";
+
+NSString * const kSerialNumber = @"serial_no";
+NSString * const kHostname = @"hostname";
+NSString * const kSantaVer = @"santa_version";
+NSString * const kOSVer = @"os_version";
+NSString * const kOSBuild = @"os_build";
+NSString * const kPrimaryUser = @"primary_user";
+NSString * const kBatchSize = @"batch_size";
+NSString * const kUploadLogsURL = @"upload_logs_url";
+NSString * const kClientMode = @"client_mode";
+NSString * const kClientModeMonitor = @"MONITOR";
+NSString * const kClientModeLockdown = @"LOCKDOWN";
+
+NSString * const kEvents = @"events";
+NSString * const kFileSHA256 = @"file_sha256";
+NSString * const kFilePath = @"file_path";
+NSString * const kFileName = @"file_name";
+NSString * const kExecutingUser = @"executing_user";
+NSString * const kExecutionTime = @"execution_time";
+NSString * const kDecision = @"decision";
+NSString * const kLoggedInUsers = @"logged_in_users";
+NSString * const kCurrentSessions = @"current_sessions";
+NSString * const kFileBundleID = @"file_bundle_id";
+NSString * const kFileBundleName = @"file_bundle_name";
+NSString * const kFileBundleVersion = @"file_bundle_version";
+NSString * const kFileBundleShortVersionString = @"file_bundle_version_string";
+NSString * const kPID = @"pid";
+NSString * const kPPID = @"ppid";
+NSString * const kSigningChain = @"signing_chain";
+NSString * const kCertSHA256 = @"sha256";
+NSString * const kCertCN = @"cn";
+NSString * const kCertOrg = @"org";
+NSString * const kCertOU = @"ou";
+NSString * const kCertValidFrom = @"valid_from";
+NSString * const kCertValidUntil = @"valid_until";
+
+NSString * const kLogUploadField = @"files";
+
+NSString * const kRules = @"rules";
+NSString * const kRuleSHA256 = @"sha256";
+NSString * const kRulePolicy = @"policy";
+NSString * const kRulePolicyWhitelist = @"WHITELIST";
+NSString * const kRulePolicyBlacklist = @"BLACKLIST";
+NSString * const kRulePolicySilentBlacklist = @"SILENT_BLACKLIST";
+NSString * const kRulePolicyRemove = @"REMOVE";
+NSString * const kRuleType = @"rule_type";
+NSString * const kRuleTypeBinary = @"BINARY";
+NSString * const kRuleTypeCertificate = @"CERTIFICATE";
+NSString * const kRuleCustomMsg = @"custom_msg";
+NSString * const kCursor = @"cursor";

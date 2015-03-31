@@ -19,6 +19,7 @@
 #include "SNTCommonEnums.h"
 #include "SNTLogging.h"
 
+#import "SNTCommandSyncConstants.h"
 #import "SNTCommandSyncStatus.h"
 
 @implementation SNTCommandSyncLogUpload
@@ -45,8 +46,8 @@
         [[NSString stringWithFormat:@"--%@\r\n", boundary] dataUsingEncoding:NSUTF8StringEncoding]];
     [reqBody appendData:
         [[NSString stringWithFormat:@"Content-Disposition: form-data; "
-            @"name=\"files\"; "
-            @"filename=\"%@.gz\"\r\n", [log lastPathComponent]]
+            @"name=\"%@\"; "
+            @"filename=\"%@.gz\"\r\n", kLogUploadField, [log lastPathComponent]]
          dataUsingEncoding:NSUTF8StringEncoding]];
     [reqBody appendData:
         [@"Content-Type: application/x-gzip\r\n\r\n" dataUsingEncoding:NSUTF8StringEncoding]];

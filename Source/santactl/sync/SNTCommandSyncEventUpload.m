@@ -17,6 +17,7 @@
 #include "SNTLogging.h"
 
 #import "SNTCertificate.h"
+#import "SNTCommandSyncConstants.h"
 #import "SNTCommandSyncStatus.h"
 #import "SNTStoredEvent.h"
 #import "SNTXPCConnection.h"
@@ -28,7 +29,7 @@
                     progress:(SNTCommandSyncStatus *)progress
                   daemonConn:(SNTXPCConnection *)daemonConn
            completionHandler:(void (^)(BOOL success))handler {
-  NSURL *url = [NSURL URLWithString:[@"eventupload/" stringByAppendingString:progress.machineID]
+  NSURL *url = [NSURL URLWithString:[kURLEventUpload stringByAppendingString:progress.machineID]
                       relativeToURL:progress.syncBaseURL];
 
   [[daemonConn remoteObjectProxy] databaseEventsPending:^(NSArray *events) {
@@ -50,7 +51,7 @@
                            progress:(SNTCommandSyncStatus *)progress
                          daemonConn:(SNTXPCConnection *)daemonConn
                   completionHandler:(void (^)(BOOL success))handler {
-  NSURL *url = [NSURL URLWithString:[@"eventupload/" stringByAppendingString:progress.machineID]
+  NSURL *url = [NSURL URLWithString:[kURLEventUpload stringByAppendingString:progress.machineID]
                       relativeToURL:progress.syncBaseURL];
   [[daemonConn remoteObjectProxy] databaseEventForSHA256:SHA256 withReply:^(SNTStoredEvent *event) {
       if (!event) {
@@ -83,7 +84,7 @@
     if (eventIds.count >= batchSize) break;
   }
 
-  NSDictionary *uploadReq = @{ @"events": uploadEvents };
+  NSDictionary *uploadReq = @{ kEvents: uploadEvents };
 
   NSData *requestBody;
   @try {
@@ -129,38 +130,38 @@
 #define ADDKEY(dict, key, value) if (value) dict[key] = value
   NSMutableDictionary *newEvent = [NSMutableDictionary dictionary];
 
-  ADDKEY(newEvent, @"file_sha256", event.fileSHA256);
-  ADDKEY(newEvent, @"file_path", [event.filePath stringByDeletingLastPathComponent]);
-  ADDKEY(newEvent, @"file_name", [event.filePath lastPathComponent]);
-  ADDKEY(newEvent, @"executing_user", event.executingUser);
-  ADDKEY(newEvent, @"execution_time", @([event.occurrenceDate timeIntervalSince1970]));
-  ADDKEY(newEvent, @"decision", @(event.decision));
-  ADDKEY(newEvent, @"logged_in_users", event.loggedInUsers);
-  ADDKEY(newEvent, @"current_sessions", event.currentSessions);
+  ADDKEY(newEvent, kFileSHA256, event.fileSHA256);
+  ADDKEY(newEvent, kFilePath, [event.filePath stringByDeletingLastPathComponent]);
+  ADDKEY(newEvent, kFileName, [event.filePath lastPathComponent]);
+  ADDKEY(newEvent, kExecutingUser, event.executingUser);
+  ADDKEY(newEvent, kExecutionTime, @([event.occurrenceDate timeIntervalSince1970]));
+  ADDKEY(newEvent, kDecision, @(event.decision));
+  ADDKEY(newEvent, kLoggedInUsers, event.loggedInUsers);
+  ADDKEY(newEvent, kCurrentSessions, event.currentSessions);
 
-  ADDKEY(newEvent, @"file_bundle_id", event.fileBundleID);
-  ADDKEY(newEvent, @"file_bundle_name", event.fileBundleName);
-  ADDKEY(newEvent, @"file_bundle_version", event.fileBundleVersion);
-  ADDKEY(newEvent, @"file_bundle_version_string", event.fileBundleVersionString);
+  ADDKEY(newEvent, kFileBundleID, event.fileBundleID);
+  ADDKEY(newEvent, kFileBundleName, event.fileBundleName);
+  ADDKEY(newEvent, kFileBundleVersion, event.fileBundleVersion);
+  ADDKEY(newEvent, kFileBundleShortVersionString, event.fileBundleVersionString);
 
-  ADDKEY(newEvent, @"pid", event.pid);
-  ADDKEY(newEvent, @"ppid", event.ppid);
+  ADDKEY(newEvent, kPID, event.pid);
+  ADDKEY(newEvent, kPPID, event.ppid);
 
   NSMutableArray *signingChain = [NSMutableArray arrayWithCapacity:event.signingChain.count];
   for (int i = 0; i < event.signingChain.count; i++) {
     SNTCertificate *cert = [event.signingChain objectAtIndex:i];
 
     NSMutableDictionary *certDict = [NSMutableDictionary dictionary];
-    ADDKEY(certDict, @"sha256", cert.SHA256);
-    ADDKEY(certDict, @"cn", cert.commonName);
-    ADDKEY(certDict, @"org", cert.orgName);
-    ADDKEY(certDict, @"ou", cert.orgUnit);
-    ADDKEY(certDict, @"valid_from", @([cert.validFrom timeIntervalSince1970]));
-    ADDKEY(certDict, @"valid_until", @([cert.validUntil timeIntervalSince1970]));
+    ADDKEY(certDict, kCertSHA256, cert.SHA256);
+    ADDKEY(certDict, kCertCN, cert.commonName);
+    ADDKEY(certDict, kCertOrg, cert.orgName);
+    ADDKEY(certDict, kCertOU, cert.orgUnit);
+    ADDKEY(certDict, kCertValidFrom, @([cert.validFrom timeIntervalSince1970]));
+    ADDKEY(certDict, kCertValidUntil, @([cert.validUntil timeIntervalSince1970]));
 
     [signingChain addObject:certDict];
   }
-  newEvent[@"signing_chain"] = signingChain;
+  newEvent[kSigningChain] = signingChain;
 
   return newEvent;
 #undef ADDKEY
