@@ -16,14 +16,17 @@
 
 ///
 ///  Singleton that provides an interface for managing configuration values on disk
-///  @note This class is designed as a singleton but that is not enforced.
+///  @note This class is designed as a singleton but that is not strictly enforced.
 ///
 @interface SNTConfigurator : NSObject
+
+///  Default config file path
+extern NSString * const kDefaultConfigFilePath;
 
 #pragma mark - Daemon Settings
 
 ///
-///  The operating mode
+///  The operating mode.
 ///
 @property santa_clientmode_t clientMode;
 
@@ -64,17 +67,17 @@
 # pragma mark - Sync Settings
 
 ///
-///  The base URL of the sync server
+///  The base URL of the sync server.
 ///
 @property(readonly) NSURL *syncBaseURL;
 
 ///
-///  The machine owner
+///  The machine owner.
 ///
 @property(readonly) NSString *machineOwner;
 
 ///
-///  If set, this over-rides the default machine ID used for syncing
+///  If set, this over-rides the default machine ID used for syncing.
 ///
 @property(readonly) NSString *machineID;
 
@@ -116,15 +119,20 @@
 @property(readonly) NSString *syncClientAuthCertificateIssuer;
 
 ///
-///  Retrieve an initialized singleton configurator object using the default file path
+///  Retrieve an initialized singleton configurator object using the default file path.
 ///
 + (instancetype)configurator;
 
 ///
-///  Designated initializer
+///  Designated initializer.
 ///
 ///  @param filePath The path to the file to use as a backing store.
 ///
 - (instancetype)initWithFilePath:(NSString *)filePath;
+
+///
+///  Re-read config data from disk.
+///
+- (void)reloadConfigData;
 
 @end

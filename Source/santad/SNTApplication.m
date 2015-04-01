@@ -13,6 +13,7 @@
 ///    limitations under the License.
 
 #include <pwd.h>
+#include <sys/stat.h>
 #include <sys/types.h>
 
 #import "SNTApplication.h"
@@ -26,6 +27,7 @@
 #import "SNTDriverManager.h"
 #import "SNTEventTable.h"
 #import "SNTExecutionController.h"
+#import "SNTFileWatcher.h"
 #import "SNTRuleTable.h"
 #import "SNTXPCConnection.h"
 #import "SNTXPCControlInterface.h"
@@ -35,6 +37,7 @@
 @property SNTDriverManager *driverManager;
 @property SNTEventTable *eventTable;
 @property SNTExecutionController *execController;
+@property SNTFileWatcher *configFileWatcher;
 @property SNTRuleTable *ruleTable;
 @property SNTXPCConnection *controlConnection;
 @property SNTXPCConnection *notifierConnection;
@@ -81,6 +84,15 @@
     _controlConnection.exportedObject =
         [[SNTDaemonControlController alloc] initWithDriverManager:_driverManager];
     [_controlConnection resume];
+
+    _configFileWatcher = [[SNTFileWatcher alloc] initWithFilePath:kDefaultConfigFilePath
+                                                          handler:^{
+        [[SNTConfigurator configurator] reloadConfigData];
+
+        // Ensure config file remains root:wheel 0644
+        chown([kDefaultConfigFilePath fileSystemRepresentation], 0, 0);
+        chmod([kDefaultConfigFilePath fileSystemRepresentation], 0644);
+    }];
 
     // Initialize the binary checker object
     _execController = [[SNTExecutionController alloc] initWithDriverManager:_driverManager

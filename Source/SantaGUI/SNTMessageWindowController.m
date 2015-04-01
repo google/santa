@@ -77,15 +77,15 @@
 }
 
 - (IBAction)openEventDetails:(id)sender {
-  NSString *formatStr = [[SNTConfigurator configurator] eventDetailURL];
+  SNTConfigurator *config = [SNTConfigurator configurator];
 
+  NSString *formatStr = config.eventDetailURL;
   formatStr = [formatStr stringByReplacingOccurrencesOfString:@"%file_sha%"
                                                    withString:self.event.fileSHA256];
   formatStr = [formatStr stringByReplacingOccurrencesOfString:@"%username%"
                                                    withString:self.event.executingUser];
-  formatStr =
-      [formatStr stringByReplacingOccurrencesOfString:@"%machine_id%"
-                                           withString:[[SNTConfigurator configurator] machineID]];
+  formatStr = [formatStr stringByReplacingOccurrencesOfString:@"%machine_id%"
+                                                   withString:config.machineID];
 
   [self closeWindow:sender];
   [[NSWorkspace sharedWorkspace] openURL:[NSURL URLWithString:formatStr]];

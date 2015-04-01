@@ -16,11 +16,13 @@
 
 #import "SNTAboutWindowController.h"
 #import "SNTConfigurator.h"
+#import "SNTFileWatcher.h"
 #import "SNTNotificationManager.h"
 #import "SNTXPCConnection.h"
 
 @interface SNTAppDelegate ()
 @property SNTAboutWindowController *aboutWindowController;
+@property SNTFileWatcher *configFileWatcher;
 @property SNTNotificationManager *notificationManager;
 @property SNTXPCConnection *listener;
 @end
@@ -31,6 +33,12 @@
 
 - (void)applicationDidFinishLaunching:(NSNotification *)aNotification {
   [self setupMenu];
+
+  self.configFileWatcher = [[SNTFileWatcher alloc] initWithFilePath:kDefaultConfigFilePath
+                                                            handler:^{
+    [[SNTConfigurator configurator] reloadConfigData];
+  }];
+
   self.aboutWindowController = [[SNTAboutWindowController alloc] init];
   self.notificationManager = [[SNTNotificationManager alloc] init];
 
@@ -45,9 +53,6 @@
                                object:nil];
 
   [self createConnection];
-
-  // Load configuration from disk ready for first message.
-  (void)[SNTConfigurator configurator];
 }
 
 - (BOOL)applicationShouldHandleReopen:(NSApplication *)sender hasVisibleWindows:(BOOL)flag {
@@ -60,9 +65,8 @@
 - (void)createConnection {
   __weak __typeof(self) weakSelf = self;
 
-  self.listener =
-      [[SNTXPCConnection alloc] initClientWithName:[SNTXPCNotifierInterface serviceId]
-                                           options:NSXPCConnectionPrivileged];
+  self.listener = [[SNTXPCConnection alloc] initClientWithName:[SNTXPCNotifierInterface serviceId]
+                                                       options:NSXPCConnectionPrivileged];
   self.listener.exportedInterface = [SNTXPCNotifierInterface notifierInterface];
   self.listener.exportedObject = self.notificationManager;
   self.listener.rejectedHandler = ^{

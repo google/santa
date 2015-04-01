@@ -148,6 +148,9 @@
 		0DE50F6E191304E0007B2B0C /* SNTRule.m in Sources */ = {isa = PBXBuildFile; fileRef = 0DE50F671912716A007B2B0C /* SNTRule.m */; };
 		0DE6788D1784A8C2007A9E52 /* SNTExecutionController.m in Sources */ = {isa = PBXBuildFile; fileRef = 0DE6788C1784A8C2007A9E52 /* SNTExecutionController.m */; };
 		0DEFB7C01ACB28B000B92AAE /* SNTCommandSyncConstants.m in Sources */ = {isa = PBXBuildFile; fileRef = 0DEFB7BF1ACB28B000B92AAE /* SNTCommandSyncConstants.m */; };
+		0DEFB7C41ACDD80100B92AAE /* SNTFileWatcher.m in Sources */ = {isa = PBXBuildFile; fileRef = 0DEFB7C31ACDD80100B92AAE /* SNTFileWatcher.m */; };
+		0DEFB7C51ACDD80100B92AAE /* SNTFileWatcher.m in Sources */ = {isa = PBXBuildFile; fileRef = 0DEFB7C31ACDD80100B92AAE /* SNTFileWatcher.m */; };
+		0DEFB7C61ACDE5F600B92AAE /* SNTFileWatcher.m in Sources */ = {isa = PBXBuildFile; fileRef = 0DEFB7C31ACDD80100B92AAE /* SNTFileWatcher.m */; };
 		0DF395641AB76A7900CBC520 /* NSData+Zlib.m in Sources */ = {isa = PBXBuildFile; fileRef = 0DF395631AB76A7900CBC520 /* NSData+Zlib.m */; };
 		0DF395661AB76ABC00CBC520 /* libz.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 0DF395651AB76ABC00CBC520 /* libz.dylib */; };
 		4092327A1A51B66400A04527 /* SNTCommandRule.m in Sources */ = {isa = PBXBuildFile; fileRef = 409232791A51B65D00A04527 /* SNTCommandRule.m */; };
@@ -328,6 +331,8 @@
 		0DE6788C1784A8C2007A9E52 /* SNTExecutionController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; lineEnding = 0; path = SNTExecutionController.m; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objc; };
 		0DEFB7BF1ACB28B000B92AAE /* SNTCommandSyncConstants.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SNTCommandSyncConstants.m; sourceTree = "<group>"; };
 		0DEFB7C11ACB28BC00B92AAE /* SNTCommandSyncConstants.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SNTCommandSyncConstants.h; sourceTree = "<group>"; };
+		0DEFB7C21ACDD80100B92AAE /* SNTFileWatcher.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SNTFileWatcher.h; sourceTree = "<group>"; };
+		0DEFB7C31ACDD80100B92AAE /* SNTFileWatcher.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SNTFileWatcher.m; sourceTree = "<group>"; };
 		0DF395621AB76A7900CBC520 /* NSData+Zlib.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSData+Zlib.h"; sourceTree = "<group>"; };
 		0DF395631AB76A7900CBC520 /* NSData+Zlib.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSData+Zlib.m"; sourceTree = "<group>"; };
 		0DF395651AB76ABC00CBC520 /* libz.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libz.dylib; path = usr/lib/libz.dylib; sourceTree = SDKROOT; };
@@ -621,6 +626,8 @@
 				0D10BE851A0AABD600C0C944 /* SNTDropRootPrivs.m */,
 				0DCD6040190ACCB8006B445C /* SNTFileInfo.h */,
 				0DCD6041190ACCB8006B445C /* SNTFileInfo.m */,
+				0DEFB7C21ACDD80100B92AAE /* SNTFileWatcher.h */,
+				0DEFB7C31ACDD80100B92AAE /* SNTFileWatcher.m */,
 				0D28E5E31926AFE400280F87 /* SNTKernelCommon.h */,
 				0D28E5E119269B3600280F87 /* SNTLogging.h */,
 				0DA73C9E1934F8100056D7C4 /* SNTLogging.m */,
@@ -1094,6 +1101,7 @@
 				0DCD604D19105433006B445C /* SNTStoredEvent.m in Sources */,
 				0DCD605819115E57006B445C /* SNTXPCControlInterface.m in Sources */,
 				0D10BE891A0AAF6700C0C944 /* SNTDropRootPrivs.m in Sources */,
+				0DEFB7C61ACDE5F600B92AAE /* SNTFileWatcher.m in Sources */,
 				0D10BE8B1A0AB23300C0C944 /* SNTDERDecoderTest.m in Sources */,
 				0DD0D48B194F6193005F27EB /* SNTCertificateTest.m in Sources */,
 				0D28D53819D9F5910015C5EB /* SNTConfigurator.m in Sources */,
@@ -1167,6 +1175,7 @@
 				0D1B477019A53419008CADD3 /* SNTAboutWindowController.m in Sources */,
 				0D668E8118D1121700E29A8B /* SNTMessageWindow.m in Sources */,
 				0DA73CA11934F8100056D7C4 /* SNTLogging.m in Sources */,
+				0DEFB7C51ACDD80100B92AAE /* SNTFileWatcher.m in Sources */,
 				0D20710E1A7C4A86008B0A9A /* SNTStoredEvent.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -1196,6 +1205,7 @@
 				0D1AF477187C7A2C00D3298D /* SNTCertificate.m in Sources */,
 				0DA73C9F1934F8100056D7C4 /* SNTLogging.m in Sources */,
 				0DCD6042190ACCB8006B445C /* SNTFileInfo.m in Sources */,
+				0DEFB7C41ACDD80100B92AAE /* SNTFileWatcher.m in Sources */,
 				0DC5D86D191AED220078A5C0 /* SNTRuleTable.m in Sources */,
 				0D7D01871774F93A005DBAB4 /* SNTDriverManager.m in Sources */,
 				0D8E18CD19107B56000F89B8 /* SNTDaemonControlController.m in Sources */,

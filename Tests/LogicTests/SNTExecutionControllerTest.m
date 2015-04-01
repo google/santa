@@ -55,6 +55,7 @@
 
   self.mockConfigurator = OCMClassMock([SNTConfigurator class]);
   OCMStub([self.mockConfigurator configurator]).andReturn(self.mockConfigurator);
+  OCMStub([self.mockConfigurator configurator]).andReturn(self.mockConfigurator);
 
   self.mockDriverManager = OCMClassMock([SNTDriverManager class]);
 
