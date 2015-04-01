@@ -53,7 +53,8 @@
                                                         NSError *error) {
       long statusCode = [(NSHTTPURLResponse *)response statusCode];
       if (statusCode != 200) {
-        LOGD(@"HTTP Response: %@",
+        LOGE(@"HTTP Response: %d %@",
+             statusCode,
              [[NSHTTPURLResponse localizedStringForStatusCode:statusCode] capitalizedString]);
         handler(NO);
       } else {

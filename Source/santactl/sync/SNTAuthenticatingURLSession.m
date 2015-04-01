@@ -68,13 +68,13 @@
   }
 
   if (![protectionSpace.protocol isEqual:NSURLProtectionSpaceHTTPS]) {
-    LOGD(@"Protection Space: %@ is not a secure protocol", protectionSpace.protocol);
+    LOGE(@"%@ is not a secure protocol", protectionSpace.protocol);
     completionHandler(NSURLSessionAuthChallengeRejectProtectionSpace, nil);
     return;
   }
 
   if (!protectionSpace.receivesCredentialSecurely) {
-    LOGD(@"Protection Space: secure authentication or protocol cannot be established.");
+    LOGE(@"Secure authentication or protocol cannot be established.");
     completionHandler(NSURLSessionAuthChallengeRejectProtectionSpace, nil);
     return;
   }
@@ -97,7 +97,7 @@
       completionHandler(NSURLSessionAuthChallengeUseCredential, cred);
       return;
     } else {
-      LOGE(@"Server asked for client authentication but no usable client certificate found.");
+      LOGE(@"Unable to verify server identity.");
       completionHandler(NSURLSessionAuthChallengeRejectProtectionSpace, nil);
       return;
     }
@@ -142,7 +142,7 @@
     NSError *error;
     NSData *data = [NSData dataWithContentsOfFile:self.clientCertFile options:0 error:&error];
     if (error) {
-      LOGE(@"Client Trust: Couldn't open client certificate %@: %@",
+      LOGD(@"Client Trust: Couldn't open client certificate %@: %@",
            self.clientCertFile,
            [error localizedDescription]);
       return nil;
@@ -158,7 +158,7 @@
     NSArray *identities = CFBridgingRelease(cfIdentities);
 
     if (err != errSecSuccess) {
-      LOGE(@"Client Trust: Couldn't load client certificate %@: %d", self.clientCertFile, err);
+      LOGD(@"Client Trust: Couldn't load client certificate %@: %d", self.clientCertFile, err);
       return nil;
     }
 
@@ -230,7 +230,10 @@
   }
 
   if (foundIdentity) {
-    LOGD(@"Client Trust: Valid client identity %@.", foundIdentity);
+    SecCertificateRef certificate = NULL;
+    err = SecIdentityCopyCertificate(foundIdentity, &certificate);
+    SNTCertificate *clientCert = [[SNTCertificate alloc] initWithSecCertificateRef:certificate];
+    LOGD(@"Client Trust: Valid client identity %@.", clientCert);
     NSURLCredential *cred =
         [NSURLCredential credentialWithIdentity:foundIdentity
                                    certificates:nil
@@ -278,7 +281,7 @@
     // Set this array of certs as the anchors to trust.
     err = SecTrustSetAnchorCertificates(serverTrust, (__bridge CFArrayRef)certRefs);
     if (err != errSecSuccess) {
-      LOGE(@"Server Trust: Could not set anchor certificates: %d", err);
+      LOGD(@"Server Trust: Could not set anchor certificates: %d", err);
       return nil;
     }
   }
@@ -287,7 +290,7 @@
   SecTrustResultType result = kSecTrustResultInvalid;
   err = SecTrustEvaluate(serverTrust, &result);
   if (err != errSecSuccess) {
-    LOGE(@"Server Trust: Unable to evaluate certificate chain for server: %d", err);
+    LOGD(@"Server Trust: Unable to evaluate certificate chain for server: %d", err);
     return nil;
   }
 
@@ -301,7 +304,7 @@
   // Having a trust level "unspecified" by the user is the usual result, described at
   // https://developer.apple.com/library/mac/qa/qa1360
   if (result != kSecTrustResultProceed && result != kSecTrustResultUnspecified) {
-    LOGE(@"Server Trust: Server isn't trusted. SecTrustResultType: %d", result);
+    LOGD(@"Server Trust: Server isn't trusted. SecTrustResultType: %d", result);
     return nil;
   }
 

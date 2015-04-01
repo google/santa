@@ -58,6 +58,6 @@ void logMessage(int level, FILE *destination, NSString *format, ...) {
     }
 
     fprintf(destination, "%s\n", [[NSString stringWithFormat:@"[%@] %@ %@: %@",
-               [dateFormatter stringFromDate:[NSDate date]], levelName, binaryName, s] UTF8String]);
+            [dateFormatter stringFromDate:[NSDate date]], levelName, binaryName, s] UTF8String]);
   }
 }

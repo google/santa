@@ -102,8 +102,11 @@
   [[session dataTaskWithRequest:req completionHandler:^(NSData *data,
                                                         NSURLResponse *response,
                                                         NSError *error) {
-      if ([(NSHTTPURLResponse *)response statusCode] != 200) {
-        LOGD(@"HTTP Response Code: %d", [(NSHTTPURLResponse *)response statusCode]);
+      long statusCode = [(NSHTTPURLResponse *)response statusCode];
+      if (statusCode != 200) {
+          LOGE(@"HTTP Response: %d %@",
+               statusCode,
+               [[NSHTTPURLResponse localizedStringForStatusCode:statusCode] capitalizedString]);
         handler(NO);
       } else {
         LOGI(@"Uploaded %d events", eventIds.count);

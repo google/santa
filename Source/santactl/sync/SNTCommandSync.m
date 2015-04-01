@@ -118,6 +118,8 @@ REGISTER_COMMAND_NAME(@"sync");
   if (!s.progress.syncBaseURL) {
     LOGE(@"Missing SyncBaseURL. Can't sync without it.");
     exit(1);
+  } else if (![s.progress.syncBaseURL.scheme isEqual:@"https"]) {
+    LOGW(@"SyncBaseURL is not over HTTPS!");
   }
   authURLSession.serverHostname = s.progress.syncBaseURL.host;
 
