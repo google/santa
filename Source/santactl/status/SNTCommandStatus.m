@@ -41,6 +41,22 @@ REGISTER_COMMAND_NAME(@"status");
 }
 
 + (void)runWithArguments:(NSArray *)arguments daemonConnection:(SNTXPCConnection *)daemonConn {
+  // Daemon status
+  __block NSString *clientMode;
+  [[daemonConn remoteObjectProxy] clientMode:^(santa_clientmode_t cm) {
+      switch (cm) {
+        case CLIENTMODE_MONITOR:
+          clientMode = @"Monitor"; break;
+        case CLIENTMODE_LOCKDOWN:
+          clientMode = @"Lockdown"; break;
+        default:
+          clientMode = [NSString stringWithFormat:@"Unknown (%d)", cm]; break;
+      }
+  }];
+  do { usleep(5000); } while (!clientMode);
+  printf(">>> Daemon Info\n");
+  printf("  %-25s | %s\n", "Mode", [clientMode UTF8String]);
+
   // Kext status
   __block uint64_t cacheCount = -1;
   [[daemonConn remoteObjectProxy] cacheCount:^(uint64_t count) {
