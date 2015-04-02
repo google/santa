@@ -47,7 +47,6 @@
 /// database exists and uses the latest schema.
 - (void)updateTableSchema {
   [self inTransaction:^(FMDatabase *db, BOOL *rollback) {
-
       int currentVersion = [db userVersion];
       int newVersion = [self initializeDatabase:db fromVersion:currentVersion];
       if (newVersion < 1) return;

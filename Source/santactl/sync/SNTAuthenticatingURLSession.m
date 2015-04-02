@@ -111,11 +111,11 @@
     willPerformHTTPRedirection:(NSHTTPURLResponse *)response
                     newRequest:(NSURLRequest *)request
              completionHandler:(void (^)(NSURLRequest *))completionHandler {
-  if (self.refusesRedirects) {
-    completionHandler(NULL);
-  } else {
-    completionHandler(request);
-  }
+    if (self.refusesRedirects) {
+      completionHandler(NULL);
+    } else {
+      completionHandler(request);
+    }
 }
 
 #pragma mark Private Helpers for URLSession:didReceiveChallenge:completionHandler:
@@ -181,51 +181,51 @@
 
     // Manually iterate through available identities to find one with an allowed issuer.
     [identities enumerateObjectsUsingBlock:^(id obj, NSUInteger idx, BOOL *stop) {
-      SecIdentityRef identityRef = (__bridge SecIdentityRef)obj;
+        SecIdentityRef identityRef = (__bridge SecIdentityRef)obj;
 
-      SecCertificateRef certificate = NULL;
-      err = SecIdentityCopyCertificate(identityRef, &certificate);
-      if (err != errSecSuccess) {
-        LOGD(@"Client Trust: Failed to read certificate data: %d. Skipping identity.", (int)err);
-        return;
-      }
-
-      SNTCertificate *clientCert = [[SNTCertificate alloc] initWithSecCertificateRef:certificate];
-      CFRelease(certificate);
-
-      // Switch identity finding method depending on config
-      if (self.clientCertCommonName && clientCert.commonName) {
-        if ([clientCert.commonName compare:self.clientCertCommonName
-                                   options:NSCaseInsensitiveSearch] == NSOrderedSame) {
-          foundIdentity = identityRef;
-          CFRetain(foundIdentity);
-          *stop = YES;
-          return;  // return from enumeration block
+        SecCertificateRef certificate = NULL;
+        err = SecIdentityCopyCertificate(identityRef, &certificate);
+        if (err != errSecSuccess) {
+          LOGD(@"Client Trust: Failed to read certificate data: %d. Skipping identity.", (int)err);
+          return;
         }
-      } else if (self.clientCertIssuerCn && clientCert.issuerCommonName) {
-        if ([clientCert.issuerCommonName compare:self.clientCertIssuerCn
-                                         options:NSCaseInsensitiveSearch] == NSOrderedSame) {
-          foundIdentity = identityRef;
-          CFRetain(foundIdentity);
-          *stop = YES;
-          return;  // return from enumeration block
-        }
-      } else {
-        for (NSData *allowedIssuer in protectionSpace.distinguishedNames) {
-          SNTDERDecoder *decoder = [[SNTDERDecoder alloc] initWithData:allowedIssuer];
-          if (!decoder) continue;
-          if ([clientCert.issuerCommonName isEqual:decoder.commonName] &&
-              [clientCert.issuerCountryName isEqual:decoder.countryName] &&
-              [clientCert.issuerOrgName isEqual:decoder.organizationName] &&
-              [clientCert.issuerOrgUnit isEqual:decoder.organizationalUnit]) {
 
+        SNTCertificate *clientCert = [[SNTCertificate alloc] initWithSecCertificateRef:certificate];
+        CFRelease(certificate);
+
+        // Switch identity finding method depending on config
+        if (self.clientCertCommonName && clientCert.commonName) {
+          if ([clientCert.commonName compare:self.clientCertCommonName
+                                     options:NSCaseInsensitiveSearch] == NSOrderedSame) {
             foundIdentity = identityRef;
             CFRetain(foundIdentity);
             *stop = YES;
             return;  // return from enumeration block
           }
+        } else if (self.clientCertIssuerCn && clientCert.issuerCommonName) {
+          if ([clientCert.issuerCommonName compare:self.clientCertIssuerCn
+                                           options:NSCaseInsensitiveSearch] == NSOrderedSame) {
+            foundIdentity = identityRef;
+            CFRetain(foundIdentity);
+            *stop = YES;
+            return;  // return from enumeration block
+          }
+        } else {
+          for (NSData *allowedIssuer in protectionSpace.distinguishedNames) {
+            SNTDERDecoder *decoder = [[SNTDERDecoder alloc] initWithData:allowedIssuer];
+            if (!decoder) continue;
+            if ([clientCert.issuerCommonName isEqual:decoder.commonName] &&
+                [clientCert.issuerCountryName isEqual:decoder.countryName] &&
+                [clientCert.issuerOrgName isEqual:decoder.organizationName] &&
+                [clientCert.issuerOrgUnit isEqual:decoder.organizationalUnit]) {
+
+              foundIdentity = identityRef;
+              CFRetain(foundIdentity);
+              *stop = YES;
+              return;  // return from enumeration block
+            }
+          }
         }
-      }
     }];
   }
 

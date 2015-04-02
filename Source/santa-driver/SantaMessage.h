@@ -26,10 +26,6 @@
 class SantaMessage : public OSObject {
   OSDeclareDefaultStructors(SantaMessage)
 
- private:
-  santa_action_t action_;
-  uint64_t microsecs_;
-
  public:
   // Returns the time the action was last set.
   uint64_t getMicrosecs() const;
@@ -39,6 +35,10 @@ class SantaMessage : public OSObject {
 
   // Sets the acion and receive time.
   void setAction(const santa_action_t action, const uint64_t microsecs);
+
+ private:
+  santa_action_t action_;
+  uint64_t microsecs_;
 };
 
 #endif  // SANTA__SANTA_DRIVER__SANTAMESSAGE_H

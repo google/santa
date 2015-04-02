@@ -152,12 +152,12 @@ REGISTER_COMMAND_NAME(@"rule");
   newRule.customMsg = customMsg;
   
   [[daemonConn remoteObjectProxy] databaseRuleAddRule:newRule withReply:^{
-    if (state == RULESTATE_REMOVE) {
-      printf("Removed rule for SHA-256: %s.\n", [newRule.shasum UTF8String]);
-    } else {
-      printf("Added rule for SHA-256: %s.\n", [newRule.shasum UTF8String]);
-    }
-    exit(0);
+      if (state == RULESTATE_REMOVE) {
+        printf("Removed rule for SHA-256: %s.\n", [newRule.shasum UTF8String]);
+      } else {
+        printf("Added rule for SHA-256: %s.\n", [newRule.shasum UTF8String]);
+      }
+      exit(0);
   }];
 
 }

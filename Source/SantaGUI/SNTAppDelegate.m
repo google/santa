@@ -36,7 +36,7 @@
 
   self.configFileWatcher = [[SNTFileWatcher alloc] initWithFilePath:kDefaultConfigFilePath
                                                             handler:^{
-    [[SNTConfigurator configurator] reloadConfigData];
+      [[SNTConfigurator configurator] reloadConfigData];
   }];
 
   self.aboutWindowController = [[SNTAboutWindowController alloc] init];

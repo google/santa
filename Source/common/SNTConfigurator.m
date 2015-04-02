@@ -68,7 +68,7 @@ static NSString * const kMachineIDPlistKeyKey = @"MachineIDKey";
   static SNTConfigurator *sharedConfigurator = nil;
   static dispatch_once_t onceToken;
   dispatch_once(&onceToken, ^{
-    sharedConfigurator = [[SNTConfigurator alloc] initWithFilePath:kDefaultConfigFilePath];
+      sharedConfigurator = [[SNTConfigurator alloc] initWithFilePath:kDefaultConfigFilePath];
   });
   return sharedConfigurator;
 }

@@ -43,12 +43,6 @@ const int kMaxQueueEvents = 256;
 class com_google_SantaDriverClient : public IOUserClient {
   OSDeclareDefaultStructors(com_google_SantaDriverClient);
 
- private:
-  IOSharedDataQueue *fDataQueue;
-  IOMemoryDescriptor *fSharedMemory;
-  com_google_SantaDriver *fProvider;
-  SantaDecisionManager *fSDM;
-
  public:
   ///  Called as part of IOServiceOpen in clients
   bool initWithTask(task_t owningTask, void *securityID, UInt32 type);
@@ -122,6 +116,12 @@ class com_google_SantaDriverClient : public IOUserClient {
       com_google_SantaDriverClient *target,
       void *reference,
       IOExternalMethodArguments *arguments);
+
+ private:
+  IOSharedDataQueue *fDataQueue;
+  IOMemoryDescriptor *fSharedMemory;
+  com_google_SantaDriver *fProvider;
+  SantaDecisionManager *fSDM;
 };
 
 #endif  // SANTA__SANTA_DRIVER__SANTADRIVERUSERCLIENT_H
