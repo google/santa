@@ -20,16 +20,14 @@
 @interface SNTFileWatcher : NSObject
 
 ///
-///  The block to run when the file changes.
-///
-@property(strong) void (^eventHandler)(void);
-
-///
 ///  Designated initializer
 ///  Initializes the watcher and begins watching for modifications.
 ///
 ///  @param filePath the file to watch.
 ///  @param handler the handler to call when changes happen.
+///
+///  @note Shortly after the file has been opened and monitoring has begun, the provided handler
+///  will be called.
 ///
 - (instancetype)initWithFilePath:(NSString *)filePath handler:(void (^)(void))handler;
 

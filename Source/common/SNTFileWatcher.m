@@ -17,6 +17,8 @@
 @interface SNTFileWatcher ()
 @property NSString *filePath;
 @property dispatch_source_t monitoringSource;
+
+@property(strong) void (^eventHandler)(void);
 @property(strong) void (^internalEventHandler)(void);
 @property(strong) void (^internalCancelHandler)(void);
 @end
@@ -34,6 +36,8 @@
     _filePath = filePath;
     _eventHandler = handler;
 
+    if (!_filePath || !_eventHandler) return nil;
+
     [self beginWatchingFile];
   }
   return self;
@@ -44,17 +48,15 @@
 }
 
 - (void)beginWatchingFile {
-  dispatch_queue_t queue = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_BACKGROUND, 0);
-
+  __weak typeof(self) weakSelf = self;
   int mask = (DISPATCH_VNODE_DELETE | DISPATCH_VNODE_WRITE |
               DISPATCH_VNODE_EXTEND | DISPATCH_VNODE_RENAME);
-
-  __weak typeof(self) weakSelf = self;
+  dispatch_queue_t queue = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_BACKGROUND, 0);
 
   self.internalEventHandler = ^{
       unsigned long l = dispatch_source_get_data(weakSelf.monitoringSource);
       if (l & DISPATCH_VNODE_DELETE || l & DISPATCH_VNODE_RENAME) {
-        dispatch_source_cancel(weakSelf.monitoringSource);
+        if (weakSelf.monitoringSource) dispatch_source_cancel(weakSelf.monitoringSource);
       } else {
         weakSelf.eventHandler();
       }
@@ -69,7 +71,7 @@
       }
 
       while ((fd = open([weakSelf.filePath fileSystemRepresentation], O_EVTONLY)) < 0) {
-        sleep(1);
+        usleep(1000);
       }
 
       weakSelf.monitoringSource = dispatch_source_create(
@@ -80,17 +82,21 @@
 
       weakSelf.eventHandler();
   };
-  
+
   dispatch_async(queue, self.internalCancelHandler);
 }
 
 - (void)stopWatchingFile {
+  if (!self.monitoringSource) return;
+
+  int fd = (int)dispatch_source_get_handle(self.monitoringSource);
+  dispatch_source_set_event_handler(self.monitoringSource, NULL);
   dispatch_source_set_cancel_handler(self.monitoringSource, ^{
-      close((int)dispatch_source_get_handle(self.monitoringSource));
+      close(fd);
   });
-  dispatch_cancel(self.monitoringSource);
+
+  dispatch_source_cancel(self.monitoringSource);
   self.monitoringSource = nil;
 }
-
 
 @end
