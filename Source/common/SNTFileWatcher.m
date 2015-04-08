@@ -90,7 +90,7 @@
   if (!self.monitoringSource) return;
 
   int fd = (int)dispatch_source_get_handle(self.monitoringSource);
-  dispatch_source_set_event_handler(self.monitoringSource, NULL);
+  dispatch_source_set_event_handler_f(self.monitoringSource, NULL);
   dispatch_source_set_cancel_handler(self.monitoringSource, ^{
       close(fd);
   });
