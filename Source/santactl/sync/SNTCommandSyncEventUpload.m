@@ -138,9 +138,24 @@
   ADDKEY(newEvent, kFileName, [event.filePath lastPathComponent]);
   ADDKEY(newEvent, kExecutingUser, event.executingUser);
   ADDKEY(newEvent, kExecutionTime, @([event.occurrenceDate timeIntervalSince1970]));
-  ADDKEY(newEvent, kDecision, @(event.decision));
   ADDKEY(newEvent, kLoggedInUsers, event.loggedInUsers);
   ADDKEY(newEvent, kCurrentSessions, event.currentSessions);
+
+  switch (event.decision) {
+    case EVENTSTATE_ALLOW_UNKNOWN: ADDKEY(newEvent, kDecision, kDecisionAllowUnknown); break;
+    case EVENTSTATE_ALLOW_BINARY: ADDKEY(newEvent, kDecision, kDecisionAllowBinary); break;
+    case EVENTSTATE_ALLOW_CERTIFICATE:
+      ADDKEY(newEvent, kDecision, kDecisionAllowCertificate);
+      break;
+    case EVENTSTATE_ALLOW_SCOPE: ADDKEY(newEvent, kDecision, kDecisionAllowScope); break;
+    case EVENTSTATE_BLOCK_UNKNOWN: ADDKEY(newEvent, kDecision, kDecisionBlockUnknown); break;
+    case EVENTSTATE_BLOCK_BINARY: ADDKEY(newEvent, kDecision, kDecisionBlockBinary); break;
+    case EVENTSTATE_BLOCK_CERTIFICATE:
+      ADDKEY(newEvent, kDecision, kDecisionBlockCertificate);
+      break;
+    case EVENTSTATE_BLOCK_SCOPE: ADDKEY(newEvent, kDecision, kDecisionBlockScope); break;
+    default: ADDKEY(newEvent, kDecision, kDecisionUnknown);
+  }
 
   ADDKEY(newEvent, kFileBundleID, event.fileBundleID);
   ADDKEY(newEvent, kFileBundleName, event.fileBundleName);
