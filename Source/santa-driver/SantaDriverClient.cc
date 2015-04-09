@@ -43,12 +43,13 @@ bool SantaDriverClient::start(IOService *provider) {
 
   fSDM = fProvider->GetDecisionManager();
 
+  if (!fSDM) return false;
+
   return true;
 }
 
 void SantaDriverClient::stop(IOService *provider) {
   super::stop(provider);
-
   fProvider = NULL;
 }
 
@@ -61,11 +62,15 @@ bool SantaDriverClient::terminate(IOOptionBits options) {
   fSDM->DisconnectClient();
   LOGI("Client disconnected.");
 
-  fSharedMemory->release();
-  fSharedMemory = NULL;
+  if (fSharedMemory) {
+    fSharedMemory->release();
+    fSharedMemory = NULL;
+  }
 
-  fDataQueue->release();
-  fDataQueue = NULL;
+  if (fDataQueue) {
+    fDataQueue->release();
+    fDataQueue = NULL;
+  }
 
   if (fProvider && fProvider->isOpen(this)) fProvider->close(this);
 
