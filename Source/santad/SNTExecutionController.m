@@ -308,12 +308,12 @@
       sessionName = [NSString stringWithFormat:@"%s@%s", nxt->ut_user, nxt->ut_line];
     }
 
-    if (userName && ![userName isEqual:@""]) {
-      loggedInUsers[userName] = @"";
+    if ([userName length] > 0) {
+      loggedInUsers[userName] = [NSNull null];
     }
 
-    if (sessionName && ![sessionName isEqual:@":"]) {
-      loggedInHosts[sessionName] = @"";
+    if ([sessionName length] > 1) {
+      loggedInHosts[sessionName] = [NSNull null];
     }
   }
 

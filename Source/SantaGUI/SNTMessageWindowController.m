@@ -127,7 +127,7 @@
   NSString *htmlFooter = @"</body></html>";
 
   NSString *message;
-  if (self.customMessage && ![self.customMessage isEqual:@""]) {
+  if ([self.customMessage length] > 0) {
     message = self.customMessage;
   } else {
     message = @"The following application has been blocked from executing<br />"

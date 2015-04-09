@@ -172,7 +172,7 @@ static NSString * const kMachineIDPlistKeyKey = @"MachineIDKey";
     machineId = self.configData[kMachineIDKey];
   }
 
-  if (!machineId || [machineId isEqual:@""]) {
+  if ([machineId length] == 0) {
     machineId = [SNTSystemInfo hardwareUUID];
   }
 

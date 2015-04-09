@@ -124,13 +124,13 @@ REGISTER_COMMAND_NAME(@"sync");
   authURLSession.serverHostname = s.progress.syncBaseURL.host;
 
   s.progress.machineID = config.machineID;
-  if (!s.progress.machineID || [s.progress.machineID isEqual:@""]) {
+  if ([s.progress.machineID length] == 0) {
     LOGE(@"Missing Machine ID. Can't sync without it.");
     exit(1);
   }
 
   s.progress.machineOwner = config.machineOwner;
-  if (!s.progress.machineOwner) {
+  if ([s.progress.machineOwner length] == 0) {
     s.progress.machineOwner = @"";
     LOGW(@"Missing Machine Owner.");  
   }

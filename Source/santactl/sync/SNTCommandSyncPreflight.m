@@ -63,9 +63,9 @@
         progress.eventBatchSize = [r[kBatchSize] intValue];
         progress.uploadLogURL = [NSURL URLWithString:r[kUploadLogsURL]];
 
-        if (r[kClientMode] && [r[kClientMode] isEqual:kClientModeMonitor]) {
+        if ([r[kClientMode] isEqual:kClientModeMonitor]) {
             [[daemonConn remoteObjectProxy] setClientMode:CLIENTMODE_MONITOR withReply:^{}];
-        } else if (r[kClientMode] && [r[kClientMode] isEqual:kClientModeLockdown]) {
+        } else if ([r[kClientMode] isEqual:kClientModeLockdown]) {
             [[daemonConn remoteObjectProxy] setClientMode:CLIENTMODE_LOCKDOWN withReply:^{}];
         }
 
