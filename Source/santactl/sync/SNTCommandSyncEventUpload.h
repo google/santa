@@ -12,19 +12,19 @@
 ///    See the License for the specific language governing permissions and
 ///    limitations under the License.
 
-@class SNTCommandSyncStatus;
+@class SNTCommandSyncState;
 @class SNTXPCConnection;
 
 @interface SNTCommandSyncEventUpload : NSObject
 
 + (void)performSyncInSession:(NSURLSession *)session
-                    progress:(SNTCommandSyncStatus *)progress
+                   syncState:(SNTCommandSyncState *)syncState
                   daemonConn:(SNTXPCConnection *)daemonConn
            completionHandler:(void (^)(BOOL success))handler;
 
 + (void)uploadSingleEventWithSHA256:(NSString *)SHA256
                             session:(NSURLSession *)session
-                           progress:(SNTCommandSyncStatus *)progress
+                          syncState:(SNTCommandSyncState *)syncState
                          daemonConn:(SNTXPCConnection *)daemonConn
                   completionHandler:(void (^)(BOOL success))handler;
 

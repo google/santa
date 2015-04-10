@@ -17,16 +17,16 @@
 #include "SNTLogging.h"
 
 #import "SNTCommandSyncConstants.h"
-#import "SNTCommandSyncStatus.h"
+#import "SNTCommandSyncState.h"
 
 @implementation SNTCommandSyncPostflight
 
 + (void)performSyncInSession:(NSURLSession *)session
-                    progress:(SNTCommandSyncStatus *)progress
+                   syncState:(SNTCommandSyncState *)syncState
                   daemonConn:(SNTXPCConnection *)daemonConn
            completionHandler:(void (^)(BOOL success))handler {
-  NSURL *url = [NSURL URLWithString:[kURLPostflight stringByAppendingString:progress.machineID]
-                      relativeToURL:progress.syncBaseURL];
+  NSURL *url = [NSURL URLWithString:[kURLPostflight stringByAppendingString:syncState.machineID]
+                      relativeToURL:syncState.syncBaseURL];
   NSMutableURLRequest *req = [[NSMutableURLRequest alloc] initWithURL:url];
   [req setHTTPMethod:@"POST"];
 

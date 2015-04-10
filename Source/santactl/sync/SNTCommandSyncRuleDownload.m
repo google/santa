@@ -15,7 +15,7 @@
 #import "SNTCommandSyncRuleDownload.h"
 
 #import "SNTCommandSyncConstants.h"
-#import "SNTCommandSyncStatus.h"
+#import "SNTCommandSyncState.h"
 #import "SNTRule.h"
 #import "SNTXPCConnection.h"
 #import "SNTXPCControlInterface.h"
@@ -25,15 +25,15 @@
 @implementation SNTCommandSyncRuleDownload
 
 + (void)performSyncInSession:(NSURLSession *)session
-                    progress:(SNTCommandSyncStatus *)progress
+                   syncState:(SNTCommandSyncState *)syncState
                   daemonConn:(SNTXPCConnection *)daemonConn
            completionHandler:(void (^)(BOOL success))handler {
-  NSURL *url = [NSURL URLWithString:[kURLRuleDownload stringByAppendingString:progress.machineID]
-                      relativeToURL:progress.syncBaseURL];
+  NSURL *url = [NSURL URLWithString:[kURLRuleDownload stringByAppendingString:syncState.machineID]
+                      relativeToURL:syncState.syncBaseURL];
   [self ruleDownloadWithCursor:nil
                            url:url
                        session:session
-                      progress:progress
+                     syncState:syncState
                     daemonConn:daemonConn
              completionHandler:handler];
 }
@@ -41,14 +41,14 @@
 + (void)ruleDownloadWithCursor:(NSString *)cursor
                            url:(NSURL *)url
                        session:(NSURLSession *)session
-                      progress:(SNTCommandSyncStatus *)progress
+                     syncState:(SNTCommandSyncState *)syncState
                     daemonConn:(SNTXPCConnection *)daemonConn
              completionHandler:(void (^)(BOOL success))handler {
 
   NSDictionary *requestDict = (cursor ? @{ kCursor: cursor } : @{});
 
-  if (!progress.downloadedRules) {
-    progress.downloadedRules = [NSMutableArray array];
+  if (!syncState.downloadedRules) {
+    syncState.downloadedRules = [NSMutableArray array];
   }
 
   NSMutableURLRequest *req = [[NSMutableURLRequest alloc] initWithURL:url];
@@ -102,20 +102,22 @@
             newRule.customMsg = customMsg;
           }
 
-          [progress.downloadedRules addObject:newRule];
+          [syncState.downloadedRules addObject:newRule];
         }
 
         if (resp[kCursor]) {
           [self ruleDownloadWithCursor:resp[kCursor]
                                    url:url
                                session:session
-                              progress:progress
+                             syncState:syncState
                             daemonConn:daemonConn
                      completionHandler:handler];
         } else {
-          [[daemonConn remoteObjectProxy] databaseRuleAddRules:progress.downloadedRules withReply:^{
-              if (progress.downloadedRules.count) {
-                LOGI(@"Added %d rule(s)", progress.downloadedRules.count);
+          [[daemonConn remoteObjectProxy] databaseRuleAddRules:syncState.downloadedRules
+                                                    cleanSlate:syncState.cleanSync
+                                                         reply:^{
+              if (syncState.downloadedRules.count) {
+                LOGI(@"Added %d rule(s)", syncState.downloadedRules.count);
               }
               handler(YES);
           }];

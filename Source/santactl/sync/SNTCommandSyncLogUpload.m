@@ -20,15 +20,15 @@
 #include "SNTLogging.h"
 
 #import "SNTCommandSyncConstants.h"
-#import "SNTCommandSyncStatus.h"
+#import "SNTCommandSyncState.h"
 
 @implementation SNTCommandSyncLogUpload
 
 + (void)performSyncInSession:(NSURLSession *)session
-                    progress:(SNTCommandSyncStatus *)progress
+                   syncState:(SNTCommandSyncState *)syncState
                   daemonConn:(SNTXPCConnection *)daemonConn
            completionHandler:(void (^)(BOOL success))handler {
-  NSURL *url = progress.uploadLogURL;
+  NSURL *url = syncState.uploadLogURL;
   NSMutableURLRequest *req = [[NSMutableURLRequest alloc] initWithURL:url];
   [req setHTTPMethod:@"POST"];
   NSString *boundary = @"----santa-sync-upload-boundary";

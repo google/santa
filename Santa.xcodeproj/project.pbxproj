@@ -69,7 +69,7 @@
 		0D3AFBF018FB4C6C0087BCEE /* SNTDriverManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 0D7D01861774F93A005DBAB4 /* SNTDriverManager.m */; };
 		0D3AFBF618FB4C7E0087BCEE /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0D385DB7180DE4A900418BC6 /* Cocoa.framework */; };
 		0D3AFBF818FB4C870087BCEE /* IOKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0D3AFBF718FB4C870087BCEE /* IOKit.framework */; };
-		0D416401191974F1006A356A /* SNTCommandSyncStatus.m in Sources */ = {isa = PBXBuildFile; fileRef = 0D416400191974F1006A356A /* SNTCommandSyncStatus.m */; };
+		0D416401191974F1006A356A /* SNTCommandSyncState.m in Sources */ = {isa = PBXBuildFile; fileRef = 0D416400191974F1006A356A /* SNTCommandSyncState.m */; };
 		0D41640519197AD7006A356A /* SNTCommandSyncEventUpload.m in Sources */ = {isa = PBXBuildFile; fileRef = 0D41640419197AD7006A356A /* SNTCommandSyncEventUpload.m */; };
 		0D41DAD41A7C28C800A890FE /* SNTEventTableTest.m in Sources */ = {isa = PBXBuildFile; fileRef = 0D41DAD31A7C28C800A890FE /* SNTEventTableTest.m */; };
 		0D42D2B519D1D98A00955F08 /* SNTSystemInfo.m in Sources */ = {isa = PBXBuildFile; fileRef = 0D42D2B419D1D98A00955F08 /* SNTSystemInfo.m */; };
@@ -253,8 +253,8 @@
 		0D385DEF180DE51600418BC6 /* SNTNotificationManager.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SNTNotificationManager.m; sourceTree = "<group>"; };
 		0D3AFBE618FB32CB0087BCEE /* SNTXPCConnectionTest.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SNTXPCConnectionTest.m; sourceTree = "<group>"; };
 		0D3AFBF718FB4C870087BCEE /* IOKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = IOKit.framework; path = System/Library/Frameworks/IOKit.framework; sourceTree = SDKROOT; };
-		0D4163FF191974F1006A356A /* SNTCommandSyncStatus.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SNTCommandSyncStatus.h; sourceTree = "<group>"; };
-		0D416400191974F1006A356A /* SNTCommandSyncStatus.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SNTCommandSyncStatus.m; sourceTree = "<group>"; };
+		0D4163FF191974F1006A356A /* SNTCommandSyncState.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SNTCommandSyncState.h; sourceTree = "<group>"; };
+		0D416400191974F1006A356A /* SNTCommandSyncState.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SNTCommandSyncState.m; sourceTree = "<group>"; };
 		0D41640319197AD7006A356A /* SNTCommandSyncEventUpload.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SNTCommandSyncEventUpload.h; sourceTree = "<group>"; };
 		0D41640419197AD7006A356A /* SNTCommandSyncEventUpload.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SNTCommandSyncEventUpload.m; sourceTree = "<group>"; };
 		0D41DAD31A7C28C800A890FE /* SNTEventTableTest.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SNTEventTableTest.m; sourceTree = "<group>"; };
@@ -487,8 +487,8 @@
 				0DCD605B19117A90006B445C /* SNTCommandSyncPreflight.m */,
 				0D0A1EC1191998C900B8450F /* SNTCommandSyncRuleDownload.h */,
 				0D0A1EC2191998C900B8450F /* SNTCommandSyncRuleDownload.m */,
-				0D4163FF191974F1006A356A /* SNTCommandSyncStatus.h */,
-				0D416400191974F1006A356A /* SNTCommandSyncStatus.m */,
+				0D4163FF191974F1006A356A /* SNTCommandSyncState.h */,
+				0D416400191974F1006A356A /* SNTCommandSyncState.m */,
 				0D7FFD491A017D4B00F34435 /* SNTDERDecoder.h */,
 				0D7FFD4A1A017D4B00F34435 /* SNTDERDecoder.m */,
 			);
@@ -1145,7 +1145,7 @@
 				0D10BE871A0AABD600C0C944 /* SNTDropRootPrivs.m in Sources */,
 				0DE4C8A618FF3B1700466D04 /* SNTCommandFlushCache.m in Sources */,
 				4092327A1A51B66400A04527 /* SNTCommandRule.m in Sources */,
-				0D416401191974F1006A356A /* SNTCommandSyncStatus.m in Sources */,
+				0D416401191974F1006A356A /* SNTCommandSyncState.m in Sources */,
 				0DC5D871192160180078A5C0 /* SNTCommandSyncLogUpload.m in Sources */,
 				0D35BDA218FD71CE00921A21 /* main.m in Sources */,
 				0DCD6043190ACCB8006B445C /* SNTFileInfo.m in Sources */,

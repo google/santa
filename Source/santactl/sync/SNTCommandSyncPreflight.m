@@ -18,7 +18,7 @@
 #include "SNTLogging.h"
 
 #import "SNTCommandSyncConstants.h"
-#import "SNTCommandSyncStatus.h"
+#import "SNTCommandSyncState.h"
 #import "SNTSystemInfo.h"
 #import "SNTXPCConnection.h"
 #import "SNTXPCControlInterface.h"
@@ -26,11 +26,11 @@
 @implementation SNTCommandSyncPreflight
 
 + (void)performSyncInSession:(NSURLSession *)session
-                    progress:(SNTCommandSyncStatus *)progress
+                   syncState:(SNTCommandSyncState *)syncState
                   daemonConn:(SNTXPCConnection *)daemonConn
            completionHandler:(void (^)(BOOL success))handler {
-  NSURL *url = [NSURL URLWithString:[kURLPreflight stringByAppendingString:progress.machineID]
-                      relativeToURL:progress.syncBaseURL];
+  NSURL *url = [NSURL URLWithString:[kURLPreflight stringByAppendingString:syncState.machineID]
+                      relativeToURL:syncState.syncBaseURL];
 
   NSMutableDictionary *requestDict = [NSMutableDictionary dictionary];
   requestDict[kSerialNumber] = [SNTSystemInfo serialNumber];
@@ -38,7 +38,11 @@
   requestDict[kSantaVer] = [[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleVersion"];
   requestDict[kOSVer] = [SNTSystemInfo osVersion];
   requestDict[kOSBuild] = [SNTSystemInfo osBuild];
-  requestDict[kPrimaryUser] = progress.machineOwner;
+  requestDict[kPrimaryUser] = syncState.machineOwner;
+
+  if ([[[NSProcessInfo processInfo] arguments] containsObject:@"--clean"]) {
+    requestDict[kRequestCleanSync] = @YES;
+  }
 
   NSData *requestBody = [NSJSONSerialization dataWithJSONObject:requestDict
                                                         options:0
@@ -60,13 +64,18 @@
       } else {
         NSDictionary *r = [NSJSONSerialization JSONObjectWithData:data options:0 error:nil];
 
-        progress.eventBatchSize = [r[kBatchSize] intValue];
-        progress.uploadLogURL = [NSURL URLWithString:r[kUploadLogsURL]];
+        syncState.eventBatchSize = [r[kBatchSize] intValue];
+        syncState.uploadLogURL = [NSURL URLWithString:r[kUploadLogsURL]];
 
         if ([r[kClientMode] isEqual:kClientModeMonitor]) {
-            [[daemonConn remoteObjectProxy] setClientMode:CLIENTMODE_MONITOR withReply:^{}];
+            [[daemonConn remoteObjectProxy] setClientMode:CLIENTMODE_MONITOR reply:^{}];
         } else if ([r[kClientMode] isEqual:kClientModeLockdown]) {
-            [[daemonConn remoteObjectProxy] setClientMode:CLIENTMODE_LOCKDOWN withReply:^{}];
+            [[daemonConn remoteObjectProxy] setClientMode:CLIENTMODE_LOCKDOWN reply:^{}];
+        }
+
+        if ([r[kCleanSync] boolValue]) {
+          syncState.cleanSync = YES;
+          LOGD(@"Clean sync requested by server");
         }
 
         handler(YES);

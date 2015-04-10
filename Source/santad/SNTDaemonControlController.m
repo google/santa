@@ -50,16 +50,16 @@
   reply([rdb binaryRuleCount], [rdb certificateRuleCount]);
 }
 
-- (void)databaseRuleAddRule:(SNTRule *)rule withReply:(void (^)())reply {
-  [self databaseRuleAddRules:@[ rule ] withReply:reply];
+- (void)databaseRuleAddRule:(SNTRule *)rule cleanSlate:(BOOL)cleanSlate reply:(void (^)())reply {
+  [self databaseRuleAddRules:@[ rule ] cleanSlate:cleanSlate reply:reply];
 }
 
-- (void)databaseRuleAddRules:(NSArray *)rules withReply:(void (^)())reply {
-  [[SNTDatabaseController ruleTable] addRules:rules];
+- (void)databaseRuleAddRules:(NSArray *)rules cleanSlate:(BOOL)cleanSlate reply:(void (^)())reply {
+  [[SNTDatabaseController ruleTable] addRules:rules cleanSlate:cleanSlate];
 
   // If any rules were added that were not whitelist, flush cache.
   NSPredicate *p = [NSPredicate predicateWithFormat:@"SELF.state != %d", RULESTATE_WHITELIST];
-  if ([rules filteredArrayUsingPredicate:p].count) {
+  if ([rules filteredArrayUsingPredicate:p].count || cleanSlate) {
     LOGI(@"Received non-whitelist rule, flushing cache");
     [self.driverManager flushCache];
   }
@@ -71,7 +71,7 @@
   reply([[SNTDatabaseController eventTable] pendingEventsCount]);
 }
 
-- (void)databaseEventForSHA256:(NSString *)sha256 withReply:(void (^)(SNTStoredEvent *))reply {
+- (void)databaseEventForSHA256:(NSString *)sha256 reply:(void (^)(SNTStoredEvent *))reply {
   reply([[SNTDatabaseController eventTable] pendingEventForSHA256:sha256]);
 }
 
@@ -89,7 +89,7 @@
   reply([[SNTConfigurator configurator] clientMode]);
 }
 
-- (void)setClientMode:(santa_clientmode_t)mode withReply:(void (^)())reply {
+- (void)setClientMode:(santa_clientmode_t)mode reply:(void (^)())reply {
   [[SNTConfigurator configurator] setClientMode:mode];
   reply();
 }

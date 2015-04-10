@@ -20,7 +20,7 @@
 #import "SNTCommandSyncPostflight.h"
 #import "SNTCommandSyncPreflight.h"
 #import "SNTCommandSyncRuleDownload.h"
-#import "SNTCommandSyncStatus.h"
+#import "SNTCommandSyncState.h"
 #import "SNTConfigurator.h"
 #import "SNTDropRootPrivs.h"
 #import "SNTLogging.h"
@@ -30,7 +30,7 @@
 @interface SNTCommandSync : NSObject<SNTCommand>
 @property NSURLSession *session;
 @property SNTXPCConnection *daemonConn;
-@property SNTCommandSyncStatus *progress;
+@property SNTCommandSyncState *syncState;
 @end
 
 @implementation SNTCommandSync
@@ -112,26 +112,26 @@ REGISTER_COMMAND_NAME(@"sync");
   s.daemonConn = daemonConn;
 
   // Gather some data needed during some sync stages
-  s.progress = [[SNTCommandSyncStatus alloc] init];
+  s.syncState = [[SNTCommandSyncState alloc] init];
 
-  s.progress.syncBaseURL = config.syncBaseURL;
-  if (!s.progress.syncBaseURL) {
+  s.syncState.syncBaseURL = config.syncBaseURL;
+  if (!s.syncState.syncBaseURL) {
     LOGE(@"Missing SyncBaseURL. Can't sync without it.");
     exit(1);
-  } else if (![s.progress.syncBaseURL.scheme isEqual:@"https"]) {
+  } else if (![s.syncState.syncBaseURL.scheme isEqual:@"https"]) {
     LOGW(@"SyncBaseURL is not over HTTPS!");
   }
-  authURLSession.serverHostname = s.progress.syncBaseURL.host;
+  authURLSession.serverHostname = s.syncState.syncBaseURL.host;
 
-  s.progress.machineID = config.machineID;
-  if ([s.progress.machineID length] == 0) {
+  s.syncState.machineID = config.machineID;
+  if ([s.syncState.machineID length] == 0) {
     LOGE(@"Missing Machine ID. Can't sync without it.");
     exit(1);
   }
 
-  s.progress.machineOwner = config.machineOwner;
-  if ([s.progress.machineOwner length] == 0) {
-    s.progress.machineOwner = @"";
+  s.syncState.machineOwner = config.machineOwner;
+  if ([s.syncState.machineOwner length] == 0) {
+    s.syncState.machineOwner = @"";
     LOGW(@"Missing Machine Owner.");  
   }
 
@@ -144,12 +144,12 @@ REGISTER_COMMAND_NAME(@"sync");
 
 - (void)preflight {
   [SNTCommandSyncPreflight performSyncInSession:self.session
-                                       progress:self.progress
+                                      syncState:self.syncState
                                      daemonConn:self.daemonConn
                               completionHandler:^(BOOL success) {
       if (success) {
         LOGI(@"Preflight complete");
-        if (self.progress.uploadLogURL) {
+        if (self.syncState.uploadLogURL) {
           [self logUpload];
         } else {
           [self eventUpload];
@@ -163,7 +163,7 @@ REGISTER_COMMAND_NAME(@"sync");
 
 - (void)logUpload {
   [SNTCommandSyncLogUpload performSyncInSession:self.session
-                                       progress:self.progress
+                                      syncState:self.syncState
                                      daemonConn:self.daemonConn
                               completionHandler:^(BOOL success) {
       if (success) {
@@ -178,7 +178,7 @@ REGISTER_COMMAND_NAME(@"sync");
 
 - (void)eventUpload {
   [SNTCommandSyncEventUpload performSyncInSession:self.session
-                                         progress:self.progress
+                                        syncState:self.syncState
                                        daemonConn:self.daemonConn
                                 completionHandler:^(BOOL success) {
       if (success) {
@@ -194,7 +194,7 @@ REGISTER_COMMAND_NAME(@"sync");
 - (void)eventUploadSingleEvent:(NSString *)sha256 {
   [SNTCommandSyncEventUpload uploadSingleEventWithSHA256:sha256
                                                  session:self.session
-                                                progress:self.progress
+                                               syncState:self.syncState
                                               daemonConn:self.daemonConn
                                        completionHandler:^(BOOL success) {
       if (success) {
@@ -209,7 +209,7 @@ REGISTER_COMMAND_NAME(@"sync");
 
 - (void)ruleDownload {
   [SNTCommandSyncRuleDownload performSyncInSession:self.session
-                                          progress:self.progress
+                                         syncState:self.syncState
                                         daemonConn:self.daemonConn
                                  completionHandler:^(BOOL success) {
       if (success) {
@@ -224,7 +224,7 @@ REGISTER_COMMAND_NAME(@"sync");
 
 - (void)postflight {
   [SNTCommandSyncPostflight performSyncInSession:self.session
-                                        progress:self.progress
+                                       syncState:self.syncState
                                       daemonConn:self.daemonConn
                                completionHandler:^(BOOL success) {
       if (success) {

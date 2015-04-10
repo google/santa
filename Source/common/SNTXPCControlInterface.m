@@ -32,7 +32,7 @@
             ofReply:YES];
 
   [r setClasses:[NSSet setWithObjects:[NSArray class], [SNTRule class], nil]
-        forSelector:@selector(databaseRuleAddRules:withReply:)
+        forSelector:@selector(databaseRuleAddRules:cleanSlate:reply:)
       argumentIndex:0
             ofReply:NO];
 

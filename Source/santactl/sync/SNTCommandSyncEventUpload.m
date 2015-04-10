@@ -18,7 +18,7 @@
 
 #import "SNTCertificate.h"
 #import "SNTCommandSyncConstants.h"
-#import "SNTCommandSyncStatus.h"
+#import "SNTCommandSyncState.h"
 #import "SNTStoredEvent.h"
 #import "SNTXPCConnection.h"
 #import "SNTXPCControlInterface.h"
@@ -26,11 +26,11 @@
 @implementation SNTCommandSyncEventUpload
 
 + (void)performSyncInSession:(NSURLSession *)session
-                    progress:(SNTCommandSyncStatus *)progress
+                   syncState:(SNTCommandSyncState *)syncState
                   daemonConn:(SNTXPCConnection *)daemonConn
            completionHandler:(void (^)(BOOL success))handler {
-  NSURL *url = [NSURL URLWithString:[kURLEventUpload stringByAppendingString:progress.machineID]
-                      relativeToURL:progress.syncBaseURL];
+  NSURL *url = [NSURL URLWithString:[kURLEventUpload stringByAppendingString:syncState.machineID]
+                      relativeToURL:syncState.syncBaseURL];
 
   [[daemonConn remoteObjectProxy] databaseEventsPending:^(NSArray *events) {
       if ([events count] == 0) {
@@ -39,7 +39,7 @@
         [self uploadEventsFromArray:events
                               toURL:url
                           inSession:session
-                          batchSize:progress.eventBatchSize
+                          batchSize:syncState.eventBatchSize
                          daemonConn:daemonConn
                   completionHandler:handler];
       }
@@ -48,12 +48,12 @@
 
 + (void)uploadSingleEventWithSHA256:(NSString *)SHA256
                             session:(NSURLSession *)session
-                           progress:(SNTCommandSyncStatus *)progress
+                          syncState:(SNTCommandSyncState *)syncState
                          daemonConn:(SNTXPCConnection *)daemonConn
                   completionHandler:(void (^)(BOOL success))handler {
-  NSURL *url = [NSURL URLWithString:[kURLEventUpload stringByAppendingString:progress.machineID]
-                      relativeToURL:progress.syncBaseURL];
-  [[daemonConn remoteObjectProxy] databaseEventForSHA256:SHA256 withReply:^(SNTStoredEvent *event) {
+  NSURL *url = [NSURL URLWithString:[kURLEventUpload stringByAppendingString:syncState.machineID]
+                      relativeToURL:syncState.syncBaseURL];
+  [[daemonConn remoteObjectProxy] databaseEventForSHA256:SHA256 reply:^(SNTStoredEvent *event) {
       if (!event) {
         handler(YES);
         return;

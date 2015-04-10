@@ -119,10 +119,14 @@
 
 #pragma mark Adding
 
-- (BOOL)addRules:(NSArray *)rules {
+- (BOOL)addRules:(NSArray *)rules cleanSlate:(BOOL)cleanSlate {
   __block BOOL failed = NO;
 
   [self inTransaction:^(FMDatabase *db, BOOL *rollback) {
+      if (cleanSlate) {
+        [db executeUpdate:@"DELETE FROM rules"];
+      }
+
       for (SNTRule *rule in rules) {
         if (![rule isKindOfClass:[SNTRule class]] ||
             !rule.shasum || rule.shasum.length == 0 ||

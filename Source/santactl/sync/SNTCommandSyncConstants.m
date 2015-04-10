@@ -25,11 +25,13 @@ NSString * const kSantaVer = @"santa_version";
 NSString * const kOSVer = @"os_version";
 NSString * const kOSBuild = @"os_build";
 NSString * const kPrimaryUser = @"primary_user";
+NSString * const kRequestCleanSync = @"request_clean_sync";
 NSString * const kBatchSize = @"batch_size";
 NSString * const kUploadLogsURL = @"upload_logs_url";
 NSString * const kClientMode = @"client_mode";
 NSString * const kClientModeMonitor = @"MONITOR";
 NSString * const kClientModeLockdown = @"LOCKDOWN";
+NSString * const kCleanSync = @"clean_sync";
 
 NSString * const kEvents = @"events";
 NSString * const kFileSHA256 = @"file_sha256";
