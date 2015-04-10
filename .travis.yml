@@ -2,9 +2,7 @@
 language: objective-c
 
 before_install:
- - gem install cocoapods
- - brew update
- - brew upgrade xctool
+ - gem install cocoapods xcpretty
 
 script:
- - xctool -workspace Santa.xcworkspace -scheme All build test CODE_SIGN_IDENTITY=''
+ - xcodebuild -workspace Santa.xcworkspace -scheme All build test CODE_SIGN_IDENTITY='' | xcpretty -sc && exit ${PIPESTATUS[0]}

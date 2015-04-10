@@ -23,24 +23,6 @@
 
 @implementation SNTFileWatcherTest
 
-static int unusedFd1 = -1;
-static int unusedFd2 = -1;
-
-+ (void)setUp {
-  // xctest redirects the stdout/stderr FDs when starting tests. This is not a problem, except
-  // xctool intercepts stdout/stderr FDs (1 & 2) to put them in nice sections of the output.
-  // This causes problems with tests that write to files and is 'fixed' by opening two FDs just
-  // to be safe. Unfortunately this means that anything printed (e.g. with printf or NSLog) will
-  // not actually be printed in xctool output for this test suite, ho hum.
-  unusedFd1 = open("/dev/null", O_WRONLY);
-  unusedFd2 = open("/dev/null", O_WRONLY);
-}
-
-+ (void)tearDown {
-  close(unusedFd1);
-  close(unusedFd2);
-}
-
 - (void)setUp {
   [super setUp];
 
