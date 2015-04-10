@@ -37,7 +37,6 @@
   [super loadWindow];
   [self.window setLevel:NSPopUpMenuWindowLevel];
   [self.window setMovableByWindowBackground:YES];
-  [self.window center];
 
   if (![[SNTConfigurator configurator] eventDetailURL]) {
     [self.openEventButton removeFromSuperview];

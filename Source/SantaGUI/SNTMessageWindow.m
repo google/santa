@@ -26,6 +26,7 @@
 
 - (IBAction)fadeIn:(id)sender {
   [self setAlphaValue:0.f];
+  [self center];
   [self makeKeyAndOrderFront:sender];
   [NSAnimationContext beginGrouping];
   [[NSAnimationContext currentContext] setDuration:0.15f];
