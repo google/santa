@@ -13,10 +13,6 @@
 				<string>/var/log/santa.log</string>
 				<key>ProcessType</key>
 				<string>Background</string>
-				<key>UserName</key>
-				<string>nobody</string>
-				<key>GroupName</key>
-				<string>nobody</string>
 				<key>StartInterval</key>
 				<integer>600</integer>
 </dict>
