@@ -110,7 +110,12 @@ kern_return_t SantaDecisionManager::StartListener() {
                                        reinterpret_cast<void *>(this));
   if (!vnode_listener_) return kIOReturnInternalError;
 
-  LOGD("Vnode listener started.");
+  fileop_listener_ = kauth_listen_scope(KAUTH_SCOPE_FILEOP,
+                                        fileop_scope_callback,
+                                        reinterpret_cast<void *>(this));
+  if (!fileop_listener_) return kIOReturnInternalError;
+
+  LOGD("Listeners started.");
 
   return kIOReturnSuccess;
 }
@@ -118,6 +123,9 @@ kern_return_t SantaDecisionManager::StartListener() {
 kern_return_t SantaDecisionManager::StopListener() {
   kauth_unlisten_scope(vnode_listener_);
   vnode_listener_ = NULL;
+
+  kauth_unlisten_scope(fileop_listener_);
+  fileop_listener_ = NULL;
 
   // Wait for any active invocations to finish before returning
   do {
@@ -127,7 +135,7 @@ kern_return_t SantaDecisionManager::StopListener() {
   // Delete any cached decisions
   ClearCache();
 
-  LOGD("Vnode listener stopped.");
+  LOGD("Listeners stopped.");
 
   return kIOReturnSuccess;
 }
@@ -348,7 +356,29 @@ void SantaDecisionManager::DecrementListenerInvocations() {
 
 #undef super
 
-#pragma mark Kauth Callback
+#pragma mark Kauth Callbacks
+
+extern "C" int fileop_scope_callback(
+    kauth_cred_t credential, void *idata, kauth_action_t action,
+    uintptr_t arg0, uintptr_t arg1, uintptr_t arg2, uintptr_t arg3) {
+  if (!(action == KAUTH_FILEOP_CLOSE && arg2 & KAUTH_FILEOP_CLOSE_MODIFIED)) {
+    return KAUTH_RESULT_DEFER;
+  }
+
+  if (idata == NULL) {
+    LOGE("FileOp callback established without valid decision manager.");
+    return KAUTH_RESULT_DEFER;
+  }
+
+  SantaDecisionManager *sdm = OSDynamicCast(
+      SantaDecisionManager, reinterpret_cast<OSObject *>(idata));
+  char vnode_id_str[MAX_VNODE_ID_STR];
+  snprintf(vnode_id_str, MAX_VNODE_ID_STR, "%llu",
+           sdm->GetVnodeIDForVnode(NULL, (vnode_t)arg0));
+  sdm->CacheCheck(vnode_id_str);
+
+  return KAUTH_RESULT_DEFER;
+}
 
 extern "C" int vnode_scope_callback(
     kauth_cred_t credential, void *idata, kauth_action_t action,
@@ -373,27 +403,6 @@ extern "C" int vnode_scope_callback(
   // Don't operate on ACCESS events, as they're advisory
   if (action & KAUTH_VNODE_ACCESS) return returnResult;
 
-  // Filter for only writes
-  if (action & KAUTH_VNODE_WRITE_DATA ||
-      action & KAUTH_VNODE_APPEND_DATA ||
-      action & KAUTH_VNODE_DELETE) {
-    char vnode_id_str[MAX_VNODE_ID_STR];
-    snprintf(vnode_id_str, MAX_VNODE_ID_STR, "%llu",
-             sdm->GetVnodeIDForVnode(vfs_context, vnode));
-
-    // If an execution request is pending, deny write
-    if (sdm->GetFromCache(vnode_id_str) == ACTION_REQUEST_CHECKBW) {
-      LOGD("Denying write due to pending execution: %s", vnode_id_str);
-      *(reinterpret_cast<int *>(arg3)) = EACCES;
-      return KAUTH_RESULT_DENY;
-    }
-
-    // Otherwise remove from cache
-    sdm->CacheCheck(vnode_id_str);
-
-    return returnResult;
-  }
-
   // Filter for only EXECUTE actions
   if (action & KAUTH_VNODE_EXECUTE) {
     sdm->IncrementListenerInvocations();
@@ -401,6 +410,17 @@ extern "C" int vnode_scope_callback(
     // Fetch decision
     santa_action_t returnedAction = sdm->FetchDecision(
         credential, vfs_context, vnode);
+
+    // If file has dirty blocks, remove from cache and deny. This would usually
+    // be the case if a file has been written to and flushed but not yet
+    // closed.
+    if (vnode_hasdirtyblks(vnode)) {
+      char vnode_id_str[MAX_VNODE_ID_STR];
+      snprintf(vnode_id_str, MAX_VNODE_ID_STR, "%llu",
+               sdm->GetVnodeIDForVnode(vfs_context, vnode));
+      sdm->CacheCheck(vnode_id_str);
+      returnedAction = ACTION_RESPOND_CHECKBW_DENY;
+    }
 
     switch (returnedAction) {
       case ACTION_RESPOND_CHECKBW_ALLOW:

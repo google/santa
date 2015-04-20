@@ -88,10 +88,10 @@ class SantaDecisionManager : public OSObject {
   ///  Returns whether a client is currently connected or not.
   bool ClientConnected();
 
-  ///  Starts the kauth listener.
+  ///  Starts the kauth listeners.
   kern_return_t StartListener();
 
-  ///  Stops the kauth listener. After stopping new callback requests,
+  ///  Stops the kauth listeners. After stopping new callback requests,
   ///  waits until all current invocations have finished before clearing the
   ///  cache and returning.
   kern_return_t StopListener();
@@ -155,6 +155,7 @@ class SantaDecisionManager : public OSObject {
   proc_t owning_proc_;
 
   kauth_listener_t vnode_listener_;
+  kauth_listener_t fileop_listener_;
 };
 
 ///
@@ -170,5 +171,20 @@ class SantaDecisionManager : public OSObject {
 extern "C" int vnode_scope_callback(
     kauth_cred_t credential, void *idata, kauth_action_t action,
     uintptr_t arg0, uintptr_t arg1, uintptr_t arg2, uintptr_t arg3);
+
+///
+///  The kauth callback function for the FileOp scope
+///  @param actor's credentials
+///  @param data that was passed when the listener was registered
+///  @param action that was requested
+///  @param depends on action, usually the vnode ref.
+///  @param depends on action.
+///  @param depends on action, usually 0.
+///  @param depends on action, usually 0.
+///
+extern "C" int fileop_scope_callback(
+    kauth_cred_t credential, void *idata, kauth_action_t action,
+    uintptr_t arg0, uintptr_t arg1, uintptr_t arg2, uintptr_t arg3);
+
 
 #endif  // SANTA__SANTA_DRIVER__SANTADECISIONMANAGER_H
