@@ -22,7 +22,8 @@ OSDefineMetaClassAndStructors(SantaDecisionManager, OSObject);
 bool SantaDecisionManager::init() {
   sdm_lock_grp_ = lck_grp_alloc_init("santa-locks", lck_grp_attr_alloc_init());
   dataqueue_lock_ = lck_mtx_alloc_init(sdm_lock_grp_, lck_attr_alloc_init());
-  cached_decisions_lock_ = lck_rw_alloc_init(sdm_lock_grp_, lck_attr_alloc_init());
+  cached_decisions_lock_ = lck_rw_alloc_init(sdm_lock_grp_,
+                                             lck_attr_alloc_init());
 
   cached_decisions_ = OSDictionary::withCapacity(1000);
 
@@ -296,7 +297,8 @@ santa_action_t SantaDecisionManager::FetchDecision(
       if (!PostToQueue(message)) {
         OSIncrementAtomic(&failed_queue_requests_);
         if (failed_queue_requests_ > kMaxQueueFailures) {
-          LOGE("Failed to queue more than %d requests, killing daemon", kMaxQueueFailures);
+          LOGE("Failed to queue more than %d requests, killing daemon",
+               kMaxQueueFailures);
           proc_signal(owning_pid_, SIGKILL);
         }
         LOGE("Failed to queue request for %s.", path);
