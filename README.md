@@ -51,6 +51,11 @@ Known Issues
 
 Santa is not yet a 1.0 and we have some known issues to be aware of:
 
+* Santa only blocks execution (execve and variants), it doesn't protect against
+dynamic libraries loaded with dlopen, libraries on disk that have been replaced or
+libraries loaded using DYLD_INSERT_LIBRARIES. We are working on also protecting
+against these avenues of attack.
+
 * Kext communication security: the kext will only accept a connection from a
 single client at a time and said client must be running as root. We haven't yet
 found a good way to ensure the kext only accepts connections from a valid client.
