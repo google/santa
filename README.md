@@ -49,6 +49,7 @@ continue to work across OS versions.
 Intentions and Expectations
 ===========================
 No single system or process will stop *all* attacks, or provide 100% security. Santa is written with the intention of helping protect users from themselves. People often download malware and trust it, giving the malware credentials, or allowing unknown software to exfiltrate more data about your system. As a centrally managed component, Santa can help stop the spread of malware among a larger fleet of machines. Additionally, Santa can aid in analyzing what is running in your fleet.
+
 Santa is part of a defense-in-depth strategy, and you should continue to protect hosts in whatever other ways you see fit.
 
 Known Issues
