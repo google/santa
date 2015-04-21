@@ -56,9 +56,7 @@
 
 - (long)ruleCount {
   __block long count = 0;
-  [self inDatabase:^(FMDatabase *db) {
-      count = [db longForQuery:@"SELECT COUNT(*) FROM rules"];
-  }];
+  [self inDatabase:^(FMDatabase *db) { count = [db longForQuery:@"SELECT COUNT(*) FROM rules"]; }];
   return count;
 }
 
@@ -95,7 +93,7 @@
   [self inDatabase:^(FMDatabase *db) {
       FMResultSet *rs = [db executeQuery:@"SELECT * FROM certrules WHERE shasum=? LIMIT 1", SHA256];
       if ([rs next]) {
-          rule = [self ruleFromResultSet:rs];
+        rule = [self ruleFromResultSet:rs];
       }
       [rs close];
   }];
@@ -128,8 +126,7 @@
       }
 
       for (SNTRule *rule in rules) {
-        if (![rule isKindOfClass:[SNTRule class]] ||
-            !rule.shasum || rule.shasum.length == 0 ||
+        if (![rule isKindOfClass:[SNTRule class]] || rule.shasum.length == 0 ||
             rule.state == RULESTATE_UNKNOWN || rule.type == RULETYPE_UNKNOWN) {
           *rollback = failed = YES;
           return;
@@ -143,8 +140,8 @@
           }
         } else {
           if (![db executeUpdate:@"INSERT OR REPLACE INTO rules "
-                                @"(shasum, state, type, custommsg) "
-                                @"VALUES (?, ?, ?, ?);",
+                                 @"(shasum, state, type, custommsg) "
+                                 @"VALUES (?, ?, ?, ?);",
                   rule.shasum, @(rule.state), @(rule.type), rule.customMsg]) {
             *rollback = failed = YES;
             return;

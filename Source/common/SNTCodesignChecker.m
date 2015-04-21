@@ -18,7 +18,6 @@
 
 #import "SNTCertificate.h"
 
-
 /**
  *  kStaticSigningFlags are the flags used when validating signatures on disk.
  *
@@ -46,7 +45,6 @@ const SecCSFlags kStaticSigningFlags = kSecCSDoNotValidateResources | kSecCSChec
  *  No special flags needed currently.
  */
 const SecCSFlags kSigningFlags = kSecCSDefaultFlags;
-
 
 @interface SNTCodesignChecker ()
 /// Array of @c SNTCertificate's representing the chain of certs this executable was signed with.
@@ -105,10 +103,10 @@ const SecCSFlags kSigningFlags = kSecCSDefaultFlags;
   SecStaticCodeRef codeRef = NULL;
 
   // Get SecStaticCodeRef for binary
-  if (SecStaticCodeCreateWithPath((__bridge CFURLRef)[NSURL fileURLWithPath:binaryPath
-                                                                isDirectory:NO],
-                                  kSecCSDefaultFlags,
-                                  &codeRef) == errSecSuccess) {
+  if (SecStaticCodeCreateWithPath(
+          (__bridge CFURLRef)[NSURL fileURLWithPath:binaryPath isDirectory:NO],
+          kSecCSDefaultFlags,
+          &codeRef) == errSecSuccess) {
     self = [self initWithSecStaticCodeRef:codeRef];
   } else {
     self = nil;
@@ -120,12 +118,13 @@ const SecCSFlags kSigningFlags = kSecCSDefaultFlags;
 
 - (instancetype)initWithPID:(pid_t)PID {
   SecCodeRef codeRef = NULL;
-  NSDictionary *attributes = @{(__bridge NSString *)kSecGuestAttributePid: @(PID)};
+  NSDictionary *attributes = @{ (__bridge NSString *)kSecGuestAttributePid : @(PID) };
 
-  if (SecCodeCopyGuestWithAttributes(NULL,
-                                     (__bridge CFDictionaryRef)attributes,
-                                     kSecCSDefaultFlags,
-                                     &codeRef) == errSecSuccess) {
+  if (SecCodeCopyGuestWithAttributes(
+          NULL,
+          (__bridge CFDictionaryRef)attributes,
+          kSecCSDefaultFlags,
+          &codeRef) == errSecSuccess) {
     self = [self initWithSecStaticCodeRef:codeRef];
   } else {
     self = nil;
@@ -170,9 +169,7 @@ const SecCSFlags kSigningFlags = kSecCSDefaultFlags;
   }
 
   return [NSString stringWithFormat:@"%@ binary, signed by %@, located at: %@",
-             binarySource,
-             self.leafCertificate.orgName,
-             self.binaryPath];
+              binarySource, self.leafCertificate.orgName, self.binaryPath];
 }
 
 #pragma mark Public accessors

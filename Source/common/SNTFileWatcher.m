@@ -74,8 +74,8 @@
         usleep(1000);
       }
 
-      weakSelf.monitoringSource = dispatch_source_create(
-          DISPATCH_SOURCE_TYPE_VNODE, fd, mask, queue);
+      weakSelf.monitoringSource =
+          dispatch_source_create(DISPATCH_SOURCE_TYPE_VNODE, fd, mask, queue);
       dispatch_source_set_event_handler(weakSelf.monitoringSource, weakSelf.internalEventHandler);
       dispatch_source_set_cancel_handler(weakSelf.monitoringSource, weakSelf.internalCancelHandler);
       dispatch_resume(weakSelf.monitoringSource);
@@ -91,9 +91,7 @@
 
   int fd = (int)dispatch_source_get_handle(self.monitoringSource);
   dispatch_source_set_event_handler_f(self.monitoringSource, NULL);
-  dispatch_source_set_cancel_handler(self.monitoringSource, ^{
-      close(fd);
-  });
+  dispatch_source_set_cancel_handler(self.monitoringSource, ^{ close(fd); });
 
   dispatch_source_cancel(self.monitoringSource);
   self.monitoringSource = nil;

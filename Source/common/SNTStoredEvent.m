@@ -24,7 +24,9 @@
     [decoder decodeObjectOfClasses:[NSSet setWithObjects:[NSArray class], [cls class], nil] \
                                                   forKey:key]
 
-+ (BOOL)supportsSecureCoding {  return YES; }
++ (BOOL)supportsSecureCoding {
+  return YES;
+}
 
 - (void)encodeWithCoder:(NSCoder *)coder {
   ENCODE(self.idx, @"idx");
@@ -77,8 +79,7 @@
 - (BOOL)isEqual:(SNTStoredEvent *)other {
   if (other == self) return YES;
   if (![other isKindOfClass:[SNTStoredEvent class]]) return NO;
-  return ([self.fileSHA256 isEqual:other.fileSHA256] &&
-          [self.idx isEqual:other.idx]);
+  return ([self.fileSHA256 isEqual:other.fileSHA256] && [self.idx isEqual:other.idx]);
 }
 
 - (NSUInteger)hash {
@@ -91,8 +92,8 @@
 }
 
 - (NSString *)description {
-  return [NSString stringWithFormat:@"SNTStoredEvent[%@] with SHA-256: %@",
-          self.idx, self.fileSHA256];
+  return
+      [NSString stringWithFormat:@"SNTStoredEvent[%@] with SHA-256: %@", self.idx, self.fileSHA256];
 }
 
 @end

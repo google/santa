@@ -235,8 +235,8 @@
 
   if (cert && cert.SHA256 && cert.commonName) {
     // Also ensure there are no pipes in the cert's common name.
-    NSString *printCommonName = [cert.commonName stringByReplacingOccurrencesOfString:@"|"
-                                                                           withString:@"<pipe>"];
+    NSString *printCommonName =
+        [cert.commonName stringByReplacingOccurrencesOfString:@"|" withString:@"<pipe>"];
     outLog = [NSString stringWithFormat:@"%@|%@|%@|%@|%@|%@",
                  d, r, sha256, printPath, cert.SHA256, printCommonName];
   } else {

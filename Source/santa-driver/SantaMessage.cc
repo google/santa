@@ -16,13 +16,9 @@
 
 OSDefineMetaClassAndStructors(SantaMessage, OSObject);
 
-uint64_t SantaMessage::getMicrosecs() const {
-  return microsecs_;
-}
+uint64_t SantaMessage::getMicrosecs() const { return microsecs_; }
 
-santa_action_t SantaMessage::getAction() const {
-  return action_;
-}
+santa_action_t SantaMessage::getAction() const { return action_; }
 
 void SantaMessage::setAction(const santa_action_t action,
                              const uint64_t microsecs) {

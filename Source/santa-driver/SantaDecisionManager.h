@@ -95,7 +95,7 @@ class SantaDecisionManager : public OSObject {
   ///  waits until all current invocations have finished before clearing the
   ///  cache and returning.
   kern_return_t StopListener();
-  
+
   ///  Adds a decision to the cache, with a timestamp.
   void AddToCache(const char *identifier,
                   const santa_action_t decision,

@@ -34,7 +34,7 @@
 
 #pragma mark Kernel ops
 
-- (void)cacheCount:(void (^)(uint64_t))reply; {
+- (void)cacheCount:(void (^)(uint64_t))reply {
   uint64_t count = [self.driverManager cacheCount];
   reply(count);
 }

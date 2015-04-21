@@ -22,7 +22,7 @@
                      customMsg:(NSString *)customMsg {
   self = [super init];
   if (self) {
-    _shasum  = shasum;
+    _shasum = shasum;
     _state = state;
     _type = type;
     _customMsg = customMsg;
@@ -38,7 +38,9 @@
     [decoder decodeObjectOfClasses:[NSSet setWithObjects:[NSArray class], [cls class], nil] \
                             forKey:key]
 
-+ (BOOL)supportsSecureCoding { return YES; }
++ (BOOL)supportsSecureCoding {
+  return YES;
+}
 
 - (void)encodeWithCoder:(NSCoder *)coder {
   ENCODE(self.shasum, @"shasum");

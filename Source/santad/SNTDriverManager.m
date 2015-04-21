@@ -83,7 +83,7 @@ static const int MAX_DELAY = 15;
   IOServiceClose(_connection);
 }
 
-# pragma mark Incoming messages
+#pragma mark Incoming messages
 
 - (void)listenWithBlock:(void (^)(santa_message_t message))callback {
   kern_return_t kr;
@@ -122,8 +122,7 @@ static const int MAX_DELAY = 15;
   self.queueMemory = (IODataQueueMemory *)address;
   dataSize = sizeof(vdata);
 
-  while (IODataQueueWaitForAvailableData(self.queueMemory,
-                                         self.receivePort) == kIOReturnSuccess) {
+  while (IODataQueueWaitForAvailableData(self.queueMemory, self.receivePort) == kIOReturnSuccess) {
     while (IODataQueueDataAvailable(self.queueMemory)) {
       kr = IODataQueueDequeue(self.queueMemory, &vdata, &dataSize);
       if (kr == kIOReturnSuccess) {

@@ -25,10 +25,9 @@
 
   if (version < 1) {
     [db executeUpdate:@"CREATE TABLE 'events' ("
-        "'idx' INTEGER PRIMARY KEY AUTOINCREMENT,"
-        "'filesha256' TEXT NOT NULL,"
-        "'eventdata' BLOB"
-        @");"];
+                      @"'idx' INTEGER PRIMARY KEY AUTOINCREMENT,"
+                      @"'filesha256' TEXT NOT NULL,"
+                      @"'eventdata' BLOB);"];
     [db executeUpdate:@"CREATE INDEX filesha256 ON events (filesha256);"];
 
     newVersion = 1;
@@ -81,8 +80,8 @@
   __block SNTStoredEvent *storedEvent;
 
   [self inDatabase:^(FMDatabase *db) {
-      FMResultSet *rs = [db executeQuery:@"SELECT * FROM events WHERE filesha256=? LIMIT 1;",
-                            sha256];
+      FMResultSet *rs =
+          [db executeQuery:@"SELECT * FROM events WHERE filesha256=? LIMIT 1;", sha256];
 
       if ([rs next]) {
         storedEvent = [self eventFromResultSet:rs];

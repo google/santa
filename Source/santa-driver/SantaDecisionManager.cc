@@ -43,7 +43,7 @@ void SantaDecisionManager::free() {
     cached_decisions_lock_ = NULL;
   }
 
-  if (dataqueue_lock_ ) {
+  if (dataqueue_lock_) {
     lck_mtx_free(dataqueue_lock_, sdm_lock_grp_);
     dataqueue_lock_ = NULL;
   }
@@ -99,11 +99,9 @@ void SantaDecisionManager::DisconnectClient() {
   owning_proc_ = NULL;
 }
 
-bool SantaDecisionManager::ClientConnected() {
-  return owning_pid_ > 0;
-}
+bool SantaDecisionManager::ClientConnected() { return owning_pid_ > 0; }
 
-# pragma mark Listener Control
+#pragma mark Listener Control
 
 kern_return_t SantaDecisionManager::StartListener() {
   vnode_listener_ = kauth_listen_scope(KAUTH_SCOPE_VNODE,
@@ -163,8 +161,8 @@ void SantaDecisionManager::AddToCache(
     cached_decisions_->setObject(identifier, pending);
     pending->release();  // it was retained when added to the dictionary
   } else {
-    SantaMessage *pending = OSDynamicCast(
-        SantaMessage, cached_decisions_->getObject(identifier));
+    SantaMessage *pending =
+        OSDynamicCast(SantaMessage, cached_decisions_->getObject(identifier));
     if (pending) {
       pending->setAction(decision, microsecs);
     }
@@ -200,8 +198,8 @@ santa_action_t SantaDecisionManager::GetFromCache(const char *identifier) {
   uint64_t decision_time = 0;
 
   lck_rw_lock_shared(cached_decisions_lock_);
-  SantaMessage *cached_decision = OSDynamicCast(
-      SantaMessage, cached_decisions_->getObject(identifier));
+  SantaMessage *cached_decision =
+      OSDynamicCast(SantaMessage, cached_decisions_->getObject(identifier));
   if (cached_decision) {
     result = cached_decision->getAction();
     decision_time = cached_decision->getMicrosecs();
@@ -236,7 +234,7 @@ santa_action_t SantaDecisionManager::GetFromCache(const char *identifier) {
   return result;
 }
 
-# pragma mark Queue Management
+#pragma mark Queue Management
 
 bool SantaDecisionManager::PostToQueue(santa_message_t message) {
   lck_mtx_lock(dataqueue_lock_);
@@ -328,7 +326,7 @@ santa_action_t SantaDecisionManager::FetchDecision(
   return return_action;
 }
 
-# pragma mark Misc
+#pragma mark Misc
 
 uint64_t SantaDecisionManager::GetVnodeIDForVnode(const vfs_context_t context,
                                                   const vnode_t vp) {
@@ -346,7 +344,7 @@ uint64_t SantaDecisionManager::GetCurrentUptime() {
   return (uint64_t)((sec * 1000000) + usec);
 }
 
-# pragma mark Invocation Tracking & PID comparison
+#pragma mark Invocation Tracking & PID comparison
 
 void SantaDecisionManager::IncrementListenerInvocations() {
   OSIncrementAtomic(&listener_invocations_);
@@ -393,8 +391,8 @@ extern "C" int vnode_scope_callback(
     LOGE("Vnode callback established without valid decision manager.");
     return returnResult;
   }
-  SantaDecisionManager *sdm = OSDynamicCast(
-      SantaDecisionManager, reinterpret_cast<OSObject *>(idata));
+  SantaDecisionManager *sdm =
+      OSDynamicCast(SantaDecisionManager, reinterpret_cast<OSObject *>(idata));
   vfs_context_t vfs_context = reinterpret_cast<vfs_context_t>(arg0);
   vnode_t vnode = reinterpret_cast<vnode_t>(arg1);
 
@@ -410,8 +408,8 @@ extern "C" int vnode_scope_callback(
     sdm->IncrementListenerInvocations();
 
     // Fetch decision
-    santa_action_t returnedAction = sdm->FetchDecision(
-        credential, vfs_context, vnode);
+    santa_action_t returnedAction =
+        sdm->FetchDecision(credential, vfs_context, vnode);
 
     // If file has dirty blocks, remove from cache and deny. This would usually
     // be the case if a file has been written to and flushed but not yet

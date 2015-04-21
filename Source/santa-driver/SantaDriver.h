@@ -37,11 +37,10 @@ class com_google_SantaDriver : public IOService {
   void stop(IOService *provider);
 
   ///  Returns a pointer to the SantaDecisionManager created in start().
-  SantaDecisionManager* GetDecisionManager();
+  SantaDecisionManager *GetDecisionManager();
 
  private:
   SantaDecisionManager *santaDecisionManager;
-
 };
 
 #endif  // SANTA__SANTA_DRIVER__SANTADRIVER_H

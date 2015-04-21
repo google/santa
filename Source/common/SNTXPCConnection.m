@@ -59,8 +59,7 @@
   if (self) {
     Protocol *validatorProtocol = @protocol(XPCConnectionValidityRequest);
     _validatorInterface = [NSXPCInterface interfaceWithProtocol:validatorProtocol];
-    _currentConnection = [[NSXPCConnection alloc] initWithMachServiceName:name
-                                                                  options:options];
+    _currentConnection = [[NSXPCConnection alloc] initWithMachServiceName:name options:options];
 
     if (!_validatorInterface || !_currentConnection) return nil;
   }
@@ -90,9 +89,7 @@
         self.currentConnection = nil;
     };
 
-    connection.interruptionHandler = ^{
-        [self.currentConnection invalidate];
-    };
+    connection.interruptionHandler = ^{ [self.currentConnection invalidate]; };
 
     [connection resume];
 

@@ -60,13 +60,13 @@
 
     // Initialize tables
     _ruleTable = [SNTDatabaseController ruleTable];
-    if (! _ruleTable) {
+    if (!_ruleTable) {
       LOGE(@"Failed to initialize rule table.");
       return nil;
     }
 
     _eventTable = [SNTDatabaseController eventTable];
-    if (! _eventTable) {
+    if (!_eventTable) {
       LOGE(@"Failed to initialize event table.");
       return nil;
     }
@@ -109,8 +109,8 @@
   LOGI(@"Connected to driver, activating.");
 
   // Create a concurrent queue to put requests on, then set its priority to high.
-  dispatch_queue_t q = dispatch_queue_create("com.google.santad.driver_queue",
-                                             DISPATCH_QUEUE_CONCURRENT);
+  dispatch_queue_t q =
+      dispatch_queue_create("com.google.santad.driver_queue", DISPATCH_QUEUE_CONCURRENT);
   dispatch_set_target_queue(q, dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_HIGH, 0));
 
   [self.driverManager listenWithBlock:^(santa_message_t message) {

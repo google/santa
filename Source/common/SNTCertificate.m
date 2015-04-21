@@ -80,9 +80,9 @@ static NSString *const kCertDataKey = @"certData";
   NSData *output = nil;
 
   if (SecTransformSetAttribute(transform,
-                             kSecTransformInputAttributeName,
-                             (__bridge CFDataRef)input,
-                             NULL)) {
+                               kSecTransformInputAttributeName,
+                               (__bridge CFDataRef)input,
+                               NULL)) {
     output = CFBridgingRelease(SecTransformExecute(transform, NULL));
   }
   if (transform) CFRelease(transform);
@@ -138,10 +138,8 @@ static NSString *const kCertDataKey = @"certData";
 }
 
 - (NSString *)description {
-  return [NSString stringWithFormat:@"/O=%@/OU=%@/CN=%@",
-          self.orgName,
-          self.orgUnit,
-          self.commonName];
+  return
+      [NSString stringWithFormat:@"/O=%@/OU=%@/CN=%@", self.orgName, self.orgUnit, self.commonName];
 }
 
 #pragma mark NSSecureCoding

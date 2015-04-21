@@ -20,5 +20,4 @@
 ///
 @interface SNTNotificationManager : NSObject<SNTMessageWindowControllerDelegate, SNTNotifierXPC>
 
-
 @end

@@ -54,8 +54,8 @@
 
 - (void)postBlockNotification:(SNTStoredEvent *)event withCustomMessage:(NSString *)message {
   // See if this binary is already in the list of pending notifications.
-  NSPredicate *predicate = [NSPredicate predicateWithFormat:@"event.fileSHA256==%@",
-                               event.fileSHA256];
+  NSPredicate *predicate =
+      [NSPredicate predicateWithFormat:@"event.fileSHA256==%@", event.fileSHA256];
   if ([[self.pendingNotifications filteredArrayUsingPredicate:predicate] count]) return;
 
   if (!event) {

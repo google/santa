@@ -21,11 +21,8 @@
       kIOMasterPortDefault, IOServiceMatching("IOPlatformExpertDevice"));
   if (!platformExpert) return nil;
 
-  NSString *serial = CFBridgingRelease(
-      IORegistryEntryCreateCFProperty(platformExpert,
-                                      CFSTR(kIOPlatformSerialNumberKey),
-                                      kCFAllocatorDefault,
-                                      0));
+  NSString *serial = CFBridgingRelease(IORegistryEntryCreateCFProperty(
+      platformExpert, CFSTR(kIOPlatformSerialNumberKey), kCFAllocatorDefault, 0));
 
   IOObjectRelease(platformExpert);
 
@@ -37,10 +34,8 @@
       kIOMasterPortDefault, IOServiceMatching("IOPlatformExpertDevice"));
   if (!platformExpert) return nil;
 
-  NSString *uuid = CFBridgingRelease(
-      IORegistryEntryCreateCFProperty(platformExpert,
-                                      CFSTR(kIOPlatformUUIDKey),
-                                      kCFAllocatorDefault, 0));
+  NSString *uuid = CFBridgingRelease(IORegistryEntryCreateCFProperty(
+      platformExpert, CFSTR(kIOPlatformUUIDKey), kCFAllocatorDefault, 0));
 
   IOObjectRelease(platformExpert);
 
@@ -65,11 +60,11 @@
   return @(hostname);
 }
 
-# pragma mark - Internal
+#pragma mark - Internal
 
 + (NSDictionary *)_systemVersionDictionary {
-  return [NSDictionary dictionaryWithContentsOfFile:
-      @"/System/Library/CoreServices/SystemVersion.plist"];
+  return [NSDictionary
+      dictionaryWithContentsOfFile:@"/System/Library/CoreServices/SystemVersion.plist"];
 }
 
 @end

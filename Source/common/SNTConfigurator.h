@@ -35,7 +35,7 @@ extern NSString * const kDefaultConfigFilePath;
 ///
 @property BOOL logAllEvents;
 
-# pragma mark - GUI Settings
+#pragma mark - GUI Settings
 
 ///
 ///  The URL to open when the user clicks "More Info..." when opening Santa.app.
@@ -64,7 +64,7 @@ extern NSString * const kDefaultConfigFilePath;
 ///
 @property(readonly) NSString *eventDetailText;
 
-# pragma mark - Sync Settings
+#pragma mark - Sync Settings
 
 ///
 ///  The base URL of the sync server.
@@ -81,7 +81,7 @@ extern NSString * const kDefaultConfigFilePath;
 ///
 @property(readonly) NSString *machineID;
 
-# pragma mark Server Auth Settings
+#pragma mark Server Auth Settings
 
 ///
 ///  If set, this is valid PEM containing one or more certificates to be used to evaluate the
@@ -94,7 +94,7 @@ extern NSString * const kDefaultConfigFilePath;
 ///
 @property(readonly) NSString *syncServerAuthRootsFile;
 
-# pragma mark Client Auth Settings
+#pragma mark Client Auth Settings
 
 ///
 ///  If set, this contains the location of a PKCS#12 certificate to be used for sync authentication.

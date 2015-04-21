@@ -62,7 +62,7 @@ static NSString * const kMachineIDPlistKeyKey = @"MachineIDKey";
   return self;
 }
 
-# pragma mark Singleton retriever
+#pragma mark Singleton retriever
 
 + (instancetype)configurator {
   static SNTConfigurator *sharedConfigurator = nil;
@@ -73,7 +73,7 @@ static NSString * const kMachineIDPlistKeyKey = @"MachineIDKey";
   return sharedConfigurator;
 }
 
-# pragma mark Public Interface
+#pragma mark Public Interface
 
 - (santa_clientmode_t)clientMode {
   int cm = [self.configData[kClientModeKey] intValue];

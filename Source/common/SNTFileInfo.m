@@ -83,7 +83,7 @@
   unsigned char sha2[CC_SHA256_DIGEST_LENGTH];
   CC_SHA256(self.fileData.bytes, (unsigned int)self.fileData.length, sha2);
 
-  NSMutableString *buf = [[NSMutableString alloc] initWithCapacity:CC_SHA256_DIGEST_LENGTH *2];
+  NSMutableString *buf = [[NSMutableString alloc] initWithCapacity:CC_SHA256_DIGEST_LENGTH * 2];
   for (int i = 0; i < CC_SHA256_DIGEST_LENGTH; i++) {
     [buf appendFormat:@"%02x", (unsigned char)sha2[i]];
   }
@@ -92,11 +92,11 @@
 }
 
 - (NSString *)machoType {
-  if ([self isDylib])   { return @"Dynamic Library"; }
-  if ([self isKext])    { return @"Kernel Extension"; }
-  if ([self isFat])     { return @"Fat Binary"; }
-  if ([self isMachO])   { return @"Thin Binary"; }
-  if ([self isScript])  { return @"Script"; }
+  if ([self isDylib])  return @"Dynamic Library";
+  if ([self isKext])   return @"Kernel Extension";
+  if ([self isFat])    return @"Fat Binary";
+  if ([self isMachO])  return @"Thin Binary";
+  if ([self isScript]) return @"Script";
   return @"Unknown (not executable?)";
 }
 
@@ -135,8 +135,7 @@
 - (BOOL)isDylib {
   struct mach_header *mach_header = [self firstMachHeader];
   if (!mach_header) return NO;
-  if (mach_header->filetype == MH_DYLIB ||
-      mach_header->filetype == MH_FVMLIB) {
+  if (mach_header->filetype == MH_DYLIB || mach_header->filetype == MH_FVMLIB) {
     return YES;
   }
 
@@ -183,15 +182,15 @@
   return NO;
 }
 
-# pragma mark Bundle Information
+#pragma mark Bundle Information
 
 ///
 ///  Try and determine the bundle that the represented executable is contained within, if any.
 ///
 ///  Rationale: An NSBundle has a method executablePath for discovering the main binary within a
-///  bundle but provides no way to get an NSBundle object when only the executablePath is known. Also,
-///  a bundle can contain multiple binaries within the MacOS folder and we want any of these to count
-///  as being part of the bundle.
+///  bundle but provides no way to get an NSBundle object when only the executablePath is known.
+///  Also a bundle can contain multiple binaries within the MacOS folder and we want any of these
+///  to count as being part of the bundle.
 ///
 ///  This method relies on executable bundles being laid out as follows:
 ///
@@ -237,7 +236,7 @@
 
   NSURL *url = [NSURL fileURLWithPath:self.path isDirectory:NO];
   self.infoDict =
-      (__bridge_transfer NSDictionary*)CFBundleCopyInfoDictionaryForURL((__bridge CFURLRef) url);
+      (__bridge_transfer NSDictionary *)CFBundleCopyInfoDictionaryForURL((__bridge CFURLRef)url);
   return self.infoDict;
 }
 
@@ -282,7 +281,7 @@
   return nil;
 }
 
-# pragma mark Internal Methods
+#pragma mark Internal Methods
 
 ///
 ///  Look through the file for the first mach_header. If the file is thin, this will be the
@@ -297,8 +296,8 @@
 
   if ([self isFatHeader:fat_header]) {
     // Get the bytes for the fat_arch
-    NSData *archHdr = [self safeSubdataWithRange:NSMakeRange(sizeof(struct fat_header),
-                                                             sizeof(struct fat_arch))];
+    NSData *archHdr =
+        [self safeSubdataWithRange:NSMakeRange(sizeof(struct fat_header), sizeof(struct fat_arch))];
     if (!archHdr) return nil;
     struct fat_arch *fat_arch = (struct fat_arch *)[archHdr bytes];
 
