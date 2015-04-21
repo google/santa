@@ -14,7 +14,7 @@
 
 #import "NSData+Zlib.h"
 
-#import <zlib.h>
+#include <zlib.h>
 
 @implementation NSData (Zlib)
 
