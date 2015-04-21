@@ -46,9 +46,14 @@ server.
 programming interfaces to do its job. This means that the kext code should
 continue to work across OS versions.
 
+Intentions and Expectations
+===========================
+No single system or process will stop *all* attacks, or provide 100% security. Santa is written with the intention of helping protect users from themselves. People often download malware and trust it, giving the malware credentials, or allowing unknown software to exfiltrate more data about your system. As a centrally managed component, Santa can help stop the spread of malware among a larger fleet of machines. Additionally, Santa can aid in analyzing what is running in your fleet.
+
+Santa is part of a defense-in-depth strategy, and you should continue to protect hosts in whatever other ways you see fit.
+
 Known Issues
 ============
-
 Santa is not yet a 1.0 and we have some known issues to be aware of:
 
 * Santa only blocks execution (execve and variants), it doesn't protect against
@@ -85,7 +90,6 @@ option) if it would be useful to others.
 
 Building
 ========
-
 ```sh
 git clone https://github.com/google/santa
 cd santa
@@ -103,7 +107,6 @@ and for security-reasons parts of Santa will not operate properly if not signed.
 
 Kext Signing
 ============
-
 10.9 requires a special Developer ID certificate to sign kernel extensions and
 if the kext is not signed with one of these special certificates a warning will
 be shown when loading the kext for the first time. In 10.10 this is a hard error
@@ -129,11 +132,9 @@ kext-dev mode, instructions for which can be found on the Apple developer site.
 
 Contributing
 ============
-
 Patches to this project are very much welcome. Please see the [CONTRIBUTING](https://github.com/google/santa/blob/master/CONTRIBUTING.md)
 file.
 
 Disclaimer
 ==========
-
 This is **not** an official Google product.
