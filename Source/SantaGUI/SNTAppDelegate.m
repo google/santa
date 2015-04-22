@@ -39,7 +39,6 @@
       [[SNTConfigurator configurator] reloadConfigData];
   }];
 
-  self.aboutWindowController = [[SNTAboutWindowController alloc] init];
   self.notificationManager = [[SNTNotificationManager alloc] init];
 
   NSNotificationCenter *workspaceNotifications = [[NSWorkspace sharedWorkspace] notificationCenter];
@@ -56,6 +55,7 @@
 }
 
 - (BOOL)applicationShouldHandleReopen:(NSApplication *)sender hasVisibleWindows:(BOOL)flag {
+  self.aboutWindowController = [[SNTAboutWindowController alloc] init];
   [self.aboutWindowController showWindow:self];
   return NO;
 }
