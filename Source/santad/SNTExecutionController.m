@@ -147,8 +147,10 @@
         [self initiateEventUploadForSHA256:sha256];
       }
 
-      [[self.notifierConnection remoteObjectProxy] postBlockNotification:se
-                                                       withCustomMessage:rule.customMsg];
+      if (!rule || rule.state != RULESTATE_SILENT_BLACKLIST) {
+        [[self.notifierConnection remoteObjectProxy] postBlockNotification:se
+                                                         withCustomMessage:rule.customMsg];
+      }
     }
   }
 
