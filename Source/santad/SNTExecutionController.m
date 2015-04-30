@@ -273,14 +273,9 @@
 
 - (santa_action_t)defaultDecision {
   switch ([[SNTConfigurator configurator] clientMode]) {
-    case CLIENTMODE_MONITOR:
-      return ACTION_RESPOND_CHECKBW_ALLOW;
-    case CLIENTMODE_LOCKDOWN:
-      return ACTION_RESPOND_CHECKBW_DENY;
-    default:
-      // This should never happen, panic and lockdown.
-      LOGE(@"Client mode is unset while enforcement is in effect. Blocking.");
-      return ACTION_RESPOND_CHECKBW_DENY;
+    case CLIENTMODE_MONITOR: return ACTION_RESPOND_CHECKBW_ALLOW;
+    case CLIENTMODE_LOCKDOWN: return ACTION_RESPOND_CHECKBW_DENY;
+    default: return ACTION_RESPOND_CHECKBW_DENY;  // This can't happen.
   }
 }
 
