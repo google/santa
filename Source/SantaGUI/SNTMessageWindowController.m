@@ -100,6 +100,10 @@
   }
 }
 
+- (NSString *)shortenedHash {
+  return [self.event.fileSHA256 substringWithRange:NSMakeRange(0, 10)];
+}
+
 - (NSString *)publisherInfo {
   SNTCertificate *leafCert = [self.event.signingChain firstObject];
 
