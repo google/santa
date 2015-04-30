@@ -95,4 +95,9 @@
 ///
 @property NSNumber *ppid;
 
+///
+///  The name of the parent process.
+///
+@property NSString *parentName;
+
 @end

@@ -164,6 +164,7 @@
 
   ADDKEY(newEvent, kPID, event.pid);
   ADDKEY(newEvent, kPPID, event.ppid);
+  ADDKEY(newEvent, kParentName, event.parentName);
 
   NSMutableArray *signingChain = [NSMutableArray arrayWithCapacity:event.signingChain.count];
   for (int i = 0; i < event.signingChain.count; i++) {

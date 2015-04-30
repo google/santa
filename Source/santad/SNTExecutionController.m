@@ -14,6 +14,7 @@
 
 #import "SNTExecutionController.h"
 
+#include <libproc.h>
 #include <utmpx.h>
 
 #include "SNTLogging.h"
@@ -68,6 +69,10 @@
   // These will be filled in either in later steps
   santa_action_t respondedAction = ACTION_UNSET;
   SNTRule *rule;
+
+  // Get name of parent process. Do this before responding to be sure parent doesn't go away.
+  char pname[PROC_PIDPATHINFO_MAXSIZE];
+  proc_name([ppid intValue], pname, PROC_PIDPATHINFO_MAXSIZE);
 
   // Step 1 - binary rule?
   rule = [self.ruleTable binaryRuleForSHA256:sha256];
@@ -124,6 +129,7 @@
     se.decision = [self eventStateForDecision:respondedAction type:rule.type];
     se.pid = pid;
     se.ppid = ppid;
+    se.parentName = @(pname);
 
     NSArray *loggedInUsers, *currentSessions;
     [self loggedInUsers:&loggedInUsers sessions:&currentSessions];

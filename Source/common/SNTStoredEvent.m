@@ -45,6 +45,7 @@
   ENCODE(@(self.decision), @"decision");
   ENCODE(self.pid, @"pid");
   ENCODE(self.ppid, @"ppid");
+  ENCODE(self.parentName, @"parentName");
 
   ENCODE(self.loggedInUsers, @"loggedInUsers");
   ENCODE(self.currentSessions, @"currentSessions");
@@ -69,6 +70,7 @@
     _decision = [DECODE(NSNumber, @"decision") intValue];
     _pid = DECODE(NSNumber, @"pid");
     _ppid = DECODE(NSNumber, @"ppid");
+    _parentName = DECODE(NSString, @"parentName");
 
     _loggedInUsers = DECODEARRAY(NSString, @"loggedInUsers");
     _currentSessions = DECODEARRAY(NSString, @"currentSessions");

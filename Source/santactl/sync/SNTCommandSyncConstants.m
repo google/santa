@@ -57,6 +57,7 @@ NSString * const kFileBundleVersion = @"file_bundle_version";
 NSString * const kFileBundleShortVersionString = @"file_bundle_version_string";
 NSString * const kPID = @"pid";
 NSString * const kPPID = @"ppid";
+NSString * const kParentName = @"parent_name";
 NSString * const kSigningChain = @"signing_chain";
 NSString * const kCertSHA256 = @"sha256";
 NSString * const kCertCN = @"cn";

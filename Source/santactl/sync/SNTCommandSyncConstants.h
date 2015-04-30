@@ -55,6 +55,7 @@ extern NSString * const kFileBundleVersion;
 extern NSString * const kFileBundleShortVersionString;
 extern NSString * const kPID;
 extern NSString * const kPPID;
+extern NSString * const kParentName;
 extern NSString * const kSigningChain;
 extern NSString * const kCertSHA256;
 extern NSString * const kCertCN;
