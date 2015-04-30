@@ -58,20 +58,20 @@ REGISTER_COMMAND_NAME(@"rule");
 
 + (void)runWithArguments:(NSArray *)arguments daemonConnection:(SNTXPCConnection *)daemonConn {
   SNTConfigurator *config = [SNTConfigurator configurator];
-  
+
   // Ensure we have no privileges
   if (!DropRootPrivileges()) {
     printf("Failed to drop root privileges.\n");
     exit(1);
   }
-  
+
   if ([config syncBaseURL] != nil) {
     printf("SyncBaseURL is set, rules are managed centrally.\n");
     exit(1);
   }
-  
+
   NSString *action = [arguments firstObject];
-  
+
   // add or remove
   if (!action) {
     printf("Missing action - add or remove?\n");
@@ -79,7 +79,7 @@ REGISTER_COMMAND_NAME(@"rule");
   }
 
   int state = RULESTATE_UNKNOWN;
-  
+
   if ([action compare:@"add" options:NSCaseInsensitiveSearch] == NSOrderedSame) {
   } else if ([action compare:@"remove" options:NSCaseInsensitiveSearch] == NSOrderedSame) {
     state = RULESTATE_REMOVE;
@@ -87,15 +87,15 @@ REGISTER_COMMAND_NAME(@"rule");
     printf("Unknown action, expected add or remove.\n");
     exit(1);
   }
-  
+
   NSString *customMsg = @"";
   NSString *SHA256 = nil;
   NSString *filePath = nil;
-  
+
   // parse arguments
   for (int i=1; i < [arguments count] ; i++ ) {
     NSString* argument = [arguments objectAtIndex:i];
-    
+
     if ([argument compare:@"--whitelist" options:NSCaseInsensitiveSearch] == NSOrderedSame) {
       state = RULESTATE_WHITELIST;
     } else if ([argument compare:@"--blacklist" options:NSCaseInsensitiveSearch] == NSOrderedSame) {
@@ -106,31 +106,31 @@ REGISTER_COMMAND_NAME(@"rule");
       if (++i > ([arguments count])) {
         printf("No message specified.\n");
       }
-      
+
       customMsg = [arguments objectAtIndex:i];
     } else if ([argument compare:@"--path" options:NSCaseInsensitiveSearch] == NSOrderedSame) {
       if (++i > ([arguments count])) {
         printf("No path specified.\n");
       }
-      
+
       filePath = [arguments objectAtIndex:i];
     } else if ([argument compare:@"--sha256" options:NSCaseInsensitiveSearch] == NSOrderedSame) {
       if (++i > ([arguments count])) {
         printf("No SHA-256 specified.\n");
       }
-      
+
       SHA256 = [arguments objectAtIndex:i];
     } else {
       printf("Unknown argument %s.\n", [argument UTF8String]);
       exit(1);
     }
   }
-  
+
   if (state == RULESTATE_UNKNOWN) {
     printf("No state specified.\n");
     exit(1);
   }
-  
+
   if (filePath) {
     SNTFileInfo *fileInfo = [[SNTFileInfo alloc] initWithPath:filePath];
     if (!fileInfo) {
@@ -144,13 +144,13 @@ REGISTER_COMMAND_NAME(@"rule");
     printf("No SHA-256 or binary specified.\n");
     exit(1);
   }
-  
+
   SNTRule *newRule = [[SNTRule alloc] init];
   newRule.shasum = SHA256;
   newRule.state = state;
   newRule.type = RULETYPE_BINARY;
   newRule.customMsg = customMsg;
-  
+
   [[daemonConn remoteObjectProxy] databaseRuleAddRule:newRule cleanSlate:NO reply:^{
       if (state == RULESTATE_REMOVE) {
         printf("Removed rule for SHA-256: %s.\n", [newRule.shasum UTF8String]);
@@ -159,7 +159,6 @@ REGISTER_COMMAND_NAME(@"rule");
       }
       exit(0);
   }];
-
 }
 
 @end

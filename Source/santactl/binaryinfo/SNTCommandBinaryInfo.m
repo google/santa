@@ -59,22 +59,25 @@ REGISTER_COMMAND_NAME(@"binaryinfo");
     exit(1);
   }
 
-  printf("%-12s: %s\n", "Path", [[fileInfo path] UTF8String]);
-  printf("%-12s: %s\n", "SHA-256", [[fileInfo SHA256] UTF8String]);
-  printf("%-12s: %s\n", "SHA-1", [[fileInfo SHA1] UTF8String]);
+  printf("%-19s: %s\n", "Path", [[fileInfo path] UTF8String]);
+  printf("%-19s: %s\n", "SHA-256", [[fileInfo SHA256] UTF8String]);
+  printf("%-19s: %s\n", "SHA-1", [[fileInfo SHA1] UTF8String]);
+  printf("%-19s: %s\n", "Bundle Name", [[fileInfo bundleName] UTF8String]);
+  printf("%-19s: %s\n", "Bundle Version", [[fileInfo bundleVersion] UTF8String]);
+  printf("%-19s: %s\n", "Bundle Version Str", [[fileInfo bundleShortVersionString] UTF8String]);
 
   NSArray *archs = [fileInfo architectures];
   if (archs) {
-    printf("%-12s: %s (%s)\n", "Type",
+    printf("%-19s: %s (%s)\n", "Type",
            [[fileInfo machoType] UTF8String],
            [[archs componentsJoinedByString:@", "] UTF8String]);
   } else {
-    printf("%-12s: %s\n", "Type", [[fileInfo machoType] UTF8String]);
+    printf("%-19s: %s\n", "Type", [[fileInfo machoType] UTF8String]);
   }
 
   SNTCodesignChecker *csc = [[SNTCodesignChecker alloc] initWithBinaryPath:filePath];
 
-  printf("%-12s: %s\n", "Code-signed", (csc) ? "Yes" : "No");
+  printf("%-19s: %s\n", "Code-signed", (csc) ? "Yes" : "No");
 
   if (csc) {
     printf("Signing chain:\n");
