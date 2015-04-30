@@ -165,7 +165,7 @@
 ///  Checks whether the file at @c path is in-scope for checking with Santa.
 ///
 ///  Files that are out of scope:
-///    + Non Mach-O files
+///    + Non Mach-O files that are not part of an installer package.
 ///    + Files in whitelisted directories.
 ///
 ///  @return @c YES if file is in scope, @c NO otherwise.
@@ -176,10 +176,11 @@
     return NO;
   }
 
-  // If file is not a Mach-O file, we're not interested.
-  // TODO(rah): Consider adding an option to check scripts
+  // If file is not a Mach-O file, we're not interested unless it's part of an install package.
+  // TODO(rah): Consider adding an option to check all scripts.
+  // TODO(rah): Consider adding an option to disable package script checks.
   SNTFileInfo *binInfo = [[SNTFileInfo alloc] initWithPath:path];
-  if (![binInfo isMachO]) {
+  if (![binInfo isMachO] && ![path hasPrefix:@"/private/tmp/PKInstallSandbox."]) {
     return NO;
   }
 
