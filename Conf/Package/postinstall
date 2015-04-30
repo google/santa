@@ -1,0 +1,25 @@
+#!/bin/bash
+
+# Load the kernel extension, santad, sync client
+# If a user is logged in, also load the GUI agent.
+# If the target volume is not /, do nothing
+
+[[ $3 != "/" ]] && exit 0
+
+# Restart syslogd to pick up ASL configuration change
+/usr/bin/killall -HUP syslogd
+
+/sbin/kextload /Library/Extensions/santa-driver.kext
+
+sleep 1
+
+/bin/launchctl load -w /Library/LaunchDaemons/com.google.santad.plist
+/bin/launchctl load -w /Library/LaunchDaemons/com.google.santasync.plist
+
+sleep 1
+
+user=$(/usr/bin/stat -f '%u' /dev/console)
+[[ -z "$user" ]] && exit 0
+/bin/launchctl asuser ${user} /bin/launchctl load /Library/LaunchAgents/com.google.santagui.plist
+
+exit 0

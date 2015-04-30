@@ -112,7 +112,7 @@ task :dist do
     FileUtils.cp_r("#{OUTPUT_PATH}/Products/Release/#{x}.dSYM", "#{DIST_PATH}/dsym")
   end
 
-  Dir.glob("Conf/*") {|x| FileUtils.cp(x, "#{DIST_PATH}/conf")}
+  Dir.glob("Conf/*") {|x| File.directory?(x) or FileUtils.cp(x, "#{DIST_PATH}/conf")}
 
   puts "Distribution folder created"
 end

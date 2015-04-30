@@ -1,0 +1,21 @@
+#!/bin/bash
+
+# Unload the kernel extension, santad, sync client
+# If a user is logged in, also unload the GUI agent.
+# If the target volume is not /, do nothing
+
+[[ $3 != "/" ]] && exit 0
+
+/bin/launchctl remove com.google.santad
+/bin/launchctl remove com.google.santasync
+
+sleep 1
+
+/sbin/kextunload -b com.google.santa-driver >/dev/null 2>&1
+
+sleep 1
+
+user=$(/usr/bin/stat -f '%u' /dev/console)
+[[ -n "$user" ]] && /bin/launchctl asuser ${user} /bin/launchctl remove com.google.santagui
+
+exit 0
