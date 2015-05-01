@@ -63,7 +63,7 @@ typedef void (^SNTXPCRejectedBlock)(void);
 ///  @warning Do not send a message to this object if you didn't set @c remoteInterface above
 ///  before calling the @c resume method. Doing so will throw an exception.
 ///
-@property(readonly) id remoteObjectProxy;
+@property(readonly, nonatomic) id remoteObjectProxy;
 
 ///
 ///  The interface this object exports.

@@ -38,12 +38,12 @@
 ///
 ///  Returns the leaf certificate that this binary was signed with
 ///
-@property(readonly) SNTCertificate *leafCertificate;
+@property(readonly, nonatomic) SNTCertificate *leafCertificate;
 
 ///
 ///  Returns the on-disk path of this binary.
 ///
-@property(readonly) NSString *binaryPath;
+@property(readonly, nonatomic) NSString *binaryPath;
 
 ///
 ///  Designated initializer

@@ -47,12 +47,12 @@
 ///
 ///  A 'friendly' string representing the certificate information
 ///
-@property(readonly) NSString *publisherInfo;
+@property(readonly, nonatomic) NSString *publisherInfo;
 
 ///
 ///  An optional message to display with this block.
 ///
-@property(readonly) NSAttributedString *attributedCustomMessage;
+@property(readonly, nonatomic) NSAttributedString *attributedCustomMessage;
 
 ///
 ///  Reference to the "Open Event" button in the XIB. Used to either remove the button

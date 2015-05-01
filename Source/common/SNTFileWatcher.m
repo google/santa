@@ -48,7 +48,7 @@
 }
 
 - (void)beginWatchingFile {
-  __weak typeof(self) weakSelf = self;
+  __weak __typeof(self) weakSelf = self;
   int mask = (DISPATCH_VNODE_DELETE | DISPATCH_VNODE_WRITE |
               DISPATCH_VNODE_EXTEND | DISPATCH_VNODE_RENAME);
   dispatch_queue_t queue = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_BACKGROUND, 0);

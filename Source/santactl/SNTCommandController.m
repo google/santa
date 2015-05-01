@@ -36,7 +36,7 @@ static NSMutableDictionary *registeredCommands;
 
   int longestCommandName = 0;
   for (NSString *cmdName in registeredCommands) {
-    if ([cmdName length] > longestCommandName) {
+    if ((int)[cmdName length] > longestCommandName) {
       longestCommandName = (int)[cmdName length];
     }
   }

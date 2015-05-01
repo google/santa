@@ -67,7 +67,7 @@
 
     _executingUser = DECODE(NSString, @"executingUser");
     _occurrenceDate = DECODE(NSDate, @"occurrenceDate");
-    _decision = [DECODE(NSNumber, @"decision") intValue];
+    _decision = (santa_eventstate_t)[DECODE(NSNumber, @"decision") intValue];
     _pid = DECODE(NSNumber, @"pid");
     _ppid = DECODE(NSNumber, @"ppid");
     _parentName = DECODE(NSString, @"parentName");
@@ -78,10 +78,11 @@
   return self;
 }
 
-- (BOOL)isEqual:(SNTStoredEvent *)other {
+- (BOOL)isEqual:(id)other {
   if (other == self) return YES;
   if (![other isKindOfClass:[SNTStoredEvent class]]) return NO;
-  return ([self.fileSHA256 isEqual:other.fileSHA256] && [self.idx isEqual:other.idx]);
+  SNTStoredEvent *o;
+  return ([self.fileSHA256 isEqual:o.fileSHA256] && [self.idx isEqual:o.idx]);
 }
 
 - (NSUInteger)hash {

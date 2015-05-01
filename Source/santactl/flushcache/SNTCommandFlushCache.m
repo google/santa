@@ -23,7 +23,7 @@
 
 @implementation SNTCommandFlushCache
 
-REGISTER_COMMAND_NAME(@"flushcache");
+REGISTER_COMMAND_NAME(@"flushcache")
 
 + (BOOL)requiresRoot {
   return YES;

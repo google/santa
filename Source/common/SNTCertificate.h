@@ -53,59 +53,59 @@
 ///
 ///  Access the underlying certificate ref.
 ///
-@property(readonly) SecCertificateRef certRef;
+@property(readonly, nonatomic) SecCertificateRef certRef;
 
 ///
 ///  SHA-1 hash of the certificate data.
 ///
-@property(readonly) NSString *SHA1;
+@property(readonly, nonatomic) NSString *SHA1;
 
 ///
 ///  SHA-256 hash of the certificate data.
 ///
-@property(readonly) NSString *SHA256;
+@property(readonly, nonatomic) NSString *SHA256;
 
 ///
 ///  Certificate data.
 ///
-@property(readonly) NSData *certData;
+@property(readonly, nonatomic) NSData *certData;
 
 ///
 ///  Common Name e.g: "Software Signing"
 ///
-@property(readonly) NSString *commonName;
+@property(readonly, nonatomic) NSString *commonName;
 
 ///
 ///  Country Name e.g: "US"
 ///
-@property(readonly) NSString *countryName;
+@property(readonly, nonatomic) NSString *countryName;
 
 ///
 ///  Organizational Name e.g: "Apple Inc."
 ///
-@property(readonly) NSString *orgName;
+@property(readonly, nonatomic) NSString *orgName;
 
 ///
 ///  Organizational Unit Name e.g: "Apple Software"
 ///
-@property(readonly) NSString *orgUnit;
+@property(readonly, nonatomic) NSString *orgUnit;
 
 ///
 ///  Issuer details, same fields as above.
 ///
-@property(readonly) NSString *issuerCommonName;
-@property(readonly) NSString *issuerCountryName;
-@property(readonly) NSString *issuerOrgName;
-@property(readonly) NSString *issuerOrgUnit;
+@property(readonly, nonatomic) NSString *issuerCommonName;
+@property(readonly, nonatomic) NSString *issuerCountryName;
+@property(readonly, nonatomic) NSString *issuerOrgName;
+@property(readonly, nonatomic) NSString *issuerOrgUnit;
 
 ///
 ///  Validity Not Before
 ///
-@property(readonly) NSDate *validFrom;
+@property(readonly, nonatomic) NSDate *validFrom;
 
 ///
 ///  Validity Not After
 ///
-@property(readonly) NSDate *validUntil;
+@property(readonly, nonatomic) NSDate *validUntil;
 
 @end

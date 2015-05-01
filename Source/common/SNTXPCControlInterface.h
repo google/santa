@@ -25,17 +25,17 @@
 ///
 ///  Kernel ops
 ///
-- (void)cacheCount:(void (^)(uint64_t))reply;
+- (void)cacheCount:(void (^)(int64_t))reply;
 - (void)flushCache:(void (^)(BOOL))reply;
 
 ///
 ///  Database ops
 ///
-- (void)databaseRuleCounts:(void (^)(uint64_t binary, uint64_t certificate))reply;
+- (void)databaseRuleCounts:(void (^)(int64_t binary, int64_t certificate))reply;
 - (void)databaseRuleAddRule:(SNTRule *)rule cleanSlate:(BOOL)cleanSlate reply:(void (^)())reply;
 - (void)databaseRuleAddRules:(NSArray *)rules cleanSlate:(BOOL)cleanSlate reply:(void (^)())reply;
 
-- (void)databaseEventCount:(void (^)(uint64_t count))reply;
+- (void)databaseEventCount:(void (^)(int64_t count))reply;
 - (void)databaseEventForSHA256:(NSString *)sha256 reply:(void (^)(SNTStoredEvent *))reply;
 - (void)databaseEventsPending:(void (^)(NSArray *events))reply;
 - (void)databaseRemoveEventsWithIDs:(NSArray *)ids;

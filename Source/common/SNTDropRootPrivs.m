@@ -16,8 +16,9 @@
 
 BOOL DropRootPrivileges() {
   if (getuid() == 0 || geteuid() == 0 || getgid() == 0 || getegid() == 0) {
-    if (setgid(-2) != 0 || setgroups(0, NULL) != 0 || setegid(-2) != 0 ||
-        setuid(-2) != 0 || seteuid(-2) != 0) {
+    uid_t nobody = (uid_t)-2;
+    if (setgid(nobody) != 0 || setgroups(0, NULL) != 0 || setegid(nobody) != 0 ||
+        setuid(nobody) != 0 || seteuid(nobody) != 0) {
       return false;
     }
 

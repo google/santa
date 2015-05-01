@@ -25,7 +25,7 @@
 
 @implementation SNTCommandBinaryInfo
 
-REGISTER_COMMAND_NAME(@"binaryinfo");
+REGISTER_COMMAND_NAME(@"binaryinfo")
 
 + (BOOL)requiresRoot {
   return NO;

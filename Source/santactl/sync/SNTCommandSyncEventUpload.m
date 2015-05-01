@@ -71,7 +71,7 @@
 + (void)uploadEventsFromArray:(NSArray *)events
                         toURL:(NSURL *)url
                     inSession:(NSURLSession *)session
-                    batchSize:(int32_t)batchSize
+                    batchSize:(NSUInteger)batchSize
                    daemonConn:(SNTXPCConnection *)daemonConn
             completionHandler:(void (^)(BOOL success))handler {
   NSMutableArray *uploadEvents = [[NSMutableArray alloc] init];
@@ -167,7 +167,7 @@
   ADDKEY(newEvent, kParentName, event.parentName);
 
   NSMutableArray *signingChain = [NSMutableArray arrayWithCapacity:event.signingChain.count];
-  for (int i = 0; i < event.signingChain.count; i++) {
+  for (NSUInteger i = 0; i < event.signingChain.count; i++) {
     SNTCertificate *cert = [event.signingChain objectAtIndex:i];
 
     NSMutableDictionary *certDict = [NSMutableDictionary dictionary];

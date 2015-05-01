@@ -35,7 +35,7 @@
 
 @implementation SNTCommandSync
 
-REGISTER_COMMAND_NAME(@"sync");
+REGISTER_COMMAND_NAME(@"sync")
 
 + (BOOL)requiresRoot {
   return NO;

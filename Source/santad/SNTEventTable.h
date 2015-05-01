@@ -54,7 +54,7 @@
 
 ///
 ///  Delete multiple events from the database with an array of IDs.
-///  @param indexes an array of event IDs.
+///  @param ids an array of event IDs.
 ///
 - (void)deleteEventsWithIds:(NSArray *)ids;
 

@@ -17,4 +17,4 @@
 ///
 ///  @return YES if dropping was successful or unnecessary.
 ///
-BOOL DropRootPrivileges();
+BOOL DropRootPrivileges(void);

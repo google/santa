@@ -121,8 +121,9 @@
     struct fat_arch *fat_archs = (struct fat_arch *)[archs bytes];
 
     // For each arch, get the name of it's architecture
-    for (int i = 0; i < narch; ++i) {
-      [ret addObject:[self nameForCPUType:NSSwapBigIntToHost(fat_archs[i].cputype)]];
+    for (uint32_t i = 0; i < narch; ++i) {
+      cpu_type_t cpu = (cpu_type_t)NSSwapBigIntToHost((unsigned int)fat_archs[i].cputype);
+      [ret addObject:[self nameForCPUType:cpu]];
     }
     return ret;
   } else {
@@ -258,7 +259,7 @@
 
 - (NSArray *)downloadURLs {
   char *path = (char *)[self.path fileSystemRepresentation];
-  size_t size = getxattr(path, "com.apple.metadata:kMDItemWhereFroms", NULL, 0, 0, 0);
+  size_t size = (size_t)getxattr(path, "com.apple.metadata:kMDItemWhereFroms", NULL, 0, 0, 0);
   char *value = malloc(size);
   if (!value) return nil;
 
@@ -332,7 +333,7 @@
   @try {
     return [self.fileData subdataWithRange:range];
   }
-  @catch (NSException *exception) {
+  @catch (NSException *e) {
     return nil;
   }
 }

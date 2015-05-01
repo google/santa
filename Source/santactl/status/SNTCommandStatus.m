@@ -22,7 +22,7 @@
 
 @implementation SNTCommandStatus
 
-REGISTER_COMMAND_NAME(@"status");
+REGISTER_COMMAND_NAME(@"status")
 
 + (BOOL)requiresRoot {
   return NO;
@@ -58,8 +58,8 @@ REGISTER_COMMAND_NAME(@"status");
   printf("  %-25s | %s\n", "Mode", [clientMode UTF8String]);
 
   // Kext status
-  __block uint64_t cacheCount = -1;
-  [[daemonConn remoteObjectProxy] cacheCount:^(uint64_t count) {
+  __block int64_t cacheCount = -1;
+  [[daemonConn remoteObjectProxy] cacheCount:^(int64_t count) {
       cacheCount = count;
   }];
   do { usleep(5000); } while (cacheCount == -1);
@@ -67,12 +67,12 @@ REGISTER_COMMAND_NAME(@"status");
   printf("  %-25s | %lld\n", "Kernel cache count", cacheCount);
 
   // Database counts
-  __block uint64_t eventCount = 1, binaryRuleCount = -1, certRuleCount = -1;
-  [[daemonConn remoteObjectProxy] databaseRuleCounts:^(uint64_t binary, uint64_t certificate) {
+  __block int64_t eventCount = 1, binaryRuleCount = -1, certRuleCount = -1;
+  [[daemonConn remoteObjectProxy] databaseRuleCounts:^(int64_t binary, int64_t certificate) {
       binaryRuleCount = binary;
       certRuleCount = certificate;
   }];
-  [[daemonConn remoteObjectProxy] databaseEventCount:^(uint64_t count) {
+  [[daemonConn remoteObjectProxy] databaseEventCount:^(int64_t count) {
       eventCount = count;
   }];
   do { usleep(5000); } while (eventCount == -1 || binaryRuleCount == -1 || certRuleCount == -1);

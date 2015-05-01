@@ -52,7 +52,7 @@
 ///  @param userName the user who's executing the binary
 ///  @param pid the process id being executed
 ///  @param ppid the parent process id
-///  @param vnoteId the id of the vnode being executed
+///  @param vnodeId the id of the vnode being executed
 ///
 - (void)validateBinaryWithPath:(NSString *)path
                       userName:(NSString *)userName

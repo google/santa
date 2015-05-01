@@ -78,7 +78,7 @@ static NSString * const kMachineIDPlistKeyKey = @"MachineIDKey";
 - (santa_clientmode_t)clientMode {
   int cm = [self.configData[kClientModeKey] intValue];
   if (cm > CLIENTMODE_UNKNOWN && cm < CLIENTMODE_MAX) {
-    return cm;
+    return (santa_clientmode_t)cm;
   } else {
     self.configData[kClientModeKey] = @(CLIENTMODE_MONITOR);
     return CLIENTMODE_MONITOR;

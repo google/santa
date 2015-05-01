@@ -25,7 +25,7 @@
 
 @implementation SNTCommandVersion
 
-REGISTER_COMMAND_NAME(@"version");
+REGISTER_COMMAND_NAME(@"version")
 
 + (BOOL)requiresRoot {
   return NO;

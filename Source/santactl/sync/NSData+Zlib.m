@@ -29,7 +29,7 @@
     stream.total_out = 0;
     stream.avail_out = 0;
 
-    int chunkSize = 16384;
+    NSUInteger chunkSize = 16384;
 
     int windowSize = 15;
     if (includeHeader) {

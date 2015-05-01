@@ -74,15 +74,15 @@
 #pragma mark Connection set-up
 
 - (void)resume {
-  if (_listenerObject) {
+  if (self.listenerObject) {
     // A new listener doesn't do anything until a client connects.
     self.listenerObject.delegate = self;
     [self.listenerObject resume];
   } else {
     // A new client begins the validation process.
-    NSXPCConnection *connection = _currentConnection;
+    NSXPCConnection *connection = self.currentConnection;
 
-    connection.remoteObjectInterface = _validatorInterface;
+    connection.remoteObjectInterface = self.validatorInterface;
 
     connection.invalidationHandler = ^{
         [self invokeInvalidationHandler];
@@ -130,7 +130,7 @@
   if (self.currentConnection) return NO;
 
   connection.exportedObject = self;
-  connection.exportedInterface = _validatorInterface;
+  connection.exportedInterface = self.validatorInterface;
 
   connection.invalidationHandler = ^{
       [self invokeInvalidationHandler];

@@ -34,9 +34,6 @@
 
 #define ENCODE(obj, key) if (obj) [coder encodeObject:obj forKey:key]
 #define DECODE(cls, key) [decoder decodeObjectOfClass:[cls class] forKey:key]
-#define DECODEARRAY(cls, key) \
-    [decoder decodeObjectOfClasses:[NSSet setWithObjects:[NSArray class], [cls class], nil] \
-                            forKey:key]
 
 + (BOOL)supportsSecureCoding {
   return YES;
@@ -59,5 +56,8 @@
   }
   return self;
 }
+
+#undef DECODE
+#undef ENCODE
 
 @end

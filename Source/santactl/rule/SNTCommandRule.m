@@ -32,7 +32,7 @@
 
 @implementation SNTCommandRule
 
-REGISTER_COMMAND_NAME(@"rule");
+REGISTER_COMMAND_NAME(@"rule")
 
 + (BOOL)requiresRoot {
   return YES;
@@ -93,7 +93,7 @@ REGISTER_COMMAND_NAME(@"rule");
   NSString *filePath = nil;
 
   // parse arguments
-  for (int i=1; i < [arguments count] ; i++ ) {
+  for (NSUInteger i = 1; i < [arguments count] ; i++ ) {
     NSString* argument = [arguments objectAtIndex:i];
 
     if ([argument compare:@"--whitelist" options:NSCaseInsensitiveSearch] == NSOrderedSame) {

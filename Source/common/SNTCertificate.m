@@ -126,11 +126,12 @@ static NSString *const kCertDataKey = @"certData";
 
 #pragma mark Equality & description
 
-- (BOOL)isEqual:(SNTCertificate *)other {
+- (BOOL)isEqual:(id)other {
   if (self == other) return YES;
   if (![other isKindOfClass:[SNTCertificate class]]) return NO;
 
-  return [self.certData isEqual:other.certData];
+  SNTCertificate *o = other;
+  return [self.certData isEqual:o.certData];
 }
 
 - (NSUInteger)hash {
@@ -225,7 +226,7 @@ static NSString *const kCertDataKey = @"certData";
     }
     return nil;
   }
-  @catch (NSException *exception) {
+  @catch (NSException *e) {
     return nil;
   }
 }

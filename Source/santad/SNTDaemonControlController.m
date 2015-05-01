@@ -34,8 +34,8 @@
 
 #pragma mark Kernel ops
 
-- (void)cacheCount:(void (^)(uint64_t))reply {
-  uint64_t count = [self.driverManager cacheCount];
+- (void)cacheCount:(void (^)(int64_t))reply {
+  int64_t count = [self.driverManager cacheCount];
   reply(count);
 }
 
@@ -45,7 +45,7 @@
 
 #pragma mark Database ops
 
-- (void)databaseRuleCounts:(void (^)(uint64_t binary, uint64_t certificate))reply {
+- (void)databaseRuleCounts:(void (^)(int64_t binary, int64_t certificate))reply {
   SNTRuleTable *rdb = [SNTDatabaseController ruleTable];
   reply([rdb binaryRuleCount], [rdb certificateRuleCount]);
 }
@@ -67,7 +67,7 @@
   reply();
 }
 
-- (void)databaseEventCount:(void (^)(uint64_t count))reply {
+- (void)databaseEventCount:(void (^)(int64_t count))reply {
   reply([[SNTDatabaseController eventTable] pendingEventsCount]);
 }
 

@@ -37,14 +37,14 @@
  *       kSecCSDoNotValidateResources:                         0.032s
  *       kSecCSDoNotValidateResources | kSecCSCheckNestedCode: 0.033s
  */
-const SecCSFlags kStaticSigningFlags = kSecCSDoNotValidateResources | kSecCSCheckNestedCode;
+static const SecCSFlags kStaticSigningFlags = kSecCSDoNotValidateResources | kSecCSCheckNestedCode;
 
 /**
  *  kSigningFlags are the flags used when validating signatures for running binaries.
  *
  *  No special flags needed currently.
  */
-const SecCSFlags kSigningFlags = kSecCSDefaultFlags;
+static const SecCSFlags kSigningFlags = kSecCSDefaultFlags;
 
 @interface SNTCodesignChecker ()
 /// Array of @c SNTCertificate's representing the chain of certs this executable was signed with.
@@ -85,7 +85,7 @@ const SecCSFlags kSigningFlags = kSecCSDefaultFlags;
 
     // Wrap SecCertificateRef objects in SNTCertificate and put in a new NSArray
     NSMutableArray *mutableCerts = [[NSMutableArray alloc] initWithCapacity:certs.count];
-    for (int i = 0; i < certs.count; ++i) {
+    for (NSUInteger i = 0; i < certs.count; ++i) {
       SecCertificateRef certRef = (__bridge SecCertificateRef)certs[i];
       SNTCertificate *newCert = [[SNTCertificate alloc] initWithSecCertificateRef:certRef];
       [mutableCerts addObject:newCert];
@@ -180,7 +180,7 @@ const SecCSFlags kSigningFlags = kSecCSDefaultFlags;
 
 - (NSString *)binaryPath {
   CFURLRef path;
-  OSStatus status = SecCodeCopyPath(_codeRef, kSecCSDefaultFlags, &path);
+  OSStatus status = SecCodeCopyPath(self.codeRef, kSecCSDefaultFlags, &path);
   NSURL *pathURL = CFBridgingRelease(path);
   if (status != errSecSuccess) return nil;
   return [pathURL path];

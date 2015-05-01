@@ -54,7 +54,7 @@
 ///  transaction will abort if any rule fails to add.
 ///
 ///  @param rules Array of SNTRule's to add.
-///  @param cleanslate If true, remove all rules before adding the new rules.
+///  @param cleanSlate If true, remove all rules before adding the new rules.
 ///  @return YES if all rules were added successfully.
 ///
 - (BOOL)addRules:(NSArray *)rules cleanSlate:(BOOL)cleanSlate;
