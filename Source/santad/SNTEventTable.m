@@ -100,7 +100,12 @@
       FMResultSet *rs = [db executeQuery:@"SELECT * FROM events"];
 
       while ([rs next]) {
-        [pendingEvents addObject:[self eventFromResultSet:rs]];
+        id obj = [self eventFromResultSet:rs];
+        if (obj) {
+          [pendingEvents addObject:obj];
+        } else {
+          [db executeUpdate:@"DELETE FROM events WHERE idx=?", [rs intForColumn:@"idx"]];
+        }
       }
 
       [rs close];
