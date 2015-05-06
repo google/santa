@@ -372,10 +372,14 @@ extern "C" int fileop_scope_callback(
 
   SantaDecisionManager *sdm = OSDynamicCast(
       SantaDecisionManager, reinterpret_cast<OSObject *>(idata));
+  sdm->IncrementListenerInvocations();
+
   char vnode_id_str[MAX_VNODE_ID_STR];
   snprintf(vnode_id_str, MAX_VNODE_ID_STR, "%llu",
            sdm->GetVnodeIDForVnode(NULL, (vnode_t)arg0));
   sdm->CacheCheck(vnode_id_str);
+
+  sdm->DecrementListenerInvocations();
 
   return KAUTH_RESULT_DEFER;
 }
