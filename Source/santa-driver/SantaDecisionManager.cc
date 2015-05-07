@@ -374,10 +374,12 @@ extern "C" int fileop_scope_callback(
       SantaDecisionManager, reinterpret_cast<OSObject *>(idata));
   sdm->IncrementListenerInvocations();
 
+  vfs_context_t context = vfs_context_create(NULL);  
   char vnode_id_str[MAX_VNODE_ID_STR];
   snprintf(vnode_id_str, MAX_VNODE_ID_STR, "%llu",
-           sdm->GetVnodeIDForVnode(NULL, (vnode_t)arg0));
+           sdm->GetVnodeIDForVnode(context, (vnode_t)arg0));
   sdm->CacheCheck(vnode_id_str);
+  vfs_context_rele(context);
 
   sdm->DecrementListenerInvocations();
 
