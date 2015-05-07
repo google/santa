@@ -58,24 +58,24 @@
   NSURLProtectionSpace *protectionSpace = challenge.protectionSpace;
 
   if (challenge.previousFailureCount > 0) {
-    completionHandler(NSURLSessionAuthChallengeRejectProtectionSpace, nil);
+    completionHandler(NSURLSessionAuthChallengeCancelAuthenticationChallenge, nil);
     return;
   }
 
   if (self.serverHostname && ![self.serverHostname isEqual:protectionSpace.host]) {
-    completionHandler(NSURLSessionAuthChallengeRejectProtectionSpace, nil);
+    completionHandler(NSURLSessionAuthChallengeCancelAuthenticationChallenge, nil);
     return;
   }
 
   if (![protectionSpace.protocol isEqual:NSURLProtectionSpaceHTTPS]) {
     LOGE(@"%@ is not a secure protocol", protectionSpace.protocol);
-    completionHandler(NSURLSessionAuthChallengeRejectProtectionSpace, nil);
+    completionHandler(NSURLSessionAuthChallengeCancelAuthenticationChallenge, nil);
     return;
   }
 
   if (!protectionSpace.receivesCredentialSecurely) {
     LOGE(@"Secure authentication or protocol cannot be established.");
-    completionHandler(NSURLSessionAuthChallengeRejectProtectionSpace, nil);
+    completionHandler(NSURLSessionAuthChallengeCancelAuthenticationChallenge, nil);
     return;
   }
 
@@ -88,7 +88,7 @@
       return;
     } else {
       LOGE(@"Server asked for client authentication but no usable client certificate found.");
-      completionHandler(NSURLSessionAuthChallengeRejectProtectionSpace, nil);
+      completionHandler(NSURLSessionAuthChallengeCancelAuthenticationChallenge, nil);
       return;
     }
   } else if (authMethod == NSURLAuthenticationMethodServerTrust) {
@@ -98,7 +98,7 @@
       return;
     } else {
       LOGE(@"Unable to verify server identity.");
-      completionHandler(NSURLSessionAuthChallengeRejectProtectionSpace, nil);
+      completionHandler(NSURLSessionAuthChallengeCancelAuthenticationChallenge, nil);
       return;
     }
   }
@@ -295,7 +295,7 @@
   }
 
   // Print details about the server's leaf certificate.
-  SecCertificateRef firstCert = SecTrustGetCertificateAtIndex(protectionSpace.serverTrust, 0);
+  SecCertificateRef firstCert = SecTrustGetCertificateAtIndex(serverTrust, 0);
   if (firstCert) {
     SNTCertificate *cert = [[SNTCertificate alloc] initWithSecCertificateRef:firstCert];
     LOGD(@"Server Trust: Server leaf cert: %@", cert);
