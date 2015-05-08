@@ -28,7 +28,7 @@
 ///  is the current version of the table. The return value is the new version of the table. If
 ///  updating the table failed, return a negative number. If there was no update to apply, return 0.
 ///
-- (int)initializeDatabase:(FMDatabase *)db fromVersion:(int)version;
+- (uint32_t)initializeDatabase:(FMDatabase *)db fromVersion:(uint32_t)version;
 
 ///
 ///  Wrappers around the respective FMDatabaseQueue methods. If the object we initialized with was

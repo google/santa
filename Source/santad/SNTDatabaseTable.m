@@ -38,17 +38,17 @@
   return nil;
 }
 
-- (int)initializeDatabase:(FMDatabase *)db fromVersion:(int)version {
+- (uint32_t)initializeDatabase:(FMDatabase *)db fromVersion:(uint32_t)version {
   [self doesNotRecognizeSelector:_cmd];
-  return -1;
+  return 0;
 }
 
 /// Called at the end of initialization to ensure the table in the
 /// database exists and uses the latest schema.
 - (void)updateTableSchema {
   [self inTransaction:^(FMDatabase *db, BOOL *rollback) {
-      int currentVersion = [db userVersion];
-      int newVersion = [self initializeDatabase:db fromVersion:currentVersion];
+      uint32_t currentVersion = [db userVersion];
+      uint32_t newVersion = [self initializeDatabase:db fromVersion:currentVersion];
       if (newVersion < 1) return;
 
       LOGD(@"Updated %@ from version %d to %d", [self className], currentVersion, newVersion);

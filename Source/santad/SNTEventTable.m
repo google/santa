@@ -20,7 +20,7 @@
 
 @implementation SNTEventTable
 
-- (int)initializeDatabase:(FMDatabase *)db fromVersion:(int)version {
+- (uint32_t)initializeDatabase:(FMDatabase *)db fromVersion:(uint32_t)version {
   int newVersion = 0;
 
   if (version < 1) {
@@ -29,7 +29,6 @@
                       @"'filesha256' TEXT NOT NULL,"
                       @"'eventdata' BLOB);"];
     [db executeUpdate:@"CREATE INDEX filesha256 ON events (filesha256);"];
-
     newVersion = 1;
   }
 

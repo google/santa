@@ -21,8 +21,8 @@
 
 @implementation SNTRuleTable
 
-- (int)initializeDatabase:(FMDatabase *)db fromVersion:(int)version {
-  int newVersion = 0;
+- (uint32_t)initializeDatabase:(FMDatabase *)db fromVersion:(uint32_t)version {
+  uint32_t newVersion = 0;
 
   if (version < 1) {
     [db executeUpdate:@"CREATE TABLE 'rules' ("
