@@ -16,6 +16,7 @@
 
 #import "SNTCertificate.h"
 #import "SNTCodesignChecker.h"
+#import "SNTLogging.h"
 #import "SNTRule.h"
 
 @implementation SNTRuleTable
@@ -54,22 +55,24 @@
 
 #pragma mark Entry Counts
 
-- (long)ruleCount {
-  __block long count = 0;
-  [self inDatabase:^(FMDatabase *db) { count = [db longForQuery:@"SELECT COUNT(*) FROM rules"]; }];
+- (NSUInteger)ruleCount {
+  __block NSUInteger count = 0;
+  [self inDatabase:^(FMDatabase *db) {
+    count = [db longForQuery:@"SELECT COUNT(*) FROM rules"];
+  }];
   return count;
 }
 
-- (long)binaryRuleCount {
-  __block long count = 0;
+- (NSUInteger)binaryRuleCount {
+  __block NSUInteger count = 0;
   [self inDatabase:^(FMDatabase *db) {
       count = [db longForQuery:@"SELECT COUNT(*) FROM binrules"];
   }];
   return count;
 }
 
-- (long)certificateRuleCount {
-  __block long count = 0;
+- (NSUInteger)certificateRuleCount {
+  __block NSUInteger count = 0;
   [self inDatabase:^(FMDatabase *db) {
       count = [db longForQuery:@"SELECT COUNT(*) FROM certrules"];
   }];
@@ -119,6 +122,11 @@
 
 - (BOOL)addRules:(NSArray *)rules cleanSlate:(BOOL)cleanSlate {
   __block BOOL failed = NO;
+
+  if (!rules || rules.count < 1) {
+    LOGE(@"Received request to add rules with nil/empty array.");
+    return NO;
+  }
 
   [self inTransaction:^(FMDatabase *db, BOOL *rollback) {
       if (cleanSlate) {

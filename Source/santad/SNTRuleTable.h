@@ -27,17 +27,17 @@
 ///
 ///  @return Number of rules in the database
 ///
-- (long)ruleCount;
+- (NSUInteger)ruleCount;
 
 ///
 ///  @return Number of binary rules in the database
 ///
-- (long)binaryRuleCount;
+- (NSUInteger)binaryRuleCount;
 
 ///
 ///  @return Number of certificate rules in the database
 ///
-- (long)certificateRuleCount;
+- (NSUInteger)certificateRuleCount;
 
 ///
 ///  @return Rule for binary with given SHA-256
