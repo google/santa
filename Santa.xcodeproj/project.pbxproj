@@ -113,6 +113,7 @@
 		0DA73CA11934F8100056D7C4 /* SNTLogging.m in Sources */ = {isa = PBXBuildFile; fileRef = 0DA73C9E1934F8100056D7C4 /* SNTLogging.m */; };
 		0DA73CA21934F88D0056D7C4 /* SNTLogging.m in Sources */ = {isa = PBXBuildFile; fileRef = 0DA73C9E1934F8100056D7C4 /* SNTLogging.m */; };
 		0DB390991AB1E11400614002 /* SNTCommandVersion.m in Sources */ = {isa = PBXBuildFile; fileRef = 0DB390981AB1E11400614002 /* SNTCommandVersion.m */; };
+		0DB537871AFD36EB00487F92 /* SNTRuleTableTest.m in Sources */ = {isa = PBXBuildFile; fileRef = 0DB537861AFD36EB00487F92 /* SNTRuleTableTest.m */; };
 		0DB8ACC1185662DC00FEF9C7 /* SNTApplication.m in Sources */ = {isa = PBXBuildFile; fileRef = 0DB8ACC0185662DC00FEF9C7 /* SNTApplication.m */; };
 		0DC5D86D191AED220078A5C0 /* SNTRuleTable.m in Sources */ = {isa = PBXBuildFile; fileRef = 0DC5D86C191AED220078A5C0 /* SNTRuleTable.m */; };
 		0DC5D86E191AED220078A5C0 /* SNTRuleTable.m in Sources */ = {isa = PBXBuildFile; fileRef = 0DC5D86C191AED220078A5C0 /* SNTRuleTable.m */; };
@@ -301,6 +302,7 @@
 		0DA73C9E1934F8100056D7C4 /* SNTLogging.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SNTLogging.m; sourceTree = "<group>"; };
 		0DB2B92318085753001C01D9 /* santad-Prefix.pch */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "santad-Prefix.pch"; sourceTree = "<group>"; };
 		0DB390981AB1E11400614002 /* SNTCommandVersion.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = SNTCommandVersion.m; path = version/SNTCommandVersion.m; sourceTree = "<group>"; };
+		0DB537861AFD36EB00487F92 /* SNTRuleTableTest.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SNTRuleTableTest.m; sourceTree = "<group>"; };
 		0DB8ACBF185662DC00FEF9C7 /* SNTApplication.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SNTApplication.h; sourceTree = "<group>"; };
 		0DB8ACC0185662DC00FEF9C7 /* SNTApplication.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; lineEnding = 0; path = SNTApplication.m; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objc; };
 		0DB8ACE41858D73000FEF9C7 /* santad-Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = "santad-Info.plist"; sourceTree = "<group>"; };
@@ -421,6 +423,7 @@
 				0DD0D490194F9947005F27EB /* SNTExecutionControllerTest.m */,
 				0DD0D48E194F78F8005F27EB /* SNTFileInfoTest.m */,
 				0DEFB7C71ACF0BFE00B92AAE /* SNTFileWatcherTest.m */,
+				0DB537861AFD36EB00487F92 /* SNTRuleTableTest.m */,
 				0D3AFBE618FB32CB0087BCEE /* SNTXPCConnectionTest.m */,
 			);
 			path = LogicTests;
@@ -1101,6 +1104,7 @@
 				0DD0D491194F9947005F27EB /* SNTExecutionControllerTest.m in Sources */,
 				0D3AFBEF18FB4C6C0087BCEE /* SNTExecutionController.m in Sources */,
 				0D3AFBEC18FB48E70087BCEE /* SNTEventTable.m in Sources */,
+				0DB537871AFD36EB00487F92 /* SNTRuleTableTest.m in Sources */,
 				0DCD604D19105433006B445C /* SNTStoredEvent.m in Sources */,
 				0DCD605819115E57006B445C /* SNTXPCControlInterface.m in Sources */,
 				0D10BE891A0AAF6700C0C944 /* SNTDropRootPrivs.m in Sources */,
