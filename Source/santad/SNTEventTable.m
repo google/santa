@@ -55,16 +55,6 @@
   return success;
 }
 
-- (SNTStoredEvent *)eventFromResultSet:(FMResultSet *)rs {
-  NSData *eventData = [rs dataForColumn:@"eventdata"];
-  if (!eventData) return nil;
-
-  SNTStoredEvent *event = [NSKeyedUnarchiver unarchiveObjectWithData:eventData];
-  event.idx = @([rs intForColumn:@"idx"]);
-
-  return event;
-}
-
 #pragma mark Querying/Retreiving
 
 - (NSUInteger)pendingEventsCount {
@@ -103,7 +93,8 @@
         if (obj) {
           [pendingEvents addObject:obj];
         } else {
-          [db executeUpdate:@"DELETE FROM events WHERE idx=?", [rs intForColumn:@"idx"]];
+          NSNumber *idx = [rs objectForColumnName:@"idx"];
+          [db executeUpdate:@"DELETE FROM events WHERE idx=?", idx];
         }
       }
 
@@ -111,6 +102,16 @@
   }];
 
   return pendingEvents;
+}
+
+- (SNTStoredEvent *)eventFromResultSet:(FMResultSet *)rs {
+  NSData *eventData = [rs dataForColumn:@"eventdata"];
+  if (!eventData) return nil;
+
+  SNTStoredEvent *event = [NSKeyedUnarchiver unarchiveObjectWithData:eventData];
+  event.idx = @([rs intForColumn:@"idx"]);
+
+  return event;
 }
 
 #pragma mark Deleting

@@ -24,6 +24,7 @@
 
 ///
 ///  Add event to the database.
+///
 ///  @param event the event to store.
 ///  @return YES if event was successfully stored.
 ///
@@ -31,18 +32,23 @@
 
 ///
 ///  Retrieves all events in the database
+///
 ///  @return NSArray of SNTStoredEvent's
 ///
 - (NSArray *)pendingEvents;
 
 ///
 ///  Retrieves number of events in database without fetching every event.
+///
 ///  @return Number of events in database.
 ///
 - (NSUInteger)pendingEventsCount;
 
 ///
-///  Retrieve an event from the database.
+///  Retrieve an event from the database with a given SHA-256. If multiple events
+///  exist for the same SHA-256, just the first is returned.
+///
+///  @param sha256 a SHA-256 of the binary to return an event for.
 ///  @return a single SNTStoredEvent.
 ///
 - (SNTStoredEvent *)pendingEventForSHA256:(NSString *)sha256;
@@ -50,12 +56,15 @@
 ///
 ///  Delete a single event from the database using its index.
 ///
-- (void)deleteEventWithId:(NSNumber *)id;
+///  @param index the event ID.
+///
+- (void)deleteEventWithId:(NSNumber *)index;
 
 ///
 ///  Delete multiple events from the database with an array of IDs.
-///  @param ids an array of event IDs.
 ///
-- (void)deleteEventsWithIds:(NSArray *)ids;
+///  @param indexes an array of event IDs.
+///
+- (void)deleteEventsWithIds:(NSArray *)indexes;
 
 @end
