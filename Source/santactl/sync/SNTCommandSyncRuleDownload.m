@@ -113,14 +113,14 @@
                             daemonConn:daemonConn
                      completionHandler:handler];
         } else {
-          [[daemonConn remoteObjectProxy] databaseRuleAddRules:syncState.downloadedRules
-                                                    cleanSlate:syncState.cleanSync
-                                                         reply:^{
-              if (syncState.downloadedRules.count) {
+          if (syncState.downloadedRules.count) {
+            [[daemonConn remoteObjectProxy] databaseRuleAddRules:syncState.downloadedRules
+                                                      cleanSlate:syncState.cleanSync
+                                                           reply:^{
                 LOGI(@"Added %d rule(s)", syncState.downloadedRules.count);
-              }
-              handler(YES);
-          }];
+                handler(YES);
+            }];
+          }
         }
       }
   }] resume];
