@@ -73,10 +73,10 @@ class SantaDecisionManager : public OSObject {
  public:
   ///  Used for initialization after instantiation. Required because
   ///  constructors cannot throw inside kernel-space.
-  bool init();
+  bool init() override;
 
   ///  Called automatically when retain count drops to 0.
-  void free();
+  void free() override;
 
   ///  Called by SantaDriverClient when a client connects, providing the data
   ///  queue used to pass messages and the pid of the client process.

@@ -45,27 +45,27 @@ class com_google_SantaDriverClient : public IOUserClient {
 
  public:
   ///  Called as part of IOServiceOpen in clients
-  bool initWithTask(task_t owningTask, void *securityID, UInt32 type);
+  bool initWithTask(task_t owningTask, void *securityID, UInt32 type) override;
 
   ///  Called after initWithTask as part of IOServiceOpen
-  bool start(IOService *provider);
+  bool start(IOService *provider) override;
 
   ///  Called when this class is stopping
-  void stop(IOService *provider);
+  void stop(IOService *provider) override;
 
   ///  Called when a client disconnects
-  IOReturn clientClose();
+  IOReturn clientClose() override;
 
   ///  Called when the driver is shutting down
-  bool terminate(IOOptionBits options);
+  bool terminate(IOOptionBits options) override;
 
   ///  Called in clients with IOConnectSetNotificationPort
   IOReturn registerNotificationPort(
-      mach_port_t port, UInt32 type, UInt32 refCon);
+      mach_port_t port, UInt32 type, UInt32 refCon) override;
 
   ///  Called in clients with IOConnectMapMemory
   IOReturn clientMemoryForType(
-      UInt32 type, IOOptionBits *options, IOMemoryDescriptor **memory);
+      UInt32 type, IOOptionBits *options, IOMemoryDescriptor **memory) override;
 
   ///  Called in clients with IOConnectCallScalarMethod etc. Dispatches
   ///  to the requested selector using the SantaDriverMethods enum in
@@ -74,7 +74,7 @@ class com_google_SantaDriverClient : public IOUserClient {
       UInt32 selector,
       IOExternalMethodArguments *arguments,
       IOExternalMethodDispatch *dispatch,
-      OSObject *target, void *reference);
+      OSObject *target, void *reference) override;
 
   ///
   ///  The userpsace callable methods are below. Each method corresponds

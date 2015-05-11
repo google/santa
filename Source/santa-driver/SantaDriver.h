@@ -31,10 +31,10 @@ class com_google_SantaDriver : public IOService {
 
  public:
   ///  Called by the kernel when the kext is loaded
-  bool start(IOService *provider);
+  bool start(IOService *provider) override;
 
   ///  Called by the kernel when the kext is unloaded
-  void stop(IOService *provider);
+  void stop(IOService *provider) override;
 
   ///  Returns a pointer to the SantaDecisionManager created in start().
   SantaDecisionManager *GetDecisionManager();
