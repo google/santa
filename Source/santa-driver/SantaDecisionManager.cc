@@ -20,6 +20,8 @@ OSDefineMetaClassAndStructors(SantaDecisionManager, OSObject);
 #pragma mark Object Lifecycle
 
 bool SantaDecisionManager::init() {
+  if (!super::init()) return false;
+
   sdm_lock_grp_ = lck_grp_alloc_init("santa-locks", lck_grp_attr_alloc_init());
   dataqueue_lock_ = lck_mtx_alloc_init(sdm_lock_grp_, lck_attr_alloc_init());
   cached_decisions_lock_ = lck_rw_alloc_init(sdm_lock_grp_,
@@ -29,7 +31,7 @@ bool SantaDecisionManager::init() {
 
   owning_pid_ = 0;
 
-  return kIOReturnSuccess;
+  return true;
 }
 
 void SantaDecisionManager::free() {
