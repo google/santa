@@ -67,7 +67,7 @@ typedef struct {
   uid_t userId;
   pid_t pid;
   pid_t ppid;
-  char path[MAX_PATH_LEN];
+  char path[MAX_PATH_LEN + 1];
 } santa_message_t;
 
 #endif  // SANTA__COMMON__KERNELCOMMON_H

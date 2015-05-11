@@ -282,7 +282,7 @@ santa_action_t SantaDecisionManager::FetchDecision(
 
     // Prepare to send message to daemon
     santa_message_t message;
-    strncpy(message.path, path, MAX_PATH_LEN);
+    strlcpy(message.path, path, sizeof(message.path));
     message.userId = kauth_cred_getuid(credential);
     message.pid = proc_selfpid();
     message.ppid = proc_selfppid();
