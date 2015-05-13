@@ -203,6 +203,8 @@ void SantaDecisionManager::ClearCache() {
   lck_rw_unlock_exclusive(cached_decisions_lock_);
 }
 
+#pragma mark Decision Fetching
+
 santa_action_t SantaDecisionManager::GetFromCache(const char *identifier) {
   santa_action_t result = ACTION_UNSET;
   uint64_t decision_time = 0;
@@ -244,12 +246,44 @@ santa_action_t SantaDecisionManager::GetFromCache(const char *identifier) {
   return result;
 }
 
-#pragma mark Queue Management
+santa_action_t SantaDecisionManager::GetFromDaemon(
+    santa_message_t message, char *vnode_id_str) {
+  santa_action_t return_action = ACTION_UNSET;
 
-bool SantaDecisionManager::PostToQueue(santa_message_t message) {
-  bool kr = false;
-  kr = dataqueue_->enqueue(&message, sizeof(message));
-  return kr;
+  // Wait for the daemon to respond or die.
+  do {
+    // Send request to daemon...
+    if (!PostToQueue(message)) {
+      OSIncrementAtomic(&failed_queue_requests_);
+      if (failed_queue_requests_ > kMaxQueueFailures) {
+        LOGE("Failed to queue more than %d requests, killing daemon",
+             kMaxQueueFailures);
+        proc_signal(client_pid_, SIGKILL);
+      }
+      LOGE("Failed to queue request for %s.", message.path);
+      CacheCheck(vnode_id_str);
+      return ACTION_ERROR;
+    }
+
+    // ... and wait for it to respond. If after kRequestLoopSleepMilliseconds
+    // * kMaxRequestLoops it still hasn't responded, send request again.
+    for (int i = 0; i < kMaxRequestLoops; ++i) {
+      IOSleep(kRequestLoopSleepMilliseconds);
+      return_action = GetFromCache(vnode_id_str);
+      if (CHECKBW_RESPONSE_VALID(return_action)) break;
+    }
+  } while (!CHECKBW_RESPONSE_VALID(return_action) &&
+           proc_exiting(client_proc_) == 0);
+
+  // If response is still not valid, the daemon exited
+  if (!CHECKBW_RESPONSE_VALID(return_action)) {
+    LOGE("Daemon process did not respond correctly. Allowing executions "
+         "until it comes back.");
+    CacheCheck(vnode_id_str);
+    return ACTION_ERROR;
+  }
+  
+  return return_action;
 }
 
 santa_action_t SantaDecisionManager::FetchDecision(
@@ -266,76 +300,48 @@ santa_action_t SantaDecisionManager::FetchDecision(
   // Check to see if item is in cache
   return_action = GetFromCache(vnode_id_str);
 
-  // If item wasn't in cache, fetch decision from daemon.
-  if (!CHECKBW_RESPONSE_VALID(return_action)) {
-    // Add pending request to cache
-    AddToCache(vnode_id_str, ACTION_REQUEST_CHECKBW, 0);
+  // If item wasn in cache return it.
+  if CHECKBW_RESPONSE_VALID(return_action) return return_action;
 
-    // Get path
-    char path[MAX_PATH_LEN];
-    int name_len = MAX_PATH_LEN;
-    if (vn_getpath(vnode, path, &name_len) != 0) {
-      path[0] = '\0';
-    }
+  // Add pending request to cache.
+  AddToCache(vnode_id_str, ACTION_REQUEST_CHECKBW, 0);
 
-    if (!ClientConnected()) {
-      LOGI("Execution request without daemon running: %s", path);
-      AddToCache(vnode_id_str,
-                 ACTION_RESPOND_CHECKBW_ALLOW,
-                 GetCurrentUptime());
-      return ACTION_RESPOND_CHECKBW_ALLOW;
-    }
-
-    // Prepare to send message to daemon
-    santa_message_t message;
-    strlcpy(message.path, path, sizeof(message.path));
-    message.userId = kauth_cred_getuid(credential);
-    message.pid = proc_selfpid();
-    message.ppid = proc_selfppid();
-    message.action = ACTION_REQUEST_CHECKBW;
-    message.vnode_id = vnode_id;
-
-    // Wait for the daemon to respond or die.
-    do {
-      // Send request to daemon...
-      if (!PostToQueue(message)) {
-        OSIncrementAtomic(&failed_queue_requests_);
-        if (failed_queue_requests_ > kMaxQueueFailures) {
-          LOGE("Failed to queue more than %d requests, killing daemon",
-               kMaxQueueFailures);
-          proc_signal(client_pid_, SIGKILL);
-        }
-        LOGE("Failed to queue request for %s.", path);
-        CacheCheck(vnode_id_str);
-        return ACTION_ERROR;
-      }
-
-      // ... and wait for it to respond. If after kRequestLoopSleepMilliseconds
-      // * kMaxRequestLoops it still hasn't responded, send request again.
-      for (int i = 0; i < kMaxRequestLoops; ++i) {
-        IOSleep(kRequestLoopSleepMilliseconds);
-        return_action = GetFromCache(vnode_id_str);
-        if (CHECKBW_RESPONSE_VALID(return_action)) break;
-      }
-    } while (!CHECKBW_RESPONSE_VALID(return_action) &&
-             proc_exiting(client_proc_) == 0);
-
-    // If response is still not valid, the daemon exited
-    if (!CHECKBW_RESPONSE_VALID(return_action)) {
-      LOGE("Daemon process did not respond correctly. Allowing executions "
-           "until it comes back.");
-      CacheCheck(vnode_id_str);
-      return ACTION_ERROR;
-    }
+  // Get path
+  char path[MAX_PATH_LEN];
+  int name_len = MAX_PATH_LEN;
+  if (vn_getpath(vnode, path, &name_len) != 0) {
+    path[0] = '\0';
   }
 
-  return return_action;
+  // Prepare message to send to daemon.
+  santa_message_t message = {};
+  strlcpy(message.path, path, sizeof(message.path));
+  message.userId = kauth_cred_getuid(credential);
+  message.pid = proc_selfpid();
+  message.ppid = proc_selfppid();
+  message.action = ACTION_REQUEST_CHECKBW;
+  message.vnode_id = vnode_id;
+
+  if (ClientConnected()) {
+    return GetFromDaemon(message, vnode_id_str);
+  } else {
+    LOGI("Execution request without daemon running: %s", path);
+    message.action = ACTION_NOTIFY_EXEC_ALLOW_NODAEMON;
+    PostToQueue(message);
+    return ACTION_RESPOND_CHECKBW_ALLOW;
+  }
 }
 
 #pragma mark Misc
 
-uint64_t SantaDecisionManager::GetVnodeIDForVnode(const vfs_context_t context,
-                                                  const vnode_t vp) {
+bool SantaDecisionManager::PostToQueue(santa_message_t message) {
+  bool kr = false;
+  kr = dataqueue_->enqueue(&message, sizeof(message));
+  return kr;
+}
+
+uint64_t SantaDecisionManager::GetVnodeIDForVnode(
+    const vfs_context_t context, const vnode_t vp) {
   struct vnode_attr vap;
   VATTR_INIT(&vap);
   VATTR_WANTED(&vap, va_fileid);

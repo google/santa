@@ -46,16 +46,16 @@ class SantaDecisionManager : public OSObject {
   ///  Called automatically when retain count drops to 0.
   void free() override;
 
+  ///  Called by SantaDriverClient during connection to provide the shared
+  ///  dataqueue memory to the client.
+  IOMemoryDescriptor *GetMemoryDescriptor();
+
   ///  Called by SantaDriverClient when a client connects, providing the data
   ///  queue used to pass messages and the pid of the client process.
   void ConnectClient(mach_port_t port, pid_t pid);
 
   ///  Called by SantaDriverClient when a client disconnects
   void DisconnectClient(bool itDied = false);
-
-  ///  Called by SantaDriverClient during connection to provide the shared
-  ///  dataqueue memory to the client.
-  IOMemoryDescriptor *GetMemoryDescriptor();
 
   ///  Returns whether a client is currently connected or not.
   bool ClientConnected();
@@ -86,10 +86,8 @@ class SantaDecisionManager : public OSObject {
   ///  entry has expired.
   santa_action_t GetFromCache(const char *identifier);
 
-  ///  Posts the requested message to the client data queue, if there is one.
-  ///  Uses dataqueue_lock_ to ensure two threads don't try to write to the
-  ///  queue at the same time.
-  bool PostToQueue(santa_message_t);
+  ///  Fetches a response from the daemon.
+  santa_action_t GetFromDaemon(santa_message_t message, char *identifier);
 
   ///  Fetches an execution decision for a file, first using the cache and then
   ///  by sending a message to the daemon and waiting until a response arrives.
@@ -98,6 +96,9 @@ class SantaDecisionManager : public OSObject {
   santa_action_t FetchDecision(const kauth_cred_t credential,
                                const vfs_context_t vfs_context,
                                const vnode_t vnode);
+
+  ///  Posts the requested message to the client data queue.
+  bool PostToQueue(santa_message_t);
 
   ///  Fetches the vnode_id for a given vnode.
   uint64_t GetVnodeIDForVnode(const vfs_context_t context, const vnode_t vp);

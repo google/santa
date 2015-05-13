@@ -118,8 +118,13 @@
         switch (message.action) {
           case ACTION_REQUEST_SHUTDOWN: {
             LOGI(@"Driver requested a shutdown");
-            // Sleep before exiting to give driver chance to ready itself
             exit(0);
+          }
+          case ACTION_NOTIFY_EXEC_ALLOW_NODAEMON:
+          case ACTION_NOTIFY_EXEC_ALLOW_CACHED:
+          case ACTION_NOTIFY_EXEC_DENY_CACHED: {
+            // TODO(rah): Implement.
+            break;
           }
           case ACTION_REQUEST_CHECKBW: {
             // Validate the binary aynchronously on a concurrent queue so we don't
