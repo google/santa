@@ -23,7 +23,6 @@ bool SantaDecisionManager::init() {
   if (!super::init()) return false;
 
   sdm_lock_grp_ = lck_grp_alloc_init("santa-locks", lck_grp_attr_alloc_init());
-  dataqueue_lock_ = lck_mtx_alloc_init(sdm_lock_grp_, lck_attr_alloc_init());
   cached_decisions_lock_ = lck_rw_alloc_init(sdm_lock_grp_,
                                              lck_attr_alloc_init());
 
@@ -45,11 +44,6 @@ void SantaDecisionManager::free() {
     cached_decisions_lock_ = NULL;
   }
 
-  if (dataqueue_lock_) {
-    lck_mtx_free(dataqueue_lock_, sdm_lock_grp_);
-    dataqueue_lock_ = NULL;
-  }
-
   if (sdm_lock_grp_) {
     lck_grp_free(sdm_lock_grp_);
     sdm_lock_grp_ = NULL;
@@ -68,10 +62,8 @@ void SantaDecisionManager::ConnectClient(IOSharedDataQueue *queue, pid_t pid) {
   // connected should be cleared
   ClearCache();
 
-  lck_mtx_lock(dataqueue_lock_);
   dataqueue_ = queue;
   dataqueue_->retain();
-  lck_mtx_unlock(dataqueue_lock_);
 
   owning_pid_ = pid;
   owning_proc_ = proc_find(pid);
@@ -92,10 +84,8 @@ void SantaDecisionManager::DisconnectClient() {
   message.vnode_id = 0;
   PostToQueue(message);
 
-  lck_mtx_lock(dataqueue_lock_);
   dataqueue_->release();
   dataqueue_ = NULL;
-  lck_mtx_unlock(dataqueue_lock_);
 
   proc_rele(owning_proc_);
   owning_proc_ = NULL;
@@ -239,12 +229,10 @@ santa_action_t SantaDecisionManager::GetFromCache(const char *identifier) {
 #pragma mark Queue Management
 
 bool SantaDecisionManager::PostToQueue(santa_message_t message) {
-  lck_mtx_lock(dataqueue_lock_);
   bool kr = false;
   if (dataqueue_) {
     kr = dataqueue_->enqueue(&message, sizeof(message));
   }
-  lck_mtx_unlock(dataqueue_lock_);
   return kr;
 }
 

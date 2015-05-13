@@ -142,8 +142,6 @@ class SantaDecisionManager : public OSObject {
  private:
   lck_grp_t *sdm_lock_grp_;
   lck_rw_t *cached_decisions_lock_;
-  lck_mtx_t *dataqueue_lock_;
-
   OSDictionary *cached_decisions_;
 
   IOSharedDataQueue *dataqueue_;
