@@ -114,9 +114,7 @@ IOReturn SantaDriverClient::static_open(
 IOReturn SantaDriverClient::allow_binary(const uint64_t vnode_id) {
   char vnode_id_str[21];
   snprintf(vnode_id_str, sizeof(vnode_id_str), "%llu", vnode_id);
-  decisionManager->AddToCache(vnode_id_str,
-                   ACTION_RESPOND_CHECKBW_ALLOW,
-                   decisionManager->GetCurrentUptime());
+  decisionManager->AddToCache(vnode_id_str, ACTION_RESPOND_CHECKBW_ALLOW);
 
   return kIOReturnSuccess;
 }
@@ -133,9 +131,7 @@ IOReturn SantaDriverClient::static_allow_binary(
 IOReturn SantaDriverClient::deny_binary(const uint64_t vnode_id) {
   char vnode_id_str[21];
   snprintf(vnode_id_str, sizeof(vnode_id_str), "%llu", vnode_id);
-  decisionManager->AddToCache(vnode_id_str,
-                   ACTION_RESPOND_CHECKBW_DENY,
-                   decisionManager->GetCurrentUptime());
+  decisionManager->AddToCache(vnode_id_str, ACTION_RESPOND_CHECKBW_DENY);
 
   return kIOReturnSuccess;
 }

@@ -71,7 +71,7 @@ class SantaDecisionManager : public OSObject {
   ///  Adds a decision to the cache, with a timestamp.
   void AddToCache(const char *identifier,
                   const santa_action_t decision,
-                  const uint64_t microsecs);
+                  const uint64_t microsecs = GetCurrentUptime());
 
   ///  Checks to see if a given identifier is in the cache and removes it.
   void CacheCheck(const char *identifier);
@@ -103,7 +103,7 @@ class SantaDecisionManager : public OSObject {
   uint64_t GetVnodeIDForVnode(const vfs_context_t context, const vnode_t vp);
 
   ///  Returns the current system uptime in microseconds
-  uint64_t GetCurrentUptime();
+  static uint64_t GetCurrentUptime();
 
   ///  Increments the count of active vnode callback's pending.
   void IncrementListenerInvocations();
