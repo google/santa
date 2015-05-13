@@ -120,8 +120,8 @@ class com_google_SantaDriverClient : public IOUserClient {
  private:
   IOSharedDataQueue *fDataQueue;
   IOMemoryDescriptor *fSharedMemory;
-  com_google_SantaDriver *fProvider;
-  SantaDecisionManager *fSDM;
+  com_google_SantaDriver *myProvider;
+  SantaDecisionManager *decisionManager;
 };
 
 #endif  // SANTA__SANTA_DRIVER__SANTADRIVERUSERCLIENT_H

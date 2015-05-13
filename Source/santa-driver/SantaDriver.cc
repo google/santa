@@ -24,8 +24,12 @@ bool SantaDriver::start(IOService *provider) {
   if (!super::start(provider)) return false;
 
   santaDecisionManager = new SantaDecisionManager;
-  santaDecisionManager->init();
-  santaDecisionManager->StartListener();
+  if (!santaDecisionManager->init() ||
+      santaDecisionManager->StartListener() != kIOReturnSuccess) {
+    santaDecisionManager->release();
+    santaDecisionManager = NULL;
+    return false;
+  }
 
   registerService();
 

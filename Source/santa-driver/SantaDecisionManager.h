@@ -149,8 +149,8 @@ class SantaDecisionManager : public OSObject {
 
   SInt32 listener_invocations_;
 
-  pid_t owning_pid_;
-  proc_t owning_proc_;
+  pid_t client_pid_;
+  proc_t client_proc_;
 
   kauth_listener_t vnode_listener_;
   kauth_listener_t fileop_listener_;

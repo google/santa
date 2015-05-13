@@ -28,7 +28,7 @@ bool SantaDecisionManager::init() {
 
   cached_decisions_ = OSDictionary::withCapacity(1000);
 
-  owning_pid_ = 0;
+  client_pid_ = 0;
 
   return true;
 }
@@ -65,15 +65,15 @@ void SantaDecisionManager::ConnectClient(IOSharedDataQueue *queue, pid_t pid) {
   dataqueue_ = queue;
   dataqueue_->retain();
 
-  owning_pid_ = pid;
-  owning_proc_ = proc_find(pid);
+  client_pid_ = pid;
+  client_proc_ = proc_find(pid);
   failed_queue_requests_ = 0;
 }
 
 void SantaDecisionManager::DisconnectClient() {
-  if (owning_pid_ < 1) return;
+  if (client_pid_ < 1) return;
 
-  owning_pid_ = -1;
+  client_pid_ = -1;
 
   // Ask santad to shutdown, in case it's running.
   santa_message_t message;
@@ -86,12 +86,14 @@ void SantaDecisionManager::DisconnectClient() {
 
   dataqueue_->release();
   dataqueue_ = NULL;
-
-  proc_rele(owning_proc_);
-  owning_proc_ = NULL;
+  proc_rele(client_proc_);
+  client_proc_ = NULL;
 }
 
-bool SantaDecisionManager::ClientConnected() { return owning_pid_ > 0; }
+bool SantaDecisionManager::ClientConnected() {
+  return client_pid_ > 0;
+}
+
 
 #pragma mark Listener Control
 
@@ -287,7 +289,7 @@ santa_action_t SantaDecisionManager::FetchDecision(
         if (failed_queue_requests_ > kMaxQueueFailures) {
           LOGE("Failed to queue more than %d requests, killing daemon",
                kMaxQueueFailures);
-          proc_signal(owning_pid_, SIGKILL);
+          proc_signal(client_pid_, SIGKILL);
         }
         LOGE("Failed to queue request for %s.", path);
         CacheCheck(vnode_id_str);
@@ -302,7 +304,7 @@ santa_action_t SantaDecisionManager::FetchDecision(
         if (CHECKBW_RESPONSE_VALID(return_action)) break;
       }
     } while (!CHECKBW_RESPONSE_VALID(return_action) &&
-             proc_exiting(owning_proc_) == 0);
+             proc_exiting(client_proc_) == 0);
 
     // If response is still not valid, the daemon exited
     if (!CHECKBW_RESPONSE_VALID(return_action)) {
