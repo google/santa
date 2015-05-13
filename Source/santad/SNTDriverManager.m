@@ -122,7 +122,7 @@ static const int MAX_DELAY = 15;
   self.queueMemory = (IODataQueueMemory *)address;
   dataSize = sizeof(vdata);
 
-  while (IODataQueueWaitForAvailableData(self.queueMemory, self.receivePort) == kIOReturnSuccess) {
+  do {
     while (IODataQueueDataAvailable(self.queueMemory)) {
       kr = IODataQueueDequeue(self.queueMemory, &vdata, &dataSize);
       if (kr == kIOReturnSuccess) {
@@ -132,7 +132,7 @@ static const int MAX_DELAY = 15;
         exit(2);
       }
     }
-  }
+  } while (IODataQueueWaitForAvailableData(self.queueMemory, self.receivePort) == kIOReturnSuccess);
 
   IOConnectUnmapMemory(self.connection, kIODefaultMemoryType, mach_task_self(), address);
   mach_port_destroy(mach_task_self(), self.receivePort);

@@ -54,22 +54,13 @@ void SantaDriverClient::stop(IOService *provider) {
 }
 
 IOReturn SantaDriverClient::clientClose() {
+  decisionManager->DisconnectClient(true);
   return terminate(kIOServiceSynchronous) ? kIOReturnSuccess : kIOReturnError;
 }
 
 bool SantaDriverClient::terminate(IOOptionBits options) {
   decisionManager->DisconnectClient();
   LOGI("Client disconnected.");
-
-  if (fSharedMemory) {
-    fSharedMemory->release();
-    fSharedMemory = NULL;
-  }
-
-  if (fDataQueue) {
-    fDataQueue->release();
-    fDataQueue = NULL;
-  }
 
   if (myProvider && myProvider->isOpen(this)) myProvider->close(this);
 
@@ -78,32 +69,25 @@ bool SantaDriverClient::terminate(IOOptionBits options) {
 
 #pragma mark Fetching memory and data queue notifications
 
-  if ((!fDataQueue) || (port == MACH_PORT_NULL)) return kIOReturnError;
-
-  fDataQueue->setNotificationPort(port);
 IOReturn SantaDriverClient::registerNotificationPort(
     mach_port_t port, UInt32 type, UInt32 ref) {
+  if (port == MACH_PORT_NULL) return kIOReturnError;
+
+  decisionManager->ConnectClient(port, proc_selfpid());
+  LOGI("Client connected, PID: %d.", proc_selfpid());
 
   return kIOReturnSuccess;
 }
 
 IOReturn SantaDriverClient::clientMemoryForType(
     UInt32 type, IOOptionBits *options, IOMemoryDescriptor **memory) {
-  *memory = NULL;
+  if (type != kIODefaultMemoryType) return kIOReturnNoMemory;
+
   *options = 0;
+  *memory = decisionManager->GetMemoryDescriptor();
+  (*memory)->retain();
 
-  if (type == kIODefaultMemoryType) {
-    if (!fSharedMemory) return kIOReturnNoMemory;
-    fSharedMemory->retain();  // client will decrement this ref
-    *memory = fSharedMemory;
-
-  decisionManager->ConnectClient(proc_selfpid());
-  LOGI("Client connected, PID: %d.", proc_selfpid());
-
-    return kIOReturnSuccess;
-  }
-
-  return kIOReturnNoMemory;
+  return kIOReturnSuccess;
 }
 
 #pragma mark Callable Methods
@@ -114,18 +98,6 @@ IOReturn SantaDriverClient::open() {
   if (!myProvider->open(this)) {
     LOGW("A second client tried to connect.");
     return kIOReturnExclusiveAccess;
-  }
-
-  fDataQueue = IOSharedDataQueue::withCapacity((sizeof(santa_message_t) +
-                                                DATA_QUEUE_ENTRY_HEADER_SIZE)
-                                                * kMaxQueueEvents);
-  if (!fDataQueue) return kIOReturnNoMemory;
-
-  fSharedMemory = fDataQueue->getMemoryDescriptor();
-  if (!fSharedMemory) {
-    fDataQueue->release();
-    fDataQueue = NULL;
-    return kIOReturnVMError;
   }
 
   return kIOReturnSuccess;

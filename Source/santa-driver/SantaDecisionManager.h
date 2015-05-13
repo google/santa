@@ -15,7 +15,9 @@
 #ifndef SANTA__SANTA_DRIVER__SANTADECISIONMANAGER_H
 #define SANTA__SANTA_DRIVER__SANTADECISIONMANAGER_H
 
+#include <IOKit/IODataQueueShared.h>
 #include <IOKit/IOLib.h>
+#include <IOKit/IOMemoryDescriptor.h>
 #include <IOKit/IOSharedDataQueue.h>
 #include <libkern/c++/OSDictionary.h>
 #include <sys/kauth.h>
@@ -25,40 +27,6 @@
 #include "SantaMessage.h"
 #include "SNTKernelCommon.h"
 #include "SNTLogging.h"
-
-///
-///  The maximum number of milliseconds a cached deny message should be
-///  considered valid.
-///
-const uint64_t kMaxDenyCacheTimeMilliseconds = 500;
-
-///
-///  The maximum number of milliseconds a cached allow message should be
-///  considered valid.
-///
-const uint64_t kMaxAllowCacheTimeMilliseconds = 1000 * 60 * 60 * 24;
-
-///
-///  While waiting for a response from the daemon, this is the number of
-///  milliseconds to sleep for before checking the cache for a response.
-///
-const int kRequestLoopSleepMilliseconds = 10;
-
-///
-///  While waiting for a response from the daemon, this is the maximum number
-///  of loops to wait before sending the request again.
-///
-const int kMaxRequestLoops = 50;
-
-///
-///  Maximum number of entries in the in-kernel cache.
-///
-const int kMaxCacheSize = 10000;
-
-///
-///  Maximum number of PostToQueue failures to allow.
-///
-const int kMaxQueueFailures = 10;
 
 ///
 ///  SantaDecisionManager is responsible for intercepting Vnode execute actions
@@ -80,10 +48,14 @@ class SantaDecisionManager : public OSObject {
 
   ///  Called by SantaDriverClient when a client connects, providing the data
   ///  queue used to pass messages and the pid of the client process.
-  void ConnectClient(IOSharedDataQueue *queue, pid_t pid);
+  void ConnectClient(mach_port_t port, pid_t pid);
 
   ///  Called by SantaDriverClient when a client disconnects
-  void DisconnectClient();
+  void DisconnectClient(bool itDied = false);
+
+  ///  Called by SantaDriverClient during connection to provide the shared
+  ///  dataqueue memory to the client.
+  IOMemoryDescriptor *GetMemoryDescriptor();
 
   ///  Returns whether a client is currently connected or not.
   bool ClientConnected();
@@ -139,12 +111,55 @@ class SantaDecisionManager : public OSObject {
   ///  Decrements the count of active vnode callback's pending.
   void DecrementListenerInvocations();
 
+ protected:
+  ///
+  ///  The maximum number of milliseconds a cached deny message should be
+  ///  considered valid.
+  ///
+  const uint64_t kMaxDenyCacheTimeMilliseconds = 500;
+
+  ///
+  ///  The maximum number of milliseconds a cached allow message should be
+  ///  considered valid.
+  ///
+  const uint64_t kMaxAllowCacheTimeMilliseconds = 1000 * 60 * 60 * 24;
+
+  ///
+  ///  While waiting for a response from the daemon, this is the number of
+  ///  milliseconds to sleep for before checking the cache for a response.
+  ///
+  const int kRequestLoopSleepMilliseconds = 10;
+
+  ///
+  ///  While waiting for a response from the daemon, this is the maximum number
+  ///  of loops to wait before sending the request again.
+  ///
+  const int kMaxRequestLoops = 50;
+
+  ///
+  ///  Maximum number of entries in the in-kernel cache.
+  ///
+  const int kMaxCacheSize = 10000;
+
+  ///
+  ///  Maximum number of PostToQueue failures to allow.
+  ///
+  const int kMaxQueueFailures = 10;
+
+  ///
+  ///  The maximum number of messages can be kept in
+  ///  the IODataQueue at any time.
+  ///
+  const int kMaxQueueEvents = 512;
+
  private:
   lck_grp_t *sdm_lock_grp_;
   lck_rw_t *cached_decisions_lock_;
   OSDictionary *cached_decisions_;
 
   IOSharedDataQueue *dataqueue_;
+  IOMemoryDescriptor *shared_memory_;
+
   SInt32 failed_queue_requests_;
 
   SInt32 listener_invocations_;

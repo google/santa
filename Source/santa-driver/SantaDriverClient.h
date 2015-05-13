@@ -16,9 +16,6 @@
 #define SANTA__SANTA_DRIVER__SANTADRIVERUSERCLIENT_H
 
 #include <IOKit/IOUserClient.h>
-#include <IOKit/IOSharedDataQueue.h>
-#include <IOKit/IOLib.h>
-#include <IOKit/IODataQueueShared.h>
 #include <sys/kauth.h>
 #include <sys/vnode.h>
 #include <sys/proc.h>
@@ -28,9 +25,6 @@
 #include "SantaMessage.h"
 #include "SNTKernelCommon.h"
 
-// The maximum number of messages can be kept in the IODataQueue at any time.
-const int kMaxQueueEvents = 256;
-
 ///
 ///  This class is instantiated by IOKit when a new client process attempts to
 ///  connect to the driver. Starting, stopping, handling connections, allocating
@@ -39,6 +33,7 @@ const int kMaxQueueEvents = 256;
 ///  Documentation on how the IOUserClient parts of this code work can be found
 ///  here:
 ///  https://developer.apple.com/library/mac/samplecode/SimpleUserClient/Listings/User_Client_Info_txt.html
+///  https://developer.apple.com/library/mac/documentation/DeviceDrivers/Conceptual/WritingDeviceDriver/WritingDeviceDriver.pdf
 ///
 class com_google_SantaDriverClient : public IOUserClient {
   OSDeclareDefaultStructors(com_google_SantaDriverClient);
@@ -118,8 +113,6 @@ class com_google_SantaDriverClient : public IOUserClient {
       IOExternalMethodArguments *arguments);
 
  private:
-  IOSharedDataQueue *fDataQueue;
-  IOMemoryDescriptor *fSharedMemory;
   com_google_SantaDriver *myProvider;
   SantaDecisionManager *decisionManager;
 };

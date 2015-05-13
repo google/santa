@@ -28,12 +28,30 @@ bool SantaDecisionManager::init() {
 
   cached_decisions_ = OSDictionary::withCapacity(1000);
 
+  dataqueue_ = IOSharedDataQueue::withCapacity((sizeof(santa_message_t) +
+                                                DATA_QUEUE_ENTRY_HEADER_SIZE)
+                                               * kMaxQueueEvents);
+  if (!dataqueue_) return kIOReturnNoMemory;
+
+  shared_memory_ = dataqueue_->getMemoryDescriptor();
+  if (!shared_memory_) return kIOReturnNoMemory;
+
   client_pid_ = 0;
 
   return true;
 }
 
 void SantaDecisionManager::free() {
+  if (shared_memory_) {
+    shared_memory_->release();
+    shared_memory_ = NULL;
+  }
+
+  if (dataqueue_) {
+    dataqueue_->release();
+    dataqueue_ = NULL;
+  }
+
   if (cached_decisions_) {
     cached_decisions_->release();
     cached_decisions_ = NULL;
@@ -54,38 +72,33 @@ void SantaDecisionManager::free() {
 
 #pragma mark Client Management
 
-void SantaDecisionManager::ConnectClient(IOSharedDataQueue *queue, pid_t pid) {
+void SantaDecisionManager::ConnectClient(mach_port_t port, pid_t pid) {
   if (!pid) return;
-  if (!queue) return;
 
   // Any decisions made while the daemon wasn't
   // connected should be cleared
   ClearCache();
 
-  dataqueue_ = queue;
-  dataqueue_->retain();
+  dataqueue_->setNotificationPort(port);
 
   client_pid_ = pid;
   client_proc_ = proc_find(pid);
   failed_queue_requests_ = 0;
 }
 
-void SantaDecisionManager::DisconnectClient() {
+void SantaDecisionManager::DisconnectClient(bool itDied) {
   if (client_pid_ < 1) return;
 
   client_pid_ = -1;
 
   // Ask santad to shutdown, in case it's running.
-  santa_message_t message;
-  message.action = ACTION_REQUEST_SHUTDOWN;
-  message.userId = 0;
-  message.pid = 0;
-  message.ppid = 0;
-  message.vnode_id = 0;
-  PostToQueue(message);
+  if (!itDied) {
+    santa_message_t message = {.action = ACTION_REQUEST_SHUTDOWN};
+    PostToQueue(message);
+  }
 
-  dataqueue_->release();
-  dataqueue_ = NULL;
+  dataqueue_->setNotificationPort(NULL);
+
   proc_rele(client_proc_);
   client_proc_ = NULL;
 }
@@ -94,6 +107,9 @@ bool SantaDecisionManager::ClientConnected() {
   return client_pid_ > 0;
 }
 
+IOMemoryDescriptor *SantaDecisionManager::GetMemoryDescriptor() {
+  return shared_memory_;
+}
 
 #pragma mark Listener Control
 
@@ -232,9 +248,7 @@ santa_action_t SantaDecisionManager::GetFromCache(const char *identifier) {
 
 bool SantaDecisionManager::PostToQueue(santa_message_t message) {
   bool kr = false;
-  if (dataqueue_) {
-    kr = dataqueue_->enqueue(&message, sizeof(message));
-  }
+  kr = dataqueue_->enqueue(&message, sizeof(message));
   return kr;
 }
 
