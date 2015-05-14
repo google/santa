@@ -136,7 +136,7 @@
 ///
 - (NSURLCredential *)clientCredentialForProtectionSpace:(NSURLProtectionSpace *)protectionSpace {
   __block OSStatus err = errSecSuccess;
-  __block SecIdentityRef foundIdentity;
+  __block SecIdentityRef foundIdentity = NULL;
 
   if (self.clientCertFile) {
     NSError *error;
@@ -169,7 +169,8 @@
     err = SecItemCopyMatching((__bridge CFDictionaryRef)@{
           (id)kSecClass : (id)kSecClassIdentity,
           (id)kSecReturnRef : @YES,
-          (id)kSecMatchLimit : (id)kSecMatchLimitAll }, (CFTypeRef *)&cfIdentities);
+          (id)kSecMatchLimit : (id)kSecMatchLimitAll
+    }, (CFTypeRef *)&cfIdentities);
 
     if (err != errSecSuccess) {
       LOGD(@"Client Trust: Failed to load client identities, SecItemCopyMatching returned: %d",
@@ -213,12 +214,16 @@
         } else {
           for (NSData *allowedIssuer in protectionSpace.distinguishedNames) {
             SNTDERDecoder *decoder = [[SNTDERDecoder alloc] initWithData:allowedIssuer];
-            if (!decoder) continue;
+
+            if (!decoder) {
+              LOGW(@"Unable to decode allowed distinguished name.");
+              continue;
+            }
+
             if ([clientCert.issuerCommonName isEqual:decoder.commonName] &&
                 [clientCert.issuerCountryName isEqual:decoder.countryName] &&
                 [clientCert.issuerOrgName isEqual:decoder.organizationName] &&
                 [clientCert.issuerOrgUnit isEqual:decoder.organizationalUnit]) {
-
               foundIdentity = identityRef;
               CFRetain(foundIdentity);
               *stop = YES;
