@@ -134,8 +134,10 @@
                       data.length,
                       kSequenceOfSetOfOIDValueTemplate,
                       &a);
-  SecAsn1CoderRelease(coder);
-  if (err != errSecSuccess) return nil;
+  if (err != errSecSuccess) {
+    SecAsn1CoderRelease(coder);
+    return nil;
+  }
 
   // The data is decoded but now it's in a number of embedded structs.
   // Massage that into a nice dictionary of OID->String pairs.
@@ -145,7 +147,10 @@
     OIDKeyValue *keyValue = anAttr->vals[0];
 
     // Sanity check
-    if (keyValue->value.Length > data.length) return nil;
+    if (keyValue->value.Length > data.length) {
+      SecAsn1CoderRelease(coder);
+      return nil;
+    }
 
     // Get the string value. First try creating as a UTF-8 string. If that fails,
     // fallback to trying as an ASCII string. If it still doesn't work, continue on
@@ -169,6 +174,7 @@
     dict[objectId] = valueString;
   }
 
+  SecAsn1CoderRelease(coder);
   return dict;
 }
 
