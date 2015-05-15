@@ -120,6 +120,8 @@
                 LOGI(@"Added %d rule(s)", syncState.downloadedRules.count);
                 handler(YES);
             }];
+          } else {
+            handler(YES);
           }
         }
       }
