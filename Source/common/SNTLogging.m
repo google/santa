@@ -15,9 +15,9 @@
 #import "SNTLogging.h"
 
 #ifdef DEBUG
-static int logLevel = LOG_LEVEL_DEBUG;  // default to info
+static int logLevel = LOG_LEVEL_DEBUG;
 #else
-static int logLevel = LOG_LEVEL_INFO;
+static int logLevel = LOG_LEVEL_INFO;  // default to info
 #endif
 
 void logMessage(int level, FILE *destination, NSString *format, ...) {
