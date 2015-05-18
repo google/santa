@@ -128,7 +128,7 @@ static const int MAX_DELAY = 15;
       if (kr == kIOReturnSuccess) {
         callback(vdata);
       } else {
-        LOGD(@"Error receiving data: %d", kr);
+        LOGE(@"Error dequeuing data: %d", kr);
         exit(2);
       }
     }
