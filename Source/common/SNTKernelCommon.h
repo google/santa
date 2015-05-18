@@ -16,11 +16,12 @@
 /// Common defines between kernel <-> userspace
 ///
 
+#include <sys/param.h>
+
 #ifndef SANTA__COMMON__KERNELCOMMON_H
 #define SANTA__COMMON__KERNELCOMMON_H
 
 // Defines the lengths of paths and Vnode IDs passed around.
-#define MAX_PATH_LEN 1024    // ==PATH_LEN from syslimits.h
 #define MAX_VNODE_ID_STR 21  // digits in UINT64_MAX + 1 for NULL-terminator
 
 // Defines the name of the userclient class and the driver bundle ID.
@@ -72,7 +73,7 @@ typedef struct {
   uid_t userId;
   pid_t pid;
   pid_t ppid;
-  char path[MAX_PATH_LEN + 1];
+  char path[MAXPATHLEN];
 } santa_message_t;
 
 #endif  // SANTA__COMMON__KERNELCOMMON_H

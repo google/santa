@@ -307,8 +307,8 @@ santa_action_t SantaDecisionManager::FetchDecision(
   AddToCache(vnode_id_str, ACTION_REQUEST_CHECKBW, 0);
 
   // Get path
-  char path[MAX_PATH_LEN];
-  int name_len = MAX_PATH_LEN;
+  char path[MAXPATHLEN];
+  int name_len = MAXPATHLEN;
   if (vn_getpath(vnode, path, &name_len) != 0) {
     path[0] = '\0';
   }
