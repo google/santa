@@ -60,8 +60,11 @@
   [[session dataTaskWithRequest:req completionHandler:^(NSData *data,
                                                         NSURLResponse *response,
                                                         NSError *error) {
-      if ([(NSHTTPURLResponse *)response statusCode] != 200) {
-        LOGD(@"HTTP Response Code: %d", [(NSHTTPURLResponse *)response statusCode]);
+      long statusCode = [(NSHTTPURLResponse *)response statusCode];
+      if (statusCode != 200) {
+        LOGE(@"HTTP Response: %d %@",
+             statusCode,
+             [[NSHTTPURLResponse localizedStringForStatusCode:statusCode] capitalizedString]);
         handler(NO);
       } else {
         NSDictionary *resp = [NSJSONSerialization JSONObjectWithData:data options:0 error:nil];
@@ -72,37 +75,8 @@
 
         NSArray *receivedRules = resp[kRules];
         for (NSDictionary *rule in receivedRules) {
-          if (![rule isKindOfClass:[NSDictionary class]]) continue;
-
-          SNTRule *newRule = [[SNTRule alloc] init];
-          newRule.shasum = rule[kRuleSHA256];
-
-          if ([rule[kRulePolicy] isEqual:kRulePolicyWhitelist]) {
-            newRule.state = RULESTATE_WHITELIST;
-          } else if ([rule[kRulePolicy] isEqual:kRulePolicyBlacklist]) {
-            newRule.state = RULESTATE_BLACKLIST;
-          } else if ([rule[kRulePolicy] isEqual:kRulePolicySilentBlacklist]) {
-            newRule.state = RULESTATE_SILENT_BLACKLIST;
-          } else if ([rule[kRulePolicy] isEqual:kRulePolicyRemove]) {
-            newRule.state = RULESTATE_REMOVE;
-          } else {
-            continue;
-          }
-
-          if ([rule[kRuleType] isEqual:kRuleTypeBinary]) {
-            newRule.type = RULETYPE_BINARY;
-          } else if ([rule[kRuleType] isEqual:kRuleTypeCertificate]) {
-            newRule.type = RULETYPE_CERT;
-          } else {
-            continue;
-          }
-
-          NSString *customMsg = rule[kRuleCustomMsg];
-          if (customMsg) {
-            newRule.customMsg = customMsg;
-          }
-
-          [syncState.downloadedRules addObject:newRule];
+          SNTRule *r = [self ruleFromDictionary:rule];
+          if (r) [syncState.downloadedRules addObject:r];
         }
 
         if (resp[kCursor]) {
@@ -126,6 +100,42 @@
         }
       }
   }] resume];
+}
+
++ (SNTRule *)ruleFromDictionary:(NSDictionary *)dict {
+  if (![dict isKindOfClass:[NSDictionary class]]) return nil;
+
+  SNTRule *newRule = [[SNTRule alloc] init];
+  newRule.shasum = dict[kRuleSHA256];
+
+  NSString *policyString = dict[kRulePolicy];
+  if ([policyString isEqual:kRulePolicyWhitelist]) {
+    newRule.state = RULESTATE_WHITELIST;
+  } else if ([policyString isEqual:kRulePolicyBlacklist]) {
+    newRule.state = RULESTATE_BLACKLIST;
+  } else if ([policyString isEqual:kRulePolicySilentBlacklist]) {
+    newRule.state = RULESTATE_SILENT_BLACKLIST;
+  } else if ([policyString isEqual:kRulePolicyRemove]) {
+    newRule.state = RULESTATE_REMOVE;
+  } else {
+    return nil;
+  }
+
+  NSString *ruleTypeString = dict[kRuleType];
+  if ([ruleTypeString isEqual:kRuleTypeBinary]) {
+    newRule.type = RULETYPE_BINARY;
+  } else if ([ruleTypeString isEqual:kRuleTypeCertificate]) {
+    newRule.type = RULETYPE_CERT;
+  } else {
+    return nil;
+  }
+
+  NSString *customMsg = dict[kRuleCustomMsg];
+  if (customMsg) {
+    newRule.customMsg = customMsg;
+  }
+
+  return newRule;
 }
 
 @end

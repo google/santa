@@ -37,29 +37,11 @@
       [NSString stringWithFormat:@"multipart/form-data; charset=UTF-8; boundary=%@", boundary];
   [req setValue:contentType forHTTPHeaderField:@"Content-Type"];
 
-  // Prepare the body of the request, encoded as a multipart/form-data.
-  // Along the way, gzip the individual log files and append .gz to their filenames.
-  NSMutableData *reqBody = [[NSMutableData alloc] init];
   NSArray *logsToUpload = [SNTCommandSyncLogUpload logsToUpload];
-  for (NSString *log in logsToUpload) {
-    [reqBody appendData:
-        [[NSString stringWithFormat:@"--%@\r\n", boundary] dataUsingEncoding:NSUTF8StringEncoding]];
-    [reqBody appendData:
-        [[NSString stringWithFormat:@"Content-Disposition: form-data; "
-            @"name=\"%@\"; "
-            @"filename=\"%@.gz\"\r\n", kLogUploadField, [log lastPathComponent]]
-         dataUsingEncoding:NSUTF8StringEncoding]];
-    [reqBody appendData:
-        [@"Content-Type: application/x-gzip\r\n\r\n" dataUsingEncoding:NSUTF8StringEncoding]];
-    [reqBody appendData:[[NSData dataWithContentsOfFile:log] gzipCompressed]];
-    [reqBody appendData:[@"\r\n" dataUsingEncoding:NSUTF8StringEncoding]];
-  }
-  [reqBody appendData:
-     [[NSString stringWithFormat:@"--%@--\r\n", boundary] dataUsingEncoding:NSUTF8StringEncoding]];
 
   // Upload the logs
   [[session uploadTaskWithRequest:req
-                         fromData:reqBody
+                         fromData:[self requestBodyWithLogs:logsToUpload andBoundary:boundary]
                 completionHandler:^(NSData *data, NSURLResponse *response, NSError *error) {
       long statusCode = [(NSHTTPURLResponse *)response statusCode];
       if (statusCode != 200) {
@@ -72,6 +54,29 @@
         handler(YES);
       }
   }] resume];
+}
+
++ (NSData *)requestBodyWithLogs:(NSArray *)logsToUpload andBoundary:(NSString *)boundary {
+  // Prepare the body of the request, encoded as a multipart/form-data.
+  // Along the way, gzip the individual log files and append .gz to their filenames.
+  NSMutableData *reqBody = [[NSMutableData alloc] init];
+  for (NSString *log in logsToUpload) {
+    [reqBody appendData:
+        [[NSString stringWithFormat:@"--%@\r\n", boundary] dataUsingEncoding:NSUTF8StringEncoding]];
+    [reqBody appendData:
+        [[NSString stringWithFormat:@"Content-Disposition: form-data; "
+            @"name=\"%@\"; "
+            @"filename=\"%@.gz\"\r\n", kLogUploadField, [log lastPathComponent]]
+      dataUsingEncoding:NSUTF8StringEncoding]];
+    [reqBody appendData:
+        [@"Content-Type: application/x-gzip\r\n\r\n" dataUsingEncoding:NSUTF8StringEncoding]];
+    [reqBody appendData:[[NSData dataWithContentsOfFile:log] gzipCompressed]];
+    [reqBody appendData:[@"\r\n" dataUsingEncoding:NSUTF8StringEncoding]];
+  }
+  [reqBody appendData:
+      [[NSString stringWithFormat:@"--%@--\r\n", boundary] dataUsingEncoding:NSUTF8StringEncoding]];
+
+  return reqBody;
 }
 
 + (NSArray *)logsToUpload {
