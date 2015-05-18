@@ -13,14 +13,14 @@ TITLE:=santa
 REVERSE_DOMAIN:=com.google
 
 # Get latest Release version using the GitHub API. Each release is bound to a
-# git tag, which should always be a semantic version number
+# git tag, which should always be a semantic version number. The most recent
+# release is always first in the API result.
 PACKAGE_VERSION:=$(shell curl -fs https://api.github.com/repos/google/santa/releases |\
 	python -c 'import json, sys; print json.load(sys.stdin)[0]["tag_name"]' 2>/dev/null)
 
-# Get the download URL for the latest Release using the GitHub API. Each release
-# should have a single 'asset' which will be a tar.bz2 containing all of the files
-# associated with that release.
-# The tarball layout is:
+# Get the download URL for the latest Release. Each release should have a
+# tarball named santa-$version.tar.bz2 containing all of the files associated
+# with that release. The tarball layout is:
 #
 #   santa-$version.tar.bz2
 #   +--santa-$version
@@ -40,9 +40,7 @@ PACKAGE_VERSION:=$(shell curl -fs https://api.github.com/repos/google/santa/rele
 #             |-- Santa.app.dSYM
 #             |-- santad.dSYM
 #             +-- santactl.dSYM
-#
-PACKAGE_DOWNLOAD_URL:=$(shell curl -fs https://api.github.com/repos/google/santa/releases |\
-	python -c 'import json, sys; print json.load(sys.stdin)[0]["assets"][0]["browser_download_url"]' 2>/dev/null)
+PACKAGE_DOWNLOAD_URL:="https://github.com/google/santa/releases/download/${PACKAGE_VERSION}/santa-${PACKAGE_VERSION}.tar.bz2"
 
 PAYLOAD:=pack-usr-libexec-santad \
 	pack-usr-sbin-santactl \
@@ -66,7 +64,6 @@ com.google.santa.asl.conf: download
 
 download:
 	$(if $(PACKAGE_VERSION),, $(error GitHub API returned unexpected result. Wait a while and try again))
-	$(if $(PACKAGE_DOWNLOAD_URL),, $(error GitHub API returned unexpected result. Wait a while and try again))
 
 	@curl -fL ${PACKAGE_DOWNLOAD_URL} | tar xvj --strip=2
 	@rm -rf *.dSYM
