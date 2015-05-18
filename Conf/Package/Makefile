@@ -68,7 +68,7 @@ download:
 	$(if $(PACKAGE_VERSION),, $(error GitHub API returned unexpected result. Wait a while and try again))
 	$(if $(PACKAGE_DOWNLOAD_URL),, $(error GitHub API returned unexpected result. Wait a while and try again))
 
-	@curl-fL ${PACKAGE_DOWNLOAD_URL} | tar xvj --strip=2
+	@curl -fL ${PACKAGE_DOWNLOAD_URL} | tar xvj --strip=2
 	@rm -rf *.dSYM
 
 pack-usr-libexec-santad: santad l_usr
