@@ -193,7 +193,7 @@
 
   /// Begin listening for events
   queueMemory = (IODataQueueMemory *)address;
-  while (IODataQueueWaitForAvailableData(queueMemory, receivePort) == kIOReturnSuccess) {
+  do {
     while (IODataQueueDataAvailable(queueMemory)) {
       dataSize = sizeof(vdata);
       kr = IODataQueueDequeue(queueMemory, &vdata, &dataSize);
@@ -227,7 +227,7 @@
         TFAILINFO("Error receiving data: %d", kr);
       }
     }
-  }
+  }  while (IODataQueueWaitForAvailableData(queueMemory, receivePort) == kIOReturnSuccess);
 
   IOConnectUnmapMemory(self.connection, kIODefaultMemoryType, mach_task_self(), address);
   mach_port_destroy(mach_task_self(), receivePort);
