@@ -37,7 +37,7 @@
       [NSString stringWithFormat:@"multipart/form-data; charset=UTF-8; boundary=%@", boundary];
   [req setValue:contentType forHTTPHeaderField:@"Content-Type"];
 
-  NSArray *logsToUpload = [SNTCommandSyncLogUpload logsToUpload];
+  NSArray *logsToUpload = [self logsToUpload];
 
   // Upload the logs
   [[session uploadTaskWithRequest:req
