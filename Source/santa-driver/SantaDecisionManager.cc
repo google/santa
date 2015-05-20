@@ -185,7 +185,12 @@ void SantaDecisionManager::CacheCheck(const char *identifier) {
   lck_rw_lock_shared(cached_decisions_lock_);
   bool shouldInvalidate = (cached_decisions_->getObject(identifier) != NULL);
   if (shouldInvalidate) {
-    lck_rw_lock_shared_to_exclusive(cached_decisions_lock_);
+    if (!lck_rw_lock_shared_to_exclusive(cached_decisions_lock_)) {
+      // shared_to_exclusive will return false if a previous reader upgraded
+      // and if that happens the lock will have been unlocked. If that happens,
+      // which is rare, relock exclusively.
+      lck_rw_lock_exclusive(cached_decisions_lock_);
+    }
     cached_decisions_->removeObject(identifier);
     lck_rw_unlock_exclusive(cached_decisions_lock_);
   } else {
@@ -282,7 +287,7 @@ santa_action_t SantaDecisionManager::GetFromDaemon(
     CacheCheck(vnode_id_str);
     return ACTION_ERROR;
   }
-  
+
   return return_action;
 }
 
