@@ -266,11 +266,11 @@
 
     // Ensure we have no privileges
     if (!DropRootPrivileges()) {
-      exit(1);
+      _exit(1);
     }
 
-    exit(execl("/usr/sbin/santactl", "/usr/sbin/santactl", "sync",
-               "singleevent", [sha256 UTF8String], NULL));
+    _exit(execl("/usr/sbin/santactl", "/usr/sbin/santactl", "sync",
+                "singleevent", [sha256 UTF8String], NULL));
   }
 }
 
