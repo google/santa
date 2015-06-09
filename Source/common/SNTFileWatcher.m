@@ -70,7 +70,8 @@
         close(fd);
       }
 
-      while ((fd = open([weakSelf.filePath fileSystemRepresentation], O_EVTONLY)) < 0) {
+      const char *filePathCString = [weakSelf.filePath fileSystemRepresentation];
+      while ((fd = open(filePathCString, O_EVTONLY)) < 0) {
         usleep(1000);
       }
 
