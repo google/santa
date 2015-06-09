@@ -27,7 +27,7 @@
   [super setUp];
 
   self.fm = [NSFileManager defaultManager];
-  self.file = @"/tmp/SNTFileWatcherTest_File";
+  self.file = [NSTemporaryDirectory() stringByAppendingString:@"SNTFileWatcherTest_File"];
   [self createFile];
   usleep(10000);
 }
