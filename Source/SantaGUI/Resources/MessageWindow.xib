@@ -16,7 +16,7 @@
         <window allowsToolTipsWhenApplicationIsInactive="NO" autorecalculatesKeyViewLoop="NO" oneShot="NO" showsToolbarButton="NO" visibleAtLaunch="NO" animationBehavior="none" id="9Bq-yh-54f" customClass="SNTMessageWindow">
             <windowStyleMask key="styleMask" utility="YES"/>
             <rect key="contentRect" x="167" y="107" width="497" height="356"/>
-            <rect key="screenRect" x="0.0" y="0.0" width="2560" height="1577"/>
+            <rect key="screenRect" x="0.0" y="0.0" width="2560" height="1600"/>
             <view key="contentView" id="Iwq-Lx-rLv">
                 <rect key="frame" x="0.0" y="0.0" width="497" height="356"/>
                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
@@ -155,7 +155,7 @@
                         <constraints>
                             <constraint firstAttribute="width" constant="1" id="0o1-Jh-epf"/>
                         </constraints>
-                        <color key="borderColor" white="0.0" alpha="0.18" colorSpace="calibratedWhite"/>
+                        <color key="borderColor" white="0.0" alpha="0.17999999999999999" colorSpace="calibratedWhite"/>
                         <color key="fillColor" white="0.0" alpha="0.0" colorSpace="calibratedWhite"/>
                         <font key="titleFont" metaFont="system"/>
                     </box>
@@ -234,6 +234,7 @@ DQ
                 </subviews>
                 <constraints>
                     <constraint firstItem="f1p-GL-O3o" firstAttribute="centerY" secondItem="eQb-0a-76J" secondAttribute="centerY" id="2Aq-1E-Ybz"/>
+                    <constraint firstItem="BbV-3h-mmL" firstAttribute="leading" secondItem="Iwq-Lx-rLv" secondAttribute="leading" priority="500" constant="193" id="2uo-Cm-Tfp"/>
                     <constraint firstItem="h6f-PY-cc0" firstAttribute="top" secondItem="f1p-GL-O3o" secondAttribute="bottom" constant="8" id="496-VQ-Fx5"/>
                     <constraint firstItem="eQb-0a-76J" firstAttribute="leading" secondItem="lvJ-Rk-UT5" secondAttribute="trailing" constant="-116" id="6Q5-Oo-1cI"/>
                     <constraint firstItem="BbV-3h-mmL" firstAttribute="top" secondItem="oFj-ol-xpL" secondAttribute="bottom" constant="35" id="7K6-bY-Rn6"/>
@@ -255,7 +256,6 @@ DQ
                     <constraint firstAttribute="centerX" secondItem="cD5-Su-lXR" secondAttribute="centerX" id="V0a-Py-iEc"/>
                     <constraint firstItem="oFj-ol-xpL" firstAttribute="leading" secondItem="lvJ-Rk-UT5" secondAttribute="leading" priority="999" id="Z6G-l9-G4a"/>
                     <constraint firstItem="oFj-ol-xpL" firstAttribute="top" secondItem="eQb-0a-76J" secondAttribute="bottom" constant="8" id="abm-cM-PN0"/>
-                    <constraint firstAttribute="centerX" secondItem="BbV-3h-mmL" secondAttribute="centerX" priority="900" constant="-62.5" id="acs-5J-vQY"/>
                     <constraint firstItem="4Li-ul-zIi" firstAttribute="leading" secondItem="eQb-0a-76J" secondAttribute="trailing" constant="20" id="b0B-3w-grH"/>
                     <constraint firstItem="KEB-eH-x2Y" firstAttribute="leading" secondItem="oFj-ol-xpL" secondAttribute="leading" priority="999" id="b5A-M7-ZsD"/>
                     <constraint firstItem="KEB-eH-x2Y" firstAttribute="centerY" secondItem="PXc-xv-A28" secondAttribute="centerY" id="cHe-pZ-0Oq"/>
