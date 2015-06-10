@@ -28,11 +28,14 @@ GUI_USER=$(/usr/bin/stat -f '%u' /dev/console)
 [[ -n "$GUI_USER" ]] && \
   /bin/launchctl asuser ${GUI_USER} /bin/launchctl remove /Library/LaunchAgents/com.google.santagui.plist
 
+# Delete old files, if they still exist
+/bin/rm /usr/libexec/santad
+/bin/rm /usr/sbin/santactl
+
 # Copy new files.
-/bin/cp ${SOURCE}/binaries/santad /usr/libexec
-/bin/cp ${SOURCE}/binaries/santactl /usr/sbin
 /bin/cp -r ${SOURCE}/binaries/santa-driver.kext /Library/Extensions
 /bin/cp -r ${SOURCE}/binaries/Santa.app /Applications
+/bin/ln -s /Library/Extensions/santa-driver.kext/Contents/MacOS/santactl /usr/local/bin
 
 /bin/cp ${SOURCE}/conf/com.google.{santad,santasync}.plist /Library/LaunchDaemons
 /bin/cp ${SOURCE}/conf/com.google.santagui.plist /Library/LaunchAgents

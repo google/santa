@@ -33,10 +33,8 @@ task :init do
 end
 
 task :remove_existing do
-  system 'sudo rm -rf /santa-driver.kext'
+  system 'sudo rm -rf /Library/Extensions/santa-driver.kext'
   system 'sudo rm -rf /Applications/Santa.app'
-  system 'sudo rm /usr/libexec/santad'
-  system 'sudo rm /usr/sbin/santactl'
 end
 
 desc "Clean"
@@ -88,10 +86,8 @@ namespace :install do
     Rake::Task['build:build'].invoke(config)
     puts "Installing with configuration: #{config}"
     Rake::Task['remove_existing'].invoke()
-    system "sudo cp -r #{OUTPUT_PATH}/Products/#{config}/santa-driver.kext /"
+    system "sudo cp -r #{OUTPUT_PATH}/Products/#{config}/santa-driver.kext /Library/Extensions"
     system "sudo cp -r #{OUTPUT_PATH}/Products/#{config}/Santa.app /Applications"
-    system "sudo cp #{OUTPUT_PATH}/Products/#{config}/santad /usr/libexec"
-    system "sudo cp #{OUTPUT_PATH}/Products/#{config}/santactl /usr/sbin"
   end
 end
 
@@ -169,7 +165,7 @@ end
 
 task :load_kext do
   puts "Loading kernel extension"
-  system "sudo kextload /santa-driver.kext"
+  system "sudo kextload /Library/Extensions/santa-driver.kext"
 end
 
 task :load_gui do

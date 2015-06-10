@@ -21,6 +21,7 @@
 
 #import "SNTCertificate.h"
 #import "SNTCodesignChecker.h"
+#import "SNTCommonEnums.h"
 #import "SNTConfigurator.h"
 #import "SNTDriverManager.h"
 #import "SNTDropRootPrivs.h"
@@ -141,9 +142,9 @@
     if (respondedAction == ACTION_RESPOND_CHECKBW_DENY) {
       // So the server has something to show the user straight away, initiate an event
       // upload for the blocked binary rather than waiting for the next sync.
-      // The event upload is skipped if the full path is equal to that of /usr/sbin/santactl so that
+      // The event upload is skipped if the full path is equal to that of santactl so that
       /// on the off chance that santactl is not whitelisted, we don't get into an infinite loop.
-      if (![path isEqual:@"/usr/sbin/santactl"]) {
+      if (![path isEqual:@(kSantaCtlPath)]) {
         [self initiateEventUploadForSHA256:sha256];
       }
 
@@ -269,8 +270,7 @@
       _exit(1);
     }
 
-    _exit(execl("/usr/sbin/santactl", "/usr/sbin/santactl", "sync",
-                "singleevent", [sha256 UTF8String], NULL));
+    _exit(execl(kSantaCtlPath, kSantaCtlPath, "sync", "singleevent", [sha256 UTF8String], NULL));
   }
 }
 

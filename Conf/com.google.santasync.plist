@@ -6,8 +6,8 @@
 				<string>com.google.santasync</string>
 				<key>ProgramArguments</key>
 				<array>
-								<string>/usr/sbin/santactl</string>
-								<string>sync</string>
+					<string>/Library/Extensions/santa-driver.kext/Contents/MacOS/santactl</string>
+					<string>sync</string>
 				</array>
 				<key>StandardErrorPath</key>
 				<string>/var/log/santa.log</string>

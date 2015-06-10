@@ -16,6 +16,7 @@
 
 #include <IOKit/kext/KextManager.h>
 
+#import "SNTCommonEnums.h"
 #import "SNTFileInfo.h"
 #import "SNTKernelCommon.h"
 #import "SNTXPCConnection.h"
@@ -61,8 +62,7 @@ REGISTER_COMMAND_NAME(@"version")
     return loadedKexts[@(USERCLIENT_ID)][@"CFBundleVersion"];
   }
 
-  SNTFileInfo *driverInfo =
-      [[SNTFileInfo alloc] initWithPath:@"/Library/Extensions/santa-driver.kext"];
+  SNTFileInfo *driverInfo = [[SNTFileInfo alloc] initWithPath:@(kKextPath)];
   if (driverInfo) {
     return [driverInfo.bundleVersion stringByAppendingString:@" (unloaded)"];
   }
@@ -71,13 +71,13 @@ REGISTER_COMMAND_NAME(@"version")
 }
 
 + (NSString *)santadVersion {
-  SNTFileInfo *daemonInfo = [[SNTFileInfo alloc] initWithPath:@"/usr/libexec/santad"];
+  SNTFileInfo *daemonInfo = [[SNTFileInfo alloc] initWithPath:@(kSantaDPath)];
   return daemonInfo.bundleVersion;
 }
 
 + (NSString *)santaAppVersion {
   SNTFileInfo *guiInfo =
-  [[SNTFileInfo alloc] initWithPath:@"/Applications/Santa.app/Contents/MacOS/Santa"];
+      [[SNTFileInfo alloc] initWithPath:@"/Applications/Santa.app/Contents/MacOS/Santa"];
   return guiInfo.bundleVersion;
 }
 

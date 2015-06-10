@@ -18,6 +18,9 @@ sleep 1
 
 sleep 1
 
+# Create hopefully useful symlink for santactl
+/bin/ln -s /Library/Extensions/santa-driver.kext/Contents/MacOS/santactl /usr/local/bin
+
 user=$(/usr/bin/stat -f '%u' /dev/console)
 [[ -z "$user" ]] && exit 0
 /bin/launchctl asuser ${user} /bin/launchctl load /Library/LaunchAgents/com.google.santagui.plist

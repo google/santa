@@ -118,6 +118,8 @@
 		0DC5D86D191AED220078A5C0 /* SNTRuleTable.m in Sources */ = {isa = PBXBuildFile; fileRef = 0DC5D86C191AED220078A5C0 /* SNTRuleTable.m */; };
 		0DC5D86E191AED220078A5C0 /* SNTRuleTable.m in Sources */ = {isa = PBXBuildFile; fileRef = 0DC5D86C191AED220078A5C0 /* SNTRuleTable.m */; };
 		0DC5D871192160180078A5C0 /* SNTCommandSyncLogUpload.m in Sources */ = {isa = PBXBuildFile; fileRef = 0DC5D870192160180078A5C0 /* SNTCommandSyncLogUpload.m */; };
+		0DC765EA1B28D9EA00BAE651 /* santad in CopyFiles */ = {isa = PBXBuildFile; fileRef = 0D9A7F3D1759330500035EB5 /* santad */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
+		0DC765EB1B28D9EA00BAE651 /* santactl in CopyFiles */ = {isa = PBXBuildFile; fileRef = 0D35BD9E18FD71CE00921A21 /* santactl */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
 		0DCA552718C95928002A7DAE /* SNTXPCConnection.m in Sources */ = {isa = PBXBuildFile; fileRef = 0D6FDC9518C93A020044685C /* SNTXPCConnection.m */; };
 		0DCD5FBF1909D64A006B445C /* SNTCommandBinaryInfo.m in Sources */ = {isa = PBXBuildFile; fileRef = 0DCD5FBE1909D64A006B445C /* SNTCommandBinaryInfo.m */; };
 		0DCD6042190ACCB8006B445C /* SNTFileInfo.m in Sources */ = {isa = PBXBuildFile; fileRef = 0DCD6041190ACCB8006B445C /* SNTFileInfo.m */; };
@@ -203,7 +205,35 @@
 			remoteGlobalIDString = 0D9A7F3C1759330400035EB5;
 			remoteInfo = santad;
 		};
+		0DC765E51B28D9C600BAE651 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 0D91BCA8174E8A6500131A7D /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 0D9A7F3C1759330400035EB5;
+			remoteInfo = santad;
+		};
+		0DC765E71B28D9C600BAE651 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 0D91BCA8174E8A6500131A7D /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 0D35BD9D18FD71CE00921A21;
+			remoteInfo = santactl;
+		};
 /* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		0DC765E91B28D9CB00BAE651 /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 6;
+			files = (
+				0DC765EA1B28D9EA00BAE651 /* santad in CopyFiles */,
+				0DC765EB1B28D9EA00BAE651 /* santactl in CopyFiles */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		0A84545E322F475FA0B505D5 /* libPods-santad.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-santad.a"; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -835,10 +865,13 @@
 				0DD98E691A5DD5C900A754C6 /* Update Module Version */,
 				0D91BCAE174E8A7E00131A7D /* Sources */,
 				0D91BCB0174E8A7E00131A7D /* Headers */,
+				0DC765E91B28D9CB00BAE651 /* CopyFiles */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				0DC765E61B28D9C600BAE651 /* PBXTargetDependency */,
+				0DC765E81B28D9C600BAE651 /* PBXTargetDependency */,
 			);
 			name = "santa-driver";
 			productName = "santa-driver";
@@ -1261,6 +1294,16 @@
 			target = 0D9A7F3C1759330400035EB5 /* santad */;
 			targetProxy = 0D9A7F591759393600035EB5 /* PBXContainerItemProxy */;
 		};
+		0DC765E61B28D9C600BAE651 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 0D9A7F3C1759330400035EB5 /* santad */;
+			targetProxy = 0DC765E51B28D9C600BAE651 /* PBXContainerItemProxy */;
+		};
+		0DC765E81B28D9C600BAE651 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 0D35BD9D18FD71CE00921A21 /* santactl */;
+			targetProxy = 0DC765E71B28D9C600BAE651 /* PBXContainerItemProxy */;
+		};
 /* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
@@ -1293,6 +1336,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
+				INSTALL_PATH = "";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE = "";
 				WARNING_CFLAGS = "";
@@ -1322,6 +1366,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
+				INSTALL_PATH = "";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE = "";
 				WARNING_CFLAGS = "";
@@ -1456,6 +1501,7 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				INFOPLIST_FILE = "${DERIVED_FILE_DIR}/santactl-Info.plist";
+				INSTALL_PATH = "";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE = "";
 			};
@@ -1489,6 +1535,7 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				INFOPLIST_FILE = "${DERIVED_FILE_DIR}/santactl-Info.plist";
+				INSTALL_PATH = "";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE = "";
 			};
@@ -1622,6 +1669,7 @@
 				CLANG_WARN_INT_CONVERSION = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COMBINE_HIDPI_IMAGES = YES;
+				COPY_PHASE_STRIP = NO;
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
 				GCC_OPTIMIZATION_LEVEL = 0;
@@ -1660,6 +1708,7 @@
 				CLANG_WARN_INT_CONVERSION = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COMBINE_HIDPI_IMAGES = YES;
+				COPY_PHASE_STRIP = NO;
 				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREPROCESSOR_DEFINITIONS = "";
@@ -1725,7 +1774,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				INFOPLIST_FILE = "${DERIVED_FILE_DIR}/santad-Info.plist";
-				INSTALL_PATH = /usr/sbin;
+				INSTALL_PATH = "";
 				LIBRARY_SEARCH_PATHS = "$(inherited)";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
@@ -1753,7 +1802,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				INFOPLIST_FILE = "${DERIVED_FILE_DIR}/santad-Info.plist";
-				INSTALL_PATH = /usr/sbin;
+				INSTALL_PATH = "";
 				LIBRARY_SEARCH_PATHS = "$(inherited)";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};

@@ -13,6 +13,10 @@ sleep 1
 
 /sbin/kextunload -b com.google.santa-driver >/dev/null 2>&1
 
+# Remove files from old Santa install locations, if they still exist
+/bin/rm /usr/libexec/santad
+/bin/rm /usr/sbin/santactl
+
 sleep 1
 
 user=$(/usr/bin/stat -f '%u' /dev/console)
