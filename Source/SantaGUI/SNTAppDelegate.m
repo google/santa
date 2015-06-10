@@ -70,8 +70,7 @@
   self.listener.exportedInterface = [SNTXPCNotifierInterface notifierInterface];
   self.listener.exportedObject = self.notificationManager;
   self.listener.rejectedHandler = ^{
-      [weakSelf performSelectorInBackground:@selector(attemptReconnection)
-                                 withObject:nil];
+      [weakSelf attemptReconnection];
   };
   self.listener.invalidationHandler = self.listener.rejectedHandler;
   [self.listener resume];
