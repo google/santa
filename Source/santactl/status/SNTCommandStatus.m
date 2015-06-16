@@ -67,7 +67,7 @@ REGISTER_COMMAND_NAME(@"status")
   printf("  %-25s | %lld\n", "Kernel cache count", cacheCount);
 
   // Database counts
-  __block int64_t eventCount = 1, binaryRuleCount = -1, certRuleCount = -1;
+  __block int64_t eventCount = -1, binaryRuleCount = -1, certRuleCount = -1;
   [[daemonConn remoteObjectProxy] databaseRuleCounts:^(int64_t binary, int64_t certificate) {
       binaryRuleCount = binary;
       certRuleCount = certificate;
