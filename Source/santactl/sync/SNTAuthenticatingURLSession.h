@@ -27,7 +27,7 @@
 ///  If set, this is the user-agent to send with requests, otherwise remains the default
 ///  CFNetwork-based name.
 ///
-@property(nonatomic) NSString *userAgent;
+@property(copy, nonatomic) NSString *userAgent;
 
 ///
 ///  If set to YES, this session refuses redirect requests. Defaults to NO.
@@ -38,24 +38,24 @@
 ///  If set, the server that we connect to _must_ match this string. Redirects to other
 ///  hosts will not be allowed.
 ///
-@property(nonatomic) NSString *serverHostname;
+@property(copy, nonatomic) NSString *serverHostname;
 
 ///
 ///  This should be PEM data containing one or more certificates to use to verify the server's
 ///  certificate chain. This will override the trusted roots in the System Roots.
 ///
-@property(nonatomic) NSData *serverRootsPemData;
+@property(copy, nonatomic) NSData *serverRootsPemData;
 
 ///
 ///  If set and client certificate authentication is needed, the pkcs#12 file will be loaded
 ///
-@property(nonatomic) NSString *clientCertFile;
+@property(copy, nonatomic) NSString *clientCertFile;
 
 ///
 ///  If set and client certificate authentication is needed, the password being used for
 ///  loading the clientCertFile
 ///
-@property(nonatomic) NSString *clientCertPassword;
+@property(copy, nonatomic) NSString *clientCertPassword;
 
 ///
 ///  If set and client certificate authentication is needed, will search the keychain for a
@@ -65,7 +65,7 @@
 ///  @note If this property is not set and neither is |clientCertIssuerCn|, the allowed issuers
 ///  provided by the server will be used to find a matching certificate.
 ///
-@property(nonatomic) NSString *clientCertCommonName;
+@property(copy, nonatomic) NSString *clientCertCommonName;
 
 ///
 ///  If set and client certificate authentication is needed, will search the keychain for a
@@ -76,7 +76,7 @@
 ///  @note If this property is not set and neither is |clientCertCommonName|, the allowed issuers
 ///      provided by the server will be used to find a matching certificate.
 ///
-@property(nonatomic) NSString *clientCertIssuerCn;
+@property(copy, nonatomic) NSString *clientCertIssuerCn;
 
 /// Designated initializer
 - (instancetype)initWithSessionConfiguration:(NSURLSessionConfiguration *)configuration;

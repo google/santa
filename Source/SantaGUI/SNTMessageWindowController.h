@@ -37,7 +37,7 @@
 ///
 ///  The custom message to display for this event
 ///
-@property NSString *customMessage;
+@property(copy) NSString *customMessage;
 
 ///
 ///  The delegate to inform when the notification is dismissed

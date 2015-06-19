@@ -20,8 +20,8 @@
 @property NSURL *syncBaseURL;
 
 /// Machine identifier and owner
-@property NSString *machineID;
-@property NSString *machineOwner;
+@property(copy) NSString *machineID;
+@property(copy) NSString *machineOwner;
 
 /// Clean sync flag, sent from server. If True, all existing rules
 /// should be deleted before inserting any new rules.

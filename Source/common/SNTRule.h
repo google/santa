@@ -22,7 +22,7 @@
 ///
 ///  The hash of the object this rule is for
 ///
-@property NSString *shasum;
+@property(copy) NSString *shasum;
 
 ///
 ///  The state of this rule
@@ -37,7 +37,7 @@
 ///
 ///  A custom message that will be displayed if this rule blocks a binary from executing
 ///
-@property NSString *customMsg;
+@property(copy) NSString *customMsg;
 
 ///
 ///  Designated initializer.
