@@ -35,6 +35,11 @@ extern NSString * const kDefaultConfigFilePath;
 ///
 @property(nonatomic) BOOL logAllEvents;
 
+///
+///  The array of whitelisted directories. 
+///
+@property(nonatomic) NSArray *whitelistDirs;
+
 #pragma mark - GUI Settings
 
 ///

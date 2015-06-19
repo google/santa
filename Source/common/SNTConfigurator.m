@@ -20,6 +20,9 @@
 @interface SNTConfigurator ()
 @property NSString *configFilePath;
 @property NSMutableDictionary *configData;
+
+/// Array of keys that cannot be changed while santad is running if santad didn't make the change.
+@property(readonly) NSArray *protectedKeys;
 @end
 
 @implementation SNTConfigurator
@@ -29,7 +32,7 @@ NSString * const kDefaultConfigFilePath = @"/var/db/santa/config.plist";
 
 /// The keys in the config file
 static NSString * const kClientModeKey = @"ClientMode";
-
+static NSString * const kWhitelistDirsKey = @"WhitelistDirs";
 static NSString * const kLogAllEventsKey = @"LogAllEvents";
 
 static NSString * const kMoreInfoURLKey = @"MoreInfoURL";
@@ -73,6 +76,12 @@ static NSString * const kMachineIDPlistKeyKey = @"MachineIDKey";
   return sharedConfigurator;
 }
 
+#pragma mark Protected Keys
+
+- (NSArray *)protectedKeys {
+  return @[ kClientModeKey, kWhitelistDirsKey ];
+}
+
 #pragma mark Public Interface
 
 - (santa_clientmode_t)clientMode {
@@ -90,6 +99,19 @@ static NSString * const kMachineIDPlistKeyKey = @"MachineIDKey";
     self.configData[kClientModeKey] = @(newMode);
     [self saveConfigToDisk];
   }
+}
+
+- (NSArray *)whitelistDirs {
+  return self.configData[kWhitelistDirsKey];
+}
+
+- (void)setWhitelistDirs:(NSArray *)whitelistDirs {
+  if (!whitelistDirs) {
+    [self.configData removeObjectForKey:kWhitelistDirsKey];
+  } else {
+    self.configData[kWhitelistDirsKey] = whitelistDirs;
+  }
+  [self saveConfigToDisk];
 }
 
 - (BOOL)logAllEvents {
@@ -204,17 +226,20 @@ static NSString * const kMachineIDPlistKeyKey = @"MachineIDKey";
     return;
   }
 
-  // Ensure no-one is trying to change the client mode behind Santa's back.
-  if (self.configData[kClientModeKey] && configData[kClientModeKey] &&
-      ![self.configData[kClientModeKey] isEqual:configData[kClientModeKey]] &&
-      geteuid() == 0) {
-    NSMutableDictionary *configDataMutable = [configData mutableCopy];
-    configDataMutable[kClientModeKey] = self.configData[kClientModeKey];
-    self.configData = configDataMutable;
-    [self saveConfigToDisk];
-  } else {
-    self.configData = [configData mutableCopy];
+  // Ensure no-one is trying to change protected keys behind our back.
+  NSMutableDictionary *configDataMutable = [configData mutableCopy];
+  BOOL changed = NO;
+  for (NSString *key in self.protectedKeys) {
+    if (self.configData[key] && configData[key] &&
+        ![self.configData[key] isEqual:configData[key]] && geteuid() == 0) {
+      NSMutableDictionary *configDataMutable = [configData mutableCopy];
+      configDataMutable[key] = self.configData[key];
+      changed = YES;
+      LOGD(@"Ignoring changed configuration key: %@", key);
+    }
   }
+  self.configData = configDataMutable;
+  if (changed) [self saveConfigToDisk];
 }
 
 #pragma mark Private

@@ -47,6 +47,8 @@
 - (void)setClientMode:(santa_clientmode_t)mode reply:(void (^)())reply;
 - (void)setNextSyncInterval:(uint64_t)seconds reply:(void (^)())reply;
 
+- (void)setWhitelistDirs:(NSArray *)dirs reply:(void (^)())reply;
+
 @end
 
 @interface SNTXPCControlInterface : NSObject

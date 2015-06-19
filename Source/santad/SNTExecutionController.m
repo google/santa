@@ -189,8 +189,33 @@
 }
 
 - (BOOL)pathIsInWhitelistedDir:(NSString *)path {
-  // TODO(rah): Implement this.
-  return NO;
+  NSArray *pathComps = [path componentsSeparatedByString:@"/"];
+
+  __block BOOL foundMatch = NO;
+
+  for (NSString *whitelistPath in [[SNTConfigurator configurator] whitelistDirs]) {
+    foundMatch = YES;
+
+    NSArray *whitelistPathComps = [whitelistPath componentsSeparatedByString:@"/"];
+    [whitelistPathComps enumerateObjectsUsingBlock:^(id obj, NSUInteger idx, BOOL *stop) {
+      if (idx >= pathComps.count) {
+        if (idx < 1) foundMatch = NO;
+        *stop = YES;
+        return;
+      }
+
+      if (![obj isKindOfClass:[NSString class]] ||
+          (![pathComps[idx] isEqualToString:obj] && ![obj isEqualToString:@"*"])) {
+        foundMatch = NO;
+        *stop = YES;
+        return;
+      }
+    }];
+
+    if (foundMatch) break;
+  }
+
+  return foundMatch;
 }
 
 - (santa_eventstate_t)eventStateForDecision:(santa_action_t)decision type:(santa_ruletype_t)type {

@@ -141,4 +141,9 @@
   reply();
 }
 
+- (void)setWhitelistDirs:(NSArray *)dirs reply:(void (^)())reply {
+  [[SNTConfigurator configurator] setWhitelistDirs:dirs];
+  reply();
+}
+
 @end
