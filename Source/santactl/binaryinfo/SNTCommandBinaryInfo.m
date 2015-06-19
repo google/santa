@@ -55,7 +55,7 @@ REGISTER_COMMAND_NAME(@"binaryinfo")
 
   SNTFileInfo *fileInfo = [[SNTFileInfo alloc] initWithPath:filePath];
   if (!fileInfo) {
-    printf("Invalid file\n");
+    printf("Invalid or empty file\n");
     exit(1);
   }
 
