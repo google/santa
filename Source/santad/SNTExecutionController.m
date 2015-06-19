@@ -167,13 +167,14 @@
 ///
 ///  Files that are out of scope:
 ///    + Non Mach-O files that are not part of an installer package.
-///    + Files in whitelisted directories.
+///    + Files in whitelisted path.
 ///
 ///  @return @c YES if file is in scope, @c NO otherwise.
 ///
 - (BOOL)fileIsInScope:(NSString *)path {
-  // Determine if file is within a whitelisted directory.
-  if ([self pathIsInWhitelistedDir:path]) {
+  // Determine if file is within a whitelisted path
+  NSRegularExpression *re = [[SNTConfigurator configurator] whitelistPathRegex];
+  if ([re numberOfMatchesInString:path options:0 range:NSMakeRange(0, path.length)]) {
     return NO;
   }
 
@@ -186,36 +187,6 @@
   }
 
   return YES;
-}
-
-- (BOOL)pathIsInWhitelistedDir:(NSString *)path {
-  NSArray *pathComps = [path componentsSeparatedByString:@"/"];
-
-  __block BOOL foundMatch = NO;
-
-  for (NSString *whitelistPath in [[SNTConfigurator configurator] whitelistDirs]) {
-    foundMatch = YES;
-
-    NSArray *whitelistPathComps = [whitelistPath componentsSeparatedByString:@"/"];
-    [whitelistPathComps enumerateObjectsUsingBlock:^(id obj, NSUInteger idx, BOOL *stop) {
-      if (idx >= pathComps.count) {
-        if (idx < 1) foundMatch = NO;
-        *stop = YES;
-        return;
-      }
-
-      if (![obj isKindOfClass:[NSString class]] ||
-          (![pathComps[idx] isEqualToString:obj] && ![obj isEqualToString:@"*"])) {
-        foundMatch = NO;
-        *stop = YES;
-        return;
-      }
-    }];
-
-    if (foundMatch) break;
-  }
-
-  return foundMatch;
 }
 
 - (santa_eventstate_t)eventStateForDecision:(santa_action_t)decision type:(santa_ruletype_t)type {

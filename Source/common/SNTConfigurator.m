@@ -21,6 +21,9 @@
 @property NSString *configFilePath;
 @property NSMutableDictionary *configData;
 
+/// Creating NSRegularExpression objects is not fast, so cache it.
+@property NSRegularExpression *cachedWhitelistDirRegex;
+
 /// Array of keys that cannot be changed while santad is running if santad didn't make the change.
 @property(readonly) NSArray *protectedKeys;
 @end
@@ -101,16 +104,25 @@ static NSString * const kMachineIDPlistKeyKey = @"MachineIDKey";
   }
 }
 
-- (NSArray *)whitelistDirs {
-  return self.configData[kWhitelistDirsKey];
+- (NSRegularExpression *)whitelistPathRegex {
+  if (!self.cachedWhitelistDirRegex && self.configData[kWhitelistDirsKey]) {
+    NSString *re = self.configData[kWhitelistDirsKey];
+    if (![re hasPrefix:@"^"]) re = [@"^" stringByAppendingString:re];
+    self.cachedWhitelistDirRegex = [NSRegularExpression regularExpressionWithPattern:re
+                                                                             options:0
+                                                                               error:nil];
+  }
+
+  return self.cachedWhitelistDirRegex;
 }
 
-- (void)setWhitelistDirs:(NSArray *)whitelistDirs {
-  if (!whitelistDirs) {
+- (void)setWhitelistPathRegex:(NSRegularExpression *)re {
+  if (!re) {
     [self.configData removeObjectForKey:kWhitelistDirsKey];
   } else {
-    self.configData[kWhitelistDirsKey] = whitelistDirs;
+    self.configData[kWhitelistDirsKey] = [re pattern];
   }
+  self.cachedWhitelistDirRegex = nil;
   [self saveConfigToDisk];
 }
 

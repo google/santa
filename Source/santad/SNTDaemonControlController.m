@@ -141,8 +141,8 @@
   reply();
 }
 
-- (void)setWhitelistDirs:(NSArray *)dirs reply:(void (^)())reply {
-  [[SNTConfigurator configurator] setWhitelistDirs:dirs];
+- (void)setWhitelistPathRegex:(NSRegularExpression *)re reply:(void (^)())reply {
+  [[SNTConfigurator configurator] setWhitelistPathRegex:re];
   reply();
 }
 
