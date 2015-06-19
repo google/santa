@@ -26,7 +26,7 @@
   XCTAssertNotNil(sut);
   XCTAssertEqualObjects(sut.path, @"/Applications/Safari.app/Contents/MacOS/Safari");
 
-  sut = [[SNTFileInfo alloc] initWithPath:@"../../../../../../../../../bin/ls"];
+  sut = [[SNTFileInfo alloc] initWithPath:@"../../../../../../../../../../../../../../../bin/ls"];
   XCTAssertEqualObjects(sut.path, @"/bin/ls");
 
   sut = [[SNTFileInfo alloc] initWithPath:@"/usr/bin/qlmanage"];
