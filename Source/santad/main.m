@@ -30,11 +30,11 @@ void *watchdog_thread_f(__unused void *idata) {
   pthread_setname_np("Watchdog");
 
   // Number of seconds to wait between checks.
-  const int timeInterval = 30;
+  const int timeInterval = 60;
 
   // Amount of CPU usage to trigger warning, as a percentage averaged over timeInterval
   // santad's usual CPU usage is 0-3% but can occasionally spike if lots of processes start at once.
-  const int cpuWarnThreshold = 10;
+  const int cpuWarnThreshold = 20;
 
   // Amount of RAM usage to trigger warning, in MB.
   // santad's usual RAM usage is between 5-50MB but can spike if lots of processes start at once.
