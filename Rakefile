@@ -4,7 +4,7 @@ WORKSPACE           = 'Santa.xcworkspace'
 DEFAULT_SCHEME      = 'All'
 OUTPUT_PATH         = 'Build'
 DIST_PATH           = 'Dist'
-BINARIES            = ['Santa.app', 'santa-driver.kext', 'santad', 'santactl']
+BINARIES            = ['Santa.app', 'santa-driver.kext']
 XCPRETTY_DEFAULTS   = '-sc'
 XCODEBUILD_DEFAULTS = "-workspace #{WORKSPACE} -derivedDataPath #{OUTPUT_PATH} -parallelizeTargets"
 
