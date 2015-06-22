@@ -25,10 +25,8 @@ PACKAGE_VERSION:=$(shell curl -fs https://api.github.com/repos/google/santa/rele
 #   santa-$version.tar.bz2
 #   +--santa-$version
 #         |-- binaries
-#         |      |-- santa-driver.kext
-#         |      |-- Santa.app
-#         |      |-- santad
-#         |      +-- santactl
+#         |    |-- santa-driver.kext
+#         |    |-- Santa.app
 #         |-- conf
 #         |    |-- install.sh
 #         |    |-- com.google.santad.plist
@@ -36,15 +34,13 @@ PACKAGE_VERSION:=$(shell curl -fs https://api.github.com/repos/google/santa/rele
 #         |    |-- com.google.santagui.plist
 #         |    +-- com.google.santa.asl.conf
 #         +--dsym
-#             |-- santa-driver.kext.dSYM
-#             |-- Santa.app.dSYM
-#             |-- santad.dSYM
-#             +-- santactl.dSYM
+#              |-- santa-driver.kext.dSYM
+#              |-- Santa.app.dSYM
+#              |-- santad.dSYM
+#              +-- santactl.dSYM
 PACKAGE_DOWNLOAD_URL:="https://github.com/google/santa/releases/download/${PACKAGE_VERSION}/santa-${PACKAGE_VERSION}.tar.bz2"
 
-PAYLOAD:=pack-usr-libexec-santad \
-	pack-usr-sbin-santactl \
-	pack-Library-Extensions-santa-driver.kext \
+PAYLOAD:=pack-Library-Extensions-santa-driver.kext \
 	pack-applications-Santa.app \
 	pack-Library-LaunchDaemons-com.google.santad.plist \
 	pack-Library-LaunchDaemons-com.google.santasync.plist \
@@ -53,8 +49,6 @@ PAYLOAD:=pack-usr-libexec-santad \
 	pack-script-preinstall \
 	pack-script-postinstall
 
-santad: download
-santactl: download
 santa-driver.kext: download
 Santa.app: download
 com.google.santad.plist: download
@@ -67,12 +61,6 @@ download:
 
 	@curl -fL ${PACKAGE_DOWNLOAD_URL} | tar xvj --strip=2
 	@rm -rf *.dSYM
-
-pack-usr-libexec-santad: santad l_usr
-	@sudo mkdir -p ${WORK_D}/usr/libexec
-	@sudo chown root:wheel ${WORK_D}/usr/libexec
-	@sudo chmod 755 ${WORK_D}/usr/libexec
-	@sudo install -m 755 -o root -g wheel santad ${WORK_D}/usr/libexec
 
 pack-etc-asl-com.google.santa.asl.conf: com.google.santa.asl.conf l_private_etc
 	@sudo mkdir -p ${WORK_D}/private/etc/asl
@@ -92,8 +80,6 @@ myclean:
 	@rm -rf *.dSYM
 	@rm -rf Santa.app
 	@rm -rf santa-driver.kext
-	@rm -f santad
-	@rm -f santactl
 	@rm -f config.plist
 	@rm -f com.google.santa.asl.conf
 	@rm -f com.google.santad.plist
