@@ -259,7 +259,6 @@
 }
 
 - (void)initiateEventUploadForSHA256:(NSString *)sha256 {
-  signal(SIGCHLD, SIG_IGN);
   pid_t child = fork();
   if (child == 0) {
     fclose(stdout);

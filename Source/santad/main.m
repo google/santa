@@ -76,6 +76,9 @@ int main(int argc, const char *argv[]) {
     // Do not buffer stdout
     setbuf(stdout, NULL);
 
+    // Do not wait on child processes
+    signal(SIGCHLD, SIG_IGN);
+
     NSDictionary *infoDict = [[NSBundle mainBundle] infoDictionary];
 
     if ([[[NSProcessInfo processInfo] arguments] containsObject:@"-v"]) {
