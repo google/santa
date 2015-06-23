@@ -44,9 +44,9 @@
     } else {
       NSDictionary *r = [NSJSONSerialization JSONObjectWithData:data options:0 error:nil];
 
-      uint64_t backoffInterval = [r[kBackoffInterval] unsignedIntegerValue];
+      NSString *backoffInterval = r[kBackoffInterval];
       if (backoffInterval) {
-        [[daemonConn remoteObjectProxy] setNextSyncInterval:backoffInterval reply:^{}];
+        [[daemonConn remoteObjectProxy] setNextSyncInterval:[backoffInterval intValue] reply:^{}];
       }
 
       handler(YES);
