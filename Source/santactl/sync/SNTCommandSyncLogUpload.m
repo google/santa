@@ -45,12 +45,12 @@
                 completionHandler:^(NSData *data, NSURLResponse *response, NSError *error) {
       long statusCode = [(NSHTTPURLResponse *)response statusCode];
       if (statusCode != 200) {
-        LOGE(@"HTTP Response: %d %@",
+        LOGE(@"HTTP Response: %ld %@",
              statusCode,
              [[NSHTTPURLResponse localizedStringForStatusCode:statusCode] capitalizedString]);
         handler(NO);
       } else {
-        LOGI(@"Uploaded %d logs", [logsToUpload count]);
+        LOGI(@"Uploaded %lu logs", [logsToUpload count]);
         handler(YES);
       }
   }] resume];

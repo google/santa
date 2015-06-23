@@ -62,7 +62,7 @@
                                                         NSError *error) {
       long statusCode = [(NSHTTPURLResponse *)response statusCode];
       if (statusCode != 200) {
-        LOGE(@"HTTP Response: %d %@",
+        LOGE(@"HTTP Response: %ld %@",
              statusCode,
              [[NSHTTPURLResponse localizedStringForStatusCode:statusCode] capitalizedString]);
         handler(NO);
@@ -91,7 +91,7 @@
             [[daemonConn remoteObjectProxy] databaseRuleAddRules:syncState.downloadedRules
                                                       cleanSlate:syncState.cleanSync
                                                            reply:^{
-                LOGI(@"Added %d rule(s)", syncState.downloadedRules.count);
+                LOGI(@"Added %lu rule(s)", syncState.downloadedRules.count);
                 handler(YES);
             }];
           } else {

@@ -45,7 +45,8 @@
 ///  @param format the printf style format string
 ///  @param ... the arguments to format.
 ///
-void logMessage(int level, FILE *destination, NSString *format, ...);
+void logMessage(int level, FILE *destination, NSString *format, ...)
+    __attribute__((format(__NSString__, 3, 4)));
 
 /// Simple logging macros
 #define LOGD(logFormat, ...) logMessage(LOG_LEVEL_DEBUG, stdout, logFormat, ##__VA_ARGS__);
