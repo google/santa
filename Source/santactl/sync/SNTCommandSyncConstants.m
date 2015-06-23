@@ -32,6 +32,7 @@ NSString * const kClientMode = @"client_mode";
 NSString * const kClientModeMonitor = @"MONITOR";
 NSString * const kClientModeLockdown = @"LOCKDOWN";
 NSString * const kCleanSync = @"clean_sync";
+NSString * const kWhitelistRegex = @"whitelist_regex";
 
 NSString * const kEvents = @"events";
 NSString * const kFileSHA256 = @"file_sha256";

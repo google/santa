@@ -73,9 +73,12 @@
             [[daemonConn remoteObjectProxy] setClientMode:CLIENTMODE_LOCKDOWN reply:^{}];
         }
 
+        if ([r[kWhitelistRegex] isKindOfClass:[NSString class]]) {
+          [[daemonConn remoteObjectProxy] setWhitelistPathRegex:r[kWhitelistRegex] reply:^{}];
+        }
+
         if ([r[kCleanSync] boolValue]) {
           syncState.cleanSync = YES;
-          LOGD(@"Clean sync requested by server");
         }
 
         handler(YES);

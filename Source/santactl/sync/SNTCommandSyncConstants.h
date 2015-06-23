@@ -30,6 +30,7 @@ extern NSString * const kClientMode;
 extern NSString * const kClientModeMonitor;
 extern NSString * const kClientModeLockdown;
 extern NSString * const kCleanSync;
+extern NSString * const kWhitelistRegex;
 
 extern NSString * const kEvents;
 extern NSString * const kFileSHA256;

@@ -94,7 +94,7 @@
   }
 
   // Step 3 - in scope?
-  if (![self fileIsInScope:path]) {
+  if (!rule && ![self fileIsInScope:path]) {
     [self.driverManager postToKernelAction:ACTION_RESPOND_CHECKBW_ALLOW forVnodeID:vnodeId];
     [self logDecisionForEventState:EVENTSTATE_ALLOW_SCOPE sha256:sha256 path:path leafCert:nil];
     return;
@@ -167,13 +167,14 @@
 ///
 ///  Files that are out of scope:
 ///    + Non Mach-O files that are not part of an installer package.
-///    + Files in whitelisted directories.
+///    + Files in whitelisted path.
 ///
 ///  @return @c YES if file is in scope, @c NO otherwise.
 ///
 - (BOOL)fileIsInScope:(NSString *)path {
-  // Determine if file is within a whitelisted directory.
-  if ([self pathIsInWhitelistedDir:path]) {
+  // Determine if file is within a whitelisted path
+  NSRegularExpression *re = [[SNTConfigurator configurator] whitelistPathRegex];
+  if ([re numberOfMatchesInString:path options:0 range:NSMakeRange(0, path.length)]) {
     return NO;
   }
 
@@ -186,11 +187,6 @@
   }
 
   return YES;
-}
-
-- (BOOL)pathIsInWhitelistedDir:(NSString *)path {
-  // TODO(rah): Implement this.
-  return NO;
 }
 
 - (santa_eventstate_t)eventStateForDecision:(santa_action_t)decision type:(santa_ruletype_t)type {

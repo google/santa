@@ -35,6 +35,15 @@ extern NSString * const kDefaultConfigFilePath;
 ///
 @property(nonatomic) BOOL logAllEvents;
 
+///
+///  The regex of whitelisted paths. Regexes are specified in ICU format.
+///
+///  The regex flags IXSM can be used, though the s (dotall) and m (multiline) flags are
+///  pointless as a path only ever a single line.
+///  If the regex doesn't begin with ^ to match from the beginning of the line, it will be added.
+///
+@property(nonatomic) NSRegularExpression *whitelistPathRegex;
+
 #pragma mark - GUI Settings
 
 ///

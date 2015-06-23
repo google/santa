@@ -141,4 +141,12 @@
   reply();
 }
 
+- (void)setWhitelistPathRegex:(NSString *)pattern reply:(void (^)())reply {
+  NSRegularExpression *re = [NSRegularExpression regularExpressionWithPattern:pattern
+                                                                      options:0
+                                                                        error:NULL];
+  [[SNTConfigurator configurator] setWhitelistPathRegex:re];
+  reply();
+}
+
 @end

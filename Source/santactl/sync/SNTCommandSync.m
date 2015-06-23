@@ -46,7 +46,7 @@ REGISTER_COMMAND_NAME(@"sync")
 }
 
 + (NSString *)shortHelpText {
-  return @"Synchronizes Santa with the server.";
+  return @"Synchronizes Santa with a configured server.";
 }
 
 + (NSString *)longHelpText {
