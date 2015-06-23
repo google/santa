@@ -14,7 +14,6 @@
 sleep 1
 
 /bin/launchctl load -w /Library/LaunchDaemons/com.google.santad.plist
-/bin/launchctl load -w /Library/LaunchDaemons/com.google.santasync.plist
 
 sleep 1
 

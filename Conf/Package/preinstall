@@ -7,15 +7,16 @@
 [[ $3 != "/" ]] && exit 0
 
 /bin/launchctl remove com.google.santad
-/bin/launchctl remove com.google.santasync
 
 sleep 1
 
 /sbin/kextunload -b com.google.santa-driver >/dev/null 2>&1
 
-# Remove files from old Santa install locations, if they still exist
+# Remove cruft from old Santa versions
 /bin/rm /usr/libexec/santad
 /bin/rm /usr/sbin/santactl
+/bin/launchctl remove com.google.santasync
+/bin/rm /Library/LaunchDaemons/com.google.santasync.plist
 
 sleep 1
 

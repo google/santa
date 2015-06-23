@@ -80,7 +80,6 @@ namespace :install do
   task :install, [:configuration] do |t, args|
     config = args[:configuration]
     system 'sudo cp conf/com.google.santad.plist /Library/LaunchDaemons'
-    system 'sudo cp conf/com.google.santasync.plist /Library/LaunchDaemons'
     system 'sudo cp conf/com.google.santagui.plist /Library/LaunchAgents'
     system 'sudo cp conf/com.google.santa.asl.conf /etc/asl'
     Rake::Task['build:build'].invoke(config)

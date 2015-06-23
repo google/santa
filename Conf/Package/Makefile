@@ -30,7 +30,6 @@ PACKAGE_VERSION:=$(shell curl -fs https://api.github.com/repos/google/santa/rele
 #         |-- conf
 #         |    |-- install.sh
 #         |    |-- com.google.santad.plist
-#         |    |-- com.google.santasync.plist
 #         |    |-- com.google.santagui.plist
 #         |    +-- com.google.santa.asl.conf
 #         +--dsym
@@ -43,7 +42,6 @@ PACKAGE_DOWNLOAD_URL:="https://github.com/google/santa/releases/download/${PACKA
 PAYLOAD:=pack-Library-Extensions-santa-driver.kext \
 	pack-applications-Santa.app \
 	pack-Library-LaunchDaemons-com.google.santad.plist \
-	pack-Library-LaunchDaemons-com.google.santasync.plist \
 	pack-Library-LaunchAgents-com.google.santagui.plist \
 	pack-etc-asl-com.google.santa.asl.conf \
 	pack-script-preinstall \
@@ -53,7 +51,6 @@ santa-driver.kext: download
 Santa.app: download
 com.google.santad.plist: download
 com.google.santagui.plist: download
-com.google.santasync.plist: download
 com.google.santa.asl.conf: download
 
 download:
@@ -84,5 +81,4 @@ myclean:
 	@rm -f com.google.santa.asl.conf
 	@rm -f com.google.santad.plist
 	@rm -f com.google.santagui.plist
-	@rm -f com.google.santasync.plist
 	@rm -f install.sh
