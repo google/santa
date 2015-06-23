@@ -135,4 +135,10 @@
   reply();
 }
 
+- (void)setNextSyncInterval:(uint64_t)seconds reply:(void (^)())reply {
+  [self rescheduleSyncSecondsFromNow:seconds];
+  [[SNTConfigurator configurator] setSyncBackOff:YES];
+  reply();
+}
+
 @end

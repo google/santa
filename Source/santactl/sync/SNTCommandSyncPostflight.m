@@ -18,6 +18,8 @@
 
 #import "SNTCommandSyncConstants.h"
 #import "SNTCommandSyncState.h"
+#import "SNTXPCConnection.h"
+#import "SNTXPCControlInterface.h"
 
 @implementation SNTCommandSyncPostflight
 
@@ -33,15 +35,22 @@
   [[session dataTaskWithRequest:req completionHandler:^(NSData *data,
                                                         NSURLResponse *response,
                                                         NSError *error) {
-      long statusCode = [(NSHTTPURLResponse *)response statusCode];
-      if (statusCode != 200) {
-        LOGE(@"HTTP Response: %d %@",
-             statusCode,
-             [[NSHTTPURLResponse localizedStringForStatusCode:statusCode] capitalizedString]);
-        handler(NO);
-      } else {
-        handler(YES);
+    long statusCode = [(NSHTTPURLResponse *)response statusCode];
+    if (statusCode != 200) {
+      LOGE(@"HTTP Response: %d %@",
+           statusCode,
+           [[NSHTTPURLResponse localizedStringForStatusCode:statusCode] capitalizedString]);
+      handler(NO);
+    } else {
+      NSDictionary *r = [NSJSONSerialization JSONObjectWithData:data options:0 error:nil];
+
+      uint64_t backoffInterval = [r[kBackoffInterval] unsignedIntegerValue];
+      if (backoffInterval) {
+        [[daemonConn remoteObjectProxy] setNextSyncInterval:backoffInterval reply:^{}];
       }
+
+      handler(YES);
+    }
   }] resume];
 }
 

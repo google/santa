@@ -80,3 +80,5 @@ NSString * const kRuleTypeBinary = @"BINARY";
 NSString * const kRuleTypeCertificate = @"CERTIFICATE";
 NSString * const kRuleCustomMsg = @"custom_msg";
 NSString * const kCursor = @"cursor";
+
+NSString * const kBackoffInterval = @"backoff";

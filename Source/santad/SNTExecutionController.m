@@ -144,7 +144,7 @@
       // upload for the blocked binary rather than waiting for the next sync.
       // The event upload is skipped if the full path is equal to that of santactl so that
       /// on the off chance that santactl is not whitelisted, we don't get into an infinite loop.
-      if (![path isEqual:@(kSantaCtlPath)]) {
+      if (![path isEqual:@(kSantaCtlPath)] && ![[SNTConfigurator configurator] syncBackOff]) {
         [self initiateEventUploadForSHA256:sha256];
       }
 
