@@ -35,7 +35,7 @@ NSString * const kDefaultConfigFilePath = @"/var/db/santa/config.plist";
 
 /// The keys in the config file
 static NSString * const kClientModeKey = @"ClientMode";
-static NSString * const kWhitelistDirsKey = @"WhitelistDirs";
+static NSString * const kWhitelistRegexKey = @"WhitelistRegex";
 static NSString * const kLogAllEventsKey = @"LogAllEvents";
 
 static NSString * const kMoreInfoURLKey = @"MoreInfoURL";
@@ -82,7 +82,7 @@ static NSString * const kMachineIDPlistKeyKey = @"MachineIDKey";
 #pragma mark Protected Keys
 
 - (NSArray *)protectedKeys {
-  return @[ kClientModeKey, kWhitelistDirsKey ];
+  return @[ kClientModeKey, kWhitelistRegexKey ];
 }
 
 #pragma mark Public Interface
@@ -105,22 +105,21 @@ static NSString * const kMachineIDPlistKeyKey = @"MachineIDKey";
 }
 
 - (NSRegularExpression *)whitelistPathRegex {
-  if (!self.cachedWhitelistDirRegex && self.configData[kWhitelistDirsKey]) {
-    NSString *re = self.configData[kWhitelistDirsKey];
+  if (!self.cachedWhitelistDirRegex && self.configData[kWhitelistRegexKey]) {
+    NSString *re = self.configData[kWhitelistRegexKey];
     if (![re hasPrefix:@"^"]) re = [@"^" stringByAppendingString:re];
     self.cachedWhitelistDirRegex = [NSRegularExpression regularExpressionWithPattern:re
                                                                              options:0
                                                                                error:nil];
   }
-
   return self.cachedWhitelistDirRegex;
 }
 
 - (void)setWhitelistPathRegex:(NSRegularExpression *)re {
   if (!re) {
-    [self.configData removeObjectForKey:kWhitelistDirsKey];
+    [self.configData removeObjectForKey:kWhitelistRegexKey];
   } else {
-    self.configData[kWhitelistDirsKey] = [re pattern];
+    self.configData[kWhitelistRegexKey] = [re pattern];
   }
   self.cachedWhitelistDirRegex = nil;
   [self saveConfigToDisk];
