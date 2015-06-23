@@ -94,7 +94,7 @@
   }
 
   // Step 3 - in scope?
-  if (![self fileIsInScope:path]) {
+  if (!rule && ![self fileIsInScope:path]) {
     [self.driverManager postToKernelAction:ACTION_RESPOND_CHECKBW_ALLOW forVnodeID:vnodeId];
     [self logDecisionForEventState:EVENTSTATE_ALLOW_SCOPE sha256:sha256 path:path leafCert:nil];
     return;
