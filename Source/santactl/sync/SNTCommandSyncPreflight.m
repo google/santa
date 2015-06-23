@@ -74,11 +74,7 @@
         }
 
         if ([r[kWhitelistRegex] isKindOfClass:[NSString class]]) {
-          NSString *pat = r[kWhitelistRegex];
-          NSRegularExpression *re = [NSRegularExpression regularExpressionWithPattern:pat
-                                                                              options:0
-                                                                                error:NULL];
-          [[daemonConn remoteObjectProxy] setWhitelistPathRegex:re reply:^{}];
+          [[daemonConn remoteObjectProxy] setWhitelistPathRegex:r[kWhitelistRegex] reply:^{}];
         }
 
         if ([r[kCleanSync] boolValue]) {

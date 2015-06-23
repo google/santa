@@ -46,8 +46,7 @@
 - (void)clientMode:(void (^)(santa_clientmode_t))reply;
 - (void)setClientMode:(santa_clientmode_t)mode reply:(void (^)())reply;
 - (void)setNextSyncInterval:(uint64_t)seconds reply:(void (^)())reply;
-
-- (void)setWhitelistPathRegex:(NSRegularExpression *)re reply:(void (^)())reply;
+- (void)setWhitelistPathRegex:(NSString *)pattern reply:(void (^)())reply;
 
 @end
 
