@@ -126,6 +126,9 @@
   for (NSNumber *index in indexes) {
     [self deleteEventWithId:index];
   }
+  [self inDatabase:^(FMDatabase *db) {
+      [db executeUpdate:@"VACUUM"];
+  }];
 }
 
 @end
