@@ -168,11 +168,11 @@ REGISTER_COMMAND_NAME(@"sync")
                               completionHandler:^(BOOL success) {
       if (success) {
         LOGI(@"Log upload complete");
-        [self eventUpload];
       } else {
-        LOGE(@"Log upload failed, aborting run");
-        exit(1);
+        LOGE(@"Log upload failed, continuing anyway");
       }
+      [self eventUpload];
+
   }];
 }
 
