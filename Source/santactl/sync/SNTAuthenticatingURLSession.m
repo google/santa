@@ -112,6 +112,8 @@
                     newRequest:(NSURLRequest *)request
              completionHandler:(void (^)(NSURLRequest *))completionHandler {
     if (self.refusesRedirects) {
+      LOGD(@"Rejected redirection to: %@", request.URL);
+      [task cancel];  // without this, the connection hangs until timeout!?!
       completionHandler(NULL);
     } else {
       completionHandler(request);
