@@ -26,7 +26,7 @@ static inline double timeval_to_double(struct timeval tv) {
 
 ///  The watchdog thread function, used to monitor santad CPU/RAM usage and print a warning
 ///  if it goes over certain thresholds.
-void *watchdog_thread_f(__unused void *idata) {
+void *watchdogThreadFunction(__unused void *idata) {
   pthread_setname_np("Watchdog");
 
   // Number of seconds to wait between checks.
@@ -34,25 +34,26 @@ void *watchdog_thread_f(__unused void *idata) {
 
   // Amount of CPU usage to trigger warning, as a percentage averaged over timeInterval
   // santad's usual CPU usage is 0-3% but can occasionally spike if lots of processes start at once.
-  const int cpuWarnThreshold = 20;
+  const int cpuWarnThreshold = 20.0;
 
   // Amount of RAM usage to trigger warning, in MB.
   // santad's usual RAM usage is between 5-50MB but can spike if lots of processes start at once.
-  const int memWarnThreshold = 100;
+  const int memWarnThreshold = 250;
 
+  double prevTotalTime = 0.0;
+  double prevRamUseMB = 0.0;
   struct rusage usage;
-  static double prev_total_time = 0.0;
-  struct mach_task_basic_info t_info;
-  mach_msg_type_number_t t_info_count = MACH_TASK_BASIC_INFO_COUNT;
+  struct mach_task_basic_info taskInfo;
+  mach_msg_type_number_t taskInfoCount = MACH_TASK_BASIC_INFO_COUNT;
 
   while(true) {
     sleep(timeInterval);
 
     // CPU
     getrusage(RUSAGE_SELF, &usage);
-    double total_time = timeval_to_double(usage.ru_utime) + timeval_to_double(usage.ru_stime);
-    double percentage = (((total_time - prev_total_time) / (double)timeInterval) * 100.0);
-    prev_total_time = total_time;
+    double totalTime = timeval_to_double(usage.ru_utime) + timeval_to_double(usage.ru_stime);
+    double percentage = (((totalTime - prevTotalTime) / (double)timeInterval) * 100.0);
+    prevTotalTime = totalTime;
 
     if (percentage > cpuWarnThreshold) {
       LOGW(@"Watchdog: potentially high CPU use, ~%.2f%% over last %d seconds.",
@@ -61,11 +62,12 @@ void *watchdog_thread_f(__unused void *idata) {
 
     // RAM
     if (KERN_SUCCESS == task_info(mach_task_self(), MACH_TASK_BASIC_INFO,
-                                  (task_info_t)&t_info, &t_info_count)) {
-      double ramUseMb = (double) t_info.resident_size / 1024 / 1024;
-      if (ramUseMb > (double)memWarnThreshold) {
-        LOGW(@"Watchdog: potentially high RAM use, RSS is %.2fMB.", ramUseMb);
+                                  (task_info_t)&taskInfo, &taskInfoCount)) {
+      double ramUseMB = (double) taskInfo.resident_size / 1024 / 1024;
+      if (ramUseMB > memWarnThreshold && ramUseMB > prevRamUseMB) {
+        LOGW(@"Watchdog: potentially high RAM use, RSS is %.2fMB.", ramUseMB);
       }
+      prevRamUseMB = ramUseMB;
     }
   }
   return NULL;
@@ -92,8 +94,8 @@ int main(int argc, const char *argv[]) {
     [s performSelectorInBackground:@selector(run) withObject:nil];
 
     // Create watchdog thread
-    pthread_t watchdog_thread;
-    pthread_create(&watchdog_thread, NULL, watchdog_thread_f, NULL);
+    pthread_t watchdogThread;
+    pthread_create(&watchdogThread, NULL, watchdogThreadFunction, NULL);
 
     [[NSRunLoop mainRunLoop] run];
   }
