@@ -151,7 +151,7 @@ end
 
 task :unload_gui do
   puts "Unloading GUI agent"
-  system "sudo killall Santa 2>/dev/null"
+  system "launchctl unload /Library/LaunchAgents/com.google.santagui.plist 2>/dev/null"
 end
 
 desc "Unload"
@@ -169,7 +169,7 @@ end
 
 task :load_gui do
   puts "Loading GUI agent"
-  system "open /Applications/Santa.app"
+  system "launchctl load /Library/LaunchAgents/com.google.santagui.plist 2>/dev/null"
 end
 
 desc "Load"
