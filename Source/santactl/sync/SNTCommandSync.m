@@ -198,11 +198,11 @@ REGISTER_COMMAND_NAME(@"sync")
                                               daemonConn:self.daemonConn
                                        completionHandler:^(BOOL success) {
       if (success) {
-       LOGI(@"Event upload complete");
-       exit(0);
+        LOGI(@"Event upload complete");
+        exit(0);
       } else {
-       LOGW(@"Event upload failed");
-       exit(1);
+        LOGW(@"Event upload failed");
+        exit(1);
       }
   }];
 }
