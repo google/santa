@@ -27,7 +27,7 @@ static inline double timeval_to_double(struct timeval tv) {
 ///  The watchdog thread function, used to monitor santad CPU/RAM usage and print a warning
 ///  if it goes over certain thresholds.
 void *watchdogThreadFunction(__unused void *idata) {
-  pthread_setname_np("Watchdog");
+  pthread_setname_np("com.google.santa.watchdog");
 
   // Number of seconds to wait between checks.
   const int timeInterval = 60;
