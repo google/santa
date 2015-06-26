@@ -47,27 +47,29 @@ void *watchdogThreadFunction(__unused void *idata) {
   mach_msg_type_number_t taskInfoCount = MACH_TASK_BASIC_INFO_COUNT;
 
   while(true) {
-    sleep(timeInterval);
+    @autoreleasepool {
+      sleep(timeInterval);
 
-    // CPU
-    getrusage(RUSAGE_SELF, &usage);
-    double totalTime = timeval_to_double(usage.ru_utime) + timeval_to_double(usage.ru_stime);
-    double percentage = (((totalTime - prevTotalTime) / (double)timeInterval) * 100.0);
-    prevTotalTime = totalTime;
+      // CPU
+      getrusage(RUSAGE_SELF, &usage);
+      double totalTime = timeval_to_double(usage.ru_utime) + timeval_to_double(usage.ru_stime);
+      double percentage = (((totalTime - prevTotalTime) / (double)timeInterval) * 100.0);
+      prevTotalTime = totalTime;
 
-    if (percentage > cpuWarnThreshold) {
-      LOGW(@"Watchdog: potentially high CPU use, ~%.2f%% over last %d seconds.",
-           percentage, timeInterval);
-    }
-
-    // RAM
-    if (KERN_SUCCESS == task_info(mach_task_self(), MACH_TASK_BASIC_INFO,
-                                  (task_info_t)&taskInfo, &taskInfoCount)) {
-      double ramUseMB = (double) taskInfo.resident_size / 1024 / 1024;
-      if (ramUseMB > memWarnThreshold && ramUseMB > prevRamUseMB) {
-        LOGW(@"Watchdog: potentially high RAM use, RSS is %.2fMB.", ramUseMB);
+      if (percentage > cpuWarnThreshold) {
+        LOGW(@"Watchdog: potentially high CPU use, ~%.2f%% over last %d seconds.",
+             percentage, timeInterval);
       }
-      prevRamUseMB = ramUseMB;
+
+      // RAM
+      if (KERN_SUCCESS == task_info(mach_task_self(), MACH_TASK_BASIC_INFO,
+                                    (task_info_t)&taskInfo, &taskInfoCount)) {
+        double ramUseMB = (double) taskInfo.resident_size / 1024 / 1024;
+        if (ramUseMB > memWarnThreshold && ramUseMB > prevRamUseMB) {
+          LOGW(@"Watchdog: potentially high RAM use, RSS is %.2fMB.", ramUseMB);
+        }
+        prevRamUseMB = ramUseMB;
+      }
     }
   }
   return NULL;
