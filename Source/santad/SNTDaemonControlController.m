@@ -58,6 +58,8 @@
         _exit(1);
       }
 
+      fclose(stdout);
+
       _exit(execl(kSantaCtlPath, kSantaCtlPath, "sync", NULL));
     }
   });
