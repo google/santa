@@ -450,7 +450,7 @@ extern "C" int vnode_scope_callback(
         returnResult = KAUTH_RESULT_ALLOW;
         break;
       case ACTION_RESPOND_CHECKBW_DENY:
-        *(reinterpret_cast<int *>(arg3)) = EACCES;
+        *(reinterpret_cast<int *>(arg3)) = EPERM;
         returnResult = KAUTH_RESULT_DENY;
         break;
       default:
