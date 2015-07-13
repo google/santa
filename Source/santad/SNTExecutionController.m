@@ -64,8 +64,17 @@
                            pid:(NSNumber *)pid
                           ppid:(NSNumber *)ppid
                        vnodeId:(uint64_t)vnodeId {
-  SNTFileInfo *binInfo = [[SNTFileInfo alloc] initWithPath:path];
+  NSError *fileInfoError;
+  SNTFileInfo *binInfo = [[SNTFileInfo alloc] initWithPath:path error:&fileInfoError];
   NSString *sha256 = [binInfo SHA256];
+
+  // If we can't read the file and hash properly, log an error.
+  if (!binInfo || !sha256) {
+    LOGW(@"Failed to read file %@: %@", path, fileInfoError.localizedDescription);
+    [self.driverManager postToKernelAction:ACTION_RESPOND_CHECKBW_ALLOW forVnodeID:vnodeId];
+    [self logDecisionForEventState:EVENTSTATE_ALLOW_UNKNOWN sha256:nil path:path leafCert:nil];
+    return;
+  }
 
   // These will be filled in either in later steps
   santa_action_t respondedAction = ACTION_UNSET;

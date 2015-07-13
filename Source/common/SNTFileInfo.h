@@ -23,6 +23,16 @@
 ///
 ///  @param path The path of the file this instance is to represent. The path will be
 ///      converted to an absolute, standardized path if it isn't already.
+///  @param error If an error occurred and nil is returned, this will be a pointer to an NSError
+///      describing the problem.
+///
+- (instancetype)initWithPath:(NSString *)path error:(NSError **)error;
+
+///
+///  Convenience initializer.
+///
+///  @param path The path to the file this instance is to represent. The path will be
+///      converted to an absolute, standardized path if it isn't already.
 ///
 - (instancetype)initWithPath:(NSString *)path;
 

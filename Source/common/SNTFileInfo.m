@@ -33,16 +33,32 @@
 
 @implementation SNTFileInfo
 
-- (instancetype)initWithPath:(NSString *)path {
+- (instancetype)initWithPath:(NSString *)path error:(NSError **)error {
   self = [super init];
   if (self) {
     _path = [self resolvePath:path];
-    if (!_path) return nil;
-    _fileData = [NSData dataWithContentsOfFile:_path options:NSDataReadingMappedIfSafe error:nil];
+    if (_path.length == 0) {
+      if (error) {
+        NSString *errStr = @"Unable to resolve empty path";
+        if (path) errStr = [@"Unable to resolve path: " stringByAppendingString:path];
+        *error = [NSError errorWithDomain:@"com.google.santa.fileinfo"
+                                     code:260
+                                 userInfo:@{ NSLocalizedDescriptionKey: errStr }];
+      }
+      return nil;
+    }
+
+    _fileData = [NSData dataWithContentsOfFile:_path
+                                       options:NSDataReadingMappedIfSafe
+                                         error:error];
     if (_fileData.length == 0) return nil;
   }
 
   return self;
+}
+
+- (instancetype)initWithPath:(NSString *)path {
+  return [self initWithPath:path error:NULL];
 }
 
 - (NSString *)SHA1 {
