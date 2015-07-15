@@ -270,13 +270,10 @@ santa_action_t SantaDecisionManager::GetFromDaemon(
       return ACTION_ERROR;
     }
 
-    // ... and wait for it to respond. If after kRequestLoopSleepMilliseconds
-    // * kMaxRequestLoops it still hasn't responded, send request again.
-    for (int i = 0; i < kMaxRequestLoops; ++i) {
+    do {
       IOSleep(kRequestLoopSleepMilliseconds);
       return_action = GetFromCache(vnode_id_str);
-      if (CHECKBW_RESPONSE_VALID(return_action)) break;
-    }
+    } while (return_action == ACTION_REQUEST_CHECKBW);
   } while (!CHECKBW_RESPONSE_VALID(return_action) &&
            proc_exiting(client_proc_) == 0);
 

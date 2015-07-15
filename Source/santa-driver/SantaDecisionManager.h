@@ -132,12 +132,6 @@ class SantaDecisionManager : public OSObject {
   const int kRequestLoopSleepMilliseconds = 10;
 
   ///
-  ///  While waiting for a response from the daemon, this is the maximum number
-  ///  of loops to wait before sending the request again.
-  ///
-  const int kMaxRequestLoops = 50;
-
-  ///
   ///  Maximum number of entries in the in-kernel cache.
   ///
   const int kMaxCacheSize = 10000;
