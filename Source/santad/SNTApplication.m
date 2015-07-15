@@ -131,6 +131,7 @@
             // hold up other execution requests in the background.
             dispatch_async(q, ^{
                 struct passwd *user = getpwuid(message.userId);
+                endpwent();
                 NSString *userName;
                 if (user) {
                   userName = @(user->pw_name);
