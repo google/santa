@@ -358,12 +358,12 @@
   } else if (pid > 0) {
     int status;
     waitpid(pid, &status, 0);
-    if (WIFEXITED(status) && WEXITSTATUS(status) == EACCES) {
+    if (WIFEXITED(status) && WEXITSTATUS(status) == EPERM) {
       TPASS();
     } else if (WIFSTOPPED(status)) {
       TFAILINFO("Process was executed and is waiting for debugger");
     } else {
-      TFAILINFO("Process did not exit with EACCESS as expected");
+      TFAILINFO("Process did not exit with EPERM as expected");
     }
   } else if (pid == 0) {
     fclose(stdout);
