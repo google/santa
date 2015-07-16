@@ -23,18 +23,15 @@ bool SantaDecisionManager::init() {
   if (!super::init()) return false;
 
   sdm_lock_grp_ = lck_grp_alloc_init("santa-locks", lck_grp_attr_alloc_init());
+  dataqueue_lock_ = lck_mtx_alloc_init(sdm_lock_grp_, lck_attr_alloc_init());
   cached_decisions_lock_ = lck_rw_alloc_init(sdm_lock_grp_,
                                              lck_attr_alloc_init());
 
   cached_decisions_ = OSDictionary::withCapacity(1000);
 
-  dataqueue_ = IOSharedDataQueue::withCapacity((sizeof(santa_message_t) +
-                                                DATA_QUEUE_ENTRY_HEADER_SIZE)
-                                               * kMaxQueueEvents);
+  dataqueue_ = IOSharedDataQueue::withEntries(kMaxQueueEvents,
+                                              sizeof(santa_message_t));
   if (!dataqueue_) return kIOReturnNoMemory;
-
-  shared_memory_ = dataqueue_->getMemoryDescriptor();
-  if (!shared_memory_) return kIOReturnNoMemory;
 
   client_pid_ = 0;
 
@@ -42,24 +39,17 @@ bool SantaDecisionManager::init() {
 }
 
 void SantaDecisionManager::free() {
-  if (shared_memory_) {
-    shared_memory_->release();
-    shared_memory_ = NULL;
-  }
-
-  if (dataqueue_) {
-    dataqueue_->release();
-    dataqueue_ = NULL;
-  }
-
-  if (cached_decisions_) {
-    cached_decisions_->release();
-    cached_decisions_ = NULL;
-  }
+  OSSafeReleaseNULL(dataqueue_);
+  OSSafeReleaseNULL(cached_decisions_);
 
   if (cached_decisions_lock_) {
     lck_rw_free(cached_decisions_lock_, sdm_lock_grp_);
     cached_decisions_lock_ = NULL;
+  }
+
+  if (dataqueue_lock_) {
+    lck_mtx_free(dataqueue_lock_, sdm_lock_grp_);
+    dataqueue_lock_ = NULL;
   }
 
   if (sdm_lock_grp_) {
@@ -79,10 +69,13 @@ void SantaDecisionManager::ConnectClient(mach_port_t port, pid_t pid) {
   // connected should be cleared
   ClearCache();
 
+  lck_mtx_lock(dataqueue_lock_);
   dataqueue_->setNotificationPort(port);
+  lck_mtx_unlock(dataqueue_lock_);
 
   client_pid_ = pid;
   client_proc_ = proc_find(pid);
+
   failed_queue_requests_ = 0;
 }
 
@@ -95,9 +88,17 @@ void SantaDecisionManager::DisconnectClient(bool itDied) {
   if (!itDied) {
     santa_message_t message = {.action = ACTION_REQUEST_SHUTDOWN};
     PostToQueue(message);
+    dataqueue_->setNotificationPort(NULL);
+  } else {
+    // If the client died, reset the data queue so when it reconnects
+    // it doesn't get swamped straight away.
+    lck_mtx_lock(dataqueue_lock_);
+    dataqueue_->release();
+    dataqueue_ = IOSharedDataQueue::withEntries(kMaxQueueEvents,
+                                                sizeof(santa_message_t));
+    lck_mtx_unlock(dataqueue_lock_);
   }
 
-  dataqueue_->setNotificationPort(NULL);
 
   proc_rele(client_proc_);
   client_proc_ = NULL;
@@ -108,7 +109,7 @@ bool SantaDecisionManager::ClientConnected() {
 }
 
 IOMemoryDescriptor *SantaDecisionManager::GetMemoryDescriptor() {
-  return shared_memory_;
+  return dataqueue_->getMemoryDescriptor();
 }
 
 #pragma mark Listener Control
@@ -273,7 +274,8 @@ santa_action_t SantaDecisionManager::GetFromDaemon(
     do {
       IOSleep(kRequestLoopSleepMilliseconds);
       return_action = GetFromCache(vnode_id_str);
-    } while (return_action == ACTION_REQUEST_CHECKBW);
+    } while (return_action == ACTION_REQUEST_CHECKBW &&
+             proc_exiting(client_proc_) == 0);
   } while (!CHECKBW_RESPONSE_VALID(return_action) &&
            proc_exiting(client_proc_) == 0);
 
@@ -338,7 +340,9 @@ santa_action_t SantaDecisionManager::FetchDecision(
 
 bool SantaDecisionManager::PostToQueue(santa_message_t message) {
   bool kr = false;
+  lck_mtx_lock(dataqueue_lock_);
   kr = dataqueue_->enqueue(&message, sizeof(message));
+  lck_mtx_unlock(dataqueue_lock_);
   return kr;
 }
 
