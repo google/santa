@@ -74,7 +74,6 @@ void SantaDecisionManager::ConnectClient(mach_port_t port, pid_t pid) {
   lck_mtx_unlock(dataqueue_lock_);
 
   client_pid_ = pid;
-  client_proc_ = proc_find(pid);
 
   failed_queue_requests_ = 0;
 }
@@ -99,9 +98,6 @@ void SantaDecisionManager::DisconnectClient(bool itDied) {
     lck_mtx_unlock(dataqueue_lock_);
   }
 
-
-  proc_rele(client_proc_);
-  client_proc_ = NULL;
 }
 
 bool SantaDecisionManager::ClientConnected() {
@@ -274,10 +270,8 @@ santa_action_t SantaDecisionManager::GetFromDaemon(
     do {
       IOSleep(kRequestLoopSleepMilliseconds);
       return_action = GetFromCache(vnode_id_str);
-    } while (return_action == ACTION_REQUEST_CHECKBW &&
-             proc_exiting(client_proc_) == 0);
-  } while (!CHECKBW_RESPONSE_VALID(return_action) &&
-           proc_exiting(client_proc_) == 0);
+    } while (return_action == ACTION_REQUEST_CHECKBW && ClientConnected());
+  } while (!CHECKBW_RESPONSE_VALID(return_action) && ClientConnected());
 
   // If response is still not valid, the daemon exited
   if (!CHECKBW_RESPONSE_VALID(return_action)) {
