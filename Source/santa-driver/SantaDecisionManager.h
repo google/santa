@@ -82,35 +82,28 @@ class SantaDecisionManager : public OSObject {
   ///  Clears the cache.
   void ClearCache();
 
-  ///  Fetches a response from the cache, first checking to see if the
-  ///  entry has expired.
-  santa_action_t GetFromCache(const char *identifier);
-
-  ///  Fetches a response from the daemon.
-  santa_action_t GetFromDaemon(santa_message_t message, char *identifier);
-
-  ///  Fetches an execution decision for a file, first using the cache and then
-  ///  by sending a message to the daemon and waiting until a response arrives.
-  ///  If a daemon isn't connected, will allow execution and cache, logging
-  ///  the path to the executed file.
-  santa_action_t FetchDecision(const kauth_cred_t credential,
-                               const vfs_context_t vfs_context,
-                               const vnode_t vnode);
-
-  ///  Posts the requested message to the client data queue.
-  bool PostToQueue(santa_message_t);
-
-  ///  Fetches the vnode_id for a given vnode.
-  uint64_t GetVnodeIDForVnode(const vfs_context_t context, const vnode_t vp);
-
-  ///  Returns the current system uptime in microseconds
-  static uint64_t GetCurrentUptime();
-
   ///  Increments the count of active vnode callback's pending.
   void IncrementListenerInvocations();
 
   ///  Decrements the count of active vnode callback's pending.
   void DecrementListenerInvocations();
+
+  ///
+  ///  Vnode Callback
+  ///  @param cred The kauth credential for this request.
+  ///  @param ctx The VFS context for this request.
+  ///  @param vp The Vnode for this request.
+  ///  @param errno A pointer to return an errno style error.
+  ///  @return int A valid KAUTH_RESULT_*.
+  ///
+  int VnodeCallback(const kauth_cred_t cred, const vfs_context_t ctx,
+                    const vnode_t vp, int *errno);
+  ///
+  ///  FileOp Callback
+  ///  @param vp The Vnode for this request.
+  ///  @return int Should always be KAUTH_RESULT_DEFER.
+  ///
+  int FileOpCallback(const vnode_t vp);
 
  protected:
   ///
@@ -146,6 +139,54 @@ class SantaDecisionManager : public OSObject {
   ///  the IODataQueue at any time.
   ///
   const int kMaxQueueEvents = 512;
+
+  ///  Fetches a response from the cache, first checking to see if the
+  ///  entry has expired.
+  santa_action_t GetFromCache(const char *identifier);
+
+  ///  Fetches a response from the daemon. Handles both daemon death
+  ///  and failure to post messages to the daemon.
+  ///
+  ///  @param message The message to send to the daemon
+  ///  @param identifier The vnode ID string for this request
+  ///  @return santa_action_t The response for this request
+  ///
+  santa_action_t GetFromDaemon(const santa_message_t message,
+                               const char *identifier);
+
+  ///
+  ///  Fetches an execution decision for a file, first using the cache and then
+  ///  by sending a message to the daemon and waiting until a response arrives.
+  ///  If a daemon isn't connected, will allow execution and cache, logging
+  ///  the path to the executed file.
+  ///
+  ///  @param cred The credential for this request.
+  ///  @param ctx The VFS context for this request.
+  ///  @param vp The Vnode for this request.
+  ///
+  santa_action_t FetchDecision(const kauth_cred_t cred,
+                               const vfs_context_t ctx,
+                               const vnode_t vp);
+
+  ///
+  ///  Posts the requested message to the client data queue.
+  ///
+  ///  @param message The message to send
+  ///  @return bool true if sending was successful.
+  ///
+  bool PostToQueue(santa_message_t message);
+
+  ///
+  ///  Fetches the vnode_id for a given vnode.
+  ///
+  ///  @param ctx The VFS context to use.
+  ///  @param vp The Vnode to get the ID for
+  ///  @return uint64_t The Vnode ID as a 64-bit unsigned int.
+  ///
+  uint64_t GetVnodeIDForVnode(const vfs_context_t ctx, const vnode_t vp);
+
+  ///  Returns the current system uptime in microseconds
+  static uint64_t GetCurrentUptime();
 
  private:
   lck_grp_t *sdm_lock_grp_;

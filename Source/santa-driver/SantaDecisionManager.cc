@@ -249,7 +249,7 @@ santa_action_t SantaDecisionManager::GetFromCache(const char *identifier) {
 }
 
 santa_action_t SantaDecisionManager::GetFromDaemon(
-    santa_message_t message, char *vnode_id_str) {
+    const santa_message_t message, const char *vnode_id_str) {
   santa_action_t return_action = ACTION_UNSET;
 
   // Wait for the daemon to respond or die.
@@ -285,13 +285,13 @@ santa_action_t SantaDecisionManager::GetFromDaemon(
 }
 
 santa_action_t SantaDecisionManager::FetchDecision(
-    const kauth_cred_t credential,
-    const vfs_context_t vfs_context,
-    const vnode_t vnode) {
+    const kauth_cred_t cred,
+    const vfs_context_t ctx,
+    const vnode_t vp) {
   santa_action_t return_action = ACTION_UNSET;
 
   // Fetch Vnode ID & string
-  uint64_t vnode_id = GetVnodeIDForVnode(vfs_context, vnode);
+  uint64_t vnode_id = GetVnodeIDForVnode(ctx, vp);
   char vnode_id_str[MAX_VNODE_ID_STR];
   snprintf(vnode_id_str, MAX_VNODE_ID_STR, "%llu", vnode_id);
 
@@ -307,14 +307,14 @@ santa_action_t SantaDecisionManager::FetchDecision(
   // Get path
   char path[MAXPATHLEN];
   int name_len = MAXPATHLEN;
-  if (vn_getpath(vnode, path, &name_len) != 0) {
+  if (vn_getpath(vp, path, &name_len) != 0) {
     path[0] = '\0';
   }
 
   // Prepare message to send to daemon.
   santa_message_t message = {};
   strlcpy(message.path, path, sizeof(message.path));
-  message.userId = kauth_cred_getuid(credential);
+  message.userId = kauth_cred_getuid(cred);
   message.pid = proc_selfpid();
   message.ppid = proc_selfppid();
   message.action = ACTION_REQUEST_CHECKBW;
@@ -341,11 +341,11 @@ bool SantaDecisionManager::PostToQueue(santa_message_t message) {
 }
 
 uint64_t SantaDecisionManager::GetVnodeIDForVnode(
-    const vfs_context_t context, const vnode_t vp) {
+    const vfs_context_t ctx, const vnode_t vp) {
   struct vnode_attr vap;
   VATTR_INIT(&vap);
   VATTR_WANTED(&vap, va_fileid);
-  vnode_getattr(vp, &vap, context);
+  vnode_getattr(vp, &vap, ctx);
   return vap.va_fileid;
 }
 
@@ -366,6 +366,52 @@ void SantaDecisionManager::DecrementListenerInvocations() {
   OSDecrementAtomic(&listener_invocations_);
 }
 
+int SantaDecisionManager::VnodeCallback(const kauth_cred_t cred,
+                                        const vfs_context_t ctx,
+                                        const vnode_t vp,
+                                        int *errno) {
+  // Only operate on regular files (not directories, symlinks, etc.)
+  vtype vt = vnode_vtype(vp);
+  if (vt != VREG) return KAUTH_RESULT_DEFER;
+
+  // Fetch decision
+  santa_action_t returnedAction = FetchDecision(cred, ctx, vp);
+
+  // If file has dirty blocks, remove from cache and deny. This would usually
+  // be the case if a file has been written to and flushed but not yet
+  // closed.
+  if (vnode_hasdirtyblks(vp)) {
+    char vnode_id_str[MAX_VNODE_ID_STR];
+    snprintf(vnode_id_str, MAX_VNODE_ID_STR, "%llu",
+             GetVnodeIDForVnode(ctx, vp));
+    CacheCheck(vnode_id_str);
+    returnedAction = ACTION_RESPOND_CHECKBW_DENY;
+  }
+
+  switch (returnedAction) {
+    case ACTION_RESPOND_CHECKBW_ALLOW:
+      return KAUTH_RESULT_ALLOW;
+    case ACTION_RESPOND_CHECKBW_DENY:
+      *errno = EPERM;
+      return KAUTH_RESULT_DENY;
+    default:
+      // NOTE: Any unknown response or error condition causes us to fail open.
+      // Whilst from a security perspective this is bad, it's important that
+      // we don't break user's machines.
+      return KAUTH_RESULT_DEFER;
+  }
+}
+
+int SantaDecisionManager::FileOpCallback(const vnode_t vp) {
+  vfs_context_t context = vfs_context_create(NULL);
+  char vnode_id_str[MAX_VNODE_ID_STR];
+  snprintf(vnode_id_str, MAX_VNODE_ID_STR, "%llu",
+           GetVnodeIDForVnode(context, vp));
+  CacheCheck(vnode_id_str);
+  vfs_context_rele(context);
+  return KAUTH_RESULT_DEFER;
+}
+
 #undef super
 
 #pragma mark Kauth Callbacks
@@ -373,26 +419,17 @@ void SantaDecisionManager::DecrementListenerInvocations() {
 extern "C" int fileop_scope_callback(
     kauth_cred_t credential, void *idata, kauth_action_t action,
     uintptr_t arg0, uintptr_t arg1, uintptr_t arg2, uintptr_t arg3) {
-  if (!(action == KAUTH_FILEOP_CLOSE && arg2 & KAUTH_FILEOP_CLOSE_MODIFIED)) {
-    return KAUTH_RESULT_DEFER;
-  }
-
-  if (idata == NULL) {
-    LOGE("FileOp callback established without valid decision manager.");
+  if (action != KAUTH_FILEOP_CLOSE ||
+      !(arg2 & KAUTH_FILEOP_CLOSE_MODIFIED) ||
+      idata == NULL) {
     return KAUTH_RESULT_DEFER;
   }
 
   SantaDecisionManager *sdm = OSDynamicCast(
       SantaDecisionManager, reinterpret_cast<OSObject *>(idata));
+
   sdm->IncrementListenerInvocations();
-
-  vfs_context_t context = vfs_context_create(NULL);
-  char vnode_id_str[MAX_VNODE_ID_STR];
-  snprintf(vnode_id_str, MAX_VNODE_ID_STR, "%llu",
-           sdm->GetVnodeIDForVnode(context, (vnode_t)arg0));
-  sdm->CacheCheck(vnode_id_str);
-  vfs_context_rele(context);
-
+  sdm->FileOpCallback(reinterpret_cast<vnode_t>(arg0));
   sdm->DecrementListenerInvocations();
 
   return KAUTH_RESULT_DEFER;
@@ -401,64 +438,20 @@ extern "C" int fileop_scope_callback(
 extern "C" int vnode_scope_callback(
     kauth_cred_t credential, void *idata, kauth_action_t action,
     uintptr_t arg0, uintptr_t arg1, uintptr_t arg2, uintptr_t arg3) {
-  // The default action is to defer
-  int returnResult = KAUTH_RESULT_DEFER;
-
-  // Cast arguments to correct types
-  if (idata == NULL) {
-    LOGE("Vnode callback established without valid decision manager.");
-    return returnResult;
+  if (action & KAUTH_VNODE_ACCESS ||
+      !(action & KAUTH_VNODE_EXECUTE) ||
+      idata == NULL) {
+    return KAUTH_RESULT_DEFER;
   }
+
   SantaDecisionManager *sdm =
       OSDynamicCast(SantaDecisionManager, reinterpret_cast<OSObject *>(idata));
-  vfs_context_t vfs_context = reinterpret_cast<vfs_context_t>(arg0);
-  vnode_t vnode = reinterpret_cast<vnode_t>(arg1);
 
-  // Only operate on regular files (not directories, symlinks, etc.)
-  vtype vt = vnode_vtype(vnode);
-  if (vt != VREG) return returnResult;
-
-  // Don't operate on ACCESS events, as they're advisory
-  if (action & KAUTH_VNODE_ACCESS) return returnResult;
-
-  // Filter for only EXECUTE actions
-  if (action & KAUTH_VNODE_EXECUTE) {
-    sdm->IncrementListenerInvocations();
-
-    // Fetch decision
-    santa_action_t returnedAction =
-        sdm->FetchDecision(credential, vfs_context, vnode);
-
-    // If file has dirty blocks, remove from cache and deny. This would usually
-    // be the case if a file has been written to and flushed but not yet
-    // closed.
-    if (vnode_hasdirtyblks(vnode)) {
-      char vnode_id_str[MAX_VNODE_ID_STR];
-      snprintf(vnode_id_str, MAX_VNODE_ID_STR, "%llu",
-               sdm->GetVnodeIDForVnode(vfs_context, vnode));
-      sdm->CacheCheck(vnode_id_str);
-      returnedAction = ACTION_RESPOND_CHECKBW_DENY;
-    }
-
-    switch (returnedAction) {
-      case ACTION_RESPOND_CHECKBW_ALLOW:
-        returnResult = KAUTH_RESULT_ALLOW;
-        break;
-      case ACTION_RESPOND_CHECKBW_DENY:
-        *(reinterpret_cast<int *>(arg3)) = EPERM;
-        returnResult = KAUTH_RESULT_DENY;
-        break;
-      default:
-        // NOTE: Any unknown response or error condition causes us to fail open.
-        // Whilst from a security perspective this is bad, it's important that
-        // we don't break user's machines.
-        break;
-    }
-
-    sdm->DecrementListenerInvocations();
-
-    return returnResult;
-  }
-
-  return returnResult;
+  sdm->IncrementListenerInvocations();
+  int result = sdm->VnodeCallback(credential,
+                                  reinterpret_cast<vfs_context_t>(arg0),
+                                  reinterpret_cast<vnode_t>(arg1),
+                                  reinterpret_cast<int *>(arg3));
+  sdm->DecrementListenerInvocations();
+  return result;
 }
