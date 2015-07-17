@@ -77,9 +77,6 @@ void *watchdogThreadFunction(__unused void *idata) {
 
 int main(int argc, const char *argv[]) {
   @autoreleasepool {
-    // Do not buffer stdout
-    setbuf(stdout, NULL);
-
     // Do not wait on child processes
     signal(SIGCHLD, SIG_IGN);
 
@@ -89,6 +86,10 @@ int main(int argc, const char *argv[]) {
       printf("%s\n", [infoDict[@"CFBundleVersion"] UTF8String]);
       return 0;
     }
+
+    // Close stdout/stderr so logging goes to syslog
+    fclose(stdout);
+    fclose(stderr);
 
     LOGI(@"Started, version %@", infoDict[@"CFBundleVersion"]);
 

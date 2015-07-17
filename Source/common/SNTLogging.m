@@ -14,6 +14,8 @@
 
 #import "SNTLogging.h"
 
+#import <sys/syslog.h>
+
 #ifdef DEBUG
 static int logLevel = LOG_LEVEL_DEBUG;
 #else
@@ -21,15 +23,10 @@ static int logLevel = LOG_LEVEL_INFO;  // default to info
 #endif
 
 void logMessage(int level, FILE *destination, NSString *format, ...) {
-  static NSDateFormatter *dateFormatter;
   static NSString *binaryName;
   static dispatch_once_t pred;
 
   dispatch_once(&pred, ^{
-      dateFormatter = [[NSDateFormatter alloc] init];
-      [dateFormatter setTimeZone:[NSTimeZone timeZoneWithName:@"UTC"]];
-      [dateFormatter setDateFormat:@"YYYY-MM-dd HH:mm:ss.SSS'Z"];
-
       binaryName = [[NSProcessInfo processInfo] processName];
 
       // If debug logging is enabled, the process must be restarted.
@@ -50,14 +47,20 @@ void logMessage(int level, FILE *destination, NSString *format, ...) {
     fprintf(destination, "%s\n", [s UTF8String]);
   } else {
     NSString *levelName;
+    int syslogLevel = LOG_DEBUG;
     switch (level) {
-      case LOG_LEVEL_ERROR: levelName = @"E"; break;
-      case LOG_LEVEL_WARN: levelName = @"W"; break;
-      case LOG_LEVEL_INFO: levelName = @"I"; break;
-      case LOG_LEVEL_DEBUG: levelName = @"D"; break;
+      case LOG_LEVEL_ERROR: levelName = @"E"; syslogLevel = LOG_ERR; break;
+      case LOG_LEVEL_WARN: levelName = @"W"; syslogLevel = LOG_WARNING; break;
+      case LOG_LEVEL_INFO: levelName = @"I"; syslogLevel = LOG_INFO; break;
+      case LOG_LEVEL_DEBUG: levelName = @"D"; syslogLevel = LOG_DEBUG; break;
     }
 
-    fprintf(destination, "%s\n", [[NSString stringWithFormat:@"[%@] %@ %@: %@",
-            [dateFormatter stringFromDate:[NSDate date]], levelName, binaryName, s] UTF8String]);
+    if (fileno(destination) == -1) {
+      syslog(syslogLevel, "%s\n",
+             [[NSString stringWithFormat:@"%@ %@: %@", levelName, binaryName, s] UTF8String]);
+    } else {
+      fprintf(destination, "%s\n",
+              [[NSString stringWithFormat:@"%@ %@: %@", levelName, binaryName, s] UTF8String]);
+    }
   }
 }

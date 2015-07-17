@@ -39,9 +39,9 @@
 
 ///
 ///  Logging function.
-///
 ///  @param level one of the levels defined above
-///  @param destination a FILE, generally should be stdout or stderr
+///  @param destination a FILE, generally stdout/stderr. If the file is closed, the log
+///      will instead be sent to syslog.
 ///  @param format the printf style format string
 ///  @param ... the arguments to format.
 ///
@@ -49,10 +49,10 @@ void logMessage(int level, FILE *destination, NSString *format, ...)
     __attribute__((format(__NSString__, 3, 4)));
 
 /// Simple logging macros
-#define LOGD(logFormat, ...) logMessage(LOG_LEVEL_DEBUG, stdout, logFormat, ##__VA_ARGS__);
-#define LOGI(logFormat, ...) logMessage(LOG_LEVEL_INFO, stdout, logFormat, ##__VA_ARGS__);
-#define LOGW(logFormat, ...) logMessage(LOG_LEVEL_WARN, stderr, logFormat, ##__VA_ARGS__);
-#define LOGE(logFormat, ...) logMessage(LOG_LEVEL_ERROR, stderr, logFormat, ##__VA_ARGS__);
+#define LOGD(logFormat, ...) logMessage(LOG_LEVEL_DEBUG, stdout, logFormat, ##__VA_ARGS__)
+#define LOGI(logFormat, ...) logMessage(LOG_LEVEL_INFO, stdout, logFormat, ##__VA_ARGS__)
+#define LOGW(logFormat, ...) logMessage(LOG_LEVEL_WARN, stderr, logFormat, ##__VA_ARGS__)
+#define LOGE(logFormat, ...) logMessage(LOG_LEVEL_ERROR, stderr, logFormat, ##__VA_ARGS__)
 
 #endif  // KERNEL
 

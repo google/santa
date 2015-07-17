@@ -15,10 +15,6 @@
 					<key>SantaXPCControl</key>
 					<true/>
 				</dict>
-				<key>StandardOutPath</key>
-				<string>/var/log/santa.log</string>
-				<key>StandardErrorPath</key>
-				<string>/var/log/santa.log</string>
 				<key>RunAtLoad</key>
 				<true/>
 				<key>KeepAlive</key>
