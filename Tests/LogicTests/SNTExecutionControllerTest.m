@@ -61,7 +61,8 @@
 
   self.mockFileInfo = OCMClassMock([SNTFileInfo class]);
   OCMStub([self.mockFileInfo alloc]).andReturn(self.mockFileInfo);
-  OCMStub([self.mockFileInfo initWithPath:OCMOCK_ANY]).andReturn(self.mockFileInfo);
+  OCMStub([self.mockFileInfo initWithPath:OCMOCK_ANY
+                                    error:[OCMArg setTo:nil]]).andReturn(self.mockFileInfo);
 
   self.mockRuleDatabase = OCMClassMock([SNTRuleTable class]);
   self.mockEventDatabase = OCMClassMock([SNTEventTable class]);
@@ -148,6 +149,8 @@
   id mockSut = OCMPartialMock(self.sut);
   OCMStub([mockSut fileIsInScope:OCMOCK_ANY]).andReturn(YES);
 
+  OCMExpect([self.mockFileInfo SHA256]).andReturn(@"a");
+
   id cert = OCMClassMock([SNTCertificate class]);
   OCMExpect([self.mockCodesignChecker leafCertificate]).andReturn(cert);
   OCMExpect([cert SHA256]).andReturn(@"a");
@@ -170,6 +173,7 @@
   id mockSut = OCMPartialMock(self.sut);
   OCMStub([mockSut fileIsInScope:OCMOCK_ANY]).andReturn(YES);
 
+  OCMExpect([self.mockFileInfo SHA256]).andReturn(@"a");
   OCMExpect([self.mockConfigurator clientMode]).andReturn(CLIENTMODE_MONITOR);
   [self.sut validateBinaryWithPath:@"/a/file"
                           userName:@"nobody"
@@ -179,6 +183,7 @@
   OCMVerify([self.mockDriverManager postToKernelAction:ACTION_RESPOND_CHECKBW_ALLOW
                                             forVnodeID:1234]);
 
+  OCMExpect([self.mockFileInfo SHA256]).andReturn(@"a");
   OCMExpect([self.mockConfigurator clientMode]).andReturn(CLIENTMODE_LOCKDOWN);
   [self.sut validateBinaryWithPath:@"/a/file"
                           userName:@"nobody"
@@ -201,6 +206,18 @@
                            vnodeId:1234];
   OCMVerify([self.mockDriverManager postToKernelAction:ACTION_RESPOND_CHECKBW_ALLOW
                                             forVnodeID:1234]);
+}
+
+- (void)testMissingShasum {
+  [self.sut validateBinaryWithPath:@"/a/file"
+                          userName:@"nobody"
+                               pid:@(24)
+                              ppid:@(1)
+                           vnodeId:1234];
+
+  OCMVerify([self.mockDriverManager postToKernelAction:ACTION_RESPOND_CHECKBW_ALLOW
+                                            forVnodeID:1234]);
+
 }
 
 @end
