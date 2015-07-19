@@ -47,7 +47,6 @@
     _ruleTable = ruleTable;
     _eventTable = eventTable;
     _notifierConnection = notifier;
-    LOGI(@"Log format: Decision (A|D), Reason (B|C|S|?), SHA-256, Path, Cert SHA-256, Cert CN");
 
     // Workaround for xpcproxy/libsecurity bug on Yosemite
     // This establishes the XPC connection between libsecurity and syspolicyd.
