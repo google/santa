@@ -200,24 +200,21 @@
 }
 
 - (santa_eventstate_t)eventStateForDecision:(santa_action_t)decision type:(santa_ruletype_t)type {
-  if (decision == ACTION_RESPOND_CHECKBW_ALLOW) {
-    if (type == RULETYPE_BINARY) {
-      return EVENTSTATE_ALLOW_BINARY;
-    } else if (type == RULETYPE_CERT) {
-      return EVENTSTATE_ALLOW_CERTIFICATE;
-    } else {
-      return EVENTSTATE_ALLOW_UNKNOWN;
-    }
-  } else if (decision == ACTION_RESPOND_CHECKBW_DENY) {
-    if (type == RULETYPE_BINARY) {
-      return EVENTSTATE_BLOCK_BINARY;
-    } else if (decision == RULETYPE_CERT) {
-      return EVENTSTATE_BLOCK_CERTIFICATE;
-    } else {
-      return EVENTSTATE_BLOCK_UNKNOWN;
-    }
-  } else {
-    return EVENTSTATE_UNKNOWN;
+  switch (decision) {
+    case ACTION_RESPOND_CHECKBW_ALLOW:
+      switch (type) {
+        case RULETYPE_BINARY: return EVENTSTATE_ALLOW_BINARY;
+        case RULETYPE_CERT: return EVENTSTATE_ALLOW_CERTIFICATE;
+        default: return EVENTSTATE_ALLOW_UNKNOWN;
+
+      }
+    case ACTION_RESPOND_CHECKBW_DENY:
+      switch (type) {
+        case RULETYPE_BINARY: return EVENTSTATE_BLOCK_BINARY;
+        case RULETYPE_CERT: return EVENTSTATE_BLOCK_CERTIFICATE;
+        default: return EVENTSTATE_BLOCK_UNKNOWN;
+      }
+    default: return EVENTSTATE_UNKNOWN;
   }
 }
 
