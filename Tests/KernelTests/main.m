@@ -80,8 +80,8 @@
 
 #pragma mark - Driver Helpers
 
-/// Call in-kernel function: |kSantaUserClientReceive| passing the |action| and |vnodeId| via a
-/// |santa_message_t| struct.
+/// Call in-kernel function: |kSantaUserClientAllowBinary| or |kSantaUserClientDenyBinary|
+/// passing the |vnodeID|.
 - (void)postToKernelAction:(santa_action_t)action forVnodeID:(uint64_t)vnodeid {
   if (action == ACTION_RESPOND_CHECKBW_ALLOW) {
     IOConnectCallScalarMethod(self.connection, kSantaUserClientAllowBinary, &vnodeid, 1, 0, 0);
@@ -305,7 +305,6 @@
     fputc(ch, outfile);
   }
   fclose(infile);
-  fclose(outfile);
 
   // Now try running the temp file again. If it succeeds, the test failed.
   NSTask *ps = [self taskWithPath:@"santakerneltests_tmp"];
@@ -313,7 +312,22 @@
   @try {
     [ps launch];
     [ps waitUntilExit];
-    TFAIL();
+    TFAILINFO("Launched after write while file open");
+    [fm removeItemAtPath:@"santakerneltests_tmp" error:nil];
+  } @catch (NSException *exception) {
+    // This is a pass, but we have more to do.
+  }
+
+  // Close the file to flush the write.
+  fclose(outfile);
+
+  // And try running the temp file again. If it succeeds, the test failed.
+  ps = [self taskWithPath:@"santakerneltests_tmp"];
+
+  @try {
+    [ps launch];
+    [ps waitUntilExit];
+    TFAILINFO("Launched after file closed");
   } @catch (NSException *exception) {
     TPASS();
   } @finally {
