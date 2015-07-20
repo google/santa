@@ -297,11 +297,10 @@
 }
 
 - (void)loggedInUsers:(NSArray **)users sessions:(NSArray **)sessions {
-  struct utmpx *nxt;
-
   NSMutableDictionary *loggedInUsers = [[NSMutableDictionary alloc] init];
   NSMutableDictionary *loggedInHosts = [[NSMutableDictionary alloc] init];
 
+  struct utmpx *nxt;
   while ((nxt = getutxent())) {
     if (nxt->ut_type != USER_PROCESS) continue;
 
@@ -314,11 +313,11 @@
       sessionName = [NSString stringWithFormat:@"%s@%s", nxt->ut_user, nxt->ut_line];
     }
 
-    if ([userName length] > 0) {
+    if (userName.length > 0) {
       loggedInUsers[userName] = [NSNull null];
     }
 
-    if ([sessionName length] > 1) {
+    if (sessionName.length > 1) {
       loggedInHosts[sessionName] = [NSNull null];
     }
   }
