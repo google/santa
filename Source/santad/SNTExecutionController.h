@@ -55,7 +55,7 @@
 ///  @param vnodeId the id of the vnode being executed
 ///
 - (void)validateBinaryWithPath:(NSString *)path
-                      userName:(NSString *)userName
+                           uid:(NSNumber *)uid
                            pid:(NSNumber *)pid
                           ppid:(NSNumber *)ppid
                        vnodeId:(uint64_t)vnodeId;

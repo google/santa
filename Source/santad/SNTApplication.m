@@ -12,7 +12,6 @@
 ///    See the License for the specific language governing permissions and
 ///    limitations under the License.
 
-#include <pwd.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 
@@ -130,15 +129,8 @@
             // Validate the binary aynchronously on a concurrent queue so we don't
             // hold up other execution requests in the background.
             dispatch_async(q, ^{
-                struct passwd *user = getpwuid(message.userId);
-                endpwent();
-                NSString *userName;
-                if (user) {
-                  userName = @(user->pw_name);
-                }
-
                 [self.execController validateBinaryWithPath:@(message.path)
-                                                   userName:userName
+                                                        uid:@(message.userId)
                                                         pid:@(message.pid)
                                                        ppid:@(message.ppid)
                                                     vnodeId:message.vnode_id];

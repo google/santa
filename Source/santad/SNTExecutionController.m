@@ -15,6 +15,7 @@
 #import "SNTExecutionController.h"
 
 #include <libproc.h>
+#include <pwd.h>
 #include <utmpx.h>
 
 #include "SNTLogging.h"
@@ -59,7 +60,7 @@
 #pragma mark Binary Validation
 
 - (void)validateBinaryWithPath:(NSString *)path
-                      userName:(NSString *)userName
+                           uid:(NSNumber *)uid
                            pid:(NSNumber *)pid
                           ppid:(NSNumber *)ppid
                        vnodeId:(uint64_t)vnodeId {
@@ -133,12 +134,19 @@
     }
 
     se.signingChain = csInfo.certificates;
-    se.executingUser = userName;
     se.occurrenceDate = [[NSDate alloc] init];
     se.decision = [self eventStateForDecision:respondedAction type:rule.type];
     se.pid = pid;
     se.ppid = ppid;
     se.parentName = @(pname);
+
+    struct passwd *user = getpwuid([uid intValue]);
+    endpwent();
+    NSString *userName;
+    if (user) {
+      userName = @(user->pw_name);
+    }
+    se.executingUser = userName;
 
     NSArray *loggedInUsers, *currentSessions;
     [self loggedInUsers:&loggedInUsers sessions:&currentSessions];

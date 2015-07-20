@@ -94,7 +94,7 @@
   OCMExpect([self.mockRuleDatabase binaryRuleForSHA256:@"a"]).andReturn(rule);
 
   [self.sut validateBinaryWithPath:@"/a/file"
-                          userName:@"nobody"
+                               uid:@(501)
                                pid:@(12)
                               ppid:@(1)
                            vnodeId:1234];
@@ -114,7 +114,7 @@
   OCMExpect([self.mockRuleDatabase binaryRuleForSHA256:@"a"]).andReturn(rule);
 
   [self.sut validateBinaryWithPath:@"/a/file"
-                          userName:@"nobody"
+                               uid:@(501)
                                pid:@(12)
                               ppid:@(1)
                            vnodeId:1234];
@@ -136,7 +136,7 @@
   OCMExpect([self.mockRuleDatabase certificateRuleForSHA256:@"a"]).andReturn(rule);
 
   [self.sut validateBinaryWithPath:@"/a/file"
-                          userName:@"nobody"
+                               uid:@(501)
                                pid:@(12)
                               ppid:@(1)
                            vnodeId:1234];
@@ -160,7 +160,7 @@
   OCMExpect([self.mockRuleDatabase certificateRuleForSHA256:@"a"]).andReturn(rule);
 
   [self.sut validateBinaryWithPath:@"/a/file"
-                          userName:@"nobody"
+                               uid:@(501)
                                pid:@(12)
                               ppid:@(1)
                            vnodeId:1234];
@@ -176,7 +176,7 @@
   OCMExpect([self.mockFileInfo SHA256]).andReturn(@"a");
   OCMExpect([self.mockConfigurator clientMode]).andReturn(CLIENTMODE_MONITOR);
   [self.sut validateBinaryWithPath:@"/a/file"
-                          userName:@"nobody"
+                               uid:@(501)
                                pid:@(12)
                               ppid:@(1)
                            vnodeId:1234];
@@ -186,7 +186,7 @@
   OCMExpect([self.mockFileInfo SHA256]).andReturn(@"a");
   OCMExpect([self.mockConfigurator clientMode]).andReturn(CLIENTMODE_LOCKDOWN);
   [self.sut validateBinaryWithPath:@"/a/file"
-                          userName:@"nobody"
+                               uid:@(501)
                                pid:@(12)
                               ppid:@(1)
                            vnodeId:1234];
@@ -200,7 +200,7 @@
 
   OCMExpect([self.mockConfigurator clientMode]).andReturn(CLIENTMODE_LOCKDOWN);
   [self.sut validateBinaryWithPath:@"/a/file"
-                          userName:@"nobody"
+                               uid:@(501)
                                pid:@(24)
                               ppid:@(1)   
                            vnodeId:1234];
@@ -210,7 +210,7 @@
 
 - (void)testMissingShasum {
   [self.sut validateBinaryWithPath:@"/a/file"
-                          userName:@"nobody"
+                               uid:@(501)
                                pid:@(24)
                               ppid:@(1)
                            vnodeId:1234];
