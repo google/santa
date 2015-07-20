@@ -161,12 +161,14 @@ class SantaDecisionManager : public OSObject {
   ///  the path to the executed file.
   ///
   ///  @param cred The credential for this request.
-  ///  @param ctx The VFS context for this request.
   ///  @param vp The Vnode for this request.
+  ///  @param vnode_id The ID for this vnode.
+  ///  @param vnode_id_str A string representation of the above ID.
   ///
   santa_action_t FetchDecision(const kauth_cred_t cred,
-                               const vfs_context_t ctx,
-                               const vnode_t vp);
+                               const vnode_t vp,
+                               const uint64_t vnode_id,
+                               const char *vnode_id_str);
 
   ///
   ///  Posts the requested message to the client data queue.

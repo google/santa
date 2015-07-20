@@ -286,14 +286,10 @@ santa_action_t SantaDecisionManager::GetFromDaemon(
 
 santa_action_t SantaDecisionManager::FetchDecision(
     const kauth_cred_t cred,
-    const vfs_context_t ctx,
-    const vnode_t vp) {
+    const vnode_t vp,
+    const uint64_t vnode_id,
+    const char *vnode_id_str) {
   santa_action_t return_action = ACTION_UNSET;
-
-  // Fetch Vnode ID & string
-  uint64_t vnode_id = GetVnodeIDForVnode(ctx, vp);
-  char vnode_id_str[MAX_VNODE_ID_STR];
-  snprintf(vnode_id_str, MAX_VNODE_ID_STR, "%llu", vnode_id);
 
   // Check to see if item is in cache
   return_action = GetFromCache(vnode_id_str);
@@ -370,21 +366,23 @@ int SantaDecisionManager::VnodeCallback(const kauth_cred_t cred,
                                         const vfs_context_t ctx,
                                         const vnode_t vp,
                                         int *errno) {
-  // Only operate on regular files (not directories, symlinks, etc.)
+  // Only operate on regular files (not directories, symlinks, etc.).
   vtype vt = vnode_vtype(vp);
   if (vt != VREG) return KAUTH_RESULT_DEFER;
 
+  // Get ID for the vnode and convert it to a string.
+  uint64_t vnode_id = GetVnodeIDForVnode(ctx, vp);
+  char vnode_str[MAX_VNODE_ID_STR];
+  snprintf(vnode_str, MAX_VNODE_ID_STR, "%llu", vnode_id);
+
   // Fetch decision
-  santa_action_t returnedAction = FetchDecision(cred, ctx, vp);
+  santa_action_t returnedAction = FetchDecision(cred, vp, vnode_id, vnode_str);
 
   // If file has dirty blocks, remove from cache and deny. This would usually
   // be the case if a file has been written to and flushed but not yet
   // closed.
   if (vnode_hasdirtyblks(vp)) {
-    char vnode_id_str[MAX_VNODE_ID_STR];
-    snprintf(vnode_id_str, MAX_VNODE_ID_STR, "%llu",
-             GetVnodeIDForVnode(ctx, vp));
-    CacheCheck(vnode_id_str);
+    CacheCheck(vnode_str);
     returnedAction = ACTION_RESPOND_CHECKBW_DENY;
   }
 
