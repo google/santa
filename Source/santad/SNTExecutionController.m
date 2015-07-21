@@ -59,11 +59,10 @@
 
 #pragma mark Binary Validation
 
-- (void)validateBinaryWithPath:(NSString *)path
-                           uid:(NSNumber *)uid
-                           pid:(NSNumber *)pid
-                          ppid:(NSNumber *)ppid
-                       vnodeId:(uint64_t)vnodeId {
+- (void)validateBinaryWithMessage:(santa_message_t)message {
+  NSString *path = @(message.path);
+  uint64_t vnodeId = message.vnode_id;
+
   NSError *fileInfoError;
   SNTFileInfo *binInfo = [[SNTFileInfo alloc] initWithPath:path error:&fileInfoError];
   NSString *sha256 = [binInfo SHA256];
@@ -82,7 +81,7 @@
 
   // Get name of parent process. Do this before responding to be sure parent doesn't go away.
   char pname[PROC_PIDPATHINFO_MAXSIZE];
-  proc_name([ppid intValue], pname, PROC_PIDPATHINFO_MAXSIZE);
+  proc_name(message.ppid, pname, PROC_PIDPATHINFO_MAXSIZE);
 
   // Step 1 - binary rule?
   rule = [self.ruleTable binaryRuleForSHA256:sha256];
@@ -136,11 +135,11 @@
     se.signingChain = csInfo.certificates;
     se.occurrenceDate = [[NSDate alloc] init];
     se.decision = [self eventStateForDecision:respondedAction type:rule.type];
-    se.pid = pid;
-    se.ppid = ppid;
+    se.pid = @(message.pid);
+    se.ppid = @(message.ppid);
     se.parentName = @(pname);
 
-    struct passwd *user = getpwuid([uid intValue]);
+    struct passwd *user = getpwuid(message.userId);
     endpwent();
     NSString *userName;
     if (user) {

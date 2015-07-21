@@ -129,11 +129,7 @@
             // Validate the binary aynchronously on a concurrent queue so we don't
             // hold up other execution requests in the background.
             dispatch_async(q, ^{
-                [self.execController validateBinaryWithPath:@(message.path)
-                                                        uid:@(message.userId)
-                                                        pid:@(message.pid)
-                                                       ppid:@(message.ppid)
-                                                    vnodeId:message.vnode_id];
+                [self.execController validateBinaryWithMessage:message];
             });
             break;
           }

@@ -13,6 +13,7 @@
 ///    limitations under the License.
 
 #include "SNTCommonEnums.h"
+#include "SNTKernelCommon.h"
 
 @class SNTCodesignChecker;
 @class SNTDriverManager;
@@ -48,16 +49,8 @@
 ///  the kernel, logs the event to the log and if necessary stores the event in the database and
 ///  sends a notification to the GUI agent.
 ///
-///  @param path the binary that's being executed
-///  @param userName the user who's executing the binary
-///  @param pid the process id being executed
-///  @param ppid the parent process id
-///  @param vnodeId the id of the vnode being executed
+///  @param message The message sent from the kernel.
 ///
-- (void)validateBinaryWithPath:(NSString *)path
-                           uid:(NSNumber *)uid
-                           pid:(NSNumber *)pid
-                          ppid:(NSNumber *)ppid
-                       vnodeId:(uint64_t)vnodeId;
+- (void)validateBinaryWithMessage:(santa_message_t)message;
 
 @end

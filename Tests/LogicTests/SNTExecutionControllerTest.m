@@ -73,6 +73,16 @@
                                                 notifierConnection:nil];
 }
 
+///  Return a pre-configured santa_message_ t for testing with.
+- (santa_message_t)getMessage {
+  santa_message_t message = {0};
+  message.pid = 12;
+  message.ppid = 1;
+  message.vnode_id = 1234;
+  strncpy(message.path, "/a/file", 7);
+  return message;
+}
+
 - (void)tearDown {
   [self.mockFileInfo stopMocking];
   [self.mockCodesignChecker stopMocking];
@@ -93,11 +103,7 @@
   rule.state = RULESTATE_WHITELIST;
   OCMExpect([self.mockRuleDatabase binaryRuleForSHA256:@"a"]).andReturn(rule);
 
-  [self.sut validateBinaryWithPath:@"/a/file"
-                               uid:@(501)
-                               pid:@(12)
-                              ppid:@(1)
-                           vnodeId:1234];
+  [self.sut validateBinaryWithMessage:[self getMessage]];
 
   OCMVerify([self.mockDriverManager postToKernelAction:ACTION_RESPOND_CHECKBW_ALLOW
                                             forVnodeID:1234]);
@@ -113,11 +119,7 @@
   rule.state = RULESTATE_BLACKLIST;
   OCMExpect([self.mockRuleDatabase binaryRuleForSHA256:@"a"]).andReturn(rule);
 
-  [self.sut validateBinaryWithPath:@"/a/file"
-                               uid:@(501)
-                               pid:@(12)
-                              ppid:@(1)
-                           vnodeId:1234];
+  [self.sut validateBinaryWithMessage:[self getMessage]];
 
   OCMVerify([self.mockDriverManager postToKernelAction:ACTION_RESPOND_CHECKBW_DENY
                                             forVnodeID:1234]);
@@ -135,11 +137,7 @@
   rule.state = RULESTATE_WHITELIST;
   OCMExpect([self.mockRuleDatabase certificateRuleForSHA256:@"a"]).andReturn(rule);
 
-  [self.sut validateBinaryWithPath:@"/a/file"
-                               uid:@(501)
-                               pid:@(12)
-                              ppid:@(1)
-                           vnodeId:1234];
+  [self.sut validateBinaryWithMessage:[self getMessage]];
 
   OCMVerify([self.mockDriverManager postToKernelAction:ACTION_RESPOND_CHECKBW_ALLOW
                                             forVnodeID:1234]);
@@ -159,11 +157,7 @@
   rule.state = RULESTATE_BLACKLIST;
   OCMExpect([self.mockRuleDatabase certificateRuleForSHA256:@"a"]).andReturn(rule);
 
-  [self.sut validateBinaryWithPath:@"/a/file"
-                               uid:@(501)
-                               pid:@(12)
-                              ppid:@(1)
-                           vnodeId:1234];
+  [self.sut validateBinaryWithMessage:[self getMessage]];
 
   OCMVerify([self.mockDriverManager postToKernelAction:ACTION_RESPOND_CHECKBW_DENY
                                             forVnodeID:1234]);
@@ -175,21 +169,13 @@
 
   OCMExpect([self.mockFileInfo SHA256]).andReturn(@"a");
   OCMExpect([self.mockConfigurator clientMode]).andReturn(CLIENTMODE_MONITOR);
-  [self.sut validateBinaryWithPath:@"/a/file"
-                               uid:@(501)
-                               pid:@(12)
-                              ppid:@(1)
-                           vnodeId:1234];
+  [self.sut validateBinaryWithMessage:[self getMessage]];
   OCMVerify([self.mockDriverManager postToKernelAction:ACTION_RESPOND_CHECKBW_ALLOW
                                             forVnodeID:1234]);
 
   OCMExpect([self.mockFileInfo SHA256]).andReturn(@"a");
   OCMExpect([self.mockConfigurator clientMode]).andReturn(CLIENTMODE_LOCKDOWN);
-  [self.sut validateBinaryWithPath:@"/a/file"
-                               uid:@(501)
-                               pid:@(12)
-                              ppid:@(1)
-                           vnodeId:1234];
+  [self.sut validateBinaryWithMessage:[self getMessage]];
   OCMVerify([self.mockDriverManager postToKernelAction:ACTION_RESPOND_CHECKBW_DENY
                                             forVnodeID:1234]);
 }
@@ -199,22 +185,13 @@
   OCMStub([mockSut fileIsInScope:OCMOCK_ANY]).andReturn(NO);
 
   OCMExpect([self.mockConfigurator clientMode]).andReturn(CLIENTMODE_LOCKDOWN);
-  [self.sut validateBinaryWithPath:@"/a/file"
-                               uid:@(501)
-                               pid:@(24)
-                              ppid:@(1)   
-                           vnodeId:1234];
+  [self.sut validateBinaryWithMessage:[self getMessage]];
   OCMVerify([self.mockDriverManager postToKernelAction:ACTION_RESPOND_CHECKBW_ALLOW
                                             forVnodeID:1234]);
 }
 
 - (void)testMissingShasum {
-  [self.sut validateBinaryWithPath:@"/a/file"
-                               uid:@(501)
-                               pid:@(24)
-                              ppid:@(1)
-                           vnodeId:1234];
-
+  [self.sut validateBinaryWithMessage:[self getMessage]];
   OCMVerify([self.mockDriverManager postToKernelAction:ACTION_RESPOND_CHECKBW_ALLOW
                                             forVnodeID:1234]);
 
