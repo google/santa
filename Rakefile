@@ -5,6 +5,7 @@ DEFAULT_SCHEME      = 'All'
 OUTPUT_PATH         = 'Build'
 DIST_PATH           = 'Dist'
 BINARIES            = ['Santa.app', 'santa-driver.kext']
+DSYMS               = ['Santa.app.dSYM', 'santa-driver.kext.dSYM', 'santad.dSYM', 'santactl.dSYM']
 XCPRETTY_DEFAULTS   = '-sc'
 XCODEBUILD_DEFAULTS = "-workspace #{WORKSPACE} -derivedDataPath #{OUTPUT_PATH} -parallelizeTargets"
 
@@ -104,8 +105,12 @@ task :dist do
 
   BINARIES.each do |x|
     FileUtils.cp_r("#{OUTPUT_PATH}/Products/Release/#{x}", "#{DIST_PATH}/binaries")
-    FileUtils.cp_r("#{OUTPUT_PATH}/Products/Release/#{x}.dSYM", "#{DIST_PATH}/dsym")
   end
+
+  DSYMS.each do |x|
+    FileUtils.cp_r("#{OUTPUT_PATH}/Products/Release/#{x}", "#{DIST_PATH}/dsym")
+  end
+
 
   Dir.glob("Conf/*") {|x| File.directory?(x) or FileUtils.cp(x, "#{DIST_PATH}/conf")}
 
