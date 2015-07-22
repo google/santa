@@ -59,6 +59,7 @@
       }
 
       fclose(stdout);
+      fclose(stderr);
 
       _exit(execl(kSantaCtlPath, kSantaCtlPath, "sync", NULL));
     }
