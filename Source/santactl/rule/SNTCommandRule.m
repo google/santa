@@ -56,6 +56,12 @@ REGISTER_COMMAND_NAME(@"rule")
           @"  --sha256 {sha256}: hash to add\n");
 }
 
++ (void)printErrorUsageAndExit:(NSString *)error {
+  printf("%s\n\n", [error UTF8String]);
+  printf("%s\n", [[self longHelpText] UTF8String]);
+  exit(1);
+}
+
 + (void)runWithArguments:(NSArray *)arguments daemonConnection:(SNTXPCConnection *)daemonConn {
   SNTConfigurator *config = [SNTConfigurator configurator];
 
@@ -74,8 +80,7 @@ REGISTER_COMMAND_NAME(@"rule")
 
   // add or remove
   if (!action) {
-    printf("Missing action - add or remove?\n");
-    exit(1);
+    [self printErrorUsageAndExit:@"Missing action"];
   }
 
   int state = RULESTATE_UNKNOWN;
@@ -84,8 +89,7 @@ REGISTER_COMMAND_NAME(@"rule")
   } else if ([action compare:@"remove" options:NSCaseInsensitiveSearch] == NSOrderedSame) {
     state = RULESTATE_REMOVE;
   } else {
-    printf("Unknown action, expected add or remove.\n");
-    exit(1);
+    [self printErrorUsageAndExit:@"Unknown action"];
   }
 
   NSString *customMsg = @"";
@@ -103,46 +107,42 @@ REGISTER_COMMAND_NAME(@"rule")
     } else if ([argument compare:@"--silent-blacklist" options:NSCaseInsensitiveSearch] == NSOrderedSame) {
       state = RULESTATE_SILENT_BLACKLIST;
     } else if ([argument compare:@"--message" options:NSCaseInsensitiveSearch] == NSOrderedSame) {
-      if (++i > ([arguments count])) {
-        printf("No message specified.\n");
+      if (++i > arguments.count - 1) {
+        [self printErrorUsageAndExit:@"No message specified"];
       }
 
       customMsg = [arguments objectAtIndex:i];
     } else if ([argument compare:@"--path" options:NSCaseInsensitiveSearch] == NSOrderedSame) {
-      if (++i > ([arguments count])) {
-        printf("No path specified.\n");
+      if (++i > arguments.count - 1) {
+        [self printErrorUsageAndExit:@"No path specified"];
       }
 
       filePath = [arguments objectAtIndex:i];
     } else if ([argument compare:@"--sha256" options:NSCaseInsensitiveSearch] == NSOrderedSame) {
-      if (++i > ([arguments count])) {
-        printf("No SHA-256 specified.\n");
+      if (++i > arguments.count - 1) {
+        [self printErrorUsageAndExit:@"No SHA-256 specified"];
       }
 
       SHA256 = [arguments objectAtIndex:i];
     } else {
-      printf("Unknown argument %s.\n", [argument UTF8String]);
-      exit(1);
+      [self printErrorUsageAndExit:[@"Unknown argument: %@" stringByAppendingString:argument]];
     }
   }
 
   if (state == RULESTATE_UNKNOWN) {
-    printf("No state specified.\n");
-    exit(1);
+    [self printErrorUsageAndExit:@"No state specified"];
   }
 
   if (filePath) {
     SNTFileInfo *fileInfo = [[SNTFileInfo alloc] initWithPath:filePath];
     if (!fileInfo) {
-      printf("Not a regular file or executable bundle.\n");
-      exit(1);
+      [self printErrorUsageAndExit:@"Provided path is not a regular file or executable bundle"];
     }
 
     SHA256 = [fileInfo SHA256];
   } else if (SHA256) {
   } else {
-    printf("No SHA-256 or binary specified.\n");
-    exit(1);
+    [self printErrorUsageAndExit:@"Either SHA-256 or path to file must be specified"];
   }
 
   SNTRule *newRule = [[SNTRule alloc] init];
