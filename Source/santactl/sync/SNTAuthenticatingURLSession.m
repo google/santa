@@ -31,7 +31,7 @@
 }
 
 - (instancetype)init {
-  NSURLSessionConfiguration *config = [NSURLSessionConfiguration defaultSessionConfiguration];
+  NSURLSessionConfiguration *config = [NSURLSessionConfiguration ephemeralSessionConfiguration];
   [config setTLSMinimumSupportedProtocol:kTLSProtocol12];
   [config setHTTPShouldUsePipelining:YES];
   return [self initWithSessionConfiguration:config];
