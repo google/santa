@@ -254,6 +254,9 @@ santa_action_t SantaDecisionManager::GetFromDaemon(
 
   // Wait for the daemon to respond or die.
   do {
+    // Add pending request to cache.
+    AddToCache(vnode_id_str, ACTION_REQUEST_CHECKBW, 0);
+
     // Send request to daemon...
     if (!PostToQueue(message)) {
       OSIncrementAtomic(&failed_queue_requests_);
@@ -296,9 +299,6 @@ santa_action_t SantaDecisionManager::FetchDecision(
 
   // If item wasn in cache return it.
   if CHECKBW_RESPONSE_VALID(return_action) return return_action;
-
-  // Add pending request to cache.
-  AddToCache(vnode_id_str, ACTION_REQUEST_CHECKBW, 0);
 
   // Get path
   char path[MAXPATHLEN];
