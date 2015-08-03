@@ -158,7 +158,7 @@ void SantaDecisionManager::AddToCache(
     // sufficiently large and a kMaxAllowCacheTimeMilliseconds set
     // sufficiently low, this should only ever occur if someone is purposefully
     // trying to make the cache grow.
-    LOGD("Cache too large, flushing.");
+    LOGI("Cache too large, flushing.");
     cached_decisions_->flushCollection();
   }
 
