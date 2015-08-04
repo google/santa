@@ -29,17 +29,21 @@
 ///
 
 #define TSTART(testName) \
-    printf("   %-50s ", testName);
+    do { printf("   %-50s ", testName); } while (0)
 #define TPASS() \
-    printf("\x1b[32mPASS\x1b[0m\n");
+    do { printf("\x1b[32mPASS\x1b[0m\n"); } while (0)
 #define TPASSINFO(fmt, ...) \
-    printf("\x1b[32mPASS\x1b[0m\n      " fmt "\n", ##__VA_ARGS__);
+    do { printf("\x1b[32mPASS\x1b[0m\n      " fmt "\n", ##__VA_ARGS__); } while (0)
 #define TFAIL() \
-    printf("\x1b[31mFAIL\x1b[0m\n"); \
-    exit(1);
+    do { \
+      printf("\x1b[31mFAIL\x1b[0m\n"); \
+      exit(1); \
+    } while (0)
 #define TFAILINFO(fmt, ...) \
-    printf("\x1b[31mFAIL\x1b[0m\n   -> " fmt "\n\nTest failed.\n\n", ##__VA_ARGS__); \
-    exit(1);
+    do { \
+      printf("\x1b[31mFAIL\x1b[0m\n   -> " fmt "\n\nTest failed.\n\n", ##__VA_ARGS__); \
+      exit(1); \
+    } while (0)
 
 @interface SantaKernelTests : NSObject
 @property io_connect_t connection;
@@ -60,16 +64,15 @@
   t.standardInput = nil;
   t.standardOutput = nil;
   t.standardError = nil;
-
   return t;
 }
 
 - (NSString *)sha256ForPath:(NSString *)path {
   unsigned char sha256[CC_SHA256_DIGEST_LENGTH];
-  NSData *psData = [NSData dataWithContentsOfFile:path
-                                          options:NSDataReadingMappedIfSafe
-                                            error:nil];
-  CC_SHA256([psData bytes], (unsigned int)[psData length], sha256);
+  NSData *fData = [NSData dataWithContentsOfFile:path
+                                         options:NSDataReadingMappedIfSafe
+                                           error:nil];
+  CC_SHA256([fData bytes], (unsigned int)[fData length], sha256);
   char buf[CC_SHA256_DIGEST_LENGTH * 2 + 1];
   for (int i = 0; i < CC_SHA256_DIGEST_LENGTH; i++) {
     snprintf(buf + (2*i), 4, "%02x", (unsigned char)sha256[i]);
@@ -388,6 +391,36 @@
   }
 }
 
+/// Tests that the kernel can handle _lots_ of executions.
+- (void)handlesLotsOfBinaries {
+  TSTART("Handles lots of binaries");
+
+  const int LIMIT = 12000;
+
+  for (int i = 0; i < LIMIT; i++) {
+    printf("\033[s\033[?25l");  // save cursor position and hide it
+
+    printf("%d/%i", i+1, LIMIT);
+
+    NSString *fname = [@"testexe" stringByAppendingFormat:@".%i", i];
+    [[NSFileManager defaultManager] copyItemAtPath:@"/bin/hostname" toPath:fname error:NULL];
+
+    @try {
+      NSTask *aout = [self taskWithPath:fname];
+      [aout launch];
+      [aout waitUntilExit];
+    } @catch (NSException *e) {
+      TFAILINFO("Failed to launch");
+    }
+
+    unlink([fname UTF8String]);
+    printf("\033[u");  // restore cursor position
+  }
+  printf("                                 \033[u\e[?25h");  // restore cursor position and unhide
+
+  TPASS();
+}
+
 #pragma mark - Main
 
 - (void)runTests {
@@ -402,7 +435,7 @@
   [self performSelectorInBackground:@selector(beginListening) withObject:nil];
 
   // Wait for driver to finish getting ready
-  sleep(1.0);
+  sleep(1);
   printf("\n-> Functional tests:\033[m\n");
 
   [self receiveAndBlockTests];
@@ -410,6 +443,7 @@
   [self invalidatesCacheTests];
   [self clearCacheTests];
   [self blocksDeniedTracedBinaries];
+  [self handlesLotsOfBinaries];
 
   printf("\nAll tests passed.\n\n");
 }

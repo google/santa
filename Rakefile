@@ -1,5 +1,3 @@
-require 'timeout'
-
 WORKSPACE           = 'Santa.xcworkspace'
 DEFAULT_SCHEME      = 'All'
 OUTPUT_PATH         = 'Build'
@@ -130,15 +128,10 @@ namespace :tests do
     Rake::Task['unload'].invoke()
     Rake::Task['install:debug'].invoke()
     Rake::Task['load_kext'].invoke
-    timeout = 30
-    puts "Running kernel tests with a #{timeout} second timeout"
-    begin
-      Timeout::timeout(timeout) {
-        system "sudo #{OUTPUT_PATH}/Products/Debug/KernelTests"
-      }
-    rescue Timeout::Error
-      puts "ERROR: tests ran for longer than #{timeout} seconds and were killed."
-    end
+    FileUtils.mkdir_p("/tmp/santa_kerneltests_tmp")
+    puts "Running kernel tests"
+    system "cd /tmp/santa_kerneltests_tmp && sudo #{Dir.pwd}/#{OUTPUT_PATH}/Products/Debug/KernelTests"
+    FileUtils.rm_rf("/tmp/santa_kerneltests_tmp")
     Rake::Task['unload_kext'].execute
   end
 end
