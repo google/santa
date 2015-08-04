@@ -269,14 +269,10 @@
 }
 
 - (void)initiateEventUploadForSHA256:(NSString *)sha256 {
-  pid_t child = fork();
-  if (child == 0) {
-    fclose(stdout);
-    fclose(stderr);
-
+  if (fork() == 0) {
     // Ensure we have no privileges
     if (!DropRootPrivileges()) {
-      _exit(1);
+      _exit(EPERM);
     }
 
     _exit(execl(kSantaCtlPath, kSantaCtlPath, "sync", "singleevent", [sha256 UTF8String], NULL));

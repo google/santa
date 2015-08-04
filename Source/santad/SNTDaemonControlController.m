@@ -35,7 +35,7 @@
     _driverManager = driverManager;
 
     _syncTimer = [self createSyncTimer];
-    [self rescheduleSyncSecondsFromNow:600];
+    [self rescheduleSyncSecondsFromNow:30];
   }
   return self;
 }
@@ -46,23 +46,19 @@
       dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_BACKGROUND, 0));
 
   dispatch_source_set_event_handler(syncTimerQ, ^{
-    [self rescheduleSyncSecondsFromNow:600];
+      [self rescheduleSyncSecondsFromNow:600];
 
-    if (![[SNTConfigurator configurator] syncBaseURL]) return;
-    [[SNTConfigurator configurator] setSyncBackOff:NO];
+      if (![[SNTConfigurator configurator] syncBaseURL]) return;
+      [[SNTConfigurator configurator] setSyncBackOff:NO];
 
-    pid_t child = fork();
-    if (child == 0) {
-      // Ensure we have no privileges
-      if (!DropRootPrivileges()) {
-        _exit(1);
+      if (fork() == 0) {
+        // Ensure we have no privileges
+        if (!DropRootPrivileges()) {
+          _exit(EPERM);
+        }
+
+        _exit(execl(kSantaCtlPath, kSantaCtlPath, "sync", "--syslog", NULL));
       }
-
-      fclose(stdout);
-      fclose(stderr);
-
-      _exit(execl(kSantaCtlPath, kSantaCtlPath, "sync", NULL));
-    }
   });
 
   dispatch_resume(syncTimerQ);

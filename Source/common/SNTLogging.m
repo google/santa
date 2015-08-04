@@ -23,6 +23,7 @@ static int logLevel = LOG_LEVEL_INFO;  // default to info
 #endif
 
 void logMessage(int level, FILE *destination, NSString *format, ...) {
+  static BOOL useSyslog = NO;
   static NSString *binaryName;
   static dispatch_once_t pred;
 
@@ -33,6 +34,12 @@ void logMessage(int level, FILE *destination, NSString *format, ...) {
       if ([[[NSProcessInfo processInfo] arguments] containsObject:@"--debug"]) {
         logLevel = LOG_LEVEL_DEBUG;
       }
+
+      // If requested, redirect output to syslog.
+      if ([[[NSProcessInfo processInfo] arguments] containsObject:@"--syslog"] ||
+          [binaryName isEqual:@"santad"]) {
+        useSyslog = YES;
+      }
   });
 
   if (logLevel < level) return;
@@ -42,10 +49,7 @@ void logMessage(int level, FILE *destination, NSString *format, ...) {
   NSString *s = [[NSString alloc] initWithFormat:format arguments:args];
   va_end(args);
 
-  // Only prepend timestamp, severity and binary name if stdout is not a TTY
-  if (isatty(fileno(destination))) {
-    fprintf(destination, "%s\n", [s UTF8String]);
-  } else {
+  if (useSyslog) {
     NSString *levelName;
     int syslogLevel = LOG_DEBUG;
     switch (level) {
@@ -54,13 +58,9 @@ void logMessage(int level, FILE *destination, NSString *format, ...) {
       case LOG_LEVEL_INFO: levelName = @"I"; syslogLevel = LOG_INFO; break;
       case LOG_LEVEL_DEBUG: levelName = @"D"; syslogLevel = LOG_DEBUG; break;
     }
-
-    if (fileno(destination) == -1) {
-      syslog(syslogLevel, "%s\n",
-             [[NSString stringWithFormat:@"%@ %@: %@", levelName, binaryName, s] UTF8String]);
-    } else {
-      fprintf(destination, "%s\n",
-              [[NSString stringWithFormat:@"%@ %@: %@", levelName, binaryName, s] UTF8String]);
-    }
+    syslog(syslogLevel, "%s\n",
+           [[NSString stringWithFormat:@"%@ %@: %@", levelName, binaryName, s] UTF8String]);
+  } else {
+    fprintf(destination, "%s\n", [s UTF8String]);
   }
 }
