@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="6254" systemVersion="14D136" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES">
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="6254" systemVersion="14E46" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES">
     <dependencies>
         <deployment identifier="macosx"/>
         <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="6254"/>
@@ -34,7 +34,7 @@
                         <constraints>
                             <constraint firstAttribute="width" constant="450" id="XgJ-EV-tBa"/>
                         </constraints>
-                        <textFieldCell key="cell" allowsUndo="NO" sendsActionOnEndEditing="YES" alignment="center" title="A message to the user goes here..." allowsEditingTextAttributes="YES" id="5tH-bG-UJA">
+                        <textFieldCell key="cell" selectable="YES" allowsUndo="NO" sendsActionOnEndEditing="YES" alignment="center" title="A message to the user goes here..." allowsEditingTextAttributes="YES" id="5tH-bG-UJA">
                             <font key="font" metaFont="system"/>
                             <color key="textColor" red="0.40000000000000002" green="0.40000000000000002" blue="0.40000000000000002" alpha="1" colorSpace="calibratedRGB"/>
                             <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
@@ -137,7 +137,7 @@
                         <constraints>
                             <constraint firstAttribute="width" constant="290" id="on6-pj-m2k"/>
                         </constraints>
-                        <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Executing User" id="HRT-Be-ePf">
+                        <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" sendsActionOnEndEditing="YES" title="Executing User" id="HRT-Be-ePf">
                             <font key="font" metaFont="system"/>
                             <color key="textColor" white="0.0" alpha="0.5" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                             <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
@@ -218,15 +218,20 @@ DQ
                         <constraints>
                             <constraint firstAttribute="width" constant="290" id="h3Y-mO-38F"/>
                         </constraints>
-                        <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Parent Name" id="ieo-WK-aDD">
+                        <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" sendsActionOnEndEditing="YES" title="Parent Name" id="ieo-WK-aDD">
                             <font key="font" metaFont="system"/>
                             <color key="textColor" white="0.0" alpha="0.5" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                             <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                         </textFieldCell>
                         <connections>
-                            <binding destination="-2" name="value" keyPath="self.event.parentName" id="arL-Mc-4xj">
+                            <binding destination="-2" name="displayPatternValue1" keyPath="self.event.parentName" id="Lce-TO-q9V">
                                 <dictionary key="options">
-                                    <string key="NSNullPlaceholder">Unknown</string>
+                                    <string key="NSDisplayPattern">%{value1}@ (%{value2}@)</string>
+                                </dictionary>
+                            </binding>
+                            <binding destination="-2" name="displayPatternValue2" keyPath="self.event.ppid" previousBinding="Lce-TO-q9V" id="ofI-kH-F2d">
+                                <dictionary key="options">
+                                    <string key="NSDisplayPattern">%{value1}@ (%{value2}@)</string>
                                 </dictionary>
                             </binding>
                         </connections>
