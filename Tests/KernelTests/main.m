@@ -191,8 +191,8 @@
   }
   TPASS();
 
-  // Fetch the SHA-256 of /bin/ps, as we'll be using that for the cache invalidation test.
-  NSString *psSHA = [self sha256ForPath:@"/bin/ps"];
+  // Fetch the SHA-256 of /bin/ed, as we'll be using that for the cache invalidation test.
+  NSString *edSHA = [self sha256ForPath:@"/bin/ed"];
 
   /// Begin listening for events
   queueMemory = (IODataQueueMemory *)address;
@@ -201,7 +201,7 @@
       dataSize = sizeof(vdata);
       kr = IODataQueueDequeue(queueMemory, &vdata, &dataSize);
       if (kr == kIOReturnSuccess) {
-        if ([[self sha256ForPath:@(vdata.path)] isEqual:psSHA]) {
+        if ([[self sha256ForPath:@(vdata.path)] isEqual:edSHA]) {
           [self postToKernelAction:ACTION_RESPOND_CHECKBW_DENY forVnodeID:vdata.vnode_id];
         } else if (strncmp("/bin/mv", vdata.path, strlen("/bin/mv")) == 0) {
           [self postToKernelAction:ACTION_RESPOND_CHECKBW_DENY forVnodeID:vdata.vnode_id];
@@ -242,11 +242,11 @@
 - (void)receiveAndBlockTests {
   TSTART("Blocks denied binaries");
 
-  NSTask *ps = [self taskWithPath:@"/bin/ps"];
+  NSTask *ed = [self taskWithPath:@"/bin/ed"];
 
   @try {
-    [ps launch];
-    [ps waitUntilExit];
+    [ed launch];
+    [ed waitUntilExit];
     TFAIL();
   }
   @catch (NSException *exception) {
@@ -285,12 +285,12 @@
 
   // Copy the ls binary to a new file
   NSFileManager *fm = [NSFileManager defaultManager];
-  if (![fm copyItemAtPath:@"/bin/pwd" toPath:@"santakerneltests_tmp" error:nil]) {
+  if (![fm copyItemAtPath:@"/bin/pwd" toPath:@"invalidacachetest_tmp" error:nil]) {
     TFAILINFO("Failed to create temp file");
   }
 
   // Launch the new file to put it in the cache
-  NSTask *pwd = [self taskWithPath:@"santakerneltests_tmp"];
+  NSTask *pwd = [self taskWithPath:@"invalidacachetest_tmp"];
   [pwd launch];
   [pwd waitUntilExit];
 
@@ -299,10 +299,10 @@
     TFAILINFO("First launch of test binary failed");
   }
 
-  // Now replace the contents of the test file (which is cached) with the contents of /bin/ps,
+  // Now replace the contents of the test file (which is cached) with the contents of /bin/ed,
   // which is 'blacklisted' by SHA-256 during the tests.
-  FILE *infile = fopen("/bin/ps", "r");
-  FILE *outfile = fopen("santakerneltests_tmp", "w");
+  FILE *infile = fopen("/bin/ed", "r");
+  FILE *outfile = fopen("invalidacachetest_tmp", "w");
   int ch;
   while ((ch = fgetc(infile)) != EOF) {
     fputc(ch, outfile);
@@ -310,13 +310,13 @@
   fclose(infile);
 
   // Now try running the temp file again. If it succeeds, the test failed.
-  NSTask *ps = [self taskWithPath:@"santakerneltests_tmp"];
+  NSTask *ed = [self taskWithPath:@"invalidacachetest_tmp"];
 
   @try {
-    [ps launch];
-    [ps waitUntilExit];
+    [ed launch];
+    [ed waitUntilExit];
     TFAILINFO("Launched after write while file open");
-    [fm removeItemAtPath:@"santakerneltests_tmp" error:nil];
+    [fm removeItemAtPath:@"invalidacachetest_tmp" error:nil];
   } @catch (NSException *exception) {
     // This is a pass, but we have more to do.
   }
@@ -325,16 +325,16 @@
   fclose(outfile);
 
   // And try running the temp file again. If it succeeds, the test failed.
-  ps = [self taskWithPath:@"santakerneltests_tmp"];
+  ed = [self taskWithPath:@"invalidacachetest_tmp"];
 
   @try {
-    [ps launch];
-    [ps waitUntilExit];
+    [ed launch];
+    [ed waitUntilExit];
     TFAILINFO("Launched after file closed");
   } @catch (NSException *exception) {
     TPASS();
   } @finally {
-    [fm removeItemAtPath:@"santakerneltests_tmp" error:nil];
+    [fm removeItemAtPath:@"invalidacachetest_tmp" error:nil];
   }
 }
 
