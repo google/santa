@@ -133,8 +133,11 @@
   if ([self.customMessage length] > 0) {
     message = self.customMessage;
   } else {
-    message = @"The following application has been blocked from executing<br />"
-              @"because its trustworthiness cannot be determined.";
+    message = [[SNTConfigurator configurator] defaultBlockMessage];
+    if (!message) {
+      message = @"The following application has been blocked from executing<br />"
+                @"because its trustworthiness cannot be determined.";
+    }
   }
 
   NSString *fullHTML = [NSString stringWithFormat:@"%@%@%@", htmlHeader, message, htmlFooter];

@@ -41,6 +41,7 @@ static NSString * const kLogAllEventsKey = @"LogAllEvents";
 static NSString * const kMoreInfoURLKey = @"MoreInfoURL";
 static NSString * const kEventDetailURLKey = @"EventDetailURL";
 static NSString * const kEventDetailTextKey = @"EventDetailText";
+static NSString * const kDefaultBlockMessage = @"DefaultBlockMessage";
 
 static NSString * const kSyncBaseURLKey = @"SyncBaseURL";
 static NSString * const kClientAuthCertificateFileKey = @"ClientAuthCertificateFile";
@@ -144,6 +145,10 @@ static NSString * const kMachineIDPlistKeyKey = @"MachineIDKey";
 
 - (NSString *)eventDetailText {
   return self.configData[kEventDetailTextKey];
+}
+
+- (NSString *)defaultBlockMessage {
+  return self.configData[kDefaultBlockMessage];
 }
 
 - (NSURL *)syncBaseURL {

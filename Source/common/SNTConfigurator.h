@@ -39,7 +39,7 @@ extern NSString * const kDefaultConfigFilePath;
 ///  The regex of whitelisted paths. Regexes are specified in ICU format.
 ///
 ///  The regex flags IXSM can be used, though the s (dotall) and m (multiline) flags are
-///  pointless as a path only ever a single line.
+///  pointless as a path only ever has a single line.
 ///  If the regex doesn't begin with ^ to match from the beginning of the line, it will be added.
 ///
 @property(nonatomic) NSRegularExpression *whitelistPathRegex;
@@ -72,6 +72,12 @@ extern NSString * const kDefaultConfigFilePath;
 ///  Related to the above property, this string represents the text to show on the button.
 ///
 @property(readonly, nonatomic) NSString *eventDetailText;
+
+///
+///  For any rule that doesn't have a custom message, this setting overrides the message
+///  text that is display. If unset, a reasonable default is provided.
+///
+@property(readonly, nonatomic) NSString *defaultBlockMessage;
 
 #pragma mark - Sync Settings
 
