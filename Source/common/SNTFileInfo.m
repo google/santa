@@ -223,15 +223,15 @@
   if (!self.infoDict) {
     self.infoDict = (NSDictionary *)[NSNull null];
 
-    if ([self bundle] && [self.bundle infoDictionary]) {
+    // Binaries with embedded Info.plist aren't in an NSBundle but
+    // CFBundleCopyInfoDictionaryForURL will return the embedded info dict.
+    NSURL *url = [NSURL fileURLWithPath:self.path isDirectory:NO];
+    NSDictionary *infoDict =
+    (__bridge_transfer NSDictionary *)CFBundleCopyInfoDictionaryForURL((__bridge CFURLRef)url);
+    if (infoDict){
+      self.infoDict = infoDict;
+    } else if ([self bundle] && [self.bundle infoDictionary]) {
       self.infoDict = [self.bundle infoDictionary];
-    } else {
-      // Binaries with embedded Info.plist aren't in an NSBundle but
-      // CFBundleCopyInfoDictionaryForURL will return the embedded info dict.
-      NSURL *url = [NSURL fileURLWithPath:self.path isDirectory:NO];
-      NSDictionary *infoDict =
-      (__bridge_transfer NSDictionary *)CFBundleCopyInfoDictionaryForURL((__bridge CFURLRef)url);
-      if (infoDict) self.infoDict = infoDict;
     }
   }
   return self.infoDict == (NSDictionary *)[NSNull null] ? nil : self.infoDict;
