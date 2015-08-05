@@ -93,6 +93,7 @@ end
 task :dist do
   desc "Create distribution folder"
 
+  Rake::Task['clean'].invoke()
   Rake::Task['build:build'].invoke("Release")
 
   FileUtils.rm_rf(DIST_PATH)
