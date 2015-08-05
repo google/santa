@@ -130,10 +130,15 @@ namespace :tests do
     Rake::Task['install:debug'].invoke()
     Rake::Task['load_kext'].invoke
     FileUtils.mkdir_p("/tmp/santa_kerneltests_tmp")
-    puts "Running kernel tests"
-    system "cd /tmp/santa_kerneltests_tmp && sudo #{Dir.pwd}/#{OUTPUT_PATH}/Products/Debug/KernelTests"
-    FileUtils.rm_rf("/tmp/santa_kerneltests_tmp")
-    Rake::Task['unload_kext'].execute
+    begin
+      puts "\033[?25l\033[12h"  # hide cursor
+      puts "Running kernel tests"
+      system "cd /tmp/santa_kerneltests_tmp && sudo #{Dir.pwd}/#{OUTPUT_PATH}/Products/Debug/KernelTests"
+    rescue Exception
+      puts "\033[?25h\033[12l\n\n"  # unhide cursor
+      FileUtils.rm_rf("/tmp/santa_kerneltests_tmp")
+      Rake::Task['unload_kext'].execute
+    end
   end
 end
 

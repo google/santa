@@ -50,6 +50,9 @@
 @property int timesSeenLs;
 @property int timesSeenCat;
 @property int timesSeenCp;
+
+@property int testExeIteration;
+@property int timesSeenTestExeIteration;
 - (void)runTests;
 @end
 
@@ -194,6 +197,13 @@
   // Fetch the SHA-256 of /bin/ed, as we'll be using that for the cache invalidation test.
   NSString *edSHA = [self sha256ForPath:@"/bin/ed"];
 
+  // Create the RE used for matching testexe's
+  NSString *cwd = [[NSFileManager defaultManager] currentDirectoryPath];
+  NSString *pattern = [cwd stringByAppendingPathComponent:@"testexe\\.(\\d+)"];
+  NSRegularExpression *re = [NSRegularExpression regularExpressionWithPattern:pattern
+                                                                      options:0
+                                                                        error:NULL];
+
   /// Begin listening for events
   queueMemory = (IODataQueueMemory *)address;
   do {
@@ -223,6 +233,26 @@
           }
           TPASSINFO("Received pid, ppid: %d, %d", vdata.pid, vdata.ppid);
         } else {
+          NSString *path = @(vdata.path);
+
+          // If current executable is one of our test exe's from handlesLotsOfBinaries,
+          // check that the number has increased.
+          NSArray *matches = [re matchesInString:path
+                                         options:0
+                                           range:NSMakeRange(0, path.length)];
+          if (matches.count == 1 && [matches[0] numberOfRanges] == 2) {
+            NSUInteger count = [[path substringWithRange:[matches[0] rangeAtIndex:1]] intValue];
+            if (count <= self.testExeIteration && count > 0) {
+              self.timesSeenTestExeIteration++;
+              if (self.timesSeenTestExeIteration > 2) {
+                TFAILINFO("Saw same binary several times");
+              }
+            } else {
+              self.timesSeenTestExeIteration = 0;
+              self.testExeIteration = (int)count;
+            }
+          }
+
           // Allow everything not related to our testing.
           [self postToKernelAction:ACTION_RESPOND_CHECKBW_ALLOW forVnodeID:vdata.vnode_id];
         }
@@ -398,7 +428,7 @@
   const int LIMIT = 12000;
 
   for (int i = 0; i < LIMIT; i++) {
-    printf("\033[s\033[?25l");  // save cursor position and hide it
+    printf("\033[s");  // save cursor position
 
     printf("%d/%i", i+1, LIMIT);
 
@@ -406,9 +436,9 @@
     [[NSFileManager defaultManager] copyItemAtPath:@"/bin/hostname" toPath:fname error:NULL];
 
     @try {
-      NSTask *aout = [self taskWithPath:fname];
-      [aout launch];
-      [aout waitUntilExit];
+      NSTask *testexec = [self taskWithPath:fname];
+      [testexec launch];
+      [testexec waitUntilExit];
     } @catch (NSException *e) {
       TFAILINFO("Failed to launch");
     }
@@ -416,7 +446,7 @@
     unlink([fname UTF8String]);
     printf("\033[u");  // restore cursor position
   }
-  printf("                                 \033[u\e[?25h");  // restore cursor position and unhide
+  printf("\033[K\033[u");  // clear line, restore cursor position
 
   TPASS();
 }
