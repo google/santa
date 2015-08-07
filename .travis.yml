@@ -1,5 +1,6 @@
 ---
 language: objective-c
+cache: cocoapods
 
 before_install:
  - gem install cocoapods xcpretty
