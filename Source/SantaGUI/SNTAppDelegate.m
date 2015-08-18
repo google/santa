@@ -42,14 +42,22 @@
   self.notificationManager = [[SNTNotificationManager alloc] init];
 
   NSNotificationCenter *workspaceNotifications = [[NSWorkspace sharedWorkspace] notificationCenter];
-  [workspaceNotifications addObserver:self
-                             selector:@selector(killConnection)
-                                 name:NSWorkspaceSessionDidResignActiveNotification
-                               object:nil];
-  [workspaceNotifications addObserver:self
-                             selector:@selector(createConnection)
-                                 name:NSWorkspaceSessionDidBecomeActiveNotification
-                               object:nil];
+
+  [workspaceNotifications addObserverForName:NSWorkspaceSessionDidResignActiveNotification
+                                      object:nil
+                                       queue:[NSOperationQueue currentQueue]
+                                  usingBlock:^(NSNotification *note) {
+      self.listener.invalidationHandler = nil;
+      self.listener.rejectedHandler = nil;
+      [self.listener invalidate];
+      self.listener = nil;
+  }];
+  [workspaceNotifications addObserverForName:NSWorkspaceSessionDidBecomeActiveNotification
+                                      object:nil
+                                       queue:[NSOperationQueue currentQueue]
+                                  usingBlock:^(NSNotification *note) {
+      [self attemptReconnection];
+  }];
 
   [self createConnection];
 }
@@ -76,16 +84,10 @@
   [self.listener resume];
 }
 
-- (void)killConnection {
-  self.listener.invalidationHandler = nil;
-  [self.listener invalidate];
-  self.listener = nil;
-}
-
 - (void)attemptReconnection {
   // TODO(rah): Make this smarter.
-  sleep(10);
-  [self performSelectorOnMainThread:@selector(createConnection) withObject:nil waitUntilDone:NO];
+  sleep(5);
+  [self createConnection];
 }
 
 #pragma mark Menu Management
