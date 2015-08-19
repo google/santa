@@ -85,8 +85,10 @@ void SantaDecisionManager::DisconnectClient(bool itDied) {
 
   // Ask santad to shutdown, in case it's running.
   if (!itDied) {
-    santa_message_t message = {.action = ACTION_REQUEST_SHUTDOWN};
+    santa_message_t *message = new santa_message_t;
+    message->action = ACTION_REQUEST_SHUTDOWN;
     PostToQueue(message);
+    delete message;
     dataqueue_->setNotificationPort(NULL);
   } else {
     // If the client died, reset the data queue so when it reconnects
@@ -249,7 +251,7 @@ santa_action_t SantaDecisionManager::GetFromCache(const char *identifier) {
 }
 
 santa_action_t SantaDecisionManager::GetFromDaemon(
-    const santa_message_t message, const char *vnode_id_str) {
+    santa_message_t *message, const char *vnode_id_str) {
   santa_action_t return_action = ACTION_UNSET;
 
   // Wait for the daemon to respond or die.
@@ -265,7 +267,7 @@ santa_action_t SantaDecisionManager::GetFromDaemon(
              kMaxQueueFailures);
         proc_signal(client_pid_, SIGKILL);
       }
-      LOGE("Failed to queue request for %s.", message.path);
+      LOGE("Failed to queue request for %s.", message->path);
       CacheCheck(vnode_id_str);
       return ACTION_ERROR;
     }
@@ -297,7 +299,7 @@ santa_action_t SantaDecisionManager::FetchDecision(
   // Check to see if item is in cache
   return_action = GetFromCache(vnode_id_str);
 
-  // If item wasn in cache return it.
+  // If item was in cache return it.
   if CHECKBW_RESPONSE_VALID(return_action) return return_action;
 
   // Get path
@@ -308,30 +310,34 @@ santa_action_t SantaDecisionManager::FetchDecision(
   }
 
   // Prepare message to send to daemon.
-  santa_message_t message = {};
-  strlcpy(message.path, path, sizeof(message.path));
-  message.userId = kauth_cred_getuid(cred);
-  message.pid = proc_selfpid();
-  message.ppid = proc_selfppid();
-  message.action = ACTION_REQUEST_CHECKBW;
-  message.vnode_id = vnode_id;
+  santa_message_t *message = new santa_message_t;
+  strlcpy(message->path, path, sizeof(message->path));
+  message->uid = kauth_cred_getuid(cred);
+  message->gid = kauth_cred_getgid(cred);
+  message->pid = proc_selfpid();
+  message->ppid = proc_selfppid();
+  message->action = ACTION_REQUEST_CHECKBW;
+  message->vnode_id = vnode_id;
 
   if (ClientConnected()) {
-    return GetFromDaemon(message, vnode_id_str);
+    santa_action_t ret = GetFromDaemon(message, vnode_id_str);
+    delete message;
+    return ret;
   } else {
     LOGI("Execution request without daemon running: %s", path);
-    message.action = ACTION_NOTIFY_EXEC_ALLOW_NODAEMON;
+    message->action = ACTION_NOTIFY_EXEC_ALLOW_NODAEMON;
     PostToQueue(message);
+    delete message;
     return ACTION_RESPOND_CHECKBW_ALLOW;
   }
 }
 
 #pragma mark Misc
 
-bool SantaDecisionManager::PostToQueue(santa_message_t message) {
+bool SantaDecisionManager::PostToQueue(santa_message_t *message) {
   bool kr = false;
   lck_mtx_lock(dataqueue_lock_);
-  kr = dataqueue_->enqueue(&message, sizeof(message));
+  kr = dataqueue_->enqueue(message, sizeof(santa_message_t));
   lck_mtx_unlock(dataqueue_lock_);
   return kr;
 }
@@ -367,8 +373,7 @@ int SantaDecisionManager::VnodeCallback(const kauth_cred_t cred,
                                         const vnode_t vp,
                                         int *errno) {
   // Only operate on regular files (not directories, symlinks, etc.).
-  vtype vt = vnode_vtype(vp);
-  if (vt != VREG) return KAUTH_RESULT_DEFER;
+  if (vnode_vtype(vp) != VREG) return KAUTH_RESULT_DEFER;
 
   // Get ID for the vnode and convert it to a string.
   uint64_t vnode_id = GetVnodeIDForVnode(ctx, vp);

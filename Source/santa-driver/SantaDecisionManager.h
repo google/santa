@@ -151,7 +151,7 @@ class SantaDecisionManager : public OSObject {
   ///  @param identifier The vnode ID string for this request
   ///  @return santa_action_t The response for this request
   ///
-  santa_action_t GetFromDaemon(const santa_message_t message,
+  santa_action_t GetFromDaemon(santa_message_t *message,
                                const char *identifier);
 
   ///
@@ -176,7 +176,7 @@ class SantaDecisionManager : public OSObject {
   ///  @param message The message to send
   ///  @return bool true if sending was successful.
   ///
-  bool PostToQueue(santa_message_t message);
+  bool PostToQueue(santa_message_t *message);
 
   ///
   ///  Fetches the vnode_id for a given vnode.

@@ -70,7 +70,8 @@ typedef enum {
 typedef struct {
   santa_action_t action;
   uint64_t vnode_id;
-  uid_t userId;
+  uid_t uid;
+  gid_t gid;
   pid_t pid;
   pid_t ppid;
   char path[MAXPATHLEN];

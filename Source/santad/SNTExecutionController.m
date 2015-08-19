@@ -144,7 +144,7 @@
     se.ppid = @(message.ppid);
     se.parentName = @(pname);
 
-    struct passwd *user = getpwuid(message.userId);
+    struct passwd *user = getpwuid(message.uid);
     endpwent();
     NSString *userName;
     if (user) {
