@@ -93,6 +93,11 @@
 - (BOOL)isScript;
 
 ///
+///  @return YES if this file has a bad/missing __PAGEZERO .
+///
+- (BOOL)isMissingPageZero;
+
+///
 ///  @return An NSBundle if this file is part of a bundle.
 ///
 - (NSBundle *)bundle;

@@ -75,6 +75,14 @@
     return;
   }
 
+  // Check __PAGEZERO
+  if ([binInfo isMissingPageZero]) {
+    LOGW(@"File has bad/missing __PAGEZERO segment. Denying execution");
+    [self.driverManager postToKernelAction:ACTION_RESPOND_CHECKBW_DENY forVnodeID:vnodeId];
+    [self logDecisionForEventState:EVENTSTATE_BLOCK_SCOPE sha256:sha256 path:path leafCert:nil];
+    return;
+  }
+
   // These will be filled in either in later steps
   santa_action_t respondedAction = ACTION_UNSET;
   SNTRule *rule;

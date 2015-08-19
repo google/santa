@@ -75,6 +75,10 @@ REGISTER_COMMAND_NAME(@"binaryinfo")
     printf("%-19s: %s\n", "Type", [[fileInfo machoType] UTF8String]);
   }
 
+  if ([fileInfo isMissingPageZero]) {
+    printf("%-19s: %s\n", "Page Zero", "__PAGEZERO segment missing/bad!");
+  }
+
   SNTCodesignChecker *csc = [[SNTCodesignChecker alloc] initWithBinaryPath:filePath];
 
   printf("%-19s: %s\n", "Code-signed", (csc) ? "Yes" : "No");

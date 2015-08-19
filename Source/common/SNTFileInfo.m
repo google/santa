@@ -29,6 +29,7 @@
 @property NSBundle *bundleRef;
 @property NSDictionary *infoDict;
 @property NSArray *architecturesArray;
+@property BOOL missingPageZero;
 @end
 
 @implementation SNTFileInfo
@@ -174,6 +175,33 @@
     return YES;
   }
 
+  return NO;
+}
+
+- (BOOL)isMissingPageZero {
+  // TODO(rah): Look for a 32-bit header rather than assuming it's the first.
+  // If the binary is 32-bit only, it would be the first header.
+  // If the binary is dual 32/64, it probably won't be first but by default the OS will use the
+  //   64-bit binary (Santa doesn't run on 32-bit machines). However, it's possible to force use
+  //   of the 32-bit binary so relying on this being first is bad.
+  struct mach_header *mh = [self firstMachHeader];
+
+  // Only applies to 32-bit arch.
+  if (mh && mh->magic == MH_MAGIC) {
+    struct load_command *lc = (struct load_command *)(mh + 1);
+    for (uint32_t i = 0; i < mh->ncmds; i++) {
+      if (lc->cmd == LC_SEGMENT) {
+        struct segment_command *segment = (struct segment_command *)lc;
+        if (segment->vmaddr == 0 && segment->vmsize != 0 &&
+            segment->initprot == 0 && segment->maxprot == 0 &&
+            strcmp("__PAGEZERO", segment->segname) == 0) {
+          return NO;
+        }
+      }
+      lc = (struct load_command *)((uint64_t)lc + (uint64_t)lc->cmdsize);
+    }
+    return YES;
+  }
   return NO;
 }
 
