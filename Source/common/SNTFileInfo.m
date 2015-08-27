@@ -20,16 +20,34 @@
 #include <mach-o/swap.h>
 #include <sys/xattr.h>
 
+// Simple class to hold the data of a mach_header and the offset within the file
+// in which that header was found.
+@interface MachHeaderWithOffset : NSObject
+@property NSData *data;
+@property uint32_t offset;
+- (instancetype)initWithData:(NSData *)data offset:(uint32_t)offset;
+@end
+@implementation MachHeaderWithOffset
+- (instancetype)initWithData:(NSData *)data offset:(uint32_t)offset {
+  self = [super init];
+  if (self) {
+    _data = data;
+    _offset = offset;
+  }
+  return self;
+}
+@end
+
 @interface SNTFileInfo ()
 @property NSString *path;
 @property NSData *fileData;
 
+// Dictionary of MachHeaderWithOffset objects where the keys are the architecture strings
+@property NSDictionary *machHeaders;
+
 // Cached properties
-@property NSData *firstMachHeaderData;
 @property NSBundle *bundleRef;
 @property NSDictionary *infoDict;
-@property NSArray *architecturesArray;
-@property BOOL missingPageZero;
 @end
 
 @implementation SNTFileInfo
@@ -53,6 +71,7 @@
                                        options:NSDataReadingMappedIfSafe
                                          error:error];
     if (_fileData.length == 0) return nil;
+    [self parseMachHeaders];
   }
 
   return self;
@@ -97,112 +116,68 @@
 }
 
 - (NSArray *)architectures {
-  if (!self.architecturesArray) {
-    self.architecturesArray = (NSArray *)[NSNull null];
-
-    if ([self isFat]) {
-      NSMutableArray *ret = [[NSMutableArray alloc] init];
-
-      // Retrieve just the fat_header, if possible.
-      NSData *head = [self safeSubdataWithRange:NSMakeRange(0, sizeof(struct fat_header))];
-      if (!head) return nil;
-      struct fat_header *fat_header = (struct fat_header *)[head bytes];
-
-      // Get number of architectures in the binary
-      uint32_t narch = NSSwapBigIntToHost(fat_header->nfat_arch);
-
-      // Retrieve just the fat_arch's, make a mutable copy and if necessary swap the bytes
-      NSData *archs = [self safeSubdataWithRange:NSMakeRange(sizeof(struct fat_header),
-                                                             sizeof(struct fat_arch) * narch)];
-      if (!archs) return nil;
-      struct fat_arch *fat_archs = (struct fat_arch *)[archs bytes];
-
-      // For each arch, get the name of its architecture
-      for (uint32_t i = 0; i < narch; ++i) {
-        cpu_type_t cpu = (cpu_type_t)NSSwapBigIntToHost((unsigned int)fat_archs[i].cputype);
-        [ret addObject:[self nameForCPUType:cpu]];
-      }
-
-      self.architecturesArray = ret;
-    } else if ([self firstMachHeader]) {
-      struct mach_header *hdr = [self firstMachHeader];
-      self.architecturesArray = @[ [self nameForCPUType:hdr->cputype] ];
-    }
-  }
-
-  return self.architecturesArray == (NSArray *)[NSNull null] ? nil : self.architecturesArray;
+  return [self.machHeaders allKeys];
 }
 
 - (BOOL)isDylib {
   struct mach_header *mach_header = [self firstMachHeader];
-  if (mach_header && (mach_header->filetype == MH_DYLIB || mach_header->filetype == MH_FVMLIB)) {
-    return YES;
-  }
-
+  if (mach_header && mach_header->filetype == MH_DYLIB) return YES;
   return NO;
 }
 
 - (BOOL)isKext {
   struct mach_header *mach_header = [self firstMachHeader];
-  if (mach_header && mach_header->filetype == MH_KEXT_BUNDLE) {
-    return YES;
-  }
-
+  if (mach_header && mach_header->filetype == MH_KEXT_BUNDLE) return YES;
   return NO;
 }
 
 - (BOOL)isMachO {
-  return [self firstMachHeader] != nil;
+  return ([self.machHeaders count] > 0);
 }
 
 - (BOOL)isFat {
-  return ([self isFatHeader:(struct fat_header *)[self.fileData bytes]]);
+  return ([self.machHeaders count] > 1);
 }
 
 - (BOOL)isScript {
-  char magic[2];
-  [self.fileData getBytes:&magic length:2];
-
+  const char *magic = (const char *)[[self safeSubdataWithRange:NSMakeRange(0, 2)] bytes];
   return (strncmp("#!", magic, 2) == 0);
 }
 
 - (BOOL)isExecutable {
   struct mach_header *mach_header = [self firstMachHeader];
   if (!mach_header) return NO;
-  if (mach_header->filetype == MH_OBJECT ||
-      mach_header->filetype == MH_EXECUTE ||
-      mach_header->filetype == MH_PRELOAD) {
-    return YES;
-  }
-
+  if (mach_header->filetype == MH_OBJECT || mach_header->filetype == MH_EXECUTE) return YES;
   return NO;
 }
 
 - (BOOL)isMissingPageZero {
-  // TODO(rah): Look for a 32-bit header rather than assuming it's the first.
-  // If the binary is 32-bit only, it would be the first header.
-  // If the binary is dual 32/64, it probably won't be first but by default the OS will use the
-  //   64-bit binary (Santa doesn't run on 32-bit machines). However, it's possible to force use
-  //   of the 32-bit binary so relying on this being first is bad.
-  struct mach_header *mh = [self firstMachHeader];
+  // This method only checks i386 arch because the kernel enforces this for other archs
+  // See bsd/kern/mach_loader.c, search for enforce_hard_pagezero.
+  MachHeaderWithOffset *x86Header = self.machHeaders[@"i386"];
+  if (!x86Header) return NO;
 
-  // Only applies to 32-bit arch.
-  if (mh && mh->magic == MH_MAGIC) {
-    struct load_command *lc = (struct load_command *)(mh + 1);
-    for (uint32_t i = 0; i < mh->ncmds; i++) {
-      if (lc->cmd == LC_SEGMENT) {
-        struct segment_command *segment = (struct segment_command *)lc;
-        if (segment->vmaddr == 0 && segment->vmsize != 0 &&
-            segment->initprot == 0 && segment->maxprot == 0 &&
-            strcmp("__PAGEZERO", segment->segname) == 0) {
-          return NO;
-        }
-      }
-      lc = (struct load_command *)((uint64_t)lc + (uint64_t)lc->cmdsize);
+  struct mach_header *mh = (struct mach_header *)[x86Header.data bytes];
+  if (mh->filetype != MH_EXECUTE) return NO;
+
+  NSRange range = NSMakeRange(x86Header.offset + sizeof(struct mach_header),
+                              sizeof(struct segment_command));
+  NSData *lcData = [self safeSubdataWithRange:range];
+  if (!lcData) return NO;
+
+  // This code assumes the __PAGEZERO is always the first load-command in the file.
+  // Given that the OS X ABI says "the static linker creates a __PAGEZERO segment
+  // as the first segment of an executable file." this should be OK.
+  struct load_command *lc = (struct load_command *)[lcData bytes];
+  if (lc->cmd == LC_SEGMENT) {
+    struct segment_command *segment = (struct segment_command *)lc;
+    if (segment->vmaddr == 0 && segment->vmsize != 0 &&
+        segment->initprot == 0 && segment->maxprot == 0 &&
+        strcmp("__PAGEZERO", segment->segname) == 0) {
+      return NO;
     }
-    return YES;
   }
-  return NO;
+  return YES;
 }
 
 #pragma mark Bundle Information
@@ -308,46 +283,77 @@
 
 #pragma mark Internal Methods
 
-///
-///  Look through the file for the first mach_header. If the file is thin, this will be the
-///  header at the beginning of the file. If the file is fat, it will be the first
-///  architecture-specific header.
-///
-- (struct mach_header *)firstMachHeader {
-  if (!self.firstMachHeaderData) {
-    self.firstMachHeaderData = (NSData *)[NSNull null];
+- (void)parseMachHeaders {
+  if (self.machHeaders) return;
 
-    if ([self isFatHeader:(struct fat_header *)[self.fileData bytes]]) {
-      // Get the bytes for the fat_arch
-      NSData *archHdr = [self safeSubdataWithRange:NSMakeRange(sizeof(struct fat_header),
-                                                               sizeof(struct fat_arch))];
-      if (!archHdr) return NULL;
-      struct fat_arch *fat_arch = (struct fat_arch *)[archHdr bytes];
+  // Sanity check file length
+  if (self.fileData.length < sizeof(struct mach_header)) {
+    self.machHeaders = [NSDictionary dictionary];
+    return;
+  }
 
-      // Get bytes for first mach_header
-      NSData *machHdr = [self safeSubdataWithRange:NSMakeRange(NSSwapBigIntToHost(fat_arch->offset),
-                                                               sizeof(struct mach_header))];
-      if (!machHdr || ![self isMachHeader:(struct mach_header *)machHdr.bytes]) return NULL;
+  NSMutableDictionary *machHeaders = [NSMutableDictionary dictionary];
 
-      self.firstMachHeaderData = [machHdr copy];
-    } else if ([self isMachHeader:(struct mach_header *)[self.fileData bytes]]) {
-      NSData *machHdr = [self safeSubdataWithRange:NSMakeRange(0, sizeof(struct mach_header))];
-      if (!machHdr) return NULL;
-      self.firstMachHeaderData = [machHdr copy];
+  NSData *machHeader = [self parseSingleMachHeader:self.fileData];
+  if (machHeader) {
+    struct mach_header *mh = (struct mach_header *)[machHeader bytes];
+    MachHeaderWithOffset *mhwo = [[MachHeaderWithOffset alloc] initWithData:machHeader offset:0];
+    machHeaders[[self nameForCPUType:mh->cputype]] = mhwo;
+  } else {
+    NSRange range = NSMakeRange(0, sizeof(struct fat_header));
+    NSData *fatHeader = [self safeSubdataWithRange:range];
+    struct fat_header *fh = (struct fat_header *)[fatHeader bytes];
+
+    if (fatHeader && (fh->magic == FAT_MAGIC || fh->magic == FAT_CIGAM)) {
+      int nfat_arch = OSSwapBigToHostInt32(fh->nfat_arch);
+      range = NSMakeRange(sizeof(struct fat_header), sizeof(struct fat_arch) * nfat_arch);
+      NSMutableData *fatArchs = [[self safeSubdataWithRange:range] mutableCopy];
+      if (fatArchs) {
+        struct fat_arch *fat_arch = (struct fat_arch *)[fatArchs mutableBytes];
+        for (int i = 0; i < nfat_arch; i++) {
+          int offset = OSSwapBigToHostInt32(fat_arch[i].offset);
+          int size = OSSwapBigToHostInt32(fat_arch[i].size);
+          int cputype = OSSwapBigToHostInt(fat_arch[i].cputype);
+
+          range = NSMakeRange(offset, size);
+          NSData *machHeader = [self parseSingleMachHeader:[self safeSubdataWithRange:range]];
+          if (machHeader) {
+            NSString *key = [self nameForCPUType:cputype];
+            MachHeaderWithOffset *mhwo = [[MachHeaderWithOffset alloc] initWithData:machHeader
+                                                                             offset:offset];
+            machHeaders[key] = mhwo;
+          }
+        }
+      }
     }
   }
-  return (self.firstMachHeaderData == (NSData *)[NSNull null] ?
-          NULL :
-          (struct mach_header *)self.firstMachHeaderData.bytes);
+
+  self.machHeaders = [machHeaders copy];
 }
 
-- (BOOL)isMachHeader:(struct mach_header *)header {
-  return (header->magic == MH_MAGIC || header->magic == MH_MAGIC_64 ||
-          header->magic == MH_CIGAM || header->magic == MH_CIGAM_64);
+- (NSData *)parseSingleMachHeader:(NSData *)inputData {
+  if (inputData.length < sizeof(struct mach_header)) return nil;
+  struct mach_header *mh = (struct mach_header *)[inputData bytes];
+
+  if (mh->magic == MH_CIGAM || mh->magic == MH_CIGAM_64) {
+    NSMutableData *mutableInput = [inputData mutableCopy];
+    mh = (struct mach_header *)[mutableInput mutableBytes];
+    swap_mach_header(mh, NXHostByteOrder());
+  }
+
+  if (mh->magic == MH_MAGIC || mh->magic == MH_MAGIC_64) {
+    return [NSData dataWithBytes:mh length:sizeof(struct mach_header)];
+  }
+
+  return nil;
 }
 
-- (BOOL)isFatHeader:(struct fat_header *)header {
-  return (header->magic == FAT_MAGIC || header->magic == FAT_CIGAM);
+///
+///  Return one of the mach_header's in this file.
+///
+- (struct mach_header *)firstMachHeader {
+  return (struct mach_header *)([[[[self.machHeaders allValues] firstObject] data] bytes]);
+
 }
 
 ///
@@ -363,6 +369,9 @@
   }
 }
 
+///
+///  Return a human-readable string for a cpu_type_t.
+///
 - (NSString *)nameForCPUType:(cpu_type_t)cpuType {
   switch (cpuType) {
     case CPU_TYPE_X86:
