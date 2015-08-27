@@ -75,14 +75,6 @@
     return;
   }
 
-  // Check __PAGEZERO
-  if ([binInfo isMissingPageZero]) {
-    LOGW(@"File has bad/missing __PAGEZERO segment. Denying execution");
-    [self.driverManager postToKernelAction:ACTION_RESPOND_CHECKBW_DENY forVnodeID:vnodeId];
-    [self logDecisionForEventState:EVENTSTATE_BLOCK_SCOPE sha256:sha256 path:path leafCert:nil];
-    return;
-  }
-
   // These will be filled in either in later steps
   santa_action_t respondedAction = ACTION_UNSET;
   SNTRule *rule;
@@ -116,8 +108,13 @@
     return;
   }
 
-  // Step 4 - default rule :-(
-  if (!rule) {
+  if ([binInfo isMissingPageZero]) {
+    // Check __PAGEZERO
+    LOGW(@"File has bad/missing __PAGEZERO segment. Denying execution");
+    respondedAction = ACTION_RESPOND_CHECKBW_DENY;
+    [self.driverManager postToKernelAction:ACTION_RESPOND_CHECKBW_DENY forVnodeID:vnodeId];
+  } else if (!rule) {
+    // Step 4 - default rule :-(
     respondedAction = [self defaultDecision];
     [self.driverManager postToKernelAction:respondedAction forVnodeID:vnodeId];
   }
