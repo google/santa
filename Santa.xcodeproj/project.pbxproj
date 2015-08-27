@@ -78,6 +78,8 @@
 		0D4644C5182AF81700098690 /* SantaDecisionManager.cc in Sources */ = {isa = PBXBuildFile; fileRef = 0D4644C3182AF81700098690 /* SantaDecisionManager.cc */; };
 		0D4644C6182AF81700098690 /* SantaDecisionManager.h in Headers */ = {isa = PBXBuildFile; fileRef = 0D4644C4182AF81700098690 /* SantaDecisionManager.h */; };
 		0D4A5007176A4602004F63BF /* Security.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0D4A5006176A4602004F63BF /* Security.framework */; };
+		0D536ED71B8E7A2E0039A26D /* bad_pagezero in Resources */ = {isa = PBXBuildFile; fileRef = 0D536ED51B8E7A2E0039A26D /* bad_pagezero */; };
+		0D536ED81B8E7A2E0039A26D /* missing_pagezero in Resources */ = {isa = PBXBuildFile; fileRef = 0D536ED61B8E7A2E0039A26D /* missing_pagezero */; };
 		0D54E0B11976F8D3000BB59F /* SNTFileInfo.m in Sources */ = {isa = PBXBuildFile; fileRef = 0DCD6041190ACCB8006B445C /* SNTFileInfo.m */; };
 		0D59C0E417710E6000748EBF /* SNTCodesignChecker.m in Sources */ = {isa = PBXBuildFile; fileRef = 0D59C0E317710E6000748EBF /* SNTCodesignChecker.m */; };
 		0D63DD5C1906FCB400D346C4 /* SNTDatabaseController.m in Sources */ = {isa = PBXBuildFile; fileRef = 0D63DD5B1906FCB400D346C4 /* SNTDatabaseController.m */; };
@@ -296,6 +298,8 @@
 		0D4644C3182AF81700098690 /* SantaDecisionManager.cc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = SantaDecisionManager.cc; sourceTree = "<group>"; };
 		0D4644C4182AF81700098690 /* SantaDecisionManager.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SantaDecisionManager.h; sourceTree = "<group>"; };
 		0D4A5006176A4602004F63BF /* Security.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Security.framework; path = /System/Library/Frameworks/Security.framework; sourceTree = "<absolute>"; };
+		0D536ED51B8E7A2E0039A26D /* bad_pagezero */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.executable"; path = bad_pagezero; sourceTree = "<group>"; };
+		0D536ED61B8E7A2E0039A26D /* missing_pagezero */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.executable"; path = missing_pagezero; sourceTree = "<group>"; };
 		0D59C0E217710E6000748EBF /* SNTCodesignChecker.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SNTCodesignChecker.h; sourceTree = "<group>"; };
 		0D59C0E317710E6000748EBF /* SNTCodesignChecker.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SNTCodesignChecker.m; sourceTree = "<group>"; };
 		0D63DD5A1906FCB400D346C4 /* SNTDatabaseController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SNTDatabaseController.h; sourceTree = "<group>"; };
@@ -462,6 +466,8 @@
 		0D260DB018B68E12002A0B55 /* Resources */ = {
 			isa = PBXGroup;
 			children = (
+				0D536ED51B8E7A2E0039A26D /* bad_pagezero */,
+				0D536ED61B8E7A2E0039A26D /* missing_pagezero */,
 				0D2CD4601A81C7B100C9C910 /* dn.plist */,
 				0D6FDC8618C6913D0044685C /* apple.pem */,
 				0D6FDC8218C68D7E0044685C /* GIAG2.crt */,
@@ -942,8 +948,10 @@
 				0D6FDC8518C68E500044685C /* GIAG2.pem in Resources */,
 				0D6FDC8318C68D7E0044685C /* GIAG2.crt in Resources */,
 				0D6F12DA19EDE51E006B218E /* tubitak.crt in Resources */,
+				0D536ED71B8E7A2E0039A26D /* bad_pagezero in Resources */,
 				0D2CD4611A81C7B100C9C910 /* dn.plist in Resources */,
 				0D6FDC8718C6913D0044685C /* apple.pem in Resources */,
+				0D536ED81B8E7A2E0039A26D /* missing_pagezero in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

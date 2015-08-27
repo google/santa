@@ -35,17 +35,24 @@
 }
 
 - (void)testSHA1 {
-  SNTFileInfo *sut = [[SNTFileInfo alloc] initWithPath:@"/sbin/launchd"];
+  NSString *path = [[NSBundle bundleForClass:[self class]] pathForResource:@"missing_pagezero"
+                                                                    ofType:@""];
+  SNTFileInfo *sut = [[SNTFileInfo alloc] initWithPath:path];
 
   XCTAssertNotNil(sut.SHA1);
   XCTAssertEqual(sut.SHA1.length, 40);
+  XCTAssertEqualObjects(sut.SHA1, @"3a865bf47b4ceba20496e0e66e39e4cfa101ffe6");
 }
 
 - (void)testSHA256 {
-  SNTFileInfo *sut = [[SNTFileInfo alloc] initWithPath:@"/sbin/launchd"];
+  NSString *path = [[NSBundle bundleForClass:[self class]] pathForResource:@"missing_pagezero"
+                                                                    ofType:@""];
+  SNTFileInfo *sut = [[SNTFileInfo alloc] initWithPath:path];
 
   XCTAssertNotNil(sut.SHA256);
   XCTAssertEqual(sut.SHA256.length, 64);
+  XCTAssertEqualObjects(sut.SHA256,
+                        @"5e089b65a1e7a4696d84a34510710b6993d1de21250c41daaec63d9981083eba");
 }
 
 - (void)testExecutable {
@@ -58,6 +65,20 @@
   XCTAssertFalse(sut.isFat);
   XCTAssertFalse(sut.isKext);
   XCTAssertFalse(sut.isScript);
+}
+
+- (void)testPageZero {
+  NSString *path = [[NSBundle bundleForClass:[self class]] pathForResource:@"missing_pagezero"
+                                                                    ofType:@""];
+  SNTFileInfo *sut = [[SNTFileInfo alloc] initWithPath:path];
+  XCTAssertTrue(sut.isMissingPageZero);
+
+  path = [[NSBundle bundleForClass:[self class]] pathForResource:@"bad_pagezero" ofType:@""];
+  sut = [[SNTFileInfo alloc] initWithPath:path];
+  XCTAssertTrue(sut.isMissingPageZero);
+
+  sut = [[SNTFileInfo alloc] initWithPath:@"/usr/sbin/bless"];
+  XCTAssertFalse(sut.isMissingPageZero);
 }
 
 - (void)testKext {
