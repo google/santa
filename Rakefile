@@ -135,6 +135,7 @@ namespace :tests do
       puts "Running kernel tests"
       system "cd /tmp/santa_kerneltests_tmp && sudo #{Dir.pwd}/#{OUTPUT_PATH}/Products/Debug/KernelTests"
     rescue Exception
+    ensure
       puts "\033[?25h\033[12l\n\n"  # unhide cursor
       FileUtils.rm_rf("/tmp/santa_kerneltests_tmp")
       Rake::Task['unload_kext'].execute
