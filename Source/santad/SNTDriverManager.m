@@ -87,8 +87,6 @@ static const int MAX_DELAY = 15;
 
 - (void)listenWithBlock:(void (^)(santa_message_t message))callback {
   kern_return_t kr;
-  santa_message_t vdata;
-  UInt32 dataSize;
 
   mach_vm_address_t address = 0;
   mach_vm_size_t size = 0;
@@ -120,10 +118,11 @@ static const int MAX_DELAY = 15;
   }
 
   self.queueMemory = (IODataQueueMemory *)address;
-  dataSize = sizeof(vdata);
 
   do {
     while (IODataQueueDataAvailable(self.queueMemory)) {
+      santa_message_t vdata;
+      uint32_t dataSize = sizeof(vdata);
       kr = IODataQueueDequeue(self.queueMemory, &vdata, &dataSize);
       if (kr == kIOReturnSuccess) {
         callback(vdata);
