@@ -211,6 +211,8 @@
       dataSize = sizeof(vdata);
       kr = IODataQueueDequeue(queueMemory, &vdata, &dataSize);
       if (kr == kIOReturnSuccess) {
+        if (vdata.action != ACTION_REQUEST_CHECKBW) continue;
+
         if ([[self sha256ForPath:@(vdata.path)] isEqual:edSHA]) {
           [self postToKernelAction:ACTION_RESPOND_CHECKBW_DENY forVnodeID:vdata.vnode_id];
         } else if (strncmp("/bin/mv", vdata.path, strlen("/bin/mv")) == 0) {

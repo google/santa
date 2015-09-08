@@ -26,10 +26,6 @@
 #import "SNTRule.h"
 #import "SNTRuleTable.h"
 
-@interface SNTExecutionController (Testing)
-- (BOOL)fileIsInScope:(NSString *)path;
-@end
-
 @interface SNTExecutionControllerTest : XCTestCase
 @property id mockConfigurator;
 @property id mockCodesignChecker;
@@ -55,7 +51,6 @@
 
   self.mockConfigurator = OCMClassMock([SNTConfigurator class]);
   OCMStub([self.mockConfigurator configurator]).andReturn(self.mockConfigurator);
-  OCMStub([self.mockConfigurator configurator]).andReturn(self.mockConfigurator);
 
   self.mockDriverManager = OCMClassMock([SNTDriverManager class]);
 
@@ -70,7 +65,8 @@
   self.sut = [[SNTExecutionController alloc] initWithDriverManager:self.mockDriverManager
                                                          ruleTable:self.mockRuleDatabase
                                                         eventTable:self.mockEventDatabase
-                                                notifierConnection:nil];
+                                                notifierConnection:nil
+                                                          eventLog:nil];
 }
 
 ///  Return a pre-configured santa_message_ t for testing with.
@@ -94,14 +90,12 @@
 }
 
 - (void)testBinaryWhitelistRule {
-  id mockSut = OCMPartialMock(self.sut);
-  OCMStub([mockSut fileIsInScope:OCMOCK_ANY]).andReturn(YES);
-
-  OCMExpect([self.mockFileInfo SHA256]).andReturn(@"a");
+  OCMStub([self.mockFileInfo isMachO]).andReturn(YES);
+  OCMStub([self.mockFileInfo SHA256]).andReturn(@"a");
 
   SNTRule *rule = [[SNTRule alloc] init];
   rule.state = RULESTATE_WHITELIST;
-  OCMExpect([self.mockRuleDatabase binaryRuleForSHA256:@"a"]).andReturn(rule);
+  OCMStub([self.mockRuleDatabase binaryRuleForSHA256:@"a"]).andReturn(rule);
 
   [self.sut validateBinaryWithMessage:[self getMessage]];
 
@@ -110,14 +104,12 @@
 }
 
 - (void)testBinaryBlacklistRule {
-  id mockSut = OCMPartialMock(self.sut);
-  OCMStub([mockSut fileIsInScope:OCMOCK_ANY]).andReturn(YES);
-
-  OCMExpect([self.mockFileInfo SHA256]).andReturn(@"a");
+  OCMStub([self.mockFileInfo isMachO]).andReturn(YES);
+  OCMStub([self.mockFileInfo SHA256]).andReturn(@"a");
 
   SNTRule *rule = [[SNTRule alloc] init];
   rule.state = RULESTATE_BLACKLIST;
-  OCMExpect([self.mockRuleDatabase binaryRuleForSHA256:@"a"]).andReturn(rule);
+  OCMStub([self.mockRuleDatabase binaryRuleForSHA256:@"a"]).andReturn(rule);
 
   [self.sut validateBinaryWithMessage:[self getMessage]];
 
@@ -126,16 +118,16 @@
 }
 
 - (void)testCertificateWhitelistRule {
-  id mockSut = OCMPartialMock(self.sut);
-  OCMStub([mockSut fileIsInScope:OCMOCK_ANY]).andReturn(YES);
+  OCMStub([self.mockFileInfo isMachO]).andReturn(YES);
+  OCMStub([self.mockFileInfo SHA256]).andReturn(@"a");
 
   id cert = OCMClassMock([SNTCertificate class]);
-  OCMExpect([self.mockCodesignChecker leafCertificate]).andReturn(cert);
-  OCMExpect([cert SHA256]).andReturn(@"a");
+  OCMStub([self.mockCodesignChecker leafCertificate]).andReturn(cert);
+  OCMStub([cert SHA256]).andReturn(@"a");
 
   SNTRule *rule = [[SNTRule alloc] init];
   rule.state = RULESTATE_WHITELIST;
-  OCMExpect([self.mockRuleDatabase certificateRuleForSHA256:@"a"]).andReturn(rule);
+  OCMStub([self.mockRuleDatabase certificateRuleForSHA256:@"a"]).andReturn(rule);
 
   [self.sut validateBinaryWithMessage:[self getMessage]];
 
@@ -144,18 +136,16 @@
 }
 
 - (void)testCertificateBlacklistRule {
-  id mockSut = OCMPartialMock(self.sut);
-  OCMStub([mockSut fileIsInScope:OCMOCK_ANY]).andReturn(YES);
-
-  OCMExpect([self.mockFileInfo SHA256]).andReturn(@"a");
+  OCMStub([self.mockFileInfo isMachO]).andReturn(YES);
+  OCMStub([self.mockFileInfo SHA256]).andReturn(@"a");
 
   id cert = OCMClassMock([SNTCertificate class]);
-  OCMExpect([self.mockCodesignChecker leafCertificate]).andReturn(cert);
-  OCMExpect([cert SHA256]).andReturn(@"a");
+  OCMStub([self.mockCodesignChecker leafCertificate]).andReturn(cert);
+  OCMStub([cert SHA256]).andReturn(@"a");
 
   SNTRule *rule = [[SNTRule alloc] init];
   rule.state = RULESTATE_BLACKLIST;
-  OCMExpect([self.mockRuleDatabase certificateRuleForSHA256:@"a"]).andReturn(rule);
+  OCMStub([self.mockRuleDatabase certificateRuleForSHA256:@"a"]).andReturn(rule);
 
   [self.sut validateBinaryWithMessage:[self getMessage]];
 
@@ -164,16 +154,14 @@
 }
 
 - (void)testDefaultDecision {
-  id mockSut = OCMPartialMock(self.sut);
-  OCMStub([mockSut fileIsInScope:OCMOCK_ANY]).andReturn(YES);
+  OCMStub([self.mockFileInfo isMachO]).andReturn(YES);
+  OCMStub([self.mockFileInfo SHA256]).andReturn(@"a");
 
-  OCMExpect([self.mockFileInfo SHA256]).andReturn(@"a");
   OCMExpect([self.mockConfigurator clientMode]).andReturn(CLIENTMODE_MONITOR);
   [self.sut validateBinaryWithMessage:[self getMessage]];
   OCMVerify([self.mockDriverManager postToKernelAction:ACTION_RESPOND_CHECKBW_ALLOW
                                             forVnodeID:1234]);
 
-  OCMExpect([self.mockFileInfo SHA256]).andReturn(@"a");
   OCMExpect([self.mockConfigurator clientMode]).andReturn(CLIENTMODE_LOCKDOWN);
   [self.sut validateBinaryWithMessage:[self getMessage]];
   OCMVerify([self.mockDriverManager postToKernelAction:ACTION_RESPOND_CHECKBW_DENY
@@ -181,10 +169,9 @@
 }
 
 - (void)testOutOfScope {
-  id mockSut = OCMPartialMock(self.sut);
-  OCMStub([mockSut fileIsInScope:OCMOCK_ANY]).andReturn(NO);
+  OCMStub([self.mockFileInfo isMachO]).andReturn(NO);
 
-  OCMExpect([self.mockConfigurator clientMode]).andReturn(CLIENTMODE_LOCKDOWN);
+  OCMStub([self.mockConfigurator clientMode]).andReturn(CLIENTMODE_LOCKDOWN);
   [self.sut validateBinaryWithMessage:[self getMessage]];
   OCMVerify([self.mockDriverManager postToKernelAction:ACTION_RESPOND_CHECKBW_ALLOW
                                             forVnodeID:1234]);
@@ -194,7 +181,15 @@
   [self.sut validateBinaryWithMessage:[self getMessage]];
   OCMVerify([self.mockDriverManager postToKernelAction:ACTION_RESPOND_CHECKBW_ALLOW
                                             forVnodeID:1234]);
+}
 
+- (void)testPageZero {
+  OCMStub([self.mockFileInfo isMachO]).andReturn(YES);
+  OCMStub([self.mockFileInfo isMissingPageZero]).andReturn(YES);
+
+  [self.sut validateBinaryWithMessage:[self getMessage]];
+  OCMVerify([self.mockDriverManager postToKernelAction:ACTION_RESPOND_CHECKBW_DENY
+                                            forVnodeID:1234]);
 }
 
 @end
