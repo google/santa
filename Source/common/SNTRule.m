@@ -60,4 +60,25 @@
 #undef DECODE
 #undef ENCODE
 
+- (BOOL)isEqual:(id)other {
+  if (other == self) return YES;
+  if (![other isKindOfClass:[SNTRule class]]) return NO;
+  SNTRule *o = other;
+  return ([self.shasum isEqual:o.shasum] && self.state == o.state && self.type == o.type);
+}
+
+- (NSUInteger)hash {
+  NSUInteger prime = 31;
+  NSUInteger result = 1;
+  result = prime * result + [self.shasum hash];
+  result = prime * result + self.state;
+  result = prime * result + self.type;
+  return result;
+}
+
+- (NSString *)description {
+  return [NSString stringWithFormat:@"SNTRule: SHA-256: %@, State: %d, Type: %d",
+             self.shasum, self.state, self.type];
+}
+
 @end

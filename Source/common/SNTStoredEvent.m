@@ -81,7 +81,7 @@
 - (BOOL)isEqual:(id)other {
   if (other == self) return YES;
   if (![other isKindOfClass:[SNTStoredEvent class]]) return NO;
-  SNTStoredEvent *o;
+  SNTStoredEvent *o = other;
   return ([self.fileSHA256 isEqual:o.fileSHA256] && [self.idx isEqual:o.idx]);
 }
 
