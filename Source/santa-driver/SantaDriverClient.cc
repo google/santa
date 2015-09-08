@@ -124,8 +124,10 @@ IOReturn SantaDriverClient::static_allow_binary(
     void *reference,
     IOExternalMethodArguments *arguments) {
   if (!target) return kIOReturnBadArgument;
+  if (arguments->scalarInput == NULL) return kIOReturnBadArgument;
+
   return target->allow_binary(
-      *(static_cast<const uint64_t *>(arguments->scalarInput)));
+      static_cast<const uint64_t>(*arguments->scalarInput));
 }
 
 IOReturn SantaDriverClient::deny_binary(const uint64_t vnode_id) {
@@ -141,8 +143,10 @@ IOReturn SantaDriverClient::static_deny_binary(
     void *reference,
     IOExternalMethodArguments *arguments) {
   if (!target) return kIOReturnBadArgument;
+  if (arguments->scalarInput == NULL) return kIOReturnBadArgument;
+
   return target->deny_binary(
-      *(static_cast<const uint64_t *>(arguments->scalarInput)));
+      static_cast<const uint64_t>(*arguments->scalarInput));
 }
 
 IOReturn SantaDriverClient::clear_cache() {
