@@ -14,6 +14,9 @@
 
 #import "SNTDatabaseController.h"
 
+#include <sys/types.h>
+#include <sys/stat.h>
+
 #import "SNTEventTable.h"
 #import "SNTLogging.h"
 #import "SNTRuleTable.h"
@@ -31,8 +34,10 @@ static NSString * const kEventsDatabaseName = @"events.db";
       [self createDatabasePath];
       NSString *fullPath = [kDatabasePath stringByAppendingPathComponent:kEventsDatabaseName];
       eventDatabaseQueue = [[FMDatabaseQueue alloc] initWithPath:fullPath];
+      chown([fullPath UTF8String], 0, 0);
+      chmod([fullPath UTF8String], 0600);
 
-  #ifndef DEBUG
+#ifndef DEBUG
       [eventDatabaseQueue inDatabase:^(FMDatabase *db) { db.logsErrors = NO; }];
 #endif
   });
@@ -47,8 +52,10 @@ static NSString * const kEventsDatabaseName = @"events.db";
       [self createDatabasePath];
       NSString *fullPath = [kDatabasePath stringByAppendingPathComponent:kRulesDatabaseName];
       ruleDatabaseQueue = [[FMDatabaseQueue alloc] initWithPath:fullPath];
+      chown([fullPath UTF8String], 0, 0);
+      chmod([fullPath UTF8String], 0600);
 
-  #ifndef DEBUG
+#ifndef DEBUG
       [ruleDatabaseQueue inDatabase:^(FMDatabase *db) { db.logsErrors = NO; }];
 #endif
   });
