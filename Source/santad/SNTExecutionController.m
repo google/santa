@@ -20,12 +20,14 @@
 
 #include "SNTLogging.h"
 
+#import "SNTCachedDecision.h"
 #import "SNTCertificate.h"
 #import "SNTCodesignChecker.h"
 #import "SNTCommonEnums.h"
 #import "SNTConfigurator.h"
 #import "SNTDriverManager.h"
 #import "SNTDropRootPrivs.h"
+#import "SNTEventLog.h"
 #import "SNTEventTable.h"
 #import "SNTFileInfo.h"
 #import "SNTRule.h"
@@ -41,13 +43,15 @@
 - (instancetype)initWithDriverManager:(SNTDriverManager *)driverManager
                             ruleTable:(SNTRuleTable *)ruleTable
                            eventTable:(SNTEventTable *)eventTable
-                   notifierConnection:(SNTXPCConnection *)notifier {
+                   notifierConnection:(SNTXPCConnection *)notifier
+                             eventLog:(SNTEventLog *)eventLog {
   self = [super init];
   if (self) {
     _driverManager = driverManager;
     _ruleTable = ruleTable;
     _eventTable = eventTable;
     _notifierConnection = notifier;
+    _eventLog = eventLog;
 
     // Workaround for xpcproxy/libsecurity bug on Yosemite
     // This establishes the XPC connection between libsecurity and syspolicyd.
@@ -59,73 +63,98 @@
 
 #pragma mark Binary Validation
 
+- (santa_eventstate_t)makeDecision:(SNTCachedDecision *)cd binaryInfo:(SNTFileInfo *)fi {
+  SNTRule *rule = [self.ruleTable binaryRuleForSHA256:cd.sha256];
+  if (rule) {
+    switch (rule.state) {
+      case RULESTATE_WHITELIST:
+        return EVENTSTATE_ALLOW_BINARY;
+      case RULESTATE_SILENT_BLACKLIST:
+        cd.silentBlock = YES;
+      case RULESTATE_BLACKLIST:
+        cd.customMsg = rule.customMsg;
+        return EVENTSTATE_BLOCK_BINARY;
+      default: break;
+    }
+  }
+
+  rule = [self.ruleTable certificateRuleForSHA256:cd.certSHA256];
+  if (rule) {
+    switch (rule.state) {
+      case RULESTATE_WHITELIST:
+        return EVENTSTATE_ALLOW_CERTIFICATE;
+      case RULESTATE_SILENT_BLACKLIST:
+        cd.silentBlock = YES;
+      case RULESTATE_BLACKLIST:
+        cd.customMsg = rule.customMsg;
+        return EVENTSTATE_BLOCK_CERTIFICATE;
+      default: break;
+    }
+  }
+
+  if (![self fileIsInScope:fi]) {
+    return EVENTSTATE_ALLOW_SCOPE;
+  }
+
+  if (fi.isMissingPageZero) {
+    LOGW(@"File has bad/missing __PAGEZERO segment. Denying execution");
+    return EVENTSTATE_BLOCK_SCOPE;
+  }
+
+  switch ([[SNTConfigurator configurator] clientMode]) {
+    case CLIENTMODE_MONITOR: return EVENTSTATE_ALLOW_UNKNOWN;
+    case CLIENTMODE_LOCKDOWN: return EVENTSTATE_BLOCK_UNKNOWN;
+    default: return EVENTSTATE_BLOCK_UNKNOWN;
+  }
+}
+
 - (void)validateBinaryWithMessage:(santa_message_t)message {
-  NSString *path = @(message.path);
-  uint64_t vnodeId = message.vnode_id;
-
+  // Get info about the file. If we can't get this info, allow execution and log an error.
   NSError *fileInfoError;
-  SNTFileInfo *binInfo = [[SNTFileInfo alloc] initWithPath:path error:&fileInfoError];
-  NSString *sha256 = [binInfo SHA256];
-
-  // If we can't read the file and hash properly, log an error.
-  if (!binInfo || !sha256) {
-    LOGW(@"Failed to read file %@: %@", path, fileInfoError.localizedDescription);
-    [self.driverManager postToKernelAction:ACTION_RESPOND_CHECKBW_ALLOW forVnodeID:vnodeId];
-    [self logDecisionForEventState:EVENTSTATE_ALLOW_UNKNOWN sha256:nil path:path leafCert:nil];
+  SNTFileInfo *binInfo = [[SNTFileInfo alloc] initWithPath:@(message.path) error:&fileInfoError];
+  if (!binInfo) {
+    LOGW(@"Failed to read file %@: %@", binInfo.path, fileInfoError.localizedDescription);
+    [self.driverManager postToKernelAction:ACTION_RESPOND_CHECKBW_ALLOW
+                                forVnodeID:message.vnode_id];
     return;
   }
 
-  // These will be filled in either in later steps
-  santa_action_t respondedAction = ACTION_UNSET;
-  SNTRule *rule;
+  // Get codesigning info about the file.
+  SNTCodesignChecker *csInfo = [[SNTCodesignChecker alloc] initWithBinaryPath:binInfo.path];
+
+  // Actually make the decision.
+  SNTCachedDecision *cd = [[SNTCachedDecision alloc] init];
+  cd.sha256 = binInfo.SHA256;
+  cd.certCommonName = csInfo.leafCertificate.commonName;
+  cd.certSHA256 = csInfo.leafCertificate.SHA256;
+  cd.vnodeId = message.vnode_id;
+  cd.decision = [self makeDecision:cd binaryInfo:binInfo];
+
+  // Save decision details for logging the execution later.
+  santa_action_t action = [self actionForEventState:cd.decision];
+  if (action == ACTION_RESPOND_CHECKBW_ALLOW) [self.eventLog saveDecisionDetails:cd];
 
   // Get name of parent process. Do this before responding to be sure parent doesn't go away.
   char pname[PROC_PIDPATHINFO_MAXSIZE];
   proc_name(message.ppid, pname, PROC_PIDPATHINFO_MAXSIZE);
 
-  // Step 1 - binary rule?
-  rule = [self.ruleTable binaryRuleForSHA256:sha256];
-  if (rule) {
-    respondedAction = [self actionForRuleState:rule.state];
-    [self.driverManager postToKernelAction:respondedAction forVnodeID:vnodeId];
-  }
+  // Send the decision to the kernel.
+  [self.driverManager postToKernelAction:action forVnodeID:cd.vnodeId];
 
-  SNTCodesignChecker *csInfo = [[SNTCodesignChecker alloc] initWithBinaryPath:path];
+  // Log to database if necessary.
+  if ((cd.decision != EVENTSTATE_ALLOW_BINARY &&
+       cd.decision != EVENTSTATE_ALLOW_CERTIFICATE &&
+       cd.decision != EVENTSTATE_ALLOW_SCOPE) || [[SNTConfigurator configurator] logAllEvents]) {
 
-  // Step 2 - cert rule?
-  if (!rule) {
-    rule = [self.ruleTable certificateRuleForSHA256:csInfo.leafCertificate.SHA256];
-    if (rule) {
-      respondedAction = [self actionForRuleState:rule.state];
-      [self.driverManager postToKernelAction:respondedAction forVnodeID:vnodeId];
-    }
-  }
-
-  // Step 3 - in scope?
-  if (!rule && ![self fileIsInScope:path]) {
-    [self.driverManager postToKernelAction:ACTION_RESPOND_CHECKBW_ALLOW forVnodeID:vnodeId];
-    [self logDecisionForEventState:EVENTSTATE_ALLOW_SCOPE sha256:sha256 path:path leafCert:nil];
-    return;
-  }
-
-  if ([binInfo isMissingPageZero]) {
-    // Check __PAGEZERO
-    LOGW(@"File has bad/missing __PAGEZERO segment. Denying execution");
-    respondedAction = ACTION_RESPOND_CHECKBW_DENY;
-    [self.driverManager postToKernelAction:ACTION_RESPOND_CHECKBW_DENY forVnodeID:vnodeId];
-  } else if (!rule) {
-    // Step 4 - default rule :-(
-    respondedAction = [self defaultDecision];
-    [self.driverManager postToKernelAction:respondedAction forVnodeID:vnodeId];
-  }
-
-  // Step 5 - log to database and potentially alert user
-  if (respondedAction == ACTION_RESPOND_CHECKBW_DENY ||
-      !rule ||
-      [[SNTConfigurator configurator] logAllEvents]) {
     SNTStoredEvent *se = [[SNTStoredEvent alloc] init];
-    se.fileSHA256 = sha256;
-    se.filePath = path;
+    se.parentName = @(pname);
+    se.fileSHA256 = cd.sha256;
+    se.signingChain = csInfo.certificates;
+    se.occurrenceDate = [[NSDate alloc] init];
+    se.filePath = binInfo.path;
+    se.pid = @(message.pid);
+    se.ppid = @(message.ppid);
+
     se.fileBundleID = [binInfo bundleIdentifier];
     se.fileBundleName = [binInfo bundleName];
 
@@ -137,20 +166,11 @@
       se.fileBundleVersion = [binInfo bundleVersion];
     }
 
-    se.signingChain = csInfo.certificates;
-    se.occurrenceDate = [[NSDate alloc] init];
-    se.decision = [self eventStateForDecision:respondedAction type:rule.type];
-    se.pid = @(message.pid);
-    se.ppid = @(message.ppid);
-    se.parentName = @(pname);
-
     struct passwd *user = getpwuid(message.uid);
     endpwent();
-    NSString *userName;
     if (user) {
-      userName = @(user->pw_name);
+      se.executingUser = @(user->pw_name);
     }
-    se.executingUser = userName;
 
     NSArray *loggedInUsers, *currentSessions;
     [self loggedInUsers:&loggedInUsers sessions:&currentSessions];
@@ -159,29 +179,20 @@
 
     [self.eventTable addStoredEvent:se];
 
-    if (respondedAction == ACTION_RESPOND_CHECKBW_DENY) {
+    // If binary was blocked, do the needful
+    if (action != ACTION_RESPOND_CHECKBW_ALLOW) {
+      [self.eventLog logDeniedExecution:cd withMessage:message];
+
       // So the server has something to show the user straight away, initiate an event
       // upload for the blocked binary rather than waiting for the next sync.
-      // The event upload is skipped if the full path is equal to that of santactl so that
-      /// on the off chance that santactl is not whitelisted, we don't get into an infinite loop.
-      if (![path isEqual:@(kSantaCtlPath)] &&
-          [[SNTConfigurator configurator] syncBaseURL]
-          && ![[SNTConfigurator configurator] syncBackOff]) {
-        [self initiateEventUploadForSHA256:sha256];
-      }
+      [self initiateEventUploadForEvent:se];
 
-      if (!rule || rule.state != RULESTATE_SILENT_BLACKLIST) {
+      if (!cd.silentBlock) {
         [[self.notifierConnection remoteObjectProxy] postBlockNotification:se
-                                                         withCustomMessage:rule.customMsg];
+                                                         withCustomMessage:cd.customMsg];
       }
     }
   }
-
-  // Step 6 - log to log file
-  [self logDecisionForEventState:[self eventStateForDecision:respondedAction type:rule.type]
-                          sha256:sha256
-                            path:path
-                        leafCert:csInfo.leafCertificate];
 }
 
 ///
@@ -193,114 +204,59 @@
 ///
 ///  @return @c YES if file is in scope, @c NO otherwise.
 ///
-- (BOOL)fileIsInScope:(NSString *)path {
+- (BOOL)fileIsInScope:(SNTFileInfo *)fi {
   // Determine if file is within a whitelisted path
   NSRegularExpression *re = [[SNTConfigurator configurator] whitelistPathRegex];
-  if ([re numberOfMatchesInString:path options:0 range:NSMakeRange(0, path.length)]) {
+  if ([re numberOfMatchesInString:fi.path
+                          options:0
+                            range:NSMakeRange(0, fi.path.length)]) {
     return NO;
   }
 
   // If file is not a Mach-O file, we're not interested unless it's part of an install package.
   // TODO(rah): Consider adding an option to check all scripts.
   // TODO(rah): Consider adding an option to disable package script checks.
-  SNTFileInfo *binInfo = [[SNTFileInfo alloc] initWithPath:path];
-  if (![binInfo isMachO] && ![path hasPrefix:@"/private/tmp/PKInstallSandbox."]) {
+  if (!fi.isMachO && ![fi.path hasPrefix:@"/private/tmp/PKInstallSandbox."]) {
     return NO;
   }
 
   return YES;
 }
 
-- (santa_eventstate_t)eventStateForDecision:(santa_action_t)decision type:(santa_ruletype_t)type {
-  switch (decision) {
-    case ACTION_RESPOND_CHECKBW_ALLOW:
-      switch (type) {
-        case RULETYPE_BINARY: return EVENTSTATE_ALLOW_BINARY;
-        case RULETYPE_CERT: return EVENTSTATE_ALLOW_CERTIFICATE;
-        default: return EVENTSTATE_ALLOW_UNKNOWN;
+- (void)initiateEventUploadForEvent:(SNTStoredEvent *)event {
+  // The event upload is skipped if the full path is equal to that of santactl so that
+  // on the off chance that santactl is not whitelisted, we don't get into an infinite loop.
+  // It's also skipped if there isn't a server configured or the last sync caused a backoff.
+  if ([event.filePath isEqual:@(kSantaCtlPath)] ||
+      ![[SNTConfigurator configurator] syncBaseURL] ||
+      [[SNTConfigurator configurator] syncBackOff]) return;
 
-      }
-    case ACTION_RESPOND_CHECKBW_DENY:
-      switch (type) {
-        case RULETYPE_BINARY: return EVENTSTATE_BLOCK_BINARY;
-        case RULETYPE_CERT: return EVENTSTATE_BLOCK_CERTIFICATE;
-        default: return EVENTSTATE_BLOCK_UNKNOWN;
-      }
-    default: return EVENTSTATE_UNKNOWN;
-  }
-}
-
-- (void)logDecisionForEventState:(santa_eventstate_t)eventState
-                          sha256:(NSString *)sha256
-                            path:(NSString *)path
-                        leafCert:(SNTCertificate *)cert {
-  NSString *d, *r, *outLog;
-
-  switch (eventState) {
-    case EVENTSTATE_ALLOW_BINARY:
-      d = @"A"; r = @"B"; break;
-    case EVENTSTATE_ALLOW_CERTIFICATE:
-      d = @"A"; r = @"C"; break;
-    case EVENTSTATE_ALLOW_SCOPE:
-      d = @"A"; r = @"S"; break;
-    case EVENTSTATE_ALLOW_UNKNOWN:
-      d = @"A"; r = @"?"; break;
-    case EVENTSTATE_BLOCK_BINARY:
-      d = @"D"; r = @"B"; break;
-    case EVENTSTATE_BLOCK_CERTIFICATE:
-      d = @"D"; r = @"C"; break;
-    case EVENTSTATE_BLOCK_UNKNOWN:
-      d = @"D"; r = @"?"; break;
-    default:
-      d = @"?"; r = @"?"; break;
-  }
-
-  // Ensure there are no pipes in the path name (as this will be confusing in the log)
-  NSString *printPath = [path stringByReplacingOccurrencesOfString:@"|" withString:@"<pipe>"];
-
-  if (cert && cert.SHA256 && cert.commonName) {
-    // Also ensure there are no pipes in the cert's common name.
-    NSString *printCommonName =
-        [cert.commonName stringByReplacingOccurrencesOfString:@"|" withString:@"<pipe>"];
-    outLog = [NSString stringWithFormat:@"%@|%@|%@|%@|%@|%@",
-                 d, r, sha256, printPath, cert.SHA256, printCommonName];
-  } else {
-    outLog = [NSString stringWithFormat:@"%@|%@|%@|%@", d, r, sha256, printPath];
-  }
-
-  // Now make sure none of the log line has a newline in it.
-  LOGI(@"%@", [[outLog componentsSeparatedByCharactersInSet:[NSCharacterSet newlineCharacterSet]]
-                                   componentsJoinedByString:@" "]);
-}
-
-- (void)initiateEventUploadForSHA256:(NSString *)sha256 {
   if (fork() == 0) {
     // Ensure we have no privileges
     if (!DropRootPrivileges()) {
       _exit(EPERM);
     }
 
-    _exit(execl(kSantaCtlPath, kSantaCtlPath, "sync", "singleevent", [sha256 UTF8String], NULL));
+    _exit(execl(kSantaCtlPath, kSantaCtlPath, "sync", "singleevent",
+                [event.fileSHA256 UTF8String], NULL));
   }
 }
 
-- (santa_action_t)defaultDecision {
-  switch ([[SNTConfigurator configurator] clientMode]) {
-    case CLIENTMODE_MONITOR: return ACTION_RESPOND_CHECKBW_ALLOW;
-    case CLIENTMODE_LOCKDOWN: return ACTION_RESPOND_CHECKBW_DENY;
-    default: return ACTION_RESPOND_CHECKBW_DENY;  // This can't happen.
-  }
-}
-
-- (santa_action_t)actionForRuleState:(santa_rulestate_t)state {
+- (santa_action_t)actionForEventState:(santa_eventstate_t)state {
   switch (state) {
-    case RULESTATE_WHITELIST:
+    case EVENTSTATE_ALLOW_BINARY:
+    case EVENTSTATE_ALLOW_CERTIFICATE:
+    case EVENTSTATE_ALLOW_SCOPE:
+    case EVENTSTATE_ALLOW_UNKNOWN:
       return ACTION_RESPOND_CHECKBW_ALLOW;
-    case RULESTATE_BLACKLIST:
-    case RULESTATE_SILENT_BLACKLIST:
+    case EVENTSTATE_BLOCK_BINARY:
+    case EVENTSTATE_BLOCK_CERTIFICATE:
+    case EVENTSTATE_BLOCK_SCOPE:
+    case EVENTSTATE_BLOCK_UNKNOWN:
       return ACTION_RESPOND_CHECKBW_DENY;
     default:
-      return ACTION_ERROR;
+      LOGW(@"Invalid event state %d", state);
+      return ACTION_RESPOND_CHECKBW_DENY;
   }
 }
 

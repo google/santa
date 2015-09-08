@@ -24,6 +24,7 @@
 #import "SNTDaemonControlController.h"
 #import "SNTDatabaseController.h"
 #import "SNTDriverManager.h"
+#import "SNTEventLog.h"
 #import "SNTEventTable.h"
 #import "SNTExecutionController.h"
 #import "SNTFileWatcher.h"
@@ -34,6 +35,7 @@
 
 @interface SNTApplication ()
 @property SNTDriverManager *driverManager;
+@property SNTEventLog *eventLog;
 @property SNTEventTable *eventTable;
 @property SNTExecutionController *execController;
 @property SNTFileWatcher *configFileWatcher;
@@ -93,11 +95,14 @@
         chmod([kDefaultConfigFilePath fileSystemRepresentation], 0644);
     }];
 
+    _eventLog = [[SNTEventLog alloc] init];
+
     // Initialize the binary checker object
     _execController = [[SNTExecutionController alloc] initWithDriverManager:_driverManager
                                                                   ruleTable:_ruleTable
                                                                  eventTable:_eventTable
-                                                         notifierConnection:_notifierConnection];
+                                                         notifierConnection:_notifierConnection
+                                                                   eventLog:_eventLog];
     if (!_execController) return nil;
   }
 
@@ -119,15 +124,23 @@
             LOGI(@"Driver requested a shutdown");
             exit(0);
           }
-          case ACTION_NOTIFY_EXEC_ALLOW_NODAEMON:
-          case ACTION_NOTIFY_EXEC_ALLOW_CACHED:
-          case ACTION_NOTIFY_EXEC_DENY_CACHED: {
-            // TODO(rah): Implement.
+          case ACTION_NOTIFY_DELETE:
+          case ACTION_NOTIFY_EXCHANGE:
+          case ACTION_NOTIFY_LINK:
+          case ACTION_NOTIFY_RENAME:
+          case ACTION_NOTIFY_WRITE: {
+            dispatch_async(q, ^{
+              [self.eventLog logFileModification:message];
+            });
+            break;
+          }
+          case ACTION_NOTIFY_EXEC: {
+            dispatch_async(q, ^{
+              [self.eventLog logAllowedExecution:message];
+            });
             break;
           }
           case ACTION_REQUEST_CHECKBW: {
-            // Validate the binary aynchronously on a concurrent queue so we don't
-            // hold up other execution requests in the background.
             dispatch_async(q, ^{
                 [self.execController validateBinaryWithMessage:message];
             });

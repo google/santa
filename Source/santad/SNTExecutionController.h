@@ -17,6 +17,7 @@
 
 @class SNTCodesignChecker;
 @class SNTDriverManager;
+@class SNTEventLog;
 @class SNTEventTable;
 @class SNTRuleTable;
 @class SNTXPCConnection;
@@ -30,19 +31,20 @@
 ///    + (If denied or unknown) Storing details about the execution event to the database
 ///      for upload and spwaning santactl to quickly try and send that to the server.
 ///    + (If denied) Potentially sending a message to SantaGUI to notify the user
-///    + Logging the event to the log file
 ///
 @interface SNTExecutionController : NSObject
 
 @property SNTDriverManager *driverManager;
-@property SNTRuleTable *ruleTable;
+@property SNTEventLog *eventLog;
 @property SNTEventTable *eventTable;
+@property SNTRuleTable *ruleTable;
 @property SNTXPCConnection *notifierConnection;
 
 - (instancetype)initWithDriverManager:(SNTDriverManager *)driverManager
                             ruleTable:(SNTRuleTable *)ruleTable
                            eventTable:(SNTEventTable *)eventTable
-                   notifierConnection:(SNTXPCConnection *)notifierConn;
+                   notifierConnection:(SNTXPCConnection *)notifierConn
+                             eventLog:(SNTEventLog *)eventLog;
 
 ///
 ///  Handles the logic of deciding whether to allow the binary to run or not, sends the response to

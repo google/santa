@@ -101,9 +101,8 @@ class SantaDecisionManager : public OSObject {
   ///
   ///  FileOp Callback
   ///  @param vp The Vnode for this request.
-  ///  @return int Should always be KAUTH_RESULT_DEFER.
   ///
-  int FileOpCallback(const vnode_t vp);
+  void FileOpCallback(kauth_action_t action, const vnode_t vp, const char *path, const char *new_path);
 
  protected:
   ///
@@ -186,6 +185,11 @@ class SantaDecisionManager : public OSObject {
   ///  @return uint64_t The Vnode ID as a 64-bit unsigned int.
   ///
   uint64_t GetVnodeIDForVnode(const vfs_context_t ctx, const vnode_t vp);
+
+  ///
+  ///  Creates a new santa_message_t with some fields pre-filled.
+  ///
+  santa_message_t* NewMessage();
 
   ///  Returns the current system uptime in microseconds
   static uint64_t GetCurrentUptime();
