@@ -435,7 +435,8 @@ void SantaDecisionManager::FileOpCallback(
   }
 
   // Filter out modifications to locations that are not that useful.
-  if (!strprefix(path, "/private/tmp") &&
+  if (ClientConnected() &&
+      !strprefix(path, "/private/tmp") &&
       !strprefix(path, "/private/var/folders") &&
       !strprefix(path, "/.") &&
       !strprefix(path, "/dev")) {
