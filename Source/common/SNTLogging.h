@@ -32,10 +32,12 @@
 
 #else  // KERNEL
 
-#define LOG_LEVEL_ERROR   1
-#define LOG_LEVEL_WARN    2
-#define LOG_LEVEL_INFO    3
-#define LOG_LEVEL_DEBUG   4
+typedef enum : NSUInteger {
+  LOG_LEVEL_ERROR,
+  LOG_LEVEL_WARN,
+  LOG_LEVEL_INFO,
+  LOG_LEVEL_DEBUG
+} LogLevel;
 
 ///
 ///  Logging function.
@@ -45,7 +47,7 @@
 ///  @param format the printf style format string
 ///  @param ... the arguments to format.
 ///
-void logMessage(int level, FILE *destination, NSString *format, ...)
+void logMessage(LogLevel level, FILE *destination, NSString *format, ...)
     __attribute__((format(__NSString__, 3, 4)));
 
 /// Simple logging macros

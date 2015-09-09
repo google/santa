@@ -14,21 +14,21 @@
 
 #import "SNTLogging.h"
 
-#import <sys/syslog.h>
+#import <asl.h>
 
 #ifdef DEBUG
-static int logLevel = LOG_LEVEL_DEBUG;
+static LogLevel logLevel = LOG_LEVEL_DEBUG;
 #else
-static int logLevel = LOG_LEVEL_INFO;  // default to info
+static LogLevel logLevel = LOG_LEVEL_INFO;  // default to info
 #endif
 
-void logMessage(int level, FILE *destination, NSString *format, ...) {
+void logMessage(LogLevel level, FILE *destination, NSString *format, ...) {
   static BOOL useSyslog = NO;
-  static NSString *binaryName;
+  static const char *binaryName;
   static dispatch_once_t pred;
 
   dispatch_once(&pred, ^{
-      binaryName = [[NSProcessInfo processInfo] processName];
+      binaryName = [[[NSProcessInfo processInfo] processName] UTF8String];
 
       // If debug logging is enabled, the process must be restarted.
       if ([[[NSProcessInfo processInfo] arguments] containsObject:@"--debug"]) {
@@ -37,7 +37,7 @@ void logMessage(int level, FILE *destination, NSString *format, ...) {
 
       // If requested, redirect output to syslog.
       if ([[[NSProcessInfo processInfo] arguments] containsObject:@"--syslog"] ||
-          [binaryName isEqual:@"santad"]) {
+          strcmp(binaryName, "santad") == 0) {
         useSyslog = YES;
       }
   });
@@ -50,16 +50,20 @@ void logMessage(int level, FILE *destination, NSString *format, ...) {
   va_end(args);
 
   if (useSyslog) {
-    NSString *levelName;
-    int syslogLevel = LOG_DEBUG;
+    aslclient client = asl_open(NULL, "com.google.santa", 0);
+    asl_set_filter(client, ASL_FILTER_MASK_UPTO(ASL_LEVEL_DEBUG));
+
+    char *levelName;
+    int syslogLevel = ASL_LEVEL_DEBUG;
     switch (level) {
-      case LOG_LEVEL_ERROR: levelName = @"E"; syslogLevel = LOG_ERR; break;
-      case LOG_LEVEL_WARN: levelName = @"W"; syslogLevel = LOG_WARNING; break;
-      case LOG_LEVEL_INFO: levelName = @"I"; syslogLevel = LOG_INFO; break;
-      case LOG_LEVEL_DEBUG: levelName = @"D"; syslogLevel = LOG_DEBUG; break;
+      case LOG_LEVEL_ERROR: levelName = "E"; syslogLevel = ASL_LEVEL_ERR; break;
+      case LOG_LEVEL_WARN: levelName = "W"; syslogLevel = ASL_LEVEL_WARNING; break;
+      case LOG_LEVEL_INFO: levelName = "I"; syslogLevel = ASL_LEVEL_INFO; break;
+      case LOG_LEVEL_DEBUG: levelName = "D"; syslogLevel = ASL_LEVEL_DEBUG; break;
     }
-    syslog(syslogLevel, "%s\n",
-           [[NSString stringWithFormat:@"%@ %@: %@", levelName, binaryName, s] UTF8String]);
+
+    asl_log(client, NULL, syslogLevel, "%s %s: %s", levelName, binaryName, [s UTF8String]);
+    asl_close(client);
   } else {
     fprintf(destination, "%s\n", [s UTF8String]);
   }
