@@ -41,7 +41,6 @@
   if (!event.fileSHA256 ||
       !event.filePath ||
       !event.occurrenceDate ||
-      !event.executingUser ||
       !event.decision) return NO;
 
   NSData *eventData = [NSKeyedArchiver archivedDataWithRootObject:event];

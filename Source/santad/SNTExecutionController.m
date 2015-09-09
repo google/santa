@@ -147,13 +147,15 @@
       cd.decision != EVENTSTATE_ALLOW_SCOPE) {
 
     SNTStoredEvent *se = [[SNTStoredEvent alloc] init];
-    se.parentName = @(pname);
-    se.fileSHA256 = cd.sha256;
-    se.signingChain = csInfo.certificates;
     se.occurrenceDate = [[NSDate alloc] init];
+    se.fileSHA256 = cd.sha256;
     se.filePath = binInfo.path;
+    se.decision = cd.decision;
+
+    se.signingChain = csInfo.certificates;
     se.pid = @(message.pid);
     se.ppid = @(message.ppid);
+    se.parentName = @(pname);
 
     se.fileBundleID = [binInfo bundleIdentifier];
     se.fileBundleName = [binInfo bundleName];
