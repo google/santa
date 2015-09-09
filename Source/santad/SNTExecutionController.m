@@ -142,9 +142,9 @@
   [self.driverManager postToKernelAction:action forVnodeID:cd.vnodeId];
 
   // Log to database if necessary.
-  if ((cd.decision != EVENTSTATE_ALLOW_BINARY &&
-       cd.decision != EVENTSTATE_ALLOW_CERTIFICATE &&
-       cd.decision != EVENTSTATE_ALLOW_SCOPE) || [[SNTConfigurator configurator] logAllEvents]) {
+  if (cd.decision != EVENTSTATE_ALLOW_BINARY &&
+      cd.decision != EVENTSTATE_ALLOW_CERTIFICATE &&
+      cd.decision != EVENTSTATE_ALLOW_SCOPE) {
 
     SNTStoredEvent *se = [[SNTStoredEvent alloc] init];
     se.parentName = @(pname);

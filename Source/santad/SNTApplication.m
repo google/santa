@@ -130,7 +130,9 @@
           case ACTION_NOTIFY_RENAME:
           case ACTION_NOTIFY_WRITE: {
             dispatch_async(q, ^{
-              [self.eventLog logFileModification:message];
+              if ([[SNTConfigurator configurator] logFileChanges]) {
+                [self.eventLog logFileModification:message];
+              }
             });
             break;
           }

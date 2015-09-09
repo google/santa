@@ -31,9 +31,9 @@ extern NSString * const kDefaultConfigFilePath;
 @property(nonatomic) santa_clientmode_t clientMode;
 
 ///
-///  Whether or not to log all events, even for whitelisted binaries.
+///  If set to NO, file writes won't be logged. Defaults to YES.
 ///
-@property(nonatomic) BOOL logAllEvents;
+@property(nonatomic) BOOL logFileChanges;
 
 ///
 ///  The regex of whitelisted paths. Regexes are specified in ICU format.
