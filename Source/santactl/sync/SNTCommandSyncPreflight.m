@@ -17,6 +17,7 @@
 #include "SNTKernelCommon.h"
 #include "SNTLogging.h"
 
+#import "NSData+Zlib.h"
 #import "SNTCommandSyncConstants.h"
 #import "SNTCommandSyncState.h"
 #import "SNTSystemInfo.h"
@@ -47,10 +48,18 @@
   NSData *requestBody = [NSJSONSerialization dataWithJSONObject:requestDict
                                                         options:0
                                                           error:nil];
+
   NSMutableURLRequest *req = [[NSMutableURLRequest alloc] initWithURL:url];
   [req setHTTPMethod:@"POST"];
   [req setValue:@"application/json" forHTTPHeaderField:@"Content-Type"];
-  [req setHTTPBody:requestBody];
+
+  NSData *compressed = [requestBody zlibCompressed];
+  if (compressed) {
+    requestBody = compressed;
+    [req setValue:@"zlib" forHTTPHeaderField:@"Content-Encoding"];
+  }
+
+  [req setHTTPBody:requestBody];  
 
   [[session dataTaskWithRequest:req completionHandler:^(NSData *data,
                                                         NSURLResponse *response,
