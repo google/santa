@@ -87,7 +87,7 @@
   if (newpath) {
     outStr = [outStr stringByAppendingFormat:@"|newpath=%@", [self sanitizeString:newpath]];
   }
-  outStr = [outStr stringByAppendingFormat:@"|pid=%d|ppid=%d|uid:gid=%d:%d",
+  outStr = [outStr stringByAppendingFormat:@"|pid=%d|ppid=%d|uid=%d|gid=%d",
                message.pid, message.ppid, message.uid, message.gid];
   if (sha256) {
     outStr = [outStr stringByAppendingFormat:@"|sha256=%@", sha256];
@@ -103,13 +103,6 @@
 - (void)logAllowedExecution:(santa_message_t)message {
   SNTCachedDecision *cd = self.detailStore[@(message.vnode_id)];
   [self logExecution:message withDecision:cd];
-}
-
-- (NSString *)sanitizeString:(NSString *)inStr {
-  inStr = [inStr stringByReplacingOccurrencesOfString:@"|" withString:@"<pipe>"];
-  inStr = [inStr stringByReplacingOccurrencesOfString:@"\n" withString:@"\\n"];
-  inStr = [inStr stringByReplacingOccurrencesOfString:@"\r" withString:@"\\r"];
-  return inStr;
 }
 
 - (void)logExecution:(santa_message_t)message withDecision:(SNTCachedDecision *)cd {
@@ -137,7 +130,7 @@
   }
 
   NSString *format = (@"action=EXEC|decision=%@|reason=%@|sha256=%@|"
-                      @"path=%@|args=%@|pid=%d|ppid=%d|uid:gid=%d:%d");
+                      @"path=%@|args=%@|pid=%d|ppid=%d|uid=%d|gid=%d");
   outLog = [NSString stringWithFormat:format,
                d, r, cd.sha256, [self sanitizeString:@(message.path)],
                [self sanitizeString:args], message.pid, message.ppid, message.uid, message.gid];
@@ -148,6 +141,15 @@
   }
 
   LOGI(@"%@", outLog);
+}
+
+#pragma mark Helpers
+
+- (NSString *)sanitizeString:(NSString *)inStr {
+  inStr = [inStr stringByReplacingOccurrencesOfString:@"|" withString:@"<pipe>"];
+  inStr = [inStr stringByReplacingOccurrencesOfString:@"\n" withString:@"\\n"];
+  inStr = [inStr stringByReplacingOccurrencesOfString:@"\r" withString:@"\\r"];
+  return inStr;
 }
 
 - (NSString *)argsForPid:(pid_t)pid {
