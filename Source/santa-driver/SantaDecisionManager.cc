@@ -294,7 +294,7 @@ santa_action_t SantaDecisionManager::GetFromDaemon(
   // If response is still not valid, the daemon exited
   if (!CHECKBW_RESPONSE_VALID(return_action)) {
     LOGE("Daemon process did not respond correctly. Allowing executions "
-         "until it comes back.");
+         "until it comes back. Executable path: %s", message->path);
     CacheCheck(vnode_id_str);
     return ACTION_ERROR;
   }
