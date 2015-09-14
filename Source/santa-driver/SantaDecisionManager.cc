@@ -164,8 +164,6 @@ kern_return_t SantaDecisionManager::StopListener() {
 
 void SantaDecisionManager::AddToCache(
     const char *identifier, santa_action_t decision, uint64_t microsecs) {
-  lck_rw_lock_exclusive(cached_decisions_lock_);
-
   if (cached_decisions_->getCount() > kMaxCacheSize) {
     // This could be made a _lot_ smarter, say only removing entries older
     // than a certain time period. However, with a kMaxCacheSize set
@@ -173,23 +171,25 @@ void SantaDecisionManager::AddToCache(
     // sufficiently low, this should only ever occur if someone is purposefully
     // trying to make the cache grow.
     LOGI("Cache too large, flushing.");
-    cached_decisions_->flushCollection();
+    ClearCache();
   }
 
   if (decision == ACTION_REQUEST_CHECKBW) {
     SantaMessage *pending = new SantaMessage();
     pending->setAction(ACTION_REQUEST_CHECKBW, 0);
+    lck_rw_lock_exclusive(cached_decisions_lock_);
     cached_decisions_->setObject(identifier, pending);
+    lck_rw_unlock_exclusive(cached_decisions_lock_);
     pending->release();  // it was retained when added to the dictionary
   } else {
+    lck_rw_lock_exclusive(cached_decisions_lock_);
     SantaMessage *pending =
         OSDynamicCast(SantaMessage, cached_decisions_->getObject(identifier));
     if (pending) {
       pending->setAction(decision, microsecs);
     }
+    lck_rw_unlock_exclusive(cached_decisions_lock_);
   }
-
-  lck_rw_unlock_exclusive(cached_decisions_lock_);
 }
 
 void SantaDecisionManager::CacheCheck(const char *identifier) {
