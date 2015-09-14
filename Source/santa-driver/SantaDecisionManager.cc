@@ -22,10 +22,13 @@ OSDefineMetaClassAndStructors(SantaDecisionManager, OSObject);
 bool SantaDecisionManager::init() {
   if (!super::init()) return false;
 
-  sdm_lock_grp_ = lck_grp_alloc_init("santa-locks", lck_grp_attr_alloc_init());
-  dataqueue_lock_ = lck_mtx_alloc_init(sdm_lock_grp_, lck_attr_alloc_init());
-  cached_decisions_lock_ = lck_rw_alloc_init(sdm_lock_grp_,
-                                             lck_attr_alloc_init());
+  sdm_lock_grp_attr_ = lck_grp_attr_alloc_init();
+  sdm_lock_grp_ = lck_grp_alloc_init("santa-locks", sdm_lock_grp_attr_);
+
+  sdm_lock_attr_ = lck_attr_alloc_init();
+
+  dataqueue_lock_ = lck_mtx_alloc_init(sdm_lock_grp_, sdm_lock_attr_);
+  cached_decisions_lock_ = lck_rw_alloc_init(sdm_lock_grp_, sdm_lock_attr_);
 
   cached_decisions_ = OSDictionary::withCapacity(1000);
 
@@ -52,9 +55,19 @@ void SantaDecisionManager::free() {
     dataqueue_lock_ = NULL;
   }
 
+  if (sdm_lock_attr_) {
+    lck_attr_free(sdm_lock_attr_);
+    sdm_lock_attr_ = NULL;
+  }
+
   if (sdm_lock_grp_) {
     lck_grp_free(sdm_lock_grp_);
     sdm_lock_grp_ = NULL;
+  }
+
+  if (sdm_lock_grp_attr_) {
+    lck_grp_attr_free(sdm_lock_grp_attr_);
+    sdm_lock_grp_attr_ = NULL;
   }
 
   super::free();

@@ -196,6 +196,9 @@ class SantaDecisionManager : public OSObject {
 
  private:
   lck_grp_t *sdm_lock_grp_;
+  lck_grp_attr_t *sdm_lock_grp_attr_;
+
+  lck_attr_t *sdm_lock_attr_;
   lck_rw_t *cached_decisions_lock_;
   lck_mtx_t *dataqueue_lock_;
 
