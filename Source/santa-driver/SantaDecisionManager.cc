@@ -93,8 +93,7 @@ void SantaDecisionManager::ConnectClient(mach_port_t port, pid_t pid) {
 
 void SantaDecisionManager::DisconnectClient(bool itDied) {
   if (client_pid_ < 1) return;
-
-  client_pid_ = -1;
+  client_pid_ = 0;
 
   // Ask santad to shutdown, in case it's running.
   if (!itDied) {
@@ -279,6 +278,7 @@ santa_action_t SantaDecisionManager::GetFromDaemon(
         LOGE("Failed to queue more than %d requests, killing daemon",
              kMaxQueueFailures);
         proc_signal(client_pid_, SIGKILL);
+        client_pid_ = 0;
       }
       LOGE("Failed to queue request for %s.", message->path);
       CacheCheck(vnode_id_str);
