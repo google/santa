@@ -308,6 +308,7 @@ santa_action_t SantaDecisionManager::FetchDecision(
     const uint64_t vnode_id,
     const char *vnode_id_str) {
   santa_action_t return_action = ACTION_UNSET;
+  if (!ClientConnected()) return ACTION_RESPOND_CHECKBW_ALLOW;
 
   // Check to see if item is in cache
   return_action = GetFromCache(vnode_id_str);
@@ -322,18 +323,13 @@ santa_action_t SantaDecisionManager::FetchDecision(
     path[0] = '\0';
   }
 
-  // Get decision from daemon if available, otherwise allow
-  if (ClientConnected()) {
-    santa_message_t *message = NewMessage();
-    strlcpy(message->path, path, sizeof(message->path));
-    message->action = ACTION_REQUEST_CHECKBW;
-    message->vnode_id = vnode_id;
-    santa_action_t ret = GetFromDaemon(message, vnode_id_str);
-    delete message;
-    return ret;
-  } else {
-    return ACTION_RESPOND_CHECKBW_ALLOW;
-  }
+  santa_message_t *message = NewMessage();
+  strlcpy(message->path, path, sizeof(message->path));
+  message->action = ACTION_REQUEST_CHECKBW;
+  message->vnode_id = vnode_id;
+  santa_action_t ret = GetFromDaemon(message, vnode_id_str);
+  delete message;
+  return ret;
 }
 
 #pragma mark Misc
