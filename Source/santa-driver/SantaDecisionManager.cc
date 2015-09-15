@@ -115,7 +115,10 @@ void SantaDecisionManager::DisconnectClient(bool itDied) {
 }
 
 bool SantaDecisionManager::ClientConnected() {
-  return (client_pid_ > 0 && proc_exiting(proc_find(client_pid_)) == 0);
+  proc_t p = proc_find(client_pid_);
+  bool is_exiting = proc_exiting(p);
+  proc_rele(p);
+  return (client_pid_ > 0 && !is_exiting);
 }
 
 IOMemoryDescriptor *SantaDecisionManager::GetMemoryDescriptor() {
