@@ -107,6 +107,7 @@
 
   SNTRule *newRule = [[SNTRule alloc] init];
   newRule.shasum = dict[kRuleSHA256];
+  if (newRule.shasum.length != 64) return nil;
 
   NSString *policyString = dict[kRulePolicy];
   if ([policyString isEqual:kRulePolicyWhitelist]) {
@@ -131,7 +132,7 @@
   }
 
   NSString *customMsg = dict[kRuleCustomMsg];
-  if (customMsg) {
+  if (customMsg.length) {
     newRule.customMsg = customMsg;
   }
 
