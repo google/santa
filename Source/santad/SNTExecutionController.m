@@ -92,13 +92,16 @@
     }
   }
 
-  if (![self fileIsInScope:fi]) {
-    return EVENTSTATE_ALLOW_SCOPE;
+  NSString *msg = [self fileIsScopeBlacklisted:fi];
+  if (msg) {
+    cd.decisionExtra = msg;
+    return EVENTSTATE_BLOCK_SCOPE;
   }
 
-  if (fi.isMissingPageZero) {
-    LOGW(@"File has bad/missing __PAGEZERO segment. Denying execution");
-    return EVENTSTATE_BLOCK_SCOPE;
+  msg = [self fileIsScopeWhitelisted:fi];
+  if (msg) {
+    cd.decisionExtra = msg;
+    return EVENTSTATE_ALLOW_SCOPE;
   }
 
   switch ([[SNTConfigurator configurator] clientMode]) {
@@ -206,23 +209,32 @@
 ///
 ///  @return @c YES if file is in scope, @c NO otherwise.
 ///
-- (BOOL)fileIsInScope:(SNTFileInfo *)fi {
+- (NSString *)fileIsScopeWhitelisted:(SNTFileInfo *)fi {
   // Determine if file is within a whitelisted path
   NSRegularExpression *re = [[SNTConfigurator configurator] whitelistPathRegex];
-  if ([re numberOfMatchesInString:fi.path
-                          options:0
-                            range:NSMakeRange(0, fi.path.length)]) {
-    return NO;
+  if ([re numberOfMatchesInString:fi.path options:0 range:NSMakeRange(0, fi.path.length)]) {
+    return @"Whitelist Regex";
   }
 
   // If file is not a Mach-O file, we're not interested unless it's part of an install package.
   // TODO(rah): Consider adding an option to check all scripts.
   // TODO(rah): Consider adding an option to disable package script checks.
   if (!fi.isMachO && ![fi.path hasPrefix:@"/private/tmp/PKInstallSandbox."]) {
-    return NO;
+    return @"Not a Mach-O";
   }
 
-  return YES;
+  return nil;
+}
+
+- (NSString *)fileIsScopeBlacklisted:(SNTFileInfo *)fi {
+  NSRegularExpression *re = [[SNTConfigurator configurator] blacklistPathRegex];
+  if ([re numberOfMatchesInString:fi.path options:0 range:NSMakeRange(0, fi.path.length)]) {
+    return @"Blacklist Regex";
+  }
+
+  if (fi.isMissingPageZero) return @"Missing __PAGEZERO";
+
+  return nil;
 }
 
 - (void)initiateEventUploadForEvent:(SNTStoredEvent *)event {

@@ -21,8 +21,9 @@
 @property NSString *configFilePath;
 @property NSMutableDictionary *configData;
 
-/// Creating NSRegularExpression objects is not fast, so cache it.
+/// Creating NSRegularExpression objects is not fast, so cache them.
 @property NSRegularExpression *cachedWhitelistDirRegex;
+@property NSRegularExpression *cachedBlacklistDirRegex;
 
 /// Array of keys that cannot be changed while santad is running if santad didn't make the change.
 @property(readonly) NSArray *protectedKeys;
@@ -36,6 +37,7 @@ NSString * const kDefaultConfigFilePath = @"/var/db/santa/config.plist";
 /// The keys in the config file
 static NSString * const kClientModeKey = @"ClientMode";
 static NSString * const kWhitelistRegexKey = @"WhitelistRegex";
+static NSString * const kBlacklistRegexKey = @"BlacklistRegex";
 static NSString * const kLogFileChangesKey = @"LogFileChanges";
 
 static NSString * const kMoreInfoURLKey = @"MoreInfoURL";
@@ -83,7 +85,7 @@ static NSString * const kMachineIDPlistKeyKey = @"MachineIDKey";
 #pragma mark Protected Keys
 
 - (NSArray *)protectedKeys {
-  return @[ kClientModeKey, kWhitelistRegexKey, kLogFileChangesKey ];
+  return @[ kClientModeKey, kWhitelistRegexKey, kBlacklistRegexKey, kLogFileChangesKey ];
 }
 
 #pragma mark Public Interface
@@ -111,7 +113,7 @@ static NSString * const kMachineIDPlistKeyKey = @"MachineIDKey";
     if (![re hasPrefix:@"^"]) re = [@"^" stringByAppendingString:re];
     self.cachedWhitelistDirRegex = [NSRegularExpression regularExpressionWithPattern:re
                                                                              options:0
-                                                                               error:nil];
+                                                                               error:NULL];
   }
   return self.cachedWhitelistDirRegex;
 }
@@ -123,6 +125,27 @@ static NSString * const kMachineIDPlistKeyKey = @"MachineIDKey";
     self.configData[kWhitelistRegexKey] = [re pattern];
   }
   self.cachedWhitelistDirRegex = nil;
+  [self saveConfigToDisk];
+}
+
+- (NSRegularExpression *)blacklistPathRegex {
+  if (!self.cachedBlacklistDirRegex && self.configData[kBlacklistRegexKey]) {
+    NSString *re = self.configData[kBlacklistRegexKey];
+    if (![re hasPrefix:@"^"]) re = [@"^" stringByAppendingString:re];
+    self.cachedBlacklistDirRegex = [NSRegularExpression regularExpressionWithPattern:re
+                                                                             options:0
+                                                                               error:NULL];
+  }
+  return self.cachedBlacklistDirRegex;
+}
+
+- (void)setBlacklistPathRegex:(NSRegularExpression *)re {
+  if (!re) {
+    [self.configData removeObjectForKey:kBlacklistRegexKey];
+  } else {
+    self.configData[kBlacklistRegexKey] = [re pattern];
+  }
+  self.cachedBlacklistDirRegex = nil;
   [self saveConfigToDisk];
 }
 

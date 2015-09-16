@@ -21,6 +21,7 @@
 
 @property uint64_t vnodeId;
 @property santa_eventstate_t decision;
+@property NSString *decisionExtra;
 @property NSString *sha256;
 @property NSString *certSHA256;
 @property NSString *certCommonName;

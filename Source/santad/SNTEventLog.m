@@ -129,16 +129,22 @@
       d = @"ALLOW"; r = @"NOTRUNNING"; args = [self argsForPid:message.pid]; break;
   }
 
-  NSString *format = (@"action=EXEC|decision=%@|reason=%@|sha256=%@|"
-                      @"path=%@|args=%@|pid=%d|ppid=%d|uid=%d|gid=%d");
-  outLog = [NSString stringWithFormat:format,
-               d, r, cd.sha256, [self sanitizeString:@(message.path)],
-               [self sanitizeString:args], message.pid, message.ppid, message.uid, message.gid];
+  outLog = [NSString stringWithFormat:@"action=EXEC|decision=%@|reason=%@", d, r];
+
+  if (cd.decisionExtra) {
+    outLog = [outLog stringByAppendingFormat:@"|explain=%@", cd.decisionExtra];
+  }
+
+  outLog = [outLog stringByAppendingFormat:@"|sha256=%@|path=%@|args=%@",
+               cd.sha256, [self sanitizeString:@(message.path)], [self sanitizeString:args]];
 
   if (cd.certSHA256) {
     outLog = [outLog stringByAppendingFormat:@"|cert_sha256=%@|cert_cn=%@",
                  cd.certSHA256, [self sanitizeString:cd.certCommonName]];
   }
+
+  outLog = [outLog stringByAppendingFormat:@"|pid=%d|ppid=%d|uid=%d|gid=%d",
+               message.pid, message.ppid, message.uid, message.gid];
 
   LOGI(@"%@", outLog);
 }

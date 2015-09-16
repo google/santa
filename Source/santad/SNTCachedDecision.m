@@ -15,5 +15,4 @@
 #import "SNTCachedDecision.h"
 
 @implementation SNTCachedDecision
-
 @end
