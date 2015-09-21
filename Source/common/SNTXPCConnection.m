@@ -93,7 +93,7 @@
 
     [connection resume];
 
-    __block BOOL verificationComplete = NO;
+    dispatch_semaphore_t sema = dispatch_semaphore_create(0);
     [[connection remoteObjectProxy] isConnectionValidWithBlock:^void(BOOL response) {
         pid_t pid = self.currentConnection.processIdentifier;
 
@@ -107,20 +107,19 @@
           self.currentConnection.exportedObject = self.exportedObject;
           [self invokeAcceptedHandler];
           [self.currentConnection resume];
-          verificationComplete = YES;
+          dispatch_semaphore_signal(sema);
         } else {
           [self invokeRejectedHandler];
           [self.currentConnection invalidate];
           self.currentConnection = nil;
-          verificationComplete = YES;
+          dispatch_semaphore_signal(sema);
         }
     }];
 
     // Wait for validation to complete, at most 5s
-    for (int sleepLoops = 0; sleepLoops < 1000 && !verificationComplete; sleepLoops++) {
-      usleep(5000);
+    if (dispatch_semaphore_wait(sema, dispatch_time(DISPATCH_TIME_NOW, 5 * NSEC_PER_SEC))) {
+      [self invalidate];
     }
-    if (!verificationComplete) [self invalidate];
   }
 }
 
