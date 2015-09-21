@@ -6,15 +6,19 @@ BINARIES            = ['Santa.app', 'santa-driver.kext']
 DSYMS               = ['Santa.app.dSYM', 'santa-driver.kext.dSYM', 'santad.dSYM', 'santactl.dSYM']
 XCPRETTY_DEFAULTS   = '-sc'
 XCODEBUILD_DEFAULTS = "-workspace #{WORKSPACE} -derivedDataPath #{OUTPUT_PATH} -parallelizeTargets"
+$DISABLE_XCPRETTY   = false
 
 task :default do
   system("rake -sT")
 end
 
 def xcodebuild(opts)
-  if system "xcodebuild #{XCODEBUILD_DEFAULTS} #{opts} | " \
-      "xcpretty #{XCPRETTY_DEFAULTS} && " \
-      "exit ${PIPESTATUS[0]}"
+  command = "xcodebuild #{XCODEBUILD_DEFAULTS} #{opts}"
+  if not $DISABLE_XCPRETTY
+    command << " | xcpretty #{XCPRETTY_DEFAULTS} && exit ${PIPESTATUS[0]}"
+  end
+
+  if system command
     puts "\e[32mPass\e[0m"
   else
     raise "\e[31mFail\e[0m"
@@ -28,6 +32,7 @@ task :init do
   end
   unless system 'xcpretty -v >/dev/null 2>&1'
     puts "xcpretty is not installed. Install with 'sudo gem install xcpretty'"
+    $DISABLE_XCPRETTY = true
   end
 end
 
