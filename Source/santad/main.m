@@ -87,10 +87,6 @@ int main(int argc, const char *argv[]) {
       return 0;
     }
 
-    // Close stdout/stderr so logging goes to syslog
-    fclose(stdout);
-    fclose(stderr);
-
     LOGI(@"Started, version %@", infoDict[@"CFBundleVersion"]);
 
     SNTApplication *s = [[SNTApplication alloc] init];
