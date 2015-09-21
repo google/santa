@@ -357,5 +357,19 @@ static NSString *const kCertDataKey = @"certData";
   }];
 }
 
+- (BOOL)isCA {
+  return [[self memoizedSelector:_cmd forBlock:^id{
+    NSDictionary *dict = [self allCertificateValues][(__bridge NSString *)kSecOIDBasicConstraints];
+    return [self x509ValueForLabel:@"Certificate Authority"
+                    fromDictionary:dict];
+  }] isEqual:@"Yes"];
+}
+
+- (NSString *)serialNumber {
+  return [self memoizedSelector:_cmd forBlock:^id{
+    NSDictionary *dict = [self allCertificateValues][(__bridge NSString *)kSecOIDX509V1SerialNumber];
+    return dict[(__bridge NSString *)kSecPropertyKeyValue];
+  }];
+}
 
 @end

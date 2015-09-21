@@ -91,6 +91,16 @@
 @property(readonly, nonatomic) NSString *orgUnit;
 
 ///
+///  Is this cert a CA?
+///
+@property(readonly, nonatomic) BOOL isCA;
+
+///
+///  The cert serial number
+///
+@property(readonly, nonatomic) NSString *serialNumber;
+
+///
 ///  Issuer details, same fields as above.
 ///
 @property(readonly, nonatomic) NSString *issuerCommonName;

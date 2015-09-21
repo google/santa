@@ -114,6 +114,8 @@
       @"a047a37fa2d2e118a4f5095fe074d6cfe0e352425a7632bf8659c03919a6c81d");
   XCTAssertEqualObjects(sut.validFrom, [NSDate dateWithString:@"2013-04-05 15:15:55 +0000"]);
   XCTAssertEqualObjects(sut.validUntil, [NSDate dateWithString:@"2015-04-04 15:15:55 +0000"]);
+  XCTAssertTrue(sut.isCA);
+  XCTAssertEqualObjects(sut.serialNumber, @"146025");
 
   sut = [[SNTCertificate alloc] initWithCertificateDataPEM:self.testDataPEM2];
   XCTAssertNotNil(sut);
@@ -128,6 +130,8 @@
       @"129d39ff4384197dc2bcbe1a83a69b3405b7df33254b1b1ee29a23847a23555a");
   XCTAssertEqualObjects(sut.validFrom, [NSDate dateWithString:@"2013-11-14 00:00:00 +0000"]);
   XCTAssertEqualObjects(sut.validUntil, [NSDate dateWithString:@"2015-11-14 23:59:59 +0000"]);
+  XCTAssertFalse(sut.isCA);
+  XCTAssertEqualObjects(sut.serialNumber, @"5E FA 67 0E 99 E4 AB 88 E0 F2 0B 33 86 7B 78 4D");
 }
 
 - (void)testInitWithValidPEMAfterKey {
