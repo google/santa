@@ -41,8 +41,11 @@ REGISTER_COMMAND_NAME(@"status")
 }
 
 + (void)runWithArguments:(NSArray *)arguments daemonConnection:(SNTXPCConnection *)daemonConn {
+  dispatch_group_t group = dispatch_group_create();
+
   // Daemon status
   __block NSString *clientMode;
+  dispatch_group_enter(group);
   [[daemonConn remoteObjectProxy] clientMode:^(santa_clientmode_t cm) {
       switch (cm) {
         case CLIENTMODE_MONITOR:
@@ -52,31 +55,39 @@ REGISTER_COMMAND_NAME(@"status")
         default:
           clientMode = [NSString stringWithFormat:@"Unknown (%d)", cm]; break;
       }
+      dispatch_group_leave(group);
   }];
-  do { usleep(5000); } while (!clientMode);
-  printf(">>> Daemon Info\n");
-  printf("  %-25s | %s\n", "Mode", [clientMode UTF8String]);
 
   // Kext status
   __block int64_t cacheCount = -1;
+  dispatch_group_enter(group);
   [[daemonConn remoteObjectProxy] cacheCount:^(int64_t count) {
       cacheCount = count;
+      dispatch_group_leave(group);
   }];
-  do { usleep(5000); } while (cacheCount == -1);
-  printf(">>> Kernel Info\n");
-  printf("  %-25s | %lld\n", "Kernel cache count", cacheCount);
 
   // Database counts
   __block int64_t eventCount = -1, binaryRuleCount = -1, certRuleCount = -1;
+  dispatch_group_enter(group);
   [[daemonConn remoteObjectProxy] databaseRuleCounts:^(int64_t binary, int64_t certificate) {
       binaryRuleCount = binary;
       certRuleCount = certificate;
+      dispatch_group_leave(group);
   }];
+  dispatch_group_enter(group);
   [[daemonConn remoteObjectProxy] databaseEventCount:^(int64_t count) {
       eventCount = count;
+      dispatch_group_leave(group);
   }];
-  do { usleep(5000); } while (eventCount == -1 || binaryRuleCount == -1 || certRuleCount == -1);
 
+  if (dispatch_group_wait(group, dispatch_time(DISPATCH_TIME_NOW, NSEC_PER_SEC * 5))) {
+    printf("Failed to retrieve some stats from daemon\n");
+  }
+
+  printf(">>> Daemon Info\n");
+  printf("  %-25s | %s\n", "Mode", [clientMode UTF8String]);
+  printf(">>> Kernel Info\n");
+  printf("  %-25s | %lld\n", "Kernel cache count", cacheCount);
   printf(">>> Database Info\n");
   printf("  %-25s | %lld\n", "Binary Rules", binaryRuleCount);
   printf("  %-25s | %lld\n", "Certificate Rules", certRuleCount);
