@@ -43,8 +43,8 @@
   [NSAnimationContext beginGrouping];
   [[NSAnimationContext currentContext] setDuration:0.15f];
   [[NSAnimationContext currentContext] setCompletionHandler:^{
-      [weakSelf.windowController windowWillClose:nil];
-      [weakSelf orderOut:nil];
+      [weakSelf.windowController windowWillClose:sender];
+      [weakSelf orderOut:sender];
       [weakSelf setAlphaValue:1.f];
   }];
   [[self animator] setAlphaValue:0.f];
