@@ -48,9 +48,23 @@ continue to work across OS versions.
 
 Intentions and Expectations
 ===========================
-No single system or process will stop *all* attacks, or provide 100% security. Santa is written with the intention of helping protect users from themselves. People often download malware and trust it, giving the malware credentials, or allowing unknown software to exfiltrate more data about your system. As a centrally managed component, Santa can help stop the spread of malware among a larger fleet of machines. Additionally, Santa can aid in analyzing what is running in your fleet.
+No single system or process will stop *all* attacks, or provide 100% security.
+Santa is written with the intention of helping protect users from themselves.
+People often download malware and trust it, giving the malware credentials, or
+allowing unknown software to exfiltrate more data about your system. As a
+centrally managed component, Santa can help stop the spread of malware among a
+larger fleet of machines. Additionally, Santa can aid in analyzing what is
+running in your fleet.
 
-Santa is part of a defense-in-depth strategy, and you should continue to protect hosts in whatever other ways you see fit.
+Santa is part of a defense-in-depth strategy, and you should continue to protect
+hosts in whatever other ways you see fit.
+
+Get Help
+========
+
+If you have questions or need help getting started, the 
+[santa-dev](https://groups.google.com/forum/#!forum/santa-dev) group is the
+best place to start.
 
 Known Issues
 ============
@@ -58,7 +72,7 @@ Santa is not yet a 1.0 and we have some known issues to be aware of:
 
 * Santa only blocks execution (execve and variants), it doesn't protect against
 dynamic libraries loaded with dlopen, libraries on disk that have been replaced or
-libraries loaded using DYLD_INSERT_LIBRARIES. We are working on also protecting
+libraries loaded using `DYLD_INSERT_LIBRARIES`. We are working on also protecting
 against these avenues of attack.
 
 * Kext communication security: the kext will only accept a connection from a
@@ -107,11 +121,10 @@ and for security-reasons parts of Santa will not operate properly if not signed.
 
 Kext Signing
 ============
-10.9 requires a special Developer ID certificate to sign kernel extensions and
-if the kext is not signed with one of these special certificates a warning will
-be shown when loading the kext for the first time. In 10.10 this is a hard error
-and the kext will not load at all unless the machine is booted with a debug
-boot-arg.
+Kernel extensions on OS X 10.9 and later must be signed using an Apple-provided
+Developer ID certificate with a kernel extension flag. Without it, the only way
+to load an extension is to enable kext-dev-mode or disable SIP, depending on the
+OS version.
 
 There are two possible solutions for this, for distribution purposes:
 
@@ -125,10 +138,6 @@ and distribute a new version of the pre-signed kext.
 2) Apply for your own [kext signing certificate](https://developer.apple.com/contact/kext/).
 Apple will only grant this for broad distribution within an organization, they
 won't issue them just for testing purposes.
-
-If you just want to locally test changes to the kext code, you should enable
-kext-dev mode, instructions for which can be found on the Apple developer site.
-
 
 Contributing
 ============
