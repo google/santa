@@ -148,4 +148,11 @@
   reply();
 }
 
+- (void)setBlacklistPathRegex:(NSString *)pattern reply:(void (^)())reply {
+  NSRegularExpression *re = [NSRegularExpression regularExpressionWithPattern:pattern
+                                                                      options:0
+                                                                        error:NULL];
+  [[SNTConfigurator configurator] setBlacklistPathRegex:re];
+  reply();
+}
 @end

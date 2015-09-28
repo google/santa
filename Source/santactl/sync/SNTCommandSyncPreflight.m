@@ -86,6 +86,10 @@
           [[daemonConn remoteObjectProxy] setWhitelistPathRegex:r[kWhitelistRegex] reply:^{}];
         }
 
+        if ([r[kBlacklistRegex] isKindOfClass:[NSString class]]) {
+          [[daemonConn remoteObjectProxy] setBlacklistPathRegex:r[kBlacklistRegex] reply:^{}];
+        }
+
         if ([r[kCleanSync] boolValue]) {
           syncState.cleanSync = YES;
         }
