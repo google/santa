@@ -27,7 +27,16 @@
 
   self = [super init];
   if (self) {
+    [db inDatabase:^(FMDatabase *db) {
+      if (![db goodConnection]) {
+        [db close];
+        [[NSFileManager defaultManager] removeItemAtPath:[db databasePath] error:NULL];
+        [db open];
+      }
+    }];
+
     _dbQ = db;
+
     [self updateTableSchema];
   }
   return self;
@@ -51,7 +60,7 @@
       uint32_t newVersion = [self initializeDatabase:db fromVersion:currentVersion];
       if (newVersion < 1) return;
 
-      LOGD(@"Updated %@ from version %d to %d", [self className], currentVersion, newVersion);
+      LOGI(@"Updated %@ from version %d to %d", [self className], currentVersion, newVersion);
 
       [db setUserVersion:newVersion];
   }];

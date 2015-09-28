@@ -110,4 +110,18 @@
   XCTAssertNil(r);
 }
 
+- (void)testBadDatabase {
+  NSString *dbPath = [NSTemporaryDirectory() stringByAppendingString:@"sntruletabletest_baddb.db"];
+  [@"some text" writeToFile:dbPath atomically:YES encoding:NSUTF8StringEncoding error:NULL];
+
+  FMDatabaseQueue *dbq = [[FMDatabaseQueue alloc] initWithPath:dbPath];
+  SNTRuleTable *sut = [[SNTRuleTable alloc] initWithDatabaseQueue:dbq];
+
+  [sut addRules:@[ [self _exampleBinaryRule] ] cleanSlate:NO];
+
+  XCTAssertGreaterThan(sut.ruleCount, 0);
+
+  [[NSFileManager defaultManager] removeItemAtPath:dbPath error:NULL];
+}
+
 @end
