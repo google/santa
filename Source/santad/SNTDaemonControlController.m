@@ -23,6 +23,10 @@
 #import "SNTRule.h"
 #import "SNTRuleTable.h"
 
+// Globals used by the santad watchdog thread
+uint64_t watchdogCPUEvents = 0;
+uint64_t watchdogRAMEvents = 0;
+
 @interface SNTDaemonControlController ()
 @property dispatch_source_t syncTimer;
 @end
@@ -165,4 +169,13 @@
   [[SNTConfigurator configurator] setBlacklistPathRegex:re];
   reply();
 }
+
+- (void)watchdogCPUEvents:(void (^)(uint64_t))reply {
+  reply(watchdogCPUEvents);
+}
+
+- (void)watchdogRAMEvents:(void (^)(uint64_t))reply {
+  reply(watchdogRAMEvents);
+}
+
 @end

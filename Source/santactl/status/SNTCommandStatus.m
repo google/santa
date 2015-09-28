@@ -46,6 +46,7 @@ REGISTER_COMMAND_NAME(@"status")
 
   // Daemon status
   __block NSString *clientMode;
+  __block uint64_t cpuEvents, ramEvents;
   dispatch_group_enter(group);
   [[daemonConn remoteObjectProxy] clientMode:^(santa_clientmode_t cm) {
       switch (cm) {
@@ -57,6 +58,16 @@ REGISTER_COMMAND_NAME(@"status")
           clientMode = [NSString stringWithFormat:@"Unknown (%d)", cm]; break;
       }
       dispatch_group_leave(group);
+  }];
+  dispatch_group_enter(group);
+  [[daemonConn remoteObjectProxy] watchdogCPUEvents:^(uint64_t events) {
+    cpuEvents = events;
+    dispatch_group_leave(group);
+  }];
+  dispatch_group_enter(group);
+  [[daemonConn remoteObjectProxy] watchdogRAMEvents:^(uint64_t events) {
+    ramEvents = events;
+    dispatch_group_leave(group);
   }];
   char *fileLogging = ([[SNTConfigurator configurator] logFileChanges] ? "Enabled" : "Disabled");
 
@@ -94,6 +105,8 @@ REGISTER_COMMAND_NAME(@"status")
   printf(">>> Daemon Info\n");
   printf("  %-22s | %s\n", "Mode", [clientMode UTF8String]);
   printf("  %-22s | %s\n", "File Logging", fileLogging);
+  printf("  %-22s | %lld\n", "Watchdog CPU Events", cpuEvents);
+  printf("  %-22s | %lld\n", "Watchdog RAM Events", ramEvents);
   printf(">>> Kernel Info\n");
   printf("  %-22s | %lld\n", "Kernel cache count", cacheCount);
   printf(">>> Database Info\n");
