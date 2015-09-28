@@ -16,6 +16,7 @@
 
 #import "SNTCertificate.h"
 #import "SNTCodesignChecker.h"
+#import "SNTConfigurator.h"
 #import "SNTLogging.h"
 #import "SNTRule.h"
 
@@ -48,6 +49,8 @@
         launchdSHA, @(RULESTATE_WHITELIST), @(RULETYPE_CERT)];
 
     newVersion = 1;
+
+    [[SNTConfigurator configurator] setSyncCleanRequired:YES];
   }
 
   return newVersion;

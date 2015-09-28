@@ -46,6 +46,8 @@ static NSString * const kEventDetailTextKey = @"EventDetailText";
 static NSString * const kDefaultBlockMessage = @"DefaultBlockMessage";
 
 static NSString * const kSyncBaseURLKey = @"SyncBaseURL";
+static NSString * const kSyncLastSuccess = @"SyncLastSuccess";
+static NSString * const kSyncCleanRequired = @"SyncCleanRequired";
 static NSString * const kClientAuthCertificateFileKey = @"ClientAuthCertificateFile";
 static NSString * const kClientAuthCertificatePasswordKey = @"ClientAuthCertificatePassword";
 static NSString * const kClientAuthCertificateCNKey = @"ClientAuthCertificateCN";
@@ -200,6 +202,24 @@ static NSString * const kMachineIDPlistKeyKey = @"MachineIDKey";
 
 - (NSString *)syncServerAuthRootsFile {
   return self.configData[kServerAuthRootsFileKey];
+}
+
+- (NSDate *)syncLastSuccess {
+  return self.configData[kSyncLastSuccess];
+}
+
+- (void)setSyncLastSuccess:(NSDate *)syncLastSuccess {
+  self.configData[kSyncLastSuccess] = syncLastSuccess;
+  [self saveConfigToDisk];
+}
+
+- (BOOL)syncCleanRequired {
+  return [self.configData[kSyncCleanRequired] boolValue];
+}
+
+- (void)setSyncCleanRequired:(BOOL)syncCleanRequired {
+  self.configData[kSyncCleanRequired] = @(syncCleanRequired);
+  [self saveConfigToDisk];
 }
 
 - (NSString *)machineOwner {

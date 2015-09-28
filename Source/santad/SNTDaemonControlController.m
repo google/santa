@@ -140,6 +140,16 @@
   reply();
 }
 
+- (void)setSyncLastSuccess:(NSDate *)date reply:(void (^)())reply {
+  [[SNTConfigurator configurator] setSyncLastSuccess:date];
+  reply();
+}
+
+- (void)setSyncCleanRequired:(BOOL)cleanReqd reply:(void (^)())reply {
+  [[SNTConfigurator configurator] setSyncCleanRequired:cleanReqd];
+  reply();
+}
+
 - (void)setWhitelistPathRegex:(NSString *)pattern reply:(void (^)())reply {
   NSRegularExpression *re = [NSRegularExpression regularExpressionWithPattern:pattern
                                                                       options:0

@@ -49,6 +49,13 @@
         [[daemonConn remoteObjectProxy] setNextSyncInterval:[backoffInterval intValue] reply:^{}];
       }
 
+      if (syncState.cleanSync) {
+        [[daemonConn remoteObjectProxy] setSyncCleanRequired:NO reply:^{}];
+      }
+
+      // Update last sync success
+      [[daemonConn remoteObjectProxy] setSyncLastSuccess:[NSDate date] reply:^{}];
+
       handler(YES);
     }
   }] resume];

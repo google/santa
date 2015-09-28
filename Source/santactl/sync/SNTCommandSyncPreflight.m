@@ -20,6 +20,7 @@
 #import "NSData+Zlib.h"
 #import "SNTCommandSyncConstants.h"
 #import "SNTCommandSyncState.h"
+#import "SNTConfigurator.h"
 #import "SNTSystemInfo.h"
 #import "SNTXPCConnection.h"
 #import "SNTXPCControlInterface.h"
@@ -41,7 +42,9 @@
   requestDict[kOSBuild] = [SNTSystemInfo osBuild];
   requestDict[kPrimaryUser] = syncState.machineOwner;
 
-  if ([[[NSProcessInfo processInfo] arguments] containsObject:@"--clean"]) {
+  // If user requested it or we've never had a successful sync, try from a clean slate.
+  if ([[[NSProcessInfo processInfo] arguments] containsObject:@"--clean"] ||
+      ![[SNTConfigurator configurator] syncCleanRequired]) {
     requestDict[kRequestCleanSync] = @YES;
   }
 

@@ -107,6 +107,16 @@ extern NSString * const kDefaultConfigFilePath;
 @property(readonly, nonatomic) NSString *machineOwner;
 
 ///
+///  The last date of successful sync.
+///
+@property(nonatomic) NSDate *syncLastSuccess;
+
+///
+///  If YES a clean sync is required.
+///
+@property(nonatomic) BOOL syncCleanRequired;
+
+///
 ///  If set, this over-rides the default machine ID used for syncing.
 ///
 @property(readonly, nonatomic) NSString *machineID;
