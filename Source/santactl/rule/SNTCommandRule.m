@@ -47,13 +47,20 @@ REGISTER_COMMAND_NAME(@"rule")
 }
 
 + (NSString *)longHelpText {
-  return (@"Usage: santactl rule {add|remove} [options]\n"
-          @"  --whitelist: add to whitelist\n"
-          @"  --blacklist: add to blacklist\n"
-          @"  --silent-blacklist: add to silent blacklist\n"
-          @"  --message {message}: custom message\n"
-          @"  --path {path}: path of binary to add\n"
-          @"  --sha256 {sha256}: hash to add\n");
+  return (@"Usage: santactl rule [options]\n"
+          @"  One of:\n"
+          @"    --whitelist: add to whitelist\n"
+          @"    --blacklist: add to blacklist\n"
+          @"    --silent-blacklist: add to silent blacklist\n"
+          @"    --remove: remove existing rule\n"
+          @"\n"
+          @"  One of:\n"
+          @"    --path {path}: path of binary/bundle to add/remove\n"
+          @"    --sha256 {sha256}: hash to add/remove\n"
+          @"\n"
+          @"  Optionally:\n"
+          @"    --certificate: add certificate rule instead of binary\n"
+          @"    --message {message}: custom message\n");
 }
 
 + (void)printErrorUsageAndExit:(NSString *)error {
@@ -64,95 +71,72 @@ REGISTER_COMMAND_NAME(@"rule")
 
 + (void)runWithArguments:(NSArray *)arguments daemonConnection:(SNTXPCConnection *)daemonConn {
   SNTConfigurator *config = [SNTConfigurator configurator];
-
-  // Ensure we have no privileges
-  if (!DropRootPrivileges()) {
-    printf("Failed to drop root privileges.\n");
-    exit(1);
-  }
-
   if ([config syncBaseURL] != nil) {
     printf("SyncBaseURL is set, rules are managed centrally.\n");
     exit(1);
   }
 
-  NSString *action = [arguments firstObject];
+  SNTRule *newRule = [[SNTRule alloc] init];
+  newRule.state = RULESTATE_UNKNOWN;
+  newRule.type = RULETYPE_BINARY;
 
-  // add or remove
-  if (!action) {
-    [self printErrorUsageAndExit:@"Missing action"];
-  }
+  NSString *path;
 
-  int state = RULESTATE_UNKNOWN;
+  // Parse arguments
+  for (NSUInteger i = 0; i < arguments.count ; i++ ) {
+    NSString *arg = arguments[i];
 
-  if ([action compare:@"add" options:NSCaseInsensitiveSearch] == NSOrderedSame) {
-  } else if ([action compare:@"remove" options:NSCaseInsensitiveSearch] == NSOrderedSame) {
-    state = RULESTATE_REMOVE;
-  } else {
-    [self printErrorUsageAndExit:@"Unknown action"];
-  }
-
-  NSString *customMsg = @"";
-  NSString *SHA256 = nil;
-  NSString *filePath = nil;
-
-  // parse arguments
-  for (NSUInteger i = 1; i < [arguments count] ; i++ ) {
-    NSString* argument = [arguments objectAtIndex:i];
-
-    if ([argument compare:@"--whitelist" options:NSCaseInsensitiveSearch] == NSOrderedSame) {
-      state = RULESTATE_WHITELIST;
-    } else if ([argument compare:@"--blacklist" options:NSCaseInsensitiveSearch] == NSOrderedSame) {
-      state = RULESTATE_BLACKLIST;
-    } else if ([argument compare:@"--silent-blacklist" options:NSCaseInsensitiveSearch] == NSOrderedSame) {
-      state = RULESTATE_SILENT_BLACKLIST;
-    } else if ([argument compare:@"--message" options:NSCaseInsensitiveSearch] == NSOrderedSame) {
+    if ([arg caseInsensitiveCompare:@"--whitelist"] == NSOrderedSame) {
+      newRule.state = RULESTATE_WHITELIST;
+    } else if ([arg caseInsensitiveCompare:@"--blacklist"] == NSOrderedSame) {
+      newRule.state = RULESTATE_BLACKLIST;
+    } else if ([arg caseInsensitiveCompare:@"--silent-blacklist"] == NSOrderedSame) {
+      newRule.state = RULESTATE_SILENT_BLACKLIST;
+    } else if ([arg caseInsensitiveCompare:@"--remove"] == NSOrderedSame) {
+      newRule.state = RULESTATE_REMOVE;
+    } else if ([arg caseInsensitiveCompare:@"--certificate"] == NSOrderedSame) {
+      newRule.type = RULETYPE_CERT;
+    } else if ([arg caseInsensitiveCompare:@"--path"] == NSOrderedSame) {
       if (++i > arguments.count - 1) {
-        [self printErrorUsageAndExit:@"No message specified"];
+        [self printErrorUsageAndExit:@"--path requires an argument"];
       }
-
-      customMsg = [arguments objectAtIndex:i];
-    } else if ([argument compare:@"--path" options:NSCaseInsensitiveSearch] == NSOrderedSame) {
+      path = arguments[i];
+    } else if ([arg caseInsensitiveCompare:@"--sha256"] == NSOrderedSame) {
       if (++i > arguments.count - 1) {
-        [self printErrorUsageAndExit:@"No path specified"];
+        [self printErrorUsageAndExit:@"--sha256 requires an argument"];
       }
-
-      filePath = [arguments objectAtIndex:i];
-    } else if ([argument compare:@"--sha256" options:NSCaseInsensitiveSearch] == NSOrderedSame) {
+      newRule.shasum = arguments[i];
+      if (newRule.shasum.length != 64) {
+        [self printErrorUsageAndExit:@"--sha256 requires a valid SHA-256 as the argument"];
+      }
+    } else if ([arg caseInsensitiveCompare:@"--message"] == NSOrderedSame) {
       if (++i > arguments.count - 1) {
-        [self printErrorUsageAndExit:@"No SHA-256 specified"];
+        [self printErrorUsageAndExit:@"--message requires an argument"];
       }
-
-      SHA256 = [arguments objectAtIndex:i];
+      newRule.customMsg = arguments[i];
     } else {
-      [self printErrorUsageAndExit:[@"Unknown argument: %@" stringByAppendingString:argument]];
+      [self printErrorUsageAndExit:[@"Unknown argument: %@" stringByAppendingString:arg]];
     }
   }
 
-  if (state == RULESTATE_UNKNOWN) {
+  if (path) {
+    SNTFileInfo *fi = [[SNTFileInfo alloc] initWithPath:path];
+    if (newRule.type == RULETYPE_BINARY) {
+      newRule.shasum = fi.SHA256;
+    } else if (newRule.type == RULETYPE_CERT) {
+      SNTCodesignChecker *cs = [[SNTCodesignChecker alloc] initWithBinaryPath:fi.path];
+      newRule.shasum = cs.leafCertificate.SHA256;
+    }
+  }
+
+  if (newRule.state == RULESTATE_UNKNOWN) {
     [self printErrorUsageAndExit:@"No state specified"];
-  }
-
-  if (filePath) {
-    SNTFileInfo *fileInfo = [[SNTFileInfo alloc] initWithPath:filePath];
-    if (!fileInfo) {
-      [self printErrorUsageAndExit:@"Provided path is not a regular file or executable bundle"];
-    }
-
-    SHA256 = [fileInfo SHA256];
-  } else if (SHA256) {
-  } else {
+  } else if (!newRule.shasum) {
     [self printErrorUsageAndExit:@"Either SHA-256 or path to file must be specified"];
   }
 
-  SNTRule *newRule = [[SNTRule alloc] init];
-  newRule.shasum = SHA256;
-  newRule.state = state;
-  newRule.type = RULETYPE_BINARY;
-  newRule.customMsg = customMsg;
-
   [[daemonConn remoteObjectProxy] databaseRuleAddRule:newRule cleanSlate:NO reply:^{
-      if (state == RULESTATE_REMOVE) {
+      if (newRule.state == RULESTATE_REMOVE) {
         printf("Removed rule for SHA-256: %s.\n", [newRule.shasum UTF8String]);
       } else {
         printf("Added rule for SHA-256: %s.\n", [newRule.shasum UTF8String]);
