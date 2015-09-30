@@ -44,7 +44,7 @@
 
   // If user requested it or we've never had a successful sync, try from a clean slate.
   if ([[[NSProcessInfo processInfo] arguments] containsObject:@"--clean"] ||
-      ![[SNTConfigurator configurator] syncCleanRequired]) {
+      [[SNTConfigurator configurator] syncCleanRequired]) {
     requestDict[kRequestCleanSync] = @YES;
   }
 
