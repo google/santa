@@ -31,9 +31,13 @@ extern NSString * const kDefaultConfigFilePath;
 @property(nonatomic) santa_clientmode_t clientMode;
 
 ///
-///  If set to NO, file writes won't be logged. Defaults to YES.
+///  The regex of paths to log file changes for. Regexes are specified in ICU format.
 ///
-@property(nonatomic) BOOL logFileChanges;
+///  The regex flags IXSM can be used, though the s (dotalL) and m (multiline) flags are
+///  pointless as a path only ever has a single line.
+///  If the regex doesn't begin with ^ to match from the beginning of the line, it will be added.
+///
+@property(nonatomic) NSRegularExpression *fileChangesRegex;
 
 ///
 ///  The regex of whitelisted paths. Regexes are specified in ICU format.

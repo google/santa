@@ -130,7 +130,9 @@
           case ACTION_NOTIFY_RENAME:
           case ACTION_NOTIFY_WRITE: {
             dispatch_async(q, ^{
-              if ([[SNTConfigurator configurator] logFileChanges]) {
+              NSRegularExpression *re = [[SNTConfigurator configurator] fileChangesRegex];
+              NSString *path = @(message.path);
+              if ([re numberOfMatchesInString:path options:0 range:NSMakeRange(0, path.length)]) {
                 [self.eventLog logFileModification:message];
               }
             });

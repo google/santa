@@ -69,7 +69,7 @@ REGISTER_COMMAND_NAME(@"status")
     ramEvents = events;
     dispatch_group_leave(group);
   }];
-  char *fileLogging = ([[SNTConfigurator configurator] logFileChanges] ? "Enabled" : "Disabled");
+  char *fileLogging = ([[SNTConfigurator configurator] fileChangesRegex] ? "Enabled" : "Disabled");
 
   // Kext status
   __block int64_t cacheCount = -1;
