@@ -46,6 +46,10 @@
       [self.openEventButton setTitle:eventDetailText];
     }
   }
+
+  if (!self.event.fileBundleName) {
+    [self.applicationNameLabel removeFromSuperview];
+  }
 }
 
 - (IBAction)showWindow:(id)sender {

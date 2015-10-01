@@ -60,4 +60,10 @@
 ///
 @property IBOutlet NSButton *openEventButton;
 
+///
+///  Reference to the "Application Name" label in the XIB. Used to remove if application
+///  doesn't have a CFBundleName.
+///
+@property IBOutlet NSTextField *applicationNameLabel;
+
 @end
