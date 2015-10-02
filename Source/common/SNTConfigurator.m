@@ -88,7 +88,8 @@ static NSString * const kMachineIDPlistKeyKey = @"MachineIDKey";
 #pragma mark Protected Keys
 
 - (NSArray *)protectedKeys {
-  return @[ kClientModeKey, kFileChangesRegexKey, kWhitelistRegexKey, kBlacklistRegexKey ];
+  return @[ kClientModeKey, kWhitelistRegexKey, kBlacklistRegexKey,
+            kFileChangesRegexKey, kSyncBaseURLKey ];
 }
 
 #pragma mark Public Interface
@@ -298,7 +299,7 @@ static NSString * const kMachineIDPlistKeyKey = @"MachineIDKey";
 
   if (!self.configData) {
     self.configData = [configData mutableCopy];
-  } else {
+  } else if (self.syncBaseURL) {
     // Ensure no-one is trying to change protected keys behind our back.
     NSMutableDictionary *configDataMutable = [configData mutableCopy];
     BOOL changed = NO;
