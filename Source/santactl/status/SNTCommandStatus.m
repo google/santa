@@ -95,9 +95,14 @@ REGISTER_COMMAND_NAME(@"status")
 
   // Sync status
   NSString *syncURLStr = [[[SNTConfigurator configurator] syncBaseURL] absoluteString];
-  NSString *lastSyncSuccess = [[[SNTConfigurator configurator] syncLastSuccess] description];
-  BOOL syncCleanReqd = [[SNTConfigurator configurator] syncCleanRequired];
+  NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];
+  dateFormatter.dateStyle = NSDateFormatterLongStyle;
+  dateFormatter.timeStyle = NSDateFormatterLongStyle;
+  NSDate *lastSyncSuccess = [[SNTConfigurator configurator] syncLastSuccess];
+  NSString *lastSyncSuccessStr = [dateFormatter stringFromDate:lastSyncSuccess] ?: @"Never";
+  char *syncCleanReqd = [[SNTConfigurator configurator] syncCleanRequired] ? "Yes" : "No";
 
+  // Wait a maximum of 5s for stats collected from daemon to arrive.
   if (dispatch_group_wait(group, dispatch_time(DISPATCH_TIME_NOW, NSEC_PER_SEC * 5))) {
     printf("Failed to retrieve some stats from daemon\n\n");
   }
@@ -117,9 +122,8 @@ REGISTER_COMMAND_NAME(@"status")
   if (syncURLStr) {
     printf(">>> Sync Info\n");
     printf("  %-22s | %s\n", "Sync Server", [syncURLStr UTF8String]);
-    printf("  %-22s | %s\n", "Clean Sync Required", (syncCleanReqd ? "Yes" : "No"));
-    const char *syncDateStr = (lastSyncSuccess ? [lastSyncSuccess UTF8String] : "Never");
-    printf("  %-22s | %s\n", "Last Successful Sync", syncDateStr);
+    printf("  %-22s | %s\n", "Clean Sync Required", syncCleanReqd);
+    printf("  %-22s | %s\n", "Last Successful Sync", [lastSyncSuccessStr UTF8String]);
   }
 
   exit(0);
