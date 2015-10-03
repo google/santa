@@ -27,7 +27,7 @@ bool SantaDriver::start(IOService *provider) {
   if (!santaDecisionManager->init() ||
       santaDecisionManager->StartListener() != kIOReturnSuccess) {
     santaDecisionManager->release();
-    santaDecisionManager = NULL;
+    santaDecisionManager = nullptr;
     return false;
   }
 
@@ -41,7 +41,7 @@ bool SantaDriver::start(IOService *provider) {
 void SantaDriver::stop(IOService *provider) {
   santaDecisionManager->StopListener();
   santaDecisionManager->release();
-  santaDecisionManager = NULL;
+  santaDecisionManager = nullptr;
 
   LOGI("Unloaded.");
 

@@ -49,8 +49,8 @@ bool SantaDriverClient::start(IOService *provider) {
 
 void SantaDriverClient::stop(IOService *provider) {
   super::stop(provider);
-  myProvider = NULL;
-  decisionManager = NULL;
+  myProvider = nullptr;
+  decisionManager = nullptr;
 }
 
 IOReturn SantaDriverClient::clientClose() {
@@ -124,7 +124,7 @@ IOReturn SantaDriverClient::static_allow_binary(
     void *reference,
     IOExternalMethodArguments *arguments) {
   if (!target) return kIOReturnBadArgument;
-  if (arguments->scalarInput == NULL) return kIOReturnBadArgument;
+  if (arguments->scalarInput == nullptr) return kIOReturnBadArgument;
 
   return target->allow_binary(
       static_cast<const uint64_t>(*arguments->scalarInput));
@@ -143,7 +143,7 @@ IOReturn SantaDriverClient::static_deny_binary(
     void *reference,
     IOExternalMethodArguments *arguments) {
   if (!target) return kIOReturnBadArgument;
-  if (arguments->scalarInput == NULL) return kIOReturnBadArgument;
+  if (arguments->scalarInput == nullptr) return kIOReturnBadArgument;
 
   return target->deny_binary(
       static_cast<const uint64_t>(*arguments->scalarInput));

@@ -222,7 +222,7 @@ class SantaDecisionManager : public OSObject {
 ///  @param action that was requested
 ///  @param VFS context
 ///  @param Vnode being operated on
-///  @param Parent Vnode. May be NULL.
+///  @param Parent Vnode. May be nullptr.
 ///  @param Pointer to an errno-style error.
 ///
 extern "C" int vnode_scope_callback(

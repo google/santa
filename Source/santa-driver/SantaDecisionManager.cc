@@ -47,27 +47,27 @@ void SantaDecisionManager::free() {
 
   if (cached_decisions_lock_) {
     lck_rw_free(cached_decisions_lock_, sdm_lock_grp_);
-    cached_decisions_lock_ = NULL;
+    cached_decisions_lock_ = nullptr;
   }
 
   if (dataqueue_lock_) {
     lck_mtx_free(dataqueue_lock_, sdm_lock_grp_);
-    dataqueue_lock_ = NULL;
+    dataqueue_lock_ = nullptr;
   }
 
   if (sdm_lock_attr_) {
     lck_attr_free(sdm_lock_attr_);
-    sdm_lock_attr_ = NULL;
+    sdm_lock_attr_ = nullptr;
   }
 
   if (sdm_lock_grp_) {
     lck_grp_free(sdm_lock_grp_);
-    sdm_lock_grp_ = NULL;
+    sdm_lock_grp_ = nullptr;
   }
 
   if (sdm_lock_grp_attr_) {
     lck_grp_attr_free(sdm_lock_grp_attr_);
-    sdm_lock_grp_attr_ = NULL;
+    sdm_lock_grp_attr_ = nullptr;
   }
 
   super::free();
@@ -101,7 +101,7 @@ void SantaDecisionManager::DisconnectClient(bool itDied) {
     message->action = ACTION_REQUEST_SHUTDOWN;
     PostToQueue(message);
     delete message;
-    dataqueue_->setNotificationPort(NULL);
+    dataqueue_->setNotificationPort(nullptr);
   } else {
     // If the client died, reset the data queue so when it reconnects
     // it doesn't get swamped straight away.
@@ -145,10 +145,10 @@ kern_return_t SantaDecisionManager::StartListener() {
 
 kern_return_t SantaDecisionManager::StopListener() {
   kauth_unlisten_scope(vnode_listener_);
-  vnode_listener_ = NULL;
+  vnode_listener_ = nullptr;
 
   kauth_unlisten_scope(fileop_listener_);
-  fileop_listener_ = NULL;
+  fileop_listener_ = nullptr;
 
   // Wait for any active invocations to finish before returning
   do {
@@ -197,7 +197,7 @@ void SantaDecisionManager::AddToCache(
 
 void SantaDecisionManager::CacheCheck(const char *identifier) {
   lck_rw_lock_shared(cached_decisions_lock_);
-  bool shouldInvalidate = (cached_decisions_->getObject(identifier) != NULL);
+  bool shouldInvalidate = (cached_decisions_->getObject(identifier) != nullptr);
   if (shouldInvalidate) {
     if (!lck_rw_lock_shared_to_exclusive(cached_decisions_lock_)) {
       // shared_to_exclusive will return false if a previous reader upgraded
@@ -427,7 +427,7 @@ void SantaDecisionManager::FileOpCallback(
     const kauth_action_t action, const vnode_t vp,
     const char *path, const char *new_path) {
   if (vp) {
-    vfs_context_t context = vfs_context_create(NULL);
+    vfs_context_t context = vfs_context_create(nullptr);
     uint64_t vnode_id = GetVnodeIDForVnode(context, vp);
     vfs_context_rele(context);
 
@@ -481,9 +481,9 @@ extern "C" int fileop_scope_callback(
   SantaDecisionManager *sdm = OSDynamicCast(
       SantaDecisionManager, reinterpret_cast<OSObject *>(idata));
 
-  vnode_t vp = NULL;
-  char *path = NULL;
-  char *new_path = NULL;
+  vnode_t vp = nullptr;
+  char *path = nullptr;
+  char *new_path = nullptr;
 
   switch (action) {
     case KAUTH_FILEOP_CLOSE:
@@ -517,7 +517,7 @@ extern "C" int vnode_scope_callback(
     uintptr_t arg0, uintptr_t arg1, uintptr_t arg2, uintptr_t arg3) {
   if (action & KAUTH_VNODE_ACCESS ||
       !(action & KAUTH_VNODE_EXECUTE) ||
-      idata == NULL) {
+      idata == nullptr) {
     return KAUTH_RESULT_DEFER;
   }
 
