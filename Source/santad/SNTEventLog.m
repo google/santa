@@ -14,6 +14,7 @@
 
 #import "SNTEventLog.h"
 
+#include <libproc.h>
 #include <sys/stat.h>
 #include <sys/sysctl.h>
 
@@ -87,8 +88,12 @@
   if (newpath) {
     outStr = [outStr stringByAppendingFormat:@"|newpath=%@", [self sanitizeString:newpath]];
   }
-  outStr = [outStr stringByAppendingFormat:@"|pid=%d|ppid=%d|uid=%d|gid=%d",
-               message.pid, message.ppid, message.uid, message.gid];
+  char pname[PROC_PIDPATHINFO_MAXSIZE];
+  if (proc_name(message.pid, pname, PROC_PIDPATHINFO_MAXSIZE) < 1) {
+    strncpy(pname, "(null)", 6);
+  }
+  outStr = [outStr stringByAppendingFormat:@"|pid=%d|ppid=%d|process=%s|uid=%d|gid=%d",
+               message.pid, message.ppid, pname, message.uid, message.gid];
   if (sha256) {
     outStr = [outStr stringByAppendingFormat:@"|sha256=%@", sha256];
   }
