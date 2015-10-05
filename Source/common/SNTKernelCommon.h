@@ -79,6 +79,11 @@ typedef struct {
   pid_t ppid;
   char path[MAXPATHLEN];
   char newpath[MAXPATHLEN];
+  // For file events, this is the process name.
+  // For exec requests, this is the parent process name.
+  // While process names can technically be 4*MAXPATHLEN, that never
+  // actually happens, so only take MAXPATHLEN and throw away any excess.
+  char pname[MAXPATHLEN];
 } santa_message_t;
 
 #endif  // SANTA__COMMON__KERNELCOMMON_H

@@ -88,12 +88,13 @@
   if (newpath) {
     outStr = [outStr stringByAppendingFormat:@"|newpath=%@", [self sanitizeString:newpath]];
   }
-  char pname[PROC_PIDPATHINFO_MAXSIZE];
-  if (proc_name(message.pid, pname, PROC_PIDPATHINFO_MAXSIZE) < 1) {
-    strncpy(pname, "(null)", 6);
+  char ppath[PATH_MAX];
+  if (proc_pidpath(message.pid, ppath, PATH_MAX) < 1) {
+    strncpy(ppath, "(null)", 6);
   }
-  outStr = [outStr stringByAppendingFormat:@"|pid=%d|ppid=%d|process=%s|uid=%d|gid=%d",
-               message.pid, message.ppid, pname, message.uid, message.gid];
+  outStr =
+      [outStr stringByAppendingFormat:@"|pid=%d|ppid=%d|process=%s|processpath=%s|uid=%d|gid=%d",
+          message.pid, message.ppid, message.pname, ppath, message.uid, message.gid];
   if (sha256) {
     outStr = [outStr stringByAppendingFormat:@"|sha256=%@", sha256];
   }

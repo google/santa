@@ -330,6 +330,7 @@ santa_action_t SantaDecisionManager::FetchDecision(
   strlcpy(message->path, path, sizeof(message->path));
   message->action = ACTION_REQUEST_CHECKBW;
   message->vnode_id = vnode_id;
+  proc_name(message->ppid, message->pname, sizeof(message->pname));
   santa_action_t ret = GetFromDaemon(message, vnode_id_str);
   delete message;
   return ret;
@@ -451,6 +452,7 @@ void SantaDecisionManager::FileOpCallback(
     santa_message_t *message = NewMessage();
     strlcpy(message->path, path, sizeof(message->path));
     if (new_path) strlcpy(message->newpath, new_path, sizeof(message->newpath));
+    proc_name(message->pid, message->pname, sizeof(message->pname));
 
     switch (action) {
       case KAUTH_FILEOP_CLOSE:

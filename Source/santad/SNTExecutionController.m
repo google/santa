@@ -137,10 +137,6 @@
   santa_action_t action = [self actionForEventState:cd.decision];
   if (action == ACTION_RESPOND_CHECKBW_ALLOW) [self.eventLog saveDecisionDetails:cd];
 
-  // Get name of parent process. Do this before responding to be sure parent doesn't go away.
-  char pname[PROC_PIDPATHINFO_MAXSIZE];
-  proc_name(message.ppid, pname, PROC_PIDPATHINFO_MAXSIZE);
-
   // Send the decision to the kernel.
   [self.driverManager postToKernelAction:action forVnodeID:cd.vnodeId];
 
@@ -158,7 +154,7 @@
     se.signingChain = csInfo.certificates;
     se.pid = @(message.pid);
     se.ppid = @(message.ppid);
-    se.parentName = @(pname);
+    se.parentName = @(message.pname);
 
     se.fileBundleID = [binInfo bundleIdentifier];
     se.fileBundleName = [binInfo bundleName];
