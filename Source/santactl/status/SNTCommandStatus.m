@@ -38,7 +38,8 @@ REGISTER_COMMAND_NAME(@"status")
 }
 
 + (NSString *)longHelpText {
-  return nil;
+  return (@"Provides details about Santa while it's running.\n"
+          @"  Use --json to output in JSON format");
 }
 
 + (void)runWithArguments:(NSArray *)arguments daemonConnection:(SNTXPCConnection *)daemonConn {
@@ -69,7 +70,7 @@ REGISTER_COMMAND_NAME(@"status")
     ramEvents = events;
     dispatch_group_leave(group);
   }];
-  char *fileLogging = ([[SNTConfigurator configurator] fileChangesRegex] ? "Enabled" : "Disabled");
+  BOOL fileLogging = ([[SNTConfigurator configurator] fileChangesRegex] != nil);
 
   // Kext status
   __block int64_t cacheCount = -1;
@@ -99,30 +100,59 @@ REGISTER_COMMAND_NAME(@"status")
   dateFormatter.dateFormat = @"YYYY/MM/dd HH:mm:ss Z";
   NSDate *lastSyncSuccess = [[SNTConfigurator configurator] syncLastSuccess];
   NSString *lastSyncSuccessStr = [dateFormatter stringFromDate:lastSyncSuccess] ?: @"Never";
-  char *syncCleanReqd = [[SNTConfigurator configurator] syncCleanRequired] ? "Yes" : "No";
+  BOOL syncCleanReqd = [[SNTConfigurator configurator] syncCleanRequired];
 
   // Wait a maximum of 5s for stats collected from daemon to arrive.
   if (dispatch_group_wait(group, dispatch_time(DISPATCH_TIME_NOW, NSEC_PER_SEC * 5))) {
-    printf("Failed to retrieve some stats from daemon\n\n");
+    fprintf(stderr, "Failed to retrieve some stats from daemon\n\n");
   }
 
-  printf(">>> Daemon Info\n");
-  printf("  %-22s | %s\n", "Mode", [clientMode UTF8String]);
-  printf("  %-22s | %s\n", "File Logging", fileLogging);
-  printf("  %-22s | %lld\n", "Watchdog CPU Events", cpuEvents);
-  printf("  %-22s | %lld\n", "Watchdog RAM Events", ramEvents);
-  printf(">>> Kernel Info\n");
-  printf("  %-22s | %lld\n", "Kernel cache count", cacheCount);
-  printf(">>> Database Info\n");
-  printf("  %-22s | %lld\n", "Binary Rules", binaryRuleCount);
-  printf("  %-22s | %lld\n", "Certificate Rules", certRuleCount);
-  printf("  %-22s | %lld\n", "Events Pending Upload", eventCount);
+  if ([arguments containsObject:@"--json"]) {
+    NSDictionary *stats = @{
+        @"daemon": @{
+            @"mode": clientMode,
+            @"file_logging": @(fileLogging),
+            @"watchdog_cpu_events": @(cpuEvents),
+            @"watchdog_ram_events": @(ramEvents),
+        },
+        @"kernel": @{
+            @"cache_count": @(cacheCount),
+        },
+        @"database": @{
+            @"binary_rules": @(binaryRuleCount),
+            @"certificate_rules": @(certRuleCount),
+            @"events_pending_upload": @(eventCount),
+        },
+        @"sync": @{
+            @"server": syncURLStr,
+            @"clean_required": @(syncCleanReqd),
+            @"last_successful": lastSyncSuccessStr
+        },
+    };
+    NSData *statsData = [NSJSONSerialization dataWithJSONObject:stats
+                                                        options:NSJSONWritingPrettyPrinted
+                                                          error:nil];
+    NSString *statsStr = [[NSString alloc] initWithData:statsData encoding:NSUTF8StringEncoding];
+    printf("%s\n",  [statsStr UTF8String]);
+  } else {
+    printf(">>> Daemon Info\n");
+    printf("  %-22s | %s\n", "Mode", [clientMode UTF8String]);
+    printf("  %-22s | %s\n", "File Logging", (fileLogging ? "Yes" : "No"));
+    printf("  %-22s | %lld\n", "Watchdog CPU Events", cpuEvents);
+    printf("  %-22s | %lld\n", "Watchdog RAM Events", ramEvents);
+    printf(">>> Kernel Info\n");
+    printf("  %-22s | %lld\n", "Kernel cache count", cacheCount);
+    printf(">>> Database Info\n");
+    printf("  %-22s | %lld\n", "Binary Rules", binaryRuleCount);
+    printf("  %-22s | %lld\n", "Certificate Rules", certRuleCount);
+    printf("  %-22s | %lld\n", "Events Pending Upload", eventCount);
 
-  if (syncURLStr) {
-    printf(">>> Sync Info\n");
-    printf("  %-22s | %s\n", "Sync Server", [syncURLStr UTF8String]);
-    printf("  %-22s | %s\n", "Clean Sync Required", syncCleanReqd);
-    printf("  %-22s | %s\n", "Last Successful Sync", [lastSyncSuccessStr UTF8String]);
+    if (syncURLStr) {
+      printf(">>> Sync Info\n");
+      printf("  %-22s | %s\n", "Sync Server", [syncURLStr UTF8String]);
+      printf("  %-22s | %s\n", "Clean Sync Required", (syncCleanReqd ? "Yes" : "No"));
+      printf("  %-22s | %s\n", "Last Successful Sync", [lastSyncSuccessStr UTF8String]);
+    }
   }
 
   exit(0);

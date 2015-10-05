@@ -41,14 +41,30 @@ REGISTER_COMMAND_NAME(@"version")
 }
 
 + (NSString *)longHelpText {
-  return nil;
+  return (@"Show versions of all Santa components.\n"
+          @"  Use --json to output in JSON format.");
 }
 
 + (void)runWithArguments:(NSArray *)arguments daemonConnection:(SNTXPCConnection *)daemonConn {
-  printf("%-15s | %s\n", "santa-driver", [[self santaKextVersion] UTF8String]);
-  printf("%-15s | %s\n", "santad", [[self santadVersion] UTF8String]);
-  printf("%-15s | %s\n", "santactl", [[self santactlVersion] UTF8String]);
-  printf("%-15s | %s\n", "SantaGUI", [[self santaAppVersion] UTF8String]);
+  if ([arguments containsObject:@"--json"]) {
+    NSDictionary *versions = @{
+        @"santa-driver": [self santaKextVersion],
+        @"santad": [self santadVersion],
+        @"santactl": [self santactlVersion],
+        @"SantaGUI": [self santaAppVersion],
+    };
+    NSData *versionsData = [NSJSONSerialization dataWithJSONObject:versions
+                                                           options:NSJSONWritingPrettyPrinted
+                                                             error:nil];
+    NSString *versionsStr = [[NSString alloc] initWithData:versionsData
+                                                  encoding:NSUTF8StringEncoding];
+    printf("%s\n",  [versionsStr UTF8String]);
+  } else {
+    printf("%-15s | %s\n", "santa-driver", [[self santaKextVersion] UTF8String]);
+    printf("%-15s | %s\n", "santad", [[self santadVersion] UTF8String]);
+    printf("%-15s | %s\n", "santactl", [[self santactlVersion] UTF8String]);
+    printf("%-15s | %s\n", "SantaGUI", [[self santaAppVersion] UTF8String]);
+  }
   exit(0);
 }
 
@@ -58,7 +74,7 @@ REGISTER_COMMAND_NAME(@"version")
                                     (__bridge CFArrayRef)@[ @"CFBundleVersion" ])
   );
 
-  if (loadedKexts[@(USERCLIENT_ID)] && loadedKexts[@(USERCLIENT_ID)][@"CFBundleVersion"]) {
+  if (loadedKexts[@(USERCLIENT_ID)][@"CFBundleVersion"]) {
     return loadedKexts[@(USERCLIENT_ID)][@"CFBundleVersion"];
   }
 
