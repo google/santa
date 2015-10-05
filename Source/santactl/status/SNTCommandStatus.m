@@ -96,7 +96,7 @@ REGISTER_COMMAND_NAME(@"status")
   // Sync status
   NSString *syncURLStr = [[[SNTConfigurator configurator] syncBaseURL] absoluteString];
   NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];
-  dateFormatter.dateFormat = @"YYYY/MM/dd HH:mm:ss z";
+  dateFormatter.dateFormat = @"YYYY/MM/dd HH:mm:ss Z";
   NSDate *lastSyncSuccess = [[SNTConfigurator configurator] syncLastSuccess];
   NSString *lastSyncSuccessStr = [dateFormatter stringFromDate:lastSyncSuccess] ?: @"Never";
   char *syncCleanReqd = [[SNTConfigurator configurator] syncCleanRequired] ? "Yes" : "No";
