@@ -235,10 +235,10 @@
     // This could (and used to) use CFBundleCopyInfoDictionaryForURL but that uses mmap to read
     // the file and so can cause SIGBUS if the file is deleted/truncated while it's working.
     MachHeaderWithOffset *mhwo = [[self.machHeaders allValues] firstObject];
-    if (!mhwo) return nil;
+    if (!mhwo) return self.infoDict;
 
     struct mach_header *mh = (struct mach_header *)mhwo.data.bytes;
-    if (mh->filetype != MH_EXECUTE) return nil;
+    if (mh->filetype != MH_EXECUTE) return self.infoDict;
     BOOL is64 = (mh->magic == MH_MAGIC_64 || mh->magic == MH_CIGAM_64);
     uint32_t ncmds = mh->ncmds;
     uint32_t nsects = 0;
@@ -253,7 +253,7 @@
     // Loop through the load commands looking for the segment named __TEXT
     for (uint32_t i = 0; i < ncmds; i++) {
       NSData *cmdData = [self safeSubdataWithRange:NSMakeRange(offset, sz_segment)];
-      if (!cmdData) return nil;
+      if (!cmdData) return self.infoDict;
       struct segment_command_64 *lc = (struct segment_command_64 *)[cmdData bytes];
       if (lc->cmd == LC_SEGMENT || lc->cmd == LC_SEGMENT_64) {
         if (strncmp(lc->segname, "__TEXT", 6) == 0) {
@@ -268,18 +268,18 @@
     // Loop through the sections in the __TEXT segment looking for an __info_plist section.
     for (uint32_t i = 0; i < nsects; i++) {
       NSData *sectData = [self safeSubdataWithRange:NSMakeRange(offset, sz_section)];
-      if (!sectData) return nil;
+      if (!sectData) return self.infoDict;
       struct section_64 *sect = (struct section_64 *)[sectData bytes];
       if (strncmp(sect->sectname, "__info_plist", 12) == 0 && sect->size < 2000000) {
         NSData *plistData = [self safeSubdataWithRange:NSMakeRange(sect->offset, sect->size)];
-        if (!plistData) return nil;
+        if (!plistData) return self.infoDict;
         NSDictionary *plist;
         plist = [NSPropertyListSerialization propertyListWithData:plistData
                                                           options:NSPropertyListImmutable
                                                            format:NULL
                                                             error:NULL];
         if (plist) self.infoDict = plist;
-        break;
+        return self.infoDict;
       }
       offset += sz_section;
     }
