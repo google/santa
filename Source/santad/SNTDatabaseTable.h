@@ -12,7 +12,7 @@
 ///    See the License for the specific language governing permissions and
 ///    limitations under the License.
 
-// This is imported in the header rather than implementation to saves
+// This is imported in the header rather than implementation to save
 // classes that use this one from also having to import FMDB stuff.
 #import <FMDB/FMDB.h>
 
