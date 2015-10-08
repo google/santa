@@ -20,9 +20,19 @@
 #import "SNTLogging.h"
 #import "SNTRule.h"
 
+@interface SNTRuleTable ()
+@property NSString *santadCertSHA;
+@property NSString *launchdCertSHA;
+@end
+
 @implementation SNTRuleTable
 
 - (uint32_t)initializeDatabase:(FMDatabase *)db fromVersion:(uint32_t)version {
+
+  // Save hashes of the signing certs for launchd and santad
+  self.santadCertSHA = [[[[SNTCodesignChecker alloc] initWithSelf] leafCertificate] SHA256];
+  self.launchdCertSHA = [[[[SNTCodesignChecker alloc] initWithPID:1] leafCertificate] SHA256];
+
   uint32_t newVersion = 0;
 
   if (version < 1) {
@@ -41,12 +51,10 @@
     // Insert the codesigning certs for the running santad and launchd into the initial database.
     // This helps prevent accidentally denying critical system components while the database
     // is empty. This 'initial database' will then be cleared on the first successful sync.
-    NSString *santadSHA = [[[[SNTCodesignChecker alloc] initWithSelf] leafCertificate] SHA256];
-    NSString *launchdSHA = [[[[SNTCodesignChecker alloc] initWithPID:1] leafCertificate] SHA256];
     [db executeUpdate:@"INSERT INTO rules (shasum, state, type) VALUES (?, ?, ?)",
-        santadSHA, @(RULESTATE_WHITELIST), @(RULETYPE_CERT)];
+        self.santadCertSHA, @(RULESTATE_WHITELIST), @(RULETYPE_CERT)];
     [db executeUpdate:@"INSERT INTO rules (shasum, state, type) VALUES (?, ?, ?)",
-        launchdSHA, @(RULESTATE_WHITELIST), @(RULETYPE_CERT)];
+        self.launchdCertSHA, @(RULESTATE_WHITELIST), @(RULETYPE_CERT)];
 
     newVersion = 1;
 
@@ -124,14 +132,28 @@
 #pragma mark Adding
 
 - (BOOL)addRules:(NSArray *)rules cleanSlate:(BOOL)cleanSlate {
-  __block BOOL failed = NO;
-
   if (!rules || rules.count < 1) {
     LOGE(@"Received request to add rules with nil/empty array.");
     return NO;
   }
 
+  __block BOOL failed = NO;
+
   [self inTransaction:^(FMDatabase *db, BOOL *rollback) {
+      // Protect rules for santad/launchd certificates.
+      NSPredicate *p = [NSPredicate predicateWithFormat:
+          @"(SELF.shasum = %@ OR SELF.shasum = %@) AND SELF.type = %d",
+              self.santadCertSHA, self.launchdCertSHA, RULETYPE_CERT];
+      NSArray *requiredHashes = [rules filteredArrayUsingPredicate:p];
+      p = [NSPredicate predicateWithFormat:@"SELF.state == %d", RULESTATE_WHITELIST];
+      NSArray *requiredHashesWhitelist = [requiredHashes filteredArrayUsingPredicate:p];
+      if ((cleanSlate && requiredHashesWhitelist.count != 2) ||
+          (requiredHashes.count != requiredHashesWhitelist.count)) {
+        LOGE(@"Received request to remove whitelist for launchd/santad ceritifcates.");
+        *rollback = failed = YES;
+        return;
+      }
+
       if (cleanSlate) {
         [db executeUpdate:@"DELETE FROM rules"];
       }
