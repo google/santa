@@ -15,7 +15,6 @@
 #import "SNTEventLog.h"
 
 #include <libproc.h>
-#include <sys/stat.h>
 #include <sys/sysctl.h>
 
 #import "SNTCachedDecision.h"
@@ -70,11 +69,8 @@
     }
     case ACTION_NOTIFY_WRITE: {
       action = @"WRITE";
-      struct stat filestat;
-      stat(message.path, &filestat);
-
-      if (filestat.st_size < 1024 * 1024) {
-        SNTFileInfo *fileInfo = [[SNTFileInfo alloc] initWithPath:path];
+      SNTFileInfo *fileInfo = [[SNTFileInfo alloc] initWithPath:path];
+      if (fileInfo.fileSize < 1024 * 1024) {
         sha256 = fileInfo.SHA256;
       } else {
         sha256 = @"(too large)";

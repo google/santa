@@ -140,4 +140,9 @@
 ///
 - (NSArray *)downloadURLs;
 
+///
+///  @return The size of the file in bytes.
+///
+- (NSUInteger)fileSize;
+
 @end

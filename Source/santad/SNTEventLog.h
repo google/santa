@@ -14,6 +14,7 @@
 
 
 #import "SNTKernelCommon.h"
+
 @class SNTCachedDecision;
 
 ///

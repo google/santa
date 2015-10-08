@@ -328,6 +328,10 @@
   return nil;
 }
 
+- (NSUInteger)fileSize {
+  return self.fileData.length;
+}
+
 #pragma mark Internal Methods
 
 - (void)parseMachHeaders {
