@@ -44,7 +44,6 @@ end
 desc "Clean"
 task :clean => :init do
   puts "Cleaning"
-  xcodebuild("-scheme All clean")
   FileUtils.rm_rf(OUTPUT_PATH)
   FileUtils.rm_rf(DIST_PATH)
 end
