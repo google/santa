@@ -17,6 +17,11 @@
 #import "SNTRule.h"
 #import "SNTRuleTable.h"
 
+@interface SNTRuleTable (Testing)
+@property NSString *santadCertSHA;
+@property NSString *launchdCertSHA;
+@end
+
 /// This test case actually tests SNTRuleTable and SNTRule
 @interface SNTRuleTableTest : XCTestCase
 @property SNTRuleTable *sut;
@@ -60,22 +65,36 @@
 }
 
 - (void)testAddRulesClean {
-  // If SNTRuleTable doesn't start with some rules, this test doesn't work properly.
-  XCTAssert(self.sut.ruleCount);
+  // Assert that insert without 'self' and launchd cert hashes fails
+  XCTAssertFalse([self.sut addRules:@[ [self _exampleBinaryRule] ] cleanSlate:YES]);
 
-  [self.sut addRules:@[ [self _exampleBinaryRule] ] cleanSlate:YES];
+  // Now add a binary rule without clean slate
+  XCTAssertTrue([self.sut addRules:@[ [self _exampleBinaryRule] ] cleanSlate:NO]);
 
-  XCTAssertEqual(self.sut.ruleCount, 1);
-  XCTAssertEqual(self.sut.binaryRuleCount, 1);
+  // Now add a cert rule + the required rules as a clean slate,
+  // assert that the binary rule was removed
+  SNTRule *r1 = [[SNTRule alloc] init];
+  r1.shasum = self.sut.launchdCertSHA;
+  r1.state = RULESTATE_WHITELIST;
+  r1.type = RULETYPE_CERT;
+  SNTRule *r2 = [[SNTRule alloc] init];
+  r2.shasum = self.sut.santadCertSHA;
+  r2.state = RULESTATE_WHITELIST;
+  r2.type = RULETYPE_CERT;
+
+  XCTAssertTrue(([self.sut addRules:@[ [self _exampleCertRule], r1, r2 ] cleanSlate:YES]));
+  XCTAssertEqual([self.sut binaryRuleCount], 0);
 }
 
 - (void)testAddMultipleRules {
+  NSUInteger ruleCount = self.sut.ruleCount;
+
   [self.sut addRules:@[ [self _exampleBinaryRule],
                         [self _exampleCertRule],
                         [self _exampleBinaryRule] ]
-          cleanSlate:YES];
+          cleanSlate:NO];
 
-  XCTAssertEqual(self.sut.ruleCount, 2);
+  XCTAssertEqual(self.sut.ruleCount, ruleCount + 2);
 }
 
 - (void)testAddRulesEmptyArray {
@@ -87,7 +106,7 @@
 }
 
 - (void)testFetchBinaryRule {
-  [self.sut addRules:@[ [self _exampleBinaryRule], [self _exampleCertRule] ] cleanSlate:YES];
+  [self.sut addRules:@[ [self _exampleBinaryRule], [self _exampleCertRule] ] cleanSlate:NO];
 
   SNTRule *r = [self.sut binaryRuleForSHA256:@"a"];
   XCTAssertNotNil(r);
@@ -99,7 +118,7 @@
 }
 
 - (void)testFetchCertificateRule {
-  [self.sut addRules:@[ [self _exampleBinaryRule], [self _exampleCertRule] ] cleanSlate:YES];
+  [self.sut addRules:@[ [self _exampleBinaryRule], [self _exampleCertRule] ] cleanSlate:NO];
 
   SNTRule *r = [self.sut certificateRuleForSHA256:@"b"];
   XCTAssertNotNil(r);
