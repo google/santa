@@ -55,7 +55,7 @@
 @property NSString *fileBundleVersionString;
 
 ///
-///  If the executed file was signed, this is an NSArray of SNTCertificate's
+///  If the executed file was signed, this is an NSArray of MOLCertificate's
 ///  representing the signing chain.
 ///
 @property NSArray *signingChain;

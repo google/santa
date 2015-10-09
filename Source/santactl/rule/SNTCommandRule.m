@@ -16,8 +16,8 @@
 
 #include "SNTLogging.h"
 
-#import "SNTCertificate.h"
-#import "SNTCodesignChecker.h"
+#import "MOLCertificate.h"
+#import "MOLCodesignChecker.h"
 #import "SNTConfigurator.h"
 #import "SNTDropRootPrivs.h"
 #import "SNTFileInfo.h"
@@ -125,7 +125,7 @@ REGISTER_COMMAND_NAME(@"rule")
     if (newRule.type == RULETYPE_BINARY) {
       newRule.shasum = fi.SHA256;
     } else if (newRule.type == RULETYPE_CERT) {
-      SNTCodesignChecker *cs = [[SNTCodesignChecker alloc] initWithBinaryPath:fi.path];
+      MOLCodesignChecker *cs = [[MOLCodesignChecker alloc] initWithBinaryPath:fi.path];
       newRule.shasum = cs.leafCertificate.SHA256;
     }
   }

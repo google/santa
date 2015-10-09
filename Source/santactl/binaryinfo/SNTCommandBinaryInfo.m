@@ -16,8 +16,8 @@
 
 #include "SNTLogging.h"
 
-#import "SNTCertificate.h"
-#import "SNTCodesignChecker.h"
+#import "MOLCertificate.h"
+#import "MOLCodesignChecker.h"
 #import "SNTFileInfo.h"
 
 @interface SNTCommandBinaryInfo : NSObject<SNTCommand>
@@ -79,14 +79,14 @@ REGISTER_COMMAND_NAME(@"binaryinfo")
     printf("%-19s: %s\n", "Page Zero", "__PAGEZERO segment missing/bad!");
   }
 
-  SNTCodesignChecker *csc = [[SNTCodesignChecker alloc] initWithBinaryPath:filePath];
+  MOLCodesignChecker *csc = [[MOLCodesignChecker alloc] initWithBinaryPath:filePath];
 
   printf("%-19s: %s\n", "Code-signed", (csc) ? "Yes" : "No");
 
   if (csc) {
     printf("Signing chain:\n");
 
-    [csc.certificates enumerateObjectsUsingBlock:^(SNTCertificate *c,
+    [csc.certificates enumerateObjectsUsingBlock:^(MOLCertificate *c,
                                                    unsigned long idx,
                                                    BOOL *stop) {
         idx++;  // index from 1

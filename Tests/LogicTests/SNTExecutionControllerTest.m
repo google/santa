@@ -17,8 +17,8 @@
 
 #import "SNTExecutionController.h"
 
-#import "SNTCertificate.h"
-#import "SNTCodesignChecker.h"
+#import "MOLCertificate.h"
+#import "MOLCodesignChecker.h"
 #import "SNTConfigurator.h"
 #import "SNTDriverManager.h"
 #import "SNTEventTable.h"
@@ -44,7 +44,7 @@
 
   fclose(stdout);
 
-  self.mockCodesignChecker = OCMClassMock([SNTCodesignChecker class]);
+  self.mockCodesignChecker = OCMClassMock([MOLCodesignChecker class]);
   OCMStub([self.mockCodesignChecker alloc]).andReturn(self.mockCodesignChecker);
   OCMStub([self.mockCodesignChecker initWithBinaryPath:OCMOCK_ANY])
       .andReturn(self.mockCodesignChecker);
@@ -121,7 +121,7 @@
   OCMStub([self.mockFileInfo isMachO]).andReturn(YES);
   OCMStub([self.mockFileInfo SHA256]).andReturn(@"a");
 
-  id cert = OCMClassMock([SNTCertificate class]);
+  id cert = OCMClassMock([MOLCertificate class]);
   OCMStub([self.mockCodesignChecker leafCertificate]).andReturn(cert);
   OCMStub([cert SHA256]).andReturn(@"a");
 
@@ -139,7 +139,7 @@
   OCMStub([self.mockFileInfo isMachO]).andReturn(YES);
   OCMStub([self.mockFileInfo SHA256]).andReturn(@"a");
 
-  id cert = OCMClassMock([SNTCertificate class]);
+  id cert = OCMClassMock([MOLCertificate class]);
   OCMStub([self.mockCodesignChecker leafCertificate]).andReturn(cert);
   OCMStub([cert SHA256]).andReturn(@"a");
 

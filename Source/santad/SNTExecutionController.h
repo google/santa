@@ -15,7 +15,7 @@
 #include "SNTCommonEnums.h"
 #include "SNTKernelCommon.h"
 
-@class SNTCodesignChecker;
+@class MOLCodesignChecker;
 @class SNTDriverManager;
 @class SNTEventLog;
 @class SNTEventTable;

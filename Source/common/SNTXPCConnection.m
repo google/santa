@@ -14,7 +14,7 @@
 
 #import "SNTXPCConnection.h"
 
-#import "SNTCodesignChecker.h"
+#import "MOLCodesignChecker.h"
 
 @protocol XPCConnectionValidityRequest
 - (void)isConnectionValidWithBlock:(void (^)(BOOL))block;
@@ -97,8 +97,8 @@
     [[connection remoteObjectProxy] isConnectionValidWithBlock:^void(BOOL response) {
         pid_t pid = self.currentConnection.processIdentifier;
 
-        SNTCodesignChecker *selfCS = [[SNTCodesignChecker alloc] initWithSelf];
-        SNTCodesignChecker *otherCS = [[SNTCodesignChecker alloc] initWithPID:pid];
+        MOLCodesignChecker *selfCS = [[MOLCodesignChecker alloc] initWithSelf];
+        MOLCodesignChecker *otherCS = [[MOLCodesignChecker alloc] initWithPID:pid];
 
         if (response && [otherCS signingInformationMatches:selfCS]) {
           [self.currentConnection suspend];
@@ -153,8 +153,8 @@
 - (void)isConnectionValidWithBlock:(void (^)(BOOL))block {
   pid_t pid = self.currentConnection.processIdentifier;
 
-  SNTCodesignChecker *selfCS = [[SNTCodesignChecker alloc] initWithSelf];
-  SNTCodesignChecker *otherCS = [[SNTCodesignChecker alloc] initWithPID:pid];
+  MOLCodesignChecker *selfCS = [[MOLCodesignChecker alloc] initWithSelf];
+  MOLCodesignChecker *otherCS = [[MOLCodesignChecker alloc] initWithPID:pid];
 
   if ([otherCS signingInformationMatches:selfCS]) {
     [self.currentConnection suspend];

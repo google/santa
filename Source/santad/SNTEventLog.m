@@ -18,7 +18,7 @@
 #include <sys/sysctl.h>
 
 #import "SNTCachedDecision.h"
-#import "SNTCertificate.h"
+#import "MOLCertificate.h"
 #import "SNTCommonEnums.h"
 #import "SNTFileInfo.h"
 #import "SNTKernelCommon.h"

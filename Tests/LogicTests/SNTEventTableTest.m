@@ -14,7 +14,7 @@
 
 #import <XCTest/XCTest.h>
 
-#import "SNTCodesignChecker.h"
+#import "MOLCodesignChecker.h"
 #import "SNTEventTable.h"
 #import "SNTFileInfo.h"
 #import "SNTStoredEvent.h"
@@ -24,8 +24,8 @@
 /// Adding/Retrieving events relies on SNTStoredEvent coding to work correctly
 /// so if that is broken, these tests will fail.
 ///
-/// Depends on on SNTFileInfo and SNTCodesignChecker (and by extension
-/// SNTCertificate) to avoid duplicating code into these tests.
+/// Depends on on SNTFileInfo and MOLCodesignChecker (and by extension
+/// MOLCertificate) to avoid duplicating code into these tests.
 ///
 @interface SNTEventTableTest : XCTestCase
 @property SNTEventTable *sut;
@@ -43,7 +43,7 @@
 
 - (SNTStoredEvent *)createTestEvent {
   SNTFileInfo *binInfo = [[SNTFileInfo alloc] initWithPath:@"/usr/bin/false"];
-  SNTCodesignChecker *csInfo = [[SNTCodesignChecker alloc] initWithBinaryPath:@"/usr/bin/false"];
+  MOLCodesignChecker *csInfo = [[MOLCodesignChecker alloc] initWithBinaryPath:@"/usr/bin/false"];
   SNTStoredEvent *event;
   event = [[SNTStoredEvent alloc] init];
   event.filePath = @"/usr/bin/false";

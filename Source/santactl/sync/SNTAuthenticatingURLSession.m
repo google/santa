@@ -14,7 +14,7 @@
 
 #import "SNTAuthenticatingURLSession.h"
 
-#import "SNTCertificate.h"
+#import "MOLCertificate.h"
 #import "SNTDERDecoder.h"
 #import "SNTLogging.h"
 
@@ -193,7 +193,7 @@
           return;
         }
 
-        SNTCertificate *clientCert = [[SNTCertificate alloc] initWithSecCertificateRef:certificate];
+        MOLCertificate *clientCert = [[MOLCertificate alloc] initWithSecCertificateRef:certificate];
         CFRelease(certificate);
 
         // Switch identity finding method depending on config
@@ -239,7 +239,7 @@
   if (foundIdentity) {
     SecCertificateRef certificate = NULL;
     err = SecIdentityCopyCertificate(foundIdentity, &certificate);
-    SNTCertificate *clientCert = [[SNTCertificate alloc] initWithSecCertificateRef:certificate];
+    MOLCertificate *clientCert = [[MOLCertificate alloc] initWithSecCertificateRef:certificate];
     LOGD(@"Client Trust: Valid client identity %@.", clientCert);
     NSURLCredential *cred =
         [NSURLCredential credentialWithIdentity:foundIdentity
@@ -277,11 +277,11 @@
   if (self.serverRootsPemData) {
     NSString *pemStrings = [[NSString alloc] initWithData:self.serverRootsPemData
                                                  encoding:NSASCIIStringEncoding];
-    NSArray *certs = [SNTCertificate certificatesFromPEM:pemStrings];
+    NSArray *certs = [MOLCertificate certificatesFromPEM:pemStrings];
 
-    // Make a new array of the SecCertificateRef's from the SNTCertificate's.
+    // Make a new array of the SecCertificateRef's from the MOLCertificate's.
     NSMutableArray *certRefs = [[NSMutableArray alloc] initWithCapacity:certs.count];
-    for (SNTCertificate *cert in certs) {
+    for (MOLCertificate *cert in certs) {
       [certRefs addObject:(id)cert.certRef];
     }
 
@@ -304,7 +304,7 @@
   // Print details about the server's leaf certificate.
   SecCertificateRef firstCert = SecTrustGetCertificateAtIndex(serverTrust, 0);
   if (firstCert) {
-    SNTCertificate *cert = [[SNTCertificate alloc] initWithSecCertificateRef:firstCert];
+    MOLCertificate *cert = [[MOLCertificate alloc] initWithSecCertificateRef:firstCert];
     LOGD(@"Server Trust: Server leaf cert: %@", cert);
   }
 

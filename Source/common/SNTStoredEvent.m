@@ -14,7 +14,7 @@
 
 #import "SNTStoredEvent.h"
 
-#import "SNTCertificate.h"
+#import "MOLCertificate.h"
 
 @implementation SNTStoredEvent
 
@@ -63,7 +63,7 @@
     _fileBundleVersion = DECODE(NSString, @"fileBundleVersion");
     _fileBundleVersionString = DECODE(NSString, @"fileBundleVersionString");
 
-    _signingChain = DECODEARRAY(SNTCertificate, @"signingChain");
+    _signingChain = DECODEARRAY(MOLCertificate, @"signingChain");
 
     _executingUser = DECODE(NSString, @"executingUser");
     _occurrenceDate = DECODE(NSDate, @"occurrenceDate");

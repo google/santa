@@ -15,7 +15,7 @@
 #import <OCMock/OCMock.h>
 #import <XCTest/XCTest.h>
 
-#import "SNTCodesignChecker.h"
+#import "MOLCodesignChecker.h"
 #import "SNTXPCConnection.h"
 
 @interface SNTXPCConnection (Testing)
@@ -100,7 +100,7 @@
 
   OCMExpect([self.mockConnection processIdentifier]).andReturn(1);
 
-  id mockCodesignChecker = OCMClassMock([SNTCodesignChecker class]);
+  id mockCodesignChecker = OCMClassMock([MOLCodesignChecker class]);
   OCMExpect([mockCodesignChecker alloc]).andReturn(mockCodesignChecker);
   OCMExpect([mockCodesignChecker signingInformationMatches:OCMOCK_ANY]).andReturn(NO);
 

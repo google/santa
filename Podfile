@@ -2,7 +2,19 @@ platform :osx, "10.9"
 
 inhibit_all_warnings!
 
+target :santactl do
+  pod 'MOLCertificate'
+  pod 'MOLCodesignChecker'
+end
+
+target :Santa do
+  pod 'MOLCertificate'
+  pod 'MOLCodesignChecker'
+end
+
 target :santad do
+  pod 'MOLCertificate'
+  pod 'MOLCodesignChecker'
   pod 'FMDB'
 
   post_install do |installer|
@@ -20,6 +32,8 @@ target :santad do
 end
 
 target :LogicTests do
-  pod 'OCMock'
   pod 'FMDB'
+  pod 'MOLCertificate'
+  pod 'MOLCodesignChecker'
+  pod 'OCMock'
 end

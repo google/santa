@@ -26,6 +26,7 @@
 /* End PBXAggregateTarget section */
 
 /* Begin PBXBuildFile section */
+		02D7203A6CEE2A946FB08ECE /* libPods-santactl.a in Frameworks */ = {isa = PBXBuildFile; fileRef = A2EA300312100AE62218F84E /* libPods-santactl.a */; };
 		0D0016A3192BCD3C005E7FCD /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0D9A7F3E1759330500035EB5 /* Foundation.framework */; };
 		0D0016A6192BCD3C005E7FCD /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 0D0016A5192BCD3C005E7FCD /* main.m */; };
 		0D0016AE192BCD8C005E7FCD /* IOKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0D3AFBF718FB4C870087BCEE /* IOKit.framework */; };
@@ -36,21 +37,16 @@
 		0D10BE891A0AAF6700C0C944 /* SNTDropRootPrivs.m in Sources */ = {isa = PBXBuildFile; fileRef = 0D10BE851A0AABD600C0C944 /* SNTDropRootPrivs.m */; };
 		0D10BE8B1A0AB23300C0C944 /* SNTDERDecoderTest.m in Sources */ = {isa = PBXBuildFile; fileRef = 0D10BE8A1A0AB23300C0C944 /* SNTDERDecoderTest.m */; };
 		0D10BE8C1A0AB3FD00C0C944 /* SNTDERDecoder.m in Sources */ = {isa = PBXBuildFile; fileRef = 0D7FFD4A1A017D4B00F34435 /* SNTDERDecoder.m */; };
-		0D1AF477187C7A2C00D3298D /* SNTCertificate.m in Sources */ = {isa = PBXBuildFile; fileRef = 0D1AF476187C7A2C00D3298D /* SNTCertificate.m */; };
-		0D1AF478187C7A2C00D3298D /* SNTCertificate.m in Sources */ = {isa = PBXBuildFile; fileRef = 0D1AF476187C7A2C00D3298D /* SNTCertificate.m */; };
 		0D1B477019A53419008CADD3 /* SNTAboutWindowController.m in Sources */ = {isa = PBXBuildFile; fileRef = 0D1B476E19A53419008CADD3 /* SNTAboutWindowController.m */; };
 		0D1B477119A53419008CADD3 /* AboutWindow.xib in Resources */ = {isa = PBXBuildFile; fileRef = 0D1B476F19A53419008CADD3 /* AboutWindow.xib */; };
 		0D20710E1A7C4A86008B0A9A /* SNTStoredEvent.m in Sources */ = {isa = PBXBuildFile; fileRef = 0DCD604A19105433006B445C /* SNTStoredEvent.m */; };
 		0D28D53819D9F5910015C5EB /* SNTConfigurator.m in Sources */ = {isa = PBXBuildFile; fileRef = 0D42D2B719D2042900955F08 /* SNTConfigurator.m */; };
 		0D2CD4611A81C7B100C9C910 /* dn.plist in Resources */ = {isa = PBXBuildFile; fileRef = 0D2CD4601A81C7B100C9C910 /* dn.plist */; };
-		0D31DF4718D254B3002B300D /* SNTCodesignChecker.m in Sources */ = {isa = PBXBuildFile; fileRef = 0D59C0E317710E6000748EBF /* SNTCodesignChecker.m */; };
 		0D35BD9F18FD71CE00921A21 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0D9A7F3E1759330500035EB5 /* Foundation.framework */; };
 		0D35BDA218FD71CE00921A21 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 0D35BDA118FD71CE00921A21 /* main.m */; };
 		0D35BDAC18FD7CFD00921A21 /* SNTCommandController.m in Sources */ = {isa = PBXBuildFile; fileRef = 0D35BDAB18FD7CFD00921A21 /* SNTCommandController.m */; };
 		0D35BDB518FD84F600921A21 /* SNTCommandSync.m in Sources */ = {isa = PBXBuildFile; fileRef = 0D35BDB418FD84F600921A21 /* SNTCommandSync.m */; };
 		0D35BDBD18FDA23600921A21 /* IOKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0D3AFBF718FB4C870087BCEE /* IOKit.framework */; };
-		0D35BDC018FDA5C800921A21 /* SNTCertificate.m in Sources */ = {isa = PBXBuildFile; fileRef = 0D1AF476187C7A2C00D3298D /* SNTCertificate.m */; };
-		0D35BDC218FDA5D100921A21 /* SNTCodesignChecker.m in Sources */ = {isa = PBXBuildFile; fileRef = 0D59C0E317710E6000748EBF /* SNTCodesignChecker.m */; };
 		0D35BDC418FDA5D100921A21 /* SNTXPCConnection.m in Sources */ = {isa = PBXBuildFile; fileRef = 0D6FDC9518C93A020044685C /* SNTXPCConnection.m */; };
 		0D377C2A17A071B7008453DB /* SNTEventTable.m in Sources */ = {isa = PBXBuildFile; fileRef = 0D377C2917A071B7008453DB /* SNTEventTable.m */; };
 		0D37C10F18F6029A0069BC61 /* SNTDatabaseTable.m in Sources */ = {isa = PBXBuildFile; fileRef = 0D37C10E18F6029A0069BC61 /* SNTDatabaseTable.m */; };
@@ -83,7 +79,6 @@
 		0D536EDB1B94E9230039A26D /* SNTEventLog.m in Sources */ = {isa = PBXBuildFile; fileRef = 0D536EDA1B94E9230039A26D /* SNTEventLog.m */; };
 		0D536EDC1B94E9230039A26D /* SNTEventLog.m in Sources */ = {isa = PBXBuildFile; fileRef = 0D536EDA1B94E9230039A26D /* SNTEventLog.m */; };
 		0D54E0B11976F8D3000BB59F /* SNTFileInfo.m in Sources */ = {isa = PBXBuildFile; fileRef = 0DCD6041190ACCB8006B445C /* SNTFileInfo.m */; };
-		0D59C0E417710E6000748EBF /* SNTCodesignChecker.m in Sources */ = {isa = PBXBuildFile; fileRef = 0D59C0E317710E6000748EBF /* SNTCodesignChecker.m */; };
 		0D63DD5C1906FCB400D346C4 /* SNTDatabaseController.m in Sources */ = {isa = PBXBuildFile; fileRef = 0D63DD5B1906FCB400D346C4 /* SNTDatabaseController.m */; };
 		0D63DD5E1906FCB400D346C4 /* SNTDatabaseController.m in Sources */ = {isa = PBXBuildFile; fileRef = 0D63DD5B1906FCB400D346C4 /* SNTDatabaseController.m */; };
 		0D668E8118D1121700E29A8B /* SNTMessageWindow.m in Sources */ = {isa = PBXBuildFile; fileRef = 0D668E8018D1121700E29A8B /* SNTMessageWindow.m */; };
@@ -92,7 +87,6 @@
 		0D6FDC8318C68D7E0044685C /* GIAG2.crt in Resources */ = {isa = PBXBuildFile; fileRef = 0D6FDC8218C68D7E0044685C /* GIAG2.crt */; };
 		0D6FDC8518C68E500044685C /* GIAG2.pem in Resources */ = {isa = PBXBuildFile; fileRef = 0D6FDC8418C68E500044685C /* GIAG2.pem */; };
 		0D6FDC8718C6913D0044685C /* apple.pem in Resources */ = {isa = PBXBuildFile; fileRef = 0D6FDC8618C6913D0044685C /* apple.pem */; };
-		0D6FDC8C18C69AF90044685C /* SNTCertificate.m in Sources */ = {isa = PBXBuildFile; fileRef = 0D1AF476187C7A2C00D3298D /* SNTCertificate.m */; };
 		0D6FDC9618C93A020044685C /* SNTXPCConnection.m in Sources */ = {isa = PBXBuildFile; fileRef = 0D6FDC9518C93A020044685C /* SNTXPCConnection.m */; };
 		0D6FDC9718C93A020044685C /* SNTXPCConnection.m in Sources */ = {isa = PBXBuildFile; fileRef = 0D6FDC9518C93A020044685C /* SNTXPCConnection.m */; };
 		0D7A7AF3174FCF4C00B77646 /* SantaMessage.cc in Sources */ = {isa = PBXBuildFile; fileRef = 0D7A7AF1174FCF4C00B77646 /* SantaMessage.cc */; };
@@ -141,12 +135,9 @@
 		0DCD605C19117A90006B445C /* SNTCommandSyncPreflight.m in Sources */ = {isa = PBXBuildFile; fileRef = 0DCD605B19117A90006B445C /* SNTCommandSyncPreflight.m */; };
 		0DCD6062191188B1006B445C /* SNTAuthenticatingURLSession.m in Sources */ = {isa = PBXBuildFile; fileRef = 0DCD6061191188B1006B445C /* SNTAuthenticatingURLSession.m */; };
 		0DD0D487194F5187005F27EB /* IOKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0D3AFBF718FB4C870087BCEE /* IOKit.framework */; };
-		0DD0D48B194F6193005F27EB /* SNTCertificateTest.m in Sources */ = {isa = PBXBuildFile; fileRef = 0DD0D48A194F6193005F27EB /* SNTCertificateTest.m */; };
-		0DD0D48D194F6D5B005F27EB /* SNTCodesignCheckerTest.m in Sources */ = {isa = PBXBuildFile; fileRef = 0DD0D48C194F6D5B005F27EB /* SNTCodesignCheckerTest.m */; };
 		0DD0D48F194F78F8005F27EB /* SNTFileInfoTest.m in Sources */ = {isa = PBXBuildFile; fileRef = 0DD0D48E194F78F8005F27EB /* SNTFileInfoTest.m */; };
 		0DD0D491194F9947005F27EB /* SNTExecutionControllerTest.m in Sources */ = {isa = PBXBuildFile; fileRef = 0DD0D490194F9947005F27EB /* SNTExecutionControllerTest.m */; };
 		0DD0D492194F9BEF005F27EB /* SNTLogging.m in Sources */ = {isa = PBXBuildFile; fileRef = 0DA73C9E1934F8100056D7C4 /* SNTLogging.m */; };
-		0DD65D98184D2F0A00822DA7 /* SNTCodesignChecker.m in Sources */ = {isa = PBXBuildFile; fileRef = 0D59C0E317710E6000748EBF /* SNTCodesignChecker.m */; };
 		0DE4C8A118FEF28200466D04 /* Security.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0D8C200B180F359A00CE2BF8 /* Security.framework */; };
 		0DE4C8A618FF3B1700466D04 /* SNTCommandFlushCache.m in Sources */ = {isa = PBXBuildFile; fileRef = 0DE4C8A518FF3B1700466D04 /* SNTCommandFlushCache.m */; };
 		0DE50F681912716A007B2B0C /* SNTRule.m in Sources */ = {isa = PBXBuildFile; fileRef = 0DE50F671912716A007B2B0C /* SNTRule.m */; };
@@ -165,6 +156,7 @@
 		0DF395661AB76ABC00CBC520 /* libz.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 0DF395651AB76ABC00CBC520 /* libz.dylib */; };
 		4092327A1A51B66400A04527 /* SNTCommandRule.m in Sources */ = {isa = PBXBuildFile; fileRef = 409232791A51B65D00A04527 /* SNTCommandRule.m */; };
 		8BFD9B39112F4D16B3D0EFFB /* libPods-LogicTests.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 752301D17AA44BDE8B6D0541 /* libPods-LogicTests.a */; };
+		CB7CD33A4D1B4745552333F4 /* libPods-Santa.a in Frameworks */ = {isa = PBXBuildFile; fileRef = E7544A9B819620883181F257 /* libPods-Santa.a */; };
 		E86AE075D7F24FB88FB627C5 /* libPods-santad.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 0A84545E322F475FA0B505D5 /* libPods-santad.a */; };
 /* End PBXBuildFile section */
 
@@ -252,8 +244,6 @@
 		0D10BE851A0AABD600C0C944 /* SNTDropRootPrivs.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SNTDropRootPrivs.m; sourceTree = "<group>"; };
 		0D10BE881A0AAC2100C0C944 /* SNTDropRootPrivs.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SNTDropRootPrivs.h; sourceTree = "<group>"; };
 		0D10BE8A1A0AB23300C0C944 /* SNTDERDecoderTest.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SNTDERDecoderTest.m; sourceTree = "<group>"; };
-		0D1AF475187C7A2C00D3298D /* SNTCertificate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SNTCertificate.h; sourceTree = "<group>"; };
-		0D1AF476187C7A2C00D3298D /* SNTCertificate.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SNTCertificate.m; sourceTree = "<group>"; };
 		0D1B476D19A53419008CADD3 /* SNTAboutWindowController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SNTAboutWindowController.h; sourceTree = "<group>"; };
 		0D1B476E19A53419008CADD3 /* SNTAboutWindowController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SNTAboutWindowController.m; sourceTree = "<group>"; };
 		0D1B476F19A53419008CADD3 /* AboutWindow.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = AboutWindow.xib; sourceTree = "<group>"; };
@@ -306,8 +296,6 @@
 		0D536ED61B8E7A2E0039A26D /* missing_pagezero */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.executable"; path = missing_pagezero; sourceTree = "<group>"; };
 		0D536ED91B94E9230039A26D /* SNTEventLog.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SNTEventLog.h; sourceTree = "<group>"; };
 		0D536EDA1B94E9230039A26D /* SNTEventLog.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SNTEventLog.m; sourceTree = "<group>"; };
-		0D59C0E217710E6000748EBF /* SNTCodesignChecker.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SNTCodesignChecker.h; sourceTree = "<group>"; };
-		0D59C0E317710E6000748EBF /* SNTCodesignChecker.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SNTCodesignChecker.m; sourceTree = "<group>"; };
 		0D63DD5A1906FCB400D346C4 /* SNTDatabaseController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SNTDatabaseController.h; sourceTree = "<group>"; };
 		0D63DD5B1906FCB400D346C4 /* SNTDatabaseController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SNTDatabaseController.m; sourceTree = "<group>"; };
 		0D668E7F18D1121700E29A8B /* SNTMessageWindow.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SNTMessageWindow.h; sourceTree = "<group>"; };
@@ -363,8 +351,6 @@
 		0DCD605B19117A90006B445C /* SNTCommandSyncPreflight.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SNTCommandSyncPreflight.m; sourceTree = "<group>"; };
 		0DCD6060191188B1006B445C /* SNTAuthenticatingURLSession.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SNTAuthenticatingURLSession.h; sourceTree = "<group>"; };
 		0DCD6061191188B1006B445C /* SNTAuthenticatingURLSession.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SNTAuthenticatingURLSession.m; sourceTree = "<group>"; };
-		0DD0D48A194F6193005F27EB /* SNTCertificateTest.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SNTCertificateTest.m; sourceTree = "<group>"; };
-		0DD0D48C194F6D5B005F27EB /* SNTCodesignCheckerTest.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SNTCodesignCheckerTest.m; sourceTree = "<group>"; };
 		0DD0D48E194F78F8005F27EB /* SNTFileInfoTest.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SNTFileInfoTest.m; sourceTree = "<group>"; };
 		0DD0D490194F9947005F27EB /* SNTExecutionControllerTest.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SNTExecutionControllerTest.m; sourceTree = "<group>"; };
 		0DE4C8A518FF3B1700466D04 /* SNTCommandFlushCache.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SNTCommandFlushCache.m; sourceTree = "<group>"; };
@@ -384,10 +370,16 @@
 		0DF395651AB76ABC00CBC520 /* libz.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libz.dylib; path = usr/lib/libz.dylib; sourceTree = SDKROOT; };
 		13A4FE400F3857C0F5831498 /* Pods-LogicTests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-LogicTests.debug.xcconfig"; path = "Pods/Target Support Files/Pods-LogicTests/Pods-LogicTests.debug.xcconfig"; sourceTree = "<group>"; };
 		409232791A51B65D00A04527 /* SNTCommandRule.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = SNTCommandRule.m; path = rule/SNTCommandRule.m; sourceTree = "<group>"; };
+		54DD0E77B8BE005AFB7E944A /* Pods-santactl.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-santactl.release.xcconfig"; path = "Pods/Target Support Files/Pods-santactl/Pods-santactl.release.xcconfig"; sourceTree = "<group>"; };
+		583E60E97931BA83D5273304 /* Pods-santactl.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-santactl.debug.xcconfig"; path = "Pods/Target Support Files/Pods-santactl/Pods-santactl.debug.xcconfig"; sourceTree = "<group>"; };
 		627BB4EC9917DC20E89D718C /* Pods-santad.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-santad.debug.xcconfig"; path = "Pods/Target Support Files/Pods-santad/Pods-santad.debug.xcconfig"; sourceTree = "<group>"; };
 		752301D17AA44BDE8B6D0541 /* libPods-LogicTests.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-LogicTests.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		8003CA1D3E46447BCEA56440 /* Pods-santad.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-santad.release.xcconfig"; path = "Pods/Target Support Files/Pods-santad/Pods-santad.release.xcconfig"; sourceTree = "<group>"; };
+		8D738300867507BD7985972F /* Pods-Santa.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Santa.release.xcconfig"; path = "Pods/Target Support Files/Pods-Santa/Pods-Santa.release.xcconfig"; sourceTree = "<group>"; };
+		A2EA300312100AE62218F84E /* libPods-santactl.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-santactl.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		BE74E23CF5A553E5F02462B9 /* Pods-LogicTests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-LogicTests.release.xcconfig"; path = "Pods/Target Support Files/Pods-LogicTests/Pods-LogicTests.release.xcconfig"; sourceTree = "<group>"; };
+		DE1F4E0329B023976A1BAC19 /* Pods-Santa.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Santa.debug.xcconfig"; path = "Pods/Target Support Files/Pods-Santa/Pods-Santa.debug.xcconfig"; sourceTree = "<group>"; };
+		E7544A9B819620883181F257 /* libPods-Santa.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-Santa.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -418,6 +410,7 @@
 				0DE4C8A118FEF28200466D04 /* Security.framework in Frameworks */,
 				0D35BDBD18FDA23600921A21 /* IOKit.framework in Frameworks */,
 				0D35BD9F18FD71CE00921A21 /* Foundation.framework in Frameworks */,
+				02D7203A6CEE2A946FB08ECE /* libPods-santactl.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -429,6 +422,7 @@
 				0D6F12D819EC8822006B218E /* SecurityInterface.framework in Frameworks */,
 				0D8C200C180F359A00CE2BF8 /* Security.framework in Frameworks */,
 				0D385DB8180DE4A900418BC6 /* Cocoa.framework in Frameworks */,
+				CB7CD33A4D1B4745552333F4 /* libPods-Santa.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -458,8 +452,6 @@
 			isa = PBXGroup;
 			children = (
 				0D260DB018B68E12002A0B55 /* Resources */,
-				0DD0D48A194F6193005F27EB /* SNTCertificateTest.m */,
-				0DD0D48C194F6D5B005F27EB /* SNTCodesignCheckerTest.m */,
 				0D10BE8A1A0AB23300C0C944 /* SNTDERDecoderTest.m */,
 				0D41DAD31A7C28C800A890FE /* SNTEventTableTest.m */,
 				0DD0D490194F9947005F27EB /* SNTExecutionControllerTest.m */,
@@ -641,6 +633,8 @@
 				0D385DB7180DE4A900418BC6 /* Cocoa.framework */,
 				752301D17AA44BDE8B6D0541 /* libPods-LogicTests.a */,
 				0A84545E322F475FA0B505D5 /* libPods-santad.a */,
+				E7544A9B819620883181F257 /* libPods-Santa.a */,
+				A2EA300312100AE62218F84E /* libPods-santactl.a */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -665,10 +659,6 @@
 		0D91BCD5174E8AAB00131A7D /* common */ = {
 			isa = PBXGroup;
 			children = (
-				0D1AF475187C7A2C00D3298D /* SNTCertificate.h */,
-				0D1AF476187C7A2C00D3298D /* SNTCertificate.m */,
-				0D59C0E217710E6000748EBF /* SNTCodesignChecker.h */,
-				0D59C0E317710E6000748EBF /* SNTCodesignChecker.m */,
 				0D91BCE4174E8B5E00131A7D /* SNTCommonEnums.h */,
 				0D42D2B619D2042900955F08 /* SNTConfigurator.h */,
 				0D42D2B719D2042900955F08 /* SNTConfigurator.m */,
@@ -775,6 +765,10 @@
 				BE74E23CF5A553E5F02462B9 /* Pods-LogicTests.release.xcconfig */,
 				627BB4EC9917DC20E89D718C /* Pods-santad.debug.xcconfig */,
 				8003CA1D3E46447BCEA56440 /* Pods-santad.release.xcconfig */,
+				DE1F4E0329B023976A1BAC19 /* Pods-Santa.debug.xcconfig */,
+				8D738300867507BD7985972F /* Pods-Santa.release.xcconfig */,
+				583E60E97931BA83D5273304 /* Pods-santactl.debug.xcconfig */,
+				54DD0E77B8BE005AFB7E944A /* Pods-santactl.release.xcconfig */,
 			);
 			name = Pods;
 			sourceTree = "<group>";
@@ -830,6 +824,7 @@
 				0D260DA918B68E12002A0B55 /* Frameworks */,
 				0D260DAA18B68E12002A0B55 /* Resources */,
 				85CE5DF0D54C438A8933A631 /* Copy Pods Resources */,
+				4B68B2D454C1C55D29AA76D8 /* Embed Pods Frameworks */,
 			);
 			buildRules = (
 			);
@@ -844,9 +839,11 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = 0D35BDA918FD71CE00921A21 /* Build configuration list for PBXNativeTarget "santactl" */;
 			buildPhases = (
+				AAFCB010997D370F4297BF35 /* Check Pods Manifest.lock */,
 				0DD98E671A5DD02000A754C6 /* Update Version Info */,
 				0D35BD9A18FD71CE00921A21 /* Sources */,
 				0D35BD9B18FD71CE00921A21 /* Frameworks */,
+				32AA711FA23052E0F2EE59EB /* Copy Pods Resources */,
 			);
 			buildRules = (
 			);
@@ -861,10 +858,13 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = 0D385DE3180DE4A900418BC6 /* Build configuration list for PBXNativeTarget "Santa" */;
 			buildPhases = (
+				4347374E751B0BF8CF6A7110 /* Check Pods Manifest.lock */,
 				0DD98E681A5DD03E00A754C6 /* Update Version Info */,
 				0D385DB2180DE4A900418BC6 /* Sources */,
 				0D385DB3180DE4A900418BC6 /* Frameworks */,
 				0D385DB4180DE4A900418BC6 /* Resources */,
+				309C93A0ACB98D32A337D908 /* Embed Pods Frameworks */,
+				2AB78B9612925DE634AE8F7C /* Copy Pods Resources */,
 			);
 			buildRules = (
 			);
@@ -1073,6 +1073,51 @@
 			shellPath = /bin/sh;
 			shellScript = "GIT_TAG=$(git describe --abbrev=0 --tags)\nsed -i '' \"s/TO.BE.FILLED/${GIT_TAG}/\" ${DERIVED_FILE_DIR}/santa-driver_info.c";
 		};
+		2AB78B9612925DE634AE8F7C /* Copy Pods Resources */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			name = "Copy Pods Resources";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${SRCROOT}/Pods/Target Support Files/Pods-Santa/Pods-Santa-resources.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
+		309C93A0ACB98D32A337D908 /* Embed Pods Frameworks */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			name = "Embed Pods Frameworks";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${SRCROOT}/Pods/Target Support Files/Pods-Santa/Pods-Santa-frameworks.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
+		32AA711FA23052E0F2EE59EB /* Copy Pods Resources */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			name = "Copy Pods Resources";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${SRCROOT}/Pods/Target Support Files/Pods-santactl/Pods-santactl-resources.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
 		34C9C9E8C5454BBE980DF8A9 /* Check Pods Manifest.lock */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
@@ -1103,6 +1148,36 @@
 			shellScript = "\"${SRCROOT}/Pods/Target Support Files/Pods-santad/Pods-santad-resources.sh\"\n";
 			showEnvVarsInLog = 0;
 		};
+		4347374E751B0BF8CF6A7110 /* Check Pods Manifest.lock */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			name = "Check Pods Manifest.lock";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "diff \"${PODS_ROOT}/../Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [[ $? != 0 ]] ; then\n    cat << EOM\nerror: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\nEOM\n    exit 1\nfi\n";
+			showEnvVarsInLog = 0;
+		};
+		4B68B2D454C1C55D29AA76D8 /* Embed Pods Frameworks */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			name = "Embed Pods Frameworks";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${SRCROOT}/Pods/Target Support Files/Pods-LogicTests/Pods-LogicTests-frameworks.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
 		85CE5DF0D54C438A8933A631 /* Copy Pods Resources */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
@@ -1116,6 +1191,21 @@
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
 			shellScript = "\"${SRCROOT}/Pods/Target Support Files/Pods-LogicTests/Pods-LogicTests-resources.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
+		AAFCB010997D370F4297BF35 /* Check Pods Manifest.lock */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			name = "Check Pods Manifest.lock";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "diff \"${PODS_ROOT}/../Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [[ $? != 0 ]] ; then\n    cat << EOM\nerror: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\nEOM\n    exit 1\nfi\n";
 			showEnvVarsInLog = 0;
 		};
 		AE05898CB3CE4507B2F43B91 /* Check Pods Manifest.lock */ = {
@@ -1165,7 +1255,6 @@
 				0DEFB7C61ACDE5F600B92AAE /* SNTFileWatcher.m in Sources */,
 				0D10BE8B1A0AB23300C0C944 /* SNTDERDecoderTest.m in Sources */,
 				0DEFB7C81ACF0BFE00B92AAE /* SNTFileWatcherTest.m in Sources */,
-				0DD0D48B194F6193005F27EB /* SNTCertificateTest.m in Sources */,
 				0D28D53819D9F5910015C5EB /* SNTConfigurator.m in Sources */,
 				0D3AFBE718FB32CB0087BCEE /* SNTXPCConnectionTest.m in Sources */,
 				0DCD605719115E54006B445C /* SNTDaemonControlController.m in Sources */,
@@ -1173,13 +1262,10 @@
 				0D3AFBEE18FB4C6C0087BCEE /* SNTApplication.m in Sources */,
 				0DD0D48F194F78F8005F27EB /* SNTFileInfoTest.m in Sources */,
 				0DC5D86E191AED220078A5C0 /* SNTRuleTable.m in Sources */,
-				0D31DF4718D254B3002B300D /* SNTCodesignChecker.m in Sources */,
 				0DD0D492194F9BEF005F27EB /* SNTLogging.m in Sources */,
 				0DE71A761B95F7F900518526 /* SNTCachedDecision.m in Sources */,
-				0DD0D48D194F6D5B005F27EB /* SNTCodesignCheckerTest.m in Sources */,
 				0DCD605919115E5A006B445C /* SNTXPCNotifierInterface.m in Sources */,
 				0DE50F691912B0CD007B2B0C /* SNTRule.m in Sources */,
-				0D6FDC8C18C69AF90044685C /* SNTCertificate.m in Sources */,
 				0D10BE8C1A0AB3FD00C0C944 /* SNTDERDecoder.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -1189,7 +1275,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				0DA73CA21934F88D0056D7C4 /* SNTLogging.m in Sources */,
-				0D35BDC218FDA5D100921A21 /* SNTCodesignChecker.m in Sources */,
 				0D35BDB518FD84F600921A21 /* SNTCommandSync.m in Sources */,
 				0DCD5FBF1909D64A006B445C /* SNTCommandBinaryInfo.m in Sources */,
 				0DEFB7C01ACB28B000B92AAE /* SNTCommandSyncConstants.m in Sources */,
@@ -1210,7 +1295,6 @@
 				0DCD6043190ACCB8006B445C /* SNTFileInfo.m in Sources */,
 				0DE50F6E191304E0007B2B0C /* SNTRule.m in Sources */,
 				0D0A1EC3191998C900B8450F /* SNTCommandSyncRuleDownload.m in Sources */,
-				0D35BDC018FDA5C800921A21 /* SNTCertificate.m in Sources */,
 				0DB390991AB1E11400614002 /* SNTCommandVersion.m in Sources */,
 				0D42D2B519D1D98A00955F08 /* SNTSystemInfo.m in Sources */,
 				0D827E6719DF3C74006EC811 /* SNTCommandStatus.m in Sources */,
@@ -1232,8 +1316,6 @@
 				0D827E6519DF392E006EC811 /* SNTConfigurator.m in Sources */,
 				0D385DF2180DE51600418BC6 /* SNTMessageWindowController.m in Sources */,
 				0D385DF3180DE51600418BC6 /* SNTNotificationManager.m in Sources */,
-				0D1AF478187C7A2C00D3298D /* SNTCertificate.m in Sources */,
-				0DD65D98184D2F0A00822DA7 /* SNTCodesignChecker.m in Sources */,
 				0D385DC4180DE4A900418BC6 /* main.m in Sources */,
 				0D1B477019A53419008CADD3 /* SNTAboutWindowController.m in Sources */,
 				0D668E8118D1121700E29A8B /* SNTMessageWindow.m in Sources */,
@@ -1265,7 +1347,6 @@
 				0DCD604B19105433006B445C /* SNTStoredEvent.m in Sources */,
 				0DB8ACC1185662DC00FEF9C7 /* SNTApplication.m in Sources */,
 				0D9A7F421759330500035EB5 /* main.m in Sources */,
-				0D1AF477187C7A2C00D3298D /* SNTCertificate.m in Sources */,
 				0DA73C9F1934F8100056D7C4 /* SNTLogging.m in Sources */,
 				0DE71A751B95F7F900518526 /* SNTCachedDecision.m in Sources */,
 				0DCD6042190ACCB8006B445C /* SNTFileInfo.m in Sources */,
@@ -1277,7 +1358,6 @@
 				0D377C2A17A071B7008453DB /* SNTEventTable.m in Sources */,
 				0DE50F681912716A007B2B0C /* SNTRule.m in Sources */,
 				0D37C10F18F6029A0069BC61 /* SNTDatabaseTable.m in Sources */,
-				0D59C0E417710E6000748EBF /* SNTCodesignChecker.m in Sources */,
 				0D42D2B819D2042900955F08 /* SNTConfigurator.m in Sources */,
 				0DCD605519115D17006B445C /* SNTXPCControlInterface.m in Sources */,
 				0D536EDB1B94E9230039A26D /* SNTEventLog.m in Sources */,
@@ -1493,6 +1573,7 @@
 		};
 		0D35BDA718FD71CE00921A21 /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = 583E60E97931BA83D5273304 /* Pods-santactl.debug.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				CLANG_ENABLE_MODULES = YES;
@@ -1533,6 +1614,7 @@
 		};
 		0D35BDA818FD71CE00921A21 /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = 54DD0E77B8BE005AFB7E944A /* Pods-santactl.release.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				CLANG_ENABLE_MODULES = YES;
@@ -1567,6 +1649,7 @@
 		};
 		0D385DE4180DE4A900418BC6 /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = DE1F4E0329B023976A1BAC19 /* Pods-Santa.debug.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
@@ -1608,6 +1691,7 @@
 		};
 		0D385DE5180DE4A900418BC6 /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = 8D738300867507BD7985972F /* Pods-Santa.release.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;

@@ -14,8 +14,8 @@
 
 #import "SNTRuleTable.h"
 
-#import "SNTCertificate.h"
-#import "SNTCodesignChecker.h"
+#import "MOLCertificate.h"
+#import "MOLCodesignChecker.h"
 #import "SNTConfigurator.h"
 #import "SNTLogging.h"
 #import "SNTRule.h"
@@ -30,8 +30,8 @@
 - (uint32_t)initializeDatabase:(FMDatabase *)db fromVersion:(uint32_t)version {
 
   // Save hashes of the signing certs for launchd and santad
-  self.santadCertSHA = [[[[SNTCodesignChecker alloc] initWithSelf] leafCertificate] SHA256];
-  self.launchdCertSHA = [[[[SNTCodesignChecker alloc] initWithPID:1] leafCertificate] SHA256];
+  self.santadCertSHA = [[[[MOLCodesignChecker alloc] initWithSelf] leafCertificate] SHA256];
+  self.launchdCertSHA = [[[[MOLCodesignChecker alloc] initWithPID:1] leafCertificate] SHA256];
 
   uint32_t newVersion = 0;
 

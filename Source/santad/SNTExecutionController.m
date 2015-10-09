@@ -21,8 +21,8 @@
 #include "SNTLogging.h"
 
 #import "SNTCachedDecision.h"
-#import "SNTCertificate.h"
-#import "SNTCodesignChecker.h"
+#import "MOLCertificate.h"
+#import "MOLCodesignChecker.h"
 #import "SNTCommonEnums.h"
 #import "SNTConfigurator.h"
 #import "SNTDriverManager.h"
@@ -56,7 +56,7 @@
     // Workaround for xpcproxy/libsecurity bug on Yosemite
     // This establishes the XPC connection between libsecurity and syspolicyd.
     // Not doing this causes a deadlock as establishing this link goes through xpcproxy.
-    (void)[[SNTCodesignChecker alloc] initWithSelf];
+    (void)[[MOLCodesignChecker alloc] initWithSelf];
   }
   return self;
 }
@@ -123,7 +123,7 @@
   }
 
   // Get codesigning info about the file.
-  SNTCodesignChecker *csInfo = [[SNTCodesignChecker alloc] initWithBinaryPath:binInfo.path];
+  MOLCodesignChecker *csInfo = [[MOLCodesignChecker alloc] initWithBinaryPath:binInfo.path];
 
   // Actually make the decision.
   SNTCachedDecision *cd = [[SNTCachedDecision alloc] init];

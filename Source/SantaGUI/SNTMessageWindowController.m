@@ -16,7 +16,7 @@
 
 #import <SecurityInterface/SFCertificatePanel.h>
 
-#import "SNTCertificate.h"
+#import "MOLCertificate.h"
 #import "SNTConfigurator.h"
 #import "SNTFileInfo.h"
 #import "SNTMessageWindow.h"
@@ -67,7 +67,7 @@
 - (IBAction)showCertInfo:(id)sender {
   // SFCertificatePanel expects an NSArray of SecCertificateRef's
   NSMutableArray *certArray = [NSMutableArray arrayWithCapacity:[self.event.signingChain count]];
-  for (SNTCertificate *cert in self.event.signingChain) {
+  for (MOLCertificate *cert in self.event.signingChain) {
     [certArray addObject:(id)cert.certRef];
   }
 
@@ -109,7 +109,7 @@
 }
 
 - (NSString *)publisherInfo {
-  SNTCertificate *leafCert = [self.event.signingChain firstObject];
+  MOLCertificate *leafCert = [self.event.signingChain firstObject];
 
   if (leafCert.commonName && leafCert.orgName) {
     return [NSString stringWithFormat:@"%@ - %@", leafCert.orgName, leafCert.commonName];
