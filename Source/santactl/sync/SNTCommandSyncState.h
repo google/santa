@@ -12,6 +12,8 @@
 ///    See the License for the specific language governing permissions and
 ///    limitations under the License.
 
+#include "SNTCommonEnums.h"
+
 /// An instance of this class is passed to each stage of the sync process for storing data
 /// that might be needed in later stages.
 @interface SNTCommandSyncState : NSObject
@@ -26,6 +28,9 @@
 /// Clean sync flag, sent from server. If True, all existing rules
 /// should be deleted before inserting any new rules.
 @property BOOL cleanSync;
+
+/// New client mode sent from server
+@property santa_clientmode_t newClientMode;
 
 /// Batch size for uploading events, sent from server
 @property int32_t eventBatchSize;

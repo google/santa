@@ -44,6 +44,10 @@
     } else {
       NSDictionary *r = [NSJSONSerialization JSONObjectWithData:data options:0 error:nil];
 
+      if (syncState.newClientMode) {
+        [[daemonConn remoteObjectProxy] setClientMode:syncState.newClientMode reply:^{}];
+      }
+
       NSString *backoffInterval = r[kBackoffInterval];
       if (backoffInterval) {
         [[daemonConn remoteObjectProxy] setNextSyncInterval:[backoffInterval intValue] reply:^{}];

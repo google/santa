@@ -80,9 +80,9 @@
         syncState.uploadLogURL = [NSURL URLWithString:r[kUploadLogsURL]];
 
         if ([r[kClientMode] isEqual:kClientModeMonitor]) {
-            [[daemonConn remoteObjectProxy] setClientMode:CLIENTMODE_MONITOR reply:^{}];
+            syncState.newClientMode = CLIENTMODE_MONITOR;
         } else if ([r[kClientMode] isEqual:kClientModeLockdown]) {
-            [[daemonConn remoteObjectProxy] setClientMode:CLIENTMODE_LOCKDOWN reply:^{}];
+            syncState.newClientMode = CLIENTMODE_LOCKDOWN;
         }
 
         if ([r[kWhitelistRegex] isKindOfClass:[NSString class]]) {
