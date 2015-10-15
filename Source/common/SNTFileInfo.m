@@ -52,6 +52,8 @@
 
 @implementation SNTFileInfo
 
+extern NSString *const NSURLQuarantinePropertiesKey WEAK_IMPORT_ATTRIBUTE;
+
 - (instancetype)initWithPath:(NSString *)path error:(NSError **)error {
   self = [super init];
   if (self) {
@@ -429,13 +431,10 @@
 ///  Retrieve quarantine data for a file
 ///
 - (NSDictionary *)quarantineData {
-  if (!self.quarantineDict) {
+  if (!self.quarantineDict && NSURLQuarantinePropertiesKey != NULL) {
     NSURL *url = [NSURL fileURLWithPath:self.path];
-    CFDictionaryRef input;
-    CFURLCopyResourcePropertyForKey(
-                                    (__bridge CFURLRef)url, kCFURLQuarantinePropertiesKey, &input, NULL);
-    self.quarantineDict = CFBridgingRelease(input);
-
+    NSDictionary *d = [url resourceValuesForKeys:@[ NSURLQuarantinePropertiesKey ] error:NULL];
+    self.quarantineDict = d[NSURLQuarantinePropertiesKey];
     if (!self.quarantineDict) self.quarantineDict = (NSDictionary *)[NSNull null];
   }
   return (self.quarantineDict == (NSDictionary *)[NSNull null]) ? nil : self.quarantineDict;
