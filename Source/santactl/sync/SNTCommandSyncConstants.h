@@ -65,6 +65,10 @@ extern NSString * const kCertOrg;
 extern NSString * const kCertOU;
 extern NSString * const kCertValidFrom;
 extern NSString * const kCertValidUntil;
+extern NSString * const kQuarantineDataURL;
+extern NSString * const kQuarantineRefererURL;
+extern NSString * const kQuarantineTimestamp;
+extern NSString * const kQuarantineAgentBundleID;
 
 extern NSString * const kLogUploadField;
 

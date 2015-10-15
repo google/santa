@@ -174,6 +174,11 @@
   ADDKEY(newEvent, kPPID, event.ppid);
   ADDKEY(newEvent, kParentName, event.parentName);
 
+  ADDKEY(newEvent, kQuarantineDataURL, event.quarantineDataURL);
+  ADDKEY(newEvent, kQuarantineRefererURL, event.quarantineRefererURL);
+  ADDKEY(newEvent, kQuarantineTimestamp, @([event.quarantineTimestamp timeIntervalSince1970]));
+  ADDKEY(newEvent, kQuarantineAgentBundleID, event.quarantineAgentBundleID);
+
   NSMutableArray *signingChain = [NSMutableArray arrayWithCapacity:event.signingChain.count];
   for (NSUInteger i = 0; i < event.signingChain.count; i++) {
     MOLCertificate *cert = [event.signingChain objectAtIndex:i];

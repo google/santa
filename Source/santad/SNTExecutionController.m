@@ -178,6 +178,11 @@
     se.currentSessions = currentSessions;
     se.loggedInUsers = loggedInUsers;
 
+    se.quarantineDataURL = binInfo.quarantineDataURL;
+    se.quarantineRefererURL = binInfo.quarantineRefererURL;
+    se.quarantineTimestamp = binInfo.quarantineTimestamp;
+    se.quarantineAgentBundleID = binInfo.quarantineAgentBundleID;    
+
     [self.eventTable addStoredEvent:se];
 
     // If binary was blocked, do the needful

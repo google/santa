@@ -49,6 +49,11 @@
 
   ENCODE(self.loggedInUsers, @"loggedInUsers");
   ENCODE(self.currentSessions, @"currentSessions");
+
+  ENCODE(self.quarantineDataURL, @"quarantineDataURL");
+  ENCODE(self.quarantineRefererURL, @"quarantineRefererURL");
+  ENCODE(self.quarantineTimestamp, @"quarantineTiemstamp");
+  ENCODE(self.quarantineAgentBundleID, @"quarantineAgentBundleID");  
 }
 
 - (instancetype)initWithCoder:(NSCoder *)decoder {
@@ -74,6 +79,11 @@
 
     _loggedInUsers = DECODEARRAY(NSString, @"loggedInUsers");
     _currentSessions = DECODEARRAY(NSString, @"currentSessions");
+
+    _quarantineDataURL = DECODE(NSString, @"quarantineDataURL");
+    _quarantineRefererURL = DECODE(NSString, @"quarantineRefererURL");
+    _quarantineTimestamp = DECODE(NSDate, @"quarantineTimestamp");
+    _quarantineAgentBundleID = DECODE(NSString, @"quarantineAgentBundleID");
   }
   return self;
 }
