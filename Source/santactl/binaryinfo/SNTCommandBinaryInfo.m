@@ -112,7 +112,7 @@ REGISTER_COMMAND_NAME(@"binaryinfo")
 }
 
 + (void)printKey:(NSString *)key value:(NSString *)value {
-  printf("%-20s: %s\n", [key UTF8String], [value UTF8String]);
+  printf("%-21s: %s\n", [key UTF8String], [value UTF8String]);
 }
 
 @end
