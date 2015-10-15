@@ -71,17 +71,19 @@
 #pragma mark Connection handling
 
 - (void)createConnection {
-  __weak __typeof(self) weakSelf = self;
+  dispatch_sync(dispatch_get_main_queue(), ^{
+    __weak __typeof(self) weakSelf = self;
 
-  self.listener = [[SNTXPCConnection alloc] initClientWithName:[SNTXPCNotifierInterface serviceId]
-                                                       options:NSXPCConnectionPrivileged];
-  self.listener.exportedInterface = [SNTXPCNotifierInterface notifierInterface];
-  self.listener.exportedObject = self.notificationManager;
-  self.listener.rejectedHandler = ^{
-      [weakSelf attemptReconnection];
-  };
-  self.listener.invalidationHandler = self.listener.rejectedHandler;
-  [self.listener resume];
+    self.listener = [[SNTXPCConnection alloc] initClientWithName:[SNTXPCNotifierInterface serviceId]
+                                                         options:NSXPCConnectionPrivileged];
+    self.listener.exportedInterface = [SNTXPCNotifierInterface notifierInterface];
+    self.listener.exportedObject = self.notificationManager;
+    self.listener.rejectedHandler = ^{
+        [weakSelf attemptReconnection];
+    };
+    self.listener.invalidationHandler = self.listener.rejectedHandler;
+    [self.listener resume];
+  });
 }
 
 - (void)attemptReconnection {
