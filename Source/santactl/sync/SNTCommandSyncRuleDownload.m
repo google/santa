@@ -71,6 +71,7 @@
         if (!resp) {
           LOGE(@"Failed to decode server's response");
           handler(NO);
+          return;
         }
 
         NSArray *receivedRules = resp[kRules];
@@ -90,9 +91,14 @@
           if (syncState.downloadedRules.count) {
             [[daemonConn remoteObjectProxy] databaseRuleAddRules:syncState.downloadedRules
                                                       cleanSlate:syncState.cleanSync
-                                                           reply:^{
-                LOGI(@"Added %lu rule(s)", syncState.downloadedRules.count);
-                handler(YES);
+                                                           reply:^(BOOL success) {
+                if (success) {
+                  LOGI(@"Added %lu rule(s)", syncState.downloadedRules.count);
+                  handler(YES);
+                } else {
+                  LOGE(@"Failed to add rules to database");
+                  handler(NO);
+                }
             }];
           } else {
             handler(YES);

@@ -136,13 +136,18 @@ REGISTER_COMMAND_NAME(@"rule")
     [self printErrorUsageAndExit:@"Either SHA-256 or path to file must be specified"];
   }
 
-  [[daemonConn remoteObjectProxy] databaseRuleAddRule:newRule cleanSlate:NO reply:^{
-      if (newRule.state == RULESTATE_REMOVE) {
-        printf("Removed rule for SHA-256: %s.\n", [newRule.shasum UTF8String]);
+  [[daemonConn remoteObjectProxy] databaseRuleAddRule:newRule cleanSlate:NO reply:^(BOOL success) {
+      if (!success) {
+        printf("Failed to modify rules.");
+        exit(1);
       } else {
-        printf("Added rule for SHA-256: %s.\n", [newRule.shasum UTF8String]);
+        if (newRule.state == RULESTATE_REMOVE) {
+          printf("Removed rule for SHA-256: %s.\n", [newRule.shasum UTF8String]);
+        } else {
+          printf("Added rule for SHA-256: %s.\n", [newRule.shasum UTF8String]);
+        }
+        exit(0);
       }
-      exit(0);
   }];
 }
 
