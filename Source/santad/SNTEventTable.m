@@ -43,7 +43,12 @@
       !event.occurrenceDate ||
       !event.decision) return NO;
 
-  NSData *eventData = [NSKeyedArchiver archivedDataWithRootObject:event];
+  NSData *eventData;
+  @try {
+    eventData = [NSKeyedArchiver archivedDataWithRootObject:event];
+  } @catch (NSException *exception) {
+    return NO;
+  }
 
   __block BOOL success = NO;
   [self inTransaction:^(FMDatabase *db, BOOL *rollback) {
@@ -73,6 +78,9 @@
 
       if ([rs next]) {
         storedEvent = [self eventFromResultSet:rs];
+        if (!storedEvent) {
+          [db executeUpdate:@"DELETE FROM events WHERE idx=?", [rs objectForColumnName:@"idx"]];
+        }
       }
 
       [rs close];
@@ -92,8 +100,7 @@
         if (obj) {
           [pendingEvents addObject:obj];
         } else {
-          NSNumber *idx = [rs objectForColumnName:@"idx"];
-          [db executeUpdate:@"DELETE FROM events WHERE idx=?", idx];
+          [db executeUpdate:@"DELETE FROM events WHERE idx=?", [rs objectForColumnName:@"idx"]];
         }
       }
 
@@ -107,8 +114,12 @@
   NSData *eventData = [rs dataForColumn:@"eventdata"];
   if (!eventData) return nil;
 
-  SNTStoredEvent *event = [NSKeyedUnarchiver unarchiveObjectWithData:eventData];
-  event.idx = @([rs intForColumn:@"idx"]);
+  SNTStoredEvent *event;
+
+  @try {
+    event = [NSKeyedUnarchiver unarchiveObjectWithData:eventData];
+    event.idx = @([rs intForColumn:@"idx"]);
+  } @catch (NSException *exception) {}
 
   return event;
 }
