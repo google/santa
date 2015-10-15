@@ -59,49 +59,60 @@ REGISTER_COMMAND_NAME(@"binaryinfo")
     exit(1);
   }
 
-  printf("%-19s: %s\n", "Path", [[fileInfo path] UTF8String]);
-  printf("%-19s: %s\n", "SHA-256", [[fileInfo SHA256] UTF8String]);
-  printf("%-19s: %s\n", "SHA-1", [[fileInfo SHA1] UTF8String]);
-  printf("%-19s: %s\n", "Bundle Name", [[fileInfo bundleName] UTF8String]);
-  printf("%-19s: %s\n", "Bundle Version", [[fileInfo bundleVersion] UTF8String]);
-  printf("%-19s: %s\n", "Bundle Version Str", [[fileInfo bundleShortVersionString] UTF8String]);
+  NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];
+  dateFormatter.dateFormat = @"YYYY/MM/dd HH:mm:ss Z";
+
+  [self printKey:@"Path" value:fileInfo.path];
+  [self printKey:@"SHA-256" value:fileInfo.SHA256];
+  [self printKey:@"SHA-1" value:fileInfo.SHA1];
+  [self printKey:@"Bundle Name" value:fileInfo.bundleName];
+  [self printKey:@"Bundle Version" value:fileInfo.bundleVersion];
+  [self printKey:@"Bundle Version Str" value:fileInfo.bundleShortVersionString];
+  [self printKey:@"Download Referer URL" value:fileInfo.quarantineRefererURL];
+  [self printKey:@"Download URL" value:fileInfo.quarantineDataURL];
+  [self printKey:@"Download Timestamp"
+           value:[dateFormatter stringFromDate:fileInfo.quarantineTimestamp]];
+  [self printKey:@"Download Agent" value:fileInfo.quarantineAgentBundleID];
 
   NSArray *archs = [fileInfo architectures];
   if (archs) {
-    printf("%-19s: %s (%s)\n", "Type",
-           [[fileInfo machoType] UTF8String],
-           [[archs componentsJoinedByString:@", "] UTF8String]);
+    NSString *s = [NSString stringWithFormat:@"%@ (%@)",
+                      fileInfo.machoType, [archs componentsJoinedByString:@", "]];
+    [self printKey:@"Type" value:s];
   } else {
-    printf("%-19s: %s\n", "Type", [[fileInfo machoType] UTF8String]);
+    [self printKey:@"Type" value:fileInfo.machoType];
   }
 
   if ([fileInfo isMissingPageZero]) {
-    printf("%-19s: %s\n", "Page Zero", "__PAGEZERO segment missing/bad!");
+    [self printKey:@"Page Zero" value:@"__PAGEZERO segment missing/bad!"];
   }
 
   MOLCodesignChecker *csc = [[MOLCodesignChecker alloc] initWithBinaryPath:filePath];
-
-  printf("%-19s: %s\n", "Code-signed", (csc) ? "Yes" : "No");
-
+  [self printKey:@"Code-signed" value:(csc) ? @"Yes" : @"No"];
   if (csc) {
     printf("Signing chain:\n");
 
     [csc.certificates enumerateObjectsUsingBlock:^(MOLCertificate *c,
                                                    unsigned long idx,
                                                    BOOL *stop) {
-        idx++;  // index from 1
-        printf("    %2lu. %-20s: %s\n", idx, "SHA-256", [c.SHA256 UTF8String]);
+        printf("    %2lu. %-20s: %s\n", idx + 1, "SHA-256", [c.SHA256 UTF8String]);
         printf("        %-20s: %s\n", "SHA-1", [c.SHA1 UTF8String]);
         printf("        %-20s: %s\n", "Common Name", [c.commonName UTF8String]);
         printf("        %-20s: %s\n", "Organization", [c.orgName UTF8String]);
         printf("        %-20s: %s\n", "Organizational Unit", [c.orgUnit UTF8String]);
-        printf("        %-20s: %s\n", "Valid From", [[c.validFrom description] UTF8String]);
-        printf("        %-20s: %s\n", "Valid Until", [[c.validUntil description] UTF8String]);
+        printf("        %-20s: %s\n", "Valid From",
+               [[dateFormatter stringFromDate:c.validFrom] UTF8String]);
+        printf("        %-20s: %s\n", "Valid Until",
+               [[dateFormatter stringFromDate:c.validUntil] UTF8String]);
         printf("\n");
     }];
   }
 
   exit(0);
+}
+
++ (void)printKey:(NSString *)key value:(NSString *)value {
+  printf("%-20s: %s\n", [key UTF8String], [value UTF8String]);
 }
 
 @end
