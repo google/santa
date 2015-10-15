@@ -233,7 +233,9 @@
     return @"Blacklist Regex";
   }
 
-  if (fi.isMissingPageZero) return @"Missing __PAGEZERO";
+  if ([[SNTConfigurator configurator] enablePageZeroProtection] && fi.isMissingPageZero) {
+    return @"Missing __PAGEZERO";
+  }
 
   return nil;
 }

@@ -40,6 +40,7 @@ static NSString * const kClientModeKey = @"ClientMode";
 static NSString * const kFileChangesRegexKey = @"FileChangesRegex";
 static NSString * const kWhitelistRegexKey = @"WhitelistRegex";
 static NSString * const kBlacklistRegexKey = @"BlacklistRegex";
+static NSString * const kEnablePageZeroProtectionKey = @"EnablePageZeroProtection";
 
 static NSString * const kMoreInfoURLKey = @"MoreInfoURL";
 static NSString * const kEventDetailURLKey = @"EventDetailURL";
@@ -172,6 +173,11 @@ static NSString * const kMachineIDPlistKeyKey = @"MachineIDKey";
   }
   self.cachedFileChangesRegex = nil;
   [self saveConfigToDisk];
+}
+
+- (BOOL)enablePageZeroProtection {
+  NSNumber *keyValue = self.configData[kEnablePageZeroProtectionKey];
+  return keyValue ? [keyValue boolValue] : YES;
 }
 
 - (NSURL *)moreInfoURL {

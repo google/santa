@@ -57,6 +57,13 @@ extern NSString * const kDefaultConfigFilePath;
 ///
 @property(nonatomic) NSRegularExpression *blacklistPathRegex;
 
+///
+///  Enable __PAGEZERO protection, defaults to YES
+///  If this flag is set to NO, 32-bit binaries that are missing
+///  the __PAGEZERO segment will not be blocked.
+///
+@property(readonly, nonatomic) BOOL enablePageZeroProtection;
+
 #pragma mark - GUI Settings
 
 ///
