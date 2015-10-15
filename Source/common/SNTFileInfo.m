@@ -18,7 +18,6 @@
 
 #include <mach-o/loader.h>
 #include <mach-o/swap.h>
-#include <sys/xattr.h>
 
 // Simple class to hold the data of a mach_header and the offset within the file
 // in which that header was found.
@@ -48,6 +47,7 @@
 // Cached properties
 @property NSBundle *bundleRef;
 @property NSDictionary *infoDict;
+@property NSDictionary *quarantineDict;
 @end
 
 @implementation SNTFileInfo
@@ -257,29 +257,22 @@
   return [self.infoPlist objectForKey:@"CFBundleShortVersionString"];
 }
 
-- (NSArray *)downloadURLs {
-  char *path = (char *)[self.path fileSystemRepresentation];
-  size_t size = (size_t)getxattr(path, "com.apple.metadata:kMDItemWhereFroms", NULL, 0, 0, 0);
-  char *value = malloc(size);
-  if (!value) return nil;
+- (NSString *)quarantineDataURL {
+  NSURL *url = [self quarantineData][(__bridge NSString *)kLSQuarantineDataURLKey];
+  return [url absoluteString];
+}
 
-  if (getxattr(path, "com.apple.metadata:kMDItemWhereFroms", value, size, 0, 0) == -1) {
-    free(value);
-    return nil;
-  }
+- (NSString *)quarantineRefererURL {
+  NSURL *url = [self quarantineData][(__bridge NSString *)kLSQuarantineOriginURLKey];
+  return [url absoluteString];
+}
 
-  NSData *data = [NSData dataWithBytes:value length:size];
-  free(value);
+- (NSString *)quarantineAgentBundleID {
+  return [self quarantineData][(__bridge NSString *)kLSQuarantineAgentBundleIdentifierKey];
+}
 
-  if (data) {
-    NSArray *urls = [NSPropertyListSerialization propertyListWithData:data
-                                                              options:NSPropertyListImmutable
-                                                               format:NULL
-                                                                error:NULL];
-    return urls;
-  }
-
-  return nil;
+- (NSDate *)quarantineTimestamp {
+  return [self quarantineData][(__bridge NSString *)kLSQuarantineTimeStampKey];
 }
 
 - (NSUInteger)fileSize {
@@ -430,6 +423,22 @@
   @catch (NSException *e) {
     return nil;
   }
+}
+
+///
+///  Retrieve quarantine data for a file
+///
+- (NSDictionary *)quarantineData {
+  if (!self.quarantineDict) {
+    NSURL *url = [NSURL fileURLWithPath:self.path];
+    CFDictionaryRef input;
+    CFURLCopyResourcePropertyForKey(
+                                    (__bridge CFURLRef)url, kCFURLQuarantinePropertiesKey, &input, NULL);
+    self.quarantineDict = CFBridgingRelease(input);
+
+    if (!self.quarantineDict) self.quarantineDict = (NSDictionary *)[NSNull null];
+  }
+  return (self.quarantineDict == (NSDictionary *)[NSNull null]) ? nil : self.quarantineDict;
 }
 
 ///

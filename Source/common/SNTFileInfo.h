@@ -109,8 +109,8 @@
 
 ///
 ///  @return Either the Info.plist in the bundle this file is part of, or an embedded plist if there
-///  is one. In the odd case that a file has both an embedded Info.plist and is part of a bundle,
-///  the Info.plist from the bundle will be returned.
+///  is one. In the unlikely event that a file has both an embedded Info.plist and is part of a
+///  bundle, the embedded plist will be returned.
 ///
 - (NSDictionary *)infoPlist;
 
@@ -135,10 +135,24 @@
 - (NSString *)bundleShortVersionString;
 
 ///
-///  @return any URLs this file may have been downloaded from, using the
-///  @c com.apple.metadata:kMDItemWhereFroms extended attribute.
+///  @return LaunchServices quarantine data - download URL as an absolute string.
 ///
-- (NSArray *)downloadURLs;
+- (NSString *)quarantineDataURL;
+
+///
+///  @return LaunchServices quarantine data - referer URL as an absolute string.
+///
+- (NSString *)quarantineRefererURL;
+
+///
+///  @return LaunchServices quarantine data - agent bundle ID.
+///
+- (NSString *)quarantineAgentBundleID;
+
+///
+///  @return LaunchServices quarantine data - timestamp.
+///
+- (NSDate *)quarantineTimestamp;
 
 ///
 ///  @return The size of the file in bytes.
