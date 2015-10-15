@@ -68,11 +68,14 @@ REGISTER_COMMAND_NAME(@"binaryinfo")
   [self printKey:@"Bundle Name" value:fileInfo.bundleName];
   [self printKey:@"Bundle Version" value:fileInfo.bundleVersion];
   [self printKey:@"Bundle Version Str" value:fileInfo.bundleShortVersionString];
-  [self printKey:@"Download Referer URL" value:fileInfo.quarantineRefererURL];
-  [self printKey:@"Download URL" value:fileInfo.quarantineDataURL];
-  [self printKey:@"Download Timestamp"
-           value:[dateFormatter stringFromDate:fileInfo.quarantineTimestamp]];
-  [self printKey:@"Download Agent" value:fileInfo.quarantineAgentBundleID];
+
+  if (fileInfo.quarantineDataURL) {
+    [self printKey:@"Download Referer URL" value:fileInfo.quarantineRefererURL];
+    [self printKey:@"Download URL" value:fileInfo.quarantineDataURL];
+    [self printKey:@"Download Timestamp"
+             value:[dateFormatter stringFromDate:fileInfo.quarantineTimestamp]];
+    [self printKey:@"Download Agent" value:fileInfo.quarantineAgentBundleID];
+  }
 
   NSArray *archs = [fileInfo architectures];
   if (archs) {
