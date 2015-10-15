@@ -224,65 +224,19 @@
 
 - (NSDictionary *)infoPlist {
   if (!self.infoDict) {
+    NSDictionary *d = [self embeddedPlist];
+    if (d) {
+      self.infoDict = d;
+      return self.infoDict;
+    }
+
+    d = self.bundle.infoDictionary;
+    if (d) {
+      self.infoDict = d;
+      return self.infoDict;
+    }
+
     self.infoDict = (NSDictionary *)[NSNull null];
-
-    if (self.bundle) {
-      NSDictionary *d = self.bundle.infoDictionary;
-      if (d) self.infoDict = d;
-    }
-
-    // Look for an embedded Info.plist if there is one.
-    // This could (and used to) use CFBundleCopyInfoDictionaryForURL but that uses mmap to read
-    // the file and so can cause SIGBUS if the file is deleted/truncated while it's working.
-    MachHeaderWithOffset *mhwo = [[self.machHeaders allValues] firstObject];
-    if (!mhwo) return self.infoDict;
-
-    struct mach_header *mh = (struct mach_header *)mhwo.data.bytes;
-    if (mh->filetype != MH_EXECUTE) return self.infoDict;
-    BOOL is64 = (mh->magic == MH_MAGIC_64 || mh->magic == MH_CIGAM_64);
-    uint32_t ncmds = mh->ncmds;
-    uint32_t nsects = 0;
-    uint64_t offset = mhwo.offset;
-
-    uint32_t sz_header = is64 ? sizeof(struct mach_header_64) : sizeof(struct mach_header);
-    uint32_t sz_segment = is64 ? sizeof(struct segment_command_64) : sizeof(struct segment_command);
-    uint32_t sz_section = is64 ? sizeof(struct section_64) : sizeof(struct section);
-
-    offset += sz_header;
-
-    // Loop through the load commands looking for the segment named __TEXT
-    for (uint32_t i = 0; i < ncmds; i++) {
-      NSData *cmdData = [self safeSubdataWithRange:NSMakeRange(offset, sz_segment)];
-      if (!cmdData) return self.infoDict;
-      struct segment_command_64 *lc = (struct segment_command_64 *)[cmdData bytes];
-      if (lc->cmd == LC_SEGMENT || lc->cmd == LC_SEGMENT_64) {
-        if (strncmp(lc->segname, "__TEXT", 6) == 0) {
-          nsects = lc->nsects;
-          offset += sz_segment;
-          break;
-        }
-      }
-      offset += lc->cmdsize;
-    }
-
-    // Loop through the sections in the __TEXT segment looking for an __info_plist section.
-    for (uint32_t i = 0; i < nsects; i++) {
-      NSData *sectData = [self safeSubdataWithRange:NSMakeRange(offset, sz_section)];
-      if (!sectData) return self.infoDict;
-      struct section_64 *sect = (struct section_64 *)[sectData bytes];
-      if (strncmp(sect->sectname, "__info_plist", 12) == 0 && sect->size < 2000000) {
-        NSData *plistData = [self safeSubdataWithRange:NSMakeRange(sect->offset, sect->size)];
-        if (!plistData) return self.infoDict;
-        NSDictionary *plist;
-        plist = [NSPropertyListSerialization propertyListWithData:plistData
-                                                          options:NSPropertyListImmutable
-                                                           format:NULL
-                                                            error:NULL];
-        if (plist) self.infoDict = plist;
-        return self.infoDict;
-      }
-      offset += sz_section;
-    }
   }
   return self.infoDict == (NSDictionary *)[NSNull null] ? nil : self.infoDict;
 }
@@ -396,6 +350,64 @@
     return [NSData dataWithBytes:mh length:sizeof(struct mach_header)];
   }
 
+  return nil;
+}
+
+///
+///  Locate an embedded plist in the file
+///
+- (NSDictionary *)embeddedPlist {
+  // Look for an embedded Info.plist if there is one.
+  // This could (and used to) use CFBundleCopyInfoDictionaryForURL but that uses mmap to read
+  // the file and so can cause SIGBUS if the file is deleted/truncated while it's working.
+  MachHeaderWithOffset *mhwo = [[self.machHeaders allValues] firstObject];
+  if (!mhwo) return nil;
+
+  struct mach_header *mh = (struct mach_header *)mhwo.data.bytes;
+  if (mh->filetype != MH_EXECUTE) return self.infoDict;
+  BOOL is64 = (mh->magic == MH_MAGIC_64 || mh->magic == MH_CIGAM_64);
+  uint32_t ncmds = mh->ncmds;
+  uint32_t nsects = 0;
+  uint64_t offset = mhwo.offset;
+
+  uint32_t sz_header = is64 ? sizeof(struct mach_header_64) : sizeof(struct mach_header);
+  uint32_t sz_segment = is64 ? sizeof(struct segment_command_64) : sizeof(struct segment_command);
+  uint32_t sz_section = is64 ? sizeof(struct section_64) : sizeof(struct section);
+
+  offset += sz_header;
+
+  // Loop through the load commands looking for the segment named __TEXT
+  for (uint32_t i = 0; i < ncmds; i++) {
+    NSData *cmdData = [self safeSubdataWithRange:NSMakeRange(offset, sz_segment)];
+    if (!cmdData) return nil;
+    struct segment_command_64 *lc = (struct segment_command_64 *)[cmdData bytes];
+    if (lc->cmd == LC_SEGMENT || lc->cmd == LC_SEGMENT_64) {
+      if (strncmp(lc->segname, "__TEXT", 6) == 0) {
+        nsects = lc->nsects;
+        offset += sz_segment;
+        break;
+      }
+    }
+    offset += lc->cmdsize;
+  }
+
+  // Loop through the sections in the __TEXT segment looking for an __info_plist section.
+  for (uint32_t i = 0; i < nsects; i++) {
+    NSData *sectData = [self safeSubdataWithRange:NSMakeRange(offset, sz_section)];
+    if (!sectData) return nil;
+    struct section_64 *sect = (struct section_64 *)[sectData bytes];
+    if (strncmp(sect->sectname, "__info_plist", 12) == 0 && sect->size < 2000000) {
+      NSData *plistData = [self safeSubdataWithRange:NSMakeRange(sect->offset, sect->size)];
+      if (!plistData) return nil;
+      NSDictionary *plist;
+      plist = [NSPropertyListSerialization propertyListWithData:plistData
+                                                        options:NSPropertyListImmutable
+                                                         format:NULL
+                                                          error:NULL];
+      if (plist) return plist;
+    }
+    offset += sz_section;
+  }
   return nil;
 }
 
