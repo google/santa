@@ -116,8 +116,11 @@ void SantaDecisionManager::DisconnectClient(bool itDied) {
 
 bool SantaDecisionManager::ClientConnected() {
   proc_t p = proc_find(client_pid_);
-  bool is_exiting = proc_exiting(p);
-  proc_rele(p);
+  bool is_exiting = false;
+  if (p) {
+    is_exiting = proc_exiting(p);
+    proc_rele(p);
+  }
   return (client_pid_ > 0 && !is_exiting);
 }
 
