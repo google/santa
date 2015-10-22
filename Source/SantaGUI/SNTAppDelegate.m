@@ -71,7 +71,7 @@
 #pragma mark Connection handling
 
 - (void)createConnection {
-  dispatch_sync(dispatch_get_main_queue(), ^{
+  dispatch_async(dispatch_get_main_queue(), ^{
     __weak __typeof(self) weakSelf = self;
 
     self.listener = [[SNTXPCConnection alloc] initClientWithName:[SNTXPCNotifierInterface serviceId]
