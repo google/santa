@@ -60,7 +60,7 @@ REGISTER_COMMAND_NAME(@"binaryinfo")
   }
 
   NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];
-  dateFormatter.dateFormat = @"YYYY/MM/dd HH:mm:ss Z";
+  dateFormatter.dateFormat = @"yyyy/MM/dd HH:mm:ss Z";
 
   [self printKey:@"Path" value:fileInfo.path];
   [self printKey:@"SHA-256" value:fileInfo.SHA256];
