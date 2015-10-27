@@ -70,7 +70,7 @@ extern NSString *const NSURLQuarantinePropertiesKey WEAK_IMPORT_ATTRIBUTE;
     }
 
     _fileData = [NSData dataWithContentsOfFile:_path
-                                       options:NSDataReadingUncached
+                                       options:NSDataReadingMappedIfSafe
                                          error:error];
     if (_fileData.length == 0) return nil;
     [self parseMachHeaders];
