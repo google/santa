@@ -376,7 +376,7 @@ extern NSString *const NSURLQuarantinePropertiesKey WEAK_IMPORT_ATTRIBUTE;
     NSData *cmdData = [self safeSubdataWithRange:NSMakeRange(offset, sz_segment)];
     if (!cmdData) return nil;
     struct segment_command_64 *lc = (struct segment_command_64 *)[cmdData bytes];
-    if (lc->cmd == LC_SEGMENT || lc->cmd == LC_SEGMENT_64) {
+    if (lc && (lc->cmd == LC_SEGMENT || lc->cmd == LC_SEGMENT_64)) {
       if (strncmp(lc->segname, "__TEXT", 6) == 0) {
         nsects = lc->nsects;
         offset += sz_segment;
@@ -391,7 +391,7 @@ extern NSString *const NSURLQuarantinePropertiesKey WEAK_IMPORT_ATTRIBUTE;
     NSData *sectData = [self safeSubdataWithRange:NSMakeRange(offset, sz_section)];
     if (!sectData) return nil;
     struct section_64 *sect = (struct section_64 *)[sectData bytes];
-    if (strncmp(sect->sectname, "__info_plist", 12) == 0 && sect->size < 2000000) {
+    if (sect && strncmp(sect->sectname, "__info_plist", 12) == 0 && sect->size < 2000000) {
       NSData *plistData = [self safeSubdataWithRange:NSMakeRange(sect->offset, sect->size)];
       if (!plistData) return nil;
       NSDictionary *plist;
