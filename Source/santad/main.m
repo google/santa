@@ -21,10 +21,12 @@
 
 extern uint64_t watchdogCPUEvents;
 extern uint64_t watchdogRAMEvents;
+extern double watchdogCPUPeak;
+extern double watchdogRAMPeak;
 
 ///  Converts a timeval struct to double, converting the microseconds value to seconds.
-static inline double timeval_to_double(struct timeval tv) {
-  return (double)tv.tv_sec + (double)tv.tv_usec / 1000000.0;
+static inline double timeval_to_double(time_value_t tv) {
+  return (double)tv.seconds + (double)tv.microseconds / 1000000.0;
 }
 
 ///  The watchdog thread function, used to monitor santad CPU/RAM usage and print a warning
@@ -45,7 +47,6 @@ void *watchdogThreadFunction(__unused void *idata) {
 
   double prevTotalTime = 0.0;
   double prevRamUseMB = 0.0;
-  struct rusage usage;
   struct mach_task_basic_info taskInfo;
   mach_msg_type_number_t taskInfoCount = MACH_TASK_BASIC_INFO_COUNT;
 
@@ -53,27 +54,31 @@ void *watchdogThreadFunction(__unused void *idata) {
     @autoreleasepool {
       sleep(timeInterval);
 
-      // CPU
-      getrusage(RUSAGE_SELF, &usage);
-      double totalTime = timeval_to_double(usage.ru_utime) + timeval_to_double(usage.ru_stime);
-      double percentage = (((totalTime - prevTotalTime) / (double)timeInterval) * 100.0);
-      prevTotalTime = totalTime;
+      if (task_info(mach_task_self(), MACH_TASK_BASIC_INFO,
+                    (task_info_t)&taskInfo, &taskInfoCount) == KERN_SUCCESS) {
+        // CPU
+        double totalTime = (timeval_to_double(taskInfo.user_time) +
+                            timeval_to_double(taskInfo.system_time));
+        double percentage = (((totalTime - prevTotalTime) / (double)timeInterval) * 100.0);
+        prevTotalTime = totalTime;
 
-      if (percentage > cpuWarnThreshold) {
-        LOGW(@"Watchdog: potentially high CPU use, ~%.2f%% over last %d seconds.",
-             percentage, timeInterval);
-        watchdogCPUEvents++;
-      }
+        if (percentage > cpuWarnThreshold) {
+          LOGW(@"Watchdog: potentially high CPU use, ~%.2f%% over last %d seconds.",
+               percentage, timeInterval);
+          watchdogCPUEvents++;
+        }
 
-      // RAM
-      if (KERN_SUCCESS == task_info(mach_task_self(), MACH_TASK_BASIC_INFO,
-                                    (task_info_t)&taskInfo, &taskInfoCount)) {
-        double ramUseMB = (double) taskInfo.resident_size / 1024 / 1024;
+        if (percentage > watchdogCPUPeak) watchdogCPUPeak = percentage;
+
+        // RAM
+        double ramUseMB = (double)taskInfo.resident_size / 1024 / 1024;
         if (ramUseMB > memWarnThreshold && ramUseMB > prevRamUseMB) {
           LOGW(@"Watchdog: potentially high RAM use, RSS is %.2fMB.", ramUseMB);
           watchdogRAMEvents++;
         }
         prevRamUseMB = ramUseMB;
+
+        if (ramUseMB > watchdogRAMPeak) watchdogRAMPeak = ramUseMB;
       }
     }
   }
