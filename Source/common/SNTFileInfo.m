@@ -18,6 +18,7 @@
 
 #include <mach-o/loader.h>
 #include <mach-o/swap.h>
+#include <sys/stat.h>
 
 // Simple class to hold the data of a mach_header and the offset within the file
 // in which that header was found.
@@ -39,15 +40,14 @@
 
 @interface SNTFileInfo ()
 @property NSString *path;
-@property NSData *fileData;
-
-// Dictionary of MachHeaderWithOffset objects where the keys are the architecture strings
-@property NSDictionary *machHeaders;
+@property NSFileHandle *fileHandle;
+@property NSUInteger fileSize;
 
 // Cached properties
 @property NSBundle *bundleRef;
 @property NSDictionary *infoDict;
 @property NSDictionary *quarantineDict;
+@property NSDictionary *cachedHeaders;
 @end
 
 @implementation SNTFileInfo
@@ -69,11 +69,13 @@ extern NSString *const NSURLQuarantinePropertiesKey WEAK_IMPORT_ATTRIBUTE;
       return nil;
     }
 
-    _fileData = [NSData dataWithContentsOfFile:_path
-                                       options:NSDataReadingMappedIfSafe
-                                         error:error];
-    if (_fileData.length == 0) return nil;
-    [self parseMachHeaders];
+    _fileHandle = [NSFileHandle fileHandleForReadingAtPath:_path];
+
+    struct stat fileStat;
+    fstat(_fileHandle.fileDescriptor, &fileStat);
+    _fileSize = fileStat.st_size;
+
+    if (_fileSize == 0) return nil;
   }
 
   return self;
@@ -84,10 +86,29 @@ extern NSString *const NSURLQuarantinePropertiesKey WEAK_IMPORT_ATTRIBUTE;
 }
 
 - (NSString *)SHA1 {
-  unsigned char sha1[CC_SHA1_DIGEST_LENGTH];
-  CC_SHA1(self.fileData.bytes, (unsigned int)self.fileData.length, sha1);
+  const int chunkSize = 4096;
 
-  // Convert the binary SHA into hex
+  CC_SHA1_CTX c;
+  CC_SHA1_Init(&c);
+  for (uint64_t offset = 0; offset < self.fileSize; offset += chunkSize) {
+    int readSize;
+    if (offset + chunkSize > self.fileSize) {
+      readSize = (int)(self.fileSize - offset);
+    } else {
+      readSize = chunkSize;
+    }
+
+    NSData *chunk = [self safeSubdataWithRange:NSMakeRange(offset, readSize)];
+    if (!chunk) {
+      CC_SHA1_Final(NULL, &c);
+      return nil;
+    }
+
+    CC_SHA1_Update(&c, chunk.bytes, readSize);
+  }
+  unsigned char sha1[CC_SHA1_DIGEST_LENGTH];
+  CC_SHA1_Final(sha1, &c);
+
   NSMutableString *buf = [[NSMutableString alloc] initWithCapacity:CC_SHA1_DIGEST_LENGTH * 2];
   for (int i = 0; i < CC_SHA1_DIGEST_LENGTH; i++) {
     [buf appendFormat:@"%02x", (unsigned char)sha1[i]];
@@ -97,23 +118,43 @@ extern NSString *const NSURLQuarantinePropertiesKey WEAK_IMPORT_ATTRIBUTE;
 }
 
 - (NSString *)SHA256 {
+  const int chunkSize = 4096;
+
+  CC_SHA256_CTX c;
+  CC_SHA256_Init(&c);
+  for (uint64_t offset = 0; offset < self.fileSize; offset += chunkSize) {
+    int readSize;
+    if (offset + chunkSize > self.fileSize) {
+      readSize = (int)(self.fileSize - offset);
+    } else {
+      readSize = chunkSize;
+    }
+
+    NSData *chunk = [self safeSubdataWithRange:NSMakeRange(offset, readSize)];
+    if (!chunk) {
+      CC_SHA256_Final(NULL, &c);
+      return nil;
+    }
+
+    CC_SHA256_Update(&c, chunk.bytes, readSize);
+  }
   unsigned char sha256[CC_SHA256_DIGEST_LENGTH];
-  CC_SHA256(self.fileData.bytes, (unsigned int)self.fileData.length, sha256);
+  CC_SHA256_Final(sha256, &c);
 
   NSMutableString *buf = [[NSMutableString alloc] initWithCapacity:CC_SHA256_DIGEST_LENGTH * 2];
   for (int i = 0; i < CC_SHA256_DIGEST_LENGTH; i++) {
     [buf appendFormat:@"%02x", (unsigned char)sha256[i]];
   }
-
+  
   return buf;
 }
 
 - (NSString *)machoType {
+  if ([self isScript]) return @"Script";
   if ([self isDylib])  return @"Dynamic Library";
   if ([self isKext])   return @"Kernel Extension";
   if ([self isFat])    return @"Fat Binary";
   if ([self isMachO])  return @"Thin Binary";
-  if ([self isScript]) return @"Script";
   return @"Unknown (not executable?)";
 }
 
@@ -134,11 +175,11 @@ extern NSString *const NSURLQuarantinePropertiesKey WEAK_IMPORT_ATTRIBUTE;
 }
 
 - (BOOL)isMachO {
-  return ([self.machHeaders count] > 0);
+  return (self.machHeaders.count > 0);
 }
 
 - (BOOL)isFat {
-  return ([self.machHeaders count] > 1);
+  return (self.machHeaders.count > 1);
 }
 
 - (BOOL)isScript {
@@ -148,15 +189,14 @@ extern NSString *const NSURLQuarantinePropertiesKey WEAK_IMPORT_ATTRIBUTE;
 
 - (BOOL)isExecutable {
   struct mach_header *mach_header = [self firstMachHeader];
-  if (!mach_header) return NO;
-  if (mach_header->filetype == MH_OBJECT || mach_header->filetype == MH_EXECUTE) return YES;
+  if (mach_header && mach_header->filetype == MH_EXECUTE) return YES;
   return NO;
 }
 
 - (BOOL)isMissingPageZero {
   // This method only checks i386 arch because the kernel enforces this for other archs
   // See bsd/kern/mach_loader.c, search for enforce_hard_pagezero.
-  MachHeaderWithOffset *x86Header = self.machHeaders[@"i386"];
+  MachHeaderWithOffset *x86Header = self.machHeaders[[self nameForCPUType:CPU_TYPE_X86]];
   if (!x86Header) return NO;
 
   struct mach_header *mh = (struct mach_header *)[x86Header.data bytes];
@@ -259,6 +299,8 @@ extern NSString *const NSURLQuarantinePropertiesKey WEAK_IMPORT_ATTRIBUTE;
   return [self.infoPlist objectForKey:@"CFBundleShortVersionString"];
 }
 
+#pragma mark Quarantine Data
+
 - (NSString *)quarantineDataURL {
   NSURL *url = [self quarantineData][(__bridge NSString *)kLSQuarantineDataURLKey];
   return [url absoluteString];
@@ -277,24 +319,21 @@ extern NSString *const NSURLQuarantinePropertiesKey WEAK_IMPORT_ATTRIBUTE;
   return [self quarantineData][(__bridge NSString *)kLSQuarantineTimeStampKey];
 }
 
-- (NSUInteger)fileSize {
-  return self.fileData.length;
-}
-
 #pragma mark Internal Methods
 
-- (void)parseMachHeaders {
-  if (self.machHeaders) return;
+- (NSDictionary *)machHeaders {
+  if (self.cachedHeaders) return self.cachedHeaders;
 
   // Sanity check file length
-  if (self.fileData.length < sizeof(struct mach_header)) {
-    self.machHeaders = [NSDictionary dictionary];
-    return;
+  if (self.fileSize < sizeof(struct mach_header)) {
+    self.cachedHeaders = [NSDictionary dictionary];
+    return self.cachedHeaders;
   }
 
   NSMutableDictionary *machHeaders = [NSMutableDictionary dictionary];
 
-  NSData *machHeader = [self parseSingleMachHeader:self.fileData];
+  NSData *machHeader = [self parseSingleMachHeader:[self safeSubdataWithRange:NSMakeRange(0,
+                                                                                          4096)]];
   if (machHeader) {
     struct mach_header *mh = (struct mach_header *)[machHeader bytes];
     MachHeaderWithOffset *mhwo = [[MachHeaderWithOffset alloc] initWithData:machHeader offset:0];
@@ -328,7 +367,8 @@ extern NSString *const NSURLQuarantinePropertiesKey WEAK_IMPORT_ATTRIBUTE;
     }
   }
 
-  self.machHeaders = [machHeaders copy];
+  self.cachedHeaders = [machHeaders copy];
+  return self.cachedHeaders;
 }
 
 - (NSData *)parseSingleMachHeader:(NSData *)inputData {
@@ -376,7 +416,7 @@ extern NSString *const NSURLQuarantinePropertiesKey WEAK_IMPORT_ATTRIBUTE;
     NSData *cmdData = [self safeSubdataWithRange:NSMakeRange(offset, sz_segment)];
     if (!cmdData) return nil;
     struct segment_command_64 *lc = (struct segment_command_64 *)[cmdData bytes];
-    if (lc && (lc->cmd == LC_SEGMENT || lc->cmd == LC_SEGMENT_64)) {
+    if (lc->cmd == LC_SEGMENT || lc->cmd == LC_SEGMENT_64) {
       if (strncmp(lc->segname, "__TEXT", 6) == 0) {
         nsects = lc->nsects;
         offset += sz_segment;
@@ -407,20 +447,23 @@ extern NSString *const NSURLQuarantinePropertiesKey WEAK_IMPORT_ATTRIBUTE;
 }
 
 ///
-///  Return one of the mach_header's in this file.
+///  Return the first mach_header in this file.
 ///
 - (struct mach_header *)firstMachHeader {
   return (struct mach_header *)([[[[self.machHeaders allValues] firstObject] data] bytes]);
-
 }
 
 ///
-///  Wrap @c subdataWithRange: in a @@try/@@catch, returning nil on exception.
-///  Useful for when the range is beyond the end of the file.
+///  Extract a range of the file as an NSData, handling any exceptions.
+///  Returns nil if the requested range is outside of the range of the file.
 ///
 - (NSData *)safeSubdataWithRange:(NSRange)range {
   @try {
-    return [self.fileData subdataWithRange:range];
+    if ((range.location + range.length) > self.fileSize) return nil;
+    [self.fileHandle seekToFileOffset:range.location];
+    NSData *d = [self.fileHandle readDataOfLength:range.length];
+    if (d.length != range.length) return nil;
+    return d;
   }
   @catch (NSException *e) {
     return nil;
@@ -428,7 +471,7 @@ extern NSString *const NSURLQuarantinePropertiesKey WEAK_IMPORT_ATTRIBUTE;
 }
 
 ///
-///  Retrieve quarantine data for a file
+///  Retrieve quarantine data for a file and caches the dictionary
 ///
 - (NSDictionary *)quarantineData {
   if (!self.quarantineDict && NSURLQuarantinePropertiesKey != NULL) {
@@ -459,6 +502,13 @@ extern NSString *const NSURLQuarantinePropertiesKey WEAK_IMPORT_ATTRIBUTE;
   return nil;
 }
 
+///
+///  Resolves a given path:
+///    + Follows symlinks
+///    + Converts relative paths to absolute
+///    + If path is a directory, checks to see if that directory is a bundle and if so
+///      returns the path to that bundles CFBundleExecutable.
+///
 - (NSString *)resolvePath:(NSString *)path {
   // Convert to absolute, standardized path
   path = [path stringByResolvingSymlinksInPath];
