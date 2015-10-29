@@ -174,12 +174,8 @@ double watchdogRAMPeak = 0;
   reply();
 }
 
-- (void)watchdogCPUEvents:(void (^)(uint64_t))reply {
-  reply(watchdogCPUEvents);
-}
-
-- (void)watchdogRAMEvents:(void (^)(uint64_t))reply {
-  reply(watchdogRAMEvents);
+- (void)watchdogInfo:(void (^)(uint64_t, uint64_t, double, double))reply {
+  reply(watchdogCPUEvents, watchdogRAMEvents, watchdogCPUPeak, watchdogRAMPeak);
 }
 
 @end

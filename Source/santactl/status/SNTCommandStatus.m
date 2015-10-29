@@ -48,6 +48,7 @@ REGISTER_COMMAND_NAME(@"status")
   // Daemon status
   __block NSString *clientMode;
   __block uint64_t cpuEvents, ramEvents;
+  __block double cpuPeak, ramPeak;
   dispatch_group_enter(group);
   [[daemonConn remoteObjectProxy] clientMode:^(santa_clientmode_t cm) {
       switch (cm) {
@@ -61,15 +62,15 @@ REGISTER_COMMAND_NAME(@"status")
       dispatch_group_leave(group);
   }];
   dispatch_group_enter(group);
-  [[daemonConn remoteObjectProxy] watchdogCPUEvents:^(uint64_t events) {
-    cpuEvents = events;
+  [[daemonConn remoteObjectProxy] watchdogInfo:^(uint64_t wd_cpuEvents, uint64_t wd_ramEvents,
+                                                 double wd_cpuPeak, double wd_ramPeak) {
+    cpuEvents = wd_cpuEvents;
+    cpuPeak  = wd_cpuPeak;
+    ramEvents = wd_ramEvents;
+    ramPeak = wd_ramPeak;
     dispatch_group_leave(group);
   }];
-  dispatch_group_enter(group);
-  [[daemonConn remoteObjectProxy] watchdogRAMEvents:^(uint64_t events) {
-    ramEvents = events;
-    dispatch_group_leave(group);
-  }];
+
   BOOL fileLogging = ([[SNTConfigurator configurator] fileChangesRegex] != nil);
 
   // Kext status
@@ -114,6 +115,8 @@ REGISTER_COMMAND_NAME(@"status")
             @"file_logging": @(fileLogging),
             @"watchdog_cpu_events": @(cpuEvents),
             @"watchdog_ram_events": @(ramEvents),
+            @"watchdog_cpu_peak": @(cpuPeak),
+            @"watchdog_ram_peak": @(ramPeak),
         },
         @"kernel": @{
             @"cache_count": @(cacheCount),
@@ -138,8 +141,8 @@ REGISTER_COMMAND_NAME(@"status")
     printf(">>> Daemon Info\n");
     printf("  %-22s | %s\n", "Mode", [clientMode UTF8String]);
     printf("  %-22s | %s\n", "File Logging", (fileLogging ? "Yes" : "No"));
-    printf("  %-22s | %lld\n", "Watchdog CPU Events", cpuEvents);
-    printf("  %-22s | %lld\n", "Watchdog RAM Events", ramEvents);
+    printf("  %-22s | %lld  (Peak: %.2f%%)\n", "Watchdog CPU Events", cpuEvents, cpuPeak);
+    printf("  %-22s | %lld  (Peak: %.2fMB)\n", "Watchdog RAM Events", ramEvents, ramPeak);
     printf(">>> Kernel Info\n");
     printf("  %-22s | %lld\n", "Kernel cache count", cacheCount);
     printf(">>> Database Info\n");

@@ -46,8 +46,7 @@
 ///  Config ops
 ///
 - (void)clientMode:(void (^)(santa_clientmode_t))reply;
-- (void)watchdogCPUEvents:(void (^)(uint64_t))reply;
-- (void)watchdogRAMEvents:(void (^)(uint64_t))reply;
+- (void)watchdogInfo:(void (^)(uint64_t, uint64_t, double, double))reply;
 - (void)setClientMode:(santa_clientmode_t)mode reply:(void (^)())reply;
 - (void)setNextSyncInterval:(uint64_t)seconds reply:(void (^)())reply;
 - (void)setSyncLastSuccess:(NSDate *)date reply:(void (^)())reply;
