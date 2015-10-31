@@ -91,20 +91,22 @@ extern NSString *const NSURLQuarantinePropertiesKey WEAK_IMPORT_ATTRIBUTE;
   CC_SHA1_CTX c;
   CC_SHA1_Init(&c);
   for (uint64_t offset = 0; offset < self.fileSize; offset += chunkSize) {
-    int readSize;
-    if (offset + chunkSize > self.fileSize) {
-      readSize = (int)(self.fileSize - offset);
-    } else {
-      readSize = chunkSize;
-    }
+    @autoreleasepool {
+      int readSize;
+      if (offset + chunkSize > self.fileSize) {
+        readSize = (int)(self.fileSize - offset);
+      } else {
+        readSize = chunkSize;
+      }
 
-    NSData *chunk = [self safeSubdataWithRange:NSMakeRange(offset, readSize)];
-    if (!chunk) {
-      CC_SHA1_Final(NULL, &c);
-      return nil;
-    }
+      NSData *chunk = [self safeSubdataWithRange:NSMakeRange(offset, readSize)];
+      if (!chunk) {
+        CC_SHA1_Final(NULL, &c);
+        return nil;
+      }
 
-    CC_SHA1_Update(&c, chunk.bytes, readSize);
+      CC_SHA1_Update(&c, chunk.bytes, readSize);
+    }
   }
   unsigned char sha1[CC_SHA1_DIGEST_LENGTH];
   CC_SHA1_Final(sha1, &c);
@@ -123,20 +125,22 @@ extern NSString *const NSURLQuarantinePropertiesKey WEAK_IMPORT_ATTRIBUTE;
   CC_SHA256_CTX c;
   CC_SHA256_Init(&c);
   for (uint64_t offset = 0; offset < self.fileSize; offset += chunkSize) {
-    int readSize;
-    if (offset + chunkSize > self.fileSize) {
-      readSize = (int)(self.fileSize - offset);
-    } else {
-      readSize = chunkSize;
-    }
+    @autoreleasepool {
+      int readSize;
+      if (offset + chunkSize > self.fileSize) {
+        readSize = (int)(self.fileSize - offset);
+      } else {
+        readSize = chunkSize;
+      }
 
-    NSData *chunk = [self safeSubdataWithRange:NSMakeRange(offset, readSize)];
-    if (!chunk) {
-      CC_SHA256_Final(NULL, &c);
-      return nil;
-    }
+      NSData *chunk = [self safeSubdataWithRange:NSMakeRange(offset, readSize)];
+      if (!chunk) {
+        CC_SHA256_Final(NULL, &c);
+        return nil;
+      }
 
-    CC_SHA256_Update(&c, chunk.bytes, readSize);
+      CC_SHA256_Update(&c, chunk.bytes, readSize);
+    }
   }
   unsigned char sha256[CC_SHA256_DIGEST_LENGTH];
   CC_SHA256_Final(sha256, &c);
