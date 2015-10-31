@@ -52,8 +52,6 @@ void *watchdogThreadFunction(__unused void *idata) {
 
   while(true) {
     @autoreleasepool {
-      sleep(timeInterval);
-
       if (task_info(mach_task_self(), MACH_TASK_BASIC_INFO,
                     (task_info_t)&taskInfo, &taskInfoCount) == KERN_SUCCESS) {
         // CPU
@@ -80,6 +78,8 @@ void *watchdogThreadFunction(__unused void *idata) {
 
         if (ramUseMB > watchdogRAMPeak) watchdogRAMPeak = ramUseMB;
       }
+
+      sleep(timeInterval);
     }
   }
   return NULL;
