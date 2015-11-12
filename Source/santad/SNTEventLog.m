@@ -14,7 +14,9 @@
 
 #import "SNTEventLog.h"
 
+#include <grp.h>
 #include <libproc.h>
+#include <pwd.h>
 #include <sys/sysctl.h>
 
 #import "SNTCachedDecision.h"
@@ -145,8 +147,14 @@
                  cd.certSHA256, [self sanitizeString:cd.certCommonName]];
   }
 
-  outLog = [outLog stringByAppendingFormat:@"|pid=%d|ppid=%d|uid=%d|gid=%d",
-               message.pid, message.ppid, message.uid, message.gid];
+  NSString *user, *group;
+  struct passwd *pw = getpwuid(message.uid);
+  if (pw) user = @(pw->pw_name);
+  struct group *gr = getgrgid(message.gid);
+  if (gr) group = @(gr->gr_name);
+
+  outLog = [outLog stringByAppendingFormat:@"|pid=%d|ppid=%d|uid=%d|user=%@|gid=%d|group=%@",
+               message.pid, message.ppid, message.uid, user, message.gid, group];
 
   LOGI(@"%@", outLog);
 }

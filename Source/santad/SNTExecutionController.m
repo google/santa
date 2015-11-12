@@ -53,7 +53,6 @@
     _notifierConnection = notifier;
     _eventLog = eventLog;
 
-    // Workaround for xpcproxy/libsecurity bug on Yosemite
     // This establishes the XPC connection between libsecurity and syspolicyd.
     // Not doing this causes a deadlock as establishing this link goes through xpcproxy.
     (void)[[MOLCodesignChecker alloc] initWithSelf];
@@ -168,7 +167,6 @@
     }
 
     struct passwd *user = getpwuid(message.uid);
-    endpwent();
     if (user) {
       se.executingUser = @(user->pw_name);
     }
@@ -285,7 +283,7 @@
   while ((nxt = getutxent())) {
     if (nxt->ut_type != USER_PROCESS) continue;
 
-    NSString *userName = [NSString stringWithUTF8String:nxt->ut_user];
+    NSString *userName = @(nxt->ut_user);
 
     NSString *sessionName;
     if (strnlen(nxt->ut_host, 1) > 0) {
