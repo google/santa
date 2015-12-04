@@ -32,6 +32,40 @@
     newVersion = 1;
   }
 
+  if (version < 2) {
+    // Clean-up: Find events where the bundle details might not be strings and update them.
+    FMResultSet *rs = [db executeQuery:@"SELECT * FROM events"];
+    while ([rs next]) {
+      SNTStoredEvent *se = [self eventFromResultSet:rs];
+      if (!se) continue;
+
+      Class NSStringClass = [NSString class];
+      if ([se.fileBundleID class] != NSStringClass) {
+        se.fileBundleID = [se.fileBundleID description];
+      }
+      if ([se.fileBundleName class] != NSStringClass) {
+        se.fileBundleName = [se.fileBundleName description];
+      }
+      if ([se.fileBundleVersion class] != NSStringClass) {
+        se.fileBundleVersion = [se.fileBundleVersion description];
+      }
+      if ([se.fileBundleVersionString class] != NSStringClass) {
+        se.fileBundleVersionString = [se.fileBundleVersionString description];
+      }
+
+      NSData *eventData;
+      NSNumber *idx = [rs objectForColumnName:@"idx"];
+      @try {
+        eventData = [NSKeyedArchiver archivedDataWithRootObject:se];
+        [db executeUpdate:@"UPDATE events SET eventdata=? WHERE idx=?", eventData, idx];
+      } @catch (NSException *exception) {
+        [db executeUpdate:@"DELETE FROM events WHERE idx=?", idx];
+      }
+    }
+    [rs close];
+    newVersion = 2;
+  }
+
   return newVersion;
 }
 

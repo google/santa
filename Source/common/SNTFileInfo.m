@@ -288,19 +288,19 @@ extern NSString *const NSURLQuarantinePropertiesKey WEAK_IMPORT_ATTRIBUTE;
 }
 
 - (NSString *)bundleIdentifier {
-  return [self.infoPlist objectForKey:@"CFBundleIdentifier"];
+  return [[self.infoPlist objectForKey:@"CFBundleIdentifier"] description];
 }
 
 - (NSString *)bundleName {
-  return [self.infoPlist objectForKey:@"CFBundleName"];
+  return [[self.infoPlist objectForKey:@"CFBundleName"] description];
 }
 
 - (NSString *)bundleVersion {
-  return [self.infoPlist objectForKey:@"CFBundleVersion"];
+  return [[self.infoPlist objectForKey:@"CFBundleVersion"] description];
 }
 
 - (NSString *)bundleShortVersionString {
-  return [self.infoPlist objectForKey:@"CFBundleShortVersionString"];
+  return [[self.infoPlist objectForKey:@"CFBundleShortVersionString"] description];
 }
 
 #pragma mark Quarantine Data
