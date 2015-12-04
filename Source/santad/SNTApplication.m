@@ -112,10 +112,15 @@
 - (void)run {
   LOGI(@"Connected to driver, activating.");
 
-  // Create a concurrent queue to put requests on, then set its priority to high.
-  dispatch_queue_t q =
-      dispatch_queue_create("com.google.santad.driver_queue", DISPATCH_QUEUE_CONCURRENT);
-  dispatch_set_target_queue(q, dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_HIGH, 0));
+  // Create the queues used for execution requests and logging.
+  dispatch_queue_t exec_queue = dispatch_queue_create(
+      "com.google.santad.execution_queue", DISPATCH_QUEUE_CONCURRENT);
+  dispatch_set_target_queue(exec_queue, dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_HIGH, 0));
+
+  dispatch_queue_t log_queue = dispatch_queue_create(
+      "com.google.santad.log_queue", DISPATCH_QUEUE_CONCURRENT);
+  dispatch_set_target_queue(
+      log_queue, dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_LOW, 0));
 
   [self.driverManager listenWithBlock:^(santa_message_t message) {
       @autoreleasepool {
@@ -129,7 +134,7 @@
           case ACTION_NOTIFY_LINK:
           case ACTION_NOTIFY_RENAME:
           case ACTION_NOTIFY_WRITE: {
-            dispatch_async(q, ^{
+            dispatch_async(log_queue, ^{
               NSRegularExpression *re = [[SNTConfigurator configurator] fileChangesRegex];
               NSString *path = @(message.path);
               if ([re numberOfMatchesInString:path options:0 range:NSMakeRange(0, path.length)]) {
@@ -139,13 +144,13 @@
             break;
           }
           case ACTION_NOTIFY_EXEC: {
-            dispatch_async(q, ^{
+            dispatch_async(log_queue, ^{
               [self.eventLog logAllowedExecution:message];
             });
             break;
           }
           case ACTION_REQUEST_CHECKBW: {
-            dispatch_async(q, ^{
+            dispatch_async(exec_queue, ^{
                 [self.execController validateBinaryWithMessage:message];
             });
             break;
