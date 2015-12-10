@@ -205,7 +205,7 @@
   NSMutableArray *args = [NSMutableArray arrayWithCapacity:argc];
   for (int i = 0; i < argc; i++) {
     NSString *arg = @(cp);
-    [args addObject:arg];
+    if (arg) [args addObject:arg];
 
     // Move the pointer past this string and the terminator at the end.
     cp += strlen(cp) + 1;
