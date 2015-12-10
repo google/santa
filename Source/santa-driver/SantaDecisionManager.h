@@ -203,6 +203,7 @@ class SantaDecisionManager : public OSObject {
   lck_mtx_t *dataqueue_lock_;
 
   OSDictionary *cached_decisions_;
+  OSDictionary *vnode_pid_map_;
 
   IOSharedDataQueue *dataqueue_;
   SInt32 failed_queue_requests_;

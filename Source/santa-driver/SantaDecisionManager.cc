@@ -31,6 +31,7 @@ bool SantaDecisionManager::init() {
   cached_decisions_lock_ = lck_rw_alloc_init(sdm_lock_grp_, sdm_lock_attr_);
 
   cached_decisions_ = OSDictionary::withCapacity(1000);
+  vnode_pid_map_ = OSDictionary::withCapacity(1000);
 
   dataqueue_ = IOSharedDataQueue::withEntries(kMaxQueueEvents,
                                               sizeof(santa_message_t));
@@ -44,6 +45,7 @@ bool SantaDecisionManager::init() {
 void SantaDecisionManager::free() {
   OSSafeReleaseNULL(dataqueue_);
   OSSafeReleaseNULL(cached_decisions_);
+  OSSafeReleaseNULL(vnode_pid_map_);
 
   if (cached_decisions_lock_) {
     lck_rw_free(cached_decisions_lock_, sdm_lock_grp_);
@@ -390,6 +392,8 @@ void SantaDecisionManager::DecrementListenerInvocations() {
   OSDecrementAtomic(&listener_invocations_);
 }
 
+#pragma mark Callbacks
+
 int SantaDecisionManager::VnodeCallback(const kauth_cred_t cred,
                                         const vfs_context_t ctx,
                                         const vnode_t vp,
@@ -414,8 +418,17 @@ int SantaDecisionManager::VnodeCallback(const kauth_cred_t cred,
   }
 
   switch (returnedAction) {
-    case ACTION_RESPOND_CHECKBW_ALLOW:
+    case ACTION_RESPOND_CHECKBW_ALLOW: {
+      proc_t proc = vfs_context_proc(ctx);
+      if (proc) {
+        char pid_ppid[14];
+        snprintf(pid_ppid, 14, "%d:%d", proc_pid(proc), proc_ppid(proc));
+        OSString *str = OSString::withCString(pid_ppid);
+        vnode_pid_map_->setObject(vnode_str, str);
+        str->release();
+      }
       return KAUTH_RESULT_ALLOW;
+    }
     case ACTION_RESPOND_CHECKBW_DENY:
       *errno = EPERM;
       return KAUTH_RESULT_DENY;
@@ -444,6 +457,20 @@ void SantaDecisionManager::FileOpCallback(
       message->vnode_id = vnode_id;
       message->action = ACTION_NOTIFY_EXEC;
       strlcpy(message->path, path, sizeof(message->path));
+
+      char vnode_str[MAX_VNODE_ID_STR];
+      snprintf(vnode_str, MAX_VNODE_ID_STR, "%llu", vnode_id);
+      OSString *str = OSDynamicCast(OSString,
+                                    vnode_pid_map_->getObject(vnode_str));
+      if (str) {
+        pid_t pid, ppid;
+        sscanf(str->getCStringNoCopy(), "%d:%d", &pid, &ppid);
+        if (pid && ppid) {
+          message->pid = pid;
+          message->ppid = ppid;
+        }
+      }
+
       PostToQueue(message);
       delete message;
       return;
@@ -477,8 +504,6 @@ void SantaDecisionManager::FileOpCallback(
 }
 
 #undef super
-
-#pragma mark Kauth Callbacks
 
 extern "C" int fileop_scope_callback(
     kauth_cred_t credential, void *idata, kauth_action_t action,
