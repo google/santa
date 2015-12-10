@@ -134,13 +134,19 @@
   NSString *htmlFooter = @"</body></html>";
 
   NSString *message;
-  if ([self.customMessage length] > 0) {
+  if (self.customMessage.length) {
     message = self.customMessage;
-  } else {
-    message = [[SNTConfigurator configurator] defaultBlockMessage];
+  } else if (self.event.decision == EVENTSTATE_BLOCK_UNKNOWN) {
+    message = [[SNTConfigurator configurator] unknownBlockMessage];
     if (!message) {
       message = @"The following application has been blocked from executing<br />"
                 @"because its trustworthiness cannot be determined.";
+    }
+  } else {
+    message = [[SNTConfigurator configurator] bannedBlockMessage];
+    if (!message) {
+      message = @"The following application has been blocked from executing<br />"
+                @"because it has been deemed malicious.";
     }
   }
 

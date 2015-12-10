@@ -94,10 +94,17 @@ extern NSString * const kDefaultConfigFilePath;
 @property(readonly, nonatomic) NSString *eventDetailText;
 
 ///
-///  For any rule that doesn't have a custom message, this setting overrides the message
-///  text that is display. If unset, a reasonable default is provided.
+///  In lockdown mode this is the message shown to the user when an unknown binary
+///  is blocked. If this message is not configured, a reasonable default is provided.
 ///
-@property(readonly, nonatomic) NSString *defaultBlockMessage;
+@property(readonly, nonatomic) NSString *unknownBlockMessage;
+
+///
+///  This is the message shown to the user when a binary is blocked because of a rule,
+///  if that rule doesn't provide a custom message. If this is not configured, a reasonable
+///  default is provided.
+///
+@property(readonly, nonatomic) NSString *bannedBlockMessage;
 
 #pragma mark - Sync Settings
 

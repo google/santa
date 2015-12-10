@@ -45,7 +45,8 @@ static NSString * const kEnablePageZeroProtectionKey = @"EnablePageZeroProtectio
 static NSString * const kMoreInfoURLKey = @"MoreInfoURL";
 static NSString * const kEventDetailURLKey = @"EventDetailURL";
 static NSString * const kEventDetailTextKey = @"EventDetailText";
-static NSString * const kDefaultBlockMessage = @"DefaultBlockMessage";
+static NSString * const kUnknownBlockMessage = @"UnknownBlockMessage";
+static NSString * const kBannedBlockMessage = @"BannedBlockMessage";
 
 static NSString * const kSyncBaseURLKey = @"SyncBaseURL";
 static NSString * const kSyncLastSuccess = @"SyncLastSuccess";
@@ -192,8 +193,12 @@ static NSString * const kMachineIDPlistKeyKey = @"MachineIDKey";
   return self.configData[kEventDetailTextKey];
 }
 
-- (NSString *)defaultBlockMessage {
-  return self.configData[kDefaultBlockMessage];
+- (NSString *)unknownBlockMessage {
+  return self.configData[kUnknownBlockMessage];
+}
+
+- (NSString *)bannedBlockMessage {
+  return self.configData[kBannedBlockMessage];
 }
 
 - (NSURL *)syncBaseURL {
