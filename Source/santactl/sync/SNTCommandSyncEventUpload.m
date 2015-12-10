@@ -18,6 +18,7 @@
 
 #import "NSData+Zlib.h"
 #import "MOLCertificate.h"
+#import "MOLCodesignChecker.h"
 #import "SNTCommandSyncConstants.h"
 #import "SNTCommandSyncState.h"
 #import "SNTFileInfo.h"
@@ -168,6 +169,7 @@
       ADDKEY(newEvent, kDecision, kDecisionBlockCertificate);
       break;
     case EVENTSTATE_BLOCK_SCOPE: ADDKEY(newEvent, kDecision, kDecisionBlockScope); break;
+    case EVENTSTATE_RELATED_BINARY: ADDKEY(newEvent, kDecision, kDecisionRelatedBinary); break;
     default: ADDKEY(newEvent, kDecision, kDecisionUnknown);
   }
 
@@ -248,7 +250,10 @@
           se.fileBundleVersion = event.fileBundleVersion;
           se.fileBundleVersionString = event.fileBundleVersionString;
 
-          [relatedEvents addObject:se];
+          MOLCodesignChecker *cs = [[MOLCodesignChecker alloc] initWithBinaryPath:se.filePath];
+          se.signingChain = cs.certificates;  // This may not be true
+
+          [relatedEvents addObject:[self dictionaryForEvent:se]];
         }
       }
     }
