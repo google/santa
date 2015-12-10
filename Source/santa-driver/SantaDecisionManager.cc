@@ -43,10 +43,6 @@ bool SantaDecisionManager::init() {
 }
 
 void SantaDecisionManager::free() {
-  OSSafeReleaseNULL(dataqueue_);
-  OSSafeReleaseNULL(cached_decisions_);
-  OSSafeReleaseNULL(vnode_pid_map_);
-
   if (cached_decisions_lock_) {
     lck_rw_free(cached_decisions_lock_, sdm_lock_grp_);
     cached_decisions_lock_ = nullptr;
@@ -71,6 +67,10 @@ void SantaDecisionManager::free() {
     lck_grp_attr_free(sdm_lock_grp_attr_);
     sdm_lock_grp_attr_ = nullptr;
   }
+
+  OSSafeReleaseNULL(dataqueue_);
+  OSSafeReleaseNULL(cached_decisions_);
+  OSSafeReleaseNULL(vnode_pid_map_);
 
   super::free();
 }
