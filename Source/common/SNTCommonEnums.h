@@ -62,6 +62,8 @@ typedef enum {
   EVENTSTATE_BLOCK_CERTIFICATE = 7,
   EVENTSTATE_BLOCK_SCOPE       = 8,
 
+  EVENTSTATE_RELATED_BINARY    = 9,
+
   EVENTSTATE_MAX
 } santa_eventstate_t;
 

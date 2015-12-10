@@ -49,6 +49,7 @@ extern NSString * const kDecisionBlockBinary;
 extern NSString * const kDecisionBlockCertificate;
 extern NSString * const kDecisionBlockScope;
 extern NSString * const kDecisionUnknown;
+extern NSString * const kDecisionRelatedBinary;
 extern NSString * const kLoggedInUsers;
 extern NSString * const kCurrentSessions;
 extern NSString * const kFileBundleID;

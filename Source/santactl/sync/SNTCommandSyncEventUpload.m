@@ -20,6 +20,7 @@
 #import "MOLCertificate.h"
 #import "SNTCommandSyncConstants.h"
 #import "SNTCommandSyncState.h"
+#import "SNTFileInfo.h"
 #import "SNTStoredEvent.h"
 #import "SNTXPCConnection.h"
 #import "SNTXPCControlInterface.h"
@@ -81,6 +82,11 @@
   for (SNTStoredEvent *event in events) {
     [uploadEvents addObject:[self dictionaryForEvent:event]];
     [eventIds addObject:event.idx];
+
+    if (event.fileBundleID) {
+      NSArray *relatedBinaries = [self findRelatedBinaries:event];
+      [uploadEvents addObjectsFromArray:relatedBinaries];
+    }
 
     if (eventIds.count >= batchSize) break;
   }
@@ -197,6 +203,67 @@
 
   return newEvent;
 #undef ADDKEY
+}
+
++ (NSArray *)findRelatedBinaries:(SNTStoredEvent *)event {
+  // Prevent processing the same bundle twice.
+  static NSMutableDictionary *previouslyProcessedBundles;
+  static dispatch_once_t onceToken;
+  dispatch_once(&onceToken, ^{
+    previouslyProcessedBundles = [NSMutableDictionary dictionary];
+  });
+  if (previouslyProcessedBundles[event.fileBundleID]) return nil;
+  previouslyProcessedBundles[event.fileBundleID] = @YES;
+
+  NSMutableArray *relatedEvents = [NSMutableArray array];
+
+  dispatch_semaphore_t sema = dispatch_semaphore_create(0);
+  __block BOOL shouldCancel = NO;
+  dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_BACKGROUND, 0), ^{
+    SNTFileInfo *originalFile = [[SNTFileInfo alloc] initWithPath:event.filePath];
+    NSString *bundlePath = originalFile.bundlePath;
+    originalFile = nil;  // release originalFile early.
+
+    NSDirectoryEnumerator *dirEnum = [[NSFileManager defaultManager] enumeratorAtPath:bundlePath];
+    NSString *file;
+
+    while (file = [dirEnum nextObject]) {
+      @autoreleasepool {
+        if (shouldCancel) break;
+        if ([dirEnum fileAttributes][NSFileType] != NSFileTypeRegular) continue;
+
+        file = [bundlePath stringByAppendingPathComponent:file];
+
+        // Don't record the binary that triggered this event as a related binary.
+        if ([file isEqual:event.filePath]) continue;
+
+        SNTFileInfo *fi = [[SNTFileInfo alloc] initWithPath:file];
+        if (fi.isExecutable) {
+          SNTStoredEvent *se = [[SNTStoredEvent alloc] init];
+          se.filePath = fi.path;
+          se.fileSHA256 = fi.SHA256;
+          se.decision = EVENTSTATE_RELATED_BINARY;
+          se.fileBundleID = event.fileBundleID;
+          se.fileBundleName = event.fileBundleName;
+          se.fileBundleVersion = event.fileBundleVersion;
+          se.fileBundleVersionString = event.fileBundleVersionString;
+
+          [relatedEvents addObject:se];
+        }
+      }
+    }
+
+    dispatch_semaphore_signal(sema);
+  });
+
+  // Give the search up to 2s per event to run.
+  // This might need tweaking if it seems to slow down syncing or misses too much to be useful.
+  if (dispatch_semaphore_wait(sema, dispatch_time(DISPATCH_TIME_NOW, NSEC_PER_SEC * 2))) {
+    shouldCancel = YES;
+    LOGD(@"Timed out while searching for related events. Bundle ID: %@", event.fileBundleID);
+  }
+
+  return relatedEvents;
 }
 
 @end
