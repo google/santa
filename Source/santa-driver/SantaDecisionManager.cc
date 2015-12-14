@@ -29,6 +29,7 @@ bool SantaDecisionManager::init() {
 
   dataqueue_lock_ = lck_mtx_alloc_init(sdm_lock_grp_, sdm_lock_attr_);
   cached_decisions_lock_ = lck_rw_alloc_init(sdm_lock_grp_, sdm_lock_attr_);
+  vnode_pid_map_lock_ = lck_rw_alloc_init(sdm_lock_grp_, sdm_lock_attr_);
 
   cached_decisions_ = OSDictionary::withCapacity(1000);
   vnode_pid_map_ = OSDictionary::withCapacity(1000);
@@ -46,6 +47,11 @@ void SantaDecisionManager::free() {
   if (cached_decisions_lock_) {
     lck_rw_free(cached_decisions_lock_, sdm_lock_grp_);
     cached_decisions_lock_ = nullptr;
+  }
+
+  if (vnode_pid_map_lock_) {
+    lck_rw_free(vnode_pid_map_lock_, sdm_lock_grp_);
+    vnode_pid_map_lock_ = nullptr;
   }
 
   if (dataqueue_lock_) {
@@ -183,7 +189,7 @@ void SantaDecisionManager::AddToCache(
   }
 
   if (decision == ACTION_REQUEST_CHECKBW) {
-    SantaMessage *pending = new SantaMessage();
+    SantaCachedDecision *pending = new SantaCachedDecision();
     pending->setAction(ACTION_REQUEST_CHECKBW, 0);
     lck_rw_lock_exclusive(cached_decisions_lock_);
     cached_decisions_->setObject(identifier, pending);
@@ -191,8 +197,8 @@ void SantaDecisionManager::AddToCache(
     pending->release();  // it was retained when added to the dictionary
   } else {
     lck_rw_lock_exclusive(cached_decisions_lock_);
-    SantaMessage *pending =
-        OSDynamicCast(SantaMessage, cached_decisions_->getObject(identifier));
+    SantaCachedDecision *pending = OSDynamicCast(
+        SantaCachedDecision, cached_decisions_->getObject(identifier));
     if (pending) {
       pending->setAction(decision, microsecs);
     }
@@ -234,8 +240,8 @@ santa_action_t SantaDecisionManager::GetFromCache(const char *identifier) {
   uint64_t decision_time = 0;
 
   lck_rw_lock_shared(cached_decisions_lock_);
-  SantaMessage *cached_decision =
-      OSDynamicCast(SantaMessage, cached_decisions_->getObject(identifier));
+  SantaCachedDecision *cached_decision = OSDynamicCast(
+      SantaCachedDecision, cached_decisions_->getObject(identifier));
   if (cached_decision) {
     result = cached_decision->getAction();
     decision_time = cached_decision->getMicrosecs();
@@ -421,11 +427,13 @@ int SantaDecisionManager::VnodeCallback(const kauth_cred_t cred,
     case ACTION_RESPOND_CHECKBW_ALLOW: {
       proc_t proc = vfs_context_proc(ctx);
       if (proc) {
-        char pid_ppid[14];
-        snprintf(pid_ppid, 14, "%d:%d", proc_pid(proc), proc_ppid(proc));
-        OSString *str = OSString::withCString(pid_ppid);
-        vnode_pid_map_->setObject(vnode_str, str);
-        str->release();
+        SantaPIDAndPPID *pidWrapper = new SantaPIDAndPPID;
+        pidWrapper->pid = proc_pid(proc);
+        pidWrapper->ppid = proc_ppid(proc);
+        lck_rw_lock_exclusive(vnode_pid_map_lock_);
+        vnode_pid_map_->setObject(vnode_str, pidWrapper);
+        lck_rw_unlock_exclusive(vnode_pid_map_lock_);
+        pidWrapper->release();
       }
       return KAUTH_RESULT_ALLOW;
     }
@@ -460,16 +468,15 @@ void SantaDecisionManager::FileOpCallback(
 
       char vnode_str[MAX_VNODE_ID_STR];
       snprintf(vnode_str, MAX_VNODE_ID_STR, "%llu", vnode_id);
-      OSString *str = OSDynamicCast(OSString,
-                                    vnode_pid_map_->getObject(vnode_str));
-      if (str) {
-        pid_t pid, ppid;
-        sscanf(str->getCStringNoCopy(), "%d:%d", &pid, &ppid);
-        if (pid && ppid) {
-          message->pid = pid;
-          message->ppid = ppid;
-        }
+
+      lck_rw_lock_shared(vnode_pid_map_lock_);
+      SantaPIDAndPPID *pidWrapper = OSDynamicCast(
+          SantaPIDAndPPID, vnode_pid_map_->getObject(vnode_str));
+      if (pidWrapper) {
+        message->pid = pidWrapper->pid;
+        message->ppid = pidWrapper->ppid;
       }
+      lck_rw_unlock_shared(vnode_pid_map_lock_);
 
       PostToQueue(message);
       delete message;

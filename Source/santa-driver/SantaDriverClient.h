@@ -22,7 +22,6 @@
 
 #include "SantaDecisionManager.h"
 #include "SantaDriver.h"
-#include "SantaMessage.h"
 #include "SNTKernelCommon.h"
 
 ///

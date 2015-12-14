@@ -12,19 +12,19 @@
 ///    See the License for the specific language governing permissions and
 ///    limitations under the License.
 
-#ifndef SANTA__SANTA_DRIVER__SANTAMESSAGE_H
-#define SANTA__SANTA_DRIVER__SANTAMESSAGE_H
+#ifndef SANTA__SANTA_DRIVER__SANTACACHEDDECISION_H
+#define SANTA__SANTA_DRIVER__SANTACACHEDDECISION_H
 
 #include <libkern/c++/OSObject.h>
 
 #include "SNTKernelCommon.h"
 
 ///
-///  An OSObject wrapper around a @c santa_action_t and a time.
+///  An OSObject subclass to store a @c santa_action_t and a timestamp.
 ///  Only OSObject subclasses can be inserted into an OSDictionary.
 ///
-class SantaMessage : public OSObject {
-  OSDeclareDefaultStructors(SantaMessage)
+class SantaCachedDecision : public OSObject {
+  OSDeclareDefaultStructors(SantaCachedDecision)
 
  public:
   // Returns the time the action was last set.
@@ -41,4 +41,4 @@ class SantaMessage : public OSObject {
   uint64_t microsecs_;
 };
 
-#endif  // SANTA__SANTA_DRIVER__SANTAMESSAGE_H
+#endif  // SANTA__SANTA_DRIVER__SANTACACHEDDECISIONWRAPPER_H

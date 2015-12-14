@@ -12,20 +12,6 @@
 ///    See the License for the specific language governing permissions and
 ///    limitations under the License.
 
-#include "SantaMessage.h"
+#include "SantaPIDAndPPID.h"
 
-OSDefineMetaClassAndStructors(SantaMessage, OSObject);
-
-uint64_t SantaMessage::getMicrosecs() const {
-  return microsecs_;
-}
-
-santa_action_t SantaMessage::getAction() const {
-  return action_;
-}
-
-void SantaMessage::setAction(
-    const santa_action_t action, const uint64_t microsecs) {
-  action_ = action;
-  microsecs_ = microsecs;
-}
+OSDefineMetaClassAndStructors(SantaPIDAndPPID, OSObject);

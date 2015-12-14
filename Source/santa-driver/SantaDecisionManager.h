@@ -24,9 +24,10 @@
 #include <sys/proc.h>
 #include <sys/vnode.h>
 
-#include "SantaMessage.h"
+#include "SantaCachedDecision.h"
 #include "SNTKernelCommon.h"
 #include "SNTLogging.h"
+#include "SantaPIDAndPPID.h"
 
 ///
 ///  SantaDecisionManager is responsible for intercepting Vnode execute actions
@@ -201,6 +202,7 @@ class SantaDecisionManager : public OSObject {
   lck_attr_t *sdm_lock_attr_;
   lck_rw_t *cached_decisions_lock_;
   lck_mtx_t *dataqueue_lock_;
+  lck_rw_t *vnode_pid_map_lock_;
 
   OSDictionary *cached_decisions_;
   OSDictionary *vnode_pid_map_;
