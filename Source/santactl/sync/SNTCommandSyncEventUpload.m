@@ -251,7 +251,7 @@
           se.fileBundleVersionString = event.fileBundleVersionString;
 
           MOLCodesignChecker *cs = [[MOLCodesignChecker alloc] initWithBinaryPath:se.filePath];
-          se.signingChain = cs.certificates;  // This may not be true
+          se.signingChain = cs.certificates;
 
           [relatedEvents addObject:[self dictionaryForEvent:se]];
         }
@@ -261,9 +261,9 @@
     dispatch_semaphore_signal(sema);
   });
 
-  // Give the search up to 2s per event to run.
+  // Give the search up to 5s per event to run.
   // This might need tweaking if it seems to slow down syncing or misses too much to be useful.
-  if (dispatch_semaphore_wait(sema, dispatch_time(DISPATCH_TIME_NOW, NSEC_PER_SEC * 2))) {
+  if (dispatch_semaphore_wait(sema, dispatch_time(DISPATCH_TIME_NOW, NSEC_PER_SEC * 5))) {
     shouldCancel = YES;
     LOGD(@"Timed out while searching for related events. Bundle ID: %@", event.fileBundleID);
   }
