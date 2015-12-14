@@ -85,6 +85,8 @@ extern NSString *const NSURLQuarantinePropertiesKey WEAK_IMPORT_ATTRIBUTE;
   return [self initWithPath:path error:NULL];
 }
 
+# pragma mark Hashing
+
 - (NSString *)SHA1 {
   const int chunkSize = 4096;
 
@@ -153,17 +155,17 @@ extern NSString *const NSURLQuarantinePropertiesKey WEAK_IMPORT_ATTRIBUTE;
   return buf;
 }
 
-- (NSString *)machoType {
-  if ([self isScript]) return @"Script";
-  if ([self isDylib])  return @"Dynamic Library";
-  if ([self isKext])   return @"Kernel Extension";
-  if ([self isFat])    return @"Fat Binary";
-  if ([self isMachO])  return @"Thin Binary";
-  return @"Unknown (not executable?)";
-}
+# pragma mark File Type Info
 
 - (NSArray *)architectures {
   return [self.machHeaders allKeys];
+}
+
+
+- (BOOL)isExecutable {
+  struct mach_header *mach_header = [self firstMachHeader];
+  if (mach_header && mach_header->filetype == MH_EXECUTE) return YES;
+  return NO;
 }
 
 - (BOOL)isDylib {
@@ -191,10 +193,9 @@ extern NSString *const NSURLQuarantinePropertiesKey WEAK_IMPORT_ATTRIBUTE;
   return (strncmp("#!", magic, 2) == 0);
 }
 
-- (BOOL)isExecutable {
-  struct mach_header *mach_header = [self firstMachHeader];
-  if (mach_header && mach_header->filetype == MH_EXECUTE) return YES;
-  return NO;
+- (BOOL)isXARArchive {
+  const char *magic = (const char *)[[self safeSubdataWithRange:NSMakeRange(0, 4)] bytes];
+  return (strncmp("xar!", magic, 4) == 0);
 }
 
 - (BOOL)isMissingPageZero {

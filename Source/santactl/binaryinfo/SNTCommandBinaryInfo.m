@@ -81,13 +81,14 @@ REGISTER_COMMAND_NAME(@"binaryinfo")
   }
 
   NSArray *archs = [fileInfo architectures];
-  if (archs) {
-    NSString *s = [NSString stringWithFormat:@"%@ (%@)",
-                      fileInfo.machoType, [archs componentsJoinedByString:@", "]];
-    [self printKey:@"Type" value:s];
-  } else {
-    [self printKey:@"Type" value:fileInfo.machoType];
+  if (archs.count == 0) {
+    [self printKey:@"Type" value:[self humanReadableFileType:fileInfo]];
+    exit(0);
   }
+
+  NSString *s = [NSString stringWithFormat:@"%@ (%@)",
+                    [self humanReadableFileType:fileInfo], [archs componentsJoinedByString:@", "]];
+  [self printKey:@"Type" value:s];
 
   if ([fileInfo isMissingPageZero]) {
     [self printKey:@"Page Zero" value:@"__PAGEZERO segment missing/bad!"];
@@ -119,6 +120,16 @@ REGISTER_COMMAND_NAME(@"binaryinfo")
 
 + (void)printKey:(NSString *)key value:(NSString *)value {
   printf("%-21s: %s\n", [key UTF8String], [value UTF8String]);
+}
+
++ (NSString *)humanReadableFileType:(SNTFileInfo *)fi {
+  if ([fi isScript])     return @"Script";
+  if ([fi isXARArchive]) return @"XAR Archive";
+  if ([fi isDylib])      return @"Dynamic Library";
+  if ([fi isKext])       return @"Kernel Extension";
+  if ([fi isFat])        return @"Fat Binary";
+  if ([fi isMachO])      return @"Thin Binary";
+  return @"Unknown";
 }
 
 @end

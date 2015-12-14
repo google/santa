@@ -52,12 +52,6 @@
 - (NSString *)SHA256;
 
 ///
-///  @return The type of Mach-O file, one of:
-///  Dynamic Library, Kernel Extension, Fat Binary or Thin Binary.
-///
-- (NSString *)machoType;
-
-///
 ///  @return The architectures included in this binary (e.g. x86_64, ppc).
 ///
 - (NSArray *)architectures;
@@ -96,6 +90,11 @@
 ///  @return YES if this file has a bad/missing __PAGEZERO .
 ///
 - (BOOL)isMissingPageZero;
+
+///
+///  @return YES if this file is an XAR archive.
+///
+- (BOOL)isXARArchive;
 
 ///
 ///  @return An NSBundle if this file is part of a bundle.
