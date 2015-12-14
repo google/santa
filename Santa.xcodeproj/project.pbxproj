@@ -121,7 +121,7 @@
 		0DC765EA1B28D9EA00BAE651 /* santad in CopyFiles */ = {isa = PBXBuildFile; fileRef = 0D9A7F3D1759330500035EB5 /* santad */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
 		0DC765EB1B28D9EA00BAE651 /* santactl in CopyFiles */ = {isa = PBXBuildFile; fileRef = 0D35BD9E18FD71CE00921A21 /* santactl */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
 		0DCA552718C95928002A7DAE /* SNTXPCConnection.m in Sources */ = {isa = PBXBuildFile; fileRef = 0D6FDC9518C93A020044685C /* SNTXPCConnection.m */; };
-		0DCD5FBF1909D64A006B445C /* SNTCommandBinaryInfo.m in Sources */ = {isa = PBXBuildFile; fileRef = 0DCD5FBE1909D64A006B445C /* SNTCommandBinaryInfo.m */; };
+		0DCD5FBF1909D64A006B445C /* SNTCommandFileInfo.m in Sources */ = {isa = PBXBuildFile; fileRef = 0DCD5FBE1909D64A006B445C /* SNTCommandFileInfo.m */; };
 		0DCD6042190ACCB8006B445C /* SNTFileInfo.m in Sources */ = {isa = PBXBuildFile; fileRef = 0DCD6041190ACCB8006B445C /* SNTFileInfo.m */; };
 		0DCD6043190ACCB8006B445C /* SNTFileInfo.m in Sources */ = {isa = PBXBuildFile; fileRef = 0DCD6041190ACCB8006B445C /* SNTFileInfo.m */; };
 		0DCD6044190ACCB8006B445C /* SNTFileInfo.m in Sources */ = {isa = PBXBuildFile; fileRef = 0DCD6041190ACCB8006B445C /* SNTFileInfo.m */; };
@@ -343,7 +343,7 @@
 		0DC5D870192160180078A5C0 /* SNTCommandSyncLogUpload.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SNTCommandSyncLogUpload.m; sourceTree = "<group>"; };
 		0DC8C9E3180CC3BC00FCFB29 /* SNTXPCNotifierInterface.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SNTXPCNotifierInterface.h; sourceTree = "<group>"; };
 		0DCD5F771909C659006B445C /* SecurityInterface.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SecurityInterface.framework; path = System/Library/Frameworks/SecurityInterface.framework; sourceTree = SDKROOT; };
-		0DCD5FBE1909D64A006B445C /* SNTCommandBinaryInfo.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SNTCommandBinaryInfo.m; sourceTree = "<group>"; };
+		0DCD5FBE1909D64A006B445C /* SNTCommandFileInfo.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SNTCommandFileInfo.m; sourceTree = "<group>"; };
 		0DCD6040190ACCB8006B445C /* SNTFileInfo.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SNTFileInfo.h; sourceTree = "<group>"; };
 		0DCD6041190ACCB8006B445C /* SNTFileInfo.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SNTFileInfo.m; sourceTree = "<group>"; };
 		0DCD604919105433006B445C /* SNTStoredEvent.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SNTStoredEvent.h; sourceTree = "<group>"; };
@@ -486,15 +486,10 @@
 		0D35BDA018FD71CE00921A21 /* santactl */ = {
 			isa = PBXGroup;
 			children = (
-				0D35BDA118FD71CE00921A21 /* main.m */,
 				0D35BDAA18FD7CFD00921A21 /* SNTCommandController.h */,
+				0D35BDA118FD71CE00921A21 /* main.m */,
 				0D35BDAB18FD7CFD00921A21 /* SNTCommandController.m */,
-				0DCD5FBC1909D4FD006B445C /* binaryinfo */,
-				0DE4C8A318FF3AFA00466D04 /* flushcache */,
-				409232751A51914400A04527 /* rule */,
-				0D827E6819DF4F3F006EC811 /* status */,
-				0D35BDB618FD84FC00921A21 /* sync */,
-				0DB390971AB1E0F200614002 /* version */,
+				0DAF01141C1B794B00F5B6C3 /* Commands */,
 				0D35BDA318FD71CE00921A21 /* Resources */,
 			);
 			name = santactl;
@@ -740,6 +735,19 @@
 			name = DataLayer;
 			sourceTree = "<group>";
 		};
+		0DAF01141C1B794B00F5B6C3 /* Commands */ = {
+			isa = PBXGroup;
+			children = (
+				0DCD5FBC1909D4FD006B445C /* fileinfo */,
+				0DE4C8A318FF3AFA00466D04 /* flushcache */,
+				409232751A51914400A04527 /* rule */,
+				0D827E6819DF4F3F006EC811 /* status */,
+				0D35BDB618FD84FC00921A21 /* sync */,
+				0DB390971AB1E0F200614002 /* version */,
+			);
+			name = Commands;
+			sourceTree = "<group>";
+		};
 		0DB390971AB1E0F200614002 /* version */ = {
 			isa = PBXGroup;
 			children = (
@@ -748,12 +756,12 @@
 			name = version;
 			sourceTree = "<group>";
 		};
-		0DCD5FBC1909D4FD006B445C /* binaryinfo */ = {
+		0DCD5FBC1909D4FD006B445C /* fileinfo */ = {
 			isa = PBXGroup;
 			children = (
-				0DCD5FBE1909D64A006B445C /* SNTCommandBinaryInfo.m */,
+				0DCD5FBE1909D64A006B445C /* SNTCommandFileInfo.m */,
 			);
-			path = binaryinfo;
+			path = fileinfo;
 			sourceTree = "<group>";
 		};
 		0DE4C8A318FF3AFA00466D04 /* flushcache */ = {
@@ -1283,7 +1291,7 @@
 			files = (
 				0DA73CA21934F88D0056D7C4 /* SNTLogging.m in Sources */,
 				0D35BDB518FD84F600921A21 /* SNTCommandSync.m in Sources */,
-				0DCD5FBF1909D64A006B445C /* SNTCommandBinaryInfo.m in Sources */,
+				0DCD5FBF1909D64A006B445C /* SNTCommandFileInfo.m in Sources */,
 				0DEFB7C01ACB28B000B92AAE /* SNTCommandSyncConstants.m in Sources */,
 				0DCD6062191188B1006B445C /* SNTAuthenticatingURLSession.m in Sources */,
 				0DCD605619115D17006B445C /* SNTXPCControlInterface.m in Sources */,
@@ -1529,6 +1537,7 @@
 					/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include,
 				);
 				INFOPLIST_FILE = "Tests/LogicTests/Resources/Tests-Info.plist";
+				PRODUCT_BUNDLE_IDENTIFIER = "com.google.${PRODUCT_NAME:rfc1034identifier}";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				WARNING_CFLAGS = "";
 				WRAPPER_EXTENSION = xctest;
@@ -1573,6 +1582,7 @@
 					/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include,
 				);
 				INFOPLIST_FILE = "Tests/LogicTests/Resources/Tests-Info.plist";
+				PRODUCT_BUNDLE_IDENTIFIER = "com.google.${PRODUCT_NAME:rfc1034identifier}";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				WARNING_CFLAGS = "";
 				WRAPPER_EXTENSION = xctest;
@@ -1742,6 +1752,7 @@
 				CLANG_CXX_LANGUAGE_STANDARD = "c++0x";
 				CLANG_WARN_CXX0X_EXTENSIONS = YES;
 				CODE_SIGN_IDENTITY = "Mac Developer";
+				ENABLE_TESTABILITY = YES;
 				GCC_C_LANGUAGE_STANDARD = c99;
 				MACOSX_DEPLOYMENT_TARGET = 10.9;
 				ONLY_ACTIVE_ARCH = YES;

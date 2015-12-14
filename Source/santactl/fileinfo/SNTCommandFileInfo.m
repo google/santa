@@ -20,12 +20,12 @@
 #import "MOLCodesignChecker.h"
 #import "SNTFileInfo.h"
 
-@interface SNTCommandBinaryInfo : NSObject<SNTCommand>
+@interface SNTCommandFileInfo : NSObject<SNTCommand>
 @end
 
-@implementation SNTCommandBinaryInfo
+@implementation SNTCommandFileInfo
 
-REGISTER_COMMAND_NAME(@"binaryinfo")
+REGISTER_COMMAND_NAME(@"fileinfo")
 
 + (BOOL)requiresRoot {
   return NO;
@@ -36,13 +36,13 @@ REGISTER_COMMAND_NAME(@"binaryinfo")
 }
 
 + (NSString *)shortHelpText {
-  return @"Prints information about a binary.";
+  return @"Prints information about a file.";
 }
 
 + (NSString *)longHelpText {
   return (@"The details provided will be the same ones Santa uses to make a decision\n"
-          @"about binaries. This includes SHA-256, SHA-1, code signing information and\n"
-          @"the type of binary.");
+          @"about executables. This includes SHA-256, SHA-1, code signing information and\n"
+          @"the type of file.");
 }
 
 + (void)runWithArguments:(NSArray *)arguments daemonConnection:(SNTXPCConnection *)daemonConn {
