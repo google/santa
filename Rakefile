@@ -25,6 +25,17 @@ def xcodebuild(opts)
   end
 end
 
+def xcodebuilddir
+  if not $xcode_build_dir
+    output = `xcodebuild #{XCODEBUILD_DEFAULTS} -scheme All -showBuildSettings`
+    if match = output.match(/BUILD_DIR = (.*)/)
+        $xcode_build_dir = match.captures.first
+        puts "Found Xcode build dir #{$xcode_build_dir}"
+    end
+  end
+  $xcode_build_dir
+end
+
 task :init do
   unless File.exists?(WORKSPACE) and File.exists?('Pods')
     puts "Pods missing, running 'pod install'"
@@ -88,8 +99,8 @@ namespace :install do
     Rake::Task['build:build'].invoke(config)
     puts "Installing with configuration: #{config}"
     Rake::Task['remove_existing'].invoke()
-    system "sudo cp -r #{OUTPUT_PATH}/Products/#{config}/santa-driver.kext /Library/Extensions"
-    system "sudo cp -r #{OUTPUT_PATH}/Products/#{config}/Santa.app /Applications"
+    system "sudo cp -r #{xcodebuilddir}/#{config}/santa-driver.kext /Library/Extensions"
+    system "sudo cp -r #{xcodebuilddir}/#{config}/Santa.app /Applications"
   end
 end
 
@@ -107,11 +118,11 @@ task :dist do
   FileUtils.mkdir_p("#{DIST_PATH}/dsym")
 
   BINARIES.each do |x|
-    FileUtils.cp_r("#{OUTPUT_PATH}/Products/Release/#{x}", "#{DIST_PATH}/binaries")
+    FileUtils.cp_r("#{xcodebuilddir}/Release/#{x}", "#{DIST_PATH}/binaries")
   end
 
   DSYMS.each do |x|
-    FileUtils.cp_r("#{OUTPUT_PATH}/Products/Release/#{x}", "#{DIST_PATH}/dsym")
+    FileUtils.cp_r("#{xcodebuilddir}/Release/#{x}", "#{DIST_PATH}/dsym")
   end
 
 
@@ -137,7 +148,7 @@ namespace :tests do
     begin
       puts "\033[?25l\033[12h"  # hide cursor
       puts "Running kernel tests"
-      system "cd /tmp/santa_kerneltests_tmp && sudo #{Dir.pwd}/#{OUTPUT_PATH}/Products/Debug/KernelTests"
+      system "cd /tmp/santa_kerneltests_tmp && sudo #{xcodebuilddir}/Debug/KernelTests"
     rescue Exception
     ensure
       puts "\033[?25h\033[12l\n\n"  # unhide cursor
