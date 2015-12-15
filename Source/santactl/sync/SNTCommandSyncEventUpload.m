@@ -122,6 +122,7 @@
           LOGE(@"HTTP Response: %ld %@",
                statusCode,
                [[NSHTTPURLResponse localizedStringForStatusCode:statusCode] capitalizedString]);
+          LOGD(@"%@", error);
         handler(NO);
       } else {
         LOGI(@"Uploaded %lu events", eventIds.count);

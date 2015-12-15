@@ -65,6 +65,7 @@
         LOGE(@"HTTP Response: %ld %@",
              statusCode,
              [[NSHTTPURLResponse localizedStringForStatusCode:statusCode] capitalizedString]);
+        LOGD(@"%@", error);
         handler(NO);
       } else {
         NSDictionary *resp = [NSJSONSerialization JSONObjectWithData:data options:0 error:nil];
