@@ -90,9 +90,17 @@
   if (proc_pidpath(message.pid, ppath, PATH_MAX) < 1) {
     strncpy(ppath, "(null)", 6);
   }
-  outStr =
-      [outStr stringByAppendingFormat:@"|pid=%d|ppid=%d|process=%s|processpath=%s|uid=%d|gid=%d",
-          message.pid, message.ppid, message.pname, ppath, message.uid, message.gid];
+
+  NSString *user, *group;
+  struct passwd *pw = getpwuid(message.uid);
+  if (pw) user = @(pw->pw_name);
+  struct group *gr = getgrgid(message.gid);
+  if (gr) group = @(gr->gr_name);
+
+  outStr = [outStr stringByAppendingFormat:(@"|pid=%d|ppid=%d|process=%s|processpath=%s|"
+                                            @"uid=%d|user=%@|gid=%d|group=%@"),
+               message.pid, message.ppid, message.pname, ppath,
+               message.uid, user, message.gid, group];
   if (sha256) {
     outStr = [outStr stringByAppendingFormat:@"|sha256=%@", sha256];
   }
