@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="8191" systemVersion="15A282b" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES">
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="8191" systemVersion="15C50" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES">
     <dependencies>
         <deployment identifier="macosx"/>
         <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="8191"/>
@@ -44,6 +44,7 @@
                         </textFieldCell>
                         <connections>
                             <binding destination="-2" name="value" keyPath="self.attributedCustomMessage" id="376-sj-4Q1"/>
+                            <outlet property="nextKeyView" destination="7ua-5a-uSd" id="VC7-bE-uHc"/>
                         </connections>
                     </textField>
                     <textField horizontalCompressionResistancePriority="250" verticalCompressionResistancePriority="1000" setsMaxLayoutWidthAtFirstLayout="YES" translatesAutoresizingMaskIntoConstraints="NO" id="pc8-G9-4pJ">
@@ -218,7 +219,7 @@
                             <constraint firstAttribute="height" constant="22" id="GH6-nw-6rD"/>
                         </constraints>
                         <animations/>
-                        <buttonCell key="cell" type="roundTextured" title="Dismiss" bezelStyle="texturedRounded" alignment="center" refusesFirstResponder="YES" state="on" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="XR6-Xa-gP4">
+                        <buttonCell key="cell" type="roundTextured" title="Dismiss" bezelStyle="texturedRounded" alignment="center" state="on" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="XR6-Xa-gP4">
                             <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
                             <font key="font" metaFont="system"/>
                             <string key="keyEquivalent" base64-UTF8="YES">
@@ -228,6 +229,7 @@ DQ
                         </buttonCell>
                         <connections>
                             <action selector="closeWindow:" target="-2" id="qQq-gh-8lw"/>
+                            <outlet property="nextKeyView" destination="7ua-5a-uSd" id="4KL-Z2-1op"/>
                         </connections>
                     </button>
                     <button verticalHuggingPriority="750" horizontalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="7ua-5a-uSd">
@@ -236,7 +238,7 @@ DQ
                             <constraint firstAttribute="width" priority="900" constant="112" id="Pec-Pa-4aZ"/>
                         </constraints>
                         <animations/>
-                        <buttonCell key="cell" type="roundTextured" title="Open Event..." bezelStyle="texturedRounded" alignment="center" refusesFirstResponder="YES" state="on" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="X1b-TF-1TL">
+                        <buttonCell key="cell" type="roundTextured" title="Open Event..." bezelStyle="texturedRounded" alignment="center" state="on" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="X1b-TF-1TL">
                             <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
                             <font key="font" metaFont="system"/>
                             <string key="keyEquivalent" base64-UTF8="YES">
@@ -246,6 +248,7 @@ DQ
                         </buttonCell>
                         <connections>
                             <action selector="openEventDetails:" target="-2" id="VhL-ql-rCV"/>
+                            <outlet property="nextKeyView" destination="BbV-3h-mmL" id="Xkz-va-iGc"/>
                         </connections>
                     </button>
                     <textField horizontalCompressionResistancePriority="250" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="f1p-GL-O3o">
@@ -291,6 +294,17 @@ DQ
                             </binding>
                         </connections>
                     </textField>
+                    <button focusRingType="none" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="kiB-jZ-69S">
+                        <rect key="frame" x="-6" y="353" width="37" height="32"/>
+                        <animations/>
+                        <buttonCell key="cell" type="push" title="Hidden Button" alternateTitle="This button exists so neither of the other two buttons is pre-selected when the dialog opens." bezelStyle="rounded" alignment="center" borderStyle="border" focusRingType="none" transparent="YES" imageScaling="proportionallyDown" inset="2" id="XGa-Sl-F4t">
+                            <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
+                            <font key="font" metaFont="system"/>
+                        </buttonCell>
+                        <connections>
+                            <outlet property="nextKeyView" destination="7ua-5a-uSd" id="vl5-A8-O0H"/>
+                        </connections>
+                    </button>
                 </subviews>
                 <constraints>
                     <constraint firstItem="f1p-GL-O3o" firstAttribute="centerY" secondItem="eQb-0a-76J" secondAttribute="centerY" id="2Aq-1E-Ybz"/>
@@ -347,7 +361,10 @@ DQ
                 </constraints>
                 <animations/>
             </view>
-            <point key="canvasLocation" x="112.5" y="308"/>
+            <connections>
+                <outlet property="initialFirstResponder" destination="kiB-jZ-69S" id="I96-dS-lq5"/>
+            </connections>
+            <point key="canvasLocation" x="112.5" y="307.5"/>
         </window>
     </objects>
     <resources>
