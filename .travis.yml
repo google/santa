@@ -1,8 +1,10 @@
 ---
 language: objective-c
 cache: cocoapods
+sudo: false
 
 before_install:
+ - gem install activesupport
  - gem install cocoapods xcpretty
 
 script:
