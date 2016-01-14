@@ -82,18 +82,18 @@
                         </connections>
                     </textField>
                     <textField horizontalCompressionResistancePriority="250" verticalCompressionResistancePriority="1000" setsMaxLayoutWidthAtFirstLayout="YES" translatesAutoresizingMaskIntoConstraints="NO" id="PXc-xv-A28">
-                        <rect key="frame" x="165" y="142" width="294" height="17"/>
+                        <rect key="frame" x="165" y="142" width="219" height="17"/>
                         <constraints>
-                            <constraint firstAttribute="width" constant="290" id="4hh-R2-86s"/>
+                            <constraint firstAttribute="width" constant="215" id="4hh-R2-86s"/>
                         </constraints>
                         <animations/>
-                        <textFieldCell key="cell" lineBreakMode="charWrapping" selectable="YES" sendsActionOnEndEditing="YES" title="Part of SHA-256" id="X4W-9e-eIu">
-                            <font key="font" metaFont="system"/>
+                        <textFieldCell key="cell" lineBreakMode="charWrapping" selectable="YES" sendsActionOnEndEditing="YES" title="SHA-256" id="X4W-9e-eIu">
+                            <font key="font" metaFont="fixedUser" size="11"/>
                             <color key="textColor" white="0.0" alpha="0.5" colorSpace="deviceWhite"/>
                             <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                         </textFieldCell>
                         <connections>
-                            <binding destination="-2" name="value" keyPath="self.shortenedHash" id="xgu-71-9ZT"/>
+                            <binding destination="-2" name="value" keyPath="self.event.fileSHA256" id="9KB-0b-qLV"/>
                         </connections>
                     </textField>
                     <textField horizontalCompressionResistancePriority="250" verticalCompressionResistancePriority="1000" setsMaxLayoutWidthAtFirstLayout="YES" translatesAutoresizingMaskIntoConstraints="NO" id="C3G-wL-u7w">
