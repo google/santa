@@ -119,6 +119,7 @@ REGISTER_COMMAND_NAME(@"fileinfo")
 }
 
 + (void)printKey:(NSString *)key value:(NSString *)value {
+  if (!key || !value) return;
   printf("%-21s: %s\n", [key UTF8String], [value UTF8String]);
 }
 

@@ -18,7 +18,11 @@
 
 #include <mach-o/loader.h>
 #include <mach-o/swap.h>
+#include <pwd.h>
 #include <sys/stat.h>
+#include <sys/xattr.h>
+
+#import <FMDB/FMDB.h>
 
 // Simple class to hold the data of a mach_header and the offset within the file
 // in which that header was found.
@@ -42,6 +46,7 @@
 @property NSString *path;
 @property NSFileHandle *fileHandle;
 @property NSUInteger fileSize;
+@property NSString *fileOwnerHomeDir;
 
 // Cached properties
 @property NSBundle *bundleRef;
@@ -76,6 +81,13 @@ extern NSString *const NSURLQuarantinePropertiesKey WEAK_IMPORT_ATTRIBUTE;
     _fileSize = fileStat.st_size;
 
     if (_fileSize == 0) return nil;
+
+    if (fileStat.st_uid != 0) {
+      struct passwd *pwd = getpwuid(fileStat.st_uid);
+      if (pwd) {
+        _fileOwnerHomeDir = @(pwd->pw_dir);
+      }
+    }
   }
 
   return self;
@@ -307,21 +319,26 @@ extern NSString *const NSURLQuarantinePropertiesKey WEAK_IMPORT_ATTRIBUTE;
 #pragma mark Quarantine Data
 
 - (NSString *)quarantineDataURL {
-  NSURL *url = [self quarantineData][(__bridge NSString *)kLSQuarantineDataURLKey];
-  return [url absoluteString];
+  NSURL *dataURL = [self quarantineData][@"LSQuarantineDataURL"];
+  if (dataURL == (NSURL *)[NSNull null]) dataURL = nil;
+  return [dataURL absoluteString];
 }
 
 - (NSString *)quarantineRefererURL {
-  NSURL *url = [self quarantineData][(__bridge NSString *)kLSQuarantineOriginURLKey];
-  return [url absoluteString];
+  NSURL *originURL = [self quarantineData][@"LSQuarantineOriginURL"];
+  if (originURL == (NSURL *)[NSNull null]) originURL = nil;
+  return [originURL absoluteString];
 }
 
 - (NSString *)quarantineAgentBundleID {
-  return [self quarantineData][(__bridge NSString *)kLSQuarantineAgentBundleIdentifierKey];
+  NSString *agentBundle = [self quarantineData][@"LSQuarantineAgentBundleIdentifier"];
+  if (agentBundle == (NSString *)[NSNull null]) agentBundle = nil;
+  return agentBundle;
 }
 
 - (NSDate *)quarantineTimestamp {
-  return [self quarantineData][(__bridge NSString *)kLSQuarantineTimeStampKey];
+  NSDate *timeStamp = [self quarantineData][@"LSQuarantineTimeStamp"];
+  return timeStamp;
 }
 
 #pragma mark Internal Methods
@@ -477,13 +494,66 @@ extern NSString *const NSURLQuarantinePropertiesKey WEAK_IMPORT_ATTRIBUTE;
 
 ///
 ///  Retrieve quarantine data for a file and caches the dictionary
+///  This method attempts to handle fetching the quarantine data even if the running user
+///  is not the one who downloaded the file.
 ///
 - (NSDictionary *)quarantineData {
-  if (!self.quarantineDict && NSURLQuarantinePropertiesKey != NULL) {
+  if (!self.quarantineDict && self.fileOwnerHomeDir) {
+    self.quarantineDict = (NSDictionary *)[NSNull null];
+
     NSURL *url = [NSURL fileURLWithPath:self.path];
     NSDictionary *d = [url resourceValuesForKeys:@[ NSURLQuarantinePropertiesKey ] error:NULL];
-    self.quarantineDict = d[NSURLQuarantinePropertiesKey];
-    if (!self.quarantineDict) self.quarantineDict = (NSDictionary *)[NSNull null];
+
+    if (d[NSURLQuarantinePropertiesKey]) {
+      d = d[NSURLQuarantinePropertiesKey];
+
+      if (d[@"LSQuarantineIsOwnedByCurrentUser"]) {
+        self.quarantineDict = d;
+      } else if (d[@"LSQuarantineEventIdentifier"]) {
+        NSMutableDictionary *quarantineDict = [d mutableCopy];
+
+        // If self.path is on a quarantine disk image, LSQuarantineDiskImageURL will point to the
+        // disk image and self.fileOwnerHomeDir will be incorrect (probably root).
+        NSString *fileOwnerHomeDir = self.fileOwnerHomeDir;
+        if (d[@"LSQuarantineDiskImageURL"]) {
+          struct stat fileStat;
+          stat([d[@"LSQuarantineDiskImageURL"] fileSystemRepresentation], &fileStat);
+          if (fileStat.st_uid != 0) {
+            struct passwd *pwd = getpwuid(fileStat.st_uid);
+            if (pwd) {
+              fileOwnerHomeDir = @(pwd->pw_dir);
+            }
+          }
+        }
+
+        NSURL *dbPath = [NSURL fileURLWithPathComponents:@[
+            fileOwnerHomeDir, @"Library", @"Preferences",
+            @"com.apple.LaunchServices.QuarantineEventsV2" ]];
+        FMDatabase *db = [FMDatabase databaseWithPath:[dbPath absoluteString]];
+        db.logsErrors = NO;
+        if ([db open]) {
+          FMResultSet *rs = [db executeQuery:@"SELECT * FROM LSQuarantineEvent "
+                                @"WHERE LSQuarantineEventIdentifier=?",
+                                d[@"LSQuarantineEventIdentifier"]];
+          if ([rs next]) {
+            NSString *agentBundleID = [rs stringForColumn:@"LSQuarantineAgentBundleIdentifier"];
+            NSString *dataURLString = [rs stringForColumn:@"LSQuarantineDataURLString"];
+            NSString *originURLString = [rs stringForColumn:@"LSQuarantineOriginURLString"];
+            double timeStamp = [rs doubleForColumn:@"LSQuarantineTimeStamp"];
+
+            quarantineDict[@"LSQuarantineAgentBundleIdentifier"] = agentBundleID;
+            quarantineDict[@"LSQuarantineDataURL"] = [NSURL URLWithString:dataURLString];
+            quarantineDict[@"LSQuarantineOriginURL"] = [NSURL URLWithString:originURLString];
+            quarantineDict[@"LSQuarantineTimestamp"] =
+                [NSDate dateWithTimeIntervalSinceReferenceDate:timeStamp];
+
+            self.quarantineDict = quarantineDict;
+          }
+          [rs close];
+          [db close];
+        }
+      }
+    }
   }
   return (self.quarantineDict == (NSDictionary *)[NSNull null]) ? nil : self.quarantineDict;
 }

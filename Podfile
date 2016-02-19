@@ -2,14 +2,15 @@ platform :osx, "10.9"
 
 inhibit_all_warnings!
 
-target :santactl do
+target :Santa do
   pod 'MOLCertificate'
   pod 'MOLCodesignChecker'
 end
 
-target :Santa do
+target :santactl do
   pod 'MOLCertificate'
   pod 'MOLCodesignChecker'
+  pod 'FMDB'
 end
 
 target :santad do

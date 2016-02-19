@@ -52,7 +52,7 @@
 
   ENCODE(self.quarantineDataURL, @"quarantineDataURL");
   ENCODE(self.quarantineRefererURL, @"quarantineRefererURL");
-  ENCODE(self.quarantineTimestamp, @"quarantineTiemstamp");
+  ENCODE(self.quarantineTimestamp, @"quarantineTimestamp");
   ENCODE(self.quarantineAgentBundleID, @"quarantineAgentBundleID");  
 }
 
