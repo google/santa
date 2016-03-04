@@ -141,99 +141,56 @@
   __block SecIdentityRef foundIdentity = NULL;
 
   if (self.clientCertFile) {
-    NSError *error;
-    NSData *data = [NSData dataWithContentsOfFile:self.clientCertFile options:0 error:&error];
-    if (error) {
-      LOGD(@"Client Trust: Couldn't open client certificate %@: %@",
-           self.clientCertFile,
-           [error localizedDescription]);
-      return nil;
-    }
-
-    NSDictionary *options = (self.clientCertPassword ?
-        @{(__bridge id)kSecImportExportPassphrase: self.clientCertPassword} :
-        @{});
-
-    CFArrayRef cfIdentities;
-    err = SecPKCS12Import(
-        (__bridge CFDataRef)data, (__bridge CFDictionaryRef)options, &cfIdentities);
-    NSArray *identities = CFBridgingRelease(cfIdentities);
-
-    if (err != errSecSuccess) {
-      LOGD(@"Client Trust: Couldn't load client certificate %@: %d", self.clientCertFile, err);
-      return nil;
-    }
-
-    foundIdentity = (__bridge SecIdentityRef)identities[0][(__bridge id)kSecImportItemIdentity];
-    CFRetain(foundIdentity);
+    foundIdentity = [self identityFromFile:self.clientCertFile password:self.clientCertPassword];
   } else {
-    CFArrayRef cfIdentities;
-    err = SecItemCopyMatching((__bridge CFDictionaryRef)@{
-          (id)kSecClass : (id)kSecClassIdentity,
-          (id)kSecReturnRef : @YES,
-          (id)kSecMatchLimit : (id)kSecMatchLimitAll
-    }, (CFTypeRef *)&cfIdentities);
+    CFArrayRef cfResults = NULL;
+    SecItemCopyMatching((__bridge CFDictionaryRef)@{
+        (id)kSecClass: (id)kSecClassCertificate,
+        (id)kSecReturnRef: @YES,
+        (id)kSecMatchLimit: (id)kSecMatchLimitAll
+    }, (CFTypeRef *)&cfResults);
+    NSArray *results = CFBridgingRelease(cfResults);
 
-    if (err != errSecSuccess) {
-      LOGD(@"Client Trust: Failed to load client identities, SecItemCopyMatching returned: %d",
-           (int)err);
-      return nil;
+    // Take certificates array and wrap each SecCertificateRef in a yummy MOLCertificate wrapper.
+    NSMutableArray *allCerts = [NSMutableArray arrayWithCapacity:results.count];
+    for (id cert in results) {
+      SecCertificateRef certRef = (__bridge SecCertificateRef)cert;
+      MOLCertificate *molCert = [[MOLCertificate alloc] initWithSecCertificateRef:certRef];
+      if (molCert) [allCerts addObject:molCert];
     }
 
-    NSArray *identities = CFBridgingRelease(cfIdentities);
+    if (self.clientCertCommonName) {
+      foundIdentity = [self identityByFilteringArray:allCerts
+                                          commonName:self.clientCertCommonName
+                                    issuerCommonName:nil
+                                   issuerCountryName:nil
+                                       issuerOrgName:nil
+                                       issuerOrgUnit:nil];
+    } else if (self.clientCertIssuerCn) {
+      foundIdentity = [self identityByFilteringArray:allCerts
+                                          commonName:nil
+                                    issuerCommonName:self.clientCertIssuerCn
+                                   issuerCountryName:nil
+                                       issuerOrgName:nil
+                                       issuerOrgUnit:nil];
+    } else {
+      for (NSData *allowedIssuer in protectionSpace.distinguishedNames) {
+        SNTDERDecoder *decoder = [[SNTDERDecoder alloc] initWithData:allowedIssuer];
 
-    // Manually iterate through available identities to find one with an allowed issuer.
-    [identities enumerateObjectsUsingBlock:^(id obj, NSUInteger idx, BOOL *stop) {
-        SecIdentityRef identityRef = (__bridge SecIdentityRef)obj;
-
-        SecCertificateRef certificate = NULL;
-        err = SecIdentityCopyCertificate(identityRef, &certificate);
-        if (err != errSecSuccess) {
-          LOGD(@"Client Trust: Failed to read certificate data: %d. Skipping identity.", (int)err);
-          return;
+        if (!decoder) {
+          LOGW(@"Unable to decode allowed distinguished name.");
+          continue;
         }
 
-        MOLCertificate *clientCert = [[MOLCertificate alloc] initWithSecCertificateRef:certificate];
-        CFRelease(certificate);
-
-        // Switch identity finding method depending on config
-        if (self.clientCertCommonName && clientCert.commonName) {
-          if ([clientCert.commonName compare:self.clientCertCommonName
-                                     options:NSCaseInsensitiveSearch] == NSOrderedSame) {
-            foundIdentity = identityRef;
-            CFRetain(foundIdentity);
-            *stop = YES;
-            return;  // return from enumeration block
-          }
-        } else if (self.clientCertIssuerCn && clientCert.issuerCommonName) {
-          if ([clientCert.issuerCommonName compare:self.clientCertIssuerCn
-                                           options:NSCaseInsensitiveSearch] == NSOrderedSame) {
-            foundIdentity = identityRef;
-            CFRetain(foundIdentity);
-            *stop = YES;
-            return;  // return from enumeration block
-          }
-        } else {
-          for (NSData *allowedIssuer in protectionSpace.distinguishedNames) {
-            SNTDERDecoder *decoder = [[SNTDERDecoder alloc] initWithData:allowedIssuer];
-
-            if (!decoder) {
-              LOGW(@"Unable to decode allowed distinguished name.");
-              continue;
-            }
-
-            if ([clientCert.issuerCommonName isEqual:decoder.commonName] &&
-                [clientCert.issuerCountryName isEqual:decoder.countryName] &&
-                [clientCert.issuerOrgName isEqual:decoder.organizationName] &&
-                [clientCert.issuerOrgUnit isEqual:decoder.organizationalUnit]) {
-              foundIdentity = identityRef;
-              CFRetain(foundIdentity);
-              *stop = YES;
-              return;  // return from enumeration block
-            }
-          }
-        }
-    }];
+        foundIdentity = [self identityByFilteringArray:allCerts
+                                            commonName:nil
+                                      issuerCommonName:decoder.commonName
+                                     issuerCountryName:decoder.countryName
+                                         issuerOrgName:decoder.organizationName
+                                         issuerOrgUnit:decoder.organizationalUnit];
+        if (foundIdentity) break;
+      }
+    }
   }
 
   if (foundIdentity) {
@@ -245,7 +202,7 @@
         [NSURLCredential credentialWithIdentity:foundIdentity
                                    certificates:nil
                                     persistence:NSURLCredentialPersistenceForSession];
-    CFRelease(foundIdentity);
+//    CFRelease(foundIdentity);
     return cred;
   } else {
     LOGD(@"Client Trust: No valid identity found.");
@@ -316,6 +273,93 @@
   }
 
   return [NSURLCredential credentialForTrust:serverTrust];
+}
+
+/**
+  Given an array of MOLCertificate objects and some properties, filter the array
+  repeatedly until an identity is found that fulfills the signing chain.
+ */
+- (SecIdentityRef)identityByFilteringArray:(NSArray *)array
+                                commonName:(NSString *)commonName
+                          issuerCommonName:(NSString *)issuerCommonName
+                         issuerCountryName:(NSString *)issuerCountryName
+                             issuerOrgName:(NSString *)issuerOrgName
+                             issuerOrgUnit:(NSString *)issuerOrgUnit {
+  NSMutableArray *predicates = [NSMutableArray arrayWithCapacity:4];
+
+  if (commonName) {
+    [predicates addObject:[NSPredicate predicateWithFormat:@"SELF.commonName == %@",
+                           commonName]];
+  }
+  if (issuerCommonName) {
+    [predicates addObject:[NSPredicate predicateWithFormat:@"SELF.issuerCommonName == %@",
+                           issuerCommonName]];
+  }
+  if (issuerCountryName) {
+    [predicates addObject:[NSPredicate predicateWithFormat:@"SELF.issuerCountryName == %@",
+                           issuerCountryName]];
+  }
+  if (issuerOrgName) {
+    [predicates addObject:[NSPredicate predicateWithFormat:@"SELF.issuerOrgName == %@",
+                           issuerOrgName]];
+  }
+  if (issuerOrgUnit) {
+    [predicates addObject:[NSPredicate predicateWithFormat:@"SELF.issuerOrgUnit == %@",
+                           issuerOrgUnit]];
+  }
+
+  NSCompoundPredicate *andPreds = [NSCompoundPredicate andPredicateWithSubpredicates:predicates];
+
+  NSArray *filteredCerts = [array filteredArrayUsingPredicate:andPreds];
+  if (!filteredCerts.count) return NULL;
+
+  for (MOLCertificate *cert in filteredCerts) {
+    SecIdentityRef identityRef = NULL;
+    OSStatus status = SecIdentityCreateWithCertificate(NULL, cert.certRef, &identityRef);
+    if (status == errSecSuccess) {
+      return identityRef;
+    } else {
+      // Avoid infinite recursion from self-signed certs
+      if ((cert.commonName && [cert.commonName isEqual:cert.issuerCommonName]) &&
+          (cert.countryName && [cert.countryName isEqual:cert.issuerCountryName]) &&
+          (cert.orgName && [cert.orgName isEqual:cert.issuerOrgName]) &&
+          (cert.orgUnit && [cert.orgUnit isEqual:cert.issuerOrgUnit])) {
+        continue;
+      }
+
+      return [self identityByFilteringArray:array
+                                 commonName:nil
+                           issuerCommonName:cert.commonName
+                          issuerCountryName:cert.countryName
+                              issuerOrgName:cert.orgName
+                              issuerOrgUnit:cert.orgUnit];
+    }
+  }
+  return NULL;
+}
+
+- (SecIdentityRef)identityFromFile:(NSString *)file password:(NSString *)password {
+  NSError *error;
+  NSData *data = [NSData dataWithContentsOfFile:file options:0 error:&error];
+  if (error) {
+    LOGD(@"Client Trust: Couldn't open client certificate %@: %@",
+         self.clientCertFile,
+         [error localizedDescription]);
+    return nil;
+  }
+
+  NSDictionary *options = (password ? @{(__bridge id)kSecImportExportPassphrase: password} : @{});
+  CFArrayRef cfIdentities;
+  OSStatus err = SecPKCS12Import(
+      (__bridge CFDataRef)data, (__bridge CFDictionaryRef)options, &cfIdentities);
+  NSArray *identities = CFBridgingRelease(cfIdentities);
+
+  if (err != errSecSuccess) {
+    LOGD(@"Client Trust: Couldn't load client certificate %@: %d", self.clientCertFile, err);
+    return nil;
+  }
+
+  return (__bridge SecIdentityRef)identities[0][(__bridge id)kSecImportItemIdentity];
 }
 
 @end
