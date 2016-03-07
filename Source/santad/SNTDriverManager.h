@@ -32,7 +32,13 @@
 ///  Handles requests from the kernel using the given block.
 ///  @note Loops indefinitely unless there is an error trying to read data from the data queue.
 ///
-- (void)listenWithBlock:(void (^)(santa_message_t message))callback;
+- (void)listenForDecisionRequests:(void (^)(santa_message_t message))callback;
+
+///
+///  Handles requests from the kernel using the given block.
+///  @note Loops indefinitely unless there is an error trying to read data from the data queue.
+///
+- (void)listenForLogRequests:(void (^)(santa_message_t message))callback;
 
 ///
 ///  Sends a response to a query back to the kernel.

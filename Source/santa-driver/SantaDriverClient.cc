@@ -73,18 +73,36 @@ IOReturn SantaDriverClient::registerNotificationPort(
     mach_port_t port, UInt32 type, UInt32 ref) {
   if (port == MACH_PORT_NULL) return kIOReturnError;
 
-  decisionManager->ConnectClient(port, proc_selfpid());
-  LOGI("Client connected, PID: %d.", proc_selfpid());
+  switch (type) {
+    case QUEUETYPE_DECISION:
+      decisionManager->SetDecisionPort(port);
+      break;
+    case QUEUETYPE_LOG:
+      decisionManager->SetLogPort(port);
+      break;
+    default:
+      return kIOReturnBadArgument;
+  }
 
   return kIOReturnSuccess;
 }
 
 IOReturn SantaDriverClient::clientMemoryForType(
     UInt32 type, IOOptionBits *options, IOMemoryDescriptor **memory) {
-  if (type != kIODefaultMemoryType) return kIOReturnNoMemory;
+  switch (type) {
+    case QUEUETYPE_DECISION:
+      *options = 0;
+      *memory = decisionManager->GetDecisionMemoryDescriptor();
+      decisionManager->ConnectClient(proc_selfpid());
+      break;
+    case QUEUETYPE_LOG:
+      *options = 0;
+      *memory = decisionManager->GetLogMemoryDescriptor();
+      break;
+    default:
+      return kIOReturnBadArgument;
+  }
 
-  *options = 0;
-  *memory = decisionManager->GetMemoryDescriptor();
   (*memory)->retain();
 
   return kIOReturnSuccess;

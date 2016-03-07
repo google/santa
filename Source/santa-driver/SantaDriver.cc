@@ -48,7 +48,7 @@ void SantaDriver::stop(IOService *provider) {
   super::stop(provider);
 }
 
-SantaDecisionManager *SantaDriver::GetDecisionManager() {
+SantaDecisionManager *SantaDriver::GetDecisionManager() const {
   return santaDecisionManager;
 }
 

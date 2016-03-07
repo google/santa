@@ -49,17 +49,24 @@ class SantaDecisionManager : public OSObject {
 
   ///  Called by SantaDriverClient during connection to provide the shared
   ///  dataqueue memory to the client.
-  IOMemoryDescriptor *GetMemoryDescriptor();
+  IOMemoryDescriptor *GetDecisionMemoryDescriptor() const;
+  IOMemoryDescriptor *GetLogMemoryDescriptor() const;
 
-  ///  Called by SantaDriverClient when a client connects, providing the data
-  ///  queue used to pass messages and the pid of the client process.
-  void ConnectClient(mach_port_t port, pid_t pid);
+  ///  Called by SantaDriverClient when a client connects to the decision queue,
+  ///  providing the pid of the client process.
+  void ConnectClient(pid_t pid);
 
   ///  Called by SantaDriverClient when a client disconnects
   void DisconnectClient(bool itDied = false);
 
   ///  Returns whether a client is currently connected or not.
-  bool ClientConnected();
+  bool ClientConnected() const;
+
+  ///  Sets the Mach port for notifying the decision queue.
+  void SetDecisionPort(mach_port_t port);
+
+  ///  Sets the Mach port for notifying the log queue.
+  void SetLogPort(mach_port_t port);
 
   ///  Starts the kauth listeners.
   kern_return_t StartListener();
@@ -78,15 +85,15 @@ class SantaDecisionManager : public OSObject {
   void CacheCheck(const char *identifier);
 
   ///  Returns the number of entries in the cache.
-  uint64_t CacheCount();
+  uint64_t CacheCount() const;
 
   ///  Clears the cache.
   void ClearCache();
 
-  ///  Increments the count of active vnode callback's pending.
+  ///  Increments the count of active callbacks pending.
   void IncrementListenerInvocations();
 
-  ///  Decrements the count of active vnode callback's pending.
+  ///  Decrements the count of active callbacks pending.
   void DecrementListenerInvocations();
 
   ///
@@ -101,9 +108,13 @@ class SantaDecisionManager : public OSObject {
                     const vnode_t vp, int *errno);
   ///
   ///  FileOp Callback
-  ///  @param vp The Vnode for this request.
+  ///  @param action The performed action
+  ///  @param vp The Vnode for this request. May be nullptr.
+  ///  @param path The path being operated on.
+  ///  @param new_path The target path for moves and links.
   ///
-  void FileOpCallback(kauth_action_t action, const vnode_t vp, const char *path, const char *new_path);
+  void FileOpCallback(kauth_action_t action, const vnode_t vp,
+                      const char *path, const char *new_path);
 
  protected:
   ///
@@ -130,15 +141,21 @@ class SantaDecisionManager : public OSObject {
   const int kMaxCacheSize = 10000;
 
   ///
-  ///  Maximum number of PostToQueue failures to allow.
+  ///  Maximum number of PostToDecisionQueue failures to allow.
   ///
-  const int kMaxQueueFailures = 10;
+  const int kMaxDecisionQueueFailures = 10;
 
   ///
   ///  The maximum number of messages can be kept in
-  ///  the IODataQueue at any time.
+  ///  the decision data queue at any time.
   ///
-  const int kMaxQueueEvents = 512;
+  const int kMaxDecisionQueueEvents = 512;
+
+  ///
+  ///  The maximum number of messages can be kept
+  ///  in the logging data queue at any time.
+  ///
+  const int kMaxLogQueueEvents = 1024;
 
   ///  Fetches a response from the cache, first checking to see if the
   ///  entry has expired.
@@ -171,12 +188,20 @@ class SantaDecisionManager : public OSObject {
                                const char *vnode_id_str);
 
   ///
-  ///  Posts the requested message to the client data queue.
+  ///  Posts the requested message to the decision data queue.
   ///
   ///  @param message The message to send
   ///  @return bool true if sending was successful.
   ///
-  bool PostToQueue(santa_message_t *message);
+  bool PostToDecisionQueue(santa_message_t *message);
+
+  ///
+  ///  Posts the requested message to the logging data queue.
+  ///
+  ///  @param message The message to send
+  ///  @return bool true if sending was successful.
+  ///
+  bool PostToLogQueue(santa_message_t *message);
 
   ///
   ///  Fetches the vnode_id for a given vnode.
@@ -185,14 +210,16 @@ class SantaDecisionManager : public OSObject {
   ///  @param vp The Vnode to get the ID for
   ///  @return uint64_t The Vnode ID as a 64-bit unsigned int.
   ///
-  uint64_t GetVnodeIDForVnode(const vfs_context_t ctx, const vnode_t vp);
+  uint64_t GetVnodeIDForVnode(const vfs_context_t ctx, const vnode_t vp) const;
 
   ///
   ///  Creates a new santa_message_t with some fields pre-filled.
   ///
-  santa_message_t* NewMessage();
+  santa_message_t *NewMessage() const;
 
+  ///
   ///  Returns the current system uptime in microseconds
+  ///
   static uint64_t GetCurrentUptime();
 
  private:
@@ -201,14 +228,17 @@ class SantaDecisionManager : public OSObject {
 
   lck_attr_t *sdm_lock_attr_;
   lck_rw_t *cached_decisions_lock_;
-  lck_mtx_t *dataqueue_lock_;
+  lck_mtx_t *decision_dataqueue_lock_;
+  lck_mtx_t *log_dataqueue_lock_;
   lck_rw_t *vnode_pid_map_lock_;
 
   OSDictionary *cached_decisions_;
   OSDictionary *vnode_pid_map_;
 
-  IOSharedDataQueue *dataqueue_;
-  SInt32 failed_queue_requests_;
+  IOSharedDataQueue *decision_dataqueue_;
+  IOSharedDataQueue *log_dataqueue_;
+  SInt32 failed_decision_queue_requests_;
+  SInt32 failed_log_queue_requests_;
 
   SInt32 listener_invocations_;
 

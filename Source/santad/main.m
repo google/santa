@@ -100,7 +100,7 @@ int main(int argc, const char *argv[]) {
     LOGI(@"Started, version %@", infoDict[@"CFBundleVersion"]);
 
     SNTApplication *s = [[SNTApplication alloc] init];
-    [s performSelectorInBackground:@selector(run) withObject:nil];
+    [s start];
 
     // Create watchdog thread
     pthread_t watchdogThread;

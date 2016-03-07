@@ -20,9 +20,7 @@
 #include "SNTLogging.h"
 
 @interface SNTDriverManager ()
-@property IODataQueueMemory *queueMemory;
 @property io_connect_t connection;
-@property mach_port_t receivePort;
 @end
 
 @implementation SNTDriverManager
@@ -57,7 +55,7 @@ static const int MAX_DELAY = 15;
     } while (!serviceObject);
     CFRelease(classToMatch);
 
-    // This calls @c initWithTask, @c attach and @c start in @c SantaDriverClient
+    // This calls `initWithTask`, `attach` and `start` in `SantaDriverClient`
     kr = IOServiceOpen(serviceObject, mach_task_self(), 0, &_connection);
     IOObjectRelease(serviceObject);
     if (kr != kIOReturnSuccess) {
@@ -65,7 +63,7 @@ static const int MAX_DELAY = 15;
       return nil;
     }
 
-    // Call @c open in @c SantaDriverClient
+    // Call `open` in `SantaDriverClient`
     kr = IOConnectCallMethod(_connection, kSantaUserClientOpen, 0, 0, 0, 0, 0, 0, 0, 0);
 
     if (kr == kIOReturnExclusiveAccess) {
@@ -85,56 +83,65 @@ static const int MAX_DELAY = 15;
 
 #pragma mark Incoming messages
 
-- (void)listenWithBlock:(void (^)(santa_message_t message))callback {
+- (void)listenForDecisionRequests:(void (^)(santa_message_t))callback {
+  [self listenForRequestsOfType:QUEUETYPE_DECISION withCallback:callback];
+}
+
+- (void)listenForLogRequests:(void (^)(santa_message_t))callback {
+  [self listenForRequestsOfType:QUEUETYPE_LOG withCallback:callback];
+}
+
+- (void)listenForRequestsOfType:(santa_queuetype_t)type
+                   withCallback:(void (^)(santa_message_t))callback {
   kern_return_t kr;
 
+  mach_port_t receivePort = 0;
+  IODataQueueMemory *queueMemory = NULL;
   mach_vm_address_t address = 0;
   mach_vm_size_t size = 0;
-  unsigned int msgType = 1;
 
   // Allocate a mach port to receive notifactions from the IODataQueue
-  if (!(self.receivePort = IODataQueueAllocateNotificationPort())) {
+  if (!(receivePort = IODataQueueAllocateNotificationPort())) {
     LOGD(@"Failed to allocate notification port");
     return;
   }
 
   // This will call registerNotificationPort() inside our user client class
-  kr = IOConnectSetNotificationPort(self.connection, msgType, self.receivePort, 0);
+  kr = IOConnectSetNotificationPort(self.connection, type, receivePort, 0);
   if (kr != kIOReturnSuccess) {
-    LOGD(@"Failed to register notification port: %d", kr);
-    mach_port_destroy(mach_task_self(), self.receivePort);
+    LOGD(@"Failed to register notification port for type %d: %d", type, kr);
+    mach_port_destroy(mach_task_self(), receivePort);
     return;
   }
 
   // This will call clientMemoryForType() inside our user client class.
-  // The Kauth listener will start intercepting at this point and sending requests
-  // to our queue.
-  kr = IOConnectMapMemory(self.connection, kIODefaultMemoryType, mach_task_self(),
+  kr = IOConnectMapMemory(self.connection, type, mach_task_self(),
                           &address, &size, kIOMapAnywhere);
   if (kr != kIOReturnSuccess) {
-    LOGD(@"Failed to map memory: %d", kr);
-    mach_port_destroy(mach_task_self(), self.receivePort);
+    LOGD(@"Failed to map memory for type %d: %d", type, kr);
+    mach_port_destroy(mach_task_self(), receivePort);
     return;
   }
 
-  self.queueMemory = (IODataQueueMemory *)address;
+  queueMemory = (IODataQueueMemory *)address;
 
   do {
-    while (IODataQueueDataAvailable(self.queueMemory)) {
+    while (IODataQueueDataAvailable(queueMemory)) {
       santa_message_t vdata;
       uint32_t dataSize = sizeof(vdata);
-      kr = IODataQueueDequeue(self.queueMemory, &vdata, &dataSize);
+      kr = IODataQueueDequeue(queueMemory, &vdata, &dataSize);
       if (kr == kIOReturnSuccess) {
         callback(vdata);
       } else {
-        LOGE(@"Error dequeuing data: %d", kr);
+        LOGE(@"Error dequeuing data for type %d: %d", type, kr);
         exit(2);
       }
     }
-  } while (IODataQueueWaitForAvailableData(self.queueMemory, self.receivePort) == kIOReturnSuccess);
+  } while (IODataQueueWaitForAvailableData(queueMemory, receivePort) == kIOReturnSuccess);
 
-  IOConnectUnmapMemory(self.connection, kIODefaultMemoryType, mach_task_self(), address);
-  mach_port_destroy(mach_task_self(), self.receivePort);
+  IOConnectUnmapMemory(self.connection, type, mach_task_self(), address);
+  mach_port_destroy(mach_task_self(), receivePort);
+
 }
 
 #pragma mark Outgoing messages

@@ -41,6 +41,11 @@ enum SantaDriverMethods {
   kSantaUserClientNMethods,
 };
 
+typedef enum {
+  QUEUETYPE_DECISION,
+  QUEUETYPE_LOG
+} santa_queuetype_t;
+
 // Enum defining actions that can be passed down the IODataQueue and in
 // response methods.
 typedef enum {

@@ -37,7 +37,7 @@ class com_google_SantaDriver : public IOService {
   void stop(IOService *provider) override;
 
   ///  Returns a pointer to the SantaDecisionManager created in start().
-  SantaDecisionManager *GetDecisionManager();
+  SantaDecisionManager *GetDecisionManager() const;
 
  private:
   SantaDecisionManager *santaDecisionManager;

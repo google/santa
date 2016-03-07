@@ -76,7 +76,7 @@ class com_google_SantaDriverClient : public IOUserClient {
   ///  which just calls the method on the provided target.
   ///
 
-  ///  Called during client connection
+  ///  Called during client connection.
   IOReturn open();
   static IOReturn static_open(
       com_google_SantaDriverClient *target,
