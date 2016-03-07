@@ -202,7 +202,13 @@ static NSString * const kMachineIDPlistKeyKey = @"MachineIDKey";
 }
 
 - (NSURL *)syncBaseURL {
-  return [NSURL URLWithString:self.configData[kSyncBaseURLKey]];
+  NSString *urlStr = self.configData[kSyncBaseURLKey];
+  if (urlStr) {
+    NSURL *url = [NSURL URLWithString:urlStr];
+    if (!url) LOGW(@"SyncBaseURL is not a valid URL!");
+    return url;
+  }
+  return nil;
 }
 
 - (NSString *)syncClientAuthCertificateFile {
