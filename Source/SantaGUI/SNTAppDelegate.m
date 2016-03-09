@@ -78,10 +78,9 @@
                                                          options:NSXPCConnectionPrivileged];
     self.listener.exportedInterface = [SNTXPCNotifierInterface notifierInterface];
     self.listener.exportedObject = self.notificationManager;
-    self.listener.rejectedHandler = ^{
-        [weakSelf attemptReconnection];
+    self.listener.invalidationHandler = self.listener.rejectedHandler = ^{
+      [weakSelf attemptReconnection];
     };
-    self.listener.invalidationHandler = self.listener.rejectedHandler;
     [self.listener resume];
   });
 }
