@@ -304,9 +304,9 @@ static NSString * const kMachineIDPlistKeyKey = @"MachineIDKey";
     return;
   }
 
-  NSDictionary *configData =
+  NSMutableDictionary *configData =
       [NSPropertyListSerialization propertyListWithData:readData
-                                                options:NSPropertyListImmutable
+                                                options:NSPropertyListMutableContainers
                                                  format:NULL
                                                   error:&error];
   if (error) {
@@ -314,28 +314,28 @@ static NSString * const kMachineIDPlistKeyKey = @"MachineIDKey";
     return;
   }
 
-  if (!self.configData) {
-    self.configData = [configData mutableCopy];
-  } else if (self.syncBaseURL) {
+  if (self.syncBaseURL) {
     // Ensure no-one is trying to change protected keys behind our back.
-    NSMutableDictionary *configDataMutable = [configData mutableCopy];
     BOOL changed = NO;
-    for (NSString *key in self.protectedKeys) {
-      if (geteuid() == 0 &&
-          ((self.configData[key] && !configData[key]) ||
-           (!self.configData[key] && configData[key]) ||
-           (self.configData[key] && ![self.configData[key] isEqual:configData[key]]))) {
-        if (self.configData[key]) {
-          configDataMutable[key] = self.configData[key];
-        } else {
-          [configDataMutable removeObjectForKey:key];
+    if (geteuid() == 0) {
+      for (NSString *key in self.protectedKeys) {
+        if (((self.configData[key] && !configData[key]) ||
+             (!self.configData[key] && configData[key]) ||
+             (self.configData[key] && ![self.configData[key] isEqual:configData[key]]))) {
+          if (self.configData[key]) {
+            configData[key] = self.configData[key];
+          } else {
+            [configData removeObjectForKey:key];
+          }
+          changed = YES;
+          LOGI(@"Ignoring changed configuration key: %@", key);
         }
-        changed = YES;
-        LOGI(@"Ignoring changed configuration key: %@", key);
       }
     }
-    self.configData = configDataMutable;
+    self.configData = configData;
     if (changed) [self saveConfigToDisk];
+  } else {
+    self.configData = configData;
   }
 }
 
@@ -345,6 +345,7 @@ static NSString * const kMachineIDPlistKeyKey = @"MachineIDKey";
 ///  Saves the current @c self.configData to disk.
 ///
 - (void)saveConfigToDisk {
+  if (geteuid() != 0) return;
   [self.configData writeToFile:self.configFilePath atomically:YES];
 }
 
