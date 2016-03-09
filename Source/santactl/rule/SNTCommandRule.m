@@ -116,7 +116,7 @@ REGISTER_COMMAND_NAME(@"rule")
       }
       newRule.customMsg = arguments[i];
     } else {
-      [self printErrorUsageAndExit:[@"Unknown argument: %@" stringByAppendingString:arg]];
+      [self printErrorUsageAndExit:[@"Unknown argument: " stringByAppendingString:arg]];
     }
   }
 
