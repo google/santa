@@ -74,29 +74,35 @@
 }
 
 - (void)testFileChanged {
+  __block BOOL fulfilled = NO;
   __weak XCTestExpectation *exp = [self expectationWithDescription:@"Changed: callback called"];
   __unused SNTFileWatcher *sut = [[SNTFileWatcher alloc] initWithFilePath:self.file
                                                                   handler:^{
       NSString *d = [NSString stringWithContentsOfFile:self.file
                                               encoding:NSUTF8StringEncoding
                                                  error:nil];
-      if ([d isEqual:@"0x8BADF00D"]) {
+      if (!fulfilled && [d isEqual:@"0x8BADF00D"]) {
+        fulfilled = YES;
         [exp fulfill];
       }
   }];
+
+  sleep(1);
 
   [[@"0x8BADF00D" dataUsingEncoding:NSUTF8StringEncoding] writeToFile:self.file atomically:NO];
   [self waitForExpectationsWithTimeout:5.0 handler:nil];
 }
 
 - (void)testFileReplaced {
+  __block BOOL fulfilled = NO;
   __weak XCTestExpectation *exp = [self expectationWithDescription:@"Replaced: callback called"];
   __unused SNTFileWatcher *sut = [[SNTFileWatcher alloc] initWithFilePath:self.file
                                                                   handler:^{
       NSString *d = [NSString stringWithContentsOfFile:self.file
                                               encoding:NSUTF8StringEncoding
                                                  error:nil];
-      if ([d isEqual:@"0xFACEFEED"]) {
+      if (!fulfilled && [d isEqual:@"0xFACEFEED"]) {
+        fulfilled = YES;
         [exp fulfill];
       }
   }];
@@ -110,6 +116,7 @@
   int fd = open(self.file.fileSystemRepresentation, O_WRONLY);
   write(fd, "0xDEAD", 6);
 
+  __block BOOL fulfilled = NO;
   __weak XCTestExpectation *exp = [self expectationWithDescription:@"Extended: callback called"];
   __unused SNTFileWatcher *sut = [[SNTFileWatcher alloc] initWithFilePath:self.file
                                                                   handler:^{
@@ -117,7 +124,8 @@
       char fileData[10];
       read(file, fileData, 10);
 
-      if (strncmp(fileData, "0xDEADBEEF", 10) == 0) {
+      if (!fulfilled && strncmp(fileData, "0xDEADBEEF", 10) == 0) {
+        fulfilled = YES;
         [exp fulfill];
       }
   }];
