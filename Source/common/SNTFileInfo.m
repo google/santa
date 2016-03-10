@@ -599,14 +599,8 @@ extern NSString *const NSURLQuarantinePropertiesKey WEAK_IMPORT_ATTRIBUTE;
   if (![[NSFileManager defaultManager] fileExistsAtPath:path isDirectory:&directory]) {
     return nil;
   } else if (directory) {
-    NSString *infoPath = [path stringByAppendingPathComponent:@"Contents/Info.plist"];
-    NSDictionary *d = [NSDictionary dictionaryWithContentsOfFile:infoPath];
-    if (d && d[@"CFBundleExecutable"]) {
-      path = [path stringByAppendingPathComponent:@"Contents/MacOS"];
-      return [path stringByAppendingPathComponent:d[@"CFBundleExecutable"]];
-    } else {
-      return nil;
-    }
+    NSBundle *bndl = [NSBundle bundleWithPath:path];
+    return [bndl executablePath];
   } else {
     return path;
   }
