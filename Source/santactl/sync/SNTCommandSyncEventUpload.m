@@ -16,9 +16,9 @@
 
 #include "SNTLogging.h"
 
-#import "NSData+Zlib.h"
 #import "MOLCertificate.h"
 #import "MOLCodesignChecker.h"
+#import "NSData+Zlib.h"
 #import "SNTCommandSyncConstants.h"
 #import "SNTCommandSyncState.h"
 #import "SNTFileInfo.h"
@@ -36,16 +36,16 @@
                       relativeToURL:syncState.syncBaseURL];
 
   [[daemonConn remoteObjectProxy] databaseEventsPending:^(NSArray *events) {
-      if ([events count] == 0) {
-        handler(YES);
-      } else {
-        [self uploadEventsFromArray:events
-                              toURL:url
-                          inSession:session
-                          batchSize:syncState.eventBatchSize
-                         daemonConn:daemonConn
-                  completionHandler:handler];
-      }
+    if ([events count] == 0) {
+      handler(YES);
+    } else {
+      [self uploadEventsFromArray:events
+                            toURL:url
+                        inSession:session
+                        batchSize:syncState.eventBatchSize
+                       daemonConn:daemonConn
+                completionHandler:handler];
+    }
   }];
 }
 
@@ -57,17 +57,17 @@
   NSURL *url = [NSURL URLWithString:[kURLEventUpload stringByAppendingString:syncState.machineID]
                       relativeToURL:syncState.syncBaseURL];
   [[daemonConn remoteObjectProxy] databaseEventForSHA256:SHA256 reply:^(SNTStoredEvent *event) {
-      if (!event) {
-        handler(YES);
-        return;
-      }
+    if (!event) {
+      handler(YES);
+      return;
+    }
 
-      [self uploadEventsFromArray:@[ event ]
-                            toURL:url
-                        inSession:session
-                        batchSize:1
-                       daemonConn:daemonConn
-                completionHandler:handler];
+    [self uploadEventsFromArray:@[ event ]
+                          toURL:url
+                      inSession:session
+                      batchSize:1
+                     daemonConn:daemonConn
+              completionHandler:handler];
   }];
 }
 
@@ -92,7 +92,7 @@
     if (eventIds.count >= batchSize) break;
   }
 
-  NSDictionary *uploadReq = @{ kEvents: uploadEvents };
+  NSDictionary *uploadReq = @{kEvents : uploadEvents};
 
   NSData *requestBody;
   @try {
@@ -117,31 +117,31 @@
   [[session dataTaskWithRequest:req completionHandler:^(NSData *data,
                                                         NSURLResponse *response,
                                                         NSError *error) {
-      long statusCode = [(NSHTTPURLResponse *)response statusCode];
-      if (statusCode != 200) {
-          LOGE(@"HTTP Response: %ld %@",
-               statusCode,
-               [[NSHTTPURLResponse localizedStringForStatusCode:statusCode] capitalizedString]);
-          LOGD(@"%@", error);
-        handler(NO);
+    long statusCode = [(NSHTTPURLResponse *)response statusCode];
+    if (statusCode != 200) {
+      LOGE(@"HTTP Response: %ld %@",
+           statusCode,
+           [[NSHTTPURLResponse localizedStringForStatusCode:statusCode] capitalizedString]);
+      LOGD(@"%@", error);
+      handler(NO);
+    } else {
+      LOGI(@"Uploaded %lu events", eventIds.count);
+
+      [[daemonConn remoteObjectProxy] databaseRemoveEventsWithIDs:eventIds];
+
+      NSArray *nextEvents = [events subarrayWithRange:NSMakeRange(eventIds.count,
+                                                                  events.count - eventIds.count)];
+      if (nextEvents.count == 0) {
+        handler(YES);
       } else {
-        LOGI(@"Uploaded %lu events", eventIds.count);
-
-        [[daemonConn remoteObjectProxy] databaseRemoveEventsWithIDs:eventIds];
-
-        NSArray *nextEvents = [events subarrayWithRange:NSMakeRange(eventIds.count,
-                                                                    events.count - eventIds.count)];
-        if (nextEvents.count == 0) {
-          handler(YES);
-        } else {
-          [self uploadEventsFromArray:nextEvents
-                                toURL:url
-                            inSession:session
-                            batchSize:batchSize
-                           daemonConn:daemonConn
-                    completionHandler:handler];
-        }
+        [self uploadEventsFromArray:nextEvents
+                              toURL:url
+                          inSession:session
+                          batchSize:batchSize
+                         daemonConn:daemonConn
+                  completionHandler:handler];
       }
+    }
   }] resume];
 }
 
@@ -189,7 +189,7 @@
   ADDKEY(newEvent, kQuarantineAgentBundleID, event.quarantineAgentBundleID);
 
   NSMutableArray *signingChain = [NSMutableArray arrayWithCapacity:event.signingChain.count];
-  for (NSUInteger i = 0; i < event.signingChain.count; i++) {
+  for (NSUInteger i = 0; i < event.signingChain.count; ++i) {
     MOLCertificate *cert = [event.signingChain objectAtIndex:i];
 
     NSMutableDictionary *certDict = [NSMutableDictionary dictionary];

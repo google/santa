@@ -108,5 +108,4 @@
 @property NSDate *quarantineTimestamp;
 @property NSString *quarantineAgentBundleID;
 
-
 @end

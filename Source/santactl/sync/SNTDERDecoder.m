@@ -43,13 +43,13 @@
 
 - (NSString *)description {
   return [NSString stringWithFormat:@"/C=%@/O=%@/OU=%@/CN=%@",
-          self.countryName,
-          self.organizationName,
-          self.organizationalUnit,
-          self.commonName];
+                                    self.countryName,
+                                    self.organizationName,
+                                    self.organizationalUnit,
+                                    self.commonName];
 }
 
-# pragma mark Accessors
+#pragma mark Accessors
 
 - (NSString *)commonName {
   return self.decodedObjects[(__bridge id)kSecOIDCommonName];
@@ -98,29 +98,26 @@
   } OIDKeyValue;
 
   static const SecAsn1Template kOIDValueTemplate[] = {
-    { SEC_ASN1_SEQUENCE, 0, NULL, sizeof(OIDKeyValue) },
-    { SEC_ASN1_OBJECT_ID, offsetof(OIDKeyValue, oid), NULL, 0 },
-    { SEC_ASN1_ANY_CONTENTS, offsetof(OIDKeyValue, value), NULL, 0 },
-    { 0, 0, NULL, 0 }
-  };
+      {SEC_ASN1_SEQUENCE, 0, NULL, sizeof(OIDKeyValue)},
+      {SEC_ASN1_OBJECT_ID, offsetof(OIDKeyValue, oid), NULL, 0},
+      {SEC_ASN1_ANY_CONTENTS, offsetof(OIDKeyValue, value), NULL, 0},
+      {0, 0, NULL, 0}};
 
   typedef struct {
     OIDKeyValue **vals;
   } OIDKeyValueList;
 
   static const SecAsn1Template kSetOfOIDValueTemplate[] = {
-    { SEC_ASN1_SET_OF, 0, kOIDValueTemplate, sizeof(OIDKeyValueList) },
-    { 0, 0, NULL, 0 }
-  };
+      {SEC_ASN1_SET_OF, 0, kOIDValueTemplate, sizeof(OIDKeyValueList)},
+      {0, 0, NULL, 0}};
 
   typedef struct {
     OIDKeyValueList **lists;
   } OIDKeyValueListSeq;
 
   static const SecAsn1Template kSequenceOfSetOfOIDValueTemplate[] = {
-    { SEC_ASN1_SEQUENCE_OF, 0, kSetOfOIDValueTemplate, sizeof(OIDKeyValueListSeq) },
-    { 0, 0, NULL, 0 }
-  };
+      {SEC_ASN1_SEQUENCE_OF, 0, kSetOfOIDValueTemplate, sizeof(OIDKeyValueListSeq)},
+      {0, 0, NULL, 0}};
 
   OSStatus err = errSecSuccess;
   SecAsn1CoderRef coder;
@@ -143,7 +140,7 @@
   // Massage that into a nice dictionary of OID->String pairs.
   NSMutableDictionary *dict = [NSMutableDictionary dictionary];
   OIDKeyValueList *anAttr;
-  for (NSUInteger i = 0; (anAttr = a.lists[i]); i++) {
+  for (NSUInteger i = 0; (anAttr = a.lists[i]); ++i) {
     OIDKeyValue *keyValue = anAttr->vals[0];
 
     // Sanity check
@@ -178,7 +175,6 @@
   return dict;
 }
 
-
 /**
  * Decodes an ASN.1 Object Identifier into a string separated by periods.
  * See http://msdn.microsoft.com/en-us/library/bb540809(v=vs.85).aspx for
@@ -200,11 +196,11 @@
       if (byte & 0x80) {
         inVariableLengthByte = YES;
 
-        NSUInteger a = (NSUInteger) (byte & ~0x80);
+        NSUInteger a = (NSUInteger)(byte & ~0x80);
         variableLength = variableLength << 7;
         variableLength += a;
       } else if (inVariableLengthByte) {
-        NSUInteger a = (NSUInteger) (byte & ~0x80);
+        NSUInteger a = (NSUInteger)(byte & ~0x80);
         variableLength = variableLength << 7;
         variableLength += a;
         inVariableLengthByte = NO;

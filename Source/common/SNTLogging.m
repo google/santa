@@ -34,20 +34,20 @@ void logMessage(LogLevel level, FILE *destination, NSString *format, ...) {
   static pthread_key_t syslogKey = 0;
 
   dispatch_once(&pred, ^{
-      binaryName = [[[NSProcessInfo processInfo] processName] UTF8String];
+    binaryName = [[[NSProcessInfo processInfo] processName] UTF8String];
 
-      // If debug logging is enabled, the process must be restarted.
-      if ([[[NSProcessInfo processInfo] arguments] containsObject:@"--debug"]) {
-        logLevel = LOG_LEVEL_DEBUG;
-      }
+    // If debug logging is enabled, the process must be restarted.
+    if ([[[NSProcessInfo processInfo] arguments] containsObject:@"--debug"]) {
+      logLevel = LOG_LEVEL_DEBUG;
+    }
 
-      // If requested, redirect output to syslog.
-      if ([[[NSProcessInfo processInfo] arguments] containsObject:@"--syslog"] ||
-          strcmp(binaryName, "santad") == 0) {
-        useSyslog = YES;
+    // If requested, redirect output to syslog.
+    if ([[[NSProcessInfo processInfo] arguments] containsObject:@"--syslog"] ||
+        strcmp(binaryName, "santad") == 0) {
+      useSyslog = YES;
 
-        pthread_key_create(&syslogKey, syslogClientDestructor);
-      }
+      pthread_key_create(&syslogKey, syslogClientDestructor);
+    }
   });
 
   if (logLevel < level) return;
@@ -68,10 +68,22 @@ void logMessage(LogLevel level, FILE *destination, NSString *format, ...) {
     char *levelName;
     int syslogLevel = ASL_LEVEL_DEBUG;
     switch (level) {
-      case LOG_LEVEL_ERROR: levelName = "E"; syslogLevel = ASL_LEVEL_ERR; break;
-      case LOG_LEVEL_WARN: levelName = "W"; syslogLevel = ASL_LEVEL_WARNING; break;
-      case LOG_LEVEL_INFO: levelName = "I"; syslogLevel = ASL_LEVEL_INFO; break;
-      case LOG_LEVEL_DEBUG: levelName = "D"; syslogLevel = ASL_LEVEL_DEBUG; break;
+      case LOG_LEVEL_ERROR:
+        levelName = "E";
+        syslogLevel = ASL_LEVEL_ERR;
+        break;
+      case LOG_LEVEL_WARN:
+        levelName = "W";
+        syslogLevel = ASL_LEVEL_WARNING;
+        break;
+      case LOG_LEVEL_INFO:
+        levelName = "I";
+        syslogLevel = ASL_LEVEL_INFO;
+        break;
+      case LOG_LEVEL_DEBUG:
+        levelName = "D";
+        syslogLevel = ASL_LEVEL_DEBUG;
+        break;
     }
 
     asl_log(client, NULL, syslogLevel, "%s %s: %s", levelName, binaryName, [s UTF8String]);

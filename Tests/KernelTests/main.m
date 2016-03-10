@@ -77,8 +77,8 @@
                                            error:nil];
   CC_SHA256([fData bytes], (unsigned int)[fData length], sha256);
   char buf[CC_SHA256_DIGEST_LENGTH * 2 + 1];
-  for (int i = 0; i < CC_SHA256_DIGEST_LENGTH; i++) {
-    snprintf(buf + (2*i), 4, "%02x", (unsigned char)sha256[i]);
+  for (int i = 0; i < CC_SHA256_DIGEST_LENGTH; ++i) {
+    snprintf(buf + (2 * i), 4, "%02x", (unsigned char)sha256[i]);
   }
   buf[CC_SHA256_DIGEST_LENGTH * 2] = '\0';
   return @(buf);
@@ -262,7 +262,7 @@
         TFAILINFO("Error receiving data: %d", kr);
       }
     }
-  }  while (IODataQueueWaitForAvailableData(queueMemory, receivePort) == kIOReturnSuccess);
+  } while (IODataQueueWaitForAvailableData(queueMemory, receivePort) == kIOReturnSuccess);
 
   IOConnectUnmapMemory(self.connection, kIODefaultMemoryType, mach_task_self(), address);
   mach_port_destroy(mach_task_self(), receivePort);
@@ -429,10 +429,10 @@
 
   const int LIMIT = 12000;
 
-  for (int i = 0; i < LIMIT; i++) {
+  for (int i = 0; i < LIMIT; ++i) {
     printf("\033[s");  // save cursor position
 
-    printf("%d/%i", i+1, LIMIT);
+    printf("%d/%i", i + 1, LIMIT);
 
     NSString *fname = [@"testexe" stringByAppendingFormat:@".%i", i];
     [[NSFileManager defaultManager] copyItemAtPath:@"/bin/hostname" toPath:fname error:NULL];

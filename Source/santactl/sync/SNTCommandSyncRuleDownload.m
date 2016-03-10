@@ -44,8 +44,7 @@
                      syncState:(SNTCommandSyncState *)syncState
                     daemonConn:(SNTXPCConnection *)daemonConn
              completionHandler:(void (^)(BOOL success))handler {
-
-  NSDictionary *requestDict = (cursor ? @{ kCursor: cursor } : @{});
+  NSDictionary *requestDict = (cursor ? @{kCursor : cursor} : @{});
 
   if (!syncState.downloadedRules) {
     syncState.downloadedRules = [NSMutableArray array];
@@ -60,52 +59,52 @@
   [[session dataTaskWithRequest:req completionHandler:^(NSData *data,
                                                         NSURLResponse *response,
                                                         NSError *error) {
-      long statusCode = [(NSHTTPURLResponse *)response statusCode];
-      if (statusCode != 200) {
-        LOGE(@"HTTP Response: %ld %@",
-             statusCode,
-             [[NSHTTPURLResponse localizedStringForStatusCode:statusCode] capitalizedString]);
-        LOGD(@"%@", error);
+    long statusCode = [(NSHTTPURLResponse *)response statusCode];
+    if (statusCode != 200) {
+      LOGE(@"HTTP Response: %ld %@",
+           statusCode,
+           [[NSHTTPURLResponse localizedStringForStatusCode:statusCode] capitalizedString]);
+      LOGD(@"%@", error);
+      handler(NO);
+    } else {
+      NSDictionary *resp = [NSJSONSerialization JSONObjectWithData:data options:0 error:nil];
+      if (!resp) {
+        LOGE(@"Failed to decode server's response");
         handler(NO);
+        return;
+      }
+
+      NSArray *receivedRules = resp[kRules];
+      for (NSDictionary *rule in receivedRules) {
+        SNTRule *r = [self ruleFromDictionary:rule];
+        if (r) [syncState.downloadedRules addObject:r];
+      }
+
+      if (resp[kCursor]) {
+        [self ruleDownloadWithCursor:resp[kCursor]
+                                 url:url
+                             session:session
+                           syncState:syncState
+                          daemonConn:daemonConn
+                   completionHandler:handler];
       } else {
-        NSDictionary *resp = [NSJSONSerialization JSONObjectWithData:data options:0 error:nil];
-        if (!resp) {
-          LOGE(@"Failed to decode server's response");
-          handler(NO);
-          return;
-        }
-
-        NSArray *receivedRules = resp[kRules];
-        for (NSDictionary *rule in receivedRules) {
-          SNTRule *r = [self ruleFromDictionary:rule];
-          if (r) [syncState.downloadedRules addObject:r];
-        }
-
-        if (resp[kCursor]) {
-          [self ruleDownloadWithCursor:resp[kCursor]
-                                   url:url
-                               session:session
-                             syncState:syncState
-                            daemonConn:daemonConn
-                     completionHandler:handler];
+        if (syncState.downloadedRules.count) {
+          [[daemonConn remoteObjectProxy] databaseRuleAddRules:syncState.downloadedRules
+                                                    cleanSlate:syncState.cleanSync
+                                                         reply:^(BOOL success) {
+            if (success) {
+              LOGI(@"Added %lu rule(s)", syncState.downloadedRules.count);
+              handler(YES);
+            } else {
+              LOGE(@"Failed to add rules to database");
+              handler(NO);
+            }
+          }];
         } else {
-          if (syncState.downloadedRules.count) {
-            [[daemonConn remoteObjectProxy] databaseRuleAddRules:syncState.downloadedRules
-                                                      cleanSlate:syncState.cleanSync
-                                                           reply:^(BOOL success) {
-                if (success) {
-                  LOGI(@"Added %lu rule(s)", syncState.downloadedRules.count);
-                  handler(YES);
-                } else {
-                  LOGE(@"Failed to add rules to database");
-                  handler(NO);
-                }
-            }];
-          } else {
-            handler(YES);
-          }
+          handler(YES);
         }
       }
+    }
   }] resume];
 }
 

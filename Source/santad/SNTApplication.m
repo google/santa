@@ -86,13 +86,12 @@
         [[SNTDaemonControlController alloc] initWithDriverManager:_driverManager];
     [_controlConnection resume];
 
-    _configFileWatcher = [[SNTFileWatcher alloc] initWithFilePath:kDefaultConfigFilePath
-                                                          handler:^{
-        [[SNTConfigurator configurator] reloadConfigData];
+    _configFileWatcher = [[SNTFileWatcher alloc] initWithFilePath:kDefaultConfigFilePath handler:^{
+      [[SNTConfigurator configurator] reloadConfigData];
 
-        // Ensure config file remains root:wheel 0644
-        chown([kDefaultConfigFilePath fileSystemRepresentation], 0, 0);
-        chmod([kDefaultConfigFilePath fileSystemRepresentation], 0644);
+      // Ensure config file remains root:wheel 0644
+      chown([kDefaultConfigFilePath fileSystemRepresentation], 0, 0);
+      chmod([kDefaultConfigFilePath fileSystemRepresentation], 0644);
     }];
 
     _eventLog = [[SNTEventLog alloc] init];
@@ -130,7 +129,7 @@
         }
         case ACTION_REQUEST_CHECKBW: {
           dispatch_async(exec_queue, ^{
-              [self.execController validateBinaryWithMessage:message];
+            [self.execController validateBinaryWithMessage:message];
           });
           break;
         }

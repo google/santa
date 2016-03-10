@@ -28,7 +28,6 @@
 @implementation SNTRuleTable
 
 - (uint32_t)initializeDatabase:(FMDatabase *)db fromVersion:(uint32_t)version {
-
   // Save hashes of the signing certs for launchd and santad
   self.santadCertSHA = [[[[MOLCodesignChecker alloc] initWithSelf] leafCertificate] SHA256];
   self.launchdCertSHA = [[[[MOLCodesignChecker alloc] initWithPID:1] leafCertificate] SHA256];
@@ -37,11 +36,11 @@
 
   if (version < 1) {
     [db executeUpdate:@"CREATE TABLE 'rules' ("
-        @"'shasum' TEXT NOT NULL, "
-        @"'state' INTEGER NOT NULL, "
-        @"'type' INTEGER NOT NULL, "
-        @"'custommsg' TEXT"
-        @")"];
+                      @"'shasum' TEXT NOT NULL, "
+                      @"'state' INTEGER NOT NULL, "
+                      @"'type' INTEGER NOT NULL, "
+                      @"'custommsg' TEXT"
+                      @")"];
 
     [db executeUpdate:@"CREATE VIEW binrules AS SELECT * FROM rules WHERE type=1"];
     [db executeUpdate:@"CREATE VIEW certrules AS SELECT * FROM rules WHERE type=2"];
@@ -52,9 +51,9 @@
     // This helps prevent accidentally denying critical system components while the database
     // is empty. This 'initial database' will then be cleared on the first successful sync.
     [db executeUpdate:@"INSERT INTO rules (shasum, state, type) VALUES (?, ?, ?)",
-        self.santadCertSHA, @(RULESTATE_WHITELIST), @(RULETYPE_CERT)];
+                      self.santadCertSHA, @(RULESTATE_WHITELIST), @(RULETYPE_CERT)];
     [db executeUpdate:@"INSERT INTO rules (shasum, state, type) VALUES (?, ?, ?)",
-        self.launchdCertSHA, @(RULESTATE_WHITELIST), @(RULETYPE_CERT)];
+                      self.launchdCertSHA, @(RULESTATE_WHITELIST), @(RULETYPE_CERT)];
 
     newVersion = 1;
 
@@ -77,7 +76,7 @@
 - (NSUInteger)binaryRuleCount {
   __block NSUInteger count = 0;
   [self inDatabase:^(FMDatabase *db) {
-      count = [db longForQuery:@"SELECT COUNT(*) FROM binrules"];
+    count = [db longForQuery:@"SELECT COUNT(*) FROM binrules"];
   }];
   return count;
 }
@@ -85,7 +84,7 @@
 - (NSUInteger)certificateRuleCount {
   __block NSUInteger count = 0;
   [self inDatabase:^(FMDatabase *db) {
-      count = [db longForQuery:@"SELECT COUNT(*) FROM certrules"];
+    count = [db longForQuery:@"SELECT COUNT(*) FROM certrules"];
   }];
   return count;
 }
@@ -105,11 +104,11 @@
   __block SNTRule *rule;
 
   [self inDatabase:^(FMDatabase *db) {
-      FMResultSet *rs = [db executeQuery:@"SELECT * FROM certrules WHERE shasum=? LIMIT 1", SHA256];
-      if ([rs next]) {
-        rule = [self ruleFromResultSet:rs];
-      }
-      [rs close];
+    FMResultSet *rs = [db executeQuery:@"SELECT * FROM certrules WHERE shasum=? LIMIT 1", SHA256];
+    if ([rs next]) {
+      rule = [self ruleFromResultSet:rs];
+    }
+    [rs close];
   }];
 
   return rule;
@@ -119,11 +118,11 @@
   __block SNTRule *rule;
 
   [self inDatabase:^(FMDatabase *db) {
-      FMResultSet *rs = [db executeQuery:@"SELECT * FROM binrules WHERE shasum=? LIMIT 1", SHA256];
-      if ([rs next]) {
-        rule = [self ruleFromResultSet:rs];
-      }
-      [rs close];
+    FMResultSet *rs = [db executeQuery:@"SELECT * FROM binrules WHERE shasum=? LIMIT 1", SHA256];
+    if ([rs next]) {
+      rule = [self ruleFromResultSet:rs];
+    }
+    [rs close];
   }];
 
   return rule;
@@ -140,47 +139,47 @@
   __block BOOL failed = NO;
 
   [self inTransaction:^(FMDatabase *db, BOOL *rollback) {
-      // Protect rules for santad/launchd certificates.
-      NSPredicate *p = [NSPredicate predicateWithFormat:
-          @"(SELF.shasum = %@ OR SELF.shasum = %@) AND SELF.type = %d",
-              self.santadCertSHA, self.launchdCertSHA, RULETYPE_CERT];
-      NSArray *requiredHashes = [rules filteredArrayUsingPredicate:p];
-      p = [NSPredicate predicateWithFormat:@"SELF.state == %d", RULESTATE_WHITELIST];
-      NSArray *requiredHashesWhitelist = [requiredHashes filteredArrayUsingPredicate:p];
-      if ((cleanSlate && requiredHashesWhitelist.count != 2) ||
-          (requiredHashes.count != requiredHashesWhitelist.count)) {
-        LOGE(@"Received request to remove whitelist for launchd/santad ceritifcates.");
+    // Protect rules for santad/launchd certificates.
+    NSPredicate *p = [NSPredicate predicateWithFormat:
+                                      @"(SELF.shasum = %@ OR SELF.shasum = %@) AND SELF.type = %d",
+                                      self.santadCertSHA, self.launchdCertSHA, RULETYPE_CERT];
+    NSArray *requiredHashes = [rules filteredArrayUsingPredicate:p];
+    p = [NSPredicate predicateWithFormat:@"SELF.state == %d", RULESTATE_WHITELIST];
+    NSArray *requiredHashesWhitelist = [requiredHashes filteredArrayUsingPredicate:p];
+    if ((cleanSlate && requiredHashesWhitelist.count != 2) ||
+        (requiredHashes.count != requiredHashesWhitelist.count)) {
+      LOGE(@"Received request to remove whitelist for launchd/santad ceritifcates.");
+      *rollback = failed = YES;
+      return;
+    }
+
+    if (cleanSlate) {
+      [db executeUpdate:@"DELETE FROM rules"];
+    }
+
+    for (SNTRule *rule in rules) {
+      if (![rule isKindOfClass:[SNTRule class]] || rule.shasum.length == 0 ||
+          rule.state == RULESTATE_UNKNOWN || rule.type == RULETYPE_UNKNOWN) {
         *rollback = failed = YES;
         return;
       }
 
-      if (cleanSlate) {
-        [db executeUpdate:@"DELETE FROM rules"];
-      }
-
-      for (SNTRule *rule in rules) {
-        if (![rule isKindOfClass:[SNTRule class]] || rule.shasum.length == 0 ||
-            rule.state == RULESTATE_UNKNOWN || rule.type == RULETYPE_UNKNOWN) {
+      if (rule.state == RULESTATE_REMOVE) {
+        if (![db executeUpdate:@"DELETE FROM rules WHERE shasum=? AND type=?",
+                               rule.shasum, @(rule.type)]) {
           *rollback = failed = YES;
           return;
         }
-
-        if (rule.state == RULESTATE_REMOVE) {
-          if (![db executeUpdate:@"DELETE FROM rules WHERE shasum=? AND type=?",
-                  rule.shasum, @(rule.type)]) {
-            *rollback = failed = YES;
-            return;
-          }
-        } else {
-          if (![db executeUpdate:@"INSERT OR REPLACE INTO rules "
-                                 @"(shasum, state, type, custommsg) "
-                                 @"VALUES (?, ?, ?, ?);",
-                  rule.shasum, @(rule.state), @(rule.type), rule.customMsg]) {
-            *rollback = failed = YES;
-            return;
-          }
+      } else {
+        if (![db executeUpdate:@"INSERT OR REPLACE INTO rules "
+                               @"(shasum, state, type, custommsg) "
+                               @"VALUES (?, ?, ?, ?);",
+                               rule.shasum, @(rule.state), @(rule.type), rule.customMsg]) {
+          *rollback = failed = YES;
+          return;
         }
       }
+    }
   }];
 
   return !failed;

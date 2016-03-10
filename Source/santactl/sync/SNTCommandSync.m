@@ -75,7 +75,7 @@ REGISTER_COMMAND_NAME(@"sync")
   authURLSession.userAgent = @"santactl-sync/";
   NSString *santactlVersion = [[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleVersion"];
   if (santactlVersion) {
-     authURLSession.userAgent = [authURLSession.userAgent stringByAppendingString:santactlVersion];
+    authURLSession.userAgent = [authURLSession.userAgent stringByAppendingString:santactlVersion];
   }
   authURLSession.refusesRedirects = YES;
 
@@ -89,10 +89,10 @@ REGISTER_COMMAND_NAME(@"sync")
     authURLSession.serverRootsPemData = rootsData;
 
     if (!rootsData) {
-        LOGE(@"Couldn't open server root certificate file %@ with error: %@.",
-             [config syncServerAuthRootsFile],
-             [error localizedDescription]);
-        exit(1);
+      LOGE(@"Couldn't open server root certificate file %@ with error: %@.",
+           [config syncServerAuthRootsFile],
+           [error localizedDescription]);
+      exit(1);
     }
   } else if ([config syncServerAuthRootsData]) {
     authURLSession.serverRootsPemData = [config syncServerAuthRootsData];

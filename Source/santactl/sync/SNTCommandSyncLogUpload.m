@@ -90,7 +90,7 @@
   NSDirectoryEnumerator *dirEnum = [[NSFileManager defaultManager] enumeratorAtPath:diagsDir];
   NSString *file;
   while (file = [dirEnum nextObject]) {
-    if ([[file pathExtension] isEqualToString: @"panic"] ||
+    if ([[file pathExtension] isEqualToString:@"panic"] ||
         [file hasPrefix:@"santad"] ||
         [file hasPrefix:@"santactl"]) {
       [logsToUpload addObject:[diagsDir stringByAppendingString:file]];

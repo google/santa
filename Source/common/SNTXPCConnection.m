@@ -78,7 +78,6 @@
 ///
 @property NSXPCInterface *validatorInterface;
 
-
 @property NSMutableArray *pendingConnections;
 @property NSMutableArray *acceptedConnections;
 
@@ -137,12 +136,14 @@
       self.currentConnection = nil;
     };
 
-    connection.interruptionHandler = ^{ [self.currentConnection invalidate]; };
+    connection.interruptionHandler = ^{
+      [self.currentConnection invalidate];
+    };
 
     [connection resume];
 
     dispatch_semaphore_t sema = dispatch_semaphore_create(0);
-    [[connection remoteObjectProxy] isConnectionValidWithBlock:^void(BOOL response) {
+    [[connection remoteObjectProxy] isConnectionValidWithBlock:^(BOOL response) {
       pid_t pid = self.currentConnection.processIdentifier;
 
       MOLCodesignChecker *selfCS = [[MOLCodesignChecker alloc] initWithSelf];
@@ -178,7 +179,7 @@
 
   SNTXPCConnectionValidator *connectionValidator = [[SNTXPCConnectionValidator alloc] init];
   connectionValidator.connection = connection;
-  
+
   connectionValidator.acceptedHandler = ^{
     [self.pendingConnections removeObject:weakConnection];
     [self.acceptedConnections addObject:weakConnection];

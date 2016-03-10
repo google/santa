@@ -69,7 +69,7 @@ extern NSString *const NSURLQuarantinePropertiesKey WEAK_IMPORT_ATTRIBUTE;
         if (path) errStr = [@"Unable to resolve path: " stringByAppendingString:path];
         *error = [NSError errorWithDomain:@"com.google.santa.fileinfo"
                                      code:260
-                                 userInfo:@{ NSLocalizedDescriptionKey: errStr }];
+                                 userInfo:@{NSLocalizedDescriptionKey : errStr}];
       }
       return nil;
     }
@@ -97,7 +97,7 @@ extern NSString *const NSURLQuarantinePropertiesKey WEAK_IMPORT_ATTRIBUTE;
   return [self initWithPath:path error:NULL];
 }
 
-# pragma mark Hashing
+#pragma mark Hashing
 
 - (NSString *)SHA1 {
   const int chunkSize = 4096;
@@ -126,7 +126,7 @@ extern NSString *const NSURLQuarantinePropertiesKey WEAK_IMPORT_ATTRIBUTE;
   CC_SHA1_Final(sha1, &c);
 
   NSMutableString *buf = [[NSMutableString alloc] initWithCapacity:CC_SHA1_DIGEST_LENGTH * 2];
-  for (int i = 0; i < CC_SHA1_DIGEST_LENGTH; i++) {
+  for (int i = 0; i < CC_SHA1_DIGEST_LENGTH; ++i) {
     [buf appendFormat:@"%02x", (unsigned char)sha1[i]];
   }
 
@@ -160,19 +160,18 @@ extern NSString *const NSURLQuarantinePropertiesKey WEAK_IMPORT_ATTRIBUTE;
   CC_SHA256_Final(sha256, &c);
 
   NSMutableString *buf = [[NSMutableString alloc] initWithCapacity:CC_SHA256_DIGEST_LENGTH * 2];
-  for (int i = 0; i < CC_SHA256_DIGEST_LENGTH; i++) {
+  for (int i = 0; i < CC_SHA256_DIGEST_LENGTH; ++i) {
     [buf appendFormat:@"%02x", (unsigned char)sha256[i]];
   }
-  
+
   return buf;
 }
 
-# pragma mark File Type Info
+#pragma mark File Type Info
 
 - (NSArray *)architectures {
   return [self.machHeaders allKeys];
 }
-
 
 - (BOOL)isExecutable {
   struct mach_header *mach_header = [self firstMachHeader];
@@ -371,7 +370,7 @@ extern NSString *const NSURLQuarantinePropertiesKey WEAK_IMPORT_ATTRIBUTE;
       NSMutableData *fatArchs = [[self safeSubdataWithRange:range] mutableCopy];
       if (fatArchs) {
         struct fat_arch *fat_arch = (struct fat_arch *)[fatArchs mutableBytes];
-        for (int i = 0; i < nfat_arch; i++) {
+        for (int i = 0; i < nfat_arch; ++i) {
           int offset = OSSwapBigToHostInt32(fat_arch[i].offset);
           int size = OSSwapBigToHostInt32(fat_arch[i].size);
           int cputype = OSSwapBigToHostInt(fat_arch[i].cputype);
@@ -434,7 +433,7 @@ extern NSString *const NSURLQuarantinePropertiesKey WEAK_IMPORT_ATTRIBUTE;
   offset += sz_header;
 
   // Loop through the load commands looking for the segment named __TEXT
-  for (uint32_t i = 0; i < ncmds; i++) {
+  for (uint32_t i = 0; i < ncmds; ++i) {
     NSData *cmdData = [self safeSubdataWithRange:NSMakeRange(offset, sz_segment)];
     if (!cmdData) return nil;
     struct segment_command_64 *lc = (struct segment_command_64 *)[cmdData bytes];
@@ -449,7 +448,7 @@ extern NSString *const NSURLQuarantinePropertiesKey WEAK_IMPORT_ATTRIBUTE;
   }
 
   // Loop through the sections in the __TEXT segment looking for an __info_plist section.
-  for (uint32_t i = 0; i < nsects; i++) {
+  for (uint32_t i = 0; i < nsects; ++i) {
     NSData *sectData = [self safeSubdataWithRange:NSMakeRange(offset, sz_section)];
     if (!sectData) return nil;
     struct section_64 *sect = (struct section_64 *)[sectData bytes];
@@ -527,14 +526,17 @@ extern NSString *const NSURLQuarantinePropertiesKey WEAK_IMPORT_ATTRIBUTE;
         }
 
         NSURL *dbPath = [NSURL fileURLWithPathComponents:@[
-            fileOwnerHomeDir, @"Library", @"Preferences",
-            @"com.apple.LaunchServices.QuarantineEventsV2" ]];
+          fileOwnerHomeDir,
+          @"Library",
+          @"Preferences",
+          @"com.apple.LaunchServices.QuarantineEventsV2"
+        ]];
         FMDatabase *db = [FMDatabase databaseWithPath:[dbPath absoluteString]];
         db.logsErrors = NO;
         if ([db open]) {
           FMResultSet *rs = [db executeQuery:@"SELECT * FROM LSQuarantineEvent "
-                                @"WHERE LSQuarantineEventIdentifier=?",
-                                d[@"LSQuarantineEventIdentifier"]];
+                                             @"WHERE LSQuarantineEventIdentifier=?",
+                                             d[@"LSQuarantineEventIdentifier"]];
           if ([rs next]) {
             NSString *agentBundleID = [rs stringForColumn:@"LSQuarantineAgentBundleIdentifier"];
             NSString *dataURLString = [rs stringForColumn:@"LSQuarantineDataURLString"];

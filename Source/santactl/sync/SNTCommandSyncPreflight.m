@@ -62,44 +62,44 @@
     [req setValue:@"zlib" forHTTPHeaderField:@"Content-Encoding"];
   }
 
-  [req setHTTPBody:requestBody];  
+  [req setHTTPBody:requestBody];
 
   [[session dataTaskWithRequest:req completionHandler:^(NSData *data,
                                                         NSURLResponse *response,
                                                         NSError *error) {
-      long statusCode = [(NSHTTPURLResponse *)response statusCode];
-      if (statusCode != 200) {
-        LOGE(@"HTTP Response: %ld %@",
-             statusCode,
-             [[NSHTTPURLResponse localizedStringForStatusCode:statusCode] capitalizedString]);
-        LOGD(@"%@", error);
-        handler(NO);
-      } else {
-        NSDictionary *r = [NSJSONSerialization JSONObjectWithData:data options:0 error:nil];
+    long statusCode = [(NSHTTPURLResponse *)response statusCode];
+    if (statusCode != 200) {
+      LOGE(@"HTTP Response: %ld %@",
+           statusCode,
+           [[NSHTTPURLResponse localizedStringForStatusCode:statusCode] capitalizedString]);
+      LOGD(@"%@", error);
+      handler(NO);
+    } else {
+      NSDictionary *r = [NSJSONSerialization JSONObjectWithData:data options:0 error:nil];
 
-        syncState.eventBatchSize = [r[kBatchSize] intValue];
-        syncState.uploadLogURL = [NSURL URLWithString:r[kUploadLogsURL]];
+      syncState.eventBatchSize = [r[kBatchSize] intValue];
+      syncState.uploadLogURL = [NSURL URLWithString:r[kUploadLogsURL]];
 
-        if ([r[kClientMode] isEqual:kClientModeMonitor]) {
-            syncState.newClientMode = CLIENTMODE_MONITOR;
-        } else if ([r[kClientMode] isEqual:kClientModeLockdown]) {
-            syncState.newClientMode = CLIENTMODE_LOCKDOWN;
-        }
-
-        if ([r[kWhitelistRegex] isKindOfClass:[NSString class]]) {
-          [[daemonConn remoteObjectProxy] setWhitelistPathRegex:r[kWhitelistRegex] reply:^{}];
-        }
-
-        if ([r[kBlacklistRegex] isKindOfClass:[NSString class]]) {
-          [[daemonConn remoteObjectProxy] setBlacklistPathRegex:r[kBlacklistRegex] reply:^{}];
-        }
-
-        if ([r[kCleanSync] boolValue]) {
-          syncState.cleanSync = YES;
-        }
-
-        handler(YES);
+      if ([r[kClientMode] isEqual:kClientModeMonitor]) {
+        syncState.newClientMode = CLIENTMODE_MONITOR;
+      } else if ([r[kClientMode] isEqual:kClientModeLockdown]) {
+        syncState.newClientMode = CLIENTMODE_LOCKDOWN;
       }
+
+      if ([r[kWhitelistRegex] isKindOfClass:[NSString class]]) {
+        [[daemonConn remoteObjectProxy] setWhitelistPathRegex:r[kWhitelistRegex] reply:^{}];
+      }
+
+      if ([r[kBlacklistRegex] isKindOfClass:[NSString class]]) {
+        [[daemonConn remoteObjectProxy] setBlacklistPathRegex:r[kBlacklistRegex] reply:^{}];
+      }
+
+      if ([r[kCleanSync] boolValue]) {
+        syncState.cleanSync = YES;
+      }
+
+      handler(YES);
+    }
   }] resume];
 }
 

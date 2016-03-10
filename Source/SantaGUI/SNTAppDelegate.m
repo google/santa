@@ -36,7 +36,7 @@
 
   self.configFileWatcher = [[SNTFileWatcher alloc] initWithFilePath:kDefaultConfigFilePath
                                                             handler:^{
-      [[SNTConfigurator configurator] reloadConfigData];
+    [[SNTConfigurator configurator] reloadConfigData];
   }];
 
   self.notificationManager = [[SNTNotificationManager alloc] init];
@@ -47,16 +47,16 @@
                                       object:nil
                                        queue:[NSOperationQueue currentQueue]
                                   usingBlock:^(NSNotification *note) {
-      self.listener.invalidationHandler = nil;
-      self.listener.rejectedHandler = nil;
-      [self.listener invalidate];
-      self.listener = nil;
+    self.listener.invalidationHandler = nil;
+    self.listener.rejectedHandler = nil;
+    [self.listener invalidate];
+    self.listener = nil;
   }];
   [workspaceNotifications addObserverForName:NSWorkspaceSessionDidBecomeActiveNotification
                                       object:nil
                                        queue:[NSOperationQueue currentQueue]
                                   usingBlock:^(NSNotification *note) {
-      [self attemptReconnection];
+    [self attemptReconnection];
   }];
 
   [self createConnection];

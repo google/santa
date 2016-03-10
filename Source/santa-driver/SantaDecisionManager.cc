@@ -535,15 +535,20 @@ void SantaDecisionManager::FileOpCallback(
 
     switch (action) {
       case KAUTH_FILEOP_CLOSE:
-        message->action = ACTION_NOTIFY_WRITE; break;
+        message->action = ACTION_NOTIFY_WRITE;
+        break;
       case KAUTH_FILEOP_RENAME:
-        message->action = ACTION_NOTIFY_RENAME; break;
+        message->action = ACTION_NOTIFY_RENAME;
+        break;
       case KAUTH_FILEOP_LINK:
-        message->action = ACTION_NOTIFY_LINK; break;
+        message->action = ACTION_NOTIFY_LINK;
+        break;
       case KAUTH_FILEOP_EXCHANGE:
-        message->action = ACTION_NOTIFY_EXCHANGE; break;
+        message->action = ACTION_NOTIFY_EXCHANGE;
+        break;
       case KAUTH_FILEOP_DELETE:
-        message->action = ACTION_NOTIFY_DELETE; break;
+        message->action = ACTION_NOTIFY_DELETE;
+        break;
       default: delete message; return;
     }
 
@@ -567,7 +572,7 @@ extern "C" int fileop_scope_callback(
   switch (action) {
     case KAUTH_FILEOP_CLOSE:
       if (!(arg2 & KAUTH_FILEOP_CLOSE_MODIFIED)) return KAUTH_RESULT_DEFER;
-      // Intentional fall-through
+    // Intentional fall-through
     case KAUTH_FILEOP_DELETE:
     case KAUTH_FILEOP_EXEC:
       vp = reinterpret_cast<vnode_t>(arg0);

@@ -51,21 +51,24 @@ REGISTER_COMMAND_NAME(@"status")
   __block double cpuPeak, ramPeak;
   dispatch_group_enter(group);
   [[daemonConn remoteObjectProxy] clientMode:^(santa_clientmode_t cm) {
-      switch (cm) {
-        case CLIENTMODE_MONITOR:
-          clientMode = @"Monitor"; break;
-        case CLIENTMODE_LOCKDOWN:
-          clientMode = @"Lockdown"; break;
-        default:
-          clientMode = [NSString stringWithFormat:@"Unknown (%d)", cm]; break;
-      }
-      dispatch_group_leave(group);
+    switch (cm) {
+      case CLIENTMODE_MONITOR:
+        clientMode = @"Monitor";
+        break;
+      case CLIENTMODE_LOCKDOWN:
+        clientMode = @"Lockdown";
+        break;
+      default:
+        clientMode = [NSString stringWithFormat:@"Unknown (%d)", cm];
+        break;
+    }
+    dispatch_group_leave(group);
   }];
   dispatch_group_enter(group);
   [[daemonConn remoteObjectProxy] watchdogInfo:^(uint64_t wd_cpuEvents, uint64_t wd_ramEvents,
                                                  double wd_cpuPeak, double wd_ramPeak) {
     cpuEvents = wd_cpuEvents;
-    cpuPeak  = wd_cpuPeak;
+    cpuPeak = wd_cpuPeak;
     ramEvents = wd_ramEvents;
     ramPeak = wd_ramPeak;
     dispatch_group_leave(group);
@@ -77,22 +80,22 @@ REGISTER_COMMAND_NAME(@"status")
   __block int64_t cacheCount = -1;
   dispatch_group_enter(group);
   [[daemonConn remoteObjectProxy] cacheCount:^(int64_t count) {
-      cacheCount = count;
-      dispatch_group_leave(group);
+    cacheCount = count;
+    dispatch_group_leave(group);
   }];
 
   // Database counts
   __block int64_t eventCount = -1, binaryRuleCount = -1, certRuleCount = -1;
   dispatch_group_enter(group);
   [[daemonConn remoteObjectProxy] databaseRuleCounts:^(int64_t binary, int64_t certificate) {
-      binaryRuleCount = binary;
-      certRuleCount = certificate;
-      dispatch_group_leave(group);
+    binaryRuleCount = binary;
+    certRuleCount = certificate;
+    dispatch_group_leave(group);
   }];
   dispatch_group_enter(group);
   [[daemonConn remoteObjectProxy] databaseEventCount:^(int64_t count) {
-      eventCount = count;
-      dispatch_group_leave(group);
+    eventCount = count;
+    dispatch_group_leave(group);
   }];
 
   // Sync status
@@ -110,33 +113,33 @@ REGISTER_COMMAND_NAME(@"status")
 
   if ([arguments containsObject:@"--json"]) {
     NSDictionary *stats = @{
-        @"daemon": @{
-            @"mode": clientMode,
-            @"file_logging": @(fileLogging),
-            @"watchdog_cpu_events": @(cpuEvents),
-            @"watchdog_ram_events": @(ramEvents),
-            @"watchdog_cpu_peak": @(cpuPeak),
-            @"watchdog_ram_peak": @(ramPeak),
-        },
-        @"kernel": @{
-            @"cache_count": @(cacheCount),
-        },
-        @"database": @{
-            @"binary_rules": @(binaryRuleCount),
-            @"certificate_rules": @(certRuleCount),
-            @"events_pending_upload": @(eventCount),
-        },
-        @"sync": @{
-            @"server": syncURLStr,
-            @"clean_required": @(syncCleanReqd),
-            @"last_successful": lastSyncSuccessStr
-        },
+      @"daemon" : @{
+        @"mode" : clientMode,
+        @"file_logging" : @(fileLogging),
+        @"watchdog_cpu_events" : @(cpuEvents),
+        @"watchdog_ram_events" : @(ramEvents),
+        @"watchdog_cpu_peak" : @(cpuPeak),
+        @"watchdog_ram_peak" : @(ramPeak),
+      },
+      @"kernel" : @{
+        @"cache_count" : @(cacheCount),
+      },
+      @"database" : @{
+        @"binary_rules" : @(binaryRuleCount),
+        @"certificate_rules" : @(certRuleCount),
+        @"events_pending_upload" : @(eventCount),
+      },
+      @"sync" : @{
+        @"server" : syncURLStr,
+        @"clean_required" : @(syncCleanReqd),
+        @"last_successful" : lastSyncSuccessStr
+      },
     };
     NSData *statsData = [NSJSONSerialization dataWithJSONObject:stats
                                                         options:NSJSONWritingPrettyPrinted
                                                           error:nil];
     NSString *statsStr = [[NSString alloc] initWithData:statsData encoding:NSUTF8StringEncoding];
-    printf("%s\n",  [statsStr UTF8String]);
+    printf("%s\n", [statsStr UTF8String]);
   } else {
     printf(">>> Daemon Info\n");
     printf("  %-22s | %s\n", "Mode", [clientMode UTF8String]);

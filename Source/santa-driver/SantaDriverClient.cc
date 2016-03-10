@@ -25,7 +25,7 @@ OSDefineMetaClassAndStructors(com_google_SantaDriverClient, IOUserClient);
 bool SantaDriverClient::initWithTask(
     task_t owningTask, void *securityID, UInt32 type) {
   if (clientHasPrivilege(
-      owningTask, kIOClientPrivilegeAdministrator) != KERN_SUCCESS) {
+          owningTask, kIOClientPrivilegeAdministrator) != KERN_SUCCESS) {
     LOGW("Unprivileged client attempted to connect.");
     return false;
   }

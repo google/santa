@@ -44,13 +44,13 @@ REGISTER_COMMAND_NAME(@"flushcache")
 
 + (void)runWithArguments:(NSArray *)arguments daemonConnection:(SNTXPCConnection *)daemonConn {
   [[daemonConn remoteObjectProxy] flushCache:^(BOOL success) {
-      if (success) {
-        LOGI(@"Cache flush requested");
-        exit(0);
-      } else {
-        LOGE(@"Cache flush failed");
-        exit(1);
-      }
+    if (success) {
+      LOGI(@"Cache flush requested");
+      exit(0);
+    } else {
+      LOGE(@"Cache flush failed");
+      exit(1);
+    }
   }];
 }
 

@@ -31,7 +31,7 @@
   [NSAnimationContext beginGrouping];
   [[NSAnimationContext currentContext] setDuration:0.15f];
   [[NSAnimationContext currentContext] setCompletionHandler:^{
-      [NSApp activateIgnoringOtherApps:YES];
+    [NSApp activateIgnoringOtherApps:YES];
   }];
   [[self animator] setAlphaValue:1.f];
   [NSAnimationContext endGrouping];
@@ -43,9 +43,9 @@
   [NSAnimationContext beginGrouping];
   [[NSAnimationContext currentContext] setDuration:0.15f];
   [[NSAnimationContext currentContext] setCompletionHandler:^{
-      [weakSelf.windowController windowWillClose:sender];
-      [weakSelf orderOut:sender];
-      [weakSelf setAlphaValue:1.f];
+    [weakSelf.windowController windowWillClose:sender];
+    [weakSelf orderOut:sender];
+    [weakSelf setAlphaValue:1.f];
   }];
   [[self animator] setAlphaValue:0.f];
   [NSAnimationContext endGrouping];

@@ -14,8 +14,8 @@
 
 #import "SNTDatabaseController.h"
 
-#include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/types.h>
 
 #import "SNTEventTable.h"
 #import "SNTLogging.h"
@@ -23,22 +23,24 @@
 
 @implementation SNTDatabaseController
 
-static NSString * const kDatabasePath = @"/var/db/santa";
-static NSString * const kRulesDatabaseName = @"rules.db";
-static NSString * const kEventsDatabaseName = @"events.db";
+static NSString *const kDatabasePath = @"/var/db/santa";
+static NSString *const kRulesDatabaseName = @"rules.db";
+static NSString *const kEventsDatabaseName = @"events.db";
 
 + (SNTEventTable *)eventTable {
   static FMDatabaseQueue *eventDatabaseQueue = nil;
   static dispatch_once_t eventDatabaseToken;
   dispatch_once(&eventDatabaseToken, ^{
-      [self createDatabasePath];
-      NSString *fullPath = [kDatabasePath stringByAppendingPathComponent:kEventsDatabaseName];
-      eventDatabaseQueue = [[FMDatabaseQueue alloc] initWithPath:fullPath];
-      chown([fullPath UTF8String], 0, 0);
-      chmod([fullPath UTF8String], 0600);
+    [self createDatabasePath];
+    NSString *fullPath = [kDatabasePath stringByAppendingPathComponent:kEventsDatabaseName];
+    eventDatabaseQueue = [[FMDatabaseQueue alloc] initWithPath:fullPath];
+    chown([fullPath UTF8String], 0, 0);
+    chmod([fullPath UTF8String], 0600);
 
 #ifndef DEBUG
-      [eventDatabaseQueue inDatabase:^(FMDatabase *db) { db.logsErrors = NO; }];
+    [eventDatabaseQueue inDatabase:^(FMDatabase *db) {
+      db.logsErrors = NO;
+    }];
 #endif
   });
 
@@ -49,14 +51,16 @@ static NSString * const kEventsDatabaseName = @"events.db";
   static FMDatabaseQueue *ruleDatabaseQueue = nil;
   static dispatch_once_t ruleDatabaseToken;
   dispatch_once(&ruleDatabaseToken, ^{
-      [self createDatabasePath];
-      NSString *fullPath = [kDatabasePath stringByAppendingPathComponent:kRulesDatabaseName];
-      ruleDatabaseQueue = [[FMDatabaseQueue alloc] initWithPath:fullPath];
-      chown([fullPath UTF8String], 0, 0);
-      chmod([fullPath UTF8String], 0600);
+    [self createDatabasePath];
+    NSString *fullPath = [kDatabasePath stringByAppendingPathComponent:kRulesDatabaseName];
+    ruleDatabaseQueue = [[FMDatabaseQueue alloc] initWithPath:fullPath];
+    chown([fullPath UTF8String], 0, 0);
+    chmod([fullPath UTF8String], 0600);
 
 #ifndef DEBUG
-      [ruleDatabaseQueue inDatabase:^(FMDatabase *db) { db.logsErrors = NO; }];
+    [ruleDatabaseQueue inDatabase:^(FMDatabase *db) {
+      db.logsErrors = NO;
+    }];
 #endif
   });
   return [[SNTRuleTable alloc] initWithDatabaseQueue:ruleDatabaseQueue];

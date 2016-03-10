@@ -141,7 +141,6 @@ static const int MAX_DELAY = 15;
 
   IOConnectUnmapMemory(self.connection, type, mach_task_self(), address);
   mach_port_destroy(mach_task_self(), receivePort);
-
 }
 
 #pragma mark Outgoing messages
@@ -181,8 +180,8 @@ static const int MAX_DELAY = 15;
 }
 
 - (BOOL)flushCache {
-  return IOConnectCallScalarMethod(
-      self.connection, kSantaUserClientClearCache, 0, 0, 0, 0) == KERN_SUCCESS;
+  return IOConnectCallScalarMethod(self.connection,
+                                   kSantaUserClientClearCache, 0, 0, 0, 0) == KERN_SUCCESS;
 }
 
 @end

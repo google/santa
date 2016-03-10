@@ -49,13 +49,13 @@
   NSString *oidStr = [SNTDERDecoder decodeOIDWithBytes:oidBytes1 length:sizeof(oidBytes1)];
   XCTAssertEqualObjects(oidStr, @"1.3.6.1.4.1.311.21.20");
 
-  unsigned char oidBytes2[] = {0x2b, 0x06, 0x01, 0x04, 0x01, 0xAB, 0x0E, 0x01, 0x05, 0x2F };
+  unsigned char oidBytes2[] = {0x2b, 0x06, 0x01, 0x04, 0x01, 0xAB, 0x0E, 0x01, 0x05, 0x2F};
   oidStr = [SNTDERDecoder decodeOIDWithBytes:oidBytes2 length:sizeof(oidBytes2)];
   XCTAssertEqualObjects(oidStr, @"1.3.6.1.4.1.5518.1.5.47");
 
   unsigned char oidBytes3[] = {0x56, 0x04, 0x0A};
   oidStr = [SNTDERDecoder decodeOIDWithBytes:oidBytes3 length:sizeof(oidBytes3)];
-  XCTAssertEqualObjects(oidStr, @"2.6.4.10");	
+  XCTAssertEqualObjects(oidStr, @"2.6.4.10");
 }
 
 @end

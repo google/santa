@@ -47,7 +47,7 @@ int main(int argc, const char *argv[]) {
         [commandName isEqualToString:@"usage"] ||
         [commandName isEqualToString:@"commands"]) {
       print_usage();
-      return 1;;
+      return 1;
     }
     [arguments removeObjectAtIndex:0];
 

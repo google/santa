@@ -17,12 +17,12 @@
 
 #include <IOKit/IOUserClient.h>
 #include <sys/kauth.h>
-#include <sys/vnode.h>
 #include <sys/proc.h>
+#include <sys/vnode.h>
 
+#include "SNTKernelCommon.h"
 #include "SantaDecisionManager.h"
 #include "SantaDriver.h"
-#include "SNTKernelCommon.h"
 
 ///
 ///  This class is instantiated by IOKit when a new client process attempts to

@@ -87,7 +87,8 @@ REGISTER_COMMAND_NAME(@"fileinfo")
   }
 
   NSString *s = [NSString stringWithFormat:@"%@ (%@)",
-                    [self humanReadableFileType:fileInfo], [archs componentsJoinedByString:@", "]];
+                                           [self humanReadableFileType:fileInfo],
+                                           [archs componentsJoinedByString:@", "]];
   [self printKey:@"Type" value:s];
 
   if ([fileInfo isMissingPageZero]) {
@@ -102,16 +103,16 @@ REGISTER_COMMAND_NAME(@"fileinfo")
     [csc.certificates enumerateObjectsUsingBlock:^(MOLCertificate *c,
                                                    unsigned long idx,
                                                    BOOL *stop) {
-        printf("    %2lu. %-20s: %s\n", idx + 1, "SHA-256", [c.SHA256 UTF8String]);
-        printf("        %-20s: %s\n", "SHA-1", [c.SHA1 UTF8String]);
-        printf("        %-20s: %s\n", "Common Name", [c.commonName UTF8String]);
-        printf("        %-20s: %s\n", "Organization", [c.orgName UTF8String]);
-        printf("        %-20s: %s\n", "Organizational Unit", [c.orgUnit UTF8String]);
-        printf("        %-20s: %s\n", "Valid From",
-               [[dateFormatter stringFromDate:c.validFrom] UTF8String]);
-        printf("        %-20s: %s\n", "Valid Until",
-               [[dateFormatter stringFromDate:c.validUntil] UTF8String]);
-        printf("\n");
+      printf("    %2lu. %-20s: %s\n", idx + 1, "SHA-256", [c.SHA256 UTF8String]);
+      printf("        %-20s: %s\n", "SHA-1", [c.SHA1 UTF8String]);
+      printf("        %-20s: %s\n", "Common Name", [c.commonName UTF8String]);
+      printf("        %-20s: %s\n", "Organization", [c.orgName UTF8String]);
+      printf("        %-20s: %s\n", "Organizational Unit", [c.orgUnit UTF8String]);
+      printf("        %-20s: %s\n", "Valid From",
+             [[dateFormatter stringFromDate:c.validFrom] UTF8String]);
+      printf("        %-20s: %s\n", "Valid Until",
+             [[dateFormatter stringFromDate:c.validUntil] UTF8String]);
+      printf("\n");
     }];
   }
 
@@ -124,12 +125,12 @@ REGISTER_COMMAND_NAME(@"fileinfo")
 }
 
 + (NSString *)humanReadableFileType:(SNTFileInfo *)fi {
-  if ([fi isScript])     return @"Script";
+  if ([fi isScript]) return @"Script";
   if ([fi isXARArchive]) return @"XAR Archive";
-  if ([fi isDylib])      return @"Dynamic Library";
-  if ([fi isKext])       return @"Kernel Extension";
-  if ([fi isFat])        return @"Fat Binary";
-  if ([fi isMachO])      return @"Thin Binary";
+  if ([fi isDylib]) return @"Dynamic Library";
+  if ([fi isKext]) return @"Kernel Extension";
+  if ([fi isFat]) return @"Fat Binary";
+  if ([fi isMachO]) return @"Thin Binary";
   return @"Unknown";
 }
 

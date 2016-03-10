@@ -78,7 +78,7 @@
 
 - (NSString *)description {
   return [NSString stringWithFormat:@"SNTRule: SHA-256: %@, State: %d, Type: %d",
-             self.shasum, self.state, self.type];
+                                    self.shasum, self.state, self.type];
 }
 
 @end

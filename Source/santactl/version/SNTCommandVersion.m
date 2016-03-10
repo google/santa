@@ -48,17 +48,17 @@ REGISTER_COMMAND_NAME(@"version")
 + (void)runWithArguments:(NSArray *)arguments daemonConnection:(SNTXPCConnection *)daemonConn {
   if ([arguments containsObject:@"--json"]) {
     NSDictionary *versions = @{
-        @"santa-driver": [self santaKextVersion],
-        @"santad": [self santadVersion],
-        @"santactl": [self santactlVersion],
-        @"SantaGUI": [self santaAppVersion],
+      @"santa-driver" : [self santaKextVersion],
+      @"santad" : [self santadVersion],
+      @"santactl" : [self santactlVersion],
+      @"SantaGUI" : [self santaAppVersion],
     };
     NSData *versionsData = [NSJSONSerialization dataWithJSONObject:versions
                                                            options:NSJSONWritingPrettyPrinted
                                                              error:nil];
     NSString *versionsStr = [[NSString alloc] initWithData:versionsData
                                                   encoding:NSUTF8StringEncoding];
-    printf("%s\n",  [versionsStr UTF8String]);
+    printf("%s\n", [versionsStr UTF8String]);
   } else {
     printf("%-15s | %s\n", "santa-driver", [[self santaKextVersion] UTF8String]);
     printf("%-15s | %s\n", "santad", [[self santadVersion] UTF8String]);
@@ -70,9 +70,8 @@ REGISTER_COMMAND_NAME(@"version")
 
 + (NSString *)santaKextVersion {
   NSDictionary *loadedKexts = CFBridgingRelease(
-      KextManagerCopyLoadedKextInfo((__bridge CFArrayRef)@[ @(USERCLIENT_ID) ],
-                                    (__bridge CFArrayRef)@[ @"CFBundleVersion" ])
-  );
+      KextManagerCopyLoadedKextInfo((__bridge CFArrayRef) @[ @(USERCLIENT_ID) ],
+                                    (__bridge CFArrayRef) @[ @"CFBundleVersion" ]));
 
   if (loadedKexts[@(USERCLIENT_ID)][@"CFBundleVersion"]) {
     return loadedKexts[@(USERCLIENT_ID)][@"CFBundleVersion"];

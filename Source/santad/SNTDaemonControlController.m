@@ -52,19 +52,19 @@ double watchdogRAMPeak = 0;
       dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_BACKGROUND, 0));
 
   dispatch_source_set_event_handler(syncTimerQ, ^{
-      [self rescheduleSyncSecondsFromNow:600];
+    [self rescheduleSyncSecondsFromNow:600];
 
-      if (![[SNTConfigurator configurator] syncBaseURL]) return;
-      [[SNTConfigurator configurator] setSyncBackOff:NO];
+    if (![[SNTConfigurator configurator] syncBaseURL]) return;
+    [[SNTConfigurator configurator] setSyncBackOff:NO];
 
-      if (fork() == 0) {
-        // Ensure we have no privileges
-        if (!DropRootPrivileges()) {
-          _exit(EPERM);
-        }
-
-        _exit(execl(kSantaCtlPath, kSantaCtlPath, "sync", "--syslog", NULL));
+    if (fork() == 0) {
+      // Ensure we have no privileges
+      if (!DropRootPrivileges()) {
+        _exit(EPERM);
       }
+
+      _exit(execl(kSantaCtlPath, kSantaCtlPath, "sync", "--syslog", NULL));
+    }
   });
 
   dispatch_resume(syncTimerQ);

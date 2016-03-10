@@ -25,7 +25,6 @@
 #import "SNTXPCConnection.h"
 #import "SNTXPCControlInterface.h"
 
-
 @interface SNTCommandRule : NSObject<SNTCommand>
 @property SNTXPCConnection *daemonConn;
 @end
@@ -84,7 +83,7 @@ REGISTER_COMMAND_NAME(@"rule")
   NSString *path;
 
   // Parse arguments
-  for (NSUInteger i = 0; i < arguments.count ; i++ ) {
+  for (NSUInteger i = 0; i < arguments.count; ++i) {
     NSString *arg = arguments[i];
 
     if ([arg caseInsensitiveCompare:@"--whitelist"] == NSOrderedSame) {
@@ -137,17 +136,17 @@ REGISTER_COMMAND_NAME(@"rule")
   }
 
   [[daemonConn remoteObjectProxy] databaseRuleAddRule:newRule cleanSlate:NO reply:^(BOOL success) {
-      if (!success) {
-        printf("Failed to modify rules.");
-        exit(1);
+    if (!success) {
+      printf("Failed to modify rules.");
+      exit(1);
+    } else {
+      if (newRule.state == RULESTATE_REMOVE) {
+        printf("Removed rule for SHA-256: %s.\n", [newRule.shasum UTF8String]);
       } else {
-        if (newRule.state == RULESTATE_REMOVE) {
-          printf("Removed rule for SHA-256: %s.\n", [newRule.shasum UTF8String]);
-        } else {
-          printf("Added rule for SHA-256: %s.\n", [newRule.shasum UTF8String]);
-        }
-        exit(0);
+        printf("Added rule for SHA-256: %s.\n", [newRule.shasum UTF8String]);
       }
+      exit(0);
+    }
   }];
 }
 

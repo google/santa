@@ -72,13 +72,13 @@ static NSMutableDictionary *registeredCommands;
   daemonConn.remoteInterface = [SNTXPCControlInterface controlInterface];
 
   daemonConn.rejectedHandler = ^{
-      printf("The daemon rejected the connection\n");
-      exit(1);
+    printf("The daemon rejected the connection\n");
+    exit(1);
   };
 
   daemonConn.invalidationHandler = ^{
-      printf("An error occurred communicating with the daemon, is it running?\n");
-      exit(1);
+    printf("An error occurred communicating with the daemon, is it running?\n");
+    exit(1);
   };
 
   [daemonConn resume];

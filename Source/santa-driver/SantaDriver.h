@@ -18,8 +18,8 @@
 #include <IOKit/IOService.h>
 #include <libkern/OSKextLib.h>
 
-#include "SantaDecisionManager.h"
 #include "SNTLogging.h"
+#include "SantaDecisionManager.h"
 
 ///
 ///  The driver class, which provides the start/stop functions and holds

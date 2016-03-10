@@ -50,7 +50,7 @@ void *watchdogThreadFunction(__unused void *idata) {
   struct mach_task_basic_info taskInfo;
   mach_msg_type_number_t taskInfoCount = MACH_TASK_BASIC_INFO_COUNT;
 
-  while(true) {
+  while (true) {
     @autoreleasepool {
       if (task_info(mach_task_self(), MACH_TASK_BASIC_INFO,
                     (task_info_t)&taskInfo, &taskInfoCount) == KERN_SUCCESS) {

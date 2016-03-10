@@ -21,7 +21,7 @@
 @interface SNTConfigurator : NSObject
 
 ///  Default config file path
-extern NSString * const kDefaultConfigFilePath;
+extern NSString *const kDefaultConfigFilePath;
 
 #pragma mark - Daemon Settings
 

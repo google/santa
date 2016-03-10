@@ -17,7 +17,7 @@
 ///
 ///  Protocol that each command must adhere to.
 ///
-@protocol SNTCommand <NSObject>
+@protocol SNTCommand<NSObject>
 
 ///
 ///  @return YES if command requires root.

@@ -24,9 +24,9 @@
 #include <sys/proc.h>
 #include <sys/vnode.h>
 
-#include "SantaCachedDecision.h"
 #include "SNTKernelCommon.h"
 #include "SNTLogging.h"
+#include "SantaCachedDecision.h"
 #include "SantaPIDAndPPID.h"
 
 ///
@@ -275,6 +275,5 @@ extern "C" int vnode_scope_callback(
 extern "C" int fileop_scope_callback(
     kauth_cred_t credential, void *idata, kauth_action_t action,
     uintptr_t arg0, uintptr_t arg1, uintptr_t arg2, uintptr_t arg3);
-
 
 #endif  // SANTA__SANTA_DRIVER__SANTADECISIONMANAGER_H

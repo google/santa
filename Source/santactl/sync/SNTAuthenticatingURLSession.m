@@ -111,13 +111,13 @@
     willPerformHTTPRedirection:(NSHTTPURLResponse *)response
                     newRequest:(NSURLRequest *)request
              completionHandler:(void (^)(NSURLRequest *))completionHandler {
-    if (self.refusesRedirects) {
-      LOGD(@"Rejected redirection to: %@", request.URL);
-      [task cancel];  // without this, the connection hangs until timeout!?!
-      completionHandler(NULL);
-    } else {
-      completionHandler(request);
-    }
+  if (self.refusesRedirects) {
+    LOGD(@"Rejected redirection to: %@", request.URL);
+    [task cancel];  // without this, the connection hangs until timeout!?!
+    completionHandler(NULL);
+  } else {
+    completionHandler(request);
+  }
 }
 
 #pragma mark Private Helpers for URLSession:didReceiveChallenge:completionHandler:
@@ -144,10 +144,10 @@
     foundIdentity = [self identityFromFile:self.clientCertFile password:self.clientCertPassword];
   } else {
     CFArrayRef cfResults = NULL;
-    SecItemCopyMatching((__bridge CFDictionaryRef)@{
-        (id)kSecClass: (id)kSecClassCertificate,
-        (id)kSecReturnRef: @YES,
-        (id)kSecMatchLimit: (id)kSecMatchLimitAll
+    SecItemCopyMatching((__bridge CFDictionaryRef) @{
+      (id)kSecClass : (id)kSecClassCertificate,
+      (id)kSecReturnRef : @YES,
+      (id)kSecMatchLimit : (id)kSecMatchLimitAll
     }, (CFTypeRef *)&cfResults);
     NSArray *results = CFBridgingRelease(cfResults);
 
@@ -202,7 +202,6 @@
         [NSURLCredential credentialWithIdentity:foundIdentity
                                    certificates:nil
                                     persistence:NSURLCredentialPersistenceForSession];
-//    CFRelease(foundIdentity);
     return cred;
   } else {
     LOGD(@"Client Trust: No valid identity found.");
@@ -289,23 +288,23 @@
 
   if (commonName) {
     [predicates addObject:[NSPredicate predicateWithFormat:@"SELF.commonName == %@",
-                           commonName]];
+                                                           commonName]];
   }
   if (issuerCommonName) {
     [predicates addObject:[NSPredicate predicateWithFormat:@"SELF.issuerCommonName == %@",
-                           issuerCommonName]];
+                                                           issuerCommonName]];
   }
   if (issuerCountryName) {
     [predicates addObject:[NSPredicate predicateWithFormat:@"SELF.issuerCountryName == %@",
-                           issuerCountryName]];
+                                                           issuerCountryName]];
   }
   if (issuerOrgName) {
     [predicates addObject:[NSPredicate predicateWithFormat:@"SELF.issuerOrgName == %@",
-                           issuerOrgName]];
+                                                           issuerOrgName]];
   }
   if (issuerOrgUnit) {
     [predicates addObject:[NSPredicate predicateWithFormat:@"SELF.issuerOrgUnit == %@",
-                           issuerOrgUnit]];
+                                                           issuerOrgUnit]];
   }
 
   NSCompoundPredicate *andPreds = [NSCompoundPredicate andPredicateWithSubpredicates:predicates];
@@ -348,7 +347,7 @@
     return nil;
   }
 
-  NSDictionary *options = (password ? @{(__bridge id)kSecImportExportPassphrase: password} : @{});
+  NSDictionary *options = (password ? @{(__bridge id)kSecImportExportPassphrase : password} : @{});
   CFArrayRef cfIdentities;
   OSStatus err = SecPKCS12Import(
       (__bridge CFDataRef)data, (__bridge CFDictionaryRef)options, &cfIdentities);

@@ -20,9 +20,9 @@
 
 #include "SNTLogging.h"
 
-#import "SNTCachedDecision.h"
 #import "MOLCertificate.h"
 #import "MOLCodesignChecker.h"
+#import "SNTCachedDecision.h"
 #import "SNTCommonEnums.h"
 #import "SNTConfigurator.h"
 #import "SNTDriverManager.h"
@@ -144,7 +144,6 @@
   if (cd.decision != EVENTSTATE_ALLOW_BINARY &&
       cd.decision != EVENTSTATE_ALLOW_CERTIFICATE &&
       cd.decision != EVENTSTATE_ALLOW_SCOPE) {
-
     SNTStoredEvent *se = [[SNTStoredEvent alloc] init];
     se.occurrenceDate = [[NSDate alloc] init];
     se.fileSHA256 = cd.sha256;
@@ -180,7 +179,7 @@
     se.quarantineDataURL = binInfo.quarantineDataURL;
     se.quarantineRefererURL = binInfo.quarantineRefererURL;
     se.quarantineTimestamp = binInfo.quarantineTimestamp;
-    se.quarantineAgentBundleID = binInfo.quarantineAgentBundleID;    
+    se.quarantineAgentBundleID = binInfo.quarantineAgentBundleID;
 
     [self.eventTable addStoredEvent:se];
 

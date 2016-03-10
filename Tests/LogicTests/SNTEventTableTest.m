@@ -88,7 +88,7 @@
 
 - (void)testDeleteEventsWithIds {
   // Add 50 events to the database
-  for (int i = 0; i < 50; i++) {
+  for (int i = 0; i < 50; ++i) {
     SNTStoredEvent *newEvent = [self createTestEvent];
     [self.sut addStoredEvent:newEvent];
   }
@@ -115,7 +115,7 @@
 
 - (void)testDeleteCorruptEvent {
   [self.dbq inDatabase:^(FMDatabase *db) {
-      [db executeUpdate:@"INSERT INTO events (filesha256) VALUES ('deadbeef')"];
+    [db executeUpdate:@"INSERT INTO events (filesha256) VALUES ('deadbeef')"];
   }];
 
   NSArray *events = [self.sut pendingEvents];
@@ -124,11 +124,11 @@
   }
 
   [self.dbq inDatabase:^(FMDatabase *db) {
-      FMResultSet *rs = [db executeQuery:@"SELECT * FROM events WHERE filesha256='deadbeef'"];
-      if ([rs next]) {
-        XCTFail("Bad event was not deleted.");
-      }
-      [rs close];
+    FMResultSet *rs = [db executeQuery:@"SELECT * FROM events WHERE filesha256='deadbeef'"];
+    if ([rs next]) {
+      XCTFail("Bad event was not deleted.");
+    }
+    [rs close];
   }];
 }
 

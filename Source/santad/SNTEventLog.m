@@ -19,8 +19,8 @@
 #include <pwd.h>
 #include <sys/sysctl.h>
 
-#import "SNTCachedDecision.h"
 #import "MOLCertificate.h"
+#import "SNTCachedDecision.h"
 #import "SNTCommonEnums.h"
 #import "SNTFileInfo.h"
 #import "SNTKernelCommon.h"
@@ -99,8 +99,8 @@
 
   outStr = [outStr stringByAppendingFormat:(@"|pid=%d|ppid=%d|process=%s|processpath=%s|"
                                             @"uid=%d|user=%@|gid=%d|group=%@"),
-               message.pid, message.ppid, message.pname, ppath,
-               message.uid, user, message.gid, group];
+                                           message.pid, message.ppid, message.pname, ppath,
+                                           message.uid, user, message.gid, group];
   if (sha256) {
     outStr = [outStr stringByAppendingFormat:@"|sha256=%@", sha256];
   }
@@ -122,23 +122,46 @@
 
   switch (cd.decision) {
     case EVENTSTATE_ALLOW_BINARY:
-      d = @"ALLOW"; r = @"BINARY"; args = [self argsForPid:message.pid]; break;
+      d = @"ALLOW";
+      r = @"BINARY";
+      args = [self argsForPid:message.pid];
+      break;
     case EVENTSTATE_ALLOW_CERTIFICATE:
-      d = @"ALLOW"; r = @"CERTIFICATE"; args = [self argsForPid:message.pid]; break;
+      d = @"ALLOW";
+      r = @"CERTIFICATE";
+      args = [self argsForPid:message.pid];
+      break;
     case EVENTSTATE_ALLOW_SCOPE:
-      d = @"ALLOW"; r = @"SCOPE"; args = [self argsForPid:message.pid]; break;
+      d = @"ALLOW";
+      r = @"SCOPE";
+      args = [self argsForPid:message.pid];
+      break;
     case EVENTSTATE_ALLOW_UNKNOWN:
-      d = @"ALLOW"; r = @"UNKNOWN"; args = [self argsForPid:message.pid]; break;
+      d = @"ALLOW";
+      r = @"UNKNOWN";
+      args = [self argsForPid:message.pid];
+      break;
     case EVENTSTATE_BLOCK_BINARY:
-      d = @"DENY"; r = @"BINARY"; break;
+      d = @"DENY";
+      r = @"BINARY";
+      break;
     case EVENTSTATE_BLOCK_CERTIFICATE:
-      d = @"DENY"; r = @"CERT"; break;
+      d = @"DENY";
+      r = @"CERT";
+      break;
     case EVENTSTATE_BLOCK_SCOPE:
-      d = @"DENY"; r = @"SCOPE"; break;
+      d = @"DENY";
+      r = @"SCOPE";
+      break;
     case EVENTSTATE_BLOCK_UNKNOWN:
-      d = @"DENY"; r = @"UNKNOWN"; break;
+      d = @"DENY";
+      r = @"UNKNOWN";
+      break;
     default:
-      d = @"ALLOW"; r = @"NOTRUNNING"; args = [self argsForPid:message.pid]; break;
+      d = @"ALLOW";
+      r = @"NOTRUNNING";
+      args = [self argsForPid:message.pid];
+      break;
   }
 
   outLog = [NSString stringWithFormat:@"action=EXEC|decision=%@|reason=%@", d, r];
@@ -147,17 +170,18 @@
     outLog = [outLog stringByAppendingFormat:@"|explain=%@", cd.decisionExtra];
   }
 
-  outLog = [outLog stringByAppendingFormat:@"|sha256=%@|path=%@|args=%@",
-               cd.sha256, [self sanitizeString:@(message.path)], [self sanitizeString:args]];
+  outLog = [outLog stringByAppendingFormat:@"|sha256=%@|path=%@|args=%@", cd.sha256,
+                                           [self sanitizeString:@(message.path)],
+                                           [self sanitizeString:args]];
 
   if (cd.certSHA256) {
-    outLog = [outLog stringByAppendingFormat:@"|cert_sha256=%@|cert_cn=%@",
-                 cd.certSHA256, [self sanitizeString:cd.certCommonName]];
+    outLog = [outLog stringByAppendingFormat:@"|cert_sha256=%@|cert_cn=%@", cd.certSHA256,
+                                             [self sanitizeString:cd.certCommonName]];
   }
 
   if (cd.quarantineURL) {
     outLog = [outLog stringByAppendingFormat:@"|quarantine_url=%@",
-                 [self sanitizeString:cd.quarantineURL]];
+                                             [self sanitizeString:cd.quarantineURL]];
   }
 
   NSString *user, *group;
@@ -167,7 +191,8 @@
   if (gr) group = @(gr->gr_name);
 
   outLog = [outLog stringByAppendingFormat:@"|pid=%d|ppid=%d|uid=%d|user=%@|gid=%d|group=%@",
-               message.pid, message.ppid, message.uid, user, message.gid, group];
+                                           message.pid, message.ppid, message.uid, user,
+                                           message.gid, group];
 
   LOGI(@"%@", outLog);
 }
@@ -208,11 +233,10 @@
   memcpy(&argc, argsdatabytes, sizeof(argc));
 
   // Get pointer to beginning of string space
-  char *cp;
-  cp = (char *) argsdatabytes + sizeof(argc);
+  char *cp = (char *)argsdatabytes + sizeof(argc);
 
   // Skip over exec_path
-  for (; cp < &argsdatabytes[size]; cp++) {
+  for (; cp < &argsdatabytes[size]; ++cp) {
     if (*cp == '\0') {
       cp++;
       break;
@@ -220,11 +244,13 @@
   }
 
   // Skip trailing NULL bytes
-  for (; cp < &argsdatabytes[size]; cp++) if (*cp != '\0') break;
+  for (; cp < &argsdatabytes[size]; ++cp) {
+    if (*cp != '\0') break;
+  }
 
   // Loop over the argv array, stripping newlines in each arg and putting in a new array.
   NSMutableArray *args = [NSMutableArray arrayWithCapacity:argc];
-  for (int i = 0; i < argc; i++) {
+  for (int i = 0; i < argc; ++i) {
     NSString *arg = @(cp);
     if (arg) [args addObject:arg];
 

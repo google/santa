@@ -86,8 +86,8 @@
 
   __block BOOL success = NO;
   [self inTransaction:^(FMDatabase *db, BOOL *rollback) {
-      success = [db executeUpdate:@"INSERT INTO 'events' (filesha256, eventdata) VALUES (?, ?)",
-                    event.fileSHA256, eventData];
+    success = [db executeUpdate:@"INSERT INTO 'events' (filesha256, eventdata) VALUES (?, ?)",
+                                event.fileSHA256, eventData];
   }];
 
   return success;
@@ -98,7 +98,7 @@
 - (NSUInteger)pendingEventsCount {
   __block NSUInteger eventsPending = 0;
   [self inDatabase:^(FMDatabase *db) {
-      eventsPending = [db intForQuery:@"SELECT COUNT(*) FROM events"];
+    eventsPending = [db intForQuery:@"SELECT COUNT(*) FROM events"];
   }];
   return eventsPending;
 }
@@ -107,17 +107,17 @@
   __block SNTStoredEvent *storedEvent;
 
   [self inDatabase:^(FMDatabase *db) {
-      FMResultSet *rs =
-          [db executeQuery:@"SELECT * FROM events WHERE filesha256=? LIMIT 1;", sha256];
+    FMResultSet *rs =
+        [db executeQuery:@"SELECT * FROM events WHERE filesha256=? LIMIT 1;", sha256];
 
-      if ([rs next]) {
-        storedEvent = [self eventFromResultSet:rs];
-        if (!storedEvent) {
-          [db executeUpdate:@"DELETE FROM events WHERE idx=?", [rs objectForColumnName:@"idx"]];
-        }
+    if ([rs next]) {
+      storedEvent = [self eventFromResultSet:rs];
+      if (!storedEvent) {
+        [db executeUpdate:@"DELETE FROM events WHERE idx=?", [rs objectForColumnName:@"idx"]];
       }
+    }
 
-      [rs close];
+    [rs close];
   }];
 
   return storedEvent;
@@ -127,18 +127,18 @@
   NSMutableArray *pendingEvents = [[NSMutableArray alloc] init];
 
   [self inDatabase:^(FMDatabase *db) {
-      FMResultSet *rs = [db executeQuery:@"SELECT * FROM events"];
+    FMResultSet *rs = [db executeQuery:@"SELECT * FROM events"];
 
-      while ([rs next]) {
-        id obj = [self eventFromResultSet:rs];
-        if (obj) {
-          [pendingEvents addObject:obj];
-        } else {
-          [db executeUpdate:@"DELETE FROM events WHERE idx=?", [rs objectForColumnName:@"idx"]];
-        }
+    while ([rs next]) {
+      id obj = [self eventFromResultSet:rs];
+      if (obj) {
+        [pendingEvents addObject:obj];
+      } else {
+        [db executeUpdate:@"DELETE FROM events WHERE idx=?", [rs objectForColumnName:@"idx"]];
       }
+    }
 
-      [rs close];
+    [rs close];
   }];
 
   return pendingEvents;
@@ -153,7 +153,8 @@
   @try {
     event = [NSKeyedUnarchiver unarchiveObjectWithData:eventData];
     event.idx = @([rs intForColumn:@"idx"]);
-  } @catch (NSException *exception) {}
+  } @catch (NSException *exception) {
+  }
 
   return event;
 }
@@ -162,7 +163,7 @@
 
 - (void)deleteEventWithId:(NSNumber *)index {
   [self inDatabase:^(FMDatabase *db) {
-      [db executeUpdate:@"DELETE FROM events WHERE idx=?", index];
+    [db executeUpdate:@"DELETE FROM events WHERE idx=?", index];
   }];
 }
 
@@ -171,7 +172,7 @@
     [self deleteEventWithId:index];
   }
   [self inDatabase:^(FMDatabase *db) {
-      [db executeUpdate:@"VACUUM"];
+    [db executeUpdate:@"VACUUM"];
   }];
 }
 

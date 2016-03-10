@@ -67,7 +67,8 @@
   // Notifications arrive on a background thread but UI updates must happen on the main thread.
   // This includes making windows.
   [self performSelectorOnMainThread:@selector(postBlockNotificationMainThread:)
-                         withObject:@{ @"event": event, @"custommsg": message }
+                         withObject:@{ @"event" : event,
+                                       @"custommsg" : message }
                       waitUntilDone:NO];
 }
 
