@@ -8,4 +8,4 @@ before_install:
  - gem install cocoapods xcpretty
 
 script:
- - xcodebuild -workspace Santa.xcworkspace -scheme All build test CODE_SIGN_IDENTITY='' | xcpretty -sc && exit ${PIPESTATUS[0]}
+ - xcodebuild -workspace Santa.xcworkspace -scheme All -derivedDataPath build build test CODE_SIGN_IDENTITY='' | xcpretty -sc && exit ${PIPESTATUS[0]}
