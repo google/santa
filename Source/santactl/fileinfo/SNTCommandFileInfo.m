@@ -95,9 +95,46 @@ REGISTER_COMMAND_NAME(@"fileinfo")
     [self printKey:@"Page Zero" value:@"__PAGEZERO segment missing/bad!"];
   }
 
-  MOLCodesignChecker *csc = [[MOLCodesignChecker alloc] initWithBinaryPath:filePath];
-  [self printKey:@"Code-signed" value:(csc) ? @"Yes" : @"No"];
-  if (csc) {
+  NSError *error;
+  MOLCodesignChecker *csc = [[MOLCodesignChecker alloc] initWithBinaryPath:filePath error:&error];
+  if (!error) {
+    [self printKey:@"Code-signed" value:@"Yes"];
+  } else {
+    switch (error.code) {
+      case errSecCSUnsigned:
+        [self printKey:@"Code-signed" value:@"No"];
+        break;
+      case errSecCSSignatureFailed:
+      case errSecCSStaticCodeChanged:
+      case errSecCSSignatureNotVerifiable:
+      case errSecCSSignatureUnsupported:
+        [self printKey:@"Code-signed" value:@"Yes, but code/signatured changed/unverifiable"];
+        break;
+      case errSecCSResourceDirectoryFailed:
+      case errSecCSResourceNotSupported:
+      case errSecCSResourceRulesInvalid:
+      case errSecCSResourcesInvalid:
+      case errSecCSResourcesNotFound:
+      case errSecCSResourcesNotSealed:
+        [self printKey:@"Code-signed" value:@"Yes, but resources invalid"];
+        break;
+      case errSecCSReqFailed:
+      case errSecCSReqInvalid:
+      case errSecCSReqUnsupported:
+        [self printKey:@"Code-signed" value:@"Yes, but failed requirement validation"];
+        break;
+      case errSecCSInfoPlistFailed:
+        [self printKey:@"Code-signed" value:@"Yes, but can't validate as Info.plist is missing"];
+        break;
+      default: {
+        NSString *val = [NSString stringWithFormat:@"Yes, but failed to validate (%ld)",
+                                                   error.code];
+        [self printKey:@"Code-signed" value:val];
+        break;
+      }
+    }
+  }
+  if (csc.certificates) {
     printf("Signing chain:\n");
 
     [csc.certificates enumerateObjectsUsingBlock:^(MOLCertificate *c,
