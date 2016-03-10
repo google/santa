@@ -151,13 +151,7 @@
     }, (CFTypeRef *)&cfResults);
     NSArray *results = CFBridgingRelease(cfResults);
 
-    // Take certificates array and wrap each SecCertificateRef in a yummy MOLCertificate wrapper.
-    NSMutableArray *allCerts = [NSMutableArray arrayWithCapacity:results.count];
-    for (id cert in results) {
-      SecCertificateRef certRef = (__bridge SecCertificateRef)cert;
-      MOLCertificate *molCert = [[MOLCertificate alloc] initWithSecCertificateRef:certRef];
-      if (molCert) [allCerts addObject:molCert];
-    }
+    NSMutableArray *allCerts = [[MOLCertificate certificatesFromArray:results] mutableCopy];
 
     if (self.clientCertCommonName) {
       foundIdentity = [self identityByFilteringArray:allCerts
