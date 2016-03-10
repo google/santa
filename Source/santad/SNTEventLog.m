@@ -155,6 +155,11 @@
                  cd.certSHA256, [self sanitizeString:cd.certCommonName]];
   }
 
+  if (cd.quarantineURL) {
+    outLog = [outLog stringByAppendingFormat:@"|quarantine_url=%@",
+                 [self sanitizeString:cd.quarantineURL]];
+  }
+
   NSString *user, *group;
   struct passwd *pw = getpwuid(message.uid);
   if (pw) user = @(pw->pw_name);

@@ -130,6 +130,7 @@
   cd.certCommonName = csInfo.leafCertificate.commonName;
   cd.certSHA256 = csInfo.leafCertificate.SHA256;
   cd.vnodeId = message.vnode_id;
+  cd.quarantineURL = binInfo.quarantineDataURL;
   cd.decision = [self makeDecision:cd binaryInfo:binInfo];
 
   // Save decision details for logging the execution later.

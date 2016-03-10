@@ -25,6 +25,7 @@
 @property NSString *sha256;
 @property NSString *certSHA256;
 @property NSString *certCommonName;
+@property NSString *quarantineURL;
 
 @property NSString *customMsg;
 @property BOOL silentBlock;
