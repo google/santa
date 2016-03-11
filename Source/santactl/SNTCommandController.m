@@ -68,11 +68,6 @@ static NSMutableDictionary *registeredCommands;
 + (SNTXPCConnection *)connectToDaemon {
   SNTXPCConnection *daemonConn = [SNTXPCControlInterface configuredConnection];
 
-  daemonConn.rejectedHandler = ^{
-    printf("The daemon rejected the connection\n");
-    exit(1);
-  };
-
   daemonConn.invalidationHandler = ^{
     printf("An error occurred communicating with the daemon, is it running?\n");
     exit(1);

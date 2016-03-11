@@ -13,16 +13,15 @@
 ///    limitations under the License.
 
 /**
-  A validating XPC connection/listener which uses codesigning to validate that both ends of the
-  connection were signed by the same certificate chain.
- 
+  A wrapper around NSXPCListener and NSXPCConnection to provide client multiplexing, signature
+  validation of connecting clients and a simpler interface.
+
   Example server started by @c launchd where the @c launchd job has a @c MachServices key:
 
   @code
    SNTXPCConnection *conn = [[SNTXPCConnection alloc] initServerWithName:@"MyServer"];
    conn.exportedInterface = [NSXPCInterface interfaceWithProtocol:@protocol(MyServerProtocol)];
    conn.exportedObject = myObject;
-   conn.remoteInterface = [NSXPCInterface interfaceWithProtocol:@protocol(MyClientProtocol)];
    [conn resume];
   @endcode
 
@@ -31,102 +30,81 @@
   @code
    SNTXPCConnection *conn = [[SNTXPCConnection alloc] initClientWithName:"MyServer"
                                                              withOptions:0];
-   conn.exportedInterface = [NSXPCInterface interfaceWithProtocol:@protocol(MyClientProtocol)];
-   conn.exportedObject = myObject;
    conn.remoteInterface = [NSXPCInterface interfaceWithProtocol:@protocol(MyServerProtocol)];
    conn.invalidationHandler = ^{ NSLog(@"Connection invalidated") };
    [conn resume];
   @endcode
 
-  Either side can then send a message to the other with:
+  The client can send a message to the server with:
 
   @code
    [conn.remoteObjectProxy selectorInRemoteInterface];
   @endcode
  
-  It isn't necessary for both ends to export an interface/object, it is more common for the 
-  'server' end to export functionality to be consumed by the 'client'.
-
   @note messages are always delivered on a background thread!
 */
 @interface SNTXPCConnection : NSObject<NSXPCListenerDelegate>
 
-typedef void (^SNTXPCInvalidationBlock)(void);
-typedef void (^SNTXPCAcceptedBlock)(void);
-typedef void (^SNTXPCRejectedBlock)(void);
-
 /**
-  The interface the remote object should conform to.
-*/
-@property(retain) NSXPCInterface *remoteInterface;
-
-/**
-  A proxy to the object at the other end of the connection.
-
-  @warning Do not send a message to this object if you didn't set @c remoteInterface above
-  before calling the @c resume method. Doing so will throw an exception.
-*/
-@property(readonly, nonatomic) id remoteObjectProxy;
-
-/**
-  The interface this object exports.
-*/
-@property(retain) NSXPCInterface *exportedInterface;
-
-/**
-  The object that responds to messages from the other end.
-*/
-@property(retain) id exportedObject;
-
-/**
-  A block to run when the connection is invalidated.
-*/
-@property(copy) SNTXPCInvalidationBlock invalidationHandler;
-
-/**
-  A block to run when the connection has been accepted.
-*/
-@property(copy) SNTXPCAcceptedBlock acceptedHandler;
-
-/**
-  A block to run when the connection has been rejected.
-*/
-@property(copy) SNTXPCRejectedBlock rejectedHandler;
-
-/**
-  Initialize a new server with a given listener.
+  Initialize a new server with a given listener, provided by `[NSXPCListener anonymousListener]`.
 */
 - (instancetype)initServerWithListener:(NSXPCListener *)listener;
 
 /**
-  Initializer for the 'server' side of the connection, the binary that was started by launchd.
+  Initializer for the 'server' side of the connection, started by launchd.
 
-  @param name MachService name
+  @param name MachService name, must match the MachServices key in the launchd.plist
 */
 - (instancetype)initServerWithName:(NSString *)name;
 
 /**
-  Initializer for the 'client' side of the connection.
+  Initializer a new client to a service exported by a LaunchDaemon.
 
   @param name MachService name
-  @param options Use NSXPCConnectionPrivileged if the server is running as root, otherwise use 0.
+  @param privileged Use YES if the server is running as root.
 */
-- (instancetype)initClientWithName:(NSString *)name options:(NSXPCConnectionOptions)options;
+- (instancetype)initClientWithName:(NSString *)name privileged:(BOOL)privileged;
 
 /**
-   Initialize a new client with a listener endpoint sent from another process.
+  Initialize a new client with a listener endpoint sent from another process.
+
+  @param listener An NSXPCListenerEndpoint to connect to.
 */
 - (instancetype)initClientWithListener:(NSXPCListenerEndpoint *)listener;
 
 /**
   Call when the properties of the object have been set-up and you're ready for connections.
-  Blocks the executing thread for up to 5s while waiting for the verification to complete.
 */
 - (void)resume;
 
 /**
-  Invalidate the connection. This must be done before the connection can be released.
+  Invalidate the connection(s). This must be done before the object can be released.
 */
 - (void)invalidate;
+
+/**
+  The interface the remote object should conform to. (client)
+ */
+@property(retain) NSXPCInterface *remoteInterface;
+
+/**
+  A proxy to the object at the other end of the connection. (client)
+ */
+@property(readonly, nonatomic) id remoteObjectProxy;
+
+/**
+  The interface this object exports. (server)
+ */
+@property(retain) NSXPCInterface *exportedInterface;
+
+/**
+  The object that responds to messages from the other end. (server)
+ */
+@property(retain) id exportedObject;
+
+/**
+  A block to run when a/the connection is invalidated/interrupted.
+ */
+@property(copy) void (^invalidationHandler)(void);
 
 @end

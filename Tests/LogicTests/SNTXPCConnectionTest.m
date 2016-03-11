@@ -58,7 +58,7 @@
       .andReturn(self.mockConnection);
 
   SNTXPCConnection *sut = [[SNTXPCConnection alloc] initClientWithName:@"TestClient"
-                                                               options:NSXPCConnectionPrivileged];
+                                                            privileged:YES];
   XCTAssertNotNil(sut);
   OCMVerifyAll(self.mockConnection);
 }
@@ -80,68 +80,54 @@
   OCMVerify([(NSXPCListener *)self.mockListener resume]);
 }
 
-- (void)testListenerShouldAcceptNewConnection {
+- (void)testServerNotValid {
   OCMExpect([self.mockListener initWithMachServiceName:OCMOCK_ANY]).andReturn(self.mockListener);
   SNTXPCConnection *sut = [[SNTXPCConnection alloc] initServerWithName:@"TestServer"];
-
-  XCTAssertTrue([sut listener:self.mockListener shouldAcceptNewConnection:self.mockConnection]);
-
-  OCMVerify([self.mockConnection setExportedObject:OCMOCK_ANY]);
-  OCMVerify([self.mockConnection setExportedInterface:OCMOCK_ANY]);
-  OCMVerify([self.mockConnection setInvalidationHandler:OCMOCK_ANY]);
-  OCMVerify([self.mockConnection setInterruptionHandler:OCMOCK_ANY]);
-  OCMVerify([(NSXPCConnection *)self.mockConnection resume]);
-}
-
-- (void)testIsConnectionValidFalse {
-  OCMExpect([self.mockListener initWithMachServiceName:OCMOCK_ANY]).andReturn(self.mockListener);
-  SNTXPCConnection *sut = [[SNTXPCConnection alloc] initServerWithName:@"TestServer"];
-
-  __block id capturedObjectProxy;
-  id mockConnection = [[NSXPCConnection alloc] init];
-  [[mockConnection expect] setExportedObject:[OCMArg checkWithBlock:^BOOL(id obj) {
-    capturedObjectProxy = obj;
-    return YES;
-  }]];
-  [sut listener:self.mockListener shouldAcceptNewConnection:mockConnection];
 
   id mockCodesignChecker = OCMClassMock([MOLCodesignChecker class]);
   OCMStub([mockCodesignChecker alloc]).andReturn(mockCodesignChecker);
   OCMExpect([mockCodesignChecker initWithPID:0]).andReturn(mockCodesignChecker);
   OCMExpect([mockCodesignChecker signingInformationMatches:OCMOCK_ANY]).andReturn(NO);
 
-  [capturedObjectProxy isConnectionValidWithBlock:^(BOOL valid) {
-    XCTAssertFalse(valid);
-  }];
+  XCTAssertFalse([sut listener:self.mockListener shouldAcceptNewConnection:self.mockConnection]);
 
   [mockCodesignChecker stopMocking];
-
-  OCMVerify([mockConnection invalidate]);
 }
 
-- (void)testIsConnectionValidTrue {
+- (void)testServerValid {
   OCMExpect([self.mockListener initWithMachServiceName:OCMOCK_ANY]).andReturn(self.mockListener);
   SNTXPCConnection *sut = [[SNTXPCConnection alloc] initServerWithName:@"TestServer"];
-
-  __block id capturedObjectProxy;
-  id mockConnection = [[NSXPCConnection alloc] init];
-  [[mockConnection expect] setExportedObject:[OCMArg checkWithBlock:^BOOL(id obj) {
-    capturedObjectProxy = obj;
-    return YES;
-  }]];
-  [sut listener:self.mockListener shouldAcceptNewConnection:mockConnection];
 
   id mockCodesignChecker = OCMClassMock([MOLCodesignChecker class]);
   OCMStub([mockCodesignChecker alloc]).andReturn(mockCodesignChecker);
   OCMExpect([mockCodesignChecker initWithPID:0]).andReturn(mockCodesignChecker);
   OCMExpect([mockCodesignChecker signingInformationMatches:OCMOCK_ANY]).andReturn(YES);
 
-  [capturedObjectProxy isConnectionValidWithBlock:^(BOOL valid) {
-    XCTAssertTrue(valid);
-  }];
+  XCTAssertTrue([sut listener:self.mockListener shouldAcceptNewConnection:self.mockConnection]);
 
   [mockCodesignChecker stopMocking];
 }
 
+- (void)testServerInvalidateAllConnections {
+  OCMExpect([self.mockListener initWithMachServiceName:OCMOCK_ANY]).andReturn(self.mockListener);
+  SNTXPCConnection *sut = [[SNTXPCConnection alloc] initServerWithName:@"TestServer"];
+
+  int pid = [[NSProcessInfo processInfo] processIdentifier];
+
+  NSMutableArray *connections = [NSMutableArray array];
+  for (int i = 0; i < 10; ++i) {
+    NSXPCConnection *fakeConn = OCMClassMock([NSXPCConnection class]);
+    OCMStub([fakeConn processIdentifier]).andReturn(pid);
+    OCMExpect([fakeConn invalidate]);
+    [connections addObject:fakeConn];
+    [sut listener:self.mockListener shouldAcceptNewConnection:fakeConn];
+  }
+
+  [sut invalidate];
+
+  for (NSXPCConnection *fakeConn in connections) {
+    OCMVerifyAll((OCMockObject *)fakeConn);
+  }
+}
 
 @end

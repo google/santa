@@ -49,7 +49,6 @@
                                        queue:[NSOperationQueue currentQueue]
                                   usingBlock:^(NSNotification *note) {
     self.listener.invalidationHandler = nil;
-    self.listener.rejectedHandler = nil;
     [self.listener invalidate];
     self.listener = nil;
   }];
@@ -79,7 +78,7 @@
     self.listener = [[SNTXPCConnection alloc] initServerWithListener:listener];
     self.listener.exportedInterface = [SNTXPCNotifierInterface notifierInterface];
     self.listener.exportedObject = self.notificationManager;
-    self.listener.invalidationHandler = self.listener.rejectedHandler = ^{
+    self.listener.invalidationHandler = ^{
       [weakSelf attemptReconnection];
     };
     [self.listener resume];

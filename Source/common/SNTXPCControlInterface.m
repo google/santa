@@ -42,7 +42,7 @@
 
 + (SNTXPCConnection *)configuredConnection {
   SNTXPCConnection *c = [[SNTXPCConnection alloc] initClientWithName:[self serviceId]
-                                                             options:NSXPCConnectionPrivileged];
+                                                          privileged:YES];
   c.remoteInterface = [self controlInterface];
   return c;
 }
