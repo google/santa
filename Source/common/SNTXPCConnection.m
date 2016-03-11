@@ -64,12 +64,18 @@
 @interface SNTXPCConnection ()
 
 ///
-/// The XPC listener (used on server-side only).
+/// The XPC listener (server only).
 ///
 @property NSXPCListener *listenerObject;
 
 ///
-/// The current connection object (used on client-side only).
+/// Arrays of pending and accepted connections (server only).
+///
+@property NSMutableArray *pendingConnections;
+@property NSMutableArray *acceptedConnections;
+
+///
+/// The current connection object (client only).
 ///
 @property NSXPCConnection *currentConnection;
 
@@ -78,25 +84,39 @@
 ///
 @property NSXPCInterface *validatorInterface;
 
-@property NSMutableArray *pendingConnections;
-@property NSMutableArray *acceptedConnections;
-
 @end
 
 @implementation SNTXPCConnection
 
 #pragma mark Initializers
-- (instancetype)initServerWithName:(NSString *)name {
+
+- (instancetype)initServerWithListener:(NSXPCListener *)listener {
   self = [super init];
   if (self) {
     Protocol *validatorProtocol = @protocol(XPCConnectionValidityRequest);
     _validatorInterface = [NSXPCInterface interfaceWithProtocol:validatorProtocol];
-    _listenerObject = [[NSXPCListener alloc] initWithMachServiceName:name];
+    _listenerObject = listener;
 
     if (!_validatorInterface || !_listenerObject) return nil;
 
     _pendingConnections = [NSMutableArray array];
     _acceptedConnections = [NSMutableArray array];
+  }
+  return self;
+}
+
+- (instancetype)initServerWithName:(NSString *)name {
+  return [self initServerWithListener:[[NSXPCListener alloc] initWithMachServiceName:name]];
+}
+
+- (instancetype)initClientWithListener:(NSXPCListenerEndpoint *)listener {
+  self = [super init];
+  if (self) {
+    Protocol *validatorProtocol = @protocol(XPCConnectionValidityRequest);
+    _validatorInterface = [NSXPCInterface interfaceWithProtocol:validatorProtocol];
+    _currentConnection = [[NSXPCConnection alloc] initWithListenerEndpoint:listener];
+
+    if (!_validatorInterface || !_currentConnection) return nil;
   }
   return self;
 }
@@ -197,6 +217,7 @@
 
   connection.invalidationHandler = connection.interruptionHandler = ^{
     [self.pendingConnections removeObject:weakConnection];
+    [self.acceptedConnections removeObject:weakConnection];
   };
 
   [connection resume];

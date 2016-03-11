@@ -30,11 +30,10 @@
 #import "SNTEventLog.h"
 #import "SNTEventTable.h"
 #import "SNTFileInfo.h"
+#import "SNTNotificationQueue.h"
 #import "SNTRule.h"
 #import "SNTRuleTable.h"
 #import "SNTStoredEvent.h"
-#import "SNTXPCConnection.h"
-#import "SNTXPCNotifierInterface.h"
 
 @implementation SNTExecutionController
 
@@ -43,14 +42,14 @@
 - (instancetype)initWithDriverManager:(SNTDriverManager *)driverManager
                             ruleTable:(SNTRuleTable *)ruleTable
                            eventTable:(SNTEventTable *)eventTable
-                   notifierConnection:(SNTXPCConnection *)notifier
+                        notifierQueue:(SNTNotificationQueue *)notifierQueue
                              eventLog:(SNTEventLog *)eventLog {
   self = [super init];
   if (self) {
     _driverManager = driverManager;
     _ruleTable = ruleTable;
     _eventTable = eventTable;
-    _notifierConnection = notifier;
+    _notifierQueue = notifierQueue;
     _eventLog = eventLog;
 
     // This establishes the XPC connection between libsecurity and syspolicyd.
@@ -192,8 +191,7 @@
       [self initiateEventUploadForEvent:se];
 
       if (!cd.silentBlock) {
-        [[self.notifierConnection remoteObjectProxy] postBlockNotification:se
-                                                         withCustomMessage:cd.customMsg];
+        [self.notifierQueue addEvent:se customMessage:cd.customMsg];
       }
     }
   }

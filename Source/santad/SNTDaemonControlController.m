@@ -20,8 +20,11 @@
 #import "SNTDropRootPrivs.h"
 #import "SNTEventTable.h"
 #import "SNTLogging.h"
+#import "SNTNotificationQueue.h"
 #import "SNTRule.h"
 #import "SNTRuleTable.h"
+#import "SNTXPCConnection.h"
+#import "SNTXPCNotifierInterface.h"
 
 // Globals used by the santad watchdog thread
 uint64_t watchdogCPUEvents = 0;
@@ -35,11 +38,9 @@ double watchdogRAMPeak = 0;
 
 @implementation SNTDaemonControlController
 
-- (instancetype)initWithDriverManager:(SNTDriverManager *)driverManager {
+- (instancetype)init {
   self = [super init];
   if (self) {
-    _driverManager = driverManager;
-
     _syncTimer = [self createSyncTimer];
     [self rescheduleSyncSecondsFromNow:30];
   }
@@ -131,7 +132,7 @@ double watchdogRAMPeak = 0;
   [[SNTDatabaseController eventTable] deleteEventsWithIds:ids];
 }
 
-#pragma mark Misc
+#pragma mark Config Ops
 
 - (void)clientMode:(void (^)(santa_clientmode_t))reply {
   reply([[SNTConfigurator configurator] clientMode]);
@@ -176,6 +177,15 @@ double watchdogRAMPeak = 0;
 
 - (void)watchdogInfo:(void (^)(uint64_t, uint64_t, double, double))reply {
   reply(watchdogCPUEvents, watchdogRAMEvents, watchdogCPUPeak, watchdogRAMPeak);
+}
+
+#pragma mark GUI Ops
+
+- (void)setNotificationListener:(NSXPCListenerEndpoint *)listener {
+  SNTXPCConnection *c = [[SNTXPCConnection alloc] initClientWithListener:listener];
+  c.remoteInterface = [SNTXPCNotifierInterface notifierInterface];
+  [c resume];
+  self.notQueue.notifierConnection = c;
 }
 
 @end

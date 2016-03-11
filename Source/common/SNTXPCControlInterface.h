@@ -16,6 +16,7 @@
 
 @class SNTRule;
 @class SNTStoredEvent;
+@class SNTXPCConnection;
 
 ///
 ///  Protocol implemented by santad and utilized by santactl
@@ -32,9 +33,11 @@
 ///  Database ops
 ///
 - (void)databaseRuleCounts:(void (^)(int64_t binary, int64_t certificate))reply;
-- (void)databaseRuleAddRule:(SNTRule *)rule cleanSlate:(BOOL)cleanSlate
+- (void)databaseRuleAddRule:(SNTRule *)rule
+                 cleanSlate:(BOOL)cleanSlate
                       reply:(void (^)(BOOL success))reply;
-- (void)databaseRuleAddRules:(NSArray *)rules cleanSlate:(BOOL)cleanSlate
+- (void)databaseRuleAddRules:(NSArray *)rules
+                  cleanSlate:(BOOL)cleanSlate
                        reply:(void (^)(BOOL success))reply;
 
 - (void)databaseEventCount:(void (^)(int64_t count))reply;
@@ -45,14 +48,19 @@
 ///
 ///  Config ops
 ///
-- (void)clientMode:(void (^)(santa_clientmode_t))reply;
 - (void)watchdogInfo:(void (^)(uint64_t, uint64_t, double, double))reply;
+- (void)clientMode:(void (^)(santa_clientmode_t))reply;
 - (void)setClientMode:(santa_clientmode_t)mode reply:(void (^)())reply;
 - (void)setNextSyncInterval:(uint64_t)seconds reply:(void (^)())reply;
 - (void)setSyncLastSuccess:(NSDate *)date reply:(void (^)())reply;
 - (void)setSyncCleanRequired:(BOOL)cleanReqd reply:(void (^)())reply;
 - (void)setWhitelistPathRegex:(NSString *)pattern reply:(void (^)())reply;
 - (void)setBlacklistPathRegex:(NSString *)pattern reply:(void (^)())reply;
+
+///
+///  GUI Ops
+///
+- (void)setNotificationListener:(NSXPCListenerEndpoint *)listener;
 
 @end
 
@@ -68,5 +76,11 @@
 ///  Ensures any methods that accept custom classes as arguments are set-up before returning
 ///
 + (NSXPCInterface *)controlInterface;
+
+///
+///  Retrieve a pre-configured SNTXPCConnection for communicating with santad.
+///  Connections just needs any handlers set and then can be resumed and used.
+///
++ (SNTXPCConnection *)configuredConnection;
 
 @end

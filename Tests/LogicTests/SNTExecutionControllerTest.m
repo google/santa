@@ -65,7 +65,7 @@
   self.sut = [[SNTExecutionController alloc] initWithDriverManager:self.mockDriverManager
                                                          ruleTable:self.mockRuleDatabase
                                                         eventTable:self.mockEventDatabase
-                                                notifierConnection:nil
+                                                     notifierQueue:nil
                                                           eventLog:nil];
 }
 

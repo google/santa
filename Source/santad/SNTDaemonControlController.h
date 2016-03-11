@@ -15,6 +15,7 @@
 #import "SNTXPCControlInterface.h"
 
 @class SNTDriverManager;
+@class SNTNotificationQueue;
 
 ///
 ///  SNTDaemonControlController handles all of the RPCs from santactl
@@ -22,7 +23,6 @@
 @interface SNTDaemonControlController : NSObject<SNTDaemonControlXPC>
 
 @property SNTDriverManager *driverManager;
-
-- (instancetype)initWithDriverManager:(SNTDriverManager *)driverManager;
+@property SNTNotificationQueue *notQueue;
 
 @end

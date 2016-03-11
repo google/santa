@@ -10,8 +10,6 @@
 				</array>
 				<key>MachServices</key>
 				<dict>
-					<key>SantaXPCNotifications</key>
-					<true/>
 					<key>SantaXPCControl</key>
 					<true/>
 				</dict>

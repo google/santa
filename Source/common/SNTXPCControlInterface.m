@@ -16,6 +16,7 @@
 
 #import "SNTRule.h"
 #import "SNTStoredEvent.h"
+#import "SNTXPCConnection.h"
 
 @implementation SNTXPCControlInterface
 
@@ -37,6 +38,13 @@
             ofReply:NO];
 
   return r;
+}
+
++ (SNTXPCConnection *)configuredConnection {
+  SNTXPCConnection *c = [[SNTXPCConnection alloc] initClientWithName:[self serviceId]
+                                                             options:NSXPCConnectionPrivileged];
+  c.remoteInterface = [self controlInterface];
+  return c;
 }
 
 @end

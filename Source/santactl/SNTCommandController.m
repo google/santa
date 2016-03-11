@@ -66,10 +66,7 @@ static NSMutableDictionary *registeredCommands;
 }
 
 + (SNTXPCConnection *)connectToDaemon {
-  SNTXPCConnection *daemonConn =
-      [[SNTXPCConnection alloc] initClientWithName:[SNTXPCControlInterface serviceId]
-                                           options:NSXPCConnectionPrivileged];
-  daemonConn.remoteInterface = [SNTXPCControlInterface controlInterface];
+  SNTXPCConnection *daemonConn = [SNTXPCControlInterface configuredConnection];
 
   daemonConn.rejectedHandler = ^{
     printf("The daemon rejected the connection\n");

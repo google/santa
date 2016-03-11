@@ -19,8 +19,8 @@
 @class SNTDriverManager;
 @class SNTEventLog;
 @class SNTEventTable;
+@class SNTNotificationQueue;
 @class SNTRuleTable;
-@class SNTXPCConnection;
 
 ///
 ///  SNTExecutionController is responsible for everything that happens when a request to execute
@@ -37,13 +37,13 @@
 @property SNTDriverManager *driverManager;
 @property SNTEventLog *eventLog;
 @property SNTEventTable *eventTable;
+@property SNTNotificationQueue *notifierQueue;
 @property SNTRuleTable *ruleTable;
-@property SNTXPCConnection *notifierConnection;
 
 - (instancetype)initWithDriverManager:(SNTDriverManager *)driverManager
                             ruleTable:(SNTRuleTable *)ruleTable
                            eventTable:(SNTEventTable *)eventTable
-                   notifierConnection:(SNTXPCConnection *)notifierConn
+                        notifierQueue:(SNTNotificationQueue *)notifierQueue
                              eventLog:(SNTEventLog *)eventLog;
 
 ///

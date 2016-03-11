@@ -19,6 +19,7 @@
 #import "SNTFileWatcher.h"
 #import "SNTNotificationManager.h"
 #import "SNTXPCConnection.h"
+#import "SNTXPCControlInterface.h"
 
 @interface SNTAppDelegate ()
 @property SNTAboutWindowController *aboutWindowController;
@@ -74,14 +75,18 @@
   dispatch_async(dispatch_get_main_queue(), ^{
     __weak __typeof(self) weakSelf = self;
 
-    self.listener = [[SNTXPCConnection alloc] initClientWithName:[SNTXPCNotifierInterface serviceId]
-                                                         options:NSXPCConnectionPrivileged];
+    NSXPCListener *listener = [NSXPCListener anonymousListener];
+    self.listener = [[SNTXPCConnection alloc] initServerWithListener:listener];
     self.listener.exportedInterface = [SNTXPCNotifierInterface notifierInterface];
     self.listener.exportedObject = self.notificationManager;
     self.listener.invalidationHandler = self.listener.rejectedHandler = ^{
       [weakSelf attemptReconnection];
     };
     [self.listener resume];
+
+    SNTXPCConnection *daemonConn = [SNTXPCControlInterface configuredConnection];
+    [daemonConn resume];
+    [[daemonConn remoteObjectProxy] setNotificationListener:listener.endpoint];
   });
 }
 

@@ -1,4 +1,4 @@
-/// Copyright 2015 Google Inc. All rights reserved.
+/// Copyright 2016 Google Inc. All rights reserved.
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -13,18 +13,12 @@
 ///    limitations under the License.
 
 @class SNTStoredEvent;
+@class SNTXPCConnection;
 
-/// Protocol implemented by SantaGUI and utilized by santad
-@protocol SNTNotifierXPC
-- (void)postBlockNotification:(SNTStoredEvent *)event withCustomMessage:(NSString *)message;
-@end
+@interface SNTNotificationQueue : NSObject
 
-@interface SNTXPCNotifierInterface : NSObject
+@property(nonatomic) SNTXPCConnection *notifierConnection;
 
-///
-///  @return an initialized NSXPCInterface for the SNTNotifierXPC protocol.
-///  Ensures any methods that accept custom classes as arguments are set-up before returning
-///
-+ (NSXPCInterface *)notifierInterface;
+- (void)addEvent:(SNTStoredEvent *)event customMessage:(NSString *)message;
 
 @end

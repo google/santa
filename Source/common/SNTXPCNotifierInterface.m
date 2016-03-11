@@ -16,13 +16,8 @@
 
 @implementation SNTXPCNotifierInterface
 
-+ (NSString *)serviceId {
-  return @"SantaXPCNotifications";
-}
-
 + (NSXPCInterface *)notifierInterface {
-  NSXPCInterface *r = [NSXPCInterface interfaceWithProtocol:@protocol(SNTNotifierXPC)];
-  return r;
+  return [NSXPCInterface interfaceWithProtocol:@protocol(SNTNotifierXPC)];
 }
 
 @end
