@@ -1,6 +1,12 @@
 Santa  [![Build Status](https://travis-ci.org/google/santa.png?branch=master)](https://travis-ci.org/google/santa)
 =====
 
+<p align="center">
+<a href="#santa--">
+<img src="./Source/SantaGUI/Resources/Images.xcassets/AppIcon.appiconset/santa-hat-icon-128.png" alt="Santa Icon" />
+</a>
+</p>
+
 Santa is a binary whitelisting/blacklisting system for OS X. It consists of
 a kernel extension that monitors for executions, a userland daemon that makes
 execution decisions based on the contents of a SQLite database, a GUI agent that
