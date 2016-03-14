@@ -168,7 +168,6 @@
 
   mach_vm_address_t address = 0;
   mach_vm_size_t size = 0;
-  unsigned int msgType = 1;
 
   TSTART("Allocates a notification port");
   if (!(receivePort = IODataQueueAllocateNotificationPort())) {
@@ -177,7 +176,7 @@
   TPASS();
 
   TSTART("Registers the notification port");
-  kr = IOConnectSetNotificationPort(self.connection, msgType, receivePort, 0);
+  kr = IOConnectSetNotificationPort(self.connection, QUEUETYPE_DECISION, receivePort, 0);
   if (kr != kIOReturnSuccess) {
     mach_port_destroy(mach_task_self(), receivePort);
     TFAILINFO("KR: %d", kr);
@@ -186,7 +185,7 @@
   TPASS();
 
   TSTART("Maps shared memory");
-  kr = IOConnectMapMemory(self.connection, kIODefaultMemoryType, mach_task_self(),
+  kr = IOConnectMapMemory(self.connection, QUEUETYPE_DECISION, mach_task_self(),
                           &address, &size, kIOMapAnywhere);
   if (kr != kIOReturnSuccess) {
     mach_port_destroy(mach_task_self(), receivePort);
