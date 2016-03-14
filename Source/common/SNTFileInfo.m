@@ -62,7 +62,9 @@ extern NSString *const NSURLQuarantinePropertiesKey WEAK_IMPORT_ATTRIBUTE;
 - (instancetype)initWithPath:(NSString *)path error:(NSError **)error {
   self = [super init];
   if (self) {
-    _path = [self resolvePath:path];
+    NSBundle *bndl;
+    _path = [self resolvePath:path bundle:&bndl];
+    _bundleRef = bndl;
     if (_path.length == 0) {
       if (error) {
         NSString *errStr = @"Unable to resolve empty path";
@@ -588,9 +590,10 @@ extern NSString *const NSURLQuarantinePropertiesKey WEAK_IMPORT_ATTRIBUTE;
 ///    + Follows symlinks
 ///    + Converts relative paths to absolute
 ///    + If path is a directory, checks to see if that directory is a bundle and if so
-///      returns the path to that bundles CFBundleExecutable.
+///      returns the path to that bundles CFBundleExecutable and stores a reference to the
+///      bundle in the bundle out-param.
 ///
-- (NSString *)resolvePath:(NSString *)path {
+- (NSString *)resolvePath:(NSString *)path bundle:(NSBundle **)bundle {
   // Convert to absolute, standardized path
   path = [path stringByResolvingSymlinksInPath];
   if (![path isAbsolutePath]) {
@@ -606,6 +609,7 @@ extern NSString *const NSURLQuarantinePropertiesKey WEAK_IMPORT_ATTRIBUTE;
     return nil;
   } else if (directory) {
     NSBundle *bndl = [NSBundle bundleWithPath:path];
+    if (bundle) *bundle = bndl;
     return [bndl executablePath];
   } else {
     return path;
