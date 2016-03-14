@@ -99,14 +99,18 @@ extern NSString *const NSURLQuarantinePropertiesKey WEAK_IMPORT_ATTRIBUTE;
 
 #pragma mark Hashing
 
-- (NSString *)SHA1 {
+- (void)hashSHA1:(NSString **)sha1 SHA256:(NSString **)sha256 {
   const int chunkSize = 4096;
 
-  CC_SHA1_CTX c;
-  CC_SHA1_Init(&c);
+  CC_SHA1_CTX c1;
+  CC_SHA256_CTX c256;
+
+  if (sha1) CC_SHA1_Init(&c1);
+  if (sha256) CC_SHA256_Init(&c256);
+
   for (uint64_t offset = 0; offset < self.fileSize; offset += chunkSize) {
     @autoreleasepool {
-      int readSize;
+      int readSize = 0;
       if (offset + chunkSize > self.fileSize) {
         readSize = (int)(self.fileSize - offset);
       } else {
@@ -115,56 +119,48 @@ extern NSString *const NSURLQuarantinePropertiesKey WEAK_IMPORT_ATTRIBUTE;
 
       NSData *chunk = [self safeSubdataWithRange:NSMakeRange(offset, readSize)];
       if (!chunk) {
-        CC_SHA1_Final(NULL, &c);
-        return nil;
+        if (sha1) CC_SHA1_Final(NULL, &c1);
+        if (sha256) CC_SHA256_Final(NULL, &c256);
+        return;
       }
 
-      CC_SHA1_Update(&c, chunk.bytes, readSize);
+      if (sha1) CC_SHA1_Update(&c1, chunk.bytes, readSize);
+      if (sha256) CC_SHA256_Update(&c256, chunk.bytes, readSize);
     }
   }
-  unsigned char sha1[CC_SHA1_DIGEST_LENGTH];
-  CC_SHA1_Final(sha1, &c);
 
-  NSMutableString *buf = [[NSMutableString alloc] initWithCapacity:CC_SHA1_DIGEST_LENGTH * 2];
-  for (int i = 0; i < CC_SHA1_DIGEST_LENGTH; ++i) {
-    [buf appendFormat:@"%02x", (unsigned char)sha1[i]];
+  if (sha1) {
+    unsigned char dgst[CC_SHA1_DIGEST_LENGTH];
+    CC_SHA1_Final(dgst, &c1);
+
+    NSMutableString *buf = [[NSMutableString alloc] initWithCapacity:CC_SHA1_DIGEST_LENGTH * 2];
+    for (int i = 0; i < CC_SHA1_DIGEST_LENGTH; ++i) {
+      [buf appendFormat:@"%02x", (unsigned char)dgst[i]];
+    }
+    *sha1 = [buf copy];
   }
+  if (sha256) {
+    unsigned char dgst[CC_SHA256_DIGEST_LENGTH];
+    CC_SHA256_Final(dgst, &c256);
 
-  return buf;
+    NSMutableString *buf = [[NSMutableString alloc] initWithCapacity:CC_SHA256_DIGEST_LENGTH * 2];
+    for (int i = 0; i < CC_SHA256_DIGEST_LENGTH; ++i) {
+      [buf appendFormat:@"%02x", (unsigned char)dgst[i]];
+    }
+    *sha256 = [buf copy];
+  }
+}
+
+- (NSString *)SHA1 {
+  NSString *sha1;
+  [self hashSHA1:&sha1 SHA256:NULL];
+  return sha1;
 }
 
 - (NSString *)SHA256 {
-  const int chunkSize = 4096;
-
-  CC_SHA256_CTX c;
-  CC_SHA256_Init(&c);
-  for (uint64_t offset = 0; offset < self.fileSize; offset += chunkSize) {
-    @autoreleasepool {
-      int readSize;
-      if (offset + chunkSize > self.fileSize) {
-        readSize = (int)(self.fileSize - offset);
-      } else {
-        readSize = chunkSize;
-      }
-
-      NSData *chunk = [self safeSubdataWithRange:NSMakeRange(offset, readSize)];
-      if (!chunk) {
-        CC_SHA256_Final(NULL, &c);
-        return nil;
-      }
-
-      CC_SHA256_Update(&c, chunk.bytes, readSize);
-    }
-  }
-  unsigned char sha256[CC_SHA256_DIGEST_LENGTH];
-  CC_SHA256_Final(sha256, &c);
-
-  NSMutableString *buf = [[NSMutableString alloc] initWithCapacity:CC_SHA256_DIGEST_LENGTH * 2];
-  for (int i = 0; i < CC_SHA256_DIGEST_LENGTH; ++i) {
-    [buf appendFormat:@"%02x", (unsigned char)sha256[i]];
-  }
-
-  return buf;
+  NSString *sha256;
+  [self hashSHA1:NULL SHA256:&sha256];
+  return sha256;
 }
 
 #pragma mark File Type Info

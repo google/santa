@@ -42,6 +42,14 @@
 - (NSString *)path;
 
 ///
+///  Hash this file with SHA-1 and SHA-256 simultaneously.
+///
+///  @param sha1 If not NULL, will be filled with the SHA-1 of the file.
+///  @param sha256 If not NULL, will be filled with the SHA-256 of the file.
+///
+- (void)hashSHA1:(NSString **)sha1 SHA256:(NSString **)sha256;
+
+///
 ///  @return SHA-1 hash of this binary.
 ///
 - (NSString *)SHA1;

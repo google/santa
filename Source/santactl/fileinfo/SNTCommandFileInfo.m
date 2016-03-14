@@ -62,9 +62,14 @@ REGISTER_COMMAND_NAME(@"fileinfo")
   NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];
   dateFormatter.dateFormat = @"yyyy/MM/dd HH:mm:ss Z";
 
+  if (isatty(STDOUT_FILENO)) printf("Hashing...");
+  NSString *sha1, *sha256;
+  [fileInfo hashSHA1:&sha1 SHA256:&sha256];
+  if (isatty(STDOUT_FILENO)) printf("\r");
+
   [self printKey:@"Path" value:fileInfo.path];
-  [self printKey:@"SHA-256" value:fileInfo.SHA256];
-  [self printKey:@"SHA-1" value:fileInfo.SHA1];
+  [self printKey:@"SHA-256" value:sha256];
+  [self printKey:@"SHA-1" value:sha1];
 
   if (fileInfo.bundlePath) {
     [self printKey:@"Bundle Name" value:fileInfo.bundleName];
