@@ -95,14 +95,19 @@
 - (BOOL)isScript;
 
 ///
-///  @return YES if this file has a bad/missing __PAGEZERO .
-///
-- (BOOL)isMissingPageZero;
-
-///
 ///  @return YES if this file is an XAR archive.
 ///
 - (BOOL)isXARArchive;
+
+///
+///  @return YES if this file is a disk image.
+///
+- (BOOL)isDMG;
+
+///
+///  @return YES if this file has a bad/missing __PAGEZERO .
+///
+- (BOOL)isMissingPageZero;
 
 ///
 ///  @return An NSBundle if this file is part of a bundle.

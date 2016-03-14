@@ -173,6 +173,7 @@ REGISTER_COMMAND_NAME(@"fileinfo")
   if ([fi isKext]) return @"Kernel Extension";
   if ([fi isFat]) return @"Fat Binary";
   if ([fi isMachO]) return @"Thin Binary";
+  if ([fi isDMG]) return @"Disk Image";
   return @"Unknown";
 }
 

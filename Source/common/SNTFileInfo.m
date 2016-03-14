@@ -205,6 +205,14 @@ extern NSString *const NSURLQuarantinePropertiesKey WEAK_IMPORT_ATTRIBUTE;
   return (strncmp("xar!", magic, 4) == 0);
 }
 
+- (BOOL)isDMG {
+  NSUInteger last512 = self.fileSize - 512;
+  const char *magic = (const char *)[[self safeSubdataWithRange:NSMakeRange(last512, 4)] bytes];
+  return (strncmp("koly", magic, 4) == 0);
+}
+
+#pragma mark Page Zero
+
 - (BOOL)isMissingPageZero {
   // This method only checks i386 arch because the kernel enforces this for other archs
   // See bsd/kern/mach_loader.c, search for enforce_hard_pagezero.
