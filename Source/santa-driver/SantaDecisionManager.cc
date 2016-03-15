@@ -217,9 +217,9 @@ void SantaDecisionManager::AddToCache(
     ClearCache();
   }
 
-  if (decision == ACTION_REQUEST_CHECKBW) {
+  if (decision == ACTION_REQUEST_BINARY) {
     SantaCachedDecision *pending = new SantaCachedDecision();
-    pending->setAction(ACTION_REQUEST_CHECKBW, 0);
+    pending->setAction(ACTION_REQUEST_BINARY, 0);
     lck_rw_lock_exclusive(cached_decisions_lock_);
     cached_decisions_->setObject(identifier, pending);
     lck_rw_unlock_exclusive(cached_decisions_lock_);
@@ -277,16 +277,16 @@ santa_action_t SantaDecisionManager::GetFromCache(const char *identifier) {
   }
   lck_rw_unlock_shared(cached_decisions_lock_);
 
-  if (CHECKBW_RESPONSE_VALID(result)) {
+  if (RESPONSE_VALID(result)) {
     uint64_t diff_time = GetCurrentUptime();
 
-    if (result == ACTION_RESPOND_CHECKBW_ALLOW) {
+    if (result == ACTION_RESPOND_ALLOW) {
       if ((kMaxAllowCacheTimeMilliseconds * 1000) > diff_time) {
         diff_time = 0;
       } else {
         diff_time -= (kMaxAllowCacheTimeMilliseconds * 1000);
       }
-    } else if (result == ACTION_RESPOND_CHECKBW_DENY) {
+    } else if (result == ACTION_RESPOND_DENY) {
       if ((kMaxDenyCacheTimeMilliseconds * 1000) > diff_time) {
         diff_time = 0;
       } else {
@@ -312,7 +312,7 @@ santa_action_t SantaDecisionManager::GetFromDaemon(
   // Wait for the daemon to respond or die.
   do {
     // Add pending request to cache.
-    AddToCache(vnode_id_str, ACTION_REQUEST_CHECKBW, 0);
+    AddToCache(vnode_id_str, ACTION_REQUEST_BINARY, 0);
 
     // Send request to daemon...
     if (!PostToDecisionQueue(message)) {
@@ -331,11 +331,11 @@ santa_action_t SantaDecisionManager::GetFromDaemon(
     do {
       IOSleep(kRequestLoopSleepMilliseconds);
       return_action = GetFromCache(vnode_id_str);
-    } while (return_action == ACTION_REQUEST_CHECKBW && ClientConnected());
-  } while (!CHECKBW_RESPONSE_VALID(return_action) && ClientConnected());
+    } while (return_action == ACTION_REQUEST_BINARY && ClientConnected());
+  } while (!RESPONSE_VALID(return_action) && ClientConnected());
 
   // If response is still not valid, the daemon exited
-  if (!CHECKBW_RESPONSE_VALID(return_action)) {
+  if (!RESPONSE_VALID(return_action)) {
     LOGE("Daemon process did not respond correctly. Allowing executions "
          "until it comes back. Executable path: %s", message->path);
     CacheCheck(vnode_id_str);
@@ -351,13 +351,13 @@ santa_action_t SantaDecisionManager::FetchDecision(
     const uint64_t vnode_id,
     const char *vnode_id_str) {
   santa_action_t return_action = ACTION_UNSET;
-  if (!ClientConnected()) return ACTION_RESPOND_CHECKBW_ALLOW;
+  if (!ClientConnected()) return ACTION_RESPOND_ALLOW;
 
   // Check to see if item is in cache
   return_action = GetFromCache(vnode_id_str);
 
   // If item was in cache return it.
-  if CHECKBW_RESPONSE_VALID(return_action) return return_action;
+  if (RESPONSE_VALID(return_action)) return return_action;
 
   // Get path
   char path[MAXPATHLEN];
@@ -368,7 +368,7 @@ santa_action_t SantaDecisionManager::FetchDecision(
 
   santa_message_t *message = NewMessage();
   strlcpy(message->path, path, sizeof(message->path));
-  message->action = ACTION_REQUEST_CHECKBW;
+  message->action = ACTION_REQUEST_BINARY;
   message->vnode_id = vnode_id;
   proc_name(message->ppid, message->pname, sizeof(message->pname));
   santa_action_t ret = GetFromDaemon(message, vnode_id_str);
@@ -462,11 +462,11 @@ int SantaDecisionManager::VnodeCallback(const kauth_cred_t cred,
   // closed.
   if (vnode_hasdirtyblks(vp)) {
     CacheCheck(vnode_str);
-    returnedAction = ACTION_RESPOND_CHECKBW_DENY;
+    returnedAction = ACTION_RESPOND_DENY;
   }
 
   switch (returnedAction) {
-    case ACTION_RESPOND_CHECKBW_ALLOW: {
+    case ACTION_RESPOND_ALLOW: {
       proc_t proc = vfs_context_proc(ctx);
       if (proc) {
         SantaPIDAndPPID *pidWrapper = new SantaPIDAndPPID;
@@ -479,7 +479,7 @@ int SantaDecisionManager::VnodeCallback(const kauth_cred_t cred,
       }
       return KAUTH_RESULT_ALLOW;
     }
-    case ACTION_RESPOND_CHECKBW_DENY:
+    case ACTION_RESPOND_DENY:
       *errno = EPERM;
       return KAUTH_RESULT_DENY;
     default:

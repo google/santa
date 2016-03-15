@@ -99,7 +99,7 @@
 
   [self.sut validateBinaryWithMessage:[self getMessage]];
 
-  OCMVerify([self.mockDriverManager postToKernelAction:ACTION_RESPOND_CHECKBW_ALLOW
+  OCMVerify([self.mockDriverManager postToKernelAction:ACTION_RESPOND_ALLOW
                                             forVnodeID:1234]);
 }
 
@@ -113,7 +113,7 @@
 
   [self.sut validateBinaryWithMessage:[self getMessage]];
 
-  OCMVerify([self.mockDriverManager postToKernelAction:ACTION_RESPOND_CHECKBW_DENY
+  OCMVerify([self.mockDriverManager postToKernelAction:ACTION_RESPOND_DENY
                                             forVnodeID:1234]);
 }
 
@@ -131,7 +131,7 @@
 
   [self.sut validateBinaryWithMessage:[self getMessage]];
 
-  OCMVerify([self.mockDriverManager postToKernelAction:ACTION_RESPOND_CHECKBW_ALLOW
+  OCMVerify([self.mockDriverManager postToKernelAction:ACTION_RESPOND_ALLOW
                                             forVnodeID:1234]);
 }
 
@@ -149,7 +149,7 @@
 
   [self.sut validateBinaryWithMessage:[self getMessage]];
 
-  OCMVerify([self.mockDriverManager postToKernelAction:ACTION_RESPOND_CHECKBW_DENY
+  OCMVerify([self.mockDriverManager postToKernelAction:ACTION_RESPOND_DENY
                                             forVnodeID:1234]);
 }
 
@@ -159,12 +159,12 @@
 
   OCMExpect([self.mockConfigurator clientMode]).andReturn(CLIENTMODE_MONITOR);
   [self.sut validateBinaryWithMessage:[self getMessage]];
-  OCMVerify([self.mockDriverManager postToKernelAction:ACTION_RESPOND_CHECKBW_ALLOW
+  OCMVerify([self.mockDriverManager postToKernelAction:ACTION_RESPOND_ALLOW
                                             forVnodeID:1234]);
 
   OCMExpect([self.mockConfigurator clientMode]).andReturn(CLIENTMODE_LOCKDOWN);
   [self.sut validateBinaryWithMessage:[self getMessage]];
-  OCMVerify([self.mockDriverManager postToKernelAction:ACTION_RESPOND_CHECKBW_DENY
+  OCMVerify([self.mockDriverManager postToKernelAction:ACTION_RESPOND_DENY
                                             forVnodeID:1234]);
 }
 
@@ -173,13 +173,13 @@
 
   OCMStub([self.mockConfigurator clientMode]).andReturn(CLIENTMODE_LOCKDOWN);
   [self.sut validateBinaryWithMessage:[self getMessage]];
-  OCMVerify([self.mockDriverManager postToKernelAction:ACTION_RESPOND_CHECKBW_ALLOW
+  OCMVerify([self.mockDriverManager postToKernelAction:ACTION_RESPOND_ALLOW
                                             forVnodeID:1234]);
 }
 
 - (void)testMissingShasum {
   [self.sut validateBinaryWithMessage:[self getMessage]];
-  OCMVerify([self.mockDriverManager postToKernelAction:ACTION_RESPOND_CHECKBW_ALLOW
+  OCMVerify([self.mockDriverManager postToKernelAction:ACTION_RESPOND_ALLOW
                                             forVnodeID:1234]);
 }
 
@@ -188,7 +188,7 @@
   OCMStub([self.mockFileInfo isMissingPageZero]).andReturn(YES);
 
   [self.sut validateBinaryWithMessage:[self getMessage]];
-  OCMVerify([self.mockDriverManager postToKernelAction:ACTION_RESPOND_CHECKBW_DENY
+  OCMVerify([self.mockDriverManager postToKernelAction:ACTION_RESPOND_DENY
                                             forVnodeID:1234]);
 }
 

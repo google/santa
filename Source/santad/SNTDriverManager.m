@@ -147,14 +147,14 @@ static const int MAX_DELAY = 15;
 
 - (kern_return_t)postToKernelAction:(santa_action_t)action forVnodeID:(uint64_t)vnodeId {
   switch (action) {
-    case ACTION_RESPOND_CHECKBW_ALLOW:
+    case ACTION_RESPOND_ALLOW:
       return IOConnectCallScalarMethod(self.connection,
                                        kSantaUserClientAllowBinary,
                                        &vnodeId,
                                        1,
                                        0,
                                        0);
-    case ACTION_RESPOND_CHECKBW_DENY:
+    case ACTION_RESPOND_DENY:
       return IOConnectCallScalarMethod(self.connection,
                                        kSantaUserClientDenyBinary,
                                        &vnodeId,

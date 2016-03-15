@@ -122,7 +122,7 @@
           LOGI(@"Driver requested a shutdown");
           exit(0);
         }
-        case ACTION_REQUEST_CHECKBW: {
+        case ACTION_REQUEST_BINARY: {
           dispatch_async(exec_queue, ^{
             [self.execController validateBinaryWithMessage:message];
           });

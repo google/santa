@@ -115,7 +115,7 @@
   SNTFileInfo *binInfo = [[SNTFileInfo alloc] initWithPath:@(message.path) error:&fileInfoError];
   if (!binInfo) {
     LOGW(@"Failed to read file %@: %@", binInfo.path, fileInfoError.localizedDescription);
-    [self.driverManager postToKernelAction:ACTION_RESPOND_CHECKBW_ALLOW
+    [self.driverManager postToKernelAction:ACTION_RESPOND_ALLOW
                                 forVnodeID:message.vnode_id];
     return;
   }
@@ -134,7 +134,7 @@
 
   // Save decision details for logging the execution later.
   santa_action_t action = [self actionForEventState:cd.decision];
-  if (action == ACTION_RESPOND_CHECKBW_ALLOW) [self.eventLog saveDecisionDetails:cd];
+  if (action == ACTION_RESPOND_ALLOW) [self.eventLog saveDecisionDetails:cd];
 
   // Send the decision to the kernel.
   [self.driverManager postToKernelAction:action forVnodeID:cd.vnodeId];
@@ -183,7 +183,7 @@
     [self.eventTable addStoredEvent:se];
 
     // If binary was blocked, do the needful
-    if (action != ACTION_RESPOND_CHECKBW_ALLOW) {
+    if (action != ACTION_RESPOND_ALLOW) {
       [self.eventLog logDeniedExecution:cd withMessage:message];
 
       // So the server has something to show the user straight away, initiate an event
@@ -261,15 +261,15 @@
     case EVENTSTATE_ALLOW_CERTIFICATE:
     case EVENTSTATE_ALLOW_SCOPE:
     case EVENTSTATE_ALLOW_UNKNOWN:
-      return ACTION_RESPOND_CHECKBW_ALLOW;
+      return ACTION_RESPOND_ALLOW;
     case EVENTSTATE_BLOCK_BINARY:
     case EVENTSTATE_BLOCK_CERTIFICATE:
     case EVENTSTATE_BLOCK_SCOPE:
     case EVENTSTATE_BLOCK_UNKNOWN:
-      return ACTION_RESPOND_CHECKBW_DENY;
+      return ACTION_RESPOND_DENY;
     default:
       LOGW(@"Invalid event state %d", state);
-      return ACTION_RESPOND_CHECKBW_DENY;
+      return ACTION_RESPOND_DENY;
   }
 }
 

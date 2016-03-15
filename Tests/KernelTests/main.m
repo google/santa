@@ -89,9 +89,9 @@
 /// Call in-kernel function: |kSantaUserClientAllowBinary| or |kSantaUserClientDenyBinary|
 /// passing the |vnodeID|.
 - (void)postToKernelAction:(santa_action_t)action forVnodeID:(uint64_t)vnodeid {
-  if (action == ACTION_RESPOND_CHECKBW_ALLOW) {
+  if (action == ACTION_RESPOND_ALLOW) {
     IOConnectCallScalarMethod(self.connection, kSantaUserClientAllowBinary, &vnodeid, 1, 0, 0);
-  } else if (action == ACTION_RESPOND_CHECKBW_DENY) {
+  } else if (action == ACTION_RESPOND_DENY) {
     IOConnectCallScalarMethod(self.connection, kSantaUserClientDenyBinary, &vnodeid, 1, 0, 0);
   }
 }
@@ -210,23 +210,23 @@
       dataSize = sizeof(vdata);
       kr = IODataQueueDequeue(queueMemory, &vdata, &dataSize);
       if (kr == kIOReturnSuccess) {
-        if (vdata.action != ACTION_REQUEST_CHECKBW) continue;
+        if (vdata.action != ACTION_REQUEST_BINARY) continue;
 
         if ([[self sha256ForPath:@(vdata.path)] isEqual:edSHA]) {
-          [self postToKernelAction:ACTION_RESPOND_CHECKBW_DENY forVnodeID:vdata.vnode_id];
+          [self postToKernelAction:ACTION_RESPOND_DENY forVnodeID:vdata.vnode_id];
         } else if (strncmp("/bin/mv", vdata.path, strlen("/bin/mv")) == 0) {
-          [self postToKernelAction:ACTION_RESPOND_CHECKBW_DENY forVnodeID:vdata.vnode_id];
+          [self postToKernelAction:ACTION_RESPOND_DENY forVnodeID:vdata.vnode_id];
         } else if (strncmp("/bin/ls", vdata.path, strlen("/bin/ls")) == 0) {
-          [self postToKernelAction:ACTION_RESPOND_CHECKBW_ALLOW forVnodeID:vdata.vnode_id];
+          [self postToKernelAction:ACTION_RESPOND_ALLOW forVnodeID:vdata.vnode_id];
           self.timesSeenLs++;
         } else if (strncmp("/bin/cp", vdata.path, strlen("/bin/cp")) == 0) {
-          [self postToKernelAction:ACTION_RESPOND_CHECKBW_ALLOW forVnodeID:vdata.vnode_id];
+          [self postToKernelAction:ACTION_RESPOND_ALLOW forVnodeID:vdata.vnode_id];
           self.timesSeenCp++;
         } else if (strncmp("/bin/cat", vdata.path, strlen("/bin/cat")) == 0) {
-          [self postToKernelAction:ACTION_RESPOND_CHECKBW_ALLOW forVnodeID:vdata.vnode_id];
+          [self postToKernelAction:ACTION_RESPOND_ALLOW forVnodeID:vdata.vnode_id];
           self.timesSeenCat++;
         } else if (strncmp("/bin/ln", vdata.path, strlen("/bin/ln")) == 0) {
-          [self postToKernelAction:ACTION_RESPOND_CHECKBW_ALLOW forVnodeID:vdata.vnode_id];
+          [self postToKernelAction:ACTION_RESPOND_ALLOW forVnodeID:vdata.vnode_id];
 
           TSTART("Sends valid pid/ppid");
           if (vdata.pid < 1 || vdata.ppid < 1) {
@@ -255,7 +255,7 @@
           }
 
           // Allow everything not related to our testing.
-          [self postToKernelAction:ACTION_RESPOND_CHECKBW_ALLOW forVnodeID:vdata.vnode_id];
+          [self postToKernelAction:ACTION_RESPOND_ALLOW forVnodeID:vdata.vnode_id];
         }
       } else {
         TFAILINFO("Error receiving data: %d", kr);
