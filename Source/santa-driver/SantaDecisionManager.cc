@@ -418,9 +418,10 @@ uint64_t SantaDecisionManager::GetVnodeIDForVnode(
     const vfs_context_t ctx, const vnode_t vp) const {
   struct vnode_attr vap;
   VATTR_INIT(&vap);
+  VATTR_WANTED(&vap, va_fsid);
   VATTR_WANTED(&vap, va_fileid);
   vnode_getattr(vp, &vap, ctx);
-  return vap.va_fileid;
+  return (((uint64_t)vap.va_fsid << 32) | vap.va_fileid);
 }
 
 uint64_t SantaDecisionManager::GetCurrentUptime() {
