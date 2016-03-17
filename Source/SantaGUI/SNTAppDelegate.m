@@ -71,28 +71,32 @@
 #pragma mark Connection handling
 
 - (void)createConnection {
-  dispatch_async(dispatch_get_main_queue(), ^{
-    __weak __typeof(self) weakSelf = self;
+  __weak __typeof(self) weakSelf = self;
 
-    NSXPCListener *listener = [NSXPCListener anonymousListener];
-    self.listener = [[SNTXPCConnection alloc] initServerWithListener:listener];
-    self.listener.exportedInterface = [SNTXPCNotifierInterface notifierInterface];
-    self.listener.exportedObject = self.notificationManager;
-    self.listener.invalidationHandler = ^{
-      [weakSelf attemptReconnection];
-    };
-    [self.listener resume];
+  NSXPCListener *listener = [NSXPCListener anonymousListener];
+  self.listener = [[SNTXPCConnection alloc] initServerWithListener:listener];
+  self.listener.exportedInterface = [SNTXPCNotifierInterface notifierInterface];
+  self.listener.exportedObject = self.notificationManager;
+  self.listener.invalidationHandler = ^{
+    [weakSelf attemptReconnection];
+  };
+  [self.listener resume];
 
-    SNTXPCConnection *daemonConn = [SNTXPCControlInterface configuredConnection];
-    [daemonConn resume];
-    [[daemonConn remoteObjectProxy] setNotificationListener:listener.endpoint];
-  });
+  dispatch_semaphore_t sema = dispatch_semaphore_create(0);
+
+  SNTXPCConnection *daemonConn = [SNTXPCControlInterface configuredConnection];
+  [daemonConn resume];
+  [[daemonConn remoteObjectProxy] setNotificationListener:listener.endpoint reply:^{
+    dispatch_semaphore_signal(sema);
+  }];
+
+  if (dispatch_semaphore_wait(sema, dispatch_time(DISPATCH_TIME_NOW, 10 * NSEC_PER_SEC))) {
+    [self attemptReconnection];
+  }
 }
 
 - (void)attemptReconnection {
-  // TODO(rah): Make this smarter.
-  sleep(5);
-  [self createConnection];
+  [self performSelectorInBackground:@selector(createConnection) withObject:nil];
 }
 
 #pragma mark Menu Management

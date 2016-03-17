@@ -60,7 +60,7 @@
 ///
 ///  GUI Ops
 ///
-- (void)setNotificationListener:(NSXPCListenerEndpoint *)listener;
+- (void)setNotificationListener:(NSXPCListenerEndpoint *)listener reply:(void (^)())reply;
 
 @end
 

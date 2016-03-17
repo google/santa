@@ -181,11 +181,12 @@ double watchdogRAMPeak = 0;
 
 #pragma mark GUI Ops
 
-- (void)setNotificationListener:(NSXPCListenerEndpoint *)listener {
+- (void)setNotificationListener:(NSXPCListenerEndpoint *)listener reply:(void (^)())reply {
   SNTXPCConnection *c = [[SNTXPCConnection alloc] initClientWithListener:listener];
   c.remoteInterface = [SNTXPCNotifierInterface notifierInterface];
   [c resume];
   self.notQueue.notifierConnection = c;
+  reply();
 }
 
 @end
