@@ -141,6 +141,7 @@
 		0DD0D48F194F78F8005F27EB /* SNTFileInfoTest.m in Sources */ = {isa = PBXBuildFile; fileRef = 0DD0D48E194F78F8005F27EB /* SNTFileInfoTest.m */; };
 		0DD0D491194F9947005F27EB /* SNTExecutionControllerTest.m in Sources */ = {isa = PBXBuildFile; fileRef = 0DD0D490194F9947005F27EB /* SNTExecutionControllerTest.m */; };
 		0DD0D492194F9BEF005F27EB /* SNTLogging.m in Sources */ = {isa = PBXBuildFile; fileRef = 0DA73C9E1934F8100056D7C4 /* SNTLogging.m */; };
+		0DE2CE561CA05561002B649A /* SNTAccessibleTextField.m in Sources */ = {isa = PBXBuildFile; fileRef = 0DE2CE551CA05561002B649A /* SNTAccessibleTextField.m */; };
 		0DE4C8A118FEF28200466D04 /* Security.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0D8C200B180F359A00CE2BF8 /* Security.framework */; };
 		0DE4C8A618FF3B1700466D04 /* SNTCommandFlushCache.m in Sources */ = {isa = PBXBuildFile; fileRef = 0DE4C8A518FF3B1700466D04 /* SNTCommandFlushCache.m */; };
 		0DE50F681912716A007B2B0C /* SNTRule.m in Sources */ = {isa = PBXBuildFile; fileRef = 0DE50F671912716A007B2B0C /* SNTRule.m */; };
@@ -360,6 +361,8 @@
 		0DCD6061191188B1006B445C /* SNTAuthenticatingURLSession.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SNTAuthenticatingURLSession.m; sourceTree = "<group>"; };
 		0DD0D48E194F78F8005F27EB /* SNTFileInfoTest.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SNTFileInfoTest.m; sourceTree = "<group>"; };
 		0DD0D490194F9947005F27EB /* SNTExecutionControllerTest.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SNTExecutionControllerTest.m; sourceTree = "<group>"; };
+		0DE2CE541CA05561002B649A /* SNTAccessibleTextField.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SNTAccessibleTextField.h; sourceTree = "<group>"; };
+		0DE2CE551CA05561002B649A /* SNTAccessibleTextField.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SNTAccessibleTextField.m; sourceTree = "<group>"; };
 		0DE4C8A518FF3B1700466D04 /* SNTCommandFlushCache.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SNTCommandFlushCache.m; sourceTree = "<group>"; };
 		0DE50F6619127169007B2B0C /* SNTRule.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SNTRule.h; sourceTree = "<group>"; };
 		0DE50F671912716A007B2B0C /* SNTRule.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SNTRule.m; sourceTree = "<group>"; };
@@ -544,6 +547,8 @@
 				0D385DC3180DE4A900418BC6 /* main.m */,
 				0D1B476D19A53419008CADD3 /* SNTAboutWindowController.h */,
 				0D1B476E19A53419008CADD3 /* SNTAboutWindowController.m */,
+				0DE2CE541CA05561002B649A /* SNTAccessibleTextField.h */,
+				0DE2CE551CA05561002B649A /* SNTAccessibleTextField.m */,
 				0D385DEA180DE51600418BC6 /* SNTAppDelegate.h */,
 				0D385DEB180DE51600418BC6 /* SNTAppDelegate.m */,
 				0D668E7F18D1121700E29A8B /* SNTMessageWindow.h */,
@@ -1346,6 +1351,7 @@
 				0DA73CA11934F8100056D7C4 /* SNTLogging.m in Sources */,
 				0DEFB7C51ACDD80100B92AAE /* SNTFileWatcher.m in Sources */,
 				0D20710E1A7C4A86008B0A9A /* SNTStoredEvent.m in Sources */,
+				0DE2CE561CA05561002B649A /* SNTAccessibleTextField.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
