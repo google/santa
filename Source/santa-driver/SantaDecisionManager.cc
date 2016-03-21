@@ -527,8 +527,10 @@ void SantaDecisionManager::FileOpCallback(
     }
   }
 
-  // Filter out modifications to locations that are definitely not useful.
-  if (ClientConnected() && !strprefix(path, "/.") && !strprefix(path, "/dev")) {
+  // Filter out modifications to locations that are definitely
+  // not useful or made by santad.
+  if (proc_selfpid() != client_pid_ &&
+      !strprefix(path, "/.") && !strprefix(path, "/dev")) {
     santa_message_t *message = NewMessage();
     strlcpy(message->path, path, sizeof(message->path));
     if (new_path) strlcpy(message->newpath, new_path, sizeof(message->newpath));
