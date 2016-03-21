@@ -123,7 +123,7 @@
                          @"body {"
                          @"  font-family: 'Lucida Grande', 'Helvetica', sans-serif;"
                          @"  font-size: 13px;"
-                         @"  color: #AAA;"
+                         @"  color: #666;"
                          @"  text-align: center;"
                          @"}"
                          @"</style></head><body>";
