@@ -121,41 +121,41 @@ class SantaDecisionManager : public OSObject {
   ///  The maximum number of milliseconds a cached deny message should be
   ///  considered valid.
   ///
-  const uint64_t kMaxDenyCacheTimeMilliseconds = 500;
+  static const uint64_t kMaxDenyCacheTimeMilliseconds = 500;
 
   ///
   ///  The maximum number of milliseconds a cached allow message should be
   ///  considered valid.
   ///
-  const uint64_t kMaxAllowCacheTimeMilliseconds = 1000 * 60 * 60 * 24;
+  static const uint64_t kMaxAllowCacheTimeMilliseconds = 1000 * 60 * 60 * 24;
 
   ///
   ///  While waiting for a response from the daemon, this is the number of
   ///  milliseconds to sleep for before checking the cache for a response.
   ///
-  const int kRequestLoopSleepMilliseconds = 10;
+  static const uint32_t kRequestLoopSleepMilliseconds = 10;
 
   ///
   ///  Maximum number of entries in the in-kernel cache.
   ///
-  const int kMaxCacheSize = 10000;
+  static const uint32_t kMaxCacheSize = 10000;
 
   ///
   ///  Maximum number of PostToDecisionQueue failures to allow.
   ///
-  const int kMaxDecisionQueueFailures = 10;
+  static const uint32_t kMaxDecisionQueueFailures = 10;
 
   ///
   ///  The maximum number of messages can be kept in
   ///  the decision data queue at any time.
   ///
-  const int kMaxDecisionQueueEvents = 512;
+  static const uint32_t kMaxDecisionQueueEvents = 512;
 
   ///
   ///  The maximum number of messages can be kept
   ///  in the logging data queue at any time.
   ///
-  const int kMaxLogQueueEvents = 1024;
+  static const uint32_t kMaxLogQueueEvents = 1024;
 
   ///  Fetches a response from the cache, first checking to see if the
   ///  entry has expired.
@@ -210,17 +210,37 @@ class SantaDecisionManager : public OSObject {
   ///  @param vp The Vnode to get the ID for
   ///  @return uint64_t The Vnode ID as a 64-bit unsigned int.
   ///
-  uint64_t GetVnodeIDForVnode(const vfs_context_t ctx, const vnode_t vp) const;
+  static inline uint64_t GetVnodeIDForVnode(const vfs_context_t ctx,
+                                            const vnode_t vp) {
+    struct vnode_attr vap;
+    VATTR_INIT(&vap);
+    VATTR_WANTED(&vap, va_fsid);
+    VATTR_WANTED(&vap, va_fileid);
+    vnode_getattr(vp, &vap, ctx);
+    return (((uint64_t)vap.va_fsid << 32) | vap.va_fileid);
+  }
 
   ///
   ///  Creates a new santa_message_t with some fields pre-filled.
   ///
-  santa_message_t *NewMessage() const;
+  static inline santa_message_t *NewMessage() {
+    auto message = new santa_message_t;
+    message->uid = kauth_getuid();
+    message->gid = kauth_getgid();
+    message->pid = proc_selfpid();
+    message->ppid = proc_selfppid();
+    return message;
+  }
 
   ///
   ///  Returns the current system uptime in microseconds
   ///
-  static uint64_t GetCurrentUptime();
+  static inline uint64_t GetCurrentUptime() {
+    clock_sec_t sec;
+    clock_usec_t usec;
+    clock_get_system_microtime(&sec, &usec);
+    return (uint64_t)((sec * 1000000) + usec);
+  }
 
  private:
   lck_grp_t *sdm_lock_grp_;
@@ -237,10 +257,10 @@ class SantaDecisionManager : public OSObject {
 
   IOSharedDataQueue *decision_dataqueue_;
   IOSharedDataQueue *log_dataqueue_;
-  SInt32 failed_decision_queue_requests_;
-  SInt32 failed_log_queue_requests_;
+  int32_t failed_decision_queue_requests_;
+  int32_t failed_log_queue_requests_;
 
-  SInt32 listener_invocations_;
+  int32_t listener_invocations_;
 
   pid_t client_pid_;
 
