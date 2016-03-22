@@ -82,10 +82,6 @@
 		0D63DD5E1906FCB400D346C4 /* SNTDatabaseController.m in Sources */ = {isa = PBXBuildFile; fileRef = 0D63DD5B1906FCB400D346C4 /* SNTDatabaseController.m */; };
 		0D668E8118D1121700E29A8B /* SNTMessageWindow.m in Sources */ = {isa = PBXBuildFile; fileRef = 0D668E8018D1121700E29A8B /* SNTMessageWindow.m */; };
 		0D6F12D819EC8822006B218E /* SecurityInterface.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0DCD5F771909C659006B445C /* SecurityInterface.framework */; };
-		0D6F12DA19EDE51E006B218E /* tubitak.crt in Resources */ = {isa = PBXBuildFile; fileRef = 0D6F12D919EDE411006B218E /* tubitak.crt */; };
-		0D6FDC8318C68D7E0044685C /* GIAG2.crt in Resources */ = {isa = PBXBuildFile; fileRef = 0D6FDC8218C68D7E0044685C /* GIAG2.crt */; };
-		0D6FDC8518C68E500044685C /* GIAG2.pem in Resources */ = {isa = PBXBuildFile; fileRef = 0D6FDC8418C68E500044685C /* GIAG2.pem */; };
-		0D6FDC8718C6913D0044685C /* apple.pem in Resources */ = {isa = PBXBuildFile; fileRef = 0D6FDC8618C6913D0044685C /* apple.pem */; };
 		0D6FDC9618C93A020044685C /* SNTXPCConnection.m in Sources */ = {isa = PBXBuildFile; fileRef = 0D6FDC9518C93A020044685C /* SNTXPCConnection.m */; };
 		0D6FDC9718C93A020044685C /* SNTXPCConnection.m in Sources */ = {isa = PBXBuildFile; fileRef = 0D6FDC9518C93A020044685C /* SNTXPCConnection.m */; };
 		0D7A7AF3174FCF4C00B77646 /* SantaCachedDecision.cc in Sources */ = {isa = PBXBuildFile; fileRef = 0D7A7AF1174FCF4C00B77646 /* SantaCachedDecision.cc */; };
@@ -306,10 +302,6 @@
 		0D63DD5B1906FCB400D346C4 /* SNTDatabaseController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SNTDatabaseController.m; sourceTree = "<group>"; };
 		0D668E7F18D1121700E29A8B /* SNTMessageWindow.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SNTMessageWindow.h; sourceTree = "<group>"; };
 		0D668E8018D1121700E29A8B /* SNTMessageWindow.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SNTMessageWindow.m; sourceTree = "<group>"; };
-		0D6F12D919EDE411006B218E /* tubitak.crt */ = {isa = PBXFileReference; lastKnownFileType = file; path = tubitak.crt; sourceTree = "<group>"; };
-		0D6FDC8218C68D7E0044685C /* GIAG2.crt */ = {isa = PBXFileReference; lastKnownFileType = file; path = GIAG2.crt; sourceTree = "<group>"; };
-		0D6FDC8418C68E500044685C /* GIAG2.pem */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = GIAG2.pem; sourceTree = "<group>"; };
-		0D6FDC8618C6913D0044685C /* apple.pem */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = apple.pem; sourceTree = "<group>"; };
 		0D6FDC9418C93A020044685C /* SNTXPCConnection.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SNTXPCConnection.h; sourceTree = "<group>"; };
 		0D6FDC9518C93A020044685C /* SNTXPCConnection.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SNTXPCConnection.m; sourceTree = "<group>"; };
 		0D7A7AF1174FCF4C00B77646 /* SantaCachedDecision.cc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = SantaCachedDecision.cc; sourceTree = "<group>"; };
@@ -481,12 +473,8 @@
 				0D536ED51B8E7A2E0039A26D /* bad_pagezero */,
 				0D536ED61B8E7A2E0039A26D /* missing_pagezero */,
 				0D2CD4601A81C7B100C9C910 /* dn.plist */,
-				0D6FDC8618C6913D0044685C /* apple.pem */,
-				0D6FDC8218C68D7E0044685C /* GIAG2.crt */,
-				0D6FDC8418C68E500044685C /* GIAG2.pem */,
 				0D260DB118B68E12002A0B55 /* Tests-Info.plist */,
 				0D260DB718B68E12002A0B55 /* Tests-Prefix.pch */,
-				0D6F12D919EDE411006B218E /* tubitak.crt */,
 			);
 			path = Resources;
 			sourceTree = "<group>";
@@ -984,12 +972,8 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				0D6FDC8518C68E500044685C /* GIAG2.pem in Resources */,
-				0D6FDC8318C68D7E0044685C /* GIAG2.crt in Resources */,
-				0D6F12DA19EDE51E006B218E /* tubitak.crt in Resources */,
 				0D536ED71B8E7A2E0039A26D /* bad_pagezero in Resources */,
 				0D2CD4611A81C7B100C9C910 /* dn.plist in Resources */,
-				0D6FDC8718C6913D0044685C /* apple.pem in Resources */,
 				0D536ED81B8E7A2E0039A26D /* missing_pagezero in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
