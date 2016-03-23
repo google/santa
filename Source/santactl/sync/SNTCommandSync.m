@@ -135,8 +135,15 @@ REGISTER_COMMAND_NAME(@"sync")
     LOGW(@"Missing Machine Owner.");  
   }
 
-  if (arguments.count == 2 && [[arguments firstObject] isEqual:@"singleevent"]) {
-    [s eventUploadSingleEvent:arguments[1]];
+  if ([arguments containsObject:@"singleevent"]) {
+    NSUInteger idx = [arguments indexOfObject:@"singleevent"];
+    idx++;
+    NSString *obj = arguments[idx];
+    if (obj.length != 64) {
+      LOGI(@"singleevent passed without SHA-256 as next argument");
+      exit(1);
+    }
+    [s eventUploadSingleEvent:obj];
   } else {
     [s preflight];
   }
