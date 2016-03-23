@@ -22,7 +22,7 @@
 #ifdef KERNEL
 
 #ifdef DEBUG
-#define LOGD(...) IOLog("D santa-driver: " __VA_ARGS__); IOLog("\n");
+#define LOGD(...) IOLog("D santa-driver: " __VA_ARGS__); IOLog("\n")
 #else  // DEBUG
 #define LOGD(...)
 #endif  // DEBUG
