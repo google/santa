@@ -148,7 +148,7 @@
     NSArray *requiredHashesWhitelist = [requiredHashes filteredArrayUsingPredicate:p];
     if ((cleanSlate && requiredHashesWhitelist.count != 2) ||
         (requiredHashes.count != requiredHashesWhitelist.count)) {
-      LOGE(@"Received request to remove whitelist for launchd/santad ceritifcates.");
+      LOGE(@"Received request to remove whitelist for launchd/santad certificates.");
       *rollback = failed = YES;
       return;
     }
