@@ -51,8 +51,6 @@
 
     if (!_driverManager) {
       LOGE(@"Failed to connect to driver, exiting.");
-
-      // TODO(rah): Consider trying to load the extension from within santad.
       return nil;
     }
 

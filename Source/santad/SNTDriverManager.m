@@ -14,10 +14,10 @@
 
 #import "SNTDriverManager.h"
 
-#include <IOKit/IODataQueueClient.h>
-#include <mach/mach.h>
+#import <IOKit/IODataQueueClient.h>
+#import <IOKit/Kext/KextManager.h>
 
-#include "SNTLogging.h"
+#import "SNTLogging.h"
 
 @interface SNTDriverManager ()
 @property io_connect_t connection;
@@ -40,6 +40,9 @@ static const int MAX_DELAY = 15;
       LOGD(@"Failed to create matching dictionary");
       return nil;
     }
+
+    // Attempt to load driver. It may already be running, so ignore any return value.
+    KextManagerLoadKextWithIdentifier(CFSTR(USERCLIENT_ID), NULL);
 
     // Locate driver. Wait for it if necessary.
     int delay = 1;
