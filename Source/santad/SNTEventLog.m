@@ -86,10 +86,8 @@
   if (newpath) {
     outStr = [outStr stringByAppendingFormat:@"|newpath=%@", [self sanitizeString:newpath]];
   }
-  char ppath[PATH_MAX];
-  if (proc_pidpath(message.pid, ppath, PATH_MAX) < 1) {
-    strncpy(ppath, "(null)", 6);
-  }
+  char ppath[PATH_MAX] = "(null)";
+  proc_pidpath(message.pid, ppath, PATH_MAX);
 
   NSString *user, *group;
   struct passwd *pw = getpwuid(message.uid);
