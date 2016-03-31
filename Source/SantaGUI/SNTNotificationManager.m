@@ -85,11 +85,6 @@
   // If a notification isn't currently being displayed, display the incoming one.
   if (!self.currentWindowController) {
     self.currentWindowController = pendingMsg;
-
-    [NSApp activateIgnoringOtherApps:YES];
-
-    // It's quite likely that we're currently on a background thread, and GUI code should always be
-    // on main thread. Open the window on the main thread so any code it runs is also.
     [pendingMsg showWindow:nil];
   }
 }
