@@ -68,7 +68,7 @@ hosts in whatever other ways you see fit.
 Get Help
 ========
 
-If you have questions or need help getting started, the 
+If you have questions or need help getting started, the
 [santa-dev](https://groups.google.com/forum/#!forum/santa-dev) group is the
 best place to start.
 
@@ -107,6 +107,15 @@ option) if it would be useful to others.
 * Documentation: There currently isn't any.
 
 * Tests: There aren't enough of them.
+
+Screenshots
+===========
+
+A tool like Santa doesn't really lend itself to screenshots, so here's a video instead.
+
+<p align="center">
+<img src="https://zippy.gfycat.com/MadFatalAmphiuma.gif" alt="Santa Block Video" />
+</p>
 
 Building
 ========
