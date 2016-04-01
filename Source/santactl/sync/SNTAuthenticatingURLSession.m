@@ -87,8 +87,8 @@
       completionHandler(NSURLSessionAuthChallengeUseCredential, cred);
       return;
     } else {
-      LOGE(@"Server asked for client authentication but no usable client certificate found.");
-      completionHandler(NSURLSessionAuthChallengeCancelAuthenticationChallenge, nil);
+      LOGW(@"Server asked for client authentication but no usable client certificate found.");
+      completionHandler(NSURLSessionAuthChallengePerformDefaultHandling, nil);
       return;
     }
   } else if (authMethod == NSURLAuthenticationMethodServerTrust) {
