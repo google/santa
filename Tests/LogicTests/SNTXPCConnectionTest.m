@@ -22,12 +22,6 @@
 - (void)isConnectionValidWithBlock:(void (^)(BOOL))block;
 @end
 
-@interface SNTXPCConnection (Testing)
-//- (void)invokeAcceptedHandler;
-//- (void)invokeRejectedHandler;
-//- (void)invokeInvalidationHandler;
-@end
-
 @interface SNTXPCConnectionTest : XCTestCase
 @property id mockListener;
 @property id mockConnection;
