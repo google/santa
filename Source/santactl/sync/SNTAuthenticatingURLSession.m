@@ -191,6 +191,7 @@
     SecCertificateRef certificate = NULL;
     err = SecIdentityCopyCertificate(foundIdentity, &certificate);
     MOLCertificate *clientCert = [[MOLCertificate alloc] initWithSecCertificateRef:certificate];
+    if (certificate) CFRelease(certificate);
     LOGD(@"Client Trust: Valid client identity %@.", clientCert);
     NSURLCredential *cred =
         [NSURLCredential credentialWithIdentity:foundIdentity
