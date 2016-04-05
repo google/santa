@@ -21,7 +21,7 @@
 ///
 ///  The underlying session. Pass this session to NSURLRequest methods.
 ///
-@property(readonly) NSURLSession *session;
+@property(readonly, nonatomic) NSURLSession *session;
 
 ///
 ///  If set, this is the user-agent to send with requests, otherwise remains the default

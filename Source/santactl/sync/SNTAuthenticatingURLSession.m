@@ -18,14 +18,17 @@
 #import "SNTDERDecoder.h"
 #import "SNTLogging.h"
 
+@interface SNTAuthenticatingURLSession ()
+@property(readwrite) NSURLSession *session;
+@property NSURLSessionConfiguration *sessionConfig;
+@end
+
 @implementation SNTAuthenticatingURLSession
 
 - (instancetype)initWithSessionConfiguration:(NSURLSessionConfiguration *)configuration {
   self = [super init];
   if (self) {
-    _session = [NSURLSession sessionWithConfiguration:configuration
-                                             delegate:self
-                                        delegateQueue:nil];
+    _sessionConfig = configuration;
   }
   return self;
 }
@@ -37,16 +40,30 @@
   return [self initWithSessionConfiguration:config];
 }
 
+#pragma mark Session Fetching
+
+- (NSURLSession *)session {
+  if (!_session) {
+    _session = [NSURLSession sessionWithConfiguration:self.sessionConfig
+                                             delegate:self
+                                        delegateQueue:nil];
+  }
+
+  return _session;
+}
+
 #pragma mark User Agent property
 
 - (NSString *)userAgent {
-  return _session.configuration.HTTPAdditionalHeaders[@"User-Agent"];
+  return self.sessionConfig.HTTPAdditionalHeaders[@"User-Agent"];
 }
 
 - (void)setUserAgent:(NSString *)userAgent {
-  NSMutableDictionary *addlHeaders = [_session.configuration.HTTPAdditionalHeaders mutableCopy];
+  NSMutableDictionary *addlHeaders = [self.sessionConfig.HTTPAdditionalHeaders mutableCopy];
+  if (!addlHeaders) addlHeaders = [NSMutableDictionary dictionary];
   addlHeaders[@"User-Agent"] = userAgent;
-  _session.configuration.HTTPAdditionalHeaders = addlHeaders;
+  self.sessionConfig.HTTPAdditionalHeaders = [addlHeaders copy];
+  _session = nil;
 }
 
 #pragma mark NSURLSessionDelegate methods
