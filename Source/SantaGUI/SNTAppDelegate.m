@@ -71,26 +71,25 @@
 #pragma mark Connection handling
 
 - (void)createConnection {
-  __weak __typeof(self) weakSelf = self;
+  dispatch_semaphore_t sema = dispatch_semaphore_create(0);
 
+  // Create listener for return connection from daemon.
   NSXPCListener *listener = [NSXPCListener anonymousListener];
   self.listener = [[SNTXPCConnection alloc] initServerWithListener:listener];
   self.listener.exportedInterface = [SNTXPCNotifierInterface notifierInterface];
   self.listener.exportedObject = self.notificationManager;
-  self.listener.invalidationHandler = ^{
-    [weakSelf attemptReconnection];
+  self.listener.acceptedHandler = ^{
+    dispatch_semaphore_signal(sema);
   };
   [self.listener resume];
 
-  dispatch_semaphore_t sema = dispatch_semaphore_create(0);
-
+  // Tell daemon to connect back to the above listener.
   SNTXPCConnection *daemonConn = [SNTXPCControlInterface configuredConnection];
   [daemonConn resume];
-  [[daemonConn remoteObjectProxy] setNotificationListener:listener.endpoint reply:^{
-    dispatch_semaphore_signal(sema);
-  }];
+  [[daemonConn remoteObjectProxy] setNotificationListener:listener.endpoint];
 
-  if (dispatch_semaphore_wait(sema, dispatch_time(DISPATCH_TIME_NOW, 10 * NSEC_PER_SEC))) {
+  // Now wait for the connection to come in.
+  if (dispatch_semaphore_wait(sema, dispatch_time(DISPATCH_TIME_NOW, 5 * NSEC_PER_SEC))) {
     [self attemptReconnection];
   }
 }

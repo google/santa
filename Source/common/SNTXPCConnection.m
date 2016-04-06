@@ -16,6 +16,32 @@
 
 #import "MOLCodesignChecker.h"
 
+/**
+  Protocol used during connection establishment, @see SNTXPCConnectionInterface
+*/
+@protocol SNTXPCConnectionProtocol
+- (void)connectWithReply:(void (^)())reply;
+@end
+
+/**
+  Recipient object used during connection establishment. Each incoming connection
+  has one of these objects created which accept the message in the protocol
+  and call the block provided during creation before replying.
+
+  This allows the server to reset the connection's exporteed interface and
+  object to the correct values after the client has sent the establishment message.
+*/
+@interface SNTXPCConnectionInterface : NSObject<SNTXPCConnectionProtocol>
+@property(strong) void (^block)(void);
+@end
+
+@implementation SNTXPCConnectionInterface
+- (void)connectWithReply:(void (^)())reply {
+  if (self.block) self.block();
+  reply();
+}
+@end
+
 @interface SNTXPCConnection ()
 /// The XPC listener (server only).
 @property NSXPCListener *listenerObject;
@@ -28,13 +54,20 @@
 
 @implementation SNTXPCConnection
 
+#define STRONGIFY(var) \
+  _Pragma("clang diagnostic push") \
+  _Pragma("clang diagnostic ignored \"-Wshadow\"") \
+  __strong __typeof(var) var = (Weak_##var); \
+  _Pragma("clang diagnostic pop")
+#define WEAKIFY(var) \
+  __weak __typeof(var) Weak_##var = (var);
+
 #pragma mark Initializers
 
 - (instancetype)initServerWithListener:(NSXPCListener *)listener {
   self = [super init];
   if (self) {
     _listenerObject = listener;
-    if (!_listenerObject) return nil;
     _acceptedConnections = [NSMutableArray array];
   }
   return self;
@@ -75,10 +108,30 @@
     self.listenerObject.delegate = self;
     [self.listenerObject resume];
   } else {
-    self.currentConnection.remoteObjectInterface = self.remoteInterface;
+    WEAKIFY(self);
+
+    // Set-up the connection with the remote interface set to the validation interface,
+    // send a message to the listener to finish establishing the connection
+    dispatch_semaphore_t sema = dispatch_semaphore_create(0);
+    self.currentConnection.remoteObjectInterface =
+        [NSXPCInterface interfaceWithProtocol:@protocol(SNTXPCConnectionProtocol)];
     self.currentConnection.interruptionHandler = self.invalidationHandler;
     self.currentConnection.invalidationHandler = self.invalidationHandler;
     [self.currentConnection resume];
+    [[self.currentConnection remoteObjectProxy] connectWithReply:^{
+      STRONGIFY(self);
+      // The connection is now established
+      [self.currentConnection suspend];
+      self.currentConnection.remoteObjectInterface = self.remoteInterface;
+      [self.currentConnection resume];
+      dispatch_semaphore_signal(sema);
+      if (self.acceptedHandler) self.acceptedHandler();
+    }];
+    if (dispatch_semaphore_wait(sema, dispatch_time(DISPATCH_TIME_NOW, 2 * NSEC_PER_SEC))) {
+      // Connection was not established in a reasonable time, invalidate.
+      self.currentConnection.remoteObjectInterface = nil;  // ensure clients don't try to use it.
+      [self.currentConnection invalidate];
+    }
   }
 }
 
@@ -89,18 +142,39 @@
     return NO;
   }
 
-  [self.acceptedConnections addObject:connection];
+  // The client passed the code signature check, now we need to resume the listener and
+  // return YES so that the client can send the connectWithReply message. Once the client does
+  // we reset the connection's exportedInterface and exportedObject.
 
-  __weak __typeof(connection) weakConnection = connection;
-  connection.interruptionHandler = connection.invalidationHandler = ^{
-    [self.acceptedConnections removeObject:weakConnection];
-    if (self.invalidationHandler) self.invalidationHandler();
+  SNTXPCConnectionInterface *ci = [[SNTXPCConnectionInterface alloc] init];
+  WEAKIFY(self);
+  WEAKIFY(connection);
+  ci.block = ^{
+    STRONGIFY(self)
+    STRONGIFY(connection);
+    [connection suspend];
+    [self.acceptedConnections addObject:connection];
+
+    WEAKIFY(connection);
+    connection.invalidationHandler = connection.interruptionHandler = ^{
+      STRONGIFY(connection);
+      [self.acceptedConnections removeObject:connection];
+      if (self.invalidationHandler) self.invalidationHandler();
+    };
+
+    connection.exportedInterface = self.exportedInterface;
+    connection.exportedObject = self.exportedObject;
+
+    [connection resume];
+
+    // The connection is now established.
+    if (self.acceptedHandler) self.acceptedHandler();
   };
-
-  connection.exportedInterface = self.exportedInterface;
-  connection.exportedObject = self.exportedObject;
-
+  connection.exportedInterface =
+      [NSXPCInterface interfaceWithProtocol:@protocol(SNTXPCConnectionProtocol)];
+  connection.exportedObject = ci;
   [connection resume];
+
   return YES;
 }
 
@@ -119,11 +193,12 @@
   if (self.currentConnection) {
     [self.currentConnection invalidate];
     self.currentConnection = nil;
-  } else if (self.acceptedConnections.count) {
+  } else if (self.listenerObject) {
     for (NSXPCConnection *conn in self.acceptedConnections) {
       [conn invalidate];
     }
     [self.acceptedConnections removeAllObjects];
+    [self.listenerObject invalidate];
   }
 }
 
