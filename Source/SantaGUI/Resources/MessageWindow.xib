@@ -347,7 +347,6 @@ DQ
                     <constraint firstItem="4Li-ul-zIi" firstAttribute="leading" secondItem="KEB-eH-x2Y" secondAttribute="trailing" constant="20" id="Seb-c0-MUL"/>
                     <constraint firstAttribute="centerX" secondItem="cD5-Su-lXR" secondAttribute="centerX" id="V0a-Py-iEc"/>
                     <constraint firstItem="oFj-ol-xpL" firstAttribute="leading" secondItem="lvJ-Rk-UT5" secondAttribute="leading" priority="999" id="Z6G-l9-G4a"/>
-                    <constraint firstItem="oFj-ol-xpL" firstAttribute="top" secondItem="eQb-0a-76J" secondAttribute="bottom" constant="8" id="abm-cM-PN0"/>
                     <constraint firstItem="pDa-fA-vnC" firstAttribute="leading" secondItem="oFj-ol-xpL" secondAttribute="leading" id="asc-Ga-WHD"/>
                     <constraint firstItem="4Li-ul-zIi" firstAttribute="leading" secondItem="eQb-0a-76J" secondAttribute="trailing" constant="20" id="b0B-3w-grH"/>
                     <constraint firstItem="KEB-eH-x2Y" firstAttribute="leading" secondItem="oFj-ol-xpL" secondAttribute="leading" priority="999" id="b5A-M7-ZsD"/>
@@ -363,7 +362,6 @@ DQ
                     <constraint firstItem="4Li-ul-zIi" firstAttribute="leading" secondItem="oFj-ol-xpL" secondAttribute="trailing" constant="20" id="kOG-Cj-hFG"/>
                     <constraint firstItem="pc8-G9-4pJ" firstAttribute="top" secondItem="qgf-Jf-cJr" secondAttribute="bottom" constant="8" id="lWU-tC-vWg"/>
                     <constraint firstItem="oFj-ol-xpL" firstAttribute="trailing" secondItem="lvJ-Rk-UT5" secondAttribute="trailing" id="lse-kg-lA2"/>
-                    <constraint firstItem="eQb-0a-76J" firstAttribute="top" secondItem="KEB-eH-x2Y" secondAttribute="bottom" constant="8" id="m2z-1O-ifB"/>
                     <constraint firstItem="d9e-Wv-Y5H" firstAttribute="trailing" secondItem="KEB-eH-x2Y" secondAttribute="trailing" id="pdq-a6-Y73"/>
                     <constraint firstAttribute="centerX" secondItem="7ua-5a-uSd" secondAttribute="centerX" constant="61" id="phL-j9-rPq"/>
                     <constraint firstItem="4Li-ul-zIi" firstAttribute="leading" secondItem="lvJ-Rk-UT5" secondAttribute="trailing" constant="20" id="qKi-KT-jzJ"/>
