@@ -16,14 +16,14 @@
         <customObject id="-3" userLabel="Application" customClass="NSObject"/>
         <window title="Santa Blocked Execution" allowsToolTipsWhenApplicationIsInactive="NO" autorecalculatesKeyViewLoop="NO" oneShot="NO" showsToolbarButton="NO" visibleAtLaunch="NO" animationBehavior="none" id="9Bq-yh-54f" customClass="SNTMessageWindow">
             <windowStyleMask key="styleMask" utility="YES"/>
-            <rect key="contentRect" x="167" y="107" width="497" height="373"/>
+            <rect key="contentRect" x="167" y="107" width="497" height="374"/>
             <rect key="screenRect" x="0.0" y="0.0" width="2560" height="1417"/>
             <view key="contentView" id="Iwq-Lx-rLv">
-                <rect key="frame" x="0.0" y="0.0" width="497" height="373"/>
+                <rect key="frame" x="0.0" y="0.0" width="497" height="374"/>
                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                 <subviews>
                     <button focusRingType="none" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="kiB-jZ-69S">
-                        <rect key="frame" x="-6" y="345" width="37" height="32"/>
+                        <rect key="frame" x="-6" y="346" width="37" height="32"/>
                         <buttonCell key="cell" type="push" title="Hidden Button" alternateTitle="This button exists so neither of the other two buttons is pre-selected when the dialog opens." bezelStyle="rounded" alignment="center" borderStyle="border" focusRingType="none" transparent="YES" imageScaling="proportionallyDown" inset="2" id="XGa-Sl-F4t">
                             <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
                             <font key="font" metaFont="system"/>
@@ -36,9 +36,9 @@
                         </connections>
                     </button>
                     <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="t8c-Fx-e5h">
-                        <rect key="frame" x="207" y="303" width="83" height="40"/>
+                        <rect key="frame" x="206" y="303" width="85" height="41"/>
                         <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" refusesFirstResponder="YES" sendsActionOnEndEditing="YES" title="Santa" id="7YA-iB-Zma">
-                            <font key="font" size="34" name="HelveticaNeue-UltraLight"/>
+                            <font key="font" metaFont="systemUltraLight" size="34"/>
                             <color key="textColor" red="0.20000000000000001" green="0.20000000000000001" blue="0.20000000000000001" alpha="1" colorSpace="calibratedRGB"/>
                             <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                             <userDefinedRuntimeAttributes>
