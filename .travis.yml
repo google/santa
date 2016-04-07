@@ -2,6 +2,7 @@
 language: objective-c
 cache: cocoapods
 sudo: false
+osx_image: xcode7
 
 before_install:
  - gem install activesupport
