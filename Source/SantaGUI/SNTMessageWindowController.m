@@ -22,6 +22,31 @@
 #import "SNTMessageWindow.h"
 #import "SNTStoredEvent.h"
 
+@interface SNTMessageWindowController ()
+///  The execution event that this window is for
+@property SNTStoredEvent *event;
+
+///  The custom message to display for this event
+@property(copy) NSString *customMessage;
+
+///  A 'friendly' string representing the certificate information
+@property(readonly, nonatomic) NSString *publisherInfo;
+
+///  An optional message to display with this block.
+@property(readonly, nonatomic) NSAttributedString *attributedCustomMessage;
+
+///  Reference to the "Open Event" button in the XIB. Used to either remove the button
+///  if it isn't needed or set its title if it is.
+@property IBOutlet NSButton *openEventButton;
+
+///  Reference to the "Application Name" label in the XIB. Used to remove if application
+///  doesn't have a CFBundleName.
+@property IBOutlet NSTextField *applicationNameLabel;
+
+///  Linked to checkbox in UI to prevent future notifications for this binary.
+@property BOOL silenceFutureNotifications;
+@end
+
 @implementation SNTMessageWindowController
 
 - (instancetype)initWithEvent:(SNTStoredEvent *)event andMessage:(NSString *)message {
@@ -61,7 +86,13 @@
 }
 
 - (void)windowWillClose:(NSNotification *)notification {
-  if (self.delegate) [self.delegate windowDidClose];
+  if (!self.delegate) return;
+
+  if (self.silenceFutureNotifications) {
+    [self.delegate windowDidCloseSilenceHash:self.event.fileSHA256];
+  } else {
+    [self.delegate windowDidCloseSilenceHash:nil];
+  }
 }
 
 - (IBAction)showCertInfo:(id)sender {

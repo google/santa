@@ -17,18 +17,16 @@
 #import "SNTStoredEvent.h"
 
 @interface SNTNotificationManager ()
-///
 ///  The currently displayed notification
-///
 @property SNTMessageWindowController *currentWindowController;
 
-///
 ///  The queue of pending notifications
-///
 @property(readonly) NSMutableArray *pendingNotifications;
 @end
 
 @implementation SNTNotificationManager
+
+static NSString * const silencedNotificationsKey = @"SilencedNotifications";
 
 - (instancetype)init {
   self = [super init];
@@ -38,7 +36,9 @@
   return self;
 }
 
-- (void)windowDidClose {
+- (void)windowDidCloseSilenceHash:(NSString *)hash {
+  if (hash) [self updateSilenceDate:[NSDate date] forHash:hash];
+
   [self.pendingNotifications removeObject:self.currentWindowController];
   self.currentWindowController = nil;
 
@@ -50,6 +50,17 @@
   }
 }
 
+- (void)updateSilenceDate:(NSDate *)date forHash:(NSString *)hash {
+  NSUserDefaults *ud = [NSUserDefaults standardUserDefaults];
+  NSMutableDictionary *d = [[ud objectForKey:silencedNotificationsKey] mutableCopy];
+  if (date) {
+    d[hash] = date;
+  } else {
+    [d removeObjectForKey:hash];
+  }
+  [ud setObject:d forKey:silencedNotificationsKey];
+}
+
 #pragma mark SNTNotifierXPC protocol methods
 
 - (void)postBlockNotification:(SNTStoredEvent *)event withCustomMessage:(NSString *)message {
@@ -57,6 +68,23 @@
   NSPredicate *predicate =
       [NSPredicate predicateWithFormat:@"event.fileSHA256==%@", event.fileSHA256];
   if ([[self.pendingNotifications filteredArrayUsingPredicate:predicate] count]) return;
+
+  // See if this binary is silenced.
+  NSUserDefaults *ud = [NSUserDefaults standardUserDefaults];
+  NSDate *silenceDate = [ud objectForKey:silencedNotificationsKey][event.fileSHA256];
+  if (silenceDate) {
+    NSDate *oneDayAgo = [NSDate dateWithTimeIntervalSinceNow:-86400];
+    if ([silenceDate compare:[NSDate date]] == NSOrderedDescending) {
+      NSLog(@"Notification silence: date is in the future, ignoring");
+      [self updateSilenceDate:nil forHash:event.fileSHA256];
+    } else if ([silenceDate compare:oneDayAgo] == NSOrderedAscending) {
+      NSLog(@"Notification silence: date is more than one day ago, ignoring");
+      [self updateSilenceDate:nil forHash:event.fileSHA256];
+    } else {
+      NSLog(@"Notification silence: dropping notification for %@", event.fileSHA256);
+      return;
+    }
+  }
 
   if (!event) {
     NSLog(@"Error: Missing event object in message received from daemon!");
