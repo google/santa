@@ -294,6 +294,7 @@
 		0D4644C3182AF81700098690 /* SantaDecisionManager.cc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = SantaDecisionManager.cc; sourceTree = "<group>"; };
 		0D4644C4182AF81700098690 /* SantaDecisionManager.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SantaDecisionManager.h; sourceTree = "<group>"; };
 		0D4A5006176A4602004F63BF /* Security.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Security.framework; path = /System/Library/Frameworks/Security.framework; sourceTree = "<absolute>"; };
+		0D5058CF1CB70123008784BA /* SNTStrengthify.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SNTStrengthify.h; sourceTree = "<group>"; };
 		0D536ED51B8E7A2E0039A26D /* bad_pagezero */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.executable"; path = bad_pagezero; sourceTree = "<group>"; };
 		0D536ED61B8E7A2E0039A26D /* missing_pagezero */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.executable"; path = missing_pagezero; sourceTree = "<group>"; };
 		0D536ED91B94E9230039A26D /* SNTEventLog.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SNTEventLog.h; sourceTree = "<group>"; };
@@ -674,6 +675,7 @@
 				0DE50F671912716A007B2B0C /* SNTRule.m */,
 				0DCD604919105433006B445C /* SNTStoredEvent.h */,
 				0DCD604A19105433006B445C /* SNTStoredEvent.m */,
+				0D5058CF1CB70123008784BA /* SNTStrengthify.h */,
 				0D42D2B319D1D98A00955F08 /* SNTSystemInfo.h */,
 				0D42D2B419D1D98A00955F08 /* SNTSystemInfo.m */,
 				0D6FDC9418C93A020044685C /* SNTXPCConnection.h */,

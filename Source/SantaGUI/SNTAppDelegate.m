@@ -18,6 +18,7 @@
 #import "SNTConfigurator.h"
 #import "SNTFileWatcher.h"
 #import "SNTNotificationManager.h"
+#import "SNTStrengthify.h"
 #import "SNTXPCConnection.h"
 #import "SNTXPCControlInterface.h"
 
@@ -73,6 +74,8 @@
 - (void)createConnection {
   dispatch_semaphore_t sema = dispatch_semaphore_create(0);
 
+  WEAKIFY(self);
+
   // Create listener for return connection from daemon.
   NSXPCListener *listener = [NSXPCListener anonymousListener];
   self.listener = [[SNTXPCConnection alloc] initServerWithListener:listener];
@@ -80,6 +83,10 @@
   self.listener.exportedObject = self.notificationManager;
   self.listener.acceptedHandler = ^{
     dispatch_semaphore_signal(sema);
+  };
+  self.listener.invalidationHandler = ^{
+    STRONGIFY(self);
+    [self attemptReconnection];
   };
   [self.listener resume];
 

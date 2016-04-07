@@ -16,6 +16,8 @@
 
 #import "MOLCodesignChecker.h"
 
+#import "SNTStrengthify.h"
+
 /**
   Protocol used during connection establishment, @see SNTXPCConnectionInterface
 */
@@ -53,14 +55,6 @@
 @end
 
 @implementation SNTXPCConnection
-
-#define STRONGIFY(var) \
-  _Pragma("clang diagnostic push") \
-  _Pragma("clang diagnostic ignored \"-Wshadow\"") \
-  __strong __typeof(var) var = (Weak_##var); \
-  _Pragma("clang diagnostic pop")
-#define WEAKIFY(var) \
-  __weak __typeof(var) Weak_##var = (var);
 
 #pragma mark Initializers
 
