@@ -119,39 +119,39 @@
   NSString *d, *r, *args, *outLog;
 
   switch (cd.decision) {
-    case EVENTSTATE_ALLOW_BINARY:
+    case SNTEventStateAllowBinary:
       d = @"ALLOW";
       r = @"BINARY";
       args = [self argsForPid:message.pid];
       break;
-    case EVENTSTATE_ALLOW_CERTIFICATE:
+    case SNTEventStateAllowCertificate:
       d = @"ALLOW";
       r = @"CERTIFICATE";
       args = [self argsForPid:message.pid];
       break;
-    case EVENTSTATE_ALLOW_SCOPE:
+    case SNTEventStateAllowScope:
       d = @"ALLOW";
       r = @"SCOPE";
       args = [self argsForPid:message.pid];
       break;
-    case EVENTSTATE_ALLOW_UNKNOWN:
+    case SNTEventStateAllowUnknown:
       d = @"ALLOW";
       r = @"UNKNOWN";
       args = [self argsForPid:message.pid];
       break;
-    case EVENTSTATE_BLOCK_BINARY:
+    case SNTEventStateBlockBinary:
       d = @"DENY";
       r = @"BINARY";
       break;
-    case EVENTSTATE_BLOCK_CERTIFICATE:
+    case SNTEventStateBlockCertificate:
       d = @"DENY";
       r = @"CERT";
       break;
-    case EVENTSTATE_BLOCK_SCOPE:
+    case SNTEventStateBlockScope:
       d = @"DENY";
       r = @"SCOPE";
       break;
-    case EVENTSTATE_BLOCK_UNKNOWN:
+    case SNTEventStateBlockUnknown:
       d = @"DENY";
       r = @"UNKNOWN";
       break;

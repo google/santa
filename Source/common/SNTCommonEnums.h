@@ -17,51 +17,43 @@
 ///  The integer values are also stored in the database and so shouldn't be changed.
 ///
 
-typedef NS_ENUM(NSInteger, santa_ruletype_t) {
-  RULETYPE_UNKNOWN,
+typedef NS_ENUM(NSInteger, SNTRuleType) {
+  SNTRuleTypeUnknown,
 
-  RULETYPE_BINARY = 1,
-  RULETYPE_CERT = 2,
-
-  RULETYPE_MAX
+  SNTRuleTypeBinary = 1,
+  SNTRuleTypeCertificate = 2,
 };
 
-typedef NS_ENUM(NSInteger, santa_rulestate_t) {
-  RULESTATE_UNKNOWN,
+typedef NS_ENUM(NSInteger, SNTRuleState) {
+  SNTRuleStateUnknown,
 
-  RULESTATE_WHITELIST = 1,
-  RULESTATE_BLACKLIST = 2,
-  RULESTATE_SILENT_BLACKLIST = 3,
-  RULESTATE_REMOVE = 4,
-
-  RULESTATE_MAX
+  SNTRuleStateWhitelist = 1,
+  SNTRuleStateBlacklist = 2,
+  SNTRuleStateSilentBlacklist = 3,
+  SNTRuleStateRemove = 4,
 };
 
-typedef NS_ENUM(NSInteger, santa_clientmode_t) {
-  CLIENTMODE_UNKNOWN,
+typedef NS_ENUM(NSInteger, SNTClientMode) {
+  SNTClientModeUnknown,
 
-  CLIENTMODE_MONITOR = 1,
-  CLIENTMODE_LOCKDOWN = 2,
-
-  CLIENTMODE_MAX
+  SNTClientModeMonitor = 1,
+  SNTClientModeLockdown = 2,
 };
 
-typedef NS_ENUM(NSInteger, santa_eventstate_t) {
-  EVENTSTATE_UNKNOWN,
+typedef NS_ENUM(NSInteger, SNTEventState) {
+  SNTEventStateUnknown,
 
-  EVENTSTATE_ALLOW_UNKNOWN = 1,
-  EVENTSTATE_ALLOW_BINARY = 2,
-  EVENTSTATE_ALLOW_CERTIFICATE = 3,
-  EVENTSTATE_ALLOW_SCOPE = 4,
+  SNTEventStateAllowUnknown = 1,
+  SNTEventStateAllowBinary = 2,
+  SNTEventStateAllowCertificate = 3,
+  SNTEventStateAllowScope = 4,
 
-  EVENTSTATE_BLOCK_UNKNOWN = 5,
-  EVENTSTATE_BLOCK_BINARY = 6,
-  EVENTSTATE_BLOCK_CERTIFICATE = 7,
-  EVENTSTATE_BLOCK_SCOPE = 8,
+  SNTEventStateBlockUnknown = 5,
+  SNTEventStateBlockBinary = 6,
+  SNTEventStateBlockCertificate = 7,
+  SNTEventStateBlockScope = 8,
 
-  EVENTSTATE_RELATED_BINARY = 9,
-
-  EVENTSTATE_MAX
+  SNTEventStateRelatedBinary = 9,
 };
 
 typedef NS_ENUM(NSInteger, SNTRuleTableError) {

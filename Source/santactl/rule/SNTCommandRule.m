@@ -77,8 +77,8 @@ REGISTER_COMMAND_NAME(@"rule")
   }
 
   SNTRule *newRule = [[SNTRule alloc] init];
-  newRule.state = RULESTATE_UNKNOWN;
-  newRule.type = RULETYPE_BINARY;
+  newRule.state = SNTRuleStateUnknown;
+  newRule.type = SNTRuleTypeBinary;
 
   NSString *path;
 
@@ -87,15 +87,15 @@ REGISTER_COMMAND_NAME(@"rule")
     NSString *arg = arguments[i];
 
     if ([arg caseInsensitiveCompare:@"--whitelist"] == NSOrderedSame) {
-      newRule.state = RULESTATE_WHITELIST;
+      newRule.state = SNTRuleStateWhitelist;
     } else if ([arg caseInsensitiveCompare:@"--blacklist"] == NSOrderedSame) {
-      newRule.state = RULESTATE_BLACKLIST;
+      newRule.state = SNTRuleStateBlacklist;
     } else if ([arg caseInsensitiveCompare:@"--silent-blacklist"] == NSOrderedSame) {
-      newRule.state = RULESTATE_SILENT_BLACKLIST;
+      newRule.state = SNTRuleStateSilentBlacklist;
     } else if ([arg caseInsensitiveCompare:@"--remove"] == NSOrderedSame) {
-      newRule.state = RULESTATE_REMOVE;
+      newRule.state = SNTRuleStateRemove;
     } else if ([arg caseInsensitiveCompare:@"--certificate"] == NSOrderedSame) {
-      newRule.type = RULETYPE_CERT;
+      newRule.type = SNTRuleTypeCertificate;
     } else if ([arg caseInsensitiveCompare:@"--path"] == NSOrderedSame) {
       if (++i > arguments.count - 1) {
         [self printErrorUsageAndExit:@"--path requires an argument"];
@@ -121,15 +121,15 @@ REGISTER_COMMAND_NAME(@"rule")
 
   if (path) {
     SNTFileInfo *fi = [[SNTFileInfo alloc] initWithPath:path];
-    if (newRule.type == RULETYPE_BINARY) {
+    if (newRule.type == SNTRuleTypeBinary) {
       newRule.shasum = fi.SHA256;
-    } else if (newRule.type == RULETYPE_CERT) {
+    } else if (newRule.type == SNTRuleTypeCertificate) {
       MOLCodesignChecker *cs = [[MOLCodesignChecker alloc] initWithBinaryPath:fi.path];
       newRule.shasum = cs.leafCertificate.SHA256;
     }
   }
 
-  if (newRule.state == RULESTATE_UNKNOWN) {
+  if (newRule.state == SNTRuleStateUnknown) {
     [self printErrorUsageAndExit:@"No state specified"];
   } else if (!newRule.shasum) {
     [self printErrorUsageAndExit:@"Either SHA-256 or path to file must be specified"];
@@ -143,7 +143,7 @@ REGISTER_COMMAND_NAME(@"rule")
       LOGD(@"Failure reason: %@", error.localizedFailureReason);
       exit(1);
     } else {
-      if (newRule.state == RULESTATE_REMOVE) {
+      if (newRule.state == SNTRuleStateRemove) {
         printf("Removed rule for SHA-256: %s.\n", [newRule.shasum UTF8String]);
       } else {
         printf("Added rule for SHA-256: %s.\n", [newRule.shasum UTF8String]);

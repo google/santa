@@ -27,12 +27,12 @@
 ///
 ///  The state of this rule
 ///
-@property santa_rulestate_t state;
+@property SNTRuleState state;
 
 ///
 ///  The type of object this rule is for (binary, certificate)
 ///
-@property santa_ruletype_t type;
+@property SNTRuleType type;
 
 ///
 ///  A custom message that will be displayed if this rule blocks a binary from executing
@@ -43,8 +43,8 @@
 ///  Designated initializer.
 ///
 - (instancetype)initWithShasum:(NSString *)shasum
-                         state:(santa_rulestate_t)state
-                          type:(santa_ruletype_t)type
+                         state:(SNTRuleState)state
+                          type:(SNTRuleType)type
                      customMsg:(NSString *)customMsg;
 
 @end

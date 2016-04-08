@@ -53,7 +53,7 @@
   event.loggedInUsers = @[ @"nobody" ];
   event.currentSessions = @[ @"nobody@ttys000", @"nobody@console" ];
   event.occurrenceDate = [NSDate date];
-  event.decision = EVENTSTATE_ALLOW_BINARY;
+  event.decision = SNTEventStateAllowBinary;
   return event;
 }
 

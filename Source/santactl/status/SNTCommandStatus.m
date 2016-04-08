@@ -50,12 +50,12 @@ REGISTER_COMMAND_NAME(@"status")
   __block uint64_t cpuEvents, ramEvents;
   __block double cpuPeak, ramPeak;
   dispatch_group_enter(group);
-  [[daemonConn remoteObjectProxy] clientMode:^(santa_clientmode_t cm) {
+  [[daemonConn remoteObjectProxy] clientMode:^(SNTClientMode cm) {
     switch (cm) {
-      case CLIENTMODE_MONITOR:
+      case SNTClientModeMonitor:
         clientMode = @"Monitor";
         break;
-      case CLIENTMODE_LOCKDOWN:
+      case SNTClientModeLockdown:
         clientMode = @"Lockdown";
         break;
       default:

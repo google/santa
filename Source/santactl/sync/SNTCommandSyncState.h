@@ -30,7 +30,7 @@
 @property BOOL cleanSync;
 
 /// New client mode sent from server
-@property santa_clientmode_t newClientMode;
+@property SNTClientMode newClientMode;
 
 /// Batch size for uploading events, sent from server
 @property int32_t eventBatchSize;

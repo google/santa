@@ -59,13 +59,13 @@
   int ruleCount = [db intForQuery:@"SELECT COUNT(*)"
                                   @"FROM certrules "
                                   @"WHERE (shasum=? OR shasum=?) AND state=?",
-                      self.santadCertSHA, self.launchdCertSHA, @(RULESTATE_WHITELIST)];
+                      self.santadCertSHA, self.launchdCertSHA, @(SNTRuleStateWhitelist)];
   if (ruleCount != 2) {
     if (version > 0) LOGE(@"Started without launchd/santad certificate rules in place!");    
     [db executeUpdate:@"INSERT INTO rules (shasum, state, type) VALUES (?, ?, ?)",
-        self.santadCertSHA, @(RULESTATE_WHITELIST), @(RULETYPE_CERT)];
+        self.santadCertSHA, @(SNTRuleStateWhitelist), @(SNTRuleTypeCertificate)];
     [db executeUpdate:@"INSERT INTO rules (shasum, state, type) VALUES (?, ?, ?)",
-        self.launchdCertSHA, @(RULESTATE_WHITELIST), @(RULETYPE_CERT)];
+        self.launchdCertSHA, @(SNTRuleStateWhitelist), @(SNTRuleTypeCertificate)];
   }
 
   return newVersion;
@@ -150,9 +150,9 @@
     // Protect rules for santad/launchd certificates.
     NSPredicate *p = [NSPredicate predicateWithFormat:
                                       @"(SELF.shasum = %@ OR SELF.shasum = %@) AND SELF.type = %d",
-                                      self.santadCertSHA, self.launchdCertSHA, RULETYPE_CERT];
+                                      self.santadCertSHA, self.launchdCertSHA, SNTRuleTypeCertificate];
     NSArray *requiredHashes = [rules filteredArrayUsingPredicate:p];
-    p = [NSPredicate predicateWithFormat:@"SELF.state == %d", RULESTATE_WHITELIST];
+    p = [NSPredicate predicateWithFormat:@"SELF.state == %d", SNTRuleStateWhitelist];
     NSArray *requiredHashesWhitelist = [requiredHashes filteredArrayUsingPredicate:p];
     if ((cleanSlate && requiredHashesWhitelist.count != 2) ||
         (requiredHashes.count != requiredHashesWhitelist.count)) {
@@ -168,13 +168,13 @@
 
     for (SNTRule *rule in rules) {
       if (![rule isKindOfClass:[SNTRule class]] || rule.shasum.length == 0 ||
-          rule.state == RULESTATE_UNKNOWN || rule.type == RULETYPE_UNKNOWN) {
+          rule.state == SNTRuleStateUnknown || rule.type == SNTRuleTypeUnknown) {
         [self fillError:error code:SNTRuleTableErrorInvalidRule message:nil];
         *rollback = failed = YES;
         return;
       }
 
-      if (rule.state == RULESTATE_REMOVE) {
+      if (rule.state == SNTRuleStateRemove) {
         if (![db executeUpdate:@"DELETE FROM rules WHERE shasum=? AND type=?",
                                rule.shasum, @(rule.type)]) {
           [self fillError:error

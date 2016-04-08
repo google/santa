@@ -163,7 +163,7 @@
   NSString *message;
   if (self.customMessage.length) {
     message = self.customMessage;
-  } else if (self.event.decision == EVENTSTATE_BLOCK_UNKNOWN) {
+  } else if (self.event.decision == SNTEventStateBlockUnknown) {
     message = [[SNTConfigurator configurator] unknownBlockMessage];
     if (!message) {
       message = @"The following application has been blocked from executing<br />"

@@ -46,8 +46,8 @@
 ///  Config ops
 ///
 - (void)watchdogInfo:(void (^)(uint64_t, uint64_t, double, double))reply;
-- (void)clientMode:(void (^)(santa_clientmode_t))reply;
-- (void)setClientMode:(santa_clientmode_t)mode reply:(void (^)())reply;
+- (void)clientMode:(void (^)(SNTClientMode))reply;
+- (void)setClientMode:(SNTClientMode)mode reply:(void (^)())reply;
 - (void)setNextSyncInterval:(uint64_t)seconds reply:(void (^)())reply;
 - (void)setSyncLastSuccess:(NSDate *)date reply:(void (^)())reply;
 - (void)setSyncCleanRequired:(BOOL)cleanReqd reply:(void (^)())reply;

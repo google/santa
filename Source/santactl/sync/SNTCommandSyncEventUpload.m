@@ -158,19 +158,19 @@
   ADDKEY(newEvent, kCurrentSessions, event.currentSessions);
 
   switch (event.decision) {
-    case EVENTSTATE_ALLOW_UNKNOWN: ADDKEY(newEvent, kDecision, kDecisionAllowUnknown); break;
-    case EVENTSTATE_ALLOW_BINARY: ADDKEY(newEvent, kDecision, kDecisionAllowBinary); break;
-    case EVENTSTATE_ALLOW_CERTIFICATE:
+    case SNTEventStateAllowUnknown: ADDKEY(newEvent, kDecision, kDecisionAllowUnknown); break;
+    case SNTEventStateAllowBinary: ADDKEY(newEvent, kDecision, kDecisionAllowBinary); break;
+    case SNTEventStateAllowCertificate:
       ADDKEY(newEvent, kDecision, kDecisionAllowCertificate);
       break;
-    case EVENTSTATE_ALLOW_SCOPE: ADDKEY(newEvent, kDecision, kDecisionAllowScope); break;
-    case EVENTSTATE_BLOCK_UNKNOWN: ADDKEY(newEvent, kDecision, kDecisionBlockUnknown); break;
-    case EVENTSTATE_BLOCK_BINARY: ADDKEY(newEvent, kDecision, kDecisionBlockBinary); break;
-    case EVENTSTATE_BLOCK_CERTIFICATE:
+    case SNTEventStateAllowScope: ADDKEY(newEvent, kDecision, kDecisionAllowScope); break;
+    case SNTEventStateBlockUnknown: ADDKEY(newEvent, kDecision, kDecisionBlockUnknown); break;
+    case SNTEventStateBlockBinary: ADDKEY(newEvent, kDecision, kDecisionBlockBinary); break;
+    case SNTEventStateBlockCertificate:
       ADDKEY(newEvent, kDecision, kDecisionBlockCertificate);
       break;
-    case EVENTSTATE_BLOCK_SCOPE: ADDKEY(newEvent, kDecision, kDecisionBlockScope); break;
-    case EVENTSTATE_RELATED_BINARY: ADDKEY(newEvent, kDecision, kDecisionRelatedBinary); break;
+    case SNTEventStateBlockScope: ADDKEY(newEvent, kDecision, kDecisionBlockScope); break;
+    case SNTEventStateRelatedBinary: ADDKEY(newEvent, kDecision, kDecisionRelatedBinary); break;
     default: ADDKEY(newEvent, kDecision, kDecisionUnknown);
   }
 
@@ -245,7 +245,7 @@
           SNTStoredEvent *se = [[SNTStoredEvent alloc] init];
           se.filePath = fi.path;
           se.fileSHA256 = fi.SHA256;
-          se.decision = EVENTSTATE_RELATED_BINARY;
+          se.decision = SNTEventStateRelatedBinary;
           se.fileBundleID = event.fileBundleID;
           se.fileBundleName = event.fileBundleName;
           se.fileBundleVersion = event.fileBundleVersion;

@@ -17,8 +17,8 @@
 @implementation SNTRule
 
 - (instancetype)initWithShasum:(NSString *)shasum
-                         state:(santa_rulestate_t)state
-                          type:(santa_ruletype_t)type
+                         state:(SNTRuleState)state
+                          type:(SNTRuleType)type
                      customMsg:(NSString *)customMsg {
   self = [super init];
   if (self) {

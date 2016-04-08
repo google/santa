@@ -20,7 +20,7 @@
 @interface SNTCachedDecision : NSObject
 
 @property uint64_t vnodeId;
-@property santa_eventstate_t decision;
+@property SNTEventState decision;
 @property NSString *decisionExtra;
 @property NSString *sha256;
 @property NSString *certSHA256;

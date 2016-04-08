@@ -73,7 +73,7 @@
 ///
 ///  The decision santad returned.
 ///
-@property santa_eventstate_t decision;
+@property SNTEventState decision;
 
 ///
 ///  NSArray of logged in users when the decision was made.

@@ -118,22 +118,22 @@
 
   NSString *policyString = dict[kRulePolicy];
   if ([policyString isEqual:kRulePolicyWhitelist]) {
-    newRule.state = RULESTATE_WHITELIST;
+    newRule.state = SNTRuleStateWhitelist;
   } else if ([policyString isEqual:kRulePolicyBlacklist]) {
-    newRule.state = RULESTATE_BLACKLIST;
+    newRule.state = SNTRuleStateBlacklist;
   } else if ([policyString isEqual:kRulePolicySilentBlacklist]) {
-    newRule.state = RULESTATE_SILENT_BLACKLIST;
+    newRule.state = SNTRuleStateSilentBlacklist;
   } else if ([policyString isEqual:kRulePolicyRemove]) {
-    newRule.state = RULESTATE_REMOVE;
+    newRule.state = SNTRuleStateRemove;
   } else {
     return nil;
   }
 
   NSString *ruleTypeString = dict[kRuleType];
   if ([ruleTypeString isEqual:kRuleTypeBinary]) {
-    newRule.type = RULETYPE_BINARY;
+    newRule.type = SNTRuleTypeBinary;
   } else if ([ruleTypeString isEqual:kRuleTypeCertificate]) {
-    newRule.type = RULETYPE_CERT;
+    newRule.type = SNTRuleTypeCertificate;
   } else {
     return nil;
   }

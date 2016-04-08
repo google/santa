@@ -81,9 +81,9 @@
       syncState.uploadLogURL = [NSURL URLWithString:r[kUploadLogsURL]];
 
       if ([r[kClientMode] isEqual:kClientModeMonitor]) {
-        syncState.newClientMode = CLIENTMODE_MONITOR;
+        syncState.newClientMode = SNTClientModeMonitor;
       } else if ([r[kClientMode] isEqual:kClientModeLockdown]) {
-        syncState.newClientMode = CLIENTMODE_LOCKDOWN;
+        syncState.newClientMode = SNTClientModeLockdown;
       }
 
       if ([r[kWhitelistRegex] isKindOfClass:[NSString class]]) {

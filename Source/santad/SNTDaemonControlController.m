@@ -104,7 +104,7 @@ double watchdogRAMPeak = 0;
   [[SNTDatabaseController ruleTable] addRules:rules cleanSlate:cleanSlate error:&error];
 
   // If any rules were added that were not whitelist, flush cache.
-  NSPredicate *p = [NSPredicate predicateWithFormat:@"SELF.state != %d", RULESTATE_WHITELIST];
+  NSPredicate *p = [NSPredicate predicateWithFormat:@"SELF.state != %d", SNTRuleStateWhitelist];
   if ([rules filteredArrayUsingPredicate:p].count || cleanSlate) {
     LOGI(@"Received non-whitelist rule, flushing cache");
     [self.driverManager flushCache];
@@ -131,11 +131,11 @@ double watchdogRAMPeak = 0;
 
 #pragma mark Config Ops
 
-- (void)clientMode:(void (^)(santa_clientmode_t))reply {
+- (void)clientMode:(void (^)(SNTClientMode))reply {
   reply([[SNTConfigurator configurator] clientMode]);
 }
 
-- (void)setClientMode:(santa_clientmode_t)mode reply:(void (^)())reply {
+- (void)setClientMode:(SNTClientMode)mode reply:(void (^)())reply {
   [[SNTConfigurator configurator] setClientMode:mode];
   reply();
 }

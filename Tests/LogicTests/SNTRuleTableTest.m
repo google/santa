@@ -40,8 +40,8 @@
 - (SNTRule *)_exampleBinaryRule {
   SNTRule *r = [[SNTRule alloc] init];
   r.shasum = @"a";
-  r.state = RULESTATE_BLACKLIST;
-  r.type = RULETYPE_BINARY;
+  r.state = SNTRuleStateBlacklist;
+  r.type = SNTRuleTypeBinary;
   r.customMsg = @"A rule";
   return r;
 }
@@ -49,8 +49,8 @@
 - (SNTRule *)_exampleCertRule {
   SNTRule *r = [[SNTRule alloc] init];
   r.shasum = @"b";
-  r.state = RULESTATE_WHITELIST;
-  r.type = RULETYPE_CERT;
+  r.state = SNTRuleStateWhitelist;
+  r.type = SNTRuleTypeCertificate;
   return r;
 }
 
@@ -81,12 +81,12 @@
   // assert that the binary rule was removed
   SNTRule *r1 = [[SNTRule alloc] init];
   r1.shasum = self.sut.launchdCertSHA;
-  r1.state = RULESTATE_WHITELIST;
-  r1.type = RULETYPE_CERT;
+  r1.state = SNTRuleStateWhitelist;
+  r1.type = SNTRuleTypeCertificate;
   SNTRule *r2 = [[SNTRule alloc] init];
   r2.shasum = self.sut.santadCertSHA;
-  r2.state = RULESTATE_WHITELIST;
-  r2.type = RULETYPE_CERT;
+  r2.state = SNTRuleStateWhitelist;
+  r2.type = SNTRuleTypeCertificate;
 
   error = nil;
   XCTAssertTrue(([self.sut addRules:@[ [self _exampleCertRule], r1, r2 ]
@@ -125,7 +125,7 @@
 - (void)testAddInvalidRule {
   SNTRule *r = [[SNTRule alloc] init];
   r.shasum = @"a";
-  r.type = RULETYPE_CERT;
+  r.type = SNTRuleTypeCertificate;
 
   NSError *error;
   XCTAssertFalse([self.sut addRules:@[r] cleanSlate:NO error:&error]);
@@ -140,7 +140,7 @@
   SNTRule *r = [self.sut binaryRuleForSHA256:@"a"];
   XCTAssertNotNil(r);
   XCTAssertEqualObjects(r.shasum, @"a");
-  XCTAssertEqual(r.type, RULETYPE_BINARY);
+  XCTAssertEqual(r.type, SNTRuleTypeBinary);
 
   r = [self.sut binaryRuleForSHA256:@"b"];
   XCTAssertNil(r);
@@ -154,7 +154,7 @@
   SNTRule *r = [self.sut certificateRuleForSHA256:@"b"];
   XCTAssertNotNil(r);
   XCTAssertEqualObjects(r.shasum, @"b");
-  XCTAssertEqual(r.type, RULETYPE_CERT);
+  XCTAssertEqual(r.type, SNTRuleTypeCertificate);
 
   r = [self.sut certificateRuleForSHA256:@"a"];
   XCTAssertNil(r);

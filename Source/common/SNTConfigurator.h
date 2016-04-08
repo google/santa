@@ -28,7 +28,7 @@ extern NSString *const kDefaultConfigFilePath;
 ///
 ///  The operating mode.
 ///
-@property(nonatomic) santa_clientmode_t clientMode;
+@property(nonatomic) SNTClientMode clientMode;
 
 ///
 ///  The regex of paths to log file changes for. Regexes are specified in ICU format.

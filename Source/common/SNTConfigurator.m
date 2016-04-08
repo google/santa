@@ -96,20 +96,23 @@ static NSString *const kMachineIDPlistKeyKey = @"MachineIDKey";
 
 #pragma mark Public Interface
 
-- (santa_clientmode_t)clientMode {
-  int cm = [self.configData[kClientModeKey] intValue];
-  if (cm > CLIENTMODE_UNKNOWN && cm < CLIENTMODE_MAX) {
-    return (santa_clientmode_t)cm;
+- (SNTClientMode)clientMode {
+  NSInteger cm = [self.configData[kClientModeKey] longValue];
+  if (cm == SNTClientModeMonitor || cm == SNTClientModeLockdown) {
+    return (SNTClientMode)cm;
   } else {
-    self.configData[kClientModeKey] = @(CLIENTMODE_MONITOR);
-    return CLIENTMODE_MONITOR;
+    LOGE(@"Client mode was set to bad value: %ld. Resetting to MONITOR.", cm);
+    self.configData[kClientModeKey] = @(SNTClientModeMonitor);
+    return SNTClientModeMonitor;
   }
 }
 
-- (void)setClientMode:(santa_clientmode_t)newMode {
-  if (newMode > CLIENTMODE_UNKNOWN && newMode < CLIENTMODE_MAX) {
+- (void)setClientMode:(SNTClientMode)newMode {
+  if (newMode == SNTClientModeMonitor || newMode == SNTClientModeLockdown) {
     self.configData[kClientModeKey] = @(newMode);
     [self saveConfigToDisk];
+  } else {
+    LOGW(@"Ignoring request to change client mode to %ld", newMode);
   }
 }
 

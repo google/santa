@@ -61,17 +61,17 @@
 
 #pragma mark Binary Validation
 
-- (santa_eventstate_t)makeDecision:(SNTCachedDecision *)cd binaryInfo:(SNTFileInfo *)fi {
+- (SNTEventState)makeDecision:(SNTCachedDecision *)cd binaryInfo:(SNTFileInfo *)fi {
   SNTRule *rule = [self.ruleTable binaryRuleForSHA256:cd.sha256];
   if (rule) {
     switch (rule.state) {
-      case RULESTATE_WHITELIST:
-        return EVENTSTATE_ALLOW_BINARY;
-      case RULESTATE_SILENT_BLACKLIST:
+      case SNTRuleStateWhitelist:
+        return SNTEventStateAllowBinary;
+      case SNTRuleStateSilentBlacklist:
         cd.silentBlock = YES;
-      case RULESTATE_BLACKLIST:
+      case SNTRuleStateBlacklist:
         cd.customMsg = rule.customMsg;
-        return EVENTSTATE_BLOCK_BINARY;
+        return SNTEventStateBlockBinary;
       default: break;
     }
   }
@@ -79,13 +79,13 @@
   rule = [self.ruleTable certificateRuleForSHA256:cd.certSHA256];
   if (rule) {
     switch (rule.state) {
-      case RULESTATE_WHITELIST:
-        return EVENTSTATE_ALLOW_CERTIFICATE;
-      case RULESTATE_SILENT_BLACKLIST:
+      case SNTRuleStateWhitelist:
+        return SNTEventStateAllowCertificate;
+      case SNTRuleStateSilentBlacklist:
         cd.silentBlock = YES;
-      case RULESTATE_BLACKLIST:
+      case SNTRuleStateBlacklist:
         cd.customMsg = rule.customMsg;
-        return EVENTSTATE_BLOCK_CERTIFICATE;
+        return SNTEventStateBlockCertificate;
       default: break;
     }
   }
@@ -93,19 +93,19 @@
   NSString *msg = [self fileIsScopeBlacklisted:fi];
   if (msg) {
     cd.decisionExtra = msg;
-    return EVENTSTATE_BLOCK_SCOPE;
+    return SNTEventStateBlockScope;
   }
 
   msg = [self fileIsScopeWhitelisted:fi];
   if (msg) {
     cd.decisionExtra = msg;
-    return EVENTSTATE_ALLOW_SCOPE;
+    return SNTEventStateAllowScope;
   }
 
   switch ([[SNTConfigurator configurator] clientMode]) {
-    case CLIENTMODE_MONITOR: return EVENTSTATE_ALLOW_UNKNOWN;
-    case CLIENTMODE_LOCKDOWN: return EVENTSTATE_BLOCK_UNKNOWN;
-    default: return EVENTSTATE_BLOCK_UNKNOWN;
+    case SNTClientModeMonitor: return SNTEventStateAllowUnknown;
+    case SNTClientModeLockdown: return SNTEventStateBlockUnknown;
+    default: return SNTEventStateBlockUnknown;
   }
 }
 
@@ -140,9 +140,9 @@
   [self.driverManager postToKernelAction:action forVnodeID:cd.vnodeId];
 
   // Log to database if necessary.
-  if (cd.decision != EVENTSTATE_ALLOW_BINARY &&
-      cd.decision != EVENTSTATE_ALLOW_CERTIFICATE &&
-      cd.decision != EVENTSTATE_ALLOW_SCOPE) {
+  if (cd.decision != SNTEventStateAllowBinary &&
+      cd.decision != SNTEventStateAllowCertificate &&
+      cd.decision != SNTEventStateAllowScope) {
     SNTStoredEvent *se = [[SNTStoredEvent alloc] init];
     se.occurrenceDate = [[NSDate alloc] init];
     se.fileSHA256 = cd.sha256;
@@ -255,17 +255,17 @@
   }
 }
 
-- (santa_action_t)actionForEventState:(santa_eventstate_t)state {
+- (santa_action_t)actionForEventState:(SNTEventState)state {
   switch (state) {
-    case EVENTSTATE_ALLOW_BINARY:
-    case EVENTSTATE_ALLOW_CERTIFICATE:
-    case EVENTSTATE_ALLOW_SCOPE:
-    case EVENTSTATE_ALLOW_UNKNOWN:
+    case SNTEventStateAllowBinary:
+    case SNTEventStateAllowCertificate:
+    case SNTEventStateAllowScope:
+    case SNTEventStateAllowUnknown:
       return ACTION_RESPOND_ALLOW;
-    case EVENTSTATE_BLOCK_BINARY:
-    case EVENTSTATE_BLOCK_CERTIFICATE:
-    case EVENTSTATE_BLOCK_SCOPE:
-    case EVENTSTATE_BLOCK_UNKNOWN:
+    case SNTEventStateBlockBinary:
+    case SNTEventStateBlockCertificate:
+    case SNTEventStateBlockScope:
+    case SNTEventStateBlockUnknown:
       return ACTION_RESPOND_DENY;
     default:
       LOGW(@"Invalid event state %ld", state);
