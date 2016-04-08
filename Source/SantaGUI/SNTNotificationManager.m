@@ -72,7 +72,7 @@ static NSString * const silencedNotificationsKey = @"SilencedNotifications";
   // See if this binary is silenced.
   NSUserDefaults *ud = [NSUserDefaults standardUserDefaults];
   NSDate *silenceDate = [ud objectForKey:silencedNotificationsKey][event.fileSHA256];
-  if (silenceDate) {
+  if ([silenceDate isKindOfClass:[NSDate class]]) {
     NSDate *oneDayAgo = [NSDate dateWithTimeIntervalSinceNow:-86400];
     if ([silenceDate compare:[NSDate date]] == NSOrderedDescending) {
       NSLog(@"Notification silence: date is in the future, ignoring");
