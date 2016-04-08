@@ -12,24 +12,21 @@
 ///    See the License for the specific language governing permissions and
 ///    limitations under the License.
 
-#ifndef SANTA__COMMON__COMMONENUMS_H
-#define SANTA__COMMON__COMMONENUMS_H
-
 ///
 ///  These enums are used in various places throughout the Santa client code.
 ///  The integer values are also stored in the database and so shouldn't be changed.
 ///
 
-typedef enum {
+typedef NS_ENUM(NSInteger, santa_ruletype_t) {
   RULETYPE_UNKNOWN,
 
   RULETYPE_BINARY = 1,
   RULETYPE_CERT = 2,
 
   RULETYPE_MAX
-} santa_ruletype_t;
+};
 
-typedef enum {
+typedef NS_ENUM(NSInteger, santa_rulestate_t) {
   RULESTATE_UNKNOWN,
 
   RULESTATE_WHITELIST = 1,
@@ -38,18 +35,18 @@ typedef enum {
   RULESTATE_REMOVE = 4,
 
   RULESTATE_MAX
-} santa_rulestate_t;
+};
 
-typedef enum {
+typedef NS_ENUM(NSInteger, santa_clientmode_t) {
   CLIENTMODE_UNKNOWN,
 
   CLIENTMODE_MONITOR = 1,
   CLIENTMODE_LOCKDOWN = 2,
 
   CLIENTMODE_MAX
-} santa_clientmode_t;
+};
 
-typedef enum {
+typedef NS_ENUM(NSInteger, santa_eventstate_t) {
   EVENTSTATE_UNKNOWN,
 
   EVENTSTATE_ALLOW_UNKNOWN = 1,
@@ -65,7 +62,7 @@ typedef enum {
   EVENTSTATE_RELATED_BINARY = 9,
 
   EVENTSTATE_MAX
-} santa_eventstate_t;
+};
 
 typedef NS_ENUM(NSInteger, SNTRuleTableError) {
   SNTRuleTableErrorEmptyRuleArray,
@@ -78,5 +75,3 @@ typedef NS_ENUM(NSInteger, SNTRuleTableError) {
 static const char *kKextPath = "/Library/Extensions/santa-driver.kext";
 static const char *kSantaDPath = "/Library/Extensions/santa-driver.kext/Contents/MacOS/santad";
 static const char *kSantaCtlPath = "/Library/Extensions/santa-driver.kext/Contents/MacOS/santactl";
-
-#endif  // SANTA__COMMON__COMMONENUMS_H

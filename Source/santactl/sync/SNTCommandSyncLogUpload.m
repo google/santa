@@ -16,11 +16,11 @@
 
 #import "NSData+Zlib.h"
 
-#include "SNTCommonEnums.h"
 #include "SNTLogging.h"
 
 #import "SNTCommandSyncConstants.h"
 #import "SNTCommandSyncState.h"
+#import "SNTCommonEnums.h"
 
 @implementation SNTCommandSyncLogUpload
 

@@ -59,7 +59,7 @@ REGISTER_COMMAND_NAME(@"status")
         clientMode = @"Lockdown";
         break;
       default:
-        clientMode = [NSString stringWithFormat:@"Unknown (%d)", cm];
+        clientMode = [NSString stringWithFormat:@"Unknown (%ld)", cm];
         break;
     }
     dispatch_group_leave(group);

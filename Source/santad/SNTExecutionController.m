@@ -268,7 +268,7 @@
     case EVENTSTATE_BLOCK_UNKNOWN:
       return ACTION_RESPOND_DENY;
     default:
-      LOGW(@"Invalid event state %d", state);
+      LOGW(@"Invalid event state %ld", state);
       return ACTION_RESPOND_DENY;
   }
 }

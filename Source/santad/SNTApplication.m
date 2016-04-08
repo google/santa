@@ -17,8 +17,7 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 
-#include "SNTCommonEnums.h"
-
+#import "SNTCommonEnums.h"
 #import "SNTConfigurator.h"
 #import "SNTDaemonControlController.h"
 #import "SNTDatabaseController.h"

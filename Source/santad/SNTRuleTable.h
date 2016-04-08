@@ -12,9 +12,8 @@
 ///    See the License for the specific language governing permissions and
 ///    limitations under the License.
 
+#import "SNTCommonEnums.h"
 #import "SNTDatabaseTable.h"
-
-#include "SNTCommonEnums.h"
 
 @class SNTRule;
 @class SNTNotificationMessage;

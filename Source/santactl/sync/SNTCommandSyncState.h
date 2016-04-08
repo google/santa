@@ -12,7 +12,7 @@
 ///    See the License for the specific language governing permissions and
 ///    limitations under the License.
 
-#include "SNTCommonEnums.h"
+#import "SNTCommonEnums.h"
 
 /// An instance of this class is passed to each stage of the sync process for storing data
 /// that might be needed in later stages.

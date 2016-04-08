@@ -12,7 +12,7 @@
 ///    See the License for the specific language governing permissions and
 ///    limitations under the License.
 
-#include "SNTCommonEnums.h"
+#import "SNTCommonEnums.h"
 
 ///
 ///  Store information about executions from decision making for later logging.
