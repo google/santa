@@ -28,6 +28,9 @@
 @implementation SNTRuleTable
 
 - (uint32_t)initializeDatabase:(FMDatabase *)db fromVersion:(uint32_t)version {
+  // Lock this database from other processes
+  [db executeQuery:@"PRAGMA locking_mode = EXCLUSIVE;"];
+
   // Save hashes of the signing certs for launchd and santad
   self.santadCertSHA = [[[[MOLCodesignChecker alloc] initWithSelf] leafCertificate] SHA256];
   self.launchdCertSHA = [[[[MOLCodesignChecker alloc] initWithPID:1] leafCertificate] SHA256];
