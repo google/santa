@@ -31,10 +31,6 @@
   // Lock this database from other processes
   [db executeQuery:@"PRAGMA locking_mode = EXCLUSIVE;"];
 
-  // Save hashes of the signing certs for launchd and santad
-  self.santadCertSHA = [[[[MOLCodesignChecker alloc] initWithSelf] leafCertificate] SHA256];
-  self.launchdCertSHA = [[[[MOLCodesignChecker alloc] initWithPID:1] leafCertificate] SHA256];
-
   uint32_t newVersion = 0;
 
   if (version < 1) {
@@ -44,23 +40,32 @@
                       @"'type' INTEGER NOT NULL, "
                       @"'custommsg' TEXT"
                       @")"];
-
     [db executeUpdate:@"CREATE VIEW binrules AS SELECT * FROM rules WHERE type=1"];
     [db executeUpdate:@"CREATE VIEW certrules AS SELECT * FROM rules WHERE type=2"];
-
     [db executeUpdate:@"CREATE UNIQUE INDEX rulesunique ON rules (shasum, type)"];
 
-    // Insert the codesigning certs for the running santad and launchd into the initial database.
-    // This helps prevent accidentally denying critical system components while the database
-    // is empty. This 'initial database' will then be cleared on the first successful sync.
-    [db executeUpdate:@"INSERT INTO rules (shasum, state, type) VALUES (?, ?, ?)",
-                      self.santadCertSHA, @(RULESTATE_WHITELIST), @(RULETYPE_CERT)];
-    [db executeUpdate:@"INSERT INTO rules (shasum, state, type) VALUES (?, ?, ?)",
-                      self.launchdCertSHA, @(RULESTATE_WHITELIST), @(RULETYPE_CERT)];
+    [[SNTConfigurator configurator] setSyncCleanRequired:YES];
 
     newVersion = 1;
+  }
 
-    [[SNTConfigurator configurator] setSyncCleanRequired:YES];
+  // Save hashes of the signing certs for launchd and santad.
+  // Used to ensure rules for them are not removed.
+  self.santadCertSHA = [[[[MOLCodesignChecker alloc] initWithSelf] leafCertificate] SHA256];
+  self.launchdCertSHA = [[[[MOLCodesignChecker alloc] initWithPID:1] leafCertificate] SHA256];
+
+  // Ensure the certificates used to sign the running launchd/santad are whitelisted.
+  // If they weren't previously and the database is not new, log an error.
+  int ruleCount = [db intForQuery:@"SELECT COUNT(*)"
+                                  @"FROM certrules "
+                                  @"WHERE (shasum=? OR shasum=?) AND state=?",
+                      self.santadCertSHA, self.launchdCertSHA, @(RULESTATE_WHITELIST)];
+  if (ruleCount != 2) {
+    if (version > 0) LOGE(@"Started without launchd/santad certificate rules in place!");    
+    [db executeUpdate:@"INSERT INTO rules (shasum, state, type) VALUES (?, ?, ?)",
+        self.santadCertSHA, @(RULESTATE_WHITELIST), @(RULETYPE_CERT)];
+    [db executeUpdate:@"INSERT INTO rules (shasum, state, type) VALUES (?, ?, ?)",
+        self.launchdCertSHA, @(RULESTATE_WHITELIST), @(RULETYPE_CERT)];
   }
 
   return newVersion;
