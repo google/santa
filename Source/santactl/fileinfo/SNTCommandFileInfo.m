@@ -139,7 +139,7 @@ REGISTER_COMMAND_NAME(@"fileinfo")
       }
     }
   }
-  if (csc.certificates) {
+  if (csc.certificates.count) {
     printf("Signing chain:\n");
 
     [csc.certificates enumerateObjectsUsingBlock:^(MOLCertificate *c,
