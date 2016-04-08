@@ -135,9 +135,12 @@ REGISTER_COMMAND_NAME(@"rule")
     [self printErrorUsageAndExit:@"Either SHA-256 or path to file must be specified"];
   }
 
-  [[daemonConn remoteObjectProxy] databaseRuleAddRule:newRule cleanSlate:NO reply:^(BOOL success) {
-    if (!success) {
-      printf("Failed to modify rules.");
+  [[daemonConn remoteObjectProxy] databaseRuleAddRules:@[newRule]
+                                            cleanSlate:NO
+                                                 reply:^(NSError *error) {
+    if (error) {
+      printf("Failed to modify rules: %s", [error.localizedDescription UTF8String]);
+      LOGD(@"Failure reason: %@", error.localizedFailureReason);
       exit(1);
     } else {
       if (newRule.state == RULESTATE_REMOVE) {

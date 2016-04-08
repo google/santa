@@ -33,12 +33,9 @@
 ///  Database ops
 ///
 - (void)databaseRuleCounts:(void (^)(int64_t binary, int64_t certificate))reply;
-- (void)databaseRuleAddRule:(SNTRule *)rule
-                 cleanSlate:(BOOL)cleanSlate
-                      reply:(void (^)(BOOL success))reply;
 - (void)databaseRuleAddRules:(NSArray *)rules
                   cleanSlate:(BOOL)cleanSlate
-                       reply:(void (^)(BOOL success))reply;
+                       reply:(void (^)(NSError *error))reply;
 
 - (void)databaseEventCount:(void (^)(int64_t count))reply;
 - (void)databaseEventForSHA256:(NSString *)sha256 reply:(void (^)(SNTStoredEvent *))reply;

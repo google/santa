@@ -67,6 +67,14 @@ typedef enum {
   EVENTSTATE_MAX
 } santa_eventstate_t;
 
+typedef NS_ENUM(NSInteger, SNTRuleTableError) {
+  SNTRuleTableErrorEmptyRuleArray,
+  SNTRuleTableErrorInsertOrReplaceFailed,
+  SNTRuleTableErrorInvalidRule,
+  SNTRuleTableErrorMissingRequiredRule,
+  SNTRuleTableErrorRemoveFailed
+};
+
 static const char *kKextPath = "/Library/Extensions/santa-driver.kext";
 static const char *kSantaDPath = "/Library/Extensions/santa-driver.kext/Contents/MacOS/santad";
 static const char *kSantaCtlPath = "/Library/Extensions/santa-driver.kext/Contents/MacOS/santactl";

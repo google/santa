@@ -55,8 +55,9 @@
 ///
 ///  @param rules Array of SNTRule's to add.
 ///  @param cleanSlate If true, remove all rules before adding the new rules.
-///  @return YES if all rules were added successfully.
+///  @param error When returning NO, will be filled with appropriate error.
+///  @return YES if adding all rules passed, NO if any were rejected.
 ///
-- (BOOL)addRules:(NSArray *)rules cleanSlate:(BOOL)cleanSlate;
+- (BOOL)addRules:(NSArray *)rules cleanSlate:(BOOL)cleanSlate error:(NSError **)error;
 
 @end

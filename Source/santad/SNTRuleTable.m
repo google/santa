@@ -133,9 +133,9 @@
 
 #pragma mark Adding
 
-- (BOOL)addRules:(NSArray *)rules cleanSlate:(BOOL)cleanSlate {
+- (BOOL)addRules:(NSArray *)rules cleanSlate:(BOOL)cleanSlate error:(NSError **)error {
   if (!rules || rules.count < 1) {
-    LOGE(@"Received request to add rules with nil/empty array.");
+    [self fillError:error code:SNTRuleTableErrorEmptyRuleArray message:nil];
     return NO;
   }
 
@@ -152,6 +152,7 @@
     if ((cleanSlate && requiredHashesWhitelist.count != 2) ||
         (requiredHashes.count != requiredHashesWhitelist.count)) {
       LOGE(@"Received request to remove whitelist for launchd/santad certificates.");
+      [self fillError:error code:SNTRuleTableErrorMissingRequiredRule message:nil];
       *rollback = failed = YES;
       return;
     }
@@ -163,6 +164,7 @@
     for (SNTRule *rule in rules) {
       if (![rule isKindOfClass:[SNTRule class]] || rule.shasum.length == 0 ||
           rule.state == RULESTATE_UNKNOWN || rule.type == RULETYPE_UNKNOWN) {
+        [self fillError:error code:SNTRuleTableErrorInvalidRule message:nil];
         *rollback = failed = YES;
         return;
       }
@@ -170,6 +172,9 @@
       if (rule.state == RULESTATE_REMOVE) {
         if (![db executeUpdate:@"DELETE FROM rules WHERE shasum=? AND type=?",
                                rule.shasum, @(rule.type)]) {
+          [self fillError:error
+                     code:SNTRuleTableErrorRemoveFailed
+                  message:[db lastErrorMessage]];
           *rollback = failed = YES;
           return;
         }
@@ -178,6 +183,9 @@
                                @"(shasum, state, type, custommsg) "
                                @"VALUES (?, ?, ?, ?);",
                                rule.shasum, @(rule.state), @(rule.type), rule.customMsg]) {
+          [self fillError:error
+                     code:SNTRuleTableErrorInsertOrReplaceFailed
+                  message:[db lastErrorMessage]];
           *rollback = failed = YES;
           return;
         }
@@ -186,6 +194,36 @@
   }];
 
   return !failed;
+}
+
+//  Helper to create an NSError where necessary.
+//  The return value is irrelevant but the static analyzer complains if it's not a BOOL.
+- (BOOL)fillError:(NSError **)error code:(SNTRuleTableError)code message:(NSString *)message {
+  if (!error) return NO;
+
+  NSMutableDictionary *d = [NSMutableDictionary dictionary];
+  switch (code) {
+    case SNTRuleTableErrorEmptyRuleArray:
+      d[NSLocalizedDescriptionKey] = @"Empty rule array";
+      break;
+    case SNTRuleTableErrorInvalidRule:
+      d[NSLocalizedDescriptionKey] = @"Rule array contained invalid entry";
+      break;
+    case SNTRuleTableErrorInsertOrReplaceFailed:
+      d[NSLocalizedDescriptionKey] = @"A database error occurred while inserting/replacing a rule";
+      break;
+    case SNTRuleTableErrorRemoveFailed:
+      d[NSLocalizedDescriptionKey] = @"A database error occurred while deleting a rule";
+      break;
+    case SNTRuleTableErrorMissingRequiredRule:
+      d[NSLocalizedDescriptionKey] = @"A required rule was requested to be deleted";
+      break;
+  }
+
+  if (message) d[NSLocalizedFailureReasonErrorKey] = message;
+
+  *error = [NSError errorWithDomain:@"com.google.santad.ruletable" code:code userInfo:d];
+  return YES;
 }
 
 @end

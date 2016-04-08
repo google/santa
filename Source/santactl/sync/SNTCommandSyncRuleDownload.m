@@ -91,12 +91,13 @@
         if (syncState.downloadedRules.count) {
           [[daemonConn remoteObjectProxy] databaseRuleAddRules:syncState.downloadedRules
                                                     cleanSlate:syncState.cleanSync
-                                                         reply:^(BOOL success) {
-            if (success) {
+                                                         reply:^(NSError *error) {
+            if (!error) {
               LOGI(@"Added %lu rule(s)", syncState.downloadedRules.count);
               handler(YES);
             } else {
-              LOGE(@"Failed to add rules to database");
+              LOGE(@"Failed to add rule(s) to database: %@", error.localizedDescription);
+              LOGD(@"Failure reason: %@", error.localizedFailureReason);
               handler(NO);
             }
           }];

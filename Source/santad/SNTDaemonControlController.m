@@ -97,14 +97,11 @@ double watchdogRAMPeak = 0;
   reply([rdb binaryRuleCount], [rdb certificateRuleCount]);
 }
 
-- (void)databaseRuleAddRule:(SNTRule *)rule cleanSlate:(BOOL)cleanSlate
-                      reply:(void (^)(BOOL success))reply {
-  [self databaseRuleAddRules:@[ rule ] cleanSlate:cleanSlate reply:reply];
-}
-
-- (void)databaseRuleAddRules:(NSArray *)rules cleanSlate:(BOOL)cleanSlate
-                       reply:(void (^)(BOOL success))reply {
-  BOOL success = [[SNTDatabaseController ruleTable] addRules:rules cleanSlate:cleanSlate];
+- (void)databaseRuleAddRules:(NSArray *)rules
+                  cleanSlate:(BOOL)cleanSlate
+                       reply:(void (^)(NSError *error))reply {
+  NSError *error;
+  [[SNTDatabaseController ruleTable] addRules:rules cleanSlate:cleanSlate error:&error];
 
   // If any rules were added that were not whitelist, flush cache.
   NSPredicate *p = [NSPredicate predicateWithFormat:@"SELF.state != %d", RULESTATE_WHITELIST];
@@ -113,7 +110,7 @@ double watchdogRAMPeak = 0;
     [self.driverManager flushCache];
   }
 
-  reply(success);
+  reply(error);
 }
 
 - (void)databaseEventCount:(void (^)(int64_t count))reply {

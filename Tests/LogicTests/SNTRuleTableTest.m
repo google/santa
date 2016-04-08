@@ -58,18 +58,24 @@
   NSUInteger ruleCount = self.sut.ruleCount;
   NSUInteger binaryRuleCount = self.sut.binaryRuleCount;
 
-  [self.sut addRules:@[ [self _exampleBinaryRule] ] cleanSlate:NO];
+  NSError *error;
+  [self.sut addRules:@[ [self _exampleBinaryRule] ] cleanSlate:NO error:&error];
 
   XCTAssertEqual(self.sut.ruleCount, ruleCount + 1);
   XCTAssertEqual(self.sut.binaryRuleCount, binaryRuleCount + 1);
+  XCTAssertNil(error);
 }
 
 - (void)testAddRulesClean {
   // Assert that insert without 'self' and launchd cert hashes fails
-  XCTAssertFalse([self.sut addRules:@[ [self _exampleBinaryRule] ] cleanSlate:YES]);
+  NSError *error;
+  XCTAssertFalse([self.sut addRules:@[ [self _exampleBinaryRule] ] cleanSlate:YES error:&error]);
+  XCTAssertEqual(error.code, SNTRuleTableErrorMissingRequiredRule);
 
   // Now add a binary rule without clean slate
-  XCTAssertTrue([self.sut addRules:@[ [self _exampleBinaryRule] ] cleanSlate:NO]);
+  error = nil;
+  XCTAssertTrue([self.sut addRules:@[ [self _exampleBinaryRule] ] cleanSlate:NO error:&error]);
+  XCTAssertNil(error);
 
   // Now add a cert rule + the required rules as a clean slate,
   // assert that the binary rule was removed
@@ -82,31 +88,54 @@
   r2.state = RULESTATE_WHITELIST;
   r2.type = RULETYPE_CERT;
 
-  XCTAssertTrue(([self.sut addRules:@[ [self _exampleCertRule], r1, r2 ] cleanSlate:YES]));
+  error = nil;
+  XCTAssertTrue(([self.sut addRules:@[ [self _exampleCertRule], r1, r2 ]
+                         cleanSlate:YES
+                              error:&error]));
   XCTAssertEqual([self.sut binaryRuleCount], 0);
+  XCTAssertNil(error);
 }
 
 - (void)testAddMultipleRules {
   NSUInteger ruleCount = self.sut.ruleCount;
 
+  NSError *error;
   [self.sut addRules:@[ [self _exampleBinaryRule],
                         [self _exampleCertRule],
                         [self _exampleBinaryRule] ]
-          cleanSlate:NO];
+          cleanSlate:NO
+               error:&error];
 
   XCTAssertEqual(self.sut.ruleCount, ruleCount + 2);
+  XCTAssertNil(error);
 }
 
 - (void)testAddRulesEmptyArray {
-  XCTAssertFalse([self.sut addRules:@[] cleanSlate:YES]);
+  NSError *error;
+  XCTAssertFalse([self.sut addRules:@[] cleanSlate:YES error:&error]);
+  XCTAssertEqual(error.code, SNTRuleTableErrorEmptyRuleArray);
 }
 
 - (void)testAddRulesNilArray {
-  XCTAssertFalse([self.sut addRules:nil cleanSlate:YES]);
+  NSError *error;
+  XCTAssertFalse([self.sut addRules:nil cleanSlate:YES error:&error]);
+  XCTAssertEqual(error.code, SNTRuleTableErrorEmptyRuleArray);
+}
+
+- (void)testAddInvalidRule {
+  SNTRule *r = [[SNTRule alloc] init];
+  r.shasum = @"a";
+  r.type = RULETYPE_CERT;
+
+  NSError *error;
+  XCTAssertFalse([self.sut addRules:@[r] cleanSlate:NO error:&error]);
+  XCTAssertEqual(error.code, SNTRuleTableErrorInvalidRule);
 }
 
 - (void)testFetchBinaryRule {
-  [self.sut addRules:@[ [self _exampleBinaryRule], [self _exampleCertRule] ] cleanSlate:NO];
+  [self.sut addRules:@[ [self _exampleBinaryRule], [self _exampleCertRule] ]
+          cleanSlate:NO
+               error:nil];
 
   SNTRule *r = [self.sut binaryRuleForSHA256:@"a"];
   XCTAssertNotNil(r);
@@ -118,7 +147,9 @@
 }
 
 - (void)testFetchCertificateRule {
-  [self.sut addRules:@[ [self _exampleBinaryRule], [self _exampleCertRule] ] cleanSlate:NO];
+  [self.sut addRules:@[ [self _exampleBinaryRule], [self _exampleCertRule] ]
+          cleanSlate:NO
+               error:nil];
 
   SNTRule *r = [self.sut certificateRuleForSHA256:@"b"];
   XCTAssertNotNil(r);
@@ -136,8 +167,7 @@
   FMDatabaseQueue *dbq = [[FMDatabaseQueue alloc] initWithPath:dbPath];
   SNTRuleTable *sut = [[SNTRuleTable alloc] initWithDatabaseQueue:dbq];
 
-  [sut addRules:@[ [self _exampleBinaryRule] ] cleanSlate:NO];
-
+  [sut addRules:@[ [self _exampleBinaryRule] ] cleanSlate:NO error:nil];
   XCTAssertGreaterThan(sut.ruleCount, 0);
 
   [[NSFileManager defaultManager] removeItemAtPath:dbPath error:NULL];
