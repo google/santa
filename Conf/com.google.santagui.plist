@@ -7,6 +7,7 @@
 				<key>ProgramArguments</key>
 				<array>
 					<string>/Applications/Santa.app/Contents/MacOS/Santa</string>
+					<string>--syslog</string>
 				</array>
 				<key>RunAtLoad</key>
 				<true/>

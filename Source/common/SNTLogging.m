@@ -42,8 +42,7 @@ void logMessage(LogLevel level, FILE *destination, NSString *format, ...) {
     }
 
     // If requested, redirect output to syslog.
-    if ([[[NSProcessInfo processInfo] arguments] containsObject:@"--syslog"] ||
-        strncmp(binaryName, "santad", 6) == 0) {
+    if ([[[NSProcessInfo processInfo] arguments] containsObject:@"--syslog"]) {
       useSyslog = YES;
       pthread_key_create(&syslogKey, syslogClientDestructor);
     }

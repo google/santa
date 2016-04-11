@@ -14,6 +14,7 @@
 
 #import "SNTNotificationManager.h"
 
+#import "SNTLogging.h"
 #import "SNTStoredEvent.h"
 
 @interface SNTNotificationManager ()
@@ -75,19 +76,19 @@ static NSString * const silencedNotificationsKey = @"SilencedNotifications";
   if ([silenceDate isKindOfClass:[NSDate class]]) {
     NSDate *oneDayAgo = [NSDate dateWithTimeIntervalSinceNow:-86400];
     if ([silenceDate compare:[NSDate date]] == NSOrderedDescending) {
-      NSLog(@"Notification silence: date is in the future, ignoring");
+      LOGI(@"Notification silence: date is in the future, ignoring");
       [self updateSilenceDate:nil forHash:event.fileSHA256];
     } else if ([silenceDate compare:oneDayAgo] == NSOrderedAscending) {
-      NSLog(@"Notification silence: date is more than one day ago, ignoring");
+      LOGI(@"Notification silence: date is more than one day ago, ignoring");
       [self updateSilenceDate:nil forHash:event.fileSHA256];
     } else {
-      NSLog(@"Notification silence: dropping notification for %@", event.fileSHA256);
+      LOGI(@"Notification silence: dropping notification for %@", event.fileSHA256);
       return;
     }
   }
 
   if (!event) {
-    NSLog(@"Error: Missing event object in message received from daemon!");
+    LOGI(@"Error: Missing event object in message received from daemon!");
     return;
   }
 
