@@ -484,8 +484,8 @@
 			isa = PBXGroup;
 			children = (
 				0D35BDAA18FD7CFD00921A21 /* SNTCommandController.h */,
-				0D35BDA118FD71CE00921A21 /* main.m */,
 				0D35BDAB18FD7CFD00921A21 /* SNTCommandController.m */,
+				0D35BDA118FD71CE00921A21 /* main.m */,
 				0DAF01141C1B794B00F5B6C3 /* Commands */,
 				0D35BDA318FD71CE00921A21 /* Resources */,
 			);
