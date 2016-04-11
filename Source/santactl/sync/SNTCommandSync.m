@@ -140,8 +140,12 @@ REGISTER_COMMAND_NAME(@"sync")
   s.daemonConn = daemonConn;
 
   if ([arguments containsObject:@"singleevent"]) {
-    NSUInteger idx = [arguments indexOfObject:@"singleevent"];
-    idx++;
+    NSUInteger idx = [arguments indexOfObject:@"singleevent"] + 1;
+    if (idx >= arguments.count) {
+      LOGI(@"singleevent takes an argument");
+      exit(1);
+    }
+
     NSString *obj = arguments[idx];
     if (obj.length != 64) {
       LOGI(@"singleevent passed without SHA-256 as next argument");
