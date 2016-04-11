@@ -58,12 +58,37 @@ REGISTER_COMMAND_NAME(@"sync")
 }
 
 + (void)runWithArguments:(NSArray *)arguments daemonConnection:(SNTXPCConnection *)daemonConn {
-  SNTConfigurator *config = [SNTConfigurator configurator];
-
   // Ensure we have no privileges
   if (!DropRootPrivileges()) {
     LOGE(@"Failed to drop root privileges. Exiting.");
     exit(1);
+  }
+
+  SNTConfigurator *config = [SNTConfigurator configurator];
+
+  SNTCommandSync *s = [[self alloc] init];
+
+  // Gather some data needed during some sync stages
+  s.syncState = [[SNTCommandSyncState alloc] init];
+
+  s.syncState.syncBaseURL = config.syncBaseURL;
+  if (!s.syncState.syncBaseURL) {
+    LOGE(@"Missing SyncBaseURL. Can't sync without it.");
+    exit(1);
+  } else if (![s.syncState.syncBaseURL.scheme isEqual:@"https"]) {
+    LOGW(@"SyncBaseURL is not over HTTPS!");
+  }
+
+  s.syncState.machineID = config.machineID;
+  if ([s.syncState.machineID length] == 0) {
+    LOGE(@"Missing Machine ID. Can't sync without it.");
+    exit(1);
+  }
+
+  s.syncState.machineOwner = config.machineOwner;
+  if ([s.syncState.machineOwner length] == 0) {
+    s.syncState.machineOwner = @"";
+    LOGW(@"Missing Machine Owner.");
   }
 
   // Dropping root privileges to the 'nobody' user causes the default NSURLCache to throw
@@ -72,16 +97,15 @@ REGISTER_COMMAND_NAME(@"sync")
                                                               diskCapacity:0
                                                                   diskPath:nil]];
 
-  SNTCommandSync *s = [[self alloc] init];
 
   SNTAuthenticatingURLSession *authURLSession = [[SNTAuthenticatingURLSession alloc] init];
-
   authURLSession.userAgent = @"santactl-sync/";
   NSString *santactlVersion = [[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleVersion"];
   if (santactlVersion) {
     authURLSession.userAgent = [authURLSession.userAgent stringByAppendingString:santactlVersion];
   }
   authURLSession.refusesRedirects = YES;
+  authURLSession.serverHostname = s.syncState.syncBaseURL.host;
 
   // Configure server auth
   if ([config syncServerAuthRootsFile]) {
@@ -114,30 +138,6 @@ REGISTER_COMMAND_NAME(@"sync")
 
   s.session = [authURLSession session];
   s.daemonConn = daemonConn;
-
-  // Gather some data needed during some sync stages
-  s.syncState = [[SNTCommandSyncState alloc] init];
-
-  s.syncState.syncBaseURL = config.syncBaseURL;
-  if (!s.syncState.syncBaseURL) {
-    LOGE(@"Missing SyncBaseURL. Can't sync without it.");
-    exit(1);
-  } else if (![s.syncState.syncBaseURL.scheme isEqual:@"https"]) {
-    LOGW(@"SyncBaseURL is not over HTTPS!");
-  }
-  authURLSession.serverHostname = s.syncState.syncBaseURL.host;
-
-  s.syncState.machineID = config.machineID;
-  if ([s.syncState.machineID length] == 0) {
-    LOGE(@"Missing Machine ID. Can't sync without it.");
-    exit(1);
-  }
-
-  s.syncState.machineOwner = config.machineOwner;
-  if ([s.syncState.machineOwner length] == 0) {
-    s.syncState.machineOwner = @"";
-    LOGW(@"Missing Machine Owner.");  
-  }
 
   if ([arguments containsObject:@"singleevent"]) {
     NSUInteger idx = [arguments indexOfObject:@"singleevent"];
