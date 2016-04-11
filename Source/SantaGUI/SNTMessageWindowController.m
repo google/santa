@@ -53,7 +53,7 @@
   self = [super initWithWindowNibName:@"MessageWindow"];
   if (self) {
     _event = event;
-    _customMessage = (message != (NSString *)[NSNull null] ? message : nil);
+    _customMessage = message;
   }
   return self;
 }

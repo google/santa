@@ -61,7 +61,7 @@ static NSString * const silencedNotificationsKey = @"SilencedNotifications";
   [ud setObject:d forKey:silencedNotificationsKey];
 }
 
-#pragma mark SNTNotifierXPC protocol methods
+#pragma mark SNTNotifierXPC protocol method
 
 - (void)postBlockNotification:(SNTStoredEvent *)event withCustomMessage:(NSString *)message {
   // See if this binary is already in the list of pending notifications.
@@ -90,31 +90,21 @@ static NSString * const silencedNotificationsKey = @"SilencedNotifications";
     NSLog(@"Error: Missing event object in message received from daemon!");
     return;
   }
-  if (!message) message = (NSString *)[NSNull null];
 
   // Notifications arrive on a background thread but UI updates must happen on the main thread.
   // This includes making windows.
-  [self performSelectorOnMainThread:@selector(postBlockNotificationMainThread:)
-                         withObject:@{ @"event" : event,
-                                       @"custommsg" : message }
-                      waitUntilDone:NO];
-}
+  dispatch_async(dispatch_get_main_queue(), ^{
+    SNTMessageWindowController *pendingMsg =
+        [[SNTMessageWindowController alloc] initWithEvent:event andMessage:message];
+    pendingMsg.delegate = self;
+    [self.pendingNotifications addObject:pendingMsg];
 
-- (void)postBlockNotificationMainThread:(NSDictionary *)dict {
-  SNTStoredEvent *event = dict[@"event"];
-  NSString *msg = dict[@"custommsg"];
-
-  // Create message window
-  SNTMessageWindowController *pendingMsg = [[SNTMessageWindowController alloc] initWithEvent:event
-                                                                                  andMessage:msg];
-  pendingMsg.delegate = self;
-  [self.pendingNotifications addObject:pendingMsg];
-
-  // If a notification isn't currently being displayed, display the incoming one.
-  if (!self.currentWindowController) {
-    self.currentWindowController = pendingMsg;
-    [pendingMsg showWindow:nil];
-  }
+    // If a notification isn't currently being displayed, display the incoming one.
+    if (!self.currentWindowController) {
+      self.currentWindowController = pendingMsg;
+      [pendingMsg showWindow:nil];
+    }
+  });
 }
 
 @end
