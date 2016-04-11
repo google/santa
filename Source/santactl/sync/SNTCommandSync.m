@@ -50,7 +50,11 @@ REGISTER_COMMAND_NAME(@"sync")
 }
 
 + (NSString *)longHelpText {
-  return nil;
+  return (@"If Santa is configured to synchronize with a a server, "
+          @"this is the command used for syncing.\n\n"
+          @"Options:\n"
+          @"  --clean: Perform a clean sync, erasing all existing rules and requesting a"
+          @"           clean sync from the server.");
 }
 
 + (void)runWithArguments:(NSArray *)arguments daemonConnection:(SNTXPCConnection *)daemonConn {
