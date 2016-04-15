@@ -445,6 +445,9 @@ int SantaDecisionManager::VnodeCallback(const kauth_cred_t cred,
         pidWrapper->pid = proc_pid(proc);
         pidWrapper->ppid = proc_ppid(proc);
         lck_rw_lock_exclusive(vnode_pid_map_lock_);
+        if (vnode_pid_map_->getCount() > 5000) {
+          vnode_pid_map_->flushCollection();
+        }
         vnode_pid_map_->setObject(vnode_str, pidWrapper);
         lck_rw_unlock_exclusive(vnode_pid_map_lock_);
         pidWrapper->release();
