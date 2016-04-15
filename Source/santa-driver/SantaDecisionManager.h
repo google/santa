@@ -222,13 +222,26 @@ class SantaDecisionManager : public OSObject {
 
   ///
   ///  Creates a new santa_message_t with some fields pre-filled.
+  ///  @param credential The kauth_cred_t for this action, if available.
+  ///         If nullptr, will get the credential for the current process.
   ///
-  static inline santa_message_t *NewMessage() {
+  static inline santa_message_t *NewMessage(kauth_cred_t credential) {
+    bool should_release = false;
+    if (credential == nullptr) {
+      credential = kauth_cred_get_with_ref();
+      should_release = true;
+    }
+
     auto message = new santa_message_t;
-    message->uid = kauth_getuid();
-    message->gid = kauth_getgid();
+    message->uid = kauth_cred_getuid(credential);
+    message->gid = kauth_cred_getgid(credential);
     message->pid = proc_selfpid();
     message->ppid = proc_selfppid();
+
+    if (should_release) {
+      kauth_cred_unref(&credential);
+    }
+    
     return message;
   }
 

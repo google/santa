@@ -365,7 +365,7 @@ santa_action_t SantaDecisionManager::FetchDecision(
     path[0] = '\0';
   }
 
-  auto message = NewMessage();
+  auto message = NewMessage(cred);
   strlcpy(message->path, path, sizeof(message->path));
   message->action = ACTION_REQUEST_BINARY;
   message->vnode_id = vnode_id;
@@ -475,7 +475,7 @@ void SantaDecisionManager::FileOpCallback(
       snprintf(vnode_id_str, MAX_VNODE_ID_STR, "%llu", vnode_id);
       CacheCheck(vnode_id_str);
     } else if (action == KAUTH_FILEOP_EXEC) {
-      auto message = NewMessage();
+      auto message = NewMessage(nullptr);
       message->vnode_id = vnode_id;
       message->action = ACTION_NOTIFY_EXEC;
       strlcpy(message->path, path, sizeof(message->path));
@@ -502,7 +502,7 @@ void SantaDecisionManager::FileOpCallback(
   // not useful or made by santad.
   if (proc_selfpid() != client_pid_ &&
       !strprefix(path, "/.") && !strprefix(path, "/dev")) {
-    auto message = NewMessage();
+    auto message = NewMessage(nullptr);
     strlcpy(message->path, path, sizeof(message->path));
     if (new_path) strlcpy(message->newpath, new_path, sizeof(message->newpath));
     proc_name(message->pid, message->pname, sizeof(message->pname));
