@@ -17,6 +17,7 @@
 #import <SecurityInterface/SFCertificatePanel.h>
 
 #import "MOLCertificate.h"
+#import "SNTBlockMessage.h"
 #import "SNTConfigurator.h"
 #import "SNTFileInfo.h"
 #import "SNTMessageWindow.h"
@@ -150,39 +151,8 @@
 }
 
 - (NSAttributedString *)attributedCustomMessage {
-  NSString *htmlHeader = @"<html><head><style>"
-                         @"body {"
-                         @"  font-family: 'Lucida Grande', 'Helvetica', sans-serif;"
-                         @"  font-size: 13px;"
-                         @"  color: #666;"
-                         @"  text-align: center;"
-                         @"}"
-                         @"</style></head><body>";
-  NSString *htmlFooter = @"</body></html>";
-
-  NSString *message;
-  if (self.customMessage.length) {
-    message = self.customMessage;
-  } else if (self.event.decision == SNTEventStateBlockUnknown) {
-    message = [[SNTConfigurator configurator] unknownBlockMessage];
-    if (!message) {
-      message = @"The following application has been blocked from executing<br />"
-                @"because its trustworthiness cannot be determined.";
-    }
-  } else {
-    message = [[SNTConfigurator configurator] bannedBlockMessage];
-    if (!message) {
-      message = @"The following application has been blocked from executing<br />"
-                @"because it has been deemed malicious.";
-    }
-  }
-
-  NSString *fullHTML = [NSString stringWithFormat:@"%@%@%@", htmlHeader, message, htmlFooter];
-
-  NSData *htmlData = [fullHTML dataUsingEncoding:NSUTF8StringEncoding];
-  NSAttributedString *returnStr = [[NSAttributedString alloc] initWithHTML:htmlData
-                                                        documentAttributes:NULL];
-  return returnStr;
+  return [SNTBlockMessage attributedBlockMessageForEvent:self.event
+                                           customMessage:self.customMessage];
 }
 
 @end

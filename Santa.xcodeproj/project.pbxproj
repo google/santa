@@ -109,6 +109,10 @@
 		0DA73CA21934F88D0056D7C4 /* SNTLogging.m in Sources */ = {isa = PBXBuildFile; fileRef = 0DA73C9E1934F8100056D7C4 /* SNTLogging.m */; };
 		0DB390991AB1E11400614002 /* SNTCommandVersion.m in Sources */ = {isa = PBXBuildFile; fileRef = 0DB390981AB1E11400614002 /* SNTCommandVersion.m */; };
 		0DB537871AFD36EB00487F92 /* SNTRuleTableTest.m in Sources */ = {isa = PBXBuildFile; fileRef = 0DB537861AFD36EB00487F92 /* SNTRuleTableTest.m */; };
+		0DB77FD81CCE824A004DF060 /* SNTBlockMessage.m in Sources */ = {isa = PBXBuildFile; fileRef = 0DB77FD71CCE824A004DF060 /* SNTBlockMessage.m */; };
+		0DB77FD91CCE824A004DF060 /* SNTBlockMessage.m in Sources */ = {isa = PBXBuildFile; fileRef = 0DB77FD71CCE824A004DF060 /* SNTBlockMessage.m */; };
+		0DB77FDA1CD14092004DF060 /* SNTBlockMessage.m in Sources */ = {isa = PBXBuildFile; fileRef = 0DB77FD71CCE824A004DF060 /* SNTBlockMessage.m */; };
+		0DB77FDB1CD14093004DF060 /* SNTBlockMessage.m in Sources */ = {isa = PBXBuildFile; fileRef = 0DB77FD71CCE824A004DF060 /* SNTBlockMessage.m */; };
 		0DB8ACC1185662DC00FEF9C7 /* SNTApplication.m in Sources */ = {isa = PBXBuildFile; fileRef = 0DB8ACC0185662DC00FEF9C7 /* SNTApplication.m */; };
 		0DB98BFA1C1B9F3000B65DB1 /* SantaPIDAndPPID.cc in Sources */ = {isa = PBXBuildFile; fileRef = 0DB98BF81C1B9F3000B65DB1 /* SantaPIDAndPPID.cc */; };
 		0DB98BFB1C1B9F3000B65DB1 /* SantaPIDAndPPID.h in Headers */ = {isa = PBXBuildFile; fileRef = 0DB98BF91C1B9F3000B65DB1 /* SantaPIDAndPPID.h */; };
@@ -330,6 +334,8 @@
 		0DB2B92318085753001C01D9 /* santad-Prefix.pch */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "santad-Prefix.pch"; sourceTree = "<group>"; };
 		0DB390981AB1E11400614002 /* SNTCommandVersion.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SNTCommandVersion.m; sourceTree = "<group>"; };
 		0DB537861AFD36EB00487F92 /* SNTRuleTableTest.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SNTRuleTableTest.m; sourceTree = "<group>"; };
+		0DB77FD61CCE824A004DF060 /* SNTBlockMessage.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SNTBlockMessage.h; sourceTree = "<group>"; };
+		0DB77FD71CCE824A004DF060 /* SNTBlockMessage.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SNTBlockMessage.m; sourceTree = "<group>"; };
 		0DB8ACBF185662DC00FEF9C7 /* SNTApplication.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SNTApplication.h; sourceTree = "<group>"; };
 		0DB8ACC0185662DC00FEF9C7 /* SNTApplication.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; lineEnding = 0; path = SNTApplication.m; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objc; };
 		0DB8ACE41858D73000FEF9C7 /* santad-Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = "santad-Info.plist"; sourceTree = "<group>"; };
@@ -644,6 +650,8 @@
 		0D91BCD5174E8AAB00131A7D /* common */ = {
 			isa = PBXGroup;
 			children = (
+				0DB77FD61CCE824A004DF060 /* SNTBlockMessage.h */,
+				0DB77FD71CCE824A004DF060 /* SNTBlockMessage.m */,
 				0D91BCE4174E8B5E00131A7D /* SNTCommonEnums.h */,
 				0D42D2B619D2042900955F08 /* SNTConfigurator.h */,
 				0D42D2B719D2042900955F08 /* SNTConfigurator.m */,
@@ -1216,6 +1224,7 @@
 			files = (
 				0D88680C1AC48A1400B86659 /* SNTSystemInfo.m in Sources */,
 				0D536EDC1B94E9230039A26D /* SNTEventLog.m in Sources */,
+				0DB77FDB1CD14093004DF060 /* SNTBlockMessage.m in Sources */,
 				0D63DD5E1906FCB400D346C4 /* SNTDatabaseController.m in Sources */,
 				0D3AFBF018FB4C6C0087BCEE /* SNTDriverManager.m in Sources */,
 				0DCD6044190ACCB8006B445C /* SNTFileInfo.m in Sources */,
@@ -1268,6 +1277,7 @@
 				4092327A1A51B66400A04527 /* SNTCommandRule.m in Sources */,
 				0D416401191974F1006A356A /* SNTCommandSyncState.m in Sources */,
 				0DC5D871192160180078A5C0 /* SNTCommandSyncLogUpload.m in Sources */,
+				0DB77FDA1CD14092004DF060 /* SNTBlockMessage.m in Sources */,
 				0D35BDA218FD71CE00921A21 /* main.m in Sources */,
 				0DCD6043190ACCB8006B445C /* SNTFileInfo.m in Sources */,
 				0DE50F6E191304E0007B2B0C /* SNTRule.m in Sources */,
@@ -1290,6 +1300,7 @@
 				0D88680A1AC48A1200B86659 /* SNTSystemInfo.m in Sources */,
 				0D89310F1C931986002E8D74 /* SNTRule.m in Sources */,
 				0DCD605119115A06006B445C /* SNTXPCNotifierInterface.m in Sources */,
+				0DB77FD91CCE824A004DF060 /* SNTBlockMessage.m in Sources */,
 				0D827E6519DF392E006EC811 /* SNTConfigurator.m in Sources */,
 				0D89310E1C931979002E8D74 /* SNTXPCControlInterface.m in Sources */,
 				0D385DF2180DE51600418BC6 /* SNTMessageWindowController.m in Sources */,
@@ -1337,6 +1348,7 @@
 				0D6FDC9618C93A020044685C /* SNTXPCConnection.m in Sources */,
 				0D377C2A17A071B7008453DB /* SNTEventTable.m in Sources */,
 				0DE50F681912716A007B2B0C /* SNTRule.m in Sources */,
+				0DB77FD81CCE824A004DF060 /* SNTBlockMessage.m in Sources */,
 				0D37C10F18F6029A0069BC61 /* SNTDatabaseTable.m in Sources */,
 				0D42D2B819D2042900955F08 /* SNTConfigurator.m in Sources */,
 				0DCD605519115D17006B445C /* SNTXPCControlInterface.m in Sources */,

@@ -22,6 +22,7 @@
 
 #import "MOLCertificate.h"
 #import "MOLCodesignChecker.h"
+#import "SNTBlockMessage.h"
 #import "SNTCachedDecision.h"
 #import "SNTCommonEnums.h"
 #import "SNTConfigurator.h"
@@ -190,6 +191,12 @@
       [self initiateEventUploadForEvent:se];
 
       if (!cd.silentBlock) {
+        // Let the user know what happened, both on the terminal and in the GUI.
+        NSAttributedString *s = [SNTBlockMessage attributedBlockMessageForEvent:se
+                                                                  customMessage:cd.customMsg];
+        NSString *msg = [NSString stringWithFormat:@"Santa: %@\n", s.string];
+        [self printMessage:msg toTTYForPID:message.ppid];
+
         [self.notifierQueue addEvent:se customMessage:cd.customMsg];
       }
     }
@@ -270,6 +277,20 @@
       LOGW(@"Invalid event state %ld", state);
       return ACTION_RESPOND_DENY;
   }
+}
+
+- (void)printMessage:(NSString *)msg toTTYForPID:(pid_t)pid {
+  if (pid < 2) return;  // don't bother even looking for launchd.
+
+  struct proc_bsdinfo taskInfo = {};
+  if (proc_pidinfo(pid, PROC_PIDTBSDINFO, 0,  &taskInfo, sizeof(taskInfo)) < 1) {
+    return;
+  }
+
+  NSString *devPath = [NSString stringWithFormat:@"/dev/%s", devname(taskInfo.e_tdev, S_IFCHR)];
+  int fd = open(devPath.UTF8String, O_WRONLY | O_NOCTTY);
+  NSFileHandle *fh = [[NSFileHandle alloc] initWithFileDescriptor:fd closeOnDealloc:YES];
+  [fh writeData:[msg dataUsingEncoding:NSUTF8StringEncoding]];
 }
 
 - (void)loggedInUsers:(NSArray **)users sessions:(NSArray **)sessions {
