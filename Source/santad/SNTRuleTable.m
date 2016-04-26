@@ -29,7 +29,7 @@
 
 - (uint32_t)initializeDatabase:(FMDatabase *)db fromVersion:(uint32_t)version {
   // Lock this database from other processes
-  [db executeQuery:@"PRAGMA locking_mode = EXCLUSIVE;"];
+  [[db executeQuery:@"PRAGMA locking_mode = EXCLUSIVE;"] close];
 
   uint32_t newVersion = 0;
 
