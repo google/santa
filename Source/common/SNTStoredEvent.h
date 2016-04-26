@@ -35,7 +35,8 @@
 @property NSString *filePath;
 
 ///
-///  If the executed file was part of the bundle, this is the CFBundleName.
+///  If the executed file was part of the bundle, this is the CFBundleDisplayName, if it exists
+///  or the CFBundleName if not.
 ///
 @property NSString *fileBundleName;
 

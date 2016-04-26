@@ -310,7 +310,8 @@ extern NSString *const NSURLQuarantinePropertiesKey WEAK_IMPORT_ATTRIBUTE;
 }
 
 - (NSString *)bundleName {
-  return [[self.infoPlist objectForKey:@"CFBundleName"] description];
+  return [[self.infoPlist objectForKey:@"CFBundleDisplayName"] description] ?:
+         [[self.infoPlist objectForKey:@"CFBundleName"] description];
 }
 
 - (NSString *)bundleVersion {
