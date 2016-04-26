@@ -154,27 +154,26 @@
     se.ppid = @(message.ppid);
     se.parentName = @(message.pname);
 
+    // Bundle data
     se.fileBundleID = [binInfo bundleIdentifier];
     se.fileBundleName = [binInfo bundleName];
-
+    se.fileBundlePath = [binInfo bundlePath];
     if ([binInfo bundleShortVersionString]) {
       se.fileBundleVersionString = [binInfo bundleShortVersionString];
     }
-
     if ([binInfo bundleVersion]) {
       se.fileBundleVersion = [binInfo bundleVersion];
     }
 
+    // User data
     struct passwd *user = getpwuid(message.uid);
-    if (user) {
-      se.executingUser = @(user->pw_name);
-    }
-
+    if (user) se.executingUser = @(user->pw_name);
     NSArray *loggedInUsers, *currentSessions;
     [self loggedInUsers:&loggedInUsers sessions:&currentSessions];
     se.currentSessions = currentSessions;
     se.loggedInUsers = loggedInUsers;
 
+    // Quarantine data
     se.quarantineDataURL = binInfo.quarantineDataURL;
     se.quarantineRefererURL = binInfo.quarantineRefererURL;
     se.quarantineTimestamp = binInfo.quarantineTimestamp;

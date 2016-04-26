@@ -175,6 +175,7 @@
   }
 
   ADDKEY(newEvent, kFileBundleID, event.fileBundleID);
+  ADDKEY(newEvent, kFileBundlePath, event.fileBundlePath);
   ADDKEY(newEvent, kFileBundleName, event.fileBundleName);
   ADDKEY(newEvent, kFileBundleVersion, event.fileBundleVersion);
   ADDKEY(newEvent, kFileBundleShortVersionString, event.fileBundleVersionString);

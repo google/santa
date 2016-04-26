@@ -41,6 +41,11 @@
 @property NSString *fileBundleName;
 
 ///
+///  If the executed file was part of the bundle, this is the path to the bundle.
+///
+@property NSString *fileBundlePath;
+
+///
 ///  If the executed file was part of the bundle, this is the CFBundleID.
 ///
 @property NSString *fileBundleID;
