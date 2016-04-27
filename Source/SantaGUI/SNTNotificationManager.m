@@ -54,6 +54,7 @@ static NSString * const silencedNotificationsKey = @"SilencedNotifications";
 - (void)updateSilenceDate:(NSDate *)date forHash:(NSString *)hash {
   NSUserDefaults *ud = [NSUserDefaults standardUserDefaults];
   NSMutableDictionary *d = [[ud objectForKey:silencedNotificationsKey] mutableCopy];
+  if (!d) d = [NSMutableDictionary dictionary];
   if (date) {
     d[hash] = date;
   } else {
