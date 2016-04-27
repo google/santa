@@ -163,6 +163,7 @@ REGISTER_COMMAND_NAME(@"sync")
                                      daemonConn:self.daemonConn
                               completionHandler:^(BOOL success) {
       if (success) {
+        LOGD(@"Preflight complete");
         if (self.syncState.uploadLogURL) {
           [self logUpload];
         } else {
@@ -181,6 +182,7 @@ REGISTER_COMMAND_NAME(@"sync")
                                      daemonConn:self.daemonConn
                               completionHandler:^(BOOL success) {
       if (success) {
+        LOGD(@"Log upload complete");
       } else {
         LOGE(@"Log upload failed, continuing anyway");
       }
@@ -195,6 +197,7 @@ REGISTER_COMMAND_NAME(@"sync")
                                        daemonConn:self.daemonConn
                                 completionHandler:^(BOOL success) {
       if (success) {
+        LOGD(@"Event upload complete");
         [self ruleDownload];
       } else {
         LOGE(@"Event upload failed, aborting run");
@@ -210,6 +213,7 @@ REGISTER_COMMAND_NAME(@"sync")
                                               daemonConn:self.daemonConn
                                        completionHandler:^(BOOL success) {
       if (success) {
+        LOGD(@"Event upload complete");
         exit(0);
       } else {
         LOGW(@"Event upload failed");
@@ -224,6 +228,7 @@ REGISTER_COMMAND_NAME(@"sync")
                                         daemonConn:self.daemonConn
                                  completionHandler:^(BOOL success) {
       if (success) {
+        LOGD(@"Rule download complete");
         [self postflight];
       } else {
         LOGE(@"Rule download failed, aborting run");
@@ -238,6 +243,7 @@ REGISTER_COMMAND_NAME(@"sync")
                                       daemonConn:self.daemonConn
                                completionHandler:^(BOOL success) {
       if (success) {
+        LOGD(@"Postflight complete");
         LOGI(@"Sync completed successfully");
         exit(0);
       } else {
