@@ -34,6 +34,8 @@ NSString *const kClientModeLockdown = @"LOCKDOWN";
 NSString *const kCleanSync = @"clean_sync";
 NSString *const kWhitelistRegex = @"whitelist_regex";
 NSString *const kBlacklistRegex = @"blacklist_regex";
+NSString *const kBinaryRuleCount = @"binary_rule_count";
+NSString *const kCertificateRuleCount = @"certificate_rule_count";
 
 NSString *const kEvents = @"events";
 NSString *const kFileSHA256 = @"file_sha256";

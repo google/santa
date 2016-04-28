@@ -42,6 +42,14 @@
   requestDict[kOSBuild] = [SNTSystemInfo osBuild];
   requestDict[kPrimaryUser] = syncState.machineOwner;
 
+  dispatch_semaphore_t sema = dispatch_semaphore_create(0);
+  [[daemonConn remoteObjectProxy] databaseRuleCounts:^(int64_t binary, int64_t certificate) {
+    requestDict[kBinaryRuleCount] = @(binary);
+    requestDict[kCertificateRuleCount] = @(certificate);
+    dispatch_semaphore_signal(sema);
+  }];
+  dispatch_semaphore_wait(sema, dispatch_time(DISPATCH_TIME_NOW, 2 * NSEC_PER_SEC));
+
   // If user requested it or we've never had a successful sync, try from a clean slate.
   if ([[[NSProcessInfo processInfo] arguments] containsObject:@"--clean"] ||
       [[SNTConfigurator configurator] syncCleanRequired]) {

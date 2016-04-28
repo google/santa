@@ -32,6 +32,8 @@ extern NSString *const kClientModeLockdown;
 extern NSString *const kCleanSync;
 extern NSString *const kWhitelistRegex;
 extern NSString *const kBlacklistRegex;
+extern NSString *const kBinaryRuleCount;
+extern NSString *const kCertificateRuleCount;
 
 extern NSString *const kEvents;
 extern NSString *const kFileSHA256;
