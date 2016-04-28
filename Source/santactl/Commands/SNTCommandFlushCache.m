@@ -23,7 +23,9 @@
 
 @implementation SNTCommandFlushCache
 
+#ifdef DEBUG
 REGISTER_COMMAND_NAME(@"flushcache")
+#endif
 
 + (BOOL)requiresRoot {
   return YES;
