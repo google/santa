@@ -129,6 +129,14 @@ double watchdogRAMPeak = 0;
   [[SNTDatabaseController eventTable] deleteEventsWithIds:ids];
 }
 
+- (void)databaseBinaryRuleForSHA256:(NSString *)sha256 reply:(void (^)(SNTRule *))reply {
+  reply([[SNTDatabaseController ruleTable] binaryRuleForSHA256:sha256]);
+}
+
+- (void)databaseCertificateRuleForSHA256:(NSString *)sha256 reply:(void (^)(SNTRule *))reply {
+  reply([[SNTDatabaseController ruleTable] certificateRuleForSHA256:sha256]);
+}
+
 #pragma mark Config Ops
 
 - (void)clientMode:(void (^)(SNTClientMode))reply {

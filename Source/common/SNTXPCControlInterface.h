@@ -41,6 +41,8 @@
 - (void)databaseEventForSHA256:(NSString *)sha256 reply:(void (^)(SNTStoredEvent *))reply;
 - (void)databaseEventsPending:(void (^)(NSArray *events))reply;
 - (void)databaseRemoveEventsWithIDs:(NSArray *)ids;
+- (void)databaseBinaryRuleForSHA256:(NSString *)sha256 reply:(void (^)(SNTRule *))reply;
+- (void)databaseCertificateRuleForSHA256:(NSString *)sha256 reply:(void (^)(SNTRule *))reply;
 
 ///
 ///  Config ops

@@ -19,6 +19,9 @@
 #import "MOLCertificate.h"
 #import "MOLCodesignChecker.h"
 #import "SNTFileInfo.h"
+#import "SNTRule.h"
+#import "SNTXPCConnection.h"
+#import "SNTXPCControlInterface.h"
 
 @interface SNTCommandFileInfo : NSObject<SNTCommand>
 @end
@@ -32,7 +35,7 @@ REGISTER_COMMAND_NAME(@"fileinfo")
 }
 
 + (BOOL)requiresDaemonConn {
-  return NO;
+  return YES;
 }
 
 + (NSString *)shortHelpText {
@@ -100,6 +103,7 @@ REGISTER_COMMAND_NAME(@"fileinfo")
     [self printKey:@"Page Zero" value:@"__PAGEZERO segment missing/bad!"];
   }
 
+  // Code signature state
   NSError *error;
   MOLCodesignChecker *csc = [[MOLCodesignChecker alloc] initWithBinaryPath:filePath error:&error];
   if (!error) {
@@ -139,6 +143,39 @@ REGISTER_COMMAND_NAME(@"fileinfo")
       }
     }
   }
+
+  // Binary rule state
+  __block SNTRule *r;
+  dispatch_group_t group = dispatch_group_create();
+  dispatch_group_enter(group);
+  [[daemonConn remoteObjectProxy] databaseBinaryRuleForSHA256:sha256 reply:^(SNTRule *rule) {
+    r = rule;
+    dispatch_group_leave(group);
+  }];
+  NSString *leafCertSHA = [[csc.certificates firstObject] SHA256];
+  dispatch_group_enter(group);
+  [[daemonConn remoteObjectProxy] databaseCertificateRuleForSHA256:leafCertSHA
+                                                             reply:^(SNTRule *rule) {
+    if (!r) r = rule;
+    dispatch_group_leave(group);
+  }];
+  if (dispatch_group_wait(group, dispatch_time(DISPATCH_TIME_NOW, 2 * NSEC_PER_SEC))) {
+    [self printKey:@"Rule" value:@"Unable to retrieve rule"];
+  } else {
+    switch (r.state) {
+      case SNTRuleStateWhitelist:
+        [self printKey:@"Rule" value:@"Whitelisted"];
+        break;
+      case SNTRuleStateBlacklist:
+      case SNTRuleStateSilentBlacklist:
+        [self printKey:@"Rule" value:@"Blacklisted"];
+        break;
+      default:
+        [self printKey:@"Rule" value:@"None"];
+    }
+  }
+
+  // Signing chain
   if (csc.certificates.count) {
     printf("Signing chain:\n");
 
