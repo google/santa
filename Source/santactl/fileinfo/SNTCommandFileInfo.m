@@ -168,11 +168,10 @@ REGISTER_COMMAND_NAME(@"fileinfo")
 
 + (NSString *)humanReadableFileType:(SNTFileInfo *)fi {
   if ([fi isScript]) return @"Script";
-  if ([fi isXARArchive]) return @"XAR Archive";
+  if ([fi isExecutable]) return @"Executable";
   if ([fi isDylib]) return @"Dynamic Library";
   if ([fi isKext]) return @"Kernel Extension";
-  if ([fi isFat]) return @"Fat Binary";
-  if ([fi isMachO]) return @"Thin Binary";
+  if ([fi isXARArchive]) return @"XAR Archive";
   if ([fi isDMG]) return @"Disk Image";
   return @"Unknown";
 }
