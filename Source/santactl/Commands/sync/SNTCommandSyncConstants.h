@@ -12,10 +12,7 @@
 ///    See the License for the specific language governing permissions and
 ///    limitations under the License.
 
-extern NSString *const kURLPreflight;
-extern NSString *const kURLEventUpload;
-extern NSString *const kURLRuleDownload;
-extern NSString *const kURLPostflight;
+extern NSString *const kXSRFToken;
 
 extern NSString *const kSerialNumber;
 extern NSString *const kHostname;

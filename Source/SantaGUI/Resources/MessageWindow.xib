@@ -424,7 +424,7 @@ DQ
             <connections>
                 <outlet property="initialFirstResponder" destination="kiB-jZ-69S" id="I96-dS-lq5"/>
             </connections>
-            <point key="canvasLocation" x="112.5" y="302.5"/>
+            <point key="canvasLocation" x="302.5" y="304.5"/>
         </window>
     </objects>
     <resources>

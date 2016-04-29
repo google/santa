@@ -14,31 +14,43 @@
 
 #import "SNTCommonEnums.h"
 
+@class SNTXPCConnection;
+
 /// An instance of this class is passed to each stage of the sync process for storing data
 /// that might be needed in later stages.
 @interface SNTCommandSyncState : NSObject
 
-/// The base API URL
+/// Configured session to use for requests.
+@property NSURLSession *session;
+
+/// Connection to the daemon control interface.
+@property SNTXPCConnection *daemonConn;
+
+/// The base API URL.
 @property NSURL *syncBaseURL;
 
-/// Machine identifier and owner
+/// An XSRF token to send in the headers with each request.
+@property NSString *xsrfToken;
+
+/// Machine identifier and owner.
 @property(copy) NSString *machineID;
 @property(copy) NSString *machineOwner;
 
-/// Clean sync flag, sent from server. If True, all existing rules
-/// should be deleted before inserting any new rules.
+/// Settings sent from server during preflight that are set during postflight.
+@property SNTClientMode clientMode;
+@property NSString *whitelistRegex;
+@property NSString *blacklistRegex;
+
+/// Clean sync flag, if True, all existing rules should be deleted before inserting any new rules.
 @property BOOL cleanSync;
 
-/// New client mode sent from server
-@property SNTClientMode newClientMode;
+/// Batch size for uploading events.
+@property NSUInteger eventBatchSize;
 
-/// Batch size for uploading events, sent from server
-@property int32_t eventBatchSize;
-
-/// Log upload URL sent from server
+/// Log upload URL sent from server. If set, LogUpload phase needs to happen.
 @property NSURL *uploadLogURL;
 
-/// Rules downloaded from server
+/// Rules downloaded from server.
 @property NSMutableArray *downloadedRules;
 
 @end

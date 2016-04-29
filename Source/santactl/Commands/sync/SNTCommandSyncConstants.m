@@ -14,10 +14,7 @@
 
 #import "SNTCommandSyncConstants.h"
 
-NSString *const kURLPreflight = @"preflight/";
-NSString *const kURLEventUpload = @"eventupload/";
-NSString *const kURLRuleDownload = @"ruledownload/";
-NSString *const kURLPostflight = @"postflight/";
+NSString *const kXSRFToken = @"X-XSRF-TOKEN";
 
 NSString *const kSerialNumber = @"serial_num";
 NSString *const kHostname = @"hostname";

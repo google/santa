@@ -33,6 +33,7 @@ double watchdogCPUPeak = 0;
 double watchdogRAMPeak = 0;
 
 @interface SNTDaemonControlController ()
+@property NSString *_syncXsrfToken;
 @property dispatch_source_t syncTimer;
 @end
 
@@ -148,6 +149,15 @@ double watchdogRAMPeak = 0;
     [[SNTConfigurator configurator] setClientMode:mode];
     [[self.notQueue.notifierConnection remoteObjectProxy] postClientModeNotification:mode];
   }
+  reply();
+}
+
+- (void)xsrfToken:(void (^)(NSString *))reply {
+  reply(self._syncXsrfToken);
+}
+
+- (void)setXsrfToken:(NSString *)token reply:(void (^)())reply {
+  self._syncXsrfToken = token;
   reply();
 }
 

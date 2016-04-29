@@ -1,0 +1,1 @@
+{"rules": [{"rule_type": "BINARY", "policy": "BLACKLIST", "sha256": "ee382e199f7eda58863a93a7854b930ade35798bc6856ee8e6ab6ce9277f0eab", "custom_msg": ""},{"rule_type": "CERTIFICATE", "policy": "WHITELIST", "sha256": "46f8c706d0533a54554af5fc163eea704f10c08b30f8a5db12bfdc04fb382fc3", "custom_msg": ""}],"cursor": "this-is-a-cursor="}

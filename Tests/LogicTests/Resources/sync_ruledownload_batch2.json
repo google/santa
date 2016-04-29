@@ -1,0 +1,1 @@
+{"rules": [{"rule_type": "CERTIFICATE", "policy": "BLACKLIST", "sha256": "7846698e47ef41be80b83fb9e2b98fa6dc46c9188b068bff323c302955a00142", "custom_msg": "Hi There"}]}

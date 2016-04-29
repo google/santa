@@ -12,20 +12,10 @@
 ///    See the License for the specific language governing permissions and
 ///    limitations under the License.
 
-@class SNTCommandSyncState;
-@class SNTXPCConnection;
+#import "SNTCommandSyncStage.h"
 
-@interface SNTCommandSyncEventUpload : NSObject
+@interface SNTCommandSyncEventUpload : SNTCommandSyncStage
 
-+ (void)performSyncInSession:(NSURLSession *)session
-                   syncState:(SNTCommandSyncState *)syncState
-                  daemonConn:(SNTXPCConnection *)daemonConn
-           completionHandler:(void (^)(BOOL success))handler;
-
-+ (void)uploadSingleEventWithSHA256:(NSString *)SHA256
-                            session:(NSURLSession *)session
-                          syncState:(SNTCommandSyncState *)syncState
-                         daemonConn:(SNTXPCConnection *)daemonConn
-                  completionHandler:(void (^)(BOOL success))handler;
+- (BOOL)syncSingleEventWithSHA256:(NSString *)sha256;
 
 @end

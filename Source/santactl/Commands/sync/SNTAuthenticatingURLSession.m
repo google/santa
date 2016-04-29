@@ -209,7 +209,7 @@
     err = SecIdentityCopyCertificate(foundIdentity, &certificate);
     MOLCertificate *clientCert = [[MOLCertificate alloc] initWithSecCertificateRef:certificate];
     if (certificate) CFRelease(certificate);
-    LOGD(@"Client Trust: Valid client identity %@.", clientCert);
+    LOGD(@"Client Trust: Valid client identity %@", clientCert);
     NSURLCredential *cred =
         [NSURLCredential credentialWithIdentity:foundIdentity
                                    certificates:nil
@@ -241,6 +241,19 @@
   }
 
   OSStatus err = errSecSuccess;
+
+  if (self.serverRootsPemFile) {
+    NSError *error;
+    NSData *rootsData = [NSData dataWithContentsOfFile:self.serverRootsPemFile
+                                               options:0
+                                                 error:&error];
+    if (!rootsData) {
+      LOGD(@"Unable to read server root certificate file %@ with error: %@",
+          self.serverRootsPemFile, error.localizedDescription);
+      return nil;
+    }
+    self.serverRootsPemData = rootsData;
+  }
 
   if (self.serverRootsPemData) {
     NSString *pemStrings = [[NSString alloc] initWithData:self.serverRootsPemData

@@ -12,14 +12,7 @@
 ///    See the License for the specific language governing permissions and
 ///    limitations under the License.
 
-@class SNTCommandSyncState;
-@class SNTXPCConnection;
+#import "SNTCommandSyncStage.h"
 
-@interface SNTCommandSyncPostflight : NSObject
-
-+ (void)performSyncInSession:(NSURLSession *)session
-                   syncState:(SNTCommandSyncState *)syncState
-                  daemonConn:(SNTXPCConnection *)daemonConn
-           completionHandler:(void (^)(BOOL success))handler;
-
+@interface SNTCommandSyncPostflight : SNTCommandSyncStage
 @end

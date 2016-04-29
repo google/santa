@@ -47,6 +47,12 @@
 @property(copy, nonatomic) NSData *serverRootsPemData;
 
 ///
+///  This should be the path to a PEM file containing one or more certificates to use to verify
+///  the server's certificate chain. This will override the trusted system roots.
+///
+@property(copy, nonatomic) NSString *serverRootsPemFile;
+
+///
 ///  If set and client certificate authentication is needed, the pkcs#12 file will be loaded
 ///
 @property(copy, nonatomic) NSString *clientCertFile;

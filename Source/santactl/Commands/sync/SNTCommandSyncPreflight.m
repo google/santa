@@ -17,7 +17,6 @@
 #include "SNTKernelCommon.h"
 #include "SNTLogging.h"
 
-#import "NSData+Zlib.h"
 #import "SNTCommandSyncConstants.h"
 #import "SNTCommandSyncState.h"
 #import "SNTConfigurator.h"
@@ -27,23 +26,22 @@
 
 @implementation SNTCommandSyncPreflight
 
-+ (void)performSyncInSession:(NSURLSession *)session
-                   syncState:(SNTCommandSyncState *)syncState
-                  daemonConn:(SNTXPCConnection *)daemonConn
-           completionHandler:(void (^)(BOOL success))handler {
-  NSURL *url = [NSURL URLWithString:[kURLPreflight stringByAppendingString:syncState.machineID]
-                      relativeToURL:syncState.syncBaseURL];
+- (NSURL *)stageURL {
+  NSString *stageName = [@"preflight" stringByAppendingFormat:@"/%@", self.syncState.machineID];
+  return [NSURL URLWithString:stageName relativeToURL:self.syncState.syncBaseURL];
+}
 
+- (BOOL)sync {
   NSMutableDictionary *requestDict = [NSMutableDictionary dictionary];
   requestDict[kSerialNumber] = [SNTSystemInfo serialNumber];
-  requestDict[kHostname] = [SNTSystemInfo shortHostname];
-  requestDict[kSantaVer] = [[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleVersion"];
+  requestDict[kHostname] = [SNTSystemInfo longHostname];
   requestDict[kOSVer] = [SNTSystemInfo osVersion];
   requestDict[kOSBuild] = [SNTSystemInfo osBuild];
-  requestDict[kPrimaryUser] = syncState.machineOwner;
+  requestDict[kSantaVer] = [[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleVersion"];  
+  requestDict[kPrimaryUser] = self.syncState.machineOwner;
 
   dispatch_semaphore_t sema = dispatch_semaphore_create(0);
-  [[daemonConn remoteObjectProxy] databaseRuleCounts:^(int64_t binary, int64_t certificate) {
+  [[self.daemonConn remoteObjectProxy] databaseRuleCounts:^(int64_t binary, int64_t certificate) {
     requestDict[kBinaryRuleCount] = @(binary);
     requestDict[kCertificateRuleCount] = @(certificate);
     dispatch_semaphore_signal(sema);
@@ -56,59 +54,37 @@
     requestDict[kRequestCleanSync] = @YES;
   }
 
-  NSData *requestBody = [NSJSONSerialization dataWithJSONObject:requestDict
-                                                        options:0
-                                                          error:nil];
+  NSURLRequest *req = [self requestWithDictionary:requestDict];
+  NSDictionary *resp = [self performRequest:req];
 
-  NSMutableURLRequest *req = [[NSMutableURLRequest alloc] initWithURL:url];
-  [req setHTTPMethod:@"POST"];
-  [req setValue:@"application/json" forHTTPHeaderField:@"Content-Type"];
+  if (!resp) return NO;
 
-  NSData *compressed = [requestBody zlibCompressed];
-  if (compressed) {
-    requestBody = compressed;
-    [req setValue:@"zlib" forHTTPHeaderField:@"Content-Encoding"];
+  self.syncState.eventBatchSize = [resp[kBatchSize] intValue];
+  if (self.syncState.eventBatchSize == 0) {
+    self.syncState.eventBatchSize = 50;
   }
 
-  [req setHTTPBody:requestBody];
+  self.syncState.uploadLogURL = [NSURL URLWithString:resp[kUploadLogsURL]];
 
-  [[session dataTaskWithRequest:req completionHandler:^(NSData *data,
-                                                        NSURLResponse *response,
-                                                        NSError *error) {
-    long statusCode = [(NSHTTPURLResponse *)response statusCode];
-    if (statusCode != 200) {
-      LOGE(@"HTTP Response: %ld %@",
-           statusCode,
-           [[NSHTTPURLResponse localizedStringForStatusCode:statusCode] capitalizedString]);
-      LOGD(@"%@", error);
-      handler(NO);
-    } else {
-      NSDictionary *r = [NSJSONSerialization JSONObjectWithData:data options:0 error:nil];
+  if ([resp[kClientMode] isEqual:kClientModeMonitor]) {
+    self.syncState.clientMode = SNTClientModeMonitor;
+  } else if ([resp[kClientMode] isEqual:kClientModeLockdown]) {
+    self.syncState.clientMode = SNTClientModeLockdown;
+  }
 
-      syncState.eventBatchSize = [r[kBatchSize] intValue];
-      syncState.uploadLogURL = [NSURL URLWithString:r[kUploadLogsURL]];
+  if ([resp[kWhitelistRegex] isKindOfClass:[NSString class]]) {
+    self.syncState.whitelistRegex = resp[kWhitelistRegex];
+  }
 
-      if ([r[kClientMode] isEqual:kClientModeMonitor]) {
-        syncState.newClientMode = SNTClientModeMonitor;
-      } else if ([r[kClientMode] isEqual:kClientModeLockdown]) {
-        syncState.newClientMode = SNTClientModeLockdown;
-      }
+  if ([resp[kBlacklistRegex] isKindOfClass:[NSString class]]) {
+    self.syncState.blacklistRegex = resp[kBlacklistRegex];
+  }
 
-      if ([r[kWhitelistRegex] isKindOfClass:[NSString class]]) {
-        [[daemonConn remoteObjectProxy] setWhitelistPathRegex:r[kWhitelistRegex] reply:^{}];
-      }
+  if ([resp[kCleanSync] boolValue]) {
+    self.syncState.cleanSync = YES;
+  }
 
-      if ([r[kBlacklistRegex] isKindOfClass:[NSString class]]) {
-        [[daemonConn remoteObjectProxy] setBlacklistPathRegex:r[kBlacklistRegex] reply:^{}];
-      }
-
-      if ([r[kCleanSync] boolValue]) {
-        syncState.cleanSync = YES;
-      }
-
-      handler(YES);
-    }
-  }] resume];
+  return YES;
 }
 
 @end

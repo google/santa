@@ -24,92 +24,54 @@
 
 @implementation SNTCommandSyncRuleDownload
 
-+ (void)performSyncInSession:(NSURLSession *)session
-                   syncState:(SNTCommandSyncState *)syncState
-                  daemonConn:(SNTXPCConnection *)daemonConn
-           completionHandler:(void (^)(BOOL success))handler {
-  NSURL *url = [NSURL URLWithString:[kURLRuleDownload stringByAppendingString:syncState.machineID]
-                      relativeToURL:syncState.syncBaseURL];
-  [self ruleDownloadWithCursor:nil
-                           url:url
-                       session:session
-                     syncState:syncState
-                    daemonConn:daemonConn
-             completionHandler:handler];
+- (NSURL *)stageURL {
+  NSString *stageName = [@"ruledownload" stringByAppendingFormat:@"/%@", self.syncState.machineID];
+  return [NSURL URLWithString:stageName relativeToURL:self.syncState.syncBaseURL];
 }
 
-+ (void)ruleDownloadWithCursor:(NSString *)cursor
-                           url:(NSURL *)url
-                       session:(NSURLSession *)session
-                     syncState:(SNTCommandSyncState *)syncState
-                    daemonConn:(SNTXPCConnection *)daemonConn
-             completionHandler:(void (^)(BOOL success))handler {
+- (BOOL)sync {
+  self.syncState.downloadedRules = [NSMutableArray array];
+  return [self ruleDownloadWithCursor:nil];
+}
+
+- (BOOL)ruleDownloadWithCursor:(NSString *)cursor {
   NSDictionary *requestDict = (cursor ? @{kCursor : cursor} : @{});
 
-  if (!syncState.downloadedRules) {
-    syncState.downloadedRules = [NSMutableArray array];
+  NSDictionary *resp = [self performRequest:[self requestWithDictionary:requestDict]];
+  if (!resp) return NO;
+
+  for (NSDictionary *rule in resp[kRules]) {
+    SNTRule *r = [self ruleFromDictionary:rule];
+    if (r) [self.syncState.downloadedRules addObject:r];
   }
 
-  NSMutableURLRequest *req = [[NSMutableURLRequest alloc] initWithURL:url];
-  [req setHTTPBody:[NSJSONSerialization dataWithJSONObject:requestDict
-                                                   options:0
-                                                     error:nil]];
-  [req setHTTPMethod:@"POST"];
-  [req setValue:@"application/json" forHTTPHeaderField:@"Content-Type"];
-  [[session dataTaskWithRequest:req completionHandler:^(NSData *data,
-                                                        NSURLResponse *response,
-                                                        NSError *error) {
-    long statusCode = [(NSHTTPURLResponse *)response statusCode];
-    if (statusCode != 200) {
-      LOGE(@"HTTP Response: %ld %@",
-           statusCode,
-           [[NSHTTPURLResponse localizedStringForStatusCode:statusCode] capitalizedString]);
-      LOGD(@"%@", error);
-      handler(NO);
-    } else {
-      NSDictionary *resp = [NSJSONSerialization JSONObjectWithData:data options:0 error:nil];
-      if (!resp) {
-        LOGE(@"Failed to decode server's response");
-        handler(NO);
-        return;
-      }
+  if (resp[kCursor]) {
+    return [self ruleDownloadWithCursor:resp[kCursor]];
+  }
 
-      NSArray *receivedRules = resp[kRules];
-      for (NSDictionary *rule in receivedRules) {
-        SNTRule *r = [self ruleFromDictionary:rule];
-        if (r) [syncState.downloadedRules addObject:r];
-      }
+  if (!self.syncState.downloadedRules.count) return YES;
 
-      if (resp[kCursor]) {
-        [self ruleDownloadWithCursor:resp[kCursor]
-                                 url:url
-                             session:session
-                           syncState:syncState
-                          daemonConn:daemonConn
-                   completionHandler:handler];
-      } else {
-        if (syncState.downloadedRules.count) {
-          [[daemonConn remoteObjectProxy] databaseRuleAddRules:syncState.downloadedRules
-                                                    cleanSlate:syncState.cleanSync
-                                                         reply:^(NSError *error) {
-            if (!error) {
-              LOGI(@"Added %lu rule(s)", syncState.downloadedRules.count);
-              handler(YES);
-            } else {
-              LOGE(@"Failed to add rule(s) to database: %@", error.localizedDescription);
-              LOGD(@"Failure reason: %@", error.localizedFailureReason);
-              handler(NO);
-            }
-          }];
-        } else {
-          handler(YES);
-        }
-      }
-    }
-  }] resume];
+  dispatch_semaphore_t sema = dispatch_semaphore_create(0);
+  __block NSError *error;
+  [[self.daemonConn remoteObjectProxy] databaseRuleAddRules:self.syncState.downloadedRules
+                                                 cleanSlate:self.syncState.cleanSync
+                                                      reply:^(NSError *e) {
+    error = e;
+    dispatch_semaphore_signal(sema);
+  }];
+  dispatch_semaphore_wait(sema, dispatch_time(DISPATCH_TIME_NOW, 300 * NSEC_PER_SEC));
+
+  if (error) {
+    LOGE(@"Failed to add rule(s) to database: %@", error.localizedDescription);
+    LOGD(@"Failure reason: %@", error.localizedFailureReason);
+    return NO;
+  }
+
+  LOGI(@"Added %lu rules", self.syncState.downloadedRules.count);
+  return YES;
 }
 
-+ (SNTRule *)ruleFromDictionary:(NSDictionary *)dict {
+- (SNTRule *)ruleFromDictionary:(NSDictionary *)dict {
   if (![dict isKindOfClass:[NSDictionary class]]) return nil;
 
   SNTRule *newRule = [[SNTRule alloc] init];

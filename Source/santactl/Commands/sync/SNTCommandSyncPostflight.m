@@ -23,48 +23,60 @@
 
 @implementation SNTCommandSyncPostflight
 
-+ (void)performSyncInSession:(NSURLSession *)session
-                   syncState:(SNTCommandSyncState *)syncState
-                  daemonConn:(SNTXPCConnection *)daemonConn
-           completionHandler:(void (^)(BOOL success))handler {
-  NSURL *url = [NSURL URLWithString:[kURLPostflight stringByAppendingString:syncState.machineID]
-                      relativeToURL:syncState.syncBaseURL];
-  NSMutableURLRequest *req = [[NSMutableURLRequest alloc] initWithURL:url];
-  [req setHTTPMethod:@"POST"];
-
-  [[session dataTaskWithRequest:req completionHandler:^(NSData *data,
-                                                        NSURLResponse *response,
-                                                        NSError *error) {
-    long statusCode = [(NSHTTPURLResponse *)response statusCode];
-    if (statusCode != 200) {
-      LOGE(@"HTTP Response: %ld %@",
-           statusCode,
-           [[NSHTTPURLResponse localizedStringForStatusCode:statusCode] capitalizedString]);
-      LOGD(@"%@", error);
-      handler(NO);
-    } else {
-      NSDictionary *r = [NSJSONSerialization JSONObjectWithData:data options:0 error:nil];
-
-      if (syncState.newClientMode) {
-        [[daemonConn remoteObjectProxy] setClientMode:syncState.newClientMode reply:^{}];
-      }
-
-      NSString *backoffInterval = r[kBackoffInterval];
-      if (backoffInterval) {
-        [[daemonConn remoteObjectProxy] setNextSyncInterval:[backoffInterval intValue] reply:^{}];
-      }
-
-      if (syncState.cleanSync) {
-        [[daemonConn remoteObjectProxy] setSyncCleanRequired:NO reply:^{}];
-      }
-
-      // Update last sync success
-      [[daemonConn remoteObjectProxy] setSyncLastSuccess:[NSDate date] reply:^{}];
-
-      handler(YES);
-    }
-  }] resume];
+- (NSURL *)stageURL {
+  NSString *stageName = [@"postflight" stringByAppendingFormat:@"/%@", self.syncState.machineID];
+  return [NSURL URLWithString:stageName relativeToURL:self.syncState.syncBaseURL];
 }
 
+- (BOOL)sync {
+  NSDictionary *r = [self performRequest:[self requestWithDictionary:nil]];
+
+  dispatch_group_t group = dispatch_group_create();
+  void (^replyBlock)() = ^{
+    dispatch_group_leave(group);
+  };
+
+  // Set client mode if it changed
+  if (self.syncState.clientMode) {
+    dispatch_group_enter(group);
+    [[self.daemonConn remoteObjectProxy] setClientMode:self.syncState.clientMode
+                                                 reply:replyBlock];
+  }
+
+  // Update backoff interval
+  NSString *backoffInterval = r[kBackoffInterval];
+  if (backoffInterval) {
+    dispatch_group_enter(group);
+    [[self.daemonConn remoteObjectProxy] setNextSyncInterval:[backoffInterval intValue]
+                                                       reply:replyBlock];
+  }
+
+  // Remove clean sync flag if we did a clean sync
+  if (self.syncState.cleanSync) {
+    dispatch_group_enter(group);
+    [[self.daemonConn remoteObjectProxy] setSyncCleanRequired:NO reply:replyBlock];
+  }
+
+  // Update whitelist/blacklist regexes
+  if (self.syncState.whitelistRegex) {
+    dispatch_group_enter(group);
+    [[self.daemonConn remoteObjectProxy] setWhitelistPathRegex:self.syncState.whitelistRegex
+                                                         reply:replyBlock];
+  }
+  if (self.syncState.blacklistRegex) {
+    dispatch_group_enter(group);
+    [[self.daemonConn remoteObjectProxy] setBlacklistPathRegex:self.syncState.blacklistRegex
+                                                         reply:replyBlock];
+  }
+
+  // Update last sync success
+  dispatch_group_enter(group);
+  [[self.daemonConn remoteObjectProxy] setSyncLastSuccess:[NSDate date] reply:replyBlock];
+
+  // Wait for dispatch group
+  dispatch_group_wait(group, dispatch_time(DISPATCH_TIME_NOW, 5 * NSEC_PER_SEC));
+
+  return YES;
+}
 
 @end

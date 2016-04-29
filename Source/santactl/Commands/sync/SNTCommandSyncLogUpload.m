@@ -15,49 +15,40 @@
 #import "SNTCommandSyncLogUpload.h"
 
 #import "NSData+Zlib.h"
-
-#include "SNTLogging.h"
-
 #import "SNTCommandSyncConstants.h"
 #import "SNTCommandSyncState.h"
 #import "SNTCommonEnums.h"
+#import "SNTLogging.h"
 
 @implementation SNTCommandSyncLogUpload
 
-+ (void)performSyncInSession:(NSURLSession *)session
-                   syncState:(SNTCommandSyncState *)syncState
-                  daemonConn:(SNTXPCConnection *)daemonConn
-           completionHandler:(void (^)(BOOL success))handler {
-  NSURL *url = syncState.uploadLogURL;
-  NSMutableURLRequest *req = [[NSMutableURLRequest alloc] initWithURL:url];
-  [req setHTTPMethod:@"POST"];
-  NSString *boundary = @"----santa-sync-upload-boundary";
+- (NSString *)stageName {
+  return @"logupload";
+}
 
+- (NSURL *)stageURL {
+  return self.syncState.uploadLogURL;
+}
+
+- (BOOL)sync {
+  NSMutableURLRequest *req = [self requestWithDictionary:nil];
+
+  NSString *boundary = @"----santa-sync-upload-boundary";
   NSString *contentType =
       [NSString stringWithFormat:@"multipart/form-data; charset=UTF-8; boundary=%@", boundary];
   [req setValue:contentType forHTTPHeaderField:@"Content-Type"];
 
   NSArray *logsToUpload = [self logsToUpload];
+  [req setHTTPBody:[self requestBodyWithLogs:logsToUpload andBoundary:boundary]];
 
-  // Upload the logs
-  [[session uploadTaskWithRequest:req
-                         fromData:[self requestBodyWithLogs:logsToUpload andBoundary:boundary]
-                completionHandler:^(NSData *data, NSURLResponse *response, NSError *error) {
-      long statusCode = [(NSHTTPURLResponse *)response statusCode];
-      if (statusCode != 200) {
-        LOGE(@"HTTP Response: %ld %@",
-             statusCode,
-             [[NSHTTPURLResponse localizedStringForStatusCode:statusCode] capitalizedString]);
-        LOGD(@"%@", error);
-        handler(NO);
-      } else {
-        LOGI(@"Uploaded %lu logs", [logsToUpload count]);
-        handler(YES);
-      }
-  }] resume];
+  NSDictionary *d = [self performRequest:req];
+  if (!d) return NO;
+
+  LOGI(@"Uploaded %lu logs", logsToUpload.count);
+  return YES;
 }
 
-+ (NSData *)requestBodyWithLogs:(NSArray *)logsToUpload andBoundary:(NSString *)boundary {
+- (NSData *)requestBodyWithLogs:(NSArray *)logsToUpload andBoundary:(NSString *)boundary {
   // Prepare the body of the request, encoded as a multipart/form-data.
   // Along the way, gzip the individual log files and append .gz to their filenames.
   NSMutableData *reqBody = [[NSMutableData alloc] init];
@@ -80,7 +71,7 @@
   return reqBody;
 }
 
-+ (NSArray *)logsToUpload {
+- (NSArray *)logsToUpload {
   // General logs
   NSMutableArray *logsToUpload = [@[ @"/var/log/santa.log",
                                      @"/var/log/system.log" ] mutableCopy];

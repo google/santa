@@ -28,8 +28,6 @@
 #import "SNTXPCControlInterface.h"
 
 @interface SNTCommandSync : NSObject<SNTCommand>
-@property NSURLSession *session;
-@property SNTXPCConnection *daemonConn;
 @property SNTCommandSyncState *syncState;
 @end
 
@@ -72,7 +70,7 @@ REGISTER_COMMAND_NAME(@"sync")
   s.syncState = [[SNTCommandSyncState alloc] init];
 
   s.syncState.syncBaseURL = config.syncBaseURL;
-  if (!s.syncState.syncBaseURL) {
+  if (s.syncState.syncBaseURL.absoluteString.length == 0) {
     LOGE(@"Missing SyncBaseURL. Can't sync without it.");
     exit(1);
   } else if (![s.syncState.syncBaseURL.scheme isEqual:@"https"]) {
@@ -80,16 +78,20 @@ REGISTER_COMMAND_NAME(@"sync")
   }
 
   s.syncState.machineID = config.machineID;
-  if ([s.syncState.machineID length] == 0) {
+  if (s.syncState.machineID.length == 0) {
     LOGE(@"Missing Machine ID. Can't sync without it.");
     exit(1);
   }
 
   s.syncState.machineOwner = config.machineOwner;
-  if ([s.syncState.machineOwner length] == 0) {
+  if (s.syncState.machineOwner.length == 0) {
     s.syncState.machineOwner = @"";
     LOGW(@"Missing Machine Owner.");
   }
+
+  [[daemonConn remoteObjectProxy] xsrfToken:^(NSString *token) {
+    s.syncState.xsrfToken = token;
+  }];
 
   // Dropping root privileges to the 'nobody' user causes the default NSURLCache to throw
   // sandbox errors, which are benign but annoying. This line disables the cache entirely.
@@ -109,19 +111,7 @@ REGISTER_COMMAND_NAME(@"sync")
 
   // Configure server auth
   if ([config syncServerAuthRootsFile]) {
-    NSError *error = nil;
-
-    NSData *rootsData = [NSData dataWithContentsOfFile:[config syncServerAuthRootsFile]
-                                               options:0
-                                                 error:&error];
-    authURLSession.serverRootsPemData = rootsData;
-
-    if (!rootsData) {
-      LOGE(@"Couldn't open server root certificate file %@ with error: %@.",
-           [config syncServerAuthRootsFile],
-           [error localizedDescription]);
-      exit(1);
-    }
+    authURLSession.serverRootsPemFile = [config syncServerAuthRootsFile];
   } else if ([config syncServerAuthRootsData]) {
     authURLSession.serverRootsPemData = [config syncServerAuthRootsData];
   }
@@ -136,8 +126,8 @@ REGISTER_COMMAND_NAME(@"sync")
     authURLSession.clientCertIssuerCn = [config syncClientAuthCertificateIssuer];
   }
 
-  s.session = [authURLSession session];
-  s.daemonConn = daemonConn;
+  s.syncState.session = [authURLSession session];
+  s.syncState.daemonConn = daemonConn;
 
   if ([arguments containsObject:@"singleevent"]) {
     NSUInteger idx = [arguments indexOfObject:@"singleevent"] + 1;
@@ -151,106 +141,80 @@ REGISTER_COMMAND_NAME(@"sync")
       LOGI(@"singleevent passed without SHA-256 as next argument");
       exit(1);
     }
-    [s eventUploadSingleEvent:obj];
+    return [s eventUploadSingleEvent:obj];
   } else {
-    [s preflight];
+    return [s preflight];
   }
 }
 
 - (void)preflight {
-  [SNTCommandSyncPreflight performSyncInSession:self.session
-                                      syncState:self.syncState
-                                     daemonConn:self.daemonConn
-                              completionHandler:^(BOOL success) {
-      if (success) {
-        LOGD(@"Preflight complete");
-        if (self.syncState.uploadLogURL) {
-          [self logUpload];
-        } else {
-          [self eventUpload];
-        }
-      } else {
-        LOGE(@"Preflight failed, aborting run");
-        exit(1);
-      }
-  }];
+  SNTCommandSyncPreflight *p = [[SNTCommandSyncPreflight alloc] initWithState:self.syncState];
+  if ([p sync]) {
+    LOGD(@"Preflight complete");
+    if (self.syncState.uploadLogURL) {
+      return [self logUpload];
+    } else {
+      return [self eventUpload];
+    }
+  } else {
+    LOGE(@"Preflight failed, aborting run");
+    exit(1);
+  }
 }
 
 - (void)logUpload {
-  [SNTCommandSyncLogUpload performSyncInSession:self.session
-                                      syncState:self.syncState
-                                     daemonConn:self.daemonConn
-                              completionHandler:^(BOOL success) {
-      if (success) {
-        LOGD(@"Log upload complete");
-      } else {
-        LOGE(@"Log upload failed, continuing anyway");
-      }
-      [self eventUpload];
-
-  }];
+  SNTCommandSyncLogUpload *p = [[SNTCommandSyncLogUpload alloc] initWithState:self.syncState];
+  if ([p sync]) {
+    LOGD(@"Log upload complete");
+  } else {
+    LOGE(@"Log upload failed, continuing anyway");
+  }
+  return [self eventUpload];
 }
 
 - (void)eventUpload {
-  [SNTCommandSyncEventUpload performSyncInSession:self.session
-                                        syncState:self.syncState
-                                       daemonConn:self.daemonConn
-                                completionHandler:^(BOOL success) {
-      if (success) {
-        LOGD(@"Event upload complete");
-        [self ruleDownload];
-      } else {
-        LOGE(@"Event upload failed, aborting run");
-        exit(1);
-      }
-  }];
+  SNTCommandSyncEventUpload *p = [[SNTCommandSyncEventUpload alloc] initWithState:self.syncState];
+  if ([p sync]) {
+    LOGD(@"Event upload complete");
+    return [self ruleDownload];
+  } else {
+    LOGE(@"Event upload failed, aborting run");
+    exit(1);
+  }
 }
 
 - (void)eventUploadSingleEvent:(NSString *)sha256 {
-  [SNTCommandSyncEventUpload uploadSingleEventWithSHA256:sha256
-                                                 session:self.session
-                                               syncState:self.syncState
-                                              daemonConn:self.daemonConn
-                                       completionHandler:^(BOOL success) {
-      if (success) {
-        LOGD(@"Event upload complete");
-        exit(0);
-      } else {
-        LOGW(@"Event upload failed");
-        exit(1);
-      }
-  }];
+  SNTCommandSyncEventUpload *p = [[SNTCommandSyncEventUpload alloc] initWithState:self.syncState];
+  if ([p syncSingleEventWithSHA256:sha256]) {
+    LOGD(@"Event upload complete");
+    exit(0);
+  } else {
+    LOGE(@"Event upload failed");
+    exit(1);
+  }
 }
 
 - (void)ruleDownload {
-  [SNTCommandSyncRuleDownload performSyncInSession:self.session
-                                         syncState:self.syncState
-                                        daemonConn:self.daemonConn
-                                 completionHandler:^(BOOL success) {
-      if (success) {
-        LOGD(@"Rule download complete");
-        [self postflight];
-      } else {
-        LOGE(@"Rule download failed, aborting run");
-        exit(1);
-      }
-  }];
+  SNTCommandSyncRuleDownload *p = [[SNTCommandSyncRuleDownload alloc] initWithState:self.syncState];
+  if ([p sync]) {
+    LOGD(@"Rule download complete");
+    return [self postflight];
+  } else {
+    LOGE(@"Rule download failed, aborting run");
+    exit(1);
+  }
 }
 
 - (void)postflight {
-  [SNTCommandSyncPostflight performSyncInSession:self.session
-                                       syncState:self.syncState
-                                      daemonConn:self.daemonConn
-                               completionHandler:^(BOOL success) {
-      if (success) {
-        LOGD(@"Postflight complete");
-        LOGI(@"Sync completed successfully");
-        exit(0);
-      } else {
-        LOGE(@"Postflight failed");
-        exit(1);
-      }
-  }];
+  SNTCommandSyncPostflight *p = [[SNTCommandSyncPostflight alloc] initWithState:self.syncState];
+  if ([p sync]) {
+    LOGD(@"Postflight complete");
+    LOGI(@"Sync completed successfully");
+    exit(0);
+  } else {
+    LOGE(@"Postflight failed");
+    exit(1);
+  }
 }
 
 @end

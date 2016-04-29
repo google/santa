@@ -28,55 +28,34 @@
 
 @implementation SNTCommandSyncEventUpload
 
-+ (void)performSyncInSession:(NSURLSession *)session
-                   syncState:(SNTCommandSyncState *)syncState
-                  daemonConn:(SNTXPCConnection *)daemonConn
-           completionHandler:(void (^)(BOOL success))handler {
-  NSURL *url = [NSURL URLWithString:[kURLEventUpload stringByAppendingString:syncState.machineID]
-                      relativeToURL:syncState.syncBaseURL];
-
-  [[daemonConn remoteObjectProxy] databaseEventsPending:^(NSArray *events) {
-    if ([events count] == 0) {
-      handler(YES);
-    } else {
-      [self uploadEventsFromArray:events
-                            toURL:url
-                        inSession:session
-                        batchSize:syncState.eventBatchSize
-                       daemonConn:daemonConn
-                completionHandler:handler];
-    }
-  }];
+- (NSURL *)stageURL {
+  NSString *stageName = [@"eventupload" stringByAppendingFormat:@"/%@", self.syncState.machineID];
+  return [NSURL URLWithString:stageName relativeToURL:self.syncState.syncBaseURL];
 }
 
-+ (void)uploadSingleEventWithSHA256:(NSString *)SHA256
-                            session:(NSURLSession *)session
-                          syncState:(SNTCommandSyncState *)syncState
-                         daemonConn:(SNTXPCConnection *)daemonConn
-                  completionHandler:(void (^)(BOOL success))handler {
-  NSURL *url = [NSURL URLWithString:[kURLEventUpload stringByAppendingString:syncState.machineID]
-                      relativeToURL:syncState.syncBaseURL];
-  [[daemonConn remoteObjectProxy] databaseEventForSHA256:SHA256 reply:^(SNTStoredEvent *event) {
-    if (!event) {
-      handler(YES);
-      return;
+- (BOOL)sync {
+  dispatch_semaphore_t sema = dispatch_semaphore_create(0);
+  [[self.daemonConn remoteObjectProxy] databaseEventsPending:^(NSArray *events) {
+    if (events.count) {
+      [self uploadEvents:events];
     }
-
-    [self uploadEventsFromArray:@[ event ]
-                          toURL:url
-                      inSession:session
-                      batchSize:1
-                     daemonConn:daemonConn
-              completionHandler:handler];
+    dispatch_semaphore_signal(sema);
   }];
+  return (dispatch_semaphore_wait(sema, DISPATCH_TIME_FOREVER) == 0);
 }
 
-+ (void)uploadEventsFromArray:(NSArray *)events
-                        toURL:(NSURL *)url
-                    inSession:(NSURLSession *)session
-                    batchSize:(NSUInteger)batchSize
-                   daemonConn:(SNTXPCConnection *)daemonConn
-            completionHandler:(void (^)(BOOL success))handler {
+- (BOOL)syncSingleEventWithSHA256:(NSString *)sha256 {
+  dispatch_semaphore_t sema = dispatch_semaphore_create(0);
+  [[self.daemonConn remoteObjectProxy] databaseEventForSHA256:sha256 reply:^(SNTStoredEvent *e) {
+    if (e) {
+      [self uploadEvents:@[ e ]];
+    }
+    dispatch_semaphore_signal(sema);
+  }];
+  return (dispatch_semaphore_wait(sema, DISPATCH_TIME_FOREVER) == 0);
+}
+
+- (BOOL)uploadEvents:(NSArray *)events {
   NSMutableArray *uploadEvents = [[NSMutableArray alloc] init];
 
   NSMutableArray *eventIds = [NSMutableArray arrayWithCapacity:events.count];
@@ -89,63 +68,28 @@
       [uploadEvents addObjectsFromArray:relatedBinaries];
     }
 
-    if (eventIds.count >= batchSize) break;
+    if (uploadEvents.count >= self.syncState.eventBatchSize) break;
   }
 
-  NSDictionary *uploadReq = @{kEvents : uploadEvents};
+  NSDictionary *r = [self performRequest:[self requestWithDictionary:@{ kEvents: uploadEvents }]];
+  if (!r) return NO;
 
-  NSData *requestBody;
-  @try {
-    requestBody = [NSJSONSerialization dataWithJSONObject:uploadReq options:0 error:nil];
-  } @catch (NSException *exception) {
-    LOGE(@"Failed to parse event(s) into JSON");
-    LOGD(@"Parsing error: %@", [exception reason]);
+  LOGI(@"Uploaded %lu events", uploadEvents.count);
+
+  // Remove event IDs
+  [[self.daemonConn remoteObjectProxy] databaseRemoveEventsWithIDs:eventIds];
+
+  // See if there are any events remaining to upload
+  if (uploadEvents.count < events.count) {
+    NSRange nextEventsRange = NSMakeRange(uploadEvents.count, events.count - uploadEvents.count);
+    NSArray *nextEvents = [events subarrayWithRange:nextEventsRange];
+    return [self uploadEvents:nextEvents];
   }
 
-  NSMutableURLRequest *req = [[NSMutableURLRequest alloc] initWithURL:url];
-  [req setHTTPMethod:@"POST"];
-  [req setValue:@"application/json" forHTTPHeaderField:@"Content-Type"];
-
-  NSData *compressed = [requestBody zlibCompressed];
-  if (compressed) {
-    requestBody = compressed;
-    [req setValue:@"zlib" forHTTPHeaderField:@"Content-Encoding"];
-  }
-
-  [req setHTTPBody:requestBody];
-
-  [[session dataTaskWithRequest:req completionHandler:^(NSData *data,
-                                                        NSURLResponse *response,
-                                                        NSError *error) {
-    long statusCode = [(NSHTTPURLResponse *)response statusCode];
-    if (statusCode != 200) {
-      LOGE(@"HTTP Response: %ld %@",
-           statusCode,
-           [[NSHTTPURLResponse localizedStringForStatusCode:statusCode] capitalizedString]);
-      LOGD(@"%@", error);
-      handler(NO);
-    } else {
-      LOGI(@"Uploaded %lu events", eventIds.count);
-
-      [[daemonConn remoteObjectProxy] databaseRemoveEventsWithIDs:eventIds];
-
-      NSArray *nextEvents = [events subarrayWithRange:NSMakeRange(eventIds.count,
-                                                                  events.count - eventIds.count)];
-      if (nextEvents.count == 0) {
-        handler(YES);
-      } else {
-        [self uploadEventsFromArray:nextEvents
-                              toURL:url
-                          inSession:session
-                          batchSize:batchSize
-                         daemonConn:daemonConn
-                  completionHandler:handler];
-      }
-    }
-  }] resume];
+  return YES;
 }
 
-+ (NSDictionary *)dictionaryForEvent:(SNTStoredEvent *)event {
+- (NSDictionary *)dictionaryForEvent:(SNTStoredEvent *)event {
 #define ADDKEY(dict, key, value) if (value) dict[key] = value
   NSMutableDictionary *newEvent = [NSMutableDictionary dictionary];
 
@@ -209,7 +153,7 @@
 #undef ADDKEY
 }
 
-+ (NSArray *)findRelatedBinaries:(SNTStoredEvent *)event {
+- (NSArray *)findRelatedBinaries:(SNTStoredEvent *)event {
   // Prevent processing the same bundle twice.
   static NSMutableDictionary *previouslyProcessedBundles;
   static dispatch_once_t onceToken;
