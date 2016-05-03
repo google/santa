@@ -106,9 +106,7 @@ REGISTER_COMMAND_NAME(@"fileinfo")
   // Code signature state
   NSError *error;
   MOLCodesignChecker *csc = [[MOLCodesignChecker alloc] initWithBinaryPath:filePath error:&error];
-  if (!error) {
-    [self printKey:@"Code-signed" value:@"Yes"];
-  } else {
+  if (error) {
     switch (error.code) {
       case errSecCSUnsigned:
         [self printKey:@"Code-signed" value:@"No"];
@@ -117,7 +115,7 @@ REGISTER_COMMAND_NAME(@"fileinfo")
       case errSecCSStaticCodeChanged:
       case errSecCSSignatureNotVerifiable:
       case errSecCSSignatureUnsupported:
-        [self printKey:@"Code-signed" value:@"Yes, but code/signatured changed/unverifiable"];
+        [self printKey:@"Code-signed" value:@"Yes, but code/signature changed/unverifiable"];
         break;
       case errSecCSResourceDirectoryFailed:
       case errSecCSResourceNotSupported:
@@ -137,11 +135,15 @@ REGISTER_COMMAND_NAME(@"fileinfo")
         break;
       default: {
         NSString *val = [NSString stringWithFormat:@"Yes, but failed to validate (%ld)",
-                                                   error.code];
+                         error.code];
         [self printKey:@"Code-signed" value:val];
         break;
       }
     }
+  } else if (csc.signatureFlags & kSecCodeSignatureAdhoc) {
+    [self printKey:@"Code-signed" value:@"Yes, but ad-hoc"];
+  } else {
+    [self printKey:@"Code-signed" value:@"Yes"];
   }
 
   // Binary rule state
@@ -149,14 +151,14 @@ REGISTER_COMMAND_NAME(@"fileinfo")
   dispatch_group_t group = dispatch_group_create();
   dispatch_group_enter(group);
   [[daemonConn remoteObjectProxy] databaseBinaryRuleForSHA256:sha256 reply:^(SNTRule *rule) {
-    r = rule;
+    if (rule) r = rule;
     dispatch_group_leave(group);
   }];
   NSString *leafCertSHA = [[csc.certificates firstObject] SHA256];
   dispatch_group_enter(group);
   [[daemonConn remoteObjectProxy] databaseCertificateRuleForSHA256:leafCertSHA
                                                              reply:^(SNTRule *rule) {
-    if (!r) r = rule;
+    if (!r && rule) r = rule;
     dispatch_group_leave(group);
   }];
   if (dispatch_group_wait(group, dispatch_time(DISPATCH_TIME_NOW, 2 * NSEC_PER_SEC))) {

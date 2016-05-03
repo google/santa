@@ -1,11 +1,11 @@
 PODS:
-  - FMDB (2.6):
-    - FMDB/standard (= 2.6)
-  - FMDB/standard (2.6)
+  - FMDB (2.6.2):
+    - FMDB/standard (= 2.6.2)
+  - FMDB/standard (2.6.2)
   - MOLCertificate (1.3)
-  - MOLCodesignChecker (1.4):
+  - MOLCodesignChecker (1.5):
     - MOLCertificate (~> 1.3)
-  - OCMock (3.2.2)
+  - OCMock (3.3)
 
 DEPENDENCIES:
   - FMDB
@@ -14,9 +14,9 @@ DEPENDENCIES:
   - OCMock
 
 SPEC CHECKSUMS:
-  FMDB: c1968bab3ab0aed38f66cb778ae1e7fa9a652b6e
+  FMDB: 854a0341b4726e53276f2a8996f06f1b80f9259a
   MOLCertificate: a776221906b5a46dd1bd749d0682bef3ee68c1f5
-  MOLCodesignChecker: 34e60cc6beadabfb4762b6e5087e12837774f85f
-  OCMock: 18c9b7e67d4c2770e95bb77a9cc1ae0c91fe3835
+  MOLCodesignChecker: fc9c64147811d7b0d0739127003e0630dff9213a
+  OCMock: d68685bde31f69cb61d518dcb39269080c78b5ed
 
 COCOAPODS: 0.39.0
