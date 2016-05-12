@@ -47,8 +47,6 @@
 @interface SNTXPCConnection ()
 /// The XPC listener (server only).
 @property NSXPCListener *listenerObject;
-/// Array of accepted connections (server only).
-@property NSMutableArray *acceptedConnections;
 
 /// The current connection object (client only).
 @property NSXPCConnection *currentConnection;
@@ -62,7 +60,6 @@
   self = [super init];
   if (self) {
     _listenerObject = listener;
-    _acceptedConnections = [NSMutableArray array];
   }
   return self;
 }
@@ -139,7 +136,6 @@
   // The client passed the code signature check, now we need to resume the listener and
   // return YES so that the client can send the connectWithReply message. Once the client does
   // we reset the connection's exportedInterface and exportedObject.
-
   SNTXPCConnectionInterface *ci = [[SNTXPCConnectionInterface alloc] init];
   WEAKIFY(self);
   WEAKIFY(connection);
@@ -147,18 +143,11 @@
     STRONGIFY(self)
     STRONGIFY(connection);
     [connection suspend];
-    [self.acceptedConnections addObject:connection];
-
-    WEAKIFY(connection);
     connection.invalidationHandler = connection.interruptionHandler = ^{
-      STRONGIFY(connection);
-      [self.acceptedConnections removeObject:connection];
       if (self.invalidationHandler) self.invalidationHandler();
     };
-
     connection.exportedInterface = self.exportedInterface;
     connection.exportedObject = self.exportedObject;
-
     [connection resume];
 
     // The connection is now established.
@@ -188,10 +177,6 @@
     [self.currentConnection invalidate];
     self.currentConnection = nil;
   } else if (self.listenerObject) {
-    for (NSXPCConnection *conn in self.acceptedConnections) {
-      [conn invalidate];
-    }
-    [self.acceptedConnections removeAllObjects];
     [self.listenerObject invalidate];
   }
 }
