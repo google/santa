@@ -68,15 +68,22 @@ static NSMutableDictionary *registeredCommands;
   return nil;
 }
 
-+ (SNTXPCConnection *)connectToDaemon {
++ (SNTXPCConnection *)connectToDaemonRequired:(BOOL)required {
   SNTXPCConnection *daemonConn = [SNTXPCControlInterface configuredConnection];
 
-  daemonConn.invalidationHandler = ^{
-    printf("An error occurred communicating with the daemon, is it running?\n");
-    exit(1);
-  };
+  if (required) {
+    daemonConn.invalidationHandler = ^{
+      printf("An error occurred communicating with the daemon, is it running?\n");
+      exit(1);
+    };
+    [daemonConn resume];
+  } else {
+    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+      [daemonConn resume];
+    });
+  }
 
-  [daemonConn resume];
+
   return daemonConn;
 }
 
@@ -92,11 +99,7 @@ static NSMutableDictionary *registeredCommands;
     exit(2);
   }
 
-  SNTXPCConnection *daemonConn;
-  if ([command requiresDaemonConn]) {
-    daemonConn = [self connectToDaemon];
-  }
-
+  SNTXPCConnection *daemonConn = [self connectToDaemonRequired:[command requiresDaemonConn]];
   [command runWithArguments:arguments daemonConnection:daemonConn];
 
   // The command is responsible for quitting.
