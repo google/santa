@@ -45,6 +45,8 @@
 @end
 
 @interface SNTXPCConnection ()
+@property NSXPCInterface *validationInterface;
+
 /// The XPC listener (server only).
 @property NSXPCListener *listenerObject;
 
@@ -60,6 +62,8 @@
   self = [super init];
   if (self) {
     _listenerObject = listener;
+    _validationInterface =
+        [NSXPCInterface interfaceWithProtocol:@protocol(SNTXPCConnectionProtocol)];
   }
   return self;
 }
@@ -73,6 +77,8 @@
   if (self) {
     _currentConnection = [[NSXPCConnection alloc] initWithListenerEndpoint:listener];
     if (!_currentConnection) return nil;
+    _validationInterface =
+        [NSXPCInterface interfaceWithProtocol:@protocol(SNTXPCConnectionProtocol)];
   }
   return self;
 }
@@ -83,6 +89,8 @@
     NSXPCConnectionOptions options = (privileged ? NSXPCConnectionPrivileged : 0);
     _currentConnection = [[NSXPCConnection alloc] initWithMachServiceName:name options:options];
     if (!_currentConnection) return nil;
+    _validationInterface =
+        [NSXPCInterface interfaceWithProtocol:@protocol(SNTXPCConnectionProtocol)];
   }
   return self;
 }
@@ -104,8 +112,7 @@
     // Set-up the connection with the remote interface set to the validation interface,
     // send a message to the listener to finish establishing the connection
     dispatch_semaphore_t sema = dispatch_semaphore_create(0);
-    self.currentConnection.remoteObjectInterface =
-        [NSXPCInterface interfaceWithProtocol:@protocol(SNTXPCConnectionProtocol)];
+    self.currentConnection.remoteObjectInterface = self.validationInterface;
     self.currentConnection.interruptionHandler = self.invalidationHandler;
     self.currentConnection.invalidationHandler = self.invalidationHandler;
     [self.currentConnection resume];
@@ -153,8 +160,7 @@
     // The connection is now established.
     if (self.acceptedHandler) self.acceptedHandler();
   };
-  connection.exportedInterface =
-      [NSXPCInterface interfaceWithProtocol:@protocol(SNTXPCConnectionProtocol)];
+  connection.exportedInterface = self.validationInterface;
   connection.exportedObject = ci;
   [connection resume];
 
@@ -162,7 +168,8 @@
 }
 
 - (id)remoteObjectProxy {
-  if (self.currentConnection.remoteObjectInterface) {
+  if (self.currentConnection.remoteObjectInterface &&
+      self.currentConnection.remoteObjectInterface != self.validationInterface) {
     return [self.currentConnection remoteObjectProxyWithErrorHandler:^(NSError *error) {
       [self.currentConnection invalidate];
     }];
