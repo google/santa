@@ -130,10 +130,7 @@ IOReturn SantaDriverClient::static_open(
 }
 
 IOReturn SantaDriverClient::allow_binary(const uint64_t vnode_id) {
-  char vnode_id_str[21];
-  snprintf(vnode_id_str, sizeof(vnode_id_str), "%llu", vnode_id);
-  decisionManager->AddToCache(vnode_id_str, ACTION_RESPOND_ALLOW);
-
+  decisionManager->AddToCache(vnode_id, ACTION_RESPOND_ALLOW);
   return kIOReturnSuccess;
 }
 
@@ -149,10 +146,7 @@ IOReturn SantaDriverClient::static_allow_binary(
 }
 
 IOReturn SantaDriverClient::deny_binary(const uint64_t vnode_id) {
-  char vnode_id_str[21];
-  snprintf(vnode_id_str, sizeof(vnode_id_str), "%llu", vnode_id);
-  decisionManager->AddToCache(vnode_id_str, ACTION_RESPOND_DENY);
-
+  decisionManager->AddToCache(vnode_id, ACTION_RESPOND_DENY);
   return kIOReturnSuccess;
 }
 
@@ -194,9 +188,7 @@ IOReturn SantaDriverClient::static_cache_count(
 }
 
 IOReturn SantaDriverClient::check_cache(uint64_t vnode_id, uint64_t *output) {
-  char vnode_str[MAX_VNODE_ID_STR];
-  snprintf(vnode_str, MAX_VNODE_ID_STR, "%llu", vnode_id);
-  *output = decisionManager->GetFromCache(vnode_str);
+  *output = decisionManager->GetFromCache(vnode_id);
   return kIOReturnSuccess;
 }
 
@@ -219,7 +211,7 @@ IOReturn SantaDriverClient::externalMethod(
     void *reference) {
   ///  Array of methods callable by clients. The order of these must match the
   ///  order of the items in SantaDriverMethods in SNTKernelCommon.h
-  IOExternalMethodDispatch sMethods[kSantaUserClientNMethods] = {
+  static IOExternalMethodDispatch sMethods[kSantaUserClientNMethods] = {
     {
       reinterpret_cast<IOExternalMethodAction>(&SantaDriverClient::static_open),
       0,  // input scalar
