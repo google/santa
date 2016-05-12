@@ -2,22 +2,15 @@ platform :osx, "10.9"
 
 inhibit_all_warnings!
 
-target :Santa do
+def mol_pods
   pod 'MOLCertificate'
   pod 'MOLCodesignChecker'
 end
 
-target :santactl do
-  pod 'MOLCertificate'
-  pod 'MOLCodesignChecker'
-  pod 'FMDB'
-end
-
-target :santad do
-  pod 'MOLCertificate'
-  pod 'MOLCodesignChecker'
+def fmdb_pod
   pod 'FMDB'
 
+  # This is necessary to get FMDB to not NSLog stuff.
   post_install do |installer|
     installer.pods_project.targets.each do |target|
       target.build_configurations.each do |config|
@@ -32,9 +25,22 @@ target :santad do
   end
 end
 
+target :Santa do
+  mol_pods
+end
+
+target :santad do
+  mol_pods
+  fmdb_pod
+end
+
+target :santactl do
+  mol_pods
+  fmdb_pod
+end
+
 target :LogicTests do
-  pod 'FMDB'
-  pod 'MOLCertificate'
-  pod 'MOLCodesignChecker'
+  mol_pods
+  fmdb_pod
   pod 'OCMock'
 end

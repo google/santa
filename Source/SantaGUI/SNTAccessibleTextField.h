@@ -14,7 +14,7 @@
 
 /**
    An NSTextField subclass that provides an accessiblity label equal to:
-   (self.toolTip + self.stringValue) where available. It also sets the 
+   (self.toolTip + self.stringValue) where available. It also sets the
    accessibilityRoleDescription to "label".
 */
 @interface SNTAccessibleTextField : NSTextField
