@@ -35,7 +35,7 @@ REGISTER_COMMAND_NAME(@"fileinfo")
 }
 
 + (BOOL)requiresDaemonConn {
-  return YES;
+  return NO;
 }
 
 + (NSString *)shortHelpText {
@@ -161,19 +161,32 @@ REGISTER_COMMAND_NAME(@"fileinfo")
     if (!r && rule) r = rule;
     dispatch_group_leave(group);
   }];
-  if (dispatch_group_wait(group, dispatch_time(DISPATCH_TIME_NOW, 2 * NSEC_PER_SEC))) {
-    [self printKey:@"Rule" value:@"Unable to retrieve rule"];
+  if (dispatch_group_wait(group, dispatch_time(DISPATCH_TIME_NOW, 1 * NSEC_PER_SEC))) {
+    [self printKey:@"Rule" value:@"Cannot communicate with daemon"];
   } else {
+    NSString *output;
     switch (r.state) {
       case SNTRuleStateWhitelist:
-        [self printKey:@"Rule" value:@"Whitelisted"];
+        output = @"Whitelisted";
+        if (isatty(STDOUT_FILENO)) {
+          output = @"\033[32mWhitelisted\033[0m";
+        }
+        [self printKey:@"Rule" value:output];
         break;
       case SNTRuleStateBlacklist:
       case SNTRuleStateSilentBlacklist:
-        [self printKey:@"Rule" value:@"Blacklisted"];
+        output = @"Blacklisted";
+        if (isatty(STDOUT_FILENO)) {
+          output = @"\033[31mBlacklisted\033[0m";
+        }
+        [self printKey:@"Rule" value:output];
         break;
       default:
-        [self printKey:@"Rule" value:@"None"];
+        output = @"None";
+        if (isatty(STDOUT_FILENO)) {
+          output = @"\033[33mNone\033[0m";
+        }
+        [self printKey:@"Rule" value:output];
     }
   }
 
