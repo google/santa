@@ -63,9 +63,7 @@
     @"<xsl:stylesheet version='1.0' xmlns:xsl='http://www.w3.org/1999/XSL/Transform'"
     @"                              xmlns:xhtml='http://www.w3.org/1999/xhtml'>"
     @"<xsl:output method='text'/>"
-    @"<xsl:template match='br[not(preceding-sibling::node()[1][self::br])]'>"
-    @"  <xsl:text> </xsl:text>"
-    @"</xsl:template>"
+    @"<xsl:template match='br'><xsl:text>\n</xsl:text></xsl:template>"
     @"<xsl:template match='style'/>"
     @"</xsl:stylesheet>";
   NSError *error;
@@ -79,5 +77,17 @@
 #endif
 }
 
++ (NSURL *)eventDetailURLForEvent:(SNTStoredEvent *)event {
+  SNTConfigurator *config = [SNTConfigurator configurator];
+
+  NSString *formatStr = config.eventDetailURL;
+  formatStr = [formatStr stringByReplacingOccurrencesOfString:@"%file_sha%"
+                                                   withString:event.fileSHA256];
+  formatStr = [formatStr stringByReplacingOccurrencesOfString:@"%username%"
+                                                   withString:event.executingUser];
+  formatStr = [formatStr stringByReplacingOccurrencesOfString:@"%machine_id%"
+                                                   withString:config.machineID];
+  return [NSURL URLWithString:formatStr];
+}
 
 @end

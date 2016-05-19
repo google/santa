@@ -194,7 +194,11 @@
         // Let the user know what happened, both on the terminal and in the GUI.
         NSAttributedString *s = [SNTBlockMessage attributedBlockMessageForEvent:se
                                                                   customMessage:cd.customMsg];
-        NSString *msg = [NSString stringWithFormat:@"Santa: %@\n", s.string];
+        NSString *msg = [NSString stringWithFormat:@"\033[1mSanta\033[0m\n\n%@\n\n", s.string];
+        NSURL *detailURL = [SNTBlockMessage eventDetailURLForEvent:se];
+        if (detailURL) {
+          msg = [msg stringByAppendingFormat:@"%@\n\n", detailURL.absoluteString];
+        }
         [self printMessage:msg toTTYForPID:message.ppid];
 
         [self.notifierQueue addEvent:se customMessage:cd.customMsg];

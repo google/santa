@@ -27,4 +27,10 @@
 + (NSAttributedString *)attributedBlockMessageForEvent:(SNTStoredEvent *)event
                                          customMessage:(NSString *)customMessage;
 
+///
+///  Return a URL generated from the EventDetailURL configuration key
+///  after replacing templates in the URL with values from the event.
+///
++ (NSURL *)eventDetailURLForEvent:(SNTStoredEvent *)event;
+
 @end
