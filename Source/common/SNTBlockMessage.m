@@ -55,26 +55,42 @@
   NSData *htmlData = [fullHTML dataUsingEncoding:NSUTF8StringEncoding];
   return [[NSAttributedString alloc] initWithHTML:htmlData documentAttributes:NULL];
 #else
-  NSXMLDocument *xml = [[NSXMLDocument alloc] initWithXMLString:fullHTML options:0 error:NULL];
-
-  // Strip any HTML tags out of the message. Also remove any content inside <style> tags and
-  // replace <br> elements with a space while avoiding double-spacing.
-  NSString *stripXslt = @"<?xml version='1.0' encoding='utf-8'?>"
-    @"<xsl:stylesheet version='1.0' xmlns:xsl='http://www.w3.org/1999/XSL/Transform'"
-    @"                              xmlns:xhtml='http://www.w3.org/1999/xhtml'>"
-    @"<xsl:output method='text'/>"
-    @"<xsl:template match='br'><xsl:text>\n</xsl:text></xsl:template>"
-    @"<xsl:template match='style'/>"
-    @"</xsl:stylesheet>";
-  NSError *error;
-  NSData *data = [xml objectByApplyingXSLTString:stripXslt arguments:NULL error:&error];
-  if (error || ![data isKindOfClass:[NSData class]]) {
-    LOGW(@"Error when generating block message: %@", error);
+  NSString *strippedHTML = [self stringFromHTML:fullHTML];
+  if (!strippedHTML) {
     return [[NSAttributedString alloc] initWithString:@"This binary has been blocked."];
   }
-  NSString *strippedString = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
-  return [[NSAttributedString alloc] initWithString:strippedString];
+  return [[NSAttributedString alloc] initWithString:strippedHTML];
 #endif
+}
+
++ (NSString *)stringFromHTML:(NSString *)html {
+  NSError *error;
+  NSXMLDocument *xml = [[NSXMLDocument alloc] initWithXMLString:html options:0 error:&error];
+
+  if (!xml && error.code == NSXMLParserEmptyDocumentError) {
+    html = [NSString stringWithFormat:@"<html><body>%@</body></html>", html];
+    xml = [[NSXMLDocument alloc] initWithXMLString:html options:0 error:&error];
+    if (!xml) {
+      LOGW(@"Error when processing HTML to plain text: %@", error.localizedDescription);
+      return nil;
+    }
+  }
+
+  // Strip any HTML tags out of the message. Also remove any content inside <style> tags and
+  // replace <br> elements with a newline.
+  NSString *stripXslt = @"<?xml version='1.0' encoding='utf-8'?>"
+      @"<xsl:stylesheet version='1.0' xmlns:xsl='http://www.w3.org/1999/XSL/Transform'"
+      @"                              xmlns:xhtml='http://www.w3.org/1999/xhtml'>"
+      @"<xsl:output method='text'/>"
+      @"<xsl:template match='br'><xsl:text>\n</xsl:text></xsl:template>"
+      @"<xsl:template match='style'/>"
+      @"</xsl:stylesheet>";
+  NSData *data = [xml objectByApplyingXSLTString:stripXslt arguments:NULL error:&error];
+  if (error || ![data isKindOfClass:[NSData class]]) {
+    LOGW(@"Error when processing HTML to plain text: %@", error.localizedDescription);
+    return nil;
+  }
+  return [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
 }
 
 + (NSURL *)eventDetailURLForEvent:(SNTStoredEvent *)event {
