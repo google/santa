@@ -37,10 +37,12 @@ end
 target :santactl do
   mol_pods
   fmdb_pod
+  pod 'MOLAuthenticatingURLSession'
 end
 
 target :LogicTests do
   mol_pods
   fmdb_pod
+  pod 'MOLAuthenticatingURLSession'
   pod 'OCMock'
 end

@@ -14,7 +14,8 @@
 
 #import "SNTCommandController.h"
 
-#import "SNTAuthenticatingURLSession.h"
+#import <MOLAuthenticatingURLSession.h>
+
 #import "SNTCommandSyncEventUpload.h"
 #import "SNTCommandSyncLogUpload.h"
 #import "SNTCommandSyncPostflight.h"
@@ -100,7 +101,7 @@ REGISTER_COMMAND_NAME(@"sync")
                                                                   diskPath:nil]];
 
 
-  SNTAuthenticatingURLSession *authURLSession = [[SNTAuthenticatingURLSession alloc] init];
+  MOLAuthenticatingURLSession *authURLSession = [[MOLAuthenticatingURLSession alloc] init];
   authURLSession.userAgent = @"santactl-sync/";
   NSString *santactlVersion = [[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleVersion"];
   if (santactlVersion) {
@@ -108,6 +109,9 @@ REGISTER_COMMAND_NAME(@"sync")
   }
   authURLSession.refusesRedirects = YES;
   authURLSession.serverHostname = s.syncState.syncBaseURL.host;
+  authURLSession.loggingBlock = ^(NSString *line) {
+    LOGD(@"%@", line);
+  };
 
   // Configure server auth
   if ([config syncServerAuthRootsFile]) {
