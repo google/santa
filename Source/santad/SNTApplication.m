@@ -78,8 +78,19 @@
     _controlConnection.exportedObject = dc;
     [_controlConnection resume];
 
+    __block SNTClientMode origMode = [[SNTConfigurator configurator] clientMode];
     _configFileWatcher = [[SNTFileWatcher alloc] initWithFilePath:kDefaultConfigFilePath handler:^{
       [[SNTConfigurator configurator] reloadConfigData];
+
+      // Flush cache if client just went into lockdown.
+      SNTClientMode newMode = [[SNTConfigurator configurator] clientMode];
+      if (origMode != newMode) {
+        origMode = newMode;
+        if (newMode == SNTClientModeLockdown) {
+          LOGI(@"Changed client mode, flushing cache.");
+          [self.driverManager flushCache];
+        }
+      }
 
       // Ensure config file remains root:wheel 0644
       chown([kDefaultConfigFilePath fileSystemRepresentation], 0, 0);
