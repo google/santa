@@ -106,6 +106,18 @@ extern NSString *const kDefaultConfigFilePath;
 ///
 @property(readonly, nonatomic) NSString *bannedBlockMessage;
 
+///
+///  The notification text to display when the client goes into MONITOR mode.
+///  Defaults to "Switching into Monitor mode"
+///
+@property(readonly, nonatomic) NSString *modeNotificationMonitor;
+
+///
+///  The notification text to display when the client goes into LOCKDOWN mode.
+///  Defaults to "Switching into Lockdown mode"
+///
+@property(readonly, nonatomic) NSString *modeNotificationLockdown;
+
 #pragma mark - Sync Settings
 
 ///

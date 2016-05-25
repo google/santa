@@ -12,11 +12,14 @@
 ///    See the License for the specific language governing permissions and
 ///    limitations under the License.
 
+#import "SNTCommonEnums.h"
+
 @class SNTStoredEvent;
 
 /// Protocol implemented by SantaGUI and utilized by santad
 @protocol SNTNotifierXPC
 - (void)postBlockNotification:(SNTStoredEvent *)event withCustomMessage:(NSString *)message;
+- (void)postClientModeNotification:(SNTClientMode)clientmode;
 @end
 
 @interface SNTXPCNotifierInterface : NSObject

@@ -70,10 +70,7 @@
   if (!xml && error.code == NSXMLParserEmptyDocumentError) {
     html = [NSString stringWithFormat:@"<html><body>%@</body></html>", html];
     xml = [[NSXMLDocument alloc] initWithXMLString:html options:0 error:&error];
-    if (!xml) {
-      LOGW(@"Error when processing HTML to plain text: %@", error.localizedDescription);
-      return nil;
-    }
+    if (!xml) return html;
   }
 
   // Strip any HTML tags out of the message. Also remove any content inside <style> tags and
@@ -87,8 +84,7 @@
       @"</xsl:stylesheet>";
   NSData *data = [xml objectByApplyingXSLTString:stripXslt arguments:NULL error:&error];
   if (error || ![data isKindOfClass:[NSData class]]) {
-    LOGW(@"Error when processing HTML to plain text: %@", error.localizedDescription);
-    return nil;
+    return html;
   }
   return [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
 }

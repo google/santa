@@ -144,7 +144,10 @@ double watchdogRAMPeak = 0;
 }
 
 - (void)setClientMode:(SNTClientMode)mode reply:(void (^)())reply {
-  [[SNTConfigurator configurator] setClientMode:mode];
+  if ([[SNTConfigurator configurator] clientMode] != mode) {
+    [[SNTConfigurator configurator] setClientMode:mode];
+    [[self.notQueue.notifierConnection remoteObjectProxy] postClientModeNotification:mode];
+  }
   reply();
 }
 

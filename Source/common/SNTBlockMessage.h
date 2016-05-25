@@ -33,4 +33,9 @@
 ///
 + (NSURL *)eventDetailURLForEvent:(SNTStoredEvent *)event;
 
+///
+///  Strip HTML from a string, replacing <br /> with newline.
+///
++ (NSString *)stringFromHTML:(NSString *)html;
+
 @end

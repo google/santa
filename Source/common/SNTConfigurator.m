@@ -47,6 +47,8 @@ static NSString *const kEventDetailURLKey = @"EventDetailURL";
 static NSString *const kEventDetailTextKey = @"EventDetailText";
 static NSString *const kUnknownBlockMessage = @"UnknownBlockMessage";
 static NSString *const kBannedBlockMessage = @"BannedBlockMessage";
+static NSString *const kModeNotificationMonitor = @"ModeNotificationMonitor";
+static NSString *const kModeNotificationLockdown = @"ModeNotificationLockdown";
 
 static NSString *const kSyncBaseURLKey = @"SyncBaseURL";
 static NSString *const kSyncLastSuccess = @"SyncLastSuccess";
@@ -202,6 +204,14 @@ static NSString *const kMachineIDPlistKeyKey = @"MachineIDKey";
 
 - (NSString *)bannedBlockMessage {
   return self.configData[kBannedBlockMessage];
+}
+
+- (NSString *)modeNotificationMonitor {
+  return self.configData[kModeNotificationMonitor];
+}
+
+- (NSString *)modeNotificationLockdown {
+  return self.configData[kModeNotificationLockdown];
 }
 
 - (NSURL *)syncBaseURL {

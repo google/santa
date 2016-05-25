@@ -14,6 +14,8 @@
 
 #import "SNTNotificationManager.h"
 
+#import "SNTBlockMessage.h"
+#import "SNTConfigurator.h"
 #import "SNTLogging.h"
 #import "SNTStoredEvent.h"
 
@@ -64,6 +66,30 @@ static NSString * const silencedNotificationsKey = @"SilencedNotifications";
 }
 
 #pragma mark SNTNotifierXPC protocol method
+
+- (void)postClientModeNotification:(SNTClientMode)clientmode {
+  NSUserNotification *un = [[NSUserNotification alloc] init];
+  un.title = @"Santa";
+  un.hasActionButton = NO;
+  NSString *customMsg;
+  switch (clientmode) {
+    case SNTClientModeMonitor:
+      un.informativeText = @"Switching into Monitor mode";
+      customMsg = [[SNTConfigurator configurator] modeNotificationMonitor];
+      customMsg = [SNTBlockMessage stringFromHTML:customMsg];
+      if (customMsg.length) un.informativeText = customMsg;
+      break;
+    case SNTClientModeLockdown:
+      un.informativeText = @"Switching into Lockdown mode";
+      customMsg = [[SNTConfigurator configurator] modeNotificationLockdown];
+      customMsg = [SNTBlockMessage stringFromHTML:customMsg];      
+      if (customMsg.length) un.informativeText = customMsg;
+      break;
+    default:
+      return;
+  }
+  [[NSUserNotificationCenter defaultUserNotificationCenter] deliverNotification:un];
+}
 
 - (void)postBlockNotification:(SNTStoredEvent *)event withCustomMessage:(NSString *)message {
   // See if this binary is already in the list of pending notifications.
