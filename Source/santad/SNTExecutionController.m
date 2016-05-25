@@ -260,8 +260,8 @@
       _exit(EPERM);
     }
 
-    _exit(execl(kSantaCtlPath, kSantaCtlPath, "sync", "singleevent",
-                [event.fileSHA256 UTF8String], NULL));
+    _exit(execl(kSantaCtlPath, kSantaCtlPath, "sync", "--syslog",
+                "singleevent", [event.fileSHA256 UTF8String], NULL));
   }
 }
 
