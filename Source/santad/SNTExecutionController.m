@@ -293,8 +293,10 @@
 
   NSString *devPath = [NSString stringWithFormat:@"/dev/%s", devname(taskInfo.e_tdev, S_IFCHR)];
   int fd = open(devPath.UTF8String, O_WRONLY | O_NOCTTY);
-  NSFileHandle *fh = [[NSFileHandle alloc] initWithFileDescriptor:fd closeOnDealloc:YES];
-  [fh writeData:[msg dataUsingEncoding:NSUTF8StringEncoding]];
+  @try {
+    NSFileHandle *fh = [[NSFileHandle alloc] initWithFileDescriptor:fd closeOnDealloc:YES];
+    [fh writeData:[msg dataUsingEncoding:NSUTF8StringEncoding]];
+  } @catch (NSException *) { /* do nothing */ }
 }
 
 - (void)loggedInUsers:(NSArray **)users sessions:(NSArray **)sessions {
