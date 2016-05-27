@@ -75,18 +75,24 @@ extern NSString *const kDefaultConfigFilePath;
 ///
 ///  When the user gets a block notification, a button can be displayed which will
 ///  take them to a web page with more information about that event.
+///  There are two properties, one for individual binaries and one for binaries that are part
+///  of a bundle. If the latter is not set the former will be used.
+///
 ///  This property contains a kind of format string to be turned into the URL to send them to.
 ///  The following sequences will be replaced in the final URL:
 ///
 ///  %file_sha%    -- SHA-256 of the file that was blocked.
 ///  %machine_id%  -- ID of the machine.
 ///  %username%    -- executing user.
+///  %bundle_id%   -- bundle id of the binary, if applicable.
+///  %bundle_ver%  -- bundle version of the binary, if applicable.
 ///
 ///  @note: This is not an NSURL because the format-string parsing is done elsewhere.
 ///
 ///  If this item isn't set, the Open Event button will not be displayed.
 ///
 @property(readonly, nonatomic) NSString *eventDetailURL;
+@property(readonly, nonatomic) NSString *eventDetailBundleURL;
 
 ///
 ///  Related to the above property, this string represents the text to show on the button.

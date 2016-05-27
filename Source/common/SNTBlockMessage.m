@@ -92,13 +92,36 @@
 + (NSURL *)eventDetailURLForEvent:(SNTStoredEvent *)event {
   SNTConfigurator *config = [SNTConfigurator configurator];
 
-  NSString *formatStr = config.eventDetailURL;
-  formatStr = [formatStr stringByReplacingOccurrencesOfString:@"%file_sha%"
-                                                   withString:event.fileSHA256];
-  formatStr = [formatStr stringByReplacingOccurrencesOfString:@"%username%"
-                                                   withString:event.executingUser];
-  formatStr = [formatStr stringByReplacingOccurrencesOfString:@"%machine_id%"
-                                                   withString:config.machineID];
+  NSString *formatStr;
+  if (config.eventDetailBundleURL && event.fileBundleID) {
+    formatStr = config.eventDetailBundleURL;
+  } else {
+    formatStr = config.eventDetailURL;
+  }
+
+  if (!formatStr.length) return nil;
+
+  if (event.fileSHA256) {
+    formatStr = [formatStr stringByReplacingOccurrencesOfString:@"%file_sha%"
+                                                     withString:event.fileSHA256];
+  }
+  if (event.executingUser) {
+    formatStr = [formatStr stringByReplacingOccurrencesOfString:@"%username%"
+                                                     withString:event.executingUser];
+  }
+  if (config.machineID) {
+    formatStr = [formatStr stringByReplacingOccurrencesOfString:@"%machine_id%"
+                                                     withString:config.machineID];
+  }
+  if (event.fileBundleID) {
+    formatStr = [formatStr stringByReplacingOccurrencesOfString:@"%bundle_id%"
+                                                     withString:event.fileBundleID];
+  }
+  if (event.fileBundleVersionString) {
+    formatStr = [formatStr stringByReplacingOccurrencesOfString:@"%bundle_ver%"
+                                                     withString:event.fileBundleVersionString];
+  }
+
   return [NSURL URLWithString:formatStr];
 }
 
