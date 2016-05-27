@@ -50,7 +50,7 @@ NSString *const kDecisionBlockBinary = @"BLOCK_BINARY";
 NSString *const kDecisionBlockCertificate = @"BLOCK_CERTIFICATE";
 NSString *const kDecisionBlockScope = @"BLOCK_SCOPE";
 NSString *const kDecisionUnknown = @"UNKNOWN";
-NSString *const kDecisionRelatedBinary = @"RELATED_BINARY";
+NSString *const kDecisionBundleBinary = @"BUNDLE_BINARY";
 NSString *const kLoggedInUsers = @"logged_in_users";
 NSString *const kCurrentSessions = @"current_sessions";
 NSString *const kFileBundleID = @"file_bundle_id";
@@ -72,6 +72,7 @@ NSString *const kQuarantineDataURL = @"quarantine_data_url";
 NSString *const kQuarantineRefererURL = @"quarantine_referer_url";
 NSString *const kQuarantineTimestamp = @"quarantine_timestamp";
 NSString *const kQuarantineAgentBundleID = @"quarantine_agent_bundle_id";
+NSString *const kEventUploadBundleBinaries = @"event_upload_bundle_binaries";
 
 NSString *const kLogUploadField = @"files";
 

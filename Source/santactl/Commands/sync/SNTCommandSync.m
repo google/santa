@@ -202,11 +202,24 @@ REGISTER_COMMAND_NAME(@"sync")
   SNTCommandSyncRuleDownload *p = [[SNTCommandSyncRuleDownload alloc] initWithState:self.syncState];
   if ([p sync]) {
     LOGD(@"Rule download complete");
+    if (self.syncState.bundleBinaryRequests.count) {
+      return [self eventUploadBundleBinaries];
+    }
     return [self postflight];
   } else {
     LOGE(@"Rule download failed, aborting run");
     exit(1);
   }
+}
+
+- (void)eventUploadBundleBinaries {
+  SNTCommandSyncEventUpload *p = [[SNTCommandSyncEventUpload alloc] initWithState:self.syncState];
+  if ([p syncBundleEvents]) {
+    LOGD(@"Event Upload bundle binaries complete");
+  } else {
+    LOGW(@"Event Upload bundle binary search failed");
+  }
+  return [self postflight];
 }
 
 - (void)postflight {

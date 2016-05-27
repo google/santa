@@ -48,7 +48,7 @@ extern NSString *const kDecisionBlockBinary;
 extern NSString *const kDecisionBlockCertificate;
 extern NSString *const kDecisionBlockScope;
 extern NSString *const kDecisionUnknown;
-extern NSString *const kDecisionRelatedBinary;
+extern NSString *const kDecisionBundleBinary;
 extern NSString *const kLoggedInUsers;
 extern NSString *const kCurrentSessions;
 extern NSString *const kFileBundleID;
@@ -70,6 +70,7 @@ extern NSString *const kQuarantineDataURL;
 extern NSString *const kQuarantineRefererURL;
 extern NSString *const kQuarantineTimestamp;
 extern NSString *const kQuarantineAgentBundleID;
+extern NSString *const kEventUploadBundleBinaries;
 
 extern NSString *const kLogUploadField;
 

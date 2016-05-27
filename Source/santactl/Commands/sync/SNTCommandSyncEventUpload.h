@@ -18,4 +18,6 @@
 
 - (BOOL)syncSingleEventWithSHA256:(NSString *)sha256;
 
+- (BOOL)syncBundleEvents;
+
 @end

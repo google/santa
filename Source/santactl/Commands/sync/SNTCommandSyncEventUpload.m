@@ -55,29 +55,34 @@
   return (dispatch_semaphore_wait(sema, DISPATCH_TIME_FOREVER) == 0);
 }
 
+- (BOOL)syncBundleEvents {
+  NSMutableArray *newEvents = [NSMutableArray array];
+  for (NSString *bundlePath in self.syncState.bundleBinaryRequests) {
+    [newEvents addObjectsFromArray:[self findRelatedBinaries:bundlePath]];
+  }
+  return [self uploadEvents:newEvents];
+}
+
 - (BOOL)uploadEvents:(NSArray *)events {
   NSMutableArray *uploadEvents = [[NSMutableArray alloc] init];
 
-  NSMutableArray *eventIds = [NSMutableArray arrayWithCapacity:events.count];
+  NSMutableDictionary *eventIds = [NSMutableDictionary dictionaryWithCapacity:events.count];
   for (SNTStoredEvent *event in events) {
     [uploadEvents addObject:[self dictionaryForEvent:event]];
-    [eventIds addObject:event.idx];
-
-    if (event.fileBundleID) {
-      NSArray *relatedBinaries = [self findRelatedBinaries:event];
-      [uploadEvents addObjectsFromArray:relatedBinaries];
-    }
-
+    eventIds[event.idx] = @YES;
     if (uploadEvents.count >= self.syncState.eventBatchSize) break;
   }
 
   NSDictionary *r = [self performRequest:[self requestWithDictionary:@{ kEvents: uploadEvents }]];
   if (!r) return NO;
 
+  // Keep track of bundle search requests
+  self.syncState.bundleBinaryRequests = r[kEventUploadBundleBinaries];
+
   LOGI(@"Uploaded %lu events", uploadEvents.count);
 
-  // Remove event IDs
-  [[self.daemonConn remoteObjectProxy] databaseRemoveEventsWithIDs:eventIds];
+  // Remove event IDs. For Bundle Events the ID is 0 so nothing happens.
+  [[self.daemonConn remoteObjectProxy] databaseRemoveEventsWithIDs:[eventIds allKeys]];
 
   // See if there are any events remaining to upload
   if (uploadEvents.count < events.count) {
@@ -114,7 +119,7 @@
       ADDKEY(newEvent, kDecision, kDecisionBlockCertificate);
       break;
     case SNTEventStateBlockScope: ADDKEY(newEvent, kDecision, kDecisionBlockScope); break;
-    case SNTEventStateRelatedBinary: ADDKEY(newEvent, kDecision, kDecisionRelatedBinary); break;
+    case SNTEventStateBundleBinary: ADDKEY(newEvent, kDecision, kDecisionBundleBinary); break;
     default: ADDKEY(newEvent, kDecision, kDecisionUnknown);
   }
 
@@ -153,26 +158,26 @@
 #undef ADDKEY
 }
 
-- (NSArray *)findRelatedBinaries:(SNTStoredEvent *)event {
+// Find binaries within a bundle given the bundle's path
+// Searches for 10 minutes, creating new events.
+- (NSArray *)findRelatedBinaries:(NSString *)path {
+  SNTFileInfo *requestedPath = [[SNTFileInfo alloc] initWithPath:path];
+
   // Prevent processing the same bundle twice.
   static NSMutableDictionary *previouslyProcessedBundles;
   static dispatch_once_t onceToken;
   dispatch_once(&onceToken, ^{
     previouslyProcessedBundles = [NSMutableDictionary dictionary];
   });
-  if (previouslyProcessedBundles[event.fileBundleID]) return nil;
-  previouslyProcessedBundles[event.fileBundleID] = @YES;
+  if (previouslyProcessedBundles[requestedPath.bundleIdentifier]) return nil;
+  previouslyProcessedBundles[requestedPath.bundleIdentifier] = @YES;
 
   NSMutableArray *relatedEvents = [NSMutableArray array];
 
   dispatch_semaphore_t sema = dispatch_semaphore_create(0);
   __block BOOL shouldCancel = NO;
   dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_BACKGROUND, 0), ^{
-    SNTFileInfo *originalFile = [[SNTFileInfo alloc] initWithPath:event.filePath];
-    NSString *bundlePath = originalFile.bundlePath;
-    originalFile = nil;  // release originalFile early.
-
-    NSDirectoryEnumerator *dirEnum = [[NSFileManager defaultManager] enumeratorAtPath:bundlePath];
+    NSDirectoryEnumerator *dirEnum = [[NSFileManager defaultManager] enumeratorAtPath:path];
     NSString *file;
 
     while (file = [dirEnum nextObject]) {
@@ -180,21 +185,19 @@
         if (shouldCancel) break;
         if ([dirEnum fileAttributes][NSFileType] != NSFileTypeRegular) continue;
 
-        file = [bundlePath stringByAppendingPathComponent:file];
-
-        // Don't record the binary that triggered this event as a related binary.
-        if ([file isEqual:event.filePath]) continue;
+        file = [path stringByAppendingPathComponent:file];
 
         SNTFileInfo *fi = [[SNTFileInfo alloc] initWithPath:file];
         if (fi.isExecutable) {
           SNTStoredEvent *se = [[SNTStoredEvent alloc] init];
           se.filePath = fi.path;
           se.fileSHA256 = fi.SHA256;
-          se.decision = SNTEventStateRelatedBinary;
-          se.fileBundleID = event.fileBundleID;
-          se.fileBundleName = event.fileBundleName;
-          se.fileBundleVersion = event.fileBundleVersion;
-          se.fileBundleVersionString = event.fileBundleVersionString;
+          se.decision = SNTEventStateBundleBinary;
+          se.fileBundleID = fi.bundleIdentifier;
+          se.fileBundleName = fi.bundleName;
+          se.fileBundlePath = fi.bundlePath;
+          se.fileBundleVersion = fi.bundleVersion;
+          se.fileBundleVersionString = fi.bundleShortVersionString;
 
           MOLCodesignChecker *cs = [[MOLCodesignChecker alloc] initWithBinaryPath:se.filePath];
           se.signingChain = cs.certificates;
@@ -207,11 +210,10 @@
     dispatch_semaphore_signal(sema);
   });
 
-  // Give the search up to 5s per event to run.
-  // This might need tweaking if it seems to slow down syncing or misses too much to be useful.
-  if (dispatch_semaphore_wait(sema, dispatch_time(DISPATCH_TIME_NOW, NSEC_PER_SEC * 5))) {
+  // Give the search up to 10m per bundle to run.
+  if (dispatch_semaphore_wait(sema, dispatch_time(DISPATCH_TIME_NOW, NSEC_PER_SEC * 600))) {
     shouldCancel = YES;
-    LOGD(@"Timed out while searching for related events. Bundle ID: %@", event.fileBundleID);
+    LOGD(@"Timed out while searching for related events at path %@", path);
   }
 
   return relatedEvents;

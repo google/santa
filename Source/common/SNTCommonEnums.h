@@ -53,7 +53,7 @@ typedef NS_ENUM(NSInteger, SNTEventState) {
   SNTEventStateBlockCertificate = 7,
   SNTEventStateBlockScope = 8,
 
-  SNTEventStateRelatedBinary = 9,
+  SNTEventStateBundleBinary = 9,
 };
 
 typedef NS_ENUM(NSInteger, SNTRuleTableError) {
