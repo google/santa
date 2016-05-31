@@ -14,6 +14,7 @@
 
 #import "SNTApplication.h"
 
+#import <DiskArbitration/DiskArbitration.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 
@@ -33,6 +34,7 @@
 #import "SNTXPCControlInterface.h"
 
 @interface SNTApplication ()
+@property DASessionRef diskArbSession;
 @property SNTDriverManager *driverManager;
 @property SNTEventLog *eventLog;
 @property SNTExecutionController *execController;
@@ -116,6 +118,7 @@
 
   [self performSelectorInBackground:@selector(beginListeningForDecisionRequests) withObject:nil];
   [self performSelectorInBackground:@selector(beginListeningForLogRequests) withObject:nil];
+  [self performSelectorInBackground:@selector(beginListeningForDiskMounts) withObject:nil];
 }
 
 - (void)beginListeningForDecisionRequests {
@@ -181,5 +184,39 @@
     }
   }];
 }
+
+- (void)beginListeningForDiskMounts {
+  dispatch_queue_t disk_queue = dispatch_queue_create(
+      "com.google.santad.disk_queue", DISPATCH_QUEUE_SERIAL);
+
+  _diskArbSession = DASessionCreate(NULL);
+  DASessionSetDispatchQueue(_diskArbSession, disk_queue);
+
+  DARegisterDiskAppearedCallback(
+      _diskArbSession, NULL, diskAppearedCallback, (__bridge void *)self);
+  DARegisterDiskDescriptionChangedCallback(
+      _diskArbSession, NULL, NULL, diskDescriptionChangedCallback, (__bridge void *)self);
+  DARegisterDiskDisappearedCallback(
+      _diskArbSession, NULL, diskDisappearedCallback, (__bridge void *)self);
+}
+
+void diskAppearedCallback(DADiskRef disk, void *context) {
+  SNTApplication *app = (__bridge SNTApplication *)context;
+  NSDictionary *props = CFBridgingRelease(DADiskCopyDescription(disk));
+  [app.eventLog logDiskAppeared:props];
+}
+
+void diskDescriptionChangedCallback(DADiskRef disk, CFArrayRef keys, void *context) {
+  SNTApplication *app = (__bridge SNTApplication *)context;
+  NSDictionary *props = CFBridgingRelease(DADiskCopyDescription(disk));
+  if (props[@"DAVolumePath"]) [app.eventLog logDiskAppeared:props];
+}
+
+void diskDisappearedCallback(DADiskRef disk, void *context) {
+  SNTApplication *app = (__bridge SNTApplication *)context;
+  NSDictionary *props = CFBridgingRelease(DADiskCopyDescription(disk));
+  [app.eventLog logDiskDisappeared:props];
+}
+
 
 @end

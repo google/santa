@@ -21,6 +21,9 @@
 ///
 @interface SNTEventLog : NSObject
 
+- (void)logDiskAppeared:(NSDictionary *)diskProperties;
+- (void)logDiskDisappeared:(NSDictionary *)diskProperties;
+
 - (void)logFileModification:(santa_message_t)message;
 
 - (void)saveDecisionDetails:(SNTCachedDecision *)cd;

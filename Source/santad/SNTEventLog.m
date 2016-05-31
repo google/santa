@@ -195,6 +195,43 @@
   LOGI(@"%@", outLog);
 }
 
+- (void)logDiskAppeared:(NSDictionary *)diskProperties {
+  if (![diskProperties[@"DAVolumeMountable"] boolValue]) return;
+
+  NSString *dmgPath = @"";
+  NSString *serial = @"";
+  if ([diskProperties[@"DADeviceModel"] isEqual:@"Disk Image"]) {
+    dmgPath = [self diskImageForDevice:diskProperties[@"DADevicePath"]];
+  } else {
+    serial = [self serialForDevice:diskProperties[@"DADevicePath"]];
+    serial = [serial stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
+  }
+
+  NSString *model = [NSString stringWithFormat:@"%@ %@",
+                        diskProperties[@"DADeviceVendor"] ?: @"",
+                        diskProperties[@"DADeviceModel"] ?: @""];
+  model = [model stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
+
+  LOGI(@"action=DISKAPPEAR|mount=%@|volume=%@|bsdname=%@|fs=%@|model=%@|serial=%@|bus=%@|dmgpath=%@",
+       [diskProperties[@"DAVolumePath"] path] ?: @"",
+       diskProperties[@"DAVolumeName"] ?: @"",
+       diskProperties[@"DAMediaBSDName"] ?: @"",
+       diskProperties[@"DAVolumeKind"] ?: @"",
+       model ?: @"",
+       serial,
+       diskProperties[@"DADeviceProtocol"] ?: @"",
+       dmgPath);
+}
+
+- (void)logDiskDisappeared:(NSDictionary *)diskProperties {
+  if (![diskProperties[@"DAVolumeMountable"] boolValue]) return;
+
+  LOGI(@"action=DISKDISAPPEAR|mount=%@|volume=%@|bsdname=%@",
+       [diskProperties[@"DAVolumePath"] path] ?: @"",
+       diskProperties[@"DAVolumeName"] ?: @"",
+       diskProperties[@"DAMediaBSDName"]);
+}
+
 #pragma mark Helpers
 
 - (NSString *)sanitizeString:(NSString *)inStr {
@@ -204,6 +241,9 @@
   return inStr;
 }
 
+/**
+  Use sysctl to get the arguments for a PID, returned as a single string.
+*/
 - (NSString *)argsForPid:(pid_t)pid {
   int mib[3];
 
@@ -258,6 +298,61 @@
 
   // Return the args as a space-separated list
   return [args componentsJoinedByString:@" "];
+}
+
+/**
+  Given an IOKit device path (like those provided by DiskArbitration), find the disk
+  image path by looking up the device in the IOKit registry and getting its properties.
+
+  This is largely the same as the way hdiutil gathers info for the "info" command.
+*/
+- (NSString *)diskImageForDevice:(NSString *)devPath {
+  devPath = [devPath stringByDeletingLastPathComponent];
+  if (!devPath.length) return nil;
+  io_registry_entry_t device = IORegistryEntryCopyFromPath(
+      kIOMasterPortDefault, (__bridge CFStringRef)devPath);
+  CFMutableDictionaryRef deviceProperties = NULL;
+  IORegistryEntryCreateCFProperties(device, &deviceProperties, kCFAllocatorDefault, kNilOptions);
+  NSDictionary *properties = CFBridgingRelease(deviceProperties);
+  IOObjectRelease(device);
+
+  NSData *pathData = properties[@"image-path"];
+  NSString *result = [[NSString alloc] initWithData:pathData encoding:NSUTF8StringEncoding];
+
+  return result;
+}
+
+/**
+ Given an IOKit device path (like those provided by DiskArbitration), find the device serial number,
+ if there is one. This has only really been tested with USB and internal devices.
+*/
+- (NSString *)serialForDevice:(NSString *)devPath {
+  if (!devPath.length) return nil;
+  NSString *serial;
+  io_registry_entry_t device = IORegistryEntryCopyFromPath(
+      kIOMasterPortDefault, (__bridge CFStringRef)devPath);
+  while (!serial && device) {
+    CFMutableDictionaryRef deviceProperties = NULL;
+    IORegistryEntryCreateCFProperties(device, &deviceProperties, kCFAllocatorDefault, kNilOptions);
+    NSDictionary *properties = CFBridgingRelease(deviceProperties);
+    if (properties[@"Serial Number"]) {
+      serial = properties[@"Serial Number"];
+    } else if (properties[@"kUSBSerialNumberString"]) {
+      serial = properties[@"kUSBSerialNumberString"];
+    }
+
+    if (serial) {
+      IOObjectRelease(device);
+      break;
+    }
+
+    io_registry_entry_t parent;
+    IORegistryEntryGetParentEntry(device, kIOServicePlane, &parent);
+    IOObjectRelease(device);
+    device = parent;
+  }
+
+  return serial;
 }
 
 @end
