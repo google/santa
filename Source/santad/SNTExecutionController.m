@@ -254,6 +254,18 @@
       ![[SNTConfigurator configurator] syncBaseURL] ||
       [[SNTConfigurator configurator] syncBackOff]) return;
 
+  // The event upload is skipped if an event upload has been initiated for it in the
+  // last 10 minutes.
+  static dispatch_once_t onceToken;
+  static NSMutableDictionary *uploadBackoff;
+  dispatch_once(&onceToken, ^{
+    uploadBackoff = [NSMutableDictionary dictionary];
+  });
+  NSDate *backoff = uploadBackoff[event.fileSHA256];
+  NSDate *now = [NSDate date];
+  if (([now timeIntervalSince1970] - [backoff timeIntervalSince1970]) < 600) return;
+  uploadBackoff[event.fileSHA256] = now;
+
   if (fork() == 0) {
     // Ensure we have no privileges
     if (!DropRootPrivileges()) {
