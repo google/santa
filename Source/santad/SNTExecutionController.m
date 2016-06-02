@@ -121,6 +121,9 @@
     return;
   }
 
+  // PrinterProxy workaround, see description above the method for more details.
+  if ([self printerProxyWorkaround:binInfo]) return;
+
   // Get codesigning info about the file.
   MOLCodesignChecker *csInfo = [[MOLCodesignChecker alloc] initWithBinaryPath:binInfo.path];
 
@@ -244,6 +247,47 @@
   }
 
   return nil;
+}
+
+/**
+  Workaround for issue with PrinterProxy.app.
+ 
+  Every time a new printer is added to the machine, a copy of the PrinterProxy.app is copied from
+  the Print.framework to ~/Library/Printers with the name of the printer as the name of the app.
+  The binary inside is changed slightly (in a way that is unique to the printer name) and then 
+  re-signed with an adhoc signature. I don't know why this is done but it seems that the binary 
+  itself doesn't need to be changed as copying the old one back in-place seems to work,
+  so that's what we do.
+ 
+  If this workaround is applied the decision request is not responded to as the existing request
+  is invalidated when the file is closed which will trigger a brand new request coming from the
+  kernel.
+ 
+  @param fi, SNTFileInfo object for the binary being executed.
+  @return YES if the workaround was applied, NO otherwise.
+*/
+- (BOOL)printerProxyWorkaround:(SNTFileInfo *)fi {
+  if ([fi.path hasSuffix:@"/Contents/MacOS/PrinterProxy"] &&
+      [fi.path containsString:@"Library/Printers"]) {
+    NSString *proxyPath = (@"/System/Library/Frameworks/Carbon.framework/Versions/Current/"
+                           @"Frameworks/Print.framework/Versions/Current/Plugins/PrinterProxy.app/"
+                           @"Contents/MacOS/PrinterProxy");
+    SNTFileInfo *proxyFi = [[SNTFileInfo alloc] initWithPath:proxyPath];
+    if ([proxyFi.SHA256 isEqual:fi.SHA256]) return NO;
+
+    NSFileHandle *inFh = [NSFileHandle fileHandleForReadingAtPath:proxyPath];
+    NSFileHandle *outFh = [NSFileHandle fileHandleForWritingAtPath:fi.path];
+    [outFh writeData:[inFh readDataToEndOfFile]];
+    [inFh closeFile];
+    [outFh truncateFileAtOffset:[outFh offsetInFile]];
+    [outFh synchronizeFile];
+    [outFh closeFile];
+
+    LOGW(@"PrinterProxy workaround applied to %@", fi.path);
+
+    return YES;
+  }
+  return NO;
 }
 
 - (void)initiateEventUploadForEvent:(SNTStoredEvent *)event {
