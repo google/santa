@@ -195,7 +195,10 @@
 - (void)testPreflightDatabaseCounts {
   SNTCommandSyncPreflight *sut = [[SNTCommandSyncPreflight alloc] initWithState:self.syncState];
 
-  OCMStub([self.daemonConnRop databaseRuleCounts:([OCMArg invokeBlockWithArgs:@(5), @(8), nil])]);
+  int64_t bin = 5, cert = 8;
+  OCMStub([self.daemonConnRop databaseRuleCounts:([OCMArg invokeBlockWithArgs:OCMOCK_VALUE(bin),
+                                                                              OCMOCK_VALUE(cert),
+                                                                              nil])]);
 
   [self stubRequestBody:nil response:nil error:nil validateBlock:^BOOL(NSURLRequest *req) {
     NSDictionary *requestDict = [self dictFromRequest:req];
