@@ -82,6 +82,8 @@
 
     __block SNTClientMode origMode = [[SNTConfigurator configurator] clientMode];
     _configFileWatcher = [[SNTFileWatcher alloc] initWithFilePath:kDefaultConfigFilePath handler:^{
+      LOGD(@"Config file changed, reloading.");
+
       [[SNTConfigurator configurator] reloadConfigData];
 
       // Flush cache if client just went into lockdown.
@@ -96,7 +98,8 @@
 
       // Ensure config file remains root:wheel 0644
       chown([kDefaultConfigFilePath fileSystemRepresentation], 0, 0);
-      chmod([kDefaultConfigFilePath fileSystemRepresentation], 0644);
+      chmod([kDefaultConfigFilePath fileSystemRepresentation],
+            S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
     }];
 
     _eventLog = [[SNTEventLog alloc] init];

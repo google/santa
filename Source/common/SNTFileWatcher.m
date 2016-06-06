@@ -58,7 +58,7 @@
     if (l & DISPATCH_VNODE_DELETE || l & DISPATCH_VNODE_RENAME) {
       if (weakSelf.monitoringSource) dispatch_source_cancel(weakSelf.monitoringSource);
     } else {
-      weakSelf.eventHandler();
+      [weakSelf performSelectorOnMainThread:@selector(trigger) withObject:nil waitUntilDone:NO];
     }
   };
 
@@ -81,7 +81,7 @@
     dispatch_source_set_cancel_handler(weakSelf.monitoringSource, weakSelf.internalCancelHandler);
     dispatch_resume(weakSelf.monitoringSource);
 
-    weakSelf.eventHandler();
+    [weakSelf performSelectorOnMainThread:@selector(trigger) withObject:nil waitUntilDone:NO];
   };
 
   dispatch_async(queue, self.internalCancelHandler);
@@ -98,6 +98,12 @@
 
   dispatch_source_cancel(self.monitoringSource);
   self.monitoringSource = nil;
+}
+
+- (void)trigger {
+  if (self.eventHandler) {
+    self.eventHandler();
+  }
 }
 
 @end
