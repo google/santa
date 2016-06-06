@@ -318,7 +318,8 @@ static NSString *const kMachineIDPlistKeyKey = @"MachineIDKey";
                                             options:NSDataReadingMappedIfSafe
                                               error:&error];
   if (error) {
-    LOGE(@"Could not read configuration file: %@", [error localizedDescription]);
+    LOGE(@"Could not read configuration file: %@, replacing.", [error localizedDescription]);
+    [self saveConfigToDisk];
     return;
   }
 
@@ -328,7 +329,8 @@ static NSString *const kMachineIDPlistKeyKey = @"MachineIDKey";
                                                  format:NULL
                                                   error:&error];
   if (error) {
-    LOGE(@"Could not parse configuration file: %@", [error localizedDescription]);
+    LOGE(@"Could not parse configuration file: %@, replacing.", [error localizedDescription]);
+    [self saveConfigToDisk];
     return;
   }
 

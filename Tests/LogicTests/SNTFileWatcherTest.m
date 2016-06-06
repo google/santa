@@ -54,7 +54,7 @@
 - (void)testInitFileExists {
   __weak XCTestExpectation *exp = [self expectationWithDescription:@"Init: callback called"];
   __unused SNTFileWatcher *sut = [[SNTFileWatcher alloc] initWithFilePath:self.file
-                                                                  handler:^{
+                                                                  handler:^(unsigned long data) {
       [exp fulfill];
   }];
   [self waitForExpectationsWithTimeout:5.0 handler:nil];
@@ -65,7 +65,7 @@
 
   __weak XCTestExpectation *exp = [self expectationWithDescription:@"Init: callback called"];
   __unused SNTFileWatcher *sut = [[SNTFileWatcher alloc] initWithFilePath:self.file
-                                                                  handler:^{
+                                                                  handler:^(unsigned long data) {
       [exp fulfill];
   }];
 
@@ -77,7 +77,7 @@
   __block BOOL fulfilled = NO;
   __weak XCTestExpectation *exp = [self expectationWithDescription:@"Changed: callback called"];
   __unused SNTFileWatcher *sut = [[SNTFileWatcher alloc] initWithFilePath:self.file
-                                                                  handler:^{
+                                                                  handler:^(unsigned long data) {
       NSString *d = [NSString stringWithContentsOfFile:self.file
                                               encoding:NSUTF8StringEncoding
                                                  error:nil];
@@ -97,7 +97,7 @@
   __block BOOL fulfilled = NO;
   __weak XCTestExpectation *exp = [self expectationWithDescription:@"Replaced: callback called"];
   __unused SNTFileWatcher *sut = [[SNTFileWatcher alloc] initWithFilePath:self.file
-                                                                  handler:^{
+                                                                  handler:^(unsigned long data) {
       NSString *d = [NSString stringWithContentsOfFile:self.file
                                               encoding:NSUTF8StringEncoding
                                                  error:nil];
@@ -119,7 +119,7 @@
   __block BOOL fulfilled = NO;
   __weak XCTestExpectation *exp = [self expectationWithDescription:@"Extended: callback called"];
   __unused SNTFileWatcher *sut = [[SNTFileWatcher alloc] initWithFilePath:self.file
-                                                                  handler:^{
+                                                                  handler:^(unsigned long data) {
       int file = open(self.file.fileSystemRepresentation, O_RDONLY);
       char fileData[10];
       read(file, fileData, 10);

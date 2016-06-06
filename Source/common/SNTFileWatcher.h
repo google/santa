@@ -14,7 +14,7 @@
 
 ///
 ///  Simple file watching class using dispatch sources. Will automatically
-///  reload the watch if the file is deleted. Will continue watching for
+///  reload the watch if the file is deleted and continue watching for
 ///  events until deallocated.
 ///
 @interface SNTFileWatcher : NSObject
@@ -24,11 +24,11 @@
 ///  Initializes the watcher and begins watching for modifications.
 ///
 ///  @param filePath the file to watch.
-///  @param handler the handler to call when changes happen.
+///  @param handler the handler to call when changes happen. The argument to the block is the
+///      type of change that happened as a bitmask to be compared with DISPATCH_VNODE_* constants.
+///      The handler is always be called on the main thread.
 ///
-///  @note Shortly after the file has been opened and monitoring has begun, the provided handler
-///  will be called.
-///
-- (instancetype)initWithFilePath:(NSString *)filePath handler:(void (^)(void))handler;
+- (nonnull instancetype)initWithFilePath:(nonnull NSString *)filePath
+                                 handler:(nonnull void (^)(unsigned long))handler;
 
 @end

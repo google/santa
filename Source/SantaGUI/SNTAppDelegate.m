@@ -37,7 +37,7 @@
   [self setupMenu];
 
   self.configFileWatcher = [[SNTFileWatcher alloc] initWithFilePath:kDefaultConfigFilePath
-                                                            handler:^{
+                                                            handler:^(unsigned long data) {
     [[SNTConfigurator configurator] reloadConfigData];
   }];
 

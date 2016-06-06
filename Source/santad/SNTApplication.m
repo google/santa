@@ -81,25 +81,33 @@
     [_controlConnection resume];
 
     __block SNTClientMode origMode = [[SNTConfigurator configurator] clientMode];
-    _configFileWatcher = [[SNTFileWatcher alloc] initWithFilePath:kDefaultConfigFilePath handler:^{
-      LOGD(@"Config file changed, reloading.");
+    _configFileWatcher = [[SNTFileWatcher alloc] initWithFilePath:kDefaultConfigFilePath
+                                                          handler:^(unsigned long data) {
+      if (data & DISPATCH_VNODE_ATTRIB) {
+        const char *cPath = [kDefaultConfigFilePath fileSystemRepresentation];
+        struct stat fileStat;
+        stat(cPath, &fileStat);
+        int mask = S_IRWXU | S_IRWXG | S_IRWXO;
+        int desired = S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH;
+        if (fileStat.st_uid != 0 || fileStat.st_gid != 0 || (fileStat.st_mode & mask) != desired) {
+          LOGD(@"Config file permissions changed, fixing.");
+          chown(cPath, 0, 0);
+          chmod(cPath, desired);
+        }
+      } else {
+        LOGD(@"Config file changed, reloading.");
+        [[SNTConfigurator configurator] reloadConfigData];
 
-      [[SNTConfigurator configurator] reloadConfigData];
-
-      // Flush cache if client just went into lockdown.
-      SNTClientMode newMode = [[SNTConfigurator configurator] clientMode];
-      if (origMode != newMode) {
-        origMode = newMode;
-        if (newMode == SNTClientModeLockdown) {
-          LOGI(@"Changed client mode, flushing cache.");
-          [self.driverManager flushCache];
+        // Flush cache if client just went into lockdown.
+        SNTClientMode newMode = [[SNTConfigurator configurator] clientMode];
+        if (origMode != newMode) {
+          origMode = newMode;
+          if (newMode == SNTClientModeLockdown) {
+            LOGI(@"Changed client mode, flushing cache.");
+            [self.driverManager flushCache];
+          }
         }
       }
-
-      // Ensure config file remains root:wheel 0644
-      chown([kDefaultConfigFilePath fileSystemRepresentation], 0, 0);
-      chmod([kDefaultConfigFilePath fileSystemRepresentation],
-            S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
     }];
 
     _eventLog = [[SNTEventLog alloc] init];

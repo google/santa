@@ -14,13 +14,13 @@
 
 #import "SNTFileWatcher.h"
 
+#import "SNTStrengthify.h"
+
 @interface SNTFileWatcher ()
 @property NSString *filePath;
-@property dispatch_source_t monitoringSource;
+@property(strong) void (^handler)(unsigned long);
 
-@property(strong) void (^eventHandler)(void);
-@property(strong) void (^internalEventHandler)(void);
-@property(strong) void (^internalCancelHandler)(void);
+@property dispatch_source_t source;
 @end
 
 @implementation SNTFileWatcher
@@ -30,15 +30,13 @@
   return nil;
 }
 
-- (instancetype)initWithFilePath:(NSString *)filePath handler:(void (^)(void))handler {
+- (instancetype)initWithFilePath:(nonnull NSString *)filePath
+                         handler:(nonnull void (^)(unsigned long))handler {
   self = [super init];
   if (self) {
     _filePath = filePath;
-    _eventHandler = handler;
-
-    if (!_filePath || !_eventHandler) return nil;
-
-    [self beginWatchingFile];
+    _handler = handler;
+    [self startWatchingFile];
   }
   return self;
 }
@@ -47,63 +45,60 @@
   [self stopWatchingFile];
 }
 
-- (void)beginWatchingFile {
-  __weak __typeof(self) weakSelf = self;
-  int mask = (DISPATCH_VNODE_DELETE | DISPATCH_VNODE_WRITE |
-              DISPATCH_VNODE_EXTEND | DISPATCH_VNODE_RENAME);
+- (void)startWatchingFile {
   dispatch_queue_t queue = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_BACKGROUND, 0);
+  int mask = (DISPATCH_VNODE_DELETE | DISPATCH_VNODE_RENAME |
+              DISPATCH_VNODE_WRITE | DISPATCH_VNODE_EXTEND | DISPATCH_VNODE_ATTRIB);
 
-  self.internalEventHandler = ^{
-    unsigned long l = dispatch_source_get_data(weakSelf.monitoringSource);
-    if (l & DISPATCH_VNODE_DELETE || l & DISPATCH_VNODE_RENAME) {
-      if (weakSelf.monitoringSource) dispatch_source_cancel(weakSelf.monitoringSource);
-    } else {
-      [weakSelf performSelectorOnMainThread:@selector(trigger) withObject:nil waitUntilDone:NO];
+  dispatch_async(queue, ^{
+    int fd = -1;
+    while ((fd = open([self.filePath fileSystemRepresentation], O_EVTONLY)) < 0) {
+      usleep(200000);  // wait 200ms
     }
-  };
+    self.source = dispatch_source_create(DISPATCH_SOURCE_TYPE_VNODE, fd, mask, queue);
 
-  self.internalCancelHandler = ^{
-    int fd;
+    WEAKIFY(self);
 
-    if (weakSelf.monitoringSource) {
-      fd = (int)dispatch_source_get_handle(weakSelf.monitoringSource);
-      close(fd);
-    }
+    dispatch_source_set_event_handler(self.source, ^{
+      STRONGIFY(self);
+      unsigned long data = dispatch_source_get_data(self.source);
+      dispatch_async(dispatch_get_main_queue(), ^{
+        self.handler(data);
+      });
+      if (data & DISPATCH_VNODE_DELETE || data & DISPATCH_VNODE_RENAME) {
+        [self stopWatchingFile];
+        [self startWatchingFile];
+      }
+    });
 
-    const char *filePathCString = [weakSelf.filePath fileSystemRepresentation];
-    while ((fd = open(filePathCString, O_EVTONLY)) < 0) {
-      usleep(1000);
-    }
+    dispatch_source_set_registration_handler(self.source, ^{
+      STRONGIFY(self);
+      dispatch_async(dispatch_get_main_queue(), ^{
+        self.handler(0);
+      });
+    });
 
-    weakSelf.monitoringSource =
-        dispatch_source_create(DISPATCH_SOURCE_TYPE_VNODE, fd, mask, queue);
-    dispatch_source_set_event_handler(weakSelf.monitoringSource, weakSelf.internalEventHandler);
-    dispatch_source_set_cancel_handler(weakSelf.monitoringSource, weakSelf.internalCancelHandler);
-    dispatch_resume(weakSelf.monitoringSource);
-
-    [weakSelf performSelectorOnMainThread:@selector(trigger) withObject:nil waitUntilDone:NO];
-  };
-
-  dispatch_async(queue, self.internalCancelHandler);
+    dispatch_source_set_cancel_handler(self.source, ^{
+      STRONGIFY(self);
+      int fd = (int)dispatch_source_get_handle(self.source);
+      if (fd > 0) close(fd);
+    });
+    
+    dispatch_resume(self.source);
+  });
 }
 
 - (void)stopWatchingFile {
-  if (!self.monitoringSource) return;
+  if (!self.source) return;
 
-  int fd = (int)dispatch_source_get_handle(self.monitoringSource);
-  dispatch_source_set_event_handler_f(self.monitoringSource, NULL);
-  dispatch_source_set_cancel_handler(self.monitoringSource, ^{
+  int fd = (int)dispatch_source_get_handle(self.source);
+  dispatch_source_set_event_handler_f(self.source, NULL);
+  dispatch_source_set_cancel_handler(self.source, ^{
     close(fd);
   });
 
-  dispatch_source_cancel(self.monitoringSource);
-  self.monitoringSource = nil;
-}
-
-- (void)trigger {
-  if (self.eventHandler) {
-    self.eventHandler();
-  }
+  dispatch_source_cancel(self.source);
+  self.source = nil;
 }
 
 @end
