@@ -38,7 +38,7 @@
 
   self.configFileWatcher = [[SNTFileWatcher alloc] initWithFilePath:kDefaultConfigFilePath
                                                             handler:^(unsigned long data) {
-    [[SNTConfigurator configurator] reloadConfigData];
+    if (! (data & DISPATCH_VNODE_ATTRIB)) [[SNTConfigurator configurator] reloadConfigData];
   }];
 
   self.notificationManager = [[SNTNotificationManager alloc] init];
