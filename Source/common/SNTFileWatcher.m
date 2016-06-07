@@ -62,20 +62,17 @@
     dispatch_source_set_event_handler(self.source, ^{
       STRONGIFY(self);
       unsigned long data = dispatch_source_get_data(self.source);
-      dispatch_async(dispatch_get_main_queue(), ^{
-        self.handler(data);
-      });
+      self.handler(data);
       if (data & DISPATCH_VNODE_DELETE || data & DISPATCH_VNODE_RENAME) {
         [self stopWatchingFile];
         [self startWatchingFile];
       }
+      sleep(2);
     });
 
     dispatch_source_set_registration_handler(self.source, ^{
       STRONGIFY(self);
-      dispatch_async(dispatch_get_main_queue(), ^{
-        self.handler(0);
-      });
+      self.handler(0);
     });
 
     dispatch_source_set_cancel_handler(self.source, ^{

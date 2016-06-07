@@ -26,7 +26,6 @@
 ///  @param filePath the file to watch.
 ///  @param handler the handler to call when changes happen. The argument to the block is the
 ///      type of change that happened as a bitmask to be compared with DISPATCH_VNODE_* constants.
-///      The handler is always be called on the main thread.
 ///
 - (nonnull instancetype)initWithFilePath:(nonnull NSString *)filePath
                                  handler:(nonnull void (^)(unsigned long))handler;
