@@ -1,7 +1,6 @@
 WORKSPACE           = 'Santa.xcworkspace'
 DEFAULT_SCHEME      = 'All'
 OUTPUT_PATH         = 'Build'
-DIST_PATH           = 'Dist'
 BINARIES            = ['Santa.app', 'santa-driver.kext']
 DSYMS               = ['Santa.app.dSYM', 'santa-driver.kext.dSYM', 'santad.dSYM', 'santactl.dSYM']
 XCPRETTY_DEFAULTS   = '-sc'
@@ -56,7 +55,6 @@ desc "Clean"
 task :clean => :init do
   puts "Cleaning"
   FileUtils.rm_rf(OUTPUT_PATH)
-  FileUtils.rm_rf(DIST_PATH)
 end
 
 # Build
@@ -111,24 +109,26 @@ task :dist do
   Rake::Task['clean'].invoke()
   Rake::Task['build:build'].invoke("Release")
 
-  FileUtils.rm_rf(DIST_PATH)
+  dist_path = "santa-#{`defaults read #{xcodebuilddir}/Release/santa-driver.kext/Contents/Info.plist CFBundleVersion`.strip}"
 
-  FileUtils.mkdir_p("#{DIST_PATH}/binaries")
-  FileUtils.mkdir_p("#{DIST_PATH}/conf")
-  FileUtils.mkdir_p("#{DIST_PATH}/dsym")
+  FileUtils.rm_rf(dist_path)
+
+  FileUtils.mkdir_p("#{dist_path}/binaries")
+  FileUtils.mkdir_p("#{dist_path}/conf")
+  FileUtils.mkdir_p("#{dist_path}/dsym")
 
   BINARIES.each do |x|
-    FileUtils.cp_r("#{xcodebuilddir}/Release/#{x}", "#{DIST_PATH}/binaries")
+    FileUtils.cp_r("#{xcodebuilddir}/Release/#{x}", "#{dist_path}/binaries")
   end
 
   DSYMS.each do |x|
-    FileUtils.cp_r("#{xcodebuilddir}/Release/#{x}", "#{DIST_PATH}/dsym")
+    FileUtils.cp_r("#{xcodebuilddir}/Release/#{x}", "#{dist_path}/dsym")
   end
 
 
-  Dir.glob("Conf/*") {|x| File.directory?(x) or FileUtils.cp(x, "#{DIST_PATH}/conf")}
+  Dir.glob("Conf/*") {|x| File.directory?(x) or FileUtils.cp(x, "#{dist_path}/conf")}
 
-  puts "Distribution folder created"
+  puts "Distribution folder #{dist_path} created"
 end
 
 # Tests
