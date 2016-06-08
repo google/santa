@@ -16,9 +16,14 @@
 #import <Foundation/Foundation.h>
 #import <IOKit/IODataQueueClient.h>
 
+#include <cmath>
+#include <ctime>
+#include <iostream>
 #include <mach/mach.h>
+#include <numeric>
 #include <sys/ptrace.h>
 #include <sys/types.h>
+#include <vector>
 
 #include "SNTKernelCommon.h"
 
@@ -150,6 +155,13 @@
               "Please kill the existing client and re-run the test.");
   } else if (kr != kIOReturnSuccess) {
     TFAILINFO("KR: %d", kr);
+  }
+  TPASS();
+
+  TSTART("Refuses second client");
+  kr = IOConnectCallMethod(self.connection, kSantaUserClientOpen, 0, 0, 0, 0, 0, 0, 0, 0);
+  if (kr != kIOReturnExclusiveAccess) {
+    TFAIL();
   }
   TPASS();
 }
@@ -452,6 +464,48 @@
   TPASS();
 }
 
+- (void)testCachePerformance {
+  TSTART("Test cache performance");
+
+  // Execute echo 100 times, saving the time taken for each run
+  std::vector<std::clock_t> times;
+  for (int i = 0; i < 100; ++i) {
+    printf("\033[s");  // save cursor position
+    printf("%d/%d", i + 1, 100);
+    auto start = std::clock();
+    NSTask *t = [[NSTask alloc] init];
+    t.launchPath = @"/bin/echo";
+    t.standardOutput = [NSPipe pipe];
+    [t launch];
+    [t waitUntilExit];
+    if (i > 5) times.push_back(std::clock() - start);
+    printf("\033[u");  // restore cursor position
+  }
+
+  printf("\033[K\033[u");  // clear line, restore cursor position
+
+  // Sort and remove first 10 and last 10 entries.
+  std::sort(times.begin(), times.end());
+  times.erase(times.begin(), times.begin()+10);
+  times.erase(times.end()-10, times.end());
+
+  // Calculate mean
+  double mean = std::accumulate(times.begin(), times.end(), 0.0) / times.size();
+
+  // Calculate stdev
+  double accum = 0.0;
+  std::for_each(times.begin(), times.end(), [&](const double d) {
+    accum += (d - mean) * (d - mean);
+  });
+  double stdev = sqrt(accum / (times.size()-1));
+
+  if (mean > 1000 || stdev > 150) {
+    TFAILINFO("μ: %-3.2f σ: %-3.2f", mean, stdev);
+  } else {
+    TPASSINFO("μ: %-3.2f σ: %-3.2f", mean, stdev);
+  }
+}
+
 #pragma mark - Main
 
 - (void)runTests {
@@ -474,6 +528,9 @@
   [self invalidatesCacheTests];
   [self clearCacheTests];
   [self blocksDeniedTracedBinaries];
+
+  printf("\n-> Performance tests:\033[m\n");
+  [self testCachePerformance];
   [self handlesLotsOfBinaries];
 
   printf("\nAll tests passed.\n\n");

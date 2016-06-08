@@ -27,7 +27,7 @@
 
 /* Begin PBXBuildFile section */
 		0D0016A3192BCD3C005E7FCD /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0D9A7F3E1759330500035EB5 /* Foundation.framework */; };
-		0D0016A6192BCD3C005E7FCD /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 0D0016A5192BCD3C005E7FCD /* main.m */; };
+		0D0016A6192BCD3C005E7FCD /* main.mm in Sources */ = {isa = PBXBuildFile; fileRef = 0D0016A5192BCD3C005E7FCD /* main.mm */; };
 		0D0016AE192BCD8C005E7FCD /* IOKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0D3AFBF718FB4C870087BCEE /* IOKit.framework */; };
 		0D0A1EC3191998C900B8450F /* SNTCommandSyncRuleDownload.m in Sources */ = {isa = PBXBuildFile; fileRef = 0D0A1EC2191998C900B8450F /* SNTCommandSyncRuleDownload.m */; };
 		0D0A1EC6191AB9B000B8450F /* SNTCommandSyncPostflight.m in Sources */ = {isa = PBXBuildFile; fileRef = 0D0A1EC5191AB9B000B8450F /* SNTCommandSyncPostflight.m */; };
@@ -252,7 +252,7 @@
 
 /* Begin PBXFileReference section */
 		0D0016A2192BCD3C005E7FCD /* KernelTests */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = KernelTests; sourceTree = BUILT_PRODUCTS_DIR; };
-		0D0016A5192BCD3C005E7FCD /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
+		0D0016A5192BCD3C005E7FCD /* main.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = main.mm; sourceTree = "<group>"; };
 		0D0A1EC1191998C900B8450F /* SNTCommandSyncRuleDownload.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SNTCommandSyncRuleDownload.h; sourceTree = "<group>"; };
 		0D0A1EC2191998C900B8450F /* SNTCommandSyncRuleDownload.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SNTCommandSyncRuleDownload.m; sourceTree = "<group>"; };
 		0D0A1EC4191AB9B000B8450F /* SNTCommandSyncPostflight.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SNTCommandSyncPostflight.h; sourceTree = "<group>"; };
@@ -478,7 +478,7 @@
 		0D0016A4192BCD3C005E7FCD /* KernelTests */ = {
 			isa = PBXGroup;
 			children = (
-				0D0016A5192BCD3C005E7FCD /* main.m */,
+				0D0016A5192BCD3C005E7FCD /* main.mm */,
 			);
 			path = KernelTests;
 			sourceTree = "<group>";
@@ -1250,7 +1250,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				0D0016A6192BCD3C005E7FCD /* main.m in Sources */,
+				0D0016A6192BCD3C005E7FCD /* main.mm in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
