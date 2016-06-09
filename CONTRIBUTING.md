@@ -29,8 +29,8 @@ rake tests:kernel  # only necessary if you're changing the kext code
 
 All code submissions should try to match the surrounding code.  Wherever possible,
 code should adhere to either the
-[Google Objective-C Style Guide](http://google-styleguide.googlecode.com/svn/trunk/objcguide.xml)
-or the [Google C++ Style Guide](http://google-styleguide.googlecode.com/svn/trunk/cppguide.html).
+[Google Objective-C Style Guide](https://google.github.io/styleguide/objcguide.xml)
+or the [Google C++ Style Guide](https://google.github.io/styleguide/cppguide.html).
 
 ### The small print
 Contributions made by corporations are covered by a different agreement than
