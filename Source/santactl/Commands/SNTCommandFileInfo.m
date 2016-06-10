@@ -135,7 +135,7 @@ REGISTER_COMMAND_NAME(@"fileinfo")
         break;
       default: {
         NSString *val = [NSString stringWithFormat:@"Yes, but failed to validate (%ld)",
-                         error.code];
+                            error.code];
         [self printKey:@"Code-signed" value:val];
         break;
       }
@@ -149,6 +149,7 @@ REGISTER_COMMAND_NAME(@"fileinfo")
   // Binary rule state
   __block SNTRule *r;
   dispatch_group_t group = dispatch_group_create();
+  [daemonConn resume];
   dispatch_group_enter(group);
   [[daemonConn remoteObjectProxy] databaseBinaryRuleForSHA256:sha256 reply:^(SNTRule *rule) {
     if (rule) r = rule;
