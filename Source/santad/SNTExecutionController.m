@@ -198,6 +198,10 @@
         NSAttributedString *s = [SNTBlockMessage attributedBlockMessageForEvent:se
                                                                   customMessage:cd.customMsg];
         NSString *msg = [NSString stringWithFormat:@"\033[1mSanta\033[0m\n\n%@\n\n", s.string];
+        msg = [msg stringByAppendingFormat:@"\033[1mPath:\033[0m %@\n"
+                                           @"\033[1mIdentifier:\033[0m %@\n"
+                                           @"\033[1mParent:\033[0m %@ (%@)\n\n",
+                  se.filePath, se.fileSHA256, se.parentName, se.ppid];
         NSURL *detailURL = [SNTBlockMessage eventDetailURLForEvent:se];
         if (detailURL) {
           msg = [msg stringByAppendingFormat:@"%@\n\n", detailURL.absoluteString];
