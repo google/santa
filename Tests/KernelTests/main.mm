@@ -324,7 +324,7 @@
 
 /// Tests that a write to a cached vnode will invalidate the cached response for that file
 - (void)invalidatesCacheTests {
-  TSTART("Invalidates cache correctly");
+  TSTART("Invalidates cache for manually closed FDs");
 
   // Copy the ls binary to a new file
   NSFileManager *fm = [NSFileManager defaultManager];
@@ -370,6 +370,49 @@
   // And try running the temp file again. If it succeeds, the test failed.
   ed = [self taskWithPath:@"invalidacachetest_tmp"];
 
+  @try {
+    [ed launch];
+    [ed waitUntilExit];
+    TFAILINFO("Launched after file closed");
+  } @catch (NSException *exception) {
+    TPASS();
+  } @finally {
+    [fm removeItemAtPath:@"invalidacachetest_tmp" error:nil];
+  }
+}
+
+- (void)invalidatesCacheAutoCloseTest {
+  TSTART("Invalidates cache for auto-closed FDs");
+
+  // Check invalidations when kernel auto-closes descriptors
+  NSFileManager *fm = [NSFileManager defaultManager];
+  if (![fm copyItemAtPath:@"/bin/pwd" toPath:@"invalidacachetest_tmp" error:nil]) {
+    TFAILINFO("Failed to create temp file");
+  }
+
+  // Launch the new file to put it in the cache
+  NSTask *pwd = [self taskWithPath:@"invalidacachetest_tmp"];
+  [pwd launch];
+  [pwd waitUntilExit];
+
+  // Exit if this fails with a useful message.
+  if ([pwd terminationStatus] != 0) {
+    TFAILINFO("Second launch of test binary failed");
+  }
+
+  // Replace file contents
+  NSDictionary *attrs = [fm attributesOfItemAtPath:@"/bin/ed" error:NULL];
+  NSTask *dd = [self taskWithPath:@"/bin/dd"];
+  dd.arguments = @[ @"if=/bin/ed",
+                    @"of=invalidacachetest_tmp",
+                    @"bs=1",
+                    [NSString stringWithFormat:@"count=%@", attrs[NSFileSize]]
+  ];
+  [dd launch];
+  [dd waitUntilExit];
+
+  // And try running the temp file again. If it succeeds, the test failed.
+  NSTask *ed = [self taskWithPath:@"invalidacachetest_tmp"];
   @try {
     [ed launch];
     [ed waitUntilExit];
@@ -526,6 +569,7 @@
   [self receiveAndBlockTests];
   [self receiveAndCacheTests];
   [self invalidatesCacheTests];
+  [self invalidatesCacheAutoCloseTest];
   [self clearCacheTests];
   [self blocksDeniedTracedBinaries];
 
