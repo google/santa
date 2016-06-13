@@ -504,7 +504,8 @@ void SantaDecisionManager::FileOpCallback(
   // Filter out modifications to locations that are definitely
   // not useful or made by santad.
   if (proc_selfpid() != client_pid_ &&
-      !strprefix(path, "/.") && !strprefix(path, "/dev")) {
+      !strprefix(path, "/.") &&
+      !strprefix(path, "/dev")) {
     auto message = NewMessage(nullptr);
     strlcpy(message->path, path, sizeof(message->path));
     if (new_path) strlcpy(message->newpath, new_path, sizeof(message->newpath));
@@ -526,7 +527,9 @@ void SantaDecisionManager::FileOpCallback(
       case KAUTH_FILEOP_DELETE:
         message->action = ACTION_NOTIFY_DELETE;
         break;
-      default: delete message; return;
+      default:
+        delete message;
+        return;
     }
 
     PostToLogQueue(message);
@@ -547,9 +550,6 @@ extern "C" int fileop_scope_callback(
   char *new_path = nullptr;
 
   switch (action) {
-    case KAUTH_FILEOP_CLOSE:
-      if (!(arg2 & KAUTH_FILEOP_CLOSE_MODIFIED)) return KAUTH_RESULT_DEFER;
-    // Intentional fall-through
     case KAUTH_FILEOP_DELETE:
     case KAUTH_FILEOP_EXEC:
       vp = reinterpret_cast<vnode_t>(arg0);
@@ -576,20 +576,31 @@ extern "C" int fileop_scope_callback(
 extern "C" int vnode_scope_callback(
     kauth_cred_t credential, void *idata, kauth_action_t action,
     uintptr_t arg0, uintptr_t arg1, uintptr_t arg2, uintptr_t arg3) {
-  if (action & KAUTH_VNODE_ACCESS ||
-      !(action & KAUTH_VNODE_EXECUTE) ||
-      idata == nullptr) {
+  if (action & KAUTH_VNODE_ACCESS || idata == nullptr) {
     return KAUTH_RESULT_DEFER;
   }
 
   auto sdm = OSDynamicCast(
       SantaDecisionManager, reinterpret_cast<OSObject *>(idata));
 
-  sdm->IncrementListenerInvocations();
-  int result = sdm->VnodeCallback(credential,
-                                  reinterpret_cast<vfs_context_t>(arg0),
-                                  reinterpret_cast<vnode_t>(arg1),
-                                  reinterpret_cast<int *>(arg3));
-  sdm->DecrementListenerInvocations();
-  return result;
+  if (action & KAUTH_VNODE_EXECUTE) {
+    sdm->IncrementListenerInvocations();
+    int result = sdm->VnodeCallback(credential,
+                                    reinterpret_cast<vfs_context_t>(arg0),
+                                    reinterpret_cast<vnode_t>(arg1),
+                                    reinterpret_cast<int *>(arg3));
+    sdm->DecrementListenerInvocations();
+    return result;
+  } else if (action & KAUTH_VNODE_WRITE_DATA) {
+    vnode_t vp = reinterpret_cast<vnode_t>(arg1);
+    if (vnode_vtype(vp) != VREG) return KAUTH_RESULT_DEFER;
+    sdm->IncrementListenerInvocations();
+    char path[MAXPATHLEN];
+    int pathlen = MAXPATHLEN;
+    vn_getpath(vp, path, &pathlen);
+    sdm->FileOpCallback(KAUTH_FILEOP_CLOSE, vp, path, nullptr);
+    sdm->DecrementListenerInvocations();
+  }
+
+  return KAUTH_RESULT_DEFER;
 }
