@@ -45,7 +45,7 @@
 }
 
 - (void)logFileModification:(santa_message_t)message {
-  NSString *action, *path, *newpath, *sha256, *outStr;
+  NSString *action, *path, *newpath, *outStr;
 
   path = @(message.path);
 
@@ -71,12 +71,6 @@
     }
     case ACTION_NOTIFY_WRITE: {
       action = @"WRITE";
-      SNTFileInfo *fileInfo = [[SNTFileInfo alloc] initWithPath:path];
-      if (fileInfo.fileSize < 1024 * 1024) {
-        sha256 = fileInfo.SHA256;
-      } else {
-        sha256 = @"(too large)";
-      }
       break;
     }
     default: action = @"UNKNOWN"; break;
@@ -99,10 +93,6 @@
                                             @"uid=%d|user=%@|gid=%d|group=%@"),
                                            message.pid, message.ppid, message.pname, ppath,
                                            message.uid, user, message.gid, group];
-  if (sha256) {
-    outStr = [outStr stringByAppendingFormat:@"|sha256=%@", sha256];
-  }
-
   LOGI(@"%@", outStr);
 }
 
