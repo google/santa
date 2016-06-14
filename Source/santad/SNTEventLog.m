@@ -309,8 +309,7 @@
 - (NSString *)diskImageForDevice:(NSString *)devPath {
   devPath = [devPath stringByDeletingLastPathComponent];
   if (!devPath.length) return nil;
-  io_registry_entry_t device = IORegistryEntryCopyFromPath(
-      kIOMasterPortDefault, (__bridge CFStringRef)devPath);
+  io_registry_entry_t device = IORegistryEntryFromPath(kIOMasterPortDefault, devPath.UTF8String);
   CFMutableDictionaryRef deviceProperties = NULL;
   IORegistryEntryCreateCFProperties(device, &deviceProperties, kCFAllocatorDefault, kNilOptions);
   NSDictionary *properties = CFBridgingRelease(deviceProperties);
@@ -329,8 +328,7 @@
 - (NSString *)serialForDevice:(NSString *)devPath {
   if (!devPath.length) return nil;
   NSString *serial;
-  io_registry_entry_t device = IORegistryEntryCopyFromPath(
-      kIOMasterPortDefault, (__bridge CFStringRef)devPath);
+  io_registry_entry_t device = IORegistryEntryFromPath(kIOMasterPortDefault, devPath.UTF8String);
   while (!serial && device) {
     CFMutableDictionaryRef deviceProperties = NULL;
     IORegistryEntryCreateCFProperties(device, &deviceProperties, kCFAllocatorDefault, kNilOptions);
