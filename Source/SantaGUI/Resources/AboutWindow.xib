@@ -37,7 +37,7 @@
                         <rect key="frame" x="18" y="65" width="444" height="60"/>
                         <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="center" id="CcT-ul-1eA">
                             <font key="font" metaFont="system"/>
-                            <string key="title">Santa is an application whitelisting system for OS X.
+                            <string key="title">Santa is an application whitelisting system for macOS.
 
 There are no user-configurable settings.</string>
                             <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>

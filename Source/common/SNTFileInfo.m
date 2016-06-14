@@ -230,7 +230,7 @@ extern NSString *const NSURLQuarantinePropertiesKey WEAK_IMPORT_ATTRIBUTE;
   if (!lcData) return NO;
 
   // This code assumes the __PAGEZERO is always the first load-command in the file.
-  // Given that the OS X ABI says "the static linker creates a __PAGEZERO segment
+  // Given that the macOS ABI says "the static linker creates a __PAGEZERO segment
   // as the first segment of an executable file." this should be OK.
   struct load_command *lc = (struct load_command *)[lcData bytes];
   if (lc->cmd == LC_SEGMENT) {
