@@ -193,6 +193,20 @@ IOReturn SantaDriverClient::static_cache_count(
   return target->cache_count(&(arguments->scalarOutput[0]));
 }
 
+IOReturn SantaDriverClient::check_cache(uint64_t vnode_id, uint64_t *output) {
+  *output = decisionManager->CheckCache(vnode_id);
+  return kIOReturnSuccess;
+}
+
+IOReturn SantaDriverClient::static_check_cache(
+    com_google_SantaDriverClient *target,
+    void *reference,
+    IOExternalMethodArguments *arguments) {
+  if (!target) return kIOReturnBadArgument;
+  return target->check_cache(reinterpret_cast<uint64_t>(*arguments->scalarInput),
+                             &(arguments->scalarOutput[0]));
+}
+
 #pragma mark Method Resolution
 
 IOReturn SantaDriverClient::externalMethod(
@@ -239,6 +253,14 @@ IOReturn SantaDriverClient::externalMethod(
       reinterpret_cast<IOExternalMethodAction>(
           &SantaDriverClient::static_cache_count),
       0,
+      0,
+      1,
+      0
+    },
+    {
+      reinterpret_cast<IOExternalMethodAction>(
+          &SantaDriverClient::static_check_cache),
+      1,
       0,
       1,
       0

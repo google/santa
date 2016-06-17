@@ -28,6 +28,7 @@
 ///
 - (void)cacheCount:(void (^)(int64_t))reply;
 - (void)flushCache:(void (^)(BOOL))reply;
+- (void)checkCacheForVnodeID:(u_int64_t)vnodeID withReply:(void (^)(BOOL))reply;
 
 ///
 ///  Database ops

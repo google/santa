@@ -110,6 +110,13 @@ class com_google_SantaDriverClient : public IOUserClient {
       com_google_SantaDriverClient *target,
       void *reference,
       IOExternalMethodArguments *arguments);
+  
+  ///  The daemon calls this to find out if a VnodeID is in the cache
+  IOReturn check_cache(uint64_t vnode_id, uint64_t *output);
+  static IOReturn static_check_cache(
+      com_google_SantaDriverClient *target,
+      void *reference,
+      IOExternalMethodArguments *arguments);
 
  private:
   com_google_SantaDriver *myProvider;

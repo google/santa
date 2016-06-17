@@ -175,6 +175,7 @@
 		2BA4AE89AA2447E29DA2E85C /* libPods-santactl.a in Frameworks */ = {isa = PBXBuildFile; fileRef = BE53E1EAE84D54E7FCB22FD5 /* libPods-santactl.a */; };
 		4092327A1A51B66400A04527 /* SNTCommandRule.m in Sources */ = {isa = PBXBuildFile; fileRef = 409232791A51B65D00A04527 /* SNTCommandRule.m */; };
 		A60673DE57680AC450A3B0B2 /* libPods-santad.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 9BE438428F17C09C6A9D0802 /* libPods-santad.a */; };
+		C76614EC1D142D3C00D150C1 /* SNTCommandCheckCache.m in Sources */ = {isa = PBXBuildFile; fileRef = C76614EB1D142D3C00D150C1 /* SNTCommandCheckCache.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -406,6 +407,7 @@
 		95B378553DCD86290341B8E4 /* Pods-santad.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-santad.debug.xcconfig"; path = "Pods/Target Support Files/Pods-santad/Pods-santad.debug.xcconfig"; sourceTree = "<group>"; };
 		9BE438428F17C09C6A9D0802 /* libPods-santad.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-santad.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		BE53E1EAE84D54E7FCB22FD5 /* libPods-santactl.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-santactl.a"; sourceTree = BUILT_PRODUCTS_DIR; };
+		C76614EB1D142D3C00D150C1 /* SNTCommandCheckCache.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SNTCommandCheckCache.m; sourceTree = "<group>"; };
 		D227889DF327E7D3532FE00B /* Pods-Santa.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Santa.debug.xcconfig"; path = "Pods/Target Support Files/Pods-Santa/Pods-Santa.debug.xcconfig"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -760,6 +762,7 @@
 		0DAF01141C1B794B00F5B6C3 /* Commands */ = {
 			isa = PBXGroup;
 			children = (
+				C76614EB1D142D3C00D150C1 /* SNTCommandCheckCache.m */,
 				0DCD5FBE1909D64A006B445C /* SNTCommandFileInfo.m */,
 				0DE4C8A518FF3B1700466D04 /* SNTCommandFlushCache.m */,
 				409232791A51B65D00A04527 /* SNTCommandRule.m */,
@@ -835,13 +838,13 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = 0D260DBC18B68E12002A0B55 /* Build configuration list for PBXNativeTarget "LogicTests" */;
 			buildPhases = (
-				C88551472F6983D0B00880F8 /* 📦 Check Pods Manifest.lock */,
+				C88551472F6983D0B00880F8 /* [CP] Check Pods Manifest.lock */,
 				0D673DAD18FC9017009C5B06 /* Delete existing coverage files */,
 				0D260DA818B68E12002A0B55 /* Sources */,
 				0D260DA918B68E12002A0B55 /* Frameworks */,
 				0D260DAA18B68E12002A0B55 /* Resources */,
-				1D12555F0F4EF323B11E40F9 /* 📦 Embed Pods Frameworks */,
-				0C5C7A6AB763BCE7F760FAFF /* 📦 Copy Pods Resources */,
+				1D12555F0F4EF323B11E40F9 /* [CP] Embed Pods Frameworks */,
+				0C5C7A6AB763BCE7F760FAFF /* [CP] Copy Pods Resources */,
 			);
 			buildRules = (
 			);
@@ -856,11 +859,11 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = 0D35BDA918FD71CE00921A21 /* Build configuration list for PBXNativeTarget "santactl" */;
 			buildPhases = (
-				EE6ABBFEC2708CE57EB1780A /* 📦 Check Pods Manifest.lock */,
+				EE6ABBFEC2708CE57EB1780A /* [CP] Check Pods Manifest.lock */,
 				0DD98E671A5DD02000A754C6 /* Update Version Info */,
 				0D35BD9A18FD71CE00921A21 /* Sources */,
 				0D35BD9B18FD71CE00921A21 /* Frameworks */,
-				E50DD7319E04737B040B69EC /* 📦 Copy Pods Resources */,
+				E50DD7319E04737B040B69EC /* [CP] Copy Pods Resources */,
 			);
 			buildRules = (
 			);
@@ -875,13 +878,13 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = 0D385DE3180DE4A900418BC6 /* Build configuration list for PBXNativeTarget "Santa" */;
 			buildPhases = (
-				B34356D1FD4C8C6EF75F2FFE /* 📦 Check Pods Manifest.lock */,
+				B34356D1FD4C8C6EF75F2FFE /* [CP] Check Pods Manifest.lock */,
 				0DD98E681A5DD03E00A754C6 /* Update Version Info */,
 				0D385DB2180DE4A900418BC6 /* Sources */,
 				0D385DB3180DE4A900418BC6 /* Frameworks */,
 				0D385DB4180DE4A900418BC6 /* Resources */,
-				31CD7EDCDEBD95322ED67F63 /* 📦 Embed Pods Frameworks */,
-				B3EB60284D47F89140F5A033 /* 📦 Copy Pods Resources */,
+				31CD7EDCDEBD95322ED67F63 /* [CP] Embed Pods Frameworks */,
+				B3EB60284D47F89140F5A033 /* [CP] Copy Pods Resources */,
 			);
 			buildRules = (
 			);
@@ -918,11 +921,11 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = 0D9A7F471759330500035EB5 /* Build configuration list for PBXNativeTarget "santad" */;
 			buildPhases = (
-				A3D478EF1D48EA118AF176E9 /* 📦 Check Pods Manifest.lock */,
+				A3D478EF1D48EA118AF176E9 /* [CP] Check Pods Manifest.lock */,
 				0DD98E661A5DCED300A754C6 /* Update Version Info */,
 				0D9A7F391759330400035EB5 /* Sources */,
 				0D9A7F3A1759330400035EB5 /* Frameworks */,
-				435B0E246EE25ACC763D684C /* 📦 Copy Pods Resources */,
+				435B0E246EE25ACC763D684C /* [CP] Copy Pods Resources */,
 			);
 			buildRules = (
 			);
@@ -1000,14 +1003,14 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXShellScriptBuildPhase section */
-		0C5C7A6AB763BCE7F760FAFF /* 📦 Copy Pods Resources */ = {
+		0C5C7A6AB763BCE7F760FAFF /* [CP] Copy Pods Resources */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
 			);
 			inputPaths = (
 			);
-			name = "📦 Copy Pods Resources";
+			name = "[CP] Copy Pods Resources";
 			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -1108,14 +1111,14 @@
 			shellPath = /bin/sh;
 			shellScript = "GIT_TAG=$(git describe --abbrev=0 --tags)\nsed -i '' \"s/TO.BE.FILLED/${GIT_TAG}/\" ${DERIVED_FILE_DIR}/santa-driver_info.c";
 		};
-		1D12555F0F4EF323B11E40F9 /* 📦 Embed Pods Frameworks */ = {
+		1D12555F0F4EF323B11E40F9 /* [CP] Embed Pods Frameworks */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
 			);
 			inputPaths = (
 			);
-			name = "📦 Embed Pods Frameworks";
+			name = "[CP] Embed Pods Frameworks";
 			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -1123,14 +1126,14 @@
 			shellScript = "\"${SRCROOT}/Pods/Target Support Files/Pods-LogicTests/Pods-LogicTests-frameworks.sh\"\n";
 			showEnvVarsInLog = 0;
 		};
-		31CD7EDCDEBD95322ED67F63 /* 📦 Embed Pods Frameworks */ = {
+		31CD7EDCDEBD95322ED67F63 /* [CP] Embed Pods Frameworks */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
 			);
 			inputPaths = (
 			);
-			name = "📦 Embed Pods Frameworks";
+			name = "[CP] Embed Pods Frameworks";
 			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -1138,14 +1141,14 @@
 			shellScript = "\"${SRCROOT}/Pods/Target Support Files/Pods-Santa/Pods-Santa-frameworks.sh\"\n";
 			showEnvVarsInLog = 0;
 		};
-		435B0E246EE25ACC763D684C /* 📦 Copy Pods Resources */ = {
+		435B0E246EE25ACC763D684C /* [CP] Copy Pods Resources */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
 			);
 			inputPaths = (
 			);
-			name = "📦 Copy Pods Resources";
+			name = "[CP] Copy Pods Resources";
 			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -1153,14 +1156,14 @@
 			shellScript = "\"${SRCROOT}/Pods/Target Support Files/Pods-santad/Pods-santad-resources.sh\"\n";
 			showEnvVarsInLog = 0;
 		};
-		A3D478EF1D48EA118AF176E9 /* 📦 Check Pods Manifest.lock */ = {
+		A3D478EF1D48EA118AF176E9 /* [CP] Check Pods Manifest.lock */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
 			);
 			inputPaths = (
 			);
-			name = "📦 Check Pods Manifest.lock";
+			name = "[CP] Check Pods Manifest.lock";
 			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -1168,14 +1171,14 @@
 			shellScript = "diff \"${PODS_ROOT}/../Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [[ $? != 0 ]] ; then\n    cat << EOM\nerror: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\nEOM\n    exit 1\nfi\n";
 			showEnvVarsInLog = 0;
 		};
-		B34356D1FD4C8C6EF75F2FFE /* 📦 Check Pods Manifest.lock */ = {
+		B34356D1FD4C8C6EF75F2FFE /* [CP] Check Pods Manifest.lock */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
 			);
 			inputPaths = (
 			);
-			name = "📦 Check Pods Manifest.lock";
+			name = "[CP] Check Pods Manifest.lock";
 			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -1183,14 +1186,14 @@
 			shellScript = "diff \"${PODS_ROOT}/../Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [[ $? != 0 ]] ; then\n    cat << EOM\nerror: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\nEOM\n    exit 1\nfi\n";
 			showEnvVarsInLog = 0;
 		};
-		B3EB60284D47F89140F5A033 /* 📦 Copy Pods Resources */ = {
+		B3EB60284D47F89140F5A033 /* [CP] Copy Pods Resources */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
 			);
 			inputPaths = (
 			);
-			name = "📦 Copy Pods Resources";
+			name = "[CP] Copy Pods Resources";
 			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -1198,14 +1201,14 @@
 			shellScript = "\"${SRCROOT}/Pods/Target Support Files/Pods-Santa/Pods-Santa-resources.sh\"\n";
 			showEnvVarsInLog = 0;
 		};
-		C88551472F6983D0B00880F8 /* 📦 Check Pods Manifest.lock */ = {
+		C88551472F6983D0B00880F8 /* [CP] Check Pods Manifest.lock */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
 			);
 			inputPaths = (
 			);
-			name = "📦 Check Pods Manifest.lock";
+			name = "[CP] Check Pods Manifest.lock";
 			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -1213,14 +1216,14 @@
 			shellScript = "diff \"${PODS_ROOT}/../Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [[ $? != 0 ]] ; then\n    cat << EOM\nerror: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\nEOM\n    exit 1\nfi\n";
 			showEnvVarsInLog = 0;
 		};
-		E50DD7319E04737B040B69EC /* 📦 Copy Pods Resources */ = {
+		E50DD7319E04737B040B69EC /* [CP] Copy Pods Resources */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
 			);
 			inputPaths = (
 			);
-			name = "📦 Copy Pods Resources";
+			name = "[CP] Copy Pods Resources";
 			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -1228,14 +1231,14 @@
 			shellScript = "\"${SRCROOT}/Pods/Target Support Files/Pods-santactl/Pods-santactl-resources.sh\"\n";
 			showEnvVarsInLog = 0;
 		};
-		EE6ABBFEC2708CE57EB1780A /* 📦 Check Pods Manifest.lock */ = {
+		EE6ABBFEC2708CE57EB1780A /* [CP] Check Pods Manifest.lock */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
 			);
 			inputPaths = (
 			);
-			name = "📦 Check Pods Manifest.lock";
+			name = "[CP] Check Pods Manifest.lock";
 			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -1316,6 +1319,7 @@
 				0D10BE871A0AABD600C0C944 /* SNTDropRootPrivs.m in Sources */,
 				0DE4C8A618FF3B1700466D04 /* SNTCommandFlushCache.m in Sources */,
 				4092327A1A51B66400A04527 /* SNTCommandRule.m in Sources */,
+				C76614EC1D142D3C00D150C1 /* SNTCommandCheckCache.m in Sources */,
 				0D416401191974F1006A356A /* SNTCommandSyncState.m in Sources */,
 				0DC5D871192160180078A5C0 /* SNTCommandSyncLogUpload.m in Sources */,
 				0DB77FDA1CD14092004DF060 /* SNTBlockMessage.m in Sources */,

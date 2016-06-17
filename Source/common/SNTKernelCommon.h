@@ -35,6 +35,7 @@ enum SantaDriverMethods {
   kSantaUserClientDenyBinary,
   kSantaUserClientClearCache,
   kSantaUserClientCacheCount,
+  kSantaUserClientCheckCache,
 
   // Any methods supported by the driver should be added above this line to
   // ensure this remains the count of methods.

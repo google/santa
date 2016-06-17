@@ -262,6 +262,15 @@ void SantaDecisionManager::ClearCache() {
   lck_rw_unlock_exclusive(cached_decisions_lock_);
 }
 
+bool SantaDecisionManager::CheckCache(uint64_t vnode_id) {
+  char vnode_str[MAX_VNODE_ID_STR];
+  snprintf(vnode_str, MAX_VNODE_ID_STR, "%llu", vnode_id);
+  lck_rw_lock_shared(cached_decisions_lock_);
+  auto vnodeExists = (cached_decisions_->getObject(vnode_str) != nullptr);
+  lck_rw_unlock_shared(cached_decisions_lock_);
+  return vnodeExists;
+}
+
 #pragma mark Decision Fetching
 
 santa_action_t SantaDecisionManager::GetFromCache(const char *identifier) {
