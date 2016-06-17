@@ -90,8 +90,8 @@ class SantaDecisionManager : public OSObject {
   ///  Clears the cache.
   void ClearCache();
   
-  /// Checks for VnodeID in the cache. Returns true if the VnodeID exists.
-  bool CheckCache(uint64_t vnode_id);
+  /// Checks for vnode_id in the cache. Returns santa_action_t for the vnode_id.
+  santa_action_t CheckCache(uint64_t vnode_id);
 
   ///  Increments the count of active callbacks pending.
   void IncrementListenerInvocations();

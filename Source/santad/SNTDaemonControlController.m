@@ -91,7 +91,7 @@ double watchdogRAMPeak = 0;
   reply([self.driverManager flushCache]);
 }
 
-- (void)checkCacheForVnodeID:(u_int64_t)vnodeID withReply:(void (^)(BOOL))reply {
+- (void)checkCacheForVnodeID:(u_int64_t)vnodeID withReply:(void (^)(santa_action_t))reply {
   reply([self.driverManager checkCache:vnodeID]);
 }
 

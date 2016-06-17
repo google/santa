@@ -13,6 +13,7 @@
 ///    limitations under the License.
 
 #import "SNTCommonEnums.h"
+#import "SNTKernelCommon.h"
 
 @class SNTRule;
 @class SNTStoredEvent;
@@ -28,7 +29,7 @@
 ///
 - (void)cacheCount:(void (^)(int64_t))reply;
 - (void)flushCache:(void (^)(BOOL))reply;
-- (void)checkCacheForVnodeID:(u_int64_t)vnodeID withReply:(void (^)(BOOL))reply;
+- (void)checkCacheForVnodeID:(u_int64_t)vnodeID withReply:(void (^)(santa_action_t))reply;
 
 ///
 ///  Database ops

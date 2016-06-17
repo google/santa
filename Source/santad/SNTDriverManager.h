@@ -58,6 +58,6 @@
 ///
 ///  Check the kernel cache for a VnodeID
 ///
--(BOOL)checkCache:(u_int64_t)vnodeID;
+-(santa_action_t)checkCache:(u_int64_t)vnodeID;
 
 @end

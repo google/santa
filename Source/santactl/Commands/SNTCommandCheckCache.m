@@ -49,11 +49,14 @@ REGISTER_COMMAND_NAME(@"checkcache")
 
 + (void)runWithArguments:(NSArray *)arguments daemonConnection:(SNTXPCConnection *)daemonConn {
   uint64_t vnodeID = [self vnodeIDForFile:arguments.firstObject];
-  [[daemonConn remoteObjectProxy] checkCacheForVnodeID:vnodeID withReply:^(BOOL success) {
-    if (success) {
-      LOGI(@"File exists in cache");
+  [[daemonConn remoteObjectProxy] checkCacheForVnodeID:vnodeID withReply:^(santa_action_t action) {
+    if (action == ACTION_RESPOND_ALLOW) {
+      LOGI(@"File exists in [whitelist] kernel cache");
       exit(0);
-    } else {
+    } else if (action == ACTION_RESPOND_DENY) {
+      LOGI(@"File exists in [blacklist] kernel cache");
+      exit(0);
+    } else if (action == ACTION_UNSET) {
       LOGE(@"File does not exist in cache");
       exit(1);
     }
