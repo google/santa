@@ -194,7 +194,9 @@ IOReturn SantaDriverClient::static_cache_count(
 }
 
 IOReturn SantaDriverClient::check_cache(uint64_t vnode_id, uint64_t *output) {
-  *output = decisionManager->CheckCache(vnode_id);
+  char vnode_str[MAX_VNODE_ID_STR];
+  snprintf(vnode_str, MAX_VNODE_ID_STR, "%llu", vnode_id);
+  *output = decisionManager->GetFromCache(vnode_str);
   return kIOReturnSuccess;
 }
 

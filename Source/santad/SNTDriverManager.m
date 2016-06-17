@@ -187,7 +187,7 @@ static const int MAX_DELAY = 15;
                                    kSantaUserClientClearCache, 0, 0, 0, 0) == KERN_SUCCESS;
 }
 
-- (santa_action_t)checkCache:(u_int64_t)vnodeID {
+- (santa_action_t)checkCache:(uint64_t)vnodeID {
   uint32_t input_count = 1;
   uint64_t vnode_action = 0;
   

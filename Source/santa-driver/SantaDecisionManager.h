@@ -82,7 +82,7 @@ class SantaDecisionManager : public OSObject {
                   const uint64_t microsecs = GetCurrentUptime());
 
   ///  Checks to see if a given identifier is in the cache and removes it.
-  void CacheCheck(const char *identifier);
+  void RemoveFromCache(const char *identifier);
 
   ///  Returns the number of entries in the cache.
   uint64_t CacheCount() const;
@@ -90,8 +90,9 @@ class SantaDecisionManager : public OSObject {
   ///  Clears the cache.
   void ClearCache();
   
-  /// Checks for vnode_id in the cache. Returns santa_action_t for the vnode_id.
-  santa_action_t CheckCache(uint64_t vnode_id);
+  ///  Fetches a response from the cache, first checking to see if the
+  ///  entry has expired.
+  santa_action_t GetFromCache(const char *identifier);
 
   ///  Increments the count of active callbacks pending.
   void IncrementListenerInvocations();
@@ -159,10 +160,6 @@ class SantaDecisionManager : public OSObject {
   ///  in the logging data queue at any time.
   ///
   static const uint32_t kMaxLogQueueEvents = 1024;
-
-  ///  Fetches a response from the cache, first checking to see if the
-  ///  entry has expired.
-  santa_action_t GetFromCache(const char *identifier);
 
   ///  Fetches a response from the daemon. Handles both daemon death
   ///  and failure to post messages to the daemon.

@@ -235,7 +235,7 @@ void SantaDecisionManager::AddToCache(
   }
 }
 
-void SantaDecisionManager::CacheCheck(const char *identifier) {
+void SantaDecisionManager::RemoveFromCache(const char *identifier) {
   lck_rw_lock_shared(cached_decisions_lock_);
   auto shouldInvalidate = (cached_decisions_->getObject(identifier) != nullptr);
   if (shouldInvalidate) {
@@ -260,12 +260,6 @@ void SantaDecisionManager::ClearCache() {
   lck_rw_lock_exclusive(cached_decisions_lock_);
   cached_decisions_->flushCollection();
   lck_rw_unlock_exclusive(cached_decisions_lock_);
-}
-
-santa_action_t SantaDecisionManager::CheckCache(uint64_t vnode_id) {
-  char vnode_str[MAX_VNODE_ID_STR];
-  snprintf(vnode_str, MAX_VNODE_ID_STR, "%llu", vnode_id);
-  return SantaDecisionManager::GetFromCache(vnode_str);
 }
 
 #pragma mark Decision Fetching
@@ -330,7 +324,7 @@ santa_action_t SantaDecisionManager::GetFromDaemon(
         client_pid_ = 0;
       }
       LOGE("Failed to queue request for %s.", message->path);
-      CacheCheck(vnode_id_str);
+      RemoveFromCache(vnode_id_str);
       return ACTION_ERROR;
     }
 
@@ -344,7 +338,7 @@ santa_action_t SantaDecisionManager::GetFromDaemon(
   if (!RESPONSE_VALID(return_action)) {
     LOGE("Daemon process did not respond correctly. Allowing executions "
          "until it comes back. Executable path: %s", message->path);
-    CacheCheck(vnode_id_str);
+    RemoveFromCache(vnode_id_str);
     return ACTION_ERROR;
   }
 
@@ -439,7 +433,7 @@ int SantaDecisionManager::VnodeCallback(const kauth_cred_t cred,
   // be the case if a file has been written to and flushed but not yet
   // closed.
   if (vnode_hasdirtyblks(vp)) {
-    CacheCheck(vnode_str);
+    RemoveFromCache(vnode_str);
     returnedAction = ACTION_RESPOND_DENY;
   }
 
@@ -482,7 +476,7 @@ void SantaDecisionManager::FileOpCallback(
     if (action == KAUTH_FILEOP_CLOSE) {
       char vnode_id_str[MAX_VNODE_ID_STR];
       snprintf(vnode_id_str, MAX_VNODE_ID_STR, "%llu", vnode_id);
-      CacheCheck(vnode_id_str);
+      RemoveFromCache(vnode_id_str);
     } else if (action == KAUTH_FILEOP_EXEC) {
       auto message = NewMessage(nullptr);
       message->vnode_id = vnode_id;
