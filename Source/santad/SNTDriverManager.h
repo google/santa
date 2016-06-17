@@ -55,4 +55,9 @@
 ///
 - (BOOL)flushCache;
 
+///
+///  Check the kernel cache for a VnodeID
+///
+-(santa_action_t)checkCache:(uint64_t)vnodeID;
+
 @end

@@ -187,4 +187,17 @@ static const int MAX_DELAY = 15;
                                    kSantaUserClientClearCache, 0, 0, 0, 0) == KERN_SUCCESS;
 }
 
+- (santa_action_t)checkCache:(uint64_t)vnodeID {
+  uint32_t input_count = 1;
+  uint64_t vnode_action = 0;
+  
+  IOConnectCallScalarMethod(self.connection,
+                            kSantaUserClientCheckCache,
+                            &vnodeID,
+                            1,
+                            &vnode_action,
+                            &input_count);
+  return (santa_action_t)vnode_action;
+}
+
 @end
