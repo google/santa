@@ -21,6 +21,8 @@
 
 #ifdef KERNEL
 
+#include <IOKit/IOLib.h>
+
 #ifdef DEBUG
 #define LOGD(...) IOLog("D santa-driver: " __VA_ARGS__); IOLog("\n")
 #else  // DEBUG

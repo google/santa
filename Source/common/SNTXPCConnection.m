@@ -30,7 +30,7 @@
   has one of these objects created which accept the message in the protocol
   and call the block provided during creation before replying.
 
-  This allows the server to reset the connection's exporteed interface and
+  This allows the server to reset the connection's exported interface and
   object to the correct values after the client has sent the establishment message.
 */
 @interface SNTXPCConnectionInterface : NSObject<SNTXPCConnectionProtocol>
