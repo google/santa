@@ -58,12 +58,13 @@ template<class T> class SantaCache {
    
     @param maximum_size The maximum number of entries in this cache. Once this
         number is reached all the entries will be purged.
-    @param per_bucket The maximum number of entries in each bucket. A higher
-        number will result in better performance but higher memory usage.
-        Cannot be higher than 126 due to type requirements.
+    @param per_bucket The target number of entries in each bucket when cache is full. 
+        A higher number will result in better performance but higher memory usage.
+        Cannot be higher than 64 to try and ensure buckets don't overflow.
   */
   SantaCache(uint64_t maximum_size = 10000, uint8_t per_bucket = 5) {
-    if (unlikely(per_bucket > 126)) per_bucket = 126;
+    if (unlikely(per_bucket < 1)) per_bucket = 1;
+    if (unlikely(per_bucket > 64)) per_bucket = 64;
     max_size_ = maximum_size;
     bucket_count_ = 1 << (32 - __builtin_clz(
         ((uint32_t)max_size_ / per_bucket) - 1));
@@ -83,7 +84,7 @@ template<class T> class SantaCache {
     Get an element from the cache. Returns zero_ if item doesn't exist.
   */
   T get(uint64_t key) {
-    struct bucket *bucket = &buckets_[hash(key) % bucket_count_];
+    struct bucket *bucket = &buckets_[hash(key)];
     lock(bucket);
     for (int i = 0; i < bucket_count(bucket); ++i) {
       struct entry *entry = &bucket->entry[i];
@@ -100,12 +101,15 @@ template<class T> class SantaCache {
   /**
     Set an element in the cache.
    
+    @note If the cache is full when this is called, this will empty the cache before
+    inserting the new value.
+   
     @return if an existing value was replaced, the previous value, otherwise zero_
   */
   T set(uint64_t key, T value) {
-    struct bucket *bucket = &buckets_[hash(key) % bucket_count_];
+    struct bucket *bucket = &buckets_[hash(key)];
     lock(bucket);
-    for (int i = 0; i < bucket_count(bucket); ++i) {
+    for (uint8_t i = 0; i < bucket_count(bucket); ++i) {
       struct entry *entry = &bucket->entry[i];
 
       if (entry->key == key) {
@@ -162,7 +166,7 @@ template<class T> class SantaCache {
     Remove all entries and free bucket memory.
   */
   void clear() {
-    for (int i = 0; i < bucket_count_; ++i) {
+    for (uint32_t i = 0; i < bucket_count_; ++i) {
       struct bucket *bucket = &buckets_[i];
       // We grab the lock so nothing can use this bucket while we're erasing it
       // and never release it. It'll be 'released' when the bzero call happens
@@ -254,7 +258,7 @@ template<class T> class SantaCache {
     values we expect to see.
   */
   inline uint64_t hash(uint64_t input) const {
-    return (input * 11400714819323198549ul);
+    return (input * 11400714819323198549ul) % bucket_count_;
   }
 
   /**
