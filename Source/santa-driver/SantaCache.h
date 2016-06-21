@@ -34,7 +34,9 @@
 #include <cstring>
 #define panic(args...) printf(args); printf("\n"); abort()
 #define IOMalloc malloc
-#define IOFree(addr, sz) (void)(sz); free(addr)
+#define IOMallocAligned(sz, alignment) malloc(sz);
+#define IOFree(addr, sz) free(addr)
+#define IOFreeAligned(addr, sz) free(addr)
 #define OSTestAndSet OSAtomicTestAndSet
 #define OSTestAndClear(bit, addr) OSAtomicTestAndClear(bit, addr) == 0
 #define OSIncrementAtomic(addr) OSAtomicIncrement64((volatile int64_t *)addr)
@@ -42,8 +44,8 @@
 #endif // KERNEL
 
 /**
-  A somewhat simple, concurrent array hash table implementation intended for use
-  in IOKit kernel extensions. Maps 64-bit unsigned integer keys to values.
+  A somewhat simple, concurrent linked-list hash table intended for use in IOKit kernel extensions.
+  Maps 64-bit unsigned integer keys to values.
 
   Enforces a maximum size by clearing all entries if a new value
   is added that would go over the maximum size declared at creation.
@@ -86,13 +88,13 @@ template<class T> class SantaCache {
   T get(uint64_t key) {
     struct bucket *bucket = &buckets_[hash(key)];
     lock(bucket);
-    for (int i = 0; i < bucket_count(bucket); ++i) {
-      struct entry *entry = &bucket->entry[i];
-
+    struct entry *entry = (struct entry *)((uintptr_t)bucket->head - 1);
+    while (entry != nullptr) {
       if (entry->key == key) {
         unlock(bucket);
         return entry->value;
       }
+      entry = entry->next;
     }
     unlock(bucket);
     return zero_;
@@ -109,21 +111,28 @@ template<class T> class SantaCache {
   T set(uint64_t key, T value) {
     struct bucket *bucket = &buckets_[hash(key)];
     lock(bucket);
-    for (uint8_t i = 0; i < bucket_count(bucket); ++i) {
-      struct entry *entry = &bucket->entry[i];
-
+    struct entry *entry = (struct entry *)((uintptr_t)bucket->head - 1);
+    struct entry *previous_entry = nullptr;
+    while (entry != nullptr) {
       if (entry->key == key) {
-        // Found existing key, replace value.
         T existing_value = entry->value;
         entry->value = value;
 
         if (value == zero_) {
-          bucket_shrink(bucket, i);
+          if (previous_entry != nullptr) {
+            previous_entry->next = entry->next;
+          } else {
+            bucket->head = (struct entry *)((uintptr_t)entry->next + 1);
+          }
+          IOFreeAligned(entry, sizeof(struct entry));
+          OSDecrementAtomic(&count_);
         }
 
         unlock(bucket);
         return existing_value;
       }
+      previous_entry = entry;
+      entry = entry->next;
     }
 
     // If value is zero_, we're clearing but there's nothing to clear
@@ -133,8 +142,7 @@ template<class T> class SantaCache {
       return zero_;
     }
 
-    // Check that adding this new item won't take the cache over its
-    // maximum size.
+    // Check that adding this new item won't take the cache over its maximum size.
     if (count_ + 1 > max_size_) {
       unlock(bucket);
       lock(&clear_bucket_);
@@ -146,11 +154,15 @@ template<class T> class SantaCache {
       unlock(&clear_bucket_);
     }
 
-    // We didn't find the entry in the bucket, so grow the bucket
-    // and add the new entry at the beginning.
-    bucket_grow(bucket);
-    bucket->entry->key = key;
-    bucket->entry->value = value;
+    // Allocate a new entry, set the key and value, then set the next pointer as the current
+    // first entry in the bucket then make this new entry the first in the bucket.
+    struct entry *new_entry = (struct entry *)IOMallocAligned(sizeof(struct entry), 2);
+    new_entry->key = key;
+    new_entry->value = value;
+    new_entry->next = (struct entry *)((uintptr_t)bucket->head - 1);
+    bucket->head = (struct entry *)((uintptr_t)new_entry + 1);
+    OSIncrementAtomic(&count_);
+
     unlock(bucket);
     return zero_;
   }
@@ -174,9 +186,11 @@ template<class T> class SantaCache {
       lock(bucket);
 
       // Free the bucket's entries, if there are any.
-      if (bucket->entry) {
-        size_t free_size = bucket_count(bucket) * sizeof(struct entry);
-        IOFree(bucket->entry, free_size);
+      struct entry *entry = (struct entry *)((uintptr_t)bucket->head - 1);
+      while (entry != nullptr) {
+        struct entry *next_entry = entry->next;
+        IOFreeAligned(entry, sizeof(struct entry));
+        entry = next_entry;
       }
     }
 
@@ -200,42 +214,36 @@ template<class T> class SantaCache {
   struct entry {
     uint64_t key;
     T value;
+    struct entry *next;
   };
 
   struct bucket {
-    struct entry *entry;
-    // The top bit of this value is the lock,
-    // the remaining 7 bits are the count.
-    uint8_t count_and_lock;
+    // The least significant bit of this pointer is always 0 (due to alignment),
+    // so we utilize that bit as the lock for the bucket.
+    struct entry *head;
   };
-
-  /**
-    Return the number of items in a bucket
-  */
-  inline uint8_t bucket_count(struct bucket *bucket) const {
-    return bucket->count_and_lock & ~0x80;
-  }
 
   /**
     Lock a bucket. Spins until the lock is acquired.
   */
   inline void lock(struct bucket *bucket) const {
-    while (OSTestAndSet(0, &bucket->count_and_lock));
+    while (OSTestAndSet(7, (volatile uint8_t *)&bucket->head));
   }
 
   /**
     Unlock a bucket. Panics if the lock wasn't locked.
   */
   inline void unlock(struct bucket *bucket) const {
-    if (unlikely(OSTestAndClear(0, &bucket->count_and_lock))) {
+    if (unlikely(OSTestAndClear(7, (volatile uint8_t *)&bucket->head))) {
       panic("SantaCache::unlock(): Tried to unlock an unlocked lock");
     }
   }
 
   uint64_t count_ = 0;
-  uint64_t max_size_;
 
+  uint64_t max_size_;
   uint32_t bucket_count_;
+
   struct bucket *buckets_;
 
   /**
@@ -259,53 +267,6 @@ template<class T> class SantaCache {
   */
   inline uint64_t hash(uint64_t input) const {
     return (input * 11400714819323198549ul) % bucket_count_;
-  }
-
-  /**
-    Grow a given bucket by 1 entry.
-
-    @note The lock for this bucket must already be held.
-
-    @param bucket, The bucket to grow.
-  */
-  void bucket_grow(struct bucket *bucket) {
-    uint32_t current_size = bucket_count(bucket);
-    bucket->count_and_lock++;
-    OSIncrementAtomic(&count_);
-    size_t alloc_size = bucket_count(bucket) * sizeof(struct entry);
-    struct entry *entry_list = (struct entry *)IOMalloc(alloc_size);
-    bzero(entry_list, alloc_size);
-    bcopy(bucket->entry, entry_list + 1, current_size * sizeof(struct entry));
-    IOFree(bucket->entry, current_size * sizeof(struct entry));
-    bucket->entry = entry_list;
-  }
-
-  /**
-    Shrink a bucket by 1 entry.
-
-    @note The lock for this bucket must already be held.
-
-    @param bucket, The bucket to shrink.
-    @param idx, The 0-based index in the bucket to remove.
-  */
-  void bucket_shrink(struct bucket *bucket, int idx) {
-    size_t alloc_size = (bucket_count(bucket) - 1) * sizeof(struct entry);
-    struct entry *entry_list = (struct entry *)IOMalloc(alloc_size);
-    bzero(entry_list, alloc_size);
-
-    uint32_t after = bucket_count(bucket) - idx - 1;
-    uint32_t before = bucket_count(bucket) - after - 1;
-
-    bcopy(bucket->entry, entry_list, before * sizeof(struct entry));
-    bcopy(&bucket->entry[idx + 1],
-          &entry_list[before],
-          after * sizeof(struct entry));
-
-    IOFree(bucket->entry, bucket_count(bucket) * sizeof(struct entry));
-
-    bucket->count_and_lock--;
-    OSDecrementAtomic(&count_);
-    bucket->entry = entry_list;
   }
 };
 
