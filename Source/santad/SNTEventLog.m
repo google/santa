@@ -106,7 +106,8 @@
 }
 
 - (void)logExecution:(santa_message_t)message withDecision:(SNTCachedDecision *)cd {
-  NSString *d, *r, *args, *outLog;
+  NSString *d, *r, *args;
+  NSMutableString *outLog;
 
   switch (cd.decision) {
     case SNTEventStateAllowBinary:
@@ -152,24 +153,26 @@
       break;
   }
 
-  outLog = [NSString stringWithFormat:@"action=EXEC|decision=%@|reason=%@", d, r];
+  // init the string with 4k capacity to avoid reallocs
+  outLog = [[NSMutableString alloc] initWithCapacity:4096];
+  [outLog appendFormat:@"action=EXEC|decision=%@|reason=%@", d, r];
 
   if (cd.decisionExtra) {
-    outLog = [outLog stringByAppendingFormat:@"|explain=%@", cd.decisionExtra];
+    [outLog appendFormat:@"|explain=%@", cd.decisionExtra];
   }
 
-  outLog = [outLog stringByAppendingFormat:@"|sha256=%@|path=%@|args=%@", cd.sha256,
-                                           [self sanitizeString:@(message.path)],
-                                           [self sanitizeString:args]];
+  [outLog appendFormat:@"|sha256=%@|path=%@|args=%@", cd.sha256,
+                       [self sanitizeString:@(message.path)],
+                       [self sanitizeString:args]];
 
   if (cd.certSHA256) {
-    outLog = [outLog stringByAppendingFormat:@"|cert_sha256=%@|cert_cn=%@", cd.certSHA256,
-                                             [self sanitizeString:cd.certCommonName]];
+    [outLog appendFormat:@"|cert_sha256=%@|cert_cn=%@", cd.certSHA256,
+                         [self sanitizeString:cd.certCommonName]];
   }
 
   if (cd.quarantineURL) {
-    outLog = [outLog stringByAppendingFormat:@"|quarantine_url=%@",
-                                             [self sanitizeString:cd.quarantineURL]];
+    [outLog appendFormat:@"|quarantine_url=%@",
+                         [self sanitizeString:cd.quarantineURL]];
   }
 
   NSString *user, *group;
@@ -178,9 +181,9 @@
   struct group *gr = getgrgid(message.gid);
   if (gr) group = @(gr->gr_name);
 
-  outLog = [outLog stringByAppendingFormat:@"|pid=%d|ppid=%d|uid=%d|user=%@|gid=%d|group=%@",
-                                           message.pid, message.ppid, message.uid, user,
-                                           message.gid, group];
+  [outLog appendFormat:@"|pid=%d|ppid=%d|uid=%d|user=%@|gid=%d|group=%@",
+                       message.pid, message.ppid, message.uid, user,
+                       message.gid, group];
 
   LOGI(@"%@", outLog);
 }
