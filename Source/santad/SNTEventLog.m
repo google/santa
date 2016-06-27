@@ -278,59 +278,61 @@
   Use sysctl to get the arguments for a PID, returned as a single string.
 */
 - (NSString *)argsForPid:(pid_t)pid {
-  int mib[3];
+  size_t argsSize = 0, index = 0;
+  NSMutableData *argsData;
+  char *bytes = NULL;
 
-  // Get size of buffer required to store process arguments.
-  mib[0] = CTL_KERN;
-  mib[1] = KERN_ARGMAX;
-  int argmax;
-  size_t size = sizeof(argmax);
+  // Repeat up to 3 times, sysctl will sometimes return nothing
+  // while still giving a success error code
+  int tries = 3;
+  do {
+    int mib[] = {CTL_KERN, KERN_PROCARGS2, pid};
+    // Get length of arg array
+    if (sysctl(mib, 3, NULL, &argsSize, NULL, 0) < 0) continue;
+    argsSize++;
 
-  if (sysctl(mib, 2, &argmax, &size, NULL, 0) == -1) return nil;
+    // Allocate space to store the args
+    argsData = [NSMutableData dataWithLength:argsSize];
+    bytes = argsData.mutableBytes;
 
-  // Create buffer to store args
-  NSMutableData *argsdata = [NSMutableData dataWithCapacity:argmax];
-  char *argsdatabytes = (char *)argsdata.mutableBytes;
+    // Get the args
+    if (sysctl(mib, 3, bytes, &argsSize, NULL, 0) < 0) continue;
+  } while (argsSize == argsData.length && tries--);
+  if (bytes == NULL) return nil;
 
-  // Fetch args
-  mib[0] = CTL_KERN;
-  mib[1] = KERN_PROCARGS2;
-  mib[2] = pid;
-  size = (size_t)argmax;
-  if (sysctl(mib, 3, argsdatabytes, &size, NULL, 0) == -1) return nil;
+  // Get argc, set index to the end of argc
+  int argc = 0;
+  memcpy(&argc, &bytes[0], sizeof(argc));
+  index = sizeof(argc);
 
-  // Get argc
-  int argc;
-  memcpy(&argc, argsdatabytes, sizeof(argc));
-
-  // Get pointer to beginning of string space
-  char *cp = (char *)argsdatabytes + sizeof(argc);
-
-  // Skip over exec_path
-  for (; cp < &argsdatabytes[size]; ++cp) {
-    if (*cp == '\0') {
-      cp++;
+  // Skip past end of executable path and trailing NULLs
+  for (; index < argsSize; ++index) {
+    if (bytes[index] == '\0') {
+      ++index;
       break;
     }
   }
-
-  // Skip trailing NULL bytes
-  for (; cp < &argsdatabytes[size]; ++cp) {
-    if (*cp != '\0') break;
+  for (; index < argsSize; ++index) {
+    if (bytes[index] != '\0') break;
   }
 
-  // Loop over the argv array, stripping newlines in each arg and putting in a new array.
-  NSMutableArray *args = [NSMutableArray arrayWithCapacity:argc];
-  for (int i = 0; i < argc; ++i) {
-    NSString *arg = @(cp);
-    if (arg) [args addObject:arg];
+  // Save the beginning of the arguments
+  size_t stringStart = index;
 
-    // Move the pointer past this string and the terminator at the end.
-    cp += strlen(cp) + 1;
+  // Replace all NULLs with spaces up until the first environment variable
+  int replacedNulls = 0;
+  for (; index < argsSize; ++index) {
+    if (bytes[index] == '\0') {
+      bytes[index] = ' ';
+      ++replacedNulls;
+      if (replacedNulls == argc) break;
+    }
   }
 
-  // Return the args as a space-separated list
-  return [args componentsJoinedByString:@" "];
+  // Copy the bytes from 'stringStart' to 'index' into a string, return it.
+  return [[NSString alloc] initWithBytes:&bytes[stringStart]
+                                  length:(index - stringStart)
+                                encoding:NSUTF8StringEncoding];
 }
 
 /**
