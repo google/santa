@@ -102,13 +102,18 @@ extern NSString *const NSURLQuarantinePropertiesKey WEAK_IMPORT_ATTRIBUTE;
 #pragma mark Hashing
 
 - (void)hashSHA1:(NSString **)sha1 SHA256:(NSString **)sha256 {
-  const int chunkSize = 4096;
+  const int chunkSize = 262144;
 
   CC_SHA1_CTX c1;
   CC_SHA256_CTX c256;
 
   if (sha1) CC_SHA1_Init(&c1);
   if (sha256) CC_SHA256_Init(&c256);
+
+  int fd = self.fileHandle.fileDescriptor;
+  
+  fcntl(fd, F_NOCACHE, 1);
+  fcntl(fd, F_RDADVISE, 1);
 
   for (uint64_t offset = 0; offset < self.fileSize; offset += chunkSize) {
     @autoreleasepool {
@@ -119,17 +124,18 @@ extern NSString *const NSURLQuarantinePropertiesKey WEAK_IMPORT_ATTRIBUTE;
         readSize = chunkSize;
       }
 
-      NSData *chunk = [self safeSubdataWithRange:NSMakeRange(offset, readSize)];
-      if (!chunk) {
-        if (sha1) CC_SHA1_Final(NULL, &c1);
-        if (sha256) CC_SHA256_Final(NULL, &c256);
+      char chunk[readSize];
+      if (pread(fd, &chunk, readSize, offset) != readSize) {
         return;
       }
 
-      if (sha1) CC_SHA1_Update(&c1, chunk.bytes, readSize);
-      if (sha256) CC_SHA256_Update(&c256, chunk.bytes, readSize);
+      if (sha1) CC_SHA1_Update(&c1, chunk, readSize);
+      if (sha256) CC_SHA256_Update(&c256, chunk, readSize);
     }
   }
+
+  fcntl(fd, F_NOCACHE, 0);
+  fcntl(fd, F_RDAHEAD, 0);
 
   if (sha1) {
     unsigned char dgst[CC_SHA1_DIGEST_LENGTH];
