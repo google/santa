@@ -49,9 +49,9 @@
 }
 
 - (void)logFileModification:(santa_message_t)message {
-  NSString *action, *path, *newpath, *outStr;
+  NSString *action, *newpath;
 
-  path = @(message.path);
+  NSString *path = @(message.path);
 
   switch (message.action) {
     case ACTION_NOTIFY_DELETE: {
@@ -80,9 +80,11 @@
     default: action = @"UNKNOWN"; break;
   }
 
-  outStr = [NSString stringWithFormat:@"action=%@|path=%@", action, [self sanitizeString:path]];
+  // init the string with 2k capacity to avoid reallocs
+  NSMutableString *outStr = [NSMutableString stringWithCapacity:2048];
+  [outStr appendFormat:@"action=%@|path=%@", action, [self sanitizeString:path]];
   if (newpath) {
-    outStr = [outStr stringByAppendingFormat:@"|newpath=%@", [self sanitizeString:newpath]];
+    [outStr appendFormat:@"|newpath=%@", [self sanitizeString:newpath]];
   }
   char ppath[PATH_MAX] = "(null)";
   proc_pidpath(message.pid, ppath, PATH_MAX);
@@ -93,10 +95,9 @@
   struct group *gr = getgrgid(message.gid);
   if (gr) group = @(gr->gr_name);
 
-  outStr = [outStr stringByAppendingFormat:(@"|pid=%d|ppid=%d|process=%s|processpath=%s|"
-                                            @"uid=%d|user=%@|gid=%d|group=%@"),
-                                           message.pid, message.ppid, message.pname, ppath,
-                                           message.uid, user, message.gid, group];
+  [outStr appendFormat:@"|pid=%d|ppid=%d|process=%s|processpath=%s|uid=%d|user=%@|gid=%d|group=%@",
+                       message.pid, message.ppid, message.pname, ppath,
+                       message.uid, user, message.gid, group];
   LOGI(@"%@", outStr);
 }
 
@@ -113,7 +114,6 @@
 
 - (void)logExecution:(santa_message_t)message withDecision:(SNTCachedDecision *)cd {
   NSString *d, *r, *args;
-  NSMutableString *outLog;
 
   switch (cd.decision) {
     case SNTEventStateAllowBinary:
@@ -160,7 +160,7 @@
   }
 
   // init the string with 4k capacity to avoid reallocs
-  outLog = [[NSMutableString alloc] initWithCapacity:4096];
+  NSMutableString *outLog = [[NSMutableString alloc] initWithCapacity:4096];
   [outLog appendFormat:@"action=EXEC|decision=%@|reason=%@", d, r];
 
   if (cd.decisionExtra) {
