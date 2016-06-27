@@ -34,12 +34,6 @@
 ///
 @interface SNTExecutionController : NSObject
 
-@property SNTDriverManager *driverManager;
-@property SNTEventLog *eventLog;
-@property SNTEventTable *eventTable;
-@property SNTNotificationQueue *notifierQueue;
-@property SNTRuleTable *ruleTable;
-
 - (instancetype)initWithDriverManager:(SNTDriverManager *)driverManager
                             ruleTable:(SNTRuleTable *)ruleTable
                            eventTable:(SNTEventTable *)eventTable

@@ -36,6 +36,17 @@
 #import "SNTRuleTable.h"
 #import "SNTStoredEvent.h"
 
+@interface SNTExecutionController ()
+@property SNTDriverManager *driverManager;
+@property SNTEventLog *eventLog;
+@property SNTEventTable *eventTable;
+@property SNTNotificationQueue *notifierQueue;
+@property SNTRuleTable *ruleTable;
+
+@property NSMutableDictionary *uploadBackoff;
+@property NSLock *uploadBackoffLock;
+@end
+
 @implementation SNTExecutionController
 
 #pragma mark Initializers
@@ -52,6 +63,9 @@
     _eventTable = eventTable;
     _notifierQueue = notifierQueue;
     _eventLog = eventLog;
+
+    _uploadBackoff = [NSMutableDictionary dictionaryWithCapacity:128];
+    _uploadBackoffLock = [[NSLock alloc] init];
 
     // This establishes the XPC connection between libsecurity and syspolicyd.
     // Not doing this causes a deadlock as establishing this link goes through xpcproxy.
@@ -304,15 +318,16 @@
 
   // The event upload is skipped if an event upload has been initiated for it in the
   // last 10 minutes.
-  static dispatch_once_t onceToken;
-  static NSMutableDictionary *uploadBackoff;
-  dispatch_once(&onceToken, ^{
-    uploadBackoff = [NSMutableDictionary dictionary];
-  });
-  NSDate *backoff = uploadBackoff[event.fileSHA256];
+  [self.uploadBackoffLock lock];
+  NSDate *backoff = self.uploadBackoff[event.fileSHA256];
+  [self.uploadBackoffLock unlock];
+
   NSDate *now = [NSDate date];
   if (([now timeIntervalSince1970] - [backoff timeIntervalSince1970]) < 600) return;
-  uploadBackoff[event.fileSHA256] = now;
+
+  [self.uploadBackoffLock lock];
+  self.uploadBackoff[event.fileSHA256] = now;
+  [self.uploadBackoffLock unlock];
 
   if (fork() == 0) {
     // Ensure we have no privileges

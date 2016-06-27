@@ -28,6 +28,7 @@
 
 @interface SNTEventLog ()
 @property NSMutableDictionary *detailStore;
+@property NSLock *detailStoreLock;
 @end
 
 @implementation SNTEventLog
@@ -36,12 +37,15 @@
   self = [super init];
   if (self) {
     _detailStore = [NSMutableDictionary dictionaryWithCapacity:10000];
+    _detailStoreLock = [[NSLock alloc] init];
   }
   return self;
 }
 
 - (void)saveDecisionDetails:(SNTCachedDecision *)cd {
+  [self.detailStoreLock lock];
   self.detailStore[@(cd.vnodeId)] = cd;
+  [self.detailStoreLock unlock];
 }
 
 - (void)logFileModification:(santa_message_t)message {
@@ -101,7 +105,9 @@
 }
 
 - (void)logAllowedExecution:(santa_message_t)message {
+  [self.detailStoreLock lock];
   SNTCachedDecision *cd = self.detailStore[@(message.vnode_id)];
+  [self.detailStoreLock unlock];
   [self logExecution:message withDecision:cd];
 }
 
