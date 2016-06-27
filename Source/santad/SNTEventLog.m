@@ -27,6 +27,8 @@
 #import "SNTLogging.h"
 
 @interface SNTEventLog ()
+@property NSRegularExpression *sanitizeRegex;
+
 @property NSMutableDictionary *detailStore;
 @property NSLock *detailStoreLock;
 @end
@@ -36,6 +38,10 @@
 - (instancetype)init {
   self = [super init];
   if (self) {
+    _sanitizeRegex = [NSRegularExpression regularExpressionWithPattern:@"\\||\\n|\\r"
+                                                               options:0
+                                                                 error:NULL];
+
     _detailStore = [NSMutableDictionary dictionaryWithCapacity:10000];
     _detailStoreLock = [[NSLock alloc] init];
   }
@@ -234,10 +240,38 @@
 #pragma mark Helpers
 
 - (NSString *)sanitizeString:(NSString *)inStr {
-  inStr = [inStr stringByReplacingOccurrencesOfString:@"|" withString:@"<pipe>"];
-  inStr = [inStr stringByReplacingOccurrencesOfString:@"\n" withString:@"\\n"];
-  inStr = [inStr stringByReplacingOccurrencesOfString:@"\r" withString:@"\\r"];
-  return inStr;
+  if (!inStr) return inStr;
+
+  NSMutableString *str = [inStr mutableCopy];
+
+  NSArray *matches = [self.sanitizeRegex matchesInString:inStr
+                                                 options:0
+                                                   range:NSMakeRange(0, inStr.length)];
+
+  NSInteger offset = 0;
+  for (NSTextCheckingResult *result in matches) {
+    NSRange range = result.range;
+    range.location += offset;
+
+    NSString *match = [self.sanitizeRegex replacementStringForResult:result
+                                                            inString:str
+                                                              offset:offset
+                                                            template:@"$0"];
+    NSString *replacement;
+    if ([match isEqualToString:@"|"]) {
+      replacement = @"<pipe>";
+    } else if ([match isEqualToString:@"\n"]) {
+      replacement = @"\\n";
+    } else if ([match isEqualToString:@"\r"]) {
+      replacement = @"\\r";
+    }
+
+    [str replaceCharactersInRange:range withString:replacement];
+
+    offset += (replacement.length - range.length);
+  }
+
+  return str;
 }
 
 /**
