@@ -163,7 +163,7 @@
   dispatch_queue_t log_queue = dispatch_queue_create(
       "com.google.santad.log_queue", DISPATCH_QUEUE_CONCURRENT);
   dispatch_set_target_queue(
-      log_queue, dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_LOW, 0));
+      log_queue, dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_BACKGROUND, 0));
 
   [self.driverManager listenForLogRequests:^(santa_message_t message) {
     @autoreleasepool {
