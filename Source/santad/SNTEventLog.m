@@ -255,15 +255,15 @@ NSString *sanitizeStringInternal(char *buf, NSString *inStr) {
       // Replace the found character and advance the buffer offset
       switch (c) {
         case '|':
-          strncpy(buf + bufOffset, "<pipe>", 6);
+          memcpy(buf + bufOffset, "<pipe>", 6);
           bufOffset += 6;
           break;
         case '\n':
-          strncpy(buf + bufOffset, "\\n", 2);
+          memcpy(buf + bufOffset, "\\n", 2);
           bufOffset += 2;
           break;
         case '\r':
-          strncpy(buf + bufOffset, "\\r", 2);
+          memcpy(buf + bufOffset, "\\r", 2);
           bufOffset += 2;
           break;
       }

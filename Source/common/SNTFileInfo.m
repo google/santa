@@ -207,18 +207,18 @@ extern NSString *const NSURLQuarantinePropertiesKey WEAK_IMPORT_ATTRIBUTE;
 
 - (BOOL)isScript {
   const char *magic = (const char *)[[self safeSubdataWithRange:NSMakeRange(0, 2)] bytes];
-  return (magic && strncmp("#!", magic, 2) == 0);
+  return (magic && memcmp("#!", magic, 2) == 0);
 }
 
 - (BOOL)isXARArchive {
   const char *magic = (const char *)[[self safeSubdataWithRange:NSMakeRange(0, 4)] bytes];
-  return (magic && strncmp("xar!", magic, 4) == 0);
+  return (magic && memcmp("xar!", magic, 4) == 0);
 }
 
 - (BOOL)isDMG {
   NSUInteger last512 = self.fileSize - 512;
   const char *magic = (const char *)[[self safeSubdataWithRange:NSMakeRange(last512, 4)] bytes];
-  return (magic && strncmp("koly", magic, 4) == 0);
+  return (magic && memcmp("koly", magic, 4) == 0);
 }
 
 #pragma mark Page Zero
@@ -453,7 +453,7 @@ extern NSString *const NSURLQuarantinePropertiesKey WEAK_IMPORT_ATTRIBUTE;
     if (!cmdData) return nil;
     struct segment_command_64 *lc = (struct segment_command_64 *)[cmdData bytes];
     if (lc->cmd == LC_SEGMENT || lc->cmd == LC_SEGMENT_64) {
-      if (strncmp(lc->segname, "__TEXT", 6) == 0) {
+      if (memcmp(lc->segname, "__TEXT", 6) == 0) {
         nsects = lc->nsects;
         offset += sz_segment;
         break;
@@ -467,7 +467,7 @@ extern NSString *const NSURLQuarantinePropertiesKey WEAK_IMPORT_ATTRIBUTE;
     NSData *sectData = [self safeSubdataWithRange:NSMakeRange(offset, sz_section)];
     if (!sectData) return nil;
     struct section_64 *sect = (struct section_64 *)[sectData bytes];
-    if (sect && strncmp(sect->sectname, "__info_plist", 12) == 0 && sect->size < 2000000) {
+    if (sect && memcmp(sect->sectname, "__info_plist", 12) == 0 && sect->size < 2000000) {
       NSData *plistData = [self safeSubdataWithRange:NSMakeRange(sect->offset, sect->size)];
       if (!plistData) return nil;
       NSDictionary *plist;
