@@ -44,7 +44,7 @@
 @property SNTRuleTable *ruleTable;
 
 @property NSMutableDictionary *uploadBackoff;
-@property NSLock *uploadBackoffLock;
+@property dispatch_queue_t eventUploadQueue;
 @end
 
 @implementation SNTExecutionController
@@ -65,7 +65,8 @@
     _eventLog = eventLog;
 
     _uploadBackoff = [NSMutableDictionary dictionaryWithCapacity:128];
-    _uploadBackoffLock = [[NSLock alloc] init];
+    _eventUploadQueue = dispatch_queue_create("com.google.santad.event_upload",
+                                              DISPATCH_QUEUE_SERIAL);
 
     // This establishes the XPC connection between libsecurity and syspolicyd.
     // Not doing this causes a deadlock as establishing this link goes through xpcproxy.
@@ -205,7 +206,9 @@
 
       // So the server has something to show the user straight away, initiate an event
       // upload for the blocked binary rather than waiting for the next sync.
-      [self initiateEventUploadForEvent:se];
+      dispatch_async(self.eventUploadQueue, ^{
+        [self initiateEventUploadForEvent:se];
+      });
 
       if (!cd.silentBlock) {
         // Let the user know what happened, both on the terminal and in the GUI.
@@ -318,16 +321,12 @@
 
   // The event upload is skipped if an event upload has been initiated for it in the
   // last 10 minutes.
-  [self.uploadBackoffLock lock];
   NSDate *backoff = self.uploadBackoff[event.fileSHA256];
-  [self.uploadBackoffLock unlock];
 
   NSDate *now = [NSDate date];
   if (([now timeIntervalSince1970] - [backoff timeIntervalSince1970]) < 600) return;
 
-  [self.uploadBackoffLock lock];
   self.uploadBackoff[event.fileSHA256] = now;
-  [self.uploadBackoffLock unlock];
 
   if (fork() == 0) {
     // Ensure we have no privileges

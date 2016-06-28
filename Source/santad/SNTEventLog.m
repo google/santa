@@ -30,7 +30,7 @@
 @property NSRegularExpression *sanitizeRegex;
 
 @property NSMutableDictionary *detailStore;
-@property NSLock *detailStoreLock;
+@property dispatch_queue_t detailStoreQueue;
 @end
 
 @implementation SNTEventLog
@@ -43,15 +43,16 @@
                                                                  error:NULL];
 
     _detailStore = [NSMutableDictionary dictionaryWithCapacity:10000];
-    _detailStoreLock = [[NSLock alloc] init];
+    _detailStoreQueue = dispatch_queue_create("com.google.santad.detail_store",
+                                              DISPATCH_QUEUE_SERIAL);
   }
   return self;
 }
 
 - (void)saveDecisionDetails:(SNTCachedDecision *)cd {
-  [self.detailStoreLock lock];
-  self.detailStore[@(cd.vnodeId)] = cd;
-  [self.detailStoreLock unlock];
+  dispatch_async(self.detailStoreQueue, ^{
+    self.detailStore[@(cd.vnodeId)] = cd;
+  });
 }
 
 - (void)logFileModification:(santa_message_t)message {
@@ -112,9 +113,10 @@
 }
 
 - (void)logAllowedExecution:(santa_message_t)message {
-  [self.detailStoreLock lock];
-  SNTCachedDecision *cd = self.detailStore[@(message.vnode_id)];
-  [self.detailStoreLock unlock];
+  __block SNTCachedDecision *cd;
+  dispatch_sync(self.detailStoreQueue, ^{
+    cd = self.detailStore[@(message.vnode_id)];
+  });
   [self logExecution:message withDecision:cd];
 }
 
