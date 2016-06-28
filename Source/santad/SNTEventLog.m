@@ -236,7 +236,7 @@
 #pragma mark Helpers
 
 - (NSString *)sanitizeString:(NSString *)inStr {
-  NSUInteger length = inStr.length;
+  NSUInteger length = [inStr lengthOfBytesUsingEncoding:NSUTF8StringEncoding];
   if (length < 1) return inStr;
 
   const char *str = inStr.UTF8String;
@@ -285,10 +285,10 @@
     }
   }
 
-  if (strOffset > 0 && strOffset < inStr.length) {
+  if (strOffset > 0 && strOffset < length) {
     // Copy any characters from the last match to the end of the string into the buffer.
-    memcpy(buf + bufOffset, str + strOffset, inStr.length - strOffset);
-    bufOffset += inStr.length - strOffset;
+    memcpy(buf + bufOffset, str + strOffset, length - strOffset);
+    bufOffset += length - strOffset;
   }
 
   if (buf) {
