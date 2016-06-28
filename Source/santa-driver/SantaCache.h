@@ -232,7 +232,7 @@ template<class T> class SantaCache {
     }
   }
 
-  uint64_t count_;
+  uint64_t count_ = 0;
   uint64_t max_size_;
 
   uint32_t bucket_count_;
