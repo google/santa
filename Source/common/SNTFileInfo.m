@@ -207,12 +207,12 @@ extern NSString *const NSURLQuarantinePropertiesKey WEAK_IMPORT_ATTRIBUTE;
 
 - (BOOL)isScript {
   const char *magic = (const char *)[[self safeSubdataWithRange:NSMakeRange(0, 2)] bytes];
-  return (strncmp("#!", magic, 2) == 0);
+  return (magic && strncmp("#!", magic, 2) == 0);
 }
 
 - (BOOL)isXARArchive {
   const char *magic = (const char *)[[self safeSubdataWithRange:NSMakeRange(0, 4)] bytes];
-  return (strncmp("xar!", magic, 4) == 0);
+  return (magic && strncmp("xar!", magic, 4) == 0);
 }
 
 - (BOOL)isDMG {
