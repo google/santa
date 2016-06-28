@@ -235,15 +235,30 @@
 
 #pragma mark Helpers
 
-NSString *sanitizeStringInternal(char *buf, NSString *inStr) {
+- (NSString *)sanitizeString:(NSString *)inStr {
+  NSUInteger length = inStr.length;
+  if (length < 1) return inStr;
+
   const char *str = inStr.UTF8String;
   NSUInteger bufOffset = 0, strOffset = 0;
   char c = 0;
+  char *buf = NULL;
+  BOOL shouldFree = NO;
 
   // Loop through the string one character at a time, looking for the characters
   // we want to remove.
   for (const char *p = str; (c = *p) != 0; p++) {
     if (c == '|' || c == '\n' || c == '\r') {
+      if (!buf) {
+        // If string size * 6 is more than 64KiB use malloc, otherwise use stack space.
+        if (length * 6 > 65536) {
+          buf = malloc(length * 6);
+          shouldFree = YES;
+        } else {
+          buf = alloca(length * 6);
+        }
+      }
+
       // Copy from the last offset up to the character we just found into the buffer
       ptrdiff_t diff = p - str;
       memcpy(buf + bufOffset, str + strOffset, diff - strOffset);
@@ -276,27 +291,18 @@ NSString *sanitizeStringInternal(char *buf, NSString *inStr) {
     bufOffset += inStr.length - strOffset;
   }
 
-  if (bufOffset > 0) {
+  if (buf) {
     // Only return a new string if there were matches
-    return [[NSString alloc] initWithBytes:buf length:bufOffset encoding:NSUTF8StringEncoding];
+    NSString *ret = [[NSString alloc] initWithBytes:buf
+                                             length:bufOffset
+                                           encoding:NSUTF8StringEncoding];
+    if (shouldFree) {
+      free(buf);
+    }
+
+    return ret;
   }
   return inStr;
-}
-
-- (NSString *)sanitizeString:(NSString *)inStr {
-  NSUInteger length = inStr.length;
-  if (length < 1) return inStr;
-
-  // If string size * 6 is more than 64KiB, use malloc.
-  if (length * 6 > 65536) {
-    char *buf = malloc(length * 6);
-    NSString *result = sanitizeStringInternal(buf, inStr);
-    free(buf);
-    return result;
-  } else {
-    char buf[length * 6];
-    return sanitizeStringInternal(buf, inStr);
-  }
 }
 
 /**
