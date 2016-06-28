@@ -338,7 +338,7 @@
   NSArray *events = [NSKeyedUnarchiver unarchiveObjectWithData:eventData];
   OCMStub([self.daemonConnRop databaseEventsPending:([OCMArg invokeBlockWithArgs:events, nil])]);
 
-  __block int requestCount;
+  __block int requestCount = 0;
 
   [self stubRequestBody:nil response:nil error:nil validateBlock:^BOOL(NSURLRequest *req) {
     requestCount++;

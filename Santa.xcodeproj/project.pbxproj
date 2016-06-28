@@ -168,15 +168,11 @@
 		0DEFB7C81ACF0BFE00B92AAE /* SNTFileWatcherTest.m in Sources */ = {isa = PBXBuildFile; fileRef = 0DEFB7C71ACF0BFE00B92AAE /* SNTFileWatcherTest.m */; };
 		0DF395641AB76A7900CBC520 /* NSData+Zlib.m in Sources */ = {isa = PBXBuildFile; fileRef = 0DF395631AB76A7900CBC520 /* NSData+Zlib.m */; };
 		0DF395661AB76ABC00CBC520 /* libz.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 0DF395651AB76ABC00CBC520 /* libz.dylib */; };
-		1ADE9D41C651A7FD44478ECE /* libPods-santactl.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 556108C12FC29E329D82D4CB /* libPods-santactl.a */; };
 		1C299D1C789489996FF9E081 /* libPods-Santa.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 87D1CEAEDF1FA6819A855559 /* libPods-Santa.a */; };
 		29C490B1720D4FD576F93519 /* libPods-LogicTests.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 17D03B346587131C45A8DA67 /* libPods-LogicTests.a */; };
 		2BA4AE89AA2447E29DA2E85C /* libPods-santactl.a in Frameworks */ = {isa = PBXBuildFile; fileRef = BE53E1EAE84D54E7FCB22FD5 /* libPods-santactl.a */; };
-		3470FA46949EA2AFA1B0BA5B /* libPods-santad.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 60A9B66BB0F7404D1F61D518 /* libPods-santad.a */; };
 		4092327A1A51B66400A04527 /* SNTCommandRule.m in Sources */ = {isa = PBXBuildFile; fileRef = 409232791A51B65D00A04527 /* SNTCommandRule.m */; };
-		4C4A6DA6D5C0836B6AEDB036 /* libPods-LogicTests.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 873978BCE4B0DBD2A89C99D1 /* libPods-LogicTests.a */; };
 		A60673DE57680AC450A3B0B2 /* libPods-santad.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 9BE438428F17C09C6A9D0802 /* libPods-santad.a */; };
-		C42ABCF85D115BA65EBF2F74 /* libPods-Santa.a in Frameworks */ = {isa = PBXBuildFile; fileRef = B2B9044B79DD2E4DEC5D3B7A /* libPods-Santa.a */; };
 		C76614EC1D142D3C00D150C1 /* SNTCommandCheckCache.m in Sources */ = {isa = PBXBuildFile; fileRef = C76614EB1D142D3C00D150C1 /* SNTCommandCheckCache.m */; };
 /* End PBXBuildFile section */
 
@@ -433,7 +429,6 @@
 				0D3AFBF618FB4C7E0087BCEE /* Cocoa.framework in Frameworks */,
 				0D3AFBF818FB4C870087BCEE /* IOKit.framework in Frameworks */,
 				29C490B1720D4FD576F93519 /* libPods-LogicTests.a in Frameworks */,
-				4C4A6DA6D5C0836B6AEDB036 /* libPods-LogicTests.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -446,7 +441,6 @@
 				0D35BDBD18FDA23600921A21 /* IOKit.framework in Frameworks */,
 				0D35BD9F18FD71CE00921A21 /* Foundation.framework in Frameworks */,
 				2BA4AE89AA2447E29DA2E85C /* libPods-santactl.a in Frameworks */,
-				1ADE9D41C651A7FD44478ECE /* libPods-santactl.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -459,7 +453,6 @@
 				0D8C200C180F359A00CE2BF8 /* Security.framework in Frameworks */,
 				0D385DB8180DE4A900418BC6 /* Cocoa.framework in Frameworks */,
 				1C299D1C789489996FF9E081 /* libPods-Santa.a in Frameworks */,
-				C42ABCF85D115BA65EBF2F74 /* libPods-Santa.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -471,7 +464,6 @@
 				0D4A5007176A4602004F63BF /* Security.framework in Frameworks */,
 				0D9A7F3F1759330500035EB5 /* Foundation.framework in Frameworks */,
 				A60673DE57680AC450A3B0B2 /* libPods-santad.a in Frameworks */,
-				3470FA46949EA2AFA1B0BA5B /* libPods-santad.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -970,7 +962,7 @@
 		0D91BCA8174E8A6500131A7D /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
-				LastUpgradeCheck = 0720;
+				LastUpgradeCheck = 0730;
 				TargetAttributes = {
 					0D260DAB18B68E12002A0B55 = {
 						TestTargetID = 0D385DB5180DE4A900418BC6;

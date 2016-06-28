@@ -119,7 +119,7 @@ extern NSString *const NSURLQuarantinePropertiesKey WEAK_IMPORT_ATTRIBUTE;
   for (uint64_t offset = 0; offset < _fileSize;) {
     unsigned int readSize = 0;
     if (offset + chunkSize > _fileSize) {
-      readSize = (int)(_fileSize - offset);
+      readSize = (unsigned int)(_fileSize - offset);
     } else {
       readSize = chunkSize;
     }
