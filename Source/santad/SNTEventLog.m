@@ -27,8 +27,6 @@
 #import "SNTLogging.h"
 
 @interface SNTEventLog ()
-@property NSRegularExpression *sanitizeRegex;
-
 @property NSMutableDictionary *detailStore;
 @property dispatch_queue_t detailStoreQueue;
 @end
@@ -38,10 +36,6 @@
 - (instancetype)init {
   self = [super init];
   if (self) {
-    _sanitizeRegex = [NSRegularExpression regularExpressionWithPattern:@"\\||\\n|\\r"
-                                                               options:0
-                                                                 error:NULL];
-
     _detailStore = [NSMutableDictionary dictionaryWithCapacity:10000];
     _detailStoreQueue = dispatch_queue_create("com.google.santad.detail_store",
                                               DISPATCH_QUEUE_SERIAL);
@@ -241,39 +235,68 @@
 
 #pragma mark Helpers
 
-- (NSString *)sanitizeString:(NSString *)inStr {
-  if (!inStr) return inStr;
+NSString *sanitizeStringInternal(char *buf, NSString *inStr) {
+  const char *str = inStr.UTF8String;
+  NSUInteger bufOffset = 0, strOffset = 0;
+  char c = 0;
 
-  NSMutableString *str = [inStr mutableCopy];
+  // Loop through the string one character at a time, looking for the characters
+  // we want to remove.
+  for (const char *p = str; (c = *p) != 0; p++) {
+    if (c == '|' || c == '\n' || c == '\r') {
+      // Copy from the last offset up to the character we just found into the buffer
+      ptrdiff_t diff = p - str;
+      memcpy(buf + bufOffset, str + strOffset, diff - strOffset);
 
-  NSArray *matches = [self.sanitizeRegex matchesInString:inStr
-                                                 options:0
-                                                   range:NSMakeRange(0, inStr.length)];
+      // Update the buffer and string offsets
+      bufOffset += diff - strOffset;
+      strOffset = diff + 1;
 
-  NSInteger offset = 0;
-  for (NSTextCheckingResult *result in matches) {
-    NSRange range = result.range;
-    range.location += offset;
-
-    NSString *match = [self.sanitizeRegex replacementStringForResult:result
-                                                            inString:str
-                                                              offset:offset
-                                                            template:@"$0"];
-    NSString *replacement;
-    if ([match isEqualToString:@"|"]) {
-      replacement = @"<pipe>";
-    } else if ([match isEqualToString:@"\n"]) {
-      replacement = @"\\n";
-    } else if ([match isEqualToString:@"\r"]) {
-      replacement = @"\\r";
+      // Replace the found character and advance the buffer offset
+      switch (c) {
+        case '|':
+          strncpy(buf + bufOffset, "<pipe>", 6);
+          bufOffset += 6;
+          break;
+        case '\n':
+          strncpy(buf + bufOffset, "\\n", 2);
+          bufOffset += 2;
+          break;
+        case '\r':
+          strncpy(buf + bufOffset, "\\r", 2);
+          bufOffset += 2;
+          break;
+      }
     }
-
-    [str replaceCharactersInRange:range withString:replacement];
-
-    offset += (replacement.length - range.length);
   }
 
-  return str;
+  if (strOffset > 0 && strOffset < inStr.length) {
+    // Copy any characters from the last match to the end of the string into the buffer.
+    memcpy(buf + bufOffset, str + strOffset, inStr.length - strOffset);
+    bufOffset += inStr.length - strOffset;
+  }
+
+  if (bufOffset > 0) {
+    // Only return a new string if there were matches
+    return [[NSString alloc] initWithBytes:buf length:bufOffset encoding:NSUTF8StringEncoding];
+  }
+  return inStr;
+}
+
+- (NSString *)sanitizeString:(NSString *)inStr {
+  NSUInteger length = inStr.length;
+  if (length < 1) return inStr;
+
+  // If string size * 6 is more than 64KiB, use malloc.
+  if (length * 6 > 65536) {
+    char *buf = malloc(length * 6);
+    NSString *result = sanitizeStringInternal(buf, inStr);
+    free(buf);
+    return result;
+  } else {
+    char buf[length * 6];
+    return sanitizeStringInternal(buf, inStr);
+  }
 }
 
 /**
