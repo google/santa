@@ -103,6 +103,7 @@ extern NSString *const NSURLQuarantinePropertiesKey WEAK_IMPORT_ATTRIBUTE;
 
 - (void)hashSHA1:(NSString **)sha1 SHA256:(NSString **)sha256 {
   const int chunkSize = 262144;
+  char chunk[chunkSize];
 
   CC_SHA1_CTX c1;
   CC_SHA256_CTX c256;
@@ -112,30 +113,31 @@ extern NSString *const NSURLQuarantinePropertiesKey WEAK_IMPORT_ATTRIBUTE;
 
   int fd = self.fileHandle.fileDescriptor;
   
-  fcntl(fd, F_NOCACHE, 1);
+  fcntl(fd, F_RDAHEAD, 1);
   fcntl(fd, F_RDADVISE, 1);
 
-  for (uint64_t offset = 0; offset < self.fileSize; offset += chunkSize) {
-    @autoreleasepool {
-      int readSize = 0;
-      if (offset + chunkSize > self.fileSize) {
-        readSize = (int)(self.fileSize - offset);
-      } else {
-        readSize = chunkSize;
-      }
+  for (uint64_t offset = 0; offset < _fileSize;) {
+    unsigned int readSize = 0;
+    if (offset + chunkSize > _fileSize) {
+      readSize = (int)(_fileSize - offset);
+    } else {
+      readSize = chunkSize;
+    }
 
-      char chunk[readSize];
-      if (pread(fd, &chunk, readSize, offset) != readSize) {
-        return;
-      }
-
+    unsigned int bytesRead = (unsigned int)pread(fd, &chunk, readSize, offset);
+    if (bytesRead == readSize) {
       if (sha1) CC_SHA1_Update(&c1, chunk, readSize);
       if (sha256) CC_SHA256_Update(&c256, chunk, readSize);
+      offset += bytesRead;
+    } else if (errno == EINTR) {
+      continue;
+    } else {
+      return;
     }
   }
 
-  fcntl(fd, F_NOCACHE, 0);
   fcntl(fd, F_RDAHEAD, 0);
+  fcntl(fd, F_RDADVISE, 0);
 
   if (sha1) {
     unsigned char dgst[CC_SHA1_DIGEST_LENGTH];
