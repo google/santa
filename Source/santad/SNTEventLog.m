@@ -44,7 +44,7 @@
 }
 
 - (void)saveDecisionDetails:(SNTCachedDecision *)cd {
-  dispatch_async(self.detailStoreQueue, ^{
+  dispatch_sync(self.detailStoreQueue, ^{
     self.detailStore[@(cd.vnodeId)] = cd;
   });
 }
@@ -115,28 +115,29 @@
 }
 
 - (void)logExecution:(santa_message_t)message withDecision:(SNTCachedDecision *)cd {
-  NSString *d, *r, *args;
+  NSString *d, *r;
+  BOOL logArgs = NO;
 
   switch (cd.decision) {
     case SNTEventStateAllowBinary:
       d = @"ALLOW";
       r = @"BINARY";
-      args = [self argsForPid:message.pid];
+      logArgs = YES;
       break;
     case SNTEventStateAllowCertificate:
       d = @"ALLOW";
       r = @"CERTIFICATE";
-      args = [self argsForPid:message.pid];
+      logArgs = YES;
       break;
     case SNTEventStateAllowScope:
       d = @"ALLOW";
       r = @"SCOPE";
-      args = [self argsForPid:message.pid];
+      logArgs = YES;
       break;
     case SNTEventStateAllowUnknown:
       d = @"ALLOW";
       r = @"UNKNOWN";
-      args = [self argsForPid:message.pid];
+      logArgs = YES;
       break;
     case SNTEventStateBlockBinary:
       d = @"DENY";
@@ -157,7 +158,7 @@
     default:
       d = @"ALLOW";
       r = @"NOTRUNNING";
-      args = [self argsForPid:message.pid];
+      logArgs = YES;
       break;
   }
 
@@ -169,9 +170,11 @@
     [outLog appendFormat:@"|explain=%@", cd.decisionExtra];
   }
 
-  [outLog appendFormat:@"|sha256=%@|path=%@|args=%@", cd.sha256,
-                       [self sanitizeString:@(message.path)],
-                       [self sanitizeString:args]];
+  [outLog appendFormat:@"|sha256=%@|path=%@", cd.sha256, [self sanitizeString:@(message.path)]];
+
+  if (logArgs) {
+    [self addArgsForPid:message.pid toString:outLog];
+  }
 
   if (cd.certSHA256) {
     [outLog appendFormat:@"|cert_sha256=%@|cert_cn=%@", cd.certSHA256,
@@ -235,11 +238,26 @@
 
 #pragma mark Helpers
 
+/**
+  Sanitizes a given string if necessary, otherwise returns the original.
+*/
 - (NSString *)sanitizeString:(NSString *)inStr {
   NSUInteger length = [inStr lengthOfBytesUsingEncoding:NSUTF8StringEncoding];
   if (length < 1) return inStr;
 
-  const char *str = inStr.UTF8String;
+  NSString *ret = [self sanitizeCString:inStr.UTF8String ofLength:length];
+  if (ret) {
+    return ret;
+  }
+  return inStr;
+}
+
+/**
+  Sanitize the given C-string, replacing |, \n and \r characters.
+
+  @return a new NSString with the replaced contents, if necessary, otherwise nil.
+*/
+- (NSString *)sanitizeCString:(const char *)str ofLength:(NSUInteger)length {
   NSUInteger bufOffset = 0, strOffset = 0;
   char c = 0;
   char *buf = NULL;
@@ -251,7 +269,7 @@
     if (c == '|' || c == '\n' || c == '\r') {
       if (!buf) {
         // If string size * 6 is more than 64KiB use malloc, otherwise use stack space.
-        if (length * 6 > 65536) {
+        if (length * 6 > 64 * 1024) {
           buf = malloc(length * 6);
           shouldFree = YES;
         } else {
@@ -302,34 +320,39 @@
 
     return ret;
   }
-  return inStr;
+  return nil;
 }
 
 /**
-  Use sysctl to get the arguments for a PID, returned as a single string.
+  Use sysctl to get the arguments for a PID, appended to the given string.
 */
-- (NSString *)argsForPid:(pid_t)pid {
-  size_t argsSize = 0, index = 0;
-  NSMutableData *argsData;
-  char *bytes = NULL;
+- (void)addArgsForPid:(pid_t)pid toString:(NSMutableString *)str {
+  size_t argsSizeEstimate = 0, argsSize = 0, index = 0;
 
-  // Repeat up to 3 times, sysctl will sometimes return nothing
-  // while still giving a success error code
-  int tries = 3;
-  do {
-    int mib[] = {CTL_KERN, KERN_PROCARGS2, pid};
-    // Get length of arg array
-    if (sysctl(mib, 3, NULL, &argsSize, NULL, 0) < 0) continue;
-    argsSize++;
+  // Use stack space up to 128KiB.
+  const size_t MAX_STACK_ALLOC = 128 * 1024;
+  char *bytes = alloca(MAX_STACK_ALLOC);
+  BOOL shouldFree = NO;
 
-    // Allocate space to store the args
-    argsData = [NSMutableData dataWithLength:argsSize];
-    bytes = argsData.mutableBytes;
+  int mib[] = {CTL_KERN, KERN_PROCARGS2, pid};
 
-    // Get the args
-    if (sysctl(mib, 3, bytes, &argsSize, NULL, 0) < 0) continue;
-  } while (argsSize == argsData.length && tries--);
-  if (bytes == NULL) return nil;
+  // Get estimated length of arg array
+  if (sysctl(mib, 3, NULL, &argsSizeEstimate, NULL, 0) < 0) return;
+  argsSize = argsSizeEstimate + 512;
+
+  // If this is larger than our allocated stack space, alloc from heap.
+  if (argsSize > MAX_STACK_ALLOC) {
+    bytes = malloc(argsSize);
+    shouldFree = YES;
+  }
+
+  // Get the args. If this fails, free if necessary and return.
+  if (sysctl(mib, 3, bytes, &argsSize, NULL, 0) != 0 || argsSize >= argsSizeEstimate + 512) {
+    if (shouldFree) {
+      free(bytes);
+    }
+    return;
+  }
 
   // Get argc, set index to the end of argc
   int argc = 0;
@@ -352,18 +375,24 @@
 
   // Replace all NULLs with spaces up until the first environment variable
   int replacedNulls = 0;
-  for (; index < argsSize; ++index) {
+  for (; index < argsSize && replacedNulls < argc - 1; ++index) {
     if (bytes[index] == '\0') {
       bytes[index] = ' ';
       ++replacedNulls;
-      if (replacedNulls == argc) break;
     }
   }
 
-  // Copy the bytes from 'stringStart' to 'index' into a string, return it.
-  return [[NSString alloc] initWithBytes:&bytes[stringStart]
-                                  length:(index - stringStart)
-                                encoding:NSUTF8StringEncoding];
+  // Potentially sanitize the args string.
+  NSString *sanitized = [self sanitizeCString:&bytes[stringStart] ofLength:index - stringStart];
+  if (sanitized) {
+    [str appendFormat:@"|args=%@", sanitized];
+  } else {
+    [str appendFormat:@"|args=%s", &bytes[stringStart]];
+  }
+
+  if (shouldFree) {
+    free(bytes);
+  }
 }
 
 /**
