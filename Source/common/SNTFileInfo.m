@@ -281,9 +281,10 @@ extern NSString *const NSURLQuarantinePropertiesKey WEAK_IMPORT_ATTRIBUTE;
     // Check that the full path is at least 4-levels deep:
     // e.g: /Calendar.app/Contents/MacOS/Calendar
     NSArray *pathComponents = [self.path pathComponents];
-    if ([pathComponents count] < 4) return nil;
+    NSUInteger pathComponentsCount = pathComponents.count;
+    if (pathComponentsCount < 4) return nil;
 
-    pathComponents = [pathComponents subarrayWithRange:NSMakeRange(0, [pathComponents count] - 3)];
+    pathComponents = [pathComponents subarrayWithRange:NSMakeRange(0, pathComponentsCount - 3)];
     NSBundle *bndl = [NSBundle bundleWithPath:[NSString pathWithComponents:pathComponents]];
     if (bndl && [bndl objectForInfoDictionaryKey:@"CFBundleIdentifier"]) self.bundleRef = bndl;
   }
