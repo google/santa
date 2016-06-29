@@ -102,7 +102,8 @@ extern NSString *const NSURLQuarantinePropertiesKey WEAK_IMPORT_ATTRIBUTE;
 #pragma mark Hashing
 
 - (void)hashSHA1:(NSString **)sha1 SHA256:(NSString **)sha256 {
-  const int chunkSize = 262144;
+  const int MAX_CHUNK_SIZE = 256 * 1024;  // 256 KB
+  const size_t chunkSize = _fileSize > MAX_CHUNK_SIZE ? MAX_CHUNK_SIZE : _fileSize;
   char chunk[chunkSize];
 
   CC_SHA1_CTX c1;
@@ -112,52 +113,58 @@ extern NSString *const NSURLQuarantinePropertiesKey WEAK_IMPORT_ATTRIBUTE;
   if (sha256) CC_SHA256_Init(&c256);
 
   int fd = self.fileHandle.fileDescriptor;
-  
+
   fcntl(fd, F_RDAHEAD, 1);
-  fcntl(fd, F_RDADVISE, 1);
+  struct radvisory radv;
+  radv.ra_offset = 0;
+  const int MAX_ADVISORY_READ = 10 * 1024 * 1024;
+  radv.ra_count = (int)_fileSize < MAX_ADVISORY_READ ? (int)_fileSize : MAX_ADVISORY_READ;
+  fcntl(fd, F_RDADVISE, &radv);
+  ssize_t bytesRead;
 
   for (uint64_t offset = 0; offset < _fileSize;) {
-    unsigned int readSize = 0;
-    if (offset + chunkSize > _fileSize) {
-      readSize = (unsigned int)(_fileSize - offset);
-    } else {
-      readSize = chunkSize;
-    }
-
-    unsigned int bytesRead = (unsigned int)pread(fd, &chunk, readSize, offset);
-    if (bytesRead == readSize) {
-      if (sha1) CC_SHA1_Update(&c1, chunk, readSize);
-      if (sha256) CC_SHA256_Update(&c256, chunk, readSize);
+    bytesRead = pread(fd, chunk, chunkSize, offset);
+    if (bytesRead > 0) {
+      if (sha1) CC_SHA1_Update(&c1, chunk, (CC_LONG)bytesRead);
+      if (sha256) CC_SHA256_Update(&c256, chunk, (CC_LONG)bytesRead);
       offset += bytesRead;
-    } else if (errno == EINTR) {
+    } else if (bytesRead == -1 && errno == EINTR) {
       continue;
     } else {
       return;
     }
   }
 
+  // We turn off Read Ahead that we turned on
   fcntl(fd, F_RDAHEAD, 0);
-  fcntl(fd, F_RDADVISE, 0);
-
   if (sha1) {
-    unsigned char dgst[CC_SHA1_DIGEST_LENGTH];
-    CC_SHA1_Final(dgst, &c1);
-
-    NSMutableString *buf = [[NSMutableString alloc] initWithCapacity:CC_SHA1_DIGEST_LENGTH * 2];
-    for (int i = 0; i < CC_SHA1_DIGEST_LENGTH; ++i) {
-      [buf appendFormat:@"%02x", (unsigned char)dgst[i]];
-    }
-    *sha1 = [buf copy];
+    unsigned char digest[CC_SHA1_DIGEST_LENGTH];
+    CC_SHA1_Final(digest, &c1);
+    NSString *const SHA1FormatString =
+        @"%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x";
+    *sha1 = [[NSString alloc]
+        initWithFormat:SHA1FormatString, digest[0], digest[1], digest[2],
+                       digest[3], digest[4], digest[5], digest[6], digest[7],
+                       digest[8], digest[9], digest[10], digest[11], digest[12],
+                       digest[13], digest[14], digest[15], digest[16],
+                       digest[17], digest[18], digest[19]];
   }
   if (sha256) {
-    unsigned char dgst[CC_SHA256_DIGEST_LENGTH];
-    CC_SHA256_Final(dgst, &c256);
+    unsigned char digest[CC_SHA256_DIGEST_LENGTH];
+    CC_SHA256_Final(digest, &c256);
+    NSString *const SHA256FormatString =
+        @"%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x"
+         "%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x";
 
-    NSMutableString *buf = [[NSMutableString alloc] initWithCapacity:CC_SHA256_DIGEST_LENGTH * 2];
-    for (int i = 0; i < CC_SHA256_DIGEST_LENGTH; ++i) {
-      [buf appendFormat:@"%02x", (unsigned char)dgst[i]];
-    }
-    *sha256 = [buf copy];
+    *sha256 = [[NSString alloc]
+        initWithFormat:SHA256FormatString, digest[0], digest[1], digest[2],
+                       digest[3], digest[4], digest[5], digest[6], digest[7],
+                       digest[8], digest[9], digest[10], digest[11], digest[12],
+                       digest[13], digest[14], digest[15], digest[16],
+                       digest[17], digest[18], digest[19], digest[20],
+                       digest[21], digest[22], digest[23], digest[24],
+                       digest[25], digest[26], digest[27], digest[28],
+                       digest[29], digest[30], digest[31]];
   }
 }
 
