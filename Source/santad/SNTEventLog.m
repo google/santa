@@ -265,7 +265,7 @@
 
   // Loop through the string one character at a time, looking for the characters
   // we want to remove.
-  for (const char *p = str; (c = *p) != 0; p++) {
+  for (const char *p = str; (c = *p) != 0; ++p) {
     if (c == '|' || c == '\n' || c == '\r') {
       if (!buf) {
         // If string size * 6 is more than 64KiB use malloc, otherwise use stack space.
@@ -375,10 +375,11 @@
 
   // Replace all NULLs with spaces up until the first environment variable
   int replacedNulls = 0;
-  for (; index < argsSize && replacedNulls < argc - 1; ++index) {
+  for (; index < argsSize; ++index) {
     if (bytes[index] == '\0') {
-      bytes[index] = ' ';
       ++replacedNulls;
+      if (replacedNulls == argc) break;
+      bytes[index] = ' ';
     }
   }
 
