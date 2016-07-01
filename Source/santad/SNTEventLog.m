@@ -90,13 +90,14 @@
   char ppath[PATH_MAX] = "(null)";
   proc_pidpath(message.pid, ppath, PATH_MAX);
 
-  NSString *user, *group;
+  const char *user = "";
+  const char *group = "";
   struct passwd *pw = getpwuid(message.uid);
-  if (pw) user = @(pw->pw_name);
+  if (pw) user = pw->pw_name;
   struct group *gr = getgrgid(message.gid);
-  if (gr) group = @(gr->gr_name);
+  if (gr) group = gr->gr_name;
 
-  [outStr appendFormat:@"|pid=%d|ppid=%d|process=%s|processpath=%s|uid=%d|user=%@|gid=%d|group=%@",
+  [outStr appendFormat:@"|pid=%d|ppid=%d|process=%s|processpath=%s|uid=%d|user=%s|gid=%d|group=%s",
                        message.pid, message.ppid, message.pname, ppath,
                        message.uid, user, message.gid, group];
   LOGI(@"%@", outStr);
