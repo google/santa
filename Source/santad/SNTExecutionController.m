@@ -44,7 +44,7 @@
 @property SNTRuleTable *ruleTable;
 
 @property NSMutableDictionary *uploadBackoff;
-@property dispatch_queue_t eventUploadQueue;
+@property dispatch_queue_t eventQueue;
 @end
 
 @implementation SNTExecutionController
@@ -65,7 +65,7 @@
     _eventLog = eventLog;
 
     _uploadBackoff = [NSMutableDictionary dictionaryWithCapacity:128];
-    _eventUploadQueue = dispatch_queue_create("com.google.santad.event_upload",
+    _eventQueue = dispatch_queue_create("com.google.santad.event_upload",
                                               DISPATCH_QUEUE_SERIAL);
 
     // This establishes the XPC connection between libsecurity and syspolicyd.
@@ -198,7 +198,9 @@
     se.quarantineTimestamp = binInfo.quarantineTimestamp;
     se.quarantineAgentBundleID = binInfo.quarantineAgentBundleID;
 
-    [self.eventTable addStoredEvent:se];
+    dispatch_async(_eventQueue, ^{
+      [self.eventTable addStoredEvent:se];
+    });
 
     // If binary was blocked, do the needful
     if (action != ACTION_RESPOND_ALLOW) {
@@ -206,7 +208,7 @@
 
       // So the server has something to show the user straight away, initiate an event
       // upload for the blocked binary rather than waiting for the next sync.
-      dispatch_async(self.eventUploadQueue, ^{
+      dispatch_async(_eventQueue, ^{
         [self initiateEventUploadForEvent:se];
       });
 
