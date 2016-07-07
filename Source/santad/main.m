@@ -35,7 +35,7 @@ void *watchdogThreadFunction(__unused void *idata) {
   pthread_setname_np("com.google.santa.watchdog");
 
   // Number of seconds to wait between checks.
-  const int timeInterval = 60;
+  const int timeInterval = 30;
 
   // Amount of CPU usage to trigger warning, as a percentage averaged over timeInterval
   // santad's usual CPU usage is 0-3% but can occasionally spike if lots of processes start at once.
