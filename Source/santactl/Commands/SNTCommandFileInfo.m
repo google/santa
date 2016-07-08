@@ -162,7 +162,7 @@ REGISTER_COMMAND_NAME(@"fileinfo")
     if (!r && rule) r = rule;
     dispatch_group_leave(group);
   }];
-  if (dispatch_group_wait(group, dispatch_time(DISPATCH_TIME_NOW, 1 * NSEC_PER_SEC))) {
+  if (dispatch_group_wait(group, dispatch_time(DISPATCH_TIME_NOW, 5 * NSEC_PER_SEC))) {
     [self printKey:@"Rule" value:@"Cannot communicate with daemon"];
   } else {
     NSString *output;
