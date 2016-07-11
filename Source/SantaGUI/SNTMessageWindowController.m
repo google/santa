@@ -123,7 +123,7 @@
   if (![key isEqualToString:@"event"]) {
     return [NSSet setWithObject:@"event"];
   } else {
-    return nil;
+    return [NSSet set];
   }
 }
 
