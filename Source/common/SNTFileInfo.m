@@ -76,7 +76,17 @@ extern NSString *const NSURLQuarantinePropertiesKey WEAK_IMPORT_ATTRIBUTE;
       return nil;
     }
 
-    _fileHandle = [NSFileHandle fileHandleForReadingAtPath:_path];
+    int fd = open([_path UTF8String], O_RDONLY | O_CLOEXEC);
+    if (fd < 0) {
+      if (error) {
+        NSString *errStr = [NSString stringWithFormat:@"Unable to open file: %s", strerror(errno)];
+        *error = [NSError errorWithDomain:@"com.google.santa.fileinfo"
+                                     code:280
+                                 userInfo:@{NSLocalizedDescriptionKey : errStr}];
+      }
+      return nil;
+    }
+    _fileHandle = [[NSFileHandle alloc] initWithFileDescriptor:fd closeOnDealloc:YES];
 
     struct stat fileStat;
     fstat(_fileHandle.fileDescriptor, &fileStat);

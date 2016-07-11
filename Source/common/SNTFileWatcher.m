@@ -52,7 +52,7 @@
 
   dispatch_async(queue, ^{
     int fd = -1;
-    while ((fd = open([self.filePath fileSystemRepresentation], O_EVTONLY)) < 0) {
+    while ((fd = open([self.filePath fileSystemRepresentation], O_EVTONLY | O_CLOEXEC)) < 0) {
       usleep(200000);  // wait 200ms
     }
     self.source = dispatch_source_create(DISPATCH_SOURCE_TYPE_VNODE, fd, mask, queue);
