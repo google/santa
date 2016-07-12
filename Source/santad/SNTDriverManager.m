@@ -98,13 +98,9 @@ static const int MAX_DELAY = 15;
                    withCallback:(void (^)(santa_message_t))callback {
   kern_return_t kr;
 
-  mach_port_t receivePort = 0;
-  IODataQueueMemory *queueMemory = NULL;
-  mach_vm_address_t address = 0;
-  mach_vm_size_t size = 0;
-
   // Allocate a mach port to receive notifactions from the IODataQueue
-  if (!(receivePort = IODataQueueAllocateNotificationPort())) {
+  mach_port_t receivePort = IODataQueueAllocateNotificationPort();
+  if (receivePort == MACH_PORT_NULL) {
     LOGD(@"Failed to allocate notification port");
     return;
   }
@@ -118,15 +114,16 @@ static const int MAX_DELAY = 15;
   }
 
   // This will call clientMemoryForType() inside our user client class.
-  kr = IOConnectMapMemory(self.connection, type, mach_task_self(),
-                          &address, &size, kIOMapAnywhere);
+  mach_vm_address_t address = 0;
+  mach_vm_size_t size = 0;
+  kr = IOConnectMapMemory(self.connection, type, mach_task_self(), &address, &size, kIOMapAnywhere);
   if (kr != kIOReturnSuccess) {
     LOGD(@"Failed to map memory for type %d: %d", type, kr);
     mach_port_destroy(mach_task_self(), receivePort);
     return;
   }
 
-  queueMemory = (IODataQueueMemory *)address;
+  IODataQueueMemory *queueMemory = (IODataQueueMemory *)address;
 
   do {
     while (IODataQueueDataAvailable(queueMemory)) {
@@ -151,14 +148,14 @@ static const int MAX_DELAY = 15;
 - (kern_return_t)postToKernelAction:(santa_action_t)action forVnodeID:(uint64_t)vnodeId {
   switch (action) {
     case ACTION_RESPOND_ALLOW:
-      return IOConnectCallScalarMethod(self.connection,
+      return IOConnectCallScalarMethod(_connection,
                                        kSantaUserClientAllowBinary,
                                        &vnodeId,
                                        1,
                                        0,
                                        0);
     case ACTION_RESPOND_DENY:
-      return IOConnectCallScalarMethod(self.connection,
+      return IOConnectCallScalarMethod(_connection,
                                        kSantaUserClientDenyBinary,
                                        &vnodeId,
                                        1,
@@ -173,7 +170,7 @@ static const int MAX_DELAY = 15;
   uint32_t input_count = 1;
   uint64_t cache_count = 0;
 
-  IOConnectCallScalarMethod(self.connection,
+  IOConnectCallScalarMethod(_connection,
                             kSantaUserClientCacheCount,
                             0,
                             0,
@@ -183,7 +180,7 @@ static const int MAX_DELAY = 15;
 }
 
 - (BOOL)flushCache {
-  return IOConnectCallScalarMethod(self.connection,
+  return IOConnectCallScalarMethod(_connection,
                                    kSantaUserClientClearCache, 0, 0, 0, 0) == KERN_SUCCESS;
 }
 
@@ -191,7 +188,7 @@ static const int MAX_DELAY = 15;
   uint32_t input_count = 1;
   uint64_t vnode_action = 0;
 
-  IOConnectCallScalarMethod(self.connection,
+  IOConnectCallScalarMethod(_connection,
                             kSantaUserClientCheckCache,
                             &vnodeID,
                             1,

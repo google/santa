@@ -146,7 +146,7 @@
         }
         case ACTION_REQUEST_BINARY: {
           dispatch_async(exec_queue, ^{
-            [self.execController validateBinaryWithMessage:message];
+            [_execController validateBinaryWithMessage:message];
           });
           break;
         }
@@ -177,14 +177,14 @@
             NSRegularExpression *re = [[SNTConfigurator configurator] fileChangesRegex];
             NSString *path = @(message.path);
             if ([re numberOfMatchesInString:path options:0 range:NSMakeRange(0, path.length)]) {
-              [self.eventLog logFileModification:message];
+              [_eventLog logFileModification:message];
             }
           });
           break;
         }
         case ACTION_NOTIFY_EXEC: {
           dispatch_async(log_queue, ^{
-            [self.eventLog logAllowedExecution:message];
+            [_eventLog logAllowedExecution:message];
           });
           break;
         }

@@ -65,8 +65,7 @@
     _eventLog = eventLog;
 
     _uploadBackoff = [NSMutableDictionary dictionaryWithCapacity:128];
-    _eventQueue = dispatch_queue_create("com.google.santad.event_upload",
-                                              DISPATCH_QUEUE_SERIAL);
+    _eventQueue = dispatch_queue_create("com.google.santad.event_upload", DISPATCH_QUEUE_SERIAL);
 
     // This establishes the XPC connection between libsecurity and syspolicyd.
     // Not doing this causes a deadlock as establishing this link goes through xpcproxy.
@@ -78,7 +77,7 @@
 #pragma mark Binary Validation
 
 - (SNTEventState)makeDecision:(SNTCachedDecision *)cd binaryInfo:(SNTFileInfo *)fi {
-  SNTRule *rule = [self.ruleTable binaryRuleForSHA256:cd.sha256];
+  SNTRule *rule = [_ruleTable binaryRuleForSHA256:cd.sha256];
   if (rule) {
     switch (rule.state) {
       case SNTRuleStateWhitelist:
@@ -92,7 +91,7 @@
     }
   }
 
-  rule = [self.ruleTable certificateRuleForSHA256:cd.certSHA256];
+  rule = [_ruleTable certificateRuleForSHA256:cd.certSHA256];
   if (rule) {
     switch (rule.state) {
       case SNTRuleStateWhitelist:
@@ -131,8 +130,7 @@
   SNTFileInfo *binInfo = [[SNTFileInfo alloc] initWithPath:@(message.path) error:&fileInfoError];
   if (!binInfo) {
     LOGW(@"Failed to read file %@: %@", binInfo.path, fileInfoError.localizedDescription);
-    [self.driverManager postToKernelAction:ACTION_RESPOND_ALLOW
-                                forVnodeID:message.vnode_id];
+    [_driverManager postToKernelAction:ACTION_RESPOND_ALLOW forVnodeID:message.vnode_id];
     return;
   }
 
@@ -153,10 +151,10 @@
 
   // Save decision details for logging the execution later.
   santa_action_t action = [self actionForEventState:cd.decision];
-  if (action == ACTION_RESPOND_ALLOW) [self.eventLog saveDecisionDetails:cd];
+  if (action == ACTION_RESPOND_ALLOW) [_eventLog saveDecisionDetails:cd];
 
   // Send the decision to the kernel.
-  [self.driverManager postToKernelAction:action forVnodeID:cd.vnodeId];
+  [_driverManager postToKernelAction:action forVnodeID:cd.vnodeId];
 
   // Log to database if necessary.
   if (cd.decision != SNTEventStateAllowBinary &&
@@ -199,12 +197,12 @@
     se.quarantineAgentBundleID = binInfo.quarantineAgentBundleID;
 
     dispatch_async(_eventQueue, ^{
-      [self.eventTable addStoredEvent:se];
+      [_eventTable addStoredEvent:se];
     });
 
     // If binary was blocked, do the needful
     if (action != ACTION_RESPOND_ALLOW) {
-      [self.eventLog logDeniedExecution:cd withMessage:message];
+      [_eventLog logDeniedExecution:cd withMessage:message];
 
       // So the server has something to show the user straight away, initiate an event
       // upload for the blocked binary rather than waiting for the next sync.
@@ -227,7 +225,7 @@
         }
         [self printMessage:msg toTTYForPID:message.ppid];
 
-        [self.notifierQueue addEvent:se customMessage:cd.customMsg];
+        [_notifierQueue addEvent:se customMessage:cd.customMsg];
       }
     }
   }

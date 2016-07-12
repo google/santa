@@ -44,8 +44,8 @@
 }
 
 - (void)saveDecisionDetails:(SNTCachedDecision *)cd {
-  dispatch_sync(self.detailStoreQueue, ^{
-    self.detailStore[@(cd.vnodeId)] = cd;
+  dispatch_sync(_detailStoreQueue, ^{
+    _detailStore[@(cd.vnodeId)] = cd;
   });
 }
 
@@ -109,8 +109,8 @@
 
 - (void)logAllowedExecution:(santa_message_t)message {
   __block SNTCachedDecision *cd;
-  dispatch_sync(self.detailStoreQueue, ^{
-    cd = self.detailStore[@(message.vnode_id)];
+  dispatch_sync(_detailStoreQueue, ^{
+    cd = _detailStore[@(message.vnode_id)];
   });
   [self logExecution:message withDecision:cd];
 }
@@ -183,8 +183,7 @@
   }
 
   if (cd.quarantineURL) {
-    [outLog appendFormat:@"|quarantine_url=%@",
-                         [self sanitizeString:cd.quarantineURL]];
+    [outLog appendFormat:@"|quarantine_url=%@", [self sanitizeString:cd.quarantineURL]];
   }
 
   NSString *user, *group;
