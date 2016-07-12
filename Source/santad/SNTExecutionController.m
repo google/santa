@@ -274,18 +274,18 @@
 
 /**
   Workaround for issue with PrinterProxy.app.
- 
+
   Every time a new printer is added to the machine, a copy of the PrinterProxy.app is copied from
   the Print.framework to ~/Library/Printers with the name of the printer as the name of the app.
-  The binary inside is changed slightly (in a way that is unique to the printer name) and then 
-  re-signed with an adhoc signature. I don't know why this is done but it seems that the binary 
+  The binary inside is changed slightly (in a way that is unique to the printer name) and then
+  re-signed with an adhoc signature. I don't know why this is done but it seems that the binary
   itself doesn't need to be changed as copying the old one back in-place seems to work,
   so that's what we do.
- 
+
   If this workaround is applied the decision request is not responded to as the existing request
   is invalidated when the file is closed which will trigger a brand new request coming from the
   kernel.
- 
+
   @param fi, SNTFileInfo object for the binary being executed.
   @return YES if the workaround was applied, NO otherwise.
 */

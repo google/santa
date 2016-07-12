@@ -37,7 +37,7 @@
   requestDict[kHostname] = [SNTSystemInfo longHostname];
   requestDict[kOSVer] = [SNTSystemInfo osVersion];
   requestDict[kOSBuild] = [SNTSystemInfo osBuild];
-  requestDict[kSantaVer] = [[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleVersion"];  
+  requestDict[kSantaVer] = [[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleVersion"];
   requestDict[kPrimaryUser] = self.syncState.machineOwner;
 
   dispatch_semaphore_t sema = dispatch_semaphore_create(0);

@@ -38,8 +38,8 @@
 - (BOOL)sync;
 
 /**
-  The URL for this stage. 
- 
+  The URL for this stage.
+
   @return The NSURL for this stage.
 */
 - (nonnull NSURL *)stageURL;
@@ -49,7 +49,7 @@
 /**
   Creates an NSMutableURLRequest pointing at the URL for this stage and containing the JSON-encoded
   data passed in as a dictionary.
- 
+
   @param dictionary The values to POST to the server.
 */
 - (nullable NSMutableURLRequest *)requestWithDictionary:(nullable NSDictionary *)dictionary;
@@ -58,7 +58,7 @@
   Perform the passed in request and attempt to parse the response as JSON into a dictionary.
 
   @param request The request to perform
-  @param timeout The number of seconds to allow the request to run before timing out. 
+  @param timeout The number of seconds to allow the request to run before timing out.
 
   @return A populated dictionary if the response data was JSON, an empty dictionary if not and nil
           if the request failed for any reason.

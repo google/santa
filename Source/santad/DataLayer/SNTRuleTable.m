@@ -61,7 +61,7 @@
                                   @"WHERE (shasum=? OR shasum=?) AND state=?",
                       self.santadCertSHA, self.launchdCertSHA, @(SNTRuleStateWhitelist)];
   if (ruleCount != 2) {
-    if (version > 0) LOGE(@"Started without launchd/santad certificate rules in place!");    
+    if (version > 0) LOGE(@"Started without launchd/santad certificate rules in place!");
     [db executeUpdate:@"INSERT INTO rules (shasum, state, type) VALUES (?, ?, ?)",
         self.santadCertSHA, @(SNTRuleStateWhitelist), @(SNTRuleTypeCertificate)];
     [db executeUpdate:@"INSERT INTO rules (shasum, state, type) VALUES (?, ?, ?)",

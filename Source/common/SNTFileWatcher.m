@@ -80,7 +80,7 @@
       int fd = (int)dispatch_source_get_handle(self.source);
       if (fd > 0) close(fd);
     });
-    
+
     dispatch_resume(self.source);
   });
 }

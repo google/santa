@@ -44,10 +44,10 @@
 /**
   A somewhat simple, concurrent array hash table implementation intended for use
   in IOKit kernel extensions. Maps 64-bit unsigned integer keys to values.
- 
-  Enforces a maximum size by clearing all entries if a new value 
+
+  Enforces a maximum size by clearing all entries if a new value
   is added that would go over the maximum size declared at creation.
-  
+
   The number of buckets is calculated as `maximum_size` / `per_bucket`
   rounded up to the next power of 2. Locking is done per-bucket.
 */
@@ -55,10 +55,10 @@ template<class T> class SantaCache {
  public:
   /**
     Initialize a newly created cache.
-   
+
     @param maximum_size The maximum number of entries in this cache. Once this
         number is reached all the entries will be purged.
-    @param per_bucket The target number of entries in each bucket when cache is full. 
+    @param per_bucket The target number of entries in each bucket when cache is full.
         A higher number will result in better performance but higher memory usage.
         Cannot be higher than 64 to try and ensure buckets don't overflow.
   */
@@ -100,10 +100,10 @@ template<class T> class SantaCache {
 
   /**
     Set an element in the cache.
-   
+
     @note If the cache is full when this is called, this will empty the cache before
     inserting the new value.
-   
+
     @return if an existing value was replaced, the previous value, otherwise zero_
   */
   T set(uint64_t key, T value) {
@@ -252,7 +252,7 @@ template<class T> class SantaCache {
 
   /**
     Hash a key to determine which bucket it belongs in.
-   
+
     Multiplicative hash using a prime near to the golden ratio, per Knuth.
     This seems to have good bucket distribution generally and for the range of
     values we expect to see.
@@ -263,9 +263,9 @@ template<class T> class SantaCache {
 
   /**
     Grow a given bucket by 1 entry.
-  
+
     @note The lock for this bucket must already be held.
-   
+
     @param bucket, The bucket to grow.
   */
   void bucket_grow(struct bucket *bucket) {
@@ -284,7 +284,7 @@ template<class T> class SantaCache {
     Shrink a bucket by 1 entry.
 
     @note The lock for this bucket must already be held.
-   
+
     @param bucket, The bucket to shrink.
     @param idx, The 0-based index in the bucket to remove.
   */

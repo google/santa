@@ -190,7 +190,7 @@ static const int MAX_DELAY = 15;
 - (santa_action_t)checkCache:(uint64_t)vnodeID {
   uint32_t input_count = 1;
   uint64_t vnode_action = 0;
-  
+
   IOConnectCallScalarMethod(self.connection,
                             kSantaUserClientCheckCache,
                             &vnodeID,

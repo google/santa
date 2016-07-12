@@ -40,12 +40,12 @@
   @code
    [conn.remoteObjectProxy selectorInRemoteInterface];
   @endcode
- 
+
   One advantage of the way that SNTXPCConnection works over using NSXPCConnection directly is that
   from the client-side once the resume method has finished, the connection is either valid or the
   invalidation handler will be called. Ordinarily, the connection doesn't actually get made until
   the first message is sent across it.
- 
+
   @note messages are always delivered on a background thread!
 */
 @interface SNTXPCConnection : NSObject<NSXPCListenerDelegate>
@@ -79,7 +79,7 @@
 
 /**
   Call when the properties of the object have been set-up and you're ready for connections.
- 
+
   For clients, this call can take up to 2s to complete for connection to finish establishing though
   in basically all cases it will actually complete in a few milliseconds.
 */
@@ -97,7 +97,7 @@
 
 /**
   A proxy to the object at the other end of the connection. (client)
- 
+
   @note If the connection to the server failed, this will be nil, so you can safely send messages
   and rely on the invalidationHandler for handling the failure.
 */

@@ -82,7 +82,7 @@ static NSString * const silencedNotificationsKey = @"SilencedNotifications";
     case SNTClientModeLockdown:
       un.informativeText = @"Switching into Lockdown mode";
       customMsg = [[SNTConfigurator configurator] modeNotificationLockdown];
-      customMsg = [SNTBlockMessage stringFromHTML:customMsg];      
+      customMsg = [SNTBlockMessage stringFromHTML:customMsg];
       if (customMsg.length) un.informativeText = customMsg;
       break;
     default:
