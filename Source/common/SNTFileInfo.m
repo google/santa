@@ -530,7 +530,7 @@ extern NSString *const NSURLQuarantinePropertiesKey WEAK_IMPORT_ATTRIBUTE;
 ///  is not the one who downloaded the file.
 ///
 - (NSDictionary *)quarantineData {
-  if (!self.quarantineDict && self.fileOwnerHomeDir) {
+  if (!self.quarantineDict && self.fileOwnerHomeDir && NSURLQuarantinePropertiesKey) {
     self.quarantineDict = (NSDictionary *)[NSNull null];
 
     NSURL *url = [NSURL fileURLWithPath:self.path];
