@@ -432,7 +432,8 @@ void SantaDecisionManager::FileOpCallback(
 
   // Filter out modifications to locations that are definitely
   // not useful or made by santad.
-  if (proc_selfpid() != client_pid_ &&
+  if (client_pid_ > 0 &&
+      proc_selfpid() != client_pid_ &&
       !strprefix(path, "/.") &&
       !strprefix(path, "/dev")) {
     auto message = NewMessage(nullptr);
