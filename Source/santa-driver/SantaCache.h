@@ -91,8 +91,9 @@ template<class T> class SantaCache {
     struct entry *entry = (struct entry *)((uintptr_t)bucket->head - 1);
     while (entry != nullptr) {
       if (entry->key == key) {
+        T val = entry->value;
         unlock(bucket);
-        return entry->value;
+        return val;
       }
       entry = entry->next;
     }
