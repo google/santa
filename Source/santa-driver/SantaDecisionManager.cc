@@ -42,6 +42,9 @@ bool SantaDecisionManager::init() {
 
   client_pid_ = 0;
 
+  ts_ = { .tv_sec = kRequestLoopSleepMilliseconds / 1000,
+          .tv_nsec = kRequestLoopSleepMilliseconds % 1000 * 1000000 };
+
   return true;
 }
 
@@ -277,7 +280,7 @@ santa_action_t SantaDecisionManager::GetFromDaemon(santa_message_t *message, uin
     }
 
     do {
-      IOSleep(kRequestLoopSleepMilliseconds);
+      msleep((void *)message->vnode_id, NULL, 0, "", &ts_);
       return_action = GetFromCache(identifier);
     } while (return_action == ACTION_REQUEST_BINARY && ClientConnected());
   } while (!RESPONSE_VALID(return_action) && ClientConnected());
