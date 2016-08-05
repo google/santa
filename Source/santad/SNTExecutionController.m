@@ -214,14 +214,15 @@
         // Let the user know what happened, both on the terminal and in the GUI.
         NSAttributedString *s = [SNTBlockMessage attributedBlockMessageForEvent:se
                                                                   customMessage:cd.customMsg];
-        NSString *msg = [NSString stringWithFormat:@"\033[1mSanta\033[0m\n\n%@\n\n", s.string];
-        msg = [msg stringByAppendingFormat:@"\033[1mPath:\033[0m %@\n"
-                                           @"\033[1mIdentifier:\033[0m %@\n"
-                                           @"\033[1mParent:\033[0m %@ (%@)\n\n",
-                  se.filePath, se.fileSHA256, se.parentName, se.ppid];
+        NSMutableString *msg = [NSMutableString stringWithCapacity:1024];
+        [msg appendFormat:@"\n\033[1mSanta\033[0m\n\n%@\n\n", s.string];
+        [msg appendFormat:@"\033[1mPath:      \033[0m %@\n"
+                          @"\033[1mIdentifier:\033[0m %@\n"
+                          @"\033[1mParent:    \033[0m %@ (%@)\n\n",
+            se.filePath, se.fileSHA256, se.parentName, se.ppid];
         NSURL *detailURL = [SNTBlockMessage eventDetailURLForEvent:se];
         if (detailURL) {
-          msg = [msg stringByAppendingFormat:@"%@\n\n", detailURL.absoluteString];
+          [msg appendFormat:@"%@\n\n", detailURL.absoluteString];
         }
         [self printMessage:msg toTTYForPID:message.ppid];
 
@@ -365,12 +366,11 @@
     return;
   }
 
-  NSString *devPath = [NSString stringWithFormat:@"/dev/%s", devname(taskInfo.e_tdev, S_IFCHR)];
-  int fd = open(devPath.UTF8String, O_WRONLY | O_NOCTTY);
-  @try {
-    NSFileHandle *fh = [[NSFileHandle alloc] initWithFileDescriptor:fd closeOnDealloc:YES];
-    [fh writeData:[msg dataUsingEncoding:NSUTF8StringEncoding]];
-  } @catch (NSException *) { /* do nothing */ }
+  char devPath[32] = "/dev/";
+  snprintf(devPath, 32, "/dev/%s", devname(taskInfo.e_tdev, S_IFCHR));
+  int fd = open(devPath, O_WRONLY | O_NOCTTY);
+  write(fd, msg.UTF8String, msg.length);
+  close(fd);
 }
 
 - (void)loggedInUsers:(NSArray **)users sessions:(NSArray **)sessions {
