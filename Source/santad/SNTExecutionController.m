@@ -312,6 +312,13 @@
   return NO;
 }
 
+/**
+  This runs `santactl sync` for the event that was just saved, so that the user
+  has something to vote in straight away.
+
+  This method is always called on a serial queue to ensure the backoff works properly
+  and to keep this low-priority method away from the high-priority decision making threads.
+*/
 - (void)initiateEventUploadForEvent:(SNTStoredEvent *)event {
   // The event upload is skipped if the full path is equal to that of santactl so that
   // on the off chance that santactl is not whitelisted, we don't get into an infinite loop.
@@ -374,35 +381,28 @@
 }
 
 - (void)loggedInUsers:(NSArray **)users sessions:(NSArray **)sessions {
-  NSMutableDictionary *loggedInUsers = [[NSMutableDictionary alloc] init];
-  NSMutableDictionary *loggedInHosts = [[NSMutableDictionary alloc] init];
+  NSMutableDictionary *loggedInUsers = [NSMutableDictionary dictionary];
+  NSMutableArray *loggedInHosts = [NSMutableArray array];
 
   struct utmpx *nxt;
   while ((nxt = getutxent())) {
     if (nxt->ut_type != USER_PROCESS) continue;
 
     NSString *userName = @(nxt->ut_user);
-
     NSString *sessionName;
     if (strnlen(nxt->ut_host, 1) > 0) {
-      sessionName = [NSString stringWithFormat:@"%s@%s", nxt->ut_user, nxt->ut_host];
+      sessionName = [NSString stringWithFormat:@"%@@%s", userName, nxt->ut_host];
     } else {
-      sessionName = [NSString stringWithFormat:@"%s@%s", nxt->ut_user, nxt->ut_line];
+      sessionName = [NSString stringWithFormat:@"%@@%s", userName, nxt->ut_line];
     }
 
-    if (userName.length > 0) {
-      loggedInUsers[userName] = [NSNull null];
-    }
-
-    if (sessionName.length > 1) {
-      loggedInHosts[sessionName] = [NSNull null];
-    }
+    if (userName.length) loggedInUsers[userName] = [NSNull null];
+    if (sessionName.length) [loggedInHosts addObject:sessionName];
   }
-
   endutxent();
 
   *users = [loggedInUsers allKeys];
-  *sessions = [loggedInHosts allKeys];
+  *sessions = [loggedInHosts copy];
 }
 
 @end
