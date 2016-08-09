@@ -27,8 +27,8 @@ Admin-Related Features
 those marked as blacklisted will be allowed to run, whilst being logged and recorded in the events database. In LOCKDOWN mode, only whitelisted binaries are
 allowed to run.
 
-* Event logging: All executions processed by the userland agent are logged.
-When in MONITOR and LOCKDOWN modes, all unknown or denied binaries are stored in the database to enable later aggregation.
+* Event logging: When the kext is loaded, all binary launches are logged.
+When in either mode, all unknown or denied binaries are stored in the database to enable later aggregation.
 
 * Certificate-based rules, with override levels: Instead of relying on a binaries hash (or 'fingerprint'), executables can be whitelisted/blacklisted by their signing
 certificate. You can therefore trust/block all binaries by a given publisher that were signed with that cert across version updates. A
@@ -39,7 +39,7 @@ signed with that certificate, or vice-versa.
 
 * Path-based rules (via NSRegularExpression/ICU): This allows a similar feature as Managed Client for OS X's (the precursor to configuration profiles, which used the same implementation mechanism) Application Launch Restrictions via the mcxalr binary. This implementation carries the added benefit of being configurable via regex, and doesn't rely on LaunchServices. As detailed in the wiki, when evaluating rules this holds the lowest precendence.
 
-* Failsafe cert rules: You cannot put in a deny rule that would block the certificate used to sign launchd, a.k.a. pid 1, and therefore all components used in Apple's OS. The binaries in every OS update (and in some cases entire new versions) are therefore auto-whitelisted. This does not affect binaries from Apple's App Store, which use various certs that change regularly for common apps. Likewise, you cannot blacklist Santa itself, and Santa uses a distinct separate cert than other Google apps.
+* Failsafe cert rules: You cannot put in a deny rule that would block the certificate used to sign launchd, a.k.a. pid 1, and therefore all components used in macOS. The binaries in every OS update (and in some cases entire new versions) are therefore auto-whitelisted. This does not affect binaries from Apple's App Store, which use various certs that change regularly for common apps. Likewise, you cannot blacklist Santa itself, and Santa uses a distinct separate cert than other Google apps.
 
 Intentions and Expectations
 ===========================
@@ -82,7 +82,7 @@ Santa is not yet a 1.0 and we have some known issues to be aware of:
 
 * Santa only blocks execution (execve and variants), it doesn't protect against
 dynamic libraries loaded with dlopen, libraries on disk that have been replaced, or
-libraries loaded using `DYLD_INSERT_LIBRARIES`. As of version 0.9.1 we *did* address [__PAGEZERO missing issues](b87482e) that were exploited in some versions of macOS. We are working on also protecting against similar avenues of attack.
+libraries loaded using `DYLD_INSERT_LIBRARIES`. As of version 0.9.1 we *do* address [__PAGEZERO missing issues](b87482e) that were exploited in some versions of macOS. We are working on also protecting against similar avenues of attack.
 
 * Kext communication security: the kext will only accept a connection from a
 single client at a time and said client must be running as root. We haven't yet
