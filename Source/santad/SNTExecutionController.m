@@ -373,8 +373,10 @@
     return;
   }
 
-  char devPath[32] = "/dev/";
-  snprintf(devPath, 32, "/dev/%s", devname(taskInfo.e_tdev, S_IFCHR));
+  // 16-bytes here is for future-proofing. Currently kern.tty.ptmx_max is
+  // limited to 999 so 12 bytes should be enough.
+  char devPath[16] = "/dev/";
+  snprintf(devPath, 16, "/dev/%s", devname(taskInfo.e_tdev, S_IFCHR));
   int fd = open(devPath, O_WRONLY | O_NOCTTY);
   write(fd, msg.UTF8String, msg.length);
   close(fd);
