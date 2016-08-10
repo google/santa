@@ -16,25 +16,53 @@ managing the system and synchronizing the database with a server.
 Santa is not yet a 1.0. We're writing more tests, fixing bugs, working on TODOs
 and finishing up a security audit.
 
-Santa is named because it keeps track of binaries that are naughty and nice.
+It is named Santa because it keeps track of binaries that are naughty or nice.
 
 Santa is a project of Google's Macintosh Operations Team.
 
-Features
+Admin-Related Features
 ========
 
-* Multiple modes: MONITOR and LOCKDOWN. In MONITOR mode all binaries except
-those marked as blacklisted will be allowed to run, whilst being logged and
-recorded in the database. In LOCKDOWN mode, only whitelisted binaries are
+* Multiple modes: In the default MONITOR mode, all binaries except
+those marked as blacklisted will be allowed to run, whilst being logged and recorded in the events database. In LOCKDOWN mode, only whitelisted binaries are
 allowed to run.
 
-* Codesign listing: Binaries can be whitelisted/blacklisted by their signing
-certificate, so you can trust/block all binaries by a given publisher. The
-binary will only be whitelisted by certificate if its signature validates
-correctly. However, a decision for a binary will override a decision for a
-certificate; i.e. you can whitelist a certificate while blacklisting a binary
-signed by that certificate or vice-versa.
+* Event logging: When the kext is loaded, all binary launches are logged.
+When in either mode, all unknown or denied binaries are stored in the database to enable later aggregation.
 
+* Certificate-based rules, with override levels: Instead of relying on a binaries hash (or 'fingerprint'), executables can be whitelisted/blacklisted by their signing
+certificate. You can therefore trust/block all binaries by a given publisher that were signed with that cert across version updates. A
+binary can only be whitelisted by its certificate if its signature validates
+correctly, but a rule for a binaries fingerprint will override a decision for a
+certificate; i.e. you can whitelist a certificate while blacklisting a binary
+signed with that certificate, or vice-versa.
+
+* Path-based rules (via NSRegularExpression/ICU): This allows a similar feature as Managed Client for OS X's (the precursor to configuration profiles, which used the same implementation mechanism) Application Launch Restrictions via the mcxalr binary. This implementation carries the added benefit of being configurable via regex, and doesn't rely on LaunchServices. As detailed in the wiki, when evaluating rules this holds the lowest precendence.
+
+* Failsafe cert rules: You cannot put in a deny rule that would block the certificate used to sign launchd, a.k.a. pid 1, and therefore all components used in macOS. The binaries in every OS update (and in some cases entire new versions) are therefore auto-whitelisted. This does not affect binaries from Apple's App Store, which use various certs that change regularly for common apps. Likewise, you cannot blacklist Santa itself, and Santa uses a distinct separate cert than other Google apps.
+
+Intentions and Expectations
+===========================
+No single system or process will stop *all* attacks, or provide 100% security.
+Santa is written with the intention of helping protect users from themselves.
+People often download malware and trust it, giving the malware credentials, or
+allowing unknown software to exfiltrate more data about your system. As a
+centrally managed component, Santa can help stop the spread of malware among a
+larger fleet of machines. Independently, Santa can aid in analyzing what is
+running on your computer.
+
+Santa is part of a defense-in-depth strategy, and you should continue to protect
+hosts in whatever other ways you see fit.
+
+Get Help
+========
+
+If you have questions or otherwise need help getting started, the
+[santa-dev](https://groups.google.com/forum/#!forum/santa-dev) group is a
+great place. Please consult the [wiki](https://github.com/google/santa/wiki) and [issues](https://github.com/google/santa/issues) as well.
+
+Security and Performance-Related Features
+============
 * In-kernel caching: whitelisted binaries are cached in the kernel so the
 processing required to make a request is only done if the binary
 isn't already cached.
@@ -44,42 +72,17 @@ daemon, the GUI agent and the command-line utility) communicate with each other
 using XPC and check that their signing certificates are identical before any
 communication is accepted.
 
-* Event logging: all executions processed by the userland agent are logged and
-all unknown or denied binaries are also stored in the database for upload to a
-server.
-
 * Kext uses only KPIs: the kernel extension only uses provided kernel
 programming interfaces to do its job. This means that the kext code should
 continue to work across OS versions.
-
-Intentions and Expectations
-===========================
-No single system or process will stop *all* attacks, or provide 100% security.
-Santa is written with the intention of helping protect users from themselves.
-People often download malware and trust it, giving the malware credentials, or
-allowing unknown software to exfiltrate more data about your system. As a
-centrally managed component, Santa can help stop the spread of malware among a
-larger fleet of machines. Additionally, Santa can aid in analyzing what is
-running in your fleet.
-
-Santa is part of a defense-in-depth strategy, and you should continue to protect
-hosts in whatever other ways you see fit.
-
-Get Help
-========
-
-If you have questions or need help getting started, the
-[santa-dev](https://groups.google.com/forum/#!forum/santa-dev) group is the
-best place to start.
 
 Known Issues
 ============
 Santa is not yet a 1.0 and we have some known issues to be aware of:
 
 * Santa only blocks execution (execve and variants), it doesn't protect against
-dynamic libraries loaded with dlopen, libraries on disk that have been replaced or
-libraries loaded using `DYLD_INSERT_LIBRARIES`. We are working on also protecting
-against these avenues of attack.
+dynamic libraries loaded with dlopen, libraries on disk that have been replaced, or
+libraries loaded using `DYLD_INSERT_LIBRARIES`. As of version 0.9.1 we *do* address [__PAGEZERO missing issues](b87482e) that were exploited in some versions of macOS. We are working on also protecting against similar avenues of attack.
 
 * Kext communication security: the kext will only accept a connection from a
 single client at a time and said client must be running as root. We haven't yet
@@ -89,9 +92,8 @@ found a good way to ensure the kext only accepts connections from a valid client
 only the root user can read/write it. We're considering approaches to secure
 this further.
 
-* Sync client: the command-line client includes a command to synchronize with a
-management server, including the uploading of events that have occurred on the
-machine and to download new rules. We're still very heavily working on this
+* Sync client: The `santactl` command-line client includes a flag to synchronize with a management server, which uploads events that have occurred on the
+machine and downloads new rules. We're still very heavily working on this
 server (which is AppEngine-based and will be open-sourced in the future), so the
 sync client code is unfinished. It does show the 'API' that we're expecting to
 use so if you'd like to write your own management server, feel free to look at
@@ -104,7 +106,7 @@ of temporary generated scripts, which we can't possibly whitelist and not doing
 so would cause problems. We're happy to revisit this (or at least make it an
 option) if it would be useful to others.
 
-* Documentation: There currently isn't any.
+* Documentation: This is currently limited.
 
 * Tests: There aren't enough of them.
 
