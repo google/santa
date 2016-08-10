@@ -92,9 +92,16 @@
 + (NSURL *)eventDetailURLForEvent:(SNTStoredEvent *)event {
   SNTConfigurator *config = [SNTConfigurator configurator];
 
-  NSString *formatStr;
+  NSString *formatStr, *versionStr;
   if (config.eventDetailBundleURL && event.fileBundleID) {
     formatStr = config.eventDetailBundleURL;
+    versionStr = event.fileBundleVersionString;
+    if (!versionStr) versionStr = event.fileBundleVersion;
+
+    formatStr = [formatStr stringByReplacingOccurrencesOfString:@"%bundle_id%"
+                                                     withString:event.fileBundleID];
+    formatStr = [formatStr stringByReplacingOccurrencesOfString:@"%bundle_ver%"
+                                                     withString:versionStr];
   } else {
     formatStr = config.eventDetailURL;
   }
@@ -112,14 +119,6 @@
   if (config.machineID) {
     formatStr = [formatStr stringByReplacingOccurrencesOfString:@"%machine_id%"
                                                      withString:config.machineID];
-  }
-  if (event.fileBundleID) {
-    formatStr = [formatStr stringByReplacingOccurrencesOfString:@"%bundle_id%"
-                                                     withString:event.fileBundleID];
-  }
-  if (event.fileBundleVersionString) {
-    formatStr = [formatStr stringByReplacingOccurrencesOfString:@"%bundle_ver%"
-                                                     withString:event.fileBundleVersionString];
   }
 
   return [NSURL URLWithString:formatStr];
