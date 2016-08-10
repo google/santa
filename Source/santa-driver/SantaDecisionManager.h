@@ -52,8 +52,8 @@ class SantaDecisionManager : public OSObject {
   IOMemoryDescriptor *GetDecisionMemoryDescriptor() const;
 
   /**
-   Called by SantaDriverClient during connection to provide the shared
-   dataqueue memory to the client for the logging queue.
+    Called by SantaDriverClient during connection to provide the shared
+    dataqueue memory to the client for the logging queue.
   */
   IOMemoryDescriptor *GetLogMemoryDescriptor() const;
 
@@ -131,10 +131,10 @@ class SantaDecisionManager : public OSObject {
 
  protected:
   /**
-    While waiting for a response from the daemon, this is the number of
+    While waiting for a response from the daemon, this is the maximum number of
     milliseconds to sleep for before checking the cache for a response.
   */
-  static const uint32_t kRequestLoopSleepMilliseconds = 10;
+  static const uint32_t kRequestLoopSleepMilliseconds = 1000;
 
   /// The maximum number of milliseconds a cached deny message should be considered valid.
   static const uint64_t kMaxDenyCacheTimeMilliseconds = 500;
@@ -265,6 +265,8 @@ class SantaDecisionManager : public OSObject {
 
   kauth_listener_t vnode_listener_;
   kauth_listener_t fileop_listener_;
+
+  struct timespec ts_;
 };
 
 /**

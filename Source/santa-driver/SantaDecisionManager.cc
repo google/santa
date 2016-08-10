@@ -42,6 +42,9 @@ bool SantaDecisionManager::init() {
 
   client_pid_ = 0;
 
+  ts_ = { .tv_sec = kRequestLoopSleepMilliseconds / 1000,
+          .tv_nsec = kRequestLoopSleepMilliseconds % 1000 * 1000000 };
+
   return true;
 }
 
@@ -250,6 +253,13 @@ santa_action_t SantaDecisionManager::GetFromCache(uint64_t identifier) {
 santa_action_t SantaDecisionManager::GetFromDaemon(santa_message_t *message, uint64_t identifier) {
   auto return_action = ACTION_UNSET;
 
+#ifdef DEBUG
+  clock_sec_t secs = 0;
+  clock_usec_t microsecs = 0;
+  clock_get_system_microtime(&secs, &microsecs);
+  uint64_t uptime = (secs * 1000000) + microsecs;
+#endif
+
   // Wait for the daemon to respond or die.
   do {
     // Add pending request to cache, to be replaced by daemon with actual response
@@ -270,7 +280,7 @@ santa_action_t SantaDecisionManager::GetFromDaemon(santa_message_t *message, uin
     }
 
     do {
-      IOSleep(kRequestLoopSleepMilliseconds);
+      msleep((void *)message->vnode_id, NULL, 0, "", &ts_);
       return_action = GetFromCache(identifier);
     } while (return_action == ACTION_REQUEST_BINARY && ClientConnected());
   } while (!RESPONSE_VALID(return_action) && ClientConnected());
@@ -282,6 +292,12 @@ santa_action_t SantaDecisionManager::GetFromDaemon(santa_message_t *message, uin
     RemoveFromCache(identifier);
     return ACTION_ERROR;
   }
+
+#ifdef DEBUG
+  clock_get_system_microtime(&secs, &microsecs);
+  LOGD("Decision time: %4lldms (%s)",
+       (((secs * 1000000) + microsecs) - uptime) / 1000, message->path);
+#endif
 
   return return_action;
 }

@@ -214,14 +214,15 @@
         // Let the user know what happened, both on the terminal and in the GUI.
         NSAttributedString *s = [SNTBlockMessage attributedBlockMessageForEvent:se
                                                                   customMessage:cd.customMsg];
-        NSString *msg = [NSString stringWithFormat:@"\033[1mSanta\033[0m\n\n%@\n\n", s.string];
-        msg = [msg stringByAppendingFormat:@"\033[1mPath:\033[0m %@\n"
-                                           @"\033[1mIdentifier:\033[0m %@\n"
-                                           @"\033[1mParent:\033[0m %@ (%@)\n\n",
-                  se.filePath, se.fileSHA256, se.parentName, se.ppid];
+        NSMutableString *msg = [NSMutableString stringWithCapacity:1024];
+        [msg appendFormat:@"\n\033[1mSanta\033[0m\n\n%@\n\n", s.string];
+        [msg appendFormat:@"\033[1mPath:      \033[0m %@\n"
+                          @"\033[1mIdentifier:\033[0m %@\n"
+                          @"\033[1mParent:    \033[0m %@ (%@)\n\n",
+            se.filePath, se.fileSHA256, se.parentName, se.ppid];
         NSURL *detailURL = [SNTBlockMessage eventDetailURLForEvent:se];
         if (detailURL) {
-          msg = [msg stringByAppendingFormat:@"%@\n\n", detailURL.absoluteString];
+          [msg appendFormat:@"%@\n\n", detailURL.absoluteString];
         }
         [self printMessage:msg toTTYForPID:message.ppid];
 
@@ -311,6 +312,13 @@
   return NO;
 }
 
+/**
+  This runs `santactl sync` for the event that was just saved, so that the user
+  has something to vote in straight away.
+
+  This method is always called on a serial queue to ensure the backoff works properly
+  and to keep this low-priority method away from the high-priority decision making threads.
+*/
 - (void)initiateEventUploadForEvent:(SNTStoredEvent *)event {
   // The event upload is skipped if the full path is equal to that of santactl so that
   // on the off chance that santactl is not whitelisted, we don't get into an infinite loop.
@@ -365,44 +373,38 @@
     return;
   }
 
-  NSString *devPath = [NSString stringWithFormat:@"/dev/%s", devname(taskInfo.e_tdev, S_IFCHR)];
-  int fd = open(devPath.UTF8String, O_WRONLY | O_NOCTTY);
-  @try {
-    NSFileHandle *fh = [[NSFileHandle alloc] initWithFileDescriptor:fd closeOnDealloc:YES];
-    [fh writeData:[msg dataUsingEncoding:NSUTF8StringEncoding]];
-  } @catch (NSException *) { /* do nothing */ }
+  // 16-bytes here is for future-proofing. Currently kern.tty.ptmx_max is
+  // limited to 999 so 12 bytes should be enough.
+  char devPath[16] = "/dev/";
+  snprintf(devPath, 16, "/dev/%s", devname(taskInfo.e_tdev, S_IFCHR));
+  int fd = open(devPath, O_WRONLY | O_NOCTTY);
+  write(fd, msg.UTF8String, msg.length);
+  close(fd);
 }
 
 - (void)loggedInUsers:(NSArray **)users sessions:(NSArray **)sessions {
-  NSMutableDictionary *loggedInUsers = [[NSMutableDictionary alloc] init];
-  NSMutableDictionary *loggedInHosts = [[NSMutableDictionary alloc] init];
+  NSMutableDictionary *loggedInUsers = [NSMutableDictionary dictionary];
+  NSMutableArray *loggedInHosts = [NSMutableArray array];
 
   struct utmpx *nxt;
   while ((nxt = getutxent())) {
     if (nxt->ut_type != USER_PROCESS) continue;
 
     NSString *userName = @(nxt->ut_user);
-
     NSString *sessionName;
     if (strnlen(nxt->ut_host, 1) > 0) {
-      sessionName = [NSString stringWithFormat:@"%s@%s", nxt->ut_user, nxt->ut_host];
+      sessionName = [NSString stringWithFormat:@"%@@%s", userName, nxt->ut_host];
     } else {
-      sessionName = [NSString stringWithFormat:@"%s@%s", nxt->ut_user, nxt->ut_line];
+      sessionName = [NSString stringWithFormat:@"%@@%s", userName, nxt->ut_line];
     }
 
-    if (userName.length > 0) {
-      loggedInUsers[userName] = [NSNull null];
-    }
-
-    if (sessionName.length > 1) {
-      loggedInHosts[sessionName] = [NSNull null];
-    }
+    if (userName.length) loggedInUsers[userName] = [NSNull null];
+    if (sessionName.length) [loggedInHosts addObject:sessionName];
   }
-
   endutxent();
 
   *users = [loggedInUsers allKeys];
-  *sessions = [loggedInHosts allKeys];
+  *sessions = [loggedInHosts copy];
 }
 
 @end

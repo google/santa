@@ -29,6 +29,13 @@
 @interface SNTEventLog ()
 @property NSMutableDictionary *detailStore;
 @property dispatch_queue_t detailStoreQueue;
+
+// Caches for uid->username and gid->groupname lookups.
+// Both dictionaries must be accessed from the nameMapQueue
+// to enforce thread-safety.
+@property NSMutableDictionary *userNameMap;
+@property NSMutableDictionary *groupNameMap;
+@property dispatch_queue_t nameMapQueue;
 @end
 
 @implementation SNTEventLog
@@ -39,6 +46,11 @@
     _detailStore = [NSMutableDictionary dictionaryWithCapacity:10000];
     _detailStoreQueue = dispatch_queue_create("com.google.santad.detail_store",
                                               DISPATCH_QUEUE_SERIAL);
+
+    _userNameMap = [NSMutableDictionary dictionary];
+    _groupNameMap = [NSMutableDictionary dictionary];
+    _nameMapQueue = dispatch_queue_create("com.google.santad.name_map_queue",
+                                          DISPATCH_QUEUE_SERIAL);
   }
   return self;
 }
@@ -90,16 +102,10 @@
   char ppath[PATH_MAX] = "(null)";
   proc_pidpath(message.pid, ppath, PATH_MAX);
 
-  const char *user = "";
-  const char *group = "";
-  struct passwd *pw = getpwuid(message.uid);
-  if (pw) user = pw->pw_name;
-  struct group *gr = getgrgid(message.gid);
-  if (gr) group = gr->gr_name;
-
-  [outStr appendFormat:@"|pid=%d|ppid=%d|process=%s|processpath=%s|uid=%d|user=%s|gid=%d|group=%s",
+  [outStr appendFormat:@"|pid=%d|ppid=%d|process=%s|processpath=%s|uid=%d|user=%@|gid=%d|group=%@",
                        message.pid, message.ppid, message.pname, ppath,
-                       message.uid, user, message.gid, group];
+                       message.uid, [self nameForUID:message.uid],
+                       message.gid, [self nameForGID:message.gid]];
   LOGI(@"%@", outStr);
 }
 
@@ -186,15 +192,10 @@
     [outLog appendFormat:@"|quarantine_url=%@", [self sanitizeString:cd.quarantineURL]];
   }
 
-  NSString *user, *group;
-  struct passwd *pw = getpwuid(message.uid);
-  if (pw) user = @(pw->pw_name);
-  struct group *gr = getgrgid(message.gid);
-  if (gr) group = @(gr->gr_name);
-
   [outLog appendFormat:@"|pid=%d|ppid=%d|uid=%d|user=%@|gid=%d|group=%@",
-                       message.pid, message.ppid, message.uid, user,
-                       message.gid, group];
+                       message.pid, message.ppid,
+                       message.uid, [self nameForUID:message.uid],
+                       message.gid, [self nameForGID:message.gid]];
 
   LOGI(@"%@", outLog);
 }
@@ -394,6 +395,44 @@
   if (shouldFree) {
     free(bytes);
   }
+}
+
+- (NSString *)nameForUID:(uid_t)uid {
+  __block NSString *name;
+
+  NSNumber *uidNumber = @(uid);
+  dispatch_sync(self.nameMapQueue, ^{
+    name = self.userNameMap[uidNumber];
+  });
+  if (name) return name;
+
+  struct passwd *pw = getpwuid(uid);
+  if (pw) {
+    name = @(pw->pw_name);
+    dispatch_sync(self.nameMapQueue, ^{
+      self.userNameMap[uidNumber] = name;
+    });
+  }
+  return name;
+}
+
+- (NSString *)nameForGID:(gid_t)gid {
+  __block NSString *name;
+
+  NSNumber *gidNumber = @(gid);
+  dispatch_sync(self.nameMapQueue, ^{
+    name = self.groupNameMap[gidNumber];
+  });
+  if (name) return name;
+
+  struct group *gr = getgrgid(gid);
+  if (gr) {
+    name = @(gr->gr_name);
+    dispatch_sync(self.nameMapQueue, ^{
+      self.groupNameMap[gidNumber] = name;
+    });
+  }
+  return name;
 }
 
 /**

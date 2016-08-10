@@ -131,6 +131,7 @@ IOReturn SantaDriverClient::static_open(
 
 IOReturn SantaDriverClient::allow_binary(const uint64_t vnode_id) {
   decisionManager->AddToCache(vnode_id, ACTION_RESPOND_ALLOW);
+  wakeup((void *)vnode_id);
   return kIOReturnSuccess;
 }
 
@@ -147,6 +148,7 @@ IOReturn SantaDriverClient::static_allow_binary(
 
 IOReturn SantaDriverClient::deny_binary(const uint64_t vnode_id) {
   decisionManager->AddToCache(vnode_id, ACTION_RESPOND_DENY);
+  wakeup((void *)vnode_id);
   return kIOReturnSuccess;
 }
 
