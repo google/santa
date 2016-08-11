@@ -305,8 +305,7 @@ santa_action_t SantaDecisionManager::GetFromDaemon(santa_message_t *message, uin
 santa_action_t SantaDecisionManager::FetchDecision(
     const kauth_cred_t cred,
     const vnode_t vp,
-    const uint64_t vnode_id,
-    const char *vnode_id_str) {
+    const uint64_t vnode_id) {
   if (!ClientConnected()) return ACTION_RESPOND_ALLOW;
 
   // Check to see if item is in cache
@@ -378,13 +377,11 @@ int SantaDecisionManager::VnodeCallback(const kauth_cred_t cred,
   // Only operate on regular files (not directories, symlinks, etc.).
   if (vnode_vtype(vp) != VREG) return KAUTH_RESULT_DEFER;
 
-  // Get ID for the vnode and convert it to a string.
+  // Get ID for the vnode
   auto vnode_id = GetVnodeIDForVnode(ctx, vp);
-  char vnode_str[MAX_VNODE_ID_STR];
-  snprintf(vnode_str, MAX_VNODE_ID_STR, "%llu", vnode_id);
 
   // Fetch decision
-  auto returnedAction = FetchDecision(cred, vp, vnode_id, vnode_str);
+  auto returnedAction = FetchDecision(cred, vp, vnode_id);
 
   // If file has dirty blocks, remove from cache and deny. This would usually
   // be the case if a file has been written to and flushed but not yet
@@ -426,8 +423,6 @@ void SantaDecisionManager::FileOpCallback(
     vfs_context_rele(context);
 
     if (action == KAUTH_FILEOP_CLOSE) {
-      char vnode_id_str[MAX_VNODE_ID_STR];
-      snprintf(vnode_id_str, MAX_VNODE_ID_STR, "%llu", vnode_id);
       RemoveFromCache(vnode_id);
     } else if (action == KAUTH_FILEOP_EXEC) {
       auto message = NewMessage(nullptr);
