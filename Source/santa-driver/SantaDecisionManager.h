@@ -149,7 +149,7 @@ class SantaDecisionManager : public OSObject {
   static const uint32_t kMaxDecisionQueueEvents = 512;
 
   /// The maximum number of messages can be kept in the logging data queue at any time.
-  static const uint32_t kMaxLogQueueEvents = 1024;
+  static const uint32_t kMaxLogQueueEvents = 2048;
 
   /**
     Fetches a response from the daemon. Handles both daemon death

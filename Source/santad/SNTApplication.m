@@ -135,26 +135,27 @@
 - (void)beginListeningForDecisionRequests {
   dispatch_queue_t exec_queue = dispatch_queue_create(
       "com.google.santad.execution_queue", DISPATCH_QUEUE_CONCURRENT);
-  dispatch_set_target_queue(exec_queue, dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_HIGH, 0));
+  dispatch_set_target_queue(
+      exec_queue, dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_HIGH, 0));
 
   [self.driverManager listenForDecisionRequests:^(santa_message_t message) {
     @autoreleasepool {
-      switch (message.action) {
-        case ACTION_REQUEST_SHUTDOWN: {
-          LOGI(@"Driver requested a shutdown");
-          exit(0);
-        }
-        case ACTION_REQUEST_BINARY: {
-          dispatch_async(exec_queue, ^{
+      dispatch_async(exec_queue, ^{
+        switch (message.action) {
+          case ACTION_REQUEST_SHUTDOWN: {
+            LOGI(@"Driver requested a shutdown");
+            exit(0);
+          }
+          case ACTION_REQUEST_BINARY: {
             [_execController validateBinaryWithMessage:message];
-          });
-          break;
+            break;
+          }
+          default: {
+            LOGE(@"Received decision request without a valid action: %d", message.action);
+            exit(1);
+          }
         }
-        default: {
-          LOGE(@"Received decision request without a valid action: %d", message.action);
-          exit(1);
-        }
-      }
+      });
     }
   }];
 }
@@ -165,33 +166,36 @@
   dispatch_set_target_queue(
       log_queue, dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_BACKGROUND, 0));
 
+  // Limit number of threads the queue can create.
+  dispatch_semaphore_t concurrencyLimiter = dispatch_semaphore_create(15);
+
   [self.driverManager listenForLogRequests:^(santa_message_t message) {
     @autoreleasepool {
-      switch (message.action) {
-        case ACTION_NOTIFY_DELETE:
-        case ACTION_NOTIFY_EXCHANGE:
-        case ACTION_NOTIFY_LINK:
-        case ACTION_NOTIFY_RENAME:
-        case ACTION_NOTIFY_WRITE: {
-          dispatch_async(log_queue, ^{
+      dispatch_semaphore_wait(concurrencyLimiter, DISPATCH_TIME_FOREVER);
+      dispatch_async(log_queue, ^{
+        switch (message.action) {
+          case ACTION_NOTIFY_DELETE:
+          case ACTION_NOTIFY_EXCHANGE:
+          case ACTION_NOTIFY_LINK:
+          case ACTION_NOTIFY_RENAME:
+          case ACTION_NOTIFY_WRITE: {
             NSRegularExpression *re = [[SNTConfigurator configurator] fileChangesRegex];
             NSString *path = @(message.path);
             if ([re numberOfMatchesInString:path options:0 range:NSMakeRange(0, path.length)]) {
               [_eventLog logFileModification:message];
             }
-          });
-          break;
-        }
-        case ACTION_NOTIFY_EXEC: {
-          dispatch_async(log_queue, ^{
+            break;
+          }
+          case ACTION_NOTIFY_EXEC: {
             [_eventLog logAllowedExecution:message];
-          });
-          break;
+            break;
+          }
+          default:
+            LOGE(@"Received log request without a valid action: %d", message.action);
+            break;
         }
-        default:
-          LOGE(@"Received log request without a valid action: %d", message.action);
-          break;
-      }
+        dispatch_semaphore_signal(concurrencyLimiter);
+      });
     }
   }];
 }
