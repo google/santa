@@ -312,7 +312,12 @@ santa_action_t SantaDecisionManager::FetchDecision(
   auto return_action = GetFromCache(vnode_id);
 
   // If item was in cache return it.
-  if (RESPONSE_VALID(return_action)) return return_action;
+  if (RESPONSE_VALID(return_action)) {
+    return return_action;
+  } else if (return_action == ACTION_REQUEST_BINARY) {
+    msleep((void *)vnode_id, NULL, 0, "", &ts_);
+    return FetchDecision(cred, vp, vnode_id);
+  }
 
   // Get path
   char path[MAXPATHLEN];
