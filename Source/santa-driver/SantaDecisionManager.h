@@ -256,8 +256,8 @@ class SantaDecisionManager : public OSObject {
 
   IOSharedDataQueue *decision_dataqueue_;
   IOSharedDataQueue *log_dataqueue_;
-  int32_t failed_decision_queue_requests_;
-  int32_t failed_log_queue_requests_;
+  uint32_t failed_decision_queue_requests_;
+  uint32_t failed_log_queue_requests_;
 
   int32_t listener_invocations_;
 

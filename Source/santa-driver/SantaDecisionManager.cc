@@ -267,13 +267,6 @@ santa_action_t SantaDecisionManager::GetFromDaemon(santa_message_t *message, uin
 
     // Send request to daemon...
     if (!PostToDecisionQueue(message)) {
-      OSIncrementAtomic(&failed_decision_queue_requests_);
-      if (failed_decision_queue_requests_ > kMaxDecisionQueueFailures) {
-        LOGE("Failed to queue more than %d requests, killing daemon",
-             kMaxDecisionQueueFailures);
-        proc_signal(client_pid_, SIGKILL);
-        client_pid_ = 0;
-      }
       LOGE("Failed to queue request for %s.", message->path);
       RemoveFromCache(identifier);
       return ACTION_ERROR;
@@ -341,6 +334,14 @@ santa_action_t SantaDecisionManager::FetchDecision(
 bool SantaDecisionManager::PostToDecisionQueue(santa_message_t *message) {
   lck_mtx_lock(decision_dataqueue_lock_);
   auto kr = decision_dataqueue_->enqueue(message, sizeof(santa_message_t));
+  if (!kr) {
+    if (++failed_decision_queue_requests_ > kMaxDecisionQueueFailures) {
+      LOGE("Failed to queue more than %d decision requests, killing daemon",
+           kMaxDecisionQueueFailures);
+      proc_signal(client_pid_, SIGKILL);
+      client_pid_ = 0;
+    }
+  }
   lck_mtx_unlock(decision_dataqueue_lock_);
   return kr;
 }
@@ -349,7 +350,7 @@ bool SantaDecisionManager::PostToLogQueue(santa_message_t *message) {
   lck_mtx_lock(log_dataqueue_lock_);
   auto kr = log_dataqueue_->enqueue(message, sizeof(santa_message_t));
   if (!kr) {
-    if (OSCompareAndSwap(0, 1, &failed_log_queue_requests_)) {
+    if (failed_log_queue_requests_++ == 0) {
       LOGW("Dropping log queue messages");
     }
     // If enqueue failed, pop an item off the queue and try again.
@@ -357,7 +358,9 @@ bool SantaDecisionManager::PostToLogQueue(santa_message_t *message) {
     log_dataqueue_->dequeue(0, &dataSize);
     kr = log_dataqueue_->enqueue(message, sizeof(santa_message_t));
   } else {
-    OSCompareAndSwap(1, 0, &failed_log_queue_requests_);
+    if (failed_log_queue_requests_ > 0) {
+      failed_log_queue_requests_--;
+    }
   }
   lck_mtx_unlock(log_dataqueue_lock_);
   return kr;
