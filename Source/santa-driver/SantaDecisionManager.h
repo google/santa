@@ -149,7 +149,7 @@ class SantaDecisionManager : public OSObject {
   static const uint32_t kMaxDecisionQueueEvents = 512;
 
   /// The maximum number of messages can be kept in the logging data queue at any time.
-  static const uint32_t kMaxLogQueueEvents = 1024;
+  static const uint32_t kMaxLogQueueEvents = 2048;
 
   /**
     Fetches a response from the daemon. Handles both daemon death
@@ -170,10 +170,10 @@ class SantaDecisionManager : public OSObject {
     @param cred The credential for this request.
     @param vp The Vnode for this request.
     @param vnode_id The ID for this vnode.
-    @param vnode_id_str A string representation of the above ID.
+    @return santa_action_t The response for this request
   */
   santa_action_t FetchDecision(
-      const kauth_cred_t cred, const vnode_t vp, const uint64_t vnode_id, const char *vnode_id_str);
+      const kauth_cred_t cred, const vnode_t vp, const uint64_t vnode_id);
 
   /**
     Posts the requested message to the decision data queue.
@@ -256,8 +256,8 @@ class SantaDecisionManager : public OSObject {
 
   IOSharedDataQueue *decision_dataqueue_;
   IOSharedDataQueue *log_dataqueue_;
-  int32_t failed_decision_queue_requests_;
-  int32_t failed_log_queue_requests_;
+  uint32_t failed_decision_queue_requests_;
+  uint32_t failed_log_queue_requests_;
 
   int32_t listener_invocations_;
 
