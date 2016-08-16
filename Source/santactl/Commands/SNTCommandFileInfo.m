@@ -133,7 +133,9 @@ REGISTER_COMMAND_NAME(@"fileinfo")
   if (!_fileInfo) {
     _fileInfo = [[SNTFileInfo alloc] initWithPath:self.filePath];
     if (!_fileInfo) {
-      printf("Invalid or empty file: %s\n", self.filePath.UTF8String);
+      if (isatty(STDOUT_FILENO) && !self.jsonOutput) {
+        printf("Invalid or empty file: %s\n", self.filePath.UTF8String);
+      }
     }
   }
   return _fileInfo;
@@ -378,14 +380,18 @@ REGISTER_COMMAND_NAME(@"fileinfo")
              @"%@\n"
              @"    --cert-index: an integer corresponding to a certificate of the signing chain"
              @"\n"
-             @"Example: santactl fileinfo --cert-index 0 --key SHA-256 --json /usr/bin/yes"
-             @"         santactl fileinfo --key SHA-256 --json /usr/bin/yes"
-             @"         santactl fileinfo /usr/bin/yes /bin/*"
+             @"Example: santactl fileinfo --cert-index 0 --key SHA-256 --json /usr/bin/yes\n"
+             @"         santactl fileinfo --key SHA-256 --json /usr/bin/yes\n"
+             @"         santactl fileinfo /usr/bin/yes /bin/*\n"
              , [self printKeyArray:[self fileInfoKeys]],
              [self printKeyArray:[self signingChainKeys]]];
 }
 
 + (void)runWithArguments:(NSArray *)arguments daemonConnection:(SNTXPCConnection *)daemonConn {
+#ifdef DEBUG
+  NSDate *startTime = [NSDate date];
+#endif
+
   if (!arguments.count) [self printErrorUsageAndExit:@"No arguments"];
 
   BOOL jsonOutput = NO;
@@ -400,37 +406,57 @@ REGISTER_COMMAND_NAME(@"fileinfo")
              filePaths:&filePaths];
 
   __block NSMutableArray *outputHashes = [[NSMutableArray alloc] init];
+  __block NSOperationQueue *hashQueue = [[NSOperationQueue alloc] init];
+  hashQueue.maxConcurrentOperationCount = 15;
+  __block NSUInteger hashed = 0;
 
   [filePaths enumerateObjectsUsingBlock:^(id obj, NSUInteger idx, BOOL *stop) {
-    SNTCommandFileInfo *fi = [[self alloc] initWithFilePath:obj
-                                           daemonConnection:daemonConn
-                                                 jsonOutput:jsonOutput];
-    if (!fi.fileInfo) return;
+    NSBlockOperation *hashOperation = [NSBlockOperation blockOperationWithBlock:^{
+      SNTCommandFileInfo *fi = [[self alloc] initWithFilePath:obj
+                                             daemonConnection:daemonConn
+                                                   jsonOutput:jsonOutput];
+      if (!fi.fileInfo) return;
 
-    __block NSMutableDictionary *outputHash = [[NSMutableDictionary alloc] init];
+      __block NSMutableDictionary *outputHash = [[NSMutableDictionary alloc] init];
 
-    if (key) {
-      if (certIndex) {
-        SNTAttributeBlock block = fi.signingChain;
-        [block(fi) enumerateObjectsUsingBlock:^(id obj, NSUInteger idx, BOOL *stop) {
-          if (certIndex.unsignedIntegerValue == idx) {
-            outputHash[key] = obj[key];
-          }
-        }];
+      if (key) {
+        if (certIndex) {
+          SNTAttributeBlock block = fi.signingChain;
+          [block(fi) enumerateObjectsUsingBlock:^(id obj, NSUInteger idx, BOOL *stop) {
+            if (certIndex.unsignedIntegerValue == idx) {
+              outputHash[key] = obj[key];
+            }
+          }];
+        } else {
+          SNTAttributeBlock block = fi.propertyMap[key];
+          outputHash[key] = block(fi);
+        }
       } else {
-        SNTAttributeBlock block = fi.propertyMap[key];
-        outputHash[key] = block(fi);
+        [fi.propertyMap enumerateKeysAndObjectsUsingBlock:^(id key, id obj, BOOL *stop) {
+          SNTAttributeBlock block = fi.propertyMap[key];
+          outputHash[key] = block(fi);
+        }];
       }
-    } else {
-      [fi.propertyMap enumerateKeysAndObjectsUsingBlock:^(id key, id obj, BOOL *stop) {
-        SNTAttributeBlock block = fi.propertyMap[key];
-        outputHash[key] = block(fi);
-      }];
-    }
-    [outputHashes addObject:outputHash];
+      [outputHashes addObject:outputHash];
+    }];
+    hashOperation.qualityOfService = NSQualityOfServiceUserInitiated;
+    hashOperation.completionBlock = ^{
+      if (isatty(STDOUT_FILENO) && !jsonOutput && filePaths.count > 1) {
+        printf(" Hashing %lu/%lu", ++hashed, filePaths.count);
+        printf("\r");
+        fflush(stdout);
+      }
+    };
+    [hashQueue addOperation:hashOperation];
   }];
-
+  [hashQueue waitUntilAllOperationsAreFinished];
   [self printOutputHashes:outputHashes jsonOutput:jsonOutput];
+
+#ifdef DEBUG
+  if (isatty(STDOUT_FILENO) && !jsonOutput) {
+    printf("Hashing time: %f\n", [[NSDate date] timeIntervalSinceDate:startTime]);
+  }
+#endif
 
   exit(0);
 }
@@ -467,52 +493,41 @@ REGISTER_COMMAND_NAME(@"fileinfo")
              certIndex:(NSNumber **)certIndex
             jsonOutput:(BOOL *)jsonOutput
              filePaths:(NSArray **)filePaths {
-  __block NSMutableArray *arguments = args.mutableCopy;
-  [arguments enumerateObjectsUsingBlock:^(NSString *obj, NSUInteger idx, BOOL *stop) {
+  __block NSMutableArray *paths = [[NSMutableArray alloc] init];
+  [args enumerateObjectsUsingBlock:^(NSString *obj, NSUInteger idx, BOOL *stop) {
     if ([obj caseInsensitiveCompare:@"--json"] == NSOrderedSame) {
       *jsonOutput = YES;
-      [arguments removeObject:obj];
-      *stop = YES;
-    }
-  }];
-  [arguments enumerateObjectsUsingBlock:^(NSString *obj, NSUInteger idx, BOOL *stop) {
-    if ([obj caseInsensitiveCompare:@"--cert-index"] == NSOrderedSame) {
-      [arguments removeObject:obj];
-      if (idx > arguments.count - 1 || [arguments[idx] hasPrefix:@"--"]) {
+    } else if ([obj caseInsensitiveCompare:@"--cert-index"] == NSOrderedSame) {
+      if (++idx > args.count - 1 || [args[idx] hasPrefix:@"--"]) {
         [self printErrorUsageAndExit:@"\n--cert-index requires an argument"];
       }
-      *certIndex = @([arguments[idx] integerValue]);
-      [arguments removeObjectAtIndex:idx];
-      *stop = YES;
-    }
-  }];
-  [arguments enumerateObjectsUsingBlock:^(NSString *obj, NSUInteger idx, BOOL *stop) {
-    if ([obj caseInsensitiveCompare:@"--key"] == NSOrderedSame) {
-      [arguments removeObject:obj];
-      if (idx > arguments.count - 1 || [arguments[idx] hasPrefix:@"--"]) {
+      *certIndex = @([args[idx] integerValue]);
+    } else if ([obj caseInsensitiveCompare:@"--key"] == NSOrderedSame) {
+      if (++idx > args.count - 1 || [args[idx] hasPrefix:@"--"]) {
         [self printErrorUsageAndExit:@"\n--key requires an argument"];
       }
-      if ((!*certIndex) && (![self.fileInfoKeys containsObject:arguments[idx]])) {
-        [self printErrorUsageAndExit:
-            [NSString stringWithFormat:@"\n\"%@\" is an invalid key", arguments[idx]]];
-      }
-      if ((*certIndex) && (![self.signingChainKeys containsObject:arguments[idx]])) {
-        [self printErrorUsageAndExit:
-            [NSString stringWithFormat:@"\n\"%@\" is an invalid key when using --cert-index",
-                arguments[idx]]];
-      }
-      *key = arguments[idx];
-      [arguments removeObjectAtIndex:idx];
-      *stop = YES;
+      *key = args[idx];
+    } else if ([@([obj integerValue]) isEqual: *certIndex] || [obj isEqual:*key]) {
+      return;
+    } else {
+      [paths addObject:args[idx]];
     }
   }];
-  // Whatever is leftover process as file paths
-  *filePaths = arguments.copy;
+  if (*key && (!*certIndex) && (![self.fileInfoKeys containsObject:*key])) {
+    [self printErrorUsageAndExit:
+        [NSString stringWithFormat:@"\n\"%@\" is an invalid key", *key]];
+  }
+  if (*key && (*certIndex) && (![self.signingChainKeys containsObject:*key])) {
+    [self printErrorUsageAndExit:
+        [NSString stringWithFormat:@"\n\"%@\" is an invalid key when using --cert-index", *key]];
+  }
+  *filePaths = paths.copy;
 }
 
 + (void)printOutputHashes:(NSArray *)outputHashes jsonOutput:(BOOL)jsonOutput {
   if (jsonOutput) {
     id object = (outputHashes.count > 1) ? outputHashes : outputHashes.firstObject;
+    if (!object) return;
     NSData *jsonData = [NSJSONSerialization dataWithJSONObject:object
                                                        options:NSJSONWritingPrettyPrinted
                                                          error:NULL];
@@ -528,6 +543,7 @@ REGISTER_COMMAND_NAME(@"fileinfo")
     [self.fileInfoKeys enumerateObjectsUsingBlock:^(id key, NSUInteger idx, BOOL *stop) {
       [self printValueForKey:key fromOutputHash:outputHash];
     }];
+    printf("\n");
   }];
 }
 
@@ -562,7 +578,6 @@ REGISTER_COMMAND_NAME(@"fileinfo")
         ((NSString *)obj[kValidFrom]).UTF8String);
     printf("        %-20s: %s\n", kValidUntil.UTF8String,
         ((NSString *)obj[kValidUntil]).UTF8String);
-    printf("\n");
   }];
 }
 
