@@ -224,7 +224,7 @@ REGISTER_COMMAND_NAME(@"fileinfo")
 - (SNTAttributeBlock)codeSigned {
   return ^id (SNTCommandFileInfo *fi) {
     NSError *error;
-    self.csc = [[MOLCodesignChecker alloc] initWithBinaryPath:self.filePath error:&error];
+    fi.csc = [[MOLCodesignChecker alloc] initWithBinaryPath:self.filePath error:&error];
     if (error) {
       switch (error.code) {
         case errSecCSUnsigned:
@@ -557,6 +557,9 @@ REGISTER_COMMAND_NAME(@"fileinfo")
 }
 
 + (void)printValueFromOutputHash:(NSDictionary *)outputHash {
+  if ([[[outputHash allKeys] firstObject] isEqualToString:kSigningChain]) {
+    return [self printSigningChain:[[outputHash allValues] firstObject]];
+  }
   printf("%s\n", [[[outputHash allValues] firstObject] UTF8String]);
 }
 
