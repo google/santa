@@ -442,9 +442,8 @@ REGISTER_COMMAND_NAME(@"fileinfo")
     hashOperation.qualityOfService = NSQualityOfServiceUserInitiated;
     hashOperation.completionBlock = ^{
       if (isatty(STDOUT_FILENO) && !jsonOutput && filePaths.count > 1) {
-        printf(" Hashing %lu/%lu", ++hashed, filePaths.count);
+        printf("\r Hashing %lu/%lu", ++hashed, filePaths.count);
         printf("\r");
-        fflush(stdout);
       }
     };
     [hashQueue addOperation:hashOperation];
