@@ -108,25 +108,15 @@
   return rule;
 }
 
-- (SNTRule *)certificateRuleForSHA256:(NSString *)SHA256 {
+- (SNTRule *)ruleForBinarySHA256:(NSString *)binarySHA256
+               certificateSHA256:(NSString *)certificateSHA256 {
   __block SNTRule *rule;
-
+ 
   [self inDatabase:^(FMDatabase *db) {
-    FMResultSet *rs = [db executeQuery:@"SELECT * FROM certrules WHERE shasum=? LIMIT 1", SHA256];
-    if ([rs next]) {
-      rule = [self ruleFromResultSet:rs];
-    }
-    [rs close];
-  }];
-
-  return rule;
-}
-
-- (SNTRule *)binaryRuleForSHA256:(NSString *)SHA256 {
-  __block SNTRule *rule;
-
-  [self inDatabase:^(FMDatabase *db) {
-    FMResultSet *rs = [db executeQuery:@"SELECT * FROM binrules WHERE shasum=? LIMIT 1", SHA256];
+    FMResultSet *rs =
+        [db executeQuery:
+            @"SELECT * FROM rules WHERE (shasum=? and type=1) OR (shasum=? AND type=2) LIMIT 1",
+            binarySHA256, certificateSHA256];
     if ([rs next]) {
       rule = [self ruleFromResultSet:rs];
     }
