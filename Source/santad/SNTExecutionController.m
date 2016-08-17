@@ -77,31 +77,35 @@
 #pragma mark Binary Validation
 
 - (SNTEventState)makeDecision:(SNTCachedDecision *)cd binaryInfo:(SNTFileInfo *)fi {
-  SNTRule *rule = [_ruleTable binaryRuleForSHA256:cd.sha256];
+  SNTRule *rule = [_ruleTable ruleForBinarySHA256:cd.sha256 certificateSHA256:cd.certSHA256];
   if (rule) {
-    switch (rule.state) {
-      case SNTRuleStateWhitelist:
-        return SNTEventStateAllowBinary;
-      case SNTRuleStateSilentBlacklist:
-        cd.silentBlock = YES;
-      case SNTRuleStateBlacklist:
-        cd.customMsg = rule.customMsg;
-        return SNTEventStateBlockBinary;
-      default: break;
-    }
-  }
-
-  rule = [_ruleTable certificateRuleForSHA256:cd.certSHA256];
-  if (rule) {
-    switch (rule.state) {
-      case SNTRuleStateWhitelist:
-        return SNTEventStateAllowCertificate;
-      case SNTRuleStateSilentBlacklist:
-        cd.silentBlock = YES;
-      case SNTRuleStateBlacklist:
-        cd.customMsg = rule.customMsg;
-        return SNTEventStateBlockCertificate;
-      default: break;
+    switch (rule.type) {
+      case SNTRuleTypeBinary:
+        switch (rule.state) {
+          case SNTRuleStateWhitelist:
+            return SNTEventStateAllowBinary;
+          case SNTRuleStateSilentBlacklist:
+            cd.silentBlock = YES;
+          case SNTRuleStateBlacklist:
+            cd.customMsg = rule.customMsg;
+            return SNTEventStateBlockBinary;
+          default: break;
+        }
+        break;
+      case SNTRuleTypeCertificate:
+        switch (rule.state) {
+          case SNTRuleStateWhitelist:
+            return SNTEventStateAllowCertificate;
+          case SNTRuleStateSilentBlacklist:
+            cd.silentBlock = YES;
+          case SNTRuleStateBlacklist:
+            cd.customMsg = rule.customMsg;
+            return SNTEventStateBlockCertificate;
+          default: break;
+        }
+        break;
+      default:
+        break;
     }
   }
 

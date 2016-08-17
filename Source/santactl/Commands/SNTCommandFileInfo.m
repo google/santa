@@ -268,20 +268,15 @@ REGISTER_COMMAND_NAME(@"fileinfo")
       [fi.daemonConn resume];
     });
     dispatch_group_enter(group);
-    [[fi.daemonConn remoteObjectProxy] databaseBinaryRuleForSHA256:fi.fileInfo.SHA256
-                                                             reply:^(SNTRule *rule) {
-      if (rule) r = rule;
-      dispatch_group_leave(group);
-    }];
     if (!fi.csc) {
       NSError *error;
       fi.csc = [[MOLCodesignChecker alloc] initWithBinaryPath:fi.filePath error:&error];
     }
     NSString *leafCertSHA = [[fi.csc.certificates firstObject] SHA256];
-    dispatch_group_enter(group);
-    [[fi.daemonConn remoteObjectProxy] databaseCertificateRuleForSHA256:leafCertSHA
-                                                                  reply:^(SNTRule *rule) {
-      if (!r && rule) r = rule;
+    [[fi.daemonConn remoteObjectProxy] databaseRuleForBinarySHA256:fi.fileInfo.SHA256
+                                                 certificateSHA256:leafCertSHA
+                                                             reply:^(SNTRule *rule) {
+      if (rule) r = rule;
       dispatch_group_leave(group);
     }];
     if (dispatch_group_wait(group, dispatch_time(DISPATCH_TIME_NOW, 5 * NSEC_PER_SEC))) {

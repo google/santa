@@ -39,14 +39,11 @@
 - (NSUInteger)certificateRuleCount;
 
 ///
-///  @return Rule for binary with given SHA-256
+///  @return Rule for binary or certificate with given SHA-256. The binary rule will be returned
+///          if it exists. If not, the certificate rule will be returned if it exists.
 ///
-- (SNTRule *)binaryRuleForSHA256:(NSString *)SHA256;
-
-///
-///  @return Rule for certificate with  given SHA-256
-///
-- (SNTRule *)certificateRuleForSHA256:(NSString *)SHA256;
+- (SNTRule *)ruleForBinarySHA256:(NSString *)binarySHA256
+               certificateSHA256:(NSString *)certificateSHA256;
 
 ///
 ///  Add an array of rules to the database. The rules will be added within a transaction and the

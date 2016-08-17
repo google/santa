@@ -95,7 +95,8 @@
 
   SNTRule *rule = [[SNTRule alloc] init];
   rule.state = SNTRuleStateWhitelist;
-  OCMStub([self.mockRuleDatabase binaryRuleForSHA256:@"a"]).andReturn(rule);
+  rule.type = SNTRuleTypeBinary;
+  OCMStub([self.mockRuleDatabase ruleForBinarySHA256:@"a" certificateSHA256:nil]).andReturn(rule);
 
   [self.sut validateBinaryWithMessage:[self getMessage]];
 
@@ -109,7 +110,8 @@
 
   SNTRule *rule = [[SNTRule alloc] init];
   rule.state = SNTRuleStateBlacklist;
-  OCMStub([self.mockRuleDatabase binaryRuleForSHA256:@"a"]).andReturn(rule);
+  rule.type = SNTRuleTypeBinary;
+  OCMStub([self.mockRuleDatabase ruleForBinarySHA256:@"a" certificateSHA256:nil]).andReturn(rule);
 
   [self.sut validateBinaryWithMessage:[self getMessage]];
 
@@ -119,7 +121,6 @@
 
 - (void)testCertificateWhitelistRule {
   OCMStub([self.mockFileInfo isMachO]).andReturn(YES);
-  OCMStub([self.mockFileInfo SHA256]).andReturn(@"a");
 
   id cert = OCMClassMock([MOLCertificate class]);
   OCMStub([self.mockCodesignChecker leafCertificate]).andReturn(cert);
@@ -127,7 +128,8 @@
 
   SNTRule *rule = [[SNTRule alloc] init];
   rule.state = SNTRuleStateWhitelist;
-  OCMStub([self.mockRuleDatabase certificateRuleForSHA256:@"a"]).andReturn(rule);
+  rule.type = SNTRuleTypeCertificate;
+  OCMStub([self.mockRuleDatabase ruleForBinarySHA256:nil certificateSHA256:@"a"]).andReturn(rule);
 
   [self.sut validateBinaryWithMessage:[self getMessage]];
 
@@ -137,7 +139,6 @@
 
 - (void)testCertificateBlacklistRule {
   OCMStub([self.mockFileInfo isMachO]).andReturn(YES);
-  OCMStub([self.mockFileInfo SHA256]).andReturn(@"a");
 
   id cert = OCMClassMock([MOLCertificate class]);
   OCMStub([self.mockCodesignChecker leafCertificate]).andReturn(cert);
@@ -145,7 +146,8 @@
 
   SNTRule *rule = [[SNTRule alloc] init];
   rule.state = SNTRuleStateBlacklist;
-  OCMStub([self.mockRuleDatabase certificateRuleForSHA256:@"a"]).andReturn(rule);
+  rule.type = SNTRuleTypeCertificate;
+  OCMStub([self.mockRuleDatabase ruleForBinarySHA256:nil certificateSHA256:@"a"]).andReturn(rule);
 
   [self.sut validateBinaryWithMessage:[self getMessage]];
 

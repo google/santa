@@ -137,12 +137,12 @@
           cleanSlate:NO
                error:nil];
 
-  SNTRule *r = [self.sut binaryRuleForSHA256:@"a"];
+  SNTRule *r = [self.sut ruleForBinarySHA256:@"a" certificateSHA256:nil];
   XCTAssertNotNil(r);
   XCTAssertEqualObjects(r.shasum, @"a");
   XCTAssertEqual(r.type, SNTRuleTypeBinary);
 
-  r = [self.sut binaryRuleForSHA256:@"b"];
+  r = [self.sut ruleForBinarySHA256:@"b" certificateSHA256:nil];
   XCTAssertNil(r);
 }
 
@@ -151,12 +151,12 @@
           cleanSlate:NO
                error:nil];
 
-  SNTRule *r = [self.sut certificateRuleForSHA256:@"b"];
+  SNTRule *r = [self.sut ruleForBinarySHA256:nil certificateSHA256:@"b"];
   XCTAssertNotNil(r);
   XCTAssertEqualObjects(r.shasum, @"b");
   XCTAssertEqual(r.type, SNTRuleTypeCertificate);
 
-  r = [self.sut certificateRuleForSHA256:@"a"];
+  r = [self.sut ruleForBinarySHA256:nil certificateSHA256:@"a"];
   XCTAssertNil(r);
 }
 
