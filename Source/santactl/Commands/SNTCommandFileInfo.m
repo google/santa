@@ -382,8 +382,8 @@ REGISTER_COMMAND_NAME(@"fileinfo")
              @"\n"
              @"Example: santactl fileinfo --cert-index 0 --key SHA-256 --json /usr/bin/yes\n"
              @"         santactl fileinfo --key SHA-256 --json /usr/bin/yes\n"
-             @"         santactl fileinfo /usr/bin/yes /bin/*\n"
-             , [self printKeyArray:[self fileInfoKeys]],
+             @"         santactl fileinfo /usr/bin/yes /bin/*\n",
+             [self printKeyArray:[self fileInfoKeys]],
              [self printKeyArray:[self signingChainKeys]]];
 }
 
@@ -412,6 +412,11 @@ REGISTER_COMMAND_NAME(@"fileinfo")
 
   [filePaths enumerateObjectsUsingBlock:^(id obj, NSUInteger idx, BOOL *stop) {
     NSBlockOperation *hashOperation = [NSBlockOperation blockOperationWithBlock:^{
+      if (isatty(STDOUT_FILENO) && !jsonOutput) {
+        printf("\r Calculating %lu/%lu", ++hashed, filePaths.count);
+        printf("\r");
+      }
+
       SNTCommandFileInfo *fi = [[self alloc] initWithFilePath:obj
                                              daemonConnection:daemonConn
                                                    jsonOutput:jsonOutput];
@@ -421,8 +426,8 @@ REGISTER_COMMAND_NAME(@"fileinfo")
 
       if (key) {
         if (certIndex) {
-          SNTAttributeBlock block = fi.signingChain;
-          [block(fi) enumerateObjectsUsingBlock:^(id obj, NSUInteger idx, BOOL *stop) {
+          NSArray *signingChain = fi.signingChain(fi);
+          [signingChain enumerateObjectsUsingBlock:^(id obj, NSUInteger idx, BOOL *stop) {
             if (certIndex.unsignedIntegerValue == idx) {
               outputHash[key] = obj[key];
             }
@@ -440,12 +445,6 @@ REGISTER_COMMAND_NAME(@"fileinfo")
       [outputHashes addObject:outputHash];
     }];
     hashOperation.qualityOfService = NSQualityOfServiceUserInitiated;
-    hashOperation.completionBlock = ^{
-      if (isatty(STDOUT_FILENO) && !jsonOutput && filePaths.count > 1) {
-        printf("\r Hashing %lu/%lu", ++hashed, filePaths.count);
-        printf("\r");
-      }
-    };
     [hashQueue addOperation:hashOperation];
   }];
   [hashQueue waitUntilAllOperationsAreFinished];
@@ -453,7 +452,7 @@ REGISTER_COMMAND_NAME(@"fileinfo")
 
 #ifdef DEBUG
   if (isatty(STDOUT_FILENO) && !jsonOutput) {
-    printf("Hashing time: %f\n", [[NSDate date] timeIntervalSinceDate:startTime]);
+    printf("Calculating time: %f\n", [[NSDate date] timeIntervalSinceDate:startTime]);
   }
 #endif
 
@@ -515,8 +514,7 @@ REGISTER_COMMAND_NAME(@"fileinfo")
   if (*key && (!*certIndex) && (![self.fileInfoKeys containsObject:*key])) {
     [self printErrorUsageAndExit:
         [NSString stringWithFormat:@"\n\"%@\" is an invalid key", *key]];
-  }
-  if (*key && (*certIndex) && (![self.signingChainKeys containsObject:*key])) {
+  } else if (*key && (*certIndex) && (![self.signingChainKeys containsObject:*key])) {
     [self printErrorUsageAndExit:
         [NSString stringWithFormat:@"\n\"%@\" is an invalid key when using --cert-index", *key]];
   }
