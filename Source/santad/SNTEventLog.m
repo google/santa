@@ -22,6 +22,7 @@
 #import "MOLCertificate.h"
 #import "SNTCachedDecision.h"
 #import "SNTCommonEnums.h"
+#import "SNTConfigurator.h"
 #import "SNTFileInfo.h"
 #import "SNTKernelCommon.h"
 #import "SNTLogging.h"
@@ -192,10 +193,21 @@
     [outLog appendFormat:@"|quarantine_url=%@", [self sanitizeString:cd.quarantineURL]];
   }
 
-  [outLog appendFormat:@"|pid=%d|ppid=%d|uid=%d|user=%@|gid=%d|group=%@",
+  NSString *mode;
+  switch ([[SNTConfigurator configurator] clientMode]) {
+    case SNTClientModeMonitor:
+      mode = @"M"; break;
+    case SNTClientModeLockdown:
+      mode = @"L"; break;
+    default:
+      mode = @"U"; break;
+  }
+
+  [outLog appendFormat:@"|pid=%d|ppid=%d|uid=%d|user=%@|gid=%d|group=%@|mode=%@",
                        message.pid, message.ppid,
                        message.uid, [self nameForUID:message.uid],
-                       message.gid, [self nameForGID:message.gid]];
+                       message.gid, [self nameForGID:message.gid],
+                       mode];
 
   LOGI(@"%@", outLog);
 }

@@ -397,7 +397,7 @@ extern NSString *const NSURLQuarantinePropertiesKey WEAK_IMPORT_ATTRIBUTE;
     NSData *fatHeader = [self safeSubdataWithRange:range];
     struct fat_header *fh = (struct fat_header *)[fatHeader bytes];
 
-    if (fatHeader && (fh->magic == FAT_MAGIC || fh->magic == FAT_CIGAM)) {
+    if (fatHeader && (fh->magic == FAT_CIGAM || fh->magic == FAT_MAGIC)) {
       int nfat_arch = OSSwapBigToHostInt32(fh->nfat_arch);
       range = NSMakeRange(sizeof(struct fat_header), sizeof(struct fat_arch) * nfat_arch);
       NSMutableData *fatArchs = [[self safeSubdataWithRange:range] mutableCopy];
