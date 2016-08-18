@@ -95,8 +95,8 @@
   NSString *formatStr, *versionStr;
   if (config.eventDetailBundleURL && event.fileBundleID) {
     formatStr = config.eventDetailBundleURL;
-    versionStr = event.fileBundleVersionString;
-    if (!versionStr) versionStr = event.fileBundleVersion;
+    versionStr = event.fileBundleVersion;
+    if (!versionStr) versionStr = event.fileBundleVersionString;
 
     formatStr = [formatStr stringByReplacingOccurrencesOfString:@"%bundle_id%"
                                                      withString:event.fileBundleID];
