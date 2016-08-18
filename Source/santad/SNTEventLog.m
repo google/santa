@@ -133,7 +133,7 @@
       break;
     case SNTEventStateAllowCertificate:
       d = @"ALLOW";
-      r = @"CERTIFICATE";
+      r = @"CERT";
       logArgs = YES;
       break;
     case SNTEventStateAllowScope:
