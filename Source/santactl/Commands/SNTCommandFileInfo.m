@@ -430,21 +430,23 @@ REGISTER_COMMAND_NAME(@"fileinfo")
           if ([certIndex isEqual:@(-1)]) {
             outputHash[key] = signingChain.lastObject[key];
           } else {
-            [signingChain enumerateObjectsUsingBlock:^(id obj, NSUInteger idx, BOOL *stop) {
-              if (certIndex.unsignedIntegerValue - 1 == idx) {
-                outputHash[key] = obj[key];
-              }
-            }];
+            if (certIndex.unsignedIntegerValue - 1 < signingChain.count) {
+              outputHash[key] = signingChain[certIndex.unsignedIntegerValue - 1][key];
+            }
           }
         } else {
           if ([certIndex isEqual:@(-1)]) {
             outputHash[kSigningChain] = @[ signingChain.lastObject ?: @{} ];
           } else {
+            NSMutableArray *indexedCert = [NSMutableArray arrayWithCapacity:signingChain.count];
             [signingChain enumerateObjectsUsingBlock:^(id obj, NSUInteger idx, BOOL *stop) {
               if (certIndex.unsignedIntegerValue - 1 == idx) {
-                outputHash[kSigningChain] = @[ obj ];
+                [indexedCert addObject:obj];
+              } else {
+                [indexedCert addObject:[NSNull null]];
               }
             }];
+            if (indexedCert.count) outputHash[kSigningChain] = indexedCert;
           }
         }
       } else {
@@ -532,6 +534,7 @@ REGISTER_COMMAND_NAME(@"fileinfo")
   } else if ([@(0) isEqual:*certIndex]) {
     [self printErrorUsageAndExit:@"\n0 is an invalid --cert-index\n  --cert-index is 1 indexed"];
   }
+  if (!paths.count) [self printErrorUsageAndExit:@"\nat least one file-path is needed"];
   *filePaths = paths.copy;
 }
 
@@ -577,8 +580,10 @@ REGISTER_COMMAND_NAME(@"fileinfo")
 + (void)printSigningChain:(NSArray *)signingChain {
   if (!signingChain) return;
   printf("%s:\n", kSigningChain.UTF8String);
+  __block int i = 0;
   [signingChain enumerateObjectsUsingBlock:^(id obj, NSUInteger idx, BOOL *stop) {
-    if (idx) printf("\n");
+    if ([obj isEqual:[NSNull null]]) return;
+    if (i++) printf("\n");
     printf("    %2lu. %-20s: %s\n", idx + 1, kSHA256.UTF8String,
         ((NSString *)obj[kSHA256]).UTF8String);
     printf("        %-20s: %s\n", kSHA1.UTF8String,
