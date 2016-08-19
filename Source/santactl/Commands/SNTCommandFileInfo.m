@@ -134,7 +134,7 @@ REGISTER_COMMAND_NAME(@"fileinfo")
     _fileInfo = [[SNTFileInfo alloc] initWithPath:self.filePath];
     if (!_fileInfo) {
       if (isatty(STDOUT_FILENO) && !self.jsonOutput) {
-        printf("Invalid or empty file: %s\n", self.filePath.UTF8String);
+        printf("\rInvalid or empty file: %s\n", self.filePath.UTF8String);
       }
     }
   }
@@ -373,11 +373,14 @@ REGISTER_COMMAND_NAME(@"fileinfo")
              @"%@\n"
              @"           valid keys when using --cert-index:\n"
              @"%@\n"
-             @"    --cert-index: an integer corresponding to a certificate of the signing chain"
+             @"    --cert-index: an integer corresponding to a certificate of the signing chain\n"
+             @"                  1 for the leaf certificate\n"
+             @"                  -1 for the root certificate\n"
+             @"                  2 and up for the intermediates / root\n"
              @"\n"
-             @"Example: santactl fileinfo --cert-index 0 --key SHA-256 --json /usr/bin/yes\n"
-             @"         santactl fileinfo --key SHA-256 --json /usr/bin/yes\n"
-             @"         santactl fileinfo /usr/bin/yes /bin/*\n",
+             @"Examples: santactl fileinfo --cert-index 1 --key SHA-256 --json /usr/bin/yes\n"
+             @"          santactl fileinfo --key SHA-256 --json /usr/bin/yes\n"
+             @"          santactl fileinfo /usr/bin/yes /bin/*\n",
              [self printKeyArray:[self fileInfoKeys]],
              [self printKeyArray:[self signingChainKeys]]];
 }
@@ -408,8 +411,7 @@ REGISTER_COMMAND_NAME(@"fileinfo")
   [filePaths enumerateObjectsUsingBlock:^(id obj, NSUInteger idx, BOOL *stop) {
     NSBlockOperation *hashOperation = [NSBlockOperation blockOperationWithBlock:^{
       if (isatty(STDOUT_FILENO) && !jsonOutput) {
-        printf("\r Calculating %lu/%lu", ++hashed, filePaths.count);
-        printf("\r");
+        printf("\rCalculating %lu/%lu", ++hashed, filePaths.count);
       }
 
       SNTCommandFileInfo *fi = [[self alloc] initWithFilePath:obj
@@ -419,17 +421,33 @@ REGISTER_COMMAND_NAME(@"fileinfo")
 
       __block NSMutableDictionary *outputHash = [[NSMutableDictionary alloc] init];
 
-      if (key) {
-        if (certIndex) {
-          NSArray *signingChain = fi.signingChain(fi);
-          [signingChain enumerateObjectsUsingBlock:^(id obj, NSUInteger idx, BOOL *stop) {
-            if (certIndex.unsignedIntegerValue == idx) {
-              outputHash[key] = obj[key];
+      if (key && !certIndex) {
+        SNTAttributeBlock block = fi.propertyMap[key];
+        outputHash[key] = block(fi);
+      } else if (certIndex) {
+        NSArray *signingChain = fi.signingChain(fi);
+        if (key) {
+          if ([certIndex isEqual:@(-1)]) {
+            outputHash[key] = signingChain.lastObject[key];
+          } else {
+            if (certIndex.unsignedIntegerValue - 1 < signingChain.count) {
+              outputHash[key] = signingChain[certIndex.unsignedIntegerValue - 1][key];
             }
-          }];
+          }
         } else {
-          SNTAttributeBlock block = fi.propertyMap[key];
-          outputHash[key] = block(fi);
+          if ([certIndex isEqual:@(-1)]) {
+            outputHash[kSigningChain] = @[ signingChain.lastObject ?: @{} ];
+          } else {
+            NSMutableArray *indexedCert = [NSMutableArray arrayWithCapacity:signingChain.count];
+            [signingChain enumerateObjectsUsingBlock:^(id obj, NSUInteger idx, BOOL *stop) {
+              if (certIndex.unsignedIntegerValue - 1 == idx) {
+                [indexedCert addObject:obj];
+              } else {
+                [indexedCert addObject:[NSNull null]];
+              }
+            }];
+            if (indexedCert.count) outputHash[kSigningChain] = indexedCert;
+          }
         }
       } else {
         [fi.propertyMap enumerateKeysAndObjectsUsingBlock:^(id key, id obj, BOOL *stop) {
@@ -437,13 +455,14 @@ REGISTER_COMMAND_NAME(@"fileinfo")
           outputHash[key] = block(fi);
         }];
       }
-      [outputHashes addObject:outputHash];
+      if (outputHash.count) [outputHashes addObject:outputHash];
     }];
     hashOperation.qualityOfService = NSQualityOfServiceUserInitiated;
     [hashQueue addOperation:hashOperation];
   }];
   [hashQueue waitUntilAllOperationsAreFinished];
-  [self printOutputHashes:outputHashes jsonOutput:jsonOutput];
+  printf("\33[2K\r");
+  if (outputHashes.count) [self printOutputHashes:outputHashes jsonOutput:jsonOutput];
 
 #ifdef DEBUG
   if (isatty(STDOUT_FILENO) && !jsonOutput) {
@@ -500,19 +519,22 @@ REGISTER_COMMAND_NAME(@"fileinfo")
         [self printErrorUsageAndExit:@"\n--key requires an argument"];
       }
       *key = args[idx];
-    } else if ([@([obj integerValue]) isEqual: *certIndex] || [obj isEqual:*key]) {
+    } else if ([@([obj integerValue]) isEqual:*certIndex] || [obj isEqual:*key]) {
       return;
     } else {
       [paths addObject:args[idx]];
     }
   }];
-  if (*key && (!*certIndex) && (![self.fileInfoKeys containsObject:*key])) {
+  if (*key && !*certIndex && ![self.fileInfoKeys containsObject:*key]) {
     [self printErrorUsageAndExit:
         [NSString stringWithFormat:@"\n\"%@\" is an invalid key", *key]];
-  } else if (*key && (*certIndex) && (![self.signingChainKeys containsObject:*key])) {
+  } else if (*key && *certIndex && ![self.signingChainKeys containsObject:*key]) {
     [self printErrorUsageAndExit:
         [NSString stringWithFormat:@"\n\"%@\" is an invalid key when using --cert-index", *key]];
+  } else if ([@(0) isEqual:*certIndex]) {
+    [self printErrorUsageAndExit:@"\n0 is an invalid --cert-index\n  --cert-index is 1 indexed"];
   }
+  if (!paths.count) [self printErrorUsageAndExit:@"\nat least one file-path is needed"];
   *filePaths = paths.copy;
 }
 
@@ -558,7 +580,10 @@ REGISTER_COMMAND_NAME(@"fileinfo")
 + (void)printSigningChain:(NSArray *)signingChain {
   if (!signingChain) return;
   printf("%s:\n", kSigningChain.UTF8String);
+  __block int i = 0;
   [signingChain enumerateObjectsUsingBlock:^(id obj, NSUInteger idx, BOOL *stop) {
+    if ([obj isEqual:[NSNull null]]) return;
+    if (i++) printf("\n");
     printf("    %2lu. %-20s: %s\n", idx + 1, kSHA256.UTF8String,
         ((NSString *)obj[kSHA256]).UTF8String);
     printf("        %-20s: %s\n", kSHA1.UTF8String,
