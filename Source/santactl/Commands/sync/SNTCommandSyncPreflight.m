@@ -40,13 +40,27 @@
   requestDict[kSantaVer] = [[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleVersion"];
   requestDict[kPrimaryUser] = self.syncState.machineOwner;
 
-  dispatch_semaphore_t sema = dispatch_semaphore_create(0);
+  dispatch_group_t group = dispatch_group_create();
+  dispatch_group_enter(group);
   [[self.daemonConn remoteObjectProxy] databaseRuleCounts:^(int64_t binary, int64_t certificate) {
     requestDict[kBinaryRuleCount] = @(binary);
     requestDict[kCertificateRuleCount] = @(certificate);
-    dispatch_semaphore_signal(sema);
+    dispatch_group_leave(group);
   }];
-  dispatch_semaphore_wait(sema, dispatch_time(DISPATCH_TIME_NOW, 2 * NSEC_PER_SEC));
+
+  dispatch_group_enter(group);
+  [[self.daemonConn remoteObjectProxy] clientMode:^(SNTClientMode cm) {
+    switch (cm) {
+      case SNTClientModeMonitor:
+        requestDict[kClientMode] = kClientModeMonitor; break;
+      case SNTClientModeLockdown:
+        requestDict[kClientMode] = kClientModeLockdown; break;
+      default: break;
+    }
+    dispatch_group_leave(group);
+  }];
+
+  dispatch_group_wait(group, dispatch_time(DISPATCH_TIME_NOW, 2 * NSEC_PER_SEC));
 
   // If user requested it or we've never had a successful sync, try from a clean slate.
   if ([[[NSProcessInfo processInfo] arguments] containsObject:@"--clean"] ||
