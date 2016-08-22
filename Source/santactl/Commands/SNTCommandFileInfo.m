@@ -340,6 +340,7 @@ REGISTER_COMMAND_NAME(@"fileinfo")
   if ([fi isScript]) return @"Script";
   if ([fi isExecutable]) return @"Executable";
   if ([fi isDylib]) return @"Dynamic Library";
+  if ([fi isBundle]) return @"Bundle/Plugin";
   if ([fi isKext]) return @"Kernel Extension";
   if ([fi isXARArchive]) return @"XAR Archive";
   if ([fi isDMG]) return @"Disk Image";
