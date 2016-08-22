@@ -196,22 +196,26 @@ extern NSString *const NSURLQuarantinePropertiesKey WEAK_IMPORT_ATTRIBUTE;
   return [self.machHeaders allKeys];
 }
 
-- (BOOL)isExecutable {
+- (uint32_t)machFileType {
   struct mach_header *mach_header = [self firstMachHeader];
-  if (mach_header && mach_header->filetype == MH_EXECUTE) return YES;
-  return NO;
+  if (mach_header) return mach_header->filetype;
+  return -1;
+}
+
+- (BOOL)isExecutable {
+  return [self machFileType] == MH_EXECUTE;
 }
 
 - (BOOL)isDylib {
-  struct mach_header *mach_header = [self firstMachHeader];
-  if (mach_header && mach_header->filetype == MH_DYLIB) return YES;
-  return NO;
+  return [self machFileType] == MH_DYLIB;
+}
+
+- (BOOL)isBundle {
+  return [self machFileType] == MH_BUNDLE;
 }
 
 - (BOOL)isKext {
-  struct mach_header *mach_header = [self firstMachHeader];
-  if (mach_header && mach_header->filetype == MH_KEXT_BUNDLE) return YES;
-  return NO;
+  return [self machFileType] == MH_KEXT_BUNDLE;
 }
 
 - (BOOL)isMachO {

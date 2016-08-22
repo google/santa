@@ -85,6 +85,11 @@
 - (BOOL)isDylib;
 
 ///
+///  @return YES if this file is a bundle executable (QuickLook/Spotlight plugin, etc.)
+///
+- (BOOL)isBundle;
+
+///
 ///  @return YES if this file is a kernel extension.
 ///
 - (BOOL)isKext;
