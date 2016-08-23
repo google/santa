@@ -40,13 +40,17 @@
                       @"'type' INTEGER NOT NULL, "
                       @"'custommsg' TEXT"
                       @")"];
-    [db executeUpdate:@"CREATE VIEW binrules AS SELECT * FROM rules WHERE type=1"];
-    [db executeUpdate:@"CREATE VIEW certrules AS SELECT * FROM rules WHERE type=2"];
     [db executeUpdate:@"CREATE UNIQUE INDEX rulesunique ON rules (shasum, type)"];
 
     [[SNTConfigurator configurator] setSyncCleanRequired:YES];
 
     newVersion = 1;
+  }
+
+  if (version < 2) {
+    [db executeUpdate:@"DROP VIEW IF EXISTS binrules"];
+    [db executeUpdate:@"DROP VIEW IF EXISTS certrules"];
+    newVersion = 2;
   }
 
   // Save hashes of the signing certs for launchd and santad.
@@ -57,8 +61,8 @@
   // Ensure the certificates used to sign the running launchd/santad are whitelisted.
   // If they weren't previously and the database is not new, log an error.
   int ruleCount = [db intForQuery:@"SELECT COUNT(*)"
-                                  @"FROM certrules "
-                                  @"WHERE (shasum=? OR shasum=?) AND state=?",
+                                  @"FROM rules "
+                                  @"WHERE (shasum=? OR shasum=?) AND state=? AND type=2",
                       self.santadCertSHA, self.launchdCertSHA, @(SNTRuleStateWhitelist)];
   if (ruleCount != 2) {
     if (version > 0) LOGE(@"Started without launchd/santad certificate rules in place!");
@@ -84,7 +88,7 @@
 - (NSUInteger)binaryRuleCount {
   __block NSUInteger count = 0;
   [self inDatabase:^(FMDatabase *db) {
-    count = [db longForQuery:@"SELECT COUNT(*) FROM binrules"];
+    count = [db longForQuery:@"SELECT COUNT(*) FROM rules WHERE type=1"];
   }];
   return count;
 }
@@ -92,7 +96,7 @@
 - (NSUInteger)certificateRuleCount {
   __block NSUInteger count = 0;
   [self inDatabase:^(FMDatabase *db) {
-    count = [db longForQuery:@"SELECT COUNT(*) FROM certrules"];
+    count = [db longForQuery:@"SELECT COUNT(*) FROM rules WHERE type=2"];
   }];
   return count;
 }
@@ -139,8 +143,8 @@
   [self inTransaction:^(FMDatabase *db, BOOL *rollback) {
     // Protect rules for santad/launchd certificates.
     NSPredicate *p = [NSPredicate predicateWithFormat:
-                                      @"(SELF.shasum = %@ OR SELF.shasum = %@) AND SELF.type = %d",
-                                      self.santadCertSHA, self.launchdCertSHA, SNTRuleTypeCertificate];
+                         @"(SELF.shasum = %@ OR SELF.shasum = %@) AND SELF.type = %d",
+                         self.santadCertSHA, self.launchdCertSHA, SNTRuleTypeCertificate];
     NSArray *requiredHashes = [rules filteredArrayUsingPredicate:p];
     p = [NSPredicate predicateWithFormat:@"SELF.state == %d", SNTRuleStateWhitelist];
     NSArray *requiredHashesWhitelist = [requiredHashes filteredArrayUsingPredicate:p];
