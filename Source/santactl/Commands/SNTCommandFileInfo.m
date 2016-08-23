@@ -81,7 +81,7 @@ typedef id (^SNTAttributeBlock)(SNTCommandFileInfo *);
 @property(readonly, copy, nonatomic) SNTAttributeBlock signingChain;
 
 // Mapping between property string keys and SNTAttributeBlocks
-@property(readonly, nonatomic) NSDictionary<NSString *, SNTAttributeBlock> *propertyMap;
+@property(nonatomic) NSMutableDictionary<NSString *, SNTAttributeBlock> *propertyMap;
 
 // Common Date Formatter
 @property(nonatomic) NSDateFormatter *dateFormatter;
@@ -122,7 +122,7 @@ REGISTER_COMMAND_NAME(@"fileinfo")
                       kPageZero : self.pageZero,
                       kCodeSigned : self.codeSigned,
                       kRule : self.rule,
-                      kSigningChain : self.signingChain };
+                      kSigningChain : self.signingChain }.mutableCopy;
   }
   return self;
 }
@@ -451,8 +451,12 @@ REGISTER_COMMAND_NAME(@"fileinfo")
           }
         }
       } else {
+        NSString *sha1, *sha256;
+        [fi.fileInfo hashSHA1:&sha1 SHA256:&sha256];
+        fi.propertyMap[kSHA1] = ^id (SNTCommandFileInfo *fi) { return sha1; };
+        fi.propertyMap[kSHA256] = ^id (SNTCommandFileInfo *fi) { return sha256; };
         [fi.propertyMap enumerateKeysAndObjectsUsingBlock:^(id key, id obj, BOOL *stop) {
-          SNTAttributeBlock block = fi.propertyMap[key];
+          SNTAttributeBlock block = obj;
           outputHash[key] = block(fi);
         }];
       }
