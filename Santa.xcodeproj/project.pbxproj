@@ -176,6 +176,7 @@
 		580046F725A5D0874B970A17 /* libPods-Santa.a in Frameworks */ = {isa = PBXBuildFile; fileRef = B2B9044B79DD2E4DEC5D3B7A /* libPods-Santa.a */; };
 		79C1556E6EAC94038762EF36 /* libPods-santactl.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 556108C12FC29E329D82D4CB /* libPods-santactl.a */; };
 		A60673DE57680AC450A3B0B2 /* libPods-santad.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 9BE438428F17C09C6A9D0802 /* libPods-santad.a */; };
+		C72E8D941D7F399900C86DD3 /* SNTCommandFileInfoTest.m in Sources */ = {isa = PBXBuildFile; fileRef = C72E8D931D7F399900C86DD3 /* SNTCommandFileInfoTest.m */; };
 		C76614EC1D142D3C00D150C1 /* SNTCommandCheckCache.m in Sources */ = {isa = PBXBuildFile; fileRef = C76614EB1D142D3C00D150C1 /* SNTCommandCheckCache.m */; };
 		EFD8E30D32F6128B9E833D64 /* libPods-LogicTests.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 873978BCE4B0DBD2A89C99D1 /* libPods-LogicTests.a */; };
 /* End PBXBuildFile section */
@@ -411,6 +412,7 @@
 		9BE438428F17C09C6A9D0802 /* libPods-santad.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-santad.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		B2B9044B79DD2E4DEC5D3B7A /* libPods-Santa.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-Santa.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		BE53E1EAE84D54E7FCB22FD5 /* libPods-santactl.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-santactl.a"; sourceTree = BUILT_PRODUCTS_DIR; };
+		C72E8D931D7F399900C86DD3 /* SNTCommandFileInfoTest.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SNTCommandFileInfoTest.m; sourceTree = "<group>"; };
 		C76614EB1D142D3C00D150C1 /* SNTCommandCheckCache.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SNTCommandCheckCache.m; sourceTree = "<group>"; };
 		D227889DF327E7D3532FE00B /* Pods-Santa.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Santa.debug.xcconfig"; path = "Pods/Target Support Files/Pods-Santa/Pods-Santa.debug.xcconfig"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -499,6 +501,7 @@
 				0D91BCB6174E8A7E00131A7D /* Frameworks */,
 				0D260DB018B68E12002A0B55 /* Resources */,
 				0D2E1E621CEFA6C30039B2C4 /* SantaCacheTest.mm */,
+				C72E8D931D7F399900C86DD3 /* SNTCommandFileInfoTest.m */,
 				0D202D181CDD2EE500A88F16 /* SNTCommandSyncTest.m */,
 				0D41DAD31A7C28C800A890FE /* SNTEventTableTest.m */,
 				0DD0D490194F9947005F27EB /* SNTExecutionControllerTest.m */,
@@ -1298,6 +1301,7 @@
 				0D202D1A1CDD464B00A88F16 /* SNTCommandSyncPreflight.m in Sources */,
 				0D10BE891A0AAF6700C0C944 /* SNTDropRootPrivs.m in Sources */,
 				0DEFB7C61ACDE5F600B92AAE /* SNTFileWatcher.m in Sources */,
+				C72E8D941D7F399900C86DD3 /* SNTCommandFileInfoTest.m in Sources */,
 				0DEFB7C81ACF0BFE00B92AAE /* SNTFileWatcherTest.m in Sources */,
 				0D28D53819D9F5910015C5EB /* SNTConfigurator.m in Sources */,
 				0DE5B54C1C92722300C00603 /* SNTNotificationQueue.m in Sources */,
