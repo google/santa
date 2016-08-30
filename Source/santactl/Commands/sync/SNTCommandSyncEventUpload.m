@@ -69,7 +69,9 @@
   NSMutableDictionary *eventIds = [NSMutableDictionary dictionaryWithCapacity:events.count];
   for (SNTStoredEvent *event in events) {
     [uploadEvents addObject:[self dictionaryForEvent:event]];
-    eventIds[event.idx] = @YES;
+    if (event.idx) {
+      eventIds[event.idx] = @YES;
+    }
     if (uploadEvents.count >= self.syncState.eventBatchSize) break;
   }
 
@@ -202,7 +204,7 @@
           MOLCodesignChecker *cs = [[MOLCodesignChecker alloc] initWithBinaryPath:se.filePath];
           se.signingChain = cs.certificates;
 
-          [relatedEvents addObject:[self dictionaryForEvent:se]];
+          [relatedEvents addObject:se];
         }
       }
     }
