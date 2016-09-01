@@ -12,7 +12,7 @@ sleep 1
 user=$(/usr/bin/stat -f '%u' /dev/console)
 [[ -n "$user" ]] && /bin/launchctl asuser ${user} /bin/launchctl remove com.google.santagui
 # and to clean out the log config, although it won't write after wiping the binary
-/usr/bin/killall -HUP syslog
+/usr/bin/killall -HUP syslogd
 # delete artifacts on-disk
 /bin/rm -rf /Applications/Santa.app
 /bin/rm -rf /Library/Extensions/santa-driver.kext
