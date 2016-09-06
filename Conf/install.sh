@@ -36,6 +36,7 @@ GUI_USER=$(/usr/bin/stat -f '%u' /dev/console)
 # Copy new files.
 /bin/cp -r ${SOURCE}/binaries/santa-driver.kext /Library/Extensions
 /bin/cp -r ${SOURCE}/binaries/Santa.app /Applications
+mkdir -p /usr/local/bin
 /bin/ln -s /Library/Extensions/santa-driver.kext/Contents/MacOS/santactl /usr/local/bin
 
 /bin/cp ${SOURCE}/conf/com.google.santad.plist /Library/LaunchDaemons
