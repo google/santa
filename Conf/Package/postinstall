@@ -18,7 +18,8 @@ sleep 1
 sleep 1
 
 # Create hopefully useful symlink for santactl
-/bin/ln -sf /Library/Extensions/santa-driver.kext/Contents/MacOS/santactl /usr/local/bin
+mkdir -p /usr/local/bin
+/bin/ln -sf /Library/Extensions/santa-driver.kext/Contents/MacOS/santactl /usr/local/bin/santactl
 
 user=$(/usr/bin/stat -f '%u' /dev/console)
 [[ -z "$user" ]] && exit 0
