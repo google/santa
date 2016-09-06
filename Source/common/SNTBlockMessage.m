@@ -93,7 +93,7 @@
   SNTConfigurator *config = [SNTConfigurator configurator];
 
   NSString *formatStr, *versionStr;
-  if (config.eventDetailBundleURL && event.fileBundleID) {
+  if (config.eventDetailBundleURL.length && event.fileBundleID) {
     formatStr = config.eventDetailBundleURL;
     versionStr = event.fileBundleVersion;
     if (!versionStr) versionStr = event.fileBundleVersionString;
