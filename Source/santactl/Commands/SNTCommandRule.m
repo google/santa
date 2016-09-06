@@ -121,6 +121,10 @@ REGISTER_COMMAND_NAME(@"rule")
 
   if (path) {
     SNTFileInfo *fi = [[SNTFileInfo alloc] initWithPath:path];
+    if (!fi.path) {
+      [self printErrorUsageAndExit:@"Provided path was not a plain file"];
+    }
+
     if (newRule.type == SNTRuleTypeBinary) {
       newRule.shasum = fi.SHA256;
     } else if (newRule.type == SNTRuleTypeCertificate) {
