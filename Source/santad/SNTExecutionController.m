@@ -226,7 +226,7 @@
             se.filePath, se.fileSHA256, se.parentName, se.ppid];
         NSURL *detailURL = [SNTBlockMessage eventDetailURLForEvent:se];
         if (detailURL) {
-          [msg appendFormat:@"%@\n\n", detailURL.absoluteString];
+          [msg appendFormat:@"More info:\n%@\n\n", detailURL.absoluteString];
         }
         [self printMessage:msg toTTYForPID:message.ppid];
 
