@@ -23,10 +23,8 @@
 @class SNTRuleTable;
 
 ///
-///  SNTExecutionController is responsible for everything that happens when a request to execute
-///  a binary occurs:
-///    + Making a decision about whether to allow or deny this binary based on any existing rules
-///      for that specific binary, its signing certificate and the operating mode of santad.
+///  SNTExecutionController is responsible for handling binary execution requests:
+///    + Uses SNTPolicyProcessor to make a decision about whether to allow or deny the binary.
 ///    + Sending the decision to the kernel as soon as possible
 ///    + (If denied or unknown) Storing details about the execution event to the database
 ///      for upload and spwaning santactl to quickly try and send that to the server.

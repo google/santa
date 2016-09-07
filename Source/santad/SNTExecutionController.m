@@ -32,6 +32,7 @@
 #import "SNTEventTable.h"
 #import "SNTFileInfo.h"
 #import "SNTNotificationQueue.h"
+#import "SNTPolicyProcessor.h"
 #import "SNTRule.h"
 #import "SNTRuleTable.h"
 #import "SNTStoredEvent.h"
@@ -41,6 +42,7 @@
 @property SNTEventLog *eventLog;
 @property SNTEventTable *eventTable;
 @property SNTNotificationQueue *notifierQueue;
+@property SNTPolicyProcessor *policyProcessor;
 @property SNTRuleTable *ruleTable;
 
 @property NSMutableDictionary *uploadBackoff;
@@ -63,6 +65,7 @@
     _eventTable = eventTable;
     _notifierQueue = notifierQueue;
     _eventLog = eventLog;
+    _policyProcessor = [[SNTPolicyProcessor alloc] initWithRuleTable:_ruleTable];
 
     _uploadBackoff = [NSMutableDictionary dictionaryWithCapacity:128];
     _eventQueue = dispatch_queue_create("com.google.santad.event_upload", DISPATCH_QUEUE_SERIAL);
@@ -76,64 +79,17 @@
 
 #pragma mark Binary Validation
 
-- (SNTEventState)makeDecision:(SNTCachedDecision *)cd binaryInfo:(SNTFileInfo *)fi {
-  SNTRule *rule = [_ruleTable ruleForBinarySHA256:cd.sha256 certificateSHA256:cd.certSHA256];
-  if (rule) {
-    switch (rule.type) {
-      case SNTRuleTypeBinary:
-        switch (rule.state) {
-          case SNTRuleStateWhitelist:
-            return SNTEventStateAllowBinary;
-          case SNTRuleStateSilentBlacklist:
-            cd.silentBlock = YES;
-          case SNTRuleStateBlacklist:
-            cd.customMsg = rule.customMsg;
-            return SNTEventStateBlockBinary;
-          default: break;
-        }
-        break;
-      case SNTRuleTypeCertificate:
-        switch (rule.state) {
-          case SNTRuleStateWhitelist:
-            return SNTEventStateAllowCertificate;
-          case SNTRuleStateSilentBlacklist:
-            cd.silentBlock = YES;
-          case SNTRuleStateBlacklist:
-            cd.customMsg = rule.customMsg;
-            return SNTEventStateBlockCertificate;
-          default: break;
-        }
-        break;
-      default:
-        break;
-    }
-  }
-
-  NSString *msg = [self fileIsScopeBlacklisted:fi];
-  if (msg) {
-    cd.decisionExtra = msg;
-    return SNTEventStateBlockScope;
-  }
-
-  msg = [self fileIsScopeWhitelisted:fi];
-  if (msg) {
-    cd.decisionExtra = msg;
-    return SNTEventStateAllowScope;
-  }
-
-  switch ([[SNTConfigurator configurator] clientMode]) {
-    case SNTClientModeMonitor: return SNTEventStateAllowUnknown;
-    case SNTClientModeLockdown: return SNTEventStateBlockUnknown;
-    default: return SNTEventStateBlockUnknown;
-  }
-}
-
 - (void)validateBinaryWithMessage:(santa_message_t)message {
   // Get info about the file. If we can't get this info, allow execution and log an error.
+  if (unlikely(message.path == NULL)) {
+    LOGE(@"Path for vnode_id is NULL: %llu", message.vnode_id);
+    [_driverManager postToKernelAction:ACTION_RESPOND_ALLOW forVnodeID:message.vnode_id];
+    return;
+  }
   NSError *fileInfoError;
   SNTFileInfo *binInfo = [[SNTFileInfo alloc] initWithPath:@(message.path) error:&fileInfoError];
-  if (!binInfo) {
-    LOGW(@"Failed to read file %@: %@", binInfo.path, fileInfoError.localizedDescription);
+  if (unlikely(!binInfo)) {
+    LOGE(@"Failed to read file %@: %@", @(message.path), fileInfoError.localizedDescription);
     [_driverManager postToKernelAction:ACTION_RESPOND_ALLOW forVnodeID:message.vnode_id];
     return;
   }
@@ -145,16 +101,16 @@
   MOLCodesignChecker *csInfo = [[MOLCodesignChecker alloc] initWithBinaryPath:binInfo.path];
 
   // Actually make the decision.
-  SNTCachedDecision *cd = [[SNTCachedDecision alloc] init];
-  cd.sha256 = binInfo.SHA256;
-  cd.certCommonName = csInfo.leafCertificate.commonName;
-  cd.certSHA256 = csInfo.leafCertificate.SHA256;
+  SNTCachedDecision *cd = [self.policyProcessor decisionForFileInfo:binInfo
+                                                         fileSHA256:nil
+                                                 signingCertificate:csInfo.leafCertificate];
   cd.vnodeId = message.vnode_id;
-  cd.quarantineURL = binInfo.quarantineDataURL;
-  cd.decision = [self makeDecision:cd binaryInfo:binInfo];
+
+  // Formulate an action from the decision
+  santa_action_t action =
+      (SNTEventStateAllow & cd.decision) ? ACTION_RESPOND_ALLOW : ACTION_RESPOND_DENY;
 
   // Save decision details for logging the execution later.
-  santa_action_t action = [self actionForEventState:cd.decision];
   if (action == ACTION_RESPOND_ALLOW) [_eventLog saveDecisionDetails:cd];
 
   // Send the decision to the kernel.
@@ -236,45 +192,6 @@
   }
 }
 
-///
-///  Checks whether the file at @c path is in-scope for checking with Santa.
-///
-///  Files that are out of scope:
-///    + Non Mach-O files that are not part of an installer package.
-///    + Files in whitelisted path.
-///
-///  @return @c YES if file is in scope, @c NO otherwise.
-///
-- (NSString *)fileIsScopeWhitelisted:(SNTFileInfo *)fi {
-  // Determine if file is within a whitelisted path
-  NSRegularExpression *re = [[SNTConfigurator configurator] whitelistPathRegex];
-  if ([re numberOfMatchesInString:fi.path options:0 range:NSMakeRange(0, fi.path.length)]) {
-    return @"Whitelist Regex";
-  }
-
-  // If file is not a Mach-O file, we're not interested unless it's part of an install package.
-  // TODO(rah): Consider adding an option to check all scripts.
-  // TODO(rah): Consider adding an option to disable package script checks.
-  if (!fi.isMachO && ![fi.path hasPrefix:@"/private/tmp/PKInstallSandbox."]) {
-    return @"Not a Mach-O";
-  }
-
-  return nil;
-}
-
-- (NSString *)fileIsScopeBlacklisted:(SNTFileInfo *)fi {
-  NSRegularExpression *re = [[SNTConfigurator configurator] blacklistPathRegex];
-  if ([re numberOfMatchesInString:fi.path options:0 range:NSMakeRange(0, fi.path.length)]) {
-    return @"Blacklist Regex";
-  }
-
-  if ([[SNTConfigurator configurator] enablePageZeroProtection] && fi.isMissingPageZero) {
-    return @"Missing __PAGEZERO";
-  }
-
-  return nil;
-}
-
 /**
   Workaround for issue with PrinterProxy.app.
 
@@ -348,24 +265,6 @@
 
     _exit(execl(kSantaCtlPath, kSantaCtlPath, "sync", "--syslog",
                 "singleevent", [event.fileSHA256 UTF8String], NULL));
-  }
-}
-
-- (santa_action_t)actionForEventState:(SNTEventState)state {
-  switch (state) {
-    case SNTEventStateAllowBinary:
-    case SNTEventStateAllowCertificate:
-    case SNTEventStateAllowScope:
-    case SNTEventStateAllowUnknown:
-      return ACTION_RESPOND_ALLOW;
-    case SNTEventStateBlockBinary:
-    case SNTEventStateBlockCertificate:
-    case SNTEventStateBlockScope:
-    case SNTEventStateBlockUnknown:
-      return ACTION_RESPOND_DENY;
-    default:
-      LOGW(@"Invalid event state %ld", state);
-      return ACTION_RESPOND_DENY;
   }
 }
 

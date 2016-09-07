@@ -28,6 +28,10 @@
 #define USERCLIENT_CLASS "com_google_SantaDriver"
 #define USERCLIENT_ID "com.google.santa-driver"
 
+// Branch prediction
+#define likely(x)   __builtin_expect((x), 1)
+#define unlikely(x) __builtin_expect((x), 0)
+
 // List of methods supported by the driver.
 enum SantaDriverMethods {
   kSantaUserClientOpen,

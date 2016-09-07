@@ -22,9 +22,6 @@
 
 #include "SNTKernelCommon.h"
 
-#define likely(x)   __builtin_expect((x), 1)
-#define unlikely(x) __builtin_expect((x), 0)
-
 #ifdef KERNEL
 #include <IOKit/IOLib.h>
 #else // KERNEL

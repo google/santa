@@ -41,19 +41,25 @@ typedef NS_ENUM(NSInteger, SNTClientMode) {
 };
 
 typedef NS_ENUM(NSInteger, SNTEventState) {
-  SNTEventStateUnknown,
+  // Bits 0-15 bits store non-decision types
+  SNTEventStateUnknown = 0,
+  SNTEventStateBundleBinary = 1,
 
-  SNTEventStateAllowUnknown = 1,
-  SNTEventStateAllowBinary = 2,
-  SNTEventStateAllowCertificate = 3,
-  SNTEventStateAllowScope = 4,
+  // Bits 16-23 store deny decision types
+  SNTEventStateBlockUnknown = 1 << 16,
+  SNTEventStateBlockBinary = 1 << 17,
+  SNTEventStateBlockCertificate = 1 << 18,
+  SNTEventStateBlockScope = 1 << 19,
 
-  SNTEventStateBlockUnknown = 5,
-  SNTEventStateBlockBinary = 6,
-  SNTEventStateBlockCertificate = 7,
-  SNTEventStateBlockScope = 8,
+  // Bits 24-31 store allow decision types
+  SNTEventStateAllowUnknown = 1 << 24,
+  SNTEventStateAllowBinary = 1 << 25,
+  SNTEventStateAllowCertificate = 1 << 26,
+  SNTEventStateAllowScope = 1 << 27,
 
-  SNTEventStateBundleBinary = 9,
+  // Block and Allow masks
+  SNTEventStateBlock = 0xFF << 16,
+  SNTEventStateAllow = 0xFF << 24
 };
 
 typedef NS_ENUM(NSInteger, SNTRuleTableError) {

@@ -14,6 +14,7 @@
 
 #import "SNTDaemonControlController.h"
 
+#import "SNTCachedDecision.h"
 #import "SNTConfigurator.h"
 #import "SNTDatabaseController.h"
 #import "SNTDriverManager.h"
@@ -21,6 +22,7 @@
 #import "SNTEventTable.h"
 #import "SNTLogging.h"
 #import "SNTNotificationQueue.h"
+#import "SNTPolicyProcessor.h"
 #import "SNTRule.h"
 #import "SNTRuleTable.h"
 #import "SNTXPCConnection.h"
@@ -35,6 +37,7 @@ double watchdogRAMPeak = 0;
 @interface SNTDaemonControlController ()
 @property NSString *_syncXsrfToken;
 @property dispatch_source_t syncTimer;
+@property SNTPolicyProcessor *policyProcessor;
 @end
 
 @implementation SNTDaemonControlController
@@ -44,6 +47,8 @@ double watchdogRAMPeak = 0;
   if (self) {
     _syncTimer = [self createSyncTimer];
     [self rescheduleSyncSecondsFromNow:30];
+    _policyProcessor = [[SNTPolicyProcessor alloc] initWithRuleTable:
+                           [SNTDatabaseController ruleTable]];
   }
   return self;
 }
@@ -139,6 +144,17 @@ double watchdogRAMPeak = 0;
                               reply:(void (^)(SNTRule *))reply {
   reply([[SNTDatabaseController ruleTable] ruleForBinarySHA256:binarySHA256
                                              certificateSHA256:certificateSHA256]);
+}
+
+#pragma mark Decision Ops
+
+- (void)decisionForFilePath:(NSString *)filePath
+                 fileSHA256:(NSString *)fileSHA256
+         signingCertificate:(MOLCertificate *)signingCertificate
+                      reply:(void (^)(SNTEventState))reply {
+  reply([self.policyProcessor decisionForFilePath:filePath
+                                       fileSHA256:fileSHA256
+                               signingCertificate:signingCertificate].decision);
 }
 
 #pragma mark Config Ops
