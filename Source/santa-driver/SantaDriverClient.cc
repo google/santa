@@ -123,6 +123,8 @@ IOReturn SantaDriverClient::open(
     return kIOReturnExclusiveAccess;
   }
 
+  LOGI("Client connected.");
+
   return kIOReturnSuccess;
 }
 
