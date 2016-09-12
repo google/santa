@@ -110,10 +110,15 @@ IOReturn SantaDriverClient::clientMemoryForType(
 
 #pragma mark Callable Methods
 
-IOReturn SantaDriverClient::open() {
-  if (isInactive()) return kIOReturnNotAttached;
+IOReturn SantaDriverClient::open(
+    OSObject *target,
+    void *reference,
+    IOExternalMethodArguments *arguments) {
+  SantaDriverClient *me = OSDynamicCast(SantaDriverClient, target);
+  if (!me) return kIOReturnBadArgument;
 
-  if (!myProvider->open(this)) {
+  if (me->isInactive()) return kIOReturnNotAttached;
+  if (!me->myProvider->open(me)) {
     LOGW("A second client tried to connect.");
     return kIOReturnExclusiveAccess;
   }
@@ -121,86 +126,60 @@ IOReturn SantaDriverClient::open() {
   return kIOReturnSuccess;
 }
 
-IOReturn SantaDriverClient::static_open(
-    SantaDriverClient *target,
-    void *reference,
-    IOExternalMethodArguments *arguments) {
-  if (!target) return kIOReturnBadArgument;
-  return target->open();
-}
+IOReturn SantaDriverClient::allow_binary(
+    OSObject *target, void *reference, IOExternalMethodArguments *arguments) {
+  SantaDriverClient *me = OSDynamicCast(SantaDriverClient, target);
+  if (!me) return kIOReturnBadArgument;
 
-IOReturn SantaDriverClient::allow_binary(const uint64_t vnode_id) {
-  decisionManager->AddToCache(vnode_id, ACTION_RESPOND_ALLOW);
+  const uint64_t vnode_id = static_cast<const uint64_t>(*arguments->scalarInput);
+
+  me->decisionManager->AddToCache(vnode_id, ACTION_RESPOND_ALLOW);
   wakeup((void *)vnode_id);
+
   return kIOReturnSuccess;
 }
 
-IOReturn SantaDriverClient::static_allow_binary(
-    SantaDriverClient *target,
-    void *reference,
-    IOExternalMethodArguments *arguments) {
-  if (!target) return kIOReturnBadArgument;
-  if (arguments->scalarInput == nullptr) return kIOReturnBadArgument;
+IOReturn SantaDriverClient::deny_binary(
+    OSObject *target, void *reference, IOExternalMethodArguments *arguments) {
+  SantaDriverClient *me = OSDynamicCast(SantaDriverClient, target);
+  if (!me) return kIOReturnBadArgument;
 
-  return target->allow_binary(
-      static_cast<const uint64_t>(*arguments->scalarInput));
-}
+  const uint64_t vnode_id = static_cast<const uint64_t>(*arguments->scalarInput);
 
-IOReturn SantaDriverClient::deny_binary(const uint64_t vnode_id) {
-  decisionManager->AddToCache(vnode_id, ACTION_RESPOND_DENY);
+  me->decisionManager->AddToCache(vnode_id, ACTION_RESPOND_DENY);
   wakeup((void *)vnode_id);
+
   return kIOReturnSuccess;
 }
 
-IOReturn SantaDriverClient::static_deny_binary(
-    com_google_SantaDriverClient *target,
-    void *reference,
-    IOExternalMethodArguments *arguments) {
-  if (!target) return kIOReturnBadArgument;
-  if (arguments->scalarInput == nullptr) return kIOReturnBadArgument;
+IOReturn SantaDriverClient::clear_cache(
+    OSObject *target, void *reference, IOExternalMethodArguments *arguments) {
+  SantaDriverClient *me = OSDynamicCast(SantaDriverClient, target);
+  if (!me) return kIOReturnBadArgument;
 
-  return target->deny_binary(
-      static_cast<const uint64_t>(*arguments->scalarInput));
-}
+  me->decisionManager->ClearCache();
 
-IOReturn SantaDriverClient::clear_cache() {
-  decisionManager->ClearCache();
   return kIOReturnSuccess;
 }
 
-IOReturn SantaDriverClient::static_clear_cache(
-    com_google_SantaDriverClient *target,
-    void *reference,
-    IOExternalMethodArguments *arguments) {
-  if (!target) return kIOReturnBadArgument;
-  return target->clear_cache();
-}
+IOReturn SantaDriverClient::cache_count(
+    OSObject *target, void *reference, IOExternalMethodArguments *arguments) {
+  SantaDriverClient *me = OSDynamicCast(SantaDriverClient, target);
+  if (!me) return kIOReturnBadArgument;
 
-IOReturn SantaDriverClient::cache_count(uint64_t *output) {
-  *output = decisionManager->CacheCount();
+  arguments->scalarOutput[0] = me->decisionManager->CacheCount();
   return kIOReturnSuccess;
 }
 
-IOReturn SantaDriverClient::static_cache_count(
-    com_google_SantaDriverClient *target,
-    void *reference,
-    IOExternalMethodArguments *arguments) {
-  if (!target) return kIOReturnBadArgument;
-  return target->cache_count(&(arguments->scalarOutput[0]));
-}
+IOReturn SantaDriverClient::check_cache(
+    OSObject *target, void *reference, IOExternalMethodArguments *arguments) {
+  SantaDriverClient *me = OSDynamicCast(SantaDriverClient, target);
+  if (!me) return kIOReturnBadArgument;
 
-IOReturn SantaDriverClient::check_cache(uint64_t vnode_id, uint64_t *output) {
-  *output = decisionManager->GetFromCache(vnode_id);
+  uint64_t input = *arguments->scalarInput;
+  arguments->scalarOutput[0] = me->decisionManager->GetFromCache(input);
+
   return kIOReturnSuccess;
-}
-
-IOReturn SantaDriverClient::static_check_cache(
-    com_google_SantaDriverClient *target,
-    void *reference,
-    IOExternalMethodArguments *arguments) {
-  if (!target) return kIOReturnBadArgument;
-  return target->check_cache(reinterpret_cast<uint64_t>(*arguments->scalarInput),
-                             &(arguments->scalarOutput[0]));
 }
 
 #pragma mark Method Resolution
@@ -214,67 +193,22 @@ IOReturn SantaDriverClient::externalMethod(
   ///  Array of methods callable by clients. The order of these must match the
   ///  order of the items in SantaDriverMethods in SNTKernelCommon.h
   static IOExternalMethodDispatch sMethods[kSantaUserClientNMethods] = {
-    {
-      reinterpret_cast<IOExternalMethodAction>(&SantaDriverClient::static_open),
-      0,  // input scalar
-      0,  // input struct
-      0,  // output scalar
-      0   // output struct
-    },
-    {
-      reinterpret_cast<IOExternalMethodAction>(
-          &SantaDriverClient::static_allow_binary),
-      1,
-      0,
-      0,
-      0
-    },
-    {
-      reinterpret_cast<IOExternalMethodAction>(
-          &SantaDriverClient::static_deny_binary),
-      1,
-      0,
-      0,
-      0
-    },
-    {
-      reinterpret_cast<IOExternalMethodAction>(
-          &SantaDriverClient::static_clear_cache),
-      0,
-      0,
-      0,
-      0
-    },
-    {
-      reinterpret_cast<IOExternalMethodAction>(
-          &SantaDriverClient::static_cache_count),
-      0,
-      0,
-      1,
-      0
-    },
-    {
-      reinterpret_cast<IOExternalMethodAction>(
-          &SantaDriverClient::static_check_cache),
-      1,
-      0,
-      1,
-      0
-    }
+    // Function ptr, input scalar count, input struct size, output scalar count, output struct size
+    { &SantaDriverClient::open, 0, 0, 0, 0 },
+    { &SantaDriverClient::allow_binary, 1, 0, 0, 0 },
+    { &SantaDriverClient::deny_binary, 1, 0, 0, 0 },
+    { &SantaDriverClient::clear_cache, 0, 0, 0, 0 },
+    { &SantaDriverClient::cache_count, 0, 0, 1, 0 },
+    { &SantaDriverClient::check_cache, 1, 0, 1, 0 }
   };
 
-  if (selector < static_cast<UInt32>(kSantaUserClientNMethods)) {
-    dispatch = &(sMethods[selector]);
-    if (!target) target = this;
-  } else {
+  if (selector > static_cast<UInt32>(kSantaUserClientNMethods)) {
     return kIOReturnBadArgument;
   }
 
-  return super::externalMethod(selector,
-                               arguments,
-                               dispatch,
-                               target,
-                               reference);
+  dispatch = &(sMethods[selector]);
+  if (!target) target = this;
+  return super::externalMethod(selector, arguments, dispatch, target, reference);
 }
 
 #undef super

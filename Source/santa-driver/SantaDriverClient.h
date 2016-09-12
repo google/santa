@@ -72,52 +72,33 @@ class com_google_SantaDriverClient : public IOUserClient {
 
   ///
   ///  The userpsace callable methods are below. Each method corresponds
-  ///  to an entry in SantaDriverMethods. Each method has a static version
-  ///  which just calls the method on the provided target.
+  ///  to an entry in SantaDriverMethods.
   ///
 
   ///  Called during client connection.
-  IOReturn open();
-  static IOReturn static_open(
-      com_google_SantaDriverClient *target,
-      void *reference,
-      IOExternalMethodArguments *arguments);
+  static IOReturn open(
+      OSObject *target, void *reference, IOExternalMethodArguments *arguments);
 
   ///  The daemon calls this to allow a binary.
-  IOReturn allow_binary(uint64_t vnode_id);
-  static IOReturn static_allow_binary(
-      com_google_SantaDriverClient *target,
-      void *reference,
-      IOExternalMethodArguments *arguments);
+  static IOReturn allow_binary(
+      OSObject *target, void *reference,IOExternalMethodArguments *arguments);
 
   ///  The daemon calls this to deny a binary.
-  IOReturn deny_binary(uint64_t vnode_id);
-  static IOReturn static_deny_binary(
-      com_google_SantaDriverClient *target,
-      void *reference,
-      IOExternalMethodArguments *arguments);
+  static IOReturn deny_binary(
+      OSObject *target, void *reference, IOExternalMethodArguments *arguments);
 
   ///  The daemon calls this to empty the cache.
-  IOReturn clear_cache();
-  static IOReturn static_clear_cache(
-      com_google_SantaDriverClient *target,
-      void *reference,
-      IOExternalMethodArguments *arguments);
+  static IOReturn clear_cache(
+      OSObject *target, void *reference, IOExternalMethodArguments *arguments);
 
   ///  The daemon calls this to find out how many items are in the cache
-  IOReturn cache_count(uint64_t *output);
-  static IOReturn static_cache_count(
-      com_google_SantaDriverClient *target,
-      void *reference,
-      IOExternalMethodArguments *arguments);
+  static IOReturn cache_count(
+      OSObject *target, void *reference, IOExternalMethodArguments *arguments);
 
   ///  The daemon calls this to find out the status of a vnode_id in the cache.
   ///  Output will be a santa_action_t.
-  IOReturn check_cache(uint64_t vnode_id, uint64_t *output);
-  static IOReturn static_check_cache(
-      com_google_SantaDriverClient *target,
-      void *reference,
-      IOExternalMethodArguments *arguments);
+  static IOReturn check_cache(
+      OSObject *target, void *reference, IOExternalMethodArguments *arguments);
 
  private:
   com_google_SantaDriver *myProvider;
