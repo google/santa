@@ -494,6 +494,11 @@ extern "C" int fileop_scope_callback(
   auto sdm = OSDynamicCast(
       SantaDecisionManager, reinterpret_cast<OSObject *>(idata));
 
+  if (unlikely(sdm == nullptr)) {
+    LOGE("fileop_scope_callback called with no decision manager");
+    return KAUTH_RESULT_DEFER;
+  }
+
   vnode_t vp = nullptr;
   char *path = nullptr;
   char *new_path = nullptr;
@@ -525,14 +530,15 @@ extern "C" int fileop_scope_callback(
 extern "C" int vnode_scope_callback(
     kauth_cred_t credential, void *idata, kauth_action_t action,
     uintptr_t arg0, uintptr_t arg1, uintptr_t arg2, uintptr_t arg3) {
-  if (action & KAUTH_VNODE_ACCESS || idata == nullptr) {
-    return KAUTH_RESULT_DEFER;
-  }
-
   auto sdm = OSDynamicCast(
       SantaDecisionManager, reinterpret_cast<OSObject *>(idata));
 
-  if (action & KAUTH_VNODE_EXECUTE) {
+  if (unlikely(sdm == nullptr)) {
+    LOGE("vnode_scope_callback called with no decision manager");
+    return KAUTH_RESULT_DEFER;
+  }
+
+  if (action & KAUTH_VNODE_EXECUTE && !(action & KAUTH_VNODE_ACCESS)) {
     sdm->IncrementListenerInvocations();
     int result = sdm->VnodeCallback(credential,
                                     reinterpret_cast<vfs_context_t>(arg0),
