@@ -45,7 +45,7 @@
 @property SNTPolicyProcessor *policyProcessor;
 @property SNTRuleTable *ruleTable;
 
-@property NSMutableDictionary *uploadBackoff;
+@property NSCache<NSString *, NSDate *> *uploadBackoff;
 @property dispatch_queue_t eventQueue;
 @end
 
@@ -67,7 +67,8 @@
     _eventLog = eventLog;
     _policyProcessor = [[SNTPolicyProcessor alloc] initWithRuleTable:_ruleTable];
 
-    _uploadBackoff = [NSMutableDictionary dictionaryWithCapacity:128];
+    _uploadBackoff = [[NSCache alloc] init];
+    _uploadBackoff.countLimit = 128;
     _eventQueue = dispatch_queue_create("com.google.santad.event_upload", DISPATCH_QUEUE_SERIAL);
 
     // This establishes the XPC connection between libsecurity and syspolicyd.
@@ -237,8 +238,8 @@
   This runs `santactl sync` for the event that was just saved, so that the user
   has something to vote in straight away.
 
-  This method is always called on a serial queue to ensure the backoff works properly
-  and to keep this low-priority method away from the high-priority decision making threads.
+  This method is always called on a serial queue to keep this low-priority method 
+  away from the high-priority decision making threads.
 */
 - (void)initiateEventUploadForEvent:(SNTStoredEvent *)event {
   // The event upload is skipped if the full path is equal to that of santactl so that
@@ -250,12 +251,12 @@
 
   // The event upload is skipped if an event upload has been initiated for it in the
   // last 10 minutes.
-  NSDate *backoff = self.uploadBackoff[event.fileSHA256];
+  NSDate *backoff = [self.uploadBackoff objectForKey:event.fileSHA256];
 
   NSDate *now = [NSDate date];
   if (([now timeIntervalSince1970] - [backoff timeIntervalSince1970]) < 600) return;
 
-  self.uploadBackoff[event.fileSHA256] = now;
+  [self.uploadBackoff setObject:now forKey:event.fileSHA256];
 
   if (fork() == 0) {
     // Ensure we have no privileges
