@@ -12,6 +12,9 @@
 ///    See the License for the specific language governing permissions and
 ///    limitations under the License.
 
+#import <MOLCertificate/MOLCertificate.h>
+
+#import "SNTCachedDecision.h"
 #import "SNTCommonEnums.h"
 #import "SNTKernelCommon.h"
 
@@ -46,6 +49,22 @@
 - (void)databaseRuleForBinarySHA256:(NSString *)binarySHA256
                   certificateSHA256:(NSString *)certificateSHA256
                               reply:(void (^)(SNTRule *))reply;
+///
+///  Decision ops
+///
+
+///
+///  @param filePath A Path to the file, can be nil.
+///  @param fileSHA256 The pre-calculated SHA256 hash for the file, can be nil. If nil the hash will
+///                    be calculated by this method from the filePath.
+///  @param signingCertificate A MOLCertificate object, can be nil.
+///  @note If fileInfo and signingCertificate are both passed in, the most specific rule will be
+///        returned. Binary rules take precedence over cert rules.
+///
+- (void)decisionForFilePath:(NSString *)filePath
+                 fileSHA256:(NSString *)fileSHA256
+         signingCertificate:(MOLCertificate *)signingCertificate
+                      reply:(void (^)(SNTEventState))reply;
 
 ///
 ///  Config ops

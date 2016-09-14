@@ -14,11 +14,12 @@
 
 #import "SNTCommandController.h"
 
-#include "SNTLogging.h"
+#import <MOLCertificate/MOLCertificate.h>
+#import <MOLCodesignChecker/MOLCodesignChecker.h>
 
-#import "MOLCertificate.h"
-#import "MOLCodesignChecker.h"
+#import "SNTCachedDecision.h"
 #import "SNTFileInfo.h"
+#import "SNTLogging.h"
 #import "SNTRule.h"
 #import "SNTXPCConnection.h"
 #import "SNTXPCControlInterface.h"
@@ -261,51 +262,60 @@ REGISTER_COMMAND_NAME(@"fileinfo")
 
 - (SNTAttributeBlock)rule {
   return ^id (SNTCommandFileInfo *fi) {
-    __block SNTRule *r;
-    dispatch_group_t group = dispatch_group_create();
+    __block SNTEventState s;
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
       [fi.daemonConn resume];
     });
-    dispatch_group_enter(group);
+    dispatch_semaphore_t sema = dispatch_semaphore_create(0);
     if (!fi.csc) {
       NSError *error;
       fi.csc = [[MOLCodesignChecker alloc] initWithBinaryPath:fi.filePath error:&error];
     }
-    NSString *leafCertSHA = [[fi.csc.certificates firstObject] SHA256];
-    [[fi.daemonConn remoteObjectProxy] databaseRuleForBinarySHA256:fi.fileInfo.SHA256
-                                                 certificateSHA256:leafCertSHA
-                                                             reply:^(SNTRule *rule) {
-      if (rule) r = rule;
-      dispatch_group_leave(group);
+    [[fi.daemonConn remoteObjectProxy] decisionForFilePath:fi.filePath
+                                                fileSHA256:fi.propertyMap[kSHA256](fi)
+                                        signingCertificate:fi.csc.leafCertificate
+                                                     reply:^(SNTEventState state) {
+      if (state) s = state;
+      dispatch_semaphore_signal(sema);
     }];
-    if (dispatch_group_wait(group, dispatch_time(DISPATCH_TIME_NOW, 5 * NSEC_PER_SEC))) {
+    if (dispatch_semaphore_wait(sema, dispatch_time(DISPATCH_TIME_NOW, 5 * NSEC_PER_SEC))) {
       return @"Cannot communicate with daemon";
     } else {
-      NSString *output;
-      switch (r.state) {
-        case SNTRuleStateWhitelist:
-          output = @"Whitelisted";
-          if (isatty(STDOUT_FILENO) && !fi.jsonOutput) {
-            output = @"\033[32mWhitelisted\033[0m";
-          }
-          return output;
+      NSMutableString *output =
+          (SNTEventStateAllow & s) ? @"Whitelisted".mutableCopy : @"Blacklisted".mutableCopy;
+      switch (s) {
+        case SNTEventStateAllowUnknown:
+        case SNTEventStateBlockUnknown:
+          [output appendString:@" (Unknown)"];
           break;
-        case SNTRuleStateBlacklist:
-        case SNTRuleStateSilentBlacklist:
-          output = @"Blacklisted";
-          if (isatty(STDOUT_FILENO) && !fi.jsonOutput) {
-            output = @"\033[31mBlacklisted\033[0m";
-          }
-          return output;
+        case SNTEventStateAllowBinary:
+        case SNTEventStateBlockBinary:
+          [output appendString:@" (Binary)"];
+          break;
+        case SNTEventStateAllowCertificate:
+        case SNTEventStateBlockCertificate:
+          [output appendString:@" (Certificate)"];
+          break;
+        case SNTEventStateAllowScope:
+        case SNTEventStateBlockScope:
+          [output appendString:@" (Scope)"];
           break;
         default:
-          output = @"None";
-          if (isatty(STDOUT_FILENO) && !fi.jsonOutput) {
-            output = @"\033[33mNone\033[0m";
-          }
-          return output;
+          output = @"None".mutableCopy;
+          break;
       }
+      if ((SNTEventStateAllow & s) && isatty(STDOUT_FILENO) && !fi.jsonOutput) {
+        [output insertString:@"\033[32m" atIndex:0];
+        [output appendString:@"\033[0m"];
+      } else if ((SNTEventStateBlock & s) && isatty(STDOUT_FILENO) && !fi.jsonOutput) {
+        [output insertString:@"\033[31m" atIndex:0];
+        [output appendString:@"\033[0m"];
+      } else if (isatty(STDOUT_FILENO) && !fi.jsonOutput) {
+        [output insertString:@"\033[33m" atIndex:0];
+        [output appendString:@"\033[0m"];
+      }
+      return output.copy;
     }
   };
 }
