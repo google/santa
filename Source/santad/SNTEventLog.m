@@ -28,15 +28,12 @@
 #import "SNTLogging.h"
 
 @interface SNTEventLog ()
-@property NSMutableDictionary *detailStore;
+@property NSMutableDictionary<NSNumber *, SNTCachedDecision *> *detailStore;
 @property dispatch_queue_t detailStoreQueue;
 
 // Caches for uid->username and gid->groupname lookups.
-// Both dictionaries must be accessed from the nameMapQueue
-// to enforce thread-safety.
-@property NSMutableDictionary *userNameMap;
-@property NSMutableDictionary *groupNameMap;
-@property dispatch_queue_t nameMapQueue;
+@property NSCache<NSNumber *, NSString *> *userNameMap;
+@property NSCache<NSNumber *, NSString *> *groupNameMap;
 @end
 
 @implementation SNTEventLog
@@ -48,10 +45,10 @@
     _detailStoreQueue = dispatch_queue_create("com.google.santad.detail_store",
                                               DISPATCH_QUEUE_SERIAL);
 
-    _userNameMap = [NSMutableDictionary dictionary];
-    _groupNameMap = [NSMutableDictionary dictionary];
-    _nameMapQueue = dispatch_queue_create("com.google.santad.name_map_queue",
-                                          DISPATCH_QUEUE_SERIAL);
+    _userNameMap = [[NSCache alloc] init];
+    _userNameMap.countLimit = 100;
+    _groupNameMap = [[NSCache alloc] init];
+    _groupNameMap.countLimit = 100;
   }
   return self;
 }
@@ -410,39 +407,29 @@
 }
 
 - (NSString *)nameForUID:(uid_t)uid {
-  __block NSString *name;
-
   NSNumber *uidNumber = @(uid);
-  dispatch_sync(self.nameMapQueue, ^{
-    name = self.userNameMap[uidNumber];
-  });
+
+  NSString *name = [self.userNameMap objectForKey:uidNumber];
   if (name) return name;
 
   struct passwd *pw = getpwuid(uid);
   if (pw) {
     name = @(pw->pw_name);
-    dispatch_sync(self.nameMapQueue, ^{
-      self.userNameMap[uidNumber] = name;
-    });
+    [self.userNameMap setObject:name forKey:uidNumber];
   }
   return name;
 }
 
 - (NSString *)nameForGID:(gid_t)gid {
-  __block NSString *name;
-
   NSNumber *gidNumber = @(gid);
-  dispatch_sync(self.nameMapQueue, ^{
-    name = self.groupNameMap[gidNumber];
-  });
+
+  NSString *name = [self.groupNameMap objectForKey:gidNumber];
   if (name) return name;
 
   struct group *gr = getgrgid(gid);
   if (gr) {
     name = @(gr->gr_name);
-    dispatch_sync(self.nameMapQueue, ^{
-      self.groupNameMap[gidNumber] = name;
-    });
+    [self.groupNameMap setObject:name forKey:gidNumber];
   }
   return name;
 }
