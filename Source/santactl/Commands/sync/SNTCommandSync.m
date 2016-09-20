@@ -215,9 +215,9 @@ REGISTER_COMMAND_NAME(@"sync")
 - (void)eventUploadBundleBinaries {
   SNTCommandSyncEventUpload *p = [[SNTCommandSyncEventUpload alloc] initWithState:self.syncState];
   if ([p syncBundleEvents]) {
-    LOGD(@"Event Upload bundle binaries complete");
+    LOGD(@"Event upload for bundle binaries complete");
   } else {
-    LOGW(@"Event Upload bundle binary search failed");
+    LOGW(@"Event upload for bundle binary search failed");
   }
   return [self postflight];
 }
