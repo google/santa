@@ -299,17 +299,22 @@ santa_action_t SantaDecisionManager::FetchDecision(
     const kauth_cred_t cred,
     const vnode_t vp,
     const uint64_t vnode_id) {
-  if (!ClientConnected()) return ACTION_RESPOND_ALLOW;
+  while (true) {
+    if (!ClientConnected()) return ACTION_RESPOND_ALLOW;
 
-  // Check to see if item is in cache
-  auto return_action = GetFromCache(vnode_id);
+    // Check to see if item is in cache
+    auto return_action = GetFromCache(vnode_id);
 
-  // If item was in cache return it.
-  if (RESPONSE_VALID(return_action)) {
-    return return_action;
-  } else if (return_action == ACTION_REQUEST_BINARY) {
-    msleep((void *)vnode_id, NULL, 0, "", &ts_);
-    return FetchDecision(cred, vp, vnode_id);
+    // If item was in cache with a valid response, return it.
+    // If item is in cache but hasn't received a response yet, sleep for a bit.
+    // If item is not in cache, break out of loop to send request to daemon.
+    if (RESPONSE_VALID(return_action)) {
+      return return_action;
+    } else if (return_action == ACTION_REQUEST_BINARY) {
+      msleep((void *)vnode_id, NULL, 0, "", &ts_);
+    } else {
+      break;
+    }
   }
 
   // Get path
@@ -324,7 +329,7 @@ santa_action_t SantaDecisionManager::FetchDecision(
   message->action = ACTION_REQUEST_BINARY;
   message->vnode_id = vnode_id;
   proc_name(message->ppid, message->pname, sizeof(message->pname));
-  return_action = GetFromDaemon(message, vnode_id);
+  auto return_action = GetFromDaemon(message, vnode_id);
   delete message;
   return return_action;
 }
