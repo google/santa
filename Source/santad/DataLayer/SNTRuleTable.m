@@ -148,7 +148,7 @@
     NSArray *requiredHashes = [rules filteredArrayUsingPredicate:p];
     p = [NSPredicate predicateWithFormat:@"SELF.state == %d", SNTRuleStateWhitelist];
     NSArray *requiredHashesWhitelist = [requiredHashes filteredArrayUsingPredicate:p];
-    if ((cleanSlate && requiredHashesWhitelist.count != 2) ||
+    if ((cleanSlate && requiredHashesWhitelist.count < 2) ||
         (requiredHashes.count != requiredHashesWhitelist.count)) {
       LOGE(@"Received request to remove whitelist for launchd/santad certificates.");
       [self fillError:error code:SNTRuleTableErrorMissingRequiredRule message:nil];
