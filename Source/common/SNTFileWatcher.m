@@ -76,9 +76,7 @@
     });
 
     dispatch_source_set_cancel_handler(self.source, ^{
-      STRONGIFY(self);
-      int fd = (int)dispatch_source_get_handle(self.source);
-      if (fd > 0) close(fd);
+      close(fd);
     });
 
     dispatch_resume(self.source);
@@ -87,13 +85,7 @@
 
 - (void)stopWatchingFile {
   if (!self.source) return;
-
-  int fd = (int)dispatch_source_get_handle(self.source);
   dispatch_source_set_event_handler_f(self.source, NULL);
-  dispatch_source_set_cancel_handler(self.source, ^{
-    close(fd);
-  });
-
   dispatch_source_cancel(self.source);
   self.source = nil;
 }
