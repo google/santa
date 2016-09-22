@@ -398,7 +398,7 @@
   if (sanitized) {
     [str appendFormat:@"|args=%@", sanitized];
   } else {
-    [str appendFormat:@"|args=%s", &bytes[stringStart]];
+    [str appendFormat:@"|args=%@", @(&bytes[stringStart])];
   }
 
   if (shouldFree) {
