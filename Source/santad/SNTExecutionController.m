@@ -99,7 +99,14 @@
   if ([self printerProxyWorkaround:binInfo]) return;
 
   // Get codesigning info about the file.
-  MOLCodesignChecker *csInfo = [[MOLCodesignChecker alloc] initWithBinaryPath:binInfo.path];
+  NSError *csError;
+  MOLCodesignChecker *csInfo = [[MOLCodesignChecker alloc] initWithBinaryPath:binInfo.path
+                                                                        error:&csError];
+  // We specifically ignore CSInfoPlistFailed (-67030) as it sometimes appears spuriously
+  // when trying to validate a binary separately from its bundle.
+  if (csError && csError.code != errSecCSInfoPlistFailed) {
+    csInfo = nil;
+  }
 
   // Actually make the decision.
   SNTCachedDecision *cd = [self.policyProcessor decisionForFileInfo:binInfo
