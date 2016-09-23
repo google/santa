@@ -171,10 +171,7 @@
 		1C299D1C789489996FF9E081 /* libPods-Santa.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 87D1CEAEDF1FA6819A855559 /* libPods-Santa.a */; };
 		29C490B1720D4FD576F93519 /* libPods-LogicTests.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 17D03B346587131C45A8DA67 /* libPods-LogicTests.a */; };
 		2BA4AE89AA2447E29DA2E85C /* libPods-santactl.a in Frameworks */ = {isa = PBXBuildFile; fileRef = BE53E1EAE84D54E7FCB22FD5 /* libPods-santactl.a */; };
-		34D8F6C53153950A66DBEF69 /* libPods-santad.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 60A9B66BB0F7404D1F61D518 /* libPods-santad.a */; };
 		4092327A1A51B66400A04527 /* SNTCommandRule.m in Sources */ = {isa = PBXBuildFile; fileRef = 409232791A51B65D00A04527 /* SNTCommandRule.m */; };
-		580046F725A5D0874B970A17 /* libPods-Santa.a in Frameworks */ = {isa = PBXBuildFile; fileRef = B2B9044B79DD2E4DEC5D3B7A /* libPods-Santa.a */; };
-		79C1556E6EAC94038762EF36 /* libPods-santactl.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 556108C12FC29E329D82D4CB /* libPods-santactl.a */; };
 		A60673DE57680AC450A3B0B2 /* libPods-santad.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 9BE438428F17C09C6A9D0802 /* libPods-santad.a */; };
 		C714F8B11D8044D400700EDF /* SNTCommandFileInfo.m in Sources */ = {isa = PBXBuildFile; fileRef = 0DCD5FBE1909D64A006B445C /* SNTCommandFileInfo.m */; };
 		C714F8B21D8044FE00700EDF /* SNTCommandController.m in Sources */ = {isa = PBXBuildFile; fileRef = 0D35BDAB18FD7CFD00921A21 /* SNTCommandController.m */; };
@@ -182,7 +179,6 @@
 		C76614EC1D142D3C00D150C1 /* SNTCommandCheckCache.m in Sources */ = {isa = PBXBuildFile; fileRef = C76614EB1D142D3C00D150C1 /* SNTCommandCheckCache.m */; };
 		C795ED901D80A5BE007CFF42 /* SNTPolicyProcessor.m in Sources */ = {isa = PBXBuildFile; fileRef = C795ED8F1D80A5BE007CFF42 /* SNTPolicyProcessor.m */; };
 		C795ED911D80B66B007CFF42 /* SNTPolicyProcessor.m in Sources */ = {isa = PBXBuildFile; fileRef = C795ED8F1D80A5BE007CFF42 /* SNTPolicyProcessor.m */; };
-		EFD8E30D32F6128B9E833D64 /* libPods-LogicTests.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 873978BCE4B0DBD2A89C99D1 /* libPods-LogicTests.a */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -306,6 +302,7 @@
 		0D385DED180DE51600418BC6 /* SNTMessageWindowController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SNTMessageWindowController.m; sourceTree = "<group>"; };
 		0D385DEE180DE51600418BC6 /* SNTNotificationManager.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SNTNotificationManager.h; sourceTree = "<group>"; };
 		0D385DEF180DE51600418BC6 /* SNTNotificationManager.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SNTNotificationManager.m; sourceTree = "<group>"; };
+		0D38FD651D998C72002246BE /* TeamID.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; path = TeamID.xcconfig; sourceTree = "<group>"; };
 		0D3AFBE618FB32CB0087BCEE /* SNTXPCConnectionTest.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SNTXPCConnectionTest.m; sourceTree = "<group>"; };
 		0D3AFBF718FB4C870087BCEE /* IOKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = IOKit.framework; path = System/Library/Frameworks/IOKit.framework; sourceTree = SDKROOT; };
 		0D4163FF191974F1006A356A /* SNTCommandSyncState.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SNTCommandSyncState.h; sourceTree = "<group>"; };
@@ -441,7 +438,6 @@
 				0D3AFBF618FB4C7E0087BCEE /* Cocoa.framework in Frameworks */,
 				0D3AFBF818FB4C870087BCEE /* IOKit.framework in Frameworks */,
 				29C490B1720D4FD576F93519 /* libPods-LogicTests.a in Frameworks */,
-				EFD8E30D32F6128B9E833D64 /* libPods-LogicTests.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -454,7 +450,6 @@
 				0D35BDBD18FDA23600921A21 /* IOKit.framework in Frameworks */,
 				0D35BD9F18FD71CE00921A21 /* Foundation.framework in Frameworks */,
 				2BA4AE89AA2447E29DA2E85C /* libPods-santactl.a in Frameworks */,
-				79C1556E6EAC94038762EF36 /* libPods-santactl.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -467,7 +462,6 @@
 				0D8C200C180F359A00CE2BF8 /* Security.framework in Frameworks */,
 				0D385DB8180DE4A900418BC6 /* Cocoa.framework in Frameworks */,
 				1C299D1C789489996FF9E081 /* libPods-Santa.a in Frameworks */,
-				580046F725A5D0874B970A17 /* libPods-Santa.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -479,7 +473,6 @@
 				0D4A5007176A4602004F63BF /* Security.framework in Frameworks */,
 				0D9A7F3F1759330500035EB5 /* Foundation.framework in Frameworks */,
 				A60673DE57680AC450A3B0B2 /* libPods-santad.a in Frameworks */,
-				34D8F6C53153950A66DBEF69 /* libPods-santad.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -800,6 +793,7 @@
 				0D9A7F401759330500035EB5 /* santad */,
 				0D35BDA018FD71CE00921A21 /* santactl */,
 				0D385DBD180DE4A900418BC6 /* SantaGUI */,
+				0D38FD651D998C72002246BE /* TeamID.xcconfig */,
 			);
 			path = Source;
 			sourceTree = "<group>";
@@ -971,10 +965,36 @@
 		0D91BCA8174E8A6500131A7D /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
-				LastUpgradeCheck = 0730;
+				LastUpgradeCheck = 0800;
 				TargetAttributes = {
+					0D0016A1192BCD3C005E7FCD = {
+						DevelopmentTeam = EQHXZ8M8AV;
+						ProvisioningStyle = Automatic;
+					};
 					0D260DAB18B68E12002A0B55 = {
+						DevelopmentTeam = EQHXZ8M8AV;
+						ProvisioningStyle = Automatic;
 						TestTargetID = 0D385DB5180DE4A900418BC6;
+					};
+					0D35BD9D18FD71CE00921A21 = {
+						DevelopmentTeam = EQHXZ8M8AV;
+						ProvisioningStyle = Automatic;
+					};
+					0D385DB5180DE4A900418BC6 = {
+						DevelopmentTeam = EQHXZ8M8AV;
+						ProvisioningStyle = Automatic;
+					};
+					0D91BCB3174E8A7E00131A7D = {
+						DevelopmentTeam = EQHXZ8M8AV;
+						ProvisioningStyle = Automatic;
+					};
+					0D91BCDC174E8AE600131A7D = {
+						DevelopmentTeam = EQHXZ8M8AV;
+						ProvisioningStyle = Automatic;
+					};
+					0D9A7F3C1759330400035EB5 = {
+						DevelopmentTeam = EQHXZ8M8AV;
+						ProvisioningStyle = Automatic;
 					};
 				};
 			};
@@ -1494,6 +1514,7 @@
 				CLANG_WARN_INT_CONVERSION = YES;
 				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_IDENTITY = "Mac Developer";
 				COPY_PHASE_STRIP = NO;
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
@@ -1529,6 +1550,7 @@
 				CLANG_WARN_INT_CONVERSION = YES;
 				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_IDENTITY = "Mac Developer";
 				COPY_PHASE_STRIP = YES;
 				ENABLE_NS_ASSERTIONS = NO;
 				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
@@ -1560,6 +1582,7 @@
 				CLANG_WARN_INT_CONVERSION = YES;
 				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_IDENTITY = "Mac Developer";
 				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = NO;
 				FRAMEWORK_SEARCH_PATHS = (
@@ -1609,6 +1632,7 @@
 				CLANG_WARN_INT_CONVERSION = YES;
 				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_IDENTITY = "Mac Developer";
 				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = YES;
 				ENABLE_NS_ASSERTIONS = NO;
@@ -1655,6 +1679,7 @@
 				CLANG_WARN_INT_CONVERSION = YES;
 				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_IDENTITY = "Mac Developer";
 				COPY_PHASE_STRIP = NO;
 				CREATE_INFOPLIST_SECTION_IN_BINARY = YES;
 				GCC_DYNAMIC_NO_PIC = NO;
@@ -1674,6 +1699,7 @@
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				INFOPLIST_FILE = "${DERIVED_FILE_DIR}/santactl-Info.plist";
 				INSTALL_PATH = "";
+				PRODUCT_BUNDLE_IDENTIFIER = "com.google.${PRODUCT_NAME:rfc1034identifier}";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE = "";
 			};
@@ -1695,6 +1721,7 @@
 				CLANG_WARN_INT_CONVERSION = YES;
 				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_IDENTITY = "Mac Developer";
 				COPY_PHASE_STRIP = YES;
 				CREATE_INFOPLIST_SECTION_IN_BINARY = YES;
 				ENABLE_NS_ASSERTIONS = NO;
@@ -1709,6 +1736,7 @@
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				INFOPLIST_FILE = "${DERIVED_FILE_DIR}/santactl-Info.plist";
 				INSTALL_PATH = "";
+				PRODUCT_BUNDLE_IDENTIFIER = "com.google.${PRODUCT_NAME:rfc1034identifier}";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE = "";
 			};
@@ -1731,6 +1759,7 @@
 				CLANG_WARN_INT_CONVERSION = YES;
 				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_IDENTITY = "Mac Developer";
 				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = NO;
 				GCC_DYNAMIC_NO_PIC = NO;
@@ -1749,6 +1778,7 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				INFOPLIST_FILE = "${DERIVED_FILE_DIR}/SantaGUI-Info.plist";
+				PRODUCT_BUNDLE_IDENTIFIER = "com.google.${PRODUCT_NAME:rfc1034identifier}GUI";
 				PRODUCT_NAME = "${TARGET_NAME}";
 				PROVISIONING_PROFILE = "";
 				WRAPPER_EXTENSION = app;
@@ -1772,6 +1802,7 @@
 				CLANG_WARN_INT_CONVERSION = YES;
 				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_IDENTITY = "Mac Developer";
 				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = YES;
 				ENABLE_NS_ASSERTIONS = NO;
@@ -1785,6 +1816,7 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				INFOPLIST_FILE = "${DERIVED_FILE_DIR}/SantaGUI-Info.plist";
+				PRODUCT_BUNDLE_IDENTIFIER = "com.google.${PRODUCT_NAME:rfc1034identifier}GUI";
 				PRODUCT_NAME = "${TARGET_NAME}";
 				PROVISIONING_PROFILE = "";
 				WRAPPER_EXTENSION = app;
@@ -1793,16 +1825,35 @@
 		};
 		0D91BCAC174E8A6500131A7D /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = 0D38FD651D998C72002246BE /* TeamID.xcconfig */;
 			buildSettings = {
 				CLANG_ANALYZER_SECURITY_FLOATLOOPCOUNTER = YES;
 				CLANG_ANALYZER_SECURITY_INSECUREAPI_RAND = YES;
 				CLANG_ANALYZER_SECURITY_INSECUREAPI_STRCPY = YES;
 				CLANG_CXX_LANGUAGE_STANDARD = "c++0x";
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
 				CLANG_WARN_CXX0X_EXTENSIONS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				CODE_SIGN_IDENTITY = "Mac Developer";
+				DEVELOPMENT_TEAM = "$(SANTA_DEVELOPMENT_TEAM)";
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
 				GCC_C_LANGUAGE_STANDARD = c99;
+				GCC_NO_COMMON_BLOCKS = YES;
 				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
 				LLVM_LTO = YES;
 				MACOSX_DEPLOYMENT_TARGET = 10.9;
 				ONLY_ACTIVE_ARCH = YES;
@@ -1819,16 +1870,35 @@
 		};
 		0D91BCAD174E8A6500131A7D /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = 0D38FD651D998C72002246BE /* TeamID.xcconfig */;
 			buildSettings = {
 				CLANG_ANALYZER_SECURITY_FLOATLOOPCOUNTER = YES;
 				CLANG_ANALYZER_SECURITY_INSECUREAPI_RAND = YES;
 				CLANG_ANALYZER_SECURITY_INSECUREAPI_STRCPY = YES;
 				CLANG_CXX_LANGUAGE_STANDARD = "c++0x";
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
 				CLANG_WARN_CXX0X_EXTENSIONS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				CODE_SIGN_IDENTITY = "Mac Developer";
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = "$(SANTA_DEVELOPMENT_TEAM)";
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				GCC_C_LANGUAGE_STANDARD = c99;
+				GCC_NO_COMMON_BLOCKS = YES;
 				GCC_OPTIMIZATION_LEVEL = fast;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
 				LLVM_LTO = YES;
 				MACOSX_DEPLOYMENT_TARGET = 10.9;
 				PROVISIONING_PROFILE = "";
@@ -1853,6 +1923,7 @@
 				CLANG_WARN_ENUM_CONVERSION = YES;
 				CLANG_WARN_INT_CONVERSION = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_IDENTITY = "Mac Developer";
 				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = NO;
 				GCC_DYNAMIC_NO_PIC = NO;
@@ -1870,6 +1941,7 @@
 				MODULE_NAME = "com.google.santa-driver";
 				MODULE_VERSION = TO.BE.FILLED;
 				OTHER_LDFLAGS = "";
+				PRODUCT_BUNDLE_IDENTIFIER = "com.google.${PRODUCT_NAME:rfc1034identifier}";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				WARNING_CFLAGS = (
@@ -1891,6 +1963,7 @@
 				CLANG_WARN_ENUM_CONVERSION = YES;
 				CLANG_WARN_INT_CONVERSION = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_IDENTITY = "Mac Developer";
 				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = NO;
 				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
@@ -1906,6 +1979,7 @@
 				MODULE_NAME = "com.google.santa-driver";
 				MODULE_VERSION = TO.BE.FILLED;
 				OTHER_LDFLAGS = "";
+				PRODUCT_BUNDLE_IDENTIFIER = "com.google.${PRODUCT_NAME:rfc1034identifier}";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				WARNING_CFLAGS = (
 					"-Wno-deprecated-register",
@@ -1941,6 +2015,7 @@
 				CLANG_WARN_ENUM_CONVERSION = YES;
 				CLANG_WARN_INT_CONVERSION = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_IDENTITY = "Mac Developer";
 				COPY_PHASE_STRIP = NO;
 				CREATE_INFOPLIST_SECTION_IN_BINARY = YES;
 				GCC_DYNAMIC_NO_PIC = NO;
@@ -1976,6 +2051,7 @@
 				CLANG_WARN_ENUM_CONVERSION = YES;
 				CLANG_WARN_INT_CONVERSION = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_IDENTITY = "Mac Developer";
 				COPY_PHASE_STRIP = YES;
 				CREATE_INFOPLIST_SECTION_IN_BINARY = YES;
 				GCC_ENABLE_OBJC_EXCEPTIONS = YES;

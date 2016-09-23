@@ -1,10 +1,12 @@
 WORKSPACE           = 'Santa.xcworkspace'
+TEAMID_CONFIG       = 'Source/TeamID.xcconfig'
 DEFAULT_SCHEME      = 'All'
 OUTPUT_PATH         = 'Build'
 BINARIES            = ['Santa.app', 'santa-driver.kext']
 DSYMS               = ['Santa.app.dSYM', 'santa-driver.kext.dSYM', 'santad.dSYM', 'santactl.dSYM']
 XCPRETTY_DEFAULTS   = '-sc'
 XCODEBUILD_DEFAULTS = "-workspace #{WORKSPACE} -derivedDataPath #{OUTPUT_PATH} -parallelizeTargets"
+
 $DISABLE_XCPRETTY   = false
 
 task :default do
@@ -39,6 +41,16 @@ task :init do
   unless File.exists?(WORKSPACE) and File.exists?('Pods')
     puts "Pods missing, running 'pod install'"
     system "pod install" or raise "CocoaPods is not installed. Install with 'sudo gem install cocoapods'"
+  end
+  unless File.exists?(TEAMID_CONFIG) and File.foreach(TEAMID_CONFIG).grep(/SANTA_DEVELOPMENT_TEAM/).any?
+    puts "#{TEAMID_CONFIG} is missing or doesn't contain a SANTA_DEVELOPMENT_TEAM line, attempting to fix"
+    output = `/usr/bin/security find-certificate -c "Mac Developer" -p 2>&1 | /usr/bin/openssl x509 -inform pem -text 2>&1`
+    teamid = output[/Subject:.+OU=(\w+).+/, 1]
+    if teamid.nil? or teamid.empty?
+      raise "Unable to determine Team Identifier. Please manually write your Team Identifier to #{TEAMID_CONFIG}."
+    end
+    File.open(TEAMID_CONFIG, 'w') { |f| f.write("SANTA_DEVELOPMENT_TEAM = #{teamid}") }
+    puts "Wrote team identifier #{teamid} to #{TEAMID_CONFIG}. If this is incorrect please fix manually"
   end
   unless system 'xcpretty -v >/dev/null 2>&1'
     puts "xcpretty is not installed. Install with 'sudo gem install xcpretty'"
