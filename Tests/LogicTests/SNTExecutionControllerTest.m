@@ -46,7 +46,7 @@
 
   self.mockCodesignChecker = OCMClassMock([MOLCodesignChecker class]);
   OCMStub([self.mockCodesignChecker alloc]).andReturn(self.mockCodesignChecker);
-  OCMStub([self.mockCodesignChecker initWithBinaryPath:OCMOCK_ANY])
+  OCMStub([self.mockCodesignChecker initWithBinaryPath:OCMOCK_ANY error:[OCMArg setTo:NULL]])
       .andReturn(self.mockCodesignChecker);
 
   self.mockConfigurator = OCMClassMock([SNTConfigurator class]);
