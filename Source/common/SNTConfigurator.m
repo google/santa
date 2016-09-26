@@ -100,7 +100,13 @@ static NSString *const kMachineIDPlistKeyKey = @"MachineIDKey";
 #pragma mark Public Interface
 
 - (SNTClientMode)clientMode {
-  NSInteger cm = [self.configData[kClientModeKey] longValue];
+  NSInteger cm = SNTClientModeUnknown;
+
+  id mode = self.configData[kClientModeKey];
+  if ([mode respondsToSelector:@selector(longLongValue)]) {
+    cm = (NSInteger)[mode longLongValue];
+  }
+
   if (cm == SNTClientModeMonitor || cm == SNTClientModeLockdown) {
     return (SNTClientMode)cm;
   } else {
