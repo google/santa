@@ -205,10 +205,13 @@ void SantaDecisionManager::AddToCache(
   if (decision_cache_->set(identifier, val) == 0 && decision != ACTION_REQUEST_BINARY) {
     decision_cache_->remove(identifier);
   }
+
+  wakeup((void *)identifier);
 }
 
 void SantaDecisionManager::RemoveFromCache(uint64_t identifier) {
   decision_cache_->remove(identifier);
+  wakeup((void *)identifier);
 }
 
 uint64_t SantaDecisionManager::CacheCount() const {
@@ -387,9 +390,6 @@ int SantaDecisionManager::VnodeCallback(const kauth_cred_t cred,
                                         const vfs_context_t ctx,
                                         const vnode_t vp,
                                         int *errno) {
-  // Only operate on regular files (not directories, symlinks, etc.).
-  if (vnode_vtype(vp) != VREG) return KAUTH_RESULT_DEFER;
-
   // Get ID for the vnode
   auto vnode_id = GetVnodeIDForVnode(ctx, vp);
 
@@ -430,6 +430,8 @@ int SantaDecisionManager::VnodeCallback(const kauth_cred_t cred,
 void SantaDecisionManager::FileOpCallback(
     const kauth_action_t action, const vnode_t vp,
     const char *path, const char *new_path) {
+  if (!ClientConnected() || proc_selfpid() == client_pid_) return;
+
   if (vp) {
     auto context = vfs_context_create(nullptr);
     auto vnode_id = GetVnodeIDForVnode(context, vp);
@@ -456,10 +458,7 @@ void SantaDecisionManager::FileOpCallback(
 
   // Filter out modifications to locations that are definitely
   // not useful or made by santad.
-  if (client_pid_ > 0 &&
-      proc_selfpid() != client_pid_ &&
-      !strprefix(path, "/.") &&
-      !strprefix(path, "/dev")) {
+  if (!strprefix(path, "/.") && !strprefix(path, "/dev")) {
     auto message = NewMessage(nullptr);
     strlcpy(message->path, path, sizeof(message->path));
     if (new_path) strlcpy(message->newpath, new_path, sizeof(message->newpath));
@@ -543,17 +542,20 @@ extern "C" int vnode_scope_callback(
     return KAUTH_RESULT_DEFER;
   }
 
-  if (action & KAUTH_VNODE_EXECUTE && !(action & KAUTH_VNODE_ACCESS)) {
+  vnode_t vp = reinterpret_cast<vnode_t>(arg1);
+
+  // We only care about regular files.
+  if (vnode_vtype(vp) != VREG) return KAUTH_RESULT_DEFER;
+
+  if ((action & KAUTH_VNODE_EXECUTE) && !(action & KAUTH_VNODE_ACCESS)) {
     sdm->IncrementListenerInvocations();
     int result = sdm->VnodeCallback(credential,
                                     reinterpret_cast<vfs_context_t>(arg0),
-                                    reinterpret_cast<vnode_t>(arg1),
+                                    vp,
                                     reinterpret_cast<int *>(arg3));
     sdm->DecrementListenerInvocations();
     return result;
   } else if (action & KAUTH_VNODE_WRITE_DATA) {
-    vnode_t vp = reinterpret_cast<vnode_t>(arg1);
-    if (vnode_vtype(vp) != VREG) return KAUTH_RESULT_DEFER;
     sdm->IncrementListenerInvocations();
     char path[MAXPATHLEN];
     int pathlen = MAXPATHLEN;
