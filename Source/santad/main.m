@@ -14,6 +14,7 @@
 
 #include "SNTLogging.h"
 
+#include <mach/task.h>
 #include <pthread/pthread.h>
 #include <sys/resource.h>
 

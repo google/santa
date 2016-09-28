@@ -16,6 +16,7 @@
 
 #import <IOKit/IODataQueueClient.h>
 #import <IOKit/Kext/KextManager.h>
+#import <mach/mach_port.h>
 
 #import "SNTLogging.h"
 
