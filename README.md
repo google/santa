@@ -121,6 +121,9 @@ A tool like Santa doesn't really lend itself to screenshots, so here's a video i
 
 Building
 ========
+Firstly, make sure you're using Xcode 7.3.1 as currently we do not support
+building with Xcode 8.
+
 ```sh
 git clone https://github.com/google/santa
 cd santa
