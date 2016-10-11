@@ -50,6 +50,18 @@ static NSString *const kValidUntil = @"Valid Until";
 static NSString *const kSHA256 = @"SHA-256";
 static NSString *const kSHA1 = @"SHA-1";
 
+// global json output flag
+static BOOL json = NO;
+
+BOOL PrettyOutput() {
+  static int tty = 0;
+  static dispatch_once_t onceToken;
+  dispatch_once(&onceToken, ^{
+    tty = isatty(STDOUT_FILENO);
+  });
+  return (tty && !json);
+}
+
 #pragma mark SNTCommandFileInfo
 
 @interface SNTCommandFileInfo : NSObject<SNTCommand>
@@ -87,9 +99,6 @@ typedef id (^SNTAttributeBlock)(SNTCommandFileInfo *);
 // Common Date Formatter
 @property(nonatomic) NSDateFormatter *dateFormatter;
 
-// CLI option
-@property(nonatomic) BOOL jsonOutput;
-
 // Block Helpers
 - (NSString *)humanReadableFileType:(SNTFileInfo *)fi;
 
@@ -100,13 +109,11 @@ typedef id (^SNTAttributeBlock)(SNTCommandFileInfo *);
 REGISTER_COMMAND_NAME(@"fileinfo")
 
 - (instancetype)initWithFilePath:(NSString *)filePath
-                daemonConnection:(SNTXPCConnection *)daemonConn
-                      jsonOutput:(BOOL)jsonOutput {
+                daemonConnection:(SNTXPCConnection *)daemonConn {
   self = [super init];
   if (self) {
     _filePath = filePath;
     _daemonConn = daemonConn;
-    _jsonOutput = jsonOutput;
     _dateFormatter = [[NSDateFormatter alloc] init];
     _dateFormatter.dateFormat = @"yyyy/MM/dd HH:mm:ss Z";
     _propertyMap = @{ kPath : self.path,
@@ -134,9 +141,7 @@ REGISTER_COMMAND_NAME(@"fileinfo")
   if (!_fileInfo) {
     _fileInfo = [[SNTFileInfo alloc] initWithPath:self.filePath];
     if (!_fileInfo) {
-      if (isatty(STDOUT_FILENO) && !self.jsonOutput) {
-        printf("\rInvalid or empty file: %s\n", self.filePath.UTF8String);
-      }
+      fprintf(stderr, "\rInvalid or empty file: %s\n", self.filePath.UTF8String);
     }
   }
   return _fileInfo;
@@ -305,15 +310,17 @@ REGISTER_COMMAND_NAME(@"fileinfo")
           output = @"None".mutableCopy;
           break;
       }
-      if ((SNTEventStateAllow & s) && isatty(STDOUT_FILENO) && !fi.jsonOutput) {
-        [output insertString:@"\033[32m" atIndex:0];
-        [output appendString:@"\033[0m"];
-      } else if ((SNTEventStateBlock & s) && isatty(STDOUT_FILENO) && !fi.jsonOutput) {
-        [output insertString:@"\033[31m" atIndex:0];
-        [output appendString:@"\033[0m"];
-      } else if (isatty(STDOUT_FILENO) && !fi.jsonOutput) {
-        [output insertString:@"\033[33m" atIndex:0];
-        [output appendString:@"\033[0m"];
+      if (PrettyOutput()) {
+        if ((SNTEventStateAllow & s)) {
+          [output insertString:@"\033[32m" atIndex:0];
+          [output appendString:@"\033[0m"];
+        } else if ((SNTEventStateBlock & s)) {
+          [output insertString:@"\033[31m" atIndex:0];
+          [output appendString:@"\033[0m"];
+        } else {
+          [output insertString:@"\033[33m" atIndex:0];
+          [output appendString:@"\033[0m"];
+        }
       }
       return output.copy;
     }
@@ -397,13 +404,8 @@ REGISTER_COMMAND_NAME(@"fileinfo")
 }
 
 + (void)runWithArguments:(NSArray *)arguments daemonConnection:(SNTXPCConnection *)daemonConn {
-#ifdef DEBUG
-  NSDate *startTime = [NSDate date];
-#endif
-
   if (!arguments.count) [self printErrorUsageAndExit:@"No arguments"];
 
-  BOOL jsonOutput = NO;
   NSString *key;
   NSNumber *certIndex;
   NSArray *filePaths;
@@ -411,23 +413,20 @@ REGISTER_COMMAND_NAME(@"fileinfo")
   [self parseArguments:arguments
                 forKey:&key
              certIndex:&certIndex
-            jsonOutput:&jsonOutput
+            jsonOutput:&json
              filePaths:&filePaths];
 
   __block NSMutableArray *outputHashes = [[NSMutableArray alloc] init];
   __block NSOperationQueue *hashQueue = [[NSOperationQueue alloc] init];
   hashQueue.maxConcurrentOperationCount = 15;
+
   __block NSUInteger hashed = 0;
 
   [filePaths enumerateObjectsUsingBlock:^(id obj, NSUInteger idx, BOOL *stop) {
     NSBlockOperation *hashOperation = [NSBlockOperation blockOperationWithBlock:^{
-      if (isatty(STDOUT_FILENO) && !jsonOutput) {
-        printf("\rCalculating %lu/%lu", ++hashed, filePaths.count);
-      }
+      if (PrettyOutput()) printf("\rCalculating %lu/%lu", ++hashed, filePaths.count);
 
-      SNTCommandFileInfo *fi = [[self alloc] initWithFilePath:obj
-                                             daemonConnection:daemonConn
-                                                   jsonOutput:jsonOutput];
+      SNTCommandFileInfo *fi = [[self alloc] initWithFilePath:obj daemonConnection:daemonConn];
       if (!fi.fileInfo) return;
 
       __block NSMutableDictionary *outputHash = [[NSMutableDictionary alloc] init];
@@ -476,15 +475,8 @@ REGISTER_COMMAND_NAME(@"fileinfo")
     [hashQueue addOperation:hashOperation];
   }];
   [hashQueue waitUntilAllOperationsAreFinished];
-  printf("\33[2K\r");
-  if (outputHashes.count) [self printOutputHashes:outputHashes jsonOutput:jsonOutput];
-
-#ifdef DEBUG
-  if (isatty(STDOUT_FILENO) && !jsonOutput) {
-    printf("Calculating time: %f\n", [[NSDate date] timeIntervalSinceDate:startTime]);
-  }
-#endif
-
+  if (PrettyOutput()) printf("\33[2K\r");
+  if (outputHashes.count) [self printOutputHashes:outputHashes];
   exit(0);
 }
 
@@ -553,8 +545,8 @@ REGISTER_COMMAND_NAME(@"fileinfo")
   *filePaths = paths.copy;
 }
 
-+ (void)printOutputHashes:(NSArray *)outputHashes jsonOutput:(BOOL)jsonOutput {
-  if (jsonOutput) {
++ (void)printOutputHashes:(NSArray *)outputHashes {
+  if (json) {
     id object = (outputHashes.count > 1) ? outputHashes : outputHashes.firstObject;
     if (!object) return;
     NSData *jsonData = [NSJSONSerialization dataWithJSONObject:object
