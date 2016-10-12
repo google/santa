@@ -27,8 +27,7 @@ typedef id (^SNTAttributeBlock)(SNTCommandFileInfo *);
 + (NSArray *)signingChainKeys;
 - (SNTAttributeBlock)codeSigned;
 - (instancetype)initWithFilePath:(NSString *)filePath
-                daemonConnection:(SNTXPCConnection *)daemonConn
-                      jsonOutput:(BOOL)jsonOutput;
+                daemonConnection:(SNTXPCConnection *)daemonConn;
 + (void)parseArguments:(NSArray *)args
                 forKey:(NSString **)key
              certIndex:(NSNumber **)certIndex
@@ -49,7 +48,7 @@ typedef id (^SNTAttributeBlock)(SNTCommandFileInfo *);
 - (void)setUp {
   [super setUp];
 
-  self.cfi = [[SNTCommandFileInfo alloc] initWithFilePath:nil daemonConnection:nil jsonOutput:NO];
+  self.cfi = [[SNTCommandFileInfo alloc] initWithFilePath:nil daemonConnection:nil];
   self.cscMock = OCMClassMock([MOLCodesignChecker class]);
   OCMStub([self.cscMock alloc]).andReturn(self.cscMock);
 }
