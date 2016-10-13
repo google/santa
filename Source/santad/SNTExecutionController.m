@@ -294,7 +294,7 @@
 }
 
 - (void)loggedInUsers:(NSArray **)users sessions:(NSArray **)sessions {
-  NSMutableDictionary *loggedInUsers = [NSMutableDictionary dictionary];
+  NSMutableSet *loggedInUsers = [NSMutableSet set];
   NSMutableArray *loggedInHosts = [NSMutableArray array];
 
   struct utmpx *nxt;
@@ -309,12 +309,12 @@
       sessionName = [NSString stringWithFormat:@"%@@%s", userName, nxt->ut_line];
     }
 
-    if (userName.length) loggedInUsers[userName] = [NSNull null];
+    if (userName.length) [loggedInUsers addObject:userName];
     if (sessionName.length) [loggedInHosts addObject:sessionName];
   }
   endutxent();
 
-  *users = [loggedInUsers allKeys];
+  *users = [loggedInUsers allObjects];
   *sessions = [loggedInHosts copy];
 }
 

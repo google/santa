@@ -80,12 +80,10 @@
 - (BOOL)uploadEvents:(NSArray *)events {
   NSMutableArray *uploadEvents = [[NSMutableArray alloc] init];
 
-  NSMutableDictionary *eventIds = [NSMutableDictionary dictionaryWithCapacity:events.count];
+  NSMutableSet *eventIds = [NSMutableSet setWithCapacity:events.count];
   for (SNTStoredEvent *event in events) {
     [uploadEvents addObject:[self dictionaryForEvent:event]];
-    if (event.idx) {
-      eventIds[event.idx] = @YES;
-    }
+    if (event.idx) [eventIds addObject:event.idx];
     if (uploadEvents.count >= self.syncState.eventBatchSize) break;
   }
 
@@ -98,7 +96,7 @@
   LOGI(@"Uploaded %lu events", uploadEvents.count);
 
   // Remove event IDs. For Bundle Events the ID is 0 so nothing happens.
-  [[self.daemonConn remoteObjectProxy] databaseRemoveEventsWithIDs:[eventIds allKeys]];
+  [[self.daemonConn remoteObjectProxy] databaseRemoveEventsWithIDs:[eventIds allObjects]];
 
   // See if there are any events remaining to upload
   if (uploadEvents.count < events.count) {
