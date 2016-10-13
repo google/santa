@@ -56,9 +56,23 @@
 }
 
 - (BOOL)syncBundleEvents {
+  NSOperationQueue *q = [[NSOperationQueue alloc] init];
   NSMutableArray *newEvents = [NSMutableArray array];
-  for (NSString *bundlePath in self.syncState.bundleBinaryRequests) {
-    [newEvents addObjectsFromArray:[self findRelatedBinaries:bundlePath]];
+  for (NSString *bundlePath in [NSSet setWithArray:self.syncState.bundleBinaryRequests]) {
+    __block NSArray *relatedBinaries;
+    dispatch_semaphore_t sema = dispatch_semaphore_create(0);
+    [q addOperationWithBlock:^{
+      relatedBinaries = [self findRelatedBinaries:bundlePath];
+      dispatch_semaphore_signal(sema);
+    }];
+
+    // Give the search up to 5m to run
+    if (dispatch_semaphore_wait(sema, dispatch_time(DISPATCH_TIME_NOW, NSEC_PER_SEC * 300))) {
+      LOGD(@"Timed out while searching for related binaries at path %@", bundlePath);
+      [q cancelAllOperations];
+    }
+
+    if (relatedBinaries) [newEvents addObjectsFromArray:relatedBinaries];
   }
   return [self uploadEvents:newEvents];
 }
@@ -163,34 +177,37 @@
 // Find binaries within a bundle given the bundle's path
 // Searches for 10 minutes, creating new events.
 - (NSArray *)findRelatedBinaries:(NSString *)path {
-  SNTFileInfo *requestedPath = [[SNTFileInfo alloc] initWithPath:path];
-
-  // Prevent processing the same bundle twice.
-  static NSMutableDictionary *previouslyProcessedBundles;
-  static dispatch_once_t onceToken;
-  dispatch_once(&onceToken, ^{
-    previouslyProcessedBundles = [NSMutableDictionary dictionary];
-  });
-  if (previouslyProcessedBundles[requestedPath.bundleIdentifier]) return nil;
-  previouslyProcessedBundles[requestedPath.bundleIdentifier] = @YES;
-
+  // For storing the generated events, with a simple lock for writing.
   NSMutableArray *relatedEvents = [NSMutableArray array];
+  NSLock *relatedEventsLock = [[NSLock alloc] init];
 
-  dispatch_semaphore_t sema = dispatch_semaphore_create(0);
-  __block BOOL shouldCancel = NO;
-  dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_BACKGROUND, 0), ^{
-    NSDirectoryEnumerator *dirEnum = [[NSFileManager defaultManager] enumeratorAtPath:path];
-    NSString *file;
+  // Limit the number of threads that can process files at once to keep CPU usage down.
+  dispatch_semaphore_t sema = dispatch_semaphore_create(25);
 
-    while (file = [dirEnum nextObject]) {
-      @autoreleasepool {
-        if (shouldCancel) break;
-        if ([dirEnum fileAttributes][NSFileType] != NSFileTypeRegular) continue;
+  // Group the processing into a single group so we can wait on the whole group at the end.
+  dispatch_group_t group = dispatch_group_create();
 
-        file = [path stringByAppendingPathComponent:file];
+  NSDirectoryEnumerator *dirEnum = [[NSFileManager defaultManager] enumeratorAtPath:path];
+  while (1) {
+    @autoreleasepool {
+      NSString *file = [dirEnum nextObject];
+      if (!file) break;
+      if ([dirEnum fileAttributes][NSFileType] != NSFileTypeRegular) continue;
 
-        SNTFileInfo *fi = [[SNTFileInfo alloc] initWithPath:file];
-        if (fi.isExecutable) {
+      // Wait for a processing thread to become available
+      dispatch_semaphore_wait(sema, DISPATCH_TIME_FOREVER);
+
+      dispatch_group_async(group,
+                           dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_BACKGROUND, 0),
+                           ^{
+        @autoreleasepool {
+          NSString *newFile = [path stringByAppendingPathComponent:file];
+          SNTFileInfo *fi = [[SNTFileInfo alloc] initWithPath:newFile];
+          if (!fi.isExecutable) {
+            dispatch_semaphore_signal(sema);
+            return;
+          }
+
           SNTStoredEvent *se = [[SNTStoredEvent alloc] init];
           se.filePath = fi.path;
           se.fileSHA256 = fi.SHA256;
@@ -204,19 +221,17 @@
           MOLCodesignChecker *cs = [[MOLCodesignChecker alloc] initWithBinaryPath:se.filePath];
           se.signingChain = cs.certificates;
 
+          [relatedEventsLock lock];
           [relatedEvents addObject:se];
+          [relatedEventsLock unlock];
+
+          dispatch_semaphore_signal(sema);
         }
-      }
+      });
     }
-
-    dispatch_semaphore_signal(sema);
-  });
-
-  // Give the search up to 10m per bundle to run.
-  if (dispatch_semaphore_wait(sema, dispatch_time(DISPATCH_TIME_NOW, NSEC_PER_SEC * 600))) {
-    shouldCancel = YES;
-    LOGD(@"Timed out while searching for related events at path %@", path);
   }
+
+  dispatch_group_wait(group, DISPATCH_TIME_FOREVER);
 
   return relatedEvents;
 }
