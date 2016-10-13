@@ -43,6 +43,7 @@
   XCTAssertNotNil(sut);
 
   OCMVerifyAll(mockConnection);
+  [mockConnection stopMocking];
 }
 
 - (void)testInitServer {
@@ -52,6 +53,7 @@
   SNTXPCConnection *sut = [[SNTXPCConnection alloc] initServerWithName:@"TestServer"];
   XCTAssertNotNil(sut);
   OCMVerifyAll(mockListener);
+  [mockListener stopMocking];
 }
 
 - (void)testConnectionRejection {
@@ -75,6 +77,8 @@
   [sutClient resume];
 
   [self waitForExpectationsWithTimeout:3.0 handler:NULL];
+
+  [mockCodesignChecker stopMocking];
 }
 
 - (void)testConnectionAcceptance {
