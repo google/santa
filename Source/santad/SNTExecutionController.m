@@ -96,7 +96,10 @@
   }
 
   // PrinterProxy workaround, see description above the method for more details.
-  if ([self printerProxyWorkaround:binInfo]) return;
+  if ([self printerProxyWorkaround:binInfo]) {
+    [_driverManager postToKernelAction:ACTION_RESPOND_DENY forVnodeID:message.vnode_id];
+    return;
+  }
 
   // Get codesigning info about the file.
   NSError *csError;
