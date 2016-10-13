@@ -56,23 +56,23 @@
 }
 
 - (BOOL)syncBundleEvents {
-  NSOperationQueue *q = [[NSOperationQueue alloc] init];
   NSMutableArray *newEvents = [NSMutableArray array];
   for (NSString *bundlePath in [NSSet setWithArray:self.syncState.bundleBinaryRequests]) {
     __block NSArray *relatedBinaries;
+    __block BOOL shouldCancel = NO;
     dispatch_semaphore_t sema = dispatch_semaphore_create(0);
-    [q addOperationWithBlock:^{
-      relatedBinaries = [self findRelatedBinaries:bundlePath];
+    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_BACKGROUND, 0), ^{
+      relatedBinaries = [self findRelatedBinaries:bundlePath shouldCancel:&shouldCancel];
       dispatch_semaphore_signal(sema);
-    }];
+    });
 
     // Give the search up to 5m to run
     if (dispatch_semaphore_wait(sema, dispatch_time(DISPATCH_TIME_NOW, NSEC_PER_SEC * 300))) {
       LOGD(@"Timed out while searching for related binaries at path %@", bundlePath);
-      [q cancelAllOperations];
+      shouldCancel = YES;
+    } else {
+      [newEvents addObjectsFromArray:relatedBinaries];
     }
-
-    if (relatedBinaries) [newEvents addObjectsFromArray:relatedBinaries];
   }
   return [self uploadEvents:newEvents];
 }
@@ -174,9 +174,15 @@
 #undef ADDKEY
 }
 
-// Find binaries within a bundle given the bundle's path
-// Searches for 10 minutes, creating new events.
-- (NSArray *)findRelatedBinaries:(NSString *)path {
+/**
+  Find binaries within a bundle given the bundle's path. Will run until completion, however long
+  that might be. Search is done within the bundle concurrently, using up to 25 threads at once.
+
+  @param path, the path to begin searching underneath
+  @param shouldCancel, if YES, the search is cancelled part way through.
+  @return array of SNTStoredEvent's
+*/
+- (NSArray *)findRelatedBinaries:(NSString *)path shouldCancel:(BOOL *)shouldCancel {
   // For storing the generated events, with a simple lock for writing.
   NSMutableArray *relatedEvents = [NSMutableArray array];
   NSLock *relatedEventsLock = [[NSLock alloc] init];
@@ -190,6 +196,7 @@
   NSDirectoryEnumerator *dirEnum = [[NSFileManager defaultManager] enumeratorAtPath:path];
   while (1) {
     @autoreleasepool {
+      if (*shouldCancel) break;
       NSString *file = [dirEnum nextObject];
       if (!file) break;
       if ([dirEnum fileAttributes][NSFileType] != NSFileTypeRegular) continue;
