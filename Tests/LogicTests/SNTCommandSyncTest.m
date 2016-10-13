@@ -39,10 +39,6 @@
 }
 @end
 
-@interface SNTCommandSyncEventUpload (Testing)
-- (NSArray *)findRelatedBinaries:(SNTStoredEvent *)event;
-@end
-
 @interface SNTCommandSyncTest : XCTestCase
 @property SNTCommandSyncState *syncState;
 @property id<SNTDaemonControlXPC> daemonConnRop;
@@ -299,7 +295,6 @@
 - (void)testEventUploadBundleAndQuarantineData {
   SNTCommandSyncEventUpload *sut = [[SNTCommandSyncEventUpload alloc] initWithState:self.syncState];
   sut = OCMPartialMock(sut);
-  OCMStub([sut findRelatedBinaries:OCMOCK_ANY]);
 
   NSData *eventData = [self dataFromFixture:@"sync_eventupload_input_quarantine.plist"];
   NSArray *events = [NSKeyedUnarchiver unarchiveObjectWithData:eventData];
@@ -324,7 +319,7 @@
 
     return YES;
   }];
-  
+
   [sut sync];
 }
 
@@ -332,7 +327,6 @@
   SNTCommandSyncEventUpload *sut = [[SNTCommandSyncEventUpload alloc] initWithState:self.syncState];
   self.syncState.eventBatchSize = 1;
   sut = OCMPartialMock(sut);
-  OCMStub([sut findRelatedBinaries:OCMOCK_ANY]);
 
   NSData *eventData = [self dataFromFixture:@"sync_eventupload_input_basic.plist"];
   NSArray *events = [NSKeyedUnarchiver unarchiveObjectWithData:eventData];
@@ -348,6 +342,28 @@
   [sut sync];
 
   XCTAssertEqual(requestCount, 2);
+}
+
+- (void)testEventUploadBundleSearch {
+  SNTCommandSyncEventUpload *sut = [[SNTCommandSyncEventUpload alloc] initWithState:self.syncState];
+  self.syncState.eventBatchSize = 128;
+  self.syncState.bundleBinaryRequests = @[ @"/Applications/Safari.app"];
+  sut = OCMPartialMock(sut);
+
+  [self stubRequestBody:nil response:nil error:nil validateBlock:^BOOL(NSURLRequest *req) {
+    NSDictionary *requestDict = [self dictFromRequest:req];
+    NSArray *events = requestDict[kEvents];
+
+    XCTAssertGreaterThanOrEqual(events.count, 3);
+
+    for (NSDictionary *event in events) {
+      XCTAssertEqualObjects(event[kDecision], kDecisionBundleBinary);
+    }
+
+    return YES;
+  }];
+
+  [sut syncBundleEvents];
 }
 
 #pragma mark - SNTCommandSyncRuleDownload Tests
