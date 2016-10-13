@@ -230,7 +230,7 @@ REGISTER_COMMAND_NAME(@"fileinfo")
 - (SNTAttributeBlock)codeSigned {
   return ^id (SNTCommandFileInfo *fi) {
     NSError *error;
-    fi.csc = [[MOLCodesignChecker alloc] initWithBinaryPath:self.filePath error:&error];
+    fi.csc = [[MOLCodesignChecker alloc] initWithBinaryPath:fi.filePath error:&error];
     if (error) {
       switch (error.code) {
         case errSecCSUnsigned:
@@ -416,7 +416,12 @@ REGISTER_COMMAND_NAME(@"fileinfo")
             jsonOutput:&json
              filePaths:&filePaths];
 
-  __block NSMutableArray *outputHashes = [[NSMutableArray alloc] init];
+  // Only access outputHashes from the outputHashesQueue
+  __block NSMutableArray *outputHashes = [[NSMutableArray alloc] initWithCapacity:filePaths.count];
+  dispatch_group_t outputHashesGroup = dispatch_group_create();
+  dispatch_queue_t outputHashesQueue =
+      dispatch_queue_create("com.google.santa.outputhashes", DISPATCH_QUEUE_SERIAL);
+
   __block NSOperationQueue *hashQueue = [[NSOperationQueue alloc] init];
   hashQueue.maxConcurrentOperationCount = 15;
 
@@ -469,13 +474,26 @@ REGISTER_COMMAND_NAME(@"fileinfo")
           outputHash[key] = block(fi);
         }];
       }
-      if (outputHash.count) [outputHashes addObject:outputHash];
+      if (outputHash.count) {
+        dispatch_group_async(outputHashesGroup, outputHashesQueue, ^{
+          [outputHashes addObject:outputHash];
+        });
+      }
     }];
+    
     hashOperation.qualityOfService = NSQualityOfServiceUserInitiated;
     [hashQueue addOperation:hashOperation];
   }];
+
+  // Wait for all the calculating threads to finish
   [hashQueue waitUntilAllOperationsAreFinished];
+
+  // Clear the "Calculating ..." indicator if present
   if (PrettyOutput()) printf("\33[2K\r");
+
+  // Wait for all the writes to the outputHashes to finish
+  dispatch_group_wait(outputHashesGroup, DISPATCH_TIME_FOREVER);
+
   if (outputHashes.count) [self printOutputHashes:outputHashes];
   exit(0);
 }
