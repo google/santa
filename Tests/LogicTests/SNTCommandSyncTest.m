@@ -253,41 +253,41 @@
 
   [self stubRequestBody:nil response:nil error:nil validateBlock:^BOOL(NSURLRequest *req) {
     NSDictionary *requestDict = [self dictFromRequest:req];
-    NSArray *events = requestDict[@"events"];
+    NSArray *events = requestDict[kEvents];
 
     XCTAssertEqual(events.count, 2);
 
     NSDictionary *event = events[0];
-    XCTAssertEqualObjects(event[@"file_sha256"],
+    XCTAssertEqualObjects(event[kFileSHA256],
                           @"ff98fa0c0a1095fedcbe4d388a9760e71399a5c3c017a847ffa545663b57929a");
-    XCTAssertEqualObjects(event[@"file_name"], @"yes");
-    XCTAssertEqualObjects(event[@"file_path"], @"/usr/bin");
-    XCTAssertEqualObjects(event[@"decision"], @"BLOCK_BINARY");
+    XCTAssertEqualObjects(event[kFileName], @"yes");
+    XCTAssertEqualObjects(event[kFilePath], @"/usr/bin");
+    XCTAssertEqualObjects(event[kDecision], @"BLOCK_BINARY");
     NSArray *sessions = @[ @"foouser@console", @"foouser@ttys000"];
-    XCTAssertEqualObjects(event[@"current_sessions"], sessions);
+    XCTAssertEqualObjects(event[kCurrentSessions], sessions);
     NSArray *users = @[ @"foouser" ];
-    XCTAssertEqualObjects(event[@"logged_in_users"], users);
-    XCTAssertEqualObjects(event[@"executing_user"], @"root");
-    XCTAssertEqualObjects(event[@"pid"], @(11196));
-    XCTAssertEqualObjects(event[@"ppid"], @(10760));
-    XCTAssertEqualObjects(event[@"execution_time"], @(1464201698.537635));
+    XCTAssertEqualObjects(event[kLoggedInUsers], users);
+    XCTAssertEqualObjects(event[kExecutingUser], @"root");
+    XCTAssertEqualObjects(event[kPID], @(11196));
+    XCTAssertEqualObjects(event[kPPID], @(10760));
+    XCTAssertEqualObjects(event[kExecutionTime], @(1464201698.537635));
 
-    NSArray *certs = event[@"signing_chain"];
+    NSArray *certs = event[kSigningChain];
     XCTAssertEqual(certs.count, 3);
 
     NSDictionary *cert = [certs firstObject];
-    XCTAssertEqualObjects(cert[@"sha256"],
+    XCTAssertEqualObjects(cert[kCertSHA256],
                           @"2aa4b9973b7ba07add447ee4da8b5337c3ee2c3a991911e80e7282e8a751fc32");
-    XCTAssertEqualObjects(cert[@"cn"], @"Software Signing");
-    XCTAssertEqualObjects(cert[@"org"], @"Apple Inc.");
-    XCTAssertEqualObjects(cert[@"ou"], @"Apple Software");
-    XCTAssertEqualObjects(cert[@"valid_from"], @(1365806075));
-    XCTAssertEqualObjects(cert[@"valid_until"], @(1618266875));
+    XCTAssertEqualObjects(cert[kCertCN], @"Software Signing");
+    XCTAssertEqualObjects(cert[kCertOrg], @"Apple Inc.");
+    XCTAssertEqualObjects(cert[kCertOU], @"Apple Software");
+    XCTAssertEqualObjects(cert[kCertValidFrom], @(1365806075));
+    XCTAssertEqualObjects(cert[kCertValidUntil], @(1618266875));
 
     event = events[1];
-    XCTAssertEqualObjects(event[@"file_name"], @"hub");
-    XCTAssertEqualObjects(event[@"executing_user"], @"foouser");
-    certs = event[@"signing_chain"];
+    XCTAssertEqualObjects(event[kFileName], @"hub");
+    XCTAssertEqualObjects(event[kExecutingUser], @"foouser");
+    certs = event[kSigningChain];
     XCTAssertEqual(certs.count, 0);
 
     return YES;
@@ -307,20 +307,20 @@
 
   [self stubRequestBody:nil response:nil error:nil validateBlock:^BOOL(NSURLRequest *req) {
     NSDictionary *requestDict = [self dictFromRequest:req];
-    NSArray *events = requestDict[@"events"];
+    NSArray *events = requestDict[kEvents];
 
     XCTAssertEqual(events.count, 1);
 
     NSDictionary *event = [events firstObject];
-    XCTAssertEqualObjects(event[@"file_bundle_id"], @"com.luckymarmot.Paw");
-    XCTAssertEqualObjects(event[@"file_bundle_path"], @"/Applications/Paw.app");
-    XCTAssertEqualObjects(event[@"file_bundle_version"], @"2003004001");
-    XCTAssertEqualObjects(event[@"file_bundle_version_string"], @"2.3.4");
-    XCTAssertEqualObjects(event[@"quarantine_timestamp"], @(1464204868));
-    XCTAssertEqualObjects(event[@"quarantine_agent_bundle_id"], @"com.google.Chrome");
-    XCTAssertEqualObjects(event[@"quarantine_data_url"],
+    XCTAssertEqualObjects(event[kFileBundleID], @"com.luckymarmot.Paw");
+    XCTAssertEqualObjects(event[kFileBundlePath], @"/Applications/Paw.app");
+    XCTAssertEqualObjects(event[kFileBundleVersion], @"2003004001");
+    XCTAssertEqualObjects(event[kFileBundleShortVersionString], @"2.3.4");
+    XCTAssertEqualObjects(event[kQuarantineTimestamp], @(1464204868));
+    XCTAssertEqualObjects(event[kQuarantineAgentBundleID], @"com.google.Chrome");
+    XCTAssertEqualObjects(event[kQuarantineDataURL],
                           @"https://d3hevc2w7wq7nj.cloudfront.net/paw/Paw-2.3.4-2003004001.zip");
-    XCTAssertEqualObjects(event[@"quarantine_referer_url"], @"https://luckymarmot.com/paw");
+    XCTAssertEqualObjects(event[kQuarantineRefererURL], @"https://luckymarmot.com/paw");
 
     return YES;
   }];
