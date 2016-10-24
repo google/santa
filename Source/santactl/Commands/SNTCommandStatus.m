@@ -114,7 +114,7 @@ REGISTER_COMMAND_NAME(@"status")
   if ([arguments containsObject:@"--json"]) {
     NSDictionary *stats = @{
       @"daemon" : @{
-        @"mode" : clientMode,
+        @"mode" : clientMode ?: @"null",
         @"file_logging" : @(fileLogging),
         @"watchdog_cpu_events" : @(cpuEvents),
         @"watchdog_ram_events" : @(ramEvents),
@@ -130,9 +130,9 @@ REGISTER_COMMAND_NAME(@"status")
         @"events_pending_upload" : @(eventCount),
       },
       @"sync" : @{
-        @"server" : syncURLStr,
+        @"server" : syncURLStr ?: @"null",
         @"clean_required" : @(syncCleanReqd),
-        @"last_successful" : lastSyncSuccessStr
+        @"last_successful" : lastSyncSuccessStr ?: @"null"
       },
     };
     NSData *statsData = [NSJSONSerialization dataWithJSONObject:stats
