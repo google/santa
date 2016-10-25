@@ -82,3 +82,4 @@ myclean:
 	@rm -f com.google.santad.plist
 	@rm -f com.google.santagui.plist
 	@rm -f install.sh
+	@rm -f uninstall.sh

@@ -19,7 +19,7 @@ user=$(/usr/bin/stat -f '%u' /dev/console)
 /bin/rm -f /Library/LaunchAgents/com.google.santagui.plist
 /bin/rm -f /Library/LaunchDaemons/com.google.santad.plist
 /bin/rm -f /private/etc/asl/com.google.santa.asl.conf
-/bin/rm -f /usr/local/santactl # just a symlink
+/bin/rm -f /usr/local/bin/santactl # just a symlink
 #uncomment to remove the config file and all databases, log files
 #/bin/rm -rf /var/db/santa
 #/bin/rm -f /var/log/santa*
