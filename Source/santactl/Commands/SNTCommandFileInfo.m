@@ -275,9 +275,9 @@ REGISTER_COMMAND_NAME(@"fileinfo")
     dispatch_semaphore_t sema = dispatch_semaphore_create(0);
     if (!fi.csc) {
       NSError *error;
-      fi.csc = [[MOLCodesignChecker alloc] initWithBinaryPath:fi.filePath error:&error];
+      fi.csc = [[MOLCodesignChecker alloc] initWithBinaryPath:fi.path(fi) error:&error];
     }
-    [[fi.daemonConn remoteObjectProxy] decisionForFilePath:fi.filePath
+    [[fi.daemonConn remoteObjectProxy] decisionForFilePath:fi.path(fi)
                                                 fileSHA256:fi.propertyMap[kSHA256](fi)
                                         signingCertificate:fi.csc.leafCertificate
                                                      reply:^(SNTEventState state) {
