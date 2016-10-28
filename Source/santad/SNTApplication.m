@@ -23,6 +23,7 @@
 #import "SNTDaemonControlController.h"
 #import "SNTDatabaseController.h"
 #import "SNTDriverManager.h"
+#import "SNTDropRootPrivs.h"
 #import "SNTEventLog.h"
 #import "SNTEventTable.h"
 #import "SNTExecutionController.h"
@@ -30,6 +31,7 @@
 #import "SNTLogging.h"
 #import "SNTNotificationQueue.h"
 #import "SNTRuleTable.h"
+#import "SNTSyncdQueue.h"
 #import "SNTXPCConnection.h"
 #import "SNTXPCControlInterface.h"
 
@@ -68,11 +70,18 @@
     }
 
     SNTNotificationQueue *notQueue = [[SNTNotificationQueue alloc] init];
+    SNTSyncdQueue *syncdQueue = [[SNTSyncdQueue alloc] init];
 
-    // Establish XPC listener for santactl connections
+    // Restart santactl if it goes down
+    syncdQueue.invalidationHandler = ^{
+      [self startSyncd];
+    };
+    
+    // Establish XPC listener for Santa and santactl connections
     SNTDaemonControlController *dc = [[SNTDaemonControlController alloc] init];
     dc.driverManager = _driverManager;
     dc.notQueue = notQueue;
+    dc.syncdQueue = syncdQueue;
 
     _controlConnection =
         [[SNTXPCConnection alloc] initServerWithName:[SNTXPCControlInterface serviceId]];
@@ -81,6 +90,7 @@
     [_controlConnection resume];
 
     __block SNTClientMode origMode = [[SNTConfigurator configurator] clientMode];
+    __block NSURL *origSyncURL = [[SNTConfigurator configurator] syncBaseURL];
     _configFileWatcher = [[SNTFileWatcher alloc] initWithFilePath:kDefaultConfigFilePath
                                                           handler:^(unsigned long data) {
       if (data & DISPATCH_VNODE_ATTRIB) {
@@ -107,6 +117,14 @@
             [self.driverManager flushCache];
           }
         }
+
+        // Start santactl if the syncBaseURL changed from nil --> somthing
+        NSURL *syncURL = [[SNTConfigurator configurator] syncBaseURL];
+        if (!origSyncURL && syncURL) {
+          origSyncURL = syncURL;
+          LOGI(@"SyncBaseURL added, starting santactl.");
+          [self startSyncd];
+        }
       }
     }];
 
@@ -117,11 +135,27 @@
                                                                   ruleTable:ruleTable
                                                                  eventTable:eventTable
                                                               notifierQueue:notQueue
+                                                                 syncdQueue:syncdQueue
                                                                    eventLog:_eventLog];
+    // Start up santactl as a daemon if a sync server exists.
+    [self startSyncd];
+
     if (!_execController) return nil;
   }
 
   return self;
+}
+
+- (void)startSyncd {
+  if (![[SNTConfigurator configurator] syncBaseURL]) return;
+
+  if (fork() == 0) {
+    // Ensure we have no privileges
+    if (!DropRootPrivileges()) {
+      _exit(EPERM);
+    }
+    _exit(execl(kSantaCtlPath, kSantaCtlPath, "sync", "--daemon", "--syslog", NULL));
+  }
 }
 
 - (void)start {

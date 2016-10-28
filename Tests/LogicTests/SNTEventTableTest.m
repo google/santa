@@ -46,6 +46,7 @@
   MOLCodesignChecker *csInfo = [[MOLCodesignChecker alloc] initWithBinaryPath:@"/usr/bin/false"];
   SNTStoredEvent *event;
   event = [[SNTStoredEvent alloc] init];
+  event.idx = @(arc4random());
   event.filePath = @"/usr/bin/false";
   event.fileSHA256 = [binInfo SHA256];
   event.signingChain = [csInfo certificates];
@@ -67,7 +68,7 @@
   SNTStoredEvent *event = [self createTestEvent];
   [self.sut addStoredEvent:event];
 
-  SNTStoredEvent *storedEvent = [self.sut pendingEventForSHA256:event.fileSHA256];
+  SNTStoredEvent *storedEvent = [self.sut pendingEvents].firstObject;
   XCTAssertNotNil(storedEvent);
   XCTAssertEqualObjects(event.filePath, storedEvent.filePath);
   XCTAssertEqualObjects(event.signingChain, storedEvent.signingChain);
@@ -81,8 +82,7 @@
   [self.sut addStoredEvent:newEvent];
   XCTAssertEqual(self.sut.pendingEventsCount, 1);
 
-  SNTStoredEvent *storedEvent = [self.sut pendingEventForSHA256:newEvent.fileSHA256];
-  [self.sut deleteEventWithId:storedEvent.idx];
+  [self.sut deleteEventWithId:newEvent.idx];
   XCTAssertEqual(self.sut.pendingEventsCount, 0);
 }
 

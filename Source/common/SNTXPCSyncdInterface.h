@@ -12,12 +12,22 @@
 ///    See the License for the specific language governing permissions and
 ///    limitations under the License.
 
-#import "SNTCommandSyncStage.h"
+#import "SNTCommonEnums.h"
 
-@interface SNTCommandSyncEventUpload : SNTCommandSyncStage
+@class SNTStoredEvent;
 
-- (BOOL)uploadEvents:(NSArray *)events;
+/// Protocol implemented by santactl and utilized by santad
+@protocol SNTSyncdXPC
+- (void)postEventToSyncServer:(SNTStoredEvent *)event;
+- (void)rescheduleSyncSecondsFromNow:(uint64_t)seconds;
+@end
 
-- (BOOL)syncBundleEvents;
+@interface SNTXPCSyncdInterface : NSObject
+
+///
+///  Returns an initialized NSXPCInterface for the SNTSyncdXPC protocol.
+///  Ensures any methods that accept custom classes as arguments are set-up before returning
+///
++ (NSXPCInterface *)syncdInterface;
 
 @end

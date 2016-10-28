@@ -44,17 +44,6 @@
   return (dispatch_semaphore_wait(sema, DISPATCH_TIME_FOREVER) == 0);
 }
 
-- (BOOL)syncSingleEventWithSHA256:(NSString *)sha256 {
-  dispatch_semaphore_t sema = dispatch_semaphore_create(0);
-  [[self.daemonConn remoteObjectProxy] databaseEventForSHA256:sha256 reply:^(SNTStoredEvent *e) {
-    if (e) {
-      [self uploadEvents:@[ e ]];
-    }
-    dispatch_semaphore_signal(sema);
-  }];
-  return (dispatch_semaphore_wait(sema, DISPATCH_TIME_FOREVER) == 0);
-}
-
 - (BOOL)syncBundleEvents {
   NSMutableArray *newEvents = [NSMutableArray array];
   for (NSString *bundlePath in [NSSet setWithArray:self.syncState.bundleBinaryRequests]) {

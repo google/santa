@@ -74,10 +74,7 @@
 
   if (!resp) return NO;
 
-  self.syncState.eventBatchSize = [resp[kBatchSize] intValue];
-  if (self.syncState.eventBatchSize == 0) {
-    self.syncState.eventBatchSize = 50;
-  }
+  self.syncState.eventBatchSize = [resp[kBatchSize] intValue] ?: 50;
 
   self.syncState.uploadLogURL = [NSURL URLWithString:resp[kUploadLogsURL]];
 
