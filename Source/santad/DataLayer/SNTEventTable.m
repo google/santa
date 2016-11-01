@@ -66,6 +66,18 @@
     newVersion = 2;
   }
 
+  if (version < 3) {
+    // Clean-up: Disable AUTOINCREMENT on idx column
+    [db executeUpdate:@"CREATE TABLE 'events_tmp' ("
+                      @"'idx' INTEGER PRIMARY KEY,"
+                      @"'filesha256' TEXT NOT NULL,"
+                      @"'eventdata' BLOB);"];
+    [db executeUpdate:@"INSERT INTO events_tmp SELECT * FROM events"];
+    [db executeUpdate:@"DROP TABLE events"];
+    [db executeUpdate:@"ALTER TABLE events_tmp RENAME TO events"];
+    newVersion = 3;
+  }
+
   return newVersion;
 }
 
