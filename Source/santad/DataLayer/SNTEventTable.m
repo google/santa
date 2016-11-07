@@ -84,7 +84,8 @@
 #pragma mark Loading / Storing
 
 - (BOOL)addStoredEvent:(SNTStoredEvent *)event {
-  if (!event.fileSHA256 ||
+  if (!event.idx ||
+      !event.fileSHA256 ||
       !event.filePath ||
       !event.occurrenceDate ||
       !event.decision) return NO;

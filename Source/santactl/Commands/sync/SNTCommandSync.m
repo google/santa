@@ -159,12 +159,12 @@ REGISTER_COMMAND_NAME(@"sync")
   self.listener.exportedInterface = [SNTXPCSyncdInterface syncdInterface];
   self.listener.exportedObject = self;
   self.listener.acceptedHandler = ^{
-    LOGI(@"santad <--> santactl connections established");
+    LOGD(@"santad <--> santactl connections established");
     dispatch_semaphore_signal(sema);
   };
   self.listener.invalidationHandler = ^{
     // If santad is unloaded kill santactl
-    LOGI(@"exiting");
+    LOGD(@"exiting");
     exit(0);
   };
   [self.listener resume];
@@ -174,15 +174,11 @@ REGISTER_COMMAND_NAME(@"sync")
 
   // Now wait for the connection to come in.
   if (dispatch_semaphore_wait(sema, dispatch_time(DISPATCH_TIME_NOW, 5 * NSEC_PER_SEC))) {
-    [self attemptReconnection];
+    [self performSelectorInBackground:@selector(syncd) withObject:nil];
   }
 
   self.syncTimer = [self createSyncTimer];
   [self rescheduleSyncSecondsFromNow:30];
-}
-
-- (void)attemptReconnection {
-  [self performSelectorInBackground:@selector(syncd) withObject:nil];
 }
 
 - (dispatch_source_t)createSyncTimer {
