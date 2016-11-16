@@ -41,9 +41,7 @@
 - (void)databaseRuleAddRules:(NSArray *)rules
                   cleanSlate:(BOOL)cleanSlate
                        reply:(void (^)(NSError *error))reply;
-
 - (void)databaseEventCount:(void (^)(int64_t count))reply;
-- (void)databaseEventForSHA256:(NSString *)sha256 reply:(void (^)(SNTStoredEvent *))reply;
 - (void)databaseEventsPending:(void (^)(NSArray *events))reply;
 - (void)databaseRemoveEventsWithIDs:(NSArray *)ids;
 - (void)databaseRuleForBinarySHA256:(NSString *)binarySHA256
@@ -74,7 +72,6 @@
 - (void)setClientMode:(SNTClientMode)mode reply:(void (^)())reply;
 - (void)xsrfToken:(void (^)(NSString *))reply;
 - (void)setXsrfToken:(NSString *)token reply:(void (^)())reply;
-- (void)setNextSyncInterval:(uint64_t)seconds reply:(void (^)())reply;
 - (void)setSyncLastSuccess:(NSDate *)date reply:(void (^)())reply;
 - (void)setSyncCleanRequired:(BOOL)cleanReqd reply:(void (^)())reply;
 - (void)setWhitelistPathRegex:(NSString *)pattern reply:(void (^)())reply;
@@ -84,6 +81,12 @@
 ///  GUI Ops
 ///
 - (void)setNotificationListener:(NSXPCListenerEndpoint *)listener;
+
+///
+///  Syncd Ops
+///
+- (void)setSyncdListener:(NSXPCListenerEndpoint *)listener;
+- (void)setNextSyncInterval:(uint64_t)seconds reply:(void (^)())reply;
 
 @end
 

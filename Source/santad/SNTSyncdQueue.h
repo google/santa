@@ -1,4 +1,4 @@
-/// Copyright 2015 Google Inc. All rights reserved.
+/// Copyright 2016 Google Inc. All rights reserved.
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -12,12 +12,17 @@
 ///    See the License for the specific language governing permissions and
 ///    limitations under the License.
 
-#import "SNTCommandSyncStage.h"
+@class SNTStoredEvent;
+@class SNTXPCConnection;
 
-@interface SNTCommandSyncEventUpload : SNTCommandSyncStage
+@interface SNTSyncdQueue : NSObject
 
-- (BOOL)uploadEvents:(NSArray *)events;
+@property(nonatomic) SNTXPCConnection *syncdConnection;
+@property(copy) void (^invalidationHandler)();
+@property(copy) void (^acceptedHandler)();
 
-- (BOOL)syncBundleEvents;
+- (void)addEvent:(SNTStoredEvent *)event;
+- (void)startSyncingEvents;
+- (void)stopSyncingEvents;
 
 @end

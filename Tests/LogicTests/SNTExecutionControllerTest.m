@@ -66,6 +66,7 @@
                                                          ruleTable:self.mockRuleDatabase
                                                         eventTable:self.mockEventDatabase
                                                      notifierQueue:nil
+                                                        syncdQueue:nil
                                                           eventLog:nil];
 }
 

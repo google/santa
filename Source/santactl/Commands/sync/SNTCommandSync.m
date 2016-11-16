@@ -25,23 +25,30 @@
 #import "SNTConfigurator.h"
 #import "SNTDropRootPrivs.h"
 #import "SNTLogging.h"
+#import "SNTStoredEvent.h"
 #import "SNTXPCConnection.h"
 #import "SNTXPCControlInterface.h"
+#import "SNTXPCSyncdInterface.h"
 
-@interface SNTCommandSync : NSObject<SNTCommand>
+@interface SNTCommandSync : NSObject<SNTCommand, SNTSyncdXPC>
 @property SNTCommandSyncState *syncState;
+@property SNTXPCConnection *listener;
+@property dispatch_source_t syncTimer;
+@property BOOL isDaemon;
 @end
 
 @implementation SNTCommandSync
 
 REGISTER_COMMAND_NAME(@"sync")
 
+#pragma mark SNTCommand protocol methods
+
 + (BOOL)requiresRoot {
   return NO;
 }
 
 + (BOOL)requiresDaemonConn {
-  return YES;
+  return NO;
 }
 
 + (NSString *)shortHelpText {
@@ -64,7 +71,6 @@ REGISTER_COMMAND_NAME(@"sync")
   }
 
   SNTConfigurator *config = [SNTConfigurator configurator];
-
   SNTCommandSync *s = [[self alloc] init];
 
   // Gather some data needed during some sync stages
@@ -89,7 +95,8 @@ REGISTER_COMMAND_NAME(@"sync")
     s.syncState.machineOwner = @"";
     LOGW(@"Missing Machine Owner.");
   }
-
+  
+  [daemonConn resume];
   [[daemonConn remoteObjectProxy] xsrfToken:^(NSString *token) {
     s.syncState.xsrfToken = token;
   }];
@@ -132,24 +139,84 @@ REGISTER_COMMAND_NAME(@"sync")
 
   s.syncState.session = [authURLSession session];
   s.syncState.daemonConn = daemonConn;
+  s.isDaemon = [arguments containsObject:@"--daemon"];
 
-  if ([arguments containsObject:@"singleevent"]) {
-    NSUInteger idx = [arguments indexOfObject:@"singleevent"] + 1;
-    if (idx >= arguments.count) {
-      LOGI(@"singleevent takes an argument");
-      exit(1);
-    }
-
-    NSString *obj = arguments[idx];
-    if (obj.length != 64) {
-      LOGI(@"singleevent passed without SHA-256 as next argument");
-      exit(1);
-    }
-    return [s eventUploadSingleEvent:obj];
+  if (s.isDaemon) {
+    [s syncd];
   } else {
-    return [s preflight];
+    [s preflight];
   }
 }
+
+#pragma mark daemon methods
+
+- (void)syncd {
+  dispatch_semaphore_t sema = dispatch_semaphore_create(0);
+
+  // Create listener for return connection from daemon.
+  NSXPCListener *listener = [NSXPCListener anonymousListener];
+  self.listener = [[SNTXPCConnection alloc] initServerWithListener:listener];
+  self.listener.exportedInterface = [SNTXPCSyncdInterface syncdInterface];
+  self.listener.exportedObject = self;
+  self.listener.acceptedHandler = ^{
+    LOGD(@"santad <--> santactl connections established");
+    dispatch_semaphore_signal(sema);
+  };
+  self.listener.invalidationHandler = ^{
+    // If santad is unloaded kill santactl
+    LOGD(@"exiting");
+    exit(0);
+  };
+  [self.listener resume];
+
+  // Tell daemon to connect back to the above listener.
+  [[self.syncState.daemonConn remoteObjectProxy] setSyncdListener:listener.endpoint];
+
+  // Now wait for the connection to come in.
+  if (dispatch_semaphore_wait(sema, dispatch_time(DISPATCH_TIME_NOW, 5 * NSEC_PER_SEC))) {
+    [self performSelectorInBackground:@selector(syncd) withObject:nil];
+  }
+
+  self.syncTimer = [self createSyncTimer];
+  [self rescheduleSyncSecondsFromNow:30];
+}
+
+- (dispatch_source_t)createSyncTimer {
+  dispatch_source_t syncTimerQ = dispatch_source_create(
+      DISPATCH_SOURCE_TYPE_TIMER, 0, 0,
+      dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_BACKGROUND, 0));
+
+  dispatch_source_set_event_handler(syncTimerQ, ^{
+    [self rescheduleSyncSecondsFromNow:600];
+
+    if (![[SNTConfigurator configurator] syncBaseURL]) return;
+    [[SNTConfigurator configurator] setSyncBackOff:NO];
+    [self preflight];
+  });
+  
+  dispatch_resume(syncTimerQ);
+  
+  return syncTimerQ;
+}
+
+#pragma mark SNTSyncdXPC protocol methods
+
+- (void)postEventToSyncServer:(SNTStoredEvent *)event {
+  SNTCommandSyncEventUpload *p = [[SNTCommandSyncEventUpload alloc] initWithState:self.syncState];
+  if (event && [p uploadEvents:@[event]]) {
+    LOGD(@"Event upload complete");
+  } else {
+    LOGE(@"Event upload failed");
+  }
+}
+
+- (void)rescheduleSyncSecondsFromNow:(uint64_t)seconds {
+  uint64_t interval = seconds * NSEC_PER_SEC;
+  uint64_t leeway = (seconds * 0.05) * NSEC_PER_SEC;
+  dispatch_source_set_timer(self.syncTimer, dispatch_walltime(NULL, interval), interval, leeway);
+}
+
+#pragma mark sync methods
 
 - (void)preflight {
   SNTCommandSyncPreflight *p = [[SNTCommandSyncPreflight alloc] initWithState:self.syncState];
@@ -162,7 +229,7 @@ REGISTER_COMMAND_NAME(@"sync")
     }
   } else {
     LOGE(@"Preflight failed, aborting run");
-    exit(1);
+    if (!self.isDaemon) exit(1);
   }
 }
 
@@ -183,18 +250,7 @@ REGISTER_COMMAND_NAME(@"sync")
     return [self ruleDownload];
   } else {
     LOGE(@"Event upload failed, aborting run");
-    exit(1);
-  }
-}
-
-- (void)eventUploadSingleEvent:(NSString *)sha256 {
-  SNTCommandSyncEventUpload *p = [[SNTCommandSyncEventUpload alloc] initWithState:self.syncState];
-  if ([p syncSingleEventWithSHA256:sha256]) {
-    LOGD(@"Event upload complete");
-    exit(0);
-  } else {
-    LOGE(@"Event upload failed");
-    exit(1);
+    if (!self.isDaemon) exit(1);
   }
 }
 
@@ -208,7 +264,7 @@ REGISTER_COMMAND_NAME(@"sync")
     return [self postflight];
   } else {
     LOGE(@"Rule download failed, aborting run");
-    exit(1);
+    if (!self.isDaemon) exit(1);
   }
 }
 
@@ -227,10 +283,10 @@ REGISTER_COMMAND_NAME(@"sync")
   if ([p sync]) {
     LOGD(@"Postflight complete");
     LOGI(@"Sync completed successfully");
-    exit(0);
+    if (!self.isDaemon) exit(0);
   } else {
     LOGE(@"Postflight failed");
-    exit(1);
+    if (!self.isDaemon) exit(1);
   }
 }
 

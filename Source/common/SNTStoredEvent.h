@@ -20,7 +20,7 @@
 @interface SNTStoredEvent : NSObject<NSSecureCoding>
 
 ///
-///  An index for this event, empty unless the event came from the database.
+///  An index for this event, randomly generated during initialization.
 ///
 @property NSNumber *idx;
 

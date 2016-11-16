@@ -21,6 +21,7 @@
 @class SNTEventTable;
 @class SNTNotificationQueue;
 @class SNTRuleTable;
+@class SNTSyncdQueue;
 
 ///
 ///  SNTExecutionController is responsible for handling binary execution requests:
@@ -36,6 +37,7 @@
                             ruleTable:(SNTRuleTable *)ruleTable
                            eventTable:(SNTEventTable *)eventTable
                         notifierQueue:(SNTNotificationQueue *)notifierQueue
+                           syncdQueue:(SNTSyncdQueue *)syncdQueue
                              eventLog:(SNTEventLog *)eventLog;
 
 ///

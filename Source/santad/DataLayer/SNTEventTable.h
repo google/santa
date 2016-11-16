@@ -45,15 +45,6 @@
 - (NSUInteger)pendingEventsCount;
 
 ///
-///  Retrieve an event from the database with a given SHA-256. If multiple events
-///  exist for the same SHA-256, just the first is returned.
-///
-///  @param sha256 a SHA-256 of the binary to return an event for.
-///  @return a single SNTStoredEvent.
-///
-- (SNTStoredEvent *)pendingEventForSHA256:(NSString *)sha256;
-
-///
 ///  Delete a single event from the database using its index.
 ///
 ///  @param index the event ID.

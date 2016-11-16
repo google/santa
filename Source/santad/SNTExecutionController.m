@@ -36,6 +36,7 @@
 #import "SNTRule.h"
 #import "SNTRuleTable.h"
 #import "SNTStoredEvent.h"
+#import "SNTSyncdQueue.h"
 
 @interface SNTExecutionController ()
 @property SNTDriverManager *driverManager;
@@ -44,8 +45,8 @@
 @property SNTNotificationQueue *notifierQueue;
 @property SNTPolicyProcessor *policyProcessor;
 @property SNTRuleTable *ruleTable;
+@property SNTSyncdQueue *syncdQueue;
 
-@property NSCache<NSString *, NSDate *> *uploadBackoff;
 @property dispatch_queue_t eventQueue;
 @end
 
@@ -57,6 +58,7 @@
                             ruleTable:(SNTRuleTable *)ruleTable
                            eventTable:(SNTEventTable *)eventTable
                         notifierQueue:(SNTNotificationQueue *)notifierQueue
+                           syncdQueue:(SNTSyncdQueue *)syncdQueue
                              eventLog:(SNTEventLog *)eventLog {
   self = [super init];
   if (self) {
@@ -64,11 +66,10 @@
     _ruleTable = ruleTable;
     _eventTable = eventTable;
     _notifierQueue = notifierQueue;
+    _syncdQueue = syncdQueue;
     _eventLog = eventLog;
     _policyProcessor = [[SNTPolicyProcessor alloc] initWithRuleTable:_ruleTable];
 
-    _uploadBackoff = [[NSCache alloc] init];
-    _uploadBackoff.countLimit = 128;
     _eventQueue = dispatch_queue_create("com.google.santad.event_upload", DISPATCH_QUEUE_SERIAL);
 
     // This establishes the XPC connection between libsecurity and syspolicyd.
@@ -245,7 +246,7 @@
 }
 
 /**
-  This runs `santactl sync` for the event that was just saved, so that the user
+  This sends the event that was just saved to santactl for immediate upload, so that the user
   has something to vote in straight away.
 
   This method is always called on a serial queue to keep this low-priority method 
@@ -259,24 +260,7 @@
       ![[SNTConfigurator configurator] syncBaseURL] ||
       [[SNTConfigurator configurator] syncBackOff]) return;
 
-  // The event upload is skipped if an event upload has been initiated for it in the
-  // last 10 minutes.
-  NSDate *backoff = [self.uploadBackoff objectForKey:event.fileSHA256];
-
-  NSDate *now = [NSDate date];
-  if (([now timeIntervalSince1970] - [backoff timeIntervalSince1970]) < 600) return;
-
-  [self.uploadBackoff setObject:now forKey:event.fileSHA256];
-
-  if (fork() == 0) {
-    // Ensure we have no privileges
-    if (!DropRootPrivileges()) {
-      _exit(EPERM);
-    }
-
-    _exit(execl(kSantaCtlPath, kSantaCtlPath, "sync", "--syslog",
-                "singleevent", [event.fileSHA256 UTF8String], NULL));
-  }
+  [self.syncdQueue addEvent:event];
 }
 
 - (void)printMessage:(NSString *)msg toTTYForPID:(pid_t)pid {

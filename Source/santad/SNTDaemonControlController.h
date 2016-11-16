@@ -16,6 +16,7 @@
 
 @class SNTDriverManager;
 @class SNTNotificationQueue;
+@class SNTSyncdQueue;
 
 ///
 ///  SNTDaemonControlController handles all of the RPCs from santactl
@@ -24,5 +25,6 @@
 
 @property SNTDriverManager *driverManager;
 @property SNTNotificationQueue *notQueue;
+@property SNTSyncdQueue *syncdQueue;
 
 @end

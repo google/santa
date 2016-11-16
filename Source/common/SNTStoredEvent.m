@@ -57,6 +57,14 @@
   ENCODE(self.quarantineAgentBundleID, @"quarantineAgentBundleID");
 }
 
+- (instancetype)init {
+  self = [super init];
+  if (self) {
+    _idx = @(arc4random());
+  }
+  return self;
+}
+
 - (instancetype)initWithCoder:(NSCoder *)decoder {
   self = [super init];
   if (self) {

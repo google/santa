@@ -1,4 +1,4 @@
-/// Copyright 2015 Google Inc. All rights reserved.
+/// Copyright 2016 Google Inc. All rights reserved.
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -12,12 +12,22 @@
 ///    See the License for the specific language governing permissions and
 ///    limitations under the License.
 
-#import "SNTCommandSyncStage.h"
+#import "SNTCommonEnums.h"
 
-@interface SNTCommandSyncEventUpload : SNTCommandSyncStage
+@class SNTStoredEvent;
 
-- (BOOL)uploadEvents:(NSArray *)events;
+/// Protocol implemented by santactl and utilized by santad
+@protocol SNTSyncdXPC
+- (void)postEventToSyncServer:(SNTStoredEvent *)event;
+- (void)rescheduleSyncSecondsFromNow:(uint64_t)seconds;
+@end
 
-- (BOOL)syncBundleEvents;
+@interface SNTXPCSyncdInterface : NSObject
+
+///
+///  Returns an initialized NSXPCInterface for the SNTSyncdXPC protocol.
+///  Ensures any methods that accept custom classes as arguments are set-up before returning
+///
++ (NSXPCInterface *)syncdInterface;
 
 @end
