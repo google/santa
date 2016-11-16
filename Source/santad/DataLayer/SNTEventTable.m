@@ -15,7 +15,6 @@
 #import "SNTEventTable.h"
 
 #import "MOLCertificate.h"
-#import "SNTLogging.h"
 #import "SNTStoredEvent.h"
 
 @implementation SNTEventTable
@@ -146,7 +145,7 @@
 
   @try {
     event = [NSKeyedUnarchiver unarchiveObjectWithData:eventData];
-    event.idx = event.idx ?: @([rs intForColumn:@"idx"]);
+    event.idx = event.idx ?: @((uint32_t)[rs intForColumn:@"idx"]);
   } @catch (NSException *exception) {
   }
 

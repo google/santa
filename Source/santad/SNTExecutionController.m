@@ -169,7 +169,6 @@
     se.quarantineAgentBundleID = binInfo.quarantineAgentBundleID;
 
     dispatch_async(_eventQueue, ^{
-      se.idx = @(arc4random());
       [_eventTable addStoredEvent:se];
     });
 
