@@ -229,7 +229,7 @@ REGISTER_COMMAND_NAME(@"sync")
     }
   } else {
     LOGE(@"Preflight failed, aborting run");
-    exit(1);
+    if (!self.isDaemon) exit(1);
   }
 }
 
