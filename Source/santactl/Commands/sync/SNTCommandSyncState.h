@@ -32,6 +32,9 @@
 /// An XSRF token to send in the headers with each request.
 @property NSString *xsrfToken;
 
+/// A FCM token to subscribe to push notifications.
+@property(copy) NSString *FCMToken;
+
 /// Machine identifier and owner.
 @property(copy) NSString *machineID;
 @property(copy) NSString *machineOwner;
@@ -55,5 +58,11 @@
 
 /// Rules downloaded from server.
 @property NSMutableArray *downloadedRules;
+
+/// Returns YES if the santactl session is running as a daemon, returns NO otherwise.
+@property BOOL daemon;
+
+/// Returns YES if the session is a stand-alone rule sync, returns NO otherwise.
+@property BOOL ruleSyncOnly;
 
 @end

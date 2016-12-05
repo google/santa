@@ -20,6 +20,7 @@
 @protocol SNTSyncdXPC
 - (void)postEventToSyncServer:(SNTStoredEvent *)event;
 - (void)rescheduleSyncSecondsFromNow:(uint64_t)seconds;
+- (void)isFCMListening:(void (^)(BOOL))reply;
 @end
 
 @interface SNTXPCSyncdInterface : NSObject

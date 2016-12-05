@@ -60,6 +60,7 @@ static NSString *const kClientAuthCertificateCNKey = @"ClientAuthCertificateCN";
 static NSString *const kClientAuthCertificateIssuerKey = @"ClientAuthCertificateIssuerCN";
 static NSString *const kServerAuthRootsDataKey = @"ServerAuthRootsData";
 static NSString *const kServerAuthRootsFileKey = @"ServerAuthRootsFile";
+static NSString *const kPushNotificationGlobalRuleID = @"PushNotificationGlobalRuleID";
 
 static NSString *const kMachineOwnerKey = @"MachineOwner";
 static NSString *const kMachineIDKey = @"MachineID";
@@ -275,6 +276,10 @@ static NSString *const kMachineIDPlistKeyKey = @"MachineIDKey";
 - (void)setSyncCleanRequired:(BOOL)syncCleanRequired {
   self.configData[kSyncCleanRequired] = @(syncCleanRequired);
   [self saveConfigToDisk];
+}
+
+- (NSString *)pushNotificationGlobalRuleID {
+  return self.configData[kPushNotificationGlobalRuleID];
 }
 
 - (NSString *)machineOwner {

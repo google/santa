@@ -18,6 +18,7 @@ target :santactl do
   pod 'MOLAuthenticatingURLSession'
   pod 'MOLCertificate'
   pod 'MOLCodesignChecker'
+  pod 'MOLFCMClient'
 end
 
 target :LogicTests do

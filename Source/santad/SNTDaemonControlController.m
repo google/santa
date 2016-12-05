@@ -203,4 +203,15 @@ double watchdogRAMPeak = 0;
   reply();
 }
 
+- (void)pushNotifications:(void (^)(BOOL))reply {
+  [self.syncdQueue.syncdConnection.remoteObjectProxy isFCMListening:^(BOOL response) {
+    reply(response);
+  }];
+}
+
+- (void)postRuleSyncNotification:(uint64_t)ruleCount reply:(void (^)())reply {
+  [[self.notQueue.notifierConnection remoteObjectProxy] postRuleSyncNotification:ruleCount];
+  reply();
+}
+
 @end

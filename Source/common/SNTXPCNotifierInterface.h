@@ -20,6 +20,7 @@
 @protocol SNTNotifierXPC
 - (void)postBlockNotification:(SNTStoredEvent *)event withCustomMessage:(NSString *)message;
 - (void)postClientModeNotification:(SNTClientMode)clientmode;
+- (void)postRuleSyncNotification:(uint64_t)ruleCount;
 @end
 
 @interface SNTXPCNotifierInterface : NSObject

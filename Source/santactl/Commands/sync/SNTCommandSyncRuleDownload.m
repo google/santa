@@ -68,6 +68,12 @@
   }
 
   LOGI(@"Added %lu rules", self.syncState.downloadedRules.count);
+
+  if (self.syncState.ruleSyncOnly) {
+    [[self.daemonConn remoteObjectProxy]
+        postRuleSyncNotification:self.syncState.downloadedRules.count reply:^{}];
+  }
+
   return YES;
 }
 
