@@ -88,7 +88,7 @@
 - (void)setSyncdListener:(NSXPCListenerEndpoint *)listener;
 - (void)setNextSyncInterval:(uint64_t)seconds reply:(void (^)())reply;
 - (void)pushNotifications:(void (^)(BOOL))reply;
-- (void)postRuleSyncNotification:(uint64_t)ruleCount reply:(void (^)())reply;
+- (void)postRuleSyncNotificationWithCustomMessage:(NSString *)message reply:(void (^)())reply;
 
 @end
 

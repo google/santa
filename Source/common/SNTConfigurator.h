@@ -138,11 +138,6 @@ extern NSString *const kDefaultConfigFilePath;
 @property BOOL syncBackOff;
 
 ///
-///  Global rule identifier.
-///
-@property(readonly, nonatomic) NSString *pushNotificationGlobalRuleID;
-
-///
 ///  The machine owner.
 ///
 @property(readonly, nonatomic) NSString *machineOwner;

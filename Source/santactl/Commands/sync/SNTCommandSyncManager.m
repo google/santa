@@ -114,6 +114,7 @@ const uint64_t kGlobalRuleSyncLeeway = 600;
 
   WEAKIFY(self);
 
+  NSString *FCMBroadcastTopic = syncState.FCMBroadcastTopic;
   [self.FCMClient disconnect];
   self.FCMClient = [[MOLFCMClient alloc] initWithFCMToken:syncState.FCMToken
                                      sessionConfiguration:syncState.session.configuration.copy
@@ -122,7 +123,7 @@ const uint64_t kGlobalRuleSyncLeeway = 600;
       STRONGIFY(self);
       LOGD(@"%@", message);
       [self.FCMClient acknowledgeMessage:message];
-      [self processFCMMessage:message];
+      [self processFCMMessage:message withBroadcastTopic:FCMBroadcastTopic];
   }];
 
   self.FCMClient.connectionErrorHandler = ^(NSError *error) {
@@ -140,7 +141,7 @@ const uint64_t kGlobalRuleSyncLeeway = 600;
   [self.FCMClient connect];
 }
 
-- (void)processFCMMessage:(NSDictionary *)FCMmessage {
+- (void)processFCMMessage:(NSDictionary *)FCMmessage withBroadcastTopic:(NSString *)broadcastTopic {
   NSData *entryData;
 
   // Sort through the entries in the FCM message.
@@ -175,9 +176,8 @@ const uint64_t kGlobalRuleSyncLeeway = 600;
   if ([action isEqualToString:kFullSync]) {
     [self fullSync];
   } else if ([action isEqualToString:kRuleSync]) {
-    NSString *messageSender = [[SNTConfigurator configurator] pushNotificationGlobalRuleID];
-    if (messageSender && [messageSender isEqualToString:FCMmessage[@"from"]]) {
-      LOGD(@"%@ is from %@, staggering rule download", action, messageSender);
+    if (broadcastTopic && [broadcastTopic isEqualToString:FCMmessage[@"from"]]) {
+      LOGD(@"%@ is from %@, staggering rule download", action, broadcastTopic);
       self.globalRuleSync = YES;
       [self ruleSyncSecondsFromNow:arc4random_uniform(kGlobalRuleSyncLeeway)];
     } else {

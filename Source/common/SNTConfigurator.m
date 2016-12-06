@@ -278,10 +278,6 @@ static NSString *const kMachineIDPlistKeyKey = @"MachineIDKey";
   [self saveConfigToDisk];
 }
 
-- (NSString *)pushNotificationGlobalRuleID {
-  return self.configData[kPushNotificationGlobalRuleID];
-}
-
 - (NSString *)machineOwner {
   NSString *machineOwner;
 

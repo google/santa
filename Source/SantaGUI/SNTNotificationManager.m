@@ -135,12 +135,11 @@ static NSString * const silencedNotificationsKey = @"SilencedNotifications";
   });
 }
 
-- (void)postRuleSyncNotification:(uint64_t)ruleCount {
+- (void)postRuleSyncNotificationWithCustomMessage:(NSString *)message {
   NSUserNotification *un = [[NSUserNotification alloc] init];
   un.title = @"Santa";
   un.hasActionButton = NO;
-  un.informativeText =
-      [NSString stringWithFormat:@"%llu rule%@ synced", ruleCount, (ruleCount > 1) ? @"s" : @""];
+  un.informativeText = message ?: @"Requested rules synced";
   [[NSUserNotificationCenter defaultUserNotificationCenter] deliverNotification:un];
 }
 

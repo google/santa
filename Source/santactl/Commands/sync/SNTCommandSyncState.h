@@ -35,6 +35,9 @@
 /// A FCM token to subscribe to push notifications.
 @property(copy) NSString *FCMToken;
 
+/// A FCM broadcast topic. Used to determine origins of a fcm message.
+@property(copy) NSString *FCMBroadcastTopic;
+
 /// Machine identifier and owner.
 @property(copy) NSString *machineID;
 @property(copy) NSString *machineOwner;

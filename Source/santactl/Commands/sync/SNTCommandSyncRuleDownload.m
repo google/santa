@@ -70,8 +70,10 @@
   LOGI(@"Added %lu rules", self.syncState.downloadedRules.count);
 
   if (self.syncState.ruleSyncOnly) {
+    // TODO:(tburgin) Have the sync server send down the sha256 and name of the binary in the FCM
+    // message. Match those items with downloaded rules, making use of the custom message.
     [[self.daemonConn remoteObjectProxy]
-        postRuleSyncNotification:self.syncState.downloadedRules.count reply:^{}];
+        postRuleSyncNotificationWithCustomMessage:nil reply:^{}];
   }
 
   return YES;

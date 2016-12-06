@@ -209,8 +209,9 @@ double watchdogRAMPeak = 0;
   }];
 }
 
-- (void)postRuleSyncNotification:(uint64_t)ruleCount reply:(void (^)())reply {
-  [[self.notQueue.notifierConnection remoteObjectProxy] postRuleSyncNotification:ruleCount];
+- (void)postRuleSyncNotificationWithCustomMessage:(NSString *)message reply:(void (^)())reply {
+  [[self.notQueue.notifierConnection remoteObjectProxy]
+      postRuleSyncNotificationWithCustomMessage:message];
   reply();
 }
 
