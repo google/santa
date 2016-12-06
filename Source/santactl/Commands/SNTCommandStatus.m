@@ -105,6 +105,12 @@ REGISTER_COMMAND_NAME(@"status")
   NSDate *lastSyncSuccess = [[SNTConfigurator configurator] syncLastSuccess];
   NSString *lastSyncSuccessStr = [dateFormatter stringFromDate:lastSyncSuccess] ?: @"Never";
   BOOL syncCleanReqd = [[SNTConfigurator configurator] syncCleanRequired];
+  __block BOOL pushNotifications;
+  dispatch_group_enter(group);
+  [[daemonConn remoteObjectProxy] pushNotifications:^(BOOL response) {
+    pushNotifications = response;
+    dispatch_group_leave(group);
+  }];
 
   // Wait a maximum of 5s for stats collected from daemon to arrive.
   if (dispatch_group_wait(group, dispatch_time(DISPATCH_TIME_NOW, NSEC_PER_SEC * 5))) {
@@ -132,7 +138,8 @@ REGISTER_COMMAND_NAME(@"status")
       @"sync" : @{
         @"server" : syncURLStr ?: @"null",
         @"clean_required" : @(syncCleanReqd),
-        @"last_successful" : lastSyncSuccessStr ?: @"null"
+        @"last_successful" : lastSyncSuccessStr ?: @"null",
+        @"push_notifications" : pushNotifications ? @"true" : @"false"
       },
     };
     NSData *statsData = [NSJSONSerialization dataWithJSONObject:stats
@@ -158,6 +165,7 @@ REGISTER_COMMAND_NAME(@"status")
       printf("  %-22s | %s\n", "Sync Server", [syncURLStr UTF8String]);
       printf("  %-22s | %s\n", "Clean Sync Required", (syncCleanReqd ? "Yes" : "No"));
       printf("  %-22s | %s\n", "Last Successful Sync", [lastSyncSuccessStr UTF8String]);
+      printf("  %-22s | %s\n", "Push Notifications", (pushNotifications ? "Yes" : "No"));
     }
   }
 

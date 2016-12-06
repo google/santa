@@ -31,6 +31,8 @@ extern NSString *const kWhitelistRegex;
 extern NSString *const kBlacklistRegex;
 extern NSString *const kBinaryRuleCount;
 extern NSString *const kCertificateRuleCount;
+extern NSString *const kFCMToken;
+extern NSString *const kFCMBroadcastTopic;
 
 extern NSString *const kEvents;
 extern NSString *const kFileSHA256;
@@ -88,3 +90,8 @@ extern NSString *const kRuleCustomMsg;
 extern NSString *const kCursor;
 
 extern NSString *const kBackoffInterval;
+
+extern NSString *const kFullSync;
+extern NSString *const kRuleSync;
+extern NSString *const kConfigSync;
+extern NSString *const kLogSync;

@@ -203,4 +203,16 @@ double watchdogRAMPeak = 0;
   reply();
 }
 
+- (void)pushNotifications:(void (^)(BOOL))reply {
+  [self.syncdQueue.syncdConnection.remoteObjectProxy isFCMListening:^(BOOL response) {
+    reply(response);
+  }];
+}
+
+- (void)postRuleSyncNotificationWithCustomMessage:(NSString *)message reply:(void (^)())reply {
+  [[self.notQueue.notifierConnection remoteObjectProxy]
+      postRuleSyncNotificationWithCustomMessage:message];
+  reply();
+}
+
 @end

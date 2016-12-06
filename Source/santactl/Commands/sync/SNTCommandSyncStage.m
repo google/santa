@@ -26,6 +26,7 @@
 @property(readwrite) NSURLSession *urlSession;
 @property(readwrite) SNTCommandSyncState *syncState;
 @property(readwrite) SNTXPCConnection *daemonConn;
+@property BOOL xsrfFetched;
 
 @end
 
@@ -170,9 +171,9 @@
 }
 
 - (BOOL)fetchXSRFToken {
-  __block BOOL success = NO;
-  static dispatch_once_t onceToken;
-  dispatch_once(&onceToken, ^{  // only fetch token once per session
+  BOOL success = NO;
+  if (!self.xsrfFetched) {  // only fetch token once per session
+    self.xsrfFetched = YES;
     NSString *stageName = [@"xsrf" stringByAppendingFormat:@"/%@", self.syncState.machineID];
     NSURL *u = [NSURL URLWithString:stageName relativeToURL:self.syncState.syncBaseURL];
     NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:u];
@@ -188,7 +189,7 @@
     } else {
       LOGD(@"Failed to retrieve XSRF token");
     }
-  });
+  };
   return success;
 }
 

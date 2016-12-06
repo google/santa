@@ -182,6 +182,7 @@
 		C73A4B9A1DC10753007B6789 /* SNTSyncdQueue.m in Sources */ = {isa = PBXBuildFile; fileRef = C7FB56FF1DBFC213004E14EF /* SNTSyncdQueue.m */; };
 		C73A4B9B1DC10758007B6789 /* SNTXPCSyncdInterface.m in Sources */ = {isa = PBXBuildFile; fileRef = C7FB56F51DBFB480004E14EF /* SNTXPCSyncdInterface.m */; };
 		C76614EC1D142D3C00D150C1 /* SNTCommandCheckCache.m in Sources */ = {isa = PBXBuildFile; fileRef = C76614EB1D142D3C00D150C1 /* SNTCommandCheckCache.m */; };
+		C776A1071DEE160500A56616 /* SNTCommandSyncManager.m in Sources */ = {isa = PBXBuildFile; fileRef = C776A1061DEE160500A56616 /* SNTCommandSyncManager.m */; };
 		C795ED901D80A5BE007CFF42 /* SNTPolicyProcessor.m in Sources */ = {isa = PBXBuildFile; fileRef = C795ED8F1D80A5BE007CFF42 /* SNTPolicyProcessor.m */; };
 		C795ED911D80B66B007CFF42 /* SNTPolicyProcessor.m in Sources */ = {isa = PBXBuildFile; fileRef = C795ED8F1D80A5BE007CFF42 /* SNTPolicyProcessor.m */; };
 		C7FB56F61DBFB480004E14EF /* SNTXPCSyncdInterface.m in Sources */ = {isa = PBXBuildFile; fileRef = C7FB56F51DBFB480004E14EF /* SNTXPCSyncdInterface.m */; };
@@ -423,6 +424,8 @@
 		BE53E1EAE84D54E7FCB22FD5 /* libPods-santactl.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-santactl.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		C72E8D931D7F399900C86DD3 /* SNTCommandFileInfoTest.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SNTCommandFileInfoTest.m; sourceTree = "<group>"; };
 		C76614EB1D142D3C00D150C1 /* SNTCommandCheckCache.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SNTCommandCheckCache.m; sourceTree = "<group>"; };
+		C776A1051DEE160500A56616 /* SNTCommandSyncManager.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SNTCommandSyncManager.h; sourceTree = "<group>"; };
+		C776A1061DEE160500A56616 /* SNTCommandSyncManager.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SNTCommandSyncManager.m; sourceTree = "<group>"; };
 		C795ED8E1D80A5BE007CFF42 /* SNTPolicyProcessor.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SNTPolicyProcessor.h; sourceTree = "<group>"; };
 		C795ED8F1D80A5BE007CFF42 /* SNTPolicyProcessor.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SNTPolicyProcessor.m; sourceTree = "<group>"; };
 		C7FB56F41DBFB480004E14EF /* SNTXPCSyncdInterface.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SNTXPCSyncdInterface.h; sourceTree = "<group>"; };
@@ -579,6 +582,8 @@
 				0D41640419197AD7006A356A /* SNTCommandSyncEventUpload.m */,
 				0DC5D86F192160180078A5C0 /* SNTCommandSyncLogUpload.h */,
 				0DC5D870192160180078A5C0 /* SNTCommandSyncLogUpload.m */,
+				C776A1051DEE160500A56616 /* SNTCommandSyncManager.h */,
+				C776A1061DEE160500A56616 /* SNTCommandSyncManager.m */,
 				0D0A1EC4191AB9B000B8450F /* SNTCommandSyncPostflight.h */,
 				0D0A1EC5191AB9B000B8450F /* SNTCommandSyncPostflight.m */,
 				0DCD605A19117A90006B445C /* SNTCommandSyncPreflight.h */,
@@ -1360,6 +1365,7 @@
 				0DCD605619115D17006B445C /* SNTXPCControlInterface.m in Sources */,
 				0DE50F6C19130358007B2B0C /* SNTStoredEvent.m in Sources */,
 				0D9184B81CD2F32D0004E859 /* SNTCommandSyncStage.m in Sources */,
+				C776A1071DEE160500A56616 /* SNTCommandSyncManager.m in Sources */,
 				0D35BDC418FDA5D100921A21 /* SNTXPCConnection.m in Sources */,
 				0DCD605C19117A90006B445C /* SNTCommandSyncPreflight.m in Sources */,
 				0D41640519197AD7006A356A /* SNTCommandSyncEventUpload.m in Sources */,

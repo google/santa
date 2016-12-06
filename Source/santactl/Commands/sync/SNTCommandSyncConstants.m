@@ -33,6 +33,8 @@ NSString *const kWhitelistRegex = @"whitelist_regex";
 NSString *const kBlacklistRegex = @"blacklist_regex";
 NSString *const kBinaryRuleCount = @"binary_rule_count";
 NSString *const kCertificateRuleCount = @"certificate_rule_count";
+NSString *const kFCMToken = @"fcm_token";
+NSString *const kFCMBroadcastTopic = @"fcm_broadcast_topic";
 
 NSString *const kEvents = @"events";
 NSString *const kFileSHA256 = @"file_sha256";
@@ -90,3 +92,8 @@ NSString *const kRuleCustomMsg = @"custom_msg";
 NSString *const kCursor = @"cursor";
 
 NSString *const kBackoffInterval = @"backoff";
+
+NSString *const kFullSync = @"full_sync";
+NSString *const kRuleSync = @"rule_sync";
+NSString *const kConfigSync = @"config_sync";
+NSString *const kLogSync = @"log_sync";
