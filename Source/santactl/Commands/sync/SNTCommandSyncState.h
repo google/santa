@@ -68,4 +68,7 @@
 /// Returns YES if the session is a stand-alone rule sync, returns NO otherwise.
 @property BOOL ruleSyncOnly;
 
+/// Reference to the sync manager's ruleSyncCache. Used to lookup binary names for notifications.
+@property(weak) NSCache *ruleSyncCache;
+
 @end
