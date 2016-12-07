@@ -70,10 +70,15 @@
   LOGI(@"Added %lu rules", self.syncState.downloadedRules.count);
 
   if (self.syncState.ruleSyncOnly) {
-    // TODO:(tburgin) Have the sync server send down the sha256 and name of the binary in the FCM
-    // message. Match those items with downloaded rules, making use of the custom message.
+    NSString *fileName;
+    for (SNTRule *r in self.syncState.downloadedRules) {
+      fileName = [[self.syncState.ruleSyncCache objectForKey:r.shasum] copy];
+      [self.syncState.ruleSyncCache removeObjectForKey:r.shasum];
+      if (fileName) break;
+    }
+    NSString *message = fileName ? [NSString stringWithFormat:@"Rule added for %@", fileName] : nil;
     [[self.daemonConn remoteObjectProxy]
-        postRuleSyncNotificationWithCustomMessage:nil reply:^{}];
+        postRuleSyncNotificationWithCustomMessage:message reply:^{}];
   }
 
   return YES;

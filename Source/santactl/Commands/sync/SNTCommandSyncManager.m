@@ -40,6 +40,7 @@ const uint64_t kGlobalRuleSyncLeeway = 600;
 @property(nonatomic) dispatch_source_t fullSyncTimer;
 @property(nonatomic) dispatch_source_t ruleSyncTimer;
 @property(nonatomic) NSCache *dispatchLock;
+@property(nonatomic) NSCache *ruleSyncCache;
 @property MOLFCMClient *FCMClient;
 @property(nonatomic) SNTXPCConnection *daemonConn;
 @property BOOL globalRuleSync;
@@ -68,6 +69,7 @@ const uint64_t kGlobalRuleSyncLeeway = 600;
       [self lockAction:kRuleSync];
       SNTCommandSyncState *syncState = [self createSyncState];
       syncState.ruleSyncOnly = !self.globalRuleSync;
+      syncState.ruleSyncCache = self.ruleSyncCache;
       SNTCommandSyncRuleDownload *p = [[SNTCommandSyncRuleDownload alloc] initWithState:syncState];
       if ([p sync]) {
         LOGD(@"Rule download complete");
@@ -78,6 +80,7 @@ const uint64_t kGlobalRuleSyncLeeway = 600;
       [self unlockAction:kRuleSync];
     }];
     _dispatchLock = [[NSCache alloc] init];
+    _ruleSyncCache = [[NSCache alloc] init];
   }
   return self;
 }
@@ -164,6 +167,14 @@ const uint64_t kGlobalRuleSyncLeeway = 600;
   if (!actionMessage) {
     LOGD(@"Unable to parse push notification message value: %@", error);
     return;
+  }
+
+  // Store the file name and hash in a cache. When the rule is actually added, use the cache
+  // to build a user notification.
+  NSString *fileHash = actionMessage[@"file_hash"];
+  NSString *fileName = actionMessage[@"file_name"];
+  if (fileName && fileHash) {
+    [self.ruleSyncCache setObject:fileName forKey:fileHash];
   }
 
   NSString *action = actionMessage[@"action"];
