@@ -35,9 +35,6 @@
 /// A FCM token to subscribe to push notifications.
 @property(copy) NSString *FCMToken;
 
-/// A FCM broadcast topic. Used to determine origins of a fcm message.
-@property(copy) NSString *FCMBroadcastTopic;
-
 /// Machine identifier and owner.
 @property(copy) NSString *machineID;
 @property(copy) NSString *machineOwner;
@@ -65,8 +62,8 @@
 /// Returns YES if the santactl session is running as a daemon, returns NO otherwise.
 @property BOOL daemon;
 
-/// Returns YES if the session is a stand-alone rule sync, returns NO otherwise.
-@property BOOL ruleSyncOnly;
+/// Returns YES if the session is targeted for this machine, returns NO otherwise.
+@property BOOL targetedRuleSync;
 
 /// Reference to the sync manager's ruleSyncCache. Used to lookup binary names for notifications.
 @property(weak) NSCache *ruleSyncCache;

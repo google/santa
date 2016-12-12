@@ -69,7 +69,7 @@
 
   LOGI(@"Added %lu rules", self.syncState.downloadedRules.count);
 
-  if (self.syncState.ruleSyncOnly) {
+  if (self.syncState.targetedRuleSync) {
     NSString *fileName;
     for (SNTRule *r in self.syncState.downloadedRules) {
       fileName = [[self.syncState.ruleSyncCache objectForKey:r.shasum] copy];
