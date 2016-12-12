@@ -75,7 +75,6 @@
   if (!resp) return NO;
 
   self.syncState.FCMToken = resp[kFCMToken];
-  self.syncState.FCMBroadcastTopic = resp[kFCMBroadcastTopic];
 
   self.syncState.eventBatchSize = [resp[kBatchSize] intValue] ?: 50;
 

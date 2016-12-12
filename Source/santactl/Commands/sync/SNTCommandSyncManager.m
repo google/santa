@@ -43,7 +43,7 @@ const uint64_t kGlobalRuleSyncLeeway = 600;
 @property(nonatomic) NSCache *ruleSyncCache;
 @property MOLFCMClient *FCMClient;
 @property(nonatomic) SNTXPCConnection *daemonConn;
-@property BOOL globalRuleSync;
+@property BOOL targetedRuleSync;
 @end
 
 @implementation SNTCommandSyncManager
@@ -68,7 +68,7 @@ const uint64_t kGlobalRuleSyncLeeway = 600;
       if (![[SNTConfigurator configurator] syncBaseURL]) return;
       [self lockAction:kRuleSync];
       SNTCommandSyncState *syncState = [self createSyncState];
-      syncState.ruleSyncOnly = !self.globalRuleSync;
+      syncState.targetedRuleSync = self.targetedRuleSync;
       syncState.ruleSyncCache = self.ruleSyncCache;
       SNTCommandSyncRuleDownload *p = [[SNTCommandSyncRuleDownload alloc] initWithState:syncState];
       if ([p sync]) {
@@ -76,7 +76,7 @@ const uint64_t kGlobalRuleSyncLeeway = 600;
       } else {
         LOGE(@"Rule download failed");
       }
-      self.globalRuleSync = NO;
+      self.targetedRuleSync = NO;
       [self unlockAction:kRuleSync];
     }];
     _dispatchLock = [[NSCache alloc] init];
@@ -117,8 +117,8 @@ const uint64_t kGlobalRuleSyncLeeway = 600;
 
   WEAKIFY(self);
 
-  NSString *FCMBroadcastTopic = syncState.FCMBroadcastTopic;
   [self.FCMClient disconnect];
+  NSString *machineID = syncState.machineID;
   self.FCMClient = [[MOLFCMClient alloc] initWithFCMToken:syncState.FCMToken
                                      sessionConfiguration:syncState.session.configuration.copy
                                            messageHandler:^(NSDictionary *message) {
@@ -126,7 +126,7 @@ const uint64_t kGlobalRuleSyncLeeway = 600;
       STRONGIFY(self);
       LOGD(@"%@", message);
       [self.FCMClient acknowledgeMessage:message];
-      [self processFCMMessage:message withBroadcastTopic:FCMBroadcastTopic];
+      [self processFCMMessage:message withMachineID:machineID];
   }];
 
   self.FCMClient.connectionErrorHandler = ^(NSError *error) {
@@ -144,7 +144,7 @@ const uint64_t kGlobalRuleSyncLeeway = 600;
   [self.FCMClient connect];
 }
 
-- (void)processFCMMessage:(NSDictionary *)FCMmessage withBroadcastTopic:(NSString *)broadcastTopic {
+- (void)processFCMMessage:(NSDictionary *)FCMmessage withMachineID:(NSString *)machineID {
   NSData *entryData;
 
   // Sort through the entries in the FCM message.
@@ -187,12 +187,15 @@ const uint64_t kGlobalRuleSyncLeeway = 600;
   if ([action isEqualToString:kFullSync]) {
     [self fullSync];
   } else if ([action isEqualToString:kRuleSync]) {
-    if (broadcastTopic && [broadcastTopic isEqualToString:FCMmessage[@"from"]]) {
-      LOGD(@"%@ is from %@, staggering rule download", action, broadcastTopic);
-      self.globalRuleSync = YES;
-      [self ruleSyncSecondsFromNow:arc4random_uniform(kGlobalRuleSyncLeeway)];
-    } else {
+    NSString *targetMachineID = actionMessage[@"target_host_id"];
+    if (![targetMachineID isKindOfClass:[NSNull class]] &&
+        [targetMachineID.lowercaseString isEqualToString:machineID.lowercaseString]) {
+      self.targetedRuleSync = YES;
       [self ruleSync];
+    } else {
+      uint32_t delaySeconds = arc4random_uniform(kGlobalRuleSyncLeeway);
+      LOGD(@"Staggering rule download, %u second delay for this machine", delaySeconds);
+      [self ruleSyncSecondsFromNow:delaySeconds];
     }
   } else if ([action isEqualToString:kConfigSync]) {
     [self fullSync];
