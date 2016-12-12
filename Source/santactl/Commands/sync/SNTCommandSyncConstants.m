@@ -34,7 +34,6 @@ NSString *const kBlacklistRegex = @"blacklist_regex";
 NSString *const kBinaryRuleCount = @"binary_rule_count";
 NSString *const kCertificateRuleCount = @"certificate_rule_count";
 NSString *const kFCMToken = @"fcm_token";
-NSString *const kFCMBroadcastTopic = @"fcm_broadcast_topic";
 
 NSString *const kEvents = @"events";
 NSString *const kFileSHA256 = @"file_sha256";
