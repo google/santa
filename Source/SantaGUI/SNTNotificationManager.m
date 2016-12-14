@@ -139,7 +139,7 @@ static NSString * const silencedNotificationsKey = @"SilencedNotifications";
   NSUserNotification *un = [[NSUserNotification alloc] init];
   un.title = @"Santa";
   un.hasActionButton = NO;
-  un.informativeText = message ?: @"Requested rules synced";
+  un.informativeText = message ?: @"Requested application can now be run";
   [[NSUserNotificationCenter defaultUserNotificationCenter] deliverNotification:un];
 }
 

@@ -76,7 +76,7 @@
       [self.syncState.ruleSyncCache removeObjectForKey:r.shasum];
       if (fileName) break;
     }
-    NSString *message = fileName ? [NSString stringWithFormat:@"Rule added for %@", fileName] : nil;
+    NSString *message = fileName ? [NSString stringWithFormat:@"%@ can now be run", fileName] : nil;
     [[self.daemonConn remoteObjectProxy]
         postRuleSyncNotificationWithCustomMessage:message reply:^{}];
   }
