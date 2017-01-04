@@ -14,6 +14,8 @@
 
 #import "SNTCommandSyncManager.h"
 
+#import <SystemConfiguration/SystemConfiguration.h>
+
 #import <MOLAuthenticatingURLSession.h>
 #import <MOLFCMClient/MOLFCMClient.h>
 
@@ -36,7 +38,9 @@ const uint64_t kFullSyncInterval = 600;
 const uint64_t kFullSyncFCMInterval = 14400;
 const uint64_t kGlobalRuleSyncLeeway = 600;
 
-@interface SNTCommandSyncManager ()
+@interface SNTCommandSyncManager () {
+  SCNetworkReachabilityRef _reachability;
+}
 @property(nonatomic) dispatch_source_t fullSyncTimer;
 @property(nonatomic) dispatch_source_t ruleSyncTimer;
 @property(nonatomic) NSCache *dispatchLock;
@@ -44,7 +48,19 @@ const uint64_t kGlobalRuleSyncLeeway = 600;
 @property MOLFCMClient *FCMClient;
 @property(nonatomic) SNTXPCConnection *daemonConn;
 @property BOOL targetedRuleSync;
+@property(nonatomic) BOOL reachable;
 @end
+
+// Called when the network state changes
+static void reachabilityHandler(
+    SCNetworkReachabilityRef target, SCNetworkReachabilityFlags flags, void *info) {
+  SNTCommandSyncManager *commandSyncManager = (__bridge SNTCommandSyncManager *)info;
+  // Only call the setter when there is a change. This will filter out the redundant calls to this
+  // callback whenever the network interface states change.
+  if (commandSyncManager.reachable != (flags & kSCNetworkReachabilityFlagsReachable)) {
+    commandSyncManager.reachable = (flags & kSCNetworkReachabilityFlagsReachable);
+  }
+}
 
 @implementation SNTCommandSyncManager
 
@@ -246,6 +262,9 @@ const uint64_t kGlobalRuleSyncLeeway = 600;
   if ([p sync]) {
     LOGD(@"Preflight complete");
 
+    // Clean up reachability if it was started for a non-network error
+    [self stopReachability];
+
     // Start listening for push notifications with a full sync every kFullSyncFCMInterval or
     // revert to full syncing every kFullSyncInterval.
     if (syncState.daemon && syncState.FCMToken) {
@@ -263,8 +282,13 @@ const uint64_t kGlobalRuleSyncLeeway = 600;
       return [self eventUploadWithSyncState:syncState];
     }
   } else {
-    LOGE(@"Preflight failed, aborting run");
-    if (!syncState.daemon) exit(1);
+    if (!syncState.daemon) {
+      LOGE(@"Preflight failed, aborting run");
+      exit(1);
+    }
+    LOGE(@"Preflight failed, will try again once %@ is reachable",
+         [[SNTConfigurator configurator] syncBaseURL].absoluteString);
+    [self startReachability];
   }
 }
 
@@ -411,6 +435,41 @@ const uint64_t kGlobalRuleSyncLeeway = 600;
 
 - (BOOL)checkLockAction:(NSString *)action {
   return ([self.dispatchLock objectForKey:action] == nil);
+}
+
+#pragma mark reachability methods
+
+- (void)setReachable:(BOOL)reachable {
+  _reachable = reachable;
+  if (reachable) {
+    [self stopReachability];
+    [self fullSync];
+  }
+}
+
+// Start listening for network state changes on a background thread
+- (void)startReachability {
+  if (_reachability) return;
+  const char *nodename = [[SNTConfigurator configurator] syncBaseURL].absoluteString.UTF8String;
+  _reachability = SCNetworkReachabilityCreateWithName(kCFAllocatorDefault, nodename);
+  SCNetworkReachabilityContext context = {
+    .info = (__bridge void *)self
+  };
+  if (SCNetworkReachabilitySetCallback(_reachability, reachabilityHandler, &context)) {
+    SCNetworkReachabilitySetDispatchQueue(
+        _reachability, dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_BACKGROUND, 0));
+  } else {
+    [self stopReachability];
+  }
+}
+
+// Stop listening for network state changes
+- (void)stopReachability {
+  if (_reachability) {
+    SCNetworkReachabilitySetDispatchQueue(_reachability, NULL);
+    CFRelease(_reachability);
+    _reachability = NULL;
+  }
 }
 
 @end
