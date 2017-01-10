@@ -70,15 +70,15 @@
   LOGI(@"Added %lu rules", self.syncState.downloadedRules.count);
 
   if (self.syncState.targetedRuleSync) {
-    NSString *fileName;
     for (SNTRule *r in self.syncState.downloadedRules) {
-      fileName = [[self.syncState.ruleSyncCache objectForKey:r.shasum] copy];
+      NSString *fileName = [[self.syncState.ruleSyncCache objectForKey:r.shasum] copy];
       [self.syncState.ruleSyncCache removeObjectForKey:r.shasum];
-      if (fileName) break;
+      if (fileName) {
+        NSString *message = [NSString stringWithFormat:@"%@ can now be run", fileName];
+        [[self.daemonConn remoteObjectProxy]
+            postRuleSyncNotificationWithCustomMessage:message reply:^{}];
+      }
     }
-    NSString *message = fileName ? [NSString stringWithFormat:@"%@ can now be run", fileName] : nil;
-    [[self.daemonConn remoteObjectProxy]
-        postRuleSyncNotificationWithCustomMessage:message reply:^{}];
   }
 
   return YES;

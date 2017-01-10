@@ -184,10 +184,13 @@ double watchdogRAMPeak = 0;
 #pragma mark syncd Ops
 
 - (void)setSyncdListener:(NSXPCListenerEndpoint *)listener {
+  // Only allow one active syncd connection
+  if (self.syncdQueue.syncdConnection) return;
   SNTXPCConnection *c = [[SNTXPCConnection alloc] initClientWithListener:listener];
   c.remoteInterface = [SNTXPCSyncdInterface syncdInterface];
   c.invalidationHandler = ^{
     [self.syncdQueue stopSyncingEvents];
+    self.syncdQueue.syncdConnection = nil;
     self.syncdQueue.invalidationHandler();
   };
   c.acceptedHandler = ^{
