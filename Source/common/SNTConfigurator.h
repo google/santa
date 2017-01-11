@@ -145,7 +145,7 @@ extern NSString *const kDefaultConfigFilePath;
 ///
 ///  The last date of a successful full sync.
 ///
-@property(nonatomic) NSDate *syncLastSuccess;
+@property(nonatomic) NSDate *fullSyncLastSuccess;
 
 ///
 ///  The last date of a successful rule sync.

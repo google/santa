@@ -102,7 +102,7 @@ REGISTER_COMMAND_NAME(@"status")
   NSString *syncURLStr = [[[SNTConfigurator configurator] syncBaseURL] absoluteString];
   NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];
   dateFormatter.dateFormat = @"yyyy/MM/dd HH:mm:ss Z";
-  NSDate *lastSyncSuccess = [[SNTConfigurator configurator] syncLastSuccess];
+  NSDate *lastSyncSuccess = [[SNTConfigurator configurator] fullSyncLastSuccess];
   NSString *lastSyncSuccessStr = [dateFormatter stringFromDate:lastSyncSuccess] ?: @"Never";
   NSDate *lastRuleSyncSuccess = [[SNTConfigurator configurator] ruleSyncLastSuccess];
   NSString *lastRuleSyncSuccessStr =
