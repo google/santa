@@ -264,14 +264,14 @@ static NSString *const kMachineIDPlistKeyKey = @"MachineIDKey";
   return self.configData[kFullSyncLastSuccess];
 }
 
-- (NSDate *)ruleSyncLastSuccess {
-  return self.configData[kRuleSyncLastSuccess];
-}
-
 - (void)setFullSyncLastSuccess:(NSDate *)fullSyncLastSuccess {
   self.configData[kFullSyncLastSuccess] = fullSyncLastSuccess;
   [self saveConfigToDisk];
   self.ruleSyncLastSuccess = fullSyncLastSuccess;
+}
+
+- (NSDate *)ruleSyncLastSuccess {
+  return self.configData[kRuleSyncLastSuccess];
 }
 
 - (void)setRuleSyncLastSuccess:(NSDate *)ruleSyncLastSuccess {
