@@ -147,6 +147,11 @@ double watchdogRAMPeak = 0;
   reply();
 }
 
+- (void)setRuleSyncLastSuccess:(NSDate *)date reply:(void (^)())reply {
+  [[SNTConfigurator configurator] setRuleSyncLastSuccess:date];
+  reply();
+}
+
 - (void)setSyncCleanRequired:(BOOL)cleanReqd reply:(void (^)())reply {
   [[SNTConfigurator configurator] setSyncCleanRequired:cleanReqd];
   reply();

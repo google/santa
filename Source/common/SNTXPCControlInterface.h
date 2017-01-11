@@ -73,6 +73,7 @@
 - (void)xsrfToken:(void (^)(NSString *))reply;
 - (void)setXsrfToken:(NSString *)token reply:(void (^)())reply;
 - (void)setSyncLastSuccess:(NSDate *)date reply:(void (^)())reply;
+- (void)setRuleSyncLastSuccess:(NSDate *)date reply:(void (^)())reply;
 - (void)setSyncCleanRequired:(BOOL)cleanReqd reply:(void (^)())reply;
 - (void)setWhitelistPathRegex:(NSString *)pattern reply:(void (^)())reply;
 - (void)setBlacklistPathRegex:(NSString *)pattern reply:(void (^)())reply;

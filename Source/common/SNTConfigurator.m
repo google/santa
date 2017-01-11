@@ -53,6 +53,7 @@ static NSString *const kModeNotificationLockdown = @"ModeNotificationLockdown";
 
 static NSString *const kSyncBaseURLKey = @"SyncBaseURL";
 static NSString *const kSyncLastSuccess = @"SyncLastSuccess";
+static NSString *const kRuleSyncLastSuccess = @"RuleSyncLastSuccess";
 static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
 static NSString *const kClientAuthCertificateFileKey = @"ClientAuthCertificateFile";
 static NSString *const kClientAuthCertificatePasswordKey = @"ClientAuthCertificatePassword";
@@ -263,8 +264,18 @@ static NSString *const kMachineIDPlistKeyKey = @"MachineIDKey";
   return self.configData[kSyncLastSuccess];
 }
 
+- (NSDate *)ruleSyncLastSuccess {
+  return self.configData[kRuleSyncLastSuccess];
+}
+
 - (void)setSyncLastSuccess:(NSDate *)syncLastSuccess {
   self.configData[kSyncLastSuccess] = syncLastSuccess;
+  [self saveConfigToDisk];
+  self.ruleSyncLastSuccess = syncLastSuccess;
+}
+
+- (void)setRuleSyncLastSuccess:(NSDate *)ruleSyncLastSuccess {
+  self.configData[kRuleSyncLastSuccess] = ruleSyncLastSuccess;
   [self saveConfigToDisk];
 }
 

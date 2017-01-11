@@ -67,6 +67,12 @@
     return NO;
   }
 
+  sema = dispatch_semaphore_create(0);
+  [[self.daemonConn remoteObjectProxy] setRuleSyncLastSuccess:[NSDate date] reply:^{
+    dispatch_semaphore_signal(sema);
+  }];
+  dispatch_semaphore_wait(sema, dispatch_time(DISPATCH_TIME_NOW, 5 * NSEC_PER_SEC));
+
   LOGI(@"Added %lu rules", self.syncState.downloadedRules.count);
 
   if (self.syncState.targetedRuleSync) {
