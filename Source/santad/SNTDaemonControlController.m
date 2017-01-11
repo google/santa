@@ -143,7 +143,12 @@ double watchdogRAMPeak = 0;
 }
 
 - (void)setSyncLastSuccess:(NSDate *)date reply:(void (^)())reply {
-  [[SNTConfigurator configurator] setSyncLastSuccess:date];
+  [[SNTConfigurator configurator] setFullSyncLastSuccess:date];
+  reply();
+}
+
+- (void)setRuleSyncLastSuccess:(NSDate *)date reply:(void (^)())reply {
+  [[SNTConfigurator configurator] setRuleSyncLastSuccess:date];
   reply();
 }
 

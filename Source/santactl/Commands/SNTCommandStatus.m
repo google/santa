@@ -102,8 +102,11 @@ REGISTER_COMMAND_NAME(@"status")
   NSString *syncURLStr = [[[SNTConfigurator configurator] syncBaseURL] absoluteString];
   NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];
   dateFormatter.dateFormat = @"yyyy/MM/dd HH:mm:ss Z";
-  NSDate *lastSyncSuccess = [[SNTConfigurator configurator] syncLastSuccess];
+  NSDate *lastSyncSuccess = [[SNTConfigurator configurator] fullSyncLastSuccess];
   NSString *lastSyncSuccessStr = [dateFormatter stringFromDate:lastSyncSuccess] ?: @"Never";
+  NSDate *lastRuleSyncSuccess = [[SNTConfigurator configurator] ruleSyncLastSuccess];
+  NSString *lastRuleSyncSuccessStr =
+      [dateFormatter stringFromDate:lastRuleSyncSuccess] ?: lastSyncSuccessStr;
   BOOL syncCleanReqd = [[SNTConfigurator configurator] syncCleanRequired];
   __block BOOL pushNotifications;
   dispatch_group_enter(group);
@@ -138,8 +141,9 @@ REGISTER_COMMAND_NAME(@"status")
       @"sync" : @{
         @"server" : syncURLStr ?: @"null",
         @"clean_required" : @(syncCleanReqd),
-        @"last_successful" : lastSyncSuccessStr ?: @"null",
-        @"push_notifications" : pushNotifications ? @"true" : @"false"
+        @"last_successful_full" : lastSyncSuccessStr ?: @"null",
+        @"last_successful_rule" : lastRuleSyncSuccessStr ?: @"null",
+        @"push_notifications" : pushNotifications ? @"Connected" : @"Disconnected"
       },
     };
     NSData *statsData = [NSJSONSerialization dataWithJSONObject:stats
@@ -149,23 +153,25 @@ REGISTER_COMMAND_NAME(@"status")
     printf("%s\n", [statsStr UTF8String]);
   } else {
     printf(">>> Daemon Info\n");
-    printf("  %-22s | %s\n", "Mode", [clientMode UTF8String]);
-    printf("  %-22s | %s\n", "File Logging", (fileLogging ? "Yes" : "No"));
-    printf("  %-22s | %lld  (Peak: %.2f%%)\n", "Watchdog CPU Events", cpuEvents, cpuPeak);
-    printf("  %-22s | %lld  (Peak: %.2fMB)\n", "Watchdog RAM Events", ramEvents, ramPeak);
+    printf("  %-25s | %s\n", "Mode", [clientMode UTF8String]);
+    printf("  %-25s | %s\n", "File Logging", (fileLogging ? "Yes" : "No"));
+    printf("  %-25s | %lld  (Peak: %.2f%%)\n", "Watchdog CPU Events", cpuEvents, cpuPeak);
+    printf("  %-25s | %lld  (Peak: %.2fMB)\n", "Watchdog RAM Events", ramEvents, ramPeak);
     printf(">>> Kernel Info\n");
-    printf("  %-22s | %lld\n", "Kernel cache count", cacheCount);
+    printf("  %-25s | %lld\n", "Kernel cache count", cacheCount);
     printf(">>> Database Info\n");
-    printf("  %-22s | %lld\n", "Binary Rules", binaryRuleCount);
-    printf("  %-22s | %lld\n", "Certificate Rules", certRuleCount);
-    printf("  %-22s | %lld\n", "Events Pending Upload", eventCount);
+    printf("  %-25s | %lld\n", "Binary Rules", binaryRuleCount);
+    printf("  %-25s | %lld\n", "Certificate Rules", certRuleCount);
+    printf("  %-25s | %lld\n", "Events Pending Upload", eventCount);
 
     if (syncURLStr) {
       printf(">>> Sync Info\n");
-      printf("  %-22s | %s\n", "Sync Server", [syncURLStr UTF8String]);
-      printf("  %-22s | %s\n", "Clean Sync Required", (syncCleanReqd ? "Yes" : "No"));
-      printf("  %-22s | %s\n", "Last Successful Sync", [lastSyncSuccessStr UTF8String]);
-      printf("  %-22s | %s\n", "Push Notifications", (pushNotifications ? "Yes" : "No"));
+      printf("  %-25s | %s\n", "Sync Server", [syncURLStr UTF8String]);
+      printf("  %-25s | %s\n", "Clean Sync Required", (syncCleanReqd ? "Yes" : "No"));
+      printf("  %-25s | %s\n", "Last Successful Full Sync", [lastSyncSuccessStr UTF8String]);
+      printf("  %-25s | %s\n", "Last Successful Rule Sync", [lastRuleSyncSuccessStr UTF8String]);
+      printf("  %-25s | %s\n", "Push Notifications",
+             (pushNotifications ? "Connected" : "Disconnected"));
     }
   }
 

@@ -143,9 +143,14 @@ extern NSString *const kDefaultConfigFilePath;
 @property(readonly, nonatomic) NSString *machineOwner;
 
 ///
-///  The last date of successful sync.
+///  The last date of a successful full sync.
 ///
-@property(nonatomic) NSDate *syncLastSuccess;
+@property(nonatomic) NSDate *fullSyncLastSuccess;
+
+///
+///  The last date of a successful rule sync.
+///
+@property(nonatomic) NSDate *ruleSyncLastSuccess;
 
 ///
 ///  If YES a clean sync is required.
