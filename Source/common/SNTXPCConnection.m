@@ -113,8 +113,10 @@
     // send a message to the listener to finish establishing the connection
     dispatch_semaphore_t sema = dispatch_semaphore_create(0);
     self.currentConnection.remoteObjectInterface = self.validationInterface;
-    self.currentConnection.interruptionHandler = self.invalidationHandler;
-    self.currentConnection.invalidationHandler = self.invalidationHandler;
+    self.currentConnection.interruptionHandler = self.currentConnection.invalidationHandler = ^{
+      STRONGIFY(self);
+      if (self.invalidationHandler) self.invalidationHandler();
+    };
     [self.currentConnection resume];
     [[self.currentConnection remoteObjectProxy] connectWithReply:^{
       STRONGIFY(self);
