@@ -29,8 +29,8 @@ REGISTER_COMMAND_NAME(@"status")
   return NO;
 }
 
-+ (BOOL)requiresDaemonConn {
-  return YES;
++ (SNTXPCConnection *)daemonConnectionIfNeeded {
+  return [SNTXPCControlInterface configuredConnection];
 }
 
 + (NSString *)shortHelpText {

@@ -33,8 +33,8 @@ REGISTER_COMMAND_NAME(@"checkcache")
   return NO;
 }
 
-+ (BOOL)requiresDaemonConn {
-  return YES;
++ (SNTXPCConnection *)daemonConnectionIfNeeded {
+  return [SNTXPCControlInterface configuredConnection];
 }
 
 + (NSString *)shortHelpText {

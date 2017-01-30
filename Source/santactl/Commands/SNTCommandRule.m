@@ -37,8 +37,8 @@ REGISTER_COMMAND_NAME(@"rule")
   return YES;
 }
 
-+ (BOOL)requiresDaemonConn {
-  return YES;
++ (SNTXPCConnection *)daemonConnectionIfNeeded {
+  return [SNTXPCControlInterface configuredConnection];
 }
 
 + (NSString *)shortHelpText {

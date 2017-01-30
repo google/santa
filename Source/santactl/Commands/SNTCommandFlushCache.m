@@ -31,8 +31,8 @@ REGISTER_COMMAND_NAME(@"flushcache")
   return YES;
 }
 
-+ (BOOL)requiresDaemonConn {
-  return YES;
++ (SNTXPCConnection *)daemonConnectionIfNeeded {
+  return [SNTXPCControlInterface configuredConnection];
 }
 
 + (NSString *)shortHelpText {
