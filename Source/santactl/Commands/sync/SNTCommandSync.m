@@ -36,8 +36,8 @@ REGISTER_COMMAND_NAME(@"sync")
   return NO;
 }
 
-+ (BOOL)requiresDaemonConn {
-  return NO;
++ (SNTXPCConnection *)daemonConnectionIfNeeded {
+  return [SNTXPCControlInterface configuredConnection];
 }
 
 + (NSString *)shortHelpText {

@@ -15,7 +15,6 @@
 #import "SNTCommandController.h"
 
 #import "SNTXPCConnection.h"
-#import "SNTXPCControlInterface.h"
 
 @implementation SNTCommandController
 
@@ -47,8 +46,9 @@ static NSMutableDictionary *registeredCommands;
     [helpText appendFormat:@"\t%*s - %@\n", longestCommandName,
                            [cmdName UTF8String], [cmd shortHelpText]];
   }
-
-  [helpText appendFormat:@"\nSee 'santactl help <command>' to read about a specific subcommand."];
+  NSString *appName = [[NSProcessInfo processInfo] processName];
+  [helpText appendFormat:@"\nSee '%@ help <command>' to read about a specific subcommand.",
+      appName];
   return helpText;
 }
 
@@ -68,14 +68,14 @@ static NSMutableDictionary *registeredCommands;
   return nil;
 }
 
-+ (SNTXPCConnection *)connectToDaemonRequired:(BOOL)required {
-  SNTXPCConnection *daemonConn = [SNTXPCControlInterface configuredConnection];
-
-  if (required) {
-    daemonConn.invalidationHandler = ^{
-      printf("An error occurred communicating with the daemon, is it running?\n");
-      exit(1);
-    };
++ (SNTXPCConnection *)configureConnection:(SNTXPCConnection *)daemonConn {
+  if (daemonConn) {
+    if (!daemonConn.invalidationHandler) {
+      daemonConn.invalidationHandler = ^{
+        printf("An error occurred communicating with the daemon, is it running?\n");
+        exit(1);
+      };
+    }
     [daemonConn resume];
   }
   return daemonConn;
@@ -93,7 +93,7 @@ static NSMutableDictionary *registeredCommands;
     exit(2);
   }
 
-  SNTXPCConnection *daemonConn = [self connectToDaemonRequired:[command requiresDaemonConn]];
+  SNTXPCConnection *daemonConn = [self configureConnection:[command daemonConnectionIfNeeded]];
   [command runWithArguments:arguments daemonConnection:daemonConn];
 
   // The command is responsible for quitting.

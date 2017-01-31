@@ -138,7 +138,12 @@
 - (BOOL)listener:(NSXPCListener *)listener shouldAcceptNewConnection:(NSXPCConnection *)connection {
   pid_t pid = connection.processIdentifier;
   MOLCodesignChecker *otherCS = [[MOLCodesignChecker alloc] initWithPID:pid];
-  if (![otherCS signingInformationMatches:[[MOLCodesignChecker alloc] initWithSelf]]) {
+  MOLCodesignChecker *myCS = [[MOLCodesignChecker alloc] initWithSelf];
+  if (![otherCS signingInformationMatches:myCS]
+#ifdef DEBUG  // allow no certs on both sides of the connection.
+      && ! [[[NSProcessInfo processInfo] arguments] containsObject:@"--nochecksignatures"]
+#endif
+      ) {
     return NO;
   }
 

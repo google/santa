@@ -25,9 +25,12 @@
 + (BOOL)requiresRoot;
 
 ///
-///  @return YES if command requires connection to santad.
+///  @return an (SNTXPCConnection *) if command requires connection to a daemon.
+/// The connection should be in a suspended state.
+/// If an invalidation handler is provided in the connection, it needs to properly exit instead of
+/// waiting forever.  If none is provided, a default invalidation handler is installed.
 ///
-+ (BOOL)requiresDaemonConn;
++ (SNTXPCConnection *)daemonConnectionIfNeeded;
 
 ///
 ///  A small summary of the command, to be printed with the list of available commands
