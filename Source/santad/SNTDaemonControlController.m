@@ -162,6 +162,8 @@ double watchdogRAMPeak = 0;
                                                                       options:0
                                                                         error:NULL];
   [[SNTConfigurator configurator] setWhitelistPathRegex:re];
+  LOGI(@"Received new whitelist regex, flushing cache");
+  [self.driverManager flushCache];
   reply();
 }
 
@@ -170,6 +172,8 @@ double watchdogRAMPeak = 0;
                                                                       options:0
                                                                         error:NULL];
   [[SNTConfigurator configurator] setBlacklistPathRegex:re];
+  LOGI(@"Received new blacklist regex, flushing cache");
+  [self.driverManager flushCache];  
   reply();
 }
 
