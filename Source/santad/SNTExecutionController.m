@@ -176,11 +176,19 @@
     if (action != ACTION_RESPOND_ALLOW) {
       [_eventLog logDeniedExecution:cd withMessage:message];
 
-      // So the server has something to show the user straight away, initiate an event
-      // upload for the blocked binary rather than waiting for the next sync.
-      dispatch_async(_eventQueue, ^{
-        [self initiateEventUploadForEvent:se];
-      });
+      if (binInfo.bundle && [[SNTConfigurator configurator] syncBaseURL]) {
+        // If the binary is apart of a bundle, find and hash all the related binaries in the bundle.
+        // Let the GUI know hashing is needed. Once the hashing is complete the GUI will send a
+        // message to santad to perform the upload logic for bundles.
+        // See syncBundleEvent:relatedEvents: for more info.
+        se.fileBundleHash = @"Calculating...";
+      } else if ([[SNTConfigurator configurator] syncBaseURL]) {
+        // So the server has something to show the user straight away, initiate an event
+        // upload for the blocked binary rather than waiting for the next sync.
+        dispatch_async(_eventQueue, ^{
+          [_syncdQueue addEvent:se];
+        });
+      }
 
       if (!cd.silentBlock) {
         // Let the user know what happened, both on the terminal and in the GUI.
@@ -243,24 +251,6 @@
     return YES;
   }
   return NO;
-}
-
-/**
-  This sends the event that was just saved to santactl for immediate upload, so that the user
-  has something to vote in straight away.
-
-  This method is always called on a serial queue to keep this low-priority method 
-  away from the high-priority decision making threads.
-*/
-- (void)initiateEventUploadForEvent:(SNTStoredEvent *)event {
-  // The event upload is skipped if the full path is equal to that of santactl so that
-  // on the off chance that santactl is not whitelisted, we don't get into an infinite loop.
-  // It's also skipped if there isn't a server configured or the last sync caused a backoff.
-  if ([event.filePath isEqual:@(kSantaCtlPath)] ||
-      ![[SNTConfigurator configurator] syncBaseURL] ||
-      [[SNTConfigurator configurator] syncBackOff]) return;
-
-  [self.syncdQueue addEvent:event];
 }
 
 - (void)printMessage:(NSString *)msg toTTYForPID:(pid_t)pid {

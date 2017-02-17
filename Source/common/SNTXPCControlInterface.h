@@ -19,6 +19,7 @@
 #import "SNTCachedDecision.h"
 #import "SNTCommonEnums.h"
 #import "SNTKernelCommon.h"
+#import "SNTXPCBundleServiceInterface.h"
 
 @class SNTRule;
 @class SNTStoredEvent;
@@ -84,6 +85,7 @@
 ///  GUI Ops
 ///
 - (void)setNotificationListener:(NSXPCListenerEndpoint *)listener;
+- (void)setBundleNotificationListener:(NSXPCListenerEndpoint *)listener;
 
 ///
 ///  Syncd Ops
@@ -92,6 +94,12 @@
 - (void)setNextSyncInterval:(uint64_t)seconds reply:(void (^)())reply;
 - (void)pushNotifications:(void (^)(BOOL))reply;
 - (void)postRuleSyncNotificationWithCustomMessage:(NSString *)message reply:(void (^)())reply;
+
+///
+///  Bundle Ops
+///
+- (void)hashBundleBinariesForEvent:(SNTStoredEvent *)event reply:(SNTBundleHashBlock)reply;
+- (void)syncBundleEvent:(SNTStoredEvent *)event relatedEvents:(NSArray<SNTStoredEvent *> *)events;
 
 @end
 
