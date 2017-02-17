@@ -21,6 +21,12 @@ target :santactl do
   pod 'MOLFCMClient', '~> 1.3'
 end
 
+target :santabs do
+  pod 'FMDB'
+  pod 'MOLCertificate'
+  pod 'MOLCodesignChecker'
+end
+
 target :LogicTests do
   pod 'FMDB'
   pod 'MOLAuthenticatingURLSession'
