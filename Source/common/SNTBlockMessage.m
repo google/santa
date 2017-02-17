@@ -109,8 +109,9 @@
   if (!formatStr.length) return nil;
 
   if (event.fileSHA256) {
-    formatStr = [formatStr stringByReplacingOccurrencesOfString:@"%file_sha%"
-                                                     withString:event.fileSHA256];
+    formatStr =
+        [formatStr stringByReplacingOccurrencesOfString:@"%file_sha%"
+                                             withString:event.fileBundleHash ?: event.fileSHA256];
   }
   if (event.executingUser) {
     formatStr = [formatStr stringByReplacingOccurrencesOfString:@"%username%"
