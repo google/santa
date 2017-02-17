@@ -134,12 +134,6 @@ extern NSString *const kDefaultConfigFilePath;
 @property(readonly, nonatomic) NSURL *syncBaseURL;
 
 ///
-///  If YES, mid-execution event uploads are skipped.
-///  This property is never stored on disk.
-///
-@property BOOL syncBackOff;
-
-///
 ///  The machine owner.
 ///
 @property(readonly, nonatomic) NSString *machineOwner;
