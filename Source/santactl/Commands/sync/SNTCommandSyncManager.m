@@ -28,6 +28,7 @@
 #import "SNTCommandSyncRuleDownload.h"
 #import "SNTCommandSyncState.h"
 #import "SNTLogging.h"
+#import "SNTStoredEvent.h"
 #import "SNTStrengthify.h"
 #import "SNTXPCConnection.h"
 #import "SNTXPCControlInterface.h"
@@ -52,7 +53,7 @@ const uint64_t kFullSyncInterval = 600;
 // Called when the network state changes
 static void reachabilityHandler(
     SCNetworkReachabilityRef target, SCNetworkReachabilityFlags flags, void *info) {
-  // Ensure state changes are processed in order.
+  // Put this check and set on the main thread to ensure serial access.
   dispatch_async(dispatch_get_main_queue(), ^{
     SNTCommandSyncManager *commandSyncManager = (__bridge SNTCommandSyncManager *)info;
     // Only call the setter when there is a change. This will filter out the redundant calls to this
@@ -104,6 +105,34 @@ static void reachabilityHandler(
 }
 
 #pragma mark SNTSyncdXPC protocol methods
+
+- (void)postBundleEventToSyncServer:(SNTStoredEvent *)event reply:(void (^)(BOOL))reply {
+  SNTCommandSyncState *syncState = [self createSyncState];
+  SNTCommandSyncEventUpload *p = [[SNTCommandSyncEventUpload alloc] initWithState:syncState];
+  if (event && [p uploadEvents:@[event]]) {
+    BOOL needsRelatedEvents = [syncState.bundleBinaryRequests containsObject:event.fileBundleHash];
+    reply(needsRelatedEvents);
+    if (needsRelatedEvents) {
+      LOGD(@"Needs related events");
+    } else {
+      LOGD(@"Bundle event upload complete");
+    }
+  } else {
+    reply(NO);
+    LOGE(@"Bundle event upload failed");
+  }
+}
+
+- (void)postBundleEventsToSyncServer:(NSArray<SNTStoredEvent *> *)events {
+  SNTCommandSyncState *syncState = [self createSyncState];
+  syncState.eventBatchSize = 50;
+  SNTCommandSyncEventUpload *p = [[SNTCommandSyncEventUpload alloc] initWithState:syncState];
+  if (events && [p uploadEvents:events]) {
+    LOGD(@"Bundle events upload complete");
+  } else {
+    LOGE(@"Bundle events upload failed");
+  }
+}
 
 - (void)postEventToSyncServer:(SNTStoredEvent *)event {
   SNTCommandSyncEventUpload *p = [[SNTCommandSyncEventUpload alloc]
