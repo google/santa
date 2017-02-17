@@ -1,5 +1,5 @@
-<?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="10117" systemVersion="15G31" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES">
+<?xml version="1.0" encoding="UTF-8"?>
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="10117" systemVersion="16D32" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES">
     <dependencies>
         <deployment identifier="macosx"/>
         <development version="6300" identifier="xcode"/>
@@ -9,6 +9,9 @@
         <customObject id="-2" userLabel="File's Owner" customClass="SNTMessageWindowController">
             <connections>
                 <outlet property="applicationNameLabel" destination="qgf-Jf-cJr" id="1JX-X8-03v"/>
+                <outlet property="bundleHashLabel" destination="xP7-jE-NF8" id="i8B-Gs-2E3"/>
+                <outlet property="foundFileCountLabel" destination="LHV-gV-vyf" id="Sr0-T2-xGx"/>
+                <outlet property="hashingIndicator" destination="VyY-Yg-JOe" id="Yq4-tZ-9ep"/>
                 <outlet property="openEventButton" destination="7ua-5a-uSd" id="9s4-ZA-Vlo"/>
                 <outlet property="window" destination="9Bq-yh-54f" id="Uhs-WF-TV9"/>
             </connections>
@@ -17,14 +20,14 @@
         <customObject id="-3" userLabel="Application" customClass="NSObject"/>
         <window title="Santa Blocked Execution" allowsToolTipsWhenApplicationIsInactive="NO" autorecalculatesKeyViewLoop="NO" oneShot="NO" showsToolbarButton="NO" visibleAtLaunch="NO" animationBehavior="none" id="9Bq-yh-54f" customClass="SNTMessageWindow">
             <windowStyleMask key="styleMask" utility="YES"/>
-            <rect key="contentRect" x="167" y="107" width="497" height="439"/>
+            <rect key="contentRect" x="167" y="107" width="540" height="479"/>
             <rect key="screenRect" x="0.0" y="0.0" width="2560" height="1417"/>
             <view key="contentView" id="Iwq-Lx-rLv">
-                <rect key="frame" x="0.0" y="0.0" width="497" height="439"/>
+                <rect key="frame" x="0.0" y="0.0" width="540" height="479"/>
                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                 <subviews>
                     <button focusRingType="none" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="kiB-jZ-69S">
-                        <rect key="frame" x="-6" y="411" width="37" height="32"/>
+                        <rect key="frame" x="16" y="451" width="37" height="32"/>
                         <buttonCell key="cell" type="push" title="Hidden Button" alternateTitle="This button exists so neither of the other two buttons is pre-selected when the dialog opens." bezelStyle="rounded" alignment="center" borderStyle="border" focusRingType="none" transparent="YES" imageScaling="proportionallyDown" inset="2" id="XGa-Sl-F4t">
                             <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
                             <font key="font" metaFont="system"/>
@@ -37,7 +40,7 @@
                         </connections>
                     </button>
                     <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="t8c-Fx-e5h">
-                        <rect key="frame" x="206" y="368" width="85" height="41"/>
+                        <rect key="frame" x="228" y="408" width="85" height="41"/>
                         <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" refusesFirstResponder="YES" sendsActionOnEndEditing="YES" title="Santa" id="7YA-iB-Zma">
                             <font key="font" metaFont="systemUltraLight" size="34"/>
                             <color key="textColor" red="0.20000000000000001" green="0.20000000000000001" blue="0.20000000000000001" alpha="1" colorSpace="calibratedRGB"/>
@@ -51,7 +54,7 @@
                         </connections>
                     </textField>
                     <textField verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" setsMaxLayoutWidthAtFirstLayout="YES" translatesAutoresizingMaskIntoConstraints="NO" id="cD5-Su-lXR" customClass="SNTAccessibleTextField">
-                        <rect key="frame" x="22" y="329" width="454" height="17"/>
+                        <rect key="frame" x="43" y="369" width="454" height="17"/>
                         <constraints>
                             <constraint firstAttribute="width" constant="450" id="XgJ-EV-tBa"/>
                         </constraints>
@@ -65,58 +68,10 @@
                             <outlet property="nextKeyView" destination="7ua-5a-uSd" id="VC7-bE-uHc"/>
                         </connections>
                     </textField>
-                    <box horizontalHuggingPriority="750" title="Line" boxType="custom" borderType="line" titlePosition="noTitle" translatesAutoresizingMaskIntoConstraints="NO" id="4Li-ul-zIi">
-                        <rect key="frame" x="146" y="132" width="1" height="167"/>
-                        <constraints>
-                            <constraint firstAttribute="width" constant="1" id="0o1-Jh-epf"/>
-                        </constraints>
-                        <color key="borderColor" white="0.0" alpha="0.17999999999999999" colorSpace="calibratedWhite"/>
-                        <color key="fillColor" white="0.0" alpha="0.0" colorSpace="calibratedWhite"/>
-                        <font key="titleFont" metaFont="system"/>
-                    </box>
-                    <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="pDa-fA-vnC" userLabel="Label: Application">
-                        <rect key="frame" x="8" y="282" width="120" height="17"/>
-                        <constraints>
-                            <constraint firstAttribute="width" constant="116" id="8mA-zi-Ev7"/>
-                        </constraints>
-                        <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="right" title="Application" id="Hy7-WF-6xW">
-                            <font key="font" metaFont="systemBold"/>
-                            <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
-                            <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
-                            <userDefinedRuntimeAttributes>
-                                <userDefinedRuntimeAttribute type="boolean" keyPath="accessibilityElement" value="NO"/>
-                            </userDefinedRuntimeAttributes>
-                        </textFieldCell>
-                        <connections>
-                            <binding destination="-2" name="hidden" keyPath="self.event.fileBundleName" id="r2Q-hh-Uy5">
-                                <dictionary key="options">
-                                    <string key="NSValueTransformerName">NSIsNil</string>
-                                </dictionary>
-                            </binding>
-                        </connections>
-                    </textField>
-                    <textField toolTip="Application Name" verticalHuggingPriority="900" horizontalCompressionResistancePriority="250" verticalCompressionResistancePriority="1000" setsMaxLayoutWidthAtFirstLayout="YES" translatesAutoresizingMaskIntoConstraints="NO" id="qgf-Jf-cJr" customClass="SNTAccessibleTextField">
-                        <rect key="frame" x="165" y="282" width="294" height="17"/>
-                        <constraints>
-                            <constraint firstAttribute="width" constant="290" id="Pav-ZA-iAu"/>
-                        </constraints>
-                        <textFieldCell key="cell" selectable="YES" sendsActionOnEndEditing="YES" alignment="left" title="Application Name" id="3UG-ca-d1k">
-                            <font key="font" metaFont="systemBold"/>
-                            <color key="textColor" red="0.40000000000000002" green="0.40000000000000002" blue="0.40000000000000002" alpha="1" colorSpace="calibratedRGB"/>
-                            <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
-                        </textFieldCell>
-                        <connections>
-                            <binding destination="-2" name="value" keyPath="self.event.fileBundleName" id="enC-Cl-UWt">
-                                <dictionary key="options">
-                                    <string key="NSNullPlaceholder">Unknown</string>
-                                </dictionary>
-                            </binding>
-                        </connections>
-                    </textField>
                     <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="d9e-Wv-Y5H" userLabel="Label: Path">
-                        <rect key="frame" x="8" y="257" width="120" height="17"/>
+                        <rect key="frame" x="8" y="297" width="142" height="17"/>
                         <constraints>
-                            <constraint firstAttribute="width" constant="116" id="Kqd-nX-7df"/>
+                            <constraint firstAttribute="width" constant="138" id="Kqd-nX-7df"/>
                         </constraints>
                         <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="right" title="Filename" id="KgY-X1-ESG">
                             <font key="font" metaFont="systemBold"/>
@@ -128,9 +83,9 @@
                         </textFieldCell>
                     </textField>
                     <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="YNz-ka-cBi" userLabel="Label: Path">
-                        <rect key="frame" x="8" y="232" width="120" height="17"/>
+                        <rect key="frame" x="8" y="272" width="142" height="17"/>
                         <constraints>
-                            <constraint firstAttribute="width" constant="116" id="3wU-P0-gAC"/>
+                            <constraint firstAttribute="width" constant="138" id="3wU-P0-gAC"/>
                         </constraints>
                         <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="right" title="Path" id="adC-be-Beh">
                             <font key="font" metaFont="systemBold"/>
@@ -141,10 +96,10 @@
                             </userDefinedRuntimeAttributes>
                         </textFieldCell>
                     </textField>
-                    <textField toolTip="Binary Path" verticalHuggingPriority="900" horizontalCompressionResistancePriority="250" verticalCompressionResistancePriority="1000" setsMaxLayoutWidthAtFirstLayout="YES" translatesAutoresizingMaskIntoConstraints="NO" id="pc8-G9-4pJ" customClass="SNTAccessibleTextField">
-                        <rect key="frame" x="165" y="257" width="294" height="17"/>
+                    <textField toolTip="Binary Name" verticalHuggingPriority="900" horizontalCompressionResistancePriority="250" verticalCompressionResistancePriority="1000" setsMaxLayoutWidthAtFirstLayout="YES" translatesAutoresizingMaskIntoConstraints="NO" id="pc8-G9-4pJ" customClass="SNTAccessibleTextField">
+                        <rect key="frame" x="187" y="297" width="315" height="17"/>
                         <constraints>
-                            <constraint firstAttribute="width" constant="290" id="xVR-j3-dLw"/>
+                            <constraint firstAttribute="width" constant="311" id="xVR-j3-dLw"/>
                         </constraints>
                         <textFieldCell key="cell" selectable="YES" sendsActionOnEndEditing="YES" alignment="left" title="Binary Name" id="E7T-9h-ofr">
                             <font key="font" metaFont="system"/>
@@ -156,7 +111,7 @@
                         </connections>
                     </textField>
                     <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="lvJ-Rk-UT5" userLabel="Label: Publisher">
-                        <rect key="frame" x="8" y="207" width="120" height="17"/>
+                        <rect key="frame" x="8" y="247" width="142" height="17"/>
                         <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="right" title="Publisher" id="yL9-yD-JXX">
                             <font key="font" metaFont="systemBold"/>
                             <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
@@ -167,9 +122,9 @@
                         </textFieldCell>
                     </textField>
                     <textField toolTip="Publisher" verticalHuggingPriority="900" horizontalCompressionResistancePriority="250" verticalCompressionResistancePriority="1000" setsMaxLayoutWidthAtFirstLayout="YES" translatesAutoresizingMaskIntoConstraints="NO" id="C3G-wL-u7w" userLabel="Publisher" customClass="SNTAccessibleTextField">
-                        <rect key="frame" x="165" y="207" width="294" height="17"/>
+                        <rect key="frame" x="187" y="247" width="315" height="17"/>
                         <constraints>
-                            <constraint firstAttribute="width" constant="290" id="Dem-wH-KHm"/>
+                            <constraint firstAttribute="width" constant="311" id="Dem-wH-KHm"/>
                         </constraints>
                         <textFieldCell key="cell" selectable="YES" allowsUndo="NO" sendsActionOnEndEditing="YES" title="Code signing information" placeholderString="" id="ztA-La-XgT">
                             <font key="font" metaFont="system"/>
@@ -185,7 +140,7 @@
                         </connections>
                     </textField>
                     <button toolTip="Show code signing certificate chain" translatesAutoresizingMaskIntoConstraints="NO" id="cJf-k6-OxS" userLabel="Publisher Certs Button">
-                        <rect key="frame" x="40" y="208" width="15" height="15"/>
+                        <rect key="frame" x="62" y="248" width="15" height="15"/>
                         <constraints>
                             <constraint firstAttribute="width" constant="15" id="QTm-Iv-m5p"/>
                             <constraint firstAttribute="height" constant="15" id="YwG-0s-jop"/>
@@ -207,7 +162,7 @@
                         </connections>
                     </button>
                     <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="KEB-eH-x2Y" userLabel="Label: Identifier">
-                        <rect key="frame" x="8" y="182" width="120" height="17"/>
+                        <rect key="frame" x="8" y="222" width="142" height="17"/>
                         <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="right" title="Identifier" id="eKN-Ic-5zy">
                             <font key="font" metaFont="systemBold"/>
                             <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
@@ -217,8 +172,8 @@
                             </userDefinedRuntimeAttributes>
                         </textFieldCell>
                     </textField>
-                    <textField verticalHuggingPriority="900" horizontalCompressionResistancePriority="250" verticalCompressionResistancePriority="1000" setsMaxLayoutWidthAtFirstLayout="YES" translatesAutoresizingMaskIntoConstraints="NO" id="PXc-xv-A28">
-                        <rect key="frame" x="165" y="182" width="219" height="17"/>
+                    <textField toolTip="SHA-256" verticalHuggingPriority="900" horizontalCompressionResistancePriority="250" verticalCompressionResistancePriority="1000" setsMaxLayoutWidthAtFirstLayout="YES" translatesAutoresizingMaskIntoConstraints="NO" id="PXc-xv-A28">
+                        <rect key="frame" x="187" y="222" width="219" height="17"/>
                         <constraints>
                             <constraint firstAttribute="width" constant="215" id="4hh-R2-86s"/>
                         </constraints>
@@ -234,8 +189,26 @@
                             <binding destination="-2" name="value" keyPath="self.event.fileSHA256" id="9KB-0b-qLV"/>
                         </connections>
                     </textField>
+                    <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="MhO-U0-MLR" userLabel="Label: Bundle Identifier">
+                        <rect key="frame" x="8" y="197" width="142" height="17"/>
+                        <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="right" title="Bundle Identifier" id="LEe-u0-52o">
+                            <font key="font" metaFont="systemBold"/>
+                            <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
+                            <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                            <userDefinedRuntimeAttributes>
+                                <userDefinedRuntimeAttribute type="boolean" keyPath="accessibilityElement" value="NO"/>
+                            </userDefinedRuntimeAttributes>
+                        </textFieldCell>
+                        <connections>
+                            <binding destination="-2" name="hidden" keyPath="self.event.fileBundleHash" id="v0N-pG-ulX">
+                                <dictionary key="options">
+                                    <string key="NSValueTransformerName">NSIsNil</string>
+                                </dictionary>
+                            </binding>
+                        </connections>
+                    </textField>
                     <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="eQb-0a-76J" userLabel="Label: Parent">
-                        <rect key="frame" x="8" y="157" width="120" height="17"/>
+                        <rect key="frame" x="8" y="157" width="142" height="17"/>
                         <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="right" title="Parent" id="gze-4A-1w5">
                             <font key="font" metaFont="systemBold"/>
                             <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
@@ -246,7 +219,7 @@
                         </textFieldCell>
                     </textField>
                     <textField toolTip="Parent Process" verticalHuggingPriority="900" horizontalCompressionResistancePriority="250" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="f1p-GL-O3o" userLabel="Parent" customClass="SNTAccessibleTextField">
-                        <rect key="frame" x="165" y="157" width="294" height="17"/>
+                        <rect key="frame" x="187" y="157" width="294" height="17"/>
                         <constraints>
                             <constraint firstAttribute="width" constant="290" id="h3Y-mO-38F"/>
                         </constraints>
@@ -269,7 +242,7 @@
                         </connections>
                     </textField>
                     <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="oFj-ol-xpL" userLabel="Label: User">
-                        <rect key="frame" x="8" y="132" width="120" height="17"/>
+                        <rect key="frame" x="8" y="132" width="142" height="17"/>
                         <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="right" title="User" id="1ut-uT-hQD">
                             <font key="font" metaFont="systemBold"/>
                             <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
@@ -279,26 +252,8 @@
                             </userDefinedRuntimeAttributes>
                         </textFieldCell>
                     </textField>
-                    <textField toolTip="Executing User" verticalHuggingPriority="900" horizontalCompressionResistancePriority="250" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="h6f-PY-cc0" customClass="SNTAccessibleTextField">
-                        <rect key="frame" x="165" y="132" width="294" height="17"/>
-                        <constraints>
-                            <constraint firstAttribute="width" constant="290" id="on6-pj-m2k"/>
-                        </constraints>
-                        <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" sendsActionOnEndEditing="YES" title="Executing User" id="HRT-Be-ePf">
-                            <font key="font" metaFont="system"/>
-                            <color key="textColor" red="0.40000000000000002" green="0.40000000000000002" blue="0.40000000000000002" alpha="1" colorSpace="calibratedRGB"/>
-                            <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
-                        </textFieldCell>
-                        <connections>
-                            <binding destination="-2" name="value" keyPath="self.event.executingUser" id="IcM-Lt-xTT">
-                                <dictionary key="options">
-                                    <string key="NSNullPlaceholder">Unknown</string>
-                                </dictionary>
-                            </binding>
-                        </connections>
-                    </textField>
                     <button verticalHuggingPriority="750" horizontalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="7ua-5a-uSd">
-                        <rect key="frame" x="132" y="33" width="112" height="25"/>
+                        <rect key="frame" x="154" y="33" width="112" height="25"/>
                         <constraints>
                             <constraint firstAttribute="width" priority="900" constant="112" id="Pec-Pa-4aZ"/>
                         </constraints>
@@ -315,8 +270,35 @@ DQ
                             <outlet property="nextKeyView" destination="BbV-3h-mmL" id="Xkz-va-iGc"/>
                         </connections>
                     </button>
+                    <textField toolTip="Binary Path" verticalHuggingPriority="900" horizontalCompressionResistancePriority="250" verticalCompressionResistancePriority="1000" setsMaxLayoutWidthAtFirstLayout="YES" translatesAutoresizingMaskIntoConstraints="NO" id="bDE-Tl-UHg" customClass="SNTAccessibleTextField">
+                        <rect key="frame" x="187" y="272" width="315" height="17"/>
+                        <constraints>
+                            <constraint firstAttribute="width" constant="311" id="p1W-f9-KBX"/>
+                        </constraints>
+                        <textFieldCell key="cell" selectable="YES" sendsActionOnEndEditing="YES" alignment="left" title="Binary Path" id="H1b-Ui-CYo">
+                            <font key="font" metaFont="system"/>
+                            <color key="textColor" red="0.40000000000000002" green="0.40000000000000002" blue="0.40000000000000002" alpha="1" colorSpace="calibratedRGB"/>
+                            <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                        </textFieldCell>
+                        <connections>
+                            <binding destination="-2" name="value" keyPath="self.event.filePath" id="Sry-KY-HDb"/>
+                        </connections>
+                    </textField>
+                    <button translatesAutoresizingMaskIntoConstraints="NO" id="5D8-GP-a4l">
+                        <rect key="frame" x="113" y="80" width="315" height="29"/>
+                        <constraints>
+                            <constraint firstAttribute="height" constant="25" id="KvD-X6-CsO"/>
+                        </constraints>
+                        <buttonCell key="cell" type="check" title="Prevent future notifications for this application for a day" bezelStyle="regularSquare" imagePosition="left" alignment="center" inset="2" id="R5Y-Uc-rEP">
+                            <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                            <font key="font" metaFont="smallSystem"/>
+                        </buttonCell>
+                        <connections>
+                            <binding destination="-2" name="value" keyPath="self.silenceFutureNotifications" id="tEb-2A-sht"/>
+                        </connections>
+                    </button>
                     <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="BbV-3h-mmL" userLabel="Dismiss Button">
-                        <rect key="frame" x="256" y="33" width="110" height="25"/>
+                        <rect key="frame" x="278" y="33" width="110" height="25"/>
                         <constraints>
                             <constraint firstAttribute="width" constant="110" id="6Uh-Bd-N64"/>
                             <constraint firstAttribute="height" constant="22" id="GH6-nw-6rD"/>
@@ -335,61 +317,138 @@ DQ
                             <outlet property="nextKeyView" destination="7ua-5a-uSd" id="4KL-Z2-1op"/>
                         </connections>
                     </button>
-                    <textField toolTip="Binary Path" verticalHuggingPriority="900" horizontalCompressionResistancePriority="250" verticalCompressionResistancePriority="1000" setsMaxLayoutWidthAtFirstLayout="YES" translatesAutoresizingMaskIntoConstraints="NO" id="bDE-Tl-UHg" customClass="SNTAccessibleTextField">
-                        <rect key="frame" x="165" y="232" width="294" height="17"/>
+                    <textField toolTip="Executing User" verticalHuggingPriority="900" horizontalCompressionResistancePriority="250" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="h6f-PY-cc0" customClass="SNTAccessibleTextField">
+                        <rect key="frame" x="187" y="132" width="294" height="17"/>
                         <constraints>
-                            <constraint firstAttribute="width" constant="290" id="p1W-f9-KBX"/>
+                            <constraint firstAttribute="width" constant="290" id="on6-pj-m2k"/>
                         </constraints>
-                        <textFieldCell key="cell" selectable="YES" sendsActionOnEndEditing="YES" alignment="left" title="Binary Path" id="H1b-Ui-CYo">
+                        <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" sendsActionOnEndEditing="YES" title="Executing User" id="HRT-Be-ePf">
                             <font key="font" metaFont="system"/>
                             <color key="textColor" red="0.40000000000000002" green="0.40000000000000002" blue="0.40000000000000002" alpha="1" colorSpace="calibratedRGB"/>
                             <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                         </textFieldCell>
                         <connections>
-                            <binding destination="-2" name="value" keyPath="self.event.filePath" id="Sry-KY-HDb"/>
+                            <binding destination="-2" name="value" keyPath="self.event.executingUser" id="IcM-Lt-xTT">
+                                <dictionary key="options">
+                                    <string key="NSNullPlaceholder">Unknown</string>
+                                </dictionary>
+                            </binding>
                         </connections>
                     </textField>
-                    <button translatesAutoresizingMaskIntoConstraints="NO" id="5D8-GP-a4l">
-                        <rect key="frame" x="91" y="80" width="315" height="29"/>
+                    <progressIndicator wantsLayer="YES" canDrawConcurrently="YES" horizontalHuggingPriority="750" verticalHuggingPriority="750" maxValue="1" bezeled="NO" controlSize="small" style="bar" translatesAutoresizingMaskIntoConstraints="NO" id="VyY-Yg-JOe">
+                        <rect key="frame" x="187" y="199" width="217" height="12"/>
                         <constraints>
-                            <constraint firstAttribute="height" constant="25" id="KvD-X6-CsO"/>
+                            <constraint firstAttribute="width" constant="217" id="M22-Dv-KIP"/>
                         </constraints>
-                        <buttonCell key="cell" type="check" title="Prevent future notifications for this application for a day" bezelStyle="regularSquare" imagePosition="left" alignment="center" inset="2" id="R5Y-Uc-rEP">
-                            <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
-                            <font key="font" metaFont="smallSystem"/>
-                        </buttonCell>
+                    </progressIndicator>
+                    <textField toolTip="Bundle SHA-256" verticalHuggingPriority="900" horizontalCompressionResistancePriority="250" verticalCompressionResistancePriority="1000" setsMaxLayoutWidthAtFirstLayout="YES" translatesAutoresizingMaskIntoConstraints="NO" id="xP7-jE-NF8">
+                        <rect key="frame" x="187" y="197" width="219" height="17"/>
+                        <constraints>
+                            <constraint firstAttribute="width" constant="215" id="s7W-o9-2nN"/>
+                        </constraints>
+                        <textFieldCell key="cell" lineBreakMode="charWrapping" selectable="YES" sendsActionOnEndEditing="YES" title="Calculating..." id="yJa-yL-X9a">
+                            <font key="font" metaFont="fixedUser" size="11"/>
+                            <color key="textColor" red="0.40000000000000002" green="0.40000000000000002" blue="0.40000000000000002" alpha="1" colorSpace="calibratedRGB"/>
+                            <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                            <userDefinedRuntimeAttributes>
+                                <userDefinedRuntimeAttribute type="boolean" keyPath="accessibilityElement" value="NO"/>
+                            </userDefinedRuntimeAttributes>
+                        </textFieldCell>
                         <connections>
-                            <binding destination="-2" name="value" keyPath="self.silenceFutureNotifications" id="tEb-2A-sht"/>
+                            <binding destination="-2" name="value" keyPath="self.event.fileBundleHash" id="CnT-q6-bot"/>
                         </connections>
-                    </button>
+                    </textField>
+                    <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="LHV-gV-vyf">
+                        <rect key="frame" x="187" y="182" width="219" height="17"/>
+                        <constraints>
+                            <constraint firstAttribute="width" constant="215" id="LUu-Vd-peN"/>
+                        </constraints>
+                        <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="1000 related binaries" id="AVM-vB-hB8">
+                            <font key="font" metaFont="fixedUser" size="11"/>
+                            <color key="textColor" red="0.40000000000000002" green="0.40000000000000002" blue="0.40000000000000002" alpha="1" colorSpace="calibratedRGB"/>
+                            <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                        </textFieldCell>
+                    </textField>
+                    <box horizontalHuggingPriority="750" title="Line" boxType="custom" borderType="line" titlePosition="noTitle" translatesAutoresizingMaskIntoConstraints="NO" id="4Li-ul-zIi">
+                        <rect key="frame" x="168" y="132" width="1" height="207"/>
+                        <constraints>
+                            <constraint firstAttribute="width" constant="1" id="0o1-Jh-epf"/>
+                        </constraints>
+                        <color key="borderColor" white="0.0" alpha="0.17999999999999999" colorSpace="calibratedWhite"/>
+                        <color key="fillColor" white="0.0" alpha="0.0" colorSpace="calibratedWhite"/>
+                        <font key="titleFont" metaFont="system"/>
+                    </box>
+                    <textField toolTip="Application Name" verticalHuggingPriority="900" horizontalCompressionResistancePriority="250" verticalCompressionResistancePriority="1000" setsMaxLayoutWidthAtFirstLayout="YES" translatesAutoresizingMaskIntoConstraints="NO" id="qgf-Jf-cJr" customClass="SNTAccessibleTextField">
+                        <rect key="frame" x="187" y="322" width="315" height="17"/>
+                        <constraints>
+                            <constraint firstAttribute="width" constant="311" id="Pav-ZA-iAu"/>
+                        </constraints>
+                        <textFieldCell key="cell" selectable="YES" sendsActionOnEndEditing="YES" alignment="left" title="Application Name" id="3UG-ca-d1k">
+                            <font key="font" metaFont="systemBold"/>
+                            <color key="textColor" red="0.40000000000000002" green="0.40000000000000002" blue="0.40000000000000002" alpha="1" colorSpace="calibratedRGB"/>
+                            <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                        </textFieldCell>
+                        <connections>
+                            <binding destination="-2" name="value" keyPath="self.event.fileBundleName" id="enC-Cl-UWt">
+                                <dictionary key="options">
+                                    <string key="NSNullPlaceholder">Unknown</string>
+                                </dictionary>
+                            </binding>
+                        </connections>
+                    </textField>
+                    <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="pDa-fA-vnC" userLabel="Label: Application">
+                        <rect key="frame" x="8" y="322" width="142" height="17"/>
+                        <constraints>
+                            <constraint firstAttribute="width" constant="138" id="8mA-zi-Ev7"/>
+                        </constraints>
+                        <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="right" title="Application" id="Hy7-WF-6xW">
+                            <font key="font" metaFont="systemBold"/>
+                            <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
+                            <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                            <userDefinedRuntimeAttributes>
+                                <userDefinedRuntimeAttribute type="boolean" keyPath="accessibilityElement" value="NO"/>
+                            </userDefinedRuntimeAttributes>
+                        </textFieldCell>
+                        <connections>
+                            <binding destination="-2" name="hidden" keyPath="self.event.fileBundleName" id="r2Q-hh-Uy5">
+                                <dictionary key="options">
+                                    <string key="NSValueTransformerName">NSIsNil</string>
+                                </dictionary>
+                            </binding>
+                        </connections>
+                    </textField>
                 </subviews>
                 <constraints>
                     <constraint firstItem="oFj-ol-xpL" firstAttribute="leading" secondItem="Iwq-Lx-rLv" secondAttribute="leading" constant="10" id="0AD-PS-5V1"/>
                     <constraint firstItem="f1p-GL-O3o" firstAttribute="centerY" secondItem="eQb-0a-76J" secondAttribute="centerY" id="2Aq-1E-Ybz"/>
                     <constraint firstItem="BbV-3h-mmL" firstAttribute="leading" secondItem="Iwq-Lx-rLv" secondAttribute="leading" priority="500" constant="193" id="2uo-Cm-Tfp"/>
                     <constraint firstItem="h6f-PY-cc0" firstAttribute="top" secondItem="f1p-GL-O3o" secondAttribute="bottom" constant="8" id="496-VQ-Fx5"/>
+                    <constraint firstItem="xP7-jE-NF8" firstAttribute="leading" secondItem="4Li-ul-zIi" secondAttribute="trailing" constant="20" id="5Mr-By-PAU"/>
                     <constraint firstItem="pDa-fA-vnC" firstAttribute="centerY" secondItem="qgf-Jf-cJr" secondAttribute="centerY" id="AKX-pe-hEX"/>
                     <constraint firstItem="C3G-wL-u7w" firstAttribute="leading" secondItem="4Li-ul-zIi" secondAttribute="trailing" constant="20" id="ALv-0v-szi"/>
-                    <constraint firstItem="f1p-GL-O3o" firstAttribute="top" secondItem="PXc-xv-A28" secondAttribute="bottom" constant="8" id="E6D-7P-17g"/>
                     <constraint firstItem="d9e-Wv-Y5H" firstAttribute="leading" secondItem="Iwq-Lx-rLv" secondAttribute="leading" constant="10" id="FPe-Rd-G4n"/>
                     <constraint firstItem="cJf-k6-OxS" firstAttribute="centerY" secondItem="C3G-wL-u7w" secondAttribute="centerY" id="FdL-ZZ-Vbe"/>
                     <constraint firstItem="t8c-Fx-e5h" firstAttribute="top" secondItem="Iwq-Lx-rLv" secondAttribute="top" constant="30" id="FuB-GX-0jg"/>
                     <constraint firstItem="oFj-ol-xpL" firstAttribute="bottom" secondItem="4Li-ul-zIi" secondAttribute="bottom" id="G0I-O2-S91"/>
-                    <constraint firstItem="lvJ-Rk-UT5" firstAttribute="leading" secondItem="cJf-k6-OxS" secondAttribute="trailing" constant="-45" id="GD2-Ka-deo"/>
+                    <constraint firstItem="lvJ-Rk-UT5" firstAttribute="leading" secondItem="cJf-k6-OxS" secondAttribute="trailing" constant="-67" id="GD2-Ka-deo"/>
                     <constraint firstItem="BbV-3h-mmL" firstAttribute="top" secondItem="5D8-GP-a4l" secondAttribute="bottom" priority="900" constant="25" id="GT2-tO-2td"/>
                     <constraint firstItem="h6f-PY-cc0" firstAttribute="centerY" secondItem="oFj-ol-xpL" secondAttribute="centerY" id="GXI-pT-FM1"/>
                     <constraint firstItem="4Li-ul-zIi" firstAttribute="top" secondItem="pDa-fA-vnC" secondAttribute="top" id="Gd4-Nr-n5G"/>
+                    <constraint firstItem="xP7-jE-NF8" firstAttribute="top" secondItem="PXc-xv-A28" secondAttribute="bottom" constant="8" id="HUT-MI-jsR"/>
                     <constraint firstItem="qgf-Jf-cJr" firstAttribute="leading" secondItem="4Li-ul-zIi" secondAttribute="trailing" constant="20" id="Ht4-Lg-U5N"/>
+                    <constraint firstItem="LHV-gV-vyf" firstAttribute="leading" secondItem="4Li-ul-zIi" secondAttribute="trailing" constant="20" id="IA0-dy-2be"/>
                     <constraint firstItem="oFj-ol-xpL" firstAttribute="leading" secondItem="Iwq-Lx-rLv" secondAttribute="leading" constant="10" id="IwX-ja-ZIs"/>
                     <constraint firstItem="d9e-Wv-Y5H" firstAttribute="top" secondItem="4Li-ul-zIi" secondAttribute="top" priority="500" id="JY4-N1-j8e"/>
                     <constraint firstItem="YNz-ka-cBi" firstAttribute="leading" secondItem="Iwq-Lx-rLv" secondAttribute="leading" constant="10" id="KmX-kX-VCN"/>
                     <constraint firstItem="5D8-GP-a4l" firstAttribute="centerX" secondItem="Iwq-Lx-rLv" secondAttribute="centerX" id="LkH-F4-Ncm"/>
-                    <constraint firstItem="pc8-G9-4pJ" firstAttribute="top" secondItem="cD5-Su-lXR" secondAttribute="bottom" priority="950" constant="30" id="Nsl-zf-poH"/>
+                    <constraint firstItem="pc8-G9-4pJ" firstAttribute="top" secondItem="cD5-Su-lXR" secondAttribute="bottom" priority="950" constant="55" id="Nsl-zf-poH"/>
                     <constraint firstItem="YNz-ka-cBi" firstAttribute="centerY" secondItem="bDE-Tl-UHg" secondAttribute="centerY" id="ObQ-RA-S5V"/>
                     <constraint firstItem="pc8-G9-4pJ" firstAttribute="leading" secondItem="4Li-ul-zIi" secondAttribute="trailing" constant="20" id="SCl-Ky-VmT"/>
                     <constraint firstItem="d9e-Wv-Y5H" firstAttribute="centerY" secondItem="pc8-G9-4pJ" secondAttribute="centerY" id="SLv-F7-w5k"/>
                     <constraint firstItem="4Li-ul-zIi" firstAttribute="leading" secondItem="KEB-eH-x2Y" secondAttribute="trailing" constant="20" id="Seb-c0-MUL"/>
                     <constraint firstAttribute="centerX" secondItem="cD5-Su-lXR" secondAttribute="centerX" id="V0a-Py-iEc"/>
+                    <constraint firstItem="LHV-gV-vyf" firstAttribute="top" secondItem="VyY-Yg-JOe" secondAttribute="bottom" id="Vjr-NX-j8V"/>
+                    <constraint firstItem="MhO-U0-MLR" firstAttribute="leading" secondItem="Iwq-Lx-rLv" secondAttribute="leading" constant="10" id="Vly-VE-BwU"/>
                     <constraint firstItem="oFj-ol-xpL" firstAttribute="leading" secondItem="lvJ-Rk-UT5" secondAttribute="leading" priority="999" id="Z6G-l9-G4a"/>
                     <constraint firstItem="C3G-wL-u7w" firstAttribute="top" secondItem="bDE-Tl-UHg" secondAttribute="bottom" constant="8" id="ZoS-xV-2WA"/>
                     <constraint firstItem="lvJ-Rk-UT5" firstAttribute="leading" secondItem="Iwq-Lx-rLv" secondAttribute="leading" constant="10" id="aMJ-Wb-vRS"/>
@@ -401,22 +460,28 @@ DQ
                     <constraint firstItem="qgf-Jf-cJr" firstAttribute="top" secondItem="cD5-Su-lXR" secondAttribute="bottom" constant="30" id="esg-lX-BAT"/>
                     <constraint firstItem="f1p-GL-O3o" firstAttribute="leading" secondItem="4Li-ul-zIi" secondAttribute="trailing" constant="20" id="fGd-YS-phP"/>
                     <constraint firstAttribute="centerX" secondItem="t8c-Fx-e5h" secondAttribute="centerX" id="h3d-Kc-q88"/>
+                    <constraint firstItem="f1p-GL-O3o" firstAttribute="top" secondItem="LHV-gV-vyf" secondAttribute="bottom" constant="8" id="h4h-K3-BTd"/>
+                    <constraint firstItem="f1p-GL-O3o" firstAttribute="top" secondItem="PXc-xv-A28" secondAttribute="bottom" priority="700" constant="8" id="hXw-6Z-lb2"/>
                     <constraint firstItem="BbV-3h-mmL" firstAttribute="leading" secondItem="7ua-5a-uSd" secondAttribute="trailing" constant="12" id="ioO-NJ-Jqo"/>
                     <constraint firstItem="bDE-Tl-UHg" firstAttribute="leading" secondItem="4Li-ul-zIi" secondAttribute="trailing" constant="20" id="jdk-ak-soQ"/>
                     <constraint firstItem="C3G-wL-u7w" firstAttribute="centerY" secondItem="lvJ-Rk-UT5" secondAttribute="centerY" id="jfs-YI-7Ae"/>
                     <constraint firstItem="4Li-ul-zIi" firstAttribute="leading" secondItem="oFj-ol-xpL" secondAttribute="trailing" constant="20" id="kOG-Cj-hFG"/>
+                    <constraint firstItem="4Li-ul-zIi" firstAttribute="leading" secondItem="MhO-U0-MLR" secondAttribute="trailing" constant="20" id="ke9-wW-5fr"/>
                     <constraint firstItem="pc8-G9-4pJ" firstAttribute="top" secondItem="qgf-Jf-cJr" secondAttribute="bottom" constant="8" id="lWU-tC-vWg"/>
                     <constraint firstItem="5D8-GP-a4l" firstAttribute="top" secondItem="h6f-PY-cc0" secondAttribute="bottom" constant="25" id="lYd-VZ-lBs"/>
+                    <constraint firstItem="VyY-Yg-JOe" firstAttribute="leading" secondItem="4Li-ul-zIi" secondAttribute="trailing" constant="18" id="lei-uP-T8m"/>
+                    <constraint firstItem="f1p-GL-O3o" firstAttribute="top" secondItem="xP7-jE-NF8" secondAttribute="bottom" priority="701" constant="8" id="oY4-e7-lsz"/>
                     <constraint firstItem="7ua-5a-uSd" firstAttribute="top" secondItem="5D8-GP-a4l" secondAttribute="bottom" priority="900" constant="25" id="pCX-eX-erN"/>
-                    <constraint firstAttribute="centerX" secondItem="7ua-5a-uSd" secondAttribute="centerX" constant="61" id="phL-j9-rPq"/>
+                    <constraint firstItem="xP7-jE-NF8" firstAttribute="centerY" secondItem="MhO-U0-MLR" secondAttribute="centerY" id="pdC-x8-Nao"/>
+                    <constraint firstAttribute="centerX" secondItem="7ua-5a-uSd" secondAttribute="centerX" constant="60" id="phL-j9-rPq"/>
                     <constraint firstItem="bDE-Tl-UHg" firstAttribute="top" secondItem="pc8-G9-4pJ" secondAttribute="bottom" constant="8" id="pis-of-f93"/>
                     <constraint firstItem="4Li-ul-zIi" firstAttribute="leading" secondItem="lvJ-Rk-UT5" secondAttribute="trailing" constant="20" id="qKi-KT-jzJ"/>
                     <constraint firstItem="C3G-wL-u7w" firstAttribute="bottom" secondItem="PXc-xv-A28" secondAttribute="top" constant="-8" id="snd-8T-LjC"/>
                     <constraint firstItem="4Li-ul-zIi" firstAttribute="leading" secondItem="d9e-Wv-Y5H" secondAttribute="trailing" constant="20" id="stz-Vm-Kxo"/>
                     <constraint firstItem="PXc-xv-A28" firstAttribute="leading" secondItem="4Li-ul-zIi" secondAttribute="trailing" constant="20" id="tAa-1s-xVZ"/>
                     <constraint firstItem="eQb-0a-76J" firstAttribute="leading" secondItem="Iwq-Lx-rLv" secondAttribute="leading" constant="10" id="u1y-6V-moc"/>
-                    <constraint firstItem="d9e-Wv-Y5H" firstAttribute="width" secondItem="eQb-0a-76J" secondAttribute="width" id="u4p-1B-x5B"/>
                     <constraint firstAttribute="bottom" secondItem="BbV-3h-mmL" secondAttribute="bottom" constant="35" id="ukF-FH-DE8"/>
+                    <constraint firstItem="VyY-Yg-JOe" firstAttribute="centerY" secondItem="MhO-U0-MLR" secondAttribute="centerY" id="vB8-c5-pfO"/>
                     <constraint firstItem="4Li-ul-zIi" firstAttribute="leading" secondItem="YNz-ka-cBi" secondAttribute="trailing" constant="20" id="vfq-83-tKI"/>
                     <constraint firstItem="pDa-fA-vnC" firstAttribute="leading" secondItem="Iwq-Lx-rLv" secondAttribute="leading" constant="10" id="z6s-ga-iAk"/>
                 </constraints>
@@ -424,8 +489,9 @@ DQ
             <connections>
                 <outlet property="initialFirstResponder" destination="kiB-jZ-69S" id="I96-dS-lq5"/>
             </connections>
-            <point key="canvasLocation" x="302.5" y="304.5"/>
+            <point key="canvasLocation" x="274" y="326.5"/>
         </window>
+        <userDefaultsController representsSharedInstance="YES" id="iXx-cu-WYe"/>
     </objects>
     <resources>
         <image name="NSInfo" width="32" height="32"/>

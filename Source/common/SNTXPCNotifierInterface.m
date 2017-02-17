@@ -14,10 +14,16 @@
 
 #import "SNTXPCNotifierInterface.h"
 
+#import "SNTStoredEvent.h"
+
 @implementation SNTXPCNotifierInterface
 
 + (NSXPCInterface *)notifierInterface {
   return [NSXPCInterface interfaceWithProtocol:@protocol(SNTNotifierXPC)];
+}
+
++ (NSXPCInterface *)bundleNotifierInterface {
+  return [NSXPCInterface interfaceWithProtocol:@protocol(SNTBundleNotifierXPC)];
 }
 
 @end
