@@ -44,28 +44,6 @@
   return (dispatch_semaphore_wait(sema, DISPATCH_TIME_FOREVER) == 0);
 }
 
-- (BOOL)syncBundleEvents {
-  NSMutableArray *newEvents = [NSMutableArray array];
-  for (NSString *bundlePath in [NSSet setWithArray:self.syncState.bundleBinaryRequests]) {
-    __block NSArray *relatedBinaries;
-    __block BOOL shouldCancel = NO;
-    dispatch_semaphore_t sema = dispatch_semaphore_create(0);
-    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_BACKGROUND, 0), ^{
-      relatedBinaries = [self findRelatedBinaries:bundlePath shouldCancel:&shouldCancel];
-      dispatch_semaphore_signal(sema);
-    });
-
-    // Give the search up to 5m to run
-    if (dispatch_semaphore_wait(sema, dispatch_time(DISPATCH_TIME_NOW, NSEC_PER_SEC * 300))) {
-      LOGD(@"Timed out while searching for related binaries at path %@", bundlePath);
-      shouldCancel = YES;
-    } else {
-      [newEvents addObjectsFromArray:relatedBinaries];
-    }
-  }
-  return [self uploadEvents:newEvents];
-}
-
 - (BOOL)uploadEvents:(NSArray *)events {
   NSMutableArray *uploadEvents = [[NSMutableArray alloc] init];
 
@@ -78,9 +56,6 @@
 
   NSDictionary *r = [self performRequest:[self requestWithDictionary:@{ kEvents: uploadEvents }]];
   if (!r) return NO;
-
-  // Keep track of bundle search requests
-  self.syncState.bundleBinaryRequests = r[kEventUploadBundleBinaries];
 
   LOGI(@"Uploaded %lu events", uploadEvents.count);
 
@@ -159,75 +134,6 @@
 
   return newEvent;
 #undef ADDKEY
-}
-
-/**
-  Find binaries within a bundle given the bundle's path. Will run until completion, however long
-  that might be. Search is done within the bundle concurrently, using up to 25 threads at once.
-
-  @param path, the path to begin searching underneath
-  @param shouldCancel, if YES, the search is cancelled part way through.
-  @return array of SNTStoredEvent's
-*/
-- (NSArray *)findRelatedBinaries:(NSString *)path shouldCancel:(BOOL *)shouldCancel {
-  // For storing the generated events, with a simple lock for writing.
-  NSMutableArray *relatedEvents = [NSMutableArray array];
-  NSLock *relatedEventsLock = [[NSLock alloc] init];
-
-  // Limit the number of threads that can process files at once to keep CPU usage down.
-  dispatch_semaphore_t sema = dispatch_semaphore_create(25);
-
-  // Group the processing into a single group so we can wait on the whole group at the end.
-  dispatch_group_t group = dispatch_group_create();
-
-  NSDirectoryEnumerator *dirEnum = [[NSFileManager defaultManager] enumeratorAtPath:path];
-  while (1) {
-    @autoreleasepool {
-      if (*shouldCancel) break;
-      NSString *file = [dirEnum nextObject];
-      if (!file) break;
-      if ([dirEnum fileAttributes][NSFileType] != NSFileTypeRegular) continue;
-
-      // Wait for a processing thread to become available
-      dispatch_semaphore_wait(sema, DISPATCH_TIME_FOREVER);
-
-      dispatch_group_async(group,
-                           dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_BACKGROUND, 0),
-                           ^{
-        @autoreleasepool {
-          NSString *newFile = [path stringByAppendingPathComponent:file];
-          SNTFileInfo *fi = [[SNTFileInfo alloc] initWithPath:newFile];
-          if (!fi.isExecutable) {
-            dispatch_semaphore_signal(sema);
-            return;
-          }
-
-          SNTStoredEvent *se = [[SNTStoredEvent alloc] init];
-          se.filePath = fi.path;
-          se.fileSHA256 = fi.SHA256;
-          se.decision = SNTEventStateBundleBinary;
-          se.fileBundleID = fi.bundleIdentifier;
-          se.fileBundleName = fi.bundleName;
-          se.fileBundlePath = fi.bundlePath;
-          se.fileBundleVersion = fi.bundleVersion;
-          se.fileBundleVersionString = fi.bundleShortVersionString;
-
-          MOLCodesignChecker *cs = [[MOLCodesignChecker alloc] initWithBinaryPath:se.filePath];
-          se.signingChain = cs.certificates;
-
-          [relatedEventsLock lock];
-          [relatedEvents addObject:se];
-          [relatedEventsLock unlock];
-
-          dispatch_semaphore_signal(sema);
-        }
-      });
-    }
-  }
-
-  dispatch_group_wait(group, DISPATCH_TIME_FOREVER);
-
-  return relatedEvents;
 }
 
 @end

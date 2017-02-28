@@ -344,28 +344,6 @@
   XCTAssertEqual(requestCount, 2);
 }
 
-- (void)testEventUploadBundleSearch {
-  SNTCommandSyncEventUpload *sut = [[SNTCommandSyncEventUpload alloc] initWithState:self.syncState];
-  self.syncState.eventBatchSize = 128;
-  self.syncState.bundleBinaryRequests = @[ @"/Applications/Safari.app"];
-  sut = OCMPartialMock(sut);
-
-  [self stubRequestBody:nil response:nil error:nil validateBlock:^BOOL(NSURLRequest *req) {
-    NSDictionary *requestDict = [self dictFromRequest:req];
-    NSArray *events = requestDict[kEvents];
-
-    XCTAssertGreaterThanOrEqual(events.count, 3);
-
-    for (NSDictionary *event in events) {
-      XCTAssertEqualObjects(event[kDecision], kDecisionBundleBinary);
-    }
-
-    return YES;
-  }];
-
-  [sut syncBundleEvents];
-}
-
 #pragma mark - SNTCommandSyncRuleDownload Tests
 
 - (void)testRuleDownload {

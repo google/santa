@@ -317,24 +317,11 @@ static void reachabilityHandler(
   SNTCommandSyncRuleDownload *p = [[SNTCommandSyncRuleDownload alloc] initWithState:syncState];
   if ([p sync]) {
     LOGD(@"Rule download complete");
-    if (syncState.bundleBinaryRequests.count) {
-      return [self eventUploadBundleBinariesWithSyncState:syncState];
-    }
     return [self postflightWithSyncState:syncState];
   } else {
     LOGE(@"Rule download failed, aborting run");
     if (!syncState.daemon) exit(1);
   }
-}
-
-- (void)eventUploadBundleBinariesWithSyncState:(SNTCommandSyncState *)syncState {
-  SNTCommandSyncEventUpload *p = [[SNTCommandSyncEventUpload alloc] initWithState:syncState];
-  if ([p syncBundleEvents]) {
-    LOGD(@"Event upload for bundle binaries complete");
-  } else {
-    LOGW(@"Event upload for bundle binary search failed");
-  }
-  return [self postflightWithSyncState:syncState];
 }
 
 - (void)postflightWithSyncState:(SNTCommandSyncState *)syncState {

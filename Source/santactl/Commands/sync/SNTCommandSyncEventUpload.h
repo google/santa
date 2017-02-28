@@ -18,6 +18,4 @@
 
 - (BOOL)uploadEvents:(NSArray *)events;
 
-- (BOOL)syncBundleEvents;
-
 @end
