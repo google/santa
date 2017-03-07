@@ -370,8 +370,8 @@ REGISTER_COMMAND_NAME(@"fileinfo")
   return NO;
 }
 
-+ (SNTXPCConnection *)daemonConnectionIfNeeded {
-  return nil;
++ (BOOL)requiresDaemonConn {
+  return NO;
 }
 
 + (NSString *)shortHelpText {
