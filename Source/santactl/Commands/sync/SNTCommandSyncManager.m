@@ -52,8 +52,8 @@ const uint64_t kGlobalRuleSyncLeeway = 600;
 @end
 
 // Called when the network state changes
-static void reachabilityHandler(SCNetworkReachabilityRef target, SCNetworkReachabilityFlags flags,
-                                void *info) {
+static void reachabilityHandler(
+    SCNetworkReachabilityRef target, SCNetworkReachabilityFlags flags, void *info) {
   // Ensure state changes are processed in order.
   dispatch_async(dispatch_get_main_queue(), ^{
     SNTCommandSyncManager *commandSyncManager = (__bridge SNTCommandSyncManager *)info;
