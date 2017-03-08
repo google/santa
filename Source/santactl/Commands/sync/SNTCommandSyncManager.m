@@ -54,12 +54,15 @@ const uint64_t kGlobalRuleSyncLeeway = 600;
 // Called when the network state changes
 static void reachabilityHandler(
     SCNetworkReachabilityRef target, SCNetworkReachabilityFlags flags, void *info) {
-  SNTCommandSyncManager *commandSyncManager = (__bridge SNTCommandSyncManager *)info;
-  // Only call the setter when there is a change. This will filter out the redundant calls to this
-  // callback whenever the network interface states change.
-  if (commandSyncManager.reachable != (flags & kSCNetworkReachabilityFlagsReachable)) {
-    commandSyncManager.reachable = (flags & kSCNetworkReachabilityFlagsReachable);
-  }
+  // Ensure state changes are processed in order.
+  dispatch_async(dispatch_get_main_queue(), ^{
+    SNTCommandSyncManager *commandSyncManager = (__bridge SNTCommandSyncManager *)info;
+    // Only call the setter when there is a change. This will filter out the redundant calls to this
+    // callback whenever the network interface states change.
+    if (commandSyncManager.reachable != (flags & kSCNetworkReachabilityFlagsReachable)) {
+      commandSyncManager.reachable = (flags & kSCNetworkReachabilityFlagsReachable);
+    }
+  });
 }
 
 @implementation SNTCommandSyncManager
@@ -437,7 +440,7 @@ static void reachabilityHandler(
 // Start listening for network state changes on a background thread
 - (void)startReachability {
   if (_reachability) return;
-  const char *nodename = [[SNTConfigurator configurator] syncBaseURL].absoluteString.UTF8String;
+  const char *nodename = [[SNTConfigurator configurator] syncBaseURL].host.UTF8String;
   _reachability = SCNetworkReachabilityCreateWithName(kCFAllocatorDefault, nodename);
   SCNetworkReachabilityContext context = {
     .info = (__bridge void *)self
@@ -454,7 +457,7 @@ static void reachabilityHandler(
 - (void)stopReachability {
   if (_reachability) {
     SCNetworkReachabilitySetDispatchQueue(_reachability, NULL);
-    CFRelease(_reachability);
+    if (_reachability) CFRelease(_reachability);
     _reachability = NULL;
   }
 }

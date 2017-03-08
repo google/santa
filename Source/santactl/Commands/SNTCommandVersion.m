@@ -32,8 +32,8 @@ REGISTER_COMMAND_NAME(@"version")
   return NO;
 }
 
-+ (SNTXPCConnection *)daemonConnectionIfNeeded {
-  return nil;
++ (BOOL)requiresDaemonConn {
+  return NO;
 }
 
 + (NSString *)shortHelpText {
