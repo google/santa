@@ -14,8 +14,7 @@
 
 #import "SNTDriverManager.h"
 
-#import <IOKit/IODataQueueClient.h>
-#import <IOKit/Kext/KextManager.h>
+@import IOKit.kext;
 
 #import "SNTLogging.h"
 

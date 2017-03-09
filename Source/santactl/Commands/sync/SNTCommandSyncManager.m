@@ -14,7 +14,7 @@
 
 #import "SNTCommandSyncManager.h"
 
-#import <SystemConfiguration/SystemConfiguration.h>
+@import SystemConfiguration;
 
 #import <MOLAuthenticatingURLSession.h>
 #import <MOLFCMClient/MOLFCMClient.h>
@@ -33,10 +33,8 @@
 #import "SNTXPCControlInterface.h"
 #import "SNTXPCSyncdInterface.h"
 
-// Syncing time constants
+// Syncing time constant
 const uint64_t kFullSyncInterval = 600;
-const uint64_t kFullSyncFCMInterval = 14400;
-const uint64_t kGlobalRuleSyncLeeway = 600;
 
 @interface SNTCommandSyncManager () {
   SCNetworkReachabilityRef _reachability;
@@ -75,7 +73,8 @@ static void reachabilityHandler(
     _daemonConn = daemonConn;
     _daemon = daemon;
     _fullSyncTimer = [self createSyncTimerWithBlock:^{
-      [self rescheduleTimerQueue:self.fullSyncTimer secondsFromNow:kFullSyncFCMInterval];
+      [self rescheduleTimerQueue:self.fullSyncTimer
+                  secondsFromNow:[SNTConfigurator configurator].FCMFullSyncInterval];
       if (![[SNTConfigurator configurator] syncBaseURL]) return;
       [self lockAction:kFullSync];
       [self preflight];
@@ -212,7 +211,8 @@ static void reachabilityHandler(
       self.targetedRuleSync = YES;
       [self ruleSync];
     } else {
-      uint32_t delaySeconds = arc4random_uniform(kGlobalRuleSyncLeeway);
+      uint32_t delaySeconds =
+          arc4random_uniform((u_int32_t)[SNTConfigurator configurator].FCMGlobalRuleLeeway);
       LOGD(@"Staggering rule download, %u second delay for this machine", delaySeconds);
       [self ruleSyncSecondsFromNow:delaySeconds];
     }

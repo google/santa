@@ -12,9 +12,11 @@
 ///    See the License for the specific language governing permissions and
 ///    limitations under the License.
 
+@import Foundation;
+
 #import "SNTCommandController.h"
 
-#include <IOKit/kext/KextManager.h>
+@import IOKit.kext;
 
 #import "SNTCommonEnums.h"
 #import "SNTFileInfo.h"

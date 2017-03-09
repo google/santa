@@ -12,6 +12,8 @@
 ///    See the License for the specific language governing permissions and
 ///    limitations under the License.
 
+@import Foundation;
+
 #import "SNTCommonEnums.h"
 
 ///
@@ -161,6 +163,24 @@ extern NSString *const kDefaultConfigFilePath;
 ///  If set, this over-rides the default machine ID used for syncing.
 ///
 @property(readonly, nonatomic) NSString *machineID;
+
+///
+///  The number of seconds in-between full syncs while connected to FCM
+///
+///  @note The default value is 14400.
+///  @note The minimum value is 600.
+///
+@property(readonly, nonatomic) NSInteger FCMFullSyncInterval;
+
+///
+///  The maximum number of seconds to wait before a rule sync when
+///  receiving a global rule sync message. Each client will choose a random
+///  number of seconds between 0 and FCMGlobalRuleLeeway.
+///
+///  @note The default value is 600.
+///  @note The minimum value is 60.
+///
+@property(readonly, nonatomic) NSInteger FCMGlobalRuleLeeway;
 
 #pragma mark Server Auth Settings
 

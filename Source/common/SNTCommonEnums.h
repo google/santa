@@ -12,6 +12,8 @@
 ///    See the License for the specific language governing permissions and
 ///    limitations under the License.
 
+@import Foundation;
+
 ///
 ///  These enums are used in various places throughout the Santa client code.
 ///  The integer values are also stored in the database and so shouldn't be changed.

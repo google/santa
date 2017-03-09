@@ -12,6 +12,8 @@
 ///    See the License for the specific language governing permissions and
 ///    limitations under the License.
 
+@import Foundation;
+
 // This is imported in the header rather than implementation to saves
 // classes that use this one from also having to import FMDB stuff.
 #import <FMDB/FMDB.h>

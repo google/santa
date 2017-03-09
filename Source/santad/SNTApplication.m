@@ -14,7 +14,8 @@
 
 #import "SNTApplication.h"
 
-#import <DiskArbitration/DiskArbitration.h>
+@import DiskArbitration;
+
 #include <sys/stat.h>
 #include <sys/types.h>
 

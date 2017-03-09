@@ -12,6 +12,8 @@
 ///    See the License for the specific language governing permissions and
 ///    limitations under the License.
 
+@import Foundation;
+
 extern NSString *const kXSRFToken;
 
 extern NSString *const kSerialNumber;
