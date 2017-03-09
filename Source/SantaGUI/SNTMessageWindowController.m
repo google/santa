@@ -14,7 +14,7 @@
 
 #import "SNTMessageWindowController.h"
 
-#import <SecurityInterface/SFCertificatePanel.h>
+@import SecurityInterface.SFCertificatePanel;
 
 #import "MOLCertificate.h"
 #import "SNTBlockMessage.h"

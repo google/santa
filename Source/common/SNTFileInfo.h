@@ -12,6 +12,8 @@
 ///    See the License for the specific language governing permissions and
 ///    limitations under the License.
 
+@import Foundation;
+
 ///
 ///  Represents a binary on disk, providing access to details about that binary
 ///  such as the SHA-1, SHA-256, Info.plist and the Mach-O data.

@@ -12,6 +12,8 @@
 ///    See the License for the specific language governing permissions and
 ///    limitations under the License.
 
+@import Foundation;
+
 ///
 ///  Simple file watching class using dispatch sources. Will automatically
 ///  reload the watch if the file is deleted and continue watching for

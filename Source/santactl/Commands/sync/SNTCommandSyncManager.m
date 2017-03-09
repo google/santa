@@ -14,7 +14,7 @@
 
 #import "SNTCommandSyncManager.h"
 
-#import <SystemConfiguration/SystemConfiguration.h>
+@import SystemConfiguration;
 
 #import <MOLAuthenticatingURLSession.h>
 #import <MOLFCMClient/MOLFCMClient.h>

@@ -12,6 +12,8 @@
 ///    See the License for the specific language governing permissions and
 ///    limitations under the License.
 
+@import Cocoa;
+
 /**
    An NSTextField subclass that provides an accessiblity label equal to:
    (self.toolTip + self.stringValue) where available. It also sets the
