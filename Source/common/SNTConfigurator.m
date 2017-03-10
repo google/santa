@@ -115,7 +115,7 @@ static NSString *const kFCMGlobalRuleLeeway = @"FCMGlobalRuleLeeway";
     return (SNTClientMode)cm;
   } else {
     LOGE(@"Client mode was set to bad value: %ld. Resetting to MONITOR.", cm);
-    self.configData[kClientModeKey] = @(SNTClientModeMonitor);
+    self.clientMode = SNTClientModeMonitor;
     return SNTClientModeMonitor;
   }
 }
@@ -341,7 +341,14 @@ static NSString *const kFCMGlobalRuleLeeway = @"FCMGlobalRuleLeeway";
 
 - (void)reloadConfigData {
   NSFileManager *fm = [NSFileManager defaultManager];
-  if (![fm fileExistsAtPath:self.configFilePath]) return;
+  if (![fm fileExistsAtPath:self.configFilePath]) {
+    // As soon as saveConfigToDisk is called, reloadConfigData will be called again because
+    // of the SNTFileWatchers on the config path. No need to use dictionaryWithCapacity: here.
+    self.configData = [NSMutableDictionary dictionary];
+    self.configData[kClientModeKey] = @(SNTClientModeMonitor);
+    [self saveConfigToDisk];
+    return;
+  };
 
   NSError *error;
   NSData *readData = [NSData dataWithContentsOfFile:self.configFilePath
