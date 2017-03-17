@@ -111,7 +111,7 @@ REGISTER_COMMAND_NAME(@"status")
       [dateFormatter stringFromDate:lastRuleSyncSuccess] ?: lastSyncSuccessStr;
   BOOL syncCleanReqd = [[SNTConfigurator configurator] syncCleanRequired];
 
-  __block BOOL pushNotifications = FALSE;
+  __block BOOL pushNotifications = NO;
   if ([[SNTConfigurator configurator] syncBaseURL]) {
     dispatch_group_enter(group);
     [[daemonConn remoteObjectProxy] pushNotifications:^(BOOL response) {
