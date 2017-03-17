@@ -18,7 +18,7 @@
 
 @interface SNTFileWatcher ()
 @property NSString *filePath;
-@property(strong) void (^handler)(unsigned long);
+@property(copy) void (^handler)(unsigned long);
 
 @property dispatch_source_t source;
 @end
@@ -52,7 +52,8 @@
 
   dispatch_async(queue, ^{
     int fd = -1;
-    while ((fd = open([self.filePath fileSystemRepresentation], O_EVTONLY | O_CLOEXEC)) < 0) {
+    const char *filePath = [self.filePath fileSystemRepresentation];
+    while ((fd = open(filePath, O_EVTONLY | O_CLOEXEC)) < 0) {
       usleep(200000);  // wait 200ms
     }
     self.source = dispatch_source_create(DISPATCH_SOURCE_TYPE_VNODE, fd, mask, queue);
