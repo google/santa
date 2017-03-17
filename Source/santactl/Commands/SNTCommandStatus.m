@@ -110,12 +110,15 @@ REGISTER_COMMAND_NAME(@"status")
   NSString *lastRuleSyncSuccessStr =
       [dateFormatter stringFromDate:lastRuleSyncSuccess] ?: lastSyncSuccessStr;
   BOOL syncCleanReqd = [[SNTConfigurator configurator] syncCleanRequired];
-  __block BOOL pushNotifications;
-  dispatch_group_enter(group);
-  [[daemonConn remoteObjectProxy] pushNotifications:^(BOOL response) {
-    pushNotifications = response;
-    dispatch_group_leave(group);
-  }];
+
+  __block BOOL pushNotifications = NO;
+  if ([[SNTConfigurator configurator] syncBaseURL]) {
+    dispatch_group_enter(group);
+    [[daemonConn remoteObjectProxy] pushNotifications:^(BOOL response) {
+      pushNotifications = response;
+      dispatch_group_leave(group);
+    }];
+  }
 
   // Wait a maximum of 5s for stats collected from daemon to arrive.
   if (dispatch_group_wait(group, dispatch_time(DISPATCH_TIME_NOW, NSEC_PER_SEC * 5))) {
