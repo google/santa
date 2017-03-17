@@ -16,6 +16,8 @@
 
 @import IOKit.kext;
 
+#include <mach/mach_port.h>
+
 #import "SNTLogging.h"
 
 @interface SNTDriverManager ()
