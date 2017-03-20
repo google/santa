@@ -163,24 +163,16 @@ static void reachabilityHandler(
 }
 
 - (void)processFCMMessage:(NSDictionary *)FCMmessage withMachineID:(NSString *)machineID {
-  NSData *entryData;
+  NSData *messageData = [self extractMessageDataFrom:FCMmessage];
 
-  // Sort through the entries in the FCM message.
-  for (NSDictionary *entry in FCMmessage[@"data"]) {
-    if ([entry[@"key"] isEqualToString:@"blob"]) {
-      entryData = [entry[@"value"] dataUsingEncoding:NSUTF8StringEncoding];
-      break;
-    }
-  }
-
-  if (!entryData) {
+  if (!messageData) {
     LOGD(@"Push notification message is not in the expected format...dropping message");
     return;
   }
 
   NSError *error;
-  NSDictionary *actionMessage = [NSJSONSerialization JSONObjectWithData:entryData
-                                                                options:NSJSONReadingAllowFragments
+  NSDictionary *actionMessage = [NSJSONSerialization JSONObjectWithData:messageData
+                                                                options:0
                                                                   error:&error];
   if (!actionMessage) {
     LOGD(@"Unable to parse push notification message value: %@", error);
@@ -223,6 +215,12 @@ static void reachabilityHandler(
   } else {
     LOGD(@"Unrecognised action: %@", action);
   }
+}
+
+- (NSData *)extractMessageDataFrom:(NSDictionary *)FCMmessage {
+  if (![FCMmessage[@"data"] isKindOfClass:[NSDictionary class]]) return nil;
+  if (![FCMmessage[@"data"][@"blob"] isKindOfClass:[NSString class]]) return nil;
+  return [FCMmessage[@"data"][@"blob"] dataUsingEncoding:NSUTF8StringEncoding];
 }
 
 #pragma mark sync timer control
