@@ -1,3 +1,5 @@
+require 'openssl'
+
 WORKSPACE           = 'Santa.xcworkspace'
 DEFAULT_SCHEME      = 'All'
 OUTPUT_PATH         = 'Build'
@@ -5,6 +7,8 @@ BINARIES            = ['Santa.app', 'santa-driver.kext']
 DSYMS               = ['Santa.app.dSYM', 'santa-driver.kext.dSYM', 'santad.dSYM', 'santactl.dSYM']
 XCPRETTY_DEFAULTS   = '-sc'
 XCODEBUILD_DEFAULTS = "-workspace #{WORKSPACE} -derivedDataPath #{OUTPUT_PATH} -parallelizeTargets"
+DEVTEAM_FILE        = 'Source/DevelopmentTeam.xcconfig'
+DEVTEAM_CERT_CN     = 'Mac Developer'
 $DISABLE_XCPRETTY   = false
 
 task :default do
@@ -44,6 +48,13 @@ task :init do
     puts "xcpretty is not installed. Install with 'sudo gem install xcpretty'"
     $DISABLE_XCPRETTY = true
   end
+  cert_pem = `security find-certificate -p -c '#{DEVTEAM_CERT_CN}'`
+  cert = OpenSSL::X509::Certificate.new cert_pem
+  team_id = cert.subject.to_a.find {|f| f[0] == "OU"}[1]
+  File.open(DEVTEAM_FILE, 'w') { |f|
+    f.puts("// This file is auto-generated. Do not edit manually")
+    f.puts("DEVELOPMENT_TEAM = #{team_id}")
+  }
 end
 
 task :remove_existing do

@@ -2,14 +2,14 @@ PODS:
   - FMDB (2.6.2):
     - FMDB/standard (= 2.6.2)
   - FMDB/standard (2.6.2)
-  - MOLAuthenticatingURLSession (2.1):
+  - MOLAuthenticatingURLSession (2.2):
     - MOLCertificate (~> 1.5)
   - MOLCertificate (1.5)
   - MOLCodesignChecker (1.5):
     - MOLCertificate (~> 1.3)
   - MOLFCMClient (1.3):
     - MOLAuthenticatingURLSession (~> 2.1)
-  - OCMock (3.3.1)
+  - OCMock (3.4)
 
 DEPENDENCIES:
   - FMDB
@@ -21,11 +21,11 @@ DEPENDENCIES:
 
 SPEC CHECKSUMS:
   FMDB: 854a0341b4726e53276f2a8996f06f1b80f9259a
-  MOLAuthenticatingURLSession: 2f0fd35f641bc857ee1b026021dbd759955adaa3
+  MOLAuthenticatingURLSession: 5a5e31eb73248c3e92c79b9a285f031194e8404c
   MOLCertificate: c39cae866d24d36fbc78032affff83d401b5384a
   MOLCodesignChecker: fc9c64147811d7b0d0739127003e0630dff9213a
   MOLFCMClient: 13d8b42db9d750e772f09cc38fc453922fece09f
-  OCMock: f3f61e6eaa16038c30caa5798c5e49d3307b6f22
+  OCMock: 35ae71d6a8fcc1b59434d561d1520b9dd4f15765
 
 PODFILE CHECKSUM: 1728b86e95e7cdb481dd91ab9c38af38e060a023
 
