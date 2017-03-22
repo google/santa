@@ -19,18 +19,18 @@
 
 @class SNTStoredEvent;
 
-/// Protocol implemented by Santa GUI and utilized by santad
+/// Protocol implemented by SantaGUI and utilized by santad
 @protocol SNTNotifierXPC
 - (void)postBlockNotification:(SNTStoredEvent *)event withCustomMessage:(NSString *)message;
 - (void)postClientModeNotification:(SNTClientMode)clientmode;
 - (void)postRuleSyncNotificationWithCustomMessage:(NSString *)message;
 @end
 
-/// Protocol implemented by Santa GUI and utilized by santabs
+/// Protocol implemented by SantaGUI and utilized by santabs
 @protocol SNTBundleNotifierXPC
-- (void)updateTotalFileCountForEvent:(SNTStoredEvent *)event
-                         binaryCount:(uint64_t)binaryCount
-                           fileCount:(uint64_t)fileCount;
+- (void)updateCountsForEvent:(SNTStoredEvent *)event
+                 binaryCount:(uint64_t)binaryCount
+                   fileCount:(uint64_t)fileCount;
 - (void)setBundleServiceListener:(NSXPCListenerEndpoint *)listener;
 @end
 

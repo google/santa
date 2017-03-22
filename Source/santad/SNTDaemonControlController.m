@@ -239,27 +239,28 @@ double watchdogRAMPeak = 0;
 #pragma mark Bundle ops
 
 ///
-///  This method is only used for santactl's bundleinfo command. For blocked executions, Santa GUI
+///  This method is only used for santactl's bundleinfo command. For blocked executions, SantaGUI
 ///  calls on santabs directly.
 ///
 ///  Hash a bundle for an event. The SNTBundleHashBlock will be called with nil parameters if a
-///  failure or cancelation occurs.
+///  failure or cancellation occurs.
 ///
 ///  @param event The event that includes the fileBundlePath to be hashed.
-///  @param reply A SNTBundleHashBlock to be executed upon completion or cancelation.
+///  @param reply A SNTBundleHashBlock to be executed upon completion or cancellation.
 ///
 ///  @note If there is a current NSProgress when called this method will report back it's progress.
 ///
 - (void)hashBundleBinariesForEvent:(SNTStoredEvent *)event
                              reply:(SNTBundleHashBlock)reply {
-  SNTXPCConnection *bs = [[SNTXPCConnection alloc] initClientWithServiceName:@"com.google.santabs"];
+  SNTXPCConnection *bs =
+      [[SNTXPCConnection alloc] initClientWithServiceName:[SNTXPCBundleServiceInterface serviceId]];
   bs.remoteInterface = [SNTXPCBundleServiceInterface bundleServiceInterface];
   [bs resume];
   [[bs remoteObjectProxy] hashBundleBinariesForEvent:event reply:reply];
 }
 
 ///
-///  Used by Santa GUI sync the offending event and potentially all the related events,
+///  Used by SantaGUI sync the offending event and potentially all the related events,
 ///  if the sync server has not seen them before.
 ///
 ///  @param event The offending event, fileBundleHash & fileBundleBinaryCount need to be populated.

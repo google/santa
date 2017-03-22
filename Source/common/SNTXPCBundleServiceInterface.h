@@ -17,22 +17,22 @@
 ///  A block that takes the calculated bundle hash, associated events and hashing time in ms.
 typedef void (^SNTBundleHashBlock)(NSString *, NSArray<SNTStoredEvent *> *, NSNumber *);
 
-///  Protocol implemented by santabs and utilized by Santa GUI for bundle hashing
+///  Protocol implemented by santabs and utilized by SantaGUI for bundle hashing
 @protocol SNTBundleServiceXPC
 
 ///
-///  @param listener The lister to connect back to the Santa GUI.
+///  @param listener The listener to connect back to the SantaGUI.
 ///
 - (void)setBundleNotificationListener:(NSXPCListenerEndpoint *)listener;
 
 ///
 ///  Hash a bundle for an event. The SNTBundleHashBlock will be called with nil parameters if a
-///  failure or cancelation occurs.
+///  failure or cancellation occurs.
 ///
 ///  @param event The event that includes the fileBundlePath to be hashed.
-///  @param reply A SNTBundleHashBlock to be executed upon completion or cancelation.
+///  @param reply A SNTBundleHashBlock to be executed upon completion or cancellation.
 ///
-///  @note If there is a current NSProgress when called this method will report back it's progress.
+///  @note If there is a current NSProgress when called this method will report back its progress.
 ///
 - (void)hashBundleBinariesForEvent:(SNTStoredEvent *)event reply:(SNTBundleHashBlock)reply;
 
@@ -45,5 +45,10 @@ typedef void (^SNTBundleHashBlock)(NSString *, NSArray<SNTStoredEvent *> *, NSNu
 ///  Ensures any methods that accept custom classes as arguments are set-up before returning.
 ///
 + (NSXPCInterface *)bundleServiceInterface;
+
+///
+///  Returns the MachService ID for this service.
+///
++ (NSString *)serviceId;
 
 @end

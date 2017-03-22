@@ -36,6 +36,9 @@
 ///  A semaphore to block bundle hashing until a connection is established
 @property dispatch_semaphore_t bundleServiceSema;
 
+// A serial queue for holding hashBundleBinaries requests
+@property dispatch_queue_t hashBundleBinariesQueue;
+
 @end
 
 @implementation SNTNotificationManager
@@ -47,6 +50,8 @@ static NSString * const silencedNotificationsKey = @"SilencedNotifications";
   if (self) {
     _pendingNotifications = [[NSMutableArray alloc] init];
     _bundleServiceSema = dispatch_semaphore_create(0);
+    _hashBundleBinariesQueue = dispatch_queue_create("com.google.santagui.hashbundlebinaries",
+                                                     DISPATCH_QUEUE_SERIAL);
   }
   return self;
 }
@@ -61,7 +66,9 @@ static NSString * const silencedNotificationsKey = @"SilencedNotifications";
     self.currentWindowController = [self.pendingNotifications firstObject];
     [self.currentWindowController showWindow:self];
     if (self.currentWindowController.event.fileBundleHash) {
-      [self hashBundleBinariesForEvent:self.currentWindowController.event];
+      dispatch_async(self.hashBundleBinariesQueue, ^{
+        [self hashBundleBinariesForEvent:self.currentWindowController.event];
+      });
     }
   } else {
     // Tear down the bundle service
@@ -151,7 +158,9 @@ static NSString * const silencedNotificationsKey = @"SilencedNotifications";
       self.currentWindowController = pendingMsg;
       [pendingMsg showWindow:nil];
       if (self.currentWindowController.event.fileBundleHash) {
-        [self hashBundleBinariesForEvent:self.currentWindowController.event];
+        dispatch_async(self.hashBundleBinariesQueue, ^{
+          [self hashBundleBinariesForEvent:self.currentWindowController.event];
+        });
       }
     }
   });
@@ -167,9 +176,9 @@ static NSString * const silencedNotificationsKey = @"SilencedNotifications";
 
 #pragma mark SNTBundleNotifierXPC protocol methods
 
-- (void)updateTotalFileCountForEvent:(SNTStoredEvent *)event
-                         binaryCount:(uint64_t)binaryCount
-                           fileCount:(uint64_t)fileCount {
+- (void)updateCountsForEvent:(SNTStoredEvent *)event
+                 binaryCount:(uint64_t)binaryCount
+                   fileCount:(uint64_t)fileCount {
   if ([self.currentWindowController.event.idx isEqual:event.idx]) {
     dispatch_async(dispatch_get_main_queue(), ^{
       self.currentWindowController.foundFileCountLabel.stringValue =
@@ -189,8 +198,13 @@ static NSString * const silencedNotificationsKey = @"SilencedNotifications";
 #pragma mark SNTBundleNotifierXPC helper methods
 
 - (void)hashBundleBinariesForEvent:(SNTStoredEvent *)event {
-  // Wait until the bundle service is connected
-  dispatch_semaphore_wait(self.bundleServiceSema, DISPATCH_TIME_FOREVER);
+  // Wait a max of 6 secs for the bundle service. Should the bundle service fall over, it will
+  // reconnect within 5 secs. Otherwise abandon bundle hashing and display the blockable event.
+  if (dispatch_semaphore_wait(self.bundleServiceSema,
+                              dispatch_time(DISPATCH_TIME_NOW, 6 * NSEC_PER_SEC))) {
+    [self updateBlockNotification:event withBundleHash:nil];
+    return;
+  }
 
   // Let all future requests flow, until the connection is terminated and we go back to waiting.
   dispatch_semaphore_signal(self.bundleServiceSema);
@@ -226,10 +240,14 @@ static NSString * const silencedNotificationsKey = @"SilencedNotifications";
 - (void)updateBlockNotification:(SNTStoredEvent *)event withBundleHash:(NSString *)bundleHash {
   dispatch_async(dispatch_get_main_queue(), ^{
     if ([self.currentWindowController.event.idx isEqual:event.idx]) {
+      if (bundleHash) {
+        [self.currentWindowController.bundleHashLabel setHidden:NO];
+      } else {
+        [self.currentWindowController.bundleHashLabel removeFromSuperview];
+      }
       self.currentWindowController.event.fileBundleHash = bundleHash;
       [self.currentWindowController.foundFileCountLabel removeFromSuperview];
       [self.currentWindowController.hashingIndicator setHidden:YES];
-      [self.currentWindowController.bundleHashLabel setHidden:NO];
       [self.currentWindowController.openEventButton setEnabled:YES];
     }
   });

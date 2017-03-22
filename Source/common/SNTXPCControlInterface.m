@@ -38,14 +38,14 @@
             ofReply:NO];
 
   [r setClasses:[NSSet setWithObjects:[NSArray class], [SNTStoredEvent class], nil]
-    forSelector:@selector(hashBundleBinariesForEvent:reply:)
-  argumentIndex:1
-        ofReply:YES];
+        forSelector:@selector(hashBundleBinariesForEvent:reply:)
+      argumentIndex:1
+            ofReply:YES];
 
   [r setClasses:[NSSet setWithObjects:[NSArray class], [SNTStoredEvent class], nil]
-    forSelector:@selector(syncBundleEvent:relatedEvents:)
-  argumentIndex:1
-        ofReply:NO];
+        forSelector:@selector(syncBundleEvent:relatedEvents:)
+      argumentIndex:1
+            ofReply:NO];
 
   return r;
 }

@@ -280,7 +280,7 @@ extern NSString *const NSURLQuarantinePropertiesKey WEAK_IMPORT_ATTRIBUTE;
 ///
 ///  Rationale: An NSBundle has a method executablePath for discovering the main binary within a
 ///  bundle but provides no way to get an NSBundle object when only the executablePath is known.
-///  Also a bundle can contain multiple binaries within it's subdirectories and we want any of these
+///  Also a bundle can contain multiple binaries within its subdirectories and we want any of these
 ///  to count as being part of the bundle.
 ///
 ///  This method walks up the path until a bundle is found, if any.
@@ -289,19 +289,18 @@ extern NSString *const NSURLQuarantinePropertiesKey WEAK_IMPORT_ATTRIBUTE;
   if (!self.bundleRef) {
     self.bundleRef = (NSBundle *)[NSNull null];
 
-    NSMutableArray *pathComponents = [NSMutableArray arrayWithArray:[self.path pathComponents]];
+    NSMutableArray *pathComponents = [[self.path pathComponents] mutableCopy];
 
     // Ignore the checking the root path "/". For some reason this produces a valid bundle.
     // Also only walk back a max 10 dirs.
-    uint64_t deep = 0;
-    while (pathComponents.count > 1 && deep < 10) {
-      deep++;
+    for (short deep = 0;
+         pathComponents.count > 1 && deep < 10;
+         ++deep, [pathComponents removeLastObject]) {
       NSBundle *bndl = [NSBundle bundleWithPath:[NSString pathWithComponents:pathComponents]];
       if (bndl && [bndl objectForInfoDictionaryKey:@"CFBundleIdentifier"]) {
         self.bundleRef = bndl;
         break;
       }
-      [pathComponents removeLastObject];
     }
   }
   return self.bundleRef == (NSBundle *)[NSNull null] ? nil : self.bundleRef;

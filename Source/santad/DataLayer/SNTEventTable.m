@@ -93,7 +93,7 @@
         !event.fileSHA256 ||
         !event.filePath ||
         !event.occurrenceDate ||
-        !event.decision) return NO;
+        !event.decision) continue;
 
     NSData *eventData;
     @try {

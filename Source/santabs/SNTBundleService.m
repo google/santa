@@ -34,7 +34,7 @@
 
 #pragma mark Connection handling
 
-// Create a listener for Santa GUI to connect
+// Create a listener for SantaGUI to connect
 - (void)createConnection {
   dispatch_semaphore_t sema = dispatch_semaphore_create(0);
 
@@ -47,14 +47,14 @@
     dispatch_semaphore_signal(sema);
   };
 
-  // Exit when Santa GUI is done with us.
+  // Exit when SantaGUI is done with us.
   self.listener.invalidationHandler = ^{
     exit(0);
   };
 
   [self.listener resume];
 
-  // Tell Santa GUI to connect back to the above listener.
+  // Tell SantaGUI to connect back to the above listener.
   [[self.notifierConnection remoteObjectProxy] setBundleServiceListener:listener.endpoint];
 
   // Now wait for the connection to come in.
@@ -70,7 +70,7 @@
 
 #pragma mark SNTBundleServiceXPC Methods
 
-// Connect to the Santa GUI
+// Connect to the SantaGUI
 - (void)setBundleNotificationListener:(NSXPCListenerEndpoint *)listener {
   SNTXPCConnection *c = [[SNTXPCConnection alloc] initClientWithListener:listener];
   c.remoteInterface = [SNTXPCNotifierInterface bundleNotifierInterface];
@@ -128,7 +128,7 @@
   __block pthread_mutex_t enumeratorMutex = PTHREAD_MUTEX_INITIALIZER;
   __block pthread_mutex_t eventsMutex = PTHREAD_MUTEX_INITIALIZER;
 
-  // Counts used as additional progress information in Santa GUI
+  // Counts used as additional progress information in SantaGUI
   __block uint64_t binaryCount = 0;
   __block uint64_t sentBinaryCount = 0;
   __block uint64_t fileCount = 0;
@@ -179,9 +179,9 @@
       });
       if (progress && ((fileCount % 500) == 0 || binaryCount > sentBinaryCount)) {
         sentBinaryCount = binaryCount;
-        [[self.notifierConnection remoteObjectProxy] updateTotalFileCountForEvent:event
-                                                                        binaryCount:binaryCount
-                                                                        fileCount:fileCount];
+        [[self.notifierConnection remoteObjectProxy] updateCountsForEvent:event
+                                                              binaryCount:binaryCount
+                                                                fileCount:fileCount];
       }
     }
   }
@@ -221,7 +221,7 @@
 
           pthread_mutex_lock(&eventsMutex);
           [relatedEvents addObject:se];
-          p.completedUnitCount += 1;
+          p.completedUnitCount++;
           pthread_mutex_unlock(&eventsMutex);
 
           dispatch_semaphore_signal(sema);
@@ -240,7 +240,7 @@
 
 - (NSString *)calculateBundleHashFromEvents:(NSArray<SNTStoredEvent *> *)events {
   if (!events) return nil;
-  NSMutableArray *eventSHA256Hashes = [[NSMutableArray alloc] initWithCapacity:events.count];
+  NSMutableArray *eventSHA256Hashes = [NSMutableArray arrayWithCapacity:events.count];
   for (SNTStoredEvent *event in events) {
     if (!event.fileSHA256) return nil;
     [eventSHA256Hashes addObject:event.fileSHA256];
