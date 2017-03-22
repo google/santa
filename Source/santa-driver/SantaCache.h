@@ -247,7 +247,7 @@ template<class T> class SantaCache {
   /**
     Holder for a 'zero' entry for the current type
   */
-  const T zero_ = T(0);
+  const T zero_ = T();
 
   /**
     Special bucket used when automatically clearing due to size
