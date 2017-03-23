@@ -216,24 +216,26 @@ static NSString * const silencedNotificationsKey = @"SilencedNotifications";
   [[self.bundleServiceConnection remoteObjectProxy]
       hashBundleBinariesForEvent:event
                            reply:^(NSString *bh, NSArray<SNTStoredEvent *> *events, NSNumber *ms) {
-     if (!bh) return;
-     event.fileBundleHash = bh;
-     event.fileBundleBinaryCount = @(events.count);
-     event.fileBundleHashMilliseconds = ms;
-     for (SNTStoredEvent *se in events) {
-       se.fileBundleHash = bh;
-       se.fileBundleBinaryCount = @(events.count);
-       se.fileBundleHashMilliseconds = ms;
-     }
+    // Revert to displaying the blockable event if we fail to calculate the bundle hash
+    if (!bh) return [self updateBlockNotification:event withBundleHash:nil];
 
-     // Send the results to santad. It will decide if they need to be synced.
-     SNTXPCConnection *daemonConn = [SNTXPCControlInterface configuredConnection];
-     [daemonConn resume];
-     [[daemonConn remoteObjectProxy] syncBundleEvent:event relatedEvents:events];
+    event.fileBundleHash = bh;
+    event.fileBundleBinaryCount = @(events.count);
+    event.fileBundleHashMilliseconds = ms;
+    for (SNTStoredEvent *se in events) {
+      se.fileBundleHash = bh;
+      se.fileBundleBinaryCount = @(events.count);
+      se.fileBundleHashMilliseconds = ms;
+    }
 
-     // Update the UI with the bundle hash. Also make the openEventButton available.
-     [self updateBlockNotification:event withBundleHash:bh];
-   }];
+    // Send the results to santad. It will decide if they need to be synced.
+    SNTXPCConnection *daemonConn = [SNTXPCControlInterface configuredConnection];
+    [daemonConn resume];
+    [[daemonConn remoteObjectProxy] syncBundleEvent:event relatedEvents:events];
+
+    // Update the UI with the bundle hash. Also make the openEventButton available.
+    [self updateBlockNotification:event withBundleHash:bh];
+  }];
   [self.currentWindowController.progress resignCurrent];
 }
 

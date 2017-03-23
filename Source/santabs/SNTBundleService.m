@@ -88,23 +88,38 @@
 
   NSDate *startTime = [NSDate date];
 
+  dispatch_semaphore_t sema = dispatch_semaphore_create(0);
+
   dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_BACKGROUND, 0), ^{
     NSArray *relatedBinaries = [self findRelatedBinaries:event progress:progress];
     NSString *bundleHash = [self calculateBundleHashFromEvents:relatedBinaries];
     NSNumber *ms = [NSNumber numberWithDouble:[startTime timeIntervalSinceNow] * -1000.0];
     if (bundleHash) LOGD(@"hashed %@ in %@ ms", event.fileBundlePath, ms);
     reply(bundleHash, relatedBinaries, ms);
+    dispatch_semaphore_signal(sema);
+  });
+
+  // Master timeout of 10 min. Don't block the calling thread. NSProgress updates will be coming
+  // in over this thread.
+  dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_BACKGROUND, 0), ^{
+    if (dispatch_semaphore_wait(sema, dispatch_time(DISPATCH_TIME_NOW, 600 * NSEC_PER_SEC))) {
+      LOGD(@"hashBundleBinariesForEvent timeout");
+      [progress cancel];
+    }
   });
 }
 
 #pragma mark Internal Methods
 
 /**
- Find binaries within a bundle given the bundle's event. Will run until completion, however long
- that might be, or until the NSProgress is cancelled. Search is done within the bundle concurrently.
+ Find binaries within a bundle given the bundle's event. It will run until a timeout occurs, 
+ or until the NSProgress is cancelled. Search is done within the bundle concurrently.
 
  @param event The SNTStoredEvent to begin searching underneath
  @return An array of SNTStoredEvent's
+
+ @note The first stage gathers a set of executables. 60 sec / max thread timeout.
+ @note The second stage hashes the executables. 300 sec / max thread timeout.
  */
 - (NSArray *)findRelatedBinaries:(SNTStoredEvent *)event progress:(NSProgress *)progress {
   // For storing the generated events, with a simple lock for writing.
@@ -117,7 +132,7 @@
   dispatch_semaphore_t sema =
       dispatch_semaphore_create([[NSProcessInfo processInfo] processorCount] / 2);
 
-  // Group the processing into a single group so we can wait on the whole group at the end.
+  // Group the processing into a single group so we can wait on the whole group after each stage.
   dispatch_group_t group = dispatch_group_create();
 
   // Directory enumerator
@@ -137,13 +152,17 @@
 
   // In the first stage iterate over every file in the tree checking if it is a binary. If so add
   // it to the fis set for the second stage. Hashing the file while iterating over the filesystem
-  // causes some weird performance issues. Do them separately.
+  // causes performance issues. Do them separately.
   while (1) {
     @autoreleasepool {
       if (breakDir || progress.isCancelled) break;
 
-      // Wait for a processing thread to become available
-      dispatch_semaphore_wait(sema, DISPATCH_TIME_FOREVER);
+      // Wait for a processing thread to become available. At this stage we are only reading the
+      // mach_header. If all processing threads are blocking for more than 60 sec bail.
+      if (dispatch_semaphore_wait(sema, dispatch_time(DISPATCH_TIME_NOW, 60 * NSEC_PER_SEC))) {
+        LOGD(@"isExecutable processing threads timeout");
+        return nil;
+      }
 
       dispatch_group_async(group,
                            dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_BACKGROUND, 0), ^{
@@ -186,6 +205,9 @@
     }
   }
 
+  if (progress.isCancelled) return nil;
+
+  // Wait for all the processing threads to finish
   dispatch_group_wait(group, DISPATCH_TIME_FOREVER);
 
   NSProgress *p;
@@ -194,13 +216,17 @@
     p = [NSProgress progressWithTotalUnitCount:fis.count];
   }
 
-  // Perform the hashing of found binaries in this stage.
+  // In the second stage perform SHA256 hashing on all of the found binaries.
   for (SNTFileInfo *fi in fis) {
     @autoreleasepool {
       if (progress.isCancelled) break;
 
-      // Wait for a processing thread to become available
-      dispatch_semaphore_wait(sema, DISPATCH_TIME_FOREVER);
+      // Wait for a processing thread to become available. Here we are hashing the entire file.
+      // If all processing threads are blocking for more than 5 min bail.
+      if (dispatch_semaphore_wait(sema, dispatch_time(DISPATCH_TIME_NOW, 300 * NSEC_PER_SEC))) {
+        LOGD(@"SHA256 processing threads timeout");
+        return nil;
+      }
 
       dispatch_group_async(group,
                            dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_BACKGROUND, 0), ^{
@@ -229,7 +255,8 @@
       });
     }
   }
-  
+
+  // Wait for all the processing threads to finish
   dispatch_group_wait(group, DISPATCH_TIME_FOREVER);
 
   pthread_mutex_destroy(&enumeratorMutex);
