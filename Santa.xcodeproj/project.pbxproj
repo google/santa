@@ -438,7 +438,6 @@
 		C795ED8F1D80A5BE007CFF42 /* SNTPolicyProcessor.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SNTPolicyProcessor.m; sourceTree = "<group>"; };
 		C79A23561E23F7E80037AFA8 /* main.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
 		C79A235A1E23F8820037AFA8 /* santabs-Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = "santabs-Info.plist"; sourceTree = "<group>"; };
-		C79A235B1E23F8820037AFA8 /* santabs-Prefix.pch */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "santabs-Prefix.pch"; sourceTree = "<group>"; };
 		C7C721AC1E23FCB50051FAA6 /* SNTBundleService.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SNTBundleService.h; sourceTree = "<group>"; };
 		C7C721AD1E23FCB50051FAA6 /* SNTBundleService.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SNTBundleService.m; sourceTree = "<group>"; };
 		C7C721AF1E23FF300051FAA6 /* SNTXPCBundleServiceInterface.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SNTXPCBundleServiceInterface.h; sourceTree = "<group>"; };
@@ -862,7 +861,6 @@
 			isa = PBXGroup;
 			children = (
 				C79A235A1E23F8820037AFA8 /* santabs-Info.plist */,
-				C79A235B1E23F8820037AFA8 /* santabs-Prefix.pch */,
 			);
 			path = Resources;
 			sourceTree = "<group>";
@@ -1341,7 +1339,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "diff \"${PODS_ROOT}/../Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n";
+			shellScript = "GIT_TAG=$(git describe --abbrev=0 --tags)\nGIT_COMMIT=$(git rev-parse --short HEAD)\n\ncp ${SCRIPT_INPUT_FILE_0} ${SCRIPT_OUTPUT_FILE_0}\n\nif [ $CONFIGURATION = \"Debug\" ]; then\nnewVersion=\"${GIT_TAG}d ${GIT_COMMIT}\"\nelse\nnewVersion=\"${GIT_TAG}\"\nfi\n\n/usr/libexec/PlistBuddy -c \"Set :CFBundleVersion ${GIT_TAG}\" ${SCRIPT_OUTPUT_FILE_0}\n/usr/libexec/PlistBuddy -c \"Set :CFBundleShortVersionString ${newVersion}\" ${SCRIPT_OUTPUT_FILE_0}";
 			showEnvVarsInLog = 0;
 		};
 		CD31FBD93AEB78CB5FFC4AE4 /* [CP] Embed Pods Frameworks */ = {
@@ -2186,7 +2184,6 @@
 				GCC_C_LANGUAGE_STANDARD = gnu99;
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_NO_COMMON_BLOCKS = YES;
-				GCC_PREFIX_HEADER = "Source/santabs/Resources/santabs-Prefix.pch";
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"DEBUG=1",
 					"$(inherited)",
@@ -2230,7 +2227,6 @@
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu99;
 				GCC_NO_COMMON_BLOCKS = YES;
-				GCC_PREFIX_HEADER = "Source/santabs/Resources/santabs-Prefix.pch";
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
 				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
 				GCC_WARN_UNDECLARED_SELECTOR = YES;
