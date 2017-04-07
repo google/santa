@@ -14,8 +14,6 @@
 
 #import "SNTXPCNotifierInterface.h"
 
-#import "SNTStoredEvent.h"
-
 @implementation SNTXPCNotifierInterface
 
 + (NSXPCInterface *)notifierInterface {

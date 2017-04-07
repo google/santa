@@ -99,7 +99,7 @@
     @try {
       eventData = [NSKeyedArchiver archivedDataWithRootObject:event];
     } @catch (NSException *exception) {
-      return NO;
+      continue;
     }
     eventsData[eventData] = event;
   }
@@ -110,8 +110,8 @@
                                                     SNTStoredEvent * event,
                                                     BOOL *stop) {
       success = [db executeUpdate:@"INSERT INTO 'events' (idx, filesha256, eventdata)"
-                 @"VALUES (?, ?, ?)",
-                 event.idx, event.fileSHA256, eventData];
+                    @"VALUES (?, ?, ?)",
+                    event.idx, event.fileSHA256, eventData];
       if (!success) *stop = YES;
     }];
   }];

@@ -1,4 +1,4 @@
-/// Copyright 2016 Google Inc. All rights reserved.
+/// Copyright 2017 Google Inc. All rights reserved.
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -52,7 +52,7 @@ REGISTER_COMMAND_NAME(@"bundleinfo")
     printf("%s\n", error.description.UTF8String);
     exit(1);
   } else if (!fi.bundle) {
-    printf("not a bundle\n");
+    printf("Not a bundle\n");
     exit(2);
   }
 
@@ -64,7 +64,7 @@ REGISTER_COMMAND_NAME(@"bundleinfo")
                                                                NSArray<SNTStoredEvent *> *events,
                                                                NSNumber *time) {
 
-    printf("hashing time: %llu ms\n", time.unsignedLongLongValue);
+    printf("Hashing time: %llu ms\n", time.unsignedLongLongValue);
     printf("%lu events found\n", events.count);
     printf("BundleHash: %s\n", hash.UTF8String);
 
