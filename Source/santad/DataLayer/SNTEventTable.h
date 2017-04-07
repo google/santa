@@ -33,6 +33,14 @@
 - (BOOL)addStoredEvent:(SNTStoredEvent *)event;
 
 ///
+///  Add events to the database.
+///
+///  @param events the events to store.
+///  @return YES if events were successfully stored.
+///
+- (BOOL)addStoredEvents:(NSArray<SNTStoredEvent *> *)events;
+
+///
 ///  Retrieves all events in the database
 ///
 ///  @return NSArray of SNTStoredEvent's

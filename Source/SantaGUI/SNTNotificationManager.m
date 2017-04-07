@@ -18,13 +18,27 @@
 #import "SNTConfigurator.h"
 #import "SNTLogging.h"
 #import "SNTStoredEvent.h"
+#import "SNTStrengthify.h"
+#import "SNTXPCConnection.h"
+#import "SNTXPCControlInterface.h"
 
 @interface SNTNotificationManager ()
+
 ///  The currently displayed notification
 @property SNTMessageWindowController *currentWindowController;
 
 ///  The queue of pending notifications
 @property(readonly) NSMutableArray *pendingNotifications;
+
+///  The connection to the bundle service
+@property SNTXPCConnection *bundleServiceConnection;
+
+///  A semaphore to block bundle hashing until a connection is established
+@property dispatch_semaphore_t bundleServiceSema;
+
+// A serial queue for holding hashBundleBinaries requests
+@property dispatch_queue_t hashBundleBinariesQueue;
+
 @end
 
 @implementation SNTNotificationManager
@@ -35,6 +49,9 @@ static NSString * const silencedNotificationsKey = @"SilencedNotifications";
   self = [super init];
   if (self) {
     _pendingNotifications = [[NSMutableArray alloc] init];
+    _bundleServiceSema = dispatch_semaphore_create(0);
+    _hashBundleBinariesQueue = dispatch_queue_create("com.google.santagui.hashbundlebinaries",
+                                                     DISPATCH_QUEUE_SERIAL);
   }
   return self;
 }
@@ -48,7 +65,16 @@ static NSString * const silencedNotificationsKey = @"SilencedNotifications";
   if ([self.pendingNotifications count]) {
     self.currentWindowController = [self.pendingNotifications firstObject];
     [self.currentWindowController showWindow:self];
+    if (self.currentWindowController.event.fileBundleHash) {
+      dispatch_async(self.hashBundleBinariesQueue, ^{
+        [self hashBundleBinariesForEvent:self.currentWindowController.event];
+      });
+    }
   } else {
+    // Tear down the bundle service
+    self.bundleServiceSema = dispatch_semaphore_create(0);
+    [self.bundleServiceConnection invalidate];
+    self.bundleServiceConnection = nil;
     [NSApp hide:self];
   }
 }
@@ -65,7 +91,7 @@ static NSString * const silencedNotificationsKey = @"SilencedNotifications";
   [ud setObject:d forKey:silencedNotificationsKey];
 }
 
-#pragma mark SNTNotifierXPC protocol method
+#pragma mark SNTNotifierXPC protocol methods
 
 - (void)postClientModeNotification:(SNTClientMode)clientmode {
   NSUserNotification *un = [[NSUserNotification alloc] init];
@@ -131,6 +157,11 @@ static NSString * const silencedNotificationsKey = @"SilencedNotifications";
     if (!self.currentWindowController) {
       self.currentWindowController = pendingMsg;
       [pendingMsg showWindow:nil];
+      if (self.currentWindowController.event.fileBundleHash) {
+        dispatch_async(self.hashBundleBinariesQueue, ^{
+          [self hashBundleBinariesForEvent:self.currentWindowController.event];
+        });
+      }
     }
   });
 }
@@ -141,6 +172,87 @@ static NSString * const silencedNotificationsKey = @"SilencedNotifications";
   un.hasActionButton = NO;
   un.informativeText = message ?: @"Requested application can now be run";
   [[NSUserNotificationCenter defaultUserNotificationCenter] deliverNotification:un];
+}
+
+#pragma mark SNTBundleNotifierXPC protocol methods
+
+- (void)updateCountsForEvent:(SNTStoredEvent *)event
+                 binaryCount:(uint64_t)binaryCount
+                   fileCount:(uint64_t)fileCount {
+  if ([self.currentWindowController.event.idx isEqual:event.idx]) {
+    dispatch_async(dispatch_get_main_queue(), ^{
+      self.currentWindowController.foundFileCountLabel.stringValue =
+          [NSString stringWithFormat:@"%llu binaries / %llu files", binaryCount, fileCount];
+    });
+  }
+}
+
+- (void)setBundleServiceListener:(NSXPCListenerEndpoint *)listener {
+  SNTXPCConnection *c = [[SNTXPCConnection alloc] initClientWithListener:listener];
+  c.remoteInterface = [SNTXPCBundleServiceInterface bundleServiceInterface];
+  [c resume];
+  self.bundleServiceConnection = c;
+  dispatch_semaphore_signal(self.bundleServiceSema);
+}
+
+#pragma mark SNTBundleNotifierXPC helper methods
+
+- (void)hashBundleBinariesForEvent:(SNTStoredEvent *)event {
+  // Wait a max of 6 secs for the bundle service. Should the bundle service fall over, it will
+  // reconnect within 5 secs. Otherwise abandon bundle hashing and display the blockable event.
+  if (dispatch_semaphore_wait(self.bundleServiceSema,
+                              dispatch_time(DISPATCH_TIME_NOW, 6 * NSEC_PER_SEC))) {
+    [self updateBlockNotification:event withBundleHash:nil];
+    return;
+  }
+
+  // Let all future requests flow, until the connection is terminated and we go back to waiting.
+  dispatch_semaphore_signal(self.bundleServiceSema);
+
+  // NSProgress becomes current for this thread. XPC messages vend a child node to the receiver.
+  [self.currentWindowController.progress becomeCurrentWithPendingUnitCount:1];
+
+  // Start hashing. Progress is reported to the root NSProgress (currentWindowController.progress).
+  [[self.bundleServiceConnection remoteObjectProxy]
+      hashBundleBinariesForEvent:event
+                           reply:^(NSString *bh, NSArray<SNTStoredEvent *> *events, NSNumber *ms) {
+    // Revert to displaying the blockable event if we fail to calculate the bundle hash
+    if (!bh) return [self updateBlockNotification:event withBundleHash:nil];
+
+    event.fileBundleHash = bh;
+    event.fileBundleBinaryCount = @(events.count);
+    event.fileBundleHashMilliseconds = ms;
+    for (SNTStoredEvent *se in events) {
+      se.fileBundleHash = bh;
+      se.fileBundleBinaryCount = @(events.count);
+      se.fileBundleHashMilliseconds = ms;
+    }
+
+    // Send the results to santad. It will decide if they need to be synced.
+    SNTXPCConnection *daemonConn = [SNTXPCControlInterface configuredConnection];
+    [daemonConn resume];
+    [[daemonConn remoteObjectProxy] syncBundleEvent:event relatedEvents:events];
+
+    // Update the UI with the bundle hash. Also make the openEventButton available.
+    [self updateBlockNotification:event withBundleHash:bh];
+  }];
+  [self.currentWindowController.progress resignCurrent];
+}
+
+- (void)updateBlockNotification:(SNTStoredEvent *)event withBundleHash:(NSString *)bundleHash {
+  dispatch_async(dispatch_get_main_queue(), ^{
+    if ([self.currentWindowController.event.idx isEqual:event.idx]) {
+      if (bundleHash) {
+        [self.currentWindowController.bundleHashLabel setHidden:NO];
+      } else {
+        [self.currentWindowController.bundleHashLabel removeFromSuperview];
+      }
+      self.currentWindowController.event.fileBundleHash = bundleHash;
+      [self.currentWindowController.foundFileCountLabel removeFromSuperview];
+      [self.currentWindowController.hashingIndicator setHidden:YES];
+      [self.currentWindowController.openEventButton setEnabled:YES];
+    }
+  });
 }
 
 @end

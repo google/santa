@@ -14,10 +14,19 @@
 
 #import "SNTXPCSyncdInterface.h"
 
+#import "SNTStoredEvent.h"
+
 @implementation SNTXPCSyncdInterface
 
 + (NSXPCInterface *)syncdInterface {
-  return [NSXPCInterface interfaceWithProtocol:@protocol(SNTSyncdXPC)];
+  NSXPCInterface *r = [NSXPCInterface interfaceWithProtocol:@protocol(SNTSyncdXPC)];
+
+  [r setClasses:[NSSet setWithObjects:[NSArray class], [SNTStoredEvent class], nil]
+        forSelector:@selector(postBundleEventsToSyncServer:)
+      argumentIndex:0
+            ofReply:NO];
+
+  return r;
 }
 
 @end

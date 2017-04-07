@@ -37,6 +37,22 @@
 @property NSString *filePath;
 
 ///
+///  If the executed file was part of a bundle, this is the calculated hash of all the nested
+///  executables within the bundle.
+///
+@property NSString *fileBundleHash;
+
+///
+///  If the executed file was part of a bundle, this is the time in ms it took to hash the bundle.
+///
+@property NSNumber *fileBundleHashMilliseconds;
+
+///
+///  If the executed file was part of a bundle, this is the total count of related mach-o binaries.
+///
+@property NSNumber *fileBundleBinaryCount;
+
+///
 ///  If the executed file was part of the bundle, this is the CFBundleDisplayName, if it exists
 ///  or the CFBundleName if not.
 ///

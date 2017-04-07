@@ -24,9 +24,6 @@
 #import "SNTStoredEvent.h"
 
 @interface SNTMessageWindowController ()
-///  The execution event that this window is for
-@property SNTStoredEvent *event;
-
 ///  The custom message to display for this event
 @property(copy) NSString *customMessage;
 
@@ -36,13 +33,9 @@
 ///  An optional message to display with this block.
 @property(readonly, nonatomic) NSAttributedString *attributedCustomMessage;
 
-///  Reference to the "Open Event" button in the XIB. Used to either remove the button
-///  if it isn't needed or set its title if it is.
-@property IBOutlet NSButton *openEventButton;
-
 ///  Reference to the "Application Name" label in the XIB. Used to remove if application
 ///  doesn't have a CFBundleName.
-@property IBOutlet NSTextField *applicationNameLabel;
+@property(weak) IBOutlet NSTextField *applicationNameLabel;
 
 ///  Linked to checkbox in UI to prevent future notifications for this binary.
 @property BOOL silenceFutureNotifications;
@@ -55,8 +48,33 @@
   if (self) {
     _event = event;
     _customMessage = message;
+    _progress = [NSProgress discreteProgressWithTotalUnitCount:1];
+    [_progress addObserver:self
+                forKeyPath:@"fractionCompleted"
+                   options:NSKeyValueObservingOptionNew
+                   context:NULL];
   }
   return self;
+}
+
+- (void)dealloc {
+  [_progress removeObserver:self forKeyPath:@"fractionCompleted"];
+}
+
+- (void)observeValueForKeyPath:(NSString *)keyPath
+                      ofObject:(id)object
+                        change:(NSDictionary *)change
+                       context:(void *)context {
+  if ([keyPath isEqualToString:@"fractionCompleted"]) {
+    dispatch_async(dispatch_get_main_queue(), ^{
+      NSProgress *progress = object;
+      if (progress.fractionCompleted != 0.0) {
+        self.hashingIndicator.indeterminate = NO;
+        [self.foundFileCountLabel removeFromSuperview];
+      }
+      self.hashingIndicator.doubleValue = progress.fractionCompleted;
+    });
+  }
 }
 
 - (void)loadWindow {
@@ -73,6 +91,18 @@
     }
   }
 
+  if (!self.event.fileBundleHash) {
+    [self.bundleHashLabel removeFromSuperview];
+    [self.hashingIndicator removeFromSuperview];
+    [self.foundFileCountLabel removeFromSuperview];
+  } else {
+    self.openEventButton.enabled = NO;
+    self.hashingIndicator.indeterminate = YES;
+    [self.hashingIndicator startAnimation:self];
+    self.bundleHashLabel.hidden = YES;
+    self.foundFileCountLabel.stringValue = @"";
+  }
+
   if (!self.event.fileBundleName) {
     [self.applicationNameLabel removeFromSuperview];
   }
@@ -83,6 +113,7 @@
 }
 
 - (IBAction)closeWindow:(id)sender {
+  [self.progress cancel];
   [(SNTMessageWindow *)self.window fadeOut:sender];
 }
 

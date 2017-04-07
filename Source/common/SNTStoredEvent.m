@@ -33,6 +33,9 @@
   ENCODE(self.fileSHA256, @"fileSHA256");
   ENCODE(self.filePath, @"filePath");
 
+  ENCODE(self.fileBundleHash, @"fileBundleHash");
+  ENCODE(self.fileBundleHashMilliseconds, @"fileBundleHashMilliseconds");
+  ENCODE(self.fileBundleBinaryCount, @"fileBundleBinaryCount");
   ENCODE(self.fileBundleName, @"fileBundleName");
   ENCODE(self.fileBundlePath, @"fileBundlePath");
   ENCODE(self.fileBundleID, @"fileBundleID");
@@ -72,6 +75,9 @@
     _fileSHA256 = DECODE(NSString, @"fileSHA256");
     _filePath = DECODE(NSString, @"filePath");
 
+    _fileBundleHash = DECODE(NSString, @"fileBundleHash");
+    _fileBundleHashMilliseconds = DECODE(NSNumber, @"fileBundleHashMilliseconds");
+    _fileBundleBinaryCount = DECODE(NSNumber, @"fileBundleBinaryCount");
     _fileBundleName = DECODE(NSString, @"fileBundleName");
     _fileBundlePath = DECODE(NSString, @"fileBundlePath");
     _fileBundleID = DECODE(NSString, @"fileBundleID");

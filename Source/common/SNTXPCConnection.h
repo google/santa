@@ -65,12 +65,19 @@
 - (nullable instancetype)initServerWithName:(nonnull NSString *)name;
 
 /**
-  Initializer a new client to a service exported by a LaunchDaemon.
+  Initialize a new client to a service exported by a LaunchDaemon.
 
   @param name MachService name
   @param privileged Use YES if the server is running as root.
 */
 - (nullable instancetype)initClientWithName:(nonnull NSString *)name privileged:(BOOL)privileged;
+
+/**
+  Initialize a new client to a service within a bundle.
+
+  @param name service name
+*/
+- (nullable instancetype)initClientWithServiceName:(nonnull NSString *)name;
 
 /**
   Initialize a new client with a listener endpoint sent from another process.

@@ -55,7 +55,7 @@
 /// Log upload URL sent from server. If set, LogUpload phase needs to happen.
 @property NSURL *uploadLogURL;
 
-/// Array of bundle paths to find binaries for.
+/// Array of bundle IDs to find binaries for.
 @property NSArray *bundleBinaryRequests;
 
 /// Rules downloaded from server.

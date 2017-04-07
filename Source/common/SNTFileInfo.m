@@ -280,34 +280,28 @@ extern NSString *const NSURLQuarantinePropertiesKey WEAK_IMPORT_ATTRIBUTE;
 ///
 ///  Rationale: An NSBundle has a method executablePath for discovering the main binary within a
 ///  bundle but provides no way to get an NSBundle object when only the executablePath is known.
-///  Also a bundle can contain multiple binaries within the MacOS folder and we want any of these
+///  Also a bundle can contain multiple binaries within its subdirectories and we want any of these
 ///  to count as being part of the bundle.
 ///
-///  This method relies on executable bundles being laid out as follows:
-///
-/// @code
-/// Bundle.app/
-///    Contents/
-///       MacOS/
-///         executable
-/// @endcode
-///
-///  If @c self.path is the full path to @c executable above, this method would return an
-///  NSBundle reference for Bundle.app.
+///  This method walks up the path until a bundle is found, if any.
 ///
 - (NSBundle *)bundle {
   if (!self.bundleRef) {
     self.bundleRef = (NSBundle *)[NSNull null];
 
-    // Check that the full path is at least 4-levels deep:
-    // e.g: /Calendar.app/Contents/MacOS/Calendar
-    NSArray *pathComponents = [self.path pathComponents];
-    NSUInteger pathComponentsCount = pathComponents.count;
-    if (pathComponentsCount < 4) return nil;
+    NSMutableArray *pathComponents = [[self.path pathComponents] mutableCopy];
 
-    pathComponents = [pathComponents subarrayWithRange:NSMakeRange(0, pathComponentsCount - 3)];
-    NSBundle *bndl = [NSBundle bundleWithPath:[NSString pathWithComponents:pathComponents]];
-    if (bndl && [bndl objectForInfoDictionaryKey:@"CFBundleIdentifier"]) self.bundleRef = bndl;
+    // Ignore the checking the root path "/". For some reason this produces a valid bundle.
+    // Also only walk back a max 10 dirs.
+    for (short deep = 0;
+         pathComponents.count > 1 && deep < 10;
+         ++deep, [pathComponents removeLastObject]) {
+      NSBundle *bndl = [NSBundle bundleWithPath:[NSString pathWithComponents:pathComponents]];
+      if (bndl && [bndl objectForInfoDictionaryKey:@"CFBundleIdentifier"]) {
+        self.bundleRef = bndl;
+        break;
+      }
+    }
   }
   return self.bundleRef == (NSBundle *)[NSNull null] ? nil : self.bundleRef;
 }
@@ -638,7 +632,7 @@ extern NSString *const NSURLQuarantinePropertiesKey WEAK_IMPORT_ATTRIBUTE;
   BOOL directory;
   if (![[NSFileManager defaultManager] fileExistsAtPath:path isDirectory:&directory]) {
     return nil;
-  } else if (directory) {
+  } else if (directory && ![path isEqualToString:@"/"]) {
     NSBundle *bndl = [NSBundle bundleWithPath:path];
     if (bundle) *bundle = bndl;
     return [bndl executablePath];

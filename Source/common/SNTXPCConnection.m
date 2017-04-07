@@ -95,6 +95,17 @@
   return self;
 }
 
+- (instancetype)initClientWithServiceName:(NSString *)name {
+  self = [super init];
+  if (self) {
+    _currentConnection = [[NSXPCConnection alloc] initWithServiceName:name];
+    if (!_currentConnection) return nil;
+    _validationInterface =
+        [NSXPCInterface interfaceWithProtocol:@protocol(SNTXPCConnectionProtocol)];
+  }
+  return self;
+}
+
 - (instancetype)init {
   [self doesNotRecognizeSelector:_cmd];
   return nil;

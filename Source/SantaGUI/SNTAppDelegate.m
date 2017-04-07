@@ -26,7 +26,8 @@
 @property SNTAboutWindowController *aboutWindowController;
 @property SNTFileWatcher *configFileWatcher;
 @property SNTNotificationManager *notificationManager;
-@property SNTXPCConnection *listener;
+@property SNTXPCConnection *daemonListener;
+@property SNTXPCConnection *bundleListener;
 @end
 
 @implementation SNTAppDelegate
@@ -49,18 +50,19 @@
                                       object:nil
                                        queue:[NSOperationQueue currentQueue]
                                   usingBlock:^(NSNotification *note) {
-    self.listener.invalidationHandler = nil;
-    [self.listener invalidate];
-    self.listener = nil;
+    self.daemonListener.invalidationHandler = nil;
+    [self.daemonListener invalidate];
+    self.daemonListener = nil;
   }];
   [workspaceNotifications addObserverForName:NSWorkspaceSessionDidBecomeActiveNotification
                                       object:nil
                                        queue:[NSOperationQueue currentQueue]
                                   usingBlock:^(NSNotification *note) {
-    [self attemptReconnection];
+    [self attemptDaemonReconnection];
   }];
 
-  [self createConnection];
+  [self createDaemonConnection];
+  [self createBundleConnection];
 }
 
 - (BOOL)applicationShouldHandleReopen:(NSApplication *)sender hasVisibleWindows:(BOOL)flag {
@@ -71,24 +73,24 @@
 
 #pragma mark Connection handling
 
-- (void)createConnection {
+- (void)createDaemonConnection {
   dispatch_semaphore_t sema = dispatch_semaphore_create(0);
 
   WEAKIFY(self);
 
   // Create listener for return connection from daemon.
   NSXPCListener *listener = [NSXPCListener anonymousListener];
-  self.listener = [[SNTXPCConnection alloc] initServerWithListener:listener];
-  self.listener.exportedInterface = [SNTXPCNotifierInterface notifierInterface];
-  self.listener.exportedObject = self.notificationManager;
-  self.listener.acceptedHandler = ^{
+  self.daemonListener = [[SNTXPCConnection alloc] initServerWithListener:listener];
+  self.daemonListener.exportedInterface = [SNTXPCNotifierInterface notifierInterface];
+  self.daemonListener.exportedObject = self.notificationManager;
+  self.daemonListener.acceptedHandler = ^{
     dispatch_semaphore_signal(sema);
   };
-  self.listener.invalidationHandler = ^{
+  self.daemonListener.invalidationHandler = ^{
     STRONGIFY(self);
-    [self attemptReconnection];
+    [self attemptDaemonReconnection];
   };
-  [self.listener resume];
+  [self.daemonListener resume];
 
   // Tell daemon to connect back to the above listener.
   SNTXPCConnection *daemonConn = [SNTXPCControlInterface configuredConnection];
@@ -97,12 +99,46 @@
 
   // Now wait for the connection to come in.
   if (dispatch_semaphore_wait(sema, dispatch_time(DISPATCH_TIME_NOW, 5 * NSEC_PER_SEC))) {
-    [self attemptReconnection];
+    [self attemptDaemonReconnection];
   }
 }
 
-- (void)attemptReconnection {
-  [self performSelectorInBackground:@selector(createConnection) withObject:nil];
+- (void)attemptDaemonReconnection {
+  [self performSelectorInBackground:@selector(createDaemonConnection) withObject:nil];
+}
+
+- (void)createBundleConnection {
+  dispatch_semaphore_t sema = dispatch_semaphore_create(0);
+
+  WEAKIFY(self);
+
+  // Create listener for return connection from the bundle service.
+  NSXPCListener *listener = [NSXPCListener anonymousListener];
+  self.bundleListener = [[SNTXPCConnection alloc] initServerWithListener:listener];
+  self.bundleListener.exportedInterface = [SNTXPCNotifierInterface bundleNotifierInterface];
+  self.bundleListener.exportedObject = self.notificationManager;
+  self.bundleListener.acceptedHandler = ^{
+    dispatch_semaphore_signal(sema);
+  };
+  self.bundleListener.invalidationHandler = ^{
+    STRONGIFY(self);
+    [self attemptBundleReconnection];
+  };
+  [self.bundleListener resume];
+
+  // Tell santabs to connect back to the above listener.
+  SNTXPCConnection *daemonConn = [SNTXPCControlInterface configuredConnection];
+  [daemonConn resume];
+  [[daemonConn remoteObjectProxy] setBundleNotificationListener:listener.endpoint];
+
+  // Now wait for the connection to come in.
+  if (dispatch_semaphore_wait(sema, dispatch_time(DISPATCH_TIME_NOW, 5 * NSEC_PER_SEC))) {
+    [self attemptBundleReconnection];
+  }
+}
+
+- (void)attemptBundleReconnection {
+  [self performSelectorInBackground:@selector(createBundleConnection) withObject:nil];
 }
 
 #pragma mark Menu Management

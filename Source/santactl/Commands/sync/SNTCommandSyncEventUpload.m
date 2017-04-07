@@ -97,7 +97,10 @@
       ADDKEY(newEvent, kDecision, kDecisionBlockCertificate);
       break;
     case SNTEventStateBlockScope: ADDKEY(newEvent, kDecision, kDecisionBlockScope); break;
-    case SNTEventStateBundleBinary: ADDKEY(newEvent, kDecision, kDecisionBundleBinary); break;
+    case SNTEventStateBundleBinary:
+      ADDKEY(newEvent, kDecision, kDecisionBundleBinary);
+      [newEvent removeObjectForKey:kExecutionTime];
+      break;
     default: ADDKEY(newEvent, kDecision, kDecisionUnknown);
   }
 
@@ -106,6 +109,9 @@
   ADDKEY(newEvent, kFileBundleName, event.fileBundleName);
   ADDKEY(newEvent, kFileBundleVersion, event.fileBundleVersion);
   ADDKEY(newEvent, kFileBundleShortVersionString, event.fileBundleVersionString);
+  ADDKEY(newEvent, kFileBundleHash, event.fileBundleHash);
+  ADDKEY(newEvent, kFileBundleHashMilliseconds, event.fileBundleHashMilliseconds);
+  ADDKEY(newEvent, kFileBundleBinaryCount, event.fileBundleBinaryCount);
 
   ADDKEY(newEvent, kPID, event.pid);
   ADDKEY(newEvent, kPPID, event.ppid);

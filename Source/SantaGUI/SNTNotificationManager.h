@@ -20,6 +20,7 @@
 ///
 ///  Keeps track of pending notifications and ensures only one is presented to the user at a time.
 ///
-@interface SNTNotificationManager : NSObject<SNTMessageWindowControllerDelegate, SNTNotifierXPC>
+@interface SNTNotificationManager : NSObject<SNTMessageWindowControllerDelegate,
+                                             SNTNotifierXPC, SNTBundleNotifierXPC>
 
 @end

@@ -1,4 +1,4 @@
-/// Copyright 2015 Google Inc. All rights reserved.
+/// Copyright 2017 Google Inc. All rights reserved.
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -12,16 +12,25 @@
 ///    See the License for the specific language governing permissions and
 ///    limitations under the License.
 
-#import "SNTXPCNotifierInterface.h"
+#import "SNTXPCBundleServiceInterface.h"
 
-@implementation SNTXPCNotifierInterface
+#import "SNTStoredEvent.h"
 
-+ (NSXPCInterface *)notifierInterface {
-  return [NSXPCInterface interfaceWithProtocol:@protocol(SNTNotifierXPC)];
+@implementation SNTXPCBundleServiceInterface
+
++ (NSXPCInterface *)bundleServiceInterface {
+  NSXPCInterface *r = [NSXPCInterface interfaceWithProtocol:@protocol(SNTBundleServiceXPC)];
+
+  [r setClasses:[NSSet setWithObjects:[NSArray class], [SNTStoredEvent class], nil]
+        forSelector:@selector(hashBundleBinariesForEvent:reply:)
+      argumentIndex:1
+            ofReply:YES];
+
+  return r;
 }
 
-+ (NSXPCInterface *)bundleNotifierInterface {
-  return [NSXPCInterface interfaceWithProtocol:@protocol(SNTBundleNotifierXPC)];
++ (NSString *)serviceId {
+  return @"com.google.santabs";
 }
 
 @end

@@ -24,7 +24,10 @@
 #import "SNTPolicyProcessor.h"
 #import "SNTRule.h"
 #import "SNTRuleTable.h"
+#import "SNTStoredEvent.h"
+#import "SNTStrengthify.h"
 #import "SNTSyncdQueue.h"
+#import "SNTXPCBundleServiceInterface.h"
 #import "SNTXPCConnection.h"
 #import "SNTXPCNotifierInterface.h"
 #import "SNTXPCSyncdInterface.h"
@@ -190,6 +193,13 @@ double watchdogRAMPeak = 0;
   self.notQueue.notifierConnection = c;
 }
 
+- (void)setBundleNotificationListener:(NSXPCListenerEndpoint *)listener {
+  SNTXPCConnection *bs = [[SNTXPCConnection alloc] initClientWithServiceName:@"com.google.santabs"];
+  bs.remoteInterface = [SNTXPCBundleServiceInterface bundleServiceInterface];
+  [bs resume];
+  [[bs remoteObjectProxy] setBundleNotificationListener:listener];
+}
+
 #pragma mark syncd Ops
 
 - (void)setSyncdListener:(NSXPCListenerEndpoint *)listener {
@@ -211,7 +221,6 @@ double watchdogRAMPeak = 0;
 
 - (void)setNextSyncInterval:(uint64_t)seconds reply:(void (^)())reply {
   [[self.syncdQueue.syncdConnection remoteObjectProxy] rescheduleSyncSecondsFromNow:seconds];
-  [[SNTConfigurator configurator] setSyncBackOff:YES];
   reply();
 }
 
@@ -225,6 +234,59 @@ double watchdogRAMPeak = 0;
   [[self.notQueue.notifierConnection remoteObjectProxy]
       postRuleSyncNotificationWithCustomMessage:message];
   reply();
+}
+
+#pragma mark Bundle ops
+
+///
+///  This method is only used for santactl's bundleinfo command. For blocked executions, SantaGUI
+///  calls on santabs directly.
+///
+///  Hash a bundle for an event. The SNTBundleHashBlock will be called with nil parameters if a
+///  failure or cancellation occurs.
+///
+///  @param event The event that includes the fileBundlePath to be hashed.
+///  @param reply A SNTBundleHashBlock to be executed upon completion or cancellation.
+///
+///  @note If there is a current NSProgress when called this method will report back it's progress.
+///
+- (void)hashBundleBinariesForEvent:(SNTStoredEvent *)event
+                             reply:(SNTBundleHashBlock)reply {
+  SNTXPCConnection *bs =
+      [[SNTXPCConnection alloc] initClientWithServiceName:[SNTXPCBundleServiceInterface serviceId]];
+  bs.remoteInterface = [SNTXPCBundleServiceInterface bundleServiceInterface];
+  [bs resume];
+  [[bs remoteObjectProxy] hashBundleBinariesForEvent:event reply:reply];
+}
+
+///
+///  Used by SantaGUI sync the offending event and potentially all the related events,
+///  if the sync server has not seen them before.
+///
+///  @param event The offending event, fileBundleHash & fileBundleBinaryCount need to be populated.
+///  @param relatedEvents Nexted bundle events.
+///
+- (void)syncBundleEvent:(SNTStoredEvent *)event
+          relatedEvents:(NSArray<SNTStoredEvent *> *)events {
+  SNTEventTable *eventTable = [SNTDatabaseController eventTable];
+
+  // Delete the event cached by the execution controller.
+  [eventTable deleteEventWithId:event.idx];
+
+  // Add the updated event.
+  [eventTable addStoredEvent:event];
+
+  WEAKIFY(self);
+
+  // Sync the updated event. If the sync server needs the related events, add them to the eventTable
+  // and upload them too.
+  [self.syncdQueue addBundleEvent:event reply:^(BOOL needRelatedEvents) {
+    STRONGIFY(self);
+    if (needRelatedEvents) {
+      [eventTable addStoredEvents:events];
+      [self.syncdQueue addBundleEvents:events];
+    }
+  }];
 }
 
 @end

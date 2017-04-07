@@ -83,24 +83,37 @@
 #pragma mark Loading / Storing
 
 - (BOOL)addStoredEvent:(SNTStoredEvent *)event {
-  if (!event.idx ||
-      !event.fileSHA256 ||
-      !event.filePath ||
-      !event.occurrenceDate ||
-      !event.decision) return NO;
+  return [self addStoredEvents:@[event]];
+}
 
-  NSData *eventData;
-  @try {
-    eventData = [NSKeyedArchiver archivedDataWithRootObject:event];
-  } @catch (NSException *exception) {
-    return NO;
+- (BOOL)addStoredEvents:(NSArray<SNTStoredEvent *> *)events {
+  NSMutableDictionary *eventsData = [NSMutableDictionary dictionaryWithCapacity:events.count];
+  for (SNTStoredEvent *event in events) {
+    if (!event.idx ||
+        !event.fileSHA256 ||
+        !event.filePath ||
+        !event.occurrenceDate ||
+        !event.decision) continue;
+
+    NSData *eventData;
+    @try {
+      eventData = [NSKeyedArchiver archivedDataWithRootObject:event];
+    } @catch (NSException *exception) {
+      continue;
+    }
+    eventsData[eventData] = event;
   }
 
   __block BOOL success = NO;
   [self inTransaction:^(FMDatabase *db, BOOL *rollback) {
-    success = [db executeUpdate:@"INSERT INTO 'events' (idx, filesha256, eventdata)"
-                                @"VALUES (?, ?, ?)",
-                                event.idx, event.fileSHA256, eventData];
+    [eventsData enumerateKeysAndObjectsUsingBlock:^(NSData * eventData,
+                                                    SNTStoredEvent * event,
+                                                    BOOL *stop) {
+      success = [db executeUpdate:@"INSERT INTO 'events' (idx, filesha256, eventdata)"
+                    @"VALUES (?, ?, ?)",
+                    event.idx, event.fileSHA256, eventData];
+      if (!success) *stop = YES;
+    }];
   }];
 
   return success;
