@@ -206,11 +206,13 @@ void SantaDecisionManager::AddToCache(
     decision_cache_->remove(identifier);
   }
 
+  if (unlikely(!identifier)) return;
   wakeup((void *)identifier);
 }
 
 void SantaDecisionManager::RemoveFromCache(uint64_t identifier) {
   decision_cache_->remove(identifier);
+  if (unlikely(!identifier)) return;
   wakeup((void *)identifier);
 }
 
