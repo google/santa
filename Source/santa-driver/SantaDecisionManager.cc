@@ -237,7 +237,7 @@ santa_action_t SantaDecisionManager::GetFromCache(uint64_t identifier) {
 
   if (RESPONSE_VALID(result)) {
     if (result == ACTION_RESPOND_DENY) {
-      auto expiry_time = decision_time + (kMaxDenyCacheAgeMilliseconds * 1000);
+      auto expiry_time = decision_time + (kMaxDenyCacheTimeMilliseconds * 1000);
       if (expiry_time < GetCurrentUptime()) {
         decision_cache_->remove(identifier);
         return ACTION_UNSET;
