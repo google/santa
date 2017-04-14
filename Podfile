@@ -11,6 +11,11 @@ target :santad do
   pod 'FMDB'
   pod 'MOLCertificate'
   pod 'MOLCodesignChecker'
+  target :santabs do
+    pod 'FMDB'
+    pod 'MOLCertificate'
+    pod 'MOLCodesignChecker'
+  end
 end
 
 target :santactl do
@@ -19,12 +24,6 @@ target :santactl do
   pod 'MOLCertificate'
   pod 'MOLCodesignChecker'
   pod 'MOLFCMClient', '~> 1.3'
-end
-
-target :santabs do
-  pod 'FMDB'
-  pod 'MOLCertificate'
-  pod 'MOLCodesignChecker'
 end
 
 target :LogicTests do
