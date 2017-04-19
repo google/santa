@@ -71,9 +71,6 @@ static NSString *const kMachineOwnerPlistKeyKey = @"MachineOwnerKey";
 static NSString *const kMachineIDPlistFileKey = @"MachineIDPlist";
 static NSString *const kMachineIDPlistKeyKey = @"MachineIDKey";
 
-static NSString *const kFCMFullSyncInterval = @"FCMFullSyncInterval";
-static NSString *const kFCMGlobalRuleLeeway = @"FCMGlobalRuleLeeway";
-
 - (instancetype)initWithFilePath:(NSString *)filePath {
   self = [super init];
   if (self) {
@@ -327,16 +324,6 @@ static NSString *const kFCMGlobalRuleLeeway = @"FCMGlobalRuleLeeway";
   }
 
   return machineId;
-}
-
-- (NSInteger)FCMFullSyncInterval {
-  NSInteger interval = [self.configData[kFCMFullSyncInterval] integerValue];
-  return (interval < 600) ? 1440 : interval;
-}
-
-- (NSInteger)FCMGlobalRuleLeeway {
-  NSInteger leeway = [self.configData[kFCMGlobalRuleLeeway] integerValue];
-  return (leeway < 60) ? 600 : leeway;
 }
 
 - (void)reloadConfigData {

@@ -219,11 +219,6 @@ double watchdogRAMPeak = 0;
   self.syncdQueue.syncdConnection = c;
 }
 
-- (void)setNextSyncInterval:(uint64_t)seconds reply:(void (^)())reply {
-  [[self.syncdQueue.syncdConnection remoteObjectProxy] rescheduleSyncSecondsFromNow:seconds];
-  reply();
-}
-
 - (void)pushNotifications:(void (^)(BOOL))reply {
   [self.syncdQueue.syncdConnection.remoteObjectProxy isFCMListening:^(BOOL response) {
     reply(response);

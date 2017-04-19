@@ -29,7 +29,7 @@
 }
 
 - (BOOL)sync {
-  NSDictionary *r = [self performRequest:[self requestWithDictionary:nil]];
+  [self performRequest:[self requestWithDictionary:nil]];
 
   dispatch_group_t group = dispatch_group_create();
   void (^replyBlock)() = ^{
@@ -41,14 +41,6 @@
     dispatch_group_enter(group);
     [[self.daemonConn remoteObjectProxy] setClientMode:self.syncState.clientMode
                                                  reply:replyBlock];
-  }
-
-  // Update backoff interval
-  NSString *backoffInterval = r[kBackoffInterval];
-  if (backoffInterval) {
-    dispatch_group_enter(group);
-    [[self.daemonConn remoteObjectProxy] setNextSyncInterval:[backoffInterval intValue]
-                                                       reply:replyBlock];
   }
 
   // Remove clean sync flag if we did a clean sync
