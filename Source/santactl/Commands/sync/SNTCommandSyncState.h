@@ -42,7 +42,7 @@
 @property NSUInteger FCMFullSyncInterval;
 
 /// Leeway time in seconds when receiving a global rule sync message.
-@property NSUInteger kFCMGlobalRuleDeadline;
+@property NSUInteger FCMGlobalRuleSyncDeadline;
 
 /// Machine identifier and owner.
 @property(copy) NSString *machineID;

@@ -35,7 +35,7 @@ NSString *const kBinaryRuleCount = @"binary_rule_count";
 NSString *const kCertificateRuleCount = @"certificate_rule_count";
 NSString *const kFCMToken = @"fcm_token";
 NSString *const kFCMFullSyncInterval = @"fcm_full_sync_interval";
-NSString *const kFCMGlobalRuleDeadline = @"fcm_global_rule_deadline";
+NSString *const kFCMGlobalRuleSyncDeadline = @"fcm_global_rule_sync_deadline";
 
 NSString *const kEvents = @"events";
 NSString *const kFileSHA256 = @"file_sha256";
@@ -102,7 +102,7 @@ NSString *const kRuleSync = @"rule_sync";
 NSString *const kConfigSync = @"config_sync";
 NSString *const kLogSync = @"log_sync";
 
-const NSUInteger kEventBatchSize = 50;
-const NSUInteger kFullSyncIntervalSeconds = 600;
-const NSUInteger kFCMFullSyncIntervalSeconds = 14400;
-const NSUInteger kFCMGlobalRuleDealineSeconds = 600;
+const NSUInteger kDefaultEventBatchSize = 50;
+const NSUInteger kDefaultFullSyncInterval = 600;
+const NSUInteger kDefaultFCMFullSyncInterval = 14400;
+const NSUInteger kDefaultFCMGlobalRuleSyncDealine = 600;

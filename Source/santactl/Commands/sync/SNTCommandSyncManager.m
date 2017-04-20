@@ -45,7 +45,7 @@
 @property(nonatomic) NSCache *ruleSyncCache;
 
 @property NSUInteger FCMFullSyncInterval;
-@property NSUInteger FCMGlobalRuleDealine;
+@property NSUInteger FCMGlobalRuleSyncDealine;
 @property NSUInteger eventBatchSize;
 
 @property MOLFCMClient *FCMClient;
@@ -108,9 +108,9 @@ static void reachabilityHandler(
     _dispatchLock = [[NSCache alloc] init];
     _ruleSyncCache = [[NSCache alloc] init];
 
-    _eventBatchSize = kEventBatchSize;
-    _FCMFullSyncInterval = kFCMFullSyncIntervalSeconds;
-    _FCMGlobalRuleDealine = kFCMGlobalRuleDealineSeconds;
+    _eventBatchSize = kDefaultEventBatchSize;
+    _FCMFullSyncInterval = kDefaultFCMFullSyncInterval;
+    _FCMGlobalRuleSyncDealine = kDefaultFCMGlobalRuleSyncDealine;
   }
   return self;
 }
@@ -188,7 +188,7 @@ static void reachabilityHandler(
     LOGE(@"FCM connection error: %@", error);
     [self.FCMClient disconnect];
     self.FCMClient = nil;
-    [self rescheduleTimerQueue:self.fullSyncTimer secondsFromNow:kFullSyncIntervalSeconds];
+    [self rescheduleTimerQueue:self.fullSyncTimer secondsFromNow:kDefaultFullSyncInterval];
   };
   
   self.FCMClient.loggingBlock = ^(NSString *log) {
@@ -239,7 +239,7 @@ static void reachabilityHandler(
       self.targetedRuleSync = YES;
       [self ruleSync];
     } else {
-      uint32_t delaySeconds = arc4random_uniform((u_int32_t)self.FCMGlobalRuleDealine);
+      uint32_t delaySeconds = arc4random_uniform((u_int32_t)self.FCMGlobalRuleSyncDealine);
       LOGD(@"Staggering rule download: %u second delay", delaySeconds);
       [self ruleSyncSecondsFromNow:delaySeconds];
     }
@@ -306,13 +306,13 @@ static void reachabilityHandler(
     // Start listening for push notifications with a full sync every FCMFullSyncInterval
     if (syncState.daemon && syncState.FCMToken) {
       self.FCMFullSyncInterval = syncState.FCMFullSyncInterval;
-      self.FCMGlobalRuleDealine = syncState.kFCMGlobalRuleDeadline;
+      self.FCMGlobalRuleSyncDealine = syncState.FCMGlobalRuleSyncDeadline;
       [self listenForPushNotificationsWithSyncState:syncState];
     } else if (syncState.daemon) {
-      LOGD(@"FCMToken not provided. Sync every %lu min.", kFullSyncIntervalSeconds / 60);
+      LOGD(@"FCMToken not provided. Sync every %lu min.", kDefaultFullSyncInterval / 60);
       [self.FCMClient disconnect];
       self.FCMClient = nil;
-      [self rescheduleTimerQueue:self.fullSyncTimer secondsFromNow:kFullSyncIntervalSeconds];
+      [self rescheduleTimerQueue:self.fullSyncTimer secondsFromNow:kDefaultFullSyncInterval];
     }
 
     if (syncState.uploadLogURL) {

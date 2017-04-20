@@ -74,14 +74,15 @@
 
   if (!resp) return NO;
 
-  self.syncState.eventBatchSize = [resp[kBatchSize] unsignedIntegerValue] ?: kEventBatchSize;
+  self.syncState.eventBatchSize = [resp[kBatchSize] unsignedIntegerValue] ?: kDefaultEventBatchSize;
   self.syncState.FCMToken = resp[kFCMToken];
 
   // Don't let these go too low
   NSUInteger value = [resp[kFCMFullSyncInterval] unsignedIntegerValue];
-  self.syncState.FCMFullSyncInterval = (value < 600) ? kFCMFullSyncIntervalSeconds : value;
-  value = [resp[kFCMGlobalRuleDeadline] unsignedIntegerValue];
-  self.syncState.kFCMGlobalRuleDeadline = (value < 60) ?  kFCMGlobalRuleDealineSeconds : value;
+  self.syncState.FCMFullSyncInterval = (value < 600) ? kDefaultFCMFullSyncInterval : value;
+  value = [resp[kFCMGlobalRuleSyncDeadline] unsignedIntegerValue];
+  self.syncState.FCMGlobalRuleSyncDeadline =
+      (value < 60) ?  kDefaultFCMGlobalRuleSyncDealine : value;
 
   self.syncState.uploadLogURL = [NSURL URLWithString:resp[kUploadLogsURL]];
 
