@@ -91,7 +91,7 @@
     }
   }
 
-  if (!self.event.fileBundleHash) {
+  if (!self.event.needsBundleHash) {
     [self.bundleHashLabel removeFromSuperview];
     [self.hashingIndicator removeFromSuperview];
     [self.foundFileCountLabel removeFromSuperview];

@@ -65,7 +65,7 @@ static NSString * const silencedNotificationsKey = @"SilencedNotifications";
   if ([self.pendingNotifications count]) {
     self.currentWindowController = [self.pendingNotifications firstObject];
     [self.currentWindowController showWindow:self];
-    if (self.currentWindowController.event.fileBundleHash) {
+    if (self.currentWindowController.event.needsBundleHash) {
       dispatch_async(self.hashBundleBinariesQueue, ^{
         [self hashBundleBinariesForEvent:self.currentWindowController.event];
       });
@@ -157,7 +157,7 @@ static NSString * const silencedNotificationsKey = @"SilencedNotifications";
     if (!self.currentWindowController) {
       self.currentWindowController = pendingMsg;
       [pendingMsg showWindow:nil];
-      if (self.currentWindowController.event.fileBundleHash) {
+      if (self.currentWindowController.event.needsBundleHash) {
         dispatch_async(self.hashBundleBinariesQueue, ^{
           [self hashBundleBinariesForEvent:self.currentWindowController.event];
         });

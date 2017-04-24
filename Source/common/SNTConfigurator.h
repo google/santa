@@ -158,6 +158,12 @@ extern NSString *const kDefaultConfigFilePath;
 ///
 @property(readonly, nonatomic) NSString *machineID;
 
+///
+///  If YES, enables bundle detection for blocked events. This property is not stored on disk.
+///  Its value is set by a sync server that supports bundles. Defaults to NO.
+///
+@property BOOL bundlesEnabled;
+
 #pragma mark Server Auth Settings
 
 ///

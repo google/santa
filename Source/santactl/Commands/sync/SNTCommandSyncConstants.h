@@ -36,6 +36,7 @@ extern NSString *const kCertificateRuleCount;
 extern NSString *const kFCMToken;
 extern NSString *const kFCMFullSyncInterval;
 extern NSString *const kFCMGlobalRuleSyncDeadline;
+extern NSString *const kBundlesEnabled;
 
 extern NSString *const kEvents;
 extern NSString *const kFileSHA256;

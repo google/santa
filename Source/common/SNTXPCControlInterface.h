@@ -80,6 +80,8 @@
 - (void)setSyncCleanRequired:(BOOL)cleanReqd reply:(void (^)())reply;
 - (void)setWhitelistPathRegex:(NSString *)pattern reply:(void (^)())reply;
 - (void)setBlacklistPathRegex:(NSString *)pattern reply:(void (^)())reply;
+- (void)bundlesEnabled:(void (^)(BOOL))reply;
+- (void)setBundlesEnabled:(BOOL)bundlesEnabled reply:(void (^)())reply;
 
 ///
 ///  GUI Ops

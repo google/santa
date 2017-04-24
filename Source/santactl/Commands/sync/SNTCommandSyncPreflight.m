@@ -74,6 +74,11 @@
 
   if (!resp) return NO;
 
+  dispatch_group_enter(group);
+  [[self.daemonConn remoteObjectProxy] setBundlesEnabled:[resp[kBundlesEnabled] boolValue] reply:^{
+    dispatch_group_leave(group);
+  }];
+
   self.syncState.eventBatchSize = [resp[kBatchSize] unsignedIntegerValue] ?: kDefaultEventBatchSize;
   self.syncState.FCMToken = resp[kFCMToken];
 
@@ -106,6 +111,7 @@
     self.syncState.cleanSync = YES;
   }
 
+  dispatch_group_wait(group, dispatch_time(DISPATCH_TIME_NOW, 2 * NSEC_PER_SEC));
   return YES;
 }
 
