@@ -38,14 +38,11 @@
 
 - (SNTCachedDecision *)decisionForFileInfo:(SNTFileInfo *)fileInfo
                                 fileSHA256:(NSString *)fileSHA256
-                        signingCertificate:(MOLCertificate *)signingCertificate {
+                         certificateSHA256:(NSString *)certificateSHA256 {
   SNTCachedDecision *cd = [[SNTCachedDecision alloc] init];
   cd.sha256 = fileSHA256 ?: fileInfo.SHA256;
+  cd.certSHA256 = certificateSHA256;
   cd.quarantineURL = fileInfo.quarantineDataURL;
-  if (signingCertificate) {
-    cd.certCommonName = signingCertificate.commonName;
-    cd.certSHA256 = signingCertificate.SHA256;
-  }
 
   SNTRule *rule = [self.ruleTable ruleForBinarySHA256:cd.sha256
                                     certificateSHA256:cd.certSHA256];
@@ -113,13 +110,16 @@
 
 - (SNTCachedDecision *)decisionForFilePath:(NSString *)filePath
                                 fileSHA256:(NSString *)fileSHA256
-                        signingCertificate:(MOLCertificate *)signingCertificate {
-  NSError *error;
-  SNTFileInfo *fileInfo = [[SNTFileInfo alloc] initWithPath:filePath error:&error];
-  if (!fileInfo) LOGW(@"Failed to read file %@: %@", filePath, error.localizedDescription);
+                         certificateSHA256:(NSString *)certificateSHA256 {
+  SNTFileInfo *fileInfo;
+  if (filePath) {
+    NSError *error;
+    fileInfo = [[SNTFileInfo alloc] initWithPath:filePath error:&error];
+    if (!fileInfo) LOGW(@"Failed to read file %@: %@", filePath, error.localizedDescription);
+  }
   return [self decisionForFileInfo:fileInfo
                         fileSHA256:fileSHA256
-                signingCertificate:signingCertificate];
+                 certificateSHA256:certificateSHA256];
 }
 
 ///

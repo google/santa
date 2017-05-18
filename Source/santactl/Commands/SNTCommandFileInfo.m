@@ -281,7 +281,7 @@ REGISTER_COMMAND_NAME(@"fileinfo")
     }
     [[fi.daemonConn remoteObjectProxy] decisionForFilePath:fi.path(fi)
                                                 fileSHA256:fi.propertyMap[kSHA256](fi)
-                                        signingCertificate:fi.csc.leafCertificate
+                                         certificateSHA256:fi.csc.leafCertificate.SHA256
                                                      reply:^(SNTEventState state) {
       if (state) s = state;
       dispatch_semaphore_signal(sema);
