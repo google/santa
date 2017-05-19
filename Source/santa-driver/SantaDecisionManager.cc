@@ -374,6 +374,12 @@ bool SantaDecisionManager::PostToLogQueue(santa_message_t *message) {
   return kr;
 }
 
+void SantaDecisionManager::SetFileopLoggingFilter(uint32_t filter) {
+  // All 32 bits should be set at once. Threads reading this value only do so once per run, so no
+  // extra serialization techniques are required.
+  fileop_log_filter_ = filter;
+}
+
 #pragma mark Invocation Tracking & PID comparison
 
 void SantaDecisionManager::IncrementListenerInvocations() {
@@ -466,26 +472,38 @@ void SantaDecisionManager::FileOpCallback(
 
     switch (action) {
       case KAUTH_FILEOP_CLOSE:
-        message->action = ACTION_NOTIFY_WRITE;
+        if (fileop_log_filter_ & kFileopLogWrite) {
+          message->action = ACTION_NOTIFY_WRITE;
+        }
         break;
       case KAUTH_FILEOP_RENAME:
-        message->action = ACTION_NOTIFY_RENAME;
+        if (fileop_log_filter_ & kFileopLogRename) {
+          message->action = ACTION_NOTIFY_RENAME;
+        }
         break;
       case KAUTH_FILEOP_LINK:
-        message->action = ACTION_NOTIFY_LINK;
+        if (fileop_log_filter_ & kFileopLogLink) {
+          message->action = ACTION_NOTIFY_LINK;
+        }
         break;
       case KAUTH_FILEOP_EXCHANGE:
-        message->action = ACTION_NOTIFY_EXCHANGE;
+        if (fileop_log_filter_ & kFileopLogExchange) {
+          message->action = ACTION_NOTIFY_EXCHANGE;
+        }
         break;
       case KAUTH_FILEOP_DELETE:
-        message->action = ACTION_NOTIFY_DELETE;
+        if (fileop_log_filter_ & kFileopLogDelete) {
+          message->action = ACTION_NOTIFY_DELETE;
+        }
         break;
       default:
         delete message;
         return;
     }
 
-    PostToLogQueue(message);
+    if (message->action != ACTION_UNSET) {
+      PostToLogQueue(message);
+    }
     delete message;
   }
 }

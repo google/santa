@@ -100,6 +100,10 @@ class com_google_SantaDriverClient : public IOUserClient {
   static IOReturn check_cache(
       OSObject *target, void *reference, IOExternalMethodArguments *arguments);
 
+  ///  The daemon calls this to enable or disable portions of the fileop logging.
+  static IOReturn set_fileop_logging_filter(
+      OSObject *target, void *reference, IOExternalMethodArguments *arguments);
+
  private:
   com_google_SantaDriver *myProvider;
   SantaDecisionManager *decisionManager;

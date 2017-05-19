@@ -60,6 +60,11 @@
 ///
 ///  Check the kernel cache for a VnodeID
 ///
--(santa_action_t)checkCache:(uint64_t)vnodeID;
+- (santa_action_t)checkCache:(uint64_t)vnodeID;
+
+///
+///  Sets the type of logs to filter before the driver sends them to the daemon.
+///
+- (void)setFileopLoggingFilter:(fileop_log_filter_t)filter;
 
 @end

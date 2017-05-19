@@ -198,4 +198,9 @@ static const int MAX_DELAY = 15;
   return (santa_action_t)vnode_action;
 }
 
+- (void)setFileopLoggingFilter:(fileop_log_filter_t)filter {
+  uint64_t f = (uint64_t)filter;
+  IOConnectCallScalarMethod(_connection, kSantaUserClientSetFileopLoggingFilter, &f, 1, 0, 0);
+}
+
 @end

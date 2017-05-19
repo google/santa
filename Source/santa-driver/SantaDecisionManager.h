@@ -101,6 +101,9 @@ class SantaDecisionManager : public OSObject {
   /// Clears the cache.
   void ClearCache();
 
+  /// Sets the logging filter bitmask.
+  void SetFileopLoggingFilter(uint32_t filter);
+
   /// Increments the count of active callbacks pending.
   void IncrementListenerInvocations();
 
@@ -267,6 +270,8 @@ class SantaDecisionManager : public OSObject {
   kauth_listener_t fileop_listener_;
 
   struct timespec ts_;
+
+  uint32_t fileop_log_filter_ = kFilterLogAll;
 };
 
 /**

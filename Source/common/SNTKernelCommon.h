@@ -40,11 +40,23 @@ enum SantaDriverMethods {
   kSantaUserClientClearCache,
   kSantaUserClientCacheCount,
   kSantaUserClientCheckCache,
+  kSantaUserClientSetFileopLoggingFilter,
 
   // Any methods supported by the driver should be added above this line to
   // ensure this remains the count of methods.
   kSantaUserClientNMethods,
 };
+
+typedef enum {
+  kFilterLogNone = 0,
+  kFilterLogAll = ~0U,
+
+  kFileopLogWrite = 1,
+  kFileopLogRename = 1 << 2,
+  kFileopLogExchange = 1 << 3,
+  kFileopLogLink = 1 << 4,
+  kFileopLogDelete = 1 << 5,
+} fileop_log_filter_t;
 
 typedef enum {
   QUEUETYPE_DECISION,

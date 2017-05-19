@@ -66,6 +66,11 @@ double watchdogRAMPeak = 0;
   reply([self.driverManager checkCache:vnodeID]);
 }
 
+- (void)setFileopLoggingFilter:(fileop_log_filter_t)filter withReply:(void (^)())reply {
+  [self.driverManager setFileopLoggingFilter:filter];
+  reply();
+}
+
 #pragma mark Database ops
 
 - (void)databaseRuleCounts:(void (^)(int64_t binary, int64_t certificate))reply {

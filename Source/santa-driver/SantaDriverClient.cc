@@ -180,6 +180,18 @@ IOReturn SantaDriverClient::check_cache(
   return kIOReturnSuccess;
 }
 
+IOReturn SantaDriverClient::set_fileop_logging_filter(
+    OSObject *target, void *reference, IOExternalMethodArguments *arguments) {
+  SantaDriverClient *me = OSDynamicCast(SantaDriverClient, target);
+  if (!me) return kIOReturnBadArgument;
+
+  uint32_t input = (uint32_t)*arguments->scalarInput;
+  me->decisionManager->SetFileopLoggingFilter(input);
+
+  return kIOReturnSuccess;
+}
+
+
 #pragma mark Method Resolution
 
 IOReturn SantaDriverClient::externalMethod(
@@ -197,7 +209,8 @@ IOReturn SantaDriverClient::externalMethod(
     { &SantaDriverClient::deny_binary, 1, 0, 0, 0 },
     { &SantaDriverClient::clear_cache, 0, 0, 0, 0 },
     { &SantaDriverClient::cache_count, 0, 0, 1, 0 },
-    { &SantaDriverClient::check_cache, 1, 0, 1, 0 }
+    { &SantaDriverClient::check_cache, 1, 0, 1, 0 },
+    { &SantaDriverClient::set_fileop_logging_filter, 1, 0, 0, 0 }
   };
 
   if (selector > static_cast<UInt32>(kSantaUserClientNMethods)) {
