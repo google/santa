@@ -23,7 +23,6 @@
 - (void)postEventToSyncServer:(SNTStoredEvent *)event;
 - (void)postBundleEventToSyncServer:(SNTStoredEvent *)event reply:(void (^)(BOOL))reply;
 - (void)postBundleEventsToSyncServer:(NSArray<SNTStoredEvent *> *)events;
-- (void)rescheduleSyncSecondsFromNow:(uint64_t)seconds;
 - (void)isFCMListening:(void (^)(BOOL))reply;
 @end
 

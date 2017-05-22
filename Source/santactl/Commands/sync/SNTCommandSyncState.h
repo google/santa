@@ -16,6 +16,7 @@
 
 #import "SNTCommonEnums.h"
 
+@class SNTCommandSyncManager;
 @class SNTXPCConnection;
 
 /// An instance of this class is passed to each stage of the sync process for storing data
@@ -34,8 +35,14 @@
 /// An XSRF token to send in the headers with each request.
 @property NSString *xsrfToken;
 
-/// A FCM token to subscribe to push notifications.
+/// An FCM token to subscribe to push notifications.
 @property(copy) NSString *FCMToken;
+
+/// Full sync interval in seconds while listening for FCM messages.
+@property NSUInteger FCMFullSyncInterval;
+
+/// Leeway time in seconds when receiving a global rule sync message.
+@property NSUInteger FCMGlobalRuleSyncDeadline;
 
 /// Machine identifier and owner.
 @property(copy) NSString *machineID;

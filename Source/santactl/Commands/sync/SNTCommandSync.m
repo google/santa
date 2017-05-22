@@ -61,6 +61,11 @@ REGISTER_COMMAND_NAME(@"sync")
     exit(1);
   }
 
+  if (![[SNTConfigurator configurator] syncBaseURL]) {
+    LOGE(@"Missing SyncBaseURL. Exiting.");
+    exit(1);
+  }
+
   SNTCommandSync *s = [[self alloc] init];
   [daemonConn resume];
   BOOL daemon = [arguments containsObject:@"--daemon"];

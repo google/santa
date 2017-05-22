@@ -34,6 +34,8 @@ extern NSString *const kBlacklistRegex;
 extern NSString *const kBinaryRuleCount;
 extern NSString *const kCertificateRuleCount;
 extern NSString *const kFCMToken;
+extern NSString *const kFCMFullSyncInterval;
+extern NSString *const kFCMGlobalRuleSyncDeadline;
 
 extern NSString *const kEvents;
 extern NSString *const kFileSHA256;
@@ -99,3 +101,17 @@ extern NSString *const kFullSync;
 extern NSString *const kRuleSync;
 extern NSString *const kConfigSync;
 extern NSString *const kLogSync;
+
+extern const NSUInteger kDefaultEventBatchSize;
+
+///
+///  kDefaultFullSyncInterval
+///  kDefaultFCMFullSyncInterval
+///  kDefaultFCMGlobalRuleSyncDeadline
+///
+///  Are represented in seconds
+///
+extern const NSUInteger kDefaultFullSyncInterval;
+extern const NSUInteger kDefaultFCMFullSyncInterval;
+extern const NSUInteger kDefaultFCMGlobalRuleSyncDeadline;
+

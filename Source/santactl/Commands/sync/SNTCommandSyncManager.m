@@ -34,20 +34,28 @@
 #import "SNTXPCControlInterface.h"
 #import "SNTXPCSyncdInterface.h"
 
-// Syncing time constant
-const uint64_t kFullSyncInterval = 600;
-
 @interface SNTCommandSyncManager () {
   SCNetworkReachabilityRef _reachability;
 }
+
 @property(nonatomic) dispatch_source_t fullSyncTimer;
 @property(nonatomic) dispatch_source_t ruleSyncTimer;
+
 @property(nonatomic) NSCache *dispatchLock;
 @property(nonatomic) NSCache *ruleSyncCache;
+
+@property NSUInteger FCMFullSyncInterval;
+@property NSUInteger FCMGlobalRuleSyncDeadline;
+@property NSUInteger eventBatchSize;
+
 @property MOLFCMClient *FCMClient;
+
 @property(nonatomic) SNTXPCConnection *daemonConn;
+
 @property BOOL targetedRuleSync;
+
 @property(nonatomic) BOOL reachable;
+
 @end
 
 // Called when the network state changes
@@ -74,8 +82,7 @@ static void reachabilityHandler(
     _daemonConn = daemonConn;
     _daemon = daemon;
     _fullSyncTimer = [self createSyncTimerWithBlock:^{
-      [self rescheduleTimerQueue:self.fullSyncTimer
-                  secondsFromNow:[SNTConfigurator configurator].FCMFullSyncInterval];
+      [self rescheduleTimerQueue:self.fullSyncTimer secondsFromNow:self.FCMFullSyncInterval];
       if (![[SNTConfigurator configurator] syncBaseURL]) return;
       [self lockAction:kFullSync];
       [self preflight];
@@ -100,6 +107,10 @@ static void reachabilityHandler(
     }];
     _dispatchLock = [[NSCache alloc] init];
     _ruleSyncCache = [[NSCache alloc] init];
+
+    _eventBatchSize = kDefaultEventBatchSize;
+    _FCMFullSyncInterval = kDefaultFCMFullSyncInterval;
+    _FCMGlobalRuleSyncDeadline = kDefaultFCMGlobalRuleSyncDeadline;
   }
   return self;
 }
@@ -125,7 +136,7 @@ static void reachabilityHandler(
 
 - (void)postBundleEventsToSyncServer:(NSArray<SNTStoredEvent *> *)events {
   SNTCommandSyncState *syncState = [self createSyncState];
-  syncState.eventBatchSize = 50;
+  syncState.eventBatchSize = self.eventBatchSize;
   SNTCommandSyncEventUpload *p = [[SNTCommandSyncEventUpload alloc] initWithState:syncState];
   if (events && [p uploadEvents:events]) {
     LOGD(@"Bundle events upload complete");
@@ -142,10 +153,6 @@ static void reachabilityHandler(
   } else {
     LOGE(@"Event upload failed");
   }
-}
-
-- (void)rescheduleSyncSecondsFromNow:(uint64_t)seconds {
-  [self rescheduleTimerQueue:self.fullSyncTimer secondsFromNow:seconds];
 }
 
 - (void)isFCMListening:(void (^)(BOOL))reply {
@@ -181,7 +188,7 @@ static void reachabilityHandler(
     LOGE(@"FCM connection error: %@", error);
     [self.FCMClient disconnect];
     self.FCMClient = nil;
-    [self rescheduleTimerQueue:self.fullSyncTimer secondsFromNow:kFullSyncInterval];
+    [self rescheduleTimerQueue:self.fullSyncTimer secondsFromNow:kDefaultFullSyncInterval];
   };
   
   self.FCMClient.loggingBlock = ^(NSString *log) {
@@ -232,9 +239,8 @@ static void reachabilityHandler(
       self.targetedRuleSync = YES;
       [self ruleSync];
     } else {
-      uint32_t delaySeconds =
-          arc4random_uniform((u_int32_t)[SNTConfigurator configurator].FCMGlobalRuleLeeway);
-      LOGD(@"Staggering rule download, %u second delay for this machine", delaySeconds);
+      uint32_t delaySeconds = arc4random_uniform((uint32_t)self.FCMGlobalRuleSyncDeadline);
+      LOGD(@"Staggering rule download: %u second delay", delaySeconds);
       [self ruleSyncSecondsFromNow:delaySeconds];
     }
   } else if ([action isEqualToString:kConfigSync]) {
@@ -295,15 +301,18 @@ static void reachabilityHandler(
     // Clean up reachability if it was started for a non-network error
     [self stopReachability];
 
-    // Start listening for push notifications with a full sync every kFullSyncFCMInterval or
-    // revert to full syncing every kFullSyncInterval.
+    self.eventBatchSize = syncState.eventBatchSize;
+
+    // Start listening for push notifications with a full sync every FCMFullSyncInterval
     if (syncState.daemon && syncState.FCMToken) {
+      self.FCMFullSyncInterval = syncState.FCMFullSyncInterval;
+      self.FCMGlobalRuleSyncDeadline = syncState.FCMGlobalRuleSyncDeadline;
       [self listenForPushNotificationsWithSyncState:syncState];
     } else if (syncState.daemon) {
-      LOGD(@"FCMToken not provided. Sync every %llu min.", kFullSyncInterval / 60);
+      LOGD(@"FCMToken not provided. Sync every %lu min.", kDefaultFullSyncInterval / 60);
       [self.FCMClient disconnect];
       self.FCMClient = nil;
-      [self rescheduleTimerQueue:self.fullSyncTimer secondsFromNow:kFullSyncInterval];
+      [self rescheduleTimerQueue:self.fullSyncTimer secondsFromNow:kDefaultFullSyncInterval];
     }
 
     if (syncState.uploadLogURL) {
@@ -402,8 +411,11 @@ static void reachabilityHandler(
     LOGW(@"Missing Machine Owner.");
   }
 
+  dispatch_group_t group = dispatch_group_create();
+  dispatch_group_enter(group);
   [[self.daemonConn remoteObjectProxy] xsrfToken:^(NSString *token) {
     syncState.xsrfToken = token;
+    dispatch_group_leave(group);
   }];
 
   MOLAuthenticatingURLSession *authURLSession = [[MOLAuthenticatingURLSession alloc] init];
@@ -438,7 +450,8 @@ static void reachabilityHandler(
   syncState.session = [authURLSession session];
   syncState.daemonConn = self.daemonConn;
   syncState.daemon = self.daemon;
-  
+
+  dispatch_group_wait(group, dispatch_time(DISPATCH_TIME_NOW, 5 * NSEC_PER_SEC));
   return syncState;
 }
 
