@@ -45,7 +45,7 @@
 @property(nonatomic) NSCache *ruleSyncCache;
 
 @property NSUInteger FCMFullSyncInterval;
-@property NSUInteger FCMGlobalRuleSyncDealine;
+@property NSUInteger FCMGlobalRuleSyncDeadline;
 @property NSUInteger eventBatchSize;
 
 @property MOLFCMClient *FCMClient;
@@ -110,7 +110,7 @@ static void reachabilityHandler(
 
     _eventBatchSize = kDefaultEventBatchSize;
     _FCMFullSyncInterval = kDefaultFCMFullSyncInterval;
-    _FCMGlobalRuleSyncDealine = kDefaultFCMGlobalRuleSyncDealine;
+    _FCMGlobalRuleSyncDeadline = kDefaultFCMGlobalRuleSyncDeadline;
   }
   return self;
 }
@@ -239,7 +239,7 @@ static void reachabilityHandler(
       self.targetedRuleSync = YES;
       [self ruleSync];
     } else {
-      uint32_t delaySeconds = arc4random_uniform((u_int32_t)self.FCMGlobalRuleSyncDealine);
+      uint32_t delaySeconds = arc4random_uniform((uint32_t)self.FCMGlobalRuleSyncDeadline);
       LOGD(@"Staggering rule download: %u second delay", delaySeconds);
       [self ruleSyncSecondsFromNow:delaySeconds];
     }
@@ -306,7 +306,7 @@ static void reachabilityHandler(
     // Start listening for push notifications with a full sync every FCMFullSyncInterval
     if (syncState.daemon && syncState.FCMToken) {
       self.FCMFullSyncInterval = syncState.FCMFullSyncInterval;
-      self.FCMGlobalRuleSyncDealine = syncState.FCMGlobalRuleSyncDeadline;
+      self.FCMGlobalRuleSyncDeadline = syncState.FCMGlobalRuleSyncDeadline;
       [self listenForPushNotificationsWithSyncState:syncState];
     } else if (syncState.daemon) {
       LOGD(@"FCMToken not provided. Sync every %lu min.", kDefaultFullSyncInterval / 60);

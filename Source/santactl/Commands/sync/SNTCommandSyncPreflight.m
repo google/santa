@@ -79,10 +79,11 @@
 
   // Don't let these go too low
   NSUInteger value = [resp[kFCMFullSyncInterval] unsignedIntegerValue];
-  self.syncState.FCMFullSyncInterval = (value < 600) ? kDefaultFCMFullSyncInterval : value;
+  self.syncState.FCMFullSyncInterval =
+      (value < kDefaultFullSyncInterval) ? kDefaultFCMFullSyncInterval : value;
   value = [resp[kFCMGlobalRuleSyncDeadline] unsignedIntegerValue];
   self.syncState.FCMGlobalRuleSyncDeadline =
-      (value < 60) ?  kDefaultFCMGlobalRuleSyncDealine : value;
+      (value < 60) ?  kDefaultFCMGlobalRuleSyncDeadline : value;
 
   self.syncState.uploadLogURL = [NSURL URLWithString:resp[kUploadLogsURL]];
 

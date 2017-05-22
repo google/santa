@@ -103,7 +103,15 @@ extern NSString *const kConfigSync;
 extern NSString *const kLogSync;
 
 extern const NSUInteger kDefaultEventBatchSize;
+
+///
+///  kDefaultFullSyncInterval
+///  kDefaultFCMFullSyncInterval
+///  kDefaultFCMGlobalRuleSyncDeadline
+///
+///  Are represented in seconds
+///
 extern const NSUInteger kDefaultFullSyncInterval;
 extern const NSUInteger kDefaultFCMFullSyncInterval;
-extern const NSUInteger kDefaultFCMGlobalRuleSyncDealine;
+extern const NSUInteger kDefaultFCMGlobalRuleSyncDeadline;
 
