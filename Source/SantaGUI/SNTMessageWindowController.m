@@ -48,14 +48,43 @@
   if (self) {
     _event = event;
     _customMessage = message;
-    _progress = [NSProgress discreteProgressWithTotalUnitCount:1];
-    [_progress addObserver:self
-                forKeyPath:@"fractionCompleted"
-                   options:NSKeyValueObservingOptionNew
-                   context:NULL];
   }
   return self;
 }
+
+- (void)windowDidLoad {
+  [self.window setFrame:NSMakeRect(self.window.frame.origin.x, self.window.frame.origin.y, 0, 0)
+                display:NO];
+  self.webView.frame = NSMakeRect(0, 0, 0, 0);
+  [self.webView setDrawsBackground:NO];
+  self.window.movableByWindowBackground = YES;
+  self.webView.shouldCloseWithWindow = YES;
+  
+  //turn off scrollbars in the frame
+  [[[self.webView mainFrame] frameView] setAllowsScrolling:NO];
+  
+  //load the page
+  [self.webView.windowScriptObject setValue:self forKey:@"AppDelegate"];
+  [self.MainWindow.contentView addSubview: _webView];
+  [self.webView.mainFrame loadRequest:[self localHTMLForSanta]];
+  self.webView.policyDelegate = self;
+  self.webView.frameLoadDelegate = self;
+  [NSApp activateIgnoringOtherApps:YES];
+}
+/// Code Testing Below
+///
+- (void)webView:(WebView *)sender didFinishLoadForFrame:(WebFrame *)webFrame {
+  NSRect contentRect = [[[webFrame frameView] documentView] frame];
+  NSRect windowFrame = NSMakeRect(self.window.frame.origin.x, self.window.frame.origin.y,
+                                  contentRect.size.width, contentRect.size.height);
+  
+  [self.window setFrame:windowFrame display:YES];
+  [self.window center];
+  
+  sender.frame = NSMakeRect(0, 0, contentRect.size.width, contentRect.size.height);
+}
+///
+/// Code Testing Above
 
 - (void)dealloc {
   [_progress removeObserver:self forKeyPath:@"fractionCompleted"];
@@ -80,7 +109,7 @@
   [super loadWindow];
   [self.window setLevel:NSPopUpMenuWindowLevel];
   [self.window setMovableByWindowBackground:YES];
-
+  
   if (![[SNTConfigurator configurator] eventDetailURL]) {
     [self.openEventButton removeFromSuperview];
   } else {
@@ -101,7 +130,7 @@
     self.bundleHashLabel.hidden = YES;
     self.foundFileCountLabel.stringValue = @"";
   }
-
+  
   if (!self.event.fileBundleName) {
     [self.applicationNameLabel removeFromSuperview];
   }
@@ -111,14 +140,14 @@
   [(SNTMessageWindow *)self.window fadeIn:sender];
 }
 
-- (IBAction)closeWindow:(id)sender {
+- (void)closeWindow:(id)sender {
   [self.progress cancel];
   [(SNTMessageWindow *)self.window fadeOut:sender];
 }
 
 - (void)windowWillClose:(NSNotification *)notification {
   if (!self.delegate) return;
-
+  
   if (self.silenceFutureNotifications) {
     [self.delegate windowDidCloseSilenceHash:self.event.fileSHA256];
   } else {
@@ -126,13 +155,13 @@
   }
 }
 
-- (IBAction)showCertInfo:(id)sender {
+- (void)showCertInfo {
   // SFCertificatePanel expects an NSArray of SecCertificateRef's
   NSMutableArray *certArray = [NSMutableArray arrayWithCapacity:[self.event.signingChain count]];
   for (MOLCertificate *cert in self.event.signingChain) {
     [certArray addObject:(id)cert.certRef];
   }
-
+  
   [[[SFCertificatePanel alloc] init] beginSheetForWindow:self.window
                                            modalDelegate:nil
                                           didEndSelector:nil
@@ -159,7 +188,7 @@
 
 - (NSString *)publisherInfo {
   MOLCertificate *leafCert = [self.event.signingChain firstObject];
-
+  
   if (leafCert.commonName && leafCert.orgName) {
     return [NSString stringWithFormat:@"%@ - %@", leafCert.orgName, leafCert.commonName];
   } else if (leafCert.commonName) {
@@ -171,9 +200,92 @@
   }
 }
 
-- (NSAttributedString *)attributedCustomMessage {
-  return [SNTBlockMessage attributedBlockMessageForEvent:self.event
-                                           customMessage:self.customMessage];
+- (NSString *)attributedCustomMessage {
+  return [SNTBlockMessage blockMessageForGUI:self.event
+                               customMessage:self.customMessage];
+}
+
+- (NSURLRequest *)localHTMLForSanta {
+  NSString *resources = [[NSBundle mainBundle] resourcePath];
+  NSString *htmlPath = [resources stringByAppendingPathComponent:@"santa.html"];
+  NSURLRequest *URL = [NSURLRequest requestWithURL:[NSURL fileURLWithPath:htmlPath]];
+  return URL;
+}
+
++ (BOOL)isSelectorExcludedFromWebScript:(SEL)selector {
+  if (selector == @selector(santaData)
+      || selector == @selector(showCertInfo)
+      || selector == @selector(acceptFunction)
+      || selector == @selector(ignoreFunction:)) {
+    return NO;
+  }
+  return YES;
+}
+
+- (NSString *)santaData {
+  NSMutableDictionary *dataSet = [[NSMutableDictionary alloc] init];
+  if (self.attributedCustomMessage){
+    [dataSet setValue:self.attributedCustomMessage forKey:@"message"];
+  }
+  
+  if (self.event.fileBundleName){
+    [dataSet setValue:self.event.fileBundleName forKey:@"application"];
+  }
+  if (self.event.filePath){
+    [dataSet setValue:self.event.filePath forKey:@"path"];
+  }
+  if (self.event.filePath.lastPathComponent){
+    [dataSet setValue:self.event.filePath.lastPathComponent forKey:@"filename"];
+  }
+  if (self.publisherInfo) {
+    [dataSet setValue:self.publisherInfo forKey:@"publisher"];
+  } else {
+    [dataSet setValue:@"Not code-signed" forKey:@"publisher"];
+  }
+  if (self.event.fileSHA256) {
+    [dataSet setValue:self.event.fileSHA256 forKey:@"identifier"];
+  }
+  if (self.event.fileBundleHash) {
+    [dataSet setValue:self.event.fileBundleHash forKey:@"bundle identifier"];
+  }
+  if (self.event.parentName){
+    [dataSet setValue:self.event.parentName forKey:@"parent"];
+  }
+  if (self.event.ppid){
+    [dataSet setValue:self.event.ppid forKey:@"pid"];
+  }
+  if (self.event.executingUser){
+    [dataSet setValue:self.event.executingUser forKey:@"user"];
+  }
+  
+  NSData *dataTransform = [NSJSONSerialization dataWithJSONObject:dataSet options:0 error:NULL];
+  NSString *json = [[NSString alloc] initWithData:dataTransform encoding:NSUTF8StringEncoding];
+  return json;
+}
+
+- (void)webView:(WebView *)webView
+decidePolicyForNavigationAction:(NSDictionary *)actionInformation
+                        request:(NSURLRequest *)request
+                          frame:(WebFrame *)frame
+               decisionListener:(id<WebPolicyDecisionListener>)listener {
+  if ([request.URL.path isEqualToString:[[[self localHTMLForSanta] URL] absoluteString]]) {
+    [listener use];
+  } else {
+    [listener ignore];
+    [[NSWorkspace sharedWorkspace] openURL:request.URL];
+  }
+}
+
+- (void)ignoreFunction:(BOOL)ignoreChecked{
+  if (ignoreChecked == TRUE) {
+    _silenceFutureNotifications = TRUE;
+    [self closeWindow:self];
+  } else {
+    [self closeWindow:self];
+  }
+}
+- (void)acceptFunction{
+  [self openEventDetails:self];
 }
 
 @end

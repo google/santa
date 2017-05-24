@@ -157,6 +157,11 @@
 		168A4E09A2A5E0B7DF8A2F1A /* libPods-santad.a in Frameworks */ = {isa = PBXBuildFile; fileRef = C11A10A5D6E112788769CF70 /* libPods-santad.a */; };
 		4092327A1A51B66400A04527 /* SNTCommandRule.m in Sources */ = {isa = PBXBuildFile; fileRef = 409232791A51B65D00A04527 /* SNTCommandRule.m */; };
 		59D56CF2D9C5BD9B7E3CC56D /* libPods-santad-santabs.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 14B98F4051188ECB7D024331 /* libPods-santad-santabs.a */; };
+		9A8DA5CB1EC6A6900048CDAF /* info.gif in Resources */ = {isa = PBXBuildFile; fileRef = 9A8DA5C71EC6A6900048CDAF /* info.gif */; };
+		9A8DA5CC1EC6A6900048CDAF /* javascript.js in Resources */ = {isa = PBXBuildFile; fileRef = 9A8DA5C81EC6A6900048CDAF /* javascript.js */; };
+		9A8DA5CD1EC6A6900048CDAF /* santa.html in Resources */ = {isa = PBXBuildFile; fileRef = 9A8DA5C91EC6A6900048CDAF /* santa.html */; };
+		9A8DA5CE1EC6A6900048CDAF /* style.css in Resources */ = {isa = PBXBuildFile; fileRef = 9A8DA5CA1EC6A6900048CDAF /* style.css */; };
+		9A8DA5D01EC6A6BA0048CDAF /* WebKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9A8DA5CF1EC6A6BA0048CDAF /* WebKit.framework */; };
 		B352A545B76783D568A6D0C5 /* libPods-Santa.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 90E9D568200AB9B642E06272 /* libPods-Santa.a */; };
 		C714F8B11D8044D400700EDF /* SNTCommandFileInfo.m in Sources */ = {isa = PBXBuildFile; fileRef = 0DCD5FBE1909D64A006B445C /* SNTCommandFileInfo.m */; };
 		C714F8B21D8044FE00700EDF /* SNTCommandController.m in Sources */ = {isa = PBXBuildFile; fileRef = 0D35BDAB18FD7CFD00921A21 /* SNTCommandController.m */; };
@@ -429,6 +434,11 @@
 		7D949AA996AEAC326A4F6596 /* libPods-LogicTests.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-LogicTests.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		8EF10E4B8C86CED022C72F1B /* Pods-santactl.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-santactl.debug.xcconfig"; path = "Pods/Target Support Files/Pods-santactl/Pods-santactl.debug.xcconfig"; sourceTree = "<group>"; };
 		90E9D568200AB9B642E06272 /* libPods-Santa.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-Santa.a"; sourceTree = BUILT_PRODUCTS_DIR; };
+		9A8DA5C71EC6A6900048CDAF /* info.gif */ = {isa = PBXFileReference; lastKnownFileType = image.gif; path = info.gif; sourceTree = "<group>"; };
+		9A8DA5C81EC6A6900048CDAF /* javascript.js */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.javascript; path = javascript.js; sourceTree = "<group>"; };
+		9A8DA5C91EC6A6900048CDAF /* santa.html */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.html; path = santa.html; sourceTree = "<group>"; };
+		9A8DA5CA1EC6A6900048CDAF /* style.css */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.css; path = style.css; sourceTree = "<group>"; };
+		9A8DA5CF1EC6A6BA0048CDAF /* WebKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WebKit.framework; path = System/Library/Frameworks/WebKit.framework; sourceTree = SDKROOT; };
 		A6A91785C40257CC156B4F05 /* Pods-Santa.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Santa.release.xcconfig"; path = "Pods/Target Support Files/Pods-Santa/Pods-Santa.release.xcconfig"; sourceTree = "<group>"; };
 		C11A10A5D6E112788769CF70 /* libPods-santad.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-santad.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		C72E8D931D7F399900C86DD3 /* SNTCommandFileInfoTest.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SNTCommandFileInfoTest.m; sourceTree = "<group>"; };
@@ -486,6 +496,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				9A8DA5D01EC6A6BA0048CDAF /* WebKit.framework in Frameworks */,
 				B352A545B76783D568A6D0C5 /* libPods-Santa.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -632,6 +643,10 @@
 		0D3AF83018F87CE20087BCEE /* Resources */ = {
 			isa = PBXGroup;
 			children = (
+				9A8DA5C71EC6A6900048CDAF /* info.gif */,
+				9A8DA5C81EC6A6900048CDAF /* javascript.js */,
+				9A8DA5C91EC6A6900048CDAF /* santa.html */,
+				9A8DA5CA1EC6A6900048CDAF /* style.css */,
 				0D385DCF180DE4A900418BC6 /* Images.xcassets */,
 				0D385DBF180DE4A900418BC6 /* SantaGUI-Info.plist */,
 				0D1B476F19A53419008CADD3 /* AboutWindow.xib */,
@@ -835,6 +850,7 @@
 		65ABB276038B07159901CE5B /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				9A8DA5CF1EC6A6BA0048CDAF /* WebKit.framework */,
 				7D949AA996AEAC326A4F6596 /* libPods-LogicTests.a */,
 				90E9D568200AB9B642E06272 /* libPods-Santa.a */,
 				4E3B4B2438711ACD7D560014 /* libPods-santactl.a */,
@@ -1100,8 +1116,12 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				9A8DA5CB1EC6A6900048CDAF /* info.gif in Resources */,
 				0D385DF0180DE51600418BC6 /* MessageWindow.xib in Resources */,
+				9A8DA5CE1EC6A6900048CDAF /* style.css in Resources */,
+				9A8DA5CC1EC6A6900048CDAF /* javascript.js in Resources */,
 				0D385DD0180DE4A900418BC6 /* Images.xcassets in Resources */,
+				9A8DA5CD1EC6A6900048CDAF /* santa.html in Resources */,
 				0D1B477119A53419008CADD3 /* AboutWindow.xib in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -1221,7 +1241,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n";
+			shellScript = "diff \"${PODS_ROOT}/../Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n";
 			showEnvVarsInLog = 0;
 		};
 		2146C1274A8C11B3755A8A67 /* [CP] Check Pods Manifest.lock */ = {
@@ -1236,7 +1256,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n";
+			shellScript = "diff \"${PODS_ROOT}/../Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n";
 			showEnvVarsInLog = 0;
 		};
 		23869BA352E2C86DEFE62819 /* [CP] Copy Pods Resources */ = {
@@ -1296,7 +1316,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n";
+			shellScript = "diff \"${PODS_ROOT}/../Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n";
 			showEnvVarsInLog = 0;
 		};
 		B193461D3612BCB47C16E407 /* [CP] Check Pods Manifest.lock */ = {
@@ -1311,7 +1331,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n";
+			shellScript = "diff \"${PODS_ROOT}/../Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n";
 			showEnvVarsInLog = 0;
 		};
 		BA20035148DDEF5808B2C7EF /* [CP] Embed Pods Frameworks */ = {
@@ -1358,7 +1378,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n";
+			shellScript = "diff \"${PODS_ROOT}/../Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n";
 			showEnvVarsInLog = 0;
 		};
 		D49A3AB950AFD99741E9AF89 /* [CP] Embed Pods Frameworks */ = {
