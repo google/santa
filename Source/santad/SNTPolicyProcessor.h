@@ -39,22 +39,24 @@
 ///  @param fileInfo A SNTFileInfo object.
 ///  @param fileSHA256 The pre-calculated SHA256 hash for the file, can be nil. If nil the hash will
 ///                    be calculated by this method from the filePath.
-///  @param signingCertificate A MOLCertificate object, can be nil.
-///  @note If fileInfo and signingCertificate are both passed in, the most specific rule will be
+///  @param certificateSHA256 A SHA256 hash of the signing certificate, can be nil.
+///  @note If fileSHA256 and certificateSHA256 are both passed in, the most specific rule will be
 ///        returned. Binary rules take precedence over cert rules.
+///  @note This method can also be used to generate a SNTCachedDecision object without any
+///        artifacts on disk. Simply pass nil to fileInfo and pass in the desired SHA256s.
 ///
-- (nonnull SNTCachedDecision *)decisionForFileInfo:(nonnull SNTFileInfo *)fileInfo
+- (nonnull SNTCachedDecision *)decisionForFileInfo:(nullable SNTFileInfo *)fileInfo
                                         fileSHA256:(nullable NSString *)fileSHA256
-                                signingCertificate:(nullable MOLCertificate *)signingCertificate;
+                                 certificateSHA256:(nullable NSString *)certificateSHA256;
 
 ///
-///  A wrapper for decisionForFileInfo:fileSHA256:signingCertificate:. This method is slower as it
+///  A wrapper for decisionForFileInfo:fileSHA256:certificateSHA256:. This method is slower as it
 ///  has to create the SNTFileInfo object. This is mainly used by the santactl binary because
 ///  SNTFileInfo is not SecureCoding compliant. If the SHA256 hash of the file has already been
 ///  calculated, use the fileSHA256 parameter to save a second calculation of the hash.
 ///
-- (nonnull SNTCachedDecision *)decisionForFilePath:(nonnull NSString *)filePath
+- (nonnull SNTCachedDecision *)decisionForFilePath:(nullable NSString *)filePath
                                         fileSHA256:(nullable NSString *)fileSHA256
-                                signingCertificate:(nullable MOLCertificate *)signingCertificate;
+                                 certificateSHA256:(nullable NSString *)certificateSHA256;
 
 @end

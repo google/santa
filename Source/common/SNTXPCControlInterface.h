@@ -58,13 +58,13 @@
 ///  @param filePath A Path to the file, can be nil.
 ///  @param fileSHA256 The pre-calculated SHA256 hash for the file, can be nil. If nil the hash will
 ///                    be calculated by this method from the filePath.
-///  @param signingCertificate A MOLCertificate object, can be nil.
+///  @param certificateSHA256 A SHA256 hash of the signing certificate, can be nil.
 ///  @note If fileInfo and signingCertificate are both passed in, the most specific rule will be
 ///        returned. Binary rules take precedence over cert rules.
 ///
 - (void)decisionForFilePath:(NSString *)filePath
                  fileSHA256:(NSString *)fileSHA256
-         signingCertificate:(MOLCertificate *)signingCertificate
+          certificateSHA256:(NSString *)certificateSHA256
                       reply:(void (^)(SNTEventState))reply;
 
 ///

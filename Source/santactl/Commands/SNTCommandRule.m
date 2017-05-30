@@ -44,7 +44,7 @@ REGISTER_COMMAND_NAME(@"rule")
 }
 
 + (NSString *)shortHelpText {
-  return @"Manually add/remove rules.";
+  return @"Manually add/remove/check rules.";
 }
 
 + (NSString *)longHelpText {
@@ -54,14 +54,17 @@ REGISTER_COMMAND_NAME(@"rule")
           @"    --blacklist: add to blacklist\n"
           @"    --silent-blacklist: add to silent blacklist\n"
           @"    --remove: remove existing rule\n"
+          @"    --check: check for an existing rule\n"
           @"\n"
           @"  One of:\n"
           @"    --path {path}: path of binary/bundle to add/remove.\n"
           @"                   Will add the hash of the file currently at that path.\n"
-          @"    --sha256 {sha256}: hash to add/remove\n"
+          @"                   Does not work with --check. Use the fileinfo verb to check.\n"
+          @"                   the rule state of a file.\n"
+          @"    --sha256 {sha256}: hash to add/remove/check\n"
           @"\n"
           @"  Optionally:\n"
-          @"    --certificate: add certificate rule instead of binary\n"
+          @"    --certificate: add or check a certificate sha256 rule instead of binary\n"
           @"    --message {message}: custom message\n");
 }
 
@@ -73,7 +76,7 @@ REGISTER_COMMAND_NAME(@"rule")
 
 + (void)runWithArguments:(NSArray *)arguments daemonConnection:(SNTXPCConnection *)daemonConn {
   SNTConfigurator *config = [SNTConfigurator configurator];
-  if ([config syncBaseURL] != nil) {
+  if ([config syncBaseURL] && ![arguments containsObject:@"--check"]) {
     printf("SyncBaseURL is set, rules are managed centrally.\n");
     exit(1);
   }
@@ -83,6 +86,7 @@ REGISTER_COMMAND_NAME(@"rule")
   newRule.type = SNTRuleTypeBinary;
 
   NSString *path;
+  BOOL check = NO;
 
   // Parse arguments
   for (NSUInteger i = 0; i < arguments.count; ++i) {
@@ -96,6 +100,8 @@ REGISTER_COMMAND_NAME(@"rule")
       newRule.state = SNTRuleStateSilentBlacklist;
     } else if ([arg caseInsensitiveCompare:@"--remove"] == NSOrderedSame) {
       newRule.state = SNTRuleStateRemove;
+    } else if ([arg caseInsensitiveCompare:@"--check"] == NSOrderedSame) {
+      check = YES;
     } else if ([arg caseInsensitiveCompare:@"--certificate"] == NSOrderedSame) {
       newRule.type = SNTRuleTypeCertificate;
     } else if ([arg caseInsensitiveCompare:@"--path"] == NSOrderedSame) {
@@ -119,6 +125,11 @@ REGISTER_COMMAND_NAME(@"rule")
     } else {
       [self printErrorUsageAndExit:[@"Unknown argument: " stringByAppendingString:arg]];
     }
+  }
+
+  if (check) {
+    if (!newRule.shasum) return [self printErrorUsageAndExit:@"--check requires --sha256"];
+    return [self printStateOfRule:newRule daemonConnection:daemonConn];
   }
 
   if (path) {
@@ -157,6 +168,60 @@ REGISTER_COMMAND_NAME(@"rule")
       exit(0);
     }
   }];
+}
+
++ (void)printStateOfRule:(SNTRule *)rule daemonConnection:(SNTXPCConnection *)daemonConn {
+  NSString *fileSHA256 = (rule.type == SNTRuleTypeBinary) ? rule.shasum : nil;
+  NSString *certificateSHA256 = (rule.type == SNTRuleTypeCertificate) ? rule.shasum : nil;
+  dispatch_group_t group = dispatch_group_create();
+  dispatch_group_enter(group);
+  __block NSMutableString *output;
+  [[daemonConn remoteObjectProxy] decisionForFilePath:nil
+                                           fileSHA256:fileSHA256
+                                    certificateSHA256:certificateSHA256
+                                                reply:^(SNTEventState s) {
+    output = (SNTEventStateAllow & s) ? @"Whitelisted".mutableCopy : @"Blacklisted".mutableCopy;
+    switch (s) {
+      case SNTEventStateAllowUnknown:
+      case SNTEventStateBlockUnknown:
+        [output appendString:@" (Unknown)"];
+        break;
+      case SNTEventStateAllowBinary:
+      case SNTEventStateBlockBinary:
+        [output appendString:@" (Binary)"];
+        break;
+      case SNTEventStateAllowCertificate:
+      case SNTEventStateBlockCertificate:
+        [output appendString:@" (Certificate)"];
+        break;
+      case SNTEventStateAllowScope:
+      case SNTEventStateBlockScope:
+        [output appendString:@" (Scope)"];
+        break;
+      default:
+        output = @"None".mutableCopy;
+        break;
+    }
+    if (isatty(STDOUT_FILENO)) {
+      if ((SNTEventStateAllow & s)) {
+        [output insertString:@"\033[32m" atIndex:0];
+        [output appendString:@"\033[0m"];
+      } else if ((SNTEventStateBlock & s)) {
+        [output insertString:@"\033[31m" atIndex:0];
+        [output appendString:@"\033[0m"];
+      } else {
+        [output insertString:@"\033[33m" atIndex:0];
+        [output appendString:@"\033[0m"];
+      }
+    }
+    dispatch_group_leave(group);
+  }];
+  if (dispatch_group_wait(group, dispatch_time(DISPATCH_TIME_NOW, 5 * NSEC_PER_SEC))) {
+    printf("Cannot communicate with daemon");
+    exit(1);
+  }
+  printf("%s\n", output.UTF8String);
+  exit(0);
 }
 
 @end

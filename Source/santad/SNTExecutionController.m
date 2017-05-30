@@ -115,7 +115,8 @@
   // Actually make the decision.
   SNTCachedDecision *cd = [self.policyProcessor decisionForFileInfo:binInfo
                                                          fileSHA256:nil
-                                                 signingCertificate:csInfo.leafCertificate];
+                                                  certificateSHA256:csInfo.leafCertificate.SHA256];
+  cd.certCommonName = csInfo.leafCertificate.commonName;
   cd.vnodeId = message.vnode_id;
 
   // Formulate an action from the decision

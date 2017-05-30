@@ -115,11 +115,11 @@ double watchdogRAMPeak = 0;
 
 - (void)decisionForFilePath:(NSString *)filePath
                  fileSHA256:(NSString *)fileSHA256
-         signingCertificate:(MOLCertificate *)signingCertificate
+          certificateSHA256:(NSString *)certificateSHA256
                       reply:(void (^)(SNTEventState))reply {
   reply([self.policyProcessor decisionForFilePath:filePath
                                        fileSHA256:fileSHA256
-                               signingCertificate:signingCertificate].decision);
+                                certificateSHA256:certificateSHA256].decision);
 }
 
 #pragma mark Config Ops
