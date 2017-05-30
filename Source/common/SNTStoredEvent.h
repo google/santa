@@ -37,6 +37,12 @@
 @property NSString *filePath;
 
 ///
+///  Set to YES if the event is a part of a bundle. When an event is passed to SantaGUI this propery
+///  will be used as an indicator to to kick off bundle hashing as necessary. Default value is NO.
+///
+@property BOOL needsBundleHash;
+
+///
 ///  If the executed file was part of a bundle, this is the calculated hash of all the nested
 ///  executables within the bundle.
 ///

@@ -124,6 +124,10 @@ double watchdogRAMPeak = 0;
 
 #pragma mark Config Ops
 
+- (void)watchdogInfo:(void (^)(uint64_t, uint64_t, double, double))reply {
+  reply(watchdogCPUEvents, watchdogRAMEvents, watchdogCPUPeak, watchdogRAMPeak);
+}
+
 - (void)clientMode:(void (^)(SNTClientMode))reply {
   reply([[SNTConfigurator configurator] clientMode]);
 }
@@ -180,8 +184,13 @@ double watchdogRAMPeak = 0;
   reply();
 }
 
-- (void)watchdogInfo:(void (^)(uint64_t, uint64_t, double, double))reply {
-  reply(watchdogCPUEvents, watchdogRAMEvents, watchdogCPUPeak, watchdogRAMPeak);
+- (void)bundlesEnabled:(void (^)(BOOL))reply {
+  reply([SNTConfigurator configurator].bundlesEnabled);
+}
+
+- (void)setBundlesEnabled:(BOOL)bundlesEnabled reply:(void (^)())reply {
+  [[SNTConfigurator configurator] setBundlesEnabled:bundlesEnabled];
+  reply();
 }
 
 #pragma mark GUI Ops

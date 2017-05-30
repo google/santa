@@ -36,6 +36,7 @@ NSString *const kCertificateRuleCount = @"certificate_rule_count";
 NSString *const kFCMToken = @"fcm_token";
 NSString *const kFCMFullSyncInterval = @"fcm_full_sync_interval";
 NSString *const kFCMGlobalRuleSyncDeadline = @"fcm_global_rule_sync_deadline";
+NSString *const kBundlesEnabled = @"bundles_enabled";
 
 NSString *const kEvents = @"events";
 NSString *const kFileSHA256 = @"file_sha256";

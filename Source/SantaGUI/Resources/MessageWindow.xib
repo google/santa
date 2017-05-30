@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="10117" systemVersion="16D32" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES">
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="10117" systemVersion="16E195" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES">
     <dependencies>
         <deployment identifier="macosx"/>
         <development version="6300" identifier="xcode"/>
@@ -200,9 +200,9 @@
                             </userDefinedRuntimeAttributes>
                         </textFieldCell>
                         <connections>
-                            <binding destination="-2" name="hidden" keyPath="self.event.fileBundleHash" id="v0N-pG-ulX">
+                            <binding destination="-2" name="hidden" keyPath="self.event.needsBundleHash" id="2kb-3z-Kyn">
                                 <dictionary key="options">
-                                    <string key="NSValueTransformerName">NSIsNil</string>
+                                    <string key="NSValueTransformerName">NSNegateBoolean</string>
                                 </dictionary>
                             </binding>
                         </connections>

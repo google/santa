@@ -120,6 +120,15 @@ REGISTER_COMMAND_NAME(@"status")
     }];
   }
 
+  __block BOOL bundlesEnabled = NO;
+  if ([[SNTConfigurator configurator] syncBaseURL]) {
+    dispatch_group_enter(group);
+    [[daemonConn remoteObjectProxy] bundlesEnabled:^(BOOL response) {
+      bundlesEnabled = response;
+      dispatch_group_leave(group);
+    }];
+  }
+
   // Wait a maximum of 5s for stats collected from daemon to arrive.
   if (dispatch_group_wait(group, dispatch_time(DISPATCH_TIME_NOW, NSEC_PER_SEC * 5))) {
     fprintf(stderr, "Failed to retrieve some stats from daemon\n\n");
@@ -148,7 +157,8 @@ REGISTER_COMMAND_NAME(@"status")
         @"clean_required" : @(syncCleanReqd),
         @"last_successful_full" : lastSyncSuccessStr ?: @"null",
         @"last_successful_rule" : lastRuleSyncSuccessStr ?: @"null",
-        @"push_notifications" : pushNotifications ? @"Connected" : @"Disconnected"
+        @"push_notifications" : pushNotifications ? @"Connected" : @"Disconnected",
+        @"bundle_scanning" : @(bundlesEnabled)
       },
     };
     NSData *statsData = [NSJSONSerialization dataWithJSONObject:stats
@@ -177,6 +187,7 @@ REGISTER_COMMAND_NAME(@"status")
       printf("  %-25s | %s\n", "Last Successful Rule Sync", [lastRuleSyncSuccessStr UTF8String]);
       printf("  %-25s | %s\n", "Push Notifications",
              (pushNotifications ? "Connected" : "Disconnected"));
+      printf("  %-25s | %s\n", "Bundle Scanning", (bundlesEnabled ? "Yes" : "No"));
     }
   }
 
