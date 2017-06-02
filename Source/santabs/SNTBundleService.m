@@ -91,6 +91,11 @@
   dispatch_semaphore_t sema = dispatch_semaphore_create(0);
 
   dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_BACKGROUND, 0), ^{
+    // Use the highest bundle we can find
+    SNTFileInfo *b = [[SNTFileInfo alloc] initWithPath:event.fileBundlePath];
+    b.useAncestorBundle = YES;
+    event.fileBundlePath = b.bundlePath;
+
     NSArray *relatedBinaries = [self findRelatedBinaries:event progress:progress];
     NSString *bundleHash = [self calculateBundleHashFromEvents:relatedBinaries];
     NSNumber *ms = [NSNumber numberWithDouble:[startTime timeIntervalSinceNow] * -1000.0];
@@ -231,6 +236,7 @@
       dispatch_group_async(group,
                            dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_BACKGROUND, 0), ^{
         @autoreleasepool {
+          fi.useAncestorBundle = YES;
           SNTStoredEvent *se = [[SNTStoredEvent alloc] init];
           se.filePath = fi.path;
           se.fileSHA256 = fi.SHA256;

@@ -132,6 +132,65 @@
   XCTAssertEqualObjects([sut bundlePath], @"/Applications/Safari.app");
 }
 
+- (void)testAncestorBundle {
+  NSString *nestedBundleBinary =
+      @"/Applications/Safari.app/Contents/XPCServices/"
+      @"com.apple.Safari.BrowserDataImportingService.xpc/"
+      @"Contents/MacOS/com.apple.Safari.BrowserDataImportingService";
+  SNTFileInfo *sut = [[SNTFileInfo alloc] initWithPath:nestedBundleBinary];
+  sut.useAncestorBundle = YES;
+
+  XCTAssertNotNil([sut bundle]);
+
+  XCTAssertEqualObjects([sut bundleIdentifier], @"com.apple.Safari");
+  XCTAssertEqualObjects([sut bundleName], @"Safari");
+  XCTAssertNotNil([sut bundleVersion]);
+  XCTAssertNotNil([sut bundleShortVersionString]);
+  XCTAssertEqualObjects([sut bundlePath], @"/Applications/Safari.app");
+}
+
+- (void)testBundleCacheReset {
+  NSString *nestedBundleBinary =
+      @"/Applications/Safari.app/Contents/XPCServices/"
+      @"com.apple.Safari.BrowserDataImportingService.xpc/"
+      @"Contents/MacOS/com.apple.Safari.BrowserDataImportingService";
+  NSString *nestedBundlePath = nestedBundleBinary;
+  for (int i = 0; i < 3; i++) {
+    nestedBundlePath = [nestedBundlePath stringByDeletingLastPathComponent];
+  }
+
+  SNTFileInfo *sut = [[SNTFileInfo alloc] initWithPath:nestedBundleBinary];
+
+  XCTAssertNotNil([sut bundle]);
+
+  XCTAssertEqualObjects([sut bundleIdentifier], @"com.apple.Safari.BrowserDataImportingService");
+  XCTAssertEqualObjects([sut bundleName], @"com.apple.Safari.BrowserDataImportingService");
+  XCTAssertNotNil([sut bundleVersion]);
+  XCTAssertNotNil([sut bundleShortVersionString]);
+  XCTAssertEqualObjects([sut bundlePath], nestedBundlePath);
+
+  sut.useAncestorBundle = YES;
+
+  XCTAssertNotNil([sut bundle]);
+
+  XCTAssertEqualObjects([sut bundleIdentifier], @"com.apple.Safari");
+  XCTAssertEqualObjects([sut bundleName], @"Safari");
+  XCTAssertNotNil([sut bundleVersion]);
+  XCTAssertNotNil([sut bundleShortVersionString]);
+  XCTAssertEqualObjects([sut bundlePath], @"/Applications/Safari.app");
+}
+
+- (void)testNonBundle {
+  SNTFileInfo *sut =
+  [[SNTFileInfo alloc] initWithPath:@"/usr/bin/yes"];
+
+  XCTAssertNil([sut bundle]);
+
+  sut.useAncestorBundle = YES;
+
+  XCTAssertNil([sut bundle]);
+}
+
 - (void)testEmbeddedInfoPlist {
   // csreq is installed on all machines with Xcode installed. If you're running these tests,
   // it should be available..
