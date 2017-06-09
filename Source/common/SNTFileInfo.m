@@ -292,7 +292,7 @@ extern NSString *const NSURLQuarantinePropertiesKey WEAK_IMPORT_ATTRIBUTE;
   NSBundle *bundle;
   NSMutableArray *pathComponents = [[self.path pathComponents] mutableCopy];
 
-  // Ignore the checking the root path "/". For some reason this produces a valid bundle.
+  // Ignore the root path "/", for some reason this is considered a bundle.
   while (pathComponents.count > 1) {
     NSBundle *bndl = [NSBundle bundleWithPath:[NSString pathWithComponents:pathComponents]];
     if (bndl && [bndl objectForInfoDictionaryKey:@"CFBundleIdentifier"]) {
