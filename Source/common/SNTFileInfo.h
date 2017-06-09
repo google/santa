@@ -117,6 +117,21 @@
 - (BOOL)isMissingPageZero;
 
 ///
+///  If set to YES, the bundle* and infoPlist methods will search for and use the highest NSBundle
+///  found in the tree. Defaults to NO, which uses the first found bundle, if any.
+///
+///  @example:
+///      An SNTFileInfo object that represents
+///        /Applications/Photos.app/Contents/XPCServices/com.apple.Photos.librarychooserservice.xpc
+///      useAncestorBundle is set to YES
+///        /Applications/Photos.app will be used to get data backing all the bundle methods
+///
+///  @note: The NSBundle object backing the bundle* and infoPlist methods is cached once found.
+///         Setting the useAncestorBundle propery will clear this cache and force a re-search.
+///
+@property(nonatomic) BOOL useAncestorBundle;
+
+///
 ///  @return An NSBundle if this file is part of a bundle.
 ///
 - (NSBundle *)bundle;

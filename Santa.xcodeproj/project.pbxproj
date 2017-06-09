@@ -166,6 +166,7 @@
 		C7479F051E53704E0054C1CF /* SNTXPCBundleServiceInterface.m in Sources */ = {isa = PBXBuildFile; fileRef = C7C721B01E23FF300051FAA6 /* SNTXPCBundleServiceInterface.m */; };
 		C7479F071E5374BF0054C1CF /* SNTXPCControlInterface.m in Sources */ = {isa = PBXBuildFile; fileRef = 0DCD605419115D17006B445C /* SNTXPCControlInterface.m */; };
 		C7479F091E5374E50054C1CF /* SNTRule.m in Sources */ = {isa = PBXBuildFile; fileRef = 0DE50F671912716A007B2B0C /* SNTRule.m */; };
+		C74D6CC61EEB3B9B00BB5A33 /* BundleExample.app in Resources */ = {isa = PBXBuildFile; fileRef = C74D6CC51EEB3B9B00BB5A33 /* BundleExample.app */; };
 		C76614EC1D142D3C00D150C1 /* SNTCommandCheckCache.m in Sources */ = {isa = PBXBuildFile; fileRef = C76614EB1D142D3C00D150C1 /* SNTCommandCheckCache.m */; };
 		C776A1071DEE160500A56616 /* SNTCommandSyncManager.m in Sources */ = {isa = PBXBuildFile; fileRef = C776A1061DEE160500A56616 /* SNTCommandSyncManager.m */; };
 		C78227631E1C3C7D006EB2D6 /* santabs.xpc in CopyFiles */ = {isa = PBXBuildFile; fileRef = C78227541E1C3C58006EB2D6 /* santabs.xpc */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
@@ -431,6 +432,7 @@
 		A6A91785C40257CC156B4F05 /* Pods-Santa.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Santa.release.xcconfig"; path = "Pods/Target Support Files/Pods-Santa/Pods-Santa.release.xcconfig"; sourceTree = "<group>"; };
 		C11A10A5D6E112788769CF70 /* libPods-santad.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-santad.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		C72E8D931D7F399900C86DD3 /* SNTCommandFileInfoTest.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SNTCommandFileInfoTest.m; sourceTree = "<group>"; };
+		C74D6CC51EEB3B9B00BB5A33 /* BundleExample.app */ = {isa = PBXFileReference; lastKnownFileType = wrapper.application; path = BundleExample.app; sourceTree = "<group>"; };
 		C76614EB1D142D3C00D150C1 /* SNTCommandCheckCache.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SNTCommandCheckCache.m; sourceTree = "<group>"; };
 		C776A1051DEE160500A56616 /* SNTCommandSyncManager.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SNTCommandSyncManager.h; sourceTree = "<group>"; };
 		C776A1061DEE160500A56616 /* SNTCommandSyncManager.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SNTCommandSyncManager.m; sourceTree = "<group>"; };
@@ -543,6 +545,7 @@
 		0D260DB018B68E12002A0B55 /* Resources */ = {
 			isa = PBXGroup;
 			children = (
+				C74D6CC51EEB3B9B00BB5A33 /* BundleExample.app */,
 				0D536ED51B8E7A2E0039A26D /* bad_pagezero */,
 				0D2CD4601A81C7B100C9C910 /* dn.plist */,
 				0D536ED61B8E7A2E0039A26D /* missing_pagezero */,
@@ -1082,6 +1085,7 @@
 			files = (
 				0DEA5F761CF6482E00704398 /* sync_eventupload_input_basic.plist in Resources */,
 				0D536ED71B8E7A2E0039A26D /* bad_pagezero in Resources */,
+				C74D6CC61EEB3B9B00BB5A33 /* BundleExample.app in Resources */,
 				0DEA5F7A1CF64C9200704398 /* sync_ruledownload_batch1.json in Resources */,
 				0DEA5F741CF63B9600704398 /* sync_eventupload_input_quarantine.plist in Resources */,
 				0D2CD4611A81C7B100C9C910 /* dn.plist in Resources */,

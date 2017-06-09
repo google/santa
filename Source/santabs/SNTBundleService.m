@@ -91,6 +91,16 @@
   dispatch_semaphore_t sema = dispatch_semaphore_create(0);
 
   dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_BACKGROUND, 0), ^{
+    // Use the highest bundle we can find. Save and reuse the bundle infomation when creating
+    // the related binary events.
+    SNTFileInfo *b = [[SNTFileInfo alloc] initWithPath:event.fileBundlePath];
+    b.useAncestorBundle = YES;
+    event.fileBundlePath = b.bundlePath;
+    event.fileBundleID = b.bundleIdentifier;
+    event.fileBundleName = b.bundleName;
+    event.fileBundleVersion = b.bundleVersion;
+    event.fileBundleVersionString = b.bundleShortVersionString;
+
     NSArray *relatedBinaries = [self findRelatedBinaries:event progress:progress];
     NSString *bundleHash = [self calculateBundleHashFromEvents:relatedBinaries];
     NSNumber *ms = [NSNumber numberWithDouble:[startTime timeIntervalSinceNow] * -1000.0];
@@ -236,11 +246,12 @@
           se.fileSHA256 = fi.SHA256;
           se.occurrenceDate = [NSDate distantFuture];
           se.decision = SNTEventStateBundleBinary;
-          se.fileBundleID = fi.bundleIdentifier;
-          se.fileBundleName = fi.bundleName;
-          se.fileBundlePath = fi.bundlePath;
-          se.fileBundleVersion = fi.bundleVersion;
-          se.fileBundleVersionString = fi.bundleShortVersionString;
+
+          se.fileBundlePath = event.fileBundlePath;
+          se.fileBundleID = event.fileBundleID;
+          se.fileBundleName = event.fileBundleName;
+          se.fileBundleVersion = event.fileBundleVersion;
+          se.fileBundleVersionString = event.fileBundleVersionString;
 
           MOLCodesignChecker *cs = [[MOLCodesignChecker alloc] initWithBinaryPath:se.filePath];
           se.signingChain = cs.certificates;

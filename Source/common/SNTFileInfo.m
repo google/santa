@@ -285,29 +285,43 @@ extern NSString *const NSURLQuarantinePropertiesKey WEAK_IMPORT_ATTRIBUTE;
 ///
 ///  This method walks up the path until a bundle is found, if any.
 ///
+///  @param ancestor YES this will return the highest NSBundle found in the tree. No will return the
+///                  the lowest.
+///
+-(NSBundle *)findBundleWithAncestor:(BOOL)ancestor {
+  NSBundle *bundle;
+  NSMutableArray *pathComponents = [[self.path pathComponents] mutableCopy];
+
+  // Ignore the root path "/", for some reason this is considered a bundle.
+  while (pathComponents.count > 1) {
+    NSBundle *bndl = [NSBundle bundleWithPath:[NSString pathWithComponents:pathComponents]];
+    if (bndl && [bndl objectForInfoDictionaryKey:@"CFBundleIdentifier"]) {
+      bundle = bndl;
+      if (!ancestor) break;
+    }
+    [pathComponents removeLastObject];
+  }
+  return bundle;
+}
+
 - (NSBundle *)bundle {
   if (!self.bundleRef) {
-    self.bundleRef = (NSBundle *)[NSNull null];
-
-    NSMutableArray *pathComponents = [[self.path pathComponents] mutableCopy];
-
-    // Ignore the checking the root path "/". For some reason this produces a valid bundle.
-    // Also only walk back a max 10 dirs.
-    for (short deep = 0;
-         pathComponents.count > 1 && deep < 10;
-         ++deep, [pathComponents removeLastObject]) {
-      NSBundle *bndl = [NSBundle bundleWithPath:[NSString pathWithComponents:pathComponents]];
-      if (bndl && [bndl objectForInfoDictionaryKey:@"CFBundleIdentifier"]) {
-        self.bundleRef = bndl;
-        break;
-      }
-    }
+    self.bundleRef =
+        [self findBundleWithAncestor:self.useAncestorBundle] ?: (NSBundle *)[NSNull null];
   }
   return self.bundleRef == (NSBundle *)[NSNull null] ? nil : self.bundleRef;
 }
 
 - (NSString *)bundlePath {
   return [self.bundle bundlePath];
+}
+
+- (void)setUseAncestorBundle:(BOOL)useAncestorBundle {
+  if (self.useAncestorBundle != useAncestorBundle) {
+    self.bundleRef = nil;
+    self.infoDict = nil;
+  }
+  _useAncestorBundle = useAncestorBundle;
 }
 
 - (NSDictionary *)infoPlist {
