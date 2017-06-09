@@ -120,64 +120,77 @@
 }
 
 - (void)testBundle {
-  SNTFileInfo *sut =
-      [[SNTFileInfo alloc] initWithPath:@"/Applications/Safari.app/Contents/MacOS/Safari"];
+  NSString *path = [[NSBundle bundleForClass:[self class]] pathForResource:@"BundleExample"
+                                                                    ofType:@"app"];
+  SNTFileInfo *sut = [[SNTFileInfo alloc] initWithPath:path];
 
   XCTAssertNotNil([sut bundle]);
 
-  XCTAssertEqualObjects([sut bundleIdentifier], @"com.apple.Safari");
-  XCTAssertEqualObjects([sut bundleName], @"Safari");
-  XCTAssertNotNil([sut bundleVersion]);
-  XCTAssertNotNil([sut bundleShortVersionString]);
-  XCTAssertEqualObjects([sut bundlePath], @"/Applications/Safari.app");
+  XCTAssertEqualObjects([sut bundleIdentifier], @"com.google.santa.BundleExample");
+  XCTAssertEqualObjects([sut bundleName], @"BundleExample");
+  XCTAssertEqualObjects([sut bundleVersion], @"1");
+  XCTAssertEqualObjects([sut bundleShortVersionString], @"1.0");
+  XCTAssertEqualObjects([sut bundlePath], path);
 }
 
 - (void)testAncestorBundle {
-  NSString *nestedBundleBinary =
-      @"/Applications/Safari.app/Contents/XPCServices/"
-      @"com.apple.Safari.BrowserDataImportingService.xpc/"
-      @"Contents/MacOS/com.apple.Safari.BrowserDataImportingService";
-  SNTFileInfo *sut = [[SNTFileInfo alloc] initWithPath:nestedBundleBinary];
+  NSString *path = [[NSBundle bundleForClass:[self class]] pathForResource:@"BundleExample"
+                                                                    ofType:@"app"];
+  SNTFileInfo *sut = [[SNTFileInfo alloc] initWithPath:path];
   sut.useAncestorBundle = YES;
 
   XCTAssertNotNil([sut bundle]);
 
-  XCTAssertEqualObjects([sut bundleIdentifier], @"com.apple.Safari");
-  XCTAssertEqualObjects([sut bundleName], @"Safari");
+  XCTAssertEqualObjects([sut bundleIdentifier], @"com.google.LogicTests");
   XCTAssertNotNil([sut bundleVersion]);
   XCTAssertNotNil([sut bundleShortVersionString]);
-  XCTAssertEqualObjects([sut bundlePath], @"/Applications/Safari.app");
+
+  NSString *ancestorBundlePath = path;
+  for (int i = 0; i < 3; i++) {
+    ancestorBundlePath = [ancestorBundlePath stringByDeletingLastPathComponent];
+  }
+  XCTAssertEqualObjects([sut bundlePath], ancestorBundlePath);
+}
+
+- (void)testBundleIsAncestor {
+  NSString *path = [NSBundle bundleForClass:[self class]].bundlePath;
+  SNTFileInfo *sut = [[SNTFileInfo alloc] initWithPath:path];
+  sut.useAncestorBundle = YES;
+
+  XCTAssertNotNil([sut bundle]);
+
+  XCTAssertEqualObjects([sut bundleIdentifier], @"com.google.LogicTests");
+  XCTAssertNotNil([sut bundleVersion]);
+  XCTAssertNotNil([sut bundleShortVersionString]);
+  XCTAssertEqualObjects([sut bundlePath], path);
 }
 
 - (void)testBundleCacheReset {
-  NSString *nestedBundleBinary =
-      @"/Applications/Safari.app/Contents/XPCServices/"
-      @"com.apple.Safari.BrowserDataImportingService.xpc/"
-      @"Contents/MacOS/com.apple.Safari.BrowserDataImportingService";
-  NSString *nestedBundlePath = nestedBundleBinary;
-  for (int i = 0; i < 3; i++) {
-    nestedBundlePath = [nestedBundlePath stringByDeletingLastPathComponent];
-  }
-
-  SNTFileInfo *sut = [[SNTFileInfo alloc] initWithPath:nestedBundleBinary];
+  NSString *path = [[NSBundle bundleForClass:[self class]] pathForResource:@"BundleExample"
+                                                                    ofType:@"app"];
+  SNTFileInfo *sut = [[SNTFileInfo alloc] initWithPath:path];
 
   XCTAssertNotNil([sut bundle]);
 
-  XCTAssertEqualObjects([sut bundleIdentifier], @"com.apple.Safari.BrowserDataImportingService");
-  XCTAssertEqualObjects([sut bundleName], @"com.apple.Safari.BrowserDataImportingService");
-  XCTAssertNotNil([sut bundleVersion]);
-  XCTAssertNotNil([sut bundleShortVersionString]);
-  XCTAssertEqualObjects([sut bundlePath], nestedBundlePath);
+  XCTAssertEqualObjects([sut bundleIdentifier], @"com.google.santa.BundleExample");
+  XCTAssertEqualObjects([sut bundleName], @"BundleExample");
+  XCTAssertEqualObjects([sut bundleVersion], @"1");
+  XCTAssertEqualObjects([sut bundleShortVersionString], @"1.0");
+  XCTAssertEqualObjects([sut bundlePath], path);
 
   sut.useAncestorBundle = YES;
 
   XCTAssertNotNil([sut bundle]);
 
-  XCTAssertEqualObjects([sut bundleIdentifier], @"com.apple.Safari");
-  XCTAssertEqualObjects([sut bundleName], @"Safari");
+  XCTAssertEqualObjects([sut bundleIdentifier], @"com.google.LogicTests");
   XCTAssertNotNil([sut bundleVersion]);
   XCTAssertNotNil([sut bundleShortVersionString]);
-  XCTAssertEqualObjects([sut bundlePath], @"/Applications/Safari.app");
+
+  NSString *ancestorBundlePath = path;
+  for (int i = 0; i < 3; i++) {
+    ancestorBundlePath = [ancestorBundlePath stringByDeletingLastPathComponent];
+  }
+  XCTAssertEqualObjects([sut bundlePath], ancestorBundlePath);
 }
 
 - (void)testNonBundle {
