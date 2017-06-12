@@ -219,7 +219,7 @@ static void reachabilityHandler(
   // to build a user notification.
   NSString *fileHash = actionMessage[@"file_hash"];
   NSString *fileName = actionMessage[@"file_name"];
-  if (fileName && fileHash) {
+  if (fileName.length && fileHash.length) {
     [self.ruleSyncCache setObject:fileName forKey:fileHash];
   }
 

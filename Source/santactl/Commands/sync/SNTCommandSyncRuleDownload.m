@@ -79,7 +79,7 @@
     for (SNTRule *r in self.syncState.downloadedRules) {
       NSString *fileName = [[self.syncState.ruleSyncCache objectForKey:r.shasum] copy];
       [self.syncState.ruleSyncCache removeObjectForKey:r.shasum];
-      if (fileName) {
+      if (fileName.length) {
         NSString *message = [NSString stringWithFormat:@"%@ can now be run", fileName];
         [[self.daemonConn remoteObjectProxy]
             postRuleSyncNotificationWithCustomMessage:message reply:^{}];
