@@ -35,6 +35,10 @@
 ///  doesn't have a bundle hash.
 @property(weak) IBOutlet NSTextField *bundleHashLabel;
 
+///  Reference to the "Bundle Identifier" label in the XIB. Used to remove if application
+///  doesn't have a bundle hash.
+@property(weak) IBOutlet NSTextField *bundleHashTitle;
+
 ///
 /// Is displayed if calculating the bundle hash is taking a bit.
 ///

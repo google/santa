@@ -59,11 +59,13 @@
 
 extern NSString *const NSURLQuarantinePropertiesKey WEAK_IMPORT_ATTRIBUTE;
 
-- (instancetype)initWithPath:(NSString *)path error:(NSError **)error {
+- (instancetype)initWithPath:(NSString *)path
+                resolvedPath:(BOOL)resolvedPath
+                       error:(NSError **)error {
   self = [super init];
   if (self) {
     NSBundle *bndl;
-    _path = [self resolvePath:path bundle:&bndl];
+    _path = resolvedPath ? path : [self resolvePath:path bundle:&bndl];
     _bundleRef = bndl;
     if (_path.length == 0) {
       if (error) {
@@ -89,7 +91,21 @@ extern NSString *const NSURLQuarantinePropertiesKey WEAK_IMPORT_ATTRIBUTE;
     _fileHandle = [[NSFileHandle alloc] initWithFileDescriptor:fd closeOnDealloc:YES];
 
     struct stat fileStat;
-    fstat(_fileHandle.fileDescriptor, &fileStat);
+    if (resolvedPath) {
+      lstat(_path.UTF8String, &fileStat);
+      if (!((S_IFMT & fileStat.st_mode) == S_IFREG)) {
+        if (error) {
+          NSString *errStr = [NSString stringWithFormat:@"Non regular file: %s", strerror(errno)];
+          *error = [NSError errorWithDomain:@"com.google.santa.fileinfo"
+                                       code:290
+                                   userInfo:@{NSLocalizedDescriptionKey : errStr}];
+        }
+        return nil;
+      }
+    } else {
+      fstat(_fileHandle.fileDescriptor, &fileStat);
+    }
+
     _fileSize = fileStat.st_size;
 
     if (_fileSize == 0) return nil;
@@ -105,8 +121,16 @@ extern NSString *const NSURLQuarantinePropertiesKey WEAK_IMPORT_ATTRIBUTE;
   return self;
 }
 
+- (instancetype)initWithPath:(NSString *)path error:(NSError **)error {
+  return [self initWithPath:path resolvedPath:NO error:NULL];
+}
+
 - (instancetype)initWithPath:(NSString *)path {
   return [self initWithPath:path error:NULL];
+}
+
+- (instancetype)initWithResolvedPath:(NSString *)path error:(NSError **)error {
+  return [self initWithPath:path resolvedPath:YES error:error];
 }
 
 #pragma mark Hashing

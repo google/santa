@@ -31,7 +31,8 @@ typedef void (^SNTBundleHashBlock)(NSString *, NSArray<SNTStoredEvent *> *, NSNu
 ///  Hash a bundle for an event. The SNTBundleHashBlock will be called with nil parameters if a
 ///  failure or cancellation occurs.
 ///
-///  @param event The event that includes the fileBundlePath to be hashed.
+///  @param event The event that includes the fileBundlePath to be hashed. This method will
+///      attempt to to find and use the ancestor bundle as a starting point.
 ///  @param reply A SNTBundleHashBlock to be executed upon completion or cancellation.
 ///
 ///  @note If there is a current NSProgress when called this method will report back its progress.
