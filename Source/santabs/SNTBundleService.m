@@ -139,7 +139,7 @@
 - (NSDictionary *)findRelatedBinaries:(SNTStoredEvent *)event progress:(NSProgress *)progress {
   // Find all files and folders within the fileBundlePath
   NSFileManager *fm = [NSFileManager defaultManager];
-  NSArray *dirEnum = [fm subpathsOfDirectoryAtPath:event.fileBundlePath error:NULL];
+  NSArray *subpaths = [fm subpathsOfDirectoryAtPath:event.fileBundlePath error:NULL];
 
   // This array is used to store pointers to executable SNTFileInfo objects. There will be one block
   // dispatched per file in dirEnum. These blocks will write pointers to this array concurrently.
@@ -147,7 +147,7 @@
   //
   // Xcode.app has roughly 500k files, 8bytes per pointer is ~4MB for this array. This size to space
   // ratio seems appropriate as Xcode.app is in the upper bounds of bundle size.
-  __block void **fis = calloc(dirEnum.count, sizeof(void *));
+  __block void **fis = calloc(subpaths.count, sizeof(void *));
 
   // Counts used as additional progress information in SantaGUI
   __block volatile int64_t binaryCount = 0;
@@ -157,44 +157,42 @@
   NSProgress *p;
   if (progress) {
     [progress becomeCurrentWithPendingUnitCount:80];
-    p = [NSProgress progressWithTotalUnitCount:dirEnum.count * 100];
+    p = [NSProgress progressWithTotalUnitCount:subpaths.count * 100];
   }
 
   // Dispatch a block for every file in dirEnum.
-  dispatch_apply(dirEnum.count, self.queue, ^(size_t i) {
+  dispatch_apply(subpaths.count, self.queue, ^(size_t i) {
     @autoreleasepool {
       if (progress.isCancelled) return;
 
       dispatch_sync(dispatch_get_main_queue(), ^{
         p.completedUnitCount++;
+        if (progress && ((i % 500) == 0 || binaryCount > sentBinaryCount)) {
+          sentBinaryCount = binaryCount;
+          [[self.notifierConnection remoteObjectProxy] updateCountsForEvent:event
+                                                                binaryCount:binaryCount
+                                                                  fileCount:i
+                                                                hashedCount:0];
+        }
       });
 
-      if (progress && ((i % 500) == 0 || binaryCount > sentBinaryCount)) {
-        sentBinaryCount = binaryCount;
-        [[self.notifierConnection remoteObjectProxy] updateCountsForEvent:event
-                                                              binaryCount:binaryCount
-                                                                fileCount:i
-                                                              hashedCount:0];
-      }
+      NSString *subpath = subpaths[i];
 
-      NSString *file = dirEnum[i];
-      if (!file) return;
-
-      NSString *newFile =
-          [event.fileBundlePath stringByAppendingPathComponent:file].stringByStandardizingPath;
-      SNTFileInfo *fi = [[SNTFileInfo alloc] initWithResolvedPath:newFile error:NULL];
+      NSString *file =
+          [event.fileBundlePath stringByAppendingPathComponent:subpath].stringByStandardizingPath;
+      SNTFileInfo *fi = [[SNTFileInfo alloc] initWithResolvedPath:file error:NULL];
       if (!fi.isExecutable) return;
 
-      fis[i] = (void *)CFBridgingRetain(fi);
+      fis[i] = (__bridge_retained void *)fi;
       OSAtomicIncrement64Barrier(&binaryCount);
     }
   });
 
   [progress resignCurrent];
 
-  NSMutableArray *fileInfos = [NSMutableArray array];
-  for (NSUInteger i = 0; i < dirEnum.count; i++) {
-    if (fis[i]) [fileInfos addObject:(SNTFileInfo *)CFBridgingRelease(fis[i])];
+  NSMutableArray *fileInfos = [NSMutableArray arrayWithCapacity:binaryCount];
+  for (NSUInteger i = 0; i < subpaths.count; i++) {
+    if (fis[i]) [fileInfos addObject:(__bridge_transfer SNTFileInfo *)fis[i]];
   }
 
   free(fis);
@@ -218,8 +216,9 @@
 
   dispatch_apply(fis.count, self.queue, ^(size_t i) {
     @autoreleasepool {
+      if (progress.isCancelled) return;
+
       SNTFileInfo *fi = fis[i];
-      if (progress.isCancelled || !fi) return;
 
       SNTStoredEvent *se = [[SNTStoredEvent alloc] init];
       se.filePath = fi.path;
@@ -239,14 +238,13 @@
       dispatch_sync(dispatch_get_main_queue(), ^{
         relatedEvents[se.fileSHA256] = se;
         p.completedUnitCount++;
+        if (progress) {
+          [[self.notifierConnection remoteObjectProxy] updateCountsForEvent:event
+                                                                binaryCount:fis.count
+                                                                  fileCount:0
+                                                                hashedCount:i];
+        }
       });
-
-      if (progress) {
-        [[self.notifierConnection remoteObjectProxy] updateCountsForEvent:event
-                                                              binaryCount:fis.count
-                                                                fileCount:0
-                                                              hashedCount:i];
-      }
     }
   });
 

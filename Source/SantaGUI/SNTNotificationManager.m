@@ -209,7 +209,7 @@ static NSString * const silencedNotificationsKey = @"SilencedNotifications";
 #pragma mark SNTBundleNotifierXPC helper methods
 
 - (void)hashBundleBinariesForEvent:(SNTStoredEvent *)event {
-  self.currentWindowController.foundFileCountLabel.stringValue = @"Seaching for files...";
+  self.currentWindowController.foundFileCountLabel.stringValue = @"Searching for files...";
 
   // Wait a max of 6 secs for the bundle service. Should the bundle service fall over, it will
   // reconnect within 5 secs. Otherwise abandon bundle hashing and display the blockable event.
