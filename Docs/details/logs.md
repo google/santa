@@ -1,0 +1,30 @@
+# Logs
+
+Santa currently logs to `/var/db/santa/santa.log` by default. All executions and disk mounts are logged here. File operations can also be configured to be logged. See the `FileChangesRegex` key in the [configuration.md](../deployment/configuration.md) document.
+
+To view the logs:
+
+```sh
+tail -F /var/db/santa/santa.log
+```
+
+The `-F` will continue watching the path even when the current file fills up and rolls over.
+
+##### macOS Unified Logging System (ULS)
+
+Currently all of the most recent releases of Santa are build with the macOS 10.11 SDK. This allows Santa to continue to log to Apple System Logger (ASL) instead of ULS. That is with one exception. On macOS 10.12+ all of the Kernel logs are sent to ULS. See the KEXT Logging section below for more details.
+
+If you are building Santa yourself and using the macOS 10.12+ SDKs, Santa's logs will be sent to ULS.
+
+The is work currently underway to bypass ASL and ULS altogether. This will allow Santa to continue logging to `/var/db/santa/santa.log`. It also will make available other types of logging like Protocol Buffer logs.
+
+##### KEXT Logging
+
+For some reason streaming logs from the santa-driver KEXT does not work properly. You will see some logs, but they will be garbled and show inaccurate data.
+
+Instead, use show to view the santa-driver KEXT logs.
+
+```sh
+/usr/bin/log show --info --debug --predicate 'senderImagePath == "/Library/Extensions/santa-driver.kext/Contents/MacOS/santa-driver"'
+```
+
