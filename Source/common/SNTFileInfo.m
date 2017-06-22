@@ -59,21 +59,41 @@
 
 extern NSString *const NSURLQuarantinePropertiesKey WEAK_IMPORT_ATTRIBUTE;
 
-- (instancetype)initWithPath:(NSString *)path error:(NSError **)error {
+- (instancetype)initWithResolvedPath:(NSString *)path error:(NSError **)error {
   self = [super init];
   if (self) {
-    NSBundle *bndl;
-    _path = [self resolvePath:path bundle:&bndl];
-    _bundleRef = bndl;
-    if (_path.length == 0) {
+    _path = path;
+    if (!_path.length) {
       if (error) {
-        NSString *errStr = @"Unable to resolve empty path";
-        if (path) errStr = [@"Unable to resolve path: " stringByAppendingString:path];
+        NSString *errStr = @"Unable to use empty path";
         *error = [NSError errorWithDomain:@"com.google.santa.fileinfo"
-                                     code:260
+                                     code:270
                                  userInfo:@{NSLocalizedDescriptionKey : errStr}];
       }
       return nil;
+    }
+
+    struct stat fileStat;
+    lstat(_path.UTF8String, &fileStat);
+    if (!((S_IFMT & fileStat.st_mode) == S_IFREG)) {
+      if (error) {
+        NSString *errStr = [NSString stringWithFormat:@"Non regular file: %s", strerror(errno)];
+        *error = [NSError errorWithDomain:@"com.google.santa.fileinfo"
+                                     code:290
+                                 userInfo:@{NSLocalizedDescriptionKey : errStr}];
+      }
+      return nil;
+    }
+
+    _fileSize = fileStat.st_size;
+
+    if (_fileSize == 0) return nil;
+
+    if (fileStat.st_uid != 0) {
+      struct passwd *pwd = getpwuid(fileStat.st_uid);
+      if (pwd) {
+        _fileOwnerHomeDir = @(pwd->pw_dir);
+      }
     }
 
     int fd = open([_path UTF8String], O_RDONLY | O_CLOEXEC);
@@ -87,21 +107,26 @@ extern NSString *const NSURLQuarantinePropertiesKey WEAK_IMPORT_ATTRIBUTE;
       return nil;
     }
     _fileHandle = [[NSFileHandle alloc] initWithFileDescriptor:fd closeOnDealloc:YES];
-
-    struct stat fileStat;
-    fstat(_fileHandle.fileDescriptor, &fileStat);
-    _fileSize = fileStat.st_size;
-
-    if (_fileSize == 0) return nil;
-
-    if (fileStat.st_uid != 0) {
-      struct passwd *pwd = getpwuid(fileStat.st_uid);
-      if (pwd) {
-        _fileOwnerHomeDir = @(pwd->pw_dir);
-      }
-    }
   }
 
+  return self;
+}
+
+- (instancetype)initWithPath:(NSString *)path error:(NSError **)error {
+  NSBundle *bndl;
+  NSString *resolvedPath = [self resolvePath:path bundle:&bndl];
+  if (!resolvedPath.length) {
+    if (error) {
+      NSString *errStr = @"Unable to resolve empty path";
+      if (path) errStr = [@"Unable to resolve path: " stringByAppendingString:path];
+      *error = [NSError errorWithDomain:@"com.google.santa.fileinfo"
+                                   code:260
+                               userInfo:@{NSLocalizedDescriptionKey : errStr}];
+    }
+    return nil;
+  }
+  self = [self initWithResolvedPath:resolvedPath error:error];
+  if (self && bndl) _bundleRef = bndl;
   return self;
 }
 

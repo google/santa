@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="10117" systemVersion="16E195" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES">
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="10117" systemVersion="16F73" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES">
     <dependencies>
         <deployment identifier="macosx"/>
         <development version="6300" identifier="xcode"/>
@@ -10,6 +10,7 @@
             <connections>
                 <outlet property="applicationNameLabel" destination="qgf-Jf-cJr" id="1JX-X8-03v"/>
                 <outlet property="bundleHashLabel" destination="xP7-jE-NF8" id="i8B-Gs-2E3"/>
+                <outlet property="bundleHashTitle" destination="MhO-U0-MLR" id="KT0-bK-fpV"/>
                 <outlet property="foundFileCountLabel" destination="LHV-gV-vyf" id="Sr0-T2-xGx"/>
                 <outlet property="hashingIndicator" destination="VyY-Yg-JOe" id="Yq4-tZ-9ep"/>
                 <outlet property="openEventButton" destination="7ua-5a-uSd" id="9s4-ZA-Vlo"/>

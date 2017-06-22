@@ -178,11 +178,13 @@ static NSString * const silencedNotificationsKey = @"SilencedNotifications";
 
 - (void)updateCountsForEvent:(SNTStoredEvent *)event
                  binaryCount:(uint64_t)binaryCount
-                   fileCount:(uint64_t)fileCount {
+                   fileCount:(uint64_t)fileCount
+                 hashedCount:(uint64_t)hashedCount {
   if ([self.currentWindowController.event.idx isEqual:event.idx]) {
     dispatch_async(dispatch_get_main_queue(), ^{
       self.currentWindowController.foundFileCountLabel.stringValue =
-          [NSString stringWithFormat:@"%llu binaries / %llu files", binaryCount, fileCount];
+          [NSString stringWithFormat:@"%llu binaries / %llu %@",
+               binaryCount, hashedCount ?: fileCount, hashedCount ? @"hashed" : @"files"];
     });
   }
 }
@@ -192,12 +194,23 @@ static NSString * const silencedNotificationsKey = @"SilencedNotifications";
   c.remoteInterface = [SNTXPCBundleServiceInterface bundleServiceInterface];
   [c resume];
   self.bundleServiceConnection = c;
+
+  WEAKIFY(self);
+  self.bundleServiceConnection.invalidationHandler = ^{
+    STRONGIFY(self);
+    if (self.currentWindowController) {
+      [self updateBlockNotification:self.currentWindowController.event withBundleHash:nil];
+    }
+  };
+
   dispatch_semaphore_signal(self.bundleServiceSema);
 }
 
 #pragma mark SNTBundleNotifierXPC helper methods
 
 - (void)hashBundleBinariesForEvent:(SNTStoredEvent *)event {
+  self.currentWindowController.foundFileCountLabel.stringValue = @"Searching for files...";
+
   // Wait a max of 6 secs for the bundle service. Should the bundle service fall over, it will
   // reconnect within 5 secs. Otherwise abandon bundle hashing and display the blockable event.
   if (dispatch_semaphore_wait(self.bundleServiceSema,
@@ -210,7 +223,7 @@ static NSString * const silencedNotificationsKey = @"SilencedNotifications";
   dispatch_semaphore_signal(self.bundleServiceSema);
 
   // NSProgress becomes current for this thread. XPC messages vend a child node to the receiver.
-  [self.currentWindowController.progress becomeCurrentWithPendingUnitCount:1];
+  [self.currentWindowController.progress becomeCurrentWithPendingUnitCount:100];
 
   // Start hashing. Progress is reported to the root NSProgress (currentWindowController.progress).
   [[self.bundleServiceConnection remoteObjectProxy]
@@ -246,6 +259,7 @@ static NSString * const silencedNotificationsKey = @"SilencedNotifications";
         [self.currentWindowController.bundleHashLabel setHidden:NO];
       } else {
         [self.currentWindowController.bundleHashLabel removeFromSuperview];
+        [self.currentWindowController.bundleHashTitle removeFromSuperview];
       }
       self.currentWindowController.event.fileBundleHash = bundleHash;
       [self.currentWindowController.foundFileCountLabel removeFromSuperview];

@@ -20,7 +20,6 @@
 #import "MOLCertificate.h"
 #import "MOLCodesignChecker.h"
 #import "SNTFileInfo.h"
-#import "SNTLogging.h"
 #import "SNTStoredEvent.h"
 #import "SNTXPCConnection.h"
 #import "SNTXPCNotifierInterface.h"
@@ -28,9 +27,18 @@
 @interface SNTBundleService ()
 @property SNTXPCConnection *notifierConnection;
 @property SNTXPCConnection *listener;
+@property(nonatomic) dispatch_queue_t queue;
 @end
 
 @implementation SNTBundleService
+
+- (instancetype)init {
+  self = [super init];
+  if (self) {
+    _queue = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_BACKGROUND, 0);
+  }
+  return self;
+}
 
 #pragma mark Connection handling
 
@@ -67,7 +75,6 @@
   [self performSelectorInBackground:@selector(createConnection) withObject:nil];
 }
 
-
 #pragma mark SNTBundleServiceXPC Methods
 
 // Connect to the SantaGUI
@@ -76,7 +83,7 @@
   c.remoteInterface = [SNTXPCNotifierInterface bundleNotifierInterface];
   [c resume];
   self.notifierConnection = c;
-  dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_BACKGROUND, 0), ^{
+  dispatch_async(self.queue, ^{
     [self createConnection];
   });
 }
@@ -84,13 +91,13 @@
 - (void)hashBundleBinariesForEvent:(SNTStoredEvent *)event
                              reply:(SNTBundleHashBlock)reply {
   NSProgress *progress =
-      [NSProgress currentProgress] ? [NSProgress progressWithTotalUnitCount:1] : nil;
+      [NSProgress currentProgress] ? [NSProgress progressWithTotalUnitCount:100] : nil;
 
   NSDate *startTime = [NSDate date];
 
   dispatch_semaphore_t sema = dispatch_semaphore_create(0);
 
-  dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_BACKGROUND, 0), ^{
+  dispatch_async(self.queue, ^{
     // Use the highest bundle we can find. Save and reuse the bundle infomation when creating
     // the related binary events.
     SNTFileInfo *b = [[SNTFileInfo alloc] initWithPath:event.fileBundlePath];
@@ -101,19 +108,20 @@
     event.fileBundleVersion = b.bundleVersion;
     event.fileBundleVersionString = b.bundleShortVersionString;
 
-    NSArray *relatedBinaries = [self findRelatedBinaries:event progress:progress];
-    NSString *bundleHash = [self calculateBundleHashFromEvents:relatedBinaries];
+    NSDictionary *relatedEvents = [self findRelatedBinaries:event progress:progress];
+    NSString *bundleHash = [self calculateBundleHashFromSHA256Hashes:relatedEvents.allKeys
+                                                            progress:progress];
+
     NSNumber *ms = [NSNumber numberWithDouble:[startTime timeIntervalSinceNow] * -1000.0];
-    if (bundleHash) LOGD(@"hashed %@ in %@ ms", event.fileBundlePath, ms);
-    reply(bundleHash, relatedBinaries, ms);
+
+    reply(bundleHash, relatedEvents.allValues, ms);
     dispatch_semaphore_signal(sema);
   });
 
   // Master timeout of 10 min. Don't block the calling thread. NSProgress updates will be coming
   // in over this thread.
-  dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_BACKGROUND, 0), ^{
+  dispatch_async(self.queue, ^{
     if (dispatch_semaphore_wait(sema, dispatch_time(DISPATCH_TIME_NOW, 600 * NSEC_PER_SEC))) {
-      LOGD(@"hashBundleBinariesForEvent timeout");
       [progress cancel];
     }
   });
@@ -122,170 +130,143 @@
 #pragma mark Internal Methods
 
 /**
- Find binaries within a bundle given the bundle's event. It will run until a timeout occurs, 
- or until the NSProgress is cancelled. Search is done within the bundle concurrently.
+  Find binaries within a bundle given the bundle's event. It will run until a timeout occurs,
+  or until the NSProgress is cancelled. Search is done within the bundle concurrently.
 
- @param event The SNTStoredEvent to begin searching underneath
- @return An array of SNTStoredEvent's
+  @param event The SNTStoredEvent to begin searching.
+  @return An NSDictionary object with keys of fileSHA256 and values of SNTStoredEvent objects.
+*/
+- (NSDictionary *)findRelatedBinaries:(SNTStoredEvent *)event progress:(NSProgress *)progress {
+  // Find all files and folders within the fileBundlePath
+  NSFileManager *fm = [NSFileManager defaultManager];
+  NSArray *subpaths = [fm subpathsOfDirectoryAtPath:event.fileBundlePath error:NULL];
 
- @note The first stage gathers a set of executables. 60 sec / max thread timeout.
- @note The second stage hashes the executables. 300 sec / max thread timeout.
- */
-- (NSArray *)findRelatedBinaries:(SNTStoredEvent *)event progress:(NSProgress *)progress {
-  // For storing the generated events, with a simple lock for writing.
-  NSMutableArray *relatedEvents = [NSMutableArray array];
-
-  // For storing files to be hashed
-  NSMutableSet<SNTFileInfo *> *fis = [NSMutableSet set];
-
-  // Limit the number of threads that can process files at once to keep CPU usage down.
-  dispatch_semaphore_t sema =
-      dispatch_semaphore_create([[NSProcessInfo processInfo] processorCount] / 2);
-
-  // Group the processing into a single group so we can wait on the whole group after each stage.
-  dispatch_group_t group = dispatch_group_create();
-
-  // Directory enumerator
-  NSDirectoryEnumerator *dirEnum =
-      [[NSFileManager defaultManager] enumeratorAtPath:event.fileBundlePath];
-
-  // Locks for accessing the enumerator and adding file and events between threads.
-  __block pthread_mutex_t enumeratorMutex = PTHREAD_MUTEX_INITIALIZER;
-  __block pthread_mutex_t eventsMutex = PTHREAD_MUTEX_INITIALIZER;
+  // This array is used to store pointers to executable SNTFileInfo objects. There will be one block
+  // dispatched per file in dirEnum. These blocks will write pointers to this array concurrently.
+  // No locks are used since every file has a slot.
+  //
+  // Xcode.app has roughly 500k files, 8bytes per pointer is ~4MB for this array. This size to space
+  // ratio seems appropriate as Xcode.app is in the upper bounds of bundle size.
+  __block void **fis = calloc(subpaths.count, sizeof(void *));
 
   // Counts used as additional progress information in SantaGUI
-  __block uint64_t binaryCount = 0;
-  __block uint64_t sentBinaryCount = 0;
-  __block uint64_t fileCount = 0;
+  __block volatile int64_t binaryCount = 0;
+  __block volatile int64_t sentBinaryCount = 0;
 
-  __block BOOL breakDir = NO;
-
-  // In the first stage iterate over every file in the tree checking if it is a binary. If so add
-  // it to the fis set for the second stage. Hashing the file while iterating over the filesystem
-  // causes performance issues. Do them separately.
-  while (1) {
-    @autoreleasepool {
-      if (breakDir || progress.isCancelled) break;
-
-      // Wait for a processing thread to become available. At this stage we are only reading the
-      // mach_header. If all processing threads are blocking for more than 60 sec bail.
-      if (dispatch_semaphore_wait(sema, dispatch_time(DISPATCH_TIME_NOW, 60 * NSEC_PER_SEC))) {
-        LOGD(@"isExecutable processing threads timeout");
-        return nil;
-      }
-
-      dispatch_group_async(group,
-                           dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_BACKGROUND, 0), ^{
-        pthread_mutex_lock(&enumeratorMutex);
-        NSString *file = [dirEnum nextObject];
-        fileCount++;
-        pthread_mutex_unlock(&enumeratorMutex);
-
-        if (!file) {
-          breakDir = YES;
-          dispatch_semaphore_signal(sema);
-          return;
-        }
-
-        if ([dirEnum fileAttributes][NSFileType] != NSFileTypeRegular) {
-          dispatch_semaphore_signal(sema);
-          return;
-        }
-
-        NSString *newFile = [event.fileBundlePath stringByAppendingPathComponent:file];
-        SNTFileInfo *fi = [[SNTFileInfo alloc] initWithPath:newFile];
-        if (!fi.isExecutable) {
-          dispatch_semaphore_signal(sema);
-          return;
-        }
-
-        pthread_mutex_lock(&eventsMutex);
-        [fis addObject:fi];
-        binaryCount++;
-        pthread_mutex_unlock(&eventsMutex);
-
-        dispatch_semaphore_signal(sema);
-      });
-      if (progress && ((fileCount % 500) == 0 || binaryCount > sentBinaryCount)) {
-        sentBinaryCount = binaryCount;
-        [[self.notifierConnection remoteObjectProxy] updateCountsForEvent:event
-                                                              binaryCount:binaryCount
-                                                                fileCount:fileCount];
-      }
-    }
-  }
-
-  if (progress.isCancelled) return nil;
-
-  // Wait for all the processing threads to finish
-  dispatch_group_wait(group, DISPATCH_TIME_FOREVER);
-
+  // Account for 80% of the work
   NSProgress *p;
   if (progress) {
-    [progress becomeCurrentWithPendingUnitCount:1];
-    p = [NSProgress progressWithTotalUnitCount:fis.count];
+    [progress becomeCurrentWithPendingUnitCount:80];
+    p = [NSProgress progressWithTotalUnitCount:subpaths.count * 100];
   }
 
-  // In the second stage perform SHA256 hashing on all of the found binaries.
-  for (SNTFileInfo *fi in fis) {
+  // Dispatch a block for every file in dirEnum.
+  dispatch_apply(subpaths.count, self.queue, ^(size_t i) {
     @autoreleasepool {
-      if (progress.isCancelled) break;
+      if (progress.isCancelled) return;
 
-      // Wait for a processing thread to become available. Here we are hashing the entire file.
-      // If all processing threads are blocking for more than 5 min bail.
-      if (dispatch_semaphore_wait(sema, dispatch_time(DISPATCH_TIME_NOW, 300 * NSEC_PER_SEC))) {
-        LOGD(@"SHA256 processing threads timeout");
-        return nil;
-      }
+      dispatch_sync(dispatch_get_main_queue(), ^{
+        p.completedUnitCount++;
+        if (progress && ((i % 500) == 0 || binaryCount > sentBinaryCount)) {
+          sentBinaryCount = binaryCount;
+          [[self.notifierConnection remoteObjectProxy] updateCountsForEvent:event
+                                                                binaryCount:binaryCount
+                                                                  fileCount:i
+                                                                hashedCount:0];
+        }
+      });
 
-      dispatch_group_async(group,
-                           dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_BACKGROUND, 0), ^{
-        @autoreleasepool {
-          SNTStoredEvent *se = [[SNTStoredEvent alloc] init];
-          se.filePath = fi.path;
-          se.fileSHA256 = fi.SHA256;
-          se.occurrenceDate = [NSDate distantFuture];
-          se.decision = SNTEventStateBundleBinary;
+      NSString *subpath = subpaths[i];
 
-          se.fileBundlePath = event.fileBundlePath;
-          se.fileBundleID = event.fileBundleID;
-          se.fileBundleName = event.fileBundleName;
-          se.fileBundleVersion = event.fileBundleVersion;
-          se.fileBundleVersionString = event.fileBundleVersionString;
+      NSString *file =
+          [event.fileBundlePath stringByAppendingPathComponent:subpath].stringByStandardizingPath;
+      SNTFileInfo *fi = [[SNTFileInfo alloc] initWithResolvedPath:file error:NULL];
+      if (!fi.isExecutable) return;
 
-          MOLCodesignChecker *cs = [[MOLCodesignChecker alloc] initWithBinaryPath:se.filePath];
-          se.signingChain = cs.certificates;
+      fis[i] = (__bridge_retained void *)fi;
+      OSAtomicIncrement64Barrier(&binaryCount);
+    }
+  });
 
-          pthread_mutex_lock(&eventsMutex);
-          [relatedEvents addObject:se];
-          p.completedUnitCount++;
-          pthread_mutex_unlock(&eventsMutex);
+  [progress resignCurrent];
 
-          dispatch_semaphore_signal(sema);
+  NSMutableArray *fileInfos = [NSMutableArray arrayWithCapacity:binaryCount];
+  for (NSUInteger i = 0; i < subpaths.count; i++) {
+    if (fis[i]) [fileInfos addObject:(__bridge_transfer SNTFileInfo *)fis[i]];
+  }
+
+  free(fis);
+
+  return [self generateEventsFromBinaries:fileInfos blockingEvent:event progress:progress];
+}
+
+- (NSDictionary *)generateEventsFromBinaries:(NSArray *)fis
+                               blockingEvent:(SNTStoredEvent *)event
+                                    progress:(NSProgress *)progress {
+  if (progress.isCancelled) return nil;
+
+  NSMutableDictionary *relatedEvents = [NSMutableDictionary dictionaryWithCapacity:fis.count];
+
+  // Account for 15% of the work
+  NSProgress *p;
+  if (progress) {
+    [progress becomeCurrentWithPendingUnitCount:15];
+    p = [NSProgress progressWithTotalUnitCount:fis.count * 100];
+  }
+
+  dispatch_apply(fis.count, self.queue, ^(size_t i) {
+    @autoreleasepool {
+      if (progress.isCancelled) return;
+
+      SNTFileInfo *fi = fis[i];
+
+      SNTStoredEvent *se = [[SNTStoredEvent alloc] init];
+      se.filePath = fi.path;
+      se.fileSHA256 = fi.SHA256;
+      se.occurrenceDate = [NSDate distantFuture];
+      se.decision = SNTEventStateBundleBinary;
+
+      se.fileBundlePath = event.fileBundlePath;
+      se.fileBundleID = event.fileBundleID;
+      se.fileBundleName = event.fileBundleName;
+      se.fileBundleVersion = event.fileBundleVersion;
+      se.fileBundleVersionString = event.fileBundleVersionString;
+
+      MOLCodesignChecker *cs = [[MOLCodesignChecker alloc] initWithBinaryPath:se.filePath];
+      se.signingChain = cs.certificates;
+
+      dispatch_sync(dispatch_get_main_queue(), ^{
+        relatedEvents[se.fileSHA256] = se;
+        p.completedUnitCount++;
+        if (progress) {
+          [[self.notifierConnection remoteObjectProxy] updateCountsForEvent:event
+                                                                binaryCount:fis.count
+                                                                  fileCount:0
+                                                                hashedCount:i];
         }
       });
     }
-  }
+  });
 
-  // Wait for all the processing threads to finish
-  dispatch_group_wait(group, DISPATCH_TIME_FOREVER);
+  [progress resignCurrent];
 
-  pthread_mutex_destroy(&enumeratorMutex);
-  pthread_mutex_destroy(&eventsMutex);
-
-  return progress.isCancelled ? nil : relatedEvents;
+  return relatedEvents;
 }
 
-- (NSString *)calculateBundleHashFromEvents:(NSArray<SNTStoredEvent *> *)events {
-  if (!events) return nil;
-  NSMutableArray *eventSHA256Hashes = [NSMutableArray arrayWithCapacity:events.count];
-  for (SNTStoredEvent *event in events) {
-    if (!event.fileSHA256) return nil;
-    [eventSHA256Hashes addObject:event.fileSHA256];
+- (NSString *)calculateBundleHashFromSHA256Hashes:(NSArray *)hashes
+                                         progress:(NSProgress *)progress {
+  if (!hashes.count) return nil;
+
+  // Account for 5% of the work
+  NSProgress *p;
+  if (progress) {
+    [progress becomeCurrentWithPendingUnitCount:5];
+    p = [NSProgress progressWithTotalUnitCount:5 * 100];
   }
 
-  [eventSHA256Hashes sortUsingSelector:@selector(localizedCaseInsensitiveCompare:)];
-  NSString *sha256Hashes = [eventSHA256Hashes componentsJoinedByString:@""];
+  NSMutableArray *sortedHashes = [hashes mutableCopy];
+  [sortedHashes sortUsingSelector:@selector(localizedCaseInsensitiveCompare:)];
+  NSString *sha256Hashes = [sortedHashes componentsJoinedByString:@""];
 
   CC_SHA256_CTX c256;
   CC_SHA256_Init(&c256);
@@ -307,6 +288,8 @@
       digest[24], digest[25], digest[26], digest[27],
       digest[28], digest[29], digest[30], digest[31]];
 
+  p.completedUnitCount++;
+  [progress resignCurrent];
   return sha256;
 }
 

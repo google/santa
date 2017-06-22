@@ -70,7 +70,6 @@
       NSProgress *progress = object;
       if (progress.fractionCompleted != 0.0) {
         self.hashingIndicator.indeterminate = NO;
-        [self.foundFileCountLabel removeFromSuperview];
       }
       self.hashingIndicator.doubleValue = progress.fractionCompleted;
     });

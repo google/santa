@@ -30,7 +30,9 @@
 @protocol SNTBundleNotifierXPC
 - (void)updateCountsForEvent:(SNTStoredEvent *)event
                  binaryCount:(uint64_t)binaryCount
-                   fileCount:(uint64_t)fileCount;
+                   fileCount:(uint64_t)fileCount
+                 hashedCount:(uint64_t)hashedCount;
+
 - (void)setBundleServiceListener:(NSXPCListenerEndpoint *)listener;
 @end
 

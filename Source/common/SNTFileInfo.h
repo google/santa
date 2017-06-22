@@ -38,6 +38,18 @@
 ///
 - (instancetype)initWithPath:(NSString *)path;
 
+
+///
+///  Initializer for already resolved paths.
+///
+///  @param path The path of the file this instance is to represent. The path will
+///      not be converted and will be used as is. If the path is not a regular file this method will
+///      return nil and fill in an error.
+///  @param error If an error occurred and nil is returned, this will be a pointer to an NSError
+///      describing the problem.
+///
+- (instancetype)initWithResolvedPath:(NSString *)path error:(NSError **)error;
+
 ///
 ///  @return Path of this file.
 ///
