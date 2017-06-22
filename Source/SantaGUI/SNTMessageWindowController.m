@@ -48,6 +48,11 @@
   if (self) {
     _event = event;
     _customMessage = message;
+    _progress = [NSProgress discreteProgressWithTotalUnitCount:1];
+    [_progress addObserver:self
+                forKeyPath:@"fractionCompleted"
+                   options:NSKeyValueObservingOptionNew
+                   context:NULL];
   }
   return self;
 }
@@ -102,8 +107,6 @@
       self.hashingIndicator.doubleValue = progress.fractionCompleted;
     });
   } else if ([keyPath isEqualToString:@"self.event.fileBundleHash"]) {
-    // Testing Output. Remove before publishing
-    NSLog(@"bundle hash changed: %@", self.event.fileBundleHash);
     NSString *js = [NSString stringWithFormat:@"bundleHashChanged('%@');", self.event.fileBundleHash];
     dispatch_async(dispatch_get_main_queue(), ^{
       [self.webView.windowScriptObject evaluateWebScript:js];
@@ -117,8 +120,6 @@
 
 // Handles string update when Bundle Hash is in progress
 - (void)setFoundFileCountLabel:(NSString *)foundFileCountLabel {
-  // Testing Output. Remove before publishing
-  NSLog(@"%@", foundFileCountLabel);
   NSString *js = [NSString stringWithFormat:@"fileCountUpdateString('%@');", foundFileCountLabel];
   dispatch_async(dispatch_get_main_queue(), ^{
     [self.webView.windowScriptObject evaluateWebScript:js];

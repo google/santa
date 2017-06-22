@@ -104,6 +104,11 @@ body {
   -o-user-select:none;
 }
 
+#fileCountUpdate {
+  margin-left: 38px;
+  font-size: 12px;
+}
+
 /* Google Specific Branding */
 #google-colors {
   position: absolute;
