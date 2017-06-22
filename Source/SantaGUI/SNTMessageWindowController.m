@@ -71,8 +71,8 @@
   self.webView.frameLoadDelegate = self;
   [NSApp activateIgnoringOtherApps:YES];
 }
-/// Code Testing Below
-///
+
+// Handles WebView and Message Resizing based on the HTML page  
 - (void)webView:(WebView *)sender didFinishLoadForFrame:(WebFrame *)webFrame {
   NSRect contentRect = [[[webFrame frameView] documentView] frame];
   NSRect windowFrame = NSMakeRect(self.window.frame.origin.x, self.window.frame.origin.y,
@@ -83,8 +83,6 @@
   
   sender.frame = NSMakeRect(0, 0, contentRect.size.width, contentRect.size.height);
 }
-///
-/// Code Testing Above
 
 - (void)dealloc {
   [_progress removeObserver:self forKeyPath:@"fractionCompleted"];
@@ -99,10 +97,32 @@
       NSProgress *progress = object;
       if (progress.fractionCompleted != 0.0) {
         self.hashingIndicator.indeterminate = NO;
+        self.foundFileCountLabel = nil;
       }
       self.hashingIndicator.doubleValue = progress.fractionCompleted;
     });
+  } else if ([keyPath isEqualToString:@"self.event.fileBundleHash"]) {
+    // Testing Output. Remove before publishing
+    NSLog(@"bundle hash changed: %@", self.event.fileBundleHash);
+    NSString *js = [NSString stringWithFormat:@"bundleHashChanged('%@');", self.event.fileBundleHash];
+    dispatch_async(dispatch_get_main_queue(), ^{
+      [self.webView.windowScriptObject evaluateWebScript:js];
+    });
   }
+}
+
+- (NSString *)foundFileCountLabel {
+  return nil;
+}
+
+// Handles string update when Bundle Hash is in progress
+- (void)setFoundFileCountLabel:(NSString *)foundFileCountLabel {
+  // Testing Output. Remove before publishing
+  NSLog(@"%@", foundFileCountLabel);
+  NSString *js = [NSString stringWithFormat:@"fileCountUpdateString('%@');", foundFileCountLabel];
+  dispatch_async(dispatch_get_main_queue(), ^{
+    [self.webView.windowScriptObject evaluateWebScript:js];
+  });
 }
 
 - (void)loadWindow {
@@ -122,13 +142,13 @@
   if (!self.event.needsBundleHash) {
     [self.bundleHashLabel removeFromSuperview];
     [self.hashingIndicator removeFromSuperview];
-    [self.foundFileCountLabel removeFromSuperview];
+    self.foundFileCountLabel = nil;
   } else {
     self.openEventButton.enabled = NO;
     self.hashingIndicator.indeterminate = YES;
     [self.hashingIndicator startAnimation:self];
     self.bundleHashLabel.hidden = YES;
-    self.foundFileCountLabel.stringValue = @"";
+    self.foundFileCountLabel = @"";
   }
   
   if (!self.event.fileBundleName) {
@@ -138,6 +158,8 @@
 
 - (IBAction)showWindow:(id)sender {
   [(SNTMessageWindow *)self.window fadeIn:sender];
+  [self addObserver:self forKeyPath:@"self.event.fileBundleHash" options:0 context:NULL];
+  
 }
 
 - (void)closeWindow:(id)sender {
@@ -205,6 +227,7 @@
                                customMessage:self.customMessage];
 }
 
+// Loads local html file to be the WebView in the MessageWindow
 - (NSURLRequest *)localHTMLForSanta {
   NSString *resources = [[NSBundle mainBundle] resourcePath];
   NSString *htmlPath = [resources stringByAppendingPathComponent:@"santa.html"];
@@ -212,22 +235,23 @@
   return URL;
 }
 
+// Allows Javascript to only call the methods below
 + (BOOL)isSelectorExcludedFromWebScript:(SEL)selector {
   if (selector == @selector(santaData)
       || selector == @selector(showCertInfo)
       || selector == @selector(acceptFunction)
-      || selector == @selector(ignoreFunction:)) {
+      || selector == @selector(ignoreFunction:)){
     return NO;
   }
   return YES;
 }
 
+// Data that is passed from Objective-C code to Javascript for parsing
 - (NSString *)santaData {
   NSMutableDictionary *dataSet = [[NSMutableDictionary alloc] init];
   if (self.attributedCustomMessage){
     [dataSet setValue:self.attributedCustomMessage forKey:@"message"];
   }
-  
   if (self.event.fileBundleName){
     [dataSet setValue:self.event.fileBundleName forKey:@"application"];
   }
@@ -263,11 +287,12 @@
   return json;
 }
 
+// Allows links in WebView to open in default Web browser instead of within the WebView
 - (void)webView:(WebView *)webView
 decidePolicyForNavigationAction:(NSDictionary *)actionInformation
-                        request:(NSURLRequest *)request
-                          frame:(WebFrame *)frame
-               decisionListener:(id<WebPolicyDecisionListener>)listener {
+        request:(NSURLRequest *)request
+          frame:(WebFrame *)frame
+decisionListener:(id<WebPolicyDecisionListener>)listener {
   if ([request.URL.path isEqualToString:[[[self localHTMLForSanta] URL] absoluteString]]) {
     [listener use];
   } else {
@@ -276,6 +301,7 @@ decidePolicyForNavigationAction:(NSDictionary *)actionInformation
   }
 }
 
+// Handles detection of notification silencing from the WebView to Santa
 - (void)ignoreFunction:(BOOL)ignoreChecked{
   if (ignoreChecked == TRUE) {
     _silenceFutureNotifications = TRUE;
@@ -284,6 +310,7 @@ decidePolicyForNavigationAction:(NSDictionary *)actionInformation
     [self closeWindow:self];
   }
 }
+
 - (void)acceptFunction{
   [self openEventDetails:self];
 }

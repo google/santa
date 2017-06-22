@@ -51,7 +51,7 @@
 ///
 /// Is displayed if calculating the bundle hash is taking a bit.
 ///
-@property(weak) IBOutlet NSTextField *foundFileCountLabel;
+@property(copy, nonatomic) NSString *foundFileCountLabel;
 
 ///
 ///  Reference to the "Open Event" button in the XIB. Used to either remove the button
