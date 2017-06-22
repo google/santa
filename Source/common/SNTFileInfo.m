@@ -63,12 +63,11 @@ extern NSString *const NSURLQuarantinePropertiesKey WEAK_IMPORT_ATTRIBUTE;
   self = [super init];
   if (self) {
     _path = path;
-    if (_path.length == 0) {
+    if (!_path.length) {
       if (error) {
-        NSString *errStr = @"Unable to resolve empty path";
-        if (path) errStr = [@"Unable to resolve path: " stringByAppendingString:path];
+        NSString *errStr = @"Unable to use empty path";
         *error = [NSError errorWithDomain:@"com.google.santa.fileinfo"
-                                     code:260
+                                     code:270
                                  userInfo:@{NSLocalizedDescriptionKey : errStr}];
       }
       return nil;
@@ -115,7 +114,18 @@ extern NSString *const NSURLQuarantinePropertiesKey WEAK_IMPORT_ATTRIBUTE;
 
 - (instancetype)initWithPath:(NSString *)path error:(NSError **)error {
   NSBundle *bndl;
-  self = [self initWithResolvedPath:[self resolvePath:path bundle:&bndl] error:error];
+  NSString *resolvedPath = [self resolvePath:path bundle:&bndl];
+  if (!resolvedPath.length) {
+    if (error) {
+      NSString *errStr = @"Unable to resolve empty path";
+      if (path) errStr = [@"Unable to resolve path: " stringByAppendingString:path];
+      *error = [NSError errorWithDomain:@"com.google.santa.fileinfo"
+                                   code:260
+                               userInfo:@{NSLocalizedDescriptionKey : errStr}];
+    }
+    return nil;
+  }
+  self = [self initWithResolvedPath:resolvedPath error:error];
   if (self && bndl) _bundleRef = bndl;
   return self;
 }
