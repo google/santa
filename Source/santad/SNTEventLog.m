@@ -226,7 +226,20 @@
                         diskProperties[@"DADeviceModel"] ?: @""];
   model = [model stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
 
-  LOGI(@"action=DISKAPPEAR|mount=%@|volume=%@|bsdname=%@|fs=%@|model=%@|serial=%@|bus=%@|dmgpath=%@",
+  double appearance = [diskProperties[@"DAAppearanceTime"] doubleValue];
+  double now = [NSDate date].timeIntervalSinceReferenceDate;
+
+  NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];
+  dateFormatter.dateFormat = @"yyyy-MM-dd'T'HH:mm:ss.SSS'Z'";
+  dateFormatter.timeZone = [NSTimeZone timeZoneWithName:@"UTC"];
+  NSString *appearanceDateString =
+      [dateFormatter stringFromDate:[NSDate dateWithTimeIntervalSinceReferenceDate:appearance]];
+
+  NSString *log =
+      @"action=DISKAPPEAR|%@"
+      @"mount=%@|volume=%@|bsdname=%@|fs=%@|model=%@|serial=%@|bus=%@|dmgpath=%@|appearance=%@";
+  LOGI(log,
+       (appearance && (int)appearance != (int)now) ? @"reason=NOTRUNNING|" : @"",
        [diskProperties[@"DAVolumePath"] path] ?: @"",
        diskProperties[@"DAVolumeName"] ?: @"",
        diskProperties[@"DAMediaBSDName"] ?: @"",
@@ -234,7 +247,8 @@
        model ?: @"",
        serial,
        diskProperties[@"DADeviceProtocol"] ?: @"",
-       dmgPath);
+       dmgPath,
+       appearanceDateString);
 }
 
 - (void)logDiskDisappeared:(NSDictionary *)diskProperties {
