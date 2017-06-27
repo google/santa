@@ -39,6 +39,7 @@
   ENCODE(self.fileBundleBinaryCount, @"fileBundleBinaryCount");
   ENCODE(self.fileBundleName, @"fileBundleName");
   ENCODE(self.fileBundlePath, @"fileBundlePath");
+  ENCODE(self.fileBundleExecutableRelPath, @"fileBundleExecutableRelPath");
   ENCODE(self.fileBundleID, @"fileBundleID");
   ENCODE(self.fileBundleVersion, @"fileBundleVersion");
   ENCODE(self.fileBundleVersionString, @"fileBundleVersionString");
@@ -82,6 +83,7 @@
     _fileBundleBinaryCount = DECODE(NSNumber, @"fileBundleBinaryCount");
     _fileBundleName = DECODE(NSString, @"fileBundleName");
     _fileBundlePath = DECODE(NSString, @"fileBundlePath");
+    _fileBundleExecutableRelPath = DECODE(NSString, @"fileBundleExecutableRelPath");
     _fileBundleID = DECODE(NSString, @"fileBundleID");
     _fileBundleVersion = DECODE(NSString, @"fileBundleVersion");
     _fileBundleVersionString = DECODE(NSString, @"fileBundleVersionString");

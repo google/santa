@@ -59,6 +59,7 @@ extern NSString *const kLoggedInUsers;
 extern NSString *const kCurrentSessions;
 extern NSString *const kFileBundleID;
 extern NSString *const kFileBundlePath;
+extern NSString *const kFileBundleExecutableRelPath;
 extern NSString *const kFileBundleName;
 extern NSString *const kFileBundleVersion;
 extern NSString *const kFileBundleShortVersionString;

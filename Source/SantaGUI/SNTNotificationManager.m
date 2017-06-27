@@ -235,6 +235,7 @@ static NSString * const silencedNotificationsKey = @"SilencedNotifications";
     event.fileBundleHash = bh;
     event.fileBundleBinaryCount = @(events.count);
     event.fileBundleHashMilliseconds = ms;
+    event.fileBundleExecutableRelPath = [events.firstObject fileBundleExecutableRelPath];
     for (SNTStoredEvent *se in events) {
       se.fileBundleHash = bh;
       se.fileBundleBinaryCount = @(events.count);
