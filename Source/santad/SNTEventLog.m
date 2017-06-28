@@ -34,6 +34,8 @@
 // Caches for uid->username and gid->groupname lookups.
 @property NSCache<NSNumber *, NSString *> *userNameMap;
 @property NSCache<NSNumber *, NSString *> *groupNameMap;
+
+@property NSDateFormatter *dateFormatter;
 @end
 
 @implementation SNTEventLog
@@ -49,6 +51,10 @@
     _userNameMap.countLimit = 100;
     _groupNameMap = [[NSCache alloc] init];
     _groupNameMap.countLimit = 100;
+
+    _dateFormatter = [[NSDateFormatter alloc] init];
+    _dateFormatter.dateFormat = @"yyyy-MM-dd'T'HH:mm:ss.SSS'Z'";
+    _dateFormatter.timeZone = [NSTimeZone timeZoneWithName:@"UTC"];
   }
   return self;
 }
@@ -229,16 +235,15 @@
   double appearance = [diskProperties[@"DAAppearanceTime"] doubleValue];
   double now = [NSDate date].timeIntervalSinceReferenceDate;
 
-  NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];
-  dateFormatter.dateFormat = @"yyyy-MM-dd'T'HH:mm:ss.SSS'Z'";
-  dateFormatter.timeZone = [NSTimeZone timeZoneWithName:@"UTC"];
   NSString *appearanceDateString =
-      [dateFormatter stringFromDate:[NSDate dateWithTimeIntervalSinceReferenceDate:appearance]];
+      [_dateFormatter stringFromDate:[NSDate dateWithTimeIntervalSinceReferenceDate:appearance]];
 
   NSString *log =
       @"action=DISKAPPEAR|%@"
       @"mount=%@|volume=%@|bsdname=%@|fs=%@|model=%@|serial=%@|bus=%@|dmgpath=%@|appearance=%@";
   LOGI(log,
+       // DAAppearanceTime can sometimes be 0.0.
+       // Cast up to int to compare time to the second instead of using double precision.
        (appearance && (int)appearance != (int)now) ? @"reason=NOTRUNNING|" : @"",
        [diskProperties[@"DAVolumePath"] path] ?: @"",
        diskProperties[@"DAVolumeName"] ?: @"",
