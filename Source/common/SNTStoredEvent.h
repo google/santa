@@ -70,6 +70,11 @@
 @property NSString *fileBundlePath;
 
 ///
+///  The relative path to the bundle's main executable.
+///
+@property NSString *fileBundleExecutableRelPath;
+
+///
 ///  If the executed file was part of the bundle, this is the CFBundleID.
 ///
 @property NSString *fileBundleID;

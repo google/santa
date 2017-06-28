@@ -108,6 +108,12 @@
     event.fileBundleVersion = b.bundleVersion;
     event.fileBundleVersionString = b.bundleShortVersionString;
 
+    // For most apps this should be "Contents/MacOS/AppName"
+    if (b.bundle.executablePath.length > b.bundlePath.length) {
+      event.fileBundleExecutableRelPath =
+          [b.bundle.executablePath substringFromIndex:b.bundlePath.length + 1];
+    }
+
     NSDictionary *relatedEvents = [self findRelatedBinaries:event progress:progress];
     NSString *bundleHash = [self calculateBundleHashFromSHA256Hashes:relatedEvents.allKeys
                                                             progress:progress];
@@ -227,6 +233,7 @@
       se.decision = SNTEventStateBundleBinary;
 
       se.fileBundlePath = event.fileBundlePath;
+      se.fileBundleExecutableRelPath = event.fileBundleExecutableRelPath;
       se.fileBundleID = event.fileBundleID;
       se.fileBundleName = event.fileBundleName;
       se.fileBundleVersion = event.fileBundleVersion;

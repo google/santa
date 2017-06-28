@@ -59,6 +59,7 @@ NSString *const kLoggedInUsers = @"logged_in_users";
 NSString *const kCurrentSessions = @"current_sessions";
 NSString *const kFileBundleID = @"file_bundle_id";
 NSString *const kFileBundlePath = @"file_bundle_path";
+NSString *const kFileBundleExecutableRelPath = @"file_bundle_executable_rel_path";
 NSString *const kFileBundleName = @"file_bundle_name";
 NSString *const kFileBundleVersion = @"file_bundle_version";
 NSString *const kFileBundleShortVersionString = @"file_bundle_version_string";
