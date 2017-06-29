@@ -222,16 +222,16 @@ static void reachabilityHandler(
   NSString *fileHash = message[kFCMFileHashKey];
   NSString *fileName = message[kFCMFileNameKey];
   if (fileName && fileHash) {
-    [self.ruleSyncCache setObject:[fileName copy] forKey:[fileHash copy]];
+    [self.ruleSyncCache setObject:fileName forKey:fileHash];
   }
 
+  LOGD(@"Push notification action: %@ received", action);
+
   if ([action isEqualToString:kFullSync]) {
-    LOGD(@"Push notification action: %@ received", kFullSync);
     [self fullSync];
   } else if ([action isEqualToString:kRuleSync]) {
-    LOGD(@"Push notification action: %@ received", kRuleSync);
     NSString *targetHostID = message[kFCMTargetHostIDKey];
-    if ([targetHostID.lowercaseString isEqualToString:machineID.lowercaseString]) {
+    if (targetHostID && [targetHostID caseInsensitiveCompare:machineID] == NSOrderedSame) {
       LOGD(@"Targeted rule_sync for host_id: %@", targetHostID);
       self.targetedRuleSync = YES;
       [self ruleSync];
@@ -258,8 +258,8 @@ static void reachabilityHandler(
 - (NSDictionary *)messageFromMessageData:(NSData *)messageData {
   NSError *error;
   NSDictionary *rawMessage = [NSJSONSerialization JSONObjectWithData:messageData
-                                                          options:0
-                                                            error:&error];
+                                                             options:0
+                                                               error:&error];
   if (!rawMessage) {
     LOGD(@"Unable to parse push notification message data: %@", error);
     return nil;
