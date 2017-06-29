@@ -233,18 +233,13 @@
   model = [model stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
 
   double appearance = [diskProperties[@"DAAppearanceTime"] doubleValue];
-  double now = [NSDate date].timeIntervalSinceReferenceDate;
-
   NSString *appearanceDateString =
       [_dateFormatter stringFromDate:[NSDate dateWithTimeIntervalSinceReferenceDate:appearance]];
 
   NSString *log =
-      @"action=DISKAPPEAR|%@"
-      @"mount=%@|volume=%@|bsdname=%@|fs=%@|model=%@|serial=%@|bus=%@|dmgpath=%@|appearance=%@";
+      @"action=DISKAPPEAR|mount=%@|volume=%@|bsdname=%@|fs=%@|"
+      @"model=%@|serial=%@|bus=%@|dmgpath=%@|appearance=%@";
   LOGI(log,
-       // DAAppearanceTime can sometimes be 0.0.
-       // Cast up to int to compare time to the second instead of using double precision.
-       (appearance && (int)appearance != (int)now) ? @"reason=NOTRUNNING|" : @"",
        [diskProperties[@"DAVolumePath"] path] ?: @"",
        diskProperties[@"DAVolumeName"] ?: @"",
        diskProperties[@"DAMediaBSDName"] ?: @"",
