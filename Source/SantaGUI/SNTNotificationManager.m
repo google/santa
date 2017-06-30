@@ -58,10 +58,10 @@ static NSString * const silencedNotificationsKey = @"SilencedNotifications";
 
 - (void)windowDidCloseSilenceHash:(NSString *)hash {
   if (hash) [self updateSilenceDate:[NSDate date] forHash:hash];
-
+  
   [self.pendingNotifications removeObject:self.currentWindowController];
   self.currentWindowController = nil;
-
+  
   if ([self.pendingNotifications count]) {
     self.currentWindowController = [self.pendingNotifications firstObject];
     [self.currentWindowController showWindow:self];
@@ -100,19 +100,19 @@ static NSString * const silencedNotificationsKey = @"SilencedNotifications";
   NSString *customMsg;
   switch (clientmode) {
     case SNTClientModeMonitor:
-      un.informativeText = @"Switching into Monitor mode";
-      customMsg = [[SNTConfigurator configurator] modeNotificationMonitor];
-      customMsg = [SNTBlockMessage stringFromHTML:customMsg];
-      if (customMsg.length) un.informativeText = customMsg;
-      break;
+    un.informativeText = @"Switching into Monitor mode";
+    customMsg = [[SNTConfigurator configurator] modeNotificationMonitor];
+    customMsg = [SNTBlockMessage stringFromHTML:customMsg];
+    if (customMsg.length) un.informativeText = customMsg;
+    break;
     case SNTClientModeLockdown:
-      un.informativeText = @"Switching into Lockdown mode";
-      customMsg = [[SNTConfigurator configurator] modeNotificationLockdown];
-      customMsg = [SNTBlockMessage stringFromHTML:customMsg];
-      if (customMsg.length) un.informativeText = customMsg;
-      break;
+    un.informativeText = @"Switching into Lockdown mode";
+    customMsg = [[SNTConfigurator configurator] modeNotificationLockdown];
+    customMsg = [SNTBlockMessage stringFromHTML:customMsg];
+    if (customMsg.length) un.informativeText = customMsg;
+    break;
     default:
-      return;
+    return;
   }
   [[NSUserNotificationCenter defaultUserNotificationCenter] deliverNotification:un];
 }
@@ -120,9 +120,9 @@ static NSString * const silencedNotificationsKey = @"SilencedNotifications";
 - (void)postBlockNotification:(SNTStoredEvent *)event withCustomMessage:(NSString *)message {
   // See if this binary is already in the list of pending notifications.
   NSPredicate *predicate =
-      [NSPredicate predicateWithFormat:@"event.fileSHA256==%@", event.fileSHA256];
+  [NSPredicate predicateWithFormat:@"event.fileSHA256==%@", event.fileSHA256];
   if ([[self.pendingNotifications filteredArrayUsingPredicate:predicate] count]) return;
-
+  
   // See if this binary is silenced.
   NSUserDefaults *ud = [NSUserDefaults standardUserDefaults];
   NSDate *silenceDate = [ud objectForKey:silencedNotificationsKey][event.fileSHA256];
@@ -139,20 +139,20 @@ static NSString * const silencedNotificationsKey = @"SilencedNotifications";
       return;
     }
   }
-
+  
   if (!event) {
     LOGI(@"Error: Missing event object in message received from daemon!");
     return;
   }
-
+  
   // Notifications arrive on a background thread but UI updates must happen on the main thread.
   // This includes making windows.
   dispatch_async(dispatch_get_main_queue(), ^{
     SNTMessageWindowController *pendingMsg =
-        [[SNTMessageWindowController alloc] initWithEvent:event andMessage:message];
+    [[SNTMessageWindowController alloc] initWithEvent:event andMessage:message];
     pendingMsg.delegate = self;
     [self.pendingNotifications addObject:pendingMsg];
-
+    
     // If a notification isn't currently being displayed, display the incoming one.
     if (!self.currentWindowController) {
       self.currentWindowController = pendingMsg;
@@ -218,10 +218,10 @@ static NSString * const silencedNotificationsKey = @"SilencedNotifications";
     [self updateBlockNotification:event withBundleHash:nil];
     return;
   }
-
+  
   // Let all future requests flow, until the connection is terminated and we go back to waiting.
   dispatch_semaphore_signal(self.bundleServiceSema);
-
+  
   // NSProgress becomes current for this thread. XPC messages vend a child node to the receiver.
   [self.currentWindowController.progress becomeCurrentWithPendingUnitCount:100];
 
@@ -263,7 +263,6 @@ static NSString * const silencedNotificationsKey = @"SilencedNotifications";
         [self.currentWindowController.bundleHashTitle removeFromSuperview];
       }
       self.currentWindowController.event.fileBundleHash = bundleHash;
-//      [self.currentWindowController.foundFileCountLabel removeFromSuperview];
       [self.currentWindowController.hashingIndicator setHidden:YES];
       [self.currentWindowController.openEventButton setEnabled:YES];
     }

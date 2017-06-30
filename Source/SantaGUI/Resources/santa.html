@@ -1,34 +1,29 @@
 <!DOCTYPE html>
-<script src="javascript.js"></script>
-<link rel="stylesheet" href="style.css">
-<div id="window">
-  <div>
-    <div class="unselectable" id="santa-title">Santa</div>
-    <div id="santa-dialog"></div>
-  </div>
-
-  <div id="santa-data-info">
-  	<table id="santa-data-table" cellspacing="0">
-      <tbody>
-      </tbody>
-  	</table>
-  </div>
-
-  <div class="santa-buttons">
-  	<form class="spacer" action="" method="post">
-  		<input type="checkbox" id="ignore-checkbox">
-      <span class="unselectable" id="ignore-checkbox">Silence this notification for 24 hours<br></span>
-  		<input type="button" class="osx" id="next-steps-button" onClick="window.AppDelegate.acceptFunction();" value="Open in Upvote...">
-  		<input type="button" class="osx" id="ignore-button" onClick="window.AppDelegate.ignoreFunction_(checkIgnore());" value="Ignore">
-  	</form>
-  </div>
-
-  <div id="google-colors">
-    <div id="google-color-structure">
-      <div id="google-blue"></div>
-      <div id="google-red"></div>
-      <div id="google-yellow"></div>
-      <div id="google-green"></div>
+<html>
+  <head>
+    <script src="javascript.js"></script>
+    <link rel="stylesheet" href="style.css">
+  </head>
+  
+  <body id="window">
+    <div>
+      <div class="unselectable" id="santa-title">Santa</div>
+      <div id="santa-dialog"></div>
     </div>
-  </div>
-</div>
+    
+    <div id="santa-data-info">
+      <table id="santa-data-table" cellspacing="0">
+        <tbody>
+        </tbody>
+      </table>
+    </div>
+    
+    <div class="santa-buttons">
+      <input type="checkbox" id="ignore-checkbox">
+        <span class="unselectable" id="ignore-checkbox">Silence this notification for 24 hours<br></span>
+        <button type="button" class="osx" id="next-steps-button" onClick="window.AppDelegate.acceptFunction();">Next Steps...</button>
+        <button type="button" class="osx" id="ignore-button" onClick="window.AppDelegate.ignoreFunction_(checkIgnore());">Ignore</button>
+        </div>
+    
+  </body>
+</html>

@@ -24,9 +24,11 @@
 ///
 ///  Controller for a single message window.
 ///
-@interface SNTMessageWindowController : NSWindowController <NSApplicationDelegate, WebPolicyDelegate, WebFrameLoadDelegate>
-@property (weak) IBOutlet NSWindow *MainWindow;
-@property (weak) IBOutlet WebView *webView;
+@interface SNTMessageWindowController : NSWindowController<NSApplicationDelegate,
+                                                           WebPolicyDelegate,
+                                                           WebFrameLoadDelegate>
+@property(weak) IBOutlet NSWindow *mainWindow;
+@property(weak) IBOutlet WebView *webView;
 
 
 - (instancetype)initWithEvent:(SNTStoredEvent *)event andMessage:(NSString *)message;

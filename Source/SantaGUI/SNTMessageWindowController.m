@@ -65,19 +65,19 @@
   self.window.movableByWindowBackground = YES;
   self.webView.shouldCloseWithWindow = YES;
   
-  //turn off scrollbars in the frame
+  // Turn off scrollbars in the frame
   [[[self.webView mainFrame] frameView] setAllowsScrolling:NO];
   
-  //load the page
+  // Load the page
   [self.webView.windowScriptObject setValue:self forKey:@"AppDelegate"];
-  [self.MainWindow.contentView addSubview: _webView];
+  [self.mainWindow.contentView addSubview:_webView];
   [self.webView.mainFrame loadRequest:[self localHTMLForSanta]];
   self.webView.policyDelegate = self;
   self.webView.frameLoadDelegate = self;
   [NSApp activateIgnoringOtherApps:YES];
 }
 
-// Handles WebView and Message Resizing based on the HTML page  
+// Handles WebView and Message Resizing based on the HTML page
 - (void)webView:(WebView *)sender didFinishLoadForFrame:(WebFrame *)webFrame {
   NSRect contentRect = [[[webFrame frameView] documentView] frame];
   NSRect windowFrame = NSMakeRect(self.window.frame.origin.x, self.window.frame.origin.y,
@@ -139,7 +139,7 @@
       [self.openEventButton setTitle:eventDetailText];
     }
   }
-
+  
   if (!self.event.needsBundleHash) {
     [self.bundleHashLabel removeFromSuperview];
     [self.hashingIndicator removeFromSuperview];
@@ -160,7 +160,6 @@
 - (IBAction)showWindow:(id)sender {
   [(SNTMessageWindow *)self.window fadeIn:sender];
   [self addObserver:self forKeyPath:@"self.event.fileBundleHash" options:0 context:NULL];
-  
 }
 
 - (void)closeWindow:(id)sender {
@@ -170,7 +169,6 @@
 
 - (void)windowWillClose:(NSNotification *)notification {
   if (!self.delegate) return;
-  
   if (self.silenceFutureNotifications) {
     [self.delegate windowDidCloseSilenceHash:self.event.fileSHA256];
   } else {
@@ -241,7 +239,7 @@
   if (selector == @selector(santaData)
       || selector == @selector(showCertInfo)
       || selector == @selector(acceptFunction)
-      || selector == @selector(ignoreFunction:)){
+      || selector == @selector(ignoreFunction:)) {
     return NO;
   }
   return YES;
@@ -250,37 +248,35 @@
 // Data that is passed from Objective-C code to Javascript for parsing
 - (NSString *)santaData {
   NSMutableDictionary *dataSet = [[NSMutableDictionary alloc] init];
-  if (self.attributedCustomMessage){
-    [dataSet setValue:self.attributedCustomMessage forKey:@"message"];
+  if (self.attributedCustomMessage) {
+    dataSet[@"message"] = self.attributedCustomMessage;
   }
-  if (self.event.fileBundleName){
-    [dataSet setValue:self.event.fileBundleName forKey:@"application"];
+  if (self.event.fileBundleName) {
+    dataSet[@"application"] = self.event.fileBundleName;
   }
-  if (self.event.filePath){
-    [dataSet setValue:self.event.filePath forKey:@"path"];
+  if (self.event.filePath) {
+    dataSet[@"path"] = self.event.filePath;
   }
-  if (self.event.filePath.lastPathComponent){
-    [dataSet setValue:self.event.filePath.lastPathComponent forKey:@"filename"];
+  if (self.event.filePath.lastPathComponent) {
+    dataSet[@"filename"] = self.event.filePath.lastPathComponent;
   }
   if (self.publisherInfo) {
-    [dataSet setValue:self.publisherInfo forKey:@"publisher"];
-  } else {
-    [dataSet setValue:@"Not code-signed" forKey:@"publisher"];
+    dataSet[@"publisher"] = self.publisherInfo;
   }
   if (self.event.fileSHA256) {
-    [dataSet setValue:self.event.fileSHA256 forKey:@"identifier"];
+    dataSet[@"identifier"] = self.event.fileSHA256;
   }
-  if (self.event.fileBundleHash) {
-    [dataSet setValue:self.event.fileBundleHash forKey:@"bundle identifier"];
+  if (self.event.needsBundleHash) {
+    dataSet[@"bundle identifier"] = @"";
   }
-  if (self.event.parentName){
-    [dataSet setValue:self.event.parentName forKey:@"parent"];
+  if (self.event.parentName) {
+    dataSet[@"parent"] = self.event.parentName;
   }
-  if (self.event.ppid){
-    [dataSet setValue:self.event.ppid forKey:@"pid"];
+  if (self.event.ppid) {
+    dataSet[@"ppid"] = self.event.ppid;
   }
-  if (self.event.executingUser){
-    [dataSet setValue:self.event.executingUser forKey:@"user"];
+  if (self.event.executingUser) {
+    dataSet[@"user"] = self.event.executingUser;
   }
   
   NSData *dataTransform = [NSJSONSerialization dataWithJSONObject:dataSet options:0 error:NULL];
@@ -303,13 +299,9 @@ decisionListener:(id<WebPolicyDecisionListener>)listener {
 }
 
 // Handles detection of notification silencing from the WebView to Santa
-- (void)ignoreFunction:(BOOL)ignoreChecked{
-  if (ignoreChecked == TRUE) {
-    _silenceFutureNotifications = TRUE;
-    [self closeWindow:self];
-  } else {
-    [self closeWindow:self];
-  }
+- (void)ignoreFunction:(BOOL)ignoreChecked {
+  _silenceFutureNotifications = ignoreChecked;
+  [self closeWindow:self];
 }
 
 - (void)acceptFunction{

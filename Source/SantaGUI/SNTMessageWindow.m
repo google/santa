@@ -15,7 +15,7 @@
 #import "SNTMessageWindow.h"
 
 @interface SNTMessageWindow()
-@property (assign) NSPoint initialLocation;
+@property(assign) NSPoint initialLocation;
 @end
 
 @implementation SNTMessageWindow
@@ -58,11 +58,11 @@
 - (void)sendEvent:(NSEvent *)event {
   switch (event.type) {
     case kCGEventLeftMouseDown:
-      [self mouseDown:event];
+    [self mouseDown:event];
     case kCGEventLeftMouseDragged:
-      [self mouseDragged:event];
+    [self mouseDragged:event];
     default:
-      [super sendEvent:event];
+    [super sendEvent:event];
   }
 }
 
@@ -74,10 +74,9 @@
   }
 }
 
-
 - (void)mouseDragged:(NSEvent *)theEvent {
   if (NSEqualPoints(self.initialLocation, NSZeroPoint)) return;
-  NSPoint currentLocation = [NSEvent mouseLocation];;
+  NSPoint currentLocation = [NSEvent mouseLocation];
   NSPoint newOrigin = NSMakePoint(currentLocation.x - self.initialLocation.x,
                                   currentLocation.y - self.initialLocation.y);
   
@@ -88,7 +87,7 @@
     newOrigin.y = screenFrame.origin.y + (screenFrame.size.height - windowFrame.size.height);
   }
   
-  //go ahead and move the window to the new location
+  // Go ahead and move the window to the new location
   [self setFrameOrigin:newOrigin];
 }
 
