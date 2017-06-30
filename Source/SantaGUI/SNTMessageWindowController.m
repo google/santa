@@ -130,7 +130,7 @@
   [super loadWindow];
   [self.window setLevel:NSPopUpMenuWindowLevel];
   [self.window setMovableByWindowBackground:YES];
-  
+
   if (![[SNTConfigurator configurator] eventDetailURL]) {
     [self.openEventButton removeFromSuperview];
   } else {
@@ -139,7 +139,7 @@
       [self.openEventButton setTitle:eventDetailText];
     }
   }
-  
+
   if (!self.event.needsBundleHash) {
     [self.bundleHashLabel removeFromSuperview];
     [self.hashingIndicator removeFromSuperview];
@@ -151,7 +151,7 @@
     self.bundleHashLabel.hidden = YES;
     self.foundFileCountLabel = @"";
   }
-  
+
   if (!self.event.fileBundleName) {
     [self.applicationNameLabel removeFromSuperview];
   }
@@ -182,7 +182,7 @@
   for (MOLCertificate *cert in self.event.signingChain) {
     [certArray addObject:(id)cert.certRef];
   }
-  
+
   [[[SFCertificatePanel alloc] init] beginSheetForWindow:self.window
                                            modalDelegate:nil
                                           didEndSelector:nil
@@ -209,7 +209,7 @@
 
 - (NSString *)publisherInfo {
   MOLCertificate *leafCert = [self.event.signingChain firstObject];
-  
+
   if (leafCert.commonName && leafCert.orgName) {
     return [NSString stringWithFormat:@"%@ - %@", leafCert.orgName, leafCert.commonName];
   } else if (leafCert.commonName) {

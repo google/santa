@@ -43,7 +43,7 @@
 
 - (IBAction)fadeOut:(id)sender {
   __weak __typeof(self) weakSelf = self;
-  
+
   [NSAnimationContext beginGrouping];
   [[NSAnimationContext currentContext] setDuration:0.15f];
   [[NSAnimationContext currentContext] setCompletionHandler:^{

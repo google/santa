@@ -58,10 +58,10 @@ static NSString * const silencedNotificationsKey = @"SilencedNotifications";
 
 - (void)windowDidCloseSilenceHash:(NSString *)hash {
   if (hash) [self updateSilenceDate:[NSDate date] forHash:hash];
-  
+
   [self.pendingNotifications removeObject:self.currentWindowController];
   self.currentWindowController = nil;
-  
+
   if ([self.pendingNotifications count]) {
     self.currentWindowController = [self.pendingNotifications firstObject];
     [self.currentWindowController showWindow:self];
@@ -122,7 +122,7 @@ static NSString * const silencedNotificationsKey = @"SilencedNotifications";
   NSPredicate *predicate =
   [NSPredicate predicateWithFormat:@"event.fileSHA256==%@", event.fileSHA256];
   if ([[self.pendingNotifications filteredArrayUsingPredicate:predicate] count]) return;
-  
+
   // See if this binary is silenced.
   NSUserDefaults *ud = [NSUserDefaults standardUserDefaults];
   NSDate *silenceDate = [ud objectForKey:silencedNotificationsKey][event.fileSHA256];
@@ -139,12 +139,12 @@ static NSString * const silencedNotificationsKey = @"SilencedNotifications";
       return;
     }
   }
-  
+
   if (!event) {
     LOGI(@"Error: Missing event object in message received from daemon!");
     return;
   }
-  
+
   // Notifications arrive on a background thread but UI updates must happen on the main thread.
   // This includes making windows.
   dispatch_async(dispatch_get_main_queue(), ^{
@@ -152,7 +152,7 @@ static NSString * const silencedNotificationsKey = @"SilencedNotifications";
     [[SNTMessageWindowController alloc] initWithEvent:event andMessage:message];
     pendingMsg.delegate = self;
     [self.pendingNotifications addObject:pendingMsg];
-    
+
     // If a notification isn't currently being displayed, display the incoming one.
     if (!self.currentWindowController) {
       self.currentWindowController = pendingMsg;
@@ -218,10 +218,10 @@ static NSString * const silencedNotificationsKey = @"SilencedNotifications";
     [self updateBlockNotification:event withBundleHash:nil];
     return;
   }
-  
+
   // Let all future requests flow, until the connection is terminated and we go back to waiting.
   dispatch_semaphore_signal(self.bundleServiceSema);
-  
+
   // NSProgress becomes current for this thread. XPC messages vend a child node to the receiver.
   [self.currentWindowController.progress becomeCurrentWithPendingUnitCount:100];
 
