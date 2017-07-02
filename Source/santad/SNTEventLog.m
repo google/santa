@@ -34,6 +34,8 @@
 // Caches for uid->username and gid->groupname lookups.
 @property NSCache<NSNumber *, NSString *> *userNameMap;
 @property NSCache<NSNumber *, NSString *> *groupNameMap;
+
+@property NSDateFormatter *dateFormatter;
 @end
 
 @implementation SNTEventLog
@@ -49,6 +51,10 @@
     _userNameMap.countLimit = 100;
     _groupNameMap = [[NSCache alloc] init];
     _groupNameMap.countLimit = 100;
+
+    _dateFormatter = [[NSDateFormatter alloc] init];
+    _dateFormatter.dateFormat = @"yyyy-MM-dd'T'HH:mm:ss.SSS'Z'";
+    _dateFormatter.timeZone = [NSTimeZone timeZoneWithName:@"UTC"];
   }
   return self;
 }
@@ -226,7 +232,14 @@
                         diskProperties[@"DADeviceModel"] ?: @""];
   model = [model stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
 
-  LOGI(@"action=DISKAPPEAR|mount=%@|volume=%@|bsdname=%@|fs=%@|model=%@|serial=%@|bus=%@|dmgpath=%@",
+  double appearance = [diskProperties[@"DAAppearanceTime"] doubleValue];
+  NSString *appearanceDateString =
+      [_dateFormatter stringFromDate:[NSDate dateWithTimeIntervalSinceReferenceDate:appearance]];
+
+  NSString *log =
+      @"action=DISKAPPEAR|mount=%@|volume=%@|bsdname=%@|fs=%@|"
+      @"model=%@|serial=%@|bus=%@|dmgpath=%@|appearance=%@";
+  LOGI(log,
        [diskProperties[@"DAVolumePath"] path] ?: @"",
        diskProperties[@"DAVolumeName"] ?: @"",
        diskProperties[@"DAMediaBSDName"] ?: @"",
@@ -234,7 +247,8 @@
        model ?: @"",
        serial,
        diskProperties[@"DADeviceProtocol"] ?: @"",
-       dmgPath);
+       dmgPath,
+       appearanceDateString);
 }
 
 - (void)logDiskDisappeared:(NSDictionary *)diskProperties {
