@@ -34,6 +34,11 @@
 #import "SNTXPCControlInterface.h"
 #import "SNTXPCSyncdInterface.h"
 
+static NSString *const kFCMActionKey = @"action";
+static NSString *const kFCMFileHashKey = @"file_hash";
+static NSString *const kFCMFileNameKey = @"file_name";
+static NSString *const kFCMTargetHostIDKey = @"target_host_id";
+
 @interface SNTCommandSyncManager () {
   SCNetworkReachabilityRef _reachability;
 }
@@ -199,48 +204,40 @@ static void reachabilityHandler(
 }
 
 - (void)processFCMMessage:(NSDictionary *)FCMmessage withMachineID:(NSString *)machineID {
-  NSData *messageData = [self extractMessageDataFrom:FCMmessage];
+  NSDictionary *message = [self messageFromMessageData:[self messageDataFromFCMmessage:FCMmessage]];
 
-  if (!messageData) {
+  if (!message) {
     LOGD(@"Push notification message is not in the expected format...dropping message");
     return;
   }
 
-  NSError *error;
-  NSDictionary *actionMessage = [NSJSONSerialization JSONObjectWithData:messageData
-                                                                options:0
-                                                                  error:&error];
-  if (!actionMessage) {
-    LOGD(@"Unable to parse push notification message value: %@", error);
+  NSString *action = message[kFCMActionKey];
+  if (!action) {
+    LOGD(@"Push notification message contains no action");
     return;
   }
 
   // Store the file name and hash in a cache. When the rule is actually added, use the cache
   // to build a user notification.
-  NSString *fileHash = actionMessage[@"file_hash"];
-  NSString *fileName = actionMessage[@"file_name"];
-  if (fileName.length && fileHash.length) {
+  NSString *fileHash = message[kFCMFileHashKey];
+  NSString *fileName = message[kFCMFileNameKey];
+  if (fileName && fileHash) {
     [self.ruleSyncCache setObject:fileName forKey:fileHash];
   }
 
-  NSString *action = actionMessage[@"action"];
-  if (action) {
-    LOGD(@"Push notification action: %@ received", action);
-  } else {
-    LOGD(@"Push notification message contains no action");
-  }
+  LOGD(@"Push notification action: %@ received", action);
 
   if ([action isEqualToString:kFullSync]) {
     [self fullSync];
   } else if ([action isEqualToString:kRuleSync]) {
-    NSString *targetMachineID = actionMessage[@"target_host_id"];
-    if (![targetMachineID isKindOfClass:[NSNull class]] &&
-        [targetMachineID.lowercaseString isEqualToString:machineID.lowercaseString]) {
+    NSString *targetHostID = message[kFCMTargetHostIDKey];
+    if (targetHostID && [targetHostID caseInsensitiveCompare:machineID] == NSOrderedSame) {
+      LOGD(@"Targeted rule_sync for host_id: %@", targetHostID);
       self.targetedRuleSync = YES;
       [self ruleSync];
     } else {
       uint32_t delaySeconds = arc4random_uniform((uint32_t)self.FCMGlobalRuleSyncDeadline);
-      LOGD(@"Staggering rule download: %u second delay", delaySeconds);
+      LOGD(@"Global rule_sync, staggering: %u second delay", delaySeconds);
       [self ruleSyncSecondsFromNow:delaySeconds];
     }
   } else if ([action isEqualToString:kConfigSync]) {
@@ -252,10 +249,31 @@ static void reachabilityHandler(
   }
 }
 
-- (NSData *)extractMessageDataFrom:(NSDictionary *)FCMmessage {
+- (NSData *)messageDataFromFCMmessage:(NSDictionary *)FCMmessage {
   if (![FCMmessage[@"data"] isKindOfClass:[NSDictionary class]]) return nil;
   if (![FCMmessage[@"data"][@"blob"] isKindOfClass:[NSString class]]) return nil;
   return [FCMmessage[@"data"][@"blob"] dataUsingEncoding:NSUTF8StringEncoding];
+}
+
+- (NSDictionary *)messageFromMessageData:(NSData *)messageData {
+  NSError *error;
+  NSDictionary *rawMessage = [NSJSONSerialization JSONObjectWithData:messageData
+                                                             options:0
+                                                               error:&error];
+  if (!rawMessage) {
+    LOGD(@"Unable to parse push notification message data: %@", error);
+    return nil;
+  }
+
+  // Create a new message dropping unexpected values
+  NSArray *allowedKeys = @[ kFCMActionKey, kFCMFileHashKey, kFCMFileNameKey, kFCMTargetHostIDKey ];
+  NSMutableDictionary *message = [NSMutableDictionary dictionaryWithCapacity:allowedKeys.count];
+  for (NSString *key in allowedKeys) {
+    if ([rawMessage[key] isKindOfClass:[NSString class]] && [rawMessage[key] length]) {
+      message[key] = rawMessage[key];
+    }
+  }
+  return message.count ? [message copy] : nil;
 }
 
 #pragma mark sync timer control
