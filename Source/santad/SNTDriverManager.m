@@ -27,44 +27,28 @@
 
 @implementation SNTDriverManager
 
-static const int MAX_DELAY = 15;
-
 #pragma mark init/dealloc
 
 - (instancetype)init {
   self = [super init];
   if (self) {
-    kern_return_t kr;
-    io_service_t serviceObject;
-    CFDictionaryRef classToMatch;
-
-    if (!(classToMatch = IOServiceMatching(USERCLIENT_CLASS))) {
-      LOGD(@"Failed to create matching dictionary");
+    CFDictionaryRef classToMatch = IOServiceMatching(USERCLIENT_CLASS);
+    if (!classToMatch) {
+      LOGE(@"Failed to create matching dictionary");
       return nil;
     }
 
     // Attempt to load driver. It may already be running, so ignore any return value.
     KextManagerLoadKextWithIdentifier(CFSTR(USERCLIENT_ID), NULL);
 
-    // Locate driver. Wait for it if necessary.
-    int delay = 1;
-    do {
-      CFRetain(classToMatch);  // this ref is released by IOServiceGetMatchingService
-      serviceObject = IOServiceGetMatchingService(kIOMasterPortDefault, classToMatch);
-
-      if (!serviceObject) {
-        LOGD(@"Waiting for Santa driver to become available");
-        sleep(delay);
-        if (delay < MAX_DELAY) delay *= 2;
-      }
-    } while (!serviceObject);
-    CFRelease(classToMatch);
+    // Wait for the driver to appear
+    io_service_t service = [self waitForDriver:classToMatch];
 
     // This calls `initWithTask`, `attach` and `start` in `SantaDriverClient`
-    kr = IOServiceOpen(serviceObject, mach_task_self(), 0, &_connection);
-    IOObjectRelease(serviceObject);
+    kern_return_t kr = IOServiceOpen(service, mach_task_self(), 0, &_connection);
+    IOObjectRelease(service);
     if (kr != kIOReturnSuccess) {
-      LOGD(@"Failed to open Santa driver service");
+      LOGE(@"Failed to open santa-driver service");
       return nil;
     }
 
@@ -72,10 +56,10 @@ static const int MAX_DELAY = 15;
     kr = IOConnectCallMethod(_connection, kSantaUserClientOpen, 0, 0, 0, 0, 0, 0, 0, 0);
 
     if (kr == kIOReturnExclusiveAccess) {
-      LOGD(@"A client is already connected");
+      LOGW(@"A client is already connected");
       return nil;
     } else if (kr != kIOReturnSuccess) {
-      LOGD(@"An error occurred while opening the connection");
+      LOGE(@"An error occurred while opening the connection");
       return nil;
     }
   }
@@ -84,6 +68,61 @@ static const int MAX_DELAY = 15;
 
 - (void)dealloc {
   IOServiceClose(_connection);
+}
+
+#pragma mark Driver Waiting
+
+// Helper function used with IOServiceAddMatchingNotification which expects
+// a DriverAppearedBlock to be passed as the 'reference' argument. The block
+// will be called for each object iterated over and if the block wants to keep
+// the object, it should call IOObjectRetain().
+typedef void (^DriverAppearedBlock)(io_object_t object);
+static void driverAppearedHandler(void *info, io_iterator_t iterator) {
+  DriverAppearedBlock block = (__bridge DriverAppearedBlock)info;
+  io_object_t object = 0;
+  while ((object = IOIteratorNext(iterator))) {
+    block(object);
+    IOObjectRelease(object);
+  }
+}
+
+// Wait for the driver to
+- (io_service_t)waitForDriver:(CFDictionaryRef CF_RELEASES_ARGUMENT)matchingDict {
+  IONotificationPortRef notificationPort = IONotificationPortCreate(kIOMasterPortDefault);
+  CFRunLoopAddSource([[NSRunLoop currentRunLoop] getCFRunLoop],
+                     IONotificationPortGetRunLoopSource(notificationPort),
+                     kCFRunLoopDefaultMode);
+
+  dispatch_semaphore_t sema = dispatch_semaphore_create(0);
+  io_iterator_t iterator = 0;
+  __block io_service_t service = 0;
+
+  DriverAppearedBlock block = ^(io_object_t object) {
+    IOObjectRetain(object);
+    service = (io_service_t)object;
+    dispatch_semaphore_signal(sema);
+  };
+
+  LOGI(@"Waiting for Santa driver to become available");
+
+  IOServiceAddMatchingNotification(notificationPort,
+                                   kIOMatchedNotification,
+                                   matchingDict,
+                                   driverAppearedHandler,
+                                   (__bridge_retained void *)block,
+                                   &iterator);
+
+  // Call the handler once to 'empty' the iterator, arming it. If the driver is already loaded
+  // this will immediately set object and signal the semaphore.
+  driverAppearedHandler((__bridge_retained void*)block, iterator);
+
+  dispatch_semaphore_wait(sema, DISPATCH_TIME_FOREVER);
+
+  // Release the iterator to disarm the notifications.
+  IOObjectRelease(iterator);
+  IONotificationPortDestroy(notificationPort);
+
+  return service;
 }
 
 #pragma mark Incoming messages
