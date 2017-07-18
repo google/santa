@@ -139,6 +139,12 @@
       if (self.acceptedHandler) self.acceptedHandler();
     }];
     if (dispatch_semaphore_wait(sema, dispatch_time(DISPATCH_TIME_NOW, 2 * NSEC_PER_SEC))) {
+      // This is unusual - as we're not inside a block - but necessary in case the caller sets an
+      // invalidation handler that causes this instance to be released (which is a reasonable
+      // approach). If establishing a connection fails, the invalidation handler will be called
+      // and then shortly after this bit of code will run causing a crash.
+      STRONGIFY(self);
+
       // Connection was not established in a reasonable time, invalidate.
       self.currentConnection.remoteObjectInterface = nil;  // ensure clients don't try to use it.
       [self.currentConnection invalidate];
