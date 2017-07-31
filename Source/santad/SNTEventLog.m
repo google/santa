@@ -99,8 +99,10 @@
 
   // init the string with 2k capacity to avoid reallocs
   NSMutableString *outStr = [NSMutableString stringWithCapacity:2048];
-  [outStr appendFormat:@"action=%@", action];
-
+  [outStr appendFormat:@"action=%@|path=%@", action, [self sanitizeString:path]];
+  if (newpath) {
+    [outStr appendFormat:@"|newpath=%@", [self sanitizeString:newpath]];
+  }
   char ppath[PATH_MAX] = "(null)";
   proc_pidpath(message.pid, ppath, PATH_MAX);
 
@@ -108,11 +110,6 @@
                        message.pid, message.ppid, message.pname, ppath,
                        message.uid, [self nameForUID:message.uid],
                        message.gid, [self nameForGID:message.gid]];
-
-  [outStr appendFormat:@"|path=%@", [self sanitizeString:path]];
-  if (newpath) {
-    [outStr appendFormat:@"|newpath=%@", [self sanitizeString:newpath]];
-  }
   LOGI(@"%@", outStr);
 }
 
@@ -194,17 +191,11 @@
       mode = @"U"; break;
   }
 
-  [outLog appendFormat:@"|pid=%d|ppid=%d|uid=%d|user=%@|gid=%d|group=%@|mode=%@",
+  [outLog appendFormat:@"|pid=%d|ppid=%d|uid=%d|user=%@|gid=%d|group=%@|mode=%@|sha256=%@",
                        message.pid, message.ppid,
                        message.uid, [self nameForUID:message.uid],
                        message.gid, [self nameForGID:message.gid],
-                       mode];
-
-  [outLog appendFormat:@"|sha256=%@|path=%@", cd.sha256, [self sanitizeString:@(message.path)]];
-
-  if (logArgs) {
-    [self addArgsForPid:message.pid toString:outLog];
-  }
+                       mode, cd.sha256];
 
   if (cd.certSHA256) {
     [outLog appendFormat:@"|cert_sha256=%@|cert_cn=%@", cd.certSHA256,
@@ -213,6 +204,12 @@
 
   if (cd.quarantineURL) {
     [outLog appendFormat:@"|quarantine_url=%@", [self sanitizeString:cd.quarantineURL]];
+  }
+
+  [outLog appendFormat:@"|path=%@", [self sanitizeString:@(message.path)]];
+
+  if (logArgs) {
+    [self addArgsForPid:message.pid toString:outLog];
   }
 
   LOGI(@"%@", outLog);
