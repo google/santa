@@ -181,21 +181,6 @@
     [outLog appendFormat:@"|explain=%@", cd.decisionExtra];
   }
 
-  [outLog appendFormat:@"|sha256=%@|path=%@", cd.sha256, [self sanitizeString:@(message.path)]];
-
-  if (logArgs) {
-    [self addArgsForPid:message.pid toString:outLog];
-  }
-
-  if (cd.certSHA256) {
-    [outLog appendFormat:@"|cert_sha256=%@|cert_cn=%@", cd.certSHA256,
-                         [self sanitizeString:cd.certCommonName]];
-  }
-
-  if (cd.quarantineURL) {
-    [outLog appendFormat:@"|quarantine_url=%@", [self sanitizeString:cd.quarantineURL]];
-  }
-
   NSString *mode;
   switch ([[SNTConfigurator configurator] clientMode]) {
     case SNTClientModeMonitor:
@@ -206,11 +191,26 @@
       mode = @"U"; break;
   }
 
-  [outLog appendFormat:@"|pid=%d|ppid=%d|uid=%d|user=%@|gid=%d|group=%@|mode=%@",
+  [outLog appendFormat:@"|pid=%d|ppid=%d|uid=%d|user=%@|gid=%d|group=%@|mode=%@|sha256=%@",
                        message.pid, message.ppid,
                        message.uid, [self nameForUID:message.uid],
                        message.gid, [self nameForGID:message.gid],
-                       mode];
+                       mode, cd.sha256];
+
+  if (cd.certSHA256) {
+    [outLog appendFormat:@"|cert_sha256=%@|cert_cn=%@", cd.certSHA256,
+                         [self sanitizeString:cd.certCommonName]];
+  }
+
+  if (cd.quarantineURL) {
+    [outLog appendFormat:@"|quarantine_url=%@", [self sanitizeString:cd.quarantineURL]];
+  }
+
+  [outLog appendFormat:@"|path=%@", [self sanitizeString:@(message.path)]];
+
+  if (logArgs) {
+    [self addArgsForPid:message.pid toString:outLog];
+  }
 
   LOGI(@"%@", outLog);
 }
