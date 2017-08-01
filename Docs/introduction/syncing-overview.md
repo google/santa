@@ -4,12 +4,12 @@
 
 Santa can be run and configured without a sync-server. Doing so will enable an admin to configure rules with the `santactl rule` command. Using a sync-server will enable an admin to configures rules and multiple other settings from the sync-server itself. Santa was designed from the start with a sync-server in mind. This allows an admin to easily configure and sync rules across a fleet of macOS systems. This document explains the syncing process.
 
-#### Flow
+#### Flow of a full sync
 
-This is a high level overview of the syncing process end to end. For a more a more detailed account of each part, see the respective documents. The santaclt binary can be run in one of two modes, daemon and non-daemon. The non-daemon mode does one full sync and exits. This is the typical way a user will interact with Santa, mainly to force a sync. The daemon mode is used by santad to schedule regular syncs, listen for instant notifications and uploading of events.
+This is a high level overview of the syncing process end to end. For a more a more detailed account of each part, see the respective documents. The santaclt binary can be run in one of two modes, daemon and non-daemon. The non-daemon mode does one full sync and exits. This is the typical way a user will interact with Santa, mainly to force a sync. The daemon mode is used by santad to schedule full syncs, listen for push notifications and events uploads.
 
-0. When the santad process starts up one of the first things it does is to look for a SyncBaseURL key/value in the config. If one exists it will `fork()` and `exec()` `santactl sync —-daemon`. Before the forked process runs all privileged are dropped. All privileged actions are then restricted to the XPC interface made available to santactl by santad. Since this santactl process is running as a daemon it too exports an XPC interface so santad can interact with the process efficiently and securely. To ensure syncing reliability santad will restart the santactl daemon if it is killed or crashes.
-1. The santactl daemon process now schedules a full sync for 15 sec from now. The 15 sec is used to let santad settle before santactl potentially sending lot of rules to process.
+0. When the santad process starts up, it looks for a SyncBaseURL key/value in the config. If one exists it will `fork()` and `exec()` `santactl sync —-daemon`. Before the new process `exec()`, all privileged are dropped. All privileged actions are then restricted to the XPC interface made available to santactl by santad. Since this santactl process is running as a daemon it too exports an XPC interface so santad can interact with the process efficiently and securely. To ensure syncing reliability santad will restart the santactl daemon if it is killed or crashes.
+1. The santactl daemon process now schedules a full sync for 15 sec in the future. The 15 sec is used to let santad settle before santactl starts sending rules from the sync-server to process.
 2. The full sync starts. There are a number of stages to a full sync.
    1. preflight: The sync-server can set various settings for Santa.
    2. logupload (optional): The sync-server can request that the Santa logs be uploaded to an endpoint.
