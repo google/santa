@@ -1,0 +1,29 @@
+site_name: Santa
+theme: readthedocs
+
+docs_dir: Docs
+extra_css:
+- theme/Santa.css
+
+pages:
+- Introduction:
+  - Welcome to Santa: index.md
+  - Binary Whitelisting Overview: introduction/binary-whitelisting-overview.md
+  - Syncing Overview: introduction/syncing-overview.md
+- Deployment:
+  - Configuration: deployment/configuration.md
+- Development:
+  - Building: development/building.md
+- Details:
+  - santa-driver: details/santa-driver.md
+  - santad: details/santad.md
+  - santactl: details/santactl.md
+  - santa-gui: details/santa-gui.md
+  - config: details/config.md
+  - mode: details/mode.md
+  - events: details/events.md
+  - rules: details/rules.md
+  - scopes: details/scopes.md
+  - syncing: details/syncing.md
+  - ipc: details/ipc.md
+  - logs: details/logs.md
