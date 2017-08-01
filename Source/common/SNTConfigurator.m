@@ -44,7 +44,6 @@ static NSString *const kEnablePageZeroProtectionKey = @"EnablePageZeroProtection
 
 static NSString *const kMoreInfoURLKey = @"MoreInfoURL";
 static NSString *const kEventDetailURLKey = @"EventDetailURL";
-static NSString *const kEventDetailBundleURLKey = @"EventDetailBundleURL";
 static NSString *const kEventDetailTextKey = @"EventDetailText";
 static NSString *const kUnknownBlockMessage = @"UnknownBlockMessage";
 static NSString *const kBannedBlockMessage = @"BannedBlockMessage";
@@ -200,10 +199,6 @@ static NSString *const kMachineIDPlistKeyKey = @"MachineIDKey";
 
 - (NSString *)eventDetailURL {
   return self.configData[kEventDetailURLKey];
-}
-
-- (NSString *)eventDetailBundleURL {
-  return self.configData[kEventDetailBundleURLKey];
 }
 
 - (NSString *)eventDetailText {

@@ -92,20 +92,7 @@
 + (NSURL *)eventDetailURLForEvent:(SNTStoredEvent *)event {
   SNTConfigurator *config = [SNTConfigurator configurator];
 
-  NSString *formatStr, *versionStr;
-  if (config.eventDetailBundleURL.length && event.fileBundleID) {
-    formatStr = config.eventDetailBundleURL;
-    versionStr = event.fileBundleVersion;
-    if (!versionStr) versionStr = event.fileBundleVersionString;
-
-    formatStr = [formatStr stringByReplacingOccurrencesOfString:@"%bundle_id%"
-                                                     withString:event.fileBundleID];
-    formatStr = [formatStr stringByReplacingOccurrencesOfString:@"%bundle_ver%"
-                                                     withString:versionStr];
-  } else {
-    formatStr = config.eventDetailURL;
-  }
-
+  NSString *formatStr = config.eventDetailURL;
   if (!formatStr.length) return nil;
 
   if (event.fileSHA256) {
