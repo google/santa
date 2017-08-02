@@ -24,6 +24,7 @@ typedef NS_ENUM(NSInteger, SNTRuleType) {
 
   SNTRuleTypeBinary = 1,
   SNTRuleTypeCertificate = 2,
+  SNTRuleTypePackage = 3,
 };
 
 typedef NS_ENUM(NSInteger, SNTRuleState) {

@@ -94,6 +94,7 @@ NSString *const kRulePolicyRemove = @"REMOVE";
 NSString *const kRuleType = @"rule_type";
 NSString *const kRuleTypeBinary = @"BINARY";
 NSString *const kRuleTypeCertificate = @"CERTIFICATE";
+NSString *const kRuleTypePackage = @"PACKAGE";
 NSString *const kRuleCustomMsg = @"custom_msg";
 NSString *const kCursor = @"cursor";
 

@@ -115,6 +115,8 @@
     newRule.type = SNTRuleTypeBinary;
   } else if ([ruleTypeString isEqual:kRuleTypeCertificate]) {
     newRule.type = SNTRuleTypeCertificate;
+  } else if ([ruleTypeString isEqual:kRuleTypePackage]) {
+    newRule.type = SNTRuleTypePackage;
   } else {
     return nil;
   }

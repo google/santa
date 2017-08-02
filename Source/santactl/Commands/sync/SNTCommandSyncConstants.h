@@ -94,6 +94,7 @@ extern NSString *const kRulePolicyRemove;
 extern NSString *const kRuleType;
 extern NSString *const kRuleTypeBinary;
 extern NSString *const kRuleTypeCertificate;
+extern NSString *const kRuleTypePackage;
 extern NSString *const kRuleCustomMsg;
 extern NSString *const kCursor;
 
