@@ -102,6 +102,11 @@
 - (void)hashBundleBinariesForEvent:(SNTStoredEvent *)event reply:(SNTBundleHashBlock)reply;
 - (void)syncBundleEvent:(SNTStoredEvent *)event relatedEvents:(NSArray<SNTStoredEvent *> *)events;
 
+///
+///  Execution Ops
+///
+- (void)recentlyBlockedEventWithSHA256:(NSString *)sha256 reply:(void (^)(SNTStoredEvent *))reply;
+
 @end
 
 @interface SNTXPCControlInterface : NSObject
