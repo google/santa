@@ -452,7 +452,7 @@ REGISTER_COMMAND_NAME(@"fileinfo")
 }
 
 - (void)processFile:(NSString *)path {
-  SNTFileInfo *fileInfo = [[SNTFileInfo alloc] initWithResolvedPath:path error:nil];
+  SNTFileInfo *fileInfo = [[SNTFileInfo alloc] initWithPath:path];
   if (!fileInfo) {
     printf("couldn't get fileinfo for path: %s\n", [path UTF8String]);
     return;
