@@ -53,16 +53,7 @@ static NSString *const kValidUntil = @"Valid Until";
 static NSString *const kSHA256 = @"SHA-256";
 static NSString *const kSHA1 = @"SHA-1";
 
-// global json output flag
-static BOOL json = NO;
-
 #pragma mark SNTCommandFileInfo
-
-@interface SNTCommandFileInfo : SNTCommand
-@property(nonatomic) BOOL prettyOutput;
-@property NSArray *fileInfoKeys;
-@property NSArray *signingChainKeys;
-@end
 
 
 NSString *printKeyArray(NSArray *array) {
@@ -72,6 +63,53 @@ NSString *printKeyArray(NSArray *array) {
   }];
   return string;
 }
+
+// This should be a method defined in the fileInfo class.
+NSString *humanReadableFileType(SNTFileInfo *fileInfo) {
+  if ([fileInfo isScript]) return @"Script";
+  if ([fileInfo isExecutable]) return @"Executable";
+  if ([fileInfo isDylib]) return @"Dynamic Library";
+  if ([fileInfo isBundle]) return @"Bundle/Plugin";
+  if ([fileInfo isKext]) return @"Kernel Extension";
+  if ([fileInfo isXARArchive]) return @"XAR Archive";
+  if ([fileInfo isDMG]) return @"Disk Image";
+  return @"Unknown";
+}
+
+
+@interface SNTCommandFileInfo : SNTCommand
+@property BOOL jsonOutput;
+@property NSNumber *certIndex;
+@property NSArray *outputKeyList;
+@property(nonatomic, readonly) BOOL prettyOutput;
+@property NSArray *fileInfoKeys;
+@property NSArray *signingChainKeys;
+
+// Block type to be used with propertyMap values
+typedef id (^SNTAttributeBlock)(SNTFileInfo *);
+
+// on read generated properties
+@property(readonly, copy, nonatomic) SNTAttributeBlock path;
+@property(readonly, copy, nonatomic) SNTAttributeBlock sha256;
+@property(readonly, copy, nonatomic) SNTAttributeBlock sha1;
+@property(readonly, copy, nonatomic) SNTAttributeBlock bundleName;
+@property(readonly, copy, nonatomic) SNTAttributeBlock bundleVersion;
+@property(readonly, copy, nonatomic) SNTAttributeBlock bundleShortVersionString;
+@property(readonly, copy, nonatomic) SNTAttributeBlock downloadReferrerURL;
+@property(readonly, copy, nonatomic) SNTAttributeBlock downloadURL;
+@property(readonly, copy, nonatomic) SNTAttributeBlock downloadTimestamp;
+@property(readonly, copy, nonatomic) SNTAttributeBlock downloadAgent;
+@property(readonly, copy, nonatomic) SNTAttributeBlock type;
+@property(readonly, copy, nonatomic) SNTAttributeBlock pageZero;
+@property(readonly, copy, nonatomic) SNTAttributeBlock codeSigned;
+@property(readonly, copy, nonatomic) SNTAttributeBlock rule;
+@property(readonly, copy, nonatomic) SNTAttributeBlock signingChain;
+
+// Mapping between property string keys and SNTAttributeBlocks
+@property(nonatomic) NSMutableDictionary<NSString *, SNTAttributeBlock> *propertyMap;
+
+@end
+
 
 @implementation SNTCommandFileInfo
 
@@ -130,22 +168,198 @@ REGISTER_COMMAND_NAME(@"fileinfo")
 - (instancetype)initWithDaemonConnection:(SNTXPCConnection *)daemonConn {
   self = [super initWithDaemonConnection:daemonConn];
   if (!self) return nil;
-  _prettyOutput = isatty(STDOUT_FILENO) && !json;
+  _jsonOutput = NO;
+
+  _propertyMap = @{ kPath : self.path,
+                    kSHA256 : self.sha256,
+                    kSHA1 : self.sha1,
+                    kBundleName : self.bundleName,
+                    kBundleVersion : self.bundleVersion,
+                    kBundleVersionStr : self.bundleVersionStr,
+                    kDownloadReferrerURL : self.downloadReferrerURL,
+                    kDownloadURL : self.downloadURL,
+                    kDownloadTimestamp : self.downloadTimestamp,
+                    kDownloadAgent : self.downloadAgent,
+                    kType : self.type,
+                    kPageZero : self.pageZero,
+                    kCodeSigned : self.codeSigned,
+                    kRule : self.rule,
+                    kSigningChain : self.signingChain }.mutableCopy;
+
   return self;
+}
+
+#pragma mark property getters
+
+- (SNTAttributeBlock)path {
+  return ^id (SNTFileInfo *fileInfo) {
+    return fileInfo.path;
+  };
+}
+
+- (SNTAttributeBlock)sha256 {
+  return ^id (SNTFileInfo *fileInfo) {
+    return fileInfo.SHA256;
+  };
+}
+
+- (SNTAttributeBlock)sha1 {
+  return ^id (SNTFileInfo *fileInfo) {
+    return fileInfo.SHA1;
+  };
+}
+
+- (SNTAttributeBlock)bundleName {
+  return ^id (SNTFileInfo *fileInfo) {
+    return fileInfo.bundleName;
+  };
+}
+
+- (SNTAttributeBlock)bundleVersion {
+  return ^id (SNTFileInfo *fileInfo) {
+    return fileInfo.bundleVersion;
+  };
+}
+
+- (SNTAttributeBlock)bundleVersionStr {
+  return ^id (SNTFileInfo *fileInfo) {
+    return fileInfo.bundleShortVersionString;
+  };
+}
+
+- (SNTAttributeBlock)downloadReferrerURL {
+  return ^id (SNTFileInfo *fileInfo) {
+    return fileInfo.quarantineRefererURL;
+  };
+}
+
+- (SNTAttributeBlock)downloadURL {
+  return ^id (SNTFileInfo *fileInfo) {
+    return fileInfo.quarantineDataURL;
+  };
+}
+
+- (SNTAttributeBlock)downloadTimestamp {
+  return ^id (SNTFileInfo *fileInfo) {
+    NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];
+    dateFormatter.dateFormat = @"yyyy/MM/dd HH:mm:ss Z";
+    return [dateFormatter stringFromDate:fileInfo.quarantineTimestamp];
+  };
+}
+
+- (SNTAttributeBlock)downloadAgent {
+  return ^id (SNTFileInfo *fileInfo) {
+    return fileInfo.quarantineAgentBundleID;
+  };
+}
+
+- (SNTAttributeBlock)type {
+  return ^id (SNTFileInfo *fileInfo) {
+    NSArray *archs = [fileInfo architectures];
+    if (archs.count == 0) {
+      return humanReadableFileType(fileInfo);
+    }
+    return [NSString stringWithFormat:@"%@ (%@)",
+            humanReadableFileType(fileInfo), [archs componentsJoinedByString:@", "]];
+  };
+}
+
+- (SNTAttributeBlock)pageZero {
+  return ^id (SNTFileInfo *fileInfo) {
+    if ([fileInfo isMissingPageZero]) {
+      return @"__PAGEZERO segment missing/bad!";
+    }
+    return nil;
+  };
+}
+
+- (SNTAttributeBlock)codeSigned {
+  return ^id (SNTFileInfo *fileInfo) {
+    NSError *error;
+    MOLCodesignChecker *csc = [[MOLCodesignChecker alloc] initWithBinaryPath:fileInfo.path
+                                                                       error:&error];
+    if (error) {
+      switch (error.code) {
+        case errSecCSUnsigned:
+          return @"No";
+        case errSecCSSignatureFailed:
+        case errSecCSStaticCodeChanged:
+        case errSecCSSignatureNotVerifiable:
+        case errSecCSSignatureUnsupported:
+          return @"Yes, but code/signature changed/unverifiable";
+        case errSecCSResourceDirectoryFailed:
+        case errSecCSResourceNotSupported:
+        case errSecCSResourceRulesInvalid:
+        case errSecCSResourcesInvalid:
+        case errSecCSResourcesNotFound:
+        case errSecCSResourcesNotSealed:
+          return @"Yes, but resources invalid";
+        case errSecCSReqFailed:
+        case errSecCSReqInvalid:
+        case errSecCSReqUnsupported:
+          return @"Yes, but failed requirement validation";
+        case errSecCSInfoPlistFailed:
+          return @"Yes, but can't validate as Info.plist is missing";
+        default: {
+          return [NSString stringWithFormat:@"Yes, but failed to validate (%ld)", error.code];
+        }
+      }
+    } else if (csc.signatureFlags & kSecCodeSignatureAdhoc) {
+      return @"Yes, but ad-hoc";
+    } else {
+      return @"Yes";
+    }
+  };
+}
+
+- (SNTAttributeBlock)rule {
+  return ^id (SNTFileInfo *fileInfo) {
+    return @"This is a problem because we need daemon connection";
+  };
+}
+
+- (SNTAttributeBlock)signingChain {
+  return ^id (SNTFileInfo *fileInfo) {
+    NSError *error;
+    MOLCodesignChecker *csc = [[MOLCodesignChecker alloc] initWithBinaryPath:fileInfo.path
+                                                                       error:&error];
+    NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];
+    dateFormatter.dateFormat = @"yyyy/MM/dd HH:mm:ss Z";
+
+    if (csc.certificates.count) {
+      NSMutableArray *certs = [[NSMutableArray alloc] initWithCapacity:csc.certificates.count];
+      [csc.certificates enumerateObjectsUsingBlock:^(MOLCertificate *c, unsigned long idx,
+                                                     BOOL *stop) {
+        [certs addObject:@{ kSHA256 : c.SHA256 ?: @"null",
+                            kSHA1 : c.SHA1 ?: @"null",
+                            kCommonName : c.commonName ?: @"null",
+                            kOrganization : c.orgName ?: @"null",
+                            kOrganizationalUnit : c.orgUnit ?: @"null",
+                            kValidFrom : [dateFormatter stringFromDate:c.validFrom] ?: @"null",
+                            kValidUntil : [dateFormatter stringFromDate:c.validUntil]
+                            ?: @"null"
+                            }];
+      }];
+      return certs;
+    }
+    return nil;
+  };
+}
+
+/////////////////////////////////////////////////////////////////////////
+
+- (BOOL)prettyOutput {
+  return isatty(STDOUT_FILENO) && !self.jsonOutput;
 }
 
 - (void)runWithArguments:(NSArray *)arguments {
   if (!arguments.count) [self printErrorUsageAndExit:@"No arguments"];
 
-  NSString *key;
-  NSNumber *certIndex;
-  NSArray *filePaths;
+  NSArray *filePaths = [self parseArguments:arguments];
 
-  [self parseArguments:arguments
-                forKey:&key
-             certIndex:&certIndex
-            jsonOutput:&json
-             filePaths:&filePaths];
+  if (!self.outputKeyList || !self.outputKeyList.count) {
+    self.outputKeyList = [[self class] fileInfoKeys];
+  }
 
   NSFileManager *fm = [NSFileManager defaultManager];
   NSString *cwd = [fm currentDirectoryPath];
@@ -185,13 +399,16 @@ REGISTER_COMMAND_NAME(@"fileinfo")
   dispatch_once(&token, ^{ [self.daemonConn resume]; });
   __block SNTEventState s;
   dispatch_semaphore_t sema = dispatch_semaphore_create(0);
+  NSError *error;
+  MOLCodesignChecker *csc = [[MOLCodesignChecker alloc] initWithBinaryPath:fileInfo.path
+                                                                     error:&error];
   [[self.daemonConn remoteObjectProxy] decisionForFilePath:fileInfo.path
                                                 fileSHA256:fileInfo.SHA256
-                                         certificateSHA256:nil
+                                         certificateSHA256:csc.leafCertificate.SHA256
                                                      reply:^(SNTEventState state) {
-                                                       s = state;
-                                                       dispatch_semaphore_signal(sema);
-                                                     }];
+    s = state;
+    dispatch_semaphore_signal(sema);
+  }];
   if (dispatch_semaphore_wait(sema, dispatch_time(DISPATCH_TIME_NOW, 5 * NSEC_PER_SEC))) {
     return @"Cannot communicate with daemon";
   } else {
@@ -218,58 +435,126 @@ REGISTER_COMMAND_NAME(@"fileinfo")
         output = @"None".mutableCopy;
         break;
     }
+    if (self.prettyOutput) {
+      if ((SNTEventStateAllow & s)) {
+        [output insertString:@"\033[32m" atIndex:0];
+        [output appendString:@"\033[0m"];
+      } else if ((SNTEventStateBlock & s)) {
+        [output insertString:@"\033[31m" atIndex:0];
+        [output appendString:@"\033[0m"];
+      } else {
+        [output insertString:@"\033[33m" atIndex:0];
+        [output appendString:@"\033[0m"];
+      }
+    }
     return output.copy;
   }
 }
 
 - (void)processFile:(NSString *)path {
   SNTFileInfo *fileInfo = [[SNTFileInfo alloc] initWithResolvedPath:path error:nil];
-  printf("path:\t%s\n", [path UTF8String]);
-  printf("SHA256:\t%s\n", [fileInfo.SHA256 UTF8String]);
-  printf("fileSize:\t%lu\n", fileInfo.fileSize);
-  printf("executable:\t%s\n", fileInfo.isExecutable ? "YES" : "NO");
-  printf("rule:\t%s\n", [[self ruleForFileInfo:fileInfo] UTF8String]);
+  if (!fileInfo) {
+    printf("couldn't get fileinfo for path: %s\n", [path UTF8String]);
+    return;
+  }
+  for (NSString *key in self.outputKeyList) {
+    NSString *result = nil;
+    if ([key isEqual:kRule]) {
+      result = [self ruleForFileInfo:fileInfo];
+    } else if ([key isEqual:kSigningChain]) {
+      NSArray *signingChain = self.propertyMap[key](fileInfo);
+      [self printSigningChain:signingChain];
+    } else {
+      result = self.propertyMap[key](fileInfo);
+    }
+
+    if (result) printf("%-21s: %s\n", [key UTF8String], [result UTF8String]);
+  }
+  printf("\n");
 }
 
-
-// We can convert all of this stuff to property vars now.
-- (void)parseArguments:(NSArray *)args
-                forKey:(NSString **)key
-             certIndex:(NSNumber **)certIndex
-            jsonOutput:(BOOL *)jsonOutput
-             filePaths:(NSArray **)filePaths {
-  __block NSMutableArray *paths = [[NSMutableArray alloc] init];
-  [args enumerateObjectsUsingBlock:^(NSString *obj, NSUInteger idx, BOOL *stop) {
-    if ([obj caseInsensitiveCompare:@"--json"] == NSOrderedSame) {
-      *jsonOutput = YES;
-    } else if ([obj caseInsensitiveCompare:@"--cert-index"] == NSOrderedSame) {
-      if (++idx > args.count - 1 || [args[idx] hasPrefix:@"--"]) {
+// Parses the arguments in order to set the property variables:
+//   self.json from --json
+//   self.certIndex from --cert-index
+//   self.outputKeyList from multiple possible --key
+// and returns any non-flag args as path names in an NSArray.
+- (NSArray *)parseArguments:(NSArray *)arguments {
+  NSMutableArray *paths = [NSMutableArray array];
+  NSMutableOrderedSet *keys = [NSMutableOrderedSet orderedSet];
+  NSUInteger nargs = [arguments count];
+  for (NSUInteger i = 0; i < nargs; i++) {
+    NSString *arg = [arguments objectAtIndex:i];
+    if ([arg caseInsensitiveCompare:@"--json"] == NSOrderedSame) {
+      self.jsonOutput = YES;
+    } else if ([arg caseInsensitiveCompare:@"--cert-index"] == NSOrderedSame) {
+      i += 1; // advance to next argument
+      if (i >= nargs || [arguments[i] hasPrefix:@"--"]) {
         [self printErrorUsageAndExit:@"\n--cert-index requires an argument"];
       }
-      *certIndex = @([args[idx] integerValue]);
-    } else if ([obj caseInsensitiveCompare:@"--key"] == NSOrderedSame) {
-      if (++idx > args.count - 1 || [args[idx] hasPrefix:@"--"]) {
+      NSInteger index = [arguments[i] integerValue];
+      if (index == 0) {
+        [self printErrorUsageAndExit:
+         @"\n0 is an invalid --cert-index\n  --cert-index is 1-indexed"];
+      }
+      self.certIndex = @(index);
+    } else if ([arg caseInsensitiveCompare:@"--key"] == NSOrderedSame) {
+      i += 1; // advance to next argument
+      if (i >= nargs || [arguments[i] hasPrefix:@"--"]) {
         [self printErrorUsageAndExit:@"\n--key requires an argument"];
       }
-      *key = args[idx];
-    } else if ([@([obj integerValue]) isEqual:*certIndex] || [obj isEqual:*key]) {
-      return;
+      [keys addObject:arguments[i]];
     } else {
-      [paths addObject:args[idx]];
+      [paths addObject:arg];
     }
-  }];
-  if (*key && !*certIndex && ![[[self class] fileInfoKeys] containsObject:*key]) {
-    [self printErrorUsageAndExit:
-        [NSString stringWithFormat:@"\n\"%@\" is an invalid key", *key]];
-  } else if (*key && *certIndex && ![[[self class] signingChainKeys] containsObject:*key]) {
-    [self printErrorUsageAndExit:
-        [NSString stringWithFormat:@"\n\"%@\" is an invalid key when using --cert-index", *key]];
-  } else if ([@(0) isEqual:*certIndex]) {
-    [self printErrorUsageAndExit:@"\n0 is an invalid --cert-index\n  --cert-index is 1 indexed"];
   }
+
+  // Do some error checking before returning to make sure that specified keys are valid.
+  if (self.certIndex) {
+    NSArray *validKeys = [[self class] signingChainKeys];
+    for (NSString *key in keys) {
+      if (![validKeys containsObject:key]) {
+        [self printErrorUsageAndExit:
+         [NSString stringWithFormat:@"\n\"%@\" is an invalid key when using --cert-index", key]];
+      }
+    }
+  } else {
+    NSArray *validKeys = [[self class] fileInfoKeys];
+    for (NSString *key in keys) {
+      if (![validKeys containsObject:key]) {
+        [self printErrorUsageAndExit:
+         [NSString stringWithFormat:@"\n\"%@\" is an invalid key", key]];
+      }
+    }
+  }
+
   if (!paths.count) [self printErrorUsageAndExit:@"\nat least one file-path is needed"];
-  *filePaths = paths.copy;
+
+  self.outputKeyList = [keys array];
+  return paths.copy;
 }
 
+- (void)printSigningChain:(NSArray *)signingChain {
+  if (!signingChain) return;
+  printf("%s:\n", kSigningChain.UTF8String);
+  __block int i = 0;
+  [signingChain enumerateObjectsUsingBlock:^(id obj, NSUInteger idx, BOOL *stop) {
+    if ([obj isEqual:[NSNull null]]) return;
+    if (i++) printf("\n");
+    printf("    %2lu. %-20s: %s\n", idx + 1, kSHA256.UTF8String,
+           ((NSString *)obj[kSHA256]).UTF8String);
+    printf("        %-20s: %s\n", kSHA1.UTF8String,
+           ((NSString *)obj[kSHA1]).UTF8String);
+    printf("        %-20s: %s\n", kCommonName.UTF8String,
+           ((NSString *)obj[kCommonName]).UTF8String);
+    printf("        %-20s: %s\n", kOrganization.UTF8String,
+           ((NSString *)obj[kOrganization]).UTF8String);
+    printf("        %-20s: %s\n", kOrganizationalUnit.UTF8String,
+           ((NSString *)obj[kOrganizationalUnit]).UTF8String);
+    printf("        %-20s: %s\n", kValidFrom.UTF8String,
+           ((NSString *)obj[kValidFrom]).UTF8String);
+    printf("        %-20s: %s\n", kValidUntil.UTF8String,
+           ((NSString *)obj[kValidUntil]).UTF8String);
+  }];
+}
                          
 @end
