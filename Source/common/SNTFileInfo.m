@@ -267,6 +267,17 @@ extern NSString *const NSURLQuarantinePropertiesKey WEAK_IMPORT_ATTRIBUTE;
   return (magic && memcmp("koly", magic, 4) == 0);
 }
 
+- (NSString *)humanReadableFileType {
+  if ([self isExecutable]) return @"Executable";
+  if ([self isDylib]) return @"Dynamic Library";
+  if ([self isBundle]) return @"Bundle/Plugin";
+  if ([self isKext]) return @"Kernel Extension";
+  if ([self isScript]) return @"Script";
+  if ([self isXARArchive]) return @"XAR Archive";
+  if ([self isDMG]) return @"Disk Image";
+  return @"Unknown";
+}
+
 #pragma mark Page Zero
 
 - (BOOL)isMissingPageZero {

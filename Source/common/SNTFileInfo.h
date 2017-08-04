@@ -124,6 +124,11 @@
 - (BOOL)isDMG;
 
 ///
+///  @return NSString describing the kind of file (executable, bundle, script, etc.)
+///
+- (NSString *)humanReadableFileType;
+
+///
 ///  @return YES if this file has a bad/missing __PAGEZERO .
 ///
 - (BOOL)isMissingPageZero;

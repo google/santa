@@ -63,19 +63,6 @@ NSString *printKeyArray(NSArray *array) {
   return string;
 }
 
-// This should be a method defined in the fileInfo class.
-NSString *humanReadableFileType(SNTFileInfo *fileInfo) {
-  if ([fileInfo isScript]) return @"Script";
-  if ([fileInfo isExecutable]) return @"Executable";
-  if ([fileInfo isDylib]) return @"Dynamic Library";
-  if ([fileInfo isBundle]) return @"Bundle/Plugin";
-  if ([fileInfo isKext]) return @"Kernel Extension";
-  if ([fileInfo isXARArchive]) return @"XAR Archive";
-  if ([fileInfo isDMG]) return @"Disk Image";
-  return @"Unknown";
-}
-
-
 @interface SNTCommandFileInfo : SNTCommand
 
 // Properties set from commandline flags
@@ -264,10 +251,10 @@ REGISTER_COMMAND_NAME(@"fileinfo")
   return ^id (SNTFileInfo *fileInfo) {
     NSArray *archs = [fileInfo architectures];
     if (archs.count == 0) {
-      return humanReadableFileType(fileInfo);
+      return [fileInfo humanReadableFileType];
     }
     return [NSString stringWithFormat:@"%@ (%@)",
-            humanReadableFileType(fileInfo), [archs componentsJoinedByString:@", "]];
+            [fileInfo humanReadableFileType], [archs componentsJoinedByString:@", "]];
   };
 }
 
