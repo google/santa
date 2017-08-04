@@ -55,7 +55,6 @@ static NSString *const kSHA1 = @"SHA-1";
 
 #pragma mark SNTCommandFileInfo
 
-
 NSString *printKeyArray(NSArray *array) {
   __block NSMutableString *string = [[NSMutableString alloc] init];
   [array enumerateObjectsUsingBlock:^(id obj, NSUInteger idx, BOOL *stop) {
@@ -78,12 +77,16 @@ NSString *humanReadableFileType(SNTFileInfo *fileInfo) {
 
 
 @interface SNTCommandFileInfo : SNTCommand
+
+// Properties set from commandline flags
+@property BOOL recursive;
 @property BOOL jsonOutput;
 @property NSNumber *certIndex;
 @property NSArray *outputKeyList;
-@property(nonatomic, readonly) BOOL prettyOutput;
-@property NSArray *fileInfoKeys;
-@property NSArray *signingChainKeys;
+
+@property(readonly, nonatomic) BOOL prettyOutput;
+@property(readonly, nonatomic) NSArray *fileInfoKeys;
+@property(readonly, nonatomic) NSArray *signingChainKeys;
 
 // Block type to be used with propertyMap values
 typedef id (^SNTAttributeBlock)(SNTFileInfo *);
@@ -106,7 +109,7 @@ typedef id (^SNTAttributeBlock)(SNTFileInfo *);
 @property(readonly, copy, nonatomic) SNTAttributeBlock signingChain;
 
 // Mapping between property string keys and SNTAttributeBlocks
-@property(nonatomic) NSMutableDictionary<NSString *, SNTAttributeBlock> *propertyMap;
+@property(nonatomic) NSDictionary<NSString *, SNTAttributeBlock> *propertyMap;
 
 @end
 
@@ -136,8 +139,10 @@ REGISTER_COMMAND_NAME(@"fileinfo")
           @"the type of file."
           @"\n"
           @"Usage: santactl fileinfo [options] [file-paths]\n"
+          @"    -r (--recursive): search directories recursively\n"
           @"    --json: output in json format\n"
           @"    --key: search and return this one piece of information\n"
+          @"           you may specify multiple keys by repeating this flag\n"
           @"           valid Keys:\n"
           @"%@\n"
           @"           valid keys when using --cert-index:\n"
@@ -149,7 +154,8 @@ REGISTER_COMMAND_NAME(@"fileinfo")
           @"\n"
           @"Examples: santactl fileinfo --cert-index 1 --key SHA-256 --json /usr/bin/yes\n"
           @"          santactl fileinfo --key SHA-256 --json /usr/bin/yes\n"
-          @"          santactl fileinfo /usr/bin/yes /bin/*\n",
+          @"          santactl fileinfo /usr/bin/yes /bin/*\n"
+          @"          santactl fileinfo /usr/bin -r --key Path --key SHA-256 --key Rule",
           printKeyArray([self fileInfoKeys]),
           printKeyArray([self signingChainKeys])];
 }
@@ -168,6 +174,7 @@ REGISTER_COMMAND_NAME(@"fileinfo")
 - (instancetype)initWithDaemonConnection:(SNTXPCConnection *)daemonConn {
   self = [super initWithDaemonConnection:daemonConn];
   if (!self) return nil;
+  _recursive = NO;
   _jsonOutput = NO;
 
   _propertyMap = @{ kPath : self.path,
@@ -184,7 +191,7 @@ REGISTER_COMMAND_NAME(@"fileinfo")
                     kPageZero : self.pageZero,
                     kCodeSigned : self.codeSigned,
                     kRule : self.rule,
-                    kSigningChain : self.signingChain }.mutableCopy;
+                    kSigningChain : self.signingChain };
 
   return self;
 }
@@ -377,7 +384,7 @@ REGISTER_COMMAND_NAME(@"fileinfo")
   NSFileManager *fm = [NSFileManager defaultManager];
   BOOL isDir = NO;
   if (![fm fileExistsAtPath:path isDirectory:&isDir]) return;
-  if (isDir) {
+  if (isDir && self.recursive) {
     NSDirectoryEnumerator<NSString *> * dirEnum = [fm enumeratorAtPath:path];
     for (NSString *file in dirEnum) {
       NSString *filepath = [path stringByAppendingPathComponent:file];
@@ -389,6 +396,8 @@ REGISTER_COMMAND_NAME(@"fileinfo")
         [self processFile:filepath];
       }
     }
+  } else if (isDir && !self.recursive) {
+    printf("%s is a directory.  Use the -r flag to search recursively.\n", [path UTF8String]);
   } else {
     [self processFile:path];
   }
@@ -474,6 +483,7 @@ REGISTER_COMMAND_NAME(@"fileinfo")
 }
 
 // Parses the arguments in order to set the property variables:
+//   self.recursive from --recursive or -r
 //   self.json from --json
 //   self.certIndex from --cert-index
 //   self.outputKeyList from multiple possible --key
@@ -487,7 +497,7 @@ REGISTER_COMMAND_NAME(@"fileinfo")
     if ([arg caseInsensitiveCompare:@"--json"] == NSOrderedSame) {
       self.jsonOutput = YES;
     } else if ([arg caseInsensitiveCompare:@"--cert-index"] == NSOrderedSame) {
-      i += 1; // advance to next argument
+      i += 1; // advance to next argument and grab index
       if (i >= nargs || [arguments[i] hasPrefix:@"--"]) {
         [self printErrorUsageAndExit:@"\n--cert-index requires an argument"];
       }
@@ -498,11 +508,14 @@ REGISTER_COMMAND_NAME(@"fileinfo")
       }
       self.certIndex = @(index);
     } else if ([arg caseInsensitiveCompare:@"--key"] == NSOrderedSame) {
-      i += 1; // advance to next argument
+      i += 1; // advance to next argument and grab the key
       if (i >= nargs || [arguments[i] hasPrefix:@"--"]) {
         [self printErrorUsageAndExit:@"\n--key requires an argument"];
       }
       [keys addObject:arguments[i]];
+    } else if ([arg caseInsensitiveCompare:@"--recursive"] == NSOrderedSame ||
+               [arg caseInsensitiveCompare:@"-r"] == NSOrderedSame) {
+      self.recursive = YES;
     } else {
       [paths addObject:arg];
     }
