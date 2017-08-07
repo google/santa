@@ -70,7 +70,7 @@ REGISTER_COMMAND_NAME(@"sync")
   [self.daemonConn resume];
   BOOL daemon = [arguments containsObject:@"--daemon"];
   self.syncManager = [[SNTCommandSyncManager alloc] initWithDaemonConnection:self.daemonConn
-                                                                 isDaemon:daemon];
+                                                                    isDaemon:daemon];
 
   // Dropping root privileges to the 'nobody' user causes the default NSURLCache to throw
   // sandbox errors, which are benign but annoying. This line disables the cache entirely.

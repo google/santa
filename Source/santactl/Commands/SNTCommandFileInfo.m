@@ -338,36 +338,6 @@ REGISTER_COMMAND_NAME(@"fileinfo")
 
 # pragma mark -
 
-
-- (NSString *)getDirectoryTTYColor {
-  NSString *lscolors = [[NSProcessInfo processInfo] environment][@"LSCOLORS"];
-  if (!lscolors || lscolors.length < 2) {
-    return @"\033[1;35m";
-  }
-  char fg = [lscolors characterAtIndex:0];
-  char bg = [lscolors characterAtIndex:1];
-  char validChars[] = "abcdefghxABCDEFGHX";
-  if (!strchr(validChars, fg) || !strchr(validChars, bg)) {
-    return @"\033[1;35m";
-  }
-  NSMutableString *code = @"\033[".mutableCopy;
-  if (isupper(fg)) {
-    [code appendString:@"1;"];
-    fg = tolower(fg);
-  }
-  if (fg == 'x') {
-    [code appendFormat:@"0"];
-  } else {
-    [code appendFormat:@"%d", fg - 'a' + 30];
-  }
-  if (isupper(bg)) bg = tolower(bg);
-  if (bg != 'x') {
-    [code appendFormat:@";%d", fg - 'a' + 40];
-  }
-  [code appendString:@"m"];
-  return code.copy;
-}
-
 // Entry point for the command.
 - (void)runWithArguments:(NSArray *)arguments {
   if (!arguments.count) [self printErrorUsageAndExit:@"No arguments"];
@@ -404,6 +374,36 @@ REGISTER_COMMAND_NAME(@"fileinfo")
 // Returns YES if we should output colored text.
 - (BOOL)prettyOutput {
   return isatty(STDOUT_FILENO) && !self.jsonOutput;
+}
+
+// Look at environment variable to try to discover user's directory color preference.
+- (NSString *)getDirectoryTTYColor {
+  NSString *lscolors = [[NSProcessInfo processInfo] environment][@"LSCOLORS"];
+  if (!lscolors || lscolors.length < 2) {
+    return @"\033[1;35m"; // bold magenta
+  }
+  char fg = [lscolors characterAtIndex:0];
+  char bg = [lscolors characterAtIndex:1];
+  char validChars[] = "abcdefghxABCDEFGHX";
+  if (!strchr(validChars, fg) || !strchr(validChars, bg)) {
+    return @"\033[1;35m"; // bold magenta
+  }
+  NSMutableString *code = @"\033[".mutableCopy;
+  if (isupper(fg)) {
+    [code appendString:@"1;"];
+    fg = tolower(fg);
+  }
+  if (fg == 'x') {
+    [code appendFormat:@"0"];
+  } else {
+    [code appendFormat:@"%d", fg - 'a' + 30];
+  }
+  if (isupper(bg)) bg = tolower(bg);
+  if (bg != 'x') {
+    [code appendFormat:@";%d", fg - 'a' + 40];
+  }
+  [code appendString:@"m"];
+  return code.copy;
 }
 
 // Print out file info for the object at the given path or, if path is a directory and the
