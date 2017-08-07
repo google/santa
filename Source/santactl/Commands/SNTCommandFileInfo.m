@@ -13,6 +13,7 @@
 ///    limitations under the License.
 
 @import Foundation;
+@import AppKit;
 
 #import "SNTCommand.h"
 #import "SNTCommandController.h"
@@ -53,14 +54,13 @@ static NSString *const kValidUntil = @"Valid Until";
 static NSString *const kSHA256 = @"SHA-256";
 static NSString *const kSHA1 = @"SHA-1";
 
-#pragma mark SNTCommandFileInfo
-
-NSString *printKeyArray(NSArray *array) {
-  __block NSMutableString *string = [[NSMutableString alloc] init];
-  [array enumerateObjectsUsingBlock:^(id obj, NSUInteger idx, BOOL *stop) {
-    [string appendString:[NSString stringWithFormat:@"                       \"%@\"\n", obj]];
-  }];
-  return string;
+// Used by longHelpText to display a list of valid keys passed in as an array.
+NSString *formattedStringForKeyArray(NSArray<NSString *> *array) {
+  NSMutableString *result = [[NSMutableString alloc] init];
+  for (NSString *key in array) {
+    [result appendString:[NSString stringWithFormat:@"                       \"%@\"\n", key]];
+  }
+  return result;
 }
 
 @interface SNTCommandFileInfo : SNTCommand
@@ -69,12 +69,14 @@ NSString *printKeyArray(NSArray *array) {
 @property BOOL recursive;
 @property BOOL jsonOutput;
 @property NSNumber *certIndex;
-@property NSArray *outputKeyList;
+@property NSArray<NSString *> *outputKeyList;
+@property NSString *directoryColor;
 
 @property(readonly, nonatomic) BOOL prettyOutput;
 @property(nonatomic) BOOL hadPreviousEntry; // used when printing info for multiple files
-@property(readonly, nonatomic) NSArray *fileInfoKeys;
-@property(readonly, nonatomic) NSArray *signingChainKeys;
+@property(nonatomic) BOOL daemonUnavailable;
+@property(readonly, nonatomic) NSArray<NSString *> *fileInfoKeys;
+@property(readonly, nonatomic) NSArray<NSString *> *signingChainKeys;
 
 // Block type to be used with propertyMap values
 typedef id (^SNTAttributeBlock)(SNTFileInfo *);
@@ -144,17 +146,17 @@ REGISTER_COMMAND_NAME(@"fileinfo")
           @"          santactl fileinfo --key SHA-256 --json /usr/bin/yes\n"
           @"          santactl fileinfo /usr/bin/yes /bin/*\n"
           @"          santactl fileinfo /usr/bin -r --key Path --key SHA-256 --key Rule",
-          printKeyArray([self fileInfoKeys]),
-          printKeyArray([self signingChainKeys])];
+          formattedStringForKeyArray(self.fileInfoKeys),
+          formattedStringForKeyArray(self.signingChainKeys)];
 }
 
-+ (NSArray *)fileInfoKeys {
++ (NSArray<NSString *> *)fileInfoKeys {
   return @[ kPath, kSHA256, kSHA1, kBundleName, kBundleVersion, kBundleVersionStr,
             kDownloadReferrerURL, kDownloadURL, kDownloadTimestamp, kDownloadAgent,
             kType, kPageZero, kCodeSigned, kRule, kSigningChain ];
 }
 
-+ (NSArray *)signingChainKeys {
++ (NSArray<NSString *> *)signingChainKeys {
   return @[ kSHA256, kSHA1, kCommonName, kOrganization, kOrganizationalUnit, kValidFrom,
             kValidUntil ];
 }
@@ -178,7 +180,6 @@ REGISTER_COMMAND_NAME(@"fileinfo")
                     kType : self.type,
                     kPageZero : self.pageZero,
                     kCodeSigned : self.codeSigned,
-                    kRule : self.rule,
                     kSigningChain : self.signingChain };
 
   return self;
@@ -255,7 +256,7 @@ REGISTER_COMMAND_NAME(@"fileinfo")
       return [fileInfo humanReadableFileType];
     }
     return [NSString stringWithFormat:@"%@ (%@)",
-            [fileInfo humanReadableFileType], [archs componentsJoinedByString:@", "]];
+        [fileInfo humanReadableFileType], [archs componentsJoinedByString:@", "]];
   };
 }
 
@@ -307,12 +308,6 @@ REGISTER_COMMAND_NAME(@"fileinfo")
   };
 }
 
-- (SNTAttributeBlock)rule {
-  return ^id (SNTFileInfo *fileInfo) {
-    return @"This is a problem because we need daemon connection";
-  };
-}
-
 - (SNTAttributeBlock)signingChain {
   return ^id (SNTFileInfo *fileInfo) {
     NSError *error;
@@ -341,14 +336,44 @@ REGISTER_COMMAND_NAME(@"fileinfo")
   };
 }
 
-/////////////////////////////////////////////////////////////////////////
+# pragma mark -
 
-- (BOOL)prettyOutput {
-  return isatty(STDOUT_FILENO) && !self.jsonOutput;
+
+- (NSString *)getDirectoryTTYColor {
+  NSString *lscolors = [[NSProcessInfo processInfo] environment][@"LSCOLORS"];
+  if (!lscolors || lscolors.length < 2) {
+    return @"\033[1;35m";
+  }
+  char fg = [lscolors characterAtIndex:0];
+  char bg = [lscolors characterAtIndex:1];
+  char validChars[] = "abcdefghxABCDEFGHX";
+  if (!strchr(validChars, fg) || !strchr(validChars, bg)) {
+    return @"\033[1;35m";
+  }
+  NSMutableString *code = @"\033[".mutableCopy;
+  if (isupper(fg)) {
+    [code appendString:@"1;"];
+    fg = tolower(fg);
+  }
+  if (fg == 'x') {
+    [code appendFormat:@"0"];
+  } else {
+    [code appendFormat:@"%d", fg - 'a' + 30];
+  }
+  if (isupper(bg)) bg = tolower(bg);
+  if (bg != 'x') {
+    [code appendFormat:@";%d", fg - 'a' + 40];
+  }
+  [code appendString:@"m"];
+  return code.copy;
 }
 
+// Entry point for the command.
 - (void)runWithArguments:(NSArray *)arguments {
   if (!arguments.count) [self printErrorUsageAndExit:@"No arguments"];
+
+  self.directoryColor = [self getDirectoryTTYColor];
+
 
   NSArray *filePaths = [self parseArguments:arguments];
 
@@ -368,7 +393,7 @@ REGISTER_COMMAND_NAME(@"fileinfo")
     if ([path characterAtIndex:0] != '/') {
       fullPath = [cwd stringByAppendingPathComponent:fullPath];
     }
-    [self recurseAtPath:fullPath indent:0];
+    [self recurseAtPath:fullPath];
   }
 
   if (self.jsonOutput) printf("\n]\n"); // print closing bracket of JSON output array
@@ -376,40 +401,53 @@ REGISTER_COMMAND_NAME(@"fileinfo")
   exit(0);
 }
 
-- (void)recurseAtPath:(NSString *)path indent:(int)indent {
+// Returns YES if we should output colored text.
+- (BOOL)prettyOutput {
+  return isatty(STDOUT_FILENO) && !self.jsonOutput;
+}
+
+// Print out file info for the object at the given path or, if path is a directory and the
+// --recursive flag is set, print out file info for all objects in directory tree.
+- (void)recurseAtPath:(NSString *)path {
   NSFileManager *fm = [NSFileManager defaultManager];
-  BOOL isDir = NO;
-  if (![fm fileExistsAtPath:path isDirectory:&isDir]) return;
-  if (isDir) {
-    if (self.recursive) {
-      NSDirectoryEnumerator<NSString *> * dirEnum = [fm enumeratorAtPath:path];
-      for (NSString *file in dirEnum) {
-        NSString *filepath = [path stringByAppendingPathComponent:file];
-        if ([fm fileExistsAtPath:filepath isDirectory:&isDir] && isDir) {
-          // Print out directory names when recursive and not outputting JSON.
-          if (!self.jsonOutput) {
-            if (self.prettyOutput) printf("\033[93m");
-            printf("\n%s:\n", [filepath UTF8String]);
-            if (self.prettyOutput) printf("\033[0m");
-          }
-        } else {
-          [self processFile:filepath];
+  BOOL isDir = NO, isBundle = NO;
+  if (![fm fileExistsAtPath:path isDirectory:&isDir]) {
+    fprintf(stderr, "File does not exist: %s\n", [path UTF8String]);
+    return;
+  }
+  if (isDir) isBundle = [[NSWorkspace sharedWorkspace] isFilePackageAtPath:path];
+
+  if (isDir && self.recursive) {
+    NSDirectoryEnumerator<NSString *> * dirEnum = [fm enumeratorAtPath:path];
+    for (NSString *file in dirEnum) {
+      NSString *filepath = [path stringByAppendingPathComponent:file];
+      if ([fm fileExistsAtPath:filepath isDirectory:&isDir] && isDir) {
+        // Print out directory names when recursive and not outputting JSON.
+        if (!self.jsonOutput) {
+          if (self.prettyOutput) printf("%s", self.directoryColor.UTF8String);
+          printf("%s:\n", [filepath UTF8String]);
+          if (self.prettyOutput) printf("\033[0m");
         }
+      } else {
+        [self printInfoForFile:filepath];
       }
-    } else {
-      // Silently ignore errors if JSON output.
-      if (!self.jsonOutput) printf("%s is a directory.  Use the -r flag to search recursively.\n",
-                                   [path UTF8String]);
     }
+  } else if (isDir && !isBundle) {
+    fprintf(stderr, "%s is a directory.  Use the -r flag to search recursively.\n",
+            [path UTF8String]);
   } else {
-    [self processFile:path];
+    [self printInfoForFile:path];
   }
 }
 
+// Getting rule information for a file requires also having a daemon connection, so we can't simply
+// return a block acting on a fileInfo object to retrieve the property value.
 - (NSString *)ruleForFileInfo:(SNTFileInfo *)fileInfo {
+  // If we previously were unable to connect, don't try again.
+  if (self.daemonUnavailable) return @"Could not communicate with daemon";
   static dispatch_once_t token;
   dispatch_once(&token, ^{ [self.daemonConn resume]; });
-  __block SNTEventState s;
+  __block SNTEventState state;
   dispatch_semaphore_t sema = dispatch_semaphore_create(0);
   NSError *error;
   MOLCodesignChecker *csc = [[MOLCodesignChecker alloc] initWithBinaryPath:fileInfo.path
@@ -417,16 +455,17 @@ REGISTER_COMMAND_NAME(@"fileinfo")
   [[self.daemonConn remoteObjectProxy] decisionForFilePath:fileInfo.path
                                                 fileSHA256:fileInfo.SHA256
                                          certificateSHA256:csc.leafCertificate.SHA256
-                                                     reply:^(SNTEventState state) {
-    s = state;
+                                                     reply:^(SNTEventState s) {
+    state = s;
     dispatch_semaphore_signal(sema);
   }];
   if (dispatch_semaphore_wait(sema, dispatch_time(DISPATCH_TIME_NOW, 5 * NSEC_PER_SEC))) {
-    return @"Cannot communicate with daemon";
+    self.daemonUnavailable = YES;
+    return @"Could not communicate with daemon";
   } else {
     NSMutableString *output =
-    (SNTEventStateAllow & s) ? @"Whitelisted".mutableCopy : @"Blacklisted".mutableCopy;
-    switch (s) {
+    (SNTEventStateAllow & state) ? @"Whitelisted".mutableCopy : @"Blacklisted".mutableCopy;
+    switch (state) {
       case SNTEventStateAllowUnknown:
       case SNTEventStateBlockUnknown:
         [output appendString:@" (Unknown)"];
@@ -448,10 +487,10 @@ REGISTER_COMMAND_NAME(@"fileinfo")
         break;
     }
     if (self.prettyOutput) {
-      if ((SNTEventStateAllow & s)) {
+      if ((SNTEventStateAllow & state)) {
         [output insertString:@"\033[32m" atIndex:0];
         [output appendString:@"\033[0m"];
-      } else if ((SNTEventStateBlock & s)) {
+      } else if ((SNTEventStateBlock & state)) {
         [output insertString:@"\033[31m" atIndex:0];
         [output appendString:@"\033[0m"];
       } else {
@@ -463,10 +502,12 @@ REGISTER_COMMAND_NAME(@"fileinfo")
   }
 }
 
-- (void)processFile:(NSString *)path {
+// Prints out the info for a single (non-directory) file.  Which info is printed is controlled
+// by the keys in self.outputKeyList.
+- (void)printInfoForFile:(NSString *)path {
   SNTFileInfo *fileInfo = [[SNTFileInfo alloc] initWithPath:path];
   if (!fileInfo) {
-    printf("couldn't get fileinfo for path: %s\n", [path UTF8String]);
+    fprintf(stderr, "Invalid or empty file: %s\n", [path UTF8String]);
     return;
   }
   if (self.jsonOutput) {
@@ -491,6 +532,8 @@ REGISTER_COMMAND_NAME(@"fileinfo")
   self.hadPreviousEntry = YES;
 }
 
+// Given a SNTFileInfo object and an array of keys, returns and nicely formatted NSString
+// containing all of the key, value pairs in JSON format.
 - (NSString *)jsonStringForFileInfo:(SNTFileInfo *)fileInfo withKeys:(NSArray *)keys {
   NSMutableDictionary *outputDict = [NSMutableDictionary dictionary];
   for (NSString *key in keys) {
@@ -593,5 +636,5 @@ REGISTER_COMMAND_NAME(@"fileinfo")
            ((NSString *)obj[kValidUntil]).UTF8String);
   }];
 }
-                         
+
 @end
