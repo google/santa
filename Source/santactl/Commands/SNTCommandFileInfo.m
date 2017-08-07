@@ -72,6 +72,7 @@ NSString *printKeyArray(NSArray *array) {
 @property NSArray *outputKeyList;
 
 @property(readonly, nonatomic) BOOL prettyOutput;
+@property(nonatomic) BOOL hadPreviousEntry; // used when printing info for multiple files
 @property(readonly, nonatomic) NSArray *fileInfoKeys;
 @property(readonly, nonatomic) NSArray *signingChainKeys;
 
@@ -355,6 +356,11 @@ REGISTER_COMMAND_NAME(@"fileinfo")
     self.outputKeyList = [[self class] fileInfoKeys];
   }
 
+  // For consistency, JSON output is always returned as an array of file info objects, regardless of
+  // how many file info objects are being outputted.  So both empty and singleton result sets are
+  // still enclosed in brackets.
+  if (self.jsonOutput) printf("[\n");
+
   NSFileManager *fm = [NSFileManager defaultManager];
   NSString *cwd = [fm currentDirectoryPath];
   for (NSString *path in filePaths) {
@@ -364,6 +370,9 @@ REGISTER_COMMAND_NAME(@"fileinfo")
     }
     [self recurseAtPath:fullPath indent:0];
   }
+
+  if (self.jsonOutput) printf("\n]\n"); // print closing bracket of JSON output array
+
   exit(0);
 }
 
@@ -371,20 +380,27 @@ REGISTER_COMMAND_NAME(@"fileinfo")
   NSFileManager *fm = [NSFileManager defaultManager];
   BOOL isDir = NO;
   if (![fm fileExistsAtPath:path isDirectory:&isDir]) return;
-  if (isDir && self.recursive) {
-    NSDirectoryEnumerator<NSString *> * dirEnum = [fm enumeratorAtPath:path];
-    for (NSString *file in dirEnum) {
-      NSString *filepath = [path stringByAppendingPathComponent:file];
-      if ([fm fileExistsAtPath:filepath isDirectory:&isDir] && isDir) {
-        if (self.prettyOutput) printf("\033[93m");
-        printf("\n%s:\n", [filepath UTF8String]);
-        if (self.prettyOutput) printf("\033[0m");
-      } else {
-        [self processFile:filepath];
+  if (isDir) {
+    if (self.recursive) {
+      NSDirectoryEnumerator<NSString *> * dirEnum = [fm enumeratorAtPath:path];
+      for (NSString *file in dirEnum) {
+        NSString *filepath = [path stringByAppendingPathComponent:file];
+        if ([fm fileExistsAtPath:filepath isDirectory:&isDir] && isDir) {
+          // Print out directory names when recursive and not outputting JSON.
+          if (!self.jsonOutput) {
+            if (self.prettyOutput) printf("\033[93m");
+            printf("\n%s:\n", [filepath UTF8String]);
+            if (self.prettyOutput) printf("\033[0m");
+          }
+        } else {
+          [self processFile:filepath];
+        }
       }
+    } else {
+      // Silently ignore errors if JSON output.
+      if (!self.jsonOutput) printf("%s is a directory.  Use the -r flag to search recursively.\n",
+                                   [path UTF8String]);
     }
-  } else if (isDir && !self.recursive) {
-    printf("%s is a directory.  Use the -r flag to search recursively.\n", [path UTF8String]);
   } else {
     [self processFile:path];
   }
@@ -453,20 +469,41 @@ REGISTER_COMMAND_NAME(@"fileinfo")
     printf("couldn't get fileinfo for path: %s\n", [path UTF8String]);
     return;
   }
-  for (NSString *key in self.outputKeyList) {
-    NSString *result = nil;
-    if ([key isEqual:kRule]) {
-      result = [self ruleForFileInfo:fileInfo];
-    } else if ([key isEqual:kSigningChain]) {
-      NSArray *signingChain = self.propertyMap[key](fileInfo);
-      [self printSigningChain:signingChain];
-    } else {
-      result = self.propertyMap[key](fileInfo);
-    }
+  if (self.jsonOutput) {
+    if (self.hadPreviousEntry) printf(",\n");
+    printf("%s", [self jsonStringForFileInfo:fileInfo withKeys:self.outputKeyList].UTF8String);
+  } else { // print directly (so we don't have to build a big nsstring?)
+    for (NSString *key in self.outputKeyList) {
+      NSString *result = nil;
+      if ([key isEqual:kRule]) {
+        result = [self ruleForFileInfo:fileInfo];
+      } else if ([key isEqual:kSigningChain]) {
+        NSArray *signingChain = self.propertyMap[key](fileInfo);
+        [self printSigningChain:signingChain];
+      } else {
+        result = self.propertyMap[key](fileInfo);
+      }
 
-    if (result) printf("%-21s: %s\n", [key UTF8String], [result UTF8String]);
+      if (result) printf("%-21s: %s\n", [key UTF8String], [result UTF8String]);
+    }
+    printf("\n");
   }
-  printf("\n");
+  self.hadPreviousEntry = YES;
+}
+
+- (NSString *)jsonStringForFileInfo:(SNTFileInfo *)fileInfo withKeys:(NSArray *)keys {
+  NSMutableDictionary *outputDict = [NSMutableDictionary dictionary];
+  for (NSString *key in keys) {
+    if ([key isEqual:kRule]) {
+      outputDict[key] = [self ruleForFileInfo:fileInfo];
+    } else {
+      outputDict[key] = self.propertyMap[key](fileInfo);
+    }
+  }
+  NSData *jsonData = [NSJSONSerialization dataWithJSONObject:outputDict
+                                                     options:NSJSONWritingPrettyPrinted
+                                                       error:NULL];
+  return [[NSString alloc] initWithData:jsonData encoding:NSUTF8StringEncoding];
 }
 
 // Parses the arguments in order to set the property variables:
