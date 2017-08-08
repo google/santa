@@ -427,6 +427,8 @@
 		670AD2EB5E3572321B058D02 /* Pods-Santa.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Santa.debug.xcconfig"; path = "Pods/Target Support Files/Pods-Santa/Pods-Santa.debug.xcconfig"; sourceTree = "<group>"; };
 		6C489E087A247B24480DB954 /* Pods-LogicTests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-LogicTests.debug.xcconfig"; path = "Pods/Target Support Files/Pods-LogicTests/Pods-LogicTests.debug.xcconfig"; sourceTree = "<group>"; };
 		7D949AA996AEAC326A4F6596 /* libPods-LogicTests.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-LogicTests.a"; sourceTree = BUILT_PRODUCTS_DIR; };
+		81133DAE1F3A75CE00917FF9 /* SNTCommand.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SNTCommand.h; sourceTree = "<group>"; };
+		81133DAF1F3A75CE00917FF9 /* SNTCommand.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SNTCommand.m; sourceTree = "<group>"; };
 		8EF10E4B8C86CED022C72F1B /* Pods-santactl.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-santactl.debug.xcconfig"; path = "Pods/Target Support Files/Pods-santactl/Pods-santactl.debug.xcconfig"; sourceTree = "<group>"; };
 		90E9D568200AB9B642E06272 /* libPods-Santa.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-Santa.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		A6A91785C40257CC156B4F05 /* Pods-Santa.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Santa.release.xcconfig"; path = "Pods/Target Support Files/Pods-Santa/Pods-Santa.release.xcconfig"; sourceTree = "<group>"; };
@@ -563,6 +565,8 @@
 		0D35BDA018FD71CE00921A21 /* santactl */ = {
 			isa = PBXGroup;
 			children = (
+				81133DAE1F3A75CE00917FF9 /* SNTCommand.h */,
+				81133DAF1F3A75CE00917FF9 /* SNTCommand.m */,
 				0D35BDAA18FD7CFD00921A21 /* SNTCommandController.h */,
 				0D35BDAB18FD7CFD00921A21 /* SNTCommandController.m */,
 				0D35BDA118FD71CE00921A21 /* main.m */,
