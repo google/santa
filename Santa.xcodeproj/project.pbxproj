@@ -157,6 +157,8 @@
 		168A4E09A2A5E0B7DF8A2F1A /* libPods-santad.a in Frameworks */ = {isa = PBXBuildFile; fileRef = C11A10A5D6E112788769CF70 /* libPods-santad.a */; };
 		4092327A1A51B66400A04527 /* SNTCommandRule.m in Sources */ = {isa = PBXBuildFile; fileRef = 409232791A51B65D00A04527 /* SNTCommandRule.m */; };
 		59D56CF2D9C5BD9B7E3CC56D /* libPods-santad-santabs.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 14B98F4051188ECB7D024331 /* libPods-santad-santabs.a */; };
+		81133DB01F3A76F700917FF9 /* SNTCommand.m in Sources */ = {isa = PBXBuildFile; fileRef = 81133DAF1F3A75CE00917FF9 /* SNTCommand.m */; };
+		81133DB11F3A77C600917FF9 /* SNTCommand.m in Sources */ = {isa = PBXBuildFile; fileRef = 81133DAF1F3A75CE00917FF9 /* SNTCommand.m */; };
 		B352A545B76783D568A6D0C5 /* libPods-Santa.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 90E9D568200AB9B642E06272 /* libPods-Santa.a */; };
 		C714F8B11D8044D400700EDF /* SNTCommandFileInfo.m in Sources */ = {isa = PBXBuildFile; fileRef = 0DCD5FBE1909D64A006B445C /* SNTCommandFileInfo.m */; };
 		C714F8B21D8044FE00700EDF /* SNTCommandController.m in Sources */ = {isa = PBXBuildFile; fileRef = 0D35BDAB18FD7CFD00921A21 /* SNTCommandController.m */; };
@@ -1425,6 +1427,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				81133DB01F3A76F700917FF9 /* SNTCommand.m in Sources */,
 				C714F8B21D8044FE00700EDF /* SNTCommandController.m in Sources */,
 				C7DA62F71E241938009BDF2C /* SNTXPCBundleServiceInterface.m in Sources */,
 				C714F8B11D8044D400700EDF /* SNTCommandFileInfo.m in Sources */,
@@ -1476,6 +1479,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				81133DB11F3A77C600917FF9 /* SNTCommand.m in Sources */,
 				0DA73CA21934F88D0056D7C4 /* SNTLogging.m in Sources */,
 				0D35BDB518FD84F600921A21 /* SNTCommandSync.m in Sources */,
 				0DCD5FBF1909D64A006B445C /* SNTCommandFileInfo.m in Sources */,
