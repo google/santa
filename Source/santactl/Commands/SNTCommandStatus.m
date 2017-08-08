@@ -21,7 +21,7 @@
 #import "SNTXPCConnection.h"
 #import "SNTXPCControlInterface.h"
 
-@interface SNTCommandStatus : SNTCommand
+@interface SNTCommandStatus : SNTCommand<SNTCommandProtocol>
 @end
 
 @implementation SNTCommandStatus
@@ -69,7 +69,7 @@ REGISTER_COMMAND_NAME(@"status")
   }];
   dispatch_group_enter(group);
   [[self.daemonConn remoteObjectProxy] watchdogInfo:^(uint64_t wd_cpuEvents, uint64_t wd_ramEvents,
-                                                 double wd_cpuPeak, double wd_ramPeak) {
+                                                      double wd_cpuPeak, double wd_ramPeak) {
     cpuEvents = wd_cpuEvents;
     cpuPeak = wd_cpuPeak;
     ramEvents = wd_ramEvents;

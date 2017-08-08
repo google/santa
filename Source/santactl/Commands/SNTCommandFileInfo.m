@@ -54,6 +54,9 @@ static NSString *const kValidUntil = @"Valid Until";
 static NSString *const kSHA256 = @"SHA-256";
 static NSString *const kSHA1 = @"SHA-1";
 
+// Message displayed when daemon communication fails
+static NSString *const kCommunicationErrorMsg = @"Could not communicate with daemon";
+
 // Used by longHelpText to display a list of valid keys passed in as an array.
 NSString *formattedStringForKeyArray(NSArray<NSString *> *array) {
   NSMutableString *result = [[NSMutableString alloc] init];
@@ -63,14 +66,14 @@ NSString *formattedStringForKeyArray(NSArray<NSString *> *array) {
   return result;
 }
 
-@interface SNTCommandFileInfo : SNTCommand
+@interface SNTCommandFileInfo : SNTCommand<SNTCommandProtocol>
 
 // Properties set from commandline flags
-@property BOOL recursive;
-@property BOOL jsonOutput;
-@property NSNumber *certIndex;
-@property NSArray<NSString *> *outputKeyList;
-@property NSString *directoryColor;
+@property(nonatomic) BOOL recursive;
+@property(nonatomic) BOOL jsonOutput;
+@property(nonatomic) NSNumber *certIndex;
+@property(nonatomic, copy) NSArray<NSString *> *outputKeyList;
+@property(nonatomic, copy) NSString *directoryColor;
 
 // Flag indicating when to use TTY colors
 @property(readonly, nonatomic) BOOL prettyOutput;
@@ -249,7 +252,6 @@ REGISTER_COMMAND_NAME(@"fileinfo")
 
 - (SNTAttributeBlock)downloadTimestamp {
   return ^id (SNTCommandFileInfo *cmd, SNTFileInfo *fileInfo) {
-
     return [cmd.dateFormatter stringFromDate:fileInfo.quarantineTimestamp];
   };
 }
@@ -322,7 +324,7 @@ REGISTER_COMMAND_NAME(@"fileinfo")
 - (SNTAttributeBlock)rule {
   return ^id (SNTCommandFileInfo *cmd, SNTFileInfo *fileInfo) {
     // If we previously were unable to connect, don't try again.
-    if (cmd.daemonUnavailable) return @"Could not communicate with daemon";
+    if (cmd.daemonUnavailable) return kCommunicationErrorMsg;
     static dispatch_once_t token;
     dispatch_once(&token, ^{ [cmd.daemonConn resume]; });
     __block SNTEventState state;
@@ -339,10 +341,10 @@ REGISTER_COMMAND_NAME(@"fileinfo")
     }];
     if (dispatch_semaphore_wait(sema, dispatch_time(DISPATCH_TIME_NOW, 5 * NSEC_PER_SEC))) {
       cmd.daemonUnavailable = YES;
-      return @"Could not communicate with daemon";
+      return kCommunicationErrorMsg;
     } else {
       NSMutableString *output =
-      (SNTEventStateAllow & state) ? @"Whitelisted".mutableCopy : @"Blacklisted".mutableCopy;
+          (SNTEventStateAllow & state) ? @"Whitelisted".mutableCopy : @"Blacklisted".mutableCopy;
       switch (state) {
         case SNTEventStateAllowUnknown:
         case SNTEventStateBlockUnknown:
@@ -414,7 +416,6 @@ REGISTER_COMMAND_NAME(@"fileinfo")
 
   self.directoryColor = [self getDirectoryTTYColor];
 
-
   NSArray *filePaths = [self parseArguments:arguments];
 
   if (!self.outputKeyList || !self.outputKeyList.count) {
@@ -430,7 +431,7 @@ REGISTER_COMMAND_NAME(@"fileinfo")
   NSString *cwd = [fm currentDirectoryPath];
   for (NSString *path in filePaths) {
     NSString *fullPath = [path stringByStandardizingPath];
-    if ([path characterAtIndex:0] != '/') {
+    if (path.length && [path characterAtIndex:0] != '/') {
       fullPath = [cwd stringByAppendingPathComponent:fullPath];
     }
     [self recurseAtPath:fullPath];
@@ -571,7 +572,7 @@ REGISTER_COMMAND_NAME(@"fileinfo")
       NSInteger index = [arguments[i] integerValue];
       if (index == 0) {
         [self printErrorUsageAndExit:
-         @"\n0 is an invalid --cert-index\n  --cert-index is 1-indexed"];
+            @"\n0 is an invalid --cert-index\n  --cert-index is 1-indexed"];
       }
       self.certIndex = @(index);
     } else if ([arg caseInsensitiveCompare:@"--key"] == NSOrderedSame) {
@@ -594,7 +595,7 @@ REGISTER_COMMAND_NAME(@"fileinfo")
     for (NSString *key in keys) {
       if (![validKeys containsObject:key]) {
         [self printErrorUsageAndExit:
-         [NSString stringWithFormat:@"\n\"%@\" is an invalid key when using --cert-index", key]];
+            [NSString stringWithFormat:@"\n\"%@\" is an invalid key when using --cert-index", key]];
       }
     }
   } else {
@@ -602,7 +603,7 @@ REGISTER_COMMAND_NAME(@"fileinfo")
     for (NSString *key in keys) {
       if (![validKeys containsObject:key]) {
         [self printErrorUsageAndExit:
-         [NSString stringWithFormat:@"\n\"%@\" is an invalid key", key]];
+            [NSString stringWithFormat:@"\n\"%@\" is an invalid key", key]];
       }
     }
   }

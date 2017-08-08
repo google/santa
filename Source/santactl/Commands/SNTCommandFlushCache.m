@@ -21,7 +21,7 @@
 #import "SNTXPCConnection.h"
 #import "SNTXPCControlInterface.h"
 
-@interface SNTCommandFlushCache : SNTCommand
+@interface SNTCommandFlushCache : SNTCommand<SNTCommandProtocol>
 @end
 
 @implementation SNTCommandFlushCache

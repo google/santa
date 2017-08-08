@@ -23,7 +23,7 @@
 
 #include <sys/stat.h>
 
-@interface SNTCommandCheckCache : SNTCommand
+@interface SNTCommandCheckCache : SNTCommand<SNTCommandProtocol>
 @end
 
 @implementation SNTCommandCheckCache
@@ -51,7 +51,8 @@ REGISTER_COMMAND_NAME(@"checkcache")
 
 - (void)runWithArguments:(NSArray *)arguments {
   uint64_t vnodeID = [self vnodeIDForFile:arguments.firstObject];
-  [[self.daemonConn remoteObjectProxy] checkCacheForVnodeID:vnodeID withReply:^(santa_action_t action) {
+  [[self.daemonConn remoteObjectProxy] checkCacheForVnodeID:vnodeID
+                                                  withReply:^(santa_action_t action) {
     if (action == ACTION_RESPOND_ALLOW) {
       LOGI(@"File exists in [whitelist] kernel cache");
       exit(0);

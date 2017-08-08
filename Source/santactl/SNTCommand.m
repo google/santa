@@ -16,11 +16,6 @@
 
 @implementation SNTCommand
 
-+ (BOOL)requiresRoot { return NO; }
-+ (BOOL)requiresDaemonConn { return NO; }
-+ (NSString *)shortHelpText { return @""; }
-+ (NSString *)longHelpText { return @""; }
-
 + (void)runWithArguments:(NSArray *)arguments daemonConnection:(SNTXPCConnection *)daemonConn {
   id cmd = [[self alloc] initWithDaemonConnection:daemonConn];
   [cmd runWithArguments:arguments];
@@ -28,8 +23,9 @@
 
 - (instancetype)initWithDaemonConnection:(SNTXPCConnection *)daemonConn {
   self = [super init];
-  if (!self) return nil;
-  _daemonConn = daemonConn;
+  if (self) {
+    _daemonConn = daemonConn;
+  }
   return self;
 }
 

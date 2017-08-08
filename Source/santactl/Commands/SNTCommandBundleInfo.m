@@ -21,7 +21,7 @@
 #import "SNTXPCConnection.h"
 #import "SNTXPCControlInterface.h"
 
-@interface SNTCommandBundleInfo : SNTCommand
+@interface SNTCommandBundleInfo : SNTCommand<SNTCommandProtocol>
 @end
 
 @implementation SNTCommandBundleInfo
@@ -60,11 +60,10 @@ REGISTER_COMMAND_NAME(@"bundleinfo")
   SNTStoredEvent *se = [[SNTStoredEvent alloc] init];
   se.fileBundlePath = fi.bundlePath;
 
-  [[self.daemonConn remoteObjectProxy] hashBundleBinariesForEvent:se
-                                                       reply:^(NSString *hash,
-                                                               NSArray<SNTStoredEvent *> *events,
-                                                               NSNumber *time) {
-
+  [[self.daemonConn remoteObjectProxy]
+      hashBundleBinariesForEvent:se
+                           reply:^(NSString *hash, NSArray<SNTStoredEvent *> *events,
+                                   NSNumber *time) {
     printf("Hashing time: %llu ms\n", time.unsignedLongLongValue);
     printf("%lu events found\n", events.count);
     printf("BundleHash: %s\n", hash.UTF8String);

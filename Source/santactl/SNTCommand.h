@@ -16,7 +16,7 @@
 
 @class SNTXPCConnection;
 
-@protocol SNTCommandProtocol <NSObject>
+@protocol SNTCommandProtocol
 
 ///
 ///  @return YES if command requires root.
@@ -38,6 +38,10 @@
 ///
 + (NSString *)longHelpText;
 
+@end
+
+@protocol SNTCommandRunProtocol
+
 ///
 ///  Called when the user is running the command
 ///  @param arguments an array of arguments passed in
@@ -50,9 +54,9 @@
 
 @end
 
-@interface SNTCommand : NSObject<SNTCommandProtocol>
+@interface SNTCommand : NSObject<SNTCommandRunProtocol>
 
-@property SNTXPCConnection *daemonConn;
+@property(nonatomic,readonly) SNTXPCConnection *daemonConn;
 
 ///  Designated initializer
 - (instancetype)initWithDaemonConnection:(SNTXPCConnection *)daemonConn;

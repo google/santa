@@ -24,7 +24,7 @@
 #import "SNTXPCConnection.h"
 #import "SNTXPCControlInterface.h"
 
-@interface SNTCommandSync : SNTCommand
+@interface SNTCommandSync : SNTCommand<SNTCommandProtocol>
 @property SNTXPCConnection *listener;
 @property SNTCommandSyncManager *syncManager;
 @end

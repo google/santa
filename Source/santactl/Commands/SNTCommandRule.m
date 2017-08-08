@@ -27,7 +27,7 @@
 #import "SNTXPCConnection.h"
 #import "SNTXPCControlInterface.h"
 
-@interface SNTCommandRule : SNTCommand
+@interface SNTCommandRule : SNTCommand<SNTCommandProtocol>
 @end
 
 @implementation SNTCommandRule
@@ -146,8 +146,8 @@ REGISTER_COMMAND_NAME(@"rule")
   }
 
   [[self.daemonConn remoteObjectProxy] databaseRuleAddRules:@[newRule]
-                                            cleanSlate:NO
-                                                 reply:^(NSError *error) {
+                                                 cleanSlate:NO
+                                                      reply:^(NSError *error) {
     if (error) {
       printf("Failed to modify rules: %s", [error.localizedDescription UTF8String]);
       LOGD(@"Failure reason: %@", error.localizedFailureReason);

@@ -23,7 +23,7 @@
 #import "SNTKernelCommon.h"
 #import "SNTXPCConnection.h"
 
-@interface SNTCommandVersion : SNTCommand
+@interface SNTCommandVersion : SNTCommand<SNTCommandProtocol>
 @end
 
 @implementation SNTCommandVersion
