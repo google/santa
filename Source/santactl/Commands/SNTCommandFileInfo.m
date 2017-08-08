@@ -72,14 +72,26 @@ NSString *formattedStringForKeyArray(NSArray<NSString *> *array) {
 @property NSArray<NSString *> *outputKeyList;
 @property NSString *directoryColor;
 
+// Flag indicating when to use TTY colors
 @property(readonly, nonatomic) BOOL prettyOutput;
-@property(nonatomic) BOOL hadPreviousEntry; // used when printing info for multiple files
+
+// Flag needed when printing JSON for multiple files to get commas right
+@property(nonatomic) BOOL jsonPreviousEntry;
+
+// Flag used to avoid multiple attempts to connect to daemon
 @property(nonatomic) BOOL daemonUnavailable;
+
+// Common date formatter
+@property(nonatomic) NSDateFormatter *dateFormatter;
+
+// Valid key lists
 @property(readonly, nonatomic) NSArray<NSString *> *fileInfoKeys;
 @property(readonly, nonatomic) NSArray<NSString *> *signingChainKeys;
 
-// Block type to be used with propertyMap values
-typedef id (^SNTAttributeBlock)(SNTFileInfo *);
+// Block type to be used with propertyMap values.  The first SNTCommandFileInfo parameter
+// is really required only for the the rule property getter which needs access to the daemon
+// connection, but downloadTimestamp & signingChain also use it for a shared date formatter.
+typedef id (^SNTAttributeBlock)(SNTCommandFileInfo *, SNTFileInfo *);
 
 // on read generated properties
 @property(readonly, copy, nonatomic) SNTAttributeBlock path;
@@ -102,7 +114,6 @@ typedef id (^SNTAttributeBlock)(SNTFileInfo *);
 @property(nonatomic) NSDictionary<NSString *, SNTAttributeBlock> *propertyMap;
 
 @end
-
 
 @implementation SNTCommandFileInfo
 
@@ -164,8 +175,8 @@ REGISTER_COMMAND_NAME(@"fileinfo")
 - (instancetype)initWithDaemonConnection:(SNTXPCConnection *)daemonConn {
   self = [super initWithDaemonConnection:daemonConn];
   if (!self) return nil;
-  _recursive = NO;
-  _jsonOutput = NO;
+  _dateFormatter = [[NSDateFormatter alloc] init];
+  _dateFormatter.dateFormat = @"yyyy/MM/dd HH:mm:ss Z";
 
   _propertyMap = @{ kPath : self.path,
                     kSHA256 : self.sha256,
@@ -180,6 +191,7 @@ REGISTER_COMMAND_NAME(@"fileinfo")
                     kType : self.type,
                     kPageZero : self.pageZero,
                     kCodeSigned : self.codeSigned,
+                    kRule : self.rule,
                     kSigningChain : self.signingChain };
 
   return self;
@@ -188,69 +200,68 @@ REGISTER_COMMAND_NAME(@"fileinfo")
 #pragma mark property getters
 
 - (SNTAttributeBlock)path {
-  return ^id (SNTFileInfo *fileInfo) {
+  return ^id (SNTCommandFileInfo *cmd, SNTFileInfo *fileInfo) {
     return fileInfo.path;
   };
 }
 
 - (SNTAttributeBlock)sha256 {
-  return ^id (SNTFileInfo *fileInfo) {
+  return ^id (SNTCommandFileInfo *cmd, SNTFileInfo *fileInfo) {
     return fileInfo.SHA256;
   };
 }
 
 - (SNTAttributeBlock)sha1 {
-  return ^id (SNTFileInfo *fileInfo) {
+  return ^id (SNTCommandFileInfo *cmd, SNTFileInfo *fileInfo) {
     return fileInfo.SHA1;
   };
 }
 
 - (SNTAttributeBlock)bundleName {
-  return ^id (SNTFileInfo *fileInfo) {
+  return ^id (SNTCommandFileInfo *cmd, SNTFileInfo *fileInfo) {
     return fileInfo.bundleName;
   };
 }
 
 - (SNTAttributeBlock)bundleVersion {
-  return ^id (SNTFileInfo *fileInfo) {
+  return ^id (SNTCommandFileInfo *cmd, SNTFileInfo *fileInfo) {
     return fileInfo.bundleVersion;
   };
 }
 
 - (SNTAttributeBlock)bundleVersionStr {
-  return ^id (SNTFileInfo *fileInfo) {
+  return ^id (SNTCommandFileInfo *cmd, SNTFileInfo *fileInfo) {
     return fileInfo.bundleShortVersionString;
   };
 }
 
 - (SNTAttributeBlock)downloadReferrerURL {
-  return ^id (SNTFileInfo *fileInfo) {
+  return ^id (SNTCommandFileInfo *cmd, SNTFileInfo *fileInfo) {
     return fileInfo.quarantineRefererURL;
   };
 }
 
 - (SNTAttributeBlock)downloadURL {
-  return ^id (SNTFileInfo *fileInfo) {
+  return ^id (SNTCommandFileInfo *cmd, SNTFileInfo *fileInfo) {
     return fileInfo.quarantineDataURL;
   };
 }
 
 - (SNTAttributeBlock)downloadTimestamp {
-  return ^id (SNTFileInfo *fileInfo) {
-    NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];
-    dateFormatter.dateFormat = @"yyyy/MM/dd HH:mm:ss Z";
-    return [dateFormatter stringFromDate:fileInfo.quarantineTimestamp];
+  return ^id (SNTCommandFileInfo *cmd, SNTFileInfo *fileInfo) {
+
+    return [cmd.dateFormatter stringFromDate:fileInfo.quarantineTimestamp];
   };
 }
 
 - (SNTAttributeBlock)downloadAgent {
-  return ^id (SNTFileInfo *fileInfo) {
+  return ^id (SNTCommandFileInfo *cmd, SNTFileInfo *fileInfo) {
     return fileInfo.quarantineAgentBundleID;
   };
 }
 
 - (SNTAttributeBlock)type {
-  return ^id (SNTFileInfo *fileInfo) {
+  return ^id (SNTCommandFileInfo *cmd, SNTFileInfo *fileInfo) {
     NSArray *archs = [fileInfo architectures];
     if (archs.count == 0) {
       return [fileInfo humanReadableFileType];
@@ -261,7 +272,7 @@ REGISTER_COMMAND_NAME(@"fileinfo")
 }
 
 - (SNTAttributeBlock)pageZero {
-  return ^id (SNTFileInfo *fileInfo) {
+  return ^id (SNTCommandFileInfo *cmd, SNTFileInfo *fileInfo) {
     if ([fileInfo isMissingPageZero]) {
       return @"__PAGEZERO segment missing/bad!";
     }
@@ -270,7 +281,7 @@ REGISTER_COMMAND_NAME(@"fileinfo")
 }
 
 - (SNTAttributeBlock)codeSigned {
-  return ^id (SNTFileInfo *fileInfo) {
+  return ^id (SNTCommandFileInfo *cmd, SNTFileInfo *fileInfo) {
     NSError *error;
     MOLCodesignChecker *csc = [[MOLCodesignChecker alloc] initWithBinaryPath:fileInfo.path
                                                                        error:&error];
@@ -308,14 +319,73 @@ REGISTER_COMMAND_NAME(@"fileinfo")
   };
 }
 
-- (SNTAttributeBlock)signingChain {
-  return ^id (SNTFileInfo *fileInfo) {
+- (SNTAttributeBlock)rule {
+  return ^id (SNTCommandFileInfo *cmd, SNTFileInfo *fileInfo) {
+    // If we previously were unable to connect, don't try again.
+    if (cmd.daemonUnavailable) return @"Could not communicate with daemon";
+    static dispatch_once_t token;
+    dispatch_once(&token, ^{ [cmd.daemonConn resume]; });
+    __block SNTEventState state;
+    dispatch_semaphore_t sema = dispatch_semaphore_create(0);
     NSError *error;
     MOLCodesignChecker *csc = [[MOLCodesignChecker alloc] initWithBinaryPath:fileInfo.path
                                                                        error:&error];
-    NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];
-    dateFormatter.dateFormat = @"yyyy/MM/dd HH:mm:ss Z";
+    [[self.daemonConn remoteObjectProxy] decisionForFilePath:fileInfo.path
+                                                  fileSHA256:fileInfo.SHA256
+                                           certificateSHA256:csc.leafCertificate.SHA256
+                                                       reply:^(SNTEventState s) {
+      state = s;
+      dispatch_semaphore_signal(sema);
+    }];
+    if (dispatch_semaphore_wait(sema, dispatch_time(DISPATCH_TIME_NOW, 5 * NSEC_PER_SEC))) {
+      cmd.daemonUnavailable = YES;
+      return @"Could not communicate with daemon";
+    } else {
+      NSMutableString *output =
+      (SNTEventStateAllow & state) ? @"Whitelisted".mutableCopy : @"Blacklisted".mutableCopy;
+      switch (state) {
+        case SNTEventStateAllowUnknown:
+        case SNTEventStateBlockUnknown:
+          [output appendString:@" (Unknown)"];
+          break;
+        case SNTEventStateAllowBinary:
+        case SNTEventStateBlockBinary:
+          [output appendString:@" (Binary)"];
+          break;
+        case SNTEventStateAllowCertificate:
+        case SNTEventStateBlockCertificate:
+          [output appendString:@" (Certificate)"];
+          break;
+        case SNTEventStateAllowScope:
+        case SNTEventStateBlockScope:
+          [output appendString:@" (Scope)"];
+          break;
+        default:
+          output = @"None".mutableCopy;
+          break;
+      }
+      if (cmd.prettyOutput) {
+        if ((SNTEventStateAllow & state)) {
+          [output insertString:@"\033[32m" atIndex:0];
+          [output appendString:@"\033[0m"];
+        } else if ((SNTEventStateBlock & state)) {
+          [output insertString:@"\033[31m" atIndex:0];
+          [output appendString:@"\033[0m"];
+        } else {
+          [output insertString:@"\033[33m" atIndex:0];
+          [output appendString:@"\033[0m"];
+        }
+      }
+      return output.copy;
+    }
+  };
+}
 
+- (SNTAttributeBlock)signingChain {
+  return ^id (SNTCommandFileInfo *cmd, SNTFileInfo *fileInfo) {
+    NSError *error;
+    MOLCodesignChecker *csc = [[MOLCodesignChecker alloc] initWithBinaryPath:fileInfo.path
+                                                                       error:&error];
     if (csc.certificates.count) {
       NSMutableArray *certs = [[NSMutableArray alloc] initWithCapacity:csc.certificates.count];
       [csc.certificates enumerateObjectsUsingBlock:^(MOLCertificate *c, unsigned long idx,
@@ -325,10 +395,10 @@ REGISTER_COMMAND_NAME(@"fileinfo")
                             kCommonName : c.commonName ?: @"null",
                             kOrganization : c.orgName ?: @"null",
                             kOrganizationalUnit : c.orgUnit ?: @"null",
-                            kValidFrom : [dateFormatter stringFromDate:c.validFrom] ?: @"null",
-                            kValidUntil : [dateFormatter stringFromDate:c.validUntil]
-                            ?: @"null"
-                            }];
+                            kValidFrom : [cmd.dateFormatter stringFromDate:c.validFrom] ?: @"null",
+                            kValidUntil : [cmd.dateFormatter stringFromDate:c.validUntil]
+                                ?: @"null"
+                          }];
       }];
       return certs;
     }
@@ -440,68 +510,6 @@ REGISTER_COMMAND_NAME(@"fileinfo")
   }
 }
 
-// Getting rule information for a file requires also having a daemon connection, so we can't simply
-// return a block acting on a fileInfo object to retrieve the property value.
-- (NSString *)ruleForFileInfo:(SNTFileInfo *)fileInfo {
-  // If we previously were unable to connect, don't try again.
-  if (self.daemonUnavailable) return @"Could not communicate with daemon";
-  static dispatch_once_t token;
-  dispatch_once(&token, ^{ [self.daemonConn resume]; });
-  __block SNTEventState state;
-  dispatch_semaphore_t sema = dispatch_semaphore_create(0);
-  NSError *error;
-  MOLCodesignChecker *csc = [[MOLCodesignChecker alloc] initWithBinaryPath:fileInfo.path
-                                                                     error:&error];
-  [[self.daemonConn remoteObjectProxy] decisionForFilePath:fileInfo.path
-                                                fileSHA256:fileInfo.SHA256
-                                         certificateSHA256:csc.leafCertificate.SHA256
-                                                     reply:^(SNTEventState s) {
-    state = s;
-    dispatch_semaphore_signal(sema);
-  }];
-  if (dispatch_semaphore_wait(sema, dispatch_time(DISPATCH_TIME_NOW, 5 * NSEC_PER_SEC))) {
-    self.daemonUnavailable = YES;
-    return @"Could not communicate with daemon";
-  } else {
-    NSMutableString *output =
-    (SNTEventStateAllow & state) ? @"Whitelisted".mutableCopy : @"Blacklisted".mutableCopy;
-    switch (state) {
-      case SNTEventStateAllowUnknown:
-      case SNTEventStateBlockUnknown:
-        [output appendString:@" (Unknown)"];
-        break;
-      case SNTEventStateAllowBinary:
-      case SNTEventStateBlockBinary:
-        [output appendString:@" (Binary)"];
-        break;
-      case SNTEventStateAllowCertificate:
-      case SNTEventStateBlockCertificate:
-        [output appendString:@" (Certificate)"];
-        break;
-      case SNTEventStateAllowScope:
-      case SNTEventStateBlockScope:
-        [output appendString:@" (Scope)"];
-        break;
-      default:
-        output = @"None".mutableCopy;
-        break;
-    }
-    if (self.prettyOutput) {
-      if ((SNTEventStateAllow & state)) {
-        [output insertString:@"\033[32m" atIndex:0];
-        [output appendString:@"\033[0m"];
-      } else if ((SNTEventStateBlock & state)) {
-        [output insertString:@"\033[31m" atIndex:0];
-        [output appendString:@"\033[0m"];
-      } else {
-        [output insertString:@"\033[33m" atIndex:0];
-        [output appendString:@"\033[0m"];
-      }
-    }
-    return output.copy;
-  }
-}
-
 // Prints out the info for a single (non-directory) file.  Which info is printed is controlled
 // by the keys in self.outputKeyList.
 - (void)printInfoForFile:(NSString *)path {
@@ -511,25 +519,21 @@ REGISTER_COMMAND_NAME(@"fileinfo")
     return;
   }
   if (self.jsonOutput) {
-    if (self.hadPreviousEntry) printf(",\n");
+    if (self.jsonPreviousEntry) printf(",\n");
     printf("%s", [self jsonStringForFileInfo:fileInfo withKeys:self.outputKeyList].UTF8String);
+    self.jsonPreviousEntry = YES;
   } else { // print directly (so we don't have to build a big nsstring?)
     for (NSString *key in self.outputKeyList) {
-      NSString *result = nil;
-      if ([key isEqual:kRule]) {
-        result = [self ruleForFileInfo:fileInfo];
-      } else if ([key isEqual:kSigningChain]) {
-        NSArray *signingChain = self.propertyMap[key](fileInfo);
+      if ([key isEqual:kSigningChain]) {
+        NSArray *signingChain = self.propertyMap[key](self, fileInfo);
         [self printSigningChain:signingChain];
       } else {
-        result = self.propertyMap[key](fileInfo);
+        NSString *result = self.propertyMap[key](self, fileInfo);
+        if (result) printf("%-21s: %s\n", [key UTF8String], [result UTF8String]);
       }
-
-      if (result) printf("%-21s: %s\n", [key UTF8String], [result UTF8String]);
     }
     printf("\n");
   }
-  self.hadPreviousEntry = YES;
 }
 
 // Given a SNTFileInfo object and an array of keys, returns and nicely formatted NSString
@@ -537,11 +541,7 @@ REGISTER_COMMAND_NAME(@"fileinfo")
 - (NSString *)jsonStringForFileInfo:(SNTFileInfo *)fileInfo withKeys:(NSArray *)keys {
   NSMutableDictionary *outputDict = [NSMutableDictionary dictionary];
   for (NSString *key in keys) {
-    if ([key isEqual:kRule]) {
-      outputDict[key] = [self ruleForFileInfo:fileInfo];
-    } else {
-      outputDict[key] = self.propertyMap[key](fileInfo);
-    }
+    outputDict[key] = self.propertyMap[key](self, fileInfo);
   }
   NSData *jsonData = [NSJSONSerialization dataWithJSONObject:outputDict
                                                      options:NSJSONWritingPrettyPrinted
