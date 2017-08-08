@@ -48,13 +48,13 @@
     message = [[SNTConfigurator configurator] unknownBlockMessage];
     if (!message) {
       message = @"The following application has been blocked from executing<br />"
-      @"because its trustworthiness cannot be determined.";
+                @"because its trustworthiness cannot be determined.";
     }
   } else {
     message = [[SNTConfigurator configurator] bannedBlockMessage];
     if (!message) {
       message = @"The following application has been blocked from executing<br />"
-      @"because it has been deemed malicious.";
+                @"because it has been deemed malicious.";
     }
   }
 

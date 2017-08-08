@@ -100,19 +100,19 @@ static NSString * const silencedNotificationsKey = @"SilencedNotifications";
   NSString *customMsg;
   switch (clientmode) {
     case SNTClientModeMonitor:
-    un.informativeText = @"Switching into Monitor mode";
-    customMsg = [[SNTConfigurator configurator] modeNotificationMonitor];
-    customMsg = [SNTBlockMessage stringFromHTML:customMsg];
-    if (customMsg.length) un.informativeText = customMsg;
-    break;
+      un.informativeText = @"Switching into Monitor mode";
+      customMsg = [[SNTConfigurator configurator] modeNotificationMonitor];
+      customMsg = [SNTBlockMessage stringFromHTML:customMsg];
+      if (customMsg.length) un.informativeText = customMsg;
+        break;
     case SNTClientModeLockdown:
-    un.informativeText = @"Switching into Lockdown mode";
-    customMsg = [[SNTConfigurator configurator] modeNotificationLockdown];
-    customMsg = [SNTBlockMessage stringFromHTML:customMsg];
-    if (customMsg.length) un.informativeText = customMsg;
-    break;
+      un.informativeText = @"Switching into Lockdown mode";
+      customMsg = [[SNTConfigurator configurator] modeNotificationLockdown];
+      customMsg = [SNTBlockMessage stringFromHTML:customMsg];
+      if (customMsg.length) un.informativeText = customMsg;
+        break;
     default:
-    return;
+      return;
   }
   [[NSUserNotificationCenter defaultUserNotificationCenter] deliverNotification:un];
 }
@@ -120,7 +120,7 @@ static NSString * const silencedNotificationsKey = @"SilencedNotifications";
 - (void)postBlockNotification:(SNTStoredEvent *)event withCustomMessage:(NSString *)message {
   // See if this binary is already in the list of pending notifications.
   NSPredicate *predicate =
-  [NSPredicate predicateWithFormat:@"event.fileSHA256==%@", event.fileSHA256];
+     [NSPredicate predicateWithFormat:@"event.fileSHA256==%@", event.fileSHA256];
   if ([[self.pendingNotifications filteredArrayUsingPredicate:predicate] count]) return;
 
   // See if this binary is silenced.
@@ -149,7 +149,7 @@ static NSString * const silencedNotificationsKey = @"SilencedNotifications";
   // This includes making windows.
   dispatch_async(dispatch_get_main_queue(), ^{
     SNTMessageWindowController *pendingMsg =
-    [[SNTMessageWindowController alloc] initWithEvent:event andMessage:message];
+        [[SNTMessageWindowController alloc] initWithEvent:event andMessage:message];
     pendingMsg.delegate = self;
     [self.pendingNotifications addObject:pendingMsg];
 

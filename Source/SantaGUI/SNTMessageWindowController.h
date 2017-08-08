@@ -30,10 +30,8 @@
 @property(weak) IBOutlet NSWindow *mainWindow;
 @property(weak) IBOutlet WebView *webView;
 
-
 - (instancetype)initWithEvent:(SNTStoredEvent *)event andMessage:(NSString *)message;
 
-- (IBAction)showWindow:(id)sender;
 - (IBAction)closeWindow:(id)sender;
 - (IBAction)showCertInfo;
 

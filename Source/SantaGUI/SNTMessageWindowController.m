@@ -61,7 +61,7 @@
   [self.window setFrame:NSMakeRect(self.window.frame.origin.x, self.window.frame.origin.y, 0, 0)
                 display:NO];
   self.webView.frame = NSMakeRect(0, 0, 0, 0);
-  [self.webView setDrawsBackground:NO];
+  self.webView.drawsBackground = NO;
   self.window.movableByWindowBackground = YES;
   self.webView.shouldCloseWithWindow = YES;
   
@@ -157,11 +157,6 @@
   }
 }
 
-- (IBAction)showWindow:(id)sender {
-  [(SNTMessageWindow *)self.window fadeIn:sender];
-  [self addObserver:self forKeyPath:@"self.event.fileBundleHash" options:0 context:NULL];
-}
-
 - (void)closeWindow:(id)sender {
   [self.progress cancel];
   [(SNTMessageWindow *)self.window fadeOut:sender];
@@ -191,7 +186,7 @@
                                                showGroup:YES];
 }
 
-- (IBAction)openEventDetails:(id)sender {
+- (void)openEventDetails:(id)sender {
   NSURL *url = [SNTBlockMessage eventDetailURLForEvent:self.event];
   [self closeWindow:sender];
   [[NSWorkspace sharedWorkspace] openURL:url];
@@ -222,8 +217,7 @@
 }
 
 - (NSString *)attributedCustomMessage {
-  return [SNTBlockMessage blockMessageForGUI:self.event
-                               customMessage:self.customMessage];
+  return [SNTBlockMessage blockMessageForGUI:self.event customMessage:self.customMessage];
 }
 
 // Loads local html file to be the WebView in the MessageWindow
@@ -236,10 +230,10 @@
 
 // Allows Javascript to only call the methods below
 + (BOOL)isSelectorExcludedFromWebScript:(SEL)selector {
-  if (selector == @selector(santaData)
-      || selector == @selector(showCertInfo)
-      || selector == @selector(acceptFunction)
-      || selector == @selector(ignoreFunction:)) {
+  if (selector == @selector(santaData) ||
+      selector == @selector(showCertInfo) ||
+      selector == @selector(acceptFunction) ||
+      selector == @selector(ignoreFunction:)) {
     return NO;
   }
   return YES;
@@ -248,36 +242,18 @@
 // Data that is passed from Objective-C code to Javascript for parsing
 - (NSString *)santaData {
   NSMutableDictionary *dataSet = [[NSMutableDictionary alloc] init];
-  if (self.attributedCustomMessage) {
-    dataSet[@"message"] = self.attributedCustomMessage;
-  }
-  if (self.event.fileBundleName) {
-    dataSet[@"application"] = self.event.fileBundleName;
-  }
-  if (self.event.filePath) {
-    dataSet[@"path"] = self.event.filePath;
-  }
+  if (self.attributedCustomMessage) dataSet[@"message"] = self.attributedCustomMessage;
+  if (self.event.fileBundleName) dataSet[@"application"] = self.event.fileBundleName;
+  if (self.event.filePath) dataSet[@"path"] = self.event.filePath;
   if (self.event.filePath.lastPathComponent) {
     dataSet[@"filename"] = self.event.filePath.lastPathComponent;
   }
-  if (self.publisherInfo) {
-    dataSet[@"publisher"] = self.publisherInfo;
-  }
-  if (self.event.fileSHA256) {
-    dataSet[@"identifier"] = self.event.fileSHA256;
-  }
-  if (self.event.needsBundleHash) {
-    dataSet[@"bundle identifier"] = @"";
-  }
-  if (self.event.parentName) {
-    dataSet[@"parent"] = self.event.parentName;
-  }
-  if (self.event.ppid) {
-    dataSet[@"ppid"] = self.event.ppid;
-  }
-  if (self.event.executingUser) {
-    dataSet[@"user"] = self.event.executingUser;
-  }
+  if (self.publisherInfo) dataSet[@"publisher"] = self.publisherInfo;
+  if (self.event.fileSHA256) dataSet[@"identifier"] = self.event.fileSHA256;
+  if (self.event.needsBundleHash) dataSet[@"bundle identifier"] = @"";
+  if (self.event.parentName) dataSet[@"parent"] = self.event.parentName;
+  if (self.event.ppid) dataSet[@"ppid"] = self.event.ppid;
+  if (self.event.executingUser) dataSet[@"user"] = self.event.executingUser;
   
   NSData *dataTransform = [NSJSONSerialization dataWithJSONObject:dataSet options:0 error:NULL];
   NSString *json = [[NSString alloc] initWithData:dataTransform encoding:NSUTF8StringEncoding];
@@ -286,10 +262,10 @@
 
 // Allows links in WebView to open in default Web browser instead of within the WebView
 - (void)webView:(WebView *)webView
-decidePolicyForNavigationAction:(NSDictionary *)actionInformation
-        request:(NSURLRequest *)request
-          frame:(WebFrame *)frame
-decisionListener:(id<WebPolicyDecisionListener>)listener {
+    decidePolicyForNavigationAction:(NSDictionary *)actionInformation
+                            request:(NSURLRequest *)request
+                              frame:(WebFrame *)frame
+                   decisionListener:(id<WebPolicyDecisionListener>)listener {
   if ([request.URL.path isEqualToString:[[[self localHTMLForSanta] URL] absoluteString]]) {
     [listener use];
   } else {
