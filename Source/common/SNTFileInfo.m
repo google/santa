@@ -555,8 +555,7 @@ extern NSString *const NSURLQuarantinePropertiesKey WEAK_IMPORT_ATTRIBUTE;
     NSData *d = [self.fileHandle readDataOfLength:range.length];
     if (d.length != range.length) return nil;
     return d;
-  }
-  @catch (NSException *e) {
+  } @catch (NSException *e) {
     return nil;
   }
 }

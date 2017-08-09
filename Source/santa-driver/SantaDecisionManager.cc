@@ -29,7 +29,8 @@ bool SantaDecisionManager::init() {
   decision_dataqueue_lock_ = lck_mtx_alloc_init(sdm_lock_grp_, sdm_lock_attr_);
   log_dataqueue_lock_ = lck_mtx_alloc_init(sdm_lock_grp_, sdm_lock_attr_);
 
-  decision_cache_ = new SantaCache<uint64_t>(10000, 2);
+  root_decision_cache_ = new SantaCache<uint64_t>(5000, 2);
+  non_root_decision_cache_ = new SantaCache<uint64_t>(500, 2);
   vnode_pid_map_ = new SantaCache<uint64_t>(2000, 5);
 
   decision_dataqueue_ = IOSharedDataQueue::withEntries(
@@ -40,6 +41,12 @@ bool SantaDecisionManager::init() {
       kMaxLogQueueEvents, sizeof(santa_message_t));
   if (!log_dataqueue_) return kIOReturnNoMemory;
 
+  vfs_context_t ctx = vfs_context_create(NULL);
+  vnode_t root = vfs_rootvnode();
+  root_vsid_ = GetVnodeIDForVnode(ctx, root) >> 32;
+  vnode_put(root);
+  vfs_context_rele(ctx);
+
   client_pid_ = 0;
 
   ts_ = { .tv_sec = kRequestLoopSleepMilliseconds / 1000,
@@ -49,7 +56,8 @@ bool SantaDecisionManager::init() {
 }
 
 void SantaDecisionManager::free() {
-  delete decision_cache_;
+  delete root_decision_cache_;
+  delete non_root_decision_cache_;
   delete vnode_pid_map_;
 
   if (decision_dataqueue_lock_) {
@@ -195,15 +203,28 @@ kern_return_t SantaDecisionManager::StopListener() {
 
 #pragma mark Cache Management
 
+/**
+  Return the correct cache for a given identifier.
+
+  @param identifier The identifier
+  @return SantaCache* The cache to use
+*/
+SantaCache<uint64_t>* SantaDecisionManager::CacheForIdentifier(const uint64_t identifier) {
+  return (identifier >> 32 == root_vsid_) ? root_decision_cache_ : non_root_decision_cache_;
+}
+
+
 void SantaDecisionManager::AddToCache(
     uint64_t identifier, santa_action_t decision, uint64_t microsecs) {
   // Decision is stored in upper 8 bits, timestamp in remaining 56.
   uint64_t val = ((uint64_t)decision << 56) | (microsecs & 0xFFFFFFFFFFFFFF);
 
+  auto decision_cache = CacheForIdentifier(identifier);
+
   // If a previous entry was not found and the new entry is not `REQUEST_BINARY`, remove the
   // existing entry. This is to prevent adding an ALLOW to the cache after a write has occurred.
-  if (decision_cache_->set(identifier, val) == 0 && decision != ACTION_REQUEST_BINARY) {
-    decision_cache_->remove(identifier);
+  if (decision_cache->set(identifier, val) == 0 && decision != ACTION_REQUEST_BINARY) {
+    decision_cache->remove(identifier);
   }
 
   if (unlikely(!identifier)) return;
@@ -211,17 +232,18 @@ void SantaDecisionManager::AddToCache(
 }
 
 void SantaDecisionManager::RemoveFromCache(uint64_t identifier) {
-  decision_cache_->remove(identifier);
+  CacheForIdentifier(identifier)->remove(identifier);
   if (unlikely(!identifier)) return;
   wakeup((void *)identifier);
 }
 
 uint64_t SantaDecisionManager::CacheCount() const {
-  return decision_cache_->count();
+  return root_decision_cache_->count() + non_root_decision_cache_->count();
 }
 
-void SantaDecisionManager::ClearCache() {
-  decision_cache_->clear();
+void SantaDecisionManager::ClearCache(bool non_root_only) {
+  if (!non_root_only) root_decision_cache_->clear();
+  non_root_decision_cache_->clear();
 }
 
 #pragma mark Decision Fetching
@@ -230,7 +252,9 @@ santa_action_t SantaDecisionManager::GetFromCache(uint64_t identifier) {
   auto result = ACTION_UNSET;
   uint64_t decision_time = 0;
 
-  uint64_t cache_val = decision_cache_->get(identifier);
+  auto decision_cache = CacheForIdentifier(identifier);
+
+  uint64_t cache_val = decision_cache->get(identifier);
   if (cache_val == 0) return result;
 
   // Decision is stored in upper 8 bits, timestamp in remaining 56.
@@ -241,7 +265,7 @@ santa_action_t SantaDecisionManager::GetFromCache(uint64_t identifier) {
     if (result == ACTION_RESPOND_DENY) {
       auto expiry_time = decision_time + (kMaxDenyCacheTimeMilliseconds * 1000);
       if (expiry_time < GetCurrentUptime()) {
-        decision_cache_->remove(identifier);
+        decision_cache->remove(identifier);
         return ACTION_UNSET;
       }
     }

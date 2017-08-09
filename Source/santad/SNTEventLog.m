@@ -216,8 +216,6 @@
 }
 
 - (void)logDiskAppeared:(NSDictionary *)diskProperties {
-  if (![diskProperties[@"DAVolumeMountable"] boolValue]) return;
-
   NSString *dmgPath = @"";
   NSString *serial = @"";
   if ([diskProperties[@"DADeviceModel"] isEqual:@"Disk Image"]) {
@@ -252,8 +250,6 @@
 }
 
 - (void)logDiskDisappeared:(NSDictionary *)diskProperties {
-  if (![diskProperties[@"DAVolumeMountable"] boolValue]) return;
-
   LOGI(@"action=DISKDISAPPEAR|mount=%@|volume=%@|bsdname=%@",
        [diskProperties[@"DAVolumePath"] path] ?: @"",
        diskProperties[@"DAVolumeName"] ?: @"",

@@ -55,11 +55,11 @@
 ///
 ///  Flush the kernel's binary cache.
 ///
-- (BOOL)flushCache;
+- (BOOL)flushCacheNonRootOnly:(BOOL)nonRootOnly;
 
 ///
 ///  Check the kernel cache for a VnodeID
 ///
--(santa_action_t)checkCache:(uint64_t)vnodeID;
+- (santa_action_t)checkCache:(uint64_t)vnodeID;
 
 @end

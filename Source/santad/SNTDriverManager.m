@@ -180,9 +180,14 @@ static const int MAX_DELAY = 15;
   return cache_count;
 }
 
-- (BOOL)flushCache {
+- (BOOL)flushCacheNonRootOnly:(BOOL)nonRootOnly {
+  const uint64_t nonRoot = nonRootOnly;
   return IOConnectCallScalarMethod(_connection,
-                                   kSantaUserClientClearCache, 0, 0, 0, 0) == KERN_SUCCESS;
+                                   kSantaUserClientClearCache,
+                                   &nonRoot,
+                                   1,
+                                   0,
+                                   0) == KERN_SUCCESS;
 }
 
 - (santa_action_t)checkCache:(uint64_t)vnodeID {
