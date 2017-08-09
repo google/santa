@@ -13,7 +13,6 @@
 ///    limitations under the License.
 
 @import Foundation;
-@import AppKit;
 
 #import "SNTCommand.h"
 #import "SNTCommandController.h"
@@ -177,26 +176,26 @@ REGISTER_COMMAND_NAME(@"fileinfo")
 
 - (instancetype)initWithDaemonConnection:(SNTXPCConnection *)daemonConn {
   self = [super initWithDaemonConnection:daemonConn];
-  if (!self) return nil;
-  _dateFormatter = [[NSDateFormatter alloc] init];
-  _dateFormatter.dateFormat = @"yyyy/MM/dd HH:mm:ss Z";
+  if (self) {
+    _dateFormatter = [[NSDateFormatter alloc] init];
+    _dateFormatter.dateFormat = @"yyyy/MM/dd HH:mm:ss Z";
 
-  _propertyMap = @{ kPath : self.path,
-                    kSHA256 : self.sha256,
-                    kSHA1 : self.sha1,
-                    kBundleName : self.bundleName,
-                    kBundleVersion : self.bundleVersion,
-                    kBundleVersionStr : self.bundleVersionStr,
-                    kDownloadReferrerURL : self.downloadReferrerURL,
-                    kDownloadURL : self.downloadURL,
-                    kDownloadTimestamp : self.downloadTimestamp,
-                    kDownloadAgent : self.downloadAgent,
-                    kType : self.type,
-                    kPageZero : self.pageZero,
-                    kCodeSigned : self.codeSigned,
-                    kRule : self.rule,
-                    kSigningChain : self.signingChain };
-
+    _propertyMap = @{ kPath : self.path,
+                      kSHA256 : self.sha256,
+                      kSHA1 : self.sha1,
+                      kBundleName : self.bundleName,
+                      kBundleVersion : self.bundleVersion,
+                      kBundleVersionStr : self.bundleVersionStr,
+                      kDownloadReferrerURL : self.downloadReferrerURL,
+                      kDownloadURL : self.downloadURL,
+                      kDownloadTimestamp : self.downloadTimestamp,
+                      kDownloadAgent : self.downloadAgent,
+                      kType : self.type,
+                      kPageZero : self.pageZero,
+                      kCodeSigned : self.codeSigned,
+                      kRule : self.rule,
+                      kSigningChain : self.signingChain };
+  }
   return self;
 }
 
@@ -486,7 +485,8 @@ REGISTER_COMMAND_NAME(@"fileinfo")
     fprintf(stderr, "File does not exist: %s\n", [path UTF8String]);
     return;
   }
-  if (isDir) isBundle = [[NSWorkspace sharedWorkspace] isFilePackageAtPath:path];
+
+  if (isDir) isBundle = ([NSBundle bundleWithPath:path] != nil);
 
   if (isDir && self.recursive) {
     NSDirectoryEnumerator<NSString *> * dirEnum = [fm enumeratorAtPath:path];
