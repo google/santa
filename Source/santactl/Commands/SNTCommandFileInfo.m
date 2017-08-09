@@ -437,7 +437,7 @@ REGISTER_COMMAND_NAME(@"fileinfo")
     [self recurseAtPath:fullPath];
   }
 
-  if (self.jsonOutput) printf("\n]\n"); // print closing bracket of JSON output array
+  if (self.jsonOutput) printf("\n]\n");  // print closing bracket of JSON output array
 
   exit(0);
 }
@@ -451,13 +451,13 @@ REGISTER_COMMAND_NAME(@"fileinfo")
 - (NSString *)getDirectoryTTYColor {
   NSString *lscolors = [[NSProcessInfo processInfo] environment][@"LSCOLORS"];
   if (!lscolors || lscolors.length < 2) {
-    return @"\033[1;35m"; // bold magenta
+    return @"\033[1;35m";  // bold magenta
   }
   char fg = [lscolors characterAtIndex:0];
   char bg = [lscolors characterAtIndex:1];
   char validChars[] = "abcdefghxABCDEFGHX";
   if (!strchr(validChars, fg) || !strchr(validChars, bg)) {
-    return @"\033[1;35m"; // bold magenta
+    return @"\033[1;35m";  // bold magenta
   }
   NSMutableString *code = @"\033[".mutableCopy;
   if (isupper(fg)) {
@@ -523,7 +523,7 @@ REGISTER_COMMAND_NAME(@"fileinfo")
     if (self.jsonPreviousEntry) printf(",\n");
     printf("%s", [self jsonStringForFileInfo:fileInfo withKeys:self.outputKeyList].UTF8String);
     self.jsonPreviousEntry = YES;
-  } else { // print directly (so we don't have to build a big nsstring?)
+  } else {  // print directly (so we don't have to build a big nsstring?)
     for (NSString *key in self.outputKeyList) {
       if ([key isEqual:kSigningChain]) {
         NSArray *signingChain = self.propertyMap[key](self, fileInfo);
@@ -565,7 +565,7 @@ REGISTER_COMMAND_NAME(@"fileinfo")
     if ([arg caseInsensitiveCompare:@"--json"] == NSOrderedSame) {
       self.jsonOutput = YES;
     } else if ([arg caseInsensitiveCompare:@"--cert-index"] == NSOrderedSame) {
-      i += 1; // advance to next argument and grab index
+      i += 1;  // advance to next argument and grab index
       if (i >= nargs || [arguments[i] hasPrefix:@"--"]) {
         [self printErrorUsageAndExit:@"\n--cert-index requires an argument"];
       }
@@ -576,7 +576,7 @@ REGISTER_COMMAND_NAME(@"fileinfo")
       }
       self.certIndex = @(index);
     } else if ([arg caseInsensitiveCompare:@"--key"] == NSOrderedSame) {
-      i += 1; // advance to next argument and grab the key
+      i += 1;  // advance to next argument and grab the key
       if (i >= nargs || [arguments[i] hasPrefix:@"--"]) {
         [self printErrorUsageAndExit:@"\n--key requires an argument"];
       }
