@@ -62,7 +62,7 @@ double watchdogRAMPeak = 0;
 }
 
 - (void)flushCache:(void (^)(BOOL))reply {
-  reply([self.driverManager flushCache]);
+  reply([self.driverManager flushCacheNonRootOnly:NO]);
 }
 
 - (void)checkCacheForVnodeID:(uint64_t)vnodeID withReply:(void (^)(santa_action_t))reply {
@@ -86,7 +86,7 @@ double watchdogRAMPeak = 0;
   NSPredicate *p = [NSPredicate predicateWithFormat:@"SELF.state != %d", SNTRuleStateWhitelist];
   if ([rules filteredArrayUsingPredicate:p].count || cleanSlate) {
     LOGI(@"Received non-whitelist rule, flushing cache");
-    [self.driverManager flushCache];
+    [self.driverManager flushCacheNonRootOnly:NO];
   }
 
   reply(error);
@@ -170,7 +170,7 @@ double watchdogRAMPeak = 0;
                                                                         error:NULL];
   [[SNTConfigurator configurator] setWhitelistPathRegex:re];
   LOGI(@"Received new whitelist regex, flushing cache");
-  [self.driverManager flushCache];
+  [self.driverManager flushCacheNonRootOnly:NO];
   reply();
 }
 
@@ -180,7 +180,7 @@ double watchdogRAMPeak = 0;
                                                                         error:NULL];
   [[SNTConfigurator configurator] setBlacklistPathRegex:re];
   LOGI(@"Received new blacklist regex, flushing cache");
-  [self.driverManager flushCache];  
+  [self.driverManager flushCacheNonRootOnly:NO];
   reply();
 }
 

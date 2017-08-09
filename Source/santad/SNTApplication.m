@@ -115,7 +115,7 @@
           origMode = newMode;
           if (newMode == SNTClientModeLockdown) {
             LOGI(@"Changed client mode, flushing cache.");
-            [self.driverManager flushCache];
+            [self.driverManager flushCacheNonRootOnly:NO];
           }
         }
 
@@ -253,20 +253,26 @@
 void diskAppearedCallback(DADiskRef disk, void *context) {
   SNTApplication *app = (__bridge SNTApplication *)context;
   NSDictionary *props = CFBridgingRelease(DADiskCopyDescription(disk));
+  if (![props[@"DAVolumeMountable"] boolValue]) return;
+
   [app.eventLog logDiskAppeared:props];
 }
 
 void diskDescriptionChangedCallback(DADiskRef disk, CFArrayRef keys, void *context) {
   SNTApplication *app = (__bridge SNTApplication *)context;
   NSDictionary *props = CFBridgingRelease(DADiskCopyDescription(disk));
+  if (![props[@"DAVolumeMountable"] boolValue]) return;
+
   if (props[@"DAVolumePath"]) [app.eventLog logDiskAppeared:props];
 }
 
 void diskDisappearedCallback(DADiskRef disk, void *context) {
   SNTApplication *app = (__bridge SNTApplication *)context;
   NSDictionary *props = CFBridgingRelease(DADiskCopyDescription(disk));
-  [app.eventLog logDiskDisappeared:props];
-}
+  if (![props[@"DAVolumeMountable"] boolValue]) return;
 
+  [app.eventLog logDiskDisappeared:props];
+  [app.driverManager flushCacheNonRootOnly:YES];
+}
 
 @end

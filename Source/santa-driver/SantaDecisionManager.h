@@ -99,7 +99,7 @@ class SantaDecisionManager : public OSObject {
   uint64_t CacheCount() const;
 
   /// Clears the cache.
-  void ClearCache();
+  void ClearCache(bool non_root_only = true);
 
   /// Increments the count of active callbacks pending.
   void IncrementListenerInvocations();
@@ -244,8 +244,21 @@ class SantaDecisionManager : public OSObject {
   }
 
  private:
-  SantaCache<uint64_t> *decision_cache_;
+  SantaCache<uint64_t> *root_decision_cache_;
+  SantaCache<uint64_t> *non_root_decision_cache_;
   SantaCache<uint64_t> *vnode_pid_map_;
+
+  /**
+    Return the correct cache for a given identifier.
+
+    @param identifier The identifier
+    @return SantaCache* The cache to use
+  */
+  SantaCache<uint64_t>* CacheForIdentifier(const uint64_t identifier);
+
+  // This is the file system ID of the root filesystem,
+  // used to determine which cache to use for requests
+  uint32_t root_vsid_;
 
   lck_grp_t *sdm_lock_grp_;
   lck_grp_attr_t *sdm_lock_grp_attr_;
