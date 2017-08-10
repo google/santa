@@ -72,7 +72,6 @@ NSString *formattedStringForKeyArray(NSArray<NSString *> *array) {
 @property(nonatomic) BOOL jsonOutput;
 @property(nonatomic) NSNumber *certIndex;
 @property(nonatomic, copy) NSArray<NSString *> *outputKeyList;
-@property(nonatomic, copy) NSString *directoryColor;
 
 // Flag indicating when to use TTY colors
 @property(readonly, nonatomic) BOOL prettyOutput;
@@ -85,6 +84,9 @@ NSString *formattedStringForKeyArray(NSArray<NSString *> *array) {
 
 // Common date formatter
 @property(nonatomic) NSDateFormatter *dateFormatter;
+
+// Maximum length of output key name, used for formatting
+@property(nonatomic) NSUInteger maxKeyWidth;
 
 // Valid key lists
 @property(readonly, nonatomic) NSArray<NSString *> *fileInfoKeys;
@@ -413,12 +415,15 @@ REGISTER_COMMAND_NAME(@"fileinfo")
 - (void)runWithArguments:(NSArray *)arguments {
   if (!arguments.count) [self printErrorUsageAndExit:@"No arguments"];
 
-  self.directoryColor = [self getDirectoryTTYColor];
-
   NSArray *filePaths = [self parseArguments:arguments];
 
   if (!self.outputKeyList || !self.outputKeyList.count) {
     self.outputKeyList = [[self class] fileInfoKeys];
+  }
+  // Figure out max field width from list of keys
+  self.maxKeyWidth = 0;
+  for (NSString *key in self.outputKeyList) {
+    if (key.length > self.maxKeyWidth) self.maxKeyWidth = key.length;
   }
 
   // For consistency, JSON output is always returned as an array of file info objects, regardless of
@@ -446,36 +451,6 @@ REGISTER_COMMAND_NAME(@"fileinfo")
   return isatty(STDOUT_FILENO) && !self.jsonOutput;
 }
 
-// Look at environment variable to try to discover user's directory color preference.
-- (NSString *)getDirectoryTTYColor {
-  NSString *lscolors = [[NSProcessInfo processInfo] environment][@"LSCOLORS"];
-  if (!lscolors || lscolors.length < 2) {
-    return @"\033[1;35m";  // bold magenta
-  }
-  char fg = [lscolors characterAtIndex:0];
-  char bg = [lscolors characterAtIndex:1];
-  char validChars[] = "abcdefghxABCDEFGHX";
-  if (!strchr(validChars, fg) || !strchr(validChars, bg)) {
-    return @"\033[1;35m";  // bold magenta
-  }
-  NSMutableString *code = @"\033[".mutableCopy;
-  if (isupper(fg)) {
-    [code appendString:@"1;"];
-    fg = tolower(fg);
-  }
-  if (fg == 'x') {
-    [code appendFormat:@"0"];
-  } else {
-    [code appendFormat:@"%d", fg - 'a' + 30];
-  }
-  if (isupper(bg)) bg = tolower(bg);
-  if (bg != 'x') {
-    [code appendFormat:@";%d", fg - 'a' + 40];
-  }
-  [code appendString:@"m"];
-  return code.copy;
-}
-
 // Print out file info for the object at the given path or, if path is a directory and the
 // --recursive flag is set, print out file info for all objects in directory tree.
 - (void)recurseAtPath:(NSString *)path {
@@ -495,14 +470,8 @@ REGISTER_COMMAND_NAME(@"fileinfo")
       // they examine the file's mach header, so we should release them as soon as possible.
       @autoreleasepool {
         NSString *filepath = [path stringByAppendingPathComponent:file];
-        if ([fm fileExistsAtPath:filepath isDirectory:&isDir] && isDir) {
-          // Print out directory names when recursive and not outputting JSON.
-          if (!self.jsonOutput) {
-            if (self.prettyOutput) printf("%s", self.directoryColor.UTF8String);
-            printf("%s:\n", [filepath UTF8String]);
-            if (self.prettyOutput) printf("\033[0m");
-          }
-        } else {
+        BOOL exists = [fm fileExistsAtPath:filepath isDirectory:&isDir];
+        if (!(exists && isDir)) {  // don't display anything for a directory path
           [self printInfoForFile:filepath];
         }
       }
@@ -534,10 +503,10 @@ REGISTER_COMMAND_NAME(@"fileinfo")
         [self printSigningChain:signingChain];
       } else {
         NSString *result = self.propertyMap[key](self, fileInfo);
-        if (result) printf("%-21s: %s\n", [key UTF8String], [result UTF8String]);
+        if (result) printf("%-*s: %s\n", (int)self.maxKeyWidth, [key UTF8String], [result UTF8String]);
       }
     }
-    printf("\n");
+    if (self.outputKeyList.count > 1) printf("\n");
   }
 }
 
