@@ -491,16 +491,20 @@ REGISTER_COMMAND_NAME(@"fileinfo")
   if (isDir && self.recursive) {
     NSDirectoryEnumerator<NSString *> * dirEnum = [fm enumeratorAtPath:path];
     for (NSString *file in dirEnum) {
-      NSString *filepath = [path stringByAppendingPathComponent:file];
-      if ([fm fileExistsAtPath:filepath isDirectory:&isDir] && isDir) {
-        // Print out directory names when recursive and not outputting JSON.
-        if (!self.jsonOutput) {
-          if (self.prettyOutput) printf("%s", self.directoryColor.UTF8String);
-          printf("%s:\n", [filepath UTF8String]);
-          if (self.prettyOutput) printf("\033[0m");
+      // Need autorelease pool inside the loop because fileinfo objects use up lots of memory when
+      // they examine the file's mach header, so we should release them as soon as possible.
+      @autoreleasepool {
+        NSString *filepath = [path stringByAppendingPathComponent:file];
+        if ([fm fileExistsAtPath:filepath isDirectory:&isDir] && isDir) {
+          // Print out directory names when recursive and not outputting JSON.
+          if (!self.jsonOutput) {
+            if (self.prettyOutput) printf("%s", self.directoryColor.UTF8String);
+            printf("%s:\n", [filepath UTF8String]);
+            if (self.prettyOutput) printf("\033[0m");
+          }
+        } else {
+          [self printInfoForFile:filepath];
         }
-      } else {
-        [self printInfoForFile:filepath];
       }
     }
   } else if (isDir && !isBundle) {
@@ -523,7 +527,7 @@ REGISTER_COMMAND_NAME(@"fileinfo")
     if (self.jsonPreviousEntry) printf(",\n");
     printf("%s", [self jsonStringForFileInfo:fileInfo withKeys:self.outputKeyList].UTF8String);
     self.jsonPreviousEntry = YES;
-  } else {  // print directly (so we don't have to build a big nsstring?)
+  } else {
     for (NSString *key in self.outputKeyList) {
       if ([key isEqual:kSigningChain]) {
         NSArray *signingChain = self.propertyMap[key](self, fileInfo);
