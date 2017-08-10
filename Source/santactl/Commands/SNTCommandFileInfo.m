@@ -117,6 +117,8 @@ typedef id (^SNTAttributeBlock)(SNTCommandFileInfo *, SNTFileInfo *);
 // Mapping between property string keys and SNTAttributeBlocks
 @property(nonatomic) NSDictionary<NSString *, SNTAttributeBlock> *propertyMap;
 
+@property(nonatomic) dispatch_queue_t printQueue;
+
 @end
 
 @implementation SNTCommandFileInfo
@@ -197,6 +199,8 @@ REGISTER_COMMAND_NAME(@"fileinfo")
                       kCodeSigned : self.codeSigned,
                       kRule : self.rule,
                       kSigningChain : self.signingChain };
+
+    _printQueue = dispatch_queue_create("com.google.santactl.print_queue", DISPATCH_QUEUE_SERIAL);
   }
   return self;
 }
@@ -418,7 +422,11 @@ REGISTER_COMMAND_NAME(@"fileinfo")
   NSArray *filePaths = [self parseArguments:arguments];
 
   if (!self.outputKeyList || !self.outputKeyList.count) {
-    self.outputKeyList = [[self class] fileInfoKeys];
+    if (self.certIndex) {
+      self.outputKeyList = [[self class] signingChainKeys];
+    } else {
+      self.outputKeyList = [[self class] fileInfoKeys];
+    }
   }
   // Figure out max field width from list of keys
   self.maxKeyWidth = 0;
@@ -433,13 +441,20 @@ REGISTER_COMMAND_NAME(@"fileinfo")
 
   NSFileManager *fm = [NSFileManager defaultManager];
   NSString *cwd = [fm currentDirectoryPath];
-  for (NSString *path in filePaths) {
+
+  dispatch_group_t group = dispatch_group_create();
+
+  [filePaths enumerateObjectsWithOptions:NSEnumerationConcurrent
+                              usingBlock:^(NSString *path, NSUInteger idx, BOOL *stop) {
     NSString *fullPath = [path stringByStandardizingPath];
     if (path.length && [path characterAtIndex:0] != '/') {
       fullPath = [cwd stringByAppendingPathComponent:fullPath];
     }
-    [self recurseAtPath:fullPath];
-  }
+    [self recurseAtPath:fullPath withGroup:group];
+  }];
+
+  // Wait for print queue to be empty of tasks.
+  dispatch_group_wait(group, DISPATCH_TIME_FOREVER);
 
   if (self.jsonOutput) printf("\n]\n");  // print closing bracket of JSON output array
 
@@ -453,7 +468,7 @@ REGISTER_COMMAND_NAME(@"fileinfo")
 
 // Print out file info for the object at the given path or, if path is a directory and the
 // --recursive flag is set, print out file info for all objects in directory tree.
-- (void)recurseAtPath:(NSString *)path {
+- (void)recurseAtPath:(NSString *)path withGroup:(dispatch_group_t)group {
   NSFileManager *fm = [NSFileManager defaultManager];
   BOOL isDir = NO, isBundle = NO;
   if (![fm fileExistsAtPath:path isDirectory:&isDir]) {
@@ -462,6 +477,9 @@ REGISTER_COMMAND_NAME(@"fileinfo")
   }
 
   if (isDir) isBundle = ([NSBundle bundleWithPath:path] != nil);
+
+  NSOperationQueue *operationQueue = [[NSOperationQueue alloc] init];
+  operationQueue.qualityOfService = NSQualityOfServiceUserInitiated;
 
   if (isDir && self.recursive) {
     NSDirectoryEnumerator<NSString *> * dirEnum = [fm enumeratorAtPath:path];
@@ -472,7 +490,9 @@ REGISTER_COMMAND_NAME(@"fileinfo")
         NSString *filepath = [path stringByAppendingPathComponent:file];
         BOOL exists = [fm fileExistsAtPath:filepath isDirectory:&isDir];
         if (!(exists && isDir)) {  // don't display anything for a directory path
-          [self printInfoForFile:filepath];
+          [operationQueue addOperationWithBlock:^{
+            [self printInfoForFile:filepath withGroup:group];
+          }];
         }
       }
     }
@@ -480,34 +500,56 @@ REGISTER_COMMAND_NAME(@"fileinfo")
     fprintf(stderr, "%s is a directory.  Use the -r flag to search recursively.\n",
             [path UTF8String]);
   } else {
-    [self printInfoForFile:path];
+    [operationQueue addOperationWithBlock:^{
+      [self printInfoForFile:path withGroup:group];
+    }];
   }
+
+  [operationQueue waitUntilAllOperationsAreFinished];
+
 }
 
 // Prints out the info for a single (non-directory) file.  Which info is printed is controlled
 // by the keys in self.outputKeyList.
-- (void)printInfoForFile:(NSString *)path {
+- (void)printInfoForFile:(NSString *)path withGroup:(dispatch_group_t)group {
   SNTFileInfo *fileInfo = [[SNTFileInfo alloc] initWithPath:path];
   if (!fileInfo) {
     fprintf(stderr, "Invalid or empty file: %s\n", [path UTF8String]);
     return;
   }
+
+  NSMutableString *output = [NSMutableString string];
   if (self.jsonOutput) {
-    if (self.jsonPreviousEntry) printf(",\n");
-    printf("%s", [self jsonStringForFileInfo:fileInfo withKeys:self.outputKeyList].UTF8String);
+    if (self.jsonPreviousEntry) [output appendString:@",\n"];
+    [output appendString:[self jsonStringForFileInfo:fileInfo withKeys:self.outputKeyList]];
     self.jsonPreviousEntry = YES;
+  } else if (self.certIndex) {
+    // --cert-index flag implicitly means that we want only the signing chain.  So we find the
+    // specified certificate in the signing chain, then print out values for all keys in cert.
+    NSArray *signingChain = self.propertyMap[kSigningChain](self, fileInfo);
+    if (!signingChain || !signingChain.count) return;  // check signing chain isn't empty
+    int certIndex = [self.certIndex intValue];
+    int index = (certIndex == -1) ? (int)signingChain.count - 1 : certIndex;
+    if (index >= (int)signingChain.count) return;  // check that index is valid
+    NSDictionary *cert = signingChain[index];
+    [output appendFormat:@"%@:\n", kSigningChain];
+    [output appendString:[self stringForCertificate:cert withKeys:self.outputKeyList index:index]];
   } else {
     for (NSString *key in self.outputKeyList) {
       if ([key isEqual:kSigningChain]) {
         NSArray *signingChain = self.propertyMap[key](self, fileInfo);
-        [self printSigningChain:signingChain];
+        [output appendString:[self stringForSigningChain:signingChain]];
       } else {
         NSString *result = self.propertyMap[key](self, fileInfo);
-        if (result) printf("%-*s: %s\n", (int)self.maxKeyWidth, [key UTF8String], [result UTF8String]);
+        if (result) {
+          [output appendFormat:@"%-*s: %@\n", (int)self.maxKeyWidth, key.UTF8String, result];
+        }
       }
     }
-    if (self.outputKeyList.count > 1) printf("\n");
+    if (self.outputKeyList.count > 1) [output appendString:@"\n"];
   }
+
+  dispatch_group_async(group, self.printQueue, ^{ printf("%s", output.UTF8String); });
 }
 
 // Given a SNTFileInfo object and an array of keys, returns and nicely formatted NSString
@@ -587,28 +629,34 @@ REGISTER_COMMAND_NAME(@"fileinfo")
   return paths.copy;
 }
 
-- (void)printSigningChain:(NSArray *)signingChain {
-  if (!signingChain) return;
-  printf("%s:\n", kSigningChain.UTF8String);
-  __block int i = 0;
-  [signingChain enumerateObjectsUsingBlock:^(id obj, NSUInteger idx, BOOL *stop) {
-    if ([obj isEqual:[NSNull null]]) return;
-    if (i++) printf("\n");
-    printf("    %2lu. %-20s: %s\n", idx + 1, kSHA256.UTF8String,
-           ((NSString *)obj[kSHA256]).UTF8String);
-    printf("        %-20s: %s\n", kSHA1.UTF8String,
-           ((NSString *)obj[kSHA1]).UTF8String);
-    printf("        %-20s: %s\n", kCommonName.UTF8String,
-           ((NSString *)obj[kCommonName]).UTF8String);
-    printf("        %-20s: %s\n", kOrganization.UTF8String,
-           ((NSString *)obj[kOrganization]).UTF8String);
-    printf("        %-20s: %s\n", kOrganizationalUnit.UTF8String,
-           ((NSString *)obj[kOrganizationalUnit]).UTF8String);
-    printf("        %-20s: %s\n", kValidFrom.UTF8String,
-           ((NSString *)obj[kValidFrom]).UTF8String);
-    printf("        %-20s: %s\n", kValidUntil.UTF8String,
-           ((NSString *)obj[kValidUntil]).UTF8String);
-  }];
+- (NSString *)stringForSigningChain:(NSArray *)signingChain {
+  if (!signingChain) return @"";
+  NSMutableString *result = [NSMutableString string];
+  [result appendFormat:@"%@:\n", kSigningChain];
+  int i = 1;
+  NSArray<NSString *> *certKeys = [[self class] signingChainKeys];
+  for (NSDictionary *cert in signingChain) {
+    if ([cert isEqual:[NSNull null]]) continue;
+    if (i > 1) [result appendFormat:@"\n"];
+    [result appendString:[self stringForCertificate:cert withKeys:certKeys index:i]];
+    i += 1;
+  }
+  return result.copy;
+}
+
+- (NSString *)stringForCertificate:(NSDictionary *)cert withKeys:(NSArray *)keys index:(int)index {
+  if (!cert) return @"";
+  NSMutableString *result = [NSMutableString string];
+  BOOL firstKey = YES;
+  for (NSString *key in keys) {
+    if (firstKey) {
+      [result appendFormat:@"    %2d. %-20s: %@\n", index, key.UTF8String, cert[key]];
+      firstKey = NO;
+    } else {
+      [result appendFormat:@"        %-20s: %@\n", key.UTF8String, cert[key]];
+    }
+  }
+  return result.copy;
 }
 
 @end
