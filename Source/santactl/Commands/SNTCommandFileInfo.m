@@ -121,8 +121,9 @@ typedef id (^SNTAttributeBlock)(SNTCommandFileInfo *, SNTFileInfo *);
 // Mapping between property string keys and SNTAttributeBlocks
 @property(nonatomic) NSDictionary<NSString *, SNTAttributeBlock> *propertyMap;
 
-// Serial queue used for printing output
+// Serial queue and dispatch group used for printing output
 @property(nonatomic) dispatch_queue_t printQueue;
+@property(nonatomic) dispatch_group_t printGroup;
 
 @end
 
@@ -460,7 +461,7 @@ REGISTER_COMMAND_NAME(@"fileinfo")
   NSString *cwd = [fm currentDirectoryPath];
 
   // Dispatch group for tasks printing to stdout.
-  dispatch_group_t printGroup = dispatch_group_create();
+  self.printGroup = dispatch_group_create();
 
   [filePaths enumerateObjectsWithOptions:NSEnumerationConcurrent
                               usingBlock:^(NSString *path, NSUInteger idx, BOOL *stop) {
@@ -468,11 +469,11 @@ REGISTER_COMMAND_NAME(@"fileinfo")
     if (path.length && [path characterAtIndex:0] != '/') {
       fullPath = [cwd stringByAppendingPathComponent:fullPath];
     }
-    [self recurseAtPath:fullPath withGroup:printGroup];
+    [self recurseAtPath:fullPath];
   }];
 
   // Wait for all tasks in print queue to complete.
-  dispatch_group_wait(printGroup, DISPATCH_TIME_FOREVER);
+  dispatch_group_wait(self.printGroup, DISPATCH_TIME_FOREVER);
 
   if (self.jsonOutput) printf("\n]\n");  // print closing bracket of JSON output array
 
@@ -486,7 +487,7 @@ REGISTER_COMMAND_NAME(@"fileinfo")
 
 // Print out file info for the object at the given path or, if path is a directory and the
 // --recursive flag is set, print out file info for all objects in directory tree.
-- (void)recurseAtPath:(NSString *)path withGroup:(dispatch_group_t)group {
+- (void)recurseAtPath:(NSString *)path {
   NSFileManager *fm = [NSFileManager defaultManager];
   BOOL isDir = NO, isBundle = NO;
   if (![fm fileExistsAtPath:path isDirectory:&isDir]) {
@@ -509,7 +510,7 @@ REGISTER_COMMAND_NAME(@"fileinfo")
         BOOL exists = [fm fileExistsAtPath:filepath isDirectory:&isDir];
         if (!(exists && isDir)) {  // don't display anything for a directory path
           [operationQueue addOperationWithBlock:^{
-            [self printInfoForFile:filepath withGroup:group];
+            [self printInfoForFile:filepath];
           }];
         }
       }
@@ -519,7 +520,7 @@ REGISTER_COMMAND_NAME(@"fileinfo")
             [path UTF8String]);
   } else {
     [operationQueue addOperationWithBlock:^{
-      [self printInfoForFile:path withGroup:group];
+      [self printInfoForFile:path];
     }];
   }
 
@@ -528,7 +529,7 @@ REGISTER_COMMAND_NAME(@"fileinfo")
 
 // Prints out the info for a single (non-directory) file.  Which info is printed is controlled
 // by the keys in self.outputKeyList.
-- (void)printInfoForFile:(NSString *)path withGroup:(dispatch_group_t)group {
+- (void)printInfoForFile:(NSString *)path {
   SNTFileInfo *fileInfo = [[SNTFileInfo alloc] initWithPath:path];
   if (!fileInfo) {
     fprintf(stderr, "Invalid or empty file: %s\n", [path UTF8String]);
@@ -585,7 +586,7 @@ REGISTER_COMMAND_NAME(@"fileinfo")
     if (!singleKey) [output appendString:@"\n"];
   }
 
-  dispatch_group_async(group, self.printQueue, ^{
+  dispatch_group_async(self.printGroup, self.printQueue, ^{
     if (self.jsonOutput) {  // print commas between JSON entries
       if (self.jsonPreviousEntry) printf(",\n");
       self.jsonPreviousEntry = YES;
