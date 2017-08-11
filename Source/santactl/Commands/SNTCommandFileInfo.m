@@ -567,9 +567,7 @@ REGISTER_COMMAND_NAME(@"fileinfo")
                     ![self.outputKeyList.firstObject isEqual:kSigningChain]);
   NSMutableString *output = [NSMutableString string];
   if (self.jsonOutput) {
-    if (self.jsonPreviousEntry) [output appendString:@",\n"];
     [output appendString:[self jsonStringForDictionary:outputDict]];
-    self.jsonPreviousEntry = YES;
   } else {
     for (NSString *key in self.outputKeyList) {
       if (![outputDict objectForKey:key]) continue;
@@ -588,6 +586,10 @@ REGISTER_COMMAND_NAME(@"fileinfo")
   }
 
   dispatch_group_async(group, self.printQueue, ^{
+    if (self.jsonOutput) {  // print commas between JSON entries
+      if (self.jsonPreviousEntry) printf(",\n");
+      self.jsonPreviousEntry = YES;
+    }
     printf("%s", output.UTF8String);
   });
 }
