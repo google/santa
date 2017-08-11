@@ -556,6 +556,9 @@ REGISTER_COMMAND_NAME(@"fileinfo")
     }
   }
 
+  // If there's nothing in the outputDict, then don't need to print anything.
+  if (!outputDict.count) return;
+
   // Then display the information in the dictionary.  How we display it depends on
   // a) do we want JSON output?
   // b) is there only one key?
