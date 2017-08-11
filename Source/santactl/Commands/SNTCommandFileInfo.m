@@ -562,30 +562,30 @@ REGISTER_COMMAND_NAME(@"fileinfo")
   // c) are we displaying a cert?
   BOOL singleKey = (self.outputKeyList.count == 1 &&
                     ![self.outputKeyList.firstObject isEqual:kSigningChain]);
-  NSMutableArray<NSString *> *output = [NSMutableArray arrayWithCapacity:8];
+  NSMutableString *output = [NSMutableString string];
   if (self.jsonOutput) {
-    if (self.jsonPreviousEntry) [output addObject:@",\n"];
-    [output addObject:[self jsonStringForDictionary:outputDict]];
+    if (self.jsonPreviousEntry) [output appendString:@",\n"];
+    [output appendString:[self jsonStringForDictionary:outputDict]];
     self.jsonPreviousEntry = YES;
   } else {
     for (NSString *key in self.outputKeyList) {
       if (![outputDict objectForKey:key]) continue;
       if ([key isEqual:kSigningChain]) {
-        [output addObject:[self stringForSigningChain:outputDict[key]]];
+        [output appendString:[self stringForSigningChain:outputDict[key]]];
       } else {
         if (singleKey) {
-          [output addObject:[NSString stringWithFormat:@"%@\n", outputDict[key]]];
+          [output appendFormat:@"%@\n", outputDict[key]];
         } else {
-          [output addObject:[NSString stringWithFormat:@"%-*s: %@\n",
-              (int)self.maxKeyWidth, key.UTF8String, outputDict[key]]];
+          [output appendFormat:@"%-*s: %@\n",
+              (int)self.maxKeyWidth, key.UTF8String, outputDict[key]];
         }
       }
     }
-    if (!singleKey) [output addObject:@"\n"];
+    if (!singleKey) [output appendString:@"\n"];
   }
 
   dispatch_group_async(group, self.printQueue, ^{
-    for (NSString *string in output) printf("%s", string.UTF8String);
+    printf("%s", output.UTF8String);
   });
 }
 
