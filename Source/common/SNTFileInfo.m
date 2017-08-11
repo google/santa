@@ -53,6 +53,8 @@
 @property NSDictionary *infoDict;
 @property NSDictionary *quarantineDict;
 @property NSDictionary *cachedHeaders;
+@property NSString *cachedSHA256;
+@property NSString *cachedSHA1;
 @end
 
 @implementation SNTFileInfo
@@ -204,15 +206,29 @@ extern NSString *const NSURLQuarantinePropertiesKey WEAK_IMPORT_ATTRIBUTE;
 }
 
 - (NSString *)SHA1 {
-  NSString *sha1;
-  [self hashSHA1:&sha1 SHA256:NULL];
-  return sha1;
+  if (!self.cachedSHA1) {
+    NSString *sha1;
+    [self hashSHA1:&sha1 SHA256:NULL];
+    self.cachedSHA1 = sha1;
+  }
+  return self.cachedSHA1;
 }
 
 - (NSString *)SHA256 {
-  NSString *sha256;
-  [self hashSHA1:NULL SHA256:&sha256];
-  return sha256;
+  if (!self.cachedSHA256) {
+    NSString *sha256;
+    [self hashSHA1:NULL SHA256:&sha256];
+    self.cachedSHA256 = sha256;
+  }
+  return self.cachedSHA256;
+}
+
+- (void)precomputeSecureHashes {
+  if (self.cachedSHA256 && self.cachedSHA1) return;
+  NSString *sha1, *sha256;
+  [self hashSHA1:&sha1 SHA256:&sha256];
+  self.cachedSHA1 = sha1;
+  self.cachedSHA256 = sha256;
 }
 
 #pragma mark File Type Info
