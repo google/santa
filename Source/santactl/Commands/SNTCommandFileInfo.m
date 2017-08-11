@@ -17,6 +17,7 @@
 #import "SNTCommand.h"
 #import "SNTCommandController.h"
 
+#import <objc/runtime.h>
 #import <MOLCertificate/MOLCertificate.h>
 #import <MOLCodesignChecker/MOLCodesignChecker.h>
 
@@ -55,6 +56,9 @@ static NSString *const kSHA1 = @"SHA-1";
 
 // Message displayed when daemon communication fails
 static NSString *const kCommunicationErrorMsg = @"Could not communicate with daemon";
+
+// Key used to associate MOLCodeSignChecker object to a SNTFileInfo object
+static char kAssociatedCSC[] = "AssociatedCSC";
 
 // Used by longHelpText to display a list of valid keys passed in as an array.
 NSString *formattedStringForKeyArray(NSArray<NSString *> *array) {
@@ -117,6 +121,7 @@ typedef id (^SNTAttributeBlock)(SNTCommandFileInfo *, SNTFileInfo *);
 // Mapping between property string keys and SNTAttributeBlocks
 @property(nonatomic) NSDictionary<NSString *, SNTAttributeBlock> *propertyMap;
 
+// Serial queue used for printing output
 @property(nonatomic) dispatch_queue_t printQueue;
 
 @end
@@ -205,6 +210,19 @@ REGISTER_COMMAND_NAME(@"fileinfo")
   return self;
 }
 
+// Returns the code sign checker associated with the file info object, creating one if it doesn't
+// already exist.  If there is an error, nothing is associated.
+- (MOLCodesignChecker *)codeSignCheckerForFileInfo:(SNTFileInfo *)fileInfo error:(NSError **)error {
+  MOLCodesignChecker *csc = objc_getAssociatedObject(fileInfo, kAssociatedCSC);
+  if (!csc) {
+    csc = [[MOLCodesignChecker alloc] initWithBinaryPath:fileInfo.path error:error];
+    if (csc) {
+      objc_setAssociatedObject(fileInfo, kAssociatedCSC, csc, OBJC_ASSOCIATION_RETAIN);
+    }
+  }
+  return csc;
+}
+
 #pragma mark property getters
 
 - (SNTAttributeBlock)path {
@@ -290,8 +308,7 @@ REGISTER_COMMAND_NAME(@"fileinfo")
 - (SNTAttributeBlock)codeSigned {
   return ^id (SNTCommandFileInfo *cmd, SNTFileInfo *fileInfo) {
     NSError *error;
-    MOLCodesignChecker *csc = [[MOLCodesignChecker alloc] initWithBinaryPath:fileInfo.path
-                                                                       error:&error];
+    MOLCodesignChecker *csc = [self codeSignCheckerForFileInfo:fileInfo error:&error];
     if (error) {
       switch (error.code) {
         case errSecCSUnsigned:
@@ -335,8 +352,7 @@ REGISTER_COMMAND_NAME(@"fileinfo")
     __block SNTEventState state;
     dispatch_semaphore_t sema = dispatch_semaphore_create(0);
     NSError *error;
-    MOLCodesignChecker *csc = [[MOLCodesignChecker alloc] initWithBinaryPath:fileInfo.path
-                                                                       error:&error];
+    MOLCodesignChecker *csc = [self codeSignCheckerForFileInfo:fileInfo error:&error];
     [[self.daemonConn remoteObjectProxy] decisionForFilePath:fileInfo.path
                                                   fileSHA256:fileInfo.SHA256
                                            certificateSHA256:csc.leafCertificate.SHA256
@@ -391,8 +407,7 @@ REGISTER_COMMAND_NAME(@"fileinfo")
 - (SNTAttributeBlock)signingChain {
   return ^id (SNTCommandFileInfo *cmd, SNTFileInfo *fileInfo) {
     NSError *error;
-    MOLCodesignChecker *csc = [[MOLCodesignChecker alloc] initWithBinaryPath:fileInfo.path
-                                                                       error:&error];
+    MOLCodesignChecker *csc = [self codeSignCheckerForFileInfo:fileInfo error:&error];
     if (csc.certificates.count) {
       NSMutableArray *certs = [[NSMutableArray alloc] initWithCapacity:csc.certificates.count];
       [csc.certificates enumerateObjectsUsingBlock:^(MOLCertificate *c, unsigned long idx,
@@ -518,10 +533,10 @@ REGISTER_COMMAND_NAME(@"fileinfo")
     return;
   }
 
-  NSMutableString *output = [NSMutableString string];
+  NSMutableArray<NSString *> *output = [NSMutableArray arrayWithCapacity:16];
   if (self.jsonOutput) {
-    if (self.jsonPreviousEntry) [output appendString:@",\n"];
-    [output appendString:[self jsonStringForFileInfo:fileInfo withKeys:self.outputKeyList]];
+    if (self.jsonPreviousEntry) [output addObject:@",\n"];
+    [output addObject:[self jsonStringForFileInfo:fileInfo withKeys:self.outputKeyList]];
     self.jsonPreviousEntry = YES;
   } else if (self.certIndex) {
     // --cert-index flag implicitly means that we want only the signing chain.  So we find the
@@ -532,24 +547,29 @@ REGISTER_COMMAND_NAME(@"fileinfo")
     int index = (certIndex == -1) ? (int)signingChain.count - 1 : certIndex;
     if (index >= (int)signingChain.count) return;  // check that index is valid
     NSDictionary *cert = signingChain[index];
-    [output appendFormat:@"%@:\n", kSigningChain];
-    [output appendString:[self stringForCertificate:cert withKeys:self.outputKeyList index:index]];
+    [output addObject:[NSString stringWithFormat:@"%@:\n", kSigningChain]];
+    [output addObject:[self stringForCertificate:cert withKeys:self.outputKeyList index:index]];
   } else {
     for (NSString *key in self.outputKeyList) {
       if ([key isEqual:kSigningChain]) {
         NSArray *signingChain = self.propertyMap[key](self, fileInfo);
-        [output appendString:[self stringForSigningChain:signingChain]];
+        [output addObject:[self stringForSigningChain:signingChain]];
       } else {
         NSString *result = self.propertyMap[key](self, fileInfo);
         if (result) {
-          [output appendFormat:@"%-*s: %@\n", (int)self.maxKeyWidth, key.UTF8String, result];
+          [output addObject:[NSString stringWithFormat:@"%-*s: %@\n", (int)self.maxKeyWidth, key.UTF8String, result]];
         }
       }
     }
-    if (self.outputKeyList.count > 1) [output appendString:@"\n"];
+    if (self.outputKeyList.count > 1) [output addObject:@"\n"];
   }
 
-  dispatch_group_async(group, self.printQueue, ^{ printf("%s", output.UTF8String); });
+  //dispatch_group_async(group, dispatch_get_main_queue(), ^{ printf("%s", output.UTF8String); });
+     //dispatch_group_async(group, self.printQueue, ^{ printf("%s", output.UTF8String); });
+  //dispatch_async(dispatch_get_main_queue(), ^{ printf("%s", output.UTF8String); });
+  dispatch_group_async(group, self.printQueue, ^{
+    for (NSString *string in output) printf("%s", string.UTF8String);
+  });
 }
 
 // Given a SNTFileInfo object and an array of keys, returns and nicely formatted NSString
