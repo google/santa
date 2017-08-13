@@ -74,7 +74,7 @@ NSString *formattedStringForKeyArray(NSArray<NSString *> *array) {
 // Properties set from commandline flags
 @property(nonatomic) BOOL recursive;
 @property(nonatomic) BOOL jsonOutput;
-@property(nonatomic) NSNumber *certIndex;
+@property(nonatomic) int certIndex;  // 0 means no cert-index specified
 @property(nonatomic, copy) NSArray<NSString *> *outputKeyList;
 
 // Flag indicating when to use TTY colors
@@ -543,9 +543,8 @@ REGISTER_COMMAND_NAME(@"fileinfo")
     // specified certificate in the signing chain, then print out values for all keys in cert.
     NSArray *signingChain = self.propertyMap[kSigningChain](self, fileInfo);
     if (!signingChain || !signingChain.count) return;  // check signing chain isn't empty
-    int certIndex = [self.certIndex intValue];
-    int index = (certIndex == -1) ? (int)signingChain.count - 1 : certIndex;
-    if (index >= (int)signingChain.count) return;  // check that index is valid
+    int index = (self.certIndex == -1) ? (int)signingChain.count - 1 : self.certIndex - 1;
+    if (index < 0 || index >= (int)signingChain.count) return;  // check that index is valid
     NSDictionary *cert = signingChain[index];
     // Filter out the info we want now, in case JSON output
     for (NSString *key in self.outputKeyList) {
@@ -598,8 +597,8 @@ REGISTER_COMMAND_NAME(@"fileinfo")
 // Parses the arguments in order to set the property variables:
 //   self.recursive from --recursive or -r
 //   self.json from --json
-//   self.certIndex from --cert-index
-//   self.outputKeyList from multiple possible --key
+//   self.certIndex from --cert-index argument
+//   self.outputKeyList from multiple possible --key arguments
 // and returns any non-flag args as path names in an NSArray.
 - (NSArray *)parseArguments:(NSArray *)arguments {
   NSMutableArray *paths = [NSMutableArray array];
@@ -614,12 +613,14 @@ REGISTER_COMMAND_NAME(@"fileinfo")
       if (i >= nargs || [arguments[i] hasPrefix:@"--"]) {
         [self printErrorUsageAndExit:@"\n--cert-index requires an argument"];
       }
-      NSInteger index = [arguments[i] integerValue];
-      if (index == 0) {
-        [self printErrorUsageAndExit:
-            @"\n0 is an invalid --cert-index\n  --cert-index is 1-indexed"];
+      int index = 0;
+      NSScanner *scanner = [NSScanner scannerWithString:arguments[i]];
+      if (![scanner scanInt:&index] || !scanner.atEnd || index == 0 || index < -1) {
+        [self printErrorUsageAndExit:[NSString stringWithFormat:
+            @"\n\"%@\" is an invalid argument for --cert-index\n"
+            @"  --cert-index argument must be one of -1, 1, 2, 3, ...", arguments[i]]];
       }
-      self.certIndex = @(index);
+      self.certIndex = index;
     } else if ([arg caseInsensitiveCompare:@"--key"] == NSOrderedSame) {
       i += 1;  // advance to next argument and grab the key
       if (i >= nargs || [arguments[i] hasPrefix:@"--"]) {
