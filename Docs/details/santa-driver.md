@@ -1,10 +1,10 @@
 # santa-driver
 
-santa-driver is a macOS [kernel extension](https://developer.apple.com/library/content/documentation/Darwin/Conceptual/KEXTConcept/KEXTConceptIntro/introduction.html) (KEXT) that makes use of the [Kernel Authorization](https://developer.apple.com/library/content/technotes/tn2127/_index.html) (Kauth) KPI. This allows santa-driver to listen for events and either deny or defer the decision of those events. The overall architecture of santa-driver is fairly straightforward. It basically acts as an intermediary layer between Kauth and santad, with some caching to lower the overhead of decision making.
+santa-driver is a macOS [kernel extension](https://developer.apple.com/library/content/documentation/Darwin/Conceptual/KEXTConcept/KEXTConceptIntro/introduction.html) (KEXT) that makes use of the [Kernel Authorization](https://developer.apple.com/library/content/technotes/tn2127/_index.html) (Kauth) KPI. This allows santa-driver to listen for events and either deny or defer the decision of those events. The santa-driver acts as an intermediary layer between Kauth and santad, with some caching to lower the overhead of decision making.
 
 ##### Kauth
 
-santa-driver utilizes two Kauth scopes `KAUTH_SCOPE_VNODE` and `KAUTH_SCOPE_FILEOP `. It registers itself with the Kauth API by calling `kauth_listen_scope()` for each scope. This function takes three arguments.
+santa-driver utilizes two Kauth scopes `KAUTH_SCOPE_VNODE` and `KAUTH_SCOPE_FILEOP `. It registers itself with the Kauth API by calling `kauth_listen_scope()` for each scope. This function takes three arguments:
 
 * `const char *scope`
 * `kauth_scope_callback_t _callback`_
@@ -14,16 +14,16 @@ It returns a `kauth_listener_t` that is stored for later use, in Santa's case to
 
 ###### KAUTH_SCOPE_VNODE
 
-For example here is how santa-driver starts listening for `KAUTH_SCOPE_VNODE` events.
+Here is how santa-driver starts listening for `KAUTH_SCOPE_VNODE` events.
 
 ```c++
 vnode_listener_ = kauth_listen_scope(
     KAUTH_SCOPE_VNODE, vnode_scope_callback, reinterpret_cast<void *>(this));
 ```
 
-The function `vnode_scope_callback` is then called for every vnode event. There are many types of vnode events, they complete list can be viewed in the kauth.h. Santa is only concerned with regular files that are generating  `KAUTH_VNODE_EXECUTE ` [1] and `KAUTH_VNODE_WRITE_DATA` events. All non-regular files and unnecessary vnode events are filtered out.
+The function `vnode_scope_callback` is called for every vnode event. There are many types of vnode events, they complete list can be viewed in the kauth.h. There are many types of vnode events, the complete list can be viewed in kauth.h. Santa is only concerned with regular files generating `KAUTH_VNODE_EXECUTE` [1] and `KAUTH_VNODE_WRITE_DATA` events. All non-regular files and unnecessary vnode events are filtered out.
 
-Here is how santa-driver stops listening for `KAUTH_SCOPE_VNODE` events
+Here is how santa-driver stops listening for `KAUTH_SCOPE_VNODE` events:
 
 ```c++
 kauth_unlisten_scope(vnode_listener_);
@@ -42,17 +42,17 @@ Santa also listens for file operations, this is mainly used for logging [1].
 
 ##### Driver Interface
 
-santa-driver implements a [IOUserClient](https://developer.apple.com/documentation/kernel/iouserclient?language=objc) subclass and santad interacts with it through IOKit/IOKitLib.h functions.
+santa-driver implements an [IOUserClient](https://developer.apple.com/documentation/kernel/iouserclient?language=objc) subclass and santad interacts with it through IOKit/IOKitLib.h functions.
 
 TODO(bur, rah) Flesh out the details
 
 ##### Cache
 
-To aid in performance santa-driver utilizes a caching system to hold the state of all observed `execve()` events.
+To aid in performance, santa-driver utilizes a caching system to hold the state of all observed `execve()` events.
 
 ###### Key
 
-The key is a `uint64_t`. The top 32 bits hold the filesystem ID. The bottom 32 bits hold the file unique ID. Together we call this the vnode_id.
+The key is a `uint64_t`. The top 32 bits hold the filesystem ID, while the bottom 32 bits hold the file unique ID. Together we call this the vnode_id.
 
 ```c++
 uint64_t vnode_id = (((uint64_t)fsid << 32) | fileid);
@@ -77,7 +77,7 @@ The possible actions are:
 
 ###### Invalidation
 
-Besides the expiry time for individual entries the entire cache will be cleared if any of the following events takes place.
+Besides the expiry time for individual entries, the entire cache will be cleared if any of the following events takes place:
 
 * Addition of the blacklist rule
 * Addition of a blacklist regex scope

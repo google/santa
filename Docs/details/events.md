@@ -1,6 +1,6 @@
 # Events
 
-Events are a notion core to how Santa interacts with a sync server. Events are generated when there is a blocked `execve()` while in lockdown or monitor mode. Events are also generated in monitor mode for an `execve()` that was allowed to run, but would have been blocked in lockdown mode. This allows an admin to roll out Santa to their macOS fleet in monitor mode, but still collect meaningful data. The events collected while in monitor can be used to build a fairly comprehensive whitelist of signing certificates and binaries before switching the fleet to lockdown mode.
+Events are a defined set of data, core to how Santa interacts with a sync-server. Events are generated when there is a blocked `execve()` while in lockdown or monitor mode. Events are also generated in monitor mode for an `execve()` that was allowed to run, but would have been blocked in lockdown mode. This allows an admin to roll out Santa to their macOS fleet in monitor mode, but still collect meaningful data. The events collected while in monitor mode can be used to build a reasonably comprehensive whitelist of signing certificates and binaries before switching the fleet to lockdown mode.
 
 ##### Event Data
 
@@ -8,7 +8,9 @@ Events begin their life as an [SNTStoredEvent](https://github.com/google/santa/b
 
 ###### Archived Object
 
-Events are temporarily stored in a sqlite3 database `/var/db/santa/events.db` until they uploaded to the sync server. They are stored in the [NSKeyedArchiver](https://developer.apple.com/documentation/foundation/nskeyedarchiver?language=objc) format.  Here is an example of a Firefox event in the  events.db awaiting upload.
+The archived object format and corresponding events database is only to be used internally by santad, and may change in the future. This section is for informational purposes only.
+
+Events are temporarily stored in a sqlite3 database, `/var/db/santa/events.db`, until they uploaded to the sync server. They are stored in the [NSKeyedArchiver](https://developer.apple.com/documentation/foundation/nskeyedarchiver?language=objc) format.  Here is an example of a Firefox event in the  events.db awaiting upload:
 
 ```sh
 ⇒  sudo sqlite3 /var/db/santa/events.db "select * from events where filesha256 = 'dd78f456a0929faf5dcbb6d952992d900bfdf025e1e77af60f0b029f0b85bf09';"
@@ -20,7 +22,7 @@ Events are temporarily stored in a sqlite3 database `/var/db/santa/events.db` un
 
 ###### JSON
 
-Before an event is uploaded to a sync server the event data is copied into a JSON blob. Here is an example of Firefox being blocked and sent for upload.
+Before an event is uploaded to a sync server, the event data is copied into a JSON blob. Here is an example of Firefox being blocked and sent for upload:
 
 ```json
 {
@@ -87,17 +89,14 @@ Before an event is uploaded to a sync server the event data is copied into a JSO
 
 ##### Event Lifecycle
 
-1. santad will generate a new event
-2. santad checks / adds the event's SHA-256 file hash to a in memory cache with a timeout of 10 min. If an event with the same SHA-256 file hash has been sent for upload within the past 10 min, the event is dropped.
-3. santad saves the event to `/var/db/santa/events.db`. A unique ID is assigned as a key.
-4. santad sends an XPC message to the santactl daemon. The messages contains the event with instructions to upload the event immediately. This is non-blocking and is performed on a background thread.
-5. santad waits for a reply from santactl. Again, this is non-blocking and is performed on a background thread.
-   * If the response from santactl is a success, then the event is removed from the events.db.
-   * If the response was a failure, the event will stay in the events.db until the next full sync. At that time all events in the events.db will be uploaded and purged if successful.
+1. santad generates a new event
+2. santad compares, or adds if not present, the event's SHA-256 file hash to an in-memory cache with a timeout of 10 min. If an event with an matching hash is present in cache, the event is dropped.
+3. santad saves the event to `/var/db/santa/events.db` with a unique ID assigned as the key.
+4. santad sends an XPC message to the santactl daemon. The message contains the event with instructions to upload the event immediately. This is non-blocking and is performed on a background thread.
 
 ##### Bundle Events
 
-Bundle events are a special type of event that are only generated when a sync server supports receiving the associated bundle events instead of just the original offending event. For example: `/Applications/Keynote.app/Contents/MacOS/Keynote` is blocked and an event representing the binary is uploaded. A whitelist rule is created for that one binary. Great, you can now run `/Applications/Keynote.app/Contents/MacOS/Keynote`, but what about all the other supporting binaries contained in the bundle? You would have to wait until they are executed until an event would be generated. It is very common for a bundle to contain multiple binaries, as shown here with Keynote.app. Waiting to get a block is not a very good user experience.
+Bundle events are a special type of event that are generated when a sync server supports receiving the associated bundle events, instead of just the original event. For example: `/Applications/Keynote.app/Contents/MacOS/Keynote` is blocked and an event representing the binary is uploaded. A whitelist rule is created for that one binary. Great, you can now run `/Applications/Keynote.app/Contents/MacOS/Keynote`, but what about all the other supporting binaries contained in the bundle? You would have to wait until they are executed until an event would be generated. It is very common for a bundle to contain multiple binaries, as shown here with Keynote.app. Waiting to get a block is not a very good user experience.
 
 ```sh
 ⇒  santactl bundleinfo /Applications/Keynote.app
@@ -133,9 +132,9 @@ BundleID: com.apple.iWork.Keynote
 	Path: /Applications/Keynote.app/Contents/XPCServices/com.apple.iWork.ExternalResourceAccessor.xpc/Contents/MacOS/com.apple.iWork.ExternalResourceAccessor
 ```
 
-Bundle events provide a mechanism to generate and upload events for all the executable Mach-O binaries within a bundle. To enable bundle event generation a configuration must be set in the preflight sync stage on the sync server. Once set the sync server can then use the bundle events to drive a better user experience.
+Bundle events provide a mechanism to generate and upload events for all the executable Mach-O binaries within a bundle. To enable bundle event generation a configuration must be set in the preflight sync stage on the sync server. Once set the sync server can use bundle events to drive a better user experience.
 
-Bundle events can be differentiated by a the addition of these fields:
+Bundle events can be differentiated by the existence of these fields:
 
 | Field                    | Value                                    |
 | ------------------------ | ---------------------------------------- |
@@ -144,11 +143,11 @@ Bundle events can be differentiated by a the addition of these fields:
 | file_bundle_hash_millis  | The time in milliseconds it took to find all of the binaries, hash and produce a super hash |
 | file_bundle_binary_count | Number of binaries within the bundle     |
 
-To avoid redundant uploads of a bundle events Santa will wait for the sync server to ask for them. The server will respond to event uploads with a request like this:
+To avoid redundant uploads of a bundle event Santa will wait for the sync server to ask for them. The server will respond to event uploads with a request like this:
 
 | Field                        | Value                                    |
 | ---------------------------- | ---------------------------------------- |
 | event_upload_bundle_binaries | An array of bundle hashes that the sync server needs to be uploaded |
 
-When santactl receives this request it sends an XPC reply to santad to save all the bundle events to the events.db. It then attempts to upload all the bundle events, purging the successes from the events.db. Any failures will be uploaded during the next full sync.
+When santactl receives this type of request, it sends an XPC reply to santad to save all the bundle events to the events.db. It then attempts to upload all the bundle events, purging the successes from the events.db. Any failures will be uploaded during the next full sync.
 

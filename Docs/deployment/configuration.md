@@ -1,12 +1,12 @@
 # Configuration
 
-There are two types of configurations that can be utilized to control Santa. The first is a local configuration. The second is a sync server controlled configuration.
+Two configuration methods can be used to control Santa: local configuration and a sync server controlled configuration.
 
 #### Local Configuration
 
 | Key                           | Value Type | Description                              |
 | ----------------------------- | ---------- | ---------------------------------------- |
-| ClientMode*                   | Integer    | 1 for Monitor or 2 for Lockdown          |
+| ClientMode*                   | Integer    | 1 = MONITOR, 2 = LOCKDOWN, defaults to MONITOR |
 | FileChangesRegex*             | String     | The regex of paths to log file changes. Regexes are specified in ICU format. |
 | WhitelistRegex*               | String     | A regex to whitelist if the binary or certificate scopes did not allow execution.  Regexes are specified in ICU format. |
 | BlacklistRegex*               | String     | A regex to blacklist if the binary or certificate scopes did not block an execution.  Regexes are specified in ICU format. |
@@ -20,7 +20,7 @@ There are two types of configurations that can be utilized to control Santa. The
 | ModeNotificationLockdown      | String     | The notification text to display when the client goes into lockdown mode. Defaults to "Switching into Lockdown mode". |
 | SyncBaseURL*                  | String     | The base URL of the sync server.         |
 | ClientAuthCertificateFile     | String     | If set, this contains the location of a PKCS#12 certificate to be used for sync authentication. |
-| ClientAuthCertificatePassword | String     | Contains the password for the pkcs#12 certificate. |
+| ClientAuthCertificatePassword | String     | Contains the password for the PKCS#12 certificate. |
 | ClientAuthCertificateCN       | String     | If set, this is the Common Name of a certificate in the System keychain to be used for sync authentication. The corresponding private key must also be in the keychain. |
 | ClientAuthCertificateIssuerCN | String     | If set, this is the Issuer Name of a certificate in the System keychain to be used for sync authentication. The corresponding private key must also be in the keychain. |
 | ServerAuthRootsData           | Data       | If set, this is valid PEM containing one or more certificates to be used to evaluate the server's SSL chain, overriding the list of trusted CAs distributed with the OS. |
@@ -32,7 +32,7 @@ There are two types of configurations that can be utilized to control Santa. The
 | MachineIDPlist                | String     | The path to a plist that contains the MachineOwnerKey / value pair. |
 | MachineIDKey                  | String     | The key to use on MachineIDPlist.        |
 
-*protected keys: santad cannot be running to make a change
+*protected keys: If a sync server is configured, this setting cannot be changed while santad is running as it is assumed the setting will be provided by the sync server.
 
 ##### EventDetailURL
 
@@ -97,8 +97,13 @@ Here is an example of a configuration that could be set.
 
 | Key                            | Value Type | Description                              |
 | ------------------------------ | ---------- | ---------------------------------------- |
+<<<<<<< Updated upstream
 | client_mode                    | String     | MONITOR or  LOCKDOWN. Defaults to MONITOR. |
 | clean_sync**                   | Bool       | If set to True Santa will clear all local rules and download a fresh copy from the sync server. Defaults to False. |
+=======
+| client_mode                    | String     | MONITOR or LOCKDOWN, defaults to MONITOR. |
+| clean_sync**                   | Bool       | If set to `True` Santa will clear all local rules and download a fresh copy from the sync-server. Defaults to `False`. |
+>>>>>>> Stashed changes
 | batch_size                     | Integer    | The number of rules to download or events to upload per request. Multiple requests will be made if there is more work than can fit in single request. Defaults to 50. |
 | upload_logs_url**              | String     | If set, the endpoint to send Santa's current logs. No default. |
 | whitelist_regex                | String     | Same as the "Local Configuration" WhitelistRegex. No default. |
@@ -106,7 +111,7 @@ Here is an example of a configuration that could be set.
 | fcm_token*                     | String     | The FCM token used by Santa to listen for FCM messages. Unique for every machine. No default. |
 | fcm_full_sync_interval*        | Integer    | The full sync interval if a fcm_token is set. Defaults to  14400 secs (4 hours). |
 | fcm_global_rule_sync_deadline* | Integer    | The max time to wait before performing a rule sync when a global rule sync FCM message is received. This allows syncing to be staggered for global events to avoid spikes in server load. Defaults to 600 secs (10 min). |
-| bundles_enabled*               | Bool       | If set to True the bundle scanning feature is enabled. Defaults to False. |
+| bundles_enabled*               | Bool       | If set to `True` the bundle scanning feature is enabled. Defaults to `False`. |
 
 *Held only in memory. Not persistent upon process restart.
 

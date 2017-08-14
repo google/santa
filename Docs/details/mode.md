@@ -1,6 +1,6 @@
 # Mode
 
-Santa can run in one of two modes, Lockdown or Monitor. To check the current status run the following command.
+Santa can run in one of two modes, Lockdown or Monitor. To check the current status run the following command:
 
 ```sh
 ⇒  santactl status
@@ -26,17 +26,21 @@ Santa can run in one of two modes, Lockdown or Monitor. To check the current sta
 
 ##### Monitor mode
 
-This is the default mode. Running Santa in Monitor will not stop unknown binaries from running. It will stop binaries matching blacklist rules. This is a flexible state, allowing virtually zero user interruption but still gives protection against known blacklisted binaries. In addition execution events that would have been blocked in Lockdown mode are generated and can be collected and analyzed by a sync server.
+The default mode. Running Santa in Monitor Mode will stop all binaries matching blacklist rules, but will not stop unknown binaries from running. This is a flexible state, allowing virtually zero user interruption but still gives protection against known blacklisted binaries. In addition execution events that would have been blocked in Lockdown mode are generated and can be collected and analyzed by a sync server.
 
 ##### Lockdown mode
 
-Running Santa in Lockdown mode will stop any unknown binaries from running. Meaning, if the binary has no rules or scopes that apply, it will be blocked.
+Running Santa in Lockdown Mode will stop all blacklisted binaries and additionally will prevent all unknown binaries from running. This means that if the binary has no rules or scopes that apply, then it will be blocked.
 
 ##### Changing Modes
 
-There are two ways to change the running mode. One is by changing the config.plist. The `ClientMode` key is protected while santad is running and will revert any attempt to change it.
+There are two ways to change the running mode: changing the config.plist and with a sync server configuration.
 
-Change to __Monitor__ mode without a sync server:
+###### Change modes with the config.plist
+
+The `ClientMode` config key is protected while santad is running and will revert any attempt to change it.
+
+Change to Monitor mode:
 
 ```sh
 sudo launchctl unload /Library/LaunchDaemons/com.google.santad.plist
@@ -44,7 +48,7 @@ sudo defaults write /var/db/santa/config.plist ClientMode -int 1
 sudo launchctl load /Library/LaunchDaemons/com.google.santad.plist
 ```
 
-Change to __Lockdown__ mode without a sync server:
+Change to Lockdown mode:
 
 ```sh
 sudo launchctl unload /Library/LaunchDaemons/com.google.santad.plist
@@ -52,6 +56,6 @@ sudo defaults write /var/db/santa/config.plist ClientMode -int 2
 sudo launchctl load /Library/LaunchDaemons/com.google.santad.plist
 ```
 
-Change modes with a __sync server__:
+######Change modes with a sync server
 
 The mode is set in the preflight sync stage. Use the key `client_mode` and a value of `MONITOR` or `LOCKDOWN`.

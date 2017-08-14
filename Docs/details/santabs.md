@@ -1,12 +1,12 @@
 # santabs
 
-The santabs process is an XPC service for the santa-driver.kext bundle, meaning only binaries within that bundle can launch santabs. It will be launched with with whatever privileges the calling process is running as. Currently santad is the only caller of santabs, so santabs runs as root.
+The santabs process is an XPC service for the santa-driver.kext bundle, meaning only binaries within that bundle can launch santabs. It will be launched with the same privileges as its calling process. Currently, santad is the only caller of santabs, so santabs runs as root.
 
-#####Events
+##### Events
 
-santabs is quite simple and only does one thing. It generates non-execution events for the contents of a bundle. 
+The santabs process is quite simple and only does one thing: it generates non-execution events for the contents of a bundle.
 
-When there is an `execve()` that is blocked within a bundle a few things take place.
+When there is an `execve()` that is blocked within a bundle, a few actions take place:
 
 1. The highest ancestor bundle in the tree is found
 
@@ -41,4 +41,4 @@ When there is an `execve()` that is blocked within a bundle a few things take pl
 
 ##### Bundle Hash
 
-The found events are sorted by their file SHA-256 hash. The hashes are concatenated and then SHA-256 hashed. This now a strong indicator on what Mach-O executables where on disk at the time of scan. This can then be verified by the sync server when deciding generate rules.
+The found events are sorted by their file SHA-256 hash. The hashes are concatenated and then SHA-256 hashed. This is now a strong indicator on what Mach-O executables were within the bundle at the time of scan. This can then be verified by the sync server when deciding to generate rules.
