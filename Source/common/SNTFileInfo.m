@@ -278,6 +278,7 @@ extern NSString *const NSURLQuarantinePropertiesKey WEAK_IMPORT_ATTRIBUTE;
 }
 
 - (BOOL)isDMG {
+  if (self.fileSize < 512) return NO;
   NSUInteger last512 = self.fileSize - 512;
   const char *magic = (const char *)[[self safeSubdataWithRange:NSMakeRange(last512, 4)] bytes];
   return (magic && memcmp("koly", magic, 4) == 0);
