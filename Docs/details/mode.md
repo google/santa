@@ -26,7 +26,7 @@ Santa can run in one of two modes, Lockdown or Monitor. To check the current sta
 
 ##### Monitor mode
 
-This is the default mode. Running Santa in Monitor will not stop unknown binaries from running. It will stop binaries matching blacklist rules. This is a flexible state, allowing virtually zero user interruption but still gives protection against known blacklisted binaries. In addition execution events that would have been blocked in Lockdown mode are generated and can be collected and analyzed by a sync-server.
+This is the default mode. Running Santa in Monitor will not stop unknown binaries from running. It will stop binaries matching blacklist rules. This is a flexible state, allowing virtually zero user interruption but still gives protection against known blacklisted binaries. In addition execution events that would have been blocked in Lockdown mode are generated and can be collected and analyzed by a sync server.
 
 ##### Lockdown mode
 
@@ -36,7 +36,7 @@ Running Santa in Lockdown mode will stop any unknown binaries from running. Mean
 
 There are two ways to change the running mode. One is by changing the config.plist. The `ClientMode` key is protected while santad is running and will revert any attempt to change it.
 
-Change to __Monitor__ mode without a sync-server:
+Change to __Monitor__ mode without a sync server:
 
 ```sh
 sudo launchctl unload /Library/LaunchDaemons/com.google.santad.plist
@@ -44,7 +44,7 @@ sudo defaults write /var/db/santa/config.plist ClientMode -int 1
 sudo launchctl load /Library/LaunchDaemons/com.google.santad.plist
 ```
 
-Change to __Lockdown__ mode without a sync-server:
+Change to __Lockdown__ mode without a sync server:
 
 ```sh
 sudo launchctl unload /Library/LaunchDaemons/com.google.santad.plist
@@ -52,6 +52,6 @@ sudo defaults write /var/db/santa/config.plist ClientMode -int 2
 sudo launchctl load /Library/LaunchDaemons/com.google.santad.plist
 ```
 
-Change modes with a __sync-server__:
+Change modes with a __sync server__:
 
 The mode is set in the preflight sync stage. Use the key `client_mode` and a value of `MONITOR` or `LOCKDOWN`.

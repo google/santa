@@ -6,7 +6,7 @@ IPC within Santa is done mainly by way of Apple's [XPC](https://developer.apple.
 
 The santad and Santa (GUI) processes are both started and kept alive by launchd as LaunchDaemon and LaunchAgent respectively. This means santad runs as root, and Santa (GUI) runs as the console user. There can be multiple Santa (GUI) process running, one per logged in user.
 
-When using a sync-server the santactl process is started by santad with a `fork()` and `execve()` of  `santactl sync —-daemon`.  Before the new process starts, all privileged are dropped. So santactl runs as nobody.
+When using a sync server the santactl process is started by santad with a `fork()` and `execve()` of  `santactl sync —-daemon`.  Before the new process starts, all privileged are dropped. So santactl runs as nobody.
 
 The santabs process is started by launchd by way of an XPC service connection from santad. XPC services inherit their initiator's privileges so santabs runs as root.
 

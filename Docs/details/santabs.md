@@ -37,8 +37,8 @@ When there is an `execve()` that is blocked within a bundle a few things take pl
 
 3. Events are created for each binary and the bundle hash is calculated
 
-4. These events are sent to the sync-server for processing
+4. These events are sent to the sync server for processing
 
 ##### Bundle Hash
 
-The found events are sorted by their file SHA-256 hash. The hashes are concatenated and then SHA-256 hashed. This now a strong indicator on what Mach-O executables where on disk at the time of scan. This can then be verified by the sync-server when deciding generate rules.
+The found events are sorted by their file SHA-256 hash. The hashes are concatenated and then SHA-256 hashed. This now a strong indicator on what Mach-O executables where on disk at the time of scan. This can then be verified by the sync server when deciding generate rules.

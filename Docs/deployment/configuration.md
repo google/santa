@@ -1,6 +1,6 @@
 # Configuration
 
-There are two types of configurations that can be utilized to control Santa. The first is a local configuration. The second is a sync-server controlled configuration.
+There are two types of configurations that can be utilized to control Santa. The first is a local configuration. The second is a sync server controlled configuration.
 
 #### Local Configuration
 
@@ -66,7 +66,7 @@ Here is an example of a configuration that could be set.
 	<key>EnablePageZeroProtection</key>
 	<false/>
 	<key>EventDetailText</key>
-	<string>Open sync-server</string>
+	<string>Open sync server</string>
 	<key>EventDetailURL</key>
 	<string>https://sync-server-hostname/blockables/%file_sha%</string>
 	<key>FileChangesRegex</key>
@@ -98,7 +98,7 @@ Here is an example of a configuration that could be set.
 | Key                            | Value Type | Description                              |
 | ------------------------------ | ---------- | ---------------------------------------- |
 | client_mode                    | String     | MONITOR or  LOCKDOWN. Defaults to MONITOR. |
-| clean_sync**                   | Bool       | If set to True Santa will clear all local rules and download a fresh copy from the sync-server. Defaults to False. |
+| clean_sync**                   | Bool       | If set to True Santa will clear all local rules and download a fresh copy from the sync server. Defaults to False. |
 | batch_size                     | Integer    | The number of rules to download or events to upload per request. Multiple requests will be made if there is more work than can fit in single request. Defaults to 50. |
 | upload_logs_url**              | String     | If set, the endpoint to send Santa's current logs. No default. |
 | whitelist_regex                | String     | Same as the "Local Configuration" WhitelistRegex. No default. |

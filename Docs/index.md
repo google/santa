@@ -7,11 +7,11 @@ Santa is a binary whitelisting/blacklisting system for macOS. Here you will find
 The following documents give an overview on how Santa accomplishes binary whitelisting/blacklisting at the enterprise scale.
 
 - [Binary Whitelisting](introduction/binary-whitelisting-overview.md): How Santa makes allow or deny decisions for any `execve()` taking place.
-- [Syncing](introduction/syncing-overview.md): How configuration and whitelist / blacklist rules are applied from a sync-server.
+- [Syncing](introduction/syncing-overview.md): How configuration and whitelist / blacklist rules are applied from a sync server.
 
 #### Deployment
 
-* [Configuration](deployment/configuration.md): The local and sync-server configuration options.
+* [Configuration](deployment/configuration.md): The local and sync server configuration options.
 
 #### Development
 
@@ -28,7 +28,7 @@ There are a five main components that make up Santa. There are documents explain
 
 * [santa-driver](details/santa-driver.md): A macOS kernel extension that participates in `execve()` decisions.
 * [santad](details/santad.md): A user-land root daemon that makes decisions on behalf of santa-driver requests.
-* [santactl](details/santactl.md): A user-land anonymous daemon that communicates with a sync-server for configurations and policies. santactl can also be used to by a user to manually configure Santa when not using a sync-server.
+* [santactl](details/santactl.md): A user-land anonymous daemon that communicates with a sync server for configurations and policies. santactl can also be used to by a user to manually configure Santa when not using a sync server.
 * [santa-gui](details/santa-gui.md): A user-land GUI daemon that displays notifications when an `execve()` is blocked.
 * [santabs](details/santabs.md): A user-land root daemon that finds Mach-O binaries within a bundle and creates events for them. 
 

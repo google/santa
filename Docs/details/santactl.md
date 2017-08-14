@@ -1,8 +1,8 @@
 # santactl
 
-This may be the most complex part of Santa. It really has two types of work that is does. Firstly it contains all of the code and functionality for syncing with a sync-server. The details of which are covered in the [syncing.md](syncing.md) document. This document will cover the status work that santactl performs.
+This may be the most complex part of Santa. It really has two types of work that is does. Firstly it contains all of the code and functionality for syncing with a sync server. The details of which are covered in the [syncing.md](syncing.md) document. This document will cover the status work that santactl performs.
 
-The santactl binary can be used to view the state and configuration of Santa as a whole. It can also inspect individual files. When running without a sync-server it also a supported method of managing the rules database. 
+The santactl binary can be used to view the state and configuration of Santa as a whole. It can also inspect individual files. When running without a sync server it also a supported method of managing the rules database. 
 
 ##### status
 
