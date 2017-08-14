@@ -36,7 +36,7 @@ kauth_unlisten_scope(vnode_listener_);
 Santa also listens for file operations, this is mainly used for logging [1]. 
 
 * `KAUTH_FILEOP_DELETE`, `KAUTH_FILEOP_RENAME`, `KAUTH_FILEOP_EXCHANGE` and `KAUTH_FILEOP_LINK` are logged
-* `KAUTH_FILEOP_EXEC` is used to log `exec()`s. Since the `KAUTH_VNODE_EXECUTE` is used to allow or deny an `exec()` the process arguments have not been setup yet. Since `KAUTH_FILEOP_EXEC` is triggered after an `exec()` it is used to log the `exec()`.
+* `KAUTH_FILEOP_EXEC` is used to log `execve()`s. Since the `KAUTH_VNODE_EXECUTE` is used to allow or deny an `execve()` the process arguments have not been setup yet. Since `KAUTH_FILEOP_EXEC` is triggered after an `execve()` it is used to log the `execve()`.
 
 [1] `KAUTH_FILEOP_CLOSE` is used to invalidate that file's representation in the cache. If a file has changed it needs to be re-evalauted. This is particularly necessary for files that were added to the cache with an action of allow.
 
@@ -48,7 +48,7 @@ TODO(bur, rah) Flesh out the details
 
 ##### Cache
 
-To aid in performance santa-driver utilizes a caching system to hold the state of all observed `exec()` events.
+To aid in performance santa-driver utilizes a caching system to hold the state of all observed `execve()` events.
 
 ###### Key
 
@@ -72,8 +72,8 @@ The possible actions are:
 | Actions                 | Expiry Time      | Description                              |
 | ----------------------- | ---------------- | ---------------------------------------- |
 | `ACTION_REQUEST_BINARY` | None             | Awaiting an allow or deny decision from santad. |
-| `ACTION_RESPOND_ALLOW`  | None             | Allow the `exec()`                       |
-| `ACTION_RESPOND_DENY`   | 500 milliseconds | Deny the `exec()`, but re-evalaute after 500 milliseconds. If someone is trying to run a banned binary continually every millisecond for example, only 2 evaluation requests to santad for would occur per second. This mitigates a denial of service type attack on santad. |
+| `ACTION_RESPOND_ALLOW`  | None             | Allow the `execve()`                     |
+| `ACTION_RESPOND_DENY`   | 500 milliseconds | Deny the `execve()`, but re-evalaute after 500 milliseconds. If someone is trying to run a banned binary continually every millisecond for example, only 2 evaluation requests to santad for would occur per second. This mitigates a denial of service type attack on santad. |
 
 ###### Invalidation
 

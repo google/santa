@@ -6,7 +6,7 @@ Santa is a binary whitelisting/blacklisting system for macOS. Here you will find
 
 The following documents give an overview on how Santa accomplishes binary whitelisting/blacklisting at the enterprise scale.
 
-- [Binary Whitelisting](introduction/binary-whitelisting-overview.md): How Santa makes allow or deny decisions for any `exec()` taking place.
+- [Binary Whitelisting](introduction/binary-whitelisting-overview.md): How Santa makes allow or deny decisions for any `execve()` taking place.
 - [Syncing](introduction/syncing-overview.md): How configuration and whitelist / blacklist rules are applied from a sync-server.
 
 #### Deployment
@@ -26,10 +26,10 @@ For those who want even more details on how Santa works under the hood, this sec
 
 There are a five main components that make up Santa. There are documents explaining each piece in detail. Here is a quick one-liner on each component. These quick descriptions do not encompass all the jobs performed by each component, but do provide a quick look at the basic functionality utilized to achieve the goal of binary whitelisting/blacklisting.
 
-* [santa-driver](details/santa-driver.md): A macOS kernel extension that participates in `exec()` decisions.
+* [santa-driver](details/santa-driver.md): A macOS kernel extension that participates in `execve()` decisions.
 * [santad](details/santad.md): A user-land root daemon that makes decisions on behalf of santa-driver requests.
 * [santactl](details/santactl.md): A user-land anonymous daemon that communicates with a sync-server for configurations and policies. santactl can also be used to by a user to manually configure Santa when not using a sync-server.
-* [santa-gui](details/santa-gui.md): A user-land GUI daemon that displays notifications when an `exec()` is blocked.
+* [santa-gui](details/santa-gui.md): A user-land GUI daemon that displays notifications when an `execve()` is blocked.
 * [santabs](details/santabs.md): A user-land root daemon that finds Mach-O binaries within a bundle and creates events for them. 
 
 ######Concepts
@@ -37,9 +37,9 @@ There are a five main components that make up Santa. There are documents explain
 There are also documents on concepts that support the workings of the main components.
 
 * [mode](details/mode.md): An operating mode, either Monitor or Lockdown.
-* [events](details/events.md): Represents an `exec()` that was blocked, or would have been blocked, depending on the mode.
-* [rules](details/rules.md): Represents allow or deny decisions for a given `exec()`. Can either be a binary's SHA-256 hash or a leaf code-signing certificate's SHA-256 hash.
-* [scopes](details/scopes.md): The level at which an `exec()` was allowed or denied from taking place.
+* [events](details/events.md): Represents an `execve()` that was blocked, or would have been blocked, depending on the mode.
+* [rules](details/rules.md): Represents allow or deny decisions for a given `execve()`. Can either be a binary's SHA-256 hash or a leaf code-signing certificate's SHA-256 hash.
+* [scopes](details/scopes.md): The level at which an `execve()` was allowed or denied from taking place.
 * [syncing](introduction/syncing-overview.md): How Santa communicates with a TLS server for configuration, rules and event uploading.
 * [ipc](details/ipc.md): How all the components of Santa communicate.
 duction/syncing-overview.

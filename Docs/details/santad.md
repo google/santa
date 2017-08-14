@@ -4,7 +4,7 @@ The santad process does the heavy lifting when it comes to making decisions abou
 
 ##### A note on performance
 
-On an idling machine santad, and really all of the components of Santa, consumes virtually no CPU and a minimal amount of memory (5-50MB). When lots of processes `exec()` at the same time, the CPU and memory usage can spike. All of the `exec()` decisions are made on a high priority threads to ensure decisions are posted back to the kernel as soon as possible. There is a watchdog thread that will log warnings when there is sustained high CPU (>20%) and memory (>250MB) usage by santad.
+On an idling machine santad, and really all of the components of Santa, consumes virtually no CPU and a minimal amount of memory (5-50MB). When lots of processes `execve()` at the same time, the CPU and memory usage can spike. All of the `execve()` decisions are made on a high priority threads to ensure decisions are posted back to the kernel as soon as possible. There is a watchdog thread that will log warnings when there is sustained high CPU (>20%) and memory (>250MB) usage by santad.
 
 ##### On Launch
 

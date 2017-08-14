@@ -46,7 +46,7 @@ Santa does to evaluate the `Valid From` or `Valid Until` fields. Nor does it che
 
 ##### Rule Evaluation
 
-When a process is trying to `exec()` santad retrieves information on the binary, including hashing the entire file and extracting the signing chain (if any). The hash and signing leaf cert is then passed through the [SNTPolicyProcessor](https://github.com/google/santa/blob/master/Source/santad/SNTPolicyProcessor.h). Rules are evaluated from most specific to least specific. First binary (either whitelist or blacklist), then certificate (either whitelist or blacklist). If no rules are found that apply, scopes are then searched. See the [scopes.md](scopes.md) document for more information on scopes.
+When a process is trying to `execve()` santad retrieves information on the binary, including hashing the entire file and extracting the signing chain (if any). The hash and signing leaf cert is then passed through the [SNTPolicyProcessor](https://github.com/google/santa/blob/master/Source/santad/SNTPolicyProcessor.h). Rules are evaluated from most specific to least specific. First binary (either whitelist or blacklist), then certificate (either whitelist or blacklist). If no rules are found that apply, scopes are then searched. See the [scopes.md](scopes.md) document for more information on scopes.
 
 You can use the `santactl fileinfo` command to check the status of any given binary on the filesystem.
 

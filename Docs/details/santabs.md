@@ -6,7 +6,7 @@ The santabs process is an XPC service for the santa-driver.kext bundle, meaning 
 
 santabs is quite simple and only does one thing. It generates non-execution events for the contents of a bundle. 
 
-When there is an `exec()` that is blocked within a bundle a few things take place.
+When there is an `execve()` that is blocked within a bundle a few things take place.
 
 1. The highest ancestor bundle in the tree is found
 

@@ -1,6 +1,6 @@
 # Events
 
-Events are a notion core to how Santa interacts with a sync-server. Events are generated when there is a blocked `exec()` while in lockdown or monitor mode. Events are also generated in monitor mode for an `exec()` that was allowed to run, but would have been blocked in lockdown mode. This allows an admin to roll out Santa to their macOS fleet in monitor mode, but still collect meaningful data. The events collected while in monitor can be used to build a fairly comprehensive whitelist of signing certificates and binaries before switching the fleet to lockdown mode.
+Events are a notion core to how Santa interacts with a sync-server. Events are generated when there is a blocked `execve()` while in lockdown or monitor mode. Events are also generated in monitor mode for an `execve()` that was allowed to run, but would have been blocked in lockdown mode. This allows an admin to roll out Santa to their macOS fleet in monitor mode, but still collect meaningful data. The events collected while in monitor can be used to build a fairly comprehensive whitelist of signing certificates and binaries before switching the fleet to lockdown mode.
 
 ##### Event Data
 
