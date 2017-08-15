@@ -491,7 +491,9 @@ REGISTER_COMMAND_NAME(@"fileinfo")
   NSFileManager *fm = [NSFileManager defaultManager];
   BOOL isDir = NO, isBundle = NO;
   if (![fm fileExistsAtPath:path isDirectory:&isDir]) {
-    fprintf(stderr, "File does not exist: %s\n", [path UTF8String]);
+    dispatch_group_async(self.printGroup, self.printQueue, ^{
+      fprintf(stderr, "File does not exist: %s\n", [path UTF8String]);
+    });
     return;
   }
 
@@ -516,8 +518,10 @@ REGISTER_COMMAND_NAME(@"fileinfo")
       }
     }
   } else if (isDir && !isBundle) {
-    fprintf(stderr, "%s is a directory.  Use the -r flag to search recursively.\n",
-            [path UTF8String]);
+    dispatch_group_async(self.printGroup, self.printQueue, ^{
+      fprintf(stderr, "%s is a directory.  Use the -r flag to search recursively.\n",
+          [path UTF8String]);
+    });
   } else {
     [operationQueue addOperationWithBlock:^{
       [self printInfoForFile:path];
@@ -532,7 +536,9 @@ REGISTER_COMMAND_NAME(@"fileinfo")
 - (void)printInfoForFile:(NSString *)path {
   SNTFileInfo *fileInfo = [[SNTFileInfo alloc] initWithPath:path];
   if (!fileInfo) {
-    fprintf(stderr, "Invalid or empty file: %s\n", [path UTF8String]);
+    dispatch_group_async(self.printGroup, self.printQueue, ^{
+      fprintf(stderr, "Invalid or empty file: %s\n", [path UTF8String]);
+    });
     return;
   }
 
