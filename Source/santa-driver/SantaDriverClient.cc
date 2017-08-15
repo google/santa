@@ -134,6 +134,7 @@ IOReturn SantaDriverClient::allow_binary(
   if (!me) return kIOReturnBadArgument;
 
   const uint64_t vnode_id = static_cast<const uint64_t>(arguments->scalarInput[0]);
+  if (!vnode_id) return kIOReturnInvalid;
   me->decisionManager->AddToCache(vnode_id, ACTION_RESPOND_ALLOW);
 
   return kIOReturnSuccess;
@@ -145,6 +146,7 @@ IOReturn SantaDriverClient::deny_binary(
   if (!me) return kIOReturnBadArgument;
 
   const uint64_t vnode_id = static_cast<const uint64_t>(arguments->scalarInput[0]);
+  if (!vnode_id) return kIOReturnInvalid;
   me->decisionManager->AddToCache(vnode_id, ACTION_RESPOND_DENY);
 
   return kIOReturnSuccess;

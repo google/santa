@@ -130,7 +130,7 @@ class SantaDecisionManager : public OSObject {
   void FileOpCallback(kauth_action_t action, const vnode_t vp,
                       const char *path, const char *new_path);
 
- protected:
+ private:
   /**
     While waiting for a response from the daemon, this is the maximum number of
     milliseconds to sleep for before checking the cache for a response.
@@ -244,7 +244,6 @@ class SantaDecisionManager : public OSObject {
     return (uint64_t)((sec * 1000000) + usec);
   }
 
- private:
   SantaCache<uint64_t> *root_decision_cache_;
   SantaCache<uint64_t> *non_root_decision_cache_;
   SantaCache<uint64_t> *vnode_pid_map_;
@@ -259,7 +258,7 @@ class SantaDecisionManager : public OSObject {
 
   // This is the file system ID of the root filesystem,
   // used to determine which cache to use for requests
-  uint32_t root_vsid_;
+  uint32_t root_fsid_;
 
   lck_grp_t *sdm_lock_grp_;
   lck_grp_attr_t *sdm_lock_grp_attr_;
