@@ -41,13 +41,8 @@ bool SantaDecisionManager::init() {
       kMaxLogQueueEvents, sizeof(santa_message_t));
   if (!log_dataqueue_) return kIOReturnNoMemory;
 
-  vfs_context_t ctx = vfs_context_create(NULL);
-  vnode_t root = vfs_rootvnode();
-  root_vsid_ = GetVnodeIDForVnode(ctx, root) >> 32;
-  vnode_put(root);
-  vfs_context_rele(ctx);
-
   client_pid_ = 0;
+  root_fsid_ = 0;
 
   ts_ = { .tv_sec = kRequestLoopSleepMilliseconds / 1000,
           .tv_nsec = kRequestLoopSleepMilliseconds % 1000 * 1000000 };
@@ -97,6 +92,17 @@ void SantaDecisionManager::ConnectClient(pid_t pid) {
   if (!pid) return;
 
   client_pid_ = pid;
+
+  // Determine root fsid
+  vfs_context_t ctx = vfs_context_create(NULL);
+  if (ctx) {
+    vnode_t root = vfs_rootvnode();
+    if (root) {
+      root_fsid_ = GetVnodeIDForVnode(ctx, root) >> 32;
+      vnode_put(root);
+    }
+    vfs_context_rele(ctx);
+  }
 
   // Any decisions made while the daemon wasn't
   // connected should be cleared
@@ -210,9 +216,8 @@ kern_return_t SantaDecisionManager::StopListener() {
   @return SantaCache* The cache to use
 */
 SantaCache<uint64_t>* SantaDecisionManager::CacheForIdentifier(const uint64_t identifier) {
-  return (identifier >> 32 == root_vsid_) ? root_decision_cache_ : non_root_decision_cache_;
+  return (identifier >> 32 == root_fsid_) ? root_decision_cache_ : non_root_decision_cache_;
 }
-
 
 void SantaDecisionManager::AddToCache(
     uint64_t identifier, santa_action_t decision, uint64_t microsecs) {
@@ -227,7 +232,6 @@ void SantaDecisionManager::AddToCache(
     decision_cache->remove(identifier);
   }
 
-  if (unlikely(!identifier)) return;
   wakeup((void *)identifier);
 }
 
@@ -417,6 +421,7 @@ int SantaDecisionManager::VnodeCallback(const kauth_cred_t cred,
                                         int *errno) {
   // Get ID for the vnode
   auto vnode_id = GetVnodeIDForVnode(ctx, vp);
+  if (!vnode_id) return KAUTH_RESULT_DEFER;
 
   // Fetch decision
   auto returnedAction = FetchDecision(cred, vp, vnode_id);
