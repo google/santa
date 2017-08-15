@@ -99,8 +99,8 @@ class SantaDecisionManager : public OSObject {
   uint64_t RootCacheCount() const;
   uint64_t NonRootCacheCount() const;
 
-  /// Clears the cache.
-  void ClearCache(bool non_root_only = true);
+  /// Clears the cache(s). If non_root_only is true, only the non-root cache is cleared.
+  void ClearCache(bool non_root_only = false);
 
   /// Increments the count of active callbacks pending.
   void IncrementListenerInvocations();
