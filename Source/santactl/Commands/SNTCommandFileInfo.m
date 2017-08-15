@@ -497,7 +497,10 @@ REGISTER_COMMAND_NAME(@"fileinfo")
     return;
   }
 
-  if (isDir) isBundle = ([NSBundle bundleWithPath:path] != nil);
+  if (isDir) {
+    NSBundle *bundle = [NSBundle bundleWithPath:path];
+    isBundle = bundle && [bundle bundleIdentifier];
+  }
 
   NSOperationQueue *operationQueue = [[NSOperationQueue alloc] init];
   operationQueue.qualityOfService = NSQualityOfServiceUserInitiated;
@@ -505,8 +508,6 @@ REGISTER_COMMAND_NAME(@"fileinfo")
   if (isDir && self.recursive) {
     NSDirectoryEnumerator<NSString *> * dirEnum = [fm enumeratorAtPath:path];
     for (NSString *file in dirEnum) {
-      // Need autorelease pool inside the loop because fileinfo objects use up lots of memory when
-      // they examine the file's mach header, so we should release them as soon as possible.
       @autoreleasepool {
         NSString *filepath = [path stringByAppendingPathComponent:file];
         BOOL exists = [fm fileExistsAtPath:filepath isDirectory:&isDir];
