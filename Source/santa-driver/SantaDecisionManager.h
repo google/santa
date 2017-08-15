@@ -96,7 +96,8 @@ class SantaDecisionManager : public OSObject {
   void RemoveFromCache(uint64_t identifier);
 
   /// Returns the number of entries in the cache.
-  uint64_t CacheCount() const;
+  uint64_t RootCacheCount() const;
+  uint64_t NonRootCacheCount() const;
 
   /// Clears the cache.
   void ClearCache(bool non_root_only = true);

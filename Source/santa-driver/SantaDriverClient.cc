@@ -166,7 +166,8 @@ IOReturn SantaDriverClient::cache_count(
   SantaDriverClient *me = OSDynamicCast(SantaDriverClient, target);
   if (!me) return kIOReturnBadArgument;
 
-  arguments->scalarOutput[0] = me->decisionManager->CacheCount();
+  arguments->scalarOutput[0] = me->decisionManager->RootCacheCount();
+  arguments->scalarOutput[1] = me->decisionManager->NonRootCacheCount();
   return kIOReturnSuccess;
 }
 
@@ -197,7 +198,7 @@ IOReturn SantaDriverClient::externalMethod(
     { &SantaDriverClient::allow_binary, 1, 0, 0, 0 },
     { &SantaDriverClient::deny_binary, 1, 0, 0, 0 },
     { &SantaDriverClient::clear_cache, 1, 0, 0, 0 },
-    { &SantaDriverClient::cache_count, 0, 0, 1, 0 },
+    { &SantaDriverClient::cache_count, 0, 0, 2, 0 },
     { &SantaDriverClient::check_cache, 1, 0, 1, 0 }
   };
 
