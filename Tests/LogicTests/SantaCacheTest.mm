@@ -150,4 +150,27 @@
   delete sut;
 }
 
+- (void)testCompareAndSwap {
+  auto sut = new SantaCache<uint64_t>(100, 2);
+
+  sut->set(1, 42);
+  sut->set(1, 666, 1);
+  sut->set(1, 666, 0);
+  XCTAssertEqual(sut->get(1), 42);
+
+  sut->set(1, 0);
+  XCTAssertEqual(sut->get(1), 0);
+
+  sut->set(1, 42, 1);
+  XCTAssertEqual(sut->get(1), 0);
+
+  sut->set(1, 42, 0);
+  XCTAssertEqual(sut->get(1), 42);
+
+  sut->set(1, 0, 666);
+  XCTAssertEqual(sut->get(1), 42);
+  sut->set(1, 0, 42);
+  XCTAssertEqual(sut->get(1), 0);
+}
+
 @end

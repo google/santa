@@ -179,7 +179,8 @@ kern_return_t SantaDecisionManager::StartListener() {
   if (!vnode_listener_) return kIOReturnInternalError;
 
   fileop_listener_ = kauth_listen_scope(
-      KAUTH_SCOPE_FILEOP, fileop_scope_callback, reinterpret_cast<void *>(this));
+      KAUTH_SCOPE_FILEOP, fileop_scope_callback,
+      reinterpret_cast<void *>(this));
   if (!fileop_listener_) return kIOReturnInternalError;
 
   LOGD("Listeners started.");
@@ -215,8 +216,10 @@ kern_return_t SantaDecisionManager::StopListener() {
   @param identifier The identifier
   @return SantaCache* The cache to use
 */
-SantaCache<uint64_t>* SantaDecisionManager::CacheForIdentifier(const uint64_t identifier) {
-  return (identifier >> 32 == root_fsid_) ? root_decision_cache_ : non_root_decision_cache_;
+SantaCache<uint64_t>* SantaDecisionManager::CacheForIdentifier(
+    const uint64_t identifier) {
+  return (identifier >> 32 == root_fsid_) ?
+    root_decision_cache_ : non_root_decision_cache_;
 }
 
 void SantaDecisionManager::AddToCache(
@@ -226,10 +229,17 @@ void SantaDecisionManager::AddToCache(
 
   auto decision_cache = CacheForIdentifier(identifier);
 
-  // If a previous entry was not found and the new entry is not `REQUEST_BINARY`, remove the
-  // existing entry. This is to prevent adding an ALLOW to the cache after a write has occurred.
-  if (decision_cache->set(identifier, val) == 0 && decision != ACTION_REQUEST_BINARY) {
-    decision_cache->remove(identifier);
+  switch (decision) {
+    case ACTION_REQUEST_BINARY:
+      decision_cache->set(identifier, val, 0);
+      break;
+    case ACTION_RESPOND_ALLOW:
+    case ACTION_RESPOND_DENY:
+      decision_cache->set(
+          identifier, val, ((uint64_t)ACTION_REQUEST_BINARY << 56));
+      break;
+    default:
+      break;
   }
 
   wakeup((void *)identifier);
@@ -282,7 +292,8 @@ santa_action_t SantaDecisionManager::GetFromCache(uint64_t identifier) {
   return result;
 }
 
-santa_action_t SantaDecisionManager::GetFromDaemon(santa_message_t *message, uint64_t identifier) {
+santa_action_t SantaDecisionManager::GetFromDaemon(
+    santa_message_t *message, uint64_t identifier) {
   auto return_action = ACTION_UNSET;
 
 #ifdef DEBUG
@@ -294,10 +305,11 @@ santa_action_t SantaDecisionManager::GetFromDaemon(santa_message_t *message, uin
 
   // Wait for the daemon to respond or die.
   do {
-    // Add pending request to cache, to be replaced by daemon with actual response
+    // Add pending request to cache, to be replaced
+    // by daemon with actual response.
     AddToCache(identifier, ACTION_REQUEST_BINARY, 0);
 
-    // Send request to daemon...
+    // Send request to daemon.
     if (!PostToDecisionQueue(message)) {
       LOGE("Failed to queue request for %s.", message->path);
       RemoveFromCache(identifier);
@@ -343,6 +355,8 @@ santa_action_t SantaDecisionManager::FetchDecision(
     if (RESPONSE_VALID(return_action)) {
       return return_action;
     } else if (return_action == ACTION_REQUEST_BINARY) {
+      // This thread will now sleep for kRequestLoopSleepMilliseconds (1s) or
+      // until AddToCache is called, indicating a response has arrived.
       msleep((void *)vnode_id, NULL, 0, "", &ts_);
     } else {
       break;
