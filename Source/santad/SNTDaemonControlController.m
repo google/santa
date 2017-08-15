@@ -56,9 +56,9 @@ double watchdogRAMPeak = 0;
 
 #pragma mark Kernel ops
 
-- (void)cacheCount:(void (^)(int64_t))reply {
-  int64_t count = [self.driverManager cacheCount];
-  reply(count);
+- (void)cacheCounts:(void (^)(uint64_t, uint64_t))reply {
+  NSArray<NSNumber *> *counts = [self.driverManager cacheCounts];
+  reply([counts[0] unsignedLongLongValue], [counts[1] unsignedLongLongValue]);
 }
 
 - (void)flushCache:(void (^)(BOOL))reply {

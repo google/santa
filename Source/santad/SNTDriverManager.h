@@ -48,9 +48,9 @@
 - (kern_return_t)postToKernelAction:(santa_action_t)action forVnodeID:(uint64_t)vnodeId;
 
 ///
-///  Get the number of binaries in the kernel's cache.
+///  Get the number of binaries in the kernel's caches.
 ///
-- (uint64_t)cacheCount;
+- (NSArray<NSNumber *> *)cacheCounts;
 
 ///
 ///  Flush the kernel's binary cache.

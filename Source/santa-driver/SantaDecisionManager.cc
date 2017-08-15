@@ -237,8 +237,12 @@ void SantaDecisionManager::RemoveFromCache(uint64_t identifier) {
   wakeup((void *)identifier);
 }
 
-uint64_t SantaDecisionManager::CacheCount() const {
-  return root_decision_cache_->count() + non_root_decision_cache_->count();
+uint64_t SantaDecisionManager::RootCacheCount() const {
+  return root_decision_cache_->count();
+}
+
+uint64_t SantaDecisionManager::NonRootCacheCount() const {
+  return non_root_decision_cache_->count();
 }
 
 void SantaDecisionManager::ClearCache(bool non_root_only) {
