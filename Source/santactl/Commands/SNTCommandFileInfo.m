@@ -152,7 +152,7 @@ REGISTER_COMMAND_NAME(@"fileinfo")
           @"the type of file."
           @"\n"
           @"Usage: santactl fileinfo [options] [file-paths]\n"
-          @"    -r (--recursive): search directories recursively\n"
+          @"    --recursive (-r): search directories recursively\n"
           @"    --json: output in json format\n"
           @"    --key: search and return this one piece of information\n"
           @"           you may specify multiple keys by repeating this flag\n"
@@ -213,7 +213,9 @@ REGISTER_COMMAND_NAME(@"fileinfo")
 
 // Returns the code sign checker associated with the file info object, creating one if it doesn't
 // already exist.  If there is an error, nothing is associated.
+// TODO(nguyenphillip): move this to SNTFileInfo
 - (MOLCodesignChecker *)codeSignCheckerForFileInfo:(SNTFileInfo *)fileInfo error:(NSError **)error {
+  if (!fileInfo) return nil;
   MOLCodesignChecker *csc = objc_getAssociatedObject(fileInfo, kAssociatedCSC);
   if (!csc) {
     csc = [[MOLCodesignChecker alloc] initWithBinaryPath:fileInfo.path error:error];
@@ -411,23 +413,20 @@ REGISTER_COMMAND_NAME(@"fileinfo")
   return ^id (SNTCommandFileInfo *cmd, SNTFileInfo *fileInfo) {
     NSError *error;
     MOLCodesignChecker *csc = [self codeSignCheckerForFileInfo:fileInfo error:&error];
-    if (csc.certificates.count) {
-      NSMutableArray *certs = [[NSMutableArray alloc] initWithCapacity:csc.certificates.count];
-      [csc.certificates enumerateObjectsUsingBlock:^(MOLCertificate *c, unsigned long idx,
-                                                     BOOL *stop) {
-        [certs addObject:@{ kSHA256 : c.SHA256 ?: @"null",
-                            kSHA1 : c.SHA1 ?: @"null",
-                            kCommonName : c.commonName ?: @"null",
-                            kOrganization : c.orgName ?: @"null",
-                            kOrganizationalUnit : c.orgUnit ?: @"null",
-                            kValidFrom : [cmd.dateFormatter stringFromDate:c.validFrom] ?: @"null",
-                            kValidUntil : [cmd.dateFormatter stringFromDate:c.validUntil]
-                                ?: @"null"
-                          }];
+    if (!csc.certificates.count) return nil;
+    NSMutableArray *certs = [[NSMutableArray alloc] initWithCapacity:csc.certificates.count];
+    for (MOLCertificate *c in csc.certificates) {
+      [certs addObject:@{
+        kSHA256 : c.SHA256 ?: @"null",
+        kSHA1 : c.SHA1 ?: @"null",
+        kCommonName : c.commonName ?: @"null",
+        kOrganization : c.orgName ?: @"null",
+        kOrganizationalUnit : c.orgUnit ?: @"null",
+        kValidFrom : [cmd.dateFormatter stringFromDate:c.validFrom] ?: @"null",
+        kValidUntil : [cmd.dateFormatter stringFromDate:c.validUntil] ?: @"null"
       }];
-      return certs;
     }
-    return nil;
+    return certs;
   };
 }
 

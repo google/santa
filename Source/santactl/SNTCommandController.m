@@ -24,7 +24,7 @@
 /// Value is the Class
 static NSMutableDictionary *registeredCommands;
 
-+ (void)registerCommand:(Class<SNTCommandProtocol,SNTCommandRunProtocol>)command
++ (void)registerCommand:(Class<SNTCommandProtocol, SNTCommandRunProtocol>)command
                   named:(NSString *)name {
   if (!registeredCommands) {
     registeredCommands = [NSMutableDictionary dictionary];
@@ -87,7 +87,7 @@ static NSMutableDictionary *registeredCommands;
 }
 
 + (void)runCommandWithName:(NSString *)commandName arguments:(NSArray *)arguments {
-  Class<SNTCommandProtocol,SNTCommandRunProtocol> command = registeredCommands[commandName];
+  Class<SNTCommandProtocol, SNTCommandRunProtocol> command = registeredCommands[commandName];
 
   if ([command requiresRoot] && getuid() != 0) {
     printf("The command '%s' requires root privileges.\n", [commandName UTF8String]);
