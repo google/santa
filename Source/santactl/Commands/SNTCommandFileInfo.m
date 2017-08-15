@@ -57,9 +57,6 @@ static NSString *const kSHA1 = @"SHA-1";
 // Message displayed when daemon communication fails
 static NSString *const kCommunicationErrorMsg = @"Could not communicate with daemon";
 
-// Key used to associate MOLCodeSignChecker object to a SNTFileInfo object
-static char kAssociatedCSC[] = "AssociatedCSC";
-
 // Used by longHelpText to display a list of valid keys passed in as an array.
 NSString *formattedStringForKeyArray(NSArray<NSString *> *array) {
   NSMutableString *result = [[NSMutableString alloc] init];
@@ -211,21 +208,6 @@ REGISTER_COMMAND_NAME(@"fileinfo")
   return self;
 }
 
-// Returns the code sign checker associated with the file info object, creating one if it doesn't
-// already exist.  If there is an error, nothing is associated.
-// TODO(nguyenphillip): move this to SNTFileInfo
-- (MOLCodesignChecker *)codeSignCheckerForFileInfo:(SNTFileInfo *)fileInfo error:(NSError **)error {
-  if (!fileInfo) return nil;
-  MOLCodesignChecker *csc = objc_getAssociatedObject(fileInfo, kAssociatedCSC);
-  if (!csc) {
-    csc = [[MOLCodesignChecker alloc] initWithBinaryPath:fileInfo.path error:error];
-    if (csc) {
-      objc_setAssociatedObject(fileInfo, kAssociatedCSC, csc, OBJC_ASSOCIATION_RETAIN);
-    }
-  }
-  return csc;
-}
-
 #pragma mark property getters
 
 - (SNTAttributeBlock)path {
@@ -312,8 +294,8 @@ REGISTER_COMMAND_NAME(@"fileinfo")
 
 - (SNTAttributeBlock)codeSigned {
   return ^id (SNTCommandFileInfo *cmd, SNTFileInfo *fileInfo) {
-    NSError *error;
-    MOLCodesignChecker *csc = [self codeSignCheckerForFileInfo:fileInfo error:&error];
+    MOLCodesignChecker *csc = [fileInfo codesignChecker];
+    NSError *error = [fileInfo codesignCheckerError];
     if (error) {
       switch (error.code) {
         case errSecCSUnsigned:
@@ -356,8 +338,7 @@ REGISTER_COMMAND_NAME(@"fileinfo")
     dispatch_once(&token, ^{ [cmd.daemonConn resume]; });
     __block SNTEventState state;
     dispatch_semaphore_t sema = dispatch_semaphore_create(0);
-    NSError *error;
-    MOLCodesignChecker *csc = [self codeSignCheckerForFileInfo:fileInfo error:&error];
+    MOLCodesignChecker *csc = [fileInfo codesignChecker];
     [[self.daemonConn remoteObjectProxy] decisionForFilePath:fileInfo.path
                                                   fileSHA256:fileInfo.SHA256
                                            certificateSHA256:csc.leafCertificate.SHA256
@@ -411,8 +392,7 @@ REGISTER_COMMAND_NAME(@"fileinfo")
 
 - (SNTAttributeBlock)signingChain {
   return ^id (SNTCommandFileInfo *cmd, SNTFileInfo *fileInfo) {
-    NSError *error;
-    MOLCodesignChecker *csc = [self codeSignCheckerForFileInfo:fileInfo error:&error];
+    MOLCodesignChecker *csc = [fileInfo codesignChecker];
     if (!csc.certificates.count) return nil;
     NSMutableArray *certs = [[NSMutableArray alloc] initWithCapacity:csc.certificates.count];
     for (MOLCertificate *c in csc.certificates) {

@@ -15,6 +15,7 @@
 #import "SNTFileInfo.h"
 
 #import <CommonCrypto/CommonDigest.h>
+#import <MOLCodesignChecker/MOLCodesignChecker.h>
 
 #include <mach-o/loader.h>
 #include <mach-o/swap.h>
@@ -55,6 +56,7 @@
 @property NSDictionary *cachedHeaders;
 @property NSString *cachedSHA256;
 @property NSString *cachedSHA1;
+@property MOLCodesignChecker *cachedCodesignChecker;
 @end
 
 @implementation SNTFileInfo
@@ -706,6 +708,22 @@ extern NSString *const NSURLQuarantinePropertiesKey WEAK_IMPORT_ATTRIBUTE;
   } else {
     return path;
   }
+}
+
+///
+///  Cache and return a MOLCodeSignChecker for the given file.  If there was an error creating the
+///  code sign checker, the error may be obtained from the read-only codesignCheckerError property.
+///
+- (MOLCodesignChecker *)codesignChecker {
+  @synchronized (self) {
+    if (!self.cachedCodesignChecker) {
+      NSError *error;
+      self.cachedCodesignChecker = [[MOLCodesignChecker alloc]
+          initWithBinaryPath:self.path error:&error];
+      _codesignCheckerError = error;
+    }
+  }
+  return self.cachedCodesignChecker;
 }
 
 @end

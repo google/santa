@@ -14,6 +14,8 @@
 
 @import Foundation;
 
+@class MOLCodesignChecker;
+
 ///
 ///  Represents a binary on disk, providing access to details about that binary
 ///  such as the SHA-1, SHA-256, Info.plist and the Mach-O data.
@@ -215,5 +217,16 @@
 ///  @return The size of the file in bytes.
 ///
 - (NSUInteger)fileSize;
+
+///
+///  @return Returns an instance of MOLCodeSignChecker initialized with the file's binary path.
+///  The result is cached and returned on subsequent calls.
+///
+- (MOLCodesignChecker *)codesignChecker;
+
+///
+///  If there was an error while calling codesignChecker you can read it from this property.
+///
+@property(nonatomic,readonly) NSError *codesignCheckerError;
 
 @end
