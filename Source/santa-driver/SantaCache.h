@@ -101,12 +101,19 @@ template<class T> class SantaCache {
   /**
     Set an element in the cache.
 
-    @note If the cache is full when this is called, this will empty the cache before
-    inserting the new value.
+    @note If the cache is full when this is called, this will
+          empty the cache before inserting the new value.
 
-    @return if an existing value was replaced, the previous value, otherwise zero_
+    @param key, The key
+    @param value, The value with parameterized type
+    @param previous_value, If the has_prev_value parameter is true the new
+        value will only be set if this parameter is equal to the provided value.
+        This allows set to become a CAS operation.
+    @param has_prev_value, Pass true if previous_value should be used.
+
+    @return the previous value (which may be zero_)
   */
-  T set(uint64_t key, T value) {
+  T set(uint64_t key, T value, T previous_value, bool has_prev_value) {
     struct bucket *bucket = &buckets_[hash(key)];
     lock(bucket);
     struct entry *entry = (struct entry *)((uintptr_t)bucket->head - 1);
@@ -114,6 +121,12 @@ template<class T> class SantaCache {
     while (entry != nullptr) {
       if (entry->key == key) {
         T existing_value = entry->value;
+
+        if (has_prev_value && previous_value != existing_value) {
+          unlock(bucket);
+          return existing_value;
+        }
+
         entry->value = value;
 
         if (value == zero_) {
@@ -134,13 +147,15 @@ template<class T> class SantaCache {
     }
 
     // If value is zero_, we're clearing but there's nothing to clear
-    // so we don't need to do anything else.
-    if (value == zero_) {
+    // so we don't need to do anything else. Alternatively, if has_prev_value
+    // is true and is not zero_ we don't want to set a value.
+    if (value == zero_ || (has_prev_value && previous_value != zero_)) {
       unlock(bucket);
       return zero_;
     }
 
-    // Check that adding this new item won't take the cache over its maximum size.
+    // Check that adding this new item won't take the cache
+    // over its maximum size.
     if (count_ + 1 > max_size_) {
       unlock(bucket);
       lock(&clear_bucket_);
@@ -152,9 +167,10 @@ template<class T> class SantaCache {
       unlock(&clear_bucket_);
     }
 
-    // Allocate a new entry, set the key and value, then set the next pointer as the current
-    // first entry in the bucket then make this new entry the first in the bucket.
-    struct entry *new_entry = (struct entry *)IOMallocAligned(sizeof(struct entry), 2);
+    // Allocate a new entry, set the key and value, then put this new entry at
+    // the head of this bucket's linked list.
+    struct entry *new_entry = (struct entry *)IOMallocAligned(
+        sizeof(struct entry), 2);
     new_entry->key = key;
     new_entry->value = value;
     new_entry->next = (struct entry *)((uintptr_t)bucket->head - 1);
@@ -163,6 +179,20 @@ template<class T> class SantaCache {
 
     unlock(bucket);
     return zero_;
+  }
+
+  /**
+    Overload to allow setting without providing a previous value
+  */
+  T set(uint64_t key, T value) {
+    return set(key, value, {}, false);
+  }
+
+  /**
+    Overload to allow setting while providing a previous value
+  */
+  T set(uint64_t key, T value, T previous_value) {
+    return set(key, value, previous_value, true);
   }
 
   /**
@@ -247,7 +277,7 @@ template<class T> class SantaCache {
   /**
     Holder for a 'zero' entry for the current type
   */
-  const T zero_ = T();
+  const T zero_ = {};
 
   /**
     Special bucket used when automatically clearing due to size
