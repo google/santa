@@ -76,12 +76,6 @@
 - (NSString *)SHA256;
 
 ///
-///  Computes SHA1 and SHA256, caching the results.  This is slightly faster than computing each
-//   hash separately if you need them both.
-///
-- (void)precomputeSecureHashes;
-
-///
 ///  @return The architectures included in this binary (e.g. x86_64, ppc).
 ///
 - (NSArray *)architectures;

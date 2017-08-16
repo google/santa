@@ -218,14 +218,12 @@ REGISTER_COMMAND_NAME(@"fileinfo")
 
 - (SNTAttributeBlock)sha256 {
   return ^id (SNTCommandFileInfo *cmd, SNTFileInfo *fileInfo) {
-    [fileInfo precomputeSecureHashes];
     return fileInfo.SHA256;
   };
 }
 
 - (SNTAttributeBlock)sha1 {
   return ^id (SNTCommandFileInfo *cmd, SNTFileInfo *fileInfo) {
-    [fileInfo precomputeSecureHashes];
     return fileInfo.SHA1;
   };
 }
