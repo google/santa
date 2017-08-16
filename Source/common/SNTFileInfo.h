@@ -220,13 +220,9 @@
 
 ///
 ///  @return Returns an instance of MOLCodeSignChecker initialized with the file's binary path.
-///  The result is cached and returned on subsequent calls.
+///  Both the MOLCodesignChecker and any resulting NSError are cached and returned on subsequent
+///  calls.  You may pass in nil for the error if you don't care to receive it.
 ///
-- (MOLCodesignChecker *)codesignChecker;
-
-///
-///  If there was an error while calling codesignChecker you can read it from this property.
-///
-@property(nonatomic,readonly) NSError *codesignCheckerError;
+- (MOLCodesignChecker *)codesignCheckerWithError:(NSError **)error;
 
 @end

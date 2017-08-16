@@ -294,8 +294,8 @@ REGISTER_COMMAND_NAME(@"fileinfo")
 
 - (SNTAttributeBlock)codeSigned {
   return ^id (SNTCommandFileInfo *cmd, SNTFileInfo *fileInfo) {
-    MOLCodesignChecker *csc = [fileInfo codesignChecker];
-    NSError *error = [fileInfo codesignCheckerError];
+    NSError *error;
+    MOLCodesignChecker *csc = [fileInfo codesignCheckerWithError:&error];
     if (error) {
       switch (error.code) {
         case errSecCSUnsigned:
@@ -338,7 +338,7 @@ REGISTER_COMMAND_NAME(@"fileinfo")
     dispatch_once(&token, ^{ [cmd.daemonConn resume]; });
     __block SNTEventState state;
     dispatch_semaphore_t sema = dispatch_semaphore_create(0);
-    MOLCodesignChecker *csc = [fileInfo codesignChecker];
+    MOLCodesignChecker *csc = [fileInfo codesignCheckerWithError:nil];
     [[self.daemonConn remoteObjectProxy] decisionForFilePath:fileInfo.path
                                                   fileSHA256:fileInfo.SHA256
                                            certificateSHA256:csc.leafCertificate.SHA256
@@ -392,7 +392,7 @@ REGISTER_COMMAND_NAME(@"fileinfo")
 
 - (SNTAttributeBlock)signingChain {
   return ^id (SNTCommandFileInfo *cmd, SNTFileInfo *fileInfo) {
-    MOLCodesignChecker *csc = [fileInfo codesignChecker];
+    MOLCodesignChecker *csc = [fileInfo codesignCheckerWithError:nil];
     if (!csc.certificates.count) return nil;
     NSMutableArray *certs = [[NSMutableArray alloc] initWithCapacity:csc.certificates.count];
     for (MOLCertificate *c in csc.certificates) {

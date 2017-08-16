@@ -57,6 +57,7 @@
 @property NSString *cachedSHA256;
 @property NSString *cachedSHA1;
 @property MOLCodesignChecker *cachedCodesignChecker;
+@property(nonatomic, readonly) NSError *codesignCheckerError;
 @end
 
 @implementation SNTFileInfo
@@ -712,17 +713,15 @@ extern NSString *const NSURLQuarantinePropertiesKey WEAK_IMPORT_ATTRIBUTE;
 
 ///
 ///  Cache and return a MOLCodeSignChecker for the given file.  If there was an error creating the
-///  code sign checker, the error may be obtained from the read-only codesignCheckerError property.
+///  code sign checker it will be returned in the passed-in error parameter.
 ///
-- (MOLCodesignChecker *)codesignChecker {
-  @synchronized (self) {
-    if (!self.cachedCodesignChecker) {
-      NSError *error;
-      self.cachedCodesignChecker = [[MOLCodesignChecker alloc]
-          initWithBinaryPath:self.path error:&error];
-      _codesignCheckerError = error;
-    }
+- (MOLCodesignChecker *)codesignCheckerWithError:(NSError **)error {
+  if (!self.cachedCodesignChecker) {
+    NSError *e;
+    self.cachedCodesignChecker = [[MOLCodesignChecker alloc] initWithBinaryPath:self.path error:&e];
+    _codesignCheckerError = e;
   }
+  if (error) *error = _codesignCheckerError;
   return self.cachedCodesignChecker;
 }
 
