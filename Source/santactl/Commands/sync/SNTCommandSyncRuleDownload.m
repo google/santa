@@ -30,35 +30,21 @@
 }
 
 - (BOOL)sync {
-  self.syncState.downloadedRules = [NSMutableArray array];
-  return [self ruleDownloadWithCursor:nil];
-}
+  // Grab the new rules from server
+  NSArray<SNTRule *> *newRules = [self downloadNewRulesFromServer];
+  if (!newRules) return NO;        // encountered a problem with the download
+  if (!newRules.count) return YES; // successfully downloaded rules, but nothing of interest
 
-- (BOOL)ruleDownloadWithCursor:(NSString *)cursor {
-  NSDictionary *requestDict = (cursor ? @{kCursor : cursor} : @{});
-
-  NSDictionary *resp = [self performRequest:[self requestWithDictionary:requestDict]];
-  if (!resp) return NO;
-
-  for (NSDictionary *rule in resp[kRules]) {
-    SNTRule *r = [self ruleFromDictionary:rule];
-    if (r) [self.syncState.downloadedRules addObject:r];
-  }
-
-  if (resp[kCursor]) {
-    return [self ruleDownloadWithCursor:resp[kCursor]];
-  }
-
-  if (!self.syncState.downloadedRules.count) return YES;
-
+  // Tell santad to add the new rules to the database.
+  // Wait until finished or until 5 minutes pass.
   dispatch_semaphore_t sema = dispatch_semaphore_create(0);
   __block NSError *error;
-  [[self.daemonConn remoteObjectProxy] databaseRuleAddRules:self.syncState.downloadedRules
+  [[self.daemonConn remoteObjectProxy] databaseRuleAddRules:newRules
                                                  cleanSlate:self.syncState.cleanSync
                                                       reply:^(NSError *e) {
-    error = e;
-    dispatch_semaphore_signal(sema);
-  }];
+                                                        error = e;
+                                                        dispatch_semaphore_signal(sema);
+                                                      }];
   dispatch_semaphore_wait(sema, dispatch_time(DISPATCH_TIME_NOW, 300 * NSEC_PER_SEC));
 
   if (error) {
@@ -67,27 +53,61 @@
     return NO;
   }
 
+  // Tell santad to record a successful rules sync and wait for it to finish.
   sema = dispatch_semaphore_create(0);
-  [[self.daemonConn remoteObjectProxy] setRuleSyncLastSuccess:[NSDate date] reply:^{
-    dispatch_semaphore_signal(sema);
-  }];
+  [[self.daemonConn remoteObjectProxy] setRuleSyncLastSuccess:[NSDate date]
+                                                        reply:^{
+                                                          dispatch_semaphore_signal(sema);
+                                                        }];
   dispatch_semaphore_wait(sema, dispatch_time(DISPATCH_TIME_NOW, 5 * NSEC_PER_SEC));
 
-  LOGI(@"Added %lu rules", self.syncState.downloadedRules.count);
+  LOGI(@"Added %lu rules", newRules.count);
 
-  if (self.syncState.targetedRuleSync) {
-    for (SNTRule *r in self.syncState.downloadedRules) {
-      NSString *fileName = [[self.syncState.ruleSyncCache objectForKey:r.shasum] copy];
-      [self.syncState.ruleSyncCache removeObjectForKey:r.shasum];
-      if (fileName.length) {
-        NSString *message = [NSString stringWithFormat:@"%@ can now be run", fileName];
-        [[self.daemonConn remoteObjectProxy]
-            postRuleSyncNotificationWithCustomMessage:message reply:^{}];
-      }
-    }
-  }
+  // Send out push notifications about any newly whitelisted binaries
+  // that had been previously blocked by santad.
+  [self announceUnblockingRules:newRules];
 
   return YES;
+}
+
+// Downloads new rules from server and converts them into SNTRule.
+// Returns an array of all converted rules, or nil if there was a server problem.
+// Note that rules from the server are filtered.  We only keep those whose rule_type
+// is either BINARY or CERTIFICATE.  PACKAGE rules are dropped.
+- (NSArray<SNTRule *> *)downloadNewRulesFromServer {
+  NSMutableArray<SNTRule *> *newRules = [NSMutableArray array];
+  NSString *cursor = nil;
+  do {
+    NSDictionary *requestDict = cursor ? @{kCursor : cursor} : @{};
+    NSDictionary *response = [self performRequest:[self requestWithDictionary:requestDict]];
+    if (!response) return nil;
+    for (NSDictionary *ruleDict in response[kRules]) {
+      SNTRule *rule = [self ruleFromDictionary:ruleDict];
+      if (rule) [newRules addObject:rule];
+    }
+    cursor = response[kCursor];
+  } while (cursor);
+  return newRules;
+}
+
+// Sends push notification for each rule in newRules that whitelists a binary
+// recently blocked by santad.
+- (void)announceUnblockingRules:(NSArray<SNTRule *> *)newRules {
+  if (!self.syncState.targetedRuleSync) return;
+
+  for (NSString *key in self.syncState.pendingNotifications) {
+    // Each notifier object is a dictionary with @"name" and @"count" keys. If the count has been
+    // decremented to zero, then this means that we have downloaded all of the rules associated with
+    // this SHA256 hash (which might be a bundle hash or a binary hash), in which case we are OK to
+    // show a notification that the named bundle/binary can be run.
+    NSDictionary *notifier = self.syncState.pendingNotifications[key];
+    NSNumber *count = notifier[@"count"];
+    if (count && [count intValue] == 0) {
+      NSString *message = [NSString stringWithFormat:@"%@ can now be run", notifier[@"name"]];
+      [[self.daemonConn remoteObjectProxy]
+          postRuleSyncNotificationWithCustomMessage:message reply:^{}];
+    }
+  }
 }
 
 - (SNTRule *)ruleFromDictionary:(NSDictionary *)dict {
@@ -122,6 +142,23 @@
   NSString *customMsg = dict[kRuleCustomMsg];
   if (customMsg.length) {
     newRule.customMsg = customMsg;
+  }
+
+  // Q: Is the count value sent down with the initial FCM message? or in each rule?
+  // Q: What happens if the rules get sent before the corresponding FCM message?
+  // Let's assume that we already have a count value.
+  NSString *primaryHash = dict[kRuleBundleHash];
+  if (primaryHash.length != 64) {
+    primaryHash = newRule.shasum;
+  }
+
+  // Decrement the count of the corresponding pending notification
+  NSMutableDictionary *notifier = self.syncState.pendingNotifications[primaryHash];
+  if (notifier) {
+    NSNumber *count = notifier[@"count"];
+    if (count) {
+      notifier[@"count"] = @([count intValue] - 1);
+    }
   }
 
   return newRule;

@@ -95,7 +95,9 @@ NSString *const kRuleType = @"rule_type";
 NSString *const kRuleTypeBinary = @"BINARY";
 NSString *const kRuleTypeCertificate = @"CERTIFICATE";
 NSString *const kRuleCustomMsg = @"custom_msg";
+NSString *const kRuleBundleHash = @"bundle_hash";
 NSString *const kCursor = @"cursor";
+
 
 NSString *const kBackoffInterval = @"backoff";
 

@@ -37,6 +37,7 @@
 static NSString *const kFCMActionKey = @"action";
 static NSString *const kFCMFileHashKey = @"file_hash";
 static NSString *const kFCMFileNameKey = @"file_name";
+static NSString *const kFCMRuleCountKey = @"rule_count";
 static NSString *const kFCMTargetHostIDKey = @"target_host_id";
 
 @interface SNTCommandSyncManager () {
@@ -47,7 +48,7 @@ static NSString *const kFCMTargetHostIDKey = @"target_host_id";
 @property(nonatomic) dispatch_source_t ruleSyncTimer;
 
 @property(nonatomic) NSCache *dispatchLock;
-@property(nonatomic) NSCache *ruleSyncCache;
+@property(nonatomic) NSMutableDictionary *pendingNotifications;
 
 @property NSUInteger FCMFullSyncInterval;
 @property NSUInteger FCMGlobalRuleSyncDeadline;
@@ -100,7 +101,7 @@ static void reachabilityHandler(
       [self lockAction:kRuleSync];
       SNTCommandSyncState *syncState = [self createSyncState];
       syncState.targetedRuleSync = self.targetedRuleSync;
-      syncState.ruleSyncCache = self.ruleSyncCache;
+      syncState.pendingNotifications = self.pendingNotifications;
       SNTCommandSyncRuleDownload *p = [[SNTCommandSyncRuleDownload alloc] initWithState:syncState];
       if ([p sync]) {
         LOGD(@"Rule download complete");
@@ -111,7 +112,7 @@ static void reachabilityHandler(
       [self unlockAction:kRuleSync];
     }];
     _dispatchLock = [[NSCache alloc] init];
-    _ruleSyncCache = [[NSCache alloc] init];
+    _pendingNotifications = [NSMutableDictionary dictionary];
 
     _eventBatchSize = kDefaultEventBatchSize;
     _FCMFullSyncInterval = kDefaultFCMFullSyncInterval;
@@ -221,8 +222,10 @@ static void reachabilityHandler(
   // to build a user notification.
   NSString *fileHash = message[kFCMFileHashKey];
   NSString *fileName = message[kFCMFileNameKey];
-  if (fileName && fileHash) {
-    [self.ruleSyncCache setObject:fileName forKey:fileHash];
+  NSString *ruleCount = message[kFCMRuleCountKey];
+  if (fileName && fileHash && ruleCount) {
+    NSNumber *count = @([ruleCount integerValue]);
+    self.pendingNotifications[fileHash] = @{ @"name" : fileName, @"count" : count }.mutableCopy;
   }
 
   LOGD(@"Push notification action: %@ received", action);

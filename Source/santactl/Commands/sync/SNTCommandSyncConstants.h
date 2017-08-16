@@ -95,6 +95,7 @@ extern NSString *const kRuleType;
 extern NSString *const kRuleTypeBinary;
 extern NSString *const kRuleTypeCertificate;
 extern NSString *const kRuleCustomMsg;
+extern NSString *const kRuleBundleHash;
 extern NSString *const kCursor;
 
 extern NSString *const kBackoffInterval;
