@@ -14,11 +14,11 @@
 
 #import "SNTEventLog.h"
 
+#include <dlfcn.h>
 #include <grp.h>
 #include <libproc.h>
 #include <pwd.h>
 #include <sys/sysctl.h>
-#include <dlfcn.h>
 
 #import "MOLCertificate.h"
 #import "SNTCachedDecision.h"
@@ -509,48 +509,46 @@
 }
 
 /**
- Uses the executable path, uid, and gid from in a given santa_message_t to determine if the path
+ Uses the executable path, uid, and gid from a given santa_message_t to determine if the path
  has been translocated by GateKeeper and if so, returns the original path of the executable.  This
- requires MacOS 10.12 or higher.  We use dlopen to access the functions we need in
+ requires macOS 10.12 or higher.  We use dlopen to access the functions we need in
  Security.framework so that we can still build against the 10.11 SDK.  If the path has not been
- translocated or if running on MacOS prior to 10.12, this method returns nil.
+ translocated or if running on macOS prior to 10.12, this method returns nil.
  */
 - (NSString *)originalPathForTranslocation:(santa_message_t)message {
   // The first time this function is called, we attempt to find the addresses of
   // SecTranslocateIsTranslocatedURL and SecTranslocateCreateOriginalPathForURL inside of the
   // Security.framework library.  If we were successful, handle will be non-NULL and is never
   // closed.
-  static void *handle;
-  static Boolean (*isTranslocatedURL)(CFURLRef, bool *, CFErrorRef *);
-  static CFURLRef __nullable (*createOriginalPathForURL)(CFURLRef, CFErrorRef *);
+  static Boolean (*IsTranslocatedURL)(CFURLRef, bool *, CFErrorRef *) = NULL;
+  static CFURLRef __nullable (*CreateOriginalPathForURL)(CFURLRef, CFErrorRef *) = NULL;
   static dispatch_once_t token;
   dispatch_once(&token, ^{
-    handle = dlopen("/System/Library/Frameworks/Security.framework/Security", RTLD_LAZY);
+    void *handle = dlopen("/System/Library/Frameworks/Security.framework/Security", RTLD_LAZY);
     if (handle) {
-      isTranslocatedURL = dlsym(handle, "SecTranslocateIsTranslocatedURL");
-      createOriginalPathForURL = dlsym(handle, "SecTranslocateCreateOriginalPathForURL");
-      if (!isTranslocatedURL || !createOriginalPathForURL) {
-        isTranslocatedURL = NULL;
-        createOriginalPathForURL = NULL;
+      IsTranslocatedURL = dlsym(handle, "SecTranslocateIsTranslocatedURL");
+      CreateOriginalPathForURL = dlsym(handle, "SecTranslocateCreateOriginalPathForURL");
+      if (!IsTranslocatedURL || !CreateOriginalPathForURL) {
+        IsTranslocatedURL = NULL;
+        CreateOriginalPathForURL = NULL;
         dlclose(handle);
-        handle = NULL;
       }
     }
   });
 
   // If we couldn't open the library or find the functions we need, don't do anything.
-  if (!handle) return nil;
+  if (!IsTranslocatedURL || !CreateOriginalPathForURL) return nil;
 
   // Determine if the executable URL has been translocated or not.
   CFURLRef cfExecURL = (__bridge CFURLRef)[NSURL fileURLWithPath:@(message.path)];
   bool isTranslocated = false;
-  CFErrorRef cferror = nil;
-  if (!isTranslocatedURL(cfExecURL, &isTranslocated, &cferror) || !isTranslocated) return nil;
+  CFErrorRef cferror = NULL;
+  if (!IsTranslocatedURL(cfExecURL, &isTranslocated, &cferror) || !isTranslocated) return nil;
 
   // SecTranslocateCreateOriginalPathForURL requires that our uid be the same as the user who
   // launched the executable.  So we temporarily drop from root down to this uid, then reset.
   pthread_setugid_np(message.uid, message.gid);
-  NSURL *origURL = CFBridgingRelease(createOriginalPathForURL(cfExecURL, &cferror));
+  NSURL *origURL = CFBridgingRelease(CreateOriginalPathForURL(cfExecURL, &cferror));
   pthread_setugid_np(KAUTH_UID_NONE, KAUTH_GID_NONE);
 
   return [origURL path];  // this will be nil if there was an error
