@@ -513,17 +513,20 @@
   TSTART("Test cache performance");
 
   // Execute echo 100 times, saving the time taken for each run
-  std::vector<std::clock_t> times;
+  std::vector<double> times;
   for (int i = 0; i < 100; ++i) {
     printf("\033[s");  // save cursor position
     printf("%d/%d", i + 1, 100);
-    auto start = std::clock();
     NSTask *t = [[NSTask alloc] init];
     t.launchPath = @"/bin/echo";
     t.standardOutput = [NSPipe pipe];
+    auto start = std::chrono::steady_clock::now();
     [t launch];
     [t waitUntilExit];
-    if (i > 5) times.push_back(std::clock() - start);
+    auto end = std::chrono::steady_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
+
+    if (i > 5) times.push_back(duration);
     printf("\033[u");  // restore cursor position
   }
 
@@ -542,12 +545,12 @@
   std::for_each(times.begin(), times.end(), [&](const double d) {
     accum += (d - mean) * (d - mean);
   });
-  double stdev = sqrt(accum / (times.size()-1));
+  double stdev = sqrt(accum / (times.size() - 1));
 
-  if (mean > 1000 || stdev > 150) {
-    TFAILINFO("μ: %-3.2f σ: %-3.2f", mean, stdev);
+  if (mean > 80 || stdev > 10) {
+    TFAILINFO("ms: %-3.2f σ: %-3.2f", mean, stdev);
   } else {
-    TPASSINFO("μ: %-3.2f σ: %-3.2f", mean, stdev);
+    TPASSINFO("ms: %-3.2f σ: %-3.2f", mean, stdev);
   }
 }
 
