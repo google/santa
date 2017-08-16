@@ -542,13 +542,12 @@
   // Determine if the executable URL has been translocated or not.
   CFURLRef cfExecURL = (__bridge CFURLRef)[NSURL fileURLWithPath:@(message.path)];
   bool isTranslocated = false;
-  CFErrorRef cferror = NULL;
-  if (!IsTranslocatedURL(cfExecURL, &isTranslocated, &cferror) || !isTranslocated) return nil;
+  if (!IsTranslocatedURL(cfExecURL, &isTranslocated, NULL) || !isTranslocated) return nil;
 
   // SecTranslocateCreateOriginalPathForURL requires that our uid be the same as the user who
   // launched the executable.  So we temporarily drop from root down to this uid, then reset.
   pthread_setugid_np(message.uid, message.gid);
-  NSURL *origURL = CFBridgingRelease(CreateOriginalPathForURL(cfExecURL, &cferror));
+  NSURL *origURL = CFBridgingRelease(CreateOriginalPathForURL(cfExecURL, NULL));
   pthread_setugid_np(KAUTH_UID_NONE, KAUTH_GID_NONE);
 
   return [origURL path];  // this will be nil if there was an error
