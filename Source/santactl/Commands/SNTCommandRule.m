@@ -134,7 +134,7 @@ REGISTER_COMMAND_NAME(@"rule")
     if (newRule.type == SNTRuleTypeBinary) {
       newRule.shasum = fi.SHA256;
     } else if (newRule.type == SNTRuleTypeCertificate) {
-      MOLCodesignChecker *cs = [fi codesignCheckerWithError:nil];
+      MOLCodesignChecker *cs = [fi codesignCheckerWithError:NULL];
       newRule.shasum = cs.leafCertificate.SHA256;
     }
   }

@@ -239,7 +239,7 @@
       se.fileBundleVersion = event.fileBundleVersion;
       se.fileBundleVersionString = event.fileBundleVersionString;
 
-      MOLCodesignChecker *cs = [fi codesignCheckerWithError:nil];
+      MOLCodesignChecker *cs = [fi codesignCheckerWithError:NULL];
       se.signingChain = cs.certificates;
 
       dispatch_sync(dispatch_get_main_queue(), ^{
