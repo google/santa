@@ -55,7 +55,7 @@
 @property NSDictionary *quarantineDict;
 @property NSDictionary *cachedHeaders;
 @property MOLCodesignChecker *cachedCodesignChecker;
-@property(nonatomic, readonly) NSError *codesignCheckerError;
+@property(nonatomic) NSError *codesignCheckerError;
 @end
 
 @implementation SNTFileInfo
@@ -703,9 +703,9 @@ extern NSString *const NSURLQuarantinePropertiesKey WEAK_IMPORT_ATTRIBUTE;
   if (!self.cachedCodesignChecker) {
     NSError *e;
     self.cachedCodesignChecker = [[MOLCodesignChecker alloc] initWithBinaryPath:self.path error:&e];
-    _codesignCheckerError = e;
+    self.codesignCheckerError = e;
   }
-  if (error) *error = _codesignCheckerError;
+  if (error) *error = self.codesignCheckerError;
   return self.cachedCodesignChecker;
 }
 
