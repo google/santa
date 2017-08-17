@@ -33,7 +33,7 @@ kauth_unlisten_scope(vnode_listener_);
 
 ###### KAUTH_SCOPE_FILEOP
 
-Santa also listens for file operations, this is mainly used for logging [1]. 
+Santa also listens for file operations, this is mainly used for logging [1] and cache invalidation. 
 
 * `KAUTH_FILEOP_DELETE`, `KAUTH_FILEOP_RENAME`, `KAUTH_FILEOP_EXCHANGE` and `KAUTH_FILEOP_LINK` are logged
 * `KAUTH_FILEOP_EXEC` is used to log `execve()`s. Since the `KAUTH_VNODE_EXECUTE` is used to allow or deny an `execve()` the process arguments have not been setup yet. Since `KAUTH_FILEOP_EXEC` is triggered after an `execve()` it is used to log the `execve()`.
@@ -44,7 +44,7 @@ Santa also listens for file operations, this is mainly used for logging [1].
 
 santa-driver implements an [IOUserClient](https://developer.apple.com/documentation/kernel/iouserclient?language=objc) subclass and santad interacts with it through IOKit/IOKitLib.h functions.
 
-TODO(bur, rah) Flesh out the details
+[//]: # "TODO(bur, rah) Flesh out the details"
 
 ##### Cache
 
@@ -79,15 +79,16 @@ The possible actions are:
 
 Besides the expiry time for individual entries, the entire cache will be cleared if any of the following events takes place:
 
-* Addition of the blacklist rule
+* Addition of a blacklist rule
 * Addition of a blacklist regex scope
-* Cache fills up. This defaults to 10000 entries.
+* Cache fills up. This defaults to `5000` entries for the root volume and `500` for all other mounted volumes.
 
 To view the current kernel cache count see the "Kernel info" section of `santactl status`:
 
 ```sh
 ⇒  santactl status
 >>> Kernel Info
-  Kernel cache count        | 305
+    Root cache count          | 107
+    Non-root cache count      | 0
 ```
 

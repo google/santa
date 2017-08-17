@@ -2,7 +2,7 @@
 
 # Building
 
-Santa makes use of [rake](https://ruby.github.io/rake/) for building and testing Santa. All of the [releases](https://github.com/google/santa/releases) are made using this same process. Santa's releases are codesigned with Google's KEXT signing certificate. This allows Santa to be loaded with SIP fully enabled. macOS 10.13+ will most likely require user consent, even when signed with Google's KEXT signing certificate.
+Santa makes use of [rake](https://ruby.github.io/rake/) for building and testing Santa. All of the [releases](https://github.com/google/santa/releases) are made using this same process. Santa's releases are codesigned with Google's KEXT signing certificate. This allows Santa to be loaded with SIP fully enabled.
 
 #### Cloning
 
@@ -62,7 +62,11 @@ rake reload:release
 
 #### Debugging
 
-Xcode and lldb can be used to debug Santa, just like any other project. Instead of clicking the play button to launch and attach to a process, you can attach to an already running, or soon to by running, component of Santa. To do this select the Debug menu and choose `Attach to Process by PID or Name… ` . Below are the four components of Santa and who to debug the process as. Note: santa-driver (the kernel extension) cannot be debugged by attaching with Xcode.
+Xcode and lldb can be used to debug Santa, just like any other project. Instead of clicking the play button to launch and attach to a process, you can attach to an already running, or soon to by running, component of Santa. To do this select the Debug menu and choose `Attach to Process by PID or Name… `. Below are the four components of Santa and who to debug the process as. 
+
+Note: santa-driver (the kernel extension) cannot be debugged by attaching with Xcode.
+
+Note: Attaching to santad with breakpoints in the decision making codepath will deadlock your machine.
 
 | process  | user |
 | -------- | ---- |

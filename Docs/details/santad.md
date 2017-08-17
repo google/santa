@@ -16,7 +16,7 @@ At this point, santa-driver is loaded and running in the kernel, but is allowing
 * Connections to Santa (GUI) and santactl sync daemon are established. 
 * The config file is processed.
 
-Santad is now ready to start processing decision and logging messages from santa-driver. The listeners are started and santad sits in a run loop awaiting messages from santa-driver. 
+santad is now ready to start processing decision and logging messages from santa-driver. The listeners are started and santad sits in a run loop awaiting messages from santa-driver. 
 
 ##### Running
 

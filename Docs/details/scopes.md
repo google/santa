@@ -24,4 +24,4 @@ As seen above, Santa will whitelist any non Mach-O binary under a whitelist scop
 
 ##### Regex Caveats
 
-The paths covered by the whitelist and blacklist regex patterns are not tracked. If an `execve()` is allowed initially, then moved into a blacklist directory, Santa has no knowledge of that move. Since Santa-driver caches decisions, the recently moved file will continue to be allowed to `execve()` even though it is now within a blacklisted regex path. The cache holds "allow" decisions until invalidated and "deny" decisions for 500 milliseconds. Going from a blacklist path to a whitelist path is not largely affected.
+The paths covered by the whitelist and blacklist regex patterns are not tracked. If an `execve()` is allowed initially, then moved into a blacklist directory, Santa has no knowledge of that move. Since santa-driver caches decisions, the recently moved file will continue to be allowed to `execve()` even though it is now within a blacklisted regex path. The cache holds "allow" decisions until invalidated and "deny" decisions for 500 milliseconds. Going from a blacklist path to a whitelist path is not largely affected.

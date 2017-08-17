@@ -2,7 +2,7 @@
 
 #### Background
 
-The decision flow starts in the kernel. The macOS kernel is extensible by way of a kernel extension (KEXT). macOS makes available kernel programming interfaces (KPIs) to be used by a KEXT. Santa utilizes of the Kernel Authorization (Kauth) KPI.. This is a very powerful and verbose interface that gives Santa the ability to listen in on most vnode and file systems operations and to take actions, directly or indirectly, on the operations being performed. Still, there are some limitations to Kauth which are pointed out in the santa-driver document. For more information on the santa-driver KEXT see the [santa-driver.md](../details/santa-driver.md) document.
+The decision flow starts in the kernel. The macOS kernel is extensible by way of a kernel extension (KEXT). macOS makes available kernel programming interfaces (KPIs) to be used by a KEXT. Santa utilizes the Kernel Authorization (Kauth) KPI. This is a very powerful and verbose interface that gives Santa the ability to listen in on most vnode and file systems operations and to take actions, directly or indirectly, on the operations being performed. Still, there are some limitations to Kauth which are pointed out in the santa-driver document. For more information on the santa-driver KEXT see the [santa-driver.md](../details/santa-driver.md) document.
 
 #### Flow of an execve()
 
@@ -16,8 +16,9 @@ This is a high level overview of the binary whitelisting / blacklisting decision
    * If Kauth receives a deny, it will stop the `execve()` from taking place. 
    * If Kauth receives an allow, it will defer the decision. If there are other Kauth listeners, they also have a chance deny or defer.
 3. If there is no entry for the `vnode_id` in the cache a few actions occur:
-   * Santa-driver hands off the decision making to santad.
+   * santa-driver hands off the decision making to santad.
    * A new entry is created in the cache for the `vnode_id` with a special value of `ACTION_REQUEST_BINARY`.  This is used as a placeholder until the decision from santad comes back. If another process tries to `execve()` the same `vnode_id`, santa-driver will have that thread wait for the in-flight decision from santad. All subsequent `execve()`s for the same `vnode_id` will use the decision in the cache as explained in #2, until the cache is invalidated. See the [santa-driver.md](../details/santa-driver.md) document for more details on the cache invalidation.
+   * If the executing file is written to while any of the threads are waiting for a response the `ACTION_REQUEST_BINARY` entry is removed, forcing the decision-making process to be restarted.
 
 ###### User Space
 

@@ -16,11 +16,11 @@ Currently all of the most recent releases of Santa are built with the macOS 10.1
 
 If you are building Santa yourself and using the macOS 10.12+ SDKs, Santa's logs will be sent to ULS.
 
-Work is currently underway to bypass ASL and ULS altogether, allowing Santa to continue logging to `/var/db/santa/santa.log`. It also will make available other types of logging like Protocol Buffer logs.
+Work is currently underway to bypass ASL and ULS altogether, allowing Santa to continue logging to `/var/db/santa/santa.log`. This change will also allow us to add alternative logging formats, like Protocol Buffer or JSON.
 
 ##### KEXT Logging
 
-Streaming logs from the santa-driver KEXT does not work properly. Logs are generated, but they will be garbled and show inaccurate data.
+Streaming logs from the santa-driver KEXT does not work properly. Logs are generated but they will likely be garbled or show inaccurate data.
 
 Instead, `show` can be used to view the santa-driver KEXT logs:
 

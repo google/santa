@@ -1,24 +1,12 @@
 # Events
 
-Events are a defined set of data, core to how Santa interacts with a sync-server. Events are generated when there is a blocked `execve()` while in lockdown or monitor mode. Events are also generated in monitor mode for an `execve()` that was allowed to run, but would have been blocked in lockdown mode. This allows an admin to roll out Santa to their macOS fleet in monitor mode, but still collect meaningful data. The events collected while in monitor mode can be used to build a reasonably comprehensive whitelist of signing certificates and binaries before switching the fleet to lockdown mode.
+Events are a defined set of data, core to how Santa interacts with a sync server. Events are generated when there is a blocked `execve()` while in Lockdown or Monitor mode. Events are also generated in Monitor mode for an `execve()` that was allowed to run, but would have been blocked in Lockdown mode. This allows an admin to roll out Santa to their macOS fleet in Monitor mode but still collect meaningful data. The events collected while in Monitor mode can be used to build a reasonably comprehensive whitelist of signing certificates and binaries before switching the fleet to Lockdown mode.
 
 ##### Event Data
 
 Events begin their life as an [SNTStoredEvent](https://github.com/google/santa/blob/master/Source/common/SNTStoredEvent.h) object. The SNTStoredEvent class is just a simple storage class that has properties for all the relevant bits of information. More importantly the class implements the [NSSecureCoding](https://developer.apple.com/documentation/foundation/nssecurecoding?language=objc) protocol. This allows the objects to be encoded and decoded for storage in the events sqlite3 database on disk and sent over XPC to another process.
 
-###### Archived Object
-
-The archived object format and corresponding events database is only to be used internally by santad, and may change in the future. This section is for informational purposes only.
-
-Events are temporarily stored in a sqlite3 database, `/var/db/santa/events.db`, until they uploaded to the sync server. They are stored in the [NSKeyedArchiver](https://developer.apple.com/documentation/foundation/nskeyedarchiver?language=objc) format.  Here is an example of a Firefox event in the  events.db awaiting upload:
-
-```sh
-⇒  sudo sqlite3 /var/db/santa/events.db "select * from events where filesha256 = 'dd78f456a0929faf5dcbb6d952992d900bfdf025e1e77af60f0b029f0b85bf09';"
-```
-
-```sh
-4068275046|dd78f456a0929faf5dcbb6d952992d900bfdf025e1e77af60f0b029f0b85bf09|bplist00���X$versionX$objectsY$archiverT$top...
-```
+Events are temporarily stored in a database until they are uploaded. The format is subject the change; accessing the events database directly will most likely break in future releases. If direct access to the events database is required, raise a [issue on the Santa GitHub](https://github.com/google/santa/issues).
 
 ###### JSON
 

@@ -8,7 +8,7 @@ Binary rules use the SHA-256 hash of the entire binary as an identifier. This is
 
 ##### Certificate Rules
 
-Certificate rules are formed from the SHA-256 fingerprint of an x509 leaf signing certificate. This is a powerful rule type that has a much broader reach than an individual binary rule . A signing certificate can sign any number of binaries. Whitelisting or blacklisting just a few key signing certificates can cover the bulk of an average user's binaries. The leaf signing certificate is the only part of the chain that is evaluated. Though the whole chain is available for viewing.
+Certificate rules are formed from the SHA-256 fingerprint of an x.509 leaf signing certificate. This is a powerful rule type that has a much broader reach than an individual binary rule . A signing certificate can sign any number of binaries. Whitelisting or blacklisting just a few key signing certificates can cover the bulk of an average user's binaries. The leaf signing certificate is the only part of the chain that is evaluated. Though the whole chain is available for viewing.
 
 ```sh
 ⇒  santactl fileinfo /Applications/Dropbox.app --key "Signing Chain"
@@ -83,7 +83,7 @@ You can also check arbitrary SHA-256 binary and certificate hashes for rules. Th
 For checking the SHA-256 hash of `/usr/bin/yes`:
 
 ```sh
-sudo santactl rule --check --sha256 $(openssl sha -sha256 /usr/bin/yes  | awk '{print $2}')
+sudo santactl rule --check --sha256 $(santactl fileinfo --key SHA-256 /usr/bin/yes)
 Blacklisted (Binary)
 ```
 

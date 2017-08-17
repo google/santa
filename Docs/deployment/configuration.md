@@ -1,8 +1,8 @@
 # Configuration
 
-Two configuration methods can be used to control Santa: local configuration and a sync server controlled configuration.
+Two configuration methods can be used to control Santa: local configuration and a sync server controlled configuration. There are certain options that can only be controlled with a local configuration and others that can only be controlled with a sync server controlled configuration. Additionally, there are options that can be controlled by both.
 
-#### Local Configuration
+## Local Configuration
 
 | Key                           | Value Type | Description                              |
 | ----------------------------- | ---------- | ---------------------------------------- |
@@ -10,14 +10,14 @@ Two configuration methods can be used to control Santa: local configuration and 
 | FileChangesRegex*             | String     | The regex of paths to log file changes. Regexes are specified in ICU format. |
 | WhitelistRegex*               | String     | A regex to whitelist if the binary or certificate scopes did not allow execution.  Regexes are specified in ICU format. |
 | BlacklistRegex*               | String     | A regex to blacklist if the binary or certificate scopes did not block an execution.  Regexes are specified in ICU format. |
-| EnablePageZeroProtection      | Bool       | Enable `__PAGEZERO` protection, defaults to YES.  If this flag is set to NO, 32-bit binaries that are missing  the `__PAGEZERO` segment will not be blocked. |
+| EnablePageZeroProtection      | Bool       | Enable `__PAGEZERO` protection, defaults to YES. If this flag is set to YES, 32-bit binaries that are missing the `__PAGEZERO` segment will be blocked even in MONITOR mode, **unless** the binary is whitelisted by an explicit rule. |
 | MoreInfoURL                   | String     | The URL to open when the user clicks "More Info..." when opening Santa.app.  If unset, the button will not be displayed. |
-| EventDetailURL                | String     | See the Event URL Info section below.    |
+| EventDetailURL                | String     | See the [EventDetailURL](#EventDetailURL) section below. |
 | EventDetailText               | String     | Related to the above property, this string represents the text to show on the button. |
-| UnknownBlockMessage           | String     | In lockdown mode this is the message shown to the user when an unknown binary is blocked. If this message is not configured, a reasonable default is provided. |
-| BannedBlockMessage            | String     | This is the message shown to the user when a binary is blocked because of a rule, if that rule doesn't provide a custom message. If this is not configured, a reasonable  default is provided. |
-| ModeNotificationMonitor       | String     | The notification text to display when the client goes into monitor mode. Defaults to "Switching into Monitor mode". |
-| ModeNotificationLockdown      | String     | The notification text to display when the client goes into lockdown mode. Defaults to "Switching into Lockdown mode". |
+| UnknownBlockMessage           | String     | In Lockdown mode this is the message shown to the user when an unknown binary is blocked. If this message is not configured a reasonable default is provided. |
+| BannedBlockMessage            | String     | This is the message shown to the user when a binary is blocked because of a rule if that rule doesn't provide a custom message. If this is not configured a reasonable  default is provided. |
+| ModeNotificationMonitor       | String     | The notification text to display when the client goes into Monitor mode. Defaults to "Switching into Monitor mode". |
+| ModeNotificationLockdown      | String     | The notification text to display when the client goes into Lockdown mode. Defaults to "Switching into Lockdown mode". |
 | SyncBaseURL*                  | String     | The base URL of the sync server.         |
 | ClientAuthCertificateFile     | String     | If set, this contains the location of a PKCS#12 certificate to be used for sync authentication. |
 | ClientAuthCertificatePassword | String     | Contains the password for the PKCS#12 certificate. |
@@ -93,17 +93,12 @@ Here is an example of a configuration that could be set.
 </plist>
 ```
 
-#### Sync-server Provided Configuration
+## Sync server Provided Configuration
 
 | Key                            | Value Type | Description                              |
 | ------------------------------ | ---------- | ---------------------------------------- |
-<<<<<<< Updated upstream
-| client_mode                    | String     | MONITOR or  LOCKDOWN. Defaults to MONITOR. |
-| clean_sync**                   | Bool       | If set to True Santa will clear all local rules and download a fresh copy from the sync server. Defaults to False. |
-=======
 | client_mode                    | String     | MONITOR or LOCKDOWN, defaults to MONITOR. |
 | clean_sync**                   | Bool       | If set to `True` Santa will clear all local rules and download a fresh copy from the sync-server. Defaults to `False`. |
->>>>>>> Stashed changes
 | batch_size                     | Integer    | The number of rules to download or events to upload per request. Multiple requests will be made if there is more work than can fit in single request. Defaults to 50. |
 | upload_logs_url**              | String     | If set, the endpoint to send Santa's current logs. No default. |
 | whitelist_regex                | String     | Same as the "Local Configuration" WhitelistRegex. No default. |

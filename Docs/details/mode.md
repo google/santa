@@ -10,7 +10,8 @@ Santa can run in one of two modes, Lockdown or Monitor. To check the current sta
   Watchdog CPU Events       | 0  (Peak: 13.59%)
   Watchdog RAM Events       | 0  (Peak: 31.49MB)
 >>> Kernel Info
-  Kernel cache count        | 107
+  Root cache count          | 107
+  Non-root cache count      | 0
 >>> Database Info
   Binary Rules              | 5
   Certificate Rules         | 2
@@ -26,7 +27,7 @@ Santa can run in one of two modes, Lockdown or Monitor. To check the current sta
 
 ##### Monitor mode
 
-The default mode. Running Santa in Monitor Mode will stop all binaries matching blacklist rules, but will not stop unknown binaries from running. This is a flexible state, allowing virtually zero user interruption but still gives protection against known blacklisted binaries. In addition execution events that would have been blocked in Lockdown mode are generated and can be collected and analyzed by a sync server.
+The default mode. Running Santa in Monitor Mode will stop any binaries matching blacklist rules, but will not stop unknown binaries from running. This is a flexible state, allowing virtually zero user interruption but still gives protection against known blacklisted binaries. In addition execution events that would have been blocked in Lockdown mode are generated and can be collected and analyzed by a sync server.
 
 ##### Lockdown mode
 
