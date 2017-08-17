@@ -700,7 +700,7 @@ extern NSString *const NSURLQuarantinePropertiesKey WEAK_IMPORT_ATTRIBUTE;
 ///  code sign checker it will be returned in the passed-in error parameter.
 ///
 - (MOLCodesignChecker *)codesignCheckerWithError:(NSError **)error {
-  if (!self.cachedCodesignChecker) {
+  if (!self.cachedCodesignChecker && !self.codesignCheckerError) {
     NSError *e;
     self.cachedCodesignChecker = [[MOLCodesignChecker alloc] initWithBinaryPath:self.path error:&e];
     self.codesignCheckerError = e;
