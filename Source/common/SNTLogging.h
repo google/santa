@@ -24,13 +24,13 @@
 #include <IOKit/IOLib.h>
 
 #ifdef DEBUG
-#define LOGD(...) IOLog("D santa-driver: " __VA_ARGS__); IOLog("\n")
+#define LOGD(format, ...) IOLog("D santa-driver: " format "\n", ##__VA_ARGS__);
 #else  // DEBUG
-#define LOGD(...)
+#define LOGD(format, ...)
 #endif  // DEBUG
-#define LOGI(...) IOLog("I santa-driver: " __VA_ARGS__); IOLog("\n")
-#define LOGW(...) IOLog("W santa-driver: " __VA_ARGS__); IOLog("\n")
-#define LOGE(...) IOLog("E santa-driver: " __VA_ARGS__); IOLog("\n")
+#define LOGI(format, ...) IOLog("I santa-driver: " format "\n", ##__VA_ARGS__);
+#define LOGW(format, ...) IOLog("W santa-driver: " format "\n", ##__VA_ARGS__);
+#define LOGE(format, ...) IOLog("E santa-driver: " format "\n", ##__VA_ARGS__);
 
 #else  // KERNEL
 

@@ -167,22 +167,28 @@ static const int MAX_DELAY = 15;
   }
 }
 
-- (uint64_t)cacheCount {
-  uint32_t input_count = 1;
-  uint64_t cache_count = 0;
+- (NSArray<NSNumber *> *)cacheCounts {
+  uint32_t input_count = 2;
+  uint64_t cache_counts[2] = {0, 0};
 
   IOConnectCallScalarMethod(_connection,
                             kSantaUserClientCacheCount,
                             0,
                             0,
-                            &cache_count,
+                            cache_counts,
                             &input_count);
-  return cache_count;
+
+  return @[ @(cache_counts[0]), @(cache_counts[1]) ];
 }
 
-- (BOOL)flushCache {
+- (BOOL)flushCacheNonRootOnly:(BOOL)nonRootOnly {
+  const uint64_t nonRoot = nonRootOnly;
   return IOConnectCallScalarMethod(_connection,
-                                   kSantaUserClientClearCache, 0, 0, 0, 0) == KERN_SUCCESS;
+                                   kSantaUserClientClearCache,
+                                   &nonRoot,
+                                   1,
+                                   0,
+                                   0) == KERN_SUCCESS;
 }
 
 - (santa_action_t)checkCache:(uint64_t)vnodeID {

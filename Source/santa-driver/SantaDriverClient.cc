@@ -133,7 +133,8 @@ IOReturn SantaDriverClient::allow_binary(
   SantaDriverClient *me = OSDynamicCast(SantaDriverClient, target);
   if (!me) return kIOReturnBadArgument;
 
-  const uint64_t vnode_id = static_cast<const uint64_t>(*arguments->scalarInput);
+  const uint64_t vnode_id = static_cast<const uint64_t>(arguments->scalarInput[0]);
+  if (!vnode_id) return kIOReturnInvalid;
   me->decisionManager->AddToCache(vnode_id, ACTION_RESPOND_ALLOW);
 
   return kIOReturnSuccess;
@@ -144,7 +145,8 @@ IOReturn SantaDriverClient::deny_binary(
   SantaDriverClient *me = OSDynamicCast(SantaDriverClient, target);
   if (!me) return kIOReturnBadArgument;
 
-  const uint64_t vnode_id = static_cast<const uint64_t>(*arguments->scalarInput);
+  const uint64_t vnode_id = static_cast<const uint64_t>(arguments->scalarInput[0]);
+  if (!vnode_id) return kIOReturnInvalid;
   me->decisionManager->AddToCache(vnode_id, ACTION_RESPOND_DENY);
 
   return kIOReturnSuccess;
@@ -155,7 +157,8 @@ IOReturn SantaDriverClient::clear_cache(
   SantaDriverClient *me = OSDynamicCast(SantaDriverClient, target);
   if (!me) return kIOReturnBadArgument;
 
-  me->decisionManager->ClearCache();
+  const bool non_root_only = static_cast<const bool>(arguments->scalarInput[0]);
+  me->decisionManager->ClearCache(non_root_only);
 
   return kIOReturnSuccess;
 }
@@ -165,7 +168,8 @@ IOReturn SantaDriverClient::cache_count(
   SantaDriverClient *me = OSDynamicCast(SantaDriverClient, target);
   if (!me) return kIOReturnBadArgument;
 
-  arguments->scalarOutput[0] = me->decisionManager->CacheCount();
+  arguments->scalarOutput[0] = me->decisionManager->RootCacheCount();
+  arguments->scalarOutput[1] = me->decisionManager->NonRootCacheCount();
   return kIOReturnSuccess;
 }
 
@@ -174,7 +178,7 @@ IOReturn SantaDriverClient::check_cache(
   SantaDriverClient *me = OSDynamicCast(SantaDriverClient, target);
   if (!me) return kIOReturnBadArgument;
 
-  uint64_t input = *arguments->scalarInput;
+  const uint64_t input = static_cast<const uint64_t>(arguments->scalarInput[0]);
   arguments->scalarOutput[0] = me->decisionManager->GetFromCache(input);
 
   return kIOReturnSuccess;
@@ -195,8 +199,8 @@ IOReturn SantaDriverClient::externalMethod(
     { &SantaDriverClient::open, 0, 0, 0, 0 },
     { &SantaDriverClient::allow_binary, 1, 0, 0, 0 },
     { &SantaDriverClient::deny_binary, 1, 0, 0, 0 },
-    { &SantaDriverClient::clear_cache, 0, 0, 0, 0 },
-    { &SantaDriverClient::cache_count, 0, 0, 1, 0 },
+    { &SantaDriverClient::clear_cache, 1, 0, 0, 0 },
+    { &SantaDriverClient::cache_count, 0, 0, 2, 0 },
     { &SantaDriverClient::check_cache, 1, 0, 1, 0 }
   };
 

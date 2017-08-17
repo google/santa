@@ -138,10 +138,8 @@
     return @"Whitelist Regex";
   }
 
-  // If file is not a Mach-O file, we're not interested unless it's part of an install package.
-  // TODO(rah): Consider adding an option to check all scripts.
-  // TODO(rah): Consider adding an option to disable package script checks.
-  if (!fi.isMachO && ![fi.path hasPrefix:@"/private/tmp/PKInstallSandbox."]) {
+  // If file is not a Mach-O file, we're not interested.
+  if (!fi.isMachO) {
     return @"Not a Mach-O";
   }
 
