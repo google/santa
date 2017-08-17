@@ -66,7 +66,7 @@ Xcode and lldb can be used to debug Santa, just like any other project. Instead 
 
 Note: santa-driver (the kernel extension) cannot be debugged by attaching with Xcode.
 
-Note: Attaching to santad with breakpoints in the decision making codepath will deadlock your machine.
+Note: Xcode can attach to santad without interruption, however any breakpoints in the decision making codepath can deadlock the machine. Using lldb directly to attach to santad will deadlock the machine.
 
 | process  | user |
 | -------- | ---- |

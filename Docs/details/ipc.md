@@ -29,7 +29,7 @@ In short, santad has two-way communication with every other process. In addition
 
 ![Santa IPC](santa_ipc.png)
 
-#####SNTXPCConnection and two way communication 
+##### SNTXPCConnection and two way communication
 
 `SNTXPCConnection` enforces a server / client model for XPC connections. This allows for strong signature validation and forced connection establishment. The only problem with this model is the lack of two-way communication. For example, process A can call methods on process B and retrieve a response, but process B cannot call methods on process A.
 
