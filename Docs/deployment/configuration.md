@@ -12,7 +12,7 @@ Two configuration methods can be used to control Santa: local configuration and 
 | BlacklistRegex*               | String     | A regex to blacklist if the binary or certificate scopes did not block an execution.  Regexes are specified in ICU format. |
 | EnablePageZeroProtection      | Bool       | Enable `__PAGEZERO` protection, defaults to YES. If this flag is set to YES, 32-bit binaries that are missing the `__PAGEZERO` segment will be blocked even in MONITOR mode, **unless** the binary is whitelisted by an explicit rule. |
 | MoreInfoURL                   | String     | The URL to open when the user clicks "More Info..." when opening Santa.app.  If unset, the button will not be displayed. |
-| EventDetailURL                | String     | See the [EventDetailURL](#EventDetailURL) section below. |
+| EventDetailURL                | String     | See the [EventDetailURL](#eventdetailurl) section below. |
 | EventDetailText               | String     | Related to the above property, this string represents the text to show on the button. |
 | UnknownBlockMessage           | String     | In Lockdown mode this is the message shown to the user when an unknown binary is blocked. If this message is not configured a reasonable default is provided. |
 | BannedBlockMessage            | String     | This is the message shown to the user when a binary is blocked because of a rule if that rule doesn't provide a custom message. If this is not configured a reasonable  default is provided. |
