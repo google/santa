@@ -195,11 +195,11 @@ static void reachabilityHandler(
     self.FCMClient = nil;
     [self rescheduleTimerQueue:self.fullSyncTimer secondsFromNow:kDefaultFullSyncInterval];
   };
-  
+
   self.FCMClient.loggingBlock = ^(NSString *log) {
     LOGD(@"%@", log);
   };
-  
+
   [self.FCMClient connect];
 }
 
@@ -464,7 +464,7 @@ static void reachabilityHandler(
   } else if ([config syncClientAuthCertificateIssuer]) {
     authURLSession.clientCertIssuerCn = [config syncClientAuthCertificateIssuer];
   }
-  
+
   syncState.session = [authURLSession session];
   syncState.daemonConn = self.daemonConn;
   syncState.daemon = self.daemon;

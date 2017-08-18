@@ -15,6 +15,7 @@
 #import "SNTFileInfo.h"
 
 #import <CommonCrypto/CommonDigest.h>
+#import <MOLCodesignChecker/MOLCodesignChecker.h>
 
 #include <mach-o/loader.h>
 #include <mach-o/swap.h>
@@ -53,6 +54,8 @@
 @property NSDictionary *infoDict;
 @property NSDictionary *quarantineDict;
 @property NSDictionary *cachedHeaders;
+@property MOLCodesignChecker *cachedCodesignChecker;
+@property(nonatomic) NSError *codesignCheckerError;
 @end
 
 @implementation SNTFileInfo
@@ -262,9 +265,21 @@ extern NSString *const NSURLQuarantinePropertiesKey WEAK_IMPORT_ATTRIBUTE;
 }
 
 - (BOOL)isDMG {
+  if (self.fileSize < 512) return NO;
   NSUInteger last512 = self.fileSize - 512;
   const char *magic = (const char *)[[self safeSubdataWithRange:NSMakeRange(last512, 4)] bytes];
   return (magic && memcmp("koly", magic, 4) == 0);
+}
+
+- (NSString *)humanReadableFileType {
+  if ([self isExecutable]) return @"Executable";
+  if ([self isDylib]) return @"Dynamic Library";
+  if ([self isBundle]) return @"Bundle/Plugin";
+  if ([self isKext]) return @"Kernel Extension";
+  if ([self isScript]) return @"Script";
+  if ([self isXARArchive]) return @"XAR Archive";
+  if ([self isDMG]) return @"Disk Image";
+  return @"Unknown";
 }
 
 #pragma mark Page Zero
@@ -677,6 +692,20 @@ extern NSString *const NSURLQuarantinePropertiesKey WEAK_IMPORT_ATTRIBUTE;
   } else {
     return path;
   }
+}
+
+///
+///  Cache and return a MOLCodeSignChecker for the given file.  If there was an error creating the
+///  code sign checker it will be returned in the passed-in error parameter.
+///
+- (MOLCodesignChecker *)codesignCheckerWithError:(NSError **)error {
+  if (!self.cachedCodesignChecker && !self.codesignCheckerError) {
+    NSError *e;
+    self.cachedCodesignChecker = [[MOLCodesignChecker alloc] initWithBinaryPath:self.path error:&e];
+    self.codesignCheckerError = e;
+  }
+  if (error) *error = self.codesignCheckerError;
+  return self.cachedCodesignChecker;
 }
 
 @end

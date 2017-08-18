@@ -13,17 +13,17 @@
 ///    limitations under the License.
 
 @import Foundation;
-
-#import "SNTCommandController.h"
-
 @import IOKit.kext;
+
+#import "SNTCommand.h"
+#import "SNTCommandController.h"
 
 #import "SNTCommonEnums.h"
 #import "SNTFileInfo.h"
 #import "SNTKernelCommon.h"
 #import "SNTXPCConnection.h"
 
-@interface SNTCommandVersion : NSObject<SNTCommand>
+@interface SNTCommandVersion : SNTCommand<SNTCommandProtocol>
 @end
 
 @implementation SNTCommandVersion
@@ -47,7 +47,7 @@ REGISTER_COMMAND_NAME(@"version")
           @"  Use --json to output in JSON format.");
 }
 
-+ (void)runWithArguments:(NSArray *)arguments daemonConnection:(SNTXPCConnection *)daemonConn {
+- (void)runWithArguments:(NSArray *)arguments {
   if ([arguments containsObject:@"--json"]) {
     NSDictionary *versions = @{
       @"santa-driver" : [self santaKextVersion],
@@ -70,7 +70,7 @@ REGISTER_COMMAND_NAME(@"version")
   exit(0);
 }
 
-+ (NSString *)santaKextVersion {
+- (NSString *)santaKextVersion {
   NSDictionary *loadedKexts = CFBridgingRelease(
       KextManagerCopyLoadedKextInfo((__bridge CFArrayRef) @[ @(USERCLIENT_ID) ],
                                     (__bridge CFArrayRef) @[ @"CFBundleVersion" ]));
@@ -87,18 +87,18 @@ REGISTER_COMMAND_NAME(@"version")
   return @"not found";
 }
 
-+ (NSString *)santadVersion {
+- (NSString *)santadVersion {
   SNTFileInfo *daemonInfo = [[SNTFileInfo alloc] initWithPath:@(kSantaDPath)];
   return daemonInfo.bundleVersion;
 }
 
-+ (NSString *)santaAppVersion {
+- (NSString *)santaAppVersion {
   SNTFileInfo *guiInfo =
       [[SNTFileInfo alloc] initWithPath:@"/Applications/Santa.app/Contents/MacOS/Santa"];
   return guiInfo.bundleVersion;
 }
 
-+ (NSString *)santactlVersion {
+- (NSString *)santactlVersion {
   return [[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleVersion"];
 }
 

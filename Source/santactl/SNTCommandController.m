@@ -24,7 +24,8 @@
 /// Value is the Class
 static NSMutableDictionary *registeredCommands;
 
-+ (void)registerCommand:(Class<SNTCommand>)command named:(NSString *)name {
++ (void)registerCommand:(Class<SNTCommandProtocol, SNTCommandRunProtocol>)command
+                  named:(NSString *)name {
   if (!registeredCommands) {
     registeredCommands = [NSMutableDictionary dictionary];
   }
@@ -43,9 +44,9 @@ static NSMutableDictionary *registeredCommands;
 
   for (NSString *cmdName in
        [[registeredCommands allKeys] sortedArrayUsingSelector:@selector(caseInsensitiveCompare:)]) {
-    Class<SNTCommand> cmd = registeredCommands[cmdName];
+    Class<SNTCommandProtocol> command = registeredCommands[cmdName];
     [helpText appendFormat:@"\t%*s - %@\n", longestCommandName,
-                           [cmdName UTF8String], [cmd shortHelpText]];
+                           [cmdName UTF8String], [command shortHelpText]];
   }
 
   [helpText appendFormat:@"\nSee 'santactl help <command>' to read about a specific subcommand."];
@@ -53,7 +54,7 @@ static NSMutableDictionary *registeredCommands;
 }
 
 + (NSString *)helpForCommandWithName:(NSString *)commandName {
-  Class<SNTCommand> command = registeredCommands[commandName];
+  Class<SNTCommandProtocol> command = registeredCommands[commandName];
   if (command) {
     NSString *shortHelp = [command shortHelpText];
     NSString *longHelp = [command longHelpText];
@@ -86,7 +87,7 @@ static NSMutableDictionary *registeredCommands;
 }
 
 + (void)runCommandWithName:(NSString *)commandName arguments:(NSArray *)arguments {
-  Class<SNTCommand> command = registeredCommands[commandName];
+  Class<SNTCommandProtocol, SNTCommandRunProtocol> command = registeredCommands[commandName];
 
   if ([command requiresRoot] && getuid() != 0) {
     printf("The command '%s' requires root privileges.\n", [commandName UTF8String]);

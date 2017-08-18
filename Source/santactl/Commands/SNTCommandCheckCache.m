@@ -14,6 +14,7 @@
 
 @import Foundation;
 
+#import "SNTCommand.h"
 #import "SNTCommandController.h"
 
 #import "SNTLogging.h"
@@ -22,7 +23,7 @@
 
 #include <sys/stat.h>
 
-@interface SNTCommandCheckCache : NSObject<SNTCommand>
+@interface SNTCommandCheckCache : SNTCommand<SNTCommandProtocol>
 @end
 
 @implementation SNTCommandCheckCache
@@ -48,9 +49,10 @@ REGISTER_COMMAND_NAME(@"checkcache")
           @"Returns 0 if successful, 1 otherwise");
 }
 
-+ (void)runWithArguments:(NSArray *)arguments daemonConnection:(SNTXPCConnection *)daemonConn {
+- (void)runWithArguments:(NSArray *)arguments {
   uint64_t vnodeID = [self vnodeIDForFile:arguments.firstObject];
-  [[daemonConn remoteObjectProxy] checkCacheForVnodeID:vnodeID withReply:^(santa_action_t action) {
+  [[self.daemonConn remoteObjectProxy] checkCacheForVnodeID:vnodeID
+                                                  withReply:^(santa_action_t action) {
     if (action == ACTION_RESPOND_ALLOW) {
       LOGI(@"File exists in [whitelist] kernel cache");
       exit(0);
@@ -64,7 +66,7 @@ REGISTER_COMMAND_NAME(@"checkcache")
   }];
 }
 
-+ (uint64_t)vnodeIDForFile:(NSString *)path {
+- (uint64_t)vnodeIDForFile:(NSString *)path {
   struct stat fstat = {};
   stat(path.fileSystemRepresentation, &fstat);
   return (((uint64_t)fstat.st_dev << 32) | fstat.st_ino);

@@ -14,6 +14,7 @@
 
 @import Foundation;
 
+#import "SNTCommand.h"
 #import "SNTCommandController.h"
 
 #import "SNTCommandSyncManager.h"
@@ -23,7 +24,7 @@
 #import "SNTXPCConnection.h"
 #import "SNTXPCControlInterface.h"
 
-@interface SNTCommandSync : NSObject<SNTCommand>
+@interface SNTCommandSync : SNTCommand<SNTCommandProtocol>
 @property SNTXPCConnection *listener;
 @property SNTCommandSyncManager *syncManager;
 @end
@@ -54,7 +55,7 @@ REGISTER_COMMAND_NAME(@"sync")
           @"           clean sync from the server.");
 }
 
-+ (void)runWithArguments:(NSArray *)arguments daemonConnection:(SNTXPCConnection *)daemonConn {
+- (void)runWithArguments:(NSArray *)arguments {
   // Ensure we have no privileges
   if (!DropRootPrivileges()) {
     LOGE(@"Failed to drop root privileges. Exiting.");
@@ -66,11 +67,10 @@ REGISTER_COMMAND_NAME(@"sync")
     exit(1);
   }
 
-  SNTCommandSync *s = [[self alloc] init];
-  [daemonConn resume];
+  [self.daemonConn resume];
   BOOL daemon = [arguments containsObject:@"--daemon"];
-  s.syncManager = [[SNTCommandSyncManager alloc] initWithDaemonConnection:daemonConn
-                                                                 isDaemon:daemon];
+  self.syncManager = [[SNTCommandSyncManager alloc] initWithDaemonConnection:self.daemonConn
+                                                                    isDaemon:daemon];
 
   // Dropping root privileges to the 'nobody' user causes the default NSURLCache to throw
   // sandbox errors, which are benign but annoying. This line disables the cache entirely.
@@ -78,8 +78,8 @@ REGISTER_COMMAND_NAME(@"sync")
                                                               diskCapacity:0
                                                                   diskPath:nil]];
 
-  if (!s.syncManager.daemon) return [s.syncManager fullSync];
-  [s syncdWithDaemonConnection:daemonConn];
+  if (!self.syncManager.daemon) return [self.syncManager fullSync];
+  [self syncdWithDaemonConnection:self.daemonConn];
 }
 
 #pragma mark daemon methods

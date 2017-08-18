@@ -43,7 +43,7 @@
 
 - (SNTStoredEvent *)createTestEvent {
   SNTFileInfo *binInfo = [[SNTFileInfo alloc] initWithPath:@"/usr/bin/false"];
-  MOLCodesignChecker *csInfo = [[MOLCodesignChecker alloc] initWithBinaryPath:@"/usr/bin/false"];
+  MOLCodesignChecker *csInfo = [binInfo codesignCheckerWithError:NULL];
   SNTStoredEvent *event;
   event = [[SNTStoredEvent alloc] init];
   event.idx = @(arc4random());

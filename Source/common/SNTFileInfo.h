@@ -14,6 +14,8 @@
 
 @import Foundation;
 
+@class MOLCodesignChecker;
+
 ///
 ///  Represents a binary on disk, providing access to details about that binary
 ///  such as the SHA-1, SHA-256, Info.plist and the Mach-O data.
@@ -124,6 +126,11 @@
 - (BOOL)isDMG;
 
 ///
+///  @return NSString describing the kind of file (executable, bundle, script, etc.)
+///
+- (NSString *)humanReadableFileType;
+
+///
 ///  @return YES if this file has a bad/missing __PAGEZERO .
 ///
 - (BOOL)isMissingPageZero;
@@ -204,5 +211,12 @@
 ///  @return The size of the file in bytes.
 ///
 - (NSUInteger)fileSize;
+
+///
+///  @return Returns an instance of MOLCodeSignChecker initialized with the file's binary path.
+///  Both the MOLCodesignChecker and any resulting NSError are cached and returned on subsequent
+///  calls.  You may pass in NULL for the error if you don't care to receive it.
+///
+- (MOLCodesignChecker *)codesignCheckerWithError:(NSError **)error;
 
 @end

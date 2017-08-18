@@ -14,43 +14,9 @@
 
 @import Foundation;
 
+#import "SNTCommand.h"
+
 @class SNTXPCConnection;
-
-///
-///  Protocol that each command must adhere to.
-///
-@protocol SNTCommand<NSObject>
-
-///
-///  @return YES if command requires root.
-///
-+ (BOOL)requiresRoot;
-
-///
-///  @return YES if command requires connection to santad.
-///
-+ (BOOL)requiresDaemonConn;
-
-///
-///  A small summary of the command, to be printed with the list of available commands
-///
-+ (NSString *)shortHelpText;
-
-///
-///  A longer description of the command when the user runs <tt>santactl help x</tt>
-///
-+ (NSString *)longHelpText;
-
-///
-///  Called when the user is running the command
-///  @param arguments an array of arguments passed in
-///  @param daemonConn connection to santad. Will be nil if connection failed or
-///      if @c requiresDaemonConn is @c NO
-///
-///  @note This method (or one of the methods it calls) is responsible for calling exit().
-///
-+ (void)runWithArguments:(NSArray *)arguments daemonConnection:(SNTXPCConnection *)daemonConn;
-@end
 
 ///
 ///  Responsible for maintaining the list of available commands by name, printing their help text
@@ -64,7 +30,7 @@
 ///  Register a new command with the specified name. Do not use this directly, use the
 ///  @c REGISTER_COMMAND_NAME macro instead.
 ///
-+ (void)registerCommand:(Class<SNTCommand>)command named:(NSString *)name;
++ (void)registerCommand:(Class<SNTCommandProtocol>)command named:(NSString *)name;
 
 ///
 ///  @return a usage string listing all of the available commands

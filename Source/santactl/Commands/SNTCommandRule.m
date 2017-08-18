@@ -14,21 +14,20 @@
 
 @import Foundation;
 
+#import "SNTCommand.h"
 #import "SNTCommandController.h"
-
-#include "SNTLogging.h"
 
 #import "MOLCertificate.h"
 #import "MOLCodesignChecker.h"
 #import "SNTConfigurator.h"
 #import "SNTDropRootPrivs.h"
 #import "SNTFileInfo.h"
+#include "SNTLogging.h"
 #import "SNTRule.h"
 #import "SNTXPCConnection.h"
 #import "SNTXPCControlInterface.h"
 
-@interface SNTCommandRule : NSObject<SNTCommand>
-@property SNTXPCConnection *daemonConn;
+@interface SNTCommandRule : SNTCommand<SNTCommandProtocol>
 @end
 
 @implementation SNTCommandRule
@@ -68,13 +67,7 @@ REGISTER_COMMAND_NAME(@"rule")
           @"    --message {message}: custom message\n");
 }
 
-+ (void)printErrorUsageAndExit:(NSString *)error {
-  printf("%s\n\n", [error UTF8String]);
-  printf("%s\n", [[self longHelpText] UTF8String]);
-  exit(1);
-}
-
-+ (void)runWithArguments:(NSArray *)arguments daemonConnection:(SNTXPCConnection *)daemonConn {
+- (void)runWithArguments:(NSArray *)arguments {
   SNTConfigurator *config = [SNTConfigurator configurator];
   if ([config syncBaseURL] && ![arguments containsObject:@"--check"]) {
     printf("SyncBaseURL is set, rules are managed centrally.\n");
@@ -129,7 +122,7 @@ REGISTER_COMMAND_NAME(@"rule")
 
   if (check) {
     if (!newRule.shasum) return [self printErrorUsageAndExit:@"--check requires --sha256"];
-    return [self printStateOfRule:newRule daemonConnection:daemonConn];
+    return [self printStateOfRule:newRule daemonConnection:self.daemonConn];
   }
 
   if (path) {
@@ -141,7 +134,7 @@ REGISTER_COMMAND_NAME(@"rule")
     if (newRule.type == SNTRuleTypeBinary) {
       newRule.shasum = fi.SHA256;
     } else if (newRule.type == SNTRuleTypeCertificate) {
-      MOLCodesignChecker *cs = [[MOLCodesignChecker alloc] initWithBinaryPath:fi.path];
+      MOLCodesignChecker *cs = [fi codesignCheckerWithError:NULL];
       newRule.shasum = cs.leafCertificate.SHA256;
     }
   }
@@ -152,9 +145,9 @@ REGISTER_COMMAND_NAME(@"rule")
     [self printErrorUsageAndExit:@"Either SHA-256 or path to file must be specified"];
   }
 
-  [[daemonConn remoteObjectProxy] databaseRuleAddRules:@[newRule]
-                                            cleanSlate:NO
-                                                 reply:^(NSError *error) {
+  [[self.daemonConn remoteObjectProxy] databaseRuleAddRules:@[newRule]
+                                                 cleanSlate:NO
+                                                      reply:^(NSError *error) {
     if (error) {
       printf("Failed to modify rules: %s", [error.localizedDescription UTF8String]);
       LOGD(@"Failure reason: %@", error.localizedFailureReason);
@@ -170,7 +163,7 @@ REGISTER_COMMAND_NAME(@"rule")
   }];
 }
 
-+ (void)printStateOfRule:(SNTRule *)rule daemonConnection:(SNTXPCConnection *)daemonConn {
+- (void)printStateOfRule:(SNTRule *)rule daemonConnection:(SNTXPCConnection *)daemonConn {
   NSString *fileSHA256 = (rule.type == SNTRuleTypeBinary) ? rule.shasum : nil;
   NSString *certificateSHA256 = (rule.type == SNTRuleTypeCertificate) ? rule.shasum : nil;
   dispatch_group_t group = dispatch_group_create();

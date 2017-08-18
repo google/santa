@@ -12,6 +12,7 @@
 ///    See the License for the specific language governing permissions and
 ///    limitations under the License.
 
+#import "SNTCommand.h"
 #import "SNTCommandController.h"
 
 #import "SNTFileInfo.h"
@@ -20,7 +21,7 @@
 #import "SNTXPCConnection.h"
 #import "SNTXPCControlInterface.h"
 
-@interface SNTCommandBundleInfo : NSObject<SNTCommand>
+@interface SNTCommandBundleInfo : SNTCommand<SNTCommandProtocol>
 @end
 
 @implementation SNTCommandBundleInfo
@@ -45,7 +46,7 @@ REGISTER_COMMAND_NAME(@"bundleinfo")
   return @"Searches a bundle for binaries";
 }
 
-+ (void)runWithArguments:(NSArray *)arguments daemonConnection:(SNTXPCConnection *)daemonConn {
+- (void)runWithArguments:(NSArray *)arguments {
   NSError *error;
   SNTFileInfo *fi = [[SNTFileInfo alloc] initWithPath:arguments.firstObject error:&error];
   if (!fi) {
@@ -59,11 +60,10 @@ REGISTER_COMMAND_NAME(@"bundleinfo")
   SNTStoredEvent *se = [[SNTStoredEvent alloc] init];
   se.fileBundlePath = fi.bundlePath;
 
-  [[daemonConn remoteObjectProxy] hashBundleBinariesForEvent:se
-                                                       reply:^(NSString *hash,
-                                                               NSArray<SNTStoredEvent *> *events,
-                                                               NSNumber *time) {
-
+  [[self.daemonConn remoteObjectProxy]
+      hashBundleBinariesForEvent:se
+                           reply:^(NSString *hash, NSArray<SNTStoredEvent *> *events,
+                                   NSNumber *time) {
     printf("Hashing time: %llu ms\n", time.unsignedLongLongValue);
     printf("%lu events found\n", events.count);
     printf("BundleHash: %s\n", hash.UTF8String);

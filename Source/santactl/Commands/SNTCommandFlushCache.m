@@ -14,13 +14,14 @@
 
 @import Foundation;
 
+#import "SNTCommand.h"
 #import "SNTCommandController.h"
 
 #import "SNTLogging.h"
 #import "SNTXPCConnection.h"
 #import "SNTXPCControlInterface.h"
 
-@interface SNTCommandFlushCache : NSObject<SNTCommand>
+@interface SNTCommandFlushCache : SNTCommand<SNTCommandProtocol>
 @end
 
 @implementation SNTCommandFlushCache
@@ -46,8 +47,8 @@ REGISTER_COMMAND_NAME(@"flushcache")
           @"Returns 0 if successful, 1 otherwise");
 }
 
-+ (void)runWithArguments:(NSArray *)arguments daemonConnection:(SNTXPCConnection *)daemonConn {
-  [[daemonConn remoteObjectProxy] flushCache:^(BOOL success) {
+- (void)runWithArguments:(NSArray *)arguments {
+  [[self.daemonConn remoteObjectProxy] flushCache:^(BOOL success) {
     if (success) {
       LOGI(@"Cache flush requested");
       exit(0);

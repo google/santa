@@ -14,13 +14,14 @@
 
 @import Foundation;
 
+#import "SNTCommand.h"
 #import "SNTCommandController.h"
 
 #import "SNTConfigurator.h"
 #import "SNTXPCConnection.h"
 #import "SNTXPCControlInterface.h"
 
-@interface SNTCommandStatus : NSObject<SNTCommand>
+@interface SNTCommandStatus : SNTCommand<SNTCommandProtocol>
 @end
 
 @implementation SNTCommandStatus
@@ -44,7 +45,7 @@ REGISTER_COMMAND_NAME(@"status")
           @"  Use --json to output in JSON format");
 }
 
-+ (void)runWithArguments:(NSArray *)arguments daemonConnection:(SNTXPCConnection *)daemonConn {
+- (void)runWithArguments:(NSArray *)arguments {
   dispatch_group_t group = dispatch_group_create();
 
   // Daemon status
@@ -52,7 +53,7 @@ REGISTER_COMMAND_NAME(@"status")
   __block uint64_t cpuEvents, ramEvents;
   __block double cpuPeak, ramPeak;
   dispatch_group_enter(group);
-  [[daemonConn remoteObjectProxy] clientMode:^(SNTClientMode cm) {
+  [[self.daemonConn remoteObjectProxy] clientMode:^(SNTClientMode cm) {
     switch (cm) {
       case SNTClientModeMonitor:
         clientMode = @"Monitor";
@@ -67,8 +68,8 @@ REGISTER_COMMAND_NAME(@"status")
     dispatch_group_leave(group);
   }];
   dispatch_group_enter(group);
-  [[daemonConn remoteObjectProxy] watchdogInfo:^(uint64_t wd_cpuEvents, uint64_t wd_ramEvents,
-                                                 double wd_cpuPeak, double wd_ramPeak) {
+  [[self.daemonConn remoteObjectProxy] watchdogInfo:^(uint64_t wd_cpuEvents, uint64_t wd_ramEvents,
+                                                      double wd_cpuPeak, double wd_ramPeak) {
     cpuEvents = wd_cpuEvents;
     cpuPeak = wd_cpuPeak;
     ramEvents = wd_ramEvents;
@@ -81,7 +82,7 @@ REGISTER_COMMAND_NAME(@"status")
   // Kext status
   __block uint64_t rootCacheCount = -1, nonRootCacheCount = -1;
   dispatch_group_enter(group);
-  [[daemonConn remoteObjectProxy] cacheCounts:^(uint64_t rootCache, uint64_t nonRootCache) {
+  [[self.daemonConn remoteObjectProxy] cacheCounts:^(uint64_t rootCache, uint64_t nonRootCache) {
     rootCacheCount = rootCache;
     nonRootCacheCount = nonRootCache;
     dispatch_group_leave(group);
@@ -90,13 +91,13 @@ REGISTER_COMMAND_NAME(@"status")
   // Database counts
   __block int64_t eventCount = -1, binaryRuleCount = -1, certRuleCount = -1;
   dispatch_group_enter(group);
-  [[daemonConn remoteObjectProxy] databaseRuleCounts:^(int64_t binary, int64_t certificate) {
+  [[self.daemonConn remoteObjectProxy] databaseRuleCounts:^(int64_t binary, int64_t certificate) {
     binaryRuleCount = binary;
     certRuleCount = certificate;
     dispatch_group_leave(group);
   }];
   dispatch_group_enter(group);
-  [[daemonConn remoteObjectProxy] databaseEventCount:^(int64_t count) {
+  [[self.daemonConn remoteObjectProxy] databaseEventCount:^(int64_t count) {
     eventCount = count;
     dispatch_group_leave(group);
   }];
@@ -115,7 +116,7 @@ REGISTER_COMMAND_NAME(@"status")
   __block BOOL pushNotifications = NO;
   if ([[SNTConfigurator configurator] syncBaseURL]) {
     dispatch_group_enter(group);
-    [[daemonConn remoteObjectProxy] pushNotifications:^(BOOL response) {
+    [[self.daemonConn remoteObjectProxy] pushNotifications:^(BOOL response) {
       pushNotifications = response;
       dispatch_group_leave(group);
     }];
@@ -124,7 +125,7 @@ REGISTER_COMMAND_NAME(@"status")
   __block BOOL bundlesEnabled = NO;
   if ([[SNTConfigurator configurator] syncBaseURL]) {
     dispatch_group_enter(group);
-    [[daemonConn remoteObjectProxy] bundlesEnabled:^(BOOL response) {
+    [[self.daemonConn remoteObjectProxy] bundlesEnabled:^(BOOL response) {
       bundlesEnabled = response;
       dispatch_group_leave(group);
     }];
