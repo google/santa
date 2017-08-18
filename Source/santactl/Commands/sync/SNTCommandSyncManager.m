@@ -47,7 +47,6 @@ static NSString *const kFCMTargetHostIDKey = @"target_host_id";
 @property(nonatomic) dispatch_source_t ruleSyncTimer;
 
 @property(nonatomic) NSCache *dispatchLock;
-@property(nonatomic) NSCache *ruleSyncCache;
 
 @property NSUInteger FCMFullSyncInterval;
 @property NSUInteger FCMGlobalRuleSyncDeadline;
@@ -100,7 +99,6 @@ static void reachabilityHandler(
       [self lockAction:kRuleSync];
       SNTCommandSyncState *syncState = [self createSyncState];
       syncState.targetedRuleSync = self.targetedRuleSync;
-      syncState.ruleSyncCache = self.ruleSyncCache;
       SNTCommandSyncRuleDownload *p = [[SNTCommandSyncRuleDownload alloc] initWithState:syncState];
       if ([p sync]) {
         LOGD(@"Rule download complete");
@@ -111,7 +109,6 @@ static void reachabilityHandler(
       [self unlockAction:kRuleSync];
     }];
     _dispatchLock = [[NSCache alloc] init];
-    _ruleSyncCache = [[NSCache alloc] init];
 
     _eventBatchSize = kDefaultEventBatchSize;
     _FCMFullSyncInterval = kDefaultFCMFullSyncInterval;
@@ -215,14 +212,6 @@ static void reachabilityHandler(
   if (!action) {
     LOGD(@"Push notification message contains no action");
     return;
-  }
-
-  // Store the file name and hash in a cache. When the rule is actually added, use the cache
-  // to build a user notification.
-  NSString *fileHash = message[kFCMFileHashKey];
-  NSString *fileName = message[kFCMFileNameKey];
-  if (fileName && fileHash) {
-    [self.ruleSyncCache setObject:fileName forKey:fileHash];
   }
 
   LOGD(@"Push notification action: %@ received", action);

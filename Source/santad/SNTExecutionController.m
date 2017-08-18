@@ -52,6 +52,27 @@
 
 @implementation SNTExecutionController
 
+#pragma mark Recently blocked events
+
++ (NSCache *)recentlyBlocked {
+  static NSCache *recentlyBlocked;
+  static dispatch_once_t recentlyBlockedToken;
+  dispatch_once(&recentlyBlockedToken, ^{
+    recentlyBlocked = [[NSCache alloc] init];
+    recentlyBlocked.countLimit = 20;
+  });
+  return recentlyBlocked;
+}
+
++ (SNTStoredEvent *)recentlyBlockedEventWithSHA256:(NSString *)sha256 {
+  NSCache *recentlyBlocked = [self recentlyBlocked];
+  SNTStoredEvent *se = [recentlyBlocked objectForKey:sha256];
+  // If a matching event was found, remove it from the cache since presumably
+  // whoever asked for it doesn't want it to stick around after they use it.
+  if (se) [self.recentlyBlocked removeObjectForKey:sha256];
+  return se;
+}
+
 #pragma mark Initializers
 
 - (instancetype)initWithDriverManager:(SNTDriverManager *)driverManager
@@ -208,6 +229,11 @@
         [self printMessage:msg toTTYForPID:message.ppid];
 
         [_notifierQueue addEvent:se customMessage:cd.customMsg];
+
+        // Add the block event to cache of recently blocked events so that if a later rules
+        // sync unblocks a binary we can find it here and notify them that it is unblocked.
+        NSCache *recentlyBlocked = [[self class] recentlyBlocked];
+        [recentlyBlocked setObject:se forKey:se.fileSHA256];
       }
     }
   }

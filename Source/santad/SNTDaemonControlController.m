@@ -19,6 +19,7 @@
 #import "SNTDatabaseController.h"
 #import "SNTDriverManager.h"
 #import "SNTEventTable.h"
+#import "SNTExecutionController.h"
 #import "SNTLogging.h"
 #import "SNTNotificationQueue.h"
 #import "SNTPolicyProcessor.h"
@@ -291,6 +292,12 @@ double watchdogRAMPeak = 0;
       [self.syncdQueue addBundleEvents:events];
     }
   }];
+}
+
+#pragma mark Execution ops
+
+- (void)recentlyBlockedEventWithSHA256:(NSString *)sha256 reply:(void (^)(SNTStoredEvent *))reply {
+  reply([SNTExecutionController recentlyBlockedEventWithSHA256:sha256]);
 }
 
 @end

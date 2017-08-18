@@ -23,6 +23,7 @@
 @class SNTEventTable;
 @class SNTNotificationQueue;
 @class SNTRuleTable;
+@class SNTStoredEvent;
 @class SNTSyncdQueue;
 
 ///
@@ -50,5 +51,13 @@
 ///  @param message The message sent from the kernel.
 ///
 - (void)validateBinaryWithMessage:(santa_message_t)message;
+
+///
+///  Returns a blocked event matching the given SHA256 if there is one
+///  and removes the event from the cache.  Otherwise returns nil.
+///
+///  @param sha256 The SHA256 of the file we think might have been blocked.
+///
++ (SNTStoredEvent *)recentlyBlockedEventWithSHA256:(NSString *)sha256;
 
 @end
