@@ -337,7 +337,7 @@ REGISTER_COMMAND_NAME(@"fileinfo")
     __block SNTEventState state;
     dispatch_semaphore_t sema = dispatch_semaphore_create(0);
     MOLCodesignChecker *csc = [fileInfo codesignCheckerWithError:NULL];
-    [[self.daemonConn remoteObjectProxy] decisionForFilePath:fileInfo.path
+    [[cmd.daemonConn remoteObjectProxy] decisionForFilePath:fileInfo.path
                                                   fileSHA256:fileInfo.SHA256
                                            certificateSHA256:csc.leafCertificate.SHA256
                                                        reply:^(SNTEventState s) {
@@ -483,8 +483,9 @@ REGISTER_COMMAND_NAME(@"fileinfo")
   operationQueue.qualityOfService = NSQualityOfServiceUserInitiated;
 
   if (isDir && self.recursive) {
-    NSDirectoryEnumerator<NSString *> * dirEnum = [fm enumeratorAtPath:path];
-    for (NSString *file in dirEnum) {
+    NSDirectoryEnumerator *dirEnum = [fm enumeratorAtPath:path];
+    NSString *file = [dirEnum nextObject];
+    while (file) {
       @autoreleasepool {
         NSString *filepath = [path stringByAppendingPathComponent:file];
         BOOL exists = [fm fileExistsAtPath:filepath isDirectory:&isDir];
@@ -493,6 +494,7 @@ REGISTER_COMMAND_NAME(@"fileinfo")
             [self printInfoForFile:filepath];
           }];
         }
+        file = [dirEnum nextObject];
       }
     }
   } else if (isDir && !isBundle) {
