@@ -37,7 +37,6 @@
 static NSString *const kFCMActionKey = @"action";
 static NSString *const kFCMFileHashKey = @"file_hash";
 static NSString *const kFCMFileNameKey = @"file_name";
-static NSString *const kFCMRuleCountKey = @"rule_count";
 static NSString *const kFCMTargetHostIDKey = @"target_host_id";
 
 @interface SNTCommandSyncManager () {
@@ -48,6 +47,9 @@ static NSString *const kFCMTargetHostIDKey = @"target_host_id";
 @property(nonatomic) dispatch_source_t ruleSyncTimer;
 
 @property(nonatomic) NSCache *dispatchLock;
+
+// Changed this to an NSMutableDictionary instead of NSCache so that we can iterate over its keys
+// when checking for bundle messages who've downloaded all of their associated binary rules.
 @property(nonatomic) NSMutableDictionary *pendingNotifications;
 
 @property NSUInteger FCMFullSyncInterval;
@@ -218,14 +220,17 @@ static void reachabilityHandler(
     return;
   }
 
-  // Store the file name and hash in a cache. When the rule is actually added, use the cache
-  // to build a user notification.
+  // Assumption: Incoming FCM message contains name of binary/bundle and a hash.  Rule count info
+  // for bundles will be sent out with the rules themselves.  If the message is related to a bundle,
+  // the hash is a bundle hash, otherwise it is just a hash for a single binary.
+  // For later use, we store a mapping of bundle/binary hash to a dictionary containing the
+  // binary/bundle name so we can send out relevant notifications once the rules are actually
+  // downloaded & added to local database.  We use a dictionary value so that we can later add a
+  // count field when we start downloading the rules and receive the count information.
   NSString *fileHash = message[kFCMFileHashKey];
   NSString *fileName = message[kFCMFileNameKey];
-  NSString *ruleCount = message[kFCMRuleCountKey];
-  if (fileName && fileHash && ruleCount) {
-    NSNumber *count = @([ruleCount integerValue]);
-    self.pendingNotifications[fileHash] = @{ @"name" : fileName, @"count" : count }.mutableCopy;
+  if (fileName && fileHash) {
+    self.pendingNotifications[fileHash] = @{ @"name" : fileName }.mutableCopy;
   }
 
   LOGD(@"Push notification action: %@ received", action);

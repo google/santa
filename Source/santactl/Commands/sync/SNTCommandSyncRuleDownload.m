@@ -90,8 +90,8 @@
   return newRules;
 }
 
-// Sends push notification for each rule in newRules that whitelists a binary
-// recently blocked by santad.
+// Send out push notifications for whitelisted bundles/binaries whose rule download was preceded by
+// an associated announcing FCM message.
 - (void)announceUnblockingRules:(NSArray<SNTRule *> *)newRules {
   if (!self.syncState.targetedRuleSync) return;
 
@@ -110,6 +110,10 @@
   }
 }
 
+
+// Converts rule information downloaded from the server into a SNTRule.  Because any information
+// not recorded by SNTRule is thrown away here, this method is also responsible for dealing with
+// the extra bundle rule information (bundle_hash & rule_count).
 - (SNTRule *)ruleFromDictionary:(NSDictionary *)dict {
   if (![dict isKindOfClass:[NSDictionary class]]) return nil;
 
@@ -144,20 +148,35 @@
     newRule.customMsg = customMsg;
   }
 
-  // Q: Is the count value sent down with the initial FCM message? or in each rule?
+  // Q: Is the count value sent down with the initial FCM message? Or in each rule?
+  // A: In each rule.
+  //
   // Q: What happens if the rules get sent before the corresponding FCM message?
-  // Let's assume that we already have a count value.
+  // A: No notifier object is ever created; user won't receive notification.
+
+  // primaryHash is the bundle hash if there was a bundle hash included in the rule, otherwise
+  // it is simply the binary hash.
   NSString *primaryHash = dict[kRuleBundleHash];
   if (primaryHash.length != 64) {
     primaryHash = newRule.shasum;
   }
 
-  // Decrement the count of the corresponding pending notification
+  // If we have already seen a rule with the same primary hash, then decrement the count of the
+  // corresponding pending notification.  Otherwise, if this is the first time we've seen this
+  // primary hash, add a count field to the pending notfication and set its initial value.
+  // If the downloaded rule included count information, this initial value is (count - 1).  If the
+  // downloaded rule had no count information, then it was a non-bundle rule and count is set to 0,
+  // indicating that the we've already downloaded all of the 1 rules associated with the binary.
   NSMutableDictionary *notifier = self.syncState.pendingNotifications[primaryHash];
   if (notifier) {
-    NSNumber *count = notifier[@"count"];
-    if (count) {
-      notifier[@"count"] = @([count intValue] - 1);
+    NSNumber *ruleCount = dict[kRuleCount];
+    NSNumber *notifierCount = notifier[@"count"];
+    if (notifierCount) {  // bundle rule with existing count
+      notifier[@"count"] = @([notifierCount intValue] - 1);
+    } else if (ruleCount) {  // bundle rule seen for first time
+      notifier[@"count"] = @([ruleCount intValue] - 1);
+    } else {  // non-bundle binary rule
+      notifier[@"count"] = @0;
     }
   }
 
