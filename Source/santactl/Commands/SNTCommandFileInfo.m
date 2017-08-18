@@ -338,9 +338,9 @@ REGISTER_COMMAND_NAME(@"fileinfo")
     dispatch_semaphore_t sema = dispatch_semaphore_create(0);
     MOLCodesignChecker *csc = [fileInfo codesignCheckerWithError:NULL];
     [[cmd.daemonConn remoteObjectProxy] decisionForFilePath:fileInfo.path
-                                                  fileSHA256:fileInfo.SHA256
-                                           certificateSHA256:csc.leafCertificate.SHA256
-                                                       reply:^(SNTEventState s) {
+                                                 fileSHA256:fileInfo.SHA256
+                                          certificateSHA256:csc.leafCertificate.SHA256
+                                                      reply:^(SNTEventState s) {
       state = s;
       dispatch_semaphore_signal(sema);
     }];
