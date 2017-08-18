@@ -1,4 +1,5 @@
 Santa  [![Build Status](https://travis-ci.org/google/santa.png?branch=master)](https://travis-ci.org/google/santa)
+[![Documentation Status](https://readthedocs.org/projects/santa/badge/?version=latest)](http://santa.readthedocs.io/en/latest/?badge=latest)
 =====
 
 <p align="center">
