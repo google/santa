@@ -1,4 +1,6 @@
-Santa  [![Build Status](https://travis-ci.org/google/santa.png?branch=master)](https://travis-ci.org/google/santa)
+Santa
+[![Build Status](https://travis-ci.org/google/santa.png?branch=master)](https://travis-ci.org/google/santa)
+[![Documentation Status](https://readthedocs.org/projects/santa/badge/?version=latest)](https://santa.readthedocs.io/en/latest/?badge=latest)
 =====
 
 <p align="center">
@@ -19,6 +21,10 @@ and finishing up a security audit.
 It is named Santa because it keeps track of binaries that are naughty or nice.
 
 Santa is a project of Google's Macintosh Operations Team.
+
+Docs
+========
+The Santa docs are stored in the [Docs](https://github.com/google/santa/blob/master/Docs) directory. A Read the Docs instance is available here: https://santa.readthedocs.io.
 
 Admin-Related Features
 ========
@@ -138,6 +144,8 @@ rake build:debug
 
 Note: the Xcode project is setup to use any installed "Mac Developer" certificate
 and for security-reasons parts of Santa will not operate properly if not signed.
+
+For more details on building see the [building.md](https://github.com/google/santa/blob/master/Docs/development/building.md) document.
 
 Kext Signing
 ============
