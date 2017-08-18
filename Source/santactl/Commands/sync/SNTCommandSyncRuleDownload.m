@@ -101,9 +101,9 @@
     // this SHA256 hash (which might be a bundle hash or a binary hash), in which case we are OK to
     // show a notification that the named bundle/binary can be run.
     NSDictionary *notifier = self.syncState.pendingNotifications[key];
-    NSNumber *count = notifier[@"count"];
+    NSNumber *count = notifier[kNotifierCount];
     if (count && [count intValue] == 0) {
-      NSString *message = [NSString stringWithFormat:@"%@ can now be run", notifier[@"name"]];
+      NSString *message = [NSString stringWithFormat:@"%@ can now be run", notifier[kNotifierName]];
       [[self.daemonConn remoteObjectProxy]
           postRuleSyncNotificationWithCustomMessage:message reply:^{}];
     }
@@ -170,13 +170,13 @@
   NSMutableDictionary *notifier = self.syncState.pendingNotifications[primaryHash];
   if (notifier) {
     NSNumber *ruleCount = dict[kRuleCount];
-    NSNumber *notifierCount = notifier[@"count"];
+    NSNumber *notifierCount = notifier[kNotifierCount];
     if (notifierCount) {  // bundle rule with existing count
-      notifier[@"count"] = @([notifierCount intValue] - 1);
+      notifier[kNotifierCount] = @([notifierCount intValue] - 1);
     } else if (ruleCount) {  // bundle rule seen for first time
-      notifier[@"count"] = @([ruleCount intValue] - 1);
+      notifier[kNotifierCount] = @([ruleCount intValue] - 1);
     } else {  // non-bundle binary rule
-      notifier[@"count"] = @0;
+      notifier[kNotifierCount] = @0;
     }
   }
 

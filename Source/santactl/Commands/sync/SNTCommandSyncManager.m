@@ -230,7 +230,7 @@ static void reachabilityHandler(
   NSString *fileHash = message[kFCMFileHashKey];
   NSString *fileName = message[kFCMFileNameKey];
   if (fileName && fileHash) {
-    self.pendingNotifications[fileHash] = @{ @"name" : fileName }.mutableCopy;
+    self.pendingNotifications[fileHash] = @{ kNotifierName : fileName }.mutableCopy;
   }
 
   LOGD(@"Push notification action: %@ received", action);

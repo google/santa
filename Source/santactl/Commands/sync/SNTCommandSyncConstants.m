@@ -99,6 +99,8 @@ NSString *const kRuleBundleHash = @"bundle_hash";
 NSString *const kRuleCount = @"rule_count";
 NSString *const kCursor = @"cursor";
 
+NSString *const kNotifierName = @"name";
+NSString *const kNotifierCount = @"count";
 
 NSString *const kBackoffInterval = @"backoff";
 

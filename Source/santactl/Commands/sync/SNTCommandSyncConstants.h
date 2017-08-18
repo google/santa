@@ -99,6 +99,9 @@ extern NSString *const kRuleBundleHash;
 extern NSString *const kRuleCount;
 extern NSString *const kCursor;
 
+extern NSString *const kNotifierName;
+extern NSString *const kNotifierCount;
+
 extern NSString *const kBackoffInterval;
 
 extern NSString *const kFullSync;
