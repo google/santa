@@ -32,8 +32,8 @@
 - (BOOL)sync {
   // Grab the new rules from server
   NSArray<SNTRule *> *newRules = [self downloadNewRulesFromServer];
-  if (!newRules) return NO;        // encountered a problem with the download
-  if (!newRules.count) return YES; // successfully downloaded rules, but nothing of interest
+  if (!newRules) return NO;         // encountered a problem with the download
+  if (!newRules.count) return YES;  // successfully downloaded rules, but nothing of interest
 
   // Tell santad to add the new rules to the database.
   // Wait until finished or until 5 minutes pass.
@@ -42,9 +42,9 @@
   [[self.daemonConn remoteObjectProxy] databaseRuleAddRules:newRules
                                                  cleanSlate:self.syncState.cleanSync
                                                       reply:^(NSError *e) {
-                                                        error = e;
-                                                        dispatch_semaphore_signal(sema);
-                                                      }];
+    error = e;
+    dispatch_semaphore_signal(sema);
+  }];
   dispatch_semaphore_wait(sema, dispatch_time(DISPATCH_TIME_NOW, 300 * NSEC_PER_SEC));
 
   if (error) {
@@ -55,10 +55,9 @@
 
   // Tell santad to record a successful rules sync and wait for it to finish.
   sema = dispatch_semaphore_create(0);
-  [[self.daemonConn remoteObjectProxy] setRuleSyncLastSuccess:[NSDate date]
-                                                        reply:^{
-                                                          dispatch_semaphore_signal(sema);
-                                                        }];
+  [[self.daemonConn remoteObjectProxy] setRuleSyncLastSuccess:[NSDate date] reply:^{
+    dispatch_semaphore_signal(sema);
+  }];
   dispatch_semaphore_wait(sema, dispatch_time(DISPATCH_TIME_NOW, 5 * NSEC_PER_SEC));
 
   LOGI(@"Added %lu rules", newRules.count);
