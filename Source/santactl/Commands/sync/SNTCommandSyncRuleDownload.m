@@ -165,7 +165,7 @@
   if (newRule.state == SNTRuleStateWhitelist) {
     // primaryHash is the bundle hash if there was a bundle hash included in the rule, otherwise
     // it is simply the binary hash.
-    NSString *primaryHash = dict[kRuleBundleHash];
+    NSString *primaryHash = dict[kFileBundleHash];
     if (primaryHash.length != 64) {
       primaryHash = newRule.shasum;
     }
