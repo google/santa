@@ -235,7 +235,7 @@ static void reachabilityHandler(
   NSString *fileName = message[kFCMFileNameKey];
   if (fileName && fileHash) {
     [self.whitelistNotificationQeue addOperationWithBlock:^{
-      self.whitelistNotifications[fileHash] = @{ kNotifierName : fileName }.mutableCopy;
+      self.whitelistNotifications[fileHash] = @{ kFileName : fileName }.mutableCopy;
     }];
   }
 

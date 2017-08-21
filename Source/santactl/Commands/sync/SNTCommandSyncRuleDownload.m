@@ -103,9 +103,9 @@
     // this SHA256 hash (which might be a bundle hash or a binary hash), in which case we are OK to
     // show a notification that the named bundle/binary can be run.
     NSDictionary *notifier = self.syncState.whitelistNotifications[key];
-    NSNumber *count = notifier[kNotifierCount];
+    NSNumber *count = notifier[kFileBundleBinaryCount];
     if (count && [count intValue] == 0) {
-      NSString *message = [NSString stringWithFormat:@"%@ can now be run", notifier[kNotifierName]];
+      NSString *message = [NSString stringWithFormat:@"%@ can now be run", notifier[kFileName]];
       [[self.daemonConn remoteObjectProxy]
           postRuleSyncNotificationWithCustomMessage:message reply:^{}];
     }
@@ -175,14 +175,14 @@
     [self.syncState.whitelistNotificationQueue addOperationWithBlock:^{
       NSMutableDictionary *notifier = self.syncState.whitelistNotifications[primaryHash];
       if (notifier) {
-        NSNumber *ruleCount = dict[kRuleCount];
-        NSNumber *notifierCount = notifier[kNotifierCount];
+        NSNumber *ruleCount = dict[kFileBundleBinaryCount];
+        NSNumber *notifierCount = notifier[kFileBundleBinaryCount];
         if (notifierCount) {  // bundle rule with existing count
-          notifier[kNotifierCount] = @([notifierCount intValue] - 1);
+          notifier[kFileBundleBinaryCount] = @([notifierCount intValue] - 1);
         } else if (ruleCount) {  // bundle rule seen for first time
-          notifier[kNotifierCount] = @([ruleCount intValue] - 1);
+          notifier[kFileBundleBinaryCount] = @([ruleCount intValue] - 1);
         } else {  // non-bundle binary rule
-          notifier[kNotifierCount] = @0;
+          notifier[kFileBundleBinaryCount] = @0;
         }
       }
     }];
