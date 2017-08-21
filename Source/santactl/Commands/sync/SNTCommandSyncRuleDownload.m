@@ -97,6 +97,8 @@
 - (void)announceUnblockingRules:(NSArray<SNTRule *> *)newRules {
   if (!self.syncState.targetedRuleSync) return;
 
+  NSMutableArray *processed = [NSMutableArray array];
+
   for (NSString *key in self.syncState.whitelistNotifications) {
     // Each notifier object is a dictionary with @"name" and @"count" keys. If the count has been
     // decremented to zero, then this means that we have downloaded all of the rules associated with
@@ -105,11 +107,15 @@
     NSDictionary *notifier = self.syncState.whitelistNotifications[key];
     NSNumber *count = notifier[kFileBundleBinaryCount];
     if (count && [count intValue] == 0) {
+      [processed addObject:key];
       NSString *message = [NSString stringWithFormat:@"%@ can now be run", notifier[kFileName]];
       [[self.daemonConn remoteObjectProxy]
           postRuleSyncNotificationWithCustomMessage:message reply:^{}];
     }
   }
+
+  // Remove all entries from whitelistNotifications dictionary that had zero count.
+  [self.syncState.whitelistNotifications removeObjectsForKeys:processed];
 }
 
 
