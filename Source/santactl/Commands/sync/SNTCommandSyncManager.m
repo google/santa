@@ -50,7 +50,8 @@ static NSString *const kFCMTargetHostIDKey = @"target_host_id";
 
 // Changed this to an NSMutableDictionary instead of NSCache so that we can iterate over its keys
 // when checking for bundle messages who've downloaded all of their associated binary rules.
-@property(nonatomic) NSMutableDictionary *pendingNotifications;
+@property(nonatomic) NSMutableDictionary *whitelistNotifications;
+@property(nonatomic) NSOperationQueue *whitelistNotificationQeue;
 
 @property NSUInteger FCMFullSyncInterval;
 @property NSUInteger FCMGlobalRuleSyncDeadline;
@@ -103,7 +104,8 @@ static void reachabilityHandler(
       [self lockAction:kRuleSync];
       SNTCommandSyncState *syncState = [self createSyncState];
       syncState.targetedRuleSync = self.targetedRuleSync;
-      syncState.pendingNotifications = self.pendingNotifications;
+      syncState.whitelistNotifications = self.whitelistNotifications;
+      syncState.whitelistNotificationQueue = self.whitelistNotificationQeue;
       SNTCommandSyncRuleDownload *p = [[SNTCommandSyncRuleDownload alloc] initWithState:syncState];
       if ([p sync]) {
         LOGD(@"Rule download complete");
@@ -114,7 +116,9 @@ static void reachabilityHandler(
       [self unlockAction:kRuleSync];
     }];
     _dispatchLock = [[NSCache alloc] init];
-    _pendingNotifications = [NSMutableDictionary dictionary];
+    _whitelistNotifications = [NSMutableDictionary dictionary];
+    _whitelistNotificationQeue = [[NSOperationQueue alloc] init];
+    _whitelistNotificationQeue.maxConcurrentOperationCount = 1;  // make this a serial queue
 
     _eventBatchSize = kDefaultEventBatchSize;
     _FCMFullSyncInterval = kDefaultFCMFullSyncInterval;
@@ -230,7 +234,9 @@ static void reachabilityHandler(
   NSString *fileHash = message[kFCMFileHashKey];
   NSString *fileName = message[kFCMFileNameKey];
   if (fileName && fileHash) {
-    self.pendingNotifications[fileHash] = @{ kNotifierName : fileName }.mutableCopy;
+    [self.whitelistNotificationQeue addOperationWithBlock:^{
+      self.whitelistNotifications[fileHash] = @{ kNotifierName : fileName }.mutableCopy;
+    }];
   }
 
   LOGD(@"Push notification action: %@ received", action);

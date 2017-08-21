@@ -72,6 +72,9 @@
 @property BOOL targetedRuleSync;
 
 /// Reference to the sync manager's ruleSyncCache. Used to lookup binary names for notifications.
-@property(weak) NSMutableDictionary *pendingNotifications;
+@property(weak) NSMutableDictionary *whitelistNotifications;
+
+/// Reference to the serial operation queue used for accessing whitelistNotifications.
+@property(weak) NSOperationQueue *whitelistNotificationQueue;
 
 @end
