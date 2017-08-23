@@ -33,7 +33,7 @@
   // Grab the new rules from server
   NSArray<SNTRule *> *newRules = [self downloadNewRulesFromServer];
   if (!newRules) return NO;         // encountered a problem with the download
-  if (!newRules.count) return YES;  // successfully downloaded rules, but nothing of interest
+  if (!newRules.count) return YES;  // successfully completed request, but no new rules
 
   // Tell santad to add the new rules to the database.
   // Wait until finished or until 5 minutes pass.
