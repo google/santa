@@ -99,13 +99,13 @@
   NSMutableArray *processed = [NSMutableArray array];
 
   for (NSString *key in self.syncState.whitelistNotifications) {
-    // Each notifier object is a dictionary with @"name" and @"count" keys. If the count has been
+    // Each notifier object is a dictionary with name and count keys. If the count has been
     // decremented to zero, then this means that we have downloaded all of the rules associated with
     // this SHA256 hash (which might be a bundle hash or a binary hash), in which case we are OK to
     // show a notification that the named bundle/binary can be run.
     NSDictionary *notifier = self.syncState.whitelistNotifications[key];
-    NSNumber *count = notifier[kFileBundleBinaryCount];
-    if (count && [count intValue] == 0) {
+    NSNumber *remaining = notifier[kFileBundleBinaryCount];
+    if (remaining && [remaining intValue] == 0) {
       [processed addObject:key];
       NSString *message = [NSString stringWithFormat:@"%@ can now be run", notifier[kFileName]];
       [[self.daemonConn remoteObjectProxy]
@@ -156,12 +156,6 @@
   }
 
   // Check rule for extra notification related info.
-  //
-  // Q: Is the count value sent down with the initial FCM message? Or in each rule?
-  // A: In each rule.
-  //
-  // Q: What happens if the rules get sent before the corresponding FCM message?
-  // A: No notifier object is ever created; user won't receive notification.
   if (newRule.state == SNTRuleStateWhitelist) {
     // primaryHash is the bundle hash if there was a bundle hash included in the rule, otherwise
     // it is simply the binary hash.
@@ -170,23 +164,26 @@
       primaryHash = newRule.shasum;
     }
 
-    // If we have already seen a rule with the same primary hash, then decrement the count of the
-    // corresponding pending notification.  Otherwise, if this is the first time we've seen this
-    // primary hash, add a count field to the pending notfication and set its initial value.
-    // If the downloaded rule included count information, this initial value is (count - 1).
-    // If the downloaded rule had no count information, then it was a non-bundle rule and count is
-    // set to 0, indicating that the we've already downloaded all of the 1 rules associated with
-    // the binary.
+    // As we read in rules, we update the "remaining count" information stored in
+    // whitelistNotifications. This count represents the number of rules associated with the primary
+    // hash that still need to be downloaded and added.
     [self.syncState.whitelistNotificationQueue addOperationWithBlock:^{
       NSMutableDictionary *notifier = self.syncState.whitelistNotifications[primaryHash];
       if (notifier) {
         NSNumber *ruleCount = dict[kFileBundleBinaryCount];
-        NSNumber *notifierCount = notifier[kFileBundleBinaryCount];
-        if (notifierCount) {  // bundle rule with existing count
-          notifier[kFileBundleBinaryCount] = @([notifierCount intValue] - 1);
+        NSNumber *remaining = notifier[kFileBundleBinaryCount];
+        if (remaining) {  // bundle rule with existing count
+          // If the primary hash already has an associated count field, just decrement it.
+          notifier[kFileBundleBinaryCount] = @([remaining intValue] - 1);
         } else if (ruleCount) {  // bundle rule seen for first time
+          // Downloaded rules including count information are associated with bundles.
+          // The first time we see a rule for a given bundle hash, add a count field with an
+          // initial value equal to the number of associated rules, then decrement this value by 1
+          // to account for the rule that we've just downloaded.
           notifier[kFileBundleBinaryCount] = @([ruleCount intValue] - 1);
         } else {  // non-bundle binary rule
+          // Downloaded rule had no count information, meaning it is a singleton non-bundle rule.
+          // Therefore there are no more rules associated with this hash to download.
           notifier[kFileBundleBinaryCount] = @0;
         }
       }
