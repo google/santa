@@ -73,6 +73,7 @@ NSString *formattedStringForKeyArray(NSArray<NSString *> *array) {
 @property(nonatomic) BOOL jsonOutput;
 @property(nonatomic) int certIndex;  // 0 means no cert-index specified
 @property(nonatomic, copy) NSArray<NSString *> *outputKeyList;
+@property(nonatomic, copy) NSDictionary<NSString *, NSString *> *outputFilters;
 
 // Flag indicating when to use TTY colors
 @property(readonly, nonatomic) BOOL prettyOutput;
@@ -149,23 +150,29 @@ REGISTER_COMMAND_NAME(@"fileinfo")
           @"the type of file."
           @"\n"
           @"Usage: santactl fileinfo [options] [file-paths]\n"
-          @"    --recursive (-r): search directories recursively\n"
-          @"    --json: output in json format\n"
-          @"    --key: search and return this one piece of information\n"
-          @"           you may specify multiple keys by repeating this flag\n"
-          @"           valid Keys:\n"
+          @"    --recursive (-r): Search directories recursively.\n"
+          @"    --json: Output in JSON format.\n"
+          @"    --key: Search and return this one piece of information.\n"
+          @"           You may specify multiple keys by repeating this flag.\n"
+          @"           Valid Keys:\n"
           @"%@\n"
-          @"           valid keys when using --cert-index:\n"
+          @"           Valid keys when using --cert-index:\n"
           @"%@\n"
-          @"    --cert-index: an integer corresponding to a certificate of the signing chain\n"
+          @"    --cert-index: An integer corresponding to a certificate of the signing chain.\n"
           @"                  1 for the leaf certificate\n"
           @"                  -1 for the root certificate\n"
           @"                  2 and up for the intermediates / root\n"
           @"\n"
+          @"    --filter: Use predicates of the form 'key=value' to filter out which files\n"
+          @"              are displayed.  Valid keys are the same as for --key. Value is a\n"
+          @"              case-sensitive substring searched for in the keyed property.\n"
+          @"              You may specify multiple filters by repeating this flag.\n"
+          @"\n"
           @"Examples: santactl fileinfo --cert-index 1 --key SHA-256 --json /usr/bin/yes\n"
           @"          santactl fileinfo --key SHA-256 --json /usr/bin/yes\n"
           @"          santactl fileinfo /usr/bin/yes /bin/*\n"
-          @"          santactl fileinfo /usr/bin -r --key Path --key SHA-256 --key Rule",
+          @"          santactl fileinfo /usr/bin -r --key Path --key SHA-256 --key Rule\n"
+          @"          santactl fileinfo /usr/bin/* --filter Type=Script --filter Path=zip",
           formattedStringForKeyArray(self.fileInfoKeys),
           formattedStringForKeyArray(self.signingChainKeys)];
 }
@@ -423,6 +430,7 @@ REGISTER_COMMAND_NAME(@"fileinfo")
       self.outputKeyList = [[self class] fileInfoKeys];
     }
   }
+
   // Figure out max field width from list of keys
   self.maxKeyWidth = 0;
   for (NSString *key in self.outputKeyList) {
@@ -536,9 +544,19 @@ REGISTER_COMMAND_NAME(@"fileinfo")
     for (NSString *key in self.outputKeyList) {
       outputDict[key] = cert[key];
     }
+    // Check if we should skip over this item based on outputFilters.
+    for (NSString *key in self.outputFilters) {
+      NSString *value = outputDict[key] ?: cert[key];
+      if (![value containsString:self.outputFilters[key]]) return;
+    }
   } else {
     for (NSString *key in self.outputKeyList) {
       outputDict[key] = self.propertyMap[key](self, fileInfo);
+    }
+    // Check if we should skip over this item based on outputFilters.
+    for (NSString *key in self.outputFilters) {
+      NSString *value = outputDict[key] ?: self.propertyMap[key](self, fileInfo);
+      if (![value containsString:self.outputFilters[key]]) return;
     }
   }
 
@@ -585,10 +603,12 @@ REGISTER_COMMAND_NAME(@"fileinfo")
 //   self.json from --json
 //   self.certIndex from --cert-index argument
 //   self.outputKeyList from multiple possible --key arguments
+//   self.outputFilters from multiple possible --filter arguments
 // and returns any non-flag args as path names in an NSArray.
 - (NSArray *)parseArguments:(NSArray *)arguments {
   NSMutableArray *paths = [NSMutableArray array];
   NSMutableOrderedSet *keys = [NSMutableOrderedSet orderedSet];
+  NSMutableDictionary *filters = [NSMutableDictionary dictionary];
   NSUInteger nargs = [arguments count];
   for (NSUInteger i = 0; i < nargs; i++) {
     NSString *arg = [arguments objectAtIndex:i];
@@ -613,6 +633,21 @@ REGISTER_COMMAND_NAME(@"fileinfo")
         [self printErrorUsageAndExit:@"\n--key requires an argument"];
       }
       [keys addObject:arguments[i]];
+    } else if ([arg caseInsensitiveCompare:@"--filter"] == NSOrderedSame) {
+      i += 1;  // advance to next argument and grab filter key
+      if (i >= nargs || [arguments[i] hasPrefix:@"--"]) {
+        [self printErrorUsageAndExit:@"\n--filter requires an argument"];
+      }
+      // Check that filter argument has the format "key=value".
+      NSArray<NSString *> *items = [arguments[i] componentsSeparatedByString:@"="];
+      if (!items || items.count != 2 || !items[0].length || !items[1].length) {
+        [self printErrorUsageAndExit:[NSString stringWithFormat:
+            @"\n\"%@\" is an invalid filter predicate.\n"
+            @"Filter predicates must be of the form key=value"
+            @" (with no spaces around \"=\")", arguments[i]]];
+      }
+      // We must do a redundant check that items[0] is non-nil to silence a warning.
+      if (items[0] && items[1]) filters[items[0]] = items[1];
     } else if ([arg caseInsensitiveCompare:@"--recursive"] == NSOrderedSame ||
                [arg caseInsensitiveCompare:@"-r"] == NSOrderedSame) {
       self.recursive = YES;
@@ -630,6 +665,12 @@ REGISTER_COMMAND_NAME(@"fileinfo")
             [NSString stringWithFormat:@"\n\"%@\" is an invalid key when using --cert-index", key]];
       }
     }
+    for (NSString *key in filters) {
+      if (![validKeys containsObject:key]) {
+        [self printErrorUsageAndExit:[NSString stringWithFormat:
+            @"\n\"%@\" is an invalid filter key when using --cert-index", key]];
+      }
+    }
   } else {
     NSArray *validKeys = [[self class] fileInfoKeys];
     for (NSString *key in keys) {
@@ -638,11 +679,18 @@ REGISTER_COMMAND_NAME(@"fileinfo")
             [NSString stringWithFormat:@"\n\"%@\" is an invalid key", key]];
       }
     }
+    for (NSString *key in filters) {
+      if (![validKeys containsObject:key] || [key isEqualToString:kSigningChain]) {
+        [self printErrorUsageAndExit:
+            [NSString stringWithFormat:@"\n\"%@\" is an invalid filter key", key]];
+      }
+    }
   }
 
   if (!paths.count) [self printErrorUsageAndExit:@"\nat least one file-path is needed"];
 
   self.outputKeyList = [keys array];
+  self.outputFilters = [filters copy];
   return paths.copy;
 }
 
