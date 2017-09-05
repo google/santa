@@ -20,9 +20,8 @@
 
 /// Protocol implemented by santactl and utilized by santad
 @protocol SNTSyncdXPC
-- (void)postEventToSyncServer:(SNTStoredEvent *)event;
+- (void)postEventsToSyncServer:(NSArray<SNTStoredEvent *> *)events isFromBundle:(BOOL)isFromBundle;
 - (void)postBundleEventToSyncServer:(SNTStoredEvent *)event reply:(void (^)(BOOL))reply;
-- (void)postBundleEventsToSyncServer:(NSArray<SNTStoredEvent *> *)events;
 - (void)isFCMListening:(void (^)(BOOL))reply;
 @end
 

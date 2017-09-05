@@ -288,7 +288,7 @@ double watchdogRAMPeak = 0;
     STRONGIFY(self);
     if (needRelatedEvents) {
       [eventTable addStoredEvents:events];
-      [self.syncdQueue addBundleEvents:events];
+      [self.syncdQueue addEvents:events isFromBundle:YES];
     }
   }];
 }

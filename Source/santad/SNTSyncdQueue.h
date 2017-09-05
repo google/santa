@@ -23,8 +23,7 @@
 @property(copy) void (^invalidationHandler)();
 @property(copy) void (^acceptedHandler)();
 
-- (void)addEvent:(SNTStoredEvent *)event;
-- (void)addBundleEvents:(NSArray<SNTStoredEvent *> *)events;
+- (void)addEvents:(NSArray<SNTStoredEvent *> *)events isFromBundle:(BOOL)isFromBundle;
 - (void)addBundleEvent:(SNTStoredEvent *)event reply:(void (^)(BOOL))reply;
 - (void)startSyncingEvents;
 - (void)stopSyncingEvents;
