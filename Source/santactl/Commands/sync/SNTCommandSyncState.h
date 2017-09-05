@@ -65,9 +65,6 @@
 /// Array of bundle IDs to find binaries for.
 @property NSArray *bundleBinaryRequests;
 
-/// Rules downloaded from server.
-@property NSMutableArray *downloadedRules;
-
 /// Returns YES if the santactl session is running as a daemon, returns NO otherwise.
 @property BOOL daemon;
 
@@ -75,6 +72,9 @@
 @property BOOL targetedRuleSync;
 
 /// Reference to the sync manager's ruleSyncCache. Used to lookup binary names for notifications.
-@property(weak) NSCache *ruleSyncCache;
+@property(weak) NSMutableDictionary *whitelistNotifications;
+
+/// Reference to the serial operation queue used for accessing whitelistNotifications.
+@property(weak) NSOperationQueue *whitelistNotificationQueue;
 
 @end

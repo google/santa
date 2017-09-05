@@ -30,30 +30,16 @@
 }
 
 - (BOOL)sync {
-  self.syncState.downloadedRules = [NSMutableArray array];
-  return [self ruleDownloadWithCursor:nil];
-}
+  // Grab the new rules from server
+  NSArray<SNTRule *> *newRules = [self downloadNewRulesFromServer];
+  if (!newRules) return NO;         // encountered a problem with the download
+  if (!newRules.count) return YES;  // successfully completed request, but no new rules
 
-- (BOOL)ruleDownloadWithCursor:(NSString *)cursor {
-  NSDictionary *requestDict = (cursor ? @{kCursor : cursor} : @{});
-
-  NSDictionary *resp = [self performRequest:[self requestWithDictionary:requestDict]];
-  if (!resp) return NO;
-
-  for (NSDictionary *rule in resp[kRules]) {
-    SNTRule *r = [self ruleFromDictionary:rule];
-    if (r) [self.syncState.downloadedRules addObject:r];
-  }
-
-  if (resp[kCursor]) {
-    return [self ruleDownloadWithCursor:resp[kCursor]];
-  }
-
-  if (!self.syncState.downloadedRules.count) return YES;
-
+  // Tell santad to add the new rules to the database.
+  // Wait until finished or until 5 minutes pass.
   dispatch_semaphore_t sema = dispatch_semaphore_create(0);
   __block NSError *error;
-  [[self.daemonConn remoteObjectProxy] databaseRuleAddRules:self.syncState.downloadedRules
+  [[self.daemonConn remoteObjectProxy] databaseRuleAddRules:newRules
                                                  cleanSlate:self.syncState.cleanSync
                                                       reply:^(NSError *e) {
     error = e;
@@ -67,29 +53,74 @@
     return NO;
   }
 
+  // Tell santad to record a successful rules sync and wait for it to finish.
   sema = dispatch_semaphore_create(0);
   [[self.daemonConn remoteObjectProxy] setRuleSyncLastSuccess:[NSDate date] reply:^{
     dispatch_semaphore_signal(sema);
   }];
   dispatch_semaphore_wait(sema, dispatch_time(DISPATCH_TIME_NOW, 5 * NSEC_PER_SEC));
 
-  LOGI(@"Added %lu rules", self.syncState.downloadedRules.count);
+  LOGI(@"Added %lu rules", newRules.count);
 
-  if (self.syncState.targetedRuleSync) {
-    for (SNTRule *r in self.syncState.downloadedRules) {
-      NSString *fileName = [[self.syncState.ruleSyncCache objectForKey:r.shasum] copy];
-      [self.syncState.ruleSyncCache removeObjectForKey:r.shasum];
-      if (fileName.length) {
-        NSString *message = [NSString stringWithFormat:@"%@ can now be run", fileName];
-        [[self.daemonConn remoteObjectProxy]
-            postRuleSyncNotificationWithCustomMessage:message reply:^{}];
-      }
-    }
-  }
+  // Send out push notifications about any newly whitelisted binaries
+  // that had been previously blocked by santad.
+  [self.syncState.whitelistNotificationQueue addOperationWithBlock:^{
+    [self announceUnblockingRules:newRules];
+  }];
 
   return YES;
 }
 
+// Downloads new rules from server and converts them into SNTRule.
+// Returns an array of all converted rules, or nil if there was a server problem.
+// Note that rules from the server are filtered.  We only keep those whose rule_type
+// is either BINARY or CERTIFICATE.  PACKAGE rules are dropped.
+- (NSArray<SNTRule *> *)downloadNewRulesFromServer {
+  NSMutableArray<SNTRule *> *newRules = [NSMutableArray array];
+  NSString *cursor = nil;
+  do {
+    NSDictionary *requestDict = cursor ? @{kCursor : cursor} : @{};
+    NSDictionary *response = [self performRequest:[self requestWithDictionary:requestDict]];
+    if (!response) return nil;
+    for (NSDictionary *ruleDict in response[kRules]) {
+      SNTRule *rule = [self ruleFromDictionary:ruleDict];
+      if (rule) [newRules addObject:rule];
+    }
+    cursor = response[kCursor];
+  } while (cursor);
+  return newRules;
+}
+
+// Send out push notifications for whitelisted bundles/binaries whose rule download was preceded by
+// an associated announcing FCM message.
+- (void)announceUnblockingRules:(NSArray<SNTRule *> *)newRules {
+  if (!self.syncState.targetedRuleSync) return;
+
+  NSMutableArray *processed = [NSMutableArray array];
+
+  for (NSString *key in self.syncState.whitelistNotifications) {
+    // Each notifier object is a dictionary with name and count keys. If the count has been
+    // decremented to zero, then this means that we have downloaded all of the rules associated with
+    // this SHA256 hash (which might be a bundle hash or a binary hash), in which case we are OK to
+    // show a notification that the named bundle/binary can be run.
+    NSDictionary *notifier = self.syncState.whitelistNotifications[key];
+    NSNumber *remaining = notifier[kFileBundleBinaryCount];
+    if (remaining && [remaining intValue] == 0) {
+      [processed addObject:key];
+      NSString *message = [NSString stringWithFormat:@"%@ can now be run", notifier[kFileName]];
+      [[self.daemonConn remoteObjectProxy]
+          postRuleSyncNotificationWithCustomMessage:message reply:^{}];
+    }
+  }
+
+  // Remove all entries from whitelistNotifications dictionary that had zero count.
+  [self.syncState.whitelistNotifications removeObjectsForKeys:processed];
+}
+
+
+// Converts rule information downloaded from the server into a SNTRule.  Because any information
+// not recorded by SNTRule is thrown away here, this method is also responsible for dealing with
+// the extra bundle rule information (bundle_hash & rule_count).
 - (SNTRule *)ruleFromDictionary:(NSDictionary *)dict {
   if (![dict isKindOfClass:[NSDictionary class]]) return nil;
 
@@ -122,6 +153,41 @@
   NSString *customMsg = dict[kRuleCustomMsg];
   if (customMsg.length) {
     newRule.customMsg = customMsg;
+  }
+
+  // Check rule for extra notification related info.
+  if (newRule.state == SNTRuleStateWhitelist) {
+    // primaryHash is the bundle hash if there was a bundle hash included in the rule, otherwise
+    // it is simply the binary hash.
+    NSString *primaryHash = dict[kFileBundleHash];
+    if (primaryHash.length != 64) {
+      primaryHash = newRule.shasum;
+    }
+
+    // As we read in rules, we update the "remaining count" information stored in
+    // whitelistNotifications. This count represents the number of rules associated with the primary
+    // hash that still need to be downloaded and added.
+    [self.syncState.whitelistNotificationQueue addOperationWithBlock:^{
+      NSMutableDictionary *notifier = self.syncState.whitelistNotifications[primaryHash];
+      if (notifier) {
+        NSNumber *ruleCount = dict[kFileBundleBinaryCount];
+        NSNumber *remaining = notifier[kFileBundleBinaryCount];
+        if (remaining) {  // bundle rule with existing count
+          // If the primary hash already has an associated count field, just decrement it.
+          notifier[kFileBundleBinaryCount] = @([remaining intValue] - 1);
+        } else if (ruleCount) {  // bundle rule seen for first time
+          // Downloaded rules including count information are associated with bundles.
+          // The first time we see a rule for a given bundle hash, add a count field with an
+          // initial value equal to the number of associated rules, then decrement this value by 1
+          // to account for the rule that we've just downloaded.
+          notifier[kFileBundleBinaryCount] = @([ruleCount intValue] - 1);
+        } else {  // non-bundle binary rule
+          // Downloaded rule had no count information, meaning it is a singleton non-bundle rule.
+          // Therefore there are no more rules associated with this hash to download.
+          notifier[kFileBundleBinaryCount] = @0;
+        }
+      }
+    }];
   }
 
   return newRule;

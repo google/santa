@@ -47,7 +47,14 @@ static NSString *const kFCMTargetHostIDKey = @"target_host_id";
 @property(nonatomic) dispatch_source_t ruleSyncTimer;
 
 @property(nonatomic) NSCache *dispatchLock;
-@property(nonatomic) NSCache *ruleSyncCache;
+
+// whitelistNotifications dictionary stores info from FCM messages.  The binary/bundle hash is used
+// as a key mapping to values that are themselves dictionaries.  These dictionary values contain the
+// name of the binary/bundle and a count of associated binary rules.
+@property(nonatomic) NSMutableDictionary *whitelistNotifications;
+
+// whitelistNotificationQueue is used to serialize access to the whitelistNotifications dictionary.
+@property(nonatomic) NSOperationQueue *whitelistNotificationQueue;
 
 @property NSUInteger FCMFullSyncInterval;
 @property NSUInteger FCMGlobalRuleSyncDeadline;
@@ -100,7 +107,8 @@ static void reachabilityHandler(
       [self lockAction:kRuleSync];
       SNTCommandSyncState *syncState = [self createSyncState];
       syncState.targetedRuleSync = self.targetedRuleSync;
-      syncState.ruleSyncCache = self.ruleSyncCache;
+      syncState.whitelistNotifications = self.whitelistNotifications;
+      syncState.whitelistNotificationQueue = self.whitelistNotificationQueue;
       SNTCommandSyncRuleDownload *p = [[SNTCommandSyncRuleDownload alloc] initWithState:syncState];
       if ([p sync]) {
         LOGD(@"Rule download complete");
@@ -111,7 +119,9 @@ static void reachabilityHandler(
       [self unlockAction:kRuleSync];
     }];
     _dispatchLock = [[NSCache alloc] init];
-    _ruleSyncCache = [[NSCache alloc] init];
+    _whitelistNotifications = [NSMutableDictionary dictionary];
+    _whitelistNotificationQueue = [[NSOperationQueue alloc] init];
+    _whitelistNotificationQueue.maxConcurrentOperationCount = 1;  // make this a serial queue
 
     _eventBatchSize = kDefaultEventBatchSize;
     _FCMFullSyncInterval = kDefaultFCMFullSyncInterval;
@@ -217,12 +227,19 @@ static void reachabilityHandler(
     return;
   }
 
-  // Store the file name and hash in a cache. When the rule is actually added, use the cache
-  // to build a user notification.
+  // We assume that the incoming FCM message contains name of binary/bundle and a hash.  Rule count
+  // info for bundles will be sent out later with the rules themselves.  If the message is related
+  // to a bundle, the hash is a bundle hash, otherwise it is just a hash for a single binary.
+  // For later use, we store a mapping of bundle/binary hash to a dictionary containing the
+  // binary/bundle name so we can send out relevant notifications once the rules are actually
+  // downloaded & added to local database.  We use a dictionary value so that we can later add a
+  // count field when we start downloading the rules and receive the count information.
   NSString *fileHash = message[kFCMFileHashKey];
   NSString *fileName = message[kFCMFileNameKey];
   if (fileName && fileHash) {
-    [self.ruleSyncCache setObject:fileName forKey:fileHash];
+    [self.whitelistNotificationQueue addOperationWithBlock:^{
+      self.whitelistNotifications[fileHash] = @{ kFileName : fileName }.mutableCopy;
+    }];
   }
 
   LOGD(@"Push notification action: %@ received", action);
