@@ -432,7 +432,6 @@ REGISTER_COMMAND_NAME(@"fileinfo")
       self.outputKeyList = [[self class] fileInfoKeys];
     }
   }
-
   // Figure out max field width from list of keys
   self.maxKeyWidth = 0;
   for (NSString *key in self.outputKeyList) {
@@ -547,10 +546,7 @@ REGISTER_COMMAND_NAME(@"fileinfo")
     for (NSString *key in self.outputFilters) {
       NSString *value = cert[key];
       NSRegularExpression *regex = self.outputFilters[key];
-      NSTextCheckingResult *match = [regex firstMatchInString:value
-                                                      options:0
-                                                        range:NSMakeRange(0, value.length)];
-      if (!match) return;
+      if (![regex firstMatchInString:value options:0 range:NSMakeRange(0, value.length)]) return;
     }
 
     // Filter out the info we want now, in case JSON output
@@ -564,10 +560,7 @@ REGISTER_COMMAND_NAME(@"fileinfo")
     for (NSString *key in self.outputFilters) {
       NSString *value = self.propertyMap[key](self, fileInfo);
       NSRegularExpression *regex = self.outputFilters[key];
-      NSTextCheckingResult *match = [regex firstMatchInString:value
-                                                      options:0
-                                                        range:NSMakeRange(0, value.length)];
-      if (!match) return;
+      if (![regex firstMatchInString:value options:0 range:NSMakeRange(0, value.length)]) return;
       // If this is a value we want to show, store it in the output dictionary.
       // This does a linear search on an array, but it's a small array.
       if ([self.outputKeyList containsObject:key]) {
@@ -577,7 +570,7 @@ REGISTER_COMMAND_NAME(@"fileinfo")
 
     // Then fill the outputDict with the rest of the missing values.
     for (NSString *key in self.outputKeyList) {
-      if (outputDict[key]) continue;  // ignore keys that we've already set
+      if (outputDict[key]) continue;  // ignore keys that we've already set due to a filter
       outputDict[key] = self.propertyMap[key](self, fileInfo);
     }
   }
