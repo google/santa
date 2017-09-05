@@ -73,7 +73,7 @@ NSString *formattedStringForKeyArray(NSArray<NSString *> *array) {
 @property(nonatomic) BOOL jsonOutput;
 @property(nonatomic) int certIndex;  // 0 means no cert-index specified
 @property(nonatomic, copy) NSArray<NSString *> *outputKeyList;
-@property(nonatomic, copy) NSDictionary<NSString *, NSString *> *outputFilters;
+@property(nonatomic, copy) NSDictionary<NSString *, NSRegularExpression *> *outputFilters;
 
 // Flag indicating when to use TTY colors
 @property(readonly, nonatomic) BOOL prettyOutput;
@@ -158,14 +158,16 @@ REGISTER_COMMAND_NAME(@"fileinfo")
           @"%@\n"
           @"           Valid keys when using --cert-index:\n"
           @"%@\n"
-          @"    --cert-index: An integer corresponding to a certificate of the signing chain.\n"
-          @"                  1 for the leaf certificate\n"
-          @"                  -1 for the root certificate\n"
-          @"                  2 and up for the intermediates / root\n"
+          @"    --cert-index: Supply an integer corresponding to a certificate of the\n"
+          @"                  signing chain to show info only for that certificate.\n"
+          @"                     1 for the leaf certificate\n"
+          @"                    -1 for the root certificate\n"
+          @"                     2 and up for the intermediates / root\n"
           @"\n"
-          @"    --filter: Use predicates of the form 'key=value' to filter out which files\n"
+          @"    --filter: Use predicates of the form 'key=regex' to filter out which files\n"
           @"              are displayed.  Valid keys are the same as for --key. Value is a\n"
-          @"              case-sensitive substring searched for in the keyed property.\n"
+          @"              case-insensitive regular expression which must match anywhere in\n"
+          @"              the keyed property value for the file's info to be displayed.\n"
           @"              You may specify multiple filters by repeating this flag.\n"
           @"\n"
           @"Examples: santactl fileinfo --cert-index 1 --key SHA-256 --json /usr/bin/yes\n"
@@ -540,23 +542,43 @@ REGISTER_COMMAND_NAME(@"fileinfo")
     int index = (self.certIndex == -1) ? (int)signingChain.count - 1 : self.certIndex - 1;
     if (index < 0 || index >= (int)signingChain.count) return;  // check that index is valid
     NSDictionary *cert = signingChain[index];
+
+    // Check if we should skip over this item based on outputFilters.
+    for (NSString *key in self.outputFilters) {
+      NSString *value = cert[key];
+      NSRegularExpression *regex = self.outputFilters[key];
+      NSTextCheckingResult *match = [regex firstMatchInString:value
+                                                      options:0
+                                                        range:NSMakeRange(0, value.length)];
+      if (!match) return;
+    }
+
     // Filter out the info we want now, in case JSON output
     for (NSString *key in self.outputKeyList) {
       outputDict[key] = cert[key];
     }
-    // Check if we should skip over this item based on outputFilters.
-    for (NSString *key in self.outputFilters) {
-      NSString *value = outputDict[key] ?: cert[key];
-      if (![value containsString:self.outputFilters[key]]) return;
-    }
   } else {
-    for (NSString *key in self.outputKeyList) {
-      outputDict[key] = self.propertyMap[key](self, fileInfo);
-    }
-    // Check if we should skip over this item based on outputFilters.
+    // Check if we should skip over this item based on outputFilters.  We do this before collecting
+    // output info because there's a chance that we can bail out early if a filter doesn't match.
+    // However we also don't want to recompute info, so we save any values that we plan to show.
     for (NSString *key in self.outputFilters) {
-      NSString *value = outputDict[key] ?: self.propertyMap[key](self, fileInfo);
-      if (![value containsString:self.outputFilters[key]]) return;
+      NSString *value = self.propertyMap[key](self, fileInfo);
+      NSRegularExpression *regex = self.outputFilters[key];
+      NSTextCheckingResult *match = [regex firstMatchInString:value
+                                                      options:0
+                                                        range:NSMakeRange(0, value.length)];
+      if (!match) return;
+      // If this is a value we want to show, store it in the output dictionary.
+      // This does a linear search on an array, but it's a small array.
+      if ([self.outputKeyList containsObject:key]) {
+        outputDict[key] = value;
+      }
+    }
+
+    // Then fill the outputDict with the rest of the missing values.
+    for (NSString *key in self.outputKeyList) {
+      if (outputDict[key]) continue;  // ignore keys that we've already set
+      outputDict[key] = self.propertyMap[key](self, fileInfo);
     }
   }
 
@@ -605,7 +627,7 @@ REGISTER_COMMAND_NAME(@"fileinfo")
 //   self.outputKeyList from multiple possible --key arguments
 //   self.outputFilters from multiple possible --filter arguments
 // and returns any non-flag args as path names in an NSArray.
-- (NSArray *)parseArguments:(NSArray *)arguments {
+- (NSArray *)parseArguments:(NSArray<NSString *> *)arguments {
   NSMutableArray *paths = [NSMutableArray array];
   NSMutableOrderedSet *keys = [NSMutableOrderedSet orderedSet];
   NSMutableDictionary *filters = [NSMutableDictionary dictionary];
@@ -634,20 +656,32 @@ REGISTER_COMMAND_NAME(@"fileinfo")
       }
       [keys addObject:arguments[i]];
     } else if ([arg caseInsensitiveCompare:@"--filter"] == NSOrderedSame) {
-      i += 1;  // advance to next argument and grab filter key
+      i += 1;  // advance to next argument and grab the filter predicate
       if (i >= nargs || [arguments[i] hasPrefix:@"--"]) {
         [self printErrorUsageAndExit:@"\n--filter requires an argument"];
       }
-      // Check that filter argument has the format "key=value".
-      NSArray<NSString *> *items = [arguments[i] componentsSeparatedByString:@"="];
-      if (!items || items.count != 2 || !items[0].length || !items[1].length) {
+      // Check that filter predicate has the format "key=regex".
+      NSRange range = [arguments[i] rangeOfString:@"="];
+      if (range.location == NSNotFound || range.location == 0 ||
+          range.location == arguments[i].length - 1) {
         [self printErrorUsageAndExit:[NSString stringWithFormat:
             @"\n\"%@\" is an invalid filter predicate.\n"
-            @"Filter predicates must be of the form key=value"
+            @"Filter predicates must be of the form key=regex"
             @" (with no spaces around \"=\")", arguments[i]]];
       }
-      // We must do a redundant check that items[0] is non-nil to silence a warning.
-      if (items[0] && items[1]) filters[items[0]] = items[1];
+      NSString *key = [arguments[i] substringToIndex:range.location];
+      NSString *rhs = [arguments[i] substringFromIndex:range.location+1];
+      // Convert right-hand side of '=' into a regular expression object.
+      NSError *error;
+      NSRegularExpression *regex =
+          [NSRegularExpression regularExpressionWithPattern:rhs
+                                                    options:NSRegularExpressionCaseInsensitive
+                                                      error:&error];
+      if (error) {
+        [self printErrorUsageAndExit:[NSString stringWithFormat:
+            @"\n\"%@\" is an invalid regular expression in filter argument.\n", rhs]];
+      }
+      filters[key] = regex;
     } else if ([arg caseInsensitiveCompare:@"--recursive"] == NSOrderedSame ||
                [arg caseInsensitiveCompare:@"-r"] == NSOrderedSame) {
       self.recursive = YES;
