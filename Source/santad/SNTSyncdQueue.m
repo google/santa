@@ -39,7 +39,7 @@
 }
 
 - (void)addEvents:(NSArray<SNTStoredEvent *> *)events isFromBundle:(BOOL)isFromBundle {
-  if (!events || events.count == 0) return;
+  if (!events || !events.count) return;
   SNTStoredEvent *first = events.firstObject;
   NSString *hash = isFromBundle ? first.fileBundleHash : first.fileSHA256;
   if (![self backoffForPrimaryHash:hash]) return;
