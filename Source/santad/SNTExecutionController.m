@@ -178,7 +178,7 @@
       [_eventLog logDeniedExecution:cd withMessage:message];
 
       if ([[SNTConfigurator configurator] bundlesEnabled] && binInfo.bundle) {
-        // If the binary is apart of a bundle, find and hash all the related binaries in the bundle.
+        // If the binary is part of a bundle, find and hash all the related binaries in the bundle.
         // Let the GUI know hashing is needed. Once the hashing is complete the GUI will send a
         // message to santad to perform the upload logic for bundles.
         // See syncBundleEvent:relatedEvents: for more info.
@@ -187,7 +187,7 @@
         // So the server has something to show the user straight away, initiate an event
         // upload for the blocked binary rather than waiting for the next sync.
         dispatch_async(_eventQueue, ^{
-          [_syncdQueue addEvent:se];
+          [_syncdQueue addEvents:@[se] isFromBundle:NO];
         });
       }
 

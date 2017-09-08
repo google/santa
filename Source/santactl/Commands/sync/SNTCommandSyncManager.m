@@ -132,6 +132,17 @@ static void reachabilityHandler(
 
 #pragma mark SNTSyncdXPC protocol methods
 
+- (void)postEventsToSyncServer:(NSArray<SNTStoredEvent *> *)events isFromBundle:(BOOL)isFromBundle {
+  SNTCommandSyncState *syncState = [self createSyncState];
+  if (isFromBundle) syncState.eventBatchSize = self.eventBatchSize;
+  SNTCommandSyncEventUpload *p = [[SNTCommandSyncEventUpload alloc] initWithState:syncState];
+  if (events && [p uploadEvents:events]) {
+    LOGD(@"Events upload complete");
+  } else {
+    LOGE(@"Events upload failed");
+  }
+}
+
 - (void)postBundleEventToSyncServer:(SNTStoredEvent *)event reply:(void (^)(BOOL))reply {
   SNTCommandSyncState *syncState = [self createSyncState];
   SNTCommandSyncEventUpload *p = [[SNTCommandSyncEventUpload alloc] initWithState:syncState];
@@ -146,27 +157,6 @@ static void reachabilityHandler(
   } else {
     reply(NO);
     LOGE(@"Bundle event upload failed");
-  }
-}
-
-- (void)postBundleEventsToSyncServer:(NSArray<SNTStoredEvent *> *)events {
-  SNTCommandSyncState *syncState = [self createSyncState];
-  syncState.eventBatchSize = self.eventBatchSize;
-  SNTCommandSyncEventUpload *p = [[SNTCommandSyncEventUpload alloc] initWithState:syncState];
-  if (events && [p uploadEvents:events]) {
-    LOGD(@"Bundle events upload complete");
-  } else {
-    LOGE(@"Bundle events upload failed");
-  }
-}
-
-- (void)postEventToSyncServer:(SNTStoredEvent *)event {
-  SNTCommandSyncEventUpload *p = [[SNTCommandSyncEventUpload alloc]
-                                     initWithState:[self createSyncState]];
-  if (event && [p uploadEvents:@[event]]) {
-    LOGD(@"Event upload complete");
-  } else {
-    LOGE(@"Event upload failed");
   }
 }
 

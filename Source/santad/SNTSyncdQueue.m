@@ -38,30 +38,27 @@
   return self;
 }
 
-- (void)addBundleEvents:(NSArray<SNTStoredEvent *> *)events {
-  if (![self backoffForBundleHash:events.firstObject.fileBundleHash]) return;
+- (void)addEvents:(NSArray<SNTStoredEvent *> *)events isFromBundle:(BOOL)isFromBundle {
+  if (!events.count) return;
+  SNTStoredEvent *first = events.firstObject;
+  NSString *hash = isFromBundle ? first.fileBundleHash : first.fileSHA256;
+  if (![self backoffForPrimaryHash:hash]) return;
   [self dispatchBlockOnSyncdQueue:^{
-    [self.syncdConnection.remoteObjectProxy postBundleEventsToSyncServer:events];
+    [self.syncdConnection.remoteObjectProxy postEventsToSyncServer:events
+                                                      isFromBundle:isFromBundle];
   }];
 }
 
 - (void)addBundleEvent:(SNTStoredEvent *)event reply:(void (^)(BOOL))reply {
-  if (![self backoffForBundleHash:event.fileBundleHash]) return;
+  if (![self backoffForPrimaryHash:event.fileBundleHash]) return;
   [self dispatchBlockOnSyncdQueue:^{
     [self.syncdConnection.remoteObjectProxy postBundleEventToSyncServer:event
                                                                   reply:^(BOOL needRelatedEvents) {
       // Remove the backoff entry for the inital block event. The same event will be included in the
-      // related events synced using addBundleEvents:.
+      // related events synced using addEvents:isFromBundle:.
       if (needRelatedEvents) [self.uploadBackoff removeObjectForKey:event.fileBundleHash];
       reply(needRelatedEvents);
     }];
-  }];
-}
-
-- (void)addEvent:(SNTStoredEvent *)event {
-  if (![self backoffForEvent:event]) return;
-  [self dispatchBlockOnSyncdQueue:^{
-    [self.syncdConnection.remoteObjectProxy postEventToSyncServer:event];
   }];
 }
 
@@ -87,23 +84,13 @@
   });
 }
 
-// The event upload is skipped if an event upload has been initiated for it in the
-// last 10 minutes.
-- (BOOL)backoffForEvent:(SNTStoredEvent *)event {
-  NSDate *backoff = [self.uploadBackoff objectForKey:event.fileSHA256];
+// The event upload is skipped if an event has been initiated for it in the last 10 minutes.
+// The passed-in hash is fileBundleHash for a bundle event, or fileSHA256 for a normal event.
+- (BOOL)backoffForPrimaryHash:(NSString *)hash {
+  NSDate *backoff = [self.uploadBackoff objectForKey:hash];
   NSDate *now = [NSDate date];
   if (([now timeIntervalSince1970] - [backoff timeIntervalSince1970]) < 600) return NO;
-  [self.uploadBackoff setObject:now forKey:event.fileSHA256];
-  return YES;
-}
-
-// The bundle event upload is skipped if a bundle event has been initiated for it in the
-// last 10 minutes.
-- (BOOL)backoffForBundleHash:(NSString *)bundleHash {
-  NSDate *backoff = [self.uploadBackoff objectForKey:bundleHash];
-  NSDate *now = [NSDate date];
-  if (([now timeIntervalSince1970] - [backoff timeIntervalSince1970]) < 600) return NO;
-  [self.uploadBackoff setObject:now forKey:bundleHash];
+  [self.uploadBackoff setObject:now forKey:hash];
   return YES;
 }
 
