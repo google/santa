@@ -139,7 +139,9 @@ static void reachabilityHandler(
   if (events && [p uploadEvents:events]) {
     LOGD(@"Events upload complete");
   } else {
-    LOGE(@"Events upload failed");
+    LOGE(@"Events upload failed.  Will retry again once %@ is reachable",
+         [[SNTConfigurator configurator] syncBaseURL].absoluteString);
+    [self startReachability];
   }
 }
 
@@ -156,7 +158,9 @@ static void reachabilityHandler(
     }
   } else {
     reply(NO);
-    LOGE(@"Bundle event upload failed");
+    LOGE(@"Bundle event upload failed.  Will retry again once %@ is reachable",
+         [[SNTConfigurator configurator] syncBaseURL].absoluteString);
+    [self startReachability];
   }
 }
 
@@ -504,27 +508,31 @@ static void reachabilityHandler(
 
 // Start listening for network state changes on a background thread
 - (void)startReachability {
-  if (_reachability) return;
-  const char *nodename = [[SNTConfigurator configurator] syncBaseURL].host.UTF8String;
-  _reachability = SCNetworkReachabilityCreateWithName(kCFAllocatorDefault, nodename);
-  SCNetworkReachabilityContext context = {
-    .info = (__bridge void *)self
-  };
-  if (SCNetworkReachabilitySetCallback(_reachability, reachabilityHandler, &context)) {
-    SCNetworkReachabilitySetDispatchQueue(
-        _reachability, dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_BACKGROUND, 0));
-  } else {
-    [self stopReachability];
-  }
+  dispatch_async(dispatch_get_main_queue(), ^{
+    if (_reachability) return;
+    const char *nodename = [[SNTConfigurator configurator] syncBaseURL].host.UTF8String;
+    _reachability = SCNetworkReachabilityCreateWithName(kCFAllocatorDefault, nodename);
+    SCNetworkReachabilityContext context = {
+      .info = (__bridge void *)self
+    };
+    if (SCNetworkReachabilitySetCallback(_reachability, reachabilityHandler, &context)) {
+      SCNetworkReachabilitySetDispatchQueue(_reachability,
+          dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_BACKGROUND, 0));
+    } else {
+      [self stopReachability];
+    }
+  });
 }
 
 // Stop listening for network state changes
 - (void)stopReachability {
-  if (_reachability) {
-    SCNetworkReachabilitySetDispatchQueue(_reachability, NULL);
-    if (_reachability) CFRelease(_reachability);
-    _reachability = NULL;
-  }
+  dispatch_async(dispatch_get_main_queue(), ^{
+    if (_reachability) {
+      SCNetworkReachabilitySetDispatchQueue(_reachability, NULL);
+      if (_reachability) CFRelease(_reachability);
+      _reachability = NULL;
+    }
+  });
 }
 
 @end
