@@ -140,7 +140,7 @@ static void reachabilityHandler(
     LOGD(@"Events upload complete");
   } else {
     LOGE(@"Events upload failed.  Will retry again once %@ is reachable",
-         [[SNTConfigurator configurator] syncBaseURL].absoluteString);
+        [[SNTConfigurator configurator] syncBaseURL].absoluteString);
     [self startReachability];
   }
 }
@@ -159,7 +159,7 @@ static void reachabilityHandler(
   } else {
     reply(NO);
     LOGE(@"Bundle event upload failed.  Will retry again once %@ is reachable",
-         [[SNTConfigurator configurator] syncBaseURL].absoluteString);
+        [[SNTConfigurator configurator] syncBaseURL].absoluteString);
     [self startReachability];
   }
 }
