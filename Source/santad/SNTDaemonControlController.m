@@ -283,14 +283,21 @@ double watchdogRAMPeak = 0;
 
   WEAKIFY(self);
 
-  // Sync the updated event.  We also need to know whether or not to store/send the related bundle
-  // events.  If the reply block is called at all, we will store the related bundle events in the
-  // eventTable. If YES is passed back to the reply, we will also immediately upload the related
-  // events to the server.
-  [self.syncdQueue addBundleEvent:event reply:^(BOOL serverUp) {
+  // Sync the updated event. If the sync server needs the related events, add them to the eventTable
+  // and upload them too.
+  [self.syncdQueue addBundleEvent:event reply:^(SNTBundleEventAction action) {
     STRONGIFY(self);
-    [eventTable addStoredEvents:events];
-    if (serverUp) [self.syncdQueue addEvents:events isFromBundle:YES];
+    switch(action) {
+      case SNTBundleEventActionDropEvents:
+        break;
+      case SNTBundleEventActionStoreEvents:
+        [eventTable addStoredEvents:events];
+        break;
+      case SNTBundleEventActionSendEvents:
+        [eventTable addStoredEvents:events];
+        [self.syncdQueue addEvents:events isFromBundle:YES];
+        break;
+    }
   }];
 }
 
