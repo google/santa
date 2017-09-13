@@ -14,6 +14,8 @@
 
 @import Foundation;
 
+#import "SNTCommonEnums.h"
+
 @class SNTStoredEvent;
 @class SNTXPCConnection;
 
@@ -24,7 +26,7 @@
 @property(copy) void (^acceptedHandler)();
 
 - (void)addEvents:(NSArray<SNTStoredEvent *> *)events isFromBundle:(BOOL)isFromBundle;
-- (void)addBundleEvent:(SNTStoredEvent *)event reply:(void (^)(BOOL))reply;
+- (void)addBundleEvent:(SNTStoredEvent *)event reply:(void (^)(SNTBundleEventAction))reply;
 - (void)startSyncingEvents;
 - (void)stopSyncingEvents;
 
