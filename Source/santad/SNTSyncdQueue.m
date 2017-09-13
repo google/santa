@@ -49,17 +49,16 @@
   }];
 }
 
-- (void)addBundleEvent:(SNTStoredEvent *)event reply:(void (^)(SNTBundleEventAction))reply {
+- (void)addBundleEvent:(SNTStoredEvent *)event reply:(void (^)(BOOL))reply {
   if (![self backoffForPrimaryHash:event.fileBundleHash]) return;
   [self dispatchBlockOnSyncdQueue:^{
     [self.syncdConnection.remoteObjectProxy
-     postBundleEventToSyncServer:event reply:^(SNTBundleEventAction action) {
+     postBundleEventToSyncServer:event reply:^(BOOL serverUp) {
        // Remove the backoff entry for the inital block event. The same event will be included in the
        // related events synced using addEvents:isFromBundle:.
-       if (action == SNTBundleEventActionSendEvents) {
-         [self.uploadBackoff removeObjectForKey:event.fileBundleHash];
-       }
-       reply(action);
+       if (serverUp) [self.uploadBackoff removeObjectForKey:event.fileBundleHash];
+       // Then pass on the reply to store/send the related bundle events.
+       reply(serverUp);
      }];
   }];
 }

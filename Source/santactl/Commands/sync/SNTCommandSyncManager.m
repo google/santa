@@ -27,7 +27,6 @@
 #import "SNTCommandSyncPreflight.h"
 #import "SNTCommandSyncRuleDownload.h"
 #import "SNTCommandSyncState.h"
-#import "SNTCommonEnums.h"
 #import "SNTLogging.h"
 #import "SNTStoredEvent.h"
 #import "SNTStrengthify.h"
@@ -146,22 +145,21 @@ static void reachabilityHandler(
   }
 }
 
-- (void)postBundleEventToSyncServer:(SNTStoredEvent *)event
-                              reply:(void (^)(SNTBundleEventAction))reply {
+- (void)postBundleEventToSyncServer:(SNTStoredEvent *)event reply:(void (^)(BOOL))reply {
+  if (!event) return;
   SNTCommandSyncState *syncState = [self createSyncState];
   SNTCommandSyncEventUpload *p = [[SNTCommandSyncEventUpload alloc] initWithState:syncState];
-  if (event && [p uploadEvents:@[event]]) {
+  if ([p uploadEvents:@[event]]) {
     if ([syncState.bundleBinaryRequests containsObject:event.fileBundleHash]) {
-      reply(SNTBundleEventActionSendEvents);
+      reply(YES); // store and immediately send related bundle events
       LOGD(@"Needs related events");
     } else {
-      reply(SNTBundleEventActionDropEvents);
       LOGD(@"Bundle event upload complete");
     }
   } else {
     // Related bundle events will be stored and eventually synced, whether the server actually
     // wanted them or not.  If they weren't needed the server will simply ignore them.
-    reply(SNTBundleEventActionStoreEvents);
+    reply(NO);
     LOGE(@"Bundle event upload failed.  Will retry again once %@ is reachable",
         [[SNTConfigurator configurator] syncBaseURL].absoluteString);
     [self startReachability];

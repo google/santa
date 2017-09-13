@@ -14,15 +14,12 @@
 
 @import Foundation;
 
-#import "SNTCommonEnums.h"
-
 @class SNTStoredEvent;
 
 /// Protocol implemented by santactl and utilized by santad
 @protocol SNTSyncdXPC
 - (void)postEventsToSyncServer:(NSArray<SNTStoredEvent *> *)events isFromBundle:(BOOL)isFromBundle;
-- (void)postBundleEventToSyncServer:(SNTStoredEvent *)event
-                              reply:(void (^)(SNTBundleEventAction))reply;
+- (void)postBundleEventToSyncServer:(SNTStoredEvent *)event reply:(void (^)(BOOL))reply;
 - (void)isFCMListening:(void (^)(BOOL))reply;
 @end
 
