@@ -165,7 +165,7 @@ REGISTER_COMMAND_NAME(@"fileinfo")
           @"                     2 and up for the intermediates / root\n"
           @"\n"
           @"    --filter: Use predicates of the form 'key=regex' to filter out which files\n"
-          @"              are displayed.  Valid keys are the same as for --key. Value is a\n"
+          @"              are displayed. Valid keys are the same as for --key. Value is a\n"
           @"              case-insensitive regular expression which must match anywhere in\n"
           @"              the keyed property value for the file's info to be displayed.\n"
           @"              You may specify multiple filters by repeating this flag.\n"
