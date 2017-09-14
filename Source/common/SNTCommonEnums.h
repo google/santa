@@ -72,6 +72,14 @@ typedef NS_ENUM(NSInteger, SNTRuleTableError) {
   SNTRuleTableErrorRemoveFailed
 };
 
+// This enum type is used to indicate what should be done with the related bundle events that are
+// generated when an initiating blocked bundle event occurs.
+typedef NS_ENUM(NSInteger, SNTBundleEventAction) {
+  SNTBundleEventActionDropEvents,
+  SNTBundleEventActionStoreEvents,
+  SNTBundleEventActionSendEvents,
+};
+
 static const char *kKextPath = "/Library/Extensions/santa-driver.kext";
 static const char *kSantaDPath = "/Library/Extensions/santa-driver.kext/Contents/MacOS/santad";
 static const char *kSantaCtlPath = "/Library/Extensions/santa-driver.kext/Contents/MacOS/santactl";

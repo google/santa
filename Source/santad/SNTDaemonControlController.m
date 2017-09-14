@@ -15,6 +15,7 @@
 #import "SNTDaemonControlController.h"
 
 #import "SNTCachedDecision.h"
+#import "SNTCommonEnums.h"
 #import "SNTConfigurator.h"
 #import "SNTDatabaseController.h"
 #import "SNTDriverManager.h"
@@ -284,11 +285,18 @@ double watchdogRAMPeak = 0;
 
   // Sync the updated event. If the sync server needs the related events, add them to the eventTable
   // and upload them too.
-  [self.syncdQueue addBundleEvent:event reply:^(BOOL needRelatedEvents) {
+  [self.syncdQueue addBundleEvent:event reply:^(SNTBundleEventAction action) {
     STRONGIFY(self);
-    if (needRelatedEvents) {
-      [eventTable addStoredEvents:events];
-      [self.syncdQueue addEvents:events isFromBundle:YES];
+    switch(action) {
+      case SNTBundleEventActionDropEvents:
+        break;
+      case SNTBundleEventActionStoreEvents:
+        [eventTable addStoredEvents:events];
+        break;
+      case SNTBundleEventActionSendEvents:
+        [eventTable addStoredEvents:events];
+        [self.syncdQueue addEvents:events isFromBundle:YES];
+        break;
     }
   }];
 }

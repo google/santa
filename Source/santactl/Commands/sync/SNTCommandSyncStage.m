@@ -77,6 +77,8 @@
   return req;
 }
 
+// Returns nil when there is a server connection issue.  For other errors, such as
+// an empty response or an unparseable response, an empty dictionary is returned.
 - (NSDictionary *)performRequest:(NSURLRequest *)request timeout:(NSTimeInterval)timeout {
   NSHTTPURLResponse *response;
   NSError *error;
