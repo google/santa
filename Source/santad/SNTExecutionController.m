@@ -106,11 +106,8 @@
   NSError *csError;
   MOLCodesignChecker *csInfo = [[MOLCodesignChecker alloc] initWithBinaryPath:binInfo.path
                                                                         error:&csError];
-  // We specifically ignore CSInfoPlistFailed (-67030) as it sometimes appears spuriously
-  // when trying to validate a binary separately from its bundle.
-  if (csError && csError.code != errSecCSInfoPlistFailed) {
-    csInfo = nil;
-  }
+  // Ignore codesigning if there are any errors with the signature. 
+  if (csError) csInfo = nil;
 
   // Actually make the decision.
   SNTCachedDecision *cd = [self.policyProcessor decisionForFileInfo:binInfo
