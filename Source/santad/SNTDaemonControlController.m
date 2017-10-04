@@ -54,7 +54,7 @@ double watchdogRAMPeak = 0;
 - (instancetype)initWithDriverManager:(SNTDriverManager *)driverManager
                     notificationQueue:(SNTNotificationQueue *)notQueue
                            syncdQueue:(SNTSyncdQueue *)syncdQueue
-                             EventLog:(SNTEventLog *)eventLog {
+                             eventLog:(SNTEventLog *)eventLog {
   self = [super init];
   if (self) {
     _policyProcessor = [[SNTPolicyProcessor alloc] initWithRuleTable:

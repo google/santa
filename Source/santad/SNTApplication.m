@@ -85,7 +85,7 @@
         [[SNTDaemonControlController alloc] initWithDriverManager:_driverManager
                                                 notificationQueue:notQueue
                                                        syncdQueue:syncdQueue
-                                                         EventLog:_eventLog];
+                                                         eventLog:_eventLog];
 
     _controlConnection =
         [[SNTXPCConnection alloc] initServerWithName:[SNTXPCControlInterface serviceId]];
