@@ -132,6 +132,8 @@
 ///  @return @c YES if file is in scope, @c NO otherwise.
 ///
 - (NSString *)fileIsScopeWhitelisted:(SNTFileInfo *)fi {
+  if (!fi) return nil;
+  
   // Determine if file is within a whitelisted path
   NSRegularExpression *re = [[SNTConfigurator configurator] whitelistPathRegex];
   if ([re numberOfMatchesInString:fi.path options:0 range:NSMakeRange(0, fi.path.length)]) {
@@ -147,6 +149,8 @@
 }
 
 - (NSString *)fileIsScopeBlacklisted:(SNTFileInfo *)fi {
+  if (!fi) return nil;
+  
   NSRegularExpression *re = [[SNTConfigurator configurator] blacklistPathRegex];
   if ([re numberOfMatchesInString:fi.path options:0 range:NSMakeRange(0, fi.path.length)]) {
     return @"Blacklist Regex";
