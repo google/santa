@@ -1,6 +1,7 @@
 .DS_Store
 Build
 santa-*
+!santa-driver
 !*.md
 Pods
 Santa.xcodeproj/xcuserdata
