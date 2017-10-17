@@ -13,6 +13,8 @@
 ///    limitations under the License.
 
 #include "SantaDecisionManager.h"
+#include "CircularQueue/Queue.h"
+#include "CircularQueue/EventsCommon.h"
 
 #define super OSObject
 OSDefineMetaClassAndStructors(SantaDecisionManager, OSObject);
@@ -22,6 +24,12 @@ OSDefineMetaClassAndStructors(SantaDecisionManager, OSObject);
 bool SantaDecisionManager::init() {
   if (!super::init()) return false;
 
+  // TODO(adamsh): Init the shared memory here.
+  queue_ = new(helm_queue_t);
+  if (helm_queue_init(queue_, 0, nullptr) != HELM_SUCCESS) {
+    // freak out
+  }
+  
   sdm_lock_grp_attr_ = lck_grp_attr_alloc_init();
   sdm_lock_grp_ = lck_grp_alloc_init("santa-locks", sdm_lock_grp_attr_);
   sdm_lock_attr_ = lck_attr_alloc_init();
@@ -54,6 +62,7 @@ void SantaDecisionManager::free() {
   delete root_decision_cache_;
   delete non_root_decision_cache_;
   delete vnode_pid_map_;
+  delete queue_;
 
   if (decision_dataqueue_lock_) {
     lck_mtx_free(decision_dataqueue_lock_, sdm_lock_grp_);
@@ -484,6 +493,17 @@ void SantaDecisionManager::FileOpCallback(
     if (action == KAUTH_FILEOP_CLOSE) {
       RemoveFromCache(vnode_id);
     } else if (action == KAUTH_FILEOP_EXEC) {
+      /*
+       
+       auto slot = helm_queue_reserve_slot(queue_, sizeof(helm_event_execve_t));
+       if (slot) {
+       slot->msg = HELM_MSG_EVENT;
+       helm_event_execve_t *event = reinterpret_cast<helm_event_execve_t *>(slot->buffer);
+       event->task.pid = 1337;
+       helm_queue_commit_slot(queue_, slot);
+       }
+       */
+      
       auto message = NewMessage(nullptr);
       message->vnode_id = vnode_id;
       message->action = ACTION_NOTIFY_EXEC;
