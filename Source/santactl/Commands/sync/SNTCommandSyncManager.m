@@ -131,6 +131,11 @@ static void reachabilityHandler(
   return self;
 }
 
+- (void)dealloc {
+  // Ensure reachability is always stopped
+  [self stopReachability];
+}
+
 #pragma mark SNTSyncdXPC protocol methods
 
 - (void)postEventsToSyncServer:(NSArray<SNTStoredEvent *> *)events isFromBundle:(BOOL)isFromBundle {
@@ -521,7 +526,8 @@ static void reachabilityHandler(
     const char *nodename = [[SNTConfigurator configurator] syncBaseURL].host.UTF8String;
     _reachability = SCNetworkReachabilityCreateWithName(kCFAllocatorDefault, nodename);
     SCNetworkReachabilityContext context = {
-      .info = (__bridge void *)self
+      .info = (__bridge_retained void *)self,
+      .release = (void (*)(const void *))CFBridgingRelease,
     };
     if (SCNetworkReachabilitySetCallback(_reachability, reachabilityHandler, &context)) {
       SCNetworkReachabilitySetDispatchQueue(_reachability,
