@@ -69,10 +69,13 @@ REGISTER_COMMAND_NAME(@"rule")
 
 - (void)runWithArguments:(NSArray *)arguments {
   SNTConfigurator *config = [SNTConfigurator configurator];
+  // TODO: commented out for debugging, restore this.
+  /*
   if ([config syncBaseURL] && ![arguments containsObject:@"--check"]) {
     printf("SyncBaseURL is set, rules are managed centrally.\n");
     exit(1);
   }
+   */
 
   SNTRule *newRule = [[SNTRule alloc] init];
   newRule.state = SNTRuleStateUnknown;
@@ -190,6 +193,9 @@ REGISTER_COMMAND_NAME(@"rule")
       case SNTEventStateAllowScope:
       case SNTEventStateBlockScope:
         [output appendString:@" (Scope)"];
+        break;
+      case SNTEventStateAllowTransitive:
+        [output appendString:@" (Transitive)"];
         break;
       default:
         output = @"None".mutableCopy;

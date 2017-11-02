@@ -14,6 +14,9 @@
 
 #include "SantaDecisionManager.h"
 
+// TODO: put this somewhere else
+#define KAUTH_FILEOP_WRITE 8
+
 #define super OSObject
 OSDefineMetaClassAndStructors(SantaDecisionManager, OSObject);
 
@@ -509,8 +512,15 @@ void SantaDecisionManager::FileOpCallback(
     proc_name(message->pid, message->pname, sizeof(message->pname));
 
     switch (action) {
-      case KAUTH_FILEOP_CLOSE:
+      // TODO: remove
+      //case KAUTH_FILEOP_OPEN:
+      //  message->action = ACTION_NOTIFY_OPEN;
+      //  break;
+      case KAUTH_FILEOP_WRITE:
         message->action = ACTION_NOTIFY_WRITE;
+        break;
+      case KAUTH_FILEOP_CLOSE:
+        message->action = ACTION_NOTIFY_CLOSE;
         break;
       case KAUTH_FILEOP_RENAME:
         message->action = ACTION_NOTIFY_RENAME;
@@ -552,6 +562,11 @@ extern "C" int fileop_scope_callback(
   char *new_path = nullptr;
 
   switch (action) {
+    case KAUTH_FILEOP_CLOSE:
+      if (!(arg2 & KAUTH_FILEOP_CLOSE_MODIFIED))
+        return KAUTH_RESULT_DEFER;
+    // TODO: remove
+    //case KAUTH_FILEOP_OPEN:
     case KAUTH_FILEOP_DELETE:
     case KAUTH_FILEOP_EXEC:
       vp = reinterpret_cast<vnode_t>(arg0);
@@ -604,7 +619,7 @@ extern "C" int vnode_scope_callback(
     char path[MAXPATHLEN];
     int pathlen = MAXPATHLEN;
     vn_getpath(vp, path, &pathlen);
-    sdm->FileOpCallback(KAUTH_FILEOP_CLOSE, vp, path, nullptr);
+    sdm->FileOpCallback(KAUTH_FILEOP_WRITE, vp, path, nullptr);
     sdm->DecrementListenerInvocations();
   }
 

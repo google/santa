@@ -95,6 +95,10 @@
       action = @"WRITE";
       break;
     }
+    case ACTION_NOTIFY_CLOSE: {
+      action = @"CLOSE";
+      break;
+    }
     default: action = @"UNKNOWN"; break;
   }
 
@@ -135,6 +139,14 @@
       d = @"ALLOW";
       r = @"BINARY";
       logArgs = YES;
+      break;
+    case SNTEventStateAllowCompiler:
+      d = @"ALLOW";
+      r = @"COMPILER";
+      break;
+    case SNTEventStateAllowTransitive:
+      d = @"ALLOW";
+      r = @"TRANSITIVE";
       break;
     case SNTEventStateAllowCertificate:
       d = @"ALLOW";

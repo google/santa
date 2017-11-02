@@ -20,6 +20,7 @@
 #include <sys/types.h>
 
 #import "SNTCommonEnums.h"
+#import "SNTCompilerController.h"
 #import "SNTConfigurator.h"
 #import "SNTDaemonControlController.h"
 #import "SNTDatabaseController.h"
@@ -43,6 +44,7 @@
 @property SNTExecutionController *execController;
 @property SNTFileWatcher *configFileWatcher;
 @property SNTXPCConnection *controlConnection;
+@property SNTCompilerController *compilerController;
 @end
 
 @implementation SNTApplication
@@ -77,7 +79,9 @@
     syncdQueue.invalidationHandler = ^{
       [self startSyncd];
     };
-    
+
+    _compilerController = [[SNTCompilerController alloc] init];
+
     // Establish XPC listener for Santa and santactl connections
     SNTDaemonControlController *dc = [[SNTDaemonControlController alloc] init];
     dc.driverManager = _driverManager;
@@ -137,7 +141,8 @@
                                                                  eventTable:eventTable
                                                               notifierQueue:notQueue
                                                                  syncdQueue:syncdQueue
-                                                                   eventLog:_eventLog];
+                                                                   eventLog:_eventLog
+                                                                   compiler:_compilerController];
     // Start up santactl as a daemon if a sync server exists.
     [self startSyncd];
 
@@ -209,11 +214,19 @@
       dispatch_semaphore_wait(concurrencyLimiter, DISPATCH_TIME_FOREVER);
       dispatch_async(log_queue, ^{
         switch (message.action) {
+          case ACTION_NOTIFY_CLOSE:
           case ACTION_NOTIFY_DELETE:
           case ACTION_NOTIFY_EXCHANGE:
           case ACTION_NOTIFY_LINK:
           case ACTION_NOTIFY_RENAME:
           case ACTION_NOTIFY_WRITE: {
+
+            // Determine if we should add a transitive whitelisting rule for this new file.
+            [_compilerController checkForCompiler:message];
+
+            if (message.action == ACTION_NOTIFY_CLOSE) break;
+
+
             NSRegularExpression *re = [[SNTConfigurator configurator] fileChangesRegex];
             NSString *path = @(message.path);
             if ([re numberOfMatchesInString:path options:0 range:NSMakeRange(0, path.length)]) {
@@ -223,6 +236,9 @@
           }
           case ACTION_NOTIFY_EXEC: {
             [_eventLog logAllowedExecution:message];
+
+            // Check if executable was a compiler, and if so, record its pid.
+            [self.compilerController cacheExecution:message];
             break;
           }
           default:

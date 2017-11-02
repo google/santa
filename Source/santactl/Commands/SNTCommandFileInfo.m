@@ -376,6 +376,9 @@ REGISTER_COMMAND_NAME(@"fileinfo")
         case SNTEventStateBlockScope:
           [output appendString:@" (Scope)"];
           break;
+        case SNTEventStateAllowTransitive:
+          [output appendString:@" (Transitive)"];
+          break;
         default:
           output = @"None".mutableCopy;
           break;

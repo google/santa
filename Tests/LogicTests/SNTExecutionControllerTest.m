@@ -68,7 +68,8 @@
                                                         eventTable:self.mockEventDatabase
                                                      notifierQueue:nil
                                                         syncdQueue:nil
-                                                          eventLog:nil];
+                                                          eventLog:nil
+                                                          compiler:nil];
 }
 
 ///  Return a pre-configured santa_message_ t for testing with.

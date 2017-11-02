@@ -25,6 +25,7 @@
 #import "SNTBlockMessage.h"
 #import "SNTCachedDecision.h"
 #import "SNTCommonEnums.h"
+#import "SNTCompilerController.h"
 #import "SNTConfigurator.h"
 #import "SNTDriverManager.h"
 #import "SNTDropRootPrivs.h"
@@ -46,6 +47,7 @@
 @property SNTPolicyProcessor *policyProcessor;
 @property SNTRuleTable *ruleTable;
 @property SNTSyncdQueue *syncdQueue;
+@property SNTCompilerController *compilerController;
 
 @property dispatch_queue_t eventQueue;
 @end
@@ -59,7 +61,8 @@
                            eventTable:(SNTEventTable *)eventTable
                         notifierQueue:(SNTNotificationQueue *)notifierQueue
                            syncdQueue:(SNTSyncdQueue *)syncdQueue
-                             eventLog:(SNTEventLog *)eventLog {
+                             eventLog:(SNTEventLog *)eventLog
+                             compiler:(SNTCompilerController *)cc {
   self = [super init];
   if (self) {
     _driverManager = driverManager;
@@ -69,6 +72,7 @@
     _syncdQueue = syncdQueue;
     _eventLog = eventLog;
     _policyProcessor = [[SNTPolicyProcessor alloc] initWithRuleTable:_ruleTable];
+    _compilerController = cc;
 
     _eventQueue = dispatch_queue_create("com.google.santad.event_upload", DISPATCH_QUEUE_SERIAL);
 
@@ -123,11 +127,25 @@
   // Save decision details for logging the execution later.
   if (action == ACTION_RESPOND_ALLOW) [_eventLog saveDecisionDetails:cd];
 
+
+  // This is only ever called when the vnode_id wasn't found in the kernel level cache of decisions.
+  if (cd.decision == SNTEventStateAllowCompiler) {
+    LOGI(@"#### validateBinaryWithMessage: compiler vnodeID = %llx, pid = %d", cd.vnodeId, message.pid);
+    // Need to cache this somewhere so we can check it later.
+    [self.compilerController cacheCompilerWithVnodeId:cd.vnodeId];
+    //[self.compilerController cachePid:message.pid];
+  } else {
+    [self.compilerController forgetVnodeId:cd.vnodeId];
+  }
+
+
   // Send the decision to the kernel.
   [_driverManager postToKernelAction:action forVnodeID:cd.vnodeId];
 
   // Log to database if necessary.
   if (cd.decision != SNTEventStateAllowBinary &&
+      cd.decision != SNTEventStateAllowCompiler &&
+      cd.decision != SNTEventStateAllowTransitive && 
       cd.decision != SNTEventStateAllowCertificate &&
       cd.decision != SNTEventStateAllowScope) {
     SNTStoredEvent *se = [[SNTStoredEvent alloc] init];
