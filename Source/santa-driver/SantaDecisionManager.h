@@ -79,8 +79,9 @@ class SantaDecisionManager : public OSObject {
   kern_return_t StartListener();
 
   /**
-    Stops the kauth listeners. After stopping new callback requests, waits until all
-    current invocations have finished before clearing the cache and returning.
+    Stops the kauth listeners. After stopping new callback requests, waits 
+    until all current invocations have finished before clearing the cache and
+    returning.
   */
   kern_return_t StopListener();
 
@@ -89,7 +90,10 @@ class SantaDecisionManager : public OSObject {
                   const santa_action_t decision,
                   const uint64_t microsecs = GetCurrentUptime());
 
-  ///  Fetches a response from the cache, first checking to see if the entry has expired.
+  /**
+    Fetches a response from the cache, first checking to see if the entry 
+    has expired.
+  */
   santa_action_t GetFromCache(uint64_t identifier);
 
   /// Checks to see if a given identifier is in the cache and removes it.
@@ -99,7 +103,10 @@ class SantaDecisionManager : public OSObject {
   uint64_t RootCacheCount() const;
   uint64_t NonRootCacheCount() const;
 
-  /// Clears the cache(s). If non_root_only is true, only the non-root cache is cleared.
+  /**
+    Clears the cache(s). If non_root_only is true, only the non-root cache 
+    is cleared.
+  */
   void ClearCache(bool non_root_only = false);
 
   /// Increments the count of active callbacks pending.
@@ -137,8 +144,17 @@ class SantaDecisionManager : public OSObject {
   */
   static const uint32_t kRequestLoopSleepMilliseconds = 1000;
 
-  /// The maximum number of milliseconds a cached deny message should be considered valid.
+  /**
+    The maximum number of milliseconds a cached deny message should be
+    considered valid.
+  */
   static const uint64_t kMaxDenyCacheTimeMilliseconds = 500;
+
+  /** 
+    The maximum number of milliseconds a request can sit waiting for a response
+    before the pending request is evicted, forcing it to be retried.
+  */
+  static const uint64_t kMaxRequestWaitTimeMilliseconds = 5000;
 
   /// Maximum number of entries in the in-kernel cache.
   static const uint32_t kMaxCacheSize = 10000;
@@ -146,10 +162,16 @@ class SantaDecisionManager : public OSObject {
   /// Maximum number of PostToDecisionQueue failures to allow.
   static const uint32_t kMaxDecisionQueueFailures = 10;
 
-  /// The maximum number of messages can be kept in the decision data queue at any time.
+  /**
+    The maximum number of messages can be kept in the decision data queue at
+    any time.
+  */
   static const uint32_t kMaxDecisionQueueEvents = 512;
 
-  /// The maximum number of messages can be kept in the logging data queue at any time.
+  /**
+    The maximum number of messages can be kept in the logging data queue at
+    any time.
+  */
   static const uint32_t kMaxLogQueueEvents = 2048;
 
   /**
@@ -199,7 +221,8 @@ class SantaDecisionManager : public OSObject {
     @param vp The Vnode to get the ID for
     @return uint64_t The Vnode ID as a 64-bit unsigned int.
   */
-  static inline uint64_t GetVnodeIDForVnode(const vfs_context_t ctx, const vnode_t vp) {
+  static inline uint64_t GetVnodeIDForVnode(
+      const vfs_context_t ctx, const vnode_t vp) {
     struct vnode_attr vap;
     VATTR_INIT(&vap);
     VATTR_WANTED(&vap, va_fsid);
