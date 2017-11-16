@@ -163,14 +163,14 @@ class SantaDecisionManager : public OSObject {
   static const uint32_t kMaxDecisionQueueFailures = 10;
 
   /**
-    The maximum number of messages can be kept in the decision data queue at
-    any time.
+    The maximum number of messages that can be kept in the decision data queue
+    at any time.
   */
   static const uint32_t kMaxDecisionQueueEvents = 512;
 
   /**
-    The maximum number of messages can be kept in the logging data queue at
-    any time.
+    The maximum number of messages that can be kept in the logging data queue
+    at any time.
   */
   static const uint32_t kMaxLogQueueEvents = 2048;
 
