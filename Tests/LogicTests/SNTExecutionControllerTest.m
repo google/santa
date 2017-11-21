@@ -77,6 +77,7 @@
   message.pid = 12;
   message.ppid = 1;
   message.vnode_id = 1234;
+  message.timestamp = 7;
   strncpy(message.path, "/a/file", 7);
   return message;
 }
@@ -100,10 +101,12 @@
   rule.type = SNTRuleTypeBinary;
   OCMStub([self.mockRuleDatabase ruleForBinarySHA256:@"a" certificateSHA256:nil]).andReturn(rule);
 
-  [self.sut validateBinaryWithMessage:[self getMessage]];
+  santa_message_t message = [self getMessage];
+  [self.sut validateBinaryWithMessage:message];
 
   OCMVerify([self.mockDriverManager postToKernelAction:ACTION_RESPOND_ALLOW
-                                            forVnodeID:1234]);
+                                            forVnodeID:1234
+                                             timestamp:message.timestamp]);
 }
 
 - (void)testBinaryBlacklistRule {
@@ -115,10 +118,12 @@
   rule.type = SNTRuleTypeBinary;
   OCMStub([self.mockRuleDatabase ruleForBinarySHA256:@"a" certificateSHA256:nil]).andReturn(rule);
 
-  [self.sut validateBinaryWithMessage:[self getMessage]];
+  santa_message_t message = [self getMessage];
+  [self.sut validateBinaryWithMessage:message];
 
   OCMVerify([self.mockDriverManager postToKernelAction:ACTION_RESPOND_DENY
-                                            forVnodeID:1234]);
+                                            forVnodeID:1234
+                                             timestamp:message.timestamp]);
 }
 
 - (void)testCertificateWhitelistRule {
@@ -133,10 +138,12 @@
   rule.type = SNTRuleTypeCertificate;
   OCMStub([self.mockRuleDatabase ruleForBinarySHA256:nil certificateSHA256:@"a"]).andReturn(rule);
 
-  [self.sut validateBinaryWithMessage:[self getMessage]];
+  santa_message_t message = [self getMessage];
+  [self.sut validateBinaryWithMessage:message];
 
   OCMVerify([self.mockDriverManager postToKernelAction:ACTION_RESPOND_ALLOW
-                                            forVnodeID:1234]);
+                                            forVnodeID:1234
+                                             timestamp:message.timestamp]);
 }
 
 - (void)testCertificateBlacklistRule {
@@ -151,10 +158,12 @@
   rule.type = SNTRuleTypeCertificate;
   OCMStub([self.mockRuleDatabase ruleForBinarySHA256:nil certificateSHA256:@"a"]).andReturn(rule);
 
-  [self.sut validateBinaryWithMessage:[self getMessage]];
+  santa_message_t message = [self getMessage];
+  [self.sut validateBinaryWithMessage:message];
 
   OCMVerify([self.mockDriverManager postToKernelAction:ACTION_RESPOND_DENY
-                                            forVnodeID:1234]);
+                                            forVnodeID:1234
+                                             timestamp:message.timestamp]);
 }
 
 - (void)testDefaultDecision {
@@ -162,38 +171,48 @@
   OCMStub([self.mockFileInfo SHA256]).andReturn(@"a");
 
   OCMExpect([self.mockConfigurator clientMode]).andReturn(SNTClientModeMonitor);
-  [self.sut validateBinaryWithMessage:[self getMessage]];
+  santa_message_t message = [self getMessage];
+  [self.sut validateBinaryWithMessage:message];
   OCMVerify([self.mockDriverManager postToKernelAction:ACTION_RESPOND_ALLOW
-                                            forVnodeID:1234]);
+                                            forVnodeID:1234
+                                             timestamp:message.timestamp]);
 
   OCMExpect([self.mockConfigurator clientMode]).andReturn(SNTClientModeLockdown);
-  [self.sut validateBinaryWithMessage:[self getMessage]];
+  santa_message_t message2 = [self getMessage];
+  [self.sut validateBinaryWithMessage:message2];
   OCMVerify([self.mockDriverManager postToKernelAction:ACTION_RESPOND_DENY
-                                            forVnodeID:1234]);
+                                            forVnodeID:1234
+                                             timestamp:message2.timestamp]);
 }
 
 - (void)testOutOfScope {
   OCMStub([self.mockFileInfo isMachO]).andReturn(NO);
 
   OCMStub([self.mockConfigurator clientMode]).andReturn(SNTClientModeLockdown);
-  [self.sut validateBinaryWithMessage:[self getMessage]];
+  santa_message_t message = [self getMessage];
+  [self.sut validateBinaryWithMessage:message];
   OCMVerify([self.mockDriverManager postToKernelAction:ACTION_RESPOND_ALLOW
-                                            forVnodeID:1234]);
+                                            forVnodeID:1234
+                                             timestamp:message.timestamp]);
 }
 
 - (void)testMissingShasum {
-  [self.sut validateBinaryWithMessage:[self getMessage]];
+  santa_message_t message = [self getMessage];
+  [self.sut validateBinaryWithMessage:message];
   OCMVerify([self.mockDriverManager postToKernelAction:ACTION_RESPOND_ALLOW
-                                            forVnodeID:1234]);
+                                            forVnodeID:1234
+                                             timestamp:message.timestamp]);
 }
 
 - (void)testPageZero {
   OCMStub([self.mockFileInfo isMachO]).andReturn(YES);
   OCMStub([self.mockFileInfo isMissingPageZero]).andReturn(YES);
 
-  [self.sut validateBinaryWithMessage:[self getMessage]];
+  santa_message_t message = [self getMessage];
+  [self.sut validateBinaryWithMessage:message];
   OCMVerify([self.mockDriverManager postToKernelAction:ACTION_RESPOND_DENY
-                                            forVnodeID:1234]);
+                                            forVnodeID:1234
+                                             timestamp:message.timestamp]);
 }
 
 @end

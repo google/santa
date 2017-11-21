@@ -85,10 +85,13 @@ class SantaDecisionManager : public OSObject {
   */
   kern_return_t StopListener();
 
-  /// Adds a decision to the cache, with a timestamp.
+  /// Adds a decision to the cache, with a timestamp. Parameter old_microsecs
+  /// is used to compare and swap the expected value of an ACTION_REQUEST_BINARY entry
+  /// when attempting to update it with a ACTION_RESPOND_ALLOW or ACTION_RESPOND_DENY entry.
   void AddToCache(uint64_t identifier,
                   const santa_action_t decision,
-                  const uint64_t microsecs = GetCurrentUptime());
+                  const uint64_t microsecs = GetCurrentUptime(),
+                  const uint64_t old_microsecs = 0);
 
   /**
     Fetches a response from the cache, first checking to see if the entry 
@@ -136,6 +139,16 @@ class SantaDecisionManager : public OSObject {
   */
   void FileOpCallback(kauth_action_t action, const vnode_t vp,
                       const char *path, const char *new_path);
+
+  /**
+   Returns the current system uptime in microseconds
+   */
+  static inline uint64_t GetCurrentUptime() {
+    clock_sec_t sec;
+    clock_usec_t usec;
+    clock_get_system_microtime(&sec, &usec);
+    return (uint64_t)((sec * 1000000) + usec);
+  }
 
  private:
   /**
@@ -255,16 +268,6 @@ class SantaDecisionManager : public OSObject {
     }
 
     return message;
-  }
-
-  /**
-    Returns the current system uptime in microseconds
-  */
-  static inline uint64_t GetCurrentUptime() {
-    clock_sec_t sec;
-    clock_usec_t usec;
-    clock_get_system_microtime(&sec, &usec);
-    return (uint64_t)((sec * 1000000) + usec);
   }
 
   SantaCache<uint64_t> *root_decision_cache_;

@@ -85,20 +85,26 @@
   // Get info about the file. If we can't get this info, allow execution and log an error.
   if (unlikely(message.path == NULL)) {
     LOGE(@"Path for vnode_id is NULL: %llu", message.vnode_id);
-    [_driverManager postToKernelAction:ACTION_RESPOND_ALLOW forVnodeID:message.vnode_id];
+    [_driverManager postToKernelAction:ACTION_RESPOND_ALLOW
+                            forVnodeID:message.vnode_id
+                             timestamp:message.timestamp];
     return;
   }
   NSError *fileInfoError;
   SNTFileInfo *binInfo = [[SNTFileInfo alloc] initWithPath:@(message.path) error:&fileInfoError];
   if (unlikely(!binInfo)) {
     LOGE(@"Failed to read file %@: %@", @(message.path), fileInfoError.localizedDescription);
-    [_driverManager postToKernelAction:ACTION_RESPOND_ALLOW forVnodeID:message.vnode_id];
+    [_driverManager postToKernelAction:ACTION_RESPOND_ALLOW
+                            forVnodeID:message.vnode_id
+                             timestamp:message.timestamp];
     return;
   }
 
   // PrinterProxy workaround, see description above the method for more details.
   if ([self printerProxyWorkaround:binInfo]) {
-    [_driverManager postToKernelAction:ACTION_RESPOND_DENY forVnodeID:message.vnode_id];
+    [_driverManager postToKernelAction:ACTION_RESPOND_DENY
+                            forVnodeID:message.vnode_id
+                             timestamp:message.timestamp];
     return;
   }
 
@@ -124,7 +130,7 @@
   if (action == ACTION_RESPOND_ALLOW) [_eventLog saveDecisionDetails:cd];
 
   // Send the decision to the kernel.
-  [_driverManager postToKernelAction:action forVnodeID:cd.vnodeId];
+  [_driverManager postToKernelAction:action forVnodeID:cd.vnodeId timestamp:message.timestamp];
 
   // Log to database if necessary.
   if (cd.decision != SNTEventStateAllowBinary &&

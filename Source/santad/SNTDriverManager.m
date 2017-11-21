@@ -146,20 +146,23 @@ static const int MAX_DELAY = 15;
 
 #pragma mark Outgoing messages
 
-- (kern_return_t)postToKernelAction:(santa_action_t)action forVnodeID:(uint64_t)vnodeId {
+- (kern_return_t)postToKernelAction:(santa_action_t)action
+                         forVnodeID:(uint64_t)vnodeId
+                          timestamp:(uint64_t)timestamp {
+  uint64_t input[2] = {vnodeId, timestamp};
   switch (action) {
     case ACTION_RESPOND_ALLOW:
       return IOConnectCallScalarMethod(_connection,
                                        kSantaUserClientAllowBinary,
-                                       &vnodeId,
-                                       1,
+                                       input,
+                                       2,
                                        0,
                                        0);
     case ACTION_RESPOND_DENY:
       return IOConnectCallScalarMethod(_connection,
                                        kSantaUserClientDenyBinary,
-                                       &vnodeId,
-                                       1,
+                                       input,
+                                       2,
                                        0,
                                        0);
     default:
