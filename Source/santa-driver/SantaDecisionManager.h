@@ -86,8 +86,8 @@ class SantaDecisionManager : public OSObject {
   kern_return_t StopListener();
 
   /// Adds a decision to the cache, with a timestamp. Parameter old_microsecs
-  /// is used to test and set the expected value of an ACTION_REQUEST_BINARY entry when attempting
-  /// to update it with a ACTION_RESPOND_ALLOW or ACTION_RESPOND_DENY entry.
+  /// is used to compare and swap the expected value of an ACTION_REQUEST_BINARY entry
+  /// when attempting to update it with a ACTION_RESPOND_ALLOW or ACTION_RESPOND_DENY entry.
   void AddToCache(uint64_t identifier,
                   const santa_action_t decision,
                   const uint64_t microsecs = GetCurrentUptime(),
