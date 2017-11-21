@@ -45,7 +45,9 @@
 ///
 ///  Sends a response to a query back to the kernel.
 ///
-- (kern_return_t)postToKernelAction:(santa_action_t)action forVnodeID:(uint64_t)vnodeId;
+- (kern_return_t)postToKernelAction:(santa_action_t)action
+                         forVnodeID:(uint64_t)vnodeId
+                          timestamp:(uint64_t)timestamp;
 
 ///
 ///  Get the number of binaries in the kernel's caches.

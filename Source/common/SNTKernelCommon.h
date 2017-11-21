@@ -82,6 +82,7 @@ typedef enum {
 // Message struct that is sent down the IODataQueue.
 typedef struct {
   santa_action_t action;
+  uint64_t timestamp;
   uint64_t vnode_id;
   uid_t uid;
   gid_t gid;

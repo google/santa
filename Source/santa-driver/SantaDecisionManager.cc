@@ -223,7 +223,7 @@ SantaCache<uint64_t>* SantaDecisionManager::CacheForIdentifier(
 }
 
 void SantaDecisionManager::AddToCache(
-    uint64_t identifier, santa_action_t decision, uint64_t microsecs) {
+    uint64_t identifier, santa_action_t decision, uint64_t microsecs, uint64_t old_microsecs) {
   // Decision is stored in upper 8 bits, timestamp in remaining 56.
   uint64_t val = ((uint64_t)decision << 56) | (microsecs & 0xFFFFFFFFFFFFFF);
 
@@ -236,7 +236,8 @@ void SantaDecisionManager::AddToCache(
     case ACTION_RESPOND_ALLOW:
     case ACTION_RESPOND_DENY:
       decision_cache->set(
-          identifier, val, ((uint64_t)ACTION_REQUEST_BINARY << 56));
+          identifier, val,
+          ((uint64_t)ACTION_REQUEST_BINARY << 56) | (old_microsecs & 0xFFFFFFFFFFFFFF));
       break;
     default:
       break;
@@ -310,7 +311,9 @@ santa_action_t SantaDecisionManager::GetFromDaemon(
   do {
     // Add pending request to cache, to be replaced
     // by daemon with actual response.
-    AddToCache(identifier, ACTION_REQUEST_BINARY, 0);
+    // Set the timestamp in the cache. If this request takes more than 5 sec
+    // it will be removed and retried.
+    AddToCache(identifier, ACTION_REQUEST_BINARY, message->timestamp);
 
     // Send request to daemon.
     if (!PostToDecisionQueue(message)) {
@@ -376,6 +379,7 @@ santa_action_t SantaDecisionManager::FetchDecision(
   auto message = NewMessage(cred);
   strlcpy(message->path, path, sizeof(message->path));
   message->action = ACTION_REQUEST_BINARY;
+  message->timestamp = GetCurrentUptime();
   message->vnode_id = vnode_id;
   proc_name(message->ppid, message->pname, sizeof(message->pname));
   auto return_action = GetFromDaemon(message, vnode_id);

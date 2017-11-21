@@ -135,7 +135,9 @@ IOReturn SantaDriverClient::allow_binary(
 
   const uint64_t vnode_id = static_cast<const uint64_t>(arguments->scalarInput[0]);
   if (!vnode_id) return kIOReturnInvalid;
-  me->decisionManager->AddToCache(vnode_id, ACTION_RESPOND_ALLOW);
+  const uint64_t timestamp = static_cast<const uint64_t>(arguments->scalarInput[1]);
+  me->decisionManager->AddToCache(vnode_id, ACTION_RESPOND_ALLOW,
+                                  SantaDecisionManager::GetCurrentUptime(), timestamp);
 
   return kIOReturnSuccess;
 }
@@ -147,7 +149,9 @@ IOReturn SantaDriverClient::deny_binary(
 
   const uint64_t vnode_id = static_cast<const uint64_t>(arguments->scalarInput[0]);
   if (!vnode_id) return kIOReturnInvalid;
-  me->decisionManager->AddToCache(vnode_id, ACTION_RESPOND_DENY);
+  const uint64_t timestamp = static_cast<const uint64_t>(arguments->scalarInput[1]);
+  me->decisionManager->AddToCache(vnode_id, ACTION_RESPOND_DENY,
+                                  SantaDecisionManager::GetCurrentUptime(), timestamp);
 
   return kIOReturnSuccess;
 }
@@ -197,8 +201,8 @@ IOReturn SantaDriverClient::externalMethod(
   static IOExternalMethodDispatch sMethods[kSantaUserClientNMethods] = {
     // Function ptr, input scalar count, input struct size, output scalar count, output struct size
     { &SantaDriverClient::open, 0, 0, 0, 0 },
-    { &SantaDriverClient::allow_binary, 1, 0, 0, 0 },
-    { &SantaDriverClient::deny_binary, 1, 0, 0, 0 },
+    { &SantaDriverClient::allow_binary, 2, 0, 0, 0 },
+    { &SantaDriverClient::deny_binary, 2, 0, 0, 0 },
     { &SantaDriverClient::clear_cache, 1, 0, 0, 0 },
     { &SantaDriverClient::cache_count, 0, 0, 2, 0 },
     { &SantaDriverClient::check_cache, 1, 0, 1, 0 }
