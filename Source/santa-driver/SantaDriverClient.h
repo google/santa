@@ -87,6 +87,11 @@ class com_google_SantaDriverClient : public IOUserClient {
   static IOReturn deny_binary(
       OSObject *target, void *reference, IOExternalMethodArguments *arguments);
 
+  ///  The daemon calls this to acknowledge a binary request. This is used for large binaries that
+  ///  may take a while to reach a decision.
+  static IOReturn acknowledge_binary(
+      OSObject *target, void *reference, IOExternalMethodArguments *arguments);
+
   ///  The daemon calls this to empty the cache.
   static IOReturn clear_cache(
       OSObject *target, void *reference, IOExternalMethodArguments *arguments);

@@ -38,6 +38,8 @@
 #import "SNTStoredEvent.h"
 #import "SNTSyncdQueue.h"
 
+static size_t kLargeBinarySize = 30 * 1024 * 1024;
+
 @interface SNTExecutionController ()
 @property SNTDriverManager *driverManager;
 @property SNTEventLog *eventLog;
@@ -100,6 +102,13 @@
   if ([self printerProxyWorkaround:binInfo]) {
     [_driverManager postToKernelAction:ACTION_RESPOND_DENY forVnodeID:message.vnode_id];
     return;
+  }
+
+  // If the binary is large let santa-driver know we received the request and we are working on it.
+  if (binInfo.fileSize > kLargeBinarySize) {
+    LOGD(@"%@ is larger than %zu. Letting santa-driver know we are working on it.",
+         binInfo.path, kLargeBinarySize);
+    [_driverManager postToKernelAction:ACTION_RESPOND_ACK forVnodeID:message.vnode_id];
   }
 
   // Get codesigning info about the file.
