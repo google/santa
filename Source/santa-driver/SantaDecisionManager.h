@@ -150,12 +150,6 @@ class SantaDecisionManager : public OSObject {
   */
   static const uint64_t kMaxDenyCacheTimeMilliseconds = 500;
 
-  /** 
-    The maximum number of milliseconds a request can sit waiting for a response
-    before the pending request is evicted, forcing it to be retried.
-  */
-  static const uint64_t kMaxRequestWaitTimeMilliseconds = 5000;
-
   /// Maximum number of entries in the in-kernel cache.
   static const uint32_t kMaxCacheSize = 10000;
 
