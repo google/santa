@@ -279,19 +279,16 @@ santa_action_t SantaDecisionManager::GetFromCache(uint64_t identifier) {
   result = (santa_action_t)(cache_val >> 56);
   decision_time = (cache_val & ~(0xFF00000000000000));
 
-  // Ensure result hasn't passed its expiry.
-  if (result == ACTION_RESPOND_DENY || result == ACTION_REQUEST_BINARY) {
-    auto expiry_time = decision_time;
+  if (RESPONSE_VALID(result)) {
     if (result == ACTION_RESPOND_DENY) {
-      expiry_time += (kMaxDenyCacheTimeMilliseconds * 1000);
-    } else if (result == ACTION_REQUEST_BINARY) {
-      expiry_time += (kMaxRequestWaitTimeMilliseconds * 1000);
-    }
-    if (expiry_time < GetCurrentUptime()) {
-      decision_cache->remove(identifier);
-      return ACTION_UNSET;
+      auto expiry_time = decision_time + (kMaxDenyCacheTimeMilliseconds * 1000);
+      if (expiry_time < GetCurrentUptime()) {
+        decision_cache->remove(identifier);
+        return ACTION_UNSET;
+      }
     }
   }
+
   return result;
 }
 
@@ -407,8 +404,14 @@ bool SantaDecisionManager::PostToLogQueue(santa_message_t *message) {
     if (failed_log_queue_requests_++ == 0) {
       LOGW("Dropping log queue messages");
     }
-  } else if (failed_log_queue_requests_ > 0) {
-    failed_log_queue_requests_--;
+    // If enqueue failed, pop an item off the queue and try again.
+    uint32_t dataSize = 0;
+    log_dataqueue_->dequeue(0, &dataSize);
+    kr = log_dataqueue_->enqueue(message, sizeof(santa_message_t));
+  } else {
+    if (failed_log_queue_requests_ > 0) {
+      failed_log_queue_requests_--;
+    }
   }
   lck_mtx_unlock(log_dataqueue_lock_);
   return kr;
