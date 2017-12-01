@@ -16,14 +16,13 @@
 
 #import "SNTCommonEnums.h"
 
+extern NSString *const kMobileConfigFilePath;
+
 ///
 ///  Singleton that provides an interface for managing configuration values on disk
 ///  @note This class is designed as a singleton but that is not strictly enforced.
 ///
 @interface SNTConfigurator : NSObject
-
-///  Default config file path
-extern NSString *const kDefaultConfigFilePath;
 
 #pragma mark - Daemon Settings
 
@@ -200,13 +199,6 @@ extern NSString *const kDefaultConfigFilePath;
 ///  Retrieve an initialized singleton configurator object using the default file path.
 ///
 + (instancetype)configurator;
-
-///
-///  Designated initializer.
-///
-///  @param filePath The path to the file to use as a backing store.
-///
-- (instancetype)initWithFilePath:(NSString *)filePath;
 
 ///
 ///  Re-read config data from disk.
