@@ -27,9 +27,6 @@
 
 /// A NSUserDefaults object set to use the com.google.santa suite.
 @property(readonly, nonatomic) NSUserDefaults *defaults;
-
-/// Array of keys that cannot be changed while santad is running if santad didn't make the change.
-@property(readonly) NSArray *protectedKeys;
 @end
 
 @implementation SNTConfigurator
@@ -100,7 +97,7 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
   return sharedConfigurator;
 }
 
-#pragma mark Protected Keys
+#pragma mark Keys
 
 - (NSArray *)syncServerKeys {
   static NSArray *keys;
@@ -430,7 +427,7 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
     }
   }
   if (config[kSyncBaseURLKey] || self.syncBaseURL) {
-    for (NSString *key in [self protectedKeys]) {
+    for (NSString *key in [self syncServerKeys]) {
       if ([key isEqualToString:kSyncBaseURLKey]) continue;
       [config removeObjectForKey:key];
     }
