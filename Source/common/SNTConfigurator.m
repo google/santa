@@ -426,7 +426,7 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
       config[key] = [self.defaults objectForKey:key];
     }
   }
-  if (config[kSyncBaseURLKey] || self.syncBaseURL) {
+  if (config[kSyncBaseURLKey]) {
     for (NSString *key in [self syncServerKeys]) {
       if ([key isEqualToString:kSyncBaseURLKey]) continue;
       [config removeObjectForKey:key];
