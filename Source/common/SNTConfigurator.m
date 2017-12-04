@@ -359,7 +359,6 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
                                               error:&error];
   if (!readData) {
     LOGE(@"Could not read sync state file: %@, replacing.", [error localizedDescription]);
-    [self saveSyncStateToDisk];
     return;
   }
 
@@ -370,7 +369,6 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
                                                   error:&error];
   if (!syncState) {
     LOGE(@"Could not parse sync state file: %@, replacing.", [error localizedDescription]);
-    [self saveSyncStateToDisk];
     return;
   }
 
