@@ -27,6 +27,10 @@
 
 /// A NSUserDefaults object set to use the com.google.santa suite.
 @property(readonly, nonatomic) NSUserDefaults *defaults;
+
+/// Keys used by a mobileconfig or sync server
+@property(readonly, nonatomic) NSArray *syncServerKeys;
+@property(readonly, nonatomic) NSArray *mobileConfigKeys;
 @end
 
 @implementation SNTConfigurator
@@ -81,6 +85,20 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
   self = [super init];
   if (self) {
     _defaults = [[NSUserDefaults alloc] initWithSuiteName:kMobileConfigDomain];
+    _syncServerKeys = @[
+        kClientModeKey, kWhitelistRegexKey, kBlacklistRegexKey, kFileChangesRegexKey,
+        kFullSyncLastSuccess, kRuleSyncLastSuccess, kSyncCleanRequired
+    ];
+    _mobileConfigKeys = @[
+        kClientModeKey, kFileChangesRegexKey, kWhitelistRegexKey, kBlacklistRegexKey,
+        kEnablePageZeroProtectionKey, kMoreInfoURLKey, kEventDetailURLKey, kEventDetailTextKey,
+        kUnknownBlockMessage, kBannedBlockMessage, kModeNotificationMonitor,
+        kModeNotificationLockdown, kSyncBaseURLKey, kClientAuthCertificateFileKey,
+        kClientAuthCertificatePasswordKey, kClientAuthCertificateCNKey,
+        kClientAuthCertificateIssuerKey, kServerAuthRootsDataKey, kServerAuthRootsFileKey,
+        kMachineOwnerKey, kMachineIDKey, kMachineOwnerPlistFileKey, kMachineOwnerPlistKeyKey,
+        kMachineIDPlistFileKey, kMachineIDPlistKeyKey
+    ];
     [self reloadConfigData];
   }
   return self;
@@ -95,38 +113,6 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
     sharedConfigurator = [[SNTConfigurator alloc] init];
   });
   return sharedConfigurator;
-}
-
-#pragma mark Keys
-
-- (NSArray *)syncServerKeys {
-  static NSArray *keys;
-  static dispatch_once_t onceToken;
-  dispatch_once(&onceToken, ^{
-    keys = @[
-        kClientModeKey, kWhitelistRegexKey, kBlacklistRegexKey, kFileChangesRegexKey,
-        kFullSyncLastSuccess, kRuleSyncLastSuccess, kSyncCleanRequired
-    ];
-  });
-  return keys;
-}
-
-- (NSArray *)mobileConfigKeys {
-  static NSArray *keys;
-  static dispatch_once_t onceToken;
-  dispatch_once(&onceToken, ^{
-    keys = @[
-        kClientModeKey, kFileChangesRegexKey, kWhitelistRegexKey, kBlacklistRegexKey,
-        kEnablePageZeroProtectionKey, kMoreInfoURLKey, kEventDetailURLKey, kEventDetailTextKey,
-        kUnknownBlockMessage, kBannedBlockMessage, kModeNotificationMonitor,
-        kModeNotificationLockdown, kSyncBaseURLKey, kClientAuthCertificateFileKey,
-        kClientAuthCertificatePasswordKey, kClientAuthCertificateCNKey,
-        kClientAuthCertificateIssuerKey, kServerAuthRootsDataKey, kServerAuthRootsFileKey,
-        kMachineOwnerKey, kMachineIDKey, kMachineOwnerPlistFileKey, kMachineOwnerPlistKeyKey,
-        kMachineIDPlistFileKey, kMachineIDPlistKeyKey
-    ];
-  });
-  return keys;
 }
 
 #pragma mark Public Interface
@@ -361,12 +347,10 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
     self.configData[kClientModeKey] = @(SNTClientModeMonitor);
   }
 
-  // Nothing else to do if a sync server is not involed
+  // Nothing else to do if a sync server is not involved
   if (!self.configData[kSyncBaseURLKey]) return;
 
   // Load the last known sync state
-  NSMutableDictionary *syncState =
-      [NSMutableDictionary dictionaryWithCapacity:[self syncServerKeys].count];
   if (![[NSFileManager defaultManager] fileExistsAtPath:kSyncStateFilePath]) return;
 
   NSError *error;
@@ -379,18 +363,16 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
     return;
   }
 
-  NSMutableDictionary *syncStateData =
+  NSMutableDictionary *syncState =
       [NSPropertyListSerialization propertyListWithData:readData
                                                 options:NSPropertyListMutableContainers
                                                  format:NULL
                                                   error:&error];
-  if (!syncStateData) {
+  if (!syncState) {
     LOGE(@"Could not parse sync state file: %@, replacing.", [error localizedDescription]);
     [self saveSyncStateToDisk];
     return;
   }
-
-  syncState = syncStateData;
 
   // Overwrite or add the sync state to the running config
   for (NSString *key in [self syncServerKeys]) {
@@ -415,8 +397,8 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
 
 
 ///
-///  Returns a config provided by a com.google.santa mobileconfig or nil if
-///  no config applies.
+///  Returns a config provided by a com.google.santa mobileconfig or an empty
+///  NSMutableDictionary object if no config applies.
 ///
 - (NSMutableDictionary *)mobileConfig {
   NSMutableDictionary *config =
