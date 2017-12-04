@@ -48,7 +48,8 @@ enum SantaDriverMethods {
 
 typedef enum {
   QUEUETYPE_DECISION,
-  QUEUETYPE_LOG
+  QUEUETYPE_LOG,
+  QUEUETYPE_COMPILER,
 } santa_queuetype_t;
 
 // Enum defining actions that can be passed down the IODataQueue and in
@@ -71,8 +72,7 @@ typedef enum {
   ACTION_NOTIFY_LINK = 33,
   ACTION_NOTIFY_EXCHANGE = 34,
   ACTION_NOTIFY_DELETE = 35,
-  ACTION_NOTIFY_OPEN = 36,   // TODO: remove this
-  ACTION_NOTIFY_CLOSE = 37,
+  ACTION_NOTIFY_CLOSE = 36,
 
   // ERROR
   ACTION_ERROR = 99,

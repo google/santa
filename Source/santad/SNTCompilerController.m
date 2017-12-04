@@ -19,24 +19,7 @@
 #import "SNTRuleTable.h"
 
 
-// Return parent of given pid.  If pid has no parent, returns itself.
-int ppid(int pid) {
-  struct proc_bsdinfo info;
-  proc_pidinfo(pid, PROC_PIDTBSDINFO, 0, &info, sizeof(info));
-  return info.pbi_ppid;
-}
-
-// Sometimes we get a pid after it's process is already gone, in which case this
-// will return 0.
-uint64_t vnodeIDForPid(int pid) {
-  char path[1024];
-  proc_pidpath(pid, path, 1024);
-
-  struct stat fstat = {};
-  stat(path, &fstat);
-  return (((uint64_t)fstat.st_dev << 32) | fstat.st_ino);
-}
-
+// TODO: remove this
 NSString *stringForAction(santa_action_t action) {
   switch(action) {
       case ACTION_NOTIFY_EXEC: return @"EXEC";
@@ -45,13 +28,13 @@ NSString *stringForAction(santa_action_t action) {
       case ACTION_NOTIFY_LINK: return @"LINK";
       case ACTION_NOTIFY_EXCHANGE: return @"EXCHANGE";
       case ACTION_NOTIFY_DELETE: return @"DELETE";
-      case ACTION_NOTIFY_OPEN: return @"OPEN";
       case ACTION_NOTIFY_CLOSE: return @"CLOSE";
       default: return @"UNKNOWN";
   }
 }
 
 @interface SNTCompilerController()
+@property int kqueue;
 @property NSCache *compilerVnodeIds;
 @property NSCache *compilerPids;
 @property NSOperationQueue *operationQueue;
@@ -65,10 +48,8 @@ NSString *stringForAction(santa_action_t action) {
   if (self) {
     _compilerVnodeIds = [[NSCache alloc] init];
     _compilerPids = [[NSCache alloc] init];
-    // create new kernel event queue
-    _kq = kqueue();
-    _operationQueue = [[NSOperationQueue alloc] init];
-    [self kqueueListener];
+
+    [self startKqueueListener];
   }
   return self;
 }
@@ -76,22 +57,29 @@ NSString *stringForAction(santa_action_t action) {
 - (void)monitorProceess:(int)pid {
   LOGI(@"#### monitoring process %d", pid);
   struct kevent ke;
-  //EV_SET(&ke, pid, EVFILT_PROC, EV_ADD, NOTE_EXIT | NOTE_FORK | NOTE_EXEC, 0, NULL);
   EV_SET(&ke, pid, EVFILT_PROC, EV_ADD | EV_ONESHOT, NOTE_EXIT, 0, NULL);
 
-  // register for event
-  int i = kevent(_kq, &ke, 1, NULL, 0, NULL);
+  // Register for event.  NOTE_EXIT means that we'll be notified when this process exits.
+  // EV_ONESHOT means that the monitor will be removed after the first event occurs.
+  int i = kevent(self.kqueue, &ke, 1, NULL, 0, NULL);
   if (i == -1) {
     LOGI(@"#### kevent registration error");
   }
 }
 
-- (void)kqueueListener {
+- (void)startKqueueListener {
+  // Create new kernel event queue.
+  self.kqueue = kqueue();
+
+  // Then start up a separate process to listen on it for events.
+  self.operationQueue = [[NSOperationQueue alloc] init];
   [self.operationQueue addOperationWithBlock:^{
     for (;;) {
-      // Listen for events in an infinite loop.
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wmissing-field-initializers"
       struct kevent ke = {0};
-      int i = kevent(_kq, NULL, 0, &ke, 1, NULL);
+#pragma clang diagnostic pop
+      int i = kevent(self.kqueue, NULL, 0, &ke, 1, NULL);
       if (i == -1) {
         LOGI(@"#### kqueueListener error");
       }
@@ -99,20 +87,7 @@ NSString *stringForAction(santa_action_t action) {
         int pid = (int)ke.ident;
         LOGI(@"#### pid %d exited (with status %d)", pid, (int)ke.data);
         [self.compilerPids removeObjectForKey:@(pid)];
-        // also should stop monitoring this pid by sending a EV_DELETE message to kevent.
-        // alternatively, pass EV_ONESHOT when setting up the original monitor.
       }
-      /*
-      if (ke.fflags & NOTE_FORK) {
-        LOGI(@"#### pid %d forked (%ld)", (int)ke.ident, ke.data);
-      }
-      if (ke.fflags & NOTE_CHILD) {
-        LOGI(@"#### pid %d has %d as parent", (int)ke.ident, (int)ke.data);
-      }
-      if (ke.fflags & NOTE_EXEC) {
-        LOGI(@"#### pid %d called exec", (int)ke.ident);
-      }
-       */
     }
   }];
 }
@@ -128,11 +103,9 @@ NSString *stringForAction(santa_action_t action) {
 
 // If the vnode of the executable matches one of the known compiler vnodes,
 // then store the pid in our list of compiler pids.  Otherwise, remove the pid
-// from our list of compiler pids.  This is called for every execution so we
-// should normally be aware of which pid is a compiler and which is not, except
-// if pid is forked process that reuses an older pid that was never replaced.
-// hmm.
+// from our list of compiler pids.
 
+// TODO:
 // If we added ACTION_ALLOW_COMPILER to list of santa_action_t enums, then we
 // wouldn't need to keep a separate cache of vnode_ids, and instead could just
 // look at the passed in message to see if the process was allowed b/c of a
@@ -146,9 +119,10 @@ NSString *stringForAction(santa_action_t action) {
   }
 }
 
-
 // Call this method when ever we receive an ACTION_NOTIFY_CLOSE message
 // or ACTION_NOTIFY_RENAME message.
+// TODO: rename this to something better that actually reflects what it is doing,
+// which is whitelisting stuff.
 - (void)checkForCompiler:(santa_message_t)message {
   // message contains pid of writing process and path of written file.
 
@@ -181,23 +155,5 @@ NSString *stringForAction(santa_action_t action) {
       }
     }
   }
-  // TODO: remove
-  /*
-  // this seems to be unneeded.
-  else {
-    // Look for an ancestor process that is a compiler.
-    pid_t pid = message.pid;
-    pid_t parent = ppid(pid);
-    while (pid != parent) {
-      if ([self.compilerPids objectForKey:@(pid)]) {
-        LOGI(@"#### SNTCompilerController found ancestor compiler process");
-        break;
-      }
-      pid = parent;
-      parent = ppid(pid);
-    }
-  }
-  */
-
 }
 @end

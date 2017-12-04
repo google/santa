@@ -80,6 +80,9 @@ IOReturn SantaDriverClient::registerNotificationPort(
     case QUEUETYPE_LOG:
       decisionManager->SetLogPort(port);
       break;
+    case QUEUETYPE_COMPILER:
+      decisionManager->SetCompilerPort(port);
+      break;
     default:
       return kIOReturnBadArgument;
   }
@@ -98,6 +101,10 @@ IOReturn SantaDriverClient::clientMemoryForType(
     case QUEUETYPE_LOG:
       *options = 0;
       *memory = decisionManager->GetLogMemoryDescriptor();
+      break;
+    case QUEUETYPE_COMPILER:
+      *options = 0;
+      *memory = decisionManager->GetCompilerMemoryDescriptor();
       break;
     default:
       return kIOReturnBadArgument;

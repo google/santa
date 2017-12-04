@@ -61,9 +61,8 @@ typedef NS_ENUM(NSInteger, SNTEventState) {
   SNTEventStateAllowBinary = 1 << 25,
   SNTEventStateAllowCertificate = 1 << 26,
   SNTEventStateAllowScope = 1 << 27,
-
-  SNTEventStateAllowCompiler = 1 << 28, // debug only
-  SNTEventStateAllowTransitive = 1 << 29, // debug
+  SNTEventStateAllowCompiler = 1 << 28,
+  SNTEventStateAllowTransitive = 1 << 29,
 
   // Block and Allow masks
   SNTEventStateBlock = 0xFF << 16,

@@ -170,6 +170,7 @@
   [self performSelectorInBackground:@selector(beginListeningForDecisionRequests) withObject:nil];
   [self performSelectorInBackground:@selector(beginListeningForLogRequests) withObject:nil];
   [self performSelectorInBackground:@selector(beginListeningForDiskMounts) withObject:nil];
+  [self performSelectorInBackground:@selector(beginListeningForCompilerRequests) withObject:nil];
 }
 
 - (void)beginListeningForDecisionRequests {
@@ -214,19 +215,11 @@
       dispatch_semaphore_wait(concurrencyLimiter, DISPATCH_TIME_FOREVER);
       dispatch_async(log_queue, ^{
         switch (message.action) {
-          case ACTION_NOTIFY_CLOSE:
           case ACTION_NOTIFY_DELETE:
           case ACTION_NOTIFY_EXCHANGE:
           case ACTION_NOTIFY_LINK:
           case ACTION_NOTIFY_RENAME:
           case ACTION_NOTIFY_WRITE: {
-
-            // Determine if we should add a transitive whitelisting rule for this new file.
-            [_compilerController checkForCompiler:message];
-
-            if (message.action == ACTION_NOTIFY_CLOSE) break;
-
-
             NSRegularExpression *re = [[SNTConfigurator configurator] fileChangesRegex];
             NSString *path = @(message.path);
             if ([re numberOfMatchesInString:path options:0 range:NSMakeRange(0, path.length)]) {
@@ -236,9 +229,6 @@
           }
           case ACTION_NOTIFY_EXEC: {
             [_eventLog logAllowedExecution:message];
-
-            // Check if executable was a compiler, and if so, record its pid.
-            [self.compilerController cacheExecution:message];
             break;
           }
           default:
@@ -289,6 +279,41 @@ void diskDisappearedCallback(DADiskRef disk, void *context) {
 
   [app.eventLog logDiskDisappeared:props];
   [app.driverManager flushCacheNonRootOnly:YES];
+}
+
+- (void)beginListeningForCompilerRequests {
+  dispatch_queue_t compiler_queue = dispatch_queue_create(
+      "com.google.santad.compiler_queue", DISPATCH_QUEUE_CONCURRENT);
+  dispatch_set_target_queue(
+      compiler_queue, dispatch_get_global_queue(QOS_CLASS_USER_INITIATED, 0));
+
+  // Limit number of threads the queue can create.
+  dispatch_semaphore_t concurrencyLimiter = dispatch_semaphore_create(15);
+
+  [self.driverManager listenForCompilerRequests:^(santa_message_t message) {
+
+    @autoreleasepool {
+      dispatch_semaphore_wait(concurrencyLimiter, DISPATCH_TIME_FOREVER);
+      dispatch_async(compiler_queue, ^{
+        switch (message.action) {
+          case ACTION_NOTIFY_CLOSE:
+          case ACTION_NOTIFY_RENAME:
+            // Determine if we should add a transitive whitelisting rule for this new file.
+            // Requires that writing process was a compiler and that new file is executable.
+            [self.compilerController checkForCompiler:message];
+            break;
+          case ACTION_NOTIFY_EXEC:
+            // Check if executed binary was a compiler and, if so, record its pid.
+            [self.compilerController cacheExecution:message];
+            break;
+          default:
+            LOGE(@"Received compiler request with an invalid action: %d", message.action);
+            break;
+        }
+        dispatch_semaphore_signal(concurrencyLimiter);
+      });
+    }
+  }];
 }
 
 @end

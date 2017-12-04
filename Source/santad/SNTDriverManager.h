@@ -43,6 +43,11 @@
 - (void)listenForLogRequests:(void (^)(santa_message_t message))callback;
 
 ///
+///  Handles requests from the kernel related to compiler transitive whitelisting.
+///
+- (void)listenForCompilerRequests:(void (^)(santa_message_t message))callback;
+
+///
 ///  Sends a response to a query back to the kernel.
 ///
 - (kern_return_t)postToKernelAction:(santa_action_t)action forVnodeID:(uint64_t)vnodeId;

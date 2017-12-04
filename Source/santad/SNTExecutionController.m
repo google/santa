@@ -127,17 +127,17 @@
   // Save decision details for logging the execution later.
   if (action == ACTION_RESPOND_ALLOW) [_eventLog saveDecisionDetails:cd];
 
-
-  // This is only ever called when the vnode_id wasn't found in the kernel level cache of decisions.
+  // Whenever we execute a binary for the first time (or the first time since forgetting about it),
+  // we also inform SNTCompilerController whether or not the binary is a compiler capable of
+  // transitive whitelisting.  SNTCompilerController stores (or removes) the binaries associated
+  // vnode id, to be looked up later during future EXEC events.
   if (cd.decision == SNTEventStateAllowCompiler) {
+    // TODO: remove this log message.
     LOGI(@"#### validateBinaryWithMessage: compiler vnodeID = %llx, pid = %d", cd.vnodeId, message.pid);
-    // Need to cache this somewhere so we can check it later.
     [self.compilerController cacheCompilerWithVnodeId:cd.vnodeId];
-    //[self.compilerController cachePid:message.pid];
   } else {
     [self.compilerController forgetVnodeId:cd.vnodeId];
   }
-
 
   // Send the decision to the kernel.
   [_driverManager postToKernelAction:action forVnodeID:cd.vnodeId];

@@ -58,6 +58,12 @@ class SantaDecisionManager : public OSObject {
   IOMemoryDescriptor *GetLogMemoryDescriptor() const;
 
   /**
+    Called by SantaDriverClient during connection to provide the shared
+    dataqueue memory to the client for the compiler whitelisting queue.
+  */
+  IOMemoryDescriptor *GetCompilerMemoryDescriptor() const;
+
+  /**
     Called by SantaDriverClient when a client connects to the decision queue,
     providing the pid of the client process.
   */
@@ -74,6 +80,9 @@ class SantaDecisionManager : public OSObject {
 
   /// Sets the Mach port for notifying the log queue.
   void SetLogPort(mach_port_t port);
+
+  /// Sets the Mach port for notifying the compiler queue.
+  void SetCompilerPort(mach_port_t port);
 
   /// Starts the kauth listeners.
   kern_return_t StartListener();
@@ -152,6 +161,9 @@ class SantaDecisionManager : public OSObject {
   /// The maximum number of messages can be kept in the logging data queue at any time.
   static const uint32_t kMaxLogQueueEvents = 2048;
 
+  /// The maximum number of messages that can be kept in the compiler data queue at any time.
+  static const uint32_t kMaxCompilerQueueEvents = 512;
+
   /**
     Fetches a response from the daemon. Handles both daemon death
     and failure to post messages to the daemon.
@@ -191,6 +203,14 @@ class SantaDecisionManager : public OSObject {
     @return bool true if sending was successful.
   */
   bool PostToLogQueue(santa_message_t *message);
+
+  /**
+    Posts the requested message to the compiler data queue.
+
+   @param message The message to send
+   @return bool true if sending was successful.
+  */
+  bool PostToCompilerQueue(santa_message_t *message);
 
   /**
     Fetches the vnode_id for a given vnode.
@@ -266,11 +286,14 @@ class SantaDecisionManager : public OSObject {
 
   lck_mtx_t *decision_dataqueue_lock_;
   lck_mtx_t *log_dataqueue_lock_;
+  lck_mtx_t *compiler_dataqueue_lock_;
 
   IOSharedDataQueue *decision_dataqueue_;
   IOSharedDataQueue *log_dataqueue_;
+  IOSharedDataQueue *compiler_dataqueue_;
   uint32_t failed_decision_queue_requests_;
   uint32_t failed_log_queue_requests_;
+  uint32_t failed_compiler_queue_requests_;
 
   int32_t listener_invocations_;
 

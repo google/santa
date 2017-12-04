@@ -376,6 +376,9 @@ REGISTER_COMMAND_NAME(@"fileinfo")
         case SNTEventStateBlockScope:
           [output appendString:@" (Scope)"];
           break;
+        case SNTEventStateAllowCompiler:
+          [output appendString:@" (Compiler)"];
+          break;
         case SNTEventStateAllowTransitive:
           [output appendString:@" (Transitive)"];
           break;

@@ -52,6 +52,7 @@ REGISTER_COMMAND_NAME(@"rule")
           @"    --whitelist: add to whitelist\n"
           @"    --blacklist: add to blacklist\n"
           @"    --silent-blacklist: add to silent blacklist\n"
+          @"    --compiler: whitelist and mark as a compiler\n"
           @"    --remove: remove existing rule\n"
           @"    --check: check for an existing rule\n"
           @"\n"
@@ -61,21 +62,24 @@ REGISTER_COMMAND_NAME(@"rule")
           @"                   Does not work with --check. Use the fileinfo verb to check.\n"
           @"                   the rule state of a file.\n"
           @"    --sha256 {sha256}: hash to add/remove/check\n"
+          @"    --type {ruletype}: type of rules to remove\n"
           @"\n"
           @"  Optionally:\n"
           @"    --certificate: add or check a certificate sha256 rule instead of binary\n"
-          @"    --message {message}: custom message\n");
+          @"    --message {message}: custom message\n"
+          @"    --force: allow manual changes even when SyncBaseUrl is set\n");
 }
 
 - (void)runWithArguments:(NSArray *)arguments {
   SNTConfigurator *config = [SNTConfigurator configurator];
-  // TODO: commented out for debugging, restore this.
-  /*
-  if ([config syncBaseURL] && ![arguments containsObject:@"--check"]) {
+  // TODO: --force flag was added so that we could manually add compiler rules during testing.
+  // It's possibly a bad idea and should be removed.
+  if ([config syncBaseURL] &&
+      ![arguments containsObject:@"--check"] &&
+      ![arguments containsObject:@"--force"]) {
     printf("SyncBaseURL is set, rules are managed centrally.\n");
     exit(1);
   }
-   */
 
   SNTRule *newRule = [[SNTRule alloc] init];
   newRule.state = SNTRuleStateUnknown;
@@ -94,6 +98,8 @@ REGISTER_COMMAND_NAME(@"rule")
       newRule.state = SNTRuleStateBlacklist;
     } else if ([arg caseInsensitiveCompare:@"--silent-blacklist"] == NSOrderedSame) {
       newRule.state = SNTRuleStateSilentBlacklist;
+    } else if ([arg caseInsensitiveCompare:@"--compiler"] == NSOrderedSame) {
+      newRule.state = SNTRuleStateWhitelistCompiler;
     } else if ([arg caseInsensitiveCompare:@"--remove"] == NSOrderedSame) {
       newRule.state = SNTRuleStateRemove;
     } else if ([arg caseInsensitiveCompare:@"--check"] == NSOrderedSame) {
@@ -118,6 +124,12 @@ REGISTER_COMMAND_NAME(@"rule")
         [self printErrorUsageAndExit:@"--message requires an argument"];
       }
       newRule.customMsg = arguments[i];
+    } else if ([arg caseInsensitiveCompare:@"--type"] == NSOrderedSame) {
+      if (++i > arguments.count - 1) {
+        [self printErrorUsageAndExit:@"--type requires an argument"];
+      }
+    } else if ([arg caseInsensitiveCompare:@"--force"] == NSOrderedSame) {
+      // Don't do anything special.
     } else {
       [self printErrorUsageAndExit:[@"Unknown argument: " stringByAppendingString:arg]];
     }
@@ -193,6 +205,9 @@ REGISTER_COMMAND_NAME(@"rule")
       case SNTEventStateAllowScope:
       case SNTEventStateBlockScope:
         [output appendString:@" (Scope)"];
+        break;
+      case SNTEventStateAllowCompiler:
+        [output appendString:@" (Compiler)"];
         break;
       case SNTEventStateAllowTransitive:
         [output appendString:@" (Transitive)"];
