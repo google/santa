@@ -70,6 +70,8 @@
       return nil;
     }
 
+    _eventLog = [[SNTEventLog alloc] init];
+
     SNTNotificationQueue *notQueue = [[SNTNotificationQueue alloc] init];
     SNTSyncdQueue *syncdQueue = [[SNTSyncdQueue alloc] init];
 
@@ -79,10 +81,11 @@
     };
     
     // Establish XPC listener for Santa and santactl connections
-    SNTDaemonControlController *dc = [[SNTDaemonControlController alloc] init];
-    dc.driverManager = _driverManager;
-    dc.notQueue = notQueue;
-    dc.syncdQueue = syncdQueue;
+    SNTDaemonControlController *dc =
+        [[SNTDaemonControlController alloc] initWithDriverManager:_driverManager
+                                                notificationQueue:notQueue
+                                                       syncdQueue:syncdQueue
+                                                         eventLog:_eventLog];
 
     _controlConnection =
         [[SNTXPCConnection alloc] initServerWithName:[SNTXPCControlInterface serviceId]];
@@ -128,8 +131,6 @@
         }
       }
     }];
-
-    _eventLog = [[SNTEventLog alloc] init];
 
     // Initialize the binary checker object
     _execController = [[SNTExecutionController alloc] initWithDriverManager:_driverManager

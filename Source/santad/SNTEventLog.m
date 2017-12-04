@@ -27,6 +27,7 @@
 #import "SNTFileInfo.h"
 #import "SNTKernelCommon.h"
 #import "SNTLogging.h"
+#import "SNTStoredEvent.h"
 
 @interface SNTEventLog ()
 @property NSMutableDictionary<NSNumber *, SNTCachedDecision *> *detailStore;
@@ -261,6 +262,18 @@
        [diskProperties[@"DAVolumePath"] path] ?: @"",
        diskProperties[@"DAVolumeName"] ?: @"",
        diskProperties[@"DAMediaBSDName"]);
+}
+
+- (void)logBundleHashingEvents:(NSArray<SNTStoredEvent *> *)events {
+  for (SNTStoredEvent *event in events) {
+    LOGI(@"action=BUNDLE|sha256=%@|bundlehash=%@|bundlename=%@|bundleid=%@|bundlepath=%@|path=%@",
+         event.fileSHA256,
+         event.fileBundleHash,
+         event.fileBundleName,
+         event.fileBundleID,
+         event.fileBundlePath,
+         event.filePath);
+  }
 }
 
 #pragma mark Helpers

@@ -19,6 +19,7 @@
 #import "SNTConfigurator.h"
 #import "SNTDatabaseController.h"
 #import "SNTDriverManager.h"
+#import "SNTEventLog.h"
 #import "SNTEventTable.h"
 #import "SNTLogging.h"
 #import "SNTNotificationQueue.h"
@@ -42,15 +43,26 @@ double watchdogRAMPeak = 0;
 @interface SNTDaemonControlController ()
 @property NSString *_syncXsrfToken;
 @property SNTPolicyProcessor *policyProcessor;
+@property SNTEventLog *eventLog;
+@property SNTDriverManager *driverManager;
+@property SNTNotificationQueue *notQueue;
+@property SNTSyncdQueue *syncdQueue;
 @end
 
 @implementation SNTDaemonControlController
 
-- (instancetype)init {
+- (instancetype)initWithDriverManager:(SNTDriverManager *)driverManager
+                    notificationQueue:(SNTNotificationQueue *)notQueue
+                           syncdQueue:(SNTSyncdQueue *)syncdQueue
+                             eventLog:(SNTEventLog *)eventLog {
   self = [super init];
   if (self) {
     _policyProcessor = [[SNTPolicyProcessor alloc] initWithRuleTable:
                            [SNTDatabaseController ruleTable]];
+    _driverManager = driverManager;
+    _notQueue = notQueue;
+    _syncdQueue = syncdQueue;
+    _eventLog = eventLog;
   }
   return self;
 }
@@ -280,6 +292,9 @@ double watchdogRAMPeak = 0;
 
   // Add the updated event.
   [eventTable addStoredEvent:event];
+
+  // Log all of the generated bundle events.
+  [self.eventLog logBundleHashingEvents:events];
 
   WEAKIFY(self);
 
