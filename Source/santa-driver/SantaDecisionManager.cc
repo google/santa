@@ -15,11 +15,11 @@
 #include "SantaDecisionManager.h"
 
 // This is a made-up KAUTH_FILEOP constant which represents a KAUTH_VNODE_WRITE_DATA event
-// that gets passed to SantaDecisionManager's FileOpCallback method.  It is defined as 8
-// because that was the first unused integer from sys/kauth.h.  The reason that we don't
-// simply use the KAUTH_VNODE_WRITE_DATA constant as is is because it overlaps with the other
-// KAUTH_FILEOP  constants.
-#define KAUTH_FILEOP_WRITE 8
+// that gets passed to SantaDecisionManager's FileOpCallback method.  The KAUTH_FILEOP_*
+// constants are defined in sys/kauth.h and run from 1--7.  KAUTH_VNODE_WRITE_DATA is
+// already defined as 4 so it overlaps with the other KAUTH_FILEOP_* constants and can't be used.
+// We define KAUTH_FILEOP_WRITE as something >> 7.
+#define KAUTH_FILEOP_WRITE 100
 
 #define super OSObject
 OSDefineMetaClassAndStructors(SantaDecisionManager, OSObject);
