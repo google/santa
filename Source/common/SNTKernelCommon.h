@@ -51,7 +51,6 @@ enum SantaDriverMethods {
 typedef enum {
   QUEUETYPE_DECISION,
   QUEUETYPE_LOG,
-  QUEUETYPE_COMPILER,
 } santa_queuetype_t;
 
 // Enum defining actions that can be passed down the IODataQueue and in

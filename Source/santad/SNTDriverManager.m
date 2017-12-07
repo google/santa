@@ -95,10 +95,6 @@ static const int MAX_DELAY = 15;
   [self listenForRequestsOfType:QUEUETYPE_LOG withCallback:callback];
 }
 
-- (void)listenForCompilerRequests:(void (^)(santa_message_t))callback {
-  [self listenForRequestsOfType:QUEUETYPE_COMPILER withCallback:callback];
-}
-
 - (void)listenForRequestsOfType:(santa_queuetype_t)type
                    withCallback:(void (^)(santa_message_t))callback {
   kern_return_t kr;
@@ -216,9 +212,10 @@ static const int MAX_DELAY = 15;
 }
 
 - (void)processTerminated:(pid_t)pid {
+  uint64_t pid64 = (uint64_t)pid;
   IOConnectCallScalarMethod(_connection,
                             kSantaUserClientProcessTerminated,
-                            &pid,
+                            &pid64,
                             1,
                             0,
                             0);

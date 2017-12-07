@@ -35,7 +35,6 @@ bool SantaDecisionManager::init() {
 
   decision_dataqueue_lock_ = lck_mtx_alloc_init(sdm_lock_grp_, sdm_lock_attr_);
   log_dataqueue_lock_ = lck_mtx_alloc_init(sdm_lock_grp_, sdm_lock_attr_);
-  compiler_dataqueue_lock_ = lck_mtx_alloc_init(sdm_lock_grp_, sdm_lock_attr_);
 
   root_decision_cache_ = new SantaCache<uint64_t>(5000, 2);
   non_root_decision_cache_ = new SantaCache<uint64_t>(500, 2);
@@ -49,10 +48,6 @@ bool SantaDecisionManager::init() {
   log_dataqueue_ = IOSharedDataQueue::withEntries(
       kMaxLogQueueEvents, sizeof(santa_message_t));
   if (!log_dataqueue_) return kIOReturnNoMemory;
-
-  compiler_dataqueue_ = IOSharedDataQueue::withEntries(
-      kMaxCompilerQueueEvents, sizeof(santa_message_t));
-  if (!compiler_dataqueue_) return kIOReturnNoMemory;
 
   client_pid_ = 0;
   root_fsid_ = 0;
@@ -78,11 +73,6 @@ void SantaDecisionManager::free() {
     log_dataqueue_lock_ = nullptr;
   }
 
-  if (compiler_dataqueue_lock_) {
-    lck_mtx_free(compiler_dataqueue_lock_, sdm_lock_grp_);
-    compiler_dataqueue_lock_ = nullptr;
-  }
-
   if (sdm_lock_attr_) {
     lck_attr_free(sdm_lock_attr_);
     sdm_lock_attr_ = nullptr;
@@ -100,7 +90,6 @@ void SantaDecisionManager::free() {
 
   OSSafeReleaseNULL(decision_dataqueue_);
   OSSafeReleaseNULL(log_dataqueue_);
-  OSSafeReleaseNULL(compiler_dataqueue_);
 
   super::free();
 }
@@ -129,7 +118,6 @@ void SantaDecisionManager::ConnectClient(pid_t pid) {
 
   failed_decision_queue_requests_ = 0;
   failed_log_queue_requests_ = 0;
-  failed_compiler_queue_requests_ = 0;
 }
 
 void SantaDecisionManager::DisconnectClient(bool itDied) {
@@ -157,12 +145,6 @@ void SantaDecisionManager::DisconnectClient(bool itDied) {
     log_dataqueue_ = IOSharedDataQueue::withEntries(
         kMaxLogQueueEvents, sizeof(santa_message_t));
     lck_mtx_unlock(log_dataqueue_lock_);
-
-    lck_mtx_lock(compiler_dataqueue_lock_);
-    compiler_dataqueue_->release();
-    compiler_dataqueue_ = IOSharedDataQueue::withEntries(
-        kMaxCompilerQueueEvents, sizeof(santa_message_t));
-    lck_mtx_unlock(compiler_dataqueue_lock_);
   }
 }
 
@@ -189,22 +171,12 @@ void SantaDecisionManager::SetLogPort(mach_port_t port) {
   lck_mtx_unlock(log_dataqueue_lock_);
 }
 
-void SantaDecisionManager::SetCompilerPort(mach_port_t port) {
-  lck_mtx_lock(compiler_dataqueue_lock_);
-  compiler_dataqueue_->setNotificationPort(port);
-  lck_mtx_unlock(compiler_dataqueue_lock_);
-}
-
 IOMemoryDescriptor *SantaDecisionManager::GetDecisionMemoryDescriptor() const {
   return decision_dataqueue_->getMemoryDescriptor();
 }
 
 IOMemoryDescriptor *SantaDecisionManager::GetLogMemoryDescriptor() const {
   return log_dataqueue_->getMemoryDescriptor();
-}
-
-IOMemoryDescriptor *SantaDecisionManager::GetCompilerMemoryDescriptor() const {
-  return compiler_dataqueue_->getMemoryDescriptor();
 }
 
 #pragma mark Listener Control
@@ -454,26 +426,6 @@ bool SantaDecisionManager::PostToLogQueue(santa_message_t *message) {
   return kr;
 }
 
-bool SantaDecisionManager::PostToCompilerQueue(santa_message_t *message) {
-  lck_mtx_lock(compiler_dataqueue_lock_);
-  auto kr = compiler_dataqueue_->enqueue(message, sizeof(santa_message_t));
-  if (!kr) {
-    if (failed_compiler_queue_requests_++ == 0) {
-      LOGW("Dropping compiler queue messages");
-    }
-    // If enqueue failed, pop an item off the queue and try again.
-    uint32_t dataSize = 0;
-    compiler_dataqueue_->dequeue(0, &dataSize);
-    kr = compiler_dataqueue_->enqueue(message, sizeof(santa_message_t));
-  } else {
-    if (failed_compiler_queue_requests_ > 0) {
-      failed_compiler_queue_requests_--;
-    }
-  }
-  lck_mtx_unlock(compiler_dataqueue_lock_);
-  return kr;
-}
-
 #pragma mark Invocation Tracking & PID comparison
 
 void SantaDecisionManager::IncrementListenerInvocations() {
@@ -568,7 +520,7 @@ void SantaDecisionManager::FileOpCallback(
       // before KAUTH_FILEOP_EXEC can occur, we are assured that the pid will have already been
       // identified.
       if (val && compiler_pid_set_->get(message->pid)) {
-        PostToCompilerQueue(message);
+        PostToDecisionQueue(message);
       }
       delete message;
       return;
@@ -616,7 +568,7 @@ void SantaDecisionManager::FileOpCallback(
 
     if ((message->action == ACTION_NOTIFY_CLOSE || message->action == ACTION_NOTIFY_RENAME) &&
         compiler_pid_set_->get(message->pid)) {
-      PostToCompilerQueue(message);
+      PostToDecisionQueue(message);
     }
 
     delete message;

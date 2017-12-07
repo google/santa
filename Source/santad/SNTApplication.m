@@ -170,7 +170,6 @@
   [self performSelectorInBackground:@selector(beginListeningForDecisionRequests) withObject:nil];
   [self performSelectorInBackground:@selector(beginListeningForLogRequests) withObject:nil];
   [self performSelectorInBackground:@selector(beginListeningForDiskMounts) withObject:nil];
-  [self performSelectorInBackground:@selector(beginListeningForCompilerRequests) withObject:nil];
 }
 
 - (void)beginListeningForDecisionRequests {
@@ -191,6 +190,17 @@
             [_execController validateBinaryWithMessage:message];
             break;
           }
+          case ACTION_NOTIFY_CLOSE:
+          case ACTION_NOTIFY_RENAME:
+            // Determine if we should add a transitive whitelisting rule for this new file.
+            // Requires that writing process was a compiler and that new file is executable.
+            [self.compilerController checkForNewExecutable:message];
+            break;
+          case ACTION_NOTIFY_EXEC:
+            // We only receive this if the kernel already believes that the binary is a compiler,
+            // so just record the pid.
+            [self.compilerController monitorCompilerProcess:message.pid];
+            break;
           default: {
             LOGE(@"Received decision request without a valid action: %d", message.action);
             exit(1);
@@ -279,42 +289,6 @@ void diskDisappearedCallback(DADiskRef disk, void *context) {
 
   [app.eventLog logDiskDisappeared:props];
   [app.driverManager flushCacheNonRootOnly:YES];
-}
-
-- (void)beginListeningForCompilerRequests {
-  dispatch_queue_t compiler_queue = dispatch_queue_create(
-      "com.google.santad.compiler_queue", DISPATCH_QUEUE_CONCURRENT);
-  dispatch_set_target_queue(
-      compiler_queue, dispatch_get_global_queue(QOS_CLASS_USER_INITIATED, 0));
-
-  // Limit number of threads the queue can create.
-  dispatch_semaphore_t concurrencyLimiter = dispatch_semaphore_create(15);
-
-  [self.driverManager listenForCompilerRequests:^(santa_message_t message) {
-
-    @autoreleasepool {
-      dispatch_semaphore_wait(concurrencyLimiter, DISPATCH_TIME_FOREVER);
-      dispatch_async(compiler_queue, ^{
-        switch (message.action) {
-          case ACTION_NOTIFY_CLOSE:
-          case ACTION_NOTIFY_RENAME:
-            // Determine if we should add a transitive whitelisting rule for this new file.
-            // Requires that writing process was a compiler and that new file is executable.
-            [self.compilerController checkForNewExecutable:message];
-            break;
-          case ACTION_NOTIFY_EXEC:
-            // We only receive this if the kernel already believes that the binary is a compiler,
-            // so just record the pid.
-            [self.compilerController monitorCompilerProcess:message.pid];
-            break;
-          default:
-            LOGE(@"Received compiler request with an invalid action: %d", message.action);
-            break;
-        }
-        dispatch_semaphore_signal(concurrencyLimiter);
-      });
-    }
-  }];
 }
 
 @end
