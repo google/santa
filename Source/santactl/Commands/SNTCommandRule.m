@@ -66,17 +66,23 @@ REGISTER_COMMAND_NAME(@"rule")
           @"\n"
           @"  Optionally:\n"
           @"    --certificate: add or check a certificate sha256 rule instead of binary\n"
-          @"    --message {message}: custom message\n"
-          @"    --force: allow manual changes even when SyncBaseUrl is set\n");
+#ifdef DEBUG
+          @"    --force: allow manual changes even when SyncBaseUrl is set\n"
+#endif
+          @"    --message {message}: custom message\n");
 }
 
 - (void)runWithArguments:(NSArray *)arguments {
   SNTConfigurator *config = [SNTConfigurator configurator];
   // TODO: --force flag was added so that we could manually add compiler rules during testing.
   // It's possibly a bad idea and should be removed.
+#ifdef DEBUG
   if ([config syncBaseURL] &&
       ![arguments containsObject:@"--check"] &&
       ![arguments containsObject:@"--force"]) {
+#else
+    if ([config syncBaseURL] && ![arguments containsObject:@"--check"])
+#endif
     printf("SyncBaseURL is set, rules are managed centrally.\n");
     exit(1);
   }
@@ -128,8 +134,10 @@ REGISTER_COMMAND_NAME(@"rule")
       if (++i > arguments.count - 1) {
         [self printErrorUsageAndExit:@"--type requires an argument"];
       }
+#ifdef DEBUG
     } else if ([arg caseInsensitiveCompare:@"--force"] == NSOrderedSame) {
       // Don't do anything special.
+#endif
     } else {
       [self printErrorUsageAndExit:[@"Unknown argument: " stringByAppendingString:arg]];
     }

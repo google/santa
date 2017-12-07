@@ -20,6 +20,7 @@
 #include <IOKit/IOMemoryDescriptor.h>
 #include <IOKit/IOSharedDataQueue.h>
 #include <libkern/c++/OSDictionary.h>
+#include <sys/event.h>
 #include <sys/kauth.h>
 #include <sys/proc.h>
 #include <sys/vnode.h>
@@ -123,6 +124,8 @@ class SantaDecisionManager : public OSObject {
 
   /// Decrements the count of active callbacks pending.
   void DecrementListenerInvocations();
+
+  void ForgetCompilerPid(pid_t pid);
 
   /**
     Vnode Callback
@@ -284,6 +287,7 @@ class SantaDecisionManager : public OSObject {
   SantaCache<uint64_t> *root_decision_cache_;
   SantaCache<uint64_t> *non_root_decision_cache_;
   SantaCache<uint64_t> *vnode_pid_map_;
+  SantaCache<uint64_t> *compiler_pid_set_;
 
   /**
     Return the correct cache for a given identifier.

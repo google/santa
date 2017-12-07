@@ -83,6 +83,9 @@ class com_google_SantaDriverClient : public IOUserClient {
   static IOReturn allow_binary(
       OSObject *target, void *reference,IOExternalMethodArguments *arguments);
 
+  static IOReturn allow_compiler(
+      OSObject *target, void *reference,IOExternalMethodArguments *arguments);
+
   ///  The daemon calls this to deny a binary.
   static IOReturn deny_binary(
       OSObject *target, void *reference, IOExternalMethodArguments *arguments);
@@ -98,6 +101,10 @@ class com_google_SantaDriverClient : public IOUserClient {
   ///  The daemon calls this to find out the status of a vnode_id in the cache.
   ///  Output will be a santa_action_t.
   static IOReturn check_cache(
+      OSObject *target, void *reference, IOExternalMethodArguments *arguments);
+
+  ///  The daemon calls this to notify kernel that a process has terminated.
+  static IOReturn process_terminated(
       OSObject *target, void *reference, IOExternalMethodArguments *arguments);
 
  private:

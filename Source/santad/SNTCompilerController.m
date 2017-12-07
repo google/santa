@@ -12,6 +12,7 @@
 #import "SNTCommonEnums.h"
 #import "SNTCompilerController.h"
 #import "SNTDatabaseController.h"
+#import "SNTDriverManager.h"
 #import "SNTFileInfo.h"
 #import "SNTKernelCommon.h"
 #import "SNTLogging.h"
@@ -35,26 +36,27 @@ NSString *stringForAction(santa_action_t action) {
 
 @interface SNTCompilerController()
 @property int kqueue;
-@property NSCache *compilerVnodeIds;
-@property NSCache *compilerPids;
 @property NSOperationQueue *operationQueue;
+@property SNTDriverManager *driverManager;
 @end
 
 @implementation SNTCompilerController
 
 
-- (instancetype)init {
+- (instancetype)initWithDriverManager:(id)driverManager {
   self = [super init];
   if (self) {
-    _compilerVnodeIds = [[NSCache alloc] init];
-    _compilerPids = [[NSCache alloc] init];
-
+    _driverManager = driverManager;
     [self startKqueueListener];
   }
   return self;
 }
 
-- (void)monitorProceess:(int)pid {
+// Given the pid of a compiler process, registers an event with the kqueue so that we'll be
+// notified when the process terminates.
+// TODO: Should we have error checking on the pid value?  Presumably pid 0 would never be a
+// compiler. maybe even restrict all pids < threshold.
+- (void)monitorCompilerProcess:(pid_t)pid {
   LOGI(@"#### monitoring process %d", pid);
   struct kevent ke;
   EV_SET(&ke, pid, EVFILT_PROC, EV_ADD | EV_ONESHOT, NOTE_EXIT, 0, NULL);
@@ -67,6 +69,9 @@ NSString *stringForAction(santa_action_t action) {
   }
 }
 
+// This runs an infinite loop in a separate thread so that we can listen for kqueue events related
+// to process termination.  Whenever a compiler process terminates, it sends a message back to the
+// kernel to notify it.
 - (void)startKqueueListener {
   // Create new kernel event queue.
   self.kqueue = kqueue();
@@ -86,49 +91,20 @@ NSString *stringForAction(santa_action_t action) {
       if (ke.fflags & NOTE_EXIT) {
         int pid = (int)ke.ident;
         LOGI(@"#### pid %d exited (with status %d)", pid, (int)ke.data);
-        [self.compilerPids removeObjectForKey:@(pid)];
+        [self.driverManager processTerminated:pid];
       }
     }
   }];
 }
 
-- (void)cacheCompilerWithVnodeId:(uint64_t)vnodeId {
-  LOGI(@"#### SNTCompilerController caching vnodeID: %llx", vnodeId);
-  [self.compilerVnodeIds setObject:@(YES) forKey:@(vnodeId)];
-}
-
-- (void)forgetVnodeId:(uint64_t)vnodeId {
-  [self.compilerVnodeIds removeObjectForKey:@(vnodeId)];
-}
-
-// If the vnode of the executable matches one of the known compiler vnodes,
-// then store the pid in our list of compiler pids.  Otherwise, remove the pid
-// from our list of compiler pids.
-
-// TODO:
-// If we added ACTION_ALLOW_COMPILER to list of santa_action_t enums, then we
-// wouldn't need to keep a separate cache of vnode_ids, and instead could just
-// look at the passed in message to see if the process was allowed b/c of a
-// compiler rule in database.
-- (void)cacheExecution:(santa_message_t)message {
-  if ([self.compilerVnodeIds objectForKey:@(message.vnode_id)]) {
-    [self.compilerPids setObject:@(YES) forKey:@(message.pid)];
-    [self monitorProceess:message.pid];
-  } else {
-    [self.compilerPids removeObjectForKey:@(message.pid)];
-  }
-}
-
-// Call this method when ever we receive an ACTION_NOTIFY_CLOSE message
-// or ACTION_NOTIFY_RENAME message.
-// TODO: rename this to something better that actually reflects what it is doing,
-// which is whitelisting stuff.
-- (void)checkForCompiler:(santa_message_t)message {
+// Assume that this method is called only when we already know that the writing process is a
+// compiler.  It checks if the written / renamed file is executable, and if so, transitively
+// whitelists it.
+- (void)checkForNewExecutable:(santa_message_t)message {
   // message contains pid of writing process and path of written file.
 
   // Handle RENAME and CLOSE actions only.
   char *target = NULL;
-  //if (message.action == ACTION_NOTIFY_WRITE) target = message.path;
   if (message.action == ACTION_NOTIFY_CLOSE) target = message.path;
   else if (message.action == ACTION_NOTIFY_RENAME) target = message.newpath;
   else return;
@@ -136,24 +112,23 @@ NSString *stringForAction(santa_action_t action) {
   char processPath[1024] = {0};
   proc_pidpath(message.pid, processPath, 1024);
 
-  if ([self.compilerPids objectForKey:@(message.pid)]) {
-    // Check if this file is an executable.
-    SNTFileInfo *fi = [[SNTFileInfo alloc] initWithPath:@(target)];
-    if (fi.isExecutable) {
-      // Construct a new rule for this file.
-      SNTRuleTable *ruleTable = [SNTDatabaseController ruleTable];
-      SNTRule *rule = [[SNTRule alloc] initWithShasum:fi.SHA256
-                                                state:SNTRuleStateWhitelistTransitive
-                                                 type:SNTRuleTypeBinary
-                                            customMsg:@""];
-      NSError *err = [[NSError alloc] init];
-      if (![ruleTable addRules:@[rule] cleanSlate:NO error:&err]) {
-        LOGI(@"#### SNTCompilerController: error adding new rule: %@", err.localizedDescription);
-      } else {
-        LOGI(@"#### SNTCompilerController: %@ %d new whitelisted executable %s (SHA=%@)",
-             stringForAction(message.action), message.pid, target, fi.SHA256);
-      }
+  // Check if this file is an executable.
+  SNTFileInfo *fi = [[SNTFileInfo alloc] initWithPath:@(target)];
+  if (fi.isExecutable) {
+    // Construct a new rule for this file.
+    SNTRuleTable *ruleTable = [SNTDatabaseController ruleTable];
+    SNTRule *rule = [[SNTRule alloc] initWithShasum:fi.SHA256
+                                              state:SNTRuleStateWhitelistTransitive
+                                               type:SNTRuleTypeBinary
+                                          customMsg:@""];
+    NSError *err = [[NSError alloc] init];
+    if (![ruleTable addRules:@[rule] cleanSlate:NO error:&err]) {
+      LOGI(@"#### SNTCompilerController: error adding new rule: %@", err.localizedDescription);
+    } else {
+      LOGI(@"#### SNTCompilerController: %@ %d new whitelisted executable %s (SHA=%@)",
+           stringForAction(message.action), message.pid, target, fi.SHA256);
     }
   }
 }
+
 @end

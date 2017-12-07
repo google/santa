@@ -127,16 +127,13 @@
   // Save decision details for logging the execution later.
   if (action == ACTION_RESPOND_ALLOW) [_eventLog saveDecisionDetails:cd];
 
-  // Whenever we execute a binary for the first time (or the first time since forgetting about it),
-  // we also inform SNTCompilerController whether or not the binary is a compiler capable of
-  // transitive whitelisting.  SNTCompilerController stores (or removes) the binaries associated
-  // vnode id, to be looked up later during future EXEC events.
+  // Upgrade the action if the rule indicated that allowed binary was a compiler.  When sent back
+  // to the kernel, it can use this info to cache the vnode for filtering of future messages.
   if (cd.decision == SNTEventStateAllowCompiler) {
     // TODO: remove this log message.
-    LOGI(@"#### validateBinaryWithMessage: compiler vnodeID = %llx, pid = %d", cd.vnodeId, message.pid);
-    [self.compilerController cacheCompilerWithVnodeId:cd.vnodeId];
-  } else {
-    [self.compilerController forgetVnodeId:cd.vnodeId];
+    LOGI(@"#### validateBinaryWithMessage: compiler vnodeID = %llx, pid = %d, path=%s",
+         cd.vnodeId, message.pid, message.path);
+    action = ACTION_RESPOND_ALLOW_COMPILER;
   }
 
   // Send the decision to the kernel.
@@ -189,7 +186,7 @@
     });
 
     // If binary was blocked, do the needful
-    if (action != ACTION_RESPOND_ALLOW) {
+    if (action != ACTION_RESPOND_ALLOW && action != ACTION_RESPOND_ALLOW_COMPILER) {
       [_eventLog logDeniedExecution:cd withMessage:message];
 
       if ([[SNTConfigurator configurator] bundlesEnabled] && binInfo.bundle) {

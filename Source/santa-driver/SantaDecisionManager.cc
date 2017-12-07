@@ -40,6 +40,7 @@ bool SantaDecisionManager::init() {
   root_decision_cache_ = new SantaCache<uint64_t>(5000, 2);
   non_root_decision_cache_ = new SantaCache<uint64_t>(500, 2);
   vnode_pid_map_ = new SantaCache<uint64_t>(2000, 5);
+  compiler_pid_set_ = new SantaCache<uint64_t>(2000, 5);
 
   decision_dataqueue_ = IOSharedDataQueue::withEntries(
       kMaxDecisionQueueEvents, sizeof(santa_message_t));
@@ -269,6 +270,7 @@ void SantaDecisionManager::AddToCache(
       decision_cache->set(identifier, val, 0);
       break;
     case ACTION_RESPOND_ALLOW:
+    case ACTION_RESPOND_ALLOW_COMPILER:
     case ACTION_RESPOND_DENY:
       decision_cache->set(
           identifier, val, ((uint64_t)ACTION_REQUEST_BINARY << 56));
@@ -482,6 +484,10 @@ void SantaDecisionManager::DecrementListenerInvocations() {
   OSDecrementAtomic(&listener_invocations_);
 }
 
+void SantaDecisionManager::ForgetCompilerPid(pid_t pid) {
+  compiler_pid_set_->remove(pid);
+}
+
 #pragma mark Callbacks
 
 int SantaDecisionManager::VnodeCallback(const kauth_cred_t cred,
@@ -504,7 +510,8 @@ int SantaDecisionManager::VnodeCallback(const kauth_cred_t cred,
   }
 
   switch (returnedAction) {
-    case ACTION_RESPOND_ALLOW: {
+    case ACTION_RESPOND_ALLOW:
+    case ACTION_RESPOND_ALLOW_COMPILER: {
       auto proc = vfs_context_proc(ctx);
       if (proc) {
         pid_t pid = proc_pid(proc);
@@ -512,6 +519,12 @@ int SantaDecisionManager::VnodeCallback(const kauth_cred_t cred,
         // pid_t is 32-bit; pid is in upper 32 bits, ppid in lower.
         uint64_t val = ((uint64_t)pid << 32) | (ppid & 0xFFFFFFFF);
         vnode_pid_map_->set(vnode_id, val);
+        if (returnedAction == ACTION_RESPOND_ALLOW_COMPILER) {
+          // Do some additional bookkeeping for compilers.
+          // Want to associate the pid with a compiler so that when we
+          // see it later in the context of FILEOP, we'll recognize it.
+          compiler_pid_set_->set(pid, 1);
+        }
       }
       return KAUTH_RESULT_ALLOW;
     }
@@ -550,7 +563,13 @@ void SantaDecisionManager::FileOpCallback(
         message->ppid = (val & ~0xFFFFFFFF00000000);
       }
       PostToLogQueue(message);
-      PostToCompilerQueue(message);
+      // Only post ACTION_NOTIFY_EXEC to the compiler queue if the process id has already been
+      // identified as a compiler (in VnodeCallback).  Because the KAUTH_RESULT_ALLOW must happen
+      // before KAUTH_FILEOP_EXEC can occur, we are assured that the pid will have already been
+      // identified.
+      if (val && compiler_pid_set_->get(message->pid)) {
+        PostToCompilerQueue(message);
+      }
       delete message;
       return;
     }
@@ -595,7 +614,8 @@ void SantaDecisionManager::FileOpCallback(
       PostToLogQueue(message);
     }
 
-    if (message->action == ACTION_NOTIFY_CLOSE || message->action == ACTION_NOTIFY_RENAME) {
+    if ((message->action == ACTION_NOTIFY_CLOSE || message->action == ACTION_NOTIFY_RENAME) &&
+        compiler_pid_set_->get(message->pid)) {
       PostToCompilerQueue(message);
     }
 

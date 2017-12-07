@@ -166,6 +166,13 @@ static const int MAX_DELAY = 15;
                                        1,
                                        0,
                                        0);
+    case ACTION_RESPOND_ALLOW_COMPILER:
+      return IOConnectCallScalarMethod(_connection,
+                                       kSantaUserClientAllowCompiler,
+                                       &vnodeId,
+                                       1,
+                                       0,
+                                       0);
     default:
       return KERN_INVALID_ARGUMENT;
   }
@@ -206,6 +213,15 @@ static const int MAX_DELAY = 15;
                             &vnode_action,
                             &input_count);
   return (santa_action_t)vnode_action;
+}
+
+- (void)processTerminated:(pid_t)pid {
+  IOConnectCallScalarMethod(_connection,
+                            kSantaUserClientProcessTerminated,
+                            &pid,
+                            1,
+                            0,
+                            0);
 }
 
 @end

@@ -80,7 +80,7 @@
       [self startSyncd];
     };
 
-    _compilerController = [[SNTCompilerController alloc] init];
+    _compilerController = [[SNTCompilerController alloc] initWithDriverManager:_driverManager];
 
     // Establish XPC listener for Santa and santactl connections
     SNTDaemonControlController *dc = [[SNTDaemonControlController alloc] init];
@@ -300,11 +300,12 @@ void diskDisappearedCallback(DADiskRef disk, void *context) {
           case ACTION_NOTIFY_RENAME:
             // Determine if we should add a transitive whitelisting rule for this new file.
             // Requires that writing process was a compiler and that new file is executable.
-            [self.compilerController checkForCompiler:message];
+            [self.compilerController checkForNewExecutable:message];
             break;
           case ACTION_NOTIFY_EXEC:
-            // Check if executed binary was a compiler and, if so, record its pid.
-            [self.compilerController cacheExecution:message];
+            // We only receive this if the kernel already believes that the binary is a compiler,
+            // so just record the pid.
+            [self.compilerController monitorCompilerProcess:message.pid];
             break;
           default:
             LOGE(@"Received compiler request with an invalid action: %d", message.action);
