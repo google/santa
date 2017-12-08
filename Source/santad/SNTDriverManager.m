@@ -211,14 +211,4 @@ static const int MAX_DELAY = 15;
   return (santa_action_t)vnode_action;
 }
 
-- (void)processTerminated:(pid_t)pid {
-  uint64_t pid64 = (uint64_t)pid;
-  IOConnectCallScalarMethod(_connection,
-                            kSantaUserClientProcessTerminated,
-                            &pid64,
-                            1,
-                            0,
-                            0);
-}
-
 @end

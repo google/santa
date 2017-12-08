@@ -80,7 +80,7 @@
       [self startSyncd];
     };
 
-    _compilerController = [[SNTCompilerController alloc] initWithDriverManager:_driverManager];
+    _compilerController = [[SNTCompilerController alloc] init];
 
     // Establish XPC listener for Santa and santactl connections
     SNTDaemonControlController *dc = [[SNTDaemonControlController alloc] init];
@@ -196,11 +196,6 @@
             // Requires that writing process was a compiler and that new file is executable.
             [self.compilerController checkForNewExecutable:message];
             break;
-          case ACTION_NOTIFY_EXEC:
-            // We only receive this if the kernel already believes that the binary is a compiler,
-            // so just record the pid.
-            [self.compilerController monitorCompilerProcess:message.pid];
-            break;
           default: {
             LOGE(@"Received decision request without a valid action: %d", message.action);
             exit(1);
@@ -241,6 +236,9 @@
             [_eventLog logAllowedExecution:message];
             break;
           }
+          case ACTION_NOTIFY_MONITOR:
+            [_eventLog logProcessMonitor:message];
+            break;
           default:
             LOGE(@"Received log request without a valid action: %d", message.action);
             break;

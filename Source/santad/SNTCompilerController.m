@@ -18,7 +18,6 @@
 #import "SNTCommonEnums.h"
 #import "SNTCompilerController.h"
 #import "SNTDatabaseController.h"
-#import "SNTDriverManager.h"
 #import "SNTFileInfo.h"
 #import "SNTKernelCommon.h"
 #import "SNTLogging.h"
@@ -41,67 +40,9 @@ NSString *stringForAction(santa_action_t action) {
 }
 
 @interface SNTCompilerController()
-@property int kqueue;
-@property NSOperationQueue *operationQueue;
-@property SNTDriverManager *driverManager;
 @end
 
 @implementation SNTCompilerController
-
-
-- (instancetype)initWithDriverManager:(id)driverManager {
-  self = [super init];
-  if (self) {
-    _driverManager = driverManager;
-    [self startKqueueListener];
-  }
-  return self;
-}
-
-// Given the pid of a compiler process, registers an event with the kqueue so that we'll be
-// notified when the process terminates.
-// TODO: Should we have error checking on the pid value?  Presumably pid 0 would never be a
-// compiler. maybe even restrict all pids < threshold.
-- (void)monitorCompilerProcess:(pid_t)pid {
-  LOGI(@"#### monitoring process %d", pid);
-  struct kevent ke;
-  EV_SET(&ke, pid, EVFILT_PROC, EV_ADD | EV_ONESHOT, NOTE_EXIT, 0, NULL);
-
-  // Register for event.  NOTE_EXIT means that we'll be notified when this process exits.
-  // EV_ONESHOT means that the monitor will be removed after the first event occurs.
-  int i = kevent(self.kqueue, &ke, 1, NULL, 0, NULL);
-  if (i == -1) {
-    LOGI(@"#### kevent registration error");
-  }
-}
-
-// This runs an infinite loop in a separate thread so that we can listen for kqueue events related
-// to process termination.  Whenever a compiler process terminates, it sends a message back to the
-// kernel to notify it.
-- (void)startKqueueListener {
-  // Create new kernel event queue.
-  self.kqueue = kqueue();
-
-  // Then start up a separate process to listen on it for events.
-  self.operationQueue = [[NSOperationQueue alloc] init];
-  [self.operationQueue addOperationWithBlock:^{
-    for (;;) {
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wmissing-field-initializers"
-      struct kevent ke = {0};
-#pragma clang diagnostic pop
-      int i = kevent(self.kqueue, NULL, 0, &ke, 1, NULL);
-      if (i == -1) {
-        LOGI(@"#### kqueueListener error");
-      }
-      if (ke.fflags & NOTE_EXIT) {
-        int pid = (int)ke.ident;
-        LOGI(@"#### pid %d exited (with status %d)", pid, (int)ke.data);
-        [self.driverManager processTerminated:pid];
-      }
-    }
-  }];
-}
 
 // Assume that this method is called only when we already know that the writing process is a
 // compiler.  It checks if the written / renamed file is executable, and if so, transitively

@@ -119,6 +119,9 @@ class SantaDecisionManager : public OSObject {
   // Remove pid from cache of pids associated with compiler processes.
   void ForgetCompilerPid(pid_t pid);
 
+  // Start a thread to monitor and remove given pid from cache when process exits.
+  void MonitorCompilerPidForExit(pid_t pid);
+
   /**
     Vnode Callback
 
@@ -210,6 +213,7 @@ class SantaDecisionManager : public OSObject {
     @param message The message to send
     @return bool true if sending was successful.
   */
+public: // TODO: remove
   bool PostToLogQueue(santa_message_t *message);
 
   /**

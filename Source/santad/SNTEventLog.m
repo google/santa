@@ -118,6 +118,10 @@
   LOGI(@"%@", outStr);
 }
 
+- (void)logProcessMonitor:(santa_message_t)message {
+  LOGI(@"%@", @(message.path));
+}
+
 - (void)logDeniedExecution:(SNTCachedDecision *)cd withMessage:(santa_message_t)message {
   [self logExecution:message withDecision:cd];
 }

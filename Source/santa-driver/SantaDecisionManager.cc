@@ -436,8 +436,58 @@ void SantaDecisionManager::DecrementListenerInvocations() {
   OSDecrementAtomic(&listener_invocations_);
 }
 
+# pragma mark Monitoring PIDs
+
 void SantaDecisionManager::ForgetCompilerPid(pid_t pid) {
   compiler_pid_set_->remove(pid);
+}
+
+// Arguments that we pass to pid_monitor_thread.
+typedef struct {
+  pid_t pid;                  // process to monitor
+  struct timespec ts;         // time to sleep between checks
+  SantaDecisionManager *sdm;  // reference to SantaDecisionManager
+} pid_monitor_info;
+
+
+// Function to monitor for process termination and then remove the process pid from cache of
+// compiler pids.
+static void pid_monitor(void *args) {
+  pid_monitor_info *info = (pid_monitor_info *)args;
+
+  // Kernel logging with IOLog appears broken, so send log message to userspace.
+  auto message = info->sdm->NewMessage(nullptr);
+  snprintf(message->path, sizeof(message->path),
+           "#### santa-driver: compiler pid monitor for %d", info->pid);
+  message->action = ACTION_NOTIFY_MONITOR;
+  info->sdm->PostToLogQueue(message);
+
+  while (true) {
+    proc_t proc = proc_find(info->pid);
+    if (!proc) break;
+    proc_rele(proc);
+    msleep((void *)info, NULL, 0, "", &info->ts);
+  }
+
+  snprintf(message->path, sizeof(message->path),
+           "#### santa-driver: compiler pid exited: %d", info->pid);
+  message->action = ACTION_NOTIFY_MONITOR;
+  info->sdm->PostToLogQueue(message);
+
+  info->sdm->ForgetCompilerPid(info->pid);
+
+  delete info;
+  IOExitThread(); // not sure this is necessary
+}
+
+// This spins off a new thread for each process that we monitor.  Generally the threads should
+// be short-lived, since they die as soon as their associated compiler process dies.
+void SantaDecisionManager::MonitorCompilerPidForExit(pid_t pid) {
+  auto info = new pid_monitor_info;
+  info->pid = pid;
+  info->ts = ts_;
+  info->sdm = this;
+  IOCreateThread(&pid_monitor, (void *)info);
 }
 
 #pragma mark Callbacks
@@ -472,10 +522,13 @@ int SantaDecisionManager::VnodeCallback(const kauth_cred_t cred,
         uint64_t val = ((uint64_t)pid << 32) | (ppid & 0xFFFFFFFF);
         vnode_pid_map_->set(vnode_id, val);
         if (returnedAction == ACTION_RESPOND_ALLOW_COMPILER) {
-          // Do some additional bookkeeping for compilers.
-          // Want to associate the pid with a compiler so that when we
-          // see it later in the context of FILEOP, we'll recognize it.
+          // Do some additional bookkeeping for compilers:
+          // We associate the pid with a compiler so that when we see it later in the context of
+          // a KAUTH_FILEOP event, we'll recognize it.
           compiler_pid_set_->set(pid, 1);
+          // And start polling for the compiler process termination, so that we can remove the
+          // pid from our cache of compiler pids.
+          MonitorCompilerPidForExit(pid);
         }
       }
       return KAUTH_RESULT_ALLOW;
@@ -515,13 +568,6 @@ void SantaDecisionManager::FileOpCallback(
         message->ppid = (val & ~0xFFFFFFFF00000000);
       }
       PostToLogQueue(message);
-      // Only post ACTION_NOTIFY_EXEC to the compiler queue if the process id has already been
-      // identified as a compiler (in VnodeCallback).  Because the KAUTH_RESULT_ALLOW must happen
-      // before KAUTH_FILEOP_EXEC can occur, we are assured that the pid will have already been
-      // identified.
-      if (val && compiler_pid_set_->get(message->pid)) {
-        PostToDecisionQueue(message);
-      }
       delete message;
       return;
     }

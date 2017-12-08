@@ -62,10 +62,4 @@
 ///
 - (santa_action_t)checkCache:(uint64_t)vnodeID;
 
-
-///
-///  Notify kernel that process has terminated.
-///
-- (void)processTerminated:(pid_t)pid;
-
 @end

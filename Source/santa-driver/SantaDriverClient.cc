@@ -196,17 +196,6 @@ IOReturn SantaDriverClient::check_cache(
   return kIOReturnSuccess;
 }
 
-IOReturn SantaDriverClient::process_terminated(
-   OSObject *target, void *reference, IOExternalMethodArguments *arguments) {
-  SantaDriverClient *me = OSDynamicCast(SantaDriverClient, target);
-  if (!me) return kIOReturnBadArgument;
-
-  const pid_t pid = static_cast<const pid_t>(arguments->scalarInput[0]);
-  me->decisionManager->ForgetCompilerPid(pid);
-
-  return kIOReturnSuccess;
-}
-
 #pragma mark Method Resolution
 
 IOReturn SantaDriverClient::externalMethod(
@@ -226,7 +215,6 @@ IOReturn SantaDriverClient::externalMethod(
     { &SantaDriverClient::clear_cache, 1, 0, 0, 0 },
     { &SantaDriverClient::cache_count, 0, 0, 2, 0 },
     { &SantaDriverClient::check_cache, 1, 0, 1, 0 },
-    { &SantaDriverClient::process_terminated, 1, 0, 0, 0 },
   };
 
   if (selector > static_cast<UInt32>(kSantaUserClientNMethods)) {

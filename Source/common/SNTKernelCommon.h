@@ -41,7 +41,6 @@ enum SantaDriverMethods {
   kSantaUserClientClearCache,
   kSantaUserClientCacheCount,
   kSantaUserClientCheckCache,
-  kSantaUserClientProcessTerminated,
 
   // Any methods supported by the driver should be added above this line to
   // ensure this remains the count of methods.
@@ -75,6 +74,7 @@ typedef enum {
   ACTION_NOTIFY_EXCHANGE = 34,
   ACTION_NOTIFY_DELETE = 35,
   ACTION_NOTIFY_CLOSE = 36,
+  ACTION_NOTIFY_MONITOR = 37,
 
   // ERROR
   ACTION_ERROR = 99,

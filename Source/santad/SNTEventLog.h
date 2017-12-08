@@ -27,6 +27,7 @@
 - (void)logDiskDisappeared:(NSDictionary *)diskProperties;
 
 - (void)logFileModification:(santa_message_t)message;
+- (void)logProcessMonitor:(santa_message_t)message;
 
 - (void)saveDecisionDetails:(SNTCachedDecision *)cd;
 - (void)logDeniedExecution:(SNTCachedDecision *)cd withMessage:(santa_message_t)message;

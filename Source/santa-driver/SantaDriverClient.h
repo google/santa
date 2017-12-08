@@ -103,10 +103,6 @@ class com_google_SantaDriverClient : public IOUserClient {
   static IOReturn check_cache(
       OSObject *target, void *reference, IOExternalMethodArguments *arguments);
 
-  ///  The daemon calls this to notify kernel that a process has terminated.
-  static IOReturn process_terminated(
-      OSObject *target, void *reference, IOExternalMethodArguments *arguments);
-
  private:
   com_google_SantaDriver *myProvider;
   SantaDecisionManager *decisionManager;
