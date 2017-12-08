@@ -452,8 +452,8 @@ typedef struct {
 
 // Function to monitor for process termination and then remove the process pid from cache of
 // compiler pids.
-static void pid_monitor(void *args) {
-  pid_monitor_info *info = (pid_monitor_info *)args;
+static void pid_monitor(void *param, __unused wait_result_t wait_result) {
+  pid_monitor_info *info = (pid_monitor_info *)param;
 
   // Kernel logging with IOLog appears broken, so send log message to userspace.
   auto message = info->sdm->NewMessage(nullptr);
@@ -477,7 +477,7 @@ static void pid_monitor(void *args) {
   info->sdm->ForgetCompilerPid(info->pid);
 
   delete info;
-  IOExitThread(); // not sure this is necessary
+  thread_terminate(current_thread());
 }
 
 // This spins off a new thread for each process that we monitor.  Generally the threads should
@@ -487,7 +487,15 @@ void SantaDecisionManager::MonitorCompilerPidForExit(pid_t pid) {
   info->pid = pid;
   info->ts = ts_;
   info->sdm = this;
-  IOCreateThread(&pid_monitor, (void *)info);
+  thread_t thread = THREAD_NULL;
+  if (KERN_SUCCESS != kernel_thread_start(pid_monitor, (void *)info, &thread)) {
+    auto message = NewMessage(nullptr);
+    snprintf(message->path, sizeof(message->path),
+             "#### santa-driver: couldn't start pid monitor thread for %d", pid);
+    message->action = ACTION_NOTIFY_MONITOR;
+    PostToLogQueue(message);
+  }
+  thread_deallocate(thread);
 }
 
 #pragma mark Callbacks
