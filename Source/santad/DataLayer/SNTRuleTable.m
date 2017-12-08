@@ -64,6 +64,13 @@
                                   @"FROM rules "
                                   @"WHERE (shasum=? OR shasum=?) AND state=? AND type=2",
                       self.santadCertSHA, self.launchdCertSHA, @(SNTRuleStateWhitelist)];
+
+  if (version < 3) {
+    // Add timestamp column for tracking age of transitive rules.
+    [db executeUpdate:@"ALTER TABLE 'rules' ADD 'timestamp' INTEGER"];
+    newVersion = 3;
+  }
+
   if (ruleCount != 2) {
     if (version > 0) LOGE(@"Started without launchd/santad certificate rules in place!");
     [db executeUpdate:@"INSERT INTO rules (shasum, state, type) VALUES (?, ?, ?)",
@@ -101,6 +108,26 @@
   return count;
 }
 
+- (NSUInteger)compilerRuleCount {
+  __block NSUInteger count = 0;
+  [self inDatabase:^(FMDatabase *db) {
+    count = [db longForQuery:
+             [NSString stringWithFormat:@"SELECT COUNT(*) FROM rules WHERE state=%ld",
+              (long)SNTRuleStateWhitelistCompiler]];
+  }];
+  return count;
+}
+
+- (NSUInteger)transitiveRuleCount {
+  __block NSUInteger count = 0;
+  [self inDatabase:^(FMDatabase *db) {
+    count = [db longForQuery:
+             [NSString stringWithFormat:@"SELECT COUNT(*) FROM rules WHERE state=%ld",
+              (long)SNTRuleStateWhitelistTransitive]];
+  }];
+  return count;
+}
+
 - (SNTRule *)ruleFromResultSet:(FMResultSet *)rs {
   SNTRule *rule = [[SNTRule alloc] init];
 
@@ -108,6 +135,7 @@
   rule.type = [rs intForColumn:@"type"];
   rule.state = [rs intForColumn:@"state"];
   rule.customMsg = [rs stringForColumn:@"custommsg"];
+  rule.timestamp = [rs intForColumn:@"timestamp"];
 
   return rule;
 }
@@ -179,9 +207,10 @@
         }
       } else {
         if (![db executeUpdate:@"INSERT OR REPLACE INTO rules "
-                               @"(shasum, state, type, custommsg) "
-                               @"VALUES (?, ?, ?, ?);",
-                               rule.shasum, @(rule.state), @(rule.type), rule.customMsg]) {
+                               @"(shasum, state, type, custommsg, timestamp) "
+                               @"VALUES (?, ?, ?, ?, ?);",
+                               rule.shasum, @(rule.state), @(rule.type), rule.customMsg,
+                               @(rule.timestamp)]) {
           [self fillError:error
                      code:SNTRuleTableErrorInsertOrReplaceFailed
                   message:[db lastErrorMessage]];

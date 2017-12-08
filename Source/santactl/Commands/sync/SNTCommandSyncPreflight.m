@@ -42,9 +42,13 @@
 
   dispatch_group_t group = dispatch_group_create();
   dispatch_group_enter(group);
-  [[self.daemonConn remoteObjectProxy] databaseRuleCounts:^(int64_t binary, int64_t certificate) {
+  [[self.daemonConn remoteObjectProxy] databaseRuleCounts:^(int64_t binary,
+                                                            int64_t certificate,
+                                                            int64_t compiler,
+                                                            int64_t transitive) {
     requestDict[kBinaryRuleCount] = @(binary);
     requestDict[kCertificateRuleCount] = @(certificate);
+    // TODO: should we add compiler/transitive counts to the request dict?
     dispatch_group_leave(group);
   }];
 

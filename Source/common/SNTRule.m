@@ -26,6 +26,10 @@
     _state = state;
     _type = type;
     _customMsg = customMsg;
+    // TODO: should every rule get a timestamp?
+    if (_state == SNTRuleStateWhitelistTransitive) {
+      _timestamp = (NSUInteger)[[NSDate date] timeIntervalSinceReferenceDate];
+    }
   }
   return self;
 }
@@ -44,6 +48,7 @@
   ENCODE(@(self.state), @"state");
   ENCODE(@(self.type), @"type");
   ENCODE(self.customMsg, @"custommsg");
+  ENCODE(@(self.timestamp), @"timestamp");
 }
 
 - (instancetype)initWithCoder:(NSCoder *)decoder {
@@ -53,6 +58,7 @@
     _state = [DECODE(NSNumber, @"state") intValue];
     _type = [DECODE(NSNumber, @"type") intValue];
     _customMsg = DECODE(NSString, @"custommsg");
+    _timestamp = [DECODE(NSNumber, @"timestamp") unsignedIntegerValue];
   }
   return self;
 }
@@ -64,7 +70,10 @@
   if (other == self) return YES;
   if (![other isKindOfClass:[SNTRule class]]) return NO;
   SNTRule *o = other;
-  return ([self.shasum isEqual:o.shasum] && self.state == o.state && self.type == o.type);
+  return ([self.shasum isEqual:o.shasum] &&
+          self.state == o.state &&
+          self.type == o.type &&
+          self.timestamp == o.timestamp);
 }
 
 - (NSUInteger)hash {
@@ -73,12 +82,13 @@
   result = prime * result + [self.shasum hash];
   result = prime * result + self.state;
   result = prime * result + self.type;
+  result = prime * result + self.timestamp;
   return result;
 }
 
 - (NSString *)description {
-  return [NSString stringWithFormat:@"SNTRule: SHA-256: %@, State: %ld, Type: %ld",
-                                    self.shasum, self.state, self.type];
+  return [NSString stringWithFormat:@"SNTRule: SHA-256: %@, State: %ld, Type: %ld, Timestamp: %lu",
+          self.shasum, self.state, self.type, (unsigned long)self.timestamp];
 }
 
 @end

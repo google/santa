@@ -36,6 +36,16 @@
 - (NSUInteger)binaryRuleCount;
 
 ///
+///  @return Number of compiler rules in the database
+///
+- (NSUInteger)compilerRuleCount;
+
+///
+///  @return Number of transitive rules in the database
+///
+- (NSUInteger)transitiveRuleCount;
+
+///
 ///  @return Number of certificate rules in the database
 ///
 - (NSUInteger)certificateRuleCount;

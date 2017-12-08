@@ -42,6 +42,12 @@
 @property(copy) NSString *customMsg;
 
 ///
+///  When this rule was created, if rule is transitive.  Stored as number of seconds since
+///  January 1, 2001.
+///
+@property NSUInteger timestamp;
+
+///
 ///  Designated initializer.
 ///
 - (instancetype)initWithShasum:(NSString *)shasum

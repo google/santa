@@ -72,9 +72,13 @@ double watchdogRAMPeak = 0;
 
 #pragma mark Database ops
 
-- (void)databaseRuleCounts:(void (^)(int64_t binary, int64_t certificate))reply {
+- (void)databaseRuleCounts:(void (^)(int64_t binary,
+                                     int64_t certificate,
+                                     int64_t compiler,
+                                     int64_t transitive))reply {
   SNTRuleTable *rdb = [SNTDatabaseController ruleTable];
-  reply([rdb binaryRuleCount], [rdb certificateRuleCount]);
+  reply([rdb binaryRuleCount], [rdb certificateRuleCount],
+        [rdb compilerRuleCount], [rdb transitiveRuleCount]);
 }
 
 - (void)databaseRuleAddRules:(NSArray *)rules

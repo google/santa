@@ -40,7 +40,10 @@
 ///
 ///  Database ops
 ///
-- (void)databaseRuleCounts:(void (^)(int64_t binary, int64_t certificate))reply;
+- (void)databaseRuleCounts:(void (^)(int64_t binary,
+                                     int64_t certificate,
+                                     int64_t compiler,
+                                     int64_t transitive))reply;
 - (void)databaseRuleAddRules:(NSArray *)rules
                   cleanSlate:(BOOL)cleanSlate
                        reply:(void (^)(NSError *error))reply;

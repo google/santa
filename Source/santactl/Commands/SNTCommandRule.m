@@ -242,6 +242,22 @@ REGISTER_COMMAND_NAME(@"rule")
     printf("Cannot communicate with daemon");
     exit(1);
   }
+
+  dispatch_group_enter(group);
+  [[daemonConn remoteObjectProxy] databaseRuleForBinarySHA256:fileSHA256
+                                            certificateSHA256:certificateSHA256
+                                                        reply:^(SNTRule *r) {
+    if (r.state == SNTRuleStateWhitelistTransitive) {
+      NSDate *date = [NSDate dateWithTimeIntervalSinceReferenceDate:r.timestamp];
+      [output appendString:[NSString stringWithFormat:@"\ncreation date: %@", [date description]]];
+    }
+    dispatch_group_leave(group);
+  }];
+  if (dispatch_group_wait(group, dispatch_time(DISPATCH_TIME_NOW, 5 * NSEC_PER_SEC))) {
+    printf("Cannot communicate with daemon");
+    exit(1);
+  }
+
   printf("%s\n", output.UTF8String);
   exit(0);
 }
