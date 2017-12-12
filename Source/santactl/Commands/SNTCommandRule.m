@@ -249,7 +249,7 @@ REGISTER_COMMAND_NAME(@"rule")
                                                         reply:^(SNTRule *r) {
     if (r.state == SNTRuleStateWhitelistTransitive) {
       NSDate *date = [NSDate dateWithTimeIntervalSinceReferenceDate:r.timestamp];
-      [output appendString:[NSString stringWithFormat:@"\ncreation date: %@", [date description]]];
+      [output appendString:[NSString stringWithFormat:@"\nlast access date: %@", [date description]]];
     }
     dispatch_group_leave(group);
   }];

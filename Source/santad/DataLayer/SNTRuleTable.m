@@ -224,6 +224,18 @@
   return !failed;
 }
 
+// Updates the timestamp to current time for the given rule.
+- (void)refreshTimestampForRule:(SNTRule *)rule {
+  if (!rule) return;
+  [rule refreshTimestamp];
+  [self inDatabase:^(FMDatabase *db) {
+    if (![db executeUpdate:@"UPDATE rules SET timestamp=? WHERE shasum=? AND type=?",
+          @(rule.timestamp), rule.shasum, @(rule.type)]) {
+      LOGE(@"Could not update timestamp for rule with sha256=%@", rule.shasum);
+    }
+  }];
+}
+
 //  Helper to create an NSError where necessary.
 //  The return value is irrelevant but the static analyzer complains if it's not a BOOL.
 - (BOOL)fillError:(NSError **)error code:(SNTRuleTableError)code message:(NSString *)message {

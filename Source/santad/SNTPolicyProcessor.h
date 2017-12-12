@@ -44,10 +44,28 @@
 ///        returned. Binary rules take precedence over cert rules.
 ///  @note This method can also be used to generate a SNTCachedDecision object without any
 ///        artifacts on disk. Simply pass nil to fileInfo and pass in the desired SHA256s.
+///  @note This method calls decisionForFileInfo:fileSHA256:certificateSHA256:refreshTimestamp:
+///        with the refreshTimestamp parameter set to NO.
 ///
 - (nonnull SNTCachedDecision *)decisionForFileInfo:(nullable SNTFileInfo *)fileInfo
                                         fileSHA256:(nullable NSString *)fileSHA256
                                  certificateSHA256:(nullable NSString *)certificateSHA256;
+
+///
+///  @param fileInfo A SNTFileInfo object.
+///  @param fileSHA256 The pre-calculated SHA256 hash for the file, can be nil. If nil the hash will
+///                    be calculated by this method from the filePath.
+///  @param certificateSHA256 A SHA256 hash of the signing certificate, can be nil.
+///  @param refreshTimestamp If YES, updates the last-access timestamp of the rule in the database.
+///  @note If fileSHA256 and certificateSHA256 are both passed in, the most specific rule will be
+///        returned. Binary rules take precedence over cert rules.
+///  @note This method can also be used to generate a SNTCachedDecision object without any
+///        artifacts on disk. Simply pass nil to fileInfo and pass in the desired SHA256s.
+///
+- (nonnull SNTCachedDecision *)decisionForFileInfo:(nullable SNTFileInfo *)fileInfo
+                                fileSHA256:(nullable NSString *)fileSHA256
+                         certificateSHA256:(nullable NSString *)certificateSHA256
+                          refreshTimestamp:(BOOL)refreshTimestamp;
 
 ///
 ///  A wrapper for decisionForFileInfo:fileSHA256:certificateSHA256:. This method is slower as it

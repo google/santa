@@ -55,4 +55,9 @@
                           type:(SNTRuleType)type
                      customMsg:(NSString *)customMsg;
 
+///
+///  Sets timestamp of rule to the current time.
+///
+- (void)refreshTimestamp;
+
 @end

@@ -68,4 +68,10 @@
 ///
 - (BOOL)addRules:(NSArray *)rules cleanSlate:(BOOL)cleanSlate error:(NSError **)error;
 
+
+///
+///  Update timestampo for given rule to the current time.
+///
+- (void)refreshTimestampForRule:(SNTRule *)rule;
+
 @end

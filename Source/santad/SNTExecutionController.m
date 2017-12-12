@@ -113,10 +113,11 @@
   // Ignore codesigning if there are any errors with the signature. 
   if (csError) csInfo = nil;
 
-  // Actually make the decision.
+  // Actually make the decision (and refresh rule access timestamp).
   SNTCachedDecision *cd = [self.policyProcessor decisionForFileInfo:binInfo
                                                          fileSHA256:nil
-                                                  certificateSHA256:csInfo.leafCertificate.SHA256];
+                                                  certificateSHA256:csInfo.leafCertificate.SHA256
+                                                   refreshTimestamp:YES];
   cd.certCommonName = csInfo.leafCertificate.commonName;
   cd.vnodeId = message.vnode_id;
 

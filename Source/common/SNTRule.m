@@ -27,9 +27,7 @@
     _type = type;
     _customMsg = customMsg;
     // TODO: should every rule get a timestamp?
-    if (_state == SNTRuleStateWhitelistTransitive) {
-      _timestamp = (NSUInteger)[[NSDate date] timeIntervalSinceReferenceDate];
-    }
+    if (_state == SNTRuleStateWhitelistTransitive) [self refreshTimestamp];
   }
   return self;
 }
@@ -89,6 +87,13 @@
 - (NSString *)description {
   return [NSString stringWithFormat:@"SNTRule: SHA-256: %@, State: %ld, Type: %ld, Timestamp: %lu",
           self.shasum, self.state, self.type, (unsigned long)self.timestamp];
+}
+
+# pragma mark Last-access Timestamp
+
+- (void)refreshTimestamp
+{
+  self.timestamp = (NSUInteger)[[NSDate date] timeIntervalSinceReferenceDate];
 }
 
 @end
