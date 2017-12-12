@@ -40,6 +40,7 @@
 #import "SNTSyncdQueue.h"
 
 @interface SNTExecutionController ()
+@property SNTCompilerController *compilerController;
 @property SNTDriverManager *driverManager;
 @property SNTEventLog *eventLog;
 @property SNTEventTable *eventTable;
@@ -47,7 +48,6 @@
 @property SNTPolicyProcessor *policyProcessor;
 @property SNTRuleTable *ruleTable;
 @property SNTSyncdQueue *syncdQueue;
-@property SNTCompilerController *compilerController;
 
 @property dispatch_queue_t eventQueue;
 @end

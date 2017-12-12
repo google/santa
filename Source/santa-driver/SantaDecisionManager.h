@@ -20,7 +20,6 @@
 #include <IOKit/IOMemoryDescriptor.h>
 #include <IOKit/IOSharedDataQueue.h>
 #include <libkern/c++/OSDictionary.h>
-#include <sys/event.h>
 #include <sys/kauth.h>
 #include <sys/proc.h>
 #include <sys/vnode.h>

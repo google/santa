@@ -70,7 +70,7 @@
 
 
 ///
-///  Update timestampo for given rule to the current time.
+///  Update timestamp for given rule to the current time.
 ///
 - (void)refreshTimestampForRule:(SNTRule *)rule;
 

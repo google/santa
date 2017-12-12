@@ -91,8 +91,7 @@
 
 # pragma mark Last-access Timestamp
 
-- (void)refreshTimestamp
-{
+- (void)refreshTimestamp {
   self.timestamp = (NSUInteger)[[NSDate date] timeIntervalSinceReferenceDate];
 }
 

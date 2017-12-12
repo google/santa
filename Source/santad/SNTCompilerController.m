@@ -12,11 +12,9 @@
 ///    See the License for the specific language governing permissions and
 ///    limitations under the License.
 
-#import <libproc.h>
-#import <sys/stat.h>
-#import <sys/event.h>
-#import "SNTCommonEnums.h"
 #import "SNTCompilerController.h"
+
+#import "SNTCommonEnums.h"
 #import "SNTDatabaseController.h"
 #import "SNTFileInfo.h"
 #import "SNTKernelCommon.h"
@@ -39,8 +37,6 @@ NSString *stringForAction(santa_action_t action) {
   }
 }
 
-@interface SNTCompilerController()
-@end
 
 @implementation SNTCompilerController
 
@@ -56,29 +52,28 @@ NSString *stringForAction(santa_action_t action) {
   else if (message.action == ACTION_NOTIFY_RENAME) target = message.newpath;
   else return;
 
-  char processPath[1024] = {0};
-  proc_pidpath(message.pid, processPath, 1024);
-
   // Check if this file is an executable.
   SNTFileInfo *fi = [[SNTFileInfo alloc] initWithPath:@(target)];
   if (fi.isExecutable) {
-    // Construct a new rule for this file.
+    // Check if there is an existing (non-transitive) rule for this file.  We leave existing rules
+    // alone, so that a whitelist or blacklist rule can't be overwritten by a transitive one.
     SNTRuleTable *ruleTable = [SNTDatabaseController ruleTable];
-    SNTRule *rule = [[SNTRule alloc] initWithShasum:fi.SHA256
-                                              state:SNTRuleStateWhitelistTransitive
-                                               type:SNTRuleTypeBinary
-                                          customMsg:@""];
-    NSError *err = [[NSError alloc] init];
-
-    // Check if there is an existing rule for this file.
     SNTRule *prevRule = [ruleTable ruleForBinarySHA256:fi.SHA1 certificateSHA256:nil];
     if (prevRule && prevRule.state != SNTRuleStateWhitelistTransitive) {
       LOGI(@"#### found existing rule for %@, not adding transitive rule", fi.path);
       return;
     }
 
+    // Construct a new transitive whitelist rule for the executable.
+    SNTRule *rule = [[SNTRule alloc] initWithShasum:fi.SHA256
+                                              state:SNTRuleStateWhitelistTransitive
+                                               type:SNTRuleTypeBinary
+                                          customMsg:@""];
+
+    // Add the new rule to the rules database.
+    NSError *err = [[NSError alloc] init];
     if (![ruleTable addRules:@[rule] cleanSlate:NO error:&err]) {
-      LOGI(@"#### SNTCompilerController: error adding new rule: %@", err.localizedDescription);
+      LOGE(@"#### SNTCompilerController: error adding new rule: %@", err.localizedDescription);
     } else {
       LOGI(@"#### SNTCompilerController: %@ %d new whitelisted executable %s (SHA=%@)",
            stringForAction(message.action), message.pid, target, fi.SHA256);

@@ -236,7 +236,7 @@
             [_eventLog logAllowedExecution:message];
             break;
           }
-          case ACTION_NOTIFY_MONITOR:
+          case ACTION_NOTIFY_MONITOR: // TODO: remove when no longer logging pid monitor
             [_eventLog logProcessMonitor:message];
             break;
           default:

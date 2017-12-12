@@ -465,6 +465,7 @@ static void pid_monitor(void *param, __unused wait_result_t wait_result) {
   pid_monitor_info *info = (pid_monitor_info *)param;
 
   // Kernel logging with IOLog appears broken, so send log message to userspace.
+  // TODO: remove logging.
   auto message = info->sdm->NewMessage(nullptr);
   snprintf(message->path, sizeof(message->path),
            "#### santa-driver: compiler pid monitor for %d", info->pid);
@@ -478,6 +479,7 @@ static void pid_monitor(void *param, __unused wait_result_t wait_result) {
     msleep((void *)info, NULL, 0, "", &info->ts);
   }
 
+  // TODO: remove logging.
   snprintf(message->path, sizeof(message->path),
            "#### santa-driver: compiler pid exited: %d", info->pid);
   message->action = ACTION_NOTIFY_MONITOR;
@@ -499,6 +501,7 @@ void SantaDecisionManager::MonitorCompilerPidForExit(pid_t pid) {
   info->sdm = this;
   thread_t thread = THREAD_NULL;
   if (KERN_SUCCESS != kernel_thread_start(pid_monitor, (void *)info, &thread)) {
+    // TODO: remove log message.
     auto message = NewMessage(nullptr);
     snprintf(message->path, sizeof(message->path),
         "#### santa-driver: couldn't start pid monitor thread for %d", pid);

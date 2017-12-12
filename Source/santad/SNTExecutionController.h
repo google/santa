@@ -18,13 +18,13 @@
 #include "SNTKernelCommon.h"
 
 @class MOLCodesignChecker;
+@class SNTCompilerController;
 @class SNTDriverManager;
 @class SNTEventLog;
 @class SNTEventTable;
 @class SNTNotificationQueue;
 @class SNTRuleTable;
 @class SNTSyncdQueue;
-@class SNTCompilerController;
 
 ///
 ///  SNTExecutionController is responsible for handling binary execution requests:

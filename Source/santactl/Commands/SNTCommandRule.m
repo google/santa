@@ -62,7 +62,6 @@ REGISTER_COMMAND_NAME(@"rule")
           @"                   Does not work with --check. Use the fileinfo verb to check.\n"
           @"                   the rule state of a file.\n"
           @"    --sha256 {sha256}: hash to add/remove/check\n"
-          @"    --type {ruletype}: type of rules to remove\n"
           @"\n"
           @"  Optionally:\n"
           @"    --certificate: add or check a certificate sha256 rule instead of binary\n"
@@ -130,10 +129,6 @@ REGISTER_COMMAND_NAME(@"rule")
         [self printErrorUsageAndExit:@"--message requires an argument"];
       }
       newRule.customMsg = arguments[i];
-    } else if ([arg caseInsensitiveCompare:@"--type"] == NSOrderedSame) {
-      if (++i > arguments.count - 1) {
-        [self printErrorUsageAndExit:@"--type requires an argument"];
-      }
 #ifdef DEBUG
     } else if ([arg caseInsensitiveCompare:@"--force"] == NSOrderedSame) {
       // Don't do anything special.
