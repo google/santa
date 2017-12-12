@@ -321,7 +321,7 @@ public: // TODO: remove
 
   // When set to true, Santa will check all ancestors of a process to determine
   // if it is a compiler.
-  bool check_compiler_ancestors_ = true;
+  bool check_compiler_ancestors_ = false;
 };
 
 /**

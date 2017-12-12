@@ -191,7 +191,6 @@
             break;
           }
           case ACTION_NOTIFY_CLOSE:
-          case ACTION_NOTIFY_RENAME:
             // Determine if we should add a transitive whitelisting rule for this new file.
             // Requires that writing process was a compiler and that new file is executable.
             [self.compilerController checkForNewExecutable:message];

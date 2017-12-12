@@ -23,34 +23,15 @@
 #import "SNTRuleTable.h"
 
 
-// TODO: remove this
-NSString *stringForAction(santa_action_t action) {
-  switch(action) {
-      case ACTION_NOTIFY_EXEC: return @"EXEC";
-      case ACTION_NOTIFY_WRITE: return @"WRITE";
-      case ACTION_NOTIFY_RENAME: return @"RENAME";
-      case ACTION_NOTIFY_LINK: return @"LINK";
-      case ACTION_NOTIFY_EXCHANGE: return @"EXCHANGE";
-      case ACTION_NOTIFY_DELETE: return @"DELETE";
-      case ACTION_NOTIFY_CLOSE: return @"CLOSE";
-      default: return @"UNKNOWN";
-  }
-}
-
-
 @implementation SNTCompilerController
 
 // Assume that this method is called only when we already know that the writing process is a
-// compiler.  It checks if the written / renamed file is executable, and if so, transitively
-// whitelists it.
+// compiler.  It checks if the closed file is executable, and if so, transitively whitelists it.
+// The passed in message contains the pid of the writing process and path of closed file.
 - (void)checkForNewExecutable:(santa_message_t)message {
-  // message contains pid of writing process and path of written file.
-
-  // Handle RENAME and CLOSE actions only.
-  char *target = NULL;
-  if (message.action == ACTION_NOTIFY_CLOSE) target = message.path;
-  else if (message.action == ACTION_NOTIFY_RENAME) target = message.newpath;
-  else return;
+  // Handle CLOSE actions only.
+  if (message.action != ACTION_NOTIFY_CLOSE) return;
+  char *target = message.path;
 
   // Check if this file is an executable.
   SNTFileInfo *fi = [[SNTFileInfo alloc] initWithPath:@(target)];
@@ -75,8 +56,8 @@ NSString *stringForAction(santa_action_t action) {
     if (![ruleTable addRules:@[rule] cleanSlate:NO error:&err]) {
       LOGE(@"#### SNTCompilerController: error adding new rule: %@", err.localizedDescription);
     } else {
-      LOGI(@"#### SNTCompilerController: %@ %d new whitelisted executable %s (SHA=%@)",
-           stringForAction(message.action), message.pid, target, fi.SHA256);
+      LOGI(@"#### SNTCompilerController: CLOSE %d new whitelisted executable %s (SHA=%@)",
+           message.pid, target, fi.SHA256);
     }
   }
 }

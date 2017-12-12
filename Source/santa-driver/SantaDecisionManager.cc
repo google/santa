@@ -653,9 +653,7 @@ void SantaDecisionManager::FileOpCallback(
     }
 
     // Post any compiler-related messages to the decision queue.
-    if ((message->action == ACTION_NOTIFY_CLOSE ||
-         message->action == ACTION_NOTIFY_RENAME) &&
-        IsCompilerProcess(message->pid)) {
+    if (message->action == ACTION_NOTIFY_CLOSE && IsCompilerProcess(message->pid)) {
       PostToDecisionQueue(message);
     }
 
