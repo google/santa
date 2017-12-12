@@ -14,10 +14,11 @@
 
 #include "SantaDecisionManager.h"
 
-// This is a made-up KAUTH_FILEOP constant which represents a KAUTH_VNODE_WRITE_DATA event
-// that gets passed to SantaDecisionManager's FileOpCallback method.  The KAUTH_FILEOP_*
-// constants are defined in sys/kauth.h and run from 1--7.  KAUTH_VNODE_WRITE_DATA is
-// already defined as 4 so it overlaps with the other KAUTH_FILEOP_* constants and can't be used.
+// This is a made-up KAUTH_FILEOP constant which represents a
+// KAUTH_VNODE_WRITE_DATA event that gets passed to SantaDecisionManager's
+// FileOpCallback method.  The KAUTH_FILEOP_* constants are defined in
+// sys/kauth.h and run from 1--7.  KAUTH_VNODE_WRITE_DATA is already defined as
+// 4 so it overlaps with the other KAUTH_FILEOP_* constants and can't be used.
 // We define KAUTH_FILEOP_WRITE as something >> 7.
 #define KAUTH_FILEOP_WRITE 100
 
@@ -39,7 +40,7 @@ bool SantaDecisionManager::init() {
   root_decision_cache_ = new SantaCache<uint64_t>(5000, 2);
   non_root_decision_cache_ = new SantaCache<uint64_t>(500, 2);
   vnode_pid_map_ = new SantaCache<uint64_t>(2000, 5);
-  compiler_pid_set_ = new SantaCache<uint64_t>(2000, 5);
+  compiler_pid_set_ = new SantaCache<bool>(500, 5);
 
   decision_dataqueue_ = IOSharedDataQueue::withEntries(
       kMaxDecisionQueueEvents, sizeof(santa_message_t));
@@ -243,6 +244,7 @@ void SantaDecisionManager::AddToCache(
       break;
     case ACTION_RESPOND_ALLOW:
     case ACTION_RESPOND_ALLOW_COMPILER:
+    case ACTION_RESPOND_ALLOW_TRANSITIVE:
     case ACTION_RESPOND_DENY:
       decision_cache->set(
           identifier, val, ((uint64_t)ACTION_REQUEST_BINARY << 56));
@@ -291,6 +293,13 @@ santa_action_t SantaDecisionManager::GetFromCache(uint64_t identifier) {
   if (RESPONSE_VALID(result)) {
     if (result == ACTION_RESPOND_DENY) {
       auto expiry_time = decision_time + (kMaxDenyCacheTimeMilliseconds * 1000);
+      if (expiry_time < GetCurrentUptime()) {
+        decision_cache->remove(identifier);
+        return ACTION_UNSET;
+      }
+    } else if (result == ACTION_RESPOND_ALLOW_TRANSITIVE) {
+      auto expiry_time = decision_time +
+          (kMaxAllowTransitiveCacheTimeMilliseconds * 1000);
       if (expiry_time < GetCurrentUptime()) {
         decision_cache->remove(identifier);
         return ACTION_UNSET;
@@ -450,8 +459,8 @@ typedef struct {
 } pid_monitor_info;
 
 
-// Function to monitor for process termination and then remove the process pid from cache of
-// compiler pids.
+// Function to monitor for process termination and then remove the process pid
+// from cache of compiler pids.
 static void pid_monitor(void *param, __unused wait_result_t wait_result) {
   pid_monitor_info *info = (pid_monitor_info *)param;
 
@@ -480,8 +489,9 @@ static void pid_monitor(void *param, __unused wait_result_t wait_result) {
   thread_terminate(current_thread());
 }
 
-// This spins off a new thread for each process that we monitor.  Generally the threads should
-// be short-lived, since they die as soon as their associated compiler process dies.
+// This spins off a new thread for each process that we monitor.  Generally the
+// threads should be short-lived, since they die as soon as their associated
+// compiler process dies.
 void SantaDecisionManager::MonitorCompilerPidForExit(pid_t pid) {
   auto info = new pid_monitor_info;
   info->pid = pid;
@@ -491,11 +501,28 @@ void SantaDecisionManager::MonitorCompilerPidForExit(pid_t pid) {
   if (KERN_SUCCESS != kernel_thread_start(pid_monitor, (void *)info, &thread)) {
     auto message = NewMessage(nullptr);
     snprintf(message->path, sizeof(message->path),
-             "#### santa-driver: couldn't start pid monitor thread for %d", pid);
+        "#### santa-driver: couldn't start pid monitor thread for %d", pid);
     message->action = ACTION_NOTIFY_MONITOR;
     PostToLogQueue(message);
   }
   thread_deallocate(thread);
+}
+
+bool SantaDecisionManager::IsCompilerProcess(pid_t pid) {
+  if (compiler_pid_set_->get(pid)) return true;
+  if (check_compiler_ancestors_) {
+    // Check if any ancestor of this process is in the set of compiler pids.
+    for (;;) {
+      proc_t proc = proc_find(pid);
+      if (!proc) break;
+      pid_t ppid = proc_ppid(proc);
+      proc_rele(proc);
+      if (ppid == 0 || pid == ppid) break; // process is launchd / has no parent
+      pid = ppid;
+      if (compiler_pid_set_->get(pid)) return true;
+    }
+  }
+  return false;
 }
 
 #pragma mark Callbacks
@@ -521,7 +548,8 @@ int SantaDecisionManager::VnodeCallback(const kauth_cred_t cred,
 
   switch (returnedAction) {
     case ACTION_RESPOND_ALLOW:
-    case ACTION_RESPOND_ALLOW_COMPILER: {
+    case ACTION_RESPOND_ALLOW_COMPILER:
+    case ACTION_RESPOND_ALLOW_TRANSITIVE: {
       auto proc = vfs_context_proc(ctx);
       if (proc) {
         pid_t pid = proc_pid(proc);
@@ -531,11 +559,11 @@ int SantaDecisionManager::VnodeCallback(const kauth_cred_t cred,
         vnode_pid_map_->set(vnode_id, val);
         if (returnedAction == ACTION_RESPOND_ALLOW_COMPILER) {
           // Do some additional bookkeeping for compilers:
-          // We associate the pid with a compiler so that when we see it later in the context of
-          // a KAUTH_FILEOP event, we'll recognize it.
-          compiler_pid_set_->set(pid, 1);
-          // And start polling for the compiler process termination, so that we can remove the
-          // pid from our cache of compiler pids.
+          // We associate the pid with a compiler so that when we see it later
+          // in the context of a KAUTH_FILEOP event, we'll recognize it.
+          compiler_pid_set_->set(pid, true);
+          // And start polling for the compiler process termination, so that we
+          // can remove the pid from our cache of compiler pids.
           MonitorCompilerPidForExit(pid);
         }
       }
@@ -614,14 +642,17 @@ void SantaDecisionManager::FileOpCallback(
         return;
     }
 
-    // We don't log the ACTION_NOTIFY_CLOSE messages because they mostly duplicate the
-    // ACTION_NOTIFY_WRITE messages (though they aren't precisely the same)
+    // We don't log the ACTION_NOTIFY_CLOSE messages because they mostly
+    // duplicate the ACTION_NOTIFY_WRITE messages (though they aren't precisely
+    // the same).
     if (message->action != ACTION_NOTIFY_CLOSE) {
       PostToLogQueue(message);
     }
 
-    if ((message->action == ACTION_NOTIFY_CLOSE || message->action == ACTION_NOTIFY_RENAME) &&
-        compiler_pid_set_->get(message->pid)) {
+    // Post any compiler-related messages to the decision queue.
+    if ((message->action == ACTION_NOTIFY_CLOSE ||
+         message->action == ACTION_NOTIFY_RENAME) &&
+        IsCompilerProcess(message->pid)) {
       PostToDecisionQueue(message);
     }
 
@@ -647,8 +678,9 @@ extern "C" int fileop_scope_callback(
   char *new_path = nullptr;
 
   switch (action) {
-    // We only care about KAUTH_FILEOP_CLOSE events where the closed file was modified.
     case KAUTH_FILEOP_CLOSE:
+      // We only care about KAUTH_FILEOP_CLOSE events where the closed file
+      // was modified.
       if (!(arg2 & KAUTH_FILEOP_CLOSE_MODIFIED))
         return KAUTH_RESULT_DEFER;
     case KAUTH_FILEOP_DELETE:
@@ -703,8 +735,8 @@ extern "C" int vnode_scope_callback(
     char path[MAXPATHLEN];
     int pathlen = MAXPATHLEN;
     vn_getpath(vp, path, &pathlen);
-    // KAUTH_VNODE_WRITE_DATA events are translated into a fake KAUTH_FILEOP_WRITE event
-    // so that we can handle them in the FileOpCallback function.
+    // KAUTH_VNODE_WRITE_DATA events are translated into fake KAUTH_FILEOP_WRITE
+    // events so that we can handle them in the FileOpCallback function.
     sdm->FileOpCallback(KAUTH_FILEOP_WRITE, vp, path, nullptr);
     sdm->DecrementListenerInvocations();
   }

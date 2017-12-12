@@ -119,8 +119,13 @@ class SantaDecisionManager : public OSObject {
   // Remove pid from cache of pids associated with compiler processes.
   void ForgetCompilerPid(pid_t pid);
 
-  // Start a thread to monitor and remove given pid from cache when process exits.
+  // Start thread to monitor and remove given pid from cache when process exits.
   void MonitorCompilerPidForExit(pid_t pid);
+
+  // Determine if pid belongs to a compiler process. When
+  // check_compiler_ancestors_ is set to true, this also checks all ancestor
+  // processes of the pid.
+  bool IsCompilerProcess(pid_t pid);
 
   /**
     Vnode Callback
@@ -156,6 +161,14 @@ class SantaDecisionManager : public OSObject {
     considered valid.
   */
   static const uint64_t kMaxDenyCacheTimeMilliseconds = 500;
+
+  /**
+    The maximum number of milliseconds a cached allow transitive message should
+    be considered valid.  86400000 ms = 1 day, so that transitive messages must
+    be daily refreshed from the rules database, to keep their last accessed
+    timestamp in the database fresh.
+  */
+  static const uint64_t kMaxAllowTransitiveCacheTimeMilliseconds = 86400000;
 
   /// Maximum number of entries in the in-kernel cache.
   static const uint32_t kMaxCacheSize = 10000;
@@ -272,7 +285,7 @@ public: // TODO: remove
   SantaCache<uint64_t> *root_decision_cache_;
   SantaCache<uint64_t> *non_root_decision_cache_;
   SantaCache<uint64_t> *vnode_pid_map_;
-  SantaCache<uint64_t> *compiler_pid_set_;
+  SantaCache<bool> *compiler_pid_set_;
 
   /**
     Return the correct cache for a given identifier.
@@ -306,6 +319,10 @@ public: // TODO: remove
   kauth_listener_t fileop_listener_;
 
   struct timespec ts_;
+
+  // When set to true, Santa will check all ancestors of a process to determine
+  // if it is a compiler.
+  bool check_compiler_ancestors_ = true;
 };
 
 /**

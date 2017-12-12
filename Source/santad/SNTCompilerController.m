@@ -69,6 +69,14 @@ NSString *stringForAction(santa_action_t action) {
                                                type:SNTRuleTypeBinary
                                           customMsg:@""];
     NSError *err = [[NSError alloc] init];
+
+    // Check if there is an existing rule for this file.
+    SNTRule *prevRule = [ruleTable ruleForBinarySHA256:fi.SHA1 certificateSHA256:nil];
+    if (prevRule && prevRule.state != SNTRuleStateWhitelistTransitive) {
+      LOGI(@"#### found existing rule for %@, not adding transitive rule", fi.path);
+      return;
+    }
+
     if (![ruleTable addRules:@[rule] cleanSlate:NO error:&err]) {
       LOGI(@"#### SNTCompilerController: error adding new rule: %@", err.localizedDescription);
     } else {

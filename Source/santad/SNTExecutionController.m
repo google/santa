@@ -134,6 +134,9 @@
     LOGI(@"#### validateBinaryWithMessage: compiler vnodeID = %llx, pid = %d, path=%s",
          cd.vnodeId, message.pid, message.path);
     action = ACTION_RESPOND_ALLOW_COMPILER;
+  // Also upgrade transitive rule decisions, so that the kernel set an expiration policy for them.
+  } else if (cd.decision == SNTEventStateAllowTransitive) {
+    action = ACTION_RESPOND_ALLOW_TRANSITIVE;
   }
 
   // Send the decision to the kernel.
@@ -186,7 +189,9 @@
     });
 
     // If binary was blocked, do the needful
-    if (action != ACTION_RESPOND_ALLOW && action != ACTION_RESPOND_ALLOW_COMPILER) {
+    if (action != ACTION_RESPOND_ALLOW &&
+        action != ACTION_RESPOND_ALLOW_COMPILER &&
+        action != ACTION_RESPOND_ALLOW_TRANSITIVE) {
       [_eventLog logDeniedExecution:cd withMessage:message];
 
       if ([[SNTConfigurator configurator] bundlesEnabled] && binInfo.bundle) {

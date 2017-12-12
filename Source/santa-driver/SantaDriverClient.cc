@@ -152,6 +152,18 @@ IOReturn SantaDriverClient::allow_compiler(
   return kIOReturnSuccess;
 }
 
+IOReturn SantaDriverClient::allow_transitive(
+    OSObject *target, void *reference, IOExternalMethodArguments *arguments) {
+  SantaDriverClient *me = OSDynamicCast(SantaDriverClient, target);
+  if (!me) return kIOReturnBadArgument;
+
+  const uint64_t vnode_id = static_cast<const uint64_t>(arguments->scalarInput[0]);
+  if (!vnode_id) return kIOReturnInvalid;
+  me->decisionManager->AddToCache(vnode_id, ACTION_RESPOND_ALLOW_TRANSITIVE);
+
+  return kIOReturnSuccess;
+}
+
 IOReturn SantaDriverClient::deny_binary(
     OSObject *target, void *reference, IOExternalMethodArguments *arguments) {
   SantaDriverClient *me = OSDynamicCast(SantaDriverClient, target);
@@ -211,6 +223,7 @@ IOReturn SantaDriverClient::externalMethod(
     { &SantaDriverClient::open, 0, 0, 0, 0 },
     { &SantaDriverClient::allow_binary, 1, 0, 0, 0 },
     { &SantaDriverClient::allow_compiler, 1, 0, 0, 0 },
+    { &SantaDriverClient::allow_transitive, 1, 0, 0, 0 },
     { &SantaDriverClient::deny_binary, 1, 0, 0, 0 },
     { &SantaDriverClient::clear_cache, 1, 0, 0, 0 },
     { &SantaDriverClient::cache_count, 0, 0, 2, 0 },
