@@ -44,13 +44,13 @@
   return [self decisionForFileInfo:(SNTFileInfo *)fileInfo
                         fileSHA256:(NSString *)fileSHA256
                  certificateSHA256:(NSString *)certificateSHA256
-                  refreshTimestamp:NO];
+                    resetTimestamp:NO];
 }
 
 - (SNTCachedDecision *)decisionForFileInfo:(SNTFileInfo *)fileInfo
                                 fileSHA256:(NSString *)fileSHA256
                          certificateSHA256:(NSString *)certificateSHA256
-                          refreshTimestamp:(BOOL)refreshTimestamp {
+                            resetTimestamp:(BOOL)resetTimestamp {
 
   SNTCachedDecision *cd = [[SNTCachedDecision alloc] init];
   cd.sha256 = fileSHA256 ?: fileInfo.SHA256;
@@ -78,7 +78,7 @@
           case SNTRuleStateWhitelistTransitive:
             cd.decision = SNTEventStateAllowTransitive;
             // Update the last-accessed timestamp for this rule in the database.
-            if (refreshTimestamp) [self.ruleTable refreshTimestampForRule:rule];
+            if (resetTimestamp) [self.ruleTable refreshTimestampForRule:rule];
             return cd;
           default: break;
         }

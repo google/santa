@@ -19,7 +19,7 @@
 // FileOpCallback method.  The KAUTH_FILEOP_* constants are defined in
 // sys/kauth.h and run from 1--7.  KAUTH_VNODE_WRITE_DATA is already defined as
 // 4 so it overlaps with the other KAUTH_FILEOP_* constants and can't be used.
-// We define KAUTH_FILEOP_WRITE as something >> 7.
+// We define KAUTH_FILEOP_WRITE as something much greater than 7.
 #define KAUTH_FILEOP_WRITE 100
 
 #define super OSObject
@@ -458,11 +458,14 @@ typedef struct {
   SantaDecisionManager *sdm;  // reference to SantaDecisionManager
 } pid_monitor_info;
 
-
 // Function to monitor for process termination and then remove the process pid
 // from cache of compiler pids.
 static void pid_monitor(void *param, __unused wait_result_t wait_result) {
   pid_monitor_info *info = (pid_monitor_info *)param;
+  if (info == NULL || info->sdm == NULL) {
+    thread_terminate(current_thread());
+    return;
+  }
 
   // Kernel logging with IOLog appears broken, so send log message to userspace.
   // TODO: remove logging.

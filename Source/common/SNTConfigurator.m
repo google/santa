@@ -75,7 +75,6 @@ static NSString *const kMachineIDPlistKeyKey = @"MachineIDKey";
   if (self) {
     _configFilePath = filePath;
     [self reloadConfigData];
-    _transitiveWhitelistingEnabled = YES; // TODO: remove
   }
   return self;
 }

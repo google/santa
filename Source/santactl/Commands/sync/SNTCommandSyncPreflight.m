@@ -84,8 +84,11 @@
   }];
 
   dispatch_group_enter(group);
-  [[self.daemonConn remoteObjectProxy] setTransitiveWhitelistingEnabled:
-      [resp[kTransitiveWhitelistingEnabled] boolValue] reply:^{
+  [[self.daemonConn remoteObjectProxy]
+   // TODO: fix the following line
+      setTransitiveWhitelistingEnabled:YES
+   // setTransitiveWhitelistingEnabled:[resp[kTransitiveWhitelistingEnabled] boolValue]
+                                 reply:^{
     dispatch_group_leave(group);
   }];
 

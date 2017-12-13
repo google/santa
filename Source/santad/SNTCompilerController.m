@@ -28,37 +28,37 @@
 // Assume that this method is called only when we already know that the writing process is a
 // compiler.  It checks if the closed file is executable, and if so, transitively whitelists it.
 // The passed in message contains the pid of the writing process and path of closed file.
-- (void)checkForNewExecutable:(santa_message_t)message {
+- (void)createTransitiveRule:(santa_message_t)message {
   // Handle CLOSE actions only.
   if (message.action != ACTION_NOTIFY_CLOSE) return;
   char *target = message.path;
 
   // Check if this file is an executable.
   SNTFileInfo *fi = [[SNTFileInfo alloc] initWithPath:@(target)];
-  if (fi.isExecutable) {
-    // Check if there is an existing (non-transitive) rule for this file.  We leave existing rules
-    // alone, so that a whitelist or blacklist rule can't be overwritten by a transitive one.
-    SNTRuleTable *ruleTable = [SNTDatabaseController ruleTable];
-    SNTRule *prevRule = [ruleTable ruleForBinarySHA256:fi.SHA1 certificateSHA256:nil];
-    if (prevRule && prevRule.state != SNTRuleStateWhitelistTransitive) {
-      LOGI(@"#### found existing rule for %@, not adding transitive rule", fi.path);
-      return;
-    }
+  if (!fi.isExecutable) return;
 
-    // Construct a new transitive whitelist rule for the executable.
-    SNTRule *rule = [[SNTRule alloc] initWithShasum:fi.SHA256
-                                              state:SNTRuleStateWhitelistTransitive
-                                               type:SNTRuleTypeBinary
-                                          customMsg:@""];
+  // Check if there is an existing (non-transitive) rule for this file.  We leave existing rules
+  // alone, so that a whitelist or blacklist rule can't be overwritten by a transitive one.
+  SNTRuleTable *ruleTable = [SNTDatabaseController ruleTable];
+  SNTRule *prevRule = [ruleTable ruleForBinarySHA256:fi.SHA256 certificateSHA256:nil];
+  if (prevRule && prevRule.state != SNTRuleStateWhitelistTransitive) {
+    LOGI(@"#### found existing rule for %@, not adding transitive rule", fi.path);
+    return;
+  }
 
-    // Add the new rule to the rules database.
-    NSError *err = [[NSError alloc] init];
-    if (![ruleTable addRules:@[rule] cleanSlate:NO error:&err]) {
-      LOGE(@"#### SNTCompilerController: error adding new rule: %@", err.localizedDescription);
-    } else {
-      LOGI(@"#### SNTCompilerController: CLOSE %d new whitelisted executable %s (SHA=%@)",
-           message.pid, target, fi.SHA256);
-    }
+  // Construct a new transitive whitelist rule for the executable.
+  SNTRule *rule = [[SNTRule alloc] initWithShasum:fi.SHA256
+                                            state:SNTRuleStateWhitelistTransitive
+                                             type:SNTRuleTypeBinary
+                                        customMsg:@""];
+
+  // Add the new rule to the rules database.
+  NSError *err;
+  if (![ruleTable addRules:@[rule] cleanSlate:NO error:&err]) {
+    LOGE(@"#### SNTCompilerController: error adding new rule: %@", err.localizedDescription);
+  } else {
+    LOGI(@"#### SNTCompilerController: CLOSE %d new whitelisted executable %s (SHA=%@)",
+         message.pid, target, fi.SHA256);
   }
 }
 

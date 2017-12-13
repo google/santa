@@ -111,9 +111,8 @@
 - (NSUInteger)compilerRuleCount {
   __block NSUInteger count = 0;
   [self inDatabase:^(FMDatabase *db) {
-    count = [db longForQuery:
-        [NSString stringWithFormat:@"SELECT COUNT(*) FROM rules WHERE state=%ld",
-        (long)SNTRuleStateWhitelistCompiler]];
+    count = [db longForQuery:@"SELECT COUNT(*) FROM rules WHERE state=?",
+             @(SNTRuleStateWhitelistCompiler)];
   }];
   return count;
 }
@@ -121,23 +120,18 @@
 - (NSUInteger)transitiveRuleCount {
   __block NSUInteger count = 0;
   [self inDatabase:^(FMDatabase *db) {
-    count = [db longForQuery:
-        [NSString stringWithFormat:@"SELECT COUNT(*) FROM rules WHERE state=%ld",
-        (long)SNTRuleStateWhitelistTransitive]];
+    count = [db longForQuery:@"SELECT COUNT(*) FROM rules WHERE state=?",
+             @(SNTRuleStateWhitelistTransitive)];
   }];
   return count;
 }
 
 - (SNTRule *)ruleFromResultSet:(FMResultSet *)rs {
-  SNTRule *rule = [[SNTRule alloc] init];
-
-  rule.shasum = [rs stringForColumn:@"shasum"];
-  rule.type = [rs intForColumn:@"type"];
-  rule.state = [rs intForColumn:@"state"];
-  rule.customMsg = [rs stringForColumn:@"custommsg"];
-  rule.timestamp = [rs intForColumn:@"timestamp"];
-
-  return rule;
+  return [[SNTRule alloc] initWithShasum:[rs stringForColumn:@"shasum"]
+                                   state:[rs intForColumn:@"state"]
+                                    type:[rs intForColumn:@"type"]
+                               customMsg:[rs stringForColumn:@"custommsg"]
+                               timestamp:[rs intForColumn:@"timestamp"]];
 }
 
 - (SNTRule *)ruleForBinarySHA256:(NSString *)binarySHA256
@@ -254,7 +248,7 @@
 // Updates the timestamp to current time for the given rule.
 - (void)refreshTimestampForRule:(SNTRule *)rule {
   if (!rule) return;
-  [rule refreshTimestamp];
+  [rule resetTimestamp];
   [self inDatabase:^(FMDatabase *db) {
     if (![db executeUpdate:@"UPDATE rules SET timestamp=? WHERE shasum=? AND type=?",
           @(rule.timestamp), rule.shasum, @(rule.type)]) {

@@ -19,18 +19,36 @@
 - (instancetype)initWithShasum:(NSString *)shasum
                          state:(SNTRuleState)state
                           type:(SNTRuleType)type
-                     customMsg:(NSString *)customMsg {
+                     customMsg:(NSString *)customMsg
+                     timestamp:(NSUInteger)timestamp {
   self = [super init];
   if (self) {
     _shasum = shasum;
     _state = state;
     _type = type;
     _customMsg = customMsg;
-    // TODO: should every rule get a timestamp?
-    if (_state == SNTRuleStateWhitelistTransitive) [self refreshTimestamp];
+    _timestamp = timestamp;
   }
   return self;
 }
+
+- (instancetype)initWithShasum:(NSString *)shasum
+                         state:(SNTRuleState)state
+                          type:(SNTRuleType)type
+                     customMsg:(NSString *)customMsg {
+
+  self = [self initWithShasum:shasum
+                        state:state
+                         type:type
+                    customMsg:customMsg
+                    timestamp:0];
+  // Initialize timestamp to current time if rule is transitive.
+  if (self && state == SNTRuleStateWhitelistTransitive) {
+    [self resetTimestamp];
+  }
+  return self;
+}
+
 
 #pragma mark NSSecureCoding
 
@@ -70,8 +88,7 @@
   SNTRule *o = other;
   return ([self.shasum isEqual:o.shasum] &&
           self.state == o.state &&
-          self.type == o.type &&
-          self.timestamp == o.timestamp);
+          self.type == o.type);
 }
 
 - (NSUInteger)hash {
@@ -91,8 +108,8 @@
 
 # pragma mark Last-access Timestamp
 
-- (void)refreshTimestamp {
-  self.timestamp = (NSUInteger)[[NSDate date] timeIntervalSinceReferenceDate];
+- (void)resetTimestamp {
+  _timestamp = (NSUInteger)[[NSDate date] timeIntervalSinceReferenceDate];
 }
 
 @end

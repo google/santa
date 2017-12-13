@@ -117,7 +117,7 @@
   SNTCachedDecision *cd = [self.policyProcessor decisionForFileInfo:binInfo
                                                          fileSHA256:nil
                                                   certificateSHA256:csInfo.leafCertificate.SHA256
-                                                   refreshTimestamp:YES];
+                                                     resetTimestamp:YES];
   cd.certCommonName = csInfo.leafCertificate.commonName;
   cd.vnodeId = message.vnode_id;
 

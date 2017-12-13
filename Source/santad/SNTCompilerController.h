@@ -21,5 +21,5 @@
 
 // Whenever an executable file is closed or renamed whitelist the resulting file.
 // We assume that we have already determined that the writing process was a compiler.
-- (void)checkForNewExecutable:(santa_message_t)message;
+- (void)createTransitiveRule:(santa_message_t)message;
 @end

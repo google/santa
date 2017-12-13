@@ -42,13 +42,22 @@
 @property(copy) NSString *customMsg;
 
 ///
-///  When this rule was created, if rule is transitive.  Stored as number of seconds since
-///  January 1, 2001.
+///  The time when this rule was last retrieved from the rules database, if rule is transitive.
+///  Stored as number of seconds since 00:00:00 UTC on 1 January 2001.
 ///
-@property NSUInteger timestamp;
+@property(readonly) NSUInteger timestamp;
 
 ///
 ///  Designated initializer.
+///
+- (instancetype)initWithShasum:(NSString *)shasum
+                         state:(SNTRuleState)state
+                          type:(SNTRuleType)type
+                     customMsg:(NSString *)customMsg
+                     timestamp:(NSUInteger)timestamp;
+
+///
+///  Initialize with a default timestamp: current time if rule state is transitive, 0 otherwise.
 ///
 - (instancetype)initWithShasum:(NSString *)shasum
                          state:(SNTRuleState)state
@@ -58,6 +67,6 @@
 ///
 ///  Sets timestamp of rule to the current time.
 ///
-- (void)refreshTimestamp;
+- (void)resetTimestamp;
 
 @end

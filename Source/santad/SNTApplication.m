@@ -193,7 +193,7 @@
           case ACTION_NOTIFY_CLOSE:
             // Determine if we should add a transitive whitelisting rule for this new file.
             // Requires that writing process was a compiler and that new file is executable.
-            [self.compilerController checkForNewExecutable:message];
+            [self.compilerController createTransitiveRule:message];
             break;
           default: {
             LOGE(@"Received decision request without a valid action: %d", message.action);
