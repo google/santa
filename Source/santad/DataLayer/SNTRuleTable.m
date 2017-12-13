@@ -246,7 +246,7 @@
 }
 
 // Updates the timestamp to current time for the given rule.
-- (void)refreshTimestampForRule:(SNTRule *)rule {
+- (void)resetTimestampForRule:(SNTRule *)rule {
   if (!rule) return;
   [rule resetTimestamp];
   [self inDatabase:^(FMDatabase *db) {

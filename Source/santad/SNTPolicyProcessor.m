@@ -78,7 +78,7 @@
           case SNTRuleStateWhitelistTransitive:
             cd.decision = SNTEventStateAllowTransitive;
             // Update the last-accessed timestamp for this rule in the database.
-            if (resetTimestamp) [self.ruleTable refreshTimestampForRule:rule];
+            if (resetTimestamp) [self.ruleTable resetTimestampForRule:rule];
             return cd;
           default: break;
         }

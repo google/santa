@@ -81,6 +81,6 @@
 ///
 ///  Update timestamp for given rule to the current time.
 ///
-- (void)refreshTimestampForRule:(SNTRule *)rule;
+- (void)resetTimestampForRule:(SNTRule *)rule;
 
 @end
