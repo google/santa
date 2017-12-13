@@ -131,6 +131,8 @@
   NSString *policyString = dict[kRulePolicy];
   if ([policyString isEqual:kRulePolicyWhitelist]) {
     newRule.state = SNTRuleStateWhitelist;
+  } else if ([policyString isEqual:kRulePolicyWhitelistCompiler]) {
+    newRule.state = SNTRuleStateWhitelistCompiler;
   } else if ([policyString isEqual:kRulePolicyBlacklist]) {
     newRule.state = SNTRuleStateBlacklist;
   } else if ([policyString isEqual:kRulePolicySilentBlacklist]) {
@@ -156,7 +158,7 @@
   }
 
   // Check rule for extra notification related info.
-  if (newRule.state == SNTRuleStateWhitelist) {
+  if (newRule.state == SNTRuleStateWhitelist || newRule.state == SNTRuleStateWhitelistCompiler) {
     // primaryHash is the bundle hash if there was a bundle hash included in the rule, otherwise
     // it is simply the binary hash.
     NSString *primaryHash = dict[kFileBundleHash];

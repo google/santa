@@ -28,6 +28,7 @@ NSString *const kUploadLogsURL = @"upload_logs_url";
 NSString *const kClientMode = @"client_mode";
 NSString *const kClientModeMonitor = @"MONITOR";
 NSString *const kClientModeLockdown = @"LOCKDOWN";
+
 NSString *const kCleanSync = @"clean_sync";
 NSString *const kWhitelistRegex = @"whitelist_regex";
 NSString *const kBlacklistRegex = @"blacklist_regex";
@@ -37,6 +38,7 @@ NSString *const kFCMToken = @"fcm_token";
 NSString *const kFCMFullSyncInterval = @"fcm_full_sync_interval";
 NSString *const kFCMGlobalRuleSyncDeadline = @"fcm_global_rule_sync_deadline";
 NSString *const kBundlesEnabled = @"bundles_enabled";
+NSString *const kTransitiveWhitelistingEnabled = @"transitive_whitelisting_enabled";
 
 NSString *const kEvents = @"events";
 NSString *const kFileSHA256 = @"file_sha256";
@@ -88,9 +90,12 @@ NSString *const kRules = @"rules";
 NSString *const kRuleSHA256 = @"sha256";
 NSString *const kRulePolicy = @"policy";
 NSString *const kRulePolicyWhitelist = @"WHITELIST";
+NSString *const kRulePolicyWhitelistCompiler = @"WHITELIST_COMPILER";
 NSString *const kRulePolicyBlacklist = @"BLACKLIST";
 NSString *const kRulePolicySilentBlacklist = @"SILENT_BLACKLIST";
 NSString *const kRulePolicyRemove = @"REMOVE";
+
+
 NSString *const kRuleType = @"rule_type";
 NSString *const kRuleTypeBinary = @"BINARY";
 NSString *const kRuleTypeCertificate = @"CERTIFICATE";

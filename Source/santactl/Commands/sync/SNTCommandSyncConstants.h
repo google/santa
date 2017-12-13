@@ -37,6 +37,7 @@ extern NSString *const kFCMToken;
 extern NSString *const kFCMFullSyncInterval;
 extern NSString *const kFCMGlobalRuleSyncDeadline;
 extern NSString *const kBundlesEnabled;
+extern NSString *const kTransitiveWhitelistingEnabled;
 
 extern NSString *const kEvents;
 extern NSString *const kFileSHA256;
@@ -88,6 +89,7 @@ extern NSString *const kRules;
 extern NSString *const kRuleSHA256;
 extern NSString *const kRulePolicy;
 extern NSString *const kRulePolicyWhitelist;
+extern NSString *const kRulePolicyWhitelistCompiler;
 extern NSString *const kRulePolicyBlacklist;
 extern NSString *const kRulePolicySilentBlacklist;
 extern NSString *const kRulePolicyRemove;

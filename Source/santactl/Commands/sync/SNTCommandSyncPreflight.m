@@ -83,6 +83,12 @@
     dispatch_group_leave(group);
   }];
 
+  dispatch_group_enter(group);
+  [[self.daemonConn remoteObjectProxy] setTransitiveWhitelistingEnabled:
+      [resp[kTransitiveWhitelistingEnabled] boolValue] reply:^{
+    dispatch_group_leave(group);
+  }];
+
   self.syncState.eventBatchSize = [resp[kBatchSize] unsignedIntegerValue] ?: kDefaultEventBatchSize;
   self.syncState.FCMToken = resp[kFCMToken];
 

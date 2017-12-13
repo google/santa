@@ -84,15 +84,20 @@ double watchdogRAMPeak = 0;
 - (void)databaseRuleAddRules:(NSArray *)rules
                   cleanSlate:(BOOL)cleanSlate
                        reply:(void (^)(NSError *error))reply {
+  // If any rules are added that are not plain whitelist rules, then flush decision cache.
+  // In particular, the addition of whitelist compiler rules should cause a cache flush.
+  // We also flush cache if a whitelist compiler rule is replaced with a whitelist rule.
+  BOOL flushCache = (cleanSlate ||
+                     [[SNTDatabaseController ruleTable] addedRulesShouldFlushDecisionCache:rules]);
+
   NSError *error;
   [[SNTDatabaseController ruleTable] addRules:rules cleanSlate:cleanSlate error:&error];
 
-  // If any rules were added that were not whitelist, flush cache.
-  NSPredicate *p = [NSPredicate predicateWithFormat:@"SELF.state != %d", SNTRuleStateWhitelist];
-  if ([rules filteredArrayUsingPredicate:p].count || cleanSlate) {
-    LOGI(@"Received non-whitelist rule, flushing cache");
-    [self.driverManager flushCacheNonRootOnly:NO];
-  }
+  // The actual cache flushing happens after the new rules have been added to the database.
+  if (flushCache) {
+    LOGI(@"Flushing decision cache");
+  [self.driverManager flushCacheNonRootOnly:NO];
+}
 
   reply(error);
 }
@@ -197,6 +202,16 @@ double watchdogRAMPeak = 0;
   [[SNTConfigurator configurator] setBundlesEnabled:bundlesEnabled];
   reply();
 }
+
+- (void)transitiveWhitelistingEnabled:(void (^)(BOOL))reply {
+  reply([SNTConfigurator configurator].transitiveWhitelistingEnabled);
+}
+
+- (void)setTransitiveWhitelistingEnabled:(BOOL)enabled reply:(void (^)())reply {
+  [[SNTConfigurator configurator] setTransitiveWhitelistingEnabled:enabled];
+  reply();
+}
+
 
 #pragma mark GUI Ops
 

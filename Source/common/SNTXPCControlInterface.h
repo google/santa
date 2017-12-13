@@ -85,6 +85,8 @@
 - (void)setBlacklistPathRegex:(NSString *)pattern reply:(void (^)())reply;
 - (void)bundlesEnabled:(void (^)(BOOL))reply;
 - (void)setBundlesEnabled:(BOOL)bundlesEnabled reply:(void (^)())reply;
+- (void)transitiveWhitelistingEnabled:(void (^)(BOOL))reply;
+- (void)setTransitiveWhitelistingEnabled:(BOOL)enabled reply:(void (^)())reply;
 
 ///
 ///  GUI Ops

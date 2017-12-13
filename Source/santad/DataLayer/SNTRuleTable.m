@@ -112,8 +112,8 @@
   __block NSUInteger count = 0;
   [self inDatabase:^(FMDatabase *db) {
     count = [db longForQuery:
-             [NSString stringWithFormat:@"SELECT COUNT(*) FROM rules WHERE state=%ld",
-              (long)SNTRuleStateWhitelistCompiler]];
+        [NSString stringWithFormat:@"SELECT COUNT(*) FROM rules WHERE state=%ld",
+        (long)SNTRuleStateWhitelistCompiler]];
   }];
   return count;
 }
@@ -122,8 +122,8 @@
   __block NSUInteger count = 0;
   [self inDatabase:^(FMDatabase *db) {
     count = [db longForQuery:
-             [NSString stringWithFormat:@"SELECT COUNT(*) FROM rules WHERE state=%ld",
-              (long)SNTRuleStateWhitelistTransitive]];
+        [NSString stringWithFormat:@"SELECT COUNT(*) FROM rules WHERE state=%ld",
+        (long)SNTRuleStateWhitelistTransitive]];
   }];
   return count;
 }
@@ -222,6 +222,33 @@
   }];
 
   return !failed;
+}
+
+- (BOOL)addedRulesShouldFlushDecisionCache:(NSArray *)rules {
+  // Check for non-plain-whitelist rules first before querying the database.
+  for (SNTRule *rule in rules) {
+    if (rule.state != SNTRuleStateWhitelist) return YES;
+  }
+
+  // If still here, then all rules in the array are whitelist rules.  So now we look for whitelist
+  // rules where there is a previously existing whitelist compiler rule for the same shasum.
+  // If so we find such a rule, then cache should be flushed.
+  __block BOOL flushDecisionCache = NO;
+  [self inTransaction:^(FMDatabase *db, BOOL *rollback) {
+    for (SNTRule *rule in rules) {
+      // Whitelist certificate rules are ignored
+      if (rule.type == SNTRuleTypeCertificate) continue;
+
+      if ([db longForQuery:
+           @"SELECT COUNT(*) FROM rules WHERE shasum=? AND type=? AND state=? LIMIT 1",
+           rule.shasum, @(SNTRuleTypeBinary), @(SNTRuleStateWhitelistCompiler)] > 0) {
+        flushDecisionCache = YES;
+        break;
+      }
+    }
+  }];
+
+  return flushDecisionCache;
 }
 
 // Updates the timestamp to current time for the given rule.

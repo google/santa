@@ -125,19 +125,30 @@
   santa_action_t action =
       (SNTEventStateAllow & cd.decision) ? ACTION_RESPOND_ALLOW : ACTION_RESPOND_DENY;
 
+  // TODO: this needs to happen after potential transitive action downgrade.
   // Save decision details for logging the execution later.
   if (action == ACTION_RESPOND_ALLOW) [_eventLog saveDecisionDetails:cd];
 
-  // Upgrade the action if the rule indicated that allowed binary was a compiler.  When sent back
-  // to the kernel, it can use this info to cache the vnode for filtering of future messages.
-  if (cd.decision == SNTEventStateAllowCompiler) {
+  // If the rule indicated that the allowed binary was a compiler and Santa is configured to allow
+  // transitive whitelisting, then upgrade the action to ACTION_RESPOND_ALLOW_COMPILER.
+  // When sent back to the kernel, it can use this info to cache the vnode for filtering of future
+  // messages.
+  if (cd.decision == SNTEventStateAllowCompiler &&
+      [[SNTConfigurator configurator] transitiveWhitelistingEnabled]) {
     // TODO: remove this log message.
     LOGI(@"#### validateBinaryWithMessage: compiler vnodeID = %llx, pid = %d, path=%s",
          cd.vnodeId, message.pid, message.path);
     action = ACTION_RESPOND_ALLOW_COMPILER;
-  // Also upgrade transitive rule decisions, so that the kernel set an expiration policy for them.
+  // When transitive whitelisting is enabled, we also upgrade transitive rule decisions, so that the
+  // kernel can set an expiration policy for them.  If transitive whitelisting is disabled, then the
+  // transitive rule decision is downgraded to ACTION_RESPOND_DENY.
+  // TODO: is this the right policy?
   } else if (cd.decision == SNTEventStateAllowTransitive) {
-    action = ACTION_RESPOND_ALLOW_TRANSITIVE;
+    if ([[SNTConfigurator configurator] transitiveWhitelistingEnabled]) {
+      action = ACTION_RESPOND_ALLOW_TRANSITIVE;
+    } else {
+      //action = ACTION_RESOND_DENY;
+    }
   }
 
   // Send the decision to the kernel.
