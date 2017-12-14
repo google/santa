@@ -48,7 +48,8 @@
                                                             int64_t transitive) {
     requestDict[kBinaryRuleCount] = @(binary);
     requestDict[kCertificateRuleCount] = @(certificate);
-    // TODO: should we add compiler/transitive counts to the request dict?
+    requestDict[kCompilerRuleCount] = @(compiler);
+    requestDict[kTransitiveRuleCount] = @(transitive);
     dispatch_group_leave(group);
   }];
 

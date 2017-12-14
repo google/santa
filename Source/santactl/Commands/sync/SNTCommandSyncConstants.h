@@ -33,6 +33,8 @@ extern NSString *const kWhitelistRegex;
 extern NSString *const kBlacklistRegex;
 extern NSString *const kBinaryRuleCount;
 extern NSString *const kCertificateRuleCount;
+extern NSString *const kCompilerRuleCount;
+extern NSString *const kTransitiveRuleCount;
 extern NSString *const kFCMToken;
 extern NSString *const kFCMFullSyncInterval;
 extern NSString *const kFCMGlobalRuleSyncDeadline;
