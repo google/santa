@@ -36,21 +36,9 @@
   return self;
 }
 
-// Grabs rule decision from database without refreshing its access timestamp.
 - (SNTCachedDecision *)decisionForFileInfo:(SNTFileInfo *)fileInfo
                                 fileSHA256:(NSString *)fileSHA256
                          certificateSHA256:(NSString *)certificateSHA256 {
-
-  return [self decisionForFileInfo:(SNTFileInfo *)fileInfo
-                        fileSHA256:(NSString *)fileSHA256
-                 certificateSHA256:(NSString *)certificateSHA256
-                    resetTimestamp:NO];
-}
-
-- (SNTCachedDecision *)decisionForFileInfo:(SNTFileInfo *)fileInfo
-                                fileSHA256:(NSString *)fileSHA256
-                         certificateSHA256:(NSString *)certificateSHA256
-                            resetTimestamp:(BOOL)resetTimestamp {
 
   SNTCachedDecision *cd = [[SNTCachedDecision alloc] init];
   cd.sha256 = fileSHA256 ?: fileInfo.SHA256;
@@ -76,10 +64,15 @@
             cd.decision = SNTEventStateAllowCompiler;
             return cd;
           case SNTRuleStateWhitelistTransitive:
-            cd.decision = SNTEventStateAllowTransitive;
-            // Update the last-accessed timestamp for this rule in the database.
-            if (resetTimestamp) [self.ruleTable resetTimestampForRule:rule];
-            return cd;
+            // If transitive whitelisting is enabled, then SNTRuleStateWhitelistTransitive
+            // rules become SNTEventStateAllowTransitive decisions.  Otherwise, we treat the
+            // rule as if it were SNTRuleStateUnknown.
+            if ([[SNTConfigurator configurator] transitiveWhitelistingEnabled]) {
+              cd.decision = SNTEventStateAllowTransitive;
+              return cd;
+            } else {
+              rule.state = SNTRuleStateUnknown;
+            }
           default: break;
         }
         break;

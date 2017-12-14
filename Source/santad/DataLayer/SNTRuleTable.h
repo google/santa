@@ -83,4 +83,9 @@
 ///
 - (void)resetTimestampForRule:(SNTRule *)rule;
 
+///
+///  Remove transitive rules that haven't been used in a long time.
+///
+- (void)removeOutdatedTransitiveRules;
+
 @end

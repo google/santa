@@ -159,10 +159,12 @@ extern NSString *const kDefaultConfigFilePath;
 ///
 @property BOOL bundlesEnabled;
 
+#pragma mark Transitive Whitelisting Settings
+
 ///
-///   If YES, binaries marked with SNTRuleStateWhitelistCompiler rules are allowed to transitively
-///   whitelist any executables that they produce.  If NO, SNTRuleStateWhitelistCompiler rules are
-///   interpreted as if they were simply SNTRuleStateWhitelist rules.  Defaults to NO.
+///  If YES, binaries marked with SNTRuleStateWhitelistCompiler rules are allowed to transitively
+///  whitelist any executables that they produce.  If NO, SNTRuleStateWhitelistCompiler rules are
+///  interpreted as if they were simply SNTRuleStateWhitelist rules.  Defaults to NO.
 ///
 @property BOOL transitiveWhitelistingEnabled;
 

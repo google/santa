@@ -28,7 +28,6 @@ NSString *const kUploadLogsURL = @"upload_logs_url";
 NSString *const kClientMode = @"client_mode";
 NSString *const kClientModeMonitor = @"MONITOR";
 NSString *const kClientModeLockdown = @"LOCKDOWN";
-
 NSString *const kCleanSync = @"clean_sync";
 NSString *const kWhitelistRegex = @"whitelist_regex";
 NSString *const kBlacklistRegex = @"blacklist_regex";
@@ -94,8 +93,6 @@ NSString *const kRulePolicyWhitelistCompiler = @"WHITELIST_COMPILER";
 NSString *const kRulePolicyBlacklist = @"BLACKLIST";
 NSString *const kRulePolicySilentBlacklist = @"SILENT_BLACKLIST";
 NSString *const kRulePolicyRemove = @"REMOVE";
-
-
 NSString *const kRuleType = @"rule_type";
 NSString *const kRuleTypeBinary = @"BINARY";
 NSString *const kRuleTypeCertificate = @"CERTIFICATE";

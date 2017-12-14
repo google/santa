@@ -24,9 +24,12 @@
 #import "SNTCachedDecision.h"
 #import "SNTCommonEnums.h"
 #import "SNTConfigurator.h"
+#import "SNTDatabaseController.h"
+#import "SNTRuleTable.h"
 #import "SNTFileInfo.h"
 #import "SNTKernelCommon.h"
 #import "SNTLogging.h"
+#import "SNTRule.h"
 
 @interface SNTEventLog ()
 @property NSMutableDictionary<NSNumber *, SNTCachedDecision *> *detailStore;
@@ -35,6 +38,9 @@
 // Caches for uid->username and gid->groupname lookups.
 @property NSCache<NSNumber *, NSString *> *userNameMap;
 @property NSCache<NSNumber *, NSString *> *groupNameMap;
+
+// Cache for sha256 -> date of last timestamp reset.
+@property NSCache<NSString *, NSDate *> *timestampResetMap;
 
 @property NSDateFormatter *dateFormatter;
 @end
@@ -52,6 +58,8 @@
     _userNameMap.countLimit = 100;
     _groupNameMap = [[NSCache alloc] init];
     _groupNameMap.countLimit = 100;
+    _timestampResetMap = [[NSCache alloc] init];
+    _timestampResetMap.countLimit = 100;
 
     _dateFormatter = [[NSDateFormatter alloc] init];
     _dateFormatter.dateFormat = @"yyyy-MM-dd'T'HH:mm:ss.SSS'Z'";
@@ -118,6 +126,7 @@
   LOGI(@"%@", outStr);
 }
 
+// TODO: remove this function.
 - (void)logProcessMonitor:(santa_message_t)message {
   LOGI(@"%@", @(message.path));
 }
@@ -132,6 +141,10 @@
     cd = _detailStore[@(message.vnode_id)];
   });
   [self logExecution:message withDecision:cd];
+
+  // We also reset the timestamp for transitive rules here, because it happens to be where we
+  // have access to both the execution notification and the sha256 associated with rule.
+  [self resetTimestampForCachedDecision:cd];
 }
 
 - (void)logExecution:(santa_message_t)message withDecision:(SNTCachedDecision *)cd {
@@ -236,6 +249,23 @@
   }
 
   LOGI(@"%@", outLog);
+}
+
+// Whenever a cached decision resulting from a transitive whitelist rule is used to allow the
+// execution of a binary, we update the timestamp on the transitive rule in the rules database.
+// To prevent writing to the database too often, we space out consecutive writes by 3600 seconds.
+- (void)resetTimestampForCachedDecision:(SNTCachedDecision *)cd {
+  if (cd.decision != SNTEventStateAllowTransitive) return;
+  LOGI(@"#### updating timestamp for %@", cd.sha256);
+  NSDate *lastUpdate = [self.timestampResetMap objectForKey:cd.sha256];
+  if (!lastUpdate || -[lastUpdate timeIntervalSinceNow] > 3600) {
+    SNTRule *rule = [[SNTRule alloc] initWithShasum:cd.sha256
+                                              state:SNTRuleStateWhitelistTransitive
+                                               type:SNTRuleTypeBinary
+                                          customMsg:nil];
+    [[SNTDatabaseController ruleTable] resetTimestampForRule:rule];
+    [self.timestampResetMap setObject:[NSDate date] forKey:cd.sha256];
+  }
 }
 
 - (void)logDiskAppeared:(NSDictionary *)diskProperties {

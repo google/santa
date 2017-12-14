@@ -73,8 +73,7 @@ REGISTER_COMMAND_NAME(@"rule")
 
 - (void)runWithArguments:(NSArray *)arguments {
   SNTConfigurator *config = [SNTConfigurator configurator];
-  // TODO: --force flag was added so that we could manually add compiler rules during testing.
-  // It's possibly a bad idea and should be removed.
+  // DEBUG builds add a --force flag to allow manually adding/removing rules during testing.
 #ifdef DEBUG
   if ([config syncBaseURL] &&
       ![arguments containsObject:@"--check"] &&

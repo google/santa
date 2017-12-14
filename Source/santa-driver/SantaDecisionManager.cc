@@ -297,13 +297,6 @@ santa_action_t SantaDecisionManager::GetFromCache(uint64_t identifier) {
         decision_cache->remove(identifier);
         return ACTION_UNSET;
       }
-    } else if (result == ACTION_RESPOND_ALLOW_TRANSITIVE) {
-      auto expiry_time = decision_time +
-          (kMaxAllowTransitiveCacheTimeMilliseconds * 1000);
-      if (expiry_time < GetCurrentUptime()) {
-        decision_cache->remove(identifier);
-        return ACTION_UNSET;
-      }
     }
   }
 

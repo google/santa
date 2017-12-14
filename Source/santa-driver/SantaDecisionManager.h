@@ -161,14 +161,6 @@ class SantaDecisionManager : public OSObject {
   */
   static const uint64_t kMaxDenyCacheTimeMilliseconds = 500;
 
-  /**
-    The maximum number of milliseconds a cached allow transitive message should
-    be considered valid.  86400000 ms = 1 day, so that transitive messages must
-    be daily refreshed from the rules database, to keep their last accessed
-    timestamp in the database fresh.
-  */
-  static const uint64_t kMaxAllowTransitiveCacheTimeMilliseconds = 86400000;
-
   /// Maximum number of entries in the in-kernel cache.
   static const uint32_t kMaxCacheSize = 10000;
 

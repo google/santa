@@ -116,39 +116,37 @@
   // Actually make the decision (and refresh rule access timestamp).
   SNTCachedDecision *cd = [self.policyProcessor decisionForFileInfo:binInfo
                                                          fileSHA256:nil
-                                                  certificateSHA256:csInfo.leafCertificate.SHA256
-                                                     resetTimestamp:YES];
+                                                  certificateSHA256:csInfo.leafCertificate.SHA256];
   cd.certCommonName = csInfo.leafCertificate.commonName;
   cd.vnodeId = message.vnode_id;
 
-  // Formulate an action from the decision
+  // Formulate an initial action from the decision.
   santa_action_t action =
       (SNTEventStateAllow & cd.decision) ? ACTION_RESPOND_ALLOW : ACTION_RESPOND_DENY;
 
-  // TODO: this needs to happen after potential transitive action downgrade.
-  // Save decision details for logging the execution later.
-  if (action == ACTION_RESPOND_ALLOW) [_eventLog saveDecisionDetails:cd];
-
-  // If the rule indicated that the allowed binary was a compiler and Santa is configured to allow
-  // transitive whitelisting, then upgrade the action to ACTION_RESPOND_ALLOW_COMPILER.
-  // When sent back to the kernel, it can use this info to cache the vnode for filtering of future
-  // messages.
+  // Possibly modify that action.
   if (cd.decision == SNTEventStateAllowCompiler &&
       [[SNTConfigurator configurator] transitiveWhitelistingEnabled]) {
+    // If rule indicated that the allowed binary was a compiler and Santa is configured to allow
+    // transitive whitelisting, upgrade the action to ACTION_RESPOND_ALLOW_COMPILER. When sent back
+    // to the kernel, it can use this info to cache the vnode for filtering of future messages.
     // TODO: remove this log message.
     LOGI(@"#### validateBinaryWithMessage: compiler vnodeID = %llx, pid = %d, path=%s",
          cd.vnodeId, message.pid, message.path);
     action = ACTION_RESPOND_ALLOW_COMPILER;
-  // When transitive whitelisting is enabled, we also upgrade transitive rule decisions, so that the
-  // kernel can set an expiration policy for them.  If transitive whitelisting is disabled, then the
-  // transitive rule decision is downgraded to ACTION_RESPOND_DENY.
-  // TODO: is this the right policy?
   } else if (cd.decision == SNTEventStateAllowTransitive) {
-    if ([[SNTConfigurator configurator] transitiveWhitelistingEnabled]) {
-      action = ACTION_RESPOND_ALLOW_TRANSITIVE;
-    } else {
-      //action = ACTION_RESOND_DENY;
-    }
+    // When transitive whitelisting is enabled, we also upgrade transitive rule decisions.
+    // TODO: may not need to distinguish transitive allows in the kernel anymore.
+    action = ACTION_RESPOND_ALLOW_TRANSITIVE;
+  }
+
+  // Save decision details for logging the execution later.  For transitive rules, we also use
+  // the shasum stored in the decision details to update the rule's timestamp whenever an
+  // ACTION_NOTIFY_EXEC message related to the transitive rule is received.
+  if (action == ACTION_RESPOND_ALLOW ||
+      action == ACTION_RESPOND_ALLOW_COMPILER ||
+      action == ACTION_RESPOND_ALLOW_TRANSITIVE) {
+    [_eventLog saveDecisionDetails:cd];
   }
 
   // Send the decision to the kernel.

@@ -20,9 +20,16 @@
 #import "SNTLogging.h"
 #import "SNTRule.h"
 
+// TODO: this should be configurable.
+// How many rules must be in database before we start trying to remove transitive rules.
+static const NSUInteger kTransitiveRuleCullingThreshold = 500000;
+// Consider transitive rules out of date if they haven't been used in six months.
+static const NSUInteger kTransitiveRuleExpirationSeconds = 6 * 30 * 24 * 3600;
+
 @interface SNTRuleTable ()
 @property NSString *santadCertSHA;
 @property NSString *launchdCertSHA;
+@property NSDate *lastTransitiveRuleCulling;
 @end
 
 @implementation SNTRuleTable
@@ -255,6 +262,28 @@
       LOGE(@"Could not update timestamp for rule with sha256=%@", rule.shasum);
     }
   }];
+}
+
+- (void)removeOutdatedTransitiveRules {
+  // Don't attempt to remove transitive rules unless it's been at least an hour since the
+  // last time we tried to remove them.
+  if (self.lastTransitiveRuleCulling &&
+      -[self.lastTransitiveRuleCulling timeIntervalSinceNow] < 3600) return;
+
+  // Don't bother removing rules unless rule database is large.
+  if ([self ruleCount] < kTransitiveRuleCullingThreshold) return;
+  // Determine what timestamp qualifies as outdated.
+  NSUInteger outdatedTimestamp =
+      [[NSDate date] timeIntervalSinceReferenceDate] - kTransitiveRuleExpirationSeconds;
+
+  [self inDatabase:^(FMDatabase *db) {
+    if (![db executeUpdate:@"DELETE FROM rules WHERE state=? AND timestamp < ?",
+          @(SNTRuleStateWhitelistTransitive), @(outdatedTimestamp)]) {
+      LOGE(@"Could not remove outdated transitive rules");
+    }
+  }];
+
+  self.lastTransitiveRuleCulling = [NSDate date];
 }
 
 //  Helper to create an NSError where necessary.
