@@ -115,12 +115,6 @@ class SantaDecisionManager : public OSObject {
   /// Decrements the count of active callbacks pending.
   void DecrementListenerInvocations();
 
-  // Remove pid from cache of pids associated with compiler processes.
-  void ForgetCompilerPid(pid_t pid);
-
-  // Start thread to monitor and remove given pid from cache when process exits.
-  void MonitorCompilerPidForExit(pid_t pid);
-
   // Determine if pid belongs to a compiler process. When
   // check_compiler_ancestors_ is set to true, this also checks all ancestor
   // processes of the pid.
@@ -276,7 +270,6 @@ public: // TODO: remove
   SantaCache<uint64_t> *root_decision_cache_;
   SantaCache<uint64_t> *non_root_decision_cache_;
   SantaCache<uint64_t> *vnode_pid_map_;
-  SantaCache<bool> *compiler_pid_set_;
 
   /**
     Return the correct cache for a given identifier.

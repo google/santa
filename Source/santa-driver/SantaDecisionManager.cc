@@ -25,6 +25,40 @@
 #define super OSObject
 OSDefineMetaClassAndStructors(SantaDecisionManager, OSObject);
 
+# pragma mark Monitoring PIDs
+
+// This keeps track of all pids associated with compiler processes.  It is defined as a global
+// variable so that the pid monitor threads can access it without needing to reference
+// our instance of SantaDecisionManager.
+static SantaCache<bool> *compiler_pid_set_ = new SantaCache<bool>(500, 5);
+
+// Function to monitor for process termination and then remove the process pid
+// from cache of compiler pids.
+static void pid_monitor(void *param, __unused wait_result_t wait_result) {
+  pid_t pid = (pid_t)(uintptr_t)param;
+  struct timespec ts = { .tv_sec = 1, .tv_nsec = 0 }; // wait 1 sec between each poll
+
+  while (true) {
+    proc_t proc = proc_find(pid);
+    if (!proc) break;
+    proc_rele(proc);
+    msleep(param, NULL, 0, "", &ts);
+  }
+
+  if (compiler_pid_set_) compiler_pid_set_->remove(pid);
+  thread_terminate(current_thread());
+}
+
+// This spins off a new thread for each process that we monitor.  Generally the threads should be
+// short-lived, since they die as soon as their associated compiler process dies.
+void MonitorCompilerPidForExit(pid_t pid) {
+  thread_t thread = THREAD_NULL;
+  if (KERN_SUCCESS != kernel_thread_start(pid_monitor, (void *)(uintptr_t)pid, &thread)) {
+    LOGE("couldn't start pid monitor thread");
+  }
+  thread_deallocate(thread);
+}
+
 #pragma mark Object Lifecycle
 
 bool SantaDecisionManager::init() {
@@ -40,7 +74,6 @@ bool SantaDecisionManager::init() {
   root_decision_cache_ = new SantaCache<uint64_t>(5000, 2);
   non_root_decision_cache_ = new SantaCache<uint64_t>(500, 2);
   vnode_pid_map_ = new SantaCache<uint64_t>(2000, 5);
-  compiler_pid_set_ = new SantaCache<bool>(500, 5);
 
   decision_dataqueue_ = IOSharedDataQueue::withEntries(
       kMaxDecisionQueueEvents, sizeof(santa_message_t));
@@ -63,6 +96,9 @@ void SantaDecisionManager::free() {
   delete root_decision_cache_;
   delete non_root_decision_cache_;
   delete vnode_pid_map_;
+  auto temp = compiler_pid_set_;
+  compiler_pid_set_ = nullptr;
+  delete temp;
 
   if (decision_dataqueue_lock_) {
     lck_mtx_free(decision_dataqueue_lock_, sdm_lock_grp_);
@@ -436,75 +472,6 @@ void SantaDecisionManager::IncrementListenerInvocations() {
 
 void SantaDecisionManager::DecrementListenerInvocations() {
   OSDecrementAtomic(&listener_invocations_);
-}
-
-# pragma mark Monitoring PIDs
-
-void SantaDecisionManager::ForgetCompilerPid(pid_t pid) {
-  compiler_pid_set_->remove(pid);
-}
-
-// Arguments that we pass to pid_monitor_thread.
-typedef struct {
-  pid_t pid;                  // process to monitor
-  struct timespec ts;         // time to sleep between checks
-  SantaDecisionManager *sdm;  // reference to SantaDecisionManager
-} pid_monitor_info;
-
-// Function to monitor for process termination and then remove the process pid
-// from cache of compiler pids.
-static void pid_monitor(void *param, __unused wait_result_t wait_result) {
-  pid_monitor_info *info = (pid_monitor_info *)param;
-  if (info == NULL || info->sdm == NULL) {
-    thread_terminate(current_thread());
-    return;
-  }
-
-  // Kernel logging with IOLog appears broken, so send log message to userspace.
-  // TODO: remove logging.
-  auto message = info->sdm->NewMessage(nullptr);
-  snprintf(message->path, sizeof(message->path),
-           "#### santa-driver: compiler pid monitor for %d", info->pid);
-  message->action = ACTION_NOTIFY_MONITOR;
-  info->sdm->PostToLogQueue(message);
-
-  while (true) {
-    proc_t proc = proc_find(info->pid);
-    if (!proc) break;
-    proc_rele(proc);
-    msleep((void *)info, NULL, 0, "", &info->ts);
-  }
-
-  // TODO: remove logging.
-  snprintf(message->path, sizeof(message->path),
-           "#### santa-driver: compiler pid exited: %d", info->pid);
-  message->action = ACTION_NOTIFY_MONITOR;
-  info->sdm->PostToLogQueue(message);
-
-  info->sdm->ForgetCompilerPid(info->pid);
-
-  delete info;
-  thread_terminate(current_thread());
-}
-
-// This spins off a new thread for each process that we monitor.  Generally the
-// threads should be short-lived, since they die as soon as their associated
-// compiler process dies.
-void SantaDecisionManager::MonitorCompilerPidForExit(pid_t pid) {
-  auto info = new pid_monitor_info;
-  info->pid = pid;
-  info->ts = ts_;
-  info->sdm = this;
-  thread_t thread = THREAD_NULL;
-  if (KERN_SUCCESS != kernel_thread_start(pid_monitor, (void *)info, &thread)) {
-    // TODO: remove log message.
-    auto message = NewMessage(nullptr);
-    snprintf(message->path, sizeof(message->path),
-        "#### santa-driver: couldn't start pid monitor thread for %d", pid);
-    message->action = ACTION_NOTIFY_MONITOR;
-    PostToLogQueue(message);
-  }
-  thread_deallocate(thread);
 }
 
 bool SantaDecisionManager::IsCompilerProcess(pid_t pid) {
