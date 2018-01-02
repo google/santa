@@ -124,7 +124,7 @@ A tool like Santa doesn't really lend itself to screenshots, so here's a video i
 <img src="https://zippy.gfycat.com/MadFatalAmphiuma.gif" alt="Santa Block Video" />
 </p>
 
-Building
+Building with Xcode
 ========
 
 ```sh
@@ -143,6 +143,27 @@ Note: the Xcode project is setup to use any installed "Mac Developer" certificat
 and for security-reasons parts of Santa will not operate properly if not signed.
 
 For more details on building see the [building.md](https://github.com/google/santa/blob/master/Docs/development/building.md) document.
+
+Building with CMake
+========
+### General steps
+1. Install Xcode and the command line tools
+2. Install CMake using homebrew
+3. Clone the santa source code repository
+4. Set the signing key
+5. Create a build folder and configure the project
+6. Run make
+
+Example
+git clone https://github.com/google/santa.git
+mkdir build
+cd build
+
+export CODESIGN_IDENTITY=XXX
+cmake ../santa
+
+make -j `sysctl -n hw.ncpu`
+The CODESIGN_IDENTITY parameter can also be passed directly to CMake: cmake -DCODESIGN_IDENTITY=XXX /path/to/source/code
 
 Kext Signing
 ============
