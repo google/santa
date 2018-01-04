@@ -126,11 +126,6 @@
   LOGI(@"%@", outStr);
 }
 
-// TODO: remove this function.
-- (void)logProcessMonitor:(santa_message_t)message {
-  LOGI(@"%@", @(message.path));
-}
-
 - (void)logDeniedExecution:(SNTCachedDecision *)cd withMessage:(santa_message_t)message {
   [self logExecution:message withDecision:cd];
 }
@@ -256,7 +251,6 @@
 // To prevent writing to the database too often, we space out consecutive writes by 3600 seconds.
 - (void)resetTimestampForCachedDecision:(SNTCachedDecision *)cd {
   if (cd.decision != SNTEventStateAllowTransitive) return;
-  LOGI(@"#### updating timestamp for %@", cd.sha256);
   NSDate *lastUpdate = [self.timestampResetMap objectForKey:cd.sha256];
   if (!lastUpdate || -[lastUpdate timeIntervalSinceNow] > 3600) {
     SNTRule *rule = [[SNTRule alloc] initWithShasum:cd.sha256

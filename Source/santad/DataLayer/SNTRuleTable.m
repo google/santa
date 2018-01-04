@@ -20,7 +20,7 @@
 #import "SNTLogging.h"
 #import "SNTRule.h"
 
-// TODO: this should be configurable.
+// TODO(nguyenphillip): this should be configurable.
 // How many rules must be in database before we start trying to remove transitive rules.
 static const NSUInteger kTransitiveRuleCullingThreshold = 500000;
 // Consider transitive rules out of date if they haven't been used in six months.
@@ -192,7 +192,7 @@ static const NSUInteger kTransitiveRuleExpirationSeconds = 6 * 30 * 24 * 3600;
     for (SNTRule *rule in rules) {
       if (![rule isKindOfClass:[SNTRule class]] || rule.shasum.length == 0 ||
           rule.state == SNTRuleStateUnknown || rule.type == SNTRuleTypeUnknown) {
-        [self fillError:error code:SNTRuleTableErrorInvalidRule message:nil];
+        [self fillError:error code:SNTRuleTableErrorInvalidRule message:rule.description];
         *rollback = failed = YES;
         return;
       }
@@ -297,7 +297,8 @@ static const NSUInteger kTransitiveRuleExpirationSeconds = 6 * 30 * 24 * 3600;
       d[NSLocalizedDescriptionKey] = @"Empty rule array";
       break;
     case SNTRuleTableErrorInvalidRule:
-      d[NSLocalizedDescriptionKey] = @"Rule array contained invalid entry";
+      d[NSLocalizedDescriptionKey] =
+          [NSString stringWithFormat:@"Rule array contained invalid entry: %@", message];
       break;
     case SNTRuleTableErrorInsertOrReplaceFailed:
       d[NSLocalizedDescriptionKey] = @"A database error occurred while inserting/replacing a rule";

@@ -86,9 +86,12 @@
 
   dispatch_group_enter(group);
   [[self.daemonConn remoteObjectProxy]
-   // TODO: fix the following line
+   // TODO(nguyenphillip): get rid of the debug case
+#ifdef DEBUG
       setTransitiveWhitelistingEnabled:YES
-   // setTransitiveWhitelistingEnabled:[resp[kTransitiveWhitelistingEnabled] boolValue]
+#else
+      setTransitiveWhitelistingEnabled:[resp[kTransitiveWhitelistingEnabled] boolValue]
+#endif
                                  reply:^{
     dispatch_group_leave(group);
   }];

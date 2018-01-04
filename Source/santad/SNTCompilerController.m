@@ -41,10 +41,7 @@
   // alone, so that a whitelist or blacklist rule can't be overwritten by a transitive one.
   SNTRuleTable *ruleTable = [SNTDatabaseController ruleTable];
   SNTRule *prevRule = [ruleTable ruleForBinarySHA256:fi.SHA256 certificateSHA256:nil];
-  if (prevRule && prevRule.state != SNTRuleStateWhitelistTransitive) {
-    LOGI(@"#### found existing rule for %@, not adding transitive rule", fi.path);
-    return;
-  }
+  if (prevRule && prevRule.state != SNTRuleStateWhitelistTransitive) return;
 
   // Construct a new transitive whitelist rule for the executable.
   SNTRule *rule = [[SNTRule alloc] initWithShasum:fi.SHA256
@@ -55,10 +52,9 @@
   // Add the new rule to the rules database.
   NSError *err;
   if (![ruleTable addRules:@[rule] cleanSlate:NO error:&err]) {
-    LOGE(@"#### SNTCompilerController: error adding new rule: %@", err.localizedDescription);
+    LOGE(@"unable to add new transitive rule to database: %@", err.localizedDescription);
   } else {
-    LOGI(@"#### SNTCompilerController: CLOSE %d new whitelisted executable %s (SHA=%@)",
-         message.pid, target, fi.SHA256);
+    LOGI(@"action=WHITELIST|pid=%d|path=%s|sha256=%@", message.pid, target, fi.SHA256);
   }
 }
 

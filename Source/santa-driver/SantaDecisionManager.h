@@ -211,7 +211,6 @@ class SantaDecisionManager : public OSObject {
     @param message The message to send
     @return bool true if sending was successful.
   */
-public: // TODO: remove
   bool PostToLogQueue(santa_message_t *message);
 
   /**
