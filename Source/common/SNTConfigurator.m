@@ -14,7 +14,11 @@
 
 #import "SNTConfigurator.h"
 
+#include <sys/stat.h>
+
+#import "SNTFileWatcher.h"
 #import "SNTLogging.h"
+#import "SNTStrengthify.h"
 #import "SNTSystemInfo.h"
 
 @interface SNTConfigurator ()
@@ -31,6 +35,8 @@
 /// Keys used by a mobileconfig or sync server
 @property(readonly, nonatomic) NSArray *syncServerKeys;
 @property(readonly, nonatomic) NSArray *mobileConfigKeys;
+
+@property SNTFileWatcher *syncStateWatcher;
 @end
 
 @implementation SNTConfigurator
@@ -352,14 +358,27 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
 
   // Load the last known sync state
   if (![[NSFileManager defaultManager] fileExistsAtPath:kSyncStateFilePath]) return;
+  NSMutableDictionary *syncState = [self syncState];
+  if (!self) return;
 
+  // Overwrite or add the sync state to the running config
+  for (NSString *key in [self syncServerKeys]) {
+    self.configData[key] = syncState[key];
+  }
+  [self saveSyncStateToDisk];
+}
+
+#pragma mark Private
+
+- (NSMutableDictionary *)syncState {
   NSError *error;
   NSData *readData = [NSData dataWithContentsOfFile:kSyncStateFilePath
                                             options:NSDataReadingMappedIfSafe
                                               error:&error];
   if (!readData) {
     LOGE(@"Could not read sync state file: %@, replacing.", [error localizedDescription]);
-    return;
+    [self saveSyncStateToDisk];
+    return nil;
   }
 
   NSMutableDictionary *syncState =
@@ -369,21 +388,18 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
                                                   error:&error];
   if (!syncState) {
     LOGE(@"Could not parse sync state file: %@, replacing.", [error localizedDescription]);
-    return;
+    [self saveSyncStateToDisk];
+    return nil;
   }
 
-  // Overwrite or add the sync state to the running config
-  for (NSString *key in [self syncServerKeys]) {
-    self.configData[key] = syncState[key];
-  }
+  return syncState;
 }
-
-#pragma mark Private
 
 ///
 ///  Saves the current effective syncState to disk.
 ///
 - (void)saveSyncStateToDisk {
+  // Only santad should write to this file.
   if (geteuid() != 0) return;
   NSMutableDictionary *syncState =
       [NSMutableDictionary dictionaryWithCapacity:[self syncServerKeys].count];
@@ -391,8 +407,45 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
     syncState[key] = self.configData[key];
   }
   [syncState writeToFile:kSyncStateFilePath atomically:YES];
-}
+  [[NSFileManager defaultManager] setAttributes:@{ NSFilePosixPermissions : @0644 }
+                                   ofItemAtPath:kSyncStateFilePath error:NULL];
 
+  // Start listening for changes to the sync state file. Revert any out of band changes.
+  static dispatch_once_t onceToken;
+  dispatch_once(&onceToken, ^{
+    WEAKIFY(self);
+    self.syncStateWatcher = [[SNTFileWatcher alloc] initWithFilePath:kSyncStateFilePath
+                                                             handler:^(unsigned long data) {
+      if (data & DISPATCH_VNODE_ATTRIB) {
+        const char *cPath = [kSyncStateFilePath fileSystemRepresentation];
+        struct stat fileStat;
+        stat(cPath, &fileStat);
+        int mask = S_IRWXU | S_IRWXG | S_IRWXO;
+        int desired = S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH;
+        if (fileStat.st_uid != 0 || fileStat.st_gid != 0 || (fileStat.st_mode & mask) != desired) {
+          LOGD(@"Sync state file permissions changed, fixing.");
+          chown(cPath, 0, 0);
+          chmod(cPath, desired);
+        }
+      } else {
+        STRONGIFY(self);
+        NSDictionary *syncState = [self syncState];
+        for (NSString *key in self.syncServerKeys) {
+          if (((self.configData[key] && !syncState[key]) ||
+              (!self.configData[key] && syncState[key]) ||
+              (self.configData[key] && ![self.configData[key] isEqualTo:syncState[key]]))) {
+            // Ignore sync dates
+            if ([key isEqualToString:kRuleSyncLastSuccess] ||
+                [key isEqualToString:kFullSyncLastSuccess]) return;
+            LOGE(@"Sync state file changed, replacing");
+            [self saveSyncStateToDisk];
+            return;
+          }
+        }
+      }
+    }];
+  });
+}
 
 ///
 ///  Returns a config provided by a com.google.santa mobileconfig or an empty
