@@ -128,8 +128,7 @@
   if (cd.decision == SNTEventStateAllowCompiler &&
       [[SNTConfigurator configurator] transitiveWhitelistingEnabled]) {
     // If rule indicated that the allowed binary was a compiler and Santa is configured to allow
-    // transitive whitelisting, upgrade the action to ACTION_RESPOND_ALLOW_COMPILER. When sent back
-    // to the kernel, it can use this info to cache the vnode for filtering of future messages.
+    // transitive whitelisting, upgrade the action to ACTION_RESPOND_ALLOW_COMPILER.
     action = ACTION_RESPOND_ALLOW_COMPILER;
   } else if (cd.decision == SNTEventStateAllowTransitive) {
     // When transitive whitelisting is enabled, we also upgrade transitive rule decisions.

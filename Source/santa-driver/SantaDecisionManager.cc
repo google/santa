@@ -35,10 +35,11 @@ static SantaCache<bool> *compiler_pid_set_ = new SantaCache<bool>(500, 5);
 // Function to monitor for process termination and then remove the process pid
 // from cache of compiler pids.
 static void pid_monitor(void *param, __unused wait_result_t wait_result) {
+  // Double cast is required to avoid 'cast from pointer to smaller type loses information' error.
   pid_t pid = (pid_t)(uintptr_t)param;
   struct timespec ts = { .tv_sec = 1, .tv_nsec = 0 }; // wait 1 sec between each poll
 
-  while (true) {
+  while (compiler_pid_set_) {
     proc_t proc = proc_find(pid);
     if (!proc) break;
     proc_rele(proc);

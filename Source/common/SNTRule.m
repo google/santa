@@ -14,6 +14,10 @@
 
 #import "SNTRule.h"
 
+@interface SNTRule()
+@property(readwrite) NSUInteger timestamp;
+@end
+
 @implementation SNTRule
 
 - (instancetype)initWithShasum:(NSString *)shasum
@@ -36,7 +40,6 @@
                          state:(SNTRuleState)state
                           type:(SNTRuleType)type
                      customMsg:(NSString *)customMsg {
-
   self = [self initWithShasum:shasum
                         state:state
                          type:type
@@ -86,9 +89,7 @@
   if (other == self) return YES;
   if (![other isKindOfClass:[SNTRule class]]) return NO;
   SNTRule *o = other;
-  return ([self.shasum isEqual:o.shasum] &&
-          self.state == o.state &&
-          self.type == o.type);
+  return ([self.shasum isEqual:o.shasum] && self.state == o.state && self.type == o.type);
 }
 
 - (NSUInteger)hash {
@@ -97,19 +98,18 @@
   result = prime * result + [self.shasum hash];
   result = prime * result + self.state;
   result = prime * result + self.type;
-  result = prime * result + self.timestamp;
   return result;
 }
 
 - (NSString *)description {
   return [NSString stringWithFormat:@"SNTRule: SHA-256: %@, State: %ld, Type: %ld, Timestamp: %lu",
-          self.shasum, self.state, self.type, (unsigned long)self.timestamp];
+             self.shasum, self.state, self.type, (unsigned long)self.timestamp];
 }
 
 # pragma mark Last-access Timestamp
 
 - (void)resetTimestamp {
-  _timestamp = (NSUInteger)[[NSDate date] timeIntervalSinceReferenceDate];
+  self.timestamp = (NSUInteger)[[NSDate date] timeIntervalSinceReferenceDate];
 }
 
 @end
