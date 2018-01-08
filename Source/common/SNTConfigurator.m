@@ -16,9 +16,7 @@
 
 #include <sys/stat.h>
 
-#import "SNTFileWatcher.h"
 #import "SNTLogging.h"
-#import "SNTStrengthify.h"
 #import "SNTSystemInfo.h"
 
 @interface SNTConfigurator ()
@@ -35,14 +33,12 @@
 /// Keys used by a mobileconfig or sync server
 @property(readonly, nonatomic) NSArray *syncServerKeys;
 @property(readonly, nonatomic) NSArray *mobileConfigKeys;
-
-@property SNTFileWatcher *syncStateWatcher;
 @end
 
 @implementation SNTConfigurator
 
 /// The hard-coded path to the sync state file.
-static NSString *const kSyncStateFilePath = @"/var/db/santa/sync-state.plist";
+NSString *const kSyncStateFilePath = @"/var/db/santa/sync-state.plist";
 
 /// The domain used by mobileconfig.
 static NSString *const kMobileConfigDomain = @"com.google.santa";
@@ -409,42 +405,40 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
   [syncState writeToFile:kSyncStateFilePath atomically:YES];
   [[NSFileManager defaultManager] setAttributes:@{ NSFilePosixPermissions : @0644 }
                                    ofItemAtPath:kSyncStateFilePath error:NULL];
+}
 
-  // Start listening for changes to the sync state file. Revert any out of band changes.
-  static dispatch_once_t onceToken;
-  dispatch_once(&onceToken, ^{
-    WEAKIFY(self);
-    self.syncStateWatcher = [[SNTFileWatcher alloc] initWithFilePath:kSyncStateFilePath
-                                                             handler:^(unsigned long data) {
-      if (data & DISPATCH_VNODE_ATTRIB) {
-        const char *cPath = [kSyncStateFilePath fileSystemRepresentation];
-        struct stat fileStat;
-        stat(cPath, &fileStat);
-        int mask = S_IRWXU | S_IRWXG | S_IRWXO;
-        int desired = S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH;
-        if (fileStat.st_uid != 0 || fileStat.st_gid != 0 || (fileStat.st_mode & mask) != desired) {
-          LOGD(@"Sync state file permissions changed, fixing.");
-          chown(cPath, 0, 0);
-          chmod(cPath, desired);
-        }
-      } else {
-        STRONGIFY(self);
-        NSDictionary *syncState = [self syncState];
-        for (NSString *key in self.syncServerKeys) {
-          if (((self.configData[key] && !syncState[key]) ||
-              (!self.configData[key] && syncState[key]) ||
-              (self.configData[key] && ![self.configData[key] isEqualTo:syncState[key]]))) {
-            // Ignore sync dates
-            if ([key isEqualToString:kRuleSyncLastSuccess] ||
-                [key isEqualToString:kFullSyncLastSuccess]) return;
-            LOGE(@"Sync state file changed, replacing");
-            [self saveSyncStateToDisk];
-            return;
-          }
-        }
+///
+///  Ensure permissions are 0644.
+///  Revert any out-of-band changes.
+///
+- (void)syncStateFileChanged:(unsigned long)data {
+  if (data & DISPATCH_VNODE_ATTRIB) {
+    const char *cPath = [kSyncStateFilePath fileSystemRepresentation];
+    struct stat fileStat;
+    stat(cPath, &fileStat);
+    int mask = S_IRWXU | S_IRWXG | S_IRWXO;
+    int desired = S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH;
+    if (fileStat.st_uid != 0 || fileStat.st_gid != 0 || (fileStat.st_mode & mask) != desired) {
+      LOGD(@"Sync state file permissions changed, fixing.");
+      chown(cPath, 0, 0);
+      chmod(cPath, desired);
+    }
+  } else {
+    NSDictionary *syncState = [self syncState];
+    for (NSString *key in self.syncServerKeys) {
+      if (((self.configData[key] && !syncState[key]) ||
+           (!self.configData[key] && syncState[key]) ||
+           (self.configData[key] && ![self.configData[key] isEqualTo:syncState[key]]))) {
+        // Ignore sync url and dates
+        if ([key isEqualToString:kSyncBaseURLKey] ||
+            [key isEqualToString:kRuleSyncLastSuccess] ||
+            [key isEqualToString:kFullSyncLastSuccess]) continue;
+        LOGE(@"Sync state file changed, replacing");
+        [self saveSyncStateToDisk];
+        return;
       }
-    }];
-  });
+    }
+  }
 }
 
 ///

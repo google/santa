@@ -16,6 +16,7 @@
 
 #import "SNTCommonEnums.h"
 
+extern NSString *const kSyncStateFilePath;
 extern NSString *const kMobileConfigFilePath;
 
 ///
@@ -204,5 +205,10 @@ extern NSString *const kMobileConfigFilePath;
 ///  Re-read config data from disk.
 ///
 - (void)reloadConfigData;
+
+///
+///  Notify the receiver that the sync state file has changed.
+///
+- (void)syncStateFileChanged:(unsigned long)data;
 
 @end

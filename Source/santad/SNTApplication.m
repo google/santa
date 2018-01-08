@@ -42,6 +42,7 @@
 @property SNTEventLog *eventLog;
 @property SNTExecutionController *execController;
 @property SNTFileWatcher *configFileWatcher;
+@property SNTFileWatcher *syncStateWatcher;
 @property SNTXPCConnection *controlConnection;
 @end
 
@@ -115,6 +116,11 @@
         LOGI(@"SyncBaseURL added, starting santactl.");
         [self startSyncd];
       }
+    }];
+
+    _syncStateWatcher = [[SNTFileWatcher alloc] initWithFilePath:kSyncStateFilePath
+                                                         handler:^(unsigned long data) {
+      [[SNTConfigurator configurator] syncStateFileChanged:data];
     }];
 
     _eventLog = [[SNTEventLog alloc] init];
