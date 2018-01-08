@@ -30,6 +30,7 @@
 #import "SNTKernelCommon.h"
 #import "SNTLogging.h"
 #import "SNTRule.h"
+#import "SNTStoredEvent.h"
 
 @interface SNTEventLog ()
 @property NSMutableDictionary<NSNumber *, SNTCachedDecision *> *detailStore;
