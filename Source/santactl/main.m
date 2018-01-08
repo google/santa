@@ -53,7 +53,9 @@ int main(int argc, const char *argv[]) {
     }
     [arguments removeObjectAtIndex:0];
 
-    if ([commandName isEqualToString:@"help"]) {
+    if ([commandName isEqualToString:@"help"] ||
+        [commandName isEqualToString:@"-h"] ||
+        [commandName isEqualToString:@"--help"]) {
       if ([arguments count]) {
         // User wants help for specific command
         commandName = [arguments firstObject];

@@ -304,6 +304,18 @@
        diskProperties[@"DAMediaBSDName"]);
 }
 
+- (void)logBundleHashingEvents:(NSArray<SNTStoredEvent *> *)events {
+  for (SNTStoredEvent *event in events) {
+    LOGI(@"action=BUNDLE|sha256=%@|bundlehash=%@|bundlename=%@|bundleid=%@|bundlepath=%@|path=%@",
+         event.fileSHA256,
+         event.fileBundleHash,
+         event.fileBundleName,
+         event.fileBundleID,
+         event.fileBundlePath,
+         event.filePath);
+  }
+}
+
 #pragma mark Helpers
 
 /**
