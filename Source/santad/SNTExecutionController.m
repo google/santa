@@ -131,7 +131,8 @@
     // transitive whitelisting, upgrade the action to ACTION_RESPOND_ALLOW_COMPILER.
     action = ACTION_RESPOND_ALLOW_COMPILER;
   } else if (cd.decision == SNTEventStateAllowTransitive) {
-    // When transitive whitelisting is enabled, we also upgrade transitive rule decisions.
+    // We also upgrade transitive rule decisions.  These are filtered by SNTPolicyProcessor before
+    // they get here so that we only receive them if transitive whitelisting is enabled.
     // TODO(nguyenphillip): may not need to distinguish transitive allows in the kernel anymore.
     action = ACTION_RESPOND_ALLOW_TRANSITIVE;
   }
