@@ -147,6 +147,11 @@ double watchdogRAMPeak = 0;
 
 - (void)setClientMode:(SNTClientMode)mode reply:(void (^)())reply {
   if ([[SNTConfigurator configurator] clientMode] != mode) {
+    // Flush cache if client just went into lockdown.
+    if (mode == SNTClientModeLockdown) {
+      LOGI(@"Changed client mode, flushing cache.");
+      [self.driverManager flushCacheNonRootOnly:NO];
+    }
     [[SNTConfigurator configurator] setClientMode:mode];
     [[self.notQueue.notifierConnection remoteObjectProxy] postClientModeNotification:mode];
   }
