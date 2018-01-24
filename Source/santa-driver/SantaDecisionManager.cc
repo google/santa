@@ -366,8 +366,10 @@ santa_action_t SantaDecisionManager::FetchDecision(
   // Get path
   char path[MAXPATHLEN];
   int name_len = MAXPATHLEN;
-  if (vn_getpath(vp, path, &name_len) != 0) {
-    path[0] = '\0';
+  path[MAXPATHLEN - 1] = 0;
+
+  if (vn_getpath(vp, path, &name_len) == ENOSPC) {
+    return ACTION_RESPOND_TOOLONG;
   }
 
   auto message = NewMessage(cred);
@@ -462,6 +464,9 @@ int SantaDecisionManager::VnodeCallback(const kauth_cred_t cred,
     }
     case ACTION_RESPOND_DENY:
       *errno = EPERM;
+      return KAUTH_RESULT_DENY;
+    case ACTION_RESPOND_TOOLONG:
+      *errno = ENAMETOOLONG;
       return KAUTH_RESULT_DENY;
     default:
       // NOTE: Any unknown response or error condition causes us to fail open.
