@@ -37,9 +37,9 @@
 - (void)applicationDidFinishLaunching:(NSNotification *)aNotification {
   [self setupMenu];
 
-  self.configFileWatcher = [[SNTFileWatcher alloc] initWithFilePath:kDefaultConfigFilePath
+  self.configFileWatcher = [[SNTFileWatcher alloc] initWithFilePath:kMobileConfigFilePath
                                                             handler:^(unsigned long data) {
-    if (! (data & DISPATCH_VNODE_ATTRIB)) [[SNTConfigurator configurator] reloadConfigData];
+    if (!(data & DISPATCH_VNODE_ATTRIB)) [[SNTConfigurator configurator] reloadConfigData];
   }];
 
   self.notificationManager = [[SNTNotificationManager alloc] init];

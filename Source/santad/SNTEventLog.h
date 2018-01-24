@@ -17,6 +17,7 @@
 #import "SNTKernelCommon.h"
 
 @class SNTCachedDecision;
+@class SNTStoredEvent;
 
 ///
 ///  Logs execution and file write events to syslog
@@ -32,4 +33,5 @@
 - (void)logDeniedExecution:(SNTCachedDecision *)cd withMessage:(santa_message_t)message;
 - (void)logAllowedExecution:(santa_message_t)message;
 
+- (void)logBundleHashingEvents:(NSArray<SNTStoredEvent *> *)events;
 @end

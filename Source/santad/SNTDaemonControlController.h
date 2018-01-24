@@ -17,6 +17,7 @@
 #import "SNTXPCControlInterface.h"
 
 @class SNTDriverManager;
+@class SNTEventLog;
 @class SNTNotificationQueue;
 @class SNTSyncdQueue;
 
@@ -25,8 +26,8 @@
 ///
 @interface SNTDaemonControlController : NSObject<SNTDaemonControlXPC>
 
-@property SNTDriverManager *driverManager;
-@property SNTNotificationQueue *notQueue;
-@property SNTSyncdQueue *syncdQueue;
-
+- (instancetype)initWithDriverManager:(SNTDriverManager *)driverManager
+                    notificationQueue:(SNTNotificationQueue *)notQueue
+                           syncdQueue:(SNTSyncdQueue *)syncdQueue
+                             eventLog:(SNTEventLog *)eventLog;
 @end

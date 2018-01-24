@@ -42,6 +42,7 @@
 @property SNTEventLog *eventLog;
 @property SNTExecutionController *execController;
 @property SNTFileWatcher *configFileWatcher;
+@property SNTFileWatcher *syncStateWatcher;
 @property SNTXPCConnection *controlConnection;
 @end
 
@@ -70,6 +71,8 @@
       return nil;
     }
 
+    _eventLog = [[SNTEventLog alloc] init];
+
     SNTNotificationQueue *notQueue = [[SNTNotificationQueue alloc] init];
     SNTSyncdQueue *syncdQueue = [[SNTSyncdQueue alloc] init];
 
@@ -79,10 +82,11 @@
     };
     
     // Establish XPC listener for Santa and santactl connections
-    SNTDaemonControlController *dc = [[SNTDaemonControlController alloc] init];
-    dc.driverManager = _driverManager;
-    dc.notQueue = notQueue;
-    dc.syncdQueue = syncdQueue;
+    SNTDaemonControlController *dc =
+        [[SNTDaemonControlController alloc] initWithDriverManager:_driverManager
+                                                notificationQueue:notQueue
+                                                       syncdQueue:syncdQueue
+                                                         eventLog:_eventLog];
 
     _controlConnection =
         [[SNTXPCConnection alloc] initServerWithName:[SNTXPCControlInterface serviceId]];
@@ -92,44 +96,35 @@
 
     __block SNTClientMode origMode = [[SNTConfigurator configurator] clientMode];
     __block NSURL *origSyncURL = [[SNTConfigurator configurator] syncBaseURL];
-    _configFileWatcher = [[SNTFileWatcher alloc] initWithFilePath:kDefaultConfigFilePath
+    _configFileWatcher = [[SNTFileWatcher alloc] initWithFilePath:kMobileConfigFilePath
                                                           handler:^(unsigned long data) {
-      if (data & DISPATCH_VNODE_ATTRIB) {
-        const char *cPath = [kDefaultConfigFilePath fileSystemRepresentation];
-        struct stat fileStat;
-        stat(cPath, &fileStat);
-        int mask = S_IRWXU | S_IRWXG | S_IRWXO;
-        int desired = S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH;
-        if (fileStat.st_uid != 0 || fileStat.st_gid != 0 || (fileStat.st_mode & mask) != desired) {
-          LOGD(@"Config file permissions changed, fixing.");
-          chown(cPath, 0, 0);
-          chmod(cPath, desired);
-        }
-      } else {
-        LOGD(@"Config file changed, reloading.");
-        [[SNTConfigurator configurator] reloadConfigData];
 
-        // Flush cache if client just went into lockdown.
-        SNTClientMode newMode = [[SNTConfigurator configurator] clientMode];
-        if (origMode != newMode) {
-          origMode = newMode;
-          if (newMode == SNTClientModeLockdown) {
-            LOGI(@"Changed client mode, flushing cache.");
-            [self.driverManager flushCacheNonRootOnly:NO];
-          }
-        }
+      LOGD(@"Mobileconfig changed, reloading.");
+      [[SNTConfigurator configurator] reloadConfigData];
 
-        // Start santactl if the syncBaseURL changed from nil --> somthing
-        NSURL *syncURL = [[SNTConfigurator configurator] syncBaseURL];
-        if (!origSyncURL && syncURL) {
-          origSyncURL = syncURL;
-          LOGI(@"SyncBaseURL added, starting santactl.");
-          [self startSyncd];
+      // Flush cache if client just went into lockdown.
+      SNTClientMode newMode = [[SNTConfigurator configurator] clientMode];
+      if (origMode != newMode) {
+        origMode = newMode;
+        if (newMode == SNTClientModeLockdown) {
+          LOGI(@"Changed client mode, flushing cache.");
+          [self.driverManager flushCacheNonRootOnly:NO];
         }
+      }
+
+      // Start santactl if the syncBaseURL changed from nil --> somthing
+      NSURL *syncURL = [[SNTConfigurator configurator] syncBaseURL];
+      if (!origSyncURL && syncURL) {
+        origSyncURL = syncURL;
+        LOGI(@"SyncBaseURL added, starting santactl.");
+        [self startSyncd];
       }
     }];
 
-    _eventLog = [[SNTEventLog alloc] init];
+    _syncStateWatcher = [[SNTFileWatcher alloc] initWithFilePath:kSyncStateFilePath
+                                                         handler:^(unsigned long data) {
+      [[SNTConfigurator configurator] syncStateFileChanged:data];
+    }];
 
     // Initialize the binary checker object
     _execController = [[SNTExecutionController alloc] initWithDriverManager:_driverManager
