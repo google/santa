@@ -98,11 +98,20 @@
   dispatch_semaphore_t sema = dispatch_semaphore_create(0);
 
   dispatch_async(self.queue, ^{
-    // Use the highest bundle we can find. Save and reuse the bundle infomation when creating
-    // the related binary events.
+    // Use the highest bundle we can find.
     SNTFileInfo *b = [[SNTFileInfo alloc] initWithPath:event.fileBundlePath];
     b.useAncestorBundle = YES;
     event.fileBundlePath = b.bundlePath;
+
+    // If path to the bundle is unavailable, stop. SantaGUI will revert to
+    // using the offending blockable.
+    if (!event.fileBundlePath) {
+      reply(nil, nil, 0);
+      dispatch_semaphore_signal(sema);
+      return;
+    }
+
+    // Reuse the bundle infomation when creating the related binary events.
     event.fileBundleID = b.bundleIdentifier;
     event.fileBundleName = b.bundleName;
     event.fileBundleVersion = b.bundleVersion;
