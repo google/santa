@@ -38,6 +38,10 @@
 #import "SNTStoredEvent.h"
 #import "SNTSyncdQueue.h"
 
+// A binary is considered large at ~30MB. Large binaries take longer to hash and consequently
+// longer to post a decision back to santa-driver. When a binary is considered large santad will
+// let santa-driver know it has received its request and is working on a decision. This allows
+// santa-driver to relax; it does not have to worry about resending the request due to a timeout.
 static size_t kLargeBinarySize = 30 * 1024 * 1024;
 
 @interface SNTExecutionController ()

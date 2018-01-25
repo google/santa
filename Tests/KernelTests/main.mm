@@ -243,7 +243,7 @@
           [self postToKernelAction:ACTION_RESPOND_ALLOW forVnodeID:vdata.vnode_id];
           self.timesSeenCat++;
         } else if (strncmp("/usr/bin/cal", vdata.path, strlen("/usr/bin/cal")) == 0) {
-          static int count;
+          static int count = 0;
           if (count++) TFAILINFO("Large binary should not re-request");
           [self postToKernelAction:ACTION_RESPOND_ACK forVnodeID:vdata.vnode_id];
           for (int i = 0; i < 15; ++i) {

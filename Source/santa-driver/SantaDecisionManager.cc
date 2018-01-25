@@ -238,6 +238,7 @@ void SantaDecisionManager::AddToCache(
       break;
     case ACTION_RESPOND_ALLOW:
     case ACTION_RESPOND_DENY:
+      // TODO(bur): Avoid calling set() twice, finding and locking buckets is fast, but not free.
       if (decision_cache->set(identifier, val, ((uint64_t)ACTION_REQUEST_BINARY << 56))) {
         decision_cache->set(identifier, val, ((uint64_t)ACTION_RESPOND_ACK << 56));
       }
@@ -327,9 +328,9 @@ santa_action_t SantaDecisionManager::GetFromDaemon(
     do {
       msleep((void *)message->vnode_id, NULL, 0, "", &ts_);
       return_action = GetFromCache(identifier);
-      if (return_action == ACTION_REQUEST_BINARY) ++cache_check_count;
-    } while ((return_action == ACTION_REQUEST_BINARY || return_action == ACTION_RESPOND_ACK)
-             && ClientConnected() && cache_check_count < kRequestCacheChecks);
+    } while (ClientConnected() &&
+             ((return_action == ACTION_REQUEST_BINARY && ++cache_check_count < kRequestCacheChecks)
+             || (return_action == ACTION_RESPOND_ACK)));
   } while (!RESPONSE_VALID(return_action) && ClientConnected());
 
   // If response is still not valid, the daemon exited
