@@ -85,6 +85,29 @@ class SantaDecisionManager : public OSObject {
   */
   kern_return_t StopListener();
 
+  /**
+    This spins off a new thread for each process that we monitor.  Generally the
+    threads should be short-lived, since they die as soon as their associated
+    compiler process dies.
+  */
+  void MonitorCompilerPidForExit(pid_t pid);
+
+  /// Remove the given pid from cache of compiler pids.
+  void ForgetCompilerPid(pid_t pid);
+
+  /// Returns true when SantaDecisionManager wants monitor threads to exit.
+  bool PidMonitorThreadsShouldExit() const;
+
+  /**
+    Stops the pid monitor threads.  Waits until all threads have stopped before
+    returning.  This also frees the compiler_pid_set_.  Returns true if all 
+    threads exited cleanly.  Returns false if timed out while waiting.
+  */
+  bool StopPidMonitorThreads();
+
+  /// Returns how long pid monitor should sleep between termination checks.
+  uint32_t PidMonitorSleepTimeMilliseconds() const;
+
   /// Adds a decision to the cache, with a timestamp.
   void AddToCache(uint64_t identifier,
                   const santa_action_t decision,
@@ -114,6 +137,12 @@ class SantaDecisionManager : public OSObject {
 
   /// Decrements the count of active callbacks pending.
   void DecrementListenerInvocations();
+
+  /// Increments the count of active pid monitor threads.
+  void IncrementPidMonitorThreadCount();
+
+  /// Decrements the count of active pid monitor threads.
+  void DecrementPidMonitorThreadCount();
 
   // Determine if pid belongs to a compiler process. When
   // check_compiler_ancestors_ is set to true, this also checks all ancestor
@@ -172,6 +201,9 @@ class SantaDecisionManager : public OSObject {
     at any time.
   */
   static const uint32_t kMaxLogQueueEvents = 2048;
+
+  /// How long pid monitor thread should sleep between termination checks.
+  static const uint32_t kPidMonitorSleepTimeMilliseconds = 1000;
 
   /**
     Fetches a response from the daemon. Handles both daemon death
@@ -269,6 +301,7 @@ class SantaDecisionManager : public OSObject {
   SantaCache<uint64_t> *root_decision_cache_;
   SantaCache<uint64_t> *non_root_decision_cache_;
   SantaCache<uint64_t> *vnode_pid_map_;
+  SantaCache<bool> *compiler_pid_set_;
 
   /**
     Return the correct cache for a given identifier.
@@ -295,6 +328,7 @@ class SantaDecisionManager : public OSObject {
   uint32_t failed_log_queue_requests_;
 
   int32_t listener_invocations_;
+  int32_t pid_monitor_thread_count_ = 0;
 
   pid_t client_pid_;
 

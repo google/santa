@@ -124,25 +124,16 @@
   santa_action_t action =
       (SNTEventStateAllow & cd.decision) ? ACTION_RESPOND_ALLOW : ACTION_RESPOND_DENY;
 
-  // Possibly modify that action.
-  if (cd.decision == SNTEventStateAllowCompiler &&
-      [[SNTConfigurator configurator] transitiveWhitelistingEnabled]) {
-    // If rule indicated that the allowed binary was a compiler and Santa is configured to allow
-    // transitive whitelisting, upgrade the action to ACTION_RESPOND_ALLOW_COMPILER.
+  // Upgrade the action to ACTION_RESPOND_ALLOW_COMPILER when appropriate, because we want the
+  // kernel to track this information in its decision cache.
+  if (cd.decision == SNTEventStateAllowCompiler) {
     action = ACTION_RESPOND_ALLOW_COMPILER;
-  } else if (cd.decision == SNTEventStateAllowTransitive) {
-    // We also upgrade transitive rule decisions.  These are filtered by SNTPolicyProcessor before
-    // they get here so that we only receive them if transitive whitelisting is enabled.
-    // TODO(nguyenphillip): may not need to distinguish transitive allows in the kernel anymore.
-    action = ACTION_RESPOND_ALLOW_TRANSITIVE;
   }
 
   // Save decision details for logging the execution later.  For transitive rules, we also use
   // the shasum stored in the decision details to update the rule's timestamp whenever an
   // ACTION_NOTIFY_EXEC message related to the transitive rule is received.
-  if (action == ACTION_RESPOND_ALLOW ||
-      action == ACTION_RESPOND_ALLOW_COMPILER ||
-      action == ACTION_RESPOND_ALLOW_TRANSITIVE) {
+  if (action == ACTION_RESPOND_ALLOW || action == ACTION_RESPOND_ALLOW_COMPILER) {
     [_eventLog saveDecisionDetails:cd];
   }
 
@@ -196,9 +187,7 @@
     });
 
     // If binary was blocked, do the needful
-    if (action != ACTION_RESPOND_ALLOW &&
-        action != ACTION_RESPOND_ALLOW_COMPILER &&
-        action != ACTION_RESPOND_ALLOW_TRANSITIVE) {
+    if (action != ACTION_RESPOND_ALLOW && action != ACTION_RESPOND_ALLOW_COMPILER) {
       [_eventLog logDeniedExecution:cd withMessage:message];
 
       if ([[SNTConfigurator configurator] bundlesEnabled] && binInfo.bundle) {

@@ -15,8 +15,6 @@
 #import <Foundation/Foundation.h>
 #import "SNTKernelCommon.h"
 
-@class SNTDriverManager;
-
 @interface SNTCompilerController : NSObject
 
 // Whenever an executable file is closed or renamed whitelist the resulting file.

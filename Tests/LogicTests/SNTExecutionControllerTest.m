@@ -202,7 +202,7 @@
 
   [self.sut validateBinaryWithMessage:[self getMessage]];
 
-  OCMVerify([self.mockDriverManager postToKernelAction:ACTION_RESPOND_ALLOW_TRANSITIVE
+  OCMVerify([self.mockDriverManager postToKernelAction:ACTION_RESPOND_ALLOW
                                             forVnodeID:1234]);
 }
 

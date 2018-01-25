@@ -25,41 +25,6 @@
 #define super OSObject
 OSDefineMetaClassAndStructors(SantaDecisionManager, OSObject);
 
-# pragma mark Monitoring PIDs
-
-// This keeps track of all pids associated with compiler processes.  It is defined as a global
-// variable so that the pid monitor threads can access it without needing to reference
-// our instance of SantaDecisionManager.
-static SantaCache<bool> *compiler_pid_set_ = new SantaCache<bool>(500, 5);
-
-// Function to monitor for process termination and then remove the process pid
-// from cache of compiler pids.
-static void pid_monitor(void *param, __unused wait_result_t wait_result) {
-  // Double cast is required to avoid 'cast from pointer to smaller type loses information' error.
-  pid_t pid = (pid_t)(uintptr_t)param;
-  struct timespec ts = { .tv_sec = 1, .tv_nsec = 0 }; // wait 1 sec between each poll
-
-  while (compiler_pid_set_) {
-    proc_t proc = proc_find(pid);
-    if (!proc) break;
-    proc_rele(proc);
-    msleep(param, NULL, 0, "", &ts);
-  }
-
-  if (compiler_pid_set_) compiler_pid_set_->remove(pid);
-  thread_terminate(current_thread());
-}
-
-// This spins off a new thread for each process that we monitor.  Generally the threads should be
-// short-lived, since they die as soon as their associated compiler process dies.
-void MonitorCompilerPidForExit(pid_t pid) {
-  thread_t thread = THREAD_NULL;
-  if (KERN_SUCCESS != kernel_thread_start(pid_monitor, (void *)(uintptr_t)pid, &thread)) {
-    LOGE("couldn't start pid monitor thread");
-  }
-  thread_deallocate(thread);
-}
-
 #pragma mark Object Lifecycle
 
 bool SantaDecisionManager::init() {
@@ -75,6 +40,7 @@ bool SantaDecisionManager::init() {
   root_decision_cache_ = new SantaCache<uint64_t>(5000, 2);
   non_root_decision_cache_ = new SantaCache<uint64_t>(500, 2);
   vnode_pid_map_ = new SantaCache<uint64_t>(2000, 5);
+  compiler_pid_set_ = new SantaCache<bool>(500, 5);
 
   decision_dataqueue_ = IOSharedDataQueue::withEntries(
       kMaxDecisionQueueEvents, sizeof(santa_message_t));
@@ -97,9 +63,8 @@ void SantaDecisionManager::free() {
   delete root_decision_cache_;
   delete non_root_decision_cache_;
   delete vnode_pid_map_;
-  auto temp = compiler_pid_set_;
-  compiler_pid_set_ = nullptr;
-  delete temp;
+
+  StopPidMonitorThreads();
 
   if (decision_dataqueue_lock_) {
     lck_mtx_free(decision_dataqueue_lock_, sdm_lock_grp_);
@@ -254,6 +219,83 @@ kern_return_t SantaDecisionManager::StopListener() {
   return kIOReturnSuccess;
 }
 
+# pragma mark Monitoring PIDs
+
+// Arguments that are passed to pid_monitor thread.
+typedef struct {
+  pid_t pid;                  // process to monitor
+  SantaDecisionManager *sdm;  // reference to SantaDecisionManager
+} pid_monitor_info;
+
+// Function executed in its own thread used to monitor a compiler process for
+// termination and then remove the process pid from cache of compiler pids.
+static void pid_monitor(void *param, __unused wait_result_t wait_result) {
+  pid_monitor_info *info = (pid_monitor_info *)param;
+  uint32_t sleep_time = info->sdm->PidMonitorSleepTimeMilliseconds();
+  if (info->sdm) {
+    while (!info->sdm->PidMonitorThreadsShouldExit()) {
+      proc_t proc = proc_find(info->pid);
+      if (!proc) break;
+      proc_rele(proc);
+      IOSleep(sleep_time);
+    }
+    info->sdm->ForgetCompilerPid(info->pid);
+    info->sdm->DecrementPidMonitorThreadCount();
+  }
+  thread_terminate(current_thread());
+}
+
+void SantaDecisionManager::MonitorCompilerPidForExit(pid_t pid) {
+  // Don't start any new threads if compiler_pid_set_ doesn't exist.
+  if (!compiler_pid_set_) return;
+  auto info = new pid_monitor_info;
+  info->pid = pid;
+  info->sdm = this;
+  thread_t thread = THREAD_NULL;
+  IncrementPidMonitorThreadCount();
+  if (KERN_SUCCESS != kernel_thread_start(pid_monitor, (void *)info, &thread)) {
+    LOGE("couldn't start pid monitor thread");
+    DecrementPidMonitorThreadCount();
+  }
+  thread_deallocate(thread);
+}
+
+void SantaDecisionManager::ForgetCompilerPid(pid_t pid) {
+  if (compiler_pid_set_) compiler_pid_set_->remove(pid);
+}
+
+bool SantaDecisionManager::PidMonitorThreadsShouldExit() const {
+  return compiler_pid_set_ == nullptr;
+}
+
+bool SantaDecisionManager::StopPidMonitorThreads() {
+  // Each pid_monitor thread checks for the existence of compiler_pid_set_.
+  // As soon as they see that it's gone, they should terminate and decrement
+  // SantaDecisionManager's pid_monitor_thread_count.  When this count decreases
+  // to zero all threads have finished.
+  auto temp = compiler_pid_set_;
+  compiler_pid_set_ = nullptr;
+  delete temp;
+
+  // Keep track of how many times we've slept waiting for the pid monitor
+  // threads to exit.  If we sleep for more than 5 seconds, give up on waiting.
+  int wait_count = 0;
+
+  while (pid_monitor_thread_count_ > 0) {
+    IOSleep(10);
+    if (++wait_count > 500) {
+      LOGD("Pid monitor threads took too long to stop.  Giving up.");
+      return false;
+    }
+  };
+  LOGD("Pid monitor threads stopped.");
+  return true;
+}
+
+uint32_t SantaDecisionManager::PidMonitorSleepTimeMilliseconds() const {
+  return kPidMonitorSleepTimeMilliseconds;
+}
+
 #pragma mark Cache Management
 
 /**
@@ -281,7 +323,6 @@ void SantaDecisionManager::AddToCache(
       break;
     case ACTION_RESPOND_ALLOW:
     case ACTION_RESPOND_ALLOW_COMPILER:
-    case ACTION_RESPOND_ALLOW_TRANSITIVE:
     case ACTION_RESPOND_DENY:
       decision_cache->set(
           identifier, val, ((uint64_t)ACTION_REQUEST_BINARY << 56));
@@ -477,6 +518,14 @@ void SantaDecisionManager::DecrementListenerInvocations() {
   OSDecrementAtomic(&listener_invocations_);
 }
 
+void SantaDecisionManager::IncrementPidMonitorThreadCount() {
+  OSIncrementAtomic(&pid_monitor_thread_count_);
+}
+
+void SantaDecisionManager::DecrementPidMonitorThreadCount() {
+  OSDecrementAtomic(&pid_monitor_thread_count_);
+}
+
 bool SantaDecisionManager::IsCompilerProcess(pid_t pid) {
   if (compiler_pid_set_->get(pid)) return true;
   if (check_compiler_ancestors_) {
@@ -517,8 +566,7 @@ int SantaDecisionManager::VnodeCallback(const kauth_cred_t cred,
 
   switch (returnedAction) {
     case ACTION_RESPOND_ALLOW:
-    case ACTION_RESPOND_ALLOW_COMPILER:
-    case ACTION_RESPOND_ALLOW_TRANSITIVE: {
+    case ACTION_RESPOND_ALLOW_COMPILER: {
       auto proc = vfs_context_proc(ctx);
       if (proc) {
         pid_t pid = proc_pid(proc);
@@ -622,7 +670,8 @@ void SantaDecisionManager::FileOpCallback(
     }
 
     // Post any compiler-related messages to the decision queue.
-    if (message->action == ACTION_NOTIFY_CLOSE && IsCompilerProcess(message->pid)) {
+    if (message->action == ACTION_NOTIFY_CLOSE &&
+        IsCompilerProcess(message->pid)) {
       PostToDecisionQueue(message);
     }
 

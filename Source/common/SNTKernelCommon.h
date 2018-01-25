@@ -37,7 +37,6 @@ enum SantaDriverMethods {
   kSantaUserClientOpen,
   kSantaUserClientAllowBinary,
   kSantaUserClientAllowCompiler,
-  kSantaUserClientAllowTransitive,
   kSantaUserClientDenyBinary,
   kSantaUserClientClearCache,
   kSantaUserClientCacheCount,
@@ -67,7 +66,6 @@ typedef enum {
   ACTION_RESPOND_DENY = 21,
   ACTION_RESPOND_TOOLONG = 22,
   ACTION_RESPOND_ALLOW_COMPILER = 23,
-  ACTION_RESPOND_ALLOW_TRANSITIVE = 24,
 
   // NOTIFY
   ACTION_NOTIFY_EXEC = 30,
@@ -83,8 +81,7 @@ typedef enum {
 } santa_action_t;
 
 #define RESPONSE_VALID(x) \
-  (x == ACTION_RESPOND_ALLOW || x == ACTION_RESPOND_DENY || x == ACTION_RESPOND_ALLOW_COMPILER || \
-   x == ACTION_RESPOND_ALLOW_TRANSITIVE)
+  (x == ACTION_RESPOND_ALLOW || x == ACTION_RESPOND_DENY || x == ACTION_RESPOND_ALLOW_COMPILER)
 
 // Message struct that is sent down the IODataQueue.
 typedef struct {

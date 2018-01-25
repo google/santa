@@ -87,10 +87,6 @@ class com_google_SantaDriverClient : public IOUserClient {
   static IOReturn allow_compiler(
       OSObject *target, void *reference,IOExternalMethodArguments *arguments);
 
-  ///  The daemon calls this to allow a transitively whitelisted binary.
-  static IOReturn allow_transitive(
-      OSObject *target, void *reference,IOExternalMethodArguments *arguments);
-
   ///  The daemon calls this to deny a binary.
   static IOReturn deny_binary(
       OSObject *target, void *reference, IOExternalMethodArguments *arguments);
