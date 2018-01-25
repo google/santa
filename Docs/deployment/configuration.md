@@ -1,8 +1,12 @@
+# Important
+
+Santa v0.9.21 has moved to using an Apple [Configuration Profile](https://developer.apple.com/library/content/featuredarticles/iPhoneConfigurationProfileRef/Introduction/Introduction.html) to manage the local configuration. The old config file (`/var/db/santa/config.plist`) is no longer used.
+
 # Configuration
 
-Two configuration methods can be used to control Santa: local configuration and a sync server controlled configuration. There are certain options that can only be controlled with a local configuration and others that can only be controlled with a sync server controlled configuration. Additionally, there are options that can be controlled by both.
+Two configuration methods can be used to control Santa: a local configuration profile and a sync server controlled configuration. There are certain options that can only be controlled with a local configuration profile and others that can only be controlled with a sync server controlled configuration. Additionally, there are options that can be controlled by both.
 
-## Local Configuration
+## Local Configuration Profile
 
 | Key                           | Value Type | Description                              |
 | ----------------------------- | ---------- | ---------------------------------------- |
@@ -32,7 +36,7 @@ Two configuration methods can be used to control Santa: local configuration and 
 | MachineIDPlist                | String     | The path to a plist that contains the MachineOwnerKey / value pair. |
 | MachineIDKey                  | String     | The key to use on MachineIDPlist.        |
 
-*protected keys: If a sync server is configured, this setting cannot be changed while santad is running as it is assumed the setting will be provided by the sync server.
+*overridable by the sync server: run `santactl status` to check the current running config
 
 ##### EventDetailURL
 
@@ -50,48 +54,107 @@ This property contains a kind of format string to be turned into the URL to send
 
 For example: `https://sync-server-hostname/%machine_id%/%file_sha%`
 
-##### Example Config
+##### Example Configuration Profile
 
-Here is an example of a configuration that could be set.
+Here is an example of a configuration profile that could be set. It was generated with Tim Sutton's great [mcxToProfile](https://github.com/timsutton/mcxToProfile) tool. A copy is also available [here](com.google.santa.example.mobileconfig).
+
+A few key points to when creating your configuration profile:
+
+* `com.google.santa` needs to be the key inside `PayloadContent`
+* The `PayloadScope` needs to be `System`
 
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-	<key>BannedBlockMessage</key>
-	<string>This application has been banned</string>
-	<key>ClientMode</key>
+	<key>PayloadContent</key>
+	<array>
+		<dict>
+			<key>PayloadContent</key>
+			<dict>
+				<key>com.google.santa</key>
+				<dict>
+					<key>Forced</key>
+					<array>
+						<dict>
+							<key>mcx_preference_settings</key>
+							<dict>
+								<key>BannedBlockMessage</key>
+								<string>This application has been banned</string>
+								<key>ClientMode</key>
+								<integer>1</integer>
+								<key>EnablePageZeroProtection</key>
+								<false/>
+								<key>EventDetailText</key>
+								<string>Open sync server</string>
+								<key>EventDetailURL</key>
+								<string>https://sync-server-hostname/blockables/%file_sha%</string>
+								<key>FileChangesRegex</key>
+								<string>^/(?!(?:private/tmp|Library/(?:Caches|Managed Installs/Logs|(?:Managed )?Preferences))/)</string>
+								<key>MachineIDKey</key>
+								<string>MachineUUID</string>
+								<key>MachineIDPlist</key>
+								<string>/Library/Preferences/com.company.machine-mapping.plist</string>
+								<key>MachineOwnerKey</key>
+								<string>Owner</string>
+								<key>MachineOwnerPlist</key>
+								<string>/Library/Preferences/com.company.machine-mapping.plist</string>
+								<key>ModeNotificationLockdown</key>
+								<string>Entering Lockdown mode</string>
+								<key>ModeNotificationMonitor</key>
+								<string>Entering Monitor mode&lt;br/&gt;Please be careful!</string>
+								<key>MoreInfoURL</key>
+								<string>https://sync-server-hostname/moreinfo</string>
+								<key>SyncBaseURL</key>
+								<string>https://sync-server-hostname/api/santa/</string>
+								<key>UnknownBlockMessage</key>
+								<string>This application has been blocked from executing.</string>
+							</dict>
+						</dict>
+					</array>
+				</dict>
+			</dict>
+			<key>PayloadEnabled</key>
+			<true/>
+			<key>PayloadIdentifier</key>
+			<string>0342c558-a101-4a08-a0b9-40cc00039ea5</string>
+			<key>PayloadType</key>
+			<string>com.apple.ManagedClient.preferences</string>
+			<key>PayloadUUID</key>
+			<string>0342c558-a101-4a08-a0b9-40cc00039ea5</string>
+			<key>PayloadVersion</key>
+			<integer>1</integer>
+		</dict>
+	</array>
+	<key>PayloadDescription</key>
+	<string>com.google.santa</string>
+	<key>PayloadDisplayName</key>
+	<string>com.google.santa</string>
+	<key>PayloadIdentifier</key>
+	<string>com.google.santa</string>
+	<key>PayloadOrganization</key>
+	<string></string>
+	<key>PayloadRemovalDisallowed</key>
+	<true/>
+	<key>PayloadScope</key>
+	<string>System</string>
+	<key>PayloadType</key>
+	<string>Configuration</string>
+	<key>PayloadUUID</key>
+	<string>9020fb2d-cab3-420f-9268-acca4868bdd0</string>
+	<key>PayloadVersion</key>
 	<integer>1</integer>
-	<key>EnablePageZeroProtection</key>
-	<false/>
-	<key>EventDetailText</key>
-	<string>Open sync server</string>
-	<key>EventDetailURL</key>
-	<string>https://sync-server-hostname/blockables/%file_sha%</string>
-	<key>FileChangesRegex</key>
-	<string>^/(?!(?:private/tmp|Library/(?:Caches|Managed Installs/Logs|(?:Managed )?Preferences))/)</string>
-	<key>MachineIDKey</key>
-	<string>MachineUUID</string>
-	<key>MachineIDPlist</key>
-	<string>/Library/Preferences/com.company.machine-mapping.plist</string>
-	<key>MachineOwnerKey</key>
-	<string>Owner</string>
-	<key>MachineOwnerPlist</key>
-	<string>/Library/Preferences/com.company.machine-mapping.plist</string>
-	<key>ModeNotificationLockdown</key>
-	<string>Entering Lockdown mode</string>
-	<key>ModeNotificationMonitor</key>
-	<string>Entering Monitor mode&lt;br/&gt;Please be careful!</string>
-	<key>MoreInfoURL</key>
-	<string>https://sync-server-hostname/moreinfo</string>
-	<key>SyncBaseURL</key>
-	<string>https://sync-server-hostname/api/santa/</string>
-	<key>UnknownBlockMessage</key>
-	<string>This application has been blocked from executing.</string>
 </dict>
 </plist>
+
 ```
+
+Configuration profiles have a `.mobileconfig` file extension. There are many ways to install configuration profiles:
+
+* Double click them in Finder
+* Use the `/usr/bin/profiles` tool
+* Use an MDM
 
 ## Sync server Provided Configuration
 
