@@ -56,7 +56,7 @@ For example: `https://sync-server-hostname/%machine_id%/%file_sha%`
 
 ##### Example Configuration Profile
 
-Here is an example of a configuration profile that could be set. It was generated with Tim Sutton's great [mcxToProfile](https://github.com/timsutton/mcxToProfile) tool.
+Here is an example of a configuration profile that could be set. It was generated with Tim Sutton's great [mcxToProfile](https://github.com/timsutton/mcxToProfile) tool. A copy is also available [here](com.google.santa.example.mobileconfig).
 
 A few key points to when creating your configuration profile:
 
