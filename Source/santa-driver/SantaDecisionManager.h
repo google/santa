@@ -27,6 +27,7 @@
 #include "SantaCache.h"
 #include "SNTKernelCommon.h"
 #include "SNTLogging.h"
+#include "CircularQueue/Queue.h"
 
 ///
 ///  SantaDecisionManager is responsible for intercepting Vnode execute actions
@@ -131,6 +132,8 @@ class SantaDecisionManager : public OSObject {
                       const char *path, const char *new_path);
 
  private:
+  helm_queue_t *queue_;
+  
   /**
     While waiting for a response from the daemon, this is the maximum number of
     milliseconds to sleep for before checking the cache for a response.
