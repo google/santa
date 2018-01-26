@@ -38,6 +38,12 @@
 #import "SNTStoredEvent.h"
 #import "SNTSyncdQueue.h"
 
+// A binary is considered large at ~30MB. Large binaries take longer to hash and consequently
+// longer to post a decision back to santa-driver. When a binary is considered large santad will
+// let santa-driver know it has received its request and is working on a decision. This allows
+// santa-driver to relax; it does not have to worry about resending the request due to a timeout.
+static size_t kLargeBinarySize = 30 * 1024 * 1024;
+
 @interface SNTExecutionController ()
 @property SNTDriverManager *driverManager;
 @property SNTEventLog *eventLog;
@@ -100,6 +106,13 @@
   if ([self printerProxyWorkaround:binInfo]) {
     [_driverManager postToKernelAction:ACTION_RESPOND_DENY forVnodeID:message.vnode_id];
     return;
+  }
+
+  // If the binary is large let santa-driver know we received the request and we are working on it.
+  if (binInfo.fileSize > kLargeBinarySize) {
+    LOGD(@"%@ is larger than %zu. Letting santa-driver know we are working on it.",
+         binInfo.path, kLargeBinarySize);
+    [_driverManager postToKernelAction:ACTION_RESPOND_ACK forVnodeID:message.vnode_id];
   }
 
   // Get codesigning info about the file.

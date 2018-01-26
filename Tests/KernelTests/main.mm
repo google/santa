@@ -99,6 +99,9 @@
     IOConnectCallScalarMethod(self.connection, kSantaUserClientAllowBinary, &vnodeid, 1, 0, 0);
   } else if (action == ACTION_RESPOND_DENY) {
     IOConnectCallScalarMethod(self.connection, kSantaUserClientDenyBinary, &vnodeid, 1, 0, 0);
+  } else if (action == ACTION_RESPOND_ACK) {
+    IOConnectCallScalarMethod(self.connection, kSantaUserClientAcknowledgeBinary,
+                              &vnodeid, 1, 0, 0);
   }
 }
 
@@ -239,6 +242,18 @@
         } else if (strncmp("/bin/cat", vdata.path, strlen("/bin/cat")) == 0) {
           [self postToKernelAction:ACTION_RESPOND_ALLOW forVnodeID:vdata.vnode_id];
           self.timesSeenCat++;
+        } else if (strncmp("/usr/bin/cal", vdata.path, strlen("/usr/bin/cal")) == 0) {
+          static int count = 0;
+          if (count++) TFAILINFO("Large binary should not re-request");
+          [self postToKernelAction:ACTION_RESPOND_ACK forVnodeID:vdata.vnode_id];
+          for (int i = 0; i < 15; ++i) {
+            printf("\033[s");  // save cursor position
+            printf("%i/15", i);
+            sleep(1);
+            printf("\033[u");  // restore cursor position
+          }
+          printf("\033[K\033[u");  // clear line, restore cursor position
+          [self postToKernelAction:ACTION_RESPOND_ALLOW forVnodeID:vdata.vnode_id];
         } else if (strncmp("/bin/ln", vdata.path, strlen("/bin/ln")) == 0) {
           [self postToKernelAction:ACTION_RESPOND_ALLOW forVnodeID:vdata.vnode_id];
 
@@ -554,6 +569,20 @@
   }
 }
 
+- (void)testLargeBinary {
+  TSTART("Handles large binary");
+
+  @try {
+    NSTask *testexec = [self taskWithPath:@"/usr/bin/cal"];
+    [testexec launch];
+    [testexec waitUntilExit];
+  } @catch (NSException *e) {
+    TFAILINFO("Failed to launch");
+  }
+
+  TPASS();
+}
+
 #pragma mark - Main
 
 - (void)runTests {
@@ -580,6 +609,7 @@
 
   printf("\n-> Performance tests:\033[m\n");
   [self testCachePerformance];
+  [self testLargeBinary];
   [self handlesLotsOfBinaries];
 
   printf("\nAll tests passed.\n\n");

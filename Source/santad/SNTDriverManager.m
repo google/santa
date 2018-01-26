@@ -162,6 +162,13 @@ static const int MAX_DELAY = 15;
                                        1,
                                        0,
                                        0);
+    case ACTION_RESPOND_ACK:
+      return IOConnectCallScalarMethod(_connection,
+                                       kSantaUserClientAcknowledgeBinary,
+                                       &vnodeId,
+                                       1,
+                                       0,
+                                       0);
     default:
       return KERN_INVALID_ARGUMENT;
   }

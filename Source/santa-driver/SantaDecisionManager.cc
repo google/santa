@@ -233,10 +233,15 @@ void SantaDecisionManager::AddToCache(
     case ACTION_REQUEST_BINARY:
       decision_cache->set(identifier, val, 0);
       break;
+    case ACTION_RESPOND_ACK:
+      decision_cache->set(identifier, val, ((uint64_t)ACTION_REQUEST_BINARY << 56));
+      break;
     case ACTION_RESPOND_ALLOW:
     case ACTION_RESPOND_DENY:
-      decision_cache->set(
-          identifier, val, ((uint64_t)ACTION_REQUEST_BINARY << 56));
+      // TODO(bur): Avoid calling set() twice, finding and locking buckets is fast, but not free.
+      if (decision_cache->set(identifier, val, ((uint64_t)ACTION_REQUEST_BINARY << 56))) {
+        decision_cache->set(identifier, val, ((uint64_t)ACTION_RESPOND_ACK << 56));
+      }
       break;
     default:
       break;
@@ -316,10 +321,16 @@ santa_action_t SantaDecisionManager::GetFromDaemon(
       return ACTION_ERROR;
     }
 
+    // Check the cache every kRequestLoopSleepMilliseconds. Break this loop and send the request
+    // again if kRequestCacheChecks is reached. Don't break the loop if the daemon is working on the
+    // request, indicated with ACTION_RESPOND_ACK.
+    auto cache_check_count = 0;
     do {
       msleep((void *)message->vnode_id, NULL, 0, "", &ts_);
       return_action = GetFromCache(identifier);
-    } while (return_action == ACTION_REQUEST_BINARY && ClientConnected());
+    } while (ClientConnected() &&
+             ((return_action == ACTION_REQUEST_BINARY && ++cache_check_count < kRequestCacheChecks)
+             || (return_action == ACTION_RESPOND_ACK)));
   } while (!RESPONSE_VALID(return_action) && ClientConnected());
 
   // If response is still not valid, the daemon exited
@@ -354,7 +365,7 @@ santa_action_t SantaDecisionManager::FetchDecision(
     // If item is not in cache, break out of loop to send request to daemon.
     if (RESPONSE_VALID(return_action)) {
       return return_action;
-    } else if (return_action == ACTION_REQUEST_BINARY) {
+    } else if (return_action == ACTION_REQUEST_BINARY || return_action == ACTION_RESPOND_ACK) {
       // This thread will now sleep for kRequestLoopSleepMilliseconds (1s) or
       // until AddToCache is called, indicating a response has arrived.
       msleep((void *)vnode_id, NULL, 0, "", &ts_);

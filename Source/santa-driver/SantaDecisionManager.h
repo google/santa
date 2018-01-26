@@ -145,6 +145,12 @@ class SantaDecisionManager : public OSObject {
   static const uint32_t kRequestLoopSleepMilliseconds = 1000;
 
   /**
+    While waiting for a response from the daemon, this is the maximum number cache checks before
+    re-sending the request.
+  */
+  static const uint32_t kRequestCacheChecks = 5;
+
+  /**
     The maximum number of milliseconds a cached deny message should be
     considered valid.
   */

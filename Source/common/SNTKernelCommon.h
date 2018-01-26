@@ -37,6 +37,7 @@ enum SantaDriverMethods {
   kSantaUserClientOpen,
   kSantaUserClientAllowBinary,
   kSantaUserClientDenyBinary,
+  kSantaUserClientAcknowledgeBinary,
   kSantaUserClientClearCache,
   kSantaUserClientCacheCount,
   kSantaUserClientCheckCache,
@@ -64,7 +65,8 @@ typedef enum {
   ACTION_RESPOND_ALLOW = 20,
   ACTION_RESPOND_DENY = 21,
   ACTION_RESPOND_TOOLONG = 22,
-
+  ACTION_RESPOND_ACK = 23,
+  
   // NOTIFY
   ACTION_NOTIFY_EXEC = 30,
   ACTION_NOTIFY_WRITE = 31,
