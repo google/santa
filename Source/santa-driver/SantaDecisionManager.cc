@@ -231,8 +231,8 @@ typedef struct {
 // termination and then remove the process pid from cache of compiler pids.
 static void pid_monitor(void *param, __unused wait_result_t wait_result) {
   pid_monitor_info *info = (pid_monitor_info *)param;
-  uint32_t sleep_time = info->sdm->PidMonitorSleepTimeMilliseconds();
-  if (info->sdm) {
+  if (info && info->sdm) {
+    uint32_t sleep_time = info->sdm->PidMonitorSleepTimeMilliseconds();
     while (!info->sdm->PidMonitorThreadsShouldExit()) {
       proc_t proc = proc_find(info->pid);
       if (!proc) break;
@@ -245,6 +245,8 @@ static void pid_monitor(void *param, __unused wait_result_t wait_result) {
   thread_terminate(current_thread());
 }
 
+// TODO(nguyenphillip): Look at moving pid monitoring out of SDM entirely,
+// maybe by creating a dedicated class to do this that SDM could then query.
 void SantaDecisionManager::MonitorCompilerPidForExit(pid_t pid) {
   // Don't start any new threads if compiler_pid_set_ doesn't exist.
   if (!compiler_pid_set_) return;
@@ -277,17 +279,22 @@ bool SantaDecisionManager::StopPidMonitorThreads() {
   compiler_pid_set_ = nullptr;
   delete temp;
 
-  // Keep track of how many times we've slept waiting for the pid monitor
-  // threads to exit.  If we sleep for more than 5 seconds, give up on waiting.
-  int wait_count = 0;
+  // Sleep time between checks starts at 10 ms, but increases to 5 sec after
+  // 10 sec have passed without the thread count dropping to 0.
+  unsigned int sleep_time_milliseconds = 10;
+  unsigned int total_wait_time = 0;
 
   while (pid_monitor_thread_count_ > 0) {
-    IOSleep(10);
-    if (++wait_count > 500) {
-      LOGD("Pid monitor threads took too long to stop.  Giving up.");
-      return false;
+    if (sleep_time_milliseconds == 10) {
+      total_wait_time += sleep_time_milliseconds;
+      if (total_wait_time >= 10000) {
+        sleep_time_milliseconds = 5000;
+        LOGD("Waited %d ms for pid monitor threads to quit, switching sleep"
+             "time to %d ms", total_wait_time, sleep_time_milliseconds);
+      }
     }
-  };
+    IOSleep(sleep_time_milliseconds);
+  }
   LOGD("Pid monitor threads stopped.");
   return true;
 }
@@ -528,7 +535,7 @@ void SantaDecisionManager::DecrementPidMonitorThreadCount() {
 
 bool SantaDecisionManager::IsCompilerProcess(pid_t pid) {
   if (compiler_pid_set_->get(pid)) return true;
-  if (check_compiler_ancestors_) {
+  if (kCheckCompilerAncestors) {
     // Check if any ancestor of this process is in the set of compiler pids.
     for (;;) {
       proc_t proc = proc_find(pid);

@@ -74,6 +74,7 @@ static NSString *const kEnablePageZeroProtectionKey = @"EnablePageZeroProtection
 
 // The keys managed by a sync server or mobileconfig.
 static NSString *const kClientModeKey = @"ClientMode";
+static NSString *const kTransitiveWhitelistingEnabledKey = @"TransitiveWhitelistingEnabled";
 static NSString *const kWhitelistRegexKey = @"WhitelistRegex";
 static NSString *const kBlacklistRegexKey = @"BlacklistRegex";
 static NSString *const kFileChangesRegexKey = @"FileChangesRegex";
@@ -89,7 +90,11 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
     _defaults = [[NSUserDefaults alloc] initWithSuiteName:kMobileConfigDomain];
     _syncServerKeys = @[
         kClientModeKey, kWhitelistRegexKey, kBlacklistRegexKey, kFileChangesRegexKey,
-        kFullSyncLastSuccess, kRuleSyncLastSuccess, kSyncCleanRequired
+        kFullSyncLastSuccess, kRuleSyncLastSuccess, kSyncCleanRequired,
+#ifndef DEBUG
+        // TODO(nguyenphillip): remove this when sync server supports transitive whitelisting.
+        kTransitiveWhitelistingEnabledKey,
+#endif
     ];
     _mobileConfigKeys = @[
         kClientModeKey, kFileChangesRegexKey, kWhitelistRegexKey, kBlacklistRegexKey,
@@ -99,7 +104,7 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
         kClientAuthCertificatePasswordKey, kClientAuthCertificateCNKey,
         kClientAuthCertificateIssuerKey, kServerAuthRootsDataKey, kServerAuthRootsFileKey,
         kMachineOwnerKey, kMachineIDKey, kMachineOwnerPlistFileKey, kMachineOwnerPlistKeyKey,
-        kMachineIDPlistFileKey, kMachineIDPlistKeyKey
+        kMachineIDPlistFileKey, kMachineIDPlistKeyKey, kTransitiveWhitelistingEnabledKey,
     ];
     [self reloadConfigData];
   }
@@ -143,6 +148,21 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
   } else {
     LOGW(@"Ignoring request to change client mode to %ld", newMode);
   }
+}
+
+- (BOOL)transitiveWhitelistingEnabled {
+  id enabled = self.configData[kTransitiveWhitelistingEnabledKey];
+  if ([enabled respondsToSelector:@selector(boolValue)]) {
+    return [enabled boolValue];
+  }
+  // Fix bad values by resetting to NO.
+  self.transitiveWhitelistingEnabled = NO;
+  return NO;
+}
+
+- (void)setTransitiveWhitelistingEnabled:(BOOL)enabled {
+  self.configData[kTransitiveWhitelistingEnabledKey] = [NSNumber numberWithBool:enabled];
+  [self saveSyncStateToDisk];
 }
 
 - (NSRegularExpression *)whitelistPathRegex {

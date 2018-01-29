@@ -144,9 +144,11 @@ class SantaDecisionManager : public OSObject {
   /// Decrements the count of active pid monitor threads.
   void DecrementPidMonitorThreadCount();
 
-  // Determine if pid belongs to a compiler process. When
-  // check_compiler_ancestors_ is set to true, this also checks all ancestor
-  // processes of the pid.
+  /**
+    Determine if pid belongs to a compiler process. When
+    kCheckCompilerAncestors is set to true, this also checks all ancestor
+    processes of the pid.
+  */
   bool IsCompilerProcess(pid_t pid);
 
   /**
@@ -204,6 +206,13 @@ class SantaDecisionManager : public OSObject {
 
   /// How long pid monitor thread should sleep between termination checks.
   static const uint32_t kPidMonitorSleepTimeMilliseconds = 1000;
+
+  /**
+    When set to true, Santa will check all ancestors of a process to determine
+    if it is a compiler.
+    TODO(nguyenphillip): this setting (and others above) should be configurable.
+  */
+  static const bool kCheckCompilerAncestors = false;
 
   /**
     Fetches a response from the daemon. Handles both daemon death
@@ -336,10 +345,6 @@ class SantaDecisionManager : public OSObject {
   kauth_listener_t fileop_listener_;
 
   struct timespec ts_;
-
-  // When set to true, Santa will check all ancestors of a process to determine
-  // if it is a compiler.
-  bool check_compiler_ancestors_ = false;
 };
 
 /**

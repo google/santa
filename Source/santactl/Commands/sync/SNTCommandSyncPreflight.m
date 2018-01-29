@@ -85,16 +85,12 @@
   }];
 
   dispatch_group_enter(group);
-  [[self.daemonConn remoteObjectProxy]
-   // TODO(nguyenphillip): get rid of the debug case
-#ifdef DEBUG
-      setTransitiveWhitelistingEnabled:YES
-#else
-      setTransitiveWhitelistingEnabled:[resp[kTransitiveWhitelistingEnabled] boolValue]
-#endif
-                                 reply:^{
-    dispatch_group_leave(group);
-  }];
+  if ([resp[kTransitiveWhitelistingEnabled] respondsToSelector:@selector(boolValue)]) {
+    BOOL enabled = [resp[kTransitiveWhitelistingEnabled] boolValue];
+    [[self.daemonConn remoteObjectProxy] setTransitiveWhitelistingEnabled:enabled reply:^{
+      dispatch_group_leave(group);
+    }];
+  }
 
   self.syncState.eventBatchSize = [resp[kBatchSize] unsignedIntegerValue] ?: kDefaultEventBatchSize;
   self.syncState.FCMToken = resp[kFCMToken];
