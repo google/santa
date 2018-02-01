@@ -25,11 +25,11 @@
 #import "SNTCommonEnums.h"
 #import "SNTConfigurator.h"
 #import "SNTDatabaseController.h"
-#import "SNTRuleTable.h"
 #import "SNTFileInfo.h"
 #import "SNTKernelCommon.h"
 #import "SNTLogging.h"
 #import "SNTRule.h"
+#import "SNTRuleTable.h"
 #import "SNTStoredEvent.h"
 
 @interface SNTEventLog ()

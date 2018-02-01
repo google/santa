@@ -40,7 +40,7 @@ bool SantaDecisionManager::init() {
   root_decision_cache_ = new SantaCache<uint64_t>(5000, 2);
   non_root_decision_cache_ = new SantaCache<uint64_t>(500, 2);
   vnode_pid_map_ = new SantaCache<uint64_t>(2000, 5);
-  compiler_pid_set_ = new SantaCache<bool>(500, 5);
+  compiler_pid_set_ = new SantaCache<pid_t>(500, 5);
 
   decision_dataqueue_ = IOSharedDataQueue::withEntries(
       kMaxDecisionQueueEvents, sizeof(santa_message_t));
@@ -537,18 +537,21 @@ void SantaDecisionManager::DecrementPidMonitorThreadCount() {
 }
 
 bool SantaDecisionManager::IsCompilerProcess(pid_t pid) {
-  if (compiler_pid_set_->get(pid)) return true;
-  if (kCheckCompilerAncestors) {
-    // Check if any ancestor of this process is in the set of compiler pids.
-    for (;;) {
-      proc_t proc = proc_find(pid);
-      if (!proc) break;
-      pid_t ppid = proc_ppid(proc);
-      proc_rele(proc);
-      if (ppid == 0 || pid == ppid) break; // process is launchd / has no parent
-      pid = ppid;
-      if (compiler_pid_set_->get(pid)) return true;
-    }
+  for (;;) {
+    // Find the parent pid.
+    proc_t proc = proc_find(pid);
+    if (!proc) return false;
+    pid_t ppid = proc_ppid(proc);
+    proc_rele(proc);
+    // Quit if process is launchd or has no parent.
+    if (ppid == 0 || pid == ppid) break;
+    pid_t val = compiler_pid_set_->get(pid);
+    // If pid was in compiler_pid_set_ then make sure that it has the same
+    // parent pid as when it was set.
+    if (val) return val == ppid;
+    // If pid not in the set, then quit unless we want to check ancestors.
+    if (!kCheckCompilerAncestors) break;
+    pid = ppid;
   }
   return false;
 }
@@ -585,11 +588,11 @@ int SantaDecisionManager::VnodeCallback(const kauth_cred_t cred,
         // pid_t is 32-bit; pid is in upper 32 bits, ppid in lower.
         uint64_t val = ((uint64_t)pid << 32) | (ppid & 0xFFFFFFFF);
         vnode_pid_map_->set(vnode_id, val);
-        if (returnedAction == ACTION_RESPOND_ALLOW_COMPILER) {
+        if (returnedAction == ACTION_RESPOND_ALLOW_COMPILER && ppid != 0) {
           // Do some additional bookkeeping for compilers:
           // We associate the pid with a compiler so that when we see it later
           // in the context of a KAUTH_FILEOP event, we'll recognize it.
-          compiler_pid_set_->set(pid, true);
+          compiler_pid_set_->set(pid, ppid);
           // And start polling for the compiler process termination, so that we
           // can remove the pid from our cache of compiler pids.
           MonitorCompilerPidForExit(pid);

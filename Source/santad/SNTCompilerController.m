@@ -30,7 +30,6 @@
 @property SNTEventLog *eventLog;
 @end
 
-
 @implementation SNTCompilerController
 
 - (instancetype)initWithDriverManager:(SNTDriverManager *)driverManager
