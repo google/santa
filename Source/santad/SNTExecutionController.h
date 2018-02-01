@@ -18,7 +18,6 @@
 #include "SNTKernelCommon.h"
 
 @class MOLCodesignChecker;
-@class SNTCompilerController;
 @class SNTDriverManager;
 @class SNTEventLog;
 @class SNTEventTable;
@@ -41,8 +40,7 @@
                            eventTable:(SNTEventTable *)eventTable
                         notifierQueue:(SNTNotificationQueue *)notifierQueue
                            syncdQueue:(SNTSyncdQueue *)syncdQueue
-                             eventLog:(SNTEventLog *)eventLog
-                             compiler:(SNTCompilerController *)cc;
+                             eventLog:(SNTEventLog *)eventLog;
 
 ///
 ///  Handles the logic of deciding whether to allow the binary to run or not, sends the response to

@@ -30,6 +30,7 @@
 - (void)logFileModification:(santa_message_t)message;
 
 - (void)saveDecisionDetails:(SNTCachedDecision *)cd;
+- (void)forgetDecisionDetailsForVnodeId:(uint64_t)vnodeId;
 - (void)logDeniedExecution:(SNTCachedDecision *)cd withMessage:(santa_message_t)message;
 - (void)logAllowedExecution:(santa_message_t)message;
 

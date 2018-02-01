@@ -89,12 +89,8 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
   if (self) {
     _defaults = [[NSUserDefaults alloc] initWithSuiteName:kMobileConfigDomain];
     _syncServerKeys = @[
-        kClientModeKey, kWhitelistRegexKey, kBlacklistRegexKey, kFileChangesRegexKey,
-        kFullSyncLastSuccess, kRuleSyncLastSuccess, kSyncCleanRequired,
-#ifndef DEBUG
-        // TODO(nguyenphillip): remove this when sync server supports transitive whitelisting.
-        kTransitiveWhitelistingEnabledKey,
-#endif
+        kClientModeKey, kWhitelistRegexKey, kBlacklistRegexKey, kFullSyncLastSuccess,
+        kRuleSyncLastSuccess, kSyncCleanRequired,
     ];
     _mobileConfigKeys = @[
         kClientModeKey, kFileChangesRegexKey, kWhitelistRegexKey, kBlacklistRegexKey,

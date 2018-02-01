@@ -83,7 +83,9 @@
       [self startSyncd];
     };
 
-    _compilerController = [[SNTCompilerController alloc] init];
+    _compilerController =
+        [[SNTCompilerController alloc] initWithDriverManager:_driverManager
+                                                    eventLog:_eventLog];
 
     // Establish XPC listener for Santa and santactl connections
     SNTDaemonControlController *dc =
@@ -136,8 +138,7 @@
                                                                  eventTable:eventTable
                                                               notifierQueue:notQueue
                                                                  syncdQueue:syncdQueue
-                                                                   eventLog:_eventLog
-                                                                   compiler:_compilerController];
+                                                                   eventLog:_eventLog];
     // Start up santactl as a daemon if a sync server exists.
     [self startSyncd];
 
@@ -185,11 +186,12 @@
             [_execController validateBinaryWithMessage:message];
             break;
           }
-          case ACTION_NOTIFY_CLOSE:
+          case ACTION_NOTIFY_CLOSE: {
             // Determine if we should add a transitive whitelisting rule for this new file.
             // Requires that writing process was a compiler and that new file is executable.
             [self.compilerController createTransitiveRule:message];
             break;
+          }
           default: {
             LOGE(@"Received decision request without a valid action: %d", message.action);
             exit(1);

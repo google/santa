@@ -63,6 +63,7 @@ typedef NS_ENUM(NSInteger, SNTEventState) {
   SNTEventStateAllowScope = 1 << 27,
   SNTEventStateAllowCompiler = 1 << 28,
   SNTEventStateAllowTransitive = 1 << 29,
+  SNTEventStateAllowPendingTransitive = 1 << 30,
 
   // Block and Allow masks
   SNTEventStateBlock = 0xFF << 16,

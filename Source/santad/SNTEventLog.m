@@ -75,6 +75,12 @@
   });
 }
 
+- (void)forgetDecisionDetailsForVnodeId:(uint64_t)vnodeId {
+  dispatch_sync(_detailStoreQueue, ^{
+    [_detailStore removeObjectForKey:@(vnodeId)];
+  });
+}
+
 - (void)logFileModification:(santa_message_t)message {
   NSString *action, *newpath;
 
@@ -102,10 +108,6 @@
     }
     case ACTION_NOTIFY_WRITE: {
       action = @"WRITE";
-      break;
-    }
-    case ACTION_NOTIFY_CLOSE: {
-      action = @"CLOSE";
       break;
     }
     default: action = @"UNKNOWN"; break;
@@ -156,10 +158,17 @@
     case SNTEventStateAllowCompiler:
       d = @"ALLOW";
       r = @"COMPILER";
+      logArgs = YES;
       break;
     case SNTEventStateAllowTransitive:
       d = @"ALLOW";
       r = @"TRANSITIVE";
+      logArgs = YES;
+      break;
+    case SNTEventStateAllowPendingTransitive:
+      d = @"ALLOW";
+      r = @"PENDING_TRANSITIVE";
+      logArgs = YES;
       break;
     case SNTEventStateAllowCertificate:
       d = @"ALLOW";

@@ -62,6 +62,9 @@ REGISTER_COMMAND_NAME(@"checkcache")
     } else if (action == ACTION_RESPOND_ALLOW_COMPILER) {
       LOGI(@"File exists in [whitelist compiler] kernel cache");
       exit(0);
+    } else if (action == ACTION_RESPOND_ALLOW_TEMPORARY) {
+      LOGI(@"File exists in [whitelist temporary] kernel cache");
+      exit(0);
     } else if (action == ACTION_UNSET) {
       LOGE(@"File does not exist in cache");
       exit(1);

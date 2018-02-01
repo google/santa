@@ -211,4 +211,13 @@ static const int MAX_DELAY = 15;
   return (santa_action_t)vnode_action;
 }
 
+- (kern_return_t)removeCacheEntryForVnodeID:(uint64_t)vnodeId {
+  return IOConnectCallScalarMethod(_connection,
+                                   kSantaUserClientRemoveCacheEntry,
+                                   &vnodeId,
+                                   1,
+                                   0,
+                                   0);
+}
+
 @end

@@ -58,8 +58,13 @@
 - (BOOL)flushCacheNonRootOnly:(BOOL)nonRootOnly;
 
 ///
-///  Check the kernel cache for a VnodeID
+///  Check the kernel cache for a VnodeID.
 ///
 - (santa_action_t)checkCache:(uint64_t)vnodeID;
+
+///
+///  Remove single entry from the kernel cache for given VnodeID.
+///
+- (kern_return_t)removeCacheEntryForVnodeID:(uint64_t)vnodeId;
 
 @end

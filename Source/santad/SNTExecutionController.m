@@ -25,7 +25,6 @@
 #import "SNTBlockMessage.h"
 #import "SNTCachedDecision.h"
 #import "SNTCommonEnums.h"
-#import "SNTCompilerController.h"
 #import "SNTConfigurator.h"
 #import "SNTDriverManager.h"
 #import "SNTDropRootPrivs.h"
@@ -40,7 +39,6 @@
 #import "SNTSyncdQueue.h"
 
 @interface SNTExecutionController ()
-@property SNTCompilerController *compilerController;
 @property SNTDriverManager *driverManager;
 @property SNTEventLog *eventLog;
 @property SNTEventTable *eventTable;
@@ -61,8 +59,7 @@
                            eventTable:(SNTEventTable *)eventTable
                         notifierQueue:(SNTNotificationQueue *)notifierQueue
                            syncdQueue:(SNTSyncdQueue *)syncdQueue
-                             eventLog:(SNTEventLog *)eventLog
-                             compiler:(SNTCompilerController *)cc {
+                             eventLog:(SNTEventLog *)eventLog {
   self = [super init];
   if (self) {
     _driverManager = driverManager;
@@ -72,7 +69,6 @@
     _syncdQueue = syncdQueue;
     _eventLog = eventLog;
     _policyProcessor = [[SNTPolicyProcessor alloc] initWithRuleTable:_ruleTable];
-    _compilerController = cc;
 
     _eventQueue = dispatch_queue_create("com.google.santad.event_upload", DISPATCH_QUEUE_SERIAL);
 

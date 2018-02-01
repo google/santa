@@ -334,6 +334,9 @@ void SantaDecisionManager::AddToCache(
       decision_cache->set(
           identifier, val, ((uint64_t)ACTION_REQUEST_BINARY << 56));
       break;
+    case ACTION_RESPOND_ALLOW_TEMPORARY:
+      decision_cache->set(identifier, val, 0);
+      break;
     default:
       break;
   }
@@ -573,7 +576,8 @@ int SantaDecisionManager::VnodeCallback(const kauth_cred_t cred,
 
   switch (returnedAction) {
     case ACTION_RESPOND_ALLOW:
-    case ACTION_RESPOND_ALLOW_COMPILER: {
+    case ACTION_RESPOND_ALLOW_COMPILER:
+    case ACTION_RESPOND_ALLOW_TEMPORARY: {
       auto proc = vfs_context_proc(ctx);
       if (proc) {
         pid_t pid = proc_pid(proc);
@@ -619,6 +623,25 @@ void SantaDecisionManager::FileOpCallback(
 
     if (action == KAUTH_FILEOP_CLOSE) {
       RemoveFromCache(vnode_id);
+      auto message = NewMessage(nullptr);
+      message->vnode_id = vnode_id;
+      message->action = ACTION_NOTIFY_CLOSE;
+      strlcpy(message->path, path, sizeof(message->path));
+      proc_name(message->pid, message->pname, sizeof(message->pname));
+      // Note that the ACTION_NOTIFY_CLOSE messages aren't sent to the log queue
+      // because they mostly duplicate the ACTION_NOTIFY_WRITE messages (even
+      // though they aren't precisely the same).
+      if (IsCompilerProcess(message->pid)) {
+        PostToDecisionQueue(message);
+        // Add a temporary allow rule to the decision cache for this vnode_id
+        // while SNTCompilerController decides whether or not to add a
+        // permanent rule for the new file to the rules database.  This is
+        // because checking if the file is a Mach-O binary and hashing it might
+        // not finish before an attempt to execute it.
+        AddToCache(vnode_id, ACTION_RESPOND_ALLOW_TEMPORARY, 0);
+      }
+      delete message;
+      return;
     } else if (action == KAUTH_FILEOP_EXEC) {
       auto message = NewMessage(nullptr);
       message->vnode_id = vnode_id;
@@ -649,9 +672,6 @@ void SantaDecisionManager::FileOpCallback(
         // This is actually a KAUTH_VNODE_WRITE_DATA event.
         message->action = ACTION_NOTIFY_WRITE;
         break;
-      case KAUTH_FILEOP_CLOSE:
-        message->action = ACTION_NOTIFY_CLOSE;
-        break;
       case KAUTH_FILEOP_RENAME:
         message->action = ACTION_NOTIFY_RENAME;
         break;
@@ -669,19 +689,7 @@ void SantaDecisionManager::FileOpCallback(
         return;
     }
 
-    // We don't log the ACTION_NOTIFY_CLOSE messages because they mostly
-    // duplicate the ACTION_NOTIFY_WRITE messages (though they aren't precisely
-    // the same).
-    if (message->action != ACTION_NOTIFY_CLOSE) {
-      PostToLogQueue(message);
-    }
-
-    // Post any compiler-related messages to the decision queue.
-    if (message->action == ACTION_NOTIFY_CLOSE &&
-        IsCompilerProcess(message->pid)) {
-      PostToDecisionQueue(message);
-    }
-
+    PostToLogQueue(message);
     delete message;
   }
 }
@@ -709,6 +717,7 @@ extern "C" int fileop_scope_callback(
       // was modified.
       if (!(arg2 & KAUTH_FILEOP_CLOSE_MODIFIED))
         return KAUTH_RESULT_DEFER;
+      // Intentional fallthrough to get vnode reference.
     case KAUTH_FILEOP_DELETE:
     case KAUTH_FILEOP_EXEC:
       vp = reinterpret_cast<vnode_t>(arg0);
