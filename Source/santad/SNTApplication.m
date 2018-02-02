@@ -98,9 +98,9 @@
     __block NSURL *origSyncURL = [[SNTConfigurator configurator] syncBaseURL];
     _configFileWatcher = [[SNTFileWatcher alloc] initWithFilePath:kMobileConfigFilePath
                                                           handler:^(unsigned long data) {
-
-      LOGD(@"Mobileconfig changed, reloading.");
-      [[SNTConfigurator configurator] reloadConfigData];
+      if (data & DISPATCH_VNODE_ATTRIB) return;
+      if (![[SNTConfigurator configurator] reloadConfigData]) return;
+      LOGI(@"Mobileconfig changed, reloading.");
 
       // Flush cache if client just went into lockdown.
       SNTClientMode newMode = [[SNTConfigurator configurator] clientMode];

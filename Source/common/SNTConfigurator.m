@@ -35,7 +35,9 @@
 @property(readonly, nonatomic) NSArray *mobileConfigKeys;
 @end
 
-@implementation SNTConfigurator
+@implementation SNTConfigurator {
+  volatile int32_t _reloading;
+}
 
 /// The hard-coded path to the sync state file.
 NSString *const kSyncStateFilePath = @"/var/db/santa/sync-state.plist";
@@ -88,8 +90,8 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
   if (self) {
     _defaults = [[NSUserDefaults alloc] initWithSuiteName:kMobileConfigDomain];
     _syncServerKeys = @[
-        kClientModeKey, kWhitelistRegexKey, kBlacklistRegexKey, kFileChangesRegexKey,
-        kFullSyncLastSuccess, kRuleSyncLastSuccess, kSyncCleanRequired
+        kClientModeKey, kWhitelistRegexKey, kBlacklistRegexKey, kFullSyncLastSuccess,
+        kRuleSyncLastSuccess, kSyncCleanRequired
     ];
     _mobileConfigKeys = @[
         kClientModeKey, kFileChangesRegexKey, kWhitelistRegexKey, kBlacklistRegexKey,
@@ -101,7 +103,8 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
         kMachineOwnerKey, kMachineIDKey, kMachineOwnerPlistFileKey, kMachineOwnerPlistKeyKey,
         kMachineIDPlistFileKey, kMachineIDPlistKeyKey
     ];
-    [self reloadConfigData];
+    _reloading = 0;
+    [self reloadConfigDataHelper];
   }
   return self;
 }
@@ -341,27 +344,46 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
   return machineId;
 }
 
-- (void)reloadConfigData {
+- (void)reloadConfigDataHelper {
   // Load the mobileconfig
-  self.configData = [self mobileConfig];
-  if (!self.configData[kClientModeKey]) {
-    // Default to Monitor if the config is missing or invalid
-    self.configData[kClientModeKey] = @(SNTClientModeMonitor);
+  NSMutableDictionary *mobileConfig = [self mobileConfig];
+
+  if (!mobileConfig[kClientModeKey]) {
+    // Default to Monitor if the config is missing
+    mobileConfig[kClientModeKey] = @(SNTClientModeMonitor);
   }
 
   // Nothing else to do if a sync server is not involved
-  if (!self.configData[kSyncBaseURLKey]) return;
+  if (!mobileConfig[kSyncBaseURLKey]) {
+    self.configData = mobileConfig;
+    return;
+  }
 
   // Load the last known sync state
-  if (![[NSFileManager defaultManager] fileExistsAtPath:kSyncStateFilePath]) return;
-  NSMutableDictionary *syncState = [self syncState];
-  if (!self) return;
+  if (![[NSFileManager defaultManager] fileExistsAtPath:kSyncStateFilePath]) {
+    self.configData = mobileConfig;
+    return;
+  }
+  NSDictionary *syncState = [self syncState];
+  if (!syncState) {
+    self.configData = mobileConfig;
+    return;
+  }
 
   // Overwrite or add the sync state to the running config
   for (NSString *key in [self syncServerKeys]) {
-    self.configData[key] = syncState[key];
+    mobileConfig[key] = syncState[key];
   }
+  self.configData = mobileConfig;
   [self saveSyncStateToDisk];
+}
+
+- (BOOL)reloadConfigData {
+  if (!OSAtomicCompareAndSwap32Barrier(0, 1, &_reloading)) return NO;
+  sleep(5);
+  [self reloadConfigDataHelper];
+  OSAtomicCompareAndSwap32Barrier(1, 0, &_reloading);
+  return YES;
 }
 
 #pragma mark Private
@@ -395,6 +417,8 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
 ///  Saves the current effective syncState to disk.
 ///
 - (void)saveSyncStateToDisk {
+  // Only save the sync state if a sync server is configured.
+  if (!self.configData[kSyncBaseURLKey]) return;
   // Only santad should write to this file.
   if (geteuid() != 0) return;
   NSMutableDictionary *syncState =
