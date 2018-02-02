@@ -100,18 +100,18 @@ static NSString * const silencedNotificationsKey = @"SilencedNotifications";
   NSString *customMsg;
   switch (clientmode) {
     case SNTClientModeMonitor:
-      un.informativeText = @"Switching into Monitor mode";
       customMsg = [[SNTConfigurator configurator] modeNotificationMonitor];
       if (!customMsg.length) return;
+      un.informativeText = @"Switching into Monitor mode";
       customMsg = [SNTBlockMessage stringFromHTML:customMsg];
-      if (customMsg.length) un.informativeText = customMsg;
+      un.informativeText = customMsg;
       break;
     case SNTClientModeLockdown:
-      un.informativeText = @"Switching into Lockdown mode";
       customMsg = [[SNTConfigurator configurator] modeNotificationLockdown];
       if (!customMsg.length) return;
+      un.informativeText = @"Switching into Lockdown mode";
       customMsg = [SNTBlockMessage stringFromHTML:customMsg];
-      if (customMsg.length) un.informativeText = customMsg;
+      un.informativeText = customMsg;
       break;
     default:
       return;
