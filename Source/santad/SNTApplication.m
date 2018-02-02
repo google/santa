@@ -16,9 +16,6 @@
 
 @import DiskArbitration;
 
-#include <sys/stat.h>
-#include <sys/types.h>
-
 #import "SNTCommonEnums.h"
 #import "SNTConfigurator.h"
 #import "SNTDaemonControlController.h"
@@ -28,7 +25,6 @@
 #import "SNTEventLog.h"
 #import "SNTEventTable.h"
 #import "SNTExecutionController.h"
-#import "SNTFileWatcher.h"
 #import "SNTLogging.h"
 #import "SNTNotificationQueue.h"
 #import "SNTRuleTable.h"
@@ -36,14 +32,13 @@
 #import "SNTXPCConnection.h"
 #import "SNTXPCControlInterface.h"
 
-@interface SNTApplication ()
+@interface SNTApplication ()<SNTConfiguratorReceiver>
 @property DASessionRef diskArbSession;
 @property SNTDriverManager *driverManager;
 @property SNTEventLog *eventLog;
 @property SNTExecutionController *execController;
-@property SNTFileWatcher *configFileWatcher;
-@property SNTFileWatcher *syncStateWatcher;
 @property SNTXPCConnection *controlConnection;
+@property pid_t syncdPID;
 @end
 
 @implementation SNTApplication
@@ -80,6 +75,9 @@
     syncdQueue.invalidationHandler = ^{
       [self startSyncd];
     };
+
+    // Become the delegate for SNTConfigurator
+    [[SNTConfigurator configurator] setDelegate:self];
     
     // Establish XPC listener for Santa and santactl connections
     SNTDaemonControlController *dc =
@@ -93,38 +91,6 @@
     _controlConnection.exportedInterface = [SNTXPCControlInterface controlInterface];
     _controlConnection.exportedObject = dc;
     [_controlConnection resume];
-
-    __block SNTClientMode origMode = [[SNTConfigurator configurator] clientMode];
-    __block NSURL *origSyncURL = [[SNTConfigurator configurator] syncBaseURL];
-    _configFileWatcher = [[SNTFileWatcher alloc] initWithFilePath:kMobileConfigFilePath
-                                                          handler:^(unsigned long data) {
-      if (data & DISPATCH_VNODE_ATTRIB) return;
-      if (![[SNTConfigurator configurator] reloadConfigData]) return;
-      LOGI(@"Mobileconfig changed, reloading.");
-
-      // Flush cache if client just went into lockdown.
-      SNTClientMode newMode = [[SNTConfigurator configurator] clientMode];
-      if (origMode != newMode) {
-        origMode = newMode;
-        if (newMode == SNTClientModeLockdown) {
-          LOGI(@"Changed client mode, flushing cache.");
-          [self.driverManager flushCacheNonRootOnly:NO];
-        }
-      }
-
-      // Start santactl if the syncBaseURL changed from nil --> somthing
-      NSURL *syncURL = [[SNTConfigurator configurator] syncBaseURL];
-      if (!origSyncURL && syncURL) {
-        origSyncURL = syncURL;
-        LOGI(@"SyncBaseURL added, starting santactl.");
-        [self startSyncd];
-      }
-    }];
-
-    _syncStateWatcher = [[SNTFileWatcher alloc] initWithFilePath:kSyncStateFilePath
-                                                         handler:^(unsigned long data) {
-      [[SNTConfigurator configurator] syncStateFileChanged:data];
-    }];
 
     // Initialize the binary checker object
     _execController = [[SNTExecutionController alloc] initWithDriverManager:_driverManager
@@ -140,18 +106,6 @@
   }
 
   return self;
-}
-
-- (void)startSyncd {
-  if (![[SNTConfigurator configurator] syncBaseURL]) return;
-
-  if (fork() == 0) {
-    // Ensure we have no privileges
-    if (!DropRootPrivileges()) {
-      _exit(EPERM);
-    }
-    _exit(execl(kSantaCtlPath, kSantaCtlPath, "sync", "--daemon", "--syslog", NULL));
-  }
 }
 
 - (void)start {
@@ -268,6 +222,47 @@ void diskDisappearedCallback(DADiskRef disk, void *context) {
 
   [app.eventLog logDiskDisappeared:props];
   [app.driverManager flushCacheNonRootOnly:YES];
+}
+
+- (void)startSyncd {
+  if (![[SNTConfigurator configurator] syncBaseURL]) return;
+  [self stopSyncd];
+  self.syncdPID = fork();
+  if (self.syncdPID == -1) {
+    LOGD(@"Failed to fork");
+    self.syncdPID = 0;
+  } else if (self.syncdPID == 0) {
+    // Ensure we have no privileges
+    if (!DropRootPrivileges()) {
+      _exit(EPERM);
+    }
+    _exit(execl(kSantaCtlPath, kSantaCtlPath, "sync", "--daemon", "--syslog", NULL));
+  }
+  LOGD(@"santactl started with pid: %i", self.syncdPID);
+}
+
+- (void)stopSyncd {
+  if (!self.syncdPID) return;
+  int ret = kill(self.syncdPID, SIGKILL);
+  LOGD(@"kill(%i, 9) = %i", self.syncdPID, ret);
+  self.syncdPID = 0;
+}
+
+- (void)clientModeDidChange:(SNTClientMode)newClientMode {
+  if (newClientMode == SNTClientModeLockdown) {
+    LOGI(@"Changed client mode, flushing cache.");
+    [self.driverManager flushCacheNonRootOnly:NO];
+  }
+}
+
+- (void)syncBaseURLDidChange:(NSURL *)newSyncBaseURL {
+  if (newSyncBaseURL) {
+    LOGI(@"Starting santactl with new SyncBaseURL: %@", newSyncBaseURL);
+    [self startSyncd];
+  } else {
+    LOGI(@"SyncBaseURL removed, killing santactl pid: %i", self.syncdPID);
+    [self stopSyncd];
+  }
 }
 
 @end

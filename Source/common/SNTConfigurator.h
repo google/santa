@@ -16,14 +16,24 @@
 
 #import "SNTCommonEnums.h"
 
-extern NSString *const kSyncStateFilePath;
-extern NSString *const kMobileConfigFilePath;
+///
+///  A protocol to notify the implementor when the client mode or sync server changes.
+///
+@protocol SNTConfiguratorReceiver
+@required
+- (void)clientModeDidChange:(SNTClientMode)newClientMode;
+- (void)syncBaseURLDidChange:(NSURL *)newSyncBaseURL;
+@end
 
 ///
 ///  Singleton that provides an interface for managing configuration values on disk
 ///  @note This class is designed as a singleton but that is not strictly enforced.
 ///
 @interface SNTConfigurator : NSObject
+
+#pragma mark - SNTConfiguratorReceiver delegate
+
+@property id delegate;
 
 #pragma mark - Daemon Settings
 
@@ -39,7 +49,7 @@ extern NSString *const kMobileConfigFilePath;
 ///  pointless as a path only ever has a single line.
 ///  If the regex doesn't begin with ^ to match from the beginning of the line, it will be added.
 ///
-@property(nonatomic) NSRegularExpression *fileChangesRegex;
+@property(readonly, nonatomic) NSRegularExpression *fileChangesRegex;
 
 ///
 ///  The regex of whitelisted paths. Regexes are specified in ICU format.
@@ -200,16 +210,5 @@ extern NSString *const kMobileConfigFilePath;
 ///  Retrieve an initialized singleton configurator object using the default file path.
 ///
 + (instancetype)configurator;
-
-///
-///  Re-read config data from configuration sources. Returns YES if the reload completed
-///  successfully, NO if a reload is currently in progress.
-///
-- (BOOL)reloadConfigData;
-
-///
-///  Notify the receiver that the sync state file has changed.
-///
-- (void)syncStateFileChanged:(unsigned long)data;
 
 @end

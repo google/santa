@@ -172,6 +172,7 @@
 		C76614EC1D142D3C00D150C1 /* SNTCommandCheckCache.m in Sources */ = {isa = PBXBuildFile; fileRef = C76614EB1D142D3C00D150C1 /* SNTCommandCheckCache.m */; };
 		C776A1071DEE160500A56616 /* SNTCommandSyncManager.m in Sources */ = {isa = PBXBuildFile; fileRef = C776A1061DEE160500A56616 /* SNTCommandSyncManager.m */; };
 		C78227631E1C3C7D006EB2D6 /* santabs.xpc in CopyFiles */ = {isa = PBXBuildFile; fileRef = C78227541E1C3C58006EB2D6 /* santabs.xpc */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		C7943FE92028B855008D4F76 /* SNTFileWatcher.m in Sources */ = {isa = PBXBuildFile; fileRef = 0DEFB7C31ACDD80100B92AAE /* SNTFileWatcher.m */; };
 		C795ED901D80A5BE007CFF42 /* SNTPolicyProcessor.m in Sources */ = {isa = PBXBuildFile; fileRef = C795ED8F1D80A5BE007CFF42 /* SNTPolicyProcessor.m */; };
 		C795ED911D80B66B007CFF42 /* SNTPolicyProcessor.m in Sources */ = {isa = PBXBuildFile; fileRef = C795ED8F1D80A5BE007CFF42 /* SNTPolicyProcessor.m */; };
 		C79A23581E23F7E80037AFA8 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = C79A23561E23F7E80037AFA8 /* main.m */; };
@@ -1515,6 +1516,7 @@
 				C76614EC1D142D3C00D150C1 /* SNTCommandCheckCache.m in Sources */,
 				0D416401191974F1006A356A /* SNTCommandSyncState.m in Sources */,
 				0DC5D871192160180078A5C0 /* SNTCommandSyncLogUpload.m in Sources */,
+				C7943FE92028B855008D4F76 /* SNTFileWatcher.m in Sources */,
 				0DB77FDA1CD14092004DF060 /* SNTBlockMessage.m in Sources */,
 				0D35BDA218FD71CE00921A21 /* main.m in Sources */,
 				0DCD6043190ACCB8006B445C /* SNTFileInfo.m in Sources */,
