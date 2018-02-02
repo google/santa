@@ -380,7 +380,7 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
 
 - (BOOL)reloadConfigData {
   if (!OSAtomicCompareAndSwap32Barrier(0, 1, &_reloading)) return NO;
-  sleep(5);
+  sleep(5); // Allow the on-disk changes to appear in NSUserDefaults
   [self reloadConfigDataHelper];
   OSAtomicCompareAndSwap32Barrier(1, 0, &_reloading);
   return YES;
