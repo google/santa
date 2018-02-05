@@ -16,7 +16,6 @@
 
 #import "SNTAboutWindowController.h"
 #import "SNTConfigurator.h"
-#import "SNTFileWatcher.h"
 #import "SNTNotificationManager.h"
 #import "SNTStrengthify.h"
 #import "SNTXPCConnection.h"
@@ -24,7 +23,6 @@
 
 @interface SNTAppDelegate ()
 @property SNTAboutWindowController *aboutWindowController;
-@property SNTFileWatcher *configFileWatcher;
 @property SNTNotificationManager *notificationManager;
 @property SNTXPCConnection *daemonListener;
 @property SNTXPCConnection *bundleListener;
