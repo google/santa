@@ -31,7 +31,7 @@
 @property(readonly, nonatomic) NSUserDefaults *defaults;
 
 /// Holds the configuration from a sync server.
-@property(nonatomic, readonly) NSMutableDictionary *syncState;
+@property NSMutableDictionary *syncState;
 
 /// Used to determine if the underlying values have changed.
 @property SNTClientMode clientModeLastSeen;
@@ -122,7 +122,9 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
     return cm;
   }
 
-  LOGE(@"Client mode was set to bad value: %ld. Defaulting to MONITOR.", cm);
+  if (self.clientModeLastSeen != cm) {
+    LOGE(@"Client mode was set to bad value: %ld. Defaulting to MONITOR.", cm);
+  }
   if (update) self.clientModeLastSeen = cm;
   return SNTClientModeMonitor;
 }
@@ -337,6 +339,8 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
 ///  Read the saved syncState.
 ///
 - (NSMutableDictionary *)readSyncStateFromDisk {
+  // Only read the sync state if a sync server is configured.
+  if (!self.syncBaseURL) return nil;
   NSMutableDictionary *syncState =
       [NSMutableDictionary dictionaryWithContentsOfFile:kSyncStateFilePath];
   if (!syncState) LOGE(@"Could not read sync state file: %@", kSyncStateFilePath);
@@ -448,6 +452,7 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
   NSURL *newSyncBaseURL = [self syncBaseURLAndUpdateLastSeen:NO];
   if (![newSyncBaseURL.absoluteString isEqualToString:self.syncBaseURLLastSeen.absoluteString]) {
     self.syncBaseURLLastSeen = newSyncBaseURL;
+    self.syncState = [self readSyncStateFromDisk];
     if ([self.delegate conformsToProtocol:@protocol(SNTConfiguratorReceiver)]) {
       [self.delegate syncBaseURLDidChange:newSyncBaseURL];
     }
