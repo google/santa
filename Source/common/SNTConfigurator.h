@@ -17,7 +17,7 @@
 #import "SNTCommonEnums.h"
 
 ///
-///  A protocol to notify the implementor when the client mode or sync server changes.
+///  A protocol to notify the implementer when the client mode or sync server changes.
 ///
 @protocol SNTConfiguratorReceiver
 @required
