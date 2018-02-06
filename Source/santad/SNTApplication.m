@@ -297,7 +297,6 @@ void diskDisappearedCallback(DADiskRef disk, void *context) {
 }
 
 - (void)clientModeDidChange:(SNTClientMode)clientMode {
-  LOGI(@"clientModeDidChange: %li", clientMode);
   if (clientMode == SNTClientModeLockdown) {
     LOGI(@"Changed client mode, flushing cache.");
     [self.driverManager flushCacheNonRootOnly:NO];
