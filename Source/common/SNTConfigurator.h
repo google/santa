@@ -17,30 +17,51 @@
 #import "SNTCommonEnums.h"
 
 ///
-///  A protocol to notify the implementer when the client mode or sync server changes.
-///
-@protocol SNTConfiguratorReceiver
-@required
-- (void)clientModeDidChange:(SNTClientMode)newClientMode;
-- (void)syncBaseURLDidChange:(NSURL *)newSyncBaseURL;
-@end
-
-///
 ///  Singleton that provides an interface for managing configuration values on disk
 ///  @note This class is designed as a singleton but that is not strictly enforced.
+///  @note All properties are KVO compliant.
 ///
 @interface SNTConfigurator : NSObject
-
-#pragma mark - SNTConfiguratorReceiver delegate
-
-@property id delegate;
 
 #pragma mark - Daemon Settings
 
 ///
 ///  The operating mode.
 ///
-@property(nonatomic) SNTClientMode clientMode;
+@property(readonly, nonatomic) SNTClientMode clientMode;
+
+///
+///  Set the operating mode as received from a sync server.
+///
+- (void)setSyncServerClientMode:(SNTClientMode)newMode;
+
+///
+///  The regex of whitelisted paths. Regexes are specified in ICU format.
+///
+///  The regex flags IXSM can be used, though the s (dotall) and m (multiline) flags are
+///  pointless as a path only ever has a single line.
+///  If the regex doesn't begin with ^ to match from the beginning of the line, it will be added.
+///
+@property(readonly, nonatomic) NSRegularExpression *whitelistPathRegex;
+
+///
+///  Set the regex of whitelisted paths as received from a sync server.
+///
+- (void)setSyncServerWhitelistPathRegex:(NSRegularExpression *)re;
+
+///
+///  The regex of blacklisted paths. Regexes are specified in ICU format.
+///
+///  The regex flags IXSM can be used, though the s (dotall) and m (multiline) flags are
+///  pointless as a path only ever has a single line.
+///  If the regex doesn't begin with ^ to match from the beginning of the line, it will be added.
+///
+@property(readonly, nonatomic) NSRegularExpression *blacklistPathRegex;
+
+///
+///  Set the regex of blacklisted paths as received from a sync server.
+///
+- (void)setSyncServerBlacklistPathRegex:(NSRegularExpression *)re;
 
 ///
 ///  The regex of paths to log file changes for. Regexes are specified in ICU format.
@@ -50,24 +71,6 @@
 ///  If the regex doesn't begin with ^ to match from the beginning of the line, it will be added.
 ///
 @property(readonly, nonatomic) NSRegularExpression *fileChangesRegex;
-
-///
-///  The regex of whitelisted paths. Regexes are specified in ICU format.
-///
-///  The regex flags IXSM can be used, though the s (dotall) and m (multiline) flags are
-///  pointless as a path only ever has a single line.
-///  If the regex doesn't begin with ^ to match from the beginning of the line, it will be added.
-///
-@property(nonatomic) NSRegularExpression *whitelistPathRegex;
-
-///
-///  The regex of blacklisted paths. Regexes are specified in ICU format.
-///
-///  The regex flags IXSM can be used, though the s (dotall) and m (multiline) flags are
-///  pointless as a path only ever has a single line.
-///  If the regex doesn't begin with ^ to match from the beginning of the line, it will be added.
-///
-@property(nonatomic) NSRegularExpression *blacklistPathRegex;
 
 ///
 ///  Enable __PAGEZERO protection, defaults to YES
@@ -210,5 +213,10 @@
 ///  Retrieve an initialized singleton configurator object using the default file path.
 ///
 + (instancetype)configurator;
+
+///
+///  Clear the sync server configuration from the effective configuration.
+///
+- (void)clearSyncState;
 
 @end
