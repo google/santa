@@ -67,7 +67,9 @@ typedef enum {
   ACTION_RESPOND_DENY = 21,
   ACTION_RESPOND_TOOLONG = 22,
   ACTION_RESPOND_ALLOW_COMPILER = 23,
-  ACTION_RESPOND_ALLOW_TEMPORARY = 24,
+  // The following response is stored only in the kernel decision cache.
+  // It is removed by SNTCompilerController
+  ACTION_RESPOND_ALLOW_PENDING_TRANSITIVE = 24,
 
   // NOTIFY
   ACTION_NOTIFY_EXEC = 30,
@@ -86,7 +88,7 @@ typedef enum {
   (x == ACTION_RESPOND_ALLOW || \
    x == ACTION_RESPOND_DENY || \
    x == ACTION_RESPOND_ALLOW_COMPILER || \
-   x == ACTION_RESPOND_ALLOW_TEMPORARY)
+   x == ACTION_RESPOND_ALLOW_PENDING_TRANSITIVE)
 
 // Message struct that is sent down the IODataQueue.
 typedef struct {

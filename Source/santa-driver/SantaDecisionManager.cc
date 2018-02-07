@@ -334,7 +334,7 @@ void SantaDecisionManager::AddToCache(
       decision_cache->set(
           identifier, val, ((uint64_t)ACTION_REQUEST_BINARY << 56));
       break;
-    case ACTION_RESPOND_ALLOW_TEMPORARY:
+    case ACTION_RESPOND_ALLOW_PENDING_TRANSITIVE:
       decision_cache->set(identifier, val, 0);
       break;
     default:
@@ -580,7 +580,7 @@ int SantaDecisionManager::VnodeCallback(const kauth_cred_t cred,
   switch (returnedAction) {
     case ACTION_RESPOND_ALLOW:
     case ACTION_RESPOND_ALLOW_COMPILER:
-    case ACTION_RESPOND_ALLOW_TEMPORARY: {
+    case ACTION_RESPOND_ALLOW_PENDING_TRANSITIVE: {
       auto proc = vfs_context_proc(ctx);
       if (proc) {
         pid_t pid = proc_pid(proc);
@@ -641,7 +641,7 @@ void SantaDecisionManager::FileOpCallback(
         // permanent rule for the new file to the rules database.  This is
         // because checking if the file is a Mach-O binary and hashing it might
         // not finish before an attempt to execute it.
-        AddToCache(vnode_id, ACTION_RESPOND_ALLOW_TEMPORARY, 0);
+        AddToCache(vnode_id, ACTION_RESPOND_ALLOW_PENDING_TRANSITIVE, 0);
       }
       delete message;
       return;
