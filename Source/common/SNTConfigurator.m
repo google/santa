@@ -392,7 +392,7 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
     machineId = [plist[plistKey] isKindOfClass:[NSString class]] ? plist[plistKey] : nil;
   }
 
-  return [machineId length] ? machineId : [SNTSystemInfo hardwareUUID];
+  return machineId.length ? machineId : [SNTSystemInfo hardwareUUID];
 }
 
 #pragma mark Private
@@ -419,12 +419,12 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
   NSMutableDictionary *syncState =
       [NSMutableDictionary dictionaryWithContentsOfFile:kSyncStateFilePath];
   for (NSString *key in syncState.allKeys) {
-    if (![syncState[key] isKindOfClass:self.syncServerKeyTypes[key]]) {
-      syncState[key] = nil;
-      continue;
-    } else if (self.syncServerKeyTypes[key] == [NSRegularExpression class]) {
+    if (self.syncServerKeyTypes[key] == [NSRegularExpression class]) {
       NSString *pattern = [syncState[key] isKindOfClass:[NSString class]] ? syncState[key] : nil;
       syncState[key] = [self expressionForPattern:pattern];
+    } else if (![syncState[key] isKindOfClass:self.syncServerKeyTypes[key]]) {
+      syncState[key] = nil;
+      continue;
     }
   }
   static dispatch_once_t onceToken;
