@@ -159,14 +159,26 @@ double watchdogRAMPeak = 0;
   reply();
 }
 
-- (void)setSyncLastSuccess:(NSDate *)date reply:(void (^)())reply {
+- (void)fullSyncLastSuccess:(void (^)(NSDate *))reply {
+  reply([[SNTConfigurator configurator] fullSyncLastSuccess]);
+}
+
+- (void)setFullSyncLastSuccess:(NSDate *)date reply:(void (^)())reply {
   [[SNTConfigurator configurator] setFullSyncLastSuccess:date];
   reply();
+}
+
+- (void)ruleSyncLastSuccess:(void (^)(NSDate *))reply {
+  reply([[SNTConfigurator configurator] ruleSyncLastSuccess]);
 }
 
 - (void)setRuleSyncLastSuccess:(NSDate *)date reply:(void (^)())reply {
   [[SNTConfigurator configurator] setRuleSyncLastSuccess:date];
   reply();
+}
+
+- (void)syncCleanRequired:(void (^)(BOOL))reply {
+  reply([[SNTConfigurator configurator] syncCleanRequired]);
 }
 
 - (void)setSyncCleanRequired:(BOOL)cleanReqd reply:(void (^)())reply {
