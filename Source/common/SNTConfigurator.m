@@ -88,17 +88,17 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
   if (self) {
     _syncServerKeyTypes = @{
       kClientModeKey : [NSNumber class],
-      kWhitelistRegexKey : [NSString class],
-      kBlacklistRegexKey : [NSString class],
+      kWhitelistRegexKey : [NSRegularExpression class],
+      kBlacklistRegexKey : [NSRegularExpression class],
       kFullSyncLastSuccess : [NSDate class],
       kRuleSyncLastSuccess : [NSDate class],
       kSyncCleanRequired : [NSNumber class]
     };
     _forcedConfigKeyTypes = @{
       kClientModeKey : [NSNumber class],
-      kFileChangesRegexKey : [NSString class],
-      kWhitelistRegexKey : [NSString class],
-      kBlacklistRegexKey : [NSString class],
+      kFileChangesRegexKey : [NSRegularExpression class],
+      kWhitelistRegexKey : [NSRegularExpression class],
+      kBlacklistRegexKey : [NSRegularExpression class],
       kEnablePageZeroProtectionKey : [NSNumber class],
       kMoreInfoURLKey : [NSString class],
       kEventDetailURLKey : [NSString class],
@@ -414,28 +414,28 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
 - (NSMutableDictionary *)readSyncStateFromDisk {
   // Only read the sync state if a sync server is configured.
   if (!self.syncBaseURL) return nil;
+  // Only santad should read this file.
+  if (geteuid() != 0) return nil;
   NSMutableDictionary *syncState =
       [NSMutableDictionary dictionaryWithContentsOfFile:kSyncStateFilePath];
   for (NSString *key in syncState.allKeys) {
     if (![syncState[key] isKindOfClass:self.syncServerKeyTypes[key]]) {
       syncState[key] = nil;
       continue;
-    }
-    if ([key isEqualToString:kWhitelistRegexKey] || [key isEqualToString:kBlacklistRegexKey]) {
-      syncState[key] = [self expressionForPattern:syncState[key]];
+    } else if (self.syncServerKeyTypes[key] == [NSRegularExpression class]) {
+      NSString *pattern = [syncState[key] isKindOfClass:[NSString class]] ? syncState[key] : nil;
+      syncState[key] = [self expressionForPattern:pattern];
     }
   }
-  if (geteuid() == 0) {
-    static dispatch_once_t onceToken;
-    dispatch_once(&onceToken, ^{
-      WEAKIFY(self);
-      self.syncStateWatcher = [[SNTFileWatcher alloc] initWithFilePath:kSyncStateFilePath
-                                                               handler:^(unsigned long data) {
-        STRONGIFY(self);
-        [self syncStateFileChanged:data];
-      }];
-    });
-  }
+  static dispatch_once_t onceToken;
+  dispatch_once(&onceToken, ^{
+    WEAKIFY(self);
+    self.syncStateWatcher = [[SNTFileWatcher alloc] initWithFilePath:kSyncStateFilePath
+                                                             handler:^(unsigned long data) {
+      STRONGIFY(self);
+      [self syncStateFileChanged:data];
+    }];
+  });
   return syncState;
 }
 
@@ -507,10 +507,9 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
     id obj = [self forcedConfigValueForKey:key];
     forcedConfig[key] = [obj isKindOfClass:self.forcedConfigKeyTypes[key]] ? obj : nil;
     // Create the regex objects now
-    if ([key isEqualToString:kWhitelistRegexKey] ||
-        [key isEqualToString:kBlacklistRegexKey] ||
-        [key isEqualToString:kFileChangesRegexKey]) {
-      forcedConfig[key] = [self expressionForPattern:forcedConfig[key]];
+    if (self.forcedConfigKeyTypes[key] == [NSRegularExpression class]) {
+      NSString *pattern = [obj isKindOfClass:[NSString class]] ? obj : nil;
+      forcedConfig[key] = [self expressionForPattern:pattern];
     }
   }
   return forcedConfig;

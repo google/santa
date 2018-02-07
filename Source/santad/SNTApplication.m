@@ -78,7 +78,7 @@
       [self startSyncd];
     };
 
-    // Listen for clientMode and syncBaseURL changes
+    // Listen for actionable config changes.
     NSKeyValueObservingOptions bits = (NSKeyValueObservingOptionNew | NSKeyValueObservingOptionOld);
     [[SNTConfigurator configurator] addObserver:self
                                      forKeyPath:@"clientMode"
@@ -270,7 +270,6 @@ void diskDisappearedCallback(DADiskRef disk, void *context) {
                       ofObject:(id)object
                         change:(NSDictionary<NSString *,id> *)change
                        context:(void *)context {
-  LOGD(@"%@ --> %@", keyPath, change);
   if ([keyPath isEqualToString:@"clientMode"]) {
     SNTClientMode new =
         [change[@"new"] isKindOfClass:[NSNumber class]] ? [change[@"new"] longLongValue] : 0;
@@ -290,7 +289,7 @@ void diskDisappearedCallback(DADiskRef disk, void *context) {
         [change[@"old"] isKindOfClass:[NSRegularExpression class]] ? change[@"old"] : nil;
     if (!new && !old) return;
     if (![new.pattern isEqualToString:old.pattern]) {
-      LOGI(@"Received new [white|black]list regex, flushing cache");
+      LOGI(@"Changed [white|black]list regex, flushing cache");
       [self.driverManager flushCacheNonRootOnly:NO];
     }
   }
