@@ -146,15 +146,7 @@ double watchdogRAMPeak = 0;
 }
 
 - (void)setClientMode:(SNTClientMode)mode reply:(void (^)())reply {
-  if ([[SNTConfigurator configurator] clientMode] != mode) {
-    // Flush cache if client just went into lockdown.
-    if (mode == SNTClientModeLockdown) {
-      LOGI(@"Changed client mode, flushing cache.");
-      [self.driverManager flushCacheNonRootOnly:NO];
-    }
-    [[SNTConfigurator configurator] setClientMode:mode];
-    [[self.notQueue.notifierConnection remoteObjectProxy] postClientModeNotification:mode];
-  }
+  [[SNTConfigurator configurator] setSyncServerClientMode:mode];
   reply();
 }
 
@@ -167,14 +159,26 @@ double watchdogRAMPeak = 0;
   reply();
 }
 
-- (void)setSyncLastSuccess:(NSDate *)date reply:(void (^)())reply {
+- (void)fullSyncLastSuccess:(void (^)(NSDate *))reply {
+  reply([[SNTConfigurator configurator] fullSyncLastSuccess]);
+}
+
+- (void)setFullSyncLastSuccess:(NSDate *)date reply:(void (^)())reply {
   [[SNTConfigurator configurator] setFullSyncLastSuccess:date];
   reply();
+}
+
+- (void)ruleSyncLastSuccess:(void (^)(NSDate *))reply {
+  reply([[SNTConfigurator configurator] ruleSyncLastSuccess]);
 }
 
 - (void)setRuleSyncLastSuccess:(NSDate *)date reply:(void (^)())reply {
   [[SNTConfigurator configurator] setRuleSyncLastSuccess:date];
   reply();
+}
+
+- (void)syncCleanRequired:(void (^)(BOOL))reply {
+  reply([[SNTConfigurator configurator] syncCleanRequired]);
 }
 
 - (void)setSyncCleanRequired:(BOOL)cleanReqd reply:(void (^)())reply {
@@ -186,9 +190,7 @@ double watchdogRAMPeak = 0;
   NSRegularExpression *re = [NSRegularExpression regularExpressionWithPattern:pattern
                                                                       options:0
                                                                         error:NULL];
-  [[SNTConfigurator configurator] setWhitelistPathRegex:re];
-  LOGI(@"Received new whitelist regex, flushing cache");
-  [self.driverManager flushCacheNonRootOnly:NO];
+  [[SNTConfigurator configurator] setSyncServerWhitelistPathRegex:re];
   reply();
 }
 
@@ -196,9 +198,7 @@ double watchdogRAMPeak = 0;
   NSRegularExpression *re = [NSRegularExpression regularExpressionWithPattern:pattern
                                                                       options:0
                                                                         error:NULL];
-  [[SNTConfigurator configurator] setBlacklistPathRegex:re];
-  LOGI(@"Received new blacklist regex, flushing cache");
-  [self.driverManager flushCacheNonRootOnly:NO];
+  [[SNTConfigurator configurator] setSyncServerBlacklistPathRegex:re];
   reply();
 }
 

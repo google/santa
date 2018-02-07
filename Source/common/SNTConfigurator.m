@@ -16,23 +16,25 @@
 
 #include <sys/stat.h>
 
+#import "SNTFileWatcher.h"
 #import "SNTLogging.h"
+#import "SNTStrengthify.h"
 #import "SNTSystemInfo.h"
 
 @interface SNTConfigurator ()
-@property NSMutableDictionary *configData;
-
-/// Creating NSRegularExpression objects is not fast, so cache them.
-@property NSRegularExpression *cachedFileChangesRegex;
-@property NSRegularExpression *cachedWhitelistDirRegex;
-@property NSRegularExpression *cachedBlacklistDirRegex;
-
 /// A NSUserDefaults object set to use the com.google.santa suite.
 @property(readonly, nonatomic) NSUserDefaults *defaults;
 
-/// Keys used by a mobileconfig or sync server
-@property(readonly, nonatomic) NSArray *syncServerKeys;
-@property(readonly, nonatomic) NSArray *mobileConfigKeys;
+// Keys and expected value types.
+@property(readonly, nonatomic) NSDictionary *syncServerKeyTypes;
+@property(readonly, nonatomic) NSDictionary *forcedConfigKeyTypes;
+
+/// Holds the configurations from a sync server and mobileconfig.
+@property NSMutableDictionary *syncState;
+@property NSMutableDictionary *configState;
+
+/// Watcher for the sync-state.plist.
+@property(nonatomic) SNTFileWatcher *syncStateWatcher;
 @end
 
 @implementation SNTConfigurator
@@ -42,9 +44,6 @@ NSString *const kSyncStateFilePath = @"/var/db/santa/sync-state.plist";
 
 /// The domain used by mobileconfig.
 static NSString *const kMobileConfigDomain = @"com.google.santa";
-
-/// The hard-coded path to the mobileconfig file.
-NSString *const kMobileConfigFilePath = @"/Library/Managed Preferences/com.google.santa.plist";
 
 /// The keys managed by a mobileconfig.
 static NSString *const kSyncBaseURLKey = @"SyncBaseURL";
@@ -72,11 +71,12 @@ static NSString *const kModeNotificationLockdown = @"ModeNotificationLockdown";
 
 static NSString *const kEnablePageZeroProtectionKey = @"EnablePageZeroProtection";
 
+static NSString *const kFileChangesRegexKey = @"FileChangesRegex";
+
 // The keys managed by a sync server or mobileconfig.
 static NSString *const kClientModeKey = @"ClientMode";
 static NSString *const kWhitelistRegexKey = @"WhitelistRegex";
 static NSString *const kBlacklistRegexKey = @"BlacklistRegex";
-static NSString *const kFileChangesRegexKey = @"FileChangesRegex";
 
 // The keys managed by a sync server.
 static NSString *const kFullSyncLastSuccess = @"FullSyncLastSuccess";
@@ -86,22 +86,46 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
 - (instancetype)init {
   self = [super init];
   if (self) {
-    _defaults = [[NSUserDefaults alloc] initWithSuiteName:kMobileConfigDomain];
-    _syncServerKeys = @[
-        kClientModeKey, kWhitelistRegexKey, kBlacklistRegexKey, kFileChangesRegexKey,
-        kFullSyncLastSuccess, kRuleSyncLastSuccess, kSyncCleanRequired
-    ];
-    _mobileConfigKeys = @[
-        kClientModeKey, kFileChangesRegexKey, kWhitelistRegexKey, kBlacklistRegexKey,
-        kEnablePageZeroProtectionKey, kMoreInfoURLKey, kEventDetailURLKey, kEventDetailTextKey,
-        kUnknownBlockMessage, kBannedBlockMessage, kModeNotificationMonitor,
-        kModeNotificationLockdown, kSyncBaseURLKey, kClientAuthCertificateFileKey,
-        kClientAuthCertificatePasswordKey, kClientAuthCertificateCNKey,
-        kClientAuthCertificateIssuerKey, kServerAuthRootsDataKey, kServerAuthRootsFileKey,
-        kMachineOwnerKey, kMachineIDKey, kMachineOwnerPlistFileKey, kMachineOwnerPlistKeyKey,
-        kMachineIDPlistFileKey, kMachineIDPlistKeyKey
-    ];
-    [self reloadConfigData];
+    _syncServerKeyTypes = @{
+      kClientModeKey : [NSNumber class],
+      kWhitelistRegexKey : [NSRegularExpression class],
+      kBlacklistRegexKey : [NSRegularExpression class],
+      kFullSyncLastSuccess : [NSDate class],
+      kRuleSyncLastSuccess : [NSDate class],
+      kSyncCleanRequired : [NSNumber class]
+    };
+    _forcedConfigKeyTypes = @{
+      kClientModeKey : [NSNumber class],
+      kFileChangesRegexKey : [NSRegularExpression class],
+      kWhitelistRegexKey : [NSRegularExpression class],
+      kBlacklistRegexKey : [NSRegularExpression class],
+      kEnablePageZeroProtectionKey : [NSNumber class],
+      kMoreInfoURLKey : [NSString class],
+      kEventDetailURLKey : [NSString class],
+      kEventDetailTextKey : [NSString class],
+      kUnknownBlockMessage : [NSString class],
+      kBannedBlockMessage : [NSString class],
+      kModeNotificationMonitor : [NSString class],
+      kModeNotificationLockdown : [NSString class],
+      kSyncBaseURLKey : [NSString class],
+      kClientAuthCertificateFileKey : [NSString class],
+      kClientAuthCertificatePasswordKey : [NSString class],
+      kClientAuthCertificateCNKey : [NSString class],
+      kClientAuthCertificateIssuerKey : [NSString class],
+      kServerAuthRootsDataKey  : [NSData class],
+      kServerAuthRootsFileKey : [NSString class],
+      kMachineOwnerKey : [NSString class],
+      kMachineIDKey : [NSString class],
+      kMachineOwnerPlistFileKey : [NSString class],
+      kMachineOwnerPlistKeyKey : [NSString class],
+      kMachineIDPlistFileKey : [NSString class],
+      kMachineIDPlistKeyKey : [NSString class],
+    };
+    _defaults = [NSUserDefaults standardUserDefaults];
+    [_defaults addSuiteNamed:@"com.google.santa"];
+    _configState = [self readForcedConfig];
+    _syncState = [self readSyncStateFromDisk] ?: [NSMutableDictionary dictionary];
+    [self startWatchingDefaults];
   }
   return self;
 }
@@ -117,277 +141,301 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
   return sharedConfigurator;
 }
 
+#pragma mark KVO Dependencies
+
++ (NSSet *)keyPathsForValuesAffectingClientMode {
+  return [NSSet setWithObjects:@"syncState", @"configState", nil];
+}
+
++ (NSSet *)keyPathsForValuesAffectingWhitelistPathRegex {
+  return [NSSet setWithObjects:@"syncState", @"configState", nil];
+}
+
++ (NSSet *)keyPathsForValuesAffectingBlacklistPathRegex {
+  return [NSSet setWithObjects:@"syncState", @"configState", nil];
+}
+
++ (NSSet *)keyPathsForValuesAffectingFileChangesRegex {
+  return [NSSet setWithObject:@"configState"];
+}
+
++ (NSSet *)keyPathsForValuesAffectingSyncBaseURL {
+  return [NSSet setWithObject:@"configState"];
+}
+
++ (NSSet *)keyPathsForValuesAffectingEnablePageZeroProtection {
+  return [NSSet setWithObject:@"configState"];
+}
+
++ (NSSet *)keyPathsForValuesAffectingMoreInfoURL {
+  return [NSSet setWithObject:@"configState"];
+}
+
++ (NSSet *)keyPathsForValuesAffectingEventDetailURL {
+  return [NSSet setWithObject:@"configState"];
+}
+
++ (NSSet *)keyPathsForValuesAffectingEventDetailText {
+  return [NSSet setWithObject:@"configState"];
+}
+
++ (NSSet *)keyPathsForValuesAffectingUnknownBlockMessage {
+  return [NSSet setWithObject:@"configState"];
+}
+
++ (NSSet *)keyPathsForValuesAffectingBannedBlockMessage {
+  return [NSSet setWithObject:@"configState"];
+}
+
++ (NSSet *)keyPathsForValuesAffectingModeNotificationMonitor {
+  return [NSSet setWithObject:@"configState"];
+}
+
++ (NSSet *)keyPathsForValuesAffectingModeNotificationLockdown {
+  return [NSSet setWithObject:@"configState"];
+}
+
++ (NSSet *)keyPathsForValuesAffectingSyncClientAuthCertificateFile {
+  return [NSSet setWithObject:@"configState"];
+}
+
++ (NSSet *)keyPathsForValuesAffectingSyncClientAuthCertificatePassword {
+  return [NSSet setWithObject:@"configState"];
+}
+
++ (NSSet *)keyPathsForValuesAffectingSyncClientAuthCertificateCn {
+  return [NSSet setWithObject:@"configState"];
+}
+
++ (NSSet *)keyPathsForValuesAffectingSyncClientAuthCertificateIssuer {
+  return [NSSet setWithObject:@"configState"];
+}
+
++ (NSSet *)keyPathsForValuesAffectingSyncServerAuthRootsData {
+  return [NSSet setWithObject:@"configState"];
+}
+
++ (NSSet *)keyPathsForValuesAffectingSyncServerAuthRootsFile {
+  return [NSSet setWithObject:@"configState"];
+}
+
++ (NSSet *)keyPathsForValuesAffectingFullSyncLastSuccess {
+  return [NSSet setWithObject:@"configState"];
+}
+
++ (NSSet *)keyPathsForValuesAffectingMachineOwner {
+  return [NSSet setWithObject:@"configState"];
+}
+
++ (NSSet *)keyPathsForValuesAffectingMachineID {
+  return [NSSet setWithObject:@"configState"];
+}
+
 #pragma mark Public Interface
 
 - (SNTClientMode)clientMode {
-  NSInteger cm = SNTClientModeUnknown;
-
-  id mode = self.configData[kClientModeKey];
-  if ([mode respondsToSelector:@selector(longLongValue)]) {
-    cm = (NSInteger)[mode longLongValue];
-  }
-
+  SNTClientMode cm = [self.syncState[kClientModeKey] longLongValue];
   if (cm == SNTClientModeMonitor || cm == SNTClientModeLockdown) {
-    return (SNTClientMode)cm;
-  } else {
-    LOGE(@"Client mode was set to bad value: %ld. Resetting to MONITOR.", cm);
-    self.clientMode = SNTClientModeMonitor;
-    return SNTClientModeMonitor;
+    return cm;
   }
+
+  cm = [self.configState[kClientModeKey] longLongValue];
+  if (cm == SNTClientModeMonitor || cm == SNTClientModeLockdown) {
+    return cm;
+  }
+
+  return SNTClientModeMonitor;
 }
 
-- (void)setClientMode:(SNTClientMode)newMode {
+- (void)setSyncServerClientMode:(SNTClientMode)newMode {
   if (newMode == SNTClientModeMonitor || newMode == SNTClientModeLockdown) {
-    self.configData[kClientModeKey] = @(newMode);
-    [self saveSyncStateToDisk];
+    [self updateSyncStateForKey:kClientModeKey value:@(newMode)];
   } else {
     LOGW(@"Ignoring request to change client mode to %ld", newMode);
   }
 }
 
 - (NSRegularExpression *)whitelistPathRegex {
-  if (!self.cachedWhitelistDirRegex && self.configData[kWhitelistRegexKey]) {
-    NSString *re = self.configData[kWhitelistRegexKey];
-    if (![re hasPrefix:@"^"]) re = [@"^" stringByAppendingString:re];
-    self.cachedWhitelistDirRegex = [NSRegularExpression regularExpressionWithPattern:re
-                                                                             options:0
-                                                                               error:NULL];
-  }
-  return self.cachedWhitelistDirRegex;
+  return self.syncState[kWhitelistRegexKey] ?: self.configState[kWhitelistRegexKey];
 }
 
-- (void)setWhitelistPathRegex:(NSRegularExpression *)re {
-  if (!re) {
-    [self.configData removeObjectForKey:kWhitelistRegexKey];
-  } else {
-    self.configData[kWhitelistRegexKey] = [re pattern];
-  }
-  self.cachedWhitelistDirRegex = nil;
-  [self saveSyncStateToDisk];
+- (void)setSyncServerWhitelistPathRegex:(NSRegularExpression *)re {
+  [self updateSyncStateForKey:kWhitelistRegexKey value:re];
 }
 
 - (NSRegularExpression *)blacklistPathRegex {
-  if (!self.cachedBlacklistDirRegex && self.configData[kBlacklistRegexKey]) {
-    NSString *re = self.configData[kBlacklistRegexKey];
-    if (![re hasPrefix:@"^"]) re = [@"^" stringByAppendingString:re];
-    self.cachedBlacklistDirRegex = [NSRegularExpression regularExpressionWithPattern:re
-                                                                             options:0
-                                                                               error:NULL];
-  }
-  return self.cachedBlacklistDirRegex;
+  return self.syncState[kBlacklistRegexKey] ?: self.configState[kBlacklistRegexKey];
 }
 
-- (void)setBlacklistPathRegex:(NSRegularExpression *)re {
-  if (!re) {
-    [self.configData removeObjectForKey:kBlacklistRegexKey];
-  } else {
-    self.configData[kBlacklistRegexKey] = [re pattern];
-  }
-  self.cachedBlacklistDirRegex = nil;
-  [self saveSyncStateToDisk];
+- (void)setSyncServerBlacklistPathRegex:(NSRegularExpression *)re {
+  [self updateSyncStateForKey:kBlacklistRegexKey value:re];
 }
 
 - (NSRegularExpression *)fileChangesRegex {
-  if (!self.cachedFileChangesRegex && self.configData[kFileChangesRegexKey]) {
-    NSString *re = self.configData[kFileChangesRegexKey];
-    if (![re hasPrefix:@"^"]) re = [@"^" stringByAppendingString:re];
-    self.cachedFileChangesRegex = [NSRegularExpression regularExpressionWithPattern:re
-                                                                            options:0
-                                                                              error:NULL];
-  }
-  return self.cachedFileChangesRegex;
-}
-
-- (void)setFileChangesRegex:(NSRegularExpression *)re {
-  if (!re) {
-    [self.configData removeObjectForKey:kFileChangesRegexKey];
-  } else {
-    self.configData[kFileChangesRegexKey] = [re pattern];
-  }
-  self.cachedFileChangesRegex = nil;
-  [self saveSyncStateToDisk];
-}
-
-- (BOOL)enablePageZeroProtection {
-  NSNumber *keyValue = self.configData[kEnablePageZeroProtectionKey];
-  return keyValue ? [keyValue boolValue] : YES;
-}
-
-- (NSURL *)moreInfoURL {
-  return [NSURL URLWithString:self.configData[kMoreInfoURLKey]];
-}
-
-- (NSString *)eventDetailURL {
-  return self.configData[kEventDetailURLKey];
-}
-
-- (NSString *)eventDetailText {
-  return self.configData[kEventDetailTextKey];
-}
-
-- (NSString *)unknownBlockMessage {
-  return self.configData[kUnknownBlockMessage];
-}
-
-- (NSString *)bannedBlockMessage {
-  return self.configData[kBannedBlockMessage];
-}
-
-- (NSString *)modeNotificationMonitor {
-  return self.configData[kModeNotificationMonitor];
-}
-
-- (NSString *)modeNotificationLockdown {
-  return self.configData[kModeNotificationLockdown];
+  return self.configState[kFileChangesRegexKey];
 }
 
 - (NSURL *)syncBaseURL {
-  NSString *urlStr = self.configData[kSyncBaseURLKey];
-  if (urlStr) {
-    NSURL *url = [NSURL URLWithString:urlStr];
-    if (!url) LOGW(@"SyncBaseURL is not a valid URL!");
-    return url;
-  }
-  return nil;
+  NSString *urlString = self.configState[kSyncBaseURLKey];
+  NSURL *url = [NSURL URLWithString:urlString];
+  if (urlString && !url) LOGW(@"SyncBaseURL is not a valid URL!");
+  return url;
+}
+
+- (BOOL)enablePageZeroProtection {
+  NSNumber *number = self.configState[kEnablePageZeroProtectionKey];
+  return number ? [number boolValue] : YES;
+}
+
+- (NSURL *)moreInfoURL {
+  return [NSURL URLWithString:self.configState[kMoreInfoURLKey]];
+}
+
+- (NSString *)eventDetailURL {
+  return self.configState[kEventDetailURLKey];
+}
+
+- (NSString *)eventDetailText {
+  return self.configState[kEventDetailTextKey];
+}
+
+- (NSString *)unknownBlockMessage {
+  return self.configState[kUnknownBlockMessage];
+}
+
+- (NSString *)bannedBlockMessage {
+  return self.configState[kBannedBlockMessage];
+}
+
+- (NSString *)modeNotificationMonitor {
+  return self.configState[kModeNotificationMonitor];
+}
+
+- (NSString *)modeNotificationLockdown {
+  return self.configState[kModeNotificationLockdown];
 }
 
 - (NSString *)syncClientAuthCertificateFile {
-  return self.configData[kClientAuthCertificateFileKey];
+  return self.configState[kClientAuthCertificateFileKey];
 }
 
 - (NSString *)syncClientAuthCertificatePassword {
-  return self.configData[kClientAuthCertificatePasswordKey];
+  return self.configState[kClientAuthCertificatePasswordKey];
 }
 
 - (NSString *)syncClientAuthCertificateCn {
-  return self.configData[kClientAuthCertificateCNKey];
+  return self.configState[kClientAuthCertificateCNKey];
 }
 
 - (NSString *)syncClientAuthCertificateIssuer {
-  return self.configData[kClientAuthCertificateIssuerKey];
+  return self.configState[kClientAuthCertificateIssuerKey];
 }
 
 - (NSData *)syncServerAuthRootsData {
-  return self.configData[kServerAuthRootsDataKey];
+  return self.configState[kServerAuthRootsDataKey];
 }
 
 - (NSString *)syncServerAuthRootsFile {
-  return self.configData[kServerAuthRootsFileKey];
+  return self.configState[kServerAuthRootsFileKey];
 }
 
 - (NSDate *)fullSyncLastSuccess {
-  return self.configData[kFullSyncLastSuccess];
+  return self.syncState[kFullSyncLastSuccess];
 }
 
 - (void)setFullSyncLastSuccess:(NSDate *)fullSyncLastSuccess {
-  self.configData[kFullSyncLastSuccess] = fullSyncLastSuccess;
-  [self saveSyncStateToDisk];
+  self.syncState[kFullSyncLastSuccess] = fullSyncLastSuccess;
   self.ruleSyncLastSuccess = fullSyncLastSuccess;
 }
 
 - (NSDate *)ruleSyncLastSuccess {
-  return self.configData[kRuleSyncLastSuccess];
+  return self.syncState[kRuleSyncLastSuccess];
 }
 
 - (void)setRuleSyncLastSuccess:(NSDate *)ruleSyncLastSuccess {
-  self.configData[kRuleSyncLastSuccess] = ruleSyncLastSuccess;
+  self.syncState[kRuleSyncLastSuccess] = ruleSyncLastSuccess;
   [self saveSyncStateToDisk];
 }
 
 - (BOOL)syncCleanRequired {
-  return [self.configData[kSyncCleanRequired] boolValue];
+  return [self.syncState[kSyncCleanRequired] boolValue];
 }
 
 - (void)setSyncCleanRequired:(BOOL)syncCleanRequired {
-  self.configData[kSyncCleanRequired] = @(syncCleanRequired);
+  self.syncState[kSyncCleanRequired] = @(syncCleanRequired);
   [self saveSyncStateToDisk];
 }
 
 - (NSString *)machineOwner {
-  NSString *machineOwner;
+  NSString *machineOwner = self.configState[kMachineOwnerKey];
+  if (machineOwner) return machineOwner;
 
-  if (self.configData[kMachineOwnerPlistFileKey] && self.configData[kMachineOwnerPlistKeyKey]) {
-    NSDictionary *plist =
-        [NSDictionary dictionaryWithContentsOfFile:self.configData[kMachineOwnerPlistFileKey]];
-    machineOwner = plist[self.configData[kMachineOwnerPlistKeyKey]];
+  NSString *plistPath = self.configState[kMachineOwnerPlistFileKey];
+  NSString *plistKey = self.configState[kMachineOwnerPlistKeyKey];
+  if (plistPath && plistKey) {
+    NSDictionary *plist = [NSDictionary dictionaryWithContentsOfFile:plistPath];
+    machineOwner = [plist[plistKey] isKindOfClass:[NSString class]] ? plist[plistKey] : nil;
   }
 
-  if (self.configData[kMachineOwnerKey]) {
-    machineOwner = self.configData[kMachineOwnerKey];
-  }
-
-  if (!machineOwner) machineOwner = @"";
-
-  return machineOwner;
+  return machineOwner ?: @"";
 }
 
 - (NSString *)machineID {
-  NSString *machineId;
+  NSString *machineId = self.configState[kMachineIDKey];
+  if (machineId) return machineId;
 
-  if (self.configData[kMachineIDPlistFileKey] && self.configData[kMachineIDPlistKeyKey]) {
-    NSDictionary *plist =
-        [NSDictionary dictionaryWithContentsOfFile:self.configData[kMachineIDPlistFileKey]];
-    machineId = plist[self.configData[kMachineIDPlistKeyKey]];
+  NSString *plistPath = self.configState[kMachineIDPlistFileKey];
+  NSString *plistKey = self.configState[kMachineIDPlistKeyKey];
+
+  if (plistPath && plistKey) {
+    NSDictionary *plist = [NSDictionary dictionaryWithContentsOfFile:plistPath];
+    machineId = [plist[plistKey] isKindOfClass:[NSString class]] ? plist[plistKey] : nil;
   }
 
-  if (self.configData[kMachineIDKey]) {
-    machineId = self.configData[kMachineIDKey];
-  }
-
-  if ([machineId length] == 0) {
-    machineId = [SNTSystemInfo hardwareUUID];
-  }
-
-  return machineId;
-}
-
-- (void)reloadConfigData {
-  // Load the mobileconfig
-  self.configData = [self mobileConfig];
-  if (!self.configData[kClientModeKey]) {
-    // Default to Monitor if the config is missing or invalid
-    self.configData[kClientModeKey] = @(SNTClientModeMonitor);
-  }
-
-  // Nothing else to do if a sync server is not involved
-  if (!self.configData[kSyncBaseURLKey]) return;
-
-  // Load the last known sync state
-  if (![[NSFileManager defaultManager] fileExistsAtPath:kSyncStateFilePath]) return;
-  NSMutableDictionary *syncState = [self syncState];
-  if (!self) return;
-
-  // Overwrite or add the sync state to the running config
-  for (NSString *key in [self syncServerKeys]) {
-    self.configData[key] = syncState[key];
-  }
-  [self saveSyncStateToDisk];
+  return machineId.length ? machineId : [SNTSystemInfo hardwareUUID];
 }
 
 #pragma mark Private
 
-- (NSMutableDictionary *)syncState {
-  NSError *error;
-  NSData *readData = [NSData dataWithContentsOfFile:kSyncStateFilePath
-                                            options:NSDataReadingMappedIfSafe
-                                              error:&error];
-  if (!readData) {
-    LOGE(@"Could not read sync state file: %@, replacing.", [error localizedDescription]);
-    [self saveSyncStateToDisk];
-    return nil;
-  }
+///
+///  Update the syncState. Triggers a KVO event for all dependents.
+///
+- (BOOL)updateSyncStateForKey:(NSString *)key value:(id)value {
+  NSMutableDictionary *syncState = self.syncState.mutableCopy;
+  syncState[key] = value;
+  self.syncState = syncState;
+  [self saveSyncStateToDisk];
+  return YES;
+}
 
+///
+///  Read the saved syncState.
+///
+- (NSMutableDictionary *)readSyncStateFromDisk {
+  // Only read the sync state if a sync server is configured.
+  if (!self.syncBaseURL) return nil;
+  // Only santad should read this file.
+  if (geteuid() != 0) return nil;
   NSMutableDictionary *syncState =
-      [NSPropertyListSerialization propertyListWithData:readData
-                                                options:NSPropertyListMutableContainers
-                                                 format:NULL
-                                                  error:&error];
-  if (!syncState) {
-    LOGE(@"Could not parse sync state file: %@, replacing.", [error localizedDescription]);
-    [self saveSyncStateToDisk];
-    return nil;
+      [NSMutableDictionary dictionaryWithContentsOfFile:kSyncStateFilePath];
+  for (NSString *key in syncState.allKeys) {
+    if (self.syncServerKeyTypes[key] == [NSRegularExpression class]) {
+      NSString *pattern = [syncState[key] isKindOfClass:[NSString class]] ? syncState[key] : nil;
+      syncState[key] = [self expressionForPattern:pattern];
+    } else if (![syncState[key] isKindOfClass:self.syncServerKeyTypes[key]]) {
+      syncState[key] = nil;
+      continue;
+    }
   }
-
+  static dispatch_once_t onceToken;
+  dispatch_once(&onceToken, ^{
+    WEAKIFY(self);
+    self.syncStateWatcher = [[SNTFileWatcher alloc] initWithFilePath:kSyncStateFilePath
+                                                             handler:^(unsigned long data) {
+      STRONGIFY(self);
+      [self syncStateFileChanged:data];
+    }];
+  });
   return syncState;
 }
 
@@ -395,13 +443,14 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
 ///  Saves the current effective syncState to disk.
 ///
 - (void)saveSyncStateToDisk {
+  // Only save the sync state if a sync server is configured.
+  if (!self.syncBaseURL) return;
   // Only santad should write to this file.
   if (geteuid() != 0) return;
-  NSMutableDictionary *syncState =
-      [NSMutableDictionary dictionaryWithCapacity:[self syncServerKeys].count];
-  for (NSString *key in [self syncServerKeys]) {
-    syncState[key] = self.configData[key];
-  }
+  // Either remove
+  NSMutableDictionary *syncState = self.syncState.mutableCopy;
+  syncState[kWhitelistRegexKey] = [syncState[kWhitelistRegexKey] pattern];
+  syncState[kBlacklistRegexKey] = [syncState[kBlacklistRegexKey] pattern];
   [syncState writeToFile:kSyncStateFilePath atomically:YES];
   [[NSFileManager defaultManager] setAttributes:@{ NSFilePosixPermissions : @0644 }
                                    ofItemAtPath:kSyncStateFilePath error:NULL];
@@ -419,19 +468,18 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
     int mask = S_IRWXU | S_IRWXG | S_IRWXO;
     int desired = S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH;
     if (fileStat.st_uid != 0 || fileStat.st_gid != 0 || (fileStat.st_mode & mask) != desired) {
-      LOGD(@"Sync state file permissions changed, fixing.");
+      LOGI(@"Sync state file permissions changed, fixing.");
       chown(cPath, 0, 0);
       chmod(cPath, desired);
     }
   } else {
-    NSDictionary *syncState = [self syncState];
-    for (NSString *key in self.syncServerKeys) {
-      if (((self.configData[key] && !syncState[key]) ||
-           (!self.configData[key] && syncState[key]) ||
-           (self.configData[key] && ![self.configData[key] isEqualTo:syncState[key]]))) {
+    NSDictionary *newSyncState = [self readSyncStateFromDisk];
+    for (NSString *key in self.syncState) {
+      if (((self.syncState[key] && !newSyncState[key]) ||
+           (!self.syncState[key] && newSyncState[key]) ||
+           (self.syncState[key] && ![self.syncState[key] isEqualTo:newSyncState[key]]))) {
         // Ignore sync url and dates
-        if ([key isEqualToString:kSyncBaseURLKey] ||
-            [key isEqualToString:kRuleSyncLastSuccess] ||
+        if ([key isEqualToString:kRuleSyncLastSuccess] ||
             [key isEqualToString:kFullSyncLastSuccess]) continue;
         LOGE(@"Sync state file changed, replacing");
         [self saveSyncStateToDisk];
@@ -441,25 +489,57 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
   }
 }
 
-///
-///  Returns a config provided by a com.google.santa mobileconfig or an empty
-///  NSMutableDictionary object if no config applies.
-///
-- (NSMutableDictionary *)mobileConfig {
-  NSMutableDictionary *config =
-      [NSMutableDictionary dictionaryWithCapacity:[self mobileConfigKeys].count];
-  for (NSString *key in [self mobileConfigKeys]) {
-    if ([self.defaults objectIsForcedForKey:key]) {
-      config[key] = [self.defaults objectForKey:key];
+- (void)clearSyncState {
+  self.syncState = [NSMutableDictionary dictionary];
+}
+
+#pragma mark Private Defaults Methods
+
+- (NSRegularExpression *)expressionForPattern:(NSString *)pattern {
+  if (!pattern) return nil;
+  if (![pattern hasPrefix:@"^"]) pattern = [@"^" stringByAppendingString:pattern];
+  return [NSRegularExpression regularExpressionWithPattern:pattern options:0 error:NULL];
+}
+
+- (NSMutableDictionary *)readForcedConfig {
+  NSMutableDictionary *forcedConfig = [NSMutableDictionary dictionary];
+  for (NSString *key in self.forcedConfigKeyTypes) {
+    id obj = [self forcedConfigValueForKey:key];
+    forcedConfig[key] = [obj isKindOfClass:self.forcedConfigKeyTypes[key]] ? obj : nil;
+    // Create the regex objects now
+    if (self.forcedConfigKeyTypes[key] == [NSRegularExpression class]) {
+      NSString *pattern = [obj isKindOfClass:[NSString class]] ? obj : nil;
+      forcedConfig[key] = [self expressionForPattern:pattern];
     }
   }
-  if (config[kSyncBaseURLKey]) {
-    for (NSString *key in [self syncServerKeys]) {
-      if ([key isEqualToString:kSyncBaseURLKey]) continue;
-      [config removeObjectForKey:key];
-    }
-  }
-  return config;
+  return forcedConfig;
+}
+
+- (id)forcedConfigValueForKey:(NSString *)key {
+  id obj = [self.defaults objectForKey:key];
+  return [self.defaults objectIsForcedForKey:key inDomain:kMobileConfigDomain] ? obj : nil;
+}
+
+- (void)startWatchingDefaults {
+  // Only santad should listen.
+  if (geteuid() != 0) return;
+  [[NSNotificationCenter defaultCenter] addObserver:self
+                                           selector:@selector(defaultsChanged:)
+                                               name:NSUserDefaultsDidChangeNotification
+                                             object:nil];
+}
+
+- (void)defaultsChanged:(void *)v {
+  SEL handleChange = @selector(handleChange);
+  [NSObject cancelPreviousPerformRequestsWithTarget:self selector:handleChange object:nil];
+  [self performSelector:handleChange withObject:nil afterDelay:5.0f];
+}
+
+///
+///  Update the configState. Triggers a KVO event for all dependents.
+///
+- (void)handleChange {
+  self.configState = [self readForcedConfig];
 }
 
 @end

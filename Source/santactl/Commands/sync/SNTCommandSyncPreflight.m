@@ -60,11 +60,17 @@
     dispatch_group_leave(group);
   }];
 
+  __block BOOL syncClean = NO;
+  dispatch_group_enter(group);
+  [[self.daemonConn remoteObjectProxy] syncCleanRequired:^(BOOL clean) {
+    syncClean = clean;
+    dispatch_group_leave(group);
+  }];
+
   dispatch_group_wait(group, dispatch_time(DISPATCH_TIME_NOW, 2 * NSEC_PER_SEC));
 
   // If user requested it or we've never had a successful sync, try from a clean slate.
-  if ([[[NSProcessInfo processInfo] arguments] containsObject:@"--clean"] ||
-      [[SNTConfigurator configurator] syncCleanRequired]) {
+  if ([[[NSProcessInfo processInfo] arguments] containsObject:@"--clean"] || syncClean) {
     LOGD(@"Clean sync requested by user");
     requestDict[kRequestCleanSync] = @YES;
   }

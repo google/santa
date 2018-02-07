@@ -103,15 +103,26 @@ REGISTER_COMMAND_NAME(@"status")
   }];
 
   // Sync status
-  NSString *syncURLStr = [[[SNTConfigurator configurator] syncBaseURL] absoluteString];
-  NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];
-  dateFormatter.dateFormat = @"yyyy/MM/dd HH:mm:ss Z";
-  NSDate *lastSyncSuccess = [[SNTConfigurator configurator] fullSyncLastSuccess];
-  NSString *lastSyncSuccessStr = [dateFormatter stringFromDate:lastSyncSuccess] ?: @"Never";
-  NSDate *lastRuleSyncSuccess = [[SNTConfigurator configurator] ruleSyncLastSuccess];
-  NSString *lastRuleSyncSuccessStr =
-      [dateFormatter stringFromDate:lastRuleSyncSuccess] ?: lastSyncSuccessStr;
-  BOOL syncCleanReqd = [[SNTConfigurator configurator] syncCleanRequired];
+  __block NSDate *fullSyncLastSuccess;
+  dispatch_group_enter(group);
+  [[self.daemonConn remoteObjectProxy] fullSyncLastSuccess:^(NSDate *date) {
+    fullSyncLastSuccess = date;
+    dispatch_group_leave(group);
+  }];
+
+  __block NSDate *ruleSyncLastSuccess;
+  dispatch_group_enter(group);
+  [[self.daemonConn remoteObjectProxy] ruleSyncLastSuccess:^(NSDate *date) {
+    ruleSyncLastSuccess = date;
+    dispatch_group_leave(group);
+  }];
+
+  __block BOOL syncCleanReqd = NO;
+  dispatch_group_enter(group);
+  [[self.daemonConn remoteObjectProxy] syncCleanRequired:^(BOOL clean) {
+    syncCleanReqd = clean;
+    dispatch_group_leave(group);
+  }];
 
   __block BOOL pushNotifications = NO;
   if ([[SNTConfigurator configurator] syncBaseURL]) {
@@ -136,6 +147,15 @@ REGISTER_COMMAND_NAME(@"status")
     fprintf(stderr, "Failed to retrieve some stats from daemon\n\n");
   }
 
+  // Format dates
+  NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];
+  dateFormatter.dateFormat = @"yyyy/MM/dd HH:mm:ss Z";
+  NSString *fullSyncLastSuccessStr = [dateFormatter stringFromDate:fullSyncLastSuccess] ?: @"Never";
+  NSString *ruleSyncLastSuccessStr =
+      [dateFormatter stringFromDate:ruleSyncLastSuccess] ?: fullSyncLastSuccessStr;
+
+  NSString *syncURLStr = [[[SNTConfigurator configurator] syncBaseURL] absoluteString];
+
   if ([arguments containsObject:@"--json"]) {
     NSDictionary *stats = @{
       @"daemon" : @{
@@ -158,8 +178,8 @@ REGISTER_COMMAND_NAME(@"status")
       @"sync" : @{
         @"server" : syncURLStr ?: @"null",
         @"clean_required" : @(syncCleanReqd),
-        @"last_successful_full" : lastSyncSuccessStr ?: @"null",
-        @"last_successful_rule" : lastRuleSyncSuccessStr ?: @"null",
+        @"last_successful_full" : fullSyncLastSuccessStr ?: @"null",
+        @"last_successful_rule" : ruleSyncLastSuccessStr ?: @"null",
         @"push_notifications" : pushNotifications ? @"Connected" : @"Disconnected",
         @"bundle_scanning" : @(bundlesEnabled)
       },
@@ -187,8 +207,8 @@ REGISTER_COMMAND_NAME(@"status")
       printf(">>> Sync Info\n");
       printf("  %-25s | %s\n", "Sync Server", [syncURLStr UTF8String]);
       printf("  %-25s | %s\n", "Clean Sync Required", (syncCleanReqd ? "Yes" : "No"));
-      printf("  %-25s | %s\n", "Last Successful Full Sync", [lastSyncSuccessStr UTF8String]);
-      printf("  %-25s | %s\n", "Last Successful Rule Sync", [lastRuleSyncSuccessStr UTF8String]);
+      printf("  %-25s | %s\n", "Last Successful Full Sync", [fullSyncLastSuccessStr UTF8String]);
+      printf("  %-25s | %s\n", "Last Successful Rule Sync", [ruleSyncLastSuccessStr UTF8String]);
       printf("  %-25s | %s\n", "Push Notifications",
              (pushNotifications ? "Connected" : "Disconnected"));
       printf("  %-25s | %s\n", "Bundle Scanning", (bundlesEnabled ? "Yes" : "No"));
