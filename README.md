@@ -45,7 +45,7 @@ signed with that certificate, or vice-versa.
 
 * Path-based rules (via NSRegularExpression/ICU): This allows a similar feature to that found in Managed Client (the precursor to configuration profiles, which used the same implementation mechanism), Application Launch Restrictions via the mcxalr binary. This implementation carries the added benefit of being configurable via regex, and not relying on LaunchServices. As detailed in the wiki, when evaluating rules this holds the lowest precendence.
 
-* Failsafe cert rules: You cannot put in a deny rule that would block the certificate used to sign launchd, a.k.a. pid 1, and therefore all components used in MacOS. The binaries in every OS update (and in some cases entire new versions) are therefore auto-whitelisted. This does not affect binaries from Apple's App Store, which use various certs that change regularly for common apps. Likewise, you cannot blacklist Santa itself, and Santa uses a distinct separate cert than other Google apps.
+* Failsafe cert rules: You cannot put in a deny rule that would block the certificate used to sign launchd, a.k.a. pid 1, and therefore all components used in macOS. The binaries in every OS update (and in some cases entire new versions) are therefore auto-whitelisted. This does not affect binaries from Apple's App Store, which use various certs that change regularly for common apps. Likewise, you cannot blacklist Santa itself, and Santa uses a distinct separate cert than other Google apps.
 
 Intentions and Expectations
 ===========================
