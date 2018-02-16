@@ -178,7 +178,7 @@ static void reachabilityHandler(
 }
 
 - (void)isFCMListening:(void (^)(BOOL))reply {
-  reply((self.FCMClient.FCMToken != nil));
+  reply(self.FCMClient.isConnected);
 }
 
 #pragma mark push notification methods
@@ -205,16 +205,17 @@ static void reachabilityHandler(
       [self processFCMMessage:message withMachineID:machineID];
   }];
 
-  self.FCMClient.connectionErrorHandler = ^(NSError *error) {
+  self.FCMClient.connectionErrorHandler = ^(NSHTTPURLResponse *response, NSError *error) {
     STRONGIFY(self);
-    LOGE(@"FCM connection error: %@", error);
+    if (response) LOGE(@"FCM fatal response: %@", response);
+    if (error) LOGE(@"FCM fatal error: %@", error);
     [self.FCMClient disconnect];
     self.FCMClient = nil;
     [self rescheduleTimerQueue:self.fullSyncTimer secondsFromNow:kDefaultFullSyncInterval];
   };
 
   self.FCMClient.loggingBlock = ^(NSString *log) {
-    LOGD(@"%@", log);
+    LOGD(@"FCMClient: %@", log);
   };
 
   [self.FCMClient connect];
