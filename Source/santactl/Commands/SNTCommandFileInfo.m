@@ -345,10 +345,11 @@ REGISTER_COMMAND_NAME(@"fileinfo")
     dispatch_once(&token, ^{ [cmd.daemonConn resume]; });
     __block SNTEventState state;
     dispatch_semaphore_t sema = dispatch_semaphore_create(0);
-    MOLCodesignChecker *csc = [fileInfo codesignCheckerWithError:NULL];
+    NSError *err;
+    MOLCodesignChecker *csc = [fileInfo codesignCheckerWithError:&err];
     [[cmd.daemonConn remoteObjectProxy] decisionForFilePath:fileInfo.path
                                                  fileSHA256:fileInfo.SHA256
-                                          certificateSHA256:csc.leafCertificate.SHA256
+                                          certificateSHA256:err ? nil : csc.leafCertificate.SHA256
                                                       reply:^(SNTEventState s) {
       state = s;
       dispatch_semaphore_signal(sema);
