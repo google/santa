@@ -86,40 +86,45 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
 - (instancetype)init {
   self = [super init];
   if (self) {
+    Class number = [NSNumber class];
+    Class re = [NSRegularExpression class];
+    Class date = [NSDate class];
+    Class string = [NSString class];
+    Class data = [NSData class];
     _syncServerKeyTypes = @{
-      kClientModeKey : [NSNumber class],
-      kWhitelistRegexKey : [NSRegularExpression class],
-      kBlacklistRegexKey : [NSRegularExpression class],
-      kFullSyncLastSuccess : [NSDate class],
-      kRuleSyncLastSuccess : [NSDate class],
-      kSyncCleanRequired : [NSNumber class]
+      kClientModeKey : number,
+      kWhitelistRegexKey : re,
+      kBlacklistRegexKey : re,
+      kFullSyncLastSuccess : date,
+      kRuleSyncLastSuccess : date,
+      kSyncCleanRequired : number
     };
     _forcedConfigKeyTypes = @{
-      kClientModeKey : [NSNumber class],
-      kFileChangesRegexKey : [NSRegularExpression class],
-      kWhitelistRegexKey : [NSRegularExpression class],
-      kBlacklistRegexKey : [NSRegularExpression class],
-      kEnablePageZeroProtectionKey : [NSNumber class],
-      kMoreInfoURLKey : [NSString class],
-      kEventDetailURLKey : [NSString class],
-      kEventDetailTextKey : [NSString class],
-      kUnknownBlockMessage : [NSString class],
-      kBannedBlockMessage : [NSString class],
-      kModeNotificationMonitor : [NSString class],
-      kModeNotificationLockdown : [NSString class],
-      kSyncBaseURLKey : [NSString class],
-      kClientAuthCertificateFileKey : [NSString class],
-      kClientAuthCertificatePasswordKey : [NSString class],
-      kClientAuthCertificateCNKey : [NSString class],
-      kClientAuthCertificateIssuerKey : [NSString class],
-      kServerAuthRootsDataKey  : [NSData class],
-      kServerAuthRootsFileKey : [NSString class],
-      kMachineOwnerKey : [NSString class],
-      kMachineIDKey : [NSString class],
-      kMachineOwnerPlistFileKey : [NSString class],
-      kMachineOwnerPlistKeyKey : [NSString class],
-      kMachineIDPlistFileKey : [NSString class],
-      kMachineIDPlistKeyKey : [NSString class],
+      kClientModeKey : number,
+      kFileChangesRegexKey : re,
+      kWhitelistRegexKey : re,
+      kBlacklistRegexKey : re,
+      kEnablePageZeroProtectionKey : number,
+      kMoreInfoURLKey : string,
+      kEventDetailURLKey : string,
+      kEventDetailTextKey : string,
+      kUnknownBlockMessage : string,
+      kBannedBlockMessage : string,
+      kModeNotificationMonitor : string,
+      kModeNotificationLockdown : string,
+      kSyncBaseURLKey : string,
+      kClientAuthCertificateFileKey : string,
+      kClientAuthCertificatePasswordKey : string,
+      kClientAuthCertificateCNKey : string,
+      kClientAuthCertificateIssuerKey : string,
+      kServerAuthRootsDataKey  : data,
+      kServerAuthRootsFileKey : string,
+      kMachineOwnerKey : string,
+      kMachineIDKey : string,
+      kMachineOwnerPlistFileKey : string,
+      kMachineOwnerPlistKeyKey : string,
+      kMachineIDPlistFileKey : string,
+      kMachineIDPlistKeyKey : string,
     };
     _defaults = [NSUserDefaults standardUserDefaults];
     [_defaults addSuiteNamed:@"com.google.santa"];
@@ -141,94 +146,112 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
   return sharedConfigurator;
 }
 
++ (NSSet *)syncAndConfigStateSet {
+  static NSSet *set;
+  static dispatch_once_t onceToken;
+  dispatch_once(&onceToken, ^{
+    set = [[self configStateSet] setByAddingObject:NSStringFromSelector(@selector(syncState))];
+  });
+  return set;
+}
+
++ (NSSet *)configStateSet {
+  static NSSet *set;
+  static dispatch_once_t onceToken;
+  dispatch_once(&onceToken, ^{
+    set = [NSSet setWithObject:NSStringFromSelector(@selector(configState))];
+  });
+  return set;
+}
+
 #pragma mark KVO Dependencies
 
 + (NSSet *)keyPathsForValuesAffectingClientMode {
-  return [NSSet setWithObjects:@"syncState", @"configState", nil];
+  return [self syncAndConfigStateSet];
 }
 
 + (NSSet *)keyPathsForValuesAffectingWhitelistPathRegex {
-  return [NSSet setWithObjects:@"syncState", @"configState", nil];
+  return [self syncAndConfigStateSet];
 }
 
 + (NSSet *)keyPathsForValuesAffectingBlacklistPathRegex {
-  return [NSSet setWithObjects:@"syncState", @"configState", nil];
+  return [self syncAndConfigStateSet];
 }
 
 + (NSSet *)keyPathsForValuesAffectingFileChangesRegex {
-  return [NSSet setWithObject:@"configState"];
+  return [self configStateSet];
 }
 
 + (NSSet *)keyPathsForValuesAffectingSyncBaseURL {
-  return [NSSet setWithObject:@"configState"];
+  return [self configStateSet];
 }
 
 + (NSSet *)keyPathsForValuesAffectingEnablePageZeroProtection {
-  return [NSSet setWithObject:@"configState"];
+  return [self configStateSet];
 }
 
 + (NSSet *)keyPathsForValuesAffectingMoreInfoURL {
-  return [NSSet setWithObject:@"configState"];
+  return [self configStateSet];
 }
 
 + (NSSet *)keyPathsForValuesAffectingEventDetailURL {
-  return [NSSet setWithObject:@"configState"];
+  return [self configStateSet];
 }
 
 + (NSSet *)keyPathsForValuesAffectingEventDetailText {
-  return [NSSet setWithObject:@"configState"];
+  return [self configStateSet];
 }
 
 + (NSSet *)keyPathsForValuesAffectingUnknownBlockMessage {
-  return [NSSet setWithObject:@"configState"];
+  return [self configStateSet];
 }
 
 + (NSSet *)keyPathsForValuesAffectingBannedBlockMessage {
-  return [NSSet setWithObject:@"configState"];
+  return [self configStateSet];
 }
 
 + (NSSet *)keyPathsForValuesAffectingModeNotificationMonitor {
-  return [NSSet setWithObject:@"configState"];
+  return [self configStateSet];
 }
 
 + (NSSet *)keyPathsForValuesAffectingModeNotificationLockdown {
-  return [NSSet setWithObject:@"configState"];
+  return [self configStateSet];
 }
 
 + (NSSet *)keyPathsForValuesAffectingSyncClientAuthCertificateFile {
-  return [NSSet setWithObject:@"configState"];
+  return [self configStateSet];
 }
 
 + (NSSet *)keyPathsForValuesAffectingSyncClientAuthCertificatePassword {
-  return [NSSet setWithObject:@"configState"];
+  return [self configStateSet];
 }
 
 + (NSSet *)keyPathsForValuesAffectingSyncClientAuthCertificateCn {
-  return [NSSet setWithObject:@"configState"];
+  return [self configStateSet];
 }
 
 + (NSSet *)keyPathsForValuesAffectingSyncClientAuthCertificateIssuer {
-  return [NSSet setWithObject:@"configState"];
+  return [self configStateSet];
 }
 
 + (NSSet *)keyPathsForValuesAffectingSyncServerAuthRootsData {
-  return [NSSet setWithObject:@"configState"];
+  return [self configStateSet];
 }
 
 + (NSSet *)keyPathsForValuesAffectingSyncServerAuthRootsFile {
-  return [NSSet setWithObject:@"configState"];
+  return [self configStateSet];
 }
 
 + (NSSet *)keyPathsForValuesAffectingFullSyncLastSuccess {
-  return [NSSet setWithObject:@"configState"];
+  return [self configStateSet];
 }
 
 + (NSSet *)keyPathsForValuesAffectingMachineOwner {
-  return [NSSet setWithObject:@"configState"];
+  return [self configStateSet];
 }
 
 + (NSSet *)keyPathsForValuesAffectingMachineID {
-  return [NSSet setWithObject:@"configState"];
+  return [self configStateSet];
 }
 
 #pragma mark Public Interface
@@ -469,8 +492,8 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
     int desired = S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH;
     if (fileStat.st_uid != 0 || fileStat.st_gid != 0 || (fileStat.st_mode & mask) != desired) {
       LOGI(@"Sync state file permissions changed, fixing.");
-      chown(cPath, 0, 0);
-      chmod(cPath, desired);
+      if (chown(cPath, 0, 0) != 0) LOGE(@"Failed to chown(%s, 0, 0)", cPath);
+      if (chmod(cPath, desired) != 0) LOGE(@"Failed to chmod(%s, %i)", cPath, desired);
     }
   } else {
     NSDictionary *newSyncState = [self readSyncStateFromDisk];
