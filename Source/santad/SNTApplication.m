@@ -80,22 +80,23 @@
 
     // Listen for actionable config changes.
     NSKeyValueObservingOptions bits = (NSKeyValueObservingOptionNew | NSKeyValueObservingOptionOld);
-    [[SNTConfigurator configurator] addObserver:self
-                                     forKeyPath:@"clientMode"
-                                        options:bits
-                                        context:NULL];
-    [[SNTConfigurator configurator] addObserver:self
-                                     forKeyPath:@"syncBaseURL"
-                                        options:bits
-                                        context:NULL];
-    [[SNTConfigurator configurator] addObserver:self
-                                     forKeyPath:@"whitelistPathRegex"
-                                        options:bits
-                                        context:NULL];
-    [[SNTConfigurator configurator] addObserver:self
-                                     forKeyPath:@"blacklistPathRegex"
-                                        options:bits
-                                        context:NULL];
+    SNTConfigurator *configurator = [SNTConfigurator configurator];
+    [configurator addObserver:self
+                   forKeyPath:NSStringFromSelector(@selector(clientMode))
+                      options:bits
+                      context:NULL];
+    [configurator addObserver:self
+                   forKeyPath:NSStringFromSelector(@selector(syncBaseURL))
+                      options:bits
+                      context:NULL];
+    [configurator addObserver:self
+                   forKeyPath:NSStringFromSelector(@selector(whitelistPathRegex))
+                      options:bits
+                      context:NULL];
+    [configurator addObserver:self
+                   forKeyPath:NSStringFromSelector(@selector(blacklistPathRegex))
+                      options:bits
+                      context:NULL];
 
     // Establish XPC listener for Santa and santactl connections
     SNTDaemonControlController *dc =
@@ -270,23 +271,25 @@ void diskDisappearedCallback(DADiskRef disk, void *context) {
                       ofObject:(id)object
                         change:(NSDictionary<NSString *,id> *)change
                        context:(void *)context {
-  if ([keyPath isEqualToString:@"clientMode"]) {
+  NSString *newKey = NSKeyValueChangeNewKey;
+  NSString *oldKey = NSKeyValueChangeOldKey;
+  if ([keyPath isEqualToString:NSStringFromSelector(@selector(clientMode))]) {
     SNTClientMode new =
-        [change[@"new"] isKindOfClass:[NSNumber class]] ? [change[@"new"] longLongValue] : 0;
+        [change[newKey] isKindOfClass:[NSNumber class]] ? [change[newKey] longLongValue] : 0;
     SNTClientMode old =
-        [change[@"old"] isKindOfClass:[NSNumber class]] ? [change[@"old"] longLongValue] : 0;
+        [change[oldKey] isKindOfClass:[NSNumber class]] ? [change[oldKey] longLongValue] : 0;
     if (new != old) [self clientModeDidChange:new];
-  } else if ([keyPath isEqualToString:@"syncBaseURL"]) {
-    NSURL *new = [change[@"new"] isKindOfClass:[NSURL class]] ? change[@"new"] : nil;
-    NSURL *old = [change[@"old"] isKindOfClass:[NSURL class]] ? change[@"old"] : nil;
+  } else if ([keyPath isEqualToString:NSStringFromSelector(@selector(syncBaseURL))]) {
+    NSURL *new = [change[newKey] isKindOfClass:[NSURL class]] ? change[newKey] : nil;
+    NSURL *old = [change[oldKey] isKindOfClass:[NSURL class]] ? change[oldKey] : nil;
     if (!new && !old) return;
     if (![new.absoluteString isEqualToString:old.absoluteString]) [self syncBaseURLDidChange:new];
-  } else if ([keyPath isEqualToString:@"whitelistPathRegex"] ||
-             [keyPath isEqualToString:@"blacklistPathRegex"]) {
+  } else if ([keyPath isEqualToString:NSStringFromSelector(@selector(whitelistPathRegex))] ||
+             [keyPath isEqualToString:NSStringFromSelector(@selector(blacklistPathRegex))]) {
     NSRegularExpression *new =
-        [change[@"new"] isKindOfClass:[NSRegularExpression class]] ? change[@"new"] : nil;
+        [change[newKey] isKindOfClass:[NSRegularExpression class]] ? change[newKey] : nil;
     NSRegularExpression *old =
-        [change[@"old"] isKindOfClass:[NSRegularExpression class]] ? change[@"old"] : nil;
+        [change[oldKey] isKindOfClass:[NSRegularExpression class]] ? change[oldKey] : nil;
     if (!new && !old) return;
     if (![new.pattern isEqualToString:old.pattern]) {
       LOGI(@"Changed [white|black]list regex, flushing cache");
