@@ -241,7 +241,7 @@ template<typename KeyT, typename ValueT> class SantaCache {
     @param previous_value, If has_prev_value is true, the new value will only
         be set if this parameter is equal to the existing value in the cache.
         This allows set to become a CAS operation.
-    @param has_prev_value, Pass true if previous_value should be used.
+    @param has_prev_value Pass true if previous_value should be used.
 
     @return true if the entry was set, false if it was not
   */

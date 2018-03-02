@@ -308,13 +308,13 @@ class SantaDecisionManager : public OSObject {
 /**
   The kauth callback function for the Vnode scope
 
-  @param actor's credentials
-  @param data that was passed when the listener was registered
-  @param action that was requested
-  @param VFS context
-  @param Vnode being operated on
-  @param Parent Vnode. May be nullptr.
-  @param Pointer to an errno-style error.
+  @param credential actor's credentials
+  @param idata data that was passed when the listener was registered
+  @param action action that was requested
+  @param arg0 VFS context
+  @param arg1 Vnode being operated on
+  @param arg2 Parent Vnode. May be nullptr.
+  @param arg3 Pointer to an errno-style error.
 */
 extern "C" int vnode_scope_callback(
     kauth_cred_t credential,
@@ -328,13 +328,13 @@ extern "C" int vnode_scope_callback(
 /**
   The kauth callback function for the FileOp scope
 
-  @param actor's credentials
-  @param data that was passed when the listener was registered
-  @param action that was requested
-  @param depends on action, usually the vnode ref.
-  @param depends on action.
-  @param depends on action, usually 0.
-  @param depends on action, usually 0.
+  @param credential actor's credentials
+  @param idata data that was passed when the listener was registered
+  @param action action that was requested
+  @param arg0 depends on action, usually the vnode ref.
+  @param arg1 depends on action.
+  @param arg2 depends on action, usually 0.
+  @param arg3 depends on action, usually 0.
 */
 extern "C" int fileop_scope_callback(
     kauth_cred_t credential,
