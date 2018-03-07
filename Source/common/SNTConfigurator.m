@@ -16,7 +16,6 @@
 
 #include <sys/stat.h>
 
-#import "SNTFileWatcher.h"
 #import "SNTLogging.h"
 #import "SNTStrengthify.h"
 #import "SNTSystemInfo.h"
@@ -32,9 +31,6 @@
 /// Holds the configurations from a sync server and mobileconfig.
 @property NSMutableDictionary *syncState;
 @property NSMutableDictionary *configState;
-
-/// Watcher for the sync-state.plist.
-@property(nonatomic) SNTFileWatcher *syncStateWatcher;
 @end
 
 @implementation SNTConfigurator
@@ -466,15 +462,6 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
       continue;
     }
   }
-  static dispatch_once_t onceToken;
-  dispatch_once(&onceToken, ^{
-    WEAKIFY(self);
-    self.syncStateWatcher = [[SNTFileWatcher alloc] initWithFilePath:kSyncStateFilePath
-                                                             handler:^(unsigned long data) {
-      STRONGIFY(self);
-      [self syncStateFileChanged:data];
-    }];
-  });
   return syncState;
 }
 
@@ -493,41 +480,6 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
   [syncState writeToFile:kSyncStateFilePath atomically:YES];
   [[NSFileManager defaultManager] setAttributes:@{ NSFilePosixPermissions : @0644 }
                                    ofItemAtPath:kSyncStateFilePath error:NULL];
-}
-
-///
-///  Ensure permissions are 0644.
-///  Revert any out-of-band changes.
-///
-- (void)syncStateFileChanged:(unsigned long)data {
-  dispatch_async(dispatch_get_main_queue(), ^{
-    if (data & DISPATCH_VNODE_ATTRIB) {
-      const char *cPath = [kSyncStateFilePath fileSystemRepresentation];
-      struct stat fileStat;
-      stat(cPath, &fileStat);
-      int mask = S_IRWXU | S_IRWXG | S_IRWXO;
-      int desired = S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH;
-      if (fileStat.st_uid != 0 || fileStat.st_gid != 0 || (fileStat.st_mode & mask) != desired) {
-        LOGI(@"Sync state file permissions changed, fixing.");
-        if (chown(cPath, 0, 0) != 0) LOGE(@"Failed to chown(%s, 0, 0)", cPath);
-        if (chmod(cPath, desired) != 0) LOGE(@"Failed to chmod(%s, %i)", cPath, desired);
-      }
-    } else {
-      NSDictionary *newSyncState = [self readSyncStateFromDisk];
-      for (NSString *key in self.syncState) {
-        if (((self.syncState[key] && !newSyncState[key]) ||
-             (!self.syncState[key] && newSyncState[key]) ||
-             (self.syncState[key] && ![self.syncState[key] isEqualTo:newSyncState[key]]))) {
-          // Ignore sync url and dates
-          if ([key isEqualToString:kRuleSyncLastSuccess] ||
-              [key isEqualToString:kFullSyncLastSuccess]) continue;
-          LOGE(@"Sync state file changed, replacing");
-          [self saveSyncStateToDisk];
-          return;
-        }
-      }
-    }
-  });
 }
 
 - (void)clearSyncState {
