@@ -16,7 +16,6 @@
 
 #include <sys/stat.h>
 
-#import "SNTFileWatcher.h"
 #import "SNTLogging.h"
 #import "SNTStrengthify.h"
 #import "SNTSystemInfo.h"
@@ -32,9 +31,6 @@
 /// Holds the configurations from a sync server and mobileconfig.
 @property NSMutableDictionary *syncState;
 @property NSMutableDictionary *configState;
-
-/// Watcher for the sync-state.plist.
-@property(nonatomic) SNTFileWatcher *syncStateWatcher;
 @end
 
 @implementation SNTConfigurator
@@ -150,7 +146,16 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
   static NSSet *set;
   static dispatch_once_t onceToken;
   dispatch_once(&onceToken, ^{
-    set = [[self configStateSet] setByAddingObject:NSStringFromSelector(@selector(syncState))];
+    set = [[self syncStateSet] setByAddingObjectsFromSet:[self configStateSet]];
+  });
+  return set;
+}
+
++ (NSSet *)syncStateSet {
+  static NSSet *set;
+  static dispatch_once_t onceToken;
+  dispatch_once(&onceToken, ^{
+    set = [NSSet setWithObject:NSStringFromSelector(@selector(syncState))];
   });
   return set;
 }
@@ -242,16 +247,24 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
   return [self configStateSet];
 }
 
-+ (NSSet *)keyPathsForValuesAffectingFullSyncLastSuccess {
-  return [self configStateSet];
-}
-
 + (NSSet *)keyPathsForValuesAffectingMachineOwner {
   return [self configStateSet];
 }
 
 + (NSSet *)keyPathsForValuesAffectingMachineID {
   return [self configStateSet];
+}
+
++ (NSSet *)keyPathsForValuesAffectingFullSyncLastSuccess {
+  return [self syncStateSet];
+}
+
++ (NSSet *)keyPathsForValuesAffectingRuleSyncLastSuccess {
+  return [self syncStateSet];
+}
+
++ (NSSet *)keyPathsForValuesAffectingSyncCleanRequired {
+  return [self syncStateSet];
 }
 
 #pragma mark Public Interface
@@ -367,7 +380,7 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
 }
 
 - (void)setFullSyncLastSuccess:(NSDate *)fullSyncLastSuccess {
-  self.syncState[kFullSyncLastSuccess] = fullSyncLastSuccess;
+  [self updateSyncStateForKey:kFullSyncLastSuccess value:fullSyncLastSuccess];
   self.ruleSyncLastSuccess = fullSyncLastSuccess;
 }
 
@@ -376,8 +389,7 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
 }
 
 - (void)setRuleSyncLastSuccess:(NSDate *)ruleSyncLastSuccess {
-  self.syncState[kRuleSyncLastSuccess] = ruleSyncLastSuccess;
-  [self saveSyncStateToDisk];
+  [self updateSyncStateForKey:kRuleSyncLastSuccess value:ruleSyncLastSuccess];
 }
 
 - (BOOL)syncCleanRequired {
@@ -385,8 +397,7 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
 }
 
 - (void)setSyncCleanRequired:(BOOL)syncCleanRequired {
-  self.syncState[kSyncCleanRequired] = @(syncCleanRequired);
-  [self saveSyncStateToDisk];
+  [self updateSyncStateForKey:kSyncCleanRequired value:@(syncCleanRequired)];
 }
 
 - (NSString *)machineOwner {
@@ -423,12 +434,13 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
 ///
 ///  Update the syncState. Triggers a KVO event for all dependents.
 ///
-- (BOOL)updateSyncStateForKey:(NSString *)key value:(id)value {
-  NSMutableDictionary *syncState = self.syncState.mutableCopy;
-  syncState[key] = value;
-  self.syncState = syncState;
-  [self saveSyncStateToDisk];
-  return YES;
+- (void)updateSyncStateForKey:(NSString *)key value:(id)value {
+  dispatch_async(dispatch_get_main_queue(), ^{
+    NSMutableDictionary *syncState = self.syncState.mutableCopy;
+    syncState[key] = value;
+    self.syncState = syncState;
+    [self saveSyncStateToDisk];
+  });
 }
 
 ///
@@ -450,15 +462,6 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
       continue;
     }
   }
-  static dispatch_once_t onceToken;
-  dispatch_once(&onceToken, ^{
-    WEAKIFY(self);
-    self.syncStateWatcher = [[SNTFileWatcher alloc] initWithFilePath:kSyncStateFilePath
-                                                             handler:^(unsigned long data) {
-      STRONGIFY(self);
-      [self syncStateFileChanged:data];
-    }];
-  });
   return syncState;
 }
 
@@ -477,39 +480,6 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
   [syncState writeToFile:kSyncStateFilePath atomically:YES];
   [[NSFileManager defaultManager] setAttributes:@{ NSFilePosixPermissions : @0644 }
                                    ofItemAtPath:kSyncStateFilePath error:NULL];
-}
-
-///
-///  Ensure permissions are 0644.
-///  Revert any out-of-band changes.
-///
-- (void)syncStateFileChanged:(unsigned long)data {
-  if (data & DISPATCH_VNODE_ATTRIB) {
-    const char *cPath = [kSyncStateFilePath fileSystemRepresentation];
-    struct stat fileStat;
-    stat(cPath, &fileStat);
-    int mask = S_IRWXU | S_IRWXG | S_IRWXO;
-    int desired = S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH;
-    if (fileStat.st_uid != 0 || fileStat.st_gid != 0 || (fileStat.st_mode & mask) != desired) {
-      LOGI(@"Sync state file permissions changed, fixing.");
-      if (chown(cPath, 0, 0) != 0) LOGE(@"Failed to chown(%s, 0, 0)", cPath);
-      if (chmod(cPath, desired) != 0) LOGE(@"Failed to chmod(%s, %i)", cPath, desired);
-    }
-  } else {
-    NSDictionary *newSyncState = [self readSyncStateFromDisk];
-    for (NSString *key in self.syncState) {
-      if (((self.syncState[key] && !newSyncState[key]) ||
-           (!self.syncState[key] && newSyncState[key]) ||
-           (self.syncState[key] && ![self.syncState[key] isEqualTo:newSyncState[key]]))) {
-        // Ignore sync url and dates
-        if ([key isEqualToString:kRuleSyncLastSuccess] ||
-            [key isEqualToString:kFullSyncLastSuccess]) continue;
-        LOGE(@"Sync state file changed, replacing");
-        [self saveSyncStateToDisk];
-        return;
-      }
-    }
-  }
 }
 
 - (void)clearSyncState {
