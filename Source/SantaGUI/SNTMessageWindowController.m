@@ -16,10 +16,10 @@
 
 @import SecurityInterface.SFCertificatePanel;
 
-#import "MOLCertificate.h"
+#import <MOLCertificate/MOLCertificate.h>
+
 #import "SNTBlockMessage.h"
 #import "SNTConfigurator.h"
-#import "SNTFileInfo.h"
 #import "SNTMessageWindow.h"
 #import "SNTStoredEvent.h"
 

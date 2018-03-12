@@ -20,8 +20,8 @@
 
 #include "SNTLogging.h"
 
-#import "MOLCertificate.h"
-#import "MOLCodesignChecker.h"
+#import <MOLCodesignChecker/MOLCodesignChecker.h>
+
 #import "SNTBlockMessage.h"
 #import "SNTCachedDecision.h"
 #import "SNTCommonEnums.h"

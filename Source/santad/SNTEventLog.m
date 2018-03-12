@@ -20,7 +20,8 @@
 #include <pwd.h>
 #include <sys/sysctl.h>
 
-#import "MOLCertificate.h"
+#import <MOLCertificate/MOLCertificate.h>
+
 #import "SNTCachedDecision.h"
 #import "SNTCommonEnums.h"
 #import "SNTConfigurator.h"

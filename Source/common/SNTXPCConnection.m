@@ -14,7 +14,7 @@
 
 #import "SNTXPCConnection.h"
 
-#import "MOLCodesignChecker.h"
+#import <MOLCodesignChecker/MOLCodesignChecker.h>
 
 #import "SNTStrengthify.h"
 
