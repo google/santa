@@ -72,18 +72,18 @@
 }
 
 - (void)attemptReconnection {
-  [self performSelectorInBackground:@selector(createConnection) withObject:nil];
+  [self performSelectorOnMainThread:@selector(createConnection) withObject:nil waitUntilDone:NO];
 }
 
 #pragma mark SNTBundleServiceXPC Methods
 
 // Connect to the SantaGUI
 - (void)setBundleNotificationListener:(NSXPCListenerEndpoint *)listener {
-  SNTXPCConnection *c = [[SNTXPCConnection alloc] initClientWithListener:listener];
-  c.remoteInterface = [SNTXPCNotifierInterface bundleNotifierInterface];
-  [c resume];
-  self.notifierConnection = c;
-  dispatch_async(self.queue, ^{
+  dispatch_async(dispatch_get_main_queue(), ^{
+    SNTXPCConnection *c = [[SNTXPCConnection alloc] initClientWithListener:listener];
+    c.remoteInterface = [SNTXPCNotifierInterface bundleNotifierInterface];
+    [c resume];
+    self.notifierConnection = c;
     [self createConnection];
   });
 }
