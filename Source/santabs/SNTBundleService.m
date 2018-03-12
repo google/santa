@@ -17,8 +17,8 @@
 #import <CommonCrypto/CommonDigest.h>
 #import <pthread/pthread.h>
 
-#import "MOLCertificate.h"
-#import "MOLCodesignChecker.h"
+#import <MOLCodesignChecker/MOLCodesignChecker.h>
+
 #import "SNTFileInfo.h"
 #import "SNTStoredEvent.h"
 #import "SNTXPCConnection.h"

@@ -17,8 +17,9 @@
 #import "SNTCommand.h"
 #import "SNTCommandController.h"
 
-#import "MOLCertificate.h"
-#import "MOLCodesignChecker.h"
+#import <MOLCertificate/MOLCertificate.h>
+#import <MOLCodesignChecker/MOLCodesignChecker.h>
+
 #import "SNTConfigurator.h"
 #import "SNTDropRootPrivs.h"
 #import "SNTFileInfo.h"

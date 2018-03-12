@@ -14,7 +14,8 @@
 
 #import "SNTEventTable.h"
 
-#import "MOLCertificate.h"
+#import <MOLCertificate/MOLCertificate.h>
+
 #import "SNTStoredEvent.h"
 
 @implementation SNTEventTable

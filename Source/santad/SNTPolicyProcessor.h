@@ -17,7 +17,7 @@
 #import "SNTCommonEnums.h"
 #import "SNTKernelCommon.h"
 
-#import <MOLCertificate.h>
+#import <MOLCertificate/MOLCertificate.h>
 
 @class SNTCachedDecision;
 @class SNTFileInfo;
