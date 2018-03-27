@@ -42,6 +42,7 @@ mkdir -p /usr/local/bin
 /bin/cp ${SOURCE}/conf/com.google.santad.plist /Library/LaunchDaemons
 /bin/cp ${SOURCE}/conf/com.google.santagui.plist /Library/LaunchAgents
 /bin/cp ${SOURCE}/conf/com.google.santa.asl.conf /etc/asl/
+/bin/cp ${SOURCE}/conf/com.google.santa.newsyslog.conf /etc/newsyslog.d/
 
 # Reload syslogd to pick up ASL configuration change.
 /usr/bin/killall -HUP syslogd

@@ -22,13 +22,14 @@
 #import "SNTDatabaseController.h"
 #import "SNTDriverManager.h"
 #import "SNTDropRootPrivs.h"
-#import "SNTEventLog.h"
 #import "SNTEventTable.h"
 #import "SNTExecutionController.h"
+#import "SNTFileEventLog.h"
 #import "SNTLogging.h"
 #import "SNTNotificationQueue.h"
 #import "SNTRuleTable.h"
 #import "SNTSyncdQueue.h"
+#import "SNTSyslogEventLog.h"
 #import "SNTXPCConnection.h"
 #import "SNTXPCControlInterface.h"
 #import "SNTXPCNotifierInterface.h"
@@ -68,7 +69,13 @@
       return nil;
     }
 
-    _eventLog = [[SNTEventLog alloc] init];
+    // Choose an event logger.
+    SNTConfigurator *configurator = [SNTConfigurator configurator];
+    if ([[configurator eventLogType] isEqualToString:@"Syslog"]) {
+      _eventLog = [[SNTSyslogEventLog alloc] init];
+    } else if ([[configurator eventLogType] isEqualToString:@"FileLog"]) {
+      _eventLog = [[SNTFileEventLog alloc] init];
+    }
 
     self.notQueue = [[SNTNotificationQueue alloc] init];
     SNTSyncdQueue *syncdQueue = [[SNTSyncdQueue alloc] init];
@@ -80,7 +87,6 @@
 
     // Listen for actionable config changes.
     NSKeyValueObservingOptions bits = (NSKeyValueObservingOptionNew | NSKeyValueObservingOptionOld);
-    SNTConfigurator *configurator = [SNTConfigurator configurator];
     [configurator addObserver:self
                    forKeyPath:NSStringFromSelector(@selector(clientMode))
                       options:bits

@@ -134,7 +134,7 @@ static size_t kLargeBinarySize = 30 * 1024 * 1024;
       (SNTEventStateAllow & cd.decision) ? ACTION_RESPOND_ALLOW : ACTION_RESPOND_DENY;
 
   // Save decision details for logging the execution later.
-  if (action == ACTION_RESPOND_ALLOW) [_eventLog saveDecisionDetails:cd];
+  if (action == ACTION_RESPOND_ALLOW) [_eventLog cacheDecision:cd];
 
   // Send the decision to the kernel.
   [_driverManager postToKernelAction:action forVnodeID:cd.vnodeId];

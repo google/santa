@@ -106,6 +106,7 @@ namespace :install do
     system 'sudo cp conf/com.google.santad.plist /Library/LaunchDaemons'
     system 'sudo cp conf/com.google.santagui.plist /Library/LaunchAgents'
     system 'sudo cp conf/com.google.santa.asl.conf /etc/asl'
+    system 'sudo cp conf/com.google.santa.newsyslog.conf /etc/newsyslog.d/'
     system '/usr/bin/killall -HUP syslogd'
     Rake::Task['build:build'].invoke(config)
     puts "Installing with configuration: #{config}"
