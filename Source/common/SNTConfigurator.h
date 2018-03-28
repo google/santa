@@ -84,6 +84,7 @@
 ///    SNTEventLogTypeSyslog: Sent to ASL or ULS (if built with the 10.12 SDK or later).
 ///    SNTEventLogTypeFilelog: Sent to a file on disk. Use eventLogPath to specify a path.
 ///    Defaults to SNTEventLogTypeFilelog.
+///    For mobileconfigs use EventLogType as the key and syslog or filelog strings as the value.
 ///
 ///  @note: This property is KVO compliant, but should only be read once at santad startup.
 ///
