@@ -71,10 +71,13 @@
 
     // Choose an event logger.
     SNTConfigurator *configurator = [SNTConfigurator configurator];
-    if ([[configurator eventLogType] isEqualToString:@"Syslog"]) {
-      _eventLog = [[SNTSyslogEventLog alloc] init];
-    } else if ([[configurator eventLogType] isEqualToString:@"FileLog"]) {
-      _eventLog = [[SNTFileEventLog alloc] init];
+    switch ([configurator eventLogType]) {
+      case SNTEventLogTypeSyslog:
+        _eventLog = [[SNTSyslogEventLog alloc] init];
+        break;
+      case SNTEventLogTypeFilelog:
+        _eventLog = [[SNTFileEventLog alloc] init];
+        break;
     }
 
     self.notQueue = [[SNTNotificationQueue alloc] init];

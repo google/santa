@@ -442,10 +442,9 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
   return machineId.length ? machineId : [SNTSystemInfo hardwareUUID];
 }
 
-- (NSString *)eventLogType {
-  NSString *s = self.configState[kEventLogType];
-  if ([s isEqualToString:@"Syslog"] || [s isEqualToString:@"FileLog"]) return s;
-  return @"FileLog";
+- (SNTEventLogType)eventLogType {
+  NSString *s = [self.configState[kEventLogType] lowercaseString];
+  return [s isEqualToString:@"syslog"] ? SNTEventLogTypeSyslog : SNTEventLogTypeFilelog;
 }
 
 - (NSString *)eventLogPath {
