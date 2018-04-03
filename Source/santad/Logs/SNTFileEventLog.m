@@ -16,6 +16,7 @@
 
 #import "SNTConfigurator.h"
 #import "SNTLogging.h"
+#import "SNTStrengthify.h"
 
 @interface SNTFileEventLog ()
 @property NSFileHandle *fh;
@@ -40,7 +41,9 @@
     // To avoid long lulls in the log being updated, flush the buffer every second.
     _timer = dispatch_source_create(DISPATCH_SOURCE_TYPE_TIMER, 0, 0, _q);
     dispatch_source_set_timer(_timer, dispatch_time(DISPATCH_TIME_NOW, 0), NSEC_PER_SEC * 1, 0);
+    WEAKIFY(self);
     dispatch_source_set_event_handler(_timer, ^{
+      STRONGIFY(self);
       [self flushBuffer];
     });
     dispatch_resume(_timer);
@@ -67,7 +70,9 @@
                                        self.fh.fileDescriptor,
                                        DISPATCH_VNODE_DELETE | DISPATCH_VNODE_RENAME,
                                        self.q);
+  WEAKIFY(self);
   dispatch_source_set_event_handler(self.source, ^{
+    STRONGIFY(self);
     [self.fh closeFile];
     self.fh = [self fileHandleForPath:self.path];
     [self watchLogFile];

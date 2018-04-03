@@ -225,6 +225,7 @@ double watchdogRAMPeak = 0;
   bs.remoteInterface = [SNTXPCBundleServiceInterface bundleServiceInterface];
   [bs resume];
   [[bs remoteObjectProxy] setBundleNotificationListener:listener];
+  [bs invalidate];
 }
 
 #pragma mark syncd Ops
