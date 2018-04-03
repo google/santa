@@ -80,6 +80,12 @@ typedef NS_ENUM(NSInteger, SNTBundleEventAction) {
   SNTBundleEventActionSendEvents,
 };
 
+// Indicates where to store event logs.
+typedef NS_ENUM(NSInteger, SNTEventLogType) {
+  SNTEventLogTypeSyslog,
+  SNTEventLogTypeFilelog,
+};
+
 static const char *kKextPath = "/Library/Extensions/santa-driver.kext";
 static const char *kSantaDPath = "/Library/Extensions/santa-driver.kext/Contents/MacOS/santad";
 static const char *kSantaCtlPath = "/Library/Extensions/santa-driver.kext/Contents/MacOS/santactl";

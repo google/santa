@@ -69,6 +69,9 @@ static NSString *const kEnablePageZeroProtectionKey = @"EnablePageZeroProtection
 
 static NSString *const kFileChangesRegexKey = @"FileChangesRegex";
 
+static NSString *const kEventLogType = @"EventLogType";
+static NSString *const kEventLogPath = @"EventLogPath";
+
 // The keys managed by a sync server or mobileconfig.
 static NSString *const kClientModeKey = @"ClientMode";
 static NSString *const kWhitelistRegexKey = @"WhitelistRegex";
@@ -121,6 +124,8 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
       kMachineOwnerPlistKeyKey : string,
       kMachineIDPlistFileKey : string,
       kMachineIDPlistKeyKey : string,
+      kEventLogType : string,
+      kEventLogPath : string,
     };
     _defaults = [NSUserDefaults standardUserDefaults];
     [_defaults addSuiteNamed:@"com.google.santa"];
@@ -265,6 +270,14 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
 
 + (NSSet *)keyPathsForValuesAffectingSyncCleanRequired {
   return [self syncStateSet];
+}
+
++ (NSSet *)keyPathsForValuesAffectingEventLogType {
+  return [self configStateSet];
+}
+
++ (NSSet *)keyPathsForValuesAffectingEventLogPath {
+  return [self configStateSet];
 }
 
 #pragma mark Public Interface
@@ -427,6 +440,15 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
   }
 
   return machineId.length ? machineId : [SNTSystemInfo hardwareUUID];
+}
+
+- (SNTEventLogType)eventLogType {
+  NSString *s = [self.configState[kEventLogType] lowercaseString];
+  return [s isEqualToString:@"syslog"] ? SNTEventLogTypeSyslog : SNTEventLogTypeFilelog;
+}
+
+- (NSString *)eventLogPath {
+  return self.configState[kEventLogPath] ?: @"/var/db/santa/santa.log";
 }
 
 #pragma mark Private

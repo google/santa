@@ -32,6 +32,7 @@ PACKAGE_VERSION:=$(shell curl -fs https://api.github.com/repos/google/santa/rele
 #         |    |-- com.google.santad.plist
 #         |    |-- com.google.santagui.plist
 #         |    +-- com.google.santa.asl.conf
+#         |    +-- com.google.santa.newsyslog.conf
 #         +--dsym
 #              |-- santa-driver.kext.dSYM
 #              |-- Santa.app.dSYM
@@ -44,6 +45,7 @@ PAYLOAD:=pack-Library-Extensions-santa-driver.kext \
 	pack-Library-LaunchDaemons-com.google.santad.plist \
 	pack-Library-LaunchAgents-com.google.santagui.plist \
 	pack-etc-asl-com.google.santa.asl.conf \
+	pack-etc-newsyslog.d-com.google.santa.newsyslog.conf \
 	pack-script-preinstall \
 	pack-script-postinstall
 
@@ -52,6 +54,7 @@ Santa.app: download
 com.google.santad.plist: download
 com.google.santagui.plist: download
 com.google.santa.asl.conf: download
+com.google.santa.newsyslog.conf: download
 
 download:
 	$(if $(PACKAGE_VERSION),, $(error GitHub API returned unexpected result. Wait a while and try again))
@@ -64,6 +67,12 @@ pack-etc-asl-com.google.santa.asl.conf: com.google.santa.asl.conf l_private_etc
 	@sudo chown root:wheel ${WORK_D}/private/etc/asl
 	@sudo chmod 755 ${WORK_D}/private/etc/asl
 	@sudo install -m 644 -o root -g wheel com.google.santa.asl.conf ${WORK_D}/private/etc/asl
+
+pack-etc-newsyslog.d-com.google.santa.newsyslog.conf: com.google.santa.newsyslog.conf l_private_etc
+	@sudo mkdir -p ${WORK_D}/private/etc/newsyslog.d
+	@sudo chown root:wheel ${WORK_D}/private/etc/newsyslog.d
+	@sudo chmod 755 ${WORK_D}/private/etc/newsyslog.d
+	@sudo install -m 644 -o root -g wheel com.google.santa.newsyslog.conf ${WORK_D}/private/etc/newsyslog.d
 
 pack-Library-Extensions-santa-driver.kext: santa-driver.kext l_Library
 	@sudo mkdir -p ${WORK_D}/Library/Extensions
@@ -79,6 +88,7 @@ myclean:
 	@rm -rf santa-driver.kext
 	@rm -f config.plist
 	@rm -f com.google.santa.asl.conf
+	@rm -f com.google.santa.newsyslog.conf
 	@rm -f com.google.santad.plist
 	@rm -f com.google.santagui.plist
 	@rm -f install.sh

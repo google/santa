@@ -79,6 +79,25 @@
 ///
 @property(readonly, nonatomic) BOOL enablePageZeroProtection;
 
+///
+///  Defines how event logs are stored. Options are:
+///    SNTEventLogTypeSyslog: Sent to ASL or ULS (if built with the 10.12 SDK or later).
+///    SNTEventLogTypeFilelog: Sent to a file on disk. Use eventLogPath to specify a path.
+///    Defaults to SNTEventLogTypeFilelog.
+///    For mobileconfigs use EventLogType as the key and syslog or filelog strings as the value.
+///
+///  @note: This property is KVO compliant, but should only be read once at santad startup.
+///
+@property(readonly, nonatomic) SNTEventLogType eventLogType;
+
+///
+///  If eventLogType is set to Filelog, eventLogPath will provide the path to save logs.
+///  Defaults to /var/db/santa/santa.log.
+///
+///  @note: This property is KVO compliant, but should only be read once at santad startup.
+///
+@property(readonly, nonatomic) NSString *eventLogPath;
+
 #pragma mark - GUI Settings
 
 ///

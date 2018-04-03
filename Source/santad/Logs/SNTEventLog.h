@@ -1,4 +1,4 @@
-/// Copyright 2015 Google Inc. All rights reserved.
+/// Copyright 2018 Google Inc. All rights reserved.
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -23,15 +23,32 @@
 ///  Logs execution and file write events to syslog
 ///
 @interface SNTEventLog : NSObject
-
+// Methods implemented by a concrete subclass.
 - (void)logDiskAppeared:(NSDictionary *)diskProperties;
 - (void)logDiskDisappeared:(NSDictionary *)diskProperties;
-
 - (void)logFileModification:(santa_message_t)message;
-
-- (void)saveDecisionDetails:(SNTCachedDecision *)cd;
 - (void)logDeniedExecution:(SNTCachedDecision *)cd withMessage:(santa_message_t)message;
 - (void)logAllowedExecution:(santa_message_t)message;
-
 - (void)logBundleHashingEvents:(NSArray<SNTStoredEvent *> *)events;
+
+// Getter and setter for cached decisions.
+- (SNTCachedDecision *)cachedDecisionForMessage:(santa_message_t)message;
+- (void)cacheDecision:(SNTCachedDecision *)cd;
+
+// String formatter helpers.
+- (void)addArgsForPid:(pid_t)pid toString:(NSMutableString *)str;
+- (NSString *)diskImageForDevice:(NSString *)devPath;
+- (NSString *)nameForUID:(uid_t)uid;
+- (NSString *)nameForGID:(gid_t)gid;
+- (NSString *)sanitizeCString:(const char *)str ofLength:(NSUInteger)length;
+- (NSString *)sanitizeString:(NSString *)inStr;
+- (NSString *)serialForDevice:(NSString *)devPath;
+- (NSString *)originalPathForTranslocation:(santa_message_t)message;
+
+// A cache for usernames and groups.
+@property(readonly, nonatomic) NSCache<NSNumber *, NSString *> *userNameMap;
+@property(readonly, nonatomic) NSCache<NSNumber *, NSString *> *groupNameMap;
+
+// A UTC Date formatter.
+@property(readonly, nonatomic) NSDateFormatter *dateFormatter;
 @end
