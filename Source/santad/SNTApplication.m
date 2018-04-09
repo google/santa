@@ -325,10 +325,10 @@ void diskDisappearedCallback(DADiskRef disk, void *context) {
   } else {
     LOGI(@"SyncBaseURL removed, killing santactl pid: %i", self.syncdPID);
     [self stopSyncd];
-    // Keep the syncState active for 5 seconds in case com.apple.ManagedClient is flapping.
+    // Keep the syncState active for 10 min in case com.apple.ManagedClient is flapping.
     [[SNTConfigurator configurator] performSelector:@selector(clearSyncState)
                                          withObject:nil
-                                         afterDelay:5];
+                                         afterDelay:600];
   }
 }
 
