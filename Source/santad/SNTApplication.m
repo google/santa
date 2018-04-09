@@ -318,11 +318,17 @@ void diskDisappearedCallback(DADiskRef disk, void *context) {
 - (void)syncBaseURLDidChange:(NSURL *)syncBaseURL {
   if (syncBaseURL) {
     LOGI(@"Starting santactl with new SyncBaseURL: %@", syncBaseURL);
+    [NSObject cancelPreviousPerformRequestsWithTarget:[SNTConfigurator configurator]
+                                             selector:@selector(clearSyncState)
+                                               object:nil];
     [self startSyncd];
   } else {
     LOGI(@"SyncBaseURL removed, killing santactl pid: %i", self.syncdPID);
     [self stopSyncd];
-    [[SNTConfigurator configurator] clearSyncState];
+    // Keep the syncState active for 10 min in case com.apple.ManagedClient is flapping.
+    [[SNTConfigurator configurator] performSelector:@selector(clearSyncState)
+                                         withObject:nil
+                                         afterDelay:600];
   }
 }
 
