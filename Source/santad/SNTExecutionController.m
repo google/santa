@@ -117,9 +117,11 @@ static size_t kLargeBinarySize = 30 * 1024 * 1024;
 
   // Get codesigning info about the file.
   NSError *csError;
-  MOLCodesignChecker *csInfo = [[MOLCodesignChecker alloc] initWithBinaryPath:binInfo.path
-                                                                        error:&csError];
-  // Ignore codesigning if there are any errors with the signature. 
+  MOLCodesignChecker *csInfo =
+      [[MOLCodesignChecker alloc] initWithBinaryPath:binInfo.path
+                                      fileDescriptor:binInfo.fileHandle.fileDescriptor
+                                               error:&csError];
+  // Ignore codesigning if there are any errors with the signature.
   if (csError) csInfo = nil;
 
   // Actually make the decision.
