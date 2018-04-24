@@ -213,6 +213,11 @@
 - (NSUInteger)fileSize;
 
 ///
+///  @return The underlying file handle.
+///
+@property(readonly) NSFileHandle *fileHandle;
+
+///
 ///  @return Returns an instance of MOLCodeSignChecker initialized with the file's binary path.
 ///  Both the MOLCodesignChecker and any resulting NSError are cached and returned on subsequent
 ///  calls.  You may pass in NULL for the error if you don't care to receive it.

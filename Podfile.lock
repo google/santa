@@ -5,7 +5,7 @@ PODS:
   - MOLAuthenticatingURLSession (2.4):
     - MOLCertificate (~> 1.8)
   - MOLCertificate (1.8)
-  - MOLCodesignChecker (1.9):
+  - MOLCodesignChecker (1.10):
     - MOLCertificate (~> 1.8)
   - MOLFCMClient (1.7):
     - MOLAuthenticatingURLSession (~> 2.4)
@@ -23,7 +23,7 @@ SPEC CHECKSUMS:
   FMDB: 6198a90e7b6900cfc046e6bc0ef6ebb7be9236aa
   MOLAuthenticatingURLSession: c238aa1c9a7b1077eb39a6f40204bfe76a7d204e
   MOLCertificate: c999513316d511c69f290fbf313dfe8dca4ad592
-  MOLCodesignChecker: 303c01755646a0045c97f9f0b0fe5945ead42130
+  MOLCodesignChecker: b0d5db9d2f9bd94e0fd093891a5d40e5ad77cbc0
   MOLFCMClient: ee45348909351f232e2759c580329072ae7e02d4
   OCMock: 2cd0716969bab32a2283ff3a46fd26a8c8b4c5e3
 
