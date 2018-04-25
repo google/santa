@@ -18,8 +18,9 @@
 
 #import "SNTExecutionController.h"
 
-#import "MOLCertificate.h"
-#import "MOLCodesignChecker.h"
+#import <MOLCertificate/MOLCertificate.h>
+#import <MOLCodesignChecker/MOLCodesignChecker.h>
+
 #import "SNTConfigurator.h"
 #import "SNTDriverManager.h"
 #import "SNTEventTable.h"

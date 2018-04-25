@@ -16,7 +16,7 @@
 
 @import SystemConfiguration;
 
-#import <MOLAuthenticatingURLSession.h>
+#import <MOLAuthenticatingURLSession/MOLAuthenticatingURLSession.h>
 #import <MOLFCMClient/MOLFCMClient.h>
 
 #import "SNTConfigurator.h"

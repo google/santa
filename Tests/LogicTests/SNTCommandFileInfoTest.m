@@ -16,7 +16,8 @@
 
 #import <OCMock/OCMock.h>
 
-#import "MOLCodesignChecker.h"
+#import <MOLCodesignChecker/MOLCodesignChecker.h>
+
 #import "SNTFileInfo.h"
 #import "SNTXPCConnection.h"
 

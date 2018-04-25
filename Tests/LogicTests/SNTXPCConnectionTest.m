@@ -14,9 +14,9 @@
 
 @import XCTest;
 
+#import <MOLCodesignChecker/MOLCodesignChecker.h>
 #import <OCMock/OCMock.h>
 
-#import "MOLCodesignChecker.h"
 #import "SNTXPCConnection.h"
 
 @interface SNTXPCConnectionTest : XCTestCase
