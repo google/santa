@@ -7,7 +7,7 @@
 	<key>NSHumanReadableCopyright</key>
 	<string>Google, Inc.</string>
 	<key>CFBundleIdentifier</key>
-	<string>com.google.${PRODUCT_NAME:rfc1034identifier}</string>
+	<string>com.google.santactl</string>
 	<key>CFBundleName</key>
 	<string>${PRODUCT_NAME}</string>
 	<key>CFBundleShortVersionString</key>

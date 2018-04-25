@@ -16,8 +16,8 @@
 
 #include "SNTLogging.h"
 
-#import "MOLCertificate.h"
-#import "MOLCodesignChecker.h"
+#import <MOLCertificate/MOLCertificate.h>
+
 #import "NSData+Zlib.h"
 #import "SNTCommandSyncConstants.h"
 #import "SNTCommandSyncState.h"

@@ -14,7 +14,8 @@
 
 @import XCTest;
 
-#import "MOLCodesignChecker.h"
+#import <MOLCodesignChecker/MOLCodesignChecker.h>
+
 #import "SNTEventTable.h"
 #import "SNTFileInfo.h"
 #import "SNTStoredEvent.h"
