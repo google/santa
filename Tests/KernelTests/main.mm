@@ -12,8 +12,8 @@
 ///    See the License for the specific language governing permissions and
 ///    limitations under the License.
 
-@import Foundation;
-@import IOKit;
+#import <Foundation/Foundation.h>
+#import <IOKit/IOKitLib.h>
 
 #import <CommonCrypto/CommonDigest.h>
 

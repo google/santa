@@ -114,6 +114,8 @@
   char *buf = NULL;
   BOOL shouldFree = NO;
 
+  if (length < 1) return @"";
+
   // Loop through the string one character at a time, looking for the characters
   // we want to remove.
   for (const char *p = str; (c = *p) != 0; ++p) {

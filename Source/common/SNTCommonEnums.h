@@ -12,7 +12,7 @@
 ///    See the License for the specific language governing permissions and
 ///    limitations under the License.
 
-@import Foundation;
+#import <Foundation/Foundation.h>
 
 ///
 ///  These enums are used in various places throughout the Santa client code.

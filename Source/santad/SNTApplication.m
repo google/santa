@@ -14,7 +14,7 @@
 
 #import "SNTApplication.h"
 
-@import DiskArbitration;
+#import <DiskArbitration/DiskArbitration.h>
 
 #import "SNTCommonEnums.h"
 #import "SNTConfigurator.h"

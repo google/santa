@@ -12,8 +12,8 @@
 ///    See the License for the specific language governing permissions and
 ///    limitations under the License.
 
-@import Foundation;
-@import IOKit.kext;
+#import <Foundation/Foundation.h>
+#import <IOKit/kext/KextManager.h>
 
 #import "SNTCommand.h"
 #import "SNTCommandController.h"
