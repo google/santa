@@ -16,7 +16,7 @@
 
 // This is imported in the header rather than implementation to save
 // classes that use this one from also having to import FMDB stuff.
-#import <FMDB/FMDB.h>
+#import <fmdb/FMDB.h>
 
 @interface SNTDatabaseTable : NSObject
 

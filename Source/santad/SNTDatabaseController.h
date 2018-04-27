@@ -16,7 +16,7 @@
 
 // This is imported in the header rather than implementation to saves
 // classes that use this one from also having to import FMDB stuff.
-#import <FMDB/FMDB.h>
+#import <fmdb/FMDB.h>
 
 @class SNTConfigTable;
 @class SNTEventTable;

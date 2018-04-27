@@ -24,7 +24,7 @@
 #include <sys/stat.h>
 #include <sys/xattr.h>
 
-#import <FMDB/FMDB.h>
+#import <fmdb/FMDB.h>
 
 // Simple class to hold the data of a mach_header and the offset within the file
 // in which that header was found.
