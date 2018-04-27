@@ -14,6 +14,7 @@
 
 #import "SNTDriverManager.h"
 
+#import <IOKit/IODataQueueClient.h>
 #import <IOKit/kext/KextManager.h>
 
 #include <mach/mach_port.h>
