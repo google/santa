@@ -20,7 +20,6 @@
 #import "SNTConfigurator.h"
 #import "SNTLogging.h"
 #import "SNTStoredEvent.h"
-#import "SNTSystemInfo.h"
 
 @implementation SNTSyslogEventLog
 
@@ -69,7 +68,7 @@
       message.pid, message.ppid, message.pname, ppath,
       message.uid, [self nameForUID:message.uid],
       message.gid, [self nameForGID:message.gid],
-      [SNTSystemInfo hardwareUUID]];
+      self.hostuuid];
 
   [self writeLog:outStr];
 }
@@ -156,7 +155,7 @@
       message.uid, [self nameForUID:message.uid],
       message.gid, [self nameForGID:message.gid],
       mode, [self sanitizeString:@(message.path)],
-      [SNTSystemInfo hardwareUUID]];
+      self.hostuuid];
 
   // Check for app translocation by GateKeeper, and log original path if the case.
   NSString *originalPath = [self originalPathForTranslocation:message];
