@@ -64,11 +64,14 @@
   char ppath[PATH_MAX] = "(null)";
   proc_pidpath(message.pid, ppath, PATH_MAX);
 
-  [outStr appendFormat:@"|pid=%d|ppid=%d|process=%s|processpath=%s|uid=%d|user=%@|gid=%d|group=%@|uuid=%@",
+  [outStr appendFormat:@"|pid=%d|ppid=%d|process=%s|processpath=%s|uid=%d|user=%@|gid=%d|group=%@",
       message.pid, message.ppid, message.pname, ppath,
       message.uid, [self nameForUID:message.uid],
-      message.gid, [self nameForGID:message.gid],
-      self.hostuuid];
+      message.gid, [self nameForGID:message.gid]];
+  
+  if ([[SNTConfigurator configurator] enableUUIDDecoration]) {
+    [outStr appendFormat:@"|uuid=%@", self.hostuuid];
+  }
 
   [self writeLog:outStr];
 }
@@ -150,12 +153,11 @@
       mode = @"U"; break;
   }
 
-  [outLog appendFormat:@"|pid=%d|ppid=%d|uid=%d|user=%@|gid=%d|group=%@|mode=%@|path=%@|uuid=%@",
+  [outLog appendFormat:@"|pid=%d|ppid=%d|uid=%d|user=%@|gid=%d|group=%@|mode=%@|path=%@",
       message.pid, message.ppid,
       message.uid, [self nameForUID:message.uid],
       message.gid, [self nameForGID:message.gid],
-      mode, [self sanitizeString:@(message.path)],
-      self.hostuuid];
+      mode, [self sanitizeString:@(message.path)]];
 
   // Check for app translocation by GateKeeper, and log original path if the case.
   NSString *originalPath = [self originalPathForTranslocation:message];
@@ -165,6 +167,10 @@
 
   if (logArgs) {
     [self addArgsForPid:message.pid toString:outLog];
+  }
+
+  if ([[SNTConfigurator configurator] enableUUIDDecoration]) {
+    [outLog appendFormat:@"|uuid=%@", self.hostuuid];
   }
 
   [self writeLog:outLog];

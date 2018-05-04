@@ -98,6 +98,13 @@
 ///
 @property(readonly, nonatomic) NSString *eventLogPath;
 
+///
+/// Enabling UUID decoration appends the host uuid to the end of each log line.
+/// Defaults to NO.
+///
+@property(readonly, nonatomic) BOOL enableUUIDDecoration;
+
+
 #pragma mark - GUI Settings
 
 ///
