@@ -20,6 +20,7 @@
 #import "SNTConfigurator.h"
 #import "SNTLogging.h"
 #import "SNTStoredEvent.h"
+#import "SNTSystemInfo.h"
 
 @implementation SNTSyslogEventLog
 
@@ -64,10 +65,11 @@
   char ppath[PATH_MAX] = "(null)";
   proc_pidpath(message.pid, ppath, PATH_MAX);
 
-  [outStr appendFormat:@"|pid=%d|ppid=%d|process=%s|processpath=%s|uid=%d|user=%@|gid=%d|group=%@",
+  [outStr appendFormat:@"|pid=%d|ppid=%d|process=%s|processpath=%s|uid=%d|user=%@|gid=%d|group=%@|uuid=%@",
       message.pid, message.ppid, message.pname, ppath,
       message.uid, [self nameForUID:message.uid],
-      message.gid, [self nameForGID:message.gid]];
+      message.gid, [self nameForGID:message.gid],
+      [SNTSystemInfo hardwareUUID]];
 
   [self writeLog:outStr];
 }
@@ -149,11 +151,12 @@
       mode = @"U"; break;
   }
 
-  [outLog appendFormat:@"|pid=%d|ppid=%d|uid=%d|user=%@|gid=%d|group=%@|mode=%@|path=%@",
+  [outLog appendFormat:@"|pid=%d|ppid=%d|uid=%d|user=%@|gid=%d|group=%@|mode=%@|path=%@|uuid=%@",
       message.pid, message.ppid,
       message.uid, [self nameForUID:message.uid],
       message.gid, [self nameForGID:message.gid],
-      mode, [self sanitizeString:@(message.path)]];
+      mode, [self sanitizeString:@(message.path)],
+      [SNTSystemInfo hardwareUUID]];
 
   // Check for app translocation by GateKeeper, and log original path if the case.
   NSString *originalPath = [self originalPathForTranslocation:message];
