@@ -51,5 +51,5 @@
 
 // A UTC Date formatter.
 @property(readonly, nonatomic) NSDateFormatter *dateFormatter;
-@property(readonly, nonatomic) NSString *hostuuid;
+@property(readonly, nonatomic) NSString *machineID;
 @end

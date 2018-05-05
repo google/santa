@@ -69,8 +69,8 @@
       message.uid, [self nameForUID:message.uid],
       message.gid, [self nameForGID:message.gid]];
   
-  if ([[SNTConfigurator configurator] enableUUIDDecoration]) {
-    [outStr appendFormat:@"|uuid=%@", self.hostuuid];
+  if ([[SNTConfigurator configurator] enableMachineIDDecoration]) {
+    [outStr appendFormat:@"|machineid=%@", self.machineID];
   }
 
   [self writeLog:outStr];
@@ -169,8 +169,8 @@
     [self addArgsForPid:message.pid toString:outLog];
   }
 
-  if ([[SNTConfigurator configurator] enableUUIDDecoration]) {
-    [outLog appendFormat:@"|uuid=%@", self.hostuuid];
+  if ([[SNTConfigurator configurator] enableMachineIDDecoration]) {
+    [outLog appendFormat:@"|machineid=%@", self.machineID];
   }
 
   [self writeLog:outLog];

@@ -20,7 +20,7 @@
 #include <sys/sysctl.h>
 
 #import "SNTCachedDecision.h"
-#import "SNTSystemInfo.h"
+#import "SNTConfigurator.h"
 
 @interface SNTEventLog ()
 @property NSMutableDictionary<NSNumber *, SNTCachedDecision *> *detailStore;
@@ -46,7 +46,7 @@
     _dateFormatter.timeZone = [NSTimeZone timeZoneWithName:@"UTC"];
 
     // Grab the system UUID on init
-     _hostuuid = [SNTSystemInfo hardwareUUID];
+     _machineID = [[SNTConfigurator configurator] machineID];
   }
   return self;
 }

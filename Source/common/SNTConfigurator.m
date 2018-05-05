@@ -72,7 +72,7 @@ static NSString *const kFileChangesRegexKey = @"FileChangesRegex";
 static NSString *const kEventLogType = @"EventLogType";
 static NSString *const kEventLogPath = @"EventLogPath";
 
-static NSString *const kEnableUUIDDecoration = @"EnableUUIDDecoration";
+static NSString *const kEnableMachineIDDecoration = @"EnableMachineIDDecoration";
 
 // The keys managed by a sync server or mobileconfig.
 static NSString *const kClientModeKey = @"ClientMode";
@@ -128,7 +128,7 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
       kMachineIDPlistKeyKey : string,
       kEventLogType : string,
       kEventLogPath : string,
-      kEnableUUIDDecoration : number,
+      kEnableMachineIDDecoration : number,
     };
     _defaults = [NSUserDefaults standardUserDefaults];
     [_defaults addSuiteNamed:@"com.google.santa"];
@@ -454,9 +454,9 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
   return self.configState[kEventLogPath] ?: @"/var/db/santa/santa.log";
 }
 
-- (BOOL)enableUUIDDecoration {
-  NSNumber *number = self.configState[kEnableUUIDDecoration];
-  return number ? [number boolValue] : YES;
+- (BOOL)enableMachineIDDecoration {
+  NSNumber *number = self.configState[kEnableMachineIDDecoration];
+  return number ? [number boolValue] : NO;
 }
 
 #pragma mark Private
