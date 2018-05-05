@@ -105,7 +105,6 @@
 ///
 @property(readonly, nonatomic) BOOL enableMachineIDDecoration;
 
-
 #pragma mark - GUI Settings
 
 ///
