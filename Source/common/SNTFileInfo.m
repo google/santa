@@ -325,15 +325,14 @@ extern NSString *const NSURLQuarantinePropertiesKey WEAK_IMPORT_ATTRIBUTE;
   static NSSet *set;
   static dispatch_once_t onceToken;
   dispatch_once(&onceToken, ^{
-    NSArray *list = @[
+    set = [NSSet setWithArray:@[
       @"app",
       @"bundle",
       @"framework",
       @"kext",
       @"xctest",
       @"xpc",
-    ];
-    set = [NSSet setWithArray:list];
+    ]];
   });
   return set;
 }
