@@ -170,8 +170,8 @@
                                                                     ofType:@""];
   NSString *directoryBundle = @"/tmp/DirectoryBundle";
   NSFileManager *fm = [NSFileManager defaultManager];
-  XCTAssertTrue([fm removeItemAtPath:directoryBundle error:NULL]);
-  XCTAssertTrue([fm copyItemAtPath:path toPath:directoryBundle error:NULL]);
+  [fm removeItemAtPath:directoryBundle error:NULL];
+  [fm copyItemAtPath:path toPath:directoryBundle error:NULL];
   path = [directoryBundle stringByAppendingString:@"/Contents/Resources/BundleExample.app"];
   SNTFileInfo *sut = [[SNTFileInfo alloc] initWithPath:path];
   sut.useAncestorBundle = YES;
