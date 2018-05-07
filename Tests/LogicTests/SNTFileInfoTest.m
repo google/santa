@@ -165,6 +165,26 @@
   XCTAssertEqualObjects([sut bundlePath], path);
 }
 
+- (void)testDirectoryBundleIsNotAncestor {
+  NSString *path = [[NSBundle bundleForClass:[self class]] pathForResource:@"DirectoryBundle"
+                                                                    ofType:@""];
+  NSString *directoryBundle = @"/tmp/DirectoryBundle";
+  NSFileManager *fm = [NSFileManager defaultManager];
+  [fm removeItemAtPath:directoryBundle error:NULL];
+  [fm copyItemAtPath:path toPath:directoryBundle error:NULL];
+  path = [directoryBundle stringByAppendingString:@"/Contents/Resources/BundleExample.app"];
+  SNTFileInfo *sut = [[SNTFileInfo alloc] initWithPath:path];
+  sut.useAncestorBundle = YES;
+
+  XCTAssertNotNil([sut bundle]);
+
+  XCTAssertEqualObjects([sut bundleIdentifier], @"com.google.santa.BundleExample");
+  XCTAssertEqualObjects([sut bundleName], @"BundleExample");
+  XCTAssertEqualObjects([sut bundleVersion], @"1");
+  XCTAssertEqualObjects([sut bundleShortVersionString], @"1.0");
+  XCTAssertEqualObjects([sut bundlePath], path);
+}
+
 - (void)testBundleCacheReset {
   NSString *path = [[NSBundle bundleForClass:[self class]] pathForResource:@"BundleExample"
                                                                     ofType:@"app"];

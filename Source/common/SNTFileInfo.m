@@ -318,6 +318,26 @@ extern NSString *const NSURLQuarantinePropertiesKey WEAK_IMPORT_ATTRIBUTE;
 #pragma mark Bundle Information
 
 ///
+///  Directories with a "Contents/Info.plist" entry can be mistaken as a bundle. To be considered an
+///  ancestor, the bundle must have a valid extension.
+///
+- (NSSet *)allowedAncestorExtensions {
+  static NSSet *set;
+  static dispatch_once_t onceToken;
+  dispatch_once(&onceToken, ^{
+    set = [NSSet setWithArray:@[
+      @"app",
+      @"bundle",
+      @"framework",
+      @"kext",
+      @"xctest",
+      @"xpc",
+    ]];
+  });
+  return set;
+}
+
+///
 ///  Try and determine the bundle that the represented executable is contained within, if any.
 ///
 ///  Rationale: An NSBundle has a method executablePath for discovering the main binary within a
@@ -327,18 +347,21 @@ extern NSString *const NSURLQuarantinePropertiesKey WEAK_IMPORT_ATTRIBUTE;
 ///
 ///  This method walks up the path until a bundle is found, if any.
 ///
-///  @param ancestor YES this will return the highest NSBundle found in the tree. No will return the
-///                  the lowest.
+///  @param ancestor YES this will return the highest NSBundle, with a valid extension, found in the
+///                  tree. NO will return the the lowest NSBundle, without validating the extension.
 ///
--(NSBundle *)findBundleWithAncestor:(BOOL)ancestor {
+- (NSBundle *)findBundleWithAncestor:(BOOL)ancestor {
   NSBundle *bundle;
   NSMutableArray *pathComponents = [[self.path pathComponents] mutableCopy];
 
   // Ignore the root path "/", for some reason this is considered a bundle.
   while (pathComponents.count > 1) {
     NSBundle *bndl = [NSBundle bundleWithPath:[NSString pathWithComponents:pathComponents]];
-    if (bndl && [bndl objectForInfoDictionaryKey:@"CFBundleIdentifier"]) {
-      bundle = bndl;
+    if ([bndl objectForInfoDictionaryKey:@"CFBundleIdentifier"]) {
+      if (!ancestor ||
+          [[self allowedAncestorExtensions] containsObject:bndl.bundlePath.pathExtension]) {
+        bundle = bndl;
+      }
       if (!ancestor) break;
     }
     [pathComponents removeLastObject];
