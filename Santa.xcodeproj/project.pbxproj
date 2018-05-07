@@ -185,6 +185,7 @@
 		C7C721B61E2408C30051FAA6 /* SNTLogging.m in Sources */ = {isa = PBXBuildFile; fileRef = 0DA73C9E1934F8100056D7C4 /* SNTLogging.m */; };
 		C7DA62F71E241938009BDF2C /* SNTXPCBundleServiceInterface.m in Sources */ = {isa = PBXBuildFile; fileRef = C7C721B01E23FF300051FAA6 /* SNTXPCBundleServiceInterface.m */; };
 		C7DA62F91E241A02009BDF2C /* SNTCommandBundleInfo.m in Sources */ = {isa = PBXBuildFile; fileRef = C7DA62F81E241A02009BDF2C /* SNTCommandBundleInfo.m */; };
+		C7EAF71820A0A20B00745126 /* DirectoryBundle in Resources */ = {isa = PBXBuildFile; fileRef = C7EAF71720A0A20B00745126 /* DirectoryBundle */; };
 		C7FB56F61DBFB480004E14EF /* SNTXPCSyncdInterface.m in Sources */ = {isa = PBXBuildFile; fileRef = C7FB56F51DBFB480004E14EF /* SNTXPCSyncdInterface.m */; };
 		C7FB56F71DBFB480004E14EF /* SNTXPCSyncdInterface.m in Sources */ = {isa = PBXBuildFile; fileRef = C7FB56F51DBFB480004E14EF /* SNTXPCSyncdInterface.m */; };
 		C7FB57001DBFC213004E14EF /* SNTSyncdQueue.m in Sources */ = {isa = PBXBuildFile; fileRef = C7FB56FF1DBFC213004E14EF /* SNTSyncdQueue.m */; };
@@ -451,6 +452,7 @@
 		C7C721AF1E23FF300051FAA6 /* SNTXPCBundleServiceInterface.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SNTXPCBundleServiceInterface.h; sourceTree = "<group>"; };
 		C7C721B01E23FF300051FAA6 /* SNTXPCBundleServiceInterface.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SNTXPCBundleServiceInterface.m; sourceTree = "<group>"; };
 		C7DA62F81E241A02009BDF2C /* SNTCommandBundleInfo.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SNTCommandBundleInfo.m; sourceTree = "<group>"; };
+		C7EAF71720A0A20B00745126 /* DirectoryBundle */ = {isa = PBXFileReference; lastKnownFileType = folder; path = DirectoryBundle; sourceTree = "<group>"; };
 		C7FB56F41DBFB480004E14EF /* SNTXPCSyncdInterface.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SNTXPCSyncdInterface.h; sourceTree = "<group>"; };
 		C7FB56F51DBFB480004E14EF /* SNTXPCSyncdInterface.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SNTXPCSyncdInterface.m; sourceTree = "<group>"; };
 		C7FB56FE1DBFC213004E14EF /* SNTSyncdQueue.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SNTSyncdQueue.h; sourceTree = "<group>"; };
@@ -549,6 +551,7 @@
 		0D260DB018B68E12002A0B55 /* Resources */ = {
 			isa = PBXGroup;
 			children = (
+				C7EAF71720A0A20B00745126 /* DirectoryBundle */,
 				C74D6CC51EEB3B9B00BB5A33 /* BundleExample.app */,
 				0D536ED51B8E7A2E0039A26D /* bad_pagezero */,
 				0D2CD4601A81C7B100C9C910 /* dn.plist */,
@@ -1107,6 +1110,7 @@
 				0D2CD4611A81C7B100C9C910 /* dn.plist in Resources */,
 				0DEA5F7B1CF64C9200704398 /* sync_ruledownload_batch2.json in Resources */,
 				0DEA5F6C1CF6254900704398 /* sync_preflight_lockdown.json in Resources */,
+				C7EAF71820A0A20B00745126 /* DirectoryBundle in Resources */,
 				0D536ED81B8E7A2E0039A26D /* missing_pagezero in Resources */,
 				0D202D201CE4E90E00A88F16 /* sync_preflight_basic.json in Resources */,
 			);
