@@ -15,11 +15,11 @@
 #import <Foundation/Foundation.h>
 
 @class SNTStoredEvent;
-@class SNTXPCConnection;
+@class MOLXPCConnection;
 
 @interface SNTNotificationQueue : NSObject
 
-@property(nonatomic) SNTXPCConnection *notifierConnection;
+@property(nonatomic) MOLXPCConnection *notifierConnection;
 
 - (void)addEvent:(SNTStoredEvent *)event customMessage:(NSString *)message;
 

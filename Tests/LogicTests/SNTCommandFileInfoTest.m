@@ -17,9 +17,9 @@
 #import <OCMock/OCMock.h>
 
 #import <MOLCodesignChecker/MOLCodesignChecker.h>
+#import <MOLXPCConnection/MOLXPCConnection.h>
 
 #import "SNTFileInfo.h"
-#import "SNTXPCConnection.h"
 
 @interface SNTCommandFileInfo : NSObject
 
@@ -32,7 +32,7 @@ typedef id (^SNTAttributeBlock)(SNTCommandFileInfo *, SNTFileInfo *);
 + (NSArray *)fileInfoKeys;
 + (NSArray *)signingChainKeys;
 - (SNTAttributeBlock)codeSigned;
-- (instancetype)initWithDaemonConnection:(SNTXPCConnection *)daemonConn;
+- (instancetype)initWithDaemonConnection:(MOLXPCConnection *)daemonConn;
 - (NSArray *)parseArguments:(NSArray *)arguments;
 
 @end

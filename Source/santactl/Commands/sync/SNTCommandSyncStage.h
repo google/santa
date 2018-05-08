@@ -15,13 +15,13 @@
 #import <Foundation/Foundation.h>
 
 @class SNTCommandSyncState;
-@class SNTXPCConnection;
+@class MOLXPCConnection;
 
 @interface SNTCommandSyncStage : NSObject
 
 @property(readonly, nonnull) NSURLSession *urlSession;
 @property(readonly, nonnull) SNTCommandSyncState *syncState;
-@property(readonly, nonnull) SNTXPCConnection *daemonConn;
+@property(readonly, nonnull) MOLXPCConnection *daemonConn;
 
 /**
   Initialize this stage. Designated initializer.

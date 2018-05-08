@@ -16,7 +16,7 @@
 
 #import "SNTXPCSyncdInterface.h"
 
-@class SNTXPCConnection;
+@class MOLXPCConnection;
 
 ///
 ///  Handles push notifications and periodic syncing with a sync server.
@@ -37,7 +37,7 @@
 ///  @param daemon Set to YES if periodic syncing should occur.
 ///                Set to NO if a single sync should be performed. NO is default.
 ///
-- (instancetype)initWithDaemonConnection:(SNTXPCConnection *)daemonConn
+- (instancetype)initWithDaemonConnection:(MOLXPCConnection *)daemonConn
                                 isDaemon:(BOOL)daemon NS_DESIGNATED_INITIALIZER;
 
 ///

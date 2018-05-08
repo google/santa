@@ -14,7 +14,8 @@
 
 #import "SNTCommandController.h"
 
-#import "SNTXPCConnection.h"
+#import <MOLXPCConnection/MOLXPCConnection.h>
+
 #import "SNTXPCControlInterface.h"
 
 @implementation SNTCommandController
@@ -69,8 +70,8 @@ static NSMutableDictionary *registeredCommands;
   return nil;
 }
 
-+ (SNTXPCConnection *)connectToDaemonRequired:(BOOL)required {
-  SNTXPCConnection *daemonConn = [SNTXPCControlInterface configuredConnection];
++ (MOLXPCConnection *)connectToDaemonRequired:(BOOL)required {
+  MOLXPCConnection *daemonConn = [SNTXPCControlInterface configuredConnection];
 
   if (required) {
     daemonConn.invalidationHandler = ^{
@@ -94,7 +95,7 @@ static NSMutableDictionary *registeredCommands;
     exit(2);
   }
 
-  SNTXPCConnection *daemonConn = [self connectToDaemonRequired:[command requiresDaemonConn]];
+  MOLXPCConnection *daemonConn = [self connectToDaemonRequired:[command requiresDaemonConn]];
   [command runWithArguments:arguments daemonConnection:daemonConn];
 
   // The command is responsible for quitting.

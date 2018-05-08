@@ -16,12 +16,12 @@
 
 @implementation SNTCommand
 
-+ (void)runWithArguments:(NSArray *)arguments daemonConnection:(SNTXPCConnection *)daemonConn {
++ (void)runWithArguments:(NSArray *)arguments daemonConnection:(MOLXPCConnection *)daemonConn {
   id cmd = [[self alloc] initWithDaemonConnection:daemonConn];
   [cmd runWithArguments:arguments];
 }
 
-- (instancetype)initWithDaemonConnection:(SNTXPCConnection *)daemonConn {
+- (instancetype)initWithDaemonConnection:(MOLXPCConnection *)daemonConn {
   self = [super init];
   if (self) {
     _daemonConn = daemonConn;

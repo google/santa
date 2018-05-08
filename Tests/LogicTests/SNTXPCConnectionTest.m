@@ -16,16 +16,15 @@
 
 #import <MOLCodesignChecker/MOLCodesignChecker.h>
 #import <OCMock/OCMock.h>
+#import <MOLXPCConnection/MOLXPCConnection.h>
 
-#import "SNTXPCConnection.h"
-
-@interface SNTXPCConnectionTest : XCTestCase
+@interface MOLXPCConnectionTest : XCTestCase
 @end
 
-@implementation SNTXPCConnectionTest
+@implementation MOLXPCConnectionTest
 
 - (void)testPlainInit {
-  XCTAssertThrows([[SNTXPCConnection alloc] init]);
+  XCTAssertThrows([[MOLXPCConnection alloc] init]);
 }
 
 - (void)testInitClient {
@@ -34,13 +33,13 @@
   OCMExpect([mockConnection initWithMachServiceName:@"Client"
                                             options:0]).andReturn(mockConnection);
 
-  SNTXPCConnection *sut = [[SNTXPCConnection alloc] initClientWithName:@"Client" privileged:NO];
+  MOLXPCConnection *sut = [[MOLXPCConnection alloc] initClientWithName:@"Client" privileged:NO];
   XCTAssertNotNil(sut);
 
   OCMExpect([mockConnection initWithMachServiceName:@"Client"
                                             options:NSXPCConnectionPrivileged]).andReturn(
       mockConnection);
-  sut = [[SNTXPCConnection alloc] initClientWithName:@"Client" privileged:YES];
+  sut = [[MOLXPCConnection alloc] initClientWithName:@"Client" privileged:YES];
   XCTAssertNotNil(sut);
 
   OCMVerifyAll(mockConnection);
@@ -51,7 +50,7 @@
   id mockListener = OCMClassMock([NSXPCListener class]);
   OCMStub([mockListener alloc]).andReturn(mockListener);
   OCMExpect([mockListener initWithMachServiceName:@"TestServer"]).andReturn(mockListener);
-  SNTXPCConnection *sut = [[SNTXPCConnection alloc] initServerWithName:@"TestServer"];
+  MOLXPCConnection *sut = [[MOLXPCConnection alloc] initServerWithName:@"TestServer"];
   XCTAssertNotNil(sut);
   OCMVerifyAll(mockListener);
   [mockListener stopMocking];
@@ -66,11 +65,11 @@
 
   NSXPCListener *listener = [NSXPCListener anonymousListener];
 
-  SNTXPCConnection *sutServer = [[SNTXPCConnection alloc] initServerWithListener:listener];
+  MOLXPCConnection *sutServer = [[MOLXPCConnection alloc] initServerWithListener:listener];
   [sutServer resume];
 
   __block XCTestExpectation *exp1 = [self expectationWithDescription:@"Client Invalidated"];
-  SNTXPCConnection *sutClient = [[SNTXPCConnection alloc] initClientWithListener:listener.endpoint];
+  MOLXPCConnection *sutClient = [[MOLXPCConnection alloc] initClientWithListener:listener.endpoint];
   sutClient.invalidationHandler = ^{
     [exp1 fulfill];
     exp1 = nil; // precent multiple fulfill violation
@@ -86,14 +85,14 @@
   NSXPCListener *listener = [NSXPCListener anonymousListener];
 
   XCTestExpectation *exp1 = [self expectationWithDescription:@"Server Accepted"];
-  SNTXPCConnection *sutServer = [[SNTXPCConnection alloc] initServerWithListener:listener];
+  MOLXPCConnection *sutServer = [[MOLXPCConnection alloc] initServerWithListener:listener];
   sutServer.acceptedHandler = ^{
     [exp1 fulfill];
   };
   [sutServer resume];
 
   XCTestExpectation *exp2 = [self expectationWithDescription:@"Client Accepted"];
-  SNTXPCConnection *sutClient = [[SNTXPCConnection alloc] initClientWithListener:listener.endpoint];
+  MOLXPCConnection *sutClient = [[MOLXPCConnection alloc] initClientWithListener:listener.endpoint];
   sutClient.acceptedHandler = ^{
     [exp2 fulfill];
   };
@@ -104,11 +103,11 @@
 
 - (void)testConnectionInterruption {
   NSXPCListener *listener = [NSXPCListener anonymousListener];
-  SNTXPCConnection *sutServer = [[SNTXPCConnection alloc] initServerWithListener:listener];
+  MOLXPCConnection *sutServer = [[MOLXPCConnection alloc] initServerWithListener:listener];
   [sutServer resume];
 
   __block XCTestExpectation *exp1 = [self expectationWithDescription:@"Client Invalidated"];
-  SNTXPCConnection *sutClient = [[SNTXPCConnection alloc] initClientWithListener:listener.endpoint];
+  MOLXPCConnection *sutClient = [[MOLXPCConnection alloc] initClientWithListener:listener.endpoint];
   sutClient.invalidationHandler = ^{
     [exp1 fulfill];
     exp1 = nil;  // prevent multiple fulfill violation

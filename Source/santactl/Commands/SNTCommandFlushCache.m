@@ -17,8 +17,9 @@
 #import "SNTCommand.h"
 #import "SNTCommandController.h"
 
+#import <MOLXPCConnection/MOLXPCConnection.h>
+
 #import "SNTLogging.h"
-#import "SNTXPCConnection.h"
 #import "SNTXPCControlInterface.h"
 
 @interface SNTCommandFlushCache : SNTCommand<SNTCommandProtocol>

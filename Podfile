@@ -5,16 +5,19 @@ inhibit_all_warnings!
 target :Santa do
   pod 'MOLCertificate'
   pod 'MOLCodesignChecker'
+  pod 'MOLXPCConnection'
 end
 
 target :santad do
   pod 'FMDB'
   pod 'MOLCertificate'
   pod 'MOLCodesignChecker'
+  pod 'MOLXPCConnection'
   target :santabs do
     pod 'FMDB'
     pod 'MOLCertificate'
     pod 'MOLCodesignChecker'
+    pod 'MOLXPCConnection'
   end
 end
 
@@ -24,6 +27,7 @@ target :santactl do
   pod 'MOLCertificate'
   pod 'MOLCodesignChecker'
   pod 'MOLFCMClient', '~> 1.3'
+  pod 'MOLXPCConnection'
 end
 
 target :LogicTests do
@@ -31,6 +35,7 @@ target :LogicTests do
   pod 'MOLAuthenticatingURLSession'
   pod 'MOLCertificate'
   pod 'MOLCodesignChecker'
+  pod 'MOLXPCConnection'
   pod 'OCMock'
 end
 

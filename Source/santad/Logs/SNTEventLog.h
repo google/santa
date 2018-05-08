@@ -40,7 +40,6 @@
 - (NSString *)diskImageForDevice:(NSString *)devPath;
 - (NSString *)nameForUID:(uid_t)uid;
 - (NSString *)nameForGID:(gid_t)gid;
-- (NSString *)sanitizeCString:(const char *)str ofLength:(NSUInteger)length;
 - (NSString *)sanitizeString:(NSString *)inStr;
 - (NSString *)serialForDevice:(NSString *)devPath;
 - (NSString *)originalPathForTranslocation:(santa_message_t)message;

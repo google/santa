@@ -14,9 +14,10 @@
 
 #import "SNTXPCControlInterface.h"
 
+#import <MOLXPCConnection/MOLXPCConnection.h>
+
 #import "SNTRule.h"
 #import "SNTStoredEvent.h"
-#import "SNTXPCConnection.h"
 
 @implementation SNTXPCControlInterface
 
@@ -50,8 +51,8 @@
   return r;
 }
 
-+ (SNTXPCConnection *)configuredConnection {
-  SNTXPCConnection *c = [[SNTXPCConnection alloc] initClientWithName:[self serviceId]
++ (MOLXPCConnection *)configuredConnection {
+  MOLXPCConnection *c = [[MOLXPCConnection alloc] initClientWithName:[self serviceId]
                                                           privileged:YES];
   c.remoteInterface = [self controlInterface];
   return c;

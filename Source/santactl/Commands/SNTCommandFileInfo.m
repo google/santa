@@ -20,12 +20,12 @@
 #import <objc/runtime.h>
 #import <MOLCertificate/MOLCertificate.h>
 #import <MOLCodesignChecker/MOLCodesignChecker.h>
+#import <MOLXPCConnection/MOLXPCConnection.h>
 
 #import "SNTCachedDecision.h"
 #import "SNTFileInfo.h"
 #import "SNTLogging.h"
 #import "SNTRule.h"
-#import "SNTXPCConnection.h"
 #import "SNTXPCControlInterface.h"
 
 // file info keys
@@ -192,7 +192,7 @@ REGISTER_COMMAND_NAME(@"fileinfo")
             kValidUntil ];
 }
 
-- (instancetype)initWithDaemonConnection:(SNTXPCConnection *)daemonConn {
+- (instancetype)initWithDaemonConnection:(MOLXPCConnection *)daemonConn {
   self = [super initWithDaemonConnection:daemonConn];
   if (self) {
     _dateFormatter = [[NSDateFormatter alloc] init];

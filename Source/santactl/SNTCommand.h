@@ -14,7 +14,7 @@
 
 #import <Foundation/Foundation.h>
 
-@class SNTXPCConnection;
+@class MOLXPCConnection;
 
 @protocol SNTCommandProtocol
 
@@ -50,16 +50,16 @@
 ///
 ///  @note This method (or one of the methods it calls) is responsible for calling exit().
 ///
-+ (void)runWithArguments:(NSArray *)arguments daemonConnection:(SNTXPCConnection *)daemonConn;
++ (void)runWithArguments:(NSArray *)arguments daemonConnection:(MOLXPCConnection *)daemonConn;
 
 @end
 
 @interface SNTCommand : NSObject<SNTCommandRunProtocol>
 
-@property(nonatomic,readonly) SNTXPCConnection *daemonConn;
+@property(nonatomic,readonly) MOLXPCConnection *daemonConn;
 
 ///  Designated initializer
-- (instancetype)initWithDaemonConnection:(SNTXPCConnection *)daemonConn;
+- (instancetype)initWithDaemonConnection:(MOLXPCConnection *)daemonConn;
 
 - (void)runWithArguments:(NSArray *)arguments;
 

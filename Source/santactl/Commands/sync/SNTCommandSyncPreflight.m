@@ -17,11 +17,12 @@
 #include "SNTKernelCommon.h"
 #include "SNTLogging.h"
 
+#import <MOLXPCConnection/MOLXPCConnection.h>
+
 #import "SNTCommandSyncConstants.h"
 #import "SNTCommandSyncState.h"
 #import "SNTConfigurator.h"
 #import "SNTSystemInfo.h"
-#import "SNTXPCConnection.h"
 #import "SNTXPCControlInterface.h"
 
 @implementation SNTCommandSyncPreflight
