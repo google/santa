@@ -216,7 +216,7 @@ double watchdogRAMPeak = 0;
 
 - (void)setNotificationListener:(NSXPCListenerEndpoint *)listener {
   // This will leak the underlying NSXPCConnection when "fast user switching" occurs.
-  // It is not worth the trouble to fix. Maybe furtue self will feel differently.
+  // It is not worth the trouble to fix. Maybe future self will feel differently.
   MOLXPCConnection *c = [[MOLXPCConnection alloc] initClientWithListener:listener];
   c.remoteInterface = [SNTXPCNotifierInterface notifierInterface];
   [c resume];
