@@ -23,7 +23,7 @@
 
 @class SNTRule;
 @class SNTStoredEvent;
-@class SNTXPCConnection;
+@class MOLXPCConnection;
 
 ///
 ///  Protocol implemented by santad and utilized by santactl
@@ -121,9 +121,9 @@
 + (NSXPCInterface *)controlInterface;
 
 ///
-///  Retrieve a pre-configured SNTXPCConnection for communicating with santad.
+///  Retrieve a pre-configured MOLXPCConnection for communicating with santad.
 ///  Connections just needs any handlers set and then can be resumed and used.
 ///
-+ (SNTXPCConnection *)configuredConnection;
++ (MOLXPCConnection *)configuredConnection;
 
 @end

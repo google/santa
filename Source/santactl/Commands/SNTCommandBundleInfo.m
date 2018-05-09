@@ -15,10 +15,11 @@
 #import "SNTCommand.h"
 #import "SNTCommandController.h"
 
+#import <MOLXPCConnection/MOLXPCConnection.h>
+
 #import "SNTFileInfo.h"
 #import "SNTLogging.h"
 #import "SNTStoredEvent.h"
-#import "SNTXPCConnection.h"
 #import "SNTXPCControlInterface.h"
 
 @interface SNTCommandBundleInfo : SNTCommand<SNTCommandProtocol>

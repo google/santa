@@ -18,6 +18,7 @@
 
 #import <MOLAuthenticatingURLSession/MOLAuthenticatingURLSession.h>
 #import <MOLFCMClient/MOLFCMClient.h>
+#import <MOLXPCConnection/MOLXPCConnection.h>
 
 #import "SNTConfigurator.h"
 #import "SNTCommandSyncConstants.h"
@@ -31,7 +32,6 @@
 #import "SNTLogging.h"
 #import "SNTStoredEvent.h"
 #import "SNTStrengthify.h"
-#import "SNTXPCConnection.h"
 #import "SNTXPCControlInterface.h"
 #import "SNTXPCSyncdInterface.h"
 
@@ -63,7 +63,7 @@ static NSString *const kFCMTargetHostIDKey = @"target_host_id";
 
 @property MOLFCMClient *FCMClient;
 
-@property(nonatomic) SNTXPCConnection *daemonConn;
+@property(nonatomic) MOLXPCConnection *daemonConn;
 
 @property BOOL targetedRuleSync;
 
@@ -89,7 +89,7 @@ static void reachabilityHandler(
 
 #pragma mark init
 
-- (instancetype)initWithDaemonConnection:(SNTXPCConnection *)daemonConn isDaemon:(BOOL)daemon {
+- (instancetype)initWithDaemonConnection:(MOLXPCConnection *)daemonConn isDaemon:(BOOL)daemon {
   self = [super init];
   if (self) {
     _daemonConn = daemonConn;

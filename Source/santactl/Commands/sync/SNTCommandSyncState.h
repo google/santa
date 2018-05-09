@@ -17,7 +17,7 @@
 #import "SNTCommonEnums.h"
 
 @class SNTCommandSyncManager;
-@class SNTXPCConnection;
+@class MOLXPCConnection;
 
 /// An instance of this class is passed to each stage of the sync process for storing data
 /// that might be needed in later stages.
@@ -27,7 +27,7 @@
 @property NSURLSession *session;
 
 /// Connection to the daemon control interface.
-@property SNTXPCConnection *daemonConn;
+@property MOLXPCConnection *daemonConn;
 
 /// The base API URL.
 @property NSURL *syncBaseURL;

@@ -18,15 +18,15 @@
 #import <pthread/pthread.h>
 
 #import <MOLCodesignChecker/MOLCodesignChecker.h>
+#import <MOLXPCConnection/MOLXPCConnection.h>
 
 #import "SNTFileInfo.h"
 #import "SNTStoredEvent.h"
-#import "SNTXPCConnection.h"
 #import "SNTXPCNotifierInterface.h"
 
 @interface SNTBundleService ()
-@property SNTXPCConnection *notifierConnection;
-@property SNTXPCConnection *listener;
+@property MOLXPCConnection *notifierConnection;
+@property MOLXPCConnection *listener;
 @property(nonatomic) dispatch_queue_t queue;
 @end
 
@@ -48,7 +48,7 @@
 
   // Create listener for return connection from SantaGUI.
   NSXPCListener *listener = [NSXPCListener anonymousListener];
-  self.listener = [[SNTXPCConnection alloc] initServerWithListener:listener];
+  self.listener = [[MOLXPCConnection alloc] initServerWithListener:listener];
   self.listener.exportedInterface = [SNTXPCBundleServiceInterface bundleServiceInterface];
   self.listener.exportedObject = self;
   self.listener.acceptedHandler = ^{
@@ -80,7 +80,7 @@
 // Connect to the SantaGUI
 - (void)setBundleNotificationListener:(NSXPCListenerEndpoint *)listener {
   dispatch_async(dispatch_get_main_queue(), ^{
-    SNTXPCConnection *c = [[SNTXPCConnection alloc] initClientWithListener:listener];
+    MOLXPCConnection *c = [[MOLXPCConnection alloc] initClientWithListener:listener];
     c.remoteInterface = [SNTXPCNotifierInterface bundleNotifierInterface];
     [c resume];
     self.notifierConnection = c;

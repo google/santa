@@ -14,18 +14,19 @@
 
 #import "SNTCommandSyncStage.h"
 
+#import <MOLXPCConnection/MOLXPCConnection.h>
+
 #import "NSData+Zlib.h"
 #import "SNTCommandSyncConstants.h"
 #import "SNTCommandSyncState.h"
 #import "SNTLogging.h"
 #import "SNTXPCControlInterface.h"
-#import "SNTXPCConnection.h"
 
 @interface SNTCommandSyncStage ()
 
 @property(readwrite) NSURLSession *urlSession;
 @property(readwrite) SNTCommandSyncState *syncState;
-@property(readwrite) SNTXPCConnection *daemonConn;
+@property(readwrite) MOLXPCConnection *daemonConn;
 @property BOOL xsrfFetched;
 
 @end

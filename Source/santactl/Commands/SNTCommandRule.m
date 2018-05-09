@@ -19,13 +19,13 @@
 
 #import <MOLCertificate/MOLCertificate.h>
 #import <MOLCodesignChecker/MOLCodesignChecker.h>
+#import <MOLXPCConnection/MOLXPCConnection.h>
 
 #import "SNTConfigurator.h"
 #import "SNTDropRootPrivs.h"
 #import "SNTFileInfo.h"
 #include "SNTLogging.h"
 #import "SNTRule.h"
-#import "SNTXPCConnection.h"
 #import "SNTXPCControlInterface.h"
 
 @interface SNTCommandRule : SNTCommand<SNTCommandProtocol>
@@ -164,7 +164,7 @@ REGISTER_COMMAND_NAME(@"rule")
   }];
 }
 
-- (void)printStateOfRule:(SNTRule *)rule daemonConnection:(SNTXPCConnection *)daemonConn {
+- (void)printStateOfRule:(SNTRule *)rule daemonConnection:(MOLXPCConnection *)daemonConn {
   NSString *fileSHA256 = (rule.type == SNTRuleTypeBinary) ? rule.shasum : nil;
   NSString *certificateSHA256 = (rule.type == SNTRuleTypeCertificate) ? rule.shasum : nil;
   dispatch_group_t group = dispatch_group_create();

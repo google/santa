@@ -16,6 +16,8 @@
 
 #import <DiskArbitration/DiskArbitration.h>
 
+#import <MOLXPCConnection/MOLXPCConnection.h>
+
 #import "SNTCommonEnums.h"
 #import "SNTConfigurator.h"
 #import "SNTDaemonControlController.h"
@@ -30,7 +32,6 @@
 #import "SNTRuleTable.h"
 #import "SNTSyncdQueue.h"
 #import "SNTSyslogEventLog.h"
-#import "SNTXPCConnection.h"
 #import "SNTXPCControlInterface.h"
 #import "SNTXPCNotifierInterface.h"
 
@@ -39,7 +40,7 @@
 @property SNTDriverManager *driverManager;
 @property SNTEventLog *eventLog;
 @property SNTExecutionController *execController;
-@property SNTXPCConnection *controlConnection;
+@property MOLXPCConnection *controlConnection;
 @property SNTNotificationQueue *notQueue;
 @property pid_t syncdPID;
 @end
@@ -115,7 +116,7 @@
                                                          eventLog:_eventLog];
 
     _controlConnection =
-        [[SNTXPCConnection alloc] initServerWithName:[SNTXPCControlInterface serviceId]];
+        [[MOLXPCConnection alloc] initServerWithName:[SNTXPCControlInterface serviceId]];
     _controlConnection.exportedInterface = [SNTXPCControlInterface controlInterface];
     _controlConnection.exportedObject = dc;
     [_controlConnection resume];

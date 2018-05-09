@@ -14,6 +14,8 @@
 
 #import "SNTDaemonControlController.h"
 
+#import <MOLXPCConnection/MOLXPCConnection.h>
+
 #import "SNTCachedDecision.h"
 #import "SNTCommonEnums.h"
 #import "SNTConfigurator.h"
@@ -30,7 +32,6 @@
 #import "SNTStrengthify.h"
 #import "SNTSyncdQueue.h"
 #import "SNTXPCBundleServiceInterface.h"
-#import "SNTXPCConnection.h"
 #import "SNTXPCNotifierInterface.h"
 #import "SNTXPCSyncdInterface.h"
 
@@ -214,14 +215,16 @@ double watchdogRAMPeak = 0;
 #pragma mark GUI Ops
 
 - (void)setNotificationListener:(NSXPCListenerEndpoint *)listener {
-  SNTXPCConnection *c = [[SNTXPCConnection alloc] initClientWithListener:listener];
+  // This will leak the underlying NSXPCConnection when "fast user switching" occurs.
+  // It is not worth the trouble to fix. Maybe future self will feel differently.
+  MOLXPCConnection *c = [[MOLXPCConnection alloc] initClientWithListener:listener];
   c.remoteInterface = [SNTXPCNotifierInterface notifierInterface];
   [c resume];
   self.notQueue.notifierConnection = c;
 }
 
 - (void)setBundleNotificationListener:(NSXPCListenerEndpoint *)listener {
-  SNTXPCConnection *bs = [[SNTXPCConnection alloc] initClientWithServiceName:@"com.google.santabs"];
+  MOLXPCConnection *bs = [[MOLXPCConnection alloc] initClientWithServiceName:@"com.google.santabs"];
   bs.remoteInterface = [SNTXPCBundleServiceInterface bundleServiceInterface];
   [bs resume];
   [[bs remoteObjectProxy] setBundleNotificationListener:listener];
@@ -233,12 +236,13 @@ double watchdogRAMPeak = 0;
 - (void)setSyncdListener:(NSXPCListenerEndpoint *)listener {
   // Only allow one active syncd connection
   if (self.syncdQueue.syncdConnection) return;
-  SNTXPCConnection *c = [[SNTXPCConnection alloc] initClientWithListener:listener];
+  MOLXPCConnection *c = [[MOLXPCConnection alloc] initClientWithListener:listener];
   c.remoteInterface = [SNTXPCSyncdInterface syncdInterface];
   c.invalidationHandler = ^{
     [self.syncdQueue stopSyncingEvents];
+    [self.syncdQueue.syncdConnection invalidate];
     self.syncdQueue.syncdConnection = nil;
-    self.syncdQueue.invalidationHandler();
+    if (self.syncdQueue.invalidationHandler) self.syncdQueue.invalidationHandler();
   };
   c.acceptedHandler = ^{
     [self.syncdQueue startSyncingEvents];
@@ -275,8 +279,8 @@ double watchdogRAMPeak = 0;
 ///
 - (void)hashBundleBinariesForEvent:(SNTStoredEvent *)event
                              reply:(SNTBundleHashBlock)reply {
-  SNTXPCConnection *bs =
-      [[SNTXPCConnection alloc] initClientWithServiceName:[SNTXPCBundleServiceInterface serviceId]];
+  MOLXPCConnection *bs =
+      [[MOLXPCConnection alloc] initClientWithServiceName:[SNTXPCBundleServiceInterface serviceId]];
   bs.remoteInterface = [SNTXPCBundleServiceInterface bundleServiceInterface];
   [bs resume];
   [[bs remoteObjectProxy] hashBundleBinariesForEvent:event reply:reply];

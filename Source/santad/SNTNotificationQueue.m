@@ -14,9 +14,10 @@
 
 #import "SNTNotificationQueue.h"
 
+#import <MOLXPCConnection/MOLXPCConnection.h>
+
 #import "SNTLogging.h"
 #import "SNTStoredEvent.h"
-#import "SNTXPCConnection.h"
 #import "SNTXPCNotifierInterface.h"
 
 static const int kMaximumNotifications = 10;
@@ -69,7 +70,7 @@ static const int kMaximumNotifications = 10;
   }
 }
 
-- (void)setNotifierConnection:(SNTXPCConnection *)notifierConnection {
+- (void)setNotifierConnection:(MOLXPCConnection *)notifierConnection {
   _notifierConnection = notifierConnection;
   [self flushQueue];
 }

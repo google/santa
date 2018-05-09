@@ -18,10 +18,11 @@
 #import "SNTCommand.h"
 #import "SNTCommandController.h"
 
+#import <MOLXPCConnection/MOLXPCConnection.h>
+
 #import "SNTCommonEnums.h"
 #import "SNTFileInfo.h"
 #import "SNTKernelCommon.h"
-#import "SNTXPCConnection.h"
 
 @interface SNTCommandVersion : SNTCommand<SNTCommandProtocol>
 @end

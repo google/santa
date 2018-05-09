@@ -9,6 +9,8 @@ PODS:
     - MOLCertificate (~> 1.8)
   - MOLFCMClient (1.7):
     - MOLAuthenticatingURLSession (~> 2.4)
+  - MOLXPCConnection (1.1):
+    - MOLCodesignChecker (~> 1.9)
   - OCMock (3.4.1)
 
 DEPENDENCIES:
@@ -17,6 +19,7 @@ DEPENDENCIES:
   - MOLCertificate
   - MOLCodesignChecker
   - MOLFCMClient (~> 1.3)
+  - MOLXPCConnection
   - OCMock
 
 SPEC CHECKSUMS:
@@ -25,8 +28,9 @@ SPEC CHECKSUMS:
   MOLCertificate: c999513316d511c69f290fbf313dfe8dca4ad592
   MOLCodesignChecker: b0d5db9d2f9bd94e0fd093891a5d40e5ad77cbc0
   MOLFCMClient: ee45348909351f232e2759c580329072ae7e02d4
+  MOLXPCConnection: de9d5535928f59766a768384e411077b83ec2f9c
   OCMock: 2cd0716969bab32a2283ff3a46fd26a8c8b4c5e3
 
-PODFILE CHECKSUM: acd378b3727c923d912e09812da344f7375c14fe
+PODFILE CHECKSUM: ddca043a7ace9ec600c108621c56d13a50d17236
 
 COCOAPODS: 1.4.0

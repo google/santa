@@ -17,11 +17,11 @@
 #import "SNTCommonEnums.h"
 
 @class SNTStoredEvent;
-@class SNTXPCConnection;
+@class MOLXPCConnection;
 
 @interface SNTSyncdQueue : NSObject
 
-@property(nonatomic) SNTXPCConnection *syncdConnection;
+@property(nonatomic) MOLXPCConnection *syncdConnection;
 @property(copy) void (^invalidationHandler)();
 @property(copy) void (^acceptedHandler)();
 

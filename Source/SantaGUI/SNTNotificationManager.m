@@ -14,12 +14,13 @@
 
 #import "SNTNotificationManager.h"
 
+#import <MOLXPCConnection/MOLXPCConnection.h>
+
 #import "SNTBlockMessage.h"
 #import "SNTConfigurator.h"
 #import "SNTLogging.h"
 #import "SNTStoredEvent.h"
 #import "SNTStrengthify.h"
-#import "SNTXPCConnection.h"
 #import "SNTXPCControlInterface.h"
 
 @interface SNTNotificationManager ()
@@ -31,7 +32,7 @@
 @property(readonly) NSMutableArray *pendingNotifications;
 
 ///  The connection to the bundle service
-@property SNTXPCConnection *bundleServiceConnection;
+@property MOLXPCConnection *bundleServiceConnection;
 
 ///  A semaphore to block bundle hashing until a connection is established
 @property dispatch_semaphore_t bundleServiceSema;
@@ -192,7 +193,7 @@ static NSString * const silencedNotificationsKey = @"SilencedNotifications";
 }
 
 - (void)setBundleServiceListener:(NSXPCListenerEndpoint *)listener {
-  SNTXPCConnection *c = [[SNTXPCConnection alloc] initClientWithListener:listener];
+  MOLXPCConnection *c = [[MOLXPCConnection alloc] initClientWithListener:listener];
   c.remoteInterface = [SNTXPCBundleServiceInterface bundleServiceInterface];
   [c resume];
   self.bundleServiceConnection = c;
@@ -203,6 +204,8 @@ static NSString * const silencedNotificationsKey = @"SilencedNotifications";
     if (self.currentWindowController) {
       [self updateBlockNotification:self.currentWindowController.event withBundleHash:nil];
     }
+    self.bundleServiceConnection.invalidationHandler = nil;
+    [self.bundleServiceConnection invalidate];
   };
 
   dispatch_semaphore_signal(self.bundleServiceSema);
@@ -245,9 +248,10 @@ static NSString * const silencedNotificationsKey = @"SilencedNotifications";
     }
 
     // Send the results to santad. It will decide if they need to be synced.
-    SNTXPCConnection *daemonConn = [SNTXPCControlInterface configuredConnection];
+    MOLXPCConnection *daemonConn = [SNTXPCControlInterface configuredConnection];
     [daemonConn resume];
     [[daemonConn remoteObjectProxy] syncBundleEvent:event relatedEvents:events];
+    [daemonConn invalidate];
 
     // Update the UI with the bundle hash. Also make the openEventButton available.
     [self updateBlockNotification:event withBundleHash:bh];

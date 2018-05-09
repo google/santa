@@ -16,7 +16,7 @@
 
 #import "SNTCommand.h"
 
-@class SNTXPCConnection;
+@class MOLXPCConnection;
 
 ///
 ///  Responsible for maintaining the list of available commands by name, printing their help text

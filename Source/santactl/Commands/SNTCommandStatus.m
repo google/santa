@@ -17,8 +17,9 @@
 #import "SNTCommand.h"
 #import "SNTCommandController.h"
 
+#import <MOLXPCConnection/MOLXPCConnection.h>
+
 #import "SNTConfigurator.h"
-#import "SNTXPCConnection.h"
 #import "SNTXPCControlInterface.h"
 
 @interface SNTCommandStatus : SNTCommand<SNTCommandProtocol>

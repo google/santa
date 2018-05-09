@@ -17,13 +17,13 @@
 #include "SNTLogging.h"
 
 #import <MOLCertificate/MOLCertificate.h>
+#import <MOLXPCConnection/MOLXPCConnection.h>
 
 #import "NSData+Zlib.h"
 #import "SNTCommandSyncConstants.h"
 #import "SNTCommandSyncState.h"
 #import "SNTFileInfo.h"
 #import "SNTStoredEvent.h"
-#import "SNTXPCConnection.h"
 #import "SNTXPCControlInterface.h"
 
 @implementation SNTCommandSyncEventUpload
