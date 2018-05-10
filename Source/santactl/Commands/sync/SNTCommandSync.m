@@ -49,7 +49,7 @@ REGISTER_COMMAND_NAME(@"sync")
 }
 
 + (NSString *)longHelpText {
-  return (@"If Santa is configured to synchronize with a a server, "
+  return (@"If Santa is configured to synchronize with a server, "
           @"this is the command used for syncing.\n\n"
           @"Options:\n"
           @"  --clean: Perform a clean sync, erasing all existing rules and requesting a"
