@@ -28,71 +28,61 @@
 }
 
 - (void)testSetAndGet {
-  auto sut = new SantaCache<uint64_t>();
+  auto sut = SantaCache<uint64_t, uint64_t>();
 
-  sut->set(72057611258548992llu, 10000192);
-  XCTAssertEqual(sut->get(72057611258548992llu), 10000192);
-
-  delete sut;
+  sut.set(72057611258548992llu, 10000192);
+  XCTAssertEqual(sut.get(72057611258548992llu), 10000192);
 }
 
 - (void)testCacheRemove {
-  auto sut = new SantaCache<uint64_t>();
+  auto sut = SantaCache<uint64_t, uint64_t>();
 
-  sut->set(0xDEADBEEF, 42);
-  sut->remove(0xDEADBEEF);
+  sut.set(0xDEADBEEF, 42);
+  sut.remove(0xDEADBEEF);
 
-  XCTAssertEqual(sut->get(0xDEADBEEF), 0);
-
-  delete sut;
+  XCTAssertEqual(sut.get(0xDEADBEEF), 0);
 }
 
 - (void)testBucketGrowCopy {
-  auto sut = new SantaCache<uint64_t>();
+  auto sut = SantaCache<uint64_t, uint64_t>();
 
-  sut->set(386, 42);
-  sut->set(2434, 42);
+  sut.set(386, 42);
+  sut.set(2434, 42);
 
-  XCTAssertEqual(sut->get(386), 42);
-  XCTAssertEqual(sut->get(2434), 42);
-
-  delete sut;
+  XCTAssertEqual(sut.get(386), 42);
+  XCTAssertEqual(sut.get(2434), 42);
 }
 
 - (void)testBucketShrinkCopy {
-  auto sut = new SantaCache<uint64_t>(100, 1);
+  auto sut = SantaCache<uint64_t, uint64_t>(100, 1);
 
-  sut->set(386, 42);
-  sut->set(2434, 42);
-  sut->set(4482, 42);
+  sut.set(386, 42);
+  sut.set(2434, 42);
+  sut.set(4482, 42);
 
-  sut->remove(2434);
+  sut.remove(2434);
 
-  XCTAssertEqual(sut->get(386), 42);
-  XCTAssertEqual(sut->get(2434), 0);
-  XCTAssertEqual(sut->get(4482), 42);
-
-  delete sut;
+  XCTAssertEqual(sut.get(386), 42);
+  XCTAssertEqual(sut.get(2434), 0);
+  XCTAssertEqual(sut.get(4482), 42);
 }
 
 - (void)testCacheResetAtLimit {
-  auto sut = new SantaCache<uint64_t>(5);
+  auto sut = SantaCache<uint64_t, uint64_t>(5);
   
-  sut->set(1, 42);
-  sut->set(2, 42);
-  sut->set(3, 42);
-  sut->set(4, 42);
-  sut->set(5, 42);
-  XCTAssertEqual(sut->get(3), 42);
-  sut->set(6, 42);
-  XCTAssertEqual(sut->get(3), 0);
-  XCTAssertEqual(sut->get(6), 42);
-
-  delete sut;
+  sut.set(1, 42);
+  sut.set(2, 42);
+  sut.set(3, 42);
+  sut.set(4, 42);
+  sut.set(5, 42);
+  XCTAssertEqual(sut.get(3), 42);
+  sut.set(6, 42);
+  XCTAssertEqual(sut.get(3), 0);
+  XCTAssertEqual(sut.get(6), 42);
 }
 
 - (void)testThreading {
-  auto sut = new SantaCache<uint64_t>();
+  auto sut = new SantaCache<uint64_t, uint64_t>();
 
   for (int x = 0; x < 200; ++x) {
     dispatch_group_t group = dispatch_group_create();
@@ -120,57 +110,105 @@
 }
 
 - (void)testCount {
-  auto sut = new SantaCache<uint64_t>();
+  auto sut = SantaCache<uint64_t, int>();
 
-  XCTAssertEqual(sut->count(), 0);
+  XCTAssertEqual(sut.count(), 0);
 
-  sut->set(4012, 42);
-  sut->set(42, 0);  
-  sut->set(0x8BADF00D, 40010);
+  sut.set(4012, 42);
+  sut.set(42, 0);
+  sut.set(0x8BADF00D, 40010);
 
-  XCTAssertEqual(sut->count(), 2);
+  XCTAssertEqual(sut.count(), 2);
+}
 
-  delete sut;
+- (void)testDoubles {
+  auto sut = SantaCache<double, double>();
+
+  sut.set(3.14, 2.718281);
+  sut.set(1.41429, 2.5029);
+  sut.set(4.6692, 1.2020569);
+  sut.set(1.61803398, 0.57721);
+
+  XCTAssertEqual(sut.count(), 4);
+  XCTAssertEqual(sut.get(3.14), 2.718281);
+  XCTAssertEqual(sut.get(1.41429), 2.5029);
+  XCTAssertEqual(sut.get(4.6692), 1.2020569);
+  XCTAssertEqual(sut.get(1.61803398), 0.57721);
+
+  XCTAssertEqual(sut.get(5.5555), 0);
+  XCTAssertEqual(sut.get(3.1459124), 0);
+}
+
+template<> uint64_t SantaCacheHasher<std::string>(std::string const& s) {
+  return std::hash<std::string>{}(s);
 }
 
 - (void)testStrings {
-  auto sut = new SantaCache<std::string>();
+  auto sut = SantaCache<std::string, std::string>();
 
-  sut->set(1, "deadbeef");
-  sut->set(2, "feedface");
+  std::string s1 = "foo";
+  std::string s2 = "bar";
 
-  XCTAssertEqual(sut->count(), 2);
-  XCTAssertEqual(sut->get(1), "deadbeef");
-  XCTAssertEqual(sut->get(2), "feedface");
+  sut.set(s1, "deadbeef");
+  sut.set(s2, "feedface");
 
-  sut->remove(2);
+  XCTAssertEqual(sut.count(), 2);
+  XCTAssertEqual(sut.get(s1), "deadbeef");
+  XCTAssertEqual(sut.get(s2), "feedface");
 
-  XCTAssertTrue(sut->get(2).empty());
+  sut.remove(s2);
 
-  delete sut;
+  XCTAssertTrue(sut.get(s2).empty());
 }
 
 - (void)testCompareAndSwap {
-  auto sut = new SantaCache<uint64_t>(100, 2);
+  auto sut = SantaCache<uint64_t, uint64_t>(100, 2);
 
-  sut->set(1, 42);
-  sut->set(1, 666, 1);
-  sut->set(1, 666, 0);
-  XCTAssertEqual(sut->get(1), 42);
+  sut.set(1, 42);
+  sut.set(1, 666, 1);
+  sut.set(1, 666, 0);
+  XCTAssertEqual(sut.get(1), 42);
 
-  sut->set(1, 0);
-  XCTAssertEqual(sut->get(1), 0);
+  sut.set(1, 0);
+  XCTAssertEqual(sut.get(1), 0);
 
-  sut->set(1, 42, 1);
-  XCTAssertEqual(sut->get(1), 0);
+  sut.set(1, 42, 1);
+  XCTAssertEqual(sut.get(1), 0);
 
-  sut->set(1, 42, 0);
-  XCTAssertEqual(sut->get(1), 42);
+  sut.set(1, 42, 0);
+  XCTAssertEqual(sut.get(1), 42);
 
-  sut->set(1, 0, 666);
-  XCTAssertEqual(sut->get(1), 42);
-  sut->set(1, 0, 42);
-  XCTAssertEqual(sut->get(1), 0);
+  sut.set(1, 0, 666);
+  XCTAssertEqual(sut.get(1), 42);
+  sut.set(1, 0, 42);
+  XCTAssertEqual(sut.get(1), 0);
+}
+
+struct S {
+  uint64_t first_val;
+  uint64_t second_val;
+
+  bool operator==(const S& rhs) {
+    return first_val == rhs.first_val && second_val == rhs.second_val;
+  }
+};
+template<> uint64_t SantaCacheHasher<S>(S const& s) {
+  return SantaCacheHasher<uint64_t>(s.first_val) ^ (SantaCacheHasher<uint64_t>(s.second_val) << 1);
+}
+
+- (void)testStructKeys {
+  auto sut =  SantaCache<S, uint64_t>(10, 2);
+
+  S s1 = {1024, 2048};
+  S s2 = {4096, 8192};
+  S s3 = {16384, 32768};
+  sut.set(s1, 10);
+  sut.set(s2, 20);
+  sut.set(s3, 30);
+
+  XCTAssertEqual(sut.get(s1), 10);
+  XCTAssertEqual(sut.get(s2), 20);
+  XCTAssertEqual(sut.get(s3), 30);
 }
 
 @end

@@ -266,9 +266,9 @@ class SantaDecisionManager : public OSObject {
     return (uint64_t)((sec * 1000000) + usec);
   }
 
-  SantaCache<uint64_t> *root_decision_cache_;
-  SantaCache<uint64_t> *non_root_decision_cache_;
-  SantaCache<uint64_t> *vnode_pid_map_;
+  SantaCache<uint64_t, uint64_t> *root_decision_cache_;
+  SantaCache<uint64_t, uint64_t> *non_root_decision_cache_;
+  SantaCache<uint64_t, uint64_t> *vnode_pid_map_;
 
   /**
     Return the correct cache for a given identifier.
@@ -276,7 +276,7 @@ class SantaDecisionManager : public OSObject {
     @param identifier The identifier
     @return SantaCache* The cache to use
   */
-  SantaCache<uint64_t>* CacheForIdentifier(const uint64_t identifier);
+  SantaCache<uint64_t, uint64_t>* CacheForIdentifier(const uint64_t identifier);
 
   // This is the file system ID of the root filesystem,
   // used to determine which cache to use for requests
