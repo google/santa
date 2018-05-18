@@ -76,6 +76,8 @@
 }
 
 - (NSDictionary *)dictionaryForEvent:(SNTStoredEvent *)event {
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wobjc-literal-conversion"
 #define ADDKEY(dict, key, value) if (value) dict[key] = value
   NSMutableDictionary *newEvent = [NSMutableDictionary dictionary];
 
@@ -144,6 +146,7 @@
 
   return newEvent;
 #undef ADDKEY
+#pragma clang diagnostic pop
 }
 
 @end

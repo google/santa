@@ -33,7 +33,7 @@
   [self performRequest:[self requestWithDictionary:nil]];
 
   dispatch_group_t group = dispatch_group_create();
-  void (^replyBlock)() = ^{
+  void (^replyBlock)(void) = ^{
     dispatch_group_leave(group);
   };
 

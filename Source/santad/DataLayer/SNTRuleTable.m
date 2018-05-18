@@ -133,7 +133,8 @@
 
 #pragma mark Adding
 
-- (BOOL)addRules:(NSArray *)rules cleanSlate:(BOOL)cleanSlate error:(NSError **)error {
+- (BOOL)addRules:(NSArray *)rules cleanSlate:(BOOL)cleanSlate
+           error:(NSError * __autoreleasing *)error {
   if (!rules || rules.count < 1) {
     [self fillError:error code:SNTRuleTableErrorEmptyRuleArray message:nil];
     return NO;

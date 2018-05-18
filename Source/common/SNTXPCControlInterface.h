@@ -72,19 +72,19 @@
 ///
 - (void)watchdogInfo:(void (^)(uint64_t, uint64_t, double, double))reply;
 - (void)clientMode:(void (^)(SNTClientMode))reply;
-- (void)setClientMode:(SNTClientMode)mode reply:(void (^)())reply;
+- (void)setClientMode:(SNTClientMode)mode reply:(void (^)(void))reply;
 - (void)xsrfToken:(void (^)(NSString *))reply;
-- (void)setXsrfToken:(NSString *)token reply:(void (^)())reply;
+- (void)setXsrfToken:(NSString *)token reply:(void (^)(void))reply;
 - (void)fullSyncLastSuccess:(void (^)(NSDate *))reply;
-- (void)setFullSyncLastSuccess:(NSDate *)date reply:(void (^)())reply;
+- (void)setFullSyncLastSuccess:(NSDate *)date reply:(void (^)(void))reply;
 - (void)ruleSyncLastSuccess:(void (^)(NSDate *))reply;
-- (void)setRuleSyncLastSuccess:(NSDate *)date reply:(void (^)())reply;
+- (void)setRuleSyncLastSuccess:(NSDate *)date reply:(void (^)(void))reply;
 - (void)syncCleanRequired:(void (^)(BOOL))reply;
-- (void)setSyncCleanRequired:(BOOL)cleanReqd reply:(void (^)())reply;
-- (void)setWhitelistPathRegex:(NSString *)pattern reply:(void (^)())reply;
-- (void)setBlacklistPathRegex:(NSString *)pattern reply:(void (^)())reply;
+- (void)setSyncCleanRequired:(BOOL)cleanReqd reply:(void (^)(void))reply;
+- (void)setWhitelistPathRegex:(NSString *)pattern reply:(void (^)(void))reply;
+- (void)setBlacklistPathRegex:(NSString *)pattern reply:(void (^)(void))reply;
 - (void)bundlesEnabled:(void (^)(BOOL))reply;
-- (void)setBundlesEnabled:(BOOL)bundlesEnabled reply:(void (^)())reply;
+- (void)setBundlesEnabled:(BOOL)bundlesEnabled reply:(void (^)(void))reply;
 
 ///
 ///  GUI Ops
@@ -97,7 +97,7 @@
 ///
 - (void)setSyncdListener:(NSXPCListenerEndpoint *)listener;
 - (void)pushNotifications:(void (^)(BOOL))reply;
-- (void)postRuleSyncNotificationWithCustomMessage:(NSString *)message reply:(void (^)())reply;
+- (void)postRuleSyncNotificationWithCustomMessage:(NSString *)message reply:(void (^)(void))reply;
 
 ///
 ///  Bundle Ops
