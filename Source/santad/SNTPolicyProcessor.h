@@ -12,12 +12,12 @@
 ///    See the License for the specific language governing permissions and
 ///    limitations under the License.
 
-@import Foundation;
+#import <Foundation/Foundation.h>
 
 #import "SNTCommonEnums.h"
 #import "SNTKernelCommon.h"
 
-#import <MOLCertificate.h>
+#import <MOLCertificate/MOLCertificate.h>
 
 @class SNTCachedDecision;
 @class SNTFileInfo;

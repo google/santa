@@ -12,7 +12,7 @@
 ///    See the License for the specific language governing permissions and
 ///    limitations under the License.
 
-@import Foundation;
+#import <Foundation/Foundation.h>
 
 #import "SNTCommand.h"
 #import "SNTCommandController.h"
@@ -20,12 +20,12 @@
 #import <objc/runtime.h>
 #import <MOLCertificate/MOLCertificate.h>
 #import <MOLCodesignChecker/MOLCodesignChecker.h>
+#import <MOLXPCConnection/MOLXPCConnection.h>
 
 #import "SNTCachedDecision.h"
 #import "SNTFileInfo.h"
 #import "SNTLogging.h"
 #import "SNTRule.h"
-#import "SNTXPCConnection.h"
 #import "SNTXPCControlInterface.h"
 
 // file info keys
@@ -42,6 +42,7 @@ static NSString *const kPageZero = @"Page Zero";
 static NSString *const kCodeSigned = @"Code-signed";
 static NSString *const kRule = @"Rule";
 static NSString *const kSigningChain = @"Signing Chain";
+static NSString *const kUniversalSigningChain = @"Universal Signing Chain";
 
 // signing chain keys
 static NSString *const kCommonName = @"Common Name";
@@ -115,6 +116,7 @@ typedef id (^SNTAttributeBlock)(SNTCommandFileInfo *, SNTFileInfo *);
 @property(readonly, copy, nonatomic) SNTAttributeBlock codeSigned;
 @property(readonly, copy, nonatomic) SNTAttributeBlock rule;
 @property(readonly, copy, nonatomic) SNTAttributeBlock signingChain;
+@property(readonly, copy, nonatomic) SNTAttributeBlock universalSigningChain;
 
 // Mapping between property string keys and SNTAttributeBlocks
 @property(nonatomic) NSDictionary<NSString *, SNTAttributeBlock> *propertyMap;
@@ -182,7 +184,7 @@ REGISTER_COMMAND_NAME(@"fileinfo")
 + (NSArray<NSString *> *)fileInfoKeys {
   return @[ kPath, kSHA256, kSHA1, kBundleName, kBundleVersion, kBundleVersionStr,
             kDownloadReferrerURL, kDownloadURL, kDownloadTimestamp, kDownloadAgent,
-            kType, kPageZero, kCodeSigned, kRule, kSigningChain ];
+            kType, kPageZero, kCodeSigned, kRule, kSigningChain, kUniversalSigningChain ];
 }
 
 + (NSArray<NSString *> *)signingChainKeys {
@@ -190,7 +192,7 @@ REGISTER_COMMAND_NAME(@"fileinfo")
             kValidUntil ];
 }
 
-- (instancetype)initWithDaemonConnection:(SNTXPCConnection *)daemonConn {
+- (instancetype)initWithDaemonConnection:(MOLXPCConnection *)daemonConn {
   self = [super initWithDaemonConnection:daemonConn];
   if (self) {
     _dateFormatter = [[NSDateFormatter alloc] init];
@@ -210,7 +212,8 @@ REGISTER_COMMAND_NAME(@"fileinfo")
                       kPageZero : self.pageZero,
                       kCodeSigned : self.codeSigned,
                       kRule : self.rule,
-                      kSigningChain : self.signingChain };
+                      kSigningChain : self.signingChain,
+                      kUniversalSigningChain : self.universalSigningChain };
 
     _printQueue = dispatch_queue_create("com.google.santactl.print_queue", DISPATCH_QUEUE_SERIAL);
   }
@@ -325,6 +328,10 @@ REGISTER_COMMAND_NAME(@"fileinfo")
           return @"Yes, but failed requirement validation";
         case errSecCSInfoPlistFailed:
           return @"Yes, but can't validate as Info.plist is missing";
+        case errSecCSSignatureInvalid:
+          if ([error.domain isEqualToString:@"com.google.molcodesignchecker"]) {
+            return @"Yes, but signing is not consistent for all architectures";
+          }
         default: {
           return [NSString stringWithFormat:@"Yes, but failed to validate (%ld)", error.code];
         }
@@ -345,10 +352,11 @@ REGISTER_COMMAND_NAME(@"fileinfo")
     dispatch_once(&token, ^{ [cmd.daemonConn resume]; });
     __block SNTEventState state;
     dispatch_semaphore_t sema = dispatch_semaphore_create(0);
-    MOLCodesignChecker *csc = [fileInfo codesignCheckerWithError:NULL];
+    NSError *err;
+    MOLCodesignChecker *csc = [fileInfo codesignCheckerWithError:&err];
     [[cmd.daemonConn remoteObjectProxy] decisionForFilePath:fileInfo.path
                                                  fileSHA256:fileInfo.SHA256
-                                          certificateSHA256:csc.leafCertificate.SHA256
+                                          certificateSHA256:err ? nil : csc.leafCertificate.SHA256
                                                       reply:^(SNTEventState s) {
       state = s;
       dispatch_semaphore_signal(sema);
@@ -420,6 +428,46 @@ REGISTER_COMMAND_NAME(@"fileinfo")
       }];
     }
     return certs;
+  };
+}
+
+- (SNTAttributeBlock)universalSigningChain {
+  return ^id (SNTCommandFileInfo *cmd, SNTFileInfo *fileInfo) {
+    MOLCodesignChecker *csc = [fileInfo codesignCheckerWithError:NULL];
+    if (csc.certificates.count) return nil;
+    if (!csc.universalSigningInformation) return nil;
+    NSMutableArray *universal = [NSMutableArray array];
+    for (NSDictionary *arch in csc.universalSigningInformation) {
+      [universal addObject:@{ @"arch" : arch.allKeys.firstObject }];
+      int flags = [arch.allValues.firstObject[(__bridge id)kSecCodeInfoFlags] intValue];
+      if (flags & kSecCodeSignatureAdhoc) {
+        [universal addObject:@{ @"ad-hoc" : @YES }];
+        continue;
+      }
+      NSArray *certs = arch.allValues.firstObject[(__bridge id)kSecCodeInfoCertificates];
+      NSArray *chain = [MOLCertificate certificatesFromArray:certs];
+      if (!chain.count) {
+        [universal addObject:@{ @"unsigned" : @YES }];
+        continue;
+      }
+      for (MOLCertificate *c in chain) {
+        [universal addObject:@{
+          kSHA256 : c.SHA256 ?: @"null",
+          kSHA1 : c.SHA1 ?: @"null",
+          kCommonName : c.commonName ?: @"null",
+          kOrganization : c.orgName ?: @"null",
+          kOrganizationalUnit : c.orgUnit ?: @"null",
+          kValidFrom : [cmd.dateFormatter stringFromDate:c.validFrom] ?: @"null",
+          kValidUntil : [cmd.dateFormatter stringFromDate:c.validUntil] ?: @"null"
+        }];
+      }
+    }
+    NSMutableSet *set = [NSMutableSet set];
+    for (NSDictionary *cert in universal) {
+      if (cert[@"arch"]) continue;
+      [set addObject:cert];
+    }
+    return (set.count > 1) ? universal : nil;
   };
 }
 
@@ -596,8 +644,8 @@ REGISTER_COMMAND_NAME(@"fileinfo")
   } else {
     for (NSString *key in self.outputKeyList) {
       if (![outputDict objectForKey:key]) continue;
-      if ([key isEqual:kSigningChain]) {
-        [output appendString:[self stringForSigningChain:outputDict[key]]];
+      if ([key isEqual:kSigningChain] || [key isEqual:kUniversalSigningChain]) {
+        [output appendString:[self stringForSigningChain:outputDict[key] key:key]];
       } else {
         if (singleKey) {
           [output appendFormat:@"%@\n", outputDict[key]];
@@ -734,14 +782,25 @@ REGISTER_COMMAND_NAME(@"fileinfo")
   return [[NSString alloc] initWithData:jsonData encoding:NSUTF8StringEncoding];
 }
 
-- (NSString *)stringForSigningChain:(NSArray *)signingChain {
+- (NSString *)stringForSigningChain:(NSArray *)signingChain key:(NSString *)key {
   if (!signingChain) return @"";
   NSMutableString *result = [NSMutableString string];
-  [result appendFormat:@"%@:\n", kSigningChain];
+  [result appendFormat:@"%@:\n", key];
   int i = 1;
   NSArray<NSString *> *certKeys = [[self class] signingChainKeys];
   for (NSDictionary *cert in signingChain) {
     if ([cert isEqual:[NSNull null]]) continue;
+    if (cert[@"arch"]) {
+      [result appendFormat:@"  %2@\n", [@"Architecture: " stringByAppendingString:cert[@"arch"]]];
+      i = 1;
+      continue;
+    } else if (cert[@"ad-hoc"]) {
+      [result appendFormat:@"    %2d. %-20@\n", i, @"ad-hoc"];
+      continue;
+    } else if (cert[@"unsigned"]) {
+      [result appendFormat:@"    %2d. %-20@\n", i, @"unsigned"];
+      continue;
+    }
     if (i > 1) [result appendFormat:@"\n"];
     [result appendString:[self stringForCertificate:cert withKeys:certKeys index:i]];
     i += 1;
@@ -755,10 +814,10 @@ REGISTER_COMMAND_NAME(@"fileinfo")
   BOOL firstKey = YES;
   for (NSString *key in keys) {
     if (firstKey) {
-      [result appendFormat:@"    %2d. %-20s: %@\n", index, key.UTF8String, cert[key]];
+      [result appendFormat:@"   %2d. %-20s: %@\n", index, key.UTF8String, cert[key]];
       firstKey = NO;
     } else {
-      [result appendFormat:@"        %-20s: %@\n", key.UTF8String, cert[key]];
+      [result appendFormat:@"       %-20s: %@\n", key.UTF8String, cert[key]];
     }
   }
   return result.copy;

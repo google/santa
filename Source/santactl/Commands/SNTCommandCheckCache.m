@@ -12,13 +12,14 @@
 ///    See the License for the specific language governing permissions and
 ///    limitations under the License.
 
-@import Foundation;
+#import <Foundation/Foundation.h>
 
 #import "SNTCommand.h"
 #import "SNTCommandController.h"
 
+#import <MOLXPCConnection/MOLXPCConnection.h>
+
 #import "SNTLogging.h"
-#import "SNTXPCConnection.h"
 #import "SNTXPCControlInterface.h"
 
 #include <sys/stat.h>

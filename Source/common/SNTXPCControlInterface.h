@@ -12,7 +12,7 @@
 ///    See the License for the specific language governing permissions and
 ///    limitations under the License.
 
-@import Foundation;
+#import <Foundation/Foundation.h>
 
 #import <MOLCertificate/MOLCertificate.h>
 
@@ -23,7 +23,7 @@
 
 @class SNTRule;
 @class SNTStoredEvent;
-@class SNTXPCConnection;
+@class MOLXPCConnection;
 
 ///
 ///  Protocol implemented by santad and utilized by santactl
@@ -78,8 +78,11 @@
 - (void)setClientMode:(SNTClientMode)mode reply:(void (^)())reply;
 - (void)xsrfToken:(void (^)(NSString *))reply;
 - (void)setXsrfToken:(NSString *)token reply:(void (^)())reply;
-- (void)setSyncLastSuccess:(NSDate *)date reply:(void (^)())reply;
+- (void)fullSyncLastSuccess:(void (^)(NSDate *))reply;
+- (void)setFullSyncLastSuccess:(NSDate *)date reply:(void (^)())reply;
+- (void)ruleSyncLastSuccess:(void (^)(NSDate *))reply;
 - (void)setRuleSyncLastSuccess:(NSDate *)date reply:(void (^)())reply;
+- (void)syncCleanRequired:(void (^)(BOOL))reply;
 - (void)setSyncCleanRequired:(BOOL)cleanReqd reply:(void (^)())reply;
 - (void)setWhitelistPathRegex:(NSString *)pattern reply:(void (^)())reply;
 - (void)setBlacklistPathRegex:(NSString *)pattern reply:(void (^)())reply;
@@ -123,9 +126,9 @@
 + (NSXPCInterface *)controlInterface;
 
 ///
-///  Retrieve a pre-configured SNTXPCConnection for communicating with santad.
+///  Retrieve a pre-configured MOLXPCConnection for communicating with santad.
 ///  Connections just needs any handlers set and then can be resumed and used.
 ///
-+ (SNTXPCConnection *)configuredConnection;
++ (MOLXPCConnection *)configuredConnection;
 
 @end

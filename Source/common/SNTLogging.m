@@ -29,12 +29,12 @@ void syslogClientDestructor(void *arg) {
 
 void logMessage(LogLevel level, FILE *destination, NSString *format, ...) {
   static BOOL useSyslog = NO;
-  static const char *binaryName;
+  static NSString *binaryName;
   static dispatch_once_t pred;
   static pthread_key_t syslogKey = 0;
 
   dispatch_once(&pred, ^{
-    binaryName = [[[NSProcessInfo processInfo] processName] UTF8String];
+    binaryName = [[NSProcessInfo processInfo] processName];
 
     // If debug logging is enabled, the process must be restarted.
     if ([[[NSProcessInfo processInfo] arguments] containsObject:@"--debug"]) {
@@ -76,7 +76,7 @@ void logMessage(LogLevel level, FILE *destination, NSString *format, ...) {
         break;
       case LOG_LEVEL_INFO:
         levelName = "I";
-        syslogLevel = ASL_LEVEL_INFO;
+        syslogLevel = ASL_LEVEL_NOTICE; // Maps to ULS Default
         break;
       case LOG_LEVEL_DEBUG:
         levelName = "D";
@@ -84,7 +84,7 @@ void logMessage(LogLevel level, FILE *destination, NSString *format, ...) {
         break;
     }
 
-    asl_log(client, NULL, syslogLevel, "%s %s: %s", levelName, binaryName, [s UTF8String]);
+    asl_log(client, NULL, syslogLevel, "%s %s: %s", levelName, binaryName.UTF8String, s.UTF8String);
   } else {
     [s appendString:@"\n"];
     size_t len = [s lengthOfBytesUsingEncoding:NSUTF8StringEncoding];

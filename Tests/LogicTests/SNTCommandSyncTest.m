@@ -12,9 +12,10 @@
 ///    See the License for the specific language governing permissions and
 ///    limitations under the License.
 
-@import XCTest;
+#import <XCTest/XCTest.h>
 
 #import <OCMock/OCMock.h>
+#import <MOLXPCConnection/MOLXPCConnection.h>
 
 #import "SNTCommandSyncConstants.h"
 #import "SNTCommandSyncEventUpload.h"
@@ -26,7 +27,6 @@
 #import "SNTCommonEnums.h"
 #import "SNTRule.h"
 #import "SNTStoredEvent.h"
-#import "SNTXPCConnection.h"
 #import "SNTXPCControlInterface.h"
 
 // Prevent Zlib compression during testing
@@ -50,7 +50,7 @@
   [super setUp];
 
   self.syncState = [[SNTCommandSyncState alloc] init];
-  self.syncState.daemonConn = OCMClassMock([SNTXPCConnection class]);
+  self.syncState.daemonConn = OCMClassMock([MOLXPCConnection class]);
   self.daemonConnRop = OCMProtocolMock(@protocol(SNTDaemonControlXPC));
   OCMStub([self.syncState.daemonConn remoteObjectProxy]).andReturn(self.daemonConnRop);
 

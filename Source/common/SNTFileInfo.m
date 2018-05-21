@@ -17,13 +17,14 @@
 #import <CommonCrypto/CommonDigest.h>
 #import <MOLCodesignChecker/MOLCodesignChecker.h>
 
+#include <mach-o/arch.h>
 #include <mach-o/loader.h>
 #include <mach-o/swap.h>
 #include <pwd.h>
 #include <sys/stat.h>
 #include <sys/xattr.h>
 
-#import <FMDB/FMDB.h>
+#import <fmdb/FMDB.h>
 
 // Simple class to hold the data of a mach_header and the offset within the file
 // in which that header was found.
@@ -287,7 +288,8 @@ extern NSString *const NSURLQuarantinePropertiesKey WEAK_IMPORT_ATTRIBUTE;
 - (BOOL)isMissingPageZero {
   // This method only checks i386 arch because the kernel enforces this for other archs
   // See bsd/kern/mach_loader.c, search for enforce_hard_pagezero.
-  MachHeaderWithOffset *x86Header = self.machHeaders[[self nameForCPUType:CPU_TYPE_X86]];
+  MachHeaderWithOffset *x86Header = self.machHeaders[[self nameForCPUType:CPU_TYPE_X86
+                                                               cpuSubType:CPU_SUBTYPE_I386_ALL]];
   if (!x86Header) return NO;
 
   struct mach_header *mh = (struct mach_header *)[x86Header.data bytes];
@@ -316,6 +318,26 @@ extern NSString *const NSURLQuarantinePropertiesKey WEAK_IMPORT_ATTRIBUTE;
 #pragma mark Bundle Information
 
 ///
+///  Directories with a "Contents/Info.plist" entry can be mistaken as a bundle. To be considered an
+///  ancestor, the bundle must have a valid extension.
+///
+- (NSSet *)allowedAncestorExtensions {
+  static NSSet *set;
+  static dispatch_once_t onceToken;
+  dispatch_once(&onceToken, ^{
+    set = [NSSet setWithArray:@[
+      @"app",
+      @"bundle",
+      @"framework",
+      @"kext",
+      @"xctest",
+      @"xpc",
+    ]];
+  });
+  return set;
+}
+
+///
 ///  Try and determine the bundle that the represented executable is contained within, if any.
 ///
 ///  Rationale: An NSBundle has a method executablePath for discovering the main binary within a
@@ -325,18 +347,21 @@ extern NSString *const NSURLQuarantinePropertiesKey WEAK_IMPORT_ATTRIBUTE;
 ///
 ///  This method walks up the path until a bundle is found, if any.
 ///
-///  @param ancestor YES this will return the highest NSBundle found in the tree. No will return the
-///                  the lowest.
+///  @param ancestor YES this will return the highest NSBundle, with a valid extension, found in the
+///                  tree. NO will return the the lowest NSBundle, without validating the extension.
 ///
--(NSBundle *)findBundleWithAncestor:(BOOL)ancestor {
+- (NSBundle *)findBundleWithAncestor:(BOOL)ancestor {
   NSBundle *bundle;
   NSMutableArray *pathComponents = [[self.path pathComponents] mutableCopy];
 
   // Ignore the root path "/", for some reason this is considered a bundle.
   while (pathComponents.count > 1) {
     NSBundle *bndl = [NSBundle bundleWithPath:[NSString pathWithComponents:pathComponents]];
-    if (bndl && [bndl objectForInfoDictionaryKey:@"CFBundleIdentifier"]) {
-      bundle = bndl;
+    if ([bndl objectForInfoDictionaryKey:@"CFBundleIdentifier"]) {
+      if (!ancestor ||
+          [[self allowedAncestorExtensions] containsObject:bndl.bundlePath.pathExtension]) {
+        bundle = bndl;
+      }
       if (!ancestor) break;
     }
     [pathComponents removeLastObject];
@@ -443,7 +468,7 @@ extern NSString *const NSURLQuarantinePropertiesKey WEAK_IMPORT_ATTRIBUTE;
   if (machHeader) {
     struct mach_header *mh = (struct mach_header *)[machHeader bytes];
     MachHeaderWithOffset *mhwo = [[MachHeaderWithOffset alloc] initWithData:machHeader offset:0];
-    machHeaders[[self nameForCPUType:mh->cputype]] = mhwo;
+    machHeaders[[self nameForCPUType:mh->cputype cpuSubType:mh->cpusubtype]] = mhwo;
   } else {
     NSRange range = NSMakeRange(0, sizeof(struct fat_header));
     NSData *fatHeader = [self safeSubdataWithRange:range];
@@ -459,11 +484,12 @@ extern NSString *const NSURLQuarantinePropertiesKey WEAK_IMPORT_ATTRIBUTE;
           int offset = OSSwapBigToHostInt32(fat_arch[i].offset);
           int size = OSSwapBigToHostInt32(fat_arch[i].size);
           int cputype = OSSwapBigToHostInt(fat_arch[i].cputype);
+          int cpusubtype = OSSwapBigToHostInt(fat_arch[i].cpusubtype);
 
           range = NSMakeRange(offset, size);
           NSData *machHeader = [self parseSingleMachHeader:[self safeSubdataWithRange:range]];
           if (machHeader) {
-            NSString *key = [self nameForCPUType:cputype];
+            NSString *key = [self nameForCPUType:cputype cpuSubType:cpusubtype];
             MachHeaderWithOffset *mhwo = [[MachHeaderWithOffset alloc] initWithData:machHeader
                                                                              offset:offset];
             machHeaders[key] = mhwo;
@@ -647,20 +673,15 @@ extern NSString *const NSURLQuarantinePropertiesKey WEAK_IMPORT_ATTRIBUTE;
 ///
 ///  Return a human-readable string for a cpu_type_t.
 ///
-- (NSString *)nameForCPUType:(cpu_type_t)cpuType {
-  switch (cpuType) {
-    case CPU_TYPE_X86:
-      return @"i386";
-    case CPU_TYPE_X86_64:
-      return @"x86-64";
-    case CPU_TYPE_POWERPC:
-      return @"ppc";
-    case CPU_TYPE_POWERPC64:
-      return @"ppc64";
-    default:
-      return @"unknown";
+- (NSString *)nameForCPUType:(cpu_type_t)cpuType cpuSubType:(cpu_subtype_t)cpuSubType {
+  const NXArchInfo *archInfo = NXGetArchInfoFromCpuType(cpuType, cpuSubType);
+  NSString *arch;
+  if (archInfo && archInfo->name) {
+    arch = @(archInfo->name);
+  } else {
+    arch = [NSString stringWithFormat:@"%i:%i", cpuType, cpuSubType];
   }
-  return nil;
+  return arch;
 }
 
 ///

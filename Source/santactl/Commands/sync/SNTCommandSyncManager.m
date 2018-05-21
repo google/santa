@@ -14,10 +14,11 @@
 
 #import "SNTCommandSyncManager.h"
 
-@import SystemConfiguration;
+#import <SystemConfiguration/SystemConfiguration.h>
 
-#import <MOLAuthenticatingURLSession.h>
+#import <MOLAuthenticatingURLSession/MOLAuthenticatingURLSession.h>
 #import <MOLFCMClient/MOLFCMClient.h>
+#import <MOLXPCConnection/MOLXPCConnection.h>
 
 #import "SNTConfigurator.h"
 #import "SNTCommandSyncConstants.h"
@@ -31,7 +32,6 @@
 #import "SNTLogging.h"
 #import "SNTStoredEvent.h"
 #import "SNTStrengthify.h"
-#import "SNTXPCConnection.h"
 #import "SNTXPCControlInterface.h"
 #import "SNTXPCSyncdInterface.h"
 
@@ -63,7 +63,7 @@ static NSString *const kFCMTargetHostIDKey = @"target_host_id";
 
 @property MOLFCMClient *FCMClient;
 
-@property(nonatomic) SNTXPCConnection *daemonConn;
+@property(nonatomic) MOLXPCConnection *daemonConn;
 
 @property BOOL targetedRuleSync;
 
@@ -89,7 +89,7 @@ static void reachabilityHandler(
 
 #pragma mark init
 
-- (instancetype)initWithDaemonConnection:(SNTXPCConnection *)daemonConn isDaemon:(BOOL)daemon {
+- (instancetype)initWithDaemonConnection:(MOLXPCConnection *)daemonConn isDaemon:(BOOL)daemon {
   self = [super init];
   if (self) {
     _daemonConn = daemonConn;
@@ -178,7 +178,7 @@ static void reachabilityHandler(
 }
 
 - (void)isFCMListening:(void (^)(BOOL))reply {
-  reply((self.FCMClient.FCMToken != nil));
+  reply(self.FCMClient.isConnected);
 }
 
 #pragma mark push notification methods
@@ -205,16 +205,17 @@ static void reachabilityHandler(
       [self processFCMMessage:message withMachineID:machineID];
   }];
 
-  self.FCMClient.connectionErrorHandler = ^(NSError *error) {
+  self.FCMClient.connectionErrorHandler = ^(NSHTTPURLResponse *response, NSError *error) {
     STRONGIFY(self);
-    LOGE(@"FCM connection error: %@", error);
+    if (response) LOGE(@"FCM fatal response: %@", response);
+    if (error) LOGE(@"FCM fatal error: %@", error);
     [self.FCMClient disconnect];
     self.FCMClient = nil;
     [self rescheduleTimerQueue:self.fullSyncTimer secondsFromNow:kDefaultFullSyncInterval];
   };
 
   self.FCMClient.loggingBlock = ^(NSString *log) {
-    LOGD(@"%@", log);
+    LOGD(@"FCMClient: %@", log);
   };
 
   [self.FCMClient connect];

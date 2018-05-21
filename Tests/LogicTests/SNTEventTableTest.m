@@ -12,9 +12,10 @@
 ///    See the License for the specific language governing permissions and
 ///    limitations under the License.
 
-@import XCTest;
+#import <XCTest/XCTest.h>
 
-#import "MOLCodesignChecker.h"
+#import <MOLCodesignChecker/MOLCodesignChecker.h>
+
 #import "SNTEventTable.h"
 #import "SNTFileInfo.h"
 #import "SNTStoredEvent.h"

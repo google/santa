@@ -1,4 +1,4 @@
-/// Copyright 2015 Google Inc. All rights reserved.
+/// Copyright 2018 Google Inc. All rights reserved.
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -16,34 +16,19 @@
 
 #include <dlfcn.h>
 #include <grp.h>
-#include <libproc.h>
 #include <pwd.h>
 #include <sys/sysctl.h>
 
-#import "MOLCertificate.h"
 #import "SNTCachedDecision.h"
-#import "SNTCommonEnums.h"
-#import "SNTConfigurator.h"
 #import "SNTDatabaseController.h"
-#import "SNTFileInfo.h"
-#import "SNTKernelCommon.h"
-#import "SNTLogging.h"
 #import "SNTRule.h"
 #import "SNTRuleTable.h"
-#import "SNTStoredEvent.h"
 
 @interface SNTEventLog ()
 @property NSMutableDictionary<NSNumber *, SNTCachedDecision *> *detailStore;
 @property dispatch_queue_t detailStoreQueue;
-
-// Caches for uid->username and gid->groupname lookups.
-@property NSCache<NSNumber *, NSString *> *userNameMap;
-@property NSCache<NSNumber *, NSString *> *groupNameMap;
-
 // Cache for sha256 -> date of last timestamp reset.
 @property NSCache<NSString *, NSDate *> *timestampResetMap;
-
-@property NSDateFormatter *dateFormatter;
 @end
 
 @implementation SNTEventLog
@@ -69,191 +54,52 @@
   return self;
 }
 
-- (void)saveDecisionDetails:(SNTCachedDecision *)cd {
-  dispatch_sync(_detailStoreQueue, ^{
-    _detailStore[@(cd.vnodeId)] = cd;
-  });
+- (void)logDiskAppeared:(NSDictionary *)diskProperties {
+  [self doesNotRecognizeSelector:_cmd];
 }
 
-- (void)forgetDecisionDetailsForVnodeId:(uint64_t)vnodeId {
-  dispatch_sync(_detailStoreQueue, ^{
-    [_detailStore removeObjectForKey:@(vnodeId)];
-  });
+- (void)logDiskDisappeared:(NSDictionary *)diskProperties {
+  [self doesNotRecognizeSelector:_cmd];
 }
 
 - (void)logFileModification:(santa_message_t)message {
-  NSString *action, *newpath;
-
-  NSString *path = @(message.path);
-
-  switch (message.action) {
-    case ACTION_NOTIFY_DELETE: {
-      action = @"DELETE";
-      break;
-    }
-    case ACTION_NOTIFY_EXCHANGE: {
-      action = @"EXCHANGE";
-      newpath = @(message.newpath);
-      break;
-    }
-    case ACTION_NOTIFY_LINK: {
-      action = @"LINK";
-      newpath = @(message.newpath);
-      break;
-    }
-    case ACTION_NOTIFY_RENAME: {
-      action = @"RENAME";
-      newpath = @(message.newpath);
-      break;
-    }
-    case ACTION_NOTIFY_WRITE: {
-      action = @"WRITE";
-      break;
-    }
-    default: action = @"UNKNOWN"; break;
-  }
-
-  // init the string with 2k capacity to avoid reallocs
-  NSMutableString *outStr = [NSMutableString stringWithCapacity:2048];
-  [outStr appendFormat:@"action=%@|path=%@", action, [self sanitizeString:path]];
-  if (newpath) {
-    [outStr appendFormat:@"|newpath=%@", [self sanitizeString:newpath]];
-  }
-  char ppath[PATH_MAX] = "(null)";
-  proc_pidpath(message.pid, ppath, PATH_MAX);
-
-  [outStr appendFormat:@"|pid=%d|ppid=%d|process=%s|processpath=%s|uid=%d|user=%@|gid=%d|group=%@",
-                       message.pid, message.ppid, message.pname, ppath,
-                       message.uid, [self nameForUID:message.uid],
-                       message.gid, [self nameForGID:message.gid]];
-  LOGI(@"%@", outStr);
+  [self doesNotRecognizeSelector:_cmd];
 }
 
 - (void)logDeniedExecution:(SNTCachedDecision *)cd withMessage:(santa_message_t)message {
-  [self logExecution:message withDecision:cd];
+  [self doesNotRecognizeSelector:_cmd];
 }
 
 - (void)logAllowedExecution:(santa_message_t)message {
-  __block SNTCachedDecision *cd;
-  dispatch_sync(_detailStoreQueue, ^{
-    cd = _detailStore[@(message.vnode_id)];
-  });
-  [self logExecution:message withDecision:cd];
-
-  // We also reset the timestamp for transitive rules here, because it happens to be where we
-  // have access to both the execution notification and the sha256 associated with rule.
-  [self resetTimestampForCachedDecision:cd];
+  [self doesNotRecognizeSelector:_cmd];
 }
 
-- (void)logExecution:(santa_message_t)message withDecision:(SNTCachedDecision *)cd {
-  NSString *d, *r;
-  BOOL logArgs = NO;
+- (void)logBundleHashingEvents:(NSArray<SNTStoredEvent *> *)events {
+  [self doesNotRecognizeSelector:_cmd];
+}
 
-  switch (cd.decision) {
-    case SNTEventStateAllowBinary:
-      d = @"ALLOW";
-      r = @"BINARY";
-      logArgs = YES;
-      break;
-    case SNTEventStateAllowCompiler:
-      d = @"ALLOW";
-      r = @"COMPILER";
-      logArgs = YES;
-      break;
-    case SNTEventStateAllowTransitive:
-      d = @"ALLOW";
-      r = @"TRANSITIVE";
-      logArgs = YES;
-      break;
-    case SNTEventStateAllowPendingTransitive:
-      d = @"ALLOW";
-      r = @"PENDING_TRANSITIVE";
-      logArgs = YES;
-      break;
-    case SNTEventStateAllowCertificate:
-      d = @"ALLOW";
-      r = @"CERT";
-      logArgs = YES;
-      break;
-    case SNTEventStateAllowScope:
-      d = @"ALLOW";
-      r = @"SCOPE";
-      logArgs = YES;
-      break;
-    case SNTEventStateAllowUnknown:
-      d = @"ALLOW";
-      r = @"UNKNOWN";
-      logArgs = YES;
-      break;
-    case SNTEventStateBlockBinary:
-      d = @"DENY";
-      r = @"BINARY";
-      break;
-    case SNTEventStateBlockCertificate:
-      d = @"DENY";
-      r = @"CERT";
-      break;
-    case SNTEventStateBlockScope:
-      d = @"DENY";
-      r = @"SCOPE";
-      break;
-    case SNTEventStateBlockUnknown:
-      d = @"DENY";
-      r = @"UNKNOWN";
-      break;
-    default:
-      d = @"ALLOW";
-      r = @"NOTRUNNING";
-      logArgs = YES;
-      break;
-  }
+- (void)writeLog:(NSString *)log {
+  [self doesNotRecognizeSelector:_cmd];
+}
 
-  // init the string with 4k capacity to avoid reallocs
-  NSMutableString *outLog = [[NSMutableString alloc] initWithCapacity:4096];
-  [outLog appendFormat:@"action=EXEC|decision=%@|reason=%@", d, r];
+- (void)cacheDecision:(SNTCachedDecision *)cd {
+  dispatch_sync(self.detailStoreQueue, ^{
+    self.detailStore[@(cd.vnodeId)] = cd;
+  });
+}
 
-  if (cd.decisionExtra) {
-    [outLog appendFormat:@"|explain=%@", cd.decisionExtra];
-  }
+- (SNTCachedDecision *)cachedDecisionForMessage:(santa_message_t)message {
+  __block SNTCachedDecision *cd;
+  dispatch_sync(self.detailStoreQueue, ^{
+    cd = self.detailStore[@(message.vnode_id)];
+  });
+  return cd;
+}
 
-  [outLog appendFormat:@"|sha256=%@", cd.sha256];
-
-  if (cd.certSHA256) {
-    [outLog appendFormat:@"|cert_sha256=%@|cert_cn=%@", cd.certSHA256,
-                         [self sanitizeString:cd.certCommonName]];
-  }
-
-  if (cd.quarantineURL) {
-    [outLog appendFormat:@"|quarantine_url=%@", [self sanitizeString:cd.quarantineURL]];
-  }
-
-  NSString *mode;
-  switch ([[SNTConfigurator configurator] clientMode]) {
-    case SNTClientModeMonitor:
-      mode = @"M"; break;
-    case SNTClientModeLockdown:
-      mode = @"L"; break;
-    default:
-      mode = @"U"; break;
-  }
-
-  [outLog appendFormat:@"|pid=%d|ppid=%d|uid=%d|user=%@|gid=%d|group=%@|mode=%@|path=%@",
-                       message.pid, message.ppid,
-                       message.uid, [self nameForUID:message.uid],
-                       message.gid, [self nameForGID:message.gid],
-                       mode, [self sanitizeString:@(message.path)]];
-
-  // Check for app translocation by GateKeeper, and log original path if the case.
-  NSString *originalPath = [self originalPathForTranslocation:message];
-  if (originalPath) {
-    [outLog appendFormat:@"|origpath=%@", [self sanitizeString:originalPath]];
-  }
-
-  if (logArgs) {
-    [self addArgsForPid:message.pid toString:outLog];
-  }
-
-  LOGI(@"%@", outLog);
+- (void)forgetCachedDecisionForVnodeId:(uint64_t)vnodeId {
+  dispatch_sync(self.detailStoreQueue, ^{
+    [self.detailStore removeObjectForKey:@(vnodeId)];
+  });
 }
 
 // Whenever a cached decision resulting from a transitive whitelist rule is used to allow the
@@ -271,61 +117,6 @@
     [self.timestampResetMap setObject:[NSDate date] forKey:cd.sha256];
   }
 }
-
-- (void)logDiskAppeared:(NSDictionary *)diskProperties {
-  NSString *dmgPath = @"";
-  NSString *serial = @"";
-  if ([diskProperties[@"DADeviceModel"] isEqual:@"Disk Image"]) {
-    dmgPath = [self diskImageForDevice:diskProperties[@"DADevicePath"]];
-  } else {
-    serial = [self serialForDevice:diskProperties[@"DADevicePath"]];
-    serial = [serial stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
-  }
-
-  NSString *model = [NSString stringWithFormat:@"%@ %@",
-                        diskProperties[@"DADeviceVendor"] ?: @"",
-                        diskProperties[@"DADeviceModel"] ?: @""];
-  model = [model stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
-
-  double appearance = [diskProperties[@"DAAppearanceTime"] doubleValue];
-  NSString *appearanceDateString =
-      [_dateFormatter stringFromDate:[NSDate dateWithTimeIntervalSinceReferenceDate:appearance]];
-
-  NSString *log =
-      @"action=DISKAPPEAR|mount=%@|volume=%@|bsdname=%@|fs=%@|"
-      @"model=%@|serial=%@|bus=%@|dmgpath=%@|appearance=%@";
-  LOGI(log,
-       [diskProperties[@"DAVolumePath"] path] ?: @"",
-       diskProperties[@"DAVolumeName"] ?: @"",
-       diskProperties[@"DAMediaBSDName"] ?: @"",
-       diskProperties[@"DAVolumeKind"] ?: @"",
-       model ?: @"",
-       serial,
-       diskProperties[@"DADeviceProtocol"] ?: @"",
-       dmgPath,
-       appearanceDateString);
-}
-
-- (void)logDiskDisappeared:(NSDictionary *)diskProperties {
-  LOGI(@"action=DISKDISAPPEAR|mount=%@|volume=%@|bsdname=%@",
-       [diskProperties[@"DAVolumePath"] path] ?: @"",
-       diskProperties[@"DAVolumeName"] ?: @"",
-       diskProperties[@"DAMediaBSDName"]);
-}
-
-- (void)logBundleHashingEvents:(NSArray<SNTStoredEvent *> *)events {
-  for (SNTStoredEvent *event in events) {
-    LOGI(@"action=BUNDLE|sha256=%@|bundlehash=%@|bundlename=%@|bundleid=%@|bundlepath=%@|path=%@",
-         event.fileSHA256,
-         event.fileBundleHash,
-         event.fileBundleName,
-         event.fileBundleID,
-         event.fileBundlePath,
-         event.filePath);
-  }
-}
-
-#pragma mark Helpers
 
 /**
   Sanitizes a given string if necessary, otherwise returns the original.
@@ -351,6 +142,8 @@
   char c = 0;
   char *buf = NULL;
   BOOL shouldFree = NO;
+
+  if (length < 1) return @"";
 
   // Loop through the string one character at a time, looking for the characters
   // we want to remove.

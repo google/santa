@@ -17,16 +17,16 @@
 #import <CommonCrypto/CommonDigest.h>
 #import <pthread/pthread.h>
 
-#import "MOLCertificate.h"
-#import "MOLCodesignChecker.h"
+#import <MOLCodesignChecker/MOLCodesignChecker.h>
+#import <MOLXPCConnection/MOLXPCConnection.h>
+
 #import "SNTFileInfo.h"
 #import "SNTStoredEvent.h"
-#import "SNTXPCConnection.h"
 #import "SNTXPCNotifierInterface.h"
 
 @interface SNTBundleService ()
-@property SNTXPCConnection *notifierConnection;
-@property SNTXPCConnection *listener;
+@property MOLXPCConnection *notifierConnection;
+@property MOLXPCConnection *listener;
 @property(nonatomic) dispatch_queue_t queue;
 @end
 
@@ -48,7 +48,7 @@
 
   // Create listener for return connection from SantaGUI.
   NSXPCListener *listener = [NSXPCListener anonymousListener];
-  self.listener = [[SNTXPCConnection alloc] initServerWithListener:listener];
+  self.listener = [[MOLXPCConnection alloc] initServerWithListener:listener];
   self.listener.exportedInterface = [SNTXPCBundleServiceInterface bundleServiceInterface];
   self.listener.exportedObject = self;
   self.listener.acceptedHandler = ^{
@@ -72,18 +72,18 @@
 }
 
 - (void)attemptReconnection {
-  [self performSelectorInBackground:@selector(createConnection) withObject:nil];
+  [self performSelectorOnMainThread:@selector(createConnection) withObject:nil waitUntilDone:NO];
 }
 
 #pragma mark SNTBundleServiceXPC Methods
 
 // Connect to the SantaGUI
 - (void)setBundleNotificationListener:(NSXPCListenerEndpoint *)listener {
-  SNTXPCConnection *c = [[SNTXPCConnection alloc] initClientWithListener:listener];
-  c.remoteInterface = [SNTXPCNotifierInterface bundleNotifierInterface];
-  [c resume];
-  self.notifierConnection = c;
-  dispatch_async(self.queue, ^{
+  dispatch_async(dispatch_get_main_queue(), ^{
+    MOLXPCConnection *c = [[MOLXPCConnection alloc] initClientWithListener:listener];
+    c.remoteInterface = [SNTXPCNotifierInterface bundleNotifierInterface];
+    [c resume];
+    self.notifierConnection = c;
     [self createConnection];
   });
 }
@@ -98,11 +98,20 @@
   dispatch_semaphore_t sema = dispatch_semaphore_create(0);
 
   dispatch_async(self.queue, ^{
-    // Use the highest bundle we can find. Save and reuse the bundle infomation when creating
-    // the related binary events.
+    // Use the highest bundle we can find.
     SNTFileInfo *b = [[SNTFileInfo alloc] initWithPath:event.fileBundlePath];
     b.useAncestorBundle = YES;
     event.fileBundlePath = b.bundlePath;
+
+    // If path to the bundle is unavailable, stop. SantaGUI will revert to
+    // using the offending blockable.
+    if (!event.fileBundlePath) {
+      reply(nil, nil, 0);
+      dispatch_semaphore_signal(sema);
+      return;
+    }
+
+    // Reuse the bundle infomation when creating the related binary events.
     event.fileBundleID = b.bundleIdentifier;
     event.fileBundleName = b.bundleName;
     event.fileBundleVersion = b.bundleVersion;

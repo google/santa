@@ -14,12 +14,12 @@
 
 #import "SNTMessageWindowController.h"
 
-@import SecurityInterface.SFCertificatePanel;
+#import <SecurityInterface/SFCertificatePanel.h>
 
-#import "MOLCertificate.h"
+#import <MOLCertificate/MOLCertificate.h>
+
 #import "SNTBlockMessage.h"
 #import "SNTConfigurator.h"
-#import "SNTFileInfo.h"
 #import "SNTMessageWindow.h"
 #import "SNTStoredEvent.h"
 

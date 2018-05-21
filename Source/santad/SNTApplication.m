@@ -14,10 +14,9 @@
 
 #import "SNTApplication.h"
 
-@import DiskArbitration;
+#import <DiskArbitration/DiskArbitration.h>
 
-#include <sys/stat.h>
-#include <sys/types.h>
+#import <MOLXPCConnection/MOLXPCConnection.h>
 
 #import "SNTCommonEnums.h"
 #import "SNTCompilerController.h"
@@ -26,26 +25,26 @@
 #import "SNTDatabaseController.h"
 #import "SNTDriverManager.h"
 #import "SNTDropRootPrivs.h"
-#import "SNTEventLog.h"
 #import "SNTEventTable.h"
 #import "SNTExecutionController.h"
-#import "SNTFileWatcher.h"
+#import "SNTFileEventLog.h"
 #import "SNTLogging.h"
 #import "SNTNotificationQueue.h"
 #import "SNTRuleTable.h"
 #import "SNTSyncdQueue.h"
-#import "SNTXPCConnection.h"
+#import "SNTSyslogEventLog.h"
 #import "SNTXPCControlInterface.h"
+#import "SNTXPCNotifierInterface.h"
 
 @interface SNTApplication ()
 @property DASessionRef diskArbSession;
 @property SNTDriverManager *driverManager;
 @property SNTEventLog *eventLog;
 @property SNTExecutionController *execController;
-@property SNTFileWatcher *configFileWatcher;
-@property SNTFileWatcher *syncStateWatcher;
-@property SNTXPCConnection *controlConnection;
 @property SNTCompilerController *compilerController;
+@property MOLXPCConnection *controlConnection;
+@property SNTNotificationQueue *notQueue;
+@property pid_t syncdPID;
 @end
 
 @implementation SNTApplication
@@ -73,9 +72,18 @@
       return nil;
     }
 
-    _eventLog = [[SNTEventLog alloc] init];
+    // Choose an event logger.
+    SNTConfigurator *configurator = [SNTConfigurator configurator];
+    switch ([configurator eventLogType]) {
+      case SNTEventLogTypeSyslog:
+        _eventLog = [[SNTSyslogEventLog alloc] init];
+        break;
+      case SNTEventLogTypeFilelog:
+        _eventLog = [[SNTFileEventLog alloc] init];
+        break;
+    }
 
-    SNTNotificationQueue *notQueue = [[SNTNotificationQueue alloc] init];
+    self.notQueue = [[SNTNotificationQueue alloc] init];
     SNTSyncdQueue *syncdQueue = [[SNTSyncdQueue alloc] init];
 
     // Restart santactl if it goes down
@@ -83,60 +91,48 @@
       [self startSyncd];
     };
 
-    _compilerController =
-        [[SNTCompilerController alloc] initWithDriverManager:_driverManager
-                                                    eventLog:_eventLog];
+    // Listen for actionable config changes.
+    NSKeyValueObservingOptions bits = (NSKeyValueObservingOptionNew | NSKeyValueObservingOptionOld);
+    [configurator addObserver:self
+                   forKeyPath:NSStringFromSelector(@selector(clientMode))
+                      options:bits
+                      context:NULL];
+    [configurator addObserver:self
+                   forKeyPath:NSStringFromSelector(@selector(syncBaseURL))
+                      options:bits
+                      context:NULL];
+    [configurator addObserver:self
+                   forKeyPath:NSStringFromSelector(@selector(whitelistPathRegex))
+                      options:bits
+                      context:NULL];
+    [configurator addObserver:self
+                   forKeyPath:NSStringFromSelector(@selector(blacklistPathRegex))
+                      options:bits
+                      context:NULL];
 
     // Establish XPC listener for Santa and santactl connections
     SNTDaemonControlController *dc =
         [[SNTDaemonControlController alloc] initWithDriverManager:_driverManager
-                                                notificationQueue:notQueue
+                                                notificationQueue:self.notQueue
                                                        syncdQueue:syncdQueue
                                                          eventLog:_eventLog];
 
     _controlConnection =
-        [[SNTXPCConnection alloc] initServerWithName:[SNTXPCControlInterface serviceId]];
+        [[MOLXPCConnection alloc] initServerWithName:[SNTXPCControlInterface serviceId]];
     _controlConnection.exportedInterface = [SNTXPCControlInterface controlInterface];
     _controlConnection.exportedObject = dc;
     [_controlConnection resume];
 
-    __block SNTClientMode origMode = [[SNTConfigurator configurator] clientMode];
-    __block NSURL *origSyncURL = [[SNTConfigurator configurator] syncBaseURL];
-    _configFileWatcher = [[SNTFileWatcher alloc] initWithFilePath:kMobileConfigFilePath
-                                                          handler:^(unsigned long data) {
-
-      LOGD(@"Mobileconfig changed, reloading.");
-      [[SNTConfigurator configurator] reloadConfigData];
-
-      // Flush cache if client just went into lockdown.
-      SNTClientMode newMode = [[SNTConfigurator configurator] clientMode];
-      if (origMode != newMode) {
-        origMode = newMode;
-        if (newMode == SNTClientModeLockdown) {
-          LOGI(@"Changed client mode, flushing cache.");
-          [self.driverManager flushCacheNonRootOnly:NO];
-        }
-      }
-
-      // Start santactl if the syncBaseURL changed from nil --> somthing
-      NSURL *syncURL = [[SNTConfigurator configurator] syncBaseURL];
-      if (!origSyncURL && syncURL) {
-        origSyncURL = syncURL;
-        LOGI(@"SyncBaseURL added, starting santactl.");
-        [self startSyncd];
-      }
-    }];
-
-    _syncStateWatcher = [[SNTFileWatcher alloc] initWithFilePath:kSyncStateFilePath
-                                                         handler:^(unsigned long data) {
-      [[SNTConfigurator configurator] syncStateFileChanged:data];
-    }];
+    // Initialize the transitive whitelisting controller object.
+    _compilerController =
+    [[SNTCompilerController alloc] initWithDriverManager:_driverManager
+                                                eventLog:_eventLog];
 
     // Initialize the binary checker object
     _execController = [[SNTExecutionController alloc] initWithDriverManager:_driverManager
                                                                   ruleTable:ruleTable
                                                                  eventTable:eventTable
-                                                              notifierQueue:notQueue
+                                                              notifierQueue:self.notQueue
                                                                  syncdQueue:syncdQueue
                                                                    eventLog:_eventLog];
     // Start up santactl as a daemon if a sync server exists.
@@ -146,18 +142,6 @@
   }
 
   return self;
-}
-
-- (void)startSyncd {
-  if (![[SNTConfigurator configurator] syncBaseURL]) return;
-
-  if (fork() == 0) {
-    // Ensure we have no privileges
-    if (!DropRootPrivileges()) {
-      _exit(EPERM);
-    }
-    _exit(execl(kSantaCtlPath, kSantaCtlPath, "sync", "--daemon", "--syslog", NULL));
-  }
 }
 
 - (void)start {
@@ -280,6 +264,86 @@ void diskDisappearedCallback(DADiskRef disk, void *context) {
 
   [app.eventLog logDiskDisappeared:props];
   [app.driverManager flushCacheNonRootOnly:YES];
+}
+
+- (void)startSyncd {
+  if (![[SNTConfigurator configurator] syncBaseURL]) return;
+  [self stopSyncd];
+  self.syncdPID = fork();
+  if (self.syncdPID == -1) {
+    LOGI(@"Failed to fork");
+    self.syncdPID = 0;
+  } else if (self.syncdPID == 0) {
+    // Ensure we have no privileges
+    if (!DropRootPrivileges()) {
+      _exit(EPERM);
+    }
+    _exit(execl(kSantaCtlPath, kSantaCtlPath, "sync", "--daemon", "--syslog", NULL));
+  }
+  LOGI(@"santactl started with pid: %i", self.syncdPID);
+}
+
+- (void)stopSyncd {
+  if (!self.syncdPID) return;
+  int ret = kill(self.syncdPID, SIGKILL);
+  LOGD(@"kill(%i, 9) = %i", self.syncdPID, ret);
+  self.syncdPID = 0;
+}
+
+- (void)observeValueForKeyPath:(NSString *)keyPath
+                      ofObject:(id)object
+                        change:(NSDictionary<NSString *,id> *)change
+                       context:(void *)context {
+  NSString *newKey = NSKeyValueChangeNewKey;
+  NSString *oldKey = NSKeyValueChangeOldKey;
+  if ([keyPath isEqualToString:NSStringFromSelector(@selector(clientMode))]) {
+    SNTClientMode new =
+        [change[newKey] isKindOfClass:[NSNumber class]] ? [change[newKey] longLongValue] : 0;
+    SNTClientMode old =
+        [change[oldKey] isKindOfClass:[NSNumber class]] ? [change[oldKey] longLongValue] : 0;
+    if (new != old) [self clientModeDidChange:new];
+  } else if ([keyPath isEqualToString:NSStringFromSelector(@selector(syncBaseURL))]) {
+    NSURL *new = [change[newKey] isKindOfClass:[NSURL class]] ? change[newKey] : nil;
+    NSURL *old = [change[oldKey] isKindOfClass:[NSURL class]] ? change[oldKey] : nil;
+    if (!new && !old) return;
+    if (![new.absoluteString isEqualToString:old.absoluteString]) [self syncBaseURLDidChange:new];
+  } else if ([keyPath isEqualToString:NSStringFromSelector(@selector(whitelistPathRegex))] ||
+             [keyPath isEqualToString:NSStringFromSelector(@selector(blacklistPathRegex))]) {
+    NSRegularExpression *new =
+        [change[newKey] isKindOfClass:[NSRegularExpression class]] ? change[newKey] : nil;
+    NSRegularExpression *old =
+        [change[oldKey] isKindOfClass:[NSRegularExpression class]] ? change[oldKey] : nil;
+    if (!new && !old) return;
+    if (![new.pattern isEqualToString:old.pattern]) {
+      LOGI(@"Changed [white|black]list regex, flushing cache");
+      [self.driverManager flushCacheNonRootOnly:NO];
+    }
+  }
+}
+
+- (void)clientModeDidChange:(SNTClientMode)clientMode {
+  if (clientMode == SNTClientModeLockdown) {
+    LOGI(@"Changed client mode, flushing cache.");
+    [self.driverManager flushCacheNonRootOnly:NO];
+  }
+  [[self.notQueue.notifierConnection remoteObjectProxy] postClientModeNotification:clientMode];
+}
+
+- (void)syncBaseURLDidChange:(NSURL *)syncBaseURL {
+  if (syncBaseURL) {
+    LOGI(@"Starting santactl with new SyncBaseURL: %@", syncBaseURL);
+    [NSObject cancelPreviousPerformRequestsWithTarget:[SNTConfigurator configurator]
+                                             selector:@selector(clearSyncState)
+                                               object:nil];
+    [self startSyncd];
+  } else {
+    LOGI(@"SyncBaseURL removed, killing santactl pid: %i", self.syncdPID);
+    [self stopSyncd];
+    // Keep the syncState active for 10 min in case com.apple.ManagedClient is flapping.
+    [[SNTConfigurator configurator] performSelector:@selector(clearSyncState)
+                                         withObject:nil
+                                         afterDelay:600];
+  }
 }
 
 @end

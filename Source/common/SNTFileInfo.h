@@ -12,7 +12,7 @@
 ///    See the License for the specific language governing permissions and
 ///    limitations under the License.
 
-@import Foundation;
+#import <Foundation/Foundation.h>
 
 @class MOLCodesignChecker;
 
@@ -211,6 +211,11 @@
 ///  @return The size of the file in bytes.
 ///
 - (NSUInteger)fileSize;
+
+///
+///  @return The underlying file handle.
+///
+@property(readonly) NSFileHandle *fileHandle;
 
 ///
 ///  @return Returns an instance of MOLCodeSignChecker initialized with the file's binary path.

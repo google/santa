@@ -14,6 +14,8 @@
 
 #import "SNTDaemonControlController.h"
 
+#import <MOLXPCConnection/MOLXPCConnection.h>
+
 #import "SNTCachedDecision.h"
 #import "SNTCommonEnums.h"
 #import "SNTConfigurator.h"
@@ -30,7 +32,6 @@
 #import "SNTStrengthify.h"
 #import "SNTSyncdQueue.h"
 #import "SNTXPCBundleServiceInterface.h"
-#import "SNTXPCConnection.h"
 #import "SNTXPCNotifierInterface.h"
 #import "SNTXPCSyncdInterface.h"
 
@@ -159,15 +160,7 @@ double watchdogRAMPeak = 0;
 }
 
 - (void)setClientMode:(SNTClientMode)mode reply:(void (^)())reply {
-  if ([[SNTConfigurator configurator] clientMode] != mode) {
-    // Flush cache if client just went into lockdown.
-    if (mode == SNTClientModeLockdown) {
-      LOGI(@"Changed client mode, flushing cache.");
-      [self.driverManager flushCacheNonRootOnly:NO];
-    }
-    [[SNTConfigurator configurator] setClientMode:mode];
-    [[self.notQueue.notifierConnection remoteObjectProxy] postClientModeNotification:mode];
-  }
+  [[SNTConfigurator configurator] setSyncServerClientMode:mode];
   reply();
 }
 
@@ -180,14 +173,26 @@ double watchdogRAMPeak = 0;
   reply();
 }
 
-- (void)setSyncLastSuccess:(NSDate *)date reply:(void (^)())reply {
+- (void)fullSyncLastSuccess:(void (^)(NSDate *))reply {
+  reply([[SNTConfigurator configurator] fullSyncLastSuccess]);
+}
+
+- (void)setFullSyncLastSuccess:(NSDate *)date reply:(void (^)())reply {
   [[SNTConfigurator configurator] setFullSyncLastSuccess:date];
   reply();
+}
+
+- (void)ruleSyncLastSuccess:(void (^)(NSDate *))reply {
+  reply([[SNTConfigurator configurator] ruleSyncLastSuccess]);
 }
 
 - (void)setRuleSyncLastSuccess:(NSDate *)date reply:(void (^)())reply {
   [[SNTConfigurator configurator] setRuleSyncLastSuccess:date];
   reply();
+}
+
+- (void)syncCleanRequired:(void (^)(BOOL))reply {
+  reply([[SNTConfigurator configurator] syncCleanRequired]);
 }
 
 - (void)setSyncCleanRequired:(BOOL)cleanReqd reply:(void (^)())reply {
@@ -199,9 +204,7 @@ double watchdogRAMPeak = 0;
   NSRegularExpression *re = [NSRegularExpression regularExpressionWithPattern:pattern
                                                                       options:0
                                                                         error:NULL];
-  [[SNTConfigurator configurator] setWhitelistPathRegex:re];
-  LOGI(@"Received new whitelist regex, flushing cache");
-  [self.driverManager flushCacheNonRootOnly:NO];
+  [[SNTConfigurator configurator] setSyncServerWhitelistPathRegex:re];
   reply();
 }
 
@@ -209,9 +212,7 @@ double watchdogRAMPeak = 0;
   NSRegularExpression *re = [NSRegularExpression regularExpressionWithPattern:pattern
                                                                       options:0
                                                                         error:NULL];
-  [[SNTConfigurator configurator] setBlacklistPathRegex:re];
-  LOGI(@"Received new blacklist regex, flushing cache");
-  [self.driverManager flushCacheNonRootOnly:NO];
+  [[SNTConfigurator configurator] setSyncServerBlacklistPathRegex:re];
   reply();
 }
 
@@ -236,17 +237,20 @@ double watchdogRAMPeak = 0;
 #pragma mark GUI Ops
 
 - (void)setNotificationListener:(NSXPCListenerEndpoint *)listener {
-  SNTXPCConnection *c = [[SNTXPCConnection alloc] initClientWithListener:listener];
+  // This will leak the underlying NSXPCConnection when "fast user switching" occurs.
+  // It is not worth the trouble to fix. Maybe future self will feel differently.
+  MOLXPCConnection *c = [[MOLXPCConnection alloc] initClientWithListener:listener];
   c.remoteInterface = [SNTXPCNotifierInterface notifierInterface];
   [c resume];
   self.notQueue.notifierConnection = c;
 }
 
 - (void)setBundleNotificationListener:(NSXPCListenerEndpoint *)listener {
-  SNTXPCConnection *bs = [[SNTXPCConnection alloc] initClientWithServiceName:@"com.google.santabs"];
+  MOLXPCConnection *bs = [[MOLXPCConnection alloc] initClientWithServiceName:@"com.google.santabs"];
   bs.remoteInterface = [SNTXPCBundleServiceInterface bundleServiceInterface];
   [bs resume];
   [[bs remoteObjectProxy] setBundleNotificationListener:listener];
+  [bs invalidate];
 }
 
 #pragma mark syncd Ops
@@ -254,12 +258,13 @@ double watchdogRAMPeak = 0;
 - (void)setSyncdListener:(NSXPCListenerEndpoint *)listener {
   // Only allow one active syncd connection
   if (self.syncdQueue.syncdConnection) return;
-  SNTXPCConnection *c = [[SNTXPCConnection alloc] initClientWithListener:listener];
+  MOLXPCConnection *c = [[MOLXPCConnection alloc] initClientWithListener:listener];
   c.remoteInterface = [SNTXPCSyncdInterface syncdInterface];
   c.invalidationHandler = ^{
     [self.syncdQueue stopSyncingEvents];
+    [self.syncdQueue.syncdConnection invalidate];
     self.syncdQueue.syncdConnection = nil;
-    self.syncdQueue.invalidationHandler();
+    if (self.syncdQueue.invalidationHandler) self.syncdQueue.invalidationHandler();
   };
   c.acceptedHandler = ^{
     [self.syncdQueue startSyncingEvents];
@@ -296,8 +301,8 @@ double watchdogRAMPeak = 0;
 ///
 - (void)hashBundleBinariesForEvent:(SNTStoredEvent *)event
                              reply:(SNTBundleHashBlock)reply {
-  SNTXPCConnection *bs =
-      [[SNTXPCConnection alloc] initClientWithServiceName:[SNTXPCBundleServiceInterface serviceId]];
+  MOLXPCConnection *bs =
+      [[MOLXPCConnection alloc] initClientWithServiceName:[SNTXPCBundleServiceInterface serviceId]];
   bs.remoteInterface = [SNTXPCBundleServiceInterface bundleServiceInterface];
   [bs resume];
   [[bs remoteObjectProxy] hashBundleBinariesForEvent:event reply:reply];

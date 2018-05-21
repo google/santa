@@ -12,7 +12,7 @@
 ///    See the License for the specific language governing permissions and
 ///    limitations under the License.
 
-@import XCTest;
+#import <XCTest/XCTest.h>
 
 #import "SNTFileInfo.h"
 
@@ -162,6 +162,26 @@
   XCTAssertEqualObjects([sut bundleIdentifier], @"com.google.LogicTests");
   XCTAssertNotNil([sut bundleVersion]);
   XCTAssertNotNil([sut bundleShortVersionString]);
+  XCTAssertEqualObjects([sut bundlePath], path);
+}
+
+- (void)testDirectoryBundleIsNotAncestor {
+  NSString *path = [[NSBundle bundleForClass:[self class]] pathForResource:@"DirectoryBundle"
+                                                                    ofType:@""];
+  NSString *directoryBundle = @"/tmp/DirectoryBundle";
+  NSFileManager *fm = [NSFileManager defaultManager];
+  [fm removeItemAtPath:directoryBundle error:NULL];
+  [fm copyItemAtPath:path toPath:directoryBundle error:NULL];
+  path = [directoryBundle stringByAppendingString:@"/Contents/Resources/BundleExample.app"];
+  SNTFileInfo *sut = [[SNTFileInfo alloc] initWithPath:path];
+  sut.useAncestorBundle = YES;
+
+  XCTAssertNotNil([sut bundle]);
+
+  XCTAssertEqualObjects([sut bundleIdentifier], @"com.google.santa.BundleExample");
+  XCTAssertEqualObjects([sut bundleName], @"BundleExample");
+  XCTAssertEqualObjects([sut bundleVersion], @"1");
+  XCTAssertEqualObjects([sut bundleShortVersionString], @"1.0");
   XCTAssertEqualObjects([sut bundlePath], path);
 }
 

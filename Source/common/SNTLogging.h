@@ -34,7 +34,7 @@
 
 #else  // KERNEL
 
-@import Foundation;
+#import <Foundation/Foundation.h>
 
 typedef enum : NSUInteger {
   LOG_LEVEL_ERROR,

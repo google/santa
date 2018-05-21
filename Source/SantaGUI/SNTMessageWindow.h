@@ -12,7 +12,7 @@
 ///    See the License for the specific language governing permissions and
 ///    limitations under the License.
 
-@import Cocoa;
+#import <Cocoa/Cocoa.h>
 
 ///
 ///  An NSPanel that can become key/main and can fade in/out.

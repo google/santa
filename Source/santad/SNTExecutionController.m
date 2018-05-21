@@ -20,8 +20,8 @@
 
 #include "SNTLogging.h"
 
-#import "MOLCertificate.h"
-#import "MOLCodesignChecker.h"
+#import <MOLCodesignChecker/MOLCodesignChecker.h>
+
 #import "SNTBlockMessage.h"
 #import "SNTCachedDecision.h"
 #import "SNTCommonEnums.h"
@@ -37,6 +37,12 @@
 #import "SNTRuleTable.h"
 #import "SNTStoredEvent.h"
 #import "SNTSyncdQueue.h"
+
+// A binary is considered large at ~30MB. Large binaries take longer to hash and consequently
+// longer to post a decision back to santa-driver. When a binary is considered large santad will
+// let santa-driver know it has received its request and is working on a decision. This allows
+// santa-driver to relax; it does not have to worry about resending the request due to a timeout.
+static size_t kLargeBinarySize = 30 * 1024 * 1024;
 
 @interface SNTExecutionController ()
 @property SNTDriverManager *driverManager;
@@ -102,11 +108,20 @@
     return;
   }
 
+  // If the binary is large let santa-driver know we received the request and we are working on it.
+  if (binInfo.fileSize > kLargeBinarySize) {
+    LOGD(@"%@ is larger than %zu. Letting santa-driver know we are working on it.",
+         binInfo.path, kLargeBinarySize);
+    [_driverManager postToKernelAction:ACTION_RESPOND_ACK forVnodeID:message.vnode_id];
+  }
+
   // Get codesigning info about the file.
   NSError *csError;
-  MOLCodesignChecker *csInfo = [[MOLCodesignChecker alloc] initWithBinaryPath:binInfo.path
-                                                                        error:&csError];
-  // Ignore codesigning if there are any errors with the signature. 
+  MOLCodesignChecker *csInfo =
+      [[MOLCodesignChecker alloc] initWithBinaryPath:binInfo.path
+                                      fileDescriptor:binInfo.fileHandle.fileDescriptor
+                                               error:&csError];
+  // Ignore codesigning if there are any errors with the signature.
   if (csError) csInfo = nil;
 
   // Actually make the decision (and refresh rule access timestamp).
@@ -130,7 +145,7 @@
   // the shasum stored in the decision details to update the rule's timestamp whenever an
   // ACTION_NOTIFY_EXEC message related to the transitive rule is received.
   if (action == ACTION_RESPOND_ALLOW || action == ACTION_RESPOND_ALLOW_COMPILER) {
-    [_eventLog saveDecisionDetails:cd];
+    [_eventLog cacheDecision:cd];
   }
 
   // Send the decision to the kernel.

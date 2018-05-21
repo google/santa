@@ -14,7 +14,8 @@
 
 #import "SNTDriverManager.h"
 
-@import IOKit.kext;
+#import <IOKit/IODataQueueClient.h>
+#import <IOKit/kext/KextManager.h>
 
 #include <mach/mach_port.h>
 
@@ -158,6 +159,13 @@ static const int MAX_DELAY = 15;
     case ACTION_RESPOND_DENY:
       return IOConnectCallScalarMethod(_connection,
                                        kSantaUserClientDenyBinary,
+                                       &vnodeId,
+                                       1,
+                                       0,
+                                       0);
+    case ACTION_RESPOND_ACK:
+      return IOConnectCallScalarMethod(_connection,
+                                       kSantaUserClientAcknowledgeBinary,
                                        &vnodeId,
                                        1,
                                        0,

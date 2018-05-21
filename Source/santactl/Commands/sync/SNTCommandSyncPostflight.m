@@ -16,9 +16,10 @@
 
 #include "SNTLogging.h"
 
+#import <MOLXPCConnection/MOLXPCConnection.h>
+
 #import "SNTCommandSyncConstants.h"
 #import "SNTCommandSyncState.h"
-#import "SNTXPCConnection.h"
 #import "SNTXPCControlInterface.h"
 
 @implementation SNTCommandSyncPostflight
@@ -63,7 +64,7 @@
 
   // Update last sync success
   dispatch_group_enter(group);
-  [[self.daemonConn remoteObjectProxy] setSyncLastSuccess:[NSDate date] reply:replyBlock];
+  [[self.daemonConn remoteObjectProxy] setFullSyncLastSuccess:[NSDate date] reply:replyBlock];
 
   // Wait for dispatch group
   dispatch_group_wait(group, dispatch_time(DISPATCH_TIME_NOW, 5 * NSEC_PER_SEC));

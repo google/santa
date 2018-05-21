@@ -12,16 +12,16 @@
 ///    See the License for the specific language governing permissions and
 ///    limitations under the License.
 
-@import Foundation;
+#import <Foundation/Foundation.h>
 
 #import "SNTCommonEnums.h"
 
 @class SNTStoredEvent;
-@class SNTXPCConnection;
+@class MOLXPCConnection;
 
 @interface SNTSyncdQueue : NSObject
 
-@property(nonatomic) SNTXPCConnection *syncdConnection;
+@property(nonatomic) MOLXPCConnection *syncdConnection;
 @property(copy) void (^invalidationHandler)();
 @property(copy) void (^acceptedHandler)();
 

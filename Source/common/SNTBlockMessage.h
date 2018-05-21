@@ -13,9 +13,9 @@
 ///    limitations under the License.
 
 #ifdef SANTAGUI
-@import Cocoa;
+#import <Cocoa/Cocoa.h>
 #else
-@import Foundation;
+#import <Foundation/Foundation.h>
 #endif
 
 @class SNTStoredEvent;

@@ -14,10 +14,11 @@
 
 #import "SNTCommandSyncRuleDownload.h"
 
+#import <MOLXPCConnection/MOLXPCConnection.h>
+
 #import "SNTCommandSyncConstants.h"
 #import "SNTCommandSyncState.h"
 #import "SNTRule.h"
-#import "SNTXPCConnection.h"
 #import "SNTXPCControlInterface.h"
 
 #include "SNTLogging.h"

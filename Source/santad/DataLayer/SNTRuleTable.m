@@ -14,8 +14,9 @@
 
 #import "SNTRuleTable.h"
 
-#import "MOLCertificate.h"
-#import "MOLCodesignChecker.h"
+#import <MOLCertificate/MOLCertificate.h>
+#import <MOLCodesignChecker/MOLCodesignChecker.h>
+
 #import "SNTConfigurator.h"
 #import "SNTLogging.h"
 #import "SNTRule.h"

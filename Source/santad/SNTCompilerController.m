@@ -25,7 +25,7 @@
 #import "SNTRule.h"
 #import "SNTRuleTable.h"
 
-@interface SNTCompilerController()
+@interface SNTCompilerController ()
 @property SNTDriverManager *driverManager;
 @property SNTEventLog *eventLog;
 @end
@@ -50,11 +50,11 @@
   cd.decision = SNTEventStateAllowPendingTransitive;
   cd.vnodeId = message.vnode_id;
   cd.sha256 = @"pending";
-  [self.eventLog saveDecisionDetails:cd];
+  [self.eventLog cacheDecision:cd];
 }
 
 - (void)removeFakeDecision:(santa_message_t)message {
-  [self.eventLog forgetDecisionDetailsForVnodeId:message.vnode_id];
+  [self.eventLog forgetCachedDecisionForVnodeId:message.vnode_id];
 }
 
 // Assume that this method is called only when we already know that the writing process is a
@@ -81,10 +81,12 @@
 
       // Add the new rule to the rules database.
       NSError *err;
-      if (![ruleTable addRules:@[rule] cleanSlate:NO error:&err]) {
+      if (![ruleTable addRules:@[ rule ] cleanSlate:NO error:&err]) {
         LOGE(@"unable to add new transitive rule to database: %@", err.localizedDescription);
       } else {
-        LOGI(@"action=WHITELIST|pid=%d|path=%s|sha256=%@", message.pid, target, fi.SHA256);
+        [self.eventLog
+            writeLog:[NSString stringWithFormat:@"action=WHITELIST|pid=%d|path=%s|sha256=%@",
+                                                message.pid, target, fi.SHA256]];
       }
     }
   }

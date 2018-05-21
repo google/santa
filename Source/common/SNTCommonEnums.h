@@ -12,7 +12,7 @@
 ///    See the License for the specific language governing permissions and
 ///    limitations under the License.
 
-@import Foundation;
+#import <Foundation/Foundation.h>
 
 ///
 ///  These enums are used in various places throughout the Santa client code.
@@ -84,6 +84,12 @@ typedef NS_ENUM(NSInteger, SNTBundleEventAction) {
   SNTBundleEventActionDropEvents,
   SNTBundleEventActionStoreEvents,
   SNTBundleEventActionSendEvents,
+};
+
+// Indicates where to store event logs.
+typedef NS_ENUM(NSInteger, SNTEventLogType) {
+  SNTEventLogTypeSyslog,
+  SNTEventLogTypeFilelog,
 };
 
 static const char *kKextPath = "/Library/Extensions/santa-driver.kext";

@@ -12,20 +12,21 @@
 ///    See the License for the specific language governing permissions and
 ///    limitations under the License.
 
-@import Foundation;
+#import <Foundation/Foundation.h>
 
 #import "SNTCommand.h"
 #import "SNTCommandController.h"
+
+#import <MOLXPCConnection/MOLXPCConnection.h>
 
 #import "SNTCommandSyncManager.h"
 #import "SNTConfigurator.h"
 #import "SNTDropRootPrivs.h"
 #import "SNTLogging.h"
-#import "SNTXPCConnection.h"
 #import "SNTXPCControlInterface.h"
 
 @interface SNTCommandSync : SNTCommand<SNTCommandProtocol>
-@property SNTXPCConnection *listener;
+@property MOLXPCConnection *listener;
 @property SNTCommandSyncManager *syncManager;
 @end
 
@@ -48,7 +49,7 @@ REGISTER_COMMAND_NAME(@"sync")
 }
 
 + (NSString *)longHelpText {
-  return (@"If Santa is configured to synchronize with a a server, "
+  return (@"If Santa is configured to synchronize with a server, "
           @"this is the command used for syncing.\n\n"
           @"Options:\n"
           @"  --clean: Perform a clean sync, erasing all existing rules and requesting a"
@@ -84,12 +85,12 @@ REGISTER_COMMAND_NAME(@"sync")
 
 #pragma mark daemon methods
 
-- (void)syncdWithDaemonConnection:(SNTXPCConnection *)daemonConn {
+- (void)syncdWithDaemonConnection:(MOLXPCConnection *)daemonConn {
   dispatch_semaphore_t sema = dispatch_semaphore_create(0);
 
   // Create listener for return connection from daemon.
   NSXPCListener *listener = [NSXPCListener anonymousListener];
-  self.listener = [[SNTXPCConnection alloc] initServerWithListener:listener];
+  self.listener = [[MOLXPCConnection alloc] initServerWithListener:listener];
   self.listener.exportedInterface = [SNTXPCSyncdInterface syncdInterface];
   self.listener.exportedObject = self.syncManager;
   self.listener.acceptedHandler = ^{
@@ -108,6 +109,8 @@ REGISTER_COMMAND_NAME(@"sync")
 
   // Now wait for the connection to come in.
   if (dispatch_semaphore_wait(sema, dispatch_time(DISPATCH_TIME_NOW, 5 * NSEC_PER_SEC))) {
+    self.listener.invalidationHandler = nil;
+    [self.listener invalidate];
     [self performSelectorInBackground:@selector(syncdWithDaemonConnection:) withObject:daemonConn];
   }
 

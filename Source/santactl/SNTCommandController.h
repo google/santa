@@ -12,11 +12,11 @@
 ///    See the License for the specific language governing permissions and
 ///    limitations under the License.
 
-@import Foundation;
+#import <Foundation/Foundation.h>
 
 #import "SNTCommand.h"
 
-@class SNTXPCConnection;
+@class MOLXPCConnection;
 
 ///
 ///  Responsible for maintaining the list of available commands by name, printing their help text

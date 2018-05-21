@@ -38,6 +38,7 @@ enum SantaDriverMethods {
   kSantaUserClientAllowBinary,
   kSantaUserClientAllowCompiler,
   kSantaUserClientDenyBinary,
+  kSantaUserClientAcknowledgeBinary,
   kSantaUserClientClearCache,
   kSantaUserClientRemoveCacheEntry,
   kSantaUserClientCacheCount,
@@ -66,10 +67,11 @@ typedef enum {
   ACTION_RESPOND_ALLOW = 20,
   ACTION_RESPOND_DENY = 21,
   ACTION_RESPOND_TOOLONG = 22,
-  ACTION_RESPOND_ALLOW_COMPILER = 23,
+  ACTION_RESPOND_ACK = 23,
+  ACTION_RESPOND_ALLOW_COMPILER = 24,
   // The following response is stored only in the kernel decision cache.
   // It is removed by SNTCompilerController
-  ACTION_RESPOND_ALLOW_PENDING_TRANSITIVE = 24,
+  ACTION_RESPOND_ALLOW_PENDING_TRANSITIVE = 25,
 
   // NOTIFY
   ACTION_NOTIFY_EXEC = 30,

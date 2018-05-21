@@ -14,9 +14,10 @@
 
 #import "SNTSyncdQueue.h"
 
+#import <MOLXPCConnection/MOLXPCConnection.h>
+
 #import "SNTLogging.h"
 #import "SNTStoredEvent.h"
-#import "SNTXPCConnection.h"
 #import "SNTXPCSyncdInterface.h"
 
 @interface SNTSyncdQueue ()

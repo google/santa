@@ -12,16 +12,14 @@
 ///    See the License for the specific language governing permissions and
 ///    limitations under the License.
 
-@import Foundation;
+#import <Foundation/Foundation.h>
 
 #import "SNTCommonEnums.h"
-
-extern NSString *const kSyncStateFilePath;
-extern NSString *const kMobileConfigFilePath;
 
 ///
 ///  Singleton that provides an interface for managing configuration values on disk
 ///  @note This class is designed as a singleton but that is not strictly enforced.
+///  @note All properties are KVO compliant.
 ///
 @interface SNTConfigurator : NSObject
 
@@ -30,16 +28,12 @@ extern NSString *const kMobileConfigFilePath;
 ///
 ///  The operating mode.
 ///
-@property(nonatomic) SNTClientMode clientMode;
+@property(readonly, nonatomic) SNTClientMode clientMode;
 
 ///
-///  The regex of paths to log file changes for. Regexes are specified in ICU format.
+///  Set the operating mode as received from a sync server.
 ///
-///  The regex flags IXSM can be used, though the s (dotalL) and m (multiline) flags are
-///  pointless as a path only ever has a single line.
-///  If the regex doesn't begin with ^ to match from the beginning of the line, it will be added.
-///
-@property(nonatomic) NSRegularExpression *fileChangesRegex;
+- (void)setSyncServerClientMode:(SNTClientMode)newMode;
 
 ///
 ///  The regex of whitelisted paths. Regexes are specified in ICU format.
@@ -48,7 +42,12 @@ extern NSString *const kMobileConfigFilePath;
 ///  pointless as a path only ever has a single line.
 ///  If the regex doesn't begin with ^ to match from the beginning of the line, it will be added.
 ///
-@property(nonatomic) NSRegularExpression *whitelistPathRegex;
+@property(readonly, nonatomic) NSRegularExpression *whitelistPathRegex;
+
+///
+///  Set the regex of whitelisted paths as received from a sync server.
+///
+- (void)setSyncServerWhitelistPathRegex:(NSRegularExpression *)re;
 
 ///
 ///  The regex of blacklisted paths. Regexes are specified in ICU format.
@@ -57,7 +56,21 @@ extern NSString *const kMobileConfigFilePath;
 ///  pointless as a path only ever has a single line.
 ///  If the regex doesn't begin with ^ to match from the beginning of the line, it will be added.
 ///
-@property(nonatomic) NSRegularExpression *blacklistPathRegex;
+@property(readonly, nonatomic) NSRegularExpression *blacklistPathRegex;
+
+///
+///  Set the regex of blacklisted paths as received from a sync server.
+///
+- (void)setSyncServerBlacklistPathRegex:(NSRegularExpression *)re;
+
+///
+///  The regex of paths to log file changes for. Regexes are specified in ICU format.
+///
+///  The regex flags IXSM can be used, though the s (dotalL) and m (multiline) flags are
+///  pointless as a path only ever has a single line.
+///  If the regex doesn't begin with ^ to match from the beginning of the line, it will be added.
+///
+@property(readonly, nonatomic) NSRegularExpression *fileChangesRegex;
 
 ///
 ///  Enable __PAGEZERO protection, defaults to YES
@@ -65,6 +78,25 @@ extern NSString *const kMobileConfigFilePath;
 ///  the __PAGEZERO segment will not be blocked.
 ///
 @property(readonly, nonatomic) BOOL enablePageZeroProtection;
+
+///
+///  Defines how event logs are stored. Options are:
+///    SNTEventLogTypeSyslog: Sent to ASL or ULS (if built with the 10.12 SDK or later).
+///    SNTEventLogTypeFilelog: Sent to a file on disk. Use eventLogPath to specify a path.
+///    Defaults to SNTEventLogTypeFilelog.
+///    For mobileconfigs use EventLogType as the key and syslog or filelog strings as the value.
+///
+///  @note: This property is KVO compliant, but should only be read once at santad startup.
+///
+@property(readonly, nonatomic) SNTEventLogType eventLogType;
+
+///
+///  If eventLogType is set to Filelog, eventLogPath will provide the path to save logs.
+///  Defaults to /var/db/santa/santa.log.
+///
+///  @note: This property is KVO compliant, but should only be read once at santad startup.
+///
+@property(readonly, nonatomic) NSString *eventLogPath;
 
 #pragma mark - GUI Settings
 
@@ -211,13 +243,8 @@ extern NSString *const kMobileConfigFilePath;
 + (instancetype)configurator;
 
 ///
-///  Re-read config data from disk.
+///  Clear the sync server configuration from the effective configuration.
 ///
-- (void)reloadConfigData;
-
-///
-///  Notify the receiver that the sync state file has changed.
-///
-- (void)syncStateFileChanged:(unsigned long)data;
+- (void)clearSyncState;
 
 @end

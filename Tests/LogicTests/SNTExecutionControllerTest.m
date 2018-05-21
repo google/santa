@@ -12,14 +12,15 @@
 ///    See the License for the specific language governing permissions and
 ///    limitations under the License.
 
-@import XCTest;
+#import <XCTest/XCTest.h>
 
 #import <OCMock/OCMock.h>
 
 #import "SNTExecutionController.h"
 
-#import "MOLCertificate.h"
-#import "MOLCodesignChecker.h"
+#import <MOLCertificate/MOLCertificate.h>
+#import <MOLCodesignChecker/MOLCodesignChecker.h>
+
 #import "SNTConfigurator.h"
 #import "SNTDriverManager.h"
 #import "SNTEventTable.h"
@@ -47,7 +48,10 @@
 
   self.mockCodesignChecker = OCMClassMock([MOLCodesignChecker class]);
   OCMStub([self.mockCodesignChecker alloc]).andReturn(self.mockCodesignChecker);
-  OCMStub([self.mockCodesignChecker initWithBinaryPath:OCMOCK_ANY error:[OCMArg setTo:NULL]])
+
+  OCMStub([self.mockCodesignChecker initWithBinaryPath:OCMOCK_ANY
+                                        fileDescriptor:0
+                                                 error:[OCMArg setTo:NULL]])
       .andReturn(self.mockCodesignChecker);
 
   self.mockConfigurator = OCMClassMock([SNTConfigurator class]);

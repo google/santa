@@ -12,15 +12,16 @@
 ///    See the License for the specific language governing permissions and
 ///    limitations under the License.
 
-@import Foundation;
+#import <Foundation/Foundation.h>
+
+#import <MOLXPCConnection/MOLXPCConnection.h>
 
 #import "SNTBundleService.h"
 #import "SNTXPCBundleServiceInterface.h"
-#import "SNTXPCConnection.h"
 
 int main(int argc, const char *argv[]) {
-  SNTXPCConnection *c =
-      [[SNTXPCConnection alloc] initServerWithListener:[NSXPCListener serviceListener]];
+  MOLXPCConnection *c =
+      [[MOLXPCConnection alloc] initServerWithListener:[NSXPCListener serviceListener]];
   c.exportedInterface = [SNTXPCBundleServiceInterface bundleServiceInterface];
   c.exportedObject = [[SNTBundleService alloc] init];
   [c resume];

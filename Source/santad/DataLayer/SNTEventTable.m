@@ -14,7 +14,8 @@
 
 #import "SNTEventTable.h"
 
-#import "MOLCertificate.h"
+#import <MOLCertificate/MOLCertificate.h>
+
 #import "SNTStoredEvent.h"
 
 @implementation SNTEventTable
@@ -53,7 +54,7 @@
       }
 
       NSData *eventData;
-      NSNumber *idx = [rs objectForColumnName:@"idx"];
+      NSNumber *idx = [rs objectForColumn:@"idx"];
       @try {
         eventData = [NSKeyedArchiver archivedDataWithRootObject:se];
         [db executeUpdate:@"UPDATE events SET eventdata=? WHERE idx=?", eventData, idx];
@@ -140,7 +141,7 @@
       if (obj) {
         [pendingEvents addObject:obj];
       } else {
-        [db executeUpdate:@"DELETE FROM events WHERE idx=?", [rs objectForColumnName:@"idx"]];
+        [db executeUpdate:@"DELETE FROM events WHERE idx=?", [rs objectForColumn:@"idx"]];
       }
     }
 

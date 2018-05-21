@@ -15,7 +15,7 @@ execution decisions based on the contents of a SQLite database, a GUI agent that
 notifies the user in case of a block decision and a command-line utility for
 managing the system and synchronizing the database with a server.
 
-Santa is not yet a 1.0. We're writing more tests, fixing bugs, working on TODOs
+Santa is not yet at 1.0. We're writing more tests, fixing bugs, working on TODOs
 and finishing up a security audit.
 
 It is named Santa because it keeps track of binaries that are naughty or nice.
@@ -29,21 +29,21 @@ The Santa docs are stored in the [Docs](https://github.com/google/santa/blob/mas
 Admin-Related Features
 ========
 
-* Multiple modes: In the default MONITOR mode, all binaries except
+* Multiple modes: In the default MONITOR mode, all binaries except 
 those marked as blacklisted will be allowed to run, whilst being logged and recorded in the events database. In LOCKDOWN mode, only whitelisted binaries are
 allowed to run.
 
 * Event logging: When the kext is loaded, all binary launches are logged.
 When in either mode, all unknown or denied binaries are stored in the database to enable later aggregation.
 
-* Certificate-based rules, with override levels: Instead of relying on a binaries hash (or 'fingerprint'), executables can be whitelisted/blacklisted by their signing
+* Certificate-based rules, with override levels: Instead of relying on a binary's hash (or 'fingerprint'), executables can be whitelisted/blacklisted by their signing
 certificate. You can therefore trust/block all binaries by a given publisher that were signed with that cert across version updates. A
 binary can only be whitelisted by its certificate if its signature validates
-correctly, but a rule for a binaries fingerprint will override a decision for a
+correctly, but a rule for a binary's fingerprint will override a decision for a
 certificate; i.e. you can whitelist a certificate while blacklisting a binary
 signed with that certificate, or vice-versa.
 
-* Path-based rules (via NSRegularExpression/ICU): This allows a similar feature as Managed Client for OS X's (the precursor to configuration profiles, which used the same implementation mechanism) Application Launch Restrictions via the mcxalr binary. This implementation carries the added benefit of being configurable via regex, and doesn't rely on LaunchServices. As detailed in the wiki, when evaluating rules this holds the lowest precendence.
+* Path-based rules (via NSRegularExpression/ICU): This allows a similar feature to that found in Managed Client (the precursor to configuration profiles, which used the same implementation mechanism), Application Launch Restrictions via the mcxalr binary. This implementation carries the added benefit of being configurable via regex, and not relying on LaunchServices. As detailed in the wiki, when evaluating rules this holds the lowest precendence.
 
 * Failsafe cert rules: You cannot put in a deny rule that would block the certificate used to sign launchd, a.k.a. pid 1, and therefore all components used in macOS. The binaries in every OS update (and in some cases entire new versions) are therefore auto-whitelisted. This does not affect binaries from Apple's App Store, which use various certs that change regularly for common apps. Likewise, you cannot blacklist Santa itself, and Santa uses a distinct separate cert than other Google apps.
 
@@ -54,7 +54,7 @@ Santa is written with the intention of helping protect users from themselves.
 People often download malware and trust it, giving the malware credentials, or
 allowing unknown software to exfiltrate more data about your system. As a
 centrally managed component, Santa can help stop the spread of malware among a
-larger fleet of machines. Independently, Santa can aid in analyzing what is
+large fleet of machines. Independently, Santa can aid in analyzing what is
 running on your computer.
 
 Santa is part of a defense-in-depth strategy, and you should continue to protect
@@ -62,7 +62,6 @@ hosts in whatever other ways you see fit.
 
 Get Help
 ========
-
 If you have questions or otherwise need help getting started, the
 [santa-dev](https://groups.google.com/forum/#!forum/santa-dev) group is a
 great place. Please consult the [wiki](https://github.com/google/santa/wiki) and [issues](https://github.com/google/santa/issues) as well.
@@ -84,7 +83,7 @@ continue to work across OS versions.
 
 Known Issues
 ============
-Santa is not yet a 1.0 and we have some known issues to be aware of:
+Santa is not yet at 1.0 and we have some known issues to be aware of:
 
 * Santa only blocks execution (execve and variants), it doesn't protect against
 dynamic libraries loaded with dlopen, libraries on disk that have been replaced, or
