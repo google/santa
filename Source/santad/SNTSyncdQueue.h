@@ -22,8 +22,8 @@
 @interface SNTSyncdQueue : NSObject
 
 @property(nonatomic) MOLXPCConnection *syncdConnection;
-@property(copy) void (^invalidationHandler)();
-@property(copy) void (^acceptedHandler)();
+@property(copy) void (^invalidationHandler)(void);
+@property(copy) void (^acceptedHandler)(void);
 
 - (void)addEvents:(NSArray<SNTStoredEvent *> *)events isFromBundle:(BOOL)isFromBundle;
 - (void)addBundleEvent:(SNTStoredEvent *)event reply:(void (^)(SNTBundleEventAction))reply;

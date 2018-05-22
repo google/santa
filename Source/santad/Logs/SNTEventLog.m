@@ -368,9 +368,12 @@
 
   // SecTranslocateCreateOriginalPathForURL requires that our uid be the same as the user who
   // launched the executable.  So we temporarily drop from root down to this uid, then reset.
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated"
   pthread_setugid_np(message.uid, message.gid);
   NSURL *origURL = CFBridgingRelease(CreateOriginalPathForURL(cfExecURL, NULL));
   pthread_setugid_np(KAUTH_UID_NONE, KAUTH_GID_NONE);
+#pragma clang diagnostic pop
 
   return [origURL path];  // this will be nil if there was an error
 }
