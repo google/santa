@@ -51,7 +51,7 @@ REGISTER_COMMAND_NAME(@"checkcache")
 }
 
 - (void)runWithArguments:(NSArray *)arguments {
-  uint64_t vnodeID = [self vnodeIDForFile:arguments.firstObject];
+  santa_vnode_id_t vnodeID = [self vnodeIDForFile:arguments.firstObject];
   [[self.daemonConn remoteObjectProxy] checkCacheForVnodeID:vnodeID
                                                   withReply:^(santa_action_t action) {
     if (action == ACTION_RESPOND_ALLOW) {
@@ -67,10 +67,11 @@ REGISTER_COMMAND_NAME(@"checkcache")
   }];
 }
 
-- (uint64_t)vnodeIDForFile:(NSString *)path {
+- (santa_vnode_id_t)vnodeIDForFile:(NSString *)path {
   struct stat fstat = {};
   stat(path.fileSystemRepresentation, &fstat);
-  return (((uint64_t)fstat.st_dev << 32) | fstat.st_ino);
+  santa_vnode_id_t ret = {.fsid = fstat.st_dev, .fileid = fstat.st_ino};
+  return ret;
 }
 
 @end

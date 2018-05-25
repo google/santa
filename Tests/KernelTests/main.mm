@@ -94,21 +94,22 @@
 
 /// Call in-kernel function: |kSantaUserClientAllowBinary| or |kSantaUserClientDenyBinary|
 /// passing the |vnodeID|.
-- (void)postToKernelAction:(santa_action_t)action forVnodeID:(uint64_t)vnodeid {
+- (void)postToKernelAction:(santa_action_t)action forVnodeID:(santa_vnode_id_t)vnodeid {
   if (action == ACTION_RESPOND_ALLOW) {
-    IOConnectCallScalarMethod(self.connection, kSantaUserClientAllowBinary, &vnodeid, 1, 0, 0);
+    IOConnectCallStructMethod(self.connection, kSantaUserClientAllowBinary,
+                              &vnodeid, sizeof(vnodeid), 0, 0);
   } else if (action == ACTION_RESPOND_DENY) {
-    IOConnectCallScalarMethod(self.connection, kSantaUserClientDenyBinary, &vnodeid, 1, 0, 0);
+    IOConnectCallStructMethod(self.connection, kSantaUserClientDenyBinary,
+                              &vnodeid, sizeof(vnodeid), 0, 0);
   } else if (action == ACTION_RESPOND_ACK) {
-    IOConnectCallScalarMethod(self.connection, kSantaUserClientAcknowledgeBinary,
-                              &vnodeid, 1, 0, 0);
+    IOConnectCallStructMethod(self.connection, kSantaUserClientAcknowledgeBinary,
+                              &vnodeid, sizeof(vnodeid), 0, 0);
   }
 }
 
 /// Call in-kernel function: |kSantaUserClientClearCache|
 - (void)flushCache {
-  uint64_t nonRootOnly = 0;
-  IOConnectCallScalarMethod(self.connection, kSantaUserClientClearCache, &nonRootOnly, 1, 0, 0);
+  IOConnectCallScalarMethod(self.connection, kSantaUserClientClearCache, 0, 0, 0, 0);
 }
 
 #pragma mark - Connection Tests

@@ -80,9 +80,13 @@
   santa_message_t message = {0};
   message.pid = 12;
   message.ppid = 1;
-  message.vnode_id = 1234;
+  message.vnode_id = [self getVnodeId];
   strncpy(message.path, "/a/file", 7);
   return message;
+}
+
+- (santa_vnode_id_t)getVnodeId {
+  return (santa_vnode_id_t){.fsid = 1234, .fileid = 5678};
 }
 
 - (void)tearDown {
@@ -107,7 +111,7 @@
   [self.sut validateBinaryWithMessage:[self getMessage]];
 
   OCMVerify([self.mockDriverManager postToKernelAction:ACTION_RESPOND_ALLOW
-                                            forVnodeID:1234]);
+                                            forVnodeID:[self getVnodeId]]);
 }
 
 - (void)testBinaryBlacklistRule {
@@ -122,7 +126,7 @@
   [self.sut validateBinaryWithMessage:[self getMessage]];
 
   OCMVerify([self.mockDriverManager postToKernelAction:ACTION_RESPOND_DENY
-                                            forVnodeID:1234]);
+                                            forVnodeID:[self getVnodeId]]);
 }
 
 - (void)testCertificateWhitelistRule {
@@ -140,7 +144,7 @@
   [self.sut validateBinaryWithMessage:[self getMessage]];
 
   OCMVerify([self.mockDriverManager postToKernelAction:ACTION_RESPOND_ALLOW
-                                            forVnodeID:1234]);
+                                            forVnodeID:[self getVnodeId]]);
 }
 
 - (void)testCertificateBlacklistRule {
@@ -158,7 +162,7 @@
   [self.sut validateBinaryWithMessage:[self getMessage]];
 
   OCMVerify([self.mockDriverManager postToKernelAction:ACTION_RESPOND_DENY
-                                            forVnodeID:1234]);
+                                            forVnodeID:[self getVnodeId]]);
 }
 
 - (void)testDefaultDecision {
@@ -168,12 +172,12 @@
   OCMExpect([self.mockConfigurator clientMode]).andReturn(SNTClientModeMonitor);
   [self.sut validateBinaryWithMessage:[self getMessage]];
   OCMVerify([self.mockDriverManager postToKernelAction:ACTION_RESPOND_ALLOW
-                                            forVnodeID:1234]);
+                                            forVnodeID:[self getVnodeId]]);
 
   OCMExpect([self.mockConfigurator clientMode]).andReturn(SNTClientModeLockdown);
   [self.sut validateBinaryWithMessage:[self getMessage]];
   OCMVerify([self.mockDriverManager postToKernelAction:ACTION_RESPOND_DENY
-                                            forVnodeID:1234]);
+                                            forVnodeID:[self getVnodeId]]);
 }
 
 - (void)testOutOfScope {
@@ -182,13 +186,13 @@
   OCMStub([self.mockConfigurator clientMode]).andReturn(SNTClientModeLockdown);
   [self.sut validateBinaryWithMessage:[self getMessage]];
   OCMVerify([self.mockDriverManager postToKernelAction:ACTION_RESPOND_ALLOW
-                                            forVnodeID:1234]);
+                                            forVnodeID:[self getVnodeId]]);
 }
 
 - (void)testMissingShasum {
   [self.sut validateBinaryWithMessage:[self getMessage]];
   OCMVerify([self.mockDriverManager postToKernelAction:ACTION_RESPOND_ALLOW
-                                            forVnodeID:1234]);
+                                            forVnodeID:[self getVnodeId]]);
 }
 
 - (void)testPageZero {
@@ -197,7 +201,7 @@
 
   [self.sut validateBinaryWithMessage:[self getMessage]];
   OCMVerify([self.mockDriverManager postToKernelAction:ACTION_RESPOND_DENY
-                                            forVnodeID:1234]);
+                                            forVnodeID:[self getVnodeId]]);
 }
 
 @end

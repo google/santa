@@ -70,9 +70,9 @@ double watchdogRAMPeak = 0;
 
 #pragma mark Kernel ops
 
-- (void)cacheCounts:(void (^)(uint64_t, uint64_t))reply {
-  NSArray<NSNumber *> *counts = [self.driverManager cacheCounts];
-  reply([counts[0] unsignedLongLongValue], [counts[1] unsignedLongLongValue]);
+- (void)cacheCounts:(void (^)(uint64_t))reply {
+  uint64_t count = [self.driverManager cacheCount];
+  reply(count);
 }
 
 - (void)cacheBucketCount:(void (^)(NSArray *))reply {
@@ -80,10 +80,10 @@ double watchdogRAMPeak = 0;
 }
 
 - (void)flushCache:(void (^)(BOOL))reply {
-  reply([self.driverManager flushCacheNonRootOnly:NO]);
+  reply([self.driverManager flushCache]);
 }
 
-- (void)checkCacheForVnodeID:(uint64_t)vnodeID withReply:(void (^)(santa_action_t))reply {
+- (void)checkCacheForVnodeID:(santa_vnode_id_t)vnodeID withReply:(void (^)(santa_action_t))reply {
   reply([self.driverManager checkCache:vnodeID]);
 }
 
@@ -104,7 +104,7 @@ double watchdogRAMPeak = 0;
   NSPredicate *p = [NSPredicate predicateWithFormat:@"SELF.state != %d", SNTRuleStateWhitelist];
   if ([rules filteredArrayUsingPredicate:p].count || cleanSlate) {
     LOGI(@"Received non-whitelist rule, flushing cache");
-    [self.driverManager flushCacheNonRootOnly:NO];
+    [self.driverManager flushCache];
   }
 
   reply(error);
