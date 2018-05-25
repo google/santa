@@ -497,9 +497,7 @@ void SantaDecisionManager::FileOpCallback(
     auto vnode_id = GetVnodeIDForVnode(context, vp);
     vfs_context_rele(context);
 
-    if (action == KAUTH_FILEOP_CLOSE) {
-      RemoveFromCache(vnode_id);
-    } else if (action == KAUTH_FILEOP_EXEC) {
+    if (action == KAUTH_FILEOP_EXEC) {
       auto message = NewMessage(nullptr);
       message->vnode_id = vnode_id;
       message->action = ACTION_NOTIFY_EXEC;
@@ -615,8 +613,12 @@ extern "C" int vnode_scope_callback(
                                     reinterpret_cast<int *>(arg3));
     sdm->DecrementListenerInvocations();
     return result;
-  } else if (action & KAUTH_VNODE_WRITE_DATA) {
+  } else if (action & KAUTH_VNODE_WRITE_DATA || action & KAUTH_VNODE_APPEND_DATA) {
     sdm->IncrementListenerInvocations();
+    if (!(action & KAUTH_VNODE_ACCESS)) {
+      auto vnode_id = sdm->GetVnodeIDForVnode(reinterpret_cast<vfs_context_t>(arg0), vp);
+      sdm->RemoveFromCache(vnode_id);
+    }
     char path[MAXPATHLEN];
     int pathlen = MAXPATHLEN;
     vn_getpath(vp, path, &pathlen);

@@ -116,6 +116,22 @@ class SantaDecisionManager : public OSObject {
   void DecrementListenerInvocations();
 
   /**
+   Fetches the vnode_id for a given vnode.
+
+   @param ctx The VFS context to use.
+   @param vp The Vnode to get the ID for
+   @return uint64_t The Vnode ID as a 64-bit unsigned int.
+   */
+  static inline uint64_t GetVnodeIDForVnode(const vfs_context_t ctx, const vnode_t vp) {
+    struct vnode_attr vap;
+    VATTR_INIT(&vap);
+    VATTR_WANTED(&vap, va_fsid);
+    VATTR_WANTED(&vap, va_fileid);
+    vnode_getattr(vp, &vap, ctx);
+    return (((uint64_t)vap.va_fsid << 32) | vap.va_fileid);
+  }
+
+  /**
     Vnode Callback
 
     @param cred The kauth credential for this request.
@@ -213,23 +229,6 @@ class SantaDecisionManager : public OSObject {
     @return bool true if sending was successful.
   */
   bool PostToLogQueue(santa_message_t *message);
-
-  /**
-    Fetches the vnode_id for a given vnode.
-
-    @param ctx The VFS context to use.
-    @param vp The Vnode to get the ID for
-    @return uint64_t The Vnode ID as a 64-bit unsigned int.
-  */
-  static inline uint64_t GetVnodeIDForVnode(
-      const vfs_context_t ctx, const vnode_t vp) {
-    struct vnode_attr vap;
-    VATTR_INIT(&vap);
-    VATTR_WANTED(&vap, va_fsid);
-    VATTR_WANTED(&vap, va_fileid);
-    vnode_getattr(vp, &vap, ctx);
-    return (((uint64_t)vap.va_fsid << 32) | vap.va_fileid);
-  }
 
   /**
     Creates a new santa_message_t with some fields pre-filled.
