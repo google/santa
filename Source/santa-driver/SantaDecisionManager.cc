@@ -463,7 +463,7 @@ int SantaDecisionManager::VnodeCallback(const kauth_cred_t cred,
     char path[MAXPATHLEN];
     int len = MAXPATHLEN;
     path[MAXPATHLEN - 1] = 0;
-    LOGW("file has dirty blocks: %s", (vn_getpath(vp, path, &len) == ENOSPC) ? "unknown" : path);
+    LOGW("file has dirty blocks: %s", vn_getpath(vp, path, &len) ? "unknown" : path);
   }
 
   switch (returnedAction) {
