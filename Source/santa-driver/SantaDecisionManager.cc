@@ -459,6 +459,11 @@ int SantaDecisionManager::VnodeCallback(const kauth_cred_t cred,
   if (vnode_hasdirtyblks(vp)) {
     RemoveFromCache(vnode_id);
     returnedAction = ACTION_RESPOND_DENY;
+
+    char path[MAXPATHLEN];
+    int len = MAXPATHLEN;
+    path[MAXPATHLEN - 1] = 0;
+    LOGW("file has dirty blocks: %s", vn_getpath(vp, path, &len) ? "unknown" : path);
   }
 
   switch (returnedAction) {
