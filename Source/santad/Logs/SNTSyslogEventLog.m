@@ -68,6 +68,10 @@
       message.pid, message.ppid, message.pname, ppath,
       message.uid, [self nameForUID:message.uid],
       message.gid, [self nameForGID:message.gid]];
+  
+  if ([[SNTConfigurator configurator] enableMachineIDDecoration]) {
+    [outStr appendFormat:@"|machineid=%@", self.machineID];
+  }
 
   [self writeLog:outStr];
 }
@@ -163,6 +167,10 @@
 
   if (logArgs) {
     [self addArgsForPid:message.pid toString:outLog];
+  }
+
+  if ([[SNTConfigurator configurator] enableMachineIDDecoration]) {
+    [outLog appendFormat:@"|machineid=%@", self.machineID];
   }
 
   [self writeLog:outLog];
