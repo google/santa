@@ -18,6 +18,9 @@
 
 @implementation SNTStoredEvent
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wobjc-literal-conversion"
+
 #define ENCODE(obj, key) if (obj) [coder encodeObject:obj forKey:key]
 #define DECODE(cls, key) [decoder decodeObjectOfClass:[cls class] forKey:key]
 #define DECODEARRAY(cls, key) \
@@ -128,5 +131,7 @@
   return
       [NSString stringWithFormat:@"SNTStoredEvent[%@] with SHA-256: %@", self.idx, self.fileSHA256];
 }
+
+#pragma clang diagnostic pop
 
 @end

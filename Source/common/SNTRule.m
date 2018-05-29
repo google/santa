@@ -55,6 +55,8 @@
 
 #pragma mark NSSecureCoding
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wobjc-literal-conversion"
 #define ENCODE(obj, key) if (obj) [coder encodeObject:obj forKey:key]
 #define DECODE(cls, key) [decoder decodeObjectOfClass:[cls class] forKey:key]
 
@@ -84,6 +86,7 @@
 
 #undef DECODE
 #undef ENCODE
+#pragma clang diagnostic pop
 
 - (BOOL)isEqual:(id)other {
   if (other == self) return YES;

@@ -76,7 +76,7 @@
 // Hold events for a few seconds to allow santad and santactl to establish connections.
 // If the connections are not established in time drop the event from the queue.
 // They will be uploaded during a full sync.
-- (void)dispatchBlockOnSyncdQueue:(void (^)())block {
+- (void)dispatchBlockOnSyncdQueue:(void (^)(void))block {
   dispatch_async(self.syncdQueue, ^{
     if (!dispatch_semaphore_wait(self.sema, dispatch_time(DISPATCH_TIME_NOW, 2 * NSEC_PER_SEC))) {
       if (block) block();

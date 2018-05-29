@@ -420,7 +420,7 @@ static void reachabilityHandler(
 
 #pragma mark internal helpers
 
-- (dispatch_source_t)createSyncTimerWithBlock:(void (^)())block {
+- (dispatch_source_t)createSyncTimerWithBlock:(void (^)(void))block {
   dispatch_source_t timerQueue = dispatch_source_create(
       DISPATCH_SOURCE_TYPE_TIMER, 0, 0,
       dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_BACKGROUND, 0));

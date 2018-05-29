@@ -98,11 +98,11 @@ only the root user can read/write it. We're considering approaches to secure
 this further.
 
 * Sync client: The `santactl` command-line client includes a flag to synchronize with a management server, which uploads events that have occurred on the
-machine and downloads new rules. We're still very heavily working on this
-server (which is AppEngine-based and will be open-sourced in the future), so the
-sync client code is unfinished. It does show the 'API' that we're expecting to
-use so if you'd like to write your own management server, feel free to look at
-how the client currently works (and suggest changes!)
+machine and downloads new rules. There are several open-source servers you can sync with:
+
+    * [Upvote](https://github.com/google/upvote) - An AppEngine-based server that implements social voting to make managing a large fleet easier.
+    * [Moroz](https://github.com/groob/moroz) - A simple golang server that serves hardcoded rules from simple configuration files.
+    * [Zentral](https://github.com/zentralopensource/zentral/wiki) - A centralized service that pulls data from multiple sources and deploy configurations to multiple services.
 
 * Scripts: Santa is currently written to ignore any execution that isn't a
 binary. This is because after weighing the administration cost vs the benefit,
@@ -126,8 +126,6 @@ A tool like Santa doesn't really lend itself to screenshots, so here's a video i
 
 Building
 ========
-Firstly, make sure you're using Xcode 7.3.1 as currently we do not support
-building with Xcode 8.
 
 ```sh
 git clone https://github.com/google/santa

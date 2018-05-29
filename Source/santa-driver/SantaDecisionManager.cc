@@ -586,6 +586,11 @@ int SantaDecisionManager::VnodeCallback(const kauth_cred_t cred,
   if (vnode_hasdirtyblks(vp)) {
     RemoveFromCache(vnode_id);
     returnedAction = ACTION_RESPOND_DENY;
+
+    char path[MAXPATHLEN];
+    int len = MAXPATHLEN;
+    path[MAXPATHLEN - 1] = 0;
+    LOGW("file has dirty blocks: %s", vn_getpath(vp, path, &len) ? "unknown" : path);
   }
 
   switch (returnedAction) {
@@ -779,8 +784,12 @@ extern "C" int vnode_scope_callback(
                                     reinterpret_cast<int *>(arg3));
     sdm->DecrementListenerInvocations();
     return result;
-  } else if (action & KAUTH_VNODE_WRITE_DATA) {
+  } else if (action & KAUTH_VNODE_WRITE_DATA || action & KAUTH_VNODE_APPEND_DATA) {
     sdm->IncrementListenerInvocations();
+    if (!(action & KAUTH_VNODE_ACCESS)) {
+      auto vnode_id = sdm->GetVnodeIDForVnode(reinterpret_cast<vfs_context_t>(arg0), vp);
+      sdm->RemoveFromCache(vnode_id);
+    }
     char path[MAXPATHLEN];
     int pathlen = MAXPATHLEN;
     vn_getpath(vp, path, &pathlen);

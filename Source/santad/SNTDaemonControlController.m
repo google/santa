@@ -159,7 +159,7 @@ double watchdogRAMPeak = 0;
   reply([[SNTConfigurator configurator] clientMode]);
 }
 
-- (void)setClientMode:(SNTClientMode)mode reply:(void (^)())reply {
+- (void)setClientMode:(SNTClientMode)mode reply:(void (^)(void))reply {
   [[SNTConfigurator configurator] setSyncServerClientMode:mode];
   reply();
 }
@@ -168,7 +168,7 @@ double watchdogRAMPeak = 0;
   reply(self._syncXsrfToken);
 }
 
-- (void)setXsrfToken:(NSString *)token reply:(void (^)())reply {
+- (void)setXsrfToken:(NSString *)token reply:(void (^)(void))reply {
   self._syncXsrfToken = token;
   reply();
 }
@@ -177,7 +177,7 @@ double watchdogRAMPeak = 0;
   reply([[SNTConfigurator configurator] fullSyncLastSuccess]);
 }
 
-- (void)setFullSyncLastSuccess:(NSDate *)date reply:(void (^)())reply {
+- (void)setFullSyncLastSuccess:(NSDate *)date reply:(void (^)(void))reply {
   [[SNTConfigurator configurator] setFullSyncLastSuccess:date];
   reply();
 }
@@ -186,7 +186,7 @@ double watchdogRAMPeak = 0;
   reply([[SNTConfigurator configurator] ruleSyncLastSuccess]);
 }
 
-- (void)setRuleSyncLastSuccess:(NSDate *)date reply:(void (^)())reply {
+- (void)setRuleSyncLastSuccess:(NSDate *)date reply:(void (^)(void))reply {
   [[SNTConfigurator configurator] setRuleSyncLastSuccess:date];
   reply();
 }
@@ -195,12 +195,12 @@ double watchdogRAMPeak = 0;
   reply([[SNTConfigurator configurator] syncCleanRequired]);
 }
 
-- (void)setSyncCleanRequired:(BOOL)cleanReqd reply:(void (^)())reply {
+- (void)setSyncCleanRequired:(BOOL)cleanReqd reply:(void (^)(void))reply {
   [[SNTConfigurator configurator] setSyncCleanRequired:cleanReqd];
   reply();
 }
 
-- (void)setWhitelistPathRegex:(NSString *)pattern reply:(void (^)())reply {
+- (void)setWhitelistPathRegex:(NSString *)pattern reply:(void (^)(void))reply {
   NSRegularExpression *re = [NSRegularExpression regularExpressionWithPattern:pattern
                                                                       options:0
                                                                         error:NULL];
@@ -208,7 +208,7 @@ double watchdogRAMPeak = 0;
   reply();
 }
 
-- (void)setBlacklistPathRegex:(NSString *)pattern reply:(void (^)())reply {
+- (void)setBlacklistPathRegex:(NSString *)pattern reply:(void (^)(void))reply {
   NSRegularExpression *re = [NSRegularExpression regularExpressionWithPattern:pattern
                                                                       options:0
                                                                         error:NULL];
@@ -220,7 +220,7 @@ double watchdogRAMPeak = 0;
   reply([SNTConfigurator configurator].bundlesEnabled);
 }
 
-- (void)setBundlesEnabled:(BOOL)bundlesEnabled reply:(void (^)())reply {
+- (void)setBundlesEnabled:(BOOL)bundlesEnabled reply:(void (^)(void))reply {
   [[SNTConfigurator configurator] setBundlesEnabled:bundlesEnabled];
   reply();
 }
@@ -279,7 +279,7 @@ double watchdogRAMPeak = 0;
   }];
 }
 
-- (void)postRuleSyncNotificationWithCustomMessage:(NSString *)message reply:(void (^)())reply {
+- (void)postRuleSyncNotificationWithCustomMessage:(NSString *)message reply:(void (^)(void))reply {
   [[self.notQueue.notifierConnection remoteObjectProxy]
       postRuleSyncNotificationWithCustomMessage:message];
   reply();
