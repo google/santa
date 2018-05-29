@@ -124,9 +124,8 @@
     [_controlConnection resume];
 
     // Initialize the transitive whitelisting controller object.
-    _compilerController =
-    [[SNTCompilerController alloc] initWithDriverManager:_driverManager
-                                                eventLog:_eventLog];
+    _compilerController = [[SNTCompilerController alloc] initWithDriverManager:_driverManager
+                                                                      eventLog:_eventLog];
 
     // Initialize the binary checker object
     _execController = [[SNTExecutionController alloc] initWithDriverManager:_driverManager
