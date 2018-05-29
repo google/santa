@@ -68,7 +68,7 @@
       message.pid, message.ppid, message.pname, ppath,
       message.uid, [self nameForUID:message.uid],
       message.gid, [self nameForGID:message.gid]];
-  
+
   if ([[SNTConfigurator configurator] enableMachineIDDecoration]) {
     [outStr appendFormat:@"|machineid=%@", self.machineID];
   }
