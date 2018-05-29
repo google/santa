@@ -229,7 +229,7 @@ double watchdogRAMPeak = 0;
   reply([SNTConfigurator configurator].transitiveWhitelistingEnabled);
 }
 
-- (void)setTransitiveWhitelistingEnabled:(BOOL)enabled reply:(void (^)())reply {
+- (void)setTransitiveWhitelistingEnabled:(BOOL)enabled reply:(void (^)(void))reply {
   [[SNTConfigurator configurator] setTransitiveWhitelistingEnabled:enabled];
   reply();
 }

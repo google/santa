@@ -635,47 +635,58 @@ void SantaDecisionManager::FileOpCallback(
     const char *path, const char *new_path) {
   if (!ClientConnected() || proc_selfpid() == client_pid_) return;
 
-  if (vp) {
+  if (vp && action == KAUTH_FILEOP_EXEC) {
     auto context = vfs_context_create(nullptr);
     auto vnode_id = GetVnodeIDForVnode(context, vp);
     vfs_context_rele(context);
 
-    if (action == KAUTH_FILEOP_CLOSE) {
-      RemoveFromCache(vnode_id);
-      auto message = NewMessage(nullptr);
-      message->vnode_id = vnode_id;
-      message->action = ACTION_NOTIFY_CLOSE;
-      strlcpy(message->path, path, sizeof(message->path));
-      proc_name(message->pid, message->pname, sizeof(message->pname));
-      // Note that the ACTION_NOTIFY_CLOSE messages aren't sent to the log queue
-      // because they mostly duplicate the ACTION_NOTIFY_WRITE messages (even
-      // though they aren't precisely the same).
-      if (IsCompilerProcess(message->pid)) {
-        PostToDecisionQueue(message);
-        // Add a temporary allow rule to the decision cache for this vnode_id
-        // while SNTCompilerController decides whether or not to add a
-        // permanent rule for the new file to the rules database.  This is
-        // because checking if the file is a Mach-O binary and hashing it might
-        // not finish before an attempt to execute it.
-        AddToCache(vnode_id, ACTION_RESPOND_ALLOW_PENDING_TRANSITIVE, 0);
-      }
-      delete message;
-      return;
-    } else if (action == KAUTH_FILEOP_EXEC) {
-      auto message = NewMessage(nullptr);
-      message->vnode_id = vnode_id;
-      message->action = ACTION_NOTIFY_EXEC;
-      strlcpy(message->path, path, sizeof(message->path));
-      uint64_t val = vnode_pid_map_->get(vnode_id);
-      if (val) {
-        // pid_t is 32-bit, so pid is in upper 32 bits, ppid in lower.
-        message->pid = (val >> 32);
-        message->ppid = (val & ~0xFFFFFFFF00000000);
-      }
-      PostToLogQueue(message);
-      delete message;
-      return;
+    auto message = NewMessage(nullptr);
+    message->vnode_id = vnode_id;
+    message->action = ACTION_NOTIFY_EXEC;
+    strlcpy(message->path, path, sizeof(message->path));
+    uint64_t val = vnode_pid_map_->get(vnode_id);
+    if (val) {
+      // pid_t is 32-bit, so pid is in upper 32 bits, ppid in lower.
+      message->pid = (val >> 32);
+      message->ppid = (val & ~0xFFFFFFFF00000000);
     }
+    PostToLogQueue(message);
+    delete message;
+    return;
+  }
+
+  // For transitive whitelisting decisions, we must check for KAUTH_FILEOP_CLOSE events from a
+  // known compiler process. But we must also check for KAUTH_FILEOP_RENAME events because clang
+  // under Xcode 9 will, if the output file already exists, write to a temp file, delete the
+  // existing file, then rename the temp file, without ever closing it.  So in this scenario,
+  // the KAUTH_FILEOP_RENAME is the only chance we have of whitelisting the output.
+  if (action == KAUTH_FILEOP_CLOSE || (action == KAUTH_FILEOP_RENAME && new_path)) {
+    auto message = NewMessage(nullptr);
+    if (IsCompilerProcess(message->pid)) {
+      // Fill out the rest of the message details and send it to the decision queue.
+      auto context = vfs_context_create(nullptr);
+      vnode_t real_vp = vp;
+      // We have to manually look up the vnode pointer from new_path for KAUTH_FILEOP_RENAME.
+      if (!real_vp && new_path && ERR_SUCCESS == vnode_lookup(new_path, 0, &real_vp, context)) {
+        vnode_put(real_vp);
+      }
+      if (real_vp) message->vnode_id = GetVnodeIDForVnode(context, real_vp);
+      vfs_context_rele(context);
+      message->action = ACTION_NOTIFY_WHITELIST;
+      const char *real_path = (action == KAUTH_FILEOP_CLOSE) ? path : new_path;
+      strlcpy(message->path, real_path, sizeof(message->path));
+      proc_name(message->pid, message->pname, sizeof(message->pname));
+      PostToDecisionQueue(message);
+      // Add a temporary allow rule to the decision cache for this vnode_id
+      // while SNTCompilerController decides whether or not to add a
+      // permanent rule for the new file to the rules database.  This is
+      // because checking if the file is a Mach-O binary and hashing it might
+      // not finish before an attempt to execute it.
+      AddToCache(message->vnode_id, ACTION_RESPOND_ALLOW_PENDING_TRANSITIVE, 0);
+    }
+    delete message;
+    // Don't need to do anything else for FILEOP_CLOSE, but FILEOP_RENAME should fall through.
+    if (action == KAUTH_FILEOP_CLOSE) return;
   }
 
   // Filter out modifications to locations that are definitely
