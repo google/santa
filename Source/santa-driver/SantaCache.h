@@ -41,8 +41,20 @@
 #endif // KERNEL
 
 /**
+  A type to specialize to help SantaCache with its hashing.
+
+  The default works for numeric types with a multiplicative hash
+  using a prime near to the golden ratio, per Knuth.
+*/
+template<typename T> uint64_t SantaCacheHasher(T const& t) {
+  return t * 11400714819323198549UL;
+};
+
+/**
   A somewhat simple, concurrent linked-list hash table intended for use in IOKit kernel extensions.
-  Maps 64-bit unsigned integer keys to values.
+
+  The type used for keys must overload the == operator and a specialization of
+  SantaCacheHasher must exist for it.
 
   Enforces a maximum size by clearing all entries if a new value
   is added that would go over the maximum size declared at creation.
@@ -50,7 +62,7 @@
   The number of buckets is calculated as `maximum_size` / `per_bucket`
   rounded up to the next power of 2. Locking is done per-bucket.
 */
-template<class T> class SantaCache {
+template<typename KeyT, typename ValueT> class SantaCache {
  public:
   /**
     Initialize a newly created cache.
@@ -82,13 +94,13 @@ template<class T> class SantaCache {
   /**
     Get an element from the cache. Returns zero_ if item doesn't exist.
   */
-  T get(uint64_t key) {
+  ValueT get(KeyT key) {
     struct bucket *bucket = &buckets_[hash(key)];
     lock(bucket);
     struct entry *entry = (struct entry *)((uintptr_t)bucket->head - 1);
     while (entry != nullptr) {
       if (entry->key == key) {
-        T val = entry->value;
+        ValueT val = entry->value;
         unlock(bucket);
         return val;
       }
@@ -113,14 +125,14 @@ template<class T> class SantaCache {
 
     @return the previous value (which may be zero_)
   */
-  T set(uint64_t key, T value, T previous_value, bool has_prev_value) {
+  ValueT set(KeyT key, ValueT value, ValueT previous_value, bool has_prev_value) {
     struct bucket *bucket = &buckets_[hash(key)];
     lock(bucket);
     struct entry *entry = (struct entry *)((uintptr_t)bucket->head - 1);
     struct entry *previous_entry = nullptr;
     while (entry != nullptr) {
       if (entry->key == key) {
-        T existing_value = entry->value;
+        ValueT existing_value = entry->value;
 
         if (has_prev_value && previous_value != existing_value) {
           unlock(bucket);
@@ -184,21 +196,21 @@ template<class T> class SantaCache {
   /**
     Overload to allow setting without providing a previous value
   */
-  T set(uint64_t key, T value) {
+  ValueT set(KeyT key, ValueT value) {
     return set(key, value, {}, false);
   }
 
   /**
     Overload to allow setting while providing a previous value
   */
-  T set(uint64_t key, T value, T previous_value) {
+  ValueT set(KeyT key, ValueT value, ValueT previous_value) {
     return set(key, value, previous_value, true);
   }
 
   /**
     An alias for `set(key, zero_)`
   */
-  inline void remove(uint64_t key) {
+  inline void remove(KeyT key) {
     set(key, zero_);
   }
 
@@ -240,8 +252,8 @@ template<class T> class SantaCache {
 
  private:
   struct entry {
-    uint64_t key;
-    T value;
+    KeyT key;
+    ValueT value;
     struct entry *next;
   };
 
@@ -277,7 +289,7 @@ template<class T> class SantaCache {
   /**
     Holder for a 'zero' entry for the current type
   */
-  const T zero_ = {};
+  const ValueT zero_ = {};
 
   /**
     Special bucket used when automatically clearing due to size
@@ -288,13 +300,9 @@ template<class T> class SantaCache {
 
   /**
     Hash a key to determine which bucket it belongs in.
-
-    Multiplicative hash using a prime near to the golden ratio, per Knuth.
-    This seems to have good bucket distribution generally and for the range of
-    values we expect to see.
   */
-  inline uint64_t hash(uint64_t input) const {
-    return (input * 11400714819323198549ul) % bucket_count_;
+  inline uint64_t hash(KeyT input) const {
+    return SantaCacheHasher<KeyT>(input) % bucket_count_;
   }
 };
 

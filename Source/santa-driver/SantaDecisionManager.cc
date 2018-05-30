@@ -29,9 +29,9 @@ bool SantaDecisionManager::init() {
   decision_dataqueue_lock_ = lck_mtx_alloc_init(sdm_lock_grp_, sdm_lock_attr_);
   log_dataqueue_lock_ = lck_mtx_alloc_init(sdm_lock_grp_, sdm_lock_attr_);
 
-  root_decision_cache_ = new SantaCache<uint64_t>(5000, 2);
-  non_root_decision_cache_ = new SantaCache<uint64_t>(500, 2);
-  vnode_pid_map_ = new SantaCache<uint64_t>(2000, 5);
+  root_decision_cache_ = new SantaCache<uint64_t, uint64_t>(5000, 2);
+  non_root_decision_cache_ = new SantaCache<uint64_t, uint64_t>(500, 2);
+  vnode_pid_map_ = new SantaCache<uint64_t, uint64_t>(2000, 5);
 
   decision_dataqueue_ = IOSharedDataQueue::withEntries(
       kMaxDecisionQueueEvents, sizeof(santa_message_t));
@@ -216,7 +216,7 @@ kern_return_t SantaDecisionManager::StopListener() {
   @param identifier The identifier
   @return SantaCache* The cache to use
 */
-SantaCache<uint64_t>* SantaDecisionManager::CacheForIdentifier(
+SantaCache<uint64_t, uint64_t>* SantaDecisionManager::CacheForIdentifier(
     const uint64_t identifier) {
   return (identifier >> 32 == root_fsid_) ?
     root_decision_cache_ : non_root_decision_cache_;
