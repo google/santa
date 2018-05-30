@@ -72,6 +72,8 @@ static NSString *const kFileChangesRegexKey = @"FileChangesRegex";
 static NSString *const kEventLogType = @"EventLogType";
 static NSString *const kEventLogPath = @"EventLogPath";
 
+static NSString *const kEnableMachineIDDecoration = @"EnableMachineIDDecoration";
+
 // The keys managed by a sync server or mobileconfig.
 static NSString *const kClientModeKey = @"ClientMode";
 static NSString *const kTransitiveWhitelistingEnabledKey = @"TransitiveWhitelistingEnabled";
@@ -129,6 +131,7 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
       kMachineIDPlistKeyKey : string,
       kEventLogType : string,
       kEventLogPath : string,
+      kEnableMachineIDDecoration : number,
     };
     _defaults = [NSUserDefaults standardUserDefaults];
     [_defaults addSuiteNamed:@"com.google.santa"];
@@ -280,6 +283,10 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
 }
 
 + (NSSet *)keyPathsForValuesAffectingEventLogPath {
+  return [self configStateSet];
+}
+
++ (NSSet *)keyPathsForValuesAffectingEnableMachineIDDecoration {
   return [self configStateSet];
 }
 
@@ -464,6 +471,11 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
 
 - (NSString *)eventLogPath {
   return self.configState[kEventLogPath] ?: @"/var/db/santa/santa.log";
+}
+
+- (BOOL)enableMachineIDDecoration {
+  NSNumber *number = self.configState[kEnableMachineIDDecoration];
+  return number ? [number boolValue] : NO;
 }
 
 #pragma mark Private

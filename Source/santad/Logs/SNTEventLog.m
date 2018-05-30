@@ -20,6 +20,7 @@
 #include <sys/sysctl.h>
 
 #import "SNTCachedDecision.h"
+#import "SNTConfigurator.h"
 #import "SNTDatabaseController.h"
 #import "SNTRule.h"
 #import "SNTRuleTable.h"
@@ -50,6 +51,9 @@
     _dateFormatter = [[NSDateFormatter alloc] init];
     _dateFormatter.dateFormat = @"yyyy-MM-dd'T'HH:mm:ss.SSS'Z'";
     _dateFormatter.timeZone = [NSTimeZone timeZoneWithName:@"UTC"];
+
+    // Grab the system UUID on init
+     _machineID = [[SNTConfigurator configurator] machineID];
   }
   return self;
 }

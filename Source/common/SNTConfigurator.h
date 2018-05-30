@@ -98,6 +98,13 @@
 ///
 @property(readonly, nonatomic) NSString *eventLogPath;
 
+///
+/// Enabling this appends the Santa machine ID to the end of each log line. If nothing
+/// has been overriden, this is the host's UUID.
+/// Defaults to NO.
+///
+@property(readonly, nonatomic) BOOL enableMachineIDDecoration;
+
 #pragma mark - GUI Settings
 
 ///
