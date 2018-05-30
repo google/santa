@@ -301,7 +301,8 @@ class SantaDecisionManager : public OSObject {
   kauth_listener_t vnode_listener_;
   kauth_listener_t fileop_listener_;
 
-  struct timespec ts_;
+  struct timespec ts_= { .tv_sec = kRequestLoopSleepMilliseconds / 1000,
+                         .tv_nsec = kRequestLoopSleepMilliseconds % 1000 * 1000000 };
 };
 
 /**

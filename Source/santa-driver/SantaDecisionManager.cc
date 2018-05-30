@@ -44,9 +44,6 @@ bool SantaDecisionManager::init() {
   client_pid_ = 0;
   root_fsid_ = 0;
 
-  ts_ = { .tv_sec = kRequestLoopSleepMilliseconds / 1000,
-          .tv_nsec = kRequestLoopSleepMilliseconds % 1000 * 1000000 };
-
   return true;
 }
 
@@ -224,25 +221,25 @@ SantaCache<uint64_t, uint64_t>* SantaDecisionManager::CacheForIdentifier(
 
 void SantaDecisionManager::AddToCache(
     uint64_t identifier, santa_action_t decision, uint64_t microsecs) {
-  // Decision is stored in upper 8 bits, timestamp in remaining 56.
-  uint64_t val = ((uint64_t)decision << 56) | (microsecs & 0xFFFFFFFFFFFFFF);
-
   auto decision_cache = CacheForIdentifier(identifier);
 
   switch (decision) {
     case ACTION_REQUEST_BINARY:
-      decision_cache->set(identifier, val, 0);
+      decision_cache->set(identifier, (uint64_t)ACTION_REQUEST_BINARY << 56, 0);
       break;
     case ACTION_RESPOND_ACK:
-      decision_cache->set(identifier, val, ((uint64_t)ACTION_REQUEST_BINARY << 56));
+      decision_cache->set(identifier, (uint64_t)ACTION_RESPOND_ACK << 56,
+                          ((uint64_t)ACTION_REQUEST_BINARY << 56));
       break;
     case ACTION_RESPOND_ALLOW:
-    case ACTION_RESPOND_DENY:
-      // TODO(bur): Avoid calling set() twice, finding and locking buckets is fast, but not free.
-      if (decision_cache->set(identifier, val, ((uint64_t)ACTION_REQUEST_BINARY << 56))) {
+    case ACTION_RESPOND_DENY: {
+      // Decision is stored in upper 8 bits, timestamp in remaining 56.
+      uint64_t val = ((uint64_t)decision << 56) | (microsecs & 0xFFFFFFFFFFFFFF);
+      if (!decision_cache->set(identifier, val, ((uint64_t)ACTION_REQUEST_BINARY << 56))) {
         decision_cache->set(identifier, val, ((uint64_t)ACTION_RESPOND_ACK << 56));
       }
       break;
+    }
     default:
       break;
   }
