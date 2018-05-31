@@ -133,8 +133,8 @@ template<typename KeyT, typename ValueT> class SantaCache {
 
     @param key, The key.
     @param value, The value with parameterized type.
-    @param previous_value, If the has_prev_value parameter is true the new
-        value will only be set if this parameter is equal to the provided value.
+    @param previous_value, the new value will only be set if this
+        parameter is equal to the existing value in the cache.
         This allows set to become a CAS operation.
 
     @return true if the value was set
@@ -207,8 +207,8 @@ template<typename KeyT, typename ValueT> class SantaCache {
 
     @param key, The key
     @param value, The value with parameterized type
-    @param previous_value, If the has_prev_value parameter is true the new
-        value will only be set if this parameter is equal to the provided value.
+    @param previous_value, If has_prev_value is true, the new value will only
+        be set if this parameter is equal to the existing value in the cache.
         This allows set to become a CAS operation.
     @param has_prev_value, Pass true if previous_value should be used.
 
