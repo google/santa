@@ -77,8 +77,7 @@ template<typename KeyT, typename ValueT> class SantaCache {
     if (unlikely(per_bucket < 1)) per_bucket = 1;
     if (unlikely(per_bucket > 64)) per_bucket = 64;
     max_size_ = maximum_size;
-    bucket_count_ = 1 << (32 - __builtin_clz(
-        ((uint32_t)max_size_ / per_bucket) - 1));
+    bucket_count_ = 1 << (32 - __builtin_clz(((uint32_t)max_size_ / per_bucket) - 1));
     buckets_ = (struct bucket *)IOMalloc(bucket_count_ * sizeof(struct bucket));
     bzero(buckets_, bucket_count_ * sizeof(struct bucket));
   }
@@ -184,6 +183,38 @@ template<typename KeyT, typename ValueT> class SantaCache {
   */
   inline uint64_t count() const {
     return count_;
+  }
+
+  /**
+    Fill in the per_bucket_counts array with the number of entries in each bucket.
+
+    The per_buckets_count array will contain the per-bucket counts, up to the number
+    in array_size. The start_bucket parameter will determine which bucket to start off
+    with and upon return will contain either 0 if no buckets are remaining or the next
+    bucket to begin with when called again.
+  */
+  void bucket_counts(uint16_t *per_bucket_counts, uint16_t *array_size, uint64_t *start_bucket) {
+    if (per_bucket_counts == nullptr || array_size == nullptr || start_bucket == nullptr) return;
+
+    uint64_t start = *start_bucket;
+    uint16_t size = *array_size;
+    if (start + size > bucket_count_) size = bucket_count_ - start;
+
+    for (uint16_t i = 0; i < size; ++i) {
+      uint16_t count = 0;
+      struct bucket *bucket = &buckets_[start++];
+      lock(bucket);
+      struct entry *entry = (struct entry *)((uintptr_t)bucket->head - 1);
+      while (entry != nullptr) {
+        if (entry->key != 0) ++count;
+        entry = entry->next;
+      }
+      unlock(bucket);
+      per_bucket_counts[i] = count;
+    }
+
+    *array_size = size;
+    *start_bucket = (start >= bucket_count_) ? 0 : start;
   }
 
  private:
