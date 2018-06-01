@@ -56,16 +56,19 @@ REGISTER_COMMAND_NAME(@"cachehistogram")
       k[obj] = @([k[obj] intValue] + 1);
     }];
     printf("There are %llu empty buckets\n", [k[@0] unsignedLongLongValue]);
-    for (unsigned long x = 1; x < k.count; ++x) {
-      uint64_t kv = [k[@(x)] unsignedLongLongValue];
-      if ([[[NSProcessInfo processInfo] arguments] containsObject:@"-g"]) {
-        printf("%4lu: ", x);
+
+    if ([[[NSProcessInfo processInfo] arguments] containsObject:@"-g"]) {
+      for (uint64_t x = 1; x < k.count; ++x) {
+        uint64_t kv = [k[@(x)] unsignedLongLongValue];
+        printf("%4llu: ", x);
         for (uint64_t y = 0; y < kv; ++y) {
           printf("#");
         }
         printf("\n");
-      } else {
-        printf("%4lu: %llu\n", x ,kv);
+      }
+    } else {
+      for (unsigned long x = 1; x < k.count; ++x) {
+        printf("%4lu: %llu\n", x ,[k[@(x)] unsignedLongLongValue]);
       }
     }
     exit(0);
