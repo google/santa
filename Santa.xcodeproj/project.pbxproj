@@ -32,6 +32,7 @@
 		0D10BE861A0AABD600C0C944 /* SNTDropRootPrivs.m in Sources */ = {isa = PBXBuildFile; fileRef = 0D10BE851A0AABD600C0C944 /* SNTDropRootPrivs.m */; };
 		0D10BE871A0AABD600C0C944 /* SNTDropRootPrivs.m in Sources */ = {isa = PBXBuildFile; fileRef = 0D10BE851A0AABD600C0C944 /* SNTDropRootPrivs.m */; };
 		0D10BE891A0AAF6700C0C944 /* SNTDropRootPrivs.m in Sources */ = {isa = PBXBuildFile; fileRef = 0D10BE851A0AABD600C0C944 /* SNTDropRootPrivs.m */; };
+		0D10D18420C19445008251ED /* SNTCommandCacheHistogram.m in Sources */ = {isa = PBXBuildFile; fileRef = 0D10D18320C19445008251ED /* SNTCommandCacheHistogram.m */; };
 		0D1B477019A53419008CADD3 /* SNTAboutWindowController.m in Sources */ = {isa = PBXBuildFile; fileRef = 0D1B476E19A53419008CADD3 /* SNTAboutWindowController.m */; };
 		0D1B477119A53419008CADD3 /* AboutWindow.xib in Resources */ = {isa = PBXBuildFile; fileRef = 0D1B476F19A53419008CADD3 /* AboutWindow.xib */; };
 		0D202D191CDD2EE500A88F16 /* SNTCommandSyncTest.m in Sources */ = {isa = PBXBuildFile; fileRef = 0D202D181CDD2EE500A88F16 /* SNTCommandSyncTest.m */; };
@@ -286,6 +287,7 @@
 		0D0A1EC5191AB9B000B8450F /* SNTCommandSyncPostflight.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SNTCommandSyncPostflight.m; sourceTree = "<group>"; };
 		0D10BE851A0AABD600C0C944 /* SNTDropRootPrivs.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SNTDropRootPrivs.m; sourceTree = "<group>"; };
 		0D10BE881A0AAC2100C0C944 /* SNTDropRootPrivs.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SNTDropRootPrivs.h; sourceTree = "<group>"; };
+		0D10D18320C19445008251ED /* SNTCommandCacheHistogram.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SNTCommandCacheHistogram.m; sourceTree = "<group>"; };
 		0D1B476D19A53419008CADD3 /* SNTAboutWindowController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SNTAboutWindowController.h; sourceTree = "<group>"; };
 		0D1B476E19A53419008CADD3 /* SNTAboutWindowController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SNTAboutWindowController.m; sourceTree = "<group>"; };
 		0D1B476F19A53419008CADD3 /* AboutWindow.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = AboutWindow.xib; sourceTree = "<group>"; };
@@ -801,6 +803,7 @@
 			isa = PBXGroup;
 			children = (
 				C7DA62F81E241A02009BDF2C /* SNTCommandBundleInfo.m */,
+				0D10D18320C19445008251ED /* SNTCommandCacheHistogram.m */,
 				C76614EB1D142D3C00D150C1 /* SNTCommandCheckCache.m */,
 				0DCD5FBE1909D64A006B445C /* SNTCommandFileInfo.m */,
 				0DE4C8A518FF3B1700466D04 /* SNTCommandFlushCache.m */,
@@ -1393,6 +1396,7 @@
 				C776A1071DEE160500A56616 /* SNTCommandSyncManager.m in Sources */,
 				0DCD605C19117A90006B445C /* SNTCommandSyncPreflight.m in Sources */,
 				0D41640519197AD7006A356A /* SNTCommandSyncEventUpload.m in Sources */,
+				0D10D18420C19445008251ED /* SNTCommandCacheHistogram.m in Sources */,
 				0D42D2B919D2042900955F08 /* SNTConfigurator.m in Sources */,
 				0DF395641AB76A7900CBC520 /* NSData+Zlib.m in Sources */,
 				C7FB56F71DBFB480004E14EF /* SNTXPCSyncdInterface.m in Sources */,

@@ -266,6 +266,11 @@ void SantaDecisionManager::ClearCache(bool non_root_only) {
   non_root_decision_cache_->clear();
 }
 
+void SantaDecisionManager::CacheBucketCount(
+    uint16_t *per_bucket_counts, uint16_t *array_size, uint64_t *start_bucket) {
+  non_root_decision_cache_->bucket_counts(per_bucket_counts, array_size, start_bucket);
+}
+
 #pragma mark Decision Fetching
 
 santa_action_t SantaDecisionManager::GetFromCache(uint64_t identifier) {

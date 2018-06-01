@@ -53,6 +53,12 @@
 - (NSArray<NSNumber *> *)cacheCounts;
 
 ///
+///  Return an array representing all buckets in the kernel's decision cache where each number
+///  is the number of items in that bucket.
+///
+- (NSArray<NSNumber *> *)cacheBucketCount;
+
+///
 ///  Flush the kernel's binary cache.
 ///
 - (BOOL)flushCacheNonRootOnly:(BOOL)nonRootOnly;

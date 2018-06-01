@@ -75,6 +75,10 @@ double watchdogRAMPeak = 0;
   reply([counts[0] unsignedLongLongValue], [counts[1] unsignedLongLongValue]);
 }
 
+- (void)cacheBucketCount:(void (^)(NSArray *))reply {
+  reply([self.driverManager cacheBucketCount]);
+}
+
 - (void)flushCache:(void (^)(BOOL))reply {
   reply([self.driverManager flushCacheNonRootOnly:NO]);
 }

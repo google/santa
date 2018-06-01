@@ -1,4 +1,4 @@
-/// Copyright 2015 Google Inc. All rights reserved.
+/// Copyright 2018 Google Inc. All rights reserved.
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -24,12 +24,12 @@
 #import "SNTLogging.h"
 #import "SNTXPCControlInterface.h"
 
-@interface SNTCommandFlushCache : SNTCommand<SNTCommandProtocol>
+@interface SNTCommandCacheHistogram : SNTCommand<SNTCommandProtocol>
 @end
 
-@implementation SNTCommandFlushCache
+@implementation SNTCommandCacheHistogram
 
-REGISTER_COMMAND_NAME(@"flushcache")
+REGISTER_COMMAND_NAME(@"cachehistogram")
 
 + (BOOL)requiresRoot {
   return YES;
@@ -40,23 +40,24 @@ REGISTER_COMMAND_NAME(@"flushcache")
 }
 
 + (NSString *)shortHelpText {
-  return @"Flush the kernel cache.";
+  return @"Print a cache distribution histogram.";
 }
 
 + (NSString *)longHelpText {
-  return (@"Flushes the in-kernel cache of whitelisted binaries.\n"
-          @"Returns 0 if successful, 1 otherwise");
+  return (@"Prints a histogram of each bucket of the in-kernel cache\n"
+          @"Only available in DEBUG builds.");
 }
 
 - (void)runWithArguments:(NSArray *)arguments {
-  [[self.daemonConn remoteObjectProxy] flushCache:^(BOOL success) {
-    if (success) {
-      LOGI(@"Cache flush requested");
-      exit(0);
-    } else {
-      LOGE(@"Cache flush failed");
-      exit(1);
-    }
+  [[self.daemonConn remoteObjectProxy] cacheBucketCount:^(NSArray *counts) {
+    [counts enumerateObjectsUsingBlock:^(id  _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+      uint64_t val = [obj unsignedLongLongValue];
+      if (val < 1) return;
+      printf("%5llu: ", (unsigned long long)idx);
+      for (uint64_t i = 0; i < val; ++i) printf("#");
+      printf("\n");
+    }];
+    exit(0);
   }];
 }
 

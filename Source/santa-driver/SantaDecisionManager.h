@@ -109,6 +109,20 @@ class SantaDecisionManager : public OSObject {
   */
   void ClearCache(bool non_root_only = false);
 
+
+  /**
+    Fills out the per_bucket_counts array with the number of items in each bucket in the
+    non-root decision cache.
+
+    @param per_bucket_counts An array of uint16_t's to fill in with the number of items in each
+        bucket. The size of this array is expected to equal array_size.
+    @param array_size The size of the per_bucket_counts array on input. Upon return this will be
+        updated to the number of slots that were actually used.
+    @param start_bucket If non-zero this is the bucket in the cache to start from. Upon return this
+        will be the next numbered bucket to start from for subsequent requests.
+  */
+  void CacheBucketCount(uint16_t *per_bucket_counts, uint16_t *array_size, uint64_t *start_bucket);
+
   /// Increments the count of active callbacks pending.
   void IncrementListenerInvocations();
 
