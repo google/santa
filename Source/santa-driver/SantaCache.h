@@ -114,96 +114,32 @@ template<typename KeyT, typename ValueT> class SantaCache {
     Set an element in the cache.
 
     @note If the cache is full when this is called, this will
-          empty the cache before inserting the new value.
+        empty the cache before inserting the new value.
 
-    @param key, The key
-    @param value, The value with parameterized type
-    @param previous_value, If the has_prev_value parameter is true the new
-        value will only be set if this parameter is equal to the provided value.
-        This allows set to become a CAS operation.
-    @param has_prev_value, Pass true if previous_value should be used.
+    @param key, The key.
+    @param value, The value with parameterized type.
 
-    @return the previous value (which may be zero_)
+    @return true if the value was set.
   */
-  ValueT set(KeyT key, ValueT value, ValueT previous_value, bool has_prev_value) {
-    struct bucket *bucket = &buckets_[hash(key)];
-    lock(bucket);
-    struct entry *entry = (struct entry *)((uintptr_t)bucket->head - 1);
-    struct entry *previous_entry = nullptr;
-    while (entry != nullptr) {
-      if (entry->key == key) {
-        ValueT existing_value = entry->value;
-
-        if (has_prev_value && previous_value != existing_value) {
-          unlock(bucket);
-          return existing_value;
-        }
-
-        entry->value = value;
-
-        if (value == zero_) {
-          if (previous_entry != nullptr) {
-            previous_entry->next = entry->next;
-          } else {
-            bucket->head = (struct entry *)((uintptr_t)entry->next + 1);
-          }
-          IOFreeAligned(entry, sizeof(struct entry));
-          OSDecrementAtomic(&count_);
-        }
-
-        unlock(bucket);
-        return existing_value;
-      }
-      previous_entry = entry;
-      entry = entry->next;
-    }
-
-    // If value is zero_, we're clearing but there's nothing to clear
-    // so we don't need to do anything else. Alternatively, if has_prev_value
-    // is true and is not zero_ we don't want to set a value.
-    if (value == zero_ || (has_prev_value && previous_value != zero_)) {
-      unlock(bucket);
-      return zero_;
-    }
-
-    // Check that adding this new item won't take the cache
-    // over its maximum size.
-    if (count_ + 1 > max_size_) {
-      unlock(bucket);
-      lock(&clear_bucket_);
-      // Check again in case clear has already run while waiting for lock
-      if (count_ + 1 > max_size_) {
-        clear();
-      }
-      lock(bucket);
-      unlock(&clear_bucket_);
-    }
-
-    // Allocate a new entry, set the key and value, then put this new entry at
-    // the head of this bucket's linked list.
-    struct entry *new_entry = (struct entry *)IOMallocAligned(
-        sizeof(struct entry), 2);
-    new_entry->key = key;
-    new_entry->value = value;
-    new_entry->next = (struct entry *)((uintptr_t)bucket->head - 1);
-    bucket->head = (struct entry *)((uintptr_t)new_entry + 1);
-    OSIncrementAtomic(&count_);
-
-    unlock(bucket);
-    return zero_;
-  }
-
-  /**
-    Overload to allow setting without providing a previous value
-  */
-  ValueT set(KeyT key, ValueT value) {
+  bool set(KeyT key, ValueT value) {
     return set(key, value, {}, false);
   }
 
   /**
-    Overload to allow setting while providing a previous value
+    Set an element in the cache.
+
+    @note If the cache is full when this is called, this will
+        empty the cache before inserting the new value.
+
+    @param key, The key.
+    @param value, The value with parameterized type.
+    @param previous_value, the new value will only be set if this
+        parameter is equal to the existing value in the cache.
+        This allows set to become a CAS operation.
+
+    @return true if the value was set
   */
-  ValueT set(KeyT key, ValueT value, ValueT previous_value) {
+  bool set(KeyT key, ValueT value, ValueT previous_value) {
     return set(key, value, previous_value, true);
   }
 
@@ -262,6 +198,88 @@ template<typename KeyT, typename ValueT> class SantaCache {
     // so we utilize that bit as the lock for the bucket.
     struct entry *head;
   };
+
+  /**
+    Set an element in the cache.
+
+    @note If the cache is full when this is called, this will
+    empty the cache before inserting the new value.
+
+    @param key, The key
+    @param value, The value with parameterized type
+    @param previous_value, If has_prev_value is true, the new value will only
+        be set if this parameter is equal to the existing value in the cache.
+        This allows set to become a CAS operation.
+    @param has_prev_value, Pass true if previous_value should be used.
+
+    @return true if the entry was set, false if it was not
+  */
+  bool set(KeyT key, ValueT value, ValueT previous_value, bool has_prev_value) {
+    struct bucket *bucket = &buckets_[hash(key)];
+    lock(bucket);
+    struct entry *entry = (struct entry *)((uintptr_t)bucket->head - 1);
+    struct entry *previous_entry = nullptr;
+    while (entry != nullptr) {
+      if (entry->key == key) {
+        ValueT existing_value = entry->value;
+
+        if (has_prev_value && previous_value != existing_value) {
+          unlock(bucket);
+          return false;
+        }
+
+        entry->value = value;
+
+        if (value == zero_) {
+          if (previous_entry != nullptr) {
+            previous_entry->next = entry->next;
+          } else {
+            bucket->head = (struct entry *)((uintptr_t)entry->next + 1);
+          }
+          IOFreeAligned(entry, sizeof(struct entry));
+          OSDecrementAtomic(&count_);
+        }
+
+        unlock(bucket);
+        return true;
+      }
+      previous_entry = entry;
+      entry = entry->next;
+    }
+
+    // If value is zero_, we're clearing but there's nothing to clear
+    // so we don't need to do anything else. Alternatively, if has_prev_value
+    // is true and is not zero_ we don't want to set a value.
+    if (value == zero_ || (has_prev_value && previous_value != zero_)) {
+      unlock(bucket);
+      return false;
+    }
+
+    // Check that adding this new item won't take the cache
+    // over its maximum size.
+    if (count_ + 1 > max_size_) {
+      unlock(bucket);
+      lock(&clear_bucket_);
+      // Check again in case clear has already run while waiting for lock
+      if (count_ + 1 > max_size_) {
+        clear();
+      }
+      lock(bucket);
+      unlock(&clear_bucket_);
+    }
+
+    // Allocate a new entry, set the key and value, then put this new entry at
+    // the head of this bucket's linked list.
+    struct entry *new_entry = (struct entry *)IOMallocAligned(sizeof(struct entry), 2);
+    new_entry->key = key;
+    new_entry->value = value;
+    new_entry->next = (struct entry *)((uintptr_t)bucket->head - 1);
+    bucket->head = (struct entry *)((uintptr_t)new_entry + 1);
+    OSIncrementAtomic(&count_);
+
+    unlock(bucket);
+    return true;
+  }
 
   /**
     Lock a bucket. Spins until the lock is acquired.
