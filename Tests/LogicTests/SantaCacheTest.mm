@@ -83,25 +83,14 @@
   XCTAssertEqual(sut.get(6), 42);
 }
 
-- (void)testDistribution {
-  const int bucket_ratio = 5;
-  auto sut = SantaCache<uint64_t, uint64_t>(5000, bucket_ratio);
-
-  // Fill the cache with random keys, all set to 1.
-  for (int i = 0; i < 3000; ++i) {
-    sut.set((uint64_t)arc4random() << 32 | arc4random(), 1);
-  }
-  // And add some monotonically increasing values too
-  for (int i = 2000; i < 3000; ++i) {
-    sut.set(i, 2);
-  }
-
+// Helper to test bucket distributions for uint64_t/uint64_t combinations.
+- (void)distributionTestHelper:(SantaCache<uint64_t, uint64_t> *)sut bucketRatio:(int)br {
   uint16_t count[512];
   uint16_t array_size = 512;
   uint64_t start_bucket = 0;
   std::vector<uint16_t> per_bucket;
   do {
-    sut.bucket_counts(count, &array_size, &start_bucket);
+    sut->bucket_counts(count, &array_size, &start_bucket);
     for (int i = 0; i < array_size; ++i) {
       per_bucket.push_back(count[i]);
     }
@@ -109,8 +98,7 @@
 
   // Calculate mean
   double mean = std::accumulate(per_bucket.begin(), per_bucket.end(), 0.0) / per_bucket.size();
-  XCTAssertLessThanOrEqual(mean, bucket_ratio,
-                           @"Mean per-bucket count is greater than %d", bucket_ratio);
+  XCTAssertLessThanOrEqual(mean, br, @"Mean per-bucket count is greater than %d", br);
 
   // Calculate stdev
   double accum = 0.0;
@@ -118,9 +106,33 @@
     accum += (d - mean) * (d - mean);
   });
   double stddev = sqrt(accum / (per_bucket.size() - 1));
-  double maxStdDev = (double)bucket_ratio / 2;
+  double maxStdDev = (double)br / 2;
   XCTAssertLessThanOrEqual(stddev, maxStdDev,
                            @"Standard deviation between buckets is greater than %f", maxStdDev);
+}
+
+- (void)testDistributionRandomKeys {
+  const int bucket_ratio = 5;
+  auto sut = new SantaCache<uint64_t, uint64_t>(5000, bucket_ratio);
+
+  // Fill the cache with random keys, all set to 1.
+  for (int i = 0; i < 4000; ++i) {
+    sut->set((uint64_t)arc4random() << 32 | arc4random(), 1);
+  }
+
+  [self distributionTestHelper:sut bucketRatio:bucket_ratio];
+}
+
+- (void)testDistributionMontonicKeys {
+  const int bucket_ratio = 5;
+  auto sut = new SantaCache<uint64_t, uint64_t>(5000, bucket_ratio);
+
+  // Fill the cache with monotonic keys, all set to 1.
+  for (int i = 0; i < 4000; ++i) {
+    sut->set(i, 1);
+  }
+
+  [self distributionTestHelper:sut bucketRatio:bucket_ratio];
 }
 
 - (void)testThreading {

@@ -194,24 +194,27 @@ template<typename KeyT, typename ValueT> class SantaCache {
     bucket to begin with when called again.
   */
   void bucket_counts(uint16_t *per_bucket_counts, uint16_t *array_size, uint64_t *start_bucket) {
-    uint64_t start = *start_bucket;
-    if (*start_bucket + *array_size > bucket_count_) *array_size = bucket_count_;
+    if (per_bucket_counts == nullptr || array_size == nullptr || start_bucket == nullptr) return;
 
-    for (uint16_t i = 0; i < *array_size; ++i) {
-      int16_t count = 0;
-      struct bucket *bucket = &buckets_[start + i];
+    uint64_t start = *start_bucket;
+    uint16_t size = *array_size;
+    if (start + size > bucket_count_) size = bucket_count_ - start;
+
+    for (uint16_t i = 0; i < size; ++i) {
+      uint16_t count = 0;
+      struct bucket *bucket = &buckets_[start++];
       lock(bucket);
       struct entry *entry = (struct entry *)((uintptr_t)bucket->head - 1);
       while (entry != nullptr) {
-        if (entry->key != 0) count++;
+        if (entry->key != 0) ++count;
         entry = entry->next;
       }
       unlock(bucket);
-      (*start_bucket)++;
       per_bucket_counts[i] = count;
     }
 
-    if (*start_bucket >= bucket_count_) *start_bucket = 0;
+    *array_size = size;
+    *start_bucket = (start >= bucket_count_) ? 0 : start;
   }
 
  private:
