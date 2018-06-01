@@ -196,6 +196,23 @@ IOReturn SantaDriverClient::check_cache(
   return kIOReturnSuccess;
 }
 
+IOReturn SantaDriverClient::cache_bucket_count(
+    OSObject *target, void *reference, IOExternalMethodArguments *arguments) {
+  SantaDriverClient *me = OSDynamicCast(SantaDriverClient, target);
+  if (!me) return kIOReturnBadArgument;
+
+  santa_bucket_count_t *counts = reinterpret_cast<santa_bucket_count_t *>(
+      arguments->structureOutput);
+  const santa_bucket_count_t *input = reinterpret_cast<const santa_bucket_count_t *>(
+      arguments->structureInput);
+
+  uint16_t s = sizeof(counts->per_bucket) / sizeof(uint16_t);
+  counts->start = input->start;
+  me->decisionManager->CacheBucketCount(counts->per_bucket, &s, &(counts->start));
+
+  return kIOReturnSuccess;
+}
+
 #pragma mark Method Resolution
 
 IOReturn SantaDriverClient::externalMethod(
@@ -214,7 +231,9 @@ IOReturn SantaDriverClient::externalMethod(
     { &SantaDriverClient::acknowledge_binary, 1, 0, 0, 0 },
     { &SantaDriverClient::clear_cache, 1, 0, 0, 0 },
     { &SantaDriverClient::cache_count, 0, 0, 2, 0 },
-    { &SantaDriverClient::check_cache, 1, 0, 1, 0 }
+    { &SantaDriverClient::check_cache, 1, 0, 1, 0 },
+    { &SantaDriverClient::cache_bucket_count, 0, sizeof(santa_bucket_count_t),
+        0, sizeof(santa_bucket_count_t) },
   };
 
   if (selector > static_cast<UInt32>(kSantaUserClientNMethods)) {

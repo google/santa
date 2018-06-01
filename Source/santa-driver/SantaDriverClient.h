@@ -105,6 +105,11 @@ class com_google_SantaDriverClient : public IOUserClient {
   static IOReturn check_cache(
       OSObject *target, void *reference, IOExternalMethodArguments *arguments);
 
+  ///  The daemon calls this to find out how many items are in each cache bucket.
+  ///  Input and output are both an instance of santa_bucket_count_t.
+  static IOReturn cache_bucket_count(
+      OSObject *target, void *reference, IOExternalMethodArguments *arguments);
+
  private:
   com_google_SantaDriver *myProvider;
   SantaDecisionManager *decisionManager;

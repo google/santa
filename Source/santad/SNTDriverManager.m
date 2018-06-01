@@ -212,4 +212,25 @@ static const int MAX_DELAY = 15;
   return (santa_action_t)vnode_action;
 }
 
+- (NSArray *)cacheBucketCount {
+  santa_bucket_count_t counts = {};
+  size_t size = sizeof(counts);
+
+  NSMutableArray *a = [NSMutableArray array];
+
+  do {
+    IOConnectCallStructMethod(self.connection,
+                              kSantaUserClientCacheBucketCount,
+                              &counts,
+                              size,
+                              &counts,
+                              &size);
+    for (uint64_t i = 0; i < sizeof(counts.per_bucket) / sizeof(uint16_t); ++i) {
+      [a addObject:@(counts.per_bucket[i])];
+    }
+  } while (counts.start > 0);
+
+  return a;
+}
+
 @end

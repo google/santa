@@ -24,14 +24,14 @@
 
 #include <sys/stat.h>
 
+#ifdef DEBUG
+
 @interface SNTCommandCheckCache : SNTCommand<SNTCommandProtocol>
 @end
 
 @implementation SNTCommandCheckCache
 
-#ifdef DEBUG
 REGISTER_COMMAND_NAME(@"checkcache")
-#endif
 
 + (BOOL)requiresRoot {
   return NO;
@@ -74,3 +74,5 @@ REGISTER_COMMAND_NAME(@"checkcache")
 }
 
 @end
+
+#endif

@@ -36,6 +36,7 @@
 - (void)cacheCounts:(void (^)(uint64_t rootCache, uint64_t nonRootCache))reply;
 - (void)flushCache:(void (^)(BOOL))reply;
 - (void)checkCacheForVnodeID:(uint64_t)vnodeID withReply:(void (^)(santa_action_t))reply;
+- (void)cacheBucketCount:(void (^)(NSArray *))reply;
 
 ///
 ///  Database ops
