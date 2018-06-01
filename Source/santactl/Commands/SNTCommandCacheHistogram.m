@@ -51,24 +51,25 @@ REGISTER_COMMAND_NAME(@"cachehistogram")
 
 - (void)runWithArguments:(NSArray *)arguments {
   [[self.daemonConn remoteObjectProxy] cacheBucketCount:^(NSArray *counts) {
-    NSMutableDictionary<NSNumber *, NSNumber *> *k = [NSMutableDictionary dictionary];
+    NSMutableDictionary<NSNumber *, NSNumber *> *d = [NSMutableDictionary dictionary];
     [counts enumerateObjectsUsingBlock:^(id  _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
-      k[obj] = @([k[obj] intValue] + 1);
+      d[obj] = @([d[obj] intValue] + 1);
     }];
-    printf("There are %llu empty buckets\n", [k[@0] unsignedLongLongValue]);
+    printf("There are %llu empty buckets\n", [d[@0] unsignedLongLongValue]);
 
-    if ([[[NSProcessInfo processInfo] arguments] containsObject:@"-g"]) {
-      for (uint64_t x = 1; x < k.count; ++x) {
-        uint64_t kv = [k[@(x)] unsignedLongLongValue];
-        printf("%4llu: ", x);
-        for (uint64_t y = 0; y < kv; ++y) {
+    for (NSNumber *key in [d.allKeys sortedArrayUsingSelector:@selector(compare:)]) {
+      if ([key isEqual:@0]) continue;
+      uint64_t k = [key unsignedLongLongValue];
+      uint64_t v = [d[key] unsignedLongLongValue];
+
+      if ([[[NSProcessInfo processInfo] arguments] containsObject:@"-g"]) {
+        printf("%4llu: ", k);
+        for (uint64_t y = 0; y < v; ++y) {
           printf("#");
         }
         printf("\n");
-      }
-    } else {
-      for (unsigned long x = 1; x < k.count; ++x) {
-        printf("%4lu: %llu\n", x ,[k[@(x)] unsignedLongLongValue]);
+      } else {
+        printf("%4llu: %llu\n", k, v);
       }
     }
     exit(0);
