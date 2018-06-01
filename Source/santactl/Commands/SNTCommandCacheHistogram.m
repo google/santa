@@ -53,11 +53,7 @@ REGISTER_COMMAND_NAME(@"cachehistogram")
   [[self.daemonConn remoteObjectProxy] cacheBucketCount:^(NSArray *counts) {
     NSMutableDictionary<NSNumber *, NSNumber *> *k = [NSMutableDictionary dictionary];
     [counts enumerateObjectsUsingBlock:^(id  _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
-      if (!k[obj]) {
-        k[obj] = @1;
-      } else {
-        k[obj] = @([k[obj] intValue] + 1);
-      }
+      k[obj] = @([k[obj] intValue] + 1);
     }];
     printf("There are %llu empty buckets\n", [k[@0] unsignedLongLongValue]);
     for (unsigned long x = 1; x < k.count; ++x) {
