@@ -206,7 +206,7 @@ IOReturn SantaDriverClient::cache_bucket_count(
   const santa_bucket_count_t *input = reinterpret_cast<const santa_bucket_count_t *>(
       arguments->structureInput);
 
-  uint16_t s = 1024;
+  uint16_t s = sizeof(counts->per_bucket) / sizeof(uint16_t);
   counts->start = input->start;
   me->decisionManager->CacheBucketCount(counts->per_bucket, &s, &(counts->start));
 

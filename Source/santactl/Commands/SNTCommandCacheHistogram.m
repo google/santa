@@ -45,18 +45,33 @@ REGISTER_COMMAND_NAME(@"cachehistogram")
 
 + (NSString *)longHelpText {
   return (@"Prints a histogram of each bucket of the in-kernel cache\n"
+          @"  Use -g to get 'graphical' output\n"
           @"Only available in DEBUG builds.");
 }
 
 - (void)runWithArguments:(NSArray *)arguments {
   [[self.daemonConn remoteObjectProxy] cacheBucketCount:^(NSArray *counts) {
+    NSMutableDictionary<NSNumber *, NSNumber *> *k = [NSMutableDictionary dictionary];
     [counts enumerateObjectsUsingBlock:^(id  _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
-      uint64_t val = [obj unsignedLongLongValue];
-      if (val < 1) return;
-      printf("%5llu: ", (unsigned long long)idx);
-      for (uint64_t i = 0; i < val; ++i) printf("#");
-      printf("\n");
+      if (!k[obj]) {
+        k[obj] = @1;
+      } else {
+        k[obj] = @([k[obj] intValue] + 1);
+      }
     }];
+    printf("There are %llu empty buckets\n", [k[@0] unsignedLongLongValue]);
+    for (unsigned long x = 1; x < k.count; ++x) {
+      uint64_t kv = [k[@(x)] unsignedLongLongValue];
+      if ([[[NSProcessInfo processInfo] arguments] containsObject:@"-g"]) {
+        printf("%4lu: ", x);
+        for (uint64_t y = 0; y < kv; ++y) {
+          printf("#");
+        }
+        printf("\n");
+      } else {
+        printf("%4lu: %llu\n", x ,kv);
+      }
+    }
     exit(0);
   }];
 }

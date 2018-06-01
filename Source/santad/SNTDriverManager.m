@@ -225,7 +225,7 @@ static const int MAX_DELAY = 15;
                               size,
                               &counts,
                               &size);
-    for (uint64_t i = 0; i < 1024; ++i) {
+    for (uint64_t i = 0; i < sizeof(counts.per_bucket) / sizeof(uint16_t); ++i) {
       [a addObject:@(counts.per_bucket[i])];
     }
   } while (counts.start > 0);

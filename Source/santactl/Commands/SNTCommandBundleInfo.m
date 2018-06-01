@@ -22,14 +22,14 @@
 #import "SNTStoredEvent.h"
 #import "SNTXPCControlInterface.h"
 
+#ifdef DEBUG
+
 @interface SNTCommandBundleInfo : SNTCommand<SNTCommandProtocol>
 @end
 
 @implementation SNTCommandBundleInfo
 
-#ifdef DEBUG
 REGISTER_COMMAND_NAME(@"bundleinfo")
-#endif
 
 + (BOOL)requiresRoot {
   return NO;
@@ -78,3 +78,5 @@ REGISTER_COMMAND_NAME(@"bundleinfo")
 }
 
 @end
+
+#endif
