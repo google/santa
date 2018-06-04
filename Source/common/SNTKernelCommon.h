@@ -89,12 +89,9 @@ typedef struct santa_vnode_id_t {
   bool operator==(const santa_vnode_id_t& rhs) const {
     return fsid == rhs.fsid && fileid == rhs.fileid;
   }
-  bool operator!=(const santa_vnode_id_t& rhs) const {
-    return !(*this == rhs);
-  }
   // This _must not_ be used for anything security-sensitive. It exists solely to make
   // the msleep/wakeup calls easier.
-  uint64_t simple_id() const {
+  uint64_t unsafe_simple_id() const {
     return (((uint64_t)fsid << 32) | fileid);
   }
 #endif

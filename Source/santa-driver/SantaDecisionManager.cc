@@ -20,7 +20,7 @@ OSDefineMetaClassAndStructors(SantaDecisionManager, OSObject);
 #pragma mark Object Lifecycle
 
 template<> uint64_t SantaCacheHasher<santa_vnode_id_t>(santa_vnode_id_t const& s) {
-  return SantaCacheHasher<uint64_t>(s.fsid) ^ (SantaCacheHasher<uint64_t>(s.fileid) << 1);
+  return (SantaCacheHasher<uint64_t>(s.fsid) << 1) ^ SantaCacheHasher<uint64_t>(s.fileid);
 }
 
 bool SantaDecisionManager::init() {
@@ -220,13 +220,13 @@ void SantaDecisionManager::AddToCache(
       break;
   }
 
-  wakeup((void *)identifier.simple_id());
+  wakeup((void *)identifier.unsafe_simple_id());
 }
 
 void SantaDecisionManager::RemoveFromCache(santa_vnode_id_t identifier) {
   if (unlikely(identifier.fsid == 0 && identifier.fileid == 0)) return;
   decision_cache_->remove(identifier);
-  wakeup((void *)identifier.simple_id());
+  wakeup((void *)identifier.unsafe_simple_id());
 }
 
 uint64_t SantaDecisionManager::CacheCount() const {
@@ -297,7 +297,7 @@ santa_action_t SantaDecisionManager::GetFromDaemon(
     // request, indicated with ACTION_RESPOND_ACK.
     auto cache_check_count = 0;
     do {
-      msleep((void *)message->vnode_id.simple_id(), NULL, 0, "", &ts_);
+      msleep((void *)message->vnode_id.unsafe_simple_id(), NULL, 0, "", &ts_);
       return_action = GetFromCache(identifier);
     } while (ClientConnected() &&
              ((return_action == ACTION_REQUEST_BINARY && ++cache_check_count < kRequestCacheChecks)
@@ -339,7 +339,7 @@ santa_action_t SantaDecisionManager::FetchDecision(
     } else if (return_action == ACTION_REQUEST_BINARY || return_action == ACTION_RESPOND_ACK) {
       // This thread will now sleep for kRequestLoopSleepMilliseconds (1s) or
       // until AddToCache is called, indicating a response has arrived.
-      msleep((void *)vnode_id.simple_id(), NULL, 0, "", &ts_);
+      msleep((void *)vnode_id.unsafe_simple_id(), NULL, 0, "", &ts_);
     } else {
       break;
     }

@@ -106,7 +106,7 @@ template<typename KeyT, typename ValueT> class SantaCache {
       entry = entry->next;
     }
     unlock(bucket);
-    return value_zero_;
+    return zero_;
   }
 
   /**
@@ -146,7 +146,7 @@ template<typename KeyT, typename ValueT> class SantaCache {
     An alias for `set(key, zero_)`
   */
   inline void remove(KeyT key) {
-    set(key, value_zero_);
+    set(key, zero_);
   }
 
   /**
@@ -206,7 +206,7 @@ template<typename KeyT, typename ValueT> class SantaCache {
       lock(bucket);
       struct entry *entry = (struct entry *)((uintptr_t)bucket->head - 1);
       while (entry != nullptr) {
-        if (entry->key != key_zero_) ++count;
+        if (entry->value != zero_) ++count;
         entry = entry->next;
       }
       unlock(bucket);
@@ -261,7 +261,7 @@ template<typename KeyT, typename ValueT> class SantaCache {
 
         entry->value = value;
 
-        if (value == value_zero_) {
+        if (value == zero_) {
           if (previous_entry != nullptr) {
             previous_entry->next = entry->next;
           } else {
@@ -281,7 +281,7 @@ template<typename KeyT, typename ValueT> class SantaCache {
     // If value is zero_, we're clearing but there's nothing to clear
     // so we don't need to do anything else. Alternatively, if has_prev_value
     // is true and is not zero_ we don't want to set a value.
-    if (value == value_zero_ || (has_prev_value && previous_value != value_zero_)) {
+    if (value == zero_ || (has_prev_value && previous_value != zero_)) {
       unlock(bucket);
       return false;
     }
@@ -338,8 +338,7 @@ template<typename KeyT, typename ValueT> class SantaCache {
   /**
     Holder for a 'zero' entry for the current type
   */
-  KeyT key_zero_ = {};
-  const ValueT value_zero_ = {};
+  const ValueT zero_ = {};
 
   /**
     Special bucket used when automatically clearing due to size

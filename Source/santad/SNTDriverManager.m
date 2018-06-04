@@ -199,18 +199,13 @@ static const int MAX_DELAY = 15;
 }
 
 - (santa_action_t)checkCache:(santa_vnode_id_t)vnodeID {
-  struct {
-    uint64_t vnode_action;
-  } output;
-  size_t outputCnt = sizeof(output);
+  uint64_t output;
+  uint32_t outputCnt = 1;
 
-  IOConnectCallStructMethod(_connection,
-                            kSantaUserClientCheckCache,
-                            &vnodeID,
-                            sizeof(santa_vnode_id_t),
-                            &output,
-                            &outputCnt);
-  return (santa_action_t)output.vnode_action;
+  IOConnectCallMethod(self.connection, kSantaUserClientCheckCache,
+                      NULL, 0, &vnodeID, sizeof(santa_vnode_id_t),
+                      &output, &outputCnt, NULL, 0);
+  return (santa_action_t)output;
 }
 
 - (NSArray *)cacheBucketCount {
