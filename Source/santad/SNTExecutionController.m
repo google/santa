@@ -115,14 +115,16 @@ static size_t kLargeBinarySize = 30 * 1024 * 1024;
     [_driverManager postToKernelAction:ACTION_RESPOND_ACK forVnodeID:message.vnode_id];
   }
 
-  // Get codesigning info about the file.
-  NSError *csError;
-  MOLCodesignChecker *csInfo =
-      [[MOLCodesignChecker alloc] initWithBinaryPath:binInfo.path
-                                      fileDescriptor:binInfo.fileHandle.fileDescriptor
-                                               error:&csError];
-  // Ignore codesigning if there are any errors with the signature.
-  if (csError) csInfo = nil;
+  // Get codesigning info about the file but only if it's a Mach-O.
+  MOLCodesignChecker *csInfo;
+  if (binInfo.isMachO) {
+    NSError *csError;
+    csInfo = [[MOLCodesignChecker alloc] initWithBinaryPath:binInfo.path
+                                             fileDescriptor:binInfo.fileHandle.fileDescriptor
+                                                      error:&csError];
+    // Ignore codesigning if there are any errors with the signature.
+    if (csError) csInfo = nil;
+  }
 
   // Actually make the decision.
   SNTCachedDecision *cd = [self.policyProcessor decisionForFileInfo:binInfo
