@@ -90,7 +90,7 @@ static size_t kLargeBinarySize = 30 * 1024 * 1024;
 - (void)validateBinaryWithMessage:(santa_message_t)message {
   // Get info about the file. If we can't get this info, allow execution and log an error.
   if (unlikely(message.path == NULL)) {
-    LOGE(@"Path for vnode_id is NULL: %llu", message.vnode_id);
+    LOGE(@"Path for vnode_id is NULL: %llu/%llu", message.vnode_id.fsid, message.vnode_id.fileid);
     [_driverManager postToKernelAction:ACTION_RESPOND_ALLOW forVnodeID:message.vnode_id];
     return;
   }
@@ -141,7 +141,7 @@ static size_t kLargeBinarySize = 30 * 1024 * 1024;
   if (action == ACTION_RESPOND_ALLOW) [_eventLog cacheDecision:cd];
 
   // Send the decision to the kernel.
-  [_driverManager postToKernelAction:action forVnodeID:cd.vnodeId];
+  [_driverManager postToKernelAction:action forVnodeID:message.vnode_id];
 
   // Log to database if necessary.
   if (cd.decision != SNTEventStateAllowBinary &&

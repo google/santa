@@ -147,27 +147,27 @@ static const int MAX_DELAY = 15;
 
 #pragma mark Outgoing messages
 
-- (kern_return_t)postToKernelAction:(santa_action_t)action forVnodeID:(uint64_t)vnodeId {
+- (kern_return_t)postToKernelAction:(santa_action_t)action forVnodeID:(santa_vnode_id_t)vnodeId {
   switch (action) {
     case ACTION_RESPOND_ALLOW:
-      return IOConnectCallScalarMethod(_connection,
+      return IOConnectCallStructMethod(_connection,
                                        kSantaUserClientAllowBinary,
                                        &vnodeId,
-                                       1,
+                                       sizeof(vnodeId),
                                        0,
                                        0);
     case ACTION_RESPOND_DENY:
-      return IOConnectCallScalarMethod(_connection,
+      return IOConnectCallStructMethod(_connection,
                                        kSantaUserClientDenyBinary,
                                        &vnodeId,
-                                       1,
+                                       sizeof(vnodeId),
                                        0,
                                        0);
     case ACTION_RESPOND_ACK:
-      return IOConnectCallScalarMethod(_connection,
+      return IOConnectCallStructMethod(_connection,
                                        kSantaUserClientAcknowledgeBinary,
                                        &vnodeId,
-                                       1,
+                                       sizeof(vnodeId),
                                        0,
                                        0);
     default:
@@ -175,9 +175,9 @@ static const int MAX_DELAY = 15;
   }
 }
 
-- (NSArray<NSNumber *> *)cacheCounts {
-  uint32_t input_count = 2;
-  uint64_t cache_counts[2] = {0, 0};
+- (uint64_t)cacheCount {
+  uint32_t input_count = 1;
+  uint64_t cache_counts[1] = {0};
 
   IOConnectCallScalarMethod(_connection,
                             kSantaUserClientCacheCount,
@@ -186,30 +186,26 @@ static const int MAX_DELAY = 15;
                             cache_counts,
                             &input_count);
 
-  return @[ @(cache_counts[0]), @(cache_counts[1]) ];
+  return cache_counts[0];
 }
 
-- (BOOL)flushCacheNonRootOnly:(BOOL)nonRootOnly {
-  const uint64_t nonRoot = nonRootOnly;
+- (BOOL)flushCache {
   return IOConnectCallScalarMethod(_connection,
                                    kSantaUserClientClearCache,
-                                   &nonRoot,
-                                   1,
+                                   0,
+                                   0,
                                    0,
                                    0) == KERN_SUCCESS;
 }
 
-- (santa_action_t)checkCache:(uint64_t)vnodeID {
-  uint32_t input_count = 1;
-  uint64_t vnode_action = 0;
+- (santa_action_t)checkCache:(santa_vnode_id_t)vnodeID {
+  uint64_t output;
+  uint32_t outputCnt = 1;
 
-  IOConnectCallScalarMethod(_connection,
-                            kSantaUserClientCheckCache,
-                            &vnodeID,
-                            1,
-                            &vnode_action,
-                            &input_count);
-  return (santa_action_t)vnode_action;
+  IOConnectCallMethod(self.connection, kSantaUserClientCheckCache,
+                      NULL, 0, &vnodeID, sizeof(santa_vnode_id_t),
+                      &output, &outputCnt, NULL, 0);
+  return (santa_action_t)output;
 }
 
 - (NSArray *)cacheBucketCount {

@@ -133,9 +133,10 @@ IOReturn SantaDriverClient::allow_binary(
   SantaDriverClient *me = OSDynamicCast(SantaDriverClient, target);
   if (!me) return kIOReturnBadArgument;
 
-  const uint64_t vnode_id = static_cast<const uint64_t>(arguments->scalarInput[0]);
-  if (!vnode_id) return kIOReturnInvalid;
-  me->decisionManager->AddToCache(vnode_id, ACTION_RESPOND_ALLOW);
+  if (arguments->structureInputSize != sizeof(santa_vnode_id_t)) return kIOReturnInvalid;
+  santa_vnode_id_t *vnode_id = (santa_vnode_id_t *)arguments->structureInput;
+  if (vnode_id->fsid == 0 || vnode_id->fileid == 0) return kIOReturnInvalid;
+  me->decisionManager->AddToCache(*vnode_id, ACTION_RESPOND_ALLOW);
 
   return kIOReturnSuccess;
 }
@@ -145,9 +146,10 @@ IOReturn SantaDriverClient::deny_binary(
   SantaDriverClient *me = OSDynamicCast(SantaDriverClient, target);
   if (!me) return kIOReturnBadArgument;
 
-  const uint64_t vnode_id = static_cast<const uint64_t>(arguments->scalarInput[0]);
-  if (!vnode_id) return kIOReturnInvalid;
-  me->decisionManager->AddToCache(vnode_id, ACTION_RESPOND_DENY);
+  if (arguments->structureInputSize != sizeof(santa_vnode_id_t)) return kIOReturnInvalid;
+  santa_vnode_id_t *vnode_id = (santa_vnode_id_t *)arguments->structureInput;
+  if (vnode_id->fsid == 0 || vnode_id->fileid == 0) return kIOReturnInvalid;
+  me->decisionManager->AddToCache(*vnode_id, ACTION_RESPOND_DENY);
 
   return kIOReturnSuccess;
 }
@@ -157,9 +159,10 @@ IOReturn SantaDriverClient::acknowledge_binary(
   SantaDriverClient *me = OSDynamicCast(SantaDriverClient, target);
   if (!me) return kIOReturnBadArgument;
 
-  const uint64_t vnode_id = static_cast<const uint64_t>(arguments->scalarInput[0]);
-  if (!vnode_id) return kIOReturnInvalid;
-  me->decisionManager->AddToCache(vnode_id, ACTION_RESPOND_ACK, 0);
+  if (arguments->structureInputSize != sizeof(santa_vnode_id_t)) return kIOReturnInvalid;
+  santa_vnode_id_t *vnode_id = (santa_vnode_id_t *)arguments->structureInput;
+  if (vnode_id->fsid == 0 || vnode_id->fileid == 0) return kIOReturnInvalid;
+  me->decisionManager->AddToCache(*vnode_id, ACTION_RESPOND_ACK);
 
   return kIOReturnSuccess;
 }
@@ -169,8 +172,7 @@ IOReturn SantaDriverClient::clear_cache(
   SantaDriverClient *me = OSDynamicCast(SantaDriverClient, target);
   if (!me) return kIOReturnBadArgument;
 
-  const bool non_root_only = static_cast<const bool>(arguments->scalarInput[0]);
-  me->decisionManager->ClearCache(non_root_only);
+  me->decisionManager->ClearCache();
 
   return kIOReturnSuccess;
 }
@@ -180,8 +182,7 @@ IOReturn SantaDriverClient::cache_count(
   SantaDriverClient *me = OSDynamicCast(SantaDriverClient, target);
   if (!me) return kIOReturnBadArgument;
 
-  arguments->scalarOutput[0] = me->decisionManager->RootCacheCount();
-  arguments->scalarOutput[1] = me->decisionManager->NonRootCacheCount();
+  arguments->scalarOutput[0] = me->decisionManager->CacheCount();
   return kIOReturnSuccess;
 }
 
@@ -190,8 +191,10 @@ IOReturn SantaDriverClient::check_cache(
   SantaDriverClient *me = OSDynamicCast(SantaDriverClient, target);
   if (!me) return kIOReturnBadArgument;
 
-  const uint64_t input = static_cast<const uint64_t>(arguments->scalarInput[0]);
-  arguments->scalarOutput[0] = me->decisionManager->GetFromCache(input);
+  if (arguments->structureInputSize != sizeof(santa_vnode_id_t)) return kIOReturnInvalid;
+  santa_vnode_id_t *vnode_id = (santa_vnode_id_t *)arguments->structureInput;
+  if (vnode_id->fsid == 0 || vnode_id->fileid == 0) return kIOReturnInvalid;
+  arguments->scalarOutput[0] = me->decisionManager->GetFromCache(*vnode_id);
 
   return kIOReturnSuccess;
 }
@@ -226,12 +229,12 @@ IOReturn SantaDriverClient::externalMethod(
   static IOExternalMethodDispatch sMethods[kSantaUserClientNMethods] = {
     // Function ptr, input scalar count, input struct size, output scalar count, output struct size
     { &SantaDriverClient::open, 0, 0, 0, 0 },
-    { &SantaDriverClient::allow_binary, 1, 0, 0, 0 },
-    { &SantaDriverClient::deny_binary, 1, 0, 0, 0 },
-    { &SantaDriverClient::acknowledge_binary, 1, 0, 0, 0 },
-    { &SantaDriverClient::clear_cache, 1, 0, 0, 0 },
-    { &SantaDriverClient::cache_count, 0, 0, 2, 0 },
-    { &SantaDriverClient::check_cache, 1, 0, 1, 0 },
+    { &SantaDriverClient::allow_binary, 0, sizeof(santa_vnode_id_t), 0, 0 },
+    { &SantaDriverClient::deny_binary, 0, sizeof(santa_vnode_id_t), 0, 0 },
+    { &SantaDriverClient::acknowledge_binary, 0, sizeof(santa_vnode_id_t), 0, 0 },
+    { &SantaDriverClient::clear_cache, 0, 0, 0, 0 },
+    { &SantaDriverClient::cache_count, 0, 0, 1, 0 },
+    { &SantaDriverClient::check_cache, 0, sizeof(santa_vnode_id_t), 1, 0 },
     { &SantaDriverClient::cache_bucket_count, 0, sizeof(santa_bucket_count_t),
         0, sizeof(santa_bucket_count_t) },
   };

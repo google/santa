@@ -80,10 +80,27 @@ typedef enum {
 #define RESPONSE_VALID(x) \
   (x == ACTION_RESPOND_ALLOW || x == ACTION_RESPOND_DENY)
 
+// Struct to manage vnode IDs
+typedef struct santa_vnode_id_t {
+  uint64_t fsid;
+  uint64_t fileid;
+
+#ifdef __cplusplus
+  bool operator==(const santa_vnode_id_t& rhs) const {
+    return fsid == rhs.fsid && fileid == rhs.fileid;
+  }
+  // This _must not_ be used for anything security-sensitive. It exists solely to make
+  // the msleep/wakeup calls easier.
+  uint64_t unsafe_simple_id() const {
+    return (((uint64_t)fsid << 32) | fileid);
+  }
+#endif
+} santa_vnode_id_t;
+
 // Message struct that is sent down the IODataQueue.
 typedef struct {
   santa_action_t action;
-  uint64_t vnode_id;
+  santa_vnode_id_t vnode_id;
   uid_t uid;
   gid_t gid;
   pid_t pid;

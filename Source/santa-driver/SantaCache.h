@@ -206,7 +206,7 @@ template<typename KeyT, typename ValueT> class SantaCache {
       lock(bucket);
       struct entry *entry = (struct entry *)((uintptr_t)bucket->head - 1);
       while (entry != nullptr) {
-        if (entry->key != 0) ++count;
+        if (entry->value != zero_) ++count;
         entry = entry->next;
       }
       unlock(bucket);

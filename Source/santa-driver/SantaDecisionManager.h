@@ -86,7 +86,7 @@ class SantaDecisionManager : public OSObject {
   kern_return_t StopListener();
 
   /// Adds a decision to the cache, with a timestamp.
-  void AddToCache(uint64_t identifier,
+  void AddToCache(santa_vnode_id_t identifier,
                   const santa_action_t decision,
                   const uint64_t microsecs = GetCurrentUptime());
 
@@ -94,20 +94,16 @@ class SantaDecisionManager : public OSObject {
     Fetches a response from the cache, first checking to see if the entry 
     has expired.
   */
-  santa_action_t GetFromCache(uint64_t identifier);
+  santa_action_t GetFromCache(santa_vnode_id_t identifier);
 
   /// Checks to see if a given identifier is in the cache and removes it.
-  void RemoveFromCache(uint64_t identifier);
+  void RemoveFromCache(santa_vnode_id_t identifier);
 
   /// Returns the number of entries in the cache.
-  uint64_t RootCacheCount() const;
-  uint64_t NonRootCacheCount() const;
+  uint64_t CacheCount() const;
 
-  /**
-    Clears the cache(s). If non_root_only is true, only the non-root cache 
-    is cleared.
-  */
-  void ClearCache(bool non_root_only = false);
+  /// Clears the cache.
+  void ClearCache();
 
 
   /**
@@ -134,15 +130,18 @@ class SantaDecisionManager : public OSObject {
 
    @param ctx The VFS context to use.
    @param vp The Vnode to get the ID for
-   @return uint64_t The Vnode ID as a 64-bit unsigned int.
+   @return santa_vnode_id_t The Vnode ID.
    */
-  static inline uint64_t GetVnodeIDForVnode(const vfs_context_t ctx, const vnode_t vp) {
+  static inline santa_vnode_id_t GetVnodeIDForVnode(const vfs_context_t ctx, const vnode_t vp) {
     struct vnode_attr vap;
     VATTR_INIT(&vap);
     VATTR_WANTED(&vap, va_fsid);
     VATTR_WANTED(&vap, va_fileid);
     vnode_getattr(vp, &vap, ctx);
-    return (((uint64_t)vap.va_fsid << 32) | vap.va_fileid);
+    return {
+      .fsid = vap.va_fsid,
+      .fileid = vap.va_fileid
+    };
   }
 
   /**
@@ -212,7 +211,7 @@ class SantaDecisionManager : public OSObject {
     @param identifier The vnode ID string for this request
     @return santa_action_t The response for this request
   */
-  santa_action_t GetFromDaemon(santa_message_t *message, uint64_t identifier);
+  santa_action_t GetFromDaemon(santa_message_t *message, santa_vnode_id_t identifier);
 
   /**
     Fetches an execution decision for a file, first using the cache and then
@@ -226,7 +225,7 @@ class SantaDecisionManager : public OSObject {
     @return santa_action_t The response for this request
   */
   santa_action_t FetchDecision(
-      const kauth_cred_t cred, const vnode_t vp, const uint64_t vnode_id);
+      const kauth_cred_t cred, const vnode_t vp, const santa_vnode_id_t vnode_id);
 
   /**
     Posts the requested message to the decision data queue.
@@ -280,21 +279,8 @@ class SantaDecisionManager : public OSObject {
     return (uint64_t)((sec * 1000000) + usec);
   }
 
-  SantaCache<uint64_t, uint64_t> *root_decision_cache_;
-  SantaCache<uint64_t, uint64_t> *non_root_decision_cache_;
-  SantaCache<uint64_t, uint64_t> *vnode_pid_map_;
-
-  /**
-    Return the correct cache for a given identifier.
-
-    @param identifier The identifier
-    @return SantaCache* The cache to use
-  */
-  SantaCache<uint64_t, uint64_t>* CacheForIdentifier(const uint64_t identifier);
-
-  // This is the file system ID of the root filesystem,
-  // used to determine which cache to use for requests
-  uint32_t root_fsid_;
+  SantaCache<santa_vnode_id_t, uint64_t> *decision_cache_;
+  SantaCache<santa_vnode_id_t, uint64_t> *vnode_pid_map_;
 
   lck_grp_t *sdm_lock_grp_;
   lck_grp_attr_t *sdm_lock_grp_attr_;

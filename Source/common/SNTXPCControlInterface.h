@@ -33,10 +33,10 @@
 ///
 ///  Kernel ops
 ///
-- (void)cacheCounts:(void (^)(uint64_t rootCache, uint64_t nonRootCache))reply;
+- (void)cacheCounts:(void (^)(uint64_t count))reply;
 - (void)flushCache:(void (^)(BOOL))reply;
-- (void)checkCacheForVnodeID:(uint64_t)vnodeID withReply:(void (^)(santa_action_t))reply;
 - (void)cacheBucketCount:(void (^)(NSArray *))reply;
+- (void)checkCacheForVnodeID:(santa_vnode_id_t)vnodeID withReply:(void (^)(santa_action_t))reply;
 
 ///
 ///  Database ops
