@@ -424,19 +424,6 @@ int SantaDecisionManager::VnodeCallback(const kauth_cred_t cred,
   // Fetch decision
   auto returnedAction = FetchDecision(cred, vp, vnode_id);
 
-  // If file has dirty blocks, remove from cache and deny. This would usually
-  // be the case if a file has been written to and flushed but not yet
-  // closed.
-  if (vnode_hasdirtyblks(vp)) {
-    RemoveFromCache(vnode_id);
-    returnedAction = ACTION_RESPOND_DENY;
-
-    char path[MAXPATHLEN];
-    int len = MAXPATHLEN;
-    path[MAXPATHLEN - 1] = 0;
-    LOGW("file has dirty blocks: %s", vn_getpath(vp, path, &len) ? "unknown" : path);
-  }
-
   switch (returnedAction) {
     case ACTION_RESPOND_ALLOW: {
       auto proc = vfs_context_proc(ctx);
