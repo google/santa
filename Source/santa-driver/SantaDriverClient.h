@@ -49,9 +49,7 @@ class com_google_SantaDriverClient : public IOUserClient {
 
   ///  Called when a client disconnects
   IOReturn clientClose() override;
-
-  ///  Called when the driver is shutting down
-  bool terminate(IOOptionBits options) override;
+  IOReturn clientDied() override;
 
   ///  Called in clients with IOConnectSetNotificationPort
   IOReturn registerNotificationPort(

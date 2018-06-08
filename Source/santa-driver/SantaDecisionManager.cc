@@ -374,7 +374,6 @@ bool SantaDecisionManager::PostToDecisionQueue(santa_message_t *message) {
       LOGE("Failed to queue more than %d decision requests, killing daemon",
            kMaxDecisionQueueFailures);
       proc_signal(client_pid_, SIGKILL);
-      client_pid_ = 0;
     }
   }
   lck_mtx_unlock(decision_dataqueue_lock_);
@@ -388,10 +387,6 @@ bool SantaDecisionManager::PostToLogQueue(santa_message_t *message) {
     if (failed_log_queue_requests_++ == 0) {
       LOGW("Dropping log queue messages");
     }
-    // If enqueue failed, pop an item off the queue and try again.
-    uint32_t dataSize = 0;
-    log_dataqueue_->dequeue(0, &dataSize);
-    kr = log_dataqueue_->enqueue(message, sizeof(santa_message_t));
   } else {
     if (failed_log_queue_requests_ > 0) {
       failed_log_queue_requests_--;
