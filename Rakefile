@@ -155,14 +155,8 @@ namespace :tests do
 
   desc "Tests: Kernel"
   task :kernel do
-    Rake::Task['unload'].invoke()
     Rake::Task['build:debug'].invoke()
-    begin
-      system "sudo #{xcodebuilddir}/Debug/KernelTests"
-    rescue Exception
-    ensure
-      Rake::Task['unload_kext'].execute
-    end
+    system "sudo #{xcodebuilddir}/Debug/KernelTests"
   end
 end
 

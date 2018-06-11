@@ -47,11 +47,13 @@
 #define TFAIL() \
     do { \
       printf("FAIL\n"); \
+      [self unloadExtension]; \
       exit(1); \
     } while (0)
 #define TFAILINFO(fmt, ...) \
     do { \
       printf("FAIL\n   -> " fmt "\n\nTest failed.\n\n", ##__VA_ARGS__); \
+      [self unloadExtension]; \
       exit(1); \
     } while (0)
 
@@ -215,11 +217,10 @@
 
   /// Begin listening for events
   IODataQueueMemory *queueMemory = (IODataQueueMemory *)address;
-  santa_message_t vdata;
-  UInt32 dataSize;
   do {
     while (IODataQueueDataAvailable(queueMemory)) {
-      dataSize = sizeof(vdata);
+      santa_message_t vdata;
+      UInt32 dataSize = sizeof(vdata);
       kr = IODataQueueDequeue(queueMemory, &vdata, &dataSize);
       if (kr != kIOReturnSuccess) {
         TFAILINFO("Error receiving data: %d", kr);
@@ -267,7 +268,7 @@
 
   __block int timesSeenLs = 0;
   self.handlerBlock = ^santa_action_t(santa_message_t msg) {
-    if (strncmp("/bin/ls", msg.path, 7) == 0) timesSeenLs++;
+    if (strncmp("/bin/ls", msg.path, 7) == 0) ++timesSeenLs;
     return ACTION_RESPOND_ALLOW;
   };
 
@@ -307,7 +308,7 @@
     return ACTION_RESPOND_ALLOW;
   };
 
-  // Copy the ls binary to a new file
+  // Copy the pwd binary to a new file
   if (![fm copyItemAtPath:@"/bin/pwd" toPath:target error:nil]) {
     TFAILINFO("Failed to create temp file");
   }
@@ -362,7 +363,7 @@
 }
 
 - (void)invalidatesCacheAutoCloseTest {
-  TSTART("Invalidates cache for auto-closed FDs");
+  TSTART("Invalidates cache for auto closed FDs");
 
   NSString *edSHA = [self sha256ForPath:@"/bin/ed"];
 
@@ -418,7 +419,7 @@
 
   __block int timesSeenCat = 0;
   self.handlerBlock = ^santa_action_t(santa_message_t msg) {
-    if (strncmp("/bin/cat", msg.path, 8) == 0) timesSeenCat++;
+    if (strncmp("/bin/cat", msg.path, 8) == 0) ++timesSeenCat;
     return ACTION_RESPOND_ALLOW;
   };
 
@@ -456,7 +457,7 @@
     TFAILINFO("Failed to fork");
   } else if (pid > 0) {
     int status;
-    while (waitpid(pid, &status, 0) != pid) {} // handle EINTR
+    while (waitpid(pid, &status, 0) != pid); // handle EINTR
     if (WIFEXITED(status) && WEXITSTATUS(status) == EPERM) {
       TPASS();
     } else if (WIFSTOPPED(status)) {
@@ -551,7 +552,7 @@
 - (void)unloadDaemon {
   NSTask *t = [[NSTask alloc] init];
   t.launchPath = @"/bin/launchctl";
-  t.arguments = @[ @"unload", @"com.google.santad" ];
+  t.arguments = @[ @"remove", @"com.google.santad" ];
   t.standardOutput = t.standardError = [NSPipe pipe];
   [t launch];
   [t waitUntilExit];
@@ -574,8 +575,7 @@
   NSString *src = [[fm currentDirectoryPath] stringByAppendingPathComponent:@"santa-driver.kext"];
   NSString *dest = [NSTemporaryDirectory() stringByAppendingPathComponent:@"santa-driver.kext"];
   [fm removeItemAtPath:dest error:NULL]; // ensure dest is free
-  [fm copyItemAtPath:src toPath:dest error:&error];
-  if (error) {
+  if (![fm copyItemAtPath:src toPath:dest error:&error] || error) {
     TFAILINFO("Failed to copy kext: %s", error.description.UTF8String);
   }
 
@@ -595,6 +595,7 @@
   if (ret != kOSReturnSuccess) {
     TFAILINFO("Failed to load kext: 0x%X", ret);
   }
+  usleep(50000);
   TPASS();
 }
 
@@ -610,8 +611,8 @@
 
   // Wait for driver to finish getting ready
   sleep(1);
-  printf("\n-> Functional tests:\n");
 
+  printf("\n-> Functional tests:\n");
   [self receiveAndBlockTests];
   [self receiveAndCacheTests];
   [self invalidatesCacheTests];
@@ -620,7 +621,6 @@
   [self blocksDeniedTracedBinaries];
   [self testLargeBinary];
 
-//
   printf("\n-> Performance tests:\n");
   [self testCachePerformance];
 

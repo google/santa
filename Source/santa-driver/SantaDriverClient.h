@@ -53,6 +53,9 @@ class com_google_SantaDriverClient : public IOUserClient {
   ///  Called when a client dies
   IOReturn clientDied() override;
 
+  ///  Called during termination
+  bool didTerminate(IOService* provider, IOOptionBits options, bool* defer) override;
+
   ///  Called in clients with IOConnectSetNotificationPort
   IOReturn registerNotificationPort(
       mach_port_t port, UInt32 type, UInt32 refCon) override;
