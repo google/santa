@@ -48,23 +48,21 @@ bool SantaDriverClient::start(IOService *provider) {
 }
 
 void SantaDriverClient::stop(IOService *provider) {
-  super::stop(provider);
   myProvider = nullptr;
   decisionManager = nullptr;
+  super::stop(provider);
+}
+
+IOReturn SantaDriverClient::clientDied() {
+  LOGI("Client died.");
+  decisionManager->DisconnectClient(true);
+  return terminate() ? kIOReturnSuccess : kIOReturnError;
 }
 
 IOReturn SantaDriverClient::clientClose() {
-  decisionManager->DisconnectClient(true);
-  return terminate(kIOServiceSynchronous) ? kIOReturnSuccess : kIOReturnError;
-}
-
-bool SantaDriverClient::terminate(IOOptionBits options) {
-  decisionManager->DisconnectClient();
   LOGI("Client disconnected.");
-
-  if (myProvider && myProvider->isOpen(this)) myProvider->close(this);
-
-  return super::terminate(options);
+  decisionManager->DisconnectClient(false);
+  return terminate() ? kIOReturnSuccess : kIOReturnError;
 }
 
 #pragma mark Fetching memory and data queue notifications
