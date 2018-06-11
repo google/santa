@@ -68,4 +68,7 @@
 ///
 - (santa_action_t)checkCache:(santa_vnode_id_t)vnodeID;
 
+///  Returns whether the connection to the driver has been established.
+@property(readonly) BOOL connectionEstablished;
+
 @end

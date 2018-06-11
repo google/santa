@@ -23,6 +23,7 @@
 
 @interface SNTDriverManager ()
 @property io_connect_t connection;
+@property(readwrite) BOOL connectionEstablished;
 @end
 
 @implementation SNTDriverManager
@@ -42,26 +43,7 @@
     KextManagerLoadKextWithIdentifier(CFSTR(USERCLIENT_ID), NULL);
 
     // Wait for the driver to appear
-    io_service_t service = [self waitForDriver:classToMatch];
-
-    // This calls `initWithTask`, `attach` and `start` in `SantaDriverClient`
-    kern_return_t kr = IOServiceOpen(service, mach_task_self(), 0, &_connection);
-    IOObjectRelease(service);
-    if (kr != kIOReturnSuccess) {
-      LOGE(@"Failed to open santa-driver service");
-      return nil;
-    }
-
-    // Call `open` in `SantaDriverClient`
-    kr = IOConnectCallMethod(_connection, kSantaUserClientOpen, 0, 0, 0, 0, 0, 0, 0, 0);
-
-    if (kr == kIOReturnExclusiveAccess) {
-      LOGW(@"A client is already connected");
-      return nil;
-    } else if (kr != kIOReturnSuccess) {
-      LOGE(@"An error occurred while opening the connection");
-      return nil;
-    }
+    [self waitForDriver:classToMatch];
   }
   return self;
 }
@@ -86,21 +68,38 @@ static void driverAppearedHandler(void *info, io_iterator_t iterator) {
   }
 }
 
-// Wait for the driver to
-- (io_service_t)waitForDriver:(CFDictionaryRef CF_RELEASES_ARGUMENT)matchingDict {
+// Wait for the driver to appear, then attach to and open it.
+- (void)waitForDriver:(CFDictionaryRef CF_RELEASES_ARGUMENT)matchingDict {
   IONotificationPortRef notificationPort = IONotificationPortCreate(kIOMasterPortDefault);
   CFRunLoopAddSource([[NSRunLoop currentRunLoop] getCFRunLoop],
                      IONotificationPortGetRunLoopSource(notificationPort),
                      kCFRunLoopDefaultMode);
 
-  dispatch_semaphore_t sema = dispatch_semaphore_create(0);
   io_iterator_t iterator = 0;
-  __block io_service_t service = 0;
 
   DriverAppearedBlock block = ^(io_object_t object) {
-    IOObjectRetain(object);
-    service = (io_service_t)object;
-    dispatch_semaphore_signal(sema);
+    // This calls `initWithTask`, `attach` and `start` in `SantaDriverClient`
+    kern_return_t kr = IOServiceOpen(object, mach_task_self(), 0, &_connection);
+    if (kr != kIOReturnSuccess) {
+      LOGE(@"Failed to open santa-driver service: 0x%X", kr);
+      exit(1);
+    }
+
+    // Call `open` in `SantaDriverClient`
+    kr = IOConnectCallMethod(_connection, kSantaUserClientOpen, 0, 0, 0, 0, 0, 0, 0, 0);
+    if (kr == kIOReturnExclusiveAccess) {
+      LOGW(@"A client is already connected");
+      exit(2);
+    } else if (kr != kIOReturnSuccess) {
+      LOGE(@"An error occurred while opening the connection: 0x%X", kr);
+      exit(3);
+    }
+
+    // Release the iterator to disarm the notifications.
+    IOObjectRelease(iterator);
+    IONotificationPortDestroy(notificationPort);
+
+    _connectionEstablished = YES;
   };
 
   LOGI(@"Waiting for Santa driver to become available");
@@ -113,16 +112,8 @@ static void driverAppearedHandler(void *info, io_iterator_t iterator) {
                                    &iterator);
 
   // Call the handler once to 'empty' the iterator, arming it. If the driver is already loaded
-  // this will immediately set object and signal the semaphore.
+  // this will immediately cause the connection to be fully established.
   driverAppearedHandler((__bridge_retained void*)block, iterator);
-
-  dispatch_semaphore_wait(sema, DISPATCH_TIME_FOREVER);
-
-  // Release the iterator to disarm the notifications.
-  IOObjectRelease(iterator);
-  IONotificationPortDestroy(notificationPort);
-
-  return service;
 }
 
 #pragma mark Incoming messages
@@ -137,7 +128,7 @@ static void driverAppearedHandler(void *info, io_iterator_t iterator) {
 
 - (void)listenForRequestsOfType:(santa_queuetype_t)type
                    withCallback:(void (^)(santa_message_t))callback {
-  kern_return_t kr;
+  while (!self.connectionEstablished) usleep(100000); // 100ms
 
   // Allocate a mach port to receive notifactions from the IODataQueue
   mach_port_t receivePort = IODataQueueAllocateNotificationPort();
@@ -147,9 +138,9 @@ static void driverAppearedHandler(void *info, io_iterator_t iterator) {
   }
 
   // This will call registerNotificationPort() inside our user client class
-  kr = IOConnectSetNotificationPort(self.connection, type, receivePort, 0);
+  kern_return_t kr = IOConnectSetNotificationPort(self.connection, type, receivePort, 0);
   if (kr != kIOReturnSuccess) {
-    LOGD(@"Failed to register notification port for type %d: %d", type, kr);
+    LOGD(@"Failed to register notification port for type %d: 0x%X", type, kr);
     mach_port_destroy(mach_task_self(), receivePort);
     return;
   }
@@ -159,7 +150,7 @@ static void driverAppearedHandler(void *info, io_iterator_t iterator) {
   mach_vm_size_t size = 0;
   kr = IOConnectMapMemory(self.connection, type, mach_task_self(), &address, &size, kIOMapAnywhere);
   if (kr != kIOReturnSuccess) {
-    LOGD(@"Failed to map memory for type %d: %d", type, kr);
+    LOGD(@"Failed to map memory for type %d: 0x%X", type, kr);
     mach_port_destroy(mach_task_self(), receivePort);
     return;
   }
@@ -174,7 +165,7 @@ static void driverAppearedHandler(void *info, io_iterator_t iterator) {
       if (kr == kIOReturnSuccess) {
         callback(vdata);
       } else {
-        LOGE(@"Error dequeuing data for type %d: %d", type, kr);
+        LOGE(@"Error dequeuing data for type %d: 0x%X", type, kr);
         exit(2);
       }
     }
