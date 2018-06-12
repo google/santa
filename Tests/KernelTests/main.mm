@@ -14,12 +14,14 @@
 
 #import <Foundation/Foundation.h>
 #import <IOKit/IOKitLib.h>
+#import <IOKit/kext/KextManager.h>
 
 #import <CommonCrypto/CommonDigest.h>
 
 #include <cmath>
 #include <ctime>
 #include <iostream>
+#include <libkern/OSKextLib.h>
 #include <mach/mach.h>
 #include <numeric>
 #include <sys/ptrace.h>
@@ -31,34 +33,41 @@
 ///
 /// Kernel Extension Tests
 ///
-/// Build and launch as root while the kernel extension is loaded and nothing is already connected.
+/// Build and launch as root. This target is dependent on the santa-driver target and these
+/// tests will load santa-driver from the same location this binary is executed from, unloading
+/// any existing driver (and daemon) if necessary.
 ///
 
 #define TSTART(testName) \
     do { printf("   %-50s ", testName); } while (0)
 #define TPASS() \
-    do { printf("\x1b[32mPASS\x1b[0m\n"); } while (0)
+    do { printf("PASS\n"); } while (0)
 #define TPASSINFO(fmt, ...) \
-    do { printf("\x1b[32mPASS\x1b[0m\n      " fmt "\n", ##__VA_ARGS__); } while (0)
+    do { printf("PASS\n      " fmt "\n", ##__VA_ARGS__); } while (0)
 #define TFAIL() \
     do { \
-      printf("\x1b[31mFAIL\x1b[0m\n"); \
+      printf("FAIL\n"); \
+      [self unloadExtension]; \
       exit(1); \
     } while (0)
 #define TFAILINFO(fmt, ...) \
     do { \
-      printf("\x1b[31mFAIL\x1b[0m\n   -> " fmt "\n\nTest failed.\n\n", ##__VA_ARGS__); \
+      printf("FAIL\n   -> " fmt "\n\nTest failed.\n\n", ##__VA_ARGS__); \
+      [self unloadExtension]; \
       exit(1); \
     } while (0)
 
 @interface SantaKernelTests : NSObject
 @property io_connect_t connection;
-@property int timesSeenLs;
-@property int timesSeenCat;
-@property int timesSeenCp;
 
-@property int testExeIteration;
-@property int timesSeenTestExeIteration;
+// A block that tests can set to handle specific files/binaries.
+// The block should return an action to respond to the kernel with.
+// If no block is specified or no action is returned, the exec will be allowed.
+@property(atomic, copy) santa_action_t (^handlerBlock)(santa_message_t msg);
+
+- (void)unloadDaemon;
+- (void)unloadExtension;
+- (void)loadExtension;
 - (void)runTests;
 @end
 
@@ -95,14 +104,14 @@
 /// Call in-kernel function: |kSantaUserClientAllowBinary| or |kSantaUserClientDenyBinary|
 /// passing the |vnodeID|.
 - (void)postToKernelAction:(santa_action_t)action forVnodeID:(santa_vnode_id_t)vnodeid {
-  if (action == ACTION_RESPOND_ALLOW) {
-    IOConnectCallStructMethod(self.connection, kSantaUserClientAllowBinary,
-                              &vnodeid, sizeof(vnodeid), 0, 0);
-  } else if (action == ACTION_RESPOND_DENY) {
+  if (action == ACTION_RESPOND_DENY) {
     IOConnectCallStructMethod(self.connection, kSantaUserClientDenyBinary,
                               &vnodeid, sizeof(vnodeid), 0, 0);
   } else if (action == ACTION_RESPOND_ACK) {
     IOConnectCallStructMethod(self.connection, kSantaUserClientAcknowledgeBinary,
+                              &vnodeid, sizeof(vnodeid), 0, 0);
+  } else {
+    IOConnectCallStructMethod(self.connection, kSantaUserClientAllowBinary,
                               &vnodeid, sizeof(vnodeid), 0, 0);
   }
 }
@@ -178,23 +187,16 @@
 /// From then on, monitors the IODataQueue and responds for files specifically used in other tests.
 /// For everything else, allows execution normally to avoid deadlocking the system.
 - (void)beginListening {
-  kern_return_t kr;
-  santa_message_t vdata;
-  UInt32 dataSize;
-  IODataQueueMemory *queueMemory;
-  mach_port_t receivePort;
-
-  mach_vm_address_t address = 0;
-  mach_vm_size_t size = 0;
-
   TSTART("Allocates a notification port");
+  mach_port_t receivePort;
   if (!(receivePort = IODataQueueAllocateNotificationPort())) {
     TFAIL();
   }
   TPASS();
 
   TSTART("Registers the notification port");
-  kr = IOConnectSetNotificationPort(self.connection, QUEUETYPE_DECISION, receivePort, 0);
+  kern_return_t kr = IOConnectSetNotificationPort(
+      self.connection, QUEUETYPE_DECISION, receivePort, 0);
   if (kr != kIOReturnSuccess) {
     mach_port_destroy(mach_task_self(), receivePort);
     TFAILINFO("KR: %d", kr);
@@ -203,6 +205,8 @@
   TPASS();
 
   TSTART("Maps shared memory");
+  mach_vm_address_t address = 0;
+  mach_vm_size_t size = 0;
   kr = IOConnectMapMemory(self.connection, QUEUETYPE_DECISION, mach_task_self(),
                           &address, &size, kIOMapAnywhere);
   if (kr != kIOReturnSuccess) {
@@ -211,85 +215,26 @@
   }
   TPASS();
 
-  // Fetch the SHA-256 of /bin/ed, as we'll be using that for the cache invalidation test.
-  NSString *edSHA = [self sha256ForPath:@"/bin/ed"];
-
-  // Create the RE used for matching testexe's
-  NSString *cwd = [[NSFileManager defaultManager] currentDirectoryPath];
-  NSString *pattern = [cwd stringByAppendingPathComponent:@"testexe\\.(\\d+)"];
-  NSRegularExpression *re = [NSRegularExpression regularExpressionWithPattern:pattern
-                                                                      options:0
-                                                                        error:NULL];
-
   /// Begin listening for events
-  queueMemory = (IODataQueueMemory *)address;
+  IODataQueueMemory *queueMemory = (IODataQueueMemory *)address;
   do {
     while (IODataQueueDataAvailable(queueMemory)) {
-      dataSize = sizeof(vdata);
+      santa_message_t vdata;
+      UInt32 dataSize = sizeof(vdata);
       kr = IODataQueueDequeue(queueMemory, &vdata, &dataSize);
-      if (kr == kIOReturnSuccess) {
-        if (vdata.action != ACTION_REQUEST_BINARY) continue;
-
-        if ([[self sha256ForPath:@(vdata.path)] isEqual:edSHA]) {
-          [self postToKernelAction:ACTION_RESPOND_DENY forVnodeID:vdata.vnode_id];
-        } else if (strncmp("/bin/mv", vdata.path, strlen("/bin/mv")) == 0) {
-          [self postToKernelAction:ACTION_RESPOND_DENY forVnodeID:vdata.vnode_id];
-        } else if (strncmp("/bin/ls", vdata.path, strlen("/bin/ls")) == 0) {
-          [self postToKernelAction:ACTION_RESPOND_ALLOW forVnodeID:vdata.vnode_id];
-          self.timesSeenLs++;
-        } else if (strncmp("/bin/cp", vdata.path, strlen("/bin/cp")) == 0) {
-          [self postToKernelAction:ACTION_RESPOND_ALLOW forVnodeID:vdata.vnode_id];
-          self.timesSeenCp++;
-        } else if (strncmp("/bin/cat", vdata.path, strlen("/bin/cat")) == 0) {
-          [self postToKernelAction:ACTION_RESPOND_ALLOW forVnodeID:vdata.vnode_id];
-          self.timesSeenCat++;
-        } else if (strncmp("/usr/bin/cal", vdata.path, strlen("/usr/bin/cal")) == 0) {
-          static int count = 0;
-          if (count++) TFAILINFO("Large binary should not re-request");
-          [self postToKernelAction:ACTION_RESPOND_ACK forVnodeID:vdata.vnode_id];
-          for (int i = 0; i < 15; ++i) {
-            printf("\033[s");  // save cursor position
-            printf("%i/15", i);
-            sleep(1);
-            printf("\033[u");  // restore cursor position
-          }
-          printf("\033[K\033[u");  // clear line, restore cursor position
-          [self postToKernelAction:ACTION_RESPOND_ALLOW forVnodeID:vdata.vnode_id];
-        } else if (strncmp("/bin/ln", vdata.path, strlen("/bin/ln")) == 0) {
-          [self postToKernelAction:ACTION_RESPOND_ALLOW forVnodeID:vdata.vnode_id];
-
-          TSTART("Sends valid pid/ppid");
-          if (vdata.pid < 1 || vdata.ppid < 1) {
-            TFAIL();
-          }
-          TPASSINFO("Received pid, ppid: %d, %d", vdata.pid, vdata.ppid);
-        } else {
-          NSString *path = @(vdata.path);
-
-          // If current executable is one of our test exe's from handlesLotsOfBinaries,
-          // check that the number has increased.
-          NSArray *matches = [re matchesInString:path
-                                         options:0
-                                           range:NSMakeRange(0, path.length)];
-          if (matches.count == 1 && [matches[0] numberOfRanges] == 2) {
-            NSUInteger count = [[path substringWithRange:[matches[0] rangeAtIndex:1]] intValue];
-            if (count <= self.testExeIteration && count > 0) {
-              self.timesSeenTestExeIteration++;
-              if (self.timesSeenTestExeIteration > 2) {
-                TFAILINFO("Saw same binary several times");
-              }
-            } else {
-              self.timesSeenTestExeIteration = 0;
-              self.testExeIteration = (int)count;
-            }
-          }
-
-          // Allow everything not related to our testing.
-          [self postToKernelAction:ACTION_RESPOND_ALLOW forVnodeID:vdata.vnode_id];
-        }
-      } else {
+      if (kr != kIOReturnSuccess) {
         TFAILINFO("Error receiving data: %d", kr);
+        continue;
       }
+      if (vdata.action != ACTION_REQUEST_BINARY) continue;
+
+      santa_action_t action = ACTION_RESPOND_ALLOW;
+
+      @synchronized(self) {
+        if (self.handlerBlock) action = self.handlerBlock(vdata);
+      }
+
+      [self postToKernelAction:action forVnodeID:vdata.vnode_id];
     }
   } while (IODataQueueWaitForAvailableData(queueMemory, receivePort) == kIOReturnSuccess);
 
@@ -299,12 +244,15 @@
 
 #pragma mark - Functional Tests
 
-/// Tests that blocking works correctly
 - (void)receiveAndBlockTests {
   TSTART("Blocks denied binaries");
 
-  NSTask *ed = [self taskWithPath:@"/bin/ed"];
+  self.handlerBlock = ^santa_action_t(santa_message_t msg) {
+    if (strncmp("/bin/ed", msg.path, 7) == 0) return ACTION_RESPOND_DENY;
+    return ACTION_RESPOND_ALLOW;
+  };
 
+  NSTask *ed = [self taskWithPath:@"/bin/ed"];
   @try {
     [ed launch];
     [ed waitUntilExit];
@@ -315,17 +263,20 @@
   }
 }
 
-/// Tests that an allowed binary is cached
 - (void)receiveAndCacheTests {
   TSTART("Permits & caches allowed binaries");
 
-  self.timesSeenLs = 0;
+  __block int timesSeenLs = 0;
+  self.handlerBlock = ^santa_action_t(santa_message_t msg) {
+    if (strncmp("/bin/ls", msg.path, 7) == 0) ++timesSeenLs;
+    return ACTION_RESPOND_ALLOW;
+  };
 
   NSTask *ls = [self taskWithPath:@"/bin/ls"];
   [ls launch];
   [ls waitUntilExit];
 
-  if (self.timesSeenLs != 1) {
+  if (timesSeenLs != 1) {
     TFAILINFO("Didn't record first run of ls");
   }
 
@@ -333,25 +284,37 @@
   [ls launch];
   [ls waitUntilExit];
 
-  if (self.timesSeenLs > 1) {
+  if (timesSeenLs > 1) {
     TFAILINFO("Received request for ls a second time");
   }
 
   TPASS();
 }
 
-/// Tests that a write to a cached vnode will invalidate the cached response for that file
 - (void)invalidatesCacheTests {
   TSTART("Invalidates cache for manually closed FDs");
 
-  // Copy the ls binary to a new file
   NSFileManager *fm = [NSFileManager defaultManager];
-  if (![fm copyItemAtPath:@"/bin/pwd" toPath:@"invalidacachetest_tmp" error:nil]) {
+  NSString *target =
+      [[fm currentDirectoryPath] stringByAppendingPathComponent:@"invalidatecachetest"];
+  NSString *edSHA = [self sha256ForPath:@"/bin/ed"];
+
+  __weak __typeof(self) weakSelf = self;
+  self.handlerBlock = ^santa_action_t(santa_message_t msg) {
+    __strong __typeof(weakSelf) self = weakSelf;
+    if ([[self sha256ForPath:@(msg.path)] isEqual:edSHA]) {
+      return ACTION_RESPOND_DENY;
+    }
+    return ACTION_RESPOND_ALLOW;
+  };
+
+  // Copy the pwd binary to a new file
+  if (![fm copyItemAtPath:@"/bin/pwd" toPath:target error:nil]) {
     TFAILINFO("Failed to create temp file");
   }
 
   // Launch the new file to put it in the cache
-  NSTask *pwd = [self taskWithPath:@"invalidacachetest_tmp"];
+  NSTask *pwd = [self taskWithPath:target];
   [pwd launch];
   [pwd waitUntilExit];
 
@@ -363,7 +326,7 @@
   // Now replace the contents of the test file (which is cached) with the contents of /bin/ed,
   // which is 'blacklisted' by SHA-256 during the tests.
   FILE *infile = fopen("/bin/ed", "r");
-  FILE *outfile = fopen("invalidacachetest_tmp", "w");
+  FILE *outfile = fopen(target.UTF8String, "w");
   int ch;
   while ((ch = fgetc(infile)) != EOF) {
     fputc(ch, outfile);
@@ -371,13 +334,13 @@
   fclose(infile);
 
   // Now try running the temp file again. If it succeeds, the test failed.
-  NSTask *ed = [self taskWithPath:@"invalidacachetest_tmp"];
+  NSTask *ed = [self taskWithPath:target];
 
   @try {
     [ed launch];
     [ed waitUntilExit];
     TFAILINFO("Launched after write while file open");
-    [fm removeItemAtPath:@"invalidacachetest_tmp" error:nil];
+    [fm removeItemAtPath:target error:nil];
   } @catch (NSException *exception) {
     // This is a pass, but we have more to do.
   }
@@ -386,7 +349,7 @@
   fclose(outfile);
 
   // And try running the temp file again. If it succeeds, the test failed.
-  ed = [self taskWithPath:@"invalidacachetest_tmp"];
+  ed = [self taskWithPath:target];
 
   @try {
     [ed launch];
@@ -395,14 +358,25 @@
   } @catch (NSException *exception) {
     TPASS();
   } @finally {
-    [fm removeItemAtPath:@"invalidacachetest_tmp" error:nil];
+    [fm removeItemAtPath:target error:nil];
   }
 }
 
 - (void)invalidatesCacheAutoCloseTest {
-  TSTART("Invalidates cache for auto-closed FDs");
+  TSTART("Invalidates cache for auto closed FDs");
 
-  // Check invalidations when kernel auto-closes descriptors
+  NSString *edSHA = [self sha256ForPath:@"/bin/ed"];
+
+  __weak __typeof(self) weakSelf = self;
+  self.handlerBlock = ^santa_action_t(santa_message_t msg) {
+    __strong __typeof(weakSelf) self = weakSelf;
+    if ([[self sha256ForPath:@(msg.path)] isEqual:edSHA]) {
+      return ACTION_RESPOND_DENY;
+    }
+    return ACTION_RESPOND_ALLOW;
+  };
+
+  // Create temporary file
   NSFileManager *fm = [NSFileManager defaultManager];
   if (![fm copyItemAtPath:@"/bin/pwd" toPath:@"invalidacachetest_tmp" error:nil]) {
     TFAILINFO("Failed to create temp file");
@@ -412,13 +386,11 @@
   NSTask *pwd = [self taskWithPath:@"invalidacachetest_tmp"];
   [pwd launch];
   [pwd waitUntilExit];
-
-  // Exit if this fails with a useful message.
   if ([pwd terminationStatus] != 0) {
     TFAILINFO("Second launch of test binary failed");
   }
 
-  // Replace file contents
+  // Replace file contents using dd, which doesn't close FDs
   NSDictionary *attrs = [fm attributesOfItemAtPath:@"/bin/ed" error:NULL];
   NSTask *dd = [self taskWithPath:@"/bin/dd"];
   dd.arguments = @[ @"if=/bin/ed",
@@ -442,17 +414,20 @@
   }
 }
 
-/// Tests the clear cache function works correctly
 - (void)clearCacheTests {
   TSTART("Can clear cache");
 
-  self.timesSeenCat = 0;
+  __block int timesSeenCat = 0;
+  self.handlerBlock = ^santa_action_t(santa_message_t msg) {
+    if (strncmp("/bin/cat", msg.path, 8) == 0) ++timesSeenCat;
+    return ACTION_RESPOND_ALLOW;
+  };
 
   NSTask *cat = [self taskWithPath:@"/bin/cat"];
   [cat launch];
   [cat waitUntilExit];
 
-  if (self.timesSeenCat != 1) {
+  if (timesSeenCat != 1) {
     TFAILINFO("Didn't record first run of cat");
   }
 
@@ -462,23 +437,27 @@
   [cat launch];
   [cat waitUntilExit];
 
-  if (self.timesSeenCat != 2) {
+  if (timesSeenCat != 2) {
     TFAIL();
   }
 
   TPASS();
 }
 
-/// Tests that the kernel still denies blocked binaries even if launched while traced
 - (void)blocksDeniedTracedBinaries {
   TSTART("Denies blocked processes running while traced");
+
+  self.handlerBlock = ^santa_action_t(santa_message_t msg) {
+    if (strncmp("/bin/mv", msg.path, 7) == 0) return ACTION_RESPOND_DENY;
+    return ACTION_RESPOND_ALLOW;
+  };
 
   pid_t pid = fork();
   if (pid < 0) {
     TFAILINFO("Failed to fork");
   } else if (pid > 0) {
     int status;
-    waitpid(pid, &status, 0);
+    while (waitpid(pid, &status, 0) != pid); // handle EINTR
     if (WIFEXITED(status) && WEXITSTATUS(status) == EPERM) {
       TPASS();
     } else if (WIFSTOPPED(status)) {
@@ -495,44 +474,12 @@
   }
 }
 
-/// Tests that the kernel can handle _lots_ of executions.
-- (void)handlesLotsOfBinaries {
-  TSTART("Handles lots of binaries");
-
-  const int LIMIT = 12000;
-
-  for (int i = 0; i < LIMIT; ++i) {
-    printf("\033[s");  // save cursor position
-
-    printf("%d/%i", i + 1, LIMIT);
-
-    NSString *fname = [@"testexe" stringByAppendingFormat:@".%i", i];
-    [[NSFileManager defaultManager] copyItemAtPath:@"/bin/hostname" toPath:fname error:NULL];
-
-    @try {
-      NSTask *testexec = [self taskWithPath:fname];
-      [testexec launch];
-      [testexec waitUntilExit];
-    } @catch (NSException *e) {
-      TFAILINFO("Failed to launch");
-    }
-
-    unlink([fname UTF8String]);
-    printf("\033[u");  // restore cursor position
-  }
-  printf("\033[K\033[u");  // clear line, restore cursor position
-
-  TPASS();
-}
-
 - (void)testCachePerformance {
-  TSTART("Test cache performance");
+  TSTART("Test cache performance...");
 
   // Execute echo 100 times, saving the time taken for each run
   std::vector<double> times;
   for (int i = 0; i < 100; ++i) {
-    printf("\033[s");  // save cursor position
-    printf("%d/%d", i + 1, 100);
     NSTask *t = [[NSTask alloc] init];
     t.launchPath = @"/bin/echo";
     t.standardOutput = [NSPipe pipe];
@@ -543,10 +490,7 @@
     auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
 
     if (i > 5) times.push_back(duration);
-    printf("\033[u");  // restore cursor position
   }
-
-  printf("\033[K\033[u");  // clear line, restore cursor position
 
   // Sort and remove first 10 and last 10 entries.
   std::sort(times.begin(), times.end());
@@ -571,12 +515,31 @@
 }
 
 - (void)testLargeBinary {
-  TSTART("Handles large binary");
+  TSTART("Handles large binary...");
+
+  __block int calCount = 0;
+  __weak __typeof(self) weakSelf = self;
+  self.handlerBlock = ^santa_action_t(santa_message_t msg) {
+    __strong __typeof(weakSelf) self = weakSelf;
+    if (strncmp("/usr/bin/cal", msg.path, 12) == 0) {
+      if (calCount++) TFAILINFO("Large binary should not re-request");
+      dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 5 * NSEC_PER_SEC),
+                     dispatch_get_global_queue(0, 0), ^{
+        [self postToKernelAction:ACTION_RESPOND_ALLOW forVnodeID:msg.vnode_id];
+      });
+      return ACTION_RESPOND_ACK;
+    }
+    return ACTION_RESPOND_ALLOW;
+  };
 
   @try {
     NSTask *testexec = [self taskWithPath:@"/usr/bin/cal"];
     [testexec launch];
-    [testexec waitUntilExit];
+    int sleepCount = 0;
+    while ([testexec isRunning]) {
+      sleep(1);
+      if (++sleepCount > 5) TFAILINFO("Took longer than expected to start/stop");
+    }
   } @catch (NSException *e) {
     TFAILINFO("Failed to launch");
   }
@@ -586,8 +549,57 @@
 
 #pragma mark - Main
 
+- (void)unloadDaemon {
+  NSTask *t = [[NSTask alloc] init];
+  t.launchPath = @"/bin/launchctl";
+  t.arguments = @[ @"remove", @"com.google.santad" ];
+  t.standardOutput = t.standardError = [NSPipe pipe];
+  [t launch];
+  [t waitUntilExit];
+}
+
+- (void)unloadExtension {
+  // Don't check the status of this, the kext may not be loaded..
+  OSStatus ret = KextManagerUnloadKextWithIdentifier(CFSTR("com.google.santa-driver"));
+  if (ret != kOSReturnSuccess && ret != kOSKextReturnNotFound) {
+    NSLog(@"Failed to unload extension: 0x%X", ret);
+  }
+}
+
+- (void)loadExtension {
+  TSTART("Loads extension");
+
+  NSError *error;
+  NSFileManager *fm = [NSFileManager defaultManager];
+
+  NSString *src = [[fm currentDirectoryPath] stringByAppendingPathComponent:@"santa-driver.kext"];
+  NSString *dest = [NSTemporaryDirectory() stringByAppendingPathComponent:@"santa-driver.kext"];
+  [fm removeItemAtPath:dest error:NULL]; // ensure dest is free
+  if (![fm copyItemAtPath:src toPath:dest error:&error] || error) {
+    TFAILINFO("Failed to copy kext: %s", error.description.UTF8String);
+  }
+
+  NSDictionary *attrs = @{
+      NSFileOwnerAccountName : @"root",
+      NSFileGroupOwnerAccountName : @"wheel",
+      NSFilePosixPermissions : @0755
+  };
+
+  [fm setAttributes:attrs ofItemAtPath:dest error:NULL];
+  for (NSString *path in [fm enumeratorAtPath:dest]) {
+    [fm setAttributes:attrs ofItemAtPath:[dest stringByAppendingPathComponent:path] error:NULL];
+  }
+
+  NSURL *destURL = [NSURL fileURLWithPath:dest];
+  OSStatus ret = KextManagerLoadKextWithURL((__bridge CFURLRef)destURL, NULL);
+  if (ret != kOSReturnSuccess) {
+    TFAILINFO("Failed to load kext: 0x%X", ret);
+  }
+  usleep(50000);
+  TPASS();
+}
+
 - (void)runTests {
-  printf("\nSanta Kernel Tests\n==================\n");
   printf("-> Connection tests:\n");
 
   // Test that connection can be established
@@ -599,19 +611,18 @@
 
   // Wait for driver to finish getting ready
   sleep(1);
-  printf("\n-> Functional tests:\033[m\n");
 
+  printf("\n-> Functional tests:\n");
   [self receiveAndBlockTests];
   [self receiveAndCacheTests];
   [self invalidatesCacheTests];
   [self invalidatesCacheAutoCloseTest];
   [self clearCacheTests];
   [self blocksDeniedTracedBinaries];
-
-  printf("\n-> Performance tests:\033[m\n");
-  [self testCachePerformance];
   [self testLargeBinary];
-  [self handlesLotsOfBinaries];
+
+  printf("\n-> Performance tests:\n");
+  [self testCachePerformance];
 
   printf("\nAll tests passed.\n\n");
 }
@@ -627,8 +638,18 @@ int main(int argc, const char *argv[]) {
       exit(1);
     }
 
+    chdir([[[NSBundle mainBundle] bundlePath] UTF8String]);
+
     SantaKernelTests *skt = [[SantaKernelTests alloc] init];
+    printf("\nSanta Kernel Tests\n==================\n\n");
+    printf("-> Loading tests:\n");
+    [skt unloadDaemon];
+    [skt unloadExtension];
+    [skt loadExtension];
+    printf("\n");
+
     [skt runTests];
+    [skt unloadExtension];
   }
   return 0;
 }

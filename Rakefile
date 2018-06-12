@@ -155,20 +155,8 @@ namespace :tests do
 
   desc "Tests: Kernel"
   task :kernel do
-    Rake::Task['unload'].invoke()
-    Rake::Task['install:debug'].invoke()
-    Rake::Task['load_kext'].invoke
-    FileUtils.mkdir_p("/tmp/santa_kerneltests_tmp")
-    begin
-      puts "\033[?25l\033[12h"  # hide cursor
-      puts "Running kernel tests"
-      system "cd /tmp/santa_kerneltests_tmp && sudo #{xcodebuilddir}/Debug/KernelTests"
-    rescue Exception
-    ensure
-      puts "\033[?25h\033[12l\n\n"  # unhide cursor
-      FileUtils.rm_rf("/tmp/santa_kerneltests_tmp")
-      Rake::Task['unload_kext'].execute
-    end
+    Rake::Task['build:debug'].invoke()
+    system "sudo #{xcodebuilddir}/Debug/KernelTests"
   end
 end
 

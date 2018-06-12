@@ -37,18 +37,18 @@ bool SantaDriverClient::initWithTask(
 
 bool SantaDriverClient::start(IOService *provider) {
   myProvider = OSDynamicCast(com_google_SantaDriver, provider);
-
   if (!myProvider) return false;
-  if (!super::start(provider)) return false;
 
   decisionManager = myProvider->GetDecisionManager();
   if (!decisionManager) return false;
+  decisionManager->retain();
 
-  return true;
+  return super::start(provider);
 }
 
 void SantaDriverClient::stop(IOService *provider) {
   myProvider = nullptr;
+  decisionManager->release();
   decisionManager = nullptr;
   super::stop(provider);
 }
@@ -56,13 +56,18 @@ void SantaDriverClient::stop(IOService *provider) {
 IOReturn SantaDriverClient::clientDied() {
   LOGI("Client died.");
   decisionManager->DisconnectClient(true);
-  return terminate() ? kIOReturnSuccess : kIOReturnError;
+  return terminate(0) ? kIOReturnSuccess : kIOReturnError;
 }
 
 IOReturn SantaDriverClient::clientClose() {
   LOGI("Client disconnected.");
-  decisionManager->DisconnectClient(false);
-  return terminate() ? kIOReturnSuccess : kIOReturnError;
+  decisionManager->DisconnectClient();
+  return terminate(0) ? kIOReturnSuccess : kIOReturnError;
+}
+
+bool SantaDriverClient::didTerminate(IOService *provider, IOOptionBits options, bool *defer) {
+  if (myProvider && myProvider->isOpen(this)) myProvider->close(this);
+  return super::didTerminate(provider, options, defer);
 }
 
 #pragma mark Fetching memory and data queue notifications
