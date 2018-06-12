@@ -23,67 +23,98 @@
 
 @interface SNTDriverManager ()
 @property io_connect_t connection;
+@property(readwrite) BOOL connectionEstablished;
 @end
 
 @implementation SNTDriverManager
-
-static const int MAX_DELAY = 15;
 
 #pragma mark init/dealloc
 
 - (instancetype)init {
   self = [super init];
   if (self) {
-    kern_return_t kr;
-    io_service_t serviceObject;
-    CFDictionaryRef classToMatch;
-
-    if (!(classToMatch = IOServiceMatching(USERCLIENT_CLASS))) {
-      LOGD(@"Failed to create matching dictionary");
+    CFDictionaryRef classToMatch = IOServiceMatching(USERCLIENT_CLASS);
+    if (!classToMatch) {
+      LOGE(@"Failed to create matching dictionary");
       return nil;
     }
 
     // Attempt to load driver. It may already be running, so ignore any return value.
     KextManagerLoadKextWithIdentifier(CFSTR(USERCLIENT_ID), NULL);
 
-    // Locate driver. Wait for it if necessary.
-    int delay = 1;
-    do {
-      CFRetain(classToMatch);  // this ref is released by IOServiceGetMatchingService
-      serviceObject = IOServiceGetMatchingService(kIOMasterPortDefault, classToMatch);
-
-      if (!serviceObject) {
-        LOGD(@"Waiting for Santa driver to become available");
-        sleep(delay);
-        if (delay < MAX_DELAY) delay *= 2;
-      }
-    } while (!serviceObject);
-    CFRelease(classToMatch);
-
-    // This calls `initWithTask`, `attach` and `start` in `SantaDriverClient`
-    kr = IOServiceOpen(serviceObject, mach_task_self(), 0, &_connection);
-    IOObjectRelease(serviceObject);
-    if (kr != kIOReturnSuccess) {
-      LOGD(@"Failed to open Santa driver service");
-      return nil;
-    }
-
-    // Call `open` in `SantaDriverClient`
-    kr = IOConnectCallMethod(_connection, kSantaUserClientOpen, 0, 0, 0, 0, 0, 0, 0, 0);
-
-    if (kr == kIOReturnExclusiveAccess) {
-      LOGD(@"A client is already connected");
-      return nil;
-    } else if (kr != kIOReturnSuccess) {
-      LOGD(@"An error occurred while opening the connection");
-      return nil;
-    }
+    // Wait for the driver to appear
+    [self waitForDriver:classToMatch];
   }
   return self;
 }
 
 - (void)dealloc {
   IOServiceClose(_connection);
+}
+
+#pragma mark Driver Waiting
+
+// Helper function used with IOServiceAddMatchingNotification which expects
+// a DriverAppearedBlock to be passed as the 'reference' argument. The block
+// will be called for each object iterated over and if the block wants to keep
+// the object, it should call IOObjectRetain().
+typedef void (^DriverAppearedBlock)(io_object_t object);
+static void driverAppearedHandler(void *info, io_iterator_t iterator) {
+  DriverAppearedBlock block = (__bridge DriverAppearedBlock)info;
+  if (!block) return;
+  io_object_t object = 0;
+  while ((object = IOIteratorNext(iterator))) {
+    block(object);
+    IOObjectRelease(object);
+  }
+}
+
+// Wait for the driver to appear, then attach to and open it.
+- (void)waitForDriver:(CFDictionaryRef CF_RELEASES_ARGUMENT)matchingDict {
+  IONotificationPortRef notificationPort = IONotificationPortCreate(kIOMasterPortDefault);
+  CFRunLoopAddSource([[NSRunLoop currentRunLoop] getCFRunLoop],
+                     IONotificationPortGetRunLoopSource(notificationPort),
+                     kCFRunLoopDefaultMode);
+
+  io_iterator_t iterator = 0;
+
+  DriverAppearedBlock block = ^(io_object_t object) {
+    // This calls `initWithTask`, `attach` and `start` in `SantaDriverClient`
+    kern_return_t kr = IOServiceOpen(object, mach_task_self(), 0, &_connection);
+    if (kr != kIOReturnSuccess) {
+      LOGE(@"Failed to open santa-driver service: 0x%X", kr);
+      exit(1);
+    }
+
+    // Call `open` in `SantaDriverClient`
+    kr = IOConnectCallMethod(_connection, kSantaUserClientOpen, 0, 0, 0, 0, 0, 0, 0, 0);
+    if (kr == kIOReturnExclusiveAccess) {
+      LOGE(@"A client is already connected");
+      exit(2);
+    } else if (kr != kIOReturnSuccess) {
+      LOGE(@"An error occurred while opening the connection: 0x%X", kr);
+      exit(3);
+    }
+
+    // Release the iterator to disarm the notifications.
+    IOObjectRelease(iterator);
+    IONotificationPortDestroy(notificationPort);
+
+    _connectionEstablished = YES;
+  };
+
+  LOGI(@"Waiting for Santa driver to become available");
+
+  IOServiceAddMatchingNotification(notificationPort,
+                                   kIOMatchedNotification,
+                                   matchingDict,
+                                   driverAppearedHandler,
+                                   (__bridge_retained void *)block,
+                                   &iterator);
+
+  // Call the handler once to 'empty' the iterator, arming it. If the driver is already loaded
+  // this will immediately cause the connection to be fully established.
+  driverAppearedHandler((__bridge_retained void*)block, iterator);
 }
 
 #pragma mark Incoming messages
@@ -98,7 +129,7 @@ static const int MAX_DELAY = 15;
 
 - (void)listenForRequestsOfType:(santa_queuetype_t)type
                    withCallback:(void (^)(santa_message_t))callback {
-  kern_return_t kr;
+  while (!self.connectionEstablished) usleep(100000); // 100ms
 
   // Allocate a mach port to receive notifactions from the IODataQueue
   mach_port_t receivePort = IODataQueueAllocateNotificationPort();
@@ -108,9 +139,9 @@ static const int MAX_DELAY = 15;
   }
 
   // This will call registerNotificationPort() inside our user client class
-  kr = IOConnectSetNotificationPort(self.connection, type, receivePort, 0);
+  kern_return_t kr = IOConnectSetNotificationPort(self.connection, type, receivePort, 0);
   if (kr != kIOReturnSuccess) {
-    LOGD(@"Failed to register notification port for type %d: %d", type, kr);
+    LOGD(@"Failed to register notification port for type %d: 0x%X", type, kr);
     mach_port_destroy(mach_task_self(), receivePort);
     return;
   }
@@ -120,7 +151,7 @@ static const int MAX_DELAY = 15;
   mach_vm_size_t size = 0;
   kr = IOConnectMapMemory(self.connection, type, mach_task_self(), &address, &size, kIOMapAnywhere);
   if (kr != kIOReturnSuccess) {
-    LOGD(@"Failed to map memory for type %d: %d", type, kr);
+    LOGD(@"Failed to map memory for type %d: 0x%X", type, kr);
     mach_port_destroy(mach_task_self(), receivePort);
     return;
   }
@@ -135,7 +166,7 @@ static const int MAX_DELAY = 15;
       if (kr == kIOReturnSuccess) {
         callback(vdata);
       } else {
-        LOGE(@"Error dequeuing data for type %d: %d", type, kr);
+        LOGE(@"Error dequeuing data for type %d: 0x%X", type, kr);
         exit(2);
       }
     }

@@ -64,7 +64,7 @@ class SantaDecisionManager : public OSObject {
   void ConnectClient(pid_t pid);
 
   /// Called by SantaDriverClient when a client disconnects
-  void DisconnectClient(bool itDied = false);
+  void DisconnectClient(bool itDied = false, pid_t pid = proc_selfpid());
 
   /// Returns whether a client is currently connected or not.
   bool ClientConnected() const;

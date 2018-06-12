@@ -37,6 +37,7 @@
 - (void)flushCache:(void (^)(BOOL))reply;
 - (void)cacheBucketCount:(void (^)(NSArray *))reply;
 - (void)checkCacheForVnodeID:(santa_vnode_id_t)vnodeID withReply:(void (^)(santa_action_t))reply;
+- (void)driverConnectionEstablished:(void (^)(BOOL))reply;
 
 ///
 ///  Database ops
