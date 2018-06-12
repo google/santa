@@ -55,7 +55,7 @@ REGISTER_COMMAND_NAME(@"status")
   __block uint64_t cpuEvents, ramEvents;
   __block double cpuPeak, ramPeak;
   dispatch_group_enter(group);
-  [[self.daemonConn remoteObjectProxy] connectionEstablished:^(BOOL connected) {
+  [[self.daemonConn remoteObjectProxy] driverConnectionEstablished:^(BOOL connected) {
     driverConnected = connected;
     dispatch_group_leave(group);
   }];
@@ -165,6 +165,7 @@ REGISTER_COMMAND_NAME(@"status")
   if ([arguments containsObject:@"--json"]) {
     NSDictionary *stats = @{
       @"daemon" : @{
+        @"driver_connected" : @(driverConnected),
         @"mode" : clientMode ?: @"null",
         @"file_logging" : @(fileLogging),
         @"watchdog_cpu_events" : @(cpuEvents),
@@ -196,7 +197,7 @@ REGISTER_COMMAND_NAME(@"status")
     printf("%s\n", [statsStr UTF8String]);
   } else {
     printf(">>> Daemon Info\n");
-    printf("  %-25s | %s\n", "Connected", driverConnected ? "Yes" : "No");
+    printf("  %-25s | %s\n", "Driver Connected", driverConnected ? "Yes" : "No");
     printf("  %-25s | %s\n", "Mode", [clientMode UTF8String]);
     printf("  %-25s | %s\n", "File Logging", (fileLogging ? "Yes" : "No"));
     printf("  %-25s | %lld  (Peak: %.2f%%)\n", "Watchdog CPU Events", cpuEvents, cpuPeak);

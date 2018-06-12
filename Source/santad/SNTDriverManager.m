@@ -61,6 +61,7 @@
 typedef void (^DriverAppearedBlock)(io_object_t object);
 static void driverAppearedHandler(void *info, io_iterator_t iterator) {
   DriverAppearedBlock block = (__bridge DriverAppearedBlock)info;
+  if (!block) return;
   io_object_t object = 0;
   while ((object = IOIteratorNext(iterator))) {
     block(object);

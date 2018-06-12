@@ -87,7 +87,7 @@ double watchdogRAMPeak = 0;
   reply([self.driverManager checkCache:vnodeID]);
 }
 
-- (void)connectionEstablished:(void (^)(BOOL))reply {
+- (void)driverConnectionEstablished:(void (^)(BOOL))reply {
   reply(self.driverManager.connectionEstablished);
 }
 
