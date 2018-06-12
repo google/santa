@@ -66,6 +66,7 @@ IOReturn SantaDriverClient::clientClose() {
 }
 
 bool SantaDriverClient::didTerminate(IOService *provider, IOOptionBits options, bool *defer) {
+  decisionManager->DisconnectClient();
   if (myProvider && myProvider->isOpen(this)) myProvider->close(this);
   return super::didTerminate(provider, options, defer);
 }
