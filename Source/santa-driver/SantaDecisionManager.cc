@@ -99,8 +99,8 @@ void SantaDecisionManager::ConnectClient(pid_t pid) {
   failed_log_queue_requests_ = 0;
 }
 
-void SantaDecisionManager::DisconnectClient(bool itDied) {
-  if (client_pid_ < 1) return;
+void SantaDecisionManager::DisconnectClient(bool itDied, pid_t pid) {
+  if (client_pid_ == 0 || (pid > 0 && pid != client_pid_)) return;
   client_pid_ = 0;
 
   // Ask santad to shutdown, in case it's running.

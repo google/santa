@@ -89,7 +89,7 @@ static void driverAppearedHandler(void *info, io_iterator_t iterator) {
     // Call `open` in `SantaDriverClient`
     kr = IOConnectCallMethod(_connection, kSantaUserClientOpen, 0, 0, 0, 0, 0, 0, 0, 0);
     if (kr == kIOReturnExclusiveAccess) {
-      LOGW(@"A client is already connected");
+      LOGE(@"A client is already connected");
       exit(2);
     } else if (kr != kIOReturnSuccess) {
       LOGE(@"An error occurred while opening the connection: 0x%X", kr);
