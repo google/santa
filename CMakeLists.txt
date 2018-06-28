@@ -8,6 +8,13 @@ execute_process(
   OUTPUT_STRIP_TRAILING_WHITESPACE
 )
 
+execute_process(
+  COMMAND xcode-select -p
+  OUTPUT_VARIABLE DEFAULT_XCODE_ROOT_FOLDER
+)
+
+string(STRIP "${DEFAULT_XCODE_ROOT_FOLDER}" DEFAULT_XCODE_ROOT_FOLDER)
+
 add_custom_target(tests)
 function(AddTestTarget target_name run_as_root)
   if(run_as_root)
@@ -65,14 +72,21 @@ function(main)
   endif()
 
   if(NOT MACOSX_VERSION_MIN)
-    set(MACOSX_VERSION_MIN 10.13)
+    set(MACOSX_VERSION_MIN 10.9)
+  endif()
+
+  if(NOT MACOSX_SDK_VERSION)
+    set(sdk_version_name "Latest")
+  else()
+    set(sdk_version_name "${MACOSX_SDK_VERSION}")
   endif()
 
   if(NOT XCODE_ROOT_FOLDER)
-    set(XCODE_ROOT_FOLDER "/Applications/Xcode.app")
+    set(XCODE_ROOT_FOLDER "${DEFAULT_XCODE_ROOT_FOLDER}")
   endif()
 
   message(STATUS "MACOSX_VERSION_MIN: ${MACOSX_VERSION_MIN}")
+  message(STATUS "MACOSX_SDK_VERSION: ${sdk_version_name}")
   message(STATUS "XCODE_ROOT_FOLDER: ${XCODE_ROOT_FOLDER}")
   message(STATUS "CMAKE_BUILD_TYPE: ${CMAKE_BUILD_TYPE}")
   message(STATUS "SANTA_VERSION: ${SANTA_VERSION}")

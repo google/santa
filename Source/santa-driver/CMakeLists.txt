@@ -19,6 +19,8 @@ function(main)
     SantaDriverClient.cc
     SantaDriverClient.h
 
+    main.c
+
     "${PROJECT_INFOPLIST}"
   )
 
@@ -58,7 +60,6 @@ function(main)
   )
 
   target_compile_definitions("${PROJECT_NAME}" PRIVATE
-    SNT_OS_LOG_CATEGORY=\"${PROJECT_NAME}\"
     KERNEL
     KERNEL_PRIVATE
     DRIVER_PRIVATE
@@ -75,8 +76,8 @@ function(main)
   endif()
 
   target_include_directories("${PROJECT_NAME}" SYSTEM PRIVATE
-    "${XCODE_ROOT_FOLDER}/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX${MACOSX_VERSION_MIN}.sdk/System/Library/Frameworks/Kernel.framework/PrivateHeaders"
-    "${XCODE_ROOT_FOLDER}/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX${MACOSX_VERSION_MIN}.sdk/System/Library/Frameworks/Kernel.framework/Headers"
+    "${XCODE_ROOT_FOLDER}/Platforms/MacOSX.platform/Developer/SDKs/MacOSX${MACOSX_SDK_VERSION}.sdk/System/Library/Frameworks/Kernel.framework/PrivateHeaders"
+    "${XCODE_ROOT_FOLDER}/Platforms/MacOSX.platform/Developer/SDKs/MacOSX${MACOSX_SDK_VERSION}.sdk/System/Library/Frameworks/Kernel.framework/Headers"
   )
 
   target_include_directories("${PROJECT_NAME}" PRIVATE

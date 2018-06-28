@@ -69,7 +69,6 @@ function(GenerateFuzzTarget source_file data_size timeout run_as_root)
   )
 
   target_compile_definitions("${target_name}" PRIVATE
-    SNT_OS_LOG_CATEGORY=\"${target_name}\"
     COCOAPODS=1
   )
 

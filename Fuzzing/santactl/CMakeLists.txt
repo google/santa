@@ -24,7 +24,6 @@ function(main)
   )
 
   target_compile_definitions("${PROJECT_NAME}" PRIVATE
-    SNT_OS_LOG_CATEGORY=\"${PROJECT_NAME}\"
     COCOAPODS=1
   )
 

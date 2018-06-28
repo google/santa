@@ -31,9 +31,6 @@ user=$(/usr/bin/stat -f '%u' /dev/console)
 /bin/rm -f /private/etc/newsyslog.d/com.google.santa.newsyslog.conf
 /bin/rm -f /usr/local/bin/santactl # just a symlink
 
-# Uninstall the configuration file
-/usr/bin/profiles remove -path=${SOURCE}/conf/com.google.santa.example.mobileconfig
-
 #uncomment to remove the config file and all databases, log files
 #/bin/rm -rf /var/db/santa
 #/bin/rm -f /var/log/santa*

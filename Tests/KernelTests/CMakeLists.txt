@@ -17,10 +17,6 @@ function(main)
     -fcxx-modules -mmacosx-version-min=${MACOSX_VERSION_MIN}
   )
 
-  target_compile_definitions("${PROJECT_NAME}" PRIVATE
-    SNT_OS_LOG_CATEGORY=\"${PROJECT_NAME}\"
-  )
-
   if(CMAKE_BUILD_TYPE STREQUAL "Debug")
     target_compile_definitions("${PROJECT_NAME}" PRIVATE DEBUG=1)
   else()

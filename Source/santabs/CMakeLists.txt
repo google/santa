@@ -1,3 +1,4 @@
+
 cmake_minimum_required(VERSION 3.10.0)
 project(santabs)
 
@@ -43,7 +44,6 @@ function(main)
   endif()
 
   target_compile_definitions("${PROJECT_NAME}" PRIVATE
-    SNT_OS_LOG_CATEGORY=\"${PROJECT_NAME}\"
     COCOAPODS=1
   )
 

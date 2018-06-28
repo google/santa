@@ -53,9 +53,6 @@ cp ${SOURCE}/conf/com.google.santa.example.mobileconfig /var/db/santa
 # Reload syslogd to pick up ASL configuration change.
 /usr/bin/killall -HUP syslogd
 
-# Install the configuration file
-/usr/bin/profiles install -path=${SOURCE}/conf/com.google.santa.example.mobileconfig
-
 # Load kext.
 /sbin/kextload /Library/Extensions/santa-driver.kext
 
