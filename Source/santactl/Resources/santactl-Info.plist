@@ -9,11 +9,11 @@
 	<key>CFBundleIdentifier</key>
 	<string>com.google.santactl</string>
 	<key>CFBundleName</key>
-	<string>${PRODUCT_NAME}</string>
+	<string>santactl</string>
 	<key>CFBundleShortVersionString</key>
-	<string>TO.BE.FILLED</string>
+	<string>${SANTA_VERSION}</string>
 	<key>CFBundleVersion</key>
-	<string>TO.BE.FILLED</string>
+	<string>${SANTA_VERSION}</string>
 	<key>CSFlags</key>
 	<string>kill</string>
 </dict>

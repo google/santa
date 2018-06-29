@@ -9,10 +9,10 @@
 	<key>CFBundleIdentifier</key>
 	<string>com.google.santad</string>
 	<key>CFBundleName</key>
-	<string>${PRODUCT_NAME}</string>
+	<string>santad</string>
 	<key>CFBundleVersion</key>
-	<string>TO.BE.FILLED</string>
+	<string>${SANTA_VERSION}</string>
 	<key>CFBundleShortVersionString</key>
-	<string>TO.BE.FILLED</string>
+	<string>${SANTA_VERSION}</string>
 </dict>
 </plist>
