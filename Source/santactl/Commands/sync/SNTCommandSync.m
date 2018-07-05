@@ -37,7 +37,7 @@ REGISTER_COMMAND_NAME(@"sync")
 #pragma mark SNTCommand protocol methods
 
 + (BOOL)requiresRoot {
-  return NO;
+  return YES;
 }
 
 + (BOOL)requiresDaemonConn {
@@ -57,6 +57,9 @@ REGISTER_COMMAND_NAME(@"sync")
 }
 
 - (void)runWithArguments:(NSArray *)arguments {
+  // Connect to santad while we are root, so that we pass the XPC authentication
+  [self.daemonConn resume];
+
   // Ensure we have no privileges
   if (!DropRootPrivileges()) {
     LOGE(@"Failed to drop root privileges. Exiting.");
@@ -68,7 +71,6 @@ REGISTER_COMMAND_NAME(@"sync")
     exit(1);
   }
 
-  [self.daemonConn resume];
   BOOL daemon = [arguments containsObject:@"--daemon"];
   self.syncManager = [[SNTCommandSyncManager alloc] initWithDaemonConnection:self.daemonConn
                                                                     isDaemon:daemon];
@@ -91,7 +93,7 @@ REGISTER_COMMAND_NAME(@"sync")
   // Create listener for return connection from daemon.
   NSXPCListener *listener = [NSXPCListener anonymousListener];
   self.listener = [[MOLXPCConnection alloc] initServerWithListener:listener];
-  self.listener.exportedInterface = [SNTXPCSyncdInterface syncdInterface];
+  self.listener.privilegedInterface = [SNTXPCSyncdInterface syncdInterface];
   self.listener.exportedObject = self.syncManager;
   self.listener.acceptedHandler = ^{
     LOGD(@"santad <--> santactl connections established");
