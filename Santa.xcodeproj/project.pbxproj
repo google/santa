@@ -185,6 +185,11 @@
 		C7FB56F71DBFB480004E14EF /* SNTXPCSyncdInterface.m in Sources */ = {isa = PBXBuildFile; fileRef = C7FB56F51DBFB480004E14EF /* SNTXPCSyncdInterface.m */; };
 		C7FB57001DBFC213004E14EF /* SNTSyncdQueue.m in Sources */ = {isa = PBXBuildFile; fileRef = C7FB56FF1DBFC213004E14EF /* SNTSyncdQueue.m */; };
 		D1761D2DAE8C790F29AFE6C9 /* libPods-LogicTests.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 7D949AA996AEAC326A4F6596 /* libPods-LogicTests.a */; };
+		D221001320AB35FB003C65C2 /* SNTXPCUnprivilegedControlInterface.m in Sources */ = {isa = PBXBuildFile; fileRef = D221001020AB35F3003C65C2 /* SNTXPCUnprivilegedControlInterface.m */; };
+		D221001420AB3609003C65C2 /* SNTXPCUnprivilegedControlInterface.m in Sources */ = {isa = PBXBuildFile; fileRef = D221001020AB35F3003C65C2 /* SNTXPCUnprivilegedControlInterface.m */; };
+		D221001520AB360A003C65C2 /* SNTXPCUnprivilegedControlInterface.m in Sources */ = {isa = PBXBuildFile; fileRef = D221001020AB35F3003C65C2 /* SNTXPCUnprivilegedControlInterface.m */; };
+		D221001620AB360A003C65C2 /* SNTXPCUnprivilegedControlInterface.m in Sources */ = {isa = PBXBuildFile; fileRef = D221001020AB35F3003C65C2 /* SNTXPCUnprivilegedControlInterface.m */; };
+		D221001720AB360B003C65C2 /* SNTXPCUnprivilegedControlInterface.m in Sources */ = {isa = PBXBuildFile; fileRef = D221001020AB35F3003C65C2 /* SNTXPCUnprivilegedControlInterface.m */; };
 		D6D356C5BC8709C2E355C113 /* libPods-santactl.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 4E3B4B2438711ACD7D560014 /* libPods-santactl.a */; };
 /* End PBXBuildFile section */
 
@@ -450,6 +455,8 @@
 		C7FB56F51DBFB480004E14EF /* SNTXPCSyncdInterface.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SNTXPCSyncdInterface.m; sourceTree = "<group>"; };
 		C7FB56FE1DBFC213004E14EF /* SNTSyncdQueue.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SNTSyncdQueue.h; sourceTree = "<group>"; };
 		C7FB56FF1DBFC213004E14EF /* SNTSyncdQueue.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SNTSyncdQueue.m; sourceTree = "<group>"; };
+		D221000F20AB35F3003C65C2 /* SNTXPCUnprivilegedControlInterface.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SNTXPCUnprivilegedControlInterface.h; sourceTree = "<group>"; };
+		D221001020AB35F3003C65C2 /* SNTXPCUnprivilegedControlInterface.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SNTXPCUnprivilegedControlInterface.m; sourceTree = "<group>"; };
 		D7DEE68F05C49966396A2F10 /* Pods-santad-santabs.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-santad-santabs.release.xcconfig"; path = "Pods/Target Support Files/Pods-santad-santabs/Pods-santad-santabs.release.xcconfig"; sourceTree = "<group>"; };
 		D9B2D7095028D87E12E63EF7 /* Pods-santad-santabs.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-santad-santabs.debug.xcconfig"; path = "Pods/Target Support Files/Pods-santad-santabs/Pods-santad-santabs.debug.xcconfig"; sourceTree = "<group>"; };
 		DF5FE88E12AB307864A53CE7 /* Pods-santactl.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-santactl.release.xcconfig"; path = "Pods/Target Support Files/Pods-santactl/Pods-santactl.release.xcconfig"; sourceTree = "<group>"; };
@@ -745,6 +752,8 @@
 				0DCD604E19115A06006B445C /* SNTXPCNotifierInterface.m */,
 				C7FB56F41DBFB480004E14EF /* SNTXPCSyncdInterface.h */,
 				C7FB56F51DBFB480004E14EF /* SNTXPCSyncdInterface.m */,
+				D221000F20AB35F3003C65C2 /* SNTXPCUnprivilegedControlInterface.h */,
+				D221001020AB35F3003C65C2 /* SNTXPCUnprivilegedControlInterface.m */,
 			);
 			path = common;
 			sourceTree = "<group>";
@@ -1375,6 +1384,7 @@
 				0DD0D492194F9BEF005F27EB /* SNTLogging.m in Sources */,
 				0DE71A761B95F7F900518526 /* SNTCachedDecision.m in Sources */,
 				0DCD605919115E5A006B445C /* SNTXPCNotifierInterface.m in Sources */,
+				D221001720AB360B003C65C2 /* SNTXPCUnprivilegedControlInterface.m in Sources */,
 				0DE50F691912B0CD007B2B0C /* SNTRule.m in Sources */,
 				0D202D1B1CDD465400A88F16 /* SNTCommandSyncState.m in Sources */,
 				C73A4B9A1DC10753007B6789 /* SNTSyncdQueue.m in Sources */,
@@ -1403,6 +1413,7 @@
 				0D10BE871A0AABD600C0C944 /* SNTDropRootPrivs.m in Sources */,
 				0DE4C8A618FF3B1700466D04 /* SNTCommandFlushCache.m in Sources */,
 				4092327A1A51B66400A04527 /* SNTCommandRule.m in Sources */,
+				D221001420AB3609003C65C2 /* SNTXPCUnprivilegedControlInterface.m in Sources */,
 				C76614EC1D142D3C00D150C1 /* SNTCommandCheckCache.m in Sources */,
 				0D416401191974F1006A356A /* SNTCommandSyncState.m in Sources */,
 				0DC5D871192160180078A5C0 /* SNTCommandSyncLogUpload.m in Sources */,
@@ -1429,6 +1440,7 @@
 				0D89310F1C931986002E8D74 /* SNTRule.m in Sources */,
 				0DCD605119115A06006B445C /* SNTXPCNotifierInterface.m in Sources */,
 				0DB77FD91CCE824A004DF060 /* SNTBlockMessage.m in Sources */,
+				D221001620AB360A003C65C2 /* SNTXPCUnprivilegedControlInterface.m in Sources */,
 				0D827E6519DF392E006EC811 /* SNTConfigurator.m in Sources */,
 				0D89310E1C931979002E8D74 /* SNTXPCControlInterface.m in Sources */,
 				0D385DF2180DE51600418BC6 /* SNTMessageWindowController.m in Sources */,
@@ -1467,6 +1479,7 @@
 				0DB8ACC1185662DC00FEF9C7 /* SNTApplication.m in Sources */,
 				0D9A7F421759330500035EB5 /* main.m in Sources */,
 				0DA73C9F1934F8100056D7C4 /* SNTLogging.m in Sources */,
+				D221001320AB35FB003C65C2 /* SNTXPCUnprivilegedControlInterface.m in Sources */,
 				C7C721B11E23FF300051FAA6 /* SNTXPCBundleServiceInterface.m in Sources */,
 				0DE71A751B95F7F900518526 /* SNTCachedDecision.m in Sources */,
 				C7FB56F61DBFB480004E14EF /* SNTXPCSyncdInterface.m in Sources */,
@@ -1497,6 +1510,7 @@
 				C7C721B41E24042B0051FAA6 /* SNTStoredEvent.m in Sources */,
 				C7C721B51E2408BE0051FAA6 /* SNTFileInfo.m in Sources */,
 				C7BBA67E1E54C7E200F1E6A8 /* SNTXPCNotifierInterface.m in Sources */,
+				D221001520AB360A003C65C2 /* SNTXPCUnprivilegedControlInterface.m in Sources */,
 				C7479F071E5374BF0054C1CF /* SNTXPCControlInterface.m in Sources */,
 				C7479F091E5374E50054C1CF /* SNTRule.m in Sources */,
 				C79A23581E23F7E80037AFA8 /* main.m in Sources */,

@@ -58,6 +58,7 @@ function(main)
     # The "common" folder contains some of the files required to build this target
     "${CMAKE_SOURCE_DIR}/Source/common/SNTConfigurator.m"
     "${CMAKE_SOURCE_DIR}/Source/common/SNTXPCControlInterface.m"
+    "${CMAKE_SOURCE_DIR}/Source/common/SNTXPCUnprivilegedControlInterface.m"
     "${CMAKE_SOURCE_DIR}/Source/common/SNTBlockMessage.m"
     "${CMAKE_SOURCE_DIR}/Source/common/SNTRule.m"
     "${CMAKE_SOURCE_DIR}/Source/common/SNTStoredEvent.m"

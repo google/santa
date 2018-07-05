@@ -22,7 +22,7 @@
 int main(int argc, const char *argv[]) {
   MOLXPCConnection *c =
       [[MOLXPCConnection alloc] initServerWithListener:[NSXPCListener serviceListener]];
-  c.exportedInterface = [SNTXPCBundleServiceInterface bundleServiceInterface];
+  c.privilegedInterface = c.unprivilegedInterface = [SNTXPCBundleServiceInterface bundleServiceInterface];
   c.exportedObject = [[SNTBundleService alloc] init];
   [c resume];
 }

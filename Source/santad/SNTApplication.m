@@ -33,6 +33,7 @@
 #import "SNTSyncdQueue.h"
 #import "SNTSyslogEventLog.h"
 #import "SNTXPCControlInterface.h"
+#import "SNTXPCUnprivilegedControlInterface.h"
 #import "SNTXPCNotifierInterface.h"
 
 @interface SNTApplication ()
@@ -117,7 +118,8 @@
 
     _controlConnection =
         [[MOLXPCConnection alloc] initServerWithName:[SNTXPCControlInterface serviceId]];
-    _controlConnection.exportedInterface = [SNTXPCControlInterface controlInterface];
+    _controlConnection.privilegedInterface = [SNTXPCControlInterface controlInterface];
+    _controlConnection.unprivilegedInterface = [SNTXPCUnprivilegedControlInterface controlInterface];
     _controlConnection.exportedObject = dc;
     [_controlConnection resume];
 
@@ -261,10 +263,9 @@ void diskDisappearedCallback(DADiskRef disk, void *context) {
     LOGI(@"Failed to fork");
     self.syncdPID = 0;
   } else if (self.syncdPID == 0) {
-    // Ensure we have no privileges
-    if (!DropRootPrivileges()) {
-      _exit(EPERM);
-    }
+    // The santactl executable will drop privileges just after the XPC
+    // connection has been estabilished; this is done this way so that
+    // the XPC authentication can occur
     _exit(execl(kSantaCtlPath, kSantaCtlPath, "sync", "--daemon", "--syslog", NULL));
   }
   LOGI(@"santactl started with pid: %i", self.syncdPID);

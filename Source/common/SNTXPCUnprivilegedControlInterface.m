@@ -12,35 +12,33 @@
 ///    See the License for the specific language governing permissions and
 ///    limitations under the License.
 
-#import "SNTXPCControlInterface.h"
+#import "SNTXPCUnprivilegedControlInterface.h"
 
 #import <MOLXPCConnection/MOLXPCConnection.h>
 
 #import "SNTRule.h"
 #import "SNTStoredEvent.h"
 
-@implementation SNTXPCControlInterface
+@implementation SNTXPCUnprivilegedControlInterface
 
 + (NSString *)serviceId {
-  return @"SantaXPCControl";
+  return @"SantaUnprivilegedXPCControl";
 }
 
 + (void)initializeControlInterface:(NSXPCInterface *)r {
-  [super initializeControlInterface:r];
-
   [r setClasses:[NSSet setWithObjects:[NSArray class], [SNTStoredEvent class], nil]
-        forSelector:@selector(databaseEventsPending:)
-      argumentIndex:0
+        forSelector:@selector(hashBundleBinariesForEvent:reply:)
+      argumentIndex:1
             ofReply:YES];
 
-  [r setClasses:[NSSet setWithObjects:[NSArray class], [SNTRule class], nil]
-        forSelector:@selector(databaseRuleAddRules:cleanSlate:reply:)
-      argumentIndex:0
+  [r setClasses:[NSSet setWithObjects:[NSArray class], [SNTStoredEvent class], nil]
+        forSelector:@selector(syncBundleEvent:relatedEvents:)
+      argumentIndex:1
             ofReply:NO];
 }
 
 + (NSXPCInterface *)controlInterface {
-  NSXPCInterface *r = [NSXPCInterface interfaceWithProtocol:@protocol(SNTDaemonControlXPC)];
+  NSXPCInterface *r = [NSXPCInterface interfaceWithProtocol:@protocol(SNTUnprivilegedDaemonControlXPC)];
   [self initializeControlInterface:r];
 
   return r;

@@ -64,6 +64,7 @@ function(main)
     "${CMAKE_SOURCE_DIR}/Source/common/SNTStoredEvent.m"
     "${CMAKE_SOURCE_DIR}/Source/common/SNTSystemInfo.m"
     "${CMAKE_SOURCE_DIR}/Source/common/SNTXPCControlInterface.m"
+    "${CMAKE_SOURCE_DIR}/Source/common/SNTXPCUnprivilegedControlInterface.m"
     "${CMAKE_SOURCE_DIR}/Source/common/SNTXPCSyncdInterface.m"
     "${CMAKE_SOURCE_DIR}/Source/common/SNTLogging.m"
     "${CMAKE_SOURCE_DIR}/Source/common/SNTDropRootPrivs.m"
