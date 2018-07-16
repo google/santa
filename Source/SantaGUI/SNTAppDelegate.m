@@ -79,7 +79,7 @@
   // Create listener for return connection from daemon.
   NSXPCListener *listener = [NSXPCListener anonymousListener];
   self.daemonListener = [[MOLXPCConnection alloc] initServerWithListener:listener];
-  self.daemonListener.exportedInterface = [SNTXPCNotifierInterface notifierInterface];
+  self.daemonListener.privilegedInterface = [SNTXPCNotifierInterface notifierInterface];
   self.daemonListener.exportedObject = self.notificationManager;
   self.daemonListener.acceptedHandler = ^{
     dispatch_semaphore_signal(sema);
@@ -116,7 +116,7 @@
   // Create listener for return connection from the bundle service.
   NSXPCListener *listener = [NSXPCListener anonymousListener];
   self.bundleListener = [[MOLXPCConnection alloc] initServerWithListener:listener];
-  self.bundleListener.exportedInterface = [SNTXPCNotifierInterface bundleNotifierInterface];
+  self.bundleListener.privilegedInterface = [SNTXPCNotifierInterface bundleNotifierInterface];
   self.bundleListener.exportedObject = self.notificationManager;
   self.bundleListener.acceptedHandler = ^{
     dispatch_semaphore_signal(sema);

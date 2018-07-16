@@ -1,0 +1,16 @@
+{
+  "rules": [
+    {
+      "rule_type": "BINARY",
+      "policy": "BLACKLIST",
+      "sha256": "2dc104631939b4bdf5d6bccab76e166e37fe5e1605340cf68dab919df58b8eda",
+      "custom_msg": "blacklist firefox"
+    },
+    {
+      "rule_type": "CERTIFICATE",
+      "policy": "BLACKLIST",
+      "sha256": "e7726cf87cba9e25139465df5bd1557c8a8feed5c7dd338342d8da0959b63c8d",
+      "custom_msg": "blacklist dash app certificate"
+    }
+  ]
+}

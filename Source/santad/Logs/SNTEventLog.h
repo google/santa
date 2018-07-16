@@ -35,7 +35,7 @@
 // Methods for storing, retrieving, and removing cached decisions.
 - (void)cacheDecision:(SNTCachedDecision *)cd;
 - (SNTCachedDecision *)cachedDecisionForMessage:(santa_message_t)message;
-- (void)forgetCachedDecisionForVnodeId:(uint64_t)vnodeId;
+- (void)forgetCachedDecisionForVnodeId:(santa_vnode_id_t)vnodeId;
 
 // Method used to record the freshness of transitive rules.
 - (void)resetTimestampForCachedDecision:(SNTCachedDecision *)cd;

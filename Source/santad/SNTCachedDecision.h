@@ -15,13 +15,14 @@
 #import <Foundation/Foundation.h>
 
 #import "SNTCommonEnums.h"
+#import "SNTKernelCommon.h"
 
 ///
 ///  Store information about executions from decision making for later logging.
 ///
 @interface SNTCachedDecision : NSObject
 
-@property uint64_t vnodeId;
+@property santa_vnode_id_t vnodeId;
 @property SNTEventState decision;
 @property NSString *decisionExtra;
 @property NSString *sha256;

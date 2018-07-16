@@ -32,6 +32,7 @@
 		0D10BE861A0AABD600C0C944 /* SNTDropRootPrivs.m in Sources */ = {isa = PBXBuildFile; fileRef = 0D10BE851A0AABD600C0C944 /* SNTDropRootPrivs.m */; };
 		0D10BE871A0AABD600C0C944 /* SNTDropRootPrivs.m in Sources */ = {isa = PBXBuildFile; fileRef = 0D10BE851A0AABD600C0C944 /* SNTDropRootPrivs.m */; };
 		0D10BE891A0AAF6700C0C944 /* SNTDropRootPrivs.m in Sources */ = {isa = PBXBuildFile; fileRef = 0D10BE851A0AABD600C0C944 /* SNTDropRootPrivs.m */; };
+		0D10D18420C19445008251ED /* SNTCommandCacheHistogram.m in Sources */ = {isa = PBXBuildFile; fileRef = 0D10D18320C19445008251ED /* SNTCommandCacheHistogram.m */; };
 		0D1B477019A53419008CADD3 /* SNTAboutWindowController.m in Sources */ = {isa = PBXBuildFile; fileRef = 0D1B476E19A53419008CADD3 /* SNTAboutWindowController.m */; };
 		0D1B477119A53419008CADD3 /* AboutWindow.xib in Resources */ = {isa = PBXBuildFile; fileRef = 0D1B476F19A53419008CADD3 /* AboutWindow.xib */; };
 		0D202D191CDD2EE500A88F16 /* SNTCommandSyncTest.m in Sources */ = {isa = PBXBuildFile; fileRef = 0D202D181CDD2EE500A88F16 /* SNTCommandSyncTest.m */; };
@@ -186,6 +187,11 @@
 		C7FB56F71DBFB480004E14EF /* SNTXPCSyncdInterface.m in Sources */ = {isa = PBXBuildFile; fileRef = C7FB56F51DBFB480004E14EF /* SNTXPCSyncdInterface.m */; };
 		C7FB57001DBFC213004E14EF /* SNTSyncdQueue.m in Sources */ = {isa = PBXBuildFile; fileRef = C7FB56FF1DBFC213004E14EF /* SNTSyncdQueue.m */; };
 		D1761D2DAE8C790F29AFE6C9 /* libPods-LogicTests.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 7D949AA996AEAC326A4F6596 /* libPods-LogicTests.a */; };
+		D221001320AB35FB003C65C2 /* SNTXPCUnprivilegedControlInterface.m in Sources */ = {isa = PBXBuildFile; fileRef = D221001020AB35F3003C65C2 /* SNTXPCUnprivilegedControlInterface.m */; };
+		D221001420AB3609003C65C2 /* SNTXPCUnprivilegedControlInterface.m in Sources */ = {isa = PBXBuildFile; fileRef = D221001020AB35F3003C65C2 /* SNTXPCUnprivilegedControlInterface.m */; };
+		D221001520AB360A003C65C2 /* SNTXPCUnprivilegedControlInterface.m in Sources */ = {isa = PBXBuildFile; fileRef = D221001020AB35F3003C65C2 /* SNTXPCUnprivilegedControlInterface.m */; };
+		D221001620AB360A003C65C2 /* SNTXPCUnprivilegedControlInterface.m in Sources */ = {isa = PBXBuildFile; fileRef = D221001020AB35F3003C65C2 /* SNTXPCUnprivilegedControlInterface.m */; };
+		D221001720AB360B003C65C2 /* SNTXPCUnprivilegedControlInterface.m in Sources */ = {isa = PBXBuildFile; fileRef = D221001020AB35F3003C65C2 /* SNTXPCUnprivilegedControlInterface.m */; };
 		D6D356C5BC8709C2E355C113 /* libPods-santactl.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 4E3B4B2438711ACD7D560014 /* libPods-santactl.a */; };
 /* End PBXBuildFile section */
 
@@ -288,6 +294,7 @@
 		0D0A1EC5191AB9B000B8450F /* SNTCommandSyncPostflight.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SNTCommandSyncPostflight.m; sourceTree = "<group>"; };
 		0D10BE851A0AABD600C0C944 /* SNTDropRootPrivs.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SNTDropRootPrivs.m; sourceTree = "<group>"; };
 		0D10BE881A0AAC2100C0C944 /* SNTDropRootPrivs.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SNTDropRootPrivs.h; sourceTree = "<group>"; };
+		0D10D18320C19445008251ED /* SNTCommandCacheHistogram.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SNTCommandCacheHistogram.m; sourceTree = "<group>"; };
 		0D1B476D19A53419008CADD3 /* SNTAboutWindowController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SNTAboutWindowController.h; sourceTree = "<group>"; };
 		0D1B476E19A53419008CADD3 /* SNTAboutWindowController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SNTAboutWindowController.m; sourceTree = "<group>"; };
 		0D1B476F19A53419008CADD3 /* AboutWindow.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = AboutWindow.xib; sourceTree = "<group>"; };
@@ -452,6 +459,8 @@
 		C7FB56F51DBFB480004E14EF /* SNTXPCSyncdInterface.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SNTXPCSyncdInterface.m; sourceTree = "<group>"; };
 		C7FB56FE1DBFC213004E14EF /* SNTSyncdQueue.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SNTSyncdQueue.h; sourceTree = "<group>"; };
 		C7FB56FF1DBFC213004E14EF /* SNTSyncdQueue.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SNTSyncdQueue.m; sourceTree = "<group>"; };
+		D221000F20AB35F3003C65C2 /* SNTXPCUnprivilegedControlInterface.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SNTXPCUnprivilegedControlInterface.h; sourceTree = "<group>"; };
+		D221001020AB35F3003C65C2 /* SNTXPCUnprivilegedControlInterface.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SNTXPCUnprivilegedControlInterface.m; sourceTree = "<group>"; };
 		D7DEE68F05C49966396A2F10 /* Pods-santad-santabs.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-santad-santabs.release.xcconfig"; path = "Pods/Target Support Files/Pods-santad-santabs/Pods-santad-santabs.release.xcconfig"; sourceTree = "<group>"; };
 		D9B2D7095028D87E12E63EF7 /* Pods-santad-santabs.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-santad-santabs.debug.xcconfig"; path = "Pods/Target Support Files/Pods-santad-santabs/Pods-santad-santabs.debug.xcconfig"; sourceTree = "<group>"; };
 		DF5FE88E12AB307864A53CE7 /* Pods-santactl.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-santactl.release.xcconfig"; path = "Pods/Target Support Files/Pods-santactl/Pods-santactl.release.xcconfig"; sourceTree = "<group>"; };
@@ -747,6 +756,8 @@
 				0DCD604E19115A06006B445C /* SNTXPCNotifierInterface.m */,
 				C7FB56F41DBFB480004E14EF /* SNTXPCSyncdInterface.h */,
 				C7FB56F51DBFB480004E14EF /* SNTXPCSyncdInterface.m */,
+				D221000F20AB35F3003C65C2 /* SNTXPCUnprivilegedControlInterface.h */,
+				D221001020AB35F3003C65C2 /* SNTXPCUnprivilegedControlInterface.m */,
 			);
 			path = common;
 			sourceTree = "<group>";
@@ -807,6 +818,7 @@
 			isa = PBXGroup;
 			children = (
 				C7DA62F81E241A02009BDF2C /* SNTCommandBundleInfo.m */,
+				0D10D18320C19445008251ED /* SNTCommandCacheHistogram.m */,
 				C76614EB1D142D3C00D150C1 /* SNTCommandCheckCache.m */,
 				0DCD5FBE1909D64A006B445C /* SNTCommandFileInfo.m */,
 				0DE4C8A518FF3B1700466D04 /* SNTCommandFlushCache.m */,
@@ -935,8 +947,6 @@
 				0D260DA818B68E12002A0B55 /* Sources */,
 				0D260DA918B68E12002A0B55 /* Frameworks */,
 				0D260DAA18B68E12002A0B55 /* Resources */,
-				D49A3AB950AFD99741E9AF89 /* [CP] Embed Pods Frameworks */,
-				23869BA352E2C86DEFE62819 /* [CP] Copy Pods Resources */,
 			);
 			buildRules = (
 			);
@@ -955,7 +965,6 @@
 				0DD98E671A5DD02000A754C6 /* Update Version Info */,
 				0D35BD9A18FD71CE00921A21 /* Sources */,
 				0D35BD9B18FD71CE00921A21 /* Frameworks */,
-				2737FE8516A33567D3449943 /* [CP] Copy Pods Resources */,
 			);
 			buildRules = (
 			);
@@ -975,8 +984,6 @@
 				0D385DB2180DE4A900418BC6 /* Sources */,
 				0D385DB3180DE4A900418BC6 /* Frameworks */,
 				0D385DB4180DE4A900418BC6 /* Resources */,
-				BA20035148DDEF5808B2C7EF /* [CP] Embed Pods Frameworks */,
-				DDE76075391100F3BCE3634E /* [CP] Copy Pods Resources */,
 			);
 			buildRules = (
 			);
@@ -1018,7 +1025,6 @@
 				0DD98E661A5DCED300A754C6 /* Update Version Info */,
 				0D9A7F391759330400035EB5 /* Sources */,
 				0D9A7F3A1759330400035EB5 /* Frameworks */,
-				531BBB5BA4BF953D628D29AB /* [CP] Copy Pods Resources */,
 			);
 			buildRules = (
 			);
@@ -1039,7 +1045,6 @@
 				C78227501E1C3C58006EB2D6 /* Sources */,
 				C78227511E1C3C58006EB2D6 /* Frameworks */,
 				C78227521E1C3C58006EB2D6 /* Resources */,
-				FCF4BDAA180BD63C32AC85DE /* [CP] Copy Pods Resources */,
 			);
 			buildRules = (
 			);
@@ -1259,51 +1264,6 @@
 			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
 			showEnvVarsInLog = 0;
 		};
-		23869BA352E2C86DEFE62819 /* [CP] Copy Pods Resources */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputPaths = (
-			);
-			name = "[CP] Copy Pods Resources";
-			outputPaths = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "\"${SRCROOT}/Pods/Target Support Files/Pods-LogicTests/Pods-LogicTests-resources.sh\"\n";
-			showEnvVarsInLog = 0;
-		};
-		2737FE8516A33567D3449943 /* [CP] Copy Pods Resources */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputPaths = (
-			);
-			name = "[CP] Copy Pods Resources";
-			outputPaths = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "\"${SRCROOT}/Pods/Target Support Files/Pods-santactl/Pods-santactl-resources.sh\"\n";
-			showEnvVarsInLog = 0;
-		};
-		531BBB5BA4BF953D628D29AB /* [CP] Copy Pods Resources */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputPaths = (
-			);
-			name = "[CP] Copy Pods Resources";
-			outputPaths = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "\"${SRCROOT}/Pods/Target Support Files/Pods-santad/Pods-santad-resources.sh\"\n";
-			showEnvVarsInLog = 0;
-		};
 		9BF8830B1029605A497F13D5 /* [CP] Check Pods Manifest.lock */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
@@ -1340,21 +1300,6 @@
 			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
 			showEnvVarsInLog = 0;
 		};
-		BA20035148DDEF5808B2C7EF /* [CP] Embed Pods Frameworks */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputPaths = (
-			);
-			name = "[CP] Embed Pods Frameworks";
-			outputPaths = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "\"${SRCROOT}/Pods/Target Support Files/Pods-Santa/Pods-Santa-frameworks.sh\"\n";
-			showEnvVarsInLog = 0;
-		};
 		C7F95F971E23F9E7007A6BF5 /* Update bundle version */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
@@ -1388,51 +1333,6 @@
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
 			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
-			showEnvVarsInLog = 0;
-		};
-		D49A3AB950AFD99741E9AF89 /* [CP] Embed Pods Frameworks */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputPaths = (
-			);
-			name = "[CP] Embed Pods Frameworks";
-			outputPaths = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "\"${SRCROOT}/Pods/Target Support Files/Pods-LogicTests/Pods-LogicTests-frameworks.sh\"\n";
-			showEnvVarsInLog = 0;
-		};
-		DDE76075391100F3BCE3634E /* [CP] Copy Pods Resources */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputPaths = (
-			);
-			name = "[CP] Copy Pods Resources";
-			outputPaths = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "\"${SRCROOT}/Pods/Target Support Files/Pods-Santa/Pods-Santa-resources.sh\"\n";
-			showEnvVarsInLog = 0;
-		};
-		FCF4BDAA180BD63C32AC85DE /* [CP] Copy Pods Resources */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputPaths = (
-			);
-			name = "[CP] Copy Pods Resources";
-			outputPaths = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "\"${SRCROOT}/Pods/Target Support Files/Pods-santad-santabs/Pods-santad-santabs-resources.sh\"\n";
 			showEnvVarsInLog = 0;
 		};
 /* End PBXShellScriptBuildPhase section */
@@ -1491,6 +1391,7 @@
 				0DD0D492194F9BEF005F27EB /* SNTLogging.m in Sources */,
 				0DE71A761B95F7F900518526 /* SNTCachedDecision.m in Sources */,
 				0DCD605919115E5A006B445C /* SNTXPCNotifierInterface.m in Sources */,
+				D221001720AB360B003C65C2 /* SNTXPCUnprivilegedControlInterface.m in Sources */,
 				0DE50F691912B0CD007B2B0C /* SNTRule.m in Sources */,
 				0D202D1B1CDD465400A88F16 /* SNTCommandSyncState.m in Sources */,
 				C73A4B9A1DC10753007B6789 /* SNTSyncdQueue.m in Sources */,
@@ -1512,12 +1413,14 @@
 				C776A1071DEE160500A56616 /* SNTCommandSyncManager.m in Sources */,
 				0DCD605C19117A90006B445C /* SNTCommandSyncPreflight.m in Sources */,
 				0D41640519197AD7006A356A /* SNTCommandSyncEventUpload.m in Sources */,
+				0D10D18420C19445008251ED /* SNTCommandCacheHistogram.m in Sources */,
 				0D42D2B919D2042900955F08 /* SNTConfigurator.m in Sources */,
 				0DF395641AB76A7900CBC520 /* NSData+Zlib.m in Sources */,
 				C7FB56F71DBFB480004E14EF /* SNTXPCSyncdInterface.m in Sources */,
 				0D10BE871A0AABD600C0C944 /* SNTDropRootPrivs.m in Sources */,
 				0DE4C8A618FF3B1700466D04 /* SNTCommandFlushCache.m in Sources */,
 				4092327A1A51B66400A04527 /* SNTCommandRule.m in Sources */,
+				D221001420AB3609003C65C2 /* SNTXPCUnprivilegedControlInterface.m in Sources */,
 				C76614EC1D142D3C00D150C1 /* SNTCommandCheckCache.m in Sources */,
 				0D416401191974F1006A356A /* SNTCommandSyncState.m in Sources */,
 				0DC5D871192160180078A5C0 /* SNTCommandSyncLogUpload.m in Sources */,
@@ -1544,6 +1447,7 @@
 				0D89310F1C931986002E8D74 /* SNTRule.m in Sources */,
 				0DCD605119115A06006B445C /* SNTXPCNotifierInterface.m in Sources */,
 				0DB77FD91CCE824A004DF060 /* SNTBlockMessage.m in Sources */,
+				D221001620AB360A003C65C2 /* SNTXPCUnprivilegedControlInterface.m in Sources */,
 				0D827E6519DF392E006EC811 /* SNTConfigurator.m in Sources */,
 				0D89310E1C931979002E8D74 /* SNTXPCControlInterface.m in Sources */,
 				0D385DF2180DE51600418BC6 /* SNTMessageWindowController.m in Sources */,
@@ -1582,6 +1486,7 @@
 				0DB8ACC1185662DC00FEF9C7 /* SNTApplication.m in Sources */,
 				0D9A7F421759330500035EB5 /* main.m in Sources */,
 				0DA73C9F1934F8100056D7C4 /* SNTLogging.m in Sources */,
+				D221001320AB35FB003C65C2 /* SNTXPCUnprivilegedControlInterface.m in Sources */,
 				C7C721B11E23FF300051FAA6 /* SNTXPCBundleServiceInterface.m in Sources */,
 				0DE71A751B95F7F900518526 /* SNTCachedDecision.m in Sources */,
 				C7FB56F61DBFB480004E14EF /* SNTXPCSyncdInterface.m in Sources */,
@@ -1613,6 +1518,7 @@
 				C7C721B41E24042B0051FAA6 /* SNTStoredEvent.m in Sources */,
 				C7C721B51E2408BE0051FAA6 /* SNTFileInfo.m in Sources */,
 				C7BBA67E1E54C7E200F1E6A8 /* SNTXPCNotifierInterface.m in Sources */,
+				D221001520AB360A003C65C2 /* SNTXPCUnprivilegedControlInterface.m in Sources */,
 				C7479F071E5374BF0054C1CF /* SNTXPCControlInterface.m in Sources */,
 				C7479F091E5374E50054C1CF /* SNTRule.m in Sources */,
 				C79A23581E23F7E80037AFA8 /* main.m in Sources */,
@@ -1700,6 +1606,7 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				INSTALL_PATH = "";
+				OTHER_CODE_SIGN_FLAGS = "";
 				OTHER_CPLUSPLUSFLAGS = (
 					"$(OTHER_CFLAGS)",
 					"-fcxx-modules",
@@ -1734,6 +1641,7 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				INSTALL_PATH = "";
+				OTHER_CODE_SIGN_FLAGS = "";
 				OTHER_CPLUSPLUSFLAGS = (
 					"$(OTHER_CFLAGS)",
 					"-fcxx-modules",

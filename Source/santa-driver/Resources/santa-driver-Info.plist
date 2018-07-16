@@ -9,15 +9,15 @@
 	<key>NSHumanReadableCopyright</key>
 	<string>Google, Inc.</string>
 	<key>CFBundleIdentifier</key>
-	<string>com.google.${PRODUCT_NAME:rfc1034identifier}</string>
+	<string>com.google.santa-driver</string>
 	<key>CFBundleName</key>
-	<string>${PRODUCT_NAME}</string>
+	<string>santa-driver</string>
 	<key>CFBundleExecutable</key>
-	<string>${EXECUTABLE_NAME}</string>
+	<string>santa-driver</string>
 	<key>CFBundleVersion</key>
-	<string>TO.BE.FILLED</string>
+	<string>${SANTA_VERSION}</string>
 	<key>CFBundleShortVersionString</key>
-	<string>TO.BE.FILLED</string>
+	<string>${SANTA_VERSION}</string>
 	<key>IOKitPersonalities</key>
 	<dict>
 		<key>SantaDriver</key>

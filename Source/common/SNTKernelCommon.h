@@ -21,9 +21,6 @@
 #ifndef SANTA__COMMON__KERNELCOMMON_H
 #define SANTA__COMMON__KERNELCOMMON_H
 
-// Defines the lengths of paths and Vnode IDs passed around.
-#define MAX_VNODE_ID_STR 21  // digits in UINT64_MAX + 1 for NULL-terminator
-
 // Defines the name of the userclient class and the driver bundle ID.
 #define USERCLIENT_CLASS "com_google_SantaDriver"
 #define USERCLIENT_ID "com.google.santa-driver"
@@ -43,6 +40,7 @@ enum SantaDriverMethods {
   kSantaUserClientRemoveCacheEntry,
   kSantaUserClientCacheCount,
   kSantaUserClientCheckCache,
+  kSantaUserClientCacheBucketCount,
 
   // Any methods supported by the driver should be added above this line to
   // ensure this remains the count of methods.
@@ -92,10 +90,27 @@ typedef enum {
    x == ACTION_RESPOND_ALLOW_COMPILER || \
    x == ACTION_RESPOND_ALLOW_PENDING_TRANSITIVE)
 
+// Struct to manage vnode IDs
+typedef struct santa_vnode_id_t {
+  uint64_t fsid;
+  uint64_t fileid;
+
+#ifdef __cplusplus
+  bool operator==(const santa_vnode_id_t& rhs) const {
+    return fsid == rhs.fsid && fileid == rhs.fileid;
+  }
+  // This _must not_ be used for anything security-sensitive. It exists solely to make
+  // the msleep/wakeup calls easier.
+  uint64_t unsafe_simple_id() const {
+    return (((uint64_t)fsid << 32) | fileid);
+  }
+#endif
+} santa_vnode_id_t;
+
 // Message struct that is sent down the IODataQueue.
 typedef struct {
   santa_action_t action;
-  uint64_t vnode_id;
+  santa_vnode_id_t vnode_id;
   uid_t uid;
   gid_t gid;
   pid_t pid;
@@ -108,5 +123,11 @@ typedef struct {
   // actually happens, so only take MAXPATHLEN and throw away any excess.
   char pname[MAXPATHLEN];
 } santa_message_t;
+
+// Used for the kSantaUserClientCacheBucketCount request.
+typedef struct {
+  uint16_t per_bucket[1024];
+  uint64_t start;
+} santa_bucket_count_t;
 
 #endif  // SANTA__COMMON__KERNELCOMMON_H

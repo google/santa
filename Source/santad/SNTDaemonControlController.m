@@ -70,17 +70,25 @@ double watchdogRAMPeak = 0;
 
 #pragma mark Kernel ops
 
-- (void)cacheCounts:(void (^)(uint64_t, uint64_t))reply {
-  NSArray<NSNumber *> *counts = [self.driverManager cacheCounts];
-  reply([counts[0] unsignedLongLongValue], [counts[1] unsignedLongLongValue]);
+- (void)cacheCounts:(void (^)(uint64_t))reply {
+  uint64_t count = [self.driverManager cacheCount];
+  reply(count);
+}
+
+- (void)cacheBucketCount:(void (^)(NSArray *))reply {
+  reply([self.driverManager cacheBucketCount]);
 }
 
 - (void)flushCache:(void (^)(BOOL))reply {
-  reply([self.driverManager flushCacheNonRootOnly:NO]);
+  reply([self.driverManager flushCache]);
 }
 
-- (void)checkCacheForVnodeID:(uint64_t)vnodeID withReply:(void (^)(santa_action_t))reply {
+- (void)checkCacheForVnodeID:(santa_vnode_id_t)vnodeID withReply:(void (^)(santa_action_t))reply {
   reply([self.driverManager checkCache:vnodeID]);
+}
+
+- (void)driverConnectionEstablished:(void (^)(BOOL))reply {
+  reply(self.driverManager.connectionEstablished);
 }
 
 #pragma mark Database ops
@@ -113,7 +121,7 @@ double watchdogRAMPeak = 0;
   // The actual cache flushing happens after the new rules have been added to the database.
   if (flushCache) {
     LOGI(@"Flushing decision cache");
-    [self.driverManager flushCacheNonRootOnly:NO];
+    [self.driverManager flushCache];
   }
 
   reply(error);

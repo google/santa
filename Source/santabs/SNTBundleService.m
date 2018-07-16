@@ -49,7 +49,7 @@
   // Create listener for return connection from SantaGUI.
   NSXPCListener *listener = [NSXPCListener anonymousListener];
   self.listener = [[MOLXPCConnection alloc] initServerWithListener:listener];
-  self.listener.exportedInterface = [SNTXPCBundleServiceInterface bundleServiceInterface];
+  self.listener.unprivilegedInterface = self.listener.privilegedInterface = [SNTXPCBundleServiceInterface bundleServiceInterface];
   self.listener.exportedObject = self;
   self.listener.acceptedHandler = ^{
     dispatch_semaphore_signal(sema);

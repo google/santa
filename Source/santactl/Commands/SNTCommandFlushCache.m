@@ -12,6 +12,8 @@
 ///    See the License for the specific language governing permissions and
 ///    limitations under the License.
 
+#ifdef DEBUG
+
 #import <Foundation/Foundation.h>
 
 #import "SNTCommand.h"
@@ -27,9 +29,7 @@
 
 @implementation SNTCommandFlushCache
 
-#ifdef DEBUG
 REGISTER_COMMAND_NAME(@"flushcache")
-#endif
 
 + (BOOL)requiresRoot {
   return YES;
@@ -61,3 +61,5 @@ REGISTER_COMMAND_NAME(@"flushcache")
 }
 
 @end
+
+#endif

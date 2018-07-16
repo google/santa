@@ -80,7 +80,7 @@ REGISTER_COMMAND_NAME(@"rule")
       ![arguments containsObject:@"--check"] &&
       ![arguments containsObject:@"--force"]) {
 #else
-    if ([config syncBaseURL] && ![arguments containsObject:@"--check"])
+  if ([config syncBaseURL] && ![arguments containsObject:@"--check"]) {
 #endif
     printf("SyncBaseURL is set, rules are managed centrally.\n");
     exit(1);

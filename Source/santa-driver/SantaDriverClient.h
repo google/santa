@@ -47,11 +47,14 @@ class com_google_SantaDriverClient : public IOUserClient {
   ///  Called when this class is stopping
   void stop(IOService *provider) override;
 
-  ///  Called when a client disconnects
+  ///  Called when a client manually disconnects (via IOServiceClose)
   IOReturn clientClose() override;
 
-  ///  Called when the driver is shutting down
-  bool terminate(IOOptionBits options) override;
+  ///  Called when a client dies
+  IOReturn clientDied() override;
+
+  ///  Called during termination
+  bool didTerminate(IOService* provider, IOOptionBits options, bool* defer) override;
 
   ///  Called in clients with IOConnectSetNotificationPort
   IOReturn registerNotificationPort(
@@ -111,6 +114,11 @@ class com_google_SantaDriverClient : public IOUserClient {
   ///  The daemon calls this to find out the status of a vnode_id in the cache.
   ///  Output will be a santa_action_t.
   static IOReturn check_cache(
+      OSObject *target, void *reference, IOExternalMethodArguments *arguments);
+
+  ///  The daemon calls this to find out how many items are in each cache bucket.
+  ///  Input and output are both an instance of santa_bucket_count_t.
+  static IOReturn cache_bucket_count(
       OSObject *target, void *reference, IOExternalMethodArguments *arguments);
 
  private:

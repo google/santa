@@ -39,6 +39,12 @@ GUI_USER=$(/usr/bin/stat -f '%u' /dev/console)
 mkdir -p /usr/local/bin
 /bin/ln -s /Library/Extensions/santa-driver.kext/Contents/MacOS/santactl /usr/local/bin
 
+if [ ! -d /var/db/santa ] ; then
+  mkdir /var/db/santa
+fi
+
+cp ${SOURCE}/conf/com.google.santa.example.mobileconfig /var/db/santa
+
 /bin/cp ${SOURCE}/conf/com.google.santad.plist /Library/LaunchDaemons
 /bin/cp ${SOURCE}/conf/com.google.santagui.plist /Library/LaunchAgents
 /bin/cp ${SOURCE}/conf/com.google.santa.asl.conf /etc/asl/

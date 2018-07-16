@@ -90,7 +90,7 @@ static size_t kLargeBinarySize = 30 * 1024 * 1024;
 - (void)validateBinaryWithMessage:(santa_message_t)message {
   // Get info about the file. If we can't get this info, allow execution and log an error.
   if (unlikely(message.path == NULL)) {
-    LOGE(@"Path for vnode_id is NULL: %llu", message.vnode_id);
+    LOGE(@"Path for vnode_id is NULL: %llu/%llu", message.vnode_id.fsid, message.vnode_id.fileid);
     [_driverManager postToKernelAction:ACTION_RESPOND_ALLOW forVnodeID:message.vnode_id];
     return;
   }
@@ -115,14 +115,16 @@ static size_t kLargeBinarySize = 30 * 1024 * 1024;
     [_driverManager postToKernelAction:ACTION_RESPOND_ACK forVnodeID:message.vnode_id];
   }
 
-  // Get codesigning info about the file.
-  NSError *csError;
-  MOLCodesignChecker *csInfo =
-      [[MOLCodesignChecker alloc] initWithBinaryPath:binInfo.path
-                                      fileDescriptor:binInfo.fileHandle.fileDescriptor
-                                               error:&csError];
-  // Ignore codesigning if there are any errors with the signature.
-  if (csError) csInfo = nil;
+  // Get codesigning info about the file but only if it's a Mach-O.
+  MOLCodesignChecker *csInfo;
+  if (binInfo.isMachO) {
+    NSError *csError;
+    csInfo = [[MOLCodesignChecker alloc] initWithBinaryPath:binInfo.path
+                                             fileDescriptor:binInfo.fileHandle.fileDescriptor
+                                                      error:&csError];
+    // Ignore codesigning if there are any errors with the signature.
+    if (csError) csInfo = nil;
+  }
 
   // Actually make the decision (and refresh rule access timestamp).
   SNTCachedDecision *cd = [self.policyProcessor decisionForFileInfo:binInfo
@@ -149,7 +151,7 @@ static size_t kLargeBinarySize = 30 * 1024 * 1024;
   }
 
   // Send the decision to the kernel.
-  [_driverManager postToKernelAction:action forVnodeID:cd.vnodeId];
+  [_driverManager postToKernelAction:action forVnodeID:message.vnode_id];
 
   // Log to database if necessary.
   if (cd.decision != SNTEventStateAllowBinary &&

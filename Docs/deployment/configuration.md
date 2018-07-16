@@ -37,6 +37,7 @@ Two configuration methods can be used to control Santa: a local configuration pr
 | MachineIDKey                  | String     | The key to use on MachineIDPlist.        |
 | EventLogType                  | String     | Defines how event logs are stored. Options are 1) syslog: Sent to ASL or ULS (if built with the 10.12 SDK or later). 2) filelog: Sent to a file on disk. Use EventLogPath to specify a path. Defaults to filelog      |
 | EventLogPath                  | String     | If EventLogType is set to filelog, EventLogPath will provide the path to save logs. Defaults to /var/db/santa/santa.log. If you change this value ensure you also update com.google.santa.newsyslog.conf with the new path.        |
+| EnableMachineIDDecoration     | Bool       | If YES, this appends the MachineID to the end of each log line. Defaults to NO.       |
 
 *overridable by the sync server: run `santactl status` to check the current running config
 

@@ -45,26 +45,35 @@
 ///
 ///  Sends a response to a query back to the kernel.
 ///
-- (kern_return_t)postToKernelAction:(santa_action_t)action forVnodeID:(uint64_t)vnodeId;
+- (kern_return_t)postToKernelAction:(santa_action_t)action forVnodeID:(santa_vnode_id_t)vnodeId;
 
 ///
 ///  Get the number of binaries in the kernel's caches.
 ///
-- (NSArray<NSNumber *> *)cacheCounts;
+- (uint64_t)cacheCount;
+
+///
+///  Return an array representing all buckets in the kernel's decision cache where each number
+///  is the number of items in that bucket.
+///
+- (NSArray<NSNumber *> *)cacheBucketCount;
 
 ///
 ///  Flush the kernel's binary cache.
 ///
-- (BOOL)flushCacheNonRootOnly:(BOOL)nonRootOnly;
+- (BOOL)flushCache;
 
 ///
 ///  Check the kernel cache for a VnodeID.
 ///
-- (santa_action_t)checkCache:(uint64_t)vnodeID;
+- (santa_action_t)checkCache:(santa_vnode_id_t)vnodeID;
+
+///  Returns whether the connection to the driver has been established.
+@property(readonly) BOOL connectionEstablished;
 
 ///
 ///  Remove single entry from the kernel cache for given VnodeID.
 ///
-- (kern_return_t)removeCacheEntryForVnodeID:(uint64_t)vnodeId;
+- (kern_return_t)removeCacheEntryForVnodeID:(santa_vnode_id_t)vnodeId;
 
 @end

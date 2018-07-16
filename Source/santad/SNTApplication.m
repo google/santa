@@ -34,6 +34,7 @@
 #import "SNTSyncdQueue.h"
 #import "SNTSyslogEventLog.h"
 #import "SNTXPCControlInterface.h"
+#import "SNTXPCUnprivilegedControlInterface.h"
 #import "SNTXPCNotifierInterface.h"
 
 @interface SNTApplication ()
@@ -119,7 +120,8 @@
 
     _controlConnection =
         [[MOLXPCConnection alloc] initServerWithName:[SNTXPCControlInterface serviceId]];
-    _controlConnection.exportedInterface = [SNTXPCControlInterface controlInterface];
+    _controlConnection.privilegedInterface = [SNTXPCControlInterface controlInterface];
+    _controlConnection.unprivilegedInterface = [SNTXPCUnprivilegedControlInterface controlInterface];
     _controlConnection.exportedObject = dc;
     [_controlConnection resume];
 
@@ -262,7 +264,7 @@ void diskDisappearedCallback(DADiskRef disk, void *context) {
   if (![props[@"DAVolumeMountable"] boolValue]) return;
 
   [app.eventLog logDiskDisappeared:props];
-  [app.driverManager flushCacheNonRootOnly:YES];
+  [app.driverManager flushCache];
 }
 
 - (void)startSyncd {
@@ -273,10 +275,9 @@ void diskDisappearedCallback(DADiskRef disk, void *context) {
     LOGI(@"Failed to fork");
     self.syncdPID = 0;
   } else if (self.syncdPID == 0) {
-    // Ensure we have no privileges
-    if (!DropRootPrivileges()) {
-      _exit(EPERM);
-    }
+    // The santactl executable will drop privileges just after the XPC
+    // connection has been estabilished; this is done this way so that
+    // the XPC authentication can occur
     _exit(execl(kSantaCtlPath, kSantaCtlPath, "sync", "--daemon", "--syslog", NULL));
   }
   LOGI(@"santactl started with pid: %i", self.syncdPID);
@@ -315,7 +316,7 @@ void diskDisappearedCallback(DADiskRef disk, void *context) {
     if (!new && !old) return;
     if (![new.pattern isEqualToString:old.pattern]) {
       LOGI(@"Changed [white|black]list regex, flushing cache");
-      [self.driverManager flushCacheNonRootOnly:NO];
+      [self.driverManager flushCache];
     }
   }
 }
@@ -323,7 +324,7 @@ void diskDisappearedCallback(DADiskRef disk, void *context) {
 - (void)clientModeDidChange:(SNTClientMode)clientMode {
   if (clientMode == SNTClientModeLockdown) {
     LOGI(@"Changed client mode, flushing cache.");
-    [self.driverManager flushCacheNonRootOnly:NO];
+    [self.driverManager flushCache];
   }
   [[self.notQueue.notifierConnection remoteObjectProxy] postClientModeNotification:clientMode];
 }

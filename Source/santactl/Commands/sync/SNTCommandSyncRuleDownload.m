@@ -82,7 +82,11 @@
   do {
     NSDictionary *requestDict = cursor ? @{kCursor : cursor} : @{};
     NSDictionary *response = [self performRequest:[self requestWithDictionary:requestDict]];
-    if (!response) return nil;
+
+    if (![response isKindOfClass:[NSDictionary class]]) {
+      return nil;
+    }
+
     for (NSDictionary *ruleDict in response[kRules]) {
       SNTRule *rule = [self ruleFromDictionary:ruleDict];
       if (rule) [newRules addObject:rule];

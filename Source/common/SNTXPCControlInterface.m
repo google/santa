@@ -25,8 +25,8 @@
   return @"SantaXPCControl";
 }
 
-+ (NSXPCInterface *)controlInterface {
-  NSXPCInterface *r = [NSXPCInterface interfaceWithProtocol:@protocol(SNTDaemonControlXPC)];
++ (void)initializeControlInterface:(NSXPCInterface *)r {
+  [super initializeControlInterface:r];
 
   [r setClasses:[NSSet setWithObjects:[NSArray class], [SNTStoredEvent class], nil]
         forSelector:@selector(databaseEventsPending:)
@@ -37,16 +37,11 @@
         forSelector:@selector(databaseRuleAddRules:cleanSlate:reply:)
       argumentIndex:0
             ofReply:NO];
+}
 
-  [r setClasses:[NSSet setWithObjects:[NSArray class], [SNTStoredEvent class], nil]
-        forSelector:@selector(hashBundleBinariesForEvent:reply:)
-      argumentIndex:1
-            ofReply:YES];
-
-  [r setClasses:[NSSet setWithObjects:[NSArray class], [SNTStoredEvent class], nil]
-        forSelector:@selector(syncBundleEvent:relatedEvents:)
-      argumentIndex:1
-            ofReply:NO];
++ (NSXPCInterface *)controlInterface {
+  NSXPCInterface *r = [NSXPCInterface interfaceWithProtocol:@protocol(SNTDaemonControlXPC)];
+  [self initializeControlInterface:r];
 
   return r;
 }

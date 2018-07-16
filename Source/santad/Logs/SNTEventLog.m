@@ -88,21 +88,21 @@
 
 - (void)cacheDecision:(SNTCachedDecision *)cd {
   dispatch_sync(self.detailStoreQueue, ^{
-    self.detailStore[@(cd.vnodeId)] = cd;
+    self.detailStore[@(cd.vnodeId.fileid)] = cd;
   });
 }
 
 - (SNTCachedDecision *)cachedDecisionForMessage:(santa_message_t)message {
   __block SNTCachedDecision *cd;
   dispatch_sync(self.detailStoreQueue, ^{
-    cd = self.detailStore[@(message.vnode_id)];
+    cd = self.detailStore[@(message.vnode_id.fileid)];
   });
   return cd;
 }
 
-- (void)forgetCachedDecisionForVnodeId:(uint64_t)vnodeId {
+- (void)forgetCachedDecisionForVnodeId:(santa_vnode_id_t)vnodeId {
   dispatch_sync(self.detailStoreQueue, ^{
-    [self.detailStore removeObjectForKey:@(vnodeId)];
+    [self.detailStore removeObjectForKey:@(vnodeId.fileid)];
   });
 }
 

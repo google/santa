@@ -9,20 +9,24 @@
 	<key>NSHumanReadableCopyright</key>
 	<string>Google, Inc.</string>
 	<key>CFBundleIdentifier</key>
-	<string>com.google.${PRODUCT_NAME:rfc1034identifier}GUI</string>
+	<string>com.google.SantaGUI</string>
 	<key>CFBundleName</key>
-	<string>${PRODUCT_NAME}</string>
+	<string>Santa</string>
 	<key>CFBundleExecutable</key>
-	<string>${EXECUTABLE_NAME}</string>
+	<string>Santa</string>
 	<key>CFBundleVersion</key>
-	<string>TO.BE.FILLED</string>
+	<string>${SANTA_VERSION}</string>
 	<key>CFBundleShortVersionString</key>
-	<string>TO.BE.FILLED</string>
+	<string>${SANTA_VERSION}</string>
 	<key>LSMinimumSystemVersion</key>
-	<string>${MACOSX_DEPLOYMENT_TARGET}</string>
+	<string>${MACOSX_VERSION_MIN}</string>
 	<key>LSUIElement</key>
 	<true/>
 	<key>NSPrincipalClass</key>
 	<string>NSApplication</string>
+	<key>CFBundleIconFile</key>
+	<string>AppIcon</string>
+	<key>CFBundleIconName</key>
+	<string>AppIcon</string>
 </dict>
 </plist>

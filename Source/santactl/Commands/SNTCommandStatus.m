@@ -50,9 +50,15 @@ REGISTER_COMMAND_NAME(@"status")
   dispatch_group_t group = dispatch_group_create();
 
   // Daemon status
+  __block BOOL driverConnected;
   __block NSString *clientMode;
   __block uint64_t cpuEvents, ramEvents;
   __block double cpuPeak, ramPeak;
+  dispatch_group_enter(group);
+  [[self.daemonConn remoteObjectProxy] driverConnectionEstablished:^(BOOL connected) {
+    driverConnected = connected;
+    dispatch_group_leave(group);
+  }];
   dispatch_group_enter(group);
   [[self.daemonConn remoteObjectProxy] clientMode:^(SNTClientMode cm) {
     switch (cm) {
@@ -81,11 +87,10 @@ REGISTER_COMMAND_NAME(@"status")
   BOOL fileLogging = ([[SNTConfigurator configurator] fileChangesRegex] != nil);
 
   // Kext status
-  __block uint64_t rootCacheCount = -1, nonRootCacheCount = -1;
+  __block uint64_t cacheCount = -1;
   dispatch_group_enter(group);
-  [[self.daemonConn remoteObjectProxy] cacheCounts:^(uint64_t rootCache, uint64_t nonRootCache) {
-    rootCacheCount = rootCache;
-    nonRootCacheCount = nonRootCache;
+  [[self.daemonConn remoteObjectProxy] cacheCounts:^(uint64_t count) {
+    cacheCount = count;
     dispatch_group_leave(group);
   }];
 
@@ -173,6 +178,7 @@ REGISTER_COMMAND_NAME(@"status")
   if ([arguments containsObject:@"--json"]) {
     NSDictionary *stats = @{
       @"daemon" : @{
+        @"driver_connected" : @(driverConnected),
         @"mode" : clientMode ?: @"null",
         @"file_logging" : @(fileLogging),
         @"watchdog_cpu_events" : @(cpuEvents),
@@ -181,8 +187,7 @@ REGISTER_COMMAND_NAME(@"status")
         @"watchdog_ram_peak" : @(ramPeak),
       },
       @"kernel" : @{
-        @"root_cache_count" : @(rootCacheCount),
-        @"non_root_cache_count": @(nonRootCacheCount),
+        @"cache_count" : @(cacheCount),
       },
       @"database" : @{
         @"binary_rules" : @(binaryRuleCount),
@@ -208,13 +213,13 @@ REGISTER_COMMAND_NAME(@"status")
     printf("%s\n", [statsStr UTF8String]);
   } else {
     printf(">>> Daemon Info\n");
+    printf("  %-25s | %s\n", "Driver Connected", driverConnected ? "Yes" : "No");
     printf("  %-25s | %s\n", "Mode", [clientMode UTF8String]);
     printf("  %-25s | %s\n", "File Logging", (fileLogging ? "Yes" : "No"));
     printf("  %-25s | %lld  (Peak: %.2f%%)\n", "Watchdog CPU Events", cpuEvents, cpuPeak);
     printf("  %-25s | %lld  (Peak: %.2fMB)\n", "Watchdog RAM Events", ramEvents, ramPeak);
     printf(">>> Kernel Info\n");
-    printf("  %-25s | %lld\n", "Root cache count", rootCacheCount);
-    printf("  %-25s | %lld\n", "Non-root cache count", nonRootCacheCount);
+    printf("  %-25s | %lld\n", "Cache count", cacheCount);
     printf(">>> Database Info\n");
     printf("  %-25s | %lld\n", "Binary Rules", binaryRuleCount);
     printf("  %-25s | %lld\n", "Certificate Rules", certRuleCount);
