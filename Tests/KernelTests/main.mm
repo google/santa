@@ -107,20 +107,26 @@ const char *ldPath =
 /// Call in-kernel function: |kSantaUserClientAllowBinary| or |kSantaUserClientDenyBinary|
 /// passing the |vnodeID|.
 - (void)postToKernelAction:(santa_action_t)action forVnodeID:(santa_vnode_id_t)vnodeid {
-  if (action == ACTION_RESPOND_ALLOW) {
-    IOConnectCallStructMethod(self.connection, kSantaUserClientAllowBinary,
-                              &vnodeid, sizeof(vnodeid), 0, 0);
-  } else if (action == ACTION_RESPOND_DENY) {
-    IOConnectCallStructMethod(self.connection, kSantaUserClientDenyBinary,
-                              &vnodeid, sizeof(vnodeid), 0, 0);
-  } else if (action == ACTION_RESPOND_ACK) {
-    IOConnectCallStructMethod(self.connection, kSantaUserClientAcknowledgeBinary,
-                              &vnodeid, sizeof(vnodeid), 0, 0);
-  } else if (action == ACTION_RESPOND_ALLOW_COMPILER) {
-    IOConnectCallStructMethod(self.connection, kSantaUserClientAllowCompiler,
-                              &vnodeid, sizeof(vnodeid), 0, 0);
-  } else {
-    TFAILINFO("postToKernelAction:forVnodeID: received unkknown action type: %d", action);
+  switch (action) {
+    case ACTION_RESPOND_ALLOW:
+      IOConnectCallStructMethod(self.connection, kSantaUserClientAllowBinary,
+                                &vnodeid, sizeof(vnodeid), 0, 0);
+      break;
+  case ACTION_RESPOND_DENY:
+      IOConnectCallStructMethod(self.connection, kSantaUserClientDenyBinary,
+                                &vnodeid, sizeof(vnodeid), 0, 0);
+      break;
+  case ACTION_RESPOND_ACK:
+      IOConnectCallStructMethod(self.connection, kSantaUserClientAcknowledgeBinary,
+                                &vnodeid, sizeof(vnodeid), 0, 0);
+      break;
+  case ACTION_RESPOND_ALLOW_COMPILER:
+      IOConnectCallStructMethod(self.connection, kSantaUserClientAllowCompiler,
+                                &vnodeid, sizeof(vnodeid), 0, 0);
+      break;
+  default:
+      TFAILINFO("postToKernelAction:forVnodeID: received unknown action type: %d", action);
+      break;
   }
 }
 
@@ -597,7 +603,7 @@ const char *ldPath =
   } @catch (NSException *exception) {
     TFAILINFO("could not launch /private/tmp/hello: %s", exception.reason.UTF8String);
   }
-
+  // Check that the listener was not consulted for the decision.
   if (helloCount > 0) {
     TFAILINFO("pending decision for /private/tmp/hello was not in cache");
   }
@@ -640,8 +646,8 @@ const char *ldPath =
   } @catch (NSException *exception) {
     TFAILINFO("Couldn't launch clang");
   }
-  // Make sure that our version of ld marked as compiler was run.  This assumes that
-  // "xcode-select -p" returns "/Applications/Xcode.app/Contents/Developer"
+  // Make sure that our version of ld was run.  This assumes that "xcode-select -p"
+  // returns "/Applications/Xcode.app/Contents/Developer"
   if (ldCount != 1) {
     TFAILINFO("Didn't record run of ld");
   }
@@ -654,7 +660,7 @@ const char *ldPath =
   } @catch (NSException *exception) {
     TPASS();
   }
-
+  // Check that there wasn't a decision for /private/tmp/hello in the cache.
   if (helloCount != 1) {
     TFAILINFO("decision for /private/tmp/hello found in cache");
   }
