@@ -32,6 +32,8 @@
 			<string>IOKit</string>
 			<key>IOUserClientClass</key>
 			<string>com_google_SantaDriverClient</string>
+			<key>IOMatchCategory</key>
+			<string>com_google_SantaDriver</string>
 		</dict>
 	</dict>
 	<key>OSBundleLibraries</key>
