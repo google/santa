@@ -19,6 +19,7 @@
 #import <MOLXPCConnection/MOLXPCConnection.h>
 
 #import "SNTCommonEnums.h"
+#import "SNTCompilerController.h"
 #import "SNTConfigurator.h"
 #import "SNTDaemonControlController.h"
 #import "SNTDatabaseController.h"
@@ -41,6 +42,7 @@
 @property SNTDriverManager *driverManager;
 @property SNTEventLog *eventLog;
 @property SNTExecutionController *execController;
+@property SNTCompilerController *compilerController;
 @property MOLXPCConnection *controlConnection;
 @property SNTNotificationQueue *notQueue;
 @property pid_t syncdPID;
@@ -123,6 +125,10 @@
     _controlConnection.exportedObject = dc;
     [_controlConnection resume];
 
+    // Initialize the transitive whitelisting controller object.
+    _compilerController = [[SNTCompilerController alloc] initWithDriverManager:_driverManager
+                                                                      eventLog:_eventLog];
+
     // Initialize the binary checker object
     _execController = [[SNTExecutionController alloc] initWithDriverManager:_driverManager
                                                                   ruleTable:ruleTable
@@ -163,6 +169,12 @@
           }
           case ACTION_REQUEST_BINARY: {
             [_execController validateBinaryWithMessage:message];
+            break;
+          }
+          case ACTION_NOTIFY_WHITELIST: {
+            // Determine if we should add a transitive whitelisting rule for this new file.
+            // Requires that writing process was a compiler and that new file is executable.
+            [self.compilerController createTransitiveRule:message];
             break;
           }
           default: {

@@ -149,6 +149,8 @@
 		59D56CF2D9C5BD9B7E3CC56D /* libPods-santad-santabs.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 14B98F4051188ECB7D024331 /* libPods-santad-santabs.a */; };
 		81133DB01F3A76F700917FF9 /* SNTCommand.m in Sources */ = {isa = PBXBuildFile; fileRef = 81133DAF1F3A75CE00917FF9 /* SNTCommand.m */; };
 		81133DB11F3A77C600917FF9 /* SNTCommand.m in Sources */ = {isa = PBXBuildFile; fileRef = 81133DAF1F3A75CE00917FF9 /* SNTCommand.m */; };
+		81A00E7F1FD74F8E00A84676 /* SNTCompilerController.m in Sources */ = {isa = PBXBuildFile; fileRef = 81A00E7E1FD74EFF00A84676 /* SNTCompilerController.m */; };
+		81A00E801FD74F9100A84676 /* SNTCompilerController.m in Sources */ = {isa = PBXBuildFile; fileRef = 81A00E7E1FD74EFF00A84676 /* SNTCompilerController.m */; };
 		B352A545B76783D568A6D0C5 /* libPods-Santa.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 90E9D568200AB9B642E06272 /* libPods-Santa.a */; };
 		C714F8B11D8044D400700EDF /* SNTCommandFileInfo.m in Sources */ = {isa = PBXBuildFile; fileRef = 0DCD5FBE1909D64A006B445C /* SNTCommandFileInfo.m */; };
 		C714F8B21D8044FE00700EDF /* SNTCommandController.m in Sources */ = {isa = PBXBuildFile; fileRef = 0D35BDAB18FD7CFD00921A21 /* SNTCommandController.m */; };
@@ -425,6 +427,8 @@
 		7D949AA996AEAC326A4F6596 /* libPods-LogicTests.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-LogicTests.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		81133DAE1F3A75CE00917FF9 /* SNTCommand.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SNTCommand.h; sourceTree = "<group>"; };
 		81133DAF1F3A75CE00917FF9 /* SNTCommand.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SNTCommand.m; sourceTree = "<group>"; };
+		81A00E7D1FD74EFF00A84676 /* SNTCompilerController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SNTCompilerController.h; sourceTree = "<group>"; };
+		81A00E7E1FD74EFF00A84676 /* SNTCompilerController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SNTCompilerController.m; sourceTree = "<group>"; };
 		8EF10E4B8C86CED022C72F1B /* Pods-santactl.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-santactl.debug.xcconfig"; path = "Pods/Target Support Files/Pods-santactl/Pods-santactl.debug.xcconfig"; sourceTree = "<group>"; };
 		90E9D568200AB9B642E06272 /* libPods-Santa.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-Santa.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		A6A91785C40257CC156B4F05 /* Pods-Santa.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Santa.release.xcconfig"; path = "Pods/Target Support Files/Pods-Santa/Pods-Santa.release.xcconfig"; sourceTree = "<group>"; };
@@ -768,6 +772,8 @@
 				0DB8ACC0185662DC00FEF9C7 /* SNTApplication.m */,
 				0DE71A731B95F7F900518526 /* SNTCachedDecision.h */,
 				0DE71A741B95F7F900518526 /* SNTCachedDecision.m */,
+				81A00E7D1FD74EFF00A84676 /* SNTCompilerController.h */,
+				81A00E7E1FD74EFF00A84676 /* SNTCompilerController.m */,
 				0D8E18CB19107B56000F89B8 /* SNTDaemonControlController.h */,
 				0D8E18CC19107B56000F89B8 /* SNTDaemonControlController.m */,
 				0D63DD5A1906FCB400D346C4 /* SNTDatabaseController.h */,
@@ -1380,6 +1386,7 @@
 				0D41DAD41A7C28C800A890FE /* SNTEventTableTest.m in Sources */,
 				0D3AFBEE18FB4C6C0087BCEE /* SNTApplication.m in Sources */,
 				0DD0D48F194F78F8005F27EB /* SNTFileInfoTest.m in Sources */,
+				81A00E801FD74F9100A84676 /* SNTCompilerController.m in Sources */,
 				0DC5D86E191AED220078A5C0 /* SNTRuleTable.m in Sources */,
 				0DD0D492194F9BEF005F27EB /* SNTLogging.m in Sources */,
 				0DE71A761B95F7F900518526 /* SNTCachedDecision.m in Sources */,
@@ -1490,6 +1497,7 @@
 				0D377C2A17A071B7008453DB /* SNTEventTable.m in Sources */,
 				0DE50F681912716A007B2B0C /* SNTRule.m in Sources */,
 				0DB77FD81CCE824A004DF060 /* SNTBlockMessage.m in Sources */,
+				81A00E7F1FD74F8E00A84676 /* SNTCompilerController.m in Sources */,
 				0D37C10F18F6029A0069BC61 /* SNTDatabaseTable.m in Sources */,
 				C748E8A720696595006CFD1B /* SNTFileEventLog.m in Sources */,
 				C748E8A3206964E1006CFD1B /* SNTEventLog.m in Sources */,

@@ -85,6 +85,29 @@ class SantaDecisionManager : public OSObject {
   */
   kern_return_t StopListener();
 
+  /**
+    This spins off a new thread for each process that we monitor.  Generally the
+    threads should be short-lived, since they die as soon as their associated
+    compiler process dies.
+  */
+  void MonitorCompilerPidForExit(pid_t pid);
+
+  /// Remove the given pid from cache of compiler pids.
+  void ForgetCompilerPid(pid_t pid);
+
+  /// Returns true when SantaDecisionManager wants monitor threads to exit.
+  bool PidMonitorThreadsShouldExit() const;
+
+  /**
+    Stops the pid monitor threads.  Waits until all threads have stopped before
+    returning.  This also frees the compiler_pid_set_.  Returns true if all 
+    threads exited cleanly.  Returns false if timed out while waiting.
+  */
+  bool StopPidMonitorThreads();
+
+  /// Returns how long pid monitor should sleep between termination checks.
+  uint32_t PidMonitorSleepTimeMilliseconds() const;
+
   /// Adds a decision to the cache, with a timestamp.
   void AddToCache(santa_vnode_id_t identifier,
                   const santa_action_t decision,
@@ -124,6 +147,19 @@ class SantaDecisionManager : public OSObject {
 
   /// Decrements the count of active callbacks pending.
   void DecrementListenerInvocations();
+
+  /// Increments the count of active pid monitor threads.
+  void IncrementPidMonitorThreadCount();
+
+  /// Decrements the count of active pid monitor threads.
+  void DecrementPidMonitorThreadCount();
+
+  /**
+    Determine if pid belongs to a compiler process. When
+    kCheckCompilerAncestors is set to true, this also checks all ancestor
+    processes of the pid.
+  */
+  bool IsCompilerProcess(pid_t pid);
 
   /**
    Fetches the vnode_id for a given vnode.
@@ -203,6 +239,16 @@ class SantaDecisionManager : public OSObject {
   */
   static const uint32_t kMaxLogQueueEvents = 2048;
 
+  /// How long pid monitor thread should sleep between termination checks.
+  static const uint32_t kPidMonitorSleepTimeMilliseconds = 1000;
+
+  /**
+    When set to true, Santa will check all ancestors of a process to determine
+    if it is a compiler.
+    TODO(nguyenphillip): this setting (and others above) should be configurable.
+  */
+  static const bool kCheckCompilerAncestors = false;
+
   /**
     Fetches a response from the daemon. Handles both daemon death
     and failure to post messages to the daemon.
@@ -281,6 +327,7 @@ class SantaDecisionManager : public OSObject {
 
   SantaCache<santa_vnode_id_t, uint64_t> *decision_cache_;
   SantaCache<santa_vnode_id_t, uint64_t> *vnode_pid_map_;
+  SantaCache<pid_t, pid_t> *compiler_pid_set_;
 
   lck_grp_t *sdm_lock_grp_;
   lck_grp_attr_t *sdm_lock_grp_attr_;
@@ -295,6 +342,7 @@ class SantaDecisionManager : public OSObject {
   uint32_t failed_log_queue_requests_;
 
   int32_t listener_invocations_;
+  int32_t pid_monitor_thread_count_ = 0;
 
   pid_t client_pid_;
 

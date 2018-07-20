@@ -86,6 +86,21 @@
       r = @"BINARY";
       logArgs = YES;
       break;
+    case SNTEventStateAllowCompiler:
+      d = @"ALLOW";
+      r = @"COMPILER";
+      logArgs = YES;
+      break;
+    case SNTEventStateAllowTransitive:
+      d = @"ALLOW";
+      r = @"TRANSITIVE";
+      logArgs = YES;
+      break;
+    case SNTEventStateAllowPendingTransitive:
+      d = @"ALLOW";
+      r = @"PENDING_TRANSITIVE";
+      logArgs = YES;
+      break;
     case SNTEventStateAllowCertificate:
       d = @"ALLOW";
       r = @"CERT";
@@ -183,6 +198,10 @@
 - (void)logAllowedExecution:(santa_message_t)message {
   SNTCachedDecision *cd = [self cachedDecisionForMessage:message];
   [self logExecution:message withDecision:cd];
+
+  // We also reset the timestamp for transitive rules here, because it happens to be where we
+  // have access to both the execution notification and the sha256 associated with rule.
+  [self resetTimestampForCachedDecision:cd];
 }
 
 - (void)logDiskAppeared:(NSDictionary *)diskProperties {

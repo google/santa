@@ -14,21 +14,44 @@
 
 #import "SNTRule.h"
 
+@interface SNTRule()
+@property(readwrite) NSUInteger timestamp;
+@end
+
 @implementation SNTRule
 
 - (instancetype)initWithShasum:(NSString *)shasum
                          state:(SNTRuleState)state
                           type:(SNTRuleType)type
-                     customMsg:(NSString *)customMsg {
+                     customMsg:(NSString *)customMsg
+                     timestamp:(NSUInteger)timestamp {
   self = [super init];
   if (self) {
     _shasum = shasum;
     _state = state;
     _type = type;
     _customMsg = customMsg;
+    _timestamp = timestamp;
   }
   return self;
 }
+
+- (instancetype)initWithShasum:(NSString *)shasum
+                         state:(SNTRuleState)state
+                          type:(SNTRuleType)type
+                     customMsg:(NSString *)customMsg {
+  self = [self initWithShasum:shasum
+                        state:state
+                         type:type
+                    customMsg:customMsg
+                    timestamp:0];
+  // Initialize timestamp to current time if rule is transitive.
+  if (self && state == SNTRuleStateWhitelistTransitive) {
+    [self resetTimestamp];
+  }
+  return self;
+}
+
 
 #pragma mark NSSecureCoding
 
@@ -46,6 +69,7 @@
   ENCODE(@(self.state), @"state");
   ENCODE(@(self.type), @"type");
   ENCODE(self.customMsg, @"custommsg");
+  ENCODE(@(self.timestamp), @"timestamp");
 }
 
 - (instancetype)initWithCoder:(NSCoder *)decoder {
@@ -55,6 +79,7 @@
     _state = [DECODE(NSNumber, @"state") intValue];
     _type = [DECODE(NSNumber, @"type") intValue];
     _customMsg = DECODE(NSString, @"custommsg");
+    _timestamp = [DECODE(NSNumber, @"timestamp") unsignedIntegerValue];
   }
   return self;
 }
@@ -80,8 +105,14 @@
 }
 
 - (NSString *)description {
-  return [NSString stringWithFormat:@"SNTRule: SHA-256: %@, State: %ld, Type: %ld",
-                                    self.shasum, self.state, self.type];
+  return [NSString stringWithFormat:@"SNTRule: SHA-256: %@, State: %ld, Type: %ld, Timestamp: %lu",
+             self.shasum, self.state, self.type, (unsigned long)self.timestamp];
+}
+
+# pragma mark Last-access Timestamp
+
+- (void)resetTimestamp {
+  self.timestamp = (NSUInteger)[[NSDate date] timeIntervalSinceReferenceDate];
 }
 
 @end

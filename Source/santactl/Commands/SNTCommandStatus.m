@@ -96,10 +96,16 @@ REGISTER_COMMAND_NAME(@"status")
 
   // Database counts
   __block int64_t eventCount = -1, binaryRuleCount = -1, certRuleCount = -1;
+  __block int64_t compilerRuleCount = -1, transitiveRuleCount = -1;
   dispatch_group_enter(group);
-  [[self.daemonConn remoteObjectProxy] databaseRuleCounts:^(int64_t binary, int64_t certificate) {
+  [[self.daemonConn remoteObjectProxy] databaseRuleCounts:^(int64_t binary,
+                                                            int64_t certificate,
+                                                            int64_t compiler,
+                                                            int64_t transitive) {
     binaryRuleCount = binary;
     certRuleCount = certificate;
+    compilerRuleCount = compiler;
+    transitiveRuleCount = transitive;
     dispatch_group_leave(group);
   }];
   dispatch_group_enter(group);
@@ -148,6 +154,13 @@ REGISTER_COMMAND_NAME(@"status")
     }];
   }
 
+  __block BOOL transitiveWhitelistingEnabled = NO;
+  dispatch_group_enter(group);
+  [[self.daemonConn remoteObjectProxy] transitiveWhitelistingEnabled:^(BOOL response) {
+    transitiveWhitelistingEnabled = response;
+    dispatch_group_leave(group);
+  }];
+
   // Wait a maximum of 5s for stats collected from daemon to arrive.
   if (dispatch_group_wait(group, dispatch_time(DISPATCH_TIME_NOW, NSEC_PER_SEC * 5))) {
     fprintf(stderr, "Failed to retrieve some stats from daemon\n\n");
@@ -179,6 +192,8 @@ REGISTER_COMMAND_NAME(@"status")
       @"database" : @{
         @"binary_rules" : @(binaryRuleCount),
         @"certificate_rules" : @(certRuleCount),
+        @"compiler_rules" : @(compilerRuleCount),
+        @"transitive_rules" : @(transitiveRuleCount),
         @"events_pending_upload" : @(eventCount),
       },
       @"sync" : @{
@@ -187,7 +202,8 @@ REGISTER_COMMAND_NAME(@"status")
         @"last_successful_full" : fullSyncLastSuccessStr ?: @"null",
         @"last_successful_rule" : ruleSyncLastSuccessStr ?: @"null",
         @"push_notifications" : pushNotifications ? @"Connected" : @"Disconnected",
-        @"bundle_scanning" : @(bundlesEnabled)
+        @"bundle_scanning" : @(bundlesEnabled),
+        @"transitive_whitelisting" : @(transitiveWhitelistingEnabled),
       },
     };
     NSData *statsData = [NSJSONSerialization dataWithJSONObject:stats
@@ -207,6 +223,8 @@ REGISTER_COMMAND_NAME(@"status")
     printf(">>> Database Info\n");
     printf("  %-25s | %lld\n", "Binary Rules", binaryRuleCount);
     printf("  %-25s | %lld\n", "Certificate Rules", certRuleCount);
+    printf("  %-25s | %lld\n", "Compiler Rules", compilerRuleCount);
+    printf("  %-25s | %lld\n", "Transitive Rules", transitiveRuleCount);
     printf("  %-25s | %lld\n", "Events Pending Upload", eventCount);
 
     if (syncURLStr) {
@@ -218,6 +236,8 @@ REGISTER_COMMAND_NAME(@"status")
       printf("  %-25s | %s\n", "Push Notifications",
              (pushNotifications ? "Connected" : "Disconnected"));
       printf("  %-25s | %s\n", "Bundle Scanning", (bundlesEnabled ? "Yes" : "No"));
+      printf("  %-25s | %s\n", "Transitive Whitelisting",
+             (transitiveWhitelistingEnabled ? "Yes" : "No"));
     }
   }
 

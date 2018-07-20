@@ -191,15 +191,20 @@
 - (void)testPreflightDatabaseCounts {
   SNTCommandSyncPreflight *sut = [[SNTCommandSyncPreflight alloc] initWithState:self.syncState];
 
-  int64_t bin = 5, cert = 8;
-  OCMStub([self.daemonConnRop databaseRuleCounts:([OCMArg invokeBlockWithArgs:OCMOCK_VALUE(bin),
-                                                                              OCMOCK_VALUE(cert),
-                                                                              nil])]);
+  int64_t bin = 5, cert = 8, compiler = 2, transitive = 19;
+  OCMStub([self.daemonConnRop databaseRuleCounts:([OCMArg invokeBlockWithArgs:
+                                                   OCMOCK_VALUE(bin),
+                                                   OCMOCK_VALUE(cert),
+                                                   OCMOCK_VALUE(compiler),
+                                                   OCMOCK_VALUE(transitive),
+                                                   nil])]);
 
   [self stubRequestBody:nil response:nil error:nil validateBlock:^BOOL(NSURLRequest *req) {
     NSDictionary *requestDict = [self dictFromRequest:req];
     XCTAssertEqualObjects(requestDict[kBinaryRuleCount], @(5));
     XCTAssertEqualObjects(requestDict[kCertificateRuleCount], @(8));
+    XCTAssertEqualObjects(requestDict[kCompilerRuleCount], @(2));
+    XCTAssertEqualObjects(requestDict[kTransitiveRuleCount], @(19));
     return YES;
   }];
 

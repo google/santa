@@ -14,6 +14,14 @@
 
 #include "SantaDecisionManager.h"
 
+// This is a made-up KAUTH_FILEOP constant which represents a
+// KAUTH_VNODE_WRITE_DATA event that gets passed to SantaDecisionManager's
+// FileOpCallback method.  The KAUTH_FILEOP_* constants are defined in
+// sys/kauth.h and run from 1--7.  KAUTH_VNODE_WRITE_DATA is already defined as
+// 4 so it overlaps with the other KAUTH_FILEOP_* constants and can't be used.
+// We define KAUTH_FILEOP_WRITE as something much greater than 7.
+#define KAUTH_FILEOP_WRITE 100
+
 #define super OSObject
 OSDefineMetaClassAndStructors(SantaDecisionManager, OSObject);
 
@@ -35,6 +43,7 @@ bool SantaDecisionManager::init() {
 
   decision_cache_ = new SantaCache<santa_vnode_id_t, uint64_t>(10000, 2);
   vnode_pid_map_ = new SantaCache<santa_vnode_id_t, uint64_t>(2000, 5);
+  compiler_pid_set_ = new SantaCache<pid_t, pid_t>(500, 5);
 
   decision_dataqueue_ = IOSharedDataQueue::withEntries(
       kMaxDecisionQueueEvents, sizeof(santa_message_t));
@@ -52,6 +61,8 @@ bool SantaDecisionManager::init() {
 void SantaDecisionManager::free() {
   delete decision_cache_;
   delete vnode_pid_map_;
+
+  StopPidMonitorThreads();
 
   if (decision_dataqueue_lock_) {
     lck_mtx_free(decision_dataqueue_lock_, sdm_lock_grp_);
@@ -195,6 +206,90 @@ kern_return_t SantaDecisionManager::StopListener() {
   return kIOReturnSuccess;
 }
 
+# pragma mark Monitoring PIDs
+
+// Arguments that are passed to pid_monitor thread.
+typedef struct {
+  pid_t pid;                  // process to monitor
+  SantaDecisionManager *sdm;  // reference to SantaDecisionManager
+} pid_monitor_info;
+
+// Function executed in its own thread used to monitor a compiler process for
+// termination and then remove the process pid from cache of compiler pids.
+static void pid_monitor(void *param, __unused wait_result_t wait_result) {
+  pid_monitor_info *info = (pid_monitor_info *)param;
+  if (info && info->sdm) {
+    uint32_t sleep_time = info->sdm->PidMonitorSleepTimeMilliseconds();
+    while (!info->sdm->PidMonitorThreadsShouldExit()) {
+      proc_t proc = proc_find(info->pid);
+      if (!proc) break;
+      proc_rele(proc);
+      IOSleep(sleep_time);
+    }
+    info->sdm->ForgetCompilerPid(info->pid);
+    info->sdm->DecrementPidMonitorThreadCount();
+  }
+  thread_terminate(current_thread());
+}
+
+// TODO(nguyenphillip): Look at moving pid monitoring out of SDM entirely,
+// maybe by creating a dedicated class to do this that SDM could then query.
+void SantaDecisionManager::MonitorCompilerPidForExit(pid_t pid) {
+  // Don't start any new threads if compiler_pid_set_ doesn't exist.
+  if (!compiler_pid_set_) return;
+  auto info = new pid_monitor_info;
+  info->pid = pid;
+  info->sdm = this;
+  thread_t thread = THREAD_NULL;
+  IncrementPidMonitorThreadCount();
+  if (KERN_SUCCESS != kernel_thread_start(pid_monitor, (void *)info, &thread)) {
+    LOGE("couldn't start pid monitor thread");
+    DecrementPidMonitorThreadCount();
+  }
+  thread_deallocate(thread);
+}
+
+void SantaDecisionManager::ForgetCompilerPid(pid_t pid) {
+  if (compiler_pid_set_) compiler_pid_set_->remove(pid);
+}
+
+bool SantaDecisionManager::PidMonitorThreadsShouldExit() const {
+  return compiler_pid_set_ == nullptr;
+}
+
+bool SantaDecisionManager::StopPidMonitorThreads() {
+  // Each pid_monitor thread checks for the existence of compiler_pid_set_.
+  // As soon as they see that it's gone, they should terminate and decrement
+  // SantaDecisionManager's pid_monitor_thread_count.  When this count decreases
+  // to zero all threads have finished.
+  auto temp = compiler_pid_set_;
+  compiler_pid_set_ = nullptr;
+  delete temp;
+
+  // Sleep time between checks starts at 10 ms, but increases to 5 sec after
+  // 10 sec have passed without the thread count dropping to 0.
+  unsigned int sleep_time_milliseconds = 10;
+  unsigned int total_wait_time = 0;
+
+  while (pid_monitor_thread_count_ > 0) {
+    if (sleep_time_milliseconds == 10) {
+      total_wait_time += sleep_time_milliseconds;
+      if (total_wait_time >= 10000) {
+        sleep_time_milliseconds = 5000;
+        LOGD("Waited %d ms for pid monitor threads to quit, switching sleep"
+             "time to %d ms", total_wait_time, sleep_time_milliseconds);
+      }
+    }
+    IOSleep(sleep_time_milliseconds);
+  }
+  LOGD("Pid monitor threads stopped.");
+  return true;
+}
+
+uint32_t SantaDecisionManager::PidMonitorSleepTimeMilliseconds() const {
+  return kPidMonitorSleepTimeMilliseconds;
+}
+
 #pragma mark Cache Management
 
 void SantaDecisionManager::AddToCache(
@@ -208,12 +303,19 @@ void SantaDecisionManager::AddToCache(
                           ((uint64_t)ACTION_REQUEST_BINARY << 56));
       break;
     case ACTION_RESPOND_ALLOW:
+    case ACTION_RESPOND_ALLOW_COMPILER:
     case ACTION_RESPOND_DENY: {
       // Decision is stored in upper 8 bits, timestamp in remaining 56.
       uint64_t val = ((uint64_t)decision << 56) | (microsecs & 0xFFFFFFFFFFFFFF);
       if (!decision_cache_->set(identifier, val, ((uint64_t)ACTION_REQUEST_BINARY << 56))) {
         decision_cache_->set(identifier, val, ((uint64_t)ACTION_RESPOND_ACK << 56));
       }
+      break;
+    }
+    case ACTION_RESPOND_ALLOW_PENDING_TRANSITIVE: {
+      // Decision is stored in upper 8 bits, timestamp in remaining 56.
+      uint64_t val = ((uint64_t)decision << 56) | (microsecs & 0xFFFFFFFFFFFFFF);
+      decision_cache_->set(identifier, val, 0);
       break;
     }
     default:
@@ -406,6 +508,34 @@ void SantaDecisionManager::DecrementListenerInvocations() {
   OSDecrementAtomic(&listener_invocations_);
 }
 
+void SantaDecisionManager::IncrementPidMonitorThreadCount() {
+  OSIncrementAtomic(&pid_monitor_thread_count_);
+}
+
+void SantaDecisionManager::DecrementPidMonitorThreadCount() {
+  OSDecrementAtomic(&pid_monitor_thread_count_);
+}
+
+bool SantaDecisionManager::IsCompilerProcess(pid_t pid) {
+  for (;;) {
+    // Find the parent pid.
+    proc_t proc = proc_find(pid);
+    if (!proc) return false;
+    pid_t ppid = proc_ppid(proc);
+    proc_rele(proc);
+    // Quit if process is launchd or has no parent.
+    if (ppid == 0 || pid == ppid) break;
+    pid_t val = compiler_pid_set_->get(pid);
+    // If pid was in compiler_pid_set_ then make sure that it has the same
+    // parent pid as when it was set.
+    if (val) return val == ppid;
+    // If pid not in the set, then quit unless we want to check ancestors.
+    if (!kCheckCompilerAncestors) break;
+    pid = ppid;
+  }
+  return false;
+}
+
 #pragma mark Callbacks
 
 int SantaDecisionManager::VnodeCallback(const kauth_cred_t cred,
@@ -420,7 +550,9 @@ int SantaDecisionManager::VnodeCallback(const kauth_cred_t cred,
   auto returnedAction = FetchDecision(cred, vp, vnode_id);
 
   switch (returnedAction) {
-    case ACTION_RESPOND_ALLOW: {
+    case ACTION_RESPOND_ALLOW:
+    case ACTION_RESPOND_ALLOW_COMPILER:
+    case ACTION_RESPOND_ALLOW_PENDING_TRANSITIVE: {
       auto proc = vfs_context_proc(ctx);
       if (proc) {
         pid_t pid = proc_pid(proc);
@@ -428,6 +560,15 @@ int SantaDecisionManager::VnodeCallback(const kauth_cred_t cred,
         // pid_t is 32-bit; pid is in upper 32 bits, ppid in lower.
         uint64_t val = ((uint64_t)pid << 32) | (ppid & 0xFFFFFFFF);
         vnode_pid_map_->set(vnode_id, val);
+        if (returnedAction == ACTION_RESPOND_ALLOW_COMPILER && ppid != 0) {
+          // Do some additional bookkeeping for compilers:
+          // We associate the pid with a compiler so that when we see it later
+          // in the context of a KAUTH_FILEOP event, we'll recognize it.
+          compiler_pid_set_->set(pid, ppid);
+          // And start polling for the compiler process termination, so that we
+          // can remove the pid from our cache of compiler pids.
+          MonitorCompilerPidForExit(pid);
+        }
       }
       return KAUTH_RESULT_ALLOW;
     }
@@ -450,26 +591,58 @@ void SantaDecisionManager::FileOpCallback(
     const char *path, const char *new_path) {
   if (!ClientConnected() || proc_selfpid() == client_pid_) return;
 
-  if (vp) {
+  if (vp && action == KAUTH_FILEOP_EXEC) {
     auto context = vfs_context_create(nullptr);
     auto vnode_id = GetVnodeIDForVnode(context, vp);
     vfs_context_rele(context);
 
-    if (action == KAUTH_FILEOP_EXEC) {
-      auto message = NewMessage(nullptr);
-      message->vnode_id = vnode_id;
-      message->action = ACTION_NOTIFY_EXEC;
-      strlcpy(message->path, path, sizeof(message->path));
-      uint64_t val = vnode_pid_map_->get(vnode_id);
-      if (val) {
-        // pid_t is 32-bit, so pid is in upper 32 bits, ppid in lower.
-        message->pid = (val >> 32);
-        message->ppid = (val & ~0xFFFFFFFF00000000);
-      }
-      PostToLogQueue(message);
-      delete message;
-      return;
+    auto message = NewMessage(nullptr);
+    message->vnode_id = vnode_id;
+    message->action = ACTION_NOTIFY_EXEC;
+    strlcpy(message->path, path, sizeof(message->path));
+    uint64_t val = vnode_pid_map_->get(vnode_id);
+    if (val) {
+      // pid_t is 32-bit, so pid is in upper 32 bits, ppid in lower.
+      message->pid = (val >> 32);
+      message->ppid = (val & ~0xFFFFFFFF00000000);
     }
+    PostToLogQueue(message);
+    delete message;
+    return;
+  }
+
+  // For transitive whitelisting decisions, we must check for KAUTH_FILEOP_CLOSE events from a
+  // known compiler process. But we must also check for KAUTH_FILEOP_RENAME events because clang
+  // under Xcode 9 will, if the output file already exists, write to a temp file, delete the
+  // existing file, then rename the temp file, without ever closing it.  So in this scenario,
+  // the KAUTH_FILEOP_RENAME is the only chance we have of whitelisting the output.
+  if (action == KAUTH_FILEOP_CLOSE || (action == KAUTH_FILEOP_RENAME && new_path)) {
+    auto message = NewMessage(nullptr);
+    if (IsCompilerProcess(message->pid)) {
+      // Fill out the rest of the message details and send it to the decision queue.
+      auto context = vfs_context_create(nullptr);
+      vnode_t real_vp = vp;
+      // We have to manually look up the vnode pointer from new_path for KAUTH_FILEOP_RENAME.
+      if (!real_vp && new_path && ERR_SUCCESS == vnode_lookup(new_path, 0, &real_vp, context)) {
+        vnode_put(real_vp);
+      }
+      if (real_vp) message->vnode_id = GetVnodeIDForVnode(context, real_vp);
+      vfs_context_rele(context);
+      message->action = ACTION_NOTIFY_WHITELIST;
+      const char *real_path = (action == KAUTH_FILEOP_CLOSE) ? path : new_path;
+      strlcpy(message->path, real_path, sizeof(message->path));
+      proc_name(message->pid, message->pname, sizeof(message->pname));
+      PostToDecisionQueue(message);
+      // Add a temporary allow rule to the decision cache for this vnode_id
+      // while SNTCompilerController decides whether or not to add a
+      // permanent rule for the new file to the rules database.  This is
+      // because checking if the file is a Mach-O binary and hashing it might
+      // not finish before an attempt to execute it.
+      AddToCache(message->vnode_id, ACTION_RESPOND_ALLOW_PENDING_TRANSITIVE, 0);
+    }
+    delete message;
+    // Don't need to do anything else for FILEOP_CLOSE, but FILEOP_RENAME should fall through.
+    if (action == KAUTH_FILEOP_CLOSE) return;
   }
 
   // Filter out modifications to locations that are definitely
@@ -481,7 +654,8 @@ void SantaDecisionManager::FileOpCallback(
     proc_name(message->pid, message->pname, sizeof(message->pname));
 
     switch (action) {
-      case KAUTH_FILEOP_CLOSE:
+      case KAUTH_FILEOP_WRITE:
+        // This is actually a KAUTH_VNODE_WRITE_DATA event.
         message->action = ACTION_NOTIFY_WRITE;
         break;
       case KAUTH_FILEOP_RENAME:
@@ -524,6 +698,12 @@ extern "C" int fileop_scope_callback(
   char *new_path = nullptr;
 
   switch (action) {
+    case KAUTH_FILEOP_CLOSE:
+      // We only care about KAUTH_FILEOP_CLOSE events where the closed file
+      // was modified.
+      if (!(arg2 & KAUTH_FILEOP_CLOSE_MODIFIED))
+        return KAUTH_RESULT_DEFER;
+      // Intentional fallthrough to get vnode reference.
     case KAUTH_FILEOP_DELETE:
     case KAUTH_FILEOP_EXEC:
       vp = reinterpret_cast<vnode_t>(arg0);
@@ -580,7 +760,9 @@ extern "C" int vnode_scope_callback(
     char path[MAXPATHLEN];
     int pathlen = MAXPATHLEN;
     vn_getpath(vp, path, &pathlen);
-    sdm->FileOpCallback(KAUTH_FILEOP_CLOSE, vp, path, nullptr);
+    // KAUTH_VNODE_WRITE_DATA events are translated into fake KAUTH_FILEOP_WRITE
+    // events so that we can handle them in the FileOpCallback function.
+    sdm->FileOpCallback(KAUTH_FILEOP_WRITE, vp, path, nullptr);
     sdm->DecrementListenerInvocations();
   }
 

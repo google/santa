@@ -21,9 +21,16 @@
 #import "SNTLogging.h"
 #import "SNTRule.h"
 
+// TODO(nguyenphillip): this should be configurable.
+// How many rules must be in database before we start trying to remove transitive rules.
+static const NSUInteger kTransitiveRuleCullingThreshold = 500000;
+// Consider transitive rules out of date if they haven't been used in six months.
+static const NSUInteger kTransitiveRuleExpirationSeconds = 6 * 30 * 24 * 3600;
+
 @interface SNTRuleTable ()
 @property NSString *santadCertSHA;
 @property NSString *launchdCertSHA;
+@property NSDate *lastTransitiveRuleCulling;
 @end
 
 @implementation SNTRuleTable
@@ -65,6 +72,13 @@
                                   @"FROM rules "
                                   @"WHERE (shasum=? OR shasum=?) AND state=? AND type=2",
                       self.santadCertSHA, self.launchdCertSHA, @(SNTRuleStateWhitelist)];
+
+  if (version < 3) {
+    // Add timestamp column for tracking age of transitive rules.
+    [db executeUpdate:@"ALTER TABLE 'rules' ADD 'timestamp' INTEGER"];
+    newVersion = 3;
+  }
+
   if (ruleCount != 2) {
     if (version > 0) LOGE(@"Started without launchd/santad certificate rules in place!");
     [db executeUpdate:@"INSERT INTO rules (shasum, state, type) VALUES (?, ?, ?)",
@@ -102,15 +116,30 @@
   return count;
 }
 
+- (NSUInteger)compilerRuleCount {
+  __block NSUInteger count = 0;
+  [self inDatabase:^(FMDatabase *db) {
+    count = [db longForQuery:@"SELECT COUNT(*) FROM rules WHERE state=?",
+             @(SNTRuleStateWhitelistCompiler)];
+  }];
+  return count;
+}
+
+- (NSUInteger)transitiveRuleCount {
+  __block NSUInteger count = 0;
+  [self inDatabase:^(FMDatabase *db) {
+    count = [db longForQuery:@"SELECT COUNT(*) FROM rules WHERE state=?",
+             @(SNTRuleStateWhitelistTransitive)];
+  }];
+  return count;
+}
+
 - (SNTRule *)ruleFromResultSet:(FMResultSet *)rs {
-  SNTRule *rule = [[SNTRule alloc] init];
-
-  rule.shasum = [rs stringForColumn:@"shasum"];
-  rule.type = [rs intForColumn:@"type"];
-  rule.state = [rs intForColumn:@"state"];
-  rule.customMsg = [rs stringForColumn:@"custommsg"];
-
-  return rule;
+  return [[SNTRule alloc] initWithShasum:[rs stringForColumn:@"shasum"]
+                                   state:[rs intForColumn:@"state"]
+                                    type:[rs intForColumn:@"type"]
+                               customMsg:[rs stringForColumn:@"custommsg"]
+                               timestamp:[rs intForColumn:@"timestamp"]];
 }
 
 - (SNTRule *)ruleForBinarySHA256:(NSString *)binarySHA256
@@ -165,7 +194,7 @@
     for (SNTRule *rule in rules) {
       if (![rule isKindOfClass:[SNTRule class]] || rule.shasum.length == 0 ||
           rule.state == SNTRuleStateUnknown || rule.type == SNTRuleTypeUnknown) {
-        [self fillError:error code:SNTRuleTableErrorInvalidRule message:nil];
+        [self fillError:error code:SNTRuleTableErrorInvalidRule message:rule.description];
         *rollback = failed = YES;
         return;
       }
@@ -181,9 +210,10 @@
         }
       } else {
         if (![db executeUpdate:@"INSERT OR REPLACE INTO rules "
-                               @"(shasum, state, type, custommsg) "
-                               @"VALUES (?, ?, ?, ?);",
-                               rule.shasum, @(rule.state), @(rule.type), rule.customMsg]) {
+                               @"(shasum, state, type, custommsg, timestamp) "
+                               @"VALUES (?, ?, ?, ?, ?);",
+                               rule.shasum, @(rule.state), @(rule.type), rule.customMsg,
+                               @(rule.timestamp)]) {
           [self fillError:error
                      code:SNTRuleTableErrorInsertOrReplaceFailed
                   message:[db lastErrorMessage]];
@@ -197,6 +227,67 @@
   return !failed;
 }
 
+- (BOOL)addedRulesShouldFlushDecisionCache:(NSArray *)rules {
+  // Check for non-plain-whitelist rules first before querying the database.
+  for (SNTRule *rule in rules) {
+    if (rule.state != SNTRuleStateWhitelist) return YES;
+  }
+
+  // If still here, then all rules in the array are whitelist rules.  So now we look for whitelist
+  // rules where there is a previously existing whitelist compiler rule for the same shasum.
+  // If so we find such a rule, then cache should be flushed.
+  __block BOOL flushDecisionCache = NO;
+  [self inTransaction:^(FMDatabase *db, BOOL *rollback) {
+    for (SNTRule *rule in rules) {
+      // Whitelist certificate rules are ignored
+      if (rule.type == SNTRuleTypeCertificate) continue;
+
+      if ([db longForQuery:
+           @"SELECT COUNT(*) FROM rules WHERE shasum=? AND type=? AND state=? LIMIT 1",
+           rule.shasum, @(SNTRuleTypeBinary), @(SNTRuleStateWhitelistCompiler)] > 0) {
+        flushDecisionCache = YES;
+        break;
+      }
+    }
+  }];
+
+  return flushDecisionCache;
+}
+
+// Updates the timestamp to current time for the given rule.
+- (void)resetTimestampForRule:(SNTRule *)rule {
+  if (!rule) return;
+  [rule resetTimestamp];
+  [self inDatabase:^(FMDatabase *db) {
+    if (![db executeUpdate:@"UPDATE rules SET timestamp=? WHERE shasum=? AND type=?",
+          @(rule.timestamp), rule.shasum, @(rule.type)]) {
+      LOGE(@"Could not update timestamp for rule with sha256=%@", rule.shasum);
+    }
+  }];
+}
+
+- (void)removeOutdatedTransitiveRules {
+  // Don't attempt to remove transitive rules unless it's been at least an hour since the
+  // last time we tried to remove them.
+  if (self.lastTransitiveRuleCulling &&
+      -[self.lastTransitiveRuleCulling timeIntervalSinceNow] < 3600) return;
+
+  // Don't bother removing rules unless rule database is large.
+  if ([self ruleCount] < kTransitiveRuleCullingThreshold) return;
+  // Determine what timestamp qualifies as outdated.
+  NSUInteger outdatedTimestamp =
+      [[NSDate date] timeIntervalSinceReferenceDate] - kTransitiveRuleExpirationSeconds;
+
+  [self inDatabase:^(FMDatabase *db) {
+    if (![db executeUpdate:@"DELETE FROM rules WHERE state=? AND timestamp < ?",
+          @(SNTRuleStateWhitelistTransitive), @(outdatedTimestamp)]) {
+      LOGE(@"Could not remove outdated transitive rules");
+    }
+  }];
+
+  self.lastTransitiveRuleCulling = [NSDate date];
+}
+
 //  Helper to create an NSError where necessary.
 //  The return value is irrelevant but the static analyzer complains if it's not a BOOL.
 - (BOOL)fillError:(NSError **)error code:(SNTRuleTableError)code message:(NSString *)message {
@@ -208,7 +299,8 @@
       d[NSLocalizedDescriptionKey] = @"Empty rule array";
       break;
     case SNTRuleTableErrorInvalidRule:
-      d[NSLocalizedDescriptionKey] = @"Rule array contained invalid entry";
+      d[NSLocalizedDescriptionKey] =
+          [NSString stringWithFormat:@"Rule array contained invalid entry: %@", message];
       break;
     case SNTRuleTableErrorInsertOrReplaceFailed:
       d[NSLocalizedDescriptionKey] = @"A database error occurred while inserting/replacing a rule";

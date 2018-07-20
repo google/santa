@@ -30,10 +30,15 @@
 - (void)logDeniedExecution:(SNTCachedDecision *)cd withMessage:(santa_message_t)message;
 - (void)logAllowedExecution:(santa_message_t)message;
 - (void)logBundleHashingEvents:(NSArray<SNTStoredEvent *> *)events;
+- (void)writeLog:(NSString *)log;
 
-// Getter and setter for cached decisions.
-- (SNTCachedDecision *)cachedDecisionForMessage:(santa_message_t)message;
+// Methods for storing, retrieving, and removing cached decisions.
 - (void)cacheDecision:(SNTCachedDecision *)cd;
+- (SNTCachedDecision *)cachedDecisionForMessage:(santa_message_t)message;
+- (void)forgetCachedDecisionForVnodeId:(santa_vnode_id_t)vnodeId;
+
+// Method used to record the freshness of transitive rules.
+- (void)resetTimestampForCachedDecision:(SNTCachedDecision *)cd;
 
 // String formatter helpers.
 - (void)addArgsForPid:(pid_t)pid toString:(NSMutableString *)str;

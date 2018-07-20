@@ -33,9 +33,11 @@
 enum SantaDriverMethods {
   kSantaUserClientOpen,
   kSantaUserClientAllowBinary,
+  kSantaUserClientAllowCompiler,
   kSantaUserClientDenyBinary,
   kSantaUserClientAcknowledgeBinary,
   kSantaUserClientClearCache,
+  kSantaUserClientRemoveCacheEntry,
   kSantaUserClientCacheCount,
   kSantaUserClientCheckCache,
   kSantaUserClientCacheBucketCount,
@@ -47,7 +49,7 @@ enum SantaDriverMethods {
 
 typedef enum {
   QUEUETYPE_DECISION,
-  QUEUETYPE_LOG
+  QUEUETYPE_LOG,
 } santa_queuetype_t;
 
 // Enum defining actions that can be passed down the IODataQueue and in
@@ -64,6 +66,10 @@ typedef enum {
   ACTION_RESPOND_DENY = 21,
   ACTION_RESPOND_TOOLONG = 22,
   ACTION_RESPOND_ACK = 23,
+  ACTION_RESPOND_ALLOW_COMPILER = 24,
+  // The following response is stored only in the kernel decision cache.
+  // It is removed by SNTCompilerController
+  ACTION_RESPOND_ALLOW_PENDING_TRANSITIVE = 25,
 
   // NOTIFY
   ACTION_NOTIFY_EXEC = 30,
@@ -72,13 +78,17 @@ typedef enum {
   ACTION_NOTIFY_LINK = 33,
   ACTION_NOTIFY_EXCHANGE = 34,
   ACTION_NOTIFY_DELETE = 35,
+  ACTION_NOTIFY_WHITELIST = 36,
 
   // ERROR
   ACTION_ERROR = 99,
 } santa_action_t;
 
 #define RESPONSE_VALID(x) \
-  (x == ACTION_RESPOND_ALLOW || x == ACTION_RESPOND_DENY)
+  (x == ACTION_RESPOND_ALLOW || \
+   x == ACTION_RESPOND_DENY || \
+   x == ACTION_RESPOND_ALLOW_COMPILER || \
+   x == ACTION_RESPOND_ALLOW_PENDING_TRANSITIVE)
 
 // Struct to manage vnode IDs
 typedef struct santa_vnode_id_t {

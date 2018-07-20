@@ -64,11 +64,16 @@
 - (BOOL)flushCache;
 
 ///
-///  Check the kernel cache for a VnodeID
+///  Check the kernel cache for a VnodeID.
 ///
 - (santa_action_t)checkCache:(santa_vnode_id_t)vnodeID;
 
 ///  Returns whether the connection to the driver has been established.
 @property(readonly) BOOL connectionEstablished;
+
+///
+///  Remove single entry from the kernel cache for given VnodeID.
+///
+- (kern_return_t)removeCacheEntryForVnodeID:(santa_vnode_id_t)vnodeId;
 
 @end

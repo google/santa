@@ -74,7 +74,7 @@ class com_google_SantaDriverClient : public IOUserClient {
       OSObject *target, void *reference) override;
 
   ///
-  ///  The userpsace callable methods are below. Each method corresponds
+  ///  The userspace callable methods are below. Each method corresponds
   ///  to an entry in SantaDriverMethods.
   ///
 
@@ -84,7 +84,11 @@ class com_google_SantaDriverClient : public IOUserClient {
 
   ///  The daemon calls this to allow a binary.
   static IOReturn allow_binary(
-      OSObject *target, void *reference,IOExternalMethodArguments *arguments);
+      OSObject *target, void *reference, IOExternalMethodArguments *arguments);
+
+  ///  The daemon calls this to allow a compiler binary.
+  static IOReturn allow_compiler(
+      OSObject *target, void *reference, IOExternalMethodArguments *arguments);
 
   ///  The daemon calls this to deny a binary.
   static IOReturn deny_binary(
@@ -97,6 +101,10 @@ class com_google_SantaDriverClient : public IOUserClient {
 
   ///  The daemon calls this to empty the cache.
   static IOReturn clear_cache(
+      OSObject *target, void *reference, IOExternalMethodArguments *arguments);
+
+  ///  The daemon call this to remove a single cache entry.
+  static IOReturn remove_cache_entry(
       OSObject *target, void *reference, IOExternalMethodArguments *arguments);
 
   ///  The daemon calls this to find out how many items are in the cache

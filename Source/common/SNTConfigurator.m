@@ -76,6 +76,7 @@ static NSString *const kEnableMachineIDDecoration = @"EnableMachineIDDecoration"
 
 // The keys managed by a sync server or mobileconfig.
 static NSString *const kClientModeKey = @"ClientMode";
+static NSString *const kTransitiveWhitelistingEnabledKey = @"TransitiveWhitelistingEnabled";
 static NSString *const kWhitelistRegexKey = @"WhitelistRegex";
 static NSString *const kBlacklistRegexKey = @"BlacklistRegex";
 
@@ -94,6 +95,7 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
     Class data = [NSData class];
     _syncServerKeyTypes = @{
       kClientModeKey : number,
+      kTransitiveWhitelistingEnabledKey : number,
       kWhitelistRegexKey : re,
       kBlacklistRegexKey : re,
       kFullSyncLastSuccess : date,
@@ -102,6 +104,7 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
     };
     _forcedConfigKeyTypes = @{
       kClientModeKey : number,
+      kTransitiveWhitelistingEnabledKey : number,
       kFileChangesRegexKey : re,
       kWhitelistRegexKey : re,
       kBlacklistRegexKey : re,
@@ -287,6 +290,10 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
   return [self configStateSet];
 }
 
++ (NSSet *)keyPathsForValuesAffectingTransitiveWhitelistingEnabled {
+  return [self configStateSet];
+}
+
 #pragma mark Public Interface
 
 - (SNTClientMode)clientMode {
@@ -309,6 +316,14 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
   } else {
     LOGW(@"Ignoring request to change client mode to %ld", newMode);
   }
+}
+
+- (BOOL)transitiveWhitelistingEnabled {
+  return [self.configState[kTransitiveWhitelistingEnabledKey] boolValue];
+}
+
+- (void)setTransitiveWhitelistingEnabled:(BOOL)enabled {
+  [self updateSyncStateForKey:kTransitiveWhitelistingEnabledKey value:@(enabled)];
 }
 
 - (NSRegularExpression *)whitelistPathRegex {

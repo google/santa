@@ -21,10 +21,15 @@
 
 #import "SNTCachedDecision.h"
 #import "SNTConfigurator.h"
+#import "SNTDatabaseController.h"
+#import "SNTRule.h"
+#import "SNTRuleTable.h"
 
 @interface SNTEventLog ()
 @property NSMutableDictionary<NSNumber *, SNTCachedDecision *> *detailStore;
 @property dispatch_queue_t detailStoreQueue;
+// Cache for sha256 -> date of last timestamp reset.
+@property NSCache<NSString *, NSDate *> *timestampResetMap;
 @end
 
 @implementation SNTEventLog
@@ -40,6 +45,8 @@
     _userNameMap.countLimit = 100;
     _groupNameMap = [[NSCache alloc] init];
     _groupNameMap.countLimit = 100;
+    _timestampResetMap = [[NSCache alloc] init];
+    _timestampResetMap.countLimit = 100;
 
     _dateFormatter = [[NSDateFormatter alloc] init];
     _dateFormatter.dateFormat = @"yyyy-MM-dd'T'HH:mm:ss.SSS'Z'";
@@ -91,6 +98,28 @@
     cd = self.detailStore[@(message.vnode_id.fileid)];
   });
   return cd;
+}
+
+- (void)forgetCachedDecisionForVnodeId:(santa_vnode_id_t)vnodeId {
+  dispatch_sync(self.detailStoreQueue, ^{
+    [self.detailStore removeObjectForKey:@(vnodeId.fileid)];
+  });
+}
+
+// Whenever a cached decision resulting from a transitive whitelist rule is used to allow the
+// execution of a binary, we update the timestamp on the transitive rule in the rules database.
+// To prevent writing to the database too often, we space out consecutive writes by 3600 seconds.
+- (void)resetTimestampForCachedDecision:(SNTCachedDecision *)cd {
+  if (cd.decision != SNTEventStateAllowTransitive) return;
+  NSDate *lastUpdate = [self.timestampResetMap objectForKey:cd.sha256];
+  if (!lastUpdate || -[lastUpdate timeIntervalSinceNow] > 3600) {
+    SNTRule *rule = [[SNTRule alloc] initWithShasum:cd.sha256
+                                              state:SNTRuleStateWhitelistTransitive
+                                               type:SNTRuleTypeBinary
+                                          customMsg:nil];
+    [[SNTDatabaseController ruleTable] resetTimestampForRule:rule];
+    [self.timestampResetMap setObject:[NSDate date] forKey:cd.sha256];
+  }
 }
 
 /**

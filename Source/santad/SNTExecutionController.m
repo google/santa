@@ -126,25 +126,37 @@ static size_t kLargeBinarySize = 30 * 1024 * 1024;
     if (csError) csInfo = nil;
   }
 
-  // Actually make the decision.
+  // Actually make the decision (and refresh rule access timestamp).
   SNTCachedDecision *cd = [self.policyProcessor decisionForFileInfo:binInfo
                                                          fileSHA256:nil
                                                   certificateSHA256:csInfo.leafCertificate.SHA256];
   cd.certCommonName = csInfo.leafCertificate.commonName;
   cd.vnodeId = message.vnode_id;
 
-  // Formulate an action from the decision
+  // Formulate an initial action from the decision.
   santa_action_t action =
       (SNTEventStateAllow & cd.decision) ? ACTION_RESPOND_ALLOW : ACTION_RESPOND_DENY;
 
-  // Save decision details for logging the execution later.
-  if (action == ACTION_RESPOND_ALLOW) [_eventLog cacheDecision:cd];
+  // Upgrade the action to ACTION_RESPOND_ALLOW_COMPILER when appropriate, because we want the
+  // kernel to track this information in its decision cache.
+  if (cd.decision == SNTEventStateAllowCompiler) {
+    action = ACTION_RESPOND_ALLOW_COMPILER;
+  }
+
+  // Save decision details for logging the execution later.  For transitive rules, we also use
+  // the shasum stored in the decision details to update the rule's timestamp whenever an
+  // ACTION_NOTIFY_EXEC message related to the transitive rule is received.
+  if (action == ACTION_RESPOND_ALLOW || action == ACTION_RESPOND_ALLOW_COMPILER) {
+    [_eventLog cacheDecision:cd];
+  }
 
   // Send the decision to the kernel.
   [_driverManager postToKernelAction:action forVnodeID:message.vnode_id];
 
   // Log to database if necessary.
   if (cd.decision != SNTEventStateAllowBinary &&
+      cd.decision != SNTEventStateAllowCompiler &&
+      cd.decision != SNTEventStateAllowTransitive && 
       cd.decision != SNTEventStateAllowCertificate &&
       cd.decision != SNTEventStateAllowScope) {
     SNTStoredEvent *se = [[SNTStoredEvent alloc] init];
@@ -188,7 +200,7 @@ static size_t kLargeBinarySize = 30 * 1024 * 1024;
     });
 
     // If binary was blocked, do the needful
-    if (action != ACTION_RESPOND_ALLOW) {
+    if (action != ACTION_RESPOND_ALLOW && action != ACTION_RESPOND_ALLOW_COMPILER) {
       [_eventLog logDeniedExecution:cd withMessage:message];
 
       if ([[SNTConfigurator configurator] bundlesEnabled] && binInfo.bundle) {

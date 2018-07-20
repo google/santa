@@ -39,6 +39,7 @@
 - (SNTCachedDecision *)decisionForFileInfo:(SNTFileInfo *)fileInfo
                                 fileSHA256:(NSString *)fileSHA256
                          certificateSHA256:(NSString *)certificateSHA256 {
+
   SNTCachedDecision *cd = [[SNTCachedDecision alloc] init];
   cd.sha256 = fileSHA256 ?: fileInfo.SHA256;
   cd.certSHA256 = certificateSHA256;
@@ -59,6 +60,26 @@
             cd.customMsg = rule.customMsg;
             cd.decision = SNTEventStateBlockBinary;
             return cd;
+          case SNTRuleStateWhitelistCompiler:
+            // If transitive whitelisting is enabled, then SNTRuleStateWhiteListCompiler rules
+            // become SNTEventStateAllowCompiler decisions.  Otherwise we treat the rule as if
+            // it were SNTRuleStateWhitelist.
+            if ([[SNTConfigurator configurator] transitiveWhitelistingEnabled]) {
+              cd.decision = SNTEventStateAllowCompiler;
+            } else {
+              cd.decision = SNTEventStateAllow;
+            }
+            return cd;
+          case SNTRuleStateWhitelistTransitive:
+            // If transitive whitelisting is enabled, then SNTRuleStateWhitelistTransitive
+            // rules become SNTEventStateAllowTransitive decisions.  Otherwise, we treat the
+            // rule as if it were SNTRuleStateUnknown.
+            if ([[SNTConfigurator configurator] transitiveWhitelistingEnabled]) {
+              cd.decision = SNTEventStateAllowTransitive;
+              return cd;
+            } else {
+              rule.state = SNTRuleStateUnknown;
+            }
           default: break;
         }
         break;

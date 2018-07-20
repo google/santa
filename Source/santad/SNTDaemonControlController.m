@@ -93,21 +93,34 @@ double watchdogRAMPeak = 0;
 
 #pragma mark Database ops
 
-- (void)databaseRuleCounts:(void (^)(int64_t binary, int64_t certificate))reply {
+- (void)databaseRuleCounts:(void (^)(int64_t binary,
+                                     int64_t certificate,
+                                     int64_t compiler,
+                                     int64_t transitive))reply {
   SNTRuleTable *rdb = [SNTDatabaseController ruleTable];
-  reply([rdb binaryRuleCount], [rdb certificateRuleCount]);
+  reply([rdb binaryRuleCount], [rdb certificateRuleCount],
+        [rdb compilerRuleCount], [rdb transitiveRuleCount]);
 }
 
 - (void)databaseRuleAddRules:(NSArray *)rules
                   cleanSlate:(BOOL)cleanSlate
                        reply:(void (^)(NSError *error))reply {
-  NSError *error;
-  [[SNTDatabaseController ruleTable] addRules:rules cleanSlate:cleanSlate error:&error];
+  SNTRuleTable *ruleTable = [SNTDatabaseController ruleTable];
 
-  // If any rules were added that were not whitelist, flush cache.
-  NSPredicate *p = [NSPredicate predicateWithFormat:@"SELF.state != %d", SNTRuleStateWhitelist];
-  if ([rules filteredArrayUsingPredicate:p].count || cleanSlate) {
-    LOGI(@"Received non-whitelist rule, flushing cache");
+  // If any rules are added that are not plain whitelist rules, then flush decision cache.
+  // In particular, the addition of whitelist compiler rules should cause a cache flush.
+  // We also flush cache if a whitelist compiler rule is replaced with a whitelist rule.
+  BOOL flushCache = (cleanSlate || [ruleTable addedRulesShouldFlushDecisionCache:rules]);
+
+  NSError *error;
+  [ruleTable addRules:rules cleanSlate:cleanSlate error:&error];
+
+  // Whenever we add rules, we can also check for and remove outdated transitive rules.
+  [ruleTable removeOutdatedTransitiveRules];
+
+  // The actual cache flushing happens after the new rules have been added to the database.
+  if (flushCache) {
+    LOGI(@"Flushing decision cache");
     [self.driverManager flushCache];
   }
 
@@ -217,6 +230,15 @@ double watchdogRAMPeak = 0;
 
 - (void)setBundlesEnabled:(BOOL)bundlesEnabled reply:(void (^)(void))reply {
   [[SNTConfigurator configurator] setBundlesEnabled:bundlesEnabled];
+  reply();
+}
+
+- (void)transitiveWhitelistingEnabled:(void (^)(BOOL))reply {
+  reply([SNTConfigurator configurator].transitiveWhitelistingEnabled);
+}
+
+- (void)setTransitiveWhitelistingEnabled:(BOOL)enabled reply:(void (^)(void))reply {
+  [[SNTConfigurator configurator] setTransitiveWhitelistingEnabled:enabled];
   reply();
 }
 

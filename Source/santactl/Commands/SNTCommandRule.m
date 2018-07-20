@@ -53,6 +53,7 @@ REGISTER_COMMAND_NAME(@"rule")
           @"    --whitelist: add to whitelist\n"
           @"    --blacklist: add to blacklist\n"
           @"    --silent-blacklist: add to silent blacklist\n"
+          @"    --compiler: whitelist and mark as a compiler\n"
           @"    --remove: remove existing rule\n"
           @"    --check: check for an existing rule\n"
           @"\n"
@@ -65,12 +66,22 @@ REGISTER_COMMAND_NAME(@"rule")
           @"\n"
           @"  Optionally:\n"
           @"    --certificate: add or check a certificate sha256 rule instead of binary\n"
+#ifdef DEBUG
+          @"    --force: allow manual changes even when SyncBaseUrl is set\n"
+#endif
           @"    --message {message}: custom message\n");
 }
 
 - (void)runWithArguments:(NSArray *)arguments {
   SNTConfigurator *config = [SNTConfigurator configurator];
+  // DEBUG builds add a --force flag to allow manually adding/removing rules during testing.
+#ifdef DEBUG
+  if ([config syncBaseURL] &&
+      ![arguments containsObject:@"--check"] &&
+      ![arguments containsObject:@"--force"]) {
+#else
   if ([config syncBaseURL] && ![arguments containsObject:@"--check"]) {
+#endif
     printf("SyncBaseURL is set, rules are managed centrally.\n");
     exit(1);
   }
@@ -92,6 +103,8 @@ REGISTER_COMMAND_NAME(@"rule")
       newRule.state = SNTRuleStateBlacklist;
     } else if ([arg caseInsensitiveCompare:@"--silent-blacklist"] == NSOrderedSame) {
       newRule.state = SNTRuleStateSilentBlacklist;
+    } else if ([arg caseInsensitiveCompare:@"--compiler"] == NSOrderedSame) {
+      newRule.state = SNTRuleStateWhitelistCompiler;
     } else if ([arg caseInsensitiveCompare:@"--remove"] == NSOrderedSame) {
       newRule.state = SNTRuleStateRemove;
     } else if ([arg caseInsensitiveCompare:@"--check"] == NSOrderedSame) {
@@ -116,6 +129,10 @@ REGISTER_COMMAND_NAME(@"rule")
         [self printErrorUsageAndExit:@"--message requires an argument"];
       }
       newRule.customMsg = arguments[i];
+#ifdef DEBUG
+    } else if ([arg caseInsensitiveCompare:@"--force"] == NSOrderedSame) {
+      // Don't do anything special.
+#endif
     } else {
       [self printErrorUsageAndExit:[@"Unknown argument: " stringByAppendingString:arg]];
     }
@@ -192,6 +209,12 @@ REGISTER_COMMAND_NAME(@"rule")
       case SNTEventStateBlockScope:
         [output appendString:@" (Scope)"];
         break;
+      case SNTEventStateAllowCompiler:
+        [output appendString:@" (Compiler)"];
+        break;
+      case SNTEventStateAllowTransitive:
+        [output appendString:@" (Transitive)"];
+        break;
       default:
         output = @"None".mutableCopy;
         break;
@@ -214,6 +237,22 @@ REGISTER_COMMAND_NAME(@"rule")
     printf("Cannot communicate with daemon");
     exit(1);
   }
+
+  dispatch_group_enter(group);
+  [[daemonConn remoteObjectProxy] databaseRuleForBinarySHA256:fileSHA256
+                                            certificateSHA256:certificateSHA256
+                                                        reply:^(SNTRule *r) {
+    if (r.state == SNTRuleStateWhitelistTransitive) {
+      NSDate *date = [NSDate dateWithTimeIntervalSinceReferenceDate:r.timestamp];
+      [output appendString:[NSString stringWithFormat:@"\nlast access date: %@", [date description]]];
+    }
+    dispatch_group_leave(group);
+  }];
+  if (dispatch_group_wait(group, dispatch_time(DISPATCH_TIME_NOW, 5 * NSEC_PER_SEC))) {
+    printf("Cannot communicate with daemon");
+    exit(1);
+  }
+
   printf("%s\n", output.UTF8String);
   exit(0);
 }

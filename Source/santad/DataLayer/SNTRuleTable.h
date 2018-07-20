@@ -36,6 +36,16 @@
 - (NSUInteger)binaryRuleCount;
 
 ///
+///  @return Number of compiler rules in the database
+///
+- (NSUInteger)compilerRuleCount;
+
+///
+///  @return Number of transitive rules in the database
+///
+- (NSUInteger)transitiveRuleCount;
+
+///
 ///  @return Number of certificate rules in the database
 ///
 - (NSUInteger)certificateRuleCount;
@@ -57,5 +67,25 @@
 ///  @return YES if adding all rules passed, NO if any were rejected.
 ///
 - (BOOL)addRules:(NSArray *)rules cleanSlate:(BOOL)cleanSlate error:(NSError **)error;
+
+///
+///  Checks the given array of rules to see if adding any of them to the rules database would
+///  require the kernel's decision cache to be flushed.  This should happen if
+///     1. any of the rules is not a SNTRuleStateWhitelist
+///     2. a SNTRuleStateWhitelist rule is replacing a SNTRuleStateWhitelistCompiler rule.
+///
+///  @param rules Array of SNTRule that may be added to database.
+///  @return YES if kernel cache should be flushed after adding the new rules.
+- (BOOL)addedRulesShouldFlushDecisionCache:(NSArray *)rules;
+
+///
+///  Update timestamp for given rule to the current time.
+///
+- (void)resetTimestampForRule:(SNTRule *)rule;
+
+///
+///  Remove transitive rules that haven't been used in a long time.
+///
+- (void)removeOutdatedTransitiveRules;
 
 @end

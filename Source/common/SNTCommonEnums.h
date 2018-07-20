@@ -33,6 +33,9 @@ typedef NS_ENUM(NSInteger, SNTRuleState) {
   SNTRuleStateBlacklist = 2,
   SNTRuleStateSilentBlacklist = 3,
   SNTRuleStateRemove = 4,
+
+  SNTRuleStateWhitelistCompiler = 5,
+  SNTRuleStateWhitelistTransitive = 6,
 };
 
 typedef NS_ENUM(NSInteger, SNTClientMode) {
@@ -58,6 +61,9 @@ typedef NS_ENUM(NSInteger, SNTEventState) {
   SNTEventStateAllowBinary = 1 << 25,
   SNTEventStateAllowCertificate = 1 << 26,
   SNTEventStateAllowScope = 1 << 27,
+  SNTEventStateAllowCompiler = 1 << 28,
+  SNTEventStateAllowTransitive = 1 << 29,
+  SNTEventStateAllowPendingTransitive = 1 << 30,
 
   // Block and Allow masks
   SNTEventStateBlock = 0xFF << 16,

@@ -41,7 +41,10 @@
 ///
 ///  Database ops
 ///
-- (void)databaseRuleCounts:(void (^)(int64_t binary, int64_t certificate))reply;
+- (void)databaseRuleCounts:(void (^)(int64_t binary,
+                                     int64_t certificate,
+                                     int64_t compiler,
+                                     int64_t transitive))reply;
 - (void)databaseEventCount:(void (^)(int64_t count))reply;
 
 ///
@@ -71,6 +74,7 @@
 - (void)ruleSyncLastSuccess:(void (^)(NSDate *))reply;
 - (void)syncCleanRequired:(void (^)(BOOL))reply;
 - (void)bundlesEnabled:(void (^)(BOOL))reply;
+- (void)transitiveWhitelistingEnabled:(void (^)(BOOL))reply;
 
 ///
 ///  GUI Ops

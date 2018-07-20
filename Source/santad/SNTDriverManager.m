@@ -201,6 +201,13 @@ static void driverAppearedHandler(void *info, io_iterator_t iterator) {
                                        sizeof(vnodeId),
                                        0,
                                        0);
+    case ACTION_RESPOND_ALLOW_COMPILER:
+      return IOConnectCallStructMethod(_connection,
+                                       kSantaUserClientAllowCompiler,
+                                       &vnodeId,
+                                       sizeof(vnodeId),
+                                       0,
+                                       0);
     default:
       return KERN_INVALID_ARGUMENT;
   }
@@ -227,6 +234,15 @@ static void driverAppearedHandler(void *info, io_iterator_t iterator) {
                                    0,
                                    0,
                                    0) == KERN_SUCCESS;
+}
+
+- (kern_return_t)removeCacheEntryForVnodeID:(santa_vnode_id_t)vnodeId {
+  return IOConnectCallStructMethod(_connection,
+                                   kSantaUserClientRemoveCacheEntry,
+                                   &vnodeId,
+                                   sizeof(vnodeId),
+                                   0,
+                                   0);
 }
 
 - (santa_action_t)checkCache:(santa_vnode_id_t)vnodeID {

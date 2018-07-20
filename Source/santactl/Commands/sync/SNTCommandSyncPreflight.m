@@ -43,9 +43,14 @@
 
   dispatch_group_t group = dispatch_group_create();
   dispatch_group_enter(group);
-  [[self.daemonConn remoteObjectProxy] databaseRuleCounts:^(int64_t binary, int64_t certificate) {
+  [[self.daemonConn remoteObjectProxy] databaseRuleCounts:^(int64_t binary,
+                                                            int64_t certificate,
+                                                            int64_t compiler,
+                                                            int64_t transitive) {
     requestDict[kBinaryRuleCount] = @(binary);
     requestDict[kCertificateRuleCount] = @(certificate);
+    requestDict[kCompilerRuleCount] = @(compiler);
+    requestDict[kTransitiveRuleCount] = @(transitive);
     dispatch_group_leave(group);
   }];
 
@@ -85,6 +90,14 @@
   [[self.daemonConn remoteObjectProxy] setBundlesEnabled:[resp[kBundlesEnabled] boolValue] reply:^{
     dispatch_group_leave(group);
   }];
+
+  dispatch_group_enter(group);
+  if ([resp[kTransitiveWhitelistingEnabled] respondsToSelector:@selector(boolValue)]) {
+    BOOL enabled = [resp[kTransitiveWhitelistingEnabled] boolValue];
+    [[self.daemonConn remoteObjectProxy] setTransitiveWhitelistingEnabled:enabled reply:^{
+      dispatch_group_leave(group);
+    }];
+  }
 
   self.syncState.eventBatchSize = [resp[kBatchSize] unsignedIntegerValue] ?: kDefaultEventBatchSize;
   self.syncState.FCMToken = resp[kFCMToken];
