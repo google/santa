@@ -116,21 +116,28 @@ static size_t kLargeBinarySize = 30 * 1024 * 1024;
   }
 
   // Get codesigning info about the file but only if it's a Mach-O.
+  // If the binary is a critical system binary, don't check its signiture. The binary was validated
+  // by santad at startup.
+  SNTCachedDecision *cd = self.ruleTable.criticalSystemBinaries[binInfo.SHA256];
   MOLCodesignChecker *csInfo;
-  if (binInfo.isMachO) {
+  if (!cd && binInfo.isMachO) {
     NSError *csError;
     csInfo = [[MOLCodesignChecker alloc] initWithBinaryPath:binInfo.path
                                              fileDescriptor:binInfo.fileHandle.fileDescriptor
                                                       error:&csError];
+
     // Ignore codesigning if there are any errors with the signature.
     if (csError) csInfo = nil;
   }
 
-  // Actually make the decision (and refresh rule access timestamp).
-  SNTCachedDecision *cd = [self.policyProcessor decisionForFileInfo:binInfo
+  // If needed, actually make the decision (and refresh rule access timestamp).
+  if (!cd) {
+    cd = [self.policyProcessor decisionForFileInfo:binInfo
                                                          fileSHA256:nil
                                                   certificateSHA256:csInfo.leafCertificate.SHA256];
-  cd.certCommonName = csInfo.leafCertificate.commonName;
+    cd.certCommonName = csInfo.leafCertificate.commonName;
+  }
+
   cd.vnodeId = message.vnode_id;
 
   // Formulate an initial action from the decision.
