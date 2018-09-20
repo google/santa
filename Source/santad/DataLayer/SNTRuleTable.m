@@ -34,9 +34,14 @@ static const NSUInteger kTransitiveRuleExpirationSeconds = 6 * 30 * 24 * 3600;
 @property NSString *launchdCertSHA;
 @property NSDate *lastTransitiveRuleCulling;
 @property NSDictionary *criticalSystemBinaries;
+@property(readonly) NSArray *criticalSystemBinaryPaths;
 @end
 
 @implementation SNTRuleTable
+
+- (NSArray *)criticalSystemBinaryPaths {
+  return @[ @"/usr/libexec/trustd", @"/usr/sbin/securityd", @"/usr/libexec/xpcproxy" ];
+}
 
 - (uint32_t)initializeDatabase:(FMDatabase *)db fromVersion:(uint32_t)version {
   // Lock this database from other processes
@@ -94,7 +99,7 @@ static const NSUInteger kTransitiveRuleExpirationSeconds = 6 * 30 * 24 * 3600;
   // Setup critical system binaries
   // TODO(tburgin): Add the Santa components to this feature and remove the santadCertSHA rule.
   NSMutableDictionary *bins = [NSMutableDictionary dictionary];
-  for (NSString *path in @[ @"/usr/libexec/trustd", @"/usr/sbin/securityd" ]) {
+  for (NSString *path in self.criticalSystemBinaryPaths) {
     SNTFileInfo *binInfo = [[SNTFileInfo alloc] initWithPath:path];
     MOLCodesignChecker *csInfo = [binInfo codesignCheckerWithError:NULL];
 
