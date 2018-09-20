@@ -697,9 +697,6 @@ extern "C" int fileop_scope_callback(
   char *path = nullptr;
   char *new_path = nullptr;
 
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wimplicit-fallthrough"
-
   switch (action) {
     case KAUTH_FILEOP_CLOSE:
       // We only care about KAUTH_FILEOP_CLOSE events where the closed file
@@ -707,6 +704,7 @@ extern "C" int fileop_scope_callback(
       if (!(arg2 & KAUTH_FILEOP_CLOSE_MODIFIED))
         return KAUTH_RESULT_DEFER;
       // Intentional fallthrough to get vnode reference.
+      [[fallthrough]];
     case KAUTH_FILEOP_DELETE:
     case KAUTH_FILEOP_EXEC:
       vp = reinterpret_cast<vnode_t>(arg0);
@@ -722,8 +720,6 @@ extern "C" int fileop_scope_callback(
     default:
       return KAUTH_RESULT_DEFER;
   }
-
-#pragma clang diagnostic pop
 
   sdm->IncrementListenerInvocations();
   sdm->FileOpCallback(action, vp, path, new_path);
