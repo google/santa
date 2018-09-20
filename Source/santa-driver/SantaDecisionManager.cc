@@ -697,6 +697,9 @@ extern "C" int fileop_scope_callback(
   char *path = nullptr;
   char *new_path = nullptr;
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wimplicit-fallthrough"
+
   switch (action) {
     case KAUTH_FILEOP_CLOSE:
       // We only care about KAUTH_FILEOP_CLOSE events where the closed file
@@ -719,6 +722,8 @@ extern "C" int fileop_scope_callback(
     default:
       return KAUTH_RESULT_DEFER;
   }
+
+#pragma clang diagnostic pop
 
   sdm->IncrementListenerInvocations();
   sdm->FileOpCallback(action, vp, path, new_path);
