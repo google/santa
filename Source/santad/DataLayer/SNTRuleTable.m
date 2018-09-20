@@ -94,7 +94,7 @@ static const NSUInteger kTransitiveRuleExpirationSeconds = 6 * 30 * 24 * 3600;
   // Setup critical system binaries
   // TODO(tburgin): Add the Santa components to this feature and remove the santadCertSHA rule.
   NSMutableDictionary *bins = [NSMutableDictionary dictionary];
-  for (NSString *path in @[ @"/usr/libexec/trustd" ]) {
+  for (NSString *path in @[ @"/usr/libexec/trustd", @"/usr/sbin/securityd" ]) {
     SNTFileInfo *binInfo = [[SNTFileInfo alloc] initWithPath:path];
     MOLCodesignChecker *csInfo = [binInfo codesignCheckerWithError:NULL];
 
@@ -111,6 +111,9 @@ static const NSUInteger kTransitiveRuleExpirationSeconds = 6 * 30 * 24 * 3600;
       cd.certCommonName = csInfo.leafCertificate.commonName;
 
       bins[binInfo.SHA256] = cd;
+    } else {
+      LOGE(@"Unable to validate critical system binary. pid 1: %@ and %@: %@ do not match.",
+           launchdCSInfo.leafCertificate, path, csInfo.leafCertificate);
     }
   }
 
