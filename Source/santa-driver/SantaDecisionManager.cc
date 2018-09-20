@@ -704,6 +704,7 @@ extern "C" int fileop_scope_callback(
       if (!(arg2 & KAUTH_FILEOP_CLOSE_MODIFIED))
         return KAUTH_RESULT_DEFER;
       // Intentional fallthrough to get vnode reference.
+      [[fallthrough]];
     case KAUTH_FILEOP_DELETE:
     case KAUTH_FILEOP_EXEC:
       vp = reinterpret_cast<vnode_t>(arg0);
