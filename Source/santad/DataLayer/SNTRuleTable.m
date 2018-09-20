@@ -17,7 +17,9 @@
 #import <MOLCertificate/MOLCertificate.h>
 #import <MOLCodesignChecker/MOLCodesignChecker.h>
 
+#import "SNTCachedDecision.h"
 #import "SNTConfigurator.h"
+#import "SNTFileInfo.h"
 #import "SNTLogging.h"
 #import "SNTRule.h"
 
@@ -31,9 +33,15 @@ static const NSUInteger kTransitiveRuleExpirationSeconds = 6 * 30 * 24 * 3600;
 @property NSString *santadCertSHA;
 @property NSString *launchdCertSHA;
 @property NSDate *lastTransitiveRuleCulling;
+@property NSDictionary *criticalSystemBinaries;
+@property(readonly) NSArray *criticalSystemBinaryPaths;
 @end
 
 @implementation SNTRuleTable
+
+- (NSArray *)criticalSystemBinaryPaths {
+  return @[ @"/usr/libexec/trustd", @"/usr/sbin/securityd", @"/usr/libexec/xpcproxy" ];
+}
 
 - (uint32_t)initializeDatabase:(FMDatabase *)db fromVersion:(uint32_t)version {
   // Lock this database from other processes
@@ -64,7 +72,8 @@ static const NSUInteger kTransitiveRuleExpirationSeconds = 6 * 30 * 24 * 3600;
   // Save hashes of the signing certs for launchd and santad.
   // Used to ensure rules for them are not removed.
   self.santadCertSHA = [[[[MOLCodesignChecker alloc] initWithSelf] leafCertificate] SHA256];
-  self.launchdCertSHA = [[[[MOLCodesignChecker alloc] initWithPID:1] leafCertificate] SHA256];
+  MOLCodesignChecker *launchdCSInfo = [[MOLCodesignChecker alloc] initWithPID:1];
+  self.launchdCertSHA = launchdCSInfo.leafCertificate.SHA256;
 
   // Ensure the certificates used to sign the running launchd/santad are whitelisted.
   // If they weren't previously and the database is not new, log an error.
@@ -86,6 +95,34 @@ static const NSUInteger kTransitiveRuleExpirationSeconds = 6 * 30 * 24 * 3600;
     [db executeUpdate:@"INSERT INTO rules (shasum, state, type) VALUES (?, ?, ?)",
         self.launchdCertSHA, @(SNTRuleStateWhitelist), @(SNTRuleTypeCertificate)];
   }
+
+  // Setup critical system binaries
+  // TODO(tburgin): Add the Santa components to this feature and remove the santadCertSHA rule.
+  NSMutableDictionary *bins = [NSMutableDictionary dictionary];
+  for (NSString *path in self.criticalSystemBinaryPaths) {
+    SNTFileInfo *binInfo = [[SNTFileInfo alloc] initWithPath:path];
+    MOLCodesignChecker *csInfo = [binInfo codesignCheckerWithError:NULL];
+
+    // Make sure the critical system binary is signed by the same chain as launchd.
+    if ([csInfo signingInformationMatches:launchdCSInfo]) {
+      SNTCachedDecision *cd = [[SNTCachedDecision alloc] init];
+
+      cd.decision = SNTEventStateAllowBinary;
+      cd.decisionExtra = @"critical system binary";
+      cd.sha256 = binInfo.SHA256;
+
+      // Not needed, but nice for logging.
+      cd.certSHA256 = csInfo.leafCertificate.SHA256;
+      cd.certCommonName = csInfo.leafCertificate.commonName;
+
+      bins[binInfo.SHA256] = cd;
+    } else {
+      LOGE(@"Unable to validate critical system binary. pid 1: %@ and %@: %@ do not match.",
+           launchdCSInfo.leafCertificate, path, csInfo.leafCertificate);
+    }
+  }
+
+  self.criticalSystemBinaries = bins;
 
   return newVersion;
 }

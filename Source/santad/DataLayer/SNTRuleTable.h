@@ -17,6 +17,7 @@
 #import "SNTCommonEnums.h"
 #import "SNTDatabaseTable.h"
 
+@class SNTCachedDecision;
 @class SNTRule;
 @class SNTNotificationMessage;
 
@@ -87,5 +88,13 @@
 ///  Remove transitive rules that haven't been used in a long time.
 ///
 - (void)removeOutdatedTransitiveRules;
+
+
+///
+///  A map of a file hashes to cached decisions. This is used to pre-validate and whitelist
+///  certain critical system binaries that are integral to Santa's functionality.
+///
+@property(readonly, nonatomic)
+    NSDictionary<NSString *, SNTCachedDecision *> *criticalSystemBinaries;
 
 @end
