@@ -589,7 +589,17 @@ int SantaDecisionManager::VnodeCallback(const kauth_cred_t cred,
 void SantaDecisionManager::FileOpCallback(
     const kauth_action_t action, const vnode_t vp,
     const char *path, const char *new_path) {
-  if (!ClientConnected() || proc_selfpid() == client_pid_) return;
+  if (!ClientConnected()) return;
+
+  // KAUTH_FILEOP_CLOSE implies KAUTH_FILEOP_CLOSE_MODIFIED, so remove it from the cache.
+  if (action == KAUTH_FILEOP_CLOSE) {
+    auto context = vfs_context_create(nullptr);
+    RemoveFromCache(GetVnodeIDForVnode(context, vp));
+    vfs_context_rele(context);
+  }
+
+  // Don't log santad fileops.
+  if (proc_selfpid() == client_pid_) return;
 
   if (vp && action == KAUTH_FILEOP_EXEC) {
     auto context = vfs_context_create(nullptr);

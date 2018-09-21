@@ -687,7 +687,7 @@
     [hello waitUntilExit];
     TFAILINFO("Should not have been able to launch /private/tmp/hello");
   } @catch (NSException *exception) {
-    TPASS();
+    // All good
   }
   // Check that there wasn't a decision for /private/tmp/hello in the cache.
   if (helloCount != 1) {
