@@ -40,7 +40,9 @@ static const NSUInteger kTransitiveRuleExpirationSeconds = 6 * 30 * 24 * 3600;
 @implementation SNTRuleTable
 
 - (NSArray *)criticalSystemBinaryPaths {
-  return @[ @"/usr/libexec/trustd", @"/usr/sbin/securityd", @"/usr/libexec/xpcproxy" ];
+  return @[
+    @"/usr/libexec/trustd", @"/usr/sbin/securityd", @"/usr/libexec/xpcproxy", @"/usr/sbin/ocspd"
+  ];
 }
 
 - (uint32_t)initializeDatabase:(FMDatabase *)db fromVersion:(uint32_t)version {
