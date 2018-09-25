@@ -196,7 +196,7 @@
 ///  If YES, enables bundle detection for blocked events. This property is not stored on disk.
 ///  Its value is set by a sync server that supports bundles. Defaults to NO.
 ///
-@property BOOL bundlesEnabled;
+@property BOOL enableBundles;
 
 #pragma mark Transitive Whitelisting Settings
 
@@ -205,7 +205,7 @@
 ///  whitelist any executables that they produce.  If NO, SNTRuleStateWhitelistCompiler rules are
 ///  interpreted as if they were simply SNTRuleStateWhitelist rules.  Defaults to NO.
 ///
-@property BOOL transitiveWhitelistingEnabled;
+@property BOOL enableTransitiveWhitelisting;
 
 #pragma mark Server Auth Settings
 

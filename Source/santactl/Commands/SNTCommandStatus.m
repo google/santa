@@ -145,18 +145,18 @@ REGISTER_COMMAND_NAME(@"status")
     }];
   }
 
-  __block BOOL bundlesEnabled = NO;
+  __block BOOL enableBundles = NO;
   if ([[SNTConfigurator configurator] syncBaseURL]) {
     dispatch_group_enter(group);
-    [[self.daemonConn remoteObjectProxy] bundlesEnabled:^(BOOL response) {
-      bundlesEnabled = response;
+    [[self.daemonConn remoteObjectProxy] enableBundles:^(BOOL response) {
+      enableBundles = response;
       dispatch_group_leave(group);
     }];
   }
 
   __block BOOL transitiveWhitelistingEnabled = NO;
   dispatch_group_enter(group);
-  [[self.daemonConn remoteObjectProxy] transitiveWhitelistingEnabled:^(BOOL response) {
+  [[self.daemonConn remoteObjectProxy] enableTransitiveWhitelisting:^(BOOL response) {
     transitiveWhitelistingEnabled = response;
     dispatch_group_leave(group);
   }];
@@ -202,7 +202,7 @@ REGISTER_COMMAND_NAME(@"status")
         @"last_successful_full" : fullSyncLastSuccessStr ?: @"null",
         @"last_successful_rule" : ruleSyncLastSuccessStr ?: @"null",
         @"push_notifications" : pushNotifications ? @"Connected" : @"Disconnected",
-        @"bundle_scanning" : @(bundlesEnabled),
+        @"bundle_scanning" : @(enableBundles),
         @"transitive_whitelisting" : @(transitiveWhitelistingEnabled),
       },
     };
@@ -235,7 +235,7 @@ REGISTER_COMMAND_NAME(@"status")
       printf("  %-25s | %s\n", "Last Successful Rule Sync", [ruleSyncLastSuccessStr UTF8String]);
       printf("  %-25s | %s\n", "Push Notifications",
              (pushNotifications ? "Connected" : "Disconnected"));
-      printf("  %-25s | %s\n", "Bundle Scanning", (bundlesEnabled ? "Yes" : "No"));
+      printf("  %-25s | %s\n", "Bundle Scanning", (enableBundles ? "Yes" : "No"));
       printf("  %-25s | %s\n", "Transitive Whitelisting",
              (transitiveWhitelistingEnabled ? "Yes" : "No"));
     }

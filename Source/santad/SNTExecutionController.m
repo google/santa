@@ -209,7 +209,7 @@ static size_t kLargeBinarySize = 30 * 1024 * 1024;
     if (action != ACTION_RESPOND_ALLOW && action != ACTION_RESPOND_ALLOW_COMPILER) {
       [_eventLog logDeniedExecution:cd withMessage:message];
 
-      if ([[SNTConfigurator configurator] bundlesEnabled] && binInfo.bundle) {
+      if ([[SNTConfigurator configurator] enableBundles] && binInfo.bundle) {
         // If the binary is part of a bundle, find and hash all the related binaries in the bundle.
         // Let the GUI know hashing is needed. Once the hashing is complete the GUI will send a
         // message to santad to perform the upload logic for bundles.
