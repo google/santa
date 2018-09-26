@@ -123,11 +123,14 @@ class SantaDecisionManager : public OSObject {
   void RemoveFromCache(santa_vnode_id_t identifier);
 
   /// Returns the number of entries in the cache.
-  uint64_t CacheCount() const;
+  uint64_t RootCacheCount() const;
+  uint64_t NonRootCacheCount() const;
 
-  /// Clears the cache.
-  void ClearCache();
-
+  /**
+   Clears the cache(s). If non_root_only is true, only the non-root cache
+   is cleared.
+  */
+  void ClearCache(bool non_root_only = false);
 
   /**
     Fills out the per_bucket_counts array with the number of items in each bucket in the
@@ -325,9 +328,22 @@ class SantaDecisionManager : public OSObject {
     return (uint64_t)((sec * 1000000) + usec);
   }
 
-  SantaCache<santa_vnode_id_t, uint64_t> *decision_cache_;
+  SantaCache<santa_vnode_id_t, uint64_t> *root_decision_cache_;
+  SantaCache<santa_vnode_id_t, uint64_t> *non_root_decision_cache_;
   SantaCache<santa_vnode_id_t, uint64_t> *vnode_pid_map_;
   SantaCache<pid_t, pid_t> *compiler_pid_set_;
+
+  /**
+   Return the correct cache for a given identifier.
+
+   @param identifier The identifier
+   @return SantaCache* The cache to use
+  */
+  SantaCache<santa_vnode_id_t, uint64_t>* CacheForIdentifier(const santa_vnode_id_t identifier);
+
+  // This is the file system ID of the root filesystem,
+  // used to determine which cache to use for requests
+  uint64_t root_fsid_;
 
   lck_grp_t *sdm_lock_grp_;
   lck_grp_attr_t *sdm_lock_grp_attr_;

@@ -70,9 +70,9 @@ double watchdogRAMPeak = 0;
 
 #pragma mark Kernel ops
 
-- (void)cacheCounts:(void (^)(uint64_t))reply {
-  uint64_t count = [self.driverManager cacheCount];
-  reply(count);
+- (void)cacheCounts:(void (^)(uint64_t, uint64_t))reply {
+  NSArray<NSNumber *> *counts = [self.driverManager cacheCounts];
+  reply([counts[0] unsignedLongLongValue], [counts[1] unsignedLongLongValue]);
 }
 
 - (void)cacheBucketCount:(void (^)(NSArray *))reply {
@@ -80,7 +80,7 @@ double watchdogRAMPeak = 0;
 }
 
 - (void)flushCache:(void (^)(BOOL))reply {
-  reply([self.driverManager flushCache]);
+  reply([self.driverManager flushCacheNonRootOnly:NO]);
 }
 
 - (void)checkCacheForVnodeID:(santa_vnode_id_t)vnodeID withReply:(void (^)(santa_action_t))reply {
@@ -121,7 +121,7 @@ double watchdogRAMPeak = 0;
   // The actual cache flushing happens after the new rules have been added to the database.
   if (flushCache) {
     LOGI(@"Flushing decision cache");
-    [self.driverManager flushCache];
+    [self.driverManager flushCacheNonRootOnly:NO];
   }
 
   reply(error);

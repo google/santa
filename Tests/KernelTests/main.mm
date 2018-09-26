@@ -151,7 +151,8 @@
 
 /// Call in-kernel function: |kSantaUserClientClearCache|
 - (void)flushCache {
-  IOConnectCallScalarMethod(self.connection, kSantaUserClientClearCache, 0, 0, 0, 0);
+  uint64_t nonRootOnly = 0;
+  IOConnectCallScalarMethod(self.connection, kSantaUserClientClearCache, &nonRootOnly, 1, 0, 0);
 }
 
 #pragma mark - Connection Tests
