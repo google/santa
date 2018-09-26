@@ -69,7 +69,7 @@ REGISTER_COMMAND_NAME(@"cachehistogram")
         }
         printf("\n");
       } else {
-        printf("%4llu: %llu\n", k, v);
+        printf("%4llu bucket[s] have %llu %s\n", v, k, k > 1 ? "entries" : "entry");
       }
     }
     exit(0);
