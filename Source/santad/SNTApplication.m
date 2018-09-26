@@ -264,7 +264,7 @@ void diskDisappearedCallback(DADiskRef disk, void *context) {
   if (![props[@"DAVolumeMountable"] boolValue]) return;
 
   [app.eventLog logDiskDisappeared:props];
-  [app.driverManager flushCache];
+  [app.driverManager flushCacheNonRootOnly:YES];
 }
 
 - (void)startSyncd {
@@ -316,7 +316,7 @@ void diskDisappearedCallback(DADiskRef disk, void *context) {
     if (!new && !old) return;
     if (![new.pattern isEqualToString:old.pattern]) {
       LOGI(@"Changed [white|black]list regex, flushing cache");
-      [self.driverManager flushCache];
+      [self.driverManager flushCacheNonRootOnly:NO];
     }
   }
 }
@@ -324,7 +324,7 @@ void diskDisappearedCallback(DADiskRef disk, void *context) {
 - (void)clientModeDidChange:(SNTClientMode)clientMode {
   if (clientMode == SNTClientModeLockdown) {
     LOGI(@"Changed client mode, flushing cache.");
-    [self.driverManager flushCache];
+    [self.driverManager flushCacheNonRootOnly:NO];
   }
   [[self.notQueue.notifierConnection remoteObjectProxy] postClientModeNotification:clientMode];
 }

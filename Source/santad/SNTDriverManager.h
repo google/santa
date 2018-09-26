@@ -50,7 +50,7 @@
 ///
 ///  Get the number of binaries in the kernel's caches.
 ///
-- (uint64_t)cacheCount;
+- (NSArray<NSNumber *> *)cacheCounts;
 
 ///
 ///  Return an array representing all buckets in the kernel's decision cache where each number
@@ -61,7 +61,7 @@
 ///
 ///  Flush the kernel's binary cache.
 ///
-- (BOOL)flushCache;
+- (BOOL)flushCacheNonRootOnly:(BOOL)nonRootOnly;
 
 ///
 ///  Check the kernel cache for a VnodeID.

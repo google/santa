@@ -213,9 +213,9 @@ static void driverAppearedHandler(void *info, io_iterator_t iterator) {
   }
 }
 
-- (uint64_t)cacheCount {
-  uint32_t input_count = 1;
-  uint64_t cache_counts[1] = {0};
+- (NSArray<NSNumber *> *)cacheCounts {
+  uint32_t input_count = 2;
+  uint64_t cache_counts[2] = {0, 0};
 
   IOConnectCallScalarMethod(_connection,
                             kSantaUserClientCacheCount,
@@ -224,14 +224,16 @@ static void driverAppearedHandler(void *info, io_iterator_t iterator) {
                             cache_counts,
                             &input_count);
 
-  return cache_counts[0];
+  return @[ @(cache_counts[0]), @(cache_counts[1]) ];
 }
 
-- (BOOL)flushCache {
+- (BOOL)flushCacheNonRootOnly:(BOOL)nonRootOnly {
+  const uint64_t nonRoot = nonRootOnly;
+
   return IOConnectCallScalarMethod(_connection,
                                    kSantaUserClientClearCache,
-                                   0,
-                                   0,
+                                   &nonRoot,
+                                   1,
                                    0,
                                    0) == KERN_SUCCESS;
 }
