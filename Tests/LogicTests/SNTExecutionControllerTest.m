@@ -168,7 +168,7 @@
 - (void)testBinaryWhitelistCompilerRule {
   OCMStub([self.mockFileInfo isMachO]).andReturn(YES);
   OCMStub([self.mockFileInfo SHA256]).andReturn(@"a");
-  OCMStub([self.mockConfigurator transitiveWhitelistingEnabled]).andReturn(YES);
+  OCMStub([self.mockConfigurator enableTransitiveWhitelisting]).andReturn(YES);
 
   SNTRule *rule = [[SNTRule alloc] init];
   rule.state = SNTRuleStateWhitelistCompiler;
@@ -184,7 +184,7 @@
 - (void)testBinaryWhitelistCompilerRuleDisabled {
   OCMStub([self.mockFileInfo isMachO]).andReturn(YES);
   OCMStub([self.mockFileInfo SHA256]).andReturn(@"a");
-  OCMStub([self.mockConfigurator transitiveWhitelistingEnabled]).andReturn(NO);
+  OCMStub([self.mockConfigurator enableTransitiveWhitelisting]).andReturn(NO);
 
   SNTRule *rule = [[SNTRule alloc] init];
   rule.state = SNTRuleStateWhitelistCompiler;
@@ -200,7 +200,7 @@
 - (void)testBinaryWhitelistTransitiveRule {
   OCMStub([self.mockFileInfo isMachO]).andReturn(YES);
   OCMStub([self.mockFileInfo SHA256]).andReturn(@"a");
-  OCMStub([self.mockConfigurator transitiveWhitelistingEnabled]).andReturn(YES);
+  OCMStub([self.mockConfigurator enableTransitiveWhitelisting]).andReturn(YES);
 
   SNTRule *rule = [[SNTRule alloc] init];
   rule.state = SNTRuleStateWhitelistTransitive;
@@ -217,7 +217,7 @@
   OCMStub([self.mockFileInfo isMachO]).andReturn(YES);
   OCMStub([self.mockFileInfo SHA256]).andReturn(@"a");
   OCMStub([self.mockConfigurator clientMode]).andReturn(SNTClientModeLockdown);
-  OCMStub([self.mockConfigurator transitiveWhitelistingEnabled]).andReturn(NO);
+  OCMStub([self.mockConfigurator enableTransitiveWhitelisting]).andReturn(NO);
 
   SNTRule *rule = [[SNTRule alloc] init];
   rule.state = SNTRuleStateWhitelistTransitive;

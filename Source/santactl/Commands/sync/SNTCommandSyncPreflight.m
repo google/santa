@@ -87,17 +87,23 @@
   if (!resp) return NO;
 
   dispatch_group_enter(group);
-  [[self.daemonConn remoteObjectProxy] setBundlesEnabled:[resp[kBundlesEnabled] boolValue] reply:^{
+  NSNumber *enableBundles = resp[kEnableBundles];
+  if (!enableBundles) {
+    enableBundles = resp[kEnableBundles_OLD];
+  }
+  [[self.daemonConn remoteObjectProxy] setEnableBundles:[enableBundles boolValue] reply:^{
     dispatch_group_leave(group);
   }];
 
   dispatch_group_enter(group);
-  if ([resp[kTransitiveWhitelistingEnabled] respondsToSelector:@selector(boolValue)]) {
-    BOOL enabled = [resp[kTransitiveWhitelistingEnabled] boolValue];
-    [[self.daemonConn remoteObjectProxy] setTransitiveWhitelistingEnabled:enabled reply:^{
-      dispatch_group_leave(group);
-    }];
+  NSNumber *enableTransitiveWhitelisting = resp[kEnableTransitiveWhitelisting];
+  if (!enableTransitiveWhitelisting) {
+    enableTransitiveWhitelisting = resp[kEnableTransitiveWhitelisting_OLD];
   }
+  BOOL enabled = [enableTransitiveWhitelisting boolValue];
+  [[self.daemonConn remoteObjectProxy] setEnableTransitiveWhitelisting:enabled reply:^{
+    dispatch_group_leave(group);
+  }];
 
   self.syncState.eventBatchSize = [resp[kBatchSize] unsignedIntegerValue] ?: kDefaultEventBatchSize;
   self.syncState.FCMToken = resp[kFCMToken];

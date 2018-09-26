@@ -224,21 +224,21 @@ double watchdogRAMPeak = 0;
   reply();
 }
 
-- (void)bundlesEnabled:(void (^)(BOOL))reply {
-  reply([SNTConfigurator configurator].bundlesEnabled);
+- (void)enableBundles:(void (^)(BOOL))reply {
+  reply([SNTConfigurator configurator].enableBundles);
 }
 
-- (void)setBundlesEnabled:(BOOL)bundlesEnabled reply:(void (^)(void))reply {
-  [[SNTConfigurator configurator] setBundlesEnabled:bundlesEnabled];
+- (void)setEnableBundles:(BOOL)enableBundles reply:(void (^)(void))reply {
+  [[SNTConfigurator configurator] setEnableBundles:enableBundles];
   reply();
 }
 
-- (void)transitiveWhitelistingEnabled:(void (^)(BOOL))reply {
-  reply([SNTConfigurator configurator].transitiveWhitelistingEnabled);
+- (void)enableTransitiveWhitelisting:(void (^)(BOOL))reply {
+  reply([SNTConfigurator configurator].enableTransitiveWhitelisting);
 }
 
-- (void)setTransitiveWhitelistingEnabled:(BOOL)enabled reply:(void (^)(void))reply {
-  [[SNTConfigurator configurator] setTransitiveWhitelistingEnabled:enabled];
+- (void)setEnableTransitiveWhitelisting:(BOOL)enabled reply:(void (^)(void))reply {
+  [[SNTConfigurator configurator] setEnableTransitiveWhitelisting:enabled];
   reply();
 }
 

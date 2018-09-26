@@ -38,8 +38,10 @@ extern NSString *const kTransitiveRuleCount;
 extern NSString *const kFCMToken;
 extern NSString *const kFCMFullSyncInterval;
 extern NSString *const kFCMGlobalRuleSyncDeadline;
-extern NSString *const kBundlesEnabled;
-extern NSString *const kTransitiveWhitelistingEnabled;
+extern NSString *const kEnableBundles;
+extern NSString *const kEnableBundles_OLD;
+extern NSString *const kEnableTransitiveWhitelisting;
+extern NSString *const kEnableTransitiveWhitelisting_OLD;
 
 extern NSString *const kEvents;
 extern NSString *const kFileSHA256;

@@ -38,8 +38,12 @@ NSString *const kTransitiveRuleCount = @"transitive_rule_count";
 NSString *const kFCMToken = @"fcm_token";
 NSString *const kFCMFullSyncInterval = @"fcm_full_sync_interval";
 NSString *const kFCMGlobalRuleSyncDeadline = @"fcm_global_rule_sync_deadline";
-NSString *const kBundlesEnabled = @"bundles_enabled";
-NSString *const kTransitiveWhitelistingEnabled = @"transitive_whitelisting_enabled";
+
+// NOTE: Both of the _OLD values will be removed at some indeterminate point in the future.
+NSString *const kEnableBundles = @"enable_bundles";
+NSString *const kEnableBundles_OLD = @"bundles_enabled";
+NSString *const kEnableTransitiveWhitelisting = @"enabled_transitive_whitelisting";
+NSString *const kEnableTransitiveWhitelisting_OLD = @"transitive_whitelisting_enabled";
 
 NSString *const kEvents = @"events";
 NSString *const kFileSHA256 = @"file_sha256";
