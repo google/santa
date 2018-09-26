@@ -129,10 +129,8 @@ class SantaDecisionManager : public OSObject {
   /**
    Clears the cache(s). If non_root_only is true, only the non-root cache
    is cleared.
-   */
+  */
   void ClearCache(bool non_root_only = false);
-
-
 
   /**
     Fills out the per_bucket_counts array with the number of items in each bucket in the

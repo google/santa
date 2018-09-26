@@ -106,7 +106,7 @@ void SantaDecisionManager::ConnectClient(pid_t pid) {
   client_pid_ = pid;
 
   // Determine root fsid
-  vfs_context_t ctx = vfs_context_create(NULL);
+  vfs_context_t ctx = vfs_context_create(nullptr);
   if (ctx) {
     vnode_t root = vfs_rootvnode();
     if (root) {
