@@ -56,10 +56,13 @@ static const NSUInteger kTransitiveRuleExpirationSeconds = 6 * 30 * 24 * 3600;
   return @[
     @"/usr/libexec/trustd", @"/usr/sbin/securityd", @"/usr/libexec/xpcproxy",
     @"/usr/sbin/ocspd", @"/usr/lib/dyld",
-    @"/Library/Extensions/santa-driver.kext/Contents/MacOS/santad",
-    @"/Library/Extensions/santa-driver.kext/Contents/MacOS/santactl",
-    @"/Library/Extensions/santa-driver.kext/Contents/XPCServices/santabs.xpc/Contents/MacOS/santabs",
     @"/Applications/Santa.app/Contents/MacOS/Santa",
+    @"/Applications/Santa.app/Contents/MacOS/santactl",
+    @"/Applications/Santa.app/Contents/MacOS/santabundleservice",
+    // This entry is for on <10.15 - on 10.15+ the binary is actually executed
+    // from a system-controlled path but will only ever be executed by
+    // the OS anyway.
+    @"/Applications/Santa.app/Contents/Library/SystemExtensions/com.google.santa.daemon/Contents/MacOS/com.google.santa.daemon",
   ];
 }
 
@@ -73,8 +76,7 @@ static const NSUInteger kTransitiveRuleExpirationSeconds = 6 * 30 * 24 * 3600;
     BOOL systemBin = NO;
     if ([csInfo signingInformationMatches:self.launchdCSInfo]) {
       systemBin = YES;
-    }
-    if (!systemBin && ![csInfo signingInformationMatches:self.santadCSInfo]) {
+    } else if (![csInfo signingInformationMatches:self.santadCSInfo]) {
       LOGE(@"Unable to validate critical system binary. "
            @"pid 1: %@, santad: %@ and %@: %@ do not match.",
            self.launchdCSInfo.leafCertificate,
@@ -130,7 +132,6 @@ static const NSUInteger kTransitiveRuleExpirationSeconds = 6 * 30 * 24 * 3600;
     [db executeUpdate:@"ALTER TABLE 'rules' ADD 'timestamp' INTEGER"];
     newVersion = 3;
   }
-
 
   return newVersion;
 }

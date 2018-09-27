@@ -19,11 +19,6 @@
 #import "Source/common/SNTRule.h"
 #import "Source/santad/DataLayer/SNTRuleTable.h"
 
-@interface SNTRuleTable (Testing)
-@property NSString *santadCertSHA;
-@property NSString *launchdCertSHA;
-@end
-
 /// This test case actually tests SNTRuleTable and SNTRule
 @interface SNTRuleTableTest : XCTestCase
 @property SNTRuleTable *sut;
@@ -37,8 +32,6 @@
 
   self.dbq = [[FMDatabaseQueue alloc] init];
   self.sut = [[SNTRuleTable alloc] initWithDatabaseQueue:self.dbq];
-  // xctest is unsigned in Xcode 10.1.
-  self.sut.santadCertSHA = [[MOLCodesignChecker alloc] initWithPID:1].leafCertificate.SHA256;
 }
 
 - (SNTRule *)_exampleBinaryRule {

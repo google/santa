@@ -39,9 +39,9 @@
   sut = [[SNTFileInfo alloc] initWithPath:@"../../../../../../../../../../../../../../../bin/ls"];
   XCTAssertEqualObjects(sut.path, @"/bin/ls");
 
-  sut = [[SNTFileInfo alloc] initWithPath:@"/usr/bin/qlmanage"];
-  XCTAssertEqualObjects(sut.path, @"/System/Library/Frameworks/QuickLook.framework/Versions/A/"
-                                  @"Resources/quicklookd.app/Contents/MacOS/qlmanage");
+  sut = [[SNTFileInfo alloc] initWithPath:@"/usr/sbin/AppleFileServer"];
+  XCTAssertEqualObjects(sut.path, @"/System/Library/CoreServices/AppleFileServer.app/"
+                                  @"Contents/MacOS/AppleFileServer");
 }
 
 - (void)testSHA1 {
