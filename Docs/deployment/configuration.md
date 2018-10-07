@@ -172,7 +172,8 @@ Configuration profiles have a `.mobileconfig` file extension. There are many way
 | fcm_token*                     | String     | The FCM token used by Santa to listen for FCM messages. Unique for every machine. No default. |
 | fcm_full_sync_interval*        | Integer    | The full sync interval if a fcm_token is set. Defaults to  14400 secs (4 hours). |
 | fcm_global_rule_sync_deadline* | Integer    | The max time to wait before performing a rule sync when a global rule sync FCM message is received. This allows syncing to be staggered for global events to avoid spikes in server load. Defaults to 600 secs (10 min). |
-| bundles_enabled*               | Bool       | If set to `True` the bundle scanning feature is enabled. Defaults to `False`. |
+| enable_bundles*                | Bool       | If set to `True` the bundle scanning feature is enabled. Defaults to `False`. |
+| enabled_transitive_whitelisting | Bool       | If set to `True` the transitive whitelisting feature is enabled. Defaults to `False`. |
 
 *Held only in memory. Not persistent upon process restart.
 
