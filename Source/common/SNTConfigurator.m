@@ -352,6 +352,7 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
 
 - (NSURL *)syncBaseURL {
   NSString *urlString = self.configState[kSyncBaseURLKey];
+  if (![urlString hasSuffix:@"/"]) urlString = [urlString stringByAppendingString:@"/"];
   NSURL *url = [NSURL URLWithString:urlString];
   if (urlString && !url) LOGW(@"SyncBaseURL is not a valid URL!");
   return url;
