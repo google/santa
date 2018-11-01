@@ -19,12 +19,12 @@
 #include <IOKit/IOLib.h>
 #include <IOKit/IOMemoryDescriptor.h>
 #include <IOKit/IOSharedDataQueue.h>
-#include <libkern/c++/OSDictionary.h>
 #include <sys/kauth.h>
 #include <sys/proc.h>
 #include <sys/vnode.h>
 
 #include "SantaCache.h"
+#include "SantaPrefixTree.h"
 #include "SNTKernelCommon.h"
 #include "SNTLogging.h"
 
@@ -163,6 +163,10 @@ class SantaDecisionManager : public OSObject {
     processes of the pid.
   */
   bool IsCompilerProcess(pid_t pid);
+
+  void AddFilemodPrefixFilter(const char *prefix) {
+    filemod_prefix_filter_->AddPrefix(prefix);
+  }
 
   /**
    Fetches the vnode_id for a given vnode.
@@ -332,6 +336,8 @@ class SantaDecisionManager : public OSObject {
   SantaCache<santa_vnode_id_t, uint64_t> *non_root_decision_cache_;
   SantaCache<santa_vnode_id_t, uint64_t> *vnode_pid_map_;
   SantaCache<pid_t, pid_t> *compiler_pid_set_;
+
+  SantaPrefixTree *filemod_prefix_filter_;
 
   /**
    Return the correct cache for a given identifier.

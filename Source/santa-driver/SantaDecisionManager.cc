@@ -57,6 +57,18 @@ bool SantaDecisionManager::init() {
   client_pid_ = 0;
   root_fsid_ = 0;
 
+  // Setup file modification prefix filter.
+  filemod_prefix_filter_ = new SantaPrefixTree;
+  if (!filemod_prefix_filter_->init()) {
+    filemod_prefix_filter_->release();
+    filemod_prefix_filter_ = nullptr;
+    LOGE("Unable to initialize file modification filter tree.");
+  } else {
+    // Default prefixes to filter. Notice the trailing the "/".
+    filemod_prefix_filter_->AddPrefix("/.");
+    filemod_prefix_filter_->AddPrefix("/dev/");
+  }
+
   return true;
 }
 
@@ -94,6 +106,8 @@ void SantaDecisionManager::free() {
 
   OSSafeReleaseNULL(decision_dataqueue_);
   OSSafeReleaseNULL(log_dataqueue_);
+
+  OSSafeReleaseNULL(filemod_prefix_filter_);
 
   super::free();
 }
@@ -691,7 +705,7 @@ void SantaDecisionManager::FileOpCallback(
 
   // Filter out modifications to locations that are definitely
   // not useful or made by santad.
-  if (!strprefix(path, "/.") && !strprefix(path, "/dev")) {
+  if (!filemod_prefix_filter_ || !filemod_prefix_filter_->HasPrefix(path)) {
     auto message = NewMessage(nullptr);
     strlcpy(message->path, path, sizeof(message->path));
     if (new_path) strlcpy(message->newpath, new_path, sizeof(message->newpath));

@@ -84,6 +84,8 @@
         break;
     }
 
+    [_driverManager setFilemodPrefixFilters:[configurator fileChangesPrefixFilters]];
+
     self.notQueue = [[SNTNotificationQueue alloc] init];
     SNTSyncdQueue *syncdQueue = [[SNTSyncdQueue alloc] init];
 

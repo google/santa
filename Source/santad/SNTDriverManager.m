@@ -278,4 +278,23 @@ static void driverAppearedHandler(void *info, io_iterator_t iterator) {
   return a;
 }
 
+- (void)setFilemodPrefixFilters:(NSArray *)filters {
+  // Max out at 32K, don't want to accidentally fill up wired kernel memory.
+  NSInteger n = filters.count > 32 ? 32 : filters.count;
+  for (NSString *filter in [filters subarrayWithRange:NSMakeRange(0, n)]) {
+    char buffer[MAXPATHLEN];
+    if (![filter getFileSystemRepresentation:buffer maxLength:MAXPATHLEN]) {
+      LOGE(@"Invalid filemod prefix filter: %@", filter);
+      continue;
+    }
+
+    IOConnectCallStructMethod(self.connection,
+                              kSantaUserClientAddFilemodPrefixFilter,
+                              &buffer,
+                              sizeof(const char[MAXPATHLEN]),
+                              0,
+                              0);
+  }
+}
+
 @end

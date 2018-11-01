@@ -121,6 +121,10 @@ class com_google_SantaDriverClient : public IOUserClient {
   static IOReturn cache_bucket_count(
       OSObject *target, void *reference, IOExternalMethodArguments *arguments);
 
+  ///  The daemon calls this to add additional filemod prefix filters at daemon startup.
+  static IOReturn add_filemod_prefix_filter(
+    OSObject *target, void *reference, IOExternalMethodArguments *arguments);
+
  private:
   com_google_SantaDriver *myProvider;
   SantaDecisionManager *decisionManager;

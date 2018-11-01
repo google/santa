@@ -76,4 +76,11 @@
 ///
 - (kern_return_t)removeCacheEntryForVnodeID:(santa_vnode_id_t)vnodeId;
 
+
+///
+///  Adds in-kernel prefix filters for file modification logs.
+///  Only allow a sane number of entries, say 32.
+///
+- (void)setFilemodPrefixFilters:(NSArray *)filters;
+
 @end

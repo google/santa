@@ -73,6 +73,23 @@
 @property(readonly, nonatomic) NSRegularExpression *fileChangesRegex;
 
 ///
+///  A list of ignore prefixes which are checked in-kernel.
+///  This is more performant than FileChangesRegex when ignoring whole directory trees.
+///
+///  For example adding a prefix of "/tmp/" will turn off file change log generation in-kernel
+//   for that entire tree. Since they are ignored by the kernel, they never reach santad and are
+///  not seen by the fileChangesRegex. Note the trailing "/", without it any file or directory
+///  starting with "/tmp" would be ignored.
+///
+///  By default "/." and "/dev/" are added.
+///  32 additional entries are allowed. Anything over 32 will be ignored.
+///
+///  To disable file change logging completely add "/".
+///  Filters are only applied on santad startup.
+///
+@property(readonly, nonatomic) NSArray *fileChangesPrefixFilters;
+
+///
 ///  Enable __PAGEZERO protection, defaults to YES
 ///  If this flag is set to NO, 32-bit binaries that are missing
 ///  the __PAGEZERO segment will not be blocked.
