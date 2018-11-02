@@ -164,7 +164,10 @@ class SantaDecisionManager : public OSObject {
   */
   bool IsCompilerProcess(pid_t pid);
 
-  void AddFilemodPrefixFilter(const char *prefix) {
+  /**
+    Add a file modification prefix filter.
+  */
+  inline void AddFilemodPrefixFilter(const char *prefix) {
     filemod_prefix_filter_->AddPrefix(prefix);
   }
 

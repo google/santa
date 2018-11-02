@@ -279,13 +279,21 @@ static void driverAppearedHandler(void *info, io_iterator_t iterator) {
 }
 
 - (void)setFilemodPrefixFilters:(NSArray *)filters {
-  // Max out at 32K, don't want to accidentally fill up wired kernel memory.
-  NSInteger n = filters.count > 32 ? 32 : filters.count;
-  for (NSString *filter in [filters subarrayWithRange:NSMakeRange(0, n)]) {
+  // Max out at 256 bytes.
+  // santa-driver will also enforce this cumulatively, but it's easy enough to pre-check here so it
+  // doesn't have to acquire locks etc...
+  size_t count = 0;
+  for (NSString *filter in filters) {
     char buffer[MAXPATHLEN];
     if (![filter getFileSystemRepresentation:buffer maxLength:MAXPATHLEN]) {
       LOGE(@"Invalid filemod prefix filter: %@", filter);
       continue;
+    }
+
+    count += strlen(buffer);
+    if (count > 256) {
+      LOGE(@"Prefix filter is full!");
+      return;
     }
 
     IOConnectCallStructMethod(self.connection,

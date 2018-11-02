@@ -79,7 +79,7 @@
 
 ///
 ///  Adds in-kernel prefix filters for file modification logs.
-///  Only allow a sane number of entries, say 32.
+///  Only allow a sane number bytes, currently 256.
 ///
 - (void)setFilemodPrefixFilters:(NSArray *)filters;
 

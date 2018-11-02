@@ -64,9 +64,9 @@ bool SantaDecisionManager::init() {
     filemod_prefix_filter_ = nullptr;
     LOGE("Unable to initialize file modification filter tree.");
   } else {
-    // Default prefixes to filter. Notice the trailing the "/".
+    // Default prefixes to filter.
     filemod_prefix_filter_->AddPrefix("/.");
-    filemod_prefix_filter_->AddPrefix("/dev/");
+    filemod_prefix_filter_->AddPrefix("/dev/"); // Notice the trailing the "/".
   }
 
   return true;

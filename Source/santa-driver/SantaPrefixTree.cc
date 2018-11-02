@@ -21,8 +21,7 @@ OSDefineMetaClassAndStructors(SantaPrefixTree, OSObject);
 
 bool SantaPrefixTree::init() {
   if (!super::init()) return false;
-  root_ = new SantaPrefixNode;
-  root_->init();
+  root_ = new SantaPrefixNode();
 
   spt_lock_grp_attr_ = lck_grp_attr_alloc_init();
   spt_lock_grp_ = lck_grp_alloc_init("santa-prefix-tree-lock", spt_lock_grp_attr_);
@@ -37,25 +36,33 @@ void SantaPrefixTree::AddPrefix(const char *prefix) {
 
   lck_rw_lock_exclusive(spt_lock_);
 
-  SantaPrefixNode *node = root_;
+  // len is the number of bytes (not necessarily the number of characters) representing the string.
   size_t len = strlen(prefix);
+
+  if (current_nodes_ + len > kMaxNodes) {
+    LOGE("Prefix tree is full, can not add: %s", prefix);
+    lck_rw_unlock_exclusive(spt_lock_);
+    return;
+  }
+
+  SantaPrefixNode *node = root_;
   for (int i = 0; i < len; ++i) {
     // If there is a node in the path that is considered a prefix, stop adding.
     // For our purposes we only care about the shortest path that matches.
     if (node->isPrefix) break;
 
-    // Create a single char string.
-    const char value[2] = {prefix[i], '\0'};
+    // Only process a byte at a time.
+    uint8_t value = prefix[i];
 
     // Create a new node if needed
-    if (!node->children->getObject(value)) {
-      SantaPrefixNode *newNode = new SantaPrefixNode;
-      newNode->init();
-      node->children->setObject(value, newNode);
+    if (!node->children[value]) {
+      SantaPrefixNode *newNode = new SantaPrefixNode();
+      node->children[value] = (void *)newNode;
+      ++current_nodes_;
     }
 
     // Get ready for the next iteration.
-    node = OSDynamicCast(SantaPrefixNode, node->children->getObject(value));
+    node = (SantaPrefixNode *)node->children[value];
 
     // If this is the end, mark the node as a prefix.
     if (i + 1 == len) {
@@ -76,11 +83,11 @@ bool SantaPrefixTree::HasPrefix(const char *string) {
   SantaPrefixNode *node = root_;
   size_t len = strlen(string);
   for (int i = 0; i < len; ++i) {
-    // Create a single char string.
-    const char value[2] = {string[i], '\0'};
+    // Only process a byte at a time.
+    uint8_t value = string[i];
 
     // Get the next char string.
-    node = OSDynamicCast(SantaPrefixNode, node->children->getObject(value));
+    node = (SantaPrefixNode *)node->children[value];
 
     // If it doesn't exist in the tree, no match.
     if (!node) break;
@@ -118,30 +125,6 @@ void SantaPrefixTree::free() {
     spt_lock_grp_attr_ = nullptr;
   }
 
-  root_->release();
-  super::free();
-}
-
-OSDefineMetaClassAndStructors(SantaPrefixNode, OSObject);
-
-bool SantaPrefixNode::init() {
-  if (!super::init()) return false;
-  children = OSDictionary::withCapacity(1);
-  isPrefix = false;
-  return true;
-}
-
-void SantaPrefixNode::free() {
-  children->OSCollection::iterateObjects(^bool(OSObject *key) {
-    // Counter init()
-    children->getObject((OSString *)key)->release();
-    return false;
-  });
-
-  // Counter setObject();
-  children->flushCollection();
-
-  // Counter withCapacity()
-  children->release();
+  delete root_;
   super::free();
 }

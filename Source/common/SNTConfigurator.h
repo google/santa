@@ -76,13 +76,14 @@
 ///  A list of ignore prefixes which are checked in-kernel.
 ///  This is more performant than FileChangesRegex when ignoring whole directory trees.
 ///
-///  For example adding a prefix of "/tmp/" will turn off file change log generation in-kernel
-//   for that entire tree. Since they are ignored by the kernel, they never reach santad and are
-///  not seen by the fileChangesRegex. Note the trailing "/", without it any file or directory
-///  starting with "/tmp" would be ignored.
+///  For example adding a prefix of "/private/tmp/" will turn off file change log generation
+///  in-kernel for that entire tree. Since they are ignored by the kernel, they never reach santad
+///  and are not seen by the fileChangesRegex. Note the trailing "/", without it any file or
+///  directory starting with "/private/tmp" would be ignored.
 ///
 ///  By default "/." and "/dev/" are added.
-///  32 additional entries are allowed. Anything over 32 will be ignored.
+///  Memory in the kernel is precious. 256 total bytes are allowed, use them wisely. Anything
+///  totaling up to more than 256 bytes will be ignored.
 ///
 ///  To disable file change logging completely add "/".
 ///  Filters are only applied on santad startup.
