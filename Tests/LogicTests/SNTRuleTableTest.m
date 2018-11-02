@@ -160,6 +160,19 @@
   XCTAssertNil(r);
 }
 
+- (void)testFetchRuleOrdering {
+  [self.sut addRules:@[ [self _exampleCertRule], [self _exampleBinaryRule] ]
+          cleanSlate:NO
+               error:nil];
+
+  // This test verifies that the implicit rule ordering we've been abusing is still working.
+  // See the comment in SNTRuleTable#ruleForBinarySHA256:certificateSHA256:
+  SNTRule *r = [self.sut ruleForBinarySHA256:@"a" certificateSHA256:@"b"];
+  XCTAssertNotNil(r);
+  XCTAssertEqualObjects(r.shasum, @"a");
+  XCTAssertEqual(r.type, SNTRuleTypeBinary, @"Implicit rule ordering failed");
+}
+
 - (void)testBadDatabase {
   NSString *dbPath = [NSTemporaryDirectory() stringByAppendingString:@"sntruletabletest_baddb.db"];
   [@"some text" writeToFile:dbPath atomically:YES encoding:NSUTF8StringEncoding error:NULL];
