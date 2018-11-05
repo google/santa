@@ -22,12 +22,12 @@ Two configuration methods can be used to control Santa: a local configuration pr
 | BannedBlockMessage            | String     | This is the message shown to the user when a binary is blocked because of a rule if that rule doesn't provide a custom message. If this is not configured a reasonable  default is provided. |
 | ModeNotificationMonitor       | String     | The notification text to display when the client goes into Monitor mode. Defaults to "Switching into Monitor mode". |
 | ModeNotificationLockdown      | String     | The notification text to display when the client goes into Lockdown mode. Defaults to "Switching into Lockdown mode". |
-| SyncBaseURL*                  | String     | The base URL of the sync server.         |
+| SyncBaseURL                   | String     | The base URL of the sync server.         |
 | ClientAuthCertificateFile     | String     | If set, this contains the location of a PKCS#12 certificate to be used for sync authentication. |
 | ClientAuthCertificatePassword | String     | Contains the password for the PKCS#12 certificate. |
 | ClientAuthCertificateCN       | String     | If set, this is the Common Name of a certificate in the System keychain to be used for sync authentication. The corresponding private key must also be in the keychain. |
 | ClientAuthCertificateIssuerCN | String     | If set, this is the Issuer Name of a certificate in the System keychain to be used for sync authentication. The corresponding private key must also be in the keychain. |
-| ServerAuthRootsData           | Data       | If set, this is valid PEM containing one or more certificates to be used to evaluate the server's SSL chain, overriding the list of trusted CAs distributed with the OS. |
+| ServerAuthRootsData           | Data       | If set, this is valid PEM containing one or more certificates to be used for certificate pinning. To comply with [ATS](https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CocoaKeys.html#//apple_ref/doc/uid/TP40009251-SW57) the certificate chain must also be trusted in the keychain. |
 | ServerAuthRootsFile           | String     | The same as the above but is a path to a file on disk containing the PEM data. |
 | MachineOwner                  | String     | The machine owner.                       |
 | MachineID                     | String     | The machine ID.                          |
