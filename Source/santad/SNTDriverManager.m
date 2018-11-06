@@ -279,29 +279,40 @@ static void driverAppearedHandler(void *info, io_iterator_t iterator) {
 }
 
 - (void)setFilemodPrefixFilters:(NSArray *)filters {
-  // Max out at 256 bytes.
-  // santa-driver will also enforce this cumulatively, but it's easy enough to pre-check here so it
-  // doesn't have to acquire locks etc...
-  size_t count = 0;
-  for (NSString *filter in filters) {
+  uint64_t n = 0;
+  uint32_t n_len = 1;
+
+  const char *reset = "";
+  kern_return_t ret = IOConnectCallMethod(self.connection, kSantaUserClientAddFilemodPrefixFilter,
+                                          NULL, 0, reset, sizeof(const char[MAXPATHLEN]),
+                                          &n, &n_len, NULL, NULL);
+  if (ret != kIOReturnSuccess || n != 1) {
+    LOGE(@"Failed to reset the prefix filter: got %llu nodes expected 1", n);
+    return;
+  }
+
+  for (NSString *filter in [@[ @"/.", @"/dev/" ] arrayByAddingObjectsFromArray:filters]) {
     char buffer[MAXPATHLEN];
     if (![filter getFileSystemRepresentation:buffer maxLength:MAXPATHLEN]) {
       LOGE(@"Invalid filemod prefix filter: %@", filter);
       continue;
     }
 
-    count += strlen(buffer);
-    if (count > 256) {
-      LOGE(@"Prefix filter is full!");
-      return;
-    }
+    ret = IOConnectCallMethod(self.connection, kSantaUserClientAddFilemodPrefixFilter,
+                              NULL, 0, buffer, sizeof(const char[MAXPATHLEN]),
+                              &n, &n_len, NULL, NULL);
 
-    IOConnectCallStructMethod(self.connection,
-                              kSantaUserClientAddFilemodPrefixFilter,
-                              &buffer,
-                              sizeof(const char[MAXPATHLEN]),
-                              0,
-                              0);
+    if (ret != kIOReturnSuccess) {
+      LOGE(@"Failed to add prefix filter: %s error: 0x%x", buffer, ret);
+
+      // If the tree is full, stop.
+      // TODO(bur): Maybe continue here with some smarts around the size? Shorter, not yet iterated
+      //            prefixes (that may fit) are ignored. Seems worth it not to spam the driver.
+      if (ret == kIOReturnNoResources) {
+        LOGE(@"Prefix filter tree is full!");
+        return;
+      }
+    }
   }
 }
 

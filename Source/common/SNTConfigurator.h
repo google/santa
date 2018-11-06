@@ -82,11 +82,41 @@
 ///  directory starting with "/private/tmp" would be ignored.
 ///
 ///  By default "/." and "/dev/" are added.
-///  Memory in the kernel is precious. 256 total bytes are allowed, use them wisely. Anything
-///  totaling up to more than 256 bytes will be ignored.
+///
+///  Memory in the kernel is precious. A total of 256 bytes are allowed for this configuration.
+///  An ASCII character uses 1 byte. An UTF-8 encoded Unicode character uses 1-4 bytes.
+///  Prefixes are added to the running config in-order one by one. The prefix will be ignored if
+///  (the running config's current size) + (the prefix's size) totals up to more than 256 bytes.
+///  The running config is stored in a prefix tree. Each node in the tree represents 1 byte.
+///  Prefixes that share prefixes are effectively de-duped; their shared byte sized components only
+///  take up 1 byte. For example these 3 prefixes all have a common prefix of "/private/".
+///  They will only take up 21 bytes instead of 39.
+///
+///  "/private/tmp/"
+///  "/private/var/"
+///  "/private/new/"
+///
+///                                                              -> [t] -> [m] -> [p] -> [/]
+///
+///  [/] -> [p] -> [r] -> [i] -> [v] -> [a] -> [t] -> [e] -> [/] -> [v] -> [a] -> [r] -> [/]
+///
+///                                                              -> [n] -> [e] -> [w] -> [/]
+///
+///  Prefixes with Unicode characters work similarly. Assuming a UTF-8 encoding these two prefixes
+///  are actually the same for the first 3 bytes. They take up 7 bytes instead of 10.
+///
+///  "/🤘"
+///  "/🖖"
+///
+///                          -> [0xa4] -> [0x98]
+///  [/] -> [0xf0] -> [0x9f]
+///                          -> [0x96] -> [0x96]
 ///
 ///  To disable file change logging completely add "/".
+///  TODO(bur): Make this default if no FileChangesRegex is set.
+///
 ///  Filters are only applied on santad startup.
+///  TODO(bur): Support add / remove of filters while santad is running.
 ///
 @property(readonly, nonatomic) NSArray *fileChangesPrefixFilters;
 

@@ -154,7 +154,6 @@
 		B352A545B76783D568A6D0C5 /* libPods-Santa.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 90E9D568200AB9B642E06272 /* libPods-Santa.a */; };
 		C714F8B11D8044D400700EDF /* SNTCommandFileInfo.m in Sources */ = {isa = PBXBuildFile; fileRef = 0DCD5FBE1909D64A006B445C /* SNTCommandFileInfo.m */; };
 		C714F8B21D8044FE00700EDF /* SNTCommandController.m in Sources */ = {isa = PBXBuildFile; fileRef = 0D35BDAB18FD7CFD00921A21 /* SNTCommandController.m */; };
-		C7197269218A3AF600979487 /* SantaPrefixTree.h in Headers */ = {isa = PBXBuildFile; fileRef = C7197268218A3AF600979487 /* SantaPrefixTree.h */; };
 		C719726B218A419B00979487 /* SantaPrefixTree.cc in Sources */ = {isa = PBXBuildFile; fileRef = C719726A218A419B00979487 /* SantaPrefixTree.cc */; };
 		C72E8D941D7F399900C86DD3 /* SNTCommandFileInfoTest.m in Sources */ = {isa = PBXBuildFile; fileRef = C72E8D931D7F399900C86DD3 /* SNTCommandFileInfoTest.m */; };
 		C73A4B9A1DC10753007B6789 /* SNTSyncdQueue.m in Sources */ = {isa = PBXBuildFile; fileRef = C7FB56FF1DBFC213004E14EF /* SNTSyncdQueue.m */; };
@@ -922,7 +921,6 @@
 				0D4644C6182AF81700098690 /* SantaDecisionManager.h in Headers */,
 				0D9A7F341759144800035EB5 /* SantaDriver.h in Headers */,
 				0D9A7F381759148E00035EB5 /* SantaDriverClient.h in Headers */,
-				C7197269218A3AF600979487 /* SantaPrefixTree.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

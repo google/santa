@@ -16,34 +16,32 @@
 
 #include "SNTLogging.h"
 
-#define super OSObject
-OSDefineMetaClassAndStructors(SantaPrefixTree, OSObject);
+#include <libkern/c++/OSArray.h>
+#include <libkern/c++/OSSet.h>
+#include <libkern/c++/OSNumber.h>
 
-bool SantaPrefixTree::init() {
-  if (!super::init()) return false;
+
+SantaPrefixTree::SantaPrefixTree() {
   root_ = new SantaPrefixNode();
+  ++node_count_;
 
   spt_lock_grp_attr_ = lck_grp_attr_alloc_init();
   spt_lock_grp_ = lck_grp_alloc_init("santa-prefix-tree-lock", spt_lock_grp_attr_);
   spt_lock_attr_ = lck_attr_alloc_init();
   spt_lock_ = lck_rw_alloc_init(spt_lock_grp_, spt_lock_attr_);
-
-  return true;
 }
 
-void SantaPrefixTree::AddPrefix(const char *prefix) {
+IOReturn SantaPrefixTree::AddPrefix(const char *prefix, uint32_t *node_count) {
   LOGD("Trying to add prefix: %s", prefix);
-
-  lck_rw_lock_exclusive(spt_lock_);
 
   // len is the number of bytes (not necessarily the number of characters) representing the string.
   size_t len = strlen(prefix);
 
-  if (current_nodes_ + len > kMaxNodes) {
-    LOGE("Prefix tree is full, can not add: %s", prefix);
-    lck_rw_unlock_exclusive(spt_lock_);
-    return;
-  }
+  // Have we have created a new branch in the tree?
+  auto branched = false;
+
+  // Grab a shared lock until a new branch is required.
+  lck_rw_lock_shared(spt_lock_);
 
   SantaPrefixNode *node = root_;
   for (int i = 0; i < len; ++i) {
@@ -54,25 +52,67 @@ void SantaPrefixTree::AddPrefix(const char *prefix) {
     // Only process a byte at a time.
     uint8_t value = prefix[i];
 
-    // Create a new node if needed
+    // Create the child if it does not exist.
     if (!node->children[value]) {
-      SantaPrefixNode *newNode = new SantaPrefixNode();
-      node->children[value] = (void *)newNode;
-      ++current_nodes_;
+      // Upgrade the shared lock.
+      // If the upgrade fails, the shared lock is released.
+      if (!lck_rw_lock_shared_to_exclusive(spt_lock_)) {
+        // Grab a new exclusive lock.
+        lck_rw_lock_exclusive(spt_lock_);
+      }
+
+      // Is there enough room for the rest of the prefix?
+      if (!branched && (node_count_ + (len - i)) > kMaxNodes) {
+        LOGE("Prefix tree is full, can not add: %s", prefix);
+        if (node_count) *node_count = node_count_;
+        lck_rw_unlock_exclusive(spt_lock_);
+        return kIOReturnNoResources;
+      }
+
+      SantaPrefixNode *new_node = new SantaPrefixNode();
+
+      // If this is the end, mark the node as a prefix.
+      if (i + 1 == len) {
+        LOGD("Added prefix: %s", prefix);
+        new_node->isPrefix = true;
+      }
+
+      node->children[value] = (void *)new_node;
+      ++node_count_;
+      branched = true;
+
+      // Downgrade the exclusive lock
+      lck_rw_lock_exclusive_to_shared(spt_lock_);
+    } else if (i + 1 == len) {
+      // If the child does exist and it is the end...
+      // Set the new, higher prefix and prune the now dead nodes.
+
+      if (!lck_rw_lock_shared_to_exclusive(spt_lock_)) {
+        lck_rw_lock_exclusive(spt_lock_);
+      }
+
+      PruneNode((SantaPrefixNode *)node->children[value]);
+
+      SantaPrefixNode *new_node = new SantaPrefixNode();
+      new_node->isPrefix = true;
+
+      node->children[value] = (void *)new_node;
+      ++node_count_;
+
+      LOGD("Added prefix: %s", prefix);
+
+      lck_rw_lock_exclusive_to_shared(spt_lock_);
     }
 
     // Get ready for the next iteration.
     node = (SantaPrefixNode *)node->children[value];
-
-    // If this is the end, mark the node as a prefix.
-    if (i + 1 == len) {
-      LOGD("Added prefix: %s", prefix);
-      node->isPrefix = true;
-      break;  // Unnecessary, but clear.
-    }
   }
 
-  lck_rw_unlock_exclusive(spt_lock_);
+  if (node_count) *node_count = node_count_;
+
+  lck_rw_unlock_shared(spt_lock_);
+
+  return kIOReturnSuccess;
 }
 
 bool SantaPrefixTree::HasPrefix(const char *string) {
@@ -104,7 +144,77 @@ bool SantaPrefixTree::HasPrefix(const char *string) {
   return found;
 }
 
-void SantaPrefixTree::free() {
+void SantaPrefixTree::Reset(uint32_t *node_count) {
+  lck_rw_lock_exclusive(spt_lock_);
+
+  PruneNode(root_);
+  root_ = new SantaPrefixNode();
+  ++node_count_;
+
+  if (node_count) *node_count = node_count_;
+  LOGD("Prefix tree reset");
+
+  lck_rw_unlock_exclusive(spt_lock_);
+}
+
+void SantaPrefixTree::PruneNode(SantaPrefixNode *target) {
+  if (!target) return;
+
+  // For deep trees a recursive approach will generate too many stack frames.
+  auto stack = OSArray::withCapacity(1);
+  auto seen = OSSet::withCapacity(1);
+
+  // Seed the "stack" with a starting node.
+  auto target_pointer = OSNumber::withNumber((uint64_t)(void *)target, 64);
+  stack->setObject(target_pointer);
+  target_pointer->release();
+
+  // Start at the target node and walk the tree to find all the sub-nodes.
+  while (stack->getCount()) {
+    auto pointer = OSDynamicCast(OSNumber, stack->getLastObject());
+    if (!pointer) {
+      LOGE("Unable complete prune!");
+      break; // Bail walking the tree, but still delete any seen nodes.
+    }
+
+    seen->setObject(pointer);
+    stack->removeObject(stack->getCount() - 1);
+
+    auto node = (SantaPrefixNode *)pointer->unsigned64BitValue();
+    for (int i = 0; i < 256; ++i) {
+      if (!node->children[i]) continue;
+      auto child_pointer = OSNumber::withNumber((uint64_t)node->children[i], 64);
+      stack->setObject(child_pointer);
+      child_pointer->release();
+    }
+  }
+
+  // Delete all the seen nodes.
+  seen->iterateObjects(^bool(OSObject *object) {
+    auto pointer = OSDynamicCast(OSNumber, object);
+    if (!pointer) {
+      LOGE("Unable delete node!");
+      return false; // Continue trying to delete the rest of the nodes.
+    }
+    auto node = (SantaPrefixNode *)pointer->unsigned64BitValue();
+    delete node;
+    --node_count_;
+    return false;
+  });
+
+  OSSafeReleaseNULL(stack);
+  OSSafeReleaseNULL(seen);
+}
+
+SantaPrefixTree::~SantaPrefixTree() {
+  // The locking is probably not necessary here, but I am scared to remove it.
+  lck_rw_lock_exclusive(spt_lock_);
+  LOGD("Prefix node count: %d", node_count_);
+  PruneNode(root_);
+  LOGD("Post prune prefix node count: %d", node_count_);
+  root_ = nullptr;
+  lck_rw_unlock_exclusive(spt_lock_);
+
   if (spt_lock_) {
     lck_rw_free(spt_lock_, spt_lock_grp_);
     spt_lock_ = nullptr;
@@ -124,7 +234,4 @@ void SantaPrefixTree::free() {
     lck_grp_attr_free(spt_lock_grp_attr_);
     spt_lock_grp_attr_ = nullptr;
   }
-
-  delete root_;
-  super::free();
 }

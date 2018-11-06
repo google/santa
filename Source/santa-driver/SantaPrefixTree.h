@@ -15,31 +15,38 @@
 #ifndef SANTA__SANTA_DRIVER__SANTAPREFIXTREE_H
 #define SANTA__SANTA_DRIVER__SANTAPREFIXTREE_H
 
-#include <IOKit/IOLib.h>
-#include <libkern/c++/OSObject.h>
+#include <IOKit/IOReturn.h>
 #include <libkern/locks.h>
+
+#include "SNTLogging.h"
 
 ///
 ///  SantaPrefixTree is a simple prefix tree implementation.
-///  Adding and checking prefixes are thread safe.
+///  Operations are thread safe.
 ///
-class SantaPrefixTree : public OSObject {
-  OSDeclareDefaultStructors(SantaPrefixTree);
+class SantaPrefixTree {
 
  public:
-  bool init() override;
-  void free() override;
+  // Add a prefix to the tree.
+  // Optionally pass node_count to get the number of nodes after the add.
+  IOReturn AddPrefix(const char *, uint32_t *node_count = nullptr);
 
-  void AddPrefix(const char *);
-  bool HasPrefix(const char *);
-  // TODO(bur): Add RemoveAll(). This will allow santad to reset / add prefixes while running.
+  // Check if the tree has a prefix for string.
+  bool HasPrefix(const char *string);
+
+  // Reset the tree.
+  // Optionally pass node_count to get the number of nodes after the reset. It should be 1.
+  void Reset(uint32_t *node_count = nullptr);
+
+  SantaPrefixTree();
+  ~SantaPrefixTree();
 
  private:
   ///
   ///  SantaPrefixNode is a wrapper class that represents one byte.
   ///  1 node can represent a whole ASCII character.
   ///  For example a pointer to the 'A' node will be stored at children[0x41].
-  ///  It takes 1-4 nodes to represent a UTF8 encoded Unicode character.
+  ///  It takes 1-4 nodes to represent a UTF-8 encoded Unicode character.
   ///
   ///  The path for "/🤘" would look like this:
   ///      children[0x2f] -> children[0xf0] -> children[0x9f] -> children[0xa4] -> children[0x98]
@@ -52,26 +59,24 @@ class SantaPrefixTree : public OSObject {
   ///  Having the nodes represented by a smaller width, such as a nibble (1/2 byte), would
   ///  drastically decrease the memory footprint but would double required dereferences.
   ///
+  ///  TODO(bur): Potentially convert this into a full on radix tree.
+  ///
   class SantaPrefixNode {
    public:
     bool isPrefix;
     void *children[256];
-
-    // Free the direct descendants. Cascades down the whole tree.
-    ~SantaPrefixNode() {
-      for (int i = 0; i < 256; ++i) {
-        if (!children[i]) continue;
-        delete (SantaPrefixNode *)children[i];
-        children[i] = 0;
-      }
-    }
   };
+
+  // PruneNode will remove the passed in node from the tree.
+  // The passed in node and all subnodes will be deleted.
+  // If the tree is in use grab the exclusive lock.
+  void PruneNode(SantaPrefixNode *);
 
   SantaPrefixNode *root_;
 
   // Each node takes up ~2k, max out at ~512k.
   static const uint32_t kMaxNodes = 256;
-  uint32_t current_nodes_;
+  uint32_t node_count_;
 
   lck_grp_t *spt_lock_grp_;
   lck_grp_attr_t *spt_lock_grp_attr_;

@@ -253,11 +253,21 @@ IOReturn SantaDriverClient::add_filemod_prefix_filter(
   SantaDriverClient *me = OSDynamicCast(SantaDriverClient, target);
   if (!me) return kIOReturnBadArgument;
 
-  if (arguments->structureInputSize != sizeof(const char[MAXPATHLEN])) return kIOReturnInvalid;
   const char *prefix = reinterpret_cast<const char *>(arguments->structureInput);
-  me->decisionManager->AddFilemodPrefixFilter(prefix);
 
-  return kIOReturnSuccess;
+  IOReturn ret = kIOReturnSuccess;
+  uint32_t node_count = 0;
+
+  // If the client sends a bad address the kernel will kill the client before it reaches here.
+  if (prefix[0] == '\0') {
+    me->decisionManager->ResetFilemodPrefixFilter(&node_count);
+  } else {
+    ret = me->decisionManager->AddFilemodPrefixFilter(prefix, &node_count);
+  }
+
+  arguments->scalarOutput[0] = node_count;
+
+  return ret;
 }
 
 #pragma mark Method Resolution
@@ -283,7 +293,7 @@ IOReturn SantaDriverClient::externalMethod(
     { &SantaDriverClient::check_cache, 0, sizeof(santa_vnode_id_t), 1, 0 },
     { &SantaDriverClient::cache_bucket_count, 0, sizeof(santa_bucket_count_t),
         0, sizeof(santa_bucket_count_t) },
-    { &SantaDriverClient::add_filemod_prefix_filter, 0, sizeof(const char[MAXPATHLEN]), 0, 0 },
+    { &SantaDriverClient::add_filemod_prefix_filter, 0, sizeof(const char[MAXPATHLEN]), 1, 0 },
   };
 
   if (selector > static_cast<UInt32>(kSantaUserClientNMethods)) {

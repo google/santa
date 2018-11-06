@@ -360,7 +360,10 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
 - (NSArray *)fileChangesPrefixFilters {
   NSArray *filters = self.configState[kFileChangesPrefixFiltersKey];
   for (id filter in filters) {
-    if (![filter isKindOfClass:[NSString class]]) return nil;
+    if (![filter isKindOfClass:[NSString class]]) {
+      LOGE(@"Ignoring FileChangesPrefixFilters: array contains a non-string %@", filter);
+      return nil;
+    }
   }
   return filters;
 }
