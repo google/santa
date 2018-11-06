@@ -719,7 +719,7 @@
   uint32_t n_len = 1;
 
   // Fill up the 256 node capacity.
-  kern_return_t ret = IOConnectCallMethod(self.connection, kSantaUserClientAddFilemodPrefixFilter,
+  kern_return_t ret = IOConnectCallMethod(self.connection, kSantaUserClientFilemodPrefixFilterAdd,
                                           NULL, 0, buffer, sizeof(const char[MAXPATHLEN]),
                                           &n, &n_len, NULL, NULL);
 
@@ -729,7 +729,7 @@
 
   // Make sure it will enforce capacity.
   const char *too_much = "/B";
-  ret = IOConnectCallMethod(self.connection, kSantaUserClientAddFilemodPrefixFilter,
+  ret = IOConnectCallMethod(self.connection, kSantaUserClientFilemodPrefixFilterAdd,
                             NULL, 0, too_much, sizeof(const char[MAXPATHLEN]),
                             &n, &n_len, NULL, NULL);
   if (ret != kIOReturnNoResources || n != 256) {
@@ -738,7 +738,7 @@
 
   // Make sure it will prune.
   const char *ignore_it_all = "/";
-  ret = IOConnectCallMethod(self.connection, kSantaUserClientAddFilemodPrefixFilter,
+  ret = IOConnectCallMethod(self.connection, kSantaUserClientFilemodPrefixFilterAdd,
                             NULL, 0, ignore_it_all, sizeof(const char[MAXPATHLEN]),
                             &n, &n_len, NULL, NULL);
   // Expect 2 nodes, one for root and one for '/'.
@@ -747,17 +747,15 @@
   }
 
   // Make sure it will reset.
-  const char *reset = "";
-  ret = IOConnectCallMethod(self.connection, kSantaUserClientAddFilemodPrefixFilter,
-                            NULL, 0, reset, sizeof(const char[MAXPATHLEN]),
-                            &n, &n_len, NULL, NULL);
+  IOConnectCallScalarMethod(self.connection, kSantaUserClientFilemodPrefixFilterReset,
+                            0, 0, &n, &n_len);
   // Expect 1 root node.
-  if (ret != kIOReturnSuccess || n != 1) {
+  if (n != 1) {
     TFAILINFO("Failed to reset the prefix filter: got %llu nodes expected 1", n);
   }
 
   // And fill it back up again.
-  ret = IOConnectCallMethod(self.connection, kSantaUserClientAddFilemodPrefixFilter,
+  ret = IOConnectCallMethod(self.connection, kSantaUserClientFilemodPrefixFilterAdd,
                             NULL, 0, buffer, sizeof(const char[MAXPATHLEN]),
                             &n, &n_len, NULL, NULL);
 

@@ -282,11 +282,9 @@ static void driverAppearedHandler(void *info, io_iterator_t iterator) {
   uint64_t n = 0;
   uint32_t n_len = 1;
 
-  const char *reset = "";
-  kern_return_t ret = IOConnectCallMethod(self.connection, kSantaUserClientAddFilemodPrefixFilter,
-                                          NULL, 0, reset, sizeof(const char[MAXPATHLEN]),
-                                          &n, &n_len, NULL, NULL);
-  if (ret != kIOReturnSuccess || n != 1) {
+  IOConnectCallScalarMethod(self.connection, kSantaUserClientFilemodPrefixFilterReset,
+                            0, 0, &n, &n_len);
+  if (n != 1) {
     LOGE(@"Failed to reset the prefix filter: got %llu nodes expected 1", n);
     return;
   }
@@ -298,9 +296,9 @@ static void driverAppearedHandler(void *info, io_iterator_t iterator) {
       continue;
     }
 
-    ret = IOConnectCallMethod(self.connection, kSantaUserClientAddFilemodPrefixFilter,
-                              NULL, 0, buffer, sizeof(const char[MAXPATHLEN]),
-                              &n, &n_len, NULL, NULL);
+    kern_return_t ret = IOConnectCallMethod(self.connection, kSantaUserClientFilemodPrefixFilterAdd,
+                                            NULL, 0, buffer, sizeof(const char[MAXPATHLEN]),
+                                            &n, &n_len, NULL, NULL);
 
     if (ret != kIOReturnSuccess) {
       LOGE(@"Failed to add prefix filter: %s error: 0x%x", buffer, ret);

@@ -28,14 +28,14 @@ class SantaPrefixTree {
  public:
   // Add a prefix to the tree.
   // Optionally pass node_count to get the number of nodes after the add.
-  IOReturn AddPrefix(const char *, uint32_t *node_count = nullptr);
+  IOReturn AddPrefix(const char *, uint64_t *node_count = nullptr);
 
   // Check if the tree has a prefix for string.
   bool HasPrefix(const char *string);
 
   // Reset the tree.
   // Optionally pass node_count to get the number of nodes after the reset. It should be 1.
-  void Reset(uint32_t *node_count = nullptr);
+  void Reset(uint64_t *node_count = nullptr);
 
   SantaPrefixTree();
   ~SantaPrefixTree();
@@ -63,11 +63,12 @@ class SantaPrefixTree {
   class SantaPrefixNode {
    public:
     bool isPrefix;
-    void *children[256];
+    SantaPrefixNode *children[256];
   };
 
   // PruneNode will remove the passed in node from the tree.
   // The passed in node and all subnodes will be deleted.
+  // It is the caller's responsibility to reset the pointer to this node (held by the parent).
   // If the tree is in use grab the exclusive lock.
   void PruneNode(SantaPrefixNode *);
 

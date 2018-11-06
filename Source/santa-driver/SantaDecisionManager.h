@@ -167,14 +167,14 @@ class SantaDecisionManager : public OSObject {
   /**
     Add a file modification prefix filter.
   */
-  inline IOReturn AddFilemodPrefixFilter(const char *prefix, uint32_t *node_count) {
+  inline IOReturn AddFilemodPrefixFilter(const char *prefix, uint64_t *node_count) {
     return filemod_prefix_filter_->AddPrefix(prefix, node_count);
   }
 
   /**
     Reset the file modification prefix filter tree.
   */
-  inline void ResetFilemodPrefixFilter(uint32_t *node_count) {
+  inline void ResetFilemodPrefixFilter(uint64_t *node_count) {
     filemod_prefix_filter_->Reset(node_count);
   }
 

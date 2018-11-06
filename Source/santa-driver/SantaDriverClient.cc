@@ -248,26 +248,24 @@ IOReturn SantaDriverClient::cache_bucket_count(
   return kIOReturnSuccess;
 }
 
-IOReturn SantaDriverClient::add_filemod_prefix_filter(
+IOReturn SantaDriverClient::filemod_prefix_filter_add(
     OSObject *target, void *reference, IOExternalMethodArguments *arguments) {
   SantaDriverClient *me = OSDynamicCast(SantaDriverClient, target);
   if (!me) return kIOReturnBadArgument;
 
   const char *prefix = reinterpret_cast<const char *>(arguments->structureInput);
+  if (prefix[0] == '\0') return kIOReturnBadArgument;
 
-  IOReturn ret = kIOReturnSuccess;
-  uint32_t node_count = 0;
+  return me->decisionManager->AddFilemodPrefixFilter(prefix, arguments->scalarOutput);
+}
 
-  // If the client sends a bad address the kernel will kill the client before it reaches here.
-  if (prefix[0] == '\0') {
-    me->decisionManager->ResetFilemodPrefixFilter(&node_count);
-  } else {
-    ret = me->decisionManager->AddFilemodPrefixFilter(prefix, &node_count);
-  }
+IOReturn SantaDriverClient::filemod_prefix_filter_reset(
+    OSObject *target, void *reference, IOExternalMethodArguments *arguments) {
+  SantaDriverClient *me = OSDynamicCast(SantaDriverClient, target);
+  if (!me) return kIOReturnBadArgument;
 
-  arguments->scalarOutput[0] = node_count;
-
-  return ret;
+  me->decisionManager->ResetFilemodPrefixFilter(arguments->scalarOutput);
+  return kIOReturnSuccess;
 }
 
 #pragma mark Method Resolution
@@ -293,7 +291,8 @@ IOReturn SantaDriverClient::externalMethod(
     { &SantaDriverClient::check_cache, 0, sizeof(santa_vnode_id_t), 1, 0 },
     { &SantaDriverClient::cache_bucket_count, 0, sizeof(santa_bucket_count_t),
         0, sizeof(santa_bucket_count_t) },
-    { &SantaDriverClient::add_filemod_prefix_filter, 0, sizeof(const char[MAXPATHLEN]), 1, 0 },
+    { &SantaDriverClient::filemod_prefix_filter_add, 0, sizeof(const char[MAXPATHLEN]), 1, 0 },
+    { &SantaDriverClient::filemod_prefix_filter_reset, 0, 0, 1, 0 },
   };
 
   if (selector > static_cast<UInt32>(kSantaUserClientNMethods)) {

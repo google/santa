@@ -83,14 +83,14 @@
 ///
 ///  By default "/." and "/dev/" are added.
 ///
-///  Memory in the kernel is precious. A total of 256 bytes are allowed for this configuration.
-///  An ASCII character uses 1 byte. An UTF-8 encoded Unicode character uses 1-4 bytes.
+///  Memory in the kernel is precious. A total of 256 nodes are allowed for this configuration.
+///  An ASCII character uses 1 node. An UTF-8 encoded Unicode character uses 1-4 nodes.
 ///  Prefixes are added to the running config in-order one by one. The prefix will be ignored if
-///  (the running config's current size) + (the prefix's size) totals up to more than 256 bytes.
-///  The running config is stored in a prefix tree. Each node in the tree represents 1 byte.
-///  Prefixes that share prefixes are effectively de-duped; their shared byte sized components only
-///  take up 1 byte. For example these 3 prefixes all have a common prefix of "/private/".
-///  They will only take up 21 bytes instead of 39.
+///  (the running config's current size) + (the prefix's size) totals up to more than 256 nodes.
+///  The running config is stored in a prefix tree.
+///  Prefixes that share prefixes are effectively de-duped; their shared node sized components only
+///  take up 1 node. For example these 3 prefixes all have a common prefix of "/private/".
+///  They will only take up 21 nodes instead of 39.
 ///
 ///  "/private/tmp/"
 ///  "/private/var/"
@@ -103,7 +103,7 @@
 ///                                                              -> [n] -> [e] -> [w] -> [/]
 ///
 ///  Prefixes with Unicode characters work similarly. Assuming a UTF-8 encoding these two prefixes
-///  are actually the same for the first 3 bytes. They take up 7 bytes instead of 10.
+///  are actually the same for the first 3 nodes. They take up 7 nodes instead of 10.
 ///
 ///  "/🤘"
 ///  "/🖖"
