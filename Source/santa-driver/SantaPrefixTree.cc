@@ -162,8 +162,7 @@ void SantaPrefixTree::PruneNode(SantaPrefixNode *target) {
   if (!target) return;
 
   // For deep trees a recursive approach will generate too many stack frames.
-  auto stack = OSArray::withCapacity(1);
-  auto seen = OSSet::withCapacity(1);
+  auto stack = OSArray::withCapacity(node_count_);
 
   // Seed the "stack" with a starting node.
   auto target_pointer = OSNumber::withNumber((uint64_t)(void *)target, 64);
@@ -178,33 +177,21 @@ void SantaPrefixTree::PruneNode(SantaPrefixNode *target) {
       break;  // Bail walking the tree, but still delete any seen nodes.
     }
 
-    seen->setObject(pointer);
-    stack->removeObject(stack->getCount() - 1);
-
     auto node = (SantaPrefixNode *)pointer->unsigned64BitValue();
+    stack->removeObject(stack->getCount() - 1); // Releases pointer
+
     for (int i = 0; i < 256; ++i) {
       if (!node->children[i]) continue;
       auto child_pointer = OSNumber::withNumber((uint64_t)node->children[i], 64);
       stack->setObject(child_pointer);
       child_pointer->release();
     }
-  }
 
-  // Delete all the seen nodes.
-  seen->iterateObjects(^bool(OSObject *object) {
-    auto pointer = OSDynamicCast(OSNumber, object);
-    if (!pointer) {
-      LOGE("Unable delete node!");
-      return false;  // Continue trying to delete the rest of the nodes.
-    }
-    auto node = (SantaPrefixNode *)pointer->unsigned64BitValue();
     delete node;
     --node_count_;
-    return false;
-  });
+  }
 
   OSSafeReleaseNULL(stack);
-  OSSafeReleaseNULL(seen);
 }
 
 SantaPrefixTree::~SantaPrefixTree() {
