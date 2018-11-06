@@ -17,9 +17,8 @@
 #include "SNTLogging.h"
 
 #include <libkern/c++/OSArray.h>
-#include <libkern/c++/OSSet.h>
 #include <libkern/c++/OSNumber.h>
-
+#include <libkern/c++/OSSet.h>
 
 SantaPrefixTree::SantaPrefixTree() {
   root_ = new SantaPrefixNode();
@@ -174,7 +173,7 @@ void SantaPrefixTree::PruneNode(SantaPrefixNode *target) {
     auto pointer = OSDynamicCast(OSNumber, stack->getLastObject());
     if (!pointer) {
       LOGE("Unable complete prune!");
-      break; // Bail walking the tree, but still delete any seen nodes.
+      break;  // Bail walking the tree, but still delete any seen nodes.
     }
 
     seen->setObject(pointer);
@@ -194,7 +193,7 @@ void SantaPrefixTree::PruneNode(SantaPrefixNode *target) {
     auto pointer = OSDynamicCast(OSNumber, object);
     if (!pointer) {
       LOGE("Unable delete node!");
-      return false; // Continue trying to delete the rest of the nodes.
+      return false;  // Continue trying to delete the rest of the nodes.
     }
     auto node = (SantaPrefixNode *)pointer->unsigned64BitValue();
     delete node;

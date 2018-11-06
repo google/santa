@@ -25,7 +25,6 @@
 ///  Operations are thread safe.
 ///
 class SantaPrefixTree {
-
  public:
   // Add a prefix to the tree.
   // Optionally pass node_count to get the number of nodes after the add.
