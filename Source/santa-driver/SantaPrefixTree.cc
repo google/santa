@@ -120,6 +120,8 @@ bool SantaPrefixTree::HasPrefix(const char *string) {
   auto found = false;
 
   SantaPrefixNode *node = root_;
+
+  // TODO(bur): Avoid using strlen().
   size_t len = strlen(string);
   for (int i = 0; i < len; ++i) {
     // Only process a byte at a time.
