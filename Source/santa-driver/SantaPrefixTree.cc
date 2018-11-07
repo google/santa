@@ -18,11 +18,10 @@
 
 #include <libkern/c++/OSArray.h>
 #include <libkern/c++/OSNumber.h>
-#include <libkern/c++/OSSet.h>
 
 SantaPrefixTree::SantaPrefixTree() {
   root_ = new SantaPrefixNode();
-  ++node_count_;
+  node_count_ = 0;
 
   spt_lock_grp_attr_ = lck_grp_attr_alloc_init();
   spt_lock_grp_ = lck_grp_alloc_init("santa-prefix-tree-lock", spt_lock_grp_attr_);
@@ -31,10 +30,13 @@ SantaPrefixTree::SantaPrefixTree() {
 }
 
 IOReturn SantaPrefixTree::AddPrefix(const char *prefix, uint64_t *node_count) {
+  // Don't allow an empty prefix.
+  if (prefix[0] == '\0') return kIOReturnBadArgument;
+
   LOGD("Trying to add prefix: %s", prefix);
 
-  // len is the number of bytes (not necessarily the number of characters) representing the string.
-  size_t len = strlen(prefix);
+  // Enforce max tree depth.
+  size_t len = strnlen(prefix, kMaxNodes);
 
   // Grab a shared lock until a new branch is required.
   lck_rw_lock_shared(spt_lock_);
@@ -121,14 +123,11 @@ bool SantaPrefixTree::HasPrefix(const char *string) {
 
   SantaPrefixNode *node = root_;
 
-  // TODO(bur): Avoid using strlen().
-  size_t len = strlen(string);
-  for (int i = 0; i < len; ++i) {
+  // A well formed tree will always break this loop. Even if string doesn't terminate.
+  const char *p = string;
+  while (*p) {
     // Only process a byte at a time.
-    uint8_t value = string[i];
-
-    // Get the next char string.
-    node = node->children[value];
+    node = node->children[(uint8_t)*p++];
 
     // If it doesn't exist in the tree, no match.
     if (!node) break;
@@ -150,10 +149,9 @@ void SantaPrefixTree::Reset(uint64_t *node_count) {
 
   PruneNode(root_);
   root_ = new SantaPrefixNode();
-  node_count_ = 1;
+  node_count_ = 0;
 
   if (node_count) *node_count = node_count_;
-  LOGD("Prefix tree reset");
 
   lck_rw_unlock_exclusive(spt_lock_);
 }
@@ -196,9 +194,7 @@ void SantaPrefixTree::PruneNode(SantaPrefixNode *target) {
 
 SantaPrefixTree::~SantaPrefixTree() {
   lck_rw_lock_exclusive(spt_lock_);
-  LOGD("Prefix node count: %d", node_count_);
   PruneNode(root_);
-  LOGD("Post prune prefix node count: %d", node_count_);
   root_ = nullptr;
   lck_rw_unlock_exclusive(spt_lock_);
 

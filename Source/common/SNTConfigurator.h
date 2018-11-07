@@ -83,10 +83,11 @@
 ///
 ///  By default "/." and "/dev/" are added.
 ///
-///  Memory in the kernel is precious. A total of 256 nodes are allowed for this configuration.
+///  Memory in the kernel is precious. A total of MAXPATHLEN (1024) nodes are allowed.
+///  Using all 1024 nodes will result in santa-driver allocating ~2MB of wired memory.
 ///  An ASCII character uses 1 node. An UTF-8 encoded Unicode character uses 1-4 nodes.
-///  Prefixes are added to the running config in-order one by one. The prefix will be ignored if
-///  (the running config's current size) + (the prefix's size) totals up to more than 256 nodes.
+///  Prefixes are added to the running config in-order, one by one. The prefix will be ignored if
+///  (the running config's current size) + (the prefix's size) totals up to more than 1024 nodes.
 ///  The running config is stored in a prefix tree.
 ///  Prefixes that share prefixes are effectively de-duped; their shared node sized components only
 ///  take up 1 node. For example these 3 prefixes all have a common prefix of "/private/".

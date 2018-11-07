@@ -254,8 +254,6 @@ IOReturn SantaDriverClient::filemod_prefix_filter_add(
   if (!me) return kIOReturnBadArgument;
 
   const char *prefix = reinterpret_cast<const char *>(arguments->structureInput);
-  if (prefix[0] == '\0') return kIOReturnBadArgument;
-
   return me->decisionManager->FilemodPrefixFilterAdd(prefix, arguments->scalarOutput);
 }
 

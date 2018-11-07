@@ -18,14 +18,14 @@
 
 #import <CommonCrypto/CommonDigest.h>
 
+#include <libkern/OSKextLib.h>
+#include <mach/mach.h>
+#include <sys/ptrace.h>
+#include <sys/types.h>
 #include <cmath>
 #include <ctime>
 #include <iostream>
-#include <libkern/OSKextLib.h>
-#include <mach/mach.h>
 #include <numeric>
-#include <sys/ptrace.h>
-#include <sys/types.h>
 #include <vector>
 
 #include "SNTKernelCommon.h"
@@ -38,24 +38,30 @@
 /// any existing driver (and daemon) if necessary.
 ///
 
-#define TSTART(testName) \
-    do { printf("   %-50s ", testName); } while (0)
-#define TPASS() \
-    do { printf("PASS\n"); } while (0)
-#define TPASSINFO(fmt, ...) \
-    do { printf("PASS\n      " fmt "\n", ##__VA_ARGS__); } while (0)
-#define TFAIL() \
-    do { \
-      printf("FAIL\n"); \
-      [self unloadExtension]; \
-      exit(1); \
-    } while (0)
-#define TFAILINFO(fmt, ...) \
-    do { \
-      printf("FAIL\n   -> " fmt "\n\nTest failed.\n\n", ##__VA_ARGS__); \
-      [self unloadExtension]; \
-      exit(1); \
-    } while (0)
+#define TSTART(testName)           \
+  do {                             \
+    printf("   %-50s ", testName); \
+  } while (0)
+#define TPASS()       \
+  do {                \
+    printf("PASS\n"); \
+  } while (0)
+#define TPASSINFO(fmt, ...)                         \
+  do {                                              \
+    printf("PASS\n      " fmt "\n", ##__VA_ARGS__); \
+  } while (0)
+#define TFAIL()             \
+  do {                      \
+    printf("FAIL\n");       \
+    [self unloadExtension]; \
+    exit(1);                \
+  } while (0)
+#define TFAILINFO(fmt, ...)                                           \
+  do {                                                                \
+    printf("FAIL\n   -> " fmt "\n\nTest failed.\n\n", ##__VA_ARGS__); \
+    [self unloadExtension];                                           \
+    exit(1);                                                          \
+  } while (0)
 
 @interface SantaKernelTests : NSObject
 @property io_connect_t connection;
@@ -87,9 +93,7 @@
 
 - (NSString *)sha256ForPath:(NSString *)path {
   unsigned char sha256[CC_SHA256_DIGEST_LENGTH];
-  NSData *fData = [NSData dataWithContentsOfFile:path
-                                         options:NSDataReadingMappedIfSafe
-                                           error:nil];
+  NSData *fData = [NSData dataWithContentsOfFile:path options:NSDataReadingMappedIfSafe error:nil];
   CC_SHA256([fData bytes], (unsigned int)[fData length], sha256);
   char buf[CC_SHA256_DIGEST_LENGTH * 2 + 1];
   for (int i = 0; i < CC_SHA256_DIGEST_LENGTH; ++i) {
@@ -104,7 +108,7 @@
   static NSString *path;
   if (!path) {
     NSTask *xcrun = [self taskWithPath:@"/usr/bin/xcrun"];
-    xcrun.arguments = @[@"-f", @"ld"];
+    xcrun.arguments = @[ @"-f", @"ld" ];
     xcrun.standardOutput = [NSPipe pipe];
     @try {
       [xcrun launch];
@@ -116,7 +120,7 @@
     NSData *data = [[xcrun.standardOutput fileHandleForReading] readDataToEndOfFile];
     if (!data) return nil;
     path = [[[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding]
-            stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+        stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
   }
   return path;
 }
@@ -128,20 +132,20 @@
 - (void)postToKernelAction:(santa_action_t)action forVnodeID:(santa_vnode_id_t)vnodeid {
   switch (action) {
     case ACTION_RESPOND_ALLOW:
-      IOConnectCallStructMethod(self.connection, kSantaUserClientAllowBinary,
-                                &vnodeid, sizeof(vnodeid), 0, 0);
+      IOConnectCallStructMethod(self.connection, kSantaUserClientAllowBinary, &vnodeid,
+                                sizeof(vnodeid), 0, 0);
       break;
     case ACTION_RESPOND_DENY:
-      IOConnectCallStructMethod(self.connection, kSantaUserClientDenyBinary,
-                                &vnodeid, sizeof(vnodeid), 0, 0);
+      IOConnectCallStructMethod(self.connection, kSantaUserClientDenyBinary, &vnodeid,
+                                sizeof(vnodeid), 0, 0);
       break;
     case ACTION_RESPOND_ACK:
-      IOConnectCallStructMethod(self.connection, kSantaUserClientAcknowledgeBinary,
-                                &vnodeid, sizeof(vnodeid), 0, 0);
+      IOConnectCallStructMethod(self.connection, kSantaUserClientAcknowledgeBinary, &vnodeid,
+                                sizeof(vnodeid), 0, 0);
       break;
     case ACTION_RESPOND_ALLOW_COMPILER:
-      IOConnectCallStructMethod(self.connection, kSantaUserClientAllowCompiler,
-                                &vnodeid, sizeof(vnodeid), 0, 0);
+      IOConnectCallStructMethod(self.connection, kSantaUserClientAllowCompiler, &vnodeid,
+                                sizeof(vnodeid), 0, 0);
       break;
     default:
       TFAILINFO("postToKernelAction:forVnodeID: received unknown action type: %d", action);
@@ -229,8 +233,8 @@
   TPASS();
 
   TSTART("Registers the notification port");
-  kern_return_t kr = IOConnectSetNotificationPort(
-      self.connection, QUEUETYPE_DECISION, receivePort, 0);
+  kern_return_t kr =
+      IOConnectSetNotificationPort(self.connection, QUEUETYPE_DECISION, receivePort, 0);
   if (kr != kIOReturnSuccess) {
     mach_port_destroy(mach_task_self(), receivePort);
     TFAILINFO("KR: %d", kr);
@@ -241,8 +245,8 @@
   TSTART("Maps shared memory");
   mach_vm_address_t address = 0;
   mach_vm_size_t size = 0;
-  kr = IOConnectMapMemory(self.connection, QUEUETYPE_DECISION, mach_task_self(),
-                          &address, &size, kIOMapAnywhere);
+  kr = IOConnectMapMemory(self.connection, QUEUETYPE_DECISION, mach_task_self(), &address, &size,
+                          kIOMapAnywhere);
   if (kr != kIOReturnSuccess) {
     mach_port_destroy(mach_task_self(), receivePort);
     TFAILINFO("KR: %d", kr);
@@ -291,8 +295,7 @@
     [ed launch];
     [ed waitUntilExit];
     TFAIL();
-  }
-  @catch (NSException *exception) {
+  } @catch (NSException *exception) {
     TPASS();
   }
 }
@@ -427,10 +430,9 @@
   // Replace file contents using dd, which doesn't close FDs
   NSDictionary *attrs = [fm attributesOfItemAtPath:@"/bin/ed" error:NULL];
   NSTask *dd = [self taskWithPath:@"/bin/dd"];
-  dd.arguments = @[ @"if=/bin/ed",
-                    @"of=invalidacachetest_tmp",
-                    @"bs=1",
-                    [NSString stringWithFormat:@"count=%@", attrs[NSFileSize]]
+  dd.arguments = @[
+    @"if=/bin/ed", @"of=invalidacachetest_tmp", @"bs=1",
+    [NSString stringWithFormat:@"count=%@", attrs[NSFileSize]]
   ];
   [dd launch];
   [dd waitUntilExit];
@@ -491,7 +493,8 @@
     TFAILINFO("Failed to fork");
   } else if (pid > 0) {
     int status;
-    while (waitpid(pid, &status, 0) != pid); // handle EINTR
+    while (waitpid(pid, &status, 0) != pid)
+      ;  // handle EINTR
     if (WIFEXITED(status) && WEXITSTATUS(status) == EPERM) {
       TPASS();
     } else if (WIFSTOPPED(status)) {
@@ -528,17 +531,16 @@
 
   // Sort and remove first 10 and last 10 entries.
   std::sort(times.begin(), times.end());
-  times.erase(times.begin(), times.begin()+10);
-  times.erase(times.end()-10, times.end());
+  times.erase(times.begin(), times.begin() + 10);
+  times.erase(times.end() - 10, times.end());
 
   // Calculate mean
   double mean = std::accumulate(times.begin(), times.end(), 0.0) / times.size();
 
   // Calculate stdev
   double accum = 0.0;
-  std::for_each(times.begin(), times.end(), [&](const double d) {
-    accum += (d - mean) * (d - mean);
-  });
+  std::for_each(times.begin(), times.end(),
+                [&](const double d) { accum += (d - mean) * (d - mean); });
   double stdev = sqrt(accum / (times.size() - 1));
 
   if (mean > 80 || stdev > 10) {
@@ -559,8 +561,8 @@
       if (calCount++) TFAILINFO("Large binary should not re-request");
       dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 5 * NSEC_PER_SEC),
                      dispatch_get_global_queue(0, 0), ^{
-        [self postToKernelAction:ACTION_RESPOND_ALLOW forVnodeID:msg.vnode_id];
-      });
+                       [self postToKernelAction:ACTION_RESPOND_ALLOW forVnodeID:msg.vnode_id];
+                     });
       return ACTION_RESPOND_ACK;
     }
     return ACTION_RESPOND_ALLOW;
@@ -610,7 +612,7 @@
   fclose(out);
   // Then compile it with clang and ld, the latter of which has been marked as a compiler.
   NSTask *clang = [self taskWithPath:@"/usr/bin/clang"];
-  clang.arguments = @[@"-o", @"/private/tmp/hello", @"/private/tmp/hello.c"];
+  clang.arguments = @[ @"-o", @"/private/tmp/hello", @"/private/tmp/hello.c" ];
   [clang launch];
   [clang waitUntilExit];
   // Make sure that our version of ld marked as compiler was run.  This assumes that
@@ -669,7 +671,7 @@
   fclose(out);
   // Then compile it with clang and ld, neither of which have been marked as a compiler.
   NSTask *clang = [self taskWithPath:@"/usr/bin/clang"];
-  clang.arguments = @[@"-o", @"/private/tmp/hello", @"/private/tmp/hello.c"];
+  clang.arguments = @[ @"-o", @"/private/tmp/hello", @"/private/tmp/hello.c" ];
   @try {
     [clang launch];
     [clang waitUntilExit];
@@ -706,62 +708,62 @@
   TSTART("Adds filemod prefix filter");
 
   NSString *filter =
-      @"/Albert Einstein, in his theory of special relativity, determined that the laws of physics "
+      @"Albert Einstein, in his theory of special relativity, determined that the laws of physics "
       @"are the same for all non-accelerating observers, and he showed that the speed of light "
-      @"within a vacuum is the same no matter the speed at which an observer travels/";
+      @"within a vacuum is the same no matter the speed at which an observer travels.";
 
+  // Create a buffer that has 1024 bytes of characters, non-terminating.
   char buffer[MAXPATHLEN];
-  if (![filter getFileSystemRepresentation:buffer maxLength:MAXPATHLEN]) {
-    TFAILINFO("Invalid filemod prefix filter: %s", filter.UTF8String);
+  for (int i = 0; i < 4; ++i) {
+    if (![filter getFileSystemRepresentation:buffer + (i * filter.length) maxLength:MAXPATHLEN]) {
+      TFAILINFO("Invalid filemod prefix filter: %s", filter.UTF8String);
+    }
   }
+  strcpy(&buffer[1016], "E = mc²");
 
   uint64_t n = 0;
   uint32_t n_len = 1;
 
   // The filter is reset when KernelTests connects to the driver.
-  // Fill up the 256 node capacity.
-  kern_return_t ret = IOConnectCallMethod(self.connection, kSantaUserClientFilemodPrefixFilterAdd,
-                                          NULL, 0, buffer, sizeof(const char[MAXPATHLEN]),
-                                          &n, &n_len, NULL, NULL);
+  // Fill up the 1024 node capacity.
+  kern_return_t ret =
+      IOConnectCallMethod(self.connection, kSantaUserClientFilemodPrefixFilterAdd, NULL, 0, buffer,
+                          sizeof(const char[MAXPATHLEN]), &n, &n_len, NULL, NULL);
 
-  if (ret != kIOReturnSuccess || n != 256) {
-    TFAILINFO("Failed to fill the prefix filter: got %llu nodes expected 256", n);
+  if (ret != kIOReturnSuccess || n != 1024) {
+    TFAILINFO("Failed to fill the prefix filter: got %llu nodes expected 1024", n);
   }
 
   // Make sure it will enforce capacity.
-  const char *too_much = "/B";
-  ret = IOConnectCallMethod(self.connection, kSantaUserClientFilemodPrefixFilterAdd,
-                            NULL, 0, too_much, sizeof(const char[MAXPATHLEN]),
-                            &n, &n_len, NULL, NULL);
-  if (ret != kIOReturnNoResources || n != 256) {
-    TFAILINFO("Failed enforce capacity: got %llu nodes expected 256", n);
+  const char *too_much = "B";
+  ret = IOConnectCallMethod(self.connection, kSantaUserClientFilemodPrefixFilterAdd, NULL, 0,
+                            too_much, sizeof(const char[MAXPATHLEN]), &n, &n_len, NULL, NULL);
+  if (ret != kIOReturnNoResources || n != 1024) {
+    TFAILINFO("Failed enforce capacity: got %llu nodes expected 1024", n);
   }
 
   // Make sure it will prune.
-  const char *ignore_it_all = "/";
-  ret = IOConnectCallMethod(self.connection, kSantaUserClientFilemodPrefixFilterAdd,
-                            NULL, 0, ignore_it_all, sizeof(const char[MAXPATHLEN]),
-                            &n, &n_len, NULL, NULL);
-  // Expect 2 nodes, one for root and one for '/'.
-  if (ret != kIOReturnSuccess || n != 2) {
-    TFAILINFO("Failed to prune the prefix filter: got %llu nodes expected 2", n);
+  const char *ignore_it_all = "A";
+  ret = IOConnectCallMethod(self.connection, kSantaUserClientFilemodPrefixFilterAdd, NULL, 0,
+                            ignore_it_all, sizeof(const char[MAXPATHLEN]), &n, &n_len, NULL, NULL);
+  // Expect 1 "A" node.
+  if (ret != kIOReturnSuccess || n != 1) {
+    TFAILINFO("Failed to prune the prefix filter: got %llu nodes expected 1", n);
   }
 
   // Make sure it will reset.
-  IOConnectCallScalarMethod(self.connection, kSantaUserClientFilemodPrefixFilterReset,
-                            0, 0, &n, &n_len);
-  // Expect 1 root node.
-  if (n != 1) {
-    TFAILINFO("Failed to reset the prefix filter: got %llu nodes expected 1", n);
+  IOConnectCallScalarMethod(self.connection, kSantaUserClientFilemodPrefixFilterReset, 0, 0, &n,
+                            &n_len);
+  if (n != 0) {
+    TFAILINFO("Failed to reset the prefix filter: got %llu nodes expected 0", n);
   }
 
   // And fill it back up again.
-  ret = IOConnectCallMethod(self.connection, kSantaUserClientFilemodPrefixFilterAdd,
-                            NULL, 0, buffer, sizeof(const char[MAXPATHLEN]),
-                            &n, &n_len, NULL, NULL);
+  ret = IOConnectCallMethod(self.connection, kSantaUserClientFilemodPrefixFilterAdd, NULL, 0,
+                            buffer, sizeof(const char[MAXPATHLEN]), &n, &n_len, NULL, NULL);
 
-  if (ret != kIOReturnSuccess || n != 256) {
-    TFAILINFO("Failed to fill the prefix filter: got %llu nodes expected 256", n);
+  if (ret != kIOReturnSuccess || n != 1024) {
+    TFAILINFO("Failed to fill the prefix filter: got %llu nodes expected 1024", n);
   }
 
   TPASS();
@@ -794,15 +796,15 @@
 
   NSString *src = [[fm currentDirectoryPath] stringByAppendingPathComponent:@"santa-driver.kext"];
   NSString *dest = [NSTemporaryDirectory() stringByAppendingPathComponent:@"santa-driver.kext"];
-  [fm removeItemAtPath:dest error:NULL]; // ensure dest is free
+  [fm removeItemAtPath:dest error:NULL];  // ensure dest is free
   if (![fm copyItemAtPath:src toPath:dest error:&error] || error) {
     TFAILINFO("Failed to copy kext: %s", error.description.UTF8String);
   }
 
   NSDictionary *attrs = @{
-      NSFileOwnerAccountName : @"root",
-      NSFileGroupOwnerAccountName : @"wheel",
-      NSFilePosixPermissions : @0755
+    NSFileOwnerAccountName : @"root",
+    NSFileGroupOwnerAccountName : @"wheel",
+    NSFilePosixPermissions : @0755
   };
 
   [fm setAttributes:attrs ofItemAtPath:dest error:NULL];

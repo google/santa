@@ -17,6 +17,7 @@
 
 #include <IOKit/IOReturn.h>
 #include <libkern/locks.h>
+#include <sys/param.h>
 
 #include "SNTLogging.h"
 
@@ -74,8 +75,8 @@ class SantaPrefixTree {
 
   SantaPrefixNode *root_;
 
-  // Each node takes up ~2k, max out at ~512k.
-  static const uint32_t kMaxNodes = 256;
+  // Each node takes up ~2k, assuming MAXPATHLEN is 1024 max out at ~2MB.
+  static const uint32_t kMaxNodes = MAXPATHLEN;
   uint32_t node_count_;
 
   lck_grp_t *spt_lock_grp_;
