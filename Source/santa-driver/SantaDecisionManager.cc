@@ -125,6 +125,10 @@ void SantaDecisionManager::ConnectClient(pid_t pid) {
   // connected should be cleared
   ClearCache();
 
+  // Reset the filter from any previous connections.
+  // The daemon will add prefixes as needed.
+  FilemodPrefixFilterReset();
+
   failed_decision_queue_requests_ = 0;
   failed_log_queue_requests_ = 0;
 }

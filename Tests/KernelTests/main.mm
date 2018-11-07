@@ -718,6 +718,7 @@
   uint64_t n = 0;
   uint32_t n_len = 1;
 
+  // The filter is reset when KernelTests connects to the driver.
   // Fill up the 256 node capacity.
   kern_return_t ret = IOConnectCallMethod(self.connection, kSantaUserClientFilemodPrefixFilterAdd,
                                           NULL, 0, buffer, sizeof(const char[MAXPATHLEN]),

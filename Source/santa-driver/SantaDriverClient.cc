@@ -256,7 +256,7 @@ IOReturn SantaDriverClient::filemod_prefix_filter_add(
   const char *prefix = reinterpret_cast<const char *>(arguments->structureInput);
   if (prefix[0] == '\0') return kIOReturnBadArgument;
 
-  return me->decisionManager->AddFilemodPrefixFilter(prefix, arguments->scalarOutput);
+  return me->decisionManager->FilemodPrefixFilterAdd(prefix, arguments->scalarOutput);
 }
 
 IOReturn SantaDriverClient::filemod_prefix_filter_reset(
@@ -264,7 +264,7 @@ IOReturn SantaDriverClient::filemod_prefix_filter_reset(
   SantaDriverClient *me = OSDynamicCast(SantaDriverClient, target);
   if (!me) return kIOReturnBadArgument;
 
-  me->decisionManager->ResetFilemodPrefixFilter(arguments->scalarOutput);
+  me->decisionManager->FilemodPrefixFilterReset(arguments->scalarOutput);
   return kIOReturnSuccess;
 }
 

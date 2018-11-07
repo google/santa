@@ -68,7 +68,9 @@
 ///
 - (santa_action_t)checkCache:(santa_vnode_id_t)vnodeID;
 
+///
 ///  Returns whether the connection to the driver has been established.
+///
 @property(readonly) BOOL connectionEstablished;
 
 ///
@@ -76,11 +78,15 @@
 ///
 - (kern_return_t)removeCacheEntryForVnodeID:(santa_vnode_id_t)vnodeId;
 
-
 ///
 ///  Adds in-kernel prefix filters for file modification logs.
 ///  Only allow a sane number bytes, currently 256.
 ///
-- (void)setFilemodPrefixFilters:(NSArray *)filters;
+- (void)fileModificationPrefixFilterAdd:(NSArray *)filters;
+
+///
+///  Resets the filter.
+///
+- (void)fileModificationPrefixFilterReset;
 
 @end

@@ -278,18 +278,11 @@ static void driverAppearedHandler(void *info, io_iterator_t iterator) {
   return a;
 }
 
-- (void)setFilemodPrefixFilters:(NSArray *)filters {
+- (void)fileModificationPrefixFilterAdd:(NSArray *)filters {
   uint64_t n = 0;
   uint32_t n_len = 1;
 
-  IOConnectCallScalarMethod(self.connection, kSantaUserClientFilemodPrefixFilterReset,
-                            0, 0, &n, &n_len);
-  if (n != 1) {
-    LOGE(@"Failed to reset the prefix filter: got %llu nodes expected 1", n);
-    return;
-  }
-
-  for (NSString *filter in [@[ @"/.", @"/dev/" ] arrayByAddingObjectsFromArray:filters]) {
+  for (NSString *filter in filters) {
     char buffer[MAXPATHLEN];
     if (![filter getFileSystemRepresentation:buffer maxLength:MAXPATHLEN]) {
       LOGE(@"Invalid filemod prefix filter: %@", filter);
@@ -312,6 +305,15 @@ static void driverAppearedHandler(void *info, io_iterator_t iterator) {
       }
     }
   }
+}
+
+- (void)fileModificationPrefixFilterReset {
+  uint64_t n = 0;
+  uint32_t n_len = 1;
+
+  IOConnectCallScalarMethod(self.connection, kSantaUserClientFilemodPrefixFilterReset,
+                            0, 0, &n, &n_len);
+  if (n != 1) LOGE(@"Failed to reset the prefix filter: got %llu nodes expected 1", n);
 }
 
 @end

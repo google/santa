@@ -109,7 +109,9 @@
 ///  "/🖖"
 ///
 ///                          -> [0xa4] -> [0x98]
+///
 ///  [/] -> [0xf0] -> [0x9f]
+///
 ///                          -> [0x96] -> [0x96]
 ///
 ///  To disable file change logging completely add "/".
