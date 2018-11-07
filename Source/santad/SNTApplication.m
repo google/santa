@@ -84,7 +84,7 @@
         break;
     }
 
-    // The filter is reset when santad connects to the driver.
+    // The filter is reset when santad disconnects from the driver.
     // Add the default filters.
     [_driverManager fileModificationPrefixFilterAdd:@[ @"/.", @"/dev/" ]];
 

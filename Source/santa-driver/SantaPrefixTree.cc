@@ -36,9 +36,6 @@ IOReturn SantaPrefixTree::AddPrefix(const char *prefix, uint64_t *node_count) {
   // len is the number of bytes (not necessarily the number of characters) representing the string.
   size_t len = strlen(prefix);
 
-  // Have we have created a new branch in the tree?
-  auto branched = false;
-
   // Grab a shared lock until a new branch is required.
   lck_rw_lock_shared(spt_lock_);
 
@@ -61,24 +58,27 @@ IOReturn SantaPrefixTree::AddPrefix(const char *prefix, uint64_t *node_count) {
       }
 
       // Is there enough room for the rest of the prefix?
-      if (!branched && (node_count_ + (len - i)) > kMaxNodes) {
+      if ((node_count_ + (len - i)) > kMaxNodes) {
         LOGE("Prefix tree is full, can not add: %s", prefix);
         if (node_count) *node_count = node_count_;
         lck_rw_unlock_exclusive(spt_lock_);
         return kIOReturnNoResources;
       }
 
-      SantaPrefixNode *new_node = new SantaPrefixNode();
+      // Create the rest of the prefix.
+      while (i < len) {
+        value = prefix[i++];
 
-      // If this is the end, mark the node as a prefix.
-      if (i + 1 == len) {
-        LOGD("Added prefix: %s", prefix);
-        new_node->isPrefix = true;
+        SantaPrefixNode *new_node = new SantaPrefixNode();
+        node->children[value] = new_node;
+        ++node_count_;
+
+        node = new_node;
       }
 
-      node->children[value] = new_node;
-      ++node_count_;
-      branched = true;
+      // This is the end, mark the node as a prefix.
+      LOGD("Added prefix: %s", prefix);
+      node->isPrefix = true;
 
       // Downgrade the exclusive lock
       lck_rw_lock_exclusive_to_shared(spt_lock_);
@@ -150,7 +150,7 @@ void SantaPrefixTree::Reset(uint64_t *node_count) {
 
   PruneNode(root_);
   root_ = new SantaPrefixNode();
-  ++node_count_;
+  node_count_ = 1;
 
   if (node_count) *node_count = node_count_;
   LOGD("Prefix tree reset");
