@@ -722,7 +722,7 @@
   uint64_t n = 0;
   uint32_t n_len = 1;
 
-  // The filter is reset when KernelTests connects to the driver.
+  // The filter should currently be empty. It is reset when the client disconnects.
   // Fill up the 1024 node capacity.
   kern_return_t ret =
   IOConnectCallMethod(self.connection, kSantaUserClientFilemodPrefixFilterAdd, NULL, 0, buffer,
