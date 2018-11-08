@@ -155,6 +155,7 @@ Building with CMake
 6. Run make
 
 Example
+```
 git clone https://github.com/google/santa.git
 mkdir build
 cd build
@@ -164,7 +165,7 @@ cmake ../santa
 
 make -j `sysctl -n hw.ncpu`
 The CODESIGN_IDENTITY parameter can also be passed directly to CMake: cmake -DCODESIGN_IDENTITY=XXX /path/to/source/code
-
+```
 Kext Signing
 ============
 Kernel extensions on macOS 10.9 and later must be signed using an Apple-provided
