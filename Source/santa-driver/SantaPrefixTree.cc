@@ -156,7 +156,7 @@ void SantaPrefixTree::PruneNode(SantaPrefixNode *target) {
 
   // For deep trees, a recursive approach will generate too many stack frames. Make a "stack"
   // and walk the tree.
-  auto stack = new SantaPrefixNode *[sizeof(SantaPrefixNode *) * (node_count_ + 1)];
+  auto stack = new SantaPrefixNode *[node_count_ + 1];
   if (!stack) {
     LOGE("Unable to prune tree!");
     return;
