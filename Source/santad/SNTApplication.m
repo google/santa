@@ -84,6 +84,13 @@
         break;
     }
 
+    // The filter is reset when santad disconnects from the driver.
+    // Add the default filters.
+    [_driverManager fileModificationPrefixFilterAdd:@[ @"/.", @"/dev/" ]];
+
+    // TODO(bur): Add KVO handling for fileChangesPrefixFilters.
+    [_driverManager fileModificationPrefixFilterAdd:[configurator fileChangesPrefixFilters]];
+
     self.notQueue = [[SNTNotificationQueue alloc] init];
     SNTSyncdQueue *syncdQueue = [[SNTSyncdQueue alloc] init];
 

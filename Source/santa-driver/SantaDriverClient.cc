@@ -248,6 +248,24 @@ IOReturn SantaDriverClient::cache_bucket_count(
   return kIOReturnSuccess;
 }
 
+IOReturn SantaDriverClient::filemod_prefix_filter_add(
+    OSObject *target, void *reference, IOExternalMethodArguments *arguments) {
+  SantaDriverClient *me = OSDynamicCast(SantaDriverClient, target);
+  if (!me) return kIOReturnBadArgument;
+
+  const char *prefix = reinterpret_cast<const char *>(arguments->structureInput);
+  return me->decisionManager->FilemodPrefixFilterAdd(prefix, arguments->scalarOutput);
+}
+
+IOReturn SantaDriverClient::filemod_prefix_filter_reset(
+    OSObject *target, void *reference, IOExternalMethodArguments *arguments) {
+  SantaDriverClient *me = OSDynamicCast(SantaDriverClient, target);
+  if (!me) return kIOReturnBadArgument;
+
+  me->decisionManager->FilemodPrefixFilterReset();
+  return kIOReturnSuccess;
+}
+
 #pragma mark Method Resolution
 
 IOReturn SantaDriverClient::externalMethod(
@@ -271,6 +289,8 @@ IOReturn SantaDriverClient::externalMethod(
     { &SantaDriverClient::check_cache, 0, sizeof(santa_vnode_id_t), 1, 0 },
     { &SantaDriverClient::cache_bucket_count, 0, sizeof(santa_bucket_count_t),
         0, sizeof(santa_bucket_count_t) },
+    { &SantaDriverClient::filemod_prefix_filter_add, 0, sizeof(const char[MAXPATHLEN]), 1, 0 },
+    { &SantaDriverClient::filemod_prefix_filter_reset, 0, 0, 0, 0 },
   };
 
   if (selector > static_cast<UInt32>(kSantaUserClientNMethods)) {

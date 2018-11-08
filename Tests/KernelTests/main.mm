@@ -702,6 +702,68 @@
   TPASS();
 }
 
+- (void)testFilemodPrefixFilter {
+  TSTART("Testing filemod prefix filter");
+
+  NSString *filter =
+      @"Albert Einstein, in his theory of special relativity, determined that the laws of physics "
+      @"are the same for all non-accelerating observers, and he showed that the speed of light "
+      @"within a vacuum is the same no matter the speed at which an observer travels.";
+
+  // Create a buffer that has 1024 bytes of characters, non-terminating.
+  char buffer[MAXPATHLEN + 1];  // +1 is for the null byte from strlcpy(). It falls off the ledge.
+  for (int i = 0; i < 4; ++i) {
+    if (![filter getFileSystemRepresentation:buffer + (i * filter.length) maxLength:MAXPATHLEN]) {
+      TFAILINFO("Invalid filemod prefix filter: %s", filter.UTF8String);
+    }
+  }
+  strlcpy(&buffer[1016], "E = mc²", 9);  // Fill in the last 8 bytes.
+
+  uint64_t n = 0;
+  uint32_t n_len = 1;
+
+  // The filter should currently be empty. It is reset when the client disconnects.
+  // Fill up the 1024 node capacity.
+  kern_return_t ret =
+  IOConnectCallMethod(self.connection, kSantaUserClientFilemodPrefixFilterAdd, NULL, 0, buffer,
+                      sizeof(const char[MAXPATHLEN]), &n, &n_len, NULL, NULL);
+
+  if (ret != kIOReturnSuccess || n != 1024) {
+    TFAILINFO("Failed to fill the prefix filter: got %llu nodes expected 1024", n);
+  }
+
+  // Make sure it will enforce capacity.
+  const char *too_much = "B";
+  ret = IOConnectCallMethod(self.connection, kSantaUserClientFilemodPrefixFilterAdd, NULL, 0,
+                            too_much, sizeof(const char[MAXPATHLEN]), &n, &n_len, NULL, NULL);
+  if (ret != kIOReturnNoResources || n != 1024) {
+    TFAILINFO("Failed enforce capacity: got %llu nodes expected 1024", n);
+  }
+
+  // Make sure it will prune.
+  const char *ignore_it_all = "A";
+  ret = IOConnectCallMethod(self.connection, kSantaUserClientFilemodPrefixFilterAdd, NULL, 0,
+                            ignore_it_all, sizeof(const char[MAXPATHLEN]), &n, &n_len, NULL, NULL);
+  // Expect 1 "A" node.
+  if (ret != kIOReturnSuccess || n != 1) {
+    TFAILINFO("Failed to prune the prefix filter: got %llu nodes expected 1", n);
+  }
+
+  // Reset.
+  IOConnectCallScalarMethod(self.connection, kSantaUserClientFilemodPrefixFilterReset, NULL, 0,
+                            NULL, NULL);
+
+  // And fill it back up again.
+  ret = IOConnectCallMethod(self.connection, kSantaUserClientFilemodPrefixFilterAdd, NULL, 0,
+                            buffer, sizeof(const char[MAXPATHLEN]), &n, &n_len, NULL, NULL);
+
+  if (ret != kIOReturnSuccess || n != 1024) {
+    TFAILINFO("Failed to fill the prefix filter: got %llu nodes expected 1024", n);
+  }
+
+  TPASS();
+}
+
 #pragma mark - Main
 
 - (void)unloadDaemon {
@@ -777,6 +839,7 @@
   [self testLargeBinary];
   [self testPendingTransitiveRules];
   [self testNoTransitiveRules];
+  [self testFilemodPrefixFilter];
 
   printf("\n-> Performance tests:\n");
   [self testCachePerformance];

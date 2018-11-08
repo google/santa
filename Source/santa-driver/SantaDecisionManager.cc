@@ -57,6 +57,9 @@ bool SantaDecisionManager::init() {
   client_pid_ = 0;
   root_fsid_ = 0;
 
+  // Setup file modification prefix filter.
+  filemod_prefix_filter_ = new SantaPrefixTree();
+
   return true;
 }
 
@@ -94,6 +97,8 @@ void SantaDecisionManager::free() {
 
   OSSafeReleaseNULL(decision_dataqueue_);
   OSSafeReleaseNULL(log_dataqueue_);
+
+  delete filemod_prefix_filter_;
 
   super::free();
 }
@@ -150,6 +155,10 @@ void SantaDecisionManager::DisconnectClient(bool itDied, pid_t pid) {
         kMaxLogQueueEvents, sizeof(santa_message_t));
     lck_mtx_unlock(log_dataqueue_lock_);
   }
+
+  // Reset the filter.
+  // On startup the daemon will add prefixes as needed.
+  FilemodPrefixFilterReset();
 }
 
 bool SantaDecisionManager::ClientConnected() const {
@@ -691,7 +700,7 @@ void SantaDecisionManager::FileOpCallback(
 
   // Filter out modifications to locations that are definitely
   // not useful or made by santad.
-  if (!strprefix(path, "/.") && !strprefix(path, "/dev")) {
+  if (!filemod_prefix_filter_->HasPrefix(path)) {
     auto message = NewMessage(nullptr);
     strlcpy(message->path, path, sizeof(message->path));
     if (new_path) strlcpy(message->newpath, new_path, sizeof(message->newpath));

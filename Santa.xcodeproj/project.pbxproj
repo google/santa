@@ -154,6 +154,7 @@
 		B352A545B76783D568A6D0C5 /* libPods-Santa.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 90E9D568200AB9B642E06272 /* libPods-Santa.a */; };
 		C714F8B11D8044D400700EDF /* SNTCommandFileInfo.m in Sources */ = {isa = PBXBuildFile; fileRef = 0DCD5FBE1909D64A006B445C /* SNTCommandFileInfo.m */; };
 		C714F8B21D8044FE00700EDF /* SNTCommandController.m in Sources */ = {isa = PBXBuildFile; fileRef = 0D35BDAB18FD7CFD00921A21 /* SNTCommandController.m */; };
+		C719726B218A419B00979487 /* SantaPrefixTree.cc in Sources */ = {isa = PBXBuildFile; fileRef = C719726A218A419B00979487 /* SantaPrefixTree.cc */; };
 		C72E8D941D7F399900C86DD3 /* SNTCommandFileInfoTest.m in Sources */ = {isa = PBXBuildFile; fileRef = C72E8D931D7F399900C86DD3 /* SNTCommandFileInfoTest.m */; };
 		C73A4B9A1DC10753007B6789 /* SNTSyncdQueue.m in Sources */ = {isa = PBXBuildFile; fileRef = C7FB56FF1DBFC213004E14EF /* SNTSyncdQueue.m */; };
 		C73A4B9B1DC10758007B6789 /* SNTXPCSyncdInterface.m in Sources */ = {isa = PBXBuildFile; fileRef = C7FB56F51DBFB480004E14EF /* SNTXPCSyncdInterface.m */; };
@@ -433,6 +434,8 @@
 		90E9D568200AB9B642E06272 /* libPods-Santa.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-Santa.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		A6A91785C40257CC156B4F05 /* Pods-Santa.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Santa.release.xcconfig"; path = "Pods/Target Support Files/Pods-Santa/Pods-Santa.release.xcconfig"; sourceTree = "<group>"; };
 		C11A10A5D6E112788769CF70 /* libPods-santad.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-santad.a"; sourceTree = BUILT_PRODUCTS_DIR; };
+		C7197268218A3AF600979487 /* SantaPrefixTree.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SantaPrefixTree.h; sourceTree = "<group>"; };
+		C719726A218A419B00979487 /* SantaPrefixTree.cc */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = SantaPrefixTree.cc; sourceTree = "<group>"; };
 		C72E8D931D7F399900C86DD3 /* SNTCommandFileInfoTest.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SNTCommandFileInfoTest.m; sourceTree = "<group>"; };
 		C748E8A1206964DE006CFD1B /* SNTEventLog.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SNTEventLog.h; sourceTree = "<group>"; };
 		C748E8A2206964DE006CFD1B /* SNTEventLog.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SNTEventLog.m; sourceTree = "<group>"; };
@@ -721,6 +724,8 @@
 				0D9A7F311759144800035EB5 /* SantaDriver.cc */,
 				0D9A7F361759148E00035EB5 /* SantaDriverClient.h */,
 				0D9A7F351759148E00035EB5 /* SantaDriverClient.cc */,
+				C7197268218A3AF600979487 /* SantaPrefixTree.h */,
+				C719726A218A419B00979487 /* SantaPrefixTree.cc */,
 				0DA36C1F199EA46600A129D6 /* Resources */,
 			);
 			path = "santa-driver";
@@ -1467,6 +1472,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				0D9A7F331759144800035EB5 /* SantaDriver.cc in Sources */,
+				C719726B218A419B00979487 /* SantaPrefixTree.cc in Sources */,
 				0D9A7F371759148E00035EB5 /* SantaDriverClient.cc in Sources */,
 				0D4644C5182AF81700098690 /* SantaDecisionManager.cc in Sources */,
 			);

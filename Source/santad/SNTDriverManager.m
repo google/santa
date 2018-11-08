@@ -278,4 +278,38 @@ static void driverAppearedHandler(void *info, io_iterator_t iterator) {
   return a;
 }
 
+- (void)fileModificationPrefixFilterAdd:(NSArray *)filters {
+  uint64_t n = 0;
+  uint32_t n_len = 1;
+
+  for (NSString *filter in filters) {
+    char buffer[MAXPATHLEN];
+    if (![filter getFileSystemRepresentation:buffer maxLength:MAXPATHLEN]) {
+      LOGE(@"Invalid filemod prefix filter: %@", filter);
+      continue;
+    }
+
+    kern_return_t ret = IOConnectCallMethod(self.connection, kSantaUserClientFilemodPrefixFilterAdd,
+                                            NULL, 0, buffer, sizeof(const char[MAXPATHLEN]),
+                                            &n, &n_len, NULL, NULL);
+
+    if (ret != kIOReturnSuccess) {
+      LOGE(@"Failed to add prefix filter: %s error: 0x%x", buffer, ret);
+
+      // If the tree is full, stop.
+      // TODO(bur): Maybe continue here with some smarts around the size? Shorter, not yet iterated
+      //            prefixes (that may fit) are ignored. Seems worth it not to spam the driver.
+      if (ret == kIOReturnNoResources) {
+        LOGE(@"Prefix filter tree is full!");
+        return;
+      }
+    }
+  }
+}
+
+- (void)fileModificationPrefixFilterReset {
+  IOConnectCallScalarMethod(self.connection, kSantaUserClientFilemodPrefixFilterReset,
+                            NULL, 0, NULL, NULL);
+}
+
 @end

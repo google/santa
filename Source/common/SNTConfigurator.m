@@ -68,6 +68,7 @@ static NSString *const kModeNotificationLockdown = @"ModeNotificationLockdown";
 static NSString *const kEnablePageZeroProtectionKey = @"EnablePageZeroProtection";
 
 static NSString *const kFileChangesRegexKey = @"FileChangesRegex";
+static NSString *const kFileChangesPrefixFiltersKey = @"FileChangesPrefixFilters";
 
 static NSString *const kEventLogType = @"EventLogType";
 static NSString *const kEventLogPath = @"EventLogPath";
@@ -93,6 +94,7 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
     Class date = [NSDate class];
     Class string = [NSString class];
     Class data = [NSData class];
+    Class array = [NSArray class];
     _syncServerKeyTypes = @{
       kClientModeKey : number,
       kEnableTransitiveWhitelistingKey : number,
@@ -106,6 +108,7 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
       kClientModeKey : number,
       kEnableTransitiveWhitelistingKey : number,
       kFileChangesRegexKey : re,
+      kFileChangesPrefixFiltersKey : array,
       kWhitelistRegexKey : re,
       kBlacklistRegexKey : re,
       kEnablePageZeroProtectionKey : number,
@@ -195,6 +198,10 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
 }
 
 + (NSSet *)keyPathsForValuesAffectingFileChangesRegex {
+  return [self configStateSet];
+}
+
++ (NSSet *)keyPathsForValuesAffectingFileChangesPrefixFiltersKey {
   return [self configStateSet];
 }
 
@@ -348,6 +355,17 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
 
 - (NSRegularExpression *)fileChangesRegex {
   return self.configState[kFileChangesRegexKey];
+}
+
+- (NSArray *)fileChangesPrefixFilters {
+  NSArray *filters = self.configState[kFileChangesPrefixFiltersKey];
+  for (id filter in filters) {
+    if (![filter isKindOfClass:[NSString class]]) {
+      LOGE(@"Ignoring FileChangesPrefixFilters: array contains a non-string %@", filter);
+      return nil;
+    }
+  }
+  return filters;
 }
 
 - (NSURL *)syncBaseURL {

@@ -73,6 +73,57 @@
 @property(readonly, nonatomic) NSRegularExpression *fileChangesRegex;
 
 ///
+///  A list of ignore prefixes which are checked in-kernel.
+///  This is more performant than FileChangesRegex when ignoring whole directory trees.
+///
+///  For example adding a prefix of "/private/tmp/" will turn off file change log generation
+///  in-kernel for that entire tree. Since they are ignored by the kernel, they never reach santad
+///  and are not seen by the fileChangesRegex. Note the trailing "/", without it any file or
+///  directory starting with "/private/tmp" would be ignored.
+///
+///  By default "/." and "/dev/" are added.
+///
+///  Memory in the kernel is precious. A total of MAXPATHLEN (1024) nodes are allowed.
+///  Using all 1024 nodes will result in santa-driver allocating ~2MB of wired memory.
+///  An ASCII character uses 1 node. An UTF-8 encoded Unicode character uses 1-4 nodes.
+///  Prefixes are added to the running config in-order, one by one. The prefix will be ignored if
+///  (the running config's current size) + (the prefix's size) totals up to more than 1024 nodes.
+///  The running config is stored in a prefix tree.
+///  Prefixes that share prefixes are effectively de-duped; their shared node sized components only
+///  take up 1 node. For example these 3 prefixes all have a common prefix of "/private/".
+///  They will only take up 21 nodes instead of 39.
+///
+///  "/private/tmp/"
+///  "/private/var/"
+///  "/private/new/"
+///
+///                                                              -> [t] -> [m] -> [p] -> [/]
+///
+///  [/] -> [p] -> [r] -> [i] -> [v] -> [a] -> [t] -> [e] -> [/] -> [v] -> [a] -> [r] -> [/]
+///
+///                                                              -> [n] -> [e] -> [w] -> [/]
+///
+///  Prefixes with Unicode characters work similarly. Assuming a UTF-8 encoding these two prefixes
+///  are actually the same for the first 3 nodes. They take up 7 nodes instead of 10.
+///
+///  "/🤘"
+///  "/🖖"
+///
+///                          -> [0xa4] -> [0x98]
+///
+///  [/] -> [0xf0] -> [0x9f]
+///
+///                          -> [0x96] -> [0x96]
+///
+///  To disable file change logging completely add "/".
+///  TODO(bur): Make this default if no FileChangesRegex is set.
+///
+///  Filters are only applied on santad startup.
+///  TODO(bur): Support add / remove of filters while santad is running.
+///
+@property(readonly, nonatomic) NSArray *fileChangesPrefixFilters;
+
+///
 ///  Enable __PAGEZERO protection, defaults to YES
 ///  If this flag is set to NO, 32-bit binaries that are missing
 ///  the __PAGEZERO segment will not be blocked.
