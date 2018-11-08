@@ -262,7 +262,7 @@ IOReturn SantaDriverClient::filemod_prefix_filter_reset(
   SantaDriverClient *me = OSDynamicCast(SantaDriverClient, target);
   if (!me) return kIOReturnBadArgument;
 
-  me->decisionManager->FilemodPrefixFilterReset(arguments->scalarOutput);
+  me->decisionManager->FilemodPrefixFilterReset();
   return kIOReturnSuccess;
 }
 
@@ -290,7 +290,7 @@ IOReturn SantaDriverClient::externalMethod(
     { &SantaDriverClient::cache_bucket_count, 0, sizeof(santa_bucket_count_t),
         0, sizeof(santa_bucket_count_t) },
     { &SantaDriverClient::filemod_prefix_filter_add, 0, sizeof(const char[MAXPATHLEN]), 1, 0 },
-    { &SantaDriverClient::filemod_prefix_filter_reset, 0, 0, 1, 0 },
+    { &SantaDriverClient::filemod_prefix_filter_reset, 0, 0, 0, 0 },
   };
 
   if (selector > static_cast<UInt32>(kSantaUserClientNMethods)) {

@@ -16,9 +16,6 @@
 
 #include "SNTLogging.h"
 
-#include <libkern/c++/OSArray.h>
-#include <libkern/c++/OSNumber.h>
-
 SantaPrefixTree::SantaPrefixTree() {
   root_ = new SantaPrefixNode();
   node_count_ = 0;
@@ -144,14 +141,12 @@ bool SantaPrefixTree::HasPrefix(const char *string) {
   return found;
 }
 
-void SantaPrefixTree::Reset(uint64_t *node_count) {
+void SantaPrefixTree::Reset() {
   lck_rw_lock_exclusive(spt_lock_);
 
   PruneNode(root_);
   root_ = new SantaPrefixNode();
   node_count_ = 0;
-
-  if (node_count) *node_count = node_count_;
 
   lck_rw_unlock_exclusive(spt_lock_);
 }
@@ -159,37 +154,32 @@ void SantaPrefixTree::Reset(uint64_t *node_count) {
 void SantaPrefixTree::PruneNode(SantaPrefixNode *target) {
   if (!target) return;
 
-  // For deep trees a recursive approach will generate too many stack frames.
-  auto stack = OSArray::withCapacity(node_count_);
+  // For deep trees, a recursive approach will generate too many stack frames. Make a "stack"
+  // and walk the tree.
+  auto stack = new SantaPrefixNode *[sizeof(SantaPrefixNode *) * (node_count_ + 1)];
+  if (!stack) {
+    LOGE("Unable to prune tree!");
+    return;
+  }
+  auto count = 0;
 
   // Seed the "stack" with a starting node.
-  auto target_pointer = OSNumber::withNumber((uint64_t)(void *)target, 64);
-  stack->setObject(target_pointer);
-  target_pointer->release();
+  stack[count++] = target;
 
-  // Start at the target node and walk the tree to find all the sub-nodes.
-  while (stack->getCount()) {
-    auto pointer = OSDynamicCast(OSNumber, stack->getLastObject());
-    if (!pointer) {
-      LOGE("Unable to complete prune!");
-      break; // Bail walking the tree.
-    }
-
-    auto node = (SantaPrefixNode *)pointer->unsigned64BitValue();
-    stack->removeObject(stack->getCount() - 1); // Releases pointer
+  // Start at the target node and walk the tree to find and delete all the sub-nodes.
+  while (count) {
+    auto node = stack[--count];
 
     for (int i = 0; i < 256; ++i) {
       if (!node->children[i]) continue;
-      auto child_pointer = OSNumber::withNumber((uint64_t)node->children[i], 64);
-      stack->setObject(child_pointer);
-      child_pointer->release();
+      stack[count++] = node->children[i];
     }
 
     delete node;
     --node_count_;
   }
 
-  OSSafeReleaseNULL(stack);
+  delete[] stack;
 }
 
 SantaPrefixTree::~SantaPrefixTree() {

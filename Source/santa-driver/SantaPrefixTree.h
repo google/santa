@@ -19,8 +19,6 @@
 #include <libkern/locks.h>
 #include <sys/param.h>
 
-#include "SNTLogging.h"
-
 ///
 ///  SantaPrefixTree is a simple prefix tree implementation.
 ///  Operations are thread safe.
@@ -35,8 +33,7 @@ class SantaPrefixTree {
   bool HasPrefix(const char *string);
 
   // Reset the tree.
-  // Optionally pass node_count to get the number of nodes after the reset. It should be 1.
-  void Reset(uint64_t *node_count = nullptr);
+  void Reset();
 
   SantaPrefixTree();
   ~SantaPrefixTree();

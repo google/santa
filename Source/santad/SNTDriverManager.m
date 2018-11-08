@@ -308,12 +308,8 @@ static void driverAppearedHandler(void *info, io_iterator_t iterator) {
 }
 
 - (void)fileModificationPrefixFilterReset {
-  uint64_t n = 0;
-  uint32_t n_len = 1;
-
   IOConnectCallScalarMethod(self.connection, kSantaUserClientFilemodPrefixFilterReset,
-                            0, 0, &n, &n_len);
-  if (n != 1) LOGE(@"Failed to reset the prefix filter: got %llu nodes expected 1", n);
+                            NULL, 0, NULL, NULL);
 }
 
 @end

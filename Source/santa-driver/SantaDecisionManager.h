@@ -174,8 +174,8 @@ class SantaDecisionManager : public OSObject {
   /**
     Reset the file modification prefix filter tree.
   */
-  inline void FilemodPrefixFilterReset(uint64_t *node_count = nullptr) {
-    filemod_prefix_filter_->Reset(node_count);
+  inline void FilemodPrefixFilterReset() {
+    filemod_prefix_filter_->Reset();
   }
 
   /**
