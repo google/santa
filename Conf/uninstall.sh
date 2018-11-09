@@ -6,15 +6,6 @@
 
 [ "$EUID" != 0 ] && printf "%s\n" "This requires running as root/sudo." && exit 1
 
-if [[ -d "binaries" ]]; then
-  SOURCE="."
-elif [[ -d "../binaries" ]]; then
-  SOURCE=".."
-else
-  echo "Can't find binaries, run install.sh from inside the conf directory" 1>&2
-  exit 1
-fi
-
 /bin/launchctl remove com.google.santad
 sleep 1
 /sbin/kextunload -b com.google.santa-driver >/dev/null 2>&1
