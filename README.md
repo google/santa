@@ -97,13 +97,6 @@ found a good way to ensure the kext only accepts connections from a valid client
 only the root user can read/write it. We're considering approaches to secure
 this further.
 
-* Sync client: The `santactl` command-line client includes a flag to synchronize with a management server, which uploads events that have occurred on the
-machine and downloads new rules. There are several open-source servers you can sync with:
-
-    * [Upvote](https://github.com/google/upvote) - An AppEngine-based server that implements social voting to make managing a large fleet easier.
-    * [Moroz](https://github.com/groob/moroz) - A simple golang server that serves hardcoded rules from simple configuration files.
-    * [Zentral](https://github.com/zentralopensource/zentral/wiki) - A centralized service that pulls data from multiple sources and deploy configurations to multiple services.
-
 * Scripts: Santa is currently written to ignore any execution that isn't a
 binary. This is because after weighing the administration cost vs the benefit,
 we found it wasn't worthwhile. Additionally, a number of applications make use
@@ -114,6 +107,17 @@ option) if it would be useful to others.
 * Documentation: This is currently limited.
 
 * Tests: There aren't enough of them.
+
+Sync Servers
+===========
+* The `santactl` command-line client includes a flag to synchronize with a management server, which uploads events that have occurred on the
+machine and downloads new rules. There are several open-source servers you can sync with:
+
+    * [Upvote](https://github.com/google/upvote) - An AppEngine-based server that implements social voting to make managing a large fleet easier.
+    * [Moroz](https://github.com/groob/moroz) - A simple golang server that serves hardcoded rules from simple configuration files.
+    * [Zentral](https://github.com/zentralopensource/zentral/wiki) - A centralized service that pulls data from multiple sources and deploy configurations to multiple services.
+
+* Alternatively, `santactl` can configure rules locally (without a sync server).
 
 Screenshots
 ===========
