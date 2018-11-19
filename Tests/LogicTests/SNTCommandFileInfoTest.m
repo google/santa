@@ -26,7 +26,7 @@
 typedef id (^SNTAttributeBlock)(SNTCommandFileInfo *, SNTFileInfo *);
 @property(nonatomic) BOOL recursive;
 @property(nonatomic) BOOL jsonOutput;
-@property(nonatomic) NSNumber *certIndex;
+@property(nonatomic) int certIndex;
 @property(nonatomic, copy) NSArray<NSString *> *outputKeyList;
 @property(nonatomic) NSDictionary<NSString *, SNTAttributeBlock> *propertyMap;
 + (NSArray *)fileInfoKeys;
@@ -73,7 +73,7 @@ typedef id (^SNTAttributeBlock)(SNTCommandFileInfo *, SNTFileInfo *);
 
 - (void)testParseArgumentsCertIndex {
   NSArray *filePaths = [self.cfi parseArguments:@[ @"--cert-index", @"1", @"/usr/bin/yes" ]];
-  XCTAssertEqualObjects(self.cfi.certIndex, @(1));
+  XCTAssertEqual(self.cfi.certIndex, 1);
   XCTAssertTrue([filePaths containsObject:@"/usr/bin/yes"]);
 }
 

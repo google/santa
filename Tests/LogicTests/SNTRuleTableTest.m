@@ -17,6 +17,9 @@
 #import "SNTRule.h"
 #import "SNTRuleTable.h"
 
+#import <MOLCertificate/MOLCertificate.h>
+#import <MOLCodesignChecker/MOLCodesignChecker.h>
+
 @interface SNTRuleTable (Testing)
 @property NSString *santadCertSHA;
 @property NSString *launchdCertSHA;
@@ -35,6 +38,8 @@
 
   self.dbq = [[FMDatabaseQueue alloc] init];
   self.sut = [[SNTRuleTable alloc] initWithDatabaseQueue:self.dbq];
+  // xctest is unsigned in Xcode 10.1.
+  self.sut.santadCertSHA = [[MOLCodesignChecker alloc] initWithPID:1].leafCertificate.SHA256;
 }
 
 - (SNTRule *)_exampleBinaryRule {

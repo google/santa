@@ -653,12 +653,16 @@ void SantaDecisionManager::FileOpCallback(
     message->vnode_id = vnode_id;
     message->action = ACTION_NOTIFY_EXEC;
     strlcpy(message->path, path, sizeof(message->path));
+
+    // The vnode scope gets posix_spawn pid and ppid properly. The fileop scope does not.
+    // Get pid and ppid cached during vnode execution.
     uint64_t val = vnode_pid_map_->get(vnode_id);
     if (val) {
       // pid_t is 32-bit, so pid is in upper 32 bits, ppid in lower.
       message->pid = (val >> 32);
       message->ppid = (val & ~0xFFFFFFFF00000000);
     }
+
     PostToLogQueue(message);
     delete message;
     return;
