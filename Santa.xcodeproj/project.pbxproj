@@ -174,6 +174,8 @@
 		C795ED901D80A5BE007CFF42 /* SNTPolicyProcessor.m in Sources */ = {isa = PBXBuildFile; fileRef = C795ED8F1D80A5BE007CFF42 /* SNTPolicyProcessor.m */; };
 		C795ED911D80B66B007CFF42 /* SNTPolicyProcessor.m in Sources */ = {isa = PBXBuildFile; fileRef = C795ED8F1D80A5BE007CFF42 /* SNTPolicyProcessor.m */; };
 		C79A23581E23F7E80037AFA8 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = C79A23561E23F7E80037AFA8 /* main.m */; };
+		C7B537FF2195CF9D00458B06 /* SantaPrefixTreeTest.mm in Sources */ = {isa = PBXBuildFile; fileRef = C7B537FE2195CF9D00458B06 /* SantaPrefixTreeTest.mm */; };
+		C7B538002195D6EA00458B06 /* SantaPrefixTree.cc in Sources */ = {isa = PBXBuildFile; fileRef = C719726A218A419B00979487 /* SantaPrefixTree.cc */; };
 		C7BBA67E1E54C7E200F1E6A8 /* SNTXPCNotifierInterface.m in Sources */ = {isa = PBXBuildFile; fileRef = 0DCD604E19115A06006B445C /* SNTXPCNotifierInterface.m */; };
 		C7C721AE1E23FCB50051FAA6 /* SNTBundleService.m in Sources */ = {isa = PBXBuildFile; fileRef = C7C721AD1E23FCB50051FAA6 /* SNTBundleService.m */; };
 		C7C721B11E23FF300051FAA6 /* SNTXPCBundleServiceInterface.m in Sources */ = {isa = PBXBuildFile; fileRef = C7C721B01E23FF300051FAA6 /* SNTXPCBundleServiceInterface.m */; };
@@ -452,6 +454,7 @@
 		C795ED8F1D80A5BE007CFF42 /* SNTPolicyProcessor.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SNTPolicyProcessor.m; sourceTree = "<group>"; };
 		C79A23561E23F7E80037AFA8 /* main.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
 		C79A235A1E23F8820037AFA8 /* santabs-Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = "santabs-Info.plist"; sourceTree = "<group>"; };
+		C7B537FE2195CF9D00458B06 /* SantaPrefixTreeTest.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = SantaPrefixTreeTest.mm; sourceTree = "<group>"; };
 		C7C721AC1E23FCB50051FAA6 /* SNTBundleService.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SNTBundleService.h; sourceTree = "<group>"; };
 		C7C721AD1E23FCB50051FAA6 /* SNTBundleService.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SNTBundleService.m; sourceTree = "<group>"; };
 		C7C721AF1E23FF300051FAA6 /* SNTXPCBundleServiceInterface.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SNTXPCBundleServiceInterface.h; sourceTree = "<group>"; };
@@ -544,6 +547,7 @@
 				0D91BCB6174E8A7E00131A7D /* Frameworks */,
 				0D260DB018B68E12002A0B55 /* Resources */,
 				0D2E1E621CEFA6C30039B2C4 /* SantaCacheTest.mm */,
+				C7B537FE2195CF9D00458B06 /* SantaPrefixTreeTest.mm */,
 				C72E8D931D7F399900C86DD3 /* SNTCommandFileInfoTest.m */,
 				0D202D181CDD2EE500A88F16 /* SNTCommandSyncTest.m */,
 				0D41DAD31A7C28C800A890FE /* SNTEventTableTest.m */,
@@ -1370,6 +1374,7 @@
 				0D3AFBF018FB4C6C0087BCEE /* SNTDriverManager.m in Sources */,
 				0DCD6044190ACCB8006B445C /* SNTFileInfo.m in Sources */,
 				0D3AFBEB18FB48E70087BCEE /* SNTDatabaseTable.m in Sources */,
+				C7B538002195D6EA00458B06 /* SantaPrefixTree.cc in Sources */,
 				0DD0D491194F9947005F27EB /* SNTExecutionControllerTest.m in Sources */,
 				0D3AFBEF18FB4C6C0087BCEE /* SNTExecutionController.m in Sources */,
 				0D3AFBEC18FB48E70087BCEE /* SNTEventTable.m in Sources */,
@@ -1378,6 +1383,7 @@
 				0DCD605819115E57006B445C /* SNTXPCControlInterface.m in Sources */,
 				0D202D1A1CDD464B00A88F16 /* SNTCommandSyncPreflight.m in Sources */,
 				0D10BE891A0AAF6700C0C944 /* SNTDropRootPrivs.m in Sources */,
+				C7B537FF2195CF9D00458B06 /* SantaPrefixTreeTest.mm in Sources */,
 				C795ED911D80B66B007CFF42 /* SNTPolicyProcessor.m in Sources */,
 				C72E8D941D7F399900C86DD3 /* SNTCommandFileInfoTest.m in Sources */,
 				C748E8A820696595006CFD1B /* SNTFileEventLog.m in Sources */,
@@ -1663,6 +1669,7 @@
 			baseConfigurationReference = 6C489E087A247B24480DB954 /* Pods-LogicTests.debug.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_CXX_LANGUAGE_STANDARD = "c++17";
 				CLANG_ENABLE_OBJC_ARC = YES;
 				CLANG_WARN_BOOL_CONVERSION = YES;
 				CLANG_WARN_CONSTANT_CONVERSION = YES;
@@ -1699,6 +1706,7 @@
 					/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include,
 				);
 				INFOPLIST_FILE = "Tests/LogicTests/Resources/Tests-Info.plist";
+				MACOSX_DEPLOYMENT_TARGET = 10.12;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.google.${PRODUCT_NAME:rfc1034identifier}";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				WARNING_CFLAGS = "";
@@ -1711,6 +1719,7 @@
 			baseConfigurationReference = 351CEE7AC20DDB0345A706BE /* Pods-LogicTests.release.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_CXX_LANGUAGE_STANDARD = "c++17";
 				CLANG_ENABLE_OBJC_ARC = YES;
 				CLANG_WARN_BOOL_CONVERSION = YES;
 				CLANG_WARN_CONSTANT_CONVERSION = YES;
@@ -1742,6 +1751,7 @@
 					/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include,
 				);
 				INFOPLIST_FILE = "Tests/LogicTests/Resources/Tests-Info.plist";
+				MACOSX_DEPLOYMENT_TARGET = 10.12;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.google.${PRODUCT_NAME:rfc1034identifier}";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				WARNING_CFLAGS = "";

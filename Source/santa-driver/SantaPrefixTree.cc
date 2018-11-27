@@ -14,26 +14,67 @@
 
 #include "SantaPrefixTree.h"
 
-#include "SNTLogging.h"
+#ifdef KERNEL
+#include <libkern/locks.h>
 
-SantaPrefixTree::SantaPrefixTree() {
+#include "SNTLogging.h"
+#else // KERNEL
+// Support for unit testing.
+// Requires c++17 / macOS 10.12.
+// TODO(bur): Handle warnings from bumping target version of the tests to 10.12.
+#include <shared_mutex>
+
+#define lck_grp_attr_alloc_init() nullptr
+#define lck_grp_alloc_init(name, attr) nullptr
+#define lck_attr_alloc_init() nullptr
+
+#define lck_attr_free(attr) do {} while(0)
+#define lck_grp_free(grp) do {} while(0)
+#define lck_grp_attr_free(grp_attr) do {} while(0)
+
+#define lck_rw_lock_shared(l) l.lock_shared()
+#define lck_rw_unlock_shared(l) l.unlock_shared()
+#define lck_rw_lock_exclusive(l) l.lock()
+#define lck_rw_unlock_exclusive(l) l.unlock()
+
+#define lck_rw_lock_shared_to_exclusive(l) [this] () { l.unlock_shared(); return false;}()
+#define lck_rw_lock_exclusive_to_shared(l) l.unlock(); l.lock_shared()
+
+#define lck_mtx_lock(l) l.lock()
+#define lck_mtx_unlock(l) l.unlock()
+
+#endif // KERNEL
+
+SantaPrefixTree::SantaPrefixTree(uint32_t max_nodes) {
   root_ = new SantaPrefixNode();
   node_count_ = 0;
+  max_nodes_ = max_nodes;
 
   spt_lock_grp_attr_ = lck_grp_attr_alloc_init();
   spt_lock_grp_ = lck_grp_alloc_init("santa-prefix-tree-lock", spt_lock_grp_attr_);
   spt_lock_attr_ = lck_attr_alloc_init();
+
+  #ifdef KERNEL
   spt_lock_ = lck_rw_alloc_init(spt_lock_grp_, spt_lock_attr_);
+  spt_add_lock_ = lck_mtx_alloc_init(spt_lock_grp_, spt_lock_attr_);
+  #endif
 }
 
 IOReturn SantaPrefixTree::AddPrefix(const char *prefix, uint64_t *node_count) {
+  // Serialize requests to AddPrefix. Otherwise one AddPrefix thread could overwrite whole
+  // branches of another. HasPrefix is still free to read the tree, until AddPrefix needs to
+  // modify it.
+  lck_mtx_lock(spt_add_lock_);
+
   // Don't allow an empty prefix.
   if (prefix[0] == '\0') return kIOReturnBadArgument;
 
+  #ifdef KERNEL
   LOGD("Trying to add prefix: %s", prefix);
+  #endif
 
   // Enforce max tree depth.
-  size_t len = strnlen(prefix, kMaxNodes);
+  size_t len = strnlen(prefix, max_nodes_);
 
   // Grab a shared lock until a new branch is required.
   lck_rw_lock_shared(spt_lock_);
@@ -57,10 +98,14 @@ IOReturn SantaPrefixTree::AddPrefix(const char *prefix, uint64_t *node_count) {
       }
 
       // Is there enough room for the rest of the prefix?
-      if ((node_count_ + (len - i)) > kMaxNodes) {
+      if ((node_count_ + (len - i)) > max_nodes_) {
+        #ifdef KERNEL
         LOGE("Prefix tree is full, can not add: %s", prefix);
+        #endif
+
         if (node_count) *node_count = node_count_;
         lck_rw_unlock_exclusive(spt_lock_);
+        lck_mtx_unlock(spt_add_lock_);
         return kIOReturnNoResources;
       }
 
@@ -76,7 +121,10 @@ IOReturn SantaPrefixTree::AddPrefix(const char *prefix, uint64_t *node_count) {
       }
 
       // This is the end, mark the node as a prefix.
+      #ifdef KERNEL
       LOGD("Added prefix: %s", prefix);
+      #endif
+
       node->isPrefix = true;
 
       // Downgrade the exclusive lock
@@ -97,7 +145,9 @@ IOReturn SantaPrefixTree::AddPrefix(const char *prefix, uint64_t *node_count) {
       node->children[value] = new_node;
       ++node_count_;
 
+      #ifdef KERNEL
       LOGD("Added prefix: %s", prefix);
+      #endif
 
       lck_rw_lock_exclusive_to_shared(spt_lock_);
     }
@@ -109,6 +159,7 @@ IOReturn SantaPrefixTree::AddPrefix(const char *prefix, uint64_t *node_count) {
   if (node_count) *node_count = node_count_;
 
   lck_rw_unlock_shared(spt_lock_);
+  lck_mtx_unlock(spt_add_lock_);
 
   return kIOReturnSuccess;
 }
@@ -158,7 +209,10 @@ void SantaPrefixTree::PruneNode(SantaPrefixNode *target) {
   // and walk the tree.
   auto stack = new SantaPrefixNode *[node_count_ + 1];
   if (!stack) {
+    #ifdef KERNEL
     LOGE("Unable to prune tree!");
+    #endif
+    
     return;
   }
   auto count = 0;
@@ -188,10 +242,17 @@ SantaPrefixTree::~SantaPrefixTree() {
   root_ = nullptr;
   lck_rw_unlock_exclusive(spt_lock_);
 
+  #ifdef KERNEL
   if (spt_lock_) {
     lck_rw_free(spt_lock_, spt_lock_grp_);
     spt_lock_ = nullptr;
   }
+
+  if (spt_add_lock_) {
+    lck_mtx_free(spt_add_lock_, spt_lock_grp_);
+    spt_add_lock_ = nullptr;
+  }
+  #endif
 
   if (spt_lock_attr_) {
     lck_attr_free(spt_lock_attr_);
