@@ -18,12 +18,7 @@
 #include <libkern/locks.h>
 
 #include "SNTLogging.h"
-#else // KERNEL
-// Support for unit testing.
-// Requires c++17 / macOS 10.12.
-// TODO(bur): Handle warnings from bumping target version of the tests to 10.12.
-#include <shared_mutex>
-
+#else
 #define lck_grp_attr_alloc_init() nullptr
 #define lck_grp_alloc_init(name, attr) nullptr
 #define lck_attr_alloc_init() nullptr
@@ -42,7 +37,6 @@
 
 #define lck_mtx_lock(l) l.lock()
 #define lck_mtx_unlock(l) l.unlock()
-
 #endif // KERNEL
 
 SantaPrefixTree::SantaPrefixTree(uint32_t max_nodes) {

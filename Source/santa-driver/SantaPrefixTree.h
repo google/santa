@@ -20,8 +20,10 @@
 
 #ifdef KERNEL
 #include <libkern/locks.h>
-#else // KERNEL
+#else
 // Support for unit testing.
+// Requires c++17 / macOS 10.12.
+// TODO(bur): Handle warnings from bumping target version of the tests to 10.12.
 #include <shared_mutex>
 #endif // KERNEL
 
