@@ -38,7 +38,7 @@
 #define lck_rw_lock_exclusive(l) l->lock()
 #define lck_rw_unlock_exclusive(l) l->unlock()
 
-#define lck_rw_lock_shared_to_exclusive(l) [this] () { l->unlock_shared(); return false;}()
+#define lck_rw_lock_shared_to_exclusive(l) ({ l->unlock_shared(); false; })
 #define lck_rw_lock_exclusive_to_shared(l) l->unlock(); l->lock_shared()
 
 #define lck_mtx_lock(l) l->lock()
