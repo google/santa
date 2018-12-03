@@ -95,8 +95,8 @@ class SantaPrefixTree {
   void *spt_lock_grp_;
   void *spt_lock_grp_attr_;
   void *spt_lock_attr_;
-  std::shared_mutex spt_lock_;
-  std::mutex spt_add_lock_;
+  std::shared_mutex *spt_lock_;
+  std::mutex *spt_add_lock_;
   #endif // KERNEL
 };
 

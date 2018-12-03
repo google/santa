@@ -26,20 +26,23 @@
 #define lck_grp_alloc_init(name, attr) nullptr
 #define lck_attr_alloc_init() nullptr
 
+#define lck_rw_alloc_init(g, a) new std::shared_mutex
+#define lck_mtx_alloc_init(g, a) new std::mutex
+
 #define lck_attr_free(attr) // NOP
 #define lck_grp_free(grp) // NOP
 #define lck_grp_attr_free(grp_attr) // NOP
 
-#define lck_rw_lock_shared(l) l.lock_shared()
-#define lck_rw_unlock_shared(l) l.unlock_shared()
-#define lck_rw_lock_exclusive(l) l.lock()
-#define lck_rw_unlock_exclusive(l) l.unlock()
+#define lck_rw_lock_shared(l) l->lock_shared()
+#define lck_rw_unlock_shared(l) l->unlock_shared()
+#define lck_rw_lock_exclusive(l) l->lock()
+#define lck_rw_unlock_exclusive(l) l->unlock()
 
-#define lck_rw_lock_shared_to_exclusive(l) [this] () { l.unlock_shared(); return false;}()
-#define lck_rw_lock_exclusive_to_shared(l) l.unlock(); l.lock_shared()
+#define lck_rw_lock_shared_to_exclusive(l) [this] () { l->unlock_shared(); return false;}()
+#define lck_rw_lock_exclusive_to_shared(l) l->unlock(); l->lock_shared()
 
-#define lck_mtx_lock(l) l.lock()
-#define lck_mtx_unlock(l) l.unlock()
+#define lck_mtx_lock(l) l->lock()
+#define lck_mtx_unlock(l) l->unlock()
 #endif // KERNEL
 
 SantaPrefixTree::SantaPrefixTree(uint32_t max_nodes) {
@@ -51,10 +54,8 @@ SantaPrefixTree::SantaPrefixTree(uint32_t max_nodes) {
   spt_lock_grp_ = lck_grp_alloc_init("santa-prefix-tree-lock", spt_lock_grp_attr_);
   spt_lock_attr_ = lck_attr_alloc_init();
 
-  #ifdef KERNEL
   spt_lock_ = lck_rw_alloc_init(spt_lock_grp_, spt_lock_attr_);
   spt_add_lock_ = lck_mtx_alloc_init(spt_lock_grp_, spt_lock_attr_);
-  #endif
 }
 
 IOReturn SantaPrefixTree::AddPrefix(const char *prefix, uint64_t *node_count) {
