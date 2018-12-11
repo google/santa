@@ -14,6 +14,8 @@
 
 #import "SNTBundleService.h"
 
+#include <stdatomic.h>
+
 #import <CommonCrypto/CommonDigest.h>
 #import <pthread/pthread.h>
 
@@ -165,7 +167,7 @@
   __block void **fis = calloc(subpaths.count, sizeof(void *));
 
   // Counts used as additional progress information in SantaGUI
-  __block volatile int64_t binaryCount = 0;
+  __block atomic_llong binaryCount = 0;
   __block volatile int64_t sentBinaryCount = 0;
 
   // Account for 80% of the work
@@ -199,7 +201,7 @@
       if (!fi.isExecutable) return;
 
       fis[i] = (__bridge_retained void *)fi;
-      OSAtomicIncrement64Barrier(&binaryCount);
+      atomic_fetch_add(&binaryCount, 1);
     }
   });
 
