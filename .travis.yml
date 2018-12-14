@@ -8,5 +8,5 @@ addons:
     packages: bazelbuild/tap/bazel
 
 script:
- - bazel build :release
- - bazel test :logic_tests
+ - bazel build :release --apple_generate_dsym --color=no --verbose_failures --sandbox_debug
+ - bazel test :logic_tests --test_strategy=standalone --test_output=errors --verbose_failures --sandbox_debug
