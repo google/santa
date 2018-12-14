@@ -397,7 +397,7 @@ objc_library(
 
 macos_unit_test(
     name = "logic_tests",
-    bundle_id = "com.google.Santa.LogicTests",
+    bundle_id = "com.google.santa.LogicTests",
     minimum_os_version = "10.9",
     deps = [":logic_tests_lib"],
 )
@@ -417,7 +417,7 @@ objc_library(
 
 macos_command_line_application(
     name = "KernelTests",
-    bundle_id = "com.google.Santa.KernelTests",
+    bundle_id = "com.google.santa.KernelTests",
     minimum_os_version = "10.9",
     deps = [":kernel_tests_lib"],
 )

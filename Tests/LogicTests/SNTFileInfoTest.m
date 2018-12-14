@@ -149,7 +149,7 @@
 
   XCTAssertNotNil([sut bundle]);
 
-  XCTAssertEqualObjects([sut bundleIdentifier], @"com.google.LogicTests");
+  XCTAssertEqualObjects([sut bundleIdentifier], @"com.google.santa.LogicTests");
   XCTAssertNotNil([sut bundleVersion]);
   XCTAssertNotNil([sut bundleShortVersionString]);
 
@@ -167,7 +167,7 @@
 
   XCTAssertNotNil([sut bundle]);
 
-  XCTAssertEqualObjects([sut bundleIdentifier], @"com.google.LogicTests");
+  XCTAssertEqualObjects([sut bundleIdentifier], @"com.google.santa.LogicTests");
   XCTAssertNotNil([sut bundleVersion]);
   XCTAssertNotNil([sut bundleShortVersionString]);
   XCTAssertEqualObjects([sut bundlePath], path);
@@ -208,7 +208,7 @@
 
   XCTAssertNotNil([sut bundle]);
 
-  XCTAssertEqualObjects([sut bundleIdentifier], @"com.google.LogicTests");
+  XCTAssertEqualObjects([sut bundleIdentifier], @"com.google.santa.LogicTests");
   XCTAssertNotNil([sut bundleVersion]);
   XCTAssertNotNil([sut bundleShortVersionString]);
 
