@@ -21,6 +21,16 @@
 
 @implementation SNTFileInfoTest
 
+- (NSString *)directoryBundle {
+  NSString *rp = [[NSBundle bundleForClass:[self class]] resourcePath];
+  return [rp stringByAppendingPathComponent:@"Tests/LogicTests/Resources/DirectoryBundle"];
+}
+
+- (NSString *)bundleExample {
+  NSString *rp = [[NSBundle bundleForClass:[self class]] resourcePath];
+  return [rp stringByAppendingPathComponent:@"Tests/LogicTests/Resources/BundleExample.app"];
+}
+
 - (void)testPathStandardizing {
   SNTFileInfo *sut = [[SNTFileInfo alloc] initWithPath:@"/Applications/Safari.app"];
   XCTAssertNotNil(sut);
@@ -120,8 +130,7 @@
 }
 
 - (void)testBundle {
-  NSString *path = [[NSBundle bundleForClass:[self class]] pathForResource:@"BundleExample"
-                                                                    ofType:@"app"];
+  NSString *path = [self bundleExample];
   SNTFileInfo *sut = [[SNTFileInfo alloc] initWithPath:path];
 
   XCTAssertNotNil([sut bundle]);
@@ -134,19 +143,18 @@
 }
 
 - (void)testAncestorBundle {
-  NSString *path = [[NSBundle bundleForClass:[self class]] pathForResource:@"BundleExample"
-                                                                    ofType:@"app"];
+  NSString *path = [self bundleExample];
   SNTFileInfo *sut = [[SNTFileInfo alloc] initWithPath:path];
   sut.useAncestorBundle = YES;
 
   XCTAssertNotNil([sut bundle]);
 
-  XCTAssertEqualObjects([sut bundleIdentifier], @"com.google.LogicTests");
+  XCTAssertEqualObjects([sut bundleIdentifier], @"com.google.santa.LogicTests");
   XCTAssertNotNil([sut bundleVersion]);
   XCTAssertNotNil([sut bundleShortVersionString]);
 
   NSString *ancestorBundlePath = path;
-  for (int i = 0; i < 3; i++) {
+  for (int i = 0; i < 6; i++) {
     ancestorBundlePath = [ancestorBundlePath stringByDeletingLastPathComponent];
   }
   XCTAssertEqualObjects([sut bundlePath], ancestorBundlePath);
@@ -159,15 +167,14 @@
 
   XCTAssertNotNil([sut bundle]);
 
-  XCTAssertEqualObjects([sut bundleIdentifier], @"com.google.LogicTests");
+  XCTAssertEqualObjects([sut bundleIdentifier], @"com.google.santa.LogicTests");
   XCTAssertNotNil([sut bundleVersion]);
   XCTAssertNotNil([sut bundleShortVersionString]);
   XCTAssertEqualObjects([sut bundlePath], path);
 }
 
 - (void)testDirectoryBundleIsNotAncestor {
-  NSString *path = [[NSBundle bundleForClass:[self class]] pathForResource:@"DirectoryBundle"
-                                                                    ofType:@""];
+  NSString *path = [self directoryBundle];
   NSString *directoryBundle = @"/tmp/DirectoryBundle";
   NSFileManager *fm = [NSFileManager defaultManager];
   [fm removeItemAtPath:directoryBundle error:NULL];
@@ -186,8 +193,7 @@
 }
 
 - (void)testBundleCacheReset {
-  NSString *path = [[NSBundle bundleForClass:[self class]] pathForResource:@"BundleExample"
-                                                                    ofType:@"app"];
+  NSString *path = [self bundleExample];
   SNTFileInfo *sut = [[SNTFileInfo alloc] initWithPath:path];
 
   XCTAssertNotNil([sut bundle]);
@@ -202,12 +208,12 @@
 
   XCTAssertNotNil([sut bundle]);
 
-  XCTAssertEqualObjects([sut bundleIdentifier], @"com.google.LogicTests");
+  XCTAssertEqualObjects([sut bundleIdentifier], @"com.google.santa.LogicTests");
   XCTAssertNotNil([sut bundleVersion]);
   XCTAssertNotNil([sut bundleShortVersionString]);
 
   NSString *ancestorBundlePath = path;
-  for (int i = 0; i < 3; i++) {
+  for (int i = 0; i < 6; i++) {
     ancestorBundlePath = [ancestorBundlePath stringByDeletingLastPathComponent];
   }
   XCTAssertEqualObjects([sut bundlePath], ancestorBundlePath);

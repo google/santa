@@ -1,12 +1,3 @@
 .DS_Store
-Build
-santa-*
-!santa-driver
-!*.md
-Pods
-Santa.xcodeproj/xcuserdata
-Santa.xcodeproj/project.xcworkspace
-Santa.xcworkspace/xcuserdata
-Santa.xcworkspace/xcshareddata
-Source/DevelopmentTeam.xcconfig
 default.profraw
+bazel-*

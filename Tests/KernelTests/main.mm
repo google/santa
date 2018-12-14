@@ -13,6 +13,7 @@
 ///    limitations under the License.
 
 #import <Foundation/Foundation.h>
+#import <IOKit/IODataQueueClient.h>
 #import <IOKit/IOKitLib.h>
 #import <IOKit/kext/KextManager.h>
 

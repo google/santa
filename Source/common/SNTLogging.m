@@ -24,7 +24,10 @@ static LogLevel logLevel = LOG_LEVEL_INFO;  // default to info
 #endif
 
 void syslogClientDestructor(void *arg) {
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
   asl_close((aslclient)arg);
+#pragma clang diagnostic pop
 }
 
 void logMessage(LogLevel level, FILE *destination, NSString *format, ...) {
@@ -58,8 +61,11 @@ void logMessage(LogLevel level, FILE *destination, NSString *format, ...) {
   if (useSyslog) {
     aslclient client = (aslclient)pthread_getspecific(syslogKey);
     if (client == NULL) {
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
       client = asl_open(NULL, "com.google.santa", 0);
       asl_set_filter(client, ASL_FILTER_MASK_UPTO(ASL_LEVEL_DEBUG));
+#pragma clang diagnostic pop
       pthread_setspecific(syslogKey, client);
     }
 
@@ -84,7 +90,10 @@ void logMessage(LogLevel level, FILE *destination, NSString *format, ...) {
         break;
     }
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
     asl_log(client, NULL, syslogLevel, "%s %s: %s", levelName, binaryName.UTF8String, s.UTF8String);
+#pragma clang diagnostic pop
   } else {
     [s appendString:@"\n"];
     size_t len = [s lengthOfBytesUsingEncoding:NSUTF8StringEncoding];
