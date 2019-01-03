@@ -332,6 +332,7 @@
   NSFileManager *fm = [NSFileManager defaultManager];
   NSString *target =
       [[fm currentDirectoryPath] stringByAppendingPathComponent:@"invalidatecachetest"];
+  [fm removeItemAtPath:target error:nil];
   NSString *edSHA = [self sha256ForPath:@"/bin/ed"];
 
   __weak __typeof(self) weakSelf = self;
@@ -413,6 +414,7 @@
 
   // Create temporary file
   NSFileManager *fm = [NSFileManager defaultManager];
+  [fm removeItemAtPath:@"invalidacachetest_tmp" error:nil];
   if (![fm copyItemAtPath:@"/bin/pwd" toPath:@"invalidacachetest_tmp" error:nil]) {
     TFAILINFO("Failed to create temp file");
   }
@@ -858,8 +860,6 @@ int main(int argc, const char *argv[]) {
       printf("Please run as root\n");
       exit(1);
     }
-
-    chdir([[[NSBundle mainBundle] bundlePath] UTF8String]);
 
     SantaKernelTests *skt = [[SantaKernelTests alloc] init];
     printf("\nSanta Kernel Tests\n==================\n\n");

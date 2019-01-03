@@ -6,13 +6,14 @@ exports_files(["LICENSE"])
 
 load(
     "@build_bazel_rules_apple//apple:macos.bzl",
-    "apple_product_type",
     "macos_application",
-    "macos_bundle",
+    "macos_kernel_extension",
     "macos_command_line_application",
     "macos_unit_test",
+    "macos_xpc_service",
 )
 load("@build_bazel_rules_apple//apple:versioning.bzl", "apple_bundle_version")
+load("//:cmd.bzl", "run_command")
 
 # The version for all Santa components.
 SANTA_VERSION = "0.9.30"
@@ -62,15 +63,20 @@ cc_library(
 )
 
 # Full santa-driver.kext
-macos_bundle(
+macos_kernel_extension(
     name = "santa-driver",
     bundle_id = "com.google.santa-driver",
     infoplists = ["Source/santa-driver/Resources/santa-driver-Info.plist"],
     ipa_post_processor = ":process_kext_bundle",
     minimum_os_version = "10.9",
-    product_type = apple_product_type.kernel_extension,
     version = ":version",
     deps = [":santa-driver_lib"],
+    additional_contents = {
+        ":santabs": "XPCServices",
+        ":SantaGUI": "Resources",
+        ":santactl": "MacOS",
+        ":santad": "MacOS",
+    },
 )
 
 # Script used by the santa-driver rule to ensure the embedded Info.plist is
@@ -199,12 +205,11 @@ objc_library(
     ],
 )
 
-macos_application(
+macos_xpc_service(
     name = "santabs",
     bundle_id = "com.google.santabs",
     infoplists = ["Source/santabs/Resources/santabs-Info.plist"],
     minimum_os_version = "10.9",
-    product_type = apple_product_type.xpc_service,
     version = ":version",
     deps = [":santabs_lib"],
 )
@@ -254,43 +259,70 @@ macos_application(
 )
 
 ################################################################################
+# Loading/Unloading/Reloading
+################################################################################
+run_command(
+    name = "unload",
+    cmd = """
+sudo launchctl unload /Library/LaunchDaemons/com.google.santad.plist 2>/dev/null
+sudo kextunload -b com.google.santa-driver 2>/dev/null
+launchctl unload /Library/LaunchAgents/com.google.santagui.plist 2>/dev/null
+""",
+)
+
+run_command(
+    name = "load",
+    cmd = """
+sudo launchctl load /Library/LaunchDaemons/com.google.santad.plist
+launchctl load /Library/LaunchAgents/com.google.santagui.plist
+""",
+)
+
+run_command(
+    name = "reload",
+    cmd = """
+set -e
+
+echo "Unloading Santa components (if necessary)"
+echo "You may be asked for your password for sudo"
+sudo launchctl unload /Library/LaunchDaemons/com.google.santad.plist 2>/dev/null || true
+sudo kextunload -b com.google.santa-driver 2>/dev/null || true
+launchctl unload /Library/LaunchAgents/com.google.santagui.plist 2>/dev/null || true
+
+echo "Installing freshly-built Santa"
+sudo rm -rf /Library/Extensions/santa-driver.kext
+sudo unzip $${BUILD_WORKSPACE_DIRECTORY}/bazel-bin/santa-driver.zip -d /Library/Extensions
+sudo cp $${BUILD_WORKSPACE_DIRECTORY}/conf/com.google.santad.plist /Library/LaunchDaemons
+sudo cp $${BUILD_WORKSPACE_DIRECTORY}/conf/com.google.santagui.plist /Library/LaunchAgents
+sudo cp $${BUILD_WORKSPACE_DIRECTORY}/conf/com.google.santa.asl.conf /etc/asl
+sudo cp $${BUILD_WORKSPACE_DIRECTORY}/conf/com.google.santa.newsyslog.conf /etc/newsyslog.d/
+sudo /usr/bin/killall -HUP syslogd
+
+echo "Loading new Santa"
+sudo chown -R root:wheel /Library/Extensions/santa-driver.kext
+sudo launchctl load /Library/LaunchDaemons/com.google.santad.plist
+launchctl load /Library/LaunchAgents/com.google.santagui.plist
+
+echo "Time to stop being naughty"
+""",
+  srcs = [":santa-driver"],
+)
+
+
+################################################################################
 # Release rules - used to create a release tarball
 ################################################################################
 genrule(
     name = "release",
-    srcs = [
-        ":SantaGUI",
-        ":santa-driver",
-        ":santabs",
-        ":santactl",
-        ":santad",
-    ] + glob(["Conf/**"]),
+    srcs = [":santa-driver"] + glob(["Conf/**"]),
     outs = ["santa-"+SANTA_VERSION+".tar.gz"],
     cmd = """
       # Extract and construct Santa.app and santa-driver.kext
       for SRC in $(SRCS); do
-        case $$(basename $${SRC}) in
-          santa-driver.zip)
-            mkdir -p $(@D)/binaries
-            unzip -q $${SRC} -d $(@D)/binaries >/dev/null
-            ;;
-          santad)
-            mkdir -p $(@D)/binaries/santa-driver.kext/Contents/MacOS
-            cp -p $${SRC} $(@D)/binaries/santa-driver.kext/Contents/MacOS/
-            ;;
-          santactl)
-            mkdir -p $(@D)/binaries/santa-driver.kext/Contents/MacOS
-            cp -p $${SRC} $(@D)/binaries/santa-driver.kext/Contents/MacOS/
-            ;;
-          santabs.zip)
-            mkdir -p $(@D)/binaries/santa-driver.kext/Contents/XPCServices
-            unzip -q $${SRC} -d $(@D)/binaries/santa-driver.kext/Contents/XPCServices >/dev/null
-            ;;
-          Santa.zip)
-            mkdir -p $(@D)/binaries
-            unzip -q $${SRC} -d $(@D)/binaries/ >/dev/null
-            ;;
-        esac
+        if [[ $$(basename $${SRC}) == "santa-driver.zip" ]]; then
+          mkdir -p $(@D)/binaries
+          unzip -q $${SRC} -d $(@D)/binaries >/dev/null
+        fi
       done
 
       # Copy config files
@@ -416,8 +448,29 @@ objc_library(
 )
 
 macos_command_line_application(
-    name = "KernelTests",
+    name = "kernel_tests_bin",
     bundle_id = "com.google.santa.KernelTests",
     minimum_os_version = "10.9",
     deps = [":kernel_tests_lib"],
+)
+
+run_command(
+    name = "kernel_tests",
+    cmd = """
+function sigint() {
+  echo "\nInterrupted, unloading driver."
+  sudo kextunload -b com.google.santa-driver >/dev/null
+  exit 1
+}
+unzip -o $${BUILD_WORKSPACE_DIRECTORY}/bazel-bin/santa-driver.zip >/dev/null
+echo "Launching Kernel Tests as root. You may be prompted for your sudo password."
+trap sigint INT
+sudo $${BUILD_WORKSPACE_DIRECTORY}/bazel-bin/kernel_tests_bin
+echo "Tests complete, unloading driver."
+sudo kextunload -b com.google.santa-driver >/dev/null
+""",
+    srcs = [
+        ":kernel_tests_bin",
+        ":santa-driver",
+    ],
 )

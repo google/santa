@@ -3,10 +3,11 @@
 #define STR_EXPAND(tok) #tok
 #define STR(tok) STR_EXPAND(tok)
 
-extern kern_return_t _start(kmod_info_t *ki, void *data);
-extern kern_return_t _stop(kmod_info_t *ki, void *data);
-
 extern "C" {
+
+  extern kern_return_t _start(kmod_info_t *ki, void *data);
+  extern kern_return_t _stop(kmod_info_t *ki, void *data);
+
   __attribute__((visibility("default"))) \
     KMOD_EXPLICIT_DECL(com.google.santa-driver, STR(SANTA_VERSION), _start, _stop)
 

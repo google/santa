@@ -6,7 +6,7 @@
 				<string>com.google.santagui</string>
 				<key>ProgramArguments</key>
 				<array>
-					<string>/Applications/Santa.app/Contents/MacOS/Santa</string>
+					<string>/Library/Extensions/santa-driver.kext/Contents/Resources/Santa.app/Contents/MacOS/Santa</string>
 					<string>--syslog</string>
 				</array>
 				<key>RunAtLoad</key>

@@ -17,6 +17,7 @@ sleep 1
 /bin/rm /usr/sbin/santactl
 /bin/launchctl remove com.google.santasync
 /bin/rm /Library/LaunchDaemons/com.google.santasync.plist
+/bin/rm -rf /Applications/Santa.app
 
 sleep 1
 
