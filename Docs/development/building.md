@@ -136,7 +136,7 @@ bazel test :logic_tests
 Run all of santa-driver kernel extension tests
 
 ```sh
-rake run :kernel_tests
+bazel run :kernel_tests
 ```
 
 #### Releases
