@@ -283,26 +283,12 @@ run_command(
     cmd = """
 set -e
 
-echo "Unloading Santa components (if necessary)"
+unzip -o -d /tmp/bazel_santa_reload \
+    $${BUILD_WORKSPACE_DIRECTORY}/bazel-bin/santa-driver.zip >/dev/null
 echo "You may be asked for your password for sudo"
-sudo launchctl unload /Library/LaunchDaemons/com.google.santad.plist 2>/dev/null || true
-sudo kextunload -b com.google.santa-driver 2>/dev/null || true
-launchctl unload /Library/LaunchAgents/com.google.santagui.plist 2>/dev/null || true
-
-echo "Installing freshly-built Santa"
-sudo rm -rf /Library/Extensions/santa-driver.kext
-sudo unzip $${BUILD_WORKSPACE_DIRECTORY}/bazel-bin/santa-driver.zip -d /Library/Extensions
-sudo cp $${BUILD_WORKSPACE_DIRECTORY}/conf/com.google.santad.plist /Library/LaunchDaemons
-sudo cp $${BUILD_WORKSPACE_DIRECTORY}/conf/com.google.santagui.plist /Library/LaunchAgents
-sudo cp $${BUILD_WORKSPACE_DIRECTORY}/conf/com.google.santa.asl.conf /etc/asl
-sudo cp $${BUILD_WORKSPACE_DIRECTORY}/conf/com.google.santa.newsyslog.conf /etc/newsyslog.d/
-sudo /usr/bin/killall -HUP syslogd
-
-echo "Loading new Santa"
-sudo chown -R root:wheel /Library/Extensions/santa-driver.kext
-sudo launchctl load /Library/LaunchDaemons/com.google.santad.plist
-launchctl load /Library/LaunchAgents/com.google.santagui.plist
-
+sudo BINARIES=/tmp/bazel_santa_reload CONF=$${BUILD_WORKSPACE_DIRECTORY}/Conf \
+    $${BUILD_WORKSPACE_DIRECTORY}/Conf/install.sh
+rm -rf /tmp/bazel_santa_reload
 echo "Time to stop being naughty"
 """,
   srcs = [":santa-driver"],
@@ -317,7 +303,7 @@ genrule(
     srcs = [":santa-driver"] + glob(["Conf/**"]),
     outs = ["santa-"+SANTA_VERSION+".tar.gz"],
     cmd = """
-      # Extract and construct Santa.app and santa-driver.kext
+      # Extract santa-driver.zip
       for SRC in $(SRCS); do
         if [[ $$(basename $${SRC}) == "santa-driver.zip" ]]; then
           mkdir -p $(@D)/binaries
