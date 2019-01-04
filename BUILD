@@ -283,7 +283,8 @@ run_command(
     cmd = """
 set -e
 
-unzip -o -d /tmp/bazel_santa_reload \
+rm -rf /tmp/bazel_santa_reload
+unzip -d /tmp/bazel_santa_reload \
     $${BUILD_WORKSPACE_DIRECTORY}/bazel-bin/santa-driver.zip >/dev/null
 echo "You may be asked for your password for sudo"
 sudo BINARIES=/tmp/bazel_santa_reload CONF=$${BUILD_WORKSPACE_DIRECTORY}/Conf \
