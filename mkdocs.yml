@@ -24,6 +24,5 @@ pages:
   - events: details/events.md
   - rules: details/rules.md
   - scopes: details/scopes.md
-  - syncing: introduction/syncing-overview.md
   - ipc: details/ipc.md
   - logs: details/logs.md

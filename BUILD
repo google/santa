@@ -25,6 +25,12 @@ apple_bundle_version(
     short_version_string = SANTA_VERSION,
 )
 
+# Used to detect optimized builds
+config_setting(
+  name = "opt_build",
+  values = { "compilation_mode": "opt" },
+)
+
 ################################################################################
 # santa-driver rules
 ################################################################################
@@ -97,17 +103,72 @@ EOM""",
 ################################################################################
 objc_library(
     name = "santactl_lib",
-    srcs = ["Source/santad/SNTCachedDecision.h"] + glob(
-        [
-            "Source/common/*.h",
-            "Source/common/*.m",
-            "Source/santactl/**/*.h",
-            "Source/santactl/**/*.m",
+    srcs = [
+        "Source/common/SNTCommonEnums.h",
+        "Source/common/SNTConfigurator.h",
+        "Source/common/SNTConfigurator.m",
+        "Source/common/SNTDropRootPrivs.h",
+        "Source/common/SNTDropRootPrivs.m",
+        "Source/common/SNTFileInfo.h",
+        "Source/common/SNTFileInfo.m",
+        "Source/common/SNTKernelCommon.h",
+        "Source/common/SNTLogging.h",
+        "Source/common/SNTLogging.m",
+        "Source/common/SNTRule.h",
+        "Source/common/SNTRule.m",
+        "Source/common/SNTStoredEvent.h",
+        "Source/common/SNTStoredEvent.m",
+        "Source/common/SNTStrengthify.h",
+        "Source/common/SNTSystemInfo.h",
+        "Source/common/SNTSystemInfo.m",
+        "Source/common/SNTXPCBundleServiceInterface.h",
+        "Source/common/SNTXPCControlInterface.h",
+        "Source/common/SNTXPCControlInterface.m",
+        "Source/common/SNTXPCSyncdInterface.h",
+        "Source/common/SNTXPCSyncdInterface.m",
+        "Source/common/SNTXPCUnprivilegedControlInterface.h",
+        "Source/common/SNTXPCUnprivilegedControlInterface.m",
+        "Source/santad/SNTCachedDecision.h",
+        "Source/santactl/SNTCommand.h",
+        "Source/santactl/SNTCommand.m",
+        "Source/santactl/SNTCommandController.h",
+        "Source/santactl/SNTCommandController.m",
+        "Source/santactl/main.m",
+        "Source/santactl/Commands/SNTCommandFileInfo.m",
+        "Source/santactl/Commands/SNTCommandRule.m",
+        "Source/santactl/Commands/SNTCommandStatus.m",
+        "Source/santactl/Commands/SNTCommandVersion.m",
+        "Source/santactl/Commands/sync/NSData+Zlib.h",
+        "Source/santactl/Commands/sync/NSData+Zlib.m",
+        "Source/santactl/Commands/sync/SNTCommandSync.m",
+        "Source/santactl/Commands/sync/SNTCommandSyncConstants.h",
+        "Source/santactl/Commands/sync/SNTCommandSyncConstants.m",
+        "Source/santactl/Commands/sync/SNTCommandSyncEventUpload.h",
+        "Source/santactl/Commands/sync/SNTCommandSyncEventUpload.m",
+        "Source/santactl/Commands/sync/SNTCommandSyncLogUpload.h",
+        "Source/santactl/Commands/sync/SNTCommandSyncLogUpload.m",
+        "Source/santactl/Commands/sync/SNTCommandSyncManager.h",
+        "Source/santactl/Commands/sync/SNTCommandSyncManager.m",
+        "Source/santactl/Commands/sync/SNTCommandSyncPostflight.h",
+        "Source/santactl/Commands/sync/SNTCommandSyncPostflight.m",
+        "Source/santactl/Commands/sync/SNTCommandSyncPreflight.h",
+        "Source/santactl/Commands/sync/SNTCommandSyncPreflight.m",
+        "Source/santactl/Commands/sync/SNTCommandSyncRuleDownload.h",
+        "Source/santactl/Commands/sync/SNTCommandSyncRuleDownload.m",
+        "Source/santactl/Commands/sync/SNTCommandSyncStage.h",
+        "Source/santactl/Commands/sync/SNTCommandSyncStage.m",
+        "Source/santactl/Commands/sync/SNTCommandSyncState.h",
+        "Source/santactl/Commands/sync/SNTCommandSyncState.m",
+
+    ] + select ({
+        ":opt_build": [],
+        "//conditions:default": [
+            "Source/santactl/Commands/SNTCommandBundleInfo.m",
+            "Source/santactl/Commands/SNTCommandCacheHistogram.m",
+            "Source/santactl/Commands/SNTCommandCheckCache.m",
+            "Source/santactl/Commands/SNTCommandFlushCache.m",
         ],
-        exclude = [
-            "**/SNTXPCNotifierInterface.*",
-        ],
-    ),
+    }),
     includes = [
         "Source/common",
         "Source/santactl",
@@ -303,7 +364,12 @@ genrule(
     name = "release",
     srcs = [":santa-driver"] + glob(["Conf/**"]),
     outs = ["santa-"+SANTA_VERSION+".tar.gz"],
-    cmd = """
+    cmd = select({
+        "//conditions:default": """
+        echo "ERROR: Trying to create a release tarball without optimization."
+        echo "Please add '-c opt' flag to bazel invocation"
+        """,
+        ":opt_build": """
       # Extract santa-driver.zip
       for SRC in $(SRCS); do
         if [[ $$(basename $${SRC}) == "santa-driver.zip" ]]; then
@@ -360,7 +426,7 @@ genrule(
 
       # Create final output tar
       tar -C $(@D) -czpf $(@) binaries dsym conf
-    """,
+    """}),
     heuristic_label_expansion = 0,
 )
 
