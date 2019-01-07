@@ -1,12 +1,12 @@
-# Santa [![Build
-Status](https://travis-ci.org/google/santa.png?branch=master)](https://travis-ci.org/google/santa)
-[![Documentation
-Status](https://readthedocs.org/projects/santa/badge/?version=latest)](https://santa.readthedocs.io/en/latest/?badge=latest)
+# Santa [![Build Status][build-status-img]][build-status-link] [![Documentation Status][doc-status-img]][doc-status-link]
+
+[build-status-img]: https://travis-ci.org/google/santa.png?branch=master
+[build-status-link]: https://travis-ci.org/google/santa
+[doc-status-img]: https://readthedocs.org/projects/santa/badge/?version=latest
+[doc-status-link]: https://santa.readthedocs.io/en/latest/?badge=latest
 
 <p align="center">
-  <a href="#santa--">
     <img src="./Source/SantaGUI/Resources/Images.xcassets/AppIcon.appiconset/santa-hat-icon-128.png" alt="Santa Icon" />
-  </a>
 </p>
 
 Santa is a binary whitelisting/blacklisting system for macOS. It consists of a
