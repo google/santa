@@ -23,7 +23,6 @@
 #import "SNTConfigurator.h"
 #import "SNTCommandSyncConstants.h"
 #import "SNTCommandSyncEventUpload.h"
-#import "SNTCommandSyncLogUpload.h"
 #import "SNTCommandSyncPostflight.h"
 #import "SNTCommandSyncPreflight.h"
 #import "SNTCommandSyncRuleDownload.h"
@@ -358,11 +357,7 @@ static void reachabilityHandler(
       [self rescheduleTimerQueue:self.fullSyncTimer secondsFromNow:kDefaultFullSyncInterval];
     }
 
-    if (syncState.uploadLogURL) {
-      return [self logUploadWithSyncState:syncState];
-    } else {
-      return [self eventUploadWithSyncState:syncState];
-    }
+    return [self eventUploadWithSyncState:syncState];
   } else {
     if (!syncState.daemon) {
       LOGE(@"Preflight failed, aborting run");
@@ -372,16 +367,6 @@ static void reachabilityHandler(
          [[SNTConfigurator configurator] syncBaseURL].absoluteString);
     [self startReachability];
   }
-}
-
-- (void)logUploadWithSyncState:(SNTCommandSyncState *)syncState {
-  SNTCommandSyncLogUpload *p = [[SNTCommandSyncLogUpload alloc] initWithState:syncState];
-  if ([p sync]) {
-    LOGD(@"Log upload complete");
-  } else {
-    LOGE(@"Log upload failed, continuing anyway");
-  }
-  return [self eventUploadWithSyncState:syncState];
 }
 
 - (void)eventUploadWithSyncState:(SNTCommandSyncState *)syncState {

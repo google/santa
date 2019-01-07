@@ -89,8 +89,6 @@ NSString *const kQuarantineTimestamp = @"quarantine_timestamp";
 NSString *const kQuarantineAgentBundleID = @"quarantine_agent_bundle_id";
 NSString *const kEventUploadBundleBinaries = @"event_upload_bundle_binaries";
 
-NSString *const kLogUploadField = @"files";
-
 NSString *const kRules = @"rules";
 NSString *const kRuleSHA256 = @"sha256";
 NSString *const kRulePolicy = @"policy";

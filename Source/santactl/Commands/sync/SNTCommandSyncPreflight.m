@@ -116,8 +116,6 @@
   self.syncState.FCMGlobalRuleSyncDeadline =
       (value < 60) ?  kDefaultFCMGlobalRuleSyncDeadline : value;
 
-  self.syncState.uploadLogURL = [NSURL URLWithString:resp[kUploadLogsURL]];
-
   if ([resp[kClientMode] isEqual:kClientModeMonitor]) {
     self.syncState.clientMode = SNTClientModeMonitor;
   } else if ([resp[kClientMode] isEqual:kClientModeLockdown]) {
