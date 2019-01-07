@@ -87,8 +87,6 @@ extern NSString *const kQuarantineTimestamp;
 extern NSString *const kQuarantineAgentBundleID;
 extern NSString *const kEventUploadBundleBinaries;
 
-extern NSString *const kLogUploadField;
-
 extern NSString *const kRules;
 extern NSString *const kRuleSHA256;
 extern NSString *const kRulePolicy;

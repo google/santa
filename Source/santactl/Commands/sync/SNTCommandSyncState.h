@@ -59,9 +59,6 @@
 /// Batch size for uploading events.
 @property NSUInteger eventBatchSize;
 
-/// Log upload URL sent from server. If set, LogUpload phase needs to happen.
-@property NSURL *uploadLogURL;
-
 /// Array of bundle IDs to find binaries for.
 @property NSArray *bundleBinaryRequests;
 

@@ -145,8 +145,6 @@ objc_library(
         "Source/santactl/Commands/sync/SNTCommandSyncConstants.m",
         "Source/santactl/Commands/sync/SNTCommandSyncEventUpload.h",
         "Source/santactl/Commands/sync/SNTCommandSyncEventUpload.m",
-        "Source/santactl/Commands/sync/SNTCommandSyncLogUpload.h",
-        "Source/santactl/Commands/sync/SNTCommandSyncLogUpload.m",
         "Source/santactl/Commands/sync/SNTCommandSyncManager.h",
         "Source/santactl/Commands/sync/SNTCommandSyncManager.m",
         "Source/santactl/Commands/sync/SNTCommandSyncPostflight.h",
