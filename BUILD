@@ -16,7 +16,7 @@ load("@build_bazel_rules_apple//apple:versioning.bzl", "apple_bundle_version")
 load("//:cmd.bzl", "run_command")
 
 # The version for all Santa components.
-SANTA_VERSION = "0.9.30"
+SANTA_VERSION = "0.9.31"
 
 # The version label for mac_* rules.
 apple_bundle_version(
@@ -378,7 +378,7 @@ genrule(
 
       # Copy config files
       for SRC in $(SRCS); do
-        if [[ "$$(dirname $${SRC})" == "Conf" ]]; then
+        if [[ "$$(dirname $${SRC})" == *"Conf" ]]; then
           mkdir -p $(@D)/conf
           cp $${SRC} $(@D)/conf/
         fi
@@ -465,10 +465,10 @@ objc_library(
         "IOKit",
         "SecurityInterface",
     ],
-    structured_resources = [
-        "Tests/LogicTests/Resources/BundleExample.app",
-        "Tests/LogicTests/Resources/DirectoryBundle",
-    ],
+    structured_resources = glob([
+        "Tests/LogicTests/Resources/BundleExample.app/**",
+        "Tests/LogicTests/Resources/DirectoryBundle/**",
+    ]),
     deps = [
         "@FMDB//:fmdb",
         "@MOLCodesignChecker//:MOLCodesignChecker",
