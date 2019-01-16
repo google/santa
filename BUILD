@@ -7,8 +7,8 @@ exports_files(["LICENSE"])
 load(
     "@build_bazel_rules_apple//apple:macos.bzl",
     "macos_application",
-    "macos_kernel_extension",
     "macos_command_line_application",
+    "macos_kernel_extension",
     "macos_unit_test",
     "macos_xpc_service",
 )
@@ -27,8 +27,8 @@ apple_bundle_version(
 
 # Used to detect optimized builds
 config_setting(
-  name = "opt_build",
-  values = { "compilation_mode": "opt" },
+    name = "opt_build",
+    values = {"compilation_mode": "opt"},
 )
 
 ################################################################################
@@ -39,16 +39,16 @@ cc_library(
     srcs = [
         "Source/common/SNTKernelCommon.h",
         "Source/common/SNTLogging.h",
-        "Source/santa-driver/main.cc",
         "Source/santa-driver/SantaCache.h",
-        "Source/santa-driver/SantaDecisionManager.h",
         "Source/santa-driver/SantaDecisionManager.cc",
-        "Source/santa-driver/SantaDriver.h",
+        "Source/santa-driver/SantaDecisionManager.h",
         "Source/santa-driver/SantaDriver.cc",
-        "Source/santa-driver/SantaDriverClient.h",
+        "Source/santa-driver/SantaDriver.h",
         "Source/santa-driver/SantaDriverClient.cc",
-        "Source/santa-driver/SantaPrefixTree.h",
+        "Source/santa-driver/SantaDriverClient.h",
         "Source/santa-driver/SantaPrefixTree.cc",
+        "Source/santa-driver/SantaPrefixTree.h",
+        "Source/santa-driver/main.cc",
     ],
     copts = [
         "-mkernel",
@@ -63,7 +63,7 @@ cc_library(
         "DRIVER_PRIVATE",
         "APPLE",
         "NeXT",
-        "SANTA_VERSION="+SANTA_VERSION,
+        "SANTA_VERSION=" + SANTA_VERSION,
     ],
     alwayslink = 1,
 )
@@ -71,18 +71,18 @@ cc_library(
 # Full santa-driver.kext
 macos_kernel_extension(
     name = "santa-driver",
-    bundle_id = "com.google.santa-driver",
-    infoplists = ["Source/santa-driver/Resources/santa-driver-Info.plist"],
-    ipa_post_processor = ":process_kext_bundle",
-    minimum_os_version = "10.9",
-    version = ":version",
-    deps = [":santa-driver_lib"],
     additional_contents = {
         ":santabs": "XPCServices",
         ":SantaGUI": "Resources",
         ":santactl": "MacOS",
         ":santad": "MacOS",
     },
+    bundle_id = "com.google.santa-driver",
+    infoplists = ["Source/santa-driver/Resources/santa-driver-Info.plist"],
+    ipa_post_processor = ":process_kext_bundle",
+    minimum_os_version = "10.9",
+    version = ":version",
+    deps = [":santa-driver_lib"],
 )
 
 # Script used by the santa-driver rule to ensure the embedded Info.plist is
@@ -157,8 +157,7 @@ objc_library(
         "Source/santactl/Commands/sync/SNTCommandSyncStage.m",
         "Source/santactl/Commands/sync/SNTCommandSyncState.h",
         "Source/santactl/Commands/sync/SNTCommandSyncState.m",
-
-    ] + select ({
+    ] + select({
         ":opt_build": [],
         "//conditions:default": [
             "Source/santactl/Commands/SNTCommandBundleInfo.m",
@@ -177,11 +176,11 @@ objc_library(
     sdk_dylibs = ["libz"],
     sdk_frameworks = ["IOKit"],
     deps = [
-        "@FMDB//:fmdb",
-        "@MOLAuthenticatingURLSession//:MOLAuthenticatingURLSession",
-        "@MOLCodesignChecker//:MOLCodesignChecker",
-        "@MOLFCMClient//:MOLFCMClient",
-        "@MOLXPCConnection//:MOLXPCConnection",
+        "@FMDB",
+        "@MOLAuthenticatingURLSession",
+        "@MOLCodesignChecker",
+        "@MOLFCMClient",
+        "@MOLXPCConnection",
     ],
 )
 
@@ -216,9 +215,9 @@ objc_library(
         "IOKit",
     ],
     deps = [
-        "@FMDB//:fmdb",
-        "@MOLCodesignChecker//:MOLCodesignChecker",
-        "@MOLXPCConnection//:MOLXPCConnection",
+        "@FMDB",
+        "@MOLCodesignChecker",
+        "@MOLXPCConnection",
     ],
 )
 
@@ -258,9 +257,9 @@ objc_library(
         "Source/santad",
     ],
     deps = [
-        "@FMDB//:fmdb",
-        "@MOLCodesignChecker//:MOLCodesignChecker",
-        "@MOLXPCConnection//:MOLXPCConnection",
+        "@FMDB",
+        "@MOLCodesignChecker",
+        "@MOLXPCConnection",
     ],
 )
 
@@ -301,16 +300,16 @@ objc_library(
     ],
     xibs = glob(["Source/SantaGUI/Resources/*.xib"]),
     deps = [
-        "@MOLCodesignChecker//:MOLCodesignChecker",
-        "@MOLXPCConnection//:MOLXPCConnection",
+        "@MOLCodesignChecker",
+        "@MOLXPCConnection",
     ],
 )
 
 macos_application(
     name = "SantaGUI",
-    bundle_name = "Santa",
     app_icons = glob(["Source/SantaGUI/Resources/Images.xcassets/**"]),
     bundle_id = "com.google.SantaGUI",
+    bundle_name = "Santa",
     infoplists = ["Source/SantaGUI/Resources/SantaGUI-Info.plist"],
     minimum_os_version = "10.9",
     version = ":version",
@@ -339,6 +338,7 @@ launchctl load /Library/LaunchAgents/com.google.santagui.plist
 
 run_command(
     name = "reload",
+    srcs = [":santa-driver"],
     cmd = """
 set -e
 
@@ -351,9 +351,7 @@ sudo BINARIES=/tmp/bazel_santa_reload CONF=$${BUILD_WORKSPACE_DIRECTORY}/Conf \
 rm -rf /tmp/bazel_santa_reload
 echo "Time to stop being naughty"
 """,
-  srcs = [":santa-driver"],
 )
-
 
 ################################################################################
 # Release rules - used to create a release tarball
@@ -361,7 +359,7 @@ echo "Time to stop being naughty"
 genrule(
     name = "release",
     srcs = [":santa-driver"] + glob(["Conf/**"]),
-    outs = ["santa-"+SANTA_VERSION+".tar.gz"],
+    outs = ["santa-" + SANTA_VERSION + ".tar.gz"],
     cmd = select({
         "//conditions:default": """
         echo "ERROR: Trying to create a release tarball without optimization."
@@ -424,7 +422,8 @@ genrule(
 
       # Create final output tar
       tar -C $(@D) -czpf $(@) binaries dsym conf
-    """}),
+    """,
+    }),
     heuristic_label_expansion = 0,
 )
 
@@ -470,11 +469,11 @@ objc_library(
         "Tests/LogicTests/Resources/DirectoryBundle/**",
     ]),
     deps = [
-        "@FMDB//:fmdb",
-        "@MOLCodesignChecker//:MOLCodesignChecker",
-        "@MOLFCMClient//:MOLFCMClient",
-        "@MOLXPCConnection//:MOLXPCConnection",
-        "@OCMock//:OCMock",
+        "@FMDB",
+        "@MOLCodesignChecker",
+        "@MOLFCMClient",
+        "@MOLXPCConnection",
+        "@OCMock",
     ],
 )
 
@@ -507,6 +506,10 @@ macos_command_line_application(
 
 run_command(
     name = "kernel_tests",
+    srcs = [
+        ":kernel_tests_bin",
+        ":santa-driver",
+    ],
     cmd = """
 function sigint() {
   echo "\nInterrupted, unloading driver."
@@ -520,8 +523,4 @@ sudo $${BUILD_WORKSPACE_DIRECTORY}/bazel-bin/kernel_tests_bin
 echo "Tests complete, unloading driver."
 sudo kextunload -b com.google.santa-driver >/dev/null
 """,
-    srcs = [
-        ":kernel_tests_bin",
-        ":santa-driver",
-    ],
 )
