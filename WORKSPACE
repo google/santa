@@ -54,7 +54,7 @@ new_git_repository(
     tag = "v2.7",
     build_file_content = """
 objc_library(
-    name = "fmdb",
+    name = "FMDB",
     srcs = glob(["src/fmdb/*.m"], exclude=["src/fmdb.m"]),
     hdrs = glob(["src/fmdb/*.h"]),
     includes = ["src"],
