@@ -12,9 +12,9 @@
 ///    See the License for the specific language governing permissions and
 ///    limitations under the License.
 
-#import "SNTAboutWindowController.h"
+#import "Source/SantaGUI/SNTAboutWindowController.h"
 
-#import "SNTConfigurator.h"
+#import "Source/common/SNTConfigurator.h"
 
 @implementation SNTAboutWindowController
 

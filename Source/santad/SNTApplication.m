@@ -12,30 +12,30 @@
 ///    See the License for the specific language governing permissions and
 ///    limitations under the License.
 
-#import "SNTApplication.h"
+#import "Source/santad/SNTApplication.h"
 
 #import <DiskArbitration/DiskArbitration.h>
 
 #import <MOLXPCConnection/MOLXPCConnection.h>
 
-#import "SNTCommonEnums.h"
-#import "SNTCompilerController.h"
-#import "SNTConfigurator.h"
-#import "SNTDaemonControlController.h"
-#import "SNTDatabaseController.h"
-#import "SNTDriverManager.h"
-#import "SNTDropRootPrivs.h"
-#import "SNTEventTable.h"
-#import "SNTExecutionController.h"
-#import "SNTFileEventLog.h"
-#import "SNTLogging.h"
-#import "SNTNotificationQueue.h"
-#import "SNTRuleTable.h"
-#import "SNTSyncdQueue.h"
-#import "SNTSyslogEventLog.h"
-#import "SNTXPCControlInterface.h"
-#import "SNTXPCUnprivilegedControlInterface.h"
-#import "SNTXPCNotifierInterface.h"
+#import "Source/common/SNTCommonEnums.h"
+#import "Source/santad/SNTCompilerController.h"
+#import "Source/common/SNTConfigurator.h"
+#import "Source/santad/SNTDaemonControlController.h"
+#import "Source/santad/SNTDatabaseController.h"
+#import "Source/santad/SNTDriverManager.h"
+#import "Source/common/SNTDropRootPrivs.h"
+#import "Source/santad/DataLayer/SNTEventTable.h"
+#import "Source/santad/SNTExecutionController.h"
+#import "Source/santad/Logs/SNTFileEventLog.h"
+#import "Source/common/SNTLogging.h"
+#import "Source/santad/SNTNotificationQueue.h"
+#import "Source/santad/DataLayer/SNTRuleTable.h"
+#import "Source/santad/SNTSyncdQueue.h"
+#import "Source/santad/Logs/SNTSyslogEventLog.h"
+#import "Source/common/SNTXPCControlInterface.h"
+#import "Source/common/SNTXPCUnprivilegedControlInterface.h"
+#import "Source/common/SNTXPCNotifierInterface.h"
 
 @interface SNTApplication ()
 @property DASessionRef diskArbSession;

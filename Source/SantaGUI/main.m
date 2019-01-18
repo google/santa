@@ -14,7 +14,7 @@
 
 #import <Cocoa/Cocoa.h>
 
-#import "SNTAppDelegate.h"
+#import "Source/SantaGUI/SNTAppDelegate.h"
 
 int main(int argc, const char *argv[]) {
   @autoreleasepool {

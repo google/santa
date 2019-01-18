@@ -12,31 +12,31 @@
 ///    See the License for the specific language governing permissions and
 ///    limitations under the License.
 
-#import "SNTExecutionController.h"
+#import "Source/santad/SNTExecutionController.h"
 
 #include <libproc.h>
 #include <pwd.h>
 #include <utmpx.h>
 
-#include "SNTLogging.h"
+#include "Source/common/SNTLogging.h"
 
 #import <MOLCodesignChecker/MOLCodesignChecker.h>
 
-#import "SNTBlockMessage.h"
-#import "SNTCachedDecision.h"
-#import "SNTCommonEnums.h"
-#import "SNTConfigurator.h"
-#import "SNTDriverManager.h"
-#import "SNTDropRootPrivs.h"
-#import "SNTEventLog.h"
-#import "SNTEventTable.h"
-#import "SNTFileInfo.h"
-#import "SNTNotificationQueue.h"
-#import "SNTPolicyProcessor.h"
-#import "SNTRule.h"
-#import "SNTRuleTable.h"
-#import "SNTStoredEvent.h"
-#import "SNTSyncdQueue.h"
+#import "Source/common/SNTBlockMessage.h"
+#import "Source/common/SNTCachedDecision.h"
+#import "Source/common/SNTCommonEnums.h"
+#import "Source/common/SNTConfigurator.h"
+#import "Source/common/SNTDropRootPrivs.h"
+#import "Source/common/SNTFileInfo.h"
+#import "Source/common/SNTRule.h"
+#import "Source/common/SNTStoredEvent.h"
+#import "Source/santad/SNTDriverManager.h"
+#import "Source/santad/Logs/SNTEventLog.h"
+#import "Source/santad/DataLayer/SNTEventTable.h"
+#import "Source/santad/SNTNotificationQueue.h"
+#import "Source/santad/SNTPolicyProcessor.h"
+#import "Source/santad/DataLayer/SNTRuleTable.h"
+#import "Source/santad/SNTSyncdQueue.h"
 
 // A binary is considered large at ~30MB. Large binaries take longer to hash and consequently
 // longer to post a decision back to santa-driver. When a binary is considered large santad will

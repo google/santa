@@ -14,8 +14,8 @@
 
 #import <Foundation/Foundation.h>
 
-#import "SNTCommonEnums.h"
-#include "SNTKernelCommon.h"
+#import "Source/common/SNTCommonEnums.h"
+#include "Source/common/SNTKernelCommon.h"
 
 @class MOLCodesignChecker;
 @class SNTDriverManager;

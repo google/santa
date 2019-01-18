@@ -12,14 +12,14 @@
 ///    See the License for the specific language governing permissions and
 ///    limitations under the License.
 
-#import "SNTDriverManager.h"
+#import "Source/santad/SNTDriverManager.h"
 
 #import <IOKit/IODataQueueClient.h>
 #import <IOKit/kext/KextManager.h>
 
 #include <mach/mach_port.h>
 
-#import "SNTLogging.h"
+#import "Source/common/SNTLogging.h"
 
 @interface SNTDriverManager ()
 @property io_connect_t connection;

@@ -12,18 +12,18 @@
 ///    See the License for the specific language governing permissions and
 ///    limitations under the License.
 
-#import "SNTCompilerController.h"
+#import "Source/santad/SNTCompilerController.h"
 
-#import "SNTCachedDecision.h"
-#import "SNTCommonEnums.h"
-#import "SNTDatabaseController.h"
-#import "SNTDriverManager.h"
-#import "SNTEventLog.h"
-#import "SNTFileInfo.h"
-#import "SNTKernelCommon.h"
-#import "SNTLogging.h"
-#import "SNTRule.h"
-#import "SNTRuleTable.h"
+#import "Source/common/SNTCachedDecision.h"
+#import "Source/common/SNTCommonEnums.h"
+#import "Source/common/SNTFileInfo.h"
+#import "Source/common/SNTKernelCommon.h"
+#import "Source/common/SNTLogging.h"
+#import "Source/common/SNTRule.h"
+#import "Source/santad/SNTDatabaseController.h"
+#import "Source/santad/SNTDriverManager.h"
+#import "Source/santad/DataLayer/SNTRuleTable.h"
+#import "Source/santad/Logs/SNTEventLog.h"
 
 @interface SNTCompilerController ()
 @property SNTDriverManager *driverManager;

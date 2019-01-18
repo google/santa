@@ -12,7 +12,7 @@
 ///    See the License for the specific language governing permissions and
 ///    limitations under the License.
 
-#import "SNTSyslogEventLog.h"
+#import "Source/santad/Logs/SNTSyslogEventLog.h"
 
 @interface SNTFileEventLog : SNTSyslogEventLog
 @end

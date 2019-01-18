@@ -14,8 +14,8 @@
 
 #import <Foundation/Foundation.h>
 
-#import "SNTCommonEnums.h"
-#import "SNTKernelCommon.h"
+#import "Source/common/SNTCommonEnums.h"
+#import "Source/common/SNTKernelCommon.h"
 
 ///
 ///  Store information about executions from decision making for later logging.

@@ -35,12 +35,6 @@ objc_library(
         "SNTSyncdQueue.m",
         "main.m",
     ],
-    includes = [
-        ".",
-        "../common",
-        "DataLayer",
-        "Logs",
-    ],
     sdk_frameworks = [
         "DiskArbitration",
         "IOKit",

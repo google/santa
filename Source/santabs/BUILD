@@ -7,11 +7,6 @@ objc_library(
         "SNTBundleService.m",
         "main.m",
     ],
-    includes = [
-        "../common",
-        "../santabs",
-        "../santad",
-    ],
     deps = [
         "//Source/common:SNTFileInfo",
         "//Source/common:SNTXPCBundleServiceInterface",

@@ -14,7 +14,7 @@
 
 #import <Foundation/Foundation.h>
 
-#import "SNTDatabaseTable.h"
+#import "Source/santad/DataLayer/SNTDatabaseTable.h"
 
 @class SNTNotificationMessage;
 @class SNTStoredEvent;

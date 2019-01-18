@@ -14,8 +14,8 @@
 
 #import <Foundation/Foundation.h>
 
-#import "SNTCommonEnums.h"
-#import "SNTDatabaseTable.h"
+#import "Source/common/SNTCommonEnums.h"
+#import "Source/santad/DataLayer/SNTDatabaseTable.h"
 
 @class SNTCachedDecision;
 @class SNTRule;

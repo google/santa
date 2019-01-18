@@ -14,7 +14,7 @@
 
 #import <Foundation/Foundation.h>
 
-// This is imported in the header rather than implementation to saves
+// This is imported in the header rather than implementation to save
 // classes that use this one from also having to import FMDB stuff.
 #import <fmdb/FMDB.h>
 

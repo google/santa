@@ -12,7 +12,7 @@
 ///    See the License for the specific language governing permissions and
 ///    limitations under the License.
 
-#import "SNTBundleService.h"
+#import "Source/santabs/SNTBundleService.h"
 
 #include <stdatomic.h>
 
@@ -22,9 +22,9 @@
 #import <MOLCodesignChecker/MOLCodesignChecker.h>
 #import <MOLXPCConnection/MOLXPCConnection.h>
 
-#import "SNTFileInfo.h"
-#import "SNTStoredEvent.h"
-#import "SNTXPCNotifierInterface.h"
+#import "Source/common/SNTFileInfo.h"
+#import "Source/common/SNTStoredEvent.h"
+#import "Source/common/SNTXPCNotifierInterface.h"
 
 @interface SNTBundleService ()
 @property MOLXPCConnection *notifierConnection;

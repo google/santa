@@ -12,13 +12,13 @@
 ///    See the License for the specific language governing permissions and
 ///    limitations under the License.
 
-#import "SNTNotificationQueue.h"
+#import "Source/santad/SNTNotificationQueue.h"
 
 #import <MOLXPCConnection/MOLXPCConnection.h>
 
-#import "SNTLogging.h"
-#import "SNTStoredEvent.h"
-#import "SNTXPCNotifierInterface.h"
+#import "Source/common/SNTLogging.h"
+#import "Source/common/SNTStoredEvent.h"
+#import "Source/common/SNTXPCNotifierInterface.h"
 
 static const int kMaximumNotifications = 10;
 

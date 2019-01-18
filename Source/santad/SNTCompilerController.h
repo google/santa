@@ -13,7 +13,8 @@
 ///    limitations under the License.
 
 #import <Foundation/Foundation.h>
-#import "SNTKernelCommon.h"
+
+#import "Source/common/SNTKernelCommon.h"
 
 @class SNTDriverManager;
 @class SNTEventLog;
