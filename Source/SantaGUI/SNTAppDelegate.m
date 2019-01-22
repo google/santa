@@ -12,15 +12,15 @@
 ///    See the License for the specific language governing permissions and
 ///    limitations under the License.
 
-#import "SNTAppDelegate.h"
+#import "Source/SantaGUI/SNTAppDelegate.h"
 
 #import <MOLXPCConnection/MOLXPCConnection.h>
 
-#import "SNTAboutWindowController.h"
-#import "SNTConfigurator.h"
-#import "SNTNotificationManager.h"
-#import "SNTStrengthify.h"
-#import "SNTXPCControlInterface.h"
+#import "Source/common/SNTConfigurator.h"
+#import "Source/common/SNTStrengthify.h"
+#import "Source/common/SNTXPCControlInterface.h"
+#import "Source/SantaGUI/SNTAboutWindowController.h"
+#import "Source/SantaGUI/SNTNotificationManager.h"
 
 @interface SNTAppDelegate ()
 @property SNTAboutWindowController *aboutWindowController;

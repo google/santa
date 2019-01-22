@@ -14,7 +14,7 @@
 
 #import <Foundation/Foundation.h>
 
-#include "SNTKernelCommon.h"
+#include "Source/common/SNTKernelCommon.h"
 
 @class SNTNotificationMessage;
 

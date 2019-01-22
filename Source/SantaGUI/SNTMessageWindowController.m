@@ -12,16 +12,16 @@
 ///    See the License for the specific language governing permissions and
 ///    limitations under the License.
 
-#import "SNTMessageWindowController.h"
+#import "Source/SantaGUI/SNTMessageWindowController.h"
 
 #import <SecurityInterface/SFCertificatePanel.h>
 
 #import <MOLCertificate/MOLCertificate.h>
 
-#import "SNTBlockMessage.h"
-#import "SNTConfigurator.h"
-#import "SNTMessageWindow.h"
-#import "SNTStoredEvent.h"
+#import "Source/common/SNTBlockMessage.h"
+#import "Source/common/SNTConfigurator.h"
+#import "Source/common/SNTStoredEvent.h"
+#import "Source/SantaGUI/SNTMessageWindow.h"
 
 @interface SNTMessageWindowController ()
 ///  The custom message to display for this event

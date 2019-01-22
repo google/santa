@@ -17,9 +17,6 @@ objc_library(
         "SNTNotificationManager.m",
         "main.m",
     ],
-    includes = [
-        "../common",
-    ],
     sdk_frameworks = [
         "IOKit",
         "SecurityInterface",

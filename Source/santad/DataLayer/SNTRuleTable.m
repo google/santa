@@ -12,16 +12,16 @@
 ///    See the License for the specific language governing permissions and
 ///    limitations under the License.
 
-#import "SNTRuleTable.h"
+#import "Source/santad/DataLayer/SNTRuleTable.h"
 
 #import <MOLCertificate/MOLCertificate.h>
 #import <MOLCodesignChecker/MOLCodesignChecker.h>
 
-#import "SNTCachedDecision.h"
-#import "SNTConfigurator.h"
-#import "SNTFileInfo.h"
-#import "SNTLogging.h"
-#import "SNTRule.h"
+#import "Source/common/SNTCachedDecision.h"
+#import "Source/common/SNTConfigurator.h"
+#import "Source/common/SNTFileInfo.h"
+#import "Source/common/SNTLogging.h"
+#import "Source/common/SNTRule.h"
 
 // TODO(nguyenphillip): this should be configurable.
 // How many rules must be in database before we start trying to remove transitive rules.

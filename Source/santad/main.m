@@ -14,13 +14,13 @@
 
 #import <Foundation/Foundation.h>
 
-#include "SNTLogging.h"
+#include "Source/common/SNTLogging.h"
 
 #include <mach/task.h>
 #include <pthread/pthread.h>
 #include <sys/resource.h>
 
-#import "SNTApplication.h"
+#import "Source/santad/SNTApplication.h"
 
 extern uint64_t watchdogCPUEvents;
 extern uint64_t watchdogRAMEvents;

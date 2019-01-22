@@ -12,11 +12,11 @@
 ///    See the License for the specific language governing permissions and
 ///    limitations under the License.
 
-#import "SNTFileEventLog.h"
+#import "Source/santad/Logs/SNTFileEventLog.h"
 
-#import "SNTConfigurator.h"
-#import "SNTLogging.h"
-#import "SNTStrengthify.h"
+#import "Source/common/SNTConfigurator.h"
+#import "Source/common/SNTLogging.h"
+#import "Source/common/SNTStrengthify.h"
 
 @interface SNTFileEventLog ()
 @property NSFileHandle *fh;

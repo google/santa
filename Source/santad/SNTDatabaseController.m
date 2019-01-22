@@ -12,14 +12,14 @@
 ///    See the License for the specific language governing permissions and
 ///    limitations under the License.
 
-#import "SNTDatabaseController.h"
+#import "Source/santad/SNTDatabaseController.h"
 
 #include <sys/stat.h>
 #include <sys/types.h>
 
-#import "SNTEventTable.h"
-#import "SNTLogging.h"
-#import "SNTRuleTable.h"
+#import "Source/common/SNTLogging.h"
+#import "Source/santad/DataLayer/SNTEventTable.h"
+#import "Source/santad/DataLayer/SNTRuleTable.h"
 
 @implementation SNTDatabaseController
 

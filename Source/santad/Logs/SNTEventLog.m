@@ -12,18 +12,18 @@
 ///    See the License for the specific language governing permissions and
 ///    limitations under the License.
 
-#import "SNTEventLog.h"
+#import "Source/santad/Logs/SNTEventLog.h"
 
 #include <dlfcn.h>
 #include <grp.h>
 #include <pwd.h>
 #include <sys/sysctl.h>
 
-#import "SNTCachedDecision.h"
-#import "SNTConfigurator.h"
-#import "SNTDatabaseController.h"
-#import "SNTRule.h"
-#import "SNTRuleTable.h"
+#import "Source/common/SNTCachedDecision.h"
+#import "Source/common/SNTConfigurator.h"
+#import "Source/common/SNTRule.h"
+#import "Source/santad/SNTDatabaseController.h"
+#import "Source/santad/DataLayer/SNTRuleTable.h"
 
 @interface SNTEventLog ()
 @property NSMutableDictionary<NSNumber *, SNTCachedDecision *> *detailStore;

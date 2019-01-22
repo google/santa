@@ -16,8 +16,8 @@
 
 #import <MOLXPCConnection/MOLXPCConnection.h>
 
-#import "SNTBundleService.h"
-#import "SNTXPCBundleServiceInterface.h"
+#import "Source/santabs/SNTBundleService.h"
+#import "Source/common/SNTXPCBundleServiceInterface.h"
 
 int main(int argc, const char *argv[]) {
   MOLXPCConnection *c =

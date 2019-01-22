@@ -12,28 +12,28 @@
 ///    See the License for the specific language governing permissions and
 ///    limitations under the License.
 
-#import "SNTDaemonControlController.h"
+#import "Source/santad/SNTDaemonControlController.h"
 
 #import <MOLXPCConnection/MOLXPCConnection.h>
 
-#import "SNTCachedDecision.h"
-#import "SNTCommonEnums.h"
-#import "SNTConfigurator.h"
-#import "SNTDatabaseController.h"
-#import "SNTDriverManager.h"
-#import "SNTEventLog.h"
-#import "SNTEventTable.h"
-#import "SNTLogging.h"
-#import "SNTNotificationQueue.h"
-#import "SNTPolicyProcessor.h"
-#import "SNTRule.h"
-#import "SNTRuleTable.h"
-#import "SNTStoredEvent.h"
-#import "SNTStrengthify.h"
-#import "SNTSyncdQueue.h"
-#import "SNTXPCBundleServiceInterface.h"
-#import "SNTXPCNotifierInterface.h"
-#import "SNTXPCSyncdInterface.h"
+#import "Source/common/SNTCachedDecision.h"
+#import "Source/common/SNTCommonEnums.h"
+#import "Source/common/SNTConfigurator.h"
+#import "Source/common/SNTLogging.h"
+#import "Source/common/SNTRule.h"
+#import "Source/common/SNTStoredEvent.h"
+#import "Source/common/SNTStrengthify.h"
+#import "Source/common/SNTXPCBundleServiceInterface.h"
+#import "Source/common/SNTXPCNotifierInterface.h"
+#import "Source/common/SNTXPCSyncdInterface.h"
+#import "Source/santad/SNTDatabaseController.h"
+#import "Source/santad/SNTDriverManager.h"
+#import "Source/santad/Logs/SNTEventLog.h"
+#import "Source/santad/DataLayer/SNTEventTable.h"
+#import "Source/santad/SNTNotificationQueue.h"
+#import "Source/santad/SNTPolicyProcessor.h"
+#import "Source/santad/DataLayer/SNTRuleTable.h"
+#import "Source/santad/SNTSyncdQueue.h"
 
 // Globals used by the santad watchdog thread
 uint64_t watchdogCPUEvents = 0;

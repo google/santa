@@ -14,7 +14,7 @@
 
 #import <Foundation/Foundation.h>
 
-#import "SNTXPCControlInterface.h"
+#import "Source/common/SNTXPCControlInterface.h"
 
 @class SNTDriverManager;
 @class SNTEventLog;

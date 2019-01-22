@@ -14,8 +14,8 @@
 
 #import <Cocoa/Cocoa.h>
 
-#import "SNTMessageWindowController.h"
-#import "SNTXPCNotifierInterface.h"
+#import "Source/common/SNTXPCNotifierInterface.h"
+#import "Source/SantaGUI/SNTMessageWindowController.h"
 
 ///
 ///  Keeps track of pending notifications and ensures only one is presented to the user at a time.

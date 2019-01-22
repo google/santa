@@ -12,15 +12,15 @@
 ///    See the License for the specific language governing permissions and
 ///    limitations under the License.
 
-#import "SNTPolicyProcessor.h"
+#import "Source/santad/SNTPolicyProcessor.h"
 
-#include "SNTLogging.h"
+#include "Source/common/SNTLogging.h"
 
-#import "SNTCachedDecision.h"
-#import "SNTConfigurator.h"
-#import "SNTFileInfo.h"
-#import "SNTRule.h"
-#import "SNTRuleTable.h"
+#import "Source/common/SNTCachedDecision.h"
+#import "Source/common/SNTConfigurator.h"
+#import "Source/common/SNTFileInfo.h"
+#import "Source/common/SNTRule.h"
+#import "Source/santad/DataLayer/SNTRuleTable.h"
 
 @interface SNTPolicyProcessor()
 @property SNTRuleTable *ruleTable;

@@ -12,13 +12,13 @@
 ///    See the License for the specific language governing permissions and
 ///    limitations under the License.
 
-#import "SNTSyncdQueue.h"
+#import "Source/santad/SNTSyncdQueue.h"
 
 #import <MOLXPCConnection/MOLXPCConnection.h>
 
-#import "SNTLogging.h"
-#import "SNTStoredEvent.h"
-#import "SNTXPCSyncdInterface.h"
+#import "Source/common/SNTLogging.h"
+#import "Source/common/SNTStoredEvent.h"
+#import "Source/common/SNTXPCSyncdInterface.h"
 
 @interface SNTSyncdQueue ()
 @property NSCache<NSString *, NSDate *> *uploadBackoff;
