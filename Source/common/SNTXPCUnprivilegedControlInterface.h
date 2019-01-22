@@ -16,7 +16,6 @@
 
 #import <MOLCertificate/MOLCertificate.h>
 
-#import "SNTCachedDecision.h"
 #import "SNTCommonEnums.h"
 #import "SNTKernelCommon.h"
 #import "SNTXPCBundleServiceInterface.h"

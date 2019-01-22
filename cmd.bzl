@@ -13,4 +13,3 @@ def run_command(name, cmd, **kwargs):
         name = name,
         srcs = ["%s.sh" % name],
     )
-
