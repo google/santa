@@ -38,10 +38,10 @@ objc_library(
     ]),
     deps = [
         "@FMDB//:fmdb",
-        "@MOLCodesignChecker//:MOLCodesignChecker",
-        "@MOLFCMClient//:MOLFCMClient",
-        "@MOLXPCConnection//:MOLXPCConnection",
-        "@OCMock//:OCMock",
+        "@MOLCodesignChecker",
+        "@MOLFCMClient",
+        "@MOLXPCConnection",
+        "@OCMock",
     ],
 )
 

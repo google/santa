@@ -33,8 +33,8 @@ objc_library(
         "//Source/common:SNTConfigurator",
         "//Source/common:SNTXPCControlInterface",
         "//Source/common:SNTXPCNotifierInterface",
-        "@MOLCodesignChecker//:MOLCodesignChecker",
-        "@MOLXPCConnection//:MOLXPCConnection",
+        "@MOLCodesignChecker",
+        "@MOLXPCConnection",
     ],
 )
 
