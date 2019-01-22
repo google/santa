@@ -14,7 +14,7 @@
 
 #import <XCTest/XCTest.h>
 
-#include "SantaPrefixTree.h"
+#include "Source/santa-driver/SantaPrefixTree.h"
 
 @interface SantaPrefixTreeTest : XCTestCase
 @end

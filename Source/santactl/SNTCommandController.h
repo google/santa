@@ -14,7 +14,7 @@
 
 #import <Foundation/Foundation.h>
 
-#import "SNTCommand.h"
+#import "Source/santactl/SNTCommand.h"
 
 @class MOLXPCConnection;
 

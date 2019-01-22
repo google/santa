@@ -12,7 +12,7 @@
 ///    See the License for the specific language governing permissions and
 ///    limitations under the License.
 
-#import "SNTXPCNotifierInterface.h"
+#import "Source/common/SNTXPCNotifierInterface.h"
 
 @implementation SNTXPCNotifierInterface
 

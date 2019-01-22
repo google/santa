@@ -13,14 +13,12 @@
 ///    limitations under the License.
 
 #import <Foundation/Foundation.h>
-
-#import "SNTCommand.h"
-#import "SNTCommandController.h"
-
 #import <MOLXPCConnection/MOLXPCConnection.h>
 
-#import "SNTConfigurator.h"
-#import "SNTXPCControlInterface.h"
+#import "Source/common/SNTConfigurator.h"
+#import "Source/common/SNTXPCControlInterface.h"
+#import "Source/santactl/SNTCommand.h"
+#import "Source/santactl/SNTCommandController.h"
 
 @interface SNTCommandStatus : SNTCommand<SNTCommandProtocol>
 @end

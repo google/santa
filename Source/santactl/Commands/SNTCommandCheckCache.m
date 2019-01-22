@@ -13,16 +13,15 @@
 ///    limitations under the License.
 
 #import <Foundation/Foundation.h>
-
-#import "SNTCommand.h"
-#import "SNTCommandController.h"
-
 #import <MOLXPCConnection/MOLXPCConnection.h>
 
-#import "SNTLogging.h"
-#import "SNTXPCControlInterface.h"
-
 #include <sys/stat.h>
+
+#import "Source/common/SNTLogging.h"
+#import "Source/common/SNTXPCControlInterface.h"
+#import "Source/santactl/SNTCommand.h"
+#import "Source/santactl/SNTCommandController.h"
+
 
 #ifdef DEBUG
 

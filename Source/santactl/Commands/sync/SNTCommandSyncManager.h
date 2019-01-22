@@ -14,7 +14,7 @@
 
 #import <Foundation/Foundation.h>
 
-#import "SNTXPCSyncdInterface.h"
+#import "Source/common/SNTXPCSyncdInterface.h"
 
 @class MOLXPCConnection;
 

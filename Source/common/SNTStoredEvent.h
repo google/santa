@@ -14,7 +14,7 @@
 
 #import <Foundation/Foundation.h>
 
-#import "SNTCommonEnums.h"
+#import "Source/common/SNTCommonEnums.h"
 
 ///
 ///  Represents an event stored in the database.

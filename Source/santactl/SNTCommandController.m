@@ -12,11 +12,11 @@
 ///    See the License for the specific language governing permissions and
 ///    limitations under the License.
 
-#import "SNTCommandController.h"
+#import "Source/santactl/SNTCommandController.h"
 
 #import <MOLXPCConnection/MOLXPCConnection.h>
 
-#import "SNTXPCControlInterface.h"
+#import "Source/common/SNTXPCControlInterface.h"
 
 @implementation SNTCommandController
 

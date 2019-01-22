@@ -1,5 +1,7 @@
 package(default_visibility = ["//visibility:public"])
 
+load("//:helper.bzl", "santa_unit_test")
+
 objc_library(
     name = "SNTBlockMessage",
     srcs = ["SNTBlockMessage.m"],
@@ -95,6 +97,7 @@ objc_library(
     name = "SNTSystemInfo",
     srcs = ["SNTSystemInfo.m"],
     hdrs = ["SNTSystemInfo.h"],
+    sdk_frameworks = ["IOKit"],
 )
 
 objc_library(
@@ -148,4 +151,18 @@ objc_library(
         "@MOLCertificate",
         "@MOLXPCConnection",
     ],
+)
+
+santa_unit_test(
+    name = "SNTFileInfoTest",
+    srcs = ["SNTFileInfoTest.m"],
+    deps = [":SNTFileInfo"],
+    resources = [
+        "testdata/bad_pagezero",
+        "testdata/missing_pagezero",
+    ],
+    structured_resources = glob([
+        "testdata/BundleExample.app/**",
+        "testdata/DirectoryBundle/**",
+    ]),
 )

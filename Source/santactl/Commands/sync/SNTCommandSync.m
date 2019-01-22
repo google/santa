@@ -13,17 +13,15 @@
 ///    limitations under the License.
 
 #import <Foundation/Foundation.h>
-
-#import "SNTCommand.h"
-#import "SNTCommandController.h"
-
 #import <MOLXPCConnection/MOLXPCConnection.h>
 
-#import "SNTCommandSyncManager.h"
-#import "SNTConfigurator.h"
-#import "SNTDropRootPrivs.h"
-#import "SNTLogging.h"
-#import "SNTXPCControlInterface.h"
+#import "Source/common/SNTConfigurator.h"
+#import "Source/common/SNTDropRootPrivs.h"
+#import "Source/common/SNTLogging.h"
+#import "Source/common/SNTXPCControlInterface.h"
+#import "Source/santactl/SNTCommand.h"
+#import "Source/santactl/SNTCommandController.h"
+#import "Source/santactl/Commands/sync/SNTCommandSyncManager.h"
 
 @interface SNTCommandSync : SNTCommand<SNTCommandProtocol>
 @property MOLXPCConnection *listener;

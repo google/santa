@@ -12,27 +12,26 @@
 ///    See the License for the specific language governing permissions and
 ///    limitations under the License.
 
-#import "SNTCommandSyncManager.h"
-
-#import <SystemConfiguration/SystemConfiguration.h>
+#import "Source/santactl/Commands/sync/SNTCommandSyncManager.h"
 
 #import <MOLAuthenticatingURLSession/MOLAuthenticatingURLSession.h>
 #import <MOLFCMClient/MOLFCMClient.h>
 #import <MOLXPCConnection/MOLXPCConnection.h>
+#import <SystemConfiguration/SystemConfiguration.h>
 
-#import "SNTConfigurator.h"
-#import "SNTCommandSyncConstants.h"
-#import "SNTCommandSyncEventUpload.h"
-#import "SNTCommandSyncPostflight.h"
-#import "SNTCommandSyncPreflight.h"
-#import "SNTCommandSyncRuleDownload.h"
-#import "SNTCommandSyncState.h"
-#import "SNTCommonEnums.h"
-#import "SNTLogging.h"
-#import "SNTStoredEvent.h"
-#import "SNTStrengthify.h"
-#import "SNTXPCControlInterface.h"
-#import "SNTXPCSyncdInterface.h"
+#import "Source/common/SNTCommonEnums.h"
+#import "Source/common/SNTConfigurator.h"
+#import "Source/common/SNTLogging.h"
+#import "Source/common/SNTStoredEvent.h"
+#import "Source/common/SNTStrengthify.h"
+#import "Source/common/SNTXPCControlInterface.h"
+#import "Source/common/SNTXPCSyncdInterface.h"
+#import "Source/santactl/Commands/sync/SNTCommandSyncConstants.h"
+#import "Source/santactl/Commands/sync/SNTCommandSyncEventUpload.h"
+#import "Source/santactl/Commands/sync/SNTCommandSyncPostflight.h"
+#import "Source/santactl/Commands/sync/SNTCommandSyncPreflight.h"
+#import "Source/santactl/Commands/sync/SNTCommandSyncRuleDownload.h"
+#import "Source/santactl/Commands/sync/SNTCommandSyncState.h"
 
 static NSString *const kFCMActionKey = @"action";
 static NSString *const kFCMFileHashKey = @"file_hash";

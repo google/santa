@@ -13,12 +13,11 @@
 ///    limitations under the License.
 
 #import <Foundation/Foundation.h>
-
 #import <MOLCertificate/MOLCertificate.h>
 
-#import "SNTCommonEnums.h"
-#import "SNTKernelCommon.h"
-#import "SNTXPCBundleServiceInterface.h"
+#import "Source/common/SNTCommonEnums.h"
+#import "Source/common/SNTKernelCommon.h"
+#import "Source/common/SNTXPCBundleServiceInterface.h"
 
 @class SNTRule;
 @class SNTStoredEvent;

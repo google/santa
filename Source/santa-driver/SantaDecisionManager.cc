@@ -12,7 +12,7 @@
 ///    See the License for the specific language governing permissions and
 ///    limitations under the License.
 
-#include "SantaDecisionManager.h"
+#include "Source/santa-driver/SantaDecisionManager.h"
 
 // This is a made-up KAUTH_FILEOP constant which represents a
 // KAUTH_VNODE_WRITE_DATA event that gets passed to SantaDecisionManager's

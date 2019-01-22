@@ -15,27 +15,26 @@
 #import "Source/santad/SNTApplication.h"
 
 #import <DiskArbitration/DiskArbitration.h>
-
 #import <MOLXPCConnection/MOLXPCConnection.h>
 
 #import "Source/common/SNTCommonEnums.h"
-#import "Source/santad/SNTCompilerController.h"
 #import "Source/common/SNTConfigurator.h"
+#import "Source/common/SNTDropRootPrivs.h"
+#import "Source/common/SNTLogging.h"
+#import "Source/common/SNTXPCControlInterface.h"
+#import "Source/common/SNTXPCNotifierInterface.h"
+#import "Source/common/SNTXPCUnprivilegedControlInterface.h"
+#import "Source/santad/SNTCompilerController.h"
 #import "Source/santad/SNTDaemonControlController.h"
 #import "Source/santad/SNTDatabaseController.h"
 #import "Source/santad/SNTDriverManager.h"
-#import "Source/common/SNTDropRootPrivs.h"
-#import "Source/santad/DataLayer/SNTEventTable.h"
 #import "Source/santad/SNTExecutionController.h"
-#import "Source/santad/Logs/SNTFileEventLog.h"
-#import "Source/common/SNTLogging.h"
 #import "Source/santad/SNTNotificationQueue.h"
-#import "Source/santad/DataLayer/SNTRuleTable.h"
 #import "Source/santad/SNTSyncdQueue.h"
+#import "Source/santad/DataLayer/SNTRuleTable.h"
+#import "Source/santad/DataLayer/SNTEventTable.h"
+#import "Source/santad/Logs/SNTFileEventLog.h"
 #import "Source/santad/Logs/SNTSyslogEventLog.h"
-#import "Source/common/SNTXPCControlInterface.h"
-#import "Source/common/SNTXPCUnprivilegedControlInterface.h"
-#import "Source/common/SNTXPCNotifierInterface.h"
 
 @interface SNTApplication ()
 @property DASessionRef diskArbSession;

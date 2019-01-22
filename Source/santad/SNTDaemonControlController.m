@@ -28,12 +28,12 @@
 #import "Source/common/SNTXPCSyncdInterface.h"
 #import "Source/santad/SNTDatabaseController.h"
 #import "Source/santad/SNTDriverManager.h"
-#import "Source/santad/Logs/SNTEventLog.h"
-#import "Source/santad/DataLayer/SNTEventTable.h"
 #import "Source/santad/SNTNotificationQueue.h"
 #import "Source/santad/SNTPolicyProcessor.h"
-#import "Source/santad/DataLayer/SNTRuleTable.h"
 #import "Source/santad/SNTSyncdQueue.h"
+#import "Source/santad/DataLayer/SNTEventTable.h"
+#import "Source/santad/DataLayer/SNTRuleTable.h"
+#import "Source/santad/Logs/SNTEventLog.h"
 
 // Globals used by the santad watchdog thread
 uint64_t watchdogCPUEvents = 0;

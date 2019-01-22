@@ -13,20 +13,18 @@
 ///    limitations under the License.
 
 #import <Foundation/Foundation.h>
-
-#import "SNTCommand.h"
-#import "SNTCommandController.h"
-
-#import <objc/runtime.h>
 #import <MOLCertificate/MOLCertificate.h>
 #import <MOLCodesignChecker/MOLCodesignChecker.h>
 #import <MOLXPCConnection/MOLXPCConnection.h>
+#import <objc/runtime.h>
 
-#import "SNTCachedDecision.h"
-#import "SNTFileInfo.h"
-#import "SNTLogging.h"
-#import "SNTRule.h"
-#import "SNTXPCControlInterface.h"
+#import "Source/common/SNTCachedDecision.h"
+#import "Source/common/SNTFileInfo.h"
+#import "Source/common/SNTLogging.h"
+#import "Source/common/SNTRule.h"
+#import "Source/common/SNTXPCControlInterface.h"
+#import "Source/santactl/SNTCommand.h"
+#import "Source/santactl/SNTCommandController.h"
 
 // file info keys
 static NSString *const kPath = @"Path";

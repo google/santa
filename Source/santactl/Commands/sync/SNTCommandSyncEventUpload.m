@@ -12,19 +12,18 @@
 ///    See the License for the specific language governing permissions and
 ///    limitations under the License.
 
-#import "SNTCommandSyncEventUpload.h"
-
-#include "SNTLogging.h"
+#import "Source/santactl/Commands/sync/SNTCommandSyncEventUpload.h"
 
 #import <MOLCertificate/MOLCertificate.h>
 #import <MOLXPCConnection/MOLXPCConnection.h>
 
-#import "NSData+Zlib.h"
-#import "SNTCommandSyncConstants.h"
-#import "SNTCommandSyncState.h"
-#import "SNTFileInfo.h"
-#import "SNTStoredEvent.h"
-#import "SNTXPCControlInterface.h"
+#import "Source/common/SNTFileInfo.h"
+#import "Source/common/SNTLogging.h"
+#import "Source/common/SNTStoredEvent.h"
+#import "Source/common/SNTXPCControlInterface.h"
+#import "Source/santactl/Commands/sync/NSData+Zlib.h"
+#import "Source/santactl/Commands/sync/SNTCommandSyncConstants.h"
+#import "Source/santactl/Commands/sync/SNTCommandSyncState.h"
 
 @implementation SNTCommandSyncEventUpload
 

@@ -12,7 +12,7 @@
 ///    See the License for the specific language governing permissions and
 ///    limitations under the License.
 
-#import "SNTDropRootPrivs.h"
+#import "Source/common/SNTDropRootPrivs.h"
 
 BOOL DropRootPrivileges() {
   if (getuid() == 0 || geteuid() == 0 || getgid() == 0 || getegid() == 0) {

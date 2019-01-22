@@ -14,7 +14,7 @@
 
 #import <Foundation/Foundation.h>
 
-#import "SNTCommandController.h"
+#import "Source/santactl/SNTCommandController.h"
 
 ///
 ///  santactl is a command-line utility for managing Santa.

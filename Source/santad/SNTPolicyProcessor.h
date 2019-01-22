@@ -13,11 +13,10 @@
 ///    limitations under the License.
 
 #import <Foundation/Foundation.h>
+#import <MOLCertificate/MOLCertificate.h>
 
 #import "Source/common/SNTCommonEnums.h"
 #import "Source/common/SNTKernelCommon.h"
-
-#import <MOLCertificate/MOLCertificate.h>
 
 @class SNTCachedDecision;
 @class SNTFileInfo;

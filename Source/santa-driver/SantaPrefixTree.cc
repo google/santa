@@ -12,13 +12,15 @@
 ///    See the License for the specific language governing permissions and
 ///    limitations under the License.
 
-#include "SantaPrefixTree.h"
+#include "Source/santa-driver/SantaPrefixTree.h"
 
 #ifdef KERNEL
 #include <libkern/locks.h>
 
-#include "SNTLogging.h"
+#include "Source/common/SNTLogging.h"
 #else
+#include <string.h>
+
 #define LOGD(format, ...) // NOP
 #define LOGE(format, ...) // NOP
 
@@ -200,7 +202,7 @@ void SantaPrefixTree::PruneNode(SantaPrefixNode *target) {
   auto stack = new SantaPrefixNode *[node_count_ + 1];
   if (!stack) {
     LOGE("Unable to prune tree!");
-    
+
     return;
   }
   auto count = 0;

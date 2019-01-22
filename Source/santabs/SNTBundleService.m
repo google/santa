@@ -17,10 +17,9 @@
 #include <stdatomic.h>
 
 #import <CommonCrypto/CommonDigest.h>
-#import <pthread/pthread.h>
-
 #import <MOLCodesignChecker/MOLCodesignChecker.h>
 #import <MOLXPCConnection/MOLXPCConnection.h>
+#import <pthread/pthread.h>
 
 #import "Source/common/SNTFileInfo.h"
 #import "Source/common/SNTStoredEvent.h"

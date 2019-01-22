@@ -12,9 +12,9 @@
 ///    See the License for the specific language governing permissions and
 ///    limitations under the License.
 
-#import "SNTXPCBundleServiceInterface.h"
+#import "Source/common/SNTXPCBundleServiceInterface.h"
 
-#import "SNTStoredEvent.h"
+#import "Source/common/SNTStoredEvent.h"
 
 @implementation SNTXPCBundleServiceInterface
 

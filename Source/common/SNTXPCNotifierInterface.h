@@ -14,8 +14,8 @@
 
 #import <Foundation/Foundation.h>
 
-#import "SNTCommonEnums.h"
-#import "SNTXPCBundleServiceInterface.h"
+#import "Source/common/SNTCommonEnums.h"
+#import "Source/common/SNTXPCBundleServiceInterface.h"
 
 @class SNTStoredEvent;
 

@@ -1,4 +1,9 @@
-load("@build_bazel_rules_apple//apple:macos.bzl", "macos_kernel_extension")
+load(
+    "@build_bazel_rules_apple//apple:macos.bzl",
+    "macos_command_line_application",
+    "macos_kernel_extension",
+)
+load("//:helper.bzl", "run_command", "santa_unit_test")
 load("//:version.bzl", "SANTA_VERSION")
 
 cc_library(
@@ -37,6 +42,26 @@ cc_library(
     alwayslink = 1,
 )
 
+santa_unit_test(
+    name = "SantaCacheTest",
+    srcs = [
+        "SantaCache.h",
+        "SantaCacheTest.mm",
+    ],
+    deps = ["//Source/common:SNTKernelCommon"],
+)
+
+santa_unit_test(
+    name = "SantaPrefixTreeTest",
+    srcs = [
+        "SantaPrefixTree.cc",
+        "SantaPrefixTree.h",
+        "SantaPrefixTreeTest.mm",
+    ],
+    copts = ["-std=c++1z"],
+    deps = ["//Source/common:SNTKernelCommon"],
+)
+
 # Full santa-driver.kext containing all Santa components
 macos_kernel_extension(
     name = "santa-driver",
@@ -47,7 +72,7 @@ macos_kernel_extension(
         "//Source/santad": "MacOS",
     },
     bundle_id = "com.google.santa-driver",
-    infoplists = ["Resources/santa-driver-Info.plist"],
+    infoplists = ["Info.plist"],
     minimum_os_version = "10.9",
     version = "//:version",
     visibility = ["//visibility:public"],
@@ -58,9 +83,48 @@ macos_kernel_extension(
 macos_kernel_extension(
     name = "santa-driver_min",
     bundle_id = "com.google.santa-driver",
-    infoplists = ["Resources/santa-driver-Info.plist"],
+    infoplists = ["Info.plist"],
     minimum_os_version = "10.9",
     version = "//:version",
     visibility = ["//visibility:public"],
     deps = [":santa-driver_lib"],
+)
+
+objc_library(
+    name = "kernel_tests_lib",
+    srcs = ["kernel_tests.mm"],
+    sdk_frameworks = [
+        "Foundation",
+        "IOKit",
+    ],
+    deps = ["//Source/common:SNTKernelCommon"],
+)
+
+macos_command_line_application(
+    name = "kernel_tests_bin",
+    bundle_id = "com.google.santa.KernelTests",
+    minimum_os_version = "10.9",
+    deps = [":kernel_tests_lib"],
+)
+
+run_command(
+    name = "kernel_tests",
+    srcs = [
+        ":kernel_tests_bin",
+        "//Source/santa-driver:santa-driver_min",
+    ],
+    cmd = """
+env
+function sigint() {
+  echo "\nInterrupted, unloading driver."
+  sudo kextunload -b com.google.santa-driver >/dev/null
+  exit 1
+}
+unzip -o $${BUILD_WORKSPACE_DIRECTORY}/bazel-bin/Source/santa-driver/santa-driver.zip >/dev/null
+echo "Launching Kernel Tests as root. You may be prompted for your sudo password."
+trap sigint INT
+sudo $${BUILD_WORKSPACE_DIRECTORY}/bazel-bin/Source/santa-driver/kernel_tests_bin
+echo "Tests complete, unloading driver."
+sudo kextunload -b com.google.santa-driver >/dev/null
+""",
 )

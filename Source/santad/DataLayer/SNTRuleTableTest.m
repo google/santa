@@ -12,13 +12,12 @@
 ///    See the License for the specific language governing permissions and
 ///    limitations under the License.
 
-#import <XCTest/XCTest.h>
-
-#import "SNTRule.h"
-#import "SNTRuleTable.h"
-
 #import <MOLCertificate/MOLCertificate.h>
 #import <MOLCodesignChecker/MOLCodesignChecker.h>
+#import <XCTest/XCTest.h>
+
+#import "Source/common/SNTRule.h"
+#import "Source/santad/DataLayer/SNTRuleTable.h"
 
 @interface SNTRuleTable (Testing)
 @property NSString *santadCertSHA;

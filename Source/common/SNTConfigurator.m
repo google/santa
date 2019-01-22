@@ -12,13 +12,13 @@
 ///    See the License for the specific language governing permissions and
 ///    limitations under the License.
 
-#import "SNTConfigurator.h"
+#import "Source/common/SNTConfigurator.h"
 
 #include <sys/stat.h>
 
-#import "SNTLogging.h"
-#import "SNTStrengthify.h"
-#import "SNTSystemInfo.h"
+#import "Source/common/SNTLogging.h"
+#import "Source/common/SNTStrengthify.h"
+#import "Source/common/SNTSystemInfo.h"
 
 @interface SNTConfigurator ()
 /// A NSUserDefaults object set to use the com.google.santa suite.
