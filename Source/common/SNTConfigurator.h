@@ -14,7 +14,7 @@
 
 #import <Foundation/Foundation.h>
 
-#import "SNTCommonEnums.h"
+#import "Source/common/SNTCommonEnums.h"
 
 ///
 ///  Singleton that provides an interface for managing configuration values on disk

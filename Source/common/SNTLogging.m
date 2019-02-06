@@ -12,7 +12,7 @@
 ///    See the License for the specific language governing permissions and
 ///    limitations under the License.
 
-#import "SNTLogging.h"
+#import "Source/common/SNTLogging.h"
 
 #import <asl.h>
 #import <pthread.h>

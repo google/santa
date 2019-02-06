@@ -12,18 +12,17 @@
 ///    See the License for the specific language governing permissions and
 ///    limitations under the License.
 
-#import "SNTCommandSyncPreflight.h"
-
-#include "SNTKernelCommon.h"
-#include "SNTLogging.h"
+#import "Source/santactl/Commands/sync/SNTCommandSyncPreflight.h"
 
 #import <MOLXPCConnection/MOLXPCConnection.h>
 
-#import "SNTCommandSyncConstants.h"
-#import "SNTCommandSyncState.h"
-#import "SNTConfigurator.h"
-#import "SNTSystemInfo.h"
-#import "SNTXPCControlInterface.h"
+#import "Source/common/SNTConfigurator.h"
+#import "Source/common/SNTKernelCommon.h"
+#import "Source/common/SNTLogging.h"
+#import "Source/common/SNTSystemInfo.h"
+#import "Source/common/SNTXPCControlInterface.h"
+#import "Source/santactl/Commands/sync/SNTCommandSyncConstants.h"
+#import "Source/santactl/Commands/sync/SNTCommandSyncState.h"
 
 @implementation SNTCommandSyncPreflight
 

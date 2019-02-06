@@ -12,14 +12,12 @@
 ///    See the License for the specific language governing permissions and
 ///    limitations under the License.
 
-#import <XCTest/XCTest.h>
-
-#import <OCMock/OCMock.h>
-
 #import <MOLCodesignChecker/MOLCodesignChecker.h>
 #import <MOLXPCConnection/MOLXPCConnection.h>
+#import <OCMock/OCMock.h>
+#import <XCTest/XCTest.h>
 
-#import "SNTFileInfo.h"
+#import "Source/common/SNTFileInfo.h"
 
 @interface SNTCommandFileInfo : NSObject
 

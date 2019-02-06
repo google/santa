@@ -12,21 +12,20 @@
 ///    See the License for the specific language governing permissions and
 ///    limitations under the License.
 
+
 #import <Foundation/Foundation.h>
-
-#import "SNTCommand.h"
-#import "SNTCommandController.h"
-
 #import <MOLCertificate/MOLCertificate.h>
 #import <MOLCodesignChecker/MOLCodesignChecker.h>
 #import <MOLXPCConnection/MOLXPCConnection.h>
 
-#import "SNTConfigurator.h"
-#import "SNTDropRootPrivs.h"
-#import "SNTFileInfo.h"
-#include "SNTLogging.h"
-#import "SNTRule.h"
-#import "SNTXPCControlInterface.h"
+#import "Source/common/SNTConfigurator.h"
+#import "Source/common/SNTDropRootPrivs.h"
+#import "Source/common/SNTFileInfo.h"
+#import "Source/common/SNTLogging.h"
+#import "Source/common/SNTRule.h"
+#import "Source/common/SNTXPCControlInterface.h"
+#import "Source/santactl/SNTCommand.h"
+#import "Source/santactl/SNTCommandController.h"
 
 @interface SNTCommandRule : SNTCommand<SNTCommandProtocol>
 @end

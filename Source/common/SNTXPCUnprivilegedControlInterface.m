@@ -12,12 +12,12 @@
 ///    See the License for the specific language governing permissions and
 ///    limitations under the License.
 
-#import "SNTXPCUnprivilegedControlInterface.h"
+#import "Source/common/SNTXPCUnprivilegedControlInterface.h"
 
 #import <MOLXPCConnection/MOLXPCConnection.h>
 
-#import "SNTRule.h"
-#import "SNTStoredEvent.h"
+#import "Source/common/SNTRule.h"
+#import "Source/common/SNTStoredEvent.h"
 
 @implementation SNTXPCUnprivilegedControlInterface
 

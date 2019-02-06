@@ -14,15 +14,13 @@
 
 #import <Foundation/Foundation.h>
 #import <IOKit/kext/KextManager.h>
-
-#import "SNTCommand.h"
-#import "SNTCommandController.h"
-
 #import <MOLXPCConnection/MOLXPCConnection.h>
 
-#import "SNTCommonEnums.h"
-#import "SNTFileInfo.h"
-#import "SNTKernelCommon.h"
+#import "Source/common/SNTCommonEnums.h"
+#import "Source/common/SNTFileInfo.h"
+#import "Source/common/SNTKernelCommon.h"
+#import "Source/santactl/SNTCommand.h"
+#import "Source/santactl/SNTCommandController.h"
 
 @interface SNTCommandVersion : SNTCommand<SNTCommandProtocol>
 @end

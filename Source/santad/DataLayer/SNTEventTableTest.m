@@ -12,13 +12,12 @@
 ///    See the License for the specific language governing permissions and
 ///    limitations under the License.
 
+#import <MOLCodesignChecker/MOLCodesignChecker.h>
 #import <XCTest/XCTest.h>
 
-#import <MOLCodesignChecker/MOLCodesignChecker.h>
-
-#import "SNTEventTable.h"
-#import "SNTFileInfo.h"
-#import "SNTStoredEvent.h"
+#import "Source/common/SNTFileInfo.h"
+#import "Source/common/SNTStoredEvent.h"
+#import "Source/santad/DataLayer/SNTEventTable.h"
 
 /// This test case actually tests SNTEventTable and SNTStoredEvent.
 ///

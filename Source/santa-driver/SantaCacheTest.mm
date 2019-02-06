@@ -18,7 +18,7 @@
 #include <string>
 #include <vector>
 
-#include "SantaCache.h"
+#include "Source/santa-driver/SantaCache.h"
 
 @interface SantaCacheTest : XCTestCase
 @end
@@ -71,7 +71,7 @@
 
 - (void)testCacheResetAtLimit {
   auto sut = SantaCache<uint64_t, uint64_t>(5);
-  
+
   sut.set(1, 42);
   sut.set(2, 42);
   sut.set(3, 42);

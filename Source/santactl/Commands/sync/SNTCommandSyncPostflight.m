@@ -12,15 +12,14 @@
 ///    See the License for the specific language governing permissions and
 ///    limitations under the License.
 
-#import "SNTCommandSyncPostflight.h"
-
-#include "SNTLogging.h"
+#import "Source/santactl/Commands/sync/SNTCommandSyncPostflight.h"
 
 #import <MOLXPCConnection/MOLXPCConnection.h>
 
-#import "SNTCommandSyncConstants.h"
-#import "SNTCommandSyncState.h"
-#import "SNTXPCControlInterface.h"
+#import "Source/common/SNTLogging.h"
+#import "Source/common/SNTXPCControlInterface.h"
+#import "Source/santactl/Commands/sync/SNTCommandSyncConstants.h"
+#import "Source/santactl/Commands/sync/SNTCommandSyncState.h"
 
 @implementation SNTCommandSyncPostflight
 

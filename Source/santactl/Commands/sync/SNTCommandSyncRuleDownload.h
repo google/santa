@@ -14,8 +14,9 @@
 
 #import <Foundation/Foundation.h>
 
-#import "SNTCommandSyncStage.h"
-#import "SNTRule.h"
+#import "Source/santactl/Commands/sync/SNTCommandSyncStage.h"
+
+@class SNTRule;
 
 @interface SNTCommandSyncRuleDownload : SNTCommandSyncStage
 - (SNTRule *)ruleFromDictionary:(NSDictionary *)dict;

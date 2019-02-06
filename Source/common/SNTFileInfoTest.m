@@ -14,7 +14,7 @@
 
 #import <XCTest/XCTest.h>
 
-#import "SNTFileInfo.h"
+#import "Source/common/SNTFileInfo.h"
 
 @interface SNTFileInfoTest : XCTestCase
 @end
@@ -23,12 +23,12 @@
 
 - (NSString *)directoryBundle {
   NSString *rp = [[NSBundle bundleForClass:[self class]] resourcePath];
-  return [rp stringByAppendingPathComponent:@"Tests/LogicTests/Resources/DirectoryBundle"];
+  return [rp stringByAppendingPathComponent:@"testdata/DirectoryBundle"];
 }
 
 - (NSString *)bundleExample {
   NSString *rp = [[NSBundle bundleForClass:[self class]] resourcePath];
-  return [rp stringByAppendingPathComponent:@"Tests/LogicTests/Resources/BundleExample.app"];
+  return [rp stringByAppendingPathComponent:@"testdata/BundleExample.app"];
 }
 
 - (void)testPathStandardizing {
@@ -149,12 +149,12 @@
 
   XCTAssertNotNil([sut bundle]);
 
-  XCTAssertEqualObjects([sut bundleIdentifier], @"com.google.santa.LogicTests");
+  XCTAssertEqualObjects([sut bundleIdentifier], @"com.google.santa.UnitTest.SNTFileInfoTest");
   XCTAssertNotNil([sut bundleVersion]);
   XCTAssertNotNil([sut bundleShortVersionString]);
 
   NSString *ancestorBundlePath = path;
-  for (int i = 0; i < 6; i++) {
+  for (int i = 0; i < 4; i++) {
     ancestorBundlePath = [ancestorBundlePath stringByDeletingLastPathComponent];
   }
   XCTAssertEqualObjects([sut bundlePath], ancestorBundlePath);
@@ -167,7 +167,7 @@
 
   XCTAssertNotNil([sut bundle]);
 
-  XCTAssertEqualObjects([sut bundleIdentifier], @"com.google.santa.LogicTests");
+  XCTAssertEqualObjects([sut bundleIdentifier], @"com.google.santa.UnitTest.SNTFileInfoTest");
   XCTAssertNotNil([sut bundleVersion]);
   XCTAssertNotNil([sut bundleShortVersionString]);
   XCTAssertEqualObjects([sut bundlePath], path);
@@ -208,12 +208,12 @@
 
   XCTAssertNotNil([sut bundle]);
 
-  XCTAssertEqualObjects([sut bundleIdentifier], @"com.google.santa.LogicTests");
+  XCTAssertEqualObjects([sut bundleIdentifier], @"com.google.santa.UnitTest.SNTFileInfoTest");
   XCTAssertNotNil([sut bundleVersion]);
   XCTAssertNotNil([sut bundleShortVersionString]);
 
   NSString *ancestorBundlePath = path;
-  for (int i = 0; i < 6; i++) {
+  for (int i = 0; i < 4; i++) {
     ancestorBundlePath = [ancestorBundlePath stringByDeletingLastPathComponent];
   }
   XCTAssertEqualObjects([sut bundlePath], ancestorBundlePath);

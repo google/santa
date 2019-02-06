@@ -23,10 +23,10 @@
 #include <sys/proc.h>
 #include <sys/vnode.h>
 
-#include "SantaCache.h"
-#include "SantaPrefixTree.h"
-#include "SNTKernelCommon.h"
-#include "SNTLogging.h"
+#include "Source/common/SNTKernelCommon.h"
+#include "Source/common/SNTLogging.h"
+#include "Source/santa-driver/SantaCache.h"
+#include "Source/santa-driver/SantaPrefixTree.h"
 
 ///
 ///  SantaDecisionManager is responsible for intercepting Vnode execute actions
@@ -79,7 +79,7 @@ class SantaDecisionManager : public OSObject {
   kern_return_t StartListener();
 
   /**
-    Stops the kauth listeners. After stopping new callback requests, waits 
+    Stops the kauth listeners. After stopping new callback requests, waits
     until all current invocations have finished before clearing the cache and
     returning.
   */
@@ -100,7 +100,7 @@ class SantaDecisionManager : public OSObject {
 
   /**
     Stops the pid monitor threads.  Waits until all threads have stopped before
-    returning.  This also frees the compiler_pid_set_.  Returns true if all 
+    returning.  This also frees the compiler_pid_set_.  Returns true if all
     threads exited cleanly.  Returns false if timed out while waiting.
   */
   bool StopPidMonitorThreads();
@@ -114,7 +114,7 @@ class SantaDecisionManager : public OSObject {
                   const uint64_t microsecs = GetCurrentUptime());
 
   /**
-    Fetches a response from the cache, first checking to see if the entry 
+    Fetches a response from the cache, first checking to see if the entry
     has expired.
   */
   santa_action_t GetFromCache(santa_vnode_id_t identifier);

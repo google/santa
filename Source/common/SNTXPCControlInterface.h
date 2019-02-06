@@ -12,7 +12,7 @@
 ///    See the License for the specific language governing permissions and
 ///    limitations under the License.
 
-#import "SNTXPCUnprivilegedControlInterface.h"
+#import "Source/common/SNTXPCUnprivilegedControlInterface.h"
 
 ///
 ///  Protocol implemented by santad and utilized by santactl (privileged operations)

@@ -1,1 +1,1 @@
-common --apple_generate_dsym
+common --apple_generate_dsym --define=apple.propagate_embedded_extra_outputs=yes

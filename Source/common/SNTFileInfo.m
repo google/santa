@@ -12,9 +12,10 @@
 ///    See the License for the specific language governing permissions and
 ///    limitations under the License.
 
-#import "SNTFileInfo.h"
+#import "Source/common/SNTFileInfo.h"
 
 #import <CommonCrypto/CommonDigest.h>
+#import <fmdb/FMDB.h>
 #import <MOLCodesignChecker/MOLCodesignChecker.h>
 
 #include <mach-o/arch.h>
@@ -24,7 +25,6 @@
 #include <sys/stat.h>
 #include <sys/xattr.h>
 
-#import <fmdb/FMDB.h>
 
 // Simple class to hold the data of a mach_header and the offset within the file
 // in which that header was found.

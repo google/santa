@@ -12,15 +12,15 @@
 ///    See the License for the specific language governing permissions and
 ///    limitations under the License.
 
-#import "SNTCommandSyncStage.h"
+#import "Source/santactl/Commands/sync/SNTCommandSyncStage.h"
 
 #import <MOLXPCConnection/MOLXPCConnection.h>
 
-#import "NSData+Zlib.h"
-#import "SNTCommandSyncConstants.h"
-#import "SNTCommandSyncState.h"
-#import "SNTLogging.h"
-#import "SNTXPCControlInterface.h"
+#import "Source/common/SNTLogging.h"
+#import "Source/common/SNTXPCControlInterface.h"
+#import "Source/santactl/Commands/sync/NSData+Zlib.h"
+#import "Source/santactl/Commands/sync/SNTCommandSyncConstants.h"
+#import "Source/santactl/Commands/sync/SNTCommandSyncState.h"
 
 @interface SNTCommandSyncStage ()
 

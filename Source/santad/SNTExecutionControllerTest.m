@@ -12,21 +12,19 @@
 ///    See the License for the specific language governing permissions and
 ///    limitations under the License.
 
-#import <XCTest/XCTest.h>
-
-#import <OCMock/OCMock.h>
-
-#import "SNTExecutionController.h"
-
 #import <MOLCertificate/MOLCertificate.h>
 #import <MOLCodesignChecker/MOLCodesignChecker.h>
+#import <OCMock/OCMock.h>
+#import <XCTest/XCTest.h>
 
-#import "SNTConfigurator.h"
-#import "SNTDriverManager.h"
-#import "SNTEventTable.h"
-#import "SNTFileInfo.h"
-#import "SNTRule.h"
-#import "SNTRuleTable.h"
+#import "Source/santad/SNTExecutionController.h"
+
+#import "Source/common/SNTConfigurator.h"
+#import "Source/common/SNTFileInfo.h"
+#import "Source/common/SNTRule.h"
+#import "Source/santad/SNTDriverManager.h"
+#import "Source/santad/DataLayer/SNTEventTable.h"
+#import "Source/santad/DataLayer/SNTRuleTable.h"
 
 @interface SNTExecutionControllerTest : XCTestCase
 @property id mockConfigurator;

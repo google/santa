@@ -29,7 +29,7 @@
 #include <sys/types.h>
 #include <vector>
 
-#include "SNTKernelCommon.h"
+#include "Source/common/SNTKernelCommon.h"
 
 ///
 /// Kernel Extension Tests

@@ -12,11 +12,11 @@
 ///    See the License for the specific language governing permissions and
 ///    limitations under the License.
 
-#import "SNTBlockMessage.h"
+#import "Source/common/SNTBlockMessage.h"
 
-#import "SNTConfigurator.h"
-#import "SNTLogging.h"
-#import "SNTStoredEvent.h"
+#import "Source/common/SNTConfigurator.h"
+#import "Source/common/SNTLogging.h"
+#import "Source/common/SNTStoredEvent.h"
 
 @implementation SNTBlockMessage
 

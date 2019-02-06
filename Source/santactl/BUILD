@@ -1,4 +1,5 @@
 load("@build_bazel_rules_apple//apple:macos.bzl", "macos_command_line_application")
+load("//:helper.bzl", "santa_unit_test")
 
 objc_library(
     name = "santactl_lib",
@@ -40,12 +41,6 @@ objc_library(
             "Commands/SNTCommandFlushCache.m",
         ],
     }),
-    includes = [
-        ".",
-        "../common",
-        "./Commands",
-        "./Commands/sync",
-    ],
     sdk_dylibs = ["libz"],
     sdk_frameworks = ["IOKit"],
     deps = [
@@ -75,9 +70,77 @@ objc_library(
 macos_command_line_application(
     name = "santactl",
     bundle_id = "com.google.santactl",
-    infoplists = ["Resources/santactl-Info.plist"],
+    infoplists = ["Info.plist"],
     minimum_os_version = "10.9",
     version = "//:version",
     visibility = ["//visibility:public"],
     deps = [":santactl_lib"],
 )
+
+santa_unit_test(
+    name = "SNTCommandFileInfoTest",
+    srcs = [
+        "SNTCommand.h",
+        "SNTCommand.m",
+        "SNTCommandController.h",
+        "SNTCommandController.m",
+        "Commands/SNTCommandFileInfo.m",
+        "Commands/SNTCommandFileInfoTest.m",
+    ],
+    deps = [
+        "//Source/common:SNTCachedDecision",
+        "//Source/common:SNTFileInfo",
+        "//Source/common:SNTLogging",
+        "//Source/common:SNTXPCControlInterface",
+        "@MOLCertificate",
+        "@MOLCodesignChecker",
+        "@MOLXPCConnection",
+        "@OCMock",
+    ],
+)
+
+santa_unit_test(
+    name = "SNTCommandSyncTest",
+    srcs = [
+        "SNTCommand.h",
+        "SNTcommand.m",
+        "SNTcommandController.h",
+        "SNTcommandController.m",
+        "Commands/sync/NSData+Zlib.h",
+        "Commands/sync/NSData+Zlib.m",
+        "Commands/sync/SNTCommandSync.m",
+        "Commands/sync/SNTCommandSyncConstants.h",
+        "Commands/sync/SNTCommandSyncConstants.m",
+        "Commands/sync/SNTCommandSyncEventUpload.h",
+        "Commands/sync/SNTCommandSyncEventUpload.m",
+        "Commands/sync/SNTCommandSyncManager.h",
+        "Commands/sync/SNTCommandSyncManager.m",
+        "Commands/sync/SNTCommandSyncPostflight.h",
+        "Commands/sync/SNTCommandSyncPostflight.m",
+        "Commands/sync/SNTCommandSyncPreflight.h",
+        "Commands/sync/SNTCommandSyncPreflight.m",
+        "Commands/sync/SNTCommandSyncRuleDownload.h",
+        "Commands/sync/SNTCommandSyncRuleDownload.m",
+        "Commands/sync/SNTCommandSyncStage.h",
+        "Commands/sync/SNTCommandSyncStage.m",
+        "Commands/sync/SNTCommandSyncState.h",
+        "Commands/sync/SNTCommandSyncState.m",
+    ],
+    deps = [
+        "//Source/common:SNTCommonEnums",
+        "//Source/common:SNTConfigurator",
+        "//Source/common:SNTDropRootPrivs",
+        "//Source/common:SNTFileInfo",
+        "//Source/common:SNTLogging",
+        "//Source/common:SNTRule",
+        "//Source/common:SNTStoredEvent",
+        "//Source/common:SNTXPCControlInterface",
+        "//Source/common:SNTXPCSyncdInterface",
+        "@MOLAuthenticatingURLSession",
+        "@MOLFCMClient",
+        "@MOLXPCConnection",
+        "@OCMock",
+    ],
+    sdk_dylibs = ["libz"],
+)
+

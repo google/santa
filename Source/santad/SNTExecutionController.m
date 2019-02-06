@@ -31,12 +31,12 @@
 #import "Source/common/SNTRule.h"
 #import "Source/common/SNTStoredEvent.h"
 #import "Source/santad/SNTDriverManager.h"
-#import "Source/santad/Logs/SNTEventLog.h"
-#import "Source/santad/DataLayer/SNTEventTable.h"
 #import "Source/santad/SNTNotificationQueue.h"
 #import "Source/santad/SNTPolicyProcessor.h"
-#import "Source/santad/DataLayer/SNTRuleTable.h"
 #import "Source/santad/SNTSyncdQueue.h"
+#import "Source/santad/DataLayer/SNTEventTable.h"
+#import "Source/santad/DataLayer/SNTRuleTable.h"
+#import "Source/santad/Logs/SNTEventLog.h"
 
 // A binary is considered large at ~30MB. Large binaries take longer to hash and consequently
 // longer to post a decision back to santa-driver. When a binary is considered large santad will
@@ -162,7 +162,7 @@ static size_t kLargeBinarySize = 30 * 1024 * 1024;
   // Log to database if necessary.
   if (cd.decision != SNTEventStateAllowBinary &&
       cd.decision != SNTEventStateAllowCompiler &&
-      cd.decision != SNTEventStateAllowTransitive && 
+      cd.decision != SNTEventStateAllowTransitive &&
       cd.decision != SNTEventStateAllowCertificate &&
       cd.decision != SNTEventStateAllowScope) {
     SNTStoredEvent *se = [[SNTStoredEvent alloc] init];

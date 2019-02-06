@@ -1,4 +1,5 @@
 load("@build_bazel_rules_apple//apple:macos.bzl", "macos_command_line_application")
+load("//:helper.bzl", "santa_unit_test")
 
 objc_library(
     name = "santad_lib",
@@ -67,4 +68,86 @@ macos_command_line_application(
     version = "//:version",
     visibility = ["//visibility:public"],
     deps = [":santad_lib"],
+)
+
+santa_unit_test(
+    name = "SNTExecutionControllerTest",
+    srcs = [
+        "DataLayer/SNTDatabaseTable.h",
+        "DataLayer/SNTDatabaseTable.m",
+        "DataLayer/SNTEventTable.h",
+        "DataLayer/SNTEventTable.m",
+        "DataLayer/SNTRuleTable.h",
+        "DataLayer/SNTRuleTable.m",
+        "Logs/SNTEventLog.h",
+        "Logs/SNTEventLog.m",
+        "SNTDatabaseController.h",
+        "SNTDatabaseController.m",
+        "SNTDriverManager.h",
+        "SNTDriverManager.m",
+        "SNTExecutionController.h",
+        "SNTExecutionController.m",
+        "SNTExecutionControllerTest.m",
+        "SNTNotificationQueue.h",
+        "SNTNotificationQueue.m",
+        "SNTPolicyProcessor.h",
+        "SNTPolicyProcessor.m",
+        "SNTSyncdQueue.h",
+        "SNTSyncdQueue.m",
+    ],
+    deps = [
+        "//Source/common:SNTBlockMessage",
+        "//Source/common:SNTCachedDecision",
+        "//Source/common:SNTCommonEnums",
+        "//Source/common:SNTDropRootPrivs",
+        "//Source/common:SNTFileInfo",
+        "//Source/common:SNTKernelCommon",
+        "//Source/common:SNTLogging",
+        "//Source/common:SNTRule",
+        "//Source/common:SNTXPCNotifierInterface",
+        "//Source/common:SNTXPCSyncdInterface",
+        "@MOLCodesignChecker",
+        "@MOLXPCConnection",
+        "@OCMock",
+    ],
+)
+
+santa_unit_test(
+    name = "SNTEventTableTest",
+    srcs = [
+        "DataLayer/SNTDatabaseTable.h",
+        "DataLayer/SNTDatabaseTable.m",
+        "DataLayer/SNTEventTable.h",
+        "DataLayer/SNTEventTable.m",
+        "DataLayer/SNTEventTableTest.m",
+    ],
+    deps = [
+        "//Source/common:SNTFileInfo",
+        "//Source/common:SNTLogging",
+        "//Source/common:SNTStoredEvent",
+        "@FMDB",
+        "@MOLCertificate",
+        "@MOLCodesignChecker",
+    ],
+)
+
+santa_unit_test(
+    name = "SNTRuleTableTest",
+    srcs = [
+        "DataLayer/SNTDatabaseTable.h",
+        "DataLayer/SNTDatabaseTable.m",
+        "DataLayer/SNTRuleTable.h",
+        "DataLayer/SNTRuleTable.m",
+        "DataLayer/SNTRuleTableTest.m",
+    ],
+    deps = [
+        "//Source/common:SNTCachedDecision",
+        "//Source/common:SNTConfigurator",
+        "//Source/common:SNTFileInfo",
+        "//Source/common:SNTLogging",
+        "//Source/common:SNTRule",
+        "@FMDB",
+        "@MOLCertificate",
+        "@MOLCodesignChecker",
+    ],
 )

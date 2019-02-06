@@ -9,4 +9,4 @@ addons:
 
 script:
  - bazel build :release --show_progress_rate_limit=30.0 -c opt --apple_generate_dsym --color=no --verbose_failures --sandbox_debug
- - bazel test :logic_tests --show_progress_rate_limit=30.0 --test_output=errors --verbose_failures --sandbox_debug
+ - bazel test :unit_tests --show_progress_rate_limit=30.0 --test_output=errors --color=no --verbose_failures --sandbox_debug

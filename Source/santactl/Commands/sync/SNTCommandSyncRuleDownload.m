@@ -12,16 +12,15 @@
 ///    See the License for the specific language governing permissions and
 ///    limitations under the License.
 
-#import "SNTCommandSyncRuleDownload.h"
+#import "Source/santactl/Commands/sync/SNTCommandSyncRuleDownload.h"
 
 #import <MOLXPCConnection/MOLXPCConnection.h>
 
-#import "SNTCommandSyncConstants.h"
-#import "SNTCommandSyncState.h"
-#import "SNTRule.h"
-#import "SNTXPCControlInterface.h"
-
-#include "SNTLogging.h"
+#import "Source/common/SNTLogging.h"
+#import "Source/common/SNTRule.h"
+#import "Source/common/SNTXPCControlInterface.h"
+#import "Source/santactl/Commands/sync/SNTCommandSyncConstants.h"
+#import "Source/santactl/Commands/sync/SNTCommandSyncState.h"
 
 @implementation SNTCommandSyncRuleDownload
 

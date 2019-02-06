@@ -37,6 +37,7 @@ GUI_USER=$(/usr/bin/stat -f '%u' /dev/console)
 /bin/rm /usr/libexec/santad >/dev/null 2>&1
 /bin/rm /usr/sbin/santactl >/dev/null 2>&1
 /bin/rm -rf /Applications/Santa.app 2>&1
+/bin/rm -rf /Library/Extensions/santa-driver.kext 2>&1
 
 # Copy new files.
 /bin/cp -r ${BINARIES}/santa-driver.kext /Library/Extensions

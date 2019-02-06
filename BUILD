@@ -5,8 +5,8 @@ licenses(["notice"])  # Apache 2.0
 exports_files(["LICENSE"])
 
 load("@build_bazel_rules_apple//apple:versioning.bzl", "apple_bundle_version")
+load("//:helper.bzl", "run_command")
 load("//:version.bzl", "SANTA_VERSION")
-load("//:cmd.bzl", "run_command")
 
 # The version label for mac_* rules.
 apple_bundle_version(
@@ -43,13 +43,13 @@ launchctl load /Library/LaunchAgents/com.google.santagui.plist
 
 run_command(
     name = "reload",
-    srcs = [":santa-driver"],
+    srcs = ["//Source/santa-driver"],
     cmd = """
 set -e
 
 rm -rf /tmp/bazel_santa_reload
 unzip -d /tmp/bazel_santa_reload \
-    $${BUILD_WORKSPACE_DIRECTORY}/bazel-bin/santa-driver.zip >/dev/null
+    $${BUILD_WORKSPACE_DIRECTORY}/bazel-bin/Source/santa-driver/santa-driver.zip >/dev/null
 echo "You may be asked for your password for sudo"
 sudo BINARIES=/tmp/bazel_santa_reload CONF=$${BUILD_WORKSPACE_DIRECTORY}/Conf \
     $${BUILD_WORKSPACE_DIRECTORY}/Conf/install.sh
@@ -64,8 +64,6 @@ echo "Time to stop being naughty"
 genrule(
     name = "release",
     srcs = [
-        "//Source/SantaGUI",  # Temporary, just for generating dSYMs
-        "//Source/santabs",  # Likewise
         "//Source/santa-driver",
         "Conf/install.sh",
         "Conf/uninstall.sh",
@@ -126,10 +124,6 @@ genrule(
         esac
       done
 
-      # Temporary workaround
-      mv $(@D)/binaries/santa-driver.kext/Contents/MacOS/{santactl,santad}.dSYM \
-          $(@D)/dsym
-
       # Cause a build failure if the dSYMs are missing.
       if [[ ! -d "$(@D)/dsym" ]]; then
         echo "dsym dir missing: Did you forget to use --apple_generate_dsym?"
@@ -147,4 +141,18 @@ genrule(
     """,
     }),
     heuristic_label_expansion = 0,
+)
+
+test_suite(
+    name = "unit_tests",
+    tests = [
+        "//Source/common:SNTFileInfoTest",
+        "//Source/santa-driver:SantaCacheTest",
+        "//Source/santa-driver:SantaPrefixTreeTest",
+        "//Source/santactl:SNTCommandFileInfoTest",
+        "//Source/santactl:SNTCommandSyncTest",
+        "//Source/santad:SNTEventTableTest",
+        "//Source/santad:SNTExecutionControllerTest",
+        "//Source/santad:SNTRuleTableTest",
+    ],
 )

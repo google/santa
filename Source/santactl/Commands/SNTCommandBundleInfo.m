@@ -12,15 +12,14 @@
 ///    See the License for the specific language governing permissions and
 ///    limitations under the License.
 
-#import "SNTCommand.h"
-#import "SNTCommandController.h"
-
 #import <MOLXPCConnection/MOLXPCConnection.h>
 
-#import "SNTFileInfo.h"
-#import "SNTLogging.h"
-#import "SNTStoredEvent.h"
-#import "SNTXPCControlInterface.h"
+#import "Source/common/SNTFileInfo.h"
+#import "Source/common/SNTLogging.h"
+#import "Source/common/SNTStoredEvent.h"
+#import "Source/common/SNTXPCControlInterface.h"
+#import "Source/santactl/SNTCommand.h"
+#import "Source/santactl/SNTCommandController.h"
 
 #ifdef DEBUG
 

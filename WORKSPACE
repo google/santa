@@ -8,7 +8,7 @@ load("@bazel_tools//tools/build_defs/repo:git.bzl",
 git_repository(
     name = "build_bazel_rules_apple",
     remote = "https://github.com/bazelbuild/rules_apple.git",
-    tag = "0.12.0",
+    commit = "46611296946be1eb0fe2e7e46b8b26b4662606b3",
 )
 
 load("@build_bazel_rules_apple//apple:repositories.bzl", "apple_rules_dependencies")

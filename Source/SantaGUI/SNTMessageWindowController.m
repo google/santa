@@ -14,9 +14,8 @@
 
 #import "Source/SantaGUI/SNTMessageWindowController.h"
 
-#import <SecurityInterface/SFCertificatePanel.h>
-
 #import <MOLCertificate/MOLCertificate.h>
+#import <SecurityInterface/SFCertificatePanel.h>
 
 #import "Source/common/SNTBlockMessage.h"
 #import "Source/common/SNTConfigurator.h"
