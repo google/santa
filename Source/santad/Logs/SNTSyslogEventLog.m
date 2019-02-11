@@ -250,7 +250,7 @@
 
 - (void)logBundleHashingEvents:(NSArray<SNTStoredEvent *> *)events {
   for (SNTStoredEvent *event in events) {
-    NSString *format = @"action=DISKDISAPPEAR|mount=%@|volume=%@|bsdname=%@";
+    NSString *format = @"action=BUNDLE|sha256=%@|bundlehash=%@|bundlename=%@|bundleid=%@|bundlepath=%@|path=%@";
     NSString *outLog = [NSMutableString stringWithFormat:format,
                            event.fileSHA256,
                            event.fileBundleHash,
