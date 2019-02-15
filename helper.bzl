@@ -1,5 +1,7 @@
 """This module defines some helper rules."""
 
+load("@build_bazel_rules_apple//apple:macos.bzl", "macos_unit_test")
+
 def run_command(name, cmd, **kwargs):
     """A rule to run a command."""
     native.genrule(
@@ -13,8 +15,6 @@ def run_command(name, cmd, **kwargs):
         name = name,
         srcs = ["%s.sh" % name],
     )
-
-load("@build_bazel_rules_apple//apple:macos.bzl", "macos_unit_test")
 
 def santa_unit_test(name,
                     srcs = [],
@@ -39,4 +39,3 @@ def santa_unit_test(name,
       deps = [":%s_lib" % name],
       size = size,
   )
-
