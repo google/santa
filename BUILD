@@ -43,13 +43,13 @@ launchctl load /Library/LaunchAgents/com.google.santagui.plist
 
 run_command(
     name = "reload",
-    srcs = ["//Source/santa-driver"],
+    srcs = ["//Source/santa_driver"],
     cmd = """
 set -e
 
 rm -rf /tmp/bazel_santa_reload
 unzip -d /tmp/bazel_santa_reload \
-    $${BUILD_WORKSPACE_DIRECTORY}/bazel-bin/Source/santa-driver/santa-driver.zip >/dev/null
+    $${BUILD_WORKSPACE_DIRECTORY}/bazel-bin/Source/santa_driver/santa_driver.zip >/dev/null
 echo "You may be asked for your password for sudo"
 sudo BINARIES=/tmp/bazel_santa_reload CONF=$${BUILD_WORKSPACE_DIRECTORY}/Conf \
     $${BUILD_WORKSPACE_DIRECTORY}/Conf/install.sh
@@ -64,7 +64,7 @@ echo "Time to stop being naughty"
 genrule(
     name = "release",
     srcs = [
-        "//Source/santa-driver",
+        "//Source/santa_driver",
         "Conf/install.sh",
         "Conf/uninstall.sh",
         "Conf/com.google.santad.plist",
@@ -82,9 +82,9 @@ genrule(
         echo "Please add '-c opt' flag to bazel invocation"
         """,
         ":opt_build": """
-      # Extract santa-driver.zip
+      # Extract santa_driver.zip
       for SRC in $(SRCS); do
-        if [[ $$(basename $${SRC}) == "santa-driver.zip" ]]; then
+        if [[ $$(basename $${SRC}) == "santa_driver.zip" ]]; then
           mkdir -p $(@D)/binaries
           unzip -q $${SRC} -d $(@D)/binaries >/dev/null
         fi
@@ -147,8 +147,8 @@ test_suite(
     name = "unit_tests",
     tests = [
         "//Source/common:SNTFileInfoTest",
-        "//Source/santa-driver:SantaCacheTest",
-        "//Source/santa-driver:SantaPrefixTreeTest",
+        "//Source/santa_driver:SantaCacheTest",
+        "//Source/santa_driver:SantaPrefixTreeTest",
         "//Source/santactl:SNTCommandFileInfoTest",
         "//Source/santactl:SNTCommandSyncTest",
         "//Source/santad:SNTEventTableTest",

@@ -9,7 +9,7 @@ load("//:helper.bzl", "run_command", "santa_unit_test")
 load("//:version.bzl", "SANTA_VERSION")
 
 cc_library(
-    name = "santa-driver_lib",
+    name = "santa_driver_lib",
     srcs = [
         "SantaCache.h",
         "SantaDecisionManager.cc",
@@ -65,7 +65,7 @@ santa_unit_test(
 
 # Full santa-driver.kext containing all Santa components
 macos_kernel_extension(
-    name = "santa-driver",
+    name = "santa_driver",
     additional_contents = {
         "//Source/santabs": "XPCServices",
         "//Source/SantaGUI": "Resources",
@@ -73,22 +73,24 @@ macos_kernel_extension(
         "//Source/santad": "MacOS",
     },
     bundle_id = "com.google.santa-driver",
+    bundle_name = "santa-driver",
     infoplists = ["Info.plist"],
     minimum_os_version = "10.9",
     version = "//:version",
     visibility = ["//visibility:public"],
-    deps = [":santa-driver_lib"],
+    deps = [":santa_driver_lib"],
 )
 
 # A minimal santa-driver.kext, no other Santa components
 macos_kernel_extension(
-    name = "santa-driver_min",
+    name = "santa_driver_min",
     bundle_id = "com.google.santa-driver",
+    bundle_name = "santa-driver",
     infoplists = ["Info.plist"],
     minimum_os_version = "10.9",
     version = "//:version",
     visibility = ["//visibility:public"],
-    deps = [":santa-driver_lib"],
+    deps = [":santa_driver_lib"],
 )
 
 objc_library(
@@ -112,7 +114,7 @@ run_command(
     name = "kernel_tests",
     srcs = [
         ":kernel_tests_bin",
-        "//Source/santa-driver:santa-driver_min",
+        "//Source/santa_driver:santa_driver_min",
     ],
     cmd = """
 env
@@ -121,11 +123,13 @@ function sigint() {
   sudo kextunload -b com.google.santa-driver >/dev/null
   exit 1
 }
-unzip -o $${BUILD_WORKSPACE_DIRECTORY}/bazel-bin/Source/santa-driver/santa-driver.zip >/dev/null
+unzip -o $${BUILD_WORKSPACE_DIRECTORY}/bazel-bin/Source/santa_driver/santa-driver.zip >/dev/null
 echo "Launching Kernel Tests as root. You may be prompted for your sudo password."
 trap sigint INT
-sudo $${BUILD_WORKSPACE_DIRECTORY}/bazel-bin/Source/santa-driver/kernel_tests_bin
-echo "Tests complete, unloading driver."
-sudo kextunload -b com.google.santa-driver >/dev/null
+sudo $${BUILD_WORKSPACE_DIRECTORY}/bazel-bin/Source/santa_driver/kernel_tests_bin
+echo "Tests complete."
+if kextstat | grep com.google.santa-driver; then
+  sudo kextunload -b com.google.santa-driver >/dev/null
+fi
 """,
 )

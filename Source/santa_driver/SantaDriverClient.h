@@ -21,8 +21,8 @@
 #include <sys/vnode.h>
 
 #include "Source/common/SNTKernelCommon.h"
-#include "Source/santa-driver/SantaDecisionManager.h"
-#include "Source/santa-driver/SantaDriver.h"
+#include "Source/santa_driver/SantaDecisionManager.h"
+#include "Source/santa_driver/SantaDriver.h"
 
 ///
 ///  This class is instantiated by IOKit when a new client process attempts to
