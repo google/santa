@@ -125,7 +125,6 @@ unzip -o $${BUILD_WORKSPACE_DIRECTORY}/bazel-bin/Source/santa_driver/santa-drive
 echo "Launching Kernel Tests as root. You may be prompted for your sudo password."
 trap sigint INT
 sudo $${BUILD_WORKSPACE_DIRECTORY}/bazel-bin/Source/santa_driver/kernel_tests_bin
-echo "Tests complete, unloading driver."
-sudo kextunload -b com.google.santa-driver >/dev/null
+echo "Tests complete."
 """,
 )
