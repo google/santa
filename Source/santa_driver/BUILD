@@ -60,6 +60,7 @@ santa_unit_test(
         "SantaPrefixTreeTest.mm",
     ],
     copts = ["-std=c++1z"],
+    minimum_os_version = "10.12",
     deps = ["//Source/common:SNTKernelCommon"],
 )
 
