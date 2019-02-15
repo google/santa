@@ -82,12 +82,12 @@ macos_command_line_application(
 santa_unit_test(
     name = "SNTCommandFileInfoTest",
     srcs = [
+        "Commands/SNTCommandFileInfo.m",
+        "Commands/SNTCommandFileInfoTest.m",
         "SNTCommand.h",
         "SNTCommand.m",
         "SNTCommandController.h",
         "SNTCommandController.m",
-        "Commands/SNTCommandFileInfo.m",
-        "Commands/SNTCommandFileInfoTest.m",
     ],
     deps = [
         "//Source/common:SNTCachedDecision",
@@ -104,10 +104,6 @@ santa_unit_test(
 santa_unit_test(
     name = "SNTCommandSyncTest",
     srcs = [
-        "SNTCommand.h",
-        "SNTcommand.m",
-        "SNTcommandController.h",
-        "SNTcommandController.m",
         "Commands/sync/NSData+Zlib.h",
         "Commands/sync/NSData+Zlib.m",
         "Commands/sync/SNTCommandSync.m",
@@ -127,7 +123,12 @@ santa_unit_test(
         "Commands/sync/SNTCommandSyncStage.m",
         "Commands/sync/SNTCommandSyncState.h",
         "Commands/sync/SNTCommandSyncState.m",
+        "SNTCommand.h",
+        "SNTcommand.m",
+        "SNTcommandController.h",
+        "SNTcommandController.m",
     ],
+    sdk_dylibs = ["libz"],
     deps = [
         "//Source/common:SNTCommonEnums",
         "//Source/common:SNTConfigurator",
@@ -143,6 +144,4 @@ santa_unit_test(
         "@MOLXPCConnection",
         "@OCMock",
     ],
-    sdk_dylibs = ["libz"],
 )
-

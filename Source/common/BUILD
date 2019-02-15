@@ -158,7 +158,6 @@ objc_library(
 santa_unit_test(
     name = "SNTFileInfoTest",
     srcs = ["SNTFileInfoTest.m"],
-    deps = [":SNTFileInfo"],
     resources = [
         "testdata/bad_pagezero",
         "testdata/missing_pagezero",
@@ -167,4 +166,5 @@ santa_unit_test(
         "testdata/BundleExample.app/**",
         "testdata/DirectoryBundle/**",
     ]),
+    deps = [":SNTFileInfo"],
 )
