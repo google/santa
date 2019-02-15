@@ -25,8 +25,8 @@
 
 #include "Source/common/SNTKernelCommon.h"
 #include "Source/common/SNTLogging.h"
-#include "Source/santa-driver/SantaCache.h"
-#include "Source/santa-driver/SantaPrefixTree.h"
+#include "Source/santa_driver/SantaCache.h"
+#include "Source/santa_driver/SantaPrefixTree.h"
 
 ///
 ///  SantaDecisionManager is responsible for intercepting Vnode execute actions

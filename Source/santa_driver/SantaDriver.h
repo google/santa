@@ -19,7 +19,7 @@
 #include <libkern/OSKextLib.h>
 
 #include "Source/common/SNTLogging.h"
-#include "Source/santa-driver/SantaDecisionManager.h"
+#include "Source/santa_driver/SantaDecisionManager.h"
 
 ///
 ///  The driver class, which provides the start/stop functions and holds

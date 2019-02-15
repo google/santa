@@ -12,7 +12,7 @@
 ///    See the License for the specific language governing permissions and
 ///    limitations under the License.
 
-#include "Source/santa-driver/SantaDriver.h"
+#include "Source/santa_driver/SantaDriver.h"
 
 #define super IOService
 #define SantaDriver com_google_SantaDriver

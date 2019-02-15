@@ -18,7 +18,7 @@
 #include <string>
 #include <vector>
 
-#include "Source/santa-driver/SantaCache.h"
+#include "Source/santa_driver/SantaCache.h"
 
 @interface SantaCacheTest : XCTestCase
 @end
