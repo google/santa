@@ -124,9 +124,9 @@ santa_unit_test(
         "Commands/sync/SNTCommandSyncState.h",
         "Commands/sync/SNTCommandSyncState.m",
         "SNTCommand.h",
-        "SNTcommand.m",
-        "SNTcommandController.h",
-        "SNTcommandController.m",
+        "SNTCommand.m",
+        "SNTCommandController.h",
+        "SNTCommandController.m",
     ],
     sdk_dylibs = ["libz"],
     deps = [

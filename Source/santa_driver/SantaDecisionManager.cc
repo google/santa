@@ -27,8 +27,8 @@ OSDefineMetaClassAndStructors(SantaDecisionManager, OSObject);
 
 #pragma mark Object Lifecycle
 
-template<> uint64_t SantaCacheHasher<santa_vnode_id_t>(santa_vnode_id_t const& s) {
-  return (SantaCacheHasher<uint64_t>(s.fsid) << 1) ^ SantaCacheHasher<uint64_t>(s.fileid);
+template<> uint64_t SantaCacheHasher<santa_vnode_id_t>(santa_vnode_id_t const& t) {
+  return (SantaCacheHasher<uint64_t>(t.fsid) << 1) ^ SantaCacheHasher<uint64_t>(t.fileid);
 }
 
 bool SantaDecisionManager::init() {
@@ -801,7 +801,7 @@ extern "C" int vnode_scope_callback(
   // We only care about regular files.
   if (vnode_vtype(vp) != VREG) return KAUTH_RESULT_DEFER;
 
-  if ((action & KAUTH_VNODE_EXECUTE) && !(action & KAUTH_VNODE_ACCESS)) {
+  if ((action & KAUTH_VNODE_EXECUTE) && !(action & KAUTH_VNODE_ACCESS)) {  // NOLINT
     sdm->IncrementListenerInvocations();
     int result = sdm->VnodeCallback(credential,
                                     reinterpret_cast<vfs_context_t>(arg0),
@@ -811,7 +811,7 @@ extern "C" int vnode_scope_callback(
     return result;
   } else if (action & KAUTH_VNODE_WRITE_DATA || action & KAUTH_VNODE_APPEND_DATA) {
     sdm->IncrementListenerInvocations();
-    if (!(action & KAUTH_VNODE_ACCESS)) {
+    if (!(action & KAUTH_VNODE_ACCESS)) {  // NOLINT
       auto vnode_id = sdm->GetVnodeIDForVnode(reinterpret_cast<vfs_context_t>(arg0), vp);
       sdm->RemoveFromCache(vnode_id);
     }
