@@ -43,7 +43,7 @@ launchctl load /Library/LaunchAgents/com.google.santagui.plist
 
 run_command(
     name = "reload",
-    srcs = ["//Source/santa_driver:santa-driver"],
+    srcs = ["//Source/santa_driver"],
     cmd = """
 set -e
 
@@ -64,7 +64,7 @@ echo "Time to stop being naughty"
 genrule(
     name = "release",
     srcs = [
-        "//Source/santa_driver:santa-driver",
+        "//Source/santa_driver",
         "Conf/install.sh",
         "Conf/uninstall.sh",
         "Conf/com.google.santad.plist",
