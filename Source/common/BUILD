@@ -1,3 +1,5 @@
+package(default_visibility = ["//visibility:public"])
+
 licenses(["notice"])  # Apache 2.0
 
 load("//:helper.bzl", "santa_unit_test")
