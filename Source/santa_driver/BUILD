@@ -83,8 +83,9 @@ macos_kernel_extension(
 
 # A minimal santa-driver.kext, no other Santa components
 macos_kernel_extension(
-    name = "santa-driver_min",
+    name = "santa_driver_min",
     bundle_id = "com.google.santa-driver",
+    bundle_name = "santa-driver",
     infoplists = ["Info.plist"],
     minimum_os_version = "10.9",
     version = "//:version",
@@ -113,7 +114,7 @@ run_command(
     name = "kernel_tests",
     srcs = [
         ":kernel_tests_bin",
-        "//Source/santa_driver:santa-driver_min",
+        "//Source/santa_driver:santa_driver_min",
     ],
     cmd = """
 env

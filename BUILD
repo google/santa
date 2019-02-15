@@ -49,7 +49,7 @@ set -e
 
 rm -rf /tmp/bazel_santa_reload
 unzip -d /tmp/bazel_santa_reload \
-    $${BUILD_WORKSPACE_DIRECTORY}/bazel-bin/Source/santa_driver/santa-driver.zip >/dev/null
+    $${BUILD_WORKSPACE_DIRECTORY}/bazel-bin/Source/santa_driver/santa_driver.zip >/dev/null
 echo "You may be asked for your password for sudo"
 sudo BINARIES=/tmp/bazel_santa_reload CONF=$${BUILD_WORKSPACE_DIRECTORY}/Conf \
     $${BUILD_WORKSPACE_DIRECTORY}/Conf/install.sh
@@ -82,9 +82,9 @@ genrule(
         echo "Please add '-c opt' flag to bazel invocation"
         """,
         ":opt_build": """
-      # Extract santa-driver.zip
+      # Extract santa_driver.zip
       for SRC in $(SRCS); do
-        if [[ $$(basename $${SRC}) == "santa-driver.zip" ]]; then
+        if [[ $$(basename $${SRC}) == "santa_driver.zip" ]]; then
           mkdir -p $(@D)/binaries
           unzip -q $${SRC} -d $(@D)/binaries >/dev/null
         fi
