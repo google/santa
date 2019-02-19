@@ -1,6 +1,7 @@
 """This module defines some helper rules."""
 
 load("@build_bazel_rules_apple//apple:macos.bzl", "macos_unit_test")
+load("@build_bazel_rules_apple//apple:resources.bzl", "apple_resource_group")
 
 def run_command(name, cmd, **kwargs):
     """A rule to run a command."""
@@ -21,14 +22,23 @@ def santa_unit_test(name,
                     deps = [],
                     size = "medium",
                     minimum_os_version = "10.9",
+                    resources = [],
+                    structured_resources = [],
                     copts = [],
                     **kwargs):
+  apple_resource_group(
+      name = "%s_resources" % name,
+      resources = resources,
+      structured_resources = structured_resources,
+  )
+
   native.objc_library(
       name = "%s_lib" % name,
       testonly = 1,
       srcs = srcs,
       deps = deps,
       copts = copts,
+      data = [":%s_resources" % name],
       **kwargs
   )
 
