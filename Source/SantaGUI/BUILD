@@ -23,13 +23,13 @@ objc_library(
         "SNTNotificationManager.m",
         "main.m",
     ],
+    data = [
+        "Resources/AboutWindow.xib",
+        "Resources/MessageWindow.xib",
+    ],
     sdk_frameworks = [
         "IOKit",
         "SecurityInterface",
-    ],
-    xibs = [
-        "Resources/AboutWindow.xib",
-        "Resources/MessageWindow.xib",
     ],
     deps = [
         "//Source/common:SNTBlockMessage",
