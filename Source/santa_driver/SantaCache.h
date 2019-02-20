@@ -29,10 +29,9 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+// TODO(rah): Consider templatizing these.
 #define panic(args...) printf(args); printf("\n"); abort()
-#define IOMalloc malloc
 #define IOMallocAligned(sz, alignment) malloc(sz);
-#define IOFree(addr, sz) free(addr)
 #define IOFreeAligned(addr, sz) free(addr)
 #define OSTestAndSet OSAtomicTestAndSet
 #define OSTestAndClear(bit, addr) OSAtomicTestAndClear(bit, addr) == 0
@@ -78,7 +77,7 @@ template<typename KeyT, typename ValueT> class SantaCache {
     if (unlikely(per_bucket > 64)) per_bucket = 64;
     max_size_ = maximum_size;
     bucket_count_ = 1 << (32 - __builtin_clz(((uint32_t)max_size_ / per_bucket) - 1));
-    buckets_ = (struct bucket *)IOMalloc(bucket_count_ * sizeof(struct bucket));
+    buckets_ = (struct bucket *)IOMallocAligned(bucket_count_ * sizeof(struct bucket), 2);
     bzero(buckets_, bucket_count_ * sizeof(struct bucket));
   }
 
@@ -87,7 +86,7 @@ template<typename KeyT, typename ValueT> class SantaCache {
   */
   ~SantaCache() {
     clear();
-    IOFree(buckets_, bucket_count_ * sizeof(struct bucket));
+    IOFreeAligned(buckets_, bucket_count_ * sizeof(struct bucket));
   }
 
   /**
@@ -120,7 +119,7 @@ template<typename KeyT, typename ValueT> class SantaCache {
 
     @return true if the value was set.
   */
-  bool set(KeyT key, ValueT value) {
+  bool set(const KeyT& key, const ValueT& value) {
     return set(key, value, {}, false);
   }
 
@@ -138,14 +137,14 @@ template<typename KeyT, typename ValueT> class SantaCache {
 
     @return true if the value was set
   */
-  bool set(KeyT key, ValueT value, ValueT previous_value) {
+  bool set(const KeyT& key, const ValueT& value, const ValueT& previous_value) {
     return set(key, value, previous_value, true);
   }
 
   /**
     An alias for `set(key, zero_)`
   */
-  inline void remove(KeyT key) {
+  inline void remove(const KeyT& key) {
     set(key, zero_);
   }
 
@@ -245,7 +244,8 @@ template<typename KeyT, typename ValueT> class SantaCache {
 
     @return true if the entry was set, false if it was not
   */
-  bool set(KeyT key, ValueT value, ValueT previous_value, bool has_prev_value) {
+  bool set(const KeyT& key, const ValueT& value,
+           const ValueT& previous_value, bool has_prev_value) {
     struct bucket *bucket = &buckets_[hash(key)];
     lock(bucket);
     struct entry *entry = (struct entry *)((uintptr_t)bucket->head - 1);
@@ -302,6 +302,7 @@ template<typename KeyT, typename ValueT> class SantaCache {
     // Allocate a new entry, set the key and value, then put this new entry at
     // the head of this bucket's linked list.
     struct entry *new_entry = (struct entry *)IOMallocAligned(sizeof(struct entry), 2);
+    bzero(new_entry, sizeof(struct entry));
     new_entry->key = key;
     new_entry->value = value;
     new_entry->next = (struct entry *)((uintptr_t)bucket->head - 1);

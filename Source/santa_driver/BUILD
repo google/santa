@@ -90,7 +90,6 @@ macos_kernel_extension(
     infoplists = ["Info.plist"],
     minimum_os_version = "10.9",
     version = "//:version",
-    visibility = ["//visibility:public"],
     deps = [":santa_driver_lib"],
 )
 
@@ -115,7 +114,7 @@ run_command(
     name = "kernel_tests",
     srcs = [
         ":kernel_tests_bin",
-        "//Source/santa_driver:santa_driver_min",
+        ":santa_driver_min",
     ],
     cmd = """
 env
@@ -124,7 +123,7 @@ function sigint() {
   sudo kextunload -b com.google.santa-driver >/dev/null
   exit 1
 }
-unzip -o $${BUILD_WORKSPACE_DIRECTORY}/bazel-bin/Source/santa_driver/santa-driver.zip >/dev/null
+unzip -o $${BUILD_WORKSPACE_DIRECTORY}/bazel-bin/Source/santa_driver/santa_driver.zip >/dev/null
 echo "Launching Kernel Tests as root. You may be prompted for your sudo password."
 trap sigint INT
 sudo $${BUILD_WORKSPACE_DIRECTORY}/bazel-bin/Source/santa_driver/kernel_tests_bin
