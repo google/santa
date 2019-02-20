@@ -48,4 +48,5 @@ def santa_unit_test(name,
       minimum_os_version = minimum_os_version,
       deps = [":%s_lib" % name],
       size = size,
+      visibility = ["//:__subpackages__"],
   )
