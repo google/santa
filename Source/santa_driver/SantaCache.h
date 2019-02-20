@@ -73,10 +73,11 @@ template<typename KeyT, typename ValueT> class SantaCache {
         Cannot be higher than 64 to try and ensure buckets don't overflow.
   */
   SantaCache(uint64_t maximum_size = 10000, uint8_t per_bucket = 5) {
+    if (unlikely(per_bucket > maximum_size)) per_bucket = maximum_size;
     if (unlikely(per_bucket < 1)) per_bucket = 1;
     if (unlikely(per_bucket > 64)) per_bucket = 64;
     max_size_ = maximum_size;
-    bucket_count_ = 1 << (32 - __builtin_clz(((uint32_t)max_size_ / per_bucket) - 1));
+    bucket_count_ = (1 << (32 - __builtin_clz((((uint32_t)max_size_ / per_bucket) - 1) ?: 1)));
     buckets_ = (struct bucket *)IOMallocAligned(bucket_count_ * sizeof(struct bucket), 2);
     bzero(buckets_, bucket_count_ * sizeof(struct bucket));
   }
