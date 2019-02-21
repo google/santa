@@ -26,10 +26,24 @@
       @"body {"
       @"  font-family: 'Lucida Grande', 'Helvetica', sans-serif;"
       @"  font-size: 13px;"
-      @"  color: #666;"
+      @"  color: %@;"
       @"  text-align: center;"
       @"}"
+
+      // Supported in beta WebKit. Not sure if it is dynamic when used with NSAttributedString.
+      @"@media (prefers-color-scheme: dark) {"
+      @"  body {"
+      @"    color: #ddd;"
+      @"  }"
+      @"}"
       @"</style></head><body>";
+
+  // Support Dark Mode. Note, the returned NSAttributedString is static and does not update when
+  // the OS switches modes.
+  NSString *mode = [NSUserDefaults.standardUserDefaults stringForKey:@"AppleInterfaceStyle"];
+  BOOL dark =  [mode isEqualToString:@"Dark"];
+  htmlHeader = [NSString stringWithFormat:htmlHeader, dark ? @"#ddd" : @"#333"];
+
   NSString *htmlFooter = @"</body></html>";
 
   NSString *message;
@@ -51,7 +65,7 @@
 
   NSString *fullHTML = [NSString stringWithFormat:@"%@%@%@", htmlHeader, message, htmlFooter];
 
-#ifdef NSAppKitVersionNumber10_0
+#ifdef SANTAGUI
   NSData *htmlData = [fullHTML dataUsingEncoding:NSUTF8StringEncoding];
   return [[NSAttributedString alloc] initWithHTML:htmlData documentAttributes:NULL];
 #else

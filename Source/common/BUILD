@@ -15,6 +15,17 @@ objc_library(
 )
 
 objc_library(
+    name = "SNTBlockMessage_SantaGUI",
+    srcs = ["SNTBlockMessage.m"],
+    hdrs = ["SNTBlockMessage.h"],
+    deps = [
+        ":SNTConfigurator",
+        ":SNTStoredEvent",
+    ],
+    defines = ["SANTAGUI"],
+)
+
+objc_library(
     name = "SNTCachedDecision",
     srcs = ["SNTCachedDecision.m"],
     hdrs = ["SNTCachedDecision.h"],
