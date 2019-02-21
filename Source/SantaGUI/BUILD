@@ -32,7 +32,7 @@ objc_library(
         "SecurityInterface",
     ],
     deps = [
-        "//Source/common:SNTBlockMessage",
+        "//Source/common:SNTBlockMessage_SantaGUI",
         "//Source/common:SNTConfigurator",
         "//Source/common:SNTXPCControlInterface",
         "//Source/common:SNTXPCNotifierInterface",
