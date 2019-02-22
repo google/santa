@@ -94,16 +94,6 @@
     dispatch_group_leave(group);
   }];
 
-  dispatch_group_enter(group);
-  NSNumber *enableTransitiveWhitelisting = resp[kEnableTransitiveWhitelisting];
-  if (!enableTransitiveWhitelisting) {
-    enableTransitiveWhitelisting = resp[kEnableTransitiveWhitelisting_OLD];
-  }
-  BOOL enabled = [enableTransitiveWhitelisting boolValue];
-  [[self.daemonConn remoteObjectProxy] setEnableTransitiveWhitelisting:enabled reply:^{
-    dispatch_group_leave(group);
-  }];
-
   self.syncState.eventBatchSize = [resp[kBatchSize] unsignedIntegerValue] ?: kDefaultEventBatchSize;
   self.syncState.FCMToken = resp[kFCMToken];
 

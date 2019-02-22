@@ -166,7 +166,6 @@
 - (void)testBinaryWhitelistCompilerRule {
   OCMStub([self.mockFileInfo isMachO]).andReturn(YES);
   OCMStub([self.mockFileInfo SHA256]).andReturn(@"a");
-  OCMStub([self.mockConfigurator enableTransitiveWhitelisting]).andReturn(YES);
 
   SNTRule *rule = [[SNTRule alloc] init];
   rule.state = SNTRuleStateWhitelistCompiler;
@@ -179,26 +178,9 @@
                                             forVnodeID:[self getVnodeId]]);
 }
 
-- (void)testBinaryWhitelistCompilerRuleDisabled {
-  OCMStub([self.mockFileInfo isMachO]).andReturn(YES);
-  OCMStub([self.mockFileInfo SHA256]).andReturn(@"a");
-  OCMStub([self.mockConfigurator enableTransitiveWhitelisting]).andReturn(NO);
-
-  SNTRule *rule = [[SNTRule alloc] init];
-  rule.state = SNTRuleStateWhitelistCompiler;
-  rule.type = SNTRuleTypeBinary;
-  OCMStub([self.mockRuleDatabase ruleForBinarySHA256:@"a" certificateSHA256:nil]).andReturn(rule);
-
-  [self.sut validateBinaryWithMessage:[self getMessage]];
-
-  OCMVerify([self.mockDriverManager postToKernelAction:ACTION_RESPOND_ALLOW
-                                            forVnodeID:[self getVnodeId]]);
-}
-
 - (void)testBinaryWhitelistTransitiveRule {
   OCMStub([self.mockFileInfo isMachO]).andReturn(YES);
   OCMStub([self.mockFileInfo SHA256]).andReturn(@"a");
-  OCMStub([self.mockConfigurator enableTransitiveWhitelisting]).andReturn(YES);
 
   SNTRule *rule = [[SNTRule alloc] init];
   rule.state = SNTRuleStateWhitelistTransitive;
@@ -208,23 +190,6 @@
   [self.sut validateBinaryWithMessage:[self getMessage]];
 
   OCMVerify([self.mockDriverManager postToKernelAction:ACTION_RESPOND_ALLOW
-                                            forVnodeID:[self getVnodeId]]);
-}
-
-- (void)testBinaryWhitelistTransitiveRuleDisabled {
-  OCMStub([self.mockFileInfo isMachO]).andReturn(YES);
-  OCMStub([self.mockFileInfo SHA256]).andReturn(@"a");
-  OCMStub([self.mockConfigurator clientMode]).andReturn(SNTClientModeLockdown);
-  OCMStub([self.mockConfigurator enableTransitiveWhitelisting]).andReturn(NO);
-
-  SNTRule *rule = [[SNTRule alloc] init];
-  rule.state = SNTRuleStateWhitelistTransitive;
-  rule.type = SNTRuleTypeBinary;
-  OCMStub([self.mockRuleDatabase ruleForBinarySHA256:@"a" certificateSHA256:nil]).andReturn(rule);
-
-  [self.sut validateBinaryWithMessage:[self getMessage]];
-
-  OCMVerify([self.mockDriverManager postToKernelAction:ACTION_RESPOND_DENY
                                             forVnodeID:[self getVnodeId]]);
 }
 

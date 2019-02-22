@@ -47,7 +47,6 @@
 - (void)setWhitelistPathRegex:(NSString *)pattern reply:(void (^)(void))reply;
 - (void)setBlacklistPathRegex:(NSString *)pattern reply:(void (^)(void))reply;
 - (void)setEnableBundles:(BOOL)bundlesEnabled reply:(void (^)(void))reply;
-- (void)setEnableTransitiveWhitelisting:(BOOL)enabled reply:(void (^)(void))reply;
 
 ///
 ///  Syncd Ops

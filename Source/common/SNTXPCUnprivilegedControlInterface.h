@@ -72,7 +72,6 @@
 - (void)ruleSyncLastSuccess:(void (^)(NSDate *))reply;
 - (void)syncCleanRequired:(void (^)(BOOL))reply;
 - (void)enableBundles:(void (^)(BOOL))reply;
-- (void)enableTransitiveWhitelisting:(void (^)(BOOL))reply;
 
 ///
 ///  GUI Ops

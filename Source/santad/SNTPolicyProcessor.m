@@ -61,25 +61,11 @@
             cd.decision = SNTEventStateBlockBinary;
             return cd;
           case SNTRuleStateWhitelistCompiler:
-            // If transitive whitelisting is enabled, then SNTRuleStateWhiteListCompiler rules
-            // become SNTEventStateAllowCompiler decisions.  Otherwise we treat the rule as if
-            // it were SNTRuleStateWhitelist.
-            if ([[SNTConfigurator configurator] enableTransitiveWhitelisting]) {
-              cd.decision = SNTEventStateAllowCompiler;
-            } else {
-              cd.decision = SNTEventStateAllow;
-            }
+            cd.decision = SNTEventStateAllowCompiler;
             return cd;
           case SNTRuleStateWhitelistTransitive:
-            // If transitive whitelisting is enabled, then SNTRuleStateWhitelistTransitive
-            // rules become SNTEventStateAllowTransitive decisions.  Otherwise, we treat the
-            // rule as if it were SNTRuleStateUnknown.
-            if ([[SNTConfigurator configurator] enableTransitiveWhitelisting]) {
-              cd.decision = SNTEventStateAllowTransitive;
-              return cd;
-            } else {
-              rule.state = SNTRuleStateUnknown;
-            }
+            cd.decision = SNTEventStateAllowTransitive;
+            return cd;
           default: break;
         }
         break;

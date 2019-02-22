@@ -233,15 +233,6 @@ double watchdogRAMPeak = 0;
   reply();
 }
 
-- (void)enableTransitiveWhitelisting:(void (^)(BOOL))reply {
-  reply([SNTConfigurator configurator].enableTransitiveWhitelisting);
-}
-
-- (void)setEnableTransitiveWhitelisting:(BOOL)enabled reply:(void (^)(void))reply {
-  [[SNTConfigurator configurator] setEnableTransitiveWhitelisting:enabled];
-  reply();
-}
-
 #pragma mark GUI Ops
 
 - (void)setNotificationListener:(NSXPCListenerEndpoint *)listener {

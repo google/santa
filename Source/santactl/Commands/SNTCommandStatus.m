@@ -153,17 +153,12 @@ REGISTER_COMMAND_NAME(@"status")
     }];
   }
 
-  __block BOOL transitiveWhitelistingEnabled = NO;
-  dispatch_group_enter(group);
-  [[self.daemonConn remoteObjectProxy] enableTransitiveWhitelisting:^(BOOL response) {
-    transitiveWhitelistingEnabled = response;
-    dispatch_group_leave(group);
-  }];
-
   // Wait a maximum of 5s for stats collected from daemon to arrive.
   if (dispatch_group_wait(group, dispatch_time(DISPATCH_TIME_NOW, NSEC_PER_SEC * 5))) {
     fprintf(stderr, "Failed to retrieve some stats from daemon\n\n");
   }
+
+  BOOL transitiveWhitelistingEnabled = (compilerRuleCount > 0);
 
   // Format dates
   NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];
