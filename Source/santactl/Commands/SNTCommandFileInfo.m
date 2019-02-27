@@ -330,6 +330,8 @@ REGISTER_COMMAND_NAME(@"fileinfo")
           if ([error.domain isEqualToString:@"com.google.molcodesignchecker"]) {
             return @"Yes, but signing is not consistent for all architectures";
           }
+        case CSSMERR_TP_CERT_REVOKED:
+          return @"Yes, but the signing certificate was revoked";
         default: {
           return [NSString stringWithFormat:@"Yes, but failed to validate (%ld)", error.code];
         }
