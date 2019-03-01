@@ -15,24 +15,15 @@
 #ifndef SANTA__SANTA_DRIVER__SANTACACHE_H
 #define SANTA__SANTA_DRIVER__SANTACACHE_H
 
-#include <libkern/OSAtomic.h>
-#include <libkern/OSTypes.h>
 #include <stdint.h>
 #include <sys/cdefs.h>
 
+#include <atomic>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
 
 #include "Source/common/SNTCommon.h"
-
-#define panic(args...) \
-  printf(args);        \
-  printf("\n");        \
-  abort()
-
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wdeprecated-declarations"
 
 /**
   A type to specialize to help SantaCache with its hashing.
@@ -79,8 +70,7 @@ class SantaCache {
         (1 << (32 -
                __builtin_clz((((uint32_t)max_size_ / per_bucket) - 1) ?: 1)));
     if (unlikely(bucket_count_ > UINT32_MAX)) bucket_count_ = UINT32_MAX;
-    buckets_ = (struct bucket *)malloc(bucket_count_ * sizeof(struct bucket));
-    bzero(buckets_, bucket_count_ * sizeof(struct bucket));
+    buckets_ = new struct bucket[bucket_count_];
   }
 
   /**
@@ -88,7 +78,7 @@ class SantaCache {
   */
   ~SantaCache() {
     clear();
-    free(buckets_);
+    delete[] buckets_;
   }
 
   /**
@@ -96,17 +86,17 @@ class SantaCache {
   */
   ValueT get(KeyT key) {
     struct bucket *bucket = &buckets_[hash(key)];
-    lock(bucket);
-    struct entry *entry = (struct entry *)((uintptr_t)bucket->head - 1);
+    bucket->lock();
+    struct entry *entry = (struct entry *)((uintptr_t)bucket->head);
     while (entry != nullptr) {
       if (entry->key == key) {
         ValueT val = entry->value;
-        unlock(bucket);
+        bucket->unlock();
         return val;
       }
       entry = entry->next;
     }
-    unlock(bucket);
+    bucket->unlock();
     return zero_;
   }
 
@@ -157,18 +147,18 @@ class SantaCache {
       // We grab the lock so nothing can use this bucket while we're erasing it
       // and never release it. It'll be 'released' when the bzero call happens
       // at the end of this function.
-      lock(bucket);
+      bucket->lock();
 
       // Free the bucket's entries, if there are any.
-      struct entry *entry = (struct entry *)((uintptr_t)bucket->head - 1);
+      struct entry *entry = (struct entry *)((uintptr_t)bucket->head);
       while (entry != nullptr) {
         struct entry *next_entry = entry->next;
-        free(entry);
+        delete entry;
         entry = next_entry;
       }
     }
 
-    // Reset cache count, no atomicity needed as we hold all the bucket locks.
+    // Reset cache count.
     count_ = 0;
 
     // This resets all of the bucket counts and locks. Releasing the locks for
@@ -209,13 +199,13 @@ class SantaCache {
     for (uint16_t i = 0; i < size; ++i) {
       uint16_t count = 0;
       struct bucket *bucket = &buckets_[start++];
-      lock(bucket);
-      struct entry *entry = (struct entry *)((uintptr_t)bucket->head - 1);
+      bucket->lock();
+      struct entry *entry = (struct entry *)((uintptr_t)bucket->head);
       while (entry != nullptr) {
         if (entry->value != zero_) ++count;
         entry = entry->next;
       }
-      unlock(bucket);
+      bucket->unlock();
       per_bucket_counts[i] = count;
     }
 
@@ -225,16 +215,27 @@ class SantaCache {
 
  private:
   struct entry {
-    KeyT key;
-    ValueT value;
-    struct entry *next;
+    KeyT key = {};
+    ValueT value = {};
+    struct entry *next = nullptr;
   };
 
   struct bucket {
-    // The least significant bit of this pointer is always 0 (due to alignment),
-    // so we utilize that bit as the lock for the bucket.
-    struct entry *head;
+    std::atomic_flag lock_ = ATOMIC_FLAG_INIT;
+
+    struct entry *head = nullptr;
+
+    // Lock this bucket. Will loop until it is successfully locked.
+    void lock() {
+      while (lock_.test_and_set());
+    }
+
+    // Unlock this bucket.
+    void unlock() {
+      lock_.clear();
+    }
   };
+
 
   /**
     Set an element in the cache.
@@ -254,15 +255,15 @@ class SantaCache {
   bool set(const KeyT &key, const ValueT &value, const ValueT &previous_value,
            bool has_prev_value) {
     struct bucket *bucket = &buckets_[hash(key)];
-    lock(bucket);
-    struct entry *entry = (struct entry *)((uintptr_t)bucket->head - 1);
+    bucket->lock();
+    struct entry *entry = (struct entry *)((uintptr_t)bucket->head);
     struct entry *previous_entry = nullptr;
     while (entry != nullptr) {
       if (entry->key == key) {
         ValueT existing_value = entry->value;
 
         if (has_prev_value && previous_value != existing_value) {
-          unlock(bucket);
+          bucket->unlock();
           return false;
         }
 
@@ -272,13 +273,13 @@ class SantaCache {
           if (previous_entry != nullptr) {
             previous_entry->next = entry->next;
           } else {
-            bucket->head = (struct entry *)((uintptr_t)entry->next + 1);
+            bucket->head = (struct entry *)((uintptr_t)entry->next);
           }
-          free(entry);
-          OSAtomicDecrement64((volatile int64_t *)&count_);
+          delete entry;
+          count_--;
         }
 
-        unlock(bucket);
+        bucket->unlock();
         return true;
       }
       previous_entry = entry;
@@ -289,56 +290,37 @@ class SantaCache {
     // so we don't need to do anything else. Alternatively, if has_prev_value
     // is true and is not zero_ we don't want to set a value.
     if (value == zero_ || (has_prev_value && previous_value != zero_)) {
-      unlock(bucket);
+      bucket->unlock();
       return false;
     }
 
     // Check that adding this new item won't take the cache
     // over its maximum size.
     if (count_ + 1 > max_size_) {
-      unlock(bucket);
-      lock(&clear_bucket_);
+      bucket->unlock();
+      clear_bucket_.lock();
       // Check again in case clear has already run while waiting for lock
       if (count_ + 1 > max_size_) {
         clear();
       }
-      lock(bucket);
-      unlock(&clear_bucket_);
+      bucket->lock();
+      clear_bucket_.unlock();
     }
 
     // Allocate a new entry, set the key and value, then put this new entry at
     // the head of this bucket's linked list.
-    struct entry *new_entry = (struct entry *)malloc(sizeof(struct entry));
-    bzero(new_entry, sizeof(struct entry));
+    struct entry *new_entry = new struct entry;
     new_entry->key = key;
     new_entry->value = value;
-    new_entry->next = (struct entry *)((uintptr_t)bucket->head - 1);
-    bucket->head = (struct entry *)((uintptr_t)new_entry + 1);
-    OSAtomicIncrement64((volatile int64_t *)&count_);
+    new_entry->next = (struct entry *)((uintptr_t)bucket->head);
+    bucket->head = (struct entry *)((uintptr_t)new_entry);
+    count_++;
 
-    unlock(bucket);
+    bucket->unlock();
     return true;
   }
 
-  /**
-    Lock a bucket. Spins until the lock is acquired.
-  */
-  inline void lock(struct bucket *bucket) const {
-    while (OSAtomicTestAndSet(7, (volatile uint8_t *)&bucket->head))
-      ;
-  }
-
-  /**
-    Unlock a bucket. Panics if the lock wasn't locked.
-  */
-  inline void unlock(struct bucket *bucket) const {
-    if (unlikely(OSAtomicTestAndClear(7, (volatile uint8_t *)&bucket->head) ==
-                 0)) {
-      panic("SantaCache::unlock(): Tried to unlock an unlocked lock");
-    }
-  }
-
-  uint64_t count_ = 0;
+  std::atomic<uint_fast64_t> count_{0};
 
   uint64_t max_size_;
   uint32_t bucket_count_;
@@ -364,7 +346,5 @@ class SantaCache {
     return SantaCacheHasher<KeyT>(input) % bucket_count_;
   }
 };
-
-#pragma clang diagnostic pop
 
 #endif  // SANTA__SANTA_DRIVER__SANTACACHE_H
