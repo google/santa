@@ -52,16 +52,23 @@ santa_unit_test(
     deps = ["//Source/common:SNTKernelCommon"],
 )
 
+cc_library(
+    name = "SantaPrefixTree_userland_lib",
+    srcs = ["SantaPrefixTree.cc"],
+    hdrs = ["SantaPrefixTree.h"],
+    copts = ["-std=c++1z"],
+    visibility = ["//visibility:public"],
+)
+
 santa_unit_test(
     name = "SantaPrefixTreeTest",
-    srcs = [
-        "SantaPrefixTree.cc",
-        "SantaPrefixTree.h",
-        "SantaPrefixTreeTest.mm",
-    ],
+    srcs = ["SantaPrefixTreeTest.mm"],
     copts = ["-std=c++1z"],
     minimum_os_version = "10.12",
-    deps = ["//Source/common:SNTKernelCommon"],
+    deps = [
+        ":SantaPrefixTree_userland_lib",
+        "//Source/common:SNTKernelCommon"
+    ],
 )
 
 # Full santa-driver.kext containing all Santa components
