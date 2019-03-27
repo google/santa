@@ -599,6 +599,7 @@ REGISTER_COMMAND_NAME(@"fileinfo")
     // Check if we should skip over this item based on outputFilters.
     for (NSString *key in self.outputFilters) {
       NSString *value = cert[key];
+      if (!value) return;
       NSRegularExpression *regex = self.outputFilters[key];
       if (![regex firstMatchInString:value options:0 range:NSMakeRange(0, value.length)]) return;
     }
@@ -613,6 +614,7 @@ REGISTER_COMMAND_NAME(@"fileinfo")
     // However we also don't want to recompute info, so we save any values that we plan to show.
     for (NSString *key in self.outputFilters) {
       NSString *value = self.propertyMap[key](self, fileInfo);
+      if (!value) return;
       NSRegularExpression *regex = self.outputFilters[key];
       if (![regex firstMatchInString:value options:0 range:NSMakeRange(0, value.length)]) return;
       // If this is a value we want to show, store it in the output dictionary.
