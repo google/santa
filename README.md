@@ -22,7 +22,7 @@ Santa is a project of Google's Macintosh Operations Team.
 # Docs
 
 The Santa docs are stored in the
-[Docs](https://github.com/google/santa/blob/master/Docs) directory. A Read the
+[Docs](https://github.com/google/santa/blob/master/docs) directory. A Read the
 Docs instance is available here: https://santa.readthedocs.io.
 
 The docs include deployment options, details on how parts of Santa work and
