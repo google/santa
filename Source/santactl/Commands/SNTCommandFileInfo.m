@@ -597,11 +597,16 @@ REGISTER_COMMAND_NAME(@"fileinfo")
     NSDictionary *cert = signingChain[index];
 
     // Check if we should skip over this item based on outputFilters.
+    BOOL filterMatch = self.outputFilters.count == 0;
     for (NSString *key in self.outputFilters) {
-      NSString *value = cert[key];
+      NSString *value = cert[key] ?: @"";
       NSRegularExpression *regex = self.outputFilters[key];
-      if (![regex firstMatchInString:value options:0 range:NSMakeRange(0, value.length)]) return;
+      if (![regex firstMatchInString:value options:0 range:NSMakeRange(0, value.length)]) continue;
+      filterMatch = YES;
+      break;
     }
+
+    if (!filterMatch) return;
 
     // Filter out the info we want now, in case JSON output
     for (NSString *key in self.outputKeyList) {
@@ -611,16 +616,21 @@ REGISTER_COMMAND_NAME(@"fileinfo")
     // Check if we should skip over this item based on outputFilters.  We do this before collecting
     // output info because there's a chance that we can bail out early if a filter doesn't match.
     // However we also don't want to recompute info, so we save any values that we plan to show.
+    BOOL filterMatch = self.outputFilters.count == 0;
     for (NSString *key in self.outputFilters) {
-      NSString *value = self.propertyMap[key](self, fileInfo);
+      NSString *value = self.propertyMap[key](self, fileInfo) ?: @"";
       NSRegularExpression *regex = self.outputFilters[key];
-      if (![regex firstMatchInString:value options:0 range:NSMakeRange(0, value.length)]) return;
+      if (![regex firstMatchInString:value options:0 range:NSMakeRange(0, value.length)]) continue;
       // If this is a value we want to show, store it in the output dictionary.
       // This does a linear search on an array, but it's a small array.
-      if ([self.outputKeyList containsObject:key]) {
+      if (value.length && [self.outputKeyList containsObject:key]) {
         outputDict[key] = value;
       }
+      filterMatch = YES;
+      break;
     }
+
+    if (!filterMatch) return;
 
     // Then fill the outputDict with the rest of the missing values.
     for (NSString *key in self.outputKeyList) {
