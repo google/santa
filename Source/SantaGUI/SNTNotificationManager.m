@@ -193,6 +193,10 @@ static NSString * const silencedNotificationsKey = @"SilencedNotifications";
 }
 
 - (void)setBundleServiceListener:(NSXPCListenerEndpoint *)listener {
+  // Ensure any existing listener is invalidated.
+  self.bundleServiceConnection.invalidationHandler = nil;
+  [self.bundleServiceConnection invalidate];
+  
   MOLXPCConnection *c = [[MOLXPCConnection alloc] initClientWithListener:listener];
   c.remoteInterface = [SNTXPCBundleServiceInterface bundleServiceInterface];
   [c resume];
@@ -204,8 +208,6 @@ static NSString * const silencedNotificationsKey = @"SilencedNotifications";
     if (self.currentWindowController) {
       [self updateBlockNotification:self.currentWindowController.event withBundleHash:nil];
     }
-    self.bundleServiceConnection.invalidationHandler = nil;
-    [self.bundleServiceConnection invalidate];
   };
 
   dispatch_semaphore_signal(self.bundleServiceSema);
