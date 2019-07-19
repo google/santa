@@ -12,19 +12,17 @@
 ///    See the License for the specific language governing permissions and
 ///    limitations under the License.
 
-#import <Foundation/Foundation.h>
-
-#import "SNTXPCProxy.h"
 #import "SNTXPCProxyInterface.h"
 
-int main(int argc, const char * argv[]) {
-  @autoreleasepool {
-    MOLXPCConnection *s = [[MOLXPCConnection alloc] initServerWithName:kSantaXPCProxyMachService];
-    s.unprivilegedInterface = [NSXPCInterface interfaceWithProtocol:@protocol(SNTXPCProxyProtocol)];
-    s.privilegedInterface = s.unprivilegedInterface;
-    s.exportedObject = [[SNTXPCProxy alloc] init];
-    [s resume];
-    [[NSRunLoop mainRunLoop] run];
-  }
-  return 0;
+NSString *const kSantaXPCProxyMachService = @"com.google.santa.xpcproxy";
+
+@implementation SNTXPCProxyInterface
+
++ (MOLXPCConnection *)configuredConnection {
+  MOLXPCConnection *c = [[MOLXPCConnection alloc] initClientWithName:kSantaXPCProxyMachService
+                                                          privileged:YES];
+  c.remoteInterface = [NSXPCInterface interfaceWithProtocol:@protocol(SNTXPCProxyProtocol)];
+  return c;
 }
+
+@end

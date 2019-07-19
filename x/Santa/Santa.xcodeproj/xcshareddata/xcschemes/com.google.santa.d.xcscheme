@@ -15,7 +15,7 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "C71F0ABA22DA48D400355225"
-               BuildableName = "com.google.santa.d.systemextension"
+               BuildableName = "com.google.santa.daemon.systemextension"
                BlueprintName = "santad"
                ReferencedContainer = "container:Santa.xcodeproj">
             </BuildableReference>
@@ -52,7 +52,7 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "C71F0ABA22DA48D400355225"
-            BuildableName = "com.google.santa.d.systemextension"
+            BuildableName = "com.google.santa.daemon.systemextension"
             BlueprintName = "santad"
             ReferencedContainer = "container:Santa.xcodeproj">
          </BuildableReference>

@@ -14,17 +14,11 @@
 
 #import <Foundation/Foundation.h>
 
-#import "SNTXPCProxy.h"
 #import "SNTXPCProxyInterface.h"
 
-int main(int argc, const char * argv[]) {
-  @autoreleasepool {
-    MOLXPCConnection *s = [[MOLXPCConnection alloc] initServerWithName:kSantaXPCProxyMachService];
-    s.unprivilegedInterface = [NSXPCInterface interfaceWithProtocol:@protocol(SNTXPCProxyProtocol)];
-    s.privilegedInterface = s.unprivilegedInterface;
-    s.exportedObject = [[SNTXPCProxy alloc] init];
-    [s resume];
-    [[NSRunLoop mainRunLoop] run];
-  }
-  return 0;
-}
+NS_ASSUME_NONNULL_BEGIN
+
+@interface SNTXPCProxy : NSObject<SNTXPCProxyProtocol>
+@end
+
+NS_ASSUME_NONNULL_END
