@@ -1,7 +1,7 @@
 site_name: Santa
 theme: readthedocs
 
-docs_dir: Docs
+docs_dir: docs
 extra_css:
 - theme/Santa.css
 
