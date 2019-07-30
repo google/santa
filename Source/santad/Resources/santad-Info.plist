@@ -5,14 +5,20 @@
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>NSHumanReadableCopyright</key>
-	<string>Google, Inc.</string>
+	<string>Copyright © 2019 Google. All rights reserved.</string>
 	<key>CFBundleIdentifier</key>
-	<string>com.google.santad</string>
+	<string>com.google.santa.daemon</string>
 	<key>CFBundleName</key>
 	<string>santad</string>
 	<key>CFBundleVersion</key>
-	<string>${SANTA_VERSION}</string>
+	<string>1</string>
 	<key>CFBundleShortVersionString</key>
-	<string>${SANTA_VERSION}</string>
+	<string>1.0</string>
+	<key>CFBundleExecutable</key>
+	<string>santad</string>
+	<key>CFBundlePackageType</key>
+	<string>SYSX</string>
+	<key>NSSystemExtensionUsageDescription</key>
+	<string>Santa knows who is naughty and nice.</string>
 </dict>
 </plist>
