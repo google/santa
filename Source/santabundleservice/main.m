@@ -15,7 +15,7 @@
 #import <Foundation/Foundation.h>
 #import <MOLXPCConnection/MOLXPCConnection.h>
 
-#import "Source/santabs/SNTBundleService.h"
+#import "Source/santabundleservice/SNTBundleService.h"
 #import "Source/common/SNTXPCBundleServiceInterface.h"
 
 int main(int argc, const char *argv[]) {
