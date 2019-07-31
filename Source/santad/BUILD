@@ -64,7 +64,7 @@ objc_library(
 
 macos_command_line_application(
     name = "santad",
-    bundle_id = "com.google.santad",
+    bundle_id = "com.google.santa.daemon",
     infoplists = ["Resources/santad-Info.plist"],
     minimum_os_version = "10.9",
     version = "//:version",
