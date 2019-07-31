@@ -180,21 +180,21 @@
 - (OSSystemExtensionReplacementAction)request:(OSSystemExtensionRequest *)request
                   actionForReplacingExtension:(OSSystemExtensionProperties *)existing
                                 withExtension:(OSSystemExtensionProperties *)ext {
-  LOGD(@"Received request to replace system exension");
+  LOGD(@"System Extension \"%@\" request for replacement", request.identifier);
   return OSSystemExtensionReplacementActionReplace;
 }
 
 - (void)requestNeedsUserApproval:(OSSystemExtensionRequest *)request {
-  LOGD(@"System exension request needs user approval");
+  LOGD(@"System Extension \"%@\" request needs user approval", request.identifier);
 }
 
 - (void)request:(OSSystemExtensionRequest *)request didFailWithError:(NSError *)error {
-  LOGD(@"System exension request did fail: %@", error);
+  LOGD(@"System Extension \"%@\" request did fail: %@", request.identifier, error);
 }
 
 - (void)request:(OSSystemExtensionRequest *)request
     didFinishWithResult:(OSSystemExtensionRequestResult)result {
-  LOGD(@"System exension request did finish: %ld", (long)result);
+  LOGD(@"System Extension \"%@\" request did finish: %ld", request.identifier, (long)result);
 }
 
 @end
