@@ -7,10 +7,14 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		61FC7425DD1EAAD50D509435 /* libPods-santaxpcproxy.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 24CDFD218D8B35E34895AA6A /* libPods-santaxpcproxy.a */; };
+		66067B41944ADC1C37627C20 /* libPods-santabundleservice.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 2A55D73A235850B9FA991865 /* libPods-santabundleservice.a */; };
 		AD3736AF78C41A962C26D429 /* libPods-Santa.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 4C3E743944A9D77423AA1534 /* libPods-Santa.a */; };
 		B5AE6BB811766CA492133559 /* libPods-santad.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 3700D40B536CA7F626B76156 /* libPods-santad.a */; };
 		C71E472F22F0F97B00921CD9 /* santad in CopyFiles */ = {isa = PBXBuildFile; fileRef = C779C4E622F0F51400EE2541 /* santad */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
 		C71E473122F0FAA100921CD9 /* com.google.santa.daemon.systemextension in CopyFiles */ = {isa = PBXBuildFile; fileRef = C7A8308022F0F81F00F856AC /* com.google.santa.daemon.systemextension */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		C77179C922F207810047DF1A /* SNTXPCProxyInterface.m in Sources */ = {isa = PBXBuildFile; fileRef = C779C42B22F0EA1A00EE2541 /* SNTXPCProxyInterface.m */; };
+		C77179CB22F207B80047DF1A /* santaxpcproxy in CopyFiles */ = {isa = PBXBuildFile; fileRef = C792F25C22F206A800B1DBBD /* santaxpcproxy */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
 		C779C4CD22F0EC3A00EE2541 /* SNTMessageWindowController.m in Sources */ = {isa = PBXBuildFile; fileRef = C779C43522F0EA1A00EE2541 /* SNTMessageWindowController.m */; };
 		C779C4CE22F0EC3D00EE2541 /* SNTAccessibleTextField.m in Sources */ = {isa = PBXBuildFile; fileRef = C779C43622F0EA1A00EE2541 /* SNTAccessibleTextField.m */; };
 		C779C4CF22F0EC3F00EE2541 /* SNTAboutWindowController.m in Sources */ = {isa = PBXBuildFile; fileRef = C779C43722F0EA1A00EE2541 /* SNTAboutWindowController.m */; };
@@ -46,6 +50,11 @@
 		C779C4FA22F0F6B700EE2541 /* SNTNotificationQueue.m in Sources */ = {isa = PBXBuildFile; fileRef = C779C3B822F0EA1900EE2541 /* SNTNotificationQueue.m */; };
 		C779C4FB22F0F6BA00EE2541 /* SNTPolicyProcessor.m in Sources */ = {isa = PBXBuildFile; fileRef = C779C3C322F0EA1900EE2541 /* SNTPolicyProcessor.m */; };
 		C779C4FC22F0F6BC00EE2541 /* SNTSyncdQueue.m in Sources */ = {isa = PBXBuildFile; fileRef = C779C3C222F0EA1900EE2541 /* SNTSyncdQueue.m */; };
+		C78B793C22F20FA1007B357B /* SNTFileInfo.m in Sources */ = {isa = PBXBuildFile; fileRef = C779C42522F0EA1A00EE2541 /* SNTFileInfo.m */; };
+		C78B793D22F20FA6007B357B /* SNTStoredEvent.m in Sources */ = {isa = PBXBuildFile; fileRef = C779C43222F0EA1A00EE2541 /* SNTStoredEvent.m */; };
+		C78B793E22F20FAA007B357B /* SNTXPCNotifierInterface.m in Sources */ = {isa = PBXBuildFile; fileRef = C779C42422F0EA1A00EE2541 /* SNTXPCNotifierInterface.m */; };
+		C792F26522F206FB00B1DBBD /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = C779C44B22F0EA1A00EE2541 /* main.m */; };
+		C792F26622F206FE00B1DBBD /* SNTXPCProxy.m in Sources */ = {isa = PBXBuildFile; fileRef = C779C44922F0EA1A00EE2541 /* SNTXPCProxy.m */; };
 		C7A8306C22F0F71E00F856AC /* SNTLogging.m in Sources */ = {isa = PBXBuildFile; fileRef = C779C42E22F0EA1A00EE2541 /* SNTLogging.m */; };
 		C7A8306D22F0F72600F856AC /* SNTRule.m in Sources */ = {isa = PBXBuildFile; fileRef = C779C41E22F0EA1A00EE2541 /* SNTRule.m */; };
 		C7A8306E22F0F73600F856AC /* SNTBlockMessage.m in Sources */ = {isa = PBXBuildFile; fileRef = C779C41D22F0EA1A00EE2541 /* SNTBlockMessage.m */; };
@@ -61,8 +70,22 @@
 		C7A8307922F0F77D00F856AC /* SNTXPCProxyInterface.m in Sources */ = {isa = PBXBuildFile; fileRef = C779C42B22F0EA1A00EE2541 /* SNTXPCProxyInterface.m */; };
 		C7A8307A22F0F78000F856AC /* SNTXPCUnprivilegedControlInterface.m in Sources */ = {isa = PBXBuildFile; fileRef = C779C41B22F0EA1A00EE2541 /* SNTXPCUnprivilegedControlInterface.m */; };
 		C7A8307B22F0F79000F856AC /* SNTXPCNotifierInterface.m in Sources */ = {isa = PBXBuildFile; fileRef = C779C42422F0EA1A00EE2541 /* SNTXPCNotifierInterface.m */; };
+		C7E1192222F20DB20014F202 /* santabundleservice.xpc in Embed XPC Services */ = {isa = PBXBuildFile; fileRef = C7E1191722F20DB20014F202 /* santabundleservice.xpc */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		C7E1193522F20F5C0014F202 /* SNTXPCBundleServiceInterface.m in Sources */ = {isa = PBXBuildFile; fileRef = C779C4D622F0EF2800EE2541 /* SNTXPCBundleServiceInterface.m */; };
+		C7E1193622F20F650014F202 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = C7E1192C22F20E660014F202 /* main.m */; };
+		C7E1193722F20F680014F202 /* SNTBundleService.m in Sources */ = {isa = PBXBuildFile; fileRef = C7E1192822F20E660014F202 /* SNTBundleService.m */; };
 		F5F5D1EF2AF051FEA97A3A59 /* libPods-sysx.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 91FF0B4E62F1E90A88478993 /* libPods-sysx.a */; };
 /* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		C7E1192022F20DB20014F202 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = C779C2D622F0E95000EE2541 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = C7E1191622F20DB20014F202;
+			remoteInfo = santabundleservice;
+		};
+/* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
 		C71E472E22F0F96C00921CD9 /* CopyFiles */ = {
@@ -85,6 +108,16 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		C77179CA22F207A80047DF1A /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 6;
+			files = (
+				C77179CB22F207B80047DF1A /* santaxpcproxy in CopyFiles */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		C779C4E422F0F51400EE2541 /* CopyFiles */ = {
 			isa = PBXCopyFilesBuildPhase;
 			buildActionMask = 2147483647;
@@ -94,10 +127,32 @@
 			);
 			runOnlyForDeploymentPostprocessing = 1;
 		};
+		C792F25A22F206A800B1DBBD /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = /usr/share/man/man1/;
+			dstSubfolderSpec = 0;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 1;
+		};
+		C7E1192622F20DB20014F202 /* Embed XPC Services */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "$(CONTENTS_FOLDER_PATH)/XPCServices";
+			dstSubfolderSpec = 16;
+			files = (
+				C7E1192222F20DB20014F202 /* santabundleservice.xpc in Embed XPC Services */,
+			);
+			name = "Embed XPC Services";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		18183794C94BAEAD167B12EC /* Pods-santad.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-santad.debug.xcconfig"; path = "Target Support Files/Pods-santad/Pods-santad.debug.xcconfig"; sourceTree = "<group>"; };
+		24CDFD218D8B35E34895AA6A /* libPods-santaxpcproxy.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-santaxpcproxy.a"; sourceTree = BUILT_PRODUCTS_DIR; };
+		2A55D73A235850B9FA991865 /* libPods-santabundleservice.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-santabundleservice.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		3700D40B536CA7F626B76156 /* libPods-santad.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-santad.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		4C3E743944A9D77423AA1534 /* libPods-Santa.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-Santa.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		7AF15DF785BAA0EAB0BE340D /* Pods-santad.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-santad.release.xcconfig"; path = "Target Support Files/Pods-santad/Pods-santad.release.xcconfig"; sourceTree = "<group>"; };
@@ -141,8 +196,6 @@
 		C779C3D222F0EA1900EE2541 /* SNTExecutionControllerTest.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SNTExecutionControllerTest.m; sourceTree = "<group>"; };
 		C779C3D322F0EA1900EE2541 /* SNTNotificationQueue.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SNTNotificationQueue.h; sourceTree = "<group>"; };
 		C779C3D422F0EA1900EE2541 /* SNTExecutionController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SNTExecutionController.h; sourceTree = "<group>"; };
-		C779C3D622F0EA1900EE2541 /* main.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
-		C779C3D722F0EA1900EE2541 /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		C779C3D922F0EA1900EE2541 /* SNTCommand.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SNTCommand.m; sourceTree = "<group>"; };
 		C779C3DA22F0EA1900EE2541 /* SNTCommandController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SNTCommandController.m; sourceTree = "<group>"; };
 		C779C3DB22F0EA1900EE2541 /* main.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
@@ -246,9 +299,6 @@
 		C779C44922F0EA1A00EE2541 /* SNTXPCProxy.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SNTXPCProxy.m; sourceTree = "<group>"; };
 		C779C44A22F0EA1A00EE2541 /* SNTXPCProxy.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SNTXPCProxy.h; sourceTree = "<group>"; };
 		C779C44B22F0EA1A00EE2541 /* main.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
-		C779C44E22F0EA1A00EE2541 /* santabs-Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = "santabs-Info.plist"; sourceTree = "<group>"; };
-		C779C44F22F0EA1A00EE2541 /* main.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
-		C779C45022F0EA1A00EE2541 /* BUILD */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = BUILD; sourceTree = "<group>"; };
 		C779C45222F0EA1A00EE2541 /* main.cc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = main.cc; sourceTree = "<group>"; };
 		C779C45322F0EA1A00EE2541 /* SantaDriverClient.cc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = SantaDriverClient.cc; sourceTree = "<group>"; };
 		C779C45422F0EA1A00EE2541 /* SantaCacheTest.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = SantaCacheTest.mm; sourceTree = "<group>"; };
@@ -264,15 +314,30 @@
 		C779C45E22F0EA1A00EE2541 /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		C779C45F22F0EA1A00EE2541 /* SantaDriver.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SantaDriver.h; sourceTree = "<group>"; };
 		C779C46022F0EA1A00EE2541 /* SantaDecisionManager.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SantaDecisionManager.h; sourceTree = "<group>"; };
-		C779C46222F0EA1A00EE2541 /* main.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
-		C779C46322F0EA1A00EE2541 /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		C779C4D622F0EF2800EE2541 /* SNTXPCBundleServiceInterface.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SNTXPCBundleServiceInterface.m; sourceTree = "<group>"; };
 		C779C4D722F0EF2800EE2541 /* SNTXPCBundleServiceInterface.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SNTXPCBundleServiceInterface.h; sourceTree = "<group>"; };
 		C779C4E622F0F51400EE2541 /* santad */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = santad; sourceTree = BUILT_PRODUCTS_DIR; };
+		C792F25C22F206A800B1DBBD /* santaxpcproxy */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = santaxpcproxy; sourceTree = BUILT_PRODUCTS_DIR; };
+		C792F26422F206E600B1DBBD /* santaxpcproxy-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "santaxpcproxy-Info.plist"; sourceTree = "<group>"; };
 		C7A8308022F0F81F00F856AC /* com.google.santa.daemon.systemextension */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = com.google.santa.daemon.systemextension; sourceTree = BUILT_PRODUCTS_DIR; };
+		C7E1191222F209500014F202 /* com.google.santa.xpcproxy.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = com.google.santa.xpcproxy.plist; sourceTree = "<group>"; };
+		C7E1191722F20DB20014F202 /* santabundleservice.xpc */ = {isa = PBXFileReference; explicitFileType = "wrapper.xpc-service"; includeInIndex = 0; path = santabundleservice.xpc; sourceTree = BUILT_PRODUCTS_DIR; };
+		C7E1192822F20E660014F202 /* SNTBundleService.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SNTBundleService.m; sourceTree = "<group>"; };
+		C7E1192B22F20E660014F202 /* SNTBundleService.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SNTBundleService.h; sourceTree = "<group>"; };
+		C7E1192C22F20E660014F202 /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
+		C7E1192D22F20E660014F202 /* BUILD */ = {isa = PBXFileReference; lastKnownFileType = text; path = BUILD; sourceTree = "<group>"; };
+		C7E1192F22F20E660014F202 /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
+		C7E1193022F20E660014F202 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		C7E1193222F20E660014F202 /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
+		C7E1193322F20E660014F202 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		C7E1193422F20ED90014F202 /* santabundleservice-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "santabundleservice-Info.plist"; sourceTree = "<group>"; };
 		CD71F19EA875F61754E81EBF /* Pods-Santa.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Santa.release.xcconfig"; path = "Target Support Files/Pods-Santa/Pods-Santa.release.xcconfig"; sourceTree = "<group>"; };
+		D4808D8635FB5E8E5F4637BB /* Pods-santabundleservice.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-santabundleservice.debug.xcconfig"; path = "Target Support Files/Pods-santabundleservice/Pods-santabundleservice.debug.xcconfig"; sourceTree = "<group>"; };
 		D7360306D7CFDD179D003266 /* Pods-sysx.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-sysx.debug.xcconfig"; path = "Target Support Files/Pods-sysx/Pods-sysx.debug.xcconfig"; sourceTree = "<group>"; };
+		D979E8ECE019FB93D1D381E7 /* Pods-santaxpcproxy.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-santaxpcproxy.release.xcconfig"; path = "Target Support Files/Pods-santaxpcproxy/Pods-santaxpcproxy.release.xcconfig"; sourceTree = "<group>"; };
 		E6D38874F31422095E853E99 /* Pods-Santa.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Santa.debug.xcconfig"; path = "Target Support Files/Pods-Santa/Pods-Santa.debug.xcconfig"; sourceTree = "<group>"; };
+		EDF64F091E796EC4013F5499 /* Pods-santaxpcproxy.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-santaxpcproxy.debug.xcconfig"; path = "Target Support Files/Pods-santaxpcproxy/Pods-santaxpcproxy.debug.xcconfig"; sourceTree = "<group>"; };
+		FE1F7C320CAEA468FAAC05B0 /* Pods-santabundleservice.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-santabundleservice.release.xcconfig"; path = "Target Support Files/Pods-santabundleservice/Pods-santabundleservice.release.xcconfig"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -292,11 +357,27 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		C792F25922F206A800B1DBBD /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				61FC7425DD1EAAD50D509435 /* libPods-santaxpcproxy.a in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		C7A8307D22F0F81F00F856AC /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
 				F5F5D1EF2AF051FEA97A3A59 /* libPods-sysx.a in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		C7E1191422F20DB20014F202 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				66067B41944ADC1C37627C20 /* libPods-santabundleservice.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -319,6 +400,8 @@
 				C779C2DE22F0E95000EE2541 /* Santa.app */,
 				C779C4E622F0F51400EE2541 /* santad */,
 				C7A8308022F0F81F00F856AC /* com.google.santa.daemon.systemextension */,
+				C792F25C22F206A800B1DBBD /* santaxpcproxy */,
+				C7E1191722F20DB20014F202 /* santabundleservice.xpc */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -329,11 +412,11 @@
 				C779C40622F0EA1900EE2541 /* common */,
 				C779C43322F0EA1A00EE2541 /* Santa */,
 				C779C45122F0EA1A00EE2541 /* santa_driver */,
-				C779C44C22F0EA1A00EE2541 /* santabs */,
+				C7E1192722F20E660014F202 /* santabundleservice */,
 				C779C3D822F0EA1900EE2541 /* santactl */,
 				C779C3AC22F0EA1900EE2541 /* santad */,
-				C779C46122F0EA1A00EE2541 /* santaquarantine */,
-				C779C3D522F0EA1900EE2541 /* santasyncd */,
+				C7E1193122F20E660014F202 /* santaquarantineservice */,
+				C7E1192E22F20E660014F202 /* santasyncservice */,
 				C779C44822F0EA1A00EE2541 /* santaxpcproxy */,
 			);
 			path = Source;
@@ -405,15 +488,6 @@
 				C779C3CB22F0EA1900EE2541 /* SNTRuleTableTest.m */,
 			);
 			path = DataLayer;
-			sourceTree = "<group>";
-		};
-		C779C3D522F0EA1900EE2541 /* santasyncd */ = {
-			isa = PBXGroup;
-			children = (
-				C779C3D722F0EA1900EE2541 /* Info.plist */,
-				C779C3D622F0EA1900EE2541 /* main.m */,
-			);
-			path = santasyncd;
 			sourceTree = "<group>";
 		};
 		C779C3D822F0EA1900EE2541 /* santactl */ = {
@@ -615,28 +689,11 @@
 			isa = PBXGroup;
 			children = (
 				C779C44B22F0EA1A00EE2541 /* main.m */,
+				C792F26322F206E600B1DBBD /* Resources */,
 				C779C44A22F0EA1A00EE2541 /* SNTXPCProxy.h */,
 				C779C44922F0EA1A00EE2541 /* SNTXPCProxy.m */,
 			);
 			path = santaxpcproxy;
-			sourceTree = "<group>";
-		};
-		C779C44C22F0EA1A00EE2541 /* santabs */ = {
-			isa = PBXGroup;
-			children = (
-				C779C45022F0EA1A00EE2541 /* BUILD */,
-				C779C44F22F0EA1A00EE2541 /* main.m */,
-				C779C44D22F0EA1A00EE2541 /* Resources */,
-			);
-			path = santabs;
-			sourceTree = "<group>";
-		};
-		C779C44D22F0EA1A00EE2541 /* Resources */ = {
-			isa = PBXGroup;
-			children = (
-				C779C44E22F0EA1A00EE2541 /* santabs-Info.plist */,
-			);
-			path = Resources;
 			sourceTree = "<group>";
 		};
 		C779C45122F0EA1A00EE2541 /* santa_driver */ = {
@@ -661,13 +718,51 @@
 			path = santa_driver;
 			sourceTree = "<group>";
 		};
-		C779C46122F0EA1A00EE2541 /* santaquarantine */ = {
+		C792F26322F206E600B1DBBD /* Resources */ = {
 			isa = PBXGroup;
 			children = (
-				C779C46322F0EA1A00EE2541 /* Info.plist */,
-				C779C46222F0EA1A00EE2541 /* main.m */,
+				C7E1191222F209500014F202 /* com.google.santa.xpcproxy.plist */,
+				C792F26422F206E600B1DBBD /* santaxpcproxy-Info.plist */,
 			);
-			path = santaquarantine;
+			path = Resources;
+			sourceTree = "<group>";
+		};
+		C7E1192722F20E660014F202 /* santabundleservice */ = {
+			isa = PBXGroup;
+			children = (
+				C7E1192822F20E660014F202 /* SNTBundleService.m */,
+				C7E1192922F20E660014F202 /* Resources */,
+				C7E1192B22F20E660014F202 /* SNTBundleService.h */,
+				C7E1192C22F20E660014F202 /* main.m */,
+				C7E1192D22F20E660014F202 /* BUILD */,
+			);
+			path = santabundleservice;
+			sourceTree = "<group>";
+		};
+		C7E1192922F20E660014F202 /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				C7E1193422F20ED90014F202 /* santabundleservice-Info.plist */,
+			);
+			path = Resources;
+			sourceTree = "<group>";
+		};
+		C7E1192E22F20E660014F202 /* santasyncservice */ = {
+			isa = PBXGroup;
+			children = (
+				C7E1192F22F20E660014F202 /* main.m */,
+				C7E1193022F20E660014F202 /* Info.plist */,
+			);
+			path = santasyncservice;
+			sourceTree = "<group>";
+		};
+		C7E1193122F20E660014F202 /* santaquarantineservice */ = {
+			isa = PBXGroup;
+			children = (
+				C7E1193222F20E660014F202 /* main.m */,
+				C7E1193322F20E660014F202 /* Info.plist */,
+			);
+			path = santaquarantineservice;
 			sourceTree = "<group>";
 		};
 		D2DA9449115697B603A40259 /* Frameworks */ = {
@@ -676,6 +771,8 @@
 				4C3E743944A9D77423AA1534 /* libPods-Santa.a */,
 				3700D40B536CA7F626B76156 /* libPods-santad.a */,
 				91FF0B4E62F1E90A88478993 /* libPods-sysx.a */,
+				24CDFD218D8B35E34895AA6A /* libPods-santaxpcproxy.a */,
+				2A55D73A235850B9FA991865 /* libPods-santabundleservice.a */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -689,6 +786,10 @@
 				7AF15DF785BAA0EAB0BE340D /* Pods-santad.release.xcconfig */,
 				D7360306D7CFDD179D003266 /* Pods-sysx.debug.xcconfig */,
 				C05543B3701F50CA798B4B11 /* Pods-sysx.release.xcconfig */,
+				EDF64F091E796EC4013F5499 /* Pods-santaxpcproxy.debug.xcconfig */,
+				D979E8ECE019FB93D1D381E7 /* Pods-santaxpcproxy.release.xcconfig */,
+				D4808D8635FB5E8E5F4637BB /* Pods-santabundleservice.debug.xcconfig */,
+				FE1F7C320CAEA468FAAC05B0 /* Pods-santabundleservice.release.xcconfig */,
 			);
 			path = Pods;
 			sourceTree = "<group>";
@@ -705,10 +806,13 @@
 				C779C2DB22F0E95000EE2541 /* Frameworks */,
 				C779C2DC22F0E95000EE2541 /* Resources */,
 				C71E473022F0FA9200921CD9 /* CopyFiles */,
+				C77179CA22F207A80047DF1A /* CopyFiles */,
+				C7E1192622F20DB20014F202 /* Embed XPC Services */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				C7E1192122F20DB20014F202 /* PBXTargetDependency */,
 			);
 			name = Santa;
 			productName = Santa;
@@ -733,6 +837,24 @@
 			productReference = C779C4E622F0F51400EE2541 /* santad */;
 			productType = "com.apple.product-type.tool";
 		};
+		C792F25B22F206A800B1DBBD /* santaxpcproxy */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = C792F26222F206A800B1DBBD /* Build configuration list for PBXNativeTarget "santaxpcproxy" */;
+			buildPhases = (
+				A114CA64BA32D5D824F9FCCF /* [CP] Check Pods Manifest.lock */,
+				C792F25822F206A800B1DBBD /* Sources */,
+				C792F25922F206A800B1DBBD /* Frameworks */,
+				C792F25A22F206A800B1DBBD /* CopyFiles */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = santaxpcproxy;
+			productName = santaxpcproxy;
+			productReference = C792F25C22F206A800B1DBBD /* santaxpcproxy */;
+			productType = "com.apple.product-type.tool";
+		};
 		C7A8307F22F0F81F00F856AC /* sysx */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = C7A8308322F0F81F00F856AC /* Build configuration list for PBXNativeTarget "sysx" */;
@@ -752,6 +874,24 @@
 			productReference = C7A8308022F0F81F00F856AC /* com.google.santa.daemon.systemextension */;
 			productType = "com.apple.product-type.bundle";
 		};
+		C7E1191622F20DB20014F202 /* santabundleservice */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = C7E1192322F20DB20014F202 /* Build configuration list for PBXNativeTarget "santabundleservice" */;
+			buildPhases = (
+				3DF905BB2A5C0528D722EE4B /* [CP] Check Pods Manifest.lock */,
+				C7E1191322F20DB20014F202 /* Sources */,
+				C7E1191422F20DB20014F202 /* Frameworks */,
+				C7E1191522F20DB20014F202 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = santabundleservice;
+			productName = santabundleservice;
+			productReference = C7E1191722F20DB20014F202 /* santabundleservice.xpc */;
+			productType = "com.apple.product-type.xpc-service";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -767,7 +907,13 @@
 					C779C4E522F0F51400EE2541 = {
 						CreatedOnToolsVersion = 11.0;
 					};
+					C792F25B22F206A800B1DBBD = {
+						CreatedOnToolsVersion = 11.0;
+					};
 					C7A8307F22F0F81F00F856AC = {
+						CreatedOnToolsVersion = 11.0;
+					};
+					C7E1191622F20DB20014F202 = {
 						CreatedOnToolsVersion = 11.0;
 					};
 				};
@@ -788,6 +934,8 @@
 				C779C2DD22F0E95000EE2541 /* Santa */,
 				C779C4E522F0F51400EE2541 /* santad */,
 				C7A8307F22F0F81F00F856AC /* sysx */,
+				C792F25B22F206A800B1DBBD /* santaxpcproxy */,
+				C7E1191622F20DB20014F202 /* santabundleservice */,
 			);
 		};
 /* End PBXProject section */
@@ -809,9 +957,38 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		C7E1191522F20DB20014F202 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXShellScriptBuildPhase section */
+		3DF905BB2A5C0528D722EE4B /* [CP] Check Pods Manifest.lock */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"${PODS_PODFILE_DIR_PATH}/Podfile.lock",
+				"${PODS_ROOT}/Manifest.lock",
+			);
+			name = "[CP] Check Pods Manifest.lock";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+				"$(DERIVED_FILE_DIR)/Pods-santabundleservice-checkManifestLockResult.txt",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
+			showEnvVarsInLog = 0;
+		};
 		9B2025B681CFFFB8478F7EC3 /* [CP] Check Pods Manifest.lock */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
@@ -828,6 +1005,28 @@
 			);
 			outputPaths = (
 				"$(DERIVED_FILE_DIR)/Pods-santad-checkManifestLockResult.txt",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
+			showEnvVarsInLog = 0;
+		};
+		A114CA64BA32D5D824F9FCCF /* [CP] Check Pods Manifest.lock */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"${PODS_PODFILE_DIR_PATH}/Podfile.lock",
+				"${PODS_ROOT}/Manifest.lock",
+			);
+			name = "[CP] Check Pods Manifest.lock";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+				"$(DERIVED_FILE_DIR)/Pods-santaxpcproxy-checkManifestLockResult.txt",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -943,6 +1142,16 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		C792F25822F206A800B1DBBD /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				C792F26622F206FE00B1DBBD /* SNTXPCProxy.m in Sources */,
+				C792F26522F206FB00B1DBBD /* main.m in Sources */,
+				C77179C922F207810047DF1A /* SNTXPCProxyInterface.m in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		C7A8307C22F0F81F00F856AC /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -950,7 +1159,28 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		C7E1191322F20DB20014F202 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				C7E1193622F20F650014F202 /* main.m in Sources */,
+				C78B793C22F20FA1007B357B /* SNTFileInfo.m in Sources */,
+				C78B793D22F20FA6007B357B /* SNTStoredEvent.m in Sources */,
+				C78B793E22F20FAA007B357B /* SNTXPCNotifierInterface.m in Sources */,
+				C7E1193522F20F5C0014F202 /* SNTXPCBundleServiceInterface.m in Sources */,
+				C7E1193722F20F680014F202 /* SNTBundleService.m in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		C7E1192122F20DB20014F202 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = C7E1191622F20DB20014F202 /* santabundleservice */;
+			targetProxy = C7E1192022F20DB20014F202 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		C779C2ED22F0E95000EE2541 /* Debug */ = {
@@ -1132,6 +1362,32 @@
 			};
 			name = Release;
 		};
+		C792F26022F206A800B1DBBD /* Debug */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = EDF64F091E796EC4013F5499 /* Pods-santaxpcproxy.debug.xcconfig */;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = 998Z9C32TC;
+				ENABLE_HARDENED_RUNTIME = YES;
+				INFOPLIST_FILE = "$(SRCROOT)/Source/santaxpcproxy/Resources/santaxpcproxy-Info.plist";
+				PRODUCT_BUNDLE_IDENTIFIER = com.google.santa.xpcproxy;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Debug;
+		};
+		C792F26122F206A800B1DBBD /* Release */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = D979E8ECE019FB93D1D381E7 /* Pods-santaxpcproxy.release.xcconfig */;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = 998Z9C32TC;
+				ENABLE_HARDENED_RUNTIME = YES;
+				INFOPLIST_FILE = "$(SRCROOT)/Source/santaxpcproxy/Resources/santaxpcproxy-Info.plist";
+				PRODUCT_BUNDLE_IDENTIFIER = com.google.santa.xpcproxy;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Release;
+		};
 		C7A8308422F0F81F00F856AC /* Debug */ = {
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = D7360306D7CFDD179D003266 /* Pods-sysx.debug.xcconfig */;
@@ -1166,6 +1422,40 @@
 			};
 			name = Release;
 		};
+		C7E1192422F20DB20014F202 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = D4808D8635FB5E8E5F4637BB /* Pods-santabundleservice.debug.xcconfig */;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 998Z9C32TC;
+				ENABLE_HARDENED_RUNTIME = YES;
+				INFOPLIST_FILE = "Source/santabundleservice/Resources/santabundleservice-Info.plist";
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.google.santa.bundleservice;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+			};
+			name = Debug;
+		};
+		C7E1192522F20DB20014F202 /* Release */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = FE1F7C320CAEA468FAAC05B0 /* Pods-santabundleservice.release.xcconfig */;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 998Z9C32TC;
+				ENABLE_HARDENED_RUNTIME = YES;
+				INFOPLIST_FILE = "Source/santabundleservice/Resources/santabundleservice-Info.plist";
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.google.santa.bundleservice;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -1196,11 +1486,29 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
+		C792F26222F206A800B1DBBD /* Build configuration list for PBXNativeTarget "santaxpcproxy" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				C792F26022F206A800B1DBBD /* Debug */,
+				C792F26122F206A800B1DBBD /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		C7A8308322F0F81F00F856AC /* Build configuration list for PBXNativeTarget "sysx" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				C7A8308422F0F81F00F856AC /* Debug */,
 				C7A8308522F0F81F00F856AC /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		C7E1192322F20DB20014F202 /* Build configuration list for PBXNativeTarget "santabundleservice" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				C7E1192422F20DB20014F202 /* Debug */,
+				C7E1192522F20DB20014F202 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

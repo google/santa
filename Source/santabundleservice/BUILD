@@ -20,9 +20,9 @@ objc_library(
 )
 
 macos_xpc_service(
-    name = "santabs",
-    bundle_id = "com.google.santabs",
-    infoplists = ["Resources/santabs-Info.plist"],
+    name = "santabundleservice",
+    bundle_id = "com.google.santa.bundleservice",
+    infoplists = ["Resources/santabundleservice-Info.plist"],
     minimum_os_version = "10.9",
     version = "//:version",
     visibility = ["//visibility:public"],
