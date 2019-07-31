@@ -30,6 +30,7 @@ objc_library(
     sdk_frameworks = [
         "IOKit",
         "SecurityInterface",
+        "SystemExtensions",
     ],
     deps = [
         "//Source/common:SNTBlockMessage_SantaGUI",
@@ -44,9 +45,9 @@ objc_library(
 macos_application(
     name = "SantaGUI",
     app_icons = glob(["Resources/Images.xcassets/**"]),
-    bundle_id = "com.google.SantaGUI",
+    bundle_id = "com.google.santa",
     bundle_name = "Santa",
-    infoplists = ["Resources/SantaGUI-Info.plist"],
+    infoplists = ["Resources/Santa-Info.plist"],
     minimum_os_version = "10.9",
     version = "//:version",
     visibility = ["//visibility:public"],
