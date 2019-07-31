@@ -102,12 +102,12 @@ int main(int argc, const char *argv[]) {
 
     LOGI(@"Started, version %@", infoDict[@"CFBundleVersion"]);
 
-    SNTApplication *s = [[SNTApplication alloc] init];
-    [s start];
-
-    // Create watchdog thread
-    pthread_t watchdogThread;
-    pthread_create(&watchdogThread, NULL, watchdogThreadFunction, NULL);
+//    SNTApplication *s = [[SNTApplication alloc] init];
+//    [s start];
+//
+//    // Create watchdog thread
+//    pthread_t watchdogThread;
+//    pthread_create(&watchdogThread, NULL, watchdogThreadFunction, NULL);
 
     [[NSRunLoop mainRunLoop] run];
   }
