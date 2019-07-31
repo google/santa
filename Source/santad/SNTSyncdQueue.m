@@ -55,7 +55,7 @@
   [self dispatchBlockOnSyncdQueue:^{
     [self.syncdConnection.remoteObjectProxy
         postBundleEventToSyncServer:event reply:^(SNTBundleEventAction action) {
-      // Remove the backoff entry for the inital block event. The same event will be included in
+      // Remove the backoff entry for the initial block event. The same event will be included in
       // the related events synced using addEvents:isFromBundle:.
       if (action == SNTBundleEventActionSendEvents) {
         [self.uploadBackoff removeObjectForKey:event.fileBundleHash];
