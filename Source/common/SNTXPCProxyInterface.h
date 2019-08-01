@@ -36,13 +36,36 @@ typedef NS_ENUM(NSInteger, SNTXPCType) {
 @protocol SNTXPCProxyProtocol
 
 - (void)registerListener:(NSXPCListenerEndpoint *)listener ofType:(SNTXPCType)type;
-- (NSXPCListenerEndpoint *)lookupListenerOfType:(SNTXPCType)type;
+- (void)removeListenerOfType:(SNTXPCType)type;
+- (void)lookupListenerOfType:(SNTXPCType)type
+                       reply:(void (^)(NSXPCListenerEndpoint *listener))reply;
+
+@end
+
+///
+///  Protocol implemented by xpc services started by santaxpcproxy
+///
+@protocol SNTXPCProxyChildServiceProtocol
+
+- (void)anonymousListener:(void (^)(NSXPCListenerEndpoint *listener))reply;
 
 @end
 
 @interface SNTXPCProxyInterface : NSObject
 
 + (MOLXPCConnection *)configuredConnection;
+
+///
+///  Returns an initialized NSXPCInterface for the SNTXPCProxyProtocol protocol.
+///  Ensures any methods that accept custom classes as arguments are set-up before returning.
+///
++ (NSXPCInterface *)proxyInterface;
+
+///
+///  Returns an initialized NSXPCInterface for the SNTXPCProxyChildServiceProtocol protocol.
+///  Ensures any methods that accept custom classes as arguments are set-up before returning.
+///
++ (NSXPCInterface *)proxyChildServiceInterface;
 
 @end
 

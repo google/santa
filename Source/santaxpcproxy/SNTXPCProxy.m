@@ -37,28 +37,46 @@
   });
 }
 
-- (NSXPCListenerEndpoint *)lookupListenerOfType:(SNTXPCType)type {
+- (void)removeListenerOfType:(SNTXPCType)type {
+  dispatch_barrier_async(self.rwQueue, ^{
+    self.registeredListeners[@(type)] = nil;
+  });
+}
+
+- (void)lookupListenerOfType:(SNTXPCType)type
+                       reply:(void (^)(NSXPCListenerEndpoint *listener))reply {
   switch(type) {
     case SNTXPCTypeBundleService:
-      return [self serviceWithName:@"com.google.santa.bundleservice"];
+      reply([self serviceWithName:@"com.google.santa.bundleservice"]);
+    return;
     case SNTXPCTypeQurantineService:
-      return [self serviceWithName:@"com.google.santa.quarantineservice"];
+      reply([self serviceWithName:@"com.google.santa.quarantineservice"]);
+      return;
     case SNTXPCTypeSyncService:
-      return [self serviceWithName:@"com.google.santa.syncservice"];
+      reply([self serviceWithName:@"com.google.santa.syncservice"]);
+      return;
     default:
       break;
   }
 
-  __block NSXPCListenerEndpoint *listener;
   dispatch_sync(self.rwQueue, ^{
-    listener = self.registeredListeners[@(type)];
+    reply(self.registeredListeners[@(type)]);
   });
-  return listener;
 }
 
+// Services will spin up on demand.
+// Multiple connections to the same service are multiplexed to a single instance of the service.
 - (NSXPCListenerEndpoint *)serviceWithName:(NSString *)name {
-  NSXPCConnection *c = [[NSXPCConnection alloc] initWithServiceName:name];
-  return c.endpoint;
+  MOLXPCConnection *c = [[MOLXPCConnection alloc] initClientWithServiceName:name];
+  c.remoteInterface = [SNTXPCProxyInterface proxyChildServiceInterface];
+  [c resume];
+  __block NSXPCListenerEndpoint *listener;
+  id rop = [c synchronousRemoteObjectProxy];
+  [rop anonymousListener:^(NSXPCListenerEndpoint *l) {
+    listener = l;
+  }];
+  [c invalidate];
+  return listener;
 }
 
 @end

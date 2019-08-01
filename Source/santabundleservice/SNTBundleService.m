@@ -24,10 +24,11 @@
 #import "Source/common/SNTFileInfo.h"
 #import "Source/common/SNTStoredEvent.h"
 #import "Source/common/SNTXPCNotifierInterface.h"
+#import "Source/common/SNTXPCProxyInterface.h"
 
 @interface SNTBundleService ()
-@property MOLXPCConnection *notifierConnection;
-@property MOLXPCConnection *listener;
+@property MOLXPCConnection *server;
+@property NSXPCListener *anonymousListener;
 @property(nonatomic) dispatch_queue_t queue;
 @end
 
@@ -37,57 +38,24 @@
   self = [super init];
   if (self) {
     _queue = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_BACKGROUND, 0);
+
+    _anonymousListener = [NSXPCListener anonymousListener];
+    _server = [[MOLXPCConnection alloc] initServerWithListener:_anonymousListener];
+    _server.unprivilegedInterface = [SNTXPCBundleServiceInterface bundleServiceInterface];
+    _server.privilegedInterface = _server.unprivilegedInterface;
+    _server.exportedObject = self;
+    [self.server resume];
   }
   return self;
 }
 
-#pragma mark Connection handling
+#pragma mark SNTXPCProxyChildServiceProtocol Methods
 
-// Create a listener for SantaGUI to connect
-- (void)createConnection {
-  dispatch_semaphore_t sema = dispatch_semaphore_create(0);
-
-  // Create listener for return connection from SantaGUI.
-  NSXPCListener *listener = [NSXPCListener anonymousListener];
-  self.listener = [[MOLXPCConnection alloc] initServerWithListener:listener];
-  self.listener.unprivilegedInterface = self.listener.privilegedInterface = [SNTXPCBundleServiceInterface bundleServiceInterface];
-  self.listener.exportedObject = self;
-  self.listener.acceptedHandler = ^{
-    dispatch_semaphore_signal(sema);
-  };
-
-  // Exit when SantaGUI is done with us.
-  self.listener.invalidationHandler = ^{
-    exit(0);
-  };
-
-  [self.listener resume];
-
-  // Tell SantaGUI to connect back to the above listener.
-  [[self.notifierConnection remoteObjectProxy] setBundleServiceListener:listener.endpoint];
-
-  // Now wait for the connection to come in.
-  if (dispatch_semaphore_wait(sema, dispatch_time(DISPATCH_TIME_NOW, 5 * NSEC_PER_SEC))) {
-    [self attemptReconnection];
-  }
-}
-
-- (void)attemptReconnection {
-  [self performSelectorOnMainThread:@selector(createConnection) withObject:nil waitUntilDone:NO];
+- (void)anonymousListener:(void (^)(NSXPCListenerEndpoint *))reply {
+  reply(self.anonymousListener.endpoint);
 }
 
 #pragma mark SNTBundleServiceXPC Methods
-
-// Connect to the SantaGUI
-- (void)setBundleNotificationListener:(NSXPCListenerEndpoint *)listener {
-  dispatch_async(dispatch_get_main_queue(), ^{
-    MOLXPCConnection *c = [[MOLXPCConnection alloc] initClientWithListener:listener];
-    c.remoteInterface = [SNTXPCNotifierInterface bundleNotifierInterface];
-    [c resume];
-    self.notifierConnection = c;
-    [self createConnection];
-  });
-}
 
 - (void)hashBundleBinariesForEvent:(SNTStoredEvent *)event
                              reply:(SNTBundleHashBlock)reply {
@@ -176,21 +144,28 @@
     p = [NSProgress progressWithTotalUnitCount:subpaths.count * 100];
   }
 
+//  // Create a connection to Santa.app to provide updates.
+//  MOLXPCConnection *proxy = [SNTXPCProxyInterface configuredConnection];
+//  [[proxy remoteObjectProxy] lookupListenerOfType:SNTXPCTypeGUI reply:^(NSXPCListenerEndpoint *listener) {
+//
+//  }];
+//  MOLXPCConnection *notifierConnection;
+
   // Dispatch a block for every file in dirEnum.
   dispatch_apply(subpaths.count, self.queue, ^(size_t i) {
     @autoreleasepool {
       if (progress.isCancelled) return;
 
-      dispatch_sync(dispatch_get_main_queue(), ^{
-        p.completedUnitCount++;
-        if (progress && ((i % 500) == 0 || binaryCount > sentBinaryCount)) {
-          sentBinaryCount = binaryCount;
-          [[self.notifierConnection remoteObjectProxy] updateCountsForEvent:event
-                                                                binaryCount:binaryCount
-                                                                  fileCount:i
-                                                                hashedCount:0];
-        }
-      });
+//      dispatch_sync(dispatch_get_main_queue(), ^{
+//        p.completedUnitCount++;
+//        if (progress && ((i % 500) == 0 || binaryCount > sentBinaryCount)) {
+//          sentBinaryCount = binaryCount;
+//          [[notifierConnection remoteObjectProxy] updateCountsForEvent:event
+//                                                                binaryCount:binaryCount
+//                                                                  fileCount:i
+//                                                                hashedCount:0];
+//        }
+//      });
 
       NSString *subpath = subpaths[i];
 
@@ -255,12 +230,12 @@
       dispatch_sync(dispatch_get_main_queue(), ^{
         relatedEvents[se.fileSHA256] = se;
         p.completedUnitCount++;
-        if (progress) {
-          [[self.notifierConnection remoteObjectProxy] updateCountsForEvent:event
-                                                                binaryCount:fis.count
-                                                                  fileCount:0
-                                                                hashedCount:i];
-        }
+//        if (progress) {
+//          [[notifierConnection remoteObjectProxy] updateCountsForEvent:event
+//                                                                binaryCount:fis.count
+//                                                                  fileCount:0
+//                                                                hashedCount:i];
+//        }
       });
     }
   });

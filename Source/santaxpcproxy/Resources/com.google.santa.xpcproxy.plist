@@ -11,7 +11,7 @@
 	</array>
 	<key>MachServices</key>
 	<dict>
-		<key>SantaXPCProxy</key>
+		<key>com.google.santa.xpcproxy</key>
 		<true/>
 	</dict>
 	<key>RunAtLoad</key>

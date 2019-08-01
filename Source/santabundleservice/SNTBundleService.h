@@ -15,6 +15,7 @@
 #import <Foundation/Foundation.h>
 
 #import "Source/common/SNTXPCBundleServiceInterface.h"
+#import "Source/common/SNTXPCProxyInterface.h"
 
-@interface SNTBundleService : NSObject<SNTBundleServiceXPC>
+@interface SNTBundleService : NSObject<SNTBundleServiceXPC, SNTXPCProxyChildServiceProtocol>
 @end

@@ -2,11 +2,11 @@ PODS:
   - FMDB (2.7.5):
     - FMDB/standard (= 2.7.5)
   - FMDB/standard (2.7.5)
-  - MOLCertificate (1.9)
-  - MOLCodesignChecker (1.10):
-    - MOLCertificate (~> 1.8)
-  - MOLXPCConnection (1.2):
-    - MOLCodesignChecker (~> 1.9)
+  - MOLCertificate (2.1)
+  - MOLCodesignChecker (2.2):
+    - MOLCertificate (~> 2.0)
+  - MOLXPCConnection (2.1):
+    - MOLCodesignChecker (~> 2.2)
   - OCMock (3.4.3)
 
 DEPENDENCIES:
@@ -26,11 +26,11 @@ SPEC REPOS:
 
 SPEC CHECKSUMS:
   FMDB: 2ce00b547f966261cd18927a3ddb07cb6f3db82a
-  MOLCertificate: e9e88a396c57032cab847f51a46e20c730cd752a
-  MOLCodesignChecker: b0d5db9d2f9bd94e0fd093891a5d40e5ad77cbc0
-  MOLXPCConnection: c27af5cb1c43b18319698b0e568a8ddc2fc1e306
+  MOLCertificate: 601431e0b2f54bdecddc56fcd716590f95bdfe42
+  MOLCodesignChecker: cec56aa5f68697891abf9b465c654f6e93de35ea
+  MOLXPCConnection: 5fe7e0f620bd188e818f222433bc437b22686cae
   OCMock: 43565190abc78977ad44a61c0d20d7f0784d35ab
 
-PODFILE CHECKSUM: 1c133fe78f1837db41a095b7788b9fc2c29cf529
+PODFILE CHECKSUM: 74fa518e997f6f81e6dde0c1d396dd448ef7bf58
 
 COCOAPODS: 1.7.5

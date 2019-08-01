@@ -53,6 +53,9 @@
 		C78B793C22F20FA1007B357B /* SNTFileInfo.m in Sources */ = {isa = PBXBuildFile; fileRef = C779C42522F0EA1A00EE2541 /* SNTFileInfo.m */; };
 		C78B793D22F20FA6007B357B /* SNTStoredEvent.m in Sources */ = {isa = PBXBuildFile; fileRef = C779C43222F0EA1A00EE2541 /* SNTStoredEvent.m */; };
 		C78B793E22F20FAA007B357B /* SNTXPCNotifierInterface.m in Sources */ = {isa = PBXBuildFile; fileRef = C779C42422F0EA1A00EE2541 /* SNTXPCNotifierInterface.m */; };
+		C78B793F22F2209F007B357B /* SNTXPCProxyInterface.m in Sources */ = {isa = PBXBuildFile; fileRef = C779C42B22F0EA1A00EE2541 /* SNTXPCProxyInterface.m */; };
+		C78B794122F236E4007B357B /* SNTXPCBundleServiceInterface.m in Sources */ = {isa = PBXBuildFile; fileRef = C779C4D622F0EF2800EE2541 /* SNTXPCBundleServiceInterface.m */; };
+		C78B794222F236F3007B357B /* SNTStoredEvent.m in Sources */ = {isa = PBXBuildFile; fileRef = C779C43222F0EA1A00EE2541 /* SNTStoredEvent.m */; };
 		C792F26522F206FB00B1DBBD /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = C779C44B22F0EA1A00EE2541 /* main.m */; };
 		C792F26622F206FE00B1DBBD /* SNTXPCProxy.m in Sources */ = {isa = PBXBuildFile; fileRef = C779C44922F0EA1A00EE2541 /* SNTXPCProxy.m */; };
 		C7A8306C22F0F71E00F856AC /* SNTLogging.m in Sources */ = {isa = PBXBuildFile; fileRef = C779C42E22F0EA1A00EE2541 /* SNTLogging.m */; };
@@ -730,11 +733,11 @@
 		C7E1192722F20E660014F202 /* santabundleservice */ = {
 			isa = PBXGroup;
 			children = (
-				C7E1192822F20E660014F202 /* SNTBundleService.m */,
+				C7E1192D22F20E660014F202 /* BUILD */,
+				C7E1192C22F20E660014F202 /* main.m */,
 				C7E1192922F20E660014F202 /* Resources */,
 				C7E1192B22F20E660014F202 /* SNTBundleService.h */,
-				C7E1192C22F20E660014F202 /* main.m */,
-				C7E1192D22F20E660014F202 /* BUILD */,
+				C7E1192822F20E660014F202 /* SNTBundleService.m */,
 			);
 			path = santabundleservice;
 			sourceTree = "<group>";
@@ -1147,6 +1150,8 @@
 			buildActionMask = 2147483647;
 			files = (
 				C792F26622F206FE00B1DBBD /* SNTXPCProxy.m in Sources */,
+				C78B794122F236E4007B357B /* SNTXPCBundleServiceInterface.m in Sources */,
+				C78B794222F236F3007B357B /* SNTStoredEvent.m in Sources */,
 				C792F26522F206FB00B1DBBD /* main.m in Sources */,
 				C77179C922F207810047DF1A /* SNTXPCProxyInterface.m in Sources */,
 			);
@@ -1167,6 +1172,7 @@
 				C78B793C22F20FA1007B357B /* SNTFileInfo.m in Sources */,
 				C78B793D22F20FA6007B357B /* SNTStoredEvent.m in Sources */,
 				C78B793E22F20FAA007B357B /* SNTXPCNotifierInterface.m in Sources */,
+				C78B793F22F2209F007B357B /* SNTXPCProxyInterface.m in Sources */,
 				C7E1193522F20F5C0014F202 /* SNTXPCBundleServiceInterface.m in Sources */,
 				C7E1193722F20F680014F202 /* SNTBundleService.m in Sources */,
 			);

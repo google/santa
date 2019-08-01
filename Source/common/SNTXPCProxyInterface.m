@@ -25,4 +25,12 @@ NSString *const kSantaXPCProxyMachService = @"com.google.santa.xpcproxy";
   return c;
 }
 
++ (NSXPCInterface *)proxyInterface {
+  return [NSXPCInterface interfaceWithProtocol:@protocol(SNTXPCProxyProtocol)];
+}
+
++ (NSXPCInterface *)proxyChildServiceInterface {
+  return [NSXPCInterface interfaceWithProtocol:@protocol(SNTXPCProxyChildServiceProtocol)];
+}
+
 @end

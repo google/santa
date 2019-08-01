@@ -23,11 +23,6 @@ typedef void (^SNTBundleHashBlock)(NSString *, NSArray<SNTStoredEvent *> *, NSNu
 @protocol SNTBundleServiceXPC
 
 ///
-///  @param listener The listener to connect back to the SantaGUI.
-///
-- (void)setBundleNotificationListener:(NSXPCListenerEndpoint *)listener;
-
-///
 ///  Hash a bundle for an event. The SNTBundleHashBlock will be called with nil parameters if a
 ///  failure or cancellation occurs.
 ///

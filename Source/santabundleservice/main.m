@@ -15,13 +15,14 @@
 #import <Foundation/Foundation.h>
 #import <MOLXPCConnection/MOLXPCConnection.h>
 
+#import "Source/common/SNTXPCProxyInterface.h"
 #import "Source/santabundleservice/SNTBundleService.h"
-#import "Source/common/SNTXPCBundleServiceInterface.h"
 
 int main(int argc, const char *argv[]) {
+  // This server vends anonymous listeners via the proxyChildServiceInterface.
   MOLXPCConnection *c =
       [[MOLXPCConnection alloc] initServerWithListener:[NSXPCListener serviceListener]];
-  c.privilegedInterface = c.unprivilegedInterface = [SNTXPCBundleServiceInterface bundleServiceInterface];
+  c.privilegedInterface = [SNTXPCProxyInterface proxyChildServiceInterface];
   c.exportedObject = [[SNTBundleService alloc] init];
   [c resume];
 }
