@@ -19,7 +19,7 @@ apple_rules_dependencies()
 git_repository(
     name = "MOLAuthenticatingURLSession",
     remote = "https://github.com/google/macops-molauthenticatingurlsession.git",
-    tag = "v2.6",
+    tag = "v2.8",
 )
 
 git_repository(
