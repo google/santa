@@ -21,7 +21,7 @@ objc_library(
 
 macos_xpc_service(
     name = "santabs",
-    bundle_id = "com.google.santabs",
+    bundle_id = "com.google.santa.bundleservice",
     infoplists = ["Resources/santabs-Info.plist"],
     minimum_os_version = "10.9",
     version = "//:version",

@@ -42,11 +42,11 @@ objc_library(
 )
 
 macos_application(
-    name = "SantaGUI",
+    name = "Santa",
     app_icons = glob(["Resources/Images.xcassets/**"]),
-    bundle_id = "com.google.SantaGUI",
+    bundle_id = "com.google.santa",
     bundle_name = "Santa",
-    infoplists = ["Resources/SantaGUI-Info.plist"],
+    infoplists = ["Resources/santa-Info.plist"],
     minimum_os_version = "10.9",
     version = "//:version",
     visibility = ["//visibility:public"],
