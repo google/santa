@@ -12,26 +12,15 @@
 ///    See the License for the specific language governing permissions and
 ///    limitations under the License.
 
-#import "Source/SantaGUI/SNTAboutWindowController.h"
+#import <Cocoa/Cocoa.h>
 
-#import "Source/common/SNTConfigurator.h"
+#import "Source/common/SNTXPCNotifierInterface.h"
+#import "Source/santa/SNTMessageWindowController.h"
 
-@implementation SNTAboutWindowController
-
-- (instancetype)init {
-  return [super initWithWindowNibName:@"AboutWindow"];
-}
-
-- (void)loadWindow {
-  [super loadWindow];
-  if (![[SNTConfigurator configurator] moreInfoURL]) {
-    [self.moreInfoButton removeFromSuperview];
-  }
-}
-
-- (IBAction)openMoreInfoURL:(id)sender {
-  [[NSWorkspace sharedWorkspace] openURL:[[SNTConfigurator configurator] moreInfoURL]];
-  [self close];
-}
+///
+///  Keeps track of pending notifications and ensures only one is presented to the user at a time.
+///
+@interface SNTNotificationManager : NSObject<SNTMessageWindowControllerDelegate,
+                                             SNTNotifierXPC, SNTBundleNotifierXPC>
 
 @end
