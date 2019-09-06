@@ -107,6 +107,16 @@
 		F5F5D1EF2AF051FEA97A3A59 /* libPods-sysx.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 91FF0B4E62F1E90A88478993 /* libPods-sysx.a */; };
 /* End PBXBuildFile section */
 
+/* Begin PBXContainerItemProxy section */
+		C75C51FF2322E23F006BC7C6 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = C779C2D622F0E95000EE2541 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = C7E1191622F20DB20014F202;
+			remoteInfo = santabundleservice;
+		};
+/* End PBXContainerItemProxy section */
+
 /* Begin PBXCopyFilesBuildPhase section */
 		C71E472E22F0F96C00921CD9 /* CopyFiles */ = {
 			isa = PBXCopyFilesBuildPhase;
@@ -817,6 +827,7 @@
 			buildRules = (
 			);
 			dependencies = (
+				C75C52002322E23F006BC7C6 /* PBXTargetDependency */,
 			);
 			name = Santa;
 			productName = Santa;
@@ -1225,6 +1236,14 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		C75C52002322E23F006BC7C6 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = C7E1191622F20DB20014F202 /* santabundleservice */;
+			targetProxy = C75C51FF2322E23F006BC7C6 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		C7658B112322B95500F36578 /* Debug */ = {
