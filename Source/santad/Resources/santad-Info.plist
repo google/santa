@@ -15,8 +15,10 @@
 	<key>CFBundleVersion</key>
 	<string>$(CURRENT_PROJECT_VERSION)</string>
 	<key>NSHumanReadableCopyright</key>
-	<string>Google, Inc.</string>
+	<string>Google, LLC.</string>
 	<key>NSSystemExtensionUsageDescription</key>
 	<string>Santa knows who is naughty and nice.</string>
+	<key>CFBundleExecutable</key>
+	<string>santad</string>
 </dict>
 </plist>

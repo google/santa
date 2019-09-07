@@ -14,8 +14,8 @@
 
 #import "Source/common/SNTXPCControlInterface.h"
 
-#import <MOLXPCConnection/MOLXPCConnection.h>
 #import <MOLCodesignChecker/MOLCodesignChecker.h>
+#import <MOLXPCConnection/MOLXPCConnection.h>
 
 #import "Source/common/SNTRule.h"
 #import "Source/common/SNTStoredEvent.h"
@@ -23,11 +23,16 @@
 @implementation SNTXPCControlInterface
 
 + (NSString *)serviceId {
-  MOLCodesignChecker *cs = [[MOLCodesignChecker alloc] initWithSelf];
-  // "teamid.com.google.santa.daemon.xpc" when signed.
-  // "com.google.santa.daemon.xpc" when not signed.
-  NSString *t = cs.signingInformation[@"teamid"] ?: @"";
-  return [NSString stringWithFormat:@"%@%@com.google.santa.daemon.xpc", t, t.length ? @"." : @""];
+  NSString *bundleID = @"com.google.santa.daemon";
+  // TODO(bur/rah): Support "legacy" Santa on 10.15+.
+  NSProcessInfo *processInfo = [NSProcessInfo processInfo];
+  if ([processInfo isOperatingSystemAtLeastVersion:(NSOperatingSystemVersion){10, 15, 0}]) {
+    MOLCodesignChecker *cs = [[MOLCodesignChecker alloc] initWithSelf];
+    // "teamid.com.google.santa.daemon.xpc"
+    NSString *t = cs.signingInformation[@"teamid"];
+    return [NSString stringWithFormat:@"%@.%@.xpc", t, bundleID];
+  }
+  return bundleID;
 }
 
 + (void)initializeControlInterface:(NSXPCInterface *)r {

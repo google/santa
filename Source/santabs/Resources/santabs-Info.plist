@@ -27,5 +27,7 @@
 		<key>ServiceType</key>
 		<string>Application</string>
 	</dict>
+	<key>NSHumanReadableCopyright</key>
+	<string>Google LLC.</string>
 </dict>
 </plist>

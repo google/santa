@@ -16,13 +16,16 @@
 
 #import <MOLXPCConnection/MOLXPCConnection.h>
 
+#import <SystemExtensions/SystemExtensions.h>
+
 #import "Source/common/SNTConfigurator.h"
+#import "Source/common/SNTLogging.h"
 #import "Source/common/SNTStrengthify.h"
 #import "Source/common/SNTXPCControlInterface.h"
 #import "Source/santa/SNTAboutWindowController.h"
 #import "Source/santa/SNTNotificationManager.h"
 
-@interface SNTAppDelegate ()
+@interface SNTAppDelegate ()<OSSystemExtensionRequestDelegate>
 @property SNTAboutWindowController *aboutWindowController;
 @property SNTNotificationManager *notificationManager;
 @property MOLXPCConnection *daemonListener;
@@ -34,6 +37,16 @@
 #pragma mark App Delegate methods
 
 - (void)applicationDidFinishLaunching:(NSNotification *)aNotification {
+  NSProcessInfo *processInfo = [NSProcessInfo processInfo];
+  if ([processInfo isOperatingSystemAtLeastVersion:(NSOperatingSystemVersion){10, 15, 0}]) {
+    LOGI(@"Requesting SystemExtension activation");
+    OSSystemExtensionRequest *req =
+        [OSSystemExtensionRequest activationRequestForExtension:@"com.google.santa.daemon"
+                                                          queue:dispatch_get_main_queue()];
+    req.delegate = self;
+    [[OSSystemExtensionManager sharedManager] submitRequest:req];
+  }
+
   [self setupMenu];
   self.notificationManager = [[SNTNotificationManager alloc] init];
 
@@ -159,6 +172,29 @@
   [editMenuItem setSubmenu:editMenu];
   [mainMenu addItem:editMenuItem];
   [NSApp setMainMenu:mainMenu];
+}
+
+#pragma mark OSSystemExtensionRequestDelegate
+
+- (OSSystemExtensionReplacementAction)request:(OSSystemExtensionRequest *)request
+                  actionForReplacingExtension:(OSSystemExtensionProperties *)existing
+                                withExtension:(OSSystemExtensionProperties *)ext {
+  LOGI(@"SystemExtension \"%@\" request for replacement", request.identifier);
+  // TODO(bur/rah): Check versions.
+  return OSSystemExtensionReplacementActionReplace;
+}
+
+- (void)requestNeedsUserApproval:(OSSystemExtensionRequest *)request {
+  LOGI(@"SystemExtension \"%@\" request needs user approval", request.identifier);
+}
+
+- (void)request:(OSSystemExtensionRequest *)request didFailWithError:(NSError *)error {
+  LOGI(@"SystemExtension \"%@\" request did fail: %@", request.identifier, error);
+}
+
+- (void)request:(OSSystemExtensionRequest *)request
+    didFinishWithResult:(OSSystemExtensionRequestResult)result {
+  LOGI(@"SystemExtension \"%@\" request did finish: %ld", request.identifier, (long)result);
 }
 
 @end

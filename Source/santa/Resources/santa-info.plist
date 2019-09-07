@@ -25,7 +25,7 @@
 	<key>LSUIElement</key>
 	<true/>
 	<key>NSHumanReadableCopyright</key>
-	<string>Google, Inc.</string>
+	<string>Google LLC.</string>
 	<key>NSPrincipalClass</key>
 	<string>NSApplication</string>
 </dict>

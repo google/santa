@@ -349,6 +349,7 @@
 		C7658B132322BA3E00F36578 /* santa-info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "santa-info.plist"; sourceTree = "<group>"; };
 		C779C2DE22F0E95000EE2541 /* Santa.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Santa.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		C779C4E622F0F51400EE2541 /* santad */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = santad; sourceTree = BUILT_PRODUCTS_DIR; };
+		C77F146F2322F5E500BE2838 /* santad.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = santad.entitlements; sourceTree = "<group>"; };
 		C7A8308022F0F81F00F856AC /* com.google.santa.daemon.systemextension */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = com.google.santa.daemon.systemextension; sourceTree = BUILT_PRODUCTS_DIR; };
 		C7D35DDA2322C902000C5EB4 /* santa-driver.kext */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "santa-driver.kext"; sourceTree = BUILT_PRODUCTS_DIR; };
 		C7E1191722F20DB20014F202 /* santabundleservice.xpc */ = {isa = PBXFileReference; explicitFileType = "wrapper.xpc-service"; includeInIndex = 0; path = santabundleservice.xpc; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -459,6 +460,7 @@
 		C7658A612322B84F00F36578 /* Resources */ = {
 			isa = PBXGroup;
 			children = (
+				C77F146F2322F5E500BE2838 /* santad.entitlements */,
 				C7658A622322B84F00F36578 /* santad-Info.plist */,
 			);
 			path = Resources;
