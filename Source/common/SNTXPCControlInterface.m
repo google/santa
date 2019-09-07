@@ -25,8 +25,7 @@
 + (NSString *)serviceId {
   NSString *bundleID = @"com.google.santa.daemon";
   // TODO(bur/rah): Support "legacy" Santa on 10.15+.
-  NSProcessInfo *processInfo = [NSProcessInfo processInfo];
-  if ([processInfo isOperatingSystemAtLeastVersion:(NSOperatingSystemVersion){10, 15, 0}]) {
+  if (@available(macOS 10.15, *)) {
     MOLCodesignChecker *cs = [[MOLCodesignChecker alloc] initWithSelf];
     // "teamid.com.google.santa.daemon.xpc"
     NSString *t = cs.signingInformation[@"teamid"];
