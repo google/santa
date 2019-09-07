@@ -11,7 +11,7 @@
 	</array>
 	<key>MachServices</key>
 	<dict>
-		<key>com.google.santa.daemon.xpc</key>
+		<key>com.google.santa.daemon</key>
 		<true/>
 	</dict>
 	<key>RunAtLoad</key>
