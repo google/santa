@@ -37,8 +37,7 @@
 #pragma mark App Delegate methods
 
 - (void)applicationDidFinishLaunching:(NSNotification *)aNotification {
-  NSProcessInfo *processInfo = [NSProcessInfo processInfo];
-  if ([processInfo isOperatingSystemAtLeastVersion:(NSOperatingSystemVersion){10, 15, 0}]) {
+  if (@available(macOS 10.15, *)) {
     LOGI(@"Requesting SystemExtension activation");
     OSSystemExtensionRequest *req =
         [OSSystemExtensionRequest activationRequestForExtension:@"com.google.santa.daemon"
@@ -178,22 +177,24 @@
 
 - (OSSystemExtensionReplacementAction)request:(OSSystemExtensionRequest *)request
                   actionForReplacingExtension:(OSSystemExtensionProperties *)existing
-                                withExtension:(OSSystemExtensionProperties *)ext {
+                                withExtension:(OSSystemExtensionProperties *)ext
+    API_AVAILABLE(macosx(10.15)) {
   LOGI(@"SystemExtension \"%@\" request for replacement", request.identifier);
   // TODO(bur/rah): Check versions.
   return OSSystemExtensionReplacementActionReplace;
 }
 
-- (void)requestNeedsUserApproval:(OSSystemExtensionRequest *)request {
+- (void)requestNeedsUserApproval:(OSSystemExtensionRequest *)request API_AVAILABLE(macosx(10.15)) {
   LOGI(@"SystemExtension \"%@\" request needs user approval", request.identifier);
 }
 
-- (void)request:(OSSystemExtensionRequest *)request didFailWithError:(NSError *)error {
+- (void)request:(OSSystemExtensionRequest *)request
+    didFailWithError:(NSError *)error API_AVAILABLE(macosx(10.15)) {
   LOGI(@"SystemExtension \"%@\" request did fail: %@", request.identifier, error);
 }
 
 - (void)request:(OSSystemExtensionRequest *)request
-    didFinishWithResult:(OSSystemExtensionRequestResult)result {
+    didFinishWithResult:(OSSystemExtensionRequestResult)result API_AVAILABLE(macosx(10.15)) {
   LOGI(@"SystemExtension \"%@\" request did finish: %ld", request.identifier, (long)result);
 }
 

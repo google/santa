@@ -30,6 +30,7 @@ objc_library(
     sdk_frameworks = [
         "IOKit",
         "SecurityInterface",
+        "SystemExtensions",
     ],
     deps = [
         "//Source/common:SNTBlockMessage_SantaGUI",
