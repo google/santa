@@ -35,7 +35,7 @@
 ///
 @interface SNTExecutionController : NSObject
 
-- (instancetype)initWithDriverManager:(SNTDriverManager *)driverManager
+- (instancetype)initWithEventProvider:(SNTDriverManager *)driverManager
                             ruleTable:(SNTRuleTable *)ruleTable
                            eventTable:(SNTEventTable *)eventTable
                         notifierQueue:(SNTNotificationQueue *)notifierQueue

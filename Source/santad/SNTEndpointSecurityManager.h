@@ -1,4 +1,4 @@
-/// Copyright 2015 Google Inc. All rights reserved.
+/// Copyright 2019 Google Inc. All rights reserved.
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -14,20 +14,8 @@
 
 #import <Foundation/Foundation.h>
 
-#import "Source/common/SNTXPCControlInterface.h"
+#include "Source/common/SNTKernelCommon.h"
+#include "Source/santad/SNTEventProvider.h"
 
-@class SNTDriverManager;
-@class SNTEventLog;
-@class SNTNotificationQueue;
-@class SNTSyncdQueue;
-
-///
-///  SNTDaemonControlController handles all of the RPCs from santactl
-///
-@interface SNTDaemonControlController : NSObject<SNTDaemonControlXPC>
-
-- (instancetype)initWithEventProvider:(SNTDriverManager *)driverManager
-                    notificationQueue:(SNTNotificationQueue *)notQueue
-                           syncdQueue:(SNTSyncdQueue *)syncdQueue
-                             eventLog:(SNTEventLog *)eventLog;
+@interface SNTEndpointSecurityManager : NSObject<SNTEventProvider>
 @end

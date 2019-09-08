@@ -179,23 +179,23 @@
 - (OSSystemExtensionReplacementAction)request:(OSSystemExtensionRequest *)request
                   actionForReplacingExtension:(OSSystemExtensionProperties *)existing
                                 withExtension:(OSSystemExtensionProperties *)ext
-    API_AVAILABLE(macosx(10.15)) {
+    API_AVAILABLE(macos(10.15)) {
   LOGI(@"SystemExtension \"%@\" request for replacement", request.identifier);
   // TODO(bur/rah): Check versions.
   return OSSystemExtensionReplacementActionReplace;
 }
 
-- (void)requestNeedsUserApproval:(OSSystemExtensionRequest *)request API_AVAILABLE(macosx(10.15)) {
+- (void)requestNeedsUserApproval:(OSSystemExtensionRequest *)request API_AVAILABLE(macos(10.15)) {
   LOGI(@"SystemExtension \"%@\" request needs user approval", request.identifier);
 }
 
 - (void)request:(OSSystemExtensionRequest *)request
-    didFailWithError:(NSError *)error API_AVAILABLE(macosx(10.15)) {
+    didFailWithError:(NSError *)error API_AVAILABLE(macos(10.15)) {
   LOGI(@"SystemExtension \"%@\" request did fail: %@", request.identifier, error);
 }
 
 - (void)request:(OSSystemExtensionRequest *)request
-    didFinishWithResult:(OSSystemExtensionRequestResult)result API_AVAILABLE(macosx(10.15)) {
+    didFinishWithResult:(OSSystemExtensionRequestResult)result API_AVAILABLE(macos(10.15)) {
   LOGI(@"SystemExtension \"%@\" request did finish: %ld", request.identifier, (long)result);
 }
 

@@ -28,6 +28,9 @@ objc_library(
         "SNTDatabaseController.m",
         "SNTDriverManager.h",
         "SNTDriverManager.m",
+        "SNTEndpointSecurityManager.h",
+        "SNTEndpointSecurityManager.m",
+        "SNTEventProvider.h",
         "SNTExecutionController.h",
         "SNTExecutionController.m",
         "SNTNotificationQueue.h",
@@ -37,6 +40,10 @@ objc_library(
         "SNTSyncdQueue.h",
         "SNTSyncdQueue.m",
         "main.m",
+    ],
+    sdk_dylibs = [
+        "EndpointSecurity",
+        "bsm",
     ],
     sdk_frameworks = [
         "DiskArbitration",

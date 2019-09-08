@@ -15,13 +15,14 @@
 #import <Foundation/Foundation.h>
 
 #include "Source/common/SNTKernelCommon.h"
+#include "Source/santad/SNTEventProvider.h"
 
 @class SNTNotificationMessage;
 
 ///
 ///  Manages the connection between daemon and kernel.
 ///
-@interface SNTDriverManager : NSObject
+@interface SNTDriverManager : NSObject<SNTEventProvider>
 
 ///
 ///  Handles locating and connecting to the driver. If driver is not loaded, will
@@ -45,7 +46,7 @@
 ///
 ///  Sends a response to a query back to the kernel.
 ///
-- (kern_return_t)postToKernelAction:(santa_action_t)action forVnodeID:(santa_vnode_id_t)vnodeId;
+- (kern_return_t)postAction:(santa_action_t)action forMessage:(santa_message_t)sm;
 
 ///
 ///  Get the number of binaries in the kernel's caches.
