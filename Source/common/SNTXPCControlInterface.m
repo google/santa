@@ -20,18 +20,23 @@
 #import "Source/common/SNTRule.h"
 #import "Source/common/SNTStoredEvent.h"
 
+NSString *const kBundleID = @"com.google.santa.daemon";
+
 @implementation SNTXPCControlInterface
 
-+ (NSString *)serviceId {
-  NSString *bundleID = @"com.google.santa.daemon";
++ (NSString *)serviceID {
   // TODO(bur/rah): Support "legacy" Santa on 10.15+.
   if (@available(macOS 10.15, *)) {
     MOLCodesignChecker *cs = [[MOLCodesignChecker alloc] initWithSelf];
     // "teamid.com.google.santa.daemon.xpc"
     NSString *t = cs.signingInformation[@"teamid"];
-    return [NSString stringWithFormat:@"%@.%@.xpc", t, bundleID];
+    return [NSString stringWithFormat:@"%@.%@.xpc", t, kBundleID];
   }
-  return bundleID;
+  return kBundleID;
+}
+
++ (NSString *)systemExtensionID {
+  return kBundleID;
 }
 
 + (void)initializeControlInterface:(NSXPCInterface *)r {
@@ -54,7 +59,7 @@
 }
 
 + (MOLXPCConnection *)configuredConnection {
-  MOLXPCConnection *c = [[MOLXPCConnection alloc] initClientWithName:[self serviceId]
+  MOLXPCConnection *c = [[MOLXPCConnection alloc] initClientWithName:[self serviceID]
                                                           privileged:YES];
   c.remoteInterface = [self controlInterface];
   return c;

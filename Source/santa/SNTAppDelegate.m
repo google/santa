@@ -39,9 +39,10 @@
 - (void)applicationDidFinishLaunching:(NSNotification *)aNotification {
   if (@available(macOS 10.15, *)) {
     LOGI(@"Requesting SystemExtension activation");
-    OSSystemExtensionRequest *req =
-        [OSSystemExtensionRequest activationRequestForExtension:@"com.google.santa.daemon"
-                                                          queue:dispatch_get_main_queue()];
+    NSString *e = [SNTXPCControlInterface systemExtensionID];
+    dispatch_queue_t q = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_HIGH, 0);
+    OSSystemExtensionRequest *req = [OSSystemExtensionRequest activationRequestForExtension:e
+                                                                                      queue:q];
     req.delegate = self;
     [[OSSystemExtensionManager sharedManager] submitRequest:req];
   }

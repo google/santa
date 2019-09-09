@@ -62,7 +62,12 @@
 ///
 ///  Returns the MachService ID for this service.
 ///
-+ (NSString *)serviceId;
++ (NSString *)serviceID;
+
+///
+///  Returns the SystemExtension ID for this service.
+///
++ (NSString *)systemExtensionID;
 
 ///
 ///  Returns an initialized NSXPCInterface for the SNTUnprivilegedDaemonControlXPC protocol.
