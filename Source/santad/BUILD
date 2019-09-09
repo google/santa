@@ -94,6 +94,9 @@ santa_unit_test(
         "SNTDatabaseController.m",
         "SNTDriverManager.h",
         "SNTDriverManager.m",
+        "SNTEndpointSecurityManager.h",
+        "SNTEndpointSecurityManager.m",
+        "SNTEventProvider.h",
         "SNTExecutionController.h",
         "SNTExecutionController.m",
         "SNTExecutionControllerTest.m",
@@ -103,6 +106,10 @@ santa_unit_test(
         "SNTPolicyProcessor.m",
         "SNTSyncdQueue.h",
         "SNTSyncdQueue.m",
+    ],
+    sdk_dylibs = [
+        "EndpointSecurity",
+        "bsm",
     ],
     deps = [
         "//Source/common:SNTBlockMessage",
