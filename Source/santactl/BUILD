@@ -71,7 +71,7 @@ objc_library(
 
 macos_command_line_application(
     name = "santactl",
-    bundle_id = "com.google.santactl",
+    bundle_id = "com.google.santa.ctl",
     infoplists = ["Info.plist"],
     minimum_os_version = "10.9",
     version = "//:version",

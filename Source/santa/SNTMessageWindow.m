@@ -12,7 +12,7 @@
 ///    See the License for the specific language governing permissions and
 ///    limitations under the License.
 
-#import "Source/SantaGUI/SNTMessageWindow.h"
+#import "Source/santa/SNTMessageWindow.h"
 
 @implementation SNTMessageWindow
 

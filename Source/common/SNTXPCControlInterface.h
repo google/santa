@@ -57,12 +57,28 @@
 
 @end
 
-@interface SNTXPCControlInterface : SNTXPCUnprivilegedControlInterface
+@interface SNTXPCControlInterface : NSObject
 
 ///
-///  Internal method used to initialize the control interface
+///  Returns the MachService ID for this service.
 ///
++ (NSString *)serviceID;
 
-+ (void)initializeControlInterface:(NSXPCInterface *)r;
+///
+///  Returns the SystemExtension ID for this service.
+///
++ (NSString *)systemExtensionID;
+
+///
+///  Returns an initialized NSXPCInterface for the SNTUnprivilegedDaemonControlXPC protocol.
+///  Ensures any methods that accept custom classes as arguments are set-up before returning
+///
++ (NSXPCInterface *)controlInterface;
+
+///
+///  Retrieve a pre-configured MOLXPCConnection for communicating with santad.
+///  Connections just needs any handlers set and then can be resumed and used.
+///
++ (MOLXPCConnection *)configuredConnection;
 
 @end

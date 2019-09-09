@@ -5,15 +5,15 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>en</string>
 	<key>CFBundleDisplayName</key>
-	<string>santabs</string>
+	<string>santabundleservice</string>
 	<key>CFBundleExecutable</key>
-	<string>santabs</string>
+	<string>santabundleservice</string>
 	<key>CFBundleIdentifier</key>
-	<string>com.google.santabs</string>
+	<string>com.google.santa.bundleservice</string>
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
-	<string>santabs</string>
+	<string>santabundleservice</string>
 	<key>CFBundlePackageType</key>
 	<string>XPC!</string>
 	<key>CFBundleShortVersionString</key>
@@ -27,5 +27,7 @@
 		<key>ServiceType</key>
 		<string>Application</string>
 	</dict>
+	<key>NSHumanReadableCopyright</key>
+	<string>Google LLC.</string>
 </dict>
 </plist>

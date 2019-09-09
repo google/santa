@@ -12,7 +12,7 @@
 ///    See the License for the specific language governing permissions and
 ///    limitations under the License.
 
-#import "Source/SantaGUI/SNTAccessibleTextField.h"
+#import "Source/santa/SNTAccessibleTextField.h"
 
 @implementation SNTAccessibleTextField
 

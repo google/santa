@@ -2,17 +2,23 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<key>CFBundleIdentifier</key>
+	<string>com.google.santa.daemon</string>
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
-	<key>NSHumanReadableCopyright</key>
-	<string>Google, Inc.</string>
-	<key>CFBundleIdentifier</key>
-	<string>com.google.santad</string>
 	<key>CFBundleName</key>
 	<string>santad</string>
-	<key>CFBundleVersion</key>
-	<string>${SANTA_VERSION}</string>
+	<key>CFBundlePackageType</key>
+	<string>SYSX</string>
 	<key>CFBundleShortVersionString</key>
-	<string>${SANTA_VERSION}</string>
+	<string>$(MARKETING_VERSION)</string>
+	<key>CFBundleVersion</key>
+	<string>$(CURRENT_PROJECT_VERSION)</string>
+	<key>NSHumanReadableCopyright</key>
+	<string>Google, LLC.</string>
+	<key>NSSystemExtensionUsageDescription</key>
+	<string>Santa knows who is naughty and nice.</string>
+	<key>CFBundleExecutable</key>
+	<string>santad</string>
 </dict>
 </plist>
