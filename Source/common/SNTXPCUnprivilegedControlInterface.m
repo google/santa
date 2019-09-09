@@ -21,10 +21,6 @@
 
 @implementation SNTXPCUnprivilegedControlInterface
 
-+ (NSString *)serviceId {
-  return @"SantaUnprivilegedXPCControl";
-}
-
 + (void)initializeControlInterface:(NSXPCInterface *)r {
   [r setClasses:[NSSet setWithObjects:[NSArray class], [SNTStoredEvent class], nil]
         forSelector:@selector(hashBundleBinariesForEvent:reply:)
@@ -42,13 +38,6 @@
   [self initializeControlInterface:r];
 
   return r;
-}
-
-+ (MOLXPCConnection *)configuredConnection {
-  MOLXPCConnection *c = [[MOLXPCConnection alloc] initClientWithName:[self serviceId]
-                                                          privileged:YES];
-  c.remoteInterface = [self controlInterface];
-  return c;
 }
 
 @end

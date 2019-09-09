@@ -2,22 +2,20 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-	<key>CFBundleInfoDictionaryVersion</key>
-	<string>6.0</string>
-	<key>CFBundlePackageType</key>
-	<string>KEXT</string>
-	<key>NSHumanReadableCopyright</key>
-	<string>Google, Inc.</string>
-	<key>CFBundleIdentifier</key>
-	<string>com.google.santa-driver</string>
-	<key>CFBundleName</key>
-	<string>santa-driver</string>
 	<key>CFBundleExecutable</key>
 	<string>santa-driver</string>
-	<key>CFBundleVersion</key>
-	<string>${SANTA_VERSION}</string>
+	<key>CFBundleIdentifier</key>
+	<string>com.google.santa-driver</string>
+	<key>CFBundleInfoDictionaryVersion</key>
+	<string>6.0</string>
+	<key>CFBundleName</key>
+	<string>santa-driver</string>
+	<key>CFBundlePackageType</key>
+	<string>KEXT</string>
 	<key>CFBundleShortVersionString</key>
-	<string>${SANTA_VERSION}</string>
+	<string>$(MARKETING_VERSION)</string>
+	<key>CFBundleVersion</key>
+	<string>$(CURRENT_PROJECT_VERSION)</string>
 	<key>IOKitPersonalities</key>
 	<dict>
 		<key>SantaDriver</key>
@@ -26,16 +24,18 @@
 			<string>com.google.santa-driver</string>
 			<key>IOClass</key>
 			<string>com_google_SantaDriver</string>
+			<key>IOMatchCategory</key>
+			<string>com_google_SantaDriver</string>
 			<key>IOProviderClass</key>
 			<string>IOResources</string>
 			<key>IOResourceMatch</key>
 			<string>IOKit</string>
 			<key>IOUserClientClass</key>
 			<string>com_google_SantaDriverClient</string>
-			<key>IOMatchCategory</key>
-			<string>com_google_SantaDriver</string>
 		</dict>
 	</dict>
+	<key>NSHumanReadableCopyright</key>
+	<string>Google LLC.</string>
 	<key>OSBundleLibraries</key>
 	<dict>
 		<key>com.apple.kpi.bsd</key>

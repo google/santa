@@ -125,7 +125,7 @@
                                                          eventLog:_eventLog];
 
     _controlConnection =
-        [[MOLXPCConnection alloc] initServerWithName:[SNTXPCControlInterface serviceId]];
+        [[MOLXPCConnection alloc] initServerWithName:[SNTXPCControlInterface serviceID]];
     _controlConnection.privilegedInterface = [SNTXPCControlInterface controlInterface];
     _controlConnection.unprivilegedInterface = [SNTXPCUnprivilegedControlInterface controlInterface];
     _controlConnection.exportedObject = dc;

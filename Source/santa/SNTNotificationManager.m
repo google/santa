@@ -12,7 +12,7 @@
 ///    See the License for the specific language governing permissions and
 ///    limitations under the License.
 
-#import "Source/SantaGUI/SNTNotificationManager.h"
+#import "Source/santa/SNTNotificationManager.h"
 
 #import <MOLXPCConnection/MOLXPCConnection.h>
 

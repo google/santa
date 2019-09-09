@@ -1,0 +1,46 @@
+PODS:
+  - FMDB (2.7.5):
+    - FMDB/standard (= 2.7.5)
+  - FMDB/standard (2.7.5)
+  - MOLAuthenticatingURLSession (2.4):
+    - MOLCertificate (~> 1.8)
+  - MOLCertificate (1.9)
+  - MOLCodesignChecker (1.10):
+    - MOLCertificate (~> 1.8)
+  - MOLFCMClient (1.8):
+    - MOLAuthenticatingURLSession (~> 2.4)
+  - MOLXPCConnection (1.2):
+    - MOLCodesignChecker (~> 1.9)
+  - OCMock (3.4.3)
+
+DEPENDENCIES:
+  - FMDB
+  - MOLAuthenticatingURLSession
+  - MOLCertificate
+  - MOLCodesignChecker
+  - MOLFCMClient
+  - MOLXPCConnection
+  - OCMock
+
+SPEC REPOS:
+  https://github.com/cocoapods/specs.git:
+    - FMDB
+    - MOLAuthenticatingURLSession
+    - MOLCertificate
+    - MOLCodesignChecker
+    - MOLFCMClient
+    - MOLXPCConnection
+    - OCMock
+
+SPEC CHECKSUMS:
+  FMDB: 2ce00b547f966261cd18927a3ddb07cb6f3db82a
+  MOLAuthenticatingURLSession: c238aa1c9a7b1077eb39a6f40204bfe76a7d204e
+  MOLCertificate: e9e88a396c57032cab847f51a46e20c730cd752a
+  MOLCodesignChecker: b0d5db9d2f9bd94e0fd093891a5d40e5ad77cbc0
+  MOLFCMClient: 2bfbacd45cc11e1ca3c077e97b80401c4e4a54f1
+  MOLXPCConnection: c27af5cb1c43b18319698b0e568a8ddc2fc1e306
+  OCMock: 43565190abc78977ad44a61c0d20d7f0784d35ab
+
+PODFILE CHECKSUM: d03767a9915896232523962c98d9ff7294aec2b7
+
+COCOAPODS: 1.7.5
