@@ -17,7 +17,6 @@
 #import "Source/common/SNTLogging.h"
 
 #include <EndpointSecurity/EndpointSecurity.h>
-
 #include <bsm/libbsm.h>
 
 @interface SNTEndpointSecurityManager ()
@@ -35,47 +34,7 @@
   if (self) {
     es_client_t *client = NULL;
     es_new_client_result_t ret = es_new_client(&client, ^(es_client_t *c, const es_message_t *m) {
-      // TODO(bur/rah): Currently this class only subscribes to exec events. Move this code
-      // somewhere exec specific if other types of events are added to this client.
-      santa_message_t sm;
-      sm.uid = audit_token_to_ruid(m->event.exec.target->audit_token);
-      sm.gid = audit_token_to_rgid(m->event.exec.target->audit_token);
-      sm.pid = audit_token_to_pid(m->event.exec.target->audit_token);
-      // original_ppid stays constant even in the event a process is reparented
-      sm.ppid = m->event.exec.target->original_ppid;
-      sm.es_message = (void *)es_copy_message(m);
-
-      size_t l = m->event.exec.target->executable->path.length;
-      if (l + 1 > MAXPATHLEN ||  m->event.exec.target->executable->path_truncated) {
-        // TODO(bur/rah): Get path from fsid.
-        LOGE(@"Path is truncated!");
-        es_respond_auth_result(self.client, m, ES_AUTH_RESULT_ALLOW, true);
-        return;
-      }
-      strncpy(sm.path,m->event.exec.target->executable->path.data, l);
-      sm.path[l] = '\0';
-
-      switch (m->event_type) {
-        case ES_EVENT_TYPE_AUTH_EXEC:
-//          // TODO(bur/rah): Probably also want to do this for is_es_client.
-//          // TODO(bur/rah): Since these events are not evaluated by Santa's pipline they are
-//          //                missing bits of information such as SHA256 and REASON. Refactor the
-//          //                logging cache.
-//          if (m->event.exec.target->is_platform_binary) {
-//            LOGD(@"platform binary: %s", sm.path);
-//            [self postAction:ACTION_RESPOND_ALLOW forMessage:sm];
-//            return;
-//          }
-          sm.action = ACTION_REQUEST_BINARY;
-          if (self.decisionCallback) self.decisionCallback(sm);
-          break;
-        case ES_EVENT_TYPE_NOTIFY_EXEC:
-          sm.action = ACTION_NOTIFY_EXEC;
-          if (self.logCallback) self.logCallback(sm);
-          break;
-        default:
-          break;
-      }
+      [self messageHandler:m];
     });
 
     if (ret != ES_NEW_CLIENT_RESULT_SUCCESS) LOGE(@"Unable to create es client: %d", ret);
@@ -83,6 +42,50 @@
   }
 
   return self;
+}
+
+- (void)messageHandler:(const es_message_t *)m API_AVAILABLE(macos(10.15)) {
+  // TODO(bur/rah): Currently this class only subscribes to exec events. Move this code
+  // somewhere exec specific if other types of events are added to this client.
+  santa_message_t sm;
+  sm.uid = audit_token_to_ruid(m->event.exec.target->audit_token);
+  sm.gid = audit_token_to_rgid(m->event.exec.target->audit_token);
+  sm.pid = audit_token_to_pid(m->event.exec.target->audit_token);
+  // original_ppid stays constant even in the event a process is reparented
+  sm.ppid = m->event.exec.target->original_ppid;
+  sm.es_message = (void *)es_copy_message(m);
+
+  size_t l = m->event.exec.target->executable->path.length;
+  if (l + 1 > MAXPATHLEN ||  m->event.exec.target->executable->path_truncated) {
+    // TODO(bur/rah): Get path from fsid.
+    LOGE(@"Path is truncated!");
+    es_respond_auth_result(self.client, m, ES_AUTH_RESULT_ALLOW, true);
+    return;
+  }
+  strncpy(sm.path,m->event.exec.target->executable->path.data, l);
+  sm.path[l] = '\0';
+
+  switch (m->event_type) {
+    case ES_EVENT_TYPE_AUTH_EXEC:
+//      // TODO(bur/rah): Probably also want to do this for is_es_client.
+//      // TODO(bur/rah): Since these events are not evaluated by Santa's pipline they are
+//      //                missing bits of information such as SHA256 and REASON. Refactor the
+//      //                logging cache.
+//      if (m->event.exec.target->is_platform_binary) {
+//        LOGD(@"platform binary: %s", sm.path);
+//        [self postAction:ACTION_RESPOND_ALLOW forMessage:sm];
+//        return;
+//      }
+      sm.action = ACTION_REQUEST_BINARY;
+      if (self.decisionCallback) self.decisionCallback(sm);
+      break;
+    case ES_EVENT_TYPE_NOTIFY_EXEC:
+      sm.action = ACTION_NOTIFY_EXEC;
+      if (self.logCallback) self.logCallback(sm);
+      break;
+    default:
+      break;
+  }
 }
 
 - (void)listenForDecisionRequests:(void (^)(santa_message_t))callback API_AVAILABLE(macos(10.15)) {
