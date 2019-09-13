@@ -65,7 +65,7 @@
   self.mockRuleDatabase = OCMClassMock([SNTRuleTable class]);
   self.mockEventDatabase = OCMClassMock([SNTEventTable class]);
 
-  self.sut = [[SNTExecutionController alloc] initWithDriverManager:self.mockDriverManager
+  self.sut = [[SNTExecutionController alloc] initWithEventProvider:self.mockDriverManager
                                                          ruleTable:self.mockRuleDatabase
                                                         eventTable:self.mockEventDatabase
                                                      notifierQueue:nil
@@ -108,8 +108,7 @@
 
   [self.sut validateBinaryWithMessage:[self getMessage]];
 
-  OCMVerify([self.mockDriverManager postToKernelAction:ACTION_RESPOND_ALLOW
-                                            forVnodeID:[self getVnodeId]]);
+  OCMVerify([self.mockDriverManager postAction:ACTION_RESPOND_ALLOW forMessage:[self getMessage]]);
 }
 
 - (void)testBinaryBlacklistRule {
@@ -123,8 +122,8 @@
 
   [self.sut validateBinaryWithMessage:[self getMessage]];
 
-  OCMVerify([self.mockDriverManager postToKernelAction:ACTION_RESPOND_DENY
-                                            forVnodeID:[self getVnodeId]]);
+  OCMVerify([self.mockDriverManager postAction:ACTION_RESPOND_DENY forMessage:[self getMessage]]);
+
 }
 
 - (void)testCertificateWhitelistRule {
@@ -141,8 +140,7 @@
 
   [self.sut validateBinaryWithMessage:[self getMessage]];
 
-  OCMVerify([self.mockDriverManager postToKernelAction:ACTION_RESPOND_ALLOW
-                                            forVnodeID:[self getVnodeId]]);
+  OCMVerify([self.mockDriverManager postAction:ACTION_RESPOND_ALLOW forMessage:[self getMessage]]);
 }
 
 - (void)testCertificateBlacklistRule {
@@ -159,8 +157,7 @@
 
   [self.sut validateBinaryWithMessage:[self getMessage]];
 
-  OCMVerify([self.mockDriverManager postToKernelAction:ACTION_RESPOND_DENY
-                                            forVnodeID:[self getVnodeId]]);
+  OCMVerify([self.mockDriverManager postAction:ACTION_RESPOND_DENY forMessage:[self getMessage]]);
 }
 
 - (void)testBinaryWhitelistCompilerRule {
@@ -175,8 +172,8 @@
 
   [self.sut validateBinaryWithMessage:[self getMessage]];
 
-  OCMVerify([self.mockDriverManager postToKernelAction:ACTION_RESPOND_ALLOW_COMPILER
-                                            forVnodeID:[self getVnodeId]]);
+  OCMVerify([self.mockDriverManager postAction:ACTION_RESPOND_ALLOW_COMPILER
+                                    forMessage:[self getMessage]]);
 }
 
 - (void)testBinaryWhitelistCompilerRuleDisabled {
@@ -191,8 +188,7 @@
 
   [self.sut validateBinaryWithMessage:[self getMessage]];
 
-  OCMVerify([self.mockDriverManager postToKernelAction:ACTION_RESPOND_ALLOW
-                                            forVnodeID:[self getVnodeId]]);
+  OCMVerify([self.mockDriverManager postAction:ACTION_RESPOND_ALLOW forMessage:[self getMessage]]);
 }
 
 - (void)testBinaryWhitelistTransitiveRule {
@@ -207,8 +203,7 @@
 
   [self.sut validateBinaryWithMessage:[self getMessage]];
 
-  OCMVerify([self.mockDriverManager postToKernelAction:ACTION_RESPOND_ALLOW
-                                            forVnodeID:[self getVnodeId]]);
+  OCMVerify([self.mockDriverManager postAction:ACTION_RESPOND_ALLOW forMessage:[self getMessage]]);
 }
 
 - (void)testBinaryWhitelistTransitiveRuleDisabled {
@@ -224,8 +219,7 @@
 
   [self.sut validateBinaryWithMessage:[self getMessage]];
 
-  OCMVerify([self.mockDriverManager postToKernelAction:ACTION_RESPOND_DENY
-                                            forVnodeID:[self getVnodeId]]);
+  OCMVerify([self.mockDriverManager postAction:ACTION_RESPOND_DENY forMessage:[self getMessage]]);
 }
 
 - (void)testDefaultDecision {
@@ -234,13 +228,11 @@
 
   OCMExpect([self.mockConfigurator clientMode]).andReturn(SNTClientModeMonitor);
   [self.sut validateBinaryWithMessage:[self getMessage]];
-  OCMVerify([self.mockDriverManager postToKernelAction:ACTION_RESPOND_ALLOW
-                                            forVnodeID:[self getVnodeId]]);
+  OCMVerify([self.mockDriverManager postAction:ACTION_RESPOND_ALLOW forMessage:[self getMessage]]);
 
   OCMExpect([self.mockConfigurator clientMode]).andReturn(SNTClientModeLockdown);
   [self.sut validateBinaryWithMessage:[self getMessage]];
-  OCMVerify([self.mockDriverManager postToKernelAction:ACTION_RESPOND_DENY
-                                            forVnodeID:[self getVnodeId]]);
+  OCMVerify([self.mockDriverManager postAction:ACTION_RESPOND_DENY forMessage:[self getMessage]]);
 }
 
 - (void)testOutOfScope {
@@ -248,14 +240,12 @@
 
   OCMStub([self.mockConfigurator clientMode]).andReturn(SNTClientModeLockdown);
   [self.sut validateBinaryWithMessage:[self getMessage]];
-  OCMVerify([self.mockDriverManager postToKernelAction:ACTION_RESPOND_ALLOW
-                                            forVnodeID:[self getVnodeId]]);
+  OCMVerify([self.mockDriverManager postAction:ACTION_RESPOND_ALLOW forMessage:[self getMessage]]);
 }
 
 - (void)testMissingShasum {
   [self.sut validateBinaryWithMessage:[self getMessage]];
-  OCMVerify([self.mockDriverManager postToKernelAction:ACTION_RESPOND_ALLOW
-                                            forVnodeID:[self getVnodeId]]);
+  OCMVerify([self.mockDriverManager postAction:ACTION_RESPOND_ALLOW forMessage:[self getMessage]]);
 }
 
 - (void)testPageZero {
@@ -263,8 +253,7 @@
   OCMStub([self.mockFileInfo isMissingPageZero]).andReturn(YES);
 
   [self.sut validateBinaryWithMessage:[self getMessage]];
-  OCMVerify([self.mockDriverManager postToKernelAction:ACTION_RESPOND_DENY
-                                            forVnodeID:[self getVnodeId]]);
+  OCMVerify([self.mockDriverManager postAction:ACTION_RESPOND_DENY forMessage:[self getMessage]]);
 }
 
 @end

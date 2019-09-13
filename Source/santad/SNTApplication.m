@@ -24,6 +24,8 @@
 #import "Source/common/SNTXPCControlInterface.h"
 #import "Source/common/SNTXPCNotifierInterface.h"
 #import "Source/common/SNTXPCUnprivilegedControlInterface.h"
+#import "Source/santad/SNTEventProvider.h"
+#import "Source/santad/SNTEndpointSecurityManager.h"
 #import "Source/santad/SNTCompilerController.h"
 #import "Source/santad/SNTDaemonControlController.h"
 #import "Source/santad/SNTDatabaseController.h"
@@ -38,7 +40,7 @@
 
 @interface SNTApplication ()
 @property DASessionRef diskArbSession;
-@property SNTDriverManager *driverManager;
+@property id<SNTEventProvider> eventProvider;
 @property SNTEventLog *eventLog;
 @property SNTExecutionController *execController;
 @property SNTCompilerController *compilerController;
@@ -52,10 +54,16 @@
 - (instancetype)init {
   self = [super init];
   if (self) {
-    // Locate and connect to driver
-    _driverManager = [[SNTDriverManager alloc] init];
+    // Locate and connect to driver / SystemExtension
+    if (@available(macOS 10.15, *)) {
+      LOGI(@"Using EndpointSecurity as event provider.");
+      _eventProvider = [[SNTEndpointSecurityManager alloc] init];
+    } else {
+      LOGI(@"Using Kauth as event provider.");
+      _eventProvider = [[SNTDriverManager alloc] init];
+    }
 
-    if (!_driverManager) {
+    if (!_eventProvider) {
       LOGE(@"Failed to connect to driver, exiting.");
       return nil;
     }
@@ -85,10 +93,10 @@
 
     // The filter is reset when santad disconnects from the driver.
     // Add the default filters.
-    [_driverManager fileModificationPrefixFilterAdd:@[ @"/.", @"/dev/" ]];
+    [_eventProvider fileModificationPrefixFilterAdd:@[ @"/.", @"/dev/" ]];
 
     // TODO(bur): Add KVO handling for fileChangesPrefixFilters.
-    [_driverManager fileModificationPrefixFilterAdd:[configurator fileChangesPrefixFilters]];
+    [_eventProvider fileModificationPrefixFilterAdd:[configurator fileChangesPrefixFilters]];
 
     self.notQueue = [[SNTNotificationQueue alloc] init];
     SNTSyncdQueue *syncdQueue = [[SNTSyncdQueue alloc] init];
@@ -119,7 +127,7 @@
 
     // Establish XPC listener for Santa and santactl connections
     SNTDaemonControlController *dc =
-        [[SNTDaemonControlController alloc] initWithDriverManager:_driverManager
+        [[SNTDaemonControlController alloc] initWithEventProvider:_eventProvider
                                                 notificationQueue:self.notQueue
                                                        syncdQueue:syncdQueue
                                                          eventLog:_eventLog];
@@ -132,11 +140,11 @@
     [_controlConnection resume];
 
     // Initialize the transitive whitelisting controller object.
-    _compilerController = [[SNTCompilerController alloc] initWithDriverManager:_driverManager
+    _compilerController = [[SNTCompilerController alloc] initWithEventProvider:_eventProvider
                                                                       eventLog:_eventLog];
 
     // Initialize the binary checker object
-    _execController = [[SNTExecutionController alloc] initWithDriverManager:_driverManager
+    _execController = [[SNTExecutionController alloc] initWithEventProvider:_eventProvider
                                                                   ruleTable:ruleTable
                                                                  eventTable:eventTable
                                                               notifierQueue:self.notQueue
@@ -165,7 +173,7 @@
   dispatch_set_target_queue(
       exec_queue, dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_HIGH, 0));
 
-  [self.driverManager listenForDecisionRequests:^(santa_message_t message) {
+  [self.eventProvider listenForDecisionRequests:^(santa_message_t message) {
     @autoreleasepool {
       dispatch_async(exec_queue, ^{
         switch (message.action) {
@@ -202,7 +210,7 @@
   // Limit number of threads the queue can create.
   dispatch_semaphore_t concurrencyLimiter = dispatch_semaphore_create(15);
 
-  [self.driverManager listenForLogRequests:^(santa_message_t message) {
+  [self.eventProvider listenForLogRequests:^(santa_message_t message) {
     @autoreleasepool {
       dispatch_semaphore_wait(concurrencyLimiter, DISPATCH_TIME_FOREVER);
       dispatch_async(log_queue, ^{
@@ -270,7 +278,7 @@ void diskDisappearedCallback(DADiskRef disk, void *context) {
   if (![props[@"DAVolumeMountable"] boolValue]) return;
 
   [app.eventLog logDiskDisappeared:props];
-  [app.driverManager flushCacheNonRootOnly:YES];
+  [app.eventProvider flushCacheNonRootOnly:YES];
 }
 
 - (void)startSyncd {
@@ -322,7 +330,7 @@ void diskDisappearedCallback(DADiskRef disk, void *context) {
     if (!new && !old) return;
     if (![new.pattern isEqualToString:old.pattern]) {
       LOGI(@"Changed [white|black]list regex, flushing cache");
-      [self.driverManager flushCacheNonRootOnly:NO];
+      [self.eventProvider flushCacheNonRootOnly:NO];
     }
   }
 }
@@ -330,7 +338,7 @@ void diskDisappearedCallback(DADiskRef disk, void *context) {
 - (void)clientModeDidChange:(SNTClientMode)clientMode {
   if (clientMode == SNTClientModeLockdown) {
     LOGI(@"Changed client mode, flushing cache.");
-    [self.driverManager flushCacheNonRootOnly:NO];
+    [self.eventProvider flushCacheNonRootOnly:NO];
   }
   [[self.notQueue.notifierConnection remoteObjectProxy] postClientModeNotification:clientMode];
 }

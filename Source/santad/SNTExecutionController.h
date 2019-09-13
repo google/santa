@@ -16,6 +16,7 @@
 
 #import "Source/common/SNTCommonEnums.h"
 #include "Source/common/SNTKernelCommon.h"
+#include "Source/santad/SNTEventProvider.h"
 
 @class MOLCodesignChecker;
 @class SNTDriverManager;
@@ -35,7 +36,7 @@
 ///
 @interface SNTExecutionController : NSObject
 
-- (instancetype)initWithDriverManager:(SNTDriverManager *)driverManager
+- (instancetype)initWithEventProvider:(id<SNTEventProvider>)eventProvider
                             ruleTable:(SNTRuleTable *)ruleTable
                            eventTable:(SNTEventTable *)eventTable
                         notifierQueue:(SNTNotificationQueue *)notifierQueue

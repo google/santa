@@ -178,7 +178,8 @@ static void driverAppearedHandler(void *info, io_iterator_t iterator) {
 
 #pragma mark Outgoing messages
 
-- (kern_return_t)postToKernelAction:(santa_action_t)action forVnodeID:(santa_vnode_id_t)vnodeId {
+- (kern_return_t)postAction:(santa_action_t)action forMessage:(santa_message_t)sm {
+  santa_vnode_id_t vnodeId = sm.vnode_id;
   switch (action) {
     case ACTION_RESPOND_ALLOW:
       return IOConnectCallStructMethod(_connection,
