@@ -182,7 +182,7 @@
             exit(0);
           }
           case ACTION_REQUEST_BINARY: {
-            [_execController validateBinaryWithMessage:message];
+            [self->_execController validateBinaryWithMessage:message];
             break;
           }
           case ACTION_NOTIFY_WHITELIST: {
@@ -223,12 +223,12 @@
             NSRegularExpression *re = [[SNTConfigurator configurator] fileChangesRegex];
             NSString *path = @(message.path);
             if ([re numberOfMatchesInString:path options:0 range:NSMakeRange(0, path.length)]) {
-              [_eventLog logFileModification:message];
+              [self->_eventLog logFileModification:message];
             }
             break;
           }
           case ACTION_NOTIFY_EXEC: {
-            [_eventLog logAllowedExecution:message];
+            [self->_eventLog logAllowedExecution:message];
             break;
           }
           default:

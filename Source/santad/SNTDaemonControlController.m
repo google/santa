@@ -321,7 +321,7 @@ double watchdogRAMPeak = 0;
 ///  if the sync server has not seen them before.
 ///
 ///  @param event The offending event, fileBundleHash & fileBundleBinaryCount need to be populated.
-///  @param relatedEvents Nexted bundle events.
+///  @param events Next bundle events.
 ///
 - (void)syncBundleEvent:(SNTStoredEvent *)event
           relatedEvents:(NSArray<SNTStoredEvent *> *)events {

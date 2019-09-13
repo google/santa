@@ -80,14 +80,14 @@ static void driverAppearedHandler(void *info, io_iterator_t iterator) {
 
   DriverAppearedBlock block = ^(io_object_t object) {
     // This calls `initWithTask`, `attach` and `start` in `SantaDriverClient`
-    kern_return_t kr = IOServiceOpen(object, mach_task_self(), 0, &_connection);
+    kern_return_t kr = IOServiceOpen(object, mach_task_self(), 0, &self->_connection);
     if (kr != kIOReturnSuccess) {
       LOGE(@"Failed to open santa-driver service: 0x%X", kr);
       exit(1);
     }
 
     // Call `open` in `SantaDriverClient`
-    kr = IOConnectCallMethod(_connection, kSantaUserClientOpen, 0, 0, 0, 0, 0, 0, 0, 0);
+    kr = IOConnectCallMethod(self->_connection, kSantaUserClientOpen, 0, 0, 0, 0, 0, 0, 0, 0);
     if (kr == kIOReturnExclusiveAccess) {
       LOGE(@"A client is already connected");
       exit(2);
@@ -100,7 +100,7 @@ static void driverAppearedHandler(void *info, io_iterator_t iterator) {
     IOObjectRelease(iterator);
     IONotificationPortDestroy(notificationPort);
 
-    _connectionEstablished = YES;
+    self->_connectionEstablished = YES;
   };
 
   LOGI(@"Waiting for Santa driver to become available");

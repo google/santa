@@ -26,7 +26,7 @@
 /**
   Initialize this stage. Designated initializer.
 
-  @param syncState A holder for state used across requests
+  @param state A holder for state used across requests
 */
 - (nullable instancetype)initWithState:(nonnull SNTCommandSyncState *)state NS_DESIGNATED_INITIALIZER;
 
