@@ -101,11 +101,11 @@
 		C7658B692322C51A00F36578 /* SNTStoredEvent.m in Sources */ = {isa = PBXBuildFile; fileRef = C7658ADC2322B84F00F36578 /* SNTStoredEvent.m */; };
 		C7658B6A2322C51F00F36578 /* SNTXPCBundleServiceInterface.m in Sources */ = {isa = PBXBuildFile; fileRef = C7658ACC2322B84F00F36578 /* SNTXPCBundleServiceInterface.m */; };
 		C7658B6B2322C52300F36578 /* SNTXPCNotifierInterface.m in Sources */ = {isa = PBXBuildFile; fileRef = C7658ACF2322B84F00F36578 /* SNTXPCNotifierInterface.m */; };
+		C78E7004232C343D0057D85B /* santabundleservice.xpc in CopyFiles */ = {isa = PBXBuildFile; fileRef = C7E1191722F20DB20014F202 /* santabundleservice.xpc */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		C7D35DE42322C99B000C5EB4 /* SantaDecisionManager.cc in Sources */ = {isa = PBXBuildFile; fileRef = C7658B002322B84F00F36578 /* SantaDecisionManager.cc */; };
 		C7D35DE52322C99E000C5EB4 /* SantaDriver.cc in Sources */ = {isa = PBXBuildFile; fileRef = C7658AFF2322B84F00F36578 /* SantaDriver.cc */; };
 		C7D35DE62322C9A1000C5EB4 /* SantaDriverClient.cc in Sources */ = {isa = PBXBuildFile; fileRef = C7658AFA2322B84F00F36578 /* SantaDriverClient.cc */; };
 		C7D35DE72322C9A4000C5EB4 /* SantaPrefixTree.cc in Sources */ = {isa = PBXBuildFile; fileRef = C7658B022322B84F00F36578 /* SantaPrefixTree.cc */; };
-		C7E1192222F20DB20014F202 /* santabundleservice.xpc in Embed XPC Services */ = {isa = PBXBuildFile; fileRef = C7E1191722F20DB20014F202 /* santabundleservice.xpc */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		D28CA4C618C62392319BB642 /* libPods-santactl.a in Frameworks */ = {isa = PBXBuildFile; fileRef = B7714ABC7F247685608DACE7 /* libPods-santactl.a */; };
 		F5F5D1EF2AF051FEA97A3A59 /* libPods-sysx.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 91FF0B4E62F1E90A88478993 /* libPods-sysx.a */; };
 /* End PBXBuildFile section */
@@ -169,15 +169,14 @@
 			);
 			runOnlyForDeploymentPostprocessing = 1;
 		};
-		C7E1192622F20DB20014F202 /* Embed XPC Services */ = {
+		C78E7003232C34290057D85B /* CopyFiles */ = {
 			isa = PBXCopyFilesBuildPhase;
 			buildActionMask = 2147483647;
 			dstPath = "$(CONTENTS_FOLDER_PATH)/XPCServices";
 			dstSubfolderSpec = 16;
 			files = (
-				C7E1192222F20DB20014F202 /* santabundleservice.xpc in Embed XPC Services */,
+				C78E7004232C343D0057D85B /* santabundleservice.xpc in CopyFiles */,
 			);
-			name = "Embed XPC Services";
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXCopyFilesBuildPhase section */
@@ -841,7 +840,6 @@
 				C779C2DC22F0E95000EE2541 /* Resources */,
 				C71E473022F0FA9200921CD9 /* CopyFiles */,
 				C77179CA22F207A80047DF1A /* CopyFiles */,
-				C7E1192622F20DB20014F202 /* Embed XPC Services */,
 			);
 			buildRules = (
 			);
@@ -880,6 +878,7 @@
 				C7A8307D22F0F81F00F856AC /* Frameworks */,
 				C7A8307E22F0F81F00F856AC /* Resources */,
 				C71E472E22F0F96C00921CD9 /* CopyFiles */,
+				C78E7003232C34290057D85B /* CopyFiles */,
 			);
 			buildRules = (
 			);
