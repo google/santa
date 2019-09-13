@@ -507,15 +507,15 @@ static void reachabilityHandler(
 // Start listening for network state changes on a background thread
 - (void)startReachability {
   dispatch_async(dispatch_get_main_queue(), ^{
-    if (_reachability) return;
+    if (self->_reachability) return;
     const char *nodename = [[SNTConfigurator configurator] syncBaseURL].host.UTF8String;
-    _reachability = SCNetworkReachabilityCreateWithName(kCFAllocatorDefault, nodename);
+    self->_reachability = SCNetworkReachabilityCreateWithName(kCFAllocatorDefault, nodename);
     SCNetworkReachabilityContext context = {
       .info = (__bridge_retained void *)self,
       .release = (void (*)(const void *))CFBridgingRelease,
     };
-    if (SCNetworkReachabilitySetCallback(_reachability, reachabilityHandler, &context)) {
-      SCNetworkReachabilitySetDispatchQueue(_reachability,
+    if (SCNetworkReachabilitySetCallback(self->_reachability, reachabilityHandler, &context)) {
+      SCNetworkReachabilitySetDispatchQueue(self->_reachability,
           dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_BACKGROUND, 0));
     } else {
       [self stopReachability];
@@ -526,10 +526,10 @@ static void reachabilityHandler(
 // Stop listening for network state changes
 - (void)stopReachability {
   dispatch_async(dispatch_get_main_queue(), ^{
-    if (_reachability) {
-      SCNetworkReachabilitySetDispatchQueue(_reachability, NULL);
-      if (_reachability) CFRelease(_reachability);
-      _reachability = NULL;
+    if (self->_reachability) {
+      SCNetworkReachabilitySetDispatchQueue(self->_reachability, NULL);
+      if (self->_reachability) CFRelease(self->_reachability);
+      self->_reachability = NULL;
     }
   });
 }
