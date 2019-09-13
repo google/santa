@@ -40,8 +40,9 @@
       santa_message_t sm;
       sm.uid = audit_token_to_ruid(m->event.exec.target->audit_token);
       sm.gid = audit_token_to_rgid(m->event.exec.target->audit_token);
-      sm.pid =audit_token_to_pid(m->event.exec.target->audit_token);
-      sm.ppid = m->event.exec.target->ppid;
+      sm.pid = audit_token_to_pid(m->event.exec.target->audit_token);
+      // original_ppid stays constant even in the event a process is reparented
+      sm.ppid = m->event.exec.target->original_ppid;
       sm.es_message = (void *)es_copy_message(m);
 
       size_t l = m->event.exec.target->executable->path.length;
@@ -56,15 +57,15 @@
 
       switch (m->event_type) {
         case ES_EVENT_TYPE_AUTH_EXEC:
-          // TODO(bur/rah): Probably also want to do this for is_es_client.
-          // TODO(bur/rah): Since these events are not evaluated by Santa's pipline they are
-          //                missing bits of information such as SHA256 and REASON. Refactor the
-          //                logging cache.
-          if (m->event.exec.target->is_platform_binary) {
-            LOGD(@"platform binary: %s", sm.path);
-            [self postAction:ACTION_RESPOND_ALLOW forMessage:sm];
-            return;
-          }
+//          // TODO(bur/rah): Probably also want to do this for is_es_client.
+//          // TODO(bur/rah): Since these events are not evaluated by Santa's pipline they are
+//          //                missing bits of information such as SHA256 and REASON. Refactor the
+//          //                logging cache.
+//          if (m->event.exec.target->is_platform_binary) {
+//            LOGD(@"platform binary: %s", sm.path);
+//            [self postAction:ACTION_RESPOND_ALLOW forMessage:sm];
+//            return;
+//          }
           sm.action = ACTION_REQUEST_BINARY;
           if (self.decisionCallback) self.decisionCallback(sm);
           break;
@@ -111,11 +112,10 @@
       break;
     case ACTION_RESPOND_DENY:
       ret = es_respond_auth_result(self.client, (es_message_t *)sm.es_message,
-                                   ES_AUTH_RESULT_DENY, true);
+                                   ES_AUTH_RESULT_DENY, false);
       break;
     default:
-      ret = ES_RESPOND_RESULT_ERR_INVALID_ARGUMENT;
-      break;
+      return ES_RESPOND_RESULT_ERR_INVALID_ARGUMENT;
   }
 
   if (sm.es_message) {
