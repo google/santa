@@ -130,10 +130,10 @@
 /**
   Perform a data request and capture the returned data, response and error objects.
 
-  @param request, The request to perform
-  @param timeout, The number of seconds to wait before cancelling the request
-  @param response, Return the response details
-  @param error, Return the error details
+  @param request The request to perform
+  @param timeout The number of seconds to wait before cancelling the request
+  @param response Return the response details
+  @param error  Return the error details
   @returns data, The HTTP body of the response
 */
 - (NSData *)performRequest:(NSURLRequest *)request

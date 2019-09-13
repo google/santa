@@ -16,10 +16,6 @@
 
 @implementation SNTAccessibleTextField
 
-- (BOOL)accessibilityIsIgnored {
-  return NO;
-}
-
 - (NSString *)accessibilityLabel {
   if (self.toolTip && self.stringValue) {
     return [NSString stringWithFormat:@"%@: %@", self.toolTip, self.stringValue];

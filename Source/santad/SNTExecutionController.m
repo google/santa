@@ -259,7 +259,7 @@ static size_t kLargeBinarySize = 30 * 1024 * 1024;
   is invalidated when the file is closed which will trigger a brand new request coming from the
   kernel.
 
-  @param fi, SNTFileInfo object for the binary being executed.
+  @param fi SNTFileInfo object for the binary being executed.
   @return YES if the workaround was applied, NO otherwise.
 */
 - (BOOL)printerProxyWorkaround:(SNTFileInfo *)fi {
