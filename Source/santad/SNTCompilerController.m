@@ -21,22 +21,22 @@
 #import "Source/common/SNTLogging.h"
 #import "Source/common/SNTRule.h"
 #import "Source/santad/SNTDatabaseController.h"
-#import "Source/santad/SNTDriverManager.h"
+#import "Source/santad/SNTEventProvider.h"
 #import "Source/santad/DataLayer/SNTRuleTable.h"
 #import "Source/santad/Logs/SNTEventLog.h"
 
 @interface SNTCompilerController ()
-@property SNTDriverManager *driverManager;
+@property id<SNTEventProvider> eventProvider;
 @property SNTEventLog *eventLog;
 @end
 
 @implementation SNTCompilerController
 
-- (instancetype)initWithDriverManager:(SNTDriverManager *)driverManager
+- (instancetype)initWithEventProvider:(id<SNTEventProvider>)eventProvider
                              eventLog:(SNTEventLog *)eventLog {
   self = [super init];
   if (self) {
-    _driverManager = driverManager;
+    _eventProvider = eventProvider;
     _eventLog = eventLog;
   }
   return self;
@@ -92,7 +92,7 @@
   }
 
   // Remove the temporary allow rule in the kernel decision cache.
-  [self.driverManager removeCacheEntryForVnodeID:message.vnode_id];
+  [self.eventProvider removeCacheEntryForVnodeID:message.vnode_id];
   // Remove the "pending" decision info from SNTEventLog.
   [self removeFakeDecision:message];
 }

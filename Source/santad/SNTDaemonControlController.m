@@ -27,7 +27,7 @@
 #import "Source/common/SNTXPCNotifierInterface.h"
 #import "Source/common/SNTXPCSyncdInterface.h"
 #import "Source/santad/SNTDatabaseController.h"
-#import "Source/santad/SNTDriverManager.h"
+#import "Source/santad/SNTEventProvider.h"
 #import "Source/santad/SNTNotificationQueue.h"
 #import "Source/santad/SNTPolicyProcessor.h"
 #import "Source/santad/SNTSyncdQueue.h"
@@ -45,14 +45,14 @@ double watchdogRAMPeak = 0;
 @property NSString *_syncXsrfToken;
 @property SNTPolicyProcessor *policyProcessor;
 @property SNTEventLog *eventLog;
-@property SNTDriverManager *driverManager;
+@property id<SNTEventProvider> eventProvider;
 @property SNTNotificationQueue *notQueue;
 @property SNTSyncdQueue *syncdQueue;
 @end
 
 @implementation SNTDaemonControlController
 
-- (instancetype)initWithDriverManager:(SNTDriverManager *)driverManager
+- (instancetype)initWithEventProvider:(id<SNTEventProvider>)eventProvider
                     notificationQueue:(SNTNotificationQueue *)notQueue
                            syncdQueue:(SNTSyncdQueue *)syncdQueue
                              eventLog:(SNTEventLog *)eventLog {
@@ -60,7 +60,7 @@ double watchdogRAMPeak = 0;
   if (self) {
     _policyProcessor = [[SNTPolicyProcessor alloc] initWithRuleTable:
                            [SNTDatabaseController ruleTable]];
-    _driverManager = driverManager;
+    _eventProvider = eventProvider;
     _notQueue = notQueue;
     _syncdQueue = syncdQueue;
     _eventLog = eventLog;
@@ -71,24 +71,24 @@ double watchdogRAMPeak = 0;
 #pragma mark Kernel ops
 
 - (void)cacheCounts:(void (^)(uint64_t, uint64_t))reply {
-  NSArray<NSNumber *> *counts = [self.driverManager cacheCounts];
+  NSArray<NSNumber *> *counts = [self.eventProvider cacheCounts];
   reply([counts[0] unsignedLongLongValue], [counts[1] unsignedLongLongValue]);
 }
 
 - (void)cacheBucketCount:(void (^)(NSArray *))reply {
-  reply([self.driverManager cacheBucketCount]);
+  reply([self.eventProvider cacheBucketCount]);
 }
 
 - (void)flushCache:(void (^)(BOOL))reply {
-  reply([self.driverManager flushCacheNonRootOnly:NO]);
+  reply([self.eventProvider flushCacheNonRootOnly:NO]);
 }
 
 - (void)checkCacheForVnodeID:(santa_vnode_id_t)vnodeID withReply:(void (^)(santa_action_t))reply {
-  reply([self.driverManager checkCache:vnodeID]);
+  reply([self.eventProvider checkCache:vnodeID]);
 }
 
 - (void)driverConnectionEstablished:(void (^)(BOOL))reply {
-  reply(self.driverManager.connectionEstablished);
+  reply(self.eventProvider.connectionEstablished);
 }
 
 #pragma mark Database ops
@@ -121,7 +121,7 @@ double watchdogRAMPeak = 0;
   // The actual cache flushing happens after the new rules have been added to the database.
   if (flushCache) {
     LOGI(@"Flushing decision cache");
-    [self.driverManager flushCacheNonRootOnly:NO];
+    [self.eventProvider flushCacheNonRootOnly:NO];
   }
 
   reply(error);

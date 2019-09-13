@@ -30,7 +30,7 @@
 #import "Source/common/SNTFileInfo.h"
 #import "Source/common/SNTRule.h"
 #import "Source/common/SNTStoredEvent.h"
-#import "Source/santad/SNTDriverManager.h"
+#import "Source/santad/SNTEventProvider.h"
 #import "Source/santad/SNTNotificationQueue.h"
 #import "Source/santad/SNTPolicyProcessor.h"
 #import "Source/santad/SNTSyncdQueue.h"
@@ -45,7 +45,7 @@
 static size_t kLargeBinarySize = 30 * 1024 * 1024;
 
 @interface SNTExecutionController ()
-@property SNTDriverManager *driverManager;
+@property id<SNTEventProvider> eventProvider;
 @property SNTEventLog *eventLog;
 @property SNTEventTable *eventTable;
 @property SNTNotificationQueue *notifierQueue;
@@ -60,7 +60,7 @@ static size_t kLargeBinarySize = 30 * 1024 * 1024;
 
 #pragma mark Initializers
 
-- (instancetype)initWithDriverManager:(SNTDriverManager *)driverManager
+- (instancetype)initWithEventProvider:(id<SNTEventProvider>)eventProvider
                             ruleTable:(SNTRuleTable *)ruleTable
                            eventTable:(SNTEventTable *)eventTable
                         notifierQueue:(SNTNotificationQueue *)notifierQueue
@@ -68,7 +68,7 @@ static size_t kLargeBinarySize = 30 * 1024 * 1024;
                              eventLog:(SNTEventLog *)eventLog {
   self = [super init];
   if (self) {
-    _driverManager = driverManager;
+    _eventProvider = eventProvider;
     _ruleTable = ruleTable;
     _eventTable = eventTable;
     _notifierQueue = notifierQueue;
@@ -91,20 +91,20 @@ static size_t kLargeBinarySize = 30 * 1024 * 1024;
   // Get info about the file. If we can't get this info, allow execution and log an error.
   if (unlikely(message.path == NULL)) {
     LOGE(@"Path for vnode_id is NULL: %llu/%llu", message.vnode_id.fsid, message.vnode_id.fileid);
-    [_driverManager postToKernelAction:ACTION_RESPOND_ALLOW forVnodeID:message.vnode_id];
+    [self.eventProvider postAction:ACTION_RESPOND_ALLOW forMessage:message];
     return;
   }
   NSError *fileInfoError;
   SNTFileInfo *binInfo = [[SNTFileInfo alloc] initWithPath:@(message.path) error:&fileInfoError];
   if (unlikely(!binInfo)) {
     LOGE(@"Failed to read file %@: %@", @(message.path), fileInfoError.localizedDescription);
-    [_driverManager postToKernelAction:ACTION_RESPOND_ALLOW forVnodeID:message.vnode_id];
+    [self.eventProvider postAction:ACTION_RESPOND_ALLOW forMessage:message];
     return;
   }
 
   // PrinterProxy workaround, see description above the method for more details.
   if ([self printerProxyWorkaround:binInfo]) {
-    [_driverManager postToKernelAction:ACTION_RESPOND_DENY forVnodeID:message.vnode_id];
+    [self.eventProvider postAction:ACTION_RESPOND_DENY forMessage:message];
     return;
   }
 
@@ -112,7 +112,7 @@ static size_t kLargeBinarySize = 30 * 1024 * 1024;
   if (binInfo.fileSize > kLargeBinarySize) {
     LOGD(@"%@ is larger than %zu. Letting santa-driver know we are working on it.",
          binInfo.path, kLargeBinarySize);
-    [_driverManager postToKernelAction:ACTION_RESPOND_ACK forVnodeID:message.vnode_id];
+    [self.eventProvider postAction:ACTION_RESPOND_ACK forMessage:message];
   }
 
   // If the binary is a critical system binary, don't check its signature. The binary was validated
@@ -157,7 +157,7 @@ static size_t kLargeBinarySize = 30 * 1024 * 1024;
   }
 
   // Send the decision to the kernel.
-  [_driverManager postToKernelAction:action forVnodeID:message.vnode_id];
+  [self.eventProvider postAction:action forMessage:message];
 
   // Log to database if necessary.
   if (cd.decision != SNTEventStateAllowBinary &&
@@ -202,7 +202,7 @@ static size_t kLargeBinarySize = 30 * 1024 * 1024;
     se.quarantineAgentBundleID = binInfo.quarantineAgentBundleID;
 
     dispatch_async(_eventQueue, ^{
-      [_eventTable addStoredEvent:se];
+      [self.eventTable addStoredEvent:se];
     });
 
     // If binary was blocked, do the needful
@@ -219,7 +219,7 @@ static size_t kLargeBinarySize = 30 * 1024 * 1024;
         // So the server has something to show the user straight away, initiate an event
         // upload for the blocked binary rather than waiting for the next sync.
         dispatch_async(_eventQueue, ^{
-          [_syncdQueue addEvents:@[se] isFromBundle:NO];
+          [self.syncdQueue addEvents:@[se] isFromBundle:NO];
         });
       }
 
@@ -239,7 +239,7 @@ static size_t kLargeBinarySize = 30 * 1024 * 1024;
         }
         [self printMessage:msg toTTYForPID:message.ppid];
 
-        [_notifierQueue addEvent:se customMessage:cd.customMsg];
+        [self.notifierQueue addEvent:se customMessage:cd.customMsg];
       }
     }
   }
