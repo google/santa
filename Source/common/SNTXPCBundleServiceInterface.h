@@ -52,6 +52,6 @@ typedef void (^SNTBundleHashBlock)(NSString *, NSArray<SNTStoredEvent *> *, NSNu
 ///
 ///  Returns the MachService ID for this service.
 ///
-+ (NSString *)serviceId;
++ (NSString *)serviceID;
 
 @end

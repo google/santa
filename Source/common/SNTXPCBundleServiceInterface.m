@@ -29,8 +29,8 @@
   return r;
 }
 
-+ (NSString *)serviceId {
-  return @"com.google.santabs";
++ (NSString *)serviceID {
+  return @"com.google.santa.bundleservice";
 }
 
 @end

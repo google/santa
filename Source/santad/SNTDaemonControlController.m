@@ -254,7 +254,8 @@ double watchdogRAMPeak = 0;
 }
 
 - (void)setBundleNotificationListener:(NSXPCListenerEndpoint *)listener {
-  MOLXPCConnection *bs = [[MOLXPCConnection alloc] initClientWithServiceName:@"com.google.santabs"];
+  NSString *bundleServiceID = [SNTXPCBundleServiceInterface serviceID];
+  MOLXPCConnection *bs = [[MOLXPCConnection alloc] initClientWithServiceName:bundleServiceID];
   bs.remoteInterface = [SNTXPCBundleServiceInterface bundleServiceInterface];
   [bs resume];
   [[bs remoteObjectProxy] setBundleNotificationListener:listener];
@@ -310,7 +311,7 @@ double watchdogRAMPeak = 0;
 - (void)hashBundleBinariesForEvent:(SNTStoredEvent *)event
                              reply:(SNTBundleHashBlock)reply {
   MOLXPCConnection *bs =
-      [[MOLXPCConnection alloc] initClientWithServiceName:[SNTXPCBundleServiceInterface serviceId]];
+      [[MOLXPCConnection alloc] initClientWithServiceName:[SNTXPCBundleServiceInterface serviceID]];
   bs.remoteInterface = [SNTXPCBundleServiceInterface bundleServiceInterface];
   [bs resume];
   [[bs remoteObjectProxy] hashBundleBinariesForEvent:event reply:reply];
