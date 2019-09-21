@@ -55,6 +55,9 @@
   sm.ppid = m->event.exec.target->original_ppid;
   sm.es_message = (void *)es_copy_message(m);
 
+  sm.vnode_id.fsid = m->event.exec.target->executable->stat.st_dev;
+  sm.vnode_id.fileid = m->event.exec.target->executable->stat.st_ino;
+
   size_t l = m->event.exec.target->executable->path.length;
   if (l + 1 > MAXPATHLEN ||  m->event.exec.target->executable->path_truncated) {
     // TODO(bur/rah): Get path from fsid.
