@@ -30,12 +30,12 @@
 #import "Source/common/SNTFileInfo.h"
 #import "Source/common/SNTRule.h"
 #import "Source/common/SNTStoredEvent.h"
-#import "Source/santad/SNTEventProvider.h"
 #import "Source/santad/SNTNotificationQueue.h"
 #import "Source/santad/SNTPolicyProcessor.h"
 #import "Source/santad/SNTSyncdQueue.h"
 #import "Source/santad/DataLayer/SNTEventTable.h"
 #import "Source/santad/DataLayer/SNTRuleTable.h"
+#import "Source/santad/EventProviders/SNTEventProvider.h"
 #import "Source/santad/Logs/SNTEventLog.h"
 
 // A binary is considered large at ~30MB. Large binaries take longer to hash and consequently

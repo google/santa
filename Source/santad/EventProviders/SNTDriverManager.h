@@ -15,7 +15,7 @@
 #import <Foundation/Foundation.h>
 
 #include "Source/common/SNTKernelCommon.h"
-#include "Source/santad/SNTEventProvider.h"
+#import "Source/santad/EventProviders/SNTEventProvider.h"
 
 @class SNTNotificationMessage;
 

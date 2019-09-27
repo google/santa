@@ -15,7 +15,7 @@
 #import <Foundation/Foundation.h>
 
 #include "Source/common/SNTKernelCommon.h"
-#include "Source/santad/SNTEventProvider.h"
+#include "Source/santad/EventProviders/SNTEventProvider.h"
 
 @interface SNTEndpointSecurityManager : NSObject<SNTEventProvider>
 @end

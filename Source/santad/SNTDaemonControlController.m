@@ -27,12 +27,12 @@
 #import "Source/common/SNTXPCNotifierInterface.h"
 #import "Source/common/SNTXPCSyncdInterface.h"
 #import "Source/santad/SNTDatabaseController.h"
-#import "Source/santad/SNTEventProvider.h"
 #import "Source/santad/SNTNotificationQueue.h"
 #import "Source/santad/SNTPolicyProcessor.h"
 #import "Source/santad/SNTSyncdQueue.h"
 #import "Source/santad/DataLayer/SNTEventTable.h"
 #import "Source/santad/DataLayer/SNTRuleTable.h"
+#import "Source/santad/EventProviders/SNTEventProvider.h"
 #import "Source/santad/Logs/SNTEventLog.h"
 
 // Globals used by the santad watchdog thread
