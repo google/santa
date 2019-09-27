@@ -17,7 +17,7 @@
 #import "Source/common/SNTFileInfo.h"
 #import "Source/common/SNTLogging.h"
 #import "Source/common/SNTStoredEvent.h"
-#import "Source/common/SNTXPCControlInterface.h"
+#import "Source/common/SNTXPCBundleServiceInterface.h"
 #import "Source/santactl/SNTCommand.h"
 #import "Source/santactl/SNTCommandController.h"
 
@@ -35,7 +35,7 @@ REGISTER_COMMAND_NAME(@"bundleinfo")
 }
 
 + (BOOL)requiresDaemonConn {
-  return YES;
+  return NO;
 }
 
 + (NSString *)shortHelpText {
@@ -60,10 +60,13 @@ REGISTER_COMMAND_NAME(@"bundleinfo")
   SNTStoredEvent *se = [[SNTStoredEvent alloc] init];
   se.fileBundlePath = fi.bundlePath;
 
-  [[self.daemonConn remoteObjectProxy]
-      hashBundleBinariesForEvent:se
-                           reply:^(NSString *hash, NSArray<SNTStoredEvent *> *events,
-                                   NSNumber *time) {
+  MOLXPCConnection *bc = [SNTXPCBundleServiceInterface configuredConnection];
+  [bc resume];
+
+  [[bc remoteObjectProxy] hashBundleBinariesForEvent:se
+                                               reply:^(NSString *hash,
+                                                       NSArray<SNTStoredEvent *> *events,
+                                                       NSNumber *time) {
     printf("Hashing time: %llu ms\n", time.unsignedLongLongValue);
     printf("%lu events found\n", events.count);
     printf("BundleHash: %s\n", hash.UTF8String);
@@ -72,6 +75,7 @@ REGISTER_COMMAND_NAME(@"bundleinfo")
       printf("BundleID: %s \n\tSHA-256: %s \n\tPath: %s\n",
              event.fileBundleID.UTF8String, event.fileSHA256.UTF8String, event.filePath.UTF8String);
     }
+    [[bc remoteObjectProxy] spindown];
     exit(0);
   }];
 }

@@ -17,7 +17,6 @@
 
 #import "Source/common/SNTCommonEnums.h"
 #import "Source/common/SNTKernelCommon.h"
-#import "Source/common/SNTXPCBundleServiceInterface.h"
 
 @class SNTRule;
 @class SNTStoredEvent;
@@ -78,7 +77,6 @@
 ///  GUI Ops
 ///
 - (void)setNotificationListener:(NSXPCListenerEndpoint *)listener;
-- (void)setBundleNotificationListener:(NSXPCListenerEndpoint *)listener;
 
 ///
 ///  Syncd Ops
@@ -88,7 +86,6 @@
 ///
 ///  Bundle Ops
 ///
-- (void)hashBundleBinariesForEvent:(SNTStoredEvent *)event reply:(SNTBundleHashBlock)reply;
 - (void)syncBundleEvent:(SNTStoredEvent *)event relatedEvents:(NSArray<SNTStoredEvent *> *)events;
 
 @end

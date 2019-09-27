@@ -253,15 +253,6 @@ double watchdogRAMPeak = 0;
   self.notQueue.notifierConnection = c;
 }
 
-- (void)setBundleNotificationListener:(NSXPCListenerEndpoint *)listener {
-  NSString *bundleServiceID = [SNTXPCBundleServiceInterface serviceID];
-  MOLXPCConnection *bs = [[MOLXPCConnection alloc] initClientWithServiceName:bundleServiceID];
-  bs.remoteInterface = [SNTXPCBundleServiceInterface bundleServiceInterface];
-  [bs resume];
-  [[bs remoteObjectProxy] setBundleNotificationListener:listener];
-  [bs invalidate];
-}
-
 #pragma mark syncd Ops
 
 - (void)setSyncdListener:(NSXPCListenerEndpoint *)listener {
@@ -292,29 +283,6 @@ double watchdogRAMPeak = 0;
   [[self.notQueue.notifierConnection remoteObjectProxy]
       postRuleSyncNotificationWithCustomMessage:message];
   reply();
-}
-
-#pragma mark Bundle ops
-
-///
-///  This method is only used for santactl's bundleinfo command. For blocked executions, SantaGUI
-///  calls on santabs directly.
-///
-///  Hash a bundle for an event. The SNTBundleHashBlock will be called with nil parameters if a
-///  failure or cancellation occurs.
-///
-///  @param event The event that includes the fileBundlePath to be hashed.
-///  @param reply A SNTBundleHashBlock to be executed upon completion or cancellation.
-///
-///  @note If there is a current NSProgress when called this method will report back it's progress.
-///
-- (void)hashBundleBinariesForEvent:(SNTStoredEvent *)event
-                             reply:(SNTBundleHashBlock)reply {
-  MOLXPCConnection *bs =
-      [[MOLXPCConnection alloc] initClientWithServiceName:[SNTXPCBundleServiceInterface serviceID]];
-  bs.remoteInterface = [SNTXPCBundleServiceInterface bundleServiceInterface];
-  [bs resume];
-  [[bs remoteObjectProxy] hashBundleBinariesForEvent:event reply:reply];
 }
 
 ///

@@ -20,8 +20,4 @@
   return [NSXPCInterface interfaceWithProtocol:@protocol(SNTNotifierXPC)];
 }
 
-+ (NSXPCInterface *)bundleNotifierInterface {
-  return [NSXPCInterface interfaceWithProtocol:@protocol(SNTBundleNotifierXPC)];
-}
-
 @end

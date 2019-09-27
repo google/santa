@@ -99,6 +99,8 @@
 		C7CDA6FC233E73D80013622B /* SNTFileInfo.m in Sources */ = {isa = PBXBuildFile; fileRef = C7658AD02322B84F00F36578 /* SNTFileInfo.m */; };
 		C7CDA6FD233E73E40013622B /* SNTStoredEvent.m in Sources */ = {isa = PBXBuildFile; fileRef = C7658ADC2322B84F00F36578 /* SNTStoredEvent.m */; };
 		C7CDA6FE233E73ED0013622B /* SNTXPCNotifierInterface.m in Sources */ = {isa = PBXBuildFile; fileRef = C7658ACF2322B84F00F36578 /* SNTXPCNotifierInterface.m */; };
+		C7CDA6FF233E80160013622B /* SNTLogging.m in Sources */ = {isa = PBXBuildFile; fileRef = C7658AD82322B84F00F36578 /* SNTLogging.m */; };
+		C7CDA700233EB21A0013622B /* SNTXPCBundleServiceInterface.m in Sources */ = {isa = PBXBuildFile; fileRef = C7658ACC2322B84F00F36578 /* SNTXPCBundleServiceInterface.m */; };
 		C7D35DE42322C99B000C5EB4 /* SantaDecisionManager.cc in Sources */ = {isa = PBXBuildFile; fileRef = C7658B002322B84F00F36578 /* SantaDecisionManager.cc */; };
 		C7D35DE52322C99E000C5EB4 /* SantaDriver.cc in Sources */ = {isa = PBXBuildFile; fileRef = C7658AFF2322B84F00F36578 /* SantaDriver.cc */; };
 		C7D35DE62322C9A1000C5EB4 /* SantaDriverClient.cc in Sources */ = {isa = PBXBuildFile; fileRef = C7658AFA2322B84F00F36578 /* SantaDriverClient.cc */; };
@@ -1148,6 +1150,7 @@
 				C7658B512322C19D00F36578 /* NSData+Zlib.m in Sources */,
 				C7658B4B2322C18900F36578 /* SNTCommandFileInfo.m in Sources */,
 				C7658B572322C1AB00F36578 /* SNTCommandSyncPreflight.m in Sources */,
+				C7CDA700233EB21A0013622B /* SNTXPCBundleServiceInterface.m in Sources */,
 				C7658B642322C2F300F36578 /* SNTXPCUnprivilegedControlInterface.m in Sources */,
 				C7658B562322C1A900F36578 /* SNTCommandSyncPostflight.m in Sources */,
 				C7658B502322C19900F36578 /* SNTCommandVersion.m in Sources */,
@@ -1246,6 +1249,7 @@
 			files = (
 				C7CDA6FB233E73D20013622B /* SNTXPCBundleServiceInterface.m in Sources */,
 				C7CDA6FC233E73D80013622B /* SNTFileInfo.m in Sources */,
+				C7CDA6FF233E80160013622B /* SNTLogging.m in Sources */,
 				C7CDA6FD233E73E40013622B /* SNTStoredEvent.m in Sources */,
 				C7CDA6FE233E73ED0013622B /* SNTXPCNotifierInterface.m in Sources */,
 				C7F5C1AE233E72CC00A3F7FD /* main.m in Sources */,
@@ -1580,7 +1584,6 @@
 				DEVELOPMENT_TEAM = 998Z9C32TC;
 				ENABLE_HARDENED_RUNTIME = YES;
 				INFOPLIST_FILE = "$(SRCROOT)/Source/santabundleservice/Resources/santabundleservice-Info.plist";
-				MACOSX_DEPLOYMENT_TARGET = 10.15;
 				PRODUCT_BUNDLE_IDENTIFIER = com.google.santa.bundleservice;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
@@ -1595,7 +1598,6 @@
 				DEVELOPMENT_TEAM = 998Z9C32TC;
 				ENABLE_HARDENED_RUNTIME = YES;
 				INFOPLIST_FILE = "$(SRCROOT)/Source/santabundleservice/Resources/santabundleservice-Info.plist";
-				MACOSX_DEPLOYMENT_TARGET = 10.15;
 				PRODUCT_BUNDLE_IDENTIFIER = com.google.santa.bundleservice;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};

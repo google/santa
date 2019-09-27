@@ -33,4 +33,11 @@
   return @"com.google.santa.bundleservice";
 }
 
++ (MOLXPCConnection *)configuredConnection {
+  MOLXPCConnection *c = [[MOLXPCConnection alloc] initClientWithName:[self serviceID]
+                                                          privileged:YES];
+  c.remoteInterface = [self bundleServiceInterface];
+  return c;
+}
+
 @end
