@@ -14,19 +14,12 @@
 	<string>6.0</string>
 	<key>CFBundleName</key>
 	<string>santabundleservice</string>
-	<key>CFBundlePackageType</key>
-	<string>XPC!</string>
 	<key>CFBundleShortVersionString</key>
 	<string>${SANTA_VERSION}</string>
 	<key>CFBundleSignature</key>
 	<string>????</string>
 	<key>CFBundleVersion</key>
 	<string>${SANTA_VERSION}</string>
-	<key>XPCService</key>
-	<dict>
-		<key>ServiceType</key>
-		<string>Application</string>
-	</dict>
 	<key>NSHumanReadableCopyright</key>
 	<string>Google LLC.</string>
 </dict>

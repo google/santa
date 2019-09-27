@@ -12,7 +12,7 @@
 ///    See the License for the specific language governing permissions and
 ///    limitations under the License.
 
-#import "Source/santabs/SNTBundleService.h"
+#import "Source/santabundleservice/SNTBundleService.h"
 
 #include <stdatomic.h>
 

@@ -1,7 +1,5 @@
 licenses(["notice"])  # Apache 2.0
 
-load("@build_bazel_rules_apple//apple:macos.bzl", "macos_xpc_service")
-
 objc_library(
     name = "santabs_lib",
     srcs = [
@@ -19,12 +17,3 @@ objc_library(
     ],
 )
 
-macos_xpc_service(
-    name = "santabs",
-    bundle_id = "com.google.santa.bundleservice",
-    infoplists = ["Resources/santabs-Info.plist"],
-    minimum_os_version = "10.9",
-    version = "//:version",
-    visibility = ["//visibility:public"],
-    deps = [":santabs_lib"],
-)
