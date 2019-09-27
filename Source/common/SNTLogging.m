@@ -39,6 +39,13 @@ void logMessage(LogLevel level, FILE *destination, NSString *format, ...) {
   dispatch_once(&pred, ^{
     binaryName = [[NSProcessInfo processInfo] processName];
 
+    if (@available(macOS 10.15, *)) {
+      if ([binaryName isEqualToString:@"santad"]) {
+        useSyslog = YES;
+        pthread_key_create(&syslogKey, syslogClientDestructor);
+      }
+    }
+
     // If debug logging is enabled, the process must be restarted.
     if ([[[NSProcessInfo processInfo] arguments] containsObject:@"--debug"]) {
       logLevel = LOG_LEVEL_DEBUG;
