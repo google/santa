@@ -118,7 +118,7 @@ objc_library(
     srcs = ["SNTXPCBundleServiceInterface.m"],
     hdrs = ["SNTXPCBundleServiceInterface.h"],
     deps = [
-        ":SNTStoredEvent"
+        ":SNTStoredEvent",
         "@MOLXPCConnection",
     ],
 )
