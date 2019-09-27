@@ -21,8 +21,8 @@
 #import "Source/common/SNTLogging.h"
 #import "Source/common/SNTRule.h"
 #import "Source/santad/SNTDatabaseController.h"
-#import "Source/santad/SNTEventProvider.h"
 #import "Source/santad/DataLayer/SNTRuleTable.h"
+#import "Source/santad/EventProviders/SNTEventProvider.h"
 #import "Source/santad/Logs/SNTEventLog.h"
 
 @interface SNTCompilerController ()

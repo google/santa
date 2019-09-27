@@ -423,6 +423,18 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		0D3715F9233E680700BB624A /* EventProviders */ = {
+			isa = PBXGroup;
+			children = (
+				C7658A632322B84F00F36578 /* SNTDriverManager.h */,
+				C7658A742322B84F00F36578 /* SNTDriverManager.m */,
+				C72ED2B42324962400255555 /* SNTEndpointSecurityManager.h */,
+				C72ED2B52324962400255555 /* SNTEndpointSecurityManager.m */,
+				C72ED2B3232495CC00255555 /* SNTEventProvider.h */,
+			);
+			path = EventProviders;
+			sourceTree = "<group>";
+		};
 		C7658A592322B84F00F36578 /* Source */ = {
 			isa = PBXGroup;
 			children = (
@@ -441,6 +453,7 @@
 			children = (
 				C7658A752322B84F00F36578 /* BUILD */,
 				C7658A762322B84F00F36578 /* DataLayer */,
+				0D3715F9233E680700BB624A /* EventProviders */,
 				C7658A672322B84F00F36578 /* Logs */,
 				C7658A6E2322B84F00F36578 /* main.m */,
 				C7658A612322B84F00F36578 /* Resources */,
@@ -452,11 +465,6 @@
 				C7658A5D2322B84F00F36578 /* SNTDaemonControlController.m */,
 				C7658A5E2322B84F00F36578 /* SNTDatabaseController.h */,
 				C7658A712322B84F00F36578 /* SNTDatabaseController.m */,
-				C7658A632322B84F00F36578 /* SNTDriverManager.h */,
-				C7658A742322B84F00F36578 /* SNTDriverManager.m */,
-				C72ED2B42324962400255555 /* SNTEndpointSecurityManager.h */,
-				C72ED2B52324962400255555 /* SNTEndpointSecurityManager.m */,
-				C72ED2B3232495CC00255555 /* SNTEventProvider.h */,
 				C7658A812322B84F00F36578 /* SNTExecutionController.h */,
 				C7658A642322B84F00F36578 /* SNTExecutionController.m */,
 				C7658A7F2322B84F00F36578 /* SNTExecutionControllerTest.m */,
@@ -1414,8 +1422,8 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = Source/santa/Resources/santa.entitlements;
-				CODE_SIGN_IDENTITY = "Mac Developer";
-				CODE_SIGN_STYLE = Manual;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 998Z9C32TC;
@@ -1426,9 +1434,9 @@
 					"@executable_path/../Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.google.santa;
+				PRODUCT_BUNDLE_IDENTIFIER = com.google.santa.x;
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				PROVISIONING_PROFILE_SPECIFIER = Santa;
+				PROVISIONING_PROFILE_SPECIFIER = "";
 			};
 			name = Debug;
 		};
@@ -1438,8 +1446,8 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = Source/santa/Resources/santa.entitlements;
-				CODE_SIGN_IDENTITY = "Mac Developer";
-				CODE_SIGN_STYLE = Manual;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 998Z9C32TC;
@@ -1450,9 +1458,9 @@
 					"@executable_path/../Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.google.santa;
+				PRODUCT_BUNDLE_IDENTIFIER = com.google.santa.x;
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				PROVISIONING_PROFILE_SPECIFIER = Santa;
+				PROVISIONING_PROFILE_SPECIFIER = "";
 			};
 			name = Release;
 		};
