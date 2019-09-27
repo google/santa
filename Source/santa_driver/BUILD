@@ -75,7 +75,6 @@ santa_unit_test(
 macos_kernel_extension(
     name = "santa_driver",
     additional_contents = {
-        "//Source/santabs": "XPCServices",
         "//Source/santa:Santa": "Resources",
         "//Source/santactl": "MacOS",
         "//Source/santad": "MacOS",
