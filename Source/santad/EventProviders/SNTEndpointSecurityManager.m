@@ -12,7 +12,7 @@
 ///    See the License for the specific language governing permissions and
 ///    limitations under the License.
 
-#import "Source/santad/SNTEndpointSecurityManager.h"
+#import "Source/santad/EventProviders/SNTEndpointSecurityManager.h"
 
 #import "Source/common/SNTLogging.h"
 
@@ -32,16 +32,35 @@
 - (instancetype)init API_AVAILABLE(macos(10.15)) {
   self = [super init];
   if (self) {
+    [self establishClient];
+  }
+
+  return self;
+}
+
+- (void)establishClient API_AVAILABLE(macos(10.15)) {
+  while (!self.client) {
     es_client_t *client = NULL;
     es_new_client_result_t ret = es_new_client(&client, ^(es_client_t *c, const es_message_t *m) {
       [self messageHandler:m];
     });
 
-    if (ret != ES_NEW_CLIENT_RESULT_SUCCESS) LOGE(@"Unable to create es client: %d", ret);
-    self.client = client;
+    switch (ret) {
+      case ES_NEW_CLIENT_RESULT_SUCCESS:
+        LOGI(@"Connected to EndpointSecurity");
+        self.client = client;
+        return;
+      case ES_NEW_CLIENT_RESULT_ERR_NOT_PERMITTED:
+        LOGE(@"Unable to create EndpointSecurity client, not full-disk access permitted");
+        LOGE(@"Sleeping for 30s before restarting.");
+        sleep(30);
+        exit(ret);
+      default:
+        LOGE(@"Unable to create es client: %d. Sleeping for a minute.", ret);
+        sleep(60);
+        continue;
+    }
   }
-
-  return self;
 }
 
 - (void)messageHandler:(const es_message_t *)m API_AVAILABLE(macos(10.15)) {
@@ -92,15 +111,23 @@
 }
 
 - (void)listenForDecisionRequests:(void (^)(santa_message_t))callback API_AVAILABLE(macos(10.15)) {
+  while (!self.connectionEstablished) usleep(100000); // 100ms
+
   // Listen for exec auth messages.
   self.decisionCallback = callback;
   es_event_type_t events[] = { ES_EVENT_TYPE_AUTH_EXEC };
   es_return_t sret = es_subscribe(self.client, events, 1);
   if (sret != ES_RETURN_SUCCESS) LOGE(@"Unable to subscribe ES_EVENT_TYPE_AUTH_EXEC: %d", sret);
 
+  // There's a gap between creating a client and subscribing to events. Creating the client
+  // triggers a cache flush automatically but any events that happen in this gap could be allowed
+  // and cached, so we force the cache to flush again.
+  [self flushCacheNonRootOnly:YES];
 }
 
 - (void)listenForLogRequests:(void (^)(santa_message_t))callback API_AVAILABLE(macos(10.15)) {
+  while (!self.connectionEstablished) usleep(100000); // 100ms
+
   // Listen for exec notify messages.
   self.logCallback = callback;
   es_event_type_t events[] = { ES_EVENT_TYPE_NOTIFY_EXEC };
@@ -133,6 +160,7 @@
 }
 
 - (BOOL)flushCacheNonRootOnly:(BOOL)nonRootOnly API_AVAILABLE(macos(10.15)) {
+  if (!self.connectionEstablished) return YES; // if not connected, there's nothing to flush.
   return es_clear_cache(self.client) == ES_CLEAR_CACHE_RESULT_SUCCESS;
 }
 

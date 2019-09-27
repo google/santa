@@ -12,7 +12,7 @@
 ///    See the License for the specific language governing permissions and
 ///    limitations under the License.
 
-#import "Source/santad/SNTDriverManager.h"
+#import "Source/santad/EventProviders/SNTDriverManager.h"
 
 #import <IOKit/IODataQueueClient.h>
 #import <IOKit/kext/KextManager.h>

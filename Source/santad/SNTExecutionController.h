@@ -16,7 +16,7 @@
 
 #import "Source/common/SNTCommonEnums.h"
 #include "Source/common/SNTKernelCommon.h"
-#include "Source/santad/SNTEventProvider.h"
+#include "Source/santad/EventProviders/SNTEventProvider.h"
 
 @class MOLCodesignChecker;
 @class SNTDriverManager;
