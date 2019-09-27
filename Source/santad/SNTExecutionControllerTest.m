@@ -22,9 +22,9 @@
 #import "Source/common/SNTConfigurator.h"
 #import "Source/common/SNTFileInfo.h"
 #import "Source/common/SNTRule.h"
-#import "Source/santad/SNTDriverManager.h"
 #import "Source/santad/DataLayer/SNTEventTable.h"
 #import "Source/santad/DataLayer/SNTRuleTable.h"
+#import "Source/santad/EventProviders/SNTDriverManager.h"
 
 @interface SNTExecutionControllerTest : XCTestCase
 @property id mockConfigurator;
