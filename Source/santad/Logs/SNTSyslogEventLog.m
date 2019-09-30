@@ -15,6 +15,7 @@
 #import "Source/santad/Logs/SNTSyslogEventLog.h"
 
 #import <libproc.h>
+#include <EndpointSecurity/EndpointSecurity.h>
 
 #import "Source/common/SNTCachedDecision.h"
 #import "Source/common/SNTConfigurator.h"
@@ -181,7 +182,22 @@
   }
 
   if (logArgs) {
-    [self addArgsForPid:message.pid toString:outLog];
+    if (@available(macOS 10.15, *)) {
+      es_message_t *m = (es_message_t *)message.es_message;
+
+      // TODO(rah): Profile this, it might need to be improved.
+      uint32_t argCount = es_exec_arg_count(&(m->event.exec));
+      NSMutableArray *args = [NSMutableArray arrayWithCapacity:argCount];
+      for (int i = 0; i < argCount; ++i) {
+        es_string_token_t arg = es_exec_arg(&(m->event.exec), i);
+        [args addObject:[[NSString alloc] initWithBytes:arg.data
+                                                 length:arg.length
+                                               encoding:NSUTF8StringEncoding]];
+      }
+      [outLog appendFormat:@"|args=%@", [args componentsJoinedByString:@" "]];
+    } else {
+      [self addArgsForPid:message.pid toString:outLog];
+    }
   }
 
   if ([[SNTConfigurator configurator] enableMachineIDDecoration]) {
