@@ -22,7 +22,9 @@
 #include <libkern/locks.h>
 #else
 // Support for unit testing.
-#include <shared_mutex>
+#include <mutex>
+#include <pthread.h>
+#include <stdint.h>
 #endif // KERNEL
 
 ///

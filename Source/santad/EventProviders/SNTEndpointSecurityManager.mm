@@ -42,8 +42,12 @@
   return self;
 }
 
-- (void)dealloc {
-  delete _prefixTree;
+- (void)dealloc API_AVAILABLE(macos(10.15)) {
+  if (_prefixTree) delete _prefixTree;
+  if (_client) {
+    es_unsubscribe_all(_client);
+    es_delete_client(_client);
+  }
 }
 
 - (void)establishClient API_AVAILABLE(macos(10.15)) {
@@ -72,9 +76,7 @@
 }
 
 - (void)messageHandler:(const es_message_t *)m API_AVAILABLE(macos(10.15)) {
-  // TODO(bur/rah): Currently this class only subscribes to exec events. Move this code
-  // somewhere exec specific if other types of events are added to this client.
-  santa_message_t sm;
+  santa_message_t sm = {};
 
   audit_token_t audit_token = {};
   void (^callback)(santa_message_t);
@@ -255,7 +257,7 @@
                                    ES_AUTH_RESULT_DENY, false);
       break;
     default:
-      return ES_RESPOND_RESULT_ERR_INVALID_ARGUMENT;
+      ret = ES_RESPOND_RESULT_ERR_INVALID_ARGUMENT;
   }
 
   if (sm.es_message) {

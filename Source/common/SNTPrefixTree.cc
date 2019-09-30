@@ -19,6 +19,8 @@
 #include "Source/common/SNTLogging.h"
 
 #else
+
+#include <mutex>
 #include <string.h>
 
 #define LOGD(format, ...) // NOP
@@ -46,7 +48,7 @@ SNTPrefixTree::SNTPrefixTree(uint32_t max_nodes) {
   spt_lock_grp_ = lck_grp_alloc_init("santa-prefix-tree-lock", spt_lock_grp_attr_);
   spt_lock_attr_ = lck_attr_alloc_init();
 
-  spt_lock_ = lck_rw_alloc_init(spt_lock_grp_, spt_lock_attr);
+  spt_lock_ = lck_rw_alloc_init(spt_lock_grp_, spt_lock_attr_);
   spt_add_lock_ = lck_mtx_alloc_init(spt_lock_grp_, spt_lock_attr_);
 #else
   pthread_rwlock_init(&spt_lock_, nullptr);
