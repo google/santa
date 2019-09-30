@@ -16,10 +16,10 @@
 
 #include "Source/santa_driver/SantaPrefixTree.h"
 
-@interface SantaPrefixTreeTest : XCTestCase
+@interface SNTPrefixTreeTest : XCTestCase
 @end
 
-@implementation SantaPrefixTreeTest
+@implementation SNTPrefixTreeTest
 
 - (void)testAddAndHas {
   auto t = SantaPrefixTree();

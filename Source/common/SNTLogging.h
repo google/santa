@@ -34,6 +34,10 @@
 
 #else  // KERNEL
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #import <Foundation/Foundation.h>
 
 typedef enum : NSUInteger {
@@ -59,6 +63,10 @@ void logMessage(LogLevel level, FILE *destination, NSString *format, ...)
 #define LOGI(logFormat, ...) logMessage(LOG_LEVEL_INFO, stdout, logFormat, ##__VA_ARGS__)
 #define LOGW(logFormat, ...) logMessage(LOG_LEVEL_WARN, stderr, logFormat, ##__VA_ARGS__)
 #define LOGE(logFormat, ...) logMessage(LOG_LEVEL_ERROR, stderr, logFormat, ##__VA_ARGS__)
+
+#ifdef __cplusplus
+} // extern C
+#endif
 
 #endif  // KERNEL
 

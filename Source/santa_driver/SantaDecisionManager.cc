@@ -58,7 +58,7 @@ bool SantaDecisionManager::init() {
   root_fsid_ = 0;
 
   // Setup file modification prefix filter.
-  filemod_prefix_filter_ = new SantaPrefixTree();
+  filemod_prefix_filter_ = new SNTPrefixTree();
 
   return true;
 }
