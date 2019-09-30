@@ -31,12 +31,6 @@
 ///  The queue of pending notifications
 @property(readonly) NSMutableArray *pendingNotifications;
 
-///  The connection to the bundle service
-@property MOLXPCConnection *bundleServiceConnection;
-
-///  A semaphore to block bundle hashing until a connection is established
-@property dispatch_semaphore_t bundleServiceSema;
-
 // A serial queue for holding hashBundleBinaries requests
 @property dispatch_queue_t hashBundleBinariesQueue;
 
@@ -50,7 +44,6 @@ static NSString * const silencedNotificationsKey = @"SilencedNotifications";
   self = [super init];
   if (self) {
     _pendingNotifications = [[NSMutableArray alloc] init];
-    _bundleServiceSema = dispatch_semaphore_create(0);
     _hashBundleBinariesQueue = dispatch_queue_create("com.google.santagui.hashbundlebinaries",
                                                      DISPATCH_QUEUE_SERIAL);
   }
@@ -72,10 +65,10 @@ static NSString * const silencedNotificationsKey = @"SilencedNotifications";
       });
     }
   } else {
-    // Tear down the bundle service
-    self.bundleServiceSema = dispatch_semaphore_create(0);
-    [self.bundleServiceConnection invalidate];
-    self.bundleServiceConnection = nil;
+    MOLXPCConnection *bc = [SNTXPCBundleServiceInterface configuredConnection];
+    [bc resume];
+    [[bc remoteObjectProxy] spindown];
+    [bc invalidate];
     [NSApp hide:self];
   }
 }
@@ -192,50 +185,35 @@ static NSString * const silencedNotificationsKey = @"SilencedNotifications";
   }
 }
 
-- (void)setBundleServiceListener:(NSXPCListenerEndpoint *)listener {
-  // Ensure any existing listener is invalidated.
-  self.bundleServiceConnection.invalidationHandler = nil;
-  [self.bundleServiceConnection invalidate];
-  
-  MOLXPCConnection *c = [[MOLXPCConnection alloc] initClientWithListener:listener];
-  c.remoteInterface = [SNTXPCBundleServiceInterface bundleServiceInterface];
-  [c resume];
-  self.bundleServiceConnection = c;
-
-  WEAKIFY(self);
-  self.bundleServiceConnection.invalidationHandler = ^{
-    STRONGIFY(self);
-    if (self.currentWindowController) {
-      [self updateBlockNotification:self.currentWindowController.event withBundleHash:nil];
-    }
-  };
-
-  dispatch_semaphore_signal(self.bundleServiceSema);
-}
-
 #pragma mark SNTBundleNotifierXPC helper methods
 
 - (void)hashBundleBinariesForEvent:(SNTStoredEvent *)event {
   self.currentWindowController.foundFileCountLabel.stringValue = @"Searching for files...";
 
-  // Wait a max of 6 secs for the bundle service. Should the bundle service fall over, it will
-  // reconnect within 5 secs. Otherwise abandon bundle hashing and display the blockable event.
-  if (dispatch_semaphore_wait(self.bundleServiceSema,
-                              dispatch_time(DISPATCH_TIME_NOW, 6 * NSEC_PER_SEC))) {
+  dispatch_semaphore_t sema = dispatch_semaphore_create(0);
+  MOLXPCConnection *bc = [SNTXPCBundleServiceInterface configuredConnection];
+  bc.acceptedHandler = ^{
+    dispatch_semaphore_signal(sema);
+  };
+  [bc resume];
+
+  // Wait a max of 5 secs for the bundle service
+  // Otherwise abandon bundle hashing and display the blockable event.
+  if (dispatch_semaphore_wait(sema, dispatch_time(DISPATCH_TIME_NOW, 5 * NSEC_PER_SEC))) {
     [self updateBlockNotification:event withBundleHash:nil];
     return;
   }
 
-  // Let all future requests flow, until the connection is terminated and we go back to waiting.
-  dispatch_semaphore_signal(self.bundleServiceSema);
+  [[bc remoteObjectProxy] setNotificationListener:self.notificationListener];
 
   // NSProgress becomes current for this thread. XPC messages vend a child node to the receiver.
   [self.currentWindowController.progress becomeCurrentWithPendingUnitCount:100];
 
   // Start hashing. Progress is reported to the root NSProgress (currentWindowController.progress).
-  [[self.bundleServiceConnection remoteObjectProxy]
-      hashBundleBinariesForEvent:event
-                           reply:^(NSString *bh, NSArray<SNTStoredEvent *> *events, NSNumber *ms) {
+  [[bc remoteObjectProxy] hashBundleBinariesForEvent:event
+                                               reply:^(NSString *bh,
+                                                       NSArray<SNTStoredEvent *> *events,
+                                                       NSNumber *ms) {
     // Revert to displaying the blockable event if we fail to calculate the bundle hash
     if (!bh) return [self updateBlockNotification:event withBundleHash:nil];
 
@@ -257,7 +235,10 @@ static NSString * const silencedNotificationsKey = @"SilencedNotifications";
 
     // Update the UI with the bundle hash. Also make the openEventButton available.
     [self updateBlockNotification:event withBundleHash:bh];
+
+    [bc invalidate];
   }];
+
   [self.currentWindowController.progress resignCurrent];
 }
 

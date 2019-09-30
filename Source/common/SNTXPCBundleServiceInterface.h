@@ -14,6 +14,8 @@
 
 #import <Foundation/Foundation.h>
 
+#import <MOLXPCConnection/MOLXPCConnection.h>
+
 @class SNTStoredEvent;
 
 ///  A block that takes the calculated bundle hash, associated events and hashing time in ms.
@@ -25,7 +27,7 @@ typedef void (^SNTBundleHashBlock)(NSString *, NSArray<SNTStoredEvent *> *, NSNu
 ///
 ///  @param listener The listener to connect back to the SantaGUI.
 ///
-- (void)setBundleNotificationListener:(NSXPCListenerEndpoint *)listener;
+- (void)setNotificationListener:(NSXPCListenerEndpoint *)listener;
 
 ///
 ///  Hash a bundle for an event. The SNTBundleHashBlock will be called with nil parameters if a
@@ -38,6 +40,11 @@ typedef void (^SNTBundleHashBlock)(NSString *, NSArray<SNTStoredEvent *> *, NSNu
 ///  @note If there is a current NSProgress when called this method will report back its progress.
 ///
 - (void)hashBundleBinariesForEvent:(SNTStoredEvent *)event reply:(SNTBundleHashBlock)reply;
+
+///
+///  santabundleservice is launched on demand by launchd, call spindown to let santabundleservice know you are done with it.
+///
+- (void)spindown;
 
 @end
 
@@ -53,5 +60,11 @@ typedef void (^SNTBundleHashBlock)(NSString *, NSArray<SNTStoredEvent *> *, NSNu
 ///  Returns the MachService ID for this service.
 ///
 + (NSString *)serviceID;
+
+///
+///  Retrieve a pre-configured MOLXPCConnection for communicating with santabundleservice.
+///  Connections just needs any handlers set and then can be resumed and used.
+///
++ (MOLXPCConnection *)configuredConnection;
 
 @end

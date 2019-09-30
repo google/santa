@@ -29,7 +29,6 @@
 @property SNTAboutWindowController *aboutWindowController;
 @property SNTNotificationManager *notificationManager;
 @property MOLXPCConnection *daemonListener;
-@property MOLXPCConnection *bundleListener;
 @end
 
 @implementation SNTAppDelegate
@@ -59,21 +58,15 @@
     self.daemonListener.invalidationHandler = nil;
     [self.daemonListener invalidate];
     self.daemonListener = nil;
-
-    self.bundleListener.invalidationHandler = nil;
-    [self.bundleListener invalidate];
-    self.bundleListener = nil;
   }];
   [workspaceNotifications addObserverForName:NSWorkspaceSessionDidBecomeActiveNotification
                                       object:nil
                                        queue:[NSOperationQueue currentQueue]
                                   usingBlock:^(NSNotification *note) {
     [self attemptDaemonReconnection];
-    [self attemptBundleReconnection];
   }];
 
   [self createDaemonConnection];
-  [self createBundleConnection];
 }
 
 - (BOOL)applicationShouldHandleReopen:(NSApplication *)sender hasVisibleWindows:(BOOL)flag {
@@ -103,6 +96,11 @@
   };
   [self.daemonListener resume];
 
+  // This listener will also handle bundle service requests to update the GUI.
+  // When initializing connections with santabundleservice, the notification manager
+  // will send along the endpoint so santabundleservice knows where to find us.
+  self.notificationManager.notificationListener = listener.endpoint;
+
   // Tell daemon to connect back to the above listener.
   MOLXPCConnection *daemonConn = [SNTXPCControlInterface configuredConnection];
   [daemonConn resume];
@@ -119,43 +117,6 @@
   self.daemonListener.invalidationHandler = nil;
   [self.daemonListener invalidate];
   [self performSelectorInBackground:@selector(createDaemonConnection) withObject:nil];
-}
-
-- (void)createBundleConnection {
-  dispatch_semaphore_t sema = dispatch_semaphore_create(0);
-
-  WEAKIFY(self);
-
-  // Create listener for return connection from the bundle service.
-  NSXPCListener *listener = [NSXPCListener anonymousListener];
-  self.bundleListener = [[MOLXPCConnection alloc] initServerWithListener:listener];
-  self.bundleListener.privilegedInterface = [SNTXPCNotifierInterface bundleNotifierInterface];
-  self.bundleListener.exportedObject = self.notificationManager;
-  self.bundleListener.acceptedHandler = ^{
-    dispatch_semaphore_signal(sema);
-  };
-  self.bundleListener.invalidationHandler = ^{
-    STRONGIFY(self);
-    [self attemptBundleReconnection];
-  };
-  [self.bundleListener resume];
-
-  // Tell santabs to connect back to the above listener.
-  MOLXPCConnection *daemonConn = [SNTXPCControlInterface configuredConnection];
-  [daemonConn resume];
-  [[daemonConn remoteObjectProxy] setBundleNotificationListener:listener.endpoint];
-  [daemonConn invalidate];
-
-  // Now wait for the connection to come in.
-  if (dispatch_semaphore_wait(sema, dispatch_time(DISPATCH_TIME_NOW, 5 * NSEC_PER_SEC))) {
-    [self attemptBundleReconnection];
-  }
-}
-
-- (void)attemptBundleReconnection {
-  self.bundleListener.invalidationHandler = nil;
-  [self.bundleListener invalidate];
-  [self performSelectorInBackground:@selector(createBundleConnection) withObject:nil];
 }
 
 #pragma mark Menu Management
