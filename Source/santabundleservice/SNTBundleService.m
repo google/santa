@@ -15,13 +15,14 @@
 #import "Source/santabundleservice/SNTBundleService.h"
 
 #include <stdatomic.h>
-
 #import <CommonCrypto/CommonDigest.h>
-#import <MOLCodesignChecker/MOLCodesignChecker.h>
-#import <MOLXPCConnection/MOLXPCConnection.h>
 #import <pthread/pthread.h>
 
+#import <MOLCodesignChecker/MOLCodesignChecker.h>
+#import <MOLXPCConnection/MOLXPCConnection.h>
+
 #import "Source/common/SNTFileInfo.h"
+#import "Source/common/SNTLogging.h"
 #import "Source/common/SNTStoredEvent.h"
 #import "Source/common/SNTXPCNotifierInterface.h"
 
@@ -41,51 +42,21 @@
   return self;
 }
 
-#pragma mark Connection handling
-
-// Create a listener for SantaGUI to connect
-- (void)createConnection {
-  dispatch_semaphore_t sema = dispatch_semaphore_create(0);
-
-  // Create listener for return connection from SantaGUI.
-  NSXPCListener *listener = [NSXPCListener anonymousListener];
-  self.listener = [[MOLXPCConnection alloc] initServerWithListener:listener];
-  self.listener.unprivilegedInterface = self.listener.privilegedInterface = [SNTXPCBundleServiceInterface bundleServiceInterface];
-  self.listener.exportedObject = self;
-  self.listener.acceptedHandler = ^{
-    dispatch_semaphore_signal(sema);
-  };
-
-  // Exit when SantaGUI is done with us.
-  self.listener.invalidationHandler = ^{
-    exit(0);
-  };
-
-  [self.listener resume];
-
-  // Tell SantaGUI to connect back to the above listener.
-  [[self.notifierConnection remoteObjectProxy] setBundleServiceListener:listener.endpoint];
-
-  // Now wait for the connection to come in.
-  if (dispatch_semaphore_wait(sema, dispatch_time(DISPATCH_TIME_NOW, 5 * NSEC_PER_SEC))) {
-    [self attemptReconnection];
-  }
-}
-
-- (void)attemptReconnection {
-  [self performSelectorOnMainThread:@selector(createConnection) withObject:nil waitUntilDone:NO];
-}
-
 #pragma mark SNTBundleServiceXPC Methods
 
 // Connect to the SantaGUI
-- (void)setBundleNotificationListener:(NSXPCListenerEndpoint *)listener {
+- (void)setNotificationListener:(NSXPCListenerEndpoint *)listener {
   dispatch_async(dispatch_get_main_queue(), ^{
+    [self.notifierConnection invalidate];
+    self.notifierConnection = nil;
+
     MOLXPCConnection *c = [[MOLXPCConnection alloc] initClientWithListener:listener];
-    c.remoteInterface = [SNTXPCNotifierInterface bundleNotifierInterface];
+    c.remoteInterface = [SNTXPCNotifierInterface notifierInterface];
+    c.acceptedHandler = ^{
+      LOGI(@"Connected to Santa.app");
+    };
     [c resume];
     self.notifierConnection = c;
-    [self createConnection];
   });
 }
 
@@ -141,6 +112,11 @@
       [progress cancel];
     }
   });
+}
+
+- (void)spindown {
+  LOGI(@"Spinning down");
+  exit(0);
 }
 
 #pragma mark Internal Methods

@@ -24,16 +24,10 @@
 - (void)postBlockNotification:(SNTStoredEvent *)event withCustomMessage:(NSString *)message;
 - (void)postClientModeNotification:(SNTClientMode)clientmode;
 - (void)postRuleSyncNotificationWithCustomMessage:(NSString *)message;
-@end
-
-/// Protocol implemented by SantaGUI and utilized by santabs
-@protocol SNTBundleNotifierXPC
 - (void)updateCountsForEvent:(SNTStoredEvent *)event
                  binaryCount:(uint64_t)binaryCount
                    fileCount:(uint64_t)fileCount
                  hashedCount:(uint64_t)hashedCount;
-
-- (void)setBundleServiceListener:(NSXPCListenerEndpoint *)listener;
 @end
 
 @interface SNTXPCNotifierInterface : NSObject
@@ -43,11 +37,5 @@
 ///  Ensures any methods that accept custom classes as arguments are set-up before returning
 ///
 + (NSXPCInterface *)notifierInterface;
-
-///
-///  @return an initialized NSXPCInterface for the SNTBundleNotifierXPC protocol.
-///  Ensures any methods that accept custom classes as arguments are set-up before returning
-///
-+ (NSXPCInterface *)bundleNotifierInterface;
 
 @end

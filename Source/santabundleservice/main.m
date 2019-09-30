@@ -13,15 +13,24 @@
 ///    limitations under the License.
 
 #import <Foundation/Foundation.h>
+
 #import <MOLXPCConnection/MOLXPCConnection.h>
 
-#import "Source/santabundleservice/SNTBundleService.h"
+#import "Source/common/SNTLogging.h"
 #import "Source/common/SNTXPCBundleServiceInterface.h"
+#import "Source/santabundleservice/SNTBundleService.h"
+
 
 int main(int argc, const char *argv[]) {
-  MOLXPCConnection *c =
-      [[MOLXPCConnection alloc] initServerWithListener:[NSXPCListener serviceListener]];
-  c.privilegedInterface = c.unprivilegedInterface = [SNTXPCBundleServiceInterface bundleServiceInterface];
-  c.exportedObject = [[SNTBundleService alloc] init];
-  [c resume];
+  @autoreleasepool {
+    NSDictionary *infoDict = [[NSBundle mainBundle] infoDictionary];
+    LOGI(@"Started, version %@", infoDict[@"CFBundleVersion"]);
+    MOLXPCConnection *c =
+        [[MOLXPCConnection alloc] initServerWithName:[SNTXPCBundleServiceInterface serviceID]];
+    c.privilegedInterface = c.unprivilegedInterface =
+        [SNTXPCBundleServiceInterface bundleServiceInterface];
+    c.exportedObject = [[SNTBundleService alloc] init];
+    [c resume];
+    [[NSRunLoop mainRunLoop] run];
+  }
 }
