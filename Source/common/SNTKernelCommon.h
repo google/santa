@@ -126,6 +126,9 @@ typedef struct {
   char pname[MAXPATHLEN];
   // For messages that originate from EndpointSecurity, this points to a copy of the message.
   void *es_message;
+
+  // For messages that originate from EndpointSecurity, this points to an NSArray of the arguments.
+  void *args_array;
 } santa_message_t;
 
 // Used for the kSantaUserClientCacheBucketCount request.

@@ -84,6 +84,13 @@ objc_library(
     hdrs = ["SNTLogging.h"],
 )
 
+cc_library(
+    name = "SNTPrefixTree",
+    srcs = ["SNTPrefixTree.cc"],
+    hdrs = ["SNTPrefixTree.h"],
+    copts = ["-std=c++11"],
+)
+
 objc_library(
     name = "SNTRule",
     srcs = ["SNTRule.m"],
@@ -181,4 +188,10 @@ santa_unit_test(
         "testdata/DirectoryBundle/**",
     ]),
     deps = [":SNTFileInfo"],
+)
+
+santa_unit_test(
+    name = "SNTPrefixTreeTest",
+    srcs = ["SNTPrefixTreeTest.mm"],
+    deps = ["SNTPrefixTree"],
 )
