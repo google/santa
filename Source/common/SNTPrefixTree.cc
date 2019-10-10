@@ -12,55 +12,51 @@
 ///    See the License for the specific language governing permissions and
 ///    limitations under the License.
 
-#include "Source/santa_driver/SantaPrefixTree.h"
+#include "Source/common/SNTPrefixTree.h"
 
 #ifdef KERNEL
 #include <libkern/locks.h>
-
 #include "Source/common/SNTLogging.h"
+
 #else
+
+#include <mutex>
 #include <string.h>
 
 #define LOGD(format, ...) // NOP
 #define LOGE(format, ...) // NOP
 
-#define lck_grp_attr_alloc_init() nullptr
-#define lck_grp_alloc_init(name, attr) nullptr
-#define lck_attr_alloc_init() nullptr
+#define lck_rw_lock_shared(l) pthread_rwlock_rdlock(&l)
+#define lck_rw_unlock_shared(l) pthread_rwlock_unlock(&l)
+#define lck_rw_lock_exclusive(l) pthread_rwlock_wrlock(&l)
+#define lck_rw_unlock_exclusive(l) pthread_rwlock_unlock(&l)
 
-#define lck_rw_alloc_init(g, a) new std::shared_mutex
-#define lck_mtx_alloc_init(g, a) new std::mutex
-
-#define lck_attr_free(attr) // NOP
-#define lck_grp_free(grp) // NOP
-#define lck_grp_attr_free(grp_attr) // NOP
-
-#define lck_rw_lock_shared(l) l->lock_shared()
-#define lck_rw_unlock_shared(l) l->unlock_shared()
-#define lck_rw_lock_exclusive(l) l->lock()
-#define lck_rw_unlock_exclusive(l) l->unlock()
-
-#define lck_rw_lock_shared_to_exclusive(l) ({ l->unlock_shared(); false; })
-#define lck_rw_lock_exclusive_to_shared(l) l->unlock(); l->lock_shared()
+#define lck_rw_lock_shared_to_exclusive(l) ({ pthread_rwlock_unlock(&l); false; })
+#define lck_rw_lock_exclusive_to_shared(l) ({ pthread_rwlock_unlock(&l); pthread_rwlock_rdlock(&l); })
 
 #define lck_mtx_lock(l) l->lock()
 #define lck_mtx_unlock(l) l->unlock()
 #endif // KERNEL
 
-SantaPrefixTree::SantaPrefixTree(uint32_t max_nodes) {
+SNTPrefixTree::SNTPrefixTree(uint32_t max_nodes) {
   root_ = new SantaPrefixNode();
   node_count_ = 0;
   max_nodes_ = max_nodes;
 
+#ifdef KERNEL
   spt_lock_grp_attr_ = lck_grp_attr_alloc_init();
   spt_lock_grp_ = lck_grp_alloc_init("santa-prefix-tree-lock", spt_lock_grp_attr_);
   spt_lock_attr_ = lck_attr_alloc_init();
 
   spt_lock_ = lck_rw_alloc_init(spt_lock_grp_, spt_lock_attr_);
   spt_add_lock_ = lck_mtx_alloc_init(spt_lock_grp_, spt_lock_attr_);
+#else
+  pthread_rwlock_init(&spt_lock_, nullptr);
+  spt_add_lock_ = new std::mutex;
+#endif
 }
 
-IOReturn SantaPrefixTree::AddPrefix(const char *prefix, uint64_t *node_count) {
+IOReturn SNTPrefixTree::AddPrefix(const char *prefix, uint64_t *node_count) {
   // Serialize requests to AddPrefix. Otherwise one AddPrefix thread could overwrite whole
   // branches of another. HasPrefix is still free to read the tree, until AddPrefix needs to
   // modify it.
@@ -156,7 +152,7 @@ IOReturn SantaPrefixTree::AddPrefix(const char *prefix, uint64_t *node_count) {
   return kIOReturnSuccess;
 }
 
-bool SantaPrefixTree::HasPrefix(const char *string) {
+bool SNTPrefixTree::HasPrefix(const char *string) {
   lck_rw_lock_shared(spt_lock_);
 
   auto found = false;
@@ -184,7 +180,7 @@ bool SantaPrefixTree::HasPrefix(const char *string) {
   return found;
 }
 
-void SantaPrefixTree::Reset() {
+void SNTPrefixTree::Reset() {
   lck_rw_lock_exclusive(spt_lock_);
 
   PruneNode(root_);
@@ -194,7 +190,7 @@ void SantaPrefixTree::Reset() {
   lck_rw_unlock_exclusive(spt_lock_);
 }
 
-void SantaPrefixTree::PruneNode(SantaPrefixNode *target) {
+void SNTPrefixTree::PruneNode(SantaPrefixNode *target) {
   if (!target) return;
 
   // For deep trees, a recursive approach will generate too many stack frames. Make a "stack"
@@ -226,13 +222,13 @@ void SantaPrefixTree::PruneNode(SantaPrefixNode *target) {
   delete[] stack;
 }
 
-SantaPrefixTree::~SantaPrefixTree() {
+SNTPrefixTree::~SNTPrefixTree() {
   lck_rw_lock_exclusive(spt_lock_);
   PruneNode(root_);
   root_ = nullptr;
   lck_rw_unlock_exclusive(spt_lock_);
 
-  #ifdef KERNEL
+#ifdef KERNEL
   if (spt_lock_) {
     lck_rw_free(spt_lock_, spt_lock_grp_);
     spt_lock_ = nullptr;
@@ -242,7 +238,6 @@ SantaPrefixTree::~SantaPrefixTree() {
     lck_mtx_free(spt_add_lock_, spt_lock_grp_);
     spt_add_lock_ = nullptr;
   }
-  #endif
 
   if (spt_lock_attr_) {
     lck_attr_free(spt_lock_attr_);
@@ -258,4 +253,7 @@ SantaPrefixTree::~SantaPrefixTree() {
     lck_grp_attr_free(spt_lock_grp_attr_);
     spt_lock_grp_attr_ = nullptr;
   }
+#else
+  pthread_rwlock_destroy(&spt_lock_);
+#endif
 }

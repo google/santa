@@ -7,12 +7,13 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		0D9F577C2342650F005D9AA8 /* SNTPrefixTree.cc in Sources */ = {isa = PBXBuildFile; fileRef = C7658B022322B84F00F36578 /* SNTPrefixTree.cc */; };
 		59502195B2982225D3706DCE /* libPods-santabundleservice.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 2A55D73A235850B9FA991865 /* libPods-santabundleservice.a */; };
 		AD3736AF78C41A962C26D429 /* libPods-Santa.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 4C3E743944A9D77423AA1534 /* libPods-Santa.a */; };
 		B5AE6BB811766CA492133559 /* libPods-santad.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 3700D40B536CA7F626B76156 /* libPods-santad.a */; };
 		C71E472F22F0F97B00921CD9 /* santad in CopyFiles */ = {isa = PBXBuildFile; fileRef = C779C4E622F0F51400EE2541 /* santad */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
 		C71E473122F0FAA100921CD9 /* com.google.santa.daemon.systemextension in CopyFiles */ = {isa = PBXBuildFile; fileRef = C7A8308022F0F81F00F856AC /* com.google.santa.daemon.systemextension */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
-		C72ED2B62324962400255555 /* SNTEndpointSecurityManager.m in Sources */ = {isa = PBXBuildFile; fileRef = C72ED2B52324962400255555 /* SNTEndpointSecurityManager.m */; };
+		C72ED2B62324962400255555 /* SNTEndpointSecurityManager.mm in Sources */ = {isa = PBXBuildFile; fileRef = C72ED2B52324962400255555 /* SNTEndpointSecurityManager.mm */; };
 		C72ED2B82324A2FA00255555 /* libEndpointSecurity.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = C72ED2B72324A2FA00255555 /* libEndpointSecurity.tbd */; };
 		C72ED2BC232584C100255555 /* libbsm.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = C72ED2BB232584C100255555 /* libbsm.tbd */; };
 		C7658B142322BDD500F36578 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = C7658AEA2322B84F00F36578 /* main.m */; };
@@ -104,7 +105,7 @@
 		C7D35DE42322C99B000C5EB4 /* SantaDecisionManager.cc in Sources */ = {isa = PBXBuildFile; fileRef = C7658B002322B84F00F36578 /* SantaDecisionManager.cc */; };
 		C7D35DE52322C99E000C5EB4 /* SantaDriver.cc in Sources */ = {isa = PBXBuildFile; fileRef = C7658AFF2322B84F00F36578 /* SantaDriver.cc */; };
 		C7D35DE62322C9A1000C5EB4 /* SantaDriverClient.cc in Sources */ = {isa = PBXBuildFile; fileRef = C7658AFA2322B84F00F36578 /* SantaDriverClient.cc */; };
-		C7D35DE72322C9A4000C5EB4 /* SantaPrefixTree.cc in Sources */ = {isa = PBXBuildFile; fileRef = C7658B022322B84F00F36578 /* SantaPrefixTree.cc */; };
+		C7D35DE72322C9A4000C5EB4 /* SNTPrefixTree.cc in Sources */ = {isa = PBXBuildFile; fileRef = C7658B022322B84F00F36578 /* SNTPrefixTree.cc */; };
 		C7F5C1AE233E72CC00A3F7FD /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = C7658AF62322B84F00F36578 /* main.m */; };
 		C7F5C1AF233E72CF00A3F7FD /* SNTBundleService.m in Sources */ = {isa = PBXBuildFile; fileRef = C7658AF22322B84F00F36578 /* SNTBundleService.m */; };
 		C7F5C1B0233E735E00A3F7FD /* santabundleservice in CopyFiles */ = {isa = PBXBuildFile; fileRef = C7F5C1A7233E72BC00A3F7FD /* santabundleservice */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
@@ -196,7 +197,7 @@
 		C05543B3701F50CA798B4B11 /* Pods-sysx.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-sysx.release.xcconfig"; path = "Target Support Files/Pods-sysx/Pods-sysx.release.xcconfig"; sourceTree = "<group>"; };
 		C72ED2B3232495CC00255555 /* SNTEventProvider.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SNTEventProvider.h; sourceTree = "<group>"; };
 		C72ED2B42324962400255555 /* SNTEndpointSecurityManager.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SNTEndpointSecurityManager.h; sourceTree = "<group>"; };
-		C72ED2B52324962400255555 /* SNTEndpointSecurityManager.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SNTEndpointSecurityManager.m; sourceTree = "<group>"; };
+		C72ED2B52324962400255555 /* SNTEndpointSecurityManager.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = SNTEndpointSecurityManager.mm; sourceTree = "<group>"; };
 		C72ED2B72324A2FA00255555 /* libEndpointSecurity.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libEndpointSecurity.tbd; path = usr/lib/libEndpointSecurity.tbd; sourceTree = SDKROOT; };
 		C72ED2B9232584AA00255555 /* libauditd.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libauditd.tbd; path = usr/lib/libauditd.tbd; sourceTree = SDKROOT; };
 		C72ED2BB232584C100255555 /* libbsm.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libbsm.tbd; path = usr/lib/libbsm.tbd; sourceTree = SDKROOT; };
@@ -344,13 +345,13 @@
 		C7658AFB2322B84F00F36578 /* SantaCacheTest.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = SantaCacheTest.mm; sourceTree = "<group>"; };
 		C7658AFC2322B84F00F36578 /* SantaCache.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SantaCache.h; sourceTree = "<group>"; };
 		C7658AFD2322B84F00F36578 /* SantaDriverClient.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SantaDriverClient.h; sourceTree = "<group>"; };
-		C7658AFE2322B84F00F36578 /* SantaPrefixTreeTest.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = SantaPrefixTreeTest.mm; sourceTree = "<group>"; };
+		C7658AFE2322B84F00F36578 /* SNTPrefixTreeTest.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = SNTPrefixTreeTest.mm; sourceTree = "<group>"; };
 		C7658AFF2322B84F00F36578 /* SantaDriver.cc */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = SantaDriver.cc; sourceTree = "<group>"; };
 		C7658B002322B84F00F36578 /* SantaDecisionManager.cc */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = SantaDecisionManager.cc; sourceTree = "<group>"; };
 		C7658B012322B84F00F36578 /* kernel_tests.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = kernel_tests.mm; sourceTree = "<group>"; };
-		C7658B022322B84F00F36578 /* SantaPrefixTree.cc */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = SantaPrefixTree.cc; sourceTree = "<group>"; };
+		C7658B022322B84F00F36578 /* SNTPrefixTree.cc */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = SNTPrefixTree.cc; sourceTree = "<group>"; };
 		C7658B032322B84F00F36578 /* BUILD */ = {isa = PBXFileReference; lastKnownFileType = text; path = BUILD; sourceTree = "<group>"; };
-		C7658B042322B84F00F36578 /* SantaPrefixTree.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SantaPrefixTree.h; sourceTree = "<group>"; };
+		C7658B042322B84F00F36578 /* SNTPrefixTree.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SNTPrefixTree.h; sourceTree = "<group>"; };
 		C7658B052322B84F00F36578 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		C7658B062322B84F00F36578 /* SantaDriver.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SantaDriver.h; sourceTree = "<group>"; };
 		C7658B072322B84F00F36578 /* SantaDecisionManager.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SantaDecisionManager.h; sourceTree = "<group>"; };
@@ -430,7 +431,7 @@
 				C7658A632322B84F00F36578 /* SNTDriverManager.h */,
 				C7658A742322B84F00F36578 /* SNTDriverManager.m */,
 				C72ED2B42324962400255555 /* SNTEndpointSecurityManager.h */,
-				C72ED2B52324962400255555 /* SNTEndpointSecurityManager.m */,
+				C72ED2B52324962400255555 /* SNTEndpointSecurityManager.mm */,
 				C72ED2B3232495CC00255555 /* SNTEventProvider.h */,
 			);
 			path = EventProviders;
@@ -608,6 +609,9 @@
 				C7658ACE2322B84F00F36578 /* SNTKernelCommon.h */,
 				C7658ACB2322B84F00F36578 /* SNTLogging.h */,
 				C7658AD82322B84F00F36578 /* SNTLogging.m */,
+				C7658B022322B84F00F36578 /* SNTPrefixTree.cc */,
+				C7658B042322B84F00F36578 /* SNTPrefixTree.h */,
+				C7658AFE2322B84F00F36578 /* SNTPrefixTreeTest.mm */,
 				C7658ADB2322B84F00F36578 /* SNTRule.h */,
 				C7658AC82322B84F00F36578 /* SNTRule.m */,
 				C7658AC92322B84F00F36578 /* SNTStoredEvent.h */,
@@ -743,9 +747,6 @@
 				C7658B062322B84F00F36578 /* SantaDriver.h */,
 				C7658AFA2322B84F00F36578 /* SantaDriverClient.cc */,
 				C7658AFD2322B84F00F36578 /* SantaDriverClient.h */,
-				C7658B022322B84F00F36578 /* SantaPrefixTree.cc */,
-				C7658B042322B84F00F36578 /* SantaPrefixTree.h */,
-				C7658AFE2322B84F00F36578 /* SantaPrefixTreeTest.mm */,
 			);
 			path = santa_driver;
 			sourceTree = "<group>";
@@ -1195,6 +1196,7 @@
 				C7658B332322C08B00F36578 /* SNTRule.m in Sources */,
 				C7658B382322C0B400F36578 /* SNTXPCSyncdInterface.m in Sources */,
 				C7658B1D2322BFFA00F36578 /* main.m in Sources */,
+				0D9F577C2342650F005D9AA8 /* SNTPrefixTree.cc in Sources */,
 				C7658B282322C02300F36578 /* SNTDriverManager.m in Sources */,
 				C7658B372322C0B000F36578 /* SNTXPCNotifierInterface.m in Sources */,
 				C7658B312322C08000F36578 /* SNTLogging.m in Sources */,
@@ -1218,7 +1220,7 @@
 				C7658B212322C00B00F36578 /* SNTEventLog.m in Sources */,
 				C7658B2E2322C06800F36578 /* SNTCachedDecision.m in Sources */,
 				C7658B302322C07500F36578 /* SNTFileInfo.m in Sources */,
-				C72ED2B62324962400255555 /* SNTEndpointSecurityManager.m in Sources */,
+				C72ED2B62324962400255555 /* SNTEndpointSecurityManager.mm in Sources */,
 				C7658B352322C0A000F36578 /* SNTXPCBundleServiceInterface.m in Sources */,
 				C7658B272322C02000F36578 /* SNTDatabaseController.m in Sources */,
 				C7658B222322C00E00F36578 /* SNTFileEventLog.m in Sources */,
@@ -1238,7 +1240,7 @@
 			files = (
 				C7D35DE52322C99E000C5EB4 /* SantaDriver.cc in Sources */,
 				C7D35DE62322C9A1000C5EB4 /* SantaDriverClient.cc in Sources */,
-				C7D35DE72322C9A4000C5EB4 /* SantaPrefixTree.cc in Sources */,
+				C7D35DE72322C9A4000C5EB4 /* SNTPrefixTree.cc in Sources */,
 				C7D35DE42322C99B000C5EB4 /* SantaDecisionManager.cc in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

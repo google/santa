@@ -25,8 +25,8 @@
 
 #include "Source/common/SNTKernelCommon.h"
 #include "Source/common/SNTLogging.h"
+#include "Source/common/SNTPrefixTree.h"
 #include "Source/santa_driver/SantaCache.h"
-#include "Source/santa_driver/SantaPrefixTree.h"
 
 ///
 ///  SantaDecisionManager is responsible for intercepting Vnode execute actions
@@ -347,7 +347,7 @@ class SantaDecisionManager : public OSObject {
   SantaCache<santa_vnode_id_t, uint64_t> *vnode_pid_map_;
   SantaCache<pid_t, pid_t> *compiler_pid_set_;
 
-  SantaPrefixTree *filemod_prefix_filter_;
+  SNTPrefixTree *filemod_prefix_filter_;
 
   /**
    Return the correct cache for a given identifier.

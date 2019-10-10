@@ -14,22 +14,22 @@
 
 #import <XCTest/XCTest.h>
 
-#include "Source/santa_driver/SantaPrefixTree.h"
+#include "Source/common/SNTPrefixTree.h"
 
-@interface SantaPrefixTreeTest : XCTestCase
+@interface SNTPrefixTreeTest : XCTestCase
 @end
 
-@implementation SantaPrefixTreeTest
+@implementation SNTPrefixTreeTest
 
 - (void)testAddAndHas {
-  auto t = SantaPrefixTree();
+  auto t = SNTPrefixTree();
   XCTAssertFalse(t.HasPrefix("/private/var/tmp/file1"));
   t.AddPrefix("/private/var/tmp/");
   XCTAssertTrue(t.HasPrefix("/private/var/tmp/file1"));
 }
 
 - (void)testReset {
-  auto t = SantaPrefixTree();
+  auto t = SNTPrefixTree();
   t.AddPrefix("/private/var/tmp/");
   XCTAssertTrue(t.HasPrefix("/private/var/tmp/file1"));
   t.Reset();
@@ -38,7 +38,7 @@
 
 - (void)testThreading {
   uint32_t count = 4096;
-  auto t = new SantaPrefixTree(count * (uint32_t)[NSUUID UUID].UUIDString.length);
+  auto t = new SNTPrefixTree(count * (uint32_t)[NSUUID UUID].UUIDString.length);
 
   NSMutableArray *UUIDs = [NSMutableArray arrayWithCapacity:count];
   for (int i = 0; i < count; ++i) {

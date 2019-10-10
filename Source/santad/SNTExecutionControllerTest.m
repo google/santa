@@ -75,7 +75,7 @@
 
 ///  Return a pre-configured santa_message_ t for testing with.
 - (santa_message_t)getMessage {
-  santa_message_t message = {0};
+  santa_message_t message = {};
   message.pid = 12;
   message.ppid = 1;
   message.vnode_id = [self getVnodeId];

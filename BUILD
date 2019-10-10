@@ -147,8 +147,8 @@ test_suite(
     name = "unit_tests",
     tests = [
         "//Source/common:SNTFileInfoTest",
+        "//Source/common:SNTPrefixTreeTest",
         "//Source/santa_driver:SantaCacheTest",
-        "//Source/santa_driver:SantaPrefixTreeTest",
         "//Source/santactl:SNTCommandFileInfoTest",
         "//Source/santactl:SNTCommandSyncTest",
         "//Source/santad:SNTEventTableTest",

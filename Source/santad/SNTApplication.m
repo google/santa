@@ -222,6 +222,7 @@
           case ACTION_NOTIFY_WRITE: {
             NSRegularExpression *re = [[SNTConfigurator configurator] fileChangesRegex];
             NSString *path = @(message.path);
+            if (!path) break;
             if ([re numberOfMatchesInString:path options:0 range:NSMakeRange(0, path.length)]) {
               [self->_eventLog logFileModification:message];
             }

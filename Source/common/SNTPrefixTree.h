@@ -22,16 +22,16 @@
 #include <libkern/locks.h>
 #else
 // Support for unit testing.
-// Requires c++17 / macOS 10.12.
-// TODO(bur): Handle warnings from bumping target version of the tests to 10.12.
-#include <shared_mutex>
+#include <mutex>
+#include <pthread.h>
+#include <stdint.h>
 #endif // KERNEL
 
 ///
 ///  SantaPrefixTree is a simple prefix tree implementation.
 ///  Operations are thread safe.
 ///
-class SantaPrefixTree {
+class SNTPrefixTree {
  public:
   // Add a prefix to the tree.
   // Optionally pass node_count to get the number of nodes after the add.
@@ -43,8 +43,8 @@ class SantaPrefixTree {
   // Reset the tree.
   void Reset();
 
-  SantaPrefixTree(uint32_t max_nodes = kDefaultMaxNodes);
-  ~SantaPrefixTree();
+  SNTPrefixTree(uint32_t max_nodes = kDefaultMaxNodes);
+  ~SNTPrefixTree();
 
  private:
   ///
@@ -85,19 +85,19 @@ class SantaPrefixTree {
   uint32_t max_nodes_;
   uint32_t node_count_;
 
-  #ifdef KERNEL
+#ifdef KERNEL
   lck_grp_t *spt_lock_grp_;
   lck_grp_attr_t *spt_lock_grp_attr_;
   lck_attr_t *spt_lock_attr_;
   lck_rw_t *spt_lock_;
   lck_mtx_t *spt_add_lock_;
-  #else // KERNEL
+#else // KERNEL
   void *spt_lock_grp_;
   void *spt_lock_grp_attr_;
   void *spt_lock_attr_;
-  std::shared_mutex *spt_lock_;
+  pthread_rwlock_t spt_lock_;
   std::mutex *spt_add_lock_;
-  #endif // KERNEL
+#endif // KERNEL
 };
 
 #endif /* SANTA__SANTA_DRIVER__SANTAPREFIXTREE_H */
