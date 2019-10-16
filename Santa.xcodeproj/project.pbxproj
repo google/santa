@@ -1266,11 +1266,11 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = 052CCA75535669B953A31D6D /* Pods-santactl.debug.xcconfig */;
 			buildSettings = {
-				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_IDENTITY = "Mac Developer";
 				CODE_SIGN_STYLE = Manual;
 				CREATE_INFOPLIST_SECTION_IN_BINARY = YES;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = 998Z9C32TC;
+				DEVELOPMENT_TEAM = EQHXZ8M8AV;
 				ENABLE_HARDENED_RUNTIME = YES;
 				INFOPLIST_FILE = "$(SRCROOT)/Source/santactl/Info.plist";
 				MARKETING_VERSION = 1.0;
@@ -1284,11 +1284,11 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = 0A60226B8B4F01BE817BAAA3 /* Pods-santactl.release.xcconfig */;
 			buildSettings = {
-				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_IDENTITY = "Mac Developer";
 				CODE_SIGN_STYLE = Manual;
 				CREATE_INFOPLIST_SECTION_IN_BINARY = YES;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = 998Z9C32TC;
+				DEVELOPMENT_TEAM = EQHXZ8M8AV;
 				ENABLE_HARDENED_RUNTIME = YES;
 				INFOPLIST_FILE = "$(SRCROOT)/Source/santactl/Info.plist";
 				MARKETING_VERSION = 1.0;
@@ -1415,11 +1415,11 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = Source/santa/Resources/santa.entitlements;
-				CODE_SIGN_IDENTITY = "Apple Development";
-				CODE_SIGN_STYLE = Automatic;
+				CODE_SIGN_IDENTITY = "Mac Developer";
+				CODE_SIGN_STYLE = Manual;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = 998Z9C32TC;
+				DEVELOPMENT_TEAM = EQHXZ8M8AV;
 				ENABLE_HARDENED_RUNTIME = YES;
 				INFOPLIST_FILE = "Source/santa/Resources/santa-Info.plist";
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -1427,9 +1427,9 @@
 					"@executable_path/../Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.google.santa.x;
+				PRODUCT_BUNDLE_IDENTIFIER = com.google.santa;
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				PROVISIONING_PROFILE_SPECIFIER = "";
+				PROVISIONING_PROFILE_SPECIFIER = "Santa Dev";
 			};
 			name = Debug;
 		};
@@ -1439,11 +1439,11 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = Source/santa/Resources/santa.entitlements;
-				CODE_SIGN_IDENTITY = "Apple Development";
-				CODE_SIGN_STYLE = Automatic;
+				CODE_SIGN_IDENTITY = "Mac Developer";
+				CODE_SIGN_STYLE = Manual;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = 998Z9C32TC;
+				DEVELOPMENT_TEAM = EQHXZ8M8AV;
 				ENABLE_HARDENED_RUNTIME = YES;
 				INFOPLIST_FILE = "Source/santa/Resources/santa-Info.plist";
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -1451,9 +1451,9 @@
 					"@executable_path/../Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.google.santa.x;
+				PRODUCT_BUNDLE_IDENTIFIER = com.google.santa;
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				PROVISIONING_PROFILE_SPECIFIER = "";
+				PROVISIONING_PROFILE_SPECIFIER = "Santa Dev";
 			};
 			name = Release;
 		};
@@ -1462,11 +1462,11 @@
 			baseConfigurationReference = 18183794C94BAEAD167B12EC /* Pods-santad.debug.xcconfig */;
 			buildSettings = {
 				CODE_SIGN_ENTITLEMENTS = Source/santad/Resources/santad.entitlements;
-				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_IDENTITY = "Mac Developer";
 				CODE_SIGN_STYLE = Manual;
 				CREATE_INFOPLIST_SECTION_IN_BINARY = YES;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = 998Z9C32TC;
+				DEVELOPMENT_TEAM = EQHXZ8M8AV;
 				ENABLE_HARDENED_RUNTIME = YES;
 				INFOPLIST_FILE = "Source/santad/Resources/santad-Info.plist";
 				MARKETING_VERSION = 1.0;
@@ -1481,11 +1481,11 @@
 			baseConfigurationReference = 7AF15DF785BAA0EAB0BE340D /* Pods-santad.release.xcconfig */;
 			buildSettings = {
 				CODE_SIGN_ENTITLEMENTS = Source/santad/Resources/santad.entitlements;
-				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_IDENTITY = "Mac Developer";
 				CODE_SIGN_STYLE = Manual;
 				CREATE_INFOPLIST_SECTION_IN_BINARY = YES;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = 998Z9C32TC;
+				DEVELOPMENT_TEAM = EQHXZ8M8AV;
 				ENABLE_HARDENED_RUNTIME = YES;
 				INFOPLIST_FILE = "Source/santad/Resources/santad-Info.plist";
 				MARKETING_VERSION = 1.0;
@@ -1500,11 +1500,11 @@
 			baseConfigurationReference = D7360306D7CFDD179D003266 /* Pods-sysx.debug.xcconfig */;
 			buildSettings = {
 				CODE_SIGN_ENTITLEMENTS = Source/santad/Resources/santad.entitlements;
-				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_IDENTITY = "Mac Developer";
 				CODE_SIGN_STYLE = Manual;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = 998Z9C32TC;
+				DEVELOPMENT_TEAM = EQHXZ8M8AV;
 				INFOPLIST_FILE = "Source/santad/Resources/santad-Info.plist";
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Bundles";
 				MARKETING_VERSION = 1.0;
@@ -1521,11 +1521,11 @@
 			baseConfigurationReference = C05543B3701F50CA798B4B11 /* Pods-sysx.release.xcconfig */;
 			buildSettings = {
 				CODE_SIGN_ENTITLEMENTS = Source/santad/Resources/santad.entitlements;
-				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_IDENTITY = "Mac Developer";
 				CODE_SIGN_STYLE = Manual;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = 998Z9C32TC;
+				DEVELOPMENT_TEAM = EQHXZ8M8AV;
 				INFOPLIST_FILE = "Source/santad/Resources/santad-Info.plist";
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Bundles";
 				MARKETING_VERSION = 1.0;
@@ -1540,10 +1540,10 @@
 		C7D35DE02322C902000C5EB4 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_IDENTITY = "Mac Developer";
 				CODE_SIGN_STYLE = Manual;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = 998Z9C32TC;
+				DEVELOPMENT_TEAM = EQHXZ8M8AV;
 				INFOPLIST_FILE = Source/santa_driver/Info.plist;
 				MARKETING_VERSION = 1.0;
 				MODULE_NAME = com.google.santa_driver;
@@ -1560,10 +1560,10 @@
 		C7D35DE12322C902000C5EB4 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_IDENTITY = "Mac Developer";
 				CODE_SIGN_STYLE = Manual;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = 998Z9C32TC;
+				DEVELOPMENT_TEAM = EQHXZ8M8AV;
 				INFOPLIST_FILE = Source/santa_driver/Info.plist;
 				MARKETING_VERSION = 1.0;
 				MODULE_NAME = com.google.santa_driver;
@@ -1581,9 +1581,10 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = D4808D8635FB5E8E5F4637BB /* Pods-santabundleservice.debug.xcconfig */;
 			buildSettings = {
-				CODE_SIGN_STYLE = Automatic;
+				CODE_SIGN_IDENTITY = "Mac Developer";
+				CODE_SIGN_STYLE = Manual;
 				CREATE_INFOPLIST_SECTION_IN_BINARY = YES;
-				DEVELOPMENT_TEAM = 998Z9C32TC;
+				DEVELOPMENT_TEAM = EQHXZ8M8AV;
 				ENABLE_HARDENED_RUNTIME = YES;
 				INFOPLIST_FILE = "$(SRCROOT)/Source/santabundleservice/Resources/santabundleservice-Info.plist";
 				PRODUCT_BUNDLE_IDENTIFIER = com.google.santa.bundleservice;
@@ -1595,9 +1596,10 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = FE1F7C320CAEA468FAAC05B0 /* Pods-santabundleservice.release.xcconfig */;
 			buildSettings = {
-				CODE_SIGN_STYLE = Automatic;
+				CODE_SIGN_IDENTITY = "Mac Developer";
+				CODE_SIGN_STYLE = Manual;
 				CREATE_INFOPLIST_SECTION_IN_BINARY = YES;
-				DEVELOPMENT_TEAM = 998Z9C32TC;
+				DEVELOPMENT_TEAM = EQHXZ8M8AV;
 				ENABLE_HARDENED_RUNTIME = YES;
 				INFOPLIST_FILE = "$(SRCROOT)/Source/santabundleservice/Resources/santabundleservice-Info.plist";
 				PRODUCT_BUNDLE_IDENTIFIER = com.google.santa.bundleservice;
