@@ -199,7 +199,10 @@
       break;
   }
 
-  if (self.prefixTree->HasPrefix(sm.path)) {
+  // Filter events matching the prefix tree.
+  // Exec events are not filtered.
+  if (!(m->event_type == ES_EVENT_TYPE_AUTH_EXEC || m->event_type == ES_EVENT_TYPE_NOTIFY_EXEC) &&
+      self.prefixTree->HasPrefix(sm.path)) {
     return;
   }
 
@@ -249,13 +252,18 @@
   es_respond_result_t ret;
   switch (action) {
     case ACTION_RESPOND_ALLOW:
+    case ACTION_RESPOND_ALLOW_COMPILER:
+    case ACTION_RESPOND_ALLOW_PENDING_TRANSITIVE:
       ret = es_respond_auth_result(self.client, (es_message_t *)sm.es_message,
                                    ES_AUTH_RESULT_ALLOW, true);
       break;
     case ACTION_RESPOND_DENY:
+    case ACTION_RESPOND_TOOLONG:
       ret = es_respond_auth_result(self.client, (es_message_t *)sm.es_message,
                                    ES_AUTH_RESULT_DENY, false);
       break;
+    case ACTION_RESPOND_ACK:
+      return ES_RESPOND_RESULT_SUCCESS;
     default:
       ret = ES_RESPOND_RESULT_ERR_INVALID_ARGUMENT;
   }
