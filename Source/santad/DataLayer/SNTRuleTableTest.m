@@ -19,11 +19,6 @@
 #import "Source/common/SNTRule.h"
 #import "Source/santad/DataLayer/SNTRuleTable.h"
 
-@interface SNTRuleTable (Testing)
-@property NSString *santadCertSHA;
-@property NSString *launchdCertSHA;
-@end
-
 /// This test case actually tests SNTRuleTable and SNTRule
 @interface SNTRuleTableTest : XCTestCase
 @property SNTRuleTable *sut;
@@ -37,8 +32,6 @@
 
   self.dbq = [[FMDatabaseQueue alloc] init];
   self.sut = [[SNTRuleTable alloc] initWithDatabaseQueue:self.dbq];
-  // xctest is unsigned in Xcode 10.1.
-  self.sut.santadCertSHA = [[MOLCodesignChecker alloc] initWithPID:1].leafCertificate.SHA256;
 }
 
 - (SNTRule *)_exampleBinaryRule {
@@ -71,31 +64,14 @@
 }
 
 - (void)testAddRulesClean {
-  // Assert that insert without 'self' and launchd cert hashes fails
-  NSError *error;
-  XCTAssertFalse([self.sut addRules:@[ [self _exampleBinaryRule] ] cleanSlate:YES error:&error]);
-  XCTAssertEqual(error.code, SNTRuleTableErrorMissingRequiredRule);
-
-  // Now add a binary rule without clean slate
-  error = nil;
+  // Add a binary rule without clean slate
+  NSError *error = nil;
   XCTAssertTrue([self.sut addRules:@[ [self _exampleBinaryRule] ] cleanSlate:NO error:&error]);
   XCTAssertNil(error);
 
-  // Now add a cert rule + the required rules as a clean slate,
-  // assert that the binary rule was removed
-  SNTRule *r1 = [[SNTRule alloc] init];
-  r1.shasum = self.sut.launchdCertSHA;
-  r1.state = SNTRuleStateWhitelist;
-  r1.type = SNTRuleTypeCertificate;
-  SNTRule *r2 = [[SNTRule alloc] init];
-  r2.shasum = self.sut.santadCertSHA;
-  r2.state = SNTRuleStateWhitelist;
-  r2.type = SNTRuleTypeCertificate;
-
+  // Now add a cert rule with a clean slate, assert that the binary rule was removed
   error = nil;
-  XCTAssertTrue(([self.sut addRules:@[ [self _exampleCertRule], r1, r2 ]
-                         cleanSlate:YES
-                              error:&error]));
+  XCTAssertTrue(([self.sut addRules:@[ [self _exampleCertRule] ] cleanSlate:YES error:&error]));
   XCTAssertEqual([self.sut binaryRuleCount], 0);
   XCTAssertNil(error);
 }

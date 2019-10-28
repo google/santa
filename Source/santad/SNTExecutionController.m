@@ -115,8 +115,8 @@ static size_t kLargeBinarySize = 30 * 1024 * 1024;
     [self.eventProvider postAction:ACTION_RESPOND_ACK forMessage:message];
   }
 
-  // If the binary is a critical system binary, don't check its signature. The binary was validated
-  // by santad at startup.
+  // If the binary is a critical system binary, don't check its signature.
+  // The binary was validated by santad at startup.
   SNTCachedDecision *cd = self.ruleTable.criticalSystemBinaries[binInfo.SHA256];
   MOLCodesignChecker *csInfo; // Needed further down in this scope.
   if (!cd) {

@@ -74,7 +74,6 @@ typedef NS_ENUM(NSInteger, SNTRuleTableError) {
   SNTRuleTableErrorEmptyRuleArray,
   SNTRuleTableErrorInsertOrReplaceFailed,
   SNTRuleTableErrorInvalidRule,
-  SNTRuleTableErrorMissingRequiredRule,
   SNTRuleTableErrorRemoveFailed
 };
 
