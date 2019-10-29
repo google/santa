@@ -51,31 +51,14 @@ santa_unit_test(
     deps = ["//Source/common:SNTKernelCommon"],
 )
 
-# Full santa-driver.kext containing all Santa components
 macos_kernel_extension(
     name = "santa_driver",
-    additional_contents = {
-        "//Source/santa:Santa": "Resources",
-        "//Source/santactl": "MacOS",
-        "//Source/santad": "MacOS",
-    },
     bundle_id = "com.google.santa-driver",
     bundle_name = "santa-driver",
     infoplists = ["Info.plist"],
     minimum_os_version = "10.9",
     version = "//:version",
     visibility = ["//visibility:public"],
-    deps = [":santa_driver_lib"],
-)
-
-# A minimal santa-driver.kext, no other Santa components
-macos_kernel_extension(
-    name = "santa_driver_min",
-    bundle_id = "com.google.santa-driver",
-    bundle_name = "santa-driver",
-    infoplists = ["Info.plist"],
-    minimum_os_version = "10.9",
-    version = "//:version",
     deps = [":santa_driver_lib"],
 )
 
@@ -100,7 +83,7 @@ run_command(
     name = "kernel_tests",
     srcs = [
         ":kernel_tests_bin",
-        ":santa_driver_min",
+        ":santa_driver",
     ],
     cmd = """
 env

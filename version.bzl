@@ -1,3 +1,3 @@
 """The version for all Santa components."""
 
-SANTA_VERSION = "0.9.31"
+SANTA_VERSION = "1.0.0"

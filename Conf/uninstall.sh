@@ -17,7 +17,9 @@ user=$(/usr/bin/stat -f '%u' /dev/console)
 /bin/rm -rf /Applications/Santa.app
 /bin/rm -rf /Library/Extensions/santa-driver.kext
 /bin/rm -f /Library/LaunchAgents/com.google.santagui.plist
+/bin/rm -f /Library/LaunchAgents/com.google.santa.plist
 /bin/rm -f /Library/LaunchDaemons/com.google.santad.plist
+/bin/rm -f /Library/LaunchDaemons/com.google.santa.bundleservice.plist
 /bin/rm -f /private/etc/asl/com.google.santa.asl.conf
 /bin/rm -f /private/etc/newsyslog.d/com.google.santa.newsyslog.conf
 /bin/rm -f /usr/local/bin/santactl # just a symlink

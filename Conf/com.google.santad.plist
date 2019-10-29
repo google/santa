@@ -6,7 +6,7 @@
 	<string>com.google.santad</string>
 	<key>ProgramArguments</key>
 	<array>
-		<string>/Library/Extensions/santa-driver.kext/Contents/MacOS/santad</string>
+		<string>/Applications/Santa.app/Contents/Library/SystemExtensions/com.google.santa.daemon.systemextension/Contents/MacOS/com.google.santa.daemon</string>
 		<string>--syslog</string>
 	</array>
 	<key>MachServices</key>

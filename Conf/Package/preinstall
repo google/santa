@@ -6,22 +6,24 @@
 
 [[ $3 != "/" ]] && exit 0
 
-/bin/launchctl remove com.google.santad
+/bin/launchctl remove com.google.santad || true
+/bin/launchctl remove com.google.santa.bundleservice || true
 
-sleep 1
+/bin/sleep 1
 
-/sbin/kextunload -b com.google.santa-driver >/dev/null 2>&1
+/sbin/kextunload -b com.google.santa-driver >/dev/null 2>&1 || true
 
 # Remove cruft from old Santa versions
-/bin/rm /usr/libexec/santad
-/bin/rm /usr/sbin/santactl
+/bin/rm -f /usr/libexec/santad
+/bin/rm -f /usr/sbin/santactl
 /bin/launchctl remove com.google.santasync
-/bin/rm /Library/LaunchDaemons/com.google.santasync.plist
+/bin/rm -f /Library/LaunchDaemons/com.google.santasync.plist
 /bin/rm -rf /Applications/Santa.app
 
-sleep 1
+/bin/sleep 1
 
 user=$(/usr/bin/stat -f '%u' /dev/console)
 [[ -n "$user" ]] && /bin/launchctl asuser ${user} /bin/launchctl remove com.google.santagui
+[[ -n "$user" ]] && /bin/launchctl asuser ${user} /bin/launchctl remove com.google.santa
 
 exit 0

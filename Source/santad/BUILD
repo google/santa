@@ -1,6 +1,10 @@
 licenses(["notice"])  # Apache 2.0
 
-load("@build_bazel_rules_apple//apple:macos.bzl", "macos_command_line_application")
+load(
+    "@build_bazel_rules_apple//apple:macos.bzl",
+    "macos_bundle",
+    "macos_command_line_application",
+)
 load("//:helper.bzl", "santa_unit_test")
 
 objc_library(
@@ -78,6 +82,21 @@ macos_command_line_application(
     version = "//:version",
     visibility = ["//visibility:public"],
     deps = [":santad_lib"],
+)
+
+macos_bundle(
+    name = "com.google.santa.daemon",
+    additional_contents = {
+        ":santad": "MacOS",
+    },
+    bundle_extension = "systemextension",
+    bundle_id = "com.google.santa.daemon",
+    infoplists = ["Resources/santad-Info.plist"],
+    # provisioning_profile = "santa_daemon.provisionprofile",
+    ipa_post_processor = "postprocess.sh",
+    minimum_os_version = "10.9",
+    version = "//:version",
+    visibility = ["//visibility:public"],
 )
 
 santa_unit_test(

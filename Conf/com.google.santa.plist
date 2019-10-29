@@ -3,10 +3,10 @@
 <plist version="1.0">
 <dict>
 				<key>Label</key>
-				<string>com.google.santagui</string>
+				<string>com.google.santa</string>
 				<key>ProgramArguments</key>
 				<array>
-					<string>/Library/Extensions/santa-driver.kext/Contents/Resources/Santa.app/Contents/MacOS/Santa</string>
+					<string>/Applications/Santa.app/Contents/MacOS/Santa</string>
 					<string>--syslog</string>
 				</array>
 				<key>RunAtLoad</key>

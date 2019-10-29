@@ -6,3 +6,5 @@ Santa.xcodeproj/xcuserdata
 Santa.xcodeproj/project.xcworkspace
 Santa.xcworkspace/xcuserdata
 Santa.xcworkspace/xcshareddata
+Source/santad/santa_daemon.provisionprofile
+Source/santa/santa.provisionprofile
