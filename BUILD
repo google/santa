@@ -1,12 +1,12 @@
-package(default_visibility = ["//visibility:public"])
-
-licenses(["notice"])  # Apache 2.0
-
-exports_files(["LICENSE"])
-
 load("@build_bazel_rules_apple//apple:versioning.bzl", "apple_bundle_version")
 load("//:helper.bzl", "run_command")
 load("//:version.bzl", "SANTA_VERSION")
+
+package(default_visibility = ["//visibility:public"])
+
+licenses(["notice"])
+
+exports_files(["LICENSE"])
 
 # The version label for mac_* rules.
 apple_bundle_version(
@@ -45,7 +45,10 @@ launchctl load /Library/LaunchAgents/com.google.santa.plist
 
 run_command(
     name = "reload",
-    srcs = ["//Source/santa_driver", "//Source/santa:Santa"],
+    srcs = [
+        "//Source/santa:Santa",
+        "//Source/santa_driver",
+    ],
     cmd = """
 set -e
 
@@ -140,7 +143,7 @@ genrule(
       # Update all the timestamps to now. Bazel avoids timestamps to allow
       # builds to be hermetic and cacheable but for releases we want the
       # timestamps to be more-or-less correct.
-      find $(@D)/{binaries,conf,dsym} -exec touch {} \;
+      find $(@D)/{binaries,conf,dsym} -exec touch {} \\;
 
       # Create final output tar
       tar -C $(@D) -czpf $(@) binaries dsym conf
