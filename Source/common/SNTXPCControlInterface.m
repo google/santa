@@ -25,7 +25,6 @@ NSString *const kBundleID = @"com.google.santa.daemon";
 @implementation SNTXPCControlInterface
 
 + (NSString *)serviceID {
-  // TODO(bur/rah): Support "legacy" Santa on 10.15+.
   if (@available(macOS 10.15, *)) {
     MOLCodesignChecker *cs = [[MOLCodesignChecker alloc] initWithSelf];
     // "teamid.com.google.santa.daemon.xpc"

@@ -44,10 +44,17 @@ objc_library(
 
 macos_application(
     name = "Santa",
+    additional_contents = {
+        "//Source/santactl": "MacOS",
+        "//Source/santabundleservice": "MacOS",
+        "//Source/santad:com.google.santa.daemon": "Library/SystemExtensions",
+    },
     app_icons = glob(["Resources/Images.xcassets/**"]),
     bundle_id = "com.google.santa",
     bundle_name = "Santa",
     infoplists = ["Resources/santa-Info.plist"],
+    # provisioning_profile = "santa.provisionprofile",
+    ipa_post_processor = "postprocess.sh",
     minimum_os_version = "10.9",
     version = "//:version",
     visibility = ["//visibility:public"],

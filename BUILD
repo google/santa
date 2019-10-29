@@ -28,8 +28,9 @@ run_command(
     name = "unload",
     cmd = """
 sudo launchctl unload /Library/LaunchDaemons/com.google.santad.plist 2>/dev/null
+sudo launchctl unload /Library/LaunchDaemons/com.google.santa.bundleservice.plist 2>/dev/null
 sudo kextunload -b com.google.santa-driver 2>/dev/null
-launchctl unload /Library/LaunchAgents/com.google.santagui.plist 2>/dev/null
+launchctl unload /Library/LaunchAgents/com.google.santa.plist 2>/dev/null
 """,
 )
 
@@ -37,19 +38,22 @@ run_command(
     name = "load",
     cmd = """
 sudo launchctl load /Library/LaunchDaemons/com.google.santad.plist
-launchctl load /Library/LaunchAgents/com.google.santagui.plist
+sudo launchctl load /Library/LaunchDaemons/com.google.santa.bundleservice.plist
+launchctl load /Library/LaunchAgents/com.google.santa.plist
 """,
 )
 
 run_command(
     name = "reload",
-    srcs = ["//Source/santa_driver"],
+    srcs = ["//Source/santa_driver", "//Source/santa:Santa"],
     cmd = """
 set -e
 
 rm -rf /tmp/bazel_santa_reload
 unzip -d /tmp/bazel_santa_reload \
     $${BUILD_WORKSPACE_DIRECTORY}/bazel-bin/Source/santa_driver/santa_driver.zip >/dev/null
+unzip -d /tmp/bazel_santa_reload \
+    $${BUILD_WORKSPACE_DIRECTORY}/bazel-bin/Source/santa/Santa.zip >/dev/null
 echo "You may be asked for your password for sudo"
 sudo BINARIES=/tmp/bazel_santa_reload CONF=$${BUILD_WORKSPACE_DIRECTORY}/Conf \
     $${BUILD_WORKSPACE_DIRECTORY}/Conf/install.sh
@@ -64,11 +68,13 @@ echo "Time to stop being naughty"
 genrule(
     name = "release",
     srcs = [
+        "//Source/santa:Santa",
         "//Source/santa_driver",
         "Conf/install.sh",
         "Conf/uninstall.sh",
+        "Conf/com.google.santa.bundleservice.plist",
         "Conf/com.google.santad.plist",
-        "Conf/com.google.santagui.plist",
+        "Conf/com.google.santa.plist",
         "Conf/com.google.santa.asl.conf",
         "Conf/com.google.santa.newsyslog.conf",
         "Conf/Package/Makefile",
@@ -82,9 +88,9 @@ genrule(
         echo "Please add '-c opt' flag to bazel invocation"
         """,
         ":opt_build": """
-      # Extract santa_driver.zip
+      # Extract santa_driver.zip and Santa.zip
       for SRC in $(SRCS); do
-        if [[ $$(basename $${SRC}) == "santa_driver.zip" ]]; then
+        if [ "$$(basename $${SRC})" == "santa_driver.zip" -o "$$(basename $${SRC})" == "Santa.zip" ]; then
           mkdir -p $(@D)/binaries
           unzip -q $${SRC} -d $(@D)/binaries >/dev/null
         fi
@@ -113,9 +119,9 @@ genrule(
             mkdir -p $(@D)/dsym
             cp -LR $$(dirname $$(dirname $${SRC})) $(@D)/dsym/santactl.dSYM
             ;;
-          *santabs.xpc.dSYM*Info.plist)
+          *santabundleservice.dSYM*Info.plist)
             mkdir -p $(@D)/dsym
-            cp -LR $$(dirname $$(dirname $${SRC})) $(@D)/dsym/santabs.xpc.dSYM
+            cp -LR $$(dirname $$(dirname $${SRC})) $(@D)/dsym/santabundleservice.dSYM
             ;;
           *Santa.app.dSYM*Info.plist)
             mkdir -p $(@D)/dsym
