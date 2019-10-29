@@ -29,4 +29,3 @@ macos_command_line_application(
     visibility = ["//visibility:public"],
     deps = [":santabs_lib"],
 )
-

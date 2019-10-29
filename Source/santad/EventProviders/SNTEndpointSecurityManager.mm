@@ -84,7 +84,7 @@
   switch (m->event_type) {
     case ES_EVENT_TYPE_AUTH_EXEC: {
 //      // TODO(bur/rah): Probably also want to do this for is_es_client.
-//      // TODO(bur/rah): Since these events are not evaluated by Santa's pipline they are
+//      // TODO(bur/rah): Since these events are not evaluated by Santa's pipeline they are
 //      //                missing bits of information such as SHA256 and REASON. Refactor the
 //      //                logging cache.
 //      if (m->event.exec.target->is_platform_binary) {
@@ -155,6 +155,7 @@
       sm.path[m->event.unlink.target->path.length] = '\0';
       callback = self.logCallback;
       audit_token = m->process->audit_token;
+      break;
     case ES_EVENT_TYPE_NOTIFY_TRUNCATE: {
       sm.action = ACTION_NOTIFY_DELETE;
       sm.ppid = m->process->original_ppid;
@@ -194,6 +195,7 @@
 
       callback = self.logCallback;
       audit_token = m->process->audit_token;
+      break;
     }
     default:
       break;

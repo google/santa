@@ -18,11 +18,11 @@ objc_library(
     name = "SNTBlockMessage_SantaGUI",
     srcs = ["SNTBlockMessage.m"],
     hdrs = ["SNTBlockMessage.h"],
+    defines = ["SANTAGUI"],
     deps = [
         ":SNTConfigurator",
         ":SNTStoredEvent",
     ],
-    defines = ["SANTAGUI"],
 )
 
 objc_library(
