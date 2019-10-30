@@ -74,28 +74,16 @@ objc_library(
     ],
 )
 
-macos_command_line_application(
-    name = "santad",
+macos_bundle(
+    name = "com.google.santa.daemon",
+    bundle_extension = "systemextension",
     bundle_id = "com.google.santa.daemon",
     infoplists = ["Info.plist"],
+    linkopts = ["-execute"],
     minimum_os_version = "10.9",
     version = "//:version",
     visibility = ["//visibility:public"],
     deps = [":santad_lib"],
-)
-
-macos_bundle(
-    name = "com.google.santa.daemon",
-    additional_contents = {
-        ":santad": "MacOS",
-    },
-    bundle_extension = "systemextension",
-    bundle_id = "com.google.santa.daemon",
-    infoplists = ["Info.plist"],
-    ipa_post_processor = "postprocess.sh",
-    minimum_os_version = "10.9",
-    version = "//:version",
-    visibility = ["//visibility:public"],
 )
 
 santa_unit_test(
