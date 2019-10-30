@@ -19,6 +19,6 @@
 	<key>NSSystemExtensionUsageDescription</key>
 	<string>Santa knows who is naughty and nice.</string>
 	<key>CFBundleExecutable</key>
-	<string>santad</string>
+	<string>com.google.santa.daemon</string>
 </dict>
 </plist>

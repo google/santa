@@ -77,7 +77,7 @@ objc_library(
 macos_command_line_application(
     name = "santad",
     bundle_id = "com.google.santa.daemon",
-    infoplists = ["Resources/santad-Info.plist"],
+    infoplists = ["Info.plist"],
     minimum_os_version = "10.9",
     version = "//:version",
     visibility = ["//visibility:public"],
@@ -91,7 +91,7 @@ macos_bundle(
     },
     bundle_extension = "systemextension",
     bundle_id = "com.google.santa.daemon",
-    infoplists = ["Resources/santad-Info.plist"],
+    infoplists = ["Info.plist"],
     ipa_post_processor = "postprocess.sh",
     minimum_os_version = "10.9",
     version = "//:version",
