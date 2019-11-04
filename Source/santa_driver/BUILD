@@ -23,13 +23,10 @@ cc_library(
     copts = [
         "-mkernel",
         "-fapple-kext",
-        "-I__BAZEL_XCODE_SDKROOT__/System/Library/Frameworks/Kernel.framework/PrivateHeaders",
         "-I__BAZEL_XCODE_SDKROOT__/System/Library/Frameworks/Kernel.framework/Headers",
     ],
     defines = [
         "KERNEL",
-        "KERNEL_PRIVATE",
-        "DRIVER_PRIVATE",
         "APPLE",
         "NeXT",
         "SANTA_VERSION=" + SANTA_VERSION,
@@ -37,7 +34,7 @@ cc_library(
     deps = [
         "//Source/common:SNTKernelCommon",
         "//Source/common:SNTLoggingKernel",
-        "//Source/common:SNTPrefixTree",
+        "//Source/common:SNTPrefixTreeKernel",
     ],
     alwayslink = 1,
 )
