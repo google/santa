@@ -89,6 +89,19 @@ cc_library(
     srcs = ["SNTPrefixTree.cc"],
     hdrs = ["SNTPrefixTree.h"],
     copts = ["-std=c++11"],
+    deps = [":SNTLogging"],
+)
+
+cc_library(
+    name = "SNTPrefixTreeKernel",
+    srcs = ["SNTPrefixTree.cc"],
+    hdrs = ["SNTPrefixTree.h"],
+    copts = [
+        "-std=c++11",
+        "-I__BAZEL_XCODE_SDKROOT__/System/Library/Frameworks/Kernel.framework/Headers",
+    ],
+    defines = ["KERNEL"],
+    deps = [":SNTLoggingKernel"],
 )
 
 objc_library(
