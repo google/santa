@@ -1,8 +1,4 @@
-load(
-    "@build_bazel_rules_apple//apple:macos.bzl",
-    "macos_bundle",
-    "macos_command_line_application",
-)
+load("@build_bazel_rules_apple//apple:macos.bzl", "macos_bundle")
 load("//:helper.bzl", "santa_unit_test")
 
 licenses(["notice"])  # Apache 2.0
