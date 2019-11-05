@@ -98,6 +98,7 @@ cc_library(
     hdrs = ["SNTPrefixTree.h"],
     copts = [
         "-std=c++11",
+        "-mkernel",
         "-I__BAZEL_XCODE_SDKROOT__/System/Library/Frameworks/Kernel.framework/Headers",
     ],
     defines = ["KERNEL"],
