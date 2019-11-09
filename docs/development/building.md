@@ -18,7 +18,7 @@ built from tagged commits, so if you wanted to build, run or test a specific
 release you can checkout that tag:
 
 ```sh
-git checkout 0.9.30
+git checkout 0.9.33
 ```
 
 If you want to list all the tags in reverse order:
@@ -32,13 +32,13 @@ git tag --sort=-creatordate
 Build a debug version of Santa:
 
 ```sh
-bazel build :santa-driver
+bazel build //Source/santa_driver
 ```
 
 Build a release (optimized) version of Santa:
 
 ```sh
-bazel build :santa-driver -c opt
+bazel build //Source/santa_driver -c opt
 ```
 
 The output for these commands will be a `santa-driver.zip` file under
@@ -130,13 +130,13 @@ Now the process is attached in Xcode and you can debug your day away.
 Run all the logic / unit tests
 
 ```sh
-bazel test :logic_tests
+bazel test :unit_tests
 ```
 
 Run all of santa-driver kernel extension tests
 
 ```sh
-bazel run :kernel_tests
+bazel run //Source/santa_driver:kernel_tests
 ```
 
 #### Releases
@@ -146,5 +146,5 @@ saves the dsym files for each component of Santa. This makes debugging and
 interpreting future crashes or kernel panics much easier.
 
 ```sh
-bazel run :release
+bazel build :release
 ```
