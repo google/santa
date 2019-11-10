@@ -6,7 +6,7 @@
 [doc-status-link]: https://santa.readthedocs.io/en/latest/?badge=latest
 
 <p align="center">
-    <img src="./Source/SantaGUI/Resources/Images.xcassets/AppIcon.appiconset/santa-hat-icon-128.png" alt="Santa Icon" />
+    <img src="./Source/santa/Resources/Images.xcassets/AppIcon.appiconset/santa-hat-icon-128.png" alt="Santa Icon" />
 </p>
 
 Santa is a binary whitelisting/blacklisting system for macOS. It consists of a
