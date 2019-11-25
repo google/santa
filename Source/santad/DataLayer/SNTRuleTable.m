@@ -39,19 +39,6 @@ static const NSUInteger kTransitiveRuleExpirationSeconds = 6 * 30 * 24 * 3600;
 
 @implementation SNTRuleTable
 
-- (instancetype)init {
-  self = [super init];
-  if (self) {
-    // Save signing info for launchd and santad. Used to ensure they are always allowed.
-    self.santadCSInfo = [[MOLCodesignChecker alloc] initWithSelf];
-    self.launchdCSInfo = [[MOLCodesignChecker alloc] initWithPID:1];
-
-    // Setup critical system binaries
-    [self setupSystemCriticalBinaries];
-  }
-  return self;
-}
-
 - (NSArray *)criticalSystemBinaryPaths {
   return @[
     @"/usr/libexec/trustd", @"/usr/sbin/securityd", @"/usr/libexec/xpcproxy",
@@ -132,6 +119,13 @@ static const NSUInteger kTransitiveRuleExpirationSeconds = 6 * 30 * 24 * 3600;
     [db executeUpdate:@"ALTER TABLE 'rules' ADD 'timestamp' INTEGER"];
     newVersion = 3;
   }
+
+  // Save signing info for launchd and santad. Used to ensure they are always allowed.
+  self.santadCSInfo = [[MOLCodesignChecker alloc] initWithSelf];
+  self.launchdCSInfo = [[MOLCodesignChecker alloc] initWithPID:1];
+
+  // Setup critical system binaries
+  [self setupSystemCriticalBinaries];
 
   return newVersion;
 }
@@ -218,7 +212,8 @@ static const NSUInteger kTransitiveRuleExpirationSeconds = 6 * 30 * 24 * 3600;
     [rs close];
   }];
 
-  // Allow binaries signed by the "Software Signing" cert used to sign launchd.
+  // Allow binaries signed by the "Software Signing" cert used to sign launchd
+  // if no existing rule has matched.
   if (!rule && [certificateSHA256 isEqual:self.launchdCSInfo.leafCertificate.SHA256]) {
     rule = [[SNTRule alloc] initWithShasum:certificateSHA256
                                      state:SNTRuleStateWhitelist
