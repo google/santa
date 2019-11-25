@@ -70,6 +70,10 @@ REGISTER_COMMAND_NAME(@"version")
 }
 
 - (NSString *)santaKextVersion {
+  if (@available(macOS 10.15, *)) {
+    return @"un-needed (SystemExtension being used)";
+  }
+
   NSDictionary *loadedKexts = CFBridgingRelease(
       KextManagerCopyLoadedKextInfo((__bridge CFArrayRef) @[ @(USERCLIENT_ID) ],
                                     (__bridge CFArrayRef) @[ @"CFBundleVersion" ]));
