@@ -40,7 +40,7 @@ void logMessage(LogLevel level, FILE *destination, NSString *format, ...) {
     binaryName = [[NSProcessInfo processInfo] processName];
 
     if (@available(macOS 10.15, *)) {
-      if ([binaryName isEqualToString:@"santad"]) {
+      if ([binaryName isEqualToString:@"com.google.santa.daemon"]) {
         useSyslog = YES;
         pthread_key_create(&syslogKey, syslogClientDestructor);
       }

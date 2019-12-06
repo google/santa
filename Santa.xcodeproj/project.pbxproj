@@ -11,7 +11,7 @@
 		59502195B2982225D3706DCE /* libPods-santabundleservice.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 2A55D73A235850B9FA991865 /* libPods-santabundleservice.a */; };
 		AD3736AF78C41A962C26D429 /* libPods-Santa.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 4C3E743944A9D77423AA1534 /* libPods-Santa.a */; };
 		B5AE6BB811766CA492133559 /* libPods-santad.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 3700D40B536CA7F626B76156 /* libPods-santad.a */; };
-		C71E472F22F0F97B00921CD9 /* santad in CopyFiles */ = {isa = PBXBuildFile; fileRef = C779C4E622F0F51400EE2541 /* santad */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
+		C71E472F22F0F97B00921CD9 /* com.google.santa.daemon in CopyFiles */ = {isa = PBXBuildFile; fileRef = C779C4E622F0F51400EE2541 /* com.google.santa.daemon */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
 		C71E473122F0FAA100921CD9 /* com.google.santa.daemon.systemextension in CopyFiles */ = {isa = PBXBuildFile; fileRef = C7A8308022F0F81F00F856AC /* com.google.santa.daemon.systemextension */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		C72ED2B62324962400255555 /* SNTEndpointSecurityManager.mm in Sources */ = {isa = PBXBuildFile; fileRef = C72ED2B52324962400255555 /* SNTEndpointSecurityManager.mm */; };
 		C72ED2B82324A2FA00255555 /* libEndpointSecurity.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = C72ED2B72324A2FA00255555 /* libEndpointSecurity.tbd */; };
@@ -120,7 +120,7 @@
 			dstPath = "";
 			dstSubfolderSpec = 6;
 			files = (
-				C71E472F22F0F97B00921CD9 /* santad in CopyFiles */,
+				C71E472F22F0F97B00921CD9 /* com.google.santa.daemon in CopyFiles */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -355,7 +355,7 @@
 		C7658B072322B84F00F36578 /* SantaDecisionManager.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SantaDecisionManager.h; sourceTree = "<group>"; };
 		C7658B0C2322B95500F36578 /* santactl */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = santactl; sourceTree = BUILT_PRODUCTS_DIR; };
 		C779C2DE22F0E95000EE2541 /* Santa.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Santa.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		C779C4E622F0F51400EE2541 /* santad */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = santad; sourceTree = BUILT_PRODUCTS_DIR; };
+		C779C4E622F0F51400EE2541 /* com.google.santa.daemon */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = com.google.santa.daemon; sourceTree = BUILT_PRODUCTS_DIR; };
 		C7A8308022F0F81F00F856AC /* com.google.santa.daemon.systemextension */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = com.google.santa.daemon.systemextension; sourceTree = BUILT_PRODUCTS_DIR; };
 		C7D35DDA2322C902000C5EB4 /* santa-driver.kext */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "santa-driver.kext"; sourceTree = BUILT_PRODUCTS_DIR; };
 		C7F5C1A7233E72BC00A3F7FD /* santabundleservice */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = santabundleservice; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -751,7 +751,7 @@
 			isa = PBXGroup;
 			children = (
 				C779C2DE22F0E95000EE2541 /* Santa.app */,
-				C779C4E622F0F51400EE2541 /* santad */,
+				C779C4E622F0F51400EE2541 /* com.google.santa.daemon */,
 				C7A8308022F0F81F00F856AC /* com.google.santa.daemon.systemextension */,
 				C7658B0C2322B95500F36578 /* santactl */,
 				C7D35DDA2322C902000C5EB4 /* santa-driver.kext */,
@@ -846,9 +846,9 @@
 			productReference = C779C2DE22F0E95000EE2541 /* Santa.app */;
 			productType = "com.apple.product-type.application";
 		};
-		C779C4E522F0F51400EE2541 /* santad */ = {
+		C779C4E522F0F51400EE2541 /* com.google.santa.daemon */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = C779C4EA22F0F51400EE2541 /* Build configuration list for PBXNativeTarget "santad" */;
+			buildConfigurationList = C779C4EA22F0F51400EE2541 /* Build configuration list for PBXNativeTarget "com.google.santa.daemon" */;
 			buildPhases = (
 				9B2025B681CFFFB8478F7EC3 /* [CP] Check Pods Manifest.lock */,
 				C779C4E222F0F51400EE2541 /* Sources */,
@@ -859,9 +859,9 @@
 			);
 			dependencies = (
 			);
-			name = santad;
+			name = com.google.santa.daemon;
 			productName = santad;
-			productReference = C779C4E622F0F51400EE2541 /* santad */;
+			productReference = C779C4E622F0F51400EE2541 /* com.google.santa.daemon */;
 			productType = "com.apple.product-type.tool";
 		};
 		C7A8307F22F0F81F00F856AC /* sysx */ = {
@@ -963,7 +963,7 @@
 			projectRoot = "";
 			targets = (
 				C779C2DD22F0E95000EE2541 /* Santa */,
-				C779C4E522F0F51400EE2541 /* santad */,
+				C779C4E522F0F51400EE2541 /* com.google.santa.daemon */,
 				C7A8307F22F0F81F00F856AC /* sysx */,
 				C7658B0B2322B95500F36578 /* santactl */,
 				C7D35DD92322C902000C5EB4 /* santa-driver */,
@@ -1623,7 +1623,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		C779C4EA22F0F51400EE2541 /* Build configuration list for PBXNativeTarget "santad" */ = {
+		C779C4EA22F0F51400EE2541 /* Build configuration list for PBXNativeTarget "com.google.santa.daemon" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				C779C4EB22F0F51400EE2541 /* Debug */,
