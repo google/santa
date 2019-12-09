@@ -15,8 +15,8 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "C779C4E522F0F51400EE2541"
-               BuildableName = "santad"
-               BlueprintName = "santad"
+               BuildableName = "com.google.santa.daemon"
+               BlueprintName = "com.google.santa.daemon"
                ReferencedContainer = "container:Santa.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
@@ -46,8 +46,8 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "C779C4E522F0F51400EE2541"
-            BuildableName = "santad"
-            BlueprintName = "santad"
+            BuildableName = "com.google.santa.daemon"
+            BlueprintName = "com.google.santa.daemon"
             ReferencedContainer = "container:Santa.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
@@ -63,8 +63,8 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "C779C4E522F0F51400EE2541"
-            BuildableName = "santad"
-            BlueprintName = "santad"
+            BuildableName = "com.google.santa.daemon"
+            BlueprintName = "com.google.santa.daemon"
             ReferencedContainer = "container:Santa.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>

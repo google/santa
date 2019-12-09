@@ -168,76 +168,53 @@
 }
 
 - (void)beginListeningForDecisionRequests {
-  dispatch_queue_t exec_queue = dispatch_queue_create(
-      "com.google.santad.execution_queue", DISPATCH_QUEUE_CONCURRENT);
-  dispatch_set_target_queue(
-      exec_queue, dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_HIGH, 0));
-
   [self.eventProvider listenForDecisionRequests:^(santa_message_t message) {
-    @autoreleasepool {
-      dispatch_async(exec_queue, ^{
-        switch (message.action) {
-          case ACTION_REQUEST_SHUTDOWN: {
-            LOGI(@"Driver requested a shutdown");
-            exit(0);
-          }
-          case ACTION_REQUEST_BINARY: {
-            [self->_execController validateBinaryWithMessage:message];
-            break;
-          }
-          case ACTION_NOTIFY_WHITELIST: {
-            // Determine if we should add a transitive whitelisting rule for this new file.
-            // Requires that writing process was a compiler and that new file is executable.
-            [self.compilerController createTransitiveRule:message];
-            break;
-          }
-          default: {
-            LOGE(@"Received decision request without a valid action: %d", message.action);
-            exit(1);
-          }
-        }
-      });
+    switch (message.action) {
+      case ACTION_REQUEST_SHUTDOWN: {
+        LOGI(@"Driver requested a shutdown");
+        exit(0);
+      }
+      case ACTION_REQUEST_BINARY: {
+        [self->_execController validateBinaryWithMessage:message];
+        break;
+      }
+      case ACTION_NOTIFY_WHITELIST: {
+        // Determine if we should add a transitive whitelisting rule for this new file.
+        // Requires that writing process was a compiler and that new file is executable.
+        [self.compilerController createTransitiveRule:message];
+        break;
+      }
+      default: {
+        LOGE(@"Received decision request without a valid action: %d", message.action);
+        exit(1);
+      }
     }
   }];
 }
 
 - (void)beginListeningForLogRequests {
-  dispatch_queue_t log_queue = dispatch_queue_create(
-      "com.google.santad.log_queue", DISPATCH_QUEUE_CONCURRENT);
-  dispatch_set_target_queue(
-      log_queue, dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_BACKGROUND, 0));
-
-  // Limit number of threads the queue can create.
-  dispatch_semaphore_t concurrencyLimiter = dispatch_semaphore_create(15);
-
   [self.eventProvider listenForLogRequests:^(santa_message_t message) {
-    @autoreleasepool {
-      dispatch_semaphore_wait(concurrencyLimiter, DISPATCH_TIME_FOREVER);
-      dispatch_async(log_queue, ^{
-        switch (message.action) {
-          case ACTION_NOTIFY_DELETE:
-          case ACTION_NOTIFY_EXCHANGE:
-          case ACTION_NOTIFY_LINK:
-          case ACTION_NOTIFY_RENAME:
-          case ACTION_NOTIFY_WRITE: {
-            NSRegularExpression *re = [[SNTConfigurator configurator] fileChangesRegex];
-            NSString *path = @(message.path);
-            if (!path) break;
-            if ([re numberOfMatchesInString:path options:0 range:NSMakeRange(0, path.length)]) {
-              [self->_eventLog logFileModification:message];
-            }
-            break;
-          }
-          case ACTION_NOTIFY_EXEC: {
-            [self->_eventLog logAllowedExecution:message];
-            break;
-          }
-          default:
-            LOGE(@"Received log request without a valid action: %d", message.action);
-            break;
+    switch (message.action) {
+      case ACTION_NOTIFY_DELETE:
+      case ACTION_NOTIFY_EXCHANGE:
+      case ACTION_NOTIFY_LINK:
+      case ACTION_NOTIFY_RENAME:
+      case ACTION_NOTIFY_WRITE: {
+        NSRegularExpression *re = [[SNTConfigurator configurator] fileChangesRegex];
+        NSString *path = @(message.path);
+        if (!path) break;
+        if ([re numberOfMatchesInString:path options:0 range:NSMakeRange(0, path.length)]) {
+          [self->_eventLog logFileModification:message];
         }
-        dispatch_semaphore_signal(concurrencyLimiter);
-      });
+        break;
+      }
+      case ACTION_NOTIFY_EXEC: {
+        [self->_eventLog logAllowedExecution:message];
+        break;
+      }
+      default:
+        LOGE(@"Received log request without a valid action: %d", message.action);
+        break;
     }
   }];
 }

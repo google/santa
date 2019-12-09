@@ -19,7 +19,7 @@
 
 #include <EndpointSecurity/EndpointSecurity.h>
 #include <bsm/libbsm.h>
-#import <libproc.h>
+#include <libproc.h>
 
 @interface SNTEndpointSecurityManager ()
 
@@ -27,6 +27,8 @@
 @property(nonatomic) SNTPrefixTree *prefixTree;
 @property (nonatomic, copy) void (^decisionCallback)(santa_message_t);
 @property (nonatomic, copy) void (^logCallback)(santa_message_t);
+@property (nonatomic, readonly) dispatch_queue_t esAuthQueue;
+@property (nonatomic, readonly) dispatch_queue_t esNotifyQueue;
 
 @end
 
@@ -37,24 +39,65 @@
   if (self) {
     [self establishClient];
     _prefixTree = new SNTPrefixTree();
+    _esAuthQueue =
+        dispatch_queue_create("com.google.santa.daemon.es_auth", DISPATCH_QUEUE_CONCURRENT);
+    dispatch_set_target_queue(_esAuthQueue,
+                              dispatch_get_global_queue(QOS_CLASS_USER_INTERACTIVE, 0));
+    _esNotifyQueue =
+        dispatch_queue_create("com.google.santa.daemon.es_notify", DISPATCH_QUEUE_CONCURRENT);
+    dispatch_set_target_queue(_esNotifyQueue,
+                              dispatch_get_global_queue(QOS_CLASS_BACKGROUND, 0));
   }
 
   return self;
 }
 
 - (void)dealloc API_AVAILABLE(macos(10.15)) {
-  if (_prefixTree) delete _prefixTree;
   if (_client) {
     es_unsubscribe_all(_client);
     es_delete_client(_client);
   }
+  if (_prefixTree) delete _prefixTree;
 }
 
 - (void)establishClient API_AVAILABLE(macos(10.15)) {
   while (!self.client) {
     es_client_t *client = NULL;
     es_new_client_result_t ret = es_new_client(&client, ^(es_client_t *c, const es_message_t *m) {
-      [self messageHandler:m];
+      // Frontload some easy checks
+      switch (m->event_type) {
+        case ES_EVENT_TYPE_NOTIFY_CLOSE: {
+          if (!m->event.close.modified) return;
+        }
+        case ES_EVENT_TYPE_NOTIFY_EXEC: {
+          // Deny results are curerently logged when ES_EVENT_TYPE_AUTH_EXEC posts a deny.
+          // TODO(bur/rah): For ES log denies from NOTIFY messages instead of AUTH.
+          if (m->action.notify.result.auth == ES_AUTH_RESULT_DENY) return;
+        }
+        default: {
+          break;
+        }
+      }
+
+      es_message_t *mc = es_copy_message(m);
+      switch (mc->action_type) {
+        case ES_ACTION_TYPE_AUTH: {
+          dispatch_async(self.esAuthQueue, ^{
+            [self messageHandler:mc];
+          });
+          break;
+        }
+        case ES_ACTION_TYPE_NOTIFY: {
+          dispatch_async(self.esNotifyQueue, ^{
+            [self messageHandler:mc];
+          });
+          break;
+        }
+        default: {
+          es_free_message(mc);
+          break;
+        }
+      }
     });
 
     switch (ret) {
@@ -75,47 +118,26 @@
   }
 }
 
-- (void)messageHandler:(const es_message_t *)m API_AVAILABLE(macos(10.15)) {
+- (void)messageHandler:(es_message_t *)m API_AVAILABLE(macos(10.15)) {
   santa_message_t sm = {};
+  sm.es_message = (void *)m;
 
-  audit_token_t audit_token = {};
+  es_process_t *targetProcess = NULL;
+  es_file_t *targetFile = NULL;
   void (^callback)(santa_message_t);
 
   switch (m->event_type) {
     case ES_EVENT_TYPE_AUTH_EXEC: {
-//      // TODO(bur/rah): Probably also want to do this for is_es_client.
-//      // TODO(bur/rah): Since these events are not evaluated by Santa's pipeline they are
-//      //                missing bits of information such as SHA256 and REASON. Refactor the
-//      //                logging cache.
-//      if (m->event.exec.target->is_platform_binary) {
-//        LOGD(@"platform binary: %s", sm.path);
-//        [self postAction:ACTION_RESPOND_ALLOW forMessage:sm];
-//        return;
-//      }
-      sm.es_message = (void *)es_copy_message(m);
       sm.action = ACTION_REQUEST_BINARY;
-      sm.vnode_id.fsid = m->event.exec.target->executable->stat.st_dev;
-      sm.vnode_id.fileid = m->event.exec.target->executable->stat.st_ino;
+      targetFile = m->event.exec.target->executable;
+      targetProcess = m->event.exec.target;
       callback = self.decisionCallback;
-      audit_token = m->event.exec.target->audit_token;
-      sm.ppid = m->event.exec.target->original_ppid;
-
-      size_t l = m->event.exec.target->executable->path.length;
-      if (l + 1 > MAXPATHLEN ||  m->event.exec.target->executable->path_truncated) {
-        // TODO(bur/rah): Get path from fsid.
-        LOGE(@"Path is truncated!");
-        es_respond_auth_result(self.client, m, ES_AUTH_RESULT_ALLOW, true);
-        return;
-      }
-      strncpy(sm.path,m->event.exec.target->executable->path.data, l);
-      sm.path[l] = '\0';
-
       break;
     }
     case ES_EVENT_TYPE_NOTIFY_EXEC: {
       sm.action = ACTION_NOTIFY_EXEC;
-      sm.vnode_id.fsid = m->event.exec.target->executable->stat.st_dev;
-      sm.vnode_id.fileid = m->event.exec.target->executable->stat.st_ino;
+      targetFile = m->event.exec.target->executable;
+      targetProcess = m->event.exec.target;
 
       // TODO(rah): Profile this, it might need to be improved.
       uint32_t argCount = es_exec_arg_count(&(m->event.exec));
@@ -127,94 +149,99 @@
                                                encoding:NSUTF8StringEncoding]];
       }
       sm.args_array = (void *)CFBridgingRetain(args);
-
       callback = self.logCallback;
-      audit_token = m->event.exec.target->audit_token;
-      sm.ppid = m->event.exec.target->original_ppid;
-
-      size_t l = m->event.exec.target->executable->path.length;
-      strncpy(sm.path,m->event.exec.target->executable->path.data, l);
-      sm.path[l] = '\0';
-
       break;
     }
     case ES_EVENT_TYPE_NOTIFY_CLOSE: {
-      if (!m->event.close.modified) return;
       sm.action = ACTION_NOTIFY_WRITE;
-      sm.ppid = m->process->original_ppid;
-      strncpy(sm.path, m->event.close.target->path.data, m->event.close.target->path.length);
-      sm.path[m->event.close.target->path.length] = '\0';
+      targetFile = m->event.close.target;
+      targetProcess = m->process;
       callback = self.logCallback;
-      audit_token = m->process->audit_token;
       break;
     }
-    case ES_EVENT_TYPE_NOTIFY_UNLINK:
+    case ES_EVENT_TYPE_NOTIFY_UNLINK: {
       sm.action = ACTION_NOTIFY_DELETE;
-      sm.ppid = m->process->original_ppid;
-      strncpy(sm.path, m->event.unlink.target->path.data, m->event.unlink.target->path.length);
-      sm.path[m->event.unlink.target->path.length] = '\0';
+      targetFile = m->event.unlink.target;
+      targetProcess = m->process;
       callback = self.logCallback;
-      audit_token = m->process->audit_token;
       break;
+    }
     case ES_EVENT_TYPE_NOTIFY_TRUNCATE: {
       sm.action = ACTION_NOTIFY_DELETE;
-      sm.ppid = m->process->original_ppid;
-      strncpy(sm.path, m->event.truncate.target->path.data, m->event.truncate.target->path.length);
-      sm.path[m->event.truncate.target->path.length] = '\0';
+      targetFile = m->event.truncate.target;
+      targetProcess = m->process;
       callback = self.logCallback;
-      audit_token = m->process->audit_token;
       break;
     }
     case ES_EVENT_TYPE_NOTIFY_LINK: {
       sm.action = ACTION_NOTIFY_LINK;
-      sm.ppid = m->process->original_ppid;
-      strncpy(sm.path, m->event.link.source->path.data, m->event.link.source->path.length);
-      sm.path[m->event.link.source->path.length] = '\0';
-      strncpy(sm.newpath, m->event.link.target_filename.data, m->event.link.target_filename.length);
-      sm.newpath[m->event.link.target_filename.length] = '\0';
+      targetFile = m->event.link.source;
+      targetProcess = m->process;
+      NSString *p = @(m->event.link.target_dir->path.data);
+      p = [p stringByAppendingPathComponent:@(m->event.link.target_filename.data)];
+      [self populateBufferFromString:p.UTF8String
+                              length:p.length
+                              buffer:sm.newpath
+                                size:sizeof(sm.newpath)];
       callback = self.logCallback;
-      audit_token = m->process->audit_token;
       break;
     }
     case ES_EVENT_TYPE_NOTIFY_RENAME: {
       sm.action = ACTION_NOTIFY_RENAME;
-      sm.ppid = m->process->original_ppid;
-      strncpy(sm.path, m->event.rename.source->path.data, m->event.rename.source->path.length);
-      sm.path[m->event.rename.source->path.length] = '\0';
+      targetFile = m->event.rename.source;
+      targetProcess = m->process;
 
       switch(m->event.rename.destination_type) {
-        case ES_DESTINATION_TYPE_NEW_PATH:
-          strncpy(sm.newpath, m->event.rename.destination.new_path.filename.data, m->event.rename.destination.new_path.filename.length);
-          sm.newpath[m->event.rename.destination.new_path.filename.length] = '\0';
+        case ES_DESTINATION_TYPE_NEW_PATH: {
+          NSString *p = @(m->event.rename.destination.new_path.dir->path.data);
+          p = [p stringByAppendingPathComponent:
+                  @(m->event.rename.destination.new_path.filename.data)];
+          [self populateBufferFromString:p.UTF8String
+                                  length:p.length
+                                  buffer:sm.newpath
+                                    size:sizeof(sm.newpath)];
           break;
-        case ES_DESTINATION_TYPE_EXISTING_FILE:
-          strncpy(sm.newpath, m->event.rename.destination.existing_file->path.data, m->event.rename.destination.existing_file->path.length);
-          sm.newpath[m->event.rename.destination.existing_file->path.length] = '\0';
+        }
+        case ES_DESTINATION_TYPE_EXISTING_FILE: {
+          [self populateBufferFromESFile:m->event.rename.destination.existing_file
+                                  buffer:sm.newpath
+                                    size:sizeof(sm.newpath)];
           break;
+        }
       }
-
       callback = self.logCallback;
-      audit_token = m->process->audit_token;
       break;
     }
     default:
       break;
   }
 
-  // Filter events matching the prefix tree.
-  // Exec events are not filtered.
-  if (!(m->event_type == ES_EVENT_TYPE_AUTH_EXEC || m->event_type == ES_EVENT_TYPE_NOTIFY_EXEC) &&
-      self.prefixTree->HasPrefix(sm.path)) {
+  // Deny auth exec events if the path doesn't fit in the santa message.
+  // TODO(bur/rah): Add support for larger paths.
+  if ([self populateBufferFromESFile:targetFile buffer:sm.path size:sizeof(sm.path)]
+      && m->event_type == ES_EVENT_TYPE_AUTH_EXEC) {
+    LOGE(@"path is truncated, deny: %s", sm.path);
+    es_respond_auth_result(self.client, m, ES_AUTH_RESULT_DENY, false);
+    es_free_message(m);
     return;
   }
 
-  if (callback) {
-    sm.uid = audit_token_to_ruid(audit_token);
-    sm.gid = audit_token_to_rgid(audit_token);
-    sm.pid = audit_token_to_pid(audit_token);
-    proc_name(sm.pid, sm.pname, 1024);
-    callback(sm);
+  // Filter file op events matching the prefix tree.
+  if (!(m->event_type == ES_EVENT_TYPE_AUTH_EXEC || m->event_type == ES_EVENT_TYPE_NOTIFY_EXEC) &&
+      self.prefixTree->HasPrefix(sm.path)) {
+    es_free_message(m);
+    return;
   }
+
+  sm.vnode_id.fsid = targetFile->stat.st_dev;
+  sm.vnode_id.fileid = targetFile->stat.st_ino;
+  sm.uid = audit_token_to_ruid(targetProcess->audit_token);
+  sm.gid = audit_token_to_rgid(targetProcess->audit_token);
+  sm.pid = audit_token_to_pid(targetProcess->audit_token);
+  sm.ppid = targetProcess->original_ppid;
+  proc_name((m->event_type == ES_EVENT_TYPE_AUTH_EXEC) ? sm.ppid : sm.pid, sm.pname, 1024);
+  callback(sm);
+  es_free_message(m);
 }
 
 - (void)listenForDecisionRequests:(void (^)(santa_message_t))callback API_AVAILABLE(macos(10.15)) {
@@ -253,8 +280,8 @@
     API_AVAILABLE(macos(10.15)) {
   es_respond_result_t ret;
   switch (action) {
-    case ACTION_RESPOND_ALLOW:
     case ACTION_RESPOND_ALLOW_COMPILER:
+    case ACTION_RESPOND_ALLOW:
     case ACTION_RESPOND_ALLOW_PENDING_TRANSITIVE:
       ret = es_respond_auth_result(self.client, (es_message_t *)sm.es_message,
                                    ES_AUTH_RESULT_ALLOW, true);
@@ -268,11 +295,6 @@
       return ES_RESPOND_RESULT_SUCCESS;
     default:
       ret = ES_RESPOND_RESULT_ERR_INVALID_ARGUMENT;
-  }
-
-  if (sm.es_message) {
-    es_free_message((es_message_t *)sm.es_message);
-    sm.es_message = NULL;
   }
 
   return ret;
@@ -311,6 +333,27 @@
 
 - (BOOL)connectionEstablished {
   return self.client != nil;
+}
+
+#pragma mark helpers
+
+// Returns YES if the path was truncated.
+// The populated path will be NUL terminated.
+- (BOOL)populateBufferFromESFile:(es_file_t *)file buffer:(char *)buffer size:(size_t)size {
+  return [self populateBufferFromString:file->path.data
+                                 length:file->path.length
+                                 buffer:buffer
+                                   size:size];
+}
+
+// Returns YES if the path was truncated.
+// The populated path will be NUL terminated.
+- (BOOL)populateBufferFromString:(const char *)string
+                          length:(size_t)length
+                          buffer:(char *)buffer
+                            size:(size_t)size {
+  if (length++ > size) length = size;
+  return strlcpy(buffer, string, length) >= length;
 }
 
 @end

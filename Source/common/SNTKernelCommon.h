@@ -124,6 +124,7 @@ typedef struct {
   // While process names can technically be 4*MAXPATHLEN, that never
   // actually happens, so only take MAXPATHLEN and throw away any excess.
   char pname[MAXPATHLEN];
+
   // For messages that originate from EndpointSecurity, this points to a copy of the message.
   void *es_message;
 

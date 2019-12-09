@@ -24,6 +24,8 @@
 @interface SNTDriverManager ()
 @property io_connect_t connection;
 @property(readwrite) BOOL connectionEstablished;
+@property(nonatomic, readonly) dispatch_queue_t dmAuthQueue;
+@property(nonatomic, readonly) dispatch_queue_t dmNotifiyQueue;
 @end
 
 @implementation SNTDriverManager
@@ -33,6 +35,14 @@
 - (instancetype)init {
   self = [super init];
   if (self) {
+    _dmAuthQueue =
+        dispatch_queue_create("com.google.santa.daemon.dm_auth", DISPATCH_QUEUE_CONCURRENT);
+    dispatch_set_target_queue(_dmAuthQueue,
+                              dispatch_get_global_queue(QOS_CLASS_USER_INTERACTIVE, 0));
+    _dmNotifiyQueue =
+        dispatch_queue_create("com.google.santa.daemon.dm_notify", DISPATCH_QUEUE_CONCURRENT);
+    dispatch_set_target_queue(_dmNotifiyQueue, dispatch_get_global_queue(QOS_CLASS_BACKGROUND, 0));
+
     CFDictionaryRef classToMatch = IOServiceMatching(USERCLIENT_CLASS);
     if (!classToMatch) {
       LOGE(@"Failed to create matching dictionary");
@@ -164,7 +174,23 @@ static void driverAppearedHandler(void *info, io_iterator_t iterator) {
       uint32_t dataSize = sizeof(vdata);
       kr = IODataQueueDequeue(queueMemory, &vdata, &dataSize);
       if (kr == kIOReturnSuccess) {
-        callback(vdata);
+        switch (type) {
+          case QUEUETYPE_DECISION: {
+            dispatch_async(self.dmAuthQueue, ^{
+              callback(vdata);
+            });
+            break;
+          }
+          case QUEUETYPE_LOG: {
+            dispatch_async(self.dmNotifiyQueue, ^{
+              callback(vdata);
+            });
+            break;
+          }
+          default: {
+            break;
+          }
+        }
       } else {
         LOGE(@"Error dequeuing data for type %d: 0x%X", type, kr);
         exit(2);
