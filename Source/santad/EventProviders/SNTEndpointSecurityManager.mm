@@ -153,10 +153,6 @@
       break;
     }
     case ES_EVENT_TYPE_NOTIFY_CLOSE: {
-      if (!m->event.close.modified) {
-        es_free_message(m);
-        return;
-      }
       sm.action = ACTION_NOTIFY_WRITE;
       targetFile = m->event.close.target;
       targetProcess = m->process;
