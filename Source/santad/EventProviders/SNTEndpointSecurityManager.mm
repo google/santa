@@ -92,9 +92,14 @@
           // Create a transitive rule if the file was modified by a running compiler
           if (pid && pid < PID_MAX && self->_compilerPIDs[pid].load()) {
             santa_message_t sm = {};
-            [self populateBufferFromESFile:m->event.close.target
-                                    buffer:sm.path
-                                      size:sizeof(sm.path)];
+            BOOL truncated = [self populateBufferFromESFile:m->event.close.target
+                                                     buffer:sm.path
+                                                       size:sizeof(sm.path)];
+            if (truncated) {
+              LOGE(@"CLOSE: error creating transitive rule, the path is truncated: path=%s pid=%d",
+                   sm.path, pid);
+              break;
+            }
             sm.action = ACTION_NOTIFY_WHITELIST;
             sm.pid = pid;
             LOGI(@"CLOSE: creating a transitive rule: path=%s pid=%d", sm.path, sm.pid);
@@ -108,9 +113,14 @@
           // Create a transitive rule if the file was renamed by a running compiler
           if (pid && pid < PID_MAX && self->_compilerPIDs[pid].load()) {
             santa_message_t sm = {};
-            [self populateRenamedNewPathFromESMessage:m->event.rename
-                                               buffer:sm.path
-                                                 size:sizeof(sm.path)];
+            BOOL truncated = [self populateRenamedNewPathFromESMessage:m->event.rename
+                                                                buffer:sm.path
+                                                                  size:sizeof(sm.path)];
+            if (truncated) {
+              LOGE(@"RENAME: error creating transitive rule, the path is truncated: path=%s pid=%d",
+                   sm.path, pid);
+              break;
+            }
             sm.action = ACTION_NOTIFY_WHITELIST;
             sm.pid = pid;
             LOGI(@"RENAME: creating a transitive rule: path=%s pid=%d", sm.path, sm.pid);
