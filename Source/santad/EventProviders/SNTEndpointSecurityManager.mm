@@ -23,7 +23,6 @@
 #include <libproc.h>
 
 #include <atomic>
-#include <vector>
 
 // Gleaned from https://opensource.apple.com/source/xnu/xnu-4903.241.1/bsd/sys/proc_internal.h
 #define PID_MAX 99999
