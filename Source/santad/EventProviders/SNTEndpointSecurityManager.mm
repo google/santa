@@ -329,9 +329,9 @@
   switch (action) {
     case ACTION_RESPOND_ALLOW_COMPILER:
       if (sm.pid >= PID_MAX) {
-        LOGE(@"Unable to watch compiler PID: %d >= PID_MAX: %d", sm.pid, PID_MAX);
+        LOGE(@"Unable to watch compiler pid=%d >= pid_max=%d", sm.pid, PID_MAX);
       } else {
-        LOGI(@"Watching compiler PID: %d path: %s", sm.pid, sm.path);
+        LOGI(@"Watching compiler pid=%d path=%s", sm.pid, sm.path);
         self->_compilerPIDs[sm.pid].store(true);
       }
       // Allow the exec, but don't cache the decision so subsequent execs of the compiler get
