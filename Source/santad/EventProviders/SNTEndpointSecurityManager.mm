@@ -331,7 +331,7 @@
       if (sm.pid >= PID_MAX) {
         LOGE(@"Unable to watch compiler pid=%d >= pid_max=%d", sm.pid, PID_MAX);
       } else {
-        LOGI(@"Watching compiler pid=%d path=%s", sm.pid, sm.path);
+        LOGD(@"Watching compiler pid=%d path=%s", sm.pid, sm.path);
         self->_compilerPIDs[sm.pid].store(true);
       }
       // Allow the exec, but don't cache the decision so subsequent execs of the compiler get
