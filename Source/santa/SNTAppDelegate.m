@@ -138,12 +138,16 @@
 #pragma mark OSSystemExtensionRequestDelegate
 
 - (OSSystemExtensionReplacementAction)request:(OSSystemExtensionRequest *)request
-                  actionForReplacingExtension:(OSSystemExtensionProperties *)existing
-                                withExtension:(OSSystemExtensionProperties *)ext
+                  actionForReplacingExtension:(OSSystemExtensionProperties *)old
+                                withExtension:(OSSystemExtensionProperties *)new
     API_AVAILABLE(macos(10.15)) {
   LOGI(@"SystemExtension \"%@\" request for replacement", request.identifier);
-  // TODO(bur/rah): Check versions.
+#ifdef DEBUG
   return OSSystemExtensionReplacementActionReplace;
+#else
+  return [old.bundleVersion isEqualToString:new.bundleVersion]
+      ? OSSystemExtensionReplacementActionCancel : OSSystemExtensionReplacementActionReplace;
+#endif
 }
 
 - (void)requestNeedsUserApproval:(OSSystemExtensionRequest *)request API_AVAILABLE(macos(10.15)) {
