@@ -13,6 +13,7 @@
 ///    limitations under the License.
 
 #import "Source/santad/EventProviders/SNTEndpointSecurityManager.h"
+
 #include "Source/common/SNTPrefixTree.h"
 
 #import "Source/common/SNTLogging.h"
@@ -21,18 +22,25 @@
 #include <bsm/libbsm.h>
 #include <libproc.h>
 
+#include <atomic>
+
+// Gleaned from https://opensource.apple.com/source/xnu/xnu-4903.241.1/bsd/sys/proc_internal.h
+#define PID_MAX 99999
+
 @interface SNTEndpointSecurityManager ()
 
 @property(nonatomic) es_client_t *client;
 @property(nonatomic) SNTPrefixTree *prefixTree;
-@property (nonatomic, copy) void (^decisionCallback)(santa_message_t);
-@property (nonatomic, copy) void (^logCallback)(santa_message_t);
-@property (nonatomic, readonly) dispatch_queue_t esAuthQueue;
-@property (nonatomic, readonly) dispatch_queue_t esNotifyQueue;
+@property(nonatomic, copy) void (^decisionCallback)(santa_message_t);
+@property(nonatomic, copy) void (^logCallback)(santa_message_t);
+@property(nonatomic, readonly) dispatch_queue_t esAuthQueue;
+@property(nonatomic, readonly) dispatch_queue_t esNotifyQueue;
 
 @end
 
-@implementation SNTEndpointSecurityManager
+@implementation SNTEndpointSecurityManager {
+  std::atomic<bool> _compilerPIDs[PID_MAX];
+}
 
 - (instancetype)init API_AVAILABLE(macos(10.15)) {
   self = [super init];
@@ -64,21 +72,77 @@
   while (!self.client) {
     es_client_t *client = NULL;
     es_new_client_result_t ret = es_new_client(&client, ^(es_client_t *c, const es_message_t *m) {
-      // Frontload some easy checks
+      // Perform the following checks on this serial queue.
+      // Some checks are simple filters that avoid copying m.
+      // However, the bulk of the work done here is to support transitive whitelisting.
+      pid_t pid = audit_token_to_pid(m->process->audit_token);
       switch (m->event_type) {
-        case ES_EVENT_TYPE_NOTIFY_CLOSE: {
-          if (!m->event.close.modified) return;
-        }
         case ES_EVENT_TYPE_NOTIFY_EXEC: {
           // Deny results are curerently logged when ES_EVENT_TYPE_AUTH_EXEC posts a deny.
           // TODO(bur/rah): For ES log denies from NOTIFY messages instead of AUTH.
           if (m->action.notify.result.auth == ES_AUTH_RESULT_DENY) return;
+
+          // Continue log this event
+          break;
+        }
+        case ES_EVENT_TYPE_NOTIFY_CLOSE: {
+          // Ignore unmodified files
+          if (!m->event.close.modified) return;
+
+          // Create a transitive rule if the file was modified by a running compiler
+          if (pid && pid < PID_MAX && self->_compilerPIDs[pid].load()) {
+            santa_message_t sm = {};
+            BOOL truncated = [self populateBufferFromESFile:m->event.close.target
+                                                     buffer:sm.path
+                                                       size:sizeof(sm.path)];
+            if (truncated) {
+              LOGE(@"CLOSE: error creating transitive rule, the path is truncated: path=%s pid=%d",
+                   sm.path, pid);
+              break;
+            }
+            sm.action = ACTION_NOTIFY_WHITELIST;
+            sm.pid = pid;
+            LOGI(@"CLOSE: creating a transitive rule: path=%s pid=%d", sm.path, sm.pid);
+            self.decisionCallback(sm);
+          }
+
+          // Continue log this event
+          break;
+        }
+        case ES_EVENT_TYPE_NOTIFY_RENAME: {
+          // Create a transitive rule if the file was renamed by a running compiler
+          if (pid && pid < PID_MAX && self->_compilerPIDs[pid].load()) {
+            santa_message_t sm = {};
+            BOOL truncated = [self populateRenamedNewPathFromESMessage:m->event.rename
+                                                                buffer:sm.path
+                                                                  size:sizeof(sm.path)];
+            if (truncated) {
+              LOGE(@"RENAME: error creating transitive rule, the path is truncated: path=%s pid=%d",
+                   sm.path, pid);
+              break;
+            }
+            sm.action = ACTION_NOTIFY_WHITELIST;
+            sm.pid = pid;
+            LOGI(@"RENAME: creating a transitive rule: path=%s pid=%d", sm.path, sm.pid);
+            self.decisionCallback(sm);
+          }
+
+          // Continue log this event
+          break;
+        }
+        case ES_EVENT_TYPE_NOTIFY_EXIT: {
+          // Update the set of running compiler PIDs
+          if (pid && pid < PID_MAX) self->_compilerPIDs[pid].store(false);
+
+          // Do not log exits
+          return;
         }
         default: {
           break;
         }
       }
 
+      // Copy the message and return control back to ES
       es_message_t *mc = es_copy_message(m);
       switch (mc->action_type) {
         case ES_ACTION_TYPE_AUTH: {
@@ -190,30 +254,15 @@
       sm.action = ACTION_NOTIFY_RENAME;
       targetFile = m->event.rename.source;
       targetProcess = m->process;
-
-      switch(m->event.rename.destination_type) {
-        case ES_DESTINATION_TYPE_NEW_PATH: {
-          NSString *p = @(m->event.rename.destination.new_path.dir->path.data);
-          p = [p stringByAppendingPathComponent:
-                  @(m->event.rename.destination.new_path.filename.data)];
-          [self populateBufferFromString:p.UTF8String
-                                  length:p.length
-                                  buffer:sm.newpath
-                                    size:sizeof(sm.newpath)];
-          break;
-        }
-        case ES_DESTINATION_TYPE_EXISTING_FILE: {
-          [self populateBufferFromESFile:m->event.rename.destination.existing_file
-                                  buffer:sm.newpath
-                                    size:sizeof(sm.newpath)];
-          break;
-        }
-      }
+      [self populateRenamedNewPathFromESMessage:m->event.rename
+                                         buffer:sm.newpath
+                                           size:sizeof(sm.newpath)];
       callback = self.logCallback;
       break;
     }
     default:
-      break;
+      LOGE(@"Unknown es message: %d", m->event_type);
+      return;
   }
 
   // Deny auth exec events if the path doesn't fit in the santa message.
@@ -247,10 +296,9 @@
 - (void)listenForDecisionRequests:(void (^)(santa_message_t))callback API_AVAILABLE(macos(10.15)) {
   while (!self.connectionEstablished) usleep(100000); // 100ms
 
-  // Listen for exec auth messages.
   self.decisionCallback = callback;
-  es_event_type_t events[] = { ES_EVENT_TYPE_AUTH_EXEC };
-  es_return_t sret = es_subscribe(self.client, events, 1);
+  es_event_type_t events[] = { ES_EVENT_TYPE_AUTH_EXEC, ES_EVENT_TYPE_NOTIFY_EXIT };
+  es_return_t sret = es_subscribe(self.client, events, 2);
   if (sret != ES_RETURN_SUCCESS) LOGE(@"Unable to subscribe ES_EVENT_TYPE_AUTH_EXEC: %d", sret);
 
   // There's a gap between creating a client and subscribing to events. Creating the client
@@ -262,7 +310,6 @@
 - (void)listenForLogRequests:(void (^)(santa_message_t))callback API_AVAILABLE(macos(10.15)) {
   while (!self.connectionEstablished) usleep(100000); // 100ms
 
-  // Listen for exec notify messages.
   self.logCallback = callback;
   es_event_type_t events[] = {
     ES_EVENT_TYPE_NOTIFY_EXEC,
@@ -281,6 +328,17 @@
   es_respond_result_t ret;
   switch (action) {
     case ACTION_RESPOND_ALLOW_COMPILER:
+      if (sm.pid >= PID_MAX) {
+        LOGE(@"Unable to watch compiler pid=%d >= pid_max=%d", sm.pid, PID_MAX);
+      } else {
+        LOGD(@"Watching compiler pid=%d path=%s", sm.pid, sm.path);
+        self->_compilerPIDs[sm.pid].store(true);
+      }
+      // Allow the exec, but don't cache the decision so subsequent execs of the compiler get
+      // marked appropriately.
+      ret = es_respond_auth_result(self.client, (es_message_t *)sm.es_message,
+                                   ES_AUTH_RESULT_ALLOW, false);
+      break;
     case ACTION_RESPOND_ALLOW:
     case ACTION_RESPOND_ALLOW_PENDING_TRANSITIVE:
       ret = es_respond_auth_result(self.client, (es_message_t *)sm.es_message,
@@ -354,6 +412,31 @@
                             size:(size_t)size {
   if (length++ > size) length = size;
   return strlcpy(buffer, string, length) >= length;
+}
+
+- (BOOL)populateRenamedNewPathFromESMessage:(es_event_rename_t)mv
+                                     buffer:(char *)buffer
+                                       size:(size_t)size {
+  BOOL truncated = NO;
+  switch(mv.destination_type) {
+    case ES_DESTINATION_TYPE_NEW_PATH: {
+      NSString *p = @(mv.destination.new_path.dir->path.data);
+      p = [p stringByAppendingPathComponent:
+              @(mv.destination.new_path.filename.data)];
+      truncated = [self populateBufferFromString:p.UTF8String
+                                          length:p.length
+                                          buffer:buffer
+                                            size:size];
+      break;
+    }
+    case ES_DESTINATION_TYPE_EXISTING_FILE: {
+      truncated = [self populateBufferFromESFile:mv.destination.existing_file
+                                          buffer:buffer
+                                            size:size];
+      break;
+    }
+  }
+  return truncated;
 }
 
 @end
