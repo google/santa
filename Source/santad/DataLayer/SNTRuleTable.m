@@ -49,7 +49,7 @@ static const NSUInteger kTransitiveRuleExpirationSeconds = 6 * 30 * 24 * 3600;
     // This entry is for on <10.15 - on 10.15+ the binary is actually executed
     // from a system-controlled path but will only ever be executed by
     // the OS anyway.
-    @"/Applications/Santa.app/Contents/Library/SystemExtensions/com.google.santa.daemon/Contents/MacOS/com.google.santa.daemon",
+    @"/Applications/Santa.app/Contents/Library/SystemExtensions/com.google.santa.daemon.systemextension/Contents/MacOS/com.google.santa.daemon",
   ];
 }
 
