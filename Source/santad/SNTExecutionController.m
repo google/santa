@@ -152,8 +152,11 @@ static size_t kLargeBinarySize = 30 * 1024 * 1024;
   // Save decision details for logging the execution later.  For transitive rules, we also use
   // the shasum stored in the decision details to update the rule's timestamp whenever an
   // ACTION_NOTIFY_EXEC message related to the transitive rule is received.
+  NSString *ttyPath;
   if (action == ACTION_RESPOND_ALLOW || action == ACTION_RESPOND_ALLOW_COMPILER) {
     [_eventLog cacheDecision:cd];
+  } else {
+    ttyPath = [self ttyPathForPID:message.ppid];
   }
 
   // Send the decision to the kernel.
@@ -237,7 +240,7 @@ static size_t kLargeBinarySize = 30 * 1024 * 1024;
         if (detailURL) {
           [msg appendFormat:@"More info:\n%@\n\n", detailURL.absoluteString];
         }
-        [self printMessage:msg toTTYForPID:message.ppid];
+        if (ttyPath) [self printMessage:msg toTTY:ttyPath];
 
         [self.notifierQueue addEvent:se customMessage:cd.customMsg];
       }
@@ -286,19 +289,21 @@ static size_t kLargeBinarySize = 30 * 1024 * 1024;
   return NO;
 }
 
-- (void)printMessage:(NSString *)msg toTTYForPID:(pid_t)pid {
-  if (pid < 2) return;  // don't bother even looking for launchd.
+- (NSString *)ttyPathForPID:(pid_t)pid {
+  if (pid < 2) return nil;  // don't bother even looking for launchd.
 
   struct proc_bsdinfo taskInfo = {};
-  if (proc_pidinfo(pid, PROC_PIDTBSDINFO, 0,  &taskInfo, sizeof(taskInfo)) < 1) {
-    return;
-  }
+  if (proc_pidinfo(pid, PROC_PIDTBSDINFO, 0,  &taskInfo, sizeof(taskInfo)) < 1) return nil;
 
   // 16-bytes here is for future-proofing. Currently kern.tty.ptmx_max is
   // limited to 999 so 12 bytes should be enough.
   char devPath[16] = "/dev/";
   snprintf(devPath, 16, "/dev/%s", devname(taskInfo.e_tdev, S_IFCHR));
-  int fd = open(devPath, O_WRONLY | O_NOCTTY);
+  return @(devPath);
+}
+
+- (void)printMessage:(NSString *)msg toTTY:(NSString *)path {
+  int fd = open(path.UTF8String, O_WRONLY | O_NOCTTY);
   write(fd, msg.UTF8String, msg.length);
   close(fd);
 }
