@@ -78,7 +78,7 @@
       pid_t pid = audit_token_to_pid(m->process->audit_token);
       switch (m->event_type) {
         case ES_EVENT_TYPE_NOTIFY_EXEC: {
-          // Deny results are curerently logged when ES_EVENT_TYPE_AUTH_EXEC posts a deny.
+          // Deny results are currently logged when ES_EVENT_TYPE_AUTH_EXEC posts a deny.
           // TODO(bur/rah): For ES log denies from NOTIFY messages instead of AUTH.
           if (m->action.notify.result.auth == ES_AUTH_RESULT_DENY) return;
 
@@ -149,6 +149,10 @@
           // Create a timer to deny the execution 2 seconds before the deadline,
           // if a response hasn't already been sent. This block will still be enqueued if
           // the the deadline - 2 secs is < DISPATCH_TIME_NOW.
+          // As of 10.15.2, a typical deadline is 60 seconds.
+          // TODO(bur/rah): Possibly cache decisions made after the deadline. Currently a
+          // large enough binary will never be allowed to execute. This should be a rare edge case;
+          // it's probably not worth adding a caching layer just for this.
           dispatch_after(dispatch_time(mc->deadline, -2e+9), self.esAuthQueue, ^(void) {
             LOGE(@"Deadline reached: deny pid=%d", pid);
             es_respond_auth_result(self.client, mc, ES_AUTH_RESULT_DENY, false);
