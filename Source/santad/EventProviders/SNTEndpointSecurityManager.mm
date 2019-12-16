@@ -153,18 +153,23 @@
           // TODO(bur/rah): Possibly cache decisions made after the deadline. Currently a
           // large enough binary will never be allowed to execute. This should be a rare edge case;
           // it's probably not worth adding a caching layer just for this.
-          dispatch_after(dispatch_time(mc->deadline, -2e+9), self.esAuthQueue, ^(void) {
-            LOGE(@"Deadline reached: deny pid=%d", pid);
-            es_respond_auth_result(self.client, mc, ES_AUTH_RESULT_DENY, false);
+          auto responded = std::make_shared<std::atomic<bool>>(false);
+          dispatch_after(dispatch_time(mc->deadline, NSEC_PER_SEC * -2), self.esAuthQueue, ^(void) {
+            if (responded->load()) return;
+            LOGE(@"Deadline reached: deny pid=%d ret=%d",
+                 pid, es_respond_auth_result(self.client, mc, ES_AUTH_RESULT_DENY, false));
           });
           dispatch_async(self.esAuthQueue, ^{
             [self messageHandler:mc];
+            responded->store(true);
+            es_free_message(mc);
           });
           break;
         }
         case ES_ACTION_TYPE_NOTIFY: {
           dispatch_async(self.esNotifyQueue, ^{
             [self messageHandler:mc];
+            es_free_message(mc);
           });
           break;
         }
@@ -282,14 +287,12 @@
       && m->event_type == ES_EVENT_TYPE_AUTH_EXEC) {
     LOGE(@"path is truncated, deny: %s", sm.path);
     es_respond_auth_result(self.client, m, ES_AUTH_RESULT_DENY, false);
-    es_free_message(m);
     return;
   }
 
   // Filter file op events matching the prefix tree.
   if (!(m->event_type == ES_EVENT_TYPE_AUTH_EXEC || m->event_type == ES_EVENT_TYPE_NOTIFY_EXEC) &&
       self.prefixTree->HasPrefix(sm.path)) {
-    es_free_message(m);
     return;
   }
 
@@ -301,7 +304,6 @@
   sm.ppid = targetProcess->original_ppid;
   proc_name((m->event_type == ES_EVENT_TYPE_AUTH_EXEC) ? sm.ppid : sm.pid, sm.pname, 1024);
   callback(sm);
-  es_free_message(m);
 }
 
 - (void)listenForDecisionRequests:(void (^)(santa_message_t))callback API_AVAILABLE(macos(10.15)) {
