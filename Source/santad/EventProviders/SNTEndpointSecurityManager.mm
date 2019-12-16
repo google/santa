@@ -146,6 +146,13 @@
       es_message_t *mc = es_copy_message(m);
       switch (mc->action_type) {
         case ES_ACTION_TYPE_AUTH: {
+          // Create a timer to deny the execution 2 seconds before the deadline,
+          // if a response hasn't already been sent. This block will still be enqueued if
+          // the the deadline - 2 secs is < DISPATCH_TIME_NOW.
+          dispatch_after(dispatch_time(mc->deadline, -2e+9), self.esAuthQueue, ^(void) {
+            LOGE(@"Deadline reached: deny pid=%d", pid);
+            es_respond_auth_result(self.client, mc, ES_AUTH_RESULT_DENY, false);
+          });
           dispatch_async(self.esAuthQueue, ^{
             [self messageHandler:mc];
           });
