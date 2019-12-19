@@ -62,6 +62,10 @@
   IOServiceClose(_connection);
 }
 
++ (void)unloadDriver {
+  KextManagerUnloadKextWithIdentifier(CFSTR(USERCLIENT_ID));
+}
+
 #pragma mark Driver Waiting
 
 // Helper function used with IOServiceAddMatchingNotification which expects

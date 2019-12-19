@@ -32,6 +32,11 @@
 - (instancetype)init;
 
 ///
+///  Unloads the driver.
+///
++ (void)unloadDriver;
+
+///
 ///  Handles requests from the kernel using the given block.
 ///  @note Loops indefinitely unless there is an error trying to read data from the data queue.
 ///

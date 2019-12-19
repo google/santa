@@ -27,7 +27,10 @@ fi
 /bin/launchctl load -w /Library/LaunchDaemons/com.google.santa.bundleservice.plist
 
 user=$(/usr/bin/stat -f '%u' /dev/console)
-[[ -z "$user" ]] && exit 0
+if [[ -z "$user" ]]; then
+  /Applications/Santa.app/Contents/MacOS/Santa --load-system-extension
+  exit 0
+fi
 /bin/launchctl asuser ${user} /bin/launchctl load /Library/LaunchAgents/com.google.santa.plist
 
 exit 0
