@@ -6,11 +6,15 @@
 
 [ "$EUID" != 0 ] && printf "%s\n" "This requires running as root/sudo." && exit 1
 
+# For macOS 10.15+ this will block up to 60 seconds
+/Applications/Santa.app/Contents/MacOS/Santa --unload-system-extension
+
 /bin/launchctl remove com.google.santad
 sleep 1
 /sbin/kextunload -b com.google.santa-driver >/dev/null 2>&1
 user=$(/usr/bin/stat -f '%u' /dev/console)
 [[ -n "$user" ]] && /bin/launchctl asuser ${user} /bin/launchctl remove com.google.santagui
+[[ -n "$user" ]] && /bin/launchctl asuser ${user} /bin/launchctl remove com.google.santa
 # and to clean out the log config, although it won't write after wiping the binary
 /usr/bin/killall -HUP syslogd
 # delete artifacts on-disk

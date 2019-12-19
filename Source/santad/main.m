@@ -14,13 +14,14 @@
 
 #import <Foundation/Foundation.h>
 
-#include "Source/common/SNTLogging.h"
+#import "Source/common/SNTCommonEnums.h"
+#import "Source/common/SNTLogging.h"
+#import "Source/santad/EventProviders/SNTDriverManager.h"
+#import "Source/santad/SNTApplication.h"
 
 #include <mach/task.h>
 #include <pthread/pthread.h>
 #include <sys/resource.h>
-
-#import "Source/santad/SNTApplication.h"
 
 extern uint64_t watchdogCPUEvents;
 extern uint64_t watchdogRAMEvents;
@@ -88,19 +89,39 @@ void *watchdogThreadFunction(__unused void *idata) {
   return NULL;
 }
 
+void cleanup() {
+  LOGI(@"com.google.santa.daemon is running from an unexpected path: cleaning up");
+  NSFileManager *fm = [NSFileManager defaultManager];
+  [fm removeItemAtPath:@"/Library/LaunchDaemons/com.google.santad.plist" error:NULL];
+  [SNTDriverManager unloadDriver];
+  [fm removeItemAtPath:@"/Library/Extensions/santa-driver.kext" error:NULL];
+  NSTask *t = [[NSTask alloc] init];
+  t.launchPath = @"/bin/launchctl";
+  t.arguments = @[ @"remove", @"com.google.santad" ];
+  [t launch];
+  [t waitUntilExit];
+  exit(0);
+}
+
 int main(int argc, const char *argv[]) {
   @autoreleasepool {
     // Do not wait on child processes
     signal(SIGCHLD, SIG_IGN);
 
     NSDictionary *infoDict = [[NSBundle mainBundle] infoDictionary];
+    NSProcessInfo *pi = [NSProcessInfo processInfo];
 
-    if ([[[NSProcessInfo processInfo] arguments] containsObject:@"-v"]) {
+    if ([pi.arguments containsObject:@"-v"]) {
       printf("%s\n", [infoDict[@"CFBundleVersion"] UTF8String]);
       return 0;
     }
 
     LOGI(@"Started, version %@", infoDict[@"CFBundleVersion"]);
+
+    // Handle the case of macOS < 10.15 updating to >= 10.15.
+    if (@available(macOS 10.15, *)) {
+      if ([pi.arguments.firstObject isEqualToString:@(kSantaDPath)]) cleanup();
+    }
 
     SNTApplication *s = [[SNTApplication alloc] init];
     [s start];

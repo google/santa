@@ -45,9 +45,7 @@ GUI_USER=$(/usr/bin/stat -f '%u' /dev/console)
 /bin/rm -rf /Library/Extensions/santa-driver.kext 2>&1
 
 # Copy new files.
-if [ ! -d /var/db/santa ] ; then
-  /bin/mkdir /var/db/santa
-fi
+/bin/mkdir -p /var/db/santa
 
 /bin/cp -r ${BINARIES}/Santa.app /Applications
 
@@ -67,14 +65,17 @@ if [ $(uname -r | cut -d'.' -f1) -lt 19 ]; then
   /bin/cp -r ${BINARIES}/santa-driver.kext /Library/Extensions
   /bin/cp ${CONF}/com.google.santad.plist /Library/LaunchDaemons
   /bin/launchctl load /Library/LaunchDaemons/com.google.santad.plist
+else
+  /Applications/Santa.app/Contents/MacOS/Santa --load-system-extension
 fi
 
 # Load the bundle service
 /bin/launchctl load /Library/LaunchDaemons/com.google.santa.bundleservice.plist
 
 # Load GUI agent if someone is logged in.
-[[ -n "$GUI_USER" ]] && \
+if [[ -n "$GUI_USER" ]]; then
   /bin/launchctl asuser ${GUI_USER} \
   /bin/launchctl load -w /Library/LaunchAgents/com.google.santa.plist
+fi
 
 exit 0
