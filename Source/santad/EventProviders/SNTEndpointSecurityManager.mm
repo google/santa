@@ -171,7 +171,7 @@
         }
         case ES_ACTION_TYPE_NOTIFY: {
           // Don't log fileop events from com.google.santa.daemon
-          if (m->event_type != ES_EVENT_TYPE_NOTIFY_EXEC && self.selfPID == pid) return;
+          if (self.selfPID == pid && m->event_type != ES_EVENT_TYPE_NOTIFY_EXEC) return;
 
           // Copy the message and return control back to ES
           es_message_t *mc = es_copy_message(m);
