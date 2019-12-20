@@ -35,6 +35,7 @@
 @property(nonatomic, copy) void (^logCallback)(santa_message_t);
 @property(nonatomic, readonly) dispatch_queue_t esAuthQueue;
 @property(nonatomic, readonly) dispatch_queue_t esNotifyQueue;
+@property(nonatomic, readonly) pid_t selfPID;
 
 @end
 
@@ -55,6 +56,7 @@
         dispatch_queue_create("com.google.santa.daemon.es_notify", DISPATCH_QUEUE_CONCURRENT);
     dispatch_set_target_queue(_esNotifyQueue,
                               dispatch_get_global_queue(QOS_CLASS_BACKGROUND, 0));
+    _selfPID = getpid();
   }
 
   return self;
@@ -142,9 +144,7 @@
         }
       }
 
-      // Copy the message and return control back to ES
-      es_message_t *mc = es_copy_message(m);
-      switch (mc->action_type) {
+      switch (m->action_type) {
         case ES_ACTION_TYPE_AUTH: {
           // Create a timer to deny the execution 2 seconds before the deadline,
           // if a response hasn't already been sent. This block will still be enqueued if
@@ -154,11 +154,14 @@
           // large enough binary will never be allowed to execute. This should be a rare edge case;
           // it's probably not worth adding a caching layer just for this.
           auto responded = std::make_shared<std::atomic<bool>>(false);
-          dispatch_after(dispatch_time(mc->deadline, NSEC_PER_SEC * -2), self.esAuthQueue, ^(void) {
+          dispatch_after(dispatch_time(m->deadline, NSEC_PER_SEC * -2), self.esAuthQueue, ^(void) {
             if (responded->load()) return;
             LOGE(@"Deadline reached: deny pid=%d ret=%d",
-                 pid, es_respond_auth_result(self.client, mc, ES_AUTH_RESULT_DENY, false));
+                 pid, es_respond_auth_result(self.client, m, ES_AUTH_RESULT_DENY, false));
           });
+
+          // Copy the message and return control back to ES
+          es_message_t *mc = es_copy_message(m);
           dispatch_async(self.esAuthQueue, ^{
             [self messageHandler:mc];
             responded->store(true);
@@ -167,6 +170,11 @@
           break;
         }
         case ES_ACTION_TYPE_NOTIFY: {
+          // Don't log fileop events from com.google.santa.daemon
+          if (self.selfPID == pid && m->event_type != ES_EVENT_TYPE_NOTIFY_EXEC) return;
+
+          // Copy the message and return control back to ES
+          es_message_t *mc = es_copy_message(m);
           dispatch_async(self.esNotifyQueue, ^{
             [self messageHandler:mc];
             es_free_message(mc);
@@ -174,7 +182,6 @@
           break;
         }
         default: {
-          es_free_message(mc);
           break;
         }
       }
@@ -242,13 +249,6 @@
     case ES_EVENT_TYPE_NOTIFY_UNLINK: {
       sm.action = ACTION_NOTIFY_DELETE;
       targetFile = m->event.unlink.target;
-      targetProcess = m->process;
-      callback = self.logCallback;
-      break;
-    }
-    case ES_EVENT_TYPE_NOTIFY_TRUNCATE: {
-      sm.action = ACTION_NOTIFY_DELETE;
-      targetFile = m->event.truncate.target;
       targetProcess = m->process;
       callback = self.logCallback;
       break;
@@ -327,7 +327,6 @@
   es_event_type_t events[] = {
     ES_EVENT_TYPE_NOTIFY_EXEC,
     ES_EVENT_TYPE_NOTIFY_CLOSE,
-    ES_EVENT_TYPE_NOTIFY_TRUNCATE,
     ES_EVENT_TYPE_NOTIFY_LINK,
     ES_EVENT_TYPE_NOTIFY_RENAME,
     ES_EVENT_TYPE_NOTIFY_UNLINK,
