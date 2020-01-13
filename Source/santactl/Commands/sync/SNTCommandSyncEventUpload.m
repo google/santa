@@ -52,14 +52,16 @@
     if (event.idx) [eventIds addObject:event.idx];
     if (uploadEvents.count >= self.syncState.eventBatchSize) break;
   }
+  
+  if (!self.syncState.cleanSync) {
+    NSDictionary *r = [self performRequest:[self requestWithDictionary:@{ kEvents: uploadEvents }]];
+    if (!r) return NO;
 
-  NSDictionary *r = [self performRequest:[self requestWithDictionary:@{ kEvents: uploadEvents }]];
-  if (!r) return NO;
+    // A list of bundle hashes that require their related binary events to be uploaded.		
+    self.syncState.bundleBinaryRequests = r[kEventUploadBundleBinaries];
 
-  // A list of bundle hashes that require their related binary events to be uploaded.		
-  self.syncState.bundleBinaryRequests = r[kEventUploadBundleBinaries];
-
-  LOGI(@"Uploaded %lu events", uploadEvents.count);
+    LOGI(@"Uploaded %lu events", uploadEvents.count);
+  }
 
   // Remove event IDs. For Bundle Events the ID is 0 so nothing happens.
   [[self.daemonConn remoteObjectProxy] databaseRemoveEventsWithIDs:[eventIds allObjects]];
