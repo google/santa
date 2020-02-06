@@ -18,6 +18,7 @@
 #import "Source/common/SNTCommonEnums.h"
 #import "Source/common/SNTKernelCommon.h"
 
+@class MOLCodesignChecker;
 @class SNTCachedDecision;
 @class SNTFileInfo;
 @class SNTRuleTable;
@@ -38,15 +39,12 @@
 ///  @param fileInfo A SNTFileInfo object.
 ///  @param fileSHA256 The pre-calculated SHA256 hash for the file, can be nil. If nil the hash will
 ///                    be calculated by this method from the filePath.
-///  @param certificateSHA256 A SHA256 hash of the signing certificate, can be nil.
-///  @note If fileSHA256 and certificateSHA256 are both passed in, the most specific rule will be
-///        returned. Binary rules take precedence over cert rules.
-///  @note This method can also be used to generate a SNTCachedDecision object without any
-///        artifacts on disk. Simply pass nil to fileInfo and pass in the desired SHA256s.
 ///
-- (nonnull SNTCachedDecision *)decisionForFileInfo:(nullable SNTFileInfo *)fileInfo
-                                        fileSHA256:(nullable NSString *)fileSHA256
-                                 certificateSHA256:(nullable NSString *)certificateSHA256;
+- (nonnull SNTCachedDecision *)decisionForFileInfo:(nonnull SNTFileInfo *)fileInfo
+                                        fileSHA256:(nullable NSString *)fileSHA256;
+
+///  Convenience initializer with a nil hash.
+- (nonnull SNTCachedDecision *)decisionForFileInfo:(nonnull SNTFileInfo *)fileInfo;
 
 ///
 ///  A wrapper for decisionForFileInfo:fileSHA256:certificateSHA256:. This method is slower as it
@@ -54,8 +52,7 @@
 ///  SNTFileInfo is not SecureCoding compliant. If the SHA256 hash of the file has already been
 ///  calculated, use the fileSHA256 parameter to save a second calculation of the hash.
 ///
-- (nonnull SNTCachedDecision *)decisionForFilePath:(nullable NSString *)filePath
-                                        fileSHA256:(nullable NSString *)fileSHA256
-                                 certificateSHA256:(nullable NSString *)certificateSHA256;
+- (nonnull SNTCachedDecision *)decisionForFilePath:(nonnull NSString *)filePath
+                                        fileSHA256:(nullable NSString *)fileSHA256;
 
 @end

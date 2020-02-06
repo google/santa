@@ -17,6 +17,8 @@
 #import "Source/common/SNTCommonEnums.h"
 #import "Source/common/SNTKernelCommon.h"
 
+@class MOLCertificate;
+
 ///
 ///  Store information about executions from decision making for later logging.
 ///
@@ -26,8 +28,11 @@
 @property SNTEventState decision;
 @property NSString *decisionExtra;
 @property NSString *sha256;
+
 @property NSString *certSHA256;
 @property NSString *certCommonName;
+@property NSArray<MOLCertificate *> *certChain;
+
 @property NSString *quarantineURL;
 
 @property NSString *customMsg;

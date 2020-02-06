@@ -153,8 +153,7 @@ double watchdogRAMPeak = 0;
           certificateSHA256:(NSString *)certificateSHA256
                       reply:(void (^)(SNTEventState))reply {
   reply([self.policyProcessor decisionForFilePath:filePath
-                                       fileSHA256:fileSHA256
-                                certificateSHA256:certificateSHA256].decision);
+                                       fileSHA256:fileSHA256].decision);
 }
 
 #pragma mark Config Ops
