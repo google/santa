@@ -231,9 +231,10 @@
       NSMutableArray *args = [NSMutableArray arrayWithCapacity:argCount];
       for (int i = 0; i < argCount; ++i) {
         es_string_token_t arg = es_exec_arg(&(m->event.exec), i);
-        [args addObject:[[NSString alloc] initWithBytes:arg.data
-                                                 length:arg.length
-                                               encoding:NSUTF8StringEncoding]];
+        NSString *argStr = [[NSString alloc] initWithBytes:arg.data
+                                                    length:arg.length
+                                                  encoding:NSUTF8StringEncoding];
+        if (argStr.length) [args addObject:argStr];
       }
       sm.args_array = (void *)CFBridgingRetain(args);
       callback = self.logCallback;
