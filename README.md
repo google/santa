@@ -10,7 +10,7 @@
 </p>
 
 Santa is a binary whitelisting/blacklisting system for macOS. It consists of a
-kernel extension that monitors for executions, a userland daemon that makes
+kernel extension (or a system extension on macOS 10.15+) that monitors for executions, a userland daemon that makes
 execution decisions based on the contents of a SQLite database, a GUI agent
 that notifies the user in case of a block decision and a command-line utility
 for managing the system and synchronizing the database with a server.
