@@ -46,9 +46,7 @@
   // If the binary is a critical system binary, don't check its signature.
   // The binary was validated at startup when the rule table was initialized.
   SNTCachedDecision *systemCd = self.ruleTable.criticalSystemBinaries[cd.sha256];
-  if (systemCd) {
-    return systemCd;
-  }
+  if (systemCd) return systemCd;
 
   // Grab the code signature, if there's an error don't try to capture
   // any of the signature details.
