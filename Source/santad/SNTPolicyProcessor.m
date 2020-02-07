@@ -52,7 +52,11 @@
   // any of the signature details.
   NSError *csInfoError;
   MOLCodesignChecker *csInfo = [fileInfo codesignCheckerWithError:&csInfoError];
-  if (csInfoError) csInfo = nil;
+  if (csInfoError) {
+    csInfo = nil;
+    cd.decisionExtra =
+        [NSString stringWithFormat:@"Signature ignored due to error: %ld", (long)csInfoError.code];
+  }
 
   cd.certSHA256 = csInfo.leafCertificate.SHA256;
   cd.certCommonName = csInfo.leafCertificate.commonName;
@@ -128,6 +132,14 @@
   if (msg) {
     cd.decisionExtra = msg;
     cd.decision = SNTEventStateAllowScope;
+    return cd;
+  }
+
+  if (csInfoError && csInfoError.code != errSecCSUnsigned &&
+      [[SNTConfigurator configurator] enableBadSignatureProtection]) {
+    cd.decisionExtra =
+        [NSString stringWithFormat:@"Blocked due to signature error: %ld", (long)csInfoError.code];
+    cd.decision = SNTEventStateBlockCertificate;
     return cd;
   }
 
