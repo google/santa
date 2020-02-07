@@ -48,7 +48,6 @@
   OCMStub([self.mockCodesignChecker alloc]).andReturn(self.mockCodesignChecker);
 
   OCMStub([self.mockCodesignChecker initWithBinaryPath:OCMOCK_ANY
-                                        fileDescriptor:0
                                                  error:[OCMArg setTo:NULL]])
       .andReturn(self.mockCodesignChecker);
 
@@ -61,6 +60,8 @@
   OCMStub([self.mockFileInfo alloc]).andReturn(self.mockFileInfo);
   OCMStub([self.mockFileInfo initWithPath:OCMOCK_ANY
                                     error:[OCMArg setTo:nil]]).andReturn(self.mockFileInfo);
+  OCMStub([self.mockFileInfo codesignCheckerWithError:[OCMArg setTo:nil]])
+      .andReturn(self.mockCodesignChecker);
 
   self.mockRuleDatabase = OCMClassMock([SNTRuleTable class]);
   self.mockEventDatabase = OCMClassMock([SNTEventTable class]);

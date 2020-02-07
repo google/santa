@@ -115,48 +115,27 @@ static size_t kLargeBinarySize = 30 * 1024 * 1024;
     [self.eventProvider postAction:ACTION_RESPOND_ACK forMessage:message];
   }
 
-  // If the binary is a critical system binary, don't check its signature.
-  // The binary was validated by santad at startup.
-  SNTCachedDecision *cd = self.ruleTable.criticalSystemBinaries[binInfo.SHA256];
-  MOLCodesignChecker *csInfo; // Needed further down in this scope.
-  if (!cd) {
-    // Get codesigning info about the file but only if it's a Mach-O.
-    if (binInfo.isMachO) {
-      NSError *csError;
-      csInfo = [[MOLCodesignChecker alloc] initWithBinaryPath:binInfo.path
-                                               fileDescriptor:binInfo.fileHandle.fileDescriptor
-                                                        error:&csError];
-      // Ignore codesigning if there are any errors with the signature.
-      if (csError) csInfo = nil;
-    }
-
-    // Actually make the decision (and refresh rule access timestamp).
-    cd = [self.policyProcessor decisionForFileInfo:binInfo
-                                        fileSHA256:nil
-                                 certificateSHA256:csInfo.leafCertificate.SHA256];
-    cd.certCommonName = csInfo.leafCertificate.commonName;
-  }
-
+  SNTCachedDecision *cd = [self.policyProcessor decisionForFileInfo:binInfo];
   cd.vnodeId = message.vnode_id;
 
   // Formulate an initial action from the decision.
   santa_action_t action =
       (SNTEventStateAllow & cd.decision) ? ACTION_RESPOND_ALLOW : ACTION_RESPOND_DENY;
 
-  // Upgrade the action to ACTION_RESPOND_ALLOW_COMPILER when appropriate, because we want the
-  // kernel to track this information in its decision cache.
-  if (cd.decision == SNTEventStateAllowCompiler) {
-    action = ACTION_RESPOND_ALLOW_COMPILER;
-  }
-
   // Save decision details for logging the execution later.  For transitive rules, we also use
   // the shasum stored in the decision details to update the rule's timestamp whenever an
   // ACTION_NOTIFY_EXEC message related to the transitive rule is received.
   NSString *ttyPath;
-  if (action == ACTION_RESPOND_ALLOW || action == ACTION_RESPOND_ALLOW_COMPILER) {
+  if (action == ACTION_RESPOND_ALLOW) {
     [_eventLog cacheDecision:cd];
   } else {
     ttyPath = [self ttyPathForPID:message.ppid];
+  }
+
+  // Upgrade the action to ACTION_RESPOND_ALLOW_COMPILER when appropriate, because we want the
+  // kernel to track this information in its decision cache.
+  if (cd.decision == SNTEventStateAllowCompiler) {
+    action = ACTION_RESPOND_ALLOW_COMPILER;
   }
 
   // Send the decision to the kernel.
@@ -174,7 +153,7 @@ static size_t kLargeBinarySize = 30 * 1024 * 1024;
     se.filePath = binInfo.path;
     se.decision = cd.decision;
 
-    se.signingChain = csInfo.certificates;
+    se.signingChain = cd.certChain;
     se.pid = @(message.pid);
     se.ppid = @(message.ppid);
     se.parentName = @(message.pname);

@@ -14,6 +14,8 @@
 
 #import "Source/santad/SNTPolicyProcessor.h"
 
+#import <MOLCodesignChecker/MOLCodesignChecker.h>
+
 #include "Source/common/SNTLogging.h"
 
 #import "Source/common/SNTCachedDecision.h"
@@ -36,13 +38,25 @@
   return self;
 }
 
-- (SNTCachedDecision *)decisionForFileInfo:(SNTFileInfo *)fileInfo
-                                fileSHA256:(NSString *)fileSHA256
-                         certificateSHA256:(NSString *)certificateSHA256 {
-
+- (nonnull SNTCachedDecision *)decisionForFileInfo:(nonnull SNTFileInfo *)fileInfo
+                                        fileSHA256:(nullable NSString *)fileSHA256 {
   SNTCachedDecision *cd = [[SNTCachedDecision alloc] init];
   cd.sha256 = fileSHA256 ?: fileInfo.SHA256;
-  cd.certSHA256 = certificateSHA256;
+
+  // If the binary is a critical system binary, don't check its signature.
+  // The binary was validated at startup when the rule table was initialized.
+  SNTCachedDecision *systemCd = self.ruleTable.criticalSystemBinaries[cd.sha256];
+  if (systemCd) return systemCd;
+
+  // Grab the code signature, if there's an error don't try to capture
+  // any of the signature details.
+  NSError *csInfoError;
+  MOLCodesignChecker *csInfo = [fileInfo codesignCheckerWithError:&csInfoError];
+  if (csInfoError) csInfo = nil;
+
+  cd.certSHA256 = csInfo.leafCertificate.SHA256;
+  cd.certCommonName = csInfo.leafCertificate.commonName;
+  cd.certChain = csInfo.certificates;
   cd.quarantineURL = fileInfo.quarantineDataURL;
 
   SNTRule *rule = [self.ruleTable ruleForBinarySHA256:cd.sha256
@@ -67,7 +81,7 @@
             if ([[SNTConfigurator configurator] enableTransitiveWhitelisting]) {
               cd.decision = SNTEventStateAllowCompiler;
             } else {
-              cd.decision = SNTEventStateAllow;
+              cd.decision = SNTEventStateAllowBinary;
             }
             return cd;
           case SNTRuleStateWhitelistTransitive:
@@ -90,6 +104,7 @@
             return cd;
           case SNTRuleStateSilentBlacklist:
             cd.silentBlock = YES;
+            // intentional fallthrough
           case SNTRuleStateBlacklist:
             cd.customMsg = rule.customMsg;
             cd.decision = SNTEventStateBlockCertificate;
@@ -129,18 +144,17 @@
   }
 }
 
-- (SNTCachedDecision *)decisionForFilePath:(NSString *)filePath
-                                fileSHA256:(NSString *)fileSHA256
-                         certificateSHA256:(NSString *)certificateSHA256 {
+- (nonnull SNTCachedDecision *)decisionForFileInfo:(nonnull SNTFileInfo *)fileInfo {
+  return [self decisionForFileInfo:fileInfo fileSHA256:nil];
+}
+
+- (nonnull SNTCachedDecision *)decisionForFilePath:(nonnull NSString *)filePath
+                                        fileSHA256:(nullable NSString *)fileSHA256 {
   SNTFileInfo *fileInfo;
-  if (filePath) {
-    NSError *error;
-    fileInfo = [[SNTFileInfo alloc] initWithPath:filePath error:&error];
-    if (!fileInfo) LOGW(@"Failed to read file %@: %@", filePath, error.localizedDescription);
-  }
-  return [self decisionForFileInfo:fileInfo
-                        fileSHA256:fileSHA256
-                 certificateSHA256:certificateSHA256];
+  NSError *error;
+  fileInfo = [[SNTFileInfo alloc] initWithPath:filePath error:&error];
+  if (!fileInfo) LOGW(@"Failed to read file %@: %@", filePath, error.localizedDescription);
+  return [self decisionForFileInfo:fileInfo fileSHA256:fileSHA256];
 }
 
 ///
