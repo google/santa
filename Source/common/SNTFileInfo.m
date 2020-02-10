@@ -143,67 +143,71 @@ extern NSString *const NSURLQuarantinePropertiesKey WEAK_IMPORT_ATTRIBUTE;
 - (void)hashSHA1:(NSString **)sha1 SHA256:(NSString **)sha256 {
   const int MAX_CHUNK_SIZE = 256 * 1024;  // 256 KB
   const size_t chunkSize = _fileSize > MAX_CHUNK_SIZE ? MAX_CHUNK_SIZE : _fileSize;
-  char chunk[chunkSize];
+  char *chunk = malloc(chunkSize);
 
-  CC_SHA1_CTX c1;
-  CC_SHA256_CTX c256;
+  @try {
+    CC_SHA1_CTX c1;
+    CC_SHA256_CTX c256;
 
-  if (sha1) CC_SHA1_Init(&c1);
-  if (sha256) CC_SHA256_Init(&c256);
+    if (sha1) CC_SHA1_Init(&c1);
+    if (sha256) CC_SHA256_Init(&c256);
 
-  int fd = self.fileHandle.fileDescriptor;
+    int fd = self.fileHandle.fileDescriptor;
 
-  fcntl(fd, F_RDAHEAD, 1);
-  struct radvisory radv;
-  radv.ra_offset = 0;
-  const int MAX_ADVISORY_READ = 10 * 1024 * 1024;
-  radv.ra_count = (int)_fileSize < MAX_ADVISORY_READ ? (int)_fileSize : MAX_ADVISORY_READ;
-  fcntl(fd, F_RDADVISE, &radv);
-  ssize_t bytesRead;
+    fcntl(fd, F_RDAHEAD, 1);
+    struct radvisory radv;
+    radv.ra_offset = 0;
+    const int MAX_ADVISORY_READ = 10 * 1024 * 1024;
+    radv.ra_count = (int)_fileSize < MAX_ADVISORY_READ ? (int)_fileSize : MAX_ADVISORY_READ;
+    fcntl(fd, F_RDADVISE, &radv);
+    ssize_t bytesRead;
 
-  for (uint64_t offset = 0; offset < _fileSize;) {
-    bytesRead = pread(fd, chunk, chunkSize, offset);
-    if (bytesRead > 0) {
-      if (sha1) CC_SHA1_Update(&c1, chunk, (CC_LONG)bytesRead);
-      if (sha256) CC_SHA256_Update(&c256, chunk, (CC_LONG)bytesRead);
-      offset += bytesRead;
-    } else if (bytesRead == -1 && errno == EINTR) {
-      continue;
-    } else {
-      return;
+    for (uint64_t offset = 0; offset < _fileSize;) {
+      bytesRead = pread(fd, chunk, chunkSize, offset);
+      if (bytesRead > 0) {
+        if (sha1) CC_SHA1_Update(&c1, chunk, (CC_LONG)bytesRead);
+        if (sha256) CC_SHA256_Update(&c256, chunk, (CC_LONG)bytesRead);
+        offset += bytesRead;
+      } else if (bytesRead == -1 && errno == EINTR) {
+        continue;
+      } else {
+        return;
+      }
     }
-  }
 
-  // We turn off Read Ahead that we turned on
-  fcntl(fd, F_RDAHEAD, 0);
-  if (sha1) {
-    unsigned char digest[CC_SHA1_DIGEST_LENGTH];
-    CC_SHA1_Final(digest, &c1);
-    NSString *const SHA1FormatString =
-        @"%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x";
-    *sha1 = [[NSString alloc]
-        initWithFormat:SHA1FormatString, digest[0], digest[1], digest[2],
-                       digest[3], digest[4], digest[5], digest[6], digest[7],
-                       digest[8], digest[9], digest[10], digest[11], digest[12],
-                       digest[13], digest[14], digest[15], digest[16],
-                       digest[17], digest[18], digest[19]];
-  }
-  if (sha256) {
-    unsigned char digest[CC_SHA256_DIGEST_LENGTH];
-    CC_SHA256_Final(digest, &c256);
-    NSString *const SHA256FormatString =
-        @"%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x"
-         "%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x";
+    // We turn off Read Ahead that we turned on
+    fcntl(fd, F_RDAHEAD, 0);
+    if (sha1) {
+      unsigned char digest[CC_SHA1_DIGEST_LENGTH];
+      CC_SHA1_Final(digest, &c1);
+      NSString *const SHA1FormatString =
+          @"%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x";
+      *sha1 = [[NSString alloc]
+          initWithFormat:SHA1FormatString, digest[0], digest[1], digest[2],
+                         digest[3], digest[4], digest[5], digest[6], digest[7],
+                         digest[8], digest[9], digest[10], digest[11], digest[12],
+                         digest[13], digest[14], digest[15], digest[16],
+                         digest[17], digest[18], digest[19]];
+    }
+    if (sha256) {
+      unsigned char digest[CC_SHA256_DIGEST_LENGTH];
+      CC_SHA256_Final(digest, &c256);
+      NSString *const SHA256FormatString =
+          @"%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x"
+           "%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x";
 
-    *sha256 = [[NSString alloc]
-        initWithFormat:SHA256FormatString, digest[0], digest[1], digest[2],
-                       digest[3], digest[4], digest[5], digest[6], digest[7],
-                       digest[8], digest[9], digest[10], digest[11], digest[12],
-                       digest[13], digest[14], digest[15], digest[16],
-                       digest[17], digest[18], digest[19], digest[20],
-                       digest[21], digest[22], digest[23], digest[24],
-                       digest[25], digest[26], digest[27], digest[28],
-                       digest[29], digest[30], digest[31]];
+      *sha256 = [[NSString alloc]
+          initWithFormat:SHA256FormatString, digest[0], digest[1], digest[2],
+                         digest[3], digest[4], digest[5], digest[6], digest[7],
+                         digest[8], digest[9], digest[10], digest[11], digest[12],
+                         digest[13], digest[14], digest[15], digest[16],
+                         digest[17], digest[18], digest[19], digest[20],
+                         digest[21], digest[22], digest[23], digest[24],
+                         digest[25], digest[26], digest[27], digest[28],
+                         digest[29], digest[30], digest[31]];
+    }
+  } @finally {
+    free(chunk);
   }
 }
 
