@@ -131,6 +131,14 @@
 @property(readonly, nonatomic) BOOL enablePageZeroProtection;
 
 ///
+///  Enable bad signature protection, defaults to NO.
+///  When enabled, a binary that is signed but has a bad signature (cert revoked, binary
+///  tampered with, etc.) will be blocked regardless of client-mode unless a binary whitelist
+///  rule exists.
+///
+@property(readonly, nonatomic) BOOL enableBadSignatureProtection;
+
+///
 ///  Defines how event logs are stored. Options are:
 ///    SNTEventLogTypeSyslog: Sent to ASL or ULS (if built with the 10.12 SDK or later).
 ///    SNTEventLogTypeFilelog: Sent to a file on disk. Use eventLogPath to specify a path.

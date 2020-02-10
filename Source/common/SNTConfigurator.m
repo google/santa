@@ -66,6 +66,7 @@ static NSString *const kModeNotificationMonitor = @"ModeNotificationMonitor";
 static NSString *const kModeNotificationLockdown = @"ModeNotificationLockdown";
 
 static NSString *const kEnablePageZeroProtectionKey = @"EnablePageZeroProtection";
+static NSString *const kEnableBadSignatureProtectionKey = @"EnableBadSignatureProtection";
 
 static NSString *const kFileChangesRegexKey = @"FileChangesRegex";
 static NSString *const kFileChangesPrefixFiltersKey = @"FileChangesPrefixFilters";
@@ -112,6 +113,7 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
       kWhitelistRegexKey : re,
       kBlacklistRegexKey : re,
       kEnablePageZeroProtectionKey : number,
+      kEnableBadSignatureProtectionKey: number,
       kMoreInfoURLKey : string,
       kEventDetailURLKey : string,
       kEventDetailTextKey : string,
@@ -379,6 +381,11 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
 - (BOOL)enablePageZeroProtection {
   NSNumber *number = self.configState[kEnablePageZeroProtectionKey];
   return number ? [number boolValue] : YES;
+}
+
+- (BOOL)enableBadSignatureProtection {
+  NSNumber *number = self.configState[kEnableBadSignatureProtectionKey];
+  return number ? [number boolValue] : NO;
 }
 
 - (NSURL *)moreInfoURL {
