@@ -121,8 +121,8 @@
     }
   }
 
-  if (csInfoError && csInfoError.code != errSecCSUnsigned &&
-      [[SNTConfigurator configurator] enableBadSignatureProtection]) {
+  if ([[SNTConfigurator configurator] enableBadSignatureProtection] &&
+      csInfoError && csInfoError.code != errSecCSUnsigned) {
     cd.decisionExtra =
         [NSString stringWithFormat:@"Blocked due to signature error: %ld", (long)csInfoError.code];
     cd.decision = SNTEventStateBlockCertificate;
