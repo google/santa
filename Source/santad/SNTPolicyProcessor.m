@@ -121,6 +121,14 @@
     }
   }
 
+  if (csInfoError && csInfoError.code != errSecCSUnsigned &&
+      [[SNTConfigurator configurator] enableBadSignatureProtection]) {
+    cd.decisionExtra =
+        [NSString stringWithFormat:@"Blocked due to signature error: %ld", (long)csInfoError.code];
+    cd.decision = SNTEventStateBlockCertificate;
+    return cd;
+  }
+
   NSString *msg = [self fileIsScopeBlacklisted:fileInfo];
   if (msg) {
     cd.decisionExtra = msg;
@@ -132,14 +140,6 @@
   if (msg) {
     cd.decisionExtra = msg;
     cd.decision = SNTEventStateAllowScope;
-    return cd;
-  }
-
-  if (csInfoError && csInfoError.code != errSecCSUnsigned &&
-      [[SNTConfigurator configurator] enableBadSignatureProtection]) {
-    cd.decisionExtra =
-        [NSString stringWithFormat:@"Blocked due to signature error: %ld", (long)csInfoError.code];
-    cd.decision = SNTEventStateBlockCertificate;
     return cd;
   }
 
