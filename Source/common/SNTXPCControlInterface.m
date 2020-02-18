@@ -17,6 +17,8 @@
 #import <MOLCodesignChecker/MOLCodesignChecker.h>
 #import <MOLXPCConnection/MOLXPCConnection.h>
 
+#import "Source/common/SNTCommonEnums.h"
+#import "Source/common/SNTConfigurator.h"
 #import "Source/common/SNTRule.h"
 #import "Source/common/SNTStoredEvent.h"
 
@@ -25,7 +27,7 @@ NSString *const kBundleID = @"com.google.santa.daemon";
 @implementation SNTXPCControlInterface
 
 + (NSString *)serviceID {
-  if (@available(macOS 10.15, *)) {
+  if ([[SNTConfigurator configurator] enableSystemExtension]) {
     MOLCodesignChecker *cs = [[MOLCodesignChecker alloc] initWithSelf];
     // "teamid.com.google.santa.daemon.xpc"
     NSString *t = cs.signingInformation[@"teamid"];

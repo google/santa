@@ -15,6 +15,7 @@
 #import <Foundation/Foundation.h>
 
 #import "Source/common/SNTCommonEnums.h"
+#import "Source/common/SNTConfigurator.h"
 #import "Source/common/SNTLogging.h"
 #import "Source/santad/EventProviders/SNTDriverManager.h"
 #import "Source/santad/SNTApplication.h"
@@ -119,7 +120,7 @@ int main(int argc, const char *argv[]) {
     LOGI(@"Started, version %@", infoDict[@"CFBundleVersion"]);
 
     // Handle the case of macOS < 10.15 updating to >= 10.15.
-    if (@available(macOS 10.15, *)) {
+    if ([[SNTConfigurator configurator] enableSystemExtension]) {
       if ([pi.arguments.firstObject isEqualToString:@(kSantaDPath)]) cleanup();
     }
 

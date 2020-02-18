@@ -10,7 +10,6 @@
 		0D9F577C2342650F005D9AA8 /* SNTPrefixTree.cc in Sources */ = {isa = PBXBuildFile; fileRef = C7658B022322B84F00F36578 /* SNTPrefixTree.cc */; };
 		59502195B2982225D3706DCE /* libPods-santabundleservice.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 2A55D73A235850B9FA991865 /* libPods-santabundleservice.a */; };
 		AD3736AF78C41A962C26D429 /* libPods-Santa.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 4C3E743944A9D77423AA1534 /* libPods-Santa.a */; };
-		B5AE6BB811766CA492133559 /* libPods-santad.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 3700D40B536CA7F626B76156 /* libPods-santad.a */; };
 		C71E472F22F0F97B00921CD9 /* com.google.santa.daemon in CopyFiles */ = {isa = PBXBuildFile; fileRef = C779C4E622F0F51400EE2541 /* com.google.santa.daemon */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
 		C71E473122F0FAA100921CD9 /* com.google.santa.daemon.systemextension in CopyFiles */ = {isa = PBXBuildFile; fileRef = C7A8308022F0F81F00F856AC /* com.google.santa.daemon.systemextension */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		C72ED2B62324962400255555 /* SNTEndpointSecurityManager.mm in Sources */ = {isa = PBXBuildFile; fileRef = C72ED2B52324962400255555 /* SNTEndpointSecurityManager.mm */; };
@@ -110,6 +109,7 @@
 		C7F5C1AF233E72CF00A3F7FD /* SNTBundleService.m in Sources */ = {isa = PBXBuildFile; fileRef = C7658AF22322B84F00F36578 /* SNTBundleService.m */; };
 		C7F5C1B0233E735E00A3F7FD /* santabundleservice in CopyFiles */ = {isa = PBXBuildFile; fileRef = C7F5C1A7233E72BC00A3F7FD /* santabundleservice */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
 		D28CA4C618C62392319BB642 /* libPods-santactl.a in Frameworks */ = {isa = PBXBuildFile; fileRef = B7714ABC7F247685608DACE7 /* libPods-santactl.a */; };
+		D698C8C9E47554577ED4939F /* libPods-com.google.santa.daemon.a in Frameworks */ = {isa = PBXBuildFile; fileRef = C05F6AD95EB704B20828BDA1 /* libPods-com.google.santa.daemon.a */; };
 		F5F5D1EF2AF051FEA97A3A59 /* libPods-sysx.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 91FF0B4E62F1E90A88478993 /* libPods-sysx.a */; };
 /* End PBXBuildFile section */
 
@@ -189,12 +189,13 @@
 		18183794C94BAEAD167B12EC /* Pods-santad.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-santad.debug.xcconfig"; path = "Target Support Files/Pods-santad/Pods-santad.debug.xcconfig"; sourceTree = "<group>"; };
 		24CDFD218D8B35E34895AA6A /* libPods-santaxpcproxy.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-santaxpcproxy.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		2A55D73A235850B9FA991865 /* libPods-santabundleservice.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-santabundleservice.a"; sourceTree = BUILT_PRODUCTS_DIR; };
-		3700D40B536CA7F626B76156 /* libPods-santad.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-santad.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		4C3E743944A9D77423AA1534 /* libPods-Santa.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-Santa.a"; sourceTree = BUILT_PRODUCTS_DIR; };
+		4E28DBA012524ABF55F8300C /* Pods-com.google.santa.daemon.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-com.google.santa.daemon.debug.xcconfig"; path = "Target Support Files/Pods-com.google.santa.daemon/Pods-com.google.santa.daemon.debug.xcconfig"; sourceTree = "<group>"; };
 		7AF15DF785BAA0EAB0BE340D /* Pods-santad.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-santad.release.xcconfig"; path = "Target Support Files/Pods-santad/Pods-santad.release.xcconfig"; sourceTree = "<group>"; };
 		91FF0B4E62F1E90A88478993 /* libPods-sysx.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-sysx.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		B7714ABC7F247685608DACE7 /* libPods-santactl.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-santactl.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		C05543B3701F50CA798B4B11 /* Pods-sysx.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-sysx.release.xcconfig"; path = "Target Support Files/Pods-sysx/Pods-sysx.release.xcconfig"; sourceTree = "<group>"; };
+		C05F6AD95EB704B20828BDA1 /* libPods-com.google.santa.daemon.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-com.google.santa.daemon.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		C72ED2B3232495CC00255555 /* SNTEventProvider.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SNTEventProvider.h; sourceTree = "<group>"; };
 		C72ED2B42324962400255555 /* SNTEndpointSecurityManager.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SNTEndpointSecurityManager.h; sourceTree = "<group>"; };
 		C72ED2B52324962400255555 /* SNTEndpointSecurityManager.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = SNTEndpointSecurityManager.mm; sourceTree = "<group>"; };
@@ -369,6 +370,7 @@
 		D7360306D7CFDD179D003266 /* Pods-sysx.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-sysx.debug.xcconfig"; path = "Target Support Files/Pods-sysx/Pods-sysx.debug.xcconfig"; sourceTree = "<group>"; };
 		D979E8ECE019FB93D1D381E7 /* Pods-santaxpcproxy.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-santaxpcproxy.release.xcconfig"; path = "Target Support Files/Pods-santaxpcproxy/Pods-santaxpcproxy.release.xcconfig"; sourceTree = "<group>"; };
 		E6D38874F31422095E853E99 /* Pods-Santa.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Santa.debug.xcconfig"; path = "Target Support Files/Pods-Santa/Pods-Santa.debug.xcconfig"; sourceTree = "<group>"; };
+		E734E4FECEAA502AFF104E71 /* Pods-com.google.santa.daemon.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-com.google.santa.daemon.release.xcconfig"; path = "Target Support Files/Pods-com.google.santa.daemon/Pods-com.google.santa.daemon.release.xcconfig"; sourceTree = "<group>"; };
 		EDF64F091E796EC4013F5499 /* Pods-santaxpcproxy.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-santaxpcproxy.debug.xcconfig"; path = "Target Support Files/Pods-santaxpcproxy/Pods-santaxpcproxy.debug.xcconfig"; sourceTree = "<group>"; };
 		FE1F7C320CAEA468FAAC05B0 /* Pods-santabundleservice.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-santabundleservice.release.xcconfig"; path = "Target Support Files/Pods-santabundleservice/Pods-santabundleservice.release.xcconfig"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -396,7 +398,7 @@
 			files = (
 				C72ED2BC232584C100255555 /* libbsm.tbd in Frameworks */,
 				C72ED2B82324A2FA00255555 /* libEndpointSecurity.tbd in Frameworks */,
-				B5AE6BB811766CA492133559 /* libPods-santad.a in Frameworks */,
+				D698C8C9E47554577ED4939F /* libPods-com.google.santa.daemon.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -767,11 +769,11 @@
 				C72ED2B9232584AA00255555 /* libauditd.tbd */,
 				C72ED2B72324A2FA00255555 /* libEndpointSecurity.tbd */,
 				4C3E743944A9D77423AA1534 /* libPods-Santa.a */,
-				3700D40B536CA7F626B76156 /* libPods-santad.a */,
 				91FF0B4E62F1E90A88478993 /* libPods-sysx.a */,
 				24CDFD218D8B35E34895AA6A /* libPods-santaxpcproxy.a */,
 				2A55D73A235850B9FA991865 /* libPods-santabundleservice.a */,
 				B7714ABC7F247685608DACE7 /* libPods-santactl.a */,
+				C05F6AD95EB704B20828BDA1 /* libPods-com.google.santa.daemon.a */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -791,6 +793,8 @@
 				FE1F7C320CAEA468FAAC05B0 /* Pods-santabundleservice.release.xcconfig */,
 				052CCA75535669B953A31D6D /* Pods-santactl.debug.xcconfig */,
 				0A60226B8B4F01BE817BAAA3 /* Pods-santactl.release.xcconfig */,
+				4E28DBA012524ABF55F8300C /* Pods-com.google.santa.daemon.debug.xcconfig */,
+				E734E4FECEAA502AFF104E71 /* Pods-com.google.santa.daemon.release.xcconfig */,
 			);
 			path = Pods;
 			sourceTree = "<group>";
@@ -1036,7 +1040,7 @@
 			outputFileListPaths = (
 			);
 			outputPaths = (
-				"$(DERIVED_FILE_DIR)/Pods-santad-checkManifestLockResult.txt",
+				"$(DERIVED_FILE_DIR)/Pods-com.google.santa.daemon-checkManifestLockResult.txt",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -1445,7 +1449,7 @@
 		};
 		C779C4EB22F0F51400EE2541 /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 18183794C94BAEAD167B12EC /* Pods-santad.debug.xcconfig */;
+			baseConfigurationReference = 4E28DBA012524ABF55F8300C /* Pods-com.google.santa.daemon.debug.xcconfig */;
 			buildSettings = {
 				CODE_SIGN_ENTITLEMENTS = Source/santad/com.google.santa.daemon.systemextension.entitlements;
 				CODE_SIGN_IDENTITY = "Mac Developer";
@@ -1464,7 +1468,7 @@
 		};
 		C779C4EC22F0F51400EE2541 /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 7AF15DF785BAA0EAB0BE340D /* Pods-santad.release.xcconfig */;
+			baseConfigurationReference = E734E4FECEAA502AFF104E71 /* Pods-com.google.santa.daemon.release.xcconfig */;
 			buildSettings = {
 				CODE_SIGN_ENTITLEMENTS = Source/santad/com.google.santa.daemon.systemextension.entitlements;
 				CODE_SIGN_IDENTITY = "Mac Developer";

@@ -76,6 +76,8 @@ static NSString *const kEventLogPath = @"EventLogPath";
 
 static NSString *const kEnableMachineIDDecoration = @"EnableMachineIDDecoration";
 
+static NSString *const kEnableSystemExtension = @"EnableSystemExtension";
+
 // The keys managed by a sync server or mobileconfig.
 static NSString *const kClientModeKey = @"ClientMode";
 static NSString *const kEnableTransitiveWhitelistingKey = @"EnableTransitiveWhitelisting";
@@ -137,6 +139,7 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
       kEventLogType : string,
       kEventLogPath : string,
       kEnableMachineIDDecoration : number,
+      kEnableSystemExtension : number,
     };
     _defaults = [NSUserDefaults standardUserDefaults];
     [_defaults addSuiteNamed:@"com.google.santa"];
@@ -506,6 +509,17 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
 - (BOOL)enableMachineIDDecoration {
   NSNumber *number = self.configState[kEnableMachineIDDecoration];
   return number ? [number boolValue] : NO;
+}
+
+- (BOOL)enableSystemExtension {
+  if (@available(macOS 10.15, *)) {
+    NSFileManager *fm = [NSFileManager defaultManager];
+    if (![fm fileExistsAtPath:@"/Library/Extensions/santa-driver.kext"]) return YES;
+    NSNumber *number = self.configState[kEnableSystemExtension];
+    return number ? [number boolValue] : YES;
+  } else {
+    return NO;
+  }
 }
 
 #pragma mark Private

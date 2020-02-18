@@ -15,6 +15,7 @@
 #import <Cocoa/Cocoa.h>
 #import <SystemExtensions/SystemExtensions.h>
 
+#import "Source/common/SNTConfigurator.h"
 #import "Source/common/SNTXPCControlInterface.h"
 #import "Source/santa/SNTAppDelegate.h"
 
@@ -66,6 +67,10 @@ int main(int argc, const char *argv[]) {
         dispatch_queue_t q = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_HIGH, 0);
         OSSystemExtensionRequest *req;
         if (sysxOperation.intValue == 1) {
+          if (![[SNTConfigurator configurator] enableSystemExtension]) {
+            NSLog(@"EnableSystemExtension is disabled");
+            exit(1);
+          }
           NSLog(@"Requesting SystemExtension activation");
           req = [OSSystemExtensionRequest activationRequestForExtension:e queue:q];
         } else if (sysxOperation.intValue == 2) {

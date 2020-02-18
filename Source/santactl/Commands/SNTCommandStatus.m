@@ -84,10 +84,11 @@ REGISTER_COMMAND_NAME(@"status")
 
   BOOL fileLogging = ([[SNTConfigurator configurator] fileChangesRegex] != nil);
 
+  SNTConfigurator *configurator = [SNTConfigurator configurator];
+
   // Kext status
   __block uint64_t rootCacheCount = -1, nonRootCacheCount = -1;
-  if (@available(macOS 10.15, *)) {
-  } else {
+  if (![configurator enableSystemExtension]) {
     dispatch_group_enter(group);
     [[self.daemonConn remoteObjectProxy] cacheCounts:^(uint64_t rootCache, uint64_t nonRootCache) {
       rootCacheCount = rootCache;
@@ -205,8 +206,7 @@ REGISTER_COMMAND_NAME(@"status")
         @"transitive_whitelisting" : @(transitiveWhitelistingEnabled),
       },
     } mutableCopy];
-    if (@available(macOS 10.15, *)) {
-    } else {
+    if (![configurator enableSystemExtension]) {
       stats[@"kernel"] = @{
         @"root_cache_count" : @(rootCacheCount),
         @"non_root_cache_count": @(nonRootCacheCount),
@@ -224,8 +224,7 @@ REGISTER_COMMAND_NAME(@"status")
     printf("  %-25s | %s\n", "File Logging", (fileLogging ? "Yes" : "No"));
     printf("  %-25s | %lld  (Peak: %.2f%%)\n", "Watchdog CPU Events", cpuEvents, cpuPeak);
     printf("  %-25s | %lld  (Peak: %.2fMB)\n", "Watchdog RAM Events", ramEvents, ramPeak);
-    if (@available(macOS 10.15, *)) {
-    } else {
+    if (![configurator enableSystemExtension]) {
       printf(">>> Kernel Info\n");
       printf("  %-25s | %lld\n", "Root cache count", rootCacheCount);
       printf("  %-25s | %lld\n", "Non-root cache count", nonRootCacheCount);
