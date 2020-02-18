@@ -54,8 +54,11 @@
 - (instancetype)init {
   self = [super init];
   if (self) {
+    SNTConfigurator *configurator = [SNTConfigurator configurator];
+
+    // Choose an event logger.
     // Locate and connect to driver / SystemExtension
-    if (@available(macOS 10.15, *)) {
+    if ([configurator enableSystemExtension]) {
       LOGI(@"Using EndpointSecurity as event provider.");
       _eventProvider = [[SNTEndpointSecurityManager alloc] init];
     } else {
@@ -80,8 +83,7 @@
       return nil;
     }
 
-    // Choose an event logger.
-    SNTConfigurator *configurator = [SNTConfigurator configurator];
+
     switch ([configurator eventLogType]) {
       case SNTEventLogTypeSyslog:
         _eventLog = [[SNTSyslogEventLog alloc] init];
@@ -122,6 +124,10 @@
                       context:NULL];
     [configurator addObserver:self
                    forKeyPath:NSStringFromSelector(@selector(blacklistPathRegex))
+                      options:bits
+                      context:NULL];
+    [configurator addObserver:self
+                   forKeyPath:NSStringFromSelector(@selector(enableSystemExtension))
                       options:bits
                       context:NULL];
 
@@ -309,6 +315,19 @@ void diskDisappearedCallback(DADiskRef disk, void *context) {
     if (![new.pattern isEqualToString:old.pattern]) {
       LOGI(@"Changed [white|black]list regex, flushing cache");
       [self.eventProvider flushCacheNonRootOnly:NO];
+    }
+  } else if ([keyPath isEqualToString:NSStringFromSelector(@selector(enableSystemExtension))]) {
+    BOOL new = [change[newKey] isKindOfClass:[NSNumber class]] ? [change[newKey] boolValue] : NO;
+    BOOL old = [change[oldKey] isKindOfClass:[NSNumber class]] ? [change[oldKey] boolValue] : NO;
+    if (old == NO && new == YES) {
+      LOGI(@"EnableSystemExtension changed NO -> YES");
+      NSTask *t = [[NSTask alloc] init];
+      t.launchPath = [@(kSantaAppPath) stringByAppendingString:@"Contents/MacOS/Santa"];
+      t.arguments = @[ @"--enable-system-extension" ];
+      [t launch];
+      [t waitUntilExit];
+      LOGI(@"The penultimate exit.");
+      exit(0);
     }
   }
 }

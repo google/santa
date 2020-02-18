@@ -11,7 +11,7 @@ PODS:
     - MOLAuthenticatingURLSession (~> 2.4)
   - MOLXPCConnection (1.2):
     - MOLCodesignChecker (~> 1.9)
-  - OCMock (3.4.3)
+  - OCMock (3.5)
 
 DEPENDENCIES:
   - FMDB
@@ -39,7 +39,7 @@ SPEC CHECKSUMS:
   MOLCodesignChecker: b0d5db9d2f9bd94e0fd093891a5d40e5ad77cbc0
   MOLFCMClient: 2bfbacd45cc11e1ca3c077e97b80401c4e4a54f1
   MOLXPCConnection: c27af5cb1c43b18319698b0e568a8ddc2fc1e306
-  OCMock: 43565190abc78977ad44a61c0d20d7f0784d35ab
+  OCMock: 4ab4577fc941af31f4a0398f6e7e230cf21fc72a
 
 PODFILE CHECKSUM: d03767a9915896232523962c98d9ff7294aec2b7
 

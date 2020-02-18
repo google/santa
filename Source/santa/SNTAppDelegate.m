@@ -37,13 +37,7 @@
 
 - (void)applicationDidFinishLaunching:(NSNotification *)aNotification {
   if (@available(macOS 10.15, *)) {
-    LOGI(@"Requesting SystemExtension activation");
-    NSString *e = [SNTXPCControlInterface systemExtensionID];
-    dispatch_queue_t q = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_HIGH, 0);
-    OSSystemExtensionRequest *req = [OSSystemExtensionRequest activationRequestForExtension:e
-                                                                                      queue:q];
-    req.delegate = self;
-    [[OSSystemExtensionManager sharedManager] submitRequest:req];
+    [self loadSystemExtension];
   }
 
   [self setupMenu];
@@ -73,6 +67,20 @@
   self.aboutWindowController = [[SNTAboutWindowController alloc] init];
   [self.aboutWindowController showWindow:self];
   return NO;
+}
+
+- (void)loadSystemExtension API_AVAILABLE(macos(10.15)) {
+  if (![[SNTConfigurator configurator] enableSystemExtension]) {
+    LOGI(@"EnableSystemExtension is disabled");
+    return;
+  }
+  LOGI(@"Requesting SystemExtension activation");
+  NSString *e = [SNTXPCControlInterface systemExtensionID];
+  dispatch_queue_t q = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_HIGH, 0);
+  OSSystemExtensionRequest *req = [OSSystemExtensionRequest activationRequestForExtension:e
+                                                                                    queue:q];
+  req.delegate = self;
+  [[OSSystemExtensionManager sharedManager] submitRequest:req];
 }
 
 #pragma mark Connection handling
@@ -142,12 +150,7 @@
                                 withExtension:(OSSystemExtensionProperties *)new
     API_AVAILABLE(macos(10.15)) {
   LOGI(@"SystemExtension \"%@\" request for replacement", request.identifier);
-#ifdef DEBUG
   return OSSystemExtensionReplacementActionReplace;
-#else
-  return [old.bundleVersion isEqualToString:new.bundleVersion]
-      ? OSSystemExtensionReplacementActionCancel : OSSystemExtensionReplacementActionReplace;
-#endif
 }
 
 - (void)requestNeedsUserApproval:(OSSystemExtensionRequest *)request API_AVAILABLE(macos(10.15)) {

@@ -149,6 +149,7 @@ objc_library(
     srcs = ["SNTXPCControlInterface.m"],
     hdrs = ["SNTXPCControlInterface.h"],
     deps = [
+        ":SNTConfigurator",
         ":SNTStoredEvent",
         ":SNTXPCUnprivilegedControlInterface",
         "@MOLXPCConnection",

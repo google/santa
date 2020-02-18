@@ -39,20 +39,14 @@ void logMessage(LogLevel level, FILE *destination, NSString *format, ...) {
   dispatch_once(&pred, ^{
     binaryName = [[NSProcessInfo processInfo] processName];
 
-    if (@available(macOS 10.15, *)) {
-      if ([binaryName isEqualToString:@"com.google.santa.daemon"]) {
-        useSyslog = YES;
-        pthread_key_create(&syslogKey, syslogClientDestructor);
-      }
-    }
-
     // If debug logging is enabled, the process must be restarted.
     if ([[[NSProcessInfo processInfo] arguments] containsObject:@"--debug"]) {
       logLevel = LOG_LEVEL_DEBUG;
     }
 
     // If requested, redirect output to syslog.
-    if ([[[NSProcessInfo processInfo] arguments] containsObject:@"--syslog"]) {
+    if ([[[NSProcessInfo processInfo] arguments] containsObject:@"--syslog"] ||
+        [binaryName isEqualToString:@"com.google.santa.daemon"]) {
       useSyslog = YES;
       pthread_key_create(&syslogKey, syslogClientDestructor);
     }

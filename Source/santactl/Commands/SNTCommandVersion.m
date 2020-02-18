@@ -17,6 +17,7 @@
 #import <MOLXPCConnection/MOLXPCConnection.h>
 
 #import "Source/common/SNTCommonEnums.h"
+#import "Source/common/SNTConfigurator.h"
 #import "Source/common/SNTFileInfo.h"
 #import "Source/common/SNTKernelCommon.h"
 #import "Source/santactl/SNTCommand.h"
@@ -70,7 +71,7 @@ REGISTER_COMMAND_NAME(@"version")
 }
 
 - (NSString *)santaKextVersion {
-  if (@available(macOS 10.15, *)) {
+  if ([[SNTConfigurator configurator] enableSystemExtension]) {
     return @"un-needed (SystemExtension being used)";
   }
 
