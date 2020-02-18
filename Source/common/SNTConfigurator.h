@@ -165,7 +165,7 @@
 @property(readonly, nonatomic) BOOL enableMachineIDDecoration;
 
 ///
-///  Use the bundled SystemExtension  on macOS 10.15+, defaults to YES.
+///  Use the bundled SystemExtension on macOS 10.15+, defaults to YES.
 ///  Disable to continue using the bundled KEXT.
 ///  This is a one way switch, if this is ever true on macOS 10.15+ the SystemExtension will be used.
 ///  This gives admins control over the timing of switching to the SystemExtension. The intended use case is to have an MDM deliver
