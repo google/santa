@@ -126,10 +126,12 @@
                    forKeyPath:NSStringFromSelector(@selector(blacklistPathRegex))
                       options:bits
                       context:NULL];
-    [configurator addObserver:self
-                   forKeyPath:NSStringFromSelector(@selector(enableSystemExtension))
-                      options:bits
-                      context:NULL];
+    if (![configurator enableSystemExtension]) {
+      [configurator addObserver:self
+                     forKeyPath:NSStringFromSelector(@selector(enableSystemExtension))
+                        options:bits
+                        context:NULL];
+    }
 
     // Establish XPC listener for Santa and santactl connections
     SNTDaemonControlController *dc =
