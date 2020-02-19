@@ -306,6 +306,10 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
   return [self syncAndConfigStateSet];
 }
 
++ (NSSet *)keyPathsForValuesAffectingEnableSystemExtension {
+  return [self configStateSet];
+}
+
 #pragma mark Public Interface
 
 - (SNTClientMode)clientMode {
