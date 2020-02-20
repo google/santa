@@ -325,7 +325,7 @@ void diskDisappearedCallback(DADiskRef disk, void *context) {
       LOGI(@"EnableSystemExtension changed NO -> YES");
       NSTask *t = [[NSTask alloc] init];
       t.launchPath = [@(kSantaAppPath) stringByAppendingString:@"/Contents/MacOS/Santa"];
-      t.arguments = @[ @"--enable-system-extension" ];
+      t.arguments = @[ @"--load-system-extension" ];
       [t launch];
       [t waitUntilExit];
       LOGI(@"The penultimate exit.");
