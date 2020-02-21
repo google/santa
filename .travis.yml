@@ -8,6 +8,7 @@ addons:
   homebrew:
     taps: bazelbuild/tap
     packages: bazelbuild/tap/bazel
+    update: true
 
 script:
  - bazel build :release --show_progress_rate_limit=30.0 -c opt --apple_generate_dsym --color=no --verbose_failures --sandbox_debug
