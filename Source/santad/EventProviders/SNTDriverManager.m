@@ -310,6 +310,8 @@ static void driverAppearedHandler(void *info, io_iterator_t iterator) {
 }
 
 - (void)fileModificationPrefixFilterAdd:(NSArray *)filters {
+  while (!self.connectionEstablished) usleep(100000); // 100ms
+
   uint64_t n = 0;
   uint32_t n_len = 1;
 
