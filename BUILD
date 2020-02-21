@@ -130,6 +130,10 @@ genrule(
             mkdir -p $(@D)/dsym
             cp -LR $$(dirname $$(dirname $${SRC})) $(@D)/dsym/Santa.app.dSYM
             ;;
+          *com.google.santa.daemon.systemextension.dSYM*Info.plist)
+            mkdir -p $(@D)/dsym
+            cp -LR $$(dirname $$(dirname $${SRC})) $(@D)/dsym/com.google.santa.daemon.systemextension.dSYM
+            ;;
         esac
       done
 
