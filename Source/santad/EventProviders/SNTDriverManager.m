@@ -336,6 +336,8 @@ static void driverAppearedHandler(void *info, io_iterator_t iterator) {
         LOGE(@"Prefix filter tree is full!");
         return;
       }
+    } else {
+      LOGI(@"Added prefix filter: %s", buffer);
     }
   }
 }
