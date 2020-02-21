@@ -93,12 +93,14 @@
         break;
     }
 
-    // The filter is reset when santad disconnects from the driver.
-    // Add the default filters.
-    [_eventProvider fileModificationPrefixFilterAdd:@[ @"/.", @"/dev/" ]];
+    dispatch_async(dispatch_get_global_queue(QOS_CLASS_BACKGROUND, 0), ^{
+      // The filter is reset when santad disconnects from the driver.
+      // Add the default filters.
+      [self.eventProvider fileModificationPrefixFilterAdd:@[ @"/.", @"/dev/" ]];
 
-    // TODO(bur): Add KVO handling for fileChangesPrefixFilters.
-    [_eventProvider fileModificationPrefixFilterAdd:[configurator fileChangesPrefixFilters]];
+      // TODO(bur): Add KVO handling for fileChangesPrefixFilters.
+      [self.eventProvider fileModificationPrefixFilterAdd:[configurator fileChangesPrefixFilters]];
+    });
 
     self.notQueue = [[SNTNotificationQueue alloc] init];
     SNTSyncdQueue *syncdQueue = [[SNTSyncdQueue alloc] init];
