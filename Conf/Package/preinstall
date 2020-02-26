@@ -19,11 +19,13 @@
 /bin/launchctl remove com.google.santasync
 /bin/rm -f /Library/LaunchDaemons/com.google.santasync.plist
 /bin/rm -rf /Applications/Santa.app
+/bin/rm -rf /Library/Extensions/santa-driver.kext
 
 /bin/sleep 1
 
-user=$(/usr/bin/stat -f '%u' /dev/console)
-[[ -n "$user" ]] && /bin/launchctl asuser ${user} /bin/launchctl remove com.google.santagui
-[[ -n "$user" ]] && /bin/launchctl asuser ${user} /bin/launchctl remove com.google.santa
+GUI_USER=$(/usr/bin/stat -f '%u' /dev/console)
+[[ -z "${GUI_USER}" ]] && exit 0
 
+/bin/launchctl asuser "${GUI_USER}" /bin/launchctl remove com.google.santagui
+/bin/launchctl asuser "${GUI_USER}" /bin/launchctl remove com.google.santa
 exit 0
