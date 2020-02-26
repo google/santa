@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Load the kernel extension, santad, sync client
+# Load com.google.santa.daemon and com.google.santa.bundleservice
 # If a user is logged in, also load the GUI agent.
 # If the target volume is not /, do nothing
 
@@ -13,24 +13,15 @@
 mkdir -p /usr/local/bin
 /bin/ln -sf /Applications/Santa.app/Contents/MacOS/santactl /usr/local/bin/santactl
 
-if [ $(uname -r | cut -d'.' -f1) -ge 19 ]; then
-  # Running on 10.15+
-  echo "Santa postinstall: running on 10.15+"
-  /bin/rm -rf /Library/Extensions/santa-driver.kext
-  /bin/rm -f /Library/LaunchDaemons/com.google.santad.plist
-else
-  # Running on <10.15
-  /bin/launchctl load -w /Library/LaunchDaemons/com.google.santad.plist
-fi
+# Load com.google.santa.daemon, its main has logic to handle loading the kext
+# or relaunching itself as a SystemExtension.
+/bin/launchctl load -w /Library/LaunchDaemons/com.google.santad.plist
 
-# Load the bundle service
+# Load com.google.santa.bundleservice
 /bin/launchctl load -w /Library/LaunchDaemons/com.google.santa.bundleservice.plist
 
-user=$(/usr/bin/stat -f '%u' /dev/console)
-if [[ -z "$user" ]]; then
-  /Applications/Santa.app/Contents/MacOS/Santa --load-system-extension
-  exit 0
-fi
-/bin/launchctl asuser ${user} /bin/launchctl load /Library/LaunchAgents/com.google.santa.plist
+GUI_USER=$(/usr/bin/stat -f '%u' /dev/console)
+[[ -z "${GUI_USER}" ]] && exit 0
 
+/bin/launchctl asuser "${GUI_USER}" /bin/launchctl load /Library/LaunchAgents/com.google.santa.plist
 exit 0

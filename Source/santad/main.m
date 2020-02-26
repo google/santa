@@ -101,6 +101,13 @@ void cleanup() {
   t.arguments = @[ @"remove", @"com.google.santad" ];
   [t launch];
   [t waitUntilExit];
+
+  LOGI(@"loading com.google.santa.daemon as a SystemExtension");
+  t = [[NSTask alloc] init];
+  t.launchPath = [@(kSantaAppPath) stringByAppendingString:@"/Contents/MacOS/Santa"];
+  t.arguments = @[ @"--load-system-extension" ];
+  [t launch];
+  [t waitUntilExit];
   exit(0);
 }
 

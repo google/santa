@@ -325,11 +325,6 @@ void diskDisappearedCallback(DADiskRef disk, void *context) {
     BOOL old = [change[oldKey] isKindOfClass:[NSNumber class]] ? [change[oldKey] boolValue] : NO;
     if (old == NO && new == YES) {
       LOGI(@"EnableSystemExtension changed NO -> YES");
-      NSTask *t = [[NSTask alloc] init];
-      t.launchPath = [@(kSantaAppPath) stringByAppendingString:@"/Contents/MacOS/Santa"];
-      t.arguments = @[ @"--load-system-extension" ];
-      [t launch];
-      [t waitUntilExit];
       LOGI(@"The penultimate exit.");
       exit(0);
     }
