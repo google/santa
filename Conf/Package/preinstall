@@ -24,7 +24,8 @@
 /bin/sleep 1
 
 GUI_USER=$(/usr/bin/stat -f '%u' /dev/console)
-[[ -n "${GUI_USER}" ]] && /bin/launchctl asuser "${GUI_USER}" /bin/launchctl remove com.google.santagui
-[[ -n "${GUI_USER}" ]] && /bin/launchctl asuser "${GUI_USER}" /bin/launchctl remove com.google.santa
+[[ -z "${GUI_USER}" ]] && exit 0
 
+/bin/launchctl asuser "${GUI_USER}" /bin/launchctl remove com.google.santagui
+/bin/launchctl asuser "${GUI_USER}" /bin/launchctl remove com.google.santa
 exit 0
