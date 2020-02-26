@@ -96,18 +96,21 @@ void cleanup() {
   [fm removeItemAtPath:@"/Library/LaunchDaemons/com.google.santad.plist" error:NULL];
   [SNTDriverManager unloadDriver];
   [fm removeItemAtPath:@"/Library/Extensions/santa-driver.kext" error:NULL];
+
+  LOGI(@"loading com.google.santa.daemon as a SystemExtension");
   NSTask *t = [[NSTask alloc] init];
+  t.launchPath = [@(kSantaAppPath) stringByAppendingString:@"/Contents/MacOS/Santa"];
+  t.arguments = @[ @"--load-system-extension" ];
+  [t launch];
+  [t waitUntilExit];
+
+  t = [[NSTask alloc] init];
   t.launchPath = @"/bin/launchctl";
   t.arguments = @[ @"remove", @"com.google.santad" ];
   [t launch];
   [t waitUntilExit];
 
-  LOGI(@"loading com.google.santa.daemon as a SystemExtension");
-  t = [[NSTask alloc] init];
-  t.launchPath = [@(kSantaAppPath) stringByAppendingString:@"/Contents/MacOS/Santa"];
-  t.arguments = @[ @"--load-system-extension" ];
-  [t launch];
-  [t waitUntilExit];
+  // This exit will likely never be called because the above launchctl command kill us.
   exit(0);
 }
 
