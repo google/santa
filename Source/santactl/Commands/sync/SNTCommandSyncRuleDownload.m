@@ -82,7 +82,8 @@
     NSDictionary *requestDict = cursor ? @{kCursor : cursor} : @{};
     NSDictionary *response = [self performRequest:[self requestWithDictionary:requestDict]];
 
-    if (![response isKindOfClass:[NSDictionary class]]) {
+    if (![response isKindOfClass:[NSDictionary class]] ||
+        ![response[kRules] isKindOfClass:[NSArray class]]) {
       return nil;
     }
 
