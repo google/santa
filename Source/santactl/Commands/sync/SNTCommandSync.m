@@ -38,8 +38,9 @@ REGISTER_COMMAND_NAME(@"sync")
   return YES;
 }
 
+// Connect to santad while we are root, so that we pass the XPC authentication.
 + (BOOL)requiresDaemonConn {
-  return NO;
+  return YES;
 }
 
 + (NSString *)shortHelpText {
@@ -55,9 +56,6 @@ REGISTER_COMMAND_NAME(@"sync")
 }
 
 - (void)runWithArguments:(NSArray *)arguments {
-  // Connect to santad while we are root, so that we pass the XPC authentication
-  [self.daemonConn resume];
-
   // Ensure we have no privileges
   if (!DropRootPrivileges()) {
     LOGE(@"Failed to drop root privileges. Exiting.");
