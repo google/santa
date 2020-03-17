@@ -16,8 +16,6 @@
 
 #import <MOLXPCConnection/MOLXPCConnection.h>
 
-#import <SystemExtensions/SystemExtensions.h>
-
 #import "Source/common/SNTConfigurator.h"
 #import "Source/common/SNTLogging.h"
 #import "Source/common/SNTStrengthify.h"
@@ -25,7 +23,7 @@
 #import "Source/santa/SNTAboutWindowController.h"
 #import "Source/santa/SNTNotificationManager.h"
 
-@interface SNTAppDelegate ()<OSSystemExtensionRequestDelegate>
+@interface SNTAppDelegate ()
 @property SNTAboutWindowController *aboutWindowController;
 @property SNTNotificationManager *notificationManager;
 @property MOLXPCConnection *daemonListener;
@@ -36,10 +34,6 @@
 #pragma mark App Delegate methods
 
 - (void)applicationDidFinishLaunching:(NSNotification *)aNotification {
-  if (@available(macOS 10.15, *)) {
-    [self loadSystemExtension];
-  }
-
   [self setupMenu];
   self.notificationManager = [[SNTNotificationManager alloc] init];
 
@@ -67,20 +61,6 @@
   self.aboutWindowController = [[SNTAboutWindowController alloc] init];
   [self.aboutWindowController showWindow:self];
   return NO;
-}
-
-- (void)loadSystemExtension API_AVAILABLE(macos(10.15)) {
-  if (![[SNTConfigurator configurator] enableSystemExtension]) {
-    LOGI(@"EnableSystemExtension is disabled");
-    return;
-  }
-  LOGI(@"Requesting SystemExtension activation");
-  NSString *e = [SNTXPCControlInterface systemExtensionID];
-  dispatch_queue_t q = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_HIGH, 0);
-  OSSystemExtensionRequest *req = [OSSystemExtensionRequest activationRequestForExtension:e
-                                                                                    queue:q];
-  req.delegate = self;
-  [[OSSystemExtensionManager sharedManager] submitRequest:req];
 }
 
 #pragma mark Connection handling
@@ -141,30 +121,6 @@
   [editMenuItem setSubmenu:editMenu];
   [mainMenu addItem:editMenuItem];
   [NSApp setMainMenu:mainMenu];
-}
-
-#pragma mark OSSystemExtensionRequestDelegate
-
-- (OSSystemExtensionReplacementAction)request:(OSSystemExtensionRequest *)request
-                  actionForReplacingExtension:(OSSystemExtensionProperties *)old
-                                withExtension:(OSSystemExtensionProperties *)new
-    API_AVAILABLE(macos(10.15)) {
-  LOGI(@"SystemExtension \"%@\" request for replacement", request.identifier);
-  return OSSystemExtensionReplacementActionReplace;
-}
-
-- (void)requestNeedsUserApproval:(OSSystemExtensionRequest *)request API_AVAILABLE(macos(10.15)) {
-  LOGI(@"SystemExtension \"%@\" request needs user approval", request.identifier);
-}
-
-- (void)request:(OSSystemExtensionRequest *)request
-    didFailWithError:(NSError *)error API_AVAILABLE(macos(10.15)) {
-  LOGI(@"SystemExtension \"%@\" request did fail: %@", request.identifier, error);
-}
-
-- (void)request:(OSSystemExtensionRequest *)request
-    didFinishWithResult:(OSSystemExtensionRequestResult)result API_AVAILABLE(macos(10.15)) {
-  LOGI(@"SystemExtension \"%@\" request did finish: %ld", request.identifier, (long)result);
 }
 
 @end
