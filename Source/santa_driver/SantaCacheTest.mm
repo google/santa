@@ -251,7 +251,7 @@ template<> uint64_t SantaCacheHasher<S>(S const& s) {
 }
 
 - (void)testStructKeys {
-  auto sut =  SantaCache<S, uint64_t>(10, 2);
+  auto sut = SantaCache<S, uint64_t>(10, 2);
 
   S s1 = {1024, 2048};
   S s2 = {4096, 8192};
@@ -263,6 +263,24 @@ template<> uint64_t SantaCacheHasher<S>(S const& s) {
   XCTAssertEqual(sut.get(s1), 10);
   XCTAssertEqual(sut.get(s2), 20);
   XCTAssertEqual(sut.get(s3), 30);
+}
+
+- (void)testBucketCounts {
+  auto sut = new SantaCache<uint64_t, uint64_t>(UINT16_MAX, 1);
+
+  // These tests verify that the bucket_counts() function can't be abused
+  // with integer {over,under}flow issues in the input or going out-of-bounds
+  // on the buckets array.
+  uint16_t size = 2048;
+  uint64_t start = (UINT64_MAX - 2047);
+  uint16_t per_bucket_counts[2048];
+  sut->bucket_counts(per_bucket_counts, &size, &start);
+  XCTAssertEqual(start, 0, @"Check a high start can't overflow");
+
+  size = UINT16_MAX;
+  start = UINT16_MAX - 1;
+  sut->bucket_counts(per_bucket_counts, &size, &start);
+  XCTAssertEqual(start, 0, @"Check a large size can't overflow");
 }
 
 @end
