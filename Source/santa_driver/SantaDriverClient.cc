@@ -293,7 +293,7 @@ IOReturn SantaDriverClient::externalMethod(
     { &SantaDriverClient::filemod_prefix_filter_reset, 0, 0, 0, 0 },
   };
 
-  if (selector > static_cast<UInt32>(kSantaUserClientNMethods)) {
+  if (selector >= static_cast<UInt32>(kSantaUserClientNMethods)) {
     return kIOReturnBadArgument;
   }
 
