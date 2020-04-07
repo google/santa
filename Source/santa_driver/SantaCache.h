@@ -29,7 +29,6 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
-// TODO(rah): Consider templatizing these.
 #define panic(args...) printf(args); printf("\n"); abort()
 #define IOMallocAligned(sz, alignment) malloc(sz);
 #define IOFreeAligned(addr, sz) free(addr)
@@ -78,6 +77,7 @@ template<typename KeyT, typename ValueT> class SantaCache {
     if (unlikely(per_bucket > 64)) per_bucket = 64;
     max_size_ = maximum_size;
     bucket_count_ = (1 << (32 - __builtin_clz((((uint32_t)max_size_ / per_bucket) - 1) ?: 1)));
+    if (unlikely(bucket_count_ > UINT32_MAX)) bucket_count_ = UINT32_MAX;
     buckets_ = (struct bucket *)IOMallocAligned(bucket_count_ * sizeof(struct bucket), 2);
     bzero(buckets_, bucket_count_ * sizeof(struct bucket));
   }
@@ -197,6 +197,11 @@ template<typename KeyT, typename ValueT> class SantaCache {
     if (per_bucket_counts == nullptr || array_size == nullptr || start_bucket == nullptr) return;
 
     uint64_t start = *start_bucket;
+    if (start >= bucket_count_) {
+      *start_bucket = 0;
+      return;
+    }
+
     uint16_t size = *array_size;
     if (start + size > bucket_count_) size = bucket_count_ - start;
 
