@@ -185,11 +185,17 @@ void SantaDecisionManager::SetLogPort(mach_port_t port) {
 }
 
 IOMemoryDescriptor *SantaDecisionManager::GetDecisionMemoryDescriptor() const {
-  return decision_dataqueue_->getMemoryDescriptor();
+  lck_mtx_lock(decision_dataqueue_lock_);
+  IOMemoryDescriptor *r = decision_dataqueue_->getMemoryDescriptor();
+  lck_mtx_unlock(decision_dataqueue_lock_);
+  return r;
 }
 
 IOMemoryDescriptor *SantaDecisionManager::GetLogMemoryDescriptor() const {
-  return log_dataqueue_->getMemoryDescriptor();
+  lck_mtx_lock(log_dataqueue_lock_);
+  IOMemoryDescriptor *r = log_dataqueue_->getMemoryDescriptor();
+  lck_mtx_unlock(log_dataqueue_lock_);
+  return r;
 }
 
 #pragma mark Listener Control
