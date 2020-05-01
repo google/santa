@@ -52,8 +52,6 @@ This property contains a kind of format string to be turned into the URL to send
 | %file_sha%   | SHA-256 of the file that was blocked     |
 | %machine_id% | ID of the machine                        |
 | %username%   | The executing user                       |
-| %bundle_id%  | Bundle ID of the binary, if applicable   |
-| %bundle_ver% | Bundle version of the binary, if applicable |
 
 For example: `https://sync-server-hostname/%machine_id%/%file_sha%`
 
