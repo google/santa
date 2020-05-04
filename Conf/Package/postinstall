@@ -13,6 +13,10 @@
 mkdir -p /usr/local/bin
 /bin/ln -sf /Applications/Santa.app/Contents/MacOS/santactl /usr/local/bin/santactl
 
+# Remove the kext before com.google.santa.daemon loads if the SystemExtension is already present.
+# This prevents Santa from dueling itself if the "EnableSystemExtension" config is set to false.
+/bin/launchctl list EQHXZ8M8AV.com.google.santa.daemon > /dev/null 2>&1 && rm -rf /Library/Extensions/santa-driver.kext
+
 # Load com.google.santa.daemon, its main has logic to handle loading the kext
 # or relaunching itself as a SystemExtension.
 /bin/launchctl load -w /Library/LaunchDaemons/com.google.santad.plist
