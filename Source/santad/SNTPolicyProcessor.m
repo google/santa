@@ -39,7 +39,8 @@
 }
 
 - (nonnull SNTCachedDecision *)decisionForFileInfo:(nonnull SNTFileInfo *)fileInfo
-                                        fileSHA256:(nullable NSString *)fileSHA256 {
+                                        fileSHA256:(nullable NSString *)fileSHA256
+                                 certificateSHA256:(nullable NSString *)certificateSHA256 {
   SNTCachedDecision *cd = [[SNTCachedDecision alloc] init];
   cd.sha256 = fileSHA256 ?: fileInfo.SHA256;
 
@@ -48,19 +49,23 @@
   SNTCachedDecision *systemCd = self.ruleTable.criticalSystemBinaries[cd.sha256];
   if (systemCd) return systemCd;
 
-  // Grab the code signature, if there's an error don't try to capture
-  // any of the signature details.
   NSError *csInfoError;
-  MOLCodesignChecker *csInfo = [fileInfo codesignCheckerWithError:&csInfoError];
-  if (csInfoError) {
-    csInfo = nil;
-    cd.decisionExtra =
-        [NSString stringWithFormat:@"Signature ignored due to error: %ld", (long)csInfoError.code];
+  if (certificateSHA256.length) {
+    cd.certSHA256 = certificateSHA256;
+  } else {
+    // Grab the code signature, if there's an error don't try to capture
+    // any of the signature details.
+    MOLCodesignChecker *csInfo = [fileInfo codesignCheckerWithError:&csInfoError];
+    if (csInfoError) {
+      csInfo = nil;
+      cd.decisionExtra =
+          [NSString stringWithFormat:@"Signature ignored due to error: %ld", (long)csInfoError.code];
+    } else {
+      cd.certSHA256 = csInfo.leafCertificate.SHA256;
+      cd.certCommonName = csInfo.leafCertificate.commonName;
+      cd.certChain = csInfo.certificates;
+    }
   }
-
-  cd.certSHA256 = csInfo.leafCertificate.SHA256;
-  cd.certCommonName = csInfo.leafCertificate.commonName;
-  cd.certChain = csInfo.certificates;
   cd.quarantineURL = fileInfo.quarantineDataURL;
 
   SNTRule *rule = [self.ruleTable ruleForBinarySHA256:cd.sha256
@@ -157,16 +162,19 @@
 }
 
 - (nonnull SNTCachedDecision *)decisionForFileInfo:(nonnull SNTFileInfo *)fileInfo {
-  return [self decisionForFileInfo:fileInfo fileSHA256:nil];
+  return [self decisionForFileInfo:fileInfo fileSHA256:nil certificateSHA256:nil];
 }
 
 - (nonnull SNTCachedDecision *)decisionForFilePath:(nonnull NSString *)filePath
-                                        fileSHA256:(nullable NSString *)fileSHA256 {
+                                        fileSHA256:(nullable NSString *)fileSHA256
+                                 certificateSHA256:(nullable NSString *)certificateSHA256 {
   SNTFileInfo *fileInfo;
   NSError *error;
   fileInfo = [[SNTFileInfo alloc] initWithPath:filePath error:&error];
   if (!fileInfo) LOGW(@"Failed to read file %@: %@", filePath, error.localizedDescription);
-  return [self decisionForFileInfo:fileInfo fileSHA256:fileSHA256];
+  return [self decisionForFileInfo:fileInfo
+                        fileSHA256:fileSHA256
+                 certificateSHA256:certificateSHA256];
 }
 
 ///
