@@ -60,11 +60,11 @@
       csInfo = nil;
       cd.decisionExtra =
           [NSString stringWithFormat:@"Signature ignored due to error: %ld", (long)csInfoError.code];
+    } else {
+      cd.certSHA256 = csInfo.leafCertificate.SHA256;
+      cd.certCommonName = csInfo.leafCertificate.commonName;
+      cd.certChain = csInfo.certificates;
     }
-
-    cd.certSHA256 = csInfo.leafCertificate.SHA256;
-    cd.certCommonName = csInfo.leafCertificate.commonName;
-    cd.certChain = csInfo.certificates;
   }
   cd.quarantineURL = fileInfo.quarantineDataURL;
 
