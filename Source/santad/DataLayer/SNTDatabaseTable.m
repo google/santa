@@ -14,6 +14,8 @@
 
 #import "Source/santad/DataLayer/SNTDatabaseTable.h"
 
+#include <sqlite3.h>
+
 #import "Source/common/SNTLogging.h"
 
 @interface SNTDatabaseTable ()
@@ -29,6 +31,10 @@
   if (self) {
     [db inDatabase:^(FMDatabase *db) {
       if (![db goodConnection]) {
+        if ([db lastErrorCode] == SQLITE_LOCKED) {
+          LOGW(@"The database '%@' is locked by another process. Aborting.", [db databasePath]);
+          return nil;
+        }
         [db close];
         [[NSFileManager defaultManager] removeItemAtPath:[db databasePath] error:NULL];
         [db open];
