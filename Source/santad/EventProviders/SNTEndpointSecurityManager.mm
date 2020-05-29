@@ -247,7 +247,7 @@
                                               encoding:NSUTF8StringEncoding];
       if (([path isEqualToString:@"/private/var/db/santa/rules.db"] ||
            [path isEqualToString:@"/private/var/db/santa/events.db"]) &&
-           audit_token_to_pid(m->process->audit_token) != getpid()) {
+           audit_token_to_pid(m->process->audit_token) != self.selfPID) {
         LOGW(@"Preventing attempt to delete Santa databases!");
         es_respond_auth_result(self.client, m, ES_AUTH_RESULT_DENY, true);
       }
@@ -262,7 +262,7 @@
 
       if (([path isEqualToString:@"/private/var/db/santa/rules.db"] ||
            [path isEqualToString:@"/private/var/db/santa/events.db"]) &&
-           audit_token_to_pid(m->process->audit_token) != getpid()) {
+           audit_token_to_pid(m->process->audit_token) != self.selfPID) {
         LOGW(@"Preventing attempt to rename Santa databases!");
         es_respond_auth_result(self.client, m, ES_AUTH_RESULT_DENY, true);
       }
