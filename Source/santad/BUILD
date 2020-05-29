@@ -80,7 +80,6 @@ macos_bundle(
     version = "//:version",
     visibility = ["//visibility:public"],
     deps = [":santad_lib"],
-    provisioning_profile = "Santa_Daemon_Dev.provisionprofile",
 )
 
 santa_unit_test(

@@ -57,5 +57,4 @@ macos_application(
     version = "//:version",
     visibility = ["//visibility:public"],
     deps = [":SantaGUI_lib"],
-    provisioning_profile = "Santa_Dev.provisionprofile",
 )
