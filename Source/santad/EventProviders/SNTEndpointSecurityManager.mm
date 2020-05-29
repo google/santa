@@ -245,12 +245,13 @@
       NSString *path = [[NSString alloc] initWithBytes:pathToken.data
                                                 length:pathToken.length
                                               encoding:NSUTF8StringEncoding];
-      if ([path isEqualToString:@"/private/var/db/santa/rules.db"] ||
-          [path isEqualToString:@"/private/var/db/santa/events.db"]) {
+      if (([path isEqualToString:@"/private/var/db/santa/rules.db"] ||
+           [path isEqualToString:@"/private/var/db/santa/events.db"]) &&
+           audit_token_to_pid(m->process->audit_token) != getpid()) {
         LOGW(@"Preventing attempt to delete Santa databases!");
-        es_respond_auth_result(self.client, m, ES_AUTH_RESULT_DENY, false);
+        es_respond_auth_result(self.client, m, ES_AUTH_RESULT_DENY, true);
       }
-      es_respond_auth_result(self.client, m, ES_AUTH_RESULT_ALLOW, false);
+      es_respond_auth_result(self.client, m, ES_AUTH_RESULT_ALLOW, true);
       return;
     }
     case ES_EVENT_TYPE_AUTH_RENAME: {
@@ -258,12 +259,14 @@
       NSString *path = [[NSString alloc] initWithBytes:pathToken.data
                                                 length:pathToken.length
                                               encoding:NSUTF8StringEncoding];
-      if ([path isEqualToString:@"/private/var/db/santa/rules.db"] ||
-          [path isEqualToString:@"/private/var/db/santa/events.db"]) {
+
+      if (([path isEqualToString:@"/private/var/db/santa/rules.db"] ||
+           [path isEqualToString:@"/private/var/db/santa/events.db"]) &&
+           audit_token_to_pid(m->process->audit_token) != getpid()) {
         LOGW(@"Preventing attempt to rename Santa databases!");
-        es_respond_auth_result(self.client, m, ES_AUTH_RESULT_DENY, false);
+        es_respond_auth_result(self.client, m, ES_AUTH_RESULT_DENY, true);
       }
-      es_respond_auth_result(self.client, m, ES_AUTH_RESULT_ALLOW, false);
+      es_respond_auth_result(self.client, m, ES_AUTH_RESULT_ALLOW, true);
       return;
     }
     case ES_EVENT_TYPE_NOTIFY_CLOSE: {
