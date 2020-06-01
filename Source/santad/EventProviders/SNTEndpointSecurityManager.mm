@@ -240,6 +240,35 @@
       callback = self.logCallback;
       break;
     }
+    case ES_EVENT_TYPE_AUTH_UNLINK: {
+      es_string_token_t pathToken = m->event.unlink.target->path;
+      NSString *path = [[NSString alloc] initWithBytes:pathToken.data
+                                                length:pathToken.length
+                                              encoding:NSUTF8StringEncoding];
+      if (([path isEqualToString:@"/private/var/db/santa/rules.db"] ||
+           [path isEqualToString:@"/private/var/db/santa/events.db"]) &&
+           audit_token_to_pid(m->process->audit_token) != self.selfPID) {
+        LOGW(@"Preventing attempt to delete Santa databases!");
+        es_respond_auth_result(self.client, m, ES_AUTH_RESULT_DENY, true);
+      }
+      es_respond_auth_result(self.client, m, ES_AUTH_RESULT_ALLOW, true);
+      return;
+    }
+    case ES_EVENT_TYPE_AUTH_RENAME: {
+      es_string_token_t pathToken = m->event.rename.source->path;
+      NSString *path = [[NSString alloc] initWithBytes:pathToken.data
+                                                length:pathToken.length
+                                              encoding:NSUTF8StringEncoding];
+
+      if (([path isEqualToString:@"/private/var/db/santa/rules.db"] ||
+           [path isEqualToString:@"/private/var/db/santa/events.db"]) &&
+           audit_token_to_pid(m->process->audit_token) != self.selfPID) {
+        LOGW(@"Preventing attempt to rename Santa databases!");
+        es_respond_auth_result(self.client, m, ES_AUTH_RESULT_DENY, true);
+      }
+      es_respond_auth_result(self.client, m, ES_AUTH_RESULT_ALLOW, true);
+      return;
+    }
     case ES_EVENT_TYPE_NOTIFY_CLOSE: {
       sm.action = ACTION_NOTIFY_WRITE;
       targetFile = m->event.close.target;
@@ -311,8 +340,13 @@
   while (!self.connectionEstablished) usleep(100000); // 100ms
 
   self.decisionCallback = callback;
-  es_event_type_t events[] = { ES_EVENT_TYPE_AUTH_EXEC, ES_EVENT_TYPE_NOTIFY_EXIT };
-  es_return_t sret = es_subscribe(self.client, events, 2);
+  es_event_type_t events[] = {
+    ES_EVENT_TYPE_AUTH_EXEC,
+    ES_EVENT_TYPE_AUTH_UNLINK,
+    ES_EVENT_TYPE_AUTH_RENAME,
+    ES_EVENT_TYPE_NOTIFY_EXIT,
+  };
+  es_return_t sret = es_subscribe(self.client, events, sizeof(events) / sizeof(es_event_type_t));
   if (sret != ES_RETURN_SUCCESS) LOGE(@"Unable to subscribe ES_EVENT_TYPE_AUTH_EXEC: %d", sret);
 
   // There's a gap between creating a client and subscribing to events. Creating the client

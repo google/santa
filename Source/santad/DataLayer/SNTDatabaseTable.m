@@ -29,12 +29,14 @@
 
   self = [super init];
   if (self) {
+    __block BOOL bail = NO;
+
     [db inDatabase:^(FMDatabase *db) {
       if (![db goodConnection]) {
         if ([db lastErrorCode] == SQLITE_LOCKED) {
           LOGW(@"The database '%@' is locked by another process. Aborting.", [db databasePath]);
           [db close];
-          self = nil;
+          bail = YES;
           return;
         }
         [db close];
@@ -43,10 +45,10 @@
       }
     }];
 
-    if (self) {
-      _dbQ = db;
-      [self updateTableSchema];
-    }
+    if (bail) return nil;
+
+    _dbQ = db;
+    [self updateTableSchema];
   }
   return self;
 }
