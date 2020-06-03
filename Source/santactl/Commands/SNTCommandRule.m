@@ -98,15 +98,15 @@ REGISTER_COMMAND_NAME(@"rule")
 
     if ([arg caseInsensitiveCompare:@"--allowlist"] == NSOrderedSame ||
         [arg caseInsensitiveCompare:@"--whitelist"] == NSOrderedSame) {
-      newRule.state = SNTRuleStateAllowlist;
+      newRule.state = SNTRuleStateAllow;
     } else if ([arg caseInsensitiveCompare:@"--blocklist"] == NSOrderedSame ||
                [arg caseInsensitiveCompare:@"--blacklist"] == NSOrderedSame) {
-      newRule.state = SNTRuleStateBlocklist;
+      newRule.state = SNTRuleStateBlock;
     } else if ([arg caseInsensitiveCompare:@"--silent-blocklist"] == NSOrderedSame ||
                [arg caseInsensitiveCompare:@"--silent-blacklist"] == NSOrderedSame) {
-      newRule.state = SNTRuleStateSilentBlocklist;
+      newRule.state = SNTRuleStateSilentBlock;
     } else if ([arg caseInsensitiveCompare:@"--compiler"] == NSOrderedSame) {
-      newRule.state = SNTRuleStateAllowlistCompiler;
+      newRule.state = SNTRuleStateAllowCompiler;
     } else if ([arg caseInsensitiveCompare:@"--remove"] == NSOrderedSame) {
       newRule.state = SNTRuleStateRemove;
     } else if ([arg caseInsensitiveCompare:@"--check"] == NSOrderedSame) {
@@ -244,7 +244,7 @@ REGISTER_COMMAND_NAME(@"rule")
   [[daemonConn remoteObjectProxy] databaseRuleForBinarySHA256:fileSHA256
                                             certificateSHA256:certificateSHA256
                                                         reply:^(SNTRule *r) {
-    if (r.state == SNTRuleStateAllowlistTransitive) {
+    if (r.state == SNTRuleStateAllowTransitive) {
       NSDate *date = [NSDate dateWithTimeIntervalSinceReferenceDate:r.timestamp];
       [output appendString:[NSString stringWithFormat:@"\nlast access date: %@", [date description]]];
     }

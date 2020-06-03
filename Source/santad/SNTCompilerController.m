@@ -72,10 +72,10 @@
     // alone, so that a allowlist or blocklist rule can't be overwritten by a transitive one.
     SNTRuleTable *ruleTable = [SNTDatabaseController ruleTable];
     SNTRule *prevRule = [ruleTable ruleForBinarySHA256:fi.SHA256 certificateSHA256:nil];
-    if (!prevRule || prevRule.state == SNTRuleStateAllowlistTransitive) {
+    if (!prevRule || prevRule.state == SNTRuleStateAllowTransitive) {
       // Construct a new transitive allowlist rule for the executable.
       SNTRule *rule = [[SNTRule alloc] initWithShasum:fi.SHA256
-                                                state:SNTRuleStateAllowlistTransitive
+                                                state:SNTRuleStateAllowTransitive
                                                  type:SNTRuleTypeBinary
                                             customMsg:@""];
 

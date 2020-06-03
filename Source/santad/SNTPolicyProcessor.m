@@ -74,27 +74,27 @@
     switch (rule.type) {
       case SNTRuleTypeBinary:
         switch (rule.state) {
-          case SNTRuleStateAllowlist:
+          case SNTRuleStateAllow:
             cd.decision = SNTEventStateAllowBinary;
             return cd;
-          case SNTRuleStateSilentBlocklist:
+          case SNTRuleStateSilentBlock:
             cd.silentBlock = YES;
-          case SNTRuleStateBlocklist:
+          case SNTRuleStateBlock:
             cd.customMsg = rule.customMsg;
             cd.decision = SNTEventStateBlockBinary;
             return cd;
-          case SNTRuleStateAllowlistCompiler:
+          case SNTRuleStateAllowCompiler:
             // If transitive rules are enabled, then SNTRuleStateAllowListCompiler rules
             // become SNTEventStateAllowCompiler decisions.  Otherwise we treat the rule as if
-            // it were SNTRuleStateAllowlist.
+            // it were SNTRuleStateAllow.
             if ([[SNTConfigurator configurator] enableTransitiveRules]) {
               cd.decision = SNTEventStateAllowCompiler;
             } else {
               cd.decision = SNTEventStateAllowBinary;
             }
             return cd;
-          case SNTRuleStateAllowlistTransitive:
-            // If transitive rules are enabled, then SNTRuleStateAllowlistTransitive
+          case SNTRuleStateAllowTransitive:
+            // If transitive rules are enabled, then SNTRuleStateAllowTransitive
             // rules become SNTEventStateAllowTransitive decisions.  Otherwise, we treat the
             // rule as if it were SNTRuleStateUnknown.
             if ([[SNTConfigurator configurator] enableTransitiveRules]) {
@@ -108,13 +108,13 @@
         break;
       case SNTRuleTypeCertificate:
         switch (rule.state) {
-          case SNTRuleStateAllowlist:
+          case SNTRuleStateAllow:
             cd.decision = SNTEventStateAllowCertificate;
             return cd;
-          case SNTRuleStateSilentBlocklist:
+          case SNTRuleStateSilentBlock:
             cd.silentBlock = YES;
             // intentional fallthrough
-          case SNTRuleStateBlocklist:
+          case SNTRuleStateBlock:
             cd.customMsg = rule.customMsg;
             cd.decision = SNTEventStateBlockCertificate;
             return cd;

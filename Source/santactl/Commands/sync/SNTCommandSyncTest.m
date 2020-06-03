@@ -375,15 +375,15 @@
 
   NSArray *rules = @[
     [[SNTRule alloc] initWithShasum:@"ee382e199f7eda58863a93a7854b930ade35798bc6856ee8e6ab6ce9277f0eab"
-                              state:SNTRuleStateBlocklist
+                              state:SNTRuleStateBlock
                                type:SNTRuleTypeBinary
                           customMsg:@""],
     [[SNTRule alloc] initWithShasum:@"46f8c706d0533a54554af5fc163eea704f10c08b30f8a5db12bfdc04fb382fc3"
-                              state:SNTRuleStateAllowlist
+                              state:SNTRuleStateAllow
                                type:SNTRuleTypeCertificate
                           customMsg:@""],
     [[SNTRule alloc] initWithShasum:@"7846698e47ef41be80b83fb9e2b98fa6dc46c9188b068bff323c302955a00142"
-                              state:SNTRuleStateBlocklist
+                              state:SNTRuleStateBlock
                                type:SNTRuleTypeCertificate
                           customMsg:@"Hi There"],
   ];

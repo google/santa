@@ -136,16 +136,16 @@
   NSString *policyString = dict[kRulePolicy];
   if ([policyString isEqual:kRulePolicyAllowlist] ||
       [policyString isEqual:kRulePolicyAllowlistDeprecated]) {
-    newRule.state = SNTRuleStateAllowlist;
+    newRule.state = SNTRuleStateAllow;
   } else if ([policyString isEqual:kRulePolicyAllowlistCompiler] ||
              [policyString isEqual:kRulePolicyAllowlistCompilerDeprecated]) {
-    newRule.state = SNTRuleStateAllowlistCompiler;
+    newRule.state = SNTRuleStateAllowCompiler;
   } else if ([policyString isEqual:kRulePolicyBlocklist] ||
              [policyString isEqual:kRulePolicyBlocklistDeprecated]) {
-    newRule.state = SNTRuleStateBlocklist;
+    newRule.state = SNTRuleStateBlock;
   } else if ([policyString isEqual:kRulePolicySilentBlocklist] ||
              [policyString isEqual:kRulePolicySilentBlocklistDeprecated]) {
-    newRule.state = SNTRuleStateSilentBlocklist;
+    newRule.state = SNTRuleStateSilentBlock;
   } else if ([policyString isEqual:kRulePolicyRemove]) {
     newRule.state = SNTRuleStateRemove;
   } else {
@@ -167,7 +167,7 @@
   }
 
   // Check rule for extra notification related info.
-  if (newRule.state == SNTRuleStateAllowlist || newRule.state == SNTRuleStateAllowlistCompiler) {
+  if (newRule.state == SNTRuleStateAllow || newRule.state == SNTRuleStateAllowlistCompiler) {
     // primaryHash is the bundle hash if there was a bundle hash included in the rule, otherwise
     // it is simply the binary hash.
     NSString *primaryHash = dict[kFileBundleHash];

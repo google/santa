@@ -269,9 +269,9 @@
 #pragma mark Transitive Allowlist Settings
 
 ///
-///  If YES, binaries marked with SNTRuleStateAllowlistCompiler rules are allowed to transitively
-///  allow any executables that they produce.  If NO, SNTRuleStateAllowlistCompiler rules are
-///  interpreted as if they were simply SNTRuleStateAllowlist rules.  Defaults to NO.
+///  If YES, binaries marked with SNTRuleStateAllowCompiler rules are allowed to transitively
+///  allow any executables that they produce.  If NO, SNTRuleStateAllowCompiler rules are
+///  interpreted as if they were simply SNTRuleStateAllow rules.  Defaults to NO.
 ///
 @property BOOL enableTransitiveRules;
 

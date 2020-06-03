@@ -29,13 +29,13 @@ typedef NS_ENUM(NSInteger, SNTRuleType) {
 typedef NS_ENUM(NSInteger, SNTRuleState) {
   SNTRuleStateUnknown,
 
-  SNTRuleStateAllowlist = 1,
-  SNTRuleStateBlocklist = 2,
-  SNTRuleStateSilentBlocklist = 3,
+  SNTRuleStateAllow = 1,
+  SNTRuleStateBlock = 2,
+  SNTRuleStateSilentBlock = 3,
   SNTRuleStateRemove = 4,
 
-  SNTRuleStateAllowlistCompiler = 5,
-  SNTRuleStateAllowlistTransitive = 6,
+  SNTRuleStateAllowCompiler = 5,
+  SNTRuleStateAllowTransitive = 6,
 };
 
 typedef NS_ENUM(NSInteger, SNTClientMode) {

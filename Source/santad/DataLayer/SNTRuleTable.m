@@ -160,7 +160,7 @@ static const NSUInteger kTransitiveRuleExpirationSeconds = 6 * 30 * 24 * 3600;
   __block NSUInteger count = 0;
   [self inDatabase:^(FMDatabase *db) {
     count = [db longForQuery:@"SELECT COUNT(*) FROM rules WHERE state=?",
-             @(SNTRuleStateAllowlistCompiler)];
+             @(SNTRuleStateAllowCompiler)];
   }];
   return count;
 }
@@ -169,7 +169,7 @@ static const NSUInteger kTransitiveRuleExpirationSeconds = 6 * 30 * 24 * 3600;
   __block NSUInteger count = 0;
   [self inDatabase:^(FMDatabase *db) {
     count = [db longForQuery:@"SELECT COUNT(*) FROM rules WHERE state=?",
-             @(SNTRuleStateAllowlistTransitive)];
+             @(SNTRuleStateAllowTransitive)];
   }];
   return count;
 }
@@ -216,7 +216,7 @@ static const NSUInteger kTransitiveRuleExpirationSeconds = 6 * 30 * 24 * 3600;
   // if no existing rule has matched.
   if (!rule && [certificateSHA256 isEqual:self.launchdCSInfo.leafCertificate.SHA256]) {
     rule = [[SNTRule alloc] initWithShasum:certificateSHA256
-                                     state:SNTRuleStateAllowlist
+                                     state:SNTRuleStateAllow
                                       type:SNTRuleTypeCertificate
                                  customMsg:nil
                                  timestamp:0];
@@ -280,7 +280,7 @@ static const NSUInteger kTransitiveRuleExpirationSeconds = 6 * 30 * 24 * 3600;
 - (BOOL)addedRulesShouldFlushDecisionCache:(NSArray *)rules {
   // Check for non-plain-allowlist rules first before querying the database.
   for (SNTRule *rule in rules) {
-    if (rule.state != SNTRuleStateAllowlist) return YES;
+    if (rule.state != SNTRuleStateAllow) return YES;
   }
 
   // If still here, then all rules in the array are allowlist rules.  So now we look for allowlist
@@ -294,7 +294,7 @@ static const NSUInteger kTransitiveRuleExpirationSeconds = 6 * 30 * 24 * 3600;
 
       if ([db longForQuery:
            @"SELECT COUNT(*) FROM rules WHERE shasum=? AND type=? AND state=? LIMIT 1",
-           rule.shasum, @(SNTRuleTypeBinary), @(SNTRuleStateAllowlistCompiler)] > 0) {
+           rule.shasum, @(SNTRuleTypeBinary), @(SNTRuleStateAllowCompiler)] > 0) {
         flushDecisionCache = YES;
         break;
       }
@@ -330,7 +330,7 @@ static const NSUInteger kTransitiveRuleExpirationSeconds = 6 * 30 * 24 * 3600;
 
   [self inDatabase:^(FMDatabase *db) {
     if (![db executeUpdate:@"DELETE FROM rules WHERE state=? AND timestamp < ?",
-          @(SNTRuleStateAllowlistTransitive), @(outdatedTimestamp)]) {
+          @(SNTRuleStateAllowTransitive), @(outdatedTimestamp)]) {
       LOGE(@"Could not remove outdated transitive rules");
     }
   }];

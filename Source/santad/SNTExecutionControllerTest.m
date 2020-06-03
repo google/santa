@@ -103,7 +103,7 @@
   OCMStub([self.mockFileInfo SHA256]).andReturn(@"a");
 
   SNTRule *rule = [[SNTRule alloc] init];
-  rule.state = SNTRuleStateAllowlist;
+  rule.state = SNTRuleStateAllow;
   rule.type = SNTRuleTypeBinary;
   OCMStub([self.mockRuleDatabase ruleForBinarySHA256:@"a" certificateSHA256:nil]).andReturn(rule);
 
@@ -117,7 +117,7 @@
   OCMStub([self.mockFileInfo SHA256]).andReturn(@"a");
 
   SNTRule *rule = [[SNTRule alloc] init];
-  rule.state = SNTRuleStateBlocklist;
+  rule.state = SNTRuleStateBlock;
   rule.type = SNTRuleTypeBinary;
   OCMStub([self.mockRuleDatabase ruleForBinarySHA256:@"a" certificateSHA256:nil]).andReturn(rule);
 
@@ -135,7 +135,7 @@
   OCMStub([cert SHA256]).andReturn(@"a");
 
   SNTRule *rule = [[SNTRule alloc] init];
-  rule.state = SNTRuleStateAllowlist;
+  rule.state = SNTRuleStateAllow;
   rule.type = SNTRuleTypeCertificate;
   OCMStub([self.mockRuleDatabase ruleForBinarySHA256:nil certificateSHA256:@"a"]).andReturn(rule);
 
@@ -152,7 +152,7 @@
   OCMStub([cert SHA256]).andReturn(@"a");
 
   SNTRule *rule = [[SNTRule alloc] init];
-  rule.state = SNTRuleStateBlocklist;
+  rule.state = SNTRuleStateBlock;
   rule.type = SNTRuleTypeCertificate;
   OCMStub([self.mockRuleDatabase ruleForBinarySHA256:nil certificateSHA256:@"a"]).andReturn(rule);
 
@@ -167,7 +167,7 @@
   OCMStub([self.mockConfigurator enableTransitiveRules]).andReturn(YES);
 
   SNTRule *rule = [[SNTRule alloc] init];
-  rule.state = SNTRuleStateAllowlistCompiler;
+  rule.state = SNTRuleStateAllowCompiler;
   rule.type = SNTRuleTypeBinary;
   OCMStub([self.mockRuleDatabase ruleForBinarySHA256:@"a" certificateSHA256:nil]).andReturn(rule);
 
@@ -183,7 +183,7 @@
   OCMStub([self.mockConfigurator enableTransitiveRules]).andReturn(NO);
 
   SNTRule *rule = [[SNTRule alloc] init];
-  rule.state = SNTRuleStateAllowlistCompiler;
+  rule.state = SNTRuleStateAllowCompiler;
   rule.type = SNTRuleTypeBinary;
   OCMStub([self.mockRuleDatabase ruleForBinarySHA256:@"a" certificateSHA256:nil]).andReturn(rule);
 
@@ -198,7 +198,7 @@
   OCMStub([self.mockConfigurator enableTransitiveRules]).andReturn(YES);
 
   SNTRule *rule = [[SNTRule alloc] init];
-  rule.state = SNTRuleStateAllowlistTransitive;
+  rule.state = SNTRuleStateAllowTransitive;
   rule.type = SNTRuleTypeBinary;
   OCMStub([self.mockRuleDatabase ruleForBinarySHA256:@"a" certificateSHA256:nil]).andReturn(rule);
 
@@ -214,7 +214,7 @@
   OCMStub([self.mockConfigurator enableTransitiveRules]).andReturn(NO);
 
   SNTRule *rule = [[SNTRule alloc] init];
-  rule.state = SNTRuleStateAllowlistTransitive;
+  rule.state = SNTRuleStateAllowTransitive;
   rule.type = SNTRuleTypeBinary;
   OCMStub([self.mockRuleDatabase ruleForBinarySHA256:@"a" certificateSHA256:nil]).andReturn(rule);
 
