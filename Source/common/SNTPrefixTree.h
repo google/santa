@@ -92,9 +92,6 @@ class SNTPrefixTree {
   lck_rw_t *spt_lock_;
   lck_mtx_t *spt_add_lock_;
 #else // KERNEL
-  void *spt_lock_grp_;
-  void *spt_lock_grp_attr_;
-  void *spt_lock_attr_;
   pthread_rwlock_t spt_lock_;
   std::mutex *spt_add_lock_;
 #endif // KERNEL
