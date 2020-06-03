@@ -98,7 +98,7 @@
   [super tearDown];
 }
 
-- (void)testBinaryAllowlistRule {
+- (void)testBinaryAllowRule {
   OCMStub([self.mockFileInfo isMachO]).andReturn(YES);
   OCMStub([self.mockFileInfo SHA256]).andReturn(@"a");
 
@@ -112,7 +112,7 @@
   OCMVerify([self.mockDriverManager postAction:ACTION_RESPOND_ALLOW forMessage:[self getMessage]]);
 }
 
-- (void)testBinaryBlocklistRule {
+- (void)testBinaryBlockRule {
   OCMStub([self.mockFileInfo isMachO]).andReturn(YES);
   OCMStub([self.mockFileInfo SHA256]).andReturn(@"a");
 
@@ -127,7 +127,7 @@
 
 }
 
-- (void)testCertificateAllowlistRule {
+- (void)testCertificateAllowRule {
   OCMStub([self.mockFileInfo isMachO]).andReturn(YES);
 
   id cert = OCMClassMock([MOLCertificate class]);
@@ -144,7 +144,7 @@
   OCMVerify([self.mockDriverManager postAction:ACTION_RESPOND_ALLOW forMessage:[self getMessage]]);
 }
 
-- (void)testCertificateBlocklistRule {
+- (void)testCertificateBlockRule {
   OCMStub([self.mockFileInfo isMachO]).andReturn(YES);
 
   id cert = OCMClassMock([MOLCertificate class]);
@@ -161,7 +161,7 @@
   OCMVerify([self.mockDriverManager postAction:ACTION_RESPOND_DENY forMessage:[self getMessage]]);
 }
 
-- (void)testBinaryAllowlistCompilerRule {
+- (void)testBinaryAllowCompilerRule {
   OCMStub([self.mockFileInfo isMachO]).andReturn(YES);
   OCMStub([self.mockFileInfo SHA256]).andReturn(@"a");
   OCMStub([self.mockConfigurator enableTransitiveRules]).andReturn(YES);
@@ -177,7 +177,7 @@
                                     forMessage:[self getMessage]]);
 }
 
-- (void)testBinaryAllowlistCompilerRuleDisabled {
+- (void)testBinaryAllowCompilerRuleDisabled {
   OCMStub([self.mockFileInfo isMachO]).andReturn(YES);
   OCMStub([self.mockFileInfo SHA256]).andReturn(@"a");
   OCMStub([self.mockConfigurator enableTransitiveRules]).andReturn(NO);
@@ -192,7 +192,7 @@
   OCMVerify([self.mockDriverManager postAction:ACTION_RESPOND_ALLOW forMessage:[self getMessage]]);
 }
 
-- (void)testBinaryAllowlistTransitiveRule {
+- (void)testBinaryAllowTransitiveRule {
   OCMStub([self.mockFileInfo isMachO]).andReturn(YES);
   OCMStub([self.mockFileInfo SHA256]).andReturn(@"a");
   OCMStub([self.mockConfigurator enableTransitiveRules]).andReturn(YES);
@@ -207,7 +207,7 @@
   OCMVerify([self.mockDriverManager postAction:ACTION_RESPOND_ALLOW forMessage:[self getMessage]]);
 }
 
-- (void)testBinaryAllowlistTransitiveRuleDisabled {
+- (void)testBinaryAllowTransitiveRuleDisabled {
   OCMStub([self.mockFileInfo isMachO]).andReturn(YES);
   OCMStub([self.mockFileInfo SHA256]).andReturn(@"a");
   OCMStub([self.mockConfigurator clientMode]).andReturn(SNTClientModeLockdown);

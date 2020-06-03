@@ -192,7 +192,7 @@
   // Determine if file is within an allowed path
   NSRegularExpression *re = [[SNTConfigurator configurator] allowedPathRegex];
   if ([re numberOfMatchesInString:fi.path options:0 range:NSMakeRange(0, fi.path.length)]) {
-    return @"Allowlist Regex";
+    return @"Allowed Path Regex";
   }
 
   // If file is not a Mach-O file, we're not interested.
@@ -208,7 +208,7 @@
 
   NSRegularExpression *re = [[SNTConfigurator configurator] blockedPathRegex];
   if ([re numberOfMatchesInString:fi.path options:0 range:NSMakeRange(0, fi.path.length)]) {
-    return @"Blocklist Regex";
+    return @"Blocked Path Regex";
   }
 
   if ([[SNTConfigurator configurator] enablePageZeroProtection] && fi.isMissingPageZero) {
