@@ -107,9 +107,9 @@ double watchdogRAMPeak = 0;
                        reply:(void (^)(NSError *error))reply {
   SNTRuleTable *ruleTable = [SNTDatabaseController ruleTable];
 
-  // If any rules are added that are not plain whitelist rules, then flush decision cache.
-  // In particular, the addition of whitelist compiler rules should cause a cache flush.
-  // We also flush cache if a whitelist compiler rule is replaced with a whitelist rule.
+  // If any rules are added that are not plain allowlist rules, then flush decision cache.
+  // In particular, the addition of allowlist compiler rules should cause a cache flush.
+  // We also flush cache if a allowlist compiler rule is replaced with a allowlist rule.
   BOOL flushCache = (cleanSlate || [ruleTable addedRulesShouldFlushDecisionCache:rules]);
 
   NSError *error;
@@ -208,19 +208,19 @@ double watchdogRAMPeak = 0;
   reply();
 }
 
-- (void)setWhitelistPathRegex:(NSString *)pattern reply:(void (^)(void))reply {
+- (void)setAllowedPathRegex:(NSString *)pattern reply:(void (^)(void))reply {
   NSRegularExpression *re = [NSRegularExpression regularExpressionWithPattern:pattern
                                                                       options:0
                                                                         error:NULL];
-  [[SNTConfigurator configurator] setSyncServerWhitelistPathRegex:re];
+  [[SNTConfigurator configurator] setSyncServerAllowedPathRegex:re];
   reply();
 }
 
-- (void)setBlacklistPathRegex:(NSString *)pattern reply:(void (^)(void))reply {
+- (void)setBlockedPathRegex:(NSString *)pattern reply:(void (^)(void))reply {
   NSRegularExpression *re = [NSRegularExpression regularExpressionWithPattern:pattern
                                                                       options:0
                                                                         error:NULL];
-  [[SNTConfigurator configurator] setSyncServerBlacklistPathRegex:re];
+  [[SNTConfigurator configurator] setSyncServerBlockedPathRegex:re];
   reply();
 }
 
@@ -233,12 +233,12 @@ double watchdogRAMPeak = 0;
   reply();
 }
 
-- (void)enableTransitiveWhitelisting:(void (^)(BOOL))reply {
-  reply([SNTConfigurator configurator].enableTransitiveWhitelisting);
+- (void)enableTransitiveRules:(void (^)(BOOL))reply {
+  reply([SNTConfigurator configurator].enableTransitiveRules);
 }
 
-- (void)setEnableTransitiveWhitelisting:(BOOL)enabled reply:(void (^)(void))reply {
-  [[SNTConfigurator configurator] setEnableTransitiveWhitelisting:enabled];
+- (void)setEnableTransitiveRules:(BOOL)enabled reply:(void (^)(void))reply {
+  [[SNTConfigurator configurator] setEnableTransitiveRules:enabled];
   reply();
 }
 

@@ -98,12 +98,12 @@
   [super tearDown];
 }
 
-- (void)testBinaryWhitelistRule {
+- (void)testBinaryAllowlistRule {
   OCMStub([self.mockFileInfo isMachO]).andReturn(YES);
   OCMStub([self.mockFileInfo SHA256]).andReturn(@"a");
 
   SNTRule *rule = [[SNTRule alloc] init];
-  rule.state = SNTRuleStateWhitelist;
+  rule.state = SNTRuleStateAllowlist;
   rule.type = SNTRuleTypeBinary;
   OCMStub([self.mockRuleDatabase ruleForBinarySHA256:@"a" certificateSHA256:nil]).andReturn(rule);
 
@@ -112,12 +112,12 @@
   OCMVerify([self.mockDriverManager postAction:ACTION_RESPOND_ALLOW forMessage:[self getMessage]]);
 }
 
-- (void)testBinaryBlacklistRule {
+- (void)testBinaryBlocklistRule {
   OCMStub([self.mockFileInfo isMachO]).andReturn(YES);
   OCMStub([self.mockFileInfo SHA256]).andReturn(@"a");
 
   SNTRule *rule = [[SNTRule alloc] init];
-  rule.state = SNTRuleStateBlacklist;
+  rule.state = SNTRuleStateBlocklist;
   rule.type = SNTRuleTypeBinary;
   OCMStub([self.mockRuleDatabase ruleForBinarySHA256:@"a" certificateSHA256:nil]).andReturn(rule);
 
@@ -127,7 +127,7 @@
 
 }
 
-- (void)testCertificateWhitelistRule {
+- (void)testCertificateAllowlistRule {
   OCMStub([self.mockFileInfo isMachO]).andReturn(YES);
 
   id cert = OCMClassMock([MOLCertificate class]);
@@ -135,7 +135,7 @@
   OCMStub([cert SHA256]).andReturn(@"a");
 
   SNTRule *rule = [[SNTRule alloc] init];
-  rule.state = SNTRuleStateWhitelist;
+  rule.state = SNTRuleStateAllowlist;
   rule.type = SNTRuleTypeCertificate;
   OCMStub([self.mockRuleDatabase ruleForBinarySHA256:nil certificateSHA256:@"a"]).andReturn(rule);
 
@@ -144,7 +144,7 @@
   OCMVerify([self.mockDriverManager postAction:ACTION_RESPOND_ALLOW forMessage:[self getMessage]]);
 }
 
-- (void)testCertificateBlacklistRule {
+- (void)testCertificateBlocklistRule {
   OCMStub([self.mockFileInfo isMachO]).andReturn(YES);
 
   id cert = OCMClassMock([MOLCertificate class]);
@@ -152,7 +152,7 @@
   OCMStub([cert SHA256]).andReturn(@"a");
 
   SNTRule *rule = [[SNTRule alloc] init];
-  rule.state = SNTRuleStateBlacklist;
+  rule.state = SNTRuleStateBlocklist;
   rule.type = SNTRuleTypeCertificate;
   OCMStub([self.mockRuleDatabase ruleForBinarySHA256:nil certificateSHA256:@"a"]).andReturn(rule);
 
@@ -161,13 +161,13 @@
   OCMVerify([self.mockDriverManager postAction:ACTION_RESPOND_DENY forMessage:[self getMessage]]);
 }
 
-- (void)testBinaryWhitelistCompilerRule {
+- (void)testBinaryAllowlistCompilerRule {
   OCMStub([self.mockFileInfo isMachO]).andReturn(YES);
   OCMStub([self.mockFileInfo SHA256]).andReturn(@"a");
-  OCMStub([self.mockConfigurator enableTransitiveWhitelisting]).andReturn(YES);
+  OCMStub([self.mockConfigurator enableTransitiveRules]).andReturn(YES);
 
   SNTRule *rule = [[SNTRule alloc] init];
-  rule.state = SNTRuleStateWhitelistCompiler;
+  rule.state = SNTRuleStateAllowlistCompiler;
   rule.type = SNTRuleTypeBinary;
   OCMStub([self.mockRuleDatabase ruleForBinarySHA256:@"a" certificateSHA256:nil]).andReturn(rule);
 
@@ -177,13 +177,13 @@
                                     forMessage:[self getMessage]]);
 }
 
-- (void)testBinaryWhitelistCompilerRuleDisabled {
+- (void)testBinaryAllowlistCompilerRuleDisabled {
   OCMStub([self.mockFileInfo isMachO]).andReturn(YES);
   OCMStub([self.mockFileInfo SHA256]).andReturn(@"a");
-  OCMStub([self.mockConfigurator enableTransitiveWhitelisting]).andReturn(NO);
+  OCMStub([self.mockConfigurator enableTransitiveRules]).andReturn(NO);
 
   SNTRule *rule = [[SNTRule alloc] init];
-  rule.state = SNTRuleStateWhitelistCompiler;
+  rule.state = SNTRuleStateAllowlistCompiler;
   rule.type = SNTRuleTypeBinary;
   OCMStub([self.mockRuleDatabase ruleForBinarySHA256:@"a" certificateSHA256:nil]).andReturn(rule);
 
@@ -192,13 +192,13 @@
   OCMVerify([self.mockDriverManager postAction:ACTION_RESPOND_ALLOW forMessage:[self getMessage]]);
 }
 
-- (void)testBinaryWhitelistTransitiveRule {
+- (void)testBinaryAllowlistTransitiveRule {
   OCMStub([self.mockFileInfo isMachO]).andReturn(YES);
   OCMStub([self.mockFileInfo SHA256]).andReturn(@"a");
-  OCMStub([self.mockConfigurator enableTransitiveWhitelisting]).andReturn(YES);
+  OCMStub([self.mockConfigurator enableTransitiveRules]).andReturn(YES);
 
   SNTRule *rule = [[SNTRule alloc] init];
-  rule.state = SNTRuleStateWhitelistTransitive;
+  rule.state = SNTRuleStateAllowlistTransitive;
   rule.type = SNTRuleTypeBinary;
   OCMStub([self.mockRuleDatabase ruleForBinarySHA256:@"a" certificateSHA256:nil]).andReturn(rule);
 
@@ -207,14 +207,14 @@
   OCMVerify([self.mockDriverManager postAction:ACTION_RESPOND_ALLOW forMessage:[self getMessage]]);
 }
 
-- (void)testBinaryWhitelistTransitiveRuleDisabled {
+- (void)testBinaryAllowlistTransitiveRuleDisabled {
   OCMStub([self.mockFileInfo isMachO]).andReturn(YES);
   OCMStub([self.mockFileInfo SHA256]).andReturn(@"a");
   OCMStub([self.mockConfigurator clientMode]).andReturn(SNTClientModeLockdown);
-  OCMStub([self.mockConfigurator enableTransitiveWhitelisting]).andReturn(NO);
+  OCMStub([self.mockConfigurator enableTransitiveRules]).andReturn(NO);
 
   SNTRule *rule = [[SNTRule alloc] init];
-  rule.state = SNTRuleStateWhitelistTransitive;
+  rule.state = SNTRuleStateAllowlistTransitive;
   rule.type = SNTRuleTypeBinary;
   OCMStub([self.mockRuleDatabase ruleForBinarySHA256:@"a" certificateSHA256:nil]).andReturn(rule);
 

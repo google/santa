@@ -49,16 +49,16 @@
     [[self.daemonConn remoteObjectProxy] setSyncCleanRequired:NO reply:replyBlock];
   }
 
-  // Update whitelist/blacklist regexes
-  if (self.syncState.whitelistRegex) {
+  // Update allowlist/blocklist regexes
+  if (self.syncState.allowlistRegex) {
     dispatch_group_enter(group);
-    [[self.daemonConn remoteObjectProxy] setWhitelistPathRegex:self.syncState.whitelistRegex
-                                                         reply:replyBlock];
+    [[self.daemonConn remoteObjectProxy] setAllowedPathRegex:self.syncState.allowlistRegex
+                                                       reply:replyBlock];
   }
-  if (self.syncState.blacklistRegex) {
+  if (self.syncState.blocklistRegex) {
     dispatch_group_enter(group);
-    [[self.daemonConn remoteObjectProxy] setBlacklistPathRegex:self.syncState.blacklistRegex
-                                                         reply:replyBlock];
+    [[self.daemonConn remoteObjectProxy] setBlockedPathRegex:self.syncState.blocklistRegex
+                                                       reply:replyBlock];
   }
 
   // Update last sync success

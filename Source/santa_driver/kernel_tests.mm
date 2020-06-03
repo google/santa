@@ -360,7 +360,7 @@
   }
 
   // Now replace the contents of the test file (which is cached) with the contents of /bin/ed,
-  // which is 'blacklisted' by SHA-256 during the tests.
+  // which is blocked by SHA-256 during the tests.
   FILE *infile = fopen("/bin/ed", "r");
   FILE *outfile = fopen(target.UTF8String, "w");
   int ch;

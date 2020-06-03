@@ -50,8 +50,8 @@
 
 /// Settings sent from server during preflight that are set during postflight.
 @property SNTClientMode clientMode;
-@property NSString *whitelistRegex;
-@property NSString *blacklistRegex;
+@property NSString *allowlistRegex;
+@property NSString *blocklistRegex;
 
 /// Clean sync flag, if True, all existing rules should be deleted before inserting any new rules.
 @property BOOL cleanSync;
@@ -69,9 +69,9 @@
 @property BOOL targetedRuleSync;
 
 /// Reference to the sync manager's ruleSyncCache. Used to lookup binary names for notifications.
-@property(weak) NSMutableDictionary *whitelistNotifications;
+@property(weak) NSMutableDictionary *allowlistNotifications;
 
-/// Reference to the serial operation queue used for accessing whitelistNotifications.
-@property(weak) NSOperationQueue *whitelistNotificationQueue;
+/// Reference to the serial operation queue used for accessing allowlistNotifications.
+@property(weak) NSOperationQueue *allowlistNotificationQueue;
 
 @end
