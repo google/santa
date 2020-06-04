@@ -167,7 +167,7 @@
   }
 
   // Check rule for extra notification related info.
-  if (newRule.state == SNTRuleStateAllow || newRule.state == SNTRuleStateAllowlistCompiler) {
+  if (newRule.state == SNTRuleStateAllow || newRule.state == SNTRuleStateAllowCompiler) {
     // primaryHash is the bundle hash if there was a bundle hash included in the rule, otherwise
     // it is simply the binary hash.
     NSString *primaryHash = dict[kFileBundleHash];
