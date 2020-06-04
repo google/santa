@@ -51,7 +51,7 @@ GUI_USER=$(/usr/bin/stat -f '%u' /dev/console)
 
 # Only copy the kext if the SystemExtension is not present.
 # This prevents Santa from dueling itself if the "EnableSystemExtension" config is set to false.
-/bin/launchctl list EQHXZ8M8AV.com.google.santa.daemon > /dev/null 2>&1 || /bin/cp -r ${BINARIES}/santa-driver.kext /Library/Extensions
+/bin/launchctl list EQHXZ8M8AV.com.google.santa.daemon > /dev/null 2>&1 || /bin/cp -r ${BINARIES}/santa-driver.kext /Library/Extensions && /usr/sbin/kextcache -update-volume / -bundle-id com.google.santa-driver
 
 /bin/mkdir -p /usr/local/bin
 /bin/ln -s /Applications/Santa.app/Contents/MacOS/santactl /usr/local/bin 2>/dev/null

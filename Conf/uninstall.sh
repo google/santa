@@ -7,7 +7,7 @@
 [ "$EUID" != 0 ] && printf "%s\n" "This requires running as root/sudo." && exit 1
 
 # For macOS 10.15+ this will block up to 60 seconds
-/Applications/Santa.app/Contents/MacOS/Santa --unload-system-extension
+/bin/launchctl list EQHXZ8M8AV.com.google.santa.daemon > /dev/null 2>&1 && /Applications/Santa.app/Contents/MacOS/Santa --unload-system-extension
 
 /bin/launchctl remove com.google.santad
 sleep 1
