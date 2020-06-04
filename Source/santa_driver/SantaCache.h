@@ -36,6 +36,8 @@
 #define OSTestAndClear(bit, addr) OSAtomicTestAndClear(bit, addr) == 0
 #define OSIncrementAtomic(addr) OSAtomicIncrement64((volatile int64_t *)addr)
 #define OSDecrementAtomic(addr) OSAtomicDecrement64((volatile int64_t *)addr)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
 #endif // KERNEL
 
 /**
@@ -361,5 +363,9 @@ template<typename KeyT, typename ValueT> class SantaCache {
     return SantaCacheHasher<KeyT>(input) % bucket_count_;
   }
 };
+
+#ifndef KERNEL
+#pragma clang diagnostic pop
+#endif
 
 #endif // SANTA__SANTA_DRIVER__SANTACACHE_H

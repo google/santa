@@ -201,13 +201,19 @@ IOMemoryDescriptor *SantaDecisionManager::GetLogMemoryDescriptor() const {
 #pragma mark Listener Control
 
 kern_return_t SantaDecisionManager::StartListener() {
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
   vnode_listener_ = kauth_listen_scope(
       KAUTH_SCOPE_VNODE, vnode_scope_callback, reinterpret_cast<void *>(this));
+#pragma clang diagnostic pop
   if (!vnode_listener_) return kIOReturnInternalError;
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
   fileop_listener_ = kauth_listen_scope(
       KAUTH_SCOPE_FILEOP, fileop_scope_callback,
       reinterpret_cast<void *>(this));
+#pragma clang diagnostic pop
   if (!fileop_listener_) return kIOReturnInternalError;
 
   LOGD("Listeners started.");
@@ -216,11 +222,14 @@ kern_return_t SantaDecisionManager::StartListener() {
 }
 
 kern_return_t SantaDecisionManager::StopListener() {
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
   kauth_unlisten_scope(vnode_listener_);
   vnode_listener_ = nullptr;
 
   kauth_unlisten_scope(fileop_listener_);
   fileop_listener_ = nullptr;
+#pragma clang diagnostic pop
 
   // Wait for any active invocations to finish before returning
   do {

@@ -56,7 +56,10 @@
       NSData *eventData;
       NSNumber *idx = [rs objectForColumn:@"idx"];
       @try {
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
         eventData = [NSKeyedArchiver archivedDataWithRootObject:se];
+#pragma clang diagnostic pop
         [db executeUpdate:@"UPDATE events SET eventdata=? WHERE idx=?", eventData, idx];
       } @catch (NSException *exception) {
         [db executeUpdate:@"DELETE FROM events WHERE idx=?", idx];
@@ -98,7 +101,10 @@
 
     NSData *eventData;
     @try {
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
       eventData = [NSKeyedArchiver archivedDataWithRootObject:event];
+#pragma clang diagnostic pop
     } @catch (NSException *exception) {
       continue;
     }
@@ -158,7 +164,10 @@
   SNTStoredEvent *event;
 
   @try {
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
     event = [NSKeyedUnarchiver unarchiveObjectWithData:eventData];
+#pragma clang diagnostic pop
     event.idx = event.idx ?: @((uint32_t)[rs intForColumn:@"idx"]);
   } @catch (NSException *exception) {
   }
