@@ -41,8 +41,10 @@ extern NSString *const kFCMToken;
 extern NSString *const kFCMFullSyncInterval;
 extern NSString *const kFCMGlobalRuleSyncDeadline;
 extern NSString *const kEnableBundles;
+extern NSString *const kEnableBundlesDeprecated;
 extern NSString *const kEnableTransitiveRules;
 extern NSString *const kEnableTransitiveRulesDeprecated;
+extern NSString *const kEnableTransitiveRulesSuperDeprecated;
 
 extern NSString *const kEvents;
 extern NSString *const kFileSHA256;

@@ -42,8 +42,10 @@ NSString *const kFCMFullSyncInterval = @"fcm_full_sync_interval";
 NSString *const kFCMGlobalRuleSyncDeadline = @"fcm_global_rule_sync_deadline";
 
 NSString *const kEnableBundles = @"enable_bundles";
+NSString *const kEnableBundlesDeprecated = @"bundles_enabled";
 NSString *const kEnableTransitiveRules = @"enable_transitive_rules";
 NSString *const kEnableTransitiveRulesDeprecated = @"enabled_transitive_whitelisting";
+NSString *const kEnableTransitiveRulesSuperDeprecated = @"transitive_whitelisting_enabled";
 
 NSString *const kEvents = @"events";
 NSString *const kFileSHA256 = @"file_sha256";

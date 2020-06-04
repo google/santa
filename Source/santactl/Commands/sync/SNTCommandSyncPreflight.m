@@ -87,12 +87,15 @@
 
   dispatch_group_enter(group);
   NSNumber *enableBundles = resp[kEnableBundles];
+  if (!enableBundles) enableBundles = resp[kEnableBundlesDeprecated];
   [[self.daemonConn remoteObjectProxy] setEnableBundles:[enableBundles boolValue] reply:^{
     dispatch_group_leave(group);
   }];
 
   dispatch_group_enter(group);
   NSNumber *enableTransitiveRules = resp[kEnableTransitiveRules];
+  if (!enableTransitiveRules) enableTransitiveRules = resp[kEnableTransitiveRulesDeprecated];
+  if (!enableTransitiveRules) enableTransitiveRules = resp[kEnableTransitiveRulesSuperDeprecated];
   if (!enableTransitiveRules) {
     enableTransitiveRules = resp[kEnableTransitiveRulesDeprecated];
   }
