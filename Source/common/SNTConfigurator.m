@@ -387,7 +387,7 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
   r = self.configState[kBlockedPathRegexKey];
   if (r) return r;
 
-  return self.syncState[kBlockedPathRegexKeyDeprecated];
+  return self.configState[kBlockedPathRegexKeyDeprecated];
 }
 
 - (void)setSyncServerBlockedPathRegex:(NSRegularExpression *)re {

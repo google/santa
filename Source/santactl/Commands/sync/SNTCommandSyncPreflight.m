@@ -96,9 +96,6 @@
   NSNumber *enableTransitiveRules = resp[kEnableTransitiveRules];
   if (!enableTransitiveRules) enableTransitiveRules = resp[kEnableTransitiveRulesDeprecated];
   if (!enableTransitiveRules) enableTransitiveRules = resp[kEnableTransitiveRulesSuperDeprecated];
-  if (!enableTransitiveRules) {
-    enableTransitiveRules = resp[kEnableTransitiveRulesDeprecated];
-  }
   BOOL enabled = [enableTransitiveRules boolValue];
   [[self.daemonConn remoteObjectProxy] setEnableTransitiveRules:enabled reply:^{
     dispatch_group_leave(group);
