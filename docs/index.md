@@ -1,13 +1,16 @@
 # Welcome to the Santa Docs
 
-Santa is a binary whitelisting / blacklisting system for macOS. Here you will find the documentation for understanding how Santa works, how to deploy it and how to contribute.
+Santa is a binary authorization system for macOS. Here you will find the
+documentation for understanding how Santa works, how to deploy it and how to
+contribute.
 
 #### Introduction
 
-The following documents give an overview of how Santa accomplishes binary whitelisting / blacklisting at the enterprise scale.
+The following documents give an overview of how Santa accomplishes binary
+authorization at the enterprise scale.
 
-- [Binary Whitelisting](introduction/binary-whitelisting-overview.md): How Santa makes allow or deny decisions for any `execve()` taking place.
-- [Syncing](introduction/syncing-overview.md): How configuration and whitelist / blacklist rules are applied from a sync server.
+- [Binary Authorization](introduction/binary-authorization.md): How Santa makes allow or deny decisions for any `execve()` taking place.
+- [Syncing](introduction/syncing-overview.md): How configuration and rules are applied from a sync server.
 
 #### Deployment
 
@@ -24,7 +27,7 @@ For those who want even more details on how Santa works under the hood, this sec
 
 ###### Binaries
 
-There are five main components that make up Santa whose core functionality is described in snippets below. For additional detail on each component, visit their respective pages. These quick descriptions do not encompass all the jobs performed by each component, but do provide a quick look at the basic functionality utilized to achieve the goal of binary whitelisting / blacklisting.
+There are five main components that make up Santa whose core functionality is described in snippets below. For additional detail on each component, visit their respective pages. These quick descriptions do not encompass all the jobs performed by each component, but do provide a quick look at the basic functionality utilized to achieve the goal of binary authorization.
 
 * [santa-driver](details/santa-driver.md): A macOS kernel extension that participates in `execve()` decisions.
 * [santad](details/santad.md): A user-land root daemon that makes decisions on behalf of santa-driver requests.
