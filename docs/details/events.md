@@ -162,7 +162,7 @@ Bundle events can be differentiated by the existence of these fields:
 | decision                 | BUNDLE_BINARY                                   |
 | file_bundle_hash         | Super Hash of all binary hashes                 |
 | file_bundle_hash_millis  | The time in milliseconds it took to find all of |
-:                          : the binaries, hash and produce a super hash     :
+|                          | the binaries, hash and produce a super hash     |
 | file_bundle_binary_count | Number of binaries within the bundle            |
 
 To avoid redundant uploads of a bundle event Santa will wait for the sync server
@@ -172,7 +172,7 @@ this:
 | Field                        | Value                                   |
 | ---------------------------- | --------------------------------------- |
 | event_upload_bundle_binaries | An array of bundle hashes that the sync |
-:                              : server needs to be uploaded             :
+|                              | server needs to be uploaded             |
 
 When santactl receives this type of request, it sends an XPC reply to santad to
 save all the bundle events to the events.db. It then attempts to upload all the

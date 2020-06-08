@@ -16,8 +16,8 @@ santa-driver utilizes two Kauth scopes `KAUTH_SCOPE_VNODE` and
 `kauth_listen_scope()` for each scope. This function takes three arguments:
 
 *   `const char *scope`
-*   `kauth_scope_callback_t _callback`_
-*   `void *contex`
+*   `kauth_scope_callback_t _callback`
+*   `void *context`
 
 It returns a `kauth_listener_t` that is stored for later use, in Santa's case to
 stop listening.
@@ -101,18 +101,18 @@ The possible actions are:
 | Actions                 | Expiry Time      | Description                    |
 | ----------------------- | ---------------- | ------------------------------ |
 | `ACTION_REQUEST_BINARY` | None             | Awaiting an allow or deny      |
-:                         :                  : decision from santad.          :
+|                         |                  | decision from santad.          |
 | `ACTION_RESPOND_ALLOW`  | None             | Allow the `execve()`           |
 | `ACTION_RESPOND_DENY`   | 500 milliseconds | Deny the `execve()`, but       |
-:                         :                  : re-evalaute after 500          :
-:                         :                  : milliseconds. If someone is    :
-:                         :                  : trying to run a banned binary  :
-:                         :                  : continually every millisecond  :
-:                         :                  : for example, only 2 evaluation :
-:                         :                  : requests to santad for would   :
-:                         :                  : occur per second. This         :
-:                         :                  : mitigates a denial of service  :
-:                         :                  : type attack on santad.         :
+|                         |                  | re-evalaute after 500          |
+|                         |                  | milliseconds. If someone is    |
+|                         |                  | trying to run a banned binary  |
+|                         |                  | continually every millisecond  |
+|                         |                  | for example, only 2 evaluation |
+|                         |                  | requests to santad for would   |
+|                         |                  | occur per second. This         |
+|                         |                  | mitigates a denial of service  |
+|                         |                  | type attack on santad.         |
 
 ###### Invalidation
 

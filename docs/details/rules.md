@@ -48,7 +48,7 @@ Signing Chain:
         Valid Until         : 2035/02/09 16:40:36 -0500
 ```
 
-If you wanted to allow or block all software signed with this perticular Dropbox
+If you wanted to allow or block all software signed with this particular Dropbox
 signing certificate you would use the leaf SHA-256 fingerprint.
 
 `2a0417257348a20f96c9de0486b44fcc7eaeaeb7625b207591b8109698c02dd2`
@@ -62,7 +62,7 @@ SHA-256 hash.
 
 ##### Rule Evaluation
 
-When a process is trying to `execve()` santad retrieves information on the
+When a process is trying to `execve()` `santad` retrieves information on the
 binary, including a hash of the entire file and the signing chain (if any). The
 hash and signing leaf certificate are then passed through the
 [SNTPolicyProcessor](https://github.com/google/santa/blob/master/Source/santad/SNTPolicyProcessor.h).
@@ -121,7 +121,7 @@ Allowed (Certificate)
 
 ##### Built-in rules
 
-To avoid blocking any Apple system binaries or Santa binaries, santad will
+To avoid blocking any Apple system binaries or Santa binaries, `santad` will
 create 2 immutable certificate rules at startup:
 
 *   The signing certificate santad is signed with
