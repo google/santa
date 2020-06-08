@@ -58,7 +58,7 @@
 }
 
 // Assume that this method is called only when we already know that the writing process is a
-// compiler.  It checks if the closed file is executable, and if so, transitively whitelists it.
+// compiler.  It checks if the closed file is executable, and if so, transitively allowlists it.
 // The passed in message contains the pid of the writing process and path of closed file.
 - (void)createTransitiveRule:(santa_message_t)message {
   [self saveFakeDecision:message];
@@ -69,13 +69,13 @@
   SNTFileInfo *fi = [[SNTFileInfo alloc] initWithPath:@(target)];
   if (fi.isExecutable) {
     // Check if there is an existing (non-transitive) rule for this file.  We leave existing rules
-    // alone, so that a whitelist or blacklist rule can't be overwritten by a transitive one.
+    // alone, so that a allowlist or blocklist rule can't be overwritten by a transitive one.
     SNTRuleTable *ruleTable = [SNTDatabaseController ruleTable];
     SNTRule *prevRule = [ruleTable ruleForBinarySHA256:fi.SHA256 certificateSHA256:nil];
-    if (!prevRule || prevRule.state == SNTRuleStateWhitelistTransitive) {
-      // Construct a new transitive whitelist rule for the executable.
+    if (!prevRule || prevRule.state == SNTRuleStateAllowTransitive) {
+      // Construct a new transitive allowlist rule for the executable.
       SNTRule *rule = [[SNTRule alloc] initWithShasum:fi.SHA256
-                                                state:SNTRuleStateWhitelistTransitive
+                                                state:SNTRuleStateAllowTransitive
                                                  type:SNTRuleTypeBinary
                                             customMsg:@""];
 
@@ -85,7 +85,7 @@
         LOGE(@"unable to add new transitive rule to database: %@", err.localizedDescription);
       } else {
         [self.eventLog
-            writeLog:[NSString stringWithFormat:@"action=WHITELIST|pid=%d|path=%s|sha256=%@",
+            writeLog:[NSString stringWithFormat:@"action=ALLOWLIST|pid=%d|path=%s|sha256=%@",
                                                 message.pid, target, fi.SHA256]];
       }
     }

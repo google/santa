@@ -121,11 +121,11 @@
                       options:bits
                       context:NULL];
     [configurator addObserver:self
-                   forKeyPath:NSStringFromSelector(@selector(whitelistPathRegex))
+                   forKeyPath:NSStringFromSelector(@selector(allowedPathRegex))
                       options:bits
                       context:NULL];
     [configurator addObserver:self
-                   forKeyPath:NSStringFromSelector(@selector(blacklistPathRegex))
+                   forKeyPath:NSStringFromSelector(@selector(blockedPathRegex))
                       options:bits
                       context:NULL];
     if (![configurator enableSystemExtension]) {
@@ -309,15 +309,15 @@ void diskDisappearedCallback(DADiskRef disk, void *context) {
     NSURL *old = [change[oldKey] isKindOfClass:[NSURL class]] ? change[oldKey] : nil;
     if (!new && !old) return;
     if (![new.absoluteString isEqualToString:old.absoluteString]) [self syncBaseURLDidChange:new];
-  } else if ([keyPath isEqualToString:NSStringFromSelector(@selector(whitelistPathRegex))] ||
-             [keyPath isEqualToString:NSStringFromSelector(@selector(blacklistPathRegex))]) {
+  } else if ([keyPath isEqualToString:NSStringFromSelector(@selector(allowedPathRegex))] ||
+             [keyPath isEqualToString:NSStringFromSelector(@selector(blockedPathRegex))]) {
     NSRegularExpression *new =
         [change[newKey] isKindOfClass:[NSRegularExpression class]] ? change[newKey] : nil;
     NSRegularExpression *old =
         [change[oldKey] isKindOfClass:[NSRegularExpression class]] ? change[oldKey] : nil;
     if (!new && !old) return;
     if (![new.pattern isEqualToString:old.pattern]) {
-      LOGI(@"Changed [white|black]list regex, flushing cache");
+      LOGI(@"Changed [allow|deny]list regex, flushing cache");
       [self.eventProvider flushCacheNonRootOnly:NO];
     }
   } else if ([keyPath isEqualToString:NSStringFromSelector(@selector(enableSystemExtension))]) {

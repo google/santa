@@ -49,10 +49,10 @@ REGISTER_COMMAND_NAME(@"rule")
 + (NSString *)longHelpText {
   return (@"Usage: santactl rule [options]\n"
           @"  One of:\n"
-          @"    --whitelist: add to whitelist\n"
-          @"    --blacklist: add to blacklist\n"
-          @"    --silent-blacklist: add to silent blacklist\n"
-          @"    --compiler: whitelist and mark as a compiler\n"
+          @"    --allow: add to allow\n"
+          @"    --block: add to block\n"
+          @"    --silent-block: add to silent block\n"
+          @"    --compiler: allow and mark as a compiler\n"
           @"    --remove: remove existing rule\n"
           @"    --check: check for an existing rule\n"
           @"\n"
@@ -96,14 +96,17 @@ REGISTER_COMMAND_NAME(@"rule")
   for (NSUInteger i = 0; i < arguments.count; ++i) {
     NSString *arg = arguments[i];
 
-    if ([arg caseInsensitiveCompare:@"--whitelist"] == NSOrderedSame) {
-      newRule.state = SNTRuleStateWhitelist;
-    } else if ([arg caseInsensitiveCompare:@"--blacklist"] == NSOrderedSame) {
-      newRule.state = SNTRuleStateBlacklist;
-    } else if ([arg caseInsensitiveCompare:@"--silent-blacklist"] == NSOrderedSame) {
-      newRule.state = SNTRuleStateSilentBlacklist;
+    if ([arg caseInsensitiveCompare:@"--allowlist"] == NSOrderedSame ||
+        [arg caseInsensitiveCompare:@"--whitelist"] == NSOrderedSame) {
+      newRule.state = SNTRuleStateAllow;
+    } else if ([arg caseInsensitiveCompare:@"--blocklist"] == NSOrderedSame ||
+               [arg caseInsensitiveCompare:@"--blacklist"] == NSOrderedSame) {
+      newRule.state = SNTRuleStateBlock;
+    } else if ([arg caseInsensitiveCompare:@"--silent-blocklist"] == NSOrderedSame ||
+               [arg caseInsensitiveCompare:@"--silent-blacklist"] == NSOrderedSame) {
+      newRule.state = SNTRuleStateSilentBlock;
     } else if ([arg caseInsensitiveCompare:@"--compiler"] == NSOrderedSame) {
-      newRule.state = SNTRuleStateWhitelistCompiler;
+      newRule.state = SNTRuleStateAllowCompiler;
     } else if ([arg caseInsensitiveCompare:@"--remove"] == NSOrderedSame) {
       newRule.state = SNTRuleStateRemove;
     } else if ([arg caseInsensitiveCompare:@"--check"] == NSOrderedSame) {
@@ -190,7 +193,7 @@ REGISTER_COMMAND_NAME(@"rule")
                                            fileSHA256:fileSHA256
                                     certificateSHA256:certificateSHA256
                                                 reply:^(SNTEventState s) {
-    output = (SNTEventStateAllow & s) ? @"Whitelisted".mutableCopy : @"Blacklisted".mutableCopy;
+    output = (SNTEventStateAllow & s) ? @"Allowed".mutableCopy : @"Blocked".mutableCopy;
     switch (s) {
       case SNTEventStateAllowUnknown:
       case SNTEventStateBlockUnknown:
@@ -241,7 +244,7 @@ REGISTER_COMMAND_NAME(@"rule")
   [[daemonConn remoteObjectProxy] databaseRuleForBinarySHA256:fileSHA256
                                             certificateSHA256:certificateSHA256
                                                         reply:^(SNTRule *r) {
-    if (r.state == SNTRuleStateWhitelistTransitive) {
+    if (r.state == SNTRuleStateAllowTransitive) {
       NSDate *date = [NSDate dateWithTimeIntervalSinceReferenceDate:r.timestamp];
       [output appendString:[NSString stringWithFormat:@"\nlast access date: %@", [date description]]];
     }

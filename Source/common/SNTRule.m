@@ -46,7 +46,7 @@
                     customMsg:customMsg
                     timestamp:0];
   // Initialize timestamp to current time if rule is transitive.
-  if (self && state == SNTRuleStateWhitelistTransitive) {
+  if (self && state == SNTRuleStateAllowTransitive) {
     [self resetTimestamp];
   }
   return self;

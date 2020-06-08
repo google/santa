@@ -36,32 +36,32 @@
 - (void)setSyncServerClientMode:(SNTClientMode)newMode;
 
 ///
-///  The regex of whitelisted paths. Regexes are specified in ICU format.
+///  The regex of allowed paths. Regexes are specified in ICU format.
 ///
 ///  The regex flags IXSM can be used, though the s (dotall) and m (multiline) flags are
 ///  pointless as a path only ever has a single line.
 ///  If the regex doesn't begin with ^ to match from the beginning of the line, it will be added.
 ///
-@property(readonly, nonatomic) NSRegularExpression *whitelistPathRegex;
+@property(readonly, nonatomic) NSRegularExpression *allowedPathRegex;
 
 ///
-///  Set the regex of whitelisted paths as received from a sync server.
+///  Set the regex of allowed paths as received from a sync server.
 ///
-- (void)setSyncServerWhitelistPathRegex:(NSRegularExpression *)re;
+- (void)setSyncServerAllowedPathRegex:(NSRegularExpression *)re;
 
 ///
-///  The regex of blacklisted paths. Regexes are specified in ICU format.
+///  The regex of blocked paths. Regexes are specified in ICU format.
 ///
 ///  The regex flags IXSM can be used, though the s (dotall) and m (multiline) flags are
 ///  pointless as a path only ever has a single line.
 ///  If the regex doesn't begin with ^ to match from the beginning of the line, it will be added.
 ///
-@property(readonly, nonatomic) NSRegularExpression *blacklistPathRegex;
+@property(readonly, nonatomic) NSRegularExpression *blockedPathRegex;
 
 ///
-///  Set the regex of blacklisted paths as received from a sync server.
+///  Set the regex of blocked paths as received from a sync server.
 ///
-- (void)setSyncServerBlacklistPathRegex:(NSRegularExpression *)re;
+- (void)setSyncServerBlockedPathRegex:(NSRegularExpression *)re;
 
 ///
 ///  The regex of paths to log file changes for. Regexes are specified in ICU format.
@@ -133,7 +133,7 @@
 ///
 ///  Enable bad signature protection, defaults to NO.
 ///  When enabled, a binary that is signed but has a bad signature (cert revoked, binary
-///  tampered with, etc.) will be blocked regardless of client-mode unless a binary whitelist
+///  tampered with, etc.) will be blocked regardless of client-mode unless a binary allowlist
 ///  rule exists.
 ///
 @property(readonly, nonatomic) BOOL enableBadSignatureProtection;
@@ -266,14 +266,14 @@
 ///
 @property BOOL enableBundles;
 
-#pragma mark Transitive Whitelisting Settings
+#pragma mark Transitive Allowlist Settings
 
 ///
-///  If YES, binaries marked with SNTRuleStateWhitelistCompiler rules are allowed to transitively
-///  whitelist any executables that they produce.  If NO, SNTRuleStateWhitelistCompiler rules are
-///  interpreted as if they were simply SNTRuleStateWhitelist rules.  Defaults to NO.
+///  If YES, binaries marked with SNTRuleStateAllowCompiler rules are allowed to transitively
+///  allow any executables that they produce.  If NO, SNTRuleStateAllowCompiler rules are
+///  interpreted as if they were simply SNTRuleStateAllow rules.  Defaults to NO.
 ///
-@property BOOL enableTransitiveWhitelisting;
+@property BOOL enableTransitiveRules;
 
 #pragma mark Server Auth Settings
 

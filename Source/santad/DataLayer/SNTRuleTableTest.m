@@ -37,7 +37,7 @@
 - (SNTRule *)_exampleBinaryRule {
   SNTRule *r = [[SNTRule alloc] init];
   r.shasum = @"a";
-  r.state = SNTRuleStateBlacklist;
+  r.state = SNTRuleStateBlock;
   r.type = SNTRuleTypeBinary;
   r.customMsg = @"A rule";
   return r;
@@ -46,7 +46,7 @@
 - (SNTRule *)_exampleCertRule {
   SNTRule *r = [[SNTRule alloc] init];
   r.shasum = @"b";
-  r.state = SNTRuleStateWhitelist;
+  r.state = SNTRuleStateAllow;
   r.type = SNTRuleTypeCertificate;
   return r;
 }

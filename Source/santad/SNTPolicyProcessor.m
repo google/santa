@@ -74,30 +74,30 @@
     switch (rule.type) {
       case SNTRuleTypeBinary:
         switch (rule.state) {
-          case SNTRuleStateWhitelist:
+          case SNTRuleStateAllow:
             cd.decision = SNTEventStateAllowBinary;
             return cd;
-          case SNTRuleStateSilentBlacklist:
+          case SNTRuleStateSilentBlock:
             cd.silentBlock = YES;
-          case SNTRuleStateBlacklist:
+          case SNTRuleStateBlock:
             cd.customMsg = rule.customMsg;
             cd.decision = SNTEventStateBlockBinary;
             return cd;
-          case SNTRuleStateWhitelistCompiler:
-            // If transitive whitelisting is enabled, then SNTRuleStateWhiteListCompiler rules
+          case SNTRuleStateAllowCompiler:
+            // If transitive rules are enabled, then SNTRuleStateAllowListCompiler rules
             // become SNTEventStateAllowCompiler decisions.  Otherwise we treat the rule as if
-            // it were SNTRuleStateWhitelist.
-            if ([[SNTConfigurator configurator] enableTransitiveWhitelisting]) {
+            // it were SNTRuleStateAllow.
+            if ([[SNTConfigurator configurator] enableTransitiveRules]) {
               cd.decision = SNTEventStateAllowCompiler;
             } else {
               cd.decision = SNTEventStateAllowBinary;
             }
             return cd;
-          case SNTRuleStateWhitelistTransitive:
-            // If transitive whitelisting is enabled, then SNTRuleStateWhitelistTransitive
+          case SNTRuleStateAllowTransitive:
+            // If transitive rules are enabled, then SNTRuleStateAllowTransitive
             // rules become SNTEventStateAllowTransitive decisions.  Otherwise, we treat the
             // rule as if it were SNTRuleStateUnknown.
-            if ([[SNTConfigurator configurator] enableTransitiveWhitelisting]) {
+            if ([[SNTConfigurator configurator] enableTransitiveRules]) {
               cd.decision = SNTEventStateAllowTransitive;
               return cd;
             } else {
@@ -108,13 +108,13 @@
         break;
       case SNTRuleTypeCertificate:
         switch (rule.state) {
-          case SNTRuleStateWhitelist:
+          case SNTRuleStateAllow:
             cd.decision = SNTEventStateAllowCertificate;
             return cd;
-          case SNTRuleStateSilentBlacklist:
+          case SNTRuleStateSilentBlock:
             cd.silentBlock = YES;
             // intentional fallthrough
-          case SNTRuleStateBlacklist:
+          case SNTRuleStateBlock:
             cd.customMsg = rule.customMsg;
             cd.decision = SNTEventStateBlockCertificate;
             return cd;
@@ -134,14 +134,14 @@
     return cd;
   }
 
-  NSString *msg = [self fileIsScopeBlacklisted:fileInfo];
+  NSString *msg = [self fileIsScopeBlocked:fileInfo];
   if (msg) {
     cd.decisionExtra = msg;
     cd.decision = SNTEventStateBlockScope;
     return cd;
   }
 
-  msg = [self fileIsScopeWhitelisted:fileInfo];
+  msg = [self fileIsScopeAllowed:fileInfo];
   if (msg) {
     cd.decisionExtra = msg;
     cd.decision = SNTEventStateAllowScope;
@@ -182,17 +182,17 @@
 ///
 ///  Files that are out of scope:
 ///    + Non Mach-O files that are not part of an installer package.
-///    + Files in whitelisted path.
+///    + Files in allowed path.
 ///
 ///  @return @c YES if file is in scope, @c NO otherwise.
 ///
-- (NSString *)fileIsScopeWhitelisted:(SNTFileInfo *)fi {
+- (NSString *)fileIsScopeAllowed:(SNTFileInfo *)fi {
   if (!fi) return nil;
 
-  // Determine if file is within a whitelisted path
-  NSRegularExpression *re = [[SNTConfigurator configurator] whitelistPathRegex];
+  // Determine if file is within an allowed path
+  NSRegularExpression *re = [[SNTConfigurator configurator] allowedPathRegex];
   if ([re numberOfMatchesInString:fi.path options:0 range:NSMakeRange(0, fi.path.length)]) {
-    return @"Whitelist Regex";
+    return @"Allowed Path Regex";
   }
 
   // If file is not a Mach-O file, we're not interested.
@@ -203,12 +203,12 @@
   return nil;
 }
 
-- (NSString *)fileIsScopeBlacklisted:(SNTFileInfo *)fi {
+- (NSString *)fileIsScopeBlocked:(SNTFileInfo *)fi {
   if (!fi) return nil;
 
-  NSRegularExpression *re = [[SNTConfigurator configurator] blacklistPathRegex];
+  NSRegularExpression *re = [[SNTConfigurator configurator] blockedPathRegex];
   if ([re numberOfMatchesInString:fi.path options:0 range:NSMakeRange(0, fi.path.length)]) {
-    return @"Blacklist Regex";
+    return @"Blocked Path Regex";
   }
 
   if ([[SNTConfigurator configurator] enablePageZeroProtection] && fi.isMissingPageZero) {

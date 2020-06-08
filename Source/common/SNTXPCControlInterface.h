@@ -44,10 +44,10 @@
 - (void)setFullSyncLastSuccess:(NSDate *)date reply:(void (^)(void))reply;
 - (void)setRuleSyncLastSuccess:(NSDate *)date reply:(void (^)(void))reply;
 - (void)setSyncCleanRequired:(BOOL)cleanReqd reply:(void (^)(void))reply;
-- (void)setWhitelistPathRegex:(NSString *)pattern reply:(void (^)(void))reply;
-- (void)setBlacklistPathRegex:(NSString *)pattern reply:(void (^)(void))reply;
+- (void)setAllowedPathRegex:(NSString *)pattern reply:(void (^)(void))reply;
+- (void)setBlockedPathRegex:(NSString *)pattern reply:(void (^)(void))reply;
 - (void)setEnableBundles:(BOOL)bundlesEnabled reply:(void (^)(void))reply;
-- (void)setEnableTransitiveWhitelisting:(BOOL)enabled reply:(void (^)(void))reply;
+- (void)setEnableTransitiveRules:(BOOL)enabled reply:(void (^)(void))reply;
 
 ///
 ///  Syncd Ops

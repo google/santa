@@ -62,9 +62,9 @@
 
   LOGI(@"Added %lu rules", newRules.count);
 
-  // Send out push notifications about any newly whitelisted binaries
+  // Send out push notifications about any newly allowed binaries
   // that had been previously blocked by santad.
-  [self.syncState.whitelistNotificationQueue addOperationWithBlock:^{
+  [self.syncState.allowlistNotificationQueue addOperationWithBlock:^{
     [self announceUnblockingRules:newRules];
   }];
 
@@ -96,19 +96,19 @@
   return newRules;
 }
 
-// Send out push notifications for whitelisted bundles/binaries whose rule download was preceded by
+// Send out push notifications for allowed bundles/binaries whose rule download was preceded by
 // an associated announcing FCM message.
 - (void)announceUnblockingRules:(NSArray<SNTRule *> *)newRules {
   if (!self.syncState.targetedRuleSync) return;
 
   NSMutableArray *processed = [NSMutableArray array];
 
-  for (NSString *key in self.syncState.whitelistNotifications) {
+  for (NSString *key in self.syncState.allowlistNotifications) {
     // Each notifier object is a dictionary with name and count keys. If the count has been
     // decremented to zero, then this means that we have downloaded all of the rules associated with
     // this SHA256 hash (which might be a bundle hash or a binary hash), in which case we are OK to
     // show a notification that the named bundle/binary can be run.
-    NSDictionary *notifier = self.syncState.whitelistNotifications[key];
+    NSDictionary *notifier = self.syncState.allowlistNotifications[key];
     NSNumber *remaining = notifier[kFileBundleBinaryCount];
     if (remaining && [remaining intValue] == 0) {
       [processed addObject:key];
@@ -118,8 +118,8 @@
     }
   }
 
-  // Remove all entries from whitelistNotifications dictionary that had zero count.
-  [self.syncState.whitelistNotifications removeObjectsForKeys:processed];
+  // Remove all entries from allowlistNotifications dictionary that had zero count.
+  [self.syncState.allowlistNotifications removeObjectsForKeys:processed];
 }
 
 
@@ -134,14 +134,18 @@
   if (newRule.shasum.length != 64) return nil;
 
   NSString *policyString = dict[kRulePolicy];
-  if ([policyString isEqual:kRulePolicyWhitelist]) {
-    newRule.state = SNTRuleStateWhitelist;
-  } else if ([policyString isEqual:kRulePolicyWhitelistCompiler]) {
-    newRule.state = SNTRuleStateWhitelistCompiler;
-  } else if ([policyString isEqual:kRulePolicyBlacklist]) {
-    newRule.state = SNTRuleStateBlacklist;
-  } else if ([policyString isEqual:kRulePolicySilentBlacklist]) {
-    newRule.state = SNTRuleStateSilentBlacklist;
+  if ([policyString isEqual:kRulePolicyAllowlist] ||
+      [policyString isEqual:kRulePolicyAllowlistDeprecated]) {
+    newRule.state = SNTRuleStateAllow;
+  } else if ([policyString isEqual:kRulePolicyAllowlistCompiler] ||
+             [policyString isEqual:kRulePolicyAllowlistCompilerDeprecated]) {
+    newRule.state = SNTRuleStateAllowCompiler;
+  } else if ([policyString isEqual:kRulePolicyBlocklist] ||
+             [policyString isEqual:kRulePolicyBlocklistDeprecated]) {
+    newRule.state = SNTRuleStateBlock;
+  } else if ([policyString isEqual:kRulePolicySilentBlocklist] ||
+             [policyString isEqual:kRulePolicySilentBlocklistDeprecated]) {
+    newRule.state = SNTRuleStateSilentBlock;
   } else if ([policyString isEqual:kRulePolicyRemove]) {
     newRule.state = SNTRuleStateRemove;
   } else {
@@ -163,7 +167,7 @@
   }
 
   // Check rule for extra notification related info.
-  if (newRule.state == SNTRuleStateWhitelist || newRule.state == SNTRuleStateWhitelistCompiler) {
+  if (newRule.state == SNTRuleStateAllow || newRule.state == SNTRuleStateAllowCompiler) {
     // primaryHash is the bundle hash if there was a bundle hash included in the rule, otherwise
     // it is simply the binary hash.
     NSString *primaryHash = dict[kFileBundleHash];
@@ -172,10 +176,10 @@
     }
 
     // As we read in rules, we update the "remaining count" information stored in
-    // whitelistNotifications. This count represents the number of rules associated with the primary
+    // allowlistNotifications. This count represents the number of rules associated with the primary
     // hash that still need to be downloaded and added.
-    [self.syncState.whitelistNotificationQueue addOperationWithBlock:^{
-      NSMutableDictionary *notifier = self.syncState.whitelistNotifications[primaryHash];
+    [self.syncState.allowlistNotificationQueue addOperationWithBlock:^{
+      NSMutableDictionary *notifier = self.syncState.allowlistNotifications[primaryHash];
       if (notifier) {
         NSNumber *ruleCount = dict[kFileBundleBinaryCount];
         NSNumber *remaining = notifier[kFileBundleBinaryCount];

@@ -157,10 +157,10 @@ REGISTER_COMMAND_NAME(@"status")
     }];
   }
 
-  __block BOOL transitiveWhitelistingEnabled = NO;
+  __block BOOL enableTransitiveRules = NO;
   dispatch_group_enter(group);
-  [[self.daemonConn remoteObjectProxy] enableTransitiveWhitelisting:^(BOOL response) {
-    transitiveWhitelistingEnabled = response;
+  [[self.daemonConn remoteObjectProxy] enableTransitiveRules:^(BOOL response) {
+    enableTransitiveRules = response;
     dispatch_group_leave(group);
   }];
 
@@ -203,7 +203,7 @@ REGISTER_COMMAND_NAME(@"status")
         @"last_successful_rule" : ruleSyncLastSuccessStr ?: @"null",
         @"push_notifications" : pushNotifications ? @"Connected" : @"Disconnected",
         @"bundle_scanning" : @(enableBundles),
-        @"transitive_whitelisting" : @(transitiveWhitelistingEnabled),
+        @"transitive_rules" : @(enableTransitiveRules),
       },
     } mutableCopy];
     if (![configurator enableSystemExtension]) {
@@ -245,8 +245,8 @@ REGISTER_COMMAND_NAME(@"status")
       printf("  %-25s | %s\n", "Push Notifications",
              (pushNotifications ? "Connected" : "Disconnected"));
       printf("  %-25s | %s\n", "Bundle Scanning", (enableBundles ? "Yes" : "No"));
-      printf("  %-25s | %s\n", "Transitive Whitelisting",
-             (transitiveWhitelistingEnabled ? "Yes" : "No"));
+      printf("  %-25s | %s\n", "Transitive Rules",
+             (enableTransitiveRules? "Yes" : "No"));
     }
   }
 

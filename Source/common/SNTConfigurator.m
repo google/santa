@@ -80,9 +80,12 @@ static NSString *const kEnableSystemExtension = @"EnableSystemExtension";
 
 // The keys managed by a sync server or mobileconfig.
 static NSString *const kClientModeKey = @"ClientMode";
-static NSString *const kEnableTransitiveWhitelistingKey = @"EnableTransitiveWhitelisting";
-static NSString *const kWhitelistRegexKey = @"WhitelistRegex";
-static NSString *const kBlacklistRegexKey = @"BlacklistRegex";
+static NSString *const kEnableTransitiveRulesKey = @"EnableTransitiveRules";
+static NSString *const kEnableTransitiveRulesKeyDeprecated = @"EnableTransitiveWhitelisting";
+static NSString *const kAllowedPathRegexKey = @"AllowedPathRegex";
+static NSString *const kAllowedPathRegexKeyDeprecated = @"WhitelistRegex";
+static NSString *const kBlockedPathRegexKey = @"BlockedPathRegex";
+static NSString *const kBlockedPathRegexKeyDeprecated = @"BlacklistRegex";
 
 // The keys managed by a sync server.
 static NSString *const kFullSyncLastSuccess = @"FullSyncLastSuccess";
@@ -100,20 +103,26 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
     Class array = [NSArray class];
     _syncServerKeyTypes = @{
       kClientModeKey : number,
-      kEnableTransitiveWhitelistingKey : number,
-      kWhitelistRegexKey : re,
-      kBlacklistRegexKey : re,
+      kEnableTransitiveRulesKey : number,
+      kEnableTransitiveRulesKeyDeprecated : number,
+      kAllowedPathRegexKey : re,
+      kAllowedPathRegexKeyDeprecated : re,
+      kBlockedPathRegexKey : re,
+      kBlockedPathRegexKeyDeprecated : re,
       kFullSyncLastSuccess : date,
       kRuleSyncLastSuccess : date,
       kSyncCleanRequired : number
     };
     _forcedConfigKeyTypes = @{
       kClientModeKey : number,
-      kEnableTransitiveWhitelistingKey : number,
+      kEnableTransitiveRulesKey : number,
+      kEnableTransitiveRulesKeyDeprecated : number,
       kFileChangesRegexKey : re,
       kFileChangesPrefixFiltersKey : array,
-      kWhitelistRegexKey : re,
-      kBlacklistRegexKey : re,
+      kAllowedPathRegexKey : re,
+      kAllowedPathRegexKeyDeprecated : re,
+      kBlockedPathRegexKey : re,
+      kBlockedPathRegexKeyDeprecated : re,
       kEnablePageZeroProtectionKey : number,
       kEnableBadSignatureProtectionKey: number,
       kMoreInfoURLKey : string,
@@ -194,11 +203,11 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
   return [self syncAndConfigStateSet];
 }
 
-+ (NSSet *)keyPathsForValuesAffectingWhitelistPathRegex {
++ (NSSet *)keyPathsForValuesAffectingAllowlistPathRegex {
   return [self syncAndConfigStateSet];
 }
 
-+ (NSSet *)keyPathsForValuesAffectingBlacklistPathRegex {
++ (NSSet *)keyPathsForValuesAffectingBlocklistPathRegex {
   return [self syncAndConfigStateSet];
 }
 
@@ -302,7 +311,7 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
   return [self configStateSet];
 }
 
-+ (NSSet *)keyPathsForValuesAffectingEnableTransitiveWhitelisting {
++ (NSSet *)keyPathsForValuesAffectingEnableTransitiveRules {
   return [self syncAndConfigStateSet];
 }
 
@@ -334,32 +343,55 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
   }
 }
 
-- (BOOL)enableTransitiveWhitelisting {
-  NSNumber *n = self.syncState[kEnableTransitiveWhitelistingKey];
-  if (n) {
-    return [n boolValue];
-  }
-  return [self.configState[kEnableTransitiveWhitelistingKey] boolValue];
+- (BOOL)enableTransitiveRules {
+  NSNumber *n = self.syncState[kEnableTransitiveRulesKey];
+  if (n) return [n boolValue];
+
+  n = self.syncState[kEnableTransitiveRulesKeyDeprecated];
+  if (n) return [n boolValue];
+
+  n = self.configState[kEnableTransitiveRulesKeyDeprecated];
+  if (n) return [n boolValue];
+
+  return [self.configState[kEnableTransitiveRulesKey] boolValue];
 }
 
-- (void)setEnableTransitiveWhitelisting:(BOOL)enabled {
-  [self updateSyncStateForKey:kEnableTransitiveWhitelistingKey value:@(enabled)];
+- (void)setEnableTransitiveRules:(BOOL)enabled {
+  [self updateSyncStateForKey:kEnableTransitiveRulesKey value:@(enabled)];
 }
 
-- (NSRegularExpression *)whitelistPathRegex {
-  return self.syncState[kWhitelistRegexKey] ?: self.configState[kWhitelistRegexKey];
+- (NSRegularExpression *)allowedPathRegex {
+  NSRegularExpression *r = self.syncState[kAllowedPathRegexKey];
+  if (r) return r;
+
+  r = self.syncState[kAllowedPathRegexKeyDeprecated];
+  if (r) return r;
+
+  r = self.configState[kAllowedPathRegexKey];
+  if (r) return r;
+
+  return self.configState[kAllowedPathRegexKeyDeprecated];
 }
 
-- (void)setSyncServerWhitelistPathRegex:(NSRegularExpression *)re {
-  [self updateSyncStateForKey:kWhitelistRegexKey value:re];
+- (void)setSyncServerAllowedPathRegex:(NSRegularExpression *)re {
+  [self updateSyncStateForKey:kAllowedPathRegexKey value:re];
 }
 
-- (NSRegularExpression *)blacklistPathRegex {
-  return self.syncState[kBlacklistRegexKey] ?: self.configState[kBlacklistRegexKey];
+- (NSRegularExpression *)blockedPathRegex {
+  NSRegularExpression *r = self.syncState[kBlockedPathRegexKey];
+  if (r) return r;
+
+  r = self.syncState[kBlockedPathRegexKeyDeprecated];
+  if (r) return r;
+
+  r = self.configState[kBlockedPathRegexKey];
+  if (r) return r;
+
+  return self.configState[kBlockedPathRegexKeyDeprecated];
 }
 
-- (void)setSyncServerBlacklistPathRegex:(NSRegularExpression *)re {
-  [self updateSyncStateForKey:kBlacklistRegexKey value:re];
+- (void)setSyncServerBlockedPathRegex:(NSRegularExpression *)re {
+  [self updateSyncStateForKey:kBlockedPathRegexKey value:re];
 }
 
 - (NSRegularExpression *)fileChangesRegex {
@@ -572,8 +604,8 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
   if (geteuid() != 0) return;
   // Either remove
   NSMutableDictionary *syncState = self.syncState.mutableCopy;
-  syncState[kWhitelistRegexKey] = [syncState[kWhitelistRegexKey] pattern];
-  syncState[kBlacklistRegexKey] = [syncState[kBlacklistRegexKey] pattern];
+  syncState[kAllowedPathRegexKey] = [syncState[kAllowedPathRegexKey] pattern];
+  syncState[kBlockedPathRegexKey] = [syncState[kBlockedPathRegexKey] pattern];
   [syncState writeToFile:kSyncStateFilePath atomically:YES];
   [[NSFileManager defaultManager] setAttributes:@{ NSFilePosixPermissions : @0644 }
                                    ofItemAtPath:kSyncStateFilePath error:NULL];

@@ -366,7 +366,7 @@ REGISTER_COMMAND_NAME(@"fileinfo")
       return kCommunicationErrorMsg;
     } else {
       NSMutableString *output =
-          (SNTEventStateAllow & state) ? @"Whitelisted".mutableCopy : @"Blacklisted".mutableCopy;
+          (SNTEventStateAllow & state) ? @"Allowed".mutableCopy : @"Blocked".mutableCopy;
       switch (state) {
         case SNTEventStateAllowUnknown:
         case SNTEventStateBlockUnknown:

@@ -1,1 +1,1 @@
-{"whitelist_regex": null, "client_mode": "MONITOR", "blacklist_regex": null, "batch_size": 100}
+{"allowed_path_regex": null, "client_mode": "MONITOR", "blocked_path_regex": null, "batch_size": 100}

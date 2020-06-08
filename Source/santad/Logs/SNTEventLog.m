@@ -106,7 +106,7 @@
   });
 }
 
-// Whenever a cached decision resulting from a transitive whitelist rule is used to allow the
+// Whenever a cached decision resulting from a transitive allowlist rule is used to allow the
 // execution of a binary, we update the timestamp on the transitive rule in the rules database.
 // To prevent writing to the database too often, we space out consecutive writes by 3600 seconds.
 - (void)resetTimestampForCachedDecision:(SNTCachedDecision *)cd {
@@ -114,7 +114,7 @@
   NSDate *lastUpdate = [self.timestampResetMap objectForKey:cd.sha256];
   if (!lastUpdate || -[lastUpdate timeIntervalSinceNow] > 3600) {
     SNTRule *rule = [[SNTRule alloc] initWithShasum:cd.sha256
-                                              state:SNTRuleStateWhitelistTransitive
+                                              state:SNTRuleStateAllowTransitive
                                                type:SNTRuleTypeBinary
                                           customMsg:nil];
     [[SNTDatabaseController ruleTable] resetTimestampForRule:rule];

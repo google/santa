@@ -87,20 +87,17 @@
 
   dispatch_group_enter(group);
   NSNumber *enableBundles = resp[kEnableBundles];
-  if (!enableBundles) {
-    enableBundles = resp[kEnableBundles_OLD];
-  }
+  if (!enableBundles) enableBundles = resp[kEnableBundlesDeprecated];
   [[self.daemonConn remoteObjectProxy] setEnableBundles:[enableBundles boolValue] reply:^{
     dispatch_group_leave(group);
   }];
 
   dispatch_group_enter(group);
-  NSNumber *enableTransitiveWhitelisting = resp[kEnableTransitiveWhitelisting];
-  if (!enableTransitiveWhitelisting) {
-    enableTransitiveWhitelisting = resp[kEnableTransitiveWhitelisting_OLD];
-  }
-  BOOL enabled = [enableTransitiveWhitelisting boolValue];
-  [[self.daemonConn remoteObjectProxy] setEnableTransitiveWhitelisting:enabled reply:^{
+  NSNumber *enableTransitiveRules = resp[kEnableTransitiveRules];
+  if (!enableTransitiveRules) enableTransitiveRules = resp[kEnableTransitiveRulesDeprecated];
+  if (!enableTransitiveRules) enableTransitiveRules = resp[kEnableTransitiveRulesSuperDeprecated];
+  BOOL enabled = [enableTransitiveRules boolValue];
+  [[self.daemonConn remoteObjectProxy] setEnableTransitiveRules:enabled reply:^{
     dispatch_group_leave(group);
   }];
 
@@ -121,12 +118,16 @@
     self.syncState.clientMode = SNTClientModeLockdown;
   }
 
-  if ([resp[kWhitelistRegex] isKindOfClass:[NSString class]]) {
-    self.syncState.whitelistRegex = resp[kWhitelistRegex];
+  if ([resp[kAllowedPathRegex] isKindOfClass:[NSString class]]) {
+    self.syncState.allowlistRegex = resp[kAllowedPathRegex];
+  } else if ([resp[kAllowedPathRegexDeprecated] isKindOfClass:[NSString class]]) {
+    self.syncState.allowlistRegex = resp[kAllowedPathRegexDeprecated];
   }
 
-  if ([resp[kBlacklistRegex] isKindOfClass:[NSString class]]) {
-    self.syncState.blacklistRegex = resp[kBlacklistRegex];
+  if ([resp[kBlockedPathRegex] isKindOfClass:[NSString class]]) {
+    self.syncState.blocklistRegex = resp[kBlockedPathRegex];
+  } else if ([resp[kBlockedPathRegexDeprecated] isKindOfClass:[NSString class]]) {
+    self.syncState.blocklistRegex = resp[kBlockedPathRegexDeprecated];
   }
 
   if ([resp[kCleanSync] boolValue]) {

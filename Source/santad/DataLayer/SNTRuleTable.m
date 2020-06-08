@@ -160,7 +160,7 @@ static const NSUInteger kTransitiveRuleExpirationSeconds = 6 * 30 * 24 * 3600;
   __block NSUInteger count = 0;
   [self inDatabase:^(FMDatabase *db) {
     count = [db longForQuery:@"SELECT COUNT(*) FROM rules WHERE state=?",
-             @(SNTRuleStateWhitelistCompiler)];
+             @(SNTRuleStateAllowCompiler)];
   }];
   return count;
 }
@@ -169,7 +169,7 @@ static const NSUInteger kTransitiveRuleExpirationSeconds = 6 * 30 * 24 * 3600;
   __block NSUInteger count = 0;
   [self inDatabase:^(FMDatabase *db) {
     count = [db longForQuery:@"SELECT COUNT(*) FROM rules WHERE state=?",
-             @(SNTRuleStateWhitelistTransitive)];
+             @(SNTRuleStateAllowTransitive)];
   }];
   return count;
 }
@@ -216,7 +216,7 @@ static const NSUInteger kTransitiveRuleExpirationSeconds = 6 * 30 * 24 * 3600;
   // if no existing rule has matched.
   if (!rule && [certificateSHA256 isEqual:self.launchdCSInfo.leafCertificate.SHA256]) {
     rule = [[SNTRule alloc] initWithShasum:certificateSHA256
-                                     state:SNTRuleStateWhitelist
+                                     state:SNTRuleStateAllow
                                       type:SNTRuleTypeCertificate
                                  customMsg:nil
                                  timestamp:0];
@@ -278,23 +278,23 @@ static const NSUInteger kTransitiveRuleExpirationSeconds = 6 * 30 * 24 * 3600;
 }
 
 - (BOOL)addedRulesShouldFlushDecisionCache:(NSArray *)rules {
-  // Check for non-plain-whitelist rules first before querying the database.
+  // Check for non-plain-allowlist rules first before querying the database.
   for (SNTRule *rule in rules) {
-    if (rule.state != SNTRuleStateWhitelist) return YES;
+    if (rule.state != SNTRuleStateAllow) return YES;
   }
 
-  // If still here, then all rules in the array are whitelist rules.  So now we look for whitelist
-  // rules where there is a previously existing whitelist compiler rule for the same shasum.
+  // If still here, then all rules in the array are allowlist rules.  So now we look for allowlist
+  // rules where there is a previously existing allowlist compiler rule for the same shasum.
   // If so we find such a rule, then cache should be flushed.
   __block BOOL flushDecisionCache = NO;
   [self inTransaction:^(FMDatabase *db, BOOL *rollback) {
     for (SNTRule *rule in rules) {
-      // Whitelist certificate rules are ignored
+      // Allowlist certificate rules are ignored
       if (rule.type == SNTRuleTypeCertificate) continue;
 
       if ([db longForQuery:
            @"SELECT COUNT(*) FROM rules WHERE shasum=? AND type=? AND state=? LIMIT 1",
-           rule.shasum, @(SNTRuleTypeBinary), @(SNTRuleStateWhitelistCompiler)] > 0) {
+           rule.shasum, @(SNTRuleTypeBinary), @(SNTRuleStateAllowCompiler)] > 0) {
         flushDecisionCache = YES;
         break;
       }
@@ -330,7 +330,7 @@ static const NSUInteger kTransitiveRuleExpirationSeconds = 6 * 30 * 24 * 3600;
 
   [self inDatabase:^(FMDatabase *db) {
     if (![db executeUpdate:@"DELETE FROM rules WHERE state=? AND timestamp < ?",
-          @(SNTRuleStateWhitelistTransitive), @(outdatedTimestamp)]) {
+          @(SNTRuleStateAllowTransitive), @(outdatedTimestamp)]) {
       LOGE(@"Could not remove outdated transitive rules");
     }
   }];

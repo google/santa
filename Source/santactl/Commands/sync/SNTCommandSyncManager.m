@@ -47,13 +47,13 @@ static NSString *const kFCMTargetHostIDKey = @"target_host_id";
 
 @property(nonatomic) NSCache *dispatchLock;
 
-// whitelistNotifications dictionary stores info from FCM messages.  The binary/bundle hash is used
+// allowlistNotifications dictionary stores info from FCM messages.  The binary/bundle hash is used
 // as a key mapping to values that are themselves dictionaries.  These dictionary values contain the
 // name of the binary/bundle and a count of associated binary rules.
-@property(nonatomic) NSMutableDictionary *whitelistNotifications;
+@property(nonatomic) NSMutableDictionary *allowlistNotifications;
 
-// whitelistNotificationQueue is used to serialize access to the whitelistNotifications dictionary.
-@property(nonatomic) NSOperationQueue *whitelistNotificationQueue;
+// allowlistNotificationQueue is used to serialize access to the allowlistNotifications dictionary.
+@property(nonatomic) NSOperationQueue *allowlistNotificationQueue;
 
 @property NSUInteger FCMFullSyncInterval;
 @property NSUInteger FCMGlobalRuleSyncDeadline;
@@ -106,8 +106,8 @@ static void reachabilityHandler(
       [self lockAction:kRuleSync];
       SNTCommandSyncState *syncState = [self createSyncState];
       syncState.targetedRuleSync = self.targetedRuleSync;
-      syncState.whitelistNotifications = self.whitelistNotifications;
-      syncState.whitelistNotificationQueue = self.whitelistNotificationQueue;
+      syncState.allowlistNotifications = self.allowlistNotifications;
+      syncState.allowlistNotificationQueue = self.allowlistNotificationQueue;
       SNTCommandSyncRuleDownload *p = [[SNTCommandSyncRuleDownload alloc] initWithState:syncState];
       if ([p sync]) {
         LOGD(@"Rule download complete");
@@ -118,9 +118,9 @@ static void reachabilityHandler(
       [self unlockAction:kRuleSync];
     }];
     _dispatchLock = [[NSCache alloc] init];
-    _whitelistNotifications = [NSMutableDictionary dictionary];
-    _whitelistNotificationQueue = [[NSOperationQueue alloc] init];
-    _whitelistNotificationQueue.maxConcurrentOperationCount = 1;  // make this a serial queue
+    _allowlistNotifications = [NSMutableDictionary dictionary];
+    _allowlistNotificationQueue = [[NSOperationQueue alloc] init];
+    _allowlistNotificationQueue.maxConcurrentOperationCount = 1;  // make this a serial queue
 
     _eventBatchSize = kDefaultEventBatchSize;
     _FCMFullSyncInterval = kDefaultFCMFullSyncInterval;
@@ -243,8 +243,8 @@ static void reachabilityHandler(
   NSString *fileHash = message[kFCMFileHashKey];
   NSString *fileName = message[kFCMFileNameKey];
   if (fileName && fileHash) {
-    [self.whitelistNotificationQueue addOperationWithBlock:^{
-      self.whitelistNotifications[fileHash] = @{ kFileName : fileName }.mutableCopy;
+    [self.allowlistNotificationQueue addOperationWithBlock:^{
+      self.allowlistNotifications[fileHash] = @{ kFileName : fileName }.mutableCopy;
     }];
   }
 
