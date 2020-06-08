@@ -12,9 +12,9 @@ Two configuration methods can be used to control Santa: a local configuration pr
 | ----------------------------- | ---------- | ---------------------------------------- |
 | ClientMode*                   | Integer    | 1 = MONITOR, 2 = LOCKDOWN, defaults to MONITOR |
 | FileChangesRegex*             | String     | The regex of paths to log file changes. Regexes are specified in ICU format. |
-| WhitelistRegex*               | String     | A regex to whitelist if the binary or certificate scopes did not allow execution.  Regexes are specified in ICU format. |
-| BlacklistRegex*               | String     | A regex to blacklist if the binary or certificate scopes did not block an execution.  Regexes are specified in ICU format. |
-| EnablePageZeroProtection      | Bool       | Enable `__PAGEZERO` protection, defaults to YES. If this flag is set to YES, 32-bit binaries that are missing the `__PAGEZERO` segment will be blocked even in MONITOR mode, **unless** the binary is whitelisted by an explicit rule. |
+| AllowedPathRegex*             | String     | A regex to allow if the binary or certificate scopes did not allow/block execution.  Regexes are specified in ICU format. |
+| BlockedPathRegex*             | String     | A regex to block if the binary or certificate scopes did not allow/block an execution.  Regexes are specified in ICU format. |
+| EnablePageZeroProtection      | Bool       | Enable `__PAGEZERO` protection, defaults to YES. If this flag is set to YES, 32-bit binaries that are missing the `__PAGEZERO` segment will be blocked even in MONITOR mode, **unless** the binary is allowed by an explicit rule. |
 | MoreInfoURL                   | String     | The URL to open when the user clicks "More Info..." when opening Santa.app.  If unset, the button will not be displayed. |
 | EventDetailURL                | String     | See the [EventDetailURL](#eventdetailurl) section below. |
 | EventDetailText               | String     | Related to the above property, this string represents the text to show on the button. |
@@ -165,13 +165,13 @@ Configuration profiles have a `.mobileconfig` file extension. There are many way
 | clean_sync**                   | Bool       | If set to `True` Santa will clear all local rules and download a fresh copy from the sync-server. Defaults to `False`. |
 | batch_size                     | Integer    | The number of rules to download or events to upload per request. Multiple requests will be made if there is more work than can fit in single request. Defaults to 50. |
 | upload_logs_url**              | String     | If set, the endpoint to send Santa's current logs. No default. |
-| whitelist_regex                | String     | Same as the "Local Configuration" WhitelistRegex. No default. |
-| blacklist_regex                | String     | Same as the "Local Configuration" BlacklistRegex. No default. |
+| allowed_path_regex             | String     | Same as the "Local Configuration" AllowedPathRegex. No default. |
+| blocked_path_regex             | String     | Same as the "Local Configuration" BlockedPathRegex. No default. |
 | fcm_token*                     | String     | The FCM token used by Santa to listen for FCM messages. Unique for every machine. No default. |
 | fcm_full_sync_interval*        | Integer    | The full sync interval if a fcm_token is set. Defaults to  14400 secs (4 hours). |
 | fcm_global_rule_sync_deadline* | Integer    | The max time to wait before performing a rule sync when a global rule sync FCM message is received. This allows syncing to be staggered for global events to avoid spikes in server load. Defaults to 600 secs (10 min). |
 | enable_bundles*                | Bool       | If set to `True` the bundle scanning feature is enabled. Defaults to `False`. |
-| enabled_transitive_whitelisting | Bool       | If set to `True` the transitive whitelisting feature is enabled. Defaults to `False`. |
+| enabled_transitive_rules       | Bool       | If set to `True` the transitive rule feature is enabled. Defaults to `False`. |
 
 *Held only in memory. Not persistent upon process restart.
 

@@ -1,14 +1,24 @@
 # Rules
 
-Rules provide the primary evaluation mechanism for whitelisting and blacklisting binaries with Santa on macOS. There are two types of rules: binary and certificate.
+Rules provide the primary evaluation mechanism for allowing and blocking
+binaries with Santa on macOS. There are two types of rules: binary and
+certificate.
 
 ##### Binary Rules
 
-Binary rules use the SHA-256 hash of the entire binary as an identifier. This is the most specific rule in Santa. Even a small change in the binary will alter the SHA-256 hash, invalidating the rule.
+Binary rules use the SHA-256 hash of the entire binary as an identifier. This is
+the most specific rule in Santa. Even a small change in the binary will alter
+the SHA-256 hash, invalidating the rule.
 
 ##### Certificate Rules
 
-Certificate rules are formed from the SHA-256 fingerprint of an X.509 leaf signing certificate. This is a powerful rule type that has a much broader reach than an individual binary rule. A signing certificate can sign any number of binaries. Whitelisting or blacklisting just a few key signing certificates can cover the bulk of an average user's binaries. The leaf signing certificate is the only part of the chain that is evaluated. Though the whole chain is available for viewing.
+Certificate rules are formed from the SHA-256 fingerprint of an X.509 leaf
+signing certificate. This is a powerful rule type that has a much broader reach
+than an individual binary rule. A signing certificate can sign any number of
+binaries. Allowing or blocking just a few key signing certificates can cover the
+bulk of an average user's binaries. The leaf signing certificate is the only
+part of the chain that is evaluated. Though the whole chain is available for
+viewing.
 
 ```sh
 ⇒  santactl fileinfo /Applications/Dropbox.app --key "Signing Chain"
@@ -38,67 +48,84 @@ Signing Chain:
         Valid Until         : 2035/02/09 16:40:36 -0500
 ```
 
-If you wanted to whitelist or blacklist all software signed with this perticular Dropbox signing certificate you would use the leaf SHA-256 fingerprint.
+If you wanted to allow or block all software signed with this particular Dropbox
+signing certificate you would use the leaf SHA-256 fingerprint.
 
 `2a0417257348a20f96c9de0486b44fcc7eaeaeb7625b207591b8109698c02dd2`
 
-Santa does not evaluate the `Valid From` or `Valid Until` fields, nor does it check the Certificate Revocation List (CRL) or the Online Certificate Status Protocol (OCSP) for revoked certificates. Adding rules for the certificate chain's intermediates or roots has no effect on binaries signing by a leaf. Santa ignores the chain and is only concerned with the leaf certificate's SHA-256 hash.
+Santa does not evaluate the `Valid From` or `Valid Until` fields, nor does it
+check the Certificate Revocation List (CRL) or the Online Certificate Status
+Protocol (OCSP) for revoked certificates. Adding rules for the certificate
+chain's intermediates or roots has no effect on binaries signing by a leaf.
+Santa ignores the chain and is only concerned with the leaf certificate's
+SHA-256 hash.
 
 ##### Rule Evaluation
 
-When a process is trying to `execve()` santad retrieves information on the binary,  including a hash of the entire file and the signing chain (if any). The hash and signing leaf certificate are then passed through the [SNTPolicyProcessor](https://github.com/google/santa/blob/master/Source/santad/SNTPolicyProcessor.h). Rules are evaluated from most specific to least specific. First binary (either whitelist or blacklist), then certificate (either whitelist or blacklist). If no rules are found that apply, scopes are then searched. See the [scopes.md](scopes.md) document for more information on scopes.
+When a process is trying to `execve()` `santad` retrieves information on the
+binary, including a hash of the entire file and the signing chain (if any). The
+hash and signing leaf certificate are then passed through the
+[SNTPolicyProcessor](https://github.com/google/santa/blob/master/Source/santad/SNTPolicyProcessor.h).
+Rules are evaluated from most specific to least specific. First binary (either
+allow or block), then certificate (either allow or block). If no rules are found
+that apply, scopes are then searched. See the [scopes.md](scopes.md) document
+for more information on scopes.
 
-You can use the `santactl fileinfo` command to check the status of any given binary on the filesystem.
+You can use the `santactl fileinfo` command to check the status of any given
+binary on the filesystem.
 
-###### Whitelisted with a Binary Rule 
+###### Allowed with a Binary Rule
 
 ```sh
 ⇒  santactl fileinfo /Applications/Hex\ Fiend.app --key Rule
-Whitelisted (Binary)
+Allowed (Binary)
 ```
 
-###### Whitelisted with a Certificate Rule
+###### Allowed with a Certificate Rule
 
 ```sh
 ⇒  santactl fileinfo /Applications/Safari.app --key Rule
-Whitelisted (Certificate)
+Allowed (Certificate)
 ```
 
-###### Blacklisted with a Binary Rule
+###### Blocked with a Binary Rule
 
 ```sh
 ⇒  santactl fileinfo /usr/bin/yes --key Rule
-Blacklisted (Binary)
+Blocked (Binary)
 ```
 
-###### Blacklisted with a Certificate Rule
+###### Blocked with a Certificate Rule
 
 ```sh
 ⇒  santactl fileinfo /Applications/Malware.app --key Rule
-Blacklisted (Certificate)
+Blocked (Certificate)
 ```
 
-You can also check arbitrary SHA-256 binary and certificate hashes for rules. The rule verb needs to be run with root privileges.
+You can also check arbitrary SHA-256 binary and certificate hashes for rules.
+The rule verb needs to be run with root privileges.
 
 For checking the SHA-256 hash of `/usr/bin/yes`:
 
 ```sh
 sudo santactl rule --check --sha256 $(santactl fileinfo --key SHA-256 /usr/bin/yes)
-Blacklisted (Binary)
+Blocked (Binary)
 ```
 
-For checking the SHA-256 hash of `/usr/bin/yes ` signing certificate:
+For checking the SHA-256 hash of `/usr/bin/yes` signing certificate:
 
 ```sh
 ⇒  sudo santactl rule --check --certificate --sha256 $(santactl fileinfo --cert-index 1 --key SHA-256 /usr/bin/yes)
-Whitelisted (Certificate)
+Allowed (Certificate)
 ```
 
 ##### Built-in rules
 
-To avoid blocking any Apple system binaries or Santa binaries, santad will create 2 immutable certificate rules at startup:
+To avoid blocking any Apple system binaries or Santa binaries, `santad` will
+create 2 immutable certificate rules at startup:
 
-* The signing certificate santad is signed with
-* The signing certificate launchd is signed with
+*   The signing certificate santad is signed with
+*   The signing certificate launchd is signed with
 
-By creating these two rules at startup, Santa should never block critical Apple system binaries or other Santa components.
+By creating these two rules at startup, Santa should never block critical Apple
+system binaries or other Santa components.
