@@ -9,11 +9,12 @@
     <img src="./Source/santa/Resources/Images.xcassets/AppIcon.appiconset/santa-hat-icon-128.png" alt="Santa Icon" />
 </p>
 
-Santa is a binary whitelisting/blacklisting system for macOS. It consists of a
-kernel extension (or a system extension on macOS 10.15+) that monitors for executions, a userland daemon that makes
-execution decisions based on the contents of a SQLite database, a GUI agent
-that notifies the user in case of a block decision and a command-line utility
-for managing the system and synchronizing the database with a server.
+Santa is a binary authorization system for macOS. It consists of a kernel
+extension (or a system extension on macOS 10.15+) that monitors for executions,
+a userland daemon that makes execution decisions based on the contents of a
+SQLite database, a GUI agent that notifies the user in case of a block decision
+and a command-line utility for managing the system and synchronizing the
+database with a server.
 
 It is named Santa because it keeps track of binaries that are naughty or nice.
 
@@ -45,22 +46,22 @@ disclosure reporting.
 # Admin-Related Features
 
 * Multiple modes: In the default MONITOR mode, all binaries except those marked
-  as blacklisted will be allowed to run, whilst being logged and recorded in
-  the events database. In LOCKDOWN mode, only whitelisted binaries are allowed
-  to run.
+  as blocked will be allowed to run, whilst being logged and recorded in
+  the events database. In LOCKDOWN mode, only listed binaries are allowed to
+  run.
 
 * Event logging: When the kext is loaded, all binary launches are logged.  When
   in either mode, all unknown or denied binaries are stored in the database to
   enable later aggregation.
 
 * Certificate-based rules, with override levels: Instead of relying on a
-  binary's hash (or 'fingerprint'), executables can be whitelisted/blacklisted
-  by their signing certificate. You can therefore trust/block all binaries by a
+  binary's hash (or 'fingerprint'), executables can be allowed/blocked by their
+  signing certificate. You can therefore allow/block all binaries by a
   given publisher that were signed with that cert across version updates. A
-  binary can only be whitelisted by its certificate if its signature validates
-  correctly, but a rule for a binary's fingerprint will override a decision for
-  a certificate; i.e. you can whitelist a certificate while blacklisting a
-  binary signed with that certificate, or vice-versa.
+  binary can only be allowed by its certificate if its signature validates
+  correctly but a rule for a binary's fingerprint will override a decision for
+  a certificate; i.e. you can allowlist a certificate while blocking a binary
+  signed with that certificate, or vice-versa.
 
 * Path-based rules (via NSRegularExpression/ICU): This allows a similar feature
   to that found in Managed Client (the precursor to configuration profiles,
@@ -73,10 +74,10 @@ disclosure reporting.
 * Failsafe cert rules: You cannot put in a deny rule that would block the
   certificate used to sign launchd, a.k.a. pid 1, and therefore all components
   used in macOS. The binaries in every OS update (and in some cases entire new
-  versions) are therefore auto-whitelisted. This does not affect binaries from
-  Apple's App Store, which use various certs that change regularly for common
-  apps. Likewise, you cannot blacklist Santa itself, and Santa uses a distinct
-  separate cert than other Google apps.
+  versions) are therefore automatically allowed. This does not affect binaries
+  from Apple's App Store, which use various certs that change regularly for
+  common apps. Likewise, you cannot block Santa itself, and Santa uses a
+  distinct separate cert than other Google apps.
 
 # Intentions and Expectations
 
@@ -93,7 +94,7 @@ protect hosts in whatever other ways you see fit.
 
 # Security and Performance-Related Features
 
-* In-kernel caching: whitelisted binaries are cached in the kernel so the
+* In-kernel caching: allowed binaries are cached in the kernel so the
   processing required to make a request is only done if the binary isn't
   already cached.
 
@@ -128,7 +129,7 @@ protect hosts in whatever other ways you see fit.
   binary. This is because after weighing the administration cost vs the
   benefit, we found it wasn't worthwhile. Additionally, a number of
   applications make use of temporary generated scripts, which we can't possibly
-  whitelist and not doing so would cause problems. We're happy to revisit this
+  allowlist and not doing so would cause problems. We're happy to revisit this
   (or at least make it an option) if it would be useful to others.
 
 # Sync Servers
