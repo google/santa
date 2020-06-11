@@ -32,7 +32,7 @@
 						<key>Comment</key>
 						<string></string>
 						<key>Identifier</key>
-						<string>com.google.santa.daemon.systemextension</string>
+						<string>com.google.santa.daemon</string>
 						<key>IdentifierType</key>
 						<string>bundleID</string>
 						<key>StaticCode</key>
