@@ -60,7 +60,7 @@
   }];
   dispatch_semaphore_wait(sema, dispatch_time(DISPATCH_TIME_NOW, 5 * NSEC_PER_SEC));
 
-  LOGI(@"Added %lu rules", newRules.count);
+  LOGI(@"Processed %lu rules", newRules.count);
 
   // Send out push notifications about any newly allowed binaries
   // that had been previously blocked by santad.
@@ -87,10 +87,15 @@
       return nil;
     }
 
+    uint32_t count = 0;
     for (NSDictionary *ruleDict in response[kRules]) {
       SNTRule *rule = [self ruleFromDictionary:ruleDict];
-      if (rule) [newRules addObject:rule];
+      if (rule) {
+        [newRules addObject:rule];
+        count++;
+      }
     }
+    LOGI(@"Received %lu rules", count);
     cursor = response[kCursor];
   } while (cursor);
   return newRules;
