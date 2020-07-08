@@ -20,12 +20,17 @@
 
 @class SNTStoredEvent;
 
+///  A block that reports the number of rules processed.
+///  TODO(bur): Add more details about the sync.
+typedef void (^SNTFullSyncReplyBlock)(NSNumber *rulesProcessed);
+
 ///  Protocol implemented by syncservice and utilized by daemon and ctl for communication with a sync server.
 @protocol SNTSyncServiceXPC
-- (void)postEventsToSyncServer:(NSArray<SNTStoredEvent *> *)events isFromBundle:(BOOL)isFromBundle;
+- (void)postEventsToSyncServer:(NSArray<SNTStoredEvent *> *)events fromBundle:(BOOL)fromBundle;
 - (void)postBundleEventToSyncServer:(SNTStoredEvent *)event
                               reply:(void (^)(SNTBundleEventAction))reply;
 - (void)isFCMListening:(void (^)(BOOL))reply;
+- (void)performFullSyncWithReply:(SNTFullSyncReplyBlock)reply;
 @end
 
 @interface SNTXPCSyncServiceInterface : NSObject
