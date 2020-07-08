@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CFBundleDevelopmentRegion</key>
+	<string>en</string>
+	<key>CFBundleDisplayName</key>
+	<string>santasyncservice</string>
+	<key>CFBundleExecutable</key>
+	<string>santasyncservice</string>
+	<key>CFBundleIdentifier</key>
+	<string>com.google.santa.syncservice</string>
+	<key>CFBundleInfoDictionaryVersion</key>
+	<string>6.0</string>
+	<key>CFBundleName</key>
+	<string>santasyncservice</string>
+	<key>CFBundleShortVersionString</key>
+	<string>${SANTA_VERSION}</string>
+	<key>CFBundleSignature</key>
+	<string>????</string>
+	<key>CFBundleVersion</key>
+	<string>${SANTA_VERSION}</string>
+	<key>NSHumanReadableCopyright</key>
+	<string>Google LLC.</string>
+</dict>
+</plist>
