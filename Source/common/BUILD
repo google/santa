@@ -177,6 +177,16 @@ objc_library(
 )
 
 objc_library(
+    name = "SNTXPCSyncServiceInterface",
+    srcs = ["SNTXPCSyncServiceInterface.m"],
+    hdrs = ["SNTXPCSyncServiceInterface.h"],
+    deps = [
+        ":SNTStoredEvent",
+        "@MOLXPCConnection",
+    ],
+)
+
+objc_library(
     name = "SNTXPCUnprivilegedControlInterface",
     srcs = ["SNTXPCUnprivilegedControlInterface.m"],
     hdrs = ["SNTXPCUnprivilegedControlInterface.h"],
