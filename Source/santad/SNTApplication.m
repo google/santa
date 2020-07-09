@@ -222,6 +222,12 @@
         [self->_eventLog logAllowedExecution:message];
         break;
       }
+      case ACTION_NOTIFY_FORK:
+        [self->_eventLog logFork:message];
+        break;
+      case ACTION_NOTIFY_EXIT:
+        [self->_eventLog logExit:message];
+        break;
       default:
         LOGE(@"Received log request without a valid action: %d", message.action);
         break;

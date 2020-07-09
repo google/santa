@@ -313,6 +313,11 @@
 @property(readonly, nonatomic) NSString *syncClientAuthCertificateIssuer;
 
 ///
+///  If true, forks and exits will be logged. Defaults to false.
+///
+@property(readonly, nonatomic) BOOL enableForkAndExitLogging;
+
+///
 ///  Retrieve an initialized singleton configurator object using the default file path.
 ///
 + (instancetype)configurator;

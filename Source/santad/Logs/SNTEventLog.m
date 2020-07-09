@@ -82,6 +82,13 @@
   [self doesNotRecognizeSelector:_cmd];
 }
 
+- (void)logFork:(santa_message_t)message {
+  [self doesNotRecognizeSelector:_cmd];
+}
+- (void)logExit:(santa_message_t)message {
+  [self doesNotRecognizeSelector:_cmd];
+}
+
 - (void)writeLog:(NSString *)log {
   [self doesNotRecognizeSelector:_cmd];
 }

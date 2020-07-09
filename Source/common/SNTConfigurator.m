@@ -78,6 +78,8 @@ static NSString *const kEnableMachineIDDecoration = @"EnableMachineIDDecoration"
 
 static NSString *const kEnableSystemExtension = @"EnableSystemExtension";
 
+static NSString *const kEnableForkAndExitLogging = @"EnableForkAndExitLogging";
+
 // The keys managed by a sync server or mobileconfig.
 static NSString *const kClientModeKey = @"ClientMode";
 static NSString *const kEnableTransitiveRulesKey = @"EnableTransitiveRules";
@@ -149,6 +151,7 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
       kEventLogPath : string,
       kEnableMachineIDDecoration : number,
       kEnableSystemExtension : number,
+      kEnableForkAndExitLogging : number,
     };
     _defaults = [NSUserDefaults standardUserDefaults];
     [_defaults addSuiteNamed:@"com.google.santa"];
@@ -316,6 +319,10 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
 }
 
 + (NSSet *)keyPathsForValuesAffectingEnableSystemExtension {
+  return [self configStateSet];
+}
+
++ (NSSet *)keyPathsForValuesAffectingEnableForkAndExitLogging {
   return [self configStateSet];
 }
 
@@ -556,6 +563,11 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
   } else {
     return NO;
   }
+}
+
+- (BOOL)enableForkAndExitLogging {
+  NSNumber *number = self.configState[kEnableForkAndExitLogging];
+  return number ? [number boolValue] : NO;
 }
 
 #pragma mark Private
