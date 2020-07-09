@@ -16,6 +16,7 @@
 
 #include "Source/common/SNTPrefixTree.h"
 
+#import "Source/common/SNTConfigurator.h"
 #import "Source/common/SNTLogging.h"
 
 #include <EndpointSecurity/EndpointSecurity.h>
@@ -72,6 +73,8 @@
 
 - (void)establishClient API_AVAILABLE(macos(10.15)) {
   while (!self.client) {
+    SNTConfigurator *config = [SNTConfigurator configurator];
+
     es_client_t *client = NULL;
     es_new_client_result_t ret = es_new_client(&client, ^(es_client_t *c, const es_message_t *m) {
       // Perform the following checks on this serial queue.
@@ -136,7 +139,33 @@
           // Update the set of running compiler PIDs
           if (pid && pid < PID_MAX) self->_compilerPIDs[pid].store(false);
 
-          // Do not log exits
+          // Skip the standard pipline and just log.
+          if (![config enableForkAndExitLogging]) return;
+          santa_message_t sm = {};
+          sm.action = ACTION_NOTIFY_EXIT;
+          sm.pid = pid;
+          sm.ppid = m->process->original_ppid;
+          audit_token_t at = m->process->audit_token;
+          sm.uid = audit_token_to_ruid(at);
+          sm.gid = audit_token_to_rgid(at);
+          dispatch_async(self.esNotifyQueue, ^{
+            self.logCallback(sm);
+          });
+          return;
+        }
+        case ES_EVENT_TYPE_NOTIFY_FORK: {
+          // Skip the standard pipline and just log.
+          if (![config enableForkAndExitLogging]) return;
+          santa_message_t sm = {};
+          sm.action = ACTION_NOTIFY_FORK;
+          sm.ppid = m->event.fork.child->original_ppid;
+          audit_token_t at = m->event.fork.child->audit_token;
+          sm.pid = audit_token_to_pid(at);
+          sm.uid = audit_token_to_ruid(at);
+          sm.gid = audit_token_to_rgid(at);
+          dispatch_async(self.esNotifyQueue, ^{
+            self.logCallback(sm);
+          });
           return;
         }
         default: {
@@ -365,6 +394,7 @@
     ES_EVENT_TYPE_NOTIFY_LINK,
     ES_EVENT_TYPE_NOTIFY_RENAME,
     ES_EVENT_TYPE_NOTIFY_UNLINK,
+    ES_EVENT_TYPE_NOTIFY_FORK,
   };
   es_return_t sret = es_subscribe(self.client, events, sizeof(events) / sizeof(es_event_type_t));
   if (sret != ES_RETURN_SUCCESS) LOGE(@"Unable to subscribe ES_EVENT_TYPE_NOTIFY_EXEC: %d", sret);

@@ -268,6 +268,19 @@
   }
 }
 
+- (void)logFork:(santa_message_t)message {
+  NSString *s = [NSString stringWithFormat:@"action=FORK|pid=%d|ppid=%d|uid=%d|gid=%d",
+                    message.pid, message.ppid, message.uid, message.gid];
+  [self writeLog:s];
+
+}
+
+- (void)logExit:(santa_message_t)message {
+  NSString *s = [NSString stringWithFormat:@"action=EXIT|pid=%d|ppid=%d|uid=%d|gid=%d",
+                    message.pid, message.ppid, message.uid, message.gid];
+  [self writeLog:s];
+}
+
 - (void)writeLog:(NSString *)log {
   LOGI(@"%@", log);
 }

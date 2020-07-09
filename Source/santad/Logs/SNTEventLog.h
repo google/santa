@@ -30,6 +30,8 @@
 - (void)logDeniedExecution:(SNTCachedDecision *)cd withMessage:(santa_message_t)message;
 - (void)logAllowedExecution:(santa_message_t)message;
 - (void)logBundleHashingEvents:(NSArray<SNTStoredEvent *> *)events;
+- (void)logFork:(santa_message_t)message;
+- (void)logExit:(santa_message_t)message;
 - (void)writeLog:(NSString *)log;
 
 // Methods for storing, retrieving, and removing cached decisions.
