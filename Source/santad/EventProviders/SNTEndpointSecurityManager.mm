@@ -73,7 +73,6 @@
 
 - (void)establishClient API_AVAILABLE(macos(10.15)) {
   while (!self.client) {
-    // Used
     SNTConfigurator *config = [SNTConfigurator configurator];
 
     es_client_t *client = NULL;
