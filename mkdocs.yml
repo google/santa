@@ -8,7 +8,7 @@ extra_css:
 pages:
 - Introduction:
   - Welcome to Santa: index.md
-  - Binary Whitelisting Overview: introduction/binary-whitelisting-overview.md
+  - Binary Authorization Overview: introduction/binary-authorization-overview.md
   - Syncing Overview: introduction/syncing-overview.md
 - Deployment:
   - Configuration: deployment/configuration.md
