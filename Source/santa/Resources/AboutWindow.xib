@@ -38,7 +38,7 @@
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                         <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="center" id="CcT-ul-1eA">
                             <font key="font" metaFont="system"/>
-                            <string key="title">Santa is an application whitelisting system for macOS.
+                            <string key="title">Santa is an application control system for macOS.
 
 There are no user-configurable settings.</string>
                             <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
