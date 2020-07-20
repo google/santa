@@ -55,7 +55,7 @@ macos_kernel_extension(
     infoplists = ["Info.plist"],
     minimum_os_version = "10.9",
     version = "//:version",
-    visibility = ["//visibility:public"],
+    visibility = ["//:santa_package_group"],
     deps = [":santa_driver_lib"],
 )
 
