@@ -22,7 +22,7 @@
   NSXPCInterface *r = [NSXPCInterface interfaceWithProtocol:@protocol(SNTSyncServiceXPC)];
 
   [r setClasses:[NSSet setWithObjects:[NSArray class], [SNTStoredEvent class], nil]
-        forSelector:@selector(postEventsToSyncServer:isFromBundle:)
+        forSelector:@selector(postEventsToSyncServer:fromBundle:)
       argumentIndex:0
             ofReply:NO];
 
