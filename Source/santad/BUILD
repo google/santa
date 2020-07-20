@@ -78,7 +78,7 @@ macos_bundle(
     linkopts = ["-execute"],
     minimum_os_version = "10.9",
     version = "//:version",
-    visibility = ["//visibility:public"],
+    visibility = ["//:santa_package_group"],
     deps = [":santad_lib"],
 )
 

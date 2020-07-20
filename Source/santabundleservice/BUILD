@@ -26,6 +26,6 @@ macos_command_line_application(
     infoplists = ["Info.plist"],
     minimum_os_version = "10.9",
     version = "//:version",
-    visibility = ["//visibility:public"],
+    visibility = ["//:santa_package_group"],
     deps = [":santabs_lib"],
 )

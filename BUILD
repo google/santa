@@ -2,7 +2,7 @@ load("@build_bazel_rules_apple//apple:versioning.bzl", "apple_bundle_version")
 load("//:helper.bzl", "run_command")
 load("//:version.bzl", "SANTA_VERSION")
 
-package(default_visibility = ["//visibility:public"])
+package(default_visibility = ["//:santa_package_group"])
 
 licenses(["notice"])
 
@@ -20,6 +20,12 @@ config_setting(
     name = "opt_build",
     values = {"compilation_mode": "opt"},
 )
+
+package_group(
+    name = "santa_package_group",
+    packages = ["//..."],
+)
+
 
 ################################################################################
 # Loading/Unloading/Reloading

@@ -95,7 +95,7 @@
         count++;
       }
     }
-    LOGI(@"Received %ld rules", count);
+    LOGI(@"Received %u rules", count);
     cursor = response[kCursor];
   } while (cursor);
   return newRules;
