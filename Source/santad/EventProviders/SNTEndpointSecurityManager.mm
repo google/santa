@@ -279,6 +279,7 @@
            audit_token_to_pid(m->process->audit_token) != self.selfPID) {
         LOGW(@"Preventing attempt to delete Santa databases!");
         es_respond_auth_result(self.client, m, ES_AUTH_RESULT_DENY, true);
+        return;
       }
       es_respond_auth_result(self.client, m, ES_AUTH_RESULT_ALLOW, true);
       return;
@@ -294,6 +295,20 @@
            audit_token_to_pid(m->process->audit_token) != self.selfPID) {
         LOGW(@"Preventing attempt to rename Santa databases!");
         es_respond_auth_result(self.client, m, ES_AUTH_RESULT_DENY, true);
+        return;
+      }
+      es_respond_auth_result(self.client, m, ES_AUTH_RESULT_ALLOW, true);
+      return;
+    }
+    case ES_EVENT_TYPE_AUTH_KEXTLOAD: {
+      es_string_token_t identifier = m->event.kextload.identifier;
+      NSString *ident = [[NSString alloc] initWithBytes:identifier.data
+                                                 length:identifier.length
+                                               encoding:NSUTF8StringEncoding];
+      if ([ident isEqualToString:@"com.google.santa-driver"]) {
+        LOGW(@"Preventing attempt to load Santa kext!");
+        es_respond_auth_result(self.client, m, ES_AUTH_RESULT_DENY, true);
+        return;
       }
       es_respond_auth_result(self.client, m, ES_AUTH_RESULT_ALLOW, true);
       return;
@@ -373,10 +388,14 @@
     ES_EVENT_TYPE_AUTH_EXEC,
     ES_EVENT_TYPE_AUTH_UNLINK,
     ES_EVENT_TYPE_AUTH_RENAME,
+    ES_EVENT_TYPE_AUTH_KEXTLOAD,
+
+    // This is in the decision callback because it's used for detecting
+    // the exit of a 'compiler' used by transitive whitelisting.
     ES_EVENT_TYPE_NOTIFY_EXIT,
   };
   es_return_t sret = es_subscribe(self.client, events, sizeof(events) / sizeof(es_event_type_t));
-  if (sret != ES_RETURN_SUCCESS) LOGE(@"Unable to subscribe ES_EVENT_TYPE_AUTH_EXEC: %d", sret);
+  if (sret != ES_RETURN_SUCCESS) LOGE(@"Unable to subscribe to auth events: %d", sret);
 
   // There's a gap between creating a client and subscribing to events. Creating the client
   // triggers a cache flush automatically but any events that happen in this gap could be allowed
@@ -397,7 +416,7 @@
     ES_EVENT_TYPE_NOTIFY_FORK,
   };
   es_return_t sret = es_subscribe(self.client, events, sizeof(events) / sizeof(es_event_type_t));
-  if (sret != ES_RETURN_SUCCESS) LOGE(@"Unable to subscribe ES_EVENT_TYPE_NOTIFY_EXEC: %d", sret);
+  if (sret != ES_RETURN_SUCCESS) LOGE(@"Unable to subscribe to notify events: %d", sret);
 }
 
 - (int)postAction:(santa_action_t)action forMessage:(santa_message_t)sm
