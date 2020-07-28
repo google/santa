@@ -96,13 +96,13 @@ REGISTER_COMMAND_NAME(@"rule")
   for (NSUInteger i = 0; i < arguments.count; ++i) {
     NSString *arg = arguments[i];
 
-    if ([arg caseInsensitiveCompare:@"--allowlist"] == NSOrderedSame ||
+    if ([arg caseInsensitiveCompare:@"--allow"] == NSOrderedSame ||
         [arg caseInsensitiveCompare:@"--whitelist"] == NSOrderedSame) {
       newRule.state = SNTRuleStateAllow;
-    } else if ([arg caseInsensitiveCompare:@"--blocklist"] == NSOrderedSame ||
+    } else if ([arg caseInsensitiveCompare:@"--block"] == NSOrderedSame ||
                [arg caseInsensitiveCompare:@"--blacklist"] == NSOrderedSame) {
       newRule.state = SNTRuleStateBlock;
-    } else if ([arg caseInsensitiveCompare:@"--silent-blocklist"] == NSOrderedSame ||
+    } else if ([arg caseInsensitiveCompare:@"--silent-block"] == NSOrderedSame ||
                [arg caseInsensitiveCompare:@"--silent-blacklist"] == NSOrderedSame) {
       newRule.state = SNTRuleStateSilentBlock;
     } else if ([arg caseInsensitiveCompare:@"--compiler"] == NSOrderedSame) {
