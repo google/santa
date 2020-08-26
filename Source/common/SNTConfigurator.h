@@ -191,6 +191,9 @@
 ///  %file_sha%    -- SHA-256 of the file that was blocked.
 ///  %machine_id%  -- ID of the machine.
 ///  %username%    -- executing user.
+///  %serial%      -- System's serial number.
+///  %uuid%        -- System's UUID.
+///  %hostname%    -- System's full hostname.
 ///
 ///  @note: This is not an NSURL because the format-string parsing is done elsewhere.
 ///
