@@ -154,8 +154,8 @@ protect hosts in whatever other ways you see fit.
 A tool like Santa doesn't really lend itself to screenshots, so here's a video
 instead.
 
-<p align="center"> <img src="https://zippy.gfycat.com/MadFatalAmphiuma.gif"
-alt="Santa Block Video" /> </p>
+
+<p align="center"> <img src="https://thumbs.gfycat.com/MadFatalAmphiuma-small.gif" alt="Santa Block Video" /> </p>
 
 # Kext Signing
 Kernel extensions on macOS 10.9 and later must be signed using an Apple-provided
