@@ -17,6 +17,7 @@
 #import "Source/common/SNTConfigurator.h"
 #import "Source/common/SNTLogging.h"
 #import "Source/common/SNTStoredEvent.h"
+#import "Source/common/SNTSystemInfo.h"
 
 @implementation SNTBlockMessage
 
@@ -106,6 +107,9 @@
 + (NSURL *)eventDetailURLForEvent:(SNTStoredEvent *)event {
   SNTConfigurator *config = [SNTConfigurator configurator];
 
+  NSString *hostname = [SNTSystemInfo longHostname];
+  NSString *uuid = [SNTSystemInfo hardwareUUID];
+  NSString *serial = [SNTSystemInfo serialNumber];
   NSString *formatStr = config.eventDetailURL;
   if (!formatStr.length) return nil;
 
@@ -121,6 +125,18 @@
   if (config.machineID) {
     formatStr = [formatStr stringByReplacingOccurrencesOfString:@"%machine_id%"
                                                      withString:config.machineID];
+  }
+  if (hostname.length) {
+    formatStr = [formatStr stringByReplacingOccurrencesOfString:@"%hostname%"
+                                                     withString:hostname];
+  }
+  if (uuid.length) {
+    formatStr = [formatStr stringByReplacingOccurrencesOfString:@"%uuid%"
+                                                     withString:uuid];
+  }
+  if (serial.length) {
+    formatStr = [formatStr stringByReplacingOccurrencesOfString:@"%serial%"
+                                                     withString:serial];
   }
 
   return [NSURL URLWithString:formatStr];
