@@ -126,15 +126,15 @@
     formatStr = [formatStr stringByReplacingOccurrencesOfString:@"%machine_id%"
                                                      withString:config.machineID];
   }
-  if (hostname) {
+  if (hostname.length) {
     formatStr = [formatStr stringByReplacingOccurrencesOfString:@"%hostname%"
                                                      withString:hostname];
   }
-  if (uuid) {
+  if (uuid.length) {
     formatStr = [formatStr stringByReplacingOccurrencesOfString:@"%uuid%"
                                                      withString:uuid];
   }
-  if (serial) {
+  if (serial.length) {
     formatStr = [formatStr stringByReplacingOccurrencesOfString:@"%serial%"
                                                      withString:serial];
   }
