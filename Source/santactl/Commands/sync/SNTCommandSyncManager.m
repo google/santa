@@ -353,7 +353,7 @@ static void reachabilityHandler(
       self.FCMGlobalRuleSyncDeadline = syncState.FCMGlobalRuleSyncDeadline;
       [self listenForPushNotificationsWithSyncState:syncState];
     } else if (syncState.daemon) {
-      LOGI(@"FCMToken not provided. Sync every %lu min.", syncState.FullSyncInterval / 60);
+      LOGD(@"FCMToken not provided. Sync every %lu min.", syncState.FullSyncInterval / 60);
       [self.FCMClient disconnect];
       self.FCMClient = nil;
       self.FullSyncInterval = syncState.FullSyncInterval;
