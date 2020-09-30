@@ -105,12 +105,17 @@
   self.syncState.FCMToken = resp[kFCMToken];
 
   // Don't let these go too low
-  NSUInteger value = [resp[kFCMFullSyncInterval] unsignedIntegerValue];
+  NSUInteger FCMintervalValue = [resp[kFCMFullSyncInterval] unsignedIntegerValue];
   self.syncState.FCMFullSyncInterval =
-      (value < kDefaultFullSyncInterval) ? kDefaultFCMFullSyncInterval : value;
-  value = [resp[kFCMGlobalRuleSyncDeadline] unsignedIntegerValue];
+      (FCMintervalValue < kDefaultFullSyncInterval) ? kDefaultFCMFullSyncInterval : FCMintervalValue;
+  FCMintervalValue = [resp[kFCMGlobalRuleSyncDeadline] unsignedIntegerValue];
   self.syncState.FCMGlobalRuleSyncDeadline =
-      (value < 60) ?  kDefaultFCMGlobalRuleSyncDeadline : value;
+      (FCMintervalValue < 60) ?  kDefaultFCMGlobalRuleSyncDeadline : FCMintervalValue;
+
+  // Check if our sync interval has changed
+  NSUInteger intervalValue = [resp[kFullSyncInterval] unsignedIntegerValue];
+  self.syncState.FullSyncInterval =
+      (intervalValue < 60) ? kDefaultFullSyncInterval : intervalValue;
 
   if ([resp[kClientMode] isEqual:kClientModeMonitor]) {
     self.syncState.clientMode = SNTClientModeMonitor;

@@ -35,6 +35,9 @@
 /// An XSRF token to send in the headers with each request.
 @property NSString *xsrfToken;
 
+/// Full sync interval in seconds without FCM to update kDefaultFullSyncInterval
+@property NSUInteger FullSyncInterval;
+
 /// An FCM token to subscribe to push notifications.
 @property(copy) NSString *FCMToken;
 
