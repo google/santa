@@ -55,7 +55,7 @@ static NSString *const kFCMTargetHostIDKey = @"target_host_id";
 // allowlistNotificationQueue is used to serialize access to the allowlistNotifications dictionary.
 @property(nonatomic) NSOperationQueue *allowlistNotificationQueue;
 
-@property NSUInteger FullSyncInterval;
+@property NSUInteger fullSyncInterval;
 
 @property NSUInteger FCMFullSyncInterval;
 @property NSUInteger FCMGlobalRuleSyncDeadline;
@@ -124,7 +124,7 @@ static void reachabilityHandler(
     _allowlistNotificationQueue = [[NSOperationQueue alloc] init];
     _allowlistNotificationQueue.maxConcurrentOperationCount = 1;  // make this a serial queue
 
-    _FullSyncInterval = kDefaultFullSyncInterval;
+    _fullSyncInterval = kDefaultFullSyncInterval;
     _eventBatchSize = kDefaultEventBatchSize;
     _FCMFullSyncInterval = kDefaultFCMFullSyncInterval;
     _FCMGlobalRuleSyncDeadline = kDefaultFCMGlobalRuleSyncDeadline;
@@ -353,11 +353,11 @@ static void reachabilityHandler(
       self.FCMGlobalRuleSyncDeadline = syncState.FCMGlobalRuleSyncDeadline;
       [self listenForPushNotificationsWithSyncState:syncState];
     } else if (syncState.daemon) {
-      LOGD(@"FCMToken not provided. Sync every %lu min.", syncState.FullSyncInterval / 60);
+      LOGD(@"FCMToken not provided. Sync every %lu min.", syncState.fullSyncInterval / 60);
       [self.FCMClient disconnect];
       self.FCMClient = nil;
-      self.FullSyncInterval = syncState.FullSyncInterval;
-      [self rescheduleTimerQueue:self.fullSyncTimer secondsFromNow:self.FullSyncInterval];
+      self.fullSyncInterval = syncState.fullSyncInterval;
+      [self rescheduleTimerQueue:self.fullSyncTimer secondsFromNow:self.fullSyncInterval];
     }
 
     return [self eventUploadWithSyncState:syncState];

@@ -170,6 +170,7 @@ Configuration profiles have a `.mobileconfig` file extension. There are many way
 | upload_logs_url**              | String     | If set, the endpoint to send Santa's current logs. No default. |
 | allowed_path_regex             | String     | Same as the "Local Configuration" AllowedPathRegex. No default. |
 | blocked_path_regex             | String     | Same as the "Local Configuration" BlockedPathRegex. No default. |
+| full_sync_interval*            | Integer    | The max time to wait before performing a full sync with the server. |
 | fcm_token*                     | String     | The FCM token used by Santa to listen for FCM messages. Unique for every machine. No default. |
 | fcm_full_sync_interval*        | Integer    | The full sync interval if a fcm_token is set. Defaults to  14400 secs (4 hours). |
 | fcm_global_rule_sync_deadline* | Integer    | The max time to wait before performing a rule sync when a global rule sync FCM message is received. This allows syncing to be staggered for global events to avoid spikes in server load. Defaults to 600 secs (10 min). |
