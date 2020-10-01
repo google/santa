@@ -37,6 +37,7 @@ NSString *const kBinaryRuleCount = @"binary_rule_count";
 NSString *const kCertificateRuleCount = @"certificate_rule_count";
 NSString *const kCompilerRuleCount = @"compiler_rule_count";
 NSString *const kTransitiveRuleCount = @"transitive_rule_count";
+NSString *const kFullSyncInterval = @"full_sync_interval";
 NSString *const kFCMToken = @"fcm_token";
 NSString *const kFCMFullSyncInterval = @"fcm_full_sync_interval";
 NSString *const kFCMGlobalRuleSyncDeadline = @"fcm_global_rule_sync_deadline";
