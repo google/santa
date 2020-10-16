@@ -321,6 +321,11 @@
 @property(readonly, nonatomic) BOOL enableForkAndExitLogging;
 
 ///
+///  If true, skip processing any actions from other endpoint security clients. Defaults to false.
+///
+@property(readonly, nonatomic) BOOL skipOtherEndpointSecurityClients;
+
+///
 ///  Retrieve an initialized singleton configurator object using the default file path.
 ///
 + (instancetype)configurator;

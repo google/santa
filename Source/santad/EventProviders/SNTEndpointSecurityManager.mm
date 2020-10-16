@@ -77,6 +77,14 @@
 
     es_client_t *client = NULL;
     es_new_client_result_t ret = es_new_client(&client, ^(es_client_t *c, const es_message_t *m) {
+      // If enabled, skip any action generated from another endpoint security client.
+      if (config.skipOtherEndpointSecurityClients && m->process->is_es_client) {
+        if (m->action_type == ES_ACTION_TYPE_AUTH) {
+          es_respond_auth_result(self.client, m, ES_AUTH_RESULT_ALLOW, true);
+        }
+        return;
+      }
+
       // Perform the following checks on this serial queue.
       // Some checks are simple filters that avoid copying m.
       // However, the bulk of the work done here is to support transitive whitelisting.
