@@ -79,6 +79,7 @@ static NSString *const kEnableMachineIDDecoration = @"EnableMachineIDDecoration"
 static NSString *const kEnableSystemExtension = @"EnableSystemExtension";
 
 static NSString *const kEnableForkAndExitLogging = @"EnableForkAndExitLogging";
+static NSString *const kIgnoreOtherEndpointSecurityClients = @"IgnoreOtherEndpointSecurityClients";
 
 // The keys managed by a sync server or mobileconfig.
 static NSString *const kClientModeKey = @"ClientMode";
@@ -152,6 +153,7 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
       kEnableMachineIDDecoration : number,
       kEnableSystemExtension : number,
       kEnableForkAndExitLogging : number,
+      kIgnoreOtherEndpointSecurityClients : number,
     };
     _defaults = [NSUserDefaults standardUserDefaults];
     [_defaults addSuiteNamed:@"com.google.santa"];
@@ -323,6 +325,10 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
 }
 
 + (NSSet *)keyPathsForValuesAffectingEnableForkAndExitLogging {
+  return [self configStateSet];
+}
+
++ (NSSet *)keyPathsForValuesAffectingIgnoreOtherEndpointSecurityClients {
   return [self configStateSet];
 }
 
@@ -567,6 +573,11 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
 
 - (BOOL)enableForkAndExitLogging {
   NSNumber *number = self.configState[kEnableForkAndExitLogging];
+  return number ? [number boolValue] : NO;
+}
+
+- (BOOL)ignoreOtherEndpointSecurityClients {
+  NSNumber *number = self.configState[kIgnoreOtherEndpointSecurityClients];
   return number ? [number boolValue] : NO;
 }
 
