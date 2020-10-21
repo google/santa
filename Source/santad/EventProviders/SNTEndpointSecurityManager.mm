@@ -84,7 +84,7 @@
         if (m->action_type == ES_ACTION_TYPE_AUTH) {
           es_respond_auth_result(self.client, m, ES_AUTH_RESULT_ALLOW, true);
         }
-        LOGI(@"Skipping action from es_client pid: %d", pid);
+        LOGD(@"Skipping action from es_client pid: %d", pid);
         return;
       }
 
