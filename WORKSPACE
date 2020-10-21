@@ -8,7 +8,7 @@ load("@bazel_tools//tools/build_defs/repo:git.bzl",
 git_repository(
     name = "build_bazel_rules_apple",
     remote = "https://github.com/bazelbuild/rules_apple.git",
-    tag = "0.19.0",
+    tag = "0.20.0",
 )
 
 load("@build_bazel_rules_apple//apple:repositories.bzl", "apple_rules_dependencies")
@@ -19,7 +19,7 @@ apple_rules_dependencies()
 git_repository(
     name = "MOLAuthenticatingURLSession",
     remote = "https://github.com/google/macops-molauthenticatingurlsession.git",
-    tag = "v2.8",
+    tag = "v2.9",
 )
 
 git_repository(
