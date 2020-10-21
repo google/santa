@@ -321,9 +321,9 @@
 @property(readonly, nonatomic) BOOL enableForkAndExitLogging;
 
 ///
-///  If true, skip processing any actions from other endpoint security clients. Defaults to false.
+///  If true, ignore actions from other endpoint security clients. Defaults to false. This only applies when running as a sysx.
 ///
-@property(readonly, nonatomic) BOOL skipOtherEndpointSecurityClients;
+@property(readonly, nonatomic) BOOL ignoreOtherEndpointSecurityClients;
 
 ///
 ///  Retrieve an initialized singleton configurator object using the default file path.
