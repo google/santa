@@ -14,6 +14,8 @@
 
 #import "Source/common/SNTLogging.h"
 
+#import "Source/common/SNTConfigurator.h"
+
 #import <asl.h>
 #import <pthread.h>
 
@@ -39,8 +41,7 @@ void logMessage(LogLevel level, FILE *destination, NSString *format, ...) {
   dispatch_once(&pred, ^{
     binaryName = [[NSProcessInfo processInfo] processName];
 
-    // If debug logging is enabled, the process must be restarted.
-    if ([[[NSProcessInfo processInfo] arguments] containsObject:@"--debug"]) {
+    if ([SNTConfigurator configurator].enableDebugLogging) {
       logLevel = LOG_LEVEL_DEBUG;
     }
 

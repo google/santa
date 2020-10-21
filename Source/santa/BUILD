@@ -35,6 +35,7 @@ objc_library(
     deps = [
         "//Source/common:SNTBlockMessage_SantaGUI",
         "//Source/common:SNTConfigurator",
+        "//Source/common:SNTLogging",
         "//Source/common:SNTXPCControlInterface",
         "//Source/common:SNTXPCNotifierInterface",
         "@MOLCodesignChecker",
