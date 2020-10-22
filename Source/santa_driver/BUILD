@@ -23,6 +23,7 @@ cc_library(
     copts = [
         "-mkernel",
         "-fapple-kext",
+        "-Wno-ossharedptr-misuse",
         "-I__BAZEL_XCODE_SDKROOT__/System/Library/Frameworks/Kernel.framework/Headers",
     ],
     defines = [
