@@ -10,6 +10,7 @@ objc_library(
     hdrs = ["SNTBlockMessage.h"],
     deps = [
         ":SNTConfigurator",
+        ":SNTLogging",
         ":SNTStoredEvent",
     ],
 )
@@ -21,6 +22,7 @@ objc_library(
     defines = ["SANTAGUI"],
     deps = [
         ":SNTConfigurator",
+        ":SNTLogging",
         ":SNTStoredEvent",
     ],
 )
@@ -46,7 +48,6 @@ objc_library(
     hdrs = ["SNTConfigurator.h"],
     deps = [
         ":SNTCommonEnums",
-        ":SNTLogging",
         ":SNTStrengthify",
         ":SNTSystemInfo",
     ],
@@ -82,6 +83,7 @@ objc_library(
     name = "SNTLogging",
     srcs = ["SNTLogging.m"],
     hdrs = ["SNTLogging.h"],
+    deps = [":SNTConfigurator"],
 )
 
 cc_library(
