@@ -1,10 +1,10 @@
+load("@build_bazel_rules_apple//apple:macos.bzl", "macos_application")
+
 licenses(["notice"])  # Apache 2.0
 
 exports_files([
     "Resources/Images.xcassets/AppIcon.appiconset/santa-hat-icon-256.png",
 ])
-
-load("@build_bazel_rules_apple//apple:macos.bzl", "macos_application")
 
 objc_library(
     name = "SantaGUI_lib",

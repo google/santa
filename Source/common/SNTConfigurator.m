@@ -84,7 +84,6 @@ static NSString *const kEnableForkAndExitLogging = @"EnableForkAndExitLogging";
 static NSString *const kIgnoreOtherEndpointSecurityClients = @"IgnoreOtherEndpointSecurityClients";
 static NSString *const kEnableDebugLogging = @"EnableDebugLogging";
 
-
 // The keys managed by a sync server or mobileconfig.
 static NSString *const kClientModeKey = @"ClientMode";
 static NSString *const kEnableTransitiveRulesKey = @"EnableTransitiveRules";
@@ -131,7 +130,7 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
       kBlockedPathRegexKey : re,
       kBlockedPathRegexKeyDeprecated : re,
       kEnablePageZeroProtectionKey : number,
-      kEnableBadSignatureProtectionKey: number,
+      kEnableBadSignatureProtectionKey : number,
       kMoreInfoURLKey : string,
       kEventDetailURLKey : string,
       kEventDetailTextKey : string,
@@ -144,7 +143,7 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
       kClientAuthCertificatePasswordKey : string,
       kClientAuthCertificateCNKey : string,
       kClientAuthCertificateIssuerKey : string,
-      kServerAuthRootsDataKey  : data,
+      kServerAuthRootsDataKey : data,
       kServerAuthRootsFileKey : string,
       kMachineOwnerKey : string,
       kMachineIDKey : string,
@@ -158,7 +157,7 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
       kEnableSystemExtension : number,
       kEnableForkAndExitLogging : number,
       kIgnoreOtherEndpointSecurityClients : number,
-      kEnableDebugLogging: number,
+      kEnableDebugLogging : number,
     };
     _defaults = [NSUserDefaults standardUserDefaults];
     [_defaults addSuiteNamed:@"com.google.santa"];
