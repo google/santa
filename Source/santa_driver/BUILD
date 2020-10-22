@@ -1,4 +1,4 @@
-licenses(["notice"])  # Apache 2.0
+licenses(["notice"])
 
 load(
     "@build_bazel_rules_apple//apple:macos.bzl",

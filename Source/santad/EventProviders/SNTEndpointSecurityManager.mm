@@ -395,14 +395,14 @@
 
   self.decisionCallback = callback;
   es_event_type_t events[] = {
-    ES_EVENT_TYPE_AUTH_EXEC,
-    ES_EVENT_TYPE_AUTH_UNLINK,
-    ES_EVENT_TYPE_AUTH_RENAME,
-    ES_EVENT_TYPE_AUTH_KEXTLOAD,
+      ES_EVENT_TYPE_AUTH_EXEC,
+      ES_EVENT_TYPE_AUTH_UNLINK,
+      ES_EVENT_TYPE_AUTH_RENAME,
+      ES_EVENT_TYPE_AUTH_KEXTLOAD,
 
-    // This is in the decision callback because it's used for detecting
-    // the exit of a 'compiler' used by transitive whitelisting.
-    ES_EVENT_TYPE_NOTIFY_EXIT,
+      // This is in the decision callback because it's used for detecting
+      // the exit of a 'compiler' used by transitive whitelisting.
+      ES_EVENT_TYPE_NOTIFY_EXIT,
   };
   es_return_t sret = es_subscribe(self.client, events, sizeof(events) / sizeof(es_event_type_t));
   if (sret != ES_RETURN_SUCCESS) LOGE(@"Unable to subscribe to auth events: %d", sret);

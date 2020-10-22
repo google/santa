@@ -1,8 +1,8 @@
+load("//:helper.bzl", "santa_unit_test")
+
 package(default_visibility = ["//:santa_package_group"])
 
 licenses(["notice"])  # Apache 2.0
-
-load("//:helper.bzl", "santa_unit_test")
 
 objc_library(
     name = "SNTBlockMessage",

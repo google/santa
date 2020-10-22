@@ -321,7 +321,8 @@
 @property(readonly, nonatomic) BOOL enableForkAndExitLogging;
 
 ///
-///  If true, ignore actions from other endpoint security clients. Defaults to false. This only applies when running as a sysx.
+///  If true, ignore actions from other endpoint security clients. Defaults to false. This only
+///  applies when running as a sysx.
 ///
 @property(readonly, nonatomic) BOOL ignoreOtherEndpointSecurityClients;
 
