@@ -616,7 +616,7 @@ int SantaDecisionManager::VnodeCallback(const kauth_cred_t cred,
         pid_t pid = proc_pid(proc);
         pid_t ppid = proc_ppid(proc);
         // pid_t is 32-bit; pid is in upper 32 bits, ppid in lower.
-        uint64_t val = ((uint64_t)pid << 32) | (ppid & 0xFFFFFFFF);
+        uint64_t val = ((uint64_t)pid << 32) | ((uint64_t)ppid & 0xFFFFFFFF);
         vnode_pid_map_->set(vnode_id, val);
         if (returnedAction == ACTION_RESPOND_ALLOW_COMPILER && ppid != 0) {
           // Do some additional bookkeeping for compilers:
@@ -674,8 +674,8 @@ void SantaDecisionManager::FileOpCallback(
     uint64_t val = vnode_pid_map_->get(vnode_id);
     if (val) {
       // pid_t is 32-bit, so pid is in upper 32 bits, ppid in lower.
-      message->pid = (val >> 32);
-      message->ppid = (val & ~0xFFFFFFFF00000000);
+      message->pid = (pid_t)(val >> 32);
+      message->ppid = (pid_t)(val & ~0xFFFFFFFF00000000);
     }
 
     PostToLogQueue(message);
@@ -816,7 +816,7 @@ extern "C" int vnode_scope_callback(
   // We only care about regular files.
   if (vnode_vtype(vp) != VREG) return KAUTH_RESULT_DEFER;
 
-  if ((action & KAUTH_VNODE_EXECUTE) && !(action & KAUTH_VNODE_ACCESS)) {  // NOLINT
+  if ((action & (int)KAUTH_VNODE_EXECUTE) && !(action & (int)KAUTH_VNODE_ACCESS)) {
     sdm->IncrementListenerInvocations();
     int result = sdm->VnodeCallback(credential,
                                     reinterpret_cast<vfs_context_t>(arg0),
@@ -824,9 +824,9 @@ extern "C" int vnode_scope_callback(
                                     reinterpret_cast<int *>(arg3));
     sdm->DecrementListenerInvocations();
     return result;
-  } else if (action & KAUTH_VNODE_WRITE_DATA || action & KAUTH_VNODE_APPEND_DATA) {
+  } else if (action & (int)KAUTH_VNODE_WRITE_DATA || action & (int)KAUTH_VNODE_APPEND_DATA) {
     sdm->IncrementListenerInvocations();
-    if (!(action & KAUTH_VNODE_ACCESS)) {  // NOLINT
+    if (!(action & (int)KAUTH_VNODE_ACCESS)) {
       auto vnode_id = sdm->GetVnodeIDForVnode(reinterpret_cast<vfs_context_t>(arg0), vp);
       sdm->RemoveFromCache(vnode_id);
     }
