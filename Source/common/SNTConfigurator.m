@@ -589,7 +589,7 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
 
 - (BOOL)enableDebugLogging {
   NSNumber *number = self.configState[kEnableDebugLogging];
-  return number ? [number boolValue] : self.debugFlag;
+  return [number boolValue] || self.debugFlag;
 }
 
 #pragma mark Private
