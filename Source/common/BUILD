@@ -37,7 +37,7 @@ objc_library(
     ],
 )
 
-cc_library(
+objc_library(
     name = "SNTCommonEnums",
     hdrs = ["SNTCommonEnums.h"],
 )
