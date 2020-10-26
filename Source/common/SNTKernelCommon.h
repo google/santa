@@ -16,10 +16,11 @@
 /// Common defines between kernel <-> userspace
 ///
 
-#include <sys/param.h>
-
 #ifndef SANTA__COMMON__KERNELCOMMON_H
 #define SANTA__COMMON__KERNELCOMMON_H
+
+#include <stdint.h>
+#include <sys/param.h>
 
 // Defines the name of the userclient class and the driver bundle ID.
 #define USERCLIENT_CLASS "com_google_SantaDriver"
