@@ -1,0 +1,23 @@
+name: CI
+on:
+  push:
+    paths-ignore:
+      - 'docs/**'
+    branches:
+      - '*'
+  pull_request:
+    paths-ignore:
+      - 'docs/**'
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: macos-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Build
+      run: bazel build --apple_generate_dsym -c opt :release
+    - name: Test
+      run: bazel test :unit_tests
