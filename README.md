@@ -142,6 +142,9 @@ protect hosts in whatever other ways you see fit.
       that implements social voting to make managing a large fleet easier.
     * [Moroz](https://github.com/groob/moroz) - A simple golang server that
       serves hardcoded rules from simple configuration files.
+    * [Zercurity](https://github.com/zercurity/zercurity) - A dockerized
+      service combining Santa + Osquery to manage and monitor applications 
+      with granular controls across a large fleet. 
     * [Zentral](https://github.com/zentralopensource/zentral/wiki) - A
       centralized service that pulls data from multiple sources and deploy
       configurations to multiple services.
