@@ -4,6 +4,21 @@ package(default_visibility = ["//:santa_package_group"])
 
 licenses(["notice"])  # Apache 2.0
 
+cc_library(
+    name = "SantaCache",
+    srcs = ["SantaCache.h"],
+    deps = ["//Source/common:SNTKernelCommon"],
+)
+
+santa_unit_test(
+    name = "SantaCacheTest",
+    srcs = [
+        "SantaCache.h",
+        "SantaCacheTest.mm",
+    ],
+    deps = ["//Source/common:SNTKernelCommon"],
+)
+
 objc_library(
     name = "SNTBlockMessage",
     srcs = ["SNTBlockMessage.m"],

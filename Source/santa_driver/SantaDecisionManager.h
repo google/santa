@@ -23,10 +23,10 @@
 #include <sys/proc.h>
 #include <sys/vnode.h>
 
+#include "Source/common/SantaCache.h"
 #include "Source/common/SNTKernelCommon.h"
 #include "Source/common/SNTLogging.h"
 #include "Source/common/SNTPrefixTree.h"
-#include "Source/santa_driver/SantaCache.h"
 
 ///
 ///  SantaDecisionManager is responsible for intercepting Vnode execute actions

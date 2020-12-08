@@ -11,7 +11,6 @@ load("//:version.bzl", "SANTA_VERSION")
 cc_library(
     name = "santa_driver_lib",
     srcs = [
-        "SantaCache.h",
         "SantaDecisionManager.cc",
         "SantaDecisionManager.h",
         "SantaDriver.cc",
@@ -33,20 +32,12 @@ cc_library(
         "SANTA_VERSION=" + SANTA_VERSION,
     ],
     deps = [
+        "//Source/common:SantaCache",
         "//Source/common:SNTKernelCommon",
         "//Source/common:SNTLoggingKernel",
         "//Source/common:SNTPrefixTreeKernel",
     ],
     alwayslink = 1,
-)
-
-santa_unit_test(
-    name = "SantaCacheTest",
-    srcs = [
-        "SantaCache.h",
-        "SantaCacheTest.mm",
-    ],
-    deps = ["//Source/common:SNTKernelCommon"],
 )
 
 macos_kernel_extension(
