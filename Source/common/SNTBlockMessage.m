@@ -127,16 +127,13 @@
                                                      withString:config.machineID];
   }
   if (hostname.length) {
-    formatStr = [formatStr stringByReplacingOccurrencesOfString:@"%hostname%"
-                                                     withString:hostname];
+    formatStr = [formatStr stringByReplacingOccurrencesOfString:@"%hostname%" withString:hostname];
   }
   if (uuid.length) {
-    formatStr = [formatStr stringByReplacingOccurrencesOfString:@"%uuid%"
-                                                     withString:uuid];
+    formatStr = [formatStr stringByReplacingOccurrencesOfString:@"%uuid%" withString:uuid];
   }
   if (serial.length) {
-    formatStr = [formatStr stringByReplacingOccurrencesOfString:@"%serial%"
-                                                     withString:serial];
+    formatStr = [formatStr stringByReplacingOccurrencesOfString:@"%serial%" withString:serial];
   }
 
   return [NSURL URLWithString:formatStr];

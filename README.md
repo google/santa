@@ -1,9 +1,4 @@
-# Santa [![Build Status][build-status-img]][build-status-link] [![Documentation Status][doc-status-img]][doc-status-link]
-
-[build-status-img]: https://travis-ci.org/google/santa.png?branch=master
-[build-status-link]: https://travis-ci.org/google/santa
-[doc-status-img]: https://readthedocs.org/projects/santa/badge/?version=latest
-[doc-status-link]: https://santa.readthedocs.io/en/latest/?badge=latest
+# Santa ![CI](https://github.com/google/santa/workflows/CI/badge.svg?branch=main)
 
 <p align="center">
     <img src="./Source/santa/Resources/Images.xcassets/AppIcon.appiconset/santa-hat-icon-128.png" alt="Santa Icon" />

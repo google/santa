@@ -1,8 +1,8 @@
+load("//:helper.bzl", "santa_unit_test")
+
 package(default_visibility = ["//:santa_package_group"])
 
 licenses(["notice"])  # Apache 2.0
-
-load("//:helper.bzl", "santa_unit_test")
 
 objc_library(
     name = "SNTBlockMessage",
@@ -10,6 +10,7 @@ objc_library(
     hdrs = ["SNTBlockMessage.h"],
     deps = [
         ":SNTConfigurator",
+        ":SNTLogging",
         ":SNTStoredEvent",
     ],
 )
@@ -21,6 +22,7 @@ objc_library(
     defines = ["SANTAGUI"],
     deps = [
         ":SNTConfigurator",
+        ":SNTLogging",
         ":SNTStoredEvent",
     ],
 )
@@ -35,7 +37,7 @@ objc_library(
     ],
 )
 
-cc_library(
+objc_library(
     name = "SNTCommonEnums",
     hdrs = ["SNTCommonEnums.h"],
 )
@@ -46,7 +48,6 @@ objc_library(
     hdrs = ["SNTConfigurator.h"],
     deps = [
         ":SNTCommonEnums",
-        ":SNTLogging",
         ":SNTStrengthify",
         ":SNTSystemInfo",
     ],
@@ -82,6 +83,7 @@ objc_library(
     name = "SNTLogging",
     srcs = ["SNTLogging.m"],
     hdrs = ["SNTLogging.h"],
+    deps = [":SNTConfigurator"],
 )
 
 cc_library(

@@ -1,4 +1,4 @@
-licenses(["notice"])  # Apache 2.0
+licenses(["notice"])
 
 load(
     "@build_bazel_rules_apple//apple:macos.bzl",
@@ -23,6 +23,7 @@ cc_library(
     copts = [
         "-mkernel",
         "-fapple-kext",
+        "-Wno-ossharedptr-misuse",
         "-I__BAZEL_XCODE_SDKROOT__/System/Library/Frameworks/Kernel.framework/Headers",
     ],
     defines = [

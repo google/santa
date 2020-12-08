@@ -85,8 +85,8 @@
         LOGE(@"unable to add new transitive rule to database: %@", err.localizedDescription);
       } else {
         [self.eventLog
-            writeLog:[NSString stringWithFormat:@"action=ALLOWLIST|pid=%d|path=%s|sha256=%@",
-                                                message.pid, target, fi.SHA256]];
+            writeLog:[NSString stringWithFormat:@"action=ALLOWLIST|pid=%d|pidversion=%d|path=%s|sha256=%@",
+                                                message.pid, message.pidversion, target, fi.SHA256]];
       }
     }
   }

@@ -115,6 +115,8 @@
 		C7FA384824B6169400D192F9 /* SNTLogging.m in Sources */ = {isa = PBXBuildFile; fileRef = C7658AD82322B84F00F36578 /* SNTLogging.m */; };
 		C7FA384924B6169400D192F9 /* SNTStoredEvent.m in Sources */ = {isa = PBXBuildFile; fileRef = C7658ADC2322B84F00F36578 /* SNTStoredEvent.m */; };
 		C7FA384A24B6169400D192F9 /* SNTXPCSyncServiceInterface.m in Sources */ = {isa = PBXBuildFile; fileRef = C7FA383724B60FF800D192F9 /* SNTXPCSyncServiceInterface.m */; };
+		C7FACBFA25646FE500CCB198 /* SNTConfigurator.m in Sources */ = {isa = PBXBuildFile; fileRef = C7658ACD2322B84F00F36578 /* SNTConfigurator.m */; };
+		C7FACC0225646FEB00CCB198 /* SNTSystemInfo.m in Sources */ = {isa = PBXBuildFile; fileRef = C7658AD12322B84F00F36578 /* SNTSystemInfo.m */; };
 		D28CA4C618C62392319BB642 /* libPods-santactl.a in Frameworks */ = {isa = PBXBuildFile; fileRef = B7714ABC7F247685608DACE7 /* libPods-santactl.a */; };
 		D698C8C9E47554577ED4939F /* libPods-com.google.santa.daemon.a in Frameworks */ = {isa = PBXBuildFile; fileRef = C05F6AD95EB704B20828BDA1 /* libPods-com.google.santa.daemon.a */; };
 		F5F5D1EF2AF051FEA97A3A59 /* libPods-sysx.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 91FF0B4E62F1E90A88478993 /* libPods-sysx.a */; };
@@ -1341,7 +1343,9 @@
 				C7CDA6FC233E73D80013622B /* SNTFileInfo.m in Sources */,
 				C7CDA6FF233E80160013622B /* SNTLogging.m in Sources */,
 				C7CDA6FD233E73E40013622B /* SNTStoredEvent.m in Sources */,
+				C7FACBFA25646FE500CCB198 /* SNTConfigurator.m in Sources */,
 				C7CDA6FE233E73ED0013622B /* SNTXPCNotifierInterface.m in Sources */,
+				C7FACC0225646FEB00CCB198 /* SNTSystemInfo.m in Sources */,
 				C7F5C1AE233E72CC00A3F7FD /* main.m in Sources */,
 				C7F5C1AF233E72CF00A3F7FD /* SNTBundleService.m in Sources */,
 			);
@@ -1453,7 +1457,6 @@
 				MACOSX_DEPLOYMENT_TARGET = 10.11;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
-				ONLY_ACTIVE_ARCH = YES;
 				SDKROOT = macosx;
 			};
 			name = Debug;

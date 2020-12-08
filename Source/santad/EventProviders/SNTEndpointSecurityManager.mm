@@ -77,10 +77,23 @@
 
     es_client_t *client = NULL;
     es_new_client_result_t ret = es_new_client(&client, ^(es_client_t *c, const es_message_t *m) {
+      pid_t pid = audit_token_to_pid(m->process->audit_token);
+      int pidversion = audit_token_to_pidversion(m->process->audit_token);
+
+      // If enabled, skip any action generated from another endpoint security client.
+      if (m->process->is_es_client && config.ignoreOtherEndpointSecurityClients) {
+        if (m->action_type == ES_ACTION_TYPE_AUTH) {
+          es_respond_auth_result(self.client, m, ES_AUTH_RESULT_ALLOW, true);
+        }
+        if (self.selfPID != pid) {
+          LOGD(@"Skipping event type: 0x%x from es_client pid: %d", m->event_type, pid);
+        }
+        return;
+      }
+
       // Perform the following checks on this serial queue.
       // Some checks are simple filters that avoid copying m.
       // However, the bulk of the work done here is to support transitive whitelisting.
-      pid_t pid = audit_token_to_pid(m->process->audit_token);
       switch (m->event_type) {
         case ES_EVENT_TYPE_NOTIFY_EXEC: {
           // Deny results are currently logged when ES_EVENT_TYPE_AUTH_EXEC posts a deny.
@@ -107,6 +120,7 @@
             }
             sm.action = ACTION_NOTIFY_WHITELIST;
             sm.pid = pid;
+            sm.pidversion = pidversion;
             LOGI(@"CLOSE: creating a transitive rule: path=%s pid=%d", sm.path, sm.pid);
             self.decisionCallback(sm);
           }
@@ -128,6 +142,7 @@
             }
             sm.action = ACTION_NOTIFY_WHITELIST;
             sm.pid = pid;
+            sm.pidversion = pidversion;
             LOGI(@"RENAME: creating a transitive rule: path=%s pid=%d", sm.path, sm.pid);
             self.decisionCallback(sm);
           }
@@ -144,6 +159,7 @@
           santa_message_t sm = {};
           sm.action = ACTION_NOTIFY_EXIT;
           sm.pid = pid;
+          sm.pidversion = pidversion;
           sm.ppid = m->process->original_ppid;
           audit_token_t at = m->process->audit_token;
           sm.uid = audit_token_to_ruid(at);
@@ -161,6 +177,7 @@
           sm.ppid = m->event.fork.child->original_ppid;
           audit_token_t at = m->event.fork.child->audit_token;
           sm.pid = audit_token_to_pid(at);
+          sm.pidversion = audit_token_to_pidversion(at);
           sm.uid = audit_token_to_ruid(at);
           sm.gid = audit_token_to_rgid(at);
           dispatch_async(self.esNotifyQueue, ^{
@@ -375,6 +392,7 @@
   sm.uid = audit_token_to_ruid(targetProcess->audit_token);
   sm.gid = audit_token_to_rgid(targetProcess->audit_token);
   sm.pid = audit_token_to_pid(targetProcess->audit_token);
+  sm.pidversion = audit_token_to_pidversion(targetProcess->audit_token);
   sm.ppid = targetProcess->original_ppid;
   proc_name((m->event_type == ES_EVENT_TYPE_AUTH_EXEC) ? sm.ppid : sm.pid, sm.pname, 1024);
   callback(sm);
@@ -385,14 +403,14 @@
 
   self.decisionCallback = callback;
   es_event_type_t events[] = {
-    ES_EVENT_TYPE_AUTH_EXEC,
-    ES_EVENT_TYPE_AUTH_UNLINK,
-    ES_EVENT_TYPE_AUTH_RENAME,
-    ES_EVENT_TYPE_AUTH_KEXTLOAD,
+      ES_EVENT_TYPE_AUTH_EXEC,
+      ES_EVENT_TYPE_AUTH_UNLINK,
+      ES_EVENT_TYPE_AUTH_RENAME,
+      ES_EVENT_TYPE_AUTH_KEXTLOAD,
 
-    // This is in the decision callback because it's used for detecting
-    // the exit of a 'compiler' used by transitive whitelisting.
-    ES_EVENT_TYPE_NOTIFY_EXIT,
+      // This is in the decision callback because it's used for detecting
+      // the exit of a 'compiler' used by transitive whitelisting.
+      ES_EVENT_TYPE_NOTIFY_EXIT,
   };
   es_return_t sret = es_subscribe(self.client, events, sizeof(events) / sizeof(es_event_type_t));
   if (sret != ES_RETURN_SUCCESS) LOGE(@"Unable to subscribe to auth events: %d", sret);
