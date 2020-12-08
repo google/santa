@@ -145,9 +145,9 @@ protect hosts in whatever other ways you see fit.
     * [Zentral](https://github.com/zentralopensource/zentral/wiki) - A
       centralized service that pulls data from multiple sources and deploy
       configurations to multiple services.
-    * [Zercurity](https://github.com/zercurity/zercurity) - A dockerized
-      service combining Santa + Osquery to manage and monitor applications
-      with granular controls across a large fleet.
+    * [Zercurity](https://github.com/zercurity/zercurity) - A dockerized service 
+      for managing and monitoring applications across a large fleet utilizing 
+      Santa + Osquery.
 
 * Alternatively, `santactl` can configure rules locally (without a sync
   server).
