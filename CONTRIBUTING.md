@@ -13,18 +13,15 @@ approved it, but you must do it before we can put your code into our codebase.
 
 Before you start working on a larger contribution, you should get in touch with
 us first through the [issue tracker](https://github.com/google/santa/issues)
-with your idea so that we can help out and possibly guide you. Coordinating up 
-front makes it much easier to avoid frustration later on.
+with your idea so that we can help out and possibly guide you. Co-ordinating
+large changes ahead of time can avoid frustration later on.
 
 ### Code reviews
-All submissions, including submissions by project members, require review. We
-use GitHub pull requests for this purpose. It's also a good idea to run the
-tests beforehand, which you can do with the following commands:
+All submissions - including submissions by project members - require review. We
+use GitHub pull requests for this purpose. GitHub will automatically run the
+tests when you mail your pull request and a proper review won't be started until
+the tests are complete and passing.
 
-```sh
-rake tests:logic
-rake tests:kernel  # only necessary if you're changing the kext code
-```
 ### Code Style
 
 All code submissions should try to match the surrounding code.  Wherever possible,
