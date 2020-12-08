@@ -119,6 +119,7 @@ typedef struct {
   uid_t uid;
   gid_t gid;
   pid_t pid;
+  int pidversion;
   pid_t ppid;
   char path[MAXPATHLEN];
   char newpath[MAXPATHLEN];

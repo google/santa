@@ -65,8 +65,8 @@
   char ppath[PATH_MAX] = "(null)";
   proc_pidpath(message.pid, ppath, PATH_MAX);
 
-  [outStr appendFormat:@"|pid=%d|ppid=%d|process=%s|processpath=%s|uid=%d|user=%@|gid=%d|group=%@",
-      message.pid, message.ppid, message.pname, ppath,
+  [outStr appendFormat:@"|pid=%d|pidversion=%d|ppid=%d|process=%s|processpath=%s|uid=%d|user=%@|gid=%d|group=%@",
+      message.pid, message.pidversion, message.ppid, message.pname, ppath,
       message.uid, [self nameForUID:message.uid],
       message.gid, [self nameForGID:message.gid]];
 
@@ -169,8 +169,8 @@
       mode = @"U"; break;
   }
 
-  [outLog appendFormat:@"|pid=%d|ppid=%d|uid=%d|user=%@|gid=%d|group=%@|mode=%@|path=%@",
-      message.pid, message.ppid,
+  [outLog appendFormat:@"|pid=%d|pidversion=%d|ppid=%d|uid=%d|user=%@|gid=%d|group=%@|mode=%@|path=%@",
+      message.pid, message.pidversion, message.ppid,
       message.uid, [self nameForUID:message.uid],
       message.gid, [self nameForGID:message.gid],
       mode, [self sanitizeString:@(message.path)]];
@@ -269,15 +269,15 @@
 }
 
 - (void)logFork:(santa_message_t)message {
-  NSString *s = [NSString stringWithFormat:@"action=FORK|pid=%d|ppid=%d|uid=%d|gid=%d",
-                    message.pid, message.ppid, message.uid, message.gid];
+  NSString *s = [NSString stringWithFormat:@"action=FORK|pid=%d|pidversion=%d|ppid=%d|uid=%d|gid=%d",
+                    message.pid, message.pidversion, message.ppid, message.uid, message.gid];
   [self writeLog:s];
 
 }
 
 - (void)logExit:(santa_message_t)message {
-  NSString *s = [NSString stringWithFormat:@"action=EXIT|pid=%d|ppid=%d|uid=%d|gid=%d",
-                    message.pid, message.ppid, message.uid, message.gid];
+  NSString *s = [NSString stringWithFormat:@"action=EXIT|pid=%d|pidversion=%d|ppid=%d|uid=%d|gid=%d",
+                    message.pid, message.pidversion, message.ppid, message.uid, message.gid];
   [self writeLog:s];
 }
 
