@@ -77,6 +77,11 @@ cc_library(
 cc_library(
     name = "SNTLoggingKernel",
     hdrs = ["SNTLogging.h"],
+    copts = [
+        "-mkernel",
+        "-I__BAZEL_XCODE_SDKROOT__/System/Library/Frameworks/Kernel.framework/Headers",
+    ],
+    defines = ["KERNEL"],
 )
 
 objc_library(
