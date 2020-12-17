@@ -54,6 +54,7 @@ macos_kernel_extension(
     bundle_id = "com.google.santa-driver",
     bundle_name = "santa-driver",
     infoplists = ["Info.plist"],
+    ipa_post_processor = ":last_resort",
     minimum_os_version = "10.9",
     version = "//:version",
     visibility = ["//:santa_package_group"],
@@ -68,6 +69,11 @@ objc_library(
         "IOKit",
     ],
     deps = ["//Source/common:SNTKernelCommon"],
+)
+
+sh_binary(
+    name = "last_resort",
+    srcs = ["last_resort.sh"],
 )
 
 macos_command_line_application(
