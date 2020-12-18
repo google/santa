@@ -70,11 +70,6 @@ objc_library(
     deps = ["//Source/common:SNTKernelCommon"],
 )
 
-sh_binary(
-    name = "last_resort",
-    srcs = ["last_resort.sh"],
-)
-
 macos_command_line_application(
     name = "kernel_tests_bin",
     bundle_id = "com.google.santa.KernelTests",
