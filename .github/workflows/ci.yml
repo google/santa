@@ -18,7 +18,6 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: Build
-      run: bazel build --apple_generate_dsym -c opt :release
-      run: bazel build --apple_generate_dsym -c opt :release_driver
+      run: bazel build --apple_generate_dsym -c opt :release && bazel build --apple_generate_dsym -c opt :release_driver
     - name: Test
       run: bazel test :unit_tests
