@@ -78,4 +78,8 @@
 /// Reference to the serial operation queue used for accessing allowlistNotifications.
 @property(weak) NSOperationQueue *allowlistNotificationQueue;
 
+/// The header value for ContentEncoding when sending compressed content.
+/// Either "deflate" (default) or "zlib".
+@property(copy) NSString *compressedContentEncoding;
+
 @end

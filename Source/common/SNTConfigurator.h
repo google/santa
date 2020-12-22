@@ -333,6 +333,14 @@
 @property(readonly, nonatomic) BOOL enableDebugLogging;
 
 ///
+///  If true, compressed requests from "santactl sync" will set "Content-Encoding" to "zlib"
+///  instead of the new default "deflate". If syncing with Upvote deployed at commit 0b4477d
+///  or below, set this option to true.
+///  Defaults to false.
+///
+@property(readonly, nonatomic) BOOL enableBackwardsCompatibleContentEncoding;
+
+///
 ///  Retrieve an initialized singleton configurator object using the default file path.
 ///
 + (instancetype)configurator;
