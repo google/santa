@@ -482,6 +482,9 @@ static void reachabilityHandler(
   syncState.daemonConn = self.daemonConn;
   syncState.daemon = self.daemon;
 
+  syncState.compressedContentEncoding =
+      config.enableBackwardsCompatibleContentEncoding ? @"zlib" : @"deflate";
+
   dispatch_group_wait(group, dispatch_time(DISPATCH_TIME_NOW, 5 * NSEC_PER_SEC));
   return syncState;
 }

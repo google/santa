@@ -84,6 +84,8 @@ static NSString *const kEnableForkAndExitLogging = @"EnableForkAndExitLogging";
 static NSString *const kIgnoreOtherEndpointSecurityClients = @"IgnoreOtherEndpointSecurityClients";
 static NSString *const kEnableDebugLogging = @"EnableDebugLogging";
 
+static NSString *const kEnableBackwardsCompatibleContentEncoding = @"EnableBackwardsCompatibleContentEncoding";
+
 // The keys managed by a sync server or mobileconfig.
 static NSString *const kClientModeKey = @"ClientMode";
 static NSString *const kEnableTransitiveRulesKey = @"EnableTransitiveRules";
@@ -158,6 +160,7 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
       kEnableForkAndExitLogging : number,
       kIgnoreOtherEndpointSecurityClients : number,
       kEnableDebugLogging : number,
+      kEnableBackwardsCompatibleContentEncoding : number,
     };
     _defaults = [NSUserDefaults standardUserDefaults];
     [_defaults addSuiteNamed:@"com.google.santa"];
@@ -338,6 +341,10 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
 }
 
 + (NSSet *)keyPathsForValuesAffectingEnableDebugLogging {
+  return [self configStateSet];
+}
+
++ (NSSet *)keyPathsForValuesAffectingEnableBackwardsCompatibleContentEncoding {
   return [self configStateSet];
 }
 
@@ -589,6 +596,11 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
 - (BOOL)enableDebugLogging {
   NSNumber *number = self.configState[kEnableDebugLogging];
   return [number boolValue] || self.debugFlag;
+}
+
+- (BOOL)enableBackwardsCompatibleContentEncoding {
+  NSNumber *number = self.configState[kEnableBackwardsCompatibleContentEncoding];
+  return number ? [number boolValue] : NO;
 }
 
 #pragma mark Private
