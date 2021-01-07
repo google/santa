@@ -16,6 +16,8 @@ objc_library(
         "EventProviders/SNTDriverManager.m",
         "EventProviders/SNTEndpointSecurityManager.h",
         "EventProviders/SNTEndpointSecurityManager.mm",
+        "EventProviders/SNTCachingEndpointSecurityManager.h",
+        "EventProviders/SNTCachingEndpointSecurityManager.mm",
         "EventProviders/SNTEventProvider.h",
         "Logs/SNTEventLog.h",
         "Logs/SNTEventLog.m",

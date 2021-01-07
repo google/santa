@@ -88,7 +88,7 @@ REGISTER_COMMAND_NAME(@"status")
 
   // Kext status
   __block uint64_t rootCacheCount = -1, nonRootCacheCount = -1;
-  if (![configurator enableSystemExtension]) {
+  if (![configurator enableSystemExtension] || [configurator enableSysxCache]) {
     dispatch_group_enter(group);
     [[self.daemonConn remoteObjectProxy] cacheCounts:^(uint64_t rootCache, uint64_t nonRootCache) {
       rootCacheCount = rootCache;

@@ -79,6 +79,7 @@ static NSString *const kEventLogPath = @"EventLogPath";
 static NSString *const kEnableMachineIDDecoration = @"EnableMachineIDDecoration";
 
 static NSString *const kEnableSystemExtension = @"EnableSystemExtension";
+static NSString *const kEnableSysxCache = @"EnableSysxCache";
 
 static NSString *const kEnableForkAndExitLogging = @"EnableForkAndExitLogging";
 static NSString *const kIgnoreOtherEndpointSecurityClients = @"IgnoreOtherEndpointSecurityClients";
@@ -157,6 +158,7 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
       kEventLogPath : string,
       kEnableMachineIDDecoration : number,
       kEnableSystemExtension : number,
+      kEnableSysxCache : number,
       kEnableForkAndExitLogging : number,
       kIgnoreOtherEndpointSecurityClients : number,
       kEnableDebugLogging : number,
@@ -329,6 +331,10 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
 }
 
 + (NSSet *)keyPathsForValuesAffectingEnableSystemExtension {
+  return [self configStateSet];
+}
+
++ (NSSet *)keyPathsForValuesAffectingEnableSysxCache {
   return [self configStateSet];
 }
 
@@ -581,6 +587,11 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
   } else {
     return NO;
   }
+}
+
+- (BOOL)enableSysxCache {
+  NSNumber *number = self.configState[kEnableSysxCache];
+  return number ? [number boolValue] : NO;
 }
 
 - (BOOL)enableForkAndExitLogging {
