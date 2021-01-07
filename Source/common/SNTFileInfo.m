@@ -566,9 +566,27 @@ extern NSString *const NSURLQuarantinePropertiesKey WEAK_IMPORT_ATTRIBUTE;
   for (uint32_t i = 0; i < nsects; ++i) {
     NSData *sectData = [self safeSubdataWithRange:NSMakeRange(offset, sz_section)];
     if (!sectData) return nil;
-    struct section_64 *sect = (struct section_64 *)[sectData bytes];
-    if (sect && memcmp(sect->sectname, "__info_plist", 12) == 0 && sect->size < 2000000) {
-      NSData *plistData = [self safeSubdataWithRange:NSMakeRange(mhwo.offset + sect->offset, sect->size)];
+    uint64_t sectoffset, sectsize = 0;
+    BOOL found = NO;
+    if (is64) {
+      struct section_64 *sect = (struct section_64 *)[sectData bytes];
+      if (sect && memcmp(sect->sectname, "__info_plist", 12) == 0 && sect->size < 2000000) {
+        sectoffset = sect->offset;
+        sectsize = sect->size;
+        found = YES;
+      }
+    } else {
+      struct section *sect = (struct section *)[sectData bytes];
+      if (sect && memcmp(sect->sectname, "__info_plist", 12) == 0 && sect->size < 2000000) {
+        sectoffset = sect->offset;
+        sectsize = sect->size;
+        found = YES;
+      }
+    }
+
+    if (found) {
+      NSData *plistData = [self safeSubdataWithRange:NSMakeRange(mhwo.offset + sectoffset,
+                                                                 sectsize)];
       if (!plistData) return nil;
       NSDictionary *plist;
       plist = [NSPropertyListSerialization propertyListWithData:plistData
