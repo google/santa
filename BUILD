@@ -209,9 +209,9 @@ genrule(
 test_suite(
     name = "unit_tests",
     tests = [
+        "//Source/common:SantaCacheTest",
         "//Source/common:SNTFileInfoTest",
         "//Source/common:SNTPrefixTreeTest",
-        "//Source/santa_driver:SantaCacheTest",
         "//Source/santactl:SNTCommandFileInfoTest",
         "//Source/santactl:SNTCommandSyncTest",
         "//Source/santad:SNTEventTableTest",
