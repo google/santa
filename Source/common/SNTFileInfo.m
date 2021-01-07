@@ -568,7 +568,7 @@ extern NSString *const NSURLQuarantinePropertiesKey WEAK_IMPORT_ATTRIBUTE;
     if (!sectData) return nil;
     struct section_64 *sect = (struct section_64 *)[sectData bytes];
     if (sect && memcmp(sect->sectname, "__info_plist", 12) == 0 && sect->size < 2000000) {
-      NSData *plistData = [self safeSubdataWithRange:NSMakeRange(sect->offset, sect->size)];
+      NSData *plistData = [self safeSubdataWithRange:NSMakeRange(mhwo.offset + sect->offset, sect->size)];
       if (!plistData) return nil;
       NSDictionary *plist;
       plist = [NSPropertyListSerialization propertyListWithData:plistData

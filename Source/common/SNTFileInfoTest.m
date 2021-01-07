@@ -39,9 +39,8 @@
   sut = [[SNTFileInfo alloc] initWithPath:@"../../../../../../../../../../../../../../../bin/ls"];
   XCTAssertEqualObjects(sut.path, @"/bin/ls");
 
-  sut = [[SNTFileInfo alloc] initWithPath:@"/usr/sbin/AppleFileServer"];
-  XCTAssertEqualObjects(sut.path, @"/System/Library/CoreServices/AppleFileServer.app/"
-                                  @"Contents/MacOS/AppleFileServer");
+  sut = [[SNTFileInfo alloc] initWithPath:@"/usr/sbin/DirectoryService"];
+  XCTAssertEqualObjects(sut.path, @"/usr/libexec/dspluginhelperd");
 }
 
 - (void)testSHA1 {
@@ -72,7 +71,6 @@
   XCTAssertTrue(sut.isExecutable);
 
   XCTAssertFalse(sut.isDylib);
-  XCTAssertFalse(sut.isFat);
   XCTAssertFalse(sut.isKext);
   XCTAssertFalse(sut.isScript);
 }
@@ -106,7 +104,7 @@
 }
 
 - (void)testDylibs {
-  SNTFileInfo *sut = [[SNTFileInfo alloc] initWithPath:@"/usr/lib/libsqlite3.dylib"];
+  SNTFileInfo *sut = [[SNTFileInfo alloc] initWithPath:@"/usr/lib/system/libsystem_platform.dylib"];
 
   XCTAssertTrue(sut.isMachO);
   XCTAssertTrue(sut.isDylib);
