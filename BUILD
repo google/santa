@@ -60,9 +60,9 @@ set -e
 
 rm -rf /tmp/bazel_santa_reload
 unzip -d /tmp/bazel_santa_reload \
-    $${BUILD_WORKSPACE_DIRECTORY}/bazel-bin/Source/santa_driver/santa_driver.zip >/dev/null
+    $${BUILD_WORKSPACE_DIRECTORY}/bazel-out/*/bin/Source/santa_driver/santa_driver.zip >/dev/null
 unzip -d /tmp/bazel_santa_reload \
-    $${BUILD_WORKSPACE_DIRECTORY}/bazel-bin/Source/santa/Santa.zip >/dev/null
+    $${BUILD_WORKSPACE_DIRECTORY}/bazel-out/*/bin/Source/santa/Santa.zip >/dev/null
 echo "You may be asked for your password for sudo"
 sudo BINARIES=/tmp/bazel_santa_reload CONF=$${BUILD_WORKSPACE_DIRECTORY}/Conf \
     $${BUILD_WORKSPACE_DIRECTORY}/Conf/install.sh
