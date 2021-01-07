@@ -118,6 +118,7 @@ santa_unit_test(
         "bsm",
     ],
     deps = [
+        "//Source/common:SantaCache",
         "//Source/common:SNTBlockMessage",
         "//Source/common:SNTCachedDecision",
         "//Source/common:SNTCommonEnums",
