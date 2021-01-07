@@ -20,23 +20,13 @@
 #import "Source/common/SNTConfigurator.h"
 #import "Source/common/SNTLogging.h"
 
-#include <EndpointSecurity/EndpointSecurity.h>
+#include <atomic>
 #include <bsm/libbsm.h>
 #include <libproc.h>
 
-#include <atomic>
-
-// Gleaned from https://opensource.apple.com/source/xnu/xnu-4903.241.1/bsd/sys/proc_internal.h
-#define PID_MAX 99999
-
-uint64_t GetCurrentUptime() {
-  return clock_gettime_nsec_np(CLOCK_MONOTONIC);
-}
-static const uint32_t kRequestCacheChecks = 15;
 
 @interface SNTEndpointSecurityManager ()
 
-@property(nonatomic) es_client_t *client;
 @property(nonatomic) SNTPrefixTree *prefixTree;
 @property(nonatomic, copy) void (^decisionCallback)(santa_message_t);
 @property(nonatomic, copy) void (^logCallback)(santa_message_t);
@@ -46,13 +36,8 @@ static const uint32_t kRequestCacheChecks = 15;
 
 @end
 
-template<> uint64_t SantaCacheHasher<santa_vnode_id_t>(santa_vnode_id_t const& t) {
-  return (SantaCacheHasher<uint64_t>(t.fsid) << 1) ^ SantaCacheHasher<uint64_t>(t.fileid);
-}
-
 @implementation SNTEndpointSecurityManager {
   std::atomic<bool> _compilerPIDs[PID_MAX];
-  SantaCache<santa_vnode_id_t, uint64_t> *_decisionCache;
 }
 
 - (instancetype)init API_AVAILABLE(macos(10.15)) {
@@ -60,7 +45,6 @@ template<> uint64_t SantaCacheHasher<santa_vnode_id_t>(santa_vnode_id_t const& t
   if (self) {
     [self establishClient];
     _prefixTree = new SNTPrefixTree();
-    _decisionCache = new SantaCache<santa_vnode_id_t, uint64_t>();
     _esAuthQueue =
         dispatch_queue_create("com.google.santa.daemon.es_auth", DISPATCH_QUEUE_CONCURRENT);
     dispatch_set_target_queue(_esAuthQueue,
@@ -81,7 +65,6 @@ template<> uint64_t SantaCacheHasher<santa_vnode_id_t>(santa_vnode_id_t const& t
     es_delete_client(_client);
   }
   if (_prefixTree) delete _prefixTree;
-  if (_decisionCache) delete _decisionCache;
 }
 
 - (void)establishClient API_AVAILABLE(macos(10.15)) {
@@ -96,7 +79,7 @@ template<> uint64_t SantaCacheHasher<santa_vnode_id_t>(santa_vnode_id_t const& t
       // If enabled, skip any action generated from another endpoint security client.
       if (m->process->is_es_client && config.ignoreOtherEndpointSecurityClients) {
         if (m->action_type == ES_ACTION_TYPE_AUTH) {
-          es_respond_auth_result(self.client, m, ES_AUTH_RESULT_ALLOW, true);
+          es_respond_auth_result(self.client, m, ES_AUTH_RESULT_ALLOW, false);
         }
         if (self.selfPID != pid) {
           LOGD(@"Skipping event type: 0x%x from es_client pid: %d", m->event_type, pid);
@@ -121,7 +104,7 @@ template<> uint64_t SantaCacheHasher<santa_vnode_id_t>(santa_vnode_id_t const& t
           if (!m->event.close.modified) return;
 
           // Remove from decision cache in case this is invalidating a cached binary.
-          [self removeFromCache:[self vnodeIDForFile:m->event.close.target]];
+          [self removeCacheEntryForVnodeID:[self vnodeIDForFile:m->event.close.target]];
 
           // Create a transitive rule if the file was modified by a running compiler
           if (pid && pid < PID_MAX && self->_compilerPIDs[pid].load()) {
@@ -170,7 +153,7 @@ template<> uint64_t SantaCacheHasher<santa_vnode_id_t>(santa_vnode_id_t const& t
           // Update the set of running compiler PIDs
           if (pid && pid < PID_MAX) self->_compilerPIDs[pid].store(false);
 
-          // Skip the standard pipline and just log.
+          // Skip the standard pipeline and just log.
           if (![config enableForkAndExitLogging]) return;
           santa_message_t sm = {};
           sm.action = ACTION_NOTIFY_EXIT;
@@ -186,7 +169,7 @@ template<> uint64_t SantaCacheHasher<santa_vnode_id_t>(santa_vnode_id_t const& t
           return;
         }
         case ES_EVENT_TYPE_NOTIFY_FORK: {
-          // Skip the standard pipline and just log.
+          // Skip the standard pipeline and just log.
           if (![config enableForkAndExitLogging]) return;
           santa_message_t sm = {};
           sm.action = ACTION_NOTIFY_FORK;
@@ -252,7 +235,7 @@ template<> uint64_t SantaCacheHasher<santa_vnode_id_t>(santa_vnode_id_t const& t
     switch (ret) {
       case ES_NEW_CLIENT_RESULT_SUCCESS:
         LOGI(@"Connected to EndpointSecurity");
-        self.client = client;
+        _client = client;
         return;
       case ES_NEW_CLIENT_RESULT_ERR_NOT_PERMITTED:
         LOGE(@"Unable to create EndpointSecurity client, not full-disk access permitted");
@@ -267,6 +250,10 @@ template<> uint64_t SantaCacheHasher<santa_vnode_id_t>(santa_vnode_id_t const& t
   }
 }
 
+- (BOOL)respondFromCache:(es_message_t *)m API_AVAILABLE(macos(10.15)) {
+  return NO;
+}
+
 - (void)messageHandler:(es_message_t *)m API_AVAILABLE(macos(10.15)) {
   santa_message_t sm = {};
   sm.es_message = (void *)m;
@@ -277,32 +264,9 @@ template<> uint64_t SantaCacheHasher<santa_vnode_id_t>(santa_vnode_id_t const& t
 
   switch (m->event_type) {
     case ES_EVENT_TYPE_AUTH_EXEC: {
-      auto vnode_id = [self vnodeIDForFile:m->event.exec.target->executable];
-      while (true) {
-        // Check to see if item is in cache
-        auto return_action = [self getFromCache:vnode_id];
-
-        // If item was in cache with a valid response, return it.
-        // If item is in cache but hasn't received a response yet, sleep for a bit.
-        // If item is not in cache, break out of loop and forward request to callback.
-        if (RESPONSE_VALID(return_action)) {
-          if (return_action == ACTION_RESPOND_ALLOW) {
-            es_respond_auth_result(self.client, m, ES_AUTH_RESULT_ALLOW, false);
-          } else {
-            es_respond_auth_result(self.client, m, ES_AUTH_RESULT_DENY, false);
-          }
-          return;
-        } else if (return_action == ACTION_REQUEST_BINARY || return_action == ACTION_RESPOND_ACK) {
-          // This thread will now sleep for kRequestLoopSleepMilliseconds (1s) or
-          // until AddToCache is called, indicating a response has arrived.
-          //msleep((void *)vnode_id.unsafe_simple_id(), NULL, 0, "", &ts_);
-          usleep(5000);
-        } else {
-          break;
-        }
+      if ([self respondFromCache:m]) {
+        return;
       }
-
-      [self addToCache:vnode_id decision:ACTION_REQUEST_BINARY timeout:0];
 
       sm.action = ACTION_REQUEST_BINARY;
       targetFile = m->event.exec.target->executable;
@@ -498,9 +462,8 @@ template<> uint64_t SantaCacheHasher<santa_vnode_id_t>(santa_vnode_id_t const& t
       break;
     case ACTION_RESPOND_ALLOW:
     case ACTION_RESPOND_ALLOW_PENDING_TRANSITIVE:
-      [self addToCache:sm.vnode_id decision:ACTION_RESPOND_ALLOW timeout:GetCurrentUptime()];
       ret = es_respond_auth_result(self.client, (es_message_t *)sm.es_message,
-                                   ES_AUTH_RESULT_ALLOW, false);
+                                   ES_AUTH_RESULT_ALLOW, true);
       break;
     case ACTION_RESPOND_DENY:
     case ACTION_RESPOND_TOOLONG:
@@ -514,69 +477,6 @@ template<> uint64_t SantaCacheHasher<santa_vnode_id_t>(santa_vnode_id_t const& t
   }
 
   return ret;
-}
-
-- (santa_action_t)getFromCache:(santa_vnode_id_t)identifier {
-  auto result = ACTION_UNSET;
-  uint64_t decision_time = 0;
-
-  uint64_t cache_val = _decisionCache->get(identifier);
-  if (cache_val == 0) return result;
-
-  // Decision is stored in upper 8 bits, timestamp in remaining 56.
-  result = (santa_action_t)(cache_val >> 56);
-  decision_time = (cache_val & ~(0xFF00000000000000));
-
-  if (RESPONSE_VALID(result)) {
-    if (result == ACTION_RESPOND_DENY) {
-      auto expiry_time = decision_time + (500 * 100000); // kMaxCacheDenyTimeMilliseconds
-      if (expiry_time < GetCurrentUptime()) {
-        _decisionCache->remove(identifier);
-        return ACTION_UNSET;
-      }
-    }
-  }
-  return result;
-}
-
-- (void)addToCache:(santa_vnode_id_t)identifier
-          decision:(santa_action_t)decision
-           timeout:(uint64_t)microsecs {
-  switch (decision) {
-    case ACTION_REQUEST_BINARY:
-      _decisionCache->set(identifier, (uint64_t)ACTION_REQUEST_BINARY << 56, 0);
-      break;
-    case ACTION_RESPOND_ACK:
-      _decisionCache->set(identifier, (uint64_t)ACTION_RESPOND_ACK << 56,
-                          ((uint64_t)ACTION_REQUEST_BINARY << 56));
-      break;
-    case ACTION_RESPOND_ALLOW:
-    case ACTION_RESPOND_ALLOW_COMPILER:
-    case ACTION_RESPOND_DENY: {
-      // Decision is stored in upper 8 bits, timestamp in remaining 56.
-      uint64_t val = ((uint64_t)decision << 56) | (microsecs & 0xFFFFFFFFFFFFFF);
-      if (!_decisionCache->set(identifier, val, ((uint64_t)ACTION_REQUEST_BINARY << 56))) {
-        _decisionCache->set(identifier, val, ((uint64_t)ACTION_RESPOND_ACK << 56));
-      }
-      break;
-    }
-    case ACTION_RESPOND_ALLOW_PENDING_TRANSITIVE: {
-      // Decision is stored in upper 8 bits, timestamp in remaining 56.
-      uint64_t val = ((uint64_t)decision << 56) | (microsecs & 0xFFFFFFFFFFFFFF);
-      _decisionCache->set(identifier, val, 0);
-      break;
-    }
-    default:
-      break;
-  }
-  // TODO: Figure out a replacement for this:
-  // wakeup((void *)identifier.unsafe_simple_id());
-}
-
-- (void)removeFromCache:(santa_vnode_id_t)identifier {
-  _decisionCache->remove(identifier);
-  // TODO: Figure out a replacement for this:
-  // wakeup((void *)identifier.unsafe_simple_id());
 }
 
 - (BOOL)flushCacheNonRootOnly:(BOOL)nonRootOnly API_AVAILABLE(macos(10.15)) {
