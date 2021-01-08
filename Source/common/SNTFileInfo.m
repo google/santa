@@ -551,15 +551,24 @@ extern NSString *const NSURLQuarantinePropertiesKey WEAK_IMPORT_ATTRIBUTE;
   for (uint32_t i = 0; i < ncmds; ++i) {
     NSData *cmdData = [self safeSubdataWithRange:NSMakeRange(offset, sz_segment)];
     if (!cmdData) return nil;
-    struct segment_command_64 *lc = (struct segment_command_64 *)[cmdData bytes];
-    if (lc->cmd == LC_SEGMENT || lc->cmd == LC_SEGMENT_64) {
-      if (memcmp(lc->segname, "__TEXT", 6) == 0) {
+
+    if (is64) {
+      struct segment_command_64 *lc = (struct segment_command_64 *)[cmdData bytes];
+      if (lc->cmd == LC_SEGMENT_64 && memcmp(lc->segname, "__TEXT", 6) == 0) {
+          nsects = lc->nsects;
+          offset += sz_segment;
+          break;
+      }
+      offset += lc->cmdsize;
+    } else {
+      struct segment_command *lc = (struct segment_command *)[cmdData bytes];
+      if (lc->cmd == LC_SEGMENT && memcmp(lc->segname, "__TEXT", 6) == 0) {
         nsects = lc->nsects;
         offset += sz_segment;
         break;
       }
+      offset += lc->cmdsize;
     }
-    offset += lc->cmdsize;
   }
 
   // Loop through the sections in the __TEXT segment looking for an __info_plist section.

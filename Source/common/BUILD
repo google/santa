@@ -214,6 +214,7 @@ santa_unit_test(
     resources = [
         "testdata/bad_pagezero",
         "testdata/missing_pagezero",
+        "testdata/32bitplist",
     ],
     structured_resources = glob([
         "testdata/BundleExample.app/**",

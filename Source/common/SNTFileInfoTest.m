@@ -229,10 +229,16 @@
 }
 
 - (void)testEmbeddedInfoPlist {
+  NSString *path = [[NSBundle bundleForClass:[self class]] pathForResource:@"32bitplist"
+                                                                    ofType:@""];
+  SNTFileInfo *sut = [[SNTFileInfo alloc] initWithPath:path];
+  XCTAssertNotNil([sut infoPlist]);
+  XCTAssertEqualObjects([sut infoPlist][@"CFBundleShortVersionString"], @"1.0");
+  XCTAssertEqualObjects([sut infoPlist][@"CFBundleIdentifier"], @"com.google.i386plist");
+
   // csreq is installed on all machines with Xcode installed. If you're running these tests,
   // it should be available..
-  SNTFileInfo *sut = [[SNTFileInfo alloc] initWithPath:@"/usr/bin/csreq"];
-
+  sut = [[SNTFileInfo alloc] initWithPath:@"/usr/bin/csreq"];
   XCTAssertNotNil([sut infoPlist]);
 }
 
