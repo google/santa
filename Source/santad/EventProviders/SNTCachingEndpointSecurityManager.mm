@@ -35,6 +35,7 @@ template<> uint64_t SantaCacheHasher<santa_vnode_id_t>(santa_vnode_id_t const& t
 - (instancetype)init {
   self = [super init];
   if (self) {
+    // TODO(rah): Consider splitting into root/non-root cache
     _decisionCache = new SantaCache<santa_vnode_id_t, uint64_t>();
   }
 
@@ -62,8 +63,7 @@ template<> uint64_t SantaCacheHasher<santa_vnode_id_t>(santa_vnode_id_t const& t
       }
       return YES;
     } else if (return_action == ACTION_REQUEST_BINARY || return_action == ACTION_RESPOND_ACK) {
-      // TODO: Figure out a replacement for this:
-      //msleep((void *)vnode_id.unsafe_simple_id(), NULL, 0, "", &ts_);
+      // TODO(rah): Look at a replacement for msleep(), maybe NSCondition
       usleep(5000);
     } else {
       break;
@@ -140,8 +140,7 @@ template<> uint64_t SantaCacheHasher<santa_vnode_id_t>(santa_vnode_id_t const& t
     default:
       break;
   }
-  // TODO: Figure out a replacement for this:
-  // wakeup((void *)identifier.unsafe_simple_id());
+  // TODO(rah): Look at a replacement for wakeup(), maybe NSCondition
 }
 
 - (BOOL)flushCacheNonRootOnly:(BOOL)nonRootOnly API_AVAILABLE(macos(10.15)) {
@@ -184,8 +183,7 @@ template<> uint64_t SantaCacheHasher<santa_vnode_id_t>(santa_vnode_id_t const& t
 
 - (kern_return_t)removeCacheEntryForVnodeID:(santa_vnode_id_t)vnodeID {
   _decisionCache->remove(vnodeID);
-  // TODO: Figure out a replacement for this:
-  // wakeup((void *)identifier.unsafe_simple_id());
+  // TODO(rah): Look at a replacement for wakeup(), maybe NSCondition
   return 0;
 }
 
