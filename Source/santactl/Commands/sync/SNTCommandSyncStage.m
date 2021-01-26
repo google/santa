@@ -83,20 +83,33 @@
 - (NSDictionary *)performRequest:(NSURLRequest *)request timeout:(NSTimeInterval)timeout {
   NSHTTPURLResponse *response;
   NSError *error;
-  NSData *data = [self performRequest:request timeout:timeout response:&response error:&error];
+  NSData *data;
 
-  // If the original request failed, attempt to get a new XSRF token and try again.
-  // Unfortunately some servers cause NSURLSession to return 'client cert required' or
-  // 'could not parse response' when a 403 occurs and SSL cert auth is enabled.
-  if ((response.statusCode == 403 ||
-       error.code == NSURLErrorClientCertificateRequired ||
-       error.code == NSURLErrorCannotParseResponse) &&
-      [self fetchXSRFToken]) {
-    NSMutableURLRequest *mutableRequest = [request mutableCopy];
-    [mutableRequest setValue:self.syncState.xsrfToken forHTTPHeaderField:kXSRFToken];
-    return [self performRequest:mutableRequest timeout:timeout];
+  for (int attempt = 1; attempt < 6; ++attempt) {
+    if (attempt > 1) {
+      struct timespec ts = {.tv_sec = (attempt * 2)};
+      nanosleep(&ts, NULL);
+    }
+
+    LOGD(@"Performing request, attempt %d", attempt);
+    data = [self performRequest:request timeout:timeout response:&response error:&error];
+    if (response.statusCode == 200) break;
+
+    // If the original request failed because of an auth error, attempt to get a new XSRF token and
+    // try again. Unfortunately some servers cause NSURLSession to return 'client cert required' or
+    // 'could not parse response' when a 403 occurs and SSL cert auth is enabled.
+    if ((response.statusCode == 403 ||
+         error.code == NSURLErrorClientCertificateRequired ||
+         error.code == NSURLErrorCannotParseResponse) &&
+        [self fetchXSRFToken]) {
+      NSMutableURLRequest *mutableRequest = [request mutableCopy];
+      [mutableRequest setValue:self.syncState.xsrfToken forHTTPHeaderField:kXSRFToken];
+      request = mutableRequest;
+      continue;
+    }
   }
 
+  // If the final attempt resulted in an error, log the error and return nil.
   if (response.statusCode != 200) {
     long code;
     NSString *errStr;

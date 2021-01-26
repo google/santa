@@ -337,6 +337,7 @@ static void reachabilityHandler(
 #pragma mark syncing chain
 
 - (void)preflight {
+  LOGD(@"Preflight starting");
   SNTCommandSyncState *syncState = [self createSyncState];
   SNTCommandSyncPreflight *p = [[SNTCommandSyncPreflight alloc] initWithState:syncState];
   if ([p sync]) {
@@ -373,6 +374,7 @@ static void reachabilityHandler(
 }
 
 - (void)eventUploadWithSyncState:(SNTCommandSyncState *)syncState {
+  LOGD(@"Event upload starting");
   SNTCommandSyncEventUpload *p = [[SNTCommandSyncEventUpload alloc] initWithState:syncState];
   if ([p sync]) {
     LOGD(@"Event upload complete");
@@ -384,6 +386,7 @@ static void reachabilityHandler(
 }
 
 - (void)ruleDownloadWithSyncState:(SNTCommandSyncState *)syncState {
+  LOGD(@"Rule download starting");
   SNTCommandSyncRuleDownload *p = [[SNTCommandSyncRuleDownload alloc] initWithState:syncState];
   if ([p sync]) {
     LOGD(@"Rule download complete");
@@ -395,6 +398,7 @@ static void reachabilityHandler(
 }
 
 - (void)postflightWithSyncState:(SNTCommandSyncState *)syncState {
+  LOGD(@"Postflight starting");
   SNTCommandSyncPostflight *p = [[SNTCommandSyncPostflight alloc] initWithState:syncState];
   if ([p sync]) {
     LOGD(@"Postflight complete");
