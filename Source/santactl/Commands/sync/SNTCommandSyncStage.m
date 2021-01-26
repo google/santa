@@ -85,7 +85,12 @@
   NSError *error;
   NSData *data;
 
-  for (int attempt = 1; attempt < 4; ++attempt) {
+  for (int attempt = 1; attempt < 6; ++attempt) {
+    if (attempt > 1) {
+      struct timespec ts = {.tv_sec = (attempt * 2)};
+      nanosleep(&ts, NULL);
+    }
+
     LOGD(@"Performing request, attempt %d", attempt);
     data = [self performRequest:request timeout:timeout response:&response error:&error];
     if (response.statusCode == 200) break;
@@ -102,9 +107,6 @@
       request = mutableRequest;
       continue;
     }
-
-    struct timespec ts = {.tv_sec = (attempt * 2)};
-    nanosleep(&ts, NULL);
   }
 
   // If the final attempt resulted in an error, log the error and return nil.
