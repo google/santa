@@ -173,6 +173,15 @@
 ///
 @property(readonly, nonatomic) BOOL enableSystemExtension;
 
+///
+///  Use an internal cache for decisions instead of relying on the caching
+///  mechanism built-in to the EndpointSecurity framework. This may increase
+///  performance, particularly when Santa is run alongside other system
+///  extensions.
+///  Has no effect if the system extension is not being used. Defaults to NO.
+///
+@property(readonly, nonatomic) BOOL enableSysxCache;
+
 #pragma mark - GUI Settings
 
 ///
@@ -191,6 +200,9 @@
 ///  %file_sha%    -- SHA-256 of the file that was blocked.
 ///  %machine_id%  -- ID of the machine.
 ///  %username%    -- executing user.
+///  %serial%      -- System's serial number.
+///  %uuid%        -- System's UUID.
+///  %hostname%    -- System's full hostname.
 ///
 ///  @note: This is not an NSURL because the format-string parsing is done elsewhere.
 ///
@@ -316,6 +328,26 @@
 ///  If true, forks and exits will be logged. Defaults to false.
 ///
 @property(readonly, nonatomic) BOOL enableForkAndExitLogging;
+
+///
+///  If true, ignore actions from other endpoint security clients. Defaults to false. This only
+///  applies when running as a sysx.
+///
+@property(readonly, nonatomic) BOOL ignoreOtherEndpointSecurityClients;
+
+///
+///  If true, debug logging will be enabled for all Santa components. Defaults to false.
+///  Passing --debug as an executable argument will enable debug logging for that specific component.
+///
+@property(readonly, nonatomic) BOOL enableDebugLogging;
+
+///
+///  If true, compressed requests from "santactl sync" will set "Content-Encoding" to "zlib"
+///  instead of the new default "deflate". If syncing with Upvote deployed at commit 0b4477d
+///  or below, set this option to true.
+///  Defaults to false.
+///
+@property(readonly, nonatomic) BOOL enableBackwardsCompatibleContentEncoding;
 
 ///
 ///  Retrieve an initialized singleton configurator object using the default file path.

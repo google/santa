@@ -55,6 +55,8 @@ static NSString *const kFCMTargetHostIDKey = @"target_host_id";
 // allowlistNotificationQueue is used to serialize access to the allowlistNotifications dictionary.
 @property(nonatomic) NSOperationQueue *allowlistNotificationQueue;
 
+@property NSUInteger fullSyncInterval;
+
 @property NSUInteger FCMFullSyncInterval;
 @property NSUInteger FCMGlobalRuleSyncDeadline;
 @property NSUInteger eventBatchSize;
@@ -122,6 +124,7 @@ static void reachabilityHandler(
     _allowlistNotificationQueue = [[NSOperationQueue alloc] init];
     _allowlistNotificationQueue.maxConcurrentOperationCount = 1;  // make this a serial queue
 
+    _fullSyncInterval = kDefaultFullSyncInterval;
     _eventBatchSize = kDefaultEventBatchSize;
     _FCMFullSyncInterval = kDefaultFCMFullSyncInterval;
     _FCMGlobalRuleSyncDeadline = kDefaultFCMGlobalRuleSyncDeadline;
@@ -350,10 +353,11 @@ static void reachabilityHandler(
       self.FCMGlobalRuleSyncDeadline = syncState.FCMGlobalRuleSyncDeadline;
       [self listenForPushNotificationsWithSyncState:syncState];
     } else if (syncState.daemon) {
-      LOGD(@"FCMToken not provided. Sync every %lu min.", kDefaultFullSyncInterval / 60);
+      LOGD(@"FCMToken not provided. Sync every %lu min.", syncState.fullSyncInterval / 60);
       [self.FCMClient disconnect];
       self.FCMClient = nil;
-      [self rescheduleTimerQueue:self.fullSyncTimer secondsFromNow:kDefaultFullSyncInterval];
+      self.fullSyncInterval = syncState.fullSyncInterval;
+      [self rescheduleTimerQueue:self.fullSyncTimer secondsFromNow:self.fullSyncInterval];
     }
 
     return [self eventUploadWithSyncState:syncState];
@@ -477,6 +481,9 @@ static void reachabilityHandler(
   syncState.session = [authURLSession session];
   syncState.daemonConn = self.daemonConn;
   syncState.daemon = self.daemon;
+
+  syncState.compressedContentEncoding =
+      config.enableBackwardsCompatibleContentEncoding ? @"zlib" : @"deflate";
 
   dispatch_group_wait(group, dispatch_time(DISPATCH_TIME_NOW, 5 * NSEC_PER_SEC));
   return syncState;

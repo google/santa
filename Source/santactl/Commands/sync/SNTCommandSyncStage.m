@@ -70,7 +70,7 @@
   NSData *compressed = [requestBody zlibCompressed];
   if (compressed) {
     requestBody = compressed;
-    [req setValue:@"zlib" forHTTPHeaderField:@"Content-Encoding"];
+    [req setValue:self.syncState.compressedContentEncoding forHTTPHeaderField:@"Content-Encoding"];
   }
 
   [req setHTTPBody:requestBody];

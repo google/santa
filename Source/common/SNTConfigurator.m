@@ -16,7 +16,6 @@
 
 #include <sys/stat.h>
 
-#import "Source/common/SNTLogging.h"
 #import "Source/common/SNTStrengthify.h"
 #import "Source/common/SNTSystemInfo.h"
 
@@ -24,13 +23,16 @@
 /// A NSUserDefaults object set to use the com.google.santa suite.
 @property(readonly, nonatomic) NSUserDefaults *defaults;
 
-// Keys and expected value types.
+/// Keys and expected value types.
 @property(readonly, nonatomic) NSDictionary *syncServerKeyTypes;
 @property(readonly, nonatomic) NSDictionary *forcedConfigKeyTypes;
 
 /// Holds the configurations from a sync server and mobileconfig.
 @property NSMutableDictionary *syncState;
 @property NSMutableDictionary *configState;
+
+/// Was --debug passed as an argument to this process?
+@property(readonly, nonatomic) BOOL debugFlag;
 @end
 
 @implementation SNTConfigurator
@@ -77,8 +79,13 @@ static NSString *const kEventLogPath = @"EventLogPath";
 static NSString *const kEnableMachineIDDecoration = @"EnableMachineIDDecoration";
 
 static NSString *const kEnableSystemExtension = @"EnableSystemExtension";
+static NSString *const kEnableSysxCache = @"EnableSysxCache";
 
 static NSString *const kEnableForkAndExitLogging = @"EnableForkAndExitLogging";
+static NSString *const kIgnoreOtherEndpointSecurityClients = @"IgnoreOtherEndpointSecurityClients";
+static NSString *const kEnableDebugLogging = @"EnableDebugLogging";
+
+static NSString *const kEnableBackwardsCompatibleContentEncoding = @"EnableBackwardsCompatibleContentEncoding";
 
 // The keys managed by a sync server or mobileconfig.
 static NSString *const kClientModeKey = @"ClientMode";
@@ -126,7 +133,7 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
       kBlockedPathRegexKey : re,
       kBlockedPathRegexKeyDeprecated : re,
       kEnablePageZeroProtectionKey : number,
-      kEnableBadSignatureProtectionKey: number,
+      kEnableBadSignatureProtectionKey : number,
       kMoreInfoURLKey : string,
       kEventDetailURLKey : string,
       kEventDetailTextKey : string,
@@ -139,7 +146,7 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
       kClientAuthCertificatePasswordKey : string,
       kClientAuthCertificateCNKey : string,
       kClientAuthCertificateIssuerKey : string,
-      kServerAuthRootsDataKey  : data,
+      kServerAuthRootsDataKey : data,
       kServerAuthRootsFileKey : string,
       kMachineOwnerKey : string,
       kMachineIDKey : string,
@@ -151,12 +158,17 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
       kEventLogPath : string,
       kEnableMachineIDDecoration : number,
       kEnableSystemExtension : number,
+      kEnableSysxCache : number,
       kEnableForkAndExitLogging : number,
+      kIgnoreOtherEndpointSecurityClients : number,
+      kEnableDebugLogging : number,
+      kEnableBackwardsCompatibleContentEncoding : number,
     };
     _defaults = [NSUserDefaults standardUserDefaults];
     [_defaults addSuiteNamed:@"com.google.santa"];
     _configState = [self readForcedConfig];
     _syncState = [self readSyncStateFromDisk] ?: [NSMutableDictionary dictionary];
+    _debugFlag = [[NSProcessInfo processInfo].arguments containsObject:@"--debug"];
     [self startWatchingDefaults];
   }
   return self;
@@ -322,7 +334,23 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
   return [self configStateSet];
 }
 
++ (NSSet *)keyPathsForValuesAffectingEnableSysxCache {
+  return [self configStateSet];
+}
+
 + (NSSet *)keyPathsForValuesAffectingEnableForkAndExitLogging {
+  return [self configStateSet];
+}
+
++ (NSSet *)keyPathsForValuesAffectingIgnoreOtherEndpointSecurityClients {
+  return [self configStateSet];
+}
+
++ (NSSet *)keyPathsForValuesAffectingEnableDebugLogging {
+  return [self configStateSet];
+}
+
++ (NSSet *)keyPathsForValuesAffectingEnableBackwardsCompatibleContentEncoding {
   return [self configStateSet];
 }
 
@@ -345,8 +373,6 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
 - (void)setSyncServerClientMode:(SNTClientMode)newMode {
   if (newMode == SNTClientModeMonitor || newMode == SNTClientModeLockdown) {
     [self updateSyncStateForKey:kClientModeKey value:@(newMode)];
-  } else {
-    LOGW(@"Ignoring request to change client mode to %ld", newMode);
   }
 }
 
@@ -409,7 +435,6 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
   NSArray *filters = self.configState[kFileChangesPrefixFiltersKey];
   for (id filter in filters) {
     if (![filter isKindOfClass:[NSString class]]) {
-      LOGE(@"Ignoring FileChangesPrefixFilters: array contains a non-string %@", filter);
       return nil;
     }
   }
@@ -420,7 +445,6 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
   NSString *urlString = self.configState[kSyncBaseURLKey];
   if (![urlString hasSuffix:@"/"]) urlString = [urlString stringByAppendingString:@"/"];
   NSURL *url = [NSURL URLWithString:urlString];
-  if (urlString && !url) LOGW(@"SyncBaseURL is not a valid URL!");
   return url;
 }
 
@@ -565,8 +589,28 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
   }
 }
 
+- (BOOL)enableSysxCache {
+  NSNumber *number = self.configState[kEnableSysxCache];
+  return number ? [number boolValue] : NO;
+}
+
 - (BOOL)enableForkAndExitLogging {
   NSNumber *number = self.configState[kEnableForkAndExitLogging];
+  return number ? [number boolValue] : NO;
+}
+
+- (BOOL)ignoreOtherEndpointSecurityClients {
+  NSNumber *number = self.configState[kIgnoreOtherEndpointSecurityClients];
+  return number ? [number boolValue] : NO;
+}
+
+- (BOOL)enableDebugLogging {
+  NSNumber *number = self.configState[kEnableDebugLogging];
+  return [number boolValue] || self.debugFlag;
+}
+
+- (BOOL)enableBackwardsCompatibleContentEncoding {
+  NSNumber *number = self.configState[kEnableBackwardsCompatibleContentEncoding];
   return number ? [number boolValue] : NO;
 }
 

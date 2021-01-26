@@ -16,21 +16,17 @@
 
 #include "Source/common/SNTPrefixTree.h"
 
+#import "Source/common/SantaCache.h"
 #import "Source/common/SNTConfigurator.h"
 #import "Source/common/SNTLogging.h"
 
-#include <EndpointSecurity/EndpointSecurity.h>
+#include <atomic>
 #include <bsm/libbsm.h>
 #include <libproc.h>
 
-#include <atomic>
-
-// Gleaned from https://opensource.apple.com/source/xnu/xnu-4903.241.1/bsd/sys/proc_internal.h
-#define PID_MAX 99999
 
 @interface SNTEndpointSecurityManager ()
 
-@property(nonatomic) es_client_t *client;
 @property(nonatomic) SNTPrefixTree *prefixTree;
 @property(nonatomic, copy) void (^decisionCallback)(santa_message_t);
 @property(nonatomic, copy) void (^logCallback)(santa_message_t);
@@ -77,10 +73,23 @@
 
     es_client_t *client = NULL;
     es_new_client_result_t ret = es_new_client(&client, ^(es_client_t *c, const es_message_t *m) {
+      pid_t pid = audit_token_to_pid(m->process->audit_token);
+      int pidversion = audit_token_to_pidversion(m->process->audit_token);
+
+      // If enabled, skip any action generated from another endpoint security client.
+      if (m->process->is_es_client && config.ignoreOtherEndpointSecurityClients) {
+        if (m->action_type == ES_ACTION_TYPE_AUTH) {
+          es_respond_auth_result(self.client, m, ES_AUTH_RESULT_ALLOW, false);
+        }
+        if (self.selfPID != pid) {
+          LOGD(@"Skipping event type: 0x%x from es_client pid: %d", m->event_type, pid);
+        }
+        return;
+      }
+
       // Perform the following checks on this serial queue.
       // Some checks are simple filters that avoid copying m.
       // However, the bulk of the work done here is to support transitive whitelisting.
-      pid_t pid = audit_token_to_pid(m->process->audit_token);
       switch (m->event_type) {
         case ES_EVENT_TYPE_NOTIFY_EXEC: {
           // Deny results are currently logged when ES_EVENT_TYPE_AUTH_EXEC posts a deny.
@@ -93,6 +102,9 @@
         case ES_EVENT_TYPE_NOTIFY_CLOSE: {
           // Ignore unmodified files
           if (!m->event.close.modified) return;
+
+          // Remove from decision cache in case this is invalidating a cached binary.
+          [self removeCacheEntryForVnodeID:[self vnodeIDForFile:m->event.close.target]];
 
           // Create a transitive rule if the file was modified by a running compiler
           if (pid && pid < PID_MAX && self->_compilerPIDs[pid].load()) {
@@ -107,6 +119,7 @@
             }
             sm.action = ACTION_NOTIFY_WHITELIST;
             sm.pid = pid;
+            sm.pidversion = pidversion;
             LOGI(@"CLOSE: creating a transitive rule: path=%s pid=%d", sm.path, sm.pid);
             self.decisionCallback(sm);
           }
@@ -128,6 +141,7 @@
             }
             sm.action = ACTION_NOTIFY_WHITELIST;
             sm.pid = pid;
+            sm.pidversion = pidversion;
             LOGI(@"RENAME: creating a transitive rule: path=%s pid=%d", sm.path, sm.pid);
             self.decisionCallback(sm);
           }
@@ -139,11 +153,12 @@
           // Update the set of running compiler PIDs
           if (pid && pid < PID_MAX) self->_compilerPIDs[pid].store(false);
 
-          // Skip the standard pipline and just log.
+          // Skip the standard pipeline and just log.
           if (![config enableForkAndExitLogging]) return;
           santa_message_t sm = {};
           sm.action = ACTION_NOTIFY_EXIT;
           sm.pid = pid;
+          sm.pidversion = pidversion;
           sm.ppid = m->process->original_ppid;
           audit_token_t at = m->process->audit_token;
           sm.uid = audit_token_to_ruid(at);
@@ -154,13 +169,14 @@
           return;
         }
         case ES_EVENT_TYPE_NOTIFY_FORK: {
-          // Skip the standard pipline and just log.
+          // Skip the standard pipeline and just log.
           if (![config enableForkAndExitLogging]) return;
           santa_message_t sm = {};
           sm.action = ACTION_NOTIFY_FORK;
           sm.ppid = m->event.fork.child->original_ppid;
           audit_token_t at = m->event.fork.child->audit_token;
           sm.pid = audit_token_to_pid(at);
+          sm.pidversion = audit_token_to_pidversion(at);
           sm.uid = audit_token_to_ruid(at);
           sm.gid = audit_token_to_rgid(at);
           dispatch_async(self.esNotifyQueue, ^{
@@ -219,7 +235,7 @@
     switch (ret) {
       case ES_NEW_CLIENT_RESULT_SUCCESS:
         LOGI(@"Connected to EndpointSecurity");
-        self.client = client;
+        _client = client;
         return;
       case ES_NEW_CLIENT_RESULT_ERR_NOT_PERMITTED:
         LOGE(@"Unable to create EndpointSecurity client, not full-disk access permitted");
@@ -234,6 +250,10 @@
   }
 }
 
+- (BOOL)respondFromCache:(es_message_t *)m API_AVAILABLE(macos(10.15)) {
+  return NO;
+}
+
 - (void)messageHandler:(es_message_t *)m API_AVAILABLE(macos(10.15)) {
   santa_message_t sm = {};
   sm.es_message = (void *)m;
@@ -244,6 +264,10 @@
 
   switch (m->event_type) {
     case ES_EVENT_TYPE_AUTH_EXEC: {
+      if ([self respondFromCache:m]) {
+        return;
+      }
+
       sm.action = ACTION_REQUEST_BINARY;
       targetFile = m->event.exec.target->executable;
       targetProcess = m->event.exec.target;
@@ -375,6 +399,7 @@
   sm.uid = audit_token_to_ruid(targetProcess->audit_token);
   sm.gid = audit_token_to_rgid(targetProcess->audit_token);
   sm.pid = audit_token_to_pid(targetProcess->audit_token);
+  sm.pidversion = audit_token_to_pidversion(targetProcess->audit_token);
   sm.ppid = targetProcess->original_ppid;
   proc_name((m->event_type == ES_EVENT_TYPE_AUTH_EXEC) ? sm.ppid : sm.pid, sm.pname, 1024);
   callback(sm);
@@ -385,14 +410,14 @@
 
   self.decisionCallback = callback;
   es_event_type_t events[] = {
-    ES_EVENT_TYPE_AUTH_EXEC,
-    ES_EVENT_TYPE_AUTH_UNLINK,
-    ES_EVENT_TYPE_AUTH_RENAME,
-    ES_EVENT_TYPE_AUTH_KEXTLOAD,
+      ES_EVENT_TYPE_AUTH_EXEC,
+      ES_EVENT_TYPE_AUTH_UNLINK,
+      ES_EVENT_TYPE_AUTH_RENAME,
+      ES_EVENT_TYPE_AUTH_KEXTLOAD,
 
-    // This is in the decision callback because it's used for detecting
-    // the exit of a 'compiler' used by transitive whitelisting.
-    ES_EVENT_TYPE_NOTIFY_EXIT,
+      // This is in the decision callback because it's used for detecting
+      // the exit of a 'compiler' used by transitive whitelisting.
+      ES_EVENT_TYPE_NOTIFY_EXIT,
   };
   es_return_t sret = es_subscribe(self.client, events, sizeof(events) / sizeof(es_event_type_t));
   if (sret != ES_RETURN_SUCCESS) LOGE(@"Unable to subscribe to auth events: %d", sret);
@@ -533,6 +558,13 @@
     }
   }
   return truncated;
+}
+
+- (santa_vnode_id_t)vnodeIDForFile:(es_file_t *)file {
+  return {
+    .fsid = (uint64_t)file->stat.st_dev,
+    .fileid = file->stat.st_ino,
+  };
 }
 
 @end

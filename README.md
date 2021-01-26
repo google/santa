@@ -1,9 +1,4 @@
-# Santa [![Build Status][build-status-img]][build-status-link] [![Documentation Status][doc-status-img]][doc-status-link]
-
-[build-status-img]: https://travis-ci.org/google/santa.png?branch=master
-[build-status-link]: https://travis-ci.org/google/santa
-[doc-status-img]: https://readthedocs.org/projects/santa/badge/?version=latest
-[doc-status-link]: https://santa.readthedocs.io/en/latest/?badge=latest
+# Santa ![CI](https://github.com/google/santa/workflows/CI/badge.svg?branch=main)
 
 <p align="center">
     <img src="./Source/santa/Resources/Images.xcassets/AppIcon.appiconset/santa-hat-icon-128.png" alt="Santa Icon" />
@@ -145,6 +140,9 @@ protect hosts in whatever other ways you see fit.
     * [Zentral](https://github.com/zentralopensource/zentral/wiki) - A
       centralized service that pulls data from multiple sources and deploy
       configurations to multiple services.
+    * [Zercurity](https://github.com/zercurity/zercurity) - A dockerized service 
+      for managing and monitoring applications across a large fleet utilizing 
+      Santa + Osquery.
 
 * Alternatively, `santactl` can configure rules locally (without a sync
   server).
@@ -154,8 +152,8 @@ protect hosts in whatever other ways you see fit.
 A tool like Santa doesn't really lend itself to screenshots, so here's a video
 instead.
 
-<p align="center"> <img src="https://zippy.gfycat.com/MadFatalAmphiuma.gif"
-alt="Santa Block Video" /> </p>
+
+<p align="center"> <img src="https://thumbs.gfycat.com/MadFatalAmphiuma-small.gif" alt="Santa Block Video" /> </p>
 
 # Kext Signing
 Kernel extensions on macOS 10.9 and later must be signed using an Apple-provided

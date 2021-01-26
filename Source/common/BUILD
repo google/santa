@@ -1,8 +1,23 @@
+load("//:helper.bzl", "santa_unit_test")
+
 package(default_visibility = ["//:santa_package_group"])
 
 licenses(["notice"])  # Apache 2.0
 
-load("//:helper.bzl", "santa_unit_test")
+cc_library(
+    name = "SantaCache",
+    srcs = ["SantaCache.h"],
+    deps = ["//Source/common:SNTKernelCommon"],
+)
+
+santa_unit_test(
+    name = "SantaCacheTest",
+    srcs = [
+        "SantaCache.h",
+        "SantaCacheTest.mm",
+    ],
+    deps = ["//Source/common:SNTKernelCommon"],
+)
 
 objc_library(
     name = "SNTBlockMessage",
@@ -10,6 +25,7 @@ objc_library(
     hdrs = ["SNTBlockMessage.h"],
     deps = [
         ":SNTConfigurator",
+        ":SNTLogging",
         ":SNTStoredEvent",
     ],
 )
@@ -21,6 +37,7 @@ objc_library(
     defines = ["SANTAGUI"],
     deps = [
         ":SNTConfigurator",
+        ":SNTLogging",
         ":SNTStoredEvent",
     ],
 )
@@ -35,7 +52,7 @@ objc_library(
     ],
 )
 
-cc_library(
+objc_library(
     name = "SNTCommonEnums",
     hdrs = ["SNTCommonEnums.h"],
 )
@@ -46,7 +63,6 @@ objc_library(
     hdrs = ["SNTConfigurator.h"],
     deps = [
         ":SNTCommonEnums",
-        ":SNTLogging",
         ":SNTStrengthify",
         ":SNTSystemInfo",
     ],
@@ -76,12 +92,18 @@ cc_library(
 cc_library(
     name = "SNTLoggingKernel",
     hdrs = ["SNTLogging.h"],
+    copts = [
+        "-mkernel",
+        "-I__BAZEL_XCODE_SDKROOT__/System/Library/Frameworks/Kernel.framework/Headers",
+    ],
+    defines = ["KERNEL"],
 )
 
 objc_library(
     name = "SNTLogging",
     srcs = ["SNTLogging.m"],
     hdrs = ["SNTLogging.h"],
+    deps = [":SNTConfigurator"],
 )
 
 cc_library(
@@ -207,6 +229,7 @@ santa_unit_test(
     resources = [
         "testdata/bad_pagezero",
         "testdata/missing_pagezero",
+        "testdata/32bitplist",
     ],
     structured_resources = glob([
         "testdata/BundleExample.app/**",

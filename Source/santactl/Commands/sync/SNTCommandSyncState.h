@@ -35,6 +35,10 @@
 /// An XSRF token to send in the headers with each request.
 @property NSString *xsrfToken;
 
+/// Full sync interval in seconds without FCM to update kDefaultFullSyncInterval => when FCM
+/// is not used, defaults to 10m.
+@property NSUInteger fullSyncInterval;
+
 /// An FCM token to subscribe to push notifications.
 @property(copy) NSString *FCMToken;
 
@@ -73,5 +77,9 @@
 
 /// Reference to the serial operation queue used for accessing allowlistNotifications.
 @property(weak) NSOperationQueue *allowlistNotificationQueue;
+
+/// The header value for ContentEncoding when sending compressed content.
+/// Either "deflate" (default) or "zlib".
+@property(copy) NSString *compressedContentEncoding;
 
 @end

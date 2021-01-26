@@ -86,9 +86,11 @@ REGISTER_COMMAND_NAME(@"status")
 
   SNTConfigurator *configurator = [SNTConfigurator configurator];
 
+  BOOL cachingEnabled = (![configurator enableSystemExtension] || [configurator enableSysxCache]);
+
   // Kext status
   __block uint64_t rootCacheCount = -1, nonRootCacheCount = -1;
-  if (![configurator enableSystemExtension]) {
+  if (cachingEnabled) {
     dispatch_group_enter(group);
     [[self.daemonConn remoteObjectProxy] cacheCounts:^(uint64_t rootCache, uint64_t nonRootCache) {
       rootCacheCount = rootCache;
@@ -206,8 +208,8 @@ REGISTER_COMMAND_NAME(@"status")
         @"transitive_rules" : @(enableTransitiveRules),
       },
     } mutableCopy];
-    if (![configurator enableSystemExtension]) {
-      stats[@"kernel"] = @{
+    if (cachingEnabled) {
+      stats[@"cache"] = @{
         @"root_cache_count" : @(rootCacheCount),
         @"non_root_cache_count": @(nonRootCacheCount),
       };
@@ -224,8 +226,8 @@ REGISTER_COMMAND_NAME(@"status")
     printf("  %-25s | %s\n", "File Logging", (fileLogging ? "Yes" : "No"));
     printf("  %-25s | %lld  (Peak: %.2f%%)\n", "Watchdog CPU Events", cpuEvents, cpuPeak);
     printf("  %-25s | %lld  (Peak: %.2fMB)\n", "Watchdog RAM Events", ramEvents, ramPeak);
-    if (![configurator enableSystemExtension]) {
-      printf(">>> Kernel Info\n");
+    if (cachingEnabled) {
+      printf(">>> Cache Info\n");
       printf("  %-25s | %lld\n", "Root cache count", rootCacheCount);
       printf("  %-25s | %lld\n", "Non-root cache count", nonRootCacheCount);
     }

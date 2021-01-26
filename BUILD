@@ -60,9 +60,9 @@ set -e
 
 rm -rf /tmp/bazel_santa_reload
 unzip -d /tmp/bazel_santa_reload \
-    $${BUILD_WORKSPACE_DIRECTORY}/bazel-bin/Source/santa_driver/santa_driver.zip >/dev/null
+    $${BUILD_WORKSPACE_DIRECTORY}/bazel-out/*/bin/Source/santa_driver/santa_driver.zip >/dev/null
 unzip -d /tmp/bazel_santa_reload \
-    $${BUILD_WORKSPACE_DIRECTORY}/bazel-bin/Source/santa/Santa.zip >/dev/null
+    $${BUILD_WORKSPACE_DIRECTORY}/bazel-out/*/bin/Source/santa/Santa.zip >/dev/null
 echo "You may be asked for your password for sudo"
 sudo BINARIES=/tmp/bazel_santa_reload CONF=$${BUILD_WORKSPACE_DIRECTORY}/Conf \
     $${BUILD_WORKSPACE_DIRECTORY}/Conf/install.sh
@@ -78,7 +78,6 @@ genrule(
     name = "release",
     srcs = [
         "//Source/santa:Santa",
-        "//Source/santa_driver",
         "Conf/install.sh",
         "Conf/uninstall.sh",
         "Conf/com.google.santa.bundleservice.plist",
@@ -97,9 +96,9 @@ genrule(
         echo "Please add '-c opt' flag to bazel invocation"
         """,
         ":opt_build": """
-      # Extract santa_driver.zip and Santa.zip
+      # Extract Santa.zip
       for SRC in $(SRCS); do
-        if [ "$$(basename $${SRC})" == "santa_driver.zip" -o "$$(basename $${SRC})" == "Santa.zip" ]; then
+        if [ "$$(basename $${SRC})" == "Santa.zip" ]; then
           mkdir -p $(@D)/binaries
           unzip -q $${SRC} -d $(@D)/binaries >/dev/null
         fi
@@ -116,10 +115,6 @@ genrule(
       # Gather together the dSYMs. Throw an error if no dSYMs were found
       for SRC in $(SRCS); do
         case $${SRC} in
-          *santa-driver.kext.dSYM*Info.plist)
-            mkdir -p $(@D)/dsym
-            cp -LR $$(dirname $$(dirname $${SRC})) $(@D)/dsym/santa-driver.kext.dSYM
-            ;;
           *santad.dSYM*Info.plist)
             mkdir -p $(@D)/dsym
             cp -LR $$(dirname $$(dirname $${SRC})) $(@D)/dsym/santad.dSYM
@@ -162,12 +157,61 @@ genrule(
     heuristic_label_expansion = 0,
 )
 
+genrule(
+    name = "release_driver",
+    srcs = [
+        "//Source/santa_driver",
+    ],
+    outs = ["santa-driver-" + SANTA_VERSION + ".tar.gz"],
+    cmd = select({
+        "//conditions:default": """
+        echo "ERROR: Trying to create a release tarball without optimization."
+        echo "Please add '-c opt' flag to bazel invocation"
+        """,
+        ":opt_build": """
+      # Extract santa_driver.zip
+      for SRC in $(SRCS); do
+        if [ "$$(basename $${SRC})" == "santa_driver.zip" ]; then
+          mkdir -p $(@D)/binaries
+          unzip -q $${SRC} -d $(@D)/binaries >/dev/null
+        fi
+      done
+
+      # Gather together the dSYMs. Throw an error if no dSYMs were found
+      for SRC in $(SRCS); do
+        case $${SRC} in
+          *santa-driver.kext.dSYM*Info.plist)
+            mkdir -p $(@D)/dsym
+            cp -LR $$(dirname $$(dirname $${SRC})) $(@D)/dsym/santa-driver.kext.dSYM
+            ;;
+        esac
+      done
+
+      # Cause a build failure if the dSYMs are missing.
+      if [[ ! -d "$(@D)/dsym" ]]; then
+        echo "dsym dir missing: Did you forget to use --apple_generate_dsym?"
+        echo "This flag is required for the 'release' target."
+        exit 1
+      fi
+
+      # Update all the timestamps to now. Bazel avoids timestamps to allow
+      # builds to be hermetic and cacheable but for releases we want the
+      # timestamps to be more-or-less correct.
+      find $(@D)/{binaries,dsym} -exec touch {} \\;
+
+      # Create final output tar
+      tar -C $(@D) -czpf $(@) binaries dsym
+    """,
+    }),
+    heuristic_label_expansion = 0,
+)
+
 test_suite(
     name = "unit_tests",
     tests = [
+        "//Source/common:SantaCacheTest",
         "//Source/common:SNTFileInfoTest",
         "//Source/common:SNTPrefixTreeTest",
-        "//Source/santa_driver:SantaCacheTest",
         "//Source/santactl:SNTCommandFileInfoTest",
         "//Source/santactl:SNTCommandSyncTest",
         "//Source/santad:SNTEventTableTest",

@@ -16,6 +16,8 @@ objc_library(
         "EventProviders/SNTDriverManager.m",
         "EventProviders/SNTEndpointSecurityManager.h",
         "EventProviders/SNTEndpointSecurityManager.mm",
+        "EventProviders/SNTCachingEndpointSecurityManager.h",
+        "EventProviders/SNTCachingEndpointSecurityManager.mm",
         "EventProviders/SNTEventProvider.h",
         "Logs/SNTEventLog.h",
         "Logs/SNTEventLog.m",
@@ -50,6 +52,7 @@ objc_library(
         "IOKit",
     ],
     deps = [
+        "//Source/common:SantaCache",
         "//Source/common:SNTBlockMessage",
         "//Source/common:SNTCachedDecision",
         "//Source/common:SNTCommonEnums",
@@ -115,6 +118,7 @@ santa_unit_test(
         "bsm",
     ],
     deps = [
+        "//Source/common:SantaCache",
         "//Source/common:SNTBlockMessage",
         "//Source/common:SNTCachedDecision",
         "//Source/common:SNTCommonEnums",
