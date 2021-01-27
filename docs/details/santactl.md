@@ -8,8 +8,8 @@ This may be the most complex part of Santa. It does two types of work:
     can also inspect individual files. When running without a sync server it
     also a supported method of managing the rules database.
 
-The details of santactl's syncing functionality are covered in the syncing.md
-document. This document will cover the status work that santactl performs.
+The details of santactl's syncing functionality are covered in [introduction/syncing-overview.md](syncing-overview.md).
+This document will cover the status work that santactl performs.
 
 ##### status
 
