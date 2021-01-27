@@ -9,7 +9,7 @@ contribute.
 The following documents give an overview of how Santa accomplishes binary
 authorization at the enterprise scale.
 
-- [Binary Authorization](introduction/binary-authorization.md): How Santa makes allow or deny decisions for any `execve()` taking place.
+- [Binary Authorization](introduction/binary-authorization-overview.md): How Santa makes allow or deny decisions for any `execve()` taking place.
 - [Syncing](introduction/syncing-overview.md): How configuration and rules are applied from a sync server.
 
 #### Deployment
@@ -19,7 +19,7 @@ authorization at the enterprise scale.
 #### Development
 
 * [Building Santa](development/building.md): How to build and load Santa for testing on a development machine.
-* [Contributing](../CONTRIBUTING.md): How to contribute a bug fix or new feature to Santa.
+* [Contributing](development/contributing.md): How to contribute a bug fix or new feature to Santa.
 
 #### Details
 
@@ -43,7 +43,6 @@ Additional documentation on the concepts that support the operation of the main 
 * [events](details/events.md): Represents an `execve()` that was blocked, or would have been blocked, depending on the mode.
 * [rules](details/rules.md): Represents allow or deny decisions for a given `execve()`. Can either be a binary's SHA-256 hash or a leaf code-signing certificate's SHA-256 hash.
 * [scopes](details/scopes.md): The level at which an `execve()` was allowed or denied from taking place.
-* [syncing](introduction/syncing-overview.md): How Santa communicates with a TLS server for configuration, rules and event uploading.
 * [ipc](details/ipc.md): How all the components of Santa communicate.
   duction/syncing-overview.
 * [logs](details/logs.md): What and where Santa logs.
