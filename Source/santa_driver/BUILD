@@ -1,12 +1,12 @@
-licenses(["notice"])
-
 load(
     "@build_bazel_rules_apple//apple:macos.bzl",
     "macos_command_line_application",
     "macos_kernel_extension",
 )
-load("//:helper.bzl", "run_command", "santa_unit_test")
+load("//:helper.bzl", "run_command")
 load("//:version.bzl", "SANTA_VERSION")
+
+licenses(["notice"])
 
 cc_library(
     name = "santa_driver_lib",
