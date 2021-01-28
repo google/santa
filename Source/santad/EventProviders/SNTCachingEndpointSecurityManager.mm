@@ -98,7 +98,7 @@ template<> uint64_t SantaCacheHasher<santa_vnode_id_t>(santa_vnode_id_t const& t
       break;
     case ACTION_RESPOND_DENY:
       [self addToCache:sm.vnode_id decision:ACTION_RESPOND_DENY timeout:GetCurrentUptime()];
-      // fallthrough
+      OS_FALLTHROUGH;
     case ACTION_RESPOND_TOOLONG:
       ret = es_respond_auth_result(self.client, (es_message_t *)sm.es_message,
                                    ES_AUTH_RESULT_DENY, false);
