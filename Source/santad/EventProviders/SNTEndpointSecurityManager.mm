@@ -195,9 +195,6 @@
           // if a response hasn't already been sent. This block will still be enqueued if
           // the the deadline - 2 secs is < DISPATCH_TIME_NOW.
           // As of 10.15.2, a typical deadline is 60 seconds.
-          // TODO(bur/rah): Possibly cache decisions made after the deadline. Currently a
-          // large enough binary will never be allowed to execute. This should be a rare edge case;
-          // it's probably not worth adding a caching layer just for this.
           auto responded = std::make_shared<std::atomic<bool>>(false);
           dispatch_after(dispatch_time(m->deadline, NSEC_PER_SEC * -2), self.esAuthQueue, ^(void) {
             if (responded->load()) return;
