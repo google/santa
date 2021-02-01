@@ -362,7 +362,7 @@ extern NSString *const NSURLQuarantinePropertiesKey WEAK_IMPORT_ATTRIBUTE;
   while (pathComponents.count > 1) {
     NSBundle *bndl = [NSBundle bundleWithPath:[NSString pathWithComponents:pathComponents]];
     if ([bndl objectForInfoDictionaryKey:@"CFBundleIdentifier"]) {
-      if (!ancestor ||
+      if ((!ancestor && bndl.bundlePath.pathExtension.length) ||
           [[self allowedAncestorExtensions] containsObject:bndl.bundlePath.pathExtension]) {
         bundle = bndl;
       }
