@@ -191,12 +191,12 @@
 
       switch (m->action_type) {
         case ES_ACTION_TYPE_AUTH: {
-          // Create a timer to deny the execution 2 seconds before the deadline,
+          // Create a timer to deny the execution 5 seconds before the deadline,
           // if a response hasn't already been sent. This block will still be enqueued if
-          // the the deadline - 2 secs is < DISPATCH_TIME_NOW.
-          // As of 10.15.2, a typical deadline is 60 seconds.
+          // the the deadline - 5 secs is < DISPATCH_TIME_NOW.
+          // As of 10.15.5, a typical deadline is 60 seconds.
           auto responded = std::make_shared<std::atomic<bool>>(false);
-          dispatch_after(dispatch_time(m->deadline, NSEC_PER_SEC * -2), self.esAuthQueue, ^(void) {
+          dispatch_after(dispatch_time(m->deadline, NSEC_PER_SEC * -5), self.esAuthQueue, ^(void) {
             if (responded->load()) return;
             LOGE(@"Deadline reached: deny pid=%d ret=%d",
                  pid, es_respond_auth_result(self.client, m, ES_AUTH_RESULT_DENY, false));
