@@ -17,7 +17,7 @@
 #import "Source/common/SantaCache.h"
 #import "Source/common/SNTLogging.h"
 
-#include <atomic>
+#include <bsm/libbsm.h>
 #include <EndpointSecurity/EndpointSecurity.h>
 
 uint64_t GetCurrentUptime() {
@@ -28,7 +28,6 @@ template<> uint64_t SantaCacheHasher<santa_vnode_id_t>(santa_vnode_id_t const& t
 }
 
 @implementation SNTCachingEndpointSecurityManager {
-  std::atomic<bool> _compilerPIDs[PID_MAX];
   SantaCache<santa_vnode_id_t, uint64_t> *_decisionCache;
 }
 
@@ -56,10 +55,20 @@ template<> uint64_t SantaCacheHasher<santa_vnode_id_t>(santa_vnode_id_t const& t
     // If item is in cache but hasn't received a response yet, sleep for a bit.
     // If item is not in cache, break out of loop and forward request to callback.
     if (RESPONSE_VALID(return_action)) {
-      if (return_action == ACTION_RESPOND_ALLOW) {
-        es_respond_auth_result(self.client, m, ES_AUTH_RESULT_ALLOW, true);
-      } else {
-        es_respond_auth_result(self.client, m, ES_AUTH_RESULT_DENY, false);
+      switch (return_action) {
+        case ACTION_RESPOND_ALLOW:
+          es_respond_auth_result(self.client, m, ES_AUTH_RESULT_ALLOW, true);
+          break;
+        case ACTION_RESPOND_ALLOW_COMPILER: {
+          pid_t pid = audit_token_to_pid(m->process->audit_token);
+          [self setIsCompilerPID:pid];
+          // Don't let ES cache compilers
+          es_respond_auth_result(self.client, m, ES_AUTH_RESULT_ALLOW, false);
+          break;
+        }
+        default:
+          es_respond_auth_result(self.client, m, ES_AUTH_RESULT_DENY, false);
+          break;
       }
       return YES;
     } else if (return_action == ACTION_REQUEST_BINARY || return_action == ACTION_RESPOND_ACK) {
@@ -79,14 +88,13 @@ template<> uint64_t SantaCacheHasher<santa_vnode_id_t>(santa_vnode_id_t const& t
   es_respond_result_t ret;
   switch (action) {
     case ACTION_RESPOND_ALLOW_COMPILER:
-      if (sm.pid >= PID_MAX) {
-        LOGE(@"Unable to watch compiler pid=%d >= pid_max=%d", sm.pid, PID_MAX);
-      } else {
-        LOGD(@"Watching compiler pid=%d path=%s", sm.pid, sm.path);
-        self->_compilerPIDs[sm.pid].store(true);
-      }
-      // Allow the exec, but don't cache the decision so subsequent execs of the compiler get
-      // marked appropriately.
+      [self setIsCompilerPID:sm.pid];
+
+      // Allow the exec and cache in our internal cache but don't let ES cache, because then
+      // we won't see future execs of the compiler in order to record the PID.
+      [self addToCache:sm.vnode_id
+              decision:ACTION_RESPOND_ALLOW_COMPILER
+               timeout:GetCurrentUptime()];
       ret = es_respond_auth_result(self.client, (es_message_t *)sm.es_message,
                                    ES_AUTH_RESULT_ALLOW, false);
       break;

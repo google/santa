@@ -25,7 +25,9 @@
 #include <libproc.h>
 
 
-@interface SNTEndpointSecurityManager ()
+@interface SNTEndpointSecurityManager () {
+  std::atomic<bool> _compilerPIDs[PID_MAX];
+}
 
 @property(nonatomic) SNTPrefixTree *prefixTree;
 @property(nonatomic, copy) void (^decisionCallback)(santa_message_t);
@@ -36,9 +38,7 @@
 
 @end
 
-@implementation SNTEndpointSecurityManager {
-  std::atomic<bool> _compilerPIDs[PID_MAX];
-}
+@implementation SNTEndpointSecurityManager
 
 - (instancetype)init API_AVAILABLE(macos(10.15)) {
   self = [super init];
@@ -107,7 +107,7 @@
           [self removeCacheEntryForVnodeID:[self vnodeIDForFile:m->event.close.target]];
 
           // Create a transitive rule if the file was modified by a running compiler
-          if (pid && pid < PID_MAX && self->_compilerPIDs[pid].load()) {
+          if ([self isCompilerPID:pid]) {
             santa_message_t sm = {};
             BOOL truncated = [self populateBufferFromESFile:m->event.close.target
                                                      buffer:sm.path
@@ -129,7 +129,7 @@
         }
         case ES_EVENT_TYPE_NOTIFY_RENAME: {
           // Create a transitive rule if the file was renamed by a running compiler
-          if (pid && pid < PID_MAX && self->_compilerPIDs[pid].load()) {
+          if ([self isCompilerPID:pid]) {
             santa_message_t sm = {};
             BOOL truncated = [self populateRenamedNewPathFromESMessage:m->event.rename
                                                                 buffer:sm.path
@@ -151,7 +151,7 @@
         }
         case ES_EVENT_TYPE_NOTIFY_EXIT: {
           // Update the set of running compiler PIDs
-          if (pid && pid < PID_MAX) self->_compilerPIDs[pid].store(false);
+          [self setNotCompilerPID:pid];
 
           // Skip the standard pipeline and just log.
           if (![config enableForkAndExitLogging]) return;
@@ -446,12 +446,8 @@
   es_respond_result_t ret;
   switch (action) {
     case ACTION_RESPOND_ALLOW_COMPILER:
-      if (sm.pid >= PID_MAX) {
-        LOGE(@"Unable to watch compiler pid=%d >= pid_max=%d", sm.pid, PID_MAX);
-      } else {
-        LOGD(@"Watching compiler pid=%d path=%s", sm.pid, sm.path);
-        self->_compilerPIDs[sm.pid].store(true);
-      }
+      [self setIsCompilerPID:sm.pid];
+
       // Allow the exec, but don't cache the decision so subsequent execs of the compiler get
       // marked appropriately.
       ret = es_respond_auth_result(self.client, (es_message_t *)sm.es_message,
@@ -562,6 +558,25 @@
     .fsid = (uint64_t)file->stat.st_dev,
     .fileid = file->stat.st_ino,
   };
+}
+
+- (BOOL)isCompilerPID:(pid_t)pid {
+  return (pid && pid < PID_MAX && self->_compilerPIDs[pid].load());
+}
+
+- (void)setIsCompilerPID:(pid_t)pid {
+  if (pid < 1) {
+    LOGE(@"Unable to watch compiler pid=%d", pid);
+  } else if (pid >= PID_MAX) {
+    LOGE(@"Unable to watch compiler pid=%d >= PID_MAX(%d)", pid, PID_MAX);
+  } else {
+    self->_compilerPIDs[pid].store(true);
+    LOGD(@"Watching compiler pid=%d", pid);
+  }
+}
+
+- (void)setNotCompilerPID:(pid_t)pid {
+  if (pid && pid < PID_MAX) self->_compilerPIDs[pid].store(false);
 }
 
 @end
