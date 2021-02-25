@@ -88,7 +88,10 @@ void logMessage(LogLevel level, FILE *destination, NSString *format, ...) {
         break;
       case LOG_LEVEL_DEBUG:
         levelName = "D";
-        syslogLevel = ASL_LEVEL_DEBUG;
+        // Log debug messages at the same ASL level as INFO.
+        // While it would make sense to use DEBUG, watching debug-level logs
+        // in Console means enabling all debug logs, which is absurdly noisy.
+        syslogLevel = ASL_LEVEL_NOTICE;
         break;
     }
 
