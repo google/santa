@@ -117,6 +117,9 @@
                    sm.path, pid);
               break;
             }
+            if ([@(sm.path) hasPrefix:@"/dev/"]) {
+              break;
+            }
             sm.action = ACTION_NOTIFY_WHITELIST;
             sm.pid = pid;
             sm.pidversion = pidversion;
@@ -137,6 +140,9 @@
             if (truncated) {
               LOGE(@"RENAME: error creating transitive rule, the path is truncated: path=%s pid=%d",
                    sm.path, pid);
+              break;
+            }
+            if ([@(sm.path) hasPrefix:@"/dev/"]) {
               break;
             }
             sm.action = ACTION_NOTIFY_WHITELIST;
