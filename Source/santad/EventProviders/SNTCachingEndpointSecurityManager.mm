@@ -79,7 +79,7 @@ template<> uint64_t SantaCacheHasher<santa_vnode_id_t>(santa_vnode_id_t const& t
     }
   }
 
-  [self addToCache:vnode_id decision:ACTION_REQUEST_BINARY timeout:0];
+  [self addToCache:vnode_id decision:ACTION_REQUEST_BINARY currentTicks:0];
   return NO;
 }
 
@@ -94,18 +94,18 @@ template<> uint64_t SantaCacheHasher<santa_vnode_id_t>(santa_vnode_id_t const& t
       // we won't see future execs of the compiler in order to record the PID.
       [self addToCache:sm.vnode_id
               decision:ACTION_RESPOND_ALLOW_COMPILER
-               timeout:GetCurrentUptime()];
+          currentTicks:GetCurrentUptime()];
       ret = es_respond_auth_result(self.client, (es_message_t *)sm.es_message,
                                    ES_AUTH_RESULT_ALLOW, false);
       break;
     case ACTION_RESPOND_ALLOW:
     case ACTION_RESPOND_ALLOW_PENDING_TRANSITIVE:
-      [self addToCache:sm.vnode_id decision:ACTION_RESPOND_ALLOW timeout:GetCurrentUptime()];
+      [self addToCache:sm.vnode_id decision:ACTION_RESPOND_ALLOW currentTicks:GetCurrentUptime()];
       ret = es_respond_auth_result(self.client, (es_message_t *)sm.es_message,
                                    ES_AUTH_RESULT_ALLOW, true);
       break;
     case ACTION_RESPOND_DENY:
-      [self addToCache:sm.vnode_id decision:ACTION_RESPOND_DENY timeout:GetCurrentUptime()];
+      [self addToCache:sm.vnode_id decision:ACTION_RESPOND_DENY currentTicks:GetCurrentUptime()];
       OS_FALLTHROUGH;
     case ACTION_RESPOND_TOOLONG:
       ret = es_respond_auth_result(self.client, (es_message_t *)sm.es_message,
@@ -122,7 +122,7 @@ template<> uint64_t SantaCacheHasher<santa_vnode_id_t>(santa_vnode_id_t const& t
 
 - (void)addToCache:(santa_vnode_id_t)identifier
           decision:(santa_action_t)decision
-           timeout:(uint64_t)microsecs {
+      currentTicks:(uint64_t)microsecs {
   switch (decision) {
     case ACTION_REQUEST_BINARY:
       _decisionCache->set(identifier, (uint64_t)ACTION_REQUEST_BINARY << 56, 0);
