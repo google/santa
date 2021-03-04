@@ -25,6 +25,10 @@ const pid_t PID_MAX = 99999;
 @interface SNTEndpointSecurityManager : NSObject<SNTEventProvider>
 - (santa_vnode_id_t)vnodeIDForFile:(es_file_t *)file;
 
+- (BOOL)isCompilerPID:(pid_t)pid;
+- (void)setIsCompilerPID:(pid_t)pid;
+- (void)setNotCompilerPID:(pid_t)pid;
+
 @property(readonly, nonatomic) es_client_t *client;
 
 @end
