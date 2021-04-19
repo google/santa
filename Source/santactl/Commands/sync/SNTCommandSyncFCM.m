@@ -309,7 +309,13 @@ static void reachabilityHandler(SCNetworkReachabilityRef target, SCNetworkReacha
   NSString *t = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
   NSArray *c = [t componentsSeparatedByString:@"="];
   if (c.count == 2) {
-    if (self.tokenHandler) self.tokenHandler(c[1]);
+    NSString *tok = c[1];
+    if ([tok isEqualToString:@"PHONE_REGISTRATION_ERROR"]) {
+      LOGD(@"register: PHONE_REGISTRATION_ERROR - retrying");
+      sleep(1);
+      return [self register];
+    }
+    if (self.tokenHandler) self.tokenHandler(tok);
   }
 }
 
@@ -397,10 +403,14 @@ static void reachabilityHandler(SCNetworkReachabilityRef target, SCNetworkReacha
 - (void)handleHTTPReponse:(NSHTTPURLResponse *)HTTPResponse error:(NSError *)error {
   if (HTTPResponse.statusCode == 200) {
     _backoffSeconds = 0;
-    // If checkin was sucesfull, continue to register.
-    if ([HTTPResponse.URL.path isEqualToString:kFCMCheckin]) return [self register];
-    // register and connect will re-connect.
-    [self connectHelper];
+    if ([HTTPResponse.URL.path isEqualToString:kFCMCheckin]) {
+      // If checkin was successful, start listening for messages and continue to register.
+      [self connectHelper];
+      return [self register];
+    } else if ([HTTPResponse.URL.path isEqualToString:kFCMConnect]) {
+      // connect will re-connect.
+      return [self connectHelper];
+    } // register may be called more than once, don't do anything in response.
   } else if ([_fatalHTTPStatusCodes containsObject:@(HTTPResponse.statusCode)]) {
     if (self.connectionErrorHandler) self.connectionErrorHandler(HTTPResponse, error);
   } else {
