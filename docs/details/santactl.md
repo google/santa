@@ -365,11 +365,11 @@ Recursive lookups of an application or directory is a soon to be added feature
 
 ##### rule
 
-The rule command is covered in the [rules.md](rules.md) document.
+The rule command is covered in the [Rules](rules.md) document.
 
 ##### sync
 
-The sync command is covered in the [syncing.md](syncing.md) document.
+The sync command is covered in the [Syncing Overview](syncing-overview.md) document.
 
 ##### Debug Commands
 
