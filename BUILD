@@ -15,6 +15,13 @@ apple_bundle_version(
     short_version_string = SANTA_VERSION,
 )
 
+# Used to detect release builds
+config_setting(
+    name = "release_build",
+    values = {"define": "SANTA_BUILD_TYPE=release"},
+    visibility = [":santa_package_group"],
+)
+
 # Used to detect optimized builds
 config_setting(
     name = "opt_build",
