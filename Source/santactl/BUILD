@@ -65,7 +65,6 @@ objc_library(
         "@FMDB",
         "@MOLAuthenticatingURLSession",
         "@MOLCodesignChecker",
-        "@MOLFCMClient",
         "@MOLXPCConnection",
     ],
 )
@@ -152,7 +151,6 @@ santa_unit_test(
         "//Source/common:SNTXPCControlInterface",
         "//Source/common:SNTXPCSyncdInterface",
         "@MOLAuthenticatingURLSession",
-        "@MOLFCMClient",
         "@MOLXPCConnection",
         "@OCMock",
     ],
