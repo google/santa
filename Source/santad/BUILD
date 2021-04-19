@@ -80,6 +80,10 @@ macos_bundle(
     infoplists = ["Info.plist"],
     linkopts = ["-execute"],
     minimum_os_version = "10.9",
+    provisioning_profile = select({
+        "//:ci_build": None,
+        "//conditions:default": "Santa_Daemon_Dev.provisionprofile",
+    }),
     version = "//:version",
     visibility = ["//:santa_package_group"],
     deps = [":santad_lib"],
