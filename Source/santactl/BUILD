@@ -46,6 +46,7 @@ objc_library(
     sdk_dylibs = ["libz"],
     sdk_frameworks = ["IOKit"],
     deps = [
+        ":FCM_lib",
         "//Source/common:SNTCachedDecision",
         "//Source/common:SNTCommonEnums",
         "//Source/common:SNTConfigurator",
@@ -66,6 +67,16 @@ objc_library(
         "@MOLCodesignChecker",
         "@MOLFCMClient",
         "@MOLXPCConnection",
+    ],
+)
+
+objc_library(
+    name = "FCM_lib",
+    srcs = ["Commands/sync/SNTCommandSyncFCM.m"],
+    hdrs = ["Commands/sync/SNTCommandSyncFCM.h"],
+    sdk_frameworks = ["SystemConfiguration"],
+    deps = [
+        "@MOLAuthenticatingURLSession",
     ],
 )
 
@@ -130,6 +141,7 @@ santa_unit_test(
     ],
     sdk_dylibs = ["libz"],
     deps = [
+        ":FCM_lib",
         "//Source/common:SNTCommonEnums",
         "//Source/common:SNTConfigurator",
         "//Source/common:SNTDropRootPrivs",

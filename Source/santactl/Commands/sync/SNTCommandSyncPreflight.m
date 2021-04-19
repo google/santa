@@ -39,6 +39,7 @@
   requestDict[kOSBuild] = [SNTSystemInfo osBuild];
   requestDict[kSantaVer] = [[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleVersion"];
   requestDict[kPrimaryUser] = self.syncState.machineOwner;
+  if (self.syncState.FCMToken) requestDict[kFCMToken] = self.syncState.FCMToken;
 
   dispatch_group_t group = dispatch_group_create();
   dispatch_group_enter(group);
@@ -102,7 +103,6 @@
   }];
 
   self.syncState.eventBatchSize = [resp[kBatchSize] unsignedIntegerValue] ?: kDefaultEventBatchSize;
-  self.syncState.FCMToken = resp[kFCMToken];
 
   // Don't let these go too low
   NSUInteger FCMIntervalValue = [resp[kFCMFullSyncInterval] unsignedIntegerValue];

@@ -350,6 +350,26 @@
 @property(readonly, nonatomic) BOOL enableBackwardsCompatibleContentEncoding;
 
 ///
+///  Contains the FCM project name.
+///
+@property(readonly, nonatomic) NSString *fcmProject;
+
+///
+///  Contains the FCM project entity.
+///
+@property(readonly, nonatomic) NSString *fcmEntity;
+
+///
+///  Contains the FCM project API key.
+///
+@property(readonly, nonatomic) NSString *fcmAPIKey;
+
+///
+///  True if fcmProject, fcmEntity and fcmAPIKey are all set. Defaults to false.
+///
+@property(readonly, nonatomic) BOOL fcmEnabled;
+
+///
 ///  Retrieve an initialized singleton configurator object using the default file path.
 ///
 + (instancetype)configurator;

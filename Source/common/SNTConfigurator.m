@@ -87,6 +87,10 @@ static NSString *const kEnableDebugLogging = @"EnableDebugLogging";
 
 static NSString *const kEnableBackwardsCompatibleContentEncoding = @"EnableBackwardsCompatibleContentEncoding";
 
+static NSString *const kFCMProject = @"FCMProject";
+static NSString *const kFCMEntity = @"FCMEntity";
+static NSString *const kFCMAPIKey = @"FCMAPIKey";
+
 // The keys managed by a sync server or mobileconfig.
 static NSString *const kClientModeKey = @"ClientMode";
 static NSString *const kEnableTransitiveRulesKey = @"EnableTransitiveRules";
@@ -163,6 +167,9 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
       kIgnoreOtherEndpointSecurityClients : number,
       kEnableDebugLogging : number,
       kEnableBackwardsCompatibleContentEncoding : number,
+      kFCMProject : string,
+      kFCMEntity : string,
+      kFCMAPIKey : string,
     };
     _defaults = [NSUserDefaults standardUserDefaults];
     [_defaults addSuiteNamed:@"com.google.santa"];
@@ -351,6 +358,22 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
 }
 
 + (NSSet *)keyPathsForValuesAffectingEnableBackwardsCompatibleContentEncoding {
+  return [self configStateSet];
+}
+
++ (NSSet *)keyPathsForValuesAffectingFcmProject {
+  return [self configStateSet];
+}
+
++ (NSSet *)keyPathsForValuesAffectingFcmEntity {
+  return [self configStateSet];
+}
+
++ (NSSet *)keyPathsForValuesAffectingFcmAPIKey {
+  return [self configStateSet];
+}
+
++ (NSSet *)keyPathsForValuesAffectingFcmEnabled {
   return [self configStateSet];
 }
 
@@ -612,6 +635,22 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
 - (BOOL)enableBackwardsCompatibleContentEncoding {
   NSNumber *number = self.configState[kEnableBackwardsCompatibleContentEncoding];
   return number ? [number boolValue] : NO;
+}
+
+- (NSString *)fcmProject {
+  return self.configState[kFCMProject];
+}
+
+- (NSString *)fcmEntity {
+  return self.configState[kFCMEntity];
+}
+
+- (NSString *)fcmAPIKey {
+  return self.configState[kFCMAPIKey];
+}
+
+- (BOOL)fcmEnabled {
+  return (self.fcmProject.length && self.fcmEntity.length && self.fcmAPIKey.length);
 }
 
 #pragma mark Private
