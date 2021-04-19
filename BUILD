@@ -22,6 +22,13 @@ config_setting(
     visibility = [":santa_package_group"],
 )
 
+# Used to detect CI builds
+config_setting(
+    name = "ci_build",
+    values = {"define": "SANTA_BUILD_TYPE=ci"},
+    visibility = [":santa_package_group"],
+)
+
 # Used to detect optimized builds
 config_setting(
     name = "opt_build",
