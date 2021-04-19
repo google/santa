@@ -28,6 +28,7 @@
 #import "Source/common/SNTXPCSyncdInterface.h"
 #import "Source/santactl/Commands/sync/SNTCommandSyncConstants.h"
 #import "Source/santactl/Commands/sync/SNTCommandSyncEventUpload.h"
+#import "Source/santactl/Commands/sync/SNTCommandSyncFCM.h"
 #import "Source/santactl/Commands/sync/SNTCommandSyncPostflight.h"
 #import "Source/santactl/Commands/sync/SNTCommandSyncPreflight.h"
 #import "Source/santactl/Commands/sync/SNTCommandSyncRuleDownload.h"
@@ -61,7 +62,8 @@ static NSString *const kFCMTargetHostIDKey = @"target_host_id";
 @property NSUInteger FCMGlobalRuleSyncDeadline;
 @property NSUInteger eventBatchSize;
 
-@property MOLFCMClient *FCMClient;
+@property SNTCommandSyncFCM *FCMClient;
+@property NSString *FCMToken;
 
 @property(nonatomic) MOLXPCConnection *daemonConn;
 
@@ -185,26 +187,35 @@ static void reachabilityHandler(
 #pragma mark push notification methods
 
 - (void)listenForPushNotificationsWithSyncState:(SNTCommandSyncState *)syncState {
-  if ([self.FCMClient.FCMToken isEqualToString:syncState.FCMToken]) {
-    LOGD(@"Continue with the current FCMToken");
+  if ([self.FCMToken isEqualToString:syncState.FCMToken]) {
+    LOGD(@"Already listening for push notifications");
     return;
   }
-
   LOGD(@"Start listening for push notifications");
 
   WEAKIFY(self);
 
   [self.FCMClient disconnect];
   NSString *machineID = syncState.machineID;
-  self.FCMClient = [[MOLFCMClient alloc] initWithFCMToken:syncState.FCMToken
-                                     sessionConfiguration:syncState.session.configuration.copy
-                                           messageHandler:^(NSDictionary *message) {
-    if (!message || [message isEqual:@{}]) return;
+  SNTConfigurator *config = [SNTConfigurator configurator];
+  self.FCMClient = [[SNTCommandSyncFCM alloc] initWithProject:config.fcmProject
+                                                       entity:config.fcmEntity
+                                                       apiKey:config.fcmAPIKey
+                                         sessionConfiguration:syncState.session.configuration.copy
+                                               messageHandler:^(NSDictionary *message) {
+    if (!message || message[@"noOp"]) return;
       STRONGIFY(self);
       LOGD(@"%@", message);
       [self.FCMClient acknowledgeMessage:message];
       [self processFCMMessage:message withMachineID:machineID];
   }];
+
+  self.FCMClient.tokenHandler = ^(NSString *t) {
+    STRONGIFY(self);
+    LOGD(@"tokenHandler: %@", t);
+    self.FCMToken = t;
+    [self preflightOnly:YES];
+  };
 
   self.FCMClient.connectionErrorHandler = ^(NSHTTPURLResponse *response, NSError *error) {
     STRONGIFY(self);
@@ -212,11 +223,8 @@ static void reachabilityHandler(
     if (error) LOGE(@"FCM fatal error: %@", error);
     [self.FCMClient disconnect];
     self.FCMClient = nil;
+    self.FCMToken = nil;
     [self rescheduleTimerQueue:self.fullSyncTimer secondsFromNow:kDefaultFullSyncInterval];
-  };
-
-  self.FCMClient.loggingBlock = ^(NSString *log) {
-    LOGD(@"FCMClient: %@", log);
   };
 
   [self.FCMClient connect];
@@ -337,6 +345,10 @@ static void reachabilityHandler(
 #pragma mark syncing chain
 
 - (void)preflight {
+  [self preflightOnly:NO];
+}
+
+- (void)preflightOnly:(BOOL)preflightOnly {
   LOGD(@"Preflight starting");
   SNTCommandSyncState *syncState = [self createSyncState];
   SNTCommandSyncPreflight *p = [[SNTCommandSyncPreflight alloc] initWithState:syncState];
@@ -349,18 +361,19 @@ static void reachabilityHandler(
     self.eventBatchSize = syncState.eventBatchSize;
 
     // Start listening for push notifications with a full sync every FCMFullSyncInterval
-    if (syncState.daemon && syncState.FCMToken) {
+    if (syncState.daemon && [SNTConfigurator configurator].fcmEnabled) {
       self.FCMFullSyncInterval = syncState.FCMFullSyncInterval;
       self.FCMGlobalRuleSyncDeadline = syncState.FCMGlobalRuleSyncDeadline;
       [self listenForPushNotificationsWithSyncState:syncState];
     } else if (syncState.daemon) {
-      LOGD(@"FCMToken not provided. Sync every %lu min.", syncState.fullSyncInterval / 60);
+      LOGD(@"FCM not enabled. Sync every %lu min.", syncState.fullSyncInterval / 60);
       [self.FCMClient disconnect];
       self.FCMClient = nil;
       self.fullSyncInterval = syncState.fullSyncInterval;
       [self rescheduleTimerQueue:self.fullSyncTimer secondsFromNow:self.fullSyncInterval];
     }
 
+    if (preflightOnly) return;
     return [self eventUploadWithSyncState:syncState];
   } else {
     if (!syncState.daemon) {
@@ -488,6 +501,8 @@ static void reachabilityHandler(
 
   syncState.compressedContentEncoding =
       config.enableBackwardsCompatibleContentEncoding ? @"zlib" : @"deflate";
+
+  syncState.FCMToken = self.FCMToken;
 
   dispatch_group_wait(group, dispatch_time(DISPATCH_TIME_NOW, 5 * NSEC_PER_SEC));
   return syncState;

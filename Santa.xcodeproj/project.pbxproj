@@ -102,6 +102,8 @@
 		C7CDA6FE233E73ED0013622B /* SNTXPCNotifierInterface.m in Sources */ = {isa = PBXBuildFile; fileRef = C7658ACF2322B84F00F36578 /* SNTXPCNotifierInterface.m */; };
 		C7CDA6FF233E80160013622B /* SNTLogging.m in Sources */ = {isa = PBXBuildFile; fileRef = C7658AD82322B84F00F36578 /* SNTLogging.m */; };
 		C7CDA700233EB21A0013622B /* SNTXPCBundleServiceInterface.m in Sources */ = {isa = PBXBuildFile; fileRef = C7658ACC2322B84F00F36578 /* SNTXPCBundleServiceInterface.m */; };
+		C7CF38D3262DCD1800B0ABA7 /* SNTCommandSyncFCM.m in Sources */ = {isa = PBXBuildFile; fileRef = C7CF38D1262DCD1800B0ABA7 /* SNTCommandSyncFCM.m */; };
+		C7CF38EB262DD07100B0ABA7 /* SNTCachingEndpointSecurityManager.mm in Sources */ = {isa = PBXBuildFile; fileRef = C7CF38E9262DD07100B0ABA7 /* SNTCachingEndpointSecurityManager.mm */; };
 		C7D35DE42322C99B000C5EB4 /* SantaDecisionManager.cc in Sources */ = {isa = PBXBuildFile; fileRef = C7658B002322B84F00F36578 /* SantaDecisionManager.cc */; };
 		C7D35DE52322C99E000C5EB4 /* SantaDriver.cc in Sources */ = {isa = PBXBuildFile; fileRef = C7658AFF2322B84F00F36578 /* SantaDriver.cc */; };
 		C7D35DE62322C9A1000C5EB4 /* SantaDriverClient.cc in Sources */ = {isa = PBXBuildFile; fileRef = C7658AFA2322B84F00F36578 /* SantaDriverClient.cc */; };
@@ -378,6 +380,10 @@
 		C7A8308022F0F81F00F856AC /* com.google.santa.daemon.systemextension */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = com.google.santa.daemon.systemextension; sourceTree = BUILT_PRODUCTS_DIR; };
 		C7CC458F24B6184F0018C05C /* SNTXPCSyncdInterface.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SNTXPCSyncdInterface.h; sourceTree = "<group>"; };
 		C7CC459024B6184F0018C05C /* SNTXPCSyncdInterface.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SNTXPCSyncdInterface.m; sourceTree = "<group>"; };
+		C7CF38D1262DCD1800B0ABA7 /* SNTCommandSyncFCM.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SNTCommandSyncFCM.m; sourceTree = "<group>"; };
+		C7CF38D2262DCD1800B0ABA7 /* SNTCommandSyncFCM.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SNTCommandSyncFCM.h; sourceTree = "<group>"; };
+		C7CF38E9262DD07100B0ABA7 /* SNTCachingEndpointSecurityManager.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = SNTCachingEndpointSecurityManager.mm; sourceTree = "<group>"; };
+		C7CF38EA262DD07100B0ABA7 /* SNTCachingEndpointSecurityManager.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SNTCachingEndpointSecurityManager.h; sourceTree = "<group>"; };
 		C7D35DDA2322C902000C5EB4 /* santa-driver.kext */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "santa-driver.kext"; sourceTree = BUILT_PRODUCTS_DIR; };
 		C7F5C1A7233E72BC00A3F7FD /* santabundleservice */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = santabundleservice; sourceTree = BUILT_PRODUCTS_DIR; };
 		C7FA383324B60F3300D192F9 /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
@@ -468,6 +474,8 @@
 		0D3715F9233E680700BB624A /* EventProviders */ = {
 			isa = PBXGroup;
 			children = (
+				C7CF38EA262DD07100B0ABA7 /* SNTCachingEndpointSecurityManager.h */,
+				C7CF38E9262DD07100B0ABA7 /* SNTCachingEndpointSecurityManager.mm */,
 				C7658A632322B84F00F36578 /* SNTDriverManager.h */,
 				C7658A742322B84F00F36578 /* SNTDriverManager.m */,
 				C72ED2B42324962400255555 /* SNTEndpointSecurityManager.h */,
@@ -592,6 +600,8 @@
 				C7658AA22322B84F00F36578 /* SNTCommandSyncConstants.m */,
 				C7658A982322B84F00F36578 /* SNTCommandSyncEventUpload.h */,
 				C7658AA12322B84F00F36578 /* SNTCommandSyncEventUpload.m */,
+				C7CF38D2262DCD1800B0ABA7 /* SNTCommandSyncFCM.h */,
+				C7CF38D1262DCD1800B0ABA7 /* SNTCommandSyncFCM.m */,
 				C7658A9E2322B84F00F36578 /* SNTCommandSyncManager.h */,
 				C7658AA92322B84F00F36578 /* SNTCommandSyncManager.m */,
 				C7658A9D2322B84F00F36578 /* SNTCommandSyncPostflight.h */,
@@ -1231,6 +1241,7 @@
 				C7658B492322C18500F36578 /* SNTCommandCacheHistogram.m in Sources */,
 				C7658B472322C17D00F36578 /* SNTCommandController.m in Sources */,
 				C7658B5D2322C2B800F36578 /* SNTFileInfo.m in Sources */,
+				C7CF38D3262DCD1800B0ABA7 /* SNTCommandSyncFCM.m in Sources */,
 				C7658B542322C1A400F36578 /* SNTCommandSyncEventUpload.m in Sources */,
 				C7658B5F2322C2C700F36578 /* SNTStoredEvent.m in Sources */,
 				C7658B4F2322C19700F36578 /* SNTCommandStatus.m in Sources */,
@@ -1285,6 +1296,7 @@
 			files = (
 				C7CC459224B6188B0018C05C /* SNTXPCSyncdInterface.m in Sources */,
 				C7658B332322C08B00F36578 /* SNTRule.m in Sources */,
+				C7CF38EB262DD07100B0ABA7 /* SNTCachingEndpointSecurityManager.mm in Sources */,
 				C7658B1D2322BFFA00F36578 /* main.m in Sources */,
 				0D9F577C2342650F005D9AA8 /* SNTPrefixTree.cc in Sources */,
 				C7658B282322C02300F36578 /* SNTDriverManager.m in Sources */,
