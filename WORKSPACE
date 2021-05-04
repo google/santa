@@ -14,12 +14,15 @@ git_repository(
 load("@build_bazel_rules_apple//apple:repositories.bzl", "apple_rules_dependencies")
 apple_rules_dependencies()
 
+load("@build_bazel_apple_support//lib:repositories.bzl", "apple_support_dependencies")
+apple_support_dependencies()
+
 # Macops MOL* dependencies
 
 git_repository(
     name = "MOLAuthenticatingURLSession",
     remote = "https://github.com/google/macops-molauthenticatingurlsession.git",
-    tag = "v2.9",
+    tag = "v3.0",
 )
 
 git_repository(
@@ -35,15 +38,9 @@ git_repository(
 )
 
 git_repository(
-    name = "MOLFCMClient",
-    remote = "https://github.com/google/macops-molfcmclient.git",
-    tag = "v2.0",
-)
-
-git_repository(
     name = "MOLXPCConnection",
     remote = "https://github.com/google/macops-molxpcconnection.git",
-    tag = "v2.0",
+    tag = "v2.1",
 )
 
 # FMDB
@@ -51,7 +48,7 @@ git_repository(
 new_git_repository(
     name = "FMDB",
     remote = "https://github.com/ccgus/fmdb.git",
-    tag = "v2.7",
+    tag = "2.7.7",
     build_file_content = """
 objc_library(
     name = "FMDB",
@@ -69,7 +66,7 @@ objc_library(
 new_git_repository(
     name = "OCMock",
     remote = "https://github.com/erikdoe/ocmock",
-    tag = "v3.4.3",
+    tag = "v3.8.1",
     build_file_content = """
 objc_library(
     name = "OCMock",
