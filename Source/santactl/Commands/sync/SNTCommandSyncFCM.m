@@ -216,7 +216,7 @@ static void reachabilityHandler(SCNetworkReachabilityRef target, SCNetworkReacha
   if (self.reachability) return;
   LOGD(@"Reachability started.");
   self.reachability =
-      SCNetworkReachabilityCreateWithName(kCFAllocatorDefault, kFCMConnectHost.UTF8String);
+      SCNetworkReachabilityCreateWithName(kCFAllocatorDefault, _connectComponents.host.UTF8String);
   SCNetworkReachabilityContext context = {.info = (__bridge void *)self};
   if (SCNetworkReachabilitySetCallback(self.reachability, reachabilityHandler, &context)) {
     SCNetworkReachabilitySetDispatchQueue(
