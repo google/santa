@@ -193,7 +193,7 @@ static void reachabilityHandler(SCNetworkReachabilityRef target, SCNetworkReacha
 #pragma mark property methods
 
 - (BOOL)isConnected {
-  if (!self.androidID || !self.androidID || !self.securityToken) return NO;
+  if (!self.androidID || !self.securityToken) return NO;
   for (NSURLSessionDataTask *dataTask in [self dataTasks]) {
     if (dataTask.state == NSURLSessionTaskStateRunning) return YES;
   }
@@ -247,7 +247,7 @@ static void reachabilityHandler(SCNetworkReachabilityRef target, SCNetworkReacha
   [self cancelConnections];
 
   // Reuse checkin credentials / FCM token if allready registered.
-  if (!self.androidID || !self.androidID || !self.securityToken) return [self checkin];
+  if (!self.androidID || !self.securityToken) return [self checkin];
 
   NSMutableURLRequest *URLRequest = [NSMutableURLRequest requestWithURL:_connectComponents.URL];
   [URLRequest addValue:kFCMApplicationJSON forHTTPHeaderField:kFCMContentType];
