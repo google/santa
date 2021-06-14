@@ -128,4 +128,3 @@ extern const NSUInteger kDefaultEventBatchSize;
 extern const NSUInteger kDefaultFullSyncInterval;
 extern const NSUInteger kDefaultFCMFullSyncInterval;
 extern const NSUInteger kDefaultFCMGlobalRuleSyncDeadline;
-

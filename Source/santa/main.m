@@ -19,7 +19,7 @@
 #import "Source/common/SNTXPCControlInterface.h"
 #import "Source/santa/SNTAppDelegate.h"
 
-@interface SNTSystemExtensionDelegate : NSObject<OSSystemExtensionRequestDelegate>
+@interface SNTSystemExtensionDelegate : NSObject <OSSystemExtensionRequestDelegate>
 @end
 
 @implementation SNTSystemExtensionDelegate
@@ -28,8 +28,8 @@
 
 - (OSSystemExtensionReplacementAction)request:(OSSystemExtensionRequest *)request
                   actionForReplacingExtension:(OSSystemExtensionProperties *)old
-                                withExtension:(OSSystemExtensionProperties *)new
-    API_AVAILABLE(macos(10.15)) {
+                                withExtension:
+                                  (OSSystemExtensionProperties *)new API_AVAILABLE(macos(10.15)) {
   NSLog(@"SystemExtension \"%@\" request for replacement", request.identifier);
   return OSSystemExtensionReplacementActionReplace;
 }
@@ -39,13 +39,13 @@
 }
 
 - (void)request:(OSSystemExtensionRequest *)request
-    didFailWithError:(NSError *)error API_AVAILABLE(macos(10.15)) {
+  didFailWithError:(NSError *)error API_AVAILABLE(macos(10.15)) {
   NSLog(@"SystemExtension \"%@\" request did fail: %@", request.identifier, error);
   exit((int)error.code);
 }
 
 - (void)request:(OSSystemExtensionRequest *)request
-    didFinishWithResult:(OSSystemExtensionRequestResult)result API_AVAILABLE(macos(10.15)) {
+  didFinishWithResult:(OSSystemExtensionRequestResult)result API_AVAILABLE(macos(10.15)) {
   NSLog(@"SystemExtension \"%@\" request did finish: %ld", request.identifier, (long)result);
   exit(0);
 }

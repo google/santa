@@ -12,8 +12,8 @@
 ///    See the License for the specific language governing permissions and
 ///    limitations under the License.
 
-#include <iostream>
 #include <cstdint>
+#include <iostream>
 
 #import <MOLXPCConnection/MOLXPCConnection.h>
 
@@ -23,15 +23,14 @@
 
 extern "C" int LLVMFuzzerTestOneInput(const std::uint8_t *data, std::size_t size) {
   if (size > 16) {
-    std::cerr << "Invalid buffer size of " << size
-              <<  " (should be <= 16)" << std::endl;
+    std::cerr << "Invalid buffer size of " << size << " (should be <= 16)" << std::endl;
 
     return 1;
   }
 
   santa_vnode_id_t vnodeID = {};
   std::memcpy(&vnodeID, data, size);
-  
+
   MOLXPCConnection *daemonConn = [SNTXPCControlInterface configuredConnection];
   daemonConn.invalidationHandler = ^{
     printf("An error occurred communicating with the daemon, is it running?\n");
@@ -40,16 +39,20 @@ extern "C" int LLVMFuzzerTestOneInput(const std::uint8_t *data, std::size_t size
 
   [daemonConn resume];
 
-  [[daemonConn remoteObjectProxy] checkCacheForVnodeID:vnodeID
-                                                  withReply:^(santa_action_t action) {
-    if (action == ACTION_RESPOND_ALLOW) {
-      std::cerr << "File exists in [whitelist] kernel cache" << std::endl;;
-    } else if (action == ACTION_RESPOND_DENY) {
-      std::cerr << "File exists in [blacklist] kernel cache" << std::endl;;
-    } else if (action == ACTION_UNSET) {
-      std::cerr << "File does not exist in cache" << std::endl;;
-    }
-  }];
-  
+  [[daemonConn remoteObjectProxy]
+    checkCacheForVnodeID:vnodeID
+               withReply:^(santa_action_t action) {
+                 if (action == ACTION_RESPOND_ALLOW) {
+                   std::cerr << "File exists in [whitelist] kernel cache" << std::endl;
+                   ;
+                 } else if (action == ACTION_RESPOND_DENY) {
+                   std::cerr << "File exists in [blacklist] kernel cache" << std::endl;
+                   ;
+                 } else if (action == ACTION_UNSET) {
+                   std::cerr << "File does not exist in cache" << std::endl;
+                   ;
+                 }
+               }];
+
   return 0;
 }

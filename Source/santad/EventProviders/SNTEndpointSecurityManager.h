@@ -22,7 +22,7 @@
 // Gleaned from https://opensource.apple.com/source/xnu/xnu-4903.241.1/bsd/sys/proc_internal.h
 const pid_t PID_MAX = 99999;
 
-@interface SNTEndpointSecurityManager : NSObject<SNTEventProvider>
+@interface SNTEndpointSecurityManager : NSObject <SNTEventProvider>
 - (santa_vnode_id_t)vnodeIDForFile:(es_file_t *)file;
 
 - (BOOL)isCompilerPID:(pid_t)pid;

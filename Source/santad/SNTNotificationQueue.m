@@ -45,8 +45,7 @@ static const int kMaximumNotifications = 10;
 
   NSDictionary *d;
   if (message) {
-    d = @{@"event" : event,
-          @"message" : message};
+    d = @{@"event" : event, @"message" : message};
   } else {
     d = @{@"event" : event};
   }

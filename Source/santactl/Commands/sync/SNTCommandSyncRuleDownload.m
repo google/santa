@@ -42,9 +42,9 @@
   [[self.daemonConn remoteObjectProxy] databaseRuleAddRules:newRules
                                                  cleanSlate:self.syncState.cleanSync
                                                       reply:^(NSError *e) {
-    error = e;
-    dispatch_semaphore_signal(sema);
-  }];
+                                                        error = e;
+                                                        dispatch_semaphore_signal(sema);
+                                                      }];
   dispatch_semaphore_wait(sema, dispatch_time(DISPATCH_TIME_NOW, 300 * NSEC_PER_SEC));
 
   if (error) {
@@ -55,9 +55,10 @@
 
   // Tell santad to record a successful rules sync and wait for it to finish.
   sema = dispatch_semaphore_create(0);
-  [[self.daemonConn remoteObjectProxy] setRuleSyncLastSuccess:[NSDate date] reply:^{
-    dispatch_semaphore_signal(sema);
-  }];
+  [[self.daemonConn remoteObjectProxy] setRuleSyncLastSuccess:[NSDate date]
+                                                        reply:^{
+                                                          dispatch_semaphore_signal(sema);
+                                                        }];
   dispatch_semaphore_wait(sema, dispatch_time(DISPATCH_TIME_NOW, 5 * NSEC_PER_SEC));
 
   LOGI(@"Processed %lu rules", newRules.count);
@@ -118,15 +119,15 @@
     if (remaining && [remaining intValue] == 0) {
       [processed addObject:key];
       NSString *message = [NSString stringWithFormat:@"%@ can now be run", notifier[kFileName]];
-      [[self.daemonConn remoteObjectProxy]
-          postRuleSyncNotificationWithCustomMessage:message reply:^{}];
+      [[self.daemonConn remoteObjectProxy] postRuleSyncNotificationWithCustomMessage:message
+                                                                               reply:^{
+                                                                               }];
     }
   }
 
   // Remove all entries from allowlistNotifications dictionary that had zero count.
   [self.syncState.allowlistNotifications removeObjectsForKeys:processed];
 }
-
 
 // Converts rule information downloaded from the server into a SNTRule.  Because any information
 // not recorded by SNTRule is thrown away here, this method is also responsible for dealing with

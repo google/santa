@@ -47,9 +47,8 @@
   self.mockCodesignChecker = OCMClassMock([MOLCodesignChecker class]);
   OCMStub([self.mockCodesignChecker alloc]).andReturn(self.mockCodesignChecker);
 
-  OCMStub([self.mockCodesignChecker initWithBinaryPath:OCMOCK_ANY
-                                                 error:[OCMArg setTo:NULL]])
-      .andReturn(self.mockCodesignChecker);
+  OCMStub([self.mockCodesignChecker initWithBinaryPath:OCMOCK_ANY error:[OCMArg setTo:NULL]])
+    .andReturn(self.mockCodesignChecker);
 
   self.mockConfigurator = OCMClassMock([SNTConfigurator class]);
   OCMStub([self.mockConfigurator configurator]).andReturn(self.mockConfigurator);
@@ -58,10 +57,10 @@
 
   self.mockFileInfo = OCMClassMock([SNTFileInfo class]);
   OCMStub([self.mockFileInfo alloc]).andReturn(self.mockFileInfo);
-  OCMStub([self.mockFileInfo initWithPath:OCMOCK_ANY
-                                    error:[OCMArg setTo:nil]]).andReturn(self.mockFileInfo);
+  OCMStub([self.mockFileInfo initWithPath:OCMOCK_ANY error:[OCMArg setTo:nil]])
+    .andReturn(self.mockFileInfo);
   OCMStub([self.mockFileInfo codesignCheckerWithError:[OCMArg setTo:nil]])
-      .andReturn(self.mockCodesignChecker);
+    .andReturn(self.mockCodesignChecker);
 
   self.mockRuleDatabase = OCMClassMock([SNTRuleTable class]);
   self.mockEventDatabase = OCMClassMock([SNTEventTable class]);
@@ -124,7 +123,6 @@
   [self.sut validateBinaryWithMessage:[self getMessage]];
 
   OCMVerify([self.mockDriverManager postAction:ACTION_RESPOND_DENY forMessage:[self getMessage]]);
-
 }
 
 - (void)testCertificateAllowRule {

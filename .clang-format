@@ -1,18 +1,18 @@
+Language: ObjC
 BasedOnStyle: Google
-Language: Cpp
-Standard: Cpp11
 
-# Disable ColumnLimit because it causes some very weird line breaks.
-# For ObjC the limit is 100
-# For Cpp  the limit is 80
-ColumnLimit: 0
+IndentWidth: 2
+ObjCBlockIndentWidth: 2
+ContinuationIndentWidth: 2
+
+# For ObjC, the line limit is 100
+ColumnLimit: 100
 
 # Allow short case statements to be on a single line
 AllowShortCaseLabelsOnASingleLine: true
 
-# Ban short loops and functions on a single line
 AllowShortLoopsOnASingleLine: false
-AllowShortFunctionsOnASingleLine: false
+AllowShortFunctionsOnASingleLine: Inline
 
 # Allow spaces in NSArray/NSDictionary literals @[ and @{
 SpacesInContainerLiterals: true
@@ -20,3 +20,13 @@ SpacesInContainerLiterals: true
 # For pointers, always put the * next to the variable name.
 DerivePointerAlignment: false
 PointerAlignment: Right
+
+
+---
+Language: Cpp
+Standard: Cpp11
+
+BasedOnStyle: Google
+
+# For C++, the line limit is 80
+ColumnLimit: 80

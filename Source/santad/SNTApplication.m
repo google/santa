@@ -24,20 +24,20 @@
 #import "Source/common/SNTXPCControlInterface.h"
 #import "Source/common/SNTXPCNotifierInterface.h"
 #import "Source/common/SNTXPCUnprivilegedControlInterface.h"
+#import "Source/santad/DataLayer/SNTEventTable.h"
+#import "Source/santad/DataLayer/SNTRuleTable.h"
+#import "Source/santad/EventProviders/SNTCachingEndpointSecurityManager.h"
+#import "Source/santad/EventProviders/SNTDriverManager.h"
+#import "Source/santad/EventProviders/SNTEndpointSecurityManager.h"
+#import "Source/santad/EventProviders/SNTEventProvider.h"
+#import "Source/santad/Logs/SNTFileEventLog.h"
+#import "Source/santad/Logs/SNTSyslogEventLog.h"
 #import "Source/santad/SNTCompilerController.h"
 #import "Source/santad/SNTDaemonControlController.h"
 #import "Source/santad/SNTDatabaseController.h"
 #import "Source/santad/SNTExecutionController.h"
 #import "Source/santad/SNTNotificationQueue.h"
 #import "Source/santad/SNTSyncdQueue.h"
-#import "Source/santad/DataLayer/SNTRuleTable.h"
-#import "Source/santad/DataLayer/SNTEventTable.h"
-#import "Source/santad/EventProviders/SNTDriverManager.h"
-#import "Source/santad/EventProviders/SNTCachingEndpointSecurityManager.h"
-#import "Source/santad/EventProviders/SNTEndpointSecurityManager.h"
-#import "Source/santad/EventProviders/SNTEventProvider.h"
-#import "Source/santad/Logs/SNTFileEventLog.h"
-#import "Source/santad/Logs/SNTSyslogEventLog.h"
 
 @interface SNTApplication ()
 @property DASessionRef diskArbSession;
@@ -89,14 +89,9 @@
       return nil;
     }
 
-
     switch ([configurator eventLogType]) {
-      case SNTEventLogTypeSyslog:
-        _eventLog = [[SNTSyslogEventLog alloc] init];
-        break;
-      case SNTEventLogTypeFilelog:
-        _eventLog = [[SNTFileEventLog alloc] init];
-        break;
+      case SNTEventLogTypeSyslog: _eventLog = [[SNTSyslogEventLog alloc] init]; break;
+      case SNTEventLogTypeFilelog: _eventLog = [[SNTFileEventLog alloc] init]; break;
     }
 
     dispatch_async(dispatch_get_global_queue(QOS_CLASS_BACKGROUND, 0), ^{
@@ -143,15 +138,16 @@
 
     // Establish XPC listener for Santa and santactl connections
     SNTDaemonControlController *dc =
-        [[SNTDaemonControlController alloc] initWithEventProvider:_eventProvider
-                                                notificationQueue:self.notQueue
-                                                       syncdQueue:syncdQueue
-                                                         eventLog:_eventLog];
+      [[SNTDaemonControlController alloc] initWithEventProvider:_eventProvider
+                                              notificationQueue:self.notQueue
+                                                     syncdQueue:syncdQueue
+                                                       eventLog:_eventLog];
 
     _controlConnection =
-        [[MOLXPCConnection alloc] initServerWithName:[SNTXPCControlInterface serviceID]];
+      [[MOLXPCConnection alloc] initServerWithName:[SNTXPCControlInterface serviceID]];
     _controlConnection.privilegedInterface = [SNTXPCControlInterface controlInterface];
-    _controlConnection.unprivilegedInterface = [SNTXPCUnprivilegedControlInterface controlInterface];
+    _controlConnection.unprivilegedInterface =
+      [SNTXPCUnprivilegedControlInterface controlInterface];
     _controlConnection.exportedObject = dc;
     [_controlConnection resume];
 
@@ -228,32 +224,26 @@
         [self->_eventLog logAllowedExecution:message];
         break;
       }
-      case ACTION_NOTIFY_FORK:
-        [self->_eventLog logFork:message];
-        break;
-      case ACTION_NOTIFY_EXIT:
-        [self->_eventLog logExit:message];
-        break;
-      default:
-        LOGE(@"Received log request without a valid action: %d", message.action);
-        break;
+      case ACTION_NOTIFY_FORK: [self->_eventLog logFork:message]; break;
+      case ACTION_NOTIFY_EXIT: [self->_eventLog logExit:message]; break;
+      default: LOGE(@"Received log request without a valid action: %d", message.action); break;
     }
   }];
 }
 
 - (void)beginListeningForDiskMounts {
-  dispatch_queue_t disk_queue = dispatch_queue_create(
-      "com.google.santad.disk_queue", DISPATCH_QUEUE_SERIAL);
+  dispatch_queue_t disk_queue =
+    dispatch_queue_create("com.google.santad.disk_queue", DISPATCH_QUEUE_SERIAL);
 
   _diskArbSession = DASessionCreate(NULL);
   DASessionSetDispatchQueue(_diskArbSession, disk_queue);
 
-  DARegisterDiskAppearedCallback(
-      _diskArbSession, NULL, diskAppearedCallback, (__bridge void *)self);
-  DARegisterDiskDescriptionChangedCallback(
-      _diskArbSession, NULL, NULL, diskDescriptionChangedCallback, (__bridge void *)self);
-  DARegisterDiskDisappearedCallback(
-      _diskArbSession, NULL, diskDisappearedCallback, (__bridge void *)self);
+  DARegisterDiskAppearedCallback(_diskArbSession, NULL, diskAppearedCallback,
+                                 (__bridge void *)self);
+  DARegisterDiskDescriptionChangedCallback(_diskArbSession, NULL, NULL,
+                                           diskDescriptionChangedCallback, (__bridge void *)self);
+  DARegisterDiskDisappearedCallback(_diskArbSession, NULL, diskDisappearedCallback,
+                                    (__bridge void *)self);
 }
 
 void diskAppearedCallback(DADiskRef disk, void *context) {
@@ -306,34 +296,35 @@ void diskDisappearedCallback(DADiskRef disk, void *context) {
 
 - (void)observeValueForKeyPath:(NSString *)keyPath
                       ofObject:(id)object
-                        change:(NSDictionary<NSString *,id> *)change
+                        change:(NSDictionary<NSString *, id> *)change
                        context:(void *)context {
   NSString *newKey = NSKeyValueChangeNewKey;
   NSString *oldKey = NSKeyValueChangeOldKey;
   if ([keyPath isEqualToString:NSStringFromSelector(@selector(clientMode))]) {
     SNTClientMode new =
-        [change[newKey] isKindOfClass:[NSNumber class]] ? [change[newKey] longLongValue] : 0;
+      [ change[newKey] isKindOfClass : [NSNumber class] ] ? [ change[newKey] longLongValue ] : 0;
     SNTClientMode old =
-        [change[oldKey] isKindOfClass:[NSNumber class]] ? [change[oldKey] longLongValue] : 0;
+      [change[oldKey] isKindOfClass:[NSNumber class]] ? [change[oldKey] longLongValue] : 0;
     if (new != old) [self clientModeDidChange:new];
   } else if ([keyPath isEqualToString:NSStringFromSelector(@selector(syncBaseURL))]) {
-    NSURL *new = [change[newKey] isKindOfClass:[NSURL class]] ? change[newKey] : nil;
+    NSURL *new = [ change[newKey] isKindOfClass : [NSURL class] ] ? change[newKey] : nil;
     NSURL *old = [change[oldKey] isKindOfClass:[NSURL class]] ? change[oldKey] : nil;
     if (!new && !old) return;
     if (![new.absoluteString isEqualToString:old.absoluteString]) [self syncBaseURLDidChange:new];
   } else if ([keyPath isEqualToString:NSStringFromSelector(@selector(allowedPathRegex))] ||
              [keyPath isEqualToString:NSStringFromSelector(@selector(blockedPathRegex))]) {
     NSRegularExpression *new =
-        [change[newKey] isKindOfClass:[NSRegularExpression class]] ? change[newKey] : nil;
+      [ change[newKey] isKindOfClass : [NSRegularExpression class] ] ? change[newKey] : nil;
     NSRegularExpression *old =
-        [change[oldKey] isKindOfClass:[NSRegularExpression class]] ? change[oldKey] : nil;
+      [change[oldKey] isKindOfClass:[NSRegularExpression class]] ? change[oldKey] : nil;
     if (!new && !old) return;
     if (![new.pattern isEqualToString:old.pattern]) {
       LOGI(@"Changed [allow|deny]list regex, flushing cache");
       [self.eventProvider flushCacheNonRootOnly:NO];
     }
   } else if ([keyPath isEqualToString:NSStringFromSelector(@selector(enableSystemExtension))]) {
-    BOOL new = [change[newKey] isKindOfClass:[NSNumber class]] ? [change[newKey] boolValue] : NO;
+    BOOL new =
+      [ change[newKey] isKindOfClass : [NSNumber class] ] ? [ change[newKey] boolValue ] : NO;
     BOOL old = [change[oldKey] isKindOfClass:[NSNumber class]] ? [change[oldKey] boolValue] : NO;
     if (old == NO && new == YES) {
       LOGI(@"EnableSystemExtension changed NO -> YES");

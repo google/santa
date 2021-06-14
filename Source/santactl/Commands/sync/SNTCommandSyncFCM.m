@@ -141,9 +141,8 @@ static void reachabilityHandler(SCNetworkReachabilityRef target, SCNetworkReacha
     _messageHandler = messageHandler;
 
     _authSession = [[MOLAuthenticatingURLSession alloc]
-        initWithSessionConfiguration:sessionConfiguration
-                                         ?: [NSURLSessionConfiguration
-                                                defaultSessionConfiguration]];
+      initWithSessionConfiguration:sessionConfiguration
+                                     ?: [NSURLSessionConfiguration defaultSessionConfiguration]];
     _authSession.dataTaskDidReceiveDataBlock = [self dataTaskDidReceiveDataBlock];
     _authSession.taskDidCompleteWithErrorBlock = [self taskDidCompleteWithErrorBlock];
 
@@ -216,11 +215,11 @@ static void reachabilityHandler(SCNetworkReachabilityRef target, SCNetworkReacha
   if (self.reachability) return;
   LOGD(@"Reachability started.");
   self.reachability =
-      SCNetworkReachabilityCreateWithName(kCFAllocatorDefault, _connectComponents.host.UTF8String);
+    SCNetworkReachabilityCreateWithName(kCFAllocatorDefault, _connectComponents.host.UTF8String);
   SCNetworkReachabilityContext context = {.info = (__bridge void *)self};
   if (SCNetworkReachabilitySetCallback(self.reachability, reachabilityHandler, &context)) {
     SCNetworkReachabilitySetDispatchQueue(
-        self.reachability, dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_BACKGROUND, 0));
+      self.reachability, dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_BACKGROUND, 0));
   }
 }
 
@@ -410,7 +409,7 @@ static void reachabilityHandler(SCNetworkReachabilityRef target, SCNetworkReacha
     } else if ([HTTPResponse.URL.path isEqualToString:kFCMConnect]) {
       // connect will re-connect.
       return [self connectHelper];
-    } // register may be called more than once, don't do anything in response.
+    }  // register may be called more than once, don't do anything in response.
   } else if ([_fatalHTTPStatusCodes containsObject:@(HTTPResponse.statusCode)]) {
     if (self.connectionErrorHandler) self.connectionErrorHandler(HTTPResponse, error);
   } else {
@@ -425,7 +424,7 @@ static void reachabilityHandler(SCNetworkReachabilityRef target, SCNetworkReacha
 
 - (void)setCheckinAuthorization:(NSMutableURLRequest *)URLRequest {
   NSString *a = [NSString
-      stringWithFormat:@"checkin %@:%@ %@", self.androidID, self.securityToken, self.versionInfo];
+    stringWithFormat:@"checkin %@:%@ %@", self.androidID, self.securityToken, self.versionInfo];
   [URLRequest addValue:a forHTTPHeaderField:@"Authorization"];
   [URLRequest addValue:self.apiKey forHTTPHeaderField:@"X-Goog-Api-Key"];
 }

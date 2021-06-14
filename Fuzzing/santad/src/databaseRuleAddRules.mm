@@ -12,8 +12,8 @@
 ///    See the License for the specific language governing permissions and
 ///    limitations under the License.
 
-#include <iostream>
 #include <cstdint>
+#include <iostream>
 
 #import <MOLXPCConnection/MOLXPCConnection.h>
 
@@ -34,9 +34,8 @@ struct InputData {
 
 extern "C" int LLVMFuzzerTestOneInput(const std::uint8_t *data, std::size_t size) {
   if (size > sizeof(InputData)) {
-    std::cerr << "Invalid buffer size of " << size
-              <<  " (should be <= " << sizeof(InputData)
-              << ")" << std::endl;
+    std::cerr << "Invalid buffer size of " << size << " (should be <= " << sizeof(InputData) << ")"
+              << std::endl;
 
     return 1;
   }
@@ -45,11 +44,11 @@ extern "C" int LLVMFuzzerTestOneInput(const std::uint8_t *data, std::size_t size
   std::memcpy(&input_data, data, size);
 
   SNTRule *newRule = [[SNTRule alloc] init];
-  newRule.state = (SNTRuleState) input_data.state;
-  newRule.type = (SNTRuleType) input_data.type;
+  newRule.state = (SNTRuleState)input_data.state;
+  newRule.type = (SNTRuleType)input_data.type;
   newRule.shasum = @(input_data.hash);
   newRule.customMsg = @"";
-  
+
   MOLXPCConnection *daemonConn = [SNTXPCControlInterface configuredConnection];
   daemonConn.invalidationHandler = ^{
     printf("An error occurred communicating with the daemon, is it running?\n");
@@ -57,17 +56,18 @@ extern "C" int LLVMFuzzerTestOneInput(const std::uint8_t *data, std::size_t size
   };
 
   [daemonConn resume];
-  [[daemonConn remoteObjectProxy] databaseRuleAddRules:@[newRule]
-                                                 cleanSlate:NO
-                                                      reply:^(NSError *error) {
-    if (!error) {
-      if (newRule.state == SNTRuleStateRemove) {
-        printf("Removed rule for SHA-256: %s.\n", [newRule.shasum UTF8String]);
-      } else {
-        printf("Added rule for SHA-256: %s.\n", [newRule.shasum UTF8String]);
-      }
-    }
-  }];
-  
+  [[daemonConn remoteObjectProxy]
+    databaseRuleAddRules:@[ newRule ]
+              cleanSlate:NO
+                   reply:^(NSError *error) {
+                     if (!error) {
+                       if (newRule.state == SNTRuleStateRemove) {
+                         printf("Removed rule for SHA-256: %s.\n", [newRule.shasum UTF8String]);
+                       } else {
+                         printf("Added rule for SHA-256: %s.\n", [newRule.shasum UTF8String]);
+                       }
+                     }
+                   }];
+
   return 0;
 }

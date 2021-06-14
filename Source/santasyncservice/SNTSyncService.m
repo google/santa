@@ -17,13 +17,17 @@
 // TODO(bur): Add "santactl sync --daemon" behavior here.
 @implementation SNTSyncService
 
-- (void)postEventsToSyncServer:(NSArray<SNTStoredEvent *> *)events fromBundle:(BOOL)fromBundle {}
+- (void)postEventsToSyncServer:(NSArray<SNTStoredEvent *> *)events fromBundle:(BOOL)fromBundle {
+}
 
 - (void)postBundleEventToSyncServer:(SNTStoredEvent *)event
-                              reply:(void (^)(SNTBundleEventAction))reply {}
+                              reply:(void (^)(SNTBundleEventAction))reply {
+}
 
-- (void)isFCMListening:(void (^)(BOOL))reply {}
+- (void)isFCMListening:(void (^)(BOOL))reply {
+}
 
-- (void)performFullSyncWithReply:(SNTFullSyncReplyBlock)reply {}
+- (void)performFullSyncWithReply:(SNTFullSyncReplyBlock)reply {
+}
 
 @end

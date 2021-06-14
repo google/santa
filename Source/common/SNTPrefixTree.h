@@ -22,10 +22,11 @@
 #include <libkern/locks.h>
 #else
 // Support for unit testing.
-#include <mutex>
 #include <pthread.h>
 #include <stdint.h>
-#endif // KERNEL
+
+#include <mutex>
+#endif  // KERNEL
 
 ///
 ///  SantaPrefixTree is a simple prefix tree implementation.
@@ -54,15 +55,17 @@ class SNTPrefixTree {
   ///  It takes 1-4 nodes to represent a UTF-8 encoded Unicode character.
   ///
   ///  The path for "/🤘" would look like this:
-  ///      children[0x2f] -> children[0xf0] -> children[0x9f] -> children[0xa4] -> children[0x98]
+  ///      children[0x2f] -> children[0xf0] -> children[0x9f] -> children[0xa4]
+  ///      -> children[0x98]
   ///
   ///  The path for "/dev" is:
   ///      children[0x2f] -> children[0x64] -> children[0x65] -> children[0x76]
   ///
   ///  Lookups of children are O(1).
   ///
-  ///  Having the nodes represented by a smaller width, such as a nibble (1/2 byte), would
-  ///  drastically decrease the memory footprint but would double required dereferences.
+  ///  Having the nodes represented by a smaller width, such as a nibble (1/2
+  ///  byte), would drastically decrease the memory footprint but would double
+  ///  required dereferences.
   ///
   ///  TODO(bur): Potentially convert this into a full on radix tree.
   ///
@@ -74,8 +77,8 @@ class SNTPrefixTree {
 
   // PruneNode will remove the passed in node from the tree.
   // The passed in node and all subnodes will be deleted.
-  // It is the caller's responsibility to reset the pointer to this node (held by the parent).
-  // If the tree is in use grab the exclusive lock.
+  // It is the caller's responsibility to reset the pointer to this node (held
+  // by the parent). If the tree is in use grab the exclusive lock.
   void PruneNode(SantaPrefixNode *);
 
   SantaPrefixNode *root_;
@@ -91,10 +94,10 @@ class SNTPrefixTree {
   lck_attr_t *spt_lock_attr_;
   lck_rw_t *spt_lock_;
   lck_mtx_t *spt_add_lock_;
-#else // KERNEL
+#else   // KERNEL
   pthread_rwlock_t spt_lock_;
   std::mutex *spt_add_lock_;
-#endif // KERNEL
+#endif  // KERNEL
 };
 
 #endif /* SANTA__SANTA_DRIVER__SANTAPREFIXTREE_H */

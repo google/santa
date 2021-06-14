@@ -23,13 +23,14 @@
 
 + (void)initializeControlInterface:(NSXPCInterface *)r {
   [r setClasses:[NSSet setWithObjects:[NSArray class], [SNTStoredEvent class], nil]
-        forSelector:@selector(syncBundleEvent:relatedEvents:)
-      argumentIndex:1
-            ofReply:NO];
+      forSelector:@selector(syncBundleEvent:relatedEvents:)
+    argumentIndex:1
+          ofReply:NO];
 }
 
 + (NSXPCInterface *)controlInterface {
-  NSXPCInterface *r = [NSXPCInterface interfaceWithProtocol:@protocol(SNTUnprivilegedDaemonControlXPC)];
+  NSXPCInterface *r =
+    [NSXPCInterface interfaceWithProtocol:@protocol(SNTUnprivilegedDaemonControlXPC)];
   [self initializeControlInterface:r];
 
   return r;

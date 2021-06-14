@@ -12,13 +12,13 @@
 ///    See the License for the specific language governing permissions and
 ///    limitations under the License.
 
-#include <iostream>
 #include <cstdint>
+#include <iostream>
 #include <vector>
 
+#include <SNTCommandSyncConstants.h>
 #include <SNTCommandSyncRuleDownload.h>
 #include <SNTCommandSyncState.h>
-#include <SNTCommandSyncConstants.h>
 #include <SNTRule.h>
 
 extern "C" int LLVMFuzzerTestOneInput(const std::uint8_t *data, std::size_t size) {
@@ -57,6 +57,6 @@ extern "C" int LLVMFuzzerTestOneInput(const std::uint8_t *data, std::size_t size
       std::cerr << "Rule: " << [[rule description] UTF8String] << "\n";
     }
   }
- 
+
   return 0;
 }

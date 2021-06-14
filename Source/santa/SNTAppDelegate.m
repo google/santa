@@ -43,16 +43,16 @@
                                       object:nil
                                        queue:[NSOperationQueue currentQueue]
                                   usingBlock:^(NSNotification *note) {
-    self.daemonListener.invalidationHandler = nil;
-    [self.daemonListener invalidate];
-    self.daemonListener = nil;
-  }];
+                                    self.daemonListener.invalidationHandler = nil;
+                                    [self.daemonListener invalidate];
+                                    self.daemonListener = nil;
+                                  }];
   [workspaceNotifications addObserverForName:NSWorkspaceSessionDidBecomeActiveNotification
                                       object:nil
                                        queue:[NSOperationQueue currentQueue]
                                   usingBlock:^(NSNotification *note) {
-    [self attemptDaemonReconnection];
-  }];
+                                    [self attemptDaemonReconnection];
+                                  }];
 
   [self createDaemonConnection];
 }

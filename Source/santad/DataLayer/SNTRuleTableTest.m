@@ -80,11 +80,10 @@
   NSUInteger ruleCount = self.sut.ruleCount;
 
   NSError *error;
-  [self.sut addRules:@[ [self _exampleBinaryRule],
-                        [self _exampleCertRule],
-                        [self _exampleBinaryRule] ]
-          cleanSlate:NO
-               error:&error];
+  [self.sut
+      addRules:@[ [self _exampleBinaryRule], [self _exampleCertRule], [self _exampleBinaryRule] ]
+    cleanSlate:NO
+         error:&error];
 
   XCTAssertEqual(self.sut.ruleCount, ruleCount + 2);
   XCTAssertNil(error);
@@ -108,7 +107,7 @@
   r.type = SNTRuleTypeCertificate;
 
   NSError *error;
-  XCTAssertFalse([self.sut addRules:@[r] cleanSlate:NO error:&error]);
+  XCTAssertFalse([self.sut addRules:@[ r ] cleanSlate:NO error:&error]);
   XCTAssertEqual(error.code, SNTRuleTableErrorInvalidRule);
 }
 

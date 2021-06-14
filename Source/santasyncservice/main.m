@@ -25,9 +25,9 @@ int main(int argc, const char *argv[]) {
     NSDictionary *infoDict = [[NSBundle mainBundle] infoDictionary];
     LOGI(@"Started, version %@", infoDict[@"CFBundleVersion"]);
     MOLXPCConnection *c =
-        [[MOLXPCConnection alloc] initServerWithName:[SNTXPCSyncServiceInterface serviceID]];
+      [[MOLXPCConnection alloc] initServerWithName:[SNTXPCSyncServiceInterface serviceID]];
     c.privilegedInterface = c.unprivilegedInterface =
-        [SNTXPCSyncServiceInterface syncServiceInterface];
+      [SNTXPCSyncServiceInterface syncServiceInterface];
     c.exportedObject = [[SNTSyncService alloc] init];
     [c resume];
     [[NSRunLoop mainRunLoop] run];

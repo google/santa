@@ -70,7 +70,7 @@ typedef void (^SNTCommandSyncFCMAcknowledgeErrorHandler)(NSDictionary *, NSError
                      fatalCodes:(NSArray<NSNumber *> *)fatalCodes
            sessionConfiguration:(NSURLSessionConfiguration *)sessionConfiguration
                  messageHandler:(SNTCommandSyncFCMMessageHandler)messageHandler
-    NS_DESIGNATED_INITIALIZER;
+  NS_DESIGNATED_INITIALIZER;
 
 /**  A convenience initializer. Optional args will use their zero values. */
 - (instancetype)initWithProject:(NSString *)project

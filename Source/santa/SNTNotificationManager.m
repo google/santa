@@ -38,14 +38,14 @@
 
 @implementation SNTNotificationManager
 
-static NSString * const silencedNotificationsKey = @"SilencedNotifications";
+static NSString *const silencedNotificationsKey = @"SilencedNotifications";
 
 - (instancetype)init {
   self = [super init];
   if (self) {
     _pendingNotifications = [[NSMutableArray alloc] init];
-    _hashBundleBinariesQueue = dispatch_queue_create("com.google.santagui.hashbundlebinaries",
-                                                     DISPATCH_QUEUE_SERIAL);
+    _hashBundleBinariesQueue =
+      dispatch_queue_create("com.google.santagui.hashbundlebinaries", DISPATCH_QUEUE_SERIAL);
   }
   return self;
 }
@@ -107,8 +107,7 @@ static NSString * const silencedNotificationsKey = @"SilencedNotifications";
       if (!customMsg.length) return;
       un.informativeText = [SNTBlockMessage stringFromHTML:customMsg];
       break;
-    default:
-      return;
+    default: return;
   }
   [[NSUserNotificationCenter defaultUserNotificationCenter] deliverNotification:un];
 }
@@ -116,7 +115,7 @@ static NSString * const silencedNotificationsKey = @"SilencedNotifications";
 - (void)postBlockNotification:(SNTStoredEvent *)event withCustomMessage:(NSString *)message {
   // See if this binary is already in the list of pending notifications.
   NSPredicate *predicate =
-      [NSPredicate predicateWithFormat:@"event.fileSHA256==%@", event.fileSHA256];
+    [NSPredicate predicateWithFormat:@"event.fileSHA256==%@", event.fileSHA256];
   if ([[self.pendingNotifications filteredArrayUsingPredicate:predicate] count]) return;
 
   // See if this binary is silenced.
@@ -145,7 +144,7 @@ static NSString * const silencedNotificationsKey = @"SilencedNotifications";
   // This includes making windows.
   dispatch_async(dispatch_get_main_queue(), ^{
     SNTMessageWindowController *pendingMsg =
-        [[SNTMessageWindowController alloc] initWithEvent:event andMessage:message];
+      [[SNTMessageWindowController alloc] initWithEvent:event andMessage:message];
     pendingMsg.delegate = self;
     [self.pendingNotifications addObject:pendingMsg];
 
@@ -179,8 +178,8 @@ static NSString * const silencedNotificationsKey = @"SilencedNotifications";
   if ([self.currentWindowController.event.idx isEqual:event.idx]) {
     dispatch_async(dispatch_get_main_queue(), ^{
       self.currentWindowController.foundFileCountLabel.stringValue =
-          [NSString stringWithFormat:@"%llu binaries / %llu %@",
-               binaryCount, hashedCount ?: fileCount, hashedCount ? @"hashed" : @"files"];
+        [NSString stringWithFormat:@"%llu binaries / %llu %@", binaryCount,
+                                   hashedCount ?: fileCount, hashedCount ? @"hashed" : @"files"];
     });
   }
 }
@@ -210,34 +209,39 @@ static NSString * const silencedNotificationsKey = @"SilencedNotifications";
   [self.currentWindowController.progress becomeCurrentWithPendingUnitCount:100];
 
   // Start hashing. Progress is reported to the root NSProgress (currentWindowController.progress).
-  [[bc remoteObjectProxy] hashBundleBinariesForEvent:event
-                                               reply:^(NSString *bh,
-                                                       NSArray<SNTStoredEvent *> *events,
-                                                       NSNumber *ms) {
-    // Revert to displaying the blockable event if we fail to calculate the bundle hash
-    if (!bh) return [self updateBlockNotification:event withBundleHash:nil];
+  [[bc remoteObjectProxy]
+    hashBundleBinariesForEvent:event
+                         reply:^(NSString *bh, NSArray<SNTStoredEvent *> *events, NSNumber *ms) {
+                           // Revert to displaying the blockable event if we fail to calculate the
+                           // bundle hash
+                           if (!bh) return [self updateBlockNotification:event withBundleHash:nil];
 
-    event.fileBundleHash = bh;
-    event.fileBundleBinaryCount = @(events.count);
-    event.fileBundleHashMilliseconds = ms;
-    event.fileBundleExecutableRelPath = [events.firstObject fileBundleExecutableRelPath];
-    for (SNTStoredEvent *se in events) {
-      se.fileBundleHash = bh;
-      se.fileBundleBinaryCount = @(events.count);
-      se.fileBundleHashMilliseconds = ms;
-    }
+                           event.fileBundleHash = bh;
+                           event.fileBundleBinaryCount = @(events.count);
+                           event.fileBundleHashMilliseconds = ms;
+                           event.fileBundleExecutableRelPath =
+                             [events.firstObject fileBundleExecutableRelPath];
+                           for (SNTStoredEvent *se in events) {
+                             se.fileBundleHash = bh;
+                             se.fileBundleBinaryCount = @(events.count);
+                             se.fileBundleHashMilliseconds = ms;
+                           }
 
-    // Send the results to santad. It will decide if they need to be synced.
-    MOLXPCConnection *daemonConn = [SNTXPCControlInterface configuredConnection];
-    [daemonConn resume];
-    [[daemonConn remoteObjectProxy] syncBundleEvent:event relatedEvents:events];
-    [daemonConn invalidate];
+                           // Send the results to santad. It will decide if they need to be
+                           // synced.
+                           MOLXPCConnection *daemonConn =
+                             [SNTXPCControlInterface configuredConnection];
+                           [daemonConn resume];
+                           [[daemonConn remoteObjectProxy] syncBundleEvent:event
+                                                             relatedEvents:events];
+                           [daemonConn invalidate];
 
-    // Update the UI with the bundle hash. Also make the openEventButton available.
-    [self updateBlockNotification:event withBundleHash:bh];
+                           // Update the UI with the bundle hash. Also make the openEventButton
+                           // available.
+                           [self updateBlockNotification:event withBundleHash:bh];
 
-    [bc invalidate];
-  }];
+                           [bc invalidate];
+                         }];
 
   [self.currentWindowController.progress resignCurrent];
 }

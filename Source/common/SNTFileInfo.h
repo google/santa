@@ -40,7 +40,6 @@
 ///
 - (instancetype)initWithPath:(NSString *)path;
 
-
 ///
 ///  Initializer for already resolved paths.
 ///

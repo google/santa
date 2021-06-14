@@ -21,11 +21,12 @@
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wobjc-literal-conversion"
 
-#define ENCODE(obj, key) if (obj) [coder encodeObject:obj forKey:key]
+#define ENCODE(obj, key) \
+  if (obj) [coder encodeObject:obj forKey:key]
 #define DECODE(cls, key) [decoder decodeObjectOfClass:[cls class] forKey:key]
-#define DECODEARRAY(cls, key) \
-    [decoder decodeObjectOfClasses:[NSSet setWithObjects:[NSArray class], [cls class], nil] \
-                            forKey:key]
+#define DECODEARRAY(cls, key)                                                             \
+  [decoder decodeObjectOfClasses:[NSSet setWithObjects:[NSArray class], [cls class], nil] \
+                          forKey:key]
 
 + (BOOL)supportsSecureCoding {
   return YES;
@@ -129,7 +130,7 @@
 
 - (NSString *)description {
   return
-      [NSString stringWithFormat:@"SNTStoredEvent[%@] with SHA-256: %@", self.idx, self.fileSHA256];
+    [NSString stringWithFormat:@"SNTStoredEvent[%@] with SHA-256: %@", self.idx, self.fileSHA256];
 }
 
 #pragma clang diagnostic pop

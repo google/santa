@@ -43,10 +43,8 @@
 
   dispatch_group_t group = dispatch_group_create();
   dispatch_group_enter(group);
-  [[self.daemonConn remoteObjectProxy] databaseRuleCounts:^(int64_t binary,
-                                                            int64_t certificate,
-                                                            int64_t compiler,
-                                                            int64_t transitive) {
+  [[self.daemonConn remoteObjectProxy] databaseRuleCounts:^(int64_t binary, int64_t certificate,
+                                                            int64_t compiler, int64_t transitive) {
     requestDict[kBinaryRuleCount] = @(binary);
     requestDict[kCertificateRuleCount] = @(certificate);
     requestDict[kCompilerRuleCount] = @(compiler);
@@ -57,10 +55,8 @@
   dispatch_group_enter(group);
   [[self.daemonConn remoteObjectProxy] clientMode:^(SNTClientMode cm) {
     switch (cm) {
-      case SNTClientModeMonitor:
-        requestDict[kClientMode] = kClientModeMonitor; break;
-      case SNTClientModeLockdown:
-        requestDict[kClientMode] = kClientModeLockdown; break;
+      case SNTClientModeMonitor: requestDict[kClientMode] = kClientModeMonitor; break;
+      case SNTClientModeLockdown: requestDict[kClientMode] = kClientModeLockdown; break;
       default: break;
     }
     dispatch_group_leave(group);
@@ -89,29 +85,30 @@
   dispatch_group_enter(group);
   NSNumber *enableBundles = resp[kEnableBundles];
   if (!enableBundles) enableBundles = resp[kEnableBundlesDeprecated];
-  [[self.daemonConn remoteObjectProxy] setEnableBundles:[enableBundles boolValue] reply:^{
-    dispatch_group_leave(group);
-  }];
+  [[self.daemonConn remoteObjectProxy] setEnableBundles:[enableBundles boolValue]
+                                                  reply:^{
+                                                    dispatch_group_leave(group);
+                                                  }];
 
   dispatch_group_enter(group);
   NSNumber *enableTransitiveRules = resp[kEnableTransitiveRules];
   if (!enableTransitiveRules) enableTransitiveRules = resp[kEnableTransitiveRulesDeprecated];
   if (!enableTransitiveRules) enableTransitiveRules = resp[kEnableTransitiveRulesSuperDeprecated];
   BOOL enabled = [enableTransitiveRules boolValue];
-  [[self.daemonConn remoteObjectProxy] setEnableTransitiveRules:enabled reply:^{
-    dispatch_group_leave(group);
-  }];
+  [[self.daemonConn remoteObjectProxy] setEnableTransitiveRules:enabled
+                                                          reply:^{
+                                                            dispatch_group_leave(group);
+                                                          }];
 
   self.syncState.eventBatchSize = [resp[kBatchSize] unsignedIntegerValue] ?: kDefaultEventBatchSize;
 
   // Don't let these go too low
   NSUInteger FCMIntervalValue = [resp[kFCMFullSyncInterval] unsignedIntegerValue];
-  self.syncState.FCMFullSyncInterval = (FCMIntervalValue < kDefaultFullSyncInterval)
-                                           ? kDefaultFCMFullSyncInterval
-                                           : FCMIntervalValue;
+  self.syncState.FCMFullSyncInterval =
+    (FCMIntervalValue < kDefaultFullSyncInterval) ? kDefaultFCMFullSyncInterval : FCMIntervalValue;
   FCMIntervalValue = [resp[kFCMGlobalRuleSyncDeadline] unsignedIntegerValue];
   self.syncState.FCMGlobalRuleSyncDeadline =
-      (FCMIntervalValue < 60) ? kDefaultFCMGlobalRuleSyncDeadline : FCMIntervalValue;
+    (FCMIntervalValue < 60) ? kDefaultFCMGlobalRuleSyncDeadline : FCMIntervalValue;
 
   // Check if our sync interval has changed
   NSUInteger intervalValue = [resp[kFullSyncInterval] unsignedIntegerValue];

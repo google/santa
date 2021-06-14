@@ -54,24 +54,23 @@ class com_google_SantaDriverClient : public IOUserClient {
   IOReturn clientDied() override;
 
   ///  Called during termination
-  bool didTerminate(IOService* provider, IOOptionBits options, bool* defer) override;
+  bool didTerminate(IOService *provider, IOOptionBits options,
+                    bool *defer) override;
 
   ///  Called in clients with IOConnectSetNotificationPort
-  IOReturn registerNotificationPort(
-      mach_port_t port, UInt32 type, UInt32 refCon) override;
+  IOReturn registerNotificationPort(mach_port_t port, UInt32 type,
+                                    UInt32 refCon) override;
 
   ///  Called in clients with IOConnectMapMemory
-  IOReturn clientMemoryForType(
-      UInt32 type, IOOptionBits *options, IOMemoryDescriptor **memory) override;
+  IOReturn clientMemoryForType(UInt32 type, IOOptionBits *options,
+                               IOMemoryDescriptor **memory) override;
 
   ///  Called in clients with IOConnectCallScalarMethod etc. Dispatches
   ///  to the requested selector using the SantaDriverMethods enum in
   ///  SNTKernelCommon.
-  IOReturn externalMethod(
-      UInt32 selector,
-      IOExternalMethodArguments *arguments,
-      IOExternalMethodDispatch *dispatch,
-      OSObject *target, void *reference) override;
+  IOReturn externalMethod(UInt32 selector, IOExternalMethodArguments *arguments,
+                          IOExternalMethodDispatch *dispatch, OSObject *target,
+                          void *reference) override;
 
   ///
   ///  The userspace callable methods are below. Each method corresponds
@@ -79,47 +78,47 @@ class com_google_SantaDriverClient : public IOUserClient {
   ///
 
   ///  Called during client connection.
-  static IOReturn open(
-      OSObject *target, void *reference, IOExternalMethodArguments *arguments);
+  static IOReturn open(OSObject *target, void *reference,
+                       IOExternalMethodArguments *arguments);
 
   ///  The daemon calls this to allow a binary.
-  static IOReturn allow_binary(
-      OSObject *target, void *reference, IOExternalMethodArguments *arguments);
+  static IOReturn allow_binary(OSObject *target, void *reference,
+                               IOExternalMethodArguments *arguments);
 
   ///  The daemon calls this to allow a compiler binary.
-  static IOReturn allow_compiler(
-      OSObject *target, void *reference, IOExternalMethodArguments *arguments);
+  static IOReturn allow_compiler(OSObject *target, void *reference,
+                                 IOExternalMethodArguments *arguments);
 
   ///  The daemon calls this to deny a binary.
-  static IOReturn deny_binary(
-      OSObject *target, void *reference, IOExternalMethodArguments *arguments);
+  static IOReturn deny_binary(OSObject *target, void *reference,
+                              IOExternalMethodArguments *arguments);
 
-  ///  The daemon calls this to acknowledge a binary request. This is used for large binaries that
-  ///  may take a while to reach a decision.
-  static IOReturn acknowledge_binary(
-      OSObject *target, void *reference, IOExternalMethodArguments *arguments);
+  ///  The daemon calls this to acknowledge a binary request. This is used for
+  ///  large binaries that may take a while to reach a decision.
+  static IOReturn acknowledge_binary(OSObject *target, void *reference,
+                                     IOExternalMethodArguments *arguments);
 
   ///  The daemon calls this to empty the cache.
-  static IOReturn clear_cache(
-      OSObject *target, void *reference, IOExternalMethodArguments *arguments);
+  static IOReturn clear_cache(OSObject *target, void *reference,
+                              IOExternalMethodArguments *arguments);
 
   ///  The daemon call this to remove a single cache entry.
-  static IOReturn remove_cache_entry(
-      OSObject *target, void *reference, IOExternalMethodArguments *arguments);
+  static IOReturn remove_cache_entry(OSObject *target, void *reference,
+                                     IOExternalMethodArguments *arguments);
 
   ///  The daemon calls this to find out how many items are in the cache
-  static IOReturn cache_count(
-      OSObject *target, void *reference, IOExternalMethodArguments *arguments);
+  static IOReturn cache_count(OSObject *target, void *reference,
+                              IOExternalMethodArguments *arguments);
 
   ///  The daemon calls this to find out the status of a vnode_id in the cache.
   ///  Output will be a santa_action_t.
-  static IOReturn check_cache(
-      OSObject *target, void *reference, IOExternalMethodArguments *arguments);
+  static IOReturn check_cache(OSObject *target, void *reference,
+                              IOExternalMethodArguments *arguments);
 
-  ///  The daemon calls this to find out how many items are in each cache bucket.
-  ///  Input and output are both an instance of santa_bucket_count_t.
-  static IOReturn cache_bucket_count(
-      OSObject *target, void *reference, IOExternalMethodArguments *arguments);
+  ///  The daemon calls this to find out how many items are in each cache
+  ///  bucket. Input and output are both an instance of santa_bucket_count_t.
+  static IOReturn cache_bucket_count(OSObject *target, void *reference,
+                                     IOExternalMethodArguments *arguments);
 
   ///  The daemon calls this to add filemod prefix filters at daemon startup.
   static IOReturn filemod_prefix_filter_add(

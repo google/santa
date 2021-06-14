@@ -23,7 +23,7 @@
 #import "Source/santactl/SNTCommand.h"
 #import "Source/santactl/SNTCommandController.h"
 
-@interface SNTCommandVersion : SNTCommand<SNTCommandProtocol>
+@interface SNTCommandVersion : SNTCommand <SNTCommandProtocol>
 @end
 
 @implementation SNTCommandVersion
@@ -75,9 +75,8 @@ REGISTER_COMMAND_NAME(@"version")
     return @"un-needed (SystemExtension being used)";
   }
 
-  NSDictionary *loadedKexts = CFBridgingRelease(
-      KextManagerCopyLoadedKextInfo((__bridge CFArrayRef) @[ @(USERCLIENT_ID) ],
-                                    (__bridge CFArrayRef) @[ @"CFBundleVersion" ]));
+  NSDictionary *loadedKexts = CFBridgingRelease(KextManagerCopyLoadedKextInfo(
+    (__bridge CFArrayRef) @[ @(USERCLIENT_ID) ], (__bridge CFArrayRef) @[ @"CFBundleVersion" ]));
 
   if (loadedKexts[@(USERCLIENT_ID)][@"CFBundleVersion"]) {
     return loadedKexts[@(USERCLIENT_ID)][@"CFBundleVersion"];

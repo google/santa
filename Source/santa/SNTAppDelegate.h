@@ -17,5 +17,5 @@
 ///
 /// Initiates and manages the connection to santad
 ///
-@interface SNTAppDelegate : NSObject<NSApplicationDelegate>
+@interface SNTAppDelegate : NSObject <NSApplicationDelegate>
 @end

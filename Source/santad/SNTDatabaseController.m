@@ -84,9 +84,9 @@ static NSString *const kEventsDatabaseName = @"events.db";
 
   if (![fm fileExistsAtPath:kDatabasePath]) {
     [fm createDirectoryAtPath:kDatabasePath
-        withIntermediateDirectories:YES
-                         attributes:attrs
-                              error:nil];
+      withIntermediateDirectories:YES
+                       attributes:attrs
+                            error:nil];
   } else {
     [fm setAttributes:attrs ofItemAtPath:kDatabasePath error:nil];
   }

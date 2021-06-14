@@ -21,7 +21,7 @@
 ///
 ///  Handles push notifications and periodic syncing with a sync server.
 ///
-@interface SNTCommandSyncManager : NSObject<SNTSyncdXPC>
+@interface SNTCommandSyncManager : NSObject <SNTSyncdXPC>
 
 @property(readonly, nonatomic) BOOL daemon;
 

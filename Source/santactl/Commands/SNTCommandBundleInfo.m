@@ -23,7 +23,7 @@
 
 #ifdef DEBUG
 
-@interface SNTCommandBundleInfo : SNTCommand<SNTCommandProtocol>
+@interface SNTCommandBundleInfo : SNTCommand <SNTCommandProtocol>
 @end
 
 @implementation SNTCommandBundleInfo
@@ -63,21 +63,22 @@ REGISTER_COMMAND_NAME(@"bundleinfo")
   MOLXPCConnection *bc = [SNTXPCBundleServiceInterface configuredConnection];
   [bc resume];
 
-  [[bc remoteObjectProxy] hashBundleBinariesForEvent:se
-                                               reply:^(NSString *hash,
-                                                       NSArray<SNTStoredEvent *> *events,
-                                                       NSNumber *time) {
-    printf("Hashing time: %llu ms\n", time.unsignedLongLongValue);
-    printf("%lu events found\n", events.count);
-    printf("BundleHash: %s\n", hash.UTF8String);
+  [[bc remoteObjectProxy]
+    hashBundleBinariesForEvent:se
+                         reply:^(NSString *hash, NSArray<SNTStoredEvent *> *events,
+                                 NSNumber *time) {
+                           printf("Hashing time: %llu ms\n", time.unsignedLongLongValue);
+                           printf("%lu events found\n", events.count);
+                           printf("BundleHash: %s\n", hash.UTF8String);
 
-    for (SNTStoredEvent *event in events) {
-      printf("BundleID: %s \n\tSHA-256: %s \n\tPath: %s\n",
-             event.fileBundleID.UTF8String, event.fileSHA256.UTF8String, event.filePath.UTF8String);
-    }
-    [[bc remoteObjectProxy] spindown];
-    exit(0);
-  }];
+                           for (SNTStoredEvent *event in events) {
+                             printf("BundleID: %s \n\tSHA-256: %s \n\tPath: %s\n",
+                                    event.fileBundleID.UTF8String, event.fileSHA256.UTF8String,
+                                    event.filePath.UTF8String);
+                           }
+                           [[bc remoteObjectProxy] spindown];
+                           exit(0);
+                         }];
 }
 
 @end

@@ -66,10 +66,8 @@
     dispatch_source_set_event_handler_f(self.source, NULL);
     dispatch_source_cancel(self.source);
   }
-  self.source = dispatch_source_create(DISPATCH_SOURCE_TYPE_VNODE,
-                                       self.fh.fileDescriptor,
-                                       DISPATCH_VNODE_DELETE | DISPATCH_VNODE_RENAME,
-                                       self.q);
+  self.source = dispatch_source_create(DISPATCH_SOURCE_TYPE_VNODE, self.fh.fileDescriptor,
+                                       DISPATCH_VNODE_DELETE | DISPATCH_VNODE_RENAME, self.q);
   WEAKIFY(self);
   dispatch_source_set_event_handler(self.source, ^{
     STRONGIFY(self);

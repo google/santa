@@ -89,12 +89,11 @@
 ///
 - (void)removeOutdatedTransitiveRules;
 
-
 ///
 ///  A map of a file hashes to cached decisions. This is used to pre-validate and whitelist
 ///  certain critical system binaries that are integral to Santa's functionality.
 ///
 @property(readonly, nonatomic)
-    NSDictionary<NSString *, SNTCachedDecision *> *criticalSystemBinaries;
+  NSDictionary<NSString *, SNTCachedDecision *> *criticalSystemBinaries;
 
 @end

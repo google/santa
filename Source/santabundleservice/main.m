@@ -20,15 +20,14 @@
 #import "Source/common/SNTXPCBundleServiceInterface.h"
 #import "Source/santabundleservice/SNTBundleService.h"
 
-
 int main(int argc, const char *argv[]) {
   @autoreleasepool {
     NSDictionary *infoDict = [[NSBundle mainBundle] infoDictionary];
     LOGI(@"Started, version %@", infoDict[@"CFBundleVersion"]);
     MOLXPCConnection *c =
-        [[MOLXPCConnection alloc] initServerWithName:[SNTXPCBundleServiceInterface serviceID]];
+      [[MOLXPCConnection alloc] initServerWithName:[SNTXPCBundleServiceInterface serviceID]];
     c.privilegedInterface = c.unprivilegedInterface =
-        [SNTXPCBundleServiceInterface bundleServiceInterface];
+      [SNTXPCBundleServiceInterface bundleServiceInterface];
     c.exportedObject = [[SNTBundleService alloc] init];
     [c resume];
     [[NSRunLoop mainRunLoop] run];

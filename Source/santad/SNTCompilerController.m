@@ -20,10 +20,10 @@
 #import "Source/common/SNTKernelCommon.h"
 #import "Source/common/SNTLogging.h"
 #import "Source/common/SNTRule.h"
-#import "Source/santad/SNTDatabaseController.h"
 #import "Source/santad/DataLayer/SNTRuleTable.h"
 #import "Source/santad/EventProviders/SNTEventProvider.h"
 #import "Source/santad/Logs/SNTEventLog.h"
+#import "Source/santad/SNTDatabaseController.h"
 
 @interface SNTCompilerController ()
 @property id<SNTEventProvider> eventProvider;
@@ -85,8 +85,9 @@
         LOGE(@"unable to add new transitive rule to database: %@", err.localizedDescription);
       } else {
         [self.eventLog
-            writeLog:[NSString stringWithFormat:@"action=ALLOWLIST|pid=%d|pidversion=%d|path=%s|sha256=%@",
-                                                message.pid, message.pidversion, target, fi.SHA256]];
+          writeLog:[NSString
+                     stringWithFormat:@"action=ALLOWLIST|pid=%d|pidversion=%d|path=%s|sha256=%@",
+                                      message.pid, message.pidversion, target, fi.SHA256]];
       }
     }
   }

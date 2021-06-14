@@ -22,7 +22,7 @@
 #import "Source/santactl/SNTCommand.h"
 #import "Source/santactl/SNTCommandController.h"
 
-@interface SNTCommandFlushCache : SNTCommand<SNTCommandProtocol>
+@interface SNTCommandFlushCache : SNTCommand <SNTCommandProtocol>
 @end
 
 @implementation SNTCommandFlushCache

@@ -102,9 +102,8 @@
 
   // Calculate stdev
   double accum = 0.0;
-  std::for_each(per_bucket.begin(), per_bucket.end(), [&](const double d) {
-    accum += (d - mean) * (d - mean);
-  });
+  std::for_each(per_bucket.begin(), per_bucket.end(),
+                [&](const double d) { accum += (d - mean) * (d - mean); });
   double stddev = sqrt(accum / (per_bucket.size() - 1));
   double maxStdDev = (double)br / 2;
   XCTAssertLessThanOrEqual(stddev, maxStdDev,
@@ -143,13 +142,15 @@
 
     dispatch_group_enter(group);
     dispatch_async(dispatch_get_global_queue(QOS_CLASS_DEFAULT, 0), ^{
-      for (int i = 0; i < 5000; ++i) sut->set(i, 10000-i);
+      for (int i = 0; i < 5000; ++i)
+        sut->set(i, 10000 - i);
       dispatch_group_leave(group);
     });
 
     dispatch_group_enter(group);
     dispatch_async(dispatch_get_global_queue(QOS_CLASS_DEFAULT, 0), ^{
-      for (int i = 5000; i < 10000; ++i) sut->set(i, 10000-i);
+      for (int i = 5000; i < 10000; ++i)
+        sut->set(i, 10000 - i);
       dispatch_group_leave(group);
     });
 
@@ -157,7 +158,8 @@
       XCTFail("Timed out while setting values for test");
     }
 
-    for (int i = 0; i < 10000; ++i) XCTAssertEqual(sut->get(i), 10000 - i);
+    for (int i = 0; i < 10000; ++i)
+      XCTAssertEqual(sut->get(i), 10000 - i);
   }
 
   delete sut;
@@ -193,7 +195,8 @@
   XCTAssertEqual(sut.get(3.1459124), 0);
 }
 
-template<> uint64_t SantaCacheHasher<std::string>(std::string const& s) {
+template <>
+uint64_t SantaCacheHasher<std::string>(std::string const &s) {
   return std::hash<std::string>{}(s);
 }
 
@@ -242,11 +245,12 @@ struct S {
   uint64_t first_val;
   uint64_t second_val;
 
-  bool operator==(const S& rhs) {
+  bool operator==(const S &rhs) {
     return first_val == rhs.first_val && second_val == rhs.second_val;
   }
 };
-template<> uint64_t SantaCacheHasher<S>(S const& s) {
+template <>
+uint64_t SantaCacheHasher<S>(S const &s) {
   return SantaCacheHasher<uint64_t>(s.first_val) ^ (SantaCacheHasher<uint64_t>(s.second_val) << 1);
 }
 

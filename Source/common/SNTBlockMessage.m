@@ -23,26 +23,27 @@
 
 + (NSAttributedString *)attributedBlockMessageForEvent:(SNTStoredEvent *)event
                                          customMessage:(NSString *)customMessage {
-  NSString *htmlHeader = @"<html><head><style>"
-      @"body {"
-      @"  font-family: 'Lucida Grande', 'Helvetica', sans-serif;"
-      @"  font-size: 13px;"
-      @"  color: %@;"
-      @"  text-align: center;"
-      @"}"
+  NSString *htmlHeader =
+    @"<html><head><style>"
+    @"body {"
+    @"  font-family: 'Lucida Grande', 'Helvetica', sans-serif;"
+    @"  font-size: 13px;"
+    @"  color: %@;"
+    @"  text-align: center;"
+    @"}"
 
-      // Supported in beta WebKit. Not sure if it is dynamic when used with NSAttributedString.
-      @"@media (prefers-color-scheme: dark) {"
-      @"  body {"
-      @"    color: #ddd;"
-      @"  }"
-      @"}"
-      @"</style></head><body>";
+    // Supported in beta WebKit. Not sure if it is dynamic when used with NSAttributedString.
+    @"@media (prefers-color-scheme: dark) {"
+    @"  body {"
+    @"    color: #ddd;"
+    @"  }"
+    @"}"
+    @"</style></head><body>";
 
   // Support Dark Mode. Note, the returned NSAttributedString is static and does not update when
   // the OS switches modes.
   NSString *mode = [NSUserDefaults.standardUserDefaults stringForKey:@"AppleInterfaceStyle"];
-  BOOL dark =  [mode isEqualToString:@"Dark"];
+  BOOL dark = [mode isEqualToString:@"Dark"];
   htmlHeader = [NSString stringWithFormat:htmlHeader, dark ? @"#ddd" : @"#333"];
 
   NSString *htmlFooter = @"</body></html>";
@@ -90,13 +91,14 @@
 
   // Strip any HTML tags out of the message. Also remove any content inside <style> tags and
   // replace <br> elements with a newline.
-  NSString *stripXslt = @"<?xml version='1.0' encoding='utf-8'?>"
-      @"<xsl:stylesheet version='1.0' xmlns:xsl='http://www.w3.org/1999/XSL/Transform'"
-      @"                              xmlns:xhtml='http://www.w3.org/1999/xhtml'>"
-      @"<xsl:output method='text'/>"
-      @"<xsl:template match='br'><xsl:text>\n</xsl:text></xsl:template>"
-      @"<xsl:template match='style'/>"
-      @"</xsl:stylesheet>";
+  NSString *stripXslt =
+    @"<?xml version='1.0' encoding='utf-8'?>"
+    @"<xsl:stylesheet version='1.0' xmlns:xsl='http://www.w3.org/1999/XSL/Transform'"
+    @"                              xmlns:xhtml='http://www.w3.org/1999/xhtml'>"
+    @"<xsl:output method='text'/>"
+    @"<xsl:template match='br'><xsl:text>\n</xsl:text></xsl:template>"
+    @"<xsl:template match='style'/>"
+    @"</xsl:stylesheet>";
   NSData *data = [xml objectByApplyingXSLTString:stripXslt arguments:NULL error:&error];
   if (error || ![data isKindOfClass:[NSData class]]) {
     return html;
@@ -115,8 +117,8 @@
 
   if (event.fileSHA256) {
     formatStr =
-        [formatStr stringByReplacingOccurrencesOfString:@"%file_sha%"
-                                             withString:event.fileBundleHash ?: event.fileSHA256];
+      [formatStr stringByReplacingOccurrencesOfString:@"%file_sha%"
+                                           withString:event.fileBundleHash ?: event.fileSHA256];
   }
   if (event.executingUser) {
     formatStr = [formatStr stringByReplacingOccurrencesOfString:@"%username%"

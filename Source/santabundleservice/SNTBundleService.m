@@ -14,9 +14,9 @@
 
 #import "Source/santabundleservice/SNTBundleService.h"
 
-#include <stdatomic.h>
 #import <CommonCrypto/CommonDigest.h>
 #import <pthread/pthread.h>
+#include <stdatomic.h>
 
 #import <MOLCodesignChecker/MOLCodesignChecker.h>
 #import <MOLXPCConnection/MOLXPCConnection.h>
@@ -60,10 +60,9 @@
   });
 }
 
-- (void)hashBundleBinariesForEvent:(SNTStoredEvent *)event
-                             reply:(SNTBundleHashBlock)reply {
+- (void)hashBundleBinariesForEvent:(SNTStoredEvent *)event reply:(SNTBundleHashBlock)reply {
   NSProgress *progress =
-      [NSProgress currentProgress] ? [NSProgress progressWithTotalUnitCount:100] : nil;
+    [NSProgress currentProgress] ? [NSProgress progressWithTotalUnitCount:100] : nil;
 
   NSDate *startTime = [NSDate date];
 
@@ -92,7 +91,7 @@
     // For most apps this should be "Contents/MacOS/AppName"
     if (b.bundle.executablePath.length > b.bundlePath.length) {
       event.fileBundleExecutableRelPath =
-          [b.bundle.executablePath substringFromIndex:b.bundlePath.length + 1];
+        [b.bundle.executablePath substringFromIndex:b.bundlePath.length + 1];
     }
 
     NSDictionary *relatedEvents = [self findRelatedBinaries:event progress:progress];
@@ -171,7 +170,7 @@
       NSString *subpath = subpaths[i];
 
       NSString *file =
-          [event.fileBundlePath stringByAppendingPathComponent:subpath].stringByStandardizingPath;
+        [event.fileBundlePath stringByAppendingPathComponent:subpath].stringByStandardizingPath;
       SNTFileInfo *fi = [[SNTFileInfo alloc] initWithResolvedPath:file error:NULL];
       if (!fi.isExecutable) return;
 
@@ -269,17 +268,15 @@
 
   NSString *const SHA256FormatString =
     @"%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x"
-    "%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x";
+     "%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x";
 
-  NSString *sha256 = [[NSString alloc] initWithFormat:SHA256FormatString,
-      digest[0], digest[1], digest[2], digest[3],
-      digest[4], digest[5], digest[6], digest[7],
-      digest[8], digest[9], digest[10], digest[11],
-      digest[12], digest[13], digest[14], digest[15],
-      digest[16], digest[17], digest[18], digest[19],
-      digest[20], digest[21], digest[22], digest[23],
-      digest[24], digest[25], digest[26], digest[27],
-      digest[28], digest[29], digest[30], digest[31]];
+  NSString *sha256 = [[NSString alloc]
+    initWithFormat:SHA256FormatString, digest[0], digest[1], digest[2], digest[3], digest[4],
+                   digest[5], digest[6], digest[7], digest[8], digest[9], digest[10], digest[11],
+                   digest[12], digest[13], digest[14], digest[15], digest[16], digest[17],
+                   digest[18], digest[19], digest[20], digest[21], digest[22], digest[23],
+                   digest[24], digest[25], digest[26], digest[27], digest[28], digest[29],
+                   digest[30], digest[31]];
 
   p.completedUnitCount++;
   [progress resignCurrent];

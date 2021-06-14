@@ -84,7 +84,7 @@ void logMessage(LogLevel level, FILE *destination, NSString *format, ...) {
         break;
       case LOG_LEVEL_INFO:
         levelName = "I";
-        syslogLevel = ASL_LEVEL_NOTICE; // Maps to ULS Default
+        syslogLevel = ASL_LEVEL_NOTICE;  // Maps to ULS Default
         break;
       case LOG_LEVEL_DEBUG:
         levelName = "D";

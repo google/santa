@@ -24,7 +24,7 @@
 #import "Source/common/SNTRule.h"
 #import "Source/santad/DataLayer/SNTRuleTable.h"
 
-@interface SNTPolicyProcessor()
+@interface SNTPolicyProcessor ()
 @property SNTRuleTable *ruleTable;
 @end
 
@@ -59,7 +59,7 @@
     if (csInfoError) {
       csInfo = nil;
       cd.decisionExtra =
-          [NSString stringWithFormat:@"Signature ignored due to error: %ld", (long)csInfoError.code];
+        [NSString stringWithFormat:@"Signature ignored due to error: %ld", (long)csInfoError.code];
     } else {
       cd.certSHA256 = csInfo.leafCertificate.SHA256;
       cd.certCommonName = csInfo.leafCertificate.commonName;
@@ -68,17 +68,13 @@
   }
   cd.quarantineURL = fileInfo.quarantineDataURL;
 
-  SNTRule *rule = [self.ruleTable ruleForBinarySHA256:cd.sha256
-                                    certificateSHA256:cd.certSHA256];
+  SNTRule *rule = [self.ruleTable ruleForBinarySHA256:cd.sha256 certificateSHA256:cd.certSHA256];
   if (rule) {
     switch (rule.type) {
       case SNTRuleTypeBinary:
         switch (rule.state) {
-          case SNTRuleStateAllow:
-            cd.decision = SNTEventStateAllowBinary;
-            return cd;
-          case SNTRuleStateSilentBlock:
-            cd.silentBlock = YES;
+          case SNTRuleStateAllow: cd.decision = SNTEventStateAllowBinary; return cd;
+          case SNTRuleStateSilentBlock: cd.silentBlock = YES;
           case SNTRuleStateBlock:
             cd.customMsg = rule.customMsg;
             cd.decision = SNTEventStateBlockBinary;
@@ -108,9 +104,7 @@
         break;
       case SNTRuleTypeCertificate:
         switch (rule.state) {
-          case SNTRuleStateAllow:
-            cd.decision = SNTEventStateAllowCertificate;
-            return cd;
+          case SNTRuleStateAllow: cd.decision = SNTEventStateAllowCertificate; return cd;
           case SNTRuleStateSilentBlock:
             cd.silentBlock = YES;
             // intentional fallthrough
@@ -121,15 +115,14 @@
           default: break;
         }
         break;
-      default:
-        break;
+      default: break;
     }
   }
 
-  if ([[SNTConfigurator configurator] enableBadSignatureProtection] &&
-      csInfoError && csInfoError.code != errSecCSUnsigned) {
+  if ([[SNTConfigurator configurator] enableBadSignatureProtection] && csInfoError &&
+      csInfoError.code != errSecCSUnsigned) {
     cd.decisionExtra =
-        [NSString stringWithFormat:@"Blocked due to signature error: %ld", (long)csInfoError.code];
+      [NSString stringWithFormat:@"Blocked due to signature error: %ld", (long)csInfoError.code];
     cd.decision = SNTEventStateBlockCertificate;
     return cd;
   }
@@ -149,15 +142,9 @@
   }
 
   switch ([[SNTConfigurator configurator] clientMode]) {
-    case SNTClientModeMonitor:
-      cd.decision = SNTEventStateAllowUnknown;
-      return cd;
-    case SNTClientModeLockdown:
-      cd.decision = SNTEventStateBlockUnknown;
-      return cd;
-    default:
-      cd.decision = SNTEventStateBlockUnknown;
-      return cd;
+    case SNTClientModeMonitor: cd.decision = SNTEventStateAllowUnknown; return cd;
+    case SNTClientModeLockdown: cd.decision = SNTEventStateBlockUnknown; return cd;
+    default: cd.decision = SNTEventStateBlockUnknown; return cd;
   }
 }
 

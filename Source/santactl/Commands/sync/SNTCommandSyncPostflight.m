@@ -39,8 +39,7 @@
   // Set client mode if it changed
   if (self.syncState.clientMode) {
     dispatch_group_enter(group);
-    [[self.daemonConn remoteObjectProxy] setClientMode:self.syncState.clientMode
-                                                 reply:replyBlock];
+    [[self.daemonConn remoteObjectProxy] setClientMode:self.syncState.clientMode reply:replyBlock];
   }
 
   // Remove clean sync flag if we did a clean sync

@@ -36,11 +36,11 @@
   self = [super init];
   if (self) {
     _dmAuthQueue =
-        dispatch_queue_create("com.google.santa.daemon.dm_auth", DISPATCH_QUEUE_CONCURRENT);
+      dispatch_queue_create("com.google.santa.daemon.dm_auth", DISPATCH_QUEUE_CONCURRENT);
     dispatch_set_target_queue(_dmAuthQueue,
                               dispatch_get_global_queue(QOS_CLASS_USER_INTERACTIVE, 0));
     _dmNotifiyQueue =
-        dispatch_queue_create("com.google.santa.daemon.dm_notify", DISPATCH_QUEUE_CONCURRENT);
+      dispatch_queue_create("com.google.santa.daemon.dm_notify", DISPATCH_QUEUE_CONCURRENT);
     dispatch_set_target_queue(_dmNotifiyQueue, dispatch_get_global_queue(QOS_CLASS_BACKGROUND, 0));
 
     CFDictionaryRef classToMatch = IOServiceMatching(USERCLIENT_CLASS);
@@ -87,8 +87,7 @@ static void driverAppearedHandler(void *info, io_iterator_t iterator) {
 - (void)waitForDriver:(CFDictionaryRef CF_RELEASES_ARGUMENT)matchingDict {
   IONotificationPortRef notificationPort = IONotificationPortCreate(kIOMasterPortDefault);
   CFRunLoopAddSource([[NSRunLoop currentRunLoop] getCFRunLoop],
-                     IONotificationPortGetRunLoopSource(notificationPort),
-                     kCFRunLoopDefaultMode);
+                     IONotificationPortGetRunLoopSource(notificationPort), kCFRunLoopDefaultMode);
 
   io_iterator_t iterator = 0;
 
@@ -119,16 +118,13 @@ static void driverAppearedHandler(void *info, io_iterator_t iterator) {
 
   LOGI(@"Waiting for Santa driver to become available");
 
-  IOServiceAddMatchingNotification(notificationPort,
-                                   kIOMatchedNotification,
-                                   matchingDict,
-                                   driverAppearedHandler,
-                                   (__bridge_retained void *)block,
+  IOServiceAddMatchingNotification(notificationPort, kIOMatchedNotification, matchingDict,
+                                   driverAppearedHandler, (__bridge_retained void *)block,
                                    &iterator);
 
   // Call the handler once to 'empty' the iterator, arming it. If the driver is already loaded
   // this will immediately cause the connection to be fully established.
-  driverAppearedHandler((__bridge_retained void*)block, iterator);
+  driverAppearedHandler((__bridge_retained void *)block, iterator);
 }
 
 #pragma mark Incoming messages
@@ -143,7 +139,8 @@ static void driverAppearedHandler(void *info, io_iterator_t iterator) {
 
 - (void)listenForRequestsOfType:(santa_queuetype_t)type
                    withCallback:(void (^)(santa_message_t))callback {
-  while (!self.connectionEstablished) usleep(100000); // 100ms
+  while (!self.connectionEstablished)
+    usleep(100000);  // 100ms
 
   // Allocate a mach port to receive notifactions from the IODataQueue
   mach_port_t receivePort = IODataQueueAllocateNotificationPort();
@@ -212,35 +209,18 @@ static void driverAppearedHandler(void *info, io_iterator_t iterator) {
   santa_vnode_id_t vnodeId = sm.vnode_id;
   switch (action) {
     case ACTION_RESPOND_ALLOW:
-      return IOConnectCallStructMethod(_connection,
-                                       kSantaUserClientAllowBinary,
-                                       &vnodeId,
-                                       sizeof(vnodeId),
-                                       0,
-                                       0);
+      return IOConnectCallStructMethod(_connection, kSantaUserClientAllowBinary, &vnodeId,
+                                       sizeof(vnodeId), 0, 0);
     case ACTION_RESPOND_DENY:
-      return IOConnectCallStructMethod(_connection,
-                                       kSantaUserClientDenyBinary,
-                                       &vnodeId,
-                                       sizeof(vnodeId),
-                                       0,
-                                       0);
+      return IOConnectCallStructMethod(_connection, kSantaUserClientDenyBinary, &vnodeId,
+                                       sizeof(vnodeId), 0, 0);
     case ACTION_RESPOND_ACK:
-      return IOConnectCallStructMethod(_connection,
-                                       kSantaUserClientAcknowledgeBinary,
-                                       &vnodeId,
-                                       sizeof(vnodeId),
-                                       0,
-                                       0);
+      return IOConnectCallStructMethod(_connection, kSantaUserClientAcknowledgeBinary, &vnodeId,
+                                       sizeof(vnodeId), 0, 0);
     case ACTION_RESPOND_ALLOW_COMPILER:
-      return IOConnectCallStructMethod(_connection,
-                                       kSantaUserClientAllowCompiler,
-                                       &vnodeId,
-                                       sizeof(vnodeId),
-                                       0,
-                                       0);
-    default:
-      return KERN_INVALID_ARGUMENT;
+      return IOConnectCallStructMethod(_connection, kSantaUserClientAllowCompiler, &vnodeId,
+                                       sizeof(vnodeId), 0, 0);
+    default: return KERN_INVALID_ARGUMENT;
   }
 }
 
@@ -248,11 +228,7 @@ static void driverAppearedHandler(void *info, io_iterator_t iterator) {
   uint32_t input_count = 2;
   uint64_t cache_counts[2] = {0, 0};
 
-  IOConnectCallScalarMethod(_connection,
-                            kSantaUserClientCacheCount,
-                            0,
-                            0,
-                            cache_counts,
+  IOConnectCallScalarMethod(_connection, kSantaUserClientCacheCount, 0, 0, cache_counts,
                             &input_count);
 
   return @[ @(cache_counts[0]), @(cache_counts[1]) ];
@@ -261,30 +237,21 @@ static void driverAppearedHandler(void *info, io_iterator_t iterator) {
 - (BOOL)flushCacheNonRootOnly:(BOOL)nonRootOnly {
   const uint64_t nonRoot = nonRootOnly;
 
-  return IOConnectCallScalarMethod(_connection,
-                                   kSantaUserClientClearCache,
-                                   &nonRoot,
-                                   1,
-                                   0,
-                                   0) == KERN_SUCCESS;
+  return IOConnectCallScalarMethod(_connection, kSantaUserClientClearCache, &nonRoot, 1, 0, 0) ==
+         KERN_SUCCESS;
 }
 
 - (kern_return_t)removeCacheEntryForVnodeID:(santa_vnode_id_t)vnodeId {
-  return IOConnectCallStructMethod(_connection,
-                                   kSantaUserClientRemoveCacheEntry,
-                                   &vnodeId,
-                                   sizeof(vnodeId),
-                                   0,
-                                   0);
+  return IOConnectCallStructMethod(_connection, kSantaUserClientRemoveCacheEntry, &vnodeId,
+                                   sizeof(vnodeId), 0, 0);
 }
 
 - (santa_action_t)checkCache:(santa_vnode_id_t)vnodeID {
   uint64_t output;
   uint32_t outputCnt = 1;
 
-  IOConnectCallMethod(self.connection, kSantaUserClientCheckCache,
-                      NULL, 0, &vnodeID, sizeof(santa_vnode_id_t),
-                      &output, &outputCnt, NULL, 0);
+  IOConnectCallMethod(self.connection, kSantaUserClientCheckCache, NULL, 0, &vnodeID,
+                      sizeof(santa_vnode_id_t), &output, &outputCnt, NULL, 0);
   return (santa_action_t)output;
 }
 
@@ -295,12 +262,8 @@ static void driverAppearedHandler(void *info, io_iterator_t iterator) {
   NSMutableArray *a = [NSMutableArray array];
 
   do {
-    IOConnectCallStructMethod(self.connection,
-                              kSantaUserClientCacheBucketCount,
-                              &counts,
-                              size,
-                              &counts,
-                              &size);
+    IOConnectCallStructMethod(self.connection, kSantaUserClientCacheBucketCount, &counts, size,
+                              &counts, &size);
     for (uint64_t i = 0; i < sizeof(counts.per_bucket) / sizeof(uint16_t); ++i) {
       [a addObject:@(counts.per_bucket[i])];
     }
@@ -310,7 +273,8 @@ static void driverAppearedHandler(void *info, io_iterator_t iterator) {
 }
 
 - (void)fileModificationPrefixFilterAdd:(NSArray *)filters {
-  while (!self.connectionEstablished) usleep(100000); // 100ms
+  while (!self.connectionEstablished)
+    usleep(100000);  // 100ms
 
   uint64_t n = 0;
   uint32_t n_len = 1;
@@ -322,9 +286,9 @@ static void driverAppearedHandler(void *info, io_iterator_t iterator) {
       continue;
     }
 
-    kern_return_t ret = IOConnectCallMethod(self.connection, kSantaUserClientFilemodPrefixFilterAdd,
-                                            NULL, 0, buffer, sizeof(const char[MAXPATHLEN]),
-                                            &n, &n_len, NULL, NULL);
+    kern_return_t ret =
+      IOConnectCallMethod(self.connection, kSantaUserClientFilemodPrefixFilterAdd, NULL, 0, buffer,
+                          sizeof(const char[MAXPATHLEN]), &n, &n_len, NULL, NULL);
 
     if (ret != kIOReturnSuccess) {
       LOGE(@"Failed to add prefix filter: %s error: 0x%x", buffer, ret);
@@ -343,8 +307,8 @@ static void driverAppearedHandler(void *info, io_iterator_t iterator) {
 }
 
 - (void)fileModificationPrefixFilterReset {
-  IOConnectCallScalarMethod(self.connection, kSantaUserClientFilemodPrefixFilterReset,
-                            NULL, 0, NULL, NULL);
+  IOConnectCallScalarMethod(self.connection, kSantaUserClientFilemodPrefixFilterReset, NULL, 0,
+                            NULL, NULL);
 }
 
 @end

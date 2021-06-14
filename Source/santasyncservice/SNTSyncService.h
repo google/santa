@@ -16,5 +16,5 @@
 
 #import "Source/common/SNTXPCSyncServiceInterface.h"
 
-@interface SNTSyncService : NSObject<SNTSyncServiceXPC>
+@interface SNTSyncService : NSObject <SNTSyncServiceXPC>
 @end

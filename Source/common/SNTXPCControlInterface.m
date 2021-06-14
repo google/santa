@@ -42,14 +42,14 @@ NSString *const kBundleID = @"com.google.santa.daemon";
 
 + (void)initializeControlInterface:(NSXPCInterface *)r {
   [r setClasses:[NSSet setWithObjects:[NSArray class], [SNTStoredEvent class], nil]
-        forSelector:@selector(databaseEventsPending:)
-      argumentIndex:0
-            ofReply:YES];
+      forSelector:@selector(databaseEventsPending:)
+    argumentIndex:0
+          ofReply:YES];
 
   [r setClasses:[NSSet setWithObjects:[NSArray class], [SNTRule class], nil]
-        forSelector:@selector(databaseRuleAddRules:cleanSlate:reply:)
-      argumentIndex:0
-            ofReply:NO];
+      forSelector:@selector(databaseRuleAddRules:cleanSlate:reply:)
+    argumentIndex:0
+          ofReply:NO];
 }
 
 + (NSXPCInterface *)controlInterface {

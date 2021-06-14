@@ -22,8 +22,8 @@
 #import "Source/common/SNTCachedDecision.h"
 #import "Source/common/SNTConfigurator.h"
 #import "Source/common/SNTRule.h"
-#import "Source/santad/SNTDatabaseController.h"
 #import "Source/santad/DataLayer/SNTRuleTable.h"
+#import "Source/santad/SNTDatabaseController.h"
 
 @interface SNTEventLog ()
 @property NSMutableDictionary<NSNumber *, SNTCachedDecision *> *detailStore;
@@ -38,8 +38,8 @@
   self = [super init];
   if (self) {
     _detailStore = [NSMutableDictionary dictionaryWithCapacity:10000];
-    _detailStoreQueue = dispatch_queue_create("com.google.santad.detail_store",
-                                              DISPATCH_QUEUE_SERIAL);
+    _detailStoreQueue =
+      dispatch_queue_create("com.google.santad.detail_store", DISPATCH_QUEUE_SERIAL);
 
     _userNameMap = [[NSCache alloc] init];
     _userNameMap.countLimit = 100;
@@ -53,7 +53,7 @@
     _dateFormatter.timeZone = [NSTimeZone timeZoneWithName:@"UTC"];
 
     // Grab the system UUID on init
-     _machineID = [[SNTConfigurator configurator] machineID];
+    _machineID = [[SNTConfigurator configurator] machineID];
   }
   return self;
 }
@@ -406,8 +406,8 @@
   bool isTranslocated = false;
   if (!IsTranslocatedURL(cfExecURL, &isTranslocated, NULL) || !isTranslocated) return nil;
 
-  // SecTranslocateCreateOriginalPathForURL requires that our uid be the same as the user who
-  // launched the executable.  So we temporarily drop from root down to this uid, then reset.
+    // SecTranslocateCreateOriginalPathForURL requires that our uid be the same as the user who
+    // launched the executable.  So we temporarily drop from root down to this uid, then reset.
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wdeprecated"
   pthread_setugid_np(message.uid, message.gid);

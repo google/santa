@@ -14,7 +14,7 @@
 
 #import "Source/common/SNTRule.h"
 
-@interface SNTRule()
+@interface SNTRule ()
 @property(readwrite) NSUInteger timestamp;
 @end
 
@@ -40,11 +40,7 @@
                          state:(SNTRuleState)state
                           type:(SNTRuleType)type
                      customMsg:(NSString *)customMsg {
-  self = [self initWithShasum:shasum
-                        state:state
-                         type:type
-                    customMsg:customMsg
-                    timestamp:0];
+  self = [self initWithShasum:shasum state:state type:type customMsg:customMsg timestamp:0];
   // Initialize timestamp to current time if rule is transitive.
   if (self && state == SNTRuleStateAllowTransitive) {
     [self resetTimestamp];
@@ -52,12 +48,12 @@
   return self;
 }
 
-
 #pragma mark NSSecureCoding
 
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wobjc-literal-conversion"
-#define ENCODE(obj, key) if (obj) [coder encodeObject:obj forKey:key]
+#define ENCODE(obj, key) \
+  if (obj) [coder encodeObject:obj forKey:key]
 #define DECODE(cls, key) [decoder decodeObjectOfClass:[cls class] forKey:key]
 
 + (BOOL)supportsSecureCoding {
@@ -105,11 +101,12 @@
 }
 
 - (NSString *)description {
-  return [NSString stringWithFormat:@"SNTRule: SHA-256: %@, State: %ld, Type: %ld, Timestamp: %lu",
-             self.shasum, self.state, self.type, (unsigned long)self.timestamp];
+  return
+    [NSString stringWithFormat:@"SNTRule: SHA-256: %@, State: %ld, Type: %ld, Timestamp: %lu",
+                               self.shasum, self.state, self.type, (unsigned long)self.timestamp];
 }
 
-# pragma mark Last-access Timestamp
+#pragma mark Last-access Timestamp
 
 - (void)resetTimestamp {
   self.timestamp = (NSUInteger)[[NSDate date] timeIntervalSinceReferenceDate];

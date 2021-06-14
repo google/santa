@@ -46,8 +46,8 @@ static NSMutableDictionary *registeredCommands;
   for (NSString *cmdName in
        [[registeredCommands allKeys] sortedArrayUsingSelector:@selector(caseInsensitiveCompare:)]) {
     Class<SNTCommandProtocol> command = registeredCommands[cmdName];
-    [helpText appendFormat:@"\t%*s - %@\n", longestCommandName,
-                           [cmdName UTF8String], [command shortHelpText]];
+    [helpText appendFormat:@"\t%*s - %@\n", longestCommandName, [cmdName UTF8String],
+                           [command shortHelpText]];
   }
 
   [helpText appendFormat:@"\nSee 'santactl help <command>' to read about a specific subcommand."];

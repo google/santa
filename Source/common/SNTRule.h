@@ -19,7 +19,7 @@
 ///
 ///  Represents a Rule.
 ///
-@interface SNTRule : NSObject<NSSecureCoding>
+@interface SNTRule : NSObject <NSSecureCoding>
 
 ///
 ///  The hash of the object this rule is for

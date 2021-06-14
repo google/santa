@@ -54,9 +54,9 @@
 
 @end
 
-@interface SNTCommand : NSObject<SNTCommandRunProtocol>
+@interface SNTCommand : NSObject <SNTCommandRunProtocol>
 
-@property(nonatomic,readonly) MOLXPCConnection *daemonConn;
+@property(nonatomic, readonly) MOLXPCConnection *daemonConn;
 
 ///  Designated initializer
 - (instancetype)initWithDaemonConnection:(MOLXPCConnection *)daemonConn;
@@ -65,4 +65,3 @@
 
 - (void)printErrorUsageAndExit:(NSString *)error;
 @end
-
