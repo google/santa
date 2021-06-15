@@ -57,17 +57,17 @@ void *watchdogThreadFunction(__unused void *idata) {
 
   while (true) {
     @autoreleasepool {
-      if (task_info(mach_task_self(), MACH_TASK_BASIC_INFO,
-                    (task_info_t)&taskInfo, &taskInfoCount) == KERN_SUCCESS) {
+      if (task_info(mach_task_self(), MACH_TASK_BASIC_INFO, (task_info_t)&taskInfo,
+                    &taskInfoCount) == KERN_SUCCESS) {
         // CPU
-        double totalTime = (timeval_to_double(taskInfo.user_time) +
-                            timeval_to_double(taskInfo.system_time));
+        double totalTime =
+          (timeval_to_double(taskInfo.user_time) + timeval_to_double(taskInfo.system_time));
         double percentage = (((totalTime - prevTotalTime) / (double)timeInterval) * 100.0);
         prevTotalTime = totalTime;
 
         if (percentage > cpuWarnThreshold) {
-          LOGW(@"Watchdog: potentially high CPU use, ~%.2f%% over last %d seconds.",
-               percentage, timeInterval);
+          LOGW(@"Watchdog: potentially high CPU use, ~%.2f%% over last %d seconds.", percentage,
+               timeInterval);
           watchdogCPUEvents++;
         }
 

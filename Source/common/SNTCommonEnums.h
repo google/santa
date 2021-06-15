@@ -92,6 +92,8 @@ typedef NS_ENUM(NSInteger, SNTEventLogType) {
 };
 
 static const char *kKextPath = "/Library/Extensions/santa-driver.kext";
-static const char *kSantaDPath = "/Applications/Santa.app/Contents/Library/SystemExtensions/com.google.santa.daemon.systemextension/Contents/MacOS/com.google.santa.daemon";
+static const char *kSantaDPath =
+  "/Applications/Santa.app/Contents/Library/SystemExtensions/"
+  "com.google.santa.daemon.systemextension/Contents/MacOS/com.google.santa.daemon";
 static const char *kSantaCtlPath = "/Applications/Santa.app/Contents/MacOS/santactl";
 static const char *kSantaAppPath = "/Applications/Santa.app";

@@ -12,7 +12,6 @@
 ///    See the License for the specific language governing permissions and
 ///    limitations under the License.
 
-
 #import <Foundation/Foundation.h>
 #import <MOLCertificate/MOLCertificate.h>
 #import <MOLCodesignChecker/MOLCodesignChecker.h>
@@ -27,7 +26,7 @@
 #import "Source/santactl/SNTCommand.h"
 #import "Source/santactl/SNTCommandController.h"
 
-@interface SNTCommandRule : SNTCommand<SNTCommandProtocol>
+@interface SNTCommandRule : SNTCommand <SNTCommandProtocol>
 @end
 
 @implementation SNTCommandRule
@@ -75,8 +74,7 @@ REGISTER_COMMAND_NAME(@"rule")
   SNTConfigurator *config = [SNTConfigurator configurator];
   // DEBUG builds add a --force flag to allow manually adding/removing rules during testing.
 #ifdef DEBUG
-  if ([config syncBaseURL] &&
-      ![arguments containsObject:@"--check"] &&
+  if ([config syncBaseURL] && ![arguments containsObject:@"--check"] &&
       ![arguments containsObject:@"--force"]) {
 #else
   if ([config syncBaseURL] && ![arguments containsObject:@"--check"]) {
@@ -165,22 +163,24 @@ REGISTER_COMMAND_NAME(@"rule")
     [self printErrorUsageAndExit:@"Either SHA-256 or path to file must be specified"];
   }
 
-  [[self.daemonConn remoteObjectProxy] databaseRuleAddRules:@[newRule]
-                                                 cleanSlate:NO
-                                                      reply:^(NSError *error) {
-    if (error) {
-      printf("Failed to modify rules: %s", [error.localizedDescription UTF8String]);
-      LOGD(@"Failure reason: %@", error.localizedFailureReason);
-      exit(1);
-    } else {
-      if (newRule.state == SNTRuleStateRemove) {
-        printf("Removed rule for SHA-256: %s.\n", [newRule.shasum UTF8String]);
-      } else {
-        printf("Added rule for SHA-256: %s.\n", [newRule.shasum UTF8String]);
-      }
-      exit(0);
-    }
-  }];
+  [[self.daemonConn remoteObjectProxy]
+    databaseRuleAddRules:@[ newRule ]
+              cleanSlate:NO
+                   reply:^(NSError *error) {
+                     if (error) {
+                       printf("Failed to modify rules: %s",
+                              [error.localizedDescription UTF8String]);
+                       LOGD(@"Failure reason: %@", error.localizedFailureReason);
+                       exit(1);
+                     } else {
+                       if (newRule.state == SNTRuleStateRemove) {
+                         printf("Removed rule for SHA-256: %s.\n", [newRule.shasum UTF8String]);
+                       } else {
+                         printf("Added rule for SHA-256: %s.\n", [newRule.shasum UTF8String]);
+                       }
+                       exit(0);
+                     }
+                   }];
 }
 
 - (void)printStateOfRule:(SNTRule *)rule daemonConnection:(MOLXPCConnection *)daemonConn {
@@ -193,63 +193,67 @@ REGISTER_COMMAND_NAME(@"rule")
                                            fileSHA256:fileSHA256
                                     certificateSHA256:certificateSHA256
                                                 reply:^(SNTEventState s) {
-    output = (SNTEventStateAllow & s) ? @"Allowed".mutableCopy : @"Blocked".mutableCopy;
-    switch (s) {
-      case SNTEventStateAllowUnknown:
-      case SNTEventStateBlockUnknown:
-        [output appendString:@" (Unknown)"];
-        break;
-      case SNTEventStateAllowBinary:
-      case SNTEventStateBlockBinary:
-        [output appendString:@" (Binary)"];
-        break;
-      case SNTEventStateAllowCertificate:
-      case SNTEventStateBlockCertificate:
-        [output appendString:@" (Certificate)"];
-        break;
-      case SNTEventStateAllowScope:
-      case SNTEventStateBlockScope:
-        [output appendString:@" (Scope)"];
-        break;
-      case SNTEventStateAllowCompiler:
-        [output appendString:@" (Compiler)"];
-        break;
-      case SNTEventStateAllowTransitive:
-        [output appendString:@" (Transitive)"];
-        break;
-      default:
-        output = @"None".mutableCopy;
-        break;
-    }
-    if (isatty(STDOUT_FILENO)) {
-      if ((SNTEventStateAllow & s)) {
-        [output insertString:@"\033[32m" atIndex:0];
-        [output appendString:@"\033[0m"];
-      } else if ((SNTEventStateBlock & s)) {
-        [output insertString:@"\033[31m" atIndex:0];
-        [output appendString:@"\033[0m"];
-      } else {
-        [output insertString:@"\033[33m" atIndex:0];
-        [output appendString:@"\033[0m"];
-      }
-    }
-    dispatch_group_leave(group);
-  }];
+                                                  output = (SNTEventStateAllow & s)
+                                                             ? @"Allowed".mutableCopy
+                                                             : @"Blocked".mutableCopy;
+                                                  switch (s) {
+                                                    case SNTEventStateAllowUnknown:
+                                                    case SNTEventStateBlockUnknown:
+                                                      [output appendString:@" (Unknown)"];
+                                                      break;
+                                                    case SNTEventStateAllowBinary:
+                                                    case SNTEventStateBlockBinary:
+                                                      [output appendString:@" (Binary)"];
+                                                      break;
+                                                    case SNTEventStateAllowCertificate:
+                                                    case SNTEventStateBlockCertificate:
+                                                      [output appendString:@" (Certificate)"];
+                                                      break;
+                                                    case SNTEventStateAllowScope:
+                                                    case SNTEventStateBlockScope:
+                                                      [output appendString:@" (Scope)"];
+                                                      break;
+                                                    case SNTEventStateAllowCompiler:
+                                                      [output appendString:@" (Compiler)"];
+                                                      break;
+                                                    case SNTEventStateAllowTransitive:
+                                                      [output appendString:@" (Transitive)"];
+                                                      break;
+                                                    default: output = @"None".mutableCopy; break;
+                                                  }
+                                                  if (isatty(STDOUT_FILENO)) {
+                                                    if ((SNTEventStateAllow & s)) {
+                                                      [output insertString:@"\033[32m" atIndex:0];
+                                                      [output appendString:@"\033[0m"];
+                                                    } else if ((SNTEventStateBlock & s)) {
+                                                      [output insertString:@"\033[31m" atIndex:0];
+                                                      [output appendString:@"\033[0m"];
+                                                    } else {
+                                                      [output insertString:@"\033[33m" atIndex:0];
+                                                      [output appendString:@"\033[0m"];
+                                                    }
+                                                  }
+                                                  dispatch_group_leave(group);
+                                                }];
   if (dispatch_group_wait(group, dispatch_time(DISPATCH_TIME_NOW, 5 * NSEC_PER_SEC))) {
     printf("Cannot communicate with daemon");
     exit(1);
   }
 
   dispatch_group_enter(group);
-  [[daemonConn remoteObjectProxy] databaseRuleForBinarySHA256:fileSHA256
-                                            certificateSHA256:certificateSHA256
-                                                        reply:^(SNTRule *r) {
-    if (r.state == SNTRuleStateAllowTransitive) {
-      NSDate *date = [NSDate dateWithTimeIntervalSinceReferenceDate:r.timestamp];
-      [output appendString:[NSString stringWithFormat:@"\nlast access date: %@", [date description]]];
-    }
-    dispatch_group_leave(group);
-  }];
+  [[daemonConn remoteObjectProxy]
+    databaseRuleForBinarySHA256:fileSHA256
+              certificateSHA256:certificateSHA256
+                          reply:^(SNTRule *r) {
+                            if (r.state == SNTRuleStateAllowTransitive) {
+                              NSDate *date =
+                                [NSDate dateWithTimeIntervalSinceReferenceDate:r.timestamp];
+                              [output
+                                appendString:[NSString stringWithFormat:@"\nlast access date: %@",
+                                                                        [date description]]];
+                            }
+                            dispatch_group_leave(group);
+                          }];
   if (dispatch_group_wait(group, dispatch_time(DISPATCH_TIME_NOW, 5 * NSEC_PER_SEC))) {
     printf("Cannot communicate with daemon");
     exit(1);

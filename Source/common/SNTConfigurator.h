@@ -168,8 +168,9 @@
 ///  Use the bundled SystemExtension on macOS 10.15+, defaults to YES.
 ///  Disable to continue using the bundled KEXT.
 ///  This is a one way switch, if this is ever true on macOS 10.15+ the KEXT will be deleted.
-///  This gives admins control over the timing of switching to the SystemExtension. The intended use case is to have an MDM deliver
-///  the requisite SystemExtension and TCC profiles before attempting to load.
+///  This gives admins control over the timing of switching to the SystemExtension. The intended use
+///  case is to have an MDM deliver the requisite SystemExtension and TCC profiles before attempting
+///  to load.
 ///
 @property(readonly, nonatomic) BOOL enableSystemExtension;
 
@@ -337,7 +338,8 @@
 
 ///
 ///  If true, debug logging will be enabled for all Santa components. Defaults to false.
-///  Passing --debug as an executable argument will enable debug logging for that specific component.
+///  Passing --debug as an executable argument will enable debug logging for that specific
+///  component.
 ///
 @property(readonly, nonatomic) BOOL enableDebugLogging;
 

@@ -30,13 +30,13 @@
 #import "Source/common/SNTFileInfo.h"
 #import "Source/common/SNTRule.h"
 #import "Source/common/SNTStoredEvent.h"
-#import "Source/santad/SNTNotificationQueue.h"
-#import "Source/santad/SNTPolicyProcessor.h"
-#import "Source/santad/SNTSyncdQueue.h"
 #import "Source/santad/DataLayer/SNTEventTable.h"
 #import "Source/santad/DataLayer/SNTRuleTable.h"
 #import "Source/santad/EventProviders/SNTEventProvider.h"
 #import "Source/santad/Logs/SNTEventLog.h"
+#import "Source/santad/SNTNotificationQueue.h"
+#import "Source/santad/SNTPolicyProcessor.h"
+#import "Source/santad/SNTSyncdQueue.h"
 
 // A binary is considered large at ~30MB. Large binaries take longer to hash and consequently
 // longer to post a decision back to santa-driver. When a binary is considered large santad will
@@ -110,8 +110,8 @@ static size_t kLargeBinarySize = 30 * 1024 * 1024;
 
   // If the binary is large let santa-driver know we received the request and we are working on it.
   if (binInfo.fileSize > kLargeBinarySize) {
-    LOGD(@"%@ is larger than %zu. Letting santa-driver know we are working on it.",
-         binInfo.path, kLargeBinarySize);
+    LOGD(@"%@ is larger than %zu. Letting santa-driver know we are working on it.", binInfo.path,
+         kLargeBinarySize);
     [self.eventProvider postAction:ACTION_RESPOND_ACK forMessage:message];
   }
 
@@ -120,7 +120,7 @@ static size_t kLargeBinarySize = 30 * 1024 * 1024;
 
   // Formulate an initial action from the decision.
   santa_action_t action =
-      (SNTEventStateAllow & cd.decision) ? ACTION_RESPOND_ALLOW : ACTION_RESPOND_DENY;
+    (SNTEventStateAllow & cd.decision) ? ACTION_RESPOND_ALLOW : ACTION_RESPOND_DENY;
 
   // Save decision details for logging the execution later.  For transitive rules, we also use
   // the shasum stored in the decision details to update the rule's timestamp whenever an
@@ -142,10 +142,8 @@ static size_t kLargeBinarySize = 30 * 1024 * 1024;
   [self.eventProvider postAction:action forMessage:message];
 
   // Log to database if necessary.
-  if (cd.decision != SNTEventStateAllowBinary &&
-      cd.decision != SNTEventStateAllowCompiler &&
-      cd.decision != SNTEventStateAllowTransitive &&
-      cd.decision != SNTEventStateAllowCertificate &&
+  if (cd.decision != SNTEventStateAllowBinary && cd.decision != SNTEventStateAllowCompiler &&
+      cd.decision != SNTEventStateAllowTransitive && cd.decision != SNTEventStateAllowCertificate &&
       cd.decision != SNTEventStateAllowScope) {
     SNTStoredEvent *se = [[SNTStoredEvent alloc] init];
     se.occurrenceDate = [[NSDate alloc] init];
@@ -201,7 +199,7 @@ static size_t kLargeBinarySize = 30 * 1024 * 1024;
         // So the server has something to show the user straight away, initiate an event
         // upload for the blocked binary rather than waiting for the next sync.
         dispatch_async(_eventQueue, ^{
-          [self.syncdQueue addEvents:@[se] isFromBundle:NO];
+          [self.syncdQueue addEvents:@[ se ] isFromBundle:NO];
         });
       }
 
@@ -214,7 +212,7 @@ static size_t kLargeBinarySize = 30 * 1024 * 1024;
         [msg appendFormat:@"\033[1mPath:      \033[0m %@\n"
                           @"\033[1mIdentifier:\033[0m %@\n"
                           @"\033[1mParent:    \033[0m %@ (%@)\n\n",
-            se.filePath, se.fileSHA256, se.parentName, se.ppid];
+                          se.filePath, se.fileSHA256, se.parentName, se.ppid];
         NSURL *detailURL = [SNTBlockMessage eventDetailURLForEvent:se];
         if (detailURL) {
           [msg appendFormat:@"More info:\n%@\n\n", detailURL.absoluteString];
@@ -272,7 +270,7 @@ static size_t kLargeBinarySize = 30 * 1024 * 1024;
   if (pid < 2) return nil;  // don't bother even looking for launchd.
 
   struct proc_bsdinfo taskInfo = {};
-  if (proc_pidinfo(pid, PROC_PIDTBSDINFO, 0,  &taskInfo, sizeof(taskInfo)) < 1) return nil;
+  if (proc_pidinfo(pid, PROC_PIDTBSDINFO, 0, &taskInfo, sizeof(taskInfo)) < 1) return nil;
 
   // 16-bytes here is for future-proofing. Currently kern.tty.ptmx_max is
   // limited to 999 so 12 bytes should be enough.

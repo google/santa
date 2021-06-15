@@ -42,7 +42,8 @@ typedef void (^SNTBundleHashBlock)(NSString *, NSArray<SNTStoredEvent *> *, NSNu
 - (void)hashBundleBinariesForEvent:(SNTStoredEvent *)event reply:(SNTBundleHashBlock)reply;
 
 ///
-///  santabundleservice is launched on demand by launchd, call spindown to let santabundleservice know you are done with it.
+///  santabundleservice is launched on demand by launchd, call spindown to let santabundleservice
+///  know you are done with it.
 ///
 - (void)spindown;
 

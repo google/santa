@@ -20,7 +20,7 @@
 #import "Source/santactl/SNTCommand.h"
 #import "Source/santactl/SNTCommandController.h"
 
-@interface SNTCommandStatus : SNTCommand<SNTCommandProtocol>
+@interface SNTCommandStatus : SNTCommand <SNTCommandProtocol>
 @end
 
 @implementation SNTCommandStatus
@@ -60,15 +60,9 @@ REGISTER_COMMAND_NAME(@"status")
   dispatch_group_enter(group);
   [[self.daemonConn remoteObjectProxy] clientMode:^(SNTClientMode cm) {
     switch (cm) {
-      case SNTClientModeMonitor:
-        clientMode = @"Monitor";
-        break;
-      case SNTClientModeLockdown:
-        clientMode = @"Lockdown";
-        break;
-      default:
-        clientMode = [NSString stringWithFormat:@"Unknown (%ld)", cm];
-        break;
+      case SNTClientModeMonitor: clientMode = @"Monitor"; break;
+      case SNTClientModeLockdown: clientMode = @"Lockdown"; break;
+      default: clientMode = [NSString stringWithFormat:@"Unknown (%ld)", cm]; break;
     }
     dispatch_group_leave(group);
   }];
@@ -103,10 +97,8 @@ REGISTER_COMMAND_NAME(@"status")
   __block int64_t eventCount = -1, binaryRuleCount = -1, certRuleCount = -1;
   __block int64_t compilerRuleCount = -1, transitiveRuleCount = -1;
   dispatch_group_enter(group);
-  [[self.daemonConn remoteObjectProxy] databaseRuleCounts:^(int64_t binary,
-                                                            int64_t certificate,
-                                                            int64_t compiler,
-                                                            int64_t transitive) {
+  [[self.daemonConn remoteObjectProxy] databaseRuleCounts:^(int64_t binary, int64_t certificate,
+                                                            int64_t compiler, int64_t transitive) {
     binaryRuleCount = binary;
     certRuleCount = certificate;
     compilerRuleCount = compiler;
@@ -176,7 +168,7 @@ REGISTER_COMMAND_NAME(@"status")
   dateFormatter.dateFormat = @"yyyy/MM/dd HH:mm:ss Z";
   NSString *fullSyncLastSuccessStr = [dateFormatter stringFromDate:fullSyncLastSuccess] ?: @"Never";
   NSString *ruleSyncLastSuccessStr =
-      [dateFormatter stringFromDate:ruleSyncLastSuccess] ?: fullSyncLastSuccessStr;
+    [dateFormatter stringFromDate:ruleSyncLastSuccess] ?: fullSyncLastSuccessStr;
 
   NSString *syncURLStr = [[[SNTConfigurator configurator] syncBaseURL] absoluteString];
 
@@ -211,7 +203,7 @@ REGISTER_COMMAND_NAME(@"status")
     if (cachingEnabled) {
       stats[@"cache"] = @{
         @"root_cache_count" : @(rootCacheCount),
-        @"non_root_cache_count": @(nonRootCacheCount),
+        @"non_root_cache_count" : @(nonRootCacheCount),
       };
     }
     NSData *statsData = [NSJSONSerialization dataWithJSONObject:stats
@@ -247,8 +239,7 @@ REGISTER_COMMAND_NAME(@"status")
       printf("  %-25s | %s\n", "Push Notifications",
              (pushNotifications ? "Connected" : "Disconnected"));
       printf("  %-25s | %s\n", "Bundle Scanning", (enableBundles ? "Yes" : "No"));
-      printf("  %-25s | %s\n", "Transitive Rules",
-             (enableTransitiveRules? "Yes" : "No"));
+      printf("  %-25s | %s\n", "Transitive Rules", (enableTransitiveRules ? "Yes" : "No"));
     }
   }
 

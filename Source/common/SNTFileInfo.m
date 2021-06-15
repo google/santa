@@ -15,8 +15,8 @@
 #import "Source/common/SNTFileInfo.h"
 
 #import <CommonCrypto/CommonDigest.h>
-#import <fmdb/FMDB.h>
 #import <MOLCodesignChecker/MOLCodesignChecker.h>
+#import <fmdb/FMDB.h>
 
 #include <mach-o/arch.h>
 #include <mach-o/loader.h>
@@ -24,7 +24,6 @@
 #include <pwd.h>
 #include <sys/stat.h>
 #include <sys/xattr.h>
-
 
 // Simple class to hold the data of a mach_header and the offset within the file
 // in which that header was found.
@@ -181,30 +180,27 @@ extern NSString *const NSURLQuarantinePropertiesKey WEAK_IMPORT_ATTRIBUTE;
       unsigned char digest[CC_SHA1_DIGEST_LENGTH];
       CC_SHA1_Final(digest, &c1);
       NSString *const SHA1FormatString =
-          @"%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x";
+        @"%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x";
       *sha1 = [[NSString alloc]
-          initWithFormat:SHA1FormatString, digest[0], digest[1], digest[2],
-                         digest[3], digest[4], digest[5], digest[6], digest[7],
-                         digest[8], digest[9], digest[10], digest[11], digest[12],
-                         digest[13], digest[14], digest[15], digest[16],
-                         digest[17], digest[18], digest[19]];
+        initWithFormat:SHA1FormatString, digest[0], digest[1], digest[2], digest[3], digest[4],
+                       digest[5], digest[6], digest[7], digest[8], digest[9], digest[10],
+                       digest[11], digest[12], digest[13], digest[14], digest[15], digest[16],
+                       digest[17], digest[18], digest[19]];
     }
     if (sha256) {
       unsigned char digest[CC_SHA256_DIGEST_LENGTH];
       CC_SHA256_Final(digest, &c256);
       NSString *const SHA256FormatString =
-          @"%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x"
-           "%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x";
+        @"%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x"
+         "%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x";
 
       *sha256 = [[NSString alloc]
-          initWithFormat:SHA256FormatString, digest[0], digest[1], digest[2],
-                         digest[3], digest[4], digest[5], digest[6], digest[7],
-                         digest[8], digest[9], digest[10], digest[11], digest[12],
-                         digest[13], digest[14], digest[15], digest[16],
-                         digest[17], digest[18], digest[19], digest[20],
-                         digest[21], digest[22], digest[23], digest[24],
-                         digest[25], digest[26], digest[27], digest[28],
-                         digest[29], digest[30], digest[31]];
+        initWithFormat:SHA256FormatString, digest[0], digest[1], digest[2], digest[3], digest[4],
+                       digest[5], digest[6], digest[7], digest[8], digest[9], digest[10],
+                       digest[11], digest[12], digest[13], digest[14], digest[15], digest[16],
+                       digest[17], digest[18], digest[19], digest[20], digest[21], digest[22],
+                       digest[23], digest[24], digest[25], digest[26], digest[27], digest[28],
+                       digest[29], digest[30], digest[31]];
     }
   } @finally {
     free(chunk);
@@ -292,15 +288,15 @@ extern NSString *const NSURLQuarantinePropertiesKey WEAK_IMPORT_ATTRIBUTE;
 - (BOOL)isMissingPageZero {
   // This method only checks i386 arch because the kernel enforces this for other archs
   // See bsd/kern/mach_loader.c, search for enforce_hard_pagezero.
-  MachHeaderWithOffset *x86Header = self.machHeaders[[self nameForCPUType:CPU_TYPE_X86
-                                                               cpuSubType:CPU_SUBTYPE_I386_ALL]];
+  MachHeaderWithOffset *x86Header =
+    self.machHeaders[[self nameForCPUType:CPU_TYPE_X86 cpuSubType:CPU_SUBTYPE_I386_ALL]];
   if (!x86Header) return NO;
 
   struct mach_header *mh = (struct mach_header *)[x86Header.data bytes];
   if (mh->filetype != MH_EXECUTE) return NO;
 
-  NSRange range = NSMakeRange(x86Header.offset + sizeof(struct mach_header),
-                              sizeof(struct segment_command));
+  NSRange range =
+    NSMakeRange(x86Header.offset + sizeof(struct mach_header), sizeof(struct segment_command));
   NSData *lcData = [self safeSubdataWithRange:range];
   if (!lcData) return NO;
 
@@ -310,9 +306,8 @@ extern NSString *const NSURLQuarantinePropertiesKey WEAK_IMPORT_ATTRIBUTE;
   struct load_command *lc = (struct load_command *)[lcData bytes];
   if (lc->cmd == LC_SEGMENT) {
     struct segment_command *segment = (struct segment_command *)lc;
-    if (segment->vmaddr == 0 && segment->vmsize != 0 &&
-        segment->initprot == 0 && segment->maxprot == 0 &&
-        strcmp("__PAGEZERO", segment->segname) == 0) {
+    if (segment->vmaddr == 0 && segment->vmsize != 0 && segment->initprot == 0 &&
+        segment->maxprot == 0 && strcmp("__PAGEZERO", segment->segname) == 0) {
       return NO;
     }
   }
@@ -376,7 +371,7 @@ extern NSString *const NSURLQuarantinePropertiesKey WEAK_IMPORT_ATTRIBUTE;
 - (NSBundle *)bundle {
   if (!self.bundleRef) {
     self.bundleRef =
-        [self findBundleWithAncestor:self.useAncestorBundle] ?: (NSBundle *)[NSNull null];
+      [self findBundleWithAncestor:self.useAncestorBundle] ?: (NSBundle *)[NSNull null];
   }
   return self.bundleRef == (NSBundle *)[NSNull null] ? nil : self.bundleRef;
 }
@@ -417,8 +412,8 @@ extern NSString *const NSURLQuarantinePropertiesKey WEAK_IMPORT_ATTRIBUTE;
 }
 
 - (NSString *)bundleName {
-  return [[self.infoPlist objectForKey:@"CFBundleDisplayName"] description] ?:
-         [[self.infoPlist objectForKey:@"CFBundleName"] description];
+  return [[self.infoPlist objectForKey:@"CFBundleDisplayName"] description]
+           ?: [[self.infoPlist objectForKey:@"CFBundleName"] description];
 }
 
 - (NSString *)bundleVersion {
@@ -467,8 +462,8 @@ extern NSString *const NSURLQuarantinePropertiesKey WEAK_IMPORT_ATTRIBUTE;
 
   NSMutableDictionary *machHeaders = [NSMutableDictionary dictionary];
 
-  NSData *machHeader = [self parseSingleMachHeader:[self safeSubdataWithRange:NSMakeRange(0,
-                                                                                          4096)]];
+  NSData *machHeader =
+    [self parseSingleMachHeader:[self safeSubdataWithRange:NSMakeRange(0, 4096)]];
   if (machHeader) {
     struct mach_header *mh = (struct mach_header *)[machHeader bytes];
     MachHeaderWithOffset *mhwo = [[MachHeaderWithOffset alloc] initWithData:machHeader offset:0];
@@ -555,9 +550,9 @@ extern NSString *const NSURLQuarantinePropertiesKey WEAK_IMPORT_ATTRIBUTE;
     if (is64) {
       struct segment_command_64 *lc = (struct segment_command_64 *)[cmdData bytes];
       if (lc->cmd == LC_SEGMENT_64 && memcmp(lc->segname, "__TEXT", 6) == 0) {
-          nsects = lc->nsects;
-          offset += sz_segment;
-          break;
+        nsects = lc->nsects;
+        offset += sz_segment;
+        break;
       }
       offset += lc->cmdsize;
     } else {
@@ -594,8 +589,8 @@ extern NSString *const NSURLQuarantinePropertiesKey WEAK_IMPORT_ATTRIBUTE;
     }
 
     if (found) {
-      NSData *plistData = [self safeSubdataWithRange:NSMakeRange(mhwo.offset + sectoffset,
-                                                                 sectsize)];
+      NSData *plistData =
+        [self safeSubdataWithRange:NSMakeRange(mhwo.offset + sectoffset, sectsize)];
       if (!plistData) return nil;
       NSDictionary *plist;
       plist = [NSPropertyListSerialization propertyListWithData:plistData
@@ -667,9 +662,7 @@ extern NSString *const NSURLQuarantinePropertiesKey WEAK_IMPORT_ATTRIBUTE;
         }
 
         NSURL *dbPath = [NSURL fileURLWithPathComponents:@[
-          fileOwnerHomeDir,
-          @"Library",
-          @"Preferences",
+          fileOwnerHomeDir, @"Library", @"Preferences",
           @"com.apple.LaunchServices.QuarantineEventsV2"
         ]];
         FMDatabase *db = [FMDatabase databaseWithPath:[dbPath absoluteString]];
@@ -688,7 +681,7 @@ extern NSString *const NSURLQuarantinePropertiesKey WEAK_IMPORT_ATTRIBUTE;
             quarantineDict[@"LSQuarantineDataURL"] = [NSURL URLWithString:dataURLString];
             quarantineDict[@"LSQuarantineOriginURL"] = [NSURL URLWithString:originURLString];
             quarantineDict[@"LSQuarantineTimestamp"] =
-                [NSDate dateWithTimeIntervalSinceReferenceDate:timeStamp];
+              [NSDate dateWithTimeIntervalSinceReferenceDate:timeStamp];
 
             self.quarantineDict = quarantineDict;
           }

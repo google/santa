@@ -27,7 +27,7 @@
 #define USERCLIENT_ID "com.google.santa-driver"
 
 // Branch prediction
-#define likely(x)   __builtin_expect(!!(x), 1)
+#define likely(x) __builtin_expect(!!(x), 1)
 #define unlikely(x) __builtin_expect(!!(x), 0)
 
 // List of methods supported by the driver.
@@ -89,10 +89,9 @@ typedef enum {
   ACTION_ERROR = 99,
 } santa_action_t;
 
-#define RESPONSE_VALID(x) \
-  (x == ACTION_RESPOND_ALLOW || \
-   x == ACTION_RESPOND_DENY || \
-   x == ACTION_RESPOND_ALLOW_COMPILER || \
+#define RESPONSE_VALID(x)                                   \
+  (x == ACTION_RESPOND_ALLOW || x == ACTION_RESPOND_DENY || \
+   x == ACTION_RESPOND_ALLOW_COMPILER ||                    \
    x == ACTION_RESPOND_ALLOW_PENDING_TRANSITIVE)
 
 // Struct to manage vnode IDs
@@ -101,11 +100,11 @@ typedef struct santa_vnode_id_t {
   uint64_t fileid;
 
 #ifdef __cplusplus
-  bool operator==(const santa_vnode_id_t& rhs) const {
+  bool operator==(const santa_vnode_id_t &rhs) const {
     return fsid == rhs.fsid && fileid == rhs.fileid;
   }
-  // This _must not_ be used for anything security-sensitive. It exists solely to make
-  // the msleep/wakeup calls easier.
+  // This _must not_ be used for anything security-sensitive. It exists solely
+  // to make the msleep/wakeup calls easier.
   uint64_t unsafe_simple_id() const {
     return (((uint64_t)fsid << 32) | fileid);
   }
@@ -129,10 +128,12 @@ typedef struct {
   // actually happens, so only take MAXPATHLEN and throw away any excess.
   char pname[MAXPATHLEN];
 
-  // For messages that originate from EndpointSecurity, this points to a copy of the message.
+  // For messages that originate from EndpointSecurity, this points to a copy of
+  // the message.
   void *es_message;
 
-  // For messages that originate from EndpointSecurity, this points to an NSArray of the arguments.
+  // For messages that originate from EndpointSecurity, this points to an
+  // NSArray of the arguments.
   void *args_array;
 } santa_message_t;
 

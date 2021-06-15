@@ -22,7 +22,7 @@
 #import "Source/santactl/SNTCommand.h"
 #import "Source/santactl/SNTCommandController.h"
 
-@interface SNTCommandCacheHistogram : SNTCommand<SNTCommandProtocol>
+@interface SNTCommandCacheHistogram : SNTCommand <SNTCommandProtocol>
 @end
 
 @implementation SNTCommandCacheHistogram
@@ -50,7 +50,7 @@ REGISTER_COMMAND_NAME(@"cachehistogram")
 - (void)runWithArguments:(NSArray *)arguments {
   [[self.daemonConn remoteObjectProxy] cacheBucketCount:^(NSArray *counts) {
     NSMutableDictionary<NSNumber *, NSNumber *> *d = [NSMutableDictionary dictionary];
-    [counts enumerateObjectsUsingBlock:^(id  _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+    [counts enumerateObjectsUsingBlock:^(id _Nonnull obj, NSUInteger idx, BOOL *_Nonnull stop) {
       d[obj] = @([d[obj] intValue] + 1);
     }];
     printf("There are %llu empty buckets\n", [d[@0] unsignedLongLongValue]);

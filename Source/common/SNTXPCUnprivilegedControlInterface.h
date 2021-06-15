@@ -38,9 +38,7 @@
 ///
 ///  Database ops
 ///
-- (void)databaseRuleCounts:(void (^)(int64_t binary,
-                                     int64_t certificate,
-                                     int64_t compiler,
+- (void)databaseRuleCounts:(void (^)(int64_t binary, int64_t certificate, int64_t compiler,
                                      int64_t transitive))reply;
 - (void)databaseEventCount:(void (^)(int64_t count))reply;
 

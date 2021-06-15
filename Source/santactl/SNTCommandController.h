@@ -62,5 +62,7 @@
 ///  NSString). Must be placed just inside the implementation of the class, ideally at the top.
 ///  The class that uses this macro must implement the @c SNTCommand protcol.
 ///
-#define REGISTER_COMMAND_NAME(a) \
-    + (void)load { [SNTCommandController registerCommand:[self class] named:a]; }
+#define REGISTER_COMMAND_NAME(a)                                 \
+  +(void)load {                                                  \
+    [SNTCommandController registerCommand:[self class] named:a]; \
+  }

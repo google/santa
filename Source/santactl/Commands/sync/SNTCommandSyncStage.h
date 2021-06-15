@@ -28,7 +28,8 @@
 
   @param state A holder for state used across requests
 */
-- (nullable instancetype)initWithState:(nonnull SNTCommandSyncState *)state NS_DESIGNATED_INITIALIZER;
+- (nullable instancetype)initWithState:(nonnull SNTCommandSyncState *)state
+  NS_DESIGNATED_INITIALIZER;
 
 - (nullable instancetype)init NS_UNAVAILABLE;
 

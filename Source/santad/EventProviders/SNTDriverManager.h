@@ -22,7 +22,7 @@
 ///
 ///  Manages the connection between daemon and kernel.
 ///
-@interface SNTDriverManager : NSObject<SNTEventProvider>
+@interface SNTDriverManager : NSObject <SNTEventProvider>
 
 ///
 ///  Handles locating and connecting to the driver. If driver is not loaded, will

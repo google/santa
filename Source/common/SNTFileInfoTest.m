@@ -90,9 +90,8 @@
 }
 
 - (void)testKext {
-  SNTFileInfo *sut =
-      [[SNTFileInfo alloc] initWithPath:
-          @"/System/Library/Extensions/AppleAPIC.kext/Contents/MacOS/AppleAPIC"];
+  SNTFileInfo *sut = [[SNTFileInfo alloc]
+    initWithPath:@"/System/Library/Extensions/AppleAPIC.kext/Contents/MacOS/AppleAPIC"];
 
   XCTAssertTrue(sut.isMachO);
   XCTAssertTrue(sut.isKext);
@@ -218,8 +217,7 @@
 }
 
 - (void)testNonBundle {
-  SNTFileInfo *sut =
-  [[SNTFileInfo alloc] initWithPath:@"/usr/bin/yes"];
+  SNTFileInfo *sut = [[SNTFileInfo alloc] initWithPath:@"/usr/bin/yes"];
 
   XCTAssertNil([sut bundle]);
 

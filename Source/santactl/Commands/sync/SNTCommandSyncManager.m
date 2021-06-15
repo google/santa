@@ -73,8 +73,8 @@ static NSString *const kFCMTargetHostIDKey = @"target_host_id";
 @end
 
 // Called when the network state changes
-static void reachabilityHandler(
-    SCNetworkReachabilityRef target, SCNetworkReachabilityFlags flags, void *info) {
+static void reachabilityHandler(SCNetworkReachabilityRef target, SCNetworkReachabilityFlags flags,
+                                void *info) {
   // Put this check and set on the main thread to ensure serial access.
   dispatch_async(dispatch_get_main_queue(), ^{
     SNTCommandSyncManager *commandSyncManager = (__bridge SNTCommandSyncManager *)info;
@@ -103,8 +103,8 @@ static void reachabilityHandler(
       [self unlockAction:kFullSync];
     }];
     _ruleSyncTimer = [self createSyncTimerWithBlock:^{
-      dispatch_source_set_timer(self.ruleSyncTimer,
-                                DISPATCH_TIME_FOREVER, DISPATCH_TIME_FOREVER, 0);
+      dispatch_source_set_timer(self.ruleSyncTimer, DISPATCH_TIME_FOREVER, DISPATCH_TIME_FOREVER,
+                                0);
       if (![[SNTConfigurator configurator] syncBaseURL]) return;
       [self lockAction:kRuleSync];
       SNTCommandSyncState *syncState = [self createSyncState];
@@ -148,7 +148,7 @@ static void reachabilityHandler(
     LOGD(@"Events upload complete");
   } else {
     LOGE(@"Events upload failed.  Will retry again once %@ is reachable",
-        [[SNTConfigurator configurator] syncBaseURL].absoluteString);
+         [[SNTConfigurator configurator] syncBaseURL].absoluteString);
     [self startReachability];
   }
 }
@@ -161,7 +161,7 @@ static void reachabilityHandler(
   }
   SNTCommandSyncState *syncState = [self createSyncState];
   SNTCommandSyncEventUpload *p = [[SNTCommandSyncEventUpload alloc] initWithState:syncState];
-  if ([p uploadEvents:@[event]]) {
+  if ([p uploadEvents:@[ event ]]) {
     if ([syncState.bundleBinaryRequests containsObject:event.fileBundleHash]) {
       reply(SNTBundleEventActionSendEvents);
       LOGD(@"Needs related events");
@@ -174,7 +174,7 @@ static void reachabilityHandler(
     // wanted them or not.  If they weren't needed the server will simply ignore them.
     reply(SNTBundleEventActionStoreEvents);
     LOGE(@"Bundle event upload failed.  Will retry again once %@ is reachable",
-        [[SNTConfigurator configurator] syncBaseURL].absoluteString);
+         [[SNTConfigurator configurator] syncBaseURL].absoluteString);
     [self startReachability];
   }
 }
@@ -202,12 +202,13 @@ static void reachabilityHandler(
                                                        apiKey:config.fcmAPIKey
                                          sessionConfiguration:syncState.session.configuration.copy
                                                messageHandler:^(NSDictionary *message) {
-    if (!message || message[@"noOp"]) return;
-      STRONGIFY(self);
-      LOGD(@"%@", message);
-      [self.FCMClient acknowledgeMessage:message];
-      [self processFCMMessage:message withMachineID:machineID];
-  }];
+                                                 if (!message || message[@"noOp"]) return;
+                                                 STRONGIFY(self);
+                                                 LOGD(@"%@", message);
+                                                 [self.FCMClient acknowledgeMessage:message];
+                                                 [self processFCMMessage:message
+                                                           withMachineID:machineID];
+                                               }];
 
   self.FCMClient.tokenHandler = ^(NSString *t) {
     STRONGIFY(self);
@@ -254,7 +255,7 @@ static void reachabilityHandler(
   NSString *fileName = message[kFCMFileNameKey];
   if (fileName && fileHash) {
     [self.allowlistNotificationQueue addOperationWithBlock:^{
-      self.allowlistNotifications[fileHash] = @{ kFileName : fileName }.mutableCopy;
+      self.allowlistNotifications[fileHash] = @{kFileName : fileName}.mutableCopy;
     }];
   }
 
@@ -425,9 +426,9 @@ static void reachabilityHandler(
 #pragma mark internal helpers
 
 - (dispatch_source_t)createSyncTimerWithBlock:(void (^)(void))block {
-  dispatch_source_t timerQueue = dispatch_source_create(
-      DISPATCH_SOURCE_TYPE_TIMER, 0, 0,
-      dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_BACKGROUND, 0));
+  dispatch_source_t timerQueue =
+    dispatch_source_create(DISPATCH_SOURCE_TYPE_TIMER, 0, 0,
+                           dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_BACKGROUND, 0));
   dispatch_source_set_event_handler(timerQueue, block);
   dispatch_resume(timerQueue);
   return timerQueue;
@@ -499,7 +500,7 @@ static void reachabilityHandler(
   syncState.daemon = self.daemon;
 
   syncState.compressedContentEncoding =
-      config.enableBackwardsCompatibleContentEncoding ? @"zlib" : @"deflate";
+    config.enableBackwardsCompatibleContentEncoding ? @"zlib" : @"deflate";
 
   syncState.FCMToken = self.FCMToken;
 
@@ -540,8 +541,8 @@ static void reachabilityHandler(
       .release = (void (*)(const void *))CFBridgingRelease,
     };
     if (SCNetworkReachabilitySetCallback(self->_reachability, reachabilityHandler, &context)) {
-      SCNetworkReachabilitySetDispatchQueue(self->_reachability,
-          dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_BACKGROUND, 0));
+      SCNetworkReachabilitySetDispatchQueue(
+        self->_reachability, dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_BACKGROUND, 0));
     } else {
       [self stopReachability];
     }

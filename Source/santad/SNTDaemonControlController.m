@@ -26,14 +26,14 @@
 #import "Source/common/SNTXPCBundleServiceInterface.h"
 #import "Source/common/SNTXPCNotifierInterface.h"
 #import "Source/common/SNTXPCSyncdInterface.h"
-#import "Source/santad/SNTDatabaseController.h"
-#import "Source/santad/SNTNotificationQueue.h"
-#import "Source/santad/SNTPolicyProcessor.h"
-#import "Source/santad/SNTSyncdQueue.h"
 #import "Source/santad/DataLayer/SNTEventTable.h"
 #import "Source/santad/DataLayer/SNTRuleTable.h"
 #import "Source/santad/EventProviders/SNTEventProvider.h"
 #import "Source/santad/Logs/SNTEventLog.h"
+#import "Source/santad/SNTDatabaseController.h"
+#import "Source/santad/SNTNotificationQueue.h"
+#import "Source/santad/SNTPolicyProcessor.h"
+#import "Source/santad/SNTSyncdQueue.h"
 
 // Globals used by the santad watchdog thread
 uint64_t watchdogCPUEvents = 0;
@@ -58,8 +58,8 @@ double watchdogRAMPeak = 0;
                              eventLog:(SNTEventLog *)eventLog {
   self = [super init];
   if (self) {
-    _policyProcessor = [[SNTPolicyProcessor alloc] initWithRuleTable:
-                           [SNTDatabaseController ruleTable]];
+    _policyProcessor =
+      [[SNTPolicyProcessor alloc] initWithRuleTable:[SNTDatabaseController ruleTable]];
     _eventProvider = eventProvider;
     _notQueue = notQueue;
     _syncdQueue = syncdQueue;
@@ -93,13 +93,11 @@ double watchdogRAMPeak = 0;
 
 #pragma mark Database ops
 
-- (void)databaseRuleCounts:(void (^)(int64_t binary,
-                                     int64_t certificate,
-                                     int64_t compiler,
+- (void)databaseRuleCounts:(void (^)(int64_t binary, int64_t certificate, int64_t compiler,
                                      int64_t transitive))reply {
   SNTRuleTable *rdb = [SNTDatabaseController ruleTable];
-  reply([rdb binaryRuleCount], [rdb certificateRuleCount],
-        [rdb compilerRuleCount], [rdb transitiveRuleCount]);
+  reply([rdb binaryRuleCount], [rdb certificateRuleCount], [rdb compilerRuleCount],
+        [rdb transitiveRuleCount]);
 }
 
 - (void)databaseRuleAddRules:(NSArray *)rules
@@ -154,7 +152,8 @@ double watchdogRAMPeak = 0;
                       reply:(void (^)(SNTEventState))reply {
   reply([self.policyProcessor decisionForFilePath:filePath
                                        fileSHA256:fileSHA256
-                                certificateSHA256:certificateSHA256].decision);
+                                certificateSHA256:certificateSHA256]
+          .decision);
 }
 
 #pragma mark Config Ops
@@ -281,7 +280,7 @@ double watchdogRAMPeak = 0;
 
 - (void)postRuleSyncNotificationWithCustomMessage:(NSString *)message reply:(void (^)(void))reply {
   [[self.notQueue.notifierConnection remoteObjectProxy]
-      postRuleSyncNotificationWithCustomMessage:message];
+    postRuleSyncNotificationWithCustomMessage:message];
   reply();
 }
 
@@ -292,8 +291,7 @@ double watchdogRAMPeak = 0;
 ///  @param event The offending event, fileBundleHash & fileBundleBinaryCount need to be populated.
 ///  @param events Next bundle events.
 ///
-- (void)syncBundleEvent:(SNTStoredEvent *)event
-          relatedEvents:(NSArray<SNTStoredEvent *> *)events {
+- (void)syncBundleEvent:(SNTStoredEvent *)event relatedEvents:(NSArray<SNTStoredEvent *> *)events {
   SNTEventTable *eventTable = [SNTDatabaseController eventTable];
 
   // Delete the event cached by the execution controller.
@@ -309,20 +307,20 @@ double watchdogRAMPeak = 0;
 
   // Sync the updated event. If the sync server needs the related events, add them to the eventTable
   // and upload them too.
-  [self.syncdQueue addBundleEvent:event reply:^(SNTBundleEventAction action) {
-    STRONGIFY(self);
-    switch(action) {
-      case SNTBundleEventActionDropEvents:
-        break;
-      case SNTBundleEventActionStoreEvents:
-        [eventTable addStoredEvents:events];
-        break;
-      case SNTBundleEventActionSendEvents:
-        [eventTable addStoredEvents:events];
-        [self.syncdQueue addEvents:events isFromBundle:YES];
-        break;
-    }
-  }];
+  [self.syncdQueue addBundleEvent:event
+                            reply:^(SNTBundleEventAction action) {
+                              STRONGIFY(self);
+                              switch (action) {
+                                case SNTBundleEventActionDropEvents: break;
+                                case SNTBundleEventActionStoreEvents:
+                                  [eventTable addStoredEvents:events];
+                                  break;
+                                case SNTBundleEventActionSendEvents:
+                                  [eventTable addStoredEvents:events];
+                                  [self.syncdQueue addEvents:events isFromBundle:YES];
+                                  break;
+                              }
+                            }];
 }
 
 @end

@@ -44,11 +44,13 @@
 }
 
 - (BOOL)sync {
-  [self doesNotRecognizeSelector:_cmd]; __builtin_unreachable();
+  [self doesNotRecognizeSelector:_cmd];
+  __builtin_unreachable();
 }
 
 - (NSString *)stageURL {
-  [self doesNotRecognizeSelector:_cmd]; __builtin_unreachable();
+  [self doesNotRecognizeSelector:_cmd];
+  __builtin_unreachable();
 }
 
 - (NSMutableURLRequest *)requestWithDictionary:(NSDictionary *)dictionary {
@@ -98,8 +100,7 @@
     // If the original request failed because of an auth error, attempt to get a new XSRF token and
     // try again. Unfortunately some servers cause NSURLSession to return 'client cert required' or
     // 'could not parse response' when a 403 occurs and SSL cert auth is enabled.
-    if ((response.statusCode == 403 ||
-         error.code == NSURLErrorClientCertificateRequired ||
+    if ((response.statusCode == 403 || error.code == NSURLErrorClientCertificateRequired ||
          error.code == NSURLErrorCannotParseResponse) &&
         [self fetchXSRFToken]) {
       NSMutableURLRequest *mutableRequest = [request mutableCopy];
@@ -158,17 +159,16 @@
   __block NSError *_error;
 
   dispatch_semaphore_t sema = dispatch_semaphore_create(0);
-  NSURLSessionDataTask *task = [self.urlSession dataTaskWithRequest:request
-                                                  completionHandler:^(NSData *data,
-                                                                      NSURLResponse *response,
-                                                                      NSError *error) {
-    if ([response isKindOfClass:[NSHTTPURLResponse class]]) {
-      _response = (NSHTTPURLResponse *)response;
-    }
-    _data = data;
-    _error = error;
-    dispatch_semaphore_signal(sema);
-  }];
+  NSURLSessionDataTask *task =
+    [self.urlSession dataTaskWithRequest:request
+                       completionHandler:^(NSData *data, NSURLResponse *response, NSError *error) {
+                         if ([response isKindOfClass:[NSHTTPURLResponse class]]) {
+                           _response = (NSHTTPURLResponse *)response;
+                         }
+                         _data = data;
+                         _error = error;
+                         dispatch_semaphore_signal(sema);
+                       }];
   [task resume];
 
   if (dispatch_semaphore_wait(sema, dispatch_time(DISPATCH_TIME_NOW, NSEC_PER_SEC * timeout))) {
@@ -181,7 +181,7 @@
 }
 
 - (NSData *)stripXssi:(NSData *)data {
-  static const char xssi[3] = { ']', ')', '}' };
+  static const char xssi[3] = {']', ')', '}'};
   if (data.length < 3 || strncmp(data.bytes, xssi, 3)) return data;
   return [data subdataWithRange:NSMakeRange(3, data.length - 3)];
 }
@@ -198,7 +198,9 @@
     [self performRequest:request timeout:10 response:&response error:NULL];
     if (response.statusCode == 200) {
       NSDictionary *headers = [response allHeaderFields];
-      [[self.daemonConn remoteObjectProxy] setXsrfToken:headers[kXSRFToken] reply:^{}];
+      [[self.daemonConn remoteObjectProxy] setXsrfToken:headers[kXSRFToken]
+                                                  reply:^{
+                                                  }];
       self.syncState.xsrfToken = headers[kXSRFToken];
       LOGD(@"Retrieved new XSRF token");
       success = YES;

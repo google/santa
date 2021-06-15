@@ -24,7 +24,7 @@
 ///
 ///  SNTDaemonControlController handles all of the RPCs from santactl
 ///
-@interface SNTDaemonControlController : NSObject<SNTDaemonControlXPC>
+@interface SNTDaemonControlController : NSObject <SNTDaemonControlXPC>
 
 - (instancetype)initWithEventProvider:(SNTDriverManager *)driverManager
                     notificationQueue:(SNTNotificationQueue *)notQueue

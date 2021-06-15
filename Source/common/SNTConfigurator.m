@@ -85,7 +85,8 @@ static NSString *const kEnableForkAndExitLogging = @"EnableForkAndExitLogging";
 static NSString *const kIgnoreOtherEndpointSecurityClients = @"IgnoreOtherEndpointSecurityClients";
 static NSString *const kEnableDebugLogging = @"EnableDebugLogging";
 
-static NSString *const kEnableBackwardsCompatibleContentEncoding = @"EnableBackwardsCompatibleContentEncoding";
+static NSString *const kEnableBackwardsCompatibleContentEncoding =
+  @"EnableBackwardsCompatibleContentEncoding";
 
 static NSString *const kFCMProject = @"FCMProject";
 static NSString *const kFCMEntity = @"FCMEntity";
@@ -676,7 +677,7 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
   // Only santad should read this file.
   if (geteuid() != 0) return nil;
   NSMutableDictionary *syncState =
-      [NSMutableDictionary dictionaryWithContentsOfFile:kSyncStateFilePath];
+    [NSMutableDictionary dictionaryWithContentsOfFile:kSyncStateFilePath];
   for (NSString *key in syncState.allKeys) {
     if (self.syncServerKeyTypes[key] == [NSRegularExpression class]) {
       NSString *pattern = [syncState[key] isKindOfClass:[NSString class]] ? syncState[key] : nil;
@@ -702,8 +703,9 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
   syncState[kAllowedPathRegexKey] = [syncState[kAllowedPathRegexKey] pattern];
   syncState[kBlockedPathRegexKey] = [syncState[kBlockedPathRegexKey] pattern];
   [syncState writeToFile:kSyncStateFilePath atomically:YES];
-  [[NSFileManager defaultManager] setAttributes:@{ NSFilePosixPermissions : @0644 }
-                                   ofItemAtPath:kSyncStateFilePath error:NULL];
+  [[NSFileManager defaultManager] setAttributes:@{NSFilePosixPermissions : @0644}
+                                   ofItemAtPath:kSyncStateFilePath
+                                          error:NULL];
 }
 
 - (void)clearSyncState {

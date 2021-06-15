@@ -52,12 +52,12 @@
     if (event.idx) [eventIds addObject:event.idx];
     if (uploadEvents.count >= self.syncState.eventBatchSize) break;
   }
-  
+
   if (!self.syncState.cleanSync) {
-    NSDictionary *r = [self performRequest:[self requestWithDictionary:@{ kEvents: uploadEvents }]];
+    NSDictionary *r = [self performRequest:[self requestWithDictionary:@{kEvents : uploadEvents}]];
     if (!r) return NO;
 
-    // A list of bundle hashes that require their related binary events to be uploaded.		
+    // A list of bundle hashes that require their related binary events to be uploaded.
     self.syncState.bundleBinaryRequests = r[kEventUploadBundleBinaries];
 
     LOGI(@"Uploaded %lu events", uploadEvents.count);
@@ -79,7 +79,8 @@
 - (NSDictionary *)dictionaryForEvent:(SNTStoredEvent *)event {
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wobjc-literal-conversion"
-#define ADDKEY(dict, key, value) if (value) dict[key] = value
+#define ADDKEY(dict, key, value) \
+  if (value) dict[key] = value
   NSMutableDictionary *newEvent = [NSMutableDictionary dictionary];
 
   ADDKEY(newEvent, kFileSHA256, event.fileSHA256);

@@ -16,14 +16,13 @@
 
 #include "Source/common/SNTPrefixTree.h"
 
-#import "Source/common/SantaCache.h"
 #import "Source/common/SNTConfigurator.h"
 #import "Source/common/SNTLogging.h"
+#import "Source/common/SantaCache.h"
 
-#include <atomic>
 #include <bsm/libbsm.h>
 #include <libproc.h>
-
+#include <atomic>
 
 @interface SNTEndpointSecurityManager () {
   std::atomic<bool> _compilerPIDs[PID_MAX];
@@ -46,13 +45,12 @@
     [self establishClient];
     _prefixTree = new SNTPrefixTree();
     _esAuthQueue =
-        dispatch_queue_create("com.google.santa.daemon.es_auth", DISPATCH_QUEUE_CONCURRENT);
+      dispatch_queue_create("com.google.santa.daemon.es_auth", DISPATCH_QUEUE_CONCURRENT);
     dispatch_set_target_queue(_esAuthQueue,
                               dispatch_get_global_queue(QOS_CLASS_USER_INTERACTIVE, 0));
     _esNotifyQueue =
-        dispatch_queue_create("com.google.santa.daemon.es_notify", DISPATCH_QUEUE_CONCURRENT);
-    dispatch_set_target_queue(_esNotifyQueue,
-                              dispatch_get_global_queue(QOS_CLASS_BACKGROUND, 0));
+      dispatch_queue_create("com.google.santa.daemon.es_notify", DISPATCH_QUEUE_CONCURRENT);
+    dispatch_set_target_queue(_esNotifyQueue, dispatch_get_global_queue(QOS_CLASS_BACKGROUND, 0));
     _selfPID = getpid();
   }
 
@@ -204,8 +202,8 @@
           auto responded = std::make_shared<std::atomic<bool>>(false);
           dispatch_after(dispatch_time(m->deadline, NSEC_PER_SEC * -5), self.esAuthQueue, ^(void) {
             if (responded->load()) return;
-            LOGE(@"Deadline reached: deny pid=%d ret=%d",
-                 pid, es_respond_auth_result(self.client, m, ES_AUTH_RESULT_DENY, false));
+            LOGE(@"Deadline reached: deny pid=%d ret=%d", pid,
+                 es_respond_auth_result(self.client, m, ES_AUTH_RESULT_DENY, false));
           });
 
           // Copy the message and return control back to ES
@@ -303,7 +301,7 @@
                                               encoding:NSUTF8StringEncoding];
       if (([path isEqualToString:@"/private/var/db/santa/rules.db"] ||
            [path isEqualToString:@"/private/var/db/santa/events.db"]) &&
-           audit_token_to_pid(m->process->audit_token) != self.selfPID) {
+          audit_token_to_pid(m->process->audit_token) != self.selfPID) {
         LOGW(@"Preventing attempt to delete Santa databases!");
         es_respond_auth_result(self.client, m, ES_AUTH_RESULT_DENY, true);
         return;
@@ -319,7 +317,7 @@
 
       if (([path isEqualToString:@"/private/var/db/santa/rules.db"] ||
            [path isEqualToString:@"/private/var/db/santa/events.db"]) &&
-           audit_token_to_pid(m->process->audit_token) != self.selfPID) {
+          audit_token_to_pid(m->process->audit_token) != self.selfPID) {
         LOGW(@"Preventing attempt to rename Santa databases!");
         es_respond_auth_result(self.client, m, ES_AUTH_RESULT_DENY, true);
         return;
@@ -377,15 +375,13 @@
       callback = self.logCallback;
       break;
     }
-    default:
-      LOGE(@"Unknown es message: %d", m->event_type);
-      return;
+    default: LOGE(@"Unknown es message: %d", m->event_type); return;
   }
 
   // Deny auth exec events if the path doesn't fit in the santa message.
   // TODO(bur/rah): Add support for larger paths.
-  if ([self populateBufferFromESFile:targetFile buffer:sm.path size:sizeof(sm.path)]
-      && m->event_type == ES_EVENT_TYPE_AUTH_EXEC) {
+  if ([self populateBufferFromESFile:targetFile buffer:sm.path size:sizeof(sm.path)] &&
+      m->event_type == ES_EVENT_TYPE_AUTH_EXEC) {
     LOGE(@"path is truncated, deny: %s", sm.path);
     es_respond_auth_result(self.client, m, ES_AUTH_RESULT_DENY, false);
     return;
@@ -409,18 +405,19 @@
 }
 
 - (void)listenForDecisionRequests:(void (^)(santa_message_t))callback API_AVAILABLE(macos(10.15)) {
-  while (!self.connectionEstablished) usleep(100000); // 100ms
+  while (!self.connectionEstablished)
+    usleep(100000);  // 100ms
 
   self.decisionCallback = callback;
   es_event_type_t events[] = {
-      ES_EVENT_TYPE_AUTH_EXEC,
-      ES_EVENT_TYPE_AUTH_UNLINK,
-      ES_EVENT_TYPE_AUTH_RENAME,
-      ES_EVENT_TYPE_AUTH_KEXTLOAD,
+    ES_EVENT_TYPE_AUTH_EXEC,
+    ES_EVENT_TYPE_AUTH_UNLINK,
+    ES_EVENT_TYPE_AUTH_RENAME,
+    ES_EVENT_TYPE_AUTH_KEXTLOAD,
 
-      // This is in the decision callback because it's used for detecting
-      // the exit of a 'compiler' used by transitive whitelisting.
-      ES_EVENT_TYPE_NOTIFY_EXIT,
+    // This is in the decision callback because it's used for detecting
+    // the exit of a 'compiler' used by transitive whitelisting.
+    ES_EVENT_TYPE_NOTIFY_EXIT,
   };
   es_return_t sret = es_subscribe(self.client, events, sizeof(events) / sizeof(es_event_type_t));
   if (sret != ES_RETURN_SUCCESS) LOGE(@"Unable to subscribe to auth events: %d", sret);
@@ -432,23 +429,20 @@
 }
 
 - (void)listenForLogRequests:(void (^)(santa_message_t))callback API_AVAILABLE(macos(10.15)) {
-  while (!self.connectionEstablished) usleep(100000); // 100ms
+  while (!self.connectionEstablished)
+    usleep(100000);  // 100ms
 
   self.logCallback = callback;
   es_event_type_t events[] = {
-    ES_EVENT_TYPE_NOTIFY_EXEC,
-    ES_EVENT_TYPE_NOTIFY_CLOSE,
-    ES_EVENT_TYPE_NOTIFY_LINK,
-    ES_EVENT_TYPE_NOTIFY_RENAME,
-    ES_EVENT_TYPE_NOTIFY_UNLINK,
-    ES_EVENT_TYPE_NOTIFY_FORK,
+    ES_EVENT_TYPE_NOTIFY_EXEC,   ES_EVENT_TYPE_NOTIFY_CLOSE,  ES_EVENT_TYPE_NOTIFY_LINK,
+    ES_EVENT_TYPE_NOTIFY_RENAME, ES_EVENT_TYPE_NOTIFY_UNLINK, ES_EVENT_TYPE_NOTIFY_FORK,
   };
   es_return_t sret = es_subscribe(self.client, events, sizeof(events) / sizeof(es_event_type_t));
   if (sret != ES_RETURN_SUCCESS) LOGE(@"Unable to subscribe to notify events: %d", sret);
 }
 
-- (int)postAction:(santa_action_t)action forMessage:(santa_message_t)sm
-    API_AVAILABLE(macos(10.15)) {
+- (int)postAction:(santa_action_t)action
+       forMessage:(santa_message_t)sm API_AVAILABLE(macos(10.15)) {
   es_respond_result_t ret;
   switch (action) {
     case ACTION_RESPOND_ALLOW_COMPILER:
@@ -456,30 +450,28 @@
 
       // Allow the exec, but don't cache the decision so subsequent execs of the compiler get
       // marked appropriately.
-      ret = es_respond_auth_result(self.client, (es_message_t *)sm.es_message,
-                                   ES_AUTH_RESULT_ALLOW, false);
+      ret = es_respond_auth_result(self.client, (es_message_t *)sm.es_message, ES_AUTH_RESULT_ALLOW,
+                                   false);
       break;
     case ACTION_RESPOND_ALLOW:
     case ACTION_RESPOND_ALLOW_PENDING_TRANSITIVE:
-      ret = es_respond_auth_result(self.client, (es_message_t *)sm.es_message,
-                                   ES_AUTH_RESULT_ALLOW, true);
+      ret = es_respond_auth_result(self.client, (es_message_t *)sm.es_message, ES_AUTH_RESULT_ALLOW,
+                                   true);
       break;
     case ACTION_RESPOND_DENY:
     case ACTION_RESPOND_TOOLONG:
-      ret = es_respond_auth_result(self.client, (es_message_t *)sm.es_message,
-                                   ES_AUTH_RESULT_DENY, false);
+      ret = es_respond_auth_result(self.client, (es_message_t *)sm.es_message, ES_AUTH_RESULT_DENY,
+                                   false);
       break;
-    case ACTION_RESPOND_ACK:
-      return ES_RESPOND_RESULT_SUCCESS;
-    default:
-      ret = ES_RESPOND_RESULT_ERR_INVALID_ARGUMENT;
+    case ACTION_RESPOND_ACK: return ES_RESPOND_RESULT_SUCCESS;
+    default: ret = ES_RESPOND_RESULT_ERR_INVALID_ARGUMENT;
   }
 
   return ret;
 }
 
 - (BOOL)flushCacheNonRootOnly:(BOOL)nonRootOnly API_AVAILABLE(macos(10.15)) {
-  if (!self.connectionEstablished) return YES; // if not connected, there's nothing to flush.
+  if (!self.connectionEstablished) return YES;  // if not connected, there's nothing to flush.
   return es_clear_cache(self.client) == ES_CLEAR_CACHE_RESULT_SUCCESS;
 }
 
@@ -538,11 +530,10 @@
                                      buffer:(char *)buffer
                                        size:(size_t)size {
   BOOL truncated = NO;
-  switch(mv.destination_type) {
+  switch (mv.destination_type) {
     case ES_DESTINATION_TYPE_NEW_PATH: {
       NSString *p = @(mv.destination.new_path.dir->path.data);
-      p = [p stringByAppendingPathComponent:
-              @(mv.destination.new_path.filename.data)];
+      p = [p stringByAppendingPathComponent:@(mv.destination.new_path.filename.data)];
       truncated = [self populateBufferFromString:p.UTF8String
                                           length:p.length
                                           buffer:buffer

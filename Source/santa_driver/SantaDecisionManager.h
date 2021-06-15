@@ -23,10 +23,10 @@
 #include <sys/proc.h>
 #include <sys/vnode.h>
 
-#include "Source/common/SantaCache.h"
 #include "Source/common/SNTKernelCommon.h"
 #include "Source/common/SNTLogging.h"
 #include "Source/common/SNTPrefixTree.h"
+#include "Source/common/SantaCache.h"
 
 ///
 ///  SantaDecisionManager is responsible for intercepting Vnode execute actions
@@ -109,8 +109,7 @@ class SantaDecisionManager : public OSObject {
   uint32_t PidMonitorSleepTimeMilliseconds() const;
 
   /// Adds a decision to the cache, with a timestamp.
-  void AddToCache(santa_vnode_id_t identifier,
-                  const santa_action_t decision,
+  void AddToCache(santa_vnode_id_t identifier, const santa_action_t decision,
                   const uint64_t microsecs = GetCurrentUptime());
 
   /**
@@ -133,17 +132,20 @@ class SantaDecisionManager : public OSObject {
   void ClearCache(bool non_root_only = false);
 
   /**
-    Fills out the per_bucket_counts array with the number of items in each bucket in the
-    non-root decision cache.
+    Fills out the per_bucket_counts array with the number of items in each
+    bucket in the non-root decision cache.
 
-    @param per_bucket_counts An array of uint16_t's to fill in with the number of items in each
-        bucket. The size of this array is expected to equal array_size.
-    @param array_size The size of the per_bucket_counts array on input. Upon return this will be
-        updated to the number of slots that were actually used.
-    @param start_bucket If non-zero this is the bucket in the cache to start from. Upon return this
-        will be the next numbered bucket to start from for subsequent requests.
+    @param per_bucket_counts An array of uint16_t's to fill in with the number
+    of items in each bucket. The size of this array is expected to equal
+    array_size.
+    @param array_size The size of the per_bucket_counts array on input. Upon
+    return this will be updated to the number of slots that were actually used.
+    @param start_bucket If non-zero this is the bucket in the cache to start
+    from. Upon return this will be the next numbered bucket to start from for
+    subsequent requests.
   */
-  void CacheBucketCount(uint16_t *per_bucket_counts, uint16_t *array_size, uint64_t *start_bucket);
+  void CacheBucketCount(uint16_t *per_bucket_counts, uint16_t *array_size,
+                        uint64_t *start_bucket);
 
   /// Increments the count of active callbacks pending.
   void IncrementListenerInvocations();
@@ -167,16 +169,15 @@ class SantaDecisionManager : public OSObject {
   /**
     Add a file modification prefix filter.
   */
-  inline IOReturn FilemodPrefixFilterAdd(const char *prefix, uint64_t *node_count = nullptr) {
+  inline IOReturn FilemodPrefixFilterAdd(const char *prefix,
+                                         uint64_t *node_count = nullptr) {
     return filemod_prefix_filter_->AddPrefix(prefix, node_count);
   }
 
   /**
     Reset the file modification prefix filter tree.
   */
-  inline void FilemodPrefixFilterReset() {
-    filemod_prefix_filter_->Reset();
-  }
+  inline void FilemodPrefixFilterReset() { filemod_prefix_filter_->Reset(); }
 
   /**
    Fetches the vnode_id for a given vnode.
@@ -185,16 +186,14 @@ class SantaDecisionManager : public OSObject {
    @param vp The Vnode to get the ID for
    @return santa_vnode_id_t The Vnode ID.
    */
-  static inline santa_vnode_id_t GetVnodeIDForVnode(const vfs_context_t ctx, const vnode_t vp) {
+  static inline santa_vnode_id_t GetVnodeIDForVnode(const vfs_context_t ctx,
+                                                    const vnode_t vp) {
     struct vnode_attr vap;
     VATTR_INIT(&vap);
     VATTR_WANTED(&vap, va_fsid);
     VATTR_WANTED(&vap, va_fileid);
     vnode_getattr(vp, &vap, ctx);
-    return {
-      .fsid = vap.va_fsid,
-      .fileid = vap.va_fileid
-    };
+    return {.fsid = vap.va_fsid, .fileid = vap.va_fileid};
   }
 
   /**
@@ -216,8 +215,8 @@ class SantaDecisionManager : public OSObject {
     @param path The path being operated on.
     @param new_path The target path for moves and links.
   */
-  void FileOpCallback(kauth_action_t action, const vnode_t vp,
-                      const char *path, const char *new_path);
+  void FileOpCallback(kauth_action_t action, const vnode_t vp, const char *path,
+                      const char *new_path);
 
  private:
   /**
@@ -227,8 +226,8 @@ class SantaDecisionManager : public OSObject {
   static const uint32_t kRequestLoopSleepMilliseconds = 1000;
 
   /**
-    While waiting for a response from the daemon, this is the maximum number cache checks before
-    re-sending the request.
+    While waiting for a response from the daemon, this is the maximum number
+    cache checks before re-sending the request.
   */
   static const uint32_t kRequestCacheChecks = 5;
 
@@ -274,7 +273,8 @@ class SantaDecisionManager : public OSObject {
     @param identifier The vnode ID string for this request
     @return santa_action_t The response for this request
   */
-  santa_action_t GetFromDaemon(santa_message_t *message, santa_vnode_id_t identifier);
+  santa_action_t GetFromDaemon(santa_message_t *message,
+                               santa_vnode_id_t identifier);
 
   /**
     Fetches an execution decision for a file, first using the cache and then
@@ -287,8 +287,8 @@ class SantaDecisionManager : public OSObject {
     @param vnode_id The ID for this vnode.
     @return santa_action_t The response for this request
   */
-  santa_action_t FetchDecision(
-      const kauth_cred_t cred, const vnode_t vp, const santa_vnode_id_t vnode_id);
+  santa_action_t FetchDecision(const kauth_cred_t cred, const vnode_t vp,
+                               const santa_vnode_id_t vnode_id);
 
   /**
     Posts the requested message to the decision data queue.
@@ -355,7 +355,8 @@ class SantaDecisionManager : public OSObject {
    @param identifier The identifier
    @return SantaCache* The cache to use
   */
-  SantaCache<santa_vnode_id_t, uint64_t>* CacheForIdentifier(const santa_vnode_id_t identifier);
+  SantaCache<santa_vnode_id_t, uint64_t> *CacheForIdentifier(
+      const santa_vnode_id_t identifier);
 
   // This is the file system ID of the root filesystem,
   // used to determine which cache to use for requests
@@ -381,8 +382,9 @@ class SantaDecisionManager : public OSObject {
   kauth_listener_t vnode_listener_;
   kauth_listener_t fileop_listener_;
 
-  struct timespec ts_= { .tv_sec = kRequestLoopSleepMilliseconds / 1000,
-                         .tv_nsec = kRequestLoopSleepMilliseconds % 1000 * 1000000 };
+  struct timespec ts_ = {
+      .tv_sec = kRequestLoopSleepMilliseconds / 1000,
+      .tv_nsec = kRequestLoopSleepMilliseconds % 1000 * 1000000};
 };
 
 /**
@@ -396,14 +398,10 @@ class SantaDecisionManager : public OSObject {
   @param arg2 Parent Vnode. May be nullptr.
   @param arg3 Pointer to an errno-style error.
 */
-extern "C" int vnode_scope_callback(
-    kauth_cred_t credential,
-    void *idata,
-    kauth_action_t action,
-    uintptr_t arg0,
-    uintptr_t arg1,
-    uintptr_t arg2,
-    uintptr_t arg3);
+extern "C" int vnode_scope_callback(kauth_cred_t credential, void *idata,
+                                    kauth_action_t action, uintptr_t arg0,
+                                    uintptr_t arg1, uintptr_t arg2,
+                                    uintptr_t arg3);
 
 /**
   The kauth callback function for the FileOp scope
@@ -416,13 +414,9 @@ extern "C" int vnode_scope_callback(
   @param arg2 depends on action, usually 0.
   @param arg3 depends on action, usually 0.
 */
-extern "C" int fileop_scope_callback(
-    kauth_cred_t credential,
-    void *idata,
-    kauth_action_t action,
-    uintptr_t arg0,
-    uintptr_t arg1,
-    uintptr_t arg2,
-    uintptr_t arg3);
+extern "C" int fileop_scope_callback(kauth_cred_t credential, void *idata,
+                                     kauth_action_t action, uintptr_t arg0,
+                                     uintptr_t arg1, uintptr_t arg2,
+                                     uintptr_t arg3);
 
 #endif  // SANTA__SANTA_DRIVER__SANTADECISIONMANAGER_H

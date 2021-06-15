@@ -41,8 +41,11 @@ static const NSUInteger kTransitiveRuleExpirationSeconds = 6 * 30 * 24 * 3600;
 
 - (NSArray *)criticalSystemBinaryPaths {
   return @[
-    @"/usr/libexec/trustd", @"/usr/sbin/securityd", @"/usr/libexec/xpcproxy",
-    @"/usr/sbin/ocspd", @"/usr/lib/dyld",
+    @"/usr/libexec/trustd",
+    @"/usr/sbin/securityd",
+    @"/usr/libexec/xpcproxy",
+    @"/usr/sbin/ocspd",
+    @"/usr/lib/dyld",
     @"/Applications/Santa.app/Contents/MacOS/Santa",
     @"/Applications/Santa.app/Contents/MacOS/santactl",
     @"/Applications/Santa.app/Contents/MacOS/santabundleservice",
@@ -66,8 +69,8 @@ static const NSUInteger kTransitiveRuleExpirationSeconds = 6 * 30 * 24 * 3600;
     } else if (![csInfo signingInformationMatches:self.santadCSInfo]) {
       LOGE(@"Unable to validate critical system binary. "
            @"pid 1: %@, santad: %@ and %@: %@ do not match.",
-           self.launchdCSInfo.leafCertificate,
-           self.santadCSInfo.leafCertificate, path, csInfo.leafCertificate);
+           self.launchdCSInfo.leafCertificate, self.santadCSInfo.leafCertificate, path,
+           csInfo.leafCertificate);
       continue;
     }
 
@@ -82,7 +85,6 @@ static const NSUInteger kTransitiveRuleExpirationSeconds = 6 * 30 * 24 * 3600;
     cd.certCommonName = csInfo.leafCertificate.commonName;
 
     bins[binInfo.SHA256] = cd;
-
   }
   self.criticalSystemBinaries = bins;
 }
@@ -112,7 +114,6 @@ static const NSUInteger kTransitiveRuleExpirationSeconds = 6 * 30 * 24 * 3600;
     [db executeUpdate:@"DROP VIEW IF EXISTS certrules"];
     newVersion = 2;
   }
-
 
   if (version < 3) {
     // Add timestamp column for tracking age of transitive rules.
@@ -159,8 +160,8 @@ static const NSUInteger kTransitiveRuleExpirationSeconds = 6 * 30 * 24 * 3600;
 - (NSUInteger)compilerRuleCount {
   __block NSUInteger count = 0;
   [self inDatabase:^(FMDatabase *db) {
-    count = [db longForQuery:@"SELECT COUNT(*) FROM rules WHERE state=?",
-             @(SNTRuleStateAllowCompiler)];
+    count =
+      [db longForQuery:@"SELECT COUNT(*) FROM rules WHERE state=?", @(SNTRuleStateAllowCompiler)];
   }];
   return count;
 }
@@ -168,8 +169,8 @@ static const NSUInteger kTransitiveRuleExpirationSeconds = 6 * 30 * 24 * 3600;
 - (NSUInteger)transitiveRuleCount {
   __block NSUInteger count = 0;
   [self inDatabase:^(FMDatabase *db) {
-    count = [db longForQuery:@"SELECT COUNT(*) FROM rules WHERE state=?",
-             @(SNTRuleStateAllowTransitive)];
+    count =
+      [db longForQuery:@"SELECT COUNT(*) FROM rules WHERE state=?", @(SNTRuleStateAllowTransitive)];
   }];
   return count;
 }
@@ -203,7 +204,7 @@ static const NSUInteger kTransitiveRuleExpirationSeconds = 6 * 30 * 24 * 3600;
   //
   [self inDatabase:^(FMDatabase *db) {
     FMResultSet *rs =
-        [db executeQuery:
+      [db executeQuery:
             @"SELECT * FROM rules WHERE (shasum=? and type=1) OR (shasum=? AND type=2) LIMIT 1",
             binarySHA256, certificateSHA256];
     if ([rs next]) {
@@ -227,8 +228,9 @@ static const NSUInteger kTransitiveRuleExpirationSeconds = 6 * 30 * 24 * 3600;
 
 #pragma mark Adding
 
-- (BOOL)addRules:(NSArray *)rules cleanSlate:(BOOL)cleanSlate
-           error:(NSError * __autoreleasing *)error {
+- (BOOL)addRules:(NSArray *)rules
+      cleanSlate:(BOOL)cleanSlate
+           error:(NSError *__autoreleasing *)error {
   if (!rules || rules.count < 1) {
     [self fillError:error code:SNTRuleTableErrorEmptyRuleArray message:nil];
     return NO;
@@ -250,11 +252,9 @@ static const NSUInteger kTransitiveRuleExpirationSeconds = 6 * 30 * 24 * 3600;
       }
 
       if (rule.state == SNTRuleStateRemove) {
-        if (![db executeUpdate:@"DELETE FROM rules WHERE shasum=? AND type=?",
-                               rule.shasum, @(rule.type)]) {
-          [self fillError:error
-                     code:SNTRuleTableErrorRemoveFailed
-                  message:[db lastErrorMessage]];
+        if (![db executeUpdate:@"DELETE FROM rules WHERE shasum=? AND type=?", rule.shasum,
+                               @(rule.type)]) {
+          [self fillError:error code:SNTRuleTableErrorRemoveFailed message:[db lastErrorMessage]];
           *rollback = failed = YES;
           return;
         }
@@ -293,8 +293,8 @@ static const NSUInteger kTransitiveRuleExpirationSeconds = 6 * 30 * 24 * 3600;
       if (rule.type == SNTRuleTypeCertificate) continue;
 
       if ([db longForQuery:
-           @"SELECT COUNT(*) FROM rules WHERE shasum=? AND type=? AND state=? LIMIT 1",
-           rule.shasum, @(SNTRuleTypeBinary), @(SNTRuleStateAllowCompiler)] > 0) {
+                @"SELECT COUNT(*) FROM rules WHERE shasum=? AND type=? AND state=? LIMIT 1",
+                rule.shasum, @(SNTRuleTypeBinary), @(SNTRuleStateAllowCompiler)] > 0) {
         flushDecisionCache = YES;
         break;
       }
@@ -310,7 +310,7 @@ static const NSUInteger kTransitiveRuleExpirationSeconds = 6 * 30 * 24 * 3600;
   [rule resetTimestamp];
   [self inDatabase:^(FMDatabase *db) {
     if (![db executeUpdate:@"UPDATE rules SET timestamp=? WHERE shasum=? AND type=?",
-          @(rule.timestamp), rule.shasum, @(rule.type)]) {
+                           @(rule.timestamp), rule.shasum, @(rule.type)]) {
       LOGE(@"Could not update timestamp for rule with sha256=%@", rule.shasum);
     }
   }];
@@ -320,17 +320,18 @@ static const NSUInteger kTransitiveRuleExpirationSeconds = 6 * 30 * 24 * 3600;
   // Don't attempt to remove transitive rules unless it's been at least an hour since the
   // last time we tried to remove them.
   if (self.lastTransitiveRuleCulling &&
-      -[self.lastTransitiveRuleCulling timeIntervalSinceNow] < 3600) return;
+      -[self.lastTransitiveRuleCulling timeIntervalSinceNow] < 3600)
+    return;
 
   // Don't bother removing rules unless rule database is large.
   if ([self ruleCount] < kTransitiveRuleCullingThreshold) return;
   // Determine what timestamp qualifies as outdated.
   NSUInteger outdatedTimestamp =
-      [[NSDate date] timeIntervalSinceReferenceDate] - kTransitiveRuleExpirationSeconds;
+    [[NSDate date] timeIntervalSinceReferenceDate] - kTransitiveRuleExpirationSeconds;
 
   [self inDatabase:^(FMDatabase *db) {
     if (![db executeUpdate:@"DELETE FROM rules WHERE state=? AND timestamp < ?",
-          @(SNTRuleStateAllowTransitive), @(outdatedTimestamp)]) {
+                           @(SNTRuleStateAllowTransitive), @(outdatedTimestamp)]) {
       LOGE(@"Could not remove outdated transitive rules");
     }
   }];
@@ -345,12 +346,10 @@ static const NSUInteger kTransitiveRuleExpirationSeconds = 6 * 30 * 24 * 3600;
 
   NSMutableDictionary *d = [NSMutableDictionary dictionary];
   switch (code) {
-    case SNTRuleTableErrorEmptyRuleArray:
-      d[NSLocalizedDescriptionKey] = @"Empty rule array";
-      break;
+    case SNTRuleTableErrorEmptyRuleArray: d[NSLocalizedDescriptionKey] = @"Empty rule array"; break;
     case SNTRuleTableErrorInvalidRule:
       d[NSLocalizedDescriptionKey] =
-          [NSString stringWithFormat:@"Rule array contained invalid entry: %@", message];
+        [NSString stringWithFormat:@"Rule array contained invalid entry: %@", message];
       break;
     case SNTRuleTableErrorInsertOrReplaceFailed:
       d[NSLocalizedDescriptionKey] = @"A database error occurred while inserting/replacing a rule";

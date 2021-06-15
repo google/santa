@@ -45,16 +45,14 @@ int main(int argc, const char *argv[]) {
     [arguments removeObjectAtIndex:0];
 
     NSString *commandName = [arguments firstObject];
-    if (!commandName ||
-        [commandName isEqualToString:@"usage"] ||
+    if (!commandName || [commandName isEqualToString:@"usage"] ||
         [commandName isEqualToString:@"commands"]) {
       print_usage();
       return 1;
     }
     [arguments removeObjectAtIndex:0];
 
-    if ([commandName isEqualToString:@"help"] ||
-        [commandName isEqualToString:@"-h"] ||
+    if ([commandName isEqualToString:@"help"] || [commandName isEqualToString:@"-h"] ||
         [commandName isEqualToString:@"--help"]) {
       if ([arguments count]) {
         // User wants help for specific command

@@ -36,8 +36,8 @@
       windowSize += 16;
     }
 
-    if (deflateInit2(&stream, Z_DEFAULT_COMPRESSION,
-                     Z_DEFLATED, windowSize, 8, Z_DEFAULT_STRATEGY) == Z_OK) {
+    if (deflateInit2(&stream, Z_DEFAULT_COMPRESSION, Z_DEFLATED, windowSize, 8,
+                     Z_DEFAULT_STRATEGY) == Z_OK) {
       NSMutableData *data = [NSMutableData dataWithLength:chunkSize];
       while (stream.avail_out == 0) {
         if (stream.total_out >= [data length]) {

@@ -12,11 +12,10 @@
 ///    See the License for the specific language governing permissions and
 ///    limitations under the License.
 
-#define STRONGIFY(var) \
-  _Pragma("clang diagnostic push") \
-  _Pragma("clang diagnostic ignored \"-Wshadow\"") \
-  __strong __typeof(var) var = (Weak_##var); \
+#define STRONGIFY(var)                                 \
+  _Pragma("clang diagnostic push")                     \
+      _Pragma("clang diagnostic ignored \"-Wshadow\"") \
+          __strong __typeof(var) var = (Weak_##var);   \
   _Pragma("clang diagnostic pop")
 
-#define WEAKIFY(var) \
-  __weak __typeof(var) Weak_##var = (var);
+#define WEAKIFY(var) __weak __typeof(var) Weak_##var = (var);

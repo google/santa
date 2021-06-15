@@ -19,7 +19,7 @@
 ///
 ///  Represents an event stored in the database.
 ///
-@interface SNTStoredEvent : NSObject<NSSecureCoding>
+@interface SNTStoredEvent : NSObject <NSSecureCoding>
 
 ///
 ///  An index for this event, randomly generated during initialization.

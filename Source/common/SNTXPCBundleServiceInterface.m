@@ -22,9 +22,9 @@
   NSXPCInterface *r = [NSXPCInterface interfaceWithProtocol:@protocol(SNTBundleServiceXPC)];
 
   [r setClasses:[NSSet setWithObjects:[NSArray class], [SNTStoredEvent class], nil]
-        forSelector:@selector(hashBundleBinariesForEvent:reply:)
-      argumentIndex:1
-            ofReply:YES];
+      forSelector:@selector(hashBundleBinariesForEvent:reply:)
+    argumentIndex:1
+          ofReply:YES];
 
   return r;
 }

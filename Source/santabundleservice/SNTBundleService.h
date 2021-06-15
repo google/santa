@@ -16,5 +16,5 @@
 
 #import "Source/common/SNTXPCBundleServiceInterface.h"
 
-@interface SNTBundleService : NSObject<SNTBundleServiceXPC>
+@interface SNTBundleService : NSObject <SNTBundleServiceXPC>
 @end

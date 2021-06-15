@@ -14,16 +14,17 @@
 
 #import "Source/santad/EventProviders/SNTCachingEndpointSecurityManager.h"
 
-#import "Source/common/SantaCache.h"
 #import "Source/common/SNTLogging.h"
+#import "Source/common/SantaCache.h"
 
-#include <bsm/libbsm.h>
 #include <EndpointSecurity/EndpointSecurity.h>
+#include <bsm/libbsm.h>
 
 uint64_t GetCurrentUptime() {
   return clock_gettime_nsec_np(CLOCK_MONOTONIC);
 }
-template<> uint64_t SantaCacheHasher<santa_vnode_id_t>(santa_vnode_id_t const& t) {
+template <>
+uint64_t SantaCacheHasher<santa_vnode_id_t>(santa_vnode_id_t const &t) {
   return (SantaCacheHasher<uint64_t>(t.fsid) << 1) ^ SantaCacheHasher<uint64_t>(t.fileid);
 }
 
@@ -66,9 +67,7 @@ template<> uint64_t SantaCacheHasher<santa_vnode_id_t>(santa_vnode_id_t const& t
           es_respond_auth_result(self.client, m, ES_AUTH_RESULT_ALLOW, false);
           break;
         }
-        default:
-          es_respond_auth_result(self.client, m, ES_AUTH_RESULT_DENY, false);
-          break;
+        default: es_respond_auth_result(self.client, m, ES_AUTH_RESULT_DENY, false); break;
       }
       return YES;
     } else if (return_action == ACTION_REQUEST_BINARY || return_action == ACTION_RESPOND_ACK) {
@@ -83,8 +82,8 @@ template<> uint64_t SantaCacheHasher<santa_vnode_id_t>(santa_vnode_id_t const& t
   return NO;
 }
 
-- (int)postAction:(santa_action_t)action forMessage:(santa_message_t)sm
-    API_AVAILABLE(macos(10.15)) {
+- (int)postAction:(santa_action_t)action
+       forMessage:(santa_message_t)sm API_AVAILABLE(macos(10.15)) {
   es_respond_result_t ret;
   switch (action) {
     case ACTION_RESPOND_ALLOW_COMPILER:
@@ -95,26 +94,24 @@ template<> uint64_t SantaCacheHasher<santa_vnode_id_t>(santa_vnode_id_t const& t
       [self addToCache:sm.vnode_id
               decision:ACTION_RESPOND_ALLOW_COMPILER
           currentTicks:GetCurrentUptime()];
-      ret = es_respond_auth_result(self.client, (es_message_t *)sm.es_message,
-                                   ES_AUTH_RESULT_ALLOW, false);
+      ret = es_respond_auth_result(self.client, (es_message_t *)sm.es_message, ES_AUTH_RESULT_ALLOW,
+                                   false);
       break;
     case ACTION_RESPOND_ALLOW:
     case ACTION_RESPOND_ALLOW_PENDING_TRANSITIVE:
       [self addToCache:sm.vnode_id decision:ACTION_RESPOND_ALLOW currentTicks:GetCurrentUptime()];
-      ret = es_respond_auth_result(self.client, (es_message_t *)sm.es_message,
-                                   ES_AUTH_RESULT_ALLOW, true);
+      ret = es_respond_auth_result(self.client, (es_message_t *)sm.es_message, ES_AUTH_RESULT_ALLOW,
+                                   true);
       break;
     case ACTION_RESPOND_DENY:
       [self addToCache:sm.vnode_id decision:ACTION_RESPOND_DENY currentTicks:GetCurrentUptime()];
       OS_FALLTHROUGH;
     case ACTION_RESPOND_TOOLONG:
-      ret = es_respond_auth_result(self.client, (es_message_t *)sm.es_message,
-                                   ES_AUTH_RESULT_DENY, false);
+      ret = es_respond_auth_result(self.client, (es_message_t *)sm.es_message, ES_AUTH_RESULT_DENY,
+                                   false);
       break;
-    case ACTION_RESPOND_ACK:
-      return ES_RESPOND_RESULT_SUCCESS;
-    default:
-      ret = ES_RESPOND_RESULT_ERR_INVALID_ARGUMENT;
+    case ACTION_RESPOND_ACK: return ES_RESPOND_RESULT_SUCCESS;
+    default: ret = ES_RESPOND_RESULT_ERR_INVALID_ARGUMENT;
   }
 
   return ret;
@@ -147,20 +144,19 @@ template<> uint64_t SantaCacheHasher<santa_vnode_id_t>(santa_vnode_id_t const& t
       _decisionCache->set(identifier, val, 0);
       break;
     }
-    default:
-      break;
+    default: break;
   }
   // TODO(rah): Look at a replacement for wakeup(), maybe NSCondition
 }
 
 - (BOOL)flushCacheNonRootOnly:(BOOL)nonRootOnly API_AVAILABLE(macos(10.15)) {
   _decisionCache->clear();
-  if (!self.connectionEstablished) return YES; // if not connected, there's nothing to flush.
+  if (!self.connectionEstablished) return YES;  // if not connected, there's nothing to flush.
   return es_clear_cache(self.client) == ES_CLEAR_CACHE_RESULT_SUCCESS;
 }
 
 - (NSArray<NSNumber *> *)cacheCounts {
-  return @[@(_decisionCache->count()), @(0)];
+  return @[ @(_decisionCache->count()), @(0) ];
 }
 
 - (NSArray<NSNumber *> *)cacheBucketCount {
@@ -181,7 +177,7 @@ template<> uint64_t SantaCacheHasher<santa_vnode_id_t>(santa_vnode_id_t const& t
 
   if (RESPONSE_VALID(result)) {
     if (result == ACTION_RESPOND_DENY) {
-      auto expiry_time = decision_time + (500 * 100000); // kMaxCacheDenyTimeMilliseconds
+      auto expiry_time = decision_time + (500 * 100000);  // kMaxCacheDenyTimeMilliseconds
       if (expiry_time < GetCurrentUptime()) {
         _decisionCache->remove(vnodeID);
         return ACTION_UNSET;

@@ -24,7 +24,8 @@
 ///  TODO(bur): Add more details about the sync.
 typedef void (^SNTFullSyncReplyBlock)(NSNumber *rulesProcessed);
 
-///  Protocol implemented by syncservice and utilized by daemon and ctl for communication with a sync server.
+///  Protocol implemented by syncservice and utilized by daemon and ctl for communication with a
+///  sync server.
 @protocol SNTSyncServiceXPC
 - (void)postEventsToSyncServer:(NSArray<SNTStoredEvent *> *)events fromBundle:(BOOL)fromBundle;
 - (void)postBundleEventToSyncServer:(SNTStoredEvent *)event
@@ -53,4 +54,3 @@ typedef void (^SNTFullSyncReplyBlock)(NSNumber *rulesProcessed);
 + (MOLXPCConnection *)configuredConnection;
 
 @end
-

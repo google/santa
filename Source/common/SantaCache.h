@@ -24,12 +24,15 @@
 
 #ifdef KERNEL
 #include <IOKit/IOLib.h>
-#else // KERNEL
+#else  // KERNEL
 // Support for unit testing.
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
-#define panic(args...) printf(args); printf("\n"); abort()
+#define panic(args...) \
+  printf(args);        \
+  printf("\n");        \
+  abort()
 #define IOMallocAligned(sz, alignment) malloc(sz);
 #define IOFreeAligned(addr, sz) free(addr)
 #define OSTestAndSet OSAtomicTestAndSet
@@ -38,7 +41,7 @@
 #define OSDecrementAtomic(addr) OSAtomicDecrement64((volatile int64_t *)addr)
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wdeprecated-declarations"
-#endif // KERNEL
+#endif  // KERNEL
 
 /**
   A type to specialize to help SantaCache with its hashing.
@@ -46,12 +49,14 @@
   The default works for numeric types with a multiplicative hash
   using a prime near to the golden ratio, per Knuth.
 */
-template<typename T> uint64_t SantaCacheHasher(T const& t) {
+template <typename T>
+uint64_t SantaCacheHasher(T const &t) {
   return t * 11400714819323198549UL;
 };
 
 /**
-  A somewhat simple, concurrent linked-list hash table intended for use in IOKit kernel extensions.
+  A somewhat simple, concurrent linked-list hash table intended for use in IOKit
+  kernel extensions.
 
   The type used for keys must overload the == operator and a specialization of
   SantaCacheHasher must exist for it.
@@ -62,25 +67,29 @@ template<typename T> uint64_t SantaCacheHasher(T const& t) {
   The number of buckets is calculated as `maximum_size` / `per_bucket`
   rounded up to the next power of 2. Locking is done per-bucket.
 */
-template<typename KeyT, typename ValueT> class SantaCache {
+template <typename KeyT, typename ValueT>
+class SantaCache {
  public:
   /**
     Initialize a newly created cache.
 
     @param maximum_size The maximum number of entries in this cache. Once this
         number is reached all the entries will be purged.
-    @param per_bucket The target number of entries in each bucket when cache is full.
-        A higher number will result in better performance but higher memory usage.
-        Cannot be higher than 64 to try and ensure buckets don't overflow.
+    @param per_bucket The target number of entries in each bucket when cache is
+    full. A higher number will result in better performance but higher memory
+    usage. Cannot be higher than 64 to try and ensure buckets don't overflow.
   */
   SantaCache(uint64_t maximum_size = 10000, uint8_t per_bucket = 5) {
     if (unlikely(per_bucket > maximum_size)) per_bucket = maximum_size;
     if (unlikely(per_bucket < 1)) per_bucket = 1;
     if (unlikely(per_bucket > 64)) per_bucket = 64;
     max_size_ = maximum_size;
-    bucket_count_ = (1 << (32 - __builtin_clz((((uint32_t)max_size_ / per_bucket) - 1) ?: 1)));
+    bucket_count_ =
+        (1 << (32 -
+               __builtin_clz((((uint32_t)max_size_ / per_bucket) - 1) ?: 1)));
     if (unlikely(bucket_count_ > UINT32_MAX)) bucket_count_ = UINT32_MAX;
-    buckets_ = (struct bucket *)IOMallocAligned(bucket_count_ * sizeof(struct bucket), 2);
+    buckets_ = (struct bucket *)IOMallocAligned(
+        bucket_count_ * sizeof(struct bucket), 2);
     bzero(buckets_, bucket_count_ * sizeof(struct bucket));
   }
 
@@ -122,7 +131,7 @@ template<typename KeyT, typename ValueT> class SantaCache {
 
     @return true if the value was set.
   */
-  bool set(const KeyT& key, const ValueT& value) {
+  bool set(const KeyT &key, const ValueT &value) {
     return set(key, value, {}, false);
   }
 
@@ -140,16 +149,14 @@ template<typename KeyT, typename ValueT> class SantaCache {
 
     @return true if the value was set
   */
-  bool set(const KeyT& key, const ValueT& value, const ValueT& previous_value) {
+  bool set(const KeyT &key, const ValueT &value, const ValueT &previous_value) {
     return set(key, value, previous_value, true);
   }
 
   /**
     An alias for `set(key, zero_)`
   */
-  inline void remove(const KeyT& key) {
-    set(key, zero_);
-  }
+  inline void remove(const KeyT &key) { set(key, zero_); }
 
   /**
     Remove all entries and free bucket memory.
@@ -183,20 +190,22 @@ template<typename KeyT, typename ValueT> class SantaCache {
   /**
     Return number of entries currently in cache.
   */
-  inline uint64_t count() const {
-    return count_;
-  }
+  inline uint64_t count() const { return count_; }
 
   /**
-    Fill in the per_bucket_counts array with the number of entries in each bucket.
+    Fill in the per_bucket_counts array with the number of entries in each
+    bucket.
 
-    The per_buckets_count array will contain the per-bucket counts, up to the number
-    in array_size. The start_bucket parameter will determine which bucket to start off
-    with and upon return will contain either 0 if no buckets are remaining or the next
-    bucket to begin with when called again.
+    The per_buckets_count array will contain the per-bucket counts, up to the
+    number in array_size. The start_bucket parameter will determine which bucket
+    to start off with and upon return will contain either 0 if no buckets are
+    remaining or the next bucket to begin with when called again.
   */
-  void bucket_counts(uint16_t *per_bucket_counts, uint16_t *array_size, uint64_t *start_bucket) {
-    if (per_bucket_counts == nullptr || array_size == nullptr || start_bucket == nullptr) return;
+  void bucket_counts(uint16_t *per_bucket_counts, uint16_t *array_size,
+                     uint64_t *start_bucket) {
+    if (per_bucket_counts == nullptr || array_size == nullptr ||
+        start_bucket == nullptr)
+      return;
 
     uint64_t start = *start_bucket;
     if (start >= bucket_count_) {
@@ -252,8 +261,8 @@ template<typename KeyT, typename ValueT> class SantaCache {
 
     @return true if the entry was set, false if it was not
   */
-  bool set(const KeyT& key, const ValueT& value,
-           const ValueT& previous_value, bool has_prev_value) {
+  bool set(const KeyT &key, const ValueT &value, const ValueT &previous_value,
+           bool has_prev_value) {
     struct bucket *bucket = &buckets_[hash(key)];
     lock(bucket);
     struct entry *entry = (struct entry *)((uintptr_t)bucket->head - 1);
@@ -309,7 +318,8 @@ template<typename KeyT, typename ValueT> class SantaCache {
 
     // Allocate a new entry, set the key and value, then put this new entry at
     // the head of this bucket's linked list.
-    struct entry *new_entry = (struct entry *)IOMallocAligned(sizeof(struct entry), 2);
+    struct entry *new_entry =
+        (struct entry *)IOMallocAligned(sizeof(struct entry), 2);
     bzero(new_entry, sizeof(struct entry));
     new_entry->key = key;
     new_entry->value = value;
@@ -325,7 +335,8 @@ template<typename KeyT, typename ValueT> class SantaCache {
     Lock a bucket. Spins until the lock is acquired.
   */
   inline void lock(struct bucket *bucket) const {
-    while (OSTestAndSet(7, (volatile uint8_t *)&bucket->head));
+    while (OSTestAndSet(7, (volatile uint8_t *)&bucket->head))
+      ;
   }
 
   /**
@@ -368,4 +379,4 @@ template<typename KeyT, typename ValueT> class SantaCache {
 #pragma clang diagnostic pop
 #endif
 
-#endif // SANTA__SANTA_DRIVER__SANTACACHE_H
+#endif  // SANTA__SANTA_DRIVER__SANTACACHE_H
