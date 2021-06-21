@@ -29,6 +29,8 @@ const pid_t PID_MAX = 99999;
 - (void)setIsCompilerPID:(pid_t)pid;
 - (void)setNotCompilerPID:(pid_t)pid;
 
+@property(nonatomic, copy) void (^decisionCallback)(santa_message_t);
+@property(nonatomic, copy) void (^logCallback)(santa_message_t);
 @property(readonly, nonatomic) es_client_t *client;
 
 @end

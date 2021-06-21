@@ -73,6 +73,19 @@ objc_library(
     ],
 )
 
+objc_library(
+    name = "santad_test_lib",
+    srcs = [
+        "EventProviders/EndpointSecurityTestUtil.mm",
+        "EventProviders/EndpointSecurityTestUtil.h",
+    ],
+    testonly = 1,
+    sdk_dylibs = [
+        "EndpointSecurity",
+        "bsm",
+    ],
+)
+
 macos_bundle(
     name = "com.google.santa.daemon",
     bundle_extension = "systemextension",
@@ -178,4 +191,25 @@ santa_unit_test(
         "@MOLCertificate",
         "@MOLCodesignChecker",
     ],
+)
+
+santa_unit_test(
+    name = "SNTEndpointSecurityManagerTest",
+    srcs = [
+        "EventProviders/SNTEndpointSecurityManagerTest.mm",
+        "EventProviders/SNTEventProvider.h",
+        "EventProviders/SNTEndpointSecurityManager.mm",
+        "EventProviders/SNTEndpointSecurityManager.h",
+    ],
+    deps = [
+        ":santad_test_lib",
+        "//Source/common:SNTKernelCommon",
+        "//Source/common:SNTPrefixTree",
+        "//Source/common:SantaCache",
+    ],
+    sdk_dylibs = [
+        "EndpointSecurity",
+        "bsm",
+    ],
+
 )
