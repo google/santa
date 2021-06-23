@@ -22,10 +22,12 @@ es_string_token_t MakeStringToken(const NSString *s);
 @property(nonatomic) bool shouldCache;
 @end
 
+typedef void (^ESCallback)(ESResponse *);
+
 // Singleton wrapper around all of the kernel-level EndpointSecurity framework functions.
 @interface MockEndpointSecurity : NSObject
 - (void)reset;
-- (void)registerResponseCallback:(void (^)(ESResponse *))callback;
+- (void)registerResponseCallback:(ESCallback)callback;
 - (void)triggerHandler:(es_message_t *)msg;
 
 ///  Retrieve an initialized singleton MockEndpointSecurity object

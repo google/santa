@@ -35,18 +35,19 @@ const NSString *const kRulesDBPath = @"/private/var/db/santa/rules.db";
 }
 
 - (void)testDeleteRulesDB {
+  // There should be two events: an early uncached DENY as the consequence for not
+  // meeting the decision deadline and an actual cached decision from our message
+  // handler.
   __block int wantNumResp = 2;
 
   MockEndpointSecurity *mockES = [MockEndpointSecurity mockEndpointSecurity];
   [mockES reset];
   SNTEndpointSecurityManager *snt = [[SNTEndpointSecurityManager alloc] init];
 
-  [snt setLogCallback:^(santa_message_t m) {
-    return;
-  }];
-  [snt setDecisionCallback:^(santa_message_t m) {
-    return;
-  }];
+  snt.logCallback = ^(santa_message_t m) {
+  };
+  snt.decisionCallback = ^(santa_message_t m) {
+  };
 
   XCTestExpectation *expectation =
     [self expectationWithDescription:@"Wait for santa's Auth dispatch queue"];
@@ -57,7 +58,7 @@ const NSString *const kRulesDBPath = @"/private/var/db/santa/rules.db";
       [events addObject:r];
     }
 
-    if ([events count] >= wantNumResp) {
+    if (events.count >= wantNumResp) {
       [expectation fulfill];
     }
   }];
@@ -85,6 +86,13 @@ const NSString *const kRulesDBPath = @"/private/var/db/santa/rules.db";
                                    XCTFail(@"Santa auth test timed out with error: %@", error);
                                  }
                                }];
+
+  bool wasCached = false;
+  for (ESResponse *resp in events) {
+    XCTAssertEqual(resp.result, ES_AUTH_RESULT_DENY);
+    wasCached = wasCached | resp.shouldCache;
+  }
+  XCTAssertTrue(wasCached);
 }
 
 - (void)testSkipOtherESEvents {
@@ -92,12 +100,10 @@ const NSString *const kRulesDBPath = @"/private/var/db/santa/rules.db";
   [mockES reset];
   SNTEndpointSecurityManager *snt = [[SNTEndpointSecurityManager alloc] init];
 
-  [snt setLogCallback:^(santa_message_t m) {
-    return;
-  }];
-  [snt setDecisionCallback:^(santa_message_t m) {
-    return;
-  }];
+  snt.logCallback = ^(santa_message_t m) {
+  };
+  snt.decisionCallback = ^(santa_message_t m) {
+  };
 
   __block NSMutableArray<ESResponse *> *events = [NSMutableArray array];
   [mockES registerResponseCallback:^(ESResponse *r) {
@@ -114,13 +120,9 @@ const NSString *const kRulesDBPath = @"/private/var/db/santa/rules.db";
   };
   [mockES triggerHandler:&m];
 
-  XCTAssertEqual([events count], 1);
+  XCTAssertEqual(events.count, 1);
   XCTAssertEqual(events[0].result, ES_AUTH_RESULT_ALLOW);
   XCTAssertEqual(events[0].shouldCache, false);
-}
-
-- (void)tearDown {
-  [super tearDown];
 }
 
 @end

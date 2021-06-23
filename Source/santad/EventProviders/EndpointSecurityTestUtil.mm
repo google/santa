@@ -28,9 +28,8 @@ es_string_token_t MakeStringToken(const NSString *s) {
 @implementation ESResponse
 @end
 
-@interface MockEndpointSecurity () {
-}
-@property(nonatomic, strong) NSMutableArray<void (^)(ESResponse *)> *responseCallbacks;
+@interface MockEndpointSecurity ()
+@property(nonatomic, strong) NSMutableArray<ESCallback> *responseCallbacks;
 @property(nonatomic) void *client;
 @property(nonatomic) es_handler_block_t __strong handler;
 @end
@@ -39,7 +38,7 @@ es_string_token_t MakeStringToken(const NSString *s) {
 - (instancetype)init {
   self = [super init];
   if (self) {
-    self.responseCallbacks = [NSMutableArray array];
+    _responseCallbacks = [NSMutableArray array];
   }
   return self;
 };
@@ -62,7 +61,7 @@ es_string_token_t MakeStringToken(const NSString *s) {
   return self.handler((es_client_t *)self.client, msg);
 }
 
-- (void)registerResponseCallback:(void (^)(ESResponse *))callback {
+- (void)registerResponseCallback:(ESCallback)callback {
   @synchronized(self) {
     [self.responseCallbacks addObject:callback];
   }

@@ -74,7 +74,7 @@ objc_library(
 )
 
 objc_library(
-    name = "santad_test_lib",
+    name = "EndpointSecurityTestLib",
     srcs = [
         "EventProviders/EndpointSecurityTestUtil.mm",
         "EventProviders/EndpointSecurityTestUtil.h",
@@ -202,7 +202,7 @@ santa_unit_test(
         "EventProviders/SNTEndpointSecurityManager.h",
     ],
     deps = [
-        ":santad_test_lib",
+        ":EndpointSecurityTestLib",
         "//Source/common:SNTKernelCommon",
         "//Source/common:SNTPrefixTree",
         "//Source/common:SantaCache",
