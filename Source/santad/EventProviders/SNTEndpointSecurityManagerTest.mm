@@ -35,64 +35,66 @@ const NSString *const kRulesDBPath = @"/private/var/db/santa/rules.db";
 }
 
 - (void)testDeleteRulesDB {
-  // There should be two events: an early uncached DENY as the consequence for not
-  // meeting the decision deadline and an actual cached decision from our message
-  // handler.
-  __block int wantNumResp = 2;
+  for (const NSString *testPath in @[ kEventsDBPath, kRulesDBPath ]) {
+    // There should be two events: an early uncached DENY as the consequence for not
+    // meeting the decision deadline and an actual cached decision from our message
+    // handler.
+    __block int wantNumResp = 2;
 
-  MockEndpointSecurity *mockES = [MockEndpointSecurity mockEndpointSecurity];
-  [mockES reset];
-  SNTEndpointSecurityManager *snt = [[SNTEndpointSecurityManager alloc] init];
+    MockEndpointSecurity *mockES = [MockEndpointSecurity mockEndpointSecurity];
+    [mockES reset];
+    SNTEndpointSecurityManager *snt = [[SNTEndpointSecurityManager alloc] init];
 
-  snt.logCallback = ^(santa_message_t m) {
-  };
-  snt.decisionCallback = ^(santa_message_t m) {
-  };
+    snt.logCallback = ^(santa_message_t m) {
+    };
+    snt.decisionCallback = ^(santa_message_t m) {
+    };
 
-  XCTestExpectation *expectation =
-    [self expectationWithDescription:@"Wait for santa's Auth dispatch queue"];
+    XCTestExpectation *expectation =
+      [self expectationWithDescription:@"Wait for santa's Auth dispatch queue"];
 
-  __block NSMutableArray<ESResponse *> *events = [NSMutableArray array];
-  [mockES registerResponseCallback:^(ESResponse *r) {
-    @synchronized(self) {
-      [events addObject:r];
+    __block NSMutableArray<ESResponse *> *events = [NSMutableArray array];
+    [mockES registerResponseCallback:^(ESResponse *r) {
+      @synchronized(self) {
+        [events addObject:r];
+      }
+
+      if (events.count >= wantNumResp) {
+        [expectation fulfill];
+      }
+    }];
+
+    es_file_t dbFile = {.path = MakeStringToken(testPath)};
+    es_file_t otherBinary = {.path = MakeStringToken(@"somebinary")};
+    es_process_t proc = {
+      .executable = &otherBinary,
+      .is_es_client = false,
+    };
+    es_event_unlink_t unlink_event = {.target = &dbFile};
+    es_events_t event = {.unlink = unlink_event};
+    es_message_t m = {
+      .event_type = ES_EVENT_TYPE_AUTH_UNLINK,
+      .event = event,
+      .action_type = ES_ACTION_TYPE_AUTH,
+      .deadline = DISPATCH_TIME_NOW + NSEC_PER_SEC * 60,
+      .process = &proc,
+    };
+    [mockES triggerHandler:&m];
+
+    [self waitForExpectationsWithTimeout:10.0
+                                 handler:^(NSError *error) {
+                                   if (error) {
+                                     XCTFail(@"Santa auth test timed out with error: %@", error);
+                                   }
+                                 }];
+
+    bool wasCached = false;
+    for (ESResponse *resp in events) {
+      XCTAssertEqual(resp.result, ES_AUTH_RESULT_DENY, @"Failed to deny deletion of %@", testPath);
+      wasCached = wasCached | resp.shouldCache;
     }
-
-    if (events.count >= wantNumResp) {
-      [expectation fulfill];
-    }
-  }];
-
-  es_file_t dbFile = {.path = MakeStringToken(kRulesDBPath)};
-  es_file_t otherBinary = {.path = MakeStringToken(@"somebinary")};
-  es_process_t proc = {
-    .executable = &otherBinary,
-    .is_es_client = false,
-  };
-  es_event_unlink_t unlink_event = {.target = &dbFile};
-  es_events_t event = {.unlink = unlink_event};
-  es_message_t m = {
-    .event_type = ES_EVENT_TYPE_AUTH_UNLINK,
-    .event = event,
-    .action_type = ES_ACTION_TYPE_AUTH,
-    .deadline = DISPATCH_TIME_NOW + NSEC_PER_SEC * 60,
-    .process = &proc,
-  };
-  [mockES triggerHandler:&m];
-
-  [self waitForExpectationsWithTimeout:10.0
-                               handler:^(NSError *error) {
-                                 if (error) {
-                                   XCTFail(@"Santa auth test timed out with error: %@", error);
-                                 }
-                               }];
-
-  bool wasCached = false;
-  for (ESResponse *resp in events) {
-    XCTAssertEqual(resp.result, ES_AUTH_RESULT_DENY);
-    wasCached = wasCached | resp.shouldCache;
+    XCTAssertTrue(wasCached, @"Failed to cache deletion decision of %@", testPath);
   }
-  XCTAssertTrue(wasCached);
 }
 
 - (void)testSkipOtherESEvents {
