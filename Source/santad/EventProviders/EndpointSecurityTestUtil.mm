@@ -31,7 +31,7 @@ es_string_token_t MakeStringToken(const NSString *s) {
 @interface MockEndpointSecurity ()
 @property NSMutableArray<ESCallback> *responseCallbacks;
 @property void *client;
-@property es_handler_block_t __strong handler;
+@property es_handler_block_t handler;
 @end
 
 @implementation MockEndpointSecurity

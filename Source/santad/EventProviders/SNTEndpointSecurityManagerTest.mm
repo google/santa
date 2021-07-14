@@ -24,7 +24,6 @@ const NSString *const kEventsDBPath = @"/private/var/db/santa/events.db";
 const NSString *const kRulesDBPath = @"/private/var/db/santa/rules.db";
 
 @interface SNTEndpointSecurityManagerTest : XCTestCase
-@property SNTEndpointSecurityManager *snt;
 @end
 
 @implementation SNTEndpointSecurityManagerTest
