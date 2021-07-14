@@ -29,8 +29,6 @@
 }
 
 @property(nonatomic) SNTPrefixTree *prefixTree;
-@property(nonatomic, copy) void (^decisionCallback)(santa_message_t);
-@property(nonatomic, copy) void (^logCallback)(santa_message_t);
 @property(nonatomic, readonly) dispatch_queue_t esAuthQueue;
 @property(nonatomic, readonly) dispatch_queue_t esNotifyQueue;
 @property(nonatomic, readonly) pid_t selfPID;
