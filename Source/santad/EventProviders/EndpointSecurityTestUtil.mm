@@ -82,12 +82,11 @@ es_string_token_t MakeStringToken(const NSString *s) {
 };
 
 + (instancetype)mockEndpointSecurity {
-  static MockEndpointSecurity *sharedES = nil;
-  @synchronized(self) {
-    if (sharedES == nil) {
-      sharedES = [[MockEndpointSecurity alloc] init];
-    }
-  }
+  static MockEndpointSecurity *sharedES;
+  static dispatch_once_t onceToken;
+  dispatch_once(&onceToken, ^{
+    sharedES = [[MockEndpointSecurity alloc] init];
+  });
   return sharedES;
 };
 @end
