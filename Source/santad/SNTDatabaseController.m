@@ -27,12 +27,17 @@ static NSString *const kDatabasePath = @"/var/db/santa";
 static NSString *const kRulesDatabaseName = @"rules.db";
 static NSString *const kEventsDatabaseName = @"events.db";
 
++ (NSString *const)databasePath {
+  return kDatabasePath;
+}
+
 + (SNTEventTable *)eventTable {
   static SNTEventTable *eventDatabase;
   static dispatch_once_t eventDatabaseToken;
   dispatch_once(&eventDatabaseToken, ^{
     [self createDatabasePath];
-    NSString *fullPath = [kDatabasePath stringByAppendingPathComponent:kEventsDatabaseName];
+    NSString *fullPath =
+      [[SNTDatabaseController databasePath] stringByAppendingPathComponent:kEventsDatabaseName];
     FMDatabaseQueue *dbq = [[FMDatabaseQueue alloc] initWithPath:fullPath];
     chown([fullPath UTF8String], 0, 0);
     chmod([fullPath UTF8String], 0600);
@@ -54,7 +59,8 @@ static NSString *const kEventsDatabaseName = @"events.db";
   static dispatch_once_t ruleDatabaseToken;
   dispatch_once(&ruleDatabaseToken, ^{
     [self createDatabasePath];
-    NSString *fullPath = [kDatabasePath stringByAppendingPathComponent:kRulesDatabaseName];
+    NSString *fullPath =
+      [[SNTDatabaseController databasePath] stringByAppendingPathComponent:kRulesDatabaseName];
     FMDatabaseQueue *dbq = [[FMDatabaseQueue alloc] initWithPath:fullPath];
     chown([fullPath UTF8String], 0, 0);
     chmod([fullPath UTF8String], 0600);
@@ -82,13 +88,13 @@ static NSString *const kEventsDatabaseName = @"events.db";
     NSFilePosixPermissions : @0755
   };
 
-  if (![fm fileExistsAtPath:kDatabasePath]) {
-    [fm createDirectoryAtPath:kDatabasePath
+  if (![fm fileExistsAtPath:[SNTDatabaseController databasePath]]) {
+    [fm createDirectoryAtPath:[SNTDatabaseController databasePath]
       withIntermediateDirectories:YES
                        attributes:attrs
                             error:nil];
   } else {
-    [fm setAttributes:attrs ofItemAtPath:kDatabasePath error:nil];
+    [fm setAttributes:attrs ofItemAtPath:[SNTDatabaseController databasePath] error:nil];
   }
 }
 

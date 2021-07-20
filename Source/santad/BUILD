@@ -76,8 +76,8 @@ objc_library(
 objc_library(
     name = "EndpointSecurityTestLib",
     srcs = [
-        "EventProviders/EndpointSecurityTestUtil.mm",
         "EventProviders/EndpointSecurityTestUtil.h",
+        "EventProviders/EndpointSecurityTestUtil.mm",
     ],
     testonly = 1,
     sdk_dylibs = [
@@ -212,4 +212,26 @@ santa_unit_test(
         "bsm",
     ],
 
+)
+
+santa_unit_test(
+    name = "SNTApplicationTest",
+    data = [
+        "//Source/santad/testdata:binaryrules_testdata",
+    ],
+    srcs = [
+        "SNTApplicationTest.m"
+    ],
+    deps = [
+        ":santad_lib",
+        ":EndpointSecurityTestLib",
+        "@MOLCodesignChecker",
+        "@MOLXPCConnection",
+        "@OCMock",
+    ],
+    minimum_os_version = "10.15",
+    sdk_dylibs = [
+        "EndpointSecurity",
+        "bsm",
+    ],
 )

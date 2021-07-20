@@ -39,7 +39,7 @@ static const NSUInteger kTransitiveRuleExpirationSeconds = 6 * 30 * 24 * 3600;
 
 @implementation SNTRuleTable
 
-- (NSArray *)criticalSystemBinaryPaths {
++ (NSArray *)criticalSystemBinaryPaths {
   return @[
     @"/usr/libexec/trustd",
     @"/usr/sbin/securityd",
@@ -58,7 +58,7 @@ static const NSUInteger kTransitiveRuleExpirationSeconds = 6 * 30 * 24 * 3600;
 
 - (void)setupSystemCriticalBinaries {
   NSMutableDictionary *bins = [NSMutableDictionary dictionary];
-  for (NSString *path in self.criticalSystemBinaryPaths) {
+  for (NSString *path in [SNTRuleTable criticalSystemBinaryPaths]) {
     SNTFileInfo *binInfo = [[SNTFileInfo alloc] initWithPath:path];
     MOLCodesignChecker *csInfo = [binInfo codesignCheckerWithError:NULL];
 

@@ -35,4 +35,6 @@
 + (SNTEventTable *)eventTable;
 + (SNTRuleTable *)ruleTable;
 
++ (NSString *const)databasePath;
+
 @end
