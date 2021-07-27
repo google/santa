@@ -12,8 +12,8 @@
 ///    See the License for the specific language governing permissions and
 ///    limitations under the License.
 
-#include <CoreFoundation/CFBase.h>
 #include <EndpointSecurity/EndpointSecurity.h>
+#include <Foundation/Foundation.h>
 #include <bsm/libbsm.h>
 
 CF_EXTERN_C_BEGIN

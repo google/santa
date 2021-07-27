@@ -12,6 +12,7 @@
 ///    See the License for the specific language governing permissions and
 ///    limitations under the License.
 #import <EndpointSecurity/EndpointSecurity.h>
+#import <Foundation/Foundation.h>
 #import <MOLCertificate/MOLCertificate.h>
 #import <MOLCodesignChecker/MOLCodesignChecker.h>
 #import <OCMock/OCMock.h>
@@ -53,8 +54,23 @@
 
   // es events will start flowing in as soon as es_subscribe is called, regardless
   // of whether we're ready or not for it.
-  while (!mockES.subscribed)
-    ;
+  XCTestExpectation *santaInit =
+    [self expectationWithDescription:@"Wait for Santa to subscribe to EndpointSecurity"];
+
+  dispatch_async(dispatch_get_global_queue(QOS_CLASS_BACKGROUND, 0), ^{
+    while (!mockES.subscribed)
+      ;
+    [santaInit fulfill];
+  });
+
+  [self waitForExpectationsWithTimeout:5.0
+                               handler:^(NSError *error) {
+                                 if (error) {
+                                   XCTFail(@"Santa's subscription to EndpointSecurity timed out "
+                                           @"with error: %@",
+                                           error);
+                                 }
+                               }];
 
   XCTestExpectation *expectation =
     [self expectationWithDescription:@"Wait for santa's Auth dispatch queue"];
