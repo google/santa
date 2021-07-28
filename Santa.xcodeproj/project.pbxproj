@@ -8,6 +8,8 @@
 
 /* Begin PBXBuildFile section */
 		0D9F577C2342650F005D9AA8 /* SNTPrefixTree.cc in Sources */ = {isa = PBXBuildFile; fileRef = C7658B022322B84F00F36578 /* SNTPrefixTree.cc */; };
+		4D3AD70026B49EB400110D20 /* SNTMetricSetTest.m in Sources */ = {isa = PBXBuildFile; fileRef = 4D3AD6FE26B49EB400110D20 /* SNTMetricSetTest.m */; };
+		4D3AD70126B49EB400110D20 /* SNTMetricSet.m in Sources */ = {isa = PBXBuildFile; fileRef = 4D3AD6FF26B49EB400110D20 /* SNTMetricSet.m */; };
 		59502195B2982225D3706DCE /* libPods-santabundleservice.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 2A55D73A235850B9FA991865 /* libPods-santabundleservice.a */; };
 		AD3736AF78C41A962C26D429 /* libPods-Santa.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 4C3E743944A9D77423AA1534 /* libPods-Santa.a */; };
 		B617F8907035AD3DA2CB5C45 /* libPods-syncservice.a in Frameworks */ = {isa = PBXBuildFile; fileRef = D10E53C5ACA15304D9A7CC95 /* libPods-syncservice.a */; };
@@ -211,6 +213,9 @@
 		2A55D73A235850B9FA991865 /* libPods-santabundleservice.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-santabundleservice.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		4A98E2E9727FBEF27CDDA298 /* Pods-syncservice.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-syncservice.debug.xcconfig"; path = "Target Support Files/Pods-syncservice/Pods-syncservice.debug.xcconfig"; sourceTree = "<group>"; };
 		4C3E743944A9D77423AA1534 /* libPods-Santa.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-Santa.a"; sourceTree = BUILT_PRODUCTS_DIR; };
+		4D3AD6FD26B49EB400110D20 /* SNTMetricSet.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SNTMetricSet.h; sourceTree = "<group>"; };
+		4D3AD6FE26B49EB400110D20 /* SNTMetricSetTest.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SNTMetricSetTest.m; sourceTree = "<group>"; };
+		4D3AD6FF26B49EB400110D20 /* SNTMetricSet.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SNTMetricSet.m; sourceTree = "<group>"; };
 		4E28DBA012524ABF55F8300C /* Pods-com.google.santa.daemon.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-com.google.santa.daemon.debug.xcconfig"; path = "Target Support Files/Pods-com.google.santa.daemon/Pods-com.google.santa.daemon.debug.xcconfig"; sourceTree = "<group>"; };
 		7AF15DF785BAA0EAB0BE340D /* Pods-santad.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-santad.release.xcconfig"; path = "Target Support Files/Pods-santad/Pods-santad.release.xcconfig"; sourceTree = "<group>"; };
 		7FEBB0D42E35B93E5B995B06 /* Pods-syncservice.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-syncservice.release.xcconfig"; path = "Target Support Files/Pods-syncservice/Pods-syncservice.release.xcconfig"; sourceTree = "<group>"; };
@@ -636,6 +641,9 @@
 		C7658AB02322B84F00F36578 /* common */ = {
 			isa = PBXGroup;
 			children = (
+				4D3AD6FD26B49EB400110D20 /* SNTMetricSet.h */,
+				4D3AD6FF26B49EB400110D20 /* SNTMetricSet.m */,
+				4D3AD6FE26B49EB400110D20 /* SNTMetricSetTest.m */,
 				C7658AD52322B84F00F36578 /* BUILD */,
 				C7658AD22322B84F00F36578 /* SNTBlockMessage.h */,
 				C7658AC72322B84F00F36578 /* SNTBlockMessage.m */,
@@ -1270,6 +1278,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				4D3AD70126B49EB400110D20 /* SNTMetricSet.m in Sources */,
 				C7658B192322BDEA00F36578 /* SNTAppDelegate.m in Sources */,
 				C7658B432322C12100F36578 /* SNTRule.m in Sources */,
 				C7658B3D2322C0F500F36578 /* SNTXPCBundleServiceInterface.m in Sources */,
@@ -1282,6 +1291,7 @@
 				C7658B172322BDE500F36578 /* SNTAboutWindowController.m in Sources */,
 				C7658B402322C10700F36578 /* SNTLogging.m in Sources */,
 				C7658B3E2322C0FC00F36578 /* SNTXPCControlInterface.m in Sources */,
+				4D3AD70026B49EB400110D20 /* SNTMetricSetTest.m in Sources */,
 				C7658B3C2322C0ED00F36578 /* SNTConfigurator.m in Sources */,
 				C7658B3F2322C10200F36578 /* SNTXPCNotifierInterface.m in Sources */,
 				C7658B442322C12600F36578 /* SNTSystemInfo.m in Sources */,
