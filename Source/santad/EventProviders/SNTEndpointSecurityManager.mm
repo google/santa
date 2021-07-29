@@ -41,7 +41,7 @@
   self = [super init];
   if (self) {
     // To avoid nil deref from es_events arriving before listenForDecisionRequests or
-    // listenForLogRequests.
+    // listenForLogRequests in the  MockEndpointSecurity testing util.
     _decisionCallback = ^(santa_message_t) {
     };
     _logCallback = ^(santa_message_t) {
