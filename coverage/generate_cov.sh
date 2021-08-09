@@ -17,13 +17,15 @@ function build() {
 }
 
 function generate_lcov() {
-    object_files=$(find -L $(bazel info bazel-bin)  -type f -exec file -L {} \; | grep "Mach-O" | sed 's,:.*,,')
+    object_files=$(find -L $(bazel info bazel-bin) -type f -exec file -L {} \; | grep "Mach-O" | sed 's,:.*,,')
+    bazel_base=$(bazel info execution_root)
 
     true > $COV_FILE
     for file in $object_files; do
         xcrun llvm-cov export -instr-profile "$PROFILE_PATH/default.profdata" -format=lcov \
-          $file >> $COV_FILE
+          $file | sed "s,$bazel_base,," >> $COV_FILE
     done
+
 }
 
 function main() {
