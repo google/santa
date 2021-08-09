@@ -23,3 +23,11 @@ jobs:
       run: bazel build --apple_generate_dsym -c opt :release_driver --define=SANTA_BUILD_TYPE=ci
     - name: Test
       run: bazel test :unit_tests --define=SANTA_BUILD_TYPE=ci
+    - name: Generate coverage
+      run: sh ./generate_cov.sh
+    - name: Coveralls
+      uses: coverallsapp/github-action@master
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        path-to-lcov: ./CoverageData/info.lcov
+        flag-name: Unit

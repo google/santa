@@ -1,5 +1,5 @@
 .DS_Store
-default.profraw
+*.profraw
 *.provisionprofile
 bazel-*
 Pods
@@ -7,3 +7,4 @@ Santa.xcodeproj/xcuserdata
 Santa.xcodeproj/project.xcworkspace
 Santa.xcworkspace/xcuserdata
 Santa.xcworkspace/xcshareddata
+CoverdateData/*
