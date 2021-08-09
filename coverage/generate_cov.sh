@@ -23,7 +23,8 @@ function generate_lcov() {
     true > $COV_FILE
     for file in $object_files; do
         xcrun llvm-cov export -instr-profile "$PROFILE_PATH/default.profdata" -format=lcov \
-          $file | sed "s,$bazel_base,," >> $COV_FILE
+            --ignore-filename-regex="external/.*" \
+          $file | sed "s,$bazel_base,$GIT_ROOT," >> $COV_FILE
     done
 
 }
