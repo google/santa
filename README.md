@@ -1,4 +1,4 @@
-# Santa ![CI](https://github.com/google/santa/workflows/CI/badge.svg?branch=main)
+# Santa ![CI](https://github.com/google/santa/workflows/CI/badge.svg?branch=main) [![Coverage Status](https://coveralls.io/repos/github/google/santa/badge.svg?branch=main)](https://coveralls.io/github/google/santa?branch=main)
 
 <p align="center">
     <img src="./Source/santa/Resources/Images.xcassets/AppIcon.appiconset/santa-hat-icon-128.png" alt="Santa Icon" />
@@ -144,8 +144,8 @@ protect hosts in whatever other ways you see fit.
     * [Zentral](https://github.com/zentralopensource/zentral/wiki) - A
       centralized service that pulls data from multiple sources and deploy
       configurations to multiple services.
-    * [Zercurity](https://github.com/zercurity/zercurity) - A dockerized service 
-      for managing and monitoring applications across a large fleet utilizing 
+    * [Zercurity](https://github.com/zercurity/zercurity) - A dockerized service
+      for managing and monitoring applications across a large fleet utilizing
       Santa + Osquery.
 
 * Alternatively, `santactl` can configure rules locally (without a sync
