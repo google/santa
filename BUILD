@@ -228,6 +228,7 @@ test_suite(
         "//Source/common:SNTPrefixTreeTest",
         "//Source/santactl:SNTCommandFileInfoTest",
         "//Source/santactl:SNTCommandSyncTest",
+        "//Source/santad:SNTApplicationTest",
         "//Source/santad:SNTEventTableTest",
         "//Source/santad:SNTExecutionControllerTest",
         "//Source/santad:SNTRuleTableTest",

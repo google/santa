@@ -18,19 +18,21 @@
 
 #import "Source/santad/EventProviders/EndpointSecurityTestUtil.h"
 
+CF_EXTERN_C_BEGIN
 es_string_token_t MakeStringToken(const NSString *s) {
-  return es_string_token_t{
+  return (es_string_token_t){
     .data = [s UTF8String],
     .length = [s length],
   };
 }
+CF_EXTERN_C_END
 
 @implementation ESResponse
 @end
 
 @interface MockEndpointSecurity ()
 @property NSMutableArray<ESCallback> *responseCallbacks;
-@property void *client;
+@property NSObject *client;
 @property es_handler_block_t handler;
 @end
 
@@ -39,6 +41,7 @@ es_string_token_t MakeStringToken(const NSString *s) {
   self = [super init];
   if (self) {
     _responseCallbacks = [NSMutableArray array];
+    _subscribed = YES;
   }
   return self;
 };
@@ -48,17 +51,22 @@ es_string_token_t MakeStringToken(const NSString *s) {
     [self.responseCallbacks removeAllObjects];
     self.handler = nil;
     self.client = nil;
+    self.subscribed = NO;
   }
 };
 
 - (void)newClient:(es_client_t *_Nullable *_Nonnull)client
           handler:(es_handler_block_t __strong)handler {
-  self.client = (void *)client;
+  // es_client_t is generally used as a pointer to an opaque struct (secretly a mach port).
+  // We just want to set it to something nonnull for passing initialization checks. It shouldn't
+  // ever be directly dereferenced.
+  self.client = [[NSObject alloc] init];
+  *client = (__bridge es_client_t *)self.client;
   self.handler = handler;
 }
 
 - (void)triggerHandler:(es_message_t *)msg {
-  return self.handler((es_client_t *)self.client, msg);
+  self.handler((__bridge es_client_t *)self.client, msg);
 }
 
 - (void)registerResponseCallback:(ESCallback)callback {
@@ -116,3 +124,11 @@ es_respond_result_t es_respond_auth_result(es_client_t *_Nonnull client,
                                                                    result:result
                                                                     cache:cache];
 };
+
+API_AVAILABLE(macos(10.15))
+API_UNAVAILABLE(ios, tvos, watchos)
+es_return_t es_subscribe(es_client_t *_Nonnull client, const es_event_type_t *_Nonnull events,
+                         uint32_t event_count) {
+  [MockEndpointSecurity mockEndpointSecurity].subscribed = YES;
+  return ES_RETURN_SUCCESS;
+}

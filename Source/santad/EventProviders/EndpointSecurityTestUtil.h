@@ -13,9 +13,12 @@
 ///    limitations under the License.
 
 #include <EndpointSecurity/EndpointSecurity.h>
+#include <Foundation/Foundation.h>
 #include <bsm/libbsm.h>
 
+CF_EXTERN_C_BEGIN
 es_string_token_t MakeStringToken(const NSString *s);
+CF_EXTERN_C_END
 
 @interface ESResponse : NSObject
 @property(nonatomic) es_auth_result_t result;
@@ -26,6 +29,7 @@ typedef void (^ESCallback)(ESResponse *);
 
 // Singleton wrapper around all of the kernel-level EndpointSecurity framework functions.
 @interface MockEndpointSecurity : NSObject
+@property BOOL subscribed;
 - (void)reset;
 - (void)registerResponseCallback:(ESCallback)callback;
 - (void)triggerHandler:(es_message_t *)msg;
@@ -50,3 +54,8 @@ API_UNAVAILABLE(ios, tvos, watchos)
 es_respond_result_t es_respond_auth_result(es_client_t *_Nonnull client,
                                            const es_message_t *_Nonnull message,
                                            es_auth_result_t result, bool cache);
+
+API_AVAILABLE(macos(10.15))
+API_UNAVAILABLE(ios, tvos, watchos)
+es_return_t es_subscribe(es_client_t *_Nonnull client, const es_event_type_t *_Nonnull events,
+                         uint32_t event_count);
