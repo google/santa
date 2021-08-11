@@ -4,20 +4,22 @@ PROFILE_PATH="$GIT_ROOT/CoverageData"
 COV_FILE="$PROFILE_PATH/info.lcov"
 
 function build() {
-    bazel coverage \
-            --test_env="LLVM_PROFILE_FILE=$PROFILE_PATH/default.profraw" \
-            --experimental_use_llvm_covmap \
-            --spawn_strategy=standalone \
-            --cache_test_results=no \
-            --test_env=LCOV_MERGER=/usr/bin/true \
-            --define=SANTA_BUILD_TYPE=ci \
-            //:unit_tests
-
-    xcrun llvm-profdata merge "$PROFILE_PATH/default.profraw" -output "$PROFILE_PATH/default.profdata"
+    tests=$(bazel query "tests(//:unit_tests)")
+    for t in $tests; do
+        profname=$(echo $t | shasum | awk '{print $1}')
+        bazel coverage \
+                --test_env="LLVM_PROFILE_FILE=$PROFILE_PATH/$profname.profraw" \
+                --experimental_use_llvm_covmap \
+                --spawn_strategy=standalone \
+                --cache_test_results=no \
+                --test_env=LCOV_MERGER=/usr/bin/true \
+                $t
+    done
+    xcrun llvm-profdata merge $PROFILE_PATH/*.profraw -output "$PROFILE_PATH/default.profdata"
 }
 
 function generate_lcov() {
-    object_files=$(find -L $(bazel info bazel-bin) -type f -exec file -L {} \; | grep "Mach-O" | sed 's,:.*,,')
+    object_files=$(find -L $(bazel info bazel-bin) -type f -exec file -L {} \; | grep "Mach-O" | sed 's,:.*,,' | grep -v 'testdata')
     bazel_base=$(bazel info execution_root)
 
     true > $COV_FILE
