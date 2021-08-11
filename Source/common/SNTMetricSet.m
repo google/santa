@@ -238,27 +238,27 @@
 
   switch (_type) {
     case SNTMetricTypeConstantBool:
-    case SNTMetricTypeBoolGauge:
+    case SNTMetricTypeGaugeBool:
       fieldDict[@"data"] = [NSNumber numberWithBool:[metricValue getBoolValue]];
       break;
     case SNTMetricTypeConstantInt64:
     case SNTMetricTypeCounter:
-    case SNTMetricTypeInt64Gauge:
+    case SNTMetricTypeGaugeInt64:
       fieldDict[@"data"] = [NSNumber numberWithLongLong:[metricValue getInt64Value]];
       break;
     case SNTMetricTypeConstantDouble:
-    case SNTMetricTypeDoubleGauge:
+    case SNTMetricTypeGaugeDouble:
       fieldDict[@"data"] = [NSNumber numberWithDouble:[metricValue getDoubleValue]];
       break;
     case SNTMetricTypeConstantString:
-    case SNTMetricTypeStringGauge: fieldDict[@"data"] = [metricValue getStringValue]; break;
+    case SNTMetricTypeGaugeString: fieldDict[@"data"] = [metricValue getStringValue]; break;
     default: break;
   }
-  return [NSDictionary dictionaryWithDictionary:fieldDict];
+  return fieldDict;
 }
 
-- (NSDictionary *)exportNSDictionary {
-  NSMutableDictionary *metricDict = [[NSMutableDictionary alloc] init];
+- (NSDictionary *)export {
+  NSMutableDictionary *metricDict = [NSMutableDictionary dictionaryWithCapacity:_fieldNames.count];
   metricDict[@"type"] = [NSNumber numberWithInt:(int)_type];
   metricDict[@"fields"] = [[NSMutableDictionary alloc] init];
 
@@ -275,7 +275,7 @@
       metricDict[@"fields"][fieldName] = fieldVals;
     }
   }
-  return [NSDictionary dictionaryWithDictionary:metricDict];
+  return metricDict;
 }
 @end
 
@@ -321,7 +321,7 @@
   return [super initWithName:name
                   fieldNames:fieldNames
                     helpText:helpText
-                        type:SNTMetricTypeInt64Gauge];
+                        type:SNTMetricTypeGaugeInt64];
 }
 
 - (void)set:(long long)value forFieldValues:(NSArray<NSString *> *)fieldValues {
@@ -348,7 +348,7 @@
   return [super initWithName:name
                   fieldNames:fieldNames
                     helpText:text
-                        type:SNTMetricTypeDoubleGauge];
+                        type:SNTMetricTypeGaugeDouble];
 }
 
 - (void)set:(double)value forFieldValues:(NSArray<NSString *> *)fieldValues {
@@ -374,7 +374,7 @@
   return [super initWithName:name
                   fieldNames:fieldNames
                     helpText:text
-                        type:SNTMetricTypeStringGauge];
+                        type:SNTMetricTypeGaugeString];
 }
 
 - (void)set:(NSString *)value forFieldValues:(NSArray<NSString *> *)fieldValues {
@@ -400,7 +400,7 @@
   return [super initWithName:name
                   fieldNames:fieldNames
                     helpText:helpText
-                        type:SNTMetricTypeBoolGauge];
+                        type:SNTMetricTypeGaugeBool];
 }
 
 - (void)set:(BOOL)value forFieldValues:(NSArray<NSString *> *)fieldValues {
@@ -575,8 +575,8 @@
   [self registerMetric:metric];
 }
 
-/** exportDictionary exports the SNTMetricSet as a dictinary for use  */
-- (NSDictionary *)exportNSDictionary {
+/** Export current state of the SNTMetricSet as an NSDictionary. */
+- (NSDictionary *)export {
   NSDictionary *exported = nil;
 
   // Invoke callbacks to ensure metrics are up to date.
@@ -593,7 +593,7 @@
     // sort the metrics so we always get the same output.
     for (id metricName in _metrics) {
       SNTMetric *metric = [_metrics objectForKey:metricName];
-      exportDict[@"metrics"][metricName] = [metric exportNSDictionary];
+      exportDict[@"metrics"][metricName] = [metric export];
     }
 
     exported = [NSDictionary dictionaryWithDictionary:exportDict];

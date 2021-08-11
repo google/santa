@@ -16,7 +16,7 @@
 
 /**
  * Provides an abstraction for various metric systems that will be exported to
- * monitoring systems via the MetricService. This is used store internal
+ * monitoring systems via the MetricService. This is used to store internal
  * counters and metrics that can be exported to an external monitoring system.
  *
  * `SNTMetricSet` for storing and creating metrics and counters. This is
@@ -30,7 +30,7 @@
  *     * `SNTMetricGaugeInt64`
  *     * `SNTMetricGaugeDouble`
  *     * `SNTMetricString`
- *     * `SNTMetricBoolean`
+ *     * `SNTMetricBool`
  */
 
 NS_ASSUME_NONNULL_BEGIN
@@ -41,17 +41,15 @@ typedef NS_ENUM(NSInteger, SNTMetricType) {
   SNTMetricTypeConstantString = 2,
   SNTMetricTypeConstantInt64 = 3,
   SNTMetricTypeConstantDouble = 4,
-  SNTMetricTypeBoolGauge = 5,
-  SNTMetricTypeStringGauge = 6,
-  SNTMetricTypeInt64Gauge = 7,
-  SNTMetricTypeDoubleGauge = 8,
+  SNTMetricTypeGaugeBool = 5,
+  SNTMetricTypeGaugeString = 6,
+  SNTMetricTypeGaugeInt64 = 7,
+  SNTMetricTypeGaugeDouble = 8,
   SNTMetricTypeCounter = 9,
 };
 
-/*
- */
 @interface SNTMetric : NSObject
-- (NSDictionary *)exportNSDictionary;
+- (NSDictionary *)export;
 @end
 
 @interface SNTMetricCounter : SNTMetric
@@ -169,7 +167,7 @@ typedef NS_ENUM(NSInteger, SNTMetricType) {
 - (void)registerCallback:(void (^)(void))callback;
 
 /** Export creates an NSDictionary of the state of the metrics */
-- (NSDictionary *)exportNSDictionary;
+- (NSDictionary *)export;
 @end
 
 NS_ASSUME_NONNULL_END
