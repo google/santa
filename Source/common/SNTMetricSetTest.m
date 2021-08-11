@@ -5,7 +5,7 @@
 @interface SNTMetricCounterTest : XCTestCase
 @end
 
-@interface SNTMetricInt64GaugeTest : XCTestCase
+@interface SNTMetricGaugeInt64Test : XCTestCase
 @end
 
 @interface SNTMetricDoubleGaugeTest : XCTestCase
@@ -70,7 +70,7 @@
     }
   };
 
-  XCTAssertEqualObjects([c exportNSDictionary], expected);
+  XCTAssertEqualObjects([c export], expected);
 }
 @end
 
@@ -95,7 +95,7 @@
   XCTAssertNotNil(b);
   [b set:true forFieldValues:@[]];
   NSDictionary *expected = @{
-    @"type" : [NSNumber numberWithInt:(int)SNTMetricTypeBoolGauge],
+    @"type" : [NSNumber numberWithInt:(int)SNTMetricTypeGaugeBool],
     @"fields" : @{
       @"" : @[ @{
         @"value" : @"",
@@ -106,12 +106,12 @@
     }
   };
 
-  NSDictionary *output = [b exportNSDictionary];
+  NSDictionary *output = [b export];
   XCTAssertEqualObjects(output, expected);
 }
 @end
 
-@implementation SNTMetricInt64GaugeTest
+@implementation SNTMetricGaugeInt64Test
 - (void)testSimpleGauge {
   SNTMetricSet *metricSet = [[SNTMetricSet alloc] init];
   SNTMetricInt64Gauge *g =
@@ -119,7 +119,7 @@
                        fieldNames:@[ @"rule_type" ]
                          helpText:@"Count of rules broken out by rule type."];
 
-  XCTAssertNotNil(g, @"Expected returned SNTMetricInt64Gauge to not be nil");
+  XCTAssertNotNil(g, @"Expected returned SNTMetricGaugeInt64 to not be nil");
   // set from zero
   [g set:250 forFieldValues:@[ @"binary" ]];
   XCTAssertEqual(250, [g getGaugeValueForFieldValues:@[ @"binary" ]]);
@@ -143,13 +143,13 @@
                        fieldNames:@[ @"rule_type" ]
                          helpText:@"Count of rules broken out by rule type."];
 
-  XCTAssertNotNil(g, @"Expected returned SNTMetricInt64Gauge to not be nil");
+  XCTAssertNotNil(g, @"Expected returned SNTMetricGaugeInt64 to not be nil");
   // set from zero
   [g set:250 forFieldValues:@[ @"binary" ]];
   XCTAssertEqual(250, [g getGaugeValueForFieldValues:@[ @"binary" ]]);
 
   NSDictionary *expected = @{
-    @"type" : [NSNumber numberWithInt:(int)SNTMetricTypeInt64Gauge],
+    @"type" : [NSNumber numberWithInt:(int)SNTMetricTypeGaugeInt64],
     @"fields" : @{
       @"rule_type" : @[ @{
         @"value" : @"binary",
@@ -160,7 +160,7 @@
     }
   };
 
-  XCTAssertEqualObjects([g exportNSDictionary], expected);
+  XCTAssertEqualObjects([g export], expected);
 }
 @end
 
@@ -200,7 +200,7 @@
   [g set:(double)0.90 forFieldValues:@[ @"system" ]];
 
   NSDictionary *expected = @{
-    @"type" : [NSNumber numberWithInt:(int)SNTMetricTypeDoubleGauge],
+    @"type" : [NSNumber numberWithInt:(int)SNTMetricTypeGaugeDouble],
     @"fields" : @{
       @"mode" : @[
         @{
@@ -218,7 +218,7 @@
       ]
     }
   };
-  XCTAssertEqualObjects([g exportNSDictionary], expected);
+  XCTAssertEqualObjects([g export], expected);
 }
 @end
 
@@ -243,7 +243,7 @@
   [s set:@"testValue" forFieldValues:@[]];
 
   NSDictionary *expected = @{
-    @"type" : [NSNumber numberWithInt:(int)SNTMetricTypeStringGauge],
+    @"type" : [NSNumber numberWithInt:(int)SNTMetricTypeGaugeString],
     @"fields" : @{
       @"" : @[ @{
         @"value" : @"",
@@ -254,7 +254,7 @@
     }
   };
 
-  XCTAssertEqualObjects([s exportNSDictionary], expected);
+  XCTAssertEqualObjects([s export], expected);
 }
 @end
 
@@ -265,7 +265,7 @@
 
   NSDictionary *expected = @{@"root_labels" : @{@"hostname" : @"localhost"}, @"metrics" : @{}};
 
-  NSDictionary *output = [metricSet exportNSDictionary];
+  NSDictionary *output = [metricSet export];
   XCTAssertEqualObjects(output, expected);
 }
 
@@ -300,7 +300,7 @@
   }];
 
   // ensure the callback is called.
-  [metricSet exportNSDictionary];
+  [metricSet export];
 
   XCTAssertEqual([gauge getGaugeValueForFieldValues:@[]], 1);
 }
@@ -325,7 +325,7 @@
     }
   };
 
-  XCTAssertEqualObjects([metricSet exportNSDictionary][@"metrics"], expected);
+  XCTAssertEqualObjects([metricSet export][@"metrics"], expected);
 }
 
 - (void)testAddConstantString {
@@ -341,7 +341,6 @@
       @"fields" : @{
         @"" : @[ @{
           @"value" : @"",
-
           @"created" : [NSDate date],
           @"last_updated" : [NSDate date],
           @"data" : @"20210806.0.1"
@@ -350,7 +349,7 @@
     }
   };
 
-  XCTAssertEqualObjects([metricSet exportNSDictionary][@"metrics"], expected);
+  XCTAssertEqualObjects([metricSet export][@"metrics"], expected);
 }
 
 - (void)testAddConstantInt {
@@ -373,7 +372,7 @@
     }
   };
 
-  XCTAssertEqualObjects([metricSet exportNSDictionary][@"metrics"], expected);
+  XCTAssertEqualObjects([metricSet export][@"metrics"], expected);
 }
 
 - (void)testExportNSDictionary {
@@ -416,7 +415,7 @@
     [metricSet int64GaugeWithName:@"/proc/memory/resident_size"
                        fieldNames:@[]
                          helpText:@"The resident set siz of this process."];
-  
+
   [metricSet registerCallback:^(void) {
     [virtualMemoryGauge set:987654321 forFieldValues:@[]];
     [residentMemoryGauge set:123456789 forFieldValues:@[]];
@@ -456,7 +455,7 @@
         },
       },
       @"/santa/rules" : @{
-        @"type" : [NSNumber numberWithInt:(int)SNTMetricTypeInt64Gauge],
+        @"type" : [NSNumber numberWithInt:(int)SNTMetricTypeGaugeInt64],
         @"fields" : @{
           @"rule_type" : @[
             @{
@@ -497,7 +496,7 @@
         },
       },
       @"/proc/memory/virtual_size" : @{
-        @"type" : [NSNumber numberWithInt:(int)SNTMetricTypeInt64Gauge],
+        @"type" : [NSNumber numberWithInt:(int)SNTMetricTypeGaugeInt64],
         @"fields" : @{
           @"" : @[ @{
             @"value" : @"",
@@ -508,7 +507,7 @@
         }
       },
       @"/proc/memory/resident_size" : @{
-        @"type" : [NSNumber numberWithInt:(int)SNTMetricTypeInt64Gauge],
+        @"type" : [NSNumber numberWithInt:(int)SNTMetricTypeGaugeInt64],
         @"fields" : @{
           @"" : @[ @{
             @"value" : @"",
@@ -521,7 +520,7 @@
     }
   };
 
-  XCTAssertEqualObjects([metricSet exportNSDictionary], expected);
+  XCTAssertEqualObjects([metricSet export], expected);
 }
 
 @end
