@@ -59,3 +59,11 @@ API_AVAILABLE(macos(10.15))
 API_UNAVAILABLE(ios, tvos, watchos)
 es_return_t es_subscribe(es_client_t *_Nonnull client, const es_event_type_t *_Nonnull events,
                          uint32_t event_count);
+
+API_AVAILABLE(macos(10.15))
+API_UNAVAILABLE(ios, tvos, watchos) es_return_t es_delete_client(es_client_t *_Nullable client);
+
+API_AVAILABLE(macos(10.15))
+API_UNAVAILABLE(ios, tvos, watchos) es_return_t
+  es_unsubscribe(es_client_t *_Nonnull client, const es_event_type_t *_Nonnull events,
+                 uint32_t event_count);
