@@ -75,9 +75,9 @@ const NSString *const kRulesDBPath = @"/private/var/db/santa/rules.db";
     .version = 4,
     .event_type = ES_EVENT_TYPE_AUTH_UNLINK,
     .event = event,
-    .mach_time = DISPATCH_TIME_NOW,
+    .mach_time = 1234,
     .action_type = ES_ACTION_TYPE_AUTH,
-    .deadline = DISPATCH_TIME_NOW,
+    .deadline = 1234,
     .process = &proc,
     .seq_num = 1337,
   };
@@ -164,7 +164,7 @@ const NSString *const kRulesDBPath = @"/private/var/db/santa/rules.db";
     [expectation fulfill];
   }];
 
-  es_file_t dbFile = {.path = MakeStringToken(kEventsDBPath)};
+  es_file_t dbFile = {.path = MakeStringToken(@"/some/other/path")};
   es_file_t otherBinary = {.path = MakeStringToken(@"somebinary")};
   es_process_t proc = {
     .executable = &otherBinary,
@@ -198,7 +198,6 @@ const NSString *const kRulesDBPath = @"/private/var/db/santa/rules.db";
                                }];
 
   XCTAssertEqual(got.result, ES_AUTH_RESULT_ALLOW);
-  XCTAssertEqual(got.shouldCache, false);
 }
 
 @end
