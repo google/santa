@@ -116,6 +116,12 @@ es_new_client_result_t es_new_client(es_client_t *_Nullable *_Nonnull client,
 };
 
 API_AVAILABLE(macos(10.15))
+API_UNAVAILABLE(ios, tvos, watchos) es_return_t es_delete_client(es_client_t *_Nullable client) {
+  [[MockEndpointSecurity mockEndpointSecurity] reset];
+  return ES_RETURN_SUCCESS;
+};
+
+API_AVAILABLE(macos(10.15))
 API_UNAVAILABLE(ios, tvos, watchos)
 es_respond_result_t es_respond_auth_result(es_client_t *_Nonnull client,
                                            const es_message_t *_Nonnull message,
@@ -132,3 +138,11 @@ es_return_t es_subscribe(es_client_t *_Nonnull client, const es_event_type_t *_N
   [MockEndpointSecurity mockEndpointSecurity].subscribed = YES;
   return ES_RETURN_SUCCESS;
 }
+API_AVAILABLE(macos(10.15))
+API_UNAVAILABLE(ios, tvos, watchos)
+es_return_t es_unsubscribe(es_client_t *_Nonnull client, const es_event_type_t *_Nonnull events,
+                           uint32_t event_count) {
+  [MockEndpointSecurity mockEndpointSecurity].subscribed = NO;
+
+  return ES_RETURN_SUCCESS;
+};

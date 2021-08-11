@@ -232,5 +232,6 @@ test_suite(
         "//Source/santad:SNTEventTableTest",
         "//Source/santad:SNTExecutionControllerTest",
         "//Source/santad:SNTRuleTableTest",
+        "//Source/santad:SNTEndpointSecurityManagerTest",
     ],
 )
