@@ -2,3 +2,4 @@ build --apple_generate_dsym --define=apple.propagate_embedded_extra_outputs=yes
 build --host_force_python=PY2
 
 build --copt=-Wreorder-init-list
+build --copt=-Wunused-variable

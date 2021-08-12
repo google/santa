@@ -42,6 +42,7 @@ const NSString *const kRulesDBPath = @"/private/var/db/santa/rules.db";
   MockEndpointSecurity *mockES = [MockEndpointSecurity mockEndpointSecurity];
   [mockES reset];
   SNTEndpointSecurityManager *snt = [[SNTEndpointSecurityManager alloc] init];
+  (void)snt;  // Make it appear used for the sake of -Wunused-variable
 
   XCTestExpectation *expectation =
     [self expectationWithDescription:@"Wait for santa's Auth dispatch queue"];
@@ -105,6 +106,7 @@ const NSString *const kRulesDBPath = @"/private/var/db/santa/rules.db";
     MockEndpointSecurity *mockES = [MockEndpointSecurity mockEndpointSecurity];
     [mockES reset];
     SNTEndpointSecurityManager *snt = [[SNTEndpointSecurityManager alloc] init];
+    (void)snt;  // Make it appear used for the sake of -Wunused-variable
 
     XCTestExpectation *expectation = [self expectationWithDescription:@"Wait for response from ES"];
     __block ESResponse *got;
@@ -155,9 +157,9 @@ const NSString *const kRulesDBPath = @"/private/var/db/santa/rules.db";
   MockEndpointSecurity *mockES = [MockEndpointSecurity mockEndpointSecurity];
   [mockES reset];
   SNTEndpointSecurityManager *snt = [[SNTEndpointSecurityManager alloc] init];
+  (void)snt;  // Make it appear used for the sake of -Wunused-variable
 
   XCTestExpectation *expectation = [self expectationWithDescription:@"Wait for response from ES"];
-
   __block ESResponse *got;
   [mockES registerResponseCallback:^(ESResponse *r) {
     got = r;
@@ -205,6 +207,7 @@ const NSString *const kRulesDBPath = @"/private/var/db/santa/rules.db";
     MockEndpointSecurity *mockES = [MockEndpointSecurity mockEndpointSecurity];
     [mockES reset];
     SNTEndpointSecurityManager *snt = [[SNTEndpointSecurityManager alloc] init];
+    (void)snt;  // Make it appear used for the sake of -Wunused-variable
 
     XCTestExpectation *expectation = [self expectationWithDescription:@"Wait for response from ES"];
     __block ESResponse *got;
@@ -264,6 +267,7 @@ const NSString *const kRulesDBPath = @"/private/var/db/santa/rules.db";
     MockEndpointSecurity *mockES = [MockEndpointSecurity mockEndpointSecurity];
     [mockES reset];
     SNTEndpointSecurityManager *snt = [[SNTEndpointSecurityManager alloc] init];
+    (void)snt;  // Make it appear used for the sake of -Wunused-variable
 
     XCTestExpectation *expectation = [self expectationWithDescription:@"Wait for response from ES"];
     __block ESResponse *got;
