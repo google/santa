@@ -107,7 +107,7 @@ const NSString *const kRulesDBPath = @"/private/var/db/santa/rules.db";
     SNTEndpointSecurityManager *snt = [[SNTEndpointSecurityManager alloc] init];
 
     XCTestExpectation *expectation = [self expectationWithDescription:@"Wait for response from ES"];
-    __block ESResponse *got = nil;
+    __block ESResponse *got;
     [mockES registerResponseCallback:^(ESResponse *r) {
       got = r;
       [expectation fulfill];
@@ -158,7 +158,7 @@ const NSString *const kRulesDBPath = @"/private/var/db/santa/rules.db";
 
   XCTestExpectation *expectation = [self expectationWithDescription:@"Wait for response from ES"];
 
-  __block ESResponse *got = nil;
+  __block ESResponse *got;
   [mockES registerResponseCallback:^(ESResponse *r) {
     got = r;
     [expectation fulfill];
@@ -207,7 +207,7 @@ const NSString *const kRulesDBPath = @"/private/var/db/santa/rules.db";
     SNTEndpointSecurityManager *snt = [[SNTEndpointSecurityManager alloc] init];
 
     XCTestExpectation *expectation = [self expectationWithDescription:@"Wait for response from ES"];
-    __block ESResponse *got = nil;
+    __block ESResponse *got;
     [mockES registerResponseCallback:^(ESResponse *r) {
       got = r;
       [expectation fulfill];
@@ -266,7 +266,7 @@ const NSString *const kRulesDBPath = @"/private/var/db/santa/rules.db";
     SNTEndpointSecurityManager *snt = [[SNTEndpointSecurityManager alloc] init];
 
     XCTestExpectation *expectation = [self expectationWithDescription:@"Wait for response from ES"];
-    __block ESResponse *got = nil;
+    __block ESResponse *got;
     [mockES registerResponseCallback:^(ESResponse *r) {
       got = r;
       [expectation fulfill];
