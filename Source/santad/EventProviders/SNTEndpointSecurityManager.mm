@@ -338,6 +338,7 @@
         es_respond_auth_result(self.client, m, ES_AUTH_RESULT_ALLOW, true);
         return;
       }
+      return;
     }
     case ES_EVENT_TYPE_AUTH_KEXTLOAD: {
       es_string_token_t identifier = m->event.kextload.identifier;
