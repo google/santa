@@ -207,7 +207,6 @@ const NSString *const kRulesDBPath = @"/private/var/db/santa/rules.db";
     SNTEndpointSecurityManager *snt = [[SNTEndpointSecurityManager alloc] init];
 
     XCTestExpectation *expectation = [self expectationWithDescription:@"Wait for response from ES"];
-    __block NSMutableArray<ESResponse *> *events = [NSMutableArray array];
     __block ESResponse *got = nil;
     [mockES registerResponseCallback:^(ESResponse *r) {
       got = r;
@@ -267,7 +266,6 @@ const NSString *const kRulesDBPath = @"/private/var/db/santa/rules.db";
     SNTEndpointSecurityManager *snt = [[SNTEndpointSecurityManager alloc] init];
 
     XCTestExpectation *expectation = [self expectationWithDescription:@"Wait for response from ES"];
-    __block NSMutableArray<ESResponse *> *events = [NSMutableArray array];
     __block ESResponse *got = nil;
     [mockES registerResponseCallback:^(ESResponse *r) {
       got = r;
