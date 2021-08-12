@@ -107,7 +107,7 @@ const NSString *const kRulesDBPath = @"/private/var/db/santa/rules.db";
     SNTEndpointSecurityManager *snt = [[SNTEndpointSecurityManager alloc] init];
 
     XCTestExpectation *expectation = [self expectationWithDescription:@"Wait for response from ES"];
-    __block ESResponse *got = nil;
+    __block ESResponse *got;
     [mockES registerResponseCallback:^(ESResponse *r) {
       got = r;
       [expectation fulfill];
@@ -158,7 +158,7 @@ const NSString *const kRulesDBPath = @"/private/var/db/santa/rules.db";
 
   XCTestExpectation *expectation = [self expectationWithDescription:@"Wait for response from ES"];
 
-  __block ESResponse *got = nil;
+  __block ESResponse *got;
   [mockES registerResponseCallback:^(ESResponse *r) {
     got = r;
     [expectation fulfill];
@@ -198,6 +198,130 @@ const NSString *const kRulesDBPath = @"/private/var/db/santa/rules.db";
                                }];
 
   XCTAssertEqual(got.result, ES_AUTH_RESULT_ALLOW);
+}
+
+- (void)testRenameOverwriteRulesDB {
+  for (const NSString *testPath in @[ kEventsDBPath, kRulesDBPath ]) {
+    MockEndpointSecurity *mockES = [MockEndpointSecurity mockEndpointSecurity];
+    [mockES reset];
+    SNTEndpointSecurityManager *snt = [[SNTEndpointSecurityManager alloc] init];
+
+    XCTestExpectation *expectation = [self expectationWithDescription:@"Wait for response from ES"];
+    __block ESResponse *got;
+    [mockES registerResponseCallback:^(ESResponse *r) {
+      got = r;
+      [expectation fulfill];
+    }];
+    es_file_t otherFile = {.path = MakeStringToken(@"/some/other/path")};
+    es_file_t dbFile = {.path = MakeStringToken(testPath)};
+
+    es_event_rename_t renameEvent = {
+      .destination_type = ES_DESTINATION_TYPE_EXISTING_FILE,
+      .source = &otherFile,
+      .destination = {.existing_file = &dbFile},
+    };
+
+    es_file_t otherBinary = {.path = MakeStringToken(@"somebinary")};
+    es_process_t proc = {
+      .executable = &otherBinary,
+      .is_es_client = false,
+      .codesigning_flags = 570509313,
+      .session_id = 12345,
+      .group_id = 12345,
+      .ppid = 12345,
+      .original_ppid = 12345,
+      .is_platform_binary = false,
+    };
+
+    es_events_t event = {.rename = renameEvent};
+    es_message_t m = {
+      .version = 4,
+      .event_type = ES_EVENT_TYPE_AUTH_RENAME,
+      .event = event,
+      .mach_time = DISPATCH_TIME_NOW,
+      .action_type = ES_ACTION_TYPE_AUTH,
+      .deadline = DISPATCH_TIME_FOREVER,
+      .process = &proc,
+      .seq_num = 1337,
+    };
+    [mockES triggerHandler:&m];
+
+    [self waitForExpectationsWithTimeout:10.0
+                                 handler:^(NSError *error) {
+                                   if (error) {
+                                     XCTFail(@"Santa auth test timed out with error: %@", error);
+                                   }
+                                 }];
+
+    XCTAssertEqual(got.result, ES_AUTH_RESULT_DENY, @"Failed to deny rename overwrite of %@",
+                   testPath);
+    XCTAssertTrue(got.shouldCache, @"Failed to cache rename deny decision of %@", testPath);
+  }
+}
+
+- (void)testRenameRulesDB {
+  for (const NSString *testPath in @[ kEventsDBPath, kRulesDBPath ]) {
+    MockEndpointSecurity *mockES = [MockEndpointSecurity mockEndpointSecurity];
+    [mockES reset];
+    SNTEndpointSecurityManager *snt = [[SNTEndpointSecurityManager alloc] init];
+
+    XCTestExpectation *expectation = [self expectationWithDescription:@"Wait for response from ES"];
+    __block ESResponse *got;
+    [mockES registerResponseCallback:^(ESResponse *r) {
+      got = r;
+      [expectation fulfill];
+    }];
+    es_file_t otherFile = {.path = MakeStringToken(@"/some/other/path")};
+    es_file_t dbFile = {.path = MakeStringToken(testPath)};
+
+    es_event_rename_t renameEvent = {
+      .source = &dbFile,
+      .destination_type = ES_DESTINATION_TYPE_NEW_PATH,
+      .destination =
+        {
+          .new_path =
+            {
+              .dir = &otherFile,
+              .filename = MakeStringToken(@"someotherfilename"),
+            },
+        },
+    };
+
+    es_file_t otherBinary = {.path = MakeStringToken(@"somebinary")};
+    es_process_t proc = {
+      .executable = &otherBinary,
+      .is_es_client = false,
+      .codesigning_flags = 570509313,
+      .session_id = 12345,
+      .group_id = 12345,
+      .ppid = 12345,
+      .original_ppid = 12345,
+      .is_platform_binary = false,
+    };
+
+    es_events_t event = {.rename = renameEvent};
+    es_message_t m = {
+      .version = 4,
+      .event_type = ES_EVENT_TYPE_AUTH_RENAME,
+      .event = event,
+      .mach_time = DISPATCH_TIME_NOW,
+      .action_type = ES_ACTION_TYPE_AUTH,
+      .deadline = DISPATCH_TIME_FOREVER,
+      .process = &proc,
+      .seq_num = 1337,
+    };
+    [mockES triggerHandler:&m];
+
+    [self waitForExpectationsWithTimeout:10.0
+                                 handler:^(NSError *error) {
+                                   if (error) {
+                                     XCTFail(@"Santa auth test timed out with error: %@", error);
+                                   }
+                                 }];
+
+    XCTAssertEqual(got.result, ES_AUTH_RESULT_DENY, @"Failed to deny rename of %@", testPath);
+    XCTAssertTrue(got.shouldCache, @"Failed to cache rename deny decision of %@", testPath);
+  }
 }
 
 @end
