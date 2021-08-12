@@ -21,8 +21,8 @@
 CF_EXTERN_C_BEGIN
 es_string_token_t MakeStringToken(const NSString *s) {
   return (es_string_token_t){
-    .data = [s UTF8String],
     .length = [s length],
+    .data = [s UTF8String],
   };
 }
 CF_EXTERN_C_END

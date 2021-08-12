@@ -60,26 +60,26 @@ const NSString *const kRulesDBPath = @"/private/var/db/santa/rules.db";
   es_file_t dbFile = {.path = MakeStringToken(kEventsDBPath)};
   es_file_t otherBinary = {.path = MakeStringToken(@"somebinary")};
   es_process_t proc = {
-    .executable = &otherBinary,
-    .is_es_client = false,
-    .codesigning_flags = 570509313,
-    .session_id = 12345,
-    .group_id = 12345,
     .ppid = 12345,
     .original_ppid = 12345,
+    .group_id = 12345,
+    .session_id = 12345,
+    .codesigning_flags = 570509313,
     .is_platform_binary = false,
+    .is_es_client = false,
+    .executable = &otherBinary,
   };
   es_event_unlink_t unlink_event = {.target = &dbFile};
   es_events_t event = {.unlink = unlink_event};
   es_message_t m = {
     .version = 4,
-    .event_type = ES_EVENT_TYPE_AUTH_UNLINK,
-    .event = event,
     .mach_time = 1234,
-    .action_type = ES_ACTION_TYPE_AUTH,
     .deadline = 1234,
     .process = &proc,
     .seq_num = 1337,
+    .action_type = ES_ACTION_TYPE_AUTH,
+    .event_type = ES_EVENT_TYPE_AUTH_UNLINK,
+    .event = event,
   };
 
   [mockES triggerHandler:&m];
@@ -116,26 +116,25 @@ const NSString *const kRulesDBPath = @"/private/var/db/santa/rules.db";
     es_file_t dbFile = {.path = MakeStringToken(testPath)};
     es_file_t otherBinary = {.path = MakeStringToken(@"somebinary")};
     es_process_t proc = {
-      .executable = &otherBinary,
-      .is_es_client = false,
-      .codesigning_flags = 570509313,
-      .session_id = 12345,
-      .group_id = 12345,
       .ppid = 12345,
       .original_ppid = 12345,
+      .group_id = 12345,
+      .session_id = 12345,
+      .codesigning_flags = 570509313,
       .is_platform_binary = false,
+      .is_es_client = false,
     };
     es_event_unlink_t unlink_event = {.target = &dbFile};
     es_events_t event = {.unlink = unlink_event};
     es_message_t m = {
       .version = 4,
-      .event_type = ES_EVENT_TYPE_AUTH_UNLINK,
-      .event = event,
       .mach_time = DISPATCH_TIME_NOW,
-      .action_type = ES_ACTION_TYPE_AUTH,
       .deadline = DISPATCH_TIME_FOREVER,
       .process = &proc,
       .seq_num = 1337,
+      .action_type = ES_ACTION_TYPE_AUTH,
+      .event_type = ES_EVENT_TYPE_AUTH_UNLINK,
+      .event = event,
     };
     [mockES triggerHandler:&m];
 
@@ -167,26 +166,26 @@ const NSString *const kRulesDBPath = @"/private/var/db/santa/rules.db";
   es_file_t dbFile = {.path = MakeStringToken(@"/some/other/path")};
   es_file_t otherBinary = {.path = MakeStringToken(@"somebinary")};
   es_process_t proc = {
-    .executable = &otherBinary,
-    .is_es_client = true,
-    .codesigning_flags = 570509313,
-    .session_id = 12345,
-    .group_id = 12345,
     .ppid = 12345,
     .original_ppid = 12345,
+    .group_id = 12345,
+    .session_id = 12345,
+    .codesigning_flags = 570509313,
     .is_platform_binary = false,
+    .is_es_client = true,
+    .executable = &otherBinary,
   };
   es_event_unlink_t unlink_event = {.target = &dbFile};
   es_events_t event = {.unlink = unlink_event};
   es_message_t m = {
     .version = 4,
-    .event_type = ES_EVENT_TYPE_AUTH_UNLINK,
-    .event = event,
     .mach_time = DISPATCH_TIME_NOW,
-    .action_type = ES_ACTION_TYPE_AUTH,
     .deadline = DISPATCH_TIME_FOREVER,
     .process = &proc,
     .seq_num = 1337,
+    .action_type = ES_ACTION_TYPE_AUTH,
+    .event_type = ES_EVENT_TYPE_AUTH_UNLINK,
+    .event = event,
   };
 
   [mockES triggerHandler:&m];
@@ -216,33 +215,33 @@ const NSString *const kRulesDBPath = @"/private/var/db/santa/rules.db";
     es_file_t dbFile = {.path = MakeStringToken(testPath)};
 
     es_event_rename_t renameEvent = {
-      .destination_type = ES_DESTINATION_TYPE_EXISTING_FILE,
       .source = &otherFile,
+      .destination_type = ES_DESTINATION_TYPE_EXISTING_FILE,
       .destination = {.existing_file = &dbFile},
     };
 
     es_file_t otherBinary = {.path = MakeStringToken(@"somebinary")};
     es_process_t proc = {
-      .executable = &otherBinary,
-      .is_es_client = false,
-      .codesigning_flags = 570509313,
-      .session_id = 12345,
-      .group_id = 12345,
       .ppid = 12345,
       .original_ppid = 12345,
+      .group_id = 12345,
+      .session_id = 12345,
+      .codesigning_flags = 570509313,
       .is_platform_binary = false,
+      .is_es_client = false,
+      .executable = &otherBinary,
     };
 
     es_events_t event = {.rename = renameEvent};
     es_message_t m = {
       .version = 4,
-      .event_type = ES_EVENT_TYPE_AUTH_RENAME,
-      .event = event,
       .mach_time = DISPATCH_TIME_NOW,
-      .action_type = ES_ACTION_TYPE_AUTH,
       .deadline = DISPATCH_TIME_FOREVER,
       .process = &proc,
       .seq_num = 1337,
+      .action_type = ES_ACTION_TYPE_AUTH,
+      .event_type = ES_EVENT_TYPE_AUTH_RENAME,
+      .event = event,
     };
     [mockES triggerHandler:&m];
 
@@ -289,26 +288,26 @@ const NSString *const kRulesDBPath = @"/private/var/db/santa/rules.db";
 
     es_file_t otherBinary = {.path = MakeStringToken(@"somebinary")};
     es_process_t proc = {
-      .executable = &otherBinary,
-      .is_es_client = false,
-      .codesigning_flags = 570509313,
-      .session_id = 12345,
-      .group_id = 12345,
       .ppid = 12345,
       .original_ppid = 12345,
+      .group_id = 12345,
+      .session_id = 12345,
+      .codesigning_flags = 570509313,
       .is_platform_binary = false,
+      .is_es_client = false,
+      .executable = &otherBinary,
     };
 
     es_events_t event = {.rename = renameEvent};
     es_message_t m = {
       .version = 4,
-      .event_type = ES_EVENT_TYPE_AUTH_RENAME,
-      .event = event,
       .mach_time = DISPATCH_TIME_NOW,
-      .action_type = ES_ACTION_TYPE_AUTH,
       .deadline = DISPATCH_TIME_FOREVER,
       .process = &proc,
       .seq_num = 1337,
+      .action_type = ES_ACTION_TYPE_AUTH,
+      .event_type = ES_EVENT_TYPE_AUTH_RENAME,
+      .event = event,
     };
     [mockES triggerHandler:&m];
 
