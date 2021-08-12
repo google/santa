@@ -123,6 +123,7 @@ const NSString *const kRulesDBPath = @"/private/var/db/santa/rules.db";
       .codesigning_flags = 570509313,
       .is_platform_binary = false,
       .is_es_client = false,
+      .executable = &otherBinary,
     };
     es_event_unlink_t unlink_event = {.target = &dbFile};
     es_events_t event = {.unlink = unlink_event};
