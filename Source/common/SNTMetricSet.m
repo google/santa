@@ -214,7 +214,7 @@
 
     if (!metricValue) {
       // Deep copy to prevent mutations to the keys we store in the dictionary.
-      fieldValues = [[NSArray alloc] initWithArray:fieldValues copyItems:YES];
+      fieldValues = [fieldValues copy];
       metricValue = [[SNTMetricValue alloc] init];
       _metricsForFieldValues[fieldValues] = metricValue;
     }
