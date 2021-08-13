@@ -189,6 +189,12 @@ objc_library(
 )
 
 objc_library(
+    name = "SNTMetricSet",
+    srcs = ["SNTMetricSet.m"],
+    hdrs = ["SNTMetricSet.h"],
+)
+
+objc_library(
     name = "SNTXPCSyncdInterface",
     srcs = ["SNTXPCSyncdInterface.m"],
     hdrs = ["SNTXPCSyncdInterface.h"],
@@ -241,5 +247,11 @@ santa_unit_test(
 santa_unit_test(
     name = "SNTPrefixTreeTest",
     srcs = ["SNTPrefixTreeTest.mm"],
-    deps = ["SNTPrefixTree"],
+    deps = [":SNTPrefixTree"],
+)
+
+santa_unit_test(
+    name = "SNTMetricSetTest",
+    srcs = ["SNTMetricSetTest.m"],
+    deps = [":SNTMetricSet"],
 )
