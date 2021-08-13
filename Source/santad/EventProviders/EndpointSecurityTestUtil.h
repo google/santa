@@ -17,7 +17,7 @@
 #include <bsm/libbsm.h>
 
 CF_EXTERN_C_BEGIN
-es_string_token_t MakeStringToken(const NSString *s);
+es_string_token_t MakeStringToken(const NSString *_Nonnull s);
 CF_EXTERN_C_END
 
 @interface ESResponse : NSObject
@@ -25,17 +25,17 @@ CF_EXTERN_C_END
 @property(nonatomic) bool shouldCache;
 @end
 
-typedef void (^ESCallback)(ESResponse *);
+typedef void (^ESCallback)(ESResponse *_Nonnull);
 
 // Singleton wrapper around all of the kernel-level EndpointSecurity framework functions.
 @interface MockEndpointSecurity : NSObject
 @property BOOL subscribed;
 - (void)reset;
-- (void)registerResponseCallback:(ESCallback)callback;
-- (void)triggerHandler:(es_message_t *)msg;
+- (void)registerResponseCallback:(ESCallback _Nonnull)callback;
+- (void)triggerHandler:(es_message_t *_Nonnull)msg;
 
 ///  Retrieve an initialized singleton MockEndpointSecurity object
-+ (instancetype)mockEndpointSecurity;
++ (instancetype _Nonnull)mockEndpointSecurity;
 @end
 
 API_UNAVAILABLE(ios, tvos, watchos)
@@ -64,6 +64,6 @@ API_AVAILABLE(macos(10.15))
 API_UNAVAILABLE(ios, tvos, watchos) es_return_t es_delete_client(es_client_t *_Nullable client);
 
 API_AVAILABLE(macos(10.15))
-API_UNAVAILABLE(ios, tvos, watchos) es_return_t
-  es_unsubscribe(es_client_t *_Nonnull client, const es_event_type_t *_Nonnull events,
-                 uint32_t event_count);
+API_UNAVAILABLE(ios, tvos, watchos)
+es_return_t es_unsubscribe(es_client_t *_Nonnull client, const es_event_type_t *_Nonnull events,
+                           uint32_t event_count);
