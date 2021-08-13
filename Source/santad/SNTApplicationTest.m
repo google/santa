@@ -83,11 +83,15 @@
   }];
 
   NSString *binaryPath = [NSString pathWithComponents:@[ testPath, binaryName ]];
-  es_file_t binary = {.path = MakeStringToken(binaryPath)};
+  struct stat fileStat;
+  lstat(binaryPath.UTF8String, &fileStat);
+  es_file_t binary = {
+    .path = MakeStringToken(binaryPath),
+  };
   es_process_t proc = {
     .executable = &binary,
     .is_es_client = false,
-    .codesigning_flags = 570509313,
+    .codesigning_flags = 0x1 | 0x20000000,  // CS_VALID | CS_SIGNED - See kern/cs_blobs.h
     .session_id = 12345,
     .group_id = 12345,
     .ppid = 12345,
@@ -130,6 +134,26 @@
   NSDictionary *testCases = @{
     @"badbinary" : [NSNumber numberWithInt:ES_AUTH_RESULT_DENY],
     @"goodbinary" : [NSNumber numberWithInt:ES_AUTH_RESULT_ALLOW],
+    @"noop" : [NSNumber numberWithInt:ES_AUTH_RESULT_ALLOW],
+
+  };
+  NSString *fullTestPath = [NSString pathWithComponents:@[
+    [[[NSProcessInfo processInfo] environment] objectForKey:@"TEST_SRCDIR"], testPath
+  ]];
+
+  for (NSString *binary in testCases) {
+    [self checkBinaryExecution:binary
+                      testPath:fullTestPath
+                    wantResult:[testCases[binary] intValue]];
+  }
+}
+
+- (void)testCertRules {
+  NSString *testPath = @"santa/Source/santad/testdata/binaryrules";
+  NSDictionary *testCases = @{
+    @"badcert" : [NSNumber numberWithInt:ES_AUTH_RESULT_DENY],
+    @"goodcert" : [NSNumber numberWithInt:ES_AUTH_RESULT_ALLOW],
+    @"noop" : [NSNumber numberWithInt:ES_AUTH_RESULT_ALLOW],
   };
   NSString *fullTestPath = [NSString pathWithComponents:@[
     [[[NSProcessInfo processInfo] environment] objectForKey:@"TEST_SRCDIR"], testPath
