@@ -16,27 +16,37 @@
 
 #ifdef KERNEL
 #include <libkern/locks.h>
+
 #include "Source/common/SNTLogging.h"
 
 #else
 
-#include <mutex>
 #include <string.h>
 
-#define LOGD(format, ...) // NOP
-#define LOGE(format, ...) // NOP
+#include <mutex>
+
+#define LOGD(format, ...)  // NOP
+#define LOGE(format, ...)  // NOP
 
 #define lck_rw_lock_shared(l) pthread_rwlock_rdlock(&l)
 #define lck_rw_unlock_shared(l) pthread_rwlock_unlock(&l)
 #define lck_rw_lock_exclusive(l) pthread_rwlock_wrlock(&l)
 #define lck_rw_unlock_exclusive(l) pthread_rwlock_unlock(&l)
 
-#define lck_rw_lock_shared_to_exclusive(l) ({ pthread_rwlock_unlock(&l); false; })
-#define lck_rw_lock_exclusive_to_shared(l) ({ pthread_rwlock_unlock(&l); pthread_rwlock_rdlock(&l); })
+#define lck_rw_lock_shared_to_exclusive(l) \
+  ({                                       \
+    pthread_rwlock_unlock(&l);             \
+    false;                                 \
+  })
+#define lck_rw_lock_exclusive_to_shared(l) \
+  ({                                       \
+    pthread_rwlock_unlock(&l);             \
+    pthread_rwlock_rdlock(&l);             \
+  })
 
 #define lck_mtx_lock(l) l->lock()
 #define lck_mtx_unlock(l) l->unlock()
-#endif // KERNEL
+#endif  // KERNEL
 
 SNTPrefixTree::SNTPrefixTree(uint32_t max_nodes) {
   root_ = new SantaPrefixNode();
@@ -45,7 +55,8 @@ SNTPrefixTree::SNTPrefixTree(uint32_t max_nodes) {
 
 #ifdef KERNEL
   spt_lock_grp_attr_ = lck_grp_attr_alloc_init();
-  spt_lock_grp_ = lck_grp_alloc_init("santa-prefix-tree-lock", spt_lock_grp_attr_);
+  spt_lock_grp_ =
+      lck_grp_alloc_init("santa-prefix-tree-lock", spt_lock_grp_attr_);
   spt_lock_attr_ = lck_attr_alloc_init();
 
   spt_lock_ = lck_rw_alloc_init(spt_lock_grp_, spt_lock_attr_);
@@ -57,9 +68,9 @@ SNTPrefixTree::SNTPrefixTree(uint32_t max_nodes) {
 }
 
 IOReturn SNTPrefixTree::AddPrefix(const char *prefix, uint64_t *node_count) {
-  // Serialize requests to AddPrefix. Otherwise one AddPrefix thread could overwrite whole
-  // branches of another. HasPrefix is still free to read the tree, until AddPrefix needs to
-  // modify it.
+  // Serialize requests to AddPrefix. Otherwise one AddPrefix thread could
+  // overwrite whole branches of another. HasPrefix is still free to read the
+  // tree, until AddPrefix needs to modify it.
   lck_mtx_lock(spt_add_lock_);
 
   // Don't allow an empty prefix.
@@ -74,13 +85,13 @@ IOReturn SNTPrefixTree::AddPrefix(const char *prefix, uint64_t *node_count) {
   lck_rw_lock_shared(spt_lock_);
 
   SantaPrefixNode *node = root_;
-  for (int i = 0; i < len; ++i) {
+  for (size_t i = 0; i < len; ++i) {
     // If there is a node in the path that is considered a prefix, stop adding.
     // For our purposes we only care about the shortest path that matches.
     if (node->isPrefix) break;
 
     // Only process a byte at a time.
-    uint8_t value = prefix[i];
+    uint8_t value = (uint8_t)prefix[i];
 
     // Create the child if it does not exist.
     if (!node->children[value]) {
@@ -103,7 +114,7 @@ IOReturn SNTPrefixTree::AddPrefix(const char *prefix, uint64_t *node_count) {
 
       // Create the rest of the prefix.
       while (i < len) {
-        value = prefix[i++];
+        value = (uint8_t)prefix[i++];
 
         SantaPrefixNode *new_node = new SantaPrefixNode();
         node->children[value] = new_node;
@@ -159,7 +170,8 @@ bool SNTPrefixTree::HasPrefix(const char *string) {
 
   SantaPrefixNode *node = root_;
 
-  // A well formed tree will always break this loop. Even if string doesn't terminate.
+  // A well formed tree will always break this loop. Even if string doesn't
+  // terminate.
   const char *p = string;
   while (*p) {
     // Only process a byte at a time.
@@ -193,8 +205,8 @@ void SNTPrefixTree::Reset() {
 void SNTPrefixTree::PruneNode(SantaPrefixNode *target) {
   if (!target) return;
 
-  // For deep trees, a recursive approach will generate too many stack frames. Make a "stack"
-  // and walk the tree.
+  // For deep trees, a recursive approach will generate too many stack frames.
+  // Make a "stack" and walk the tree.
   auto stack = new SantaPrefixNode *[node_count_ + 1];
   if (!stack) {
     LOGE("Unable to prune tree!");
@@ -206,7 +218,8 @@ void SNTPrefixTree::PruneNode(SantaPrefixNode *target) {
   // Seed the "stack" with a starting node.
   stack[count++] = target;
 
-  // Start at the target node and walk the tree to find and delete all the sub-nodes.
+  // Start at the target node and walk the tree to find and delete all the
+  // sub-nodes.
   while (count) {
     auto node = stack[--count];
 

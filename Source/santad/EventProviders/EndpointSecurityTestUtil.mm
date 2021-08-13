@@ -19,10 +19,10 @@
 #import "Source/santad/EventProviders/EndpointSecurityTestUtil.h"
 
 CF_EXTERN_C_BEGIN
-es_string_token_t MakeStringToken(const NSString *s) {
+es_string_token_t MakeStringToken(const NSString *_Nonnull s) {
   return (es_string_token_t){
-    .data = [s UTF8String],
     .length = [s length],
+    .data = [s UTF8String],
   };
 }
 CF_EXTERN_C_END
@@ -65,11 +65,11 @@ CF_EXTERN_C_END
   self.handler = handler;
 }
 
-- (void)triggerHandler:(es_message_t *)msg {
-  self.handler((__bridge es_client_t *)self.client, msg);
+- (void)triggerHandler:(es_message_t *_Nonnull)msg {
+  self.handler((__bridge es_client_t *_Nullable)self.client, msg);
 }
 
-- (void)registerResponseCallback:(ESCallback)callback {
+- (void)registerResponseCallback:(ESCallback _Nonnull)callback {
   @synchronized(self) {
     [self.responseCallbacks addObject:callback];
   }
@@ -89,7 +89,7 @@ CF_EXTERN_C_END
   return ES_RESPOND_RESULT_SUCCESS;
 };
 
-+ (instancetype)mockEndpointSecurity {
++ (instancetype _Nonnull)mockEndpointSecurity {
   static MockEndpointSecurity *sharedES;
   static dispatch_once_t onceToken;
   dispatch_once(&onceToken, ^{
