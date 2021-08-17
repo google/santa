@@ -1,10 +1,19 @@
-# Important
-
-Santa v0.9.21 has moved to using an Apple [Configuration Profile](https://developer.apple.com/library/content/featuredarticles/iPhoneConfigurationProfileRef/Introduction/Introduction.html) to manage the local configuration. The old config file (`/var/db/santa/config.plist`) is no longer used.
+---
+title: Configuration
+parent: Deployment
+---
 
 # Configuration
 
-Two configuration methods can be used to control Santa: a local configuration profile and a sync server controlled configuration. There are certain options that can only be controlled with a local configuration profile and others that can only be controlled with a sync server controlled configuration. Additionally, there are options that can be controlled by both.
+Santa is configured using Apple
+[Configuration Profiles](https://developer.apple.com/library/content/featuredarticles/iPhoneConfigurationProfileRef/Introduction/Introduction.html)
+to manage the local configuration.
+
+Two configuration methods can be used to control Santa: a local configuration
+profile and a sync server controlled configuration. There are certain options
+that can only be controlled with a local configuration profile and others that
+can only be controlled with a sync server controlled configuration.
+Additionally, there are options that can be controlled by both.
 
 ## Local Configuration Profile
 
@@ -39,13 +48,16 @@ Two configuration methods can be used to control Santa: a local configuration pr
 | EventLogPath                  | String     | If EventLogType is set to filelog, EventLogPath will provide the path to save logs. Defaults to /var/db/santa/santa.log. If you change this value ensure you also update com.google.santa.newsyslog.conf with the new path.        |
 | EnableMachineIDDecoration     | Bool       | If YES, this appends the MachineID to the end of each log line. Defaults to NO.       |
 
-*overridable by the sync server: run `santactl status` to check the current running config
+*overridable by the sync server: run `santactl status` to check the current
+running config
 
 ##### EventDetailURL
 
-When the user gets a block notification, a button can be displayed which will take them to a web page with more information about that event.
+When the user gets a block notification, a button can be displayed which will
+take them to a web page with more information about that event.
 
-This property contains a kind of format string to be turned into the URL to send them to. The following sequences will be replaced in the final URL:
+This property contains a kind of format string to be turned into the URL to send
+them to. The following sequences will be replaced in the final URL:
 
 | Key          | Description                              |
 | ------------ | ---------------------------------------- |
@@ -60,7 +72,10 @@ For example: `https://sync-server-hostname/%machine_id%/%file_sha%`
 
 ##### Example Configuration Profile
 
-Here is an example of a configuration profile that could be set. It was generated with Tim Sutton's great [mcxToProfile](https://github.com/timsutton/mcxToProfile) tool. A copy is also available [here](com.google.santa.example.mobileconfig).
+Here is an example of a configuration profile that could be set. It was
+generated with Tim Sutton's great
+[mcxToProfile](https://github.com/timsutton/mcxToProfile) tool. A copy is also
+available [here](com.google.santa.example.mobileconfig).
 
 A few key points to when creating your configuration profile:
 
@@ -154,10 +169,10 @@ A few key points to when creating your configuration profile:
 
 ```
 
-Configuration profiles have a `.mobileconfig` file extension. There are many ways to install configuration profiles:
+Configuration profiles have a `.mobileconfig` file extension. There are a couple
+ways to install configuration profiles:
 
 * Double click them in Finder
-* Use the `/usr/bin/profiles` tool
 * Use an MDM
 
 ## Sync server Provided Configuration

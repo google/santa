@@ -1,7 +1,12 @@
+---
+title: Building
+parent: Development
+---
+
 # Building
 
 Santa uses [Bazel](https://bazel.build) for building, testing and releases. The
-`master` branch on GitHub is the source-of-truth with features developed in
+`main` branch on GitHub is the source-of-truth with features developed in
 personal forks.
 
 #### Cloning
@@ -13,7 +18,7 @@ git clone https://github.com/google/santa
 cd santa
 ```
 
-The above command will default to using the `master` branch. All releases are
+The above command will default to using the `main` branch. All releases are
 built from tagged commits, so if you wanted to build, run or test a specific
 release you can checkout that tag:
 

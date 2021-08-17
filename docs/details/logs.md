@@ -1,3 +1,7 @@
+---
+parent: Details
+---
+
 # Logs
 
 Santa currently logs to `/var/db/santa/santa.log` by default. All executions and

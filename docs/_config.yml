@@ -1,4 +1,15 @@
-theme: jekyll-theme-cayman
+title: Santa
+remote_theme: pmarsceill/just-the-docs
+
+nav_sort: case_insensitive
+
+back_to_top: true
+back_to_top_text: "Back to top"
+
+gh_edit_link: true # show or hide edit this page link
+gh_edit_link_text: "Edit this page on GitHub"
+gh_edit_repository: "https://github.com/google/santa"
+gh_edit_branch: "main"
 
 plugins:
     - jekyll-redirect-from

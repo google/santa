@@ -1,6 +1,9 @@
---------------------------------------------------------------------------------
-
-## redirect_from: "/introduction/binary-whitelisting-overview.md"
+---
+title: Binary Authorization
+parent: Intro
+redirect_from:
+  - /introduction/binary-whitelisting-overview
+---
 
 # Binary Authorization Overview
 

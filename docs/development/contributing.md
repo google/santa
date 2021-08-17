@@ -1,3 +1,8 @@
+---
+title: Contributing
+parent: Development
+---
+
 Want to contribute? Great! First, read this page (including the small print at the end).
 
 ### Before you contribute

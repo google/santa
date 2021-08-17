@@ -1,4 +1,9 @@
-# Welcome to the Santa Docs
+---
+title: Home
+nav_order: 1
+---
+
+# Welcome
 
 Santa is a binary authorization system for macOS. Here you will find the
 documentation for understanding how Santa works, how to deploy it and how to
@@ -33,7 +38,7 @@ There are five main components that make up Santa whose core functionality is de
 * [santad](details/santad.md): A user-land root daemon that makes decisions on behalf of santa-driver requests.
 * [santactl](details/santactl.md): A user-land anonymous daemon that communicates with a sync server for configurations and policies. santactl can also be used by a user to manually configure Santa when using the local configuration.
 * [santa-gui](details/santa-gui.md): A user-land GUI daemon that displays notifications when an `execve()` is blocked.
-* [santabs](details/santabs.md): A user-land root daemon that finds Mach-O binaries within a bundle and creates events for them. 
+* [santabs](details/santabs.md): A user-land root daemon that finds Mach-O binaries within a bundle and creates events for them.
 
 ###### Concepts
 

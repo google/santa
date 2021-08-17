@@ -1,3 +1,7 @@
+---
+parent: Details
+---
+
 # santa-driver
 
 santa-driver is a macOS

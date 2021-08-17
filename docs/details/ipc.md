@@ -1,3 +1,7 @@
+---
+parent: Details
+---
+
 # Interprocess Communication (IPC)
 
 Most IPC within Santa is done by way of Apple's
