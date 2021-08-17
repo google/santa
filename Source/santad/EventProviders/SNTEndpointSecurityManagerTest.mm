@@ -22,6 +22,7 @@
 
 const NSString *const kEventsDBPath = @"/private/var/db/santa/events.db";
 const NSString *const kRulesDBPath = @"/private/var/db/santa/rules.db";
+const NSString *const kBenignPath = @"/some/other/path";
 
 @interface SNTEndpointSecurityManagerTest : XCTestCase
 @end
@@ -102,7 +103,12 @@ const NSString *const kRulesDBPath = @"/private/var/db/santa/rules.db";
 }
 
 - (void)testDeleteRulesDB {
-  for (const NSString *testPath in @[ kEventsDBPath, kRulesDBPath ]) {
+  NSDictionary<const NSString *, NSNumber *> *testCases = @{
+    kEventsDBPath : [NSNumber numberWithInt:ES_AUTH_RESULT_DENY],
+    kRulesDBPath : [NSNumber numberWithInt:ES_AUTH_RESULT_DENY],
+    kBenignPath : [NSNumber numberWithInt:ES_AUTH_RESULT_ALLOW],
+  };
+  for (const NSString *testPath in testCases) {
     MockEndpointSecurity *mockES = [MockEndpointSecurity mockEndpointSecurity];
     [mockES reset];
     SNTEndpointSecurityManager *snt = [[SNTEndpointSecurityManager alloc] init];
@@ -148,7 +154,8 @@ const NSString *const kRulesDBPath = @"/private/var/db/santa/rules.db";
                                    }
                                  }];
 
-    XCTAssertEqual(got.result, ES_AUTH_RESULT_DENY, @"Failed to deny deletion of %@", testPath);
+    XCTAssertEqual(got.result, [testCases objectForKey:testPath].intValue,
+                   @"Incorrect handling of delete of %@", testPath);
     XCTAssertTrue(got.shouldCache, @"Failed to cache deletion decision of %@", testPath);
   }
 }
@@ -203,7 +210,12 @@ const NSString *const kRulesDBPath = @"/private/var/db/santa/rules.db";
 }
 
 - (void)testRenameOverwriteRulesDB {
-  for (const NSString *testPath in @[ kEventsDBPath, kRulesDBPath ]) {
+  NSDictionary<const NSString *, NSNumber *> *testCases = @{
+    kEventsDBPath : [NSNumber numberWithInt:ES_AUTH_RESULT_DENY],
+    kRulesDBPath : [NSNumber numberWithInt:ES_AUTH_RESULT_DENY],
+    kBenignPath : [NSNumber numberWithInt:ES_AUTH_RESULT_ALLOW],
+  };
+  for (const NSString *testPath in testCases) {
     MockEndpointSecurity *mockES = [MockEndpointSecurity mockEndpointSecurity];
     [mockES reset];
     SNTEndpointSecurityManager *snt = [[SNTEndpointSecurityManager alloc] init];
@@ -256,14 +268,20 @@ const NSString *const kRulesDBPath = @"/private/var/db/santa/rules.db";
                                    }
                                  }];
 
-    XCTAssertEqual(got.result, ES_AUTH_RESULT_DENY, @"Failed to deny rename overwrite of %@",
-                   testPath);
-    XCTAssertTrue(got.shouldCache, @"Failed to cache rename deny decision of %@", testPath);
+    XCTAssertEqual(got.result, [testCases objectForKey:testPath].intValue,
+                   @"Incorrect handling of rename of %@", testPath);
+    XCTAssertTrue(got.shouldCache, @"Failed to cache rename auth decision of %@", testPath);
   }
 }
 
 - (void)testRenameRulesDB {
-  for (const NSString *testPath in @[ kEventsDBPath, kRulesDBPath ]) {
+  NSDictionary<const NSString *, NSNumber *> *testCases = @{
+    kEventsDBPath : [NSNumber numberWithInt:ES_AUTH_RESULT_DENY],
+    kRulesDBPath : [NSNumber numberWithInt:ES_AUTH_RESULT_DENY],
+    kBenignPath : [NSNumber numberWithInt:ES_AUTH_RESULT_ALLOW],
+  };
+
+  for (const NSString *testPath in testCases) {
     MockEndpointSecurity *mockES = [MockEndpointSecurity mockEndpointSecurity];
     [mockES reset];
     SNTEndpointSecurityManager *snt = [[SNTEndpointSecurityManager alloc] init];
@@ -322,9 +340,10 @@ const NSString *const kRulesDBPath = @"/private/var/db/santa/rules.db";
                                      XCTFail(@"Santa auth test timed out with error: %@", error);
                                    }
                                  }];
+    XCTAssertEqual(got.result, [testCases objectForKey:testPath].intValue,
+                   @"Incorrect handling of rename of %@", testPath);
 
-    XCTAssertEqual(got.result, ES_AUTH_RESULT_DENY, @"Failed to deny rename of %@", testPath);
-    XCTAssertTrue(got.shouldCache, @"Failed to cache rename deny decision of %@", testPath);
+    XCTAssertTrue(got.shouldCache, @"Failed to cache rename auth decision of %@", testPath);
   }
 }
 
