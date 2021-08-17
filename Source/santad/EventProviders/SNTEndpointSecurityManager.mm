@@ -335,8 +335,6 @@
           es_respond_auth_result(self.client, m, ES_AUTH_RESULT_DENY, true);
           return;
         }
-        es_respond_auth_result(self.client, m, ES_AUTH_RESULT_ALLOW, true);
-        return;
       }
       es_respond_auth_result(self.client, m, ES_AUTH_RESULT_ALLOW, true);
       return;
