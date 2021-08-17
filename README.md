@@ -1,4 +1,4 @@
-# Santa ![CI](https://github.com/google/santa/workflows/CI/badge.svg?branch=main) [![Coverage Status](https://coveralls.io/repos/github/google/santa/badge.svg?branch=main)](https://coveralls.io/github/google/santa?branch=main)
+# Santa [![CI](https://github.com/google/santa/actions/workflows/ci.yml/badge.svg)](https://github.com/google/santa/actions/workflows/ci.yml) [![Coverage Status](https://coveralls.io/repos/github/google/santa/badge.svg?branch=main)](https://coveralls.io/github/google/santa?branch=main)
 
 <p align="center">
     <img src="./Source/santa/Resources/Images.xcassets/AppIcon.appiconset/santa-hat-icon-128.png" alt="Santa Icon" />
