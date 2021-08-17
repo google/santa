@@ -89,14 +89,14 @@
     .path = MakeStringToken(binaryPath),
   };
   es_process_t proc = {
-    .executable = &binary,
-    .is_es_client = false,
-    .codesigning_flags = 0x1 | 0x20000000,  // CS_VALID | CS_SIGNED - See kern/cs_blobs.h
-    .session_id = 12345,
-    .group_id = 12345,
     .ppid = 12345,
     .original_ppid = 12345,
+    .group_id = 12345,
+    .session_id = 12345,
+    .codesigning_flags = 0x1 | 0x20000000,  // CS_VALID | CS_SIGNED - See kern/cs_blobs.h
     .is_platform_binary = false,
+    .is_es_client = false,
+    .executable = &binary,
   };
   es_event_exec_t exec_event = {
     .target = &proc,
@@ -105,12 +105,12 @@
   es_message_t m = {
     .version = 4,
     .mach_time = 181576143417379,
-    .event_type = ES_EVENT_TYPE_AUTH_EXEC,
-    .event = event,
-    .action_type = ES_ACTION_TYPE_AUTH,
     .deadline = DISPATCH_TIME_FOREVER,
     .process = &proc,
     .seq_num = 1,
+    .action_type = ES_ACTION_TYPE_AUTH,
+    .event_type = ES_EVENT_TYPE_AUTH_EXEC,
+    .event = event,
   };
 
   [mockES triggerHandler:&m];

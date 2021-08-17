@@ -22,6 +22,7 @@
 
 const NSString *const kEventsDBPath = @"/private/var/db/santa/events.db";
 const NSString *const kRulesDBPath = @"/private/var/db/santa/rules.db";
+const NSString *const kBenignPath = @"/some/other/path";
 
 @interface SNTEndpointSecurityManagerTest : XCTestCase
 @end
@@ -42,6 +43,7 @@ const NSString *const kRulesDBPath = @"/private/var/db/santa/rules.db";
   MockEndpointSecurity *mockES = [MockEndpointSecurity mockEndpointSecurity];
   [mockES reset];
   SNTEndpointSecurityManager *snt = [[SNTEndpointSecurityManager alloc] init];
+  (void)snt;  // Make it appear used for the sake of -Wunused-variable
 
   XCTestExpectation *expectation =
     [self expectationWithDescription:@"Wait for santa's Auth dispatch queue"];
@@ -60,26 +62,26 @@ const NSString *const kRulesDBPath = @"/private/var/db/santa/rules.db";
   es_file_t dbFile = {.path = MakeStringToken(kEventsDBPath)};
   es_file_t otherBinary = {.path = MakeStringToken(@"somebinary")};
   es_process_t proc = {
-    .executable = &otherBinary,
-    .is_es_client = false,
-    .codesigning_flags = 570509313,
-    .session_id = 12345,
-    .group_id = 12345,
     .ppid = 12345,
     .original_ppid = 12345,
+    .group_id = 12345,
+    .session_id = 12345,
+    .codesigning_flags = 570509313,
     .is_platform_binary = false,
+    .is_es_client = false,
+    .executable = &otherBinary,
   };
   es_event_unlink_t unlink_event = {.target = &dbFile};
   es_events_t event = {.unlink = unlink_event};
   es_message_t m = {
     .version = 4,
-    .event_type = ES_EVENT_TYPE_AUTH_UNLINK,
-    .event = event,
     .mach_time = 1234,
-    .action_type = ES_ACTION_TYPE_AUTH,
     .deadline = 1234,
     .process = &proc,
     .seq_num = 1337,
+    .action_type = ES_ACTION_TYPE_AUTH,
+    .event_type = ES_EVENT_TYPE_AUTH_UNLINK,
+    .event = event,
   };
 
   [mockES triggerHandler:&m];
@@ -101,13 +103,19 @@ const NSString *const kRulesDBPath = @"/private/var/db/santa/rules.db";
 }
 
 - (void)testDeleteRulesDB {
-  for (const NSString *testPath in @[ kEventsDBPath, kRulesDBPath ]) {
+  NSDictionary<const NSString *, NSNumber *> *testCases = @{
+    kEventsDBPath : [NSNumber numberWithInt:ES_AUTH_RESULT_DENY],
+    kRulesDBPath : [NSNumber numberWithInt:ES_AUTH_RESULT_DENY],
+    kBenignPath : [NSNumber numberWithInt:ES_AUTH_RESULT_ALLOW],
+  };
+  for (const NSString *testPath in testCases) {
     MockEndpointSecurity *mockES = [MockEndpointSecurity mockEndpointSecurity];
     [mockES reset];
     SNTEndpointSecurityManager *snt = [[SNTEndpointSecurityManager alloc] init];
+    (void)snt;  // Make it appear used for the sake of -Wunused-variable
 
     XCTestExpectation *expectation = [self expectationWithDescription:@"Wait for response from ES"];
-    __block ESResponse *got = nil;
+    __block ESResponse *got;
     [mockES registerResponseCallback:^(ESResponse *r) {
       got = r;
       [expectation fulfill];
@@ -116,26 +124,26 @@ const NSString *const kRulesDBPath = @"/private/var/db/santa/rules.db";
     es_file_t dbFile = {.path = MakeStringToken(testPath)};
     es_file_t otherBinary = {.path = MakeStringToken(@"somebinary")};
     es_process_t proc = {
-      .executable = &otherBinary,
-      .is_es_client = false,
-      .codesigning_flags = 570509313,
-      .session_id = 12345,
-      .group_id = 12345,
       .ppid = 12345,
       .original_ppid = 12345,
+      .group_id = 12345,
+      .session_id = 12345,
+      .codesigning_flags = 570509313,
       .is_platform_binary = false,
+      .is_es_client = false,
+      .executable = &otherBinary,
     };
     es_event_unlink_t unlink_event = {.target = &dbFile};
     es_events_t event = {.unlink = unlink_event};
     es_message_t m = {
       .version = 4,
-      .event_type = ES_EVENT_TYPE_AUTH_UNLINK,
-      .event = event,
       .mach_time = DISPATCH_TIME_NOW,
-      .action_type = ES_ACTION_TYPE_AUTH,
       .deadline = DISPATCH_TIME_FOREVER,
       .process = &proc,
       .seq_num = 1337,
+      .action_type = ES_ACTION_TYPE_AUTH,
+      .event_type = ES_EVENT_TYPE_AUTH_UNLINK,
+      .event = event,
     };
     [mockES triggerHandler:&m];
 
@@ -146,7 +154,8 @@ const NSString *const kRulesDBPath = @"/private/var/db/santa/rules.db";
                                    }
                                  }];
 
-    XCTAssertEqual(got.result, ES_AUTH_RESULT_DENY, @"Failed to deny deletion of %@", testPath);
+    XCTAssertEqual(got.result, [testCases objectForKey:testPath].intValue,
+                   @"Incorrect handling of delete of %@", testPath);
     XCTAssertTrue(got.shouldCache, @"Failed to cache deletion decision of %@", testPath);
   }
 }
@@ -155,10 +164,10 @@ const NSString *const kRulesDBPath = @"/private/var/db/santa/rules.db";
   MockEndpointSecurity *mockES = [MockEndpointSecurity mockEndpointSecurity];
   [mockES reset];
   SNTEndpointSecurityManager *snt = [[SNTEndpointSecurityManager alloc] init];
+  (void)snt;  // Make it appear used for the sake of -Wunused-variable
 
   XCTestExpectation *expectation = [self expectationWithDescription:@"Wait for response from ES"];
-
-  __block ESResponse *got = nil;
+  __block ESResponse *got;
   [mockES registerResponseCallback:^(ESResponse *r) {
     got = r;
     [expectation fulfill];
@@ -167,26 +176,26 @@ const NSString *const kRulesDBPath = @"/private/var/db/santa/rules.db";
   es_file_t dbFile = {.path = MakeStringToken(@"/some/other/path")};
   es_file_t otherBinary = {.path = MakeStringToken(@"somebinary")};
   es_process_t proc = {
-    .executable = &otherBinary,
-    .is_es_client = true,
-    .codesigning_flags = 570509313,
-    .session_id = 12345,
-    .group_id = 12345,
     .ppid = 12345,
     .original_ppid = 12345,
+    .group_id = 12345,
+    .session_id = 12345,
+    .codesigning_flags = 570509313,
     .is_platform_binary = false,
+    .is_es_client = true,
+    .executable = &otherBinary,
   };
   es_event_unlink_t unlink_event = {.target = &dbFile};
   es_events_t event = {.unlink = unlink_event};
   es_message_t m = {
     .version = 4,
-    .event_type = ES_EVENT_TYPE_AUTH_UNLINK,
-    .event = event,
     .mach_time = DISPATCH_TIME_NOW,
-    .action_type = ES_ACTION_TYPE_AUTH,
     .deadline = DISPATCH_TIME_FOREVER,
     .process = &proc,
     .seq_num = 1337,
+    .action_type = ES_ACTION_TYPE_AUTH,
+    .event_type = ES_EVENT_TYPE_AUTH_UNLINK,
+    .event = event,
   };
 
   [mockES triggerHandler:&m];
@@ -198,6 +207,144 @@ const NSString *const kRulesDBPath = @"/private/var/db/santa/rules.db";
                                }];
 
   XCTAssertEqual(got.result, ES_AUTH_RESULT_ALLOW);
+}
+
+- (void)testRenameOverwriteRulesDB {
+  NSDictionary<const NSString *, NSNumber *> *testCases = @{
+    kEventsDBPath : [NSNumber numberWithInt:ES_AUTH_RESULT_DENY],
+    kRulesDBPath : [NSNumber numberWithInt:ES_AUTH_RESULT_DENY],
+    kBenignPath : [NSNumber numberWithInt:ES_AUTH_RESULT_ALLOW],
+  };
+  for (const NSString *testPath in testCases) {
+    MockEndpointSecurity *mockES = [MockEndpointSecurity mockEndpointSecurity];
+    [mockES reset];
+    SNTEndpointSecurityManager *snt = [[SNTEndpointSecurityManager alloc] init];
+    (void)snt;  // Make it appear used for the sake of -Wunused-variable
+
+    XCTestExpectation *expectation = [self expectationWithDescription:@"Wait for response from ES"];
+    __block ESResponse *got;
+    [mockES registerResponseCallback:^(ESResponse *r) {
+      got = r;
+      [expectation fulfill];
+    }];
+    es_file_t otherFile = {.path = MakeStringToken(@"/some/other/path")};
+    es_file_t dbFile = {.path = MakeStringToken(testPath)};
+
+    es_event_rename_t renameEvent = {
+      .source = &otherFile,
+      .destination_type = ES_DESTINATION_TYPE_EXISTING_FILE,
+      .destination = {.existing_file = &dbFile},
+    };
+
+    es_file_t otherBinary = {.path = MakeStringToken(@"somebinary")};
+    es_process_t proc = {
+      .ppid = 12345,
+      .original_ppid = 12345,
+      .group_id = 12345,
+      .session_id = 12345,
+      .codesigning_flags = 570509313,
+      .is_platform_binary = false,
+      .is_es_client = false,
+      .executable = &otherBinary,
+    };
+
+    es_events_t event = {.rename = renameEvent};
+    es_message_t m = {
+      .version = 4,
+      .mach_time = DISPATCH_TIME_NOW,
+      .deadline = DISPATCH_TIME_FOREVER,
+      .process = &proc,
+      .seq_num = 1337,
+      .action_type = ES_ACTION_TYPE_AUTH,
+      .event_type = ES_EVENT_TYPE_AUTH_RENAME,
+      .event = event,
+    };
+    [mockES triggerHandler:&m];
+
+    [self waitForExpectationsWithTimeout:10.0
+                                 handler:^(NSError *error) {
+                                   if (error) {
+                                     XCTFail(@"Santa auth test timed out with error: %@", error);
+                                   }
+                                 }];
+
+    XCTAssertEqual(got.result, [testCases objectForKey:testPath].intValue,
+                   @"Incorrect handling of rename of %@", testPath);
+    XCTAssertTrue(got.shouldCache, @"Failed to cache rename auth decision of %@", testPath);
+  }
+}
+
+- (void)testRenameRulesDB {
+  NSDictionary<const NSString *, NSNumber *> *testCases = @{
+    kEventsDBPath : [NSNumber numberWithInt:ES_AUTH_RESULT_DENY],
+    kRulesDBPath : [NSNumber numberWithInt:ES_AUTH_RESULT_DENY],
+    kBenignPath : [NSNumber numberWithInt:ES_AUTH_RESULT_ALLOW],
+  };
+
+  for (const NSString *testPath in testCases) {
+    MockEndpointSecurity *mockES = [MockEndpointSecurity mockEndpointSecurity];
+    [mockES reset];
+    SNTEndpointSecurityManager *snt = [[SNTEndpointSecurityManager alloc] init];
+    (void)snt;  // Make it appear used for the sake of -Wunused-variable
+
+    XCTestExpectation *expectation = [self expectationWithDescription:@"Wait for response from ES"];
+    __block ESResponse *got;
+    [mockES registerResponseCallback:^(ESResponse *r) {
+      got = r;
+      [expectation fulfill];
+    }];
+    es_file_t otherFile = {.path = MakeStringToken(@"/some/other/path")};
+    es_file_t dbFile = {.path = MakeStringToken(testPath)};
+
+    es_event_rename_t renameEvent = {
+      .source = &dbFile,
+      .destination_type = ES_DESTINATION_TYPE_NEW_PATH,
+      .destination =
+        {
+          .new_path =
+            {
+              .dir = &otherFile,
+              .filename = MakeStringToken(@"someotherfilename"),
+            },
+        },
+    };
+
+    es_file_t otherBinary = {.path = MakeStringToken(@"somebinary")};
+    es_process_t proc = {
+      .ppid = 12345,
+      .original_ppid = 12345,
+      .group_id = 12345,
+      .session_id = 12345,
+      .codesigning_flags = 570509313,
+      .is_platform_binary = false,
+      .is_es_client = false,
+      .executable = &otherBinary,
+    };
+
+    es_events_t event = {.rename = renameEvent};
+    es_message_t m = {
+      .version = 4,
+      .mach_time = DISPATCH_TIME_NOW,
+      .deadline = DISPATCH_TIME_FOREVER,
+      .process = &proc,
+      .seq_num = 1337,
+      .action_type = ES_ACTION_TYPE_AUTH,
+      .event_type = ES_EVENT_TYPE_AUTH_RENAME,
+      .event = event,
+    };
+    [mockES triggerHandler:&m];
+
+    [self waitForExpectationsWithTimeout:10.0
+                                 handler:^(NSError *error) {
+                                   if (error) {
+                                     XCTFail(@"Santa auth test timed out with error: %@", error);
+                                   }
+                                 }];
+    XCTAssertEqual(got.result, [testCases objectForKey:testPath].intValue,
+                   @"Incorrect handling of rename of %@", testPath);
+
+    XCTAssertTrue(got.shouldCache, @"Failed to cache rename auth decision of %@", testPath);
+  }
 }
 
 @end

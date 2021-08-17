@@ -24,7 +24,7 @@ jobs:
     - name: Test
       run: bazel test :unit_tests --define=SANTA_BUILD_TYPE=ci
     - name: Generate test coverage
-      run: sh ./coverage/generate_cov.sh
+      run: sh ./generate_cov.sh
     - name: Coveralls
       uses: coverallsapp/github-action@master
       with:

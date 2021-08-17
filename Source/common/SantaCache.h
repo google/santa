@@ -51,7 +51,7 @@
 */
 template <typename T>
 uint64_t SantaCacheHasher(T const &t) {
-  return t * 11400714819323198549UL;
+  return (uint64_t)t * 11400714819323198549UL;
 };
 
 /**
@@ -80,7 +80,7 @@ class SantaCache {
     usage. Cannot be higher than 64 to try and ensure buckets don't overflow.
   */
   SantaCache(uint64_t maximum_size = 10000, uint8_t per_bucket = 5) {
-    if (unlikely(per_bucket > maximum_size)) per_bucket = maximum_size;
+    if (unlikely(per_bucket > maximum_size)) per_bucket = (uint8_t)maximum_size;
     if (unlikely(per_bucket < 1)) per_bucket = 1;
     if (unlikely(per_bucket > 64)) per_bucket = 64;
     max_size_ = maximum_size;
@@ -214,7 +214,7 @@ class SantaCache {
     }
 
     uint16_t size = *array_size;
-    if (start + size > bucket_count_) size = bucket_count_ - start;
+    if (start + size > bucket_count_) size = (uint16_t)(bucket_count_ - start);
 
     for (uint16_t i = 0; i < size; ++i) {
       uint16_t count = 0;

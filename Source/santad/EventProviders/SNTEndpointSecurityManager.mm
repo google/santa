@@ -303,8 +303,7 @@
       NSString *path = [[NSString alloc] initWithBytes:pathToken.data
                                                 length:pathToken.length
                                               encoding:NSUTF8StringEncoding];
-      if (([path isEqualToString:@"/private/var/db/santa/rules.db"] ||
-           [path isEqualToString:@"/private/var/db/santa/events.db"]) &&
+      if ([self isDatabasePath:path] &&
           audit_token_to_pid(m->process->audit_token) != self.selfPID) {
         LOGW(@"Preventing attempt to delete Santa databases!");
         es_respond_auth_result(self.client, m, ES_AUTH_RESULT_DENY, true);
@@ -319,12 +318,23 @@
                                                 length:pathToken.length
                                               encoding:NSUTF8StringEncoding];
 
-      if (([path isEqualToString:@"/private/var/db/santa/rules.db"] ||
-           [path isEqualToString:@"/private/var/db/santa/events.db"]) &&
+      if ([self isDatabasePath:path] &&
           audit_token_to_pid(m->process->audit_token) != self.selfPID) {
         LOGW(@"Preventing attempt to rename Santa databases!");
         es_respond_auth_result(self.client, m, ES_AUTH_RESULT_DENY, true);
         return;
+      }
+      if (m->event.rename.destination_type == ES_DESTINATION_TYPE_EXISTING_FILE) {
+        es_string_token_t destToken = m->event.rename.destination.existing_file->path;
+        NSString *destPath = [[NSString alloc] initWithBytes:destToken.data
+                                                      length:destToken.length
+                                                    encoding:NSUTF8StringEncoding];
+        if ([self isDatabasePath:destPath] &&
+            audit_token_to_pid(m->process->audit_token) != self.selfPID) {
+          LOGW(@"Preventing attempt to overwrite Santa databases!");
+          es_respond_auth_result(self.client, m, ES_AUTH_RESULT_DENY, true);
+          return;
+        }
       }
       es_respond_auth_result(self.client, m, ES_AUTH_RESULT_ALLOW, true);
       return;
@@ -559,6 +569,11 @@
     .fsid = (uint64_t)file->stat.st_dev,
     .fileid = file->stat.st_ino,
   };
+}
+
+- (BOOL)isDatabasePath:(NSString *)path {
+  return [path isEqualToString:@"/private/var/db/santa/rules.db"] ||
+         [path isEqualToString:@"/private/var/db/santa/events.db"];
 }
 
 - (BOOL)isCompilerPID:(pid_t)pid {
