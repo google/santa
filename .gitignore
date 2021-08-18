@@ -3,8 +3,6 @@
 *.provisionprofile
 bazel-*
 Pods
-Santa.xcodeproj/xcuserdata
-Santa.xcodeproj/project.xcworkspace
-Santa.xcworkspace/xcuserdata
-Santa.xcworkspace/xcshareddata
+Santa.xcodeproj/*
+Santa.xcworkspace/*
 CoverageData/*
