@@ -1,3 +1,7 @@
+---
+parent: Details
+---
+
 # Events
 
 Events are a defined set of data, core to how Santa interacts with a sync

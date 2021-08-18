@@ -1,3 +1,7 @@
+---
+parent: Details
+---
+
 # santabs
 
 The santabs process is an XPC service for the santa-driver.kext bundle, meaning

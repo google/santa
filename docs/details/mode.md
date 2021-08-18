@@ -1,3 +1,7 @@
+---
+parent: Details
+---
+
 # Mode
 
 Santa can run in one of two modes, Lockdown or Monitor. To check the current

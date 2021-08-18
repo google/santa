@@ -1,3 +1,8 @@
+---
+title: Syncing
+parent: Intro
+---
+
 # Syncing Overview
 
 #### Background

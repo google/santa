@@ -1,3 +1,7 @@
+---
+parent: Details
+---
+
 # santad
 
 The santad process does the heavy lifting when it comes to making decisions

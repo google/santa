@@ -1,3 +1,7 @@
+---
+parent: Details
+---
+
 # Rules
 
 Rules provide the primary evaluation mechanism for allowing and blocking

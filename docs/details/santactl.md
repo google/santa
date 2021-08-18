@@ -1,3 +1,7 @@
+---
+parent: Details
+---
+
 # santactl
 
 This may be the most complex part of Santa. It does two types of work:

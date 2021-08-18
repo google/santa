@@ -1,3 +1,7 @@
+---
+parent: Details
+---
+
 # Santa GUI
 
 The Santa GUI process is pretty simple. It's only job is the display user GUI

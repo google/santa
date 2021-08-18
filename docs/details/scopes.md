@@ -1,3 +1,7 @@
+---
+parent: Details
+---
+
 # Scopes
 
 In addition to rules, Santa can allow or block based on scopes. Currently, only
