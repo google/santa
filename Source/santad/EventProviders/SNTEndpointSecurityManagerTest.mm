@@ -86,7 +86,7 @@ const NSString *const kBenignPath = @"/some/other/path";
 
   [mockES triggerHandler:&m];
 
-  [self waitForExpectationsWithTimeout:10.0
+  [self waitForExpectationsWithTimeout:30.0
                                handler:^(NSError *error) {
                                  if (error) {
                                    XCTFail(@"Santa auth test timed out without receiving two "
@@ -147,7 +147,7 @@ const NSString *const kBenignPath = @"/some/other/path";
     };
     [mockES triggerHandler:&m];
 
-    [self waitForExpectationsWithTimeout:10.0
+    [self waitForExpectationsWithTimeout:30.0
                                  handler:^(NSError *error) {
                                    if (error) {
                                      XCTFail(@"Santa auth test timed out with error: %@", error);
@@ -199,7 +199,7 @@ const NSString *const kBenignPath = @"/some/other/path";
   };
 
   [mockES triggerHandler:&m];
-  [self waitForExpectationsWithTimeout:10.0
+  [self waitForExpectationsWithTimeout:30.0
                                handler:^(NSError *error) {
                                  if (error) {
                                    XCTFail(@"Santa auth test timed out with error: %@", error);
@@ -261,7 +261,7 @@ const NSString *const kBenignPath = @"/some/other/path";
     };
     [mockES triggerHandler:&m];
 
-    [self waitForExpectationsWithTimeout:10.0
+    [self waitForExpectationsWithTimeout:30.0
                                  handler:^(NSError *error) {
                                    if (error) {
                                      XCTFail(@"Santa auth test timed out with error: %@", error);
@@ -334,7 +334,7 @@ const NSString *const kBenignPath = @"/some/other/path";
     };
     [mockES triggerHandler:&m];
 
-    [self waitForExpectationsWithTimeout:10.0
+    [self waitForExpectationsWithTimeout:30.0
                                  handler:^(NSError *error) {
                                    if (error) {
                                      XCTFail(@"Santa auth test timed out with error: %@", error);
