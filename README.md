@@ -22,8 +22,8 @@ Want to work on Santa at Google NYC? [Apply on our Careers page!](https://goo.gl
 # Docs
 
 The Santa docs are stored in the
-[Docs](https://github.com/google/santa/blob/master/docs) directory. A Read the
-Docs instance is available here: https://santa.readthedocs.io.
+[Docs](https://github.com/google/santa/blob/master/docs) directory. The docs are
+published at http://santa.dev.
 
 The docs include deployment options, details on how parts of Santa work and
 instructions for developing Santa itself.
