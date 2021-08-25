@@ -63,7 +63,7 @@
     [santaInit fulfill];
   });
 
-  [self waitForExpectationsWithTimeout:5.0
+  [self waitForExpectationsWithTimeout:30.0
                                handler:^(NSError *error) {
                                  if (error) {
                                    XCTFail(@"Santa's subscription to EndpointSecurity timed out "
@@ -104,7 +104,7 @@
   es_events_t event = {.exec = exec_event};
   es_message_t m = {
     .version = 4,
-    .mach_time = 181576143417379,
+    .mach_time = DISPATCH_TIME_NOW,
     .deadline = DISPATCH_TIME_FOREVER,
     .process = &proc,
     .seq_num = 1,
@@ -116,7 +116,7 @@
   [mockES triggerHandler:&m];
 
   [self
-    waitForExpectationsWithTimeout:5.0
+    waitForExpectationsWithTimeout:30.0
                            handler:^(NSError *error) {
                              if (error) {
                                XCTFail(
