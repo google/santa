@@ -1,33 +1,72 @@
 name: CI
 on:
   push:
-    paths-ignore:
-      - 'docs/**'
     branches:
       - '*'
   pull_request:
-    paths-ignore:
-      - 'docs/**'
     branches:
       - main
 
 jobs:
   build:
     runs-on: macos-latest
-
     steps:
     - uses: actions/checkout@v2
+    - name: Check If We Need to Build/Test
+      id: preqs
+      run: |
+          git remote add mainline https://github.com/google/santa.git
+          git fetch mainline main
+          git diff --name-only mainline/main HEAD > files.txt
+          echo "FILES CHANGED: $(wc -l ./files.txt)\n"
+
+          cat files.txt
+
+          build_driver=0
+          build_and_run_tests=0
+
+          while IFS=read -r file
+          do
+            echo "checking FILE: $file";
+
+            if [[ $file = Source/* ]]; then
+              echo "matched FILE: $file";
+              echo "::set-output name=run_build_and_test::true"
+              build_and_run_test=1;
+              if [[ $file = Source/santa_driver/* ]]; then
+                 build_driver=1;
+              fi
+            fi
+          done < files.txt
+
+          if [[ $build_and_run_test != 0 ]]; then 
+            echo "::set-output name=run_build_and_test::true"
+          else 
+            echo "::set-output name=run_build_and_test::false"
+          fi
+          
+          if [[ $build_driver != 0 ]]; then
+            echo "NEED TO BUILD DRIVER"
+            echo "::set-output name=build_driver::true"
+          else 
+            echo "::set-output name=build_driver::false"
+          fi
     - name: Build Userspace
       run: bazel build --apple_generate_dsym -c opt :release --define=SANTA_BUILD_TYPE=ci
+      if: steps.preqs.outputs.run_build_and_test == 'true'
     - name: Build Driver
       run: bazel build --apple_generate_dsym -c opt :release_driver --define=SANTA_BUILD_TYPE=ci
+      if: steps.preqs.outputs.build_driver == 'true' && steps.preqs.outputs.build_and_test == 'true'
     - name: Test
       run: bazel test :unit_tests --define=SANTA_BUILD_TYPE=ci
+      if: steps.preqs.outputs.run_build_and_test == 'true'
     - name: Generate test coverage
       run: sh ./generate_cov.sh
+      if: steps.preqs.outputs.run_build_and_test == 'true'
     - name: Coveralls
       uses: coverallsapp/github-action@master
       with:
         github-token: ${{ secrets.GITHUB_TOKEN }}
         path-to-lcov: ./CoverageData/info.lcov
         flag-name: Unit
+      if: steps.preqs.outputs.run_build_and_test == 'true'
