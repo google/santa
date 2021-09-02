@@ -8,13 +8,17 @@ on:
       - main
 
 jobs:
-  build:
+  preqs:
     runs-on: macos-latest
+    outputs:
+      run_build_and_tests: ${{ steps.step1.outputs.run_build_and_tests }}
+      build_driver: ${{ steps.step1.outputs.build_driver }}
+
     steps:
-    - uses: actions/checkout@v2
-    - name: Check If We Need to Build/Test
-      id: preqs
-      run: |
+      - uses: actions/checkout@v2
+      - name: Check If We Need to Run Build/Test
+        id: step1
+        run: |
           git remote add mainline https://github.com/google/santa.git
           git fetch mainline main
           git diff --name-only mainline/main HEAD > files.txt
@@ -25,24 +29,21 @@ jobs:
           build_driver=0
           build_and_run_tests=0
 
-          while IFS=read -r file
-          do
-            echo "checking FILE: $file";
-
+          for file in `cat files.txt`; do
             if [[ $file = Source/* ]]; then
-              echo "matched FILE: $file";
-              echo "::set-output name=run_build_and_test::true"
               build_and_run_test=1;
               if [[ $file = Source/santa_driver/* ]]; then
                  build_driver=1;
+                 break;
               fi
             fi
-          done < files.txt
+          done
 
           if [[ $build_and_run_test != 0 ]]; then 
-            echo "::set-output name=run_build_and_test::true"
+            echo "NEED TO RUN BUILD AND TESTS"
+            echo "::set-output name=run_build_and_tests::true"
           else 
-            echo "::set-output name=run_build_and_test::false"
+            echo "::set-output name=run_build_and_tests::false"
           fi
           
           if [[ $build_driver != 0 ]]; then
@@ -51,22 +52,45 @@ jobs:
           else 
             echo "::set-output name=build_driver::false"
           fi
-    - name: Build Userspace
-      run: bazel build --apple_generate_dsym -c opt :release --define=SANTA_BUILD_TYPE=ci
-      if: steps.preqs.outputs.run_build_and_test == 'true'
-    - name: Build Driver
-      run: bazel build --apple_generate_dsym -c opt :release_driver --define=SANTA_BUILD_TYPE=ci
-      if: steps.preqs.outputs.build_driver == 'true' && steps.preqs.outputs.build_and_test == 'true'
-    - name: Test
-      run: bazel test :unit_tests --define=SANTA_BUILD_TYPE=ci
-      if: steps.preqs.outputs.run_build_and_test == 'true'
-    - name: Generate test coverage
-      run: sh ./generate_cov.sh
-      if: steps.preqs.outputs.run_build_and_test == 'true'
-    - name: Coveralls
-      uses: coverallsapp/github-action@master
-      with:
-        github-token: ${{ secrets.GITHUB_TOKEN }}
-        path-to-lcov: ./CoverageData/info.lcov
-        flag-name: Unit
-      if: steps.preqs.outputs.run_build_and_test == 'true'
+ 
+  build_userspace:
+    runs-on: macos-latest
+    needs: [preqs]
+    if: needs.preqs.outputs.run_build_and_tests == 'true'
+    steps:
+     - uses: actions/checkout@v2
+     - name: Build Userspace
+       run: bazel build --apple_generate_dsym -c opt :release --define=SANTA_BUILD_TYPE=ci
+
+  build_driver:
+    runs-on: macos-latest
+    needs: [preqs]
+    if: needs.preqs.outputs.build_driver == 'true'
+    steps:
+      - uses: actions/checkout@v2
+      - name: Build Driver
+        run: bazel build --apple_generate_dsym -c opt :release_driver --define=SANTA_BUILD_TYPE=ci
+
+  unit_tests:
+    runs-on: macos-latest
+    needs: [preqs]
+    if: needs.preqs.outputs.run_build_and_tests == 'true'
+    steps:
+      - uses: actions/checkout@v2
+      - name: Run All Tests
+        run: bazel test :unit_tests --define=SANTA_BUILD_TYPE=ci
+
+  test_coverage:
+    runs-on: macos-latest
+    needs: [preqs]
+    if: needs.preqs.outputs.run_build_and_tests == 'true'
+    steps:
+      - uses: actions/checkout@v2
+      - name: Generate test coverage
+        run: sh ./generate_cov.sh
+      - name: Coveralls
+        uses: coverallsapp/github-action@master
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path-to-lcov: ./CoverageData/info.lcov
+          flag-name: Unit
