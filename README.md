@@ -147,6 +147,9 @@ protect hosts in whatever other ways you see fit.
     * [Zercurity](https://github.com/zercurity/zercurity) - A dockerized service
       for managing and monitoring applications across a large fleet utilizing
       Santa + Osquery.
+    * [Rudolph](https://github.com/airbnb/rudolph) - An AWS-based serverless sync service
+      primarily built on API GW, DynamoDB, and Lambda components to reduce operational burden.
+      Rudolph is designed to be fast, easy-to-use, and cost-efficient.
 
 * Alternatively, `santactl` can configure rules locally (without a sync
   server).
