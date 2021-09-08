@@ -6,3 +6,6 @@ Pods
 Santa.xcodeproj/*
 Santa.xcworkspace/*
 CoverageData/*
+*.tulsiconf-user
+xcuserdata
+tulsigen-*
