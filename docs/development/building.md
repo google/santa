@@ -92,6 +92,10 @@ useful to use Xcode for actually working on the code. If you'd like to use Xcode
 you can use [Tulsi](https://tulsi.bazel.build) to generate an `.xcodeproj` from
 the BUILD file which will use Bazel for actually doing the builds.
 
+```sh
+generate_xcodeproj.sh santa.tulsiproj
+```
+
 #### Debugging
 
 Xcode and lldb can be used to debug Santa, similarly to any other project, with

@@ -1,0 +1,21 @@
+{
+  "configDefaults" : {
+    "optionSet" : {
+      "ALWAYS_SEARCH_USER_PATHS" : {
+        "p" : "YES"
+      }
+    }
+  },
+  "packages" : [
+    "",
+    "Source/common",
+    "Source/santa",
+    "Source/santa_driver",
+    "Source/santabundleservice",
+    "Source/santactl",
+    "Source/santad",
+    "Source/santasyncservice"
+  ],
+  "projectName" : "santa",
+  "workspaceRoot" : ".."
+}
