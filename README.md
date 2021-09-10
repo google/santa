@@ -15,10 +15,6 @@ It is named Santa because it keeps track of binaries that are naughty or nice.
 
 Santa is a project of Google's Macintosh Operations Team.
 
-# We're hiring!
-
-Want to work on Santa at Google NYC? [Apply on our Careers page!](https://goo.gle/3tO060z)
-
 # Docs
 
 The Santa docs are stored in the
