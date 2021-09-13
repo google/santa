@@ -94,6 +94,11 @@ macos_bundle(
     linkopts = ["-execute"],
     minimum_os_version = "10.9",
     entitlements = "com.google.santa.daemon.systemextension.entitlements",
+    codesignopts = [
+        "--timestamp",
+        "--force",
+        "--options library,kill,runtime",
+    ],
     provisioning_profile = select({
         "//:ci_build": None,
         "//conditions:default": "Santa_Daemon_Dev.provisionprofile",

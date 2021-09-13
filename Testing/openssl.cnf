@@ -1,0 +1,22 @@
+[ ca ]
+default_ca = CA_default
+
+[ req ]
+prompt = no
+distinguished_name    = req_distinguished_name
+
+[ req_distinguished_name ]
+commonName = localhost
+countryName = US
+organizationName = Google LLC
+OU=EQHXZ8M8AV
+name = santa
+
+[ codesign ]
+keyUsage = digitalSignature
+extendedKeyUsage = codeSigning
+
+[ v3_ca ]
+basicConstraints = critical,CA:TRUE
+subjectKeyIdentifier = hash
+authorityKeyIdentifier = keyid:always,issuer:always
