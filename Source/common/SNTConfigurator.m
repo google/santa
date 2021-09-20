@@ -102,7 +102,7 @@ static NSString *const kBlockedPathRegexKey = @"BlockedPathRegex";
 static NSString *const kBlockedPathRegexKeyDeprecated = @"BlacklistRegex";
 
 // TODO(markowsky): move these to sync server only.
-static NSString *const kMetricsFormat = @"ExportMetricsFormat";
+static NSString *const kMetricsFormat = @"MetricsFormat";
 static NSString *const kMetricsFile = @"ExportMetricsFile";
 
 // The keys managed by a sync server.
