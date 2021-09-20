@@ -372,6 +372,11 @@
 @property(readonly, nonatomic) BOOL fcmEnabled;
 
 ///
+/// True if metricsExportFormat and metricsFile path are all set. Defaults to false.
+///
+@property(readonly, nonatomic) BOOL exportMetrics;
+
+///
 ///  Retrieve an initialized singleton configurator object using the default file path.
 ///
 + (instancetype)configurator;
