@@ -102,6 +102,8 @@ static NSString *const kBlockedPathRegexKey = @"BlockedPathRegex";
 static NSString *const kBlockedPathRegexKeyDeprecated = @"BlacklistRegex";
 
 // TODO(markowsky): move these to sync server only.
+// Valid values for kMetricsFormat should be rawjson, and json. 
+// TODO(markowsky): add support for prometheus.
 static NSString *const kMetricsFormat = @"MetricsFormat";
 static NSString *const kMetricsURL = @"MetricsURL";
 
