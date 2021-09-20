@@ -167,6 +167,15 @@ objc_library(
 )
 
 objc_library(
+    name = "SNTXPCMetricServiceInterface",
+    srcs = ["SNTXPCMetricServiceInterface.m"],
+    hdrs = ["SNTXPCMetricServiceInterface.h"],
+    deps = [
+        "@MOLXPCConnection",
+    ],
+)
+
+objc_library(
     name = "SNTXPCControlInterface",
     srcs = ["SNTXPCControlInterface.m"],
     hdrs = ["SNTXPCControlInterface.h"],
