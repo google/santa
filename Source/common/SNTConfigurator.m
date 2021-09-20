@@ -666,7 +666,7 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
 /// otherwise.
 ///
 - (BOOL) exportMetrics {
-  NSArray<NSString *> *metricKeys = @[kMetricsFormat, kMetricsFile];
+  NSArray<NSString *> *metricKeys = @[kMetricsFormat, kMetricsURL];
 
   for (NSString *key in metricKeys){
     if ([self.configState[key] isEqualToString:@""]) {
