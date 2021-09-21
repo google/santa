@@ -47,6 +47,8 @@ Additionally, there are options that can be controlled by both.
 | EventLogType                  | String     | Defines how event logs are stored. Options are 1) syslog: Sent to ASL or ULS (if built with the 10.12 SDK or later). 2) filelog: Sent to a file on disk. Use EventLogPath to specify a path. Defaults to filelog      |
 | EventLogPath                  | String     | If EventLogType is set to filelog, EventLogPath will provide the path to save logs. Defaults to /var/db/santa/santa.log. If you change this value ensure you also update com.google.santa.newsyslog.conf with the new path.        |
 | EnableMachineIDDecoration     | Bool       | If YES, this appends the MachineID to the end of each log line. Defaults to NO.       |
+| MetricsFormat                 | String     | Format to export monitoring metrics as. Supported formats (rawJSON, json). |
+| MetricsURL                    | String     | URL describing where monitoring metrics should be exported.  |
 
 *overridable by the sync server: run `santactl status` to check the current
 running config
