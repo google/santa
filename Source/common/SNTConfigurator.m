@@ -177,7 +177,7 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
       kFCMProject : string,
       kFCMEntity : string,
       kFCMAPIKey : string,
-      kMetricsFormat : string,
+      kMetricsFormat : number,
       kMetricsURL : string,
     };
     _defaults = [NSUserDefaults standardUserDefaults];
@@ -668,18 +668,19 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
 /// otherwise.
 ///
 - (BOOL) exportMetrics {
-  NSArray<NSString *> *metricKeys = @[kMetricsFormat, kMetricsURL];
-
-  for (NSString *key in metricKeys){
-    if ([self.configState[key] isEqualToString:@""]) {
-    	return NO;
-    }
-  }
-  return YES;
+  return self.configState[kMetricsFormat] != SNTMetricFormatTypeUnknown &&
+    ![self.configState[kMetricsURL] isEqualToString:@""];
 }
 
-- (NSString *)metricsFormat {
-  return self.configState[kMetricsFormat];
+- (SNTMetricFormatType)metricsFormat {
+  switch ([self.configState[kMetricsFormat] longLongValue]) {
+    case SNTMetricFormatTypeRawJSON:
+      return SNTMetricFormatTypeRawJSON;
+    case SNTMetricFormatTypeJSON:
+      return SNTMetricFormatTypeJSON;
+    default:
+      return SNTMetricFormatTypeUnknown;
+  }
 }
 
 - (NSURL *)metricsURL {

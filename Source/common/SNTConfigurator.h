@@ -377,9 +377,9 @@
 @property(readonly, nonatomic) BOOL exportMetrics;
 
 ///
-/// String format for to export metrics as, defaults to "".
+/// Format to export Metrics as.
 ///
-@property(readonly, nonatomic) NSString *metricFormat;
+@property(readonly, nonatomic) SNTMetricFormatType metricFormat;
 
 ///
 /// URL describing where metrics are exported, defaults to "".

@@ -91,6 +91,12 @@ typedef NS_ENUM(NSInteger, SNTEventLogType) {
   SNTEventLogTypeFilelog,
 };
 
+typedef NS_ENUM(NSInteger, SNTMetricFormatType) {
+  SNTMetricFormatTypeUnknown,
+  SNTMetricFormatTypeRawJSON,
+  SNTMetricFormatTypeJSON,
+};
+
 static const char *kKextPath = "/Library/Extensions/santa-driver.kext";
 static const char *kSantaDPath =
   "/Applications/Santa.app/Contents/Library/SystemExtensions/"
