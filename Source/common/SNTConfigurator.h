@@ -372,9 +372,20 @@
 @property(readonly, nonatomic) BOOL fcmEnabled;
 
 ///
-/// True if metricsExportFormat and metricsFile path are all set. Defaults to false.
+/// True if metricsFormat and metricsURL are set. False otherwise.
 ///
 @property(readonly, nonatomic) BOOL exportMetrics;
+
+///
+/// String format for to export metrics as, defaults to "".
+///
+@property(readonly, nonatomic) NSString *metricFormat;
+
+///
+/// URL describing where metrics are exported, defaults to "".
+///
+@property(readonly, nonatomic) NSURL *metricURL;
+
 
 ///
 ///  Retrieve an initialized singleton configurator object using the default file path.

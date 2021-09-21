@@ -678,6 +678,15 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
   return YES;
 }
 
+- (NSString *)metricsFormat {
+  return self.configState[kMetricsFormat];
+}
+
+- (NSURL *)metricsURL {
+  return [NSURL URLWithString:self.configState[kMetricsURL]];
+}
+
+
 #pragma mark Private
 
 ///
