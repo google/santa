@@ -178,7 +178,7 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
       kFCMEntity : string,
       kFCMAPIKey : string,
       kMetricsFormat : string,
-      kMetricsFile : string,
+      kMetricsURL : string,
     };
     _defaults = [NSUserDefaults standardUserDefaults];
     [_defaults addSuiteNamed:@"com.google.santa"];
