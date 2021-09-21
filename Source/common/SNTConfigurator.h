@@ -382,7 +382,7 @@
 @property(readonly, nonatomic) SNTMetricFormatType metricFormat;
 
 ///
-/// URL describing where metrics are exported, defaults to "".
+/// URL describing where metrics are exported, defaults to nil.
 ///
 @property(readonly, nonatomic) NSURL *metricURL;
 
