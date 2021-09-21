@@ -175,7 +175,7 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
       kFCMProject : string,
       kFCMEntity : string,
       kFCMAPIKey : string,
-      kMetricFormat : number,
+      kMetricFormat : string,
       kMetricURL : string,
     };
     _defaults = [NSUserDefaults standardUserDefaults];
@@ -660,31 +660,31 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
   return (self.fcmProject.length && self.fcmEntity.length && self.fcmAPIKey.length);
 }
 
-
 ///
 /// Returns YES if all of the necessary options are set to export metrics, NO
 /// otherwise.
 ///
-- (BOOL) exportMetrics {
-  return self.configState[kMetricFormat] != SNTMetricFormatTypeUnknown &&
-    ![self.configState[kMetricURL] isEqualToString:@""];
+- (BOOL)exportMetrics {
+  return [self metricFormat] != SNTMetricFormatTypeUnknown &&
+         ![self.configState[kMetricURL] isEqualToString:@""];
 }
 
 - (SNTMetricFormatType)metricFormat {
-  switch ([self.configState[kMetricFormat] longLongValue]) {
-    case SNTMetricFormatTypeRawJSON:
-      return SNTMetricFormatTypeRawJSON;
-    case SNTMetricFormatTypeJSON:
-      return SNTMetricFormatTypeJSON;
-    default:
-      return SNTMetricFormatTypeUnknown;
+  NSString *normalized = [self.configState[kMetricFormat] lowercaseString];
+  normalized = [normalized stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
+
+  if ([normalized isEqualToString:@"rawjson"]) {
+    return SNTMetricFormatTypeRawJSON;
+  } else if ([normalized isEqualToString:@"json"]) {
+    return SNTMetricFormatTypeJSON;
+  } else {
+    return SNTMetricFormatTypeUnknown;
   }
 }
 
 - (NSURL *)metricURL {
   return [NSURL URLWithString:self.configState[kMetricURL]];
 }
-
 
 #pragma mark Private
 
