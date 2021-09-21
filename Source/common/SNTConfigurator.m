@@ -1,4 +1,4 @@
-/// Copyright 2015 Google Inc. All rights reserved.
+/// Copyright 2021 Google Inc. All rights reserved.
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -101,6 +101,10 @@ static NSString *const kAllowedPathRegexKeyDeprecated = @"WhitelistRegex";
 static NSString *const kBlockedPathRegexKey = @"BlockedPathRegex";
 static NSString *const kBlockedPathRegexKeyDeprecated = @"BlacklistRegex";
 
+// TODO(markowsky): move these to sync server only.
+static NSString *const kMetricFormat = @"MetricFormat";
+static NSString *const kMetricURL = @"MetricURL";
+
 // The keys managed by a sync server.
 static NSString *const kFullSyncLastSuccess = @"FullSyncLastSuccess";
 static NSString *const kRuleSyncLastSuccess = @"RuleSyncLastSuccess";
@@ -171,6 +175,8 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
       kFCMProject : string,
       kFCMEntity : string,
       kFCMAPIKey : string,
+      kMetricFormat : string,
+      kMetricURL : string,
     };
     _defaults = [NSUserDefaults standardUserDefaults];
     [_defaults addSuiteNamed:@"com.google.santa"];
@@ -652,6 +658,32 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
 
 - (BOOL)fcmEnabled {
   return (self.fcmProject.length && self.fcmEntity.length && self.fcmAPIKey.length);
+}
+
+///
+/// Returns YES if all of the necessary options are set to export metrics, NO
+/// otherwise.
+///
+- (BOOL)exportMetrics {
+  return [self metricFormat] != SNTMetricFormatTypeUnknown &&
+         ![self.configState[kMetricURL] isEqualToString:@""];
+}
+
+- (SNTMetricFormatType)metricFormat {
+  NSString *normalized = [self.configState[kMetricFormat] lowercaseString];
+  normalized = [normalized stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
+
+  if ([normalized isEqualToString:@"rawjson"]) {
+    return SNTMetricFormatTypeRawJSON;
+  } else if ([normalized isEqualToString:@"json"]) {
+    return SNTMetricFormatTypeJSON;
+  } else {
+    return SNTMetricFormatTypeUnknown;
+  }
+}
+
+- (NSURL *)metricURL {
+  return [NSURL URLWithString:self.configState[kMetricURL]];
 }
 
 #pragma mark Private
