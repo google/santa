@@ -102,10 +102,8 @@ static NSString *const kBlockedPathRegexKey = @"BlockedPathRegex";
 static NSString *const kBlockedPathRegexKeyDeprecated = @"BlacklistRegex";
 
 // TODO(markowsky): move these to sync server only.
-// Valid values for kMetricsFormat should be rawjson, and json. 
-// TODO(markowsky): add support for prometheus.
-static NSString *const kMetricsFormat = @"MetricsFormat";
-static NSString *const kMetricsURL = @"MetricsURL";
+static NSString *const kMetricFormat = @"MetricFormat";
+static NSString *const kMetricURL = @"MetricURL";
 
 // The keys managed by a sync server.
 static NSString *const kFullSyncLastSuccess = @"FullSyncLastSuccess";
@@ -177,8 +175,8 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
       kFCMProject : string,
       kFCMEntity : string,
       kFCMAPIKey : string,
-      kMetricsFormat : number,
-      kMetricsURL : string,
+      kMetricFormat : number,
+      kMetricURL : string,
     };
     _defaults = [NSUserDefaults standardUserDefaults];
     [_defaults addSuiteNamed:@"com.google.santa"];
@@ -668,12 +666,12 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
 /// otherwise.
 ///
 - (BOOL) exportMetrics {
-  return self.configState[kMetricsFormat] != SNTMetricFormatTypeUnknown &&
-    ![self.configState[kMetricsURL] isEqualToString:@""];
+  return self.configState[kMetricFormat] != SNTMetricFormatTypeUnknown &&
+    ![self.configState[kMetricURL] isEqualToString:@""];
 }
 
-- (SNTMetricFormatType)metricsFormat {
-  switch ([self.configState[kMetricsFormat] longLongValue]) {
+- (SNTMetricFormatType)metricFormat {
+  switch ([self.configState[kMetricFormat] longLongValue]) {
     case SNTMetricFormatTypeRawJSON:
       return SNTMetricFormatTypeRawJSON;
     case SNTMetricFormatTypeJSON:
@@ -683,8 +681,8 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
   }
 }
 
-- (NSURL *)metricsURL {
-  return [NSURL URLWithString:self.configState[kMetricsURL]];
+- (NSURL *)metricURL {
+  return [NSURL URLWithString:self.configState[kMetricURL]];
 }
 
 
