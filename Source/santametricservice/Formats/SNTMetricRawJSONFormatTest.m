@@ -136,8 +136,7 @@ NSDictionary *validMetricsDict = nil;
   NSString *path = [[NSBundle bundleForClass:[self class]] resourcePath];
   path = [path stringByAppendingPathComponent:@"testdata/json/test.json"];
 
-  NSFileManager *filemgr = [NSFileManager defaultManager];
-  NSData *goldenFileData = [filemgr contentsAtPath:path];
+  NSData *goldenFileData = [NSData dataWithContentsOfFile:path];
 
   XCTAssertNotNil(goldenFileData, @"unable to open / read golden file");
 

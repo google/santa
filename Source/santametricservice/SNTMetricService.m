@@ -51,7 +51,7 @@
  */
 - (NSString *)messageFromError:(NSError *)error {
   NSString *message = [error localizedDescription];
-  NSString *details = [error localizedFailureReason] ? [error localizedFailureReason] : @"";
+  NSString *details = [error localizedFailureReason] ?: @"";
 
   return [NSString stringWithFormat:@"%@ %@", message, details];
 }
