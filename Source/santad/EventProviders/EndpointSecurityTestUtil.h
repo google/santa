@@ -20,6 +20,21 @@ CF_EXTERN_C_BEGIN
 es_string_token_t MakeStringToken(const NSString *_Nonnull s);
 CF_EXTERN_C_END
 
+@class ESMessage;
+typedef void (^ESMessageBuilderBlock)(ESMessage *_Nonnull builder);
+
+// An ObjC builder wrapper around es_message_t
+@interface ESMessage : NSObject
+@property(nonatomic, readwrite, strong) NSString *_Nullable binaryPath;
+@property(nonatomic, readwrite) es_file_t *_Nonnull executable;
+@property(nonatomic, readwrite) es_process_t *_Nonnull process;
+@property(nonatomic, readwrite) es_message_t *_Nonnull message;
+@property(nonatomic, readonly) pid_t pid;
+
+- (instancetype _Nonnull)initWithBlock:(ESMessageBuilderBlock _Nullable)block
+  NS_DESIGNATED_INITIALIZER;
+@end
+
 @interface ESResponse : NSObject
 @property(nonatomic) es_auth_result_t result;
 @property(nonatomic) bool shouldCache;
