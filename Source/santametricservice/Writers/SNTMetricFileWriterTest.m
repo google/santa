@@ -25,7 +25,12 @@
 
 - (void)tearDown {
   // delete the temp dir
-  [[NSFileManager defaultManager] removeItemAtPath:self.tempDir error:NULL];
+  NSError *err;
+  [[NSFileManager defaultManager] removeItemAtPath:self.tempDir error:&err];
+
+  if (err != nil) {
+    NSLog(@"unable to remove %@, error: %@", self.tempDir, err);
+  }
 }
 
 - (void)testWritingToNonFileURLFails {

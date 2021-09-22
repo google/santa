@@ -11,11 +11,11 @@ objc_library(
 )
 
 objc_library(
-    name = "SNTMetricRawJsonFormat",
+    name = "SNTMetricRawJSONFormat",
     srcs = [
         "SNTMetricFormat.h",
-        "SNTMetricRawJsonFormat.h",
-        "SNTMetricRawJsonFormat.m",
+        "SNTMetricRawJSONFormat.h",
+        "SNTMetricRawJSONFormat.m",
     ],
     deps = [
         ":SNTMetricFormat",
@@ -24,13 +24,13 @@ objc_library(
 )
 
 santa_unit_test(
-    name = "SNTMetricRawJsonFormatTest",
+    name = "SNTMetricRawJSONFormatTest",
     srcs = [
-        "SNTMetricRawJsonFormatTest.m",
+        "SNTMetricRawJSONFormatTest.m",
     ],
     structured_resources = glob(["testdata/**"]),
     deps = [
-        ":SNTMetricRawJsonFormat",
+        ":SNTMetricRawJSONFormat",
         "//Source/common:SNTMetricSet",
     ],
 )
@@ -38,6 +38,6 @@ santa_unit_test(
 test_suite(
     name = "format_tests",
     tests = [
-        ":SNTMetricRawJsonFormatTest",
+        ":SNTMetricRawJSONFormatTest",
     ],
 )

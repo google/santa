@@ -17,7 +17,7 @@ objc_library(
         "//Source/common:SNTLogging",
         "//Source/common:SNTMetricSet",
         "//Source/common:SNTXPCMetricServiceInterface",
-        "//Source/santametricservice/Formats:SNTMetricRawJsonFormat",
+        "//Source/santametricservice/Formats:SNTMetricRawJSONFormat",
         "//Source/santametricservice/Writers:SNTMetricFileWriter",
         "@MOLCodesignChecker",
         "@MOLXPCConnection",
@@ -37,7 +37,7 @@ test_suite(
     name = "unit_tests",
     tests = [
         ":SNTMetricServiceTest",
-        "//Source/santametricservice/Formats:SNTMetricRawJsonFormatTest",
+        "//Source/santametricservice/Formats:SNTMetricRawJSONFormatTest",
         "//Source/santametricservice/Writers:SNTMetricFileWriterTest",
     ],
 )

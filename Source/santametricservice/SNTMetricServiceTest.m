@@ -217,6 +217,6 @@ NSDictionary *validMetricsDict = nil;
   // Convert JSON's date strings back into dates.
   [self convertJSONDateStringsToNSDateWithJson:parsedJSONData];
 
-  XCTAssertEqualObjects(validMetricsDict, parsedJSONData, @"invalid json created");
+  XCTAssertEqualObjects(validMetricsDict, parsedJSONData, @"invalid JSON created");
 }
 @end
