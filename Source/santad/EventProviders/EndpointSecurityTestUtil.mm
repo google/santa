@@ -15,6 +15,7 @@
 
 #include <EndpointSecurity/EndpointSecurity.h>
 #include <bsm/libbsm.h>
+#include <stdlib.h>
 
 #import "Source/santad/EventProviders/EndpointSecurityTestUtil.h"
 
@@ -26,6 +27,64 @@ es_string_token_t MakeStringToken(const NSString *_Nonnull s) {
   };
 }
 CF_EXTERN_C_END
+
+@implementation ESMessage
+- (instancetype)init {
+  return [self initWithBlock:nil];
+}
+
+- (instancetype)initWithBlock:(ESMessageBuilderBlock)block {
+  NSParameterAssert(block);
+
+  self = [super init];
+  if (self) {
+    _pid = arc4random();
+    [self initBaseObjects];
+    block(self);
+    [self fillLinks];
+  }
+  return self;
+}
+
+- (void)initBaseObjects {
+  self.executable = static_cast<es_file_t *>(calloc(1, sizeof(es_file_t)));
+  self.process = static_cast<es_process_t *>(calloc(1, sizeof(es_process_t)));
+
+  self.process->ppid = self.pid;
+  self.process->original_ppid = self.pid;
+  self.process->group_id = static_cast<pid_t>(arc4random());
+  self.process->session_id = static_cast<pid_t>(arc4random());
+  self.process->codesigning_flags =
+    0x1 | 0x20000000;  // CS_VALID | CS_SIGNED -> See kern/cs_blobs.h
+  self.process->is_platform_binary = false;
+  self.process->is_es_client = false;
+
+  self.message = static_cast<es_message_t *>(calloc(1, sizeof(es_message_t)));
+  self.message->version = 4;
+  self.message->mach_time = DISPATCH_TIME_NOW;
+  self.message->deadline = DISPATCH_TIME_FOREVER;
+  self.message->seq_num = 1;
+}
+
+- (void)fillLinks {
+  if (self.binaryPath != nil) {
+    self.executable->path = MakeStringToken(self.binaryPath);
+  }
+
+  if (self.process->executable == NULL) {
+    self.process->executable = self.executable;
+  }
+  if (self.message->process == NULL) {
+    self.message->process = self.process;
+  }
+}
+
+- (void)dealloc {
+  free(self.process);
+  free(self.executable);
+  free(self.message);
+}
+@end
 
 @implementation ESResponse
 @end

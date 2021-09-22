@@ -59,32 +59,17 @@ const NSString *const kBenignPath = @"/some/other/path";
     }
   }];
 
-  es_file_t dbFile = {.path = MakeStringToken(kEventsDBPath)};
-  es_file_t otherBinary = {.path = MakeStringToken(@"somebinary")};
-  es_process_t proc = {
-    .ppid = 12345,
-    .original_ppid = 12345,
-    .group_id = 12345,
-    .session_id = 12345,
-    .codesigning_flags = 570509313,
-    .is_platform_binary = false,
-    .is_es_client = false,
-    .executable = &otherBinary,
-  };
-  es_event_unlink_t unlink_event = {.target = &dbFile};
-  es_events_t event = {.unlink = unlink_event};
-  es_message_t m = {
-    .version = 4,
-    .mach_time = 1234,
-    .deadline = 1234,
-    .process = &proc,
-    .seq_num = 1337,
-    .action_type = ES_ACTION_TYPE_AUTH,
-    .event_type = ES_EVENT_TYPE_AUTH_UNLINK,
-    .event = event,
-  };
+  __block es_file_t dbFile = {.path = MakeStringToken(kEventsDBPath)};
+  ESMessage *m = [[ESMessage alloc] initWithBlock:^(ESMessage *m) {
+    m.binaryPath = @"somebinary";
+    m.message->action_type = ES_ACTION_TYPE_AUTH;
+    m.message->event_type = ES_EVENT_TYPE_AUTH_UNLINK;
+    m.message->event = (es_events_t){.unlink = {.target = &dbFile}};
+    m.message->mach_time = 1234;
+    m.message->deadline = 1234;
+  }];
 
-  [mockES triggerHandler:&m];
+  [mockES triggerHandler:m.message];
 
   [self waitForExpectationsWithTimeout:30.0
                                handler:^(NSError *error) {
@@ -121,31 +106,15 @@ const NSString *const kBenignPath = @"/some/other/path";
       [expectation fulfill];
     }];
 
-    es_file_t dbFile = {.path = MakeStringToken(testPath)};
-    es_file_t otherBinary = {.path = MakeStringToken(@"somebinary")};
-    es_process_t proc = {
-      .ppid = 12345,
-      .original_ppid = 12345,
-      .group_id = 12345,
-      .session_id = 12345,
-      .codesigning_flags = 570509313,
-      .is_platform_binary = false,
-      .is_es_client = false,
-      .executable = &otherBinary,
-    };
-    es_event_unlink_t unlink_event = {.target = &dbFile};
-    es_events_t event = {.unlink = unlink_event};
-    es_message_t m = {
-      .version = 4,
-      .mach_time = DISPATCH_TIME_NOW,
-      .deadline = DISPATCH_TIME_FOREVER,
-      .process = &proc,
-      .seq_num = 1337,
-      .action_type = ES_ACTION_TYPE_AUTH,
-      .event_type = ES_EVENT_TYPE_AUTH_UNLINK,
-      .event = event,
-    };
-    [mockES triggerHandler:&m];
+    __block es_file_t dbFile = {.path = MakeStringToken(testPath)};
+    ESMessage *m = [[ESMessage alloc] initWithBlock:^(ESMessage *m) {
+      m.binaryPath = @"somebinary";
+      m.message->action_type = ES_ACTION_TYPE_AUTH;
+      m.message->event_type = ES_EVENT_TYPE_AUTH_UNLINK;
+      m.message->event = (es_events_t){.unlink = {.target = &dbFile}};
+    }];
+
+    [mockES triggerHandler:m.message];
 
     [self waitForExpectationsWithTimeout:30.0
                                  handler:^(NSError *error) {
@@ -173,32 +142,16 @@ const NSString *const kBenignPath = @"/some/other/path";
     [expectation fulfill];
   }];
 
-  es_file_t dbFile = {.path = MakeStringToken(@"/some/other/path")};
-  es_file_t otherBinary = {.path = MakeStringToken(@"somebinary")};
-  es_process_t proc = {
-    .ppid = 12345,
-    .original_ppid = 12345,
-    .group_id = 12345,
-    .session_id = 12345,
-    .codesigning_flags = 570509313,
-    .is_platform_binary = false,
-    .is_es_client = true,
-    .executable = &otherBinary,
-  };
-  es_event_unlink_t unlink_event = {.target = &dbFile};
-  es_events_t event = {.unlink = unlink_event};
-  es_message_t m = {
-    .version = 4,
-    .mach_time = DISPATCH_TIME_NOW,
-    .deadline = DISPATCH_TIME_FOREVER,
-    .process = &proc,
-    .seq_num = 1337,
-    .action_type = ES_ACTION_TYPE_AUTH,
-    .event_type = ES_EVENT_TYPE_AUTH_UNLINK,
-    .event = event,
-  };
+  __block es_file_t dbFile = {.path = MakeStringToken(@"/some/other/path")};
+  ESMessage *m = [[ESMessage alloc] initWithBlock:^(ESMessage *m) {
+    m.process->is_es_client = true;
+    m.binaryPath = @"somebinary";
+    m.message->action_type = ES_ACTION_TYPE_AUTH;
+    m.message->event_type = ES_EVENT_TYPE_AUTH_UNLINK;
+    m.message->event = (es_events_t){.unlink = {.target = &dbFile}};
+  }];
 
-  [mockES triggerHandler:&m];
+  [mockES triggerHandler:m.message];
   [self waitForExpectationsWithTimeout:30.0
                                handler:^(NSError *error) {
                                  if (error) {
@@ -227,39 +180,24 @@ const NSString *const kBenignPath = @"/some/other/path";
       got = r;
       [expectation fulfill];
     }];
-    es_file_t otherFile = {.path = MakeStringToken(@"/some/other/path")};
-    es_file_t dbFile = {.path = MakeStringToken(testPath)};
 
-    es_event_rename_t renameEvent = {
-      .source = &otherFile,
-      .destination_type = ES_DESTINATION_TYPE_EXISTING_FILE,
-      .destination = {.existing_file = &dbFile},
-    };
+    __block es_file_t otherFile = {.path = MakeStringToken(@"/some/other/path")};
+    __block es_file_t dbFile = {.path = MakeStringToken(testPath)};
+    ESMessage *m = [[ESMessage alloc] initWithBlock:^(ESMessage *m) {
+      m.binaryPath = @"somebinary";
+      m.message->action_type = ES_ACTION_TYPE_AUTH;
+      m.message->event_type = ES_EVENT_TYPE_AUTH_RENAME;
+      m.message->event = (es_events_t){
+        .rename =
+          {
+            .source = &otherFile,
+            .destination_type = ES_DESTINATION_TYPE_EXISTING_FILE,
+            .destination = {.existing_file = &dbFile},
+          },
+      };
+    }];
 
-    es_file_t otherBinary = {.path = MakeStringToken(@"somebinary")};
-    es_process_t proc = {
-      .ppid = 12345,
-      .original_ppid = 12345,
-      .group_id = 12345,
-      .session_id = 12345,
-      .codesigning_flags = 570509313,
-      .is_platform_binary = false,
-      .is_es_client = false,
-      .executable = &otherBinary,
-    };
-
-    es_events_t event = {.rename = renameEvent};
-    es_message_t m = {
-      .version = 4,
-      .mach_time = DISPATCH_TIME_NOW,
-      .deadline = DISPATCH_TIME_FOREVER,
-      .process = &proc,
-      .seq_num = 1337,
-      .action_type = ES_ACTION_TYPE_AUTH,
-      .event_type = ES_EVENT_TYPE_AUTH_RENAME,
-      .event = event,
-    };
-    [mockES triggerHandler:&m];
+    [mockES triggerHandler:m.message];
 
     [self waitForExpectationsWithTimeout:30.0
                                  handler:^(NSError *error) {
@@ -293,46 +231,28 @@ const NSString *const kBenignPath = @"/some/other/path";
       got = r;
       [expectation fulfill];
     }];
-    es_file_t otherFile = {.path = MakeStringToken(@"/some/other/path")};
-    es_file_t dbFile = {.path = MakeStringToken(testPath)};
 
-    es_event_rename_t renameEvent = {
-      .source = &dbFile,
-      .destination_type = ES_DESTINATION_TYPE_NEW_PATH,
-      .destination =
-        {
-          .new_path =
-            {
-              .dir = &otherFile,
-              .filename = MakeStringToken(@"someotherfilename"),
-            },
-        },
-    };
+    __block es_file_t otherFile = {.path = MakeStringToken(@"/some/other/path")};
+    __block es_file_t dbFile = {.path = MakeStringToken(testPath)};
+    ESMessage *m = [[ESMessage alloc] initWithBlock:^(ESMessage *m) {
+      m.binaryPath = @"somebinary";
+      m.message->action_type = ES_ACTION_TYPE_AUTH;
+      m.message->event_type = ES_EVENT_TYPE_AUTH_RENAME;
+      m.message->event = (es_events_t){
+        .rename =
+          {
+            .source = &dbFile,
+            .destination_type = ES_DESTINATION_TYPE_NEW_PATH,
+            .destination = {.new_path =
+                              {
+                                .dir = &otherFile,
+                                .filename = MakeStringToken(@"someotherfilename"),
+                              }},
+          },
+      };
+    }];
 
-    es_file_t otherBinary = {.path = MakeStringToken(@"somebinary")};
-    es_process_t proc = {
-      .ppid = 12345,
-      .original_ppid = 12345,
-      .group_id = 12345,
-      .session_id = 12345,
-      .codesigning_flags = 570509313,
-      .is_platform_binary = false,
-      .is_es_client = false,
-      .executable = &otherBinary,
-    };
-
-    es_events_t event = {.rename = renameEvent};
-    es_message_t m = {
-      .version = 4,
-      .mach_time = DISPATCH_TIME_NOW,
-      .deadline = DISPATCH_TIME_FOREVER,
-      .process = &proc,
-      .seq_num = 1337,
-      .action_type = ES_ACTION_TYPE_AUTH,
-      .event_type = ES_EVENT_TYPE_AUTH_RENAME,
-      .event = event,
-    };
-    [mockES triggerHandler:&m];
+    [mockES triggerHandler:m.message];
 
     [self waitForExpectationsWithTimeout:30.0
                                  handler:^(NSError *error) {
