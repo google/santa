@@ -36,11 +36,13 @@
 
 - (instancetype)init {
   self = [super init];
+  if (self) {
+    rawJSONFormatter = [[SNTMetricRawJSONFormat alloc] init];
+    metricWriters = @{@"file" : [[SNTMetricFileWriter alloc] init]};
 
-  rawJSONFormatter = [[SNTMetricRawJSONFormat alloc] init];
-  metricWriters = @{@"file" : [[SNTMetricFileWriter alloc] init]};
+    _queue = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_BACKGROUND, 0);
+  }
 
-  _queue = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_BACKGROUND, 0);
   return self;
 }
 
