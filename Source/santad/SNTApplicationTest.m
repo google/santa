@@ -87,7 +87,7 @@
   lstat(binaryPath.UTF8String, &fileStat);
   ESMessage *msg = [[ESMessage alloc] initWithBlock:^(ESMessage *m) {
     m.binaryPath = binaryPath;
-    m.file->stat = fileStat;
+    m.executable->stat = fileStat;
     m.message->action_type = ES_ACTION_TYPE_AUTH;
     m.message->event_type = ES_EVENT_TYPE_AUTH_EXEC;
     m.message->event = (es_events_t){.exec = {.target = m.process}};
