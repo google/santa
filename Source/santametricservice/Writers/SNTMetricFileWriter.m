@@ -12,8 +12,8 @@
 ///    See the License for the specific language governing permissions and
 ///    limitations under the License.
 
-#import "Source/common/SNTLogging.h"
 #import "Source/santametricservice/Writers/SNTMetricFileWriter.h"
+#import "Source/common/SNTLogging.h"
 
 @implementation SNTMetricFileWriter
 
@@ -36,7 +36,7 @@
 /**
  * Write serialzied metrics to the file one JSON object per line.
  **/
-- (BOOL)write:(NSArray<NSData *> *)metrics toURL:(NSURL *)url error: (NSError **)error {
+- (BOOL)write:(NSArray<NSData *> *)metrics toURL:(NSURL *)url error:(NSError **)error {
   // open the file and write it.
   @autoreleasepool {
     if (![url isFileURL]) {
@@ -55,9 +55,9 @@
     NSMutableData *lineData;
 
     for (int i = 0; i < [metrics count]; i++) {
-      lineData = [NSMutableData dataWithData: metrics[i]];
+      lineData = [NSMutableData dataWithData:metrics[i]];
 
-      [lineData appendBytes: newline length: 1];
+      [lineData appendBytes:newline length:1];
 
       if (@available(macos 10.15, *)) {
         [file writeData:lineData error:error];

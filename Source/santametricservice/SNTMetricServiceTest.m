@@ -1,5 +1,5 @@
-#include <unistd.h>
 #import <XCTest/XCTest.h>
+#include <unistd.h>
 
 #import "Source/common/SNTCommonEnums.h"
 #import "Source/common/SNTConfigurator.h"
@@ -19,8 +19,7 @@ NSDictionary *validMetricsDict = nil;
 
 @implementation SNTMetricServiceTest
 
-- (void)initializeValidMetricsDict
-{
+- (void)initializeValidMetricsDict {
   NSDateFormatter *formatter = NSDateFormatter.new;
   [formatter setDateFormat:@"yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"];
   NSDate *fixedDate = [formatter dateFromString:@"2021-09-16T21:07:34.826Z"];
@@ -125,10 +124,9 @@ NSDictionary *validMetricsDict = nil;
   };
 }
 
-- (void)setUp
-{
+- (void)setUp {
   [self initializeValidMetricsDict];
-  //create the configurator
+  // create the configurator
   self.mockConfigurator = OCMClassMock([SNTConfigurator class]);
   OCMStub([self.mockConfigurator configurator]).andReturn(self.mockConfigurator);
 
@@ -141,34 +139,30 @@ NSDictionary *validMetricsDict = nil;
     exit(1);
   }
 
-  self.tempDir = [[NSFileManager defaultManager]
-                    stringWithFileSystemRepresentation: tempPath
-                    length: strlen(tempPath)];
-  self.jsonURL = [NSURL URLWithString: [NSString pathWithComponents: @[@"file://", self.tempDir, @"test.json"]]];
-
+  self.tempDir =
+    [[NSFileManager defaultManager] stringWithFileSystemRepresentation:tempPath
+                                                                length:strlen(tempPath)];
+  self.jsonURL =
+    [NSURL URLWithString:[NSString pathWithComponents:@[ @"file://", self.tempDir, @"test.json" ]]];
 }
 
-- (void)tearDown 
-{
+- (void)tearDown {
   [self.mockConfigurator stopMocking];
 
-  //delete the temp dir
-  [[NSFileManager defaultManager] removeItemAtPath: self.tempDir
-                                             error:NULL];
+  // delete the temp dir
+  [[NSFileManager defaultManager] removeItemAtPath:self.tempDir error:NULL];
 }
 
-- (NSDate *) createNSDateFromDateString:(NSString *)dateString
-{
+- (NSDate *)createNSDateFromDateString:(NSString *)dateString {
   NSDateFormatter *formatter = [[NSDateFormatter alloc] init];
 
-	[formatter setTimeZone:[NSTimeZone timeZoneWithName:@"UTC"]];
+  [formatter setTimeZone:[NSTimeZone timeZoneWithName:@"UTC"]];
   [formatter setDateFormat:@"yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"];
 
-  return [formatter dateFromString: dateString];
+  return [formatter dateFromString:dateString];
 }
 
-- (NSDictionary *)convertJSONDateStringsToNSDateWithJson: (NSDictionary *)jsonData
-{
+- (NSDictionary *)convertJSONDateStringsToNSDateWithJson:(NSDictionary *)jsonData {
   NSMutableDictionary *jsonDict = [jsonData mutableCopy];
 
   for (NSString *metricName in jsonDict[@"metrics"]) {
@@ -178,8 +172,8 @@ NSDictionary *validMetricsDict = nil;
       NSMutableArray<NSMutableDictionary *> *values = metric[@"fields"][field];
 
       for (int i = 0; i < [values count]; i++) {
-        values[i][@"created"] = [self createNSDateFromDateString: values[i][@"created"]];
-        values[i][@"last_updated"] = [self createNSDateFromDateString: values[i][@"last_updated"]];
+        values[i][@"created"] = [self createNSDateFromDateString:values[i][@"created"]];
+        values[i][@"last_updated"] = [self createNSDateFromDateString:values[i][@"last_updated"]];
       }
     }
   }
@@ -187,45 +181,42 @@ NSDictionary *validMetricsDict = nil;
   return jsonDict;
 }
 
-- (void)testDefaultConfigOptionsDoNotExport 
-{
+- (void)testDefaultConfigOptionsDoNotExport {
   SNTMetricService *ms = [[SNTMetricService alloc] init];
-  //OCMStub([self.mockConfigurator exportMetrics]).andReturn(NO);
+  // OCMStub([self.mockConfigurator exportMetrics]).andReturn(NO);
 
-  [ms exportForMonitoring: validMetricsDict];
+  [ms exportForMonitoring:validMetricsDict];
 
   // Check the temp dir
-  NSArray* items = [[NSFileManager defaultManager] contentsOfDirectoryAtPath: self.tempDir
+  NSArray *items = [[NSFileManager defaultManager] contentsOfDirectoryAtPath:self.tempDir
                                                                        error:NULL];
   XCTAssertEqual(0, [items count]);
 }
 
-- (void)testWritingRawJSONFile
-{
+- (void)testWritingRawJSONFile {
   OCMStub([self.mockConfigurator exportMetrics]).andReturn(YES);
   OCMStub([self.mockConfigurator metricFormat]).andReturn(SNTMetricFormatTypeRawJSON);
   OCMStub([self.mockConfigurator metricURL]).andReturn(self.jsonURL);
 
-
   SNTMetricService *ms = [[SNTMetricService alloc] init];
-  [ms exportForMonitoring: validMetricsDict];
+  [ms exportForMonitoring:validMetricsDict];
 
   // Ensure that this has written 1 file that is well formed.
-  NSArray* items = [[NSFileManager defaultManager] contentsOfDirectoryAtPath: self.tempDir
+  NSArray *items = [[NSFileManager defaultManager] contentsOfDirectoryAtPath:self.tempDir
                                                                        error:NULL];
   XCTAssertEqual(1, [items count], @"failed to create JSON metrics file");
 
   NSData *jsonData = [NSData dataWithContentsOfFile:self.jsonURL.path
-			                                      options:NSDataReadingUncached 
+                                            options:NSDataReadingUncached
                                               error:nil];
 
-  NSDictionary *parsedJSONData = [NSJSONSerialization JSONObjectWithData:jsonData 
-                                               					         options:NSJSONReadingMutableContainers
- 	                  							                                 error:nil];
+  NSDictionary *parsedJSONData =
+    [NSJSONSerialization JSONObjectWithData:jsonData
+                                    options:NSJSONReadingMutableContainers
+                                      error:nil];
 
   // Convert JSON's date strings back into dates.
-  [self convertJSONDateStringsToNSDateWithJson: parsedJSONData];
-
+  [self convertJSONDateStringsToNSDateWithJson:parsedJSONData];
 
   XCTAssertEqualObjects(validMetricsDict, parsedJSONData, @"invalid json created");
 }

@@ -15,8 +15,7 @@ objc_library(
     srcs = [
         "SNTMetricFileWriter.h",
         "SNTMetricFileWriter.m",
-    	"SNTMetricWriter.h",
-
+        "SNTMetricWriter.h",
     ],
     deps = [
         ":SNTMetricWriter",

@@ -1,17 +1,16 @@
 #import <XCTest/XCTest.h>
 
 #import "Source/common/SNTMetricSet.h"
-#import "Source/santametricservice/Formats/SNTMetricRawJsonFormat.h"
+#import "Source/santametricservice/Formats/SNTMetricRawJSONFormat.h"
 
 NSDictionary *validMetricsDict = nil;
 
-@interface SNTMetricRawJsonFormatTest : XCTestCase
+@interface SNTMetricRawJSONFormatTest : XCTestCase
 @end
 
-@implementation SNTMetricRawJsonFormatTest
+@implementation SNTMetricRawJSONFormatTest
 
-- (void)initializeValidMetricsDict
-{
+- (void)initializeValidMetricsDict {
   NSDateFormatter *formatter = NSDateFormatter.new;
   [formatter setDateFormat:@"yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"];
   NSDate *fixedDate = [formatter dateFromString:@"2021-09-16T21:07:34.826Z"];
@@ -116,40 +115,39 @@ NSDictionary *validMetricsDict = nil;
   };
 }
 
-- (void)setUp
-{
-    [self initializeValidMetricsDict];
+- (void)setUp {
+  [self initializeValidMetricsDict];
 }
 
-- (void)testMetricsConversionToJSON
-{
-    SNTMetricRawJsonFormat *formatter = [[SNTMetricRawJsonFormat alloc] init];
-    NSError *err = nil;
-    NSArray<NSData *> *output = [formatter convert:validMetricsDict error: &err];
+- (void)testMetricsConversionToJSON {
+  SNTMetricRawJSONFormat *formatter = [[SNTMetricRawJSONFormat alloc] init];
+  NSError *err = nil;
+  NSArray<NSData *> *output = [formatter convert:validMetricsDict error:&err];
 
-    XCTAssertEqual(1, [output count]);
-    XCTAssertNotNil(output[0]);
-    XCTAssertNil(err);
+  XCTAssertEqual(1, [output count]);
+  XCTAssertNotNil(output[0]);
+  XCTAssertNil(err);
 
-    NSDictionary *jsonDict = [NSJSONSerialization JSONObjectWithData:output[0]
-                                                             options:NSJSONReadingAllowFragments
-                                                               error:&err];
-    XCTAssertNotNil(jsonDict);
+  NSDictionary *jsonDict = [NSJSONSerialization JSONObjectWithData:output[0]
+                                                           options:NSJSONReadingAllowFragments
+                                                             error:&err];
+  XCTAssertNotNil(jsonDict);
 
-    NSString *path = [[NSBundle bundleForClass:[self class]] resourcePath]; 
-    path =  [path stringByAppendingPathComponent:@"testdata/json/test.json"];
+  NSString *path = [[NSBundle bundleForClass:[self class]] resourcePath];
+  path = [path stringByAppendingPathComponent:@"testdata/json/test.json"];
 
-    NSFileManager *filemgr  = [NSFileManager defaultManager];
-    NSData *goldenFileData = [filemgr contentsAtPath: path];
-    
-    XCTAssertNotNil(goldenFileData, @"unable to open / read golden file");
+  NSFileManager *filemgr = [NSFileManager defaultManager];
+  NSData *goldenFileData = [filemgr contentsAtPath:path];
 
-    NSDictionary *expectedJsonDict = [NSJSONSerialization JSONObjectWithData:goldenFileData
-                                                             options:NSJSONReadingAllowFragments
-                                                             error: &err];
-    
-    XCTAssertNotNil(expectedJsonDict);
-    XCTAssertEqualObjects(expectedJsonDict, jsonDict, @"generated JSON does not match golden file.");
+  XCTAssertNotNil(goldenFileData, @"unable to open / read golden file");
+
+  NSDictionary *expectedJSONDict =
+    [NSJSONSerialization JSONObjectWithData:goldenFileData
+                                    options:NSJSONReadingAllowFragments
+                                      error:&err];
+
+  XCTAssertNotNil(expectedJSONDict);
+  XCTAssertEqualObjects(expectedJSONDict, jsonDict, @"generated JSON does not match golden file.");
 }
 
 @end

@@ -14,10 +14,10 @@
 
 #import <Foundation/Foundation.h>
 
-/** 
+/**
  * An SNTMetricWriter outputs a serialized SNTMetricSet to the external
  * monitoring system.
  * */
 @protocol SNTMetricWriter
-- (BOOL) write:(NSArray<NSData *> *)data toURL:(NSURL *)url error:(NSError **) error;
+- (BOOL)write:(NSArray<NSData *> *)data toURL:(NSURL *)url error:(NSError **)error;
 @end

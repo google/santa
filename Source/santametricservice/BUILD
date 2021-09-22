@@ -10,38 +10,37 @@ objc_library(
     srcs = [
         "SNTMetricService.h",
         "SNTMetricService.m",
-	"main.m",
+        "main.m",
     ],
     deps = [
-        "//Source/common:SNTXPCMetricServiceInterface",
-        "//Source/common:SNTLogging",
         "//Source/common:SNTConfigurator",
+        "//Source/common:SNTLogging",
         "//Source/common:SNTMetricSet",
+        "//Source/common:SNTXPCMetricServiceInterface",
         "//Source/santametricservice/Formats:SNTMetricRawJsonFormat",
         "//Source/santametricservice/Writers:SNTMetricFileWriter",
-     	"@MOLCodesignChecker",
+        "@MOLCodesignChecker",
         "@MOLXPCConnection",
     ],
 )
 
 santa_unit_test(
-    name="SNTMetricServiceTest",
+    name = "SNTMetricServiceTest",
     srcs = ["SNTMetricServiceTest.m"],
     deps = [
-	":SNTMetricServiceLib",
-	"@OCMock",
+        ":SNTMetricServiceLib",
+        "@OCMock",
     ],
 )
 
 test_suite(
-    name="unit_tests",
+    name = "unit_tests",
     tests = [
-      ":SNTMetricServiceTest",
-      "//Source/santametricservice/Formats:SNTMetricRawJsonFormatTest",
-      "//Source/santametricservice/Writers:SNTMetricFileWriterTest",
+        ":SNTMetricServiceTest",
+        "//Source/santametricservice/Formats:SNTMetricRawJsonFormatTest",
+        "//Source/santametricservice/Writers:SNTMetricFileWriterTest",
     ],
 )
-
 
 macos_command_line_application(
     name = "santametricservice",
