@@ -16,14 +16,14 @@
 #import "Source/santametricservice/Formats/SNTMetricRawJSONFormat.h"
 
 @implementation SNTMetricRawJSONFormat {
-  NSDateFormatter *dateFormatter;
+  NSDateFormatter *_dateFormatter;
 }
 
 - (instancetype)init {
   self = [super init];
   if (self) {
-    dateFormatter = [[NSDateFormatter alloc] init];
-    [dateFormatter setDateFormat:@"yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"];
+    _dateFormatter = [[NSDateFormatter alloc] init];
+    [_dateFormatter setDateFormat:@"yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"];
   }
   return self;
 }
@@ -53,7 +53,7 @@
   for (NSString *key in metrics) {
     const id object = [metrics objectForKey:key];
     if ([object isKindOfClass:[NSDate class]]) {
-      normalizedMetrics[key] = [self->dateFormatter stringFromDate:(NSDate *)object];
+      normalizedMetrics[key] = [self->_dateFormatter stringFromDate:(NSDate *)object];
     } else if ([object isKindOfClass:[NSDictionary class]]) {
       normalizedMetrics[key] = [self normalize:metrics[key]];
     } else if ([object isKindOfClass:[NSArray class]]) {
