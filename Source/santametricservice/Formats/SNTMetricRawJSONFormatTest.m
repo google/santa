@@ -124,7 +124,7 @@ NSDictionary *validMetricsDict = nil;
   NSError *err = nil;
   NSArray<NSData *> *output = [formatter convert:validMetricsDict error:&err];
 
-  XCTAssertEqual(1, [output count]);
+  XCTAssertEqual(1, output.count);
   XCTAssertNotNil(output[0]);
   XCTAssertNil(err);
 

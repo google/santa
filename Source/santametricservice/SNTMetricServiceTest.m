@@ -28,7 +28,7 @@ NSDictionary *validMetricsDict = nil;
     @"root_labels" : @{@"hostname" : @"testHost", @"username" : @"testUser"},
     @"metrics" : @{
       @"/build/label" : @{
-        @"type" : [NSNumber numberWithInt:(int)SNTMetricTypeConstantString],
+        @"type" : @((int)SNTMetricTypeConstantString),
         @"fields" : @{
           @"" : @[ @{
             @"value" : @"",
@@ -39,7 +39,7 @@ NSDictionary *validMetricsDict = nil;
         }
       },
       @"/santa/events" : @{
-        @"type" : [NSNumber numberWithInt:(int)SNTMetricTypeCounter],
+        @"type" : @((int)SNTMetricTypeCounter),
         @"fields" : @{
           @"rule_type" : @[
             @{
@@ -58,7 +58,7 @@ NSDictionary *validMetricsDict = nil;
         },
       },
       @"/santa/rules" : @{
-        @"type" : [NSNumber numberWithInt:(int)SNTMetricTypeGaugeInt64],
+        @"type" : @((int)SNTMetricTypeGaugeInt64),
         @"fields" : @{
           @"rule_type" : @[
             @{
@@ -77,7 +77,7 @@ NSDictionary *validMetricsDict = nil;
         },
       },
       @"/santa/using_endpoint_security_framework" : @{
-        @"type" : [NSNumber numberWithInt:(int)SNTMetricTypeConstantBool],
+        @"type" : @((int)SNTMetricTypeConstantBool),
         @"fields" : @{
           @"" : @[ @{
             @"value" : @"",
@@ -88,13 +88,13 @@ NSDictionary *validMetricsDict = nil;
         }
       },
       @"/proc/birth_timestamp" : @{
-        @"type" : [NSNumber numberWithInt:(int)SNTMetricTypeConstantInt64],
+        @"type" : @((int)SNTMetricTypeConstantInt64),
         @"fields" : @{
           @"" : @[ @{
             @"value" : @"",
             @"created" : fixedDate,
             @"last_updated" : fixedDate,
-            @"data" : [NSNumber numberWithLong:1250999830800]
+            @"data" : @1250999830800L,
           } ]
         },
       },
@@ -105,18 +105,18 @@ NSDictionary *validMetricsDict = nil;
             @"value" : @"",
             @"created" : fixedDate,
             @"last_updated" : fixedDate,
-            @"data" : [NSNumber numberWithInt:987654321]
+            @"data" : @987654321,
           } ]
         }
       },
       @"/proc/memory/resident_size" : @{
-        @"type" : [NSNumber numberWithInt:(int)SNTMetricTypeGaugeInt64],
+        @"type" : @((int)SNTMetricTypeGaugeInt64),
         @"fields" : @{
           @"" : @[ @{
             @"value" : @"",
             @"created" : fixedDate,
             @"last_updated" : fixedDate,
-            @"data" : [NSNumber numberWithInt:123456789]
+            @"data" : @123456789,
           } ]
         },
       },
@@ -142,8 +142,7 @@ NSDictionary *validMetricsDict = nil;
   self.tempDir =
     [[NSFileManager defaultManager] stringWithFileSystemRepresentation:tempPath
                                                                 length:strlen(tempPath)];
-  self.jsonURL =
-    [NSURL URLWithString:[NSString pathWithComponents:@[ @"file://", self.tempDir, @"test.json" ]]];
+  self.jsonURL = [NSURL fileURLWithPathComponents:@[ self.tempDir, @"test.json" ]];
 }
 
 - (void)tearDown {
@@ -171,7 +170,7 @@ NSDictionary *validMetricsDict = nil;
     for (NSString *field in metric[@"fields"]) {
       NSMutableArray<NSMutableDictionary *> *values = metric[@"fields"][field];
 
-      for (int i = 0; i < [values count]; i++) {
+      for (int i = 0; i < values.count; ++i) {
         values[i][@"created"] = [self createNSDateFromDateString:values[i][@"created"]];
         values[i][@"last_updated"] = [self createNSDateFromDateString:values[i][@"last_updated"]];
       }
@@ -189,7 +188,7 @@ NSDictionary *validMetricsDict = nil;
   // Check the temp dir
   NSArray *items = [[NSFileManager defaultManager] contentsOfDirectoryAtPath:self.tempDir
                                                                        error:NULL];
-  XCTAssertEqual(0, [items count]);
+  XCTAssertEqual(0, items.count, @"found unexpected files in %@", self.tempDir);
 }
 
 - (void)testWritingRawJSONFile {
@@ -203,7 +202,7 @@ NSDictionary *validMetricsDict = nil;
   // Ensure that this has written 1 file that is well formed.
   NSArray *items = [[NSFileManager defaultManager] contentsOfDirectoryAtPath:self.tempDir
                                                                        error:NULL];
-  XCTAssertEqual(1, [items count], @"failed to create JSON metrics file");
+  XCTAssertEqual(1, items.count, @"failed to create JSON metrics file");
 
   NSData *jsonData = [NSData dataWithContentsOfFile:self.jsonURL.path
                                             options:NSDataReadingUncached

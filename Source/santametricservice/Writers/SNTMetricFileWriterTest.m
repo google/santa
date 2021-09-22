@@ -49,8 +49,7 @@
 }
 
 - (void)testWritingDataToFileWorks {
-  NSString *testFile = [NSString pathWithComponents:@[ @"file://", self.tempDir, @"test.data" ]];
-  NSURL *url = [NSURL URLWithString:testFile];
+  NSURL *url = [NSURL fileURLWithPathComponents:@[ self.tempDir, @"test.data" ]];
 
   SNTMetricFileWriter *fileWriter = [[SNTMetricFileWriter alloc] init];
 

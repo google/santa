@@ -20,7 +20,7 @@
 /*
  * Open a file for appending.
  */
-- (NSFileHandle *)fileHandleForAppendingAtPath:(NSString *)path createMode:(mode_t)mode {
+- (NSFileHandle *)fileHandleForNewFileAtPath:(NSString *)path createMode:(mode_t)mode {
   int fd;
   if (!path) {
     return nil;
@@ -44,7 +44,7 @@
       return NO;
     }
 
-    NSFileHandle *file = [self fileHandleForAppendingAtPath:url.path createMode:0600];
+    NSFileHandle *file = [self fileHandleForNewFileAtPath:url.path createMode:0600];
     const char newline[1] = {'\n'};
 
     if (file == nil) {
@@ -60,9 +60,7 @@
       [entryData appendBytes:newline length:1];
 
       if (@available(macos 10.15, *)) {
-        [file writeData:entryData error:error];
-
-        if (error != nil && *error != nil) {
+        if (![file writeData:entryData error:error]) {
           return NO;
         }
       } else {

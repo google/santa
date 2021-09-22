@@ -80,11 +80,12 @@
 
   if (![NSJSONSerialization isValidJSONObject:normalizedMetrics]) {
     if (err != nil) {
-      *err = [[NSError alloc] initWithDomain:@"SNTMetricRawJSONFileWriter"
-                                        code:EINVAL
-                                    userInfo:@{
-                                        NSLocalizedDescriptionKey : @"unable to convert metrics to JSON: invalid metrics"
-                                    }];
+      *err = [[NSError alloc]
+        initWithDomain:@"SNTMetricRawJSONFileWriter"
+                  code:EINVAL
+              userInfo:@{
+                NSLocalizedDescriptionKey : @"unable to convert metrics to JSON: invalid metrics"
+              }];
     }
     return nil;
   }
@@ -92,7 +93,7 @@
   NSData *json = [NSJSONSerialization dataWithJSONObject:normalizedMetrics
                                                  options:NSJSONWritingPrettyPrinted
                                                    error:err];
-  if (json == nil && *err != nil) {
+  if (json == nil || (err != nil && *err != nil)) {
     return nil;
   }
 
