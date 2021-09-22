@@ -31,13 +31,15 @@
 - (NSArray *)normalizeArray:(NSArray *)arr {
   NSMutableArray *normalized = [NSMutableArray arrayWithArray:arr];
 
-  for (int i = 0; i < [arr count]; i++) {
-    if ([arr[i] isKindOfClass:[NSArray class]]) {
-      normalized[i] = [self normalizeArray:(NSArray *)arr[i]];
-    } else if ([arr[i] isKindOfClass:[NSDictionary class]]) {
-      normalized[i] = [self normalize:(NSDictionary *)arr[i]];
+  [normalized enumerateObjectsUsingBlock:^(id value, NSUInteger index, BOOL *stop) {
+    if ([value isKindOfClass:[NSDate class]]) {
+      normalized[index] = [self->_dateFormatter stringFromDate:(NSDate *)value];
+    } else if ([value isKindOfClass:[NSArray class]]) {
+      normalized[index] = [self normalizeArray:(NSArray *)value];
+    } else if ([value isKindOfClass:[NSDictionary class]]) {
+      normalized[index] = [self normalize:(NSDictionary *)value];
     }
-  }
+  }];
 
   return normalized;
 }
@@ -50,16 +52,15 @@
   // to JSON.
   NSMutableDictionary *normalizedMetrics = [NSMutableDictionary dictionaryWithDictionary:metrics];
 
-  for (NSString *key in metrics) {
-    const id object = [metrics objectForKey:key];
-    if ([object isKindOfClass:[NSDate class]]) {
-      normalizedMetrics[key] = [self->_dateFormatter stringFromDate:(NSDate *)object];
-    } else if ([object isKindOfClass:[NSDictionary class]]) {
-      normalizedMetrics[key] = [self normalize:metrics[key]];
-    } else if ([object isKindOfClass:[NSArray class]]) {
-      normalizedMetrics[key] = [self normalizeArray:(NSArray *)object];
+  [metrics enumerateKeysAndObjectsUsingBlock:^(id key, id value, BOOL *stop) {
+    if ([value isKindOfClass:[NSDate class]]) {
+      normalizedMetrics[key] = [self->_dateFormatter stringFromDate:(NSDate *)value];
+    } else if ([value isKindOfClass:[NSDictionary class]]) {
+      normalizedMetrics[key] = [self normalize:(NSDictionary *)value];
+    } else if ([value isKindOfClass:[NSArray class]]) {
+      normalizedMetrics[key] = [self normalizeArray:(NSArray *)value];
     }
-  }
+  }];
 
   return (NSDictionary *)normalizedMetrics;
 }
