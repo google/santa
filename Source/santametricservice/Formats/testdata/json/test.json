@@ -1,0 +1,111 @@
+{
+  "metrics" : {
+    "/santa/rules" : {
+      "type" : 7,
+      "fields" : {
+        "rule_type" : [
+          {
+            "value" : "binary",
+            "created" : "2021-09-16T21:07:34.826Z",
+            "last_updated" : "2021-09-16T21:07:34.826Z",
+            "data" : 1
+          },
+          {
+            "value" : "certificate",
+            "created" : "2021-09-16T21:07:34.826Z",
+            "last_updated" : "2021-09-16T21:07:34.826Z",
+            "data" : 3
+          }
+        ]
+      }
+    },
+    "/santa/events" : {
+      "type" : 9,
+      "fields" : {
+        "rule_type" : [
+          {
+            "value" : "binary",
+            "created" : "2021-09-16T21:07:34.826Z",
+            "last_updated" : "2021-09-16T21:07:34.826Z",
+            "data" : 1
+          },
+          {
+            "value" : "certificate",
+            "created" : "2021-09-16T21:07:34.826Z",
+            "last_updated" : "2021-09-16T21:07:34.826Z",
+            "data" : 2
+          }
+        ]
+      }
+    },
+    "/proc/memory/resident_size" : {
+      "type" : 7,
+      "fields" : {
+        "" : [
+          {
+            "value" : "",
+            "created" : "2021-09-16T21:07:34.826Z",
+            "last_updated" : "2021-09-16T21:07:34.826Z",
+            "data" : 123456789
+          }
+        ]
+      }
+    },
+    "/build/label" : {
+      "type" : 2,
+      "fields" : {
+        "" : [
+          {
+            "value" : "",
+            "created" : "2021-09-16T21:07:34.826Z",
+            "last_updated" : "2021-09-16T21:07:34.826Z",
+            "data" : "20210809.0.1"
+          }
+        ]
+      }
+    },
+    "/proc/birth_timestamp" : {
+      "type" : 3,
+      "fields" : {
+        "" : [
+          {
+            "value" : "",
+            "created" : "2021-09-16T21:07:34.826Z",
+            "last_updated" : "2021-09-16T21:07:34.826Z",
+            "data" : 1250999830800
+          }
+        ]
+      }
+    },
+    "/proc/memory/virtual_size" : {
+      "type" : 7,
+      "fields" : {
+        "" : [
+          {
+            "value" : "",
+            "created" : "2021-09-16T21:07:34.826Z",
+            "last_updated" : "2021-09-16T21:07:34.826Z",
+            "data" : 987654321
+          }
+        ]
+      }
+    },
+    "/santa/using_endpoint_security_framework" : {
+      "type" : 1,
+      "fields" : {
+        "" : [
+          {
+            "value" : "",
+            "created" : "2021-09-16T21:07:34.826Z",
+            "last_updated" : "2021-09-16T21:07:34.826Z",
+            "data" : true
+          }
+        ]
+      }
+    }
+  },
+  "root_labels" : {
+    "hostname" : "testHost",
+    "username" : "testUser"
+  }
+}
