@@ -58,12 +58,9 @@
 
   BOOL success = [fileWriter write:input toURL:url error:&err];
 
-  if (!success) {
-    NSLog(@"error: %@\n", err);
-  }
-
-  XCTAssertEqual(YES, success);
+  XCTAssertTrue(success, @"error: %@", err);
   XCTAssertNil(err);
+
   const char newline[1] = {'\n'};
 
   // Read file ensure it only contains the first line followed by a Newline
@@ -82,12 +79,7 @@
   input = @[ firstLine, secondLine ];
 
   success = [fileWriter write:input toURL:url error:&err];
-  XCTAssertEqual(YES, success);
-  XCTAssertNil(err);
-
-  if (!success) {
-    NSLog(@"error: %@\n", err);
-  }
+  XCTAssertTrue(success, @"error: %@", err);
 
   testFileContents = [NSData dataWithContentsOfFile:url.path];
   XCTAssertEqualObjects(expected, testFileContents);

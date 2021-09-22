@@ -183,7 +183,6 @@ NSDictionary *validMetricsDict = nil;
 
 - (void)testDefaultConfigOptionsDoNotExport {
   SNTMetricService *ms = [[SNTMetricService alloc] init];
-  // OCMStub([self.mockConfigurator exportMetrics]).andReturn(NO);
 
   [ms exportForMonitoring:validMetricsDict];
 

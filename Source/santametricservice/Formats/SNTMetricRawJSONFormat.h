@@ -17,5 +17,4 @@
 #import "Source/santametricservice/Formats/SNTMetricFormat.h"
 
 @interface SNTMetricRawJSONFormat : NSObject <SNTMetricFormat>
-- (NSArray<NSData *> *)convert:(NSDictionary *)metrics error:(NSError **)err;
 @end

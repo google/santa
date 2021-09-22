@@ -78,7 +78,13 @@
   NSDictionary *normalizedMetrics = [self normalize:metrics];
 
   if (![NSJSONSerialization isValidJSONObject:normalizedMetrics]) {
-    LOGE(@"unable to convert metrics to JSON: invalid metrics");
+    *err = [[NSError alloc]
+      initWithDomain:@"SNTMetricRawJSONFileWriter"
+                code:EINVAL
+            userInfo:@{
+              NSLocalizedDescriptionKey : @"unable to convert metrics to JSON: invalid metrics"
+            }];
+
     return nil;
   }
 

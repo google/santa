@@ -62,7 +62,7 @@
       if (@available(macos 10.15, *)) {
         [file writeData:entryData error:error];
 
-        if (*error != nil) {
+        if (error != nil && *error != nil) {
           return NO;
         }
       } else {
