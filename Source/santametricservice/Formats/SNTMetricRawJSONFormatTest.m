@@ -149,4 +149,11 @@ NSDictionary *validMetricsDict = nil;
   XCTAssertEqualObjects(expectedJSONDict, jsonDict, @"generated JSON does not match golden file.");
 }
 
+- (void)testPassingANilOrNullErrorDoesNotCrash {
+  SNTMetricRawJSONFormat *formatter = [[SNTMetricRawJSONFormat alloc] init];
+
+  NSArray<NSData *> *output = [formatter convert:validMetricsDict error:nil];
+  output = [formatter convert:validMetricsDict error:NULL];
+}
+
 @end

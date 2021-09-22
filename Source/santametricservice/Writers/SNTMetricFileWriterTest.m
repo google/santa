@@ -89,4 +89,18 @@
   testFileContents = [NSData dataWithContentsOfFile:url.path];
   XCTAssertEqualObjects(expected, testFileContents);
 }
+
+- (void)testThatPassingANilOrNullErrorDoesNotCrash {
+  NSString *testFile = [NSString pathWithComponents:@[ @"file://", self.tempDir, @"test.data" ]];
+  NSURL *url = [NSURL URLWithString:testFile];
+
+  SNTMetricFileWriter *fileWriter = [[SNTMetricFileWriter alloc] init];
+
+  NSData *firstLine = [@"AAAAAAAA" dataUsingEncoding:NSUTF8StringEncoding];
+
+  BOOL success = [fileWriter write:@[ firstLine ] toURL:url error:nil];
+  XCTAssertTrue(success);
+  success = [fileWriter write:@[ firstLine ] toURL:url error:NULL];
+  XCTAssertTrue(success);
+}
 @end
