@@ -29,6 +29,7 @@ santa_unit_test(
     srcs = ["SNTMetricServiceTest.m"],
     deps = [
         ":SNTMetricServiceLib",
+        "//Source/santametricservice/Formats:SNTMetricFormatTestHelper",
         "@OCMock",
     ],
 )

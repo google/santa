@@ -7,6 +7,7 @@
 
 #import <OCMock/OCMock.h>
 
+#import "Source/santametricservice/Formats/SNTMetricFormatTestHelper.h"
 #import "Source/santametricservice/SNTMetricService.h"
 
 NSDictionary *validMetricsDict = nil;
@@ -19,113 +20,7 @@ NSDictionary *validMetricsDict = nil;
 
 @implementation SNTMetricServiceTest
 
-- (void)initializeValidMetricsDict {
-  NSDateFormatter *formatter = NSDateFormatter.new;
-  [formatter setDateFormat:@"yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"];
-  NSDate *fixedDate = [formatter dateFromString:@"2021-09-16T21:07:34.826Z"];
-
-  validMetricsDict = @{
-    @"root_labels" : @{@"hostname" : @"testHost", @"username" : @"testUser"},
-    @"metrics" : @{
-      @"/build/label" : @{
-        @"type" : @((int)SNTMetricTypeConstantString),
-        @"fields" : @{
-          @"" : @[ @{
-            @"value" : @"",
-            @"created" : fixedDate,
-            @"last_updated" : fixedDate,
-            @"data" : @"20210809.0.1"
-          } ]
-        }
-      },
-      @"/santa/events" : @{
-        @"type" : @((int)SNTMetricTypeCounter),
-        @"fields" : @{
-          @"rule_type" : @[
-            @{
-              @"value" : @"binary",
-              @"created" : fixedDate,
-              @"last_updated" : fixedDate,
-              @"data" : @1,
-            },
-            @{
-              @"value" : @"certificate",
-              @"created" : fixedDate,
-              @"last_updated" : fixedDate,
-              @"data" : @2,
-            },
-          ],
-        },
-      },
-      @"/santa/rules" : @{
-        @"type" : @((int)SNTMetricTypeGaugeInt64),
-        @"fields" : @{
-          @"rule_type" : @[
-            @{
-              @"value" : @"binary",
-              @"created" : fixedDate,
-              @"last_updated" : fixedDate,
-              @"data" : @1
-            },
-            @{
-              @"value" : @"certificate",
-              @"created" : fixedDate,
-              @"last_updated" : fixedDate,
-              @"data" : @3
-            }
-          ]
-        },
-      },
-      @"/santa/using_endpoint_security_framework" : @{
-        @"type" : @((int)SNTMetricTypeConstantBool),
-        @"fields" : @{
-          @"" : @[ @{
-            @"value" : @"",
-            @"created" : fixedDate,
-            @"last_updated" : fixedDate,
-            @"data" : @YES,
-          } ]
-        }
-      },
-      @"/proc/birth_timestamp" : @{
-        @"type" : @((int)SNTMetricTypeConstantInt64),
-        @"fields" : @{
-          @"" : @[ @{
-            @"value" : @"",
-            @"created" : fixedDate,
-            @"last_updated" : fixedDate,
-            @"data" : @1250999830800L,
-          } ]
-        },
-      },
-      @"/proc/memory/virtual_size" : @{
-        @"type" : @((int)SNTMetricTypeGaugeInt64),
-        @"fields" : @{
-          @"" : @[ @{
-            @"value" : @"",
-            @"created" : fixedDate,
-            @"last_updated" : fixedDate,
-            @"data" : @987654321,
-          } ]
-        }
-      },
-      @"/proc/memory/resident_size" : @{
-        @"type" : @((int)SNTMetricTypeGaugeInt64),
-        @"fields" : @{
-          @"" : @[ @{
-            @"value" : @"",
-            @"created" : fixedDate,
-            @"last_updated" : fixedDate,
-            @"data" : @123456789,
-          } ]
-        },
-      },
-    }
-  };
-}
-
 - (void)setUp {
-  [self initializeValidMetricsDict];
   // create the configurator
   self.mockConfigurator = OCMClassMock([SNTConfigurator class]);
   OCMStub([self.mockConfigurator configurator]).andReturn(self.mockConfigurator);
@@ -194,6 +89,8 @@ NSDictionary *validMetricsDict = nil;
   OCMStub([self.mockConfigurator metricURL]).andReturn(self.jsonURL);
 
   SNTMetricService *ms = [[SNTMetricService alloc] init];
+  NSDictionary *validMetricsDict = [SNTMetricFormatTestHelper createValidMetricsDictionary];
+
   [ms exportForMonitoring:validMetricsDict];
 
   // Ensure that this has written 1 file that is well formed.
