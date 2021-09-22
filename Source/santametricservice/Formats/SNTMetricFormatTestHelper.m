@@ -19,20 +19,19 @@
 
 @implementation SNTMetricFormatTestHelper
 + (NSDictionary *)convertDatesToFixedDateWithExportDict:(NSMutableDictionary *)exportDict {
+  NSDateFormatter *formatter = [[NSDateFormatter alloc] init];
+  [formatter setDateFormat:@"yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"];
+  NSDate *fixedDate = [formatter dateFromString:@"2021-09-16T21:07:34.826Z"];
 
-   NSDateFormatter *formatter = [[NSDateFormatter alloc] init];
-   [formatter setDateFormat:@"yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"];
-   NSDate *fixedDate = [formatter dateFromString:@"2021-09-16T21:07:34.826Z"];
-
-   for (NSString *metricName in exportDict[@"metrics"]) {
+  for (NSString *metricName in exportDict[@"metrics"]) {
     NSMutableDictionary *metric = exportDict[@"metrics"][metricName];
 
     for (NSString *field in metric[@"fields"]) {
       NSMutableArray<NSMutableDictionary *> *values = metric[@"fields"][field];
 
-      [values enumerateObjectsUsingBlock:^(id object, NSUInteger index, BOOL *stop)  {
-          values[index][@"created"] = fixedDate;
-          values[index][@"last_updated"] = fixedDate;
+      [values enumerateObjectsUsingBlock:^(id object, NSUInteger index, BOOL *stop) {
+        values[index][@"created"] = fixedDate;
+        values[index][@"last_updated"] = fixedDate;
       }];
     }
   }
@@ -41,8 +40,7 @@
 }
 
 + (NSDictionary *)createValidMetricsDictionary {
-  
-   SNTMetricSet *metricSet = [[SNTMetricSet alloc] initWithHostname:@"testHost"
+  SNTMetricSet *metricSet = [[SNTMetricSet alloc] initWithHostname:@"testHost"
                                                           username:@"testUser"];
 
   // Add constants
