@@ -52,21 +52,21 @@
       return NO;
     }
 
-    NSMutableData *lineData;
+    NSMutableData *entryData;
 
-    for (int i = 0; i < [metrics count]; i++) {
-      lineData = [NSMutableData dataWithData:metrics[i]];
+    for (id formattedMetricData in metrics) {
+      entryData = [NSMutableData dataWithData:formattedMetricData];
 
-      [lineData appendBytes:newline length:1];
+      [entryData appendBytes:newline length:1];
 
       if (@available(macos 10.15, *)) {
-        [file writeData:lineData error:error];
+        [file writeData:entryData error:error];
 
         if (*error != nil) {
           return NO;
         }
       } else {
-        [file writeData:lineData];
+        [file writeData:entryData];
       }
     }
   }
