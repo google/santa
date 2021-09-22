@@ -66,7 +66,7 @@
 }
 
 /*
- * Convert normalies and converts the metrics dictionary to  a single JSON
+ * Convert normalizes and converts the metrics dictionary to a single JSON
  * object.
  *
  * @param metrics an NSDictionary exported by the SNTMetricSet

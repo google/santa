@@ -19,7 +19,7 @@ NSDictionary *validMetricsDict = nil;
     @"root_labels" : @{@"hostname" : @"testHost", @"username" : @"testUser"},
     @"metrics" : @{
       @"/build/label" : @{
-        @"type" : [NSNumber numberWithInt:(int)SNTMetricTypeConstantString],
+        @"type" : @((int)SNTMetricTypeConstantString),
         @"fields" : @{
           @"" : @[ @{
             @"value" : @"",
@@ -30,7 +30,7 @@ NSDictionary *validMetricsDict = nil;
         }
       },
       @"/santa/events" : @{
-        @"type" : [NSNumber numberWithInt:(int)SNTMetricTypeCounter],
+        @"type" : @((int)SNTMetricTypeCounter),
         @"fields" : @{
           @"rule_type" : @[
             @{
@@ -49,7 +49,7 @@ NSDictionary *validMetricsDict = nil;
         },
       },
       @"/santa/rules" : @{
-        @"type" : [NSNumber numberWithInt:(int)SNTMetricTypeGaugeInt64],
+        @"type" : @((int)SNTMetricTypeGaugeInt64),
         @"fields" : @{
           @"rule_type" : @[
             @{
@@ -68,46 +68,46 @@ NSDictionary *validMetricsDict = nil;
         },
       },
       @"/santa/using_endpoint_security_framework" : @{
-        @"type" : [NSNumber numberWithInt:(int)SNTMetricTypeConstantBool],
+        @"type" : @((int)SNTMetricTypeConstantBool),
         @"fields" : @{
           @"" : @[ @{
             @"value" : @"",
             @"created" : fixedDate,
             @"last_updated" : fixedDate,
-            @"data" : [NSNumber numberWithBool:YES]
+            @"data" : @YES,
           } ]
         }
       },
       @"/proc/birth_timestamp" : @{
-        @"type" : [NSNumber numberWithInt:(int)SNTMetricTypeConstantInt64],
+        @"type" : @((int)SNTMetricTypeConstantInt64),
         @"fields" : @{
           @"" : @[ @{
             @"value" : @"",
             @"created" : fixedDate,
             @"last_updated" : fixedDate,
-            @"data" : [NSNumber numberWithLong:1250999830800]
+            @"data" : @1250999830800L,
           } ]
         },
       },
       @"/proc/memory/virtual_size" : @{
-        @"type" : [NSNumber numberWithInt:(int)SNTMetricTypeGaugeInt64],
+        @"type" : @((int)SNTMetricTypeGaugeInt64),
         @"fields" : @{
           @"" : @[ @{
             @"value" : @"",
             @"created" : fixedDate,
             @"last_updated" : fixedDate,
-            @"data" : [NSNumber numberWithInt:987654321]
+            @"data" : @987654321,
           } ]
         }
       },
       @"/proc/memory/resident_size" : @{
-        @"type" : [NSNumber numberWithInt:(int)SNTMetricTypeGaugeInt64],
+        @"type" : @((int)SNTMetricTypeGaugeInt64),
         @"fields" : @{
           @"" : @[ @{
             @"value" : @"",
             @"created" : fixedDate,
             @"last_updated" : fixedDate,
-            @"data" : [NSNumber numberWithInt:123456789]
+            @"data" : @123456789,
           } ]
         },
       },

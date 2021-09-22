@@ -83,7 +83,7 @@ NSDictionary *validMetricsDict = nil;
             @"value" : @"",
             @"created" : fixedDate,
             @"last_updated" : fixedDate,
-            @"data" : [NSNumber numberWithBool:YES]
+            @"data" : @YES,
           } ]
         }
       },
@@ -99,7 +99,7 @@ NSDictionary *validMetricsDict = nil;
         },
       },
       @"/proc/memory/virtual_size" : @{
-        @"type" : [NSNumber numberWithInt:(int)SNTMetricTypeGaugeInt64],
+        @"type" : @((int)SNTMetricTypeGaugeInt64),
         @"fields" : @{
           @"" : @[ @{
             @"value" : @"",
@@ -134,10 +134,7 @@ NSDictionary *validMetricsDict = nil;
   char template[] = "/tmp/sntmetricsservicetestdata.XXXXXXX";
   char *tempPath = mkdtemp(template);
 
-  if (tempPath == NULL) {
-    NSLog(@"Unable to make temp directory");
-    exit(1);
-  }
+  XCTAssertNotEqual(tempPath, NULL, @"Unable to make temp dir");
 
   self.tempDir =
     [[NSFileManager defaultManager] stringWithFileSystemRepresentation:tempPath
