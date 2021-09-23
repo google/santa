@@ -290,6 +290,10 @@ static void reachabilityHandler(SCNetworkReachabilityRef target, SCNetworkReacha
 }
 
 - (NSDictionary *)messageFromMessageData:(NSData *)messageData {
+  if (!messageData) {
+    LOGD(@"Unable to parse push notification message data");
+    return nil;
+  }
   NSError *error;
   NSDictionary *rawMessage = [NSJSONSerialization JSONObjectWithData:messageData
                                                              options:0
