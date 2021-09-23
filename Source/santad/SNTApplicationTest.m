@@ -63,14 +63,7 @@
     [santaInit fulfill];
   });
 
-  [self waitForExpectationsWithTimeout:30.0
-                               handler:^(NSError *error) {
-                                 if (error) {
-                                   XCTFail(@"Santa's subscription to EndpointSecurity timed out "
-                                           @"with error: %@",
-                                           error);
-                                 }
-                               }];
+  [self waitForExpectations:@[ santaInit ] timeout::30.0];
 
   XCTestExpectation *expectation =
     [self expectationWithDescription:@"Wait for santa's Auth dispatch queue"];
@@ -95,15 +88,7 @@
 
   [mockES triggerHandler:msg.message];
 
-  [self
-    waitForExpectationsWithTimeout:30.0
-                           handler:^(NSError *error) {
-                             if (error) {
-                               XCTFail(
-                                 @"Santa auth test on binary \"%@/%@\" timed out with error: %@",
-                                 testPath, binaryName, error);
-                             }
-                           }];
+  [self waitForExpectations:@[ expectation ] timeout:30.0];
 
   XCTAssertEqual(got.result, wantResult, @"received unexpected ES response on executing \"%@/%@\"",
                  testPath, binaryName);

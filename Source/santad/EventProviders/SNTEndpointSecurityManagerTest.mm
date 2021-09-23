@@ -71,14 +71,7 @@ const NSString *const kBenignPath = @"/some/other/path";
 
   [mockES triggerHandler:m.message];
 
-  [self waitForExpectationsWithTimeout:30.0
-                               handler:^(NSError *error) {
-                                 if (error) {
-                                   XCTFail(@"Santa auth test timed out without receiving two "
-                                           @"events. Instead, had error: %@",
-                                           error);
-                                 }
-                               }];
+  [self waitForExpectations:@[ expectation ] timeout:30.0];
 
   for (ESResponse *resp in events) {
     XCTAssertEqual(
@@ -116,12 +109,7 @@ const NSString *const kBenignPath = @"/some/other/path";
 
     [mockES triggerHandler:m.message];
 
-    [self waitForExpectationsWithTimeout:30.0
-                                 handler:^(NSError *error) {
-                                   if (error) {
-                                     XCTFail(@"Santa auth test timed out with error: %@", error);
-                                   }
-                                 }];
+    [self waitForExpectations:@[ expectation ] timeout:30.0];
 
     XCTAssertEqual(got.result, [testCases objectForKey:testPath].intValue,
                    @"Incorrect handling of delete of %@", testPath);
@@ -152,12 +140,8 @@ const NSString *const kBenignPath = @"/some/other/path";
   }];
 
   [mockES triggerHandler:m.message];
-  [self waitForExpectationsWithTimeout:30.0
-                               handler:^(NSError *error) {
-                                 if (error) {
-                                   XCTFail(@"Santa auth test timed out with error: %@", error);
-                                 }
-                               }];
+
+  [self waitForExpectations:@[ expectation ] timeout:30.0];
 
   XCTAssertEqual(got.result, ES_AUTH_RESULT_ALLOW);
 }
@@ -199,12 +183,7 @@ const NSString *const kBenignPath = @"/some/other/path";
 
     [mockES triggerHandler:m.message];
 
-    [self waitForExpectationsWithTimeout:30.0
-                                 handler:^(NSError *error) {
-                                   if (error) {
-                                     XCTFail(@"Santa auth test timed out with error: %@", error);
-                                   }
-                                 }];
+    [self waitForExpectations:@[ expectation ] timeout:30.0];
 
     XCTAssertEqual(got.result, [testCases objectForKey:testPath].intValue,
                    @"Incorrect handling of rename of %@", testPath);
@@ -254,12 +233,8 @@ const NSString *const kBenignPath = @"/some/other/path";
 
     [mockES triggerHandler:m.message];
 
-    [self waitForExpectationsWithTimeout:30.0
-                                 handler:^(NSError *error) {
-                                   if (error) {
-                                     XCTFail(@"Santa auth test timed out with error: %@", error);
-                                   }
-                                 }];
+    [self waitForExpectations:@[ expectation ] timeout:30.0];
+
     XCTAssertEqual(got.result, [testCases objectForKey:testPath].intValue,
                    @"Incorrect handling of rename of %@", testPath);
 
