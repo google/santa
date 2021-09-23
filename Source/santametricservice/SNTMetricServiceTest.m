@@ -6,6 +6,7 @@
 #import "Source/common/SNTMetricSet.h"
 
 #import <OCMock/OCMock.h>
+#import <MOLAuthenticatingURLSession/MOLAuthenticatingURLSession.h>
 
 #import "Source/santametricservice/Formats/SNTMetricFormatTestHelper.h"
 #import "Source/santametricservice/SNTMetricService.h"
@@ -16,6 +17,9 @@ NSDictionary *validMetricsDict = nil;
 @property id mockConfigurator;
 @property NSString *tempDir;
 @property NSURL *jsonURL;
+@property id mockSession;
+@property id mockSessionDataTask;
+@property id mockMOLAuthenticatingURLSession;
 @end
 
 @implementation SNTMetricServiceTest
@@ -39,6 +43,15 @@ NSDictionary *validMetricsDict = nil;
 
 - (void)tearDown {
   [self.mockConfigurator stopMocking];
+    if (self.mockSessionDataTask != nil) {
+        [self.mockSessionDataTask stopMocking];
+    }
+    if (self.mockSession != nil) {
+        [self.mockSession stopMocking];
+    }
+    if (self.mockMOLAuthenticatingURLSession != nil) {
+        [self.mockMOLAuthenticatingURLSession stopMocking];
+    }
 
   // delete the temp dir
   [[NSFileManager defaultManager] removeItemAtPath:self.tempDir error:NULL];
@@ -112,4 +125,52 @@ NSDictionary *validMetricsDict = nil;
 
   XCTAssertEqualObjects(validMetricsDict, parsedJSONData, @"invalid JSON created");
 }
+
+- (void)testWritingJSON {
+  NSURL *url = [NSURL URLWithString:@"http://localhost:9444"];
+  OCMStub([self.mockConfigurator exportMetrics]).andReturn(YES);
+  OCMStub([self.mockConfigurator metricFormat]).andReturn(SNTMetricFormatTypeRawJSON);
+  OCMStub([self.mockConfigurator metricURL]).andReturn(url);
+
+  self.mockSession = [OCMockObject niceMockForClass:[NSURLSession class]];
+  self.mockSessionDataTask = [OCMockObject niceMockForClass:[NSURLSessionDataTask class]];
+  self.mockMOLAuthenticatingURLSession =
+    [OCMockObject niceMockForClass:[MOLAuthenticatingURLSession class]];
+    
+  [[[self.mockMOLAuthenticatingURLSession stub] andReturn:self.mockMOLAuthenticatingURLSession] alloc];
+  [[[self.mockMOLAuthenticatingURLSession stub] andReturn:self.mockSession] session];
+
+  NSHTTPURLResponse *response =
+    [[NSHTTPURLResponse alloc] initWithURL:url
+                                statusCode:200
+                               HTTPVersion:@"HTTP/1.1"
+                              headerFields:@{@"content-type" : @"application/json"}];
+
+  __block void (^passedBlock)(NSData *, NSURLResponse *, NSError *);
+
+  XCTestExpectation *responseCallback = [[XCTestExpectation alloc] initWithDescription:@"ensure writer passed JSON"];
+
+  void (^getCompletionHandler)(NSInvocation *) = ^(NSInvocation *invocation) {
+    [invocation getArgument:&passedBlock atIndex:3];
+  };
+
+  void (^callCompletionHandler)(NSInvocation *) = ^(NSInvocation *invocation) {
+    passedBlock(nil, response, nil);
+    [responseCallback fulfill];
+  };
+    
+
+  // stub out session to call completion handler immediately.
+  [(NSURLSessionDataTask *)[[self.mockSessionDataTask stub] andDo:callCompletionHandler] resume];
+
+  // stub out NSURLSession to assign our completion handler and return our mock
+  [[[[self.mockSession stub] andDo:getCompletionHandler] andReturn:self.mockSessionDataTask]
+    dataTaskWithRequest:[OCMArg any]
+      completionHandler:[OCMArg any]];
+
+  SNTMetricService *service = [[SNTMetricService alloc] init];
+  [service exportForMonitoring:[SNTMetricFormatTestHelper createValidMetricsDictionary]];
+  [self waitForExpectations:@[responseCallback] timeout:10.0];
+}
 @end
+

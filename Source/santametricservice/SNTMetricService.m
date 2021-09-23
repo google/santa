@@ -21,6 +21,7 @@
 #import "SNTMetricService.h"
 #import "Source/santametricservice/Formats/SNTMetricRawJSONFormat.h"
 #import "Source/santametricservice/Writers/SNTMetricFileWriter.h"
+#import "Source/santametricservice/Writers/SNTMetricHTTPWriter.h"
 
 @interface SNTMetricService ()
 @property MOLXPCConnection *notifierConnection;
@@ -38,7 +39,9 @@
   self = [super init];
   if (self) {
     rawJSONFormatter = [[SNTMetricRawJSONFormat alloc] init];
-    metricWriters = @{@"file" : [[SNTMetricFileWriter alloc] init]};
+    metricWriters = @{@"file" : [[SNTMetricFileWriter alloc] init],
+                      @"http": [[SNTMetricHTTPWriter alloc] init],
+    };
 
     _queue = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_BACKGROUND, 0);
   }
