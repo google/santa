@@ -14,7 +14,6 @@ objc_library(
     srcs = [
         "SNTMetricFileWriter.h",
         "SNTMetricFileWriter.m",
-        "SNTMetricWriter.h",
     ],
     deps = [
         ":SNTMetricWriter",
@@ -29,5 +28,37 @@ santa_unit_test(
     ],
     deps = [
         ":SNTMetricFileWriter",
+    ],
+)
+
+objc_library(
+    name = "SNTMetricHTTPWriter",
+    srcs = [
+        "SNTMetricHTTPWriter.h",
+        "SNTMetricHTTPWriter.m",
+    ],
+    deps = [
+        ":SNTMetricWriter",
+        "//Source/common:SNTLogging",
+        "@MOLAuthenticatingURLSession",
+    ],
+)
+
+santa_unit_test(
+    name = "SNTMetricHTTPWriterTest",
+    srcs = [
+        "SNTMetricHTTPWriterTest.m",
+    ],
+    deps = [
+        ":SNTMetricHTTPWriter",
+        "@OCMock",
+    ],
+)
+
+test_suite(
+    name = "writer_tests",
+    tests = [
+        ":SNTMetricFileWriterTest",
+        ":SNTMetricHTTPWriterTest",
     ],
 )
