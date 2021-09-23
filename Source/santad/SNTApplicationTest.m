@@ -69,10 +69,8 @@
     [self expectationWithDescription:@"Wait for santa's Auth dispatch queue"];
   __block ESResponse *got = nil;
   [mockES registerResponseCallback:^(ESResponse *r) {
-    @synchronized(self) {
-      got = r;
-      [expectation fulfill];
-    }
+    got = r;
+    [expectation fulfill];
   }];
 
   NSString *binaryPath = [NSString pathWithComponents:@[ testPath, binaryName ]];
