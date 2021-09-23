@@ -85,35 +85,15 @@
   NSString *binaryPath = [NSString pathWithComponents:@[ testPath, binaryName ]];
   struct stat fileStat;
   lstat(binaryPath.UTF8String, &fileStat);
-  es_file_t binary = {
-    .path = MakeStringToken(binaryPath),
-  };
-  es_process_t proc = {
-    .ppid = 12345,
-    .original_ppid = 12345,
-    .group_id = 12345,
-    .session_id = 12345,
-    .codesigning_flags = 0x1 | 0x20000000,  // CS_VALID | CS_SIGNED - See kern/cs_blobs.h
-    .is_platform_binary = false,
-    .is_es_client = false,
-    .executable = &binary,
-  };
-  es_event_exec_t exec_event = {
-    .target = &proc,
-  };
-  es_events_t event = {.exec = exec_event};
-  es_message_t m = {
-    .version = 4,
-    .mach_time = DISPATCH_TIME_NOW,
-    .deadline = DISPATCH_TIME_FOREVER,
-    .process = &proc,
-    .seq_num = 1,
-    .action_type = ES_ACTION_TYPE_AUTH,
-    .event_type = ES_EVENT_TYPE_AUTH_EXEC,
-    .event = event,
-  };
+  ESMessage *msg = [[ESMessage alloc] initWithBlock:^(ESMessage *m) {
+    m.binaryPath = binaryPath;
+    m.executable->stat = fileStat;
+    m.message->action_type = ES_ACTION_TYPE_AUTH;
+    m.message->event_type = ES_EVENT_TYPE_AUTH_EXEC;
+    m.message->event = (es_events_t){.exec = {.target = m.process}};
+  }];
 
-  [mockES triggerHandler:&m];
+  [mockES triggerHandler:msg.message];
 
   [self
     waitForExpectationsWithTimeout:30.0

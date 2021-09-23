@@ -372,6 +372,22 @@
 @property(readonly, nonatomic) BOOL fcmEnabled;
 
 ///
+/// True if metricsFormat and metricsURL are set. False otherwise.
+///
+@property(readonly, nonatomic) BOOL exportMetrics;
+
+///
+/// Format to export Metrics as.
+///
+@property(readonly, nonatomic) SNTMetricFormatType metricFormat;
+
+///
+/// URL describing where metrics are exported, defaults to nil.
+///
+@property(readonly, nonatomic) NSURL *metricURL;
+
+
+///
 ///  Retrieve an initialized singleton configurator object using the default file path.
 ///
 + (instancetype)configurator;

@@ -9,3 +9,8 @@ CoverageData/*
 *.tulsiconf-user
 xcuserdata
 tulsigen-*
+*.crt
+*.key
+*.pem
+*.p12
+*.keychain

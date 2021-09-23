@@ -84,6 +84,11 @@ macos_command_line_application(
     bundle_id = "com.google.santa.ctl",
     infoplists = ["Info.plist"],
     minimum_os_version = "10.9",
+    codesignopts = [
+        "--timestamp",
+        "--force",
+        "--options library,kill,runtime",
+    ],
     version = "//:version",
     visibility = ["//:santa_package_group"],
     deps = [":santactl_lib"],
