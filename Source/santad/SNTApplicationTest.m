@@ -63,7 +63,7 @@
     [santaInit fulfill];
   });
 
-  [self waitForExpectations:@[ santaInit ] timeout::30.0];
+  [self waitForExpectations:@[ santaInit ] timeout:60.0];
 
   XCTestExpectation *expectation =
     [self expectationWithDescription:@"Wait for santa's Auth dispatch queue"];
@@ -88,7 +88,7 @@
 
   [mockES triggerHandler:msg.message];
 
-  [self waitForExpectations:@[ expectation ] timeout:30.0];
+  [self waitForExpectations:@[ expectation ] timeout:60.0];
 
   XCTAssertEqual(got.result, wantResult, @"received unexpected ES response on executing \"%@/%@\"",
                  testPath, binaryName);

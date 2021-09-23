@@ -71,7 +71,7 @@ const NSString *const kBenignPath = @"/some/other/path";
 
   [mockES triggerHandler:m.message];
 
-  [self waitForExpectations:@[ expectation ] timeout:30.0];
+  [self waitForExpectations:@[ expectation ] timeout:60.0];
 
   for (ESResponse *resp in events) {
     XCTAssertEqual(
@@ -109,7 +109,7 @@ const NSString *const kBenignPath = @"/some/other/path";
 
     [mockES triggerHandler:m.message];
 
-    [self waitForExpectations:@[ expectation ] timeout:30.0];
+    [self waitForExpectations:@[ expectation ] timeout:60.0];
 
     XCTAssertEqual(got.result, [testCases objectForKey:testPath].intValue,
                    @"Incorrect handling of delete of %@", testPath);
@@ -141,7 +141,7 @@ const NSString *const kBenignPath = @"/some/other/path";
 
   [mockES triggerHandler:m.message];
 
-  [self waitForExpectations:@[ expectation ] timeout:30.0];
+  [self waitForExpectations:@[ expectation ] timeout:60.0];
 
   XCTAssertEqual(got.result, ES_AUTH_RESULT_ALLOW);
 }
@@ -183,7 +183,7 @@ const NSString *const kBenignPath = @"/some/other/path";
 
     [mockES triggerHandler:m.message];
 
-    [self waitForExpectations:@[ expectation ] timeout:30.0];
+    [self waitForExpectations:@[ expectation ] timeout:60.0];
 
     XCTAssertEqual(got.result, [testCases objectForKey:testPath].intValue,
                    @"Incorrect handling of rename of %@", testPath);
@@ -233,7 +233,7 @@ const NSString *const kBenignPath = @"/some/other/path";
 
     [mockES triggerHandler:m.message];
 
-    [self waitForExpectations:@[ expectation ] timeout:30.0];
+    [self waitForExpectations:@[ expectation ] timeout:60.0];
 
     XCTAssertEqual(got.result, [testCases objectForKey:testPath].intValue,
                    @"Incorrect handling of rename of %@", testPath);
