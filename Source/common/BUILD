@@ -6,7 +6,7 @@ licenses(["notice"])
 
 cc_library(
     name = "SantaCache",
-    srcs = ["SantaCache.h"],
+    hdrs = ["SantaCache.h"],
     deps = ["//Source/common:SNTKernelCommon"],
 )
 
