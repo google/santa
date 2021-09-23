@@ -2,7 +2,7 @@ load("//:helper.bzl", "santa_unit_test")
 
 package(default_visibility = ["//:santa_package_group"])
 
-licenses(["notice"])  # Apache 2.0
+licenses(["notice"])
 
 cc_library(
     name = "SantaCache",
