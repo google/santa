@@ -1,9 +1,8 @@
-load("@build_bazel_rules_apple//apple:macos.bzl", "macos_command_line_application")
 load("//:helper.bzl", "santa_unit_test")
 
 package(default_visibility = ["//:santa_package_group"])
 
-licenses(["notice"])  # Apache 2.0
+licenses(["notice"])
 
 objc_library(
     name = "SNTMetricWriter",

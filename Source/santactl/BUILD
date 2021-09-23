@@ -1,7 +1,7 @@
-licenses(["notice"])  # Apache 2.0
-
 load("@build_bazel_rules_apple//apple:macos.bzl", "macos_command_line_application")
 load("//:helper.bzl", "santa_unit_test")
+
+licenses(["notice"])
 
 objc_library(
     name = "santactl_lib",

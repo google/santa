@@ -3,7 +3,7 @@ load("//:helper.bzl", "santa_unit_test")
 
 package(default_visibility = ["//:santa_package_group"])
 
-licenses(["notice"])  # Apache 2.0
+licenses(["notice"])
 
 objc_library(
     name = "SNTMetricServiceLib",
@@ -46,6 +46,11 @@ test_suite(
 macos_command_line_application(
     name = "santametricservice",
     bundle_id = "com.google.santa.metricservice",
+    codesignopts = [
+        "--timestamp",
+        "--force",
+        "--options library,kill,runtime",
+    ],
     infoplists = ["Info.plist"],
     minimum_os_version = "10.15",
     version = "//:version",

@@ -1,6 +1,6 @@
 load("@build_bazel_rules_apple//apple:macos.bzl", "macos_command_line_application")
 
-licenses(["notice"])  # Apache 2.0
+licenses(["notice"])
 
 objc_library(
     name = "santabs_lib",
