@@ -52,18 +52,19 @@
   SNTApplication *app = [[SNTApplication alloc] init];
   [app start];
 
-  // es events will start flowing in as soon as es_subscribe is called, regardless
-  // of whether we're ready or not for it.
   XCTestExpectation *santaInit =
     [self expectationWithDescription:@"Wait for Santa to subscribe to EndpointSecurity"];
 
   dispatch_async(dispatch_get_global_queue(QOS_CLASS_BACKGROUND, 0), ^{
-    while (!mockES.subscribed)
+    while ([mockES.subscriptions[ES_EVENT_TYPE_AUTH_EXEC] isEqualTo:@NO])
       ;
     [santaInit fulfill];
   });
 
-  [self waitForExpectations:@[ santaInit ] timeout:60.0];
+  // Ugly hack to deflake the test and allow listenForDecisionRequests to install the correct
+  // decision callback.
+  sleep(1);
+  [self waitForExpectations:@[ santaInit ] timeout:10.0];
 
   XCTestExpectation *expectation =
     [self expectationWithDescription:@"Wait for santa's Auth dispatch queue"];
@@ -86,7 +87,7 @@
 
   [mockES triggerHandler:msg.message];
 
-  [self waitForExpectations:@[ expectation ] timeout:60.0];
+  [self waitForExpectations:@[ expectation ] timeout:10.0];
 
   XCTAssertEqual(got.result, wantResult, @"received unexpected ES response on executing \"%@/%@\"",
                  testPath, binaryName);
