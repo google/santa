@@ -50,19 +50,17 @@
   OCMStub([self.mockSNTDatabaseController databasePath]).andReturn(testPath);
 
   SNTApplication *app = [[SNTApplication alloc] init];
-  [app start];
 
-  // es events will start flowing in as soon as es_subscribe is called, regardless
-  // of whether we're ready or not for it.
   XCTestExpectation *santaInit =
     [self expectationWithDescription:@"Wait for Santa to subscribe to EndpointSecurity"];
 
   dispatch_async(dispatch_get_global_queue(QOS_CLASS_BACKGROUND, 0), ^{
-    while (!mockES.subscribed)
+    while (!mockES.subscriptions[ES_EVENT_TYPE_AUTH_EXEC])
       ;
     [santaInit fulfill];
   });
 
+  [app start];
   [self waitForExpectations:@[ santaInit ] timeout:60.0];
 
   XCTestExpectation *expectation =

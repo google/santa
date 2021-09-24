@@ -100,7 +100,10 @@ CF_EXTERN_C_END
   self = [super init];
   if (self) {
     _responseCallbacks = [NSMutableArray array];
-    _subscribed = YES;
+    _subscriptions = [NSMutableArray arrayWithCapacity:ES_EVENT_TYPE_LAST];
+    for (size_t i = 0; i < ES_EVENT_TYPE_LAST; i++) {
+      _subscriptions[i] = @NO;
+    }
   }
   return self;
 };
@@ -110,7 +113,6 @@ CF_EXTERN_C_END
     [self.responseCallbacks removeAllObjects];
     self.handler = nil;
     self.client = nil;
-    self.subscribed = NO;
   }
 };
 
@@ -194,14 +196,18 @@ API_AVAILABLE(macos(10.15))
 API_UNAVAILABLE(ios, tvos, watchos)
 es_return_t es_subscribe(es_client_t *_Nonnull client, const es_event_type_t *_Nonnull events,
                          uint32_t event_count) {
-  [MockEndpointSecurity mockEndpointSecurity].subscribed = YES;
+  for (size_t i = 0; i < event_count; i++) {
+    [MockEndpointSecurity mockEndpointSecurity].subscriptions[events[i]] = @YES;
+  }
   return ES_RETURN_SUCCESS;
 }
 API_AVAILABLE(macos(10.15))
 API_UNAVAILABLE(ios, tvos, watchos)
 es_return_t es_unsubscribe(es_client_t *_Nonnull client, const es_event_type_t *_Nonnull events,
                            uint32_t event_count) {
-  [MockEndpointSecurity mockEndpointSecurity].subscribed = NO;
+  for (size_t i = 0; i < event_count; i++) {
+    [MockEndpointSecurity mockEndpointSecurity].subscriptions[events[i]] = @NO;
+  }
 
   return ES_RETURN_SUCCESS;
 };
