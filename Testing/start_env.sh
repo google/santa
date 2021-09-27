@@ -24,7 +24,6 @@ function install_profile() {
 }
 
 function build_install_santa() {
-    sudo systemextensionsctl developer on
     echo "> Building and signing Santa"
     $GIT_ROOT/Testing/build_and_sign.sh
     systemextensionsctl list
