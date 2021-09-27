@@ -44,7 +44,7 @@ typedef void (^ESCallback)(ESResponse *_Nonnull);
 
 // Singleton wrapper around all of the kernel-level EndpointSecurity framework functions.
 @interface MockEndpointSecurity : NSObject
-@property BOOL subscribed;
+@property NSMutableArray *_Nonnull subscriptions;
 - (void)reset;
 - (void)registerResponseCallback:(ESCallback _Nonnull)callback;
 - (void)triggerHandler:(es_message_t *_Nonnull)msg;

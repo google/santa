@@ -100,17 +100,23 @@ CF_EXTERN_C_END
   self = [super init];
   if (self) {
     _responseCallbacks = [NSMutableArray array];
-    _subscribed = YES;
+    _subscriptions = [NSMutableArray arrayWithCapacity:ES_EVENT_TYPE_LAST];
+    [self resetSubscriptions];
   }
   return self;
 };
+
+- (void)resetSubscriptions {
+  for (size_t i = 0; i < ES_EVENT_TYPE_LAST; i++) {
+    _subscriptions[i] = @NO;
+  }
+}
 
 - (void)reset {
   @synchronized(self) {
     [self.responseCallbacks removeAllObjects];
     self.handler = nil;
     self.client = nil;
-    self.subscribed = NO;
   }
 };
 
@@ -147,6 +153,16 @@ CF_EXTERN_C_END
   }
   return ES_RESPOND_RESULT_SUCCESS;
 };
+
+- (void)setSubscriptions:(const es_event_type_t *_Nonnull)events
+             event_count:(uint32_t)event_count
+                   value:(NSNumber *)value {
+  @synchronized(self) {
+    for (size_t i = 0; i < event_count; i++) {
+      self.subscriptions[events[i]] = value;
+    }
+  }
+}
 
 + (instancetype _Nonnull)mockEndpointSecurity {
   static MockEndpointSecurity *sharedES;
@@ -194,14 +210,18 @@ API_AVAILABLE(macos(10.15))
 API_UNAVAILABLE(ios, tvos, watchos)
 es_return_t es_subscribe(es_client_t *_Nonnull client, const es_event_type_t *_Nonnull events,
                          uint32_t event_count) {
-  [MockEndpointSecurity mockEndpointSecurity].subscribed = YES;
+  [[MockEndpointSecurity mockEndpointSecurity] setSubscriptions:events
+                                                    event_count:event_count
+                                                          value:@YES];
   return ES_RETURN_SUCCESS;
 }
 API_AVAILABLE(macos(10.15))
 API_UNAVAILABLE(ios, tvos, watchos)
 es_return_t es_unsubscribe(es_client_t *_Nonnull client, const es_event_type_t *_Nonnull events,
                            uint32_t event_count) {
-  [MockEndpointSecurity mockEndpointSecurity].subscribed = NO;
+  [[MockEndpointSecurity mockEndpointSecurity] setSubscriptions:events
+                                                    event_count:event_count
+                                                          value:@NO];
 
   return ES_RETURN_SUCCESS;
 };
