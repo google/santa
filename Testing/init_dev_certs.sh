@@ -9,7 +9,6 @@ openssl req -new -key ./santa.key -out ./santa.csr -config $CNF_PATH
 openssl x509 -req -days 10 -in ./santa.csr -signkey ./santa.key -out ./santa.crt -extfile $CNF_PATH -extensions codesign
 openssl pkcs12 -export -out santa.p12 -inkey santa.key -in santa.crt -password pass:santa
 
-#KEYCHAIN="/Library/Keychains/System.keychain"
 KEYCHAIN="santa-dev-test.keychain"
 security create-keychain -p santa $KEYCHAIN
 security import ./santa.p12 -k $KEYCHAIN -A -P santa
