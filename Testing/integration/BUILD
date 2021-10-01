@@ -4,14 +4,14 @@ licenses(["notice"])
 
 santa_unit_test(
     name = "SNTExecTest",
+    srcs = [
+        "SNTExecTest.m",
+    ],
     data = [
         "//Source/santad/testdata:binaryrules_testdata",
     ],
-    srcs = [
-        "SNTExecTest.m"
-    ],
-    deps = [],
     minimum_os_version = "10.15",
+    deps = [],
 )
 
 test_suite(

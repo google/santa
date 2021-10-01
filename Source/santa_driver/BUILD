@@ -32,10 +32,10 @@ cc_library(
         "SANTA_VERSION=" + SANTA_VERSION,
     ],
     deps = [
-        "//Source/common:SantaCache",
         "//Source/common:SNTKernelCommon",
         "//Source/common:SNTLoggingKernel",
         "//Source/common:SNTPrefixTreeKernel",
+        "//Source/common:SantaCache",
     ],
     alwayslink = 1,
 )

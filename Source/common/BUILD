@@ -242,9 +242,9 @@ santa_unit_test(
     name = "SNTFileInfoTest",
     srcs = ["SNTFileInfoTest.m"],
     resources = [
+        "testdata/32bitplist",
         "testdata/bad_pagezero",
         "testdata/missing_pagezero",
-        "testdata/32bitplist",
     ],
     structured_resources = glob([
         "testdata/BundleExample.app/**",
