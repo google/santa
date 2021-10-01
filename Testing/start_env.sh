@@ -8,7 +8,7 @@ SIGNING_IDENTITY="localhost"
 
 function setup_certs() {
     echo "> Creating codesigning certs and keys"
-    $GIT_ROOT/Testing/init_dev_certs.sh
+    $GIT_ROOT/Testing/init_dev_certs.sh init
 }
 
 function run_moroz() {
