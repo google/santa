@@ -12,12 +12,12 @@ objc_library(
         "DataLayer/SNTEventTable.m",
         "DataLayer/SNTRuleTable.h",
         "DataLayer/SNTRuleTable.m",
+        "EventProviders/SNTCachingEndpointSecurityManager.h",
+        "EventProviders/SNTCachingEndpointSecurityManager.mm",
         "EventProviders/SNTDriverManager.h",
         "EventProviders/SNTDriverManager.m",
         "EventProviders/SNTEndpointSecurityManager.h",
         "EventProviders/SNTEndpointSecurityManager.mm",
-        "EventProviders/SNTCachingEndpointSecurityManager.h",
-        "EventProviders/SNTCachingEndpointSecurityManager.mm",
         "EventProviders/SNTEventProvider.h",
         "Logs/SNTEventLog.h",
         "Logs/SNTEventLog.m",
@@ -52,7 +52,6 @@ objc_library(
         "IOKit",
     ],
     deps = [
-        "//Source/common:SantaCache",
         "//Source/common:SNTBlockMessage",
         "//Source/common:SNTCachedDecision",
         "//Source/common:SNTCommonEnums",
@@ -67,6 +66,7 @@ objc_library(
         "//Source/common:SNTXPCControlInterface",
         "//Source/common:SNTXPCNotifierInterface",
         "//Source/common:SNTXPCSyncdInterface",
+        "//Source/common:SantaCache",
         "@FMDB",
         "@MOLCodesignChecker",
         "@MOLXPCConnection",
@@ -75,11 +75,11 @@ objc_library(
 
 objc_library(
     name = "EndpointSecurityTestLib",
+    testonly = 1,
     srcs = [
         "EventProviders/EndpointSecurityTestUtil.h",
         "EventProviders/EndpointSecurityTestUtil.mm",
     ],
-    testonly = 1,
     sdk_dylibs = [
         "EndpointSecurity",
         "bsm",
@@ -90,14 +90,14 @@ macos_bundle(
     name = "com.google.santa.daemon",
     bundle_extension = "systemextension",
     bundle_id = "com.google.santa.daemon",
-    infoplists = ["Info.plist"],
-    linkopts = ["-execute"],
-    minimum_os_version = "10.9",
     codesignopts = [
         "--timestamp",
         "--force",
         "--options library,kill,runtime",
     ],
+    infoplists = ["Info.plist"],
+    linkopts = ["-execute"],
+    minimum_os_version = "10.9",
     provisioning_profile = select({
         "//:ci_build": None,
         "//conditions:default": "Santa_Daemon_Dev.provisionprofile",
@@ -140,7 +140,6 @@ santa_unit_test(
         "bsm",
     ],
     deps = [
-        "//Source/common:SantaCache",
         "//Source/common:SNTBlockMessage",
         "//Source/common:SNTCachedDecision",
         "//Source/common:SNTCommonEnums",
@@ -152,6 +151,7 @@ santa_unit_test(
         "//Source/common:SNTRule",
         "//Source/common:SNTXPCNotifierInterface",
         "//Source/common:SNTXPCSyncdInterface",
+        "//Source/common:SantaCache",
         "@MOLCodesignChecker",
         "@MOLXPCConnection",
         "@OCMock",
@@ -201,10 +201,14 @@ santa_unit_test(
 santa_unit_test(
     name = "SNTEndpointSecurityManagerTest",
     srcs = [
+        "EventProviders/SNTEndpointSecurityManager.h",
+        "EventProviders/SNTEndpointSecurityManager.mm",
         "EventProviders/SNTEndpointSecurityManagerTest.mm",
         "EventProviders/SNTEventProvider.h",
-        "EventProviders/SNTEndpointSecurityManager.mm",
-        "EventProviders/SNTEndpointSecurityManager.h",
+    ],
+    sdk_dylibs = [
+        "EndpointSecurity",
+        "bsm",
     ],
     deps = [
         ":EndpointSecurityTestLib",
@@ -212,31 +216,26 @@ santa_unit_test(
         "//Source/common:SNTPrefixTree",
         "//Source/common:SantaCache",
     ],
-    sdk_dylibs = [
-        "EndpointSecurity",
-        "bsm",
-    ],
-
 )
 
 santa_unit_test(
     name = "SNTApplicationTest",
+    srcs = [
+        "SNTApplicationTest.m",
+    ],
     data = [
         "//Source/santad/testdata:binaryrules_testdata",
-    ],
-    srcs = [
-        "SNTApplicationTest.m"
-    ],
-    deps = [
-        ":santad_lib",
-        ":EndpointSecurityTestLib",
-        "@MOLCodesignChecker",
-        "@MOLXPCConnection",
-        "@OCMock",
     ],
     minimum_os_version = "10.15",
     sdk_dylibs = [
         "EndpointSecurity",
         "bsm",
+    ],
+    deps = [
+        ":EndpointSecurityTestLib",
+        ":santad_lib",
+        "@MOLCodesignChecker",
+        "@MOLXPCConnection",
+        "@OCMock",
     ],
 )

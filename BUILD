@@ -40,7 +40,6 @@ package_group(
     packages = ["//..."],
 )
 
-
 ################################################################################
 # Loading/Unloading/Reloading
 ################################################################################
@@ -223,15 +222,15 @@ genrule(
 test_suite(
     name = "unit_tests",
     tests = [
-        "//Source/common:SantaCacheTest",
         "//Source/common:SNTFileInfoTest",
         "//Source/common:SNTPrefixTreeTest",
+        "//Source/common:SantaCacheTest",
         "//Source/santactl:SNTCommandFileInfoTest",
         "//Source/santactl:SNTCommandSyncTest",
         "//Source/santad:SNTApplicationTest",
+        "//Source/santad:SNTEndpointSecurityManagerTest",
         "//Source/santad:SNTEventTableTest",
         "//Source/santad:SNTExecutionControllerTest",
         "//Source/santad:SNTRuleTableTest",
-        "//Source/santad:SNTEndpointSecurityManagerTest",
     ],
 )

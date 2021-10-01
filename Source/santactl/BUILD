@@ -82,13 +82,13 @@ objc_library(
 macos_command_line_application(
     name = "santactl",
     bundle_id = "com.google.santa.ctl",
-    infoplists = ["Info.plist"],
-    minimum_os_version = "10.9",
     codesignopts = [
         "--timestamp",
         "--force",
         "--options library,kill,runtime",
     ],
+    infoplists = ["Info.plist"],
+    minimum_os_version = "10.9",
     provisioning_profile = select({
         "//:ci_build": None,
         "//conditions:default": "Santa_Dev.provisionprofile",

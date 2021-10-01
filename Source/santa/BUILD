@@ -53,14 +53,14 @@ macos_application(
     app_icons = glob(["Resources/Images.xcassets/**"]),
     bundle_id = "com.google.santa",
     bundle_name = "Santa",
-    infoplists = ["Info.plist"],
-    minimum_os_version = "10.9",
-    entitlements = "Santa.app.entitlements",
     codesignopts = [
         "--timestamp",
         "--force",
         "--options library,kill,runtime",
     ],
+    entitlements = "Santa.app.entitlements",
+    infoplists = ["Info.plist"],
+    minimum_os_version = "10.9",
     provisioning_profile = select({
         "//:ci_build": None,
         "//conditions:default": "Santa_Dev.provisionprofile",

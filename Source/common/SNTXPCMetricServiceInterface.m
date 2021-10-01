@@ -14,7 +14,6 @@
 
 #import "Source/common/SNTXPCMetricServiceInterface.h"
 
-
 @implementation SNTXPCMetricServiceInterface
 
 + (NSXPCInterface *)metricServiceInterface {
