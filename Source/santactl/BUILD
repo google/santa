@@ -89,6 +89,10 @@ macos_command_line_application(
         "--force",
         "--options library,kill,runtime",
     ],
+    provisioning_profile = select({
+        "//:ci_build": None,
+        "//conditions:default": "Santa_Dev.provisionprofile",
+    }),
     version = "//:version",
     visibility = ["//:santa_package_group"],
     deps = [":santactl_lib"],
