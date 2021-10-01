@@ -1,5 +1,7 @@
 load("//:helper.bzl", "santa_unit_test")
 
+licenses(["notice"])
+
 santa_unit_test(
     name = "SNTExecTest",
     srcs = [
