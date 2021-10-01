@@ -1,5 +1,6 @@
-load("@build_bazel_rules_apple//apple:macos.bzl", "macos_bundle")
 load("//:helper.bzl", "santa_unit_test")
+
+licenses(["notice"])
 
 santa_unit_test(
     name = "SNTExecTest",
