@@ -31,17 +31,20 @@
   XCTestExpectation *expectation =
     [self expectationWithDescription:@"Wait for test binary to execute"];
 
+  __block NSTask *task = [[NSTask alloc] init];
   dispatch_async(dispatch_get_global_queue(QOS_CLASS_BACKGROUND, 0), ^{
-    NSTask *task = [[NSTask alloc] init];
     task.launchPath = path;
     [task launch];
-    while ([task isRunning])
-      usleep(100000);  // 0.1s
+    [task waitUntilExit];
     status = [task terminationStatus];
     [expectation fulfill];
   });
 
-  [self waitForExpectations:@[ expectation ] timeout:20.0];
+  [self waitForExpectationsWithTimeout:20.0
+                               handler:^(NSError *error) {
+                                 XCTAssertFalse([task isRunning], @"Test timed out: %@", error);
+                                 [task terminate];
+                               }];
 
   BOOL didExec = (status == 0);
   XCTAssertEqual(didExec, shouldExec);

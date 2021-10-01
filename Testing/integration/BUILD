@@ -7,7 +7,7 @@ santa_unit_test(
         "//Source/santad/testdata:binaryrules_testdata",
     ],
     srcs = [
-        "SNTBenchmarkTest.m"
+        "SNTExecTest.m"
     ],
     deps = [],
     minimum_os_version = "10.15",
