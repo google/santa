@@ -88,7 +88,7 @@
   }];
 
   if (_blockError != nil) {
-    // If the caller hasn't passed us an eror than we ignore it.
+    // If the caller hasn't passed us an error then we ignore it.
     if (error != nil) {
       *error = [_blockError copy];
     }
