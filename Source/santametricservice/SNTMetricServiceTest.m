@@ -150,20 +150,17 @@ NSDictionary *validMetricsDict = nil;
 
   XCTestExpectation *responseCallback = [[XCTestExpectation alloc] initWithDescription:@"ensure writer passed JSON"];
 
-  void (^getCompletionHandler)(NSInvocation *) = ^(NSInvocation *invocation) {
-    [invocation getArgument:&passedBlock atIndex:3];
-  };
-
+  // stub out session to call completion handler immediately.
   void (^callCompletionHandler)(NSInvocation *) = ^(NSInvocation *invocation) {
     passedBlock(nil, response, nil);
     [responseCallback fulfill];
   };
-    
-
-  // stub out session to call completion handler immediately.
   [(NSURLSessionDataTask *)[[self.mockSessionDataTask stub] andDo:callCompletionHandler] resume];
 
   // stub out NSURLSession to assign our completion handler and return our mock
+  void (^getCompletionHandler)(NSInvocation *) = ^(NSInvocation *invocation) {
+    [invocation getArgument:&passedBlock atIndex:3];
+  };
   [[[[self.mockSession stub] andDo:getCompletionHandler] andReturn:self.mockSessionDataTask]
     dataTaskWithRequest:[OCMArg any]
       completionHandler:[OCMArg any]];
