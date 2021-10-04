@@ -14,5 +14,7 @@
 
 #import "Source/santametricservice/Writers/SNTMetricWriter.h"
 
+#import <Foundation/Foundation.h>
+
 @interface SNTMetricHTTPWriter : NSObject <SNTMetricWriter>
 @end
