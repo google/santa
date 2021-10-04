@@ -50,7 +50,9 @@
   // Create a bunch of background noise.
   dispatch_async(dispatch_get_global_queue(0, 0), ^{
     for (uint64_t i = 0; i < UINT64_MAX; ++i) {
-      t->HasPrefix([UUIDs[i % count] UTF8String]);
+      dispatch_async(dispatch_get_global_queue(0, 0), ^{
+        t->HasPrefix([UUIDs[i % count] UTF8String]);
+      });
       if (stop) return;
     }
   });
