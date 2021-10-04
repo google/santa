@@ -133,19 +133,17 @@ protect hosts in whatever other ways you see fit.
   management server, which uploads events that have occurred on the machine and
   downloads new rules. There are several open-source servers you can sync with:
 
-    * [Upvote](https://github.com/google/upvote) - An AppEngine-based server
-      that implements social voting to make managing a large fleet easier.
     * [Moroz](https://github.com/groob/moroz) - A simple golang server that
       serves hardcoded rules from simple configuration files.
+    * [Rudolph](https://github.com/airbnb/rudolph) - An AWS-based serverless sync service
+      primarily built on API GW, DynamoDB, and Lambda components to reduce operational burden.
+      Rudolph is designed to be fast, easy-to-use, and cost-efficient.
     * [Zentral](https://github.com/zentralopensource/zentral/wiki) - A
       centralized service that pulls data from multiple sources and deploy
       configurations to multiple services.
     * [Zercurity](https://github.com/zercurity/zercurity) - A dockerized service
       for managing and monitoring applications across a large fleet utilizing
       Santa + Osquery.
-    * [Rudolph](https://github.com/airbnb/rudolph) - An AWS-based serverless sync service
-      primarily built on API GW, DynamoDB, and Lambda components to reduce operational burden.
-      Rudolph is designed to be fast, easy-to-use, and cost-efficient.
 
 * Alternatively, `santactl` can configure rules locally (without a sync
   server).
