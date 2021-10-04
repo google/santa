@@ -19,7 +19,7 @@
 - (void)setUp {
   self.mockSession = OCMClassMock([NSURLSession class]);
   self.mockSessionDataTask = OCMClassMock(
-    [NSURLSessionDataTask class]);  //)[OCMockObject niceMockForClass:[NSURLSessionDataTask class]];
+    [NSURLSessionDataTask class]);
   self.mockMOLAuthenticatingURLSession = OCMClassMock([MOLAuthenticatingURLSession class]);
 
   OCMStub([self.mockMOLAuthenticatingURLSession alloc])
