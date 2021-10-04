@@ -45,26 +45,29 @@
     [UUIDs addObject:[NSUUID UUID].UUIDString];
   }
 
+  __block BOOL stop = NO;
+
   // Create a bunch of background noise.
   dispatch_async(dispatch_get_global_queue(0, 0), ^{
-    dispatch_apply(UINT64_MAX, dispatch_get_global_queue(0, 0), ^(size_t i) {
-      t->HasPrefix([UUIDs[i % count] UTF8String]);
-    });
+    for (uint64_t i = 0; i < UINT64_MAX; ++i) {
+      dispatch_async(dispatch_get_global_queue(0, 0), ^{
+        t->HasPrefix([UUIDs[i % count] UTF8String]);
+      });
+      if (stop) return;
+    }
   });
 
   // Fill up the tree.
   dispatch_apply(count, dispatch_get_global_queue(0, 0), ^(size_t i) {
-    if (t->AddPrefix([UUIDs[i] UTF8String]) != kIOReturnSuccess) {
-      XCTFail();
-    }
+    XCTAssertEqual(t->AddPrefix([UUIDs[i] UTF8String]), kIOReturnSuccess);
   });
 
   // Make sure every leaf byte is found.
   dispatch_apply(count, dispatch_get_global_queue(0, 0), ^(size_t i) {
-    if (!t->HasPrefix([UUIDs[i] UTF8String])) {
-      XCTFail();
-    }
+    XCTAssertTrue(t->HasPrefix([UUIDs[i] UTF8String]));
   });
+
+  stop = YES;
 }
 
 @end
