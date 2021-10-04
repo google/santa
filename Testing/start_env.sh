@@ -8,7 +8,7 @@ SIGNING_IDENTITY="localhost"
 
 function setup_certs() {
     echo "> Creating codesigning certs and keys"
-    $GIT_ROOT/Testing/init_dev_certs.sh
+    $GIT_ROOT/Testing/init_dev_certs.sh init
 }
 
 function run_moroz() {
@@ -24,7 +24,6 @@ function install_profile() {
 }
 
 function build_install_santa() {
-    sudo systemextensionsctl developer on
     echo "> Building and signing Santa"
     $GIT_ROOT/Testing/build_and_sign.sh
     systemextensionsctl list

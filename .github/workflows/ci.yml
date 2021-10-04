@@ -39,20 +39,29 @@ jobs:
             fi
           done
 
-          if [[ $build_and_run_test != 0 ]]; then 
+          if [[ $build_and_run_test != 0 ]]; then
             echo "NEED TO RUN BUILD AND TESTS"
             echo "::set-output name=run_build_and_tests::true"
-          else 
+          else
             echo "::set-output name=run_build_and_tests::false"
           fi
-          
+
           if [[ $build_driver != 0 ]]; then
             echo "NEED TO BUILD DRIVER"
             echo "::set-output name=build_driver::true"
-          else 
+          else
             echo "::set-output name=build_driver::false"
           fi
- 
+
+  lint:
+    runs-on: ubuntu-latest
+    needs: [preqs]
+    if: needs.preqs.outputs.run_build_and_tests == 'true'
+    steps:
+      - uses: actions/checkout@v2
+      - name: Run linters
+        run: ./Testing/lint.sh
+
   build_userspace:
     runs-on: macos-latest
     needs: [preqs]
