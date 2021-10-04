@@ -675,8 +675,8 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
 
   if ([normalized isEqualToString:@"rawjson"]) {
     return SNTMetricFormatTypeRawJSON;
-  } else if ([normalized isEqualToString:@"json"]) {
-    return SNTMetricFormatTypeJSON;
+  } else if ([normalized isEqualToString:@"monarchJson"]) {
+    return SNTMetricFormatTypeMonarchJSON;
   } else {
     return SNTMetricFormatTypeUnknown;
   }
