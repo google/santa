@@ -17,17 +17,17 @@
 #import <MOLXPCConnection/MOLXPCConnection.h>
 #import <OCMock/OCMock.h>
 
-#import "SNTCommandSyncConstants.h"
-#import "SNTCommandSyncEventUpload.h"
-#import "SNTCommandSyncPostflight.h"
-#import "SNTCommandSyncPreflight.h"
-#import "SNTCommandSyncRuleDownload.h"
-#import "SNTCommandSyncStage.h"
-#import "SNTCommandSyncState.h"
-#import "SNTCommonEnums.h"
-#import "SNTRule.h"
-#import "SNTStoredEvent.h"
-#import "SNTXPCControlInterface.h"
+#import "Source/common/SNTCommonEnums.h"
+#import "Source/common/SNTRule.h"
+#import "Source/common/SNTStoredEvent.h"
+#import "Source/common/SNTXPCControlInterface.h"
+#import "Source/santactl/Commands/sync/SNTCommandSyncConstants.h"
+#import "Source/santactl/Commands/sync/SNTCommandSyncEventUpload.h"
+#import "Source/santactl/Commands/sync/SNTCommandSyncPostflight.h"
+#import "Source/santactl/Commands/sync/SNTCommandSyncPreflight.h"
+#import "Source/santactl/Commands/sync/SNTCommandSyncRuleDownload.h"
+#import "Source/santactl/Commands/sync/SNTCommandSyncStage.h"
+#import "Source/santactl/Commands/sync/SNTCommandSyncState.h"
 
 // Prevent Zlib compression during testing
 @implementation NSData (Zlib)
@@ -136,6 +136,7 @@
 */
 - (NSData *)dataFromFixture:(NSString *)file {
   NSString *path = [[NSBundle bundleForClass:[self class]] pathForResource:file ofType:nil];
+  XCTAssertNotNil(path, @"failed to load testdata: %@", file);
   return [NSData dataWithContentsOfFile:path];
 }
 
