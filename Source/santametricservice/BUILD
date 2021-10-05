@@ -19,6 +19,7 @@ objc_library(
         "//Source/common:SNTXPCMetricServiceInterface",
         "//Source/santametricservice/Formats:SNTMetricRawJSONFormat",
         "//Source/santametricservice/Writers:SNTMetricFileWriter",
+        "//Source/santametricservice/Writers:SNTMetricHTTPWriter",
         "@MOLCodesignChecker",
         "@MOLXPCConnection",
     ],
@@ -38,8 +39,8 @@ test_suite(
     name = "unit_tests",
     tests = [
         ":SNTMetricServiceTest",
-        "//Source/santametricservice/Formats:SNTMetricRawJSONFormatTest",
-        "//Source/santametricservice/Writers:SNTMetricFileWriterTest",
+        "//Source/santametricservice/Formats:format_tests",
+        "//Source/santametricservice/Writers:writer_tests",
     ],
 )
 
