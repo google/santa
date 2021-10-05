@@ -31,7 +31,7 @@ the [santa-dev](https://groups.google.com/forum/#!forum/santa-dev) group is a
 great place.
 
 If you believe you have a bug, feel free to report [an
-issue](https://github.com/google/santa/isues) and we'll respond as soon as we
+issue](https://github.com/google/santa/issues) and we'll respond as soon as we
 can.
 
 If you believe you've found a vulnerability, please read the
