@@ -142,12 +142,17 @@ santa_unit_test(
         "Commands/sync/SNTCommandSyncStage.m",
         "Commands/sync/SNTCommandSyncState.h",
         "Commands/sync/SNTCommandSyncState.m",
+        "Commands/sync/SNTCommandSyncTest.m",
         "SNTCommand.h",
         "SNTCommand.m",
         "SNTCommandController.h",
         "SNTCommandController.m",
     ],
     sdk_dylibs = ["libz"],
+    resources = glob([
+        "Commands/sync/testdata/*.json",
+        "Commands/sync/testdata/*.plist",
+    ]),
     deps = [
         ":FCM_lib",
         "//Source/common:SNTCommonEnums",
