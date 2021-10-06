@@ -12,7 +12,7 @@ This may be the most complex part of Santa. It does two types of work:
     can also inspect individual files. When running without a sync server it
     also a supported method of managing the rules database.
 
-The details of santactl's syncing functionality are covered in [introduction/syncing-overview.md](syncing-overview.md).
+The details of santactl's syncing functionality are covered in [Syncing Overview](../introduction/syncing-overview.md).
 This document will cover the status work that santactl performs.
 
 ##### status
@@ -373,7 +373,7 @@ The rule command is covered in the [Rules](rules.md) document.
 
 ##### sync
 
-The sync command is covered in the [Syncing Overview](syncing-overview.md) document.
+The sync command is covered in the [Syncing Overview](../introduction/syncing-overview.md) document.
 
 ##### Debug Commands
 
