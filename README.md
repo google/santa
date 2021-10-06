@@ -4,22 +4,20 @@
     <img src="./Source/santa/Resources/Images.xcassets/AppIcon.appiconset/santa-hat-icon-128.png" alt="Santa Icon" />
 </p>
 
-Santa is a binary authorization system for macOS. It consists of a kernel
-extension (or a system extension on macOS 10.15+) that monitors for executions,
-a userland daemon that makes execution decisions based on the contents of a
-SQLite database, a GUI agent that notifies the user in case of a block decision
+Santa is a binary authorization system for macOS. It consists of a system or
+kernel extension (depending on the macOS version) that monitors for executions,
+a daemon that makes execution decisions based on the contents of a local
+database, a GUI agent that notifies the user in case of a block decision
 and a command-line utility for managing the system and synchronizing the
 database with a server.
 
 It is named Santa because it keeps track of binaries that are naughty or nice.
 
-Santa is a project of Google's Macintosh Operations Team.
-
 # Docs
 
 The Santa docs are stored in the
-[Docs](https://github.com/google/santa/blob/master/docs) directory. The docs are
-published at http://santa.dev.
+[Docs](https://github.com/google/santa/blob/main/docs) directory and published
+at http://santa.dev.
 
 The docs include deployment options, details on how parts of Santa work and
 instructions for developing Santa itself.
@@ -38,7 +36,7 @@ If you believe you've found a vulnerability, please read the
 [security policy](https://github.com/google/santa/security/policy) for
 disclosure reporting.
 
-# Admin-Related Features
+# Features
 
 * Multiple modes: In the default MONITOR mode, all binaries except those marked
   as blocked will be allowed to run, whilst being logged and recorded in
@@ -74,6 +72,14 @@ disclosure reporting.
   common apps. Likewise, you cannot block Santa itself, and Santa uses a
   distinct separate cert than other Google apps.
 
+* Userland components validate each other: each of the userland components (the
+  daemon, the GUI agent and the command-line utility) communicate with each
+  other using XPC and check that their signing certificates are identical
+  before any communication is accepted.
+
+* Caching: allowed binaries are cached so the processing required to make a
+  request is only done if the binary isn't already cached.
+
 # Intentions and Expectations
 
 No single system or process will stop *all* attacks, or provide 100% security.
@@ -89,36 +95,11 @@ protect hosts in whatever other ways you see fit.
 
 # Security and Performance-Related Features
 
-* In-kernel caching: allowed binaries are cached in the kernel so the
-  processing required to make a request is only done if the binary isn't
-  already cached.
-
-* Userland components validate each other: each of the userland components (the
-  daemon, the GUI agent and the command-line utility) communicate with each
-  other using XPC and check that their signing certificates are identical
-  before any communication is accepted.
-
-* Kext uses only KPIs: the kernel extension only uses provided kernel
-  programming interfaces to do its job. This means that the kext code should
-  continue to work across OS versions.
-
 # Known Issues
 
 * Santa only blocks execution (execve and variants), it doesn't protect against
   dynamic libraries loaded with dlopen, libraries on disk that have been
-  replaced, or libraries loaded using `DYLD_INSERT_LIBRARIES`. As of version
-  0.9.1 we *do* address [__PAGEZERO missing issues](b87482e) that were
-  exploited in some versions of macOS. We are working on also protecting
-  against similar avenues of attack.
-
-* Kext communication security: the kext will only accept a connection from a
-  single client at a time and said client must be running as root. We haven't
-  yet found a good way to ensure the kext only accepts connections from a valid
-  client.
-
-* Database protection: the SQLite database is installed with permissions so
-  that only the root user can read/write it. We're considering approaches to
-  secure this further.
+  replaced, or libraries loaded using `DYLD_INSERT_LIBRARIES`.
 
 * Scripts: Santa is currently written to ignore any execution that isn't a
   binary. This is because after weighing the administration cost vs the
@@ -156,31 +137,9 @@ instead.
 
 <p align="center"> <img src="https://thumbs.gfycat.com/MadFatalAmphiuma-small.gif" alt="Santa Block Video" /> </p>
 
-# Kext Signing
-Kernel extensions on macOS 10.9 and later must be signed using an Apple-provided
-Developer ID certificate with a kernel extension flag. Without it, the only way
-to load an extension is to enable kext-dev-mode or disable SIP, depending on
-the OS version.
-
-There are two possible solutions for this, for distribution purposes:
-
-1) Use a [pre-built, pre-signed
-version](https://github.com/google/santa/releases) of the kext that we supply.
-Each time changes are made to the kext code we will update the pre-built
-version that you can make use of. This doesn't prevent you from making changes
-to the non-kext parts of Santa and distributing those.  If you make changes to
-the kext and make a pull request, we can merge them in and distribute a new
-version of the pre-signed kext.
-
-2) Apply for your own [kext signing
-certificate](https://developer.apple.com/contact/kext/).  Apple will only grant
-this for broad distribution within an organization, they won't issue them just
-for testing purposes.
-
 # Contributing
 Patches to this project are very much welcome. Please see the
-[CONTRIBUTING](https://github.com/google/santa/blob/master/CONTRIBUTING.md)
-file.
+[CONTRIBUTING](https://santa.dev/development/contributing) doc.
 
 # Disclaimer
 This is **not** an official Google product.
