@@ -148,11 +148,11 @@ santa_unit_test(
         "SNTCommandController.h",
         "SNTCommandController.m",
     ],
-    sdk_dylibs = ["libz"],
     resources = glob([
         "Commands/sync/testdata/*.json",
         "Commands/sync/testdata/*.plist",
     ]),
+    sdk_dylibs = ["libz"],
     deps = [
         ":FCM_lib",
         "//Source/common:SNTCommonEnums",
