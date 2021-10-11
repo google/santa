@@ -64,7 +64,7 @@ santa_unit_test(
     srcs = [
         "SNTMetricMonarchJSONFormatTest.m",
     ],
-    structured_resources = glob(["testdata/**"]),
+    structured_resources = [":testdata"],
     deps = [
         ":SNTMetricFormatTestHelper",
         ":SNTMetricMonarchJSONFormat",
