@@ -29,7 +29,7 @@ objc_library(
 santa_unit_test(
     name = "SNTMetricServiceTest",
     srcs = ["SNTMetricServiceTest.m"],
-    structured_resources = glob(["testdata/**"]),
+    structured_resources = ["//Source/santametricservice/Formats:testdata"],
     deps = [
         ":SNTMetricServiceLib",
         "//Source/santametricservice/Formats:SNTMetricFormatTestHelper",

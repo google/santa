@@ -37,28 +37,35 @@ const NSString *kRootLabels = @"rootLabels";
 const NSString *kKey = @"key";
 
 @implementation SNTMetricMonarchJSONFormat {
-  NSDateFormatter *_dateFormatter;
-  NSDictionary *monarchJSON;
+  NSISO8601DateFormatter *_dateFormatter;
 }
 
 - (instancetype)init {
   self = [super init];
   if (self) {
-    _dateFormatter = [[NSDateFormatter alloc] init];
-    [_dateFormatter setDateFormat:@"yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"];
-    monarchJSON = @{};
+    _dateFormatter = [[NSISO8601DateFormatter alloc] init];
+    _dateFormatter.formatOptions = NSISO8601DateFormatWithInternetDateTime;
+
+    if (@available(macOS 10.13, *)) {
+      _dateFormatter.formatOptions |= NSISO8601DateFormatWithFractionalSeconds;
+    }
   }
   return self;
 }
 
-- (void)encodeValueAndStreamKindForMetric:(NSDictionary *)metric
-                                     into:(NSMutableDictionary *)monarchMetric {
+- (void)encodeValueAndStreamKindFor:(NSString *)metricName
+                         withMetric:(NSDictionary *)metric
+                               into:(NSMutableDictionary *)monarchMetric {
   if (!metric[@"type"]) {
-    LOGE(@"metric type not supposed to be nil");
+    LOGE(@"metric type not supposed to be nil for %@", metricName);
     return;
   }
 
   NSNumber *type = metric[@"type"];
+  if (![type isKindOfClass:[NSNumber class]]) {
+    LOGE(@"%@ [@\"type\"] is not a number", metricName);
+    return;
+  }
 
   switch ((SNTMetricType)[type intValue]) {
     case SNTMetricTypeConstantBool: monarchMetric[kValueType] = kBoolValue; break;
@@ -86,8 +93,8 @@ const NSString *kKey = @"key";
       monarchMetric[kValueType] = kInt64Value;
       break;
     default:
-      LOGE(@"encountered unknown SNTMetricType - %ld", (SNTMetricType)metric[@"type"]);
-      LOGE(@"invalid metric %@", metric);
+      LOGE(@"encountered unknown SNTMetricType - %ld for %@", (SNTMetricType)metric[@"type"],
+           metricName);
       break;
   }
 }
@@ -164,7 +171,7 @@ const NSString *kKey = @"key";
     monarchMetric[kFieldDescriptor] = [self encodeFieldsFor:metric];
   }
 
-  [self encodeValueAndStreamKindForMetric:metric into:monarchMetric];
+  [self encodeValueAndStreamKindFor:name withMetric:metric into:monarchMetric];
   monarchMetric[@"data"] = [self encodeDataForMetric:metric];
 
   return monarchMetric;

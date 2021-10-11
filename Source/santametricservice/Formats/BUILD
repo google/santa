@@ -71,6 +71,11 @@ santa_unit_test(
     ],
 )
 
+filegroup(
+    name = "testdata",
+    srcs = glob(["testdata/**"]),
+)
+
 test_suite(
     name = "format_tests",
     tests = [
