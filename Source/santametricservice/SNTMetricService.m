@@ -19,6 +19,7 @@
 #import "Source/common/SNTLogging.h"
 
 #import "SNTMetricService.h"
+#import "Source/santametricservice/Formats/SNTMetricMonarchJSONFormat.h"
 #import "Source/santametricservice/Formats/SNTMetricRawJSONFormat.h"
 #import "Source/santametricservice/Writers/SNTMetricFileWriter.h"
 #import "Source/santametricservice/Writers/SNTMetricHTTPWriter.h"
@@ -32,6 +33,7 @@
 @implementation SNTMetricService {
  @private
   SNTMetricRawJSONFormat *rawJSONFormatter;
+  SNTMetricMonarchJSONFormat *monarchJSONFormatter;
   NSDictionary *metricWriters;
 }
 
@@ -39,6 +41,8 @@
   self = [super init];
   if (self) {
     rawJSONFormatter = [[SNTMetricRawJSONFormat alloc] init];
+    monarchJSONFormatter = [[SNTMetricMonarchJSONFormat alloc] init];
+
     metricWriters = @{
       @"file" : [[SNTMetricFileWriter alloc] init],
       @"http" : [[SNTMetricHTTPWriter alloc] init],
@@ -74,6 +78,8 @@
                                 error:(NSError **)err {
   switch (format) {
     case SNTMetricFormatTypeRawJSON: return [self->rawJSONFormatter convert:metrics error:err];
+    case SNTMetricFormatTypeMonarchJSON:
+      return [self->monarchJSONFormatter convert:metrics error:err];
     default: return nil;
   }
 }

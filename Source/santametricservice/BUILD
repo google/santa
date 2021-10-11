@@ -17,6 +17,7 @@ objc_library(
         "//Source/common:SNTLogging",
         "//Source/common:SNTMetricSet",
         "//Source/common:SNTXPCMetricServiceInterface",
+        "//Source/santametricservice/Formats:SNTMetricMonarchJSONFormat",
         "//Source/santametricservice/Formats:SNTMetricRawJSONFormat",
         "//Source/santametricservice/Writers:SNTMetricFileWriter",
         "//Source/santametricservice/Writers:SNTMetricHTTPWriter",
@@ -28,6 +29,7 @@ objc_library(
 santa_unit_test(
     name = "SNTMetricServiceTest",
     srcs = ["SNTMetricServiceTest.m"],
+    structured_resources = ["//Source/santametricservice/Formats:testdata"],
     deps = [
         ":SNTMetricServiceLib",
         "//Source/santametricservice/Formats:SNTMetricFormatTestHelper",
