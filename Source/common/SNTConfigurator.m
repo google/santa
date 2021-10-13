@@ -671,12 +671,13 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
 
 - (SNTMetricFormatType)metricFormat {
   NSString *normalized = [self.configState[kMetricFormat] lowercaseString];
+
   normalized = [normalized stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
 
   if ([normalized isEqualToString:@"rawjson"]) {
     return SNTMetricFormatTypeRawJSON;
-  } else if ([normalized isEqualToString:@"json"]) {
-    return SNTMetricFormatTypeJSON;
+  } else if ([normalized isEqualToString:@"monarchjson"]) {
+    return SNTMetricFormatTypeMonarchJSON;
   } else {
     return SNTMetricFormatTypeUnknown;
   }

@@ -33,6 +33,20 @@ objc_library(
     ],
 )
 
+objc_library(
+    name = "SNTMetricMonarchJSONFormat",
+    srcs = [
+        "SNTMetricFormat.h",
+        "SNTMetricMonarchJSONFormat.h",
+        "SNTMetricMonarchJSONFormat.m",
+    ],
+    deps = [
+        ":SNTMetricFormat",
+        "//Source/common:SNTLogging",
+        "//Source/common:SNTMetricSet",
+    ],
+)
+
 santa_unit_test(
     name = "SNTMetricRawJSONFormatTest",
     srcs = [
@@ -45,9 +59,27 @@ santa_unit_test(
     ],
 )
 
+santa_unit_test(
+    name = "SNTMetricMonarchJSONFormatTest",
+    srcs = [
+        "SNTMetricMonarchJSONFormatTest.m",
+    ],
+    structured_resources = [":testdata"],
+    deps = [
+        ":SNTMetricFormatTestHelper",
+        ":SNTMetricMonarchJSONFormat",
+    ],
+)
+
+filegroup(
+    name = "testdata",
+    srcs = glob(["testdata/**"]),
+)
+
 test_suite(
     name = "format_tests",
     tests = [
+        ":SNTMetricMonarchJSONFormatTest",
         ":SNTMetricRawJSONFormatTest",
     ],
 )

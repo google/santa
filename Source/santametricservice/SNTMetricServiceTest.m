@@ -126,7 +126,7 @@ NSDictionary *validMetricsDict = nil;
   XCTAssertEqualObjects(validMetricsDict, parsedJSONData, @"invalid JSON created");
 }
 
-- (void)testWritingJSON {
+- (void)testWritingJSONOverHTTP {
   NSURL *url = [NSURL URLWithString:@"http://localhost:9444"];
   OCMStub([self.mockConfigurator exportMetrics]).andReturn(YES);
   OCMStub([self.mockConfigurator metricFormat]).andReturn(SNTMetricFormatTypeRawJSON);
@@ -171,5 +171,53 @@ NSDictionary *validMetricsDict = nil;
   SNTMetricService *service = [[SNTMetricService alloc] init];
   [service exportForMonitoring:[SNTMetricFormatTestHelper createValidMetricsDictionary]];
   [self waitForExpectations:@[ responseCallback ] timeout:10.0];
+}
+
+- (void)testWritingMonarchJSONToAFile {
+  OCMStub([self.mockConfigurator exportMetrics]).andReturn(YES);
+  OCMStub([self.mockConfigurator metricFormat]).andReturn(SNTMetricFormatTypeMonarchJSON);
+  OCMStub([self.mockConfigurator metricURL]).andReturn(self.jsonURL);
+
+  SNTMetricService *ms = [[SNTMetricService alloc] init];
+  NSDictionary *validMetricsDict = [SNTMetricFormatTestHelper createValidMetricsDictionary];
+
+  [ms exportForMonitoring:validMetricsDict];
+
+  NSError *err;
+
+  // Ensure that this has written 1 file that is well formed.
+  NSArray *items = [[NSFileManager defaultManager] contentsOfDirectoryAtPath:self.tempDir
+                                                                       error:&err];
+  XCTAssertNil(err);
+  XCTAssertEqual(1, items.count, @"failed to create JSON metrics file");
+
+  NSData *jsonData = [NSData dataWithContentsOfFile:self.jsonURL.path
+                                            options:NSDataReadingUncached
+                                              error:&err];
+  XCTAssertNil(err);
+
+  // Read expected result from a golden file.
+  NSString *path = [[NSBundle bundleForClass:[self class]] resourcePath];
+  path = [path stringByAppendingPathComponent:@"testdata/json/monarch.json"];
+
+  NSData *goldenFileData = [NSData dataWithContentsOfFile:path
+                                                  options:NSDataReadingUncached
+                                                    error:&err];
+  XCTAssertNil(err);
+  XCTAssertNotNil(goldenFileData, @"unable to open / read golden file");
+
+  NSDictionary *parsedJSONAsDict =
+    [NSJSONSerialization JSONObjectWithData:jsonData
+                                    options:NSJSONReadingMutableContainers
+                                      error:&err];
+  XCTAssertNil(err);
+
+  NSDictionary *expectedJSONAsDict =
+    [NSJSONSerialization JSONObjectWithData:goldenFileData
+                                    options:NSJSONReadingMutableContainers
+                                      error:&err];
+  XCTAssertNil(err);
+
+  XCTAssertEqualObjects(expectedJSONAsDict, parsedJSONAsDict, @"invalid JSON created");
 }
 @end

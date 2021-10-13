@@ -1,8 +1,17 @@
 #!/bin/bash
-GIT_ROOT=$(git rev-parse --show-toplevel)
 
-find $GIT_ROOT \( -name "*.m" -o -name "*.h" -name "*.mm" \) | xargs clang-format --Werror --dry-run
+function main() {
+    GIT_ROOT=$(git rev-parse --show-toplevel)
+    err=0
 
-go get github.com/bazelbuild/buildtools/buildifier
+    find $GIT_ROOT \( -name "*.m" -o -name "*.h" -name "*.mm" \) -exec clang-format --Werror --dry-run {} \+
+    err="$(( $err | $? ))"
 
-~/go/bin/buildifier --lint=warn -r $GIT_ROOT
+    go get github.com/bazelbuild/buildtools/buildifier
+    ~/go/bin/buildifier --lint=warn -r $GIT_ROOT
+    err="$(( $err | $? ))"
+    return $err
+}
+
+main $@
+exit $?
