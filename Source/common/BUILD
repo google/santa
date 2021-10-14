@@ -87,6 +87,10 @@ objc_library(
 cc_library(
     name = "SNTKernelCommon",
     hdrs = ["SNTKernelCommon.h"],
+    defines = [
+        "TARGET_OS_OSX",
+        "TARGET_OS_MAC",
+    ],
 )
 
 cc_library(
@@ -96,7 +100,11 @@ cc_library(
         "-mkernel",
         "-I__BAZEL_XCODE_SDKROOT__/System/Library/Frameworks/Kernel.framework/Headers",
     ],
-    defines = ["KERNEL"],
+    defines = [
+        "KERNEL",
+        "TARGET_OS_OSX",
+        "TARGET_OS_MAC",
+    ],
 )
 
 objc_library(
@@ -123,7 +131,11 @@ cc_library(
         "-mkernel",
         "-I__BAZEL_XCODE_SDKROOT__/System/Library/Frameworks/Kernel.framework/Headers",
     ],
-    defines = ["KERNEL"],
+    defines = [
+        "KERNEL",
+        "TARGET_OS_OSX",
+        "TARGET_OS_MAC",
+    ],
     deps = [":SNTLoggingKernel"],
 )
 
