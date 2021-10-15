@@ -89,8 +89,7 @@
 
   // Ugly hack to deflake the test and allow listenForDecisionRequests to install the correct
   // decision callback.
-  sleep(1);
-  [self waitForExpectations:@[ santaInit ] timeout:0.0];
+  [self waitForExpectations:@[ santaInit ] timeout:2.0];
 
   // MeasureMetrics actually runs all of the individual events asynchronously at once.
   dispatch_semaphore_t sem = dispatch_semaphore_create(0);
