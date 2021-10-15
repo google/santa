@@ -3,6 +3,9 @@
     "optionSet" : {
       "ALWAYS_SEARCH_USER_PATHS" : {
         "p" : "YES"
+      },
+      "GenerateRunfiles" : {
+        "p" : "YES"
       }
     }
   },

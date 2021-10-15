@@ -10,6 +10,7 @@
     "Source/santasyncservice/BUILD"
   ],
   "buildTargets" : [
+    "//:benchmarks",
     "//:unit_tests",
     "//Source/santa:Santa",
     "//Source/santa_driver:kernel_tests_bin",

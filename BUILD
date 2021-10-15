@@ -234,3 +234,10 @@ test_suite(
         "//Source/santad:SNTRuleTableTest",
     ],
 )
+
+test_suite(
+    name = "benchmarks",
+    tests = [
+        "//Source/santad:SNTApplicationBenchmark",
+    ],
+)
