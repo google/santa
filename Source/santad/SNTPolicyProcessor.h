@@ -44,7 +44,8 @@
 ///
 - (nonnull SNTCachedDecision *)decisionForFileInfo:(nonnull SNTFileInfo *)fileInfo
                                         fileSHA256:(nullable NSString *)fileSHA256
-                                 certificateSHA256:(nullable NSString *)certificateSHA256;
+                                 certificateSHA256:(nullable NSString *)certificateSHA256
+                                            teamID:(nullable NSString *)teamID;
 
 ///  Convenience initializer with nil hashes for both the file and certificate.
 - (nonnull SNTCachedDecision *)decisionForFileInfo:(nonnull SNTFileInfo *)fileInfo;

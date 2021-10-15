@@ -40,9 +40,11 @@
 
 - (nonnull SNTCachedDecision *)decisionForFileInfo:(nonnull SNTFileInfo *)fileInfo
                                         fileSHA256:(nullable NSString *)fileSHA256
-                                 certificateSHA256:(nullable NSString *)certificateSHA256 {
+                                 certificateSHA256:(nullable NSString *)certificateSHA256
+                                            teamID:(nullable NSString *)teamID {
   SNTCachedDecision *cd = [[SNTCachedDecision alloc] init];
   cd.sha256 = fileSHA256 ?: fileInfo.SHA256;
+  cd.teamID = teamID;
 
   // If the binary is a critical system binary, don't check its signature.
   // The binary was validated at startup when the rule table was initialized.
@@ -64,11 +66,15 @@
       cd.certSHA256 = csInfo.leafCertificate.SHA256;
       cd.certCommonName = csInfo.leafCertificate.commonName;
       cd.certChain = csInfo.certificates;
+      cd.teamID = teamID ?: [csInfo.signingInformation valueForKey:@"teamid"];
+      teamID = cd.teamID;
     }
   }
   cd.quarantineURL = fileInfo.quarantineDataURL;
 
-  SNTRule *rule = [self.ruleTable ruleForBinarySHA256:cd.sha256 certificateSHA256:cd.certSHA256];
+  SNTRule *rule = [self.ruleTable ruleForBinarySHA256:cd.sha256
+                                    certificateSHA256:cd.certSHA256
+                                               teamID:teamID];
   if (rule) {
     switch (rule.type) {
       case SNTRuleTypeBinary:
@@ -115,6 +121,20 @@
           default: break;
         }
         break;
+      case SNTRuleTypeTeamID:
+        switch (rule.state) {
+          case SNTRuleStateAllow: cd.decision = SNTEventStateAllowTeamID; return cd;
+          case SNTRuleStateSilentBlock:
+            cd.silentBlock = YES;
+            // intentional fallthrough
+          case SNTRuleStateBlock:
+            cd.customMsg = rule.customMsg;
+            cd.decision = SNTEventStateBlockTeamID;
+            return cd;
+          default: break;
+        }
+        break;
+
       default: break;
     }
   }
@@ -149,9 +169,10 @@
 }
 
 - (nonnull SNTCachedDecision *)decisionForFileInfo:(nonnull SNTFileInfo *)fileInfo {
-  return [self decisionForFileInfo:fileInfo fileSHA256:nil certificateSHA256:nil];
+  return [self decisionForFileInfo:fileInfo fileSHA256:nil certificateSHA256:nil teamID:nil];
 }
 
+// Used by `$ santactl fileinfo`.
 - (nonnull SNTCachedDecision *)decisionForFilePath:(nonnull NSString *)filePath
                                         fileSHA256:(nullable NSString *)fileSHA256
                                  certificateSHA256:(nullable NSString *)certificateSHA256 {
@@ -161,7 +182,8 @@
   if (!fileInfo) LOGW(@"Failed to read file %@: %@", filePath, error.localizedDescription);
   return [self decisionForFileInfo:fileInfo
                         fileSHA256:fileSHA256
-                 certificateSHA256:certificateSHA256];
+                 certificateSHA256:certificateSHA256
+                            teamID:nil];
 }
 
 ///

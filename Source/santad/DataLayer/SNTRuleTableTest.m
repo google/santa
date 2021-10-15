@@ -116,12 +116,12 @@
           cleanSlate:NO
                error:nil];
 
-  SNTRule *r = [self.sut ruleForBinarySHA256:@"a" certificateSHA256:nil];
+  SNTRule *r = [self.sut ruleForBinarySHA256:@"a" certificateSHA256:nil teamID:nil];
   XCTAssertNotNil(r);
   XCTAssertEqualObjects(r.shasum, @"a");
   XCTAssertEqual(r.type, SNTRuleTypeBinary);
 
-  r = [self.sut ruleForBinarySHA256:@"b" certificateSHA256:nil];
+  r = [self.sut ruleForBinarySHA256:@"b" certificateSHA256:nil teamID:nil];
   XCTAssertNil(r);
 }
 
@@ -130,12 +130,12 @@
           cleanSlate:NO
                error:nil];
 
-  SNTRule *r = [self.sut ruleForBinarySHA256:nil certificateSHA256:@"b"];
+  SNTRule *r = [self.sut ruleForBinarySHA256:nil certificateSHA256:@"b" teamID:nil];
   XCTAssertNotNil(r);
   XCTAssertEqualObjects(r.shasum, @"b");
   XCTAssertEqual(r.type, SNTRuleTypeCertificate);
 
-  r = [self.sut ruleForBinarySHA256:nil certificateSHA256:@"a"];
+  r = [self.sut ruleForBinarySHA256:nil certificateSHA256:@"a" teamID:nil];
   XCTAssertNil(r);
 }
 
@@ -146,7 +146,7 @@
 
   // This test verifies that the implicit rule ordering we've been abusing is still working.
   // See the comment in SNTRuleTable#ruleForBinarySHA256:certificateSHA256:
-  SNTRule *r = [self.sut ruleForBinarySHA256:@"a" certificateSHA256:@"b"];
+  SNTRule *r = [self.sut ruleForBinarySHA256:@"a" certificateSHA256:@"b" teamID:nil];
   XCTAssertNotNil(r);
   XCTAssertEqualObjects(r.shasum, @"a");
   XCTAssertEqual(r.type, SNTRuleTypeBinary, @"Implicit rule ordering failed");

@@ -99,25 +99,10 @@
     @"badbinary" : [NSNumber numberWithInt:ES_AUTH_RESULT_DENY],
     @"goodbinary" : [NSNumber numberWithInt:ES_AUTH_RESULT_ALLOW],
     @"noop" : [NSNumber numberWithInt:ES_AUTH_RESULT_ALLOW],
-
-  };
-  NSString *fullTestPath = [NSString pathWithComponents:@[
-    [[[NSProcessInfo processInfo] environment] objectForKey:@"TEST_SRCDIR"], testPath
-  ]];
-
-  for (NSString *binary in testCases) {
-    [self checkBinaryExecution:binary
-                      testPath:fullTestPath
-                    wantResult:[testCases[binary] intValue]];
-  }
-}
-
-- (void)testCertRules {
-  NSString *testPath = @"santa/Source/santad/testdata/binaryrules";
-  NSDictionary *testCases = @{
+    @"banned_teamid" : [NSNumber numberWithInt:ES_AUTH_RESULT_DENY],
+    @"banned_teamid_allowed_binary" : [NSNumber numberWithInt:ES_AUTH_RESULT_ALLOW],
     @"badcert" : [NSNumber numberWithInt:ES_AUTH_RESULT_DENY],
     @"goodcert" : [NSNumber numberWithInt:ES_AUTH_RESULT_ALLOW],
-    @"noop" : [NSNumber numberWithInt:ES_AUTH_RESULT_ALLOW],
   };
   NSString *fullTestPath = [NSString pathWithComponents:@[
     [[[NSProcessInfo processInfo] environment] objectForKey:@"TEST_SRCDIR"], testPath
