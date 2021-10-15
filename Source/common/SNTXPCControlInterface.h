@@ -34,6 +34,7 @@
 - (void)databaseRemoveEventsWithIDs:(NSArray *)ids;
 - (void)databaseRuleForBinarySHA256:(NSString *)binarySHA256
                   certificateSHA256:(NSString *)certificateSHA256
+                             teamID:(NSString *)teamID
                               reply:(void (^)(SNTRule *))reply;
 
 ///

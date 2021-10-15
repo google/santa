@@ -93,7 +93,7 @@
                  testPath, binaryName);
 }
 
-- (void)testBinaryRules {
+- (void)testRules {
   NSString *testPath = @"santa/Source/santad/testdata/binaryrules";
   NSDictionary *testCases = @{
     @"badbinary" : [NSNumber numberWithInt:ES_AUTH_RESULT_DENY],
