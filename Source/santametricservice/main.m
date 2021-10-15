@@ -17,10 +17,16 @@
 #import <MOLXPCConnection/MOLXPCConnection.h>
 
 #import "Source/common/SNTLogging.h"
+#import "Source/common/SNTDropRootPrivs.h"
 #import "Source/common/SNTXPCMetricServiceInterface.h"
 #import "Source/santametricservice/SNTMetricService.h"
 
 int main(int argc, const char *argv[]) {
+  if (!DropRootPrivileges()) {
+        LOGE(@"unable to drop root privileges, exiting.");
+        exit(1);
+  };
+    
   @autoreleasepool {
     NSDictionary *infoDict = [[NSBundle mainBundle] infoDictionary];
     LOGI(@"Started, version %@", infoDict[@"CFBundleVersion"]);

@@ -19,7 +19,8 @@
 + (NSXPCInterface *)metricServiceInterface {
   NSXPCInterface *r = [NSXPCInterface interfaceWithProtocol:@protocol(SNTMetricServiceXPC)];
 
-  [r setClasses:[NSSet setWithObjects:[NSDictionary class], nil]
+  [r setClasses:[NSSet setWithObjects:[NSDictionary class], [NSArray class], [NSNumber class],
+                [NSString class], [NSDate class], nil]
       forSelector:@selector(exportForMonitoring:)
     argumentIndex:0
           ofReply:NO];

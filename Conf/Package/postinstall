@@ -24,6 +24,9 @@ mkdir -p /usr/local/bin
 # Load com.google.santa.bundleservice
 /bin/launchctl load -w /Library/LaunchDaemons/com.google.santa.bundleservice.plist
 
+# Load com.google.santa.metricservice
+/bin/launchctl load -w /Library/LaunchDaemons/com.google.santa.metricservice.plist
+
 GUI_USER=$(/usr/bin/stat -f '%u' /dev/console)
 [[ -z "${GUI_USER}" ]] && exit 0
 

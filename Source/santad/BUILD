@@ -60,16 +60,30 @@ objc_library(
         "//Source/common:SNTFileInfo",
         "//Source/common:SNTKernelCommon",
         "//Source/common:SNTLogging",
+        "//Source/common:SNTMetricSet",
         "//Source/common:SNTPrefixTree",
         "//Source/common:SNTRule",
         "//Source/common:SNTStoredEvent",
         "//Source/common:SNTXPCControlInterface",
+        "//Source/common:SNTXPCMetricServiceInterface",
         "//Source/common:SNTXPCNotifierInterface",
         "//Source/common:SNTXPCSyncdInterface",
         "//Source/common:SantaCache",
+        "//Source/santad:SNTApplicationCoreMetrics",
         "@FMDB",
         "@MOLCodesignChecker",
         "@MOLXPCConnection",
+    ],
+)
+
+objc_library(
+    name = "SNTApplicationCoreMetrics",
+    srcs = ["SNTApplicationCoreMetrics.m"],
+    hdrs = ["SNTApplicationCoreMetrics.h"],
+    deps = [
+        "//Source/common:SNTCommonEnums",
+        "//Source/common:SNTConfigurator",
+        "//Source/common:SNTMetricSet",
     ],
 )
 
@@ -258,6 +272,21 @@ santa_unit_test(
         ":santad_lib",
         "@MOLCodesignChecker",
         "@MOLXPCConnection",
+        "@OCMock",
+    ],
+)
+
+santa_unit_test(
+    name = "SNTApplicationCoreMetricsTest",
+    srcs = [
+        "SNTApplicationCoreMetricsTest.m",
+    ],
+    minimum_os_version = "10.15",
+    deps = [
+        ":SNTApplicationCoreMetrics",
+        "//Source/common:SNTCommonEnums",
+        "//Source/common:SNTMetricSet",
+        "//Source/santametricservice/Formats:SNTMetricFormatTestHelper",
         "@OCMock",
     ],
 )

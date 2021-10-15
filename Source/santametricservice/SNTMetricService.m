@@ -92,8 +92,9 @@
  */
 - (void)exportForMonitoring:(NSDictionary *)metrics {
   SNTConfigurator *config = [SNTConfigurator configurator];
-
+    
   if (![config exportMetrics]) {
+    LOGD(@"received metrics message while not configured to export metrics.");
     return;
   }
 

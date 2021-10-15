@@ -12,9 +12,7 @@
 ///    See the License for the specific language governing permissions and
 ///    limitations under the License.
 
-#import <Foundation/Foundation.h>
+#import "Source/common/SNTMetricSet.h"
 
-@interface SNTMetricFormatTestHelper : NSObject
-+ (NSDictionary *)convertDatesToFixedDateWithExportDict:(NSDictionary *)exportDict;
-+ (NSDictionary *)createValidMetricsDictionary;
-@end
+void SNTRegisterCoreMetrics();
+

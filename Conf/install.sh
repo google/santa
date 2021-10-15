@@ -24,6 +24,9 @@ fi
 # Unload bundle service
 /bin/launchctl remove com.google.santa.bundleservice >/dev/null 2>&1
 
+# Unload metric service
+/bin/launchctl remove com.google.santa.metricservice >/dev/null 2>&1
+
 # Unload kext.
 /sbin/kextunload -b com.google.santa-driver >/dev/null 2>&1
 
@@ -58,6 +61,7 @@ GUI_USER=$(/usr/bin/stat -f '%u' /dev/console)
 
 /bin/cp ${CONF}/com.google.santa.plist /Library/LaunchAgents
 /bin/cp ${CONF}/com.google.santa.bundleservice.plist /Library/LaunchDaemons
+/bin/cp ${CONF}/com.google.santa.metricservice.plist /Library/LaunchDaemons
 /bin/cp ${CONF}/com.google.santad.plist /Library/LaunchDaemons
 /bin/cp ${CONF}/com.google.santa.asl.conf /etc/asl/
 /bin/cp ${CONF}/com.google.santa.newsyslog.conf /etc/newsyslog.d/
@@ -70,6 +74,9 @@ GUI_USER=$(/usr/bin/stat -f '%u' /dev/console)
 
 # Load com.google.santa.bundleservice
 /bin/launchctl load /Library/LaunchDaemons/com.google.santa.bundleservice.plist
+
+# Load com.google.santa.metricservice
+/bin/launchctl load /Library/LaunchDaemons/com.google.santa.metricservice.plist
 
 # Load GUI agent if someone is logged in.
 [[ -z "${GUI_USER}" ]] && exit 0

@@ -48,6 +48,7 @@ run_command(
     cmd = """
 sudo launchctl unload /Library/LaunchDaemons/com.google.santad.plist 2>/dev/null
 sudo launchctl unload /Library/LaunchDaemons/com.google.santa.bundleservice.plist 2>/dev/null
+sudo launchctl unload /Library/LaunchDaemons/com.google.santa.metricservice.plist 2>/dev/null
 sudo kextunload -b com.google.santa-driver 2>/dev/null
 launchctl unload /Library/LaunchAgents/com.google.santa.plist 2>/dev/null
 """,
@@ -58,6 +59,7 @@ run_command(
     cmd = """
 sudo launchctl load /Library/LaunchDaemons/com.google.santad.plist
 sudo launchctl load /Library/LaunchDaemons/com.google.santa.bundleservice.plist
+sudo launchctl load /Library/LaunchDaemons/com.google.santa.metricservice.plist
 launchctl load /Library/LaunchAgents/com.google.santa.plist
 """,
 )
@@ -94,6 +96,7 @@ genrule(
         "Conf/install.sh",
         "Conf/uninstall.sh",
         "Conf/com.google.santa.bundleservice.plist",
+        "Conf/com.google.santa.metricservice.plist",
         "Conf/com.google.santad.plist",
         "Conf/com.google.santa.plist",
         "Conf/com.google.santa.asl.conf",
@@ -141,6 +144,10 @@ genrule(
           *santabundleservice.dSYM*Info.plist)
             mkdir -p $(@D)/dsym
             cp -LR $$(dirname $$(dirname $${SRC})) $(@D)/dsym/santabundleservice.dSYM
+            ;;
+          *santametricservice.dSYM*Info.plist)
+            mkdir -p $(@D)/dsym
+            cp -LR $$(dirname $$(dirname $${SRC})) $(@D)/dsym/santametricservice.dSYM
             ;;
           *Santa.app.dSYM*Info.plist)
             mkdir -p $(@D)/dsym

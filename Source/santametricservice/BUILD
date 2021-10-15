@@ -14,6 +14,7 @@ objc_library(
     ],
     deps = [
         "//Source/common:SNTConfigurator",
+        "//Source/common:SNTDropRootPrivs",
         "//Source/common:SNTLogging",
         "//Source/common:SNTMetricSet",
         "//Source/common:SNTXPCMetricServiceInterface",
@@ -54,9 +55,15 @@ macos_command_line_application(
         "--force",
         "--options library,kill,runtime",
     ],
+    provisioning_profile = select({
+        "//:ci_build": None,
+        "//conditions:default": "Santa_Dev.provisionprofile",
+    }),
     infoplists = ["Info.plist"],
     minimum_os_version = "10.15",
     version = "//:version",
     visibility = ["//:santa_package_group"],
-    deps = [":SNTMetricServiceLib"],
+    deps = [
+        ":SNTMetricServiceLib",
+    ],
 )
