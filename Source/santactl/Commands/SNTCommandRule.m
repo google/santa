@@ -113,82 +113,77 @@ REGISTER_COMMAND_NAME(@"rule")
     } else if ([arg caseInsensitiveCompare:@"--certificate"] == NSOrderedSame) {
       newRule.type = SNTRuleTypeCertificate;
     } else if ([arg caseInsensitiveCompare:@"--teamid"] == NSOrderedSame) {
-      newrule.type = SNTRuleTypeTeamID;
-    }
-  }
-  else if ([arg caseInsensitiveCompare:@"--path"] == NSOrderedSame) {
-    if (++i > arguments.count - 1) {
-      [self printErrorUsageAndExit:@"--path requires an argument"];
-    }
-    path = arguments[i];
-  }
-  else if ([arg caseInsensitiveCompare:@"--sha256"] == NSOrderedSame) {
-    if (++i > arguments.count - 1) {
-      [self printErrorUsageAndExit:@"--sha256 requires an argument"];
-    }
-    newRule.shasum = arguments[i];
-    if (newRule.shasum.length != 64) {
-      [self printErrorUsageAndExit:@"--sha256 requires a valid SHA-256 as the argument"];
-    }
-  }
-  else if ([arg caseInsensitiveCompare:@"--message"] == NSOrderedSame) {
-    if (++i > arguments.count - 1) {
-      [self printErrorUsageAndExit:@"--message requires an argument"];
-    }
-    newRule.customMsg = arguments[i];
+      newRule.type = SNTRuleTypeTeamID;
+    } else if ([arg caseInsensitiveCompare:@"--path"] == NSOrderedSame) {
+      if (++i > arguments.count - 1) {
+        [self printErrorUsageAndExit:@"--path requires an argument"];
+      }
+      path = arguments[i];
+    } else if ([arg caseInsensitiveCompare:@"--sha256"] == NSOrderedSame) {
+      if (++i > arguments.count - 1) {
+        [self printErrorUsageAndExit:@"--sha256 requires an argument"];
+      }
+      newRule.shasum = arguments[i];
+      if (newRule.shasum.length != 64) {
+        [self printErrorUsageAndExit:@"--sha256 requires a valid SHA-256 as the argument"];
+      }
+    } else if ([arg caseInsensitiveCompare:@"--message"] == NSOrderedSame) {
+      if (++i > arguments.count - 1) {
+        [self printErrorUsageAndExit:@"--message requires an argument"];
+      }
+      newRule.customMsg = arguments[i];
 #ifdef DEBUG
-  }
-  else if ([arg caseInsensitiveCompare:@"--force"] == NSOrderedSame) {
-    // Don't do anything special.
+    } else if ([arg caseInsensitiveCompare:@"--force"] == NSOrderedSame) {
+      // Don't do anything special.
 #endif
-  }
-  else {
-    [self printErrorUsageAndExit:[@"Unknown argument: " stringByAppendingString:arg]];
-  }
-}
-
-if (check) {
-  if (!newRule.shasum) return [self printErrorUsageAndExit:@"--check requires --sha256"];
-  return [self printStateOfRule:newRule daemonConnection:self.daemonConn];
-}
-
-if (path) {
-  SNTFileInfo *fi = [[SNTFileInfo alloc] initWithPath:path];
-  if (!fi.path) {
-    [self printErrorUsageAndExit:@"Provided path was not a plain file"];
+    } else {
+      [self printErrorUsageAndExit:[@"Unknown argument: " stringByAppendingString:arg]];
+    }
   }
 
-  if (newRule.type == SNTRuleTypeBinary) {
-    newRule.shasum = fi.SHA256;
-  } else if (newRule.type == SNTRuleTypeCertificate) {
-    MOLCodesignChecker *cs = [fi codesignCheckerWithError:NULL];
-    newRule.shasum = cs.leafCertificate.SHA256;
+  if (check) {
+    if (!newRule.shasum) return [self printErrorUsageAndExit:@"--check requires --sha256"];
+    return [self printStateOfRule:newRule daemonConnection:self.daemonConn];
   }
-}
 
-if (newRule.state == SNTRuleStateUnknown) {
-  [self printErrorUsageAndExit:@"No state specified"];
-} else if (!newRule.shasum) {
-  [self printErrorUsageAndExit:@"Either SHA-256 or path to file must be specified"];
-}
+  if (path) {
+    SNTFileInfo *fi = [[SNTFileInfo alloc] initWithPath:path];
+    if (!fi.path) {
+      [self printErrorUsageAndExit:@"Provided path was not a plain file"];
+    }
 
-[[self.daemonConn remoteObjectProxy]
-  databaseRuleAddRules:@[ newRule ]
-            cleanSlate:NO
-                 reply:^(NSError *error) {
-                   if (error) {
-                     printf("Failed to modify rules: %s", [error.localizedDescription UTF8String]);
-                     LOGD(@"Failure reason: %@", error.localizedFailureReason);
-                     exit(1);
-                   } else {
-                     if (newRule.state == SNTRuleStateRemove) {
-                       printf("Removed rule for SHA-256: %s.\n", [newRule.shasum UTF8String]);
+    if (newRule.type == SNTRuleTypeBinary) {
+      newRule.shasum = fi.SHA256;
+    } else if (newRule.type == SNTRuleTypeCertificate) {
+      MOLCodesignChecker *cs = [fi codesignCheckerWithError:NULL];
+      newRule.shasum = cs.leafCertificate.SHA256;
+    }
+  }
+
+  if (newRule.state == SNTRuleStateUnknown) {
+    [self printErrorUsageAndExit:@"No state specified"];
+  } else if (!newRule.shasum) {
+    [self printErrorUsageAndExit:@"Either SHA-256 or path to file must be specified"];
+  }
+
+  [[self.daemonConn remoteObjectProxy]
+    databaseRuleAddRules:@[ newRule ]
+              cleanSlate:NO
+                   reply:^(NSError *error) {
+                     if (error) {
+                       printf("Failed to modify rules: %s",
+                              [error.localizedDescription UTF8String]);
+                       LOGD(@"Failure reason: %@", error.localizedFailureReason);
+                       exit(1);
                      } else {
-                       printf("Added rule for SHA-256: %s.\n", [newRule.shasum UTF8String]);
+                       if (newRule.state == SNTRuleStateRemove) {
+                         printf("Removed rule for SHA-256: %s.\n", [newRule.shasum UTF8String]);
+                       } else {
+                         printf("Added rule for SHA-256: %s.\n", [newRule.shasum UTF8String]);
+                       }
+                       exit(0);
                      }
-                     exit(0);
-                   }
-                 }];
+                   }];
 }
 
 - (void)printStateOfRule:(SNTRule *)rule daemonConnection:(MOLXPCConnection *)daemonConn {
@@ -201,7 +196,6 @@ if (newRule.state == SNTRuleStateUnknown) {
   [[daemonConn remoteObjectProxy] decisionForFilePath:nil
                                            fileSHA256:fileSHA256
                                     certificateSHA256:certificateSHA256
-                                               teamID:teamID
                                                 reply:^(SNTEventState s) {
                                                   output = (SNTEventStateAllow & s)
                                                              ? @"Allowed".mutableCopy
@@ -258,6 +252,7 @@ if (newRule.state == SNTRuleStateUnknown) {
   [[daemonConn remoteObjectProxy]
     databaseRuleForBinarySHA256:fileSHA256
               certificateSHA256:certificateSHA256
+                         teamID:teamID
                           reply:^(SNTRule *r) {
                             if (r.state == SNTRuleStateAllowTransitive) {
                               NSDate *date =
