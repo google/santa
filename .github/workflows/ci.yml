@@ -32,7 +32,7 @@ jobs:
           for file in `cat files.txt`; do
             if [[ $file = Source/* ]]; then
               build_and_run_test=1;
-              if [[ $file = Source/santa_driver/* ]]; then
+              if [[ $file = Source/santa_driver/* || $file = Source/common/* ]]; then
                  build_driver=1;
                  break;
               fi
