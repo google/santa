@@ -28,15 +28,14 @@
 @end
 
 @implementation SNTApplicationBenchmark : XCTestCase
+
 - (void)setUp {
   [super setUp];
   fclose(stdout);
   self.mockSNTDatabaseController = OCMClassMock([SNTDatabaseController class]);
   self.mockConfigurator = OCMClassMock([SNTConfigurator class]);
-  XCTAssertTrue([[SNTConfigurator configurator] enableSystemExtension]);
-
-  OCMStub([self.mockConfigurator enableSystemExtension]).andReturn(true);
   OCMStub([self.mockConfigurator configurator]).andReturn(self.mockConfigurator);
+  OCMStub([self.mockConfigurator enableSystemExtension]).andReturn(true);
   OCMStub([self.mockConfigurator enableSysxCache]).andReturn(false);
 }
 
