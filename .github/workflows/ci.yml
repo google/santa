@@ -103,3 +103,12 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           path-to-lcov: ./CoverageData/info.lcov
           flag-name: Unit
+
+  benchmark:
+    runs-on: macos-latest
+    needs: [preqs]
+    if: needs.preqs.outputs.run_build_and_tests == 'true'
+    steps:
+      - uses: actions/checkout@v2
+      - name: Run All Tests
+        run: ./Testing/benchmark.sh
