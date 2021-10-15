@@ -121,7 +121,7 @@
     dispatch_semaphore_signal(sem);
   };
 
-  [self measureMetrics:[self defaultPerformanceMetrics]
+  [self measureMetrics:[SNTApplicationBenchmark defaultPerformanceMetrics]
     automaticallyStartMeasuring:false
                        forBlock:executeBinary];
 
