@@ -121,7 +121,7 @@
     dispatch_semaphore_signal(sem);
   };
 
-  [self measureMetrics:[MOLXCTMeasureTestCase defaultPerformanceMetrics]
+  [self measureMetrics:[self defaultPerformanceMetrics]
     automaticallyStartMeasuring:false
                        forBlock:executeBinary];
 
