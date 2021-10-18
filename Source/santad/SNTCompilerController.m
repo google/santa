@@ -74,10 +74,10 @@
     SNTRule *prevRule = [ruleTable ruleForBinarySHA256:fi.SHA256 certificateSHA256:nil teamID:nil];
     if (!prevRule || prevRule.state == SNTRuleStateAllowTransitive) {
       // Construct a new transitive allowlist rule for the executable.
-      SNTRule *rule = [[SNTRule alloc] initWithShasum:fi.SHA256
-                                                state:SNTRuleStateAllowTransitive
-                                                 type:SNTRuleTypeBinary
-                                            customMsg:@""];
+      SNTRule *rule = [[SNTRule alloc] initWithIdentifier:fi.SHA256
+                                                    state:SNTRuleStateAllowTransitive
+                                                     type:SNTRuleTypeBinary
+                                                customMsg:@""];
 
       // Add the new rule to the rules database.
       NSError *err;

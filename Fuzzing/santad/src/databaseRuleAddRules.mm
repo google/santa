@@ -46,7 +46,7 @@ extern "C" int LLVMFuzzerTestOneInput(const std::uint8_t *data, std::size_t size
   SNTRule *newRule = [[SNTRule alloc] init];
   newRule.state = (SNTRuleState)input_data.state;
   newRule.type = (SNTRuleType)input_data.type;
-  newRule.shasum = @(input_data.hash);
+  newRule.identifier = @(input_data.hash);
   newRule.customMsg = @"";
 
   MOLXPCConnection *daemonConn = [SNTXPCControlInterface configuredConnection];
@@ -62,9 +62,9 @@ extern "C" int LLVMFuzzerTestOneInput(const std::uint8_t *data, std::size_t size
                    reply:^(NSError *error) {
                      if (!error) {
                        if (newRule.state == SNTRuleStateRemove) {
-                         printf("Removed rule for SHA-256: %s.\n", [newRule.shasum UTF8String]);
+                         printf("Removed rule for SHA-256: %s.\n", [newRule.identifier UTF8String]);
                        } else {
-                         printf("Added rule for SHA-256: %s.\n", [newRule.shasum UTF8String]);
+                         printf("Added rule for SHA-256: %s.\n", [newRule.identifier UTF8String]);
                        }
                      }
                    }];

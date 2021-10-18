@@ -136,8 +136,7 @@
   if (![dict isKindOfClass:[NSDictionary class]]) return nil;
 
   SNTRule *newRule = [[SNTRule alloc] init];
-  newRule.shasum = dict[kRuleSHA256];
-  if (newRule.shasum.length != 64) return nil;
+  newRule.identifier = dict[kRuleSHA256];
 
   NSString *policyString = dict[kRulePolicy];
   if ([policyString isEqual:kRulePolicyAllowlist] ||
@@ -178,7 +177,7 @@
     // it is simply the binary hash.
     NSString *primaryHash = dict[kFileBundleHash];
     if (primaryHash.length != 64) {
-      primaryHash = newRule.shasum;
+      primaryHash = newRule.identifier;
     }
 
     // As we read in rules, we update the "remaining count" information stored in

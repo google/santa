@@ -120,6 +120,11 @@ static const NSUInteger kTransitiveRuleExpirationSeconds = 6 * 30 * 24 * 3600;
     [db executeUpdate:@"ALTER TABLE 'rules' ADD 'timestamp' INTEGER"];
     newVersion = 3;
   }
+  if (version < 4) {
+    // Rename `shasum` column to `identifier`.
+    [db executeUpdate:@"ALTER TABLE 'rules' RENAME COLUMN 'shasum' TO 'identifier'"];
+    newVersion = 4;
+  }
 
   // Save signing info for launchd and santad. Used to ensure they are always allowed.
   self.santadCSInfo = [[MOLCodesignChecker alloc] initWithSelf];
@@ -176,11 +181,11 @@ static const NSUInteger kTransitiveRuleExpirationSeconds = 6 * 30 * 24 * 3600;
 }
 
 - (SNTRule *)ruleFromResultSet:(FMResultSet *)rs {
-  return [[SNTRule alloc] initWithShasum:[rs stringForColumn:@"shasum"]
-                                   state:[rs intForColumn:@"state"]
-                                    type:[rs intForColumn:@"type"]
-                               customMsg:[rs stringForColumn:@"custommsg"]
-                               timestamp:[rs intForColumn:@"timestamp"]];
+  return [[SNTRule alloc] initWithIdentifier:[rs stringForColumn:@"identifier"]
+                                       state:[rs intForColumn:@"state"]
+                                        type:[rs intForColumn:@"type"]
+                                   customMsg:[rs stringForColumn:@"custommsg"]
+                                   timestamp:[rs intForColumn:@"timestamp"]];
 }
 
 - (SNTRule *)ruleForBinarySHA256:(NSString *)binarySHA256
@@ -206,9 +211,10 @@ static const NSUInteger kTransitiveRuleExpirationSeconds = 6 * 30 * 24 * 3600;
   // There is a test for this in SNTRuleTableTests in case SQLite behavior changes in the future.
   //
   [self inDatabase:^(FMDatabase *db) {
-    FMResultSet *rs = [db executeQuery:@"SELECT * FROM rules WHERE (shasum=? and type=1) OR "
-                                       @"(shasum=? AND type=2) OR (shasum=? AND type=3) LIMIT 1",
-                                       binarySHA256, certificateSHA256, teamID];
+    FMResultSet *rs =
+      [db executeQuery:@"SELECT * FROM rules WHERE (identifier=? and type=1) OR "
+                       @"(identifier=? AND type=2) OR (identifier=? AND type=3) LIMIT 1",
+                       binarySHA256, certificateSHA256, teamID];
     if ([rs next]) {
       rule = [self ruleFromResultSet:rs];
     }
@@ -218,11 +224,11 @@ static const NSUInteger kTransitiveRuleExpirationSeconds = 6 * 30 * 24 * 3600;
   // Allow binaries signed by the "Software Signing" cert used to sign launchd
   // if no existing rule has matched.
   if (!rule && [certificateSHA256 isEqual:self.launchdCSInfo.leafCertificate.SHA256]) {
-    rule = [[SNTRule alloc] initWithShasum:certificateSHA256
-                                     state:SNTRuleStateAllow
-                                      type:SNTRuleTypeCertificate
-                                 customMsg:nil
-                                 timestamp:0];
+    rule = [[SNTRule alloc] initWithIdentifier:certificateSHA256
+                                         state:SNTRuleStateAllow
+                                          type:SNTRuleTypeCertificate
+                                     customMsg:nil
+                                     timestamp:0];
   }
 
   return rule;
@@ -246,7 +252,7 @@ static const NSUInteger kTransitiveRuleExpirationSeconds = 6 * 30 * 24 * 3600;
     }
 
     for (SNTRule *rule in rules) {
-      if (![rule isKindOfClass:[SNTRule class]] || rule.shasum.length == 0 ||
+      if (![rule isKindOfClass:[SNTRule class]] || rule.identifier.length == 0 ||
           rule.state == SNTRuleStateUnknown || rule.type == SNTRuleTypeUnknown) {
         [self fillError:error code:SNTRuleTableErrorInvalidRule message:rule.description];
         *rollback = failed = YES;
@@ -254,7 +260,7 @@ static const NSUInteger kTransitiveRuleExpirationSeconds = 6 * 30 * 24 * 3600;
       }
 
       if (rule.state == SNTRuleStateRemove) {
-        if (![db executeUpdate:@"DELETE FROM rules WHERE shasum=? AND type=?", rule.shasum,
+        if (![db executeUpdate:@"DELETE FROM rules WHERE identifier=? AND type=?", rule.identifier,
                                @(rule.type)]) {
           [self fillError:error code:SNTRuleTableErrorRemoveFailed message:[db lastErrorMessage]];
           *rollback = failed = YES;
@@ -262,9 +268,9 @@ static const NSUInteger kTransitiveRuleExpirationSeconds = 6 * 30 * 24 * 3600;
         }
       } else {
         if (![db executeUpdate:@"INSERT OR REPLACE INTO rules "
-                               @"(shasum, state, type, custommsg, timestamp) "
+                               @"(identifier, state, type, custommsg, timestamp) "
                                @"VALUES (?, ?, ?, ?, ?);",
-                               rule.shasum, @(rule.state), @(rule.type), rule.customMsg,
+                               rule.identifier, @(rule.state), @(rule.type), rule.customMsg,
                                @(rule.timestamp)]) {
           [self fillError:error
                      code:SNTRuleTableErrorInsertOrReplaceFailed
@@ -286,7 +292,7 @@ static const NSUInteger kTransitiveRuleExpirationSeconds = 6 * 30 * 24 * 3600;
   }
 
   // If still here, then all rules in the array are allowlist rules.  So now we look for allowlist
-  // rules where there is a previously existing allowlist compiler rule for the same shasum.
+  // rules where there is a previously existing allowlist compiler rule for the same identifier.
   // If so we find such a rule, then cache should be flushed.
   __block BOOL flushDecisionCache = NO;
   [self inTransaction:^(FMDatabase *db, BOOL *rollback) {
@@ -295,8 +301,8 @@ static const NSUInteger kTransitiveRuleExpirationSeconds = 6 * 30 * 24 * 3600;
       if (rule.type == SNTRuleTypeCertificate) continue;
 
       if ([db longForQuery:
-                @"SELECT COUNT(*) FROM rules WHERE shasum=? AND type=? AND state=? LIMIT 1",
-                rule.shasum, @(SNTRuleTypeBinary), @(SNTRuleStateAllowCompiler)] > 0) {
+                @"SELECT COUNT(*) FROM rules WHERE identifier=? AND type=? AND state=? LIMIT 1",
+                rule.identifier, @(SNTRuleTypeBinary), @(SNTRuleStateAllowCompiler)] > 0) {
         flushDecisionCache = YES;
         break;
       }
@@ -311,9 +317,9 @@ static const NSUInteger kTransitiveRuleExpirationSeconds = 6 * 30 * 24 * 3600;
   if (!rule) return;
   [rule resetTimestamp];
   [self inDatabase:^(FMDatabase *db) {
-    if (![db executeUpdate:@"UPDATE rules SET timestamp=? WHERE shasum=? AND type=?",
-                           @(rule.timestamp), rule.shasum, @(rule.type)]) {
-      LOGE(@"Could not update timestamp for rule with sha256=%@", rule.shasum);
+    if (![db executeUpdate:@"UPDATE rules SET timestamp=? WHERE identifier=? AND type=?",
+                           @(rule.timestamp), rule.identifier, @(rule.type)]) {
+      LOGE(@"Could not update timestamp for rule with sha256=%@", rule.identifier);
     }
   }];
 }

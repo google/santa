@@ -24,7 +24,7 @@
 ///
 ///  The hash of the object this rule is for
 ///
-@property(copy) NSString *shasum;
+@property(copy) NSString *identifier;
 
 ///
 ///  The state of this rule
@@ -50,7 +50,7 @@
 ///
 ///  Designated initializer.
 ///
-- (instancetype)initWithShasum:(NSString *)shasum
+- (instancetype)initWithIdentifier:(NSString *)identifier
                          state:(SNTRuleState)state
                           type:(SNTRuleType)type
                      customMsg:(NSString *)customMsg
@@ -59,7 +59,7 @@
 ///
 ///  Initialize with a default timestamp: current time if rule state is transitive, 0 otherwise.
 ///
-- (instancetype)initWithShasum:(NSString *)shasum
+- (instancetype)initWithIdentifier:(NSString *)identifier
                          state:(SNTRuleState)state
                           type:(SNTRuleType)type
                      customMsg:(NSString *)customMsg;
