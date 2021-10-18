@@ -243,22 +243,21 @@ santa_unit_test(
 santa_unit_test(
     name = "SNTApplicationBenchmark",
     srcs = [
-        "SNTApplicationBenchmark.m"
+        "SNTApplicationBenchmark.m",
     ],
     data = [
         "//Source/santad/testdata:binaryrules_testdata",
-    ],
-
-    deps = [
-        ":santad_lib",
-        ":EndpointSecurityTestLib",
-        "@MOLCodesignChecker",
-        "@MOLXPCConnection",
-        "@OCMock",
     ],
     minimum_os_version = "10.15",
     sdk_dylibs = [
         "EndpointSecurity",
         "bsm",
+    ],
+    deps = [
+        ":EndpointSecurityTestLib",
+        ":santad_lib",
+        "@MOLCodesignChecker",
+        "@MOLXPCConnection",
+        "@OCMock",
     ],
 )

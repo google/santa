@@ -120,10 +120,10 @@
   if (cd.decision != SNTEventStateAllowTransitive) return;
   NSDate *lastUpdate = [self.timestampResetMap objectForKey:cd.sha256];
   if (!lastUpdate || -[lastUpdate timeIntervalSinceNow] > 3600) {
-    SNTRule *rule = [[SNTRule alloc] initWithShasum:cd.sha256
-                                              state:SNTRuleStateAllowTransitive
-                                               type:SNTRuleTypeBinary
-                                          customMsg:nil];
+    SNTRule *rule = [[SNTRule alloc] initWithIdentifier:cd.sha256
+                                                  state:SNTRuleStateAllowTransitive
+                                                   type:SNTRuleTypeBinary
+                                              customMsg:nil];
     [[SNTDatabaseController ruleTable] resetTimestampForRule:rule];
     [self.timestampResetMap setObject:[NSDate date] forKey:cd.sha256];
   }

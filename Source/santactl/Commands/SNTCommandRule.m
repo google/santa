@@ -60,10 +60,11 @@ REGISTER_COMMAND_NAME(@"rule")
           @"                   Will add the hash of the file currently at that path.\n"
           @"                   Does not work with --check. Use the fileinfo verb to check.\n"
           @"                   the rule state of a file.\n"
-          @"    --sha256 {sha256}: hash to add/remove/check\n"
+          @"    --identifier {sha256|teamID}: identifier to add/remove/check\n"
+          @"    --sha256 {sha256}: hash to add/remove/check [deprecated]\n"
           @"\n"
           @"  Optionally:\n"
-          @"    --teamid: add or check a team ID rule instead of binary\n"
+          @"    --teamid {teamid}: add or check a team ID rule instead of binary\n"
           @"    --certificate: add or check a certificate sha256 rule instead of binary\n"
 #ifdef DEBUG
           @"    --force: allow manual changes even when SyncBaseUrl is set\n"
@@ -119,12 +120,17 @@ REGISTER_COMMAND_NAME(@"rule")
         [self printErrorUsageAndExit:@"--path requires an argument"];
       }
       path = arguments[i];
+    } else if ([arg caseInsensitiveCompare:@"--identifier"] == NSOrderedSame) {
+      if (++i > arguments.count - 1) {
+        [self printErrorUsageAndExit:@"--identifier requires an argument"];
+      }
+      newRule.identifier = arguments[i];
     } else if ([arg caseInsensitiveCompare:@"--sha256"] == NSOrderedSame) {
       if (++i > arguments.count - 1) {
         [self printErrorUsageAndExit:@"--sha256 requires an argument"];
       }
-      newRule.shasum = arguments[i];
-      if (newRule.shasum.length != 64) {
+      newRule.identifier = arguments[i];
+      if (newRule.identifier.length != 64) {
         [self printErrorUsageAndExit:@"--sha256 requires a valid SHA-256 as the argument"];
       }
     } else if ([arg caseInsensitiveCompare:@"--message"] == NSOrderedSame) {
@@ -142,7 +148,7 @@ REGISTER_COMMAND_NAME(@"rule")
   }
 
   if (check) {
-    if (!newRule.shasum) return [self printErrorUsageAndExit:@"--check requires --sha256"];
+    if (!newRule.identifier) return [self printErrorUsageAndExit:@"--check requires --sha256"];
     return [self printStateOfRule:newRule daemonConnection:self.daemonConn];
   }
 
@@ -153,16 +159,17 @@ REGISTER_COMMAND_NAME(@"rule")
     }
 
     if (newRule.type == SNTRuleTypeBinary) {
-      newRule.shasum = fi.SHA256;
+      newRule.identifier = fi.SHA256;
     } else if (newRule.type == SNTRuleTypeCertificate) {
       MOLCodesignChecker *cs = [fi codesignCheckerWithError:NULL];
-      newRule.shasum = cs.leafCertificate.SHA256;
+      newRule.identifier = cs.leafCertificate.SHA256;
+    } else if (newRule.type == SNTRuleTypeTeamID) {
     }
   }
 
   if (newRule.state == SNTRuleStateUnknown) {
     [self printErrorUsageAndExit:@"No state specified"];
-  } else if (!newRule.shasum) {
+  } else if (!newRule.identifier) {
     [self printErrorUsageAndExit:@"Either SHA-256 or path to file must be specified"];
   }
 
@@ -177,9 +184,9 @@ REGISTER_COMMAND_NAME(@"rule")
                        exit(1);
                      } else {
                        if (newRule.state == SNTRuleStateRemove) {
-                         printf("Removed rule for SHA-256: %s.\n", [newRule.shasum UTF8String]);
+                         printf("Removed rule for SHA-256: %s.\n", [newRule.identifier UTF8String]);
                        } else {
-                         printf("Added rule for SHA-256: %s.\n", [newRule.shasum UTF8String]);
+                         printf("Added rule for SHA-256: %s.\n", [newRule.identifier UTF8String]);
                        }
                        exit(0);
                      }
@@ -187,9 +194,9 @@ REGISTER_COMMAND_NAME(@"rule")
 }
 
 - (void)printStateOfRule:(SNTRule *)rule daemonConnection:(MOLXPCConnection *)daemonConn {
-  NSString *fileSHA256 = (rule.type == SNTRuleTypeBinary) ? rule.shasum : nil;
-  NSString *certificateSHA256 = (rule.type == SNTRuleTypeCertificate) ? rule.shasum : nil;
-  NSString *teamID = (rule.type == SNTRuleTypeTeamID) ? rule.shasum : nil;
+  NSString *fileSHA256 = (rule.type == SNTRuleTypeBinary) ? rule.identifier : nil;
+  NSString *certificateSHA256 = (rule.type == SNTRuleTypeCertificate) ? rule.identifier : nil;
+  NSString *teamID = (rule.type == SNTRuleTypeTeamID) ? rule.identifier : nil;
   dispatch_group_t group = dispatch_group_create();
   dispatch_group_enter(group);
   __block NSMutableString *output;

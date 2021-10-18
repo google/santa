@@ -20,14 +20,14 @@
 
 @implementation SNTRule
 
-- (instancetype)initWithShasum:(NSString *)shasum
-                         state:(SNTRuleState)state
-                          type:(SNTRuleType)type
-                     customMsg:(NSString *)customMsg
-                     timestamp:(NSUInteger)timestamp {
+- (instancetype)initWithIdentifier:(NSString *)identifier
+                             state:(SNTRuleState)state
+                              type:(SNTRuleType)type
+                         customMsg:(NSString *)customMsg
+                         timestamp:(NSUInteger)timestamp {
   self = [super init];
   if (self) {
-    _shasum = shasum;
+    _identifier = identifier;
     _state = state;
     _type = type;
     _customMsg = customMsg;
@@ -36,11 +36,11 @@
   return self;
 }
 
-- (instancetype)initWithShasum:(NSString *)shasum
-                         state:(SNTRuleState)state
-                          type:(SNTRuleType)type
-                     customMsg:(NSString *)customMsg {
-  self = [self initWithShasum:shasum state:state type:type customMsg:customMsg timestamp:0];
+- (instancetype)initWithIdentifier:(NSString *)identifier
+                             state:(SNTRuleState)state
+                              type:(SNTRuleType)type
+                         customMsg:(NSString *)customMsg {
+  self = [self initWithIdentifier:identifier state:state type:type customMsg:customMsg timestamp:0];
   // Initialize timestamp to current time if rule is transitive.
   if (self && state == SNTRuleStateAllowTransitive) {
     [self resetTimestamp];
@@ -61,7 +61,7 @@
 }
 
 - (void)encodeWithCoder:(NSCoder *)coder {
-  ENCODE(self.shasum, @"shasum");
+  ENCODE(self.identifier, @"identifier");
   ENCODE(@(self.state), @"state");
   ENCODE(@(self.type), @"type");
   ENCODE(self.customMsg, @"custommsg");
@@ -71,7 +71,7 @@
 - (instancetype)initWithCoder:(NSCoder *)decoder {
   self = [super init];
   if (self) {
-    _shasum = DECODE(NSString, @"shasum");
+    _identifier = DECODE(NSString, @"identifier");
     _state = [DECODE(NSNumber, @"state") intValue];
     _type = [DECODE(NSNumber, @"type") intValue];
     _customMsg = DECODE(NSString, @"custommsg");
@@ -88,22 +88,22 @@
   if (other == self) return YES;
   if (![other isKindOfClass:[SNTRule class]]) return NO;
   SNTRule *o = other;
-  return ([self.shasum isEqual:o.shasum] && self.state == o.state && self.type == o.type);
+  return ([self.identifier isEqual:o.identifier] && self.state == o.state && self.type == o.type);
 }
 
 - (NSUInteger)hash {
   NSUInteger prime = 31;
   NSUInteger result = 1;
-  result = prime * result + [self.shasum hash];
+  result = prime * result + [self.identifier hash];
   result = prime * result + self.state;
   result = prime * result + self.type;
   return result;
 }
 
 - (NSString *)description {
-  return
-    [NSString stringWithFormat:@"SNTRule: SHA-256: %@, State: %ld, Type: %ld, Timestamp: %lu",
-                               self.shasum, self.state, self.type, (unsigned long)self.timestamp];
+  return [NSString
+    stringWithFormat:@"SNTRule: Identifier: %@, State: %ld, Type: %ld, Timestamp: %lu",
+                     self.identifier, self.state, self.type, (unsigned long)self.timestamp];
 }
 
 #pragma mark Last-access Timestamp

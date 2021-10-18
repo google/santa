@@ -36,7 +36,7 @@
 
 - (SNTRule *)_exampleTeamIDRule {
   SNTRule *r = [[SNTRule alloc] init];
-  r.shasum = @"teamID";
+  r.identifier = @"teamID";
   r.state = SNTRuleStateBlock;
   r.type = SNTRuleTypeTeamID;
   r.customMsg = @"A teamID rule";
@@ -45,7 +45,7 @@
 
 - (SNTRule *)_exampleBinaryRule {
   SNTRule *r = [[SNTRule alloc] init];
-  r.shasum = @"a";
+  r.identifier = @"a";
   r.state = SNTRuleStateBlock;
   r.type = SNTRuleTypeBinary;
   r.customMsg = @"A rule";
@@ -54,7 +54,7 @@
 
 - (SNTRule *)_exampleCertRule {
   SNTRule *r = [[SNTRule alloc] init];
-  r.shasum = @"b";
+  r.identifier = @"b";
   r.state = SNTRuleStateAllow;
   r.type = SNTRuleTypeCertificate;
   return r;
@@ -112,7 +112,7 @@
 
 - (void)testAddInvalidRule {
   SNTRule *r = [[SNTRule alloc] init];
-  r.shasum = @"a";
+  r.identifier = @"a";
   r.type = SNTRuleTypeCertificate;
 
   NSError *error;
@@ -127,7 +127,7 @@
 
   SNTRule *r = [self.sut ruleForBinarySHA256:@"a" certificateSHA256:nil teamID:nil];
   XCTAssertNotNil(r);
-  XCTAssertEqualObjects(r.shasum, @"a");
+  XCTAssertEqualObjects(r.identifier, @"a");
   XCTAssertEqual(r.type, SNTRuleTypeBinary);
 
   r = [self.sut ruleForBinarySHA256:@"b" certificateSHA256:nil teamID:nil];
@@ -141,7 +141,7 @@
 
   SNTRule *r = [self.sut ruleForBinarySHA256:nil certificateSHA256:@"b" teamID:nil];
   XCTAssertNotNil(r);
-  XCTAssertEqualObjects(r.shasum, @"b");
+  XCTAssertEqualObjects(r.identifier, @"b");
   XCTAssertEqual(r.type, SNTRuleTypeCertificate);
 
   r = [self.sut ruleForBinarySHA256:nil certificateSHA256:@"a" teamID:nil];
@@ -155,7 +155,7 @@
 
   SNTRule *r = [self.sut ruleForBinarySHA256:nil certificateSHA256:nil teamID:@"teamID"];
   XCTAssertNotNil(r);
-  XCTAssertEqualObjects(r.shasum, @"teamID");
+  XCTAssertEqualObjects(r.identifier, @"teamID");
   XCTAssertEqual(r.type, SNTRuleTypeTeamID);
 
   r = [self.sut ruleForBinarySHA256:nil certificateSHA256:nil teamID:@"nonexistentTeamID"];
@@ -172,17 +172,17 @@
   // See the comment in SNTRuleTable#ruleForBinarySHA256:certificateSHA256:teamID
   SNTRule *r = [self.sut ruleForBinarySHA256:@"a" certificateSHA256:@"b" teamID:@"teamID"];
   XCTAssertNotNil(r);
-  XCTAssertEqualObjects(r.shasum, @"a");
+  XCTAssertEqualObjects(r.identifier, @"a");
   XCTAssertEqual(r.type, SNTRuleTypeBinary, @"Implicit rule ordering failed");
 
   r = [self.sut ruleForBinarySHA256:@"a" certificateSHA256:@"unknowncert" teamID:@"teamID"];
   XCTAssertNotNil(r);
-  XCTAssertEqualObjects(r.shasum, @"a");
+  XCTAssertEqualObjects(r.identifier, @"a");
   XCTAssertEqual(r.type, SNTRuleTypeBinary, @"Implicit rule ordering failed");
 
   r = [self.sut ruleForBinarySHA256:@"unknown" certificateSHA256:@"b" teamID:@"teamID"];
   XCTAssertNotNil(r);
-  XCTAssertEqualObjects(r.shasum, @"b");
+  XCTAssertEqualObjects(r.identifier, @"b");
   XCTAssertEqual(r.type, SNTRuleTypeCertificate, @"Implicit rule ordering failed");
 }
 
