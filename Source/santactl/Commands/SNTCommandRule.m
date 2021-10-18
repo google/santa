@@ -63,6 +63,7 @@ REGISTER_COMMAND_NAME(@"rule")
           @"    --sha256 {sha256}: hash to add/remove/check\n"
           @"\n"
           @"  Optionally:\n"
+          @"    --teamid: add or check a team ID rule instead of binary\n"
           @"    --certificate: add or check a certificate sha256 rule instead of binary\n"
 #ifdef DEBUG
           @"    --force: allow manual changes even when SyncBaseUrl is set\n"
@@ -111,6 +112,8 @@ REGISTER_COMMAND_NAME(@"rule")
       check = YES;
     } else if ([arg caseInsensitiveCompare:@"--certificate"] == NSOrderedSame) {
       newRule.type = SNTRuleTypeCertificate;
+    } else if ([arg caseInsensitiveCompare:@"--teamid"] == NSOrderedSame) {
+      newRule.type = SNTRuleTypeTeamID;
     } else if ([arg caseInsensitiveCompare:@"--path"] == NSOrderedSame) {
       if (++i > arguments.count - 1) {
         [self printErrorUsageAndExit:@"--path requires an argument"];
@@ -186,6 +189,7 @@ REGISTER_COMMAND_NAME(@"rule")
 - (void)printStateOfRule:(SNTRule *)rule daemonConnection:(MOLXPCConnection *)daemonConn {
   NSString *fileSHA256 = (rule.type == SNTRuleTypeBinary) ? rule.shasum : nil;
   NSString *certificateSHA256 = (rule.type == SNTRuleTypeCertificate) ? rule.shasum : nil;
+  NSString *teamID = (rule.type == SNTRuleTypeTeamID) ? rule.shasum : nil;
   dispatch_group_t group = dispatch_group_create();
   dispatch_group_enter(group);
   __block NSMutableString *output;
@@ -219,6 +223,10 @@ REGISTER_COMMAND_NAME(@"rule")
                                                     case SNTEventStateAllowTransitive:
                                                       [output appendString:@" (Transitive)"];
                                                       break;
+                                                    case SNTEventStateAllowTeamID:
+                                                    case SNTEventStateBlockTeamID:
+                                                      [output appendString:@" (TeamID)"];
+                                                      break;
                                                     default: output = @"None".mutableCopy; break;
                                                   }
                                                   if (isatty(STDOUT_FILENO)) {
@@ -244,6 +252,7 @@ REGISTER_COMMAND_NAME(@"rule")
   [[daemonConn remoteObjectProxy]
     databaseRuleForBinarySHA256:fileSHA256
               certificateSHA256:certificateSHA256
+                         teamID:teamID
                           reply:^(SNTRule *r) {
                             if (r.state == SNTRuleStateAllowTransitive) {
                               NSDate *date =

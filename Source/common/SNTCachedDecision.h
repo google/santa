@@ -32,6 +32,7 @@
 @property NSString *certSHA256;
 @property NSString *certCommonName;
 @property NSArray<MOLCertificate *> *certChain;
+@property NSString *teamID;
 
 @property NSString *quarantineURL;
 

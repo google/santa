@@ -104,7 +104,8 @@
   SNTRule *rule = [[SNTRule alloc] init];
   rule.state = SNTRuleStateAllow;
   rule.type = SNTRuleTypeBinary;
-  OCMStub([self.mockRuleDatabase ruleForBinarySHA256:@"a" certificateSHA256:nil]).andReturn(rule);
+  OCMStub([self.mockRuleDatabase ruleForBinarySHA256:@"a" certificateSHA256:nil teamID:nil])
+    .andReturn(rule);
 
   [self.sut validateBinaryWithMessage:[self getMessage]];
 
@@ -118,7 +119,8 @@
   SNTRule *rule = [[SNTRule alloc] init];
   rule.state = SNTRuleStateBlock;
   rule.type = SNTRuleTypeBinary;
-  OCMStub([self.mockRuleDatabase ruleForBinarySHA256:@"a" certificateSHA256:nil]).andReturn(rule);
+  OCMStub([self.mockRuleDatabase ruleForBinarySHA256:@"a" certificateSHA256:nil teamID:nil])
+    .andReturn(rule);
 
   [self.sut validateBinaryWithMessage:[self getMessage]];
 
@@ -135,7 +137,8 @@
   SNTRule *rule = [[SNTRule alloc] init];
   rule.state = SNTRuleStateAllow;
   rule.type = SNTRuleTypeCertificate;
-  OCMStub([self.mockRuleDatabase ruleForBinarySHA256:nil certificateSHA256:@"a"]).andReturn(rule);
+  OCMStub([self.mockRuleDatabase ruleForBinarySHA256:nil certificateSHA256:@"a" teamID:nil])
+    .andReturn(rule);
 
   [self.sut validateBinaryWithMessage:[self getMessage]];
 
@@ -152,7 +155,8 @@
   SNTRule *rule = [[SNTRule alloc] init];
   rule.state = SNTRuleStateBlock;
   rule.type = SNTRuleTypeCertificate;
-  OCMStub([self.mockRuleDatabase ruleForBinarySHA256:nil certificateSHA256:@"a"]).andReturn(rule);
+  OCMStub([self.mockRuleDatabase ruleForBinarySHA256:nil certificateSHA256:@"a" teamID:nil])
+    .andReturn(rule);
 
   [self.sut validateBinaryWithMessage:[self getMessage]];
 
@@ -167,7 +171,8 @@
   SNTRule *rule = [[SNTRule alloc] init];
   rule.state = SNTRuleStateAllowCompiler;
   rule.type = SNTRuleTypeBinary;
-  OCMStub([self.mockRuleDatabase ruleForBinarySHA256:@"a" certificateSHA256:nil]).andReturn(rule);
+  OCMStub([self.mockRuleDatabase ruleForBinarySHA256:@"a" certificateSHA256:nil teamID:nil])
+    .andReturn(rule);
 
   [self.sut validateBinaryWithMessage:[self getMessage]];
 
@@ -183,7 +188,8 @@
   SNTRule *rule = [[SNTRule alloc] init];
   rule.state = SNTRuleStateAllowCompiler;
   rule.type = SNTRuleTypeBinary;
-  OCMStub([self.mockRuleDatabase ruleForBinarySHA256:@"a" certificateSHA256:nil]).andReturn(rule);
+  OCMStub([self.mockRuleDatabase ruleForBinarySHA256:@"a" certificateSHA256:nil teamID:nil])
+    .andReturn(rule);
 
   [self.sut validateBinaryWithMessage:[self getMessage]];
 
@@ -198,7 +204,8 @@
   SNTRule *rule = [[SNTRule alloc] init];
   rule.state = SNTRuleStateAllowTransitive;
   rule.type = SNTRuleTypeBinary;
-  OCMStub([self.mockRuleDatabase ruleForBinarySHA256:@"a" certificateSHA256:nil]).andReturn(rule);
+  OCMStub([self.mockRuleDatabase ruleForBinarySHA256:@"a" certificateSHA256:nil teamID:nil])
+    .andReturn(rule);
 
   [self.sut validateBinaryWithMessage:[self getMessage]];
 
@@ -214,7 +221,8 @@
   SNTRule *rule = [[SNTRule alloc] init];
   rule.state = SNTRuleStateAllowTransitive;
   rule.type = SNTRuleTypeBinary;
-  OCMStub([self.mockRuleDatabase ruleForBinarySHA256:@"a" certificateSHA256:nil]).andReturn(rule);
+  OCMStub([self.mockRuleDatabase ruleForBinarySHA256:@"a" certificateSHA256:nil teamID:nil])
+    .andReturn(rule);
 
   [self.sut validateBinaryWithMessage:[self getMessage]];
 

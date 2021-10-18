@@ -139,9 +139,11 @@ double watchdogRAMPeak = 0;
 
 - (void)databaseRuleForBinarySHA256:(NSString *)binarySHA256
                   certificateSHA256:(NSString *)certificateSHA256
+                             teamID:(NSString *)teamID
                               reply:(void (^)(SNTRule *))reply {
   reply([[SNTDatabaseController ruleTable] ruleForBinarySHA256:binarySHA256
-                                             certificateSHA256:certificateSHA256]);
+                                             certificateSHA256:certificateSHA256
+                                                        teamID:teamID]);
 }
 
 #pragma mark Decision Ops

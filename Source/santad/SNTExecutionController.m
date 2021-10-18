@@ -94,6 +94,7 @@ static size_t kLargeBinarySize = 30 * 1024 * 1024;
     [self.eventProvider postAction:ACTION_RESPOND_ALLOW forMessage:message];
     return;
   }
+
   NSError *fileInfoError;
   SNTFileInfo *binInfo = [[SNTFileInfo alloc] initWithPath:@(message.path) error:&fileInfoError];
   if (unlikely(!binInfo)) {

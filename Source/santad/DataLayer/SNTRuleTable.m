@@ -184,16 +184,19 @@ static const NSUInteger kTransitiveRuleExpirationSeconds = 6 * 30 * 24 * 3600;
 }
 
 - (SNTRule *)ruleForBinarySHA256:(NSString *)binarySHA256
-               certificateSHA256:(NSString *)certificateSHA256 {
+               certificateSHA256:(NSString *)certificateSHA256
+                          teamID:(NSString *)teamID {
   __block SNTRule *rule;
 
   // NOTE: This code is written with the intention that the binary rule is searched for first
-  // as Santa is designed to go with the most-specific rule possible. As such the query
-  // should have "ORDER BY type DESC" before the LIMIT, to ensure that is the case. However,
-  // in all tested versions of SQLite that ORDER BY clause is unnecessary: the query is
-  // performed 'as written' by doing 2 separate lookups in the index and the second is skipped
-  // if the first returns a result. That behavior can be checked here:
-  // http://sqlfiddle.com/#!5/09c8a/2
+  // as Santa is designed to go with the most-specific rule possible.
+  //
+  // The intended order of precedence is Binaries > Certificates > Team IDs.
+  //
+  // As such the query should have "ORDER BY type DESC" before the LIMIT, to ensure that is the
+  // case. However, in all tested versions of SQLite that ORDER BY clause is unnecessary: the query
+  // is performed 'as written' by doing separate lookups in the index and the later lookups are if
+  // the first returns a result. That behavior can be checked here: http://sqlfiddle.com/#!5/cdc42/1
   //
   // Adding the ORDER BY clause slows down this query, particularly in a database where
   // the number of binary rules outweighs the number of certificate rules because:
@@ -203,10 +206,9 @@ static const NSUInteger kTransitiveRuleExpirationSeconds = 6 * 30 * 24 * 3600;
   // There is a test for this in SNTRuleTableTests in case SQLite behavior changes in the future.
   //
   [self inDatabase:^(FMDatabase *db) {
-    FMResultSet *rs =
-      [db executeQuery:
-            @"SELECT * FROM rules WHERE (shasum=? and type=1) OR (shasum=? AND type=2) LIMIT 1",
-            binarySHA256, certificateSHA256];
+    FMResultSet *rs = [db executeQuery:@"SELECT * FROM rules WHERE (shasum=? and type=1) OR "
+                                       @"(shasum=? AND type=2) OR (shasum=? AND type=3) LIMIT 1",
+                                       binarySHA256, certificateSHA256, teamID];
     if ([rs next]) {
       rule = [self ruleFromResultSet:rs];
     }

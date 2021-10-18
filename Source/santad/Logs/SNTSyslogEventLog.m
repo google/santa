@@ -113,6 +113,11 @@
       r = @"SCOPE";
       logArgs = YES;
       break;
+    case SNTEventStateAllowTeamID:
+      d = @"ALLOW";
+      r = @"TEAMID";
+      logArgs = YES;
+      break;
     case SNTEventStateAllowUnknown:
       d = @"ALLOW";
       r = @"UNKNOWN";
@@ -129,6 +134,10 @@
     case SNTEventStateBlockScope:
       d = @"DENY";
       r = @"SCOPE";
+      break;
+    case SNTEventStateBlockTeamID:
+      d = @"DENY";
+      r = @"TEAMID";
       break;
     case SNTEventStateBlockUnknown:
       d = @"DENY";

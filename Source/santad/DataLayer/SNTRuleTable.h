@@ -56,7 +56,8 @@
 ///          if it exists. If not, the certificate rule will be returned if it exists.
 ///
 - (SNTRule *)ruleForBinarySHA256:(NSString *)binarySHA256
-               certificateSHA256:(NSString *)certificateSHA256;
+               certificateSHA256:(NSString *)certificateSHA256
+                          teamID:(NSString *)teamID;
 
 ///
 ///  Add an array of rules to the database. The rules will be added within a transaction and the

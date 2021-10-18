@@ -34,6 +34,15 @@
   self.sut = [[SNTRuleTable alloc] initWithDatabaseQueue:self.dbq];
 }
 
+- (SNTRule *)_exampleTeamIDRule {
+  SNTRule *r = [[SNTRule alloc] init];
+  r.shasum = @"teamID";
+  r.state = SNTRuleStateBlock;
+  r.type = SNTRuleTypeTeamID;
+  r.customMsg = @"A teamID rule";
+  return r;
+}
+
 - (SNTRule *)_exampleBinaryRule {
   SNTRule *r = [[SNTRule alloc] init];
   r.shasum = @"a";
@@ -116,12 +125,12 @@
           cleanSlate:NO
                error:nil];
 
-  SNTRule *r = [self.sut ruleForBinarySHA256:@"a" certificateSHA256:nil];
+  SNTRule *r = [self.sut ruleForBinarySHA256:@"a" certificateSHA256:nil teamID:nil];
   XCTAssertNotNil(r);
   XCTAssertEqualObjects(r.shasum, @"a");
   XCTAssertEqual(r.type, SNTRuleTypeBinary);
 
-  r = [self.sut ruleForBinarySHA256:@"b" certificateSHA256:nil];
+  r = [self.sut ruleForBinarySHA256:@"b" certificateSHA256:nil teamID:nil];
   XCTAssertNil(r);
 }
 
@@ -130,26 +139,51 @@
           cleanSlate:NO
                error:nil];
 
-  SNTRule *r = [self.sut ruleForBinarySHA256:nil certificateSHA256:@"b"];
+  SNTRule *r = [self.sut ruleForBinarySHA256:nil certificateSHA256:@"b" teamID:nil];
   XCTAssertNotNil(r);
   XCTAssertEqualObjects(r.shasum, @"b");
   XCTAssertEqual(r.type, SNTRuleTypeCertificate);
 
-  r = [self.sut ruleForBinarySHA256:nil certificateSHA256:@"a"];
+  r = [self.sut ruleForBinarySHA256:nil certificateSHA256:@"a" teamID:nil];
+  XCTAssertNil(r);
+}
+
+- (void)testFetchTeamIDRule {
+  [self.sut addRules:@[ [self _exampleBinaryRule], [self _exampleTeamIDRule] ]
+          cleanSlate:NO
+               error:nil];
+
+  SNTRule *r = [self.sut ruleForBinarySHA256:nil certificateSHA256:nil teamID:@"teamID"];
+  XCTAssertNotNil(r);
+  XCTAssertEqualObjects(r.shasum, @"teamID");
+  XCTAssertEqual(r.type, SNTRuleTypeTeamID);
+
+  r = [self.sut ruleForBinarySHA256:nil certificateSHA256:nil teamID:@"nonexistentTeamID"];
   XCTAssertNil(r);
 }
 
 - (void)testFetchRuleOrdering {
-  [self.sut addRules:@[ [self _exampleCertRule], [self _exampleBinaryRule] ]
-          cleanSlate:NO
-               error:nil];
+  [self.sut
+      addRules:@[ [self _exampleCertRule], [self _exampleBinaryRule], [self _exampleTeamIDRule] ]
+    cleanSlate:NO
+         error:nil];
 
   // This test verifies that the implicit rule ordering we've been abusing is still working.
-  // See the comment in SNTRuleTable#ruleForBinarySHA256:certificateSHA256:
-  SNTRule *r = [self.sut ruleForBinarySHA256:@"a" certificateSHA256:@"b"];
+  // See the comment in SNTRuleTable#ruleForBinarySHA256:certificateSHA256:teamID
+  SNTRule *r = [self.sut ruleForBinarySHA256:@"a" certificateSHA256:@"b" teamID:@"teamID"];
   XCTAssertNotNil(r);
   XCTAssertEqualObjects(r.shasum, @"a");
   XCTAssertEqual(r.type, SNTRuleTypeBinary, @"Implicit rule ordering failed");
+
+  r = [self.sut ruleForBinarySHA256:@"a" certificateSHA256:@"unknowncert" teamID:@"teamID"];
+  XCTAssertNotNil(r);
+  XCTAssertEqualObjects(r.shasum, @"a");
+  XCTAssertEqual(r.type, SNTRuleTypeBinary, @"Implicit rule ordering failed");
+
+  r = [self.sut ruleForBinarySHA256:@"unknown" certificateSHA256:@"b" teamID:@"teamID"];
+  XCTAssertNotNil(r);
+  XCTAssertEqualObjects(r.shasum, @"b");
+  XCTAssertEqual(r.type, SNTRuleTypeCertificate, @"Implicit rule ordering failed");
 }
 
 - (void)testBadDatabase {
