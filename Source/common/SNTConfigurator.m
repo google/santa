@@ -621,7 +621,7 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
 
 - (BOOL)enableSysxCache {
   NSNumber *number = self.configState[kEnableSysxCache];
-  return number ? [number boolValue] : NO;
+  return number ? [number boolValue] : YES;
 }
 
 - (BOOL)enableForkAndExitLogging {
