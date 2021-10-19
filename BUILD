@@ -98,7 +98,6 @@ genrule(
         "Conf/com.google.santa.plist",
         "Conf/com.google.santa.asl.conf",
         "Conf/com.google.santa.newsyslog.conf",
-        "Conf/Package/Makefile",
         "Conf/Package/postinstall",
         "Conf/Package/preinstall",
     ],
