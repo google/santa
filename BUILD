@@ -121,9 +121,9 @@ genrule(
 
       # Copy config files
       for SRC in $(SRCS); do
-        if [[ "$$(dirname $${SRC})" == *"Conf" ]]; then
+        if [[ "$$(dirname $${SRC})" == *"Conf"* ]]; then
           mkdir -p $(@D)/conf
-          cp $${SRC} $(@D)/conf/
+          cp -H $${SRC} $(@D)/conf/
         fi
       done
 
