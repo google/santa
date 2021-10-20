@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<installer-gui-script minSpecVersion="1">
+<title>Santa</title>
+<options customize="never" allow-external-scripts="no"/>
+
+<choices-outline>
+	<line choice="default" />
+</choices-outline>
+
+<choice id="default">
+    <pkg-ref id="com.google.santa"/>
+    <pkg-ref id="com.google.santa-driver"/>
+</choice>
+
+<pkg-ref id="com.google.santa">app.pkg</pkg-ref>
+<pkg-ref id="com.google.santa-driver" active="system.compareVersions(my.target.systemVersion.ProductVersion, '10.15') &lt; 0">kext.pkg</pkg-ref>
+
+</installer-gui-script>
