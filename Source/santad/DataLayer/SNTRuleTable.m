@@ -39,11 +39,25 @@ static const NSUInteger kTransitiveRuleExpirationSeconds = 6 * 30 * 24 * 3600;
 
 @implementation SNTRuleTable
 
+//  ES on Monterey now has a “default mute set” of paths that are automatically applied to each ES
+//  client. This mute set contains most (not all) AUTH event types for some paths that were deemed
+//  “system critical”.
+//  Retain this list for < 12.0 versions of ES, but we should be able to rely on the paths muted by
+//  default (visible with es_muted_paths_events any time after connecting a new client and before
+//  modifying any of the mute state).
 + (NSArray *)criticalSystemBinaryPaths {
   return @[
     @"/usr/libexec/trustd",
-    @"/usr/sbin/securityd",
     @"/usr/libexec/xpcproxy",
+    @"/usr/libexec/amfid",
+    @"/usr/libexec/opendirectoryd",
+    @"/usr/libexec/runningboardd",
+    @"/usr/libexec/syspolicyd",
+    @"/usr/libexec/watchdogd",
+    @"/usr/libexec/cfprefsd",
+    @"/usr/sbin/securityd",
+    @"/System/Library/PrivateFrameworks/TCC.framework/Versions/A/Resources/tccd",
+    @"/System/Library/PrivateFrameworks/SkyLight.framework/Versions/A/Resources/WindowServer",
     @"/usr/sbin/ocspd",
     @"/usr/lib/dyld",
     @"/Applications/Santa.app/Contents/MacOS/Santa",
