@@ -232,6 +232,7 @@ test_suite(
     name = "unit_tests",
     tests = [
         "//Source/common:SNTFileInfoTest",
+        "//Source/common:SNTMetricSetTest",
         "//Source/common:SNTPrefixTreeTest",
         "//Source/common:SantaCacheTest",
         "//Source/santactl:SNTCommandFileInfoTest",
@@ -241,6 +242,7 @@ test_suite(
         "//Source/santad:SNTEventTableTest",
         "//Source/santad:SNTExecutionControllerTest",
         "//Source/santad:SNTRuleTableTest",
+        "//Source/santametricservice:unit_tests",
     ],
 )
 
