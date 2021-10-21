@@ -108,7 +108,7 @@ const NSString *kKey = @"key";
       NSMutableDictionary *monarchDataEntry = [[NSMutableDictionary alloc] init];
 
       if (![fieldName isEqualToString:@""]) {
-          monarchDataEntry[@"field"] = @[ @{kName : fieldName, kStringValue : entry[@"value"]} ];
+        monarchDataEntry[@"field"] = @[ @{kName : fieldName, kStringValue : entry[@"value"]} ];
       }
 
       monarchDataEntry[kStartTimestamp] = [self->_dateFormatter stringFromDate:entry[@"created"]];

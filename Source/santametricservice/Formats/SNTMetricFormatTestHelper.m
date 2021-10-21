@@ -50,9 +50,10 @@
   [metricSet addConstantBooleanWithName:@"/santa/using_endpoint_security_framework"
                                helpText:@"Is santad using the endpoint security framework"
                                   value:YES];
-  [metricSet addConstantIntegerWithName:@"/proc/birth_timestamp"
-                               helpText:@"Start time of this santad instance, in microseconds since epoch"
-                                  value:(long long)(0x12345668910)];
+  [metricSet
+    addConstantIntegerWithName:@"/proc/birth_timestamp"
+                      helpText:@"Start time of this santad instance, in microseconds since epoch"
+                         value:(long long)(0x12345668910)];
   // Add Metrics
   SNTMetricCounter *c = [metricSet counterWithName:@"/santa/events"
                                         fieldNames:@[ @"rule_type" ]

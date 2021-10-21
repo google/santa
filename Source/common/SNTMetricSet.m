@@ -588,7 +588,7 @@
 
     // TODO(markowsky) Sort the metrics so we always get the same output.
     for (NSString *metricName in _metrics) {
-        exportDict[@"metrics"][metricName] = [_metrics[metricName] export];
+      exportDict[@"metrics"][metricName] = [_metrics[metricName] export];
     }
 
     exported = [NSDictionary dictionaryWithDictionary:exportDict];
