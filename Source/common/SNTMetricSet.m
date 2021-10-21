@@ -257,6 +257,7 @@
   NSMutableDictionary *metricDict = [NSMutableDictionary dictionaryWithCapacity:_fieldNames.count];
   metricDict[@"type"] = [NSNumber numberWithInt:(int)_type];
   metricDict[@"fields"] = [[NSMutableDictionary alloc] init];
+  metricDict[@"description"] = [_help copy];
 
   if (_fieldNames.count == 0) {
     metricDict[@"fields"][@""] = @[ [self encodeMetricValueForFieldValues:@[]] ];
@@ -581,15 +582,13 @@
   }
 
   @synchronized(self) {
-    // Walk root labels
     NSMutableDictionary *exportDict = [[NSMutableDictionary alloc] init];
-    exportDict[@"root_labels"] = [NSDictionary dictionaryWithDictionary:_rootLabels];
+    exportDict[@"root_labels"] = [_rootLabels copy];
     exportDict[@"metrics"] = [[NSMutableDictionary alloc] init];
 
-    // sort the metrics so we always get the same output.
-    for (id metricName in _metrics) {
-      SNTMetric *metric = [_metrics objectForKey:metricName];
-      exportDict[@"metrics"][metricName] = [metric export];
+    // TODO(markowsky) Sort the metrics so we always get the same output.
+    for (NSString *metricName in _metrics) {
+      exportDict[@"metrics"][metricName] = [_metrics[metricName] export];
     }
 
     exported = [NSDictionary dictionaryWithDictionary:exportDict];

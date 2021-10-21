@@ -45,26 +45,26 @@
 
   // Add constants
   [metricSet addConstantStringWithName:@"/build/label"
-                              helpText:@"Software version running."
+                              helpText:@"Software version running"
                                  value:@"20210809.0.1"];
   [metricSet addConstantBooleanWithName:@"/santa/using_endpoint_security_framework"
-                               helpText:@"Is santad using the endpoint security framework."
+                               helpText:@"Is santad using the endpoint security framework"
                                   value:YES];
-  [metricSet addConstantIntegerWithName:@"/proc/birth_timestamp"
-                               helpText:@"Start time of this LogDumper instance, in microseconds "
-                                        @"since epoch"
-                                  value:(long long)(0x12345668910)];
+  [metricSet
+    addConstantIntegerWithName:@"/proc/birth_timestamp"
+                      helpText:@"Start time of this santad instance, in microseconds since epoch"
+                         value:(long long)(0x12345668910)];
   // Add Metrics
   SNTMetricCounter *c = [metricSet counterWithName:@"/santa/events"
                                         fieldNames:@[ @"rule_type" ]
-                                          helpText:@"Count of events on the host"];
+                                          helpText:@"Count of process exec events on the host"];
 
   [c incrementForFieldValues:@[ @"binary" ]];
   [c incrementBy:2 forFieldValues:@[ @"certificate" ]];
 
   SNTMetricInt64Gauge *g = [metricSet int64GaugeWithName:@"/santa/rules"
                                               fieldNames:@[ @"rule_type" ]
-                                                helpText:@"Number of rules."];
+                                                helpText:@"Number of rules"];
 
   [g set:1 forFieldValues:@[ @"binary" ]];
   [g set:3 forFieldValues:@[ @"certificate" ]];
@@ -73,12 +73,12 @@
   SNTMetricInt64Gauge *virtualMemoryGauge =
     [metricSet int64GaugeWithName:@"/proc/memory/virtual_size"
                        fieldNames:@[]
-                         helpText:@"The virtual memory size of this process."];
+                         helpText:@"The virtual memory size of this process"];
 
   SNTMetricInt64Gauge *residentMemoryGauge =
     [metricSet int64GaugeWithName:@"/proc/memory/resident_size"
                        fieldNames:@[]
-                         helpText:@"The resident set siz of this process."];
+                         helpText:@"The resident set size of this process"];
 
   [metricSet registerCallback:^(void) {
     [virtualMemoryGauge set:987654321 forFieldValues:@[]];

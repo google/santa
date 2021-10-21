@@ -26,6 +26,7 @@ const NSString *kDescription = @"description";
 const NSString *kData = @"data";
 const NSString *kFieldDescriptor = @"fieldDescriptor";
 const NSString *kBoolValue = @"boolValue";
+const NSString *kBoolValueType = @"BOOL";
 const NSString *kInt64Value = @"int64Value";
 const NSString *kInt64ValueType = @"INT64";
 const NSString *kStringValue = @"stringValue";
@@ -68,21 +69,21 @@ const NSString *kKey = @"key";
   }
 
   switch ((SNTMetricType)[type intValue]) {
-    case SNTMetricTypeConstantBool: monarchMetric[kValueType] = kBoolValue; break;
-    case SNTMetricTypeConstantString: monarchMetric[kValueType] = kStringValue; break;
-    case SNTMetricTypeConstantInt64: monarchMetric[kValueType] = kInt64Value; break;
+    case SNTMetricTypeConstantBool: monarchMetric[kValueType] = kBoolValueType; break;
+    case SNTMetricTypeConstantString: monarchMetric[kValueType] = kStringValueType; break;
+    case SNTMetricTypeConstantInt64: monarchMetric[kValueType] = kInt64ValueType; break;
     case SNTMetricTypeConstantDouble: monarchMetric[kValueType] = @"DOUBLE"; break;
     case SNTMetricTypeGaugeBool:
       monarchMetric[kStreamKind] = @"GAUGE";
-      monarchMetric[kValueType] = kBoolValue;
+      monarchMetric[kValueType] = kBoolValueType;
       break;
     case SNTMetricTypeGaugeString:
       monarchMetric[kStreamKind] = @"GAUGE";
-      monarchMetric[kValueType] = kStringValue;
+      monarchMetric[kValueType] = kStringValueType;
       break;
     case SNTMetricTypeGaugeInt64:
       monarchMetric[kStreamKind] = @"GAUGE";
-      monarchMetric[kValueType] = kInt64Value;
+      monarchMetric[kValueType] = kInt64ValueType;
       break;
     case SNTMetricTypeGaugeDouble:
       monarchMetric[kStreamKind] = @"GAUGE";
@@ -90,7 +91,7 @@ const NSString *kKey = @"key";
       break;
     case SNTMetricTypeCounter:
       monarchMetric[kStreamKind] = @"CUMULATIVE";
-      monarchMetric[kValueType] = kInt64Value;
+      monarchMetric[kValueType] = kInt64ValueType;
       break;
     default:
       LOGE(@"encountered unknown SNTMetricType - %ld for %@", (SNTMetricType)metric[@"type"],
@@ -106,7 +107,9 @@ const NSString *kKey = @"key";
     for (NSDictionary *entry in metric[@"fields"][fieldName]) {
       NSMutableDictionary *monarchDataEntry = [[NSMutableDictionary alloc] init];
 
-      monarchDataEntry[@"field"] = @[ @{kName : fieldName, kStringValue : entry[@"value"]} ];
+      if (![fieldName isEqualToString:@""]) {
+        monarchDataEntry[@"field"] = @[ @{kName : fieldName, kStringValue : entry[@"value"]} ];
+      }
 
       monarchDataEntry[kStartTimestamp] = [self->_dateFormatter stringFromDate:entry[@"created"]];
       monarchDataEntry[kEndTimestamp] =

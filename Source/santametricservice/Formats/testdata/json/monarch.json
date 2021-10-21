@@ -13,7 +13,9 @@
       ],
       "metricsDataSet" : [
         {
-          "valueType" : "int64Value",
+          "metricName" : "/santa/rules",
+          "description" : "Number of rules",
+          "valueType" : "INT64",
           "fieldDescriptor" : [
             {
               "name" : "rule_type",
@@ -44,29 +46,23 @@
               ],
               "startTimestamp" : "2021-09-16T21:07:34.826Z"
             }
-          ],
-          "metricName" : "/santa/rules"
+          ]
         },
         {
-          "valueType" : "int64Value",
+          "valueType" : "INT64",
           "streamKind" : "GAUGE",
           "data" : [
             {
               "int64Value" : 123456789,
               "endTimestamp" : "2021-09-16T21:07:34.826Z",
-              "field" : [
-                {
-                  "name" : "",
-                  "stringValue" : ""
-                }
-              ],
               "startTimestamp" : "2021-09-16T21:07:34.826Z"
             }
           ],
-          "metricName" : "/proc/memory/resident_size"
+          "metricName" : "/proc/memory/resident_size",
+          "description" : "The resident set size of this process"
         },
         {
-          "valueType" : "int64Value",
+          "valueType" : "INT64",
           "fieldDescriptor" : [
             {
               "name" : "rule_type",
@@ -98,73 +94,54 @@
               "startTimestamp" : "2021-09-16T21:07:34.826Z"
             }
           ],
-          "metricName" : "/santa/events"
+          "metricName" : "/santa/events",
+          "description" : "Count of process exec events on the host"
         },
         {
           "metricName" : "/santa/using_endpoint_security_framework",
-          "valueType" : "boolValue",
+          "description" : "Is santad using the endpoint security framework",
+          "valueType" : "BOOL",
           "data" : [
             {
               "boolValue" : true,
               "endTimestamp" : "2021-09-16T21:07:34.826Z",
-              "field" : [
-                {
-                  "name" : "",
-                  "stringValue" : ""
-                }
-              ],
               "startTimestamp" : "2021-09-16T21:07:34.826Z"
             }
           ]
         },
         {
           "metricName" : "/proc/birth_timestamp",
-          "valueType" : "int64Value",
+          "description" : "Start time of this santad instance, in microseconds since epoch",
+          "valueType" : "INT64",
           "data" : [
             {
               "int64Value" : 1250999830800,
               "endTimestamp" : "2021-09-16T21:07:34.826Z",
-              "field" : [
-                {
-                  "name" : "",
-                  "stringValue" : ""
-                }
-              ],
               "startTimestamp" : "2021-09-16T21:07:34.826Z"
             }
           ]
         },
         {
-          "valueType" : "int64Value",
+          "valueType" : "INT64",
           "streamKind" : "GAUGE",
           "data" : [
             {
               "int64Value" : 987654321,
               "endTimestamp" : "2021-09-16T21:07:34.826Z",
-              "field" : [
-                {
-                  "name" : "",
-                  "stringValue" : ""
-                }
-              ],
               "startTimestamp" : "2021-09-16T21:07:34.826Z"
             }
           ],
-          "metricName" : "/proc/memory/virtual_size"
+          "metricName" : "/proc/memory/virtual_size",
+          "description" : "The virtual memory size of this process"
         },
         {
           "metricName" : "/build/label",
-          "valueType" : "stringValue",
+          "valueType" : "STRING",
+          "description" : "Software version running",
           "data" : [
             {
               "stringValue" : "20210809.0.1",
               "endTimestamp" : "2021-09-16T21:07:34.826Z",
-              "field" : [
-                {
-                  "name" : "",
-                  "stringValue" : ""
-                }
-              ],
               "startTimestamp" : "2021-09-16T21:07:34.826Z"
             }
           ]

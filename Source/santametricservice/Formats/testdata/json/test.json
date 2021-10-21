@@ -2,6 +2,7 @@
   "metrics" : {
     "/santa/rules" : {
       "type" : 7,
+      "description" : "Number of rules",
       "fields" : {
         "rule_type" : [
           {
@@ -21,6 +22,7 @@
     },
     "/santa/events" : {
       "type" : 9,
+      "description" : "Count of process exec events on the host",
       "fields" : {
         "rule_type" : [
           {
@@ -40,6 +42,7 @@
     },
     "/proc/memory/resident_size" : {
       "type" : 7,
+      "description" : "The resident set size of this process",
       "fields" : {
         "" : [
           {
@@ -53,6 +56,7 @@
     },
     "/build/label" : {
       "type" : 2,
+      "description" : "Software version running",
       "fields" : {
         "" : [
           {
@@ -66,6 +70,7 @@
     },
     "/proc/birth_timestamp" : {
       "type" : 3,
+      "description" : "Start time of this santad instance, in microseconds since epoch",
       "fields" : {
         "" : [
           {
@@ -79,6 +84,7 @@
     },
     "/proc/memory/virtual_size" : {
       "type" : 7,
+      "description" : "The virtual memory size of this process",
       "fields" : {
         "" : [
           {
@@ -92,6 +98,7 @@
     },
     "/santa/using_endpoint_security_framework" : {
       "type" : 1,
+      "description" : "Is santad using the endpoint security framework",
       "fields" : {
         "" : [
           {
