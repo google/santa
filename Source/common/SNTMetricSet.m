@@ -432,15 +432,15 @@
   NSMutableArray<void (^)(void)> *_callbacks;
 }
 
-+ (instancetype) sharedInstance {
-    static SNTMetricSet *sharedMetrics;
-    static dispatch_once_t onceToken;
-    
-    dispatch_once(&onceToken, ^{
-        sharedMetrics = [[SNTMetricSet alloc] init];
-    });
-    
-    return sharedMetrics;
++ (instancetype)sharedInstance {
+  static SNTMetricSet *sharedMetrics;
+  static dispatch_once_t onceToken;
+
+  dispatch_once(&onceToken, ^{
+    sharedMetrics = [[SNTMetricSet alloc] init];
+  });
+
+  return sharedMetrics;
 }
 
 - (instancetype)init {

@@ -20,13 +20,13 @@
 
 #import "Source/common/SNTCommonEnums.h"
 #import "Source/common/SNTConfigurator.h"
-#import "Source/common/SNTMetricSet.h"
 #import "Source/common/SNTDropRootPrivs.h"
 #import "Source/common/SNTLogging.h"
+#import "Source/common/SNTMetricSet.h"
 #import "Source/common/SNTXPCControlInterface.h"
+#import "Source/common/SNTXPCMetricServiceInterface.h"
 #import "Source/common/SNTXPCNotifierInterface.h"
 #import "Source/common/SNTXPCUnprivilegedControlInterface.h"
-#import "Source/common/SNTXPCMetricServiceInterface.h"
 #import "Source/santad/DataLayer/SNTEventTable.h"
 #import "Source/santad/DataLayer/SNTRuleTable.h"
 #import "Source/santad/EventProviders/SNTCachingEndpointSecurityManager.h"
@@ -138,14 +138,14 @@
                    forKeyPath:NSStringFromSelector(@selector(exportMetrics))
                       options:bits
                       context:NULL];
-      
+
     if (![configurator enableSystemExtension]) {
       [configurator addObserver:self
                      forKeyPath:NSStringFromSelector(@selector(enableSystemExtension))
                         options:bits
                         context:NULL];
     }
-      
+
     // Establish XPC listener for Santa and santactl connections
     SNTDaemonControlController *dc =
       [[SNTDaemonControlController alloc] initWithEventProvider:_eventProvider
@@ -176,11 +176,10 @@
     [self startSyncd];
 
     if (!_execController) return nil;
-      
+
     if ([configurator exportMetrics]) {
-        [self startMetricsPoll];
+      [self startMetricsPoll];
     }
-    
   }
 
   return self;
@@ -286,58 +285,54 @@ void diskDisappearedCallback(DADiskRef disk, void *context) {
   [app.eventProvider flushCacheNonRootOnly:YES];
 }
 
-dispatch_source_t createDispatchTimer(uint64_t interval,
-              uint64_t leeway,
-              dispatch_queue_t queue,
-              dispatch_block_t block)
-{
-   dispatch_source_t timer = dispatch_source_create(DISPATCH_SOURCE_TYPE_TIMER,
-                                                     0, 0, queue);
-   if (timer) {
-      dispatch_source_set_timer(timer, dispatch_walltime(NULL, 0), interval, leeway);
-      dispatch_source_set_event_handler(timer, block);
-      dispatch_resume(timer);
-   }
-   return timer;
+dispatch_source_t createDispatchTimer(uint64_t interval, uint64_t leeway, dispatch_queue_t queue,
+                                      dispatch_block_t block) {
+  dispatch_source_t timer = dispatch_source_create(DISPATCH_SOURCE_TYPE_TIMER, 0, 0, queue);
+  if (timer) {
+    dispatch_source_set_timer(timer, dispatch_walltime(NULL, 0), interval, leeway);
+    dispatch_source_set_event_handler(timer, block);
+    dispatch_resume(timer);
+  }
+  return timer;
 }
 
 /*
- * Create a SNTMetricSet instance and start reporting essential metrics immediately to the metric service.
+ * Create a SNTMetricSet instance and start reporting essential metrics immediately to the metric
+ * service.
  */
 - (void)startMetricsPoll {
-    LOGI(@"starting to export metrics every 30s");
-    void (^exportMetricsBlock)(void) = ^{
-        [[self.metricsConnection remoteObjectProxy] exportForMonitoring: [[SNTMetricSet sharedInstance] export]];
-     };
+  LOGI(@"starting to export metrics every 30s");
+  void (^exportMetricsBlock)(void) = ^{
+    [[self.metricsConnection remoteObjectProxy]
+      exportForMonitoring:[[SNTMetricSet sharedInstance] export]];
+  };
 
-    static dispatch_once_t registerMetrics;
-    dispatch_once(&registerMetrics, ^{
-        _metricsConnection = [SNTXPCMetricServiceInterface configuredConnection];
-        [_metricsConnection resume];
+  static dispatch_once_t registerMetrics;
+  dispatch_once(&registerMetrics, ^{
+    _metricsConnection = [SNTXPCMetricServiceInterface configuredConnection];
+    [_metricsConnection resume];
 
-        LOGD(@"registering core metrics");
-        SNTRegisterCoreMetrics();
-        exportMetricsBlock();
-    });
-   
-    dispatch_source_t timer = createDispatchTimer(30ull * NSEC_PER_SEC,
-                                                  1ull * NSEC_PER_SEC,
-                                                  dispatch_get_main_queue(),
-                                                  exportMetricsBlock);
-    if (!timer) {
-        LOGE(@"failed to created timer for exporting metrics");
-        return;
-    }
-    _metricsTimer = timer;
+    LOGD(@"registering core metrics");
+    SNTRegisterCoreMetrics();
+    exportMetricsBlock();
+  });
+
+  dispatch_source_t timer = createDispatchTimer(30ull * NSEC_PER_SEC, 1ull * NSEC_PER_SEC,
+                                                dispatch_get_main_queue(), exportMetricsBlock);
+  if (!timer) {
+    LOGE(@"failed to created timer for exporting metrics");
+    return;
+  }
+  _metricsTimer = timer;
 }
 
 - (void)stopMetricsPoll {
-    if (!_metricsTimer) {
-        LOGE(@"stopMetricsPoll called while _metricsTimer is nil");
-        return;
-    }
-    
-    dispatch_source_cancel(_metricsTimer);
+  if (!_metricsTimer) {
+    LOGE(@"stopMetricsPoll called while _metricsTimer is nil");
+    return;
+  }
+
+  dispatch_source_cancel(_metricsTimer);
 }
 
 - (void)startSyncd {
@@ -400,17 +395,17 @@ dispatch_source_t createDispatchTimer(uint64_t interval,
       LOGI(@"The penultimate exit.");
       exit(0);
     }
-  } else if ([keyPath isEqualToString:NSStringFromSelector(@selector(exportMetrics))]){
-      BOOL new = [change[newKey] boolValue];
-      BOOL old = [change[oldKey] boolValue];
-      
-      if (old == NO && new == YES) {
-          LOGI(@"metricsExport changed NO -> YES, starting to export metrics");
-          [self startMetricsPoll];
-      } else if (old == YES && new == NO) {
-          LOGI(@"metricsExport changed YES -> NO, stopping export of metrics");
-          [self stopMetricsPoll];
-      }
+  } else if ([keyPath isEqualToString:NSStringFromSelector(@selector(exportMetrics))]) {
+    BOOL new = [ change[newKey] boolValue ];
+    BOOL old = [change[oldKey] boolValue];
+
+    if (old == NO && new == YES) {
+      LOGI(@"metricsExport changed NO -> YES, starting to export metrics");
+      [self startMetricsPoll];
+    } else if (old == YES && new == NO) {
+      LOGI(@"metricsExport changed YES -> NO, stopping export of metrics");
+      [self stopMetricsPoll];
+    }
   }
 }
 

@@ -15,4 +15,3 @@
 #import "Source/common/SNTMetricSet.h"
 
 void SNTRegisterCoreMetrics();
-
