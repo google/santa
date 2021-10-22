@@ -164,7 +164,7 @@ echo "creating kext pkg"
 /usr/bin/pkgbuild --identifier "com.google.santa-driver" \
   --version "$(echo "${RELEASE_NAME}" | cut -d - -f2)" \
   --root "${KEXT_PKG_ROOT}" \
-  --component-plist "${SCRATCH{/component.plist" \
+  --component-plist "${SCRATCH}/component.plist" \
   "${SCRATCH}/kext.pkg"
 
 # Build signed distribution package
