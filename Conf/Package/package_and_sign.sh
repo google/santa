@@ -48,6 +48,7 @@ readonly INPUT_KEXT="${RELEASE_ROOT}/binaries/santa-driver.kext"
 readonly INPUT_SYSX="${INPUT_APP}/Contents/Library/SystemExtensions/com.google.santa.daemon.systemextension"
 readonly INPUT_SANTACTL="${INPUT_APP}/Contents/MacOS/santactl"
 readonly INPUT_SANTABS="${INPUT_APP}/Contents/MacOS/santabundleservice"
+readonly INPUT_SANTAMS="${INPUT_APP}/Contents/MacOS/santametricservice"
 
 readonly RELEASE_NAME="santa-$(/usr/bin/defaults read "${INPUT_APP}/Contents/Info.plist" CFBundleVersion)"
 
@@ -65,7 +66,7 @@ readonly DMG_PATH="${ARTIFACTS_DIR}/${RELEASE_NAME}.dmg"
 readonly TAR_PATH="${ARTIFACTS_DIR}/${RELEASE_NAME}.tar.gz"
 
 # Sign all of binaries/bundles. Maintain inside-out ordering where necessary
-for ARTIFACT in "${INPUT_SANTACTL}" "${INPUT_SANTABS}" "${INPUT_SYSX}" "${INPUT_APP}" "${INPUT_KEXT}"; do
+for ARTIFACT in "${INPUT_SANTACTL}" "${INPUT_SANTABS}" "${INPUT_SANTAMS}" "${INPUT_SYSX}" "${INPUT_APP}" "${INPUT_KEXT}"; do
   BN=$(/usr/bin/basename "${ARTIFACT}")
   EN="${ENTITLEMENTS}/${BN}.entitlements"
 
@@ -130,6 +131,7 @@ echo "creating app pkg"
 /bin/cp -vX "${RELEASE_ROOT}/conf/com.google.santad.plist" "${APP_PKG_ROOT}/Library/LaunchDaemons/"
 /bin/cp -vX "${RELEASE_ROOT}/conf/com.google.santa.plist" "${APP_PKG_ROOT}/Library/LaunchAgents/"
 /bin/cp -vX "${RELEASE_ROOT}/conf/com.google.santa.bundleservice.plist" "${APP_PKG_ROOT}/Library/LaunchDaemons/"
+/bin/cp -vX "${RELEASE_ROOT}/conf/com.google.santa.metricservice.plist" "${APP_PKG_ROOT}/Library/LaunchDaemons/"
 /bin/cp -vX "${RELEASE_ROOT}/conf/com.google.santa.asl.conf" "${APP_PKG_ROOT}/private/etc/asl/"
 /bin/cp -vX "${RELEASE_ROOT}/conf/com.google.santa.newsyslog.conf" "${APP_PKG_ROOT}/private/etc/newsyslog.d/"
 /bin/cp -vXL "${SCRIPT_PATH}/preinstall" "${APP_PKG_SCRIPTS}/"

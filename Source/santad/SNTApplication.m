@@ -285,14 +285,17 @@ void diskDisappearedCallback(DADiskRef disk, void *context) {
   [app.eventProvider flushCacheNonRootOnly:YES];
 }
 
+// Taken from Apple's Concurrency Programming Guide.
 dispatch_source_t createDispatchTimer(uint64_t interval, uint64_t leeway, dispatch_queue_t queue,
                                       dispatch_block_t block) {
   dispatch_source_t timer = dispatch_source_create(DISPATCH_SOURCE_TYPE_TIMER, 0, 0, queue);
+    
   if (timer) {
     dispatch_source_set_timer(timer, dispatch_walltime(NULL, 0), interval, leeway);
     dispatch_source_set_event_handler(timer, block);
     dispatch_resume(timer);
   }
+    
   return timer;
 }
 
@@ -301,13 +304,16 @@ dispatch_source_t createDispatchTimer(uint64_t interval, uint64_t leeway, dispat
  * service.
  */
 - (void)startMetricsPoll {
-  LOGI(@"starting to export metrics every 30s");
+  NSUInteger interval = [[SNTConfigurator configurator] metricExportInterval];
+    
+  LOGI(@"starting to export metrics every %ld seconds", interval);
   void (^exportMetricsBlock)(void) = ^{
     [[self.metricsConnection remoteObjectProxy]
       exportForMonitoring:[[SNTMetricSet sharedInstance] export]];
   };
 
   static dispatch_once_t registerMetrics;
+    
   dispatch_once(&registerMetrics, ^{
     _metricsConnection = [SNTXPCMetricServiceInterface configuredConnection];
     [_metricsConnection resume];
@@ -317,12 +323,14 @@ dispatch_source_t createDispatchTimer(uint64_t interval, uint64_t leeway, dispat
     exportMetricsBlock();
   });
 
-  dispatch_source_t timer = createDispatchTimer(30ull * NSEC_PER_SEC, 1ull * NSEC_PER_SEC,
+  dispatch_source_t timer = createDispatchTimer(interval * NSEC_PER_SEC,
+                                                1ull * NSEC_PER_SEC,
                                                 dispatch_get_main_queue(), exportMetricsBlock);
   if (!timer) {
     LOGE(@"failed to created timer for exporting metrics");
     return;
   }
+    
   _metricsTimer = timer;
 }
 

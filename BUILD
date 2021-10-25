@@ -237,6 +237,7 @@ test_suite(
         "//Source/common:SantaCacheTest",
         "//Source/santactl:SNTCommandFileInfoTest",
         "//Source/santactl:SNTCommandSyncTest",
+        "//Source/santad:SNTApplicationCoreMetricsTest",
         "//Source/santad:SNTApplicationTest",
         "//Source/santad:SNTEndpointSecurityManagerTest",
         "//Source/santad:SNTEventTableTest",

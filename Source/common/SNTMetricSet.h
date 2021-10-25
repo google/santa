@@ -101,7 +101,7 @@ typedef NS_ENUM(NSInteger, SNTMetricType) {
                              helpText:(NSString *)text;
 
 /**
- * Returns a shared global instance with default root labels and metrics registerd.
+ * Returns a shared global instance with default root labels and metrics registered.
  */
 + (instancetype)sharedInstance;
 

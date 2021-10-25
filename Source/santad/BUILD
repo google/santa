@@ -286,6 +286,7 @@ santa_unit_test(
         ":SNTApplicationCoreMetrics",
         "//Source/common:SNTCommonEnums",
         "//Source/common:SNTMetricSet",
+        "//Source/common:SNTSystemInfo",
         "//Source/santametricservice/Formats:SNTMetricFormatTestHelper",
         "@OCMock",
     ],

@@ -386,6 +386,10 @@
 ///
 @property(readonly, nonatomic) NSURL *metricURL;
 
+///
+/// Duration in seconds of how often the metrics should be exported.
+///
+@property(readonly, nonatomic) NSUInteger metricExportInterval;
 
 ///
 ///  Retrieve an initialized singleton configurator object using the default file path.

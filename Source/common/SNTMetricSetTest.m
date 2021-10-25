@@ -396,7 +396,7 @@
                                   value:TRUE];
   [metricSet
     addConstantIntegerWithName:@"/proc/birth_timestamp"
-                      helpText:@"Start time of this santad instance, in microseconds  since epoch"
+                      helpText:@"Start time of this santad instance, in microseconds since epoch"
                          value:(long long)(0x12345668910)];
   // Add Metrics
   SNTMetricCounter *c = [metricSet counterWithName:@"/santa/events"
@@ -497,7 +497,7 @@
         }
       },
       @"/proc/birth_timestamp" : @{
-        @"description" : @"Start time of this santad instance, in microseconds  since epoch",
+        @"description" : @"Start time of this santad instance, in microseconds since epoch",
         @"type" : [NSNumber numberWithInt:(int)SNTMetricTypeConstantInt64],
         @"fields" : @{
           @"" : @[ @{

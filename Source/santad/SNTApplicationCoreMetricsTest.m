@@ -94,6 +94,7 @@
   NSDictionary *expected = @{
     @"metrics" : @{
       @"/build/label" : @{
+        @"description":  @"Version of the binary",
         @"type" : @2,
         @"fields" : @{
           @"" : @[ @{
@@ -105,6 +106,7 @@
         },
       },
       @"/proc/birth_timestamp" : @{
+        @"description":  @"Start time of Santad, in microseconds since epoch",
         @"type" : @3,
         @"fields" : @{
           @"" : @[ @{
@@ -116,6 +118,7 @@
         },
       },
       @"/proc/cpu_usage" : @{
+        @"description":  @"CPU time consumed by this process, in seconds",
         @"type" : @8,
         @"fields" : @{
           @"mode" : @[
@@ -135,6 +138,7 @@
         },
       },
       @"/proc/memory/resident_size" : @{
+        @"description":  @"The resident set size of this process",
         @"type" : @7,
         @"fields" : @{
           @"" : @[ @{
@@ -146,6 +150,7 @@
         },
       },
       @"/proc/memory/virtual_size" : @{
+        @"description":  @"The virtual memory size of this process",
         @"type" : @7,
         @"fields" : @{
           @"" : @[ @{
@@ -157,6 +162,7 @@
         },
       },
       @"/proc/os/version" : @{
+        @"description":  @"Short operating System version",
         @"type" : @2,
         @"fields" : @{
           @"" : @[ @{
@@ -168,6 +174,7 @@
         },
       },
       @"/santa/mode" : @{
+        @"description":  @"Santa's operating mode",
         @"type" : @6,
         @"fields" : @{
           @"" : @[ @{

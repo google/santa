@@ -15,6 +15,7 @@
 #import "Source/common/SNTCommonEnums.h"
 #import "Source/common/SNTConfigurator.h"
 #import "Source/common/SNTMetricSet.h"
+#import "Source/common/SNTSystemInfo.h"
 
 #import <Foundation/Foundation.h>
 #include <mach/mach.h>
@@ -46,7 +47,7 @@ static void RegisterModeMetric(SNTMetricSet *metricSet) {
 /**
  * Register metrics for measuring memory usage.
  */
-static void RegisterMemoryMetrics(SNTMetricSet *metricSet) {
+static void RegisterMemoryAndCPUMetrics(SNTMetricSet *metricSet) {
   SNTMetricInt64Gauge *vsize =
     [metricSet int64GaugeWithName:@"/proc/memory/virtual_size"
                        fieldNames:@[]
@@ -55,40 +56,30 @@ static void RegisterMemoryMetrics(SNTMetricSet *metricSet) {
     [metricSet int64GaugeWithName:@"/proc/memory/resident_size"
                        fieldNames:@[]
                          helpText:@"The resident set size of this process"];
+    
+  SNTMetricDoubleGauge *cpuUsage =
+      [metricSet doubleGaugeWithName:@"/proc/cpu_usage"
+                          fieldNames:@[ @"mode" ]  // "user" or "system"
+                            helpText:@"CPU time consumed by this process, in seconds"];
+
   [metricSet registerCallback:^(void) {
     struct mach_task_basic_info info;
     mach_msg_type_number_t size = MACH_TASK_BASIC_INFO_COUNT;
     kern_return_t ret =
       task_info(mach_task_self(), MACH_TASK_BASIC_INFO, (task_info_t)&info, &size);
+      
     if (ret != KERN_SUCCESS) {
       return;
     }
 
     [vsize set:info.virtual_size forFieldValues:@[]];
     [rsize set:info.resident_size forFieldValues:@[]];
+      
+    [cpuUsage set:info.user_time.seconds   forFieldValues:@[ @"user" ]];
+    [cpuUsage set:info.system_time.seconds forFieldValues:@[ @"system" ]];
   }];
 }
 
-static double RusageTimeToSeconds(struct timeval *rusageTime) {
-  return (double)rusageTime->tv_usec * 1.0e-6 + (double)rusageTime->tv_sec;
-}
-
-static void RegisterCPUMetrics(SNTMetricSet *metricSet) {
-  SNTMetricDoubleGauge *cpuUsage =
-    [metricSet doubleGaugeWithName:@"/proc/cpu_usage"
-                        fieldNames:@[ @"mode" ]  // "user" or "system"
-                          helpText:@"CPU time consumed by this process, in seconds"];
-
-  [metricSet registerCallback:^(void) {
-    struct rusage r;
-    if (getrusage(RUSAGE_SELF, &r) != 0) {
-      return;
-    }
-
-    [cpuUsage set:RusageTimeToSeconds(&r.ru_utime) forFieldValues:@[ @"user" ]];
-    [cpuUsage set:RusageTimeToSeconds(&r.ru_stime) forFieldValues:@[ @"system" ]];
-  }];
-}
 
 static void RegisterHostnameAndUsernameLabels(SNTMetricSet *metricSet) {
   [metricSet addRootLabel:@"hostname" value:[NSProcessInfo processInfo].hostName];
@@ -111,16 +102,10 @@ static void RegisterCommonSantaMetrics(SNTMetricSet *metricSet) {
                          value:(long long)([[NSDate date] timeIntervalSince1970] * 1000000)];
 
   // Register OS version
-  NSProcessInfo *processInfo = [NSProcessInfo processInfo];
-  NSString *shortOSVersion =
-    [NSString stringWithFormat:@"%ld.%ld.%ld", processInfo.operatingSystemVersion.majorVersion,
-                               processInfo.operatingSystemVersion.minorVersion,
-                               processInfo.operatingSystemVersion.patchVersion];
-
   [metricSet addConstantStringWithName:@"/proc/os/version"
                               helpText:@"Short operating System version"
-                                 value:shortOSVersion];
-
+                                 value:[SNTSystemInfo osVersion]];
+   
   RegisterModeMetric(metricSet);
   // TODO(markowsky) Register CSR status
   // TODO(markowsky) Register system extension status
@@ -129,7 +114,6 @@ static void RegisterCommonSantaMetrics(SNTMetricSet *metricSet) {
 void SNTRegisterCoreMetrics() {
   SNTMetricSet *metricSet = [SNTMetricSet sharedInstance];
   RegisterHostnameAndUsernameLabels(metricSet);
-  RegisterMemoryMetrics(metricSet);
-  RegisterCPUMetrics(metricSet);
+  RegisterMemoryAndCPUMetrics(metricSet);
   RegisterCommonSantaMetrics(metricSet);
 }
