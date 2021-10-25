@@ -74,9 +74,14 @@ static void RegisterMemoryAndCPUMetrics(SNTMetricSet *metricSet) {
 
     [vsize set:info.virtual_size forFieldValues:@[]];
     [rsize set:info.resident_size forFieldValues:@[]];
+      
+    //convert times to seconds
+    double user_time = info.user_time.seconds + (info.user_time.microseconds / 1e6);
+    double system_time = info.system_time.seconds + (info.system_time.microseconds / 1e6);
 
-    [cpuUsage set:info.user_time.seconds forFieldValues:@[ @"user" ]];
-    [cpuUsage set:info.system_time.seconds forFieldValues:@[ @"system" ]];
+    [cpuUsage set:user_time forFieldValues:@[ @"user" ]];
+    [cpuUsage set:system_time forFieldValues:@[ @"system" ]];
+      
   }];
 }
 
