@@ -403,7 +403,7 @@ dispatch_source_t createDispatchTimer(uint64_t interval, uint64_t leeway, dispat
       exit(0);
     }
   } else if ([keyPath isEqualToString:NSStringFromSelector(@selector(exportMetrics))]) {
-    BOOL new = [ change[newKey] boolValue ];
+    BOOL new = [change[newKey] boolValue];
     BOOL old = [change[oldKey] boolValue];
 
     if (old == NO && new == YES) {
