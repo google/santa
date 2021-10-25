@@ -408,7 +408,7 @@ dispatch_source_t createDispatchTimer(uint64_t interval, uint64_t leeway, dispat
     }
   } else if ([keyPath isEqualToString:NSStringFromSelector(@selector(exportMetrics))]) {
     BOOL new = [ change[newKey] boolValue ];
-    BOOL old = [change[oldKey] boolValue];
+    BOOL old = [ change[oldKey] boolValue ];
 
     if (old == NO && new == YES) {
       LOGI(@"metricsExport changed NO -> YES, starting to export metrics");
