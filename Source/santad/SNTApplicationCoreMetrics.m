@@ -56,30 +56,29 @@ static void RegisterMemoryAndCPUMetrics(SNTMetricSet *metricSet) {
     [metricSet int64GaugeWithName:@"/proc/memory/resident_size"
                        fieldNames:@[]
                          helpText:@"The resident set size of this process"];
-    
+
   SNTMetricDoubleGauge *cpuUsage =
-      [metricSet doubleGaugeWithName:@"/proc/cpu_usage"
-                          fieldNames:@[ @"mode" ]  // "user" or "system"
-                            helpText:@"CPU time consumed by this process, in seconds"];
+    [metricSet doubleGaugeWithName:@"/proc/cpu_usage"
+                        fieldNames:@[ @"mode" ]  // "user" or "system"
+                          helpText:@"CPU time consumed by this process, in seconds"];
 
   [metricSet registerCallback:^(void) {
     struct mach_task_basic_info info;
     mach_msg_type_number_t size = MACH_TASK_BASIC_INFO_COUNT;
     kern_return_t ret =
       task_info(mach_task_self(), MACH_TASK_BASIC_INFO, (task_info_t)&info, &size);
-      
+
     if (ret != KERN_SUCCESS) {
       return;
     }
 
     [vsize set:info.virtual_size forFieldValues:@[]];
     [rsize set:info.resident_size forFieldValues:@[]];
-      
-    [cpuUsage set:info.user_time.seconds   forFieldValues:@[ @"user" ]];
+
+    [cpuUsage set:info.user_time.seconds forFieldValues:@[ @"user" ]];
     [cpuUsage set:info.system_time.seconds forFieldValues:@[ @"system" ]];
   }];
 }
-
 
 static void RegisterHostnameAndUsernameLabels(SNTMetricSet *metricSet) {
   [metricSet addRootLabel:@"hostname" value:[NSProcessInfo processInfo].hostName];
@@ -105,7 +104,7 @@ static void RegisterCommonSantaMetrics(SNTMetricSet *metricSet) {
   [metricSet addConstantStringWithName:@"/proc/os/version"
                               helpText:@"Short operating System version"
                                  value:[SNTSystemInfo osVersion]];
-   
+
   RegisterModeMetric(metricSet);
   // TODO(markowsky) Register CSR status
   // TODO(markowsky) Register system extension status

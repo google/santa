@@ -178,7 +178,7 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
       kFCMAPIKey : string,
       kMetricFormat : string,
       kMetricURL : string,
-      kMetricExportInterval: number,
+      kMetricExportInterval : number,
     };
     _defaults = [NSUserDefaults standardUserDefaults];
     [_defaults addSuiteNamed:@"com.google.santa"];
@@ -691,12 +691,12 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
 
 // Returns a default value of 30 (for 30 seconds).
 - (NSUInteger)metricExportInterval {
-    NSNumber *configuredInterval = self.configState[kMetricExportInterval];
-    
-    if (configuredInterval == nil) {
-        return 30;
-    }
-    return [configuredInterval unsignedIntegerValue];
+  NSNumber *configuredInterval = self.configState[kMetricExportInterval];
+
+  if (configuredInterval == nil) {
+    return 30;
+  }
+  return [configuredInterval unsignedIntegerValue];
 }
 
 #pragma mark Private
