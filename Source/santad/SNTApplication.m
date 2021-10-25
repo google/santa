@@ -408,7 +408,7 @@ dispatch_source_t createDispatchTimer(uint64_t interval, uint64_t leeway, dispat
     }
   } else if ([keyPath isEqualToString:NSStringFromSelector(@selector(exportMetrics))]) {
     BOOL new = [ change[newKey] boolValue ];
-    BOOL old = [ change[oldKey] boolValue ];
+    BOOL old = [change[oldKey] boolValue];
 
     if (old == NO && new == YES) {
       LOGI(@"metricsExport changed NO -> YES, starting to export metrics");
@@ -417,14 +417,14 @@ dispatch_source_t createDispatchTimer(uint64_t interval, uint64_t leeway, dispat
       LOGI(@"metricsExport changed YES -> NO, stopping export of metrics");
       [self stopMetricsPoll];
     }
-  } else if ([keyPath isEqualToString:NSStringFromSelector(@selector(metricExportInterval))]){
-      NSUInteger new = [ change[newKey] unsignedIntegerValue ];
-      NSUInteger old = [ change[oldKey] unsignedIntegerValue ];
+  } else if ([keyPath isEqualToString:NSStringFromSelector(@selector(metricExportInterval))]) {
+    NSUInteger new = [ change[newKey] unsignedIntegerValue ];
+    NSUInteger old = [change[oldKey] unsignedIntegerValue];
 
-      LOGI(@"MetricExportInterval changed from %ld to %ld restarting export", old, new);
-      
-      [self stopMetricsPoll];
-      [self startMetricsPoll];
+    LOGI(@"MetricExportInterval changed from %ld to %ld restarting export", old, new);
+
+    [self stopMetricsPoll];
+    [self startMetricsPoll];
   }
 }
 
