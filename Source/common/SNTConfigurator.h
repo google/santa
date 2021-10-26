@@ -269,6 +269,11 @@
 @property(nonatomic) BOOL syncCleanRequired;
 
 ///
+/// USB Mass Storage Blocking. Defalts to false.
+///
+@property(nonatomic) BOOL blockUSBMassStorage;
+
+///
 ///  If set, this over-rides the default machine ID used for syncing.
 ///
 @property(readonly, nonatomic) NSString *machineID;

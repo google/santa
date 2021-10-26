@@ -26,6 +26,7 @@ NSString *const kRequestCleanSync = @"request_clean_sync";
 NSString *const kBatchSize = @"batch_size";
 NSString *const kUploadLogsURL = @"upload_logs_url";
 NSString *const kClientMode = @"client_mode";
+NSString *const kBlockUSBMassStorage = @"block_usb_mass_storage";
 NSString *const kClientModeMonitor = @"MONITOR";
 NSString *const kClientModeLockdown = @"LOCKDOWN";
 NSString *const kCleanSync = @"clean_sync";

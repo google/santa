@@ -47,6 +47,7 @@
 - (void)setSyncCleanRequired:(BOOL)cleanReqd reply:(void (^)(void))reply;
 - (void)setAllowedPathRegex:(NSString *)pattern reply:(void (^)(void))reply;
 - (void)setBlockedPathRegex:(NSString *)pattern reply:(void (^)(void))reply;
+- (void)setBlockUSBMassStorage:(BOOL)enabled reply:(void (^)(void))reply;
 - (void)setEnableBundles:(BOOL)bundlesEnabled reply:(void (^)(void))reply;
 - (void)setEnableTransitiveRules:(BOOL)enabled reply:(void (^)(void))reply;
 

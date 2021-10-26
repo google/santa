@@ -56,6 +56,7 @@
 @property SNTClientMode clientMode;
 @property NSString *allowlistRegex;
 @property NSString *blocklistRegex;
+@property BOOL blockUSBMassStorage;
 
 /// Clean sync flag, if True, all existing rules should be deleted before inserting any new rules.
 @property BOOL cleanSync;

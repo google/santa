@@ -60,6 +60,12 @@
                                                        reply:replyBlock];
   }
 
+  if (self.syncState.blockUSBMassStorage) {
+    dispatch_group_enter(group);
+    [[self.daemonConn remoteObjectProxy] setBlockUSBMassStorage:self.syncState.blockUSBMassStorage
+                                                          reply:replyBlock];
+  }
+
   // Update last sync success
   dispatch_group_enter(group);
   [[self.daemonConn remoteObjectProxy] setFullSyncLastSuccess:[NSDate date] reply:replyBlock];

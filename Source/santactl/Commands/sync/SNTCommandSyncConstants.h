@@ -28,6 +28,7 @@ extern NSString *const kUploadLogsURL;
 extern NSString *const kClientMode;
 extern NSString *const kClientModeMonitor;
 extern NSString *const kClientModeLockdown;
+extern NSString *const kBlockUSBMassStorage;
 extern NSString *const kCleanSync;
 extern NSString *const kAllowedPathRegex;
 extern NSString *const kAllowedPathRegexDeprecated;

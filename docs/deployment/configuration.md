@@ -195,6 +195,7 @@ ways to install configuration profiles:
 | fcm_global_rule_sync_deadline* | Integer    | The max time to wait before performing a rule sync when a global rule sync FCM message is received. This allows syncing to be staggered for global events to avoid spikes in server load. Defaults to 600 secs (10 min). |
 | enable_bundles*                | Bool       | If set to `True` the bundle scanning feature is enabled. Defaults to `False`. |
 | enable_transitive_rules        | Bool       | If set to `True` the transitive rule feature is enabled. Defaults to `False`. |
+| block_usb_mass_storage         | Bool       | If set to 'True' blocking USB Mass storage feature is enabled. Defaults to `False`. | 
 
 *Held only in memory. Not persistent upon process restart.
 

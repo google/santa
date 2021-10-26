@@ -91,6 +91,7 @@ static NSString *const kEnableBackwardsCompatibleContentEncoding =
 static NSString *const kFCMProject = @"FCMProject";
 static NSString *const kFCMEntity = @"FCMEntity";
 static NSString *const kFCMAPIKey = @"FCMAPIKey";
+static NSString *const kBlockUSBMassStorageKey = @"blockUSBMassStorage";
 
 // The keys managed by a sync server or mobileconfig.
 static NSString *const kClientModeKey = @"ClientMode";
@@ -567,6 +568,10 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
   [self updateSyncStateForKey:kSyncCleanRequired value:@(syncCleanRequired)];
 }
 
+- (void)setBlockUSBMassStorage:(BOOL)enabled {
+  [self updateSyncStateForKey:kBlockUSBMassStorageKey value:@(enabled)];
+}
+
 - (NSString *)machineOwner {
   NSString *machineOwner = self.configState[kMachineOwnerKey];
   if (machineOwner) return machineOwner;
@@ -660,6 +665,11 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
 
 - (BOOL)fcmEnabled {
   return (self.fcmProject.length && self.fcmEntity.length && self.fcmAPIKey.length);
+}
+
+- (BOOL)blockUSBMassStorage {
+  NSNumber *number = self.configState[kBlockUSBMassStorageKey];
+  return number ? [number boolValue] : NO;
 }
 
 ///

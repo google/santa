@@ -98,6 +98,10 @@ objc_library(
         "EndpointSecurity",
         "bsm",
     ],
+    sdk_frameworks = [
+        "DiskArbitration",
+        "IOKit",
+    ],
 )
 
 macos_bundle(

@@ -20,6 +20,8 @@
 #import "Source/common/SNTLogging.h"
 #import "Source/common/SantaCache.h"
 
+#import <DiskArbitration/DiskArbitration.h>
+
 #include <bsm/libbsm.h>
 #include <libproc.h>
 #include <atomic>
@@ -352,6 +354,35 @@
       es_respond_auth_result(self.client, m, ES_AUTH_RESULT_ALLOW, true);
       return;
     }
+
+    case ES_EVENT_TYPE_AUTH_MOUNT: {
+      SNTConfigurator *config = [SNTConfigurator configurator];
+      if (![config blockUSBMassStorage]) {
+        es_respond_auth_result(self.client, m, ES_AUTH_RESULT_ALLOW, true);
+        return;
+      }
+
+      DASessionRef session = DASessionCreate(NULL);
+      CFAutorelease(session);
+
+      DADiskRef disk = DADiskCreateFromBSDName(NULL, session, m->event.mount.statfs->f_mntfromname);
+      CFAutorelease(disk);
+
+      NSDictionary *diskInfo = CFBridgingRelease(DADiskCopyDescription(disk));
+      BOOL isRemovable =
+        [diskInfo[(__bridge NSString *)kDADiskDescriptionMediaRemovableKey] boolValue];
+
+      BOOL isUSB = [diskInfo[@"DADeviceProtocol"] isEqualTo:@"USB"];
+
+      if (!isRemovable || !isUSB) {
+        LOGI(@"Did not block mounting %s", m->event.mount.statfs->f_mntfromname);
+        es_respond_auth_result(self.client, m, ES_AUTH_RESULT_ALLOW, false);
+        return;
+      }
+
+      es_respond_auth_result(self.client, m, ES_AUTH_RESULT_DENY, false);
+      return;
+    }
     case ES_EVENT_TYPE_NOTIFY_CLOSE: {
       sm.action = ACTION_NOTIFY_WRITE;
       targetFile = m->event.close.target;
@@ -428,6 +459,7 @@
     ES_EVENT_TYPE_AUTH_UNLINK,
     ES_EVENT_TYPE_AUTH_RENAME,
     ES_EVENT_TYPE_AUTH_KEXTLOAD,
+    ES_EVENT_TYPE_AUTH_MOUNT,
 
     // This is in the decision callback because it's used for detecting
     // the exit of a 'compiler' used by transitive whitelisting.

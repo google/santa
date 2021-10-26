@@ -132,6 +132,10 @@
     self.syncState.blocklistRegex = resp[kBlockedPathRegexDeprecated];
   }
 
+  if ([resp[kBlockUSBMassStorage] boolValue]) {
+    self.syncState.blockUSBMassStorage = YES;
+  }
+
   if ([resp[kCleanSync] boolValue]) {
     LOGD(@"Clean sync requested by server");
     self.syncState.cleanSync = YES;
