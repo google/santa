@@ -60,6 +60,7 @@
 
   NSDictionary *expected = @{
     @"type" : [NSNumber numberWithInt:(int)SNTMetricTypeCounter],
+    @"description" : @"Count of exec events broken out by rule type.",
     @"fields" : @{
       @"rule_type" : @[ @{
         @"value" : @"certificate",
@@ -96,6 +97,7 @@
   [b set:true forFieldValues:@[]];
   NSDictionary *expected = @{
     @"type" : [NSNumber numberWithInt:(int)SNTMetricTypeGaugeBool],
+    @"description" : @"Is the daemon connected.",
     @"fields" : @{
       @"" : @[ @{
         @"value" : @"",
@@ -150,6 +152,7 @@
 
   NSDictionary *expected = @{
     @"type" : [NSNumber numberWithInt:(int)SNTMetricTypeGaugeInt64],
+    @"description" : @"Count of rules broken out by rule type.",
     @"fields" : @{
       @"rule_type" : @[ @{
         @"value" : @"binary",
@@ -201,6 +204,7 @@
 
   NSDictionary *expected = @{
     @"type" : [NSNumber numberWithInt:(int)SNTMetricTypeGaugeDouble],
+    @"description" : @"CPU time consumed by this process.",
     @"fields" : @{
       @"mode" : @[
         @{
@@ -244,6 +248,7 @@
 
   NSDictionary *expected = @{
     @"type" : [NSNumber numberWithInt:(int)SNTMetricTypeGaugeString],
+    @"description" : @"String description of the mode.",
     @"fields" : @{
       @"" : @[ @{
         @"value" : @"",
@@ -313,6 +318,7 @@
 
   NSDictionary *expected = @{
     @"/tautology" : @{
+      @"description" : @"The first rule of tautology club is the first rule",
       @"type" : [NSNumber numberWithInt:(int)SNTMetricTypeConstantBool],
       @"fields" : @{
         @"" : @[ @{
@@ -337,6 +343,7 @@
 
   NSDictionary *expected = @{
     @"/build/label" : @{
+      @"description" : @"Build label for the binary",
       @"type" : [NSNumber numberWithInt:(int)SNTMetricTypeConstantString],
       @"fields" : @{
         @"" : @[ @{
@@ -360,6 +367,7 @@
 
   NSDictionary *expected = @{
     @"/deep/thought/answer" : @{
+      @"description" : @"Life, the universe, and everything",
       @"type" : [NSNumber numberWithInt:(int)SNTMetricTypeConstantInt64],
       @"fields" : @{
         @"" : @[ @{
@@ -386,10 +394,10 @@
   [metricSet addConstantBooleanWithName:@"/santa/using_endpoint_security_framework"
                                helpText:@"Is santad using the endpoint security framework."
                                   value:TRUE];
-  [metricSet addConstantIntegerWithName:@"/proc/birth_timestamp"
-                               helpText:@"Start time of this LogDumper instance, in microseconds "
-                                        @"since epoch"
-                                  value:(long long)(0x12345668910)];
+  [metricSet
+    addConstantIntegerWithName:@"/proc/birth_timestamp"
+                      helpText:@"Start time of this santad instance, in microseconds since epoch"
+                         value:(long long)(0x12345668910)];
   // Add Metrics
   SNTMetricCounter *c = [metricSet counterWithName:@"/santa/events"
                                         fieldNames:@[ @"rule_type" ]
@@ -414,7 +422,7 @@
   SNTMetricInt64Gauge *residentMemoryGauge =
     [metricSet int64GaugeWithName:@"/proc/memory/resident_size"
                        fieldNames:@[]
-                         helpText:@"The resident set siz of this process."];
+                         helpText:@"The resident set size of this process."];
 
   [metricSet registerCallback:^(void) {
     [virtualMemoryGauge set:987654321 forFieldValues:@[]];
@@ -425,6 +433,7 @@
     @"root_labels" : @{@"hostname" : @"testHost", @"username" : @"testUser"},
     @"metrics" : @{
       @"/build/label" : @{
+        @"description" : @"Software version running.",
         @"type" : [NSNumber numberWithInt:(int)SNTMetricTypeConstantString],
         @"fields" : @{
           @"" : @[ @{
@@ -436,6 +445,7 @@
         }
       },
       @"/santa/events" : @{
+        @"description" : @"Count of events on the host",
         @"type" : [NSNumber numberWithInt:(int)SNTMetricTypeCounter],
         @"fields" : @{
           @"rule_type" : @[
@@ -455,6 +465,7 @@
         },
       },
       @"/santa/rules" : @{
+        @"description" : @"Number of rules.",
         @"type" : [NSNumber numberWithInt:(int)SNTMetricTypeGaugeInt64],
         @"fields" : @{
           @"rule_type" : @[
@@ -474,6 +485,7 @@
         },
       },
       @"/santa/using_endpoint_security_framework" : @{
+        @"description" : @"Is santad using the endpoint security framework.",
         @"type" : [NSNumber numberWithInt:(int)SNTMetricTypeConstantBool],
         @"fields" : @{
           @"" : @[ @{
@@ -485,6 +497,7 @@
         }
       },
       @"/proc/birth_timestamp" : @{
+        @"description" : @"Start time of this santad instance, in microseconds since epoch",
         @"type" : [NSNumber numberWithInt:(int)SNTMetricTypeConstantInt64],
         @"fields" : @{
           @"" : @[ @{
@@ -496,6 +509,7 @@
         },
       },
       @"/proc/memory/virtual_size" : @{
+        @"description" : @"The virtual memory size of this process.",
         @"type" : [NSNumber numberWithInt:(int)SNTMetricTypeGaugeInt64],
         @"fields" : @{
           @"" : @[ @{
@@ -507,6 +521,7 @@
         }
       },
       @"/proc/memory/resident_size" : @{
+        @"description" : @"The resident set size of this process.",
         @"type" : [NSNumber numberWithInt:(int)SNTMetricTypeGaugeInt64],
         @"fields" : @{
           @"" : @[ @{

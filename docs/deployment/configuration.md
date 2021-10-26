@@ -49,6 +49,8 @@ Additionally, there are options that can be controlled by both.
 | EnableMachineIDDecoration     | Bool       | If YES, this appends the MachineID to the end of each log line. Defaults to NO.       |
 | MetricFormat                 | String     | Format to export metrics as, supported formats are "rawjson" for a single JSON blob and "monarchjson" for a format consumable by Google's Monarch tooling. Defaults to "". |
 | MetricURL                    | String     | URL describing where monitoring metrics should be exported.  |
+| MetricExportInterval         | Integer    | Number of seconds to wait between exporting metrics. Defaults to 30.  |
+
 
 *overridable by the sync server: run `santactl status` to check the current
 running config

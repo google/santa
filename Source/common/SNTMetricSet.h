@@ -100,6 +100,15 @@ typedef NS_ENUM(NSInteger, SNTMetricType) {
                            fieldNames:(NSArray<NSString *> *)fieldNames
                              helpText:(NSString *)text;
 
+/**
+ * Returns a shared global instance with default root labels and metrics registered.
+ */
++ (instancetype)sharedInstance;
+
+
+/**
+ *  Add a root label to the MetricSet.
+ */
 - (void)addRootLabel:(NSString *)label value:(NSString *)value;
 
 /**
