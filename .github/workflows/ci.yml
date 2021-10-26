@@ -9,7 +9,7 @@ on:
 
 jobs:
   preqs:
-    runs-on: macos-latest
+    runs-on: ubuntu-latest
     outputs:
       run_build_and_tests: ${{ steps.step1.outputs.run_build_and_tests }}
       build_driver: ${{ steps.step1.outputs.build_driver }}
@@ -63,7 +63,11 @@ jobs:
         run: ./Testing/lint.sh
 
   build_userspace:
-    runs-on: macos-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-10.15, macos-11, macos-latest]
+    runs-on: ${{ matrix.os }}
     needs: [preqs]
     if: needs.preqs.outputs.run_build_and_tests == 'true'
     steps:
@@ -72,7 +76,11 @@ jobs:
        run: bazel build --apple_generate_dsym -c opt :release --define=SANTA_BUILD_TYPE=ci
 
   build_driver:
-    runs-on: macos-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-10.15, macos-11, macos-latest]
+    runs-on: ${{ matrix.os }}
     needs: [preqs]
     if: needs.preqs.outputs.build_driver == 'true'
     steps:
@@ -81,7 +89,11 @@ jobs:
         run: bazel build --apple_generate_dsym -c opt :release_driver --define=SANTA_BUILD_TYPE=ci
 
   unit_tests:
-    runs-on: macos-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-10.15, macos-11, macos-latest]
+    runs-on: ${{ matrix.os }}
     needs: [preqs]
     if: needs.preqs.outputs.run_build_and_tests == 'true'
     steps:
@@ -90,7 +102,7 @@ jobs:
         run: bazel test :unit_tests --define=SANTA_BUILD_TYPE=ci
 
   test_coverage:
-    runs-on: macos-latest
+    runs-on: macos-11
     needs: [preqs]
     if: needs.preqs.outputs.run_build_and_tests == 'true'
     steps:
@@ -105,7 +117,7 @@ jobs:
           flag-name: Unit
 
   benchmark:
-    runs-on: macos-latest
+    runs-on: macos-11
     needs: [preqs]
     if: needs.preqs.outputs.run_build_and_tests == 'true'
     steps:
