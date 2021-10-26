@@ -189,18 +189,21 @@ ways to install configuration profiles:
 
 | Key                            | Value Type | Description                              |
 | ------------------------------ | ---------- | ---------------------------------------- |
-| client_mode                    | String     | MONITOR or LOCKDOWN, defaults to MONITOR. |
-| clean_sync**                   | Bool       | If set to `True` Santa will clear all local rules and download a fresh copy from the sync-server. Defaults to `False`. |
-| batch_size                     | Integer    | The number of rules to download or events to upload per request. Multiple requests will be made if there is more work than can fit in single request. Defaults to 50. |
-| upload_logs_url**              | String     | If set, the endpoint to send Santa's current logs. No default. |
-| allowed_path_regex             | String     | Same as the "Local Configuration" AllowedPathRegex. No default. |
-| blocked_path_regex             | String     | Same as the "Local Configuration" BlockedPathRegex. No default. |
-| full_sync_interval*            | Integer    | The max time to wait before performing a full sync with the server. Defaults to 600 secs (10 minutes) if not set. |
-| fcm_token*                     | String     | The FCM token used by Santa to listen for FCM messages. Unique for every machine. No default. |
-| fcm_full_sync_interval*        | Integer    | The full sync interval if a fcm_token is set. Defaults to  14400 secs (4 hours). |
-| fcm_global_rule_sync_deadline* | Integer    | The max time to wait before performing a rule sync when a global rule sync FCM message is received. This allows syncing to be staggered for global events to avoid spikes in server load. Defaults to 600 secs (10 min). |
-| enable_bundles*                | Bool       | If set to `True` the bundle scanning feature is enabled. Defaults to `False`. |
-| enable_transitive_rules        | Bool       | If set to `True` the transitive rule feature is enabled. Defaults to `False`. |
+| client\_mode                    | String     | MONITOR or LOCKDOWN, defaults to MONITOR. |
+| clean\_sync\*\*                   | Bool       | If set to `True` Santa will clear all local rules and download a fresh copy from the sync-server. Defaults to `False`. |
+| batch\_size                     | Integer    | The number of rules to download or events to upload per request. Multiple requests will be made if there is more work than can fit in single request. Defaults to 50. |
+| upload\_logs\_url\*\*              | String     | If set, the endpoint to send Santa's current logs. No default. |
+| allowed\_path\_regex             | String     | Same as the "Local Configuration" AllowedPathRegex. No default. |
+| blocked\_path\_regex             | String     | Same as the "Local Configuration" BlockedPathRegex. No default. |
+| full\_sync\_interval\*            | Integer    | The max time to wait before performing a full sync with the server. Defaults to 600 secs (10 minutes) if not set. |
+| fcm\_token\*                     | String     | The FCM token used by Santa to listen for FCM messages. Unique for every machine. No default. |
+| fcm\_full\_sync\_interval\*        | Integer    | The full sync interval if a fcm\_token is set. Defaults to  14400 secs (4 hours). |
+| fcm\_global\_rule\_sync\_deadline\* | Integer    | The max time to wait before performing a rule sync when a global rule sync FCM message is received. This allows syncing to be staggered for global events to avoid spikes in server load. Defaults to 600 secs (10 min). |
+| enable\_bundles\*                | Bool       | If set to `True` the bundle scanning feature is enabled. Defaults to `False`. |
+| enable\_transitive\_rules        | Bool       | If set to `True` the transitive rule feature is enabled. Defaults to `False`. |
+| block\_usb\_mass\_storage         | Bool       | If set to 'True' blocking USB Mass storage feature is enabled. Defaults to `False`. | 
+| remount\_usb\_mode         | Array       | Array of strings for arguments to pass to mount -o (any of "rdonly", "noexec", "nosuid", "nobrowse", "noowners", "nodev", "async", "-j"). when forcibly remounting devices. No default. |
+
 
 *Held only in memory. Not persistent upon process restart.
 

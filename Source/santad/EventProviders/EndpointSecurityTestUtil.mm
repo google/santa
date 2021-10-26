@@ -89,19 +89,22 @@ CF_EXTERN_C_END
 @implementation ESResponse
 @end
 
-@interface MockEndpointSecurity ()
-@property NSMutableArray<ESCallback> *responseCallbacks;
-@property NSObject *client;
+@interface MockESClient : NSObject
+@property NSMutableArray *_Nonnull subscriptions;
 @property es_handler_block_t handler;
 @end
 
-@implementation MockEndpointSecurity
+@implementation MockESClient
+
 - (instancetype)init {
   self = [super init];
   if (self) {
-    _responseCallbacks = [NSMutableArray array];
-    _subscriptions = [NSMutableArray arrayWithCapacity:ES_EVENT_TYPE_LAST];
-    [self resetSubscriptions];
+    @synchronized(self) {
+      _subscriptions = [NSMutableArray arrayWithCapacity:ES_EVENT_TYPE_LAST];
+      for (size_t i = 0; i < ES_EVENT_TYPE_LAST; i++) {
+        [self.subscriptions addObject:@NO];
+      }
+    }
   }
   return self;
 };
@@ -112,31 +115,78 @@ CF_EXTERN_C_END
   }
 }
 
+- (void)triggerHandler:(es_message_t *_Nonnull)msg {
+  self.handler((__bridge es_client_t *_Nullable)self, msg);
+}
+
+- (void)dealloc {
+  @synchronized(self) {
+    [self.subscriptions removeAllObjects];
+  }
+}
+
+@end
+
+@interface MockEndpointSecurity ()
+@property NSMutableArray<MockESClient *> *clients;
+
+// Array of collections of ESCallback blocks
+// This should be of size ES_EVENT_TYPE_LAST, allowing for indexing by ES_EVENT_TYPE_xxx members.
+@property NSMutableArray<NSMutableArray<ESCallback> *> *responseCallbacks;
+@end
+
+@implementation MockEndpointSecurity
+- (instancetype)init {
+  self = [super init];
+  if (self) {
+    @synchronized(self) {
+      _clients = [NSMutableArray array];
+      _responseCallbacks = [NSMutableArray arrayWithCapacity:ES_EVENT_TYPE_LAST];
+      for (size_t i = 0; i < ES_EVENT_TYPE_LAST; i++) {
+        [self.responseCallbacks addObject:[NSMutableArray array]];
+      }
+      [self reset];
+    }
+  }
+  return self;
+};
+
+- (void)resetResponseCallbacks {
+  for (NSMutableArray *callback in self.responseCallbacks) {
+    if (callback != nil) {
+      [callback removeAllObjects];
+    }
+  }
+}
+
 - (void)reset {
   @synchronized(self) {
-    [self.responseCallbacks removeAllObjects];
-    self.handler = nil;
-    self.client = nil;
+    [self.clients removeAllObjects];
+    [self resetResponseCallbacks];
   }
 };
 
 - (void)newClient:(es_client_t *_Nullable *_Nonnull)client
           handler:(es_handler_block_t __strong)handler {
   // es_client_t is generally used as a pointer to an opaque struct (secretly a mach port).
-  // We just want to set it to something nonnull for passing initialization checks. It shouldn't
-  // ever be directly dereferenced.
-  self.client = [[NSObject alloc] init];
-  *client = (__bridge es_client_t *)self.client;
-  self.handler = handler;
+  // There is also a few nonnull initialization checks on it.
+  MockESClient *mockClient = [[MockESClient alloc] init];
+  *client = (__bridge es_client_t *)mockClient;
+  mockClient.handler = handler;
+  [self.clients addObject:mockClient];
 }
 
 - (void)triggerHandler:(es_message_t *_Nonnull)msg {
-  self.handler((__bridge es_client_t *_Nullable)self.client, msg);
+  for (MockESClient *client in self.clients) {
+    if (client.subscriptions[msg->event_type]) {
+      [client triggerHandler:msg];
+    }
+  }
 }
 
-- (void)registerResponseCallback:(ESCallback _Nonnull)callback {
+- (void)registerResponseCallback:(es_event_type_t)t withCallback:(ESCallback _Nonnull)callback {
   @synchronized(self) {
-    [self.responseCallbacks addObject:callback];
+    [self.responseCallbacks[t] addObject:callback];
   }
 }
 
@@ -147,7 +197,7 @@ CF_EXTERN_C_END
     ESResponse *response = [[ESResponse alloc] init];
     response.result = result;
     response.shouldCache = cache;
-    for (void (^callback)(ESResponse *) in self.responseCallbacks) {
+    for (void (^callback)(ESResponse *) in self.responseCallbacks[msg->event_type]) {
       callback(response);
     }
   }
@@ -156,10 +206,22 @@ CF_EXTERN_C_END
 
 - (void)setSubscriptions:(const es_event_type_t *_Nonnull)events
              event_count:(uint32_t)event_count
-                   value:(NSNumber *)value {
+                   value:(NSNumber *)value
+                  client:(es_client_t *)client {
   @synchronized(self) {
+    MockESClient *toUpdate = nil;
+    for (MockESClient *c in self.clients) {
+      if (client == (__bridge es_client_t *)c) {
+        toUpdate = c;
+      }
+    }
+    if (toUpdate == nil) {
+      NSLog(@"setting subscription for unknown client");
+      return;
+    }
+
     for (size_t i = 0; i < event_count; i++) {
-      self.subscriptions[events[i]] = value;
+      toUpdate.subscriptions[events[i]] = value;
     }
   }
 }
@@ -212,7 +274,8 @@ es_return_t es_subscribe(es_client_t *_Nonnull client, const es_event_type_t *_N
                          uint32_t event_count) {
   [[MockEndpointSecurity mockEndpointSecurity] setSubscriptions:events
                                                     event_count:event_count
-                                                          value:@YES];
+                                                          value:@YES
+                                                         client:client];
   return ES_RETURN_SUCCESS;
 }
 API_AVAILABLE(macos(10.15))
@@ -221,7 +284,8 @@ es_return_t es_unsubscribe(es_client_t *_Nonnull client, const es_event_type_t *
                            uint32_t event_count) {
   [[MockEndpointSecurity mockEndpointSecurity] setSubscriptions:events
                                                     event_count:event_count
-                                                          value:@NO];
+                                                          value:@NO
+                                                         client:client];
 
   return ES_RETURN_SUCCESS;
 };
