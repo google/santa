@@ -15,6 +15,7 @@
 #import "Source/common/SNTCommonEnums.h"
 #import "Source/common/SNTConfigurator.h"
 #import "Source/common/SNTMetricSet.h"
+#import "Source/common/SNTSystemInfo.h"
 #import "Source/santad/SNTApplicationCoreMetrics.h"
 #import "Source/santametricservice/Formats/SNTMetricFormatTestHelper.h"
 
@@ -80,11 +81,7 @@
 
   NSString *version = [[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleVersion"];
 
-  NSProcessInfo *processInfo = [NSProcessInfo processInfo];
-  NSString *shortOSVersion =
-    [NSString stringWithFormat:@"%ld.%ld.%ld", processInfo.operatingSystemVersion.majorVersion,
-                               processInfo.operatingSystemVersion.minorVersion,
-                               processInfo.operatingSystemVersion.patchVersion];
+  NSString *shortOSVersion = [SNTSystemInfo osVersion];
 
   NSDateFormatter *formatter = [[NSDateFormatter alloc] init];
 

@@ -84,6 +84,7 @@ objc_library(
         "//Source/common:SNTCommonEnums",
         "//Source/common:SNTConfigurator",
         "//Source/common:SNTMetricSet",
+        "//Source/common:SNTSystemInfo",
     ],
 )
 
