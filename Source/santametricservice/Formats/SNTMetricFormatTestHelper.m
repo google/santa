@@ -19,8 +19,11 @@
 
 @implementation SNTMetricFormatTestHelper
 + (NSDictionary *)convertDatesToFixedDateWithExportDict:(NSMutableDictionary *)exportDict {
-  NSDateFormatter *formatter = [[NSDateFormatter alloc] init];
-  [formatter setDateFormat:@"yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"];
+
+  NSISO8601DateFormatter *formatter = [[NSISO8601DateFormatter alloc] init];
+  if (@available(macOS 10.13, *)) {
+  	formatter.formatOptions = NSISO8601DateFormatWithInternetDateTime | NSISO8601DateFormatWithFractionalSeconds;
+  }
   NSDate *fixedDate = [formatter dateFromString:@"2021-09-16T21:07:34.826Z"];
 
   for (NSString *metricName in exportDict[@"metrics"]) {
