@@ -386,6 +386,10 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
   return [self configStateSet];
 }
 
++ (NSSet *)keyPathsForValuesAffectingEnableBadSignatureProtection {
+  return [self configStateSet];
+}
+
 #pragma mark Public Interface
 
 - (SNTClientMode)clientMode {
