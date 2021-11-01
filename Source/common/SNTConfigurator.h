@@ -269,7 +269,7 @@
 @property(nonatomic) BOOL syncCleanRequired;
 
 ///
-/// USB Mass Storage Blocking. Defalts to false.
+/// USB Mass Storage Blocking. Defaults to false.
 ///
 @property(nonatomic) BOOL blockUSBMassStorage;
 

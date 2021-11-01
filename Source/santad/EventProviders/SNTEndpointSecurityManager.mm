@@ -375,7 +375,6 @@
       BOOL isUSB = [diskInfo[@"DADeviceProtocol"] isEqualTo:@"USB"];
 
       if (!isRemovable || !isUSB) {
-        LOGI(@"Did not block mounting %s", m->event.mount.statfs->f_mntfromname);
         es_respond_auth_result(self.client, m, ES_AUTH_RESULT_ALLOW, false);
         return;
       }
