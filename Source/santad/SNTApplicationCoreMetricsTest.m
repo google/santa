@@ -83,9 +83,13 @@
 
   NSString *shortOSVersion = [SNTSystemInfo osVersion];
 
-  NSDateFormatter *formatter = [[NSDateFormatter alloc] init];
+  NSISO8601DateFormatter *formatter = [[NSISO8601DateFormatter alloc] init];
 
-  [formatter setDateFormat:@"yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"];
+  if (@available(macOS 10.13, *)) {
+    formatter.formatOptions =
+      NSISO8601DateFormatWithFractionalSeconds | NSISO8601DateFormatWithInternetDateTime;
+  }
+
   NSDate *fixedDate = [formatter dateFromString:@"2021-09-16T21:07:34.826Z"];
 
   NSDictionary *expected = @{
