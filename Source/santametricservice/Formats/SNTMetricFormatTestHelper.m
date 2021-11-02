@@ -19,13 +19,19 @@
 
 @implementation SNTMetricFormatTestHelper
 + (NSDictionary *)convertDatesToFixedDateWithExportDict:(NSMutableDictionary *)exportDict {
-  NSISO8601DateFormatter *formatter = [[NSISO8601DateFormatter alloc] init];
+  id formatter;
 
   if (@available(macOS 10.13, *)) {
-    formatter.formatOptions =
+    NSISO8601DateFormatter *isoFormatter = [[NSISO8601DateFormatter alloc] init];
+
+    isoFormatter.formatOptions =
       NSISO8601DateFormatWithInternetDateTime | NSISO8601DateFormatWithFractionalSeconds;
+    formatter = isoFormatter;
   } else {
-    [formatter setTimeZone:[NSTimeZone timeZoneWithName:@"UTC"]];
+    NSDateFormatter *localFormatter = [[NSDateFormatter alloc] init];
+    [localFormatter setDateFormat:@"yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"];
+    [localFormatter setTimeZone:[NSTimeZone timeZoneWithName:@"UTC"]];
+    formatter = localFormatter;
   }
 
   NSDate *fixedDate = [formatter dateFromString:@"2021-09-16T21:07:34.826Z"];
