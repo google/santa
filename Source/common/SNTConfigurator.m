@@ -260,6 +260,10 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
   return [self configStateSet];
 }
 
++ (NSSet *)keyPathsForValuesAffectingAboutText {
+  return [self configStateSet];
+}
+
 + (NSSet *)keyPathsForValuesAffectingMoreInfoURL {
   return [self configStateSet];
 }
