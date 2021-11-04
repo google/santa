@@ -25,6 +25,7 @@ Additionally, there are options that can be controlled by both.
 | BlockedPathRegex*             | String     | A regex to block if the binary or certificate scopes did not allow/block an execution.  Regexes are specified in ICU format. |
 | EnableBadSignatureProtection  | Bool       | Enable bad signature protection, defaults to NO. If this flag is set to YES, binaries with a bad signing chain will be blocked even in MONITOR mode, **unless** the binary is allowed by an explicit rule. |
 | EnablePageZeroProtection      | Bool       | Enable `__PAGEZERO` protection, defaults to YES. If this flag is set to YES, 32-bit binaries that are missing the `__PAGEZERO` segment will be blocked even in MONITOR mode, **unless** the binary is allowed by an explicit rule. |
+| AboutText                     | String     | The text to display when the user opening Santa.app. If unset, the default text will be displayed. |
 | MoreInfoURL                   | String     | The URL to open when the user clicks "More Info..." when opening Santa.app.  If unset, the button will not be displayed. |
 | EventDetailURL                | String     | See the [EventDetailURL](#eventdetailurl) section below. |
 | EventDetailText               | String     | Related to the above property, this string represents the text to show on the button. |
