@@ -12,7 +12,6 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       run_build_and_tests: ${{ steps.step1.outputs.run_build_and_tests }}
-      build_driver: ${{ steps.step1.outputs.build_driver }}
 
     steps:
       - uses: actions/checkout@v2
@@ -26,16 +25,11 @@ jobs:
 
           cat files.txt
 
-          build_driver=0
           build_and_run_tests=0
 
           for file in `cat files.txt`; do
             if [[ $file = Source/* ]]; then
               build_and_run_test=1;
-              if [[ $file = Source/santa_driver/* || $file = Source/common/* ]]; then
-                 build_driver=1;
-                 break;
-              fi
             fi
           done
 
@@ -46,12 +40,6 @@ jobs:
             echo "::set-output name=run_build_and_tests::false"
           fi
 
-          if [[ $build_driver != 0 ]]; then
-            echo "NEED TO BUILD DRIVER"
-            echo "::set-output name=build_driver::true"
-          else
-            echo "::set-output name=build_driver::false"
-          fi
 
   lint:
     runs-on: ubuntu-latest
@@ -74,19 +62,6 @@ jobs:
      - uses: actions/checkout@v2
      - name: Build Userspace
        run: bazel build --apple_generate_dsym -c opt :release --define=SANTA_BUILD_TYPE=ci
-
-  build_driver:
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [macos-10.15, macos-11]
-    runs-on: ${{ matrix.os }}
-    needs: [preqs]
-    if: needs.preqs.outputs.build_driver == 'true'
-    steps:
-      - uses: actions/checkout@v2
-      - name: Build Driver
-        run: bazel build --apple_generate_dsym -c opt :release_driver --define=SANTA_BUILD_TYPE=ci
 
   unit_tests:
     strategy:

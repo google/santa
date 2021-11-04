@@ -93,20 +93,6 @@ cc_library(
     ],
 )
 
-cc_library(
-    name = "SNTLoggingKernel",
-    hdrs = ["SNTLogging.h"],
-    copts = [
-        "-mkernel",
-        "-I__BAZEL_XCODE_SDKROOT__/System/Library/Frameworks/Kernel.framework/Headers",
-    ],
-    defines = [
-        "KERNEL",
-        "TARGET_OS_OSX",
-        "TARGET_OS_MAC",
-    ],
-)
-
 objc_library(
     name = "SNTLogging",
     srcs = ["SNTLogging.m"],
@@ -120,23 +106,6 @@ cc_library(
     hdrs = ["SNTPrefixTree.h"],
     copts = ["-std=c++11"],
     deps = [":SNTLogging"],
-)
-
-cc_library(
-    name = "SNTPrefixTreeKernel",
-    srcs = ["SNTPrefixTree.cc"],
-    hdrs = ["SNTPrefixTree.h"],
-    copts = [
-        "-std=c++11",
-        "-mkernel",
-        "-I__BAZEL_XCODE_SDKROOT__/System/Library/Frameworks/Kernel.framework/Headers",
-    ],
-    defines = [
-        "KERNEL",
-        "TARGET_OS_OSX",
-        "TARGET_OS_MAC",
-    ],
-    deps = [":SNTLoggingKernel"],
 )
 
 objc_library(
