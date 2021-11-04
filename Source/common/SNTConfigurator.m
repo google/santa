@@ -497,7 +497,7 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
 }
 
 - (NSString *)aboutText {
-    return self.configState[kAboutText];
+  return self.configState[kAboutText];
 }
 
 - (NSURL *)moreInfoURL {
