@@ -158,9 +158,12 @@
   OCMStub([self.mockRuleDatabase ruleForBinarySHA256:nil certificateSHA256:@"a" teamID:nil])
     .andReturn(rule);
 
+  OCMExpect([self.mockEventDatabase addStoredEvent:OCMOCK_ANY]);
+
   [self.sut validateBinaryWithMessage:[self getMessage]];
 
   OCMVerify([self.mockDriverManager postAction:ACTION_RESPOND_DENY forMessage:[self getMessage]]);
+  OCMVerifyAllWithDelay(self.mockEventDatabase, 1);
 }
 
 - (void)testBinaryAllowCompilerRule {
@@ -224,9 +227,12 @@
   OCMStub([self.mockRuleDatabase ruleForBinarySHA256:@"a" certificateSHA256:nil teamID:nil])
     .andReturn(rule);
 
+  OCMExpect([self.mockEventDatabase addStoredEvent:OCMOCK_ANY]);
+
   [self.sut validateBinaryWithMessage:[self getMessage]];
 
   OCMVerify([self.mockDriverManager postAction:ACTION_RESPOND_DENY forMessage:[self getMessage]]);
+  OCMVerifyAllWithDelay(self.mockEventDatabase, 1);
 }
 
 - (void)testDefaultDecision {
@@ -234,17 +240,19 @@
   OCMStub([self.mockFileInfo SHA256]).andReturn(@"a");
 
   OCMExpect([self.mockConfigurator clientMode]).andReturn(SNTClientModeMonitor);
+  OCMExpect([self.mockEventDatabase addStoredEvent:OCMOCK_ANY]);
+
   [self.sut validateBinaryWithMessage:[self getMessage]];
   OCMVerify([self.mockDriverManager postAction:ACTION_RESPOND_ALLOW forMessage:[self getMessage]]);
 
   OCMExpect([self.mockConfigurator clientMode]).andReturn(SNTClientModeLockdown);
   [self.sut validateBinaryWithMessage:[self getMessage]];
   OCMVerify([self.mockDriverManager postAction:ACTION_RESPOND_DENY forMessage:[self getMessage]]);
+  OCMVerifyAllWithDelay(self.mockEventDatabase, 1);
 }
 
 - (void)testOutOfScope {
   OCMStub([self.mockFileInfo isMachO]).andReturn(NO);
-
   OCMStub([self.mockConfigurator clientMode]).andReturn(SNTClientModeLockdown);
   [self.sut validateBinaryWithMessage:[self getMessage]];
   OCMVerify([self.mockDriverManager postAction:ACTION_RESPOND_ALLOW forMessage:[self getMessage]]);
@@ -258,9 +266,10 @@
 - (void)testPageZero {
   OCMStub([self.mockFileInfo isMachO]).andReturn(YES);
   OCMStub([self.mockFileInfo isMissingPageZero]).andReturn(YES);
-
+  OCMExpect([self.mockEventDatabase addStoredEvent:OCMOCK_ANY]);
   [self.sut validateBinaryWithMessage:[self getMessage]];
   OCMVerify([self.mockDriverManager postAction:ACTION_RESPOND_DENY forMessage:[self getMessage]]);
+  OCMVerifyAllWithDelay(self.mockEventDatabase, 1);
 }
 
 @end
