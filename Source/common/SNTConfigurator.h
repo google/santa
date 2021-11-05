@@ -186,6 +186,12 @@
 #pragma mark - GUI Settings
 
 ///
+/// The text to display when opening Santa.app.
+/// If unset, the default text will be displayed.
+///
+@property(readonly, nonatomic) NSString *aboutText;
+
+///
 ///  The URL to open when the user clicks "More Info..." when opening Santa.app.
 ///  If unset, the button will not be displayed.
 ///

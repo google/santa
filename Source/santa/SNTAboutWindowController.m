@@ -24,7 +24,12 @@
 
 - (void)loadWindow {
   [super loadWindow];
-  if (![[SNTConfigurator configurator] moreInfoURL]) {
+  SNTConfigurator *config = [SNTConfigurator configurator];
+  NSString *aboutText = [config aboutText];
+  if (aboutText) {
+    [self.aboutTextField setStringValue:aboutText];
+  }
+  if (![config moreInfoURL]) {
     [self.moreInfoButton removeFromSuperview];
   }
 }

@@ -7,6 +7,7 @@
     <objects>
         <customObject id="-2" userLabel="File's Owner" customClass="SNTAboutWindowController">
             <connections>
+                <outlet property="aboutTextField" destination="uh6-q0-RzL" id="oGn-hV-wwc"/>
                 <outlet property="moreInfoButton" destination="SRu-Kf-vu5" id="Vj2-9Q-05d"/>
                 <outlet property="window" destination="F0z-JX-Cv5" id="gIp-Ho-8D9"/>
             </connections>

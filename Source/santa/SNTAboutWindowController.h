@@ -16,6 +16,7 @@
 
 @interface SNTAboutWindowController : NSWindowController
 
+@property IBOutlet NSTextField *aboutTextField;
 @property IBOutlet NSButton *moreInfoButton;
 
 - (IBAction)openMoreInfoURL:(id)sender;

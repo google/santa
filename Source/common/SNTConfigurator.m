@@ -59,6 +59,7 @@ static NSString *const kMachineOwnerPlistKeyKey = @"MachineOwnerKey";
 static NSString *const kMachineIDPlistFileKey = @"MachineIDPlist";
 static NSString *const kMachineIDPlistKeyKey = @"MachineIDKey";
 
+static NSString *const kAboutText = @"AboutText";
 static NSString *const kMoreInfoURLKey = @"MoreInfoURL";
 static NSString *const kEventDetailURLKey = @"EventDetailURL";
 static NSString *const kEventDetailTextKey = @"EventDetailText";
@@ -144,6 +145,7 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
       kBlockedPathRegexKeyDeprecated : re,
       kEnablePageZeroProtectionKey : number,
       kEnableBadSignatureProtectionKey : number,
+      kAboutText : string,
       kMoreInfoURLKey : string,
       kEventDetailURLKey : string,
       kEventDetailTextKey : string,
@@ -255,6 +257,10 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
 }
 
 + (NSSet *)keyPathsForValuesAffectingEnablePageZeroProtection {
+  return [self configStateSet];
+}
+
++ (NSSet *)keyPathsForValuesAffectingAboutText {
   return [self configStateSet];
 }
 
@@ -492,6 +498,10 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
 - (BOOL)enableBadSignatureProtection {
   NSNumber *number = self.configState[kEnableBadSignatureProtectionKey];
   return number ? [number boolValue] : NO;
+}
+
+- (NSString *)aboutText {
+  return self.configState[kAboutText];
 }
 
 - (NSURL *)moreInfoURL {
