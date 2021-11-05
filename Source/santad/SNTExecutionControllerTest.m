@@ -87,16 +87,6 @@
   return (santa_vnode_id_t){.fsid = 1234, .fileid = 5678};
 }
 
-- (void)tearDown {
-  [self.mockFileInfo stopMocking];
-  [self.mockCodesignChecker stopMocking];
-  [self.mockDriverManager stopMocking];
-  [self.mockRuleDatabase stopMocking];
-  [self.mockEventDatabase stopMocking];
-
-  [super tearDown];
-}
-
 - (void)testBinaryAllowRule {
   OCMStub([self.mockFileInfo isMachO]).andReturn(YES);
   OCMStub([self.mockFileInfo SHA256]).andReturn(@"a");

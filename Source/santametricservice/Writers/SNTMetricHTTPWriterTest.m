@@ -52,12 +52,6 @@
     .andReturn(self.mockSessionDataTask);
 }
 
-- (void)tearDown {
-  [self.mockSessionDataTask stopMocking];
-  [self.mockSession stopMocking];
-  [self.mockMOLAuthenticatingURLSession stopMocking];
-}
-
 /// enqueues a mock HTTP response for testing.
 - (void)createMockResponseWithURL:(NSURL *)url
                          withCode:(NSInteger)code
