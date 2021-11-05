@@ -157,7 +157,7 @@
   rule.type = SNTRuleTypeCertificate;
   OCMStub([self.mockRuleDatabase ruleForBinarySHA256:nil certificateSHA256:@"a" teamID:nil])
     .andReturn(rule);
-  
+
   OCMExpect([self.mockEventDatabase addStoredEvent:OCMOCK_ANY]);
 
   [self.sut validateBinaryWithMessage:[self getMessage]];
