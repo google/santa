@@ -146,26 +146,28 @@ NSDictionary *validMetricsDict = nil;
                                HTTPVersion:@"HTTP/1.1"
                               headerFields:@{@"content-type" : @"application/json"}];
 
-  __block void (^passedBlock)(NSData *, NSURLResponse *, NSError *);
+  typedef void (^dataTaskCompletion)(NSData *, NSURLResponse *, NSError *);
+  typedef id (^completionHandler)(NSURLSession *, NSURLRequest *, dataTaskCompletion);
+
+  __block dataTaskCompletion passedBlock;
 
   XCTestExpectation *responseCallback =
     [[XCTestExpectation alloc] initWithDescription:@"ensure writer passed JSON"];
 
   // stub out session to call completion handler immediately.
-  void (^callCompletionHandler)(NSInvocation *) = ^(NSInvocation *invocation) {
-    passedBlock(nil, response, nil);
-    [responseCallback fulfill];
-  };
-
-  OCMStub([(NSURLSessionDataTask *)self.mockSessionDataTask resume]).andDo(callCompletionHandler);
+  OCMStub([(NSURLSessionDataTask *)self.mockSessionDataTask resume])
+    .andDo(^void(NSURLSessionDataTask *unused) {
+      passedBlock(nil, response, nil);
+      [responseCallback fulfill];
+    });
 
   // stub out NSURLSession to assign our completion handler and return our mock
-  void (^getCompletionHandler)(NSInvocation *) = ^(NSInvocation *invocation) {
-    [invocation getArgument:&passedBlock atIndex:3];
-  };
-
   OCMStub([self.mockSession dataTaskWithRequest:[OCMArg any] completionHandler:[OCMArg any]])
-    .andDo(getCompletionHandler)
+    .andDo(
+      ^id(NSURLSession *localSelf, NSURLRequest *request, dataTaskCompletion completionHandler) {
+        passedBlock = completionHandler;
+        return nil;
+      })
     .andReturn(self.mockSessionDataTask);
 
   SNTMetricService *service = [[SNTMetricService alloc] init];
