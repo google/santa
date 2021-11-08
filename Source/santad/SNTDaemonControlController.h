@@ -28,6 +28,5 @@
 
 - (instancetype)initWithEventProvider:(SNTDriverManager *)driverManager
                     notificationQueue:(SNTNotificationQueue *)notQueue
-                           syncdQueue:(SNTSyncdQueue *)syncdQueue
-                             eventLog:(SNTEventLog *)eventLog;
+                           syncdQueue:(SNTSyncdQueue *)syncdQueue;
 @end
