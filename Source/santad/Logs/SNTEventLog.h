@@ -58,4 +58,8 @@
 // A UTC Date formatter.
 @property(readonly, nonatomic) NSDateFormatter *dateFormatter;
 @property(readonly, nonatomic) NSString *machineID;
+
+// Retrieve an initialized singleton SNTEventLog object.
+// Determines which type of SNTEventLog to use based on [SNTConfigurator eventLogType].
++ (instancetype)logger;
 @end

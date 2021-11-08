@@ -23,6 +23,8 @@
 #import "Source/common/SNTConfigurator.h"
 #import "Source/common/SNTRule.h"
 #import "Source/santad/DataLayer/SNTRuleTable.h"
+#import "Source/santad/Logs/SNTFileEventLog.h"
+#import "Source/santad/Logs/SNTSyslogEventLog.h"
 #import "Source/santad/SNTDatabaseController.h"
 
 @interface SNTEventLog ()
@@ -416,6 +418,26 @@
 #pragma clang diagnostic pop
 
   return [origURL path];  // this will be nil if there was an error
+}
+
++ (instancetype)logger {
+  static SNTEventLog *logger;
+  static dispatch_once_t onceToken;
+  SNTConfigurator *configurator = [SNTConfigurator configurator];
+  dispatch_once(&onceToken, ^{
+    switch ([configurator eventLogType]) {
+      case SNTEventLogTypeSyslog: {
+        logger = [[SNTSyslogEventLog alloc] init];
+        break;
+      }
+      case SNTEventLogTypeFilelog: {
+        logger = [[SNTFileEventLog alloc] init];
+        break;
+      }
+      default: logger = nil;
+    }
+  });
+  return logger;
 }
 
 @end
