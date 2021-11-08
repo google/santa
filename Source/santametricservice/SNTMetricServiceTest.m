@@ -43,15 +43,6 @@ NSDictionary *validMetricsDict = nil;
 
 - (void)tearDown {
   [self.mockConfigurator stopMocking];
-  if (self.mockSessionDataTask != nil) {
-    [self.mockSessionDataTask stopMocking];
-  }
-  if (self.mockSession != nil) {
-    [self.mockSession stopMocking];
-  }
-  if (self.mockMOLAuthenticatingURLSession != nil) {
-    [self.mockMOLAuthenticatingURLSession stopMocking];
-  }
 
   // delete the temp dir
   [[NSFileManager defaultManager] removeItemAtPath:self.tempDir error:NULL];
@@ -146,28 +137,25 @@ NSDictionary *validMetricsDict = nil;
                                HTTPVersion:@"HTTP/1.1"
                               headerFields:@{@"content-type" : @"application/json"}];
 
-  typedef void (^dataTaskCompletion)(NSData *, NSURLResponse *, NSError *);
-  typedef id (^completionHandler)(NSURLSession *, NSURLRequest *, dataTaskCompletion);
-
-  __block dataTaskCompletion passedBlock;
+  __unsafe_unretained __block void (^passedBlock)(NSData *, NSURLResponse *, NSError *);
 
   XCTestExpectation *responseCallback =
     [[XCTestExpectation alloc] initWithDescription:@"ensure writer passed JSON"];
 
   // stub out session to call completion handler immediately.
-  OCMStub([(NSURLSessionDataTask *)self.mockSessionDataTask resume])
-    .andDo(^void(NSURLSessionDataTask *unused) {
+  OCMStub([(NSURLSessionDataTask *)self.mockSessionDataTask resume]).andDo(^(NSInvocation *inv) {
+    if (passedBlock) {
       passedBlock(nil, response, nil);
-      [responseCallback fulfill];
-    });
+    }
+    [responseCallback fulfill];
+  });
 
   // stub out NSURLSession to assign our completion handler and return our mock
   OCMStub([self.mockSession dataTaskWithRequest:[OCMArg any] completionHandler:[OCMArg any]])
-    .andDo(
-      ^id(NSURLSession *localSelf, NSURLRequest *request, dataTaskCompletion completionHandler) {
-        passedBlock = completionHandler;
-        return nil;
-      })
+    .andDo(^(NSInvocation *inv) {
+      [inv retainArguments];
+      [inv getArgument:&passedBlock atIndex:3];
+    })
     .andReturn(self.mockSessionDataTask);
 
   SNTMetricService *service = [[SNTMetricService alloc] init];

@@ -28,26 +28,27 @@
   self.httpWriter = [[SNTMetricHTTPWriter alloc] init];
   self.mockResponses = [[NSMutableArray alloc] init];
 
-  typedef void (^dataTaskCompletion)(NSData *, NSURLResponse *, NSError *);
-  __block dataTaskCompletion completionHandler;
+  __block void (^completionHandler)(NSData *, NSURLResponse *, NSError *);
 
-  OCMStub([(NSURLSessionDataTask *)self.mockSessionDataTask resume])
-    .andDo(^void(NSURLSessionDataTask *unused) {
-      NSDictionary *responseValue = self.mockResponses[0];
-      if (responseValue != nil) {
-        completionHandler(responseValue[@"data"], responseValue[@"response"],
-                          responseValue[@"error"]);
-        [self.mockResponses removeObjectAtIndex:0];
-      } else {
-        XCTFail(@"mockResponses set to zero");
-      }
-    });
+  void (^getCompletionHandler)(NSInvocation *) = ^(NSInvocation *invocation) {
+    [invocation getArgument:&completionHandler atIndex:3];
+  };
+
+  void (^callCompletionHandler)(NSInvocation *) = ^(NSInvocation *invocation) {
+    NSDictionary *responseValue = self.mockResponses[0];
+    if (responseValue != nil) {
+      completionHandler(responseValue[@"data"], responseValue[@"response"],
+                        responseValue[@"error"]);
+      [self.mockResponses removeObjectAtIndex:0];
+    } else {
+      XCTFail(@"mockResponses set to zero");
+    }
+  };
+
+  OCMStub([(NSURLSessionDataTask *)self.mockSessionDataTask resume]).andDo(callCompletionHandler);
 
   OCMStub([self.mockSession dataTaskWithRequest:[OCMArg any] completionHandler:[OCMArg any]])
-    .andDo(^id(NSURLSession *localSelf, NSURLRequest *request, dataTaskCompletion completion) {
-      completionHandler = completion;
-      return nil;
-    })
+    .andDo(getCompletionHandler)
     .andReturn(self.mockSessionDataTask);
 }
 
