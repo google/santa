@@ -33,8 +33,7 @@
 #import "Source/santad/EventProviders/SNTDriverManager.h"
 #import "Source/santad/EventProviders/SNTEndpointSecurityManager.h"
 #import "Source/santad/EventProviders/SNTEventProvider.h"
-#import "Source/santad/Logs/SNTFileEventLog.h"
-#import "Source/santad/Logs/SNTSyslogEventLog.h"
+#import "Source/santad/Logs/SNTEventLog.h"
 #import "Source/santad/SNTCompilerController.h"
 #import "Source/santad/SNTDaemonControlController.h"
 #import "Source/santad/SNTDatabaseController.h"
@@ -45,7 +44,6 @@
 @interface SNTApplication ()
 @property DASessionRef diskArbSession;
 @property id<SNTEventProvider> eventProvider;
-@property SNTEventLog *eventLog;
 @property SNTExecutionController *execController;
 @property SNTCompilerController *compilerController;
 @property MOLXPCConnection *controlConnection;
@@ -92,11 +90,6 @@
     if (!eventTable) {
       LOGE(@"Failed to initialize event table.");
       return nil;
-    }
-
-    switch ([configurator eventLogType]) {
-      case SNTEventLogTypeSyslog: _eventLog = [[SNTSyslogEventLog alloc] init]; break;
-      case SNTEventLogTypeFilelog: _eventLog = [[SNTFileEventLog alloc] init]; break;
     }
 
     dispatch_async(dispatch_get_global_queue(QOS_CLASS_BACKGROUND, 0), ^{
@@ -154,8 +147,7 @@
     SNTDaemonControlController *dc =
       [[SNTDaemonControlController alloc] initWithEventProvider:_eventProvider
                                               notificationQueue:self.notQueue
-                                                     syncdQueue:syncdQueue
-                                                       eventLog:_eventLog];
+                                                     syncdQueue:syncdQueue];
 
     _controlConnection =
       [[MOLXPCConnection alloc] initServerWithName:[SNTXPCControlInterface serviceID]];
@@ -166,16 +158,14 @@
     [_controlConnection resume];
 
     // Initialize the transitive whitelisting controller object.
-    _compilerController = [[SNTCompilerController alloc] initWithEventProvider:_eventProvider
-                                                                      eventLog:_eventLog];
+    _compilerController = [[SNTCompilerController alloc] initWithEventProvider:_eventProvider];
 
     // Initialize the binary checker object
     _execController = [[SNTExecutionController alloc] initWithEventProvider:_eventProvider
                                                                   ruleTable:ruleTable
                                                                  eventTable:eventTable
                                                               notifierQueue:self.notQueue
-                                                                 syncdQueue:syncdQueue
-                                                                   eventLog:_eventLog];
+                                                                 syncdQueue:syncdQueue];
     // Start up santactl as a daemon if a sync server exists.
     [self startSyncd];
 
@@ -234,16 +224,16 @@
         NSString *path = @(message.path);
         if (!path) break;
         if ([re numberOfMatchesInString:path options:0 range:NSMakeRange(0, path.length)]) {
-          [self->_eventLog logFileModification:message];
+          [[SNTEventLog logger] logFileModification:message];
         }
         break;
       }
       case ACTION_NOTIFY_EXEC: {
-        [self->_eventLog logAllowedExecution:message];
+        [[SNTEventLog logger] logAllowedExecution:message];
         break;
       }
-      case ACTION_NOTIFY_FORK: [self->_eventLog logFork:message]; break;
-      case ACTION_NOTIFY_EXIT: [self->_eventLog logExit:message]; break;
+      case ACTION_NOTIFY_FORK: [[SNTEventLog logger] logFork:message]; break;
+      case ACTION_NOTIFY_EXIT: [[SNTEventLog logger] logExit:message]; break;
       default: LOGE(@"Received log request without a valid action: %d", message.action); break;
     }
   }];
@@ -265,19 +255,17 @@
 }
 
 void diskAppearedCallback(DADiskRef disk, void *context) {
-  SNTApplication *app = (__bridge SNTApplication *)context;
   NSDictionary *props = CFBridgingRelease(DADiskCopyDescription(disk));
   if (![props[@"DAVolumeMountable"] boolValue]) return;
 
-  [app.eventLog logDiskAppeared:props];
+  [[SNTEventLog logger] logDiskAppeared:props];
 }
 
 void diskDescriptionChangedCallback(DADiskRef disk, CFArrayRef keys, void *context) {
-  SNTApplication *app = (__bridge SNTApplication *)context;
   NSDictionary *props = CFBridgingRelease(DADiskCopyDescription(disk));
   if (![props[@"DAVolumeMountable"] boolValue]) return;
 
-  if (props[@"DAVolumePath"]) [app.eventLog logDiskAppeared:props];
+  if (props[@"DAVolumePath"]) [[SNTEventLog logger] logDiskAppeared:props];
 }
 
 void diskDisappearedCallback(DADiskRef disk, void *context) {
@@ -285,7 +273,7 @@ void diskDisappearedCallback(DADiskRef disk, void *context) {
   NSDictionary *props = CFBridgingRelease(DADiskCopyDescription(disk));
   if (![props[@"DAVolumeMountable"] boolValue]) return;
 
-  [app.eventLog logDiskDisappeared:props];
+  [[SNTEventLog logger] logDiskDisappeared:props];
   [app.eventProvider flushCacheNonRootOnly:YES];
 }
 

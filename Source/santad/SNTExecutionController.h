@@ -40,8 +40,7 @@
                             ruleTable:(SNTRuleTable *)ruleTable
                            eventTable:(SNTEventTable *)eventTable
                         notifierQueue:(SNTNotificationQueue *)notifierQueue
-                           syncdQueue:(SNTSyncdQueue *)syncdQueue
-                             eventLog:(SNTEventLog *)eventLog;
+                           syncdQueue:(SNTSyncdQueue *)syncdQueue;
 
 ///
 ///  Handles the logic of deciding whether to allow the binary to run or not, sends the response to

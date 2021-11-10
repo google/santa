@@ -11,7 +11,6 @@
 ///    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 ///    See the License for the specific language governing permissions and
 ///    limitations under the License.
-
 #import "Source/santad/Logs/SNTEventLog.h"
 
 #include <dlfcn.h>
@@ -24,6 +23,9 @@
 #import "Source/common/SNTRule.h"
 #import "Source/santad/DataLayer/SNTRuleTable.h"
 #import "Source/santad/SNTDatabaseController.h"
+
+#import "Source/santad/Logs/SNTFileEventLog.h"
+#import "Source/santad/Logs/SNTSyslogEventLog.h"
 
 @interface SNTEventLog ()
 @property NSMutableDictionary<NSNumber *, SNTCachedDecision *> *detailStore;
@@ -418,4 +420,22 @@
   return [origURL path];  // this will be nil if there was an error
 }
 
++ (instancetype)logger {
+  static SNTEventLog *logger;
+  static dispatch_once_t onceToken;
+  dispatch_once(&onceToken, ^{
+    switch ([[SNTConfigurator configurator] eventLogType]) {
+      case SNTEventLogTypeSyslog: {
+        logger = [[SNTSyslogEventLog alloc] init];
+        break;
+      }
+      case SNTEventLogTypeFilelog: {
+        logger = [[SNTFileEventLog alloc] init];
+        break;
+      }
+      default: logger = nil;
+    }
+  });
+  return logger;
+}
 @end
