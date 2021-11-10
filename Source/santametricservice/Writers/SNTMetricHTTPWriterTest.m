@@ -28,7 +28,7 @@
   self.httpWriter = [[SNTMetricHTTPWriter alloc] init];
   self.mockResponses = [[NSMutableArray alloc] init];
 
-  __block void (^completionHandler)(NSData *, NSURLResponse *, NSError *);
+  __unsafe_unretained __block void (^completionHandler)(NSData *, NSURLResponse *, NSError *);
 
   void (^getCompletionHandler)(NSInvocation *) = ^(NSInvocation *invocation) {
     [invocation getArgument:&completionHandler atIndex:3];
@@ -36,7 +36,7 @@
 
   void (^callCompletionHandler)(NSInvocation *) = ^(NSInvocation *invocation) {
     NSDictionary *responseValue = self.mockResponses[0];
-    if (responseValue != nil) {
+    if (responseValue != nil && completionHandler != nil) {
       completionHandler(responseValue[@"data"], responseValue[@"response"],
                         responseValue[@"error"]);
       [self.mockResponses removeObjectAtIndex:0];
