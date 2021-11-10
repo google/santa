@@ -424,8 +424,7 @@
   static SNTEventLog *logger;
   static dispatch_once_t onceToken;
   dispatch_once(&onceToken, ^{
-    SNTConfigurator *configurator = [SNTConfigurator configurator];
-    switch ([configurator eventLogType]) {
+    switch ([[SNTConfigurator configurator] eventLogType]) {
       case SNTEventLogTypeSyslog: {
         logger = [[SNTSyslogEventLog alloc] init];
         break;
