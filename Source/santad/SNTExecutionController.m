@@ -142,7 +142,7 @@ static size_t kLargeBinarySize = 30 * 1024 * 1024;
   // Log to database if necessary.
   if (cd.decision != SNTEventStateAllowBinary && cd.decision != SNTEventStateAllowCompiler &&
       cd.decision != SNTEventStateAllowTransitive && cd.decision != SNTEventStateAllowCertificate &&
-      cd.decision != SNTEventStateAllowScope) {
+      cd.decision != SNTEventStateAllowTeamID && cd.decision != SNTEventStateAllowScope) {
     SNTStoredEvent *se = [[SNTStoredEvent alloc] init];
     se.occurrenceDate = [[NSDate alloc] init];
     se.fileSHA256 = cd.sha256;
