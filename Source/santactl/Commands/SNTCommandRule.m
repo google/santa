@@ -64,7 +64,7 @@ REGISTER_COMMAND_NAME(@"rule")
           @"    --sha256 {sha256}: hash to add/remove/check [deprecated]\n"
           @"\n"
           @"  Optionally:\n"
-          @"    --teamid {teamid}: add or check a team ID rule instead of binary\n"
+          @"    --teamid: add or check a team ID rule instead of binary\n"
           @"    --certificate: add or check a certificate sha256 rule instead of binary\n"
 #ifdef DEBUG
           @"    --force: allow manual changes even when SyncBaseUrl is set\n"
