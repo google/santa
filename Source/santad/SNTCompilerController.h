@@ -23,8 +23,7 @@
 // Designated initializer takes a SNTEventLog instance so that we can
 // call saveDecisionDetails: to create a fake cached decision for transitive
 // rule creation requests that are still pending.
-- (instancetype)initWithEventProvider:(SNTDriverManager *)driverManager
-                             eventLog:(SNTEventLog *)eventLog;
+- (instancetype)initWithEventProvider:(SNTDriverManager *)driverManager;
 
 // Whenever an executable file is closed or renamed whitelist the resulting file.
 // We assume that we have already determined that the writing process was a compiler.

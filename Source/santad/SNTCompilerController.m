@@ -27,17 +27,14 @@
 
 @interface SNTCompilerController ()
 @property id<SNTEventProvider> eventProvider;
-@property SNTEventLog *eventLog;
 @end
 
 @implementation SNTCompilerController
 
-- (instancetype)initWithEventProvider:(id<SNTEventProvider>)eventProvider
-                             eventLog:(SNTEventLog *)eventLog {
+- (instancetype)initWithEventProvider:(id<SNTEventProvider>)eventProvider {
   self = [super init];
   if (self) {
     _eventProvider = eventProvider;
-    _eventLog = eventLog;
   }
   return self;
 }
@@ -50,11 +47,11 @@
   cd.decision = SNTEventStateAllowPendingTransitive;
   cd.vnodeId = message.vnode_id;
   cd.sha256 = @"pending";
-  [self.eventLog cacheDecision:cd];
+  [[SNTEventLog logger] cacheDecision:cd];
 }
 
 - (void)removeFakeDecision:(santa_message_t)message {
-  [self.eventLog forgetCachedDecisionForVnodeId:message.vnode_id];
+  [[SNTEventLog logger] forgetCachedDecisionForVnodeId:message.vnode_id];
 }
 
 // Assume that this method is called only when we already know that the writing process is a
@@ -84,7 +81,7 @@
       if (![ruleTable addRules:@[ rule ] cleanSlate:NO error:&err]) {
         LOGE(@"unable to add new transitive rule to database: %@", err.localizedDescription);
       } else {
-        [self.eventLog
+        [[SNTEventLog logger]
           writeLog:[NSString
                      stringWithFormat:@"action=ALLOWLIST|pid=%d|pidversion=%d|path=%s|sha256=%@",
                                       message.pid, message.pidversion, target, fi.SHA256]];

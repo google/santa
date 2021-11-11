@@ -46,7 +46,6 @@ static size_t kLargeBinarySize = 30 * 1024 * 1024;
 
 @interface SNTExecutionController ()
 @property id<SNTEventProvider> eventProvider;
-@property SNTEventLog *eventLog;
 @property SNTEventTable *eventTable;
 @property SNTNotificationQueue *notifierQueue;
 @property SNTPolicyProcessor *policyProcessor;
@@ -64,8 +63,7 @@ static size_t kLargeBinarySize = 30 * 1024 * 1024;
                             ruleTable:(SNTRuleTable *)ruleTable
                            eventTable:(SNTEventTable *)eventTable
                         notifierQueue:(SNTNotificationQueue *)notifierQueue
-                           syncdQueue:(SNTSyncdQueue *)syncdQueue
-                             eventLog:(SNTEventLog *)eventLog {
+                           syncdQueue:(SNTSyncdQueue *)syncdQueue {
   self = [super init];
   if (self) {
     _eventProvider = eventProvider;
@@ -73,7 +71,6 @@ static size_t kLargeBinarySize = 30 * 1024 * 1024;
     _eventTable = eventTable;
     _notifierQueue = notifierQueue;
     _syncdQueue = syncdQueue;
-    _eventLog = eventLog;
     _policyProcessor = [[SNTPolicyProcessor alloc] initWithRuleTable:_ruleTable];
 
     _eventQueue = dispatch_queue_create("com.google.santad.event_upload", DISPATCH_QUEUE_SERIAL);
@@ -128,7 +125,7 @@ static size_t kLargeBinarySize = 30 * 1024 * 1024;
   // ACTION_NOTIFY_EXEC message related to the transitive rule is received.
   NSString *ttyPath;
   if (action == ACTION_RESPOND_ALLOW) {
-    [_eventLog cacheDecision:cd];
+    [[SNTEventLog logger] cacheDecision:cd];
   } else {
     ttyPath = [self ttyPathForPID:message.ppid];
   }
@@ -188,7 +185,7 @@ static size_t kLargeBinarySize = 30 * 1024 * 1024;
 
     // If binary was blocked, do the needful
     if (action != ACTION_RESPOND_ALLOW && action != ACTION_RESPOND_ALLOW_COMPILER) {
-      [_eventLog logDeniedExecution:cd withMessage:message];
+      [[SNTEventLog logger] logDeniedExecution:cd withMessage:message];
 
       if ([[SNTConfigurator configurator] enableBundles] && binInfo.bundle) {
         // If the binary is part of a bundle, find and hash all the related binaries in the bundle.

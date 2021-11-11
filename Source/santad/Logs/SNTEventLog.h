@@ -14,15 +14,20 @@
 
 #import <Foundation/Foundation.h>
 
-#import "Source/common/SNTKernelCommon.h"
+#include "Source/common/SNTKernelCommon.h"
 
 @class SNTCachedDecision;
 @class SNTStoredEvent;
 
 ///
-///  Logs execution and file write events to syslog
+///  Abstract interface for logging execution and file write events to syslog
 ///
 @interface SNTEventLog : NSObject
+
+// Getter for a singleton SNTEventLog object.
+// Determines which type of SNTEventLog to use based on [SNTConfigurator eventLogType].
++ (instancetype)logger;
+
 // Methods implemented by a concrete subclass.
 - (void)logDiskAppeared:(NSDictionary *)diskProperties;
 - (void)logDiskDisappeared:(NSDictionary *)diskProperties;
@@ -34,7 +39,7 @@
 - (void)logExit:(santa_message_t)message;
 - (void)writeLog:(NSString *)log;
 
-// Methods for storing, retrieving, and removing cached decisions.
+// Methods for storing, retrieving, and removing cached decisions.
 - (void)cacheDecision:(SNTCachedDecision *)cd;
 - (SNTCachedDecision *)cachedDecisionForMessage:(santa_message_t)message;
 - (void)forgetCachedDecisionForVnodeId:(santa_vnode_id_t)vnodeId;

@@ -44,7 +44,6 @@ double watchdogRAMPeak = 0;
 @interface SNTDaemonControlController ()
 @property NSString *_syncXsrfToken;
 @property SNTPolicyProcessor *policyProcessor;
-@property SNTEventLog *eventLog;
 @property id<SNTEventProvider> eventProvider;
 @property SNTNotificationQueue *notQueue;
 @property SNTSyncdQueue *syncdQueue;
@@ -54,8 +53,7 @@ double watchdogRAMPeak = 0;
 
 - (instancetype)initWithEventProvider:(id<SNTEventProvider>)eventProvider
                     notificationQueue:(SNTNotificationQueue *)notQueue
-                           syncdQueue:(SNTSyncdQueue *)syncdQueue
-                             eventLog:(SNTEventLog *)eventLog {
+                           syncdQueue:(SNTSyncdQueue *)syncdQueue {
   self = [super init];
   if (self) {
     _policyProcessor =
@@ -63,7 +61,6 @@ double watchdogRAMPeak = 0;
     _eventProvider = eventProvider;
     _notQueue = notQueue;
     _syncdQueue = syncdQueue;
-    _eventLog = eventLog;
   }
   return self;
 }
@@ -303,7 +300,7 @@ double watchdogRAMPeak = 0;
   [eventTable addStoredEvent:event];
 
   // Log all of the generated bundle events.
-  [self.eventLog logBundleHashingEvents:events];
+  [[SNTEventLog logger] logBundleHashingEvents:events];
 
   WEAKIFY(self);
 
