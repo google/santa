@@ -28,7 +28,12 @@
   self.httpWriter = [[SNTMetricHTTPWriter alloc] init];
   self.mockResponses = [[NSMutableArray alloc] init];
 
-  __block void (^completionHandler)(NSData *, NSURLResponse *, NSError *);
+  // This must be marked __unsafe_unretained because we're going to store into
+  // it using NSInvocation's getArgument:atIndex: method which takes a void*
+  // to populate. If we don't mark the variable __unsafe_unretained it will
+  // default to __strong and ARC will attempt to release the block when it goes
+  // out of scope, not knowing that it wasn't ours to release in the first place.
+  __unsafe_unretained __block void (^completionHandler)(NSData *, NSURLResponse *, NSError *);
 
   void (^getCompletionHandler)(NSInvocation *) = ^(NSInvocation *invocation) {
     [invocation getArgument:&completionHandler atIndex:3];
@@ -36,7 +41,7 @@
 
   void (^callCompletionHandler)(NSInvocation *) = ^(NSInvocation *invocation) {
     NSDictionary *responseValue = self.mockResponses[0];
-    if (responseValue != nil) {
+    if (responseValue != nil && completionHandler != nil) {
       completionHandler(responseValue[@"data"], responseValue[@"response"],
                         responseValue[@"error"]);
       [self.mockResponses removeObjectAtIndex:0];
