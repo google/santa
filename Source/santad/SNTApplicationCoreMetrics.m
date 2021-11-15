@@ -88,7 +88,6 @@ static void RegisterHostnameAndUsernameLabels(SNTMetricSet *metricSet) {
   [metricSet addRootLabel:@"host_name" value:[NSProcessInfo processInfo].hostName];
   [metricSet addRootLabel:@"username" value:NSUserName()];
   [metricSet addRootLabel:@"job_name" value:@"santad"];
-  [metricSet addRootLabel:@"corp_site" value:@"roam"];
 }
 
 static void RegisterCommonSantaMetrics(SNTMetricSet *metricSet) {
