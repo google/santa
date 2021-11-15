@@ -188,7 +188,7 @@
       },
     },
     @"root_labels" : @{
-      @"hostname" : [NSProcessInfo processInfo].hostName,
+      @"host_name" : [NSProcessInfo processInfo].hostName,
       @"job_name" : @"santad",
       @"username" : [NSProcessInfo processInfo].userName
     },
