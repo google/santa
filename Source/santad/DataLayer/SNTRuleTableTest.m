@@ -157,6 +157,7 @@
   XCTAssertNotNil(r);
   XCTAssertEqualObjects(r.identifier, @"teamID");
   XCTAssertEqual(r.type, SNTRuleTypeTeamID);
+  XCTAssertEqual([self.sut teamIDRuleCount], 1);
 
   r = [self.sut ruleForBinarySHA256:nil certificateSHA256:nil teamID:@"nonexistentTeamID"];
   XCTAssertNil(r);

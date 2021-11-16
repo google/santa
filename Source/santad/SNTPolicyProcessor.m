@@ -175,7 +175,8 @@
 // Used by `$ santactl fileinfo`.
 - (nonnull SNTCachedDecision *)decisionForFilePath:(nonnull NSString *)filePath
                                         fileSHA256:(nullable NSString *)fileSHA256
-                                 certificateSHA256:(nullable NSString *)certificateSHA256 {
+                                 certificateSHA256:(nullable NSString *)certificateSHA256
+                                            teamID:(nullable NSString *)teamID {
   SNTFileInfo *fileInfo;
   NSError *error;
   fileInfo = [[SNTFileInfo alloc] initWithPath:filePath error:&error];
@@ -183,7 +184,7 @@
   return [self decisionForFileInfo:fileInfo
                         fileSHA256:fileSHA256
                  certificateSHA256:certificateSHA256
-                            teamID:nil];
+                            teamID:teamID];
 }
 
 ///

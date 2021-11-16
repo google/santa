@@ -43,14 +43,16 @@
 
   dispatch_group_t group = dispatch_group_create();
   dispatch_group_enter(group);
-  [[self.daemonConn remoteObjectProxy] databaseRuleCounts:^(int64_t binary, int64_t certificate,
-                                                            int64_t compiler, int64_t transitive) {
-    requestDict[kBinaryRuleCount] = @(binary);
-    requestDict[kCertificateRuleCount] = @(certificate);
-    requestDict[kCompilerRuleCount] = @(compiler);
-    requestDict[kTransitiveRuleCount] = @(transitive);
-    dispatch_group_leave(group);
-  }];
+  [[self.daemonConn remoteObjectProxy]
+    databaseRuleCounts:^(int64_t binary, int64_t certificate, int64_t compiler, int64_t transitive,
+                         int64_t teamID) {
+      requestDict[kBinaryRuleCount] = @(binary);
+      requestDict[kCertificateRuleCount] = @(certificate);
+      requestDict[kCompilerRuleCount] = @(compiler);
+      requestDict[kTransitiveRuleCount] = @(transitive);
+      requestDict[kTeamIDRuleCount] = @(teamID);
+      dispatch_group_leave(group);
+    }];
 
   dispatch_group_enter(group);
   [[self.daemonConn remoteObjectProxy] clientMode:^(SNTClientMode cm) {

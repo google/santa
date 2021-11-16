@@ -5,8 +5,8 @@ parent: Details
 # Rules
 
 Rules provide the primary evaluation mechanism for allowing and blocking
-binaries with Santa on macOS. There are two types of rules: binary and
-certificate.
+binaries with Santa on macOS. There are three types of rules: binary, 
+certificate, and TeamID.
 
 ##### Binary Rules
 
@@ -64,6 +64,15 @@ chain's intermediates or roots has no effect on binaries signing by a leaf.
 Santa ignores the chain and is only concerned with the leaf certificate's
 SHA-256 hash.
 
+##### Apple Developer Team ID Rules
+The Apple Developer Program Team ID is a 10-character identifier  issued by Apple
+and tied to developer accounts/organizations. This is distinct from Certificates,
+as a single developer account can and frequently will request/rotate between 
+multiple different signing certificates and entitlements.
+
+This is an even more powerful rule with broader reach than individual certificate rules.
+
+
 ##### Rule Evaluation
 
 When a process is trying to `execve()` `santad` retrieves information on the
@@ -71,7 +80,7 @@ binary, including a hash of the entire file and the signing chain (if any). The
 hash and signing leaf certificate are then passed through the
 [SNTPolicyProcessor](https://github.com/google/santa/blob/master/Source/santad/SNTPolicyProcessor.h).
 Rules are evaluated from most specific to least specific. First binary (either
-allow or block), then certificate (either allow or block). If no rules are found
+allow or block), then certificate (either allow or block), then team ID (either allow or block). If no rules are found
 that apply, scopes are then searched. See the [scopes.md](scopes.md) document
 for more information on scopes.
 
@@ -121,6 +130,34 @@ For checking the SHA-256 hash of `/usr/bin/yes` signing certificate:
 ```sh
 ⇒  sudo santactl rule --check --certificate --sha256 $(santactl fileinfo --cert-index 1 --key SHA-256 /usr/bin/yes)
 Allowed (Certificate)
+```
+
+##### Allowed with a Team ID rule
+
+```sh
+⇒ santactl fileinfo /Applications/Spotify.app --key Rule
+Allowed (TeamID)
+```
+
+For checking the Team ID of `/Applications/Microsoft\ Remote\ Desktop.app`
+
+```sh
+⇒  santactl fileinfo /Applications/Spotify.app --key "Team ID"
+2FNC3A47ZF
+```
+
+#### Blocked with a Team ID rule
+
+```sh
+⇒ santactl fileinfo /Applications/Microsoft\ Remote\ Desktop.app --key Rule
+Blocked (TeamID)
+```
+
+For checking the Team ID of `/Applications/Microsoft\ Remote\ Desktop.app`
+
+```sh
+⇒  santactl fileinfo /Applications/Microsoft\ Remote\ Desktop.app --key "Team ID"
+UBF8T346G9
 ```
 
 ##### Built-in rules

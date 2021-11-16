@@ -39,7 +39,7 @@
 ///  Database ops
 ///
 - (void)databaseRuleCounts:(void (^)(int64_t binary, int64_t certificate, int64_t compiler,
-                                     int64_t transitive))reply;
+                                     int64_t transitive, int64_t teamID))reply;
 - (void)databaseEventCount:(void (^)(int64_t count))reply;
 
 ///
@@ -57,6 +57,7 @@
 - (void)decisionForFilePath:(NSString *)filePath
                  fileSHA256:(NSString *)fileSHA256
           certificateSHA256:(NSString *)certificateSHA256
+                     teamID:(NSString *)teamID
                       reply:(void (^)(SNTEventState))reply;
 
 ///

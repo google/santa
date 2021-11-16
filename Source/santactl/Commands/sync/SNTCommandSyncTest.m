@@ -201,11 +201,12 @@
 - (void)testPreflightDatabaseCounts {
   SNTCommandSyncPreflight *sut = [[SNTCommandSyncPreflight alloc] initWithState:self.syncState];
 
-  int64_t bin = 5, cert = 8, compiler = 2, transitive = 19;
+  int64_t bin = 5, cert = 8, compiler = 2, transitive = 19, teamID = 3;
   OCMStub([self.daemonConnRop
     databaseRuleCounts:([OCMArg invokeBlockWithArgs:OCMOCK_VALUE(bin), OCMOCK_VALUE(cert),
                                                     OCMOCK_VALUE(compiler),
-                                                    OCMOCK_VALUE(transitive), nil])]);
+                                                    OCMOCK_VALUE(transitive), OCMOCK_VALUE(teamID),
+                                                    nil])]);
 
   [self stubRequestBody:nil
                response:nil
@@ -216,6 +217,7 @@
             XCTAssertEqualObjects(requestDict[kCertificateRuleCount], @(8));
             XCTAssertEqualObjects(requestDict[kCompilerRuleCount], @(2));
             XCTAssertEqualObjects(requestDict[kTransitiveRuleCount], @(19));
+            XCTAssertEqualObjects(requestDict[kTeamIDRuleCount], @(3));
             return YES;
           }];
 
