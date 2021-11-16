@@ -174,6 +174,10 @@ REGISTER_COMMAND_NAME(@"status")
 
   NSString *syncURLStr = [[[SNTConfigurator configurator] syncBaseURL] absoluteString];
 
+  BOOL exportMetrics = [[SNTConfigurator configurator] exportMetrics];
+  NSURL *metricsURLStr = [[SNTConfigurator configurator] metricURL];
+  NSUInteger metricExportInterval = [[SNTConfigurator configurator] metricExportInterval];
+
   if ([arguments containsObject:@"--json"]) {
     NSMutableDictionary *stats = [@{
       @"daemon" : @{
@@ -243,6 +247,12 @@ REGISTER_COMMAND_NAME(@"status")
              (pushNotifications ? "Connected" : "Disconnected"));
       printf("  %-25s | %s\n", "Bundle Scanning", (enableBundles ? "Yes" : "No"));
       printf("  %-25s | %s\n", "Transitive Rules", (enableTransitiveRules ? "Yes" : "No"));
+    }
+
+    if (exportMetrics) {
+      printf(">>> Metrics Info\n");
+      printf("  %-25s | %s\n", "Metrics Server", [[metricsURLStr absoluteString] UTF8String]);
+      printf("  %-25s | %lu\n", "Export Interval (seconds)", metricExportInterval);
     }
   }
 
