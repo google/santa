@@ -94,17 +94,19 @@ REGISTER_COMMAND_NAME(@"status")
   }
 
   // Database counts
-  __block int64_t eventCount = -1, binaryRuleCount = -1, certRuleCount = -1;
+  __block int64_t eventCount = -1, binaryRuleCount = -1, certRuleCount = -1, teamIDRuleCount = -1;
   __block int64_t compilerRuleCount = -1, transitiveRuleCount = -1;
   dispatch_group_enter(group);
-  [[self.daemonConn remoteObjectProxy] databaseRuleCounts:^(int64_t binary, int64_t certificate,
-                                                            int64_t compiler, int64_t transitive) {
-    binaryRuleCount = binary;
-    certRuleCount = certificate;
-    compilerRuleCount = compiler;
-    transitiveRuleCount = transitive;
-    dispatch_group_leave(group);
-  }];
+  [[self.daemonConn remoteObjectProxy]
+    databaseRuleCounts:^(int64_t binary, int64_t certificate, int64_t compiler, int64_t transitive,
+                         int64_t teamID) {
+      binaryRuleCount = binary;
+      certRuleCount = certificate;
+      teamIDRuleCount = teamID;
+      compilerRuleCount = compiler;
+      transitiveRuleCount = transitive;
+      dispatch_group_leave(group);
+    }];
   dispatch_group_enter(group);
   [[self.daemonConn remoteObjectProxy] databaseEventCount:^(int64_t count) {
     eventCount = count;
@@ -226,6 +228,7 @@ REGISTER_COMMAND_NAME(@"status")
     printf(">>> Database Info\n");
     printf("  %-25s | %lld\n", "Binary Rules", binaryRuleCount);
     printf("  %-25s | %lld\n", "Certificate Rules", certRuleCount);
+    printf("  %-25s | %lld\n", "TeamID Rules", teamIDRuleCount);
     printf("  %-25s | %lld\n", "Compiler Rules", compilerRuleCount);
     printf("  %-25s | %lld\n", "Transitive Rules", transitiveRuleCount);
     printf("  %-25s | %lld\n", "Events Pending Upload", eventCount);

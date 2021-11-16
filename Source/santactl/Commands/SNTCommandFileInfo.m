@@ -41,6 +41,7 @@ static NSString *const kCodeSigned = @"Code-signed";
 static NSString *const kRule = @"Rule";
 static NSString *const kSigningChain = @"Signing Chain";
 static NSString *const kUniversalSigningChain = @"Universal Signing Chain";
+static NSString *const kTeamID = @"Team ID";
 
 // signing chain keys
 static NSString *const kCommonName = @"Common Name";
@@ -109,6 +110,7 @@ typedef id (^SNTAttributeBlock)(SNTCommandFileInfo *, SNTFileInfo *);
 @property(readonly, copy, nonatomic) SNTAttributeBlock downloadURL;
 @property(readonly, copy, nonatomic) SNTAttributeBlock downloadTimestamp;
 @property(readonly, copy, nonatomic) SNTAttributeBlock downloadAgent;
+@property(readonly, copy, nonatomic) SNTAttributeBlock teamID;
 @property(readonly, copy, nonatomic) SNTAttributeBlock type;
 @property(readonly, copy, nonatomic) SNTAttributeBlock pageZero;
 @property(readonly, copy, nonatomic) SNTAttributeBlock codeSigned;
@@ -183,7 +185,7 @@ REGISTER_COMMAND_NAME(@"fileinfo")
 + (NSArray<NSString *> *)fileInfoKeys {
   return @[
     kPath, kSHA256, kSHA1, kBundleName, kBundleVersion, kBundleVersionStr, kDownloadReferrerURL,
-    kDownloadURL, kDownloadTimestamp, kDownloadAgent, kType, kPageZero, kCodeSigned, kRule,
+    kDownloadURL, kDownloadTimestamp, kDownloadAgent, kTeamID, kType, kPageZero, kCodeSigned, kRule,
     kSigningChain, kUniversalSigningChain
   ];
 }
@@ -215,7 +217,8 @@ REGISTER_COMMAND_NAME(@"fileinfo")
       kCodeSigned : self.codeSigned,
       kRule : self.rule,
       kSigningChain : self.signingChain,
-      kUniversalSigningChain : self.universalSigningChain
+      kUniversalSigningChain : self.universalSigningChain,
+      kTeamID : self.teamID,
     };
 
     _printQueue = dispatch_queue_create("com.google.santactl.print_queue", DISPATCH_QUEUE_SERIAL);
@@ -355,13 +358,15 @@ REGISTER_COMMAND_NAME(@"fileinfo")
     dispatch_semaphore_t sema = dispatch_semaphore_create(0);
     NSError *err;
     MOLCodesignChecker *csc = [fileInfo codesignCheckerWithError:&err];
-    [[cmd.daemonConn remoteObjectProxy] decisionForFilePath:fileInfo.path
-                                                 fileSHA256:fileInfo.SHA256
-                                          certificateSHA256:err ? nil : csc.leafCertificate.SHA256
-                                                      reply:^(SNTEventState s) {
-                                                        state = s;
-                                                        dispatch_semaphore_signal(sema);
-                                                      }];
+    [[cmd.daemonConn remoteObjectProxy]
+      decisionForFilePath:fileInfo.path
+               fileSHA256:fileInfo.SHA256
+        certificateSHA256:err ? nil : csc.leafCertificate.SHA256
+                   teamID:[csc.signingInformation valueForKey:@"teamid"]
+                    reply:^(SNTEventState s) {
+                      state = s;
+                      dispatch_semaphore_signal(sema);
+                    }];
     if (dispatch_semaphore_wait(sema, dispatch_time(DISPATCH_TIME_NOW, 5 * NSEC_PER_SEC))) {
       cmd.daemonUnavailable = YES;
       return kCommunicationErrorMsg;
@@ -375,10 +380,13 @@ REGISTER_COMMAND_NAME(@"fileinfo")
         case SNTEventStateBlockBinary: [output appendString:@" (Binary)"]; break;
         case SNTEventStateAllowCertificate:
         case SNTEventStateBlockCertificate: [output appendString:@" (Certificate)"]; break;
+        case SNTEventStateAllowTeamID:
+        case SNTEventStateBlockTeamID: [output appendString:@" (TeamID)"]; break;
         case SNTEventStateAllowScope:
         case SNTEventStateBlockScope: [output appendString:@" (Scope)"]; break;
         case SNTEventStateAllowCompiler: [output appendString:@" (Compiler)"]; break;
         case SNTEventStateAllowTransitive: [output appendString:@" (Transitive)"]; break;
+
         default: output = @"None".mutableCopy; break;
       }
       if (cmd.prettyOutput) {
@@ -455,6 +463,13 @@ REGISTER_COMMAND_NAME(@"fileinfo")
       [set addObject:cert];
     }
     return (set.count > 1) ? universal : nil;
+  };
+}
+
+- (SNTAttributeBlock)teamID {
+  return ^id(SNTCommandFileInfo *cmd, SNTFileInfo *fileInfo) {
+    MOLCodesignChecker *csc = [fileInfo codesignCheckerWithError:NULL];
+    return [csc.signingInformation valueForKey:@"teamid"];
   };
 }
 

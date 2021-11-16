@@ -52,6 +52,11 @@
 - (NSUInteger)certificateRuleCount;
 
 ///
+/// @return Number of team ID rules in the database
+///
+- (NSUInteger)teamIDRuleCount;
+
+///
 ///  @return Rule for binary or certificate with given SHA-256. The binary rule will be returned
 ///          if it exists. If not, the certificate rule will be returned if it exists.
 ///
