@@ -13,6 +13,7 @@
 ///    limitations under the License.
 
 #import "Source/common/SNTConfigurator.h"
+#import "Source/common/SNTConfiguratorHelperFunctions.h"
 
 #include <sys/stat.h>
 
@@ -106,6 +107,7 @@ static NSString *const kBlockedPathRegexKeyDeprecated = @"BlacklistRegex";
 static NSString *const kMetricFormat = @"MetricFormat";
 static NSString *const kMetricURL = @"MetricURL";
 static NSString *const kMetricExportInterval = @"MetricExportInterval";
+static NSString *const kMetricExtraLabels = @"MetricExtraLabels";
 
 // The keys managed by a sync server.
 static NSString *const kFullSyncLastSuccess = @"FullSyncLastSuccess";
@@ -181,6 +183,7 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
       kMetricFormat : string,
       kMetricURL : string,
       kMetricExportInterval : number,
+      kMetricExtraLabels : string,
     };
     _defaults = [NSUserDefaults standardUserDefaults];
     [_defaults addSuiteNamed:@"com.google.santa"];
@@ -711,6 +714,10 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
     return 30;
   }
   return [configuredInterval unsignedIntegerValue];
+}
+
+- (NSDictionary *)extraMetricLabels {
+  return splitListOfKeyValuePairsSplitByEquals(self.configState[kMetricExtraLabels]);
 }
 
 #pragma mark Private

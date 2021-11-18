@@ -24,13 +24,17 @@
 
 @interface SNTApplicationCoreMetricsTest : XCTestCase
 @property id mockConfigurator;
+@property NSDictionary *extraMetricLabels;
 @end
 
 @implementation SNTApplicationCoreMetricsTest
 
 - (void)setUp {
+  self.extraMetricLabels = @{@"service_name" : @"santa", @"corp_site" : @"roam"};
   self.mockConfigurator = OCMClassMock([SNTConfigurator class]);
+
   OCMStub([self.mockConfigurator configurator]).andReturn(self.mockConfigurator);
+  OCMStub([self.mockConfigurator extraMetricLabels]).andReturn(self.extraMetricLabels);
 }
 
 - (void)tearDown {
@@ -91,6 +95,7 @@
   }
 
   NSDate *fixedDate = [formatter dateFromString:@"2021-09-16T21:07:34.826Z"];
+  NSString *hostname = [NSProcessInfo processInfo].hostName;
 
   NSDictionary *expected = @{
     @"metrics" : @{
@@ -188,8 +193,10 @@
       },
     },
     @"root_labels" : @{
-      @"host_name" : [NSProcessInfo processInfo].hostName,
+      @"host_name" : hostname,
       @"job_name" : @"santad",
+      @"service_name" : @"santa",
+      @"corp_site" : @"roam",
       @"username" : [NSProcessInfo processInfo].userName
     },
   };
