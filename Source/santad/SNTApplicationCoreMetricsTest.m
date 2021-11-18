@@ -91,6 +91,15 @@
   }
 
   NSDate *fixedDate = [formatter dateFromString:@"2021-09-16T21:07:34.826Z"];
+  NSString *hostname = [NSProcessInfo processInfo].hostName;
+  NSString *expectedCorpSite = @"";
+
+  if ([[hostname lowercaseString] hasSuffix:@"corp.google.com"]) {
+    NSArray<NSString *> *parts = [hostname componentsSeparatedByString:@"."];
+    if (parts.count >= 5) {
+      expectedCorpSite = parts[parts.count - 4];
+    }
+  }
 
   NSDictionary *expected = @{
     @"metrics" : @{
@@ -188,8 +197,10 @@
       },
     },
     @"root_labels" : @{
-      @"host_name" : [NSProcessInfo processInfo].hostName,
+      @"host_name" : hostname,
       @"job_name" : @"santad",
+      @"service_name" : @"santa",
+      @"corp_site" : expectedCorpSite,
       @"username" : [NSProcessInfo processInfo].userName
     },
   };

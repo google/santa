@@ -85,9 +85,21 @@ static void RegisterMemoryAndCPUMetrics(SNTMetricSet *metricSet) {
 }
 
 static void RegisterHostnameAndUsernameLabels(SNTMetricSet *metricSet) {
-  [metricSet addRootLabel:@"host_name" value:[NSProcessInfo processInfo].hostName];
+  NSString *hostname = [NSProcessInfo processInfo].hostName;
+
+  [metricSet addRootLabel:@"host_name" value:hostname];
   [metricSet addRootLabel:@"username" value:NSUserName()];
   [metricSet addRootLabel:@"job_name" value:@"santad"];
+  [metricSet addRootLabel:@"service_name" value:@"santa"];
+  [metricSet addRootLabel:@"corp_site" value:@""];
+
+  if ([hostname hasSuffix:@".corp.google.com"]) {
+    NSArray<NSString *> *parts = [hostname componentsSeparatedByString:@"."];
+
+    if (parts.count >= 5) {
+      [metricSet addRootLabel:@"corp_site" value:parts[parts.count - 4]];
+    }
+  }
 }
 
 static void RegisterCommonSantaMetrics(SNTMetricSet *metricSet) {
