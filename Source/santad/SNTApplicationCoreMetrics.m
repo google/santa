@@ -98,7 +98,7 @@ static void RegisterHostnameAndUsernameLabels(SNTMetricSet *metricSet) {
   NSDictionary *extraLabels = [config extraMetricLabels];
 
   if (extraLabels.count == 0) return;
-    
+
   for (NSString *key in extraLabels) {
     // remove the root label if the value is empty.
     if ([@"" isEqualToString:(NSString *)extraLabels[key]]) {
@@ -109,7 +109,7 @@ static void RegisterHostnameAndUsernameLabels(SNTMetricSet *metricSet) {
     // Set or override the value.
     [metricSet addRootLabel:key value:(NSString *)extraLabels[key]];
   }
-} 
+}
 static void RegisterCommonSantaMetrics(SNTMetricSet *metricSet) {
   NSString *version = [[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleVersion"];
 
