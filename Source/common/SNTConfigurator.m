@@ -106,6 +106,7 @@ static NSString *const kBlockedPathRegexKeyDeprecated = @"BlacklistRegex";
 static NSString *const kMetricFormat = @"MetricFormat";
 static NSString *const kMetricURL = @"MetricURL";
 static NSString *const kMetricExportInterval = @"MetricExportInterval";
+static NSString *const kMetricExtraLabels = @"MetricExtraLabels";
 
 // The keys managed by a sync server.
 static NSString *const kFullSyncLastSuccess = @"FullSyncLastSuccess";
@@ -121,6 +122,7 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
     Class string = [NSString class];
     Class data = [NSData class];
     Class array = [NSArray class];
+    Class dictionary = [NSDictionary class];
     _syncServerKeyTypes = @{
       kClientModeKey : number,
       kEnableTransitiveRulesKey : number,
@@ -181,6 +183,7 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
       kMetricFormat : string,
       kMetricURL : string,
       kMetricExportInterval : number,
+      kMetricExtraLabels : dictionary,
     };
     _defaults = [NSUserDefaults standardUserDefaults];
     [_defaults addSuiteNamed:@"com.google.santa"];
@@ -711,6 +714,10 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
     return 30;
   }
   return [configuredInterval unsignedIntegerValue];
+}
+
+- (NSDictionary *)extraMetricLabels {
+  return self.configState[kMetricExtraLabels];
 }
 
 #pragma mark Private

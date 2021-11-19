@@ -51,7 +51,8 @@ Additionally, there are options that can be controlled by both.
 | EnableMachineIDDecoration     | Bool       | If YES, this appends the MachineID to the end of each log line. Defaults to NO.       |
 | MetricFormat                 | String     | Format to export metrics as, supported formats are "rawjson" for a single JSON blob and "monarchjson" for a format consumable by Google's Monarch tooling. Defaults to "". |
 | MetricURL                    | String     | URL describing where monitoring metrics should be exported.  |
-| MetricExportInterval         | Integer    | Number of seconds to wait between exporting metrics. Defaults to 30.  |
+| MetricExportInterval         | Integer    | Number of seconds to wait between exporting metrics. Defaults to 30.  
+| MetricExtraLabels            | Dictionary | A map of key value pairs to add to all metric root labels. (e.g. a=b,c=d) defaults to @{}). If a previously set key (e.g. host_name is set to "" then the key is remove from the metric root labels. Alternatively if a value is set for an existing key then the new value will override the old. |
 
 
 *overridable by the sync server: run `santactl status` to check the current
