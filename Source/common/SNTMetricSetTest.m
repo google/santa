@@ -276,11 +276,12 @@
   expected = @{@"root_labels" : @{@"hostname" : @"localhost2"}, @"metrics" : @{}};
   [metricSet addRootLabel:@"hostname" value:@"localhost2"];
 
-  XCTAssertEqualObjects(expected, [metricSet export], @"failed to overwrite rootLabel with second call to addRootLabel");
+  XCTAssertEqualObjects(expected, [metricSet export],
+                        @"failed to overwrite rootLabel with second call to addRootLabel");
 
   // ensure that removing a rootLabelWorks
   expected = @{@"root_labels" : @{}, @"metrics" : @{}};
-  [metricSet removeRootLabel: @"hostname"];
+  [metricSet removeRootLabel:@"hostname"];
 }
 
 - (void)testDoubleRegisteringIncompatibleMetricsFails {
