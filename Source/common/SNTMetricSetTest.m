@@ -270,8 +270,17 @@
 
   NSDictionary *expected = @{@"root_labels" : @{@"hostname" : @"localhost"}, @"metrics" : @{}};
 
-  NSDictionary *output = [metricSet export];
-  XCTAssertEqualObjects(output, expected);
+  XCTAssertEqualObjects(expected, [metricSet export]);
+
+  // ensure that adding a rootLabel with the same name overwrites.
+  expected = @{@"root_labels" : @{@"hostname" : @"localhost2"}, @"metrics" : @{}};
+  [metricSet addRootLabel:@"hostname" value:@"localhost2"];
+
+  XCTAssertEqualObjects(expected, [metricSet export], @"failed to overwrite rootLabel with second call to addRootLabel");
+
+  // ensure that removing a rootLabelWorks
+  expected = @{@"root_labels" : @{}, @"metrics" : @{}};
+  [metricSet removeRootLabel: @"hostname"];
 }
 
 - (void)testDoubleRegisteringIncompatibleMetricsFails {

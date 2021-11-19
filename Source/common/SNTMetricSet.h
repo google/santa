@@ -105,11 +105,15 @@ typedef NS_ENUM(NSInteger, SNTMetricType) {
  */
 + (instancetype)sharedInstance;
 
-
 /**
  *  Add a root label to the MetricSet.
  */
 - (void)addRootLabel:(NSString *)label value:(NSString *)value;
+
+/**
+ * Remove a root label from the MetricSet.
+ */
+- (void)removeRootLabel:(NSString *)labelName;
 
 /**
  * Returns a int64 gauge metric with the given Streamz name and help text,

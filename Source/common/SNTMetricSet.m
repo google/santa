@@ -473,6 +473,12 @@
   }
 }
 
+- (void)removeRootLabel:(NSString *)label {
+  @synchronized(self) {
+    [_rootLabels removeObjectForKey:label];
+  }
+}
+
 - (SNTMetric *)registerMetric:(nonnull SNTMetric *)metric {
   @synchronized(self) {
     SNTMetric *oldMetric = _metrics[[metric name]];

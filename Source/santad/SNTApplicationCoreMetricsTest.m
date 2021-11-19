@@ -34,7 +34,6 @@
   self.mockConfigurator = OCMClassMock([SNTConfigurator class]);
 
   OCMStub([self.mockConfigurator configurator]).andReturn(self.mockConfigurator);
-  OCMStub([self.mockConfigurator extraMetricLabels]).andReturn(self.extraMetricLabels);
 }
 
 - (void)tearDown {
@@ -79,6 +78,7 @@
 }
 
 - (void)testRegisteringCoreMetrics {
+  OCMStub([self.mockConfigurator extraMetricLabels]).andReturn(self.extraMetricLabels);
   OCMStub([self.mockConfigurator clientMode]).andReturn(SNTClientModeLockdown);
 
   SNTRegisterCoreMetrics();
@@ -215,6 +215,55 @@
     XCTAssertEqualObjects(expected[@"metrics"][metricName], other,
                           @"%@ does not match expected values", metricName);
   }
+}
+
+// Test that setting a new value for an existing rootLabel overwrites the labels value.
+//
+// Becareful modifiying this test as the singleton makes this order dependent.
+//
+- (void)testRootLabelReplacement {
+  self.extraMetricLabels = @{@"host_name" : @"santa-host"};
+  OCMStub([self.mockConfigurator extraMetricLabels]).andReturn(self.extraMetricLabels);
+
+  SNTRegisterCoreMetrics();
+
+  SNTMetricSet *metricSet = [SNTMetricSet sharedInstance];
+  NSDictionary *output = [metricSet export];
+
+  NSDictionary *expectedRootLabels = @{
+    @"host_name" : @"santa-host",
+    @"job_name" : @"santad",
+    @"service_name" : @"santa",
+    @"corp_site" : @"roam",
+    @"username" : [NSProcessInfo processInfo].userName
+  };
+
+  XCTAssertEqualObjects(expectedRootLabels, output[@"root_labels"],
+                        @"failed to update host_name root label");
+}
+
+// Test that setting a rootLabel key to "" removes it from the root labels.
+//
+// Becareful modifiying this test as the singleton makes this order dependent.
+//
+- (void)testRootLabelRemoval {
+  self.extraMetricLabels = @{@"host_name" : @""};
+  OCMStub([self.mockConfigurator extraMetricLabels]).andReturn(self.extraMetricLabels);
+
+  SNTRegisterCoreMetrics();
+
+  SNTMetricSet *metricSet = [SNTMetricSet sharedInstance];
+  NSDictionary *output = [metricSet export];
+
+  NSDictionary *expectedRootLabels = @{
+    @"job_name" : @"santad",
+    @"service_name" : @"santa",
+    @"corp_site" : @"roam",
+    @"username" : [NSProcessInfo processInfo].userName,
+  };
+
+  XCTAssertEqualObjects(expectedRootLabels, output[@"root_labels"],
+                        @"failed to remove only host_name root label");
 }
 
 @end

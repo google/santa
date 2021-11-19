@@ -58,18 +58,11 @@ objc_library(
 )
 
 objc_library(
-    name = "SNTConfiguratorHelperFunctions",
-    srcs = ["SNTConfiguratorHelperFunctions.m"],
-    hdrs = ["SNTConfiguratorHelperFunctions.h"],
-)
-
-objc_library(
     name = "SNTConfigurator",
     srcs = ["SNTConfigurator.m"],
     hdrs = ["SNTConfigurator.h"],
     deps = [
         ":SNTCommonEnums",
-        ":SNTConfiguratorHelperFunctions",
         ":SNTStrengthify",
         ":SNTSystemInfo",
     ],
@@ -282,10 +275,4 @@ santa_unit_test(
     name = "SNTMetricSetTest",
     srcs = ["SNTMetricSetTest.m"],
     deps = [":SNTMetricSet"],
-)
-
-santa_unit_test(
-    name = "SNTConfiguratorHelperFunctionsTest",
-    srcs = ["SNTConfiguratorHelperFunctionsTest.m"],
-    deps = [":SNTConfiguratorHelperFunctions"],
 )

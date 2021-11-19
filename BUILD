@@ -231,7 +231,6 @@ genrule(
 test_suite(
     name = "unit_tests",
     tests = [
-        "//Source/common:SNTConfiguratorHelperFunctionsTest",
         "//Source/common:SNTFileInfoTest",
         "//Source/common:SNTMetricSetTest",
         "//Source/common:SNTPrefixTreeTest",

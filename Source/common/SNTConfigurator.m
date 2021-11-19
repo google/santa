@@ -13,7 +13,6 @@
 ///    limitations under the License.
 
 #import "Source/common/SNTConfigurator.h"
-#import "Source/common/SNTConfiguratorHelperFunctions.h"
 
 #include <sys/stat.h>
 
@@ -123,6 +122,7 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
     Class string = [NSString class];
     Class data = [NSData class];
     Class array = [NSArray class];
+    Class dictionary = [NSDictionary class];
     _syncServerKeyTypes = @{
       kClientModeKey : number,
       kEnableTransitiveRulesKey : number,
@@ -183,7 +183,7 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
       kMetricFormat : string,
       kMetricURL : string,
       kMetricExportInterval : number,
-      kMetricExtraLabels : string,
+      kMetricExtraLabels : dictionary,
     };
     _defaults = [NSUserDefaults standardUserDefaults];
     [_defaults addSuiteNamed:@"com.google.santa"];
@@ -717,7 +717,7 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
 }
 
 - (NSDictionary *)extraMetricLabels {
-  return splitListOfKeyValuePairsSplitByEquals(self.configState[kMetricExtraLabels]);
+  return self.configState[kMetricExtraLabels];
 }
 
 #pragma mark Private
