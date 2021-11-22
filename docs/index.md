@@ -14,12 +14,13 @@ contribute.
 The following documents give an overview of how Santa accomplishes binary
 authorization at the enterprise scale.
 
-- [Binary Authorization](introduction/binary-authorization-overview.md): How Santa makes allow or deny decisions for any `execve()` taking place.
-- [Syncing](introduction/syncing-overview.md): How configuration and rules are applied from a sync server.
+* [Binary Authorization](introduction/binary-authorization-overview.md): How Santa makes allow or deny decisions for any `execve()` taking place.
+* [Syncing](introduction/syncing-overview.md): How configuration and rules are applied from a sync server.
 
 #### Deployment
 
-* [Configuration](deployment/configuration.md): The local and sync server configuration options.
+* [Configuration](deployment/configuration.md): The local and sync server configuration options, along with example needed mobileconfig files.
+* [Troubleshooting](deployment/troubleshooting.md): While there are numerous pages with details on Santa, admins may appreciate a central place to branch off from with common practical issues.
 
 #### Development
 
