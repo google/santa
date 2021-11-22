@@ -5,15 +5,17 @@ parent: Deployment
 
 # Configuration
 
-Santa is configured using Apple
-[Configuration Profiles](https://developer.apple.com/library/content/featuredarticles/iPhoneConfigurationProfileRef/Introduction/Introduction.html)
-to manage the local configuration.
-
 Two configuration methods can be used to control Santa: a local configuration
 profile and a sync server controlled configuration. There are certain options
 that can only be controlled with a local configuration profile and others that
 can only be controlled with a sync server controlled configuration.
-Additionally, there are options that can be controlled by both.
+Additionally, there are options that can be controlled by both, marked with a
+single asterisk in the first table below.
+
+Santa's local configuration is managed using Apple
+[Configuration Profiles](https://developer.apple.com/business/documentation/Configuration-Profile-Reference.pdf)(pdf link),
+also known as mobileconfig files, which are in an Apple-specific xml format.
+
 
 ## Local Configuration Profile
 
@@ -25,6 +27,7 @@ Additionally, there are options that can be controlled by both.
 | BlockedPathRegex*             | String     | A regex to block if the binary or certificate scopes did not allow/block an execution.  Regexes are specified in ICU format. |
 | EnableBadSignatureProtection  | Bool       | Enable bad signature protection, defaults to NO. If this flag is set to YES, binaries with a bad signing chain will be blocked even in MONITOR mode, **unless** the binary is allowed by an explicit rule. |
 | EnablePageZeroProtection      | Bool       | Enable `__PAGEZERO` protection, defaults to YES. If this flag is set to YES, 32-bit binaries that are missing the `__PAGEZERO` segment will be blocked even in MONITOR mode, **unless** the binary is allowed by an explicit rule. |
+| EnableSysxCache.              | Bool       | Enables maintenance of a cache that ensures better performance when multiple EndpointSecurity system extensions are installed, introduced in 2021.1, defaults to NO. If this flag is set to YES, a cache is maintained separately of Apple's framework regarding allow/deny decisions. This may default to YES in future versions, but is required as of 2021.7. |
 | AboutText                     | String     | The text to display when the user opens Santa.app. If unset, the default text will be displayed. |
 | MoreInfoURL                   | String     | The URL to open when the user clicks "More Info..." when opening Santa.app.  If unset, the button will not be displayed. |
 | EventDetailURL                | String     | See the [EventDetailURL](#eventdetailurl) section below. |
@@ -180,9 +183,9 @@ Configuration profiles have a `.mobileconfig` file extension. There are a couple
 ways to install configuration profiles:
 
 * Double click them in Finder
-* Use an MDM
+* Use an MDM, which is discussed further below
 
-## Sync server Provided Configuration
+## Sync Server Provided Configuration
 
 | Key                            | Value Type | Description                              |
 | ------------------------------ | ---------- | ---------------------------------------- |
@@ -202,3 +205,24 @@ ways to install configuration profiles:
 *Held only in memory. Not persistent upon process restart.
 
 **Performed once per preflight run (if set).
+
+
+## MDM-Specific Client Configuration
+
+As of macOS 10.14 Mojave, Apple introduced the requirement that various modes of
+operation by executables on macOS had to be explicitly allowed and those
+allowances could only be 'silently' applied with an MDM that had 'supervision'
+status on a computer, either via automated device enrollment (also known as DEP)
+or when opted in by the end user through a process referred to as User Approved
+MDM.
+This comes into play when a binary wants to have read access system-wide, for
+example when an app is launch from a directory considered private to a user.
+An example payload for this use case is provided [here](tcc.configuration-profile-policy.santa.example.mobileconfig)
+
+This would be used alongside a payload allowing [notifications](notificationsettings.santa.example.mobileconfig) to be sent,
+and for allowing the [system extension](https://github.com/google/santa/blob/main/docs/deployment/system-extension-policy.santa.example.mobileconfig) to be loaded without end user interaction.
+
+Please note that for release package installers that included the kernel extension
+as part of the payload (prior to 2021.8) the end user to be prompted to allow it
+unless explicitly allowed with another MDM-delivered configuration profile to the
+supervised system.
