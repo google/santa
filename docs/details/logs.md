@@ -4,10 +4,13 @@ parent: Details
 
 # Logs
 
-Santa currently logs to `/var/db/santa/santa.log` by default. All executions and
-disk mounts are logged here. File operations can also be configured to be
-logged. See the `FileChangesRegex` key in the
-[configuration.md](../deployment/configuration.md) document.
+Separately from the [events](events.md) a sync server may receive in (close to)
+real-time, with metadata that is helpful for maintaining rules, Santa logs to
+`/var/db/santa/santa.log` by default (configurable with the [EventLogPath](../deployment/configuration.md)
+key). All detected executions and disk mount operations are logged there.
+File operations (when needed for functionality otherwise referred to as "file
+integrity monitoring") can also be configured to be logged. See the
+`FileChangesRegex` key in the [configuration.md](../deployment/configuration.md) document.
 
 To view the logs:
 
@@ -20,25 +23,16 @@ rolls over.
 
 ##### macOS Unified Logging System (ULS)
 
-Currently all of the most recent releases of Santa are built with the macOS
-10.11 SDK. This allows Santa to continue to log to Apple System Logger (ASL)
-instead of ULS. However, on macOS 10.12+ all of the Kernel logs are sent to ULS.
-See the KEXT Logging section below for more details.
+For information more specific to Santa's health and operation, logs are also
+present in ULS. Using the `show` command you can view Santa-specific logs in
+flight, including messages related to the system extension:
 
-If you are building Santa yourself and using the macOS 10.12+ SDKs, Santa's logs
-will be sent to ULS.
+```sh
+/usr/bin/log show --info --debug --predicate 'senderImagePath CONTAINS[c] "santa"'
+```
 
-Work is currently underway to bypass ASL and ULS altogether, allowing Santa to
-continue logging to `/var/db/santa/santa.log`. This change will also allow us to
-add alternative logging formats, like Protocol Buffer or JSON.
-
-##### KEXT Logging
-
-Streaming logs from the santa-driver KEXT does not work properly. Logs are
-generated but they will likely be garbled or show inaccurate data.
-
-Instead, `show` can be used to view the santa-driver KEXT logs:
+For those still using the kernel extension, you could use a more specific command:
 
 ```sh
 /usr/bin/log show --info --debug --predicate 'senderImagePath == "/Library/Extensions/santa-driver.kext/Contents/MacOS/santa-driver"'
-```
+````
