@@ -34,11 +34,6 @@ expected when mass-deploying.
 
 - Additionally, confirm the system extension and TCC/PPPC profiles are present
 as mentioned under the ["MDM-Specific Client Configuration"](configuration.md) section of that page
-- Resource usage can be confirmed with Watchdog CPU Events, which is a counter
-that is reset when the daemon reloads. It tracks high usage, but the word
-'watchdog' does not imply Santa throttles, 'waitlist's, 'nice's or otherwise
-limits its system impact, it just confirms that excessive usage did result from
-its processes
 - If there is no "Cache Info" section, the EnableSysxCache key may not
 be present in the payload configuring Santa or the framework applying the key
 locally may not have properly loaded it into the applicable domain. You can
