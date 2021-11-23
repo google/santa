@@ -4,10 +4,10 @@ parent: Details
 
 # Logs
 
-Separate from the [events](events.md) a sync server may gather in (close to) real-time,
-Santa logs to `/var/db/santa/santa.log` by default (configurable with the
-[EventLogPath](../deployment/configuration.md) key). All detected executions and
-disk mount operations are logged there.
+Separately from the [events](events.md) a sync server may receive in (close to)
+real-time, with metadata that is helpful for maintaining rules, Santa logs to
+`/var/db/santa/santa.log` by default (configurable with the [EventLogPath](../deployment/configuration.md)
+key). All detected executions and disk mount operations are logged there.
 File operations (when needed for functionality otherwise referred to as "file
 integrity monitoring") can also be configured to be logged. See the
 `FileChangesRegex` key in the [configuration.md](../deployment/configuration.md) document.
@@ -23,17 +23,15 @@ rolls over.
 
 ##### macOS Unified Logging System (ULS)
 
-As Santa has been built with macOS 10.12+ SDKs for several releases, Santa's logs
-are also sent to ULS.
-
-Leveraging this capability, `show` can be used to view all santa-specific logs in
-flight, including the system extension:
+For information more specific to Santa's health and operation, logs are also
+present in ULS. Using the `show` command you can view Santa-specific logs in
+flight, including messages related to the system extension:
 
 ```sh
 /usr/bin/log show --info --debug --predicate 'senderImagePath CONTAINS[c] "santa"'
 ```
 
-For those still using the kernel extension, you would use a different command:
+For those still using the kernel extension, you could use a more specific command:
 
 ```sh
 /usr/bin/log show --info --debug --predicate 'senderImagePath == "/Library/Extensions/santa-driver.kext/Contents/MacOS/santa-driver"'
