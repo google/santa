@@ -14,6 +14,23 @@
 
 #import "SNTMetricSet.h"
 
+NSString *makeSNTMetricTypeString(SNTMetricType metricType) {
+  NSString *typeStr;
+  switch (metricType) {
+    case SNTMetricTypeConstantBool: typeStr = @"SNTMetricTypeConstantBool"; break;
+    case SNTMetricTypeConstantString: typeStr = @"SNTMetricTypeConstantString"; break;
+    case SNTMetricTypeConstantInt64: typeStr = @"SNTMetricTypeConstantInt64"; break;
+    case SNTMetricTypeConstantDouble: typeStr = @"SNTMetricTypeConstantDouble"; break;
+    case SNTMetricTypeGaugeBool: typeStr = @"SNTMetricTypeGaugeBool"; break;
+    case SNTMetricTypeGaugeString: typeStr = @"SNTMetricTypeGaugeString"; break;
+    case SNTMetricTypeGaugeInt64: typeStr = @"SNTMetricTypeGaugeInt64"; break;
+    case SNTMetricTypeGaugeDouble: typeStr = @"SNTMetricTypeGaugeDouble"; break;
+    case SNTMetricTypeCounter: typeStr = @"SNTMetricTypeCounter"; break;
+    default: typeStr = @"SNTMetricTypeUnknown"; break;
+  }
+  return [NSString stringWithFormat:@"%@ %ld", typeStr, metricType];
+}
+
 /**
  *  SNTMetricValue encapsulates the value of a metric along with the creation
  *  and update timestamps. It is thread-safe and has a separate field for each

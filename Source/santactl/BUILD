@@ -15,6 +15,7 @@ objc_library(
         "Commands/SNTCommandRule.m",
         "Commands/SNTCommandStatus.m",
         "Commands/SNTCommandVersion.m",
+        "Commands/SNTCommandMetrics.m",
         "Commands/sync/NSData+Zlib.h",
         "Commands/sync/NSData+Zlib.m",
         "Commands/sync/SNTCommandSync.m",

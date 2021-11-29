@@ -20,6 +20,7 @@
 #import "Source/common/SNTCommonEnums.h"
 #import "Source/common/SNTConfigurator.h"
 #import "Source/common/SNTLogging.h"
+#import "Source/common/SNTMetricSet.h"
 #import "Source/common/SNTRule.h"
 #import "Source/common/SNTStoredEvent.h"
 #import "Source/common/SNTStrengthify.h"
@@ -240,6 +241,18 @@ double watchdogRAMPeak = 0;
 - (void)setEnableTransitiveRules:(BOOL)enabled reply:(void (^)(void))reply {
   [[SNTConfigurator configurator] setEnableTransitiveRules:enabled];
   reply();
+}
+
+#pragma mark Metrics Ops
+
+- (void)metrics:(void (^)(NSDictionary *))reply {
+  // If metrics are not enabled send nil back
+  if (![[SNTConfigurator configurator] exportMetrics]) {
+    reply(nil);
+  }
+
+  SNTMetricSet *metricSet = [SNTMetricSet sharedInstance];
+  reply([metricSet export]);
 }
 
 #pragma mark GUI Ops

@@ -48,6 +48,8 @@ typedef NS_ENUM(NSInteger, SNTMetricType) {
   SNTMetricTypeCounter = 9,
 };
 
+NSString *makeSNTMetricTypeString(SNTMetricType metricType);
+
 @interface SNTMetric : NSObject
 - (NSDictionary *)export;
 @end
