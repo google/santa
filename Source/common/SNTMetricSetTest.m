@@ -599,7 +599,7 @@
   ];
 
   for (NSDictionary *test in tests) {
-    NSString *output = makeSNTMetricTypeString([test[@"input"] integerValue]);
+    NSString *output = SNTMetricMakeStringFromMetricType([test[@"input"] integerValue]);
     XCTAssertEqualObjects(test[@"expected"], output, @"expected %@ got %@", test[@"expected"],
                           output);
   }

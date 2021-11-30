@@ -55,6 +55,7 @@ objc_library(
         "//Source/common:SNTFileInfo",
         "//Source/common:SNTKernelCommon",
         "//Source/common:SNTLogging",
+        "//Source/common:SNTMetricSet",
         "//Source/common:SNTRule",
         "//Source/common:SNTStoredEvent",
         "//Source/common:SNTStrengthify",

@@ -14,7 +14,7 @@
 
 #import "SNTMetricSet.h"
 
-NSString *makeSNTMetricTypeString(SNTMetricType metricType) {
+NSString *SNTMetricMakeStringFromMetricType(SNTMetricType metricType) {
   NSString *typeStr;
   switch (metricType) {
     case SNTMetricTypeConstantBool: typeStr = @"SNTMetricTypeConstantBool"; break;

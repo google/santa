@@ -17,6 +17,7 @@
 
 #import "Source/common/SNTCommonEnums.h"
 #import "Source/common/SNTConfigurator.h"
+#import "Source/common/SNTMetricSet.h"
 #import "Source/common/SNTXPCControlInterface.h"
 #import "Source/santactl/SNTCommand.h"
 #import "Source/santactl/SNTCommandController.h"
@@ -123,13 +124,13 @@ REGISTER_COMMAND_NAME(@"metrics")
       printf("  %-25s | %s\n", "Metrics Format",
              [[self stringFromMetricFormat:metricFormat] UTF8String]);
       printf("  %-25s | %lu\n", "Export Interval (seconds)", metricExportInterval);
+      printf("\n");
     } else {
       printf("Metrics not configured\n");
       return;
     }
 
-    printf(">>> Metrics Info\n\n");
-    printf(">>>\t Root Labels\n");
+    printf(">>> Root Labels\n");
 
     for (NSString *label in normalizedMetrics[@"root_labels"]) {
       const char *labelStr = [label cStringUsingEncoding:NSUTF8StringEncoding];
@@ -146,12 +147,12 @@ REGISTER_COMMAND_NAME(@"metrics")
       NSDictionary *metric = normalizedMetrics[@"metrics"][metricName];
       const char *metricNameStr = [metricName UTF8String];
       const char *description = [metric[@"description"] UTF8String];
-      // NSString * metricType =  makeSNTMetricTypeString(metric[@"type"]);
-      // const char* metricTypeStr = [metricType UTF8String];
+      NSString *metricType = SNTMetricMakeStringFromMetricType([metric[@"type"] integerValue]);
+      const char *metricTypeStr = [metricType UTF8String];
 
       printf("  %-25s | %s\n", "Metric Name", metricNameStr);
       printf("  %-25s | %s\n", "Description", description);
-      // printf("  %-25s | %s\n", "Type", metricTypeStr);
+      printf("  %-25s | %s\n", "Type", metricTypeStr);
 
       for (NSString *fieldName in metric[@"fields"]) {
         for (NSDictionary *field in metric[@"fields"][fieldName]) {
