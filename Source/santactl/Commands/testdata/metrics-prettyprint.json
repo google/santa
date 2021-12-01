@@ -1,0 +1,118 @@
+{
+  "metrics" : {
+    "\/santa\/rules" : {
+      "type" : 7,
+      "description" : "Number of rules",
+      "fields" : {
+        "rule_type" : [
+          {
+            "created" : "2021-09-16T21:07:34.826Z",
+            "last_updated" : "2021-09-16T21:07:34.826Z",
+            "value" : "binary",
+            "data" : 1
+          },
+          {
+            "created" : "2021-09-16T21:07:34.826Z",
+            "last_updated" : "2021-09-16T21:07:34.826Z",
+            "value" : "certificate",
+            "data" : 3
+          }
+        ]
+      }
+    },
+    "\/proc\/memory\/resident_size" : {
+      "type" : 7,
+      "description" : "The resident set size of this process",
+      "fields" : {
+        "" : [
+          {
+            "created" : "2021-09-16T21:07:34.826Z",
+            "last_updated" : "2021-09-16T21:07:34.826Z",
+            "value" : "",
+            "data" : 123456789
+          }
+        ]
+      }
+    },
+    "\/santa\/events" : {
+      "type" : 9,
+      "description" : "Count of process exec events on the host",
+      "fields" : {
+        "rule_type" : [
+          {
+            "created" : "2021-09-16T21:07:34.826Z",
+            "last_updated" : "2021-09-16T21:07:34.826Z",
+            "value" : "binary",
+            "data" : 1
+          },
+          {
+            "created" : "2021-09-16T21:07:34.826Z",
+            "last_updated" : "2021-09-16T21:07:34.826Z",
+            "value" : "certificate",
+            "data" : 2
+          }
+        ]
+      }
+    },
+    "\/santa\/using_endpoint_security_framework" : {
+      "type" : 1,
+      "description" : "Is santad using the endpoint security framework",
+      "fields" : {
+        "" : [
+          {
+            "created" : "2021-09-16T21:07:34.826Z",
+            "last_updated" : "2021-09-16T21:07:34.826Z",
+            "value" : "",
+            "data" : true
+          }
+        ]
+      }
+    },
+    "\/proc\/birth_timestamp" : {
+      "type" : 3,
+      "description" : "Start time of this santad instance, in microseconds since epoch",
+      "fields" : {
+        "" : [
+          {
+            "created" : "2021-09-16T21:07:34.826Z",
+            "last_updated" : "2021-09-16T21:07:34.826Z",
+            "value" : "",
+            "data" : 1250999830800
+          }
+        ]
+      }
+    },
+    "\/proc\/memory\/virtual_size" : {
+      "type" : 7,
+      "description" : "The virtual memory size of this process",
+      "fields" : {
+        "" : [
+          {
+            "created" : "2021-09-16T21:07:34.826Z",
+            "last_updated" : "2021-09-16T21:07:34.826Z",
+            "value" : "",
+            "data" : 987654321
+          }
+        ]
+      }
+    },
+    "\/build\/label" : {
+      "type" : 2,
+      "description" : "Software version running",
+      "fields" : {
+        "" : [
+          {
+            "created" : "2021-09-16T21:07:34.826Z",
+            "last_updated" : "2021-09-16T21:07:34.826Z",
+            "value" : "",
+            "data" : "20210809.0.1"
+          }
+        ]
+      }
+    }
+  },
+  "root_labels" : {
+    "hostname" : "testHost",
+    "username" : "testUser"
+  }
+}

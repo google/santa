@@ -19,11 +19,9 @@
 #import "Source/common/SNTConfigurator.h"
 #import "Source/common/SNTMetricSet.h"
 #import "Source/common/SNTXPCControlInterface.h"
+#import "Source/santactl/Commands/SNTCommandMetrics.h"
 #import "Source/santactl/SNTCommand.h"
 #import "Source/santactl/SNTCommandController.h"
-
-@interface SNTCommandMetrics : SNTCommand <SNTCommandProtocol>
-@end
 
 @implementation SNTCommandMetrics
 
@@ -88,6 +86,84 @@ REGISTER_COMMAND_NAME(@"metrics")
   return mutableMetrics;
 }
 
+- (void)prettyPrintRootLabels:(NSDictionary *)rootLabels {
+  for (NSString *label in rootLabels) {
+    const char *labelStr = [label cStringUsingEncoding:NSUTF8StringEncoding];
+    const char *valueStr = [rootLabels[label] cStringUsingEncoding:NSUTF8StringEncoding];
+
+    printf("  %-25s | %s\n", labelStr, valueStr);
+  }
+}
+
+- (void)prettyPrintMetricValues:(NSDictionary *)metrics {
+  for (NSString *metricName in metrics) {
+    NSDictionary *metric = metrics[metricName];
+    const char *metricNameStr = [metricName UTF8String];
+    const char *description = [metric[@"description"] UTF8String];
+    NSString *metricType = SNTMetricMakeStringFromMetricType([metric[@"type"] integerValue]);
+    const char *metricTypeStr = [metricType UTF8String];
+
+    printf("  %-25s | %s\n", "Metric Name", metricNameStr);
+    printf("  %-25s | %s\n", "Description", description);
+    printf("  %-25s | %s\n", "Type", metricTypeStr);
+
+    for (NSString *fieldName in metric[@"fields"]) {
+      for (NSDictionary *field in metric[@"fields"][fieldName]) {
+        const char *fieldNameStr = [fieldName cStringUsingEncoding:NSUTF8StringEncoding];
+        const char *fieldValueStr = [field[@"value"] cStringUsingEncoding:NSUTF8StringEncoding];
+        const char *createdStr = [field[@"created"] UTF8String];
+        const char *lastUpdatedStr = [field[@"last_updated"] UTF8String];
+        const char *data = [[NSString stringWithFormat:@"%@", field[@"data"]] UTF8String];
+
+        if (strlen(fieldNameStr) > 0) {
+          printf("  %-25s | %s=%s\n", "Field", fieldNameStr, fieldValueStr);
+        }
+
+        printf("  %-25s | %s\n", "Created", createdStr);
+        printf("  %-25s | %s\n", "Last Updated", lastUpdatedStr);
+        printf("  %-25s | %s\n", "Data", data);
+      }
+    }
+    printf("\n");
+  }
+}
+
+- (void)prettyPrintMetrics:(NSDictionary *)metrics asJSON:(BOOL)exportJSON {
+  BOOL exportMetrics = [[SNTConfigurator configurator] exportMetrics];
+  NSURL *metricsURLStr = [[SNTConfigurator configurator] metricURL];
+  SNTMetricFormatType metricFormat = [[SNTConfigurator configurator] metricFormat];
+  NSUInteger metricExportInterval = [[SNTConfigurator configurator] metricExportInterval];
+  NSDictionary *normalizedMetrics = [self normalize:metrics];
+
+  if (exportJSON) {
+    // Format
+    NSData *metricData = [NSJSONSerialization dataWithJSONObject:normalizedMetrics
+                                                         options:NSJSONWritingPrettyPrinted
+                                                           error:nil];
+    NSString *metricStr = [[NSString alloc] initWithData:metricData encoding:NSUTF8StringEncoding];
+    printf("%s\n", [metricStr UTF8String]);
+    return;
+  }
+
+  if (!exportMetrics) {
+    printf("Metrics not configured\n");
+    return;
+  }
+
+  printf(">>> Metrics Info\n");
+  printf("  %-25s | %s\n", "Metrics Server", [metricsURLStr.absoluteString UTF8String]);
+  printf("  %-25s | %s\n", "Metrics Format",
+         [[self stringFromMetricFormat:metricFormat] UTF8String]);
+  printf("  %-25s | %lu\n", "Export Interval (seconds)", metricExportInterval);
+  printf("\n");
+
+  printf(">>> Root Labels\n");
+  [self prettyPrintRootLabels:normalizedMetrics[@"root_labels"]];
+  printf("\n");
+  printf(">>> Metrics \n");
+  [self prettyPrintMetricValues:normalizedMetrics[@"metrics"]];
+}
+
 - (void)runWithArguments:(NSArray *)arguments {
   __block NSDictionary *metrics;
 
@@ -101,80 +177,10 @@ REGISTER_COMMAND_NAME(@"metrics")
 
   // Wait a maximum of 5s for metrics collected from daemon to arrive.
   if (dispatch_group_wait(group, dispatch_time(DISPATCH_TIME_NOW, NSEC_PER_SEC * 5))) {
-    fprintf(stderr, "Failed to retrieve some stats from daemon\n\n");
+    fprintf(stderr, "Failed to retrieve metrics from daemon\n\n");
   }
 
-  BOOL exportMetrics = [[SNTConfigurator configurator] exportMetrics];
-  NSURL *metricsURLStr = [[SNTConfigurator configurator] metricURL];
-  SNTMetricFormatType metricFormat = [[SNTConfigurator configurator] metricFormat];
-  NSUInteger metricExportInterval = [[SNTConfigurator configurator] metricExportInterval];
-  NSDictionary *normalizedMetrics = [self normalize:metrics];
-
-  if ([arguments containsObject:@"--json"]) {
-    // Format
-    NSData *metricData = [NSJSONSerialization dataWithJSONObject:normalizedMetrics
-                                                         options:NSJSONWritingPrettyPrinted
-                                                           error:nil];
-    NSString *metricStr = [[NSString alloc] initWithData:metricData encoding:NSUTF8StringEncoding];
-    printf("%s\n", [metricStr UTF8String]);
-  } else {
-    if (exportMetrics) {
-      printf(">>> Metrics Info\n");
-      printf("  %-25s | %s\n", "Metrics Server", [metricsURLStr.absoluteString UTF8String]);
-      printf("  %-25s | %s\n", "Metrics Format",
-             [[self stringFromMetricFormat:metricFormat] UTF8String]);
-      printf("  %-25s | %lu\n", "Export Interval (seconds)", metricExportInterval);
-      printf("\n");
-    } else {
-      printf("Metrics not configured\n");
-      return;
-    }
-
-    printf(">>> Root Labels\n");
-
-    for (NSString *label in normalizedMetrics[@"root_labels"]) {
-      const char *labelStr = [label cStringUsingEncoding:NSUTF8StringEncoding];
-      const char *valueStr =
-        [normalizedMetrics[@"root_labels"][label] cStringUsingEncoding:NSUTF8StringEncoding];
-
-      printf("  %-25s | %s\n", labelStr, valueStr);
-    }
-
-    printf("\n");
-    printf(">>> Metrics \n");
-
-    for (NSString *metricName in normalizedMetrics[@"metrics"]) {
-      NSDictionary *metric = normalizedMetrics[@"metrics"][metricName];
-      const char *metricNameStr = [metricName UTF8String];
-      const char *description = [metric[@"description"] UTF8String];
-      NSString *metricType = SNTMetricMakeStringFromMetricType([metric[@"type"] integerValue]);
-      const char *metricTypeStr = [metricType UTF8String];
-
-      printf("  %-25s | %s\n", "Metric Name", metricNameStr);
-      printf("  %-25s | %s\n", "Description", description);
-      printf("  %-25s | %s\n", "Type", metricTypeStr);
-
-      for (NSString *fieldName in metric[@"fields"]) {
-        for (NSDictionary *field in metric[@"fields"][fieldName]) {
-          const char *fieldNameStr = [fieldName cStringUsingEncoding:NSUTF8StringEncoding];
-          const char *fieldValueStr = [field[@"value"] cStringUsingEncoding:NSUTF8StringEncoding];
-          const char *createdStr = [field[@"created"] UTF8String];
-          const char *lastUpdatedStr = [field[@"last_updated"] UTF8String];
-          const char *data = [[NSString stringWithFormat:@"%@", field[@"data"]] UTF8String];
-
-          if (strlen(fieldNameStr) > 0) {
-            printf("  %-25s | %s=%s\n", "Field", fieldNameStr, fieldValueStr);
-          }
-
-          printf("  %-25s | %s\n", "Created", createdStr);
-          printf("  %-25s | %s\n", "Last Updated", lastUpdatedStr);
-          printf("  %-25s | %s\n", "Data", data);
-        }
-      }
-      printf("\n");
-    }
-  }
-
+  [self prettyPrintMetrics:metrics asJSON:[arguments containsObject:@"--json"]];
   exit(0);
 }
 

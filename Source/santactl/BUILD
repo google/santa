@@ -15,6 +15,7 @@ objc_library(
         "Commands/SNTCommandRule.m",
         "Commands/SNTCommandStatus.m",
         "Commands/SNTCommandVersion.m",
+        "Commands/SNTCommandMetrics.h",
         "Commands/SNTCommandMetrics.m",
         "Commands/sync/NSData+Zlib.h",
         "Commands/sync/NSData+Zlib.m",
@@ -169,5 +170,15 @@ santa_unit_test(
         "@MOLAuthenticatingURLSession",
         "@MOLXPCConnection",
         "@OCMock",
+    ],
+)
+
+santa_unit_test(
+    name = "SNTCommandMetricsTest",
+    srcs = ["Commands/SNTCommandMetricsTest.m"],
+    structured_resources = glob(["Commands/testdata/*"]),
+    deps = [
+        ":santactl_lib",
+        "//Source/santametricservice/Formats:SNTMetricFormatTestHelper",
     ],
 )
