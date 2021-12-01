@@ -44,48 +44,6 @@ REGISTER_COMMAND_NAME(@"metrics")
           @"  Use --json to output in JSON format");
 }
 
-- (NSString *)stringFromMetricFormat:(SNTMetricFormatType)format {
-  switch (format) {
-    case SNTMetricFormatTypeMonarchJSON: return @"monarchjson";
-    case SNTMetricFormatTypeRawJSON: return @"rawjson";
-    default: return @"Unknown Metric Format";
-  }
-}
-
-- (NSDictionary *)normalize:(NSDictionary *)metrics {
-  NSMutableDictionary *mutableMetrics = [metrics mutableCopy];
-
-  id formatter;
-
-  if (@available(macOS 10.13, *)) {
-    NSISO8601DateFormatter *isoFormatter = [[NSISO8601DateFormatter alloc] init];
-
-    isoFormatter.formatOptions =
-      NSISO8601DateFormatWithInternetDateTime | NSISO8601DateFormatWithFractionalSeconds;
-    formatter = isoFormatter;
-  } else {
-    NSDateFormatter *localFormatter = [[NSDateFormatter alloc] init];
-    [localFormatter setDateFormat:@"yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"];
-    [localFormatter setTimeZone:[NSTimeZone timeZoneWithName:@"UTC"]];
-    formatter = localFormatter;
-  }
-
-  for (NSString *metricName in mutableMetrics[@"metrics"]) {
-    NSMutableDictionary *metric = mutableMetrics[@"metrics"][metricName];
-
-    for (NSString *field in metric[@"fields"]) {
-      NSMutableArray<NSMutableDictionary *> *values = metric[@"fields"][field];
-
-      [values enumerateObjectsUsingBlock:^(id object, NSUInteger index, BOOL *stop) {
-        values[index][@"created"] = [formatter stringFromDate:values[index][@"created"]];
-        values[index][@"last_updated"] = [formatter stringFromDate:values[index][@"last_updated"]];
-      }];
-    }
-  }
-
-  return mutableMetrics;
-}
-
 - (void)prettyPrintRootLabels:(NSDictionary *)rootLabels {
   for (NSString *label in rootLabels) {
     const char *labelStr = [label cStringUsingEncoding:NSUTF8StringEncoding];
@@ -133,7 +91,7 @@ REGISTER_COMMAND_NAME(@"metrics")
   NSURL *metricsURLStr = [[SNTConfigurator configurator] metricURL];
   SNTMetricFormatType metricFormat = [[SNTConfigurator configurator] metricFormat];
   NSUInteger metricExportInterval = [[SNTConfigurator configurator] metricExportInterval];
-  NSDictionary *normalizedMetrics = [self normalize:metrics];
+  NSDictionary *normalizedMetrics = SNTMetricConvertDatesToISO8601Strings(metrics);
 
   if (exportJSON) {
     // Format
@@ -153,7 +111,7 @@ REGISTER_COMMAND_NAME(@"metrics")
   printf(">>> Metrics Info\n");
   printf("  %-25s | %s\n", "Metrics Server", [metricsURLStr.absoluteString UTF8String]);
   printf("  %-25s | %s\n", "Metrics Format",
-         [[self stringFromMetricFormat:metricFormat] UTF8String]);
+         [SNTMetricStringFromMetricFormatType(metricFormat) UTF8String]);
   printf("  %-25s | %lu\n", "Export Interval (seconds)", metricExportInterval);
   printf("\n");
 

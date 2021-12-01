@@ -13,6 +13,7 @@
 ///    limitations under the License.
 
 #import <Foundation/Foundation.h>
+#import "SNTCommonEnums.h"
 
 /**
  * Provides an abstraction for various metric systems that will be exported to
@@ -184,5 +185,13 @@ NSString *SNTMetricMakeStringFromMetricType(SNTMetricType metricType);
 /** Export creates an NSDictionary of the state of the metrics */
 - (NSDictionary *)export;
 @end
+
+// Returns a human readble string from an SNTMetricFormat type
+NSString *SNTMetricStringFromMetricFormatType(SNTMetricFormatType format);
+
+/** Normalizes dates in an exported dictionary to be ISO8601 timestamp strings in
+ *  UTC time.
+ */
+NSDictionary *SNTMetricConvertDatesToISO8601Strings(NSDictionary *metrics);
 
 NS_ASSUME_NONNULL_END
