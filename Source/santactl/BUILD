@@ -182,3 +182,12 @@ santa_unit_test(
         "//Source/santametricservice/Formats:SNTMetricFormatTestHelper",
     ],
 )
+
+test_suite(
+    name = "unit_tests",
+    tests = [
+        ":SNTCommandFileInfoTest",
+        ":SNTCommandMetricsTest",
+        ":SNTCommandSyncTest",
+    ],
+)
