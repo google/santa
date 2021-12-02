@@ -20,6 +20,9 @@
 @interface SNTMetricSetTest : XCTestCase
 @end
 
+@interface SNTMetricSetHelperFunctionsTest : XCTestCase
+@end
+
 // Stub out NSDate's date method
 @implementation NSDate (custom)
 
@@ -548,4 +551,57 @@
   XCTAssertEqualObjects([metricSet export], expected);
 }
 
+@end
+
+@implementation SNTMetricSetHelperFunctionsTest
+- (void)testMakeMetricString {
+  NSArray<NSDictionary *> *tests = @[
+    @{
+      @"input" : [NSNumber numberWithInt:SNTMetricTypeUnknown],
+      @"expected" : @"SNTMetricTypeUnknown 0"
+    },
+    @{
+      @"input" : [NSNumber numberWithInt:SNTMetricTypeConstantBool],
+      @"expected" : @"SNTMetricTypeConstantBool 1"
+    },
+    @{
+      @"input" : [NSNumber numberWithInt:SNTMetricTypeConstantString],
+      @"expected" : @"SNTMetricTypeConstantString 2"
+    },
+    @{
+      @"input" : [NSNumber numberWithInt:SNTMetricTypeConstantInt64],
+      @"expected" : @"SNTMetricTypeConstantInt64 3"
+    },
+    @{
+      @"input" : [NSNumber numberWithInt:SNTMetricTypeConstantDouble],
+      @"expected" : @"SNTMetricTypeConstantDouble 4"
+    },
+    @{
+      @"input" : [NSNumber numberWithInt:SNTMetricTypeGaugeBool],
+      @"expected" : @"SNTMetricTypeGaugeBool 5"
+    },
+    @{
+      @"input" : [NSNumber numberWithInt:SNTMetricTypeGaugeString],
+      @"expected" : @"SNTMetricTypeGaugeString 6"
+    },
+    @{
+      @"input" : [NSNumber numberWithInt:SNTMetricTypeGaugeInt64],
+      @"expected" : @"SNTMetricTypeGaugeInt64 7"
+    },
+    @{
+      @"input" : [NSNumber numberWithInt:SNTMetricTypeGaugeDouble],
+      @"expected" : @"SNTMetricTypeGaugeDouble 8"
+    },
+    @{
+      @"input" : [NSNumber numberWithInt:SNTMetricTypeCounter],
+      @"expected" : @"SNTMetricTypeCounter 9"
+    }
+  ];
+
+  for (NSDictionary *test in tests) {
+    NSString *output = SNTMetricMakeStringFromMetricType([test[@"input"] integerValue]);
+    XCTAssertEqualObjects(test[@"expected"], output, @"expected %@ got %@", test[@"expected"],
+                          output);
+  }
+}
 @end

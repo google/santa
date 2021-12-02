@@ -73,6 +73,11 @@
 - (void)enableTransitiveRules:(void (^)(BOOL))reply;
 
 ///
+/// Metrics ops
+///
+- (void)metrics:(void (^)(NSDictionary *))reply;
+
+///
 ///  GUI Ops
 ///
 - (void)setNotificationListener:(NSXPCListenerEndpoint *)listener;
