@@ -50,7 +50,6 @@
 }
 
 - (void)tearDown {
-  [self.mockConfigurator stopMocking];
   // delete the temp dir
   NSError *err;
   [[NSFileManager defaultManager] removeItemAtPath:self.tempDir error:&err];
