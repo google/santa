@@ -3,6 +3,8 @@ load("//:helper.bzl", "santa_unit_test")
 
 licenses(["notice"])
 
+package(default_visibility = ["//:santa_package_group"])
+
 objc_library(
     name = "santactl_lib",
     srcs = [
@@ -97,7 +99,6 @@ macos_command_line_application(
         "//conditions:default": "Santa_Dev.provisionprofile",
     }),
     version = "//:version",
-    visibility = ["//:santa_package_group"],
     deps = [":santactl_lib"],
 )
 
@@ -177,9 +178,11 @@ santa_unit_test(
     name = "SNTCommandMetricsTest",
     srcs = ["Commands/SNTCommandMetricsTest.m"],
     structured_resources = glob(["Commands/testdata/*"]),
+    visibility = ["//:santa_package_group"],
     deps = [
         ":santactl_lib",
         "//Source/santametricservice/Formats:SNTMetricFormatTestHelper",
+        "@OCMock",
     ],
 )
 
@@ -190,4 +193,5 @@ test_suite(
         ":SNTCommandMetricsTest",
         ":SNTCommandSyncTest",
     ],
+    visibility = ["//:santa_package_group"],
 )
