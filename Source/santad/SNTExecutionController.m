@@ -19,6 +19,7 @@
 #include <utmpx.h>
 
 #include "Source/common/SNTLogging.h"
+#include "Source/common/SNTMetricSet.h"
 
 #import <MOLCodesignChecker/MOLCodesignChecker.h>
 
@@ -51,6 +52,7 @@ static size_t kLargeBinarySize = 30 * 1024 * 1024;
 @property SNTPolicyProcessor *policyProcessor;
 @property SNTRuleTable *ruleTable;
 @property SNTSyncdQueue *syncdQueue;
+@property SNTMetricCounter *events;
 
 @property dispatch_queue_t eventQueue;
 @end
@@ -78,8 +80,35 @@ static size_t kLargeBinarySize = 30 * 1024 * 1024;
     // This establishes the XPC connection between libsecurity and syspolicyd.
     // Not doing this causes a deadlock as establishing this link goes through xpcproxy.
     (void)[[MOLCodesignChecker alloc] initWithSelf];
+
+    SNTMetricSet *metricSet = [SNTMetricSet sharedInstance];
+    _events = [metricSet counterWithName:@"/santa/events"
+                              fieldNames:@[ @"action_response" ]
+                                helpText:@"Events processed by Santa with response"];
   }
   return self;
+}
+
+- (void)incrementEventCounters:(SNTEventState)eventType {
+  NSString *eventTypeStr;
+
+  switch (eventType) {
+    case SNTEventStateBlockBinary: eventTypeStr = @"BlockBinary"; break;
+    case SNTEventStateAllowBinary: eventTypeStr = @"AllowBinary"; break;
+    case SNTEventStateBlockCertificate: eventTypeStr = @"BlockCertificate"; break;
+    case SNTEventStateAllowCertificate: eventTypeStr = @"AllowCertificate"; break;
+    case SNTEventStateBlockTeamID: eventTypeStr = @"BlockTeamID"; break;
+    case SNTEventStateAllowTeamID: eventTypeStr = @"AllowTeamID"; break;
+    case SNTEventStateBlockScope: eventTypeStr = @"BlockScope"; break;
+    case SNTEventStateAllowScope: eventTypeStr = @"AllowScope"; break;
+    case SNTEventStateAllowCompiler: eventTypeStr = @"AllowCompiler"; break;
+    case SNTEventStateAllowTransitive: eventTypeStr = @"AllowTransitive"; break;
+    case SNTEventStateAllowUnknown: eventTypeStr = @"AllowUnknown"; break;
+    case SNTEventStateBlockUnknown: eventTypeStr = @"BlockUnknown"; break;
+    default: eventTypeStr = @"unknown"; break;
+  }
+
+  [_events incrementForFieldValues:@[ eventTypeStr ]];
 }
 
 #pragma mark Binary Validation
@@ -89,6 +118,7 @@ static size_t kLargeBinarySize = 30 * 1024 * 1024;
   if (unlikely(message.path == NULL)) {
     LOGE(@"Path for vnode_id is NULL: %llu/%llu", message.vnode_id.fsid, message.vnode_id.fileid);
     [self.eventProvider postAction:ACTION_RESPOND_ALLOW forMessage:message];
+    [self.events incrementForFieldValues:@[ @"AllowNullVNode" ]];
     return;
   }
 
@@ -97,12 +127,14 @@ static size_t kLargeBinarySize = 30 * 1024 * 1024;
   if (unlikely(!binInfo)) {
     LOGE(@"Failed to read file %@: %@", @(message.path), fileInfoError.localizedDescription);
     [self.eventProvider postAction:ACTION_RESPOND_ALLOW forMessage:message];
+    [self.events incrementForFieldValues:@[ @"AllowNoFileInfo" ]];
     return;
   }
 
   // PrinterProxy workaround, see description above the method for more details.
   if ([self printerProxyWorkaround:binInfo]) {
     [self.eventProvider postAction:ACTION_RESPOND_DENY forMessage:message];
+    [self.events incrementForFieldValues:@[ @"BlockPrinterWorkaround" ]];
     return;
   }
 
@@ -111,6 +143,7 @@ static size_t kLargeBinarySize = 30 * 1024 * 1024;
     LOGD(@"%@ is larger than %zu. Letting santa-driver know we are working on it.", binInfo.path,
          kLargeBinarySize);
     [self.eventProvider postAction:ACTION_RESPOND_ACK forMessage:message];
+    // TODO(markowsky): Maybe add a metric here for how many large executables we're seeing.
   }
 
   SNTCachedDecision *cd = [self.policyProcessor decisionForFileInfo:binInfo];
@@ -138,6 +171,9 @@ static size_t kLargeBinarySize = 30 * 1024 * 1024;
 
   // Send the decision to the kernel.
   [self.eventProvider postAction:action forMessage:message];
+
+  // Increment counters;
+  [self incrementEventCounters:cd.decision];
 
   // Log to database if necessary.
   if (cd.decision != SNTEventStateAllowBinary && cd.decision != SNTEventStateAllowCompiler &&
