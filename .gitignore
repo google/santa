@@ -15,3 +15,5 @@ tulsigen-*
 *.p12
 *.keychain
 *.swp
+compile_commands.json
+.cache/
