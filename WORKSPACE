@@ -20,6 +20,18 @@ load("@build_bazel_apple_support//lib:repositories.bzl", "apple_support_dependen
 
 apple_support_dependencies()
 
+# Hedron Bazel Compile Commands Extractor
+# Allows integrating with clangd
+# https://github.com/hedronvision/bazel-compile-commands-extractor
+git_repository(
+    name = "hedron_compile_commands",
+    commit = "e085566bf35e020402a2e32258360b16446fbad8",
+    remote = "https://github.com/hedronvision/bazel-compile-commands-extractor.git",
+    shallow_since = "1638167585 -0800",
+)
+load("@hedron_compile_commands//:workspace_setup.bzl", "hedron_compile_commands_setup")
+hedron_compile_commands_setup()
+
 # Macops MOL* dependencies
 
 git_repository(
