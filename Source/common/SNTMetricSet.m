@@ -13,6 +13,24 @@
 ///    limitations under the License.
 
 #import "SNTMetricSet.h"
+#import "SNTCommonEnums.h"
+
+NSString *SNTMetricMakeStringFromMetricType(SNTMetricType metricType) {
+  NSString *typeStr;
+  switch (metricType) {
+    case SNTMetricTypeConstantBool: typeStr = @"SNTMetricTypeConstantBool"; break;
+    case SNTMetricTypeConstantString: typeStr = @"SNTMetricTypeConstantString"; break;
+    case SNTMetricTypeConstantInt64: typeStr = @"SNTMetricTypeConstantInt64"; break;
+    case SNTMetricTypeConstantDouble: typeStr = @"SNTMetricTypeConstantDouble"; break;
+    case SNTMetricTypeGaugeBool: typeStr = @"SNTMetricTypeGaugeBool"; break;
+    case SNTMetricTypeGaugeString: typeStr = @"SNTMetricTypeGaugeString"; break;
+    case SNTMetricTypeGaugeInt64: typeStr = @"SNTMetricTypeGaugeInt64"; break;
+    case SNTMetricTypeGaugeDouble: typeStr = @"SNTMetricTypeGaugeDouble"; break;
+    case SNTMetricTypeCounter: typeStr = @"SNTMetricTypeCounter"; break;
+    default: typeStr = @"SNTMetricTypeUnknown"; break;
+  }
+  return [NSString stringWithFormat:@"%@ %ld", typeStr, metricType];
+}
 
 /**
  *  SNTMetricValue encapsulates the value of a metric along with the creation
@@ -473,6 +491,12 @@
   }
 }
 
+- (void)removeRootLabel:(NSString *)label {
+  @synchronized(self) {
+    [_rootLabels removeObjectForKey:label];
+  }
+}
+
 - (SNTMetric *)registerMetric:(nonnull SNTMetric *)metric {
   @synchronized(self) {
     SNTMetric *oldMetric = _metrics[[metric name]];
@@ -606,4 +630,48 @@
   }
   return exported;
 }
+
+// Returns a human readble string from an SNTMetricFormat type
+NSString *SNTMetricStringFromMetricFormatType(SNTMetricFormatType format) {
+  switch (format) {
+    case SNTMetricFormatTypeRawJSON: return @"rawjson";
+    case SNTMetricFormatTypeMonarchJSON: return @"monarchjson";
+    default: return @"Unknown Metric Format";
+  }
+}
+
+NSDictionary *SNTMetricConvertDatesToISO8601Strings(NSDictionary *metrics) {
+  NSMutableDictionary *mutableMetrics = [metrics mutableCopy];
+
+  id formatter;
+
+  if (@available(macOS 10.13, *)) {
+    NSISO8601DateFormatter *isoFormatter = [[NSISO8601DateFormatter alloc] init];
+
+    isoFormatter.formatOptions =
+      NSISO8601DateFormatWithInternetDateTime | NSISO8601DateFormatWithFractionalSeconds;
+    formatter = isoFormatter;
+  } else {
+    NSDateFormatter *localFormatter = [[NSDateFormatter alloc] init];
+    [localFormatter setDateFormat:@"yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"];
+    [localFormatter setTimeZone:[NSTimeZone timeZoneWithName:@"UTC"]];
+    formatter = localFormatter;
+  }
+
+  for (NSString *metricName in mutableMetrics[@"metrics"]) {
+    NSMutableDictionary *metric = mutableMetrics[@"metrics"][metricName];
+
+    for (NSString *field in metric[@"fields"]) {
+      NSMutableArray<NSMutableDictionary *> *values = metric[@"fields"][field];
+
+      [values enumerateObjectsUsingBlock:^(id object, NSUInteger index, BOOL *stop) {
+        values[index][@"created"] = [formatter stringFromDate:values[index][@"created"]];
+        values[index][@"last_updated"] = [formatter stringFromDate:values[index][@"last_updated"]];
+      }];
+    }
+  }
+
+  return mutableMetrics;
+}
+
 @end

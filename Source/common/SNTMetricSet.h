@@ -13,6 +13,7 @@
 ///    limitations under the License.
 
 #import <Foundation/Foundation.h>
+#import "SNTCommonEnums.h"
 
 /**
  * Provides an abstraction for various metric systems that will be exported to
@@ -47,6 +48,8 @@ typedef NS_ENUM(NSInteger, SNTMetricType) {
   SNTMetricTypeGaugeDouble = 8,
   SNTMetricTypeCounter = 9,
 };
+
+NSString *SNTMetricMakeStringFromMetricType(SNTMetricType metricType);
 
 @interface SNTMetric : NSObject
 - (NSDictionary *)export;
@@ -105,11 +108,15 @@ typedef NS_ENUM(NSInteger, SNTMetricType) {
  */
 + (instancetype)sharedInstance;
 
-
 /**
  *  Add a root label to the MetricSet.
  */
 - (void)addRootLabel:(NSString *)label value:(NSString *)value;
+
+/**
+ * Remove a root label from the MetricSet.
+ */
+- (void)removeRootLabel:(NSString *)labelName;
 
 /**
  * Returns a int64 gauge metric with the given Streamz name and help text,
@@ -178,5 +185,13 @@ typedef NS_ENUM(NSInteger, SNTMetricType) {
 /** Export creates an NSDictionary of the state of the metrics */
 - (NSDictionary *)export;
 @end
+
+// Returns a human readble string from an SNTMetricFormat type
+NSString *SNTMetricStringFromMetricFormatType(SNTMetricFormatType format);
+
+/** Normalizes dates in an exported dictionary to be ISO8601 timestamp strings in
+ *  UTC time.
+ */
+NSDictionary *SNTMetricConvertDatesToISO8601Strings(NSDictionary *metrics);
 
 NS_ASSUME_NONNULL_END

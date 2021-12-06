@@ -194,6 +194,14 @@ static const NSUInteger kTransitiveRuleExpirationSeconds = 6 * 30 * 24 * 3600;
   return count;
 }
 
+- (NSUInteger)teamIDRuleCount {
+  __block NSUInteger count = 0;
+  [self inDatabase:^(FMDatabase *db) {
+    count = [db longForQuery:@"SELECT COUNT(*) FROM rules WHERE type=3"];
+  }];
+  return count;
+}
+
 - (SNTRule *)ruleFromResultSet:(FMResultSet *)rs {
   return [[SNTRule alloc] initWithIdentifier:[rs stringForColumn:@"identifier"]
                                        state:[rs intForColumn:@"state"]

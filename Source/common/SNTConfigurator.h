@@ -393,6 +393,11 @@
 @property(readonly, nonatomic) NSURL *metricURL;
 
 ///
+/// Extra Metric Labels to add to the metrics payloads.
+///
+@property(readonly, nonatomic) NSDictionary *extraMetricLabels;
+
+///
 /// Duration in seconds of how often the metrics should be exported.
 ///
 @property(readonly, nonatomic) NSUInteger metricExportInterval;

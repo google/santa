@@ -203,6 +203,7 @@ REGISTER_COMMAND_NAME(@"rule")
   [[daemonConn remoteObjectProxy] decisionForFilePath:nil
                                            fileSHA256:fileSHA256
                                     certificateSHA256:certificateSHA256
+                                               teamID:teamID
                                                 reply:^(SNTEventState s) {
                                                   output = (SNTEventStateAllow & s)
                                                              ? @"Allowed".mutableCopy

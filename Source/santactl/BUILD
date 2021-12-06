@@ -3,6 +3,8 @@ load("//:helper.bzl", "santa_unit_test")
 
 licenses(["notice"])
 
+package(default_visibility = ["//:santa_package_group"])
+
 objc_library(
     name = "santactl_lib",
     srcs = [
@@ -15,6 +17,8 @@ objc_library(
         "Commands/SNTCommandRule.m",
         "Commands/SNTCommandStatus.m",
         "Commands/SNTCommandVersion.m",
+        "Commands/SNTCommandMetrics.h",
+        "Commands/SNTCommandMetrics.m",
         "Commands/sync/NSData+Zlib.h",
         "Commands/sync/NSData+Zlib.m",
         "Commands/sync/SNTCommandSync.m",
@@ -54,6 +58,7 @@ objc_library(
         "//Source/common:SNTFileInfo",
         "//Source/common:SNTKernelCommon",
         "//Source/common:SNTLogging",
+        "//Source/common:SNTMetricSet",
         "//Source/common:SNTRule",
         "//Source/common:SNTStoredEvent",
         "//Source/common:SNTStrengthify",
@@ -94,7 +99,6 @@ macos_command_line_application(
         "//conditions:default": "Santa_Dev.provisionprofile",
     }),
     version = "//:version",
-    visibility = ["//:santa_package_group"],
     deps = [":santactl_lib"],
 )
 
@@ -168,4 +172,26 @@ santa_unit_test(
         "@MOLXPCConnection",
         "@OCMock",
     ],
+)
+
+santa_unit_test(
+    name = "SNTCommandMetricsTest",
+    srcs = ["Commands/SNTCommandMetricsTest.m"],
+    structured_resources = glob(["Commands/testdata/*"]),
+    visibility = ["//:santa_package_group"],
+    deps = [
+        ":santactl_lib",
+        "//Source/santametricservice/Formats:SNTMetricFormatTestHelper",
+        "@OCMock",
+    ],
+)
+
+test_suite(
+    name = "unit_tests",
+    tests = [
+        ":SNTCommandFileInfoTest",
+        ":SNTCommandMetricsTest",
+        ":SNTCommandSyncTest",
+    ],
+    visibility = ["//:santa_package_group"],
 )

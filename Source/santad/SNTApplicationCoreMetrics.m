@@ -85,11 +85,31 @@ static void RegisterMemoryAndCPUMetrics(SNTMetricSet *metricSet) {
 }
 
 static void RegisterHostnameAndUsernameLabels(SNTMetricSet *metricSet) {
-  [metricSet addRootLabel:@"hostname" value:[NSProcessInfo processInfo].hostName];
+  NSString *hostname = [NSProcessInfo processInfo].hostName;
+
+  [metricSet addRootLabel:@"host_name" value:hostname];
   [metricSet addRootLabel:@"username" value:NSUserName()];
   [metricSet addRootLabel:@"job_name" value:@"santad"];
-}
+  [metricSet addRootLabel:@"service_name" value:@"santa"];
 
+  // get extra root labels from configuration
+  SNTConfigurator *config = [SNTConfigurator configurator];
+
+  NSDictionary *extraLabels = [config extraMetricLabels];
+
+  if (extraLabels.count == 0) return;
+
+  for (NSString *key in extraLabels) {
+    // remove the root label if the value is empty.
+    if ([@"" isEqualToString:(NSString *)extraLabels[key]]) {
+      [metricSet removeRootLabel:key];
+      continue;
+    }
+
+    // Set or override the value.
+    [metricSet addRootLabel:key value:(NSString *)extraLabels[key]];
+  }
+}
 static void RegisterCommonSantaMetrics(SNTMetricSet *metricSet) {
   NSString *version = [[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleVersion"];
 

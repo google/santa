@@ -20,6 +20,7 @@
 #import "Source/common/SNTCommonEnums.h"
 #import "Source/common/SNTConfigurator.h"
 #import "Source/common/SNTLogging.h"
+#import "Source/common/SNTMetricSet.h"
 #import "Source/common/SNTRule.h"
 #import "Source/common/SNTStoredEvent.h"
 #import "Source/common/SNTStrengthify.h"
@@ -91,10 +92,10 @@ double watchdogRAMPeak = 0;
 #pragma mark Database ops
 
 - (void)databaseRuleCounts:(void (^)(int64_t binary, int64_t certificate, int64_t compiler,
-                                     int64_t transitive))reply {
+                                     int64_t transitive, int64_t teamID))reply {
   SNTRuleTable *rdb = [SNTDatabaseController ruleTable];
   reply([rdb binaryRuleCount], [rdb certificateRuleCount], [rdb compilerRuleCount],
-        [rdb transitiveRuleCount]);
+        [rdb transitiveRuleCount], [rdb teamIDRuleCount]);
 }
 
 - (void)databaseRuleAddRules:(NSArray *)rules
@@ -148,10 +149,12 @@ double watchdogRAMPeak = 0;
 - (void)decisionForFilePath:(NSString *)filePath
                  fileSHA256:(NSString *)fileSHA256
           certificateSHA256:(NSString *)certificateSHA256
+                     teamID:(NSString *)teamID
                       reply:(void (^)(SNTEventState))reply {
   reply([self.policyProcessor decisionForFilePath:filePath
                                        fileSHA256:fileSHA256
-                                certificateSHA256:certificateSHA256]
+                                certificateSHA256:certificateSHA256
+                                           teamID:teamID]
           .decision);
 }
 
@@ -238,6 +241,18 @@ double watchdogRAMPeak = 0;
 - (void)setEnableTransitiveRules:(BOOL)enabled reply:(void (^)(void))reply {
   [[SNTConfigurator configurator] setEnableTransitiveRules:enabled];
   reply();
+}
+
+#pragma mark Metrics Ops
+
+- (void)metrics:(void (^)(NSDictionary *))reply {
+  // If metrics are not enabled send nil back
+  if (![[SNTConfigurator configurator] exportMetrics]) {
+    reply(nil);
+  }
+
+  SNTMetricSet *metricSet = [SNTMetricSet sharedInstance];
+  reply([metricSet export]);
 }
 
 #pragma mark GUI Ops

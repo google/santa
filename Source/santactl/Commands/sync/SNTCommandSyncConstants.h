@@ -37,6 +37,7 @@ extern NSString *const kBinaryRuleCount;
 extern NSString *const kCertificateRuleCount;
 extern NSString *const kCompilerRuleCount;
 extern NSString *const kTransitiveRuleCount;
+extern NSString *const kTeamIDRuleCount;
 extern NSString *const kFullSyncInterval;
 extern NSString *const kFCMToken;
 extern NSString *const kFCMFullSyncInterval;

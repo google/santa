@@ -58,6 +58,7 @@
 ///
 - (nonnull SNTCachedDecision *)decisionForFilePath:(nonnull NSString *)filePath
                                         fileSHA256:(nullable NSString *)fileSHA256
-                                 certificateSHA256:(nullable NSString *)certificateSHA256;
+                                 certificateSHA256:(nullable NSString *)certificateSHA256
+                                            teamID:(nullable NSString *)teamID;
 
 @end

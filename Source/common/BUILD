@@ -213,6 +213,7 @@ objc_library(
     name = "SNTMetricSet",
     srcs = ["SNTMetricSet.m"],
     hdrs = ["SNTMetricSet.h"],
+    deps = [":SNTCommonEnums"],
 )
 
 objc_library(
