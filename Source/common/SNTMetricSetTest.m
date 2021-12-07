@@ -76,6 +76,19 @@
 
   XCTAssertEqualObjects([c export], expected);
 }
+
+- (void)testAddingMetricWithSameSchema {
+  SNTMetricSet *metricSet = [[SNTMetricSet alloc] init];
+  SNTMetricCounter *a = [metricSet counterWithName:@"/santa/counter"
+                                        fieldNames:@[]
+                                          helpText:@"Test counter."];
+
+  SNTMetricCounter *b = [metricSet counterWithName:@"/santa/counter"
+                                        fieldNames:@[]
+                                          helpText:@"Test counter."];
+
+  XCTAssertEqual(a, b, @"Unexpected new counter returned.");
+}
 @end
 
 @implementation SNTMetricBooleanGaugeTest
@@ -114,6 +127,20 @@
   NSDictionary *output = [b export];
   XCTAssertEqualObjects(output, expected);
 }
+
+- (void)testAddingBooleanWithSameSchema {
+  SNTMetricSet *metricSet = [[SNTMetricSet alloc] init];
+  SNTMetricBooleanGauge *a = [metricSet booleanGaugeWithName:@"/santa/daemon_connected"
+                                                  fieldNames:@[]
+                                                    helpText:@"Is the daemon connected."];
+
+  SNTMetricBooleanGauge *b = [metricSet booleanGaugeWithName:@"/santa/daemon_connected"
+                                                  fieldNames:@[]
+                                                    helpText:@"Is the daemon connected."];
+
+  XCTAssertEqual(a, b, @"Unexpected new boolean gauge returned.");
+}
+
 @end
 
 @implementation SNTMetricGaugeInt64Test
@@ -168,6 +195,20 @@
 
   XCTAssertEqualObjects([g export], expected);
 }
+
+- (void)testAddingMetricWithSameSchema {
+  SNTMetricSet *metricSet = [[SNTMetricSet alloc] init];
+  SNTMetricInt64Gauge *a = [metricSet int64GaugeWithName:@"/santa/int64gauge"
+                                              fieldNames:@[]
+                                                helpText:@"Test gauge."];
+
+  SNTMetricInt64Gauge *b = [metricSet int64GaugeWithName:@"/santa/int64gauge"
+                                              fieldNames:@[]
+                                                helpText:@"Test gauge."];
+
+  XCTAssertEqual(a, b, @"Unexpected new gauge returned.");
+}
+
 @end
 
 @implementation SNTMetricDoubleGaugeTest
@@ -227,6 +268,19 @@
   };
   XCTAssertEqualObjects([g export], expected);
 }
+
+- (void)testAddingMetricWithSameSchema {
+  SNTMetricSet *metricSet = [[SNTMetricSet alloc] init];
+  SNTMetricDoubleGauge *a = [metricSet doubleGaugeWithName:@"/santa/doublegauge"
+                                                fieldNames:@[]
+                                                  helpText:@"Test gauge."];
+
+  SNTMetricDoubleGauge *b = [metricSet doubleGaugeWithName:@"/santa/doublegauge"
+                                                fieldNames:@[]
+                                                  helpText:@"Test gauge."];
+
+  XCTAssertEqual(a, b, @"Unexpected new gauge returned.");
+}
 @end
 
 @implementation SNTMetricStringGaugeTest
@@ -240,6 +294,7 @@
   [s set:@"testValue" forFieldValues:@[]];
   XCTAssertEqualObjects([s getStringValueForFieldValues:@[]], @"testValue");
 }
+
 - (void)testExportNSDictionary {
   SNTMetricSet *metricSet = [[SNTMetricSet alloc] init];
   SNTMetricStringGauge *s = [metricSet stringGaugeWithName:@"/santa/mode"
@@ -264,6 +319,20 @@
 
   XCTAssertEqualObjects([s export], expected);
 }
+
+- (void)testAddingMetricWithSameSchema {
+  SNTMetricSet *metricSet = [[SNTMetricSet alloc] init];
+  SNTMetricStringGauge *a = [metricSet stringGaugeWithName:@"/santa/stringgauge"
+                                                fieldNames:@[]
+                                                  helpText:@"Test gauge."];
+
+  SNTMetricStringGauge *b = [metricSet stringGaugeWithName:@"/santa/stringgauge"
+                                                fieldNames:@[]
+                                                  helpText:@"Test gauge."];
+
+  XCTAssertEqual(a, b, @"Unexpected new gauge returned.");
+}
+
 @end
 
 @implementation SNTMetricSetTest
@@ -550,7 +619,6 @@
 
   XCTAssertEqualObjects([metricSet export], expected);
 }
-
 @end
 
 @implementation SNTMetricSetHelperFunctionsTest

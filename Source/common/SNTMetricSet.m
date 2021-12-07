@@ -521,8 +521,7 @@ NSString *SNTMetricMakeStringFromMetricType(SNTMetricType metricType) {
   SNTMetricCounter *c = [[SNTMetricCounter alloc] initWithName:name
                                                     fieldNames:fieldNames
                                                       helpText:helpText];
-  [self registerMetric:c];
-  return c;
+  return (SNTMetricCounter *)[self registerMetric:c];
 }
 
 - (SNTMetricInt64Gauge *)int64GaugeWithName:(NSString *)name
@@ -531,8 +530,7 @@ NSString *SNTMetricMakeStringFromMetricType(SNTMetricType metricType) {
   SNTMetricInt64Gauge *g = [[SNTMetricInt64Gauge alloc] initWithName:name
                                                           fieldNames:fieldNames
                                                             helpText:helpText];
-  [self registerMetric:g];
-  return g;
+  return (SNTMetricInt64Gauge *)[self registerMetric:g];
 }
 
 - (SNTMetricDoubleGauge *)doubleGaugeWithName:(NSString *)name
@@ -542,8 +540,7 @@ NSString *SNTMetricMakeStringFromMetricType(SNTMetricType metricType) {
                                                             fieldNames:fieldNames
                                                               helpText:helpText];
 
-  [self registerMetric:g];
-  return g;
+  return (SNTMetricDoubleGauge *)[self registerMetric:g];
 }
 
 - (SNTMetricStringGauge *)stringGaugeWithName:(NSString *)name
@@ -553,8 +550,7 @@ NSString *SNTMetricMakeStringFromMetricType(SNTMetricType metricType) {
                                                             fieldNames:fieldNames
                                                               helpText:helpText];
 
-  [self registerMetric:s];
-  return s;
+  return (SNTMetricStringGauge *)[self registerMetric:s];
 }
 
 - (SNTMetricBooleanGauge *)booleanGaugeWithName:(NSString *)name
@@ -564,8 +560,7 @@ NSString *SNTMetricMakeStringFromMetricType(SNTMetricType metricType) {
                                                               fieldNames:fieldNames
                                                                 helpText:helpText];
 
-  [self registerMetric:b];
-  return b;
+  return (SNTMetricBooleanGauge *)[self registerMetric:b];
 }
 
 - (void)addConstantStringWithName:(NSString *)name
