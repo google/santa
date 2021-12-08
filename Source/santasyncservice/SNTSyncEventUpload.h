@@ -14,7 +14,10 @@
 
 #import <Foundation/Foundation.h>
 
-#import "SNTCommandSyncStage.h"
+#import "SNTSyncStage.h"
 
-@interface SNTCommandSyncPreflight : SNTCommandSyncStage
+@interface SNTCommandSyncEventUpload : SNTCommandSyncStage
+
+- (BOOL)uploadEvents:(NSArray *)events;
+
 @end

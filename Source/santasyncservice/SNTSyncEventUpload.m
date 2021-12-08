@@ -12,7 +12,7 @@
 ///    See the License for the specific language governing permissions and
 ///    limitations under the License.
 
-#import "Source/santasyncservice/SNTCommandSyncEventUpload.h"
+#import "Source/santasyncservice/SNTSyncEventUpload.h"
 
 #import <MOLCertificate/MOLCertificate.h>
 #import <MOLXPCConnection/MOLXPCConnection.h>
@@ -22,8 +22,8 @@
 #import "Source/common/SNTStoredEvent.h"
 #import "Source/common/SNTXPCControlInterface.h"
 #import "Source/santasyncservice/NSData+Zlib.h"
-#import "Source/santasyncservice/SNTCommandSyncConstants.h"
-#import "Source/santasyncservice/SNTCommandSyncState.h"
+#import "Source/santasyncservice/SNTSyncConstants.h"
+#import "Source/santasyncservice/SNTSyncState.h"
 
 @implementation SNTCommandSyncEventUpload
 

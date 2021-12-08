@@ -21,7 +21,7 @@
 #import "Source/common/SNTXPCControlInterface.h"
 #import "Source/santactl/SNTCommand.h"
 #import "Source/santactl/SNTCommandController.h"
-#import "Source/santasyncservice/SNTCommandSyncManager.h"
+#import "Source/santasyncservice/SNTSyncManager.h"
 
 @interface SNTCommandSync : SNTCommand <SNTCommandProtocol>
 @property MOLXPCConnection *listener;

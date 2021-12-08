@@ -14,7 +14,7 @@
 
 #import <Foundation/Foundation.h>
 
-#import "SNTCommandSyncStage.h"
+#import "SNTSyncStage.h"
 
-@interface SNTCommandSyncPostflight : SNTCommandSyncStage
+@interface SNTCommandSyncPreflight : SNTCommandSyncStage
 @end

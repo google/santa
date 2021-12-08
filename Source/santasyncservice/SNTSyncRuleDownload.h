@@ -14,10 +14,10 @@
 
 #import <Foundation/Foundation.h>
 
-#import "SNTCommandSyncStage.h"
+#import "Source/santasyncservice/SNTSyncStage.h"
 
-@interface SNTCommandSyncEventUpload : SNTCommandSyncStage
+@class SNTRule;
 
-- (BOOL)uploadEvents:(NSArray *)events;
-
+@interface SNTCommandSyncRuleDownload : SNTCommandSyncStage
+- (SNTRule *)ruleFromDictionary:(NSDictionary *)dict;
 @end
