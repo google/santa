@@ -21,13 +21,13 @@
 #import "Source/common/SNTRule.h"
 #import "Source/common/SNTStoredEvent.h"
 #import "Source/common/SNTXPCControlInterface.h"
-#import "Source/santactl/Commands/sync/SNTCommandSyncConstants.h"
-#import "Source/santactl/Commands/sync/SNTCommandSyncEventUpload.h"
-#import "Source/santactl/Commands/sync/SNTCommandSyncPostflight.h"
-#import "Source/santactl/Commands/sync/SNTCommandSyncPreflight.h"
-#import "Source/santactl/Commands/sync/SNTCommandSyncRuleDownload.h"
-#import "Source/santactl/Commands/sync/SNTCommandSyncStage.h"
-#import "Source/santactl/Commands/sync/SNTCommandSyncState.h"
+#import "Source/santasyncservice/SNTCommandSyncConstants.h"
+#import "Source/santasyncservice/SNTCommandSyncEventUpload.h"
+#import "Source/santasyncservice/SNTCommandSyncPostflight.h"
+#import "Source/santasyncservice/SNTCommandSyncPreflight.h"
+#import "Source/santasyncservice/SNTCommandSyncRuleDownload.h"
+#import "Source/santasyncservice/SNTCommandSyncStage.h"
+#import "Source/santasyncservice/SNTCommandSyncState.h"
 
 // Prevent Zlib compression during testing
 @implementation NSData (Zlib)

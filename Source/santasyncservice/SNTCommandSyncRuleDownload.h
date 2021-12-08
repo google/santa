@@ -14,7 +14,7 @@
 
 #import <Foundation/Foundation.h>
 
-#import "Source/santactl/Commands/sync/SNTCommandSyncStage.h"
+#import "Source/santasyncservice/SNTCommandSyncStage.h"
 
 @class SNTRule;
 

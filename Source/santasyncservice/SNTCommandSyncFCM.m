@@ -12,7 +12,7 @@
 ///    See the License for the specific language governing permissions and
 ///    limitations under the License.
 
-#import "Source/santactl/Commands/sync/SNTCommandSyncFCM.h"
+#import "Source/santasyncservice/SNTCommandSyncFCM.h"
 
 #import <SystemConfiguration/SystemConfiguration.h>
 
