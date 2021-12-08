@@ -18,6 +18,23 @@
 #include "Source/common/SNTKernelCommon.h"
 #include "Source/santad/EventProviders/SNTEventProvider.h"
 
+const static NSString *kBlockBinary = @"BlockBinary";
+const static NSString *kAllowBinary = @"AllowBinary";
+const static NSString *kBlockCertificate = @"BlockCertificate";
+const static NSString *kAllowCertificate = @"AllowCertificate";
+const static NSString *kBlockTeamID = @"BlockTeamID";
+const static NSString *kAllowTeamID = @"AllowTeamID";
+const static NSString *kBlockScope = @"BlockScope";
+const static NSString *kAllowScope = @"AllowScope";
+const static NSString *kAllowUnknown = @"AllowUnknown";
+const static NSString *kBlockUnknown = @"BlockUnknown";
+const static NSString *kAllowCompiler = @"AllowCompiler";
+const static NSString *kAllowTransitive = @"AllowTransitive";
+const static NSString *kUnknownEventState = @"Unknown";
+const static NSString *kBlockPrinterWorkaround = @"BlockPrinterWorkaround";
+const static NSString *kAllowNoFileInfo = @"AllowNoFileInfo";
+const static NSString *kAllowNullVNode = @"AllowNullVNode";
+
 @class MOLCodesignChecker;
 @class SNTDriverManager;
 @class SNTEventLog;
