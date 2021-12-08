@@ -1,4 +1,5 @@
 load("@build_bazel_rules_apple//apple:macos.bzl", "macos_command_line_application")
+load("//:helper.bzl", "santa_unit_test")
 
 licenses(["notice"])
 
@@ -36,7 +37,7 @@ objc_library(
         "SNTCommandSyncState.m",
     ],
     hdrs = ["SNTCommandSyncManager.h"],
-    sdk_frameworks = ["SystemConfiguration"],
+    sdk_dylibs = ["libz"],
     deps = [
         ":FCM_lib",
         "//Source/common:SNTFileInfo",
@@ -45,6 +46,49 @@ objc_library(
         "//Source/common:SNTXPCSyncdInterface",
         "@MOLAuthenticatingURLSession",
         "@MOLXPCConnection",
+    ],
+)
+
+santa_unit_test(
+    name = "SNTSyncTest",
+    srcs = [
+        "NSData+Zlib.h",
+        "NSData+Zlib.m",
+        "SNTCommandSyncConstants.h",
+        "SNTCommandSyncConstants.m",
+        "SNTCommandSyncEventUpload.h",
+        "SNTCommandSyncEventUpload.m",
+        "SNTCommandSyncPostflight.h",
+        "SNTCommandSyncPostflight.m",
+        "SNTCommandSyncPreflight.h",
+        "SNTCommandSyncPreflight.m",
+        "SNTCommandSyncRuleDownload.h",
+        "SNTCommandSyncRuleDownload.m",
+        "SNTCommandSyncStage.h",
+        "SNTCommandSyncStage.m",
+        "SNTCommandSyncState.h",
+        "SNTCommandSyncState.m",
+        "SNTCommandSyncTest.m",
+    ],
+    resources = glob([
+        "testdata/*.json",
+        "testdata/*.plist",
+    ]),
+    sdk_dylibs = ["libz"],
+    deps = [
+        ":FCM_lib",
+        "//Source/common:SNTCommonEnums",
+        "//Source/common:SNTConfigurator",
+        "//Source/common:SNTDropRootPrivs",
+        "//Source/common:SNTFileInfo",
+        "//Source/common:SNTLogging",
+        "//Source/common:SNTRule",
+        "//Source/common:SNTStoredEvent",
+        "//Source/common:SNTXPCControlInterface",
+        "//Source/common:SNTXPCSyncdInterface",
+        "@MOLAuthenticatingURLSession",
+        "@MOLXPCConnection",
+        "@OCMock",
     ],
 )
 
@@ -71,4 +115,12 @@ macos_command_line_application(
     version = "//:version",
     visibility = ["//:santa_package_group"],
     deps = [":santass_lib"],
+)
+
+test_suite(
+    name = "unit_tests",
+    tests = [
+        ":SNTSyncTest",
+    ],
+    visibility = ["//:santa_package_group"],
 )
