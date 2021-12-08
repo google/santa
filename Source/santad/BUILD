@@ -145,6 +145,7 @@ santa_unit_test(
         "//Source/common:SNTXPCNotifierInterface",
         "//Source/common:SNTXPCSyncdInterface",
         "//Source/common:SantaCache",
+        "//Source/common:SNTMetricSet",
         "@MOLCodesignChecker",
         "@MOLXPCConnection",
         "@OCMock",
