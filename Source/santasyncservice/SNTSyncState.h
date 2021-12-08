@@ -16,12 +16,12 @@
 
 #import "Source/common/SNTCommonEnums.h"
 
-@class SNTCommandSyncManager;
+@class SNTSyncManager;
 @class MOLXPCConnection;
 
 /// An instance of this class is passed to each stage of the sync process for storing data
 /// that might be needed in later stages.
-@interface SNTCommandSyncState : NSObject
+@interface SNTSyncState : NSObject
 
 /// Configured session to use for requests.
 @property NSURLSession *session;

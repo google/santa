@@ -12,7 +12,9 @@
 ///    See the License for the specific language governing permissions and
 ///    limitations under the License.
 
-#import "SNTCommandSyncState.h"
+#import <Foundation/Foundation.h>
 
-@implementation SNTCommandSyncState
+#import "SNTSyncStage.h"
+
+@interface SNTSyncPostflight : SNTSyncStage
 @end

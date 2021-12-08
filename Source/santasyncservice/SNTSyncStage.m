@@ -12,28 +12,28 @@
 ///    See the License for the specific language governing permissions and
 ///    limitations under the License.
 
-#import "Source/santactl/Commands/sync/SNTCommandSyncStage.h"
+#import "Source/santasyncservice/SNTSyncStage.h"
 
 #import <MOLXPCConnection/MOLXPCConnection.h>
 
 #import "Source/common/SNTLogging.h"
 #import "Source/common/SNTXPCControlInterface.h"
-#import "Source/santactl/Commands/sync/NSData+Zlib.h"
-#import "Source/santactl/Commands/sync/SNTCommandSyncConstants.h"
-#import "Source/santactl/Commands/sync/SNTCommandSyncState.h"
+#import "Source/santasyncservice/NSData+Zlib.h"
+#import "Source/santasyncservice/SNTSyncConstants.h"
+#import "Source/santasyncservice/SNTSyncState.h"
 
-@interface SNTCommandSyncStage ()
+@interface SNTSyncStage ()
 
 @property(readwrite) NSURLSession *urlSession;
-@property(readwrite) SNTCommandSyncState *syncState;
+@property(readwrite) SNTSyncState *syncState;
 @property(readwrite) MOLXPCConnection *daemonConn;
 @property BOOL xsrfFetched;
 
 @end
 
-@implementation SNTCommandSyncStage
+@implementation SNTSyncStage
 
-- (nullable instancetype)initWithState:(nonnull SNTCommandSyncState *)syncState {
+- (nullable instancetype)initWithState:(nonnull SNTSyncState *)syncState {
   self = [super init];
   if (self) {
     _syncState = syncState;

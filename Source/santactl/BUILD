@@ -19,25 +19,7 @@ objc_library(
         "Commands/SNTCommandVersion.m",
         "Commands/SNTCommandMetrics.h",
         "Commands/SNTCommandMetrics.m",
-        "Commands/sync/NSData+Zlib.h",
-        "Commands/sync/NSData+Zlib.m",
-        "Commands/sync/SNTCommandSync.m",
-        "Commands/sync/SNTCommandSyncConstants.h",
-        "Commands/sync/SNTCommandSyncConstants.m",
-        "Commands/sync/SNTCommandSyncEventUpload.h",
-        "Commands/sync/SNTCommandSyncEventUpload.m",
-        "Commands/sync/SNTCommandSyncManager.h",
-        "Commands/sync/SNTCommandSyncManager.m",
-        "Commands/sync/SNTCommandSyncPostflight.h",
-        "Commands/sync/SNTCommandSyncPostflight.m",
-        "Commands/sync/SNTCommandSyncPreflight.h",
-        "Commands/sync/SNTCommandSyncPreflight.m",
-        "Commands/sync/SNTCommandSyncRuleDownload.h",
-        "Commands/sync/SNTCommandSyncRuleDownload.m",
-        "Commands/sync/SNTCommandSyncStage.h",
-        "Commands/sync/SNTCommandSyncStage.m",
-        "Commands/sync/SNTCommandSyncState.h",
-        "Commands/sync/SNTCommandSyncState.m",
+        "Commands/SNTCommandSync.m",
     ] + select({
         "//:opt_build": [],
         "//conditions:default": [
@@ -50,7 +32,6 @@ objc_library(
     sdk_dylibs = ["libz"],
     sdk_frameworks = ["IOKit"],
     deps = [
-        ":FCM_lib",
         "//Source/common:SNTCachedDecision",
         "//Source/common:SNTCommonEnums",
         "//Source/common:SNTConfigurator",
@@ -65,22 +46,11 @@ objc_library(
         "//Source/common:SNTSystemInfo",
         "//Source/common:SNTXPCBundleServiceInterface",
         "//Source/common:SNTXPCControlInterface",
-        "//Source/common:SNTXPCSyncdInterface",
         "//Source/common:SNTXPCUnprivilegedControlInterface",
+        "//Source/santasyncservice:sync_lib",
         "@FMDB",
-        "@MOLAuthenticatingURLSession",
         "@MOLCodesignChecker",
         "@MOLXPCConnection",
-    ],
-)
-
-objc_library(
-    name = "FCM_lib",
-    srcs = ["Commands/sync/SNTCommandSyncFCM.m"],
-    hdrs = ["Commands/sync/SNTCommandSyncFCM.h"],
-    sdk_frameworks = ["SystemConfiguration"],
-    deps = [
-        "@MOLAuthenticatingURLSession",
     ],
 )
 
@@ -125,56 +95,6 @@ santa_unit_test(
 )
 
 santa_unit_test(
-    name = "SNTCommandSyncTest",
-    srcs = [
-        "Commands/sync/NSData+Zlib.h",
-        "Commands/sync/NSData+Zlib.m",
-        "Commands/sync/SNTCommandSync.m",
-        "Commands/sync/SNTCommandSyncConstants.h",
-        "Commands/sync/SNTCommandSyncConstants.m",
-        "Commands/sync/SNTCommandSyncEventUpload.h",
-        "Commands/sync/SNTCommandSyncEventUpload.m",
-        "Commands/sync/SNTCommandSyncManager.h",
-        "Commands/sync/SNTCommandSyncManager.m",
-        "Commands/sync/SNTCommandSyncPostflight.h",
-        "Commands/sync/SNTCommandSyncPostflight.m",
-        "Commands/sync/SNTCommandSyncPreflight.h",
-        "Commands/sync/SNTCommandSyncPreflight.m",
-        "Commands/sync/SNTCommandSyncRuleDownload.h",
-        "Commands/sync/SNTCommandSyncRuleDownload.m",
-        "Commands/sync/SNTCommandSyncStage.h",
-        "Commands/sync/SNTCommandSyncStage.m",
-        "Commands/sync/SNTCommandSyncState.h",
-        "Commands/sync/SNTCommandSyncState.m",
-        "Commands/sync/SNTCommandSyncTest.m",
-        "SNTCommand.h",
-        "SNTCommand.m",
-        "SNTCommandController.h",
-        "SNTCommandController.m",
-    ],
-    resources = glob([
-        "Commands/sync/testdata/*.json",
-        "Commands/sync/testdata/*.plist",
-    ]),
-    sdk_dylibs = ["libz"],
-    deps = [
-        ":FCM_lib",
-        "//Source/common:SNTCommonEnums",
-        "//Source/common:SNTConfigurator",
-        "//Source/common:SNTDropRootPrivs",
-        "//Source/common:SNTFileInfo",
-        "//Source/common:SNTLogging",
-        "//Source/common:SNTRule",
-        "//Source/common:SNTStoredEvent",
-        "//Source/common:SNTXPCControlInterface",
-        "//Source/common:SNTXPCSyncdInterface",
-        "@MOLAuthenticatingURLSession",
-        "@MOLXPCConnection",
-        "@OCMock",
-    ],
-)
-
-santa_unit_test(
     name = "SNTCommandMetricsTest",
     srcs = ["Commands/SNTCommandMetricsTest.m"],
     structured_resources = glob(["Commands/testdata/*"]),
@@ -191,7 +111,6 @@ test_suite(
     tests = [
         ":SNTCommandFileInfoTest",
         ":SNTCommandMetricsTest",
-        ":SNTCommandSyncTest",
     ],
     visibility = ["//:santa_package_group"],
 )

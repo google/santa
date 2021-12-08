@@ -12,17 +12,17 @@
 ///    See the License for the specific language governing permissions and
 ///    limitations under the License.
 
-#import "Source/santactl/Commands/sync/SNTCommandSyncRuleDownload.h"
+#import "Source/santasyncservice/SNTSyncRuleDownload.h"
 
 #import <MOLXPCConnection/MOLXPCConnection.h>
 
 #import "Source/common/SNTLogging.h"
 #import "Source/common/SNTRule.h"
 #import "Source/common/SNTXPCControlInterface.h"
-#import "Source/santactl/Commands/sync/SNTCommandSyncConstants.h"
-#import "Source/santactl/Commands/sync/SNTCommandSyncState.h"
+#import "Source/santasyncservice/SNTSyncConstants.h"
+#import "Source/santasyncservice/SNTSyncState.h"
 
-@implementation SNTCommandSyncRuleDownload
+@implementation SNTSyncRuleDownload
 
 - (NSURL *)stageURL {
   NSString *stageName = [@"ruledownload" stringByAppendingFormat:@"/%@", self.syncState.machineID];

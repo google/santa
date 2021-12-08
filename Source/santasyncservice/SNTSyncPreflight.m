@@ -12,7 +12,7 @@
 ///    See the License for the specific language governing permissions and
 ///    limitations under the License.
 
-#import "Source/santactl/Commands/sync/SNTCommandSyncPreflight.h"
+#import "Source/santasyncservice/SNTSyncPreflight.h"
 
 #import <MOLXPCConnection/MOLXPCConnection.h>
 
@@ -21,10 +21,10 @@
 #import "Source/common/SNTLogging.h"
 #import "Source/common/SNTSystemInfo.h"
 #import "Source/common/SNTXPCControlInterface.h"
-#import "Source/santactl/Commands/sync/SNTCommandSyncConstants.h"
-#import "Source/santactl/Commands/sync/SNTCommandSyncState.h"
+#import "Source/santasyncservice/SNTSyncConstants.h"
+#import "Source/santasyncservice/SNTSyncState.h"
 
-@implementation SNTCommandSyncPreflight
+@implementation SNTSyncPreflight
 
 - (NSURL *)stageURL {
   NSString *stageName = [@"preflight" stringByAppendingFormat:@"/%@", self.syncState.machineID];

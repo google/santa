@@ -12,7 +12,7 @@
 ///    See the License for the specific language governing permissions and
 ///    limitations under the License.
 
-#import "Source/santactl/Commands/sync/SNTCommandSyncFCM.h"
+#import "Source/santasyncservice/SNTSyncFCM.h"
 
 #import <SystemConfiguration/SystemConfiguration.h>
 
@@ -53,7 +53,7 @@ static const uint32_t kDefaultConnectDelayMaxSeconds = 10;
 
 #pragma mark MOLFCMClient Extension
 
-@interface SNTCommandSyncFCM () {
+@interface SNTSyncFCM () {
   /**  URL components for client registration, receiving and acknowledging messages. */
   NSURLComponents *_checkinComponents;
   NSURLComponents *_registerComponents;
@@ -77,7 +77,7 @@ static const uint32_t kDefaultConnectDelayMaxSeconds = 10;
 @property(nonatomic) MOLAuthenticatingURLSession *authSession;
 
 /**  The block to be called for every message. */
-@property(copy, nonatomic) SNTCommandSyncFCMMessageHandler messageHandler;
+@property(copy, nonatomic) SNTSyncFCMMessageHandler messageHandler;
 
 /**  Is used throughout the class to reconnect to FCM after a connection loss. */
 @property SCNetworkReachabilityRef reachability;
@@ -104,7 +104,7 @@ static void reachabilityHandler(SCNetworkReachabilityRef target, SCNetworkReacha
                                 void *info) {
   dispatch_async(dispatch_get_main_queue(), ^{
     if (flags & kSCNetworkReachabilityFlagsReachable) {
-      SNTCommandSyncFCM *FCMClient = (__bridge SNTCommandSyncFCM *)info;
+      SNTSyncFCM *FCMClient = (__bridge SNTSyncFCM *)info;
       SEL s = @selector(reachabilityRestored);
       [NSObject cancelPreviousPerformRequestsWithTarget:FCMClient selector:s object:nil];
       [FCMClient performSelector:s withObject:nil afterDelay:1];
@@ -112,7 +112,7 @@ static void reachabilityHandler(SCNetworkReachabilityRef target, SCNetworkReacha
   });
 }
 
-@implementation SNTCommandSyncFCM
+@implementation SNTSyncFCM
 
 #pragma mark init/dealloc methods
 
@@ -123,7 +123,7 @@ static void reachabilityHandler(SCNetworkReachabilityRef target, SCNetworkReacha
                      backoffMax:(uint32_t)backoffMax
                      fatalCodes:(NSArray<NSNumber *> *)fatalCodes
            sessionConfiguration:(NSURLSessionConfiguration *)sessionConfiguration
-                 messageHandler:(SNTCommandSyncFCMMessageHandler)messageHandler {
+                 messageHandler:(SNTSyncFCMMessageHandler)messageHandler {
   self = [super init];
   if (self) {
     _project = project;
@@ -159,7 +159,7 @@ static void reachabilityHandler(SCNetworkReachabilityRef target, SCNetworkReacha
                          entity:(NSString *)entity
                          apiKey:(NSString *)apiKey
            sessionConfiguration:(NSURLSessionConfiguration *)sessionConfiguration
-                 messageHandler:(SNTCommandSyncFCMMessageHandler)messageHandler {
+                 messageHandler:(SNTSyncFCMMessageHandler)messageHandler {
   return [self initWithProject:project
                         entity:entity
                         apiKey:apiKey
@@ -173,7 +173,7 @@ static void reachabilityHandler(SCNetworkReachabilityRef target, SCNetworkReacha
 - (instancetype)initWithProject:(NSString *)project
                          entity:(NSString *)entity
                          apiKey:(NSString *)apiKey
-                 messageHandler:(SNTCommandSyncFCMMessageHandler)messageHandler {
+                 messageHandler:(SNTSyncFCMMessageHandler)messageHandler {
   return [self initWithProject:project
                         entity:entity
                         apiKey:apiKey

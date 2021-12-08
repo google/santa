@@ -12,7 +12,7 @@
 ///    See the License for the specific language governing permissions and
 ///    limitations under the License.
 
-#import "Source/santactl/Commands/sync/SNTCommandSyncEventUpload.h"
+#import "Source/santasyncservice/SNTSyncEventUpload.h"
 
 #import <MOLCertificate/MOLCertificate.h>
 #import <MOLXPCConnection/MOLXPCConnection.h>
@@ -21,11 +21,11 @@
 #import "Source/common/SNTLogging.h"
 #import "Source/common/SNTStoredEvent.h"
 #import "Source/common/SNTXPCControlInterface.h"
-#import "Source/santactl/Commands/sync/NSData+Zlib.h"
-#import "Source/santactl/Commands/sync/SNTCommandSyncConstants.h"
-#import "Source/santactl/Commands/sync/SNTCommandSyncState.h"
+#import "Source/santasyncservice/NSData+Zlib.h"
+#import "Source/santasyncservice/SNTSyncConstants.h"
+#import "Source/santasyncservice/SNTSyncState.h"
 
-@implementation SNTCommandSyncEventUpload
+@implementation SNTSyncEventUpload
 
 - (NSURL *)stageURL {
   NSString *stageName = [@"eventupload" stringByAppendingFormat:@"/%@", self.syncState.machineID];

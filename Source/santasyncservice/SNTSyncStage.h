@@ -14,13 +14,13 @@
 
 #import <Foundation/Foundation.h>
 
-@class SNTCommandSyncState;
+@class SNTSyncState;
 @class MOLXPCConnection;
 
-@interface SNTCommandSyncStage : NSObject
+@interface SNTSyncStage : NSObject
 
 @property(readonly, nonnull) NSURLSession *urlSession;
-@property(readonly, nonnull) SNTCommandSyncState *syncState;
+@property(readonly, nonnull) SNTSyncState *syncState;
 @property(readonly, nonnull) MOLXPCConnection *daemonConn;
 
 /**
@@ -28,8 +28,7 @@
 
   @param state A holder for state used across requests
 */
-- (nullable instancetype)initWithState:(nonnull SNTCommandSyncState *)state
-  NS_DESIGNATED_INITIALIZER;
+- (nullable instancetype)initWithState:(nonnull SNTSyncState *)state NS_DESIGNATED_INITIALIZER;
 
 - (nullable instancetype)init NS_UNAVAILABLE;
 

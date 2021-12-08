@@ -14,10 +14,10 @@
 
 #import <Foundation/Foundation.h>
 
-#import "Source/santactl/Commands/sync/SNTCommandSyncStage.h"
+#import "Source/santasyncservice/SNTSyncStage.h"
 
 @class SNTRule;
 
-@interface SNTCommandSyncRuleDownload : SNTCommandSyncStage
+@interface SNTSyncRuleDownload : SNTSyncStage
 - (SNTRule *)ruleFromDictionary:(NSDictionary *)dict;
 @end

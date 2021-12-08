@@ -243,6 +243,7 @@ test_suite(
         "//Source/santad:SNTExecutionControllerTest",
         "//Source/santad:SNTRuleTableTest",
         "//Source/santametricservice:unit_tests",
+        "//Source/santasyncservice:unit_tests",
     ],
 )
 

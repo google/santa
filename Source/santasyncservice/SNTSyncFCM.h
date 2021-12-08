@@ -15,30 +15,30 @@
 #import <Foundation/Foundation.h>
 
 /**  A block that takes a NSString object as an argument. */
-typedef void (^SNTCommandSyncFCMTokenHandler)(NSString *);
+typedef void (^SNTSyncFCMTokenHandler)(NSString *);
 
 /**  A block that takes a NSDictionary object as an argument. */
-typedef void (^SNTCommandSyncFCMMessageHandler)(NSDictionary *);
+typedef void (^SNTSyncFCMMessageHandler)(NSDictionary *);
 
 /**  A block that takes a NSHTTPURLResponse and NSError object as an argument. */
-typedef void (^SNTCommandSyncFCMConnectionErrorHandler)(NSHTTPURLResponse *, NSError *);
+typedef void (^SNTSyncFCMConnectionErrorHandler)(NSHTTPURLResponse *, NSError *);
 
 /**  A block that takes a NSDictionary and NSError object as arguments. */
-typedef void (^SNTCommandSyncFCMAcknowledgeErrorHandler)(NSDictionary *, NSError *);
+typedef void (^SNTSyncFCMAcknowledgeErrorHandler)(NSDictionary *, NSError *);
 
-@interface SNTCommandSyncFCM : NSObject
+@interface SNTSyncFCM : NSObject
 
 /**  Returns YES if connected to FCM. */
 @property(readonly, nonatomic) BOOL isConnected;
 
 /**  A block to be executed when the FCM token changes */
-@property(copy) SNTCommandSyncFCMTokenHandler tokenHandler;
+@property(copy) SNTSyncFCMTokenHandler tokenHandler;
 
 /**  A block to be executed when there is an issue with acknowledging a message. */
-@property(copy) SNTCommandSyncFCMAcknowledgeErrorHandler acknowledgeErrorHandler;
+@property(copy) SNTSyncFCMAcknowledgeErrorHandler acknowledgeErrorHandler;
 
 /**  A block to be executed when there is a non-recoverable issue with the FCM Connection. */
-@property(copy) SNTCommandSyncFCMConnectionErrorHandler connectionErrorHandler;
+@property(copy) SNTSyncFCMConnectionErrorHandler connectionErrorHandler;
 
 - (instancetype)init NS_UNAVAILABLE;
 
@@ -60,7 +60,7 @@ typedef void (^SNTCommandSyncFCMAcknowledgeErrorHandler)(NSDictionary *, NSError
  *  @note If the fatalCodes argument is nil, @[@302, @400, @403] will be used.
  *  @note If the sessionConfiguration argument is nil, defaultSessionConfiguration will be used.
  *
- *  @return An initialized SNTCommandSyncFCM object
+ *  @return An initialized SNTSyncFCM object
  */
 - (instancetype)initWithProject:(NSString *)project
                          entity:(NSString *)entity
@@ -69,21 +69,20 @@ typedef void (^SNTCommandSyncFCMAcknowledgeErrorHandler)(NSDictionary *, NSError
                      backoffMax:(uint32_t)backoffMax
                      fatalCodes:(NSArray<NSNumber *> *)fatalCodes
            sessionConfiguration:(NSURLSessionConfiguration *)sessionConfiguration
-                 messageHandler:(SNTCommandSyncFCMMessageHandler)messageHandler
-  NS_DESIGNATED_INITIALIZER;
+                 messageHandler:(SNTSyncFCMMessageHandler)messageHandler NS_DESIGNATED_INITIALIZER;
 
 /**  A convenience initializer. Optional args will use their zero values. */
 - (instancetype)initWithProject:(NSString *)project
                          entity:(NSString *)entity
                          apiKey:(NSString *)apiKey
            sessionConfiguration:(NSURLSessionConfiguration *)sessionConfiguration
-                 messageHandler:(SNTCommandSyncFCMMessageHandler)messageHandler;
+                 messageHandler:(SNTSyncFCMMessageHandler)messageHandler;
 
 /**  A convenience initializer. Optional args will use their zero values. */
 - (instancetype)initWithProject:(NSString *)project
                          entity:(NSString *)entity
                          apiKey:(NSString *)apiKey
-                 messageHandler:(SNTCommandSyncFCMMessageHandler)messageHandler;
+                 messageHandler:(SNTSyncFCMMessageHandler)messageHandler;
 
 /**
  *  Opens a connection to FCM and starts listening for messages.
