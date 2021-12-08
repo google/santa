@@ -87,14 +87,15 @@
   return (santa_vnode_id_t){.fsid = 1234, .fileid = 5678};
 }
 
-- (void)checkMetricCounters:(NSString *)expectedFieldValueName expected:(NSNumber *)expectedValue {
+- (void)checkMetricCounters:(const NSString *)expectedFieldValueName
+                   expected:(NSNumber *)expectedValue {
   SNTMetricSet *metricSet = [SNTMetricSet sharedInstance];
   NSDictionary *eventCounter = [metricSet export][@"metrics"][@"/santa/events"];
   BOOL foundField;
   for (NSDictionary *fieldValue in eventCounter[@"fields"][@"action_response"]) {
     if ([expectedFieldValueName isEqualToString:fieldValue[@"value"]]) {
-      XCTAssertEqualObjects(expectedValue, fieldValue[@"data"], @"%@ counter not incremented",
-                            expectedFieldValueName);
+      XCTAssertEqualObjects(expectedValue, fieldValue[@"data"],
+                            @"%@ counter does not match expected value", expectedFieldValueName);
       foundField = YES;
       break;
     }
@@ -155,7 +156,7 @@
   [self.sut validateBinaryWithMessage:[self getMessage]];
 
   OCMVerify([self.mockDriverManager postAction:ACTION_RESPOND_ALLOW forMessage:[self getMessage]]);
-  [self checkMetricCounters:@"AllowCertificate" expected:@1];
+  [self checkMetricCounters:kAllowCertificate expected:@1];
 }
 
 - (void)testCertificateBlockRule {
@@ -195,7 +196,7 @@
 
   OCMVerify([self.mockDriverManager postAction:ACTION_RESPOND_ALLOW_COMPILER
                                     forMessage:[self getMessage]]);
-  [self checkMetricCounters:@"AllowCompiler" expected:@1];
+  [self checkMetricCounters:kAllowCompiler expected:@1];
 }
 
 - (void)testBinaryAllowCompilerRuleDisabled {
@@ -212,7 +213,7 @@
   [self.sut validateBinaryWithMessage:[self getMessage]];
 
   OCMVerify([self.mockDriverManager postAction:ACTION_RESPOND_ALLOW forMessage:[self getMessage]]);
-  [self checkMetricCounters:@"AllowBinary" expected:@1];
+  [self checkMetricCounters:kAllowBinary expected:@1];
 }
 
 - (void)testBinaryAllowTransitiveRule {
@@ -251,8 +252,8 @@
 
   OCMVerify([self.mockDriverManager postAction:ACTION_RESPOND_DENY forMessage:[self getMessage]]);
   OCMVerifyAllWithDelay(self.mockEventDatabase, 1);
-  [self checkMetricCounters:@"AllowBinary" expected:@2];
-  [self checkMetricCounters:@"AllowTransitive" expected:@1];
+  [self checkMetricCounters:kAllowBinary expected:@2];
+  [self checkMetricCounters:kAllowTransitive expected:@1];
 }
 
 - (void)testDefaultDecision {
@@ -269,14 +270,15 @@
   [self.sut validateBinaryWithMessage:[self getMessage]];
   OCMVerify([self.mockDriverManager postAction:ACTION_RESPOND_DENY forMessage:[self getMessage]]);
   OCMVerifyAllWithDelay(self.mockEventDatabase, 1);
-  [self checkMetricCounters:@"AllowUnknown" expected:@1];
-  [self checkMetricCounters:@"BlockUnknown" expected:@2];
+
+  [self checkMetricCounters:kBlockUnknown expected:@2];
+  [self checkMetricCounters:kAllowUnknown expected:@1];
 }
 
 - (void)testMissingShasum {
   [self.sut validateBinaryWithMessage:[self getMessage]];
   OCMVerify([self.mockDriverManager postAction:ACTION_RESPOND_ALLOW forMessage:[self getMessage]]);
-  [self checkMetricCounters:@"AllowScope" expected:@1];
+  [self checkMetricCounters:kAllowScope expected:@1];
 }
 
 - (void)testOutOfScope {
@@ -284,7 +286,7 @@
   OCMStub([self.mockConfigurator clientMode]).andReturn(SNTClientModeLockdown);
   [self.sut validateBinaryWithMessage:[self getMessage]];
   OCMVerify([self.mockDriverManager postAction:ACTION_RESPOND_ALLOW forMessage:[self getMessage]]);
-  [self checkMetricCounters:@"AllowScope" expected:@2];
+  [self checkMetricCounters:kAllowScope expected:@2];
 }
 
 - (void)testPageZero {
@@ -294,7 +296,7 @@
   [self.sut validateBinaryWithMessage:[self getMessage]];
   OCMVerify([self.mockDriverManager postAction:ACTION_RESPOND_DENY forMessage:[self getMessage]]);
   OCMVerifyAllWithDelay(self.mockEventDatabase, 1);
-  [self checkMetricCounters:@"BlockUnknown" expected:@3];
+  [self checkMetricCounters:kBlockUnknown expected:@3];
 }
 
 @end

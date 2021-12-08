@@ -84,31 +84,31 @@ static size_t kLargeBinarySize = 30 * 1024 * 1024;
     SNTMetricSet *metricSet = [SNTMetricSet sharedInstance];
     _events = [metricSet counterWithName:@"/santa/events"
                               fieldNames:@[ @"action_response" ]
-                                helpText:@"Events processed by Santa with response"];
+                                helpText:@"Events processed by Santa per response"];
   }
   return self;
 }
 
 - (void)incrementEventCounters:(SNTEventState)eventType {
-  NSString *eventTypeStr;
+  const NSString *eventTypeStr;
 
   switch (eventType) {
-    case SNTEventStateBlockBinary: eventTypeStr = @"BlockBinary"; break;
-    case SNTEventStateAllowBinary: eventTypeStr = @"AllowBinary"; break;
-    case SNTEventStateBlockCertificate: eventTypeStr = @"BlockCertificate"; break;
-    case SNTEventStateAllowCertificate: eventTypeStr = @"AllowCertificate"; break;
-    case SNTEventStateBlockTeamID: eventTypeStr = @"BlockTeamID"; break;
-    case SNTEventStateAllowTeamID: eventTypeStr = @"AllowTeamID"; break;
-    case SNTEventStateBlockScope: eventTypeStr = @"BlockScope"; break;
-    case SNTEventStateAllowScope: eventTypeStr = @"AllowScope"; break;
-    case SNTEventStateAllowCompiler: eventTypeStr = @"AllowCompiler"; break;
-    case SNTEventStateAllowTransitive: eventTypeStr = @"AllowTransitive"; break;
-    case SNTEventStateAllowUnknown: eventTypeStr = @"AllowUnknown"; break;
-    case SNTEventStateBlockUnknown: eventTypeStr = @"BlockUnknown"; break;
-    default: eventTypeStr = @"unknown"; break;
+    case SNTEventStateBlockBinary: eventTypeStr = kBlockBinary; break;
+    case SNTEventStateAllowBinary: eventTypeStr = kAllowBinary; break;
+    case SNTEventStateBlockCertificate: eventTypeStr = kBlockCertificate; break;
+    case SNTEventStateAllowCertificate: eventTypeStr = kAllowCertificate; break;
+    case SNTEventStateBlockTeamID: eventTypeStr = kBlockTeamID; break;
+    case SNTEventStateAllowTeamID: eventTypeStr = kAllowTeamID; break;
+    case SNTEventStateBlockScope: eventTypeStr = kBlockScope; break;
+    case SNTEventStateAllowScope: eventTypeStr = kAllowScope; break;
+    case SNTEventStateBlockUnknown: eventTypeStr = kBlockUnknown; break;
+    case SNTEventStateAllowUnknown: eventTypeStr = kAllowUnknown; break;
+    case SNTEventStateAllowCompiler: eventTypeStr = kAllowCompiler; break;
+    case SNTEventStateAllowTransitive: eventTypeStr = kAllowTransitive; break;
+    default: eventTypeStr = kUnknownEventState; break;
   }
 
-  [_events incrementForFieldValues:@[ eventTypeStr ]];
+  [_events incrementForFieldValues:@[ (NSString *)eventTypeStr ]];
 }
 
 #pragma mark Binary Validation
@@ -118,7 +118,7 @@ static size_t kLargeBinarySize = 30 * 1024 * 1024;
   if (unlikely(message.path == NULL)) {
     LOGE(@"Path for vnode_id is NULL: %llu/%llu", message.vnode_id.fsid, message.vnode_id.fileid);
     [self.eventProvider postAction:ACTION_RESPOND_ALLOW forMessage:message];
-    [self.events incrementForFieldValues:@[ @"AllowNullVNode" ]];
+    [self.events incrementForFieldValues:@[ (NSString *)kAllowNullVNode ]];
     return;
   }
 
@@ -127,14 +127,14 @@ static size_t kLargeBinarySize = 30 * 1024 * 1024;
   if (unlikely(!binInfo)) {
     LOGE(@"Failed to read file %@: %@", @(message.path), fileInfoError.localizedDescription);
     [self.eventProvider postAction:ACTION_RESPOND_ALLOW forMessage:message];
-    [self.events incrementForFieldValues:@[ @"AllowNoFileInfo" ]];
+    [self.events incrementForFieldValues:@[ (NSString *)kAllowNoFileInfo ]];
     return;
   }
 
   // PrinterProxy workaround, see description above the method for more details.
   if ([self printerProxyWorkaround:binInfo]) {
     [self.eventProvider postAction:ACTION_RESPOND_DENY forMessage:message];
-    [self.events incrementForFieldValues:@[ @"BlockPrinterWorkaround" ]];
+    [self.events incrementForFieldValues:@[ (NSString *)kBlockPrinterWorkaround ]];
     return;
   }
 
