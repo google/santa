@@ -19,9 +19,9 @@
 #import "Source/common/SNTDropRootPrivs.h"
 #import "Source/common/SNTLogging.h"
 #import "Source/common/SNTXPCControlInterface.h"
-#import "Source/santasyncservice/SNTCommandSyncManager.h"
 #import "Source/santactl/SNTCommand.h"
 #import "Source/santactl/SNTCommandController.h"
+#import "Source/santasyncservice/SNTCommandSyncManager.h"
 
 @interface SNTCommandSync : SNTCommand <SNTCommandProtocol>
 @property MOLXPCConnection *listener;
