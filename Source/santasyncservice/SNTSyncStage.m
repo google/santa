@@ -22,18 +22,18 @@
 #import "Source/santasyncservice/SNTSyncConstants.h"
 #import "Source/santasyncservice/SNTSyncState.h"
 
-@interface SNTCommandSyncStage ()
+@interface SNTSyncStage ()
 
 @property(readwrite) NSURLSession *urlSession;
-@property(readwrite) SNTCommandSyncState *syncState;
+@property(readwrite) SNTSyncState *syncState;
 @property(readwrite) MOLXPCConnection *daemonConn;
 @property BOOL xsrfFetched;
 
 @end
 
-@implementation SNTCommandSyncStage
+@implementation SNTSyncStage
 
-- (nullable instancetype)initWithState:(nonnull SNTCommandSyncState *)syncState {
+- (nullable instancetype)initWithState:(nonnull SNTSyncState *)syncState {
   self = [super init];
   if (self) {
     _syncState = syncState;

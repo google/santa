@@ -16,10 +16,10 @@
 #include <iostream>
 #include <vector>
 
-#include <SNTCommandSyncConstants.h>
-#include <SNTCommandSyncRuleDownload.h>
-#include <SNTCommandSyncState.h>
 #include <SNTRule.h>
+#include <SNTSyncConstants.h>
+#include <SNTSyncRuleDownload.h>
+#include <SNTSyncState.h>
 
 extern "C" int LLVMFuzzerTestOneInput(const std::uint8_t *data, std::size_t size) {
   NSData *buffer = [NSData dataWithBytes:static_cast<const void *>(data) length:size];
@@ -41,12 +41,12 @@ extern "C" int LLVMFuzzerTestOneInput(const std::uint8_t *data, std::size_t size
     return 0;
   }
 
-  SNTCommandSyncState *state = [[SNTCommandSyncState alloc] init];
+  SNTSyncState *state = [[SNTSyncState alloc] init];
   if (!state) {
     return 0;
   }
 
-  SNTCommandSyncRuleDownload *obj = [[SNTCommandSyncRuleDownload alloc] initWithState:state];
+  SNTSyncRuleDownload *obj = [[SNTSyncRuleDownload alloc] initWithState:state];
   if (!obj) {
     return 0;
   }

@@ -39,17 +39,17 @@
 }
 @end
 
-@interface SNTCommandSyncTest : XCTestCase
-@property SNTCommandSyncState *syncState;
+@interface SNTSyncTest : XCTestCase
+@property SNTSyncState *syncState;
 @property id<SNTDaemonControlXPC> daemonConnRop;
 @end
 
-@implementation SNTCommandSyncTest
+@implementation SNTSyncTest
 
 - (void)setUp {
   [super setUp];
 
-  self.syncState = [[SNTCommandSyncState alloc] init];
+  self.syncState = [[SNTSyncState alloc] init];
   self.syncState.daemonConn = OCMClassMock([MOLXPCConnection class]);
   self.daemonConnRop = OCMProtocolMock(@protocol(SNTDaemonControlXPC));
   OCMStub([self.syncState.daemonConn remoteObjectProxy]).andReturn(self.daemonConnRop);
@@ -140,7 +140,7 @@
   return [NSData dataWithContentsOfFile:path];
 }
 
-#pragma mark - SNTCommandSyncStage Tests
+#pragma mark - SNTSyncStage Tests
 
 - (void)testBaseFetchXSRFTokenSuccess {
   // NOTE: This test only works if the other tests don't return a 403 and run before this test.
@@ -177,16 +177,16 @@
   NSString *stageName = [@"a" stringByAppendingFormat:@"/%@", self.syncState.machineID];
   NSURL *u1 = [NSURL URLWithString:stageName relativeToURL:self.syncState.syncBaseURL];
 
-  SNTCommandSyncStage *sut = [[SNTCommandSyncStage alloc] initWithState:self.syncState];
+  SNTSyncStage *sut = [[SNTSyncStage alloc] initWithState:self.syncState];
   NSMutableURLRequest *req = [NSMutableURLRequest requestWithURL:u1];
   XCTAssertTrue([sut performRequest:req]);
   XCTAssertEqualObjects(self.syncState.xsrfToken, @"my-xsrf-token");
 }
 
-#pragma mark - SNTCommandSyncPreflight Tests
+#pragma mark - SNTSyncPreflight Tests
 
 - (void)testPreflightBasicResponse {
-  SNTCommandSyncPreflight *sut = [[SNTCommandSyncPreflight alloc] initWithState:self.syncState];
+  SNTSyncPreflight *sut = [[SNTSyncPreflight alloc] initWithState:self.syncState];
 
   NSData *respData = [self dataFromFixture:@"sync_preflight_basic.json"];
   [self stubRequestBody:respData response:nil error:nil validateBlock:nil];
@@ -199,7 +199,7 @@
 }
 
 - (void)testPreflightDatabaseCounts {
-  SNTCommandSyncPreflight *sut = [[SNTCommandSyncPreflight alloc] initWithState:self.syncState];
+  SNTSyncPreflight *sut = [[SNTSyncPreflight alloc] initWithState:self.syncState];
 
   int64_t bin = 5, cert = 8, compiler = 2, transitive = 19, teamID = 3;
   OCMStub([self.daemonConnRop
@@ -225,7 +225,7 @@
 }
 
 - (void)testPreflightCleanSync {
-  SNTCommandSyncPreflight *sut = [[SNTCommandSyncPreflight alloc] initWithState:self.syncState];
+  SNTSyncPreflight *sut = [[SNTSyncPreflight alloc] initWithState:self.syncState];
 
   id processInfoMock = OCMClassMock([NSProcessInfo class]);
   OCMStub([processInfoMock processInfo]).andReturn(processInfoMock);
@@ -247,7 +247,7 @@
 }
 
 - (void)testPreflightLockdown {
-  SNTCommandSyncPreflight *sut = [[SNTCommandSyncPreflight alloc] initWithState:self.syncState];
+  SNTSyncPreflight *sut = [[SNTSyncPreflight alloc] initWithState:self.syncState];
 
   NSData *respData = [self dataFromFixture:@"sync_preflight_lockdown.json"];
   [self stubRequestBody:respData response:nil error:nil validateBlock:nil];
@@ -257,10 +257,10 @@
   XCTAssertEqual(self.syncState.clientMode, SNTClientModeLockdown);
 }
 
-#pragma mark - SNTCommandSyncEventUpload Tests
+#pragma mark - SNTSyncEventUpload Tests
 
 - (void)testEventUploadBasic {
-  SNTCommandSyncEventUpload *sut = [[SNTCommandSyncEventUpload alloc] initWithState:self.syncState];
+  SNTSyncEventUpload *sut = [[SNTSyncEventUpload alloc] initWithState:self.syncState];
   self.syncState.eventBatchSize = 50;
 
   NSData *eventData = [self dataFromFixture:@"sync_eventupload_input_basic.plist"];
@@ -318,7 +318,7 @@
 }
 
 - (void)testEventUploadBundleAndQuarantineData {
-  SNTCommandSyncEventUpload *sut = [[SNTCommandSyncEventUpload alloc] initWithState:self.syncState];
+  SNTSyncEventUpload *sut = [[SNTSyncEventUpload alloc] initWithState:self.syncState];
   sut = OCMPartialMock(sut);
 
   NSData *eventData = [self dataFromFixture:@"sync_eventupload_input_quarantine.plist"];
@@ -353,7 +353,7 @@
 }
 
 - (void)testEventUploadBatching {
-  SNTCommandSyncEventUpload *sut = [[SNTCommandSyncEventUpload alloc] initWithState:self.syncState];
+  SNTSyncEventUpload *sut = [[SNTSyncEventUpload alloc] initWithState:self.syncState];
   self.syncState.eventBatchSize = 1;
   sut = OCMPartialMock(sut);
 
@@ -376,11 +376,10 @@
   XCTAssertEqual(requestCount, 2);
 }
 
-#pragma mark - SNTCommandSyncRuleDownload Tests
+#pragma mark - SNTSyncRuleDownload Tests
 
 - (void)testRuleDownload {
-  SNTCommandSyncRuleDownload *sut =
-    [[SNTCommandSyncRuleDownload alloc] initWithState:self.syncState];
+  SNTSyncRuleDownload *sut = [[SNTSyncRuleDownload alloc] initWithState:self.syncState];
 
   NSData *respData = [self dataFromFixture:@"sync_ruledownload_batch1.json"];
   [self stubRequestBody:respData

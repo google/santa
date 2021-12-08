@@ -16,5 +16,5 @@
 
 #import "SNTSyncStage.h"
 
-@interface SNTCommandSyncPostflight : SNTCommandSyncStage
+@interface SNTSyncPostflight : SNTSyncStage
 @end

@@ -25,7 +25,7 @@
 
 @interface SNTCommandSync : SNTCommand <SNTCommandProtocol>
 @property MOLXPCConnection *listener;
-@property SNTCommandSyncManager *syncManager;
+@property SNTSyncManager *syncManager;
 @end
 
 @implementation SNTCommandSync
@@ -68,8 +68,8 @@ REGISTER_COMMAND_NAME(@"sync")
   }
 
   BOOL daemon = [arguments containsObject:@"--daemon"];
-  self.syncManager = [[SNTCommandSyncManager alloc] initWithDaemonConnection:self.daemonConn
-                                                                    isDaemon:daemon];
+  self.syncManager = [[SNTSyncManager alloc] initWithDaemonConnection:self.daemonConn
+                                                             isDaemon:daemon];
 
   // Dropping root privileges to the 'nobody' user causes the default NSURLCache to throw
   // sandbox errors, which are benign but annoying. This line disables the cache entirely.

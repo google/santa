@@ -14,5 +14,5 @@
 
 #import "Source/santasyncservice/SNTSyncState.h"
 
-@implementation SNTCommandSyncState
+@implementation SNTSyncState
 @end

@@ -38,7 +38,7 @@ static NSString *const kFCMFileHashKey = @"file_hash";
 static NSString *const kFCMFileNameKey = @"file_name";
 static NSString *const kFCMTargetHostIDKey = @"target_host_id";
 
-@interface SNTCommandSyncManager () {
+@interface SNTSyncManager () {
   SCNetworkReachabilityRef _reachability;
 }
 
@@ -61,7 +61,7 @@ static NSString *const kFCMTargetHostIDKey = @"target_host_id";
 @property NSUInteger FCMGlobalRuleSyncDeadline;
 @property NSUInteger eventBatchSize;
 
-@property SNTCommandSyncFCM *FCMClient;
+@property SNTSyncFCM *FCMClient;
 @property NSString *FCMToken;
 
 @property(nonatomic) MOLXPCConnection *daemonConn;
@@ -77,7 +77,7 @@ static void reachabilityHandler(SCNetworkReachabilityRef target, SCNetworkReacha
                                 void *info) {
   // Put this check and set on the main thread to ensure serial access.
   dispatch_async(dispatch_get_main_queue(), ^{
-    SNTCommandSyncManager *commandSyncManager = (__bridge SNTCommandSyncManager *)info;
+    SNTSyncManager *commandSyncManager = (__bridge SNTSyncManager *)info;
     // Only call the setter when there is a change. This will filter out the redundant calls to this
     // callback whenever the network interface states change.
     if (commandSyncManager.reachable != (flags & kSCNetworkReachabilityFlagsReachable)) {
@@ -86,7 +86,7 @@ static void reachabilityHandler(SCNetworkReachabilityRef target, SCNetworkReacha
   });
 }
 
-@implementation SNTCommandSyncManager
+@implementation SNTSyncManager
 
 #pragma mark init
 
@@ -107,11 +107,11 @@ static void reachabilityHandler(SCNetworkReachabilityRef target, SCNetworkReacha
                                 0);
       if (![[SNTConfigurator configurator] syncBaseURL]) return;
       [self lockAction:kRuleSync];
-      SNTCommandSyncState *syncState = [self createSyncState];
+      SNTSyncState *syncState = [self createSyncState];
       syncState.targetedRuleSync = self.targetedRuleSync;
       syncState.allowlistNotifications = self.allowlistNotifications;
       syncState.allowlistNotificationQueue = self.allowlistNotificationQueue;
-      SNTCommandSyncRuleDownload *p = [[SNTCommandSyncRuleDownload alloc] initWithState:syncState];
+      SNTSyncRuleDownload *p = [[SNTSyncRuleDownload alloc] initWithState:syncState];
       if ([p sync]) {
         LOGD(@"Rule download complete");
       } else {
@@ -141,9 +141,9 @@ static void reachabilityHandler(SCNetworkReachabilityRef target, SCNetworkReacha
 #pragma mark SNTSyncdXPC protocol methods
 
 - (void)postEventsToSyncServer:(NSArray<SNTStoredEvent *> *)events isFromBundle:(BOOL)isFromBundle {
-  SNTCommandSyncState *syncState = [self createSyncState];
+  SNTSyncState *syncState = [self createSyncState];
   if (isFromBundle) syncState.eventBatchSize = self.eventBatchSize;
-  SNTCommandSyncEventUpload *p = [[SNTCommandSyncEventUpload alloc] initWithState:syncState];
+  SNTSyncEventUpload *p = [[SNTSyncEventUpload alloc] initWithState:syncState];
   if (events && [p uploadEvents:events]) {
     LOGD(@"Events upload complete");
   } else {
@@ -159,8 +159,8 @@ static void reachabilityHandler(SCNetworkReachabilityRef target, SCNetworkReacha
     reply(SNTBundleEventActionDropEvents);
     return;
   }
-  SNTCommandSyncState *syncState = [self createSyncState];
-  SNTCommandSyncEventUpload *p = [[SNTCommandSyncEventUpload alloc] initWithState:syncState];
+  SNTSyncState *syncState = [self createSyncState];
+  SNTSyncEventUpload *p = [[SNTSyncEventUpload alloc] initWithState:syncState];
   if ([p uploadEvents:@[ event ]]) {
     if ([syncState.bundleBinaryRequests containsObject:event.fileBundleHash]) {
       reply(SNTBundleEventActionSendEvents);
@@ -185,7 +185,7 @@ static void reachabilityHandler(SCNetworkReachabilityRef target, SCNetworkReacha
 
 #pragma mark push notification methods
 
-- (void)listenForPushNotificationsWithSyncState:(SNTCommandSyncState *)syncState {
+- (void)listenForPushNotificationsWithSyncState:(SNTSyncState *)syncState {
   if ([self.FCMToken isEqualToString:syncState.FCMToken]) {
     LOGD(@"Already listening for push notifications");
     return;
@@ -197,18 +197,17 @@ static void reachabilityHandler(SCNetworkReachabilityRef target, SCNetworkReacha
   [self.FCMClient disconnect];
   NSString *machineID = syncState.machineID;
   SNTConfigurator *config = [SNTConfigurator configurator];
-  self.FCMClient = [[SNTCommandSyncFCM alloc] initWithProject:config.fcmProject
-                                                       entity:config.fcmEntity
-                                                       apiKey:config.fcmAPIKey
-                                         sessionConfiguration:syncState.session.configuration.copy
-                                               messageHandler:^(NSDictionary *message) {
-                                                 if (!message || message[@"noOp"]) return;
-                                                 STRONGIFY(self);
-                                                 LOGD(@"%@", message);
-                                                 [self.FCMClient acknowledgeMessage:message];
-                                                 [self processFCMMessage:message
-                                                           withMachineID:machineID];
-                                               }];
+  self.FCMClient = [[SNTSyncFCM alloc] initWithProject:config.fcmProject
+                                                entity:config.fcmEntity
+                                                apiKey:config.fcmAPIKey
+                                  sessionConfiguration:syncState.session.configuration.copy
+                                        messageHandler:^(NSDictionary *message) {
+                                          if (!message || message[@"noOp"]) return;
+                                          STRONGIFY(self);
+                                          LOGD(@"%@", message);
+                                          [self.FCMClient acknowledgeMessage:message];
+                                          [self processFCMMessage:message withMachineID:machineID];
+                                        }];
 
   self.FCMClient.tokenHandler = ^(NSString *t) {
     STRONGIFY(self);
@@ -354,8 +353,8 @@ static void reachabilityHandler(SCNetworkReachabilityRef target, SCNetworkReacha
 
 - (void)preflightOnly:(BOOL)preflightOnly {
   LOGD(@"Preflight starting");
-  SNTCommandSyncState *syncState = [self createSyncState];
-  SNTCommandSyncPreflight *p = [[SNTCommandSyncPreflight alloc] initWithState:syncState];
+  SNTSyncState *syncState = [self createSyncState];
+  SNTSyncPreflight *p = [[SNTSyncPreflight alloc] initWithState:syncState];
   if ([p sync]) {
     LOGD(@"Preflight complete");
 
@@ -390,9 +389,9 @@ static void reachabilityHandler(SCNetworkReachabilityRef target, SCNetworkReacha
   }
 }
 
-- (void)eventUploadWithSyncState:(SNTCommandSyncState *)syncState {
+- (void)eventUploadWithSyncState:(SNTSyncState *)syncState {
   LOGD(@"Event upload starting");
-  SNTCommandSyncEventUpload *p = [[SNTCommandSyncEventUpload alloc] initWithState:syncState];
+  SNTSyncEventUpload *p = [[SNTSyncEventUpload alloc] initWithState:syncState];
   if ([p sync]) {
     LOGD(@"Event upload complete");
     return [self ruleDownloadWithSyncState:syncState];
@@ -402,9 +401,9 @@ static void reachabilityHandler(SCNetworkReachabilityRef target, SCNetworkReacha
   }
 }
 
-- (void)ruleDownloadWithSyncState:(SNTCommandSyncState *)syncState {
+- (void)ruleDownloadWithSyncState:(SNTSyncState *)syncState {
   LOGD(@"Rule download starting");
-  SNTCommandSyncRuleDownload *p = [[SNTCommandSyncRuleDownload alloc] initWithState:syncState];
+  SNTSyncRuleDownload *p = [[SNTSyncRuleDownload alloc] initWithState:syncState];
   if ([p sync]) {
     LOGD(@"Rule download complete");
     return [self postflightWithSyncState:syncState];
@@ -414,9 +413,9 @@ static void reachabilityHandler(SCNetworkReachabilityRef target, SCNetworkReacha
   }
 }
 
-- (void)postflightWithSyncState:(SNTCommandSyncState *)syncState {
+- (void)postflightWithSyncState:(SNTSyncState *)syncState {
   LOGD(@"Postflight starting");
-  SNTCommandSyncPostflight *p = [[SNTCommandSyncPostflight alloc] initWithState:syncState];
+  SNTSyncPostflight *p = [[SNTSyncPostflight alloc] initWithState:syncState];
   if ([p sync]) {
     LOGD(@"Postflight complete");
     LOGI(@"Sync completed successfully");
@@ -438,9 +437,9 @@ static void reachabilityHandler(SCNetworkReachabilityRef target, SCNetworkReacha
   return timerQueue;
 }
 
-- (SNTCommandSyncState *)createSyncState {
+- (SNTSyncState *)createSyncState {
   // Gather some data needed during some sync stages
-  SNTCommandSyncState *syncState = [[SNTCommandSyncState alloc] init];
+  SNTSyncState *syncState = [[SNTSyncState alloc] init];
   SNTConfigurator *config = [SNTConfigurator configurator];
 
   syncState.syncBaseURL = config.syncBaseURL;

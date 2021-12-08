@@ -24,7 +24,7 @@
 #import "Source/santasyncservice/SNTSyncConstants.h"
 #import "Source/santasyncservice/SNTSyncState.h"
 
-@implementation SNTCommandSyncPreflight
+@implementation SNTSyncPreflight
 
 - (NSURL *)stageURL {
   NSString *stageName = [@"preflight" stringByAppendingFormat:@"/%@", self.syncState.machineID];

@@ -22,7 +22,7 @@
 #import "Source/santasyncservice/SNTSyncConstants.h"
 #import "Source/santasyncservice/SNTSyncState.h"
 
-@implementation SNTCommandSyncRuleDownload
+@implementation SNTSyncRuleDownload
 
 - (NSURL *)stageURL {
   NSString *stageName = [@"ruledownload" stringByAppendingFormat:@"/%@", self.syncState.machineID];

@@ -16,7 +16,7 @@
 
 #import "SNTSyncStage.h"
 
-@interface SNTCommandSyncEventUpload : SNTCommandSyncStage
+@interface SNTSyncEventUpload : SNTSyncStage
 
 - (BOOL)uploadEvents:(NSArray *)events;
 

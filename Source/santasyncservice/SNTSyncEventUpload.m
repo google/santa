@@ -25,7 +25,7 @@
 #import "Source/santasyncservice/SNTSyncConstants.h"
 #import "Source/santasyncservice/SNTSyncState.h"
 
-@implementation SNTCommandSyncEventUpload
+@implementation SNTSyncEventUpload
 
 - (NSURL *)stageURL {
   NSString *stageName = [@"eventupload" stringByAppendingFormat:@"/%@", self.syncState.machineID];
