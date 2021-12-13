@@ -246,11 +246,6 @@ double watchdogRAMPeak = 0;
 #pragma mark Metrics Ops
 
 - (void)metrics:(void (^)(NSDictionary *))reply {
-  // If metrics are not enabled send nil back
-  if (![[SNTConfigurator configurator] exportMetrics]) {
-    reply(nil);
-  }
-
   SNTMetricSet *metricSet = [SNTMetricSet sharedInstance];
   reply([metricSet export]);
 }
