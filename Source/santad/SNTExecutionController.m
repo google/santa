@@ -59,6 +59,14 @@ static size_t kLargeBinarySize = 30 * 1024 * 1024;
 
 @implementation SNTExecutionController
 
+static NSString *const kPrinterProxyPreMonterey =
+  (@"/System/Library/Frameworks/Carbon.framework/Versions/Current/"
+   @"Frameworks/Print.framework/Versions/Current/Plugins/PrinterProxy.app/"
+   @"Contents/MacOS/PrinterProxy");
+static NSString *const kPrinterProxyPostMonterey =
+  (@"/System/Library/PrivateFrameworks/PrintingPrivate.framework/"
+   @"Versions/Current/Plugins/PrinterProxy.app/Contents/MacOS/PrinterProxy");
+
 #pragma mark Initializers
 
 - (instancetype)initWithEventProvider:(id<SNTEventProvider>)eventProvider
@@ -279,13 +287,10 @@ static size_t kLargeBinarySize = 30 * 1024 * 1024;
 - (BOOL)printerProxyWorkaround:(SNTFileInfo *)fi {
   if ([fi.path hasSuffix:@"/Contents/MacOS/PrinterProxy"] &&
       [fi.path containsString:@"Library/Printers"]) {
-    NSString *proxyPath = (@"/System/Library/Frameworks/Carbon.framework/Versions/Current/"
-                           @"Frameworks/Print.framework/Versions/Current/Plugins/PrinterProxy.app/"
-                           @"Contents/MacOS/PrinterProxy");
-    SNTFileInfo *proxyFi = [[SNTFileInfo alloc] initWithPath:proxyPath];
+    SNTFileInfo *proxyFi = [self printerProxyFileInfo];
     if ([proxyFi.SHA256 isEqual:fi.SHA256]) return NO;
 
-    NSFileHandle *inFh = [NSFileHandle fileHandleForReadingAtPath:proxyPath];
+    NSFileHandle *inFh = [NSFileHandle fileHandleForReadingAtPath:proxyFi.path];
     NSFileHandle *outFh = [NSFileHandle fileHandleForWritingAtPath:fi.path];
     [outFh writeData:[inFh readDataToEndOfFile]];
     [inFh closeFile];
@@ -298,6 +303,15 @@ static size_t kLargeBinarySize = 30 * 1024 * 1024;
     return YES;
   }
   return NO;
+}
+
+/**
+  Returns an SNTFileInfo for the system PrinterProxy path on this system.
+*/
+- (SNTFileInfo *)printerProxyFileInfo {
+  SNTFileInfo *proxyInfo = [[SNTFileInfo alloc] initWithPath:kPrinterProxyPostMonterey];
+  if (!proxyInfo) proxyInfo = [[SNTFileInfo alloc] initWithPath:kPrinterProxyPreMonterey];
+  return proxyInfo;
 }
 
 - (NSString *)ttyPathForPID:(pid_t)pid {
