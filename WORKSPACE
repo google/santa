@@ -29,7 +29,9 @@ git_repository(
     remote = "https://github.com/hedronvision/bazel-compile-commands-extractor.git",
     shallow_since = "1638167585 -0800",
 )
+
 load("@hedron_compile_commands//:workspace_setup.bzl", "hedron_compile_commands_setup")
+
 hedron_compile_commands_setup()
 
 # Macops MOL* dependencies

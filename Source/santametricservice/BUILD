@@ -55,12 +55,12 @@ macos_command_line_application(
         "--force",
         "--options library,kill,runtime",
     ],
+    infoplists = ["Info.plist"],
+    minimum_os_version = "10.15",
     provisioning_profile = select({
         "//:ci_build": None,
         "//conditions:default": "Santa_Dev.provisionprofile",
     }),
-    infoplists = ["Info.plist"],
-    minimum_os_version = "10.15",
     version = "//:version",
     visibility = ["//:santa_package_group"],
     deps = [
