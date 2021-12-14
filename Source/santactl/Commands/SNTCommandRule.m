@@ -148,7 +148,7 @@ REGISTER_COMMAND_NAME(@"rule")
   }
 
   if (check) {
-    if (!newRule.identifier) return [self printErrorUsageAndExit:@"--check requires --sha256"];
+    if (!newRule.identifier) return [self printErrorUsageAndExit:@"--check requires --identifier"];
     return [self printStateOfRule:newRule daemonConnection:self.daemonConn];
   }
 
@@ -170,7 +170,7 @@ REGISTER_COMMAND_NAME(@"rule")
   if (newRule.state == SNTRuleStateUnknown) {
     [self printErrorUsageAndExit:@"No state specified"];
   } else if (!newRule.identifier) {
-    [self printErrorUsageAndExit:@"Either SHA-256 or path to file must be specified"];
+    [self printErrorUsageAndExit:@"Either SHA-256, team ID, or path to file must be specified"];
   }
 
   [[self.daemonConn remoteObjectProxy]
@@ -183,10 +183,25 @@ REGISTER_COMMAND_NAME(@"rule")
                        LOGD(@"Failure reason: %@", error.localizedFailureReason);
                        exit(1);
                      } else {
+                       NSString *ruleType;
+                       switch (newRule.type) {
+                         case SNTRuleTypeCertificate:
+                         case SNTRuleTypeBinary: {
+                           ruleType = @"SHA-256";
+                           break;
+                         }
+                         case SNTRuleTypeTeamID: {
+                           ruleType = @"Team ID";
+                           break;
+                         }
+                         default: ruleType = @"(Unknown type)";
+                       }
                        if (newRule.state == SNTRuleStateRemove) {
-                         printf("Removed rule for SHA-256: %s.\n", [newRule.identifier UTF8String]);
+                         printf("Removed rule for %s: %s.\n", [ruleType UTF8String],
+                                [newRule.identifier UTF8String]);
                        } else {
-                         printf("Added rule for SHA-256: %s.\n", [newRule.identifier UTF8String]);
+                         printf("Added rule for %s: %s.\n", [ruleType UTF8String],
+                                [newRule.identifier UTF8String]);
                        }
                        exit(0);
                      }
