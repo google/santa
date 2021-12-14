@@ -197,10 +197,10 @@ REGISTER_COMMAND_NAME(@"rule")
                          default: ruleType = @"(Unknown type)";
                        }
                        if (newRule.state == SNTRuleStateRemove) {
-                         printf("Removed rule for %s: %s.\n", ruleType,
+                         printf("Removed rule for %s: %s.\n", [ruleType UTF8String],
                                 [newRule.identifier UTF8String]);
                        } else {
-                         printf("Added rule for %s: %s.\n", ruleType,
+                         printf("Added rule for %s: %s.\n", [ruleType UTF8String],
                                 [newRule.identifier UTF8String]);
                        }
                        exit(0);
