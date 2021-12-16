@@ -210,6 +210,8 @@ long mountArgsToMask(NSArray<NSString *> *args) {
     return;
   }
 
+  es_respond_auth_result(self.client, m, ES_AUTH_RESULT_DENY, false);
+
   if (self.remountArgs != nil && [self.remountArgs count] > 0) {
     long remountOpts = mountArgsToMask(self.remountArgs);
     if (mountMode & remountOpts) {
@@ -223,7 +225,6 @@ long mountArgsToMask(NSArray<NSString *> *args) {
          newMode);
     [self remount:disk mountMode:newMode];
   }
-  es_respond_auth_result(self.client, m, ES_AUTH_RESULT_DENY, false);
 }
 
 - (void)remount:(DADiskRef)disk mountMode:(long)remountMask {

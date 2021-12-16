@@ -16,11 +16,15 @@
 
 #include <EndpointSecurity/EndpointSecurity.h>
 
+/*
+ * Manages DiskArbitration and EndpointSecurity to monitor/block/remount USB
+ * storage devices.
+ */
 @interface SNTDeviceManager : NSObject
 
-@property BOOL subscribed;
-@property BOOL blockUSBMount;
-@property NSArray<NSString *> *remountArgs;
+@property(nonatomic, readwrite) BOOL subscribed;
+@property(nonatomic, readwrite) BOOL blockUSBMount;
+@property(nonatomic, readwrite) NSArray<NSString *> *remountArgs;
 
 - (instancetype)init;
 - (void)listen;
