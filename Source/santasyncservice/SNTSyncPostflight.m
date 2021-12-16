@@ -60,6 +60,17 @@
                                                        reply:replyBlock];
   }
 
+  if (self.syncState.blockUSBMount) {
+    dispatch_group_enter(group);
+    [[self.daemonConn remoteObjectProxy] setBlockUSBMount:self.syncState.blockUSBMount
+                                                    reply:replyBlock];
+  }
+  if (self.syncState.remountUSBMode) {
+    dispatch_group_enter(group);
+    [[self.daemonConn remoteObjectProxy] setRemountUSBMode:self.syncState.remountUSBMode
+                                                     reply:replyBlock];
+  }
+
   // Update last sync success
   dispatch_group_enter(group);
   [[self.daemonConn remoteObjectProxy] setFullSyncLastSuccess:[NSDate date] reply:replyBlock];
