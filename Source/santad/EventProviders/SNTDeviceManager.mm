@@ -57,7 +57,6 @@ void diskDescriptionChangedCallback(DADiskRef disk, CFArrayRef keys, void *conte
 }
 
 void diskDisappearedCallback(DADiskRef disk, void *context) {
-  SNTDeviceManager *app = (__bridge SNTDeviceManager *)context;
   NSDictionary *props = CFBridgingRelease(DADiskCopyDescription(disk));
   if (![props[@"DAVolumeMountable"] boolValue]) return;
 
