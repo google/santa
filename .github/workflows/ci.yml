@@ -15,6 +15,16 @@ jobs:
       build_driver: ${{ steps.step1.outputs.build_driver }}
 
     steps:
+      - name: Cache bazel output
+        uses: actions/cache@v2
+        env:
+          cache-name: bazel-cache
+        with:
+          path: |
+            ~/.cache/bazel
+          key: ${{ runner.os }}-${{ env.cache-name }}
+          restore-keys: |
+            ${{ runner.os }}-${{ env.cache-name }}
       - uses: actions/checkout@v2
       - name: Check If We Need to Run Build/Test
         id: step1
