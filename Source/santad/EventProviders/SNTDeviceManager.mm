@@ -80,6 +80,7 @@ NSArray<NSString *> *maskToMountArgs(long remountOpts) {
 long mountArgsToMask(NSArray<NSString *> *args) {
   long flags = 0;
   for (NSString *arg in args) {
+    arg = [arg lowercaseString];
     if ([arg isEqualToString:@"rdonly"])
       flags |= MNT_RDONLY;
     else if ([arg isEqualToString:@"noexec"])
