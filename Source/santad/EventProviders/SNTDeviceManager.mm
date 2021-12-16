@@ -97,6 +97,8 @@ long mountArgsToMask(NSArray<NSString *> *args) {
       flags |= MNT_JOURNALED;
     else if ([arg isEqualToString:@"async"])
       flags |= MNT_ASYNC;
+    else
+      LOGE(@"SNTDeviceManager: unexpected mount arg: %@", arg);
   }
   return flags;
 }
