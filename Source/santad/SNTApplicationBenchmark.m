@@ -107,9 +107,10 @@
     }];
 
     __block BOOL complete = NO;
-    [mockES registerResponseCallback:^(ESResponse *r) {
-      complete = YES;
-    }];
+    [mockES registerResponseCallback:ES_EVENT_TYPE_AUTH_EXEC
+                        withCallback:^(ESResponse *r) {
+                          complete = YES;
+                        }];
 
     [self startMeasuring];
     [mockES triggerHandler:msg.message];

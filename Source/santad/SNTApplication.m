@@ -15,7 +15,6 @@
 #import "Source/santad/SNTApplication.h"
 #import "Source/santad/SNTApplicationCoreMetrics.h"
 
-#import <DiskArbitration/DiskArbitration.h>
 #import <MOLXPCConnection/MOLXPCConnection.h>
 
 #import "Source/common/SNTCommonEnums.h"
@@ -30,6 +29,7 @@
 #import "Source/santad/DataLayer/SNTEventTable.h"
 #import "Source/santad/DataLayer/SNTRuleTable.h"
 #import "Source/santad/EventProviders/SNTCachingEndpointSecurityManager.h"
+#import "Source/santad/EventProviders/SNTDeviceManager.h"
 #import "Source/santad/EventProviders/SNTDriverManager.h"
 #import "Source/santad/EventProviders/SNTEndpointSecurityManager.h"
 #import "Source/santad/EventProviders/SNTEventProvider.h"
@@ -42,10 +42,10 @@
 #import "Source/santad/SNTSyncdQueue.h"
 
 @interface SNTApplication ()
-@property DASessionRef diskArbSession;
 @property id<SNTEventProvider> eventProvider;
 @property SNTExecutionController *execController;
 @property SNTCompilerController *compilerController;
+@property SNTDeviceManager *deviceManager;
 @property MOLXPCConnection *controlConnection;
 @property SNTNotificationQueue *notQueue;
 @property pid_t syncdPID;
@@ -92,6 +92,12 @@
       return nil;
     }
 
+    _deviceManager = [[SNTDeviceManager alloc] init];
+    self.deviceManager.blockUSBMount = [configurator blockUSBMount];
+    if ([configurator remountUSBMode] != nil) {
+      self.deviceManager.remountArgs = [configurator remountUSBMode];
+    }
+
     dispatch_async(dispatch_get_global_queue(QOS_CLASS_BACKGROUND, 0), ^{
       // The filter is reset when santad disconnects from the driver.
       // Add the default filters.
@@ -133,6 +139,14 @@
                       context:NULL];
     [configurator addObserver:self
                    forKeyPath:NSStringFromSelector(@selector(metricExportInterval))
+                      options:bits
+                      context:NULL];
+    [configurator addObserver:self
+                   forKeyPath:NSStringFromSelector(@selector(blockUSBMount))
+                      options:bits
+                      context:NULL];
+    [configurator addObserver:self
+                   forKeyPath:NSStringFromSelector(@selector(remountUSBMode))
                       options:bits
                       context:NULL];
 
@@ -184,7 +198,7 @@
 
   [self performSelectorInBackground:@selector(beginListeningForDecisionRequests) withObject:nil];
   [self performSelectorInBackground:@selector(beginListeningForLogRequests) withObject:nil];
-  [self performSelectorInBackground:@selector(beginListeningForDiskMounts) withObject:nil];
+  [self performSelectorInBackground:@selector(beginListeningForMountRequests) withObject:nil];
 }
 
 - (void)beginListeningForDecisionRequests {
@@ -239,42 +253,8 @@
   }];
 }
 
-- (void)beginListeningForDiskMounts {
-  dispatch_queue_t disk_queue =
-    dispatch_queue_create("com.google.santad.disk_queue", DISPATCH_QUEUE_SERIAL);
-
-  _diskArbSession = DASessionCreate(NULL);
-  DASessionSetDispatchQueue(_diskArbSession, disk_queue);
-
-  DARegisterDiskAppearedCallback(_diskArbSession, NULL, diskAppearedCallback,
-                                 (__bridge void *)self);
-  DARegisterDiskDescriptionChangedCallback(_diskArbSession, NULL, NULL,
-                                           diskDescriptionChangedCallback, (__bridge void *)self);
-  DARegisterDiskDisappearedCallback(_diskArbSession, NULL, diskDisappearedCallback,
-                                    (__bridge void *)self);
-}
-
-void diskAppearedCallback(DADiskRef disk, void *context) {
-  NSDictionary *props = CFBridgingRelease(DADiskCopyDescription(disk));
-  if (![props[@"DAVolumeMountable"] boolValue]) return;
-
-  [[SNTEventLog logger] logDiskAppeared:props];
-}
-
-void diskDescriptionChangedCallback(DADiskRef disk, CFArrayRef keys, void *context) {
-  NSDictionary *props = CFBridgingRelease(DADiskCopyDescription(disk));
-  if (![props[@"DAVolumeMountable"] boolValue]) return;
-
-  if (props[@"DAVolumePath"]) [[SNTEventLog logger] logDiskAppeared:props];
-}
-
-void diskDisappearedCallback(DADiskRef disk, void *context) {
-  SNTApplication *app = (__bridge SNTApplication *)context;
-  NSDictionary *props = CFBridgingRelease(DADiskCopyDescription(disk));
-  if (![props[@"DAVolumeMountable"] boolValue]) return;
-
-  [[SNTEventLog logger] logDiskDisappeared:props];
-  [app.eventProvider flushCacheNonRootOnly:YES];
+- (void)beginListeningForMountRequests {
+  [self.deviceManager listen];
 }
 
 // Taken from Apple's Concurrency Programming Guide.
@@ -415,6 +395,26 @@ dispatch_source_t createDispatchTimer(uint64_t interval, uint64_t leeway, dispat
 
     [self stopMetricsPoll];
     [self startMetricsPoll];
+  } else if ([keyPath isEqualToString:NSStringFromSelector(@selector(blockUSBMount))]) {
+    BOOL new = [ change[newKey] boolValue ];
+    BOOL old = [change[oldKey] boolValue];
+
+    if (new != old) {
+      LOGI(@"BlockUSBMount changed: %d -> %d", old, new);
+      self.deviceManager.blockUSBMount = new;
+    }
+  } else if ([keyPath isEqualToString:NSStringFromSelector(@selector(remountUSBMode))]) {
+    NSArray<NSString *> *new = [ change[newKey] isKindOfClass : [NSArray class] ]
+                                 ? (NSArray<NSString *> *)change[newKey]
+                                 : nil;
+    NSArray<NSString *> *old =
+      [change[oldKey] isKindOfClass:[NSArray class]] ? (NSArray<NSString *> *)change[oldKey] : nil;
+
+    if (![old isEqualToArray:new]) {
+      LOGI(@"RemountArgs changed: %s -> %s", [[old componentsJoinedByString:@","] UTF8String],
+           [[new componentsJoinedByString:@","] UTF8String]);
+      self.deviceManager.remountArgs = new;
+    }
   }
 }
 

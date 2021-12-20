@@ -275,6 +275,23 @@
 @property(nonatomic) BOOL syncCleanRequired;
 
 ///
+/// USB Mount Blocking. Defaults to false.
+///
+@property(nonatomic) BOOL blockUSBMount;
+
+///
+/// Comma-seperated `$ mount -o` arguments used for forced remounting of USB devices. Default
+/// to fully allow/deny without remounting if unset.
+///
+@property(nonatomic) NSArray<NSString *> *remountUSBMode;
+
+///
+/// When `blockUSBMount` is set, this is the message shown to the user when a device is blocked
+/// If this message is not configured, a reasonable default is provided.
+///
+@property(readonly, nonatomic) NSString *usbBlockMessage;
+
+///
 ///  If set, this over-rides the default machine ID used for syncing.
 ///
 @property(readonly, nonatomic) NSString *machineID;

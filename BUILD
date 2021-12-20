@@ -238,6 +238,7 @@ test_suite(
         "//Source/santactl:unit_tests",
         "//Source/santad:SNTApplicationCoreMetricsTest",
         "//Source/santad:SNTApplicationTest",
+        "//Source/santad:SNTDeviceManagerTest",
         "//Source/santad:SNTEndpointSecurityManagerTest",
         "//Source/santad:SNTEventTableTest",
         "//Source/santad:SNTExecutionControllerTest",
