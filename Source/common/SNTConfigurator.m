@@ -95,6 +95,8 @@ static NSString *const kFCMAPIKey = @"FCMAPIKey";
 
 // The keys managed by a sync server or mobileconfig.
 static NSString *const kClientModeKey = @"ClientMode";
+static NSString *const kBlockUSBMountKey = @"BlockUSBMount";
+static NSString *const kRemountUSBModeKey = @"RemountUSBMode";
 static NSString *const kEnableTransitiveRulesKey = @"EnableTransitiveRules";
 static NSString *const kEnableTransitiveRulesKeyDeprecated = @"EnableTransitiveWhitelisting";
 static NSString *const kAllowedPathRegexKey = @"AllowedPathRegex";
@@ -131,6 +133,8 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
       kAllowedPathRegexKeyDeprecated : re,
       kBlockedPathRegexKey : re,
       kBlockedPathRegexKeyDeprecated : re,
+      kBlockUSBMountKey : number,
+      kRemountUSBModeKey : array,
       kFullSyncLastSuccess : date,
       kRuleSyncLastSuccess : date,
       kSyncCleanRequired : number
@@ -145,6 +149,8 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
       kAllowedPathRegexKeyDeprecated : re,
       kBlockedPathRegexKey : re,
       kBlockedPathRegexKeyDeprecated : re,
+      kBlockUSBMountKey : number,
+      kRemountUSBModeKey : array,
       kEnablePageZeroProtectionKey : number,
       kEnableBadSignatureProtectionKey : number,
       kAboutText : string,
@@ -486,6 +492,20 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
   return filters;
 }
 
+- (void)setRemountUSBMode:(NSArray<NSString *> *)args {
+  [self updateSyncStateForKey:kRemountUSBModeKey value:args];
+}
+
+- (NSArray<NSString *> *)remountUSBMode {
+  NSArray<NSString *> *args = self.configState[kRemountUSBModeKey];
+  for (id arg in args) {
+    if (![arg isKindOfClass:[NSString class]]) {
+      return nil;
+    }
+  }
+  return args;
+}
+
 - (NSURL *)syncBaseURL {
   NSString *urlString = self.configState[kSyncBaseURLKey];
   if (![urlString hasSuffix:@"/"]) urlString = [urlString stringByAppendingString:@"/"];
@@ -677,6 +697,15 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
 
 - (BOOL)fcmEnabled {
   return (self.fcmProject.length && self.fcmEntity.length && self.fcmAPIKey.length);
+}
+
+- (void)setBlockUSBMount:(BOOL)enabled {
+  [self updateSyncStateForKey:kBlockUSBMountKey value:@(enabled)];
+}
+
+- (BOOL)blockUSBMount {
+  NSNumber *number = self.configState[kBlockUSBMountKey];
+  return number ? [number boolValue] : NO;
 }
 
 ///

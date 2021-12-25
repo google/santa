@@ -352,6 +352,7 @@
       es_respond_auth_result(self.client, m, ES_AUTH_RESULT_ALLOW, true);
       return;
     }
+
     case ES_EVENT_TYPE_NOTIFY_CLOSE: {
       sm.action = ACTION_NOTIFY_WRITE;
       targetFile = m->event.close.target;
