@@ -52,6 +52,7 @@
 
     _dateFormatter = [[NSDateFormatter alloc] init];
     _dateFormatter.dateFormat = @"yyyy-MM-dd'T'HH:mm:ss.SSS'Z'";
+    _dateFormatter.calendar = [NSCalendar calendarWithIdentifier:NSCalendarIdentifierISO8601];
     _dateFormatter.timeZone = [NSTimeZone timeZoneWithName:@"UTC"];
 
     // Grab the system UUID on init
