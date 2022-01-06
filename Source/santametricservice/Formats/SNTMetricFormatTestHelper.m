@@ -29,8 +29,9 @@
     formatter = isoFormatter;
   } else {
     NSDateFormatter *localFormatter = [[NSDateFormatter alloc] init];
-    [localFormatter setDateFormat:@"yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"];
-    [localFormatter setTimeZone:[NSTimeZone timeZoneWithName:@"UTC"]];
+    localFormatter.dateFormat = @"yyyy-MM-dd'T'HH:mm:ss.SSS'Z'";
+    localFormatter.calendar = [NSCalendar calendarWithIdentifier:NSCalendarIdentifierISO8601];
+    localFormatter.timeZone = [NSTimeZone timeZoneWithName:@"UTC"];
     formatter = localFormatter;
   }
 

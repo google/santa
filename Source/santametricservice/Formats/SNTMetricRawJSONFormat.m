@@ -24,7 +24,8 @@
   if (self) {
     _dateFormatter = [[NSDateFormatter alloc] init];
     _dateFormatter.dateFormat = @"yyyy-MM-dd'T'HH:mm:ss.SSS'Z'";
-    _dateFormatter.timeZone = [NSTimeZone timeZoneForSecondsFromGMT:0];
+    _dateFormatter.calendar = [NSCalendar calendarWithIdentifier:NSCalendarIdentifierISO8601];
+    _dateFormatter.timeZone = [NSTimeZone timeZoneWithName:@"UTC"];
   }
   return self;
 }
