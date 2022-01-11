@@ -97,6 +97,7 @@ NSString *const kEventUploadBundleBinaries = @"event_upload_bundle_binaries";
 
 NSString *const kRules = @"rules";
 NSString *const kRuleSHA256 = @"sha256";
+NSString *const kRuleIdentifier = @"identifier";
 NSString *const kRulePolicy = @"policy";
 NSString *const kRulePolicyAllowlist = @"ALLOWLIST";
 NSString *const kRulePolicyAllowlistDeprecated = @"WHITELIST";
@@ -110,6 +111,7 @@ NSString *const kRulePolicyRemove = @"REMOVE";
 NSString *const kRuleType = @"rule_type";
 NSString *const kRuleTypeBinary = @"BINARY";
 NSString *const kRuleTypeCertificate = @"CERTIFICATE";
+NSString *const kRuleTypeTeamID = @"TEAMID";
 NSString *const kRuleCustomMsg = @"custom_msg";
 NSString *const kCursor = @"cursor";
 

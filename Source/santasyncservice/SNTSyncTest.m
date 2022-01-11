@@ -422,6 +422,10 @@
                    state:SNTRuleStateBlock
                     type:SNTRuleTypeCertificate
                customMsg:@"Hi There"],
+    [[SNTRule alloc] initWithIdentifier:@"2FNC3A47ZF"
+                                  state:SNTRuleStateBlock
+                                   type:SNTRuleTypeTeamID
+                              customMsg:@"Banned team ID"],
   ];
 
   OCMVerify([self.daemonConnRop databaseRuleAddRules:rules cleanSlate:NO reply:OCMOCK_ANY]);

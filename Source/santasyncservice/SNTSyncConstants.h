@@ -96,6 +96,7 @@ extern NSString *const kEventUploadBundleBinaries;
 
 extern NSString *const kRules;
 extern NSString *const kRuleSHA256;
+extern NSString *const kRuleIdentifier;
 extern NSString *const kRulePolicy;
 extern NSString *const kRulePolicyAllowlist;
 extern NSString *const kRulePolicyAllowlistDeprecated;
@@ -109,6 +110,7 @@ extern NSString *const kRulePolicyRemove;
 extern NSString *const kRuleType;
 extern NSString *const kRuleTypeBinary;
 extern NSString *const kRuleTypeCertificate;
+extern NSString *const kRuleTypeTeamID;
 extern NSString *const kRuleCustomMsg;
 extern NSString *const kCursor;
 
