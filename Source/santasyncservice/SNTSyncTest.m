@@ -422,7 +422,7 @@
                    state:SNTRuleStateBlock
                     type:SNTRuleTypeCertificate
                customMsg:@"Hi There"],
-    [[SNTRule alloc] initWithIdentifier:@"2FNC3A47ZF"
+    [[SNTRule alloc] initWithIdentifier:@"AAAAAAAAAA"
                                   state:SNTRuleStateBlock
                                    type:SNTRuleTypeTeamID
                               customMsg:@"Banned team ID"],
