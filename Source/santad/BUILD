@@ -302,7 +302,7 @@ santa_unit_test(
 test_suite(
     name = "unit_tests",
     tests = [
-        ":SNTApplicationCoreMetrics",
+        ":SNTApplicationCoreMetricsTest",
         ":SNTApplicationTest",
         ":SNTEndpointSecurityManagerTest",
         ":SNTEventTableTest",
