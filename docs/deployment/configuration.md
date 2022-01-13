@@ -37,6 +37,7 @@ also known as mobileconfig files, which are in an Apple-specific XML format.
 | ModeNotificationMonitor       | String     | The notification text to display when the client goes into Monitor mode. Defaults to "Switching into Monitor mode". |
 | ModeNotificationLockdown      | String     | The notification text to display when the client goes into Lockdown mode. Defaults to "Switching into Lockdown mode". |
 | SyncBaseURL                   | String     | The base URL of the sync server.         |
+| SyncProxyConfiguration        | Dictionary | The proxy configuration to use when syncing. See the [Apple Documentation](https://developer.apple.com/documentation/cfnetwork/global_proxy_settings_constants) for details on the keys that can be used in this dictionary. |
 | ClientAuthCertificateFile     | String     | If set, this contains the location of a PKCS#12 certificate to be used for sync authentication. |
 | ClientAuthCertificatePassword | String     | Contains the password for the PKCS#12 certificate. |
 | ClientAuthCertificateCN       | String     | If set, this is the Common Name of a certificate in the System keychain to be used for sync authentication. The corresponding private key must also be in the keychain. |
@@ -52,10 +53,10 @@ also known as mobileconfig files, which are in an Apple-specific XML format.
 | EventLogType                  | String     | Defines how event logs are stored. Options are 1) syslog: Sent to ASL or ULS (if built with the 10.12 SDK or later). 2) filelog: Sent to a file on disk. Use EventLogPath to specify a path. Defaults to filelog      |
 | EventLogPath                  | String     | If EventLogType is set to filelog, EventLogPath will provide the path to save logs. Defaults to /var/db/santa/santa.log. If you change this value ensure you also update com.google.santa.newsyslog.conf with the new path.        |
 | EnableMachineIDDecoration     | Bool       | If YES, this appends the MachineID to the end of each log line. Defaults to NO.       |
-| MetricFormat                 | String     | Format to export metrics as, supported formats are "rawjson" for a single JSON blob and "monarchjson" for a format consumable by Google's Monarch tooling. Defaults to "". |
-| MetricURL                    | String     | URL describing where monitoring metrics should be exported.  |
-| MetricExportInterval         | Integer    | Number of seconds to wait between exporting metrics. Defaults to 30.  
-| MetricExtraLabels            | Dictionary | A map of key value pairs to add to all metric root labels. (e.g. a=b,c=d) defaults to @{}). If a previously set key (e.g. host_name is set to "" then the key is remove from the metric root labels. Alternatively if a value is set for an existing key then the new value will override the old. |
+| MetricFormat                  | String     | Format to export metrics as, supported formats are "rawjson" for a single JSON blob and "monarchjson" for a format consumable by Google's Monarch tooling. Defaults to "". |
+| MetricURL                     | String     | URL describing where monitoring metrics should be exported.  |
+| MetricExportInterval          | Integer    | Number of seconds to wait between exporting metrics. Defaults to 30.  
+| MetricExtraLabels             | Dictionary | A map of key value pairs to add to all metric root labels. (e.g. a=b,c=d) defaults to @{}). If a previously set key (e.g. host_name is set to "" then the key is remove from the metric root labels. Alternatively if a value is set for an existing key then the new value will override the old. |
 
 
 *overridable by the sync server: run `santactl status` to check the current
@@ -187,22 +188,22 @@ ways to install configuration profiles:
 
 ## Sync Server Provided Configuration
 
-| Key                            | Value Type | Description                              |
-| ------------------------------ | ---------- | ---------------------------------------- |
-| client\_mode                    | String     | MONITOR or LOCKDOWN, defaults to MONITOR. |
-| clean\_sync\*\*                   | Bool       | If set to `True` Santa will clear all local rules and download a fresh copy from the sync-server. Defaults to `False`. |
-| batch\_size                     | Integer    | The number of rules to download or events to upload per request. Multiple requests will be made if there is more work than can fit in single request. Defaults to 50. |
-| upload\_logs\_url\*\*              | String     | If set, the endpoint to send Santa's current logs. No default. |
-| allowed\_path\_regex             | String     | Same as the "Local Configuration" AllowedPathRegex. No default. |
-| blocked\_path\_regex             | String     | Same as the "Local Configuration" BlockedPathRegex. No default. |
-| full\_sync\_interval\*            | Integer    | The max time to wait before performing a full sync with the server. Defaults to 600 secs (10 minutes) if not set. |
-| fcm\_token\*                     | String     | The FCM token used by Santa to listen for FCM messages. Unique for every machine. No default. |
-| fcm\_full\_sync\_interval\*        | Integer    | The full sync interval if a fcm\_token is set. Defaults to  14400 secs (4 hours). |
+| Key                                 | Value Type | Description                              |
+| ----------------------------------- | ---------- | ---------------------------------------- |
+| client\_mode                        | String     | MONITOR or LOCKDOWN, defaults to MONITOR. |
+| clean\_sync\*\*                     | Bool       | If set to `True` Santa will clear all local rules and download a fresh copy from the sync-server. Defaults to `False`. |
+| batch\_size                         | Integer    | The number of rules to download or events to upload per request. Multiple requests will be made if there is more work than can fit in single request. Defaults to 50. |
+| upload\_logs\_url\*\*               | String     | If set, the endpoint to send Santa's current logs. No default. |
+| allowed\_path\_regex                | String     | Same as the "Local Configuration" AllowedPathRegex. No default. |
+| blocked\_path\_regex                | String     | Same as the "Local Configuration" BlockedPathRegex. No default. |
+| full\_sync\_interval\*              | Integer    | The max time to wait before performing a full sync with the server. Defaults to 600 secs (10 minutes) if not set. |
+| fcm\_token\*                        | String     | The FCM token used by Santa to listen for FCM messages. Unique for every machine. No default. |
+| fcm\_full\_sync\_interval\*         | Integer    | The full sync interval if a fcm\_token is set. Defaults to  14400 secs (4 hours). |
 | fcm\_global\_rule\_sync\_deadline\* | Integer    | The max time to wait before performing a rule sync when a global rule sync FCM message is received. This allows syncing to be staggered for global events to avoid spikes in server load. Defaults to 600 secs (10 min). |
-| enable\_bundles\*                | Bool       | If set to `True` the bundle scanning feature is enabled. Defaults to `False`. |
-| enable\_transitive\_rules        | Bool       | If set to `True` the transitive rule feature is enabled. Defaults to `False`. |
-| block\_usb\_mass\_storage         | Bool       | If set to 'True' blocking USB Mass storage feature is enabled. Defaults to `False`. | 
-| remount\_usb\_mode         | Array       | Array of strings for arguments to pass to mount -o (any of "rdonly", "noexec", "nosuid", "nobrowse", "noowners", "nodev", "async", "-j"). when forcibly remounting devices. No default. |
+| enable\_bundles\*                   | Bool       | If set to `True` the bundle scanning feature is enabled. Defaults to `False`. |
+| enable\_transitive\_rules           | Bool       | If set to `True` the transitive rule feature is enabled. Defaults to `False`. |
+| block\_usb\_mass\_storage           | Bool       | If set to 'True' blocking USB Mass storage feature is enabled. Defaults to `False`. | 
+| remount\_usb\_mode                  | Array      | Array of strings for arguments to pass to mount -o (any of "rdonly", "noexec", "nosuid", "nobrowse", "noowners", "nodev", "async", "-j"). when forcibly remounting devices. No default. |
 
 
 *Held only in memory. Not persistent upon process restart.

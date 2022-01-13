@@ -255,6 +255,14 @@
 @property(readonly, nonatomic) NSURL *syncBaseURL;
 
 ///
+///  Proxy settings for syncing.
+///  This dictionary is passed directly to NSURLSession. The allowed keys
+///  are loosely documented at
+///  https://developer.apple.com/documentation/cfnetwork/global_proxy_settings_constants.
+///
+@property(readonly, nonatomic) NSDictionary *syncProxyConfig;
+
+///
 ///  The machine owner.
 ///
 @property(readonly, nonatomic) NSString *machineOwner;
