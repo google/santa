@@ -49,15 +49,16 @@ const NSString *const kBenignPath = @"/some/other/path";
     [self expectationWithDescription:@"Wait for santa's Auth dispatch queue"];
 
   __block NSMutableArray<ESResponse *> *events = [NSMutableArray array];
-  [mockES registerResponseCallback:^(ESResponse *r) {
-    @synchronized(self) {
-      [events addObject:r];
-    }
+  [mockES registerResponseCallback:ES_EVENT_TYPE_AUTH_UNLINK
+                      withCallback:^(ESResponse *r) {
+                        @synchronized(self) {
+                          [events addObject:r];
+                        }
 
-    if (events.count >= wantNumResp) {
-      [expectation fulfill];
-    }
-  }];
+                        if (events.count >= wantNumResp) {
+                          [expectation fulfill];
+                        }
+                      }];
 
   __block es_file_t dbFile = {.path = MakeStringToken(kEventsDBPath)};
   ESMessage *m = [[ESMessage alloc] initWithBlock:^(ESMessage *m) {
@@ -94,10 +95,11 @@ const NSString *const kBenignPath = @"/some/other/path";
 
     XCTestExpectation *expectation = [self expectationWithDescription:@"Wait for response from ES"];
     __block ESResponse *got;
-    [mockES registerResponseCallback:^(ESResponse *r) {
-      got = r;
-      [expectation fulfill];
-    }];
+    [mockES registerResponseCallback:ES_EVENT_TYPE_AUTH_UNLINK
+                        withCallback:^(ESResponse *r) {
+                          got = r;
+                          [expectation fulfill];
+                        }];
 
     __block es_file_t dbFile = {.path = MakeStringToken(testPath)};
     ESMessage *m = [[ESMessage alloc] initWithBlock:^(ESMessage *m) {
@@ -125,10 +127,11 @@ const NSString *const kBenignPath = @"/some/other/path";
 
   XCTestExpectation *expectation = [self expectationWithDescription:@"Wait for response from ES"];
   __block ESResponse *got;
-  [mockES registerResponseCallback:^(ESResponse *r) {
-    got = r;
-    [expectation fulfill];
-  }];
+  [mockES registerResponseCallback:ES_EVENT_TYPE_AUTH_UNLINK
+                      withCallback:^(ESResponse *r) {
+                        got = r;
+                        [expectation fulfill];
+                      }];
 
   __block es_file_t dbFile = {.path = MakeStringToken(@"/some/other/path")};
   ESMessage *m = [[ESMessage alloc] initWithBlock:^(ESMessage *m) {
@@ -160,10 +163,11 @@ const NSString *const kBenignPath = @"/some/other/path";
 
     XCTestExpectation *expectation = [self expectationWithDescription:@"Wait for response from ES"];
     __block ESResponse *got;
-    [mockES registerResponseCallback:^(ESResponse *r) {
-      got = r;
-      [expectation fulfill];
-    }];
+    [mockES registerResponseCallback:ES_EVENT_TYPE_AUTH_RENAME
+                        withCallback:^(ESResponse *r) {
+                          got = r;
+                          [expectation fulfill];
+                        }];
 
     __block es_file_t otherFile = {.path = MakeStringToken(@"/some/other/path")};
     __block es_file_t dbFile = {.path = MakeStringToken(testPath)};
@@ -206,10 +210,11 @@ const NSString *const kBenignPath = @"/some/other/path";
 
     XCTestExpectation *expectation = [self expectationWithDescription:@"Wait for response from ES"];
     __block ESResponse *got;
-    [mockES registerResponseCallback:^(ESResponse *r) {
-      got = r;
-      [expectation fulfill];
-    }];
+    [mockES registerResponseCallback:ES_EVENT_TYPE_AUTH_RENAME
+                        withCallback:^(ESResponse *r) {
+                          got = r;
+                          [expectation fulfill];
+                        }];
 
     __block es_file_t otherFile = {.path = MakeStringToken(@"/some/other/path")};
     __block es_file_t dbFile = {.path = MakeStringToken(testPath)};

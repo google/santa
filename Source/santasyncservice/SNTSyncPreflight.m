@@ -134,6 +134,14 @@
     self.syncState.blocklistRegex = resp[kBlockedPathRegexDeprecated];
   }
 
+  if ([resp[kBlockUSBMount] boolValue]) {
+    self.syncState.blockUSBMount = YES;
+  }
+
+  if ([resp[kRemountUSBMode] isKindOfClass:[NSArray class]]) {
+    self.syncState.remountUSBMode = resp[kRemountUSBMode];
+  }
+
   if ([resp[kCleanSync] boolValue]) {
     LOGD(@"Clean sync requested by server");
     self.syncState.cleanSync = YES;

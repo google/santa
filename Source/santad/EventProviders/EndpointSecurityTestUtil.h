@@ -46,7 +46,7 @@ typedef void (^ESCallback)(ESResponse *_Nonnull);
 @interface MockEndpointSecurity : NSObject
 @property NSMutableArray *_Nonnull subscriptions;
 - (void)reset;
-- (void)registerResponseCallback:(ESCallback _Nonnull)callback;
+- (void)registerResponseCallback:(es_event_type_t)t withCallback:(ESCallback _Nonnull)callback;
 - (void)triggerHandler:(es_message_t *_Nonnull)msg;
 
 ///  Retrieve an initialized singleton MockEndpointSecurity object

@@ -51,8 +51,10 @@ NSDictionary *validMetricsDict = nil;
 - (NSDate *)createNSDateFromDateString:(NSString *)dateString {
   NSDateFormatter *formatter = [[NSDateFormatter alloc] init];
 
-  [formatter setTimeZone:[NSTimeZone timeZoneWithName:@"UTC"]];
-  [formatter setDateFormat:@"yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"];
+  formatter = [[NSDateFormatter alloc] init];
+  formatter.dateFormat = @"yyyy-MM-dd'T'HH:mm:ss.SSS'Z'";
+  formatter.calendar = [NSCalendar calendarWithIdentifier:NSCalendarIdentifierISO8601];
+  formatter.timeZone = [NSTimeZone timeZoneWithName:@"UTC"];
 
   return [formatter dateFromString:dateString];
 }

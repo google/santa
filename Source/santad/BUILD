@@ -14,6 +14,8 @@ objc_library(
         "DataLayer/SNTRuleTable.m",
         "EventProviders/SNTCachingEndpointSecurityManager.h",
         "EventProviders/SNTCachingEndpointSecurityManager.mm",
+        "EventProviders/SNTDeviceManager.h",
+        "EventProviders/SNTDeviceManager.mm",
         "EventProviders/SNTDriverManager.h",
         "EventProviders/SNTDriverManager.m",
         "EventProviders/SNTEndpointSecurityManager.h",
@@ -98,6 +100,10 @@ objc_library(
     sdk_dylibs = [
         "EndpointSecurity",
         "bsm",
+    ],
+    sdk_frameworks = [
+        "DiskArbitration",
+        "IOKit",
     ],
 )
 
@@ -200,6 +206,7 @@ santa_unit_test(
         "EventProviders/SNTEndpointSecurityManagerTest.mm",
         "EventProviders/SNTEventProvider.h",
     ],
+    minimum_os_version = "10.15",
     sdk_dylibs = [
         "EndpointSecurity",
         "bsm",
@@ -209,6 +216,26 @@ santa_unit_test(
         "//Source/common:SNTKernelCommon",
         "//Source/common:SNTPrefixTree",
         "//Source/common:SantaCache",
+    ],
+)
+
+santa_unit_test(
+    name = "SNTDeviceManagerTest",
+    srcs = [
+        "EventProviders/SNTDeviceManagerTest.mm",
+    ],
+    minimum_os_version = "10.15",
+    sdk_dylibs = [
+        "EndpointSecurity",
+        "bsm",
+    ],
+    deps = [
+        ":EndpointSecurityTestLib",
+        ":santad_lib",
+        "//Source/common:SNTKernelCommon",
+        "//Source/common:SNTPrefixTree",
+        "//Source/common:SantaCache",
+        "@OCMock",
     ],
 )
 

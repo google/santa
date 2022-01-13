@@ -198,6 +198,18 @@
   XCTAssertNil(self.syncState.blocklistRegex);
 }
 
+- (void)testPreflightBlockUSBMount {
+  SNTSyncPreflight *sut = [[SNTSyncPreflight alloc] initWithState:self.syncState];
+
+  NSData *respData = [self dataFromFixture:@"sync_preflight_toggle_blockusb.json"];
+  [self stubRequestBody:respData response:nil error:nil validateBlock:nil];
+
+  XCTAssertTrue([sut sync]);
+  XCTAssertEqual(self.syncState.blockUSBMount, true);
+  NSArray<NSString *> *wantRemountUSBMode = @[ @"rdonly", @"noexec" ];
+  XCTAssertEqualObjects(self.syncState.remountUSBMode, wantRemountUSBMode);
+}
+
 - (void)testPreflightDatabaseCounts {
   SNTSyncPreflight *sut = [[SNTSyncPreflight alloc] initWithState:self.syncState];
 
@@ -422,6 +434,10 @@
                    state:SNTRuleStateBlock
                     type:SNTRuleTypeCertificate
                customMsg:@"Hi There"],
+    [[SNTRule alloc] initWithIdentifier:@"AAAAAAAAAA"
+                                  state:SNTRuleStateBlock
+                                   type:SNTRuleTypeTeamID
+                              customMsg:@"Banned team ID"],
   ];
 
   OCMVerify([self.daemonConnRop databaseRuleAddRules:rules cleanSlate:NO reply:OCMOCK_ANY]);

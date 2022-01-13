@@ -16,6 +16,13 @@
 							<dict>
 								<key>BannedBlockMessage</key>
                                 <string>This application has been blocked from executing because it has been banned.</string>
+                                <key>BlockUSBMount</key>
+                                <true/>
+                                <key>RemountUSBMode</key>
+                                <array>
+                                    <string>noexec</string>
+                                    <string>rdonly</string>
+                                </array>
 								<key>EnableForkAndExitLogging</key>
 								<true/>
 								<key>EnablePageZeroProtection</key>

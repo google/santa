@@ -69,10 +69,11 @@
   XCTestExpectation *expectation =
     [self expectationWithDescription:@"Wait for santa's Auth dispatch queue"];
   __block ESResponse *got = nil;
-  [mockES registerResponseCallback:^(ESResponse *r) {
-    got = r;
-    [expectation fulfill];
-  }];
+  [mockES registerResponseCallback:ES_EVENT_TYPE_AUTH_EXEC
+                      withCallback:^(ESResponse *r) {
+                        got = r;
+                        [expectation fulfill];
+                      }];
 
   NSString *binaryPath = [NSString pathWithComponents:@[ testPath, binaryName ]];
   struct stat fileStat;

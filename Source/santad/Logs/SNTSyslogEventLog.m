@@ -62,8 +62,17 @@
   if (newpath) {
     [outStr appendFormat:@"|newpath=%@", [self sanitizeString:newpath]];
   }
+
   char ppath[PATH_MAX] = "(null)";
-  proc_pidpath(message.pid, ppath, PATH_MAX);
+  if (message.es_message) {
+    es_message_t *m = message.es_message;
+    es_string_token_t path = m->process->executable->path;
+    size_t length = path.length;
+    if (length++ > PATH_MAX) length = PATH_MAX;
+    strlcpy(ppath, path.data, length);
+  } else {
+    proc_pidpath(message.pid, ppath, PATH_MAX);
+  }
 
   [outStr
     appendFormat:

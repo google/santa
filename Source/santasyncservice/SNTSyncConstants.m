@@ -26,6 +26,8 @@ NSString *const kRequestCleanSync = @"request_clean_sync";
 NSString *const kBatchSize = @"batch_size";
 NSString *const kUploadLogsURL = @"upload_logs_url";
 NSString *const kClientMode = @"client_mode";
+NSString *const kBlockUSBMount = @"block_usb_mount";
+NSString *const kRemountUSBMode = @"remount_usb_mode";
 NSString *const kClientModeMonitor = @"MONITOR";
 NSString *const kClientModeLockdown = @"LOCKDOWN";
 NSString *const kCleanSync = @"clean_sync";
@@ -95,6 +97,7 @@ NSString *const kEventUploadBundleBinaries = @"event_upload_bundle_binaries";
 
 NSString *const kRules = @"rules";
 NSString *const kRuleSHA256 = @"sha256";
+NSString *const kRuleIdentifier = @"identifier";
 NSString *const kRulePolicy = @"policy";
 NSString *const kRulePolicyAllowlist = @"ALLOWLIST";
 NSString *const kRulePolicyAllowlistDeprecated = @"WHITELIST";
@@ -108,6 +111,7 @@ NSString *const kRulePolicyRemove = @"REMOVE";
 NSString *const kRuleType = @"rule_type";
 NSString *const kRuleTypeBinary = @"BINARY";
 NSString *const kRuleTypeCertificate = @"CERTIFICATE";
+NSString *const kRuleTypeTeamID = @"TEAMID";
 NSString *const kRuleCustomMsg = @"custom_msg";
 NSString *const kCursor = @"cursor";
 

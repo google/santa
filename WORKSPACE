@@ -25,7 +25,7 @@ apple_support_dependencies()
 # https://github.com/hedronvision/bazel-compile-commands-extractor
 git_repository(
     name = "hedron_compile_commands",
-    commit = "e085566bf35e020402a2e32258360b16446fbad8",
+    commit = "92db741ee6dee0c4a83a5c58be7747df7b89ed10",
     remote = "https://github.com/hedronvision/bazel-compile-commands-extractor.git",
     shallow_since = "1638167585 -0800",
 )
