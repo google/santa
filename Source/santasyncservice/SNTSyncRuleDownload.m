@@ -136,7 +136,10 @@
   if (![dict isKindOfClass:[NSDictionary class]]) return nil;
 
   SNTRule *newRule = [[SNTRule alloc] init];
-  newRule.identifier = dict[kRuleSHA256];
+  newRule.identifier = dict[kRuleIdentifier];
+  if (newRule.identifier == nil) {
+    newRule.identifier = dict[kRuleSHA256];
+  }
 
   NSString *policyString = dict[kRulePolicy];
   if ([policyString isEqual:kRulePolicyAllowlist] ||
@@ -162,6 +165,8 @@
     newRule.type = SNTRuleTypeBinary;
   } else if ([ruleTypeString isEqual:kRuleTypeCertificate]) {
     newRule.type = SNTRuleTypeCertificate;
+  } else if ([ruleTypeString isEqual:kRuleTypeTeamID]) {
+    newRule.type = SNTRuleTypeTeamID;
   } else {
     return nil;
   }
