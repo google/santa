@@ -136,9 +136,9 @@
   if (![dict isKindOfClass:[NSDictionary class]]) return nil;
 
   SNTRule *newRule = [[SNTRule alloc] init];
-  newRule.identifier = dict[kRuleSHA256];
+  newRule.identifier = dict[kRuleIdentifier];
   if (newRule.identifier == nil) {
-    newRule.identifier = dict[kRuleIdentifier];
+    newRule.identifier = dict[kRuleSHA256];
   }
 
   NSString *policyString = dict[kRulePolicy];
