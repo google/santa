@@ -164,7 +164,7 @@ REGISTER_COMMAND_NAME(@"fileinfo")
                 @"    --cert-index: Supply an integer corresponding to a certificate of the\n"
                 @"                  signing chain to show info only for that certificate.\n"
                 @"                     0 up to n for the leaf certificate up to the root\n"
-                @"                    -1 down to n for the root certificate down to the leaf\n"
+                @"                    -1 down to -n-1 for the root certificate down to the leaf\n"
                 @"\n"
                 @"    --filter: Use predicates of the form 'key=regex' to filter out which files\n"
                 @"              are displayed. Valid keys are the same as for --key. Value is a\n"
