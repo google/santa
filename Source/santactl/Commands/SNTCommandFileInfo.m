@@ -71,7 +71,7 @@ NSString *formattedStringForKeyArray(NSArray<NSString *> *array) {
 // Properties set from commandline flags
 @property(nonatomic) BOOL recursive;
 @property(nonatomic) BOOL jsonOutput;
-@property(nonatomic) int certIndex;  // 0 means no cert-index specified
+@property(nonatomic) int *certIndex;
 @property(nonatomic, copy) NSArray<NSString *> *outputKeyList;
 @property(nonatomic, copy) NSDictionary<NSString *, NSRegularExpression *> *outputFilters;
 
@@ -163,9 +163,8 @@ REGISTER_COMMAND_NAME(@"fileinfo")
                 @"%@\n"
                 @"    --cert-index: Supply an integer corresponding to a certificate of the\n"
                 @"                  signing chain to show info only for that certificate.\n"
-                @"                     1 for the leaf certificate\n"
-                @"                    -1 for the root certificate\n"
-                @"                     2 and up for the intermediates / root\n"
+                @"                     0 up to n for the leaf certificate up to the root\n"
+                @"                    -1 down to n for the root certificate down to the leaf\n"
                 @"\n"
                 @"    --filter: Use predicates of the form 'key=regex' to filter out which files\n"
                 @"              are displayed. Valid keys are the same as for --key. Value is a\n"
@@ -594,8 +593,20 @@ REGISTER_COMMAND_NAME(@"fileinfo")
     // specified certificate in the signing chain, then print out values for all keys in cert.
     NSArray *signingChain = self.propertyMap[kSigningChain](self, fileInfo);
     if (!signingChain || !signingChain.count) return;  // check signing chain isn't empty
-    int index = (self.certIndex == -1) ? (int)signingChain.count - 1 : self.certIndex - 1;
-    if (index < 0 || index >= (int)signingChain.count) return;  // check that index is valid
+    int index = 0;
+    if (*self.certIndex < 0) {
+      index = (int)signingChain.count - -(*self.certIndex);
+      if (index < 0) {
+        fprintf(stderr, "Invalid --cert-index: %d\n", *self.certIndex);
+        return;
+      }
+    } else {
+      index = *self.certIndex;
+      if (index >= (int)signingChain.count) {
+        fprintf(stderr, "Invalid --cert-index: %d\n", *self.certIndex);
+        return;
+      }
+    }
     NSDictionary *cert = signingChain[index];
 
     // Check if we should skip over this item based on outputFilters.
@@ -702,14 +713,12 @@ REGISTER_COMMAND_NAME(@"fileinfo")
       }
       int index = 0;
       NSScanner *scanner = [NSScanner scannerWithString:arguments[i]];
-      if (![scanner scanInt:&index] || !scanner.atEnd || index == 0 || index < -1) {
-        [self
-          printErrorUsageAndExit:
-            [NSString stringWithFormat:@"\n\"%@\" is an invalid argument for --cert-index\n"
-                                       @"  --cert-index argument must be one of -1, 1, 2, 3, ...",
-                                       arguments[i]]];
+      if (![scanner scanInt:&index] || !scanner.atEnd) {
+        [self printErrorUsageAndExit:
+                [NSString stringWithFormat:@"\n\"%@\" is an invalid argument for --cert-index\n",
+                                           arguments[i]]];
       }
-      self.certIndex = index;
+      self.certIndex = &index;
     } else if ([arg caseInsensitiveCompare:@"--key"] == NSOrderedSame) {
       i += 1;  // advance to next argument and grab the key
       if (i >= nargs || [arguments[i] hasPrefix:@"--"]) {
