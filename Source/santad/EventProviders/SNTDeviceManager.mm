@@ -278,8 +278,11 @@ long mountArgsToMask(NSArray<NSString *> *args) {
 - (void)handleESMessage:(const es_message_t *)m
              withClient:(es_client_t *)c API_AVAILABLE(macos(10.15)) {
   switch (m->event_type) {
-    case ES_EVENT_TYPE_AUTH_MOUNT: [self handleAuthMount:m withClient:c];
-    // Intentional fallthrough
+    case ES_EVENT_TYPE_AUTH_MOUNT: {
+      [self handleAuthMount:m withClient:c];
+      // Intentional fallthrough
+      [[fallthrough]];
+    }
     // TODO(tnek): log any extra data here about mounts.
     case ES_EVENT_TYPE_NOTIFY_MOUNT: {
       break;

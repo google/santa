@@ -469,7 +469,11 @@ static void reachabilityHandler(SCNetworkReachabilityRef target, SCNetworkReacha
     dispatch_group_leave(group);
   }];
 
-  MOLAuthenticatingURLSession *authURLSession = [[MOLAuthenticatingURLSession alloc] init];
+  NSURLSessionConfiguration *sessConfig = [NSURLSessionConfiguration defaultSessionConfiguration];
+  sessConfig.connectionProxyDictionary = [[SNTConfigurator configurator] syncProxyConfig];
+
+  MOLAuthenticatingURLSession *authURLSession =
+    [[MOLAuthenticatingURLSession alloc] initWithSessionConfiguration:sessConfig];
   authURLSession.userAgent = @"santactl-sync/";
   NSString *santactlVersion = [[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleVersion"];
   if (santactlVersion) {
