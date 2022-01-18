@@ -298,3 +298,16 @@ santa_unit_test(
         "@OCMock",
     ],
 )
+
+test_suite(
+    name = "unit_tests",
+    tests = [
+        ":SNTApplicationCoreMetricsTest",
+        ":SNTApplicationTest",
+        ":SNTEndpointSecurityManagerTest",
+        ":SNTEventTableTest",
+        ":SNTExecutionControllerTest",
+        ":SNTRuleTableTest",
+    ],
+    visibility = ["//:santa_package_group"],
+)
