@@ -46,7 +46,7 @@
                                                         dispatch_semaphore_signal(sema);
                                                       }];
   if (dispatch_semaphore_wait(sema, dispatch_time(DISPATCH_TIME_NOW, 300 * NSEC_PER_SEC))) {
-    LOGE(@"Failed to add rule(s) to database: timeout connecting to daemon");
+    LOGE(@"Failed to add rule(s) to database: timeout sending rules to daemon");
     return NO;
   }
 
