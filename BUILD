@@ -99,7 +99,6 @@ genrule(
         "Conf/com.google.santa.metricservice.plist",
         "Conf/com.google.santad.plist",
         "Conf/com.google.santa.plist",
-        "Conf/com.google.santa.asl.conf",
         "Conf/com.google.santa.newsyslog.conf",
         "Conf/Package/Distribution.xml",
         "Conf/Package/notarization_tool.sh",
