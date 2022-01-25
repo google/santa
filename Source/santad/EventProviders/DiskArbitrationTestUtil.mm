@@ -36,7 +36,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)reset {
   [self.insertedDevices removeAllObjects];
   [self.diskAppearedCallbacks removeAllObjects];
-  self.sessionQueue = nil;
+  self.sessionQueue = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0);
   self.wasRemounted = NO;
 }
 
@@ -44,7 +44,9 @@ NS_ASSUME_NONNULL_BEGIN
   self.insertedDevices[bsdName] = ref;
 
   for (MockDADiskAppearedCallback callback in self.diskAppearedCallbacks) {
-    callback((__bridge DADiskRef)ref);
+    dispatch_sync(self.sessionQueue, ^{
+      callback((__bridge DADiskRef)ref);
+    });
   }
 }
 

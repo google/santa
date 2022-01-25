@@ -108,8 +108,9 @@ long mountArgsToMask(NSArray<NSString *> *args) {
 @interface SNTDeviceManager ()
 
 @property DASessionRef diskArbSession;
-@property(readonly, nonatomic) es_client_t *client;
+@property(nonatomic, readonly) es_client_t *client;
 @property(nonatomic, readonly) dispatch_queue_t esAuthQueue;
+@property(nonatomic, readonly) dispatch_queue_t diskQueue;
 @end
 
 @implementation SNTDeviceManager
@@ -119,14 +120,13 @@ long mountArgsToMask(NSArray<NSString *> *args) {
   if (self) {
     _blockUSBMount = false;
 
-    dispatch_queue_t disk_queue =
-      dispatch_queue_create("com.google.santad.disk_queue", DISPATCH_QUEUE_SERIAL);
+    _diskQueue = dispatch_queue_create("com.google.santad.disk_queue", DISPATCH_QUEUE_SERIAL);
 
     _esAuthQueue =
       dispatch_queue_create("com.google.santa.daemon.es_device_auth", DISPATCH_QUEUE_CONCURRENT);
 
     _diskArbSession = DASessionCreate(NULL);
-    DASessionSetDispatchQueue(_diskArbSession, disk_queue);
+    DASessionSetDispatchQueue(_diskArbSession, _diskQueue);
 
     if (@available(macos 10.15, *)) [self initES];
   }
