@@ -19,21 +19,29 @@
 #include <sys/mount.h>
 
 #import "Source/common/SNTConfigurator.h"
-#import "Source/santad/EventProviders/EndpointSecurityTestUtil.h"
 #import "Source/santad/EventProviders/SNTDeviceManager.h"
 
+#import "Source/santad/EventProviders/DiskArbitrationTestUtil.h"
+#import "Source/santad/EventProviders/EndpointSecurityTestUtil.h"
+
 @interface SNTDeviceManagerTest : XCTestCase
+@property id mockConfigurator;
 @end
 
 @implementation SNTDeviceManagerTest
 
 - (void)setUp {
   [super setUp];
+  self.mockConfigurator = OCMClassMock([SNTConfigurator class]);
+  OCMStub([self.mockConfigurator configurator]).andReturn(self.mockConfigurator);
+  OCMStub([self.mockConfigurator eventLogType]).andReturn(-1);
+
   fclose(stdout);
 }
 
 - (ESResponse *)triggerTestMount:(SNTDeviceManager *)deviceManager
-                          mockES:(MockEndpointSecurity *)mockES {
+                          mockES:(MockEndpointSecurity *)mockES
+                          mockDA:(MockDiskArbitration *)mockDA {
   if (!deviceManager.subscribed) {
     // [deviceManager listen] is synchronous, but we want to asynchronously dispatch it
     // with an enforced timeout to ensure that we never run into issues where the client
@@ -54,10 +62,28 @@
   }
 
   struct statfs *fs = static_cast<struct statfs *>(calloc(1, sizeof(struct statfs)));
-  const char test_mntfromname[] = "/dev/disk2s1";
-  const char test_mntonname[] = "/Volumes/KATE'S 4G";
-  strncpy(fs->f_mntfromname, test_mntfromname, sizeof(test_mntfromname));
-  strncpy(fs->f_mntonname, test_mntonname, sizeof(test_mntonname));
+  NSString *test_mntfromname = @"/dev/disk2s1";
+  NSString *test_mntonname = @"/Volumes/KATE'S 4G";
+  const char *c_mntfromname = [test_mntfromname UTF8String];
+  const char *c_mntonname = [test_mntonname UTF8String];
+
+  strncpy(fs->f_mntfromname, c_mntfromname, MAXPATHLEN);
+  strncpy(fs->f_mntonname, c_mntonname, MAXPATHLEN);
+
+  MockDADisk *disk = [[MockDADisk alloc] init];
+  disk.diskDescription = @{
+    (__bridge NSString *)kDADiskDescriptionDeviceProtocolKey : @"USB",
+    (__bridge NSString *)kDADiskDescriptionMediaRemovableKey : @YES,
+    @"DAVolumeMountable" : @YES,
+    @"DAVolumePath" : test_mntonname,
+    @"DADeviceModel" : @"Some device model",
+    @"DADevicePath" : test_mntonname,
+    @"DADeviceVendor" : @"Some vendor",
+    @"DAAppearanceTime" : @0,
+    @"DAMediaBSDName" : test_mntfromname,
+  };
+
+  [mockDA insert:disk bsdName:test_mntfromname];
 
   ESMessage *m = [[ESMessage alloc] initWithBlock:^(ESMessage *m) {
     m.binaryPath = @"/System/Library/Filesystems/msdos.fs/Contents/Resources/mount_msdos";
@@ -78,6 +104,7 @@
 
   [self waitForExpectations:@[ expectation ] timeout:60.0];
   free(fs);
+
   return got;
 }
 
@@ -85,14 +112,46 @@
   MockEndpointSecurity *mockES = [MockEndpointSecurity mockEndpointSecurity];
   [mockES reset];
 
+  MockDiskArbitration *mockDA = [MockDiskArbitration mockDiskArbitration];
+  [mockDA reset];
+
   SNTDeviceManager *deviceManager = [[SNTDeviceManager alloc] init];
   deviceManager.blockUSBMount = NO;
-  ESResponse *got = [self triggerTestMount:deviceManager mockES:mockES];
-
+  ESResponse *got = [self triggerTestMount:deviceManager mockES:mockES mockDA:mockDA];
   XCTAssertEqual(got.result, ES_AUTH_RESULT_ALLOW);
 }
 
-// TODO(tnek): Write a DiskArbitrationTestUtil similar to the EndpointSecurityTestUtil for
-// verifying that DiskArbitration callbacks get correctly called on device discovery.
+- (void)testRemount {
+  MockEndpointSecurity *mockES = [MockEndpointSecurity mockEndpointSecurity];
+  [mockES reset];
+
+  MockDiskArbitration *mockDA = [MockDiskArbitration mockDiskArbitration];
+  [mockDA reset];
+
+  SNTDeviceManager *deviceManager = [[SNTDeviceManager alloc] init];
+  deviceManager.blockUSBMount = YES;
+  deviceManager.remountArgs = @[ @"noexec", @"rdonly" ];
+
+  ESResponse *got = [self triggerTestMount:deviceManager mockES:mockES mockDA:mockDA];
+
+  XCTAssertEqual(got.result, ES_AUTH_RESULT_DENY);
+  XCTAssertEqual(mockDA.wasRemounted, YES);
+}
+
+- (void)testBlockNoRemount {
+  MockEndpointSecurity *mockES = [MockEndpointSecurity mockEndpointSecurity];
+  [mockES reset];
+
+  MockDiskArbitration *mockDA = [MockDiskArbitration mockDiskArbitration];
+  [mockDA reset];
+
+  SNTDeviceManager *deviceManager = [[SNTDeviceManager alloc] init];
+  deviceManager.blockUSBMount = YES;
+
+  ESResponse *got = [self triggerTestMount:deviceManager mockES:mockES mockDA:mockDA];
+
+  XCTAssertEqual(got.result, ES_AUTH_RESULT_DENY);
+  XCTAssertEqual(mockDA.wasRemounted, NO);
+}
 
 @end
