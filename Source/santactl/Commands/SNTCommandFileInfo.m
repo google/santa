@@ -71,7 +71,7 @@ NSString *formattedStringForKeyArray(NSArray<NSString *> *array) {
 // Properties set from commandline flags
 @property(nonatomic) BOOL recursive;
 @property(nonatomic) BOOL jsonOutput;
-@property(nonatomic) int *certIndex;
+@property(nonatomic) NSNumber *certIndex;
 @property(nonatomic, copy) NSArray<NSString *> *outputKeyList;
 @property(nonatomic, copy) NSDictionary<NSString *, NSRegularExpression *> *outputFilters;
 
@@ -589,21 +589,21 @@ REGISTER_COMMAND_NAME(@"fileinfo")
   // First build up a dictionary containing all the information we want to print out
   NSMutableDictionary *outputDict = [NSMutableDictionary dictionary];
   if (self.certIndex) {
+    int index = [self.certIndex intValue];
+
     // --cert-index flag implicitly means that we want only the signing chain.  So we find the
     // specified certificate in the signing chain, then print out values for all keys in cert.
     NSArray *signingChain = self.propertyMap[kSigningChain](self, fileInfo);
     if (!signingChain || !signingChain.count) return;  // check signing chain isn't empty
-    int index = 0;
-    if (*self.certIndex < 0) {
-      index = (int)signingChain.count - -(*self.certIndex);
+    if (index < 0) {
+      index = (int)signingChain.count - -(index);
       if (index < 0) {
-        fprintf(stderr, "Invalid --cert-index: %d\n", *self.certIndex);
+        fprintf(stderr, "Invalid --cert-index: %d\n", index);
         return;
       }
     } else {
-      index = *self.certIndex;
       if (index >= (int)signingChain.count) {
-        fprintf(stderr, "Invalid --cert-index: %d\n", *self.certIndex);
+        fprintf(stderr, "Invalid --cert-index: %d\n", index);
         return;
       }
     }
@@ -718,7 +718,7 @@ REGISTER_COMMAND_NAME(@"fileinfo")
                 [NSString stringWithFormat:@"\n\"%@\" is an invalid argument for --cert-index\n",
                                            arguments[i]]];
       }
-      self.certIndex = &index;
+      self.certIndex = @(index);
     } else if ([arg caseInsensitiveCompare:@"--key"] == NSOrderedSame) {
       i += 1;  // advance to next argument and grab the key
       if (i >= nargs || [arguments[i] hasPrefix:@"--"]) {
