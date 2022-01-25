@@ -277,3 +277,14 @@ santa_unit_test(
     srcs = ["SNTMetricSetTest.m"],
     deps = [":SNTMetricSet"],
 )
+
+test_suite(
+    name = "unit_tests",
+    tests = [
+        ":SNTFileInfoTest",
+        ":SNTMetricSetTest",
+        ":SNTPrefixTreeTest",
+        ":SantaCacheTest",
+    ],
+    visibility = ["//:santa_package_group"],
+)

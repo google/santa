@@ -46,6 +46,7 @@ GUI_USER=$(/usr/bin/stat -f '%u' /dev/console)
 /bin/rm /usr/sbin/santactl >/dev/null 2>&1
 /bin/rm -rf /Applications/Santa.app 2>&1
 /bin/rm -rf /Library/Extensions/santa-driver.kext 2>&1
+/bin/rm /etc/asl/com.google.santa.asl.conf
 
 # Copy new files.
 /bin/mkdir -p /var/db/santa
@@ -63,7 +64,6 @@ GUI_USER=$(/usr/bin/stat -f '%u' /dev/console)
 /bin/cp ${CONF}/com.google.santa.bundleservice.plist /Library/LaunchDaemons
 /bin/cp ${CONF}/com.google.santa.metricservice.plist /Library/LaunchDaemons
 /bin/cp ${CONF}/com.google.santad.plist /Library/LaunchDaemons
-/bin/cp ${CONF}/com.google.santa.asl.conf /etc/asl/
 /bin/cp ${CONF}/com.google.santa.newsyslog.conf /etc/newsyslog.d/
 
 # Reload syslogd to pick up ASL configuration change.
