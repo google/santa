@@ -24,9 +24,9 @@
 
 @property(nonatomic, readwrite) BOOL subscribed;
 @property(nonatomic, readwrite) BOOL blockUSBMount;
-@property(nonatomic, readwrite) NSArray<NSString *> *remountArgs;
+@property(nonatomic, readwrite, nullable) NSArray<NSString *> *remountArgs;
 
-- (instancetype)init;
+- (instancetype _Nonnull)init;
 - (void)listen;
 - (BOOL)subscribed;
 
