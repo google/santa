@@ -37,7 +37,6 @@ NS_ASSUME_NONNULL_BEGIN
 @property(nonatomic) BOOL wasRemounted;
 
 - (instancetype _Nonnull)init;
-
 - (void)reset;
 
 // Also triggers DADiskRegisterDiskAppearedCallback
@@ -47,6 +46,9 @@ NS_ASSUME_NONNULL_BEGIN
 + (instancetype _Nonnull)mockDiskArbitration;
 @end
 
+//
+// All DiskArbitration functions used in SNTDeviceManager and shimmed out accordingly.
+//
 CF_EXTERN_C_BEGIN
 
 void DADiskMountWithArguments(DADiskRef _Nonnull disk, CFURLRef __nullable path,
