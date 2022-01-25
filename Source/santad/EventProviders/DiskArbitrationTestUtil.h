@@ -29,12 +29,15 @@ NS_ASSUME_NONNULL_BEGIN
 @property(nonatomic, readwrite) NSString *name;
 @end
 
+typedef void (^MockDADiskAppearedCallback)(DADiskRef ref);
 // Singleton mock fixture around all of the DiskArbitration framework functions
 @interface MockDiskArbitration : NSObject
 @property(nonatomic, readwrite, nonnull)
   NSMutableDictionary<NSString *, MockDADisk *> *insertedDevices;
-@property(nonatomic, readwrite, nonnull) NSMutableArray<NSValue *> *diskAppearedCallbacks;
+@property(nonatomic, readwrite, nonnull)
+  NSMutableArray<MockDADiskAppearedCallback> *diskAppearedCallbacks;
 @property(nonatomic) BOOL wasRemounted;
+@property(nonatomic, nullable) dispatch_queue_t sessionQueue;
 
 - (instancetype _Nonnull)init;
 - (void)reset;

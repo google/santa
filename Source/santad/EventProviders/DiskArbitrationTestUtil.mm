@@ -36,15 +36,15 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)reset {
   [self.insertedDevices removeAllObjects];
   [self.diskAppearedCallbacks removeAllObjects];
+  self.sessionQueue = nil;
   self.wasRemounted = NO;
 }
 
 - (void)insert:(MockDADisk *)ref bsdName:(NSString *)bsdName {
   self.insertedDevices[bsdName] = ref;
 
-  for (NSValue *value in self.diskAppearedCallbacks) {
-    DADiskAppearedCallback callback = (DADiskAppearedCallback)[value pointerValue];
-    callback((__bridge DADiskRef)ref, (__bridge void *)self);
+  for (MockDADiskAppearedCallback callback in self.diskAppearedCallbacks) {
+    callback((__bridge DADiskRef)ref);
   }
 }
 
@@ -74,7 +74,9 @@ DADiskRef __nullable DADiskCreateFromBSDName(CFAllocatorRef __nullable allocator
 
   MockDiskArbitration *mockDA = [MockDiskArbitration mockDiskArbitration];
   MockDADisk *got = mockDA.insertedDevices[nsName];
-  return (__bridge DADiskRef)got;
+  DADiskRef ref = (__bridge DADiskRef)got;
+  CFRetain(ref);
+  return ref;
 }
 
 CFDictionaryRef __nullable DADiskCopyDescription(DADiskRef disk) {
@@ -89,7 +91,9 @@ CFDictionaryRef __nullable DADiskCopyDescription(DADiskRef disk) {
 void DARegisterDiskAppearedCallback(DASessionRef session, CFDictionaryRef __nullable match,
                                     DADiskAppearedCallback callback, void *__nullable context) {
   MockDiskArbitration *mockDA = [MockDiskArbitration mockDiskArbitration];
-  [mockDA.diskAppearedCallbacks addObject:[NSValue valueWithPointer:(void *)callback]];
+  [mockDA.diskAppearedCallbacks addObject:^(DADiskRef ref) {
+    callback(ref, context);
+  }];
 }
 
 void DARegisterDiskDisappearedCallback(DASessionRef session, CFDictionaryRef __nullable match,
@@ -102,7 +106,10 @@ void DARegisterDiskDescriptionChangedCallback(DASessionRef session,
                                               DADiskDescriptionChangedCallback callback,
                                               void *__nullable context){};
 
-void DASessionSetDispatchQueue(DASessionRef session, dispatch_queue_t __nullable queue){};
+void DASessionSetDispatchQueue(DASessionRef session, dispatch_queue_t __nullable queue) {
+  MockDiskArbitration *mockDA = [MockDiskArbitration mockDiskArbitration];
+  mockDA.sessionQueue = queue;
+};
 
 DASessionRef __nullable DASessionCreate(CFAllocatorRef __nullable allocator) {
   return (__bridge DASessionRef)[MockDiskArbitration mockDiskArbitration];

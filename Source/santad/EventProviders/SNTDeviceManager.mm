@@ -203,6 +203,7 @@ long mountArgsToMask(NSArray<NSString *> *args) {
 
   DADiskRef disk =
     DADiskCreateFromBSDName(NULL, self.diskArbSession, m->event.mount.statfs->f_mntfromname);
+  CFAutorelease(disk);
 
   // TODO(tnek): Log all of the other attributes available in diskInfo into a structured log format.
   NSDictionary *diskInfo = CFBridgingRelease(DADiskCopyDescription(disk));
