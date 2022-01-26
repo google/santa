@@ -21,8 +21,7 @@
 
 @implementation SNTBlockMessage
 
-+ (NSAttributedString *)attributedBlockMessageForEvent:(SNTStoredEvent *)event
-                                         customMessage:(NSString *)customMessage {
++ (NSAttributedString *)formatMessage:(NSString *)message {
   NSString *htmlHeader =
     @"<html><head><style>"
     @"body {"
@@ -48,6 +47,22 @@
 
   NSString *htmlFooter = @"</body></html>";
 
+  NSString *fullHTML = [NSString stringWithFormat:@"%@%@%@", htmlHeader, message, htmlFooter];
+
+#ifdef SANTAGUI
+  NSData *htmlData = [fullHTML dataUsingEncoding:NSUTF8StringEncoding];
+  return [[NSAttributedString alloc] initWithHTML:htmlData documentAttributes:NULL];
+#else
+  NSString *strippedHTML = [self stringFromHTML:fullHTML];
+  if (!strippedHTML) {
+    return [[NSAttributedString alloc] initWithString:@"This binary has been blocked."];
+  }
+  return [[NSAttributedString alloc] initWithString:strippedHTML];
+#endif
+}
+
++ (NSAttributedString *)attributedBlockMessageForEvent:(SNTStoredEvent *)event
+                                         customMessage:(NSString *)customMessage {
   NSString *message;
   if (customMessage.length) {
     message = customMessage;
@@ -64,19 +79,7 @@
                 @"because it has been deemed malicious.";
     }
   }
-
-  NSString *fullHTML = [NSString stringWithFormat:@"%@%@%@", htmlHeader, message, htmlFooter];
-
-#ifdef SANTAGUI
-  NSData *htmlData = [fullHTML dataUsingEncoding:NSUTF8StringEncoding];
-  return [[NSAttributedString alloc] initWithHTML:htmlData documentAttributes:NULL];
-#else
-  NSString *strippedHTML = [self stringFromHTML:fullHTML];
-  if (!strippedHTML) {
-    return [[NSAttributedString alloc] initWithString:@"This binary has been blocked."];
-  }
-  return [[NSAttributedString alloc] initWithString:strippedHTML];
-#endif
+  return [SNTBlockMessage formatMessage:message];
 }
 
 + (NSString *)stringFromHTML:(NSString *)html {

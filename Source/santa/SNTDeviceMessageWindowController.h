@@ -11,31 +11,27 @@
 ///    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 ///    See the License for the specific language governing permissions and
 ///    limitations under the License.
-#import <DiskArbitration/DiskArbitration.h>
-#import <Foundation/Foundation.h>
+#import <Cocoa/Cocoa.h>
 
-#include <EndpointSecurity/EndpointSecurity.h>
-
-#include "Source/common/SNTDeviceEvent.h"
+#import "Source/common/SNTDeviceEvent.h"
+#import "Source/santa/SNTMessageWindowController.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
-typedef void (^SNTDeviceBlockCallback)(SNTDeviceEvent *event);
+@class SNTStoredEvent;
 
-/*
- * Manages DiskArbitration and EndpointSecurity to monitor/block/remount USB
- * storage devices.
- */
-@interface SNTDeviceManager : NSObject
+///
+///  Controller for a single message window.
+///
+@interface SNTDeviceMessageWindowController : SNTMessageWindowController
 
-@property(nonatomic, readwrite) BOOL subscribed;
-@property(nonatomic, readwrite) BOOL blockUSBMount;
-@property(nonatomic, readwrite, nullable) NSArray<NSString *> *remountArgs;
-@property(nonatomic, nullable) SNTDeviceBlockCallback deviceBlockCallback;
+@property(weak) IBOutlet NSTextField *mountPointLabel;
+@property(weak) IBOutlet NSTextField *mountPathLabel;
 
-- (instancetype)init;
-- (void)listen;
-- (BOOL)subscribed;
+// The device event this window is for.
+@property(readonly) SNTDeviceEvent *event;
+
+- (instancetype)initWithEvent:(SNTDeviceEvent *)event message:(nullable NSString *)message;
 
 @end
 

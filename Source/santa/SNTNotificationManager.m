@@ -18,10 +18,12 @@
 
 #import "Source/common/SNTBlockMessage.h"
 #import "Source/common/SNTConfigurator.h"
+#import "Source/common/SNTDeviceEvent.h"
 #import "Source/common/SNTLogging.h"
 #import "Source/common/SNTStoredEvent.h"
 #import "Source/common/SNTStrengthify.h"
 #import "Source/common/SNTXPCControlInterface.h"
+#import "Source/santa/SNTMessageWindowController.h"
 
 @interface SNTNotificationManager ()
 
@@ -57,13 +59,7 @@ static NSString *const silencedNotificationsKey = @"SilencedNotifications";
   self.currentWindowController = nil;
 
   if ([self.pendingNotifications count]) {
-    self.currentWindowController = [self.pendingNotifications firstObject];
-    [self.currentWindowController showWindow:self];
-    if (self.currentWindowController.event.needsBundleHash) {
-      dispatch_async(self.hashBundleBinariesQueue, ^{
-        [self hashBundleBinariesForEvent:self.currentWindowController.event];
-      });
-    }
+    [self showQueuedWindow];
   } else {
     MOLXPCConnection *bc = [SNTXPCBundleServiceInterface configuredConnection];
     [bc resume];
@@ -83,6 +79,123 @@ static NSString *const silencedNotificationsKey = @"SilencedNotifications";
     [d removeObjectForKey:hash];
   }
   [ud setObject:d forKey:silencedNotificationsKey];
+}
+
+- (void)queueMessage:(SNTMessageWindowController *)pendingMsg {
+  NSString *messageHash = [pendingMsg messageHash];
+  // See if this message is already in the list of pending notifications.
+  NSPredicate *predicate = [NSPredicate predicateWithFormat:@"messageHash==%@", messageHash];
+  if ([[self.pendingNotifications filteredArrayUsingPredicate:predicate] count]) return;
+
+  // See if this message is silenced.
+  NSUserDefaults *ud = [NSUserDefaults standardUserDefaults];
+  NSDate *silenceDate = [ud objectForKey:silencedNotificationsKey][messageHash];
+  if ([silenceDate isKindOfClass:[NSDate class]]) {
+    NSDate *oneDayAgo = [NSDate dateWithTimeIntervalSinceNow:-86400];
+    if ([silenceDate compare:[NSDate date]] == NSOrderedDescending) {
+      LOGI(@"Notification silence: date is in the future, ignoring");
+      [self updateSilenceDate:nil forHash:messageHash];
+    } else if ([silenceDate compare:oneDayAgo] == NSOrderedAscending) {
+      LOGI(@"Notification silence: date is more than one day ago, ignoring");
+      [self updateSilenceDate:nil forHash:messageHash];
+    } else {
+      LOGI(@"Notification silence: dropping notification for %@", messageHash);
+      return;
+    }
+  }
+
+  pendingMsg.delegate = self;
+  [self.pendingNotifications addObject:pendingMsg];
+
+  if (!self.currentWindowController) {
+    [self showQueuedWindow];
+  }
+}
+
+- (void)showQueuedWindow {
+  // Notifications arrive on a background thread but UI updates must happen on the main thread.
+  // This includes making windows.
+  dispatch_async(dispatch_get_main_queue(), ^{
+    // If a notification isn't currently being displayed, display the incoming one.
+    // This check will generally be redundant, as we'd generally want to check this prior to
+    // starting work on the main thread.
+    if (!self.currentWindowController) {
+      self.currentWindowController = [self.pendingNotifications firstObject];
+      [self.currentWindowController showWindow:self];
+
+      if ([self.currentWindowController isKindOfClass:[SNTBinaryMessageWindowController class]]) {
+        SNTBinaryMessageWindowController *controller =
+          (SNTBinaryMessageWindowController *)self.currentWindowController;
+        dispatch_async(self.hashBundleBinariesQueue, ^{
+          [self hashBundleBinariesForEvent:controller.event withController:controller];
+        });
+      }
+    }
+  });
+}
+
+- (void)hashBundleBinariesForEvent:(SNTStoredEvent *)event
+                    withController:(SNTBinaryMessageWindowController *)withController {
+  withController.foundFileCountLabel.stringValue = @"Searching for files...";
+
+  dispatch_semaphore_t sema = dispatch_semaphore_create(0);
+  MOLXPCConnection *bc = [SNTXPCBundleServiceInterface configuredConnection];
+  bc.acceptedHandler = ^{
+    dispatch_semaphore_signal(sema);
+  };
+  [bc resume];
+
+  // Wait a max of 5 secs for the bundle service
+  // Otherwise abandon bundle hashing and display the blockable event.
+  if (dispatch_semaphore_wait(sema, dispatch_time(DISPATCH_TIME_NOW, 5 * NSEC_PER_SEC))) {
+    [withController updateBlockNotification:event withBundleHash:nil];
+    return;
+  }
+
+  [[bc remoteObjectProxy] setNotificationListener:self.notificationListener];
+
+  // NSProgress becomes current for this thread. XPC messages vend a child node to the receiver.
+  [withController.progress becomeCurrentWithPendingUnitCount:100];
+
+  // Start hashing. Progress is reported to the root NSProgress
+  // (currentWindowController.progress).
+  [[bc remoteObjectProxy]
+    hashBundleBinariesForEvent:event
+                         reply:^(NSString *bh, NSArray<SNTStoredEvent *> *events, NSNumber *ms) {
+                           // Revert to displaying the blockable event if we fail to calculate the
+                           // bundle hash
+                           if (!bh)
+                             return [withController updateBlockNotification:event
+                                                             withBundleHash:nil];
+
+                           event.fileBundleHash = bh;
+                           event.fileBundleBinaryCount = @(events.count);
+                           event.fileBundleHashMilliseconds = ms;
+                           event.fileBundleExecutableRelPath =
+                             [events.firstObject fileBundleExecutableRelPath];
+                           for (SNTStoredEvent *se in events) {
+                             se.fileBundleHash = bh;
+                             se.fileBundleBinaryCount = @(events.count);
+                             se.fileBundleHashMilliseconds = ms;
+                           }
+
+                           // Send the results to santad. It will decide if they need to be
+                           // synced.
+                           MOLXPCConnection *daemonConn =
+                             [SNTXPCControlInterface configuredConnection];
+                           [daemonConn resume];
+                           [[daemonConn remoteObjectProxy] syncBundleEvent:event
+                                                             relatedEvents:events];
+                           [daemonConn invalidate];
+
+                           // Update the UI with the bundle hash. Also make the openEventButton
+                           // available.
+                           [withController updateBlockNotification:event withBundleHash:bh];
+
+                           [bc invalidate];
+                         }];
+
+  [withController.progress resignCurrent];
 }
 
 #pragma mark SNTNotifierXPC protocol methods
@@ -113,52 +226,15 @@ static NSString *const silencedNotificationsKey = @"SilencedNotifications";
 }
 
 - (void)postBlockNotification:(SNTStoredEvent *)event withCustomMessage:(NSString *)message {
-  // See if this binary is already in the list of pending notifications.
-  NSPredicate *predicate =
-    [NSPredicate predicateWithFormat:@"event.fileSHA256==%@", event.fileSHA256];
-  if ([[self.pendingNotifications filteredArrayUsingPredicate:predicate] count]) return;
-
-  // See if this binary is silenced.
-  NSUserDefaults *ud = [NSUserDefaults standardUserDefaults];
-  NSDate *silenceDate = [ud objectForKey:silencedNotificationsKey][event.fileSHA256];
-  if ([silenceDate isKindOfClass:[NSDate class]]) {
-    NSDate *oneDayAgo = [NSDate dateWithTimeIntervalSinceNow:-86400];
-    if ([silenceDate compare:[NSDate date]] == NSOrderedDescending) {
-      LOGI(@"Notification silence: date is in the future, ignoring");
-      [self updateSilenceDate:nil forHash:event.fileSHA256];
-    } else if ([silenceDate compare:oneDayAgo] == NSOrderedAscending) {
-      LOGI(@"Notification silence: date is more than one day ago, ignoring");
-      [self updateSilenceDate:nil forHash:event.fileSHA256];
-    } else {
-      LOGI(@"Notification silence: dropping notification for %@", event.fileSHA256);
-      return;
-    }
-  }
-
   if (!event) {
     LOGI(@"Error: Missing event object in message received from daemon!");
     return;
   }
 
-  // Notifications arrive on a background thread but UI updates must happen on the main thread.
-  // This includes making windows.
-  dispatch_async(dispatch_get_main_queue(), ^{
-    SNTMessageWindowController *pendingMsg =
-      [[SNTMessageWindowController alloc] initWithEvent:event andMessage:message];
-    pendingMsg.delegate = self;
-    [self.pendingNotifications addObject:pendingMsg];
+  SNTBinaryMessageWindowController *pendingMsg =
+    [[SNTBinaryMessageWindowController alloc] initWithEvent:event andMessage:message];
 
-    // If a notification isn't currently being displayed, display the incoming one.
-    if (!self.currentWindowController) {
-      self.currentWindowController = pendingMsg;
-      [pendingMsg showWindow:nil];
-      if (self.currentWindowController.event.needsBundleHash) {
-        dispatch_async(self.hashBundleBinariesQueue, ^{
-          [self hashBundleBinariesForEvent:self.currentWindowController.event];
-        });
-      }
-    }
-  });
+  [self queueMessage:pendingMsg];
 }
 
 - (void)postRuleSyncNotificationWithCustomMessage:(NSString *)message {
@@ -169,98 +245,35 @@ static NSString *const silencedNotificationsKey = @"SilencedNotifications";
   [[NSUserNotificationCenter defaultUserNotificationCenter] deliverNotification:un];
 }
 
+- (void)postUSBBlockNotification:(SNTDeviceEvent *)event withCustomMessage:(NSString *)message {
+  if (!event) {
+    LOGI(@"Error: Missing event object in message received from daemon!");
+    return;
+  }
+  SNTDeviceMessageWindowController *pendingMsg =
+    [[SNTDeviceMessageWindowController alloc] initWithEvent:event message:message];
+
+  [self queueMessage:pendingMsg];
+}
+
 #pragma mark SNTBundleNotifierXPC protocol methods
 
 - (void)updateCountsForEvent:(SNTStoredEvent *)event
                  binaryCount:(uint64_t)binaryCount
                    fileCount:(uint64_t)fileCount
                  hashedCount:(uint64_t)hashedCount {
-  if ([self.currentWindowController.event.idx isEqual:event.idx]) {
-    dispatch_async(dispatch_get_main_queue(), ^{
-      self.currentWindowController.foundFileCountLabel.stringValue =
-        [NSString stringWithFormat:@"%llu binaries / %llu %@", binaryCount,
-                                   hashedCount ?: fileCount, hashedCount ? @"hashed" : @"files"];
-    });
-  }
-}
+  if ([self.currentWindowController isKindOfClass:[SNTBinaryMessageWindowController class]]) {
+    SNTBinaryMessageWindowController *controller =
+      (SNTBinaryMessageWindowController *)self.currentWindowController;
 
-#pragma mark SNTBundleNotifierXPC helper methods
-
-- (void)hashBundleBinariesForEvent:(SNTStoredEvent *)event {
-  self.currentWindowController.foundFileCountLabel.stringValue = @"Searching for files...";
-
-  dispatch_semaphore_t sema = dispatch_semaphore_create(0);
-  MOLXPCConnection *bc = [SNTXPCBundleServiceInterface configuredConnection];
-  bc.acceptedHandler = ^{
-    dispatch_semaphore_signal(sema);
-  };
-  [bc resume];
-
-  // Wait a max of 5 secs for the bundle service
-  // Otherwise abandon bundle hashing and display the blockable event.
-  if (dispatch_semaphore_wait(sema, dispatch_time(DISPATCH_TIME_NOW, 5 * NSEC_PER_SEC))) {
-    [self updateBlockNotification:event withBundleHash:nil];
-    return;
-  }
-
-  [[bc remoteObjectProxy] setNotificationListener:self.notificationListener];
-
-  // NSProgress becomes current for this thread. XPC messages vend a child node to the receiver.
-  [self.currentWindowController.progress becomeCurrentWithPendingUnitCount:100];
-
-  // Start hashing. Progress is reported to the root NSProgress (currentWindowController.progress).
-  [[bc remoteObjectProxy]
-    hashBundleBinariesForEvent:event
-                         reply:^(NSString *bh, NSArray<SNTStoredEvent *> *events, NSNumber *ms) {
-                           // Revert to displaying the blockable event if we fail to calculate the
-                           // bundle hash
-                           if (!bh) return [self updateBlockNotification:event withBundleHash:nil];
-
-                           event.fileBundleHash = bh;
-                           event.fileBundleBinaryCount = @(events.count);
-                           event.fileBundleHashMilliseconds = ms;
-                           event.fileBundleExecutableRelPath =
-                             [events.firstObject fileBundleExecutableRelPath];
-                           for (SNTStoredEvent *se in events) {
-                             se.fileBundleHash = bh;
-                             se.fileBundleBinaryCount = @(events.count);
-                             se.fileBundleHashMilliseconds = ms;
-                           }
-
-                           // Send the results to santad. It will decide if they need to be
-                           // synced.
-                           MOLXPCConnection *daemonConn =
-                             [SNTXPCControlInterface configuredConnection];
-                           [daemonConn resume];
-                           [[daemonConn remoteObjectProxy] syncBundleEvent:event
-                                                             relatedEvents:events];
-                           [daemonConn invalidate];
-
-                           // Update the UI with the bundle hash. Also make the openEventButton
-                           // available.
-                           [self updateBlockNotification:event withBundleHash:bh];
-
-                           [bc invalidate];
-                         }];
-
-  [self.currentWindowController.progress resignCurrent];
-}
-
-- (void)updateBlockNotification:(SNTStoredEvent *)event withBundleHash:(NSString *)bundleHash {
-  dispatch_async(dispatch_get_main_queue(), ^{
-    if ([self.currentWindowController.event.idx isEqual:event.idx]) {
-      if (bundleHash) {
-        [self.currentWindowController.bundleHashLabel setHidden:NO];
-      } else {
-        [self.currentWindowController.bundleHashLabel removeFromSuperview];
-        [self.currentWindowController.bundleHashTitle removeFromSuperview];
-      }
-      self.currentWindowController.event.fileBundleHash = bundleHash;
-      [self.currentWindowController.foundFileCountLabel removeFromSuperview];
-      [self.currentWindowController.hashingIndicator setHidden:YES];
-      [self.currentWindowController.openEventButton setEnabled:YES];
+    if ([controller.event.idx isEqual:event.idx]) {
+      dispatch_async(dispatch_get_main_queue(), ^{
+        controller.foundFileCountLabel.stringValue =
+          [NSString stringWithFormat:@"%llu binaries / %llu %@", binaryCount,
+                                     hashedCount ?: fileCount, hashedCount ? @"hashed" : @"files"];
+      });
     }
-  });
+  }
 }
 
 @end
