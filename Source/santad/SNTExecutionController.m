@@ -223,9 +223,12 @@ static NSString *const kPrinterProxyPostMonterey =
     se.quarantineTimestamp = binInfo.quarantineTimestamp;
     se.quarantineAgentBundleID = binInfo.quarantineAgentBundleID;
 
-    dispatch_async(_eventQueue, ^{
-      [self.eventTable addStoredEvent:se];
-    });
+    // Only store events if there is a sync server configured.
+    if ([SNTConfigurator configurator].syncBaseURL) {
+      dispatch_async(_eventQueue, ^{
+        [self.eventTable addStoredEvent:se];
+      });
+    }
 
     // If binary was blocked, do the needful
     if (action != ACTION_RESPOND_ALLOW && action != ACTION_RESPOND_ALLOW_COMPILER) {
