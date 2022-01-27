@@ -53,6 +53,8 @@
 
   self.mockConfigurator = OCMClassMock([SNTConfigurator class]);
   OCMStub([self.mockConfigurator configurator]).andReturn(self.mockConfigurator);
+  NSURL *url = [NSURL URLWithString:@"https://localhost/test"];
+  OCMStub([self.mockConfigurator syncBaseURL]).andReturn(url);
 
   self.mockDriverManager = OCMClassMock([SNTDriverManager class]);
 
