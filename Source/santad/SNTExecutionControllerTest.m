@@ -276,7 +276,7 @@
   [self checkMetricCounters:kAllowUnknown expected:@1];
 }
 
-- (void)testUnreadable {
+- (void)testUnreadableFailOpenLockdown {
   // Undo the default mocks
   [self.mockFileInfo stopMocking];
   self.mockFileInfo = OCMClassMock([SNTFileInfo class]);
@@ -286,22 +286,42 @@
     .andReturn(nil);
 
   // Lockdown mode, no fail-closed
-  OCMExpect([self.mockConfigurator clientMode]).andReturn(SNTClientModeLockdown);
   OCMExpect([self.mockConfigurator failClosed]).andReturn(NO);
+  OCMExpect([self.mockConfigurator clientMode]).andReturn(SNTClientModeLockdown);
   [self.sut validateBinaryWithMessage:[self getMessage]];
   OCMVerify([self.mockDriverManager postAction:ACTION_RESPOND_ALLOW forMessage:[self getMessage]]);
-  [self checkMetricCounters:kAllowNoFileInfo expected:@1];
+  [self checkMetricCounters:kAllowNoFileInfo expected:@2];
+}
+
+- (void)testUnreadableFailClosedLockdown {
+  // Undo the default mocks
+  [self.mockFileInfo stopMocking];
+  self.mockFileInfo = OCMClassMock([SNTFileInfo class]);
+
+  OCMStub([self.mockFileInfo alloc]).andReturn(nil);
+  OCMStub([self.mockFileInfo initWithPath:OCMOCK_ANY error:[OCMArg setTo:nil]])
+    .andReturn(nil);
 
   // Lockdown mode, fail-closed
-  OCMExpect([self.mockConfigurator clientMode]).andReturn(SNTClientModeLockdown);
   OCMExpect([self.mockConfigurator failClosed]).andReturn(YES);
+  OCMExpect([self.mockConfigurator clientMode]).andReturn(SNTClientModeLockdown);
   [self.sut validateBinaryWithMessage:[self getMessage]];
   OCMVerify([self.mockDriverManager postAction:ACTION_RESPOND_DENY forMessage:[self getMessage]]);
   [self checkMetricCounters:kDenyNoFileInfo expected:@1];
+}
+
+- (void)testUnreadableFailClosedMonitor {
+  // Undo the default mocks
+  [self.mockFileInfo stopMocking];
+  self.mockFileInfo = OCMClassMock([SNTFileInfo class]);
+
+  OCMStub([self.mockFileInfo alloc]).andReturn(nil);
+  OCMStub([self.mockFileInfo initWithPath:OCMOCK_ANY error:[OCMArg setTo:nil]])
+    .andReturn(nil);
 
   // Monitor mode, fail-closed
-  OCMExpect([self.mockConfigurator clientMode]).andReturn(SNTClientModeMonitor);
   OCMExpect([self.mockConfigurator failClosed]).andReturn(YES);
+  OCMExpect([self.mockConfigurator clientMode]).andReturn(SNTClientModeMonitor);
   [self.sut validateBinaryWithMessage:[self getMessage]];
   OCMVerify([self.mockDriverManager postAction:ACTION_RESPOND_ALLOW forMessage:[self getMessage]]);
   [self checkMetricCounters:kAllowNoFileInfo expected:@1];
