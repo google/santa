@@ -282,8 +282,7 @@
   self.mockFileInfo = OCMClassMock([SNTFileInfo class]);
 
   OCMStub([self.mockFileInfo alloc]).andReturn(nil);
-  OCMStub([self.mockFileInfo initWithPath:OCMOCK_ANY error:[OCMArg setTo:nil]])
-    .andReturn(nil);
+  OCMStub([self.mockFileInfo initWithPath:OCMOCK_ANY error:[OCMArg setTo:nil]]).andReturn(nil);
 
   // Lockdown mode, no fail-closed
   OCMExpect([self.mockConfigurator failClosed]).andReturn(NO);
@@ -299,8 +298,7 @@
   self.mockFileInfo = OCMClassMock([SNTFileInfo class]);
 
   OCMStub([self.mockFileInfo alloc]).andReturn(nil);
-  OCMStub([self.mockFileInfo initWithPath:OCMOCK_ANY error:[OCMArg setTo:nil]])
-    .andReturn(nil);
+  OCMStub([self.mockFileInfo initWithPath:OCMOCK_ANY error:[OCMArg setTo:nil]]).andReturn(nil);
 
   // Lockdown mode, fail-closed
   OCMExpect([self.mockConfigurator failClosed]).andReturn(YES);
@@ -316,8 +314,7 @@
   self.mockFileInfo = OCMClassMock([SNTFileInfo class]);
 
   OCMStub([self.mockFileInfo alloc]).andReturn(nil);
-  OCMStub([self.mockFileInfo initWithPath:OCMOCK_ANY error:[OCMArg setTo:nil]])
-    .andReturn(nil);
+  OCMStub([self.mockFileInfo initWithPath:OCMOCK_ANY error:[OCMArg setTo:nil]]).andReturn(nil);
 
   // Monitor mode, fail-closed
   OCMExpect([self.mockConfigurator failClosed]).andReturn(YES);
