@@ -22,7 +22,7 @@ also known as mobileconfig files, which are in an Apple-specific XML format.
 | Key                           | Value Type | Description                              |
 | ----------------------------- | ---------- | ---------------------------------------- |
 | ClientMode\*                  | Integer    | 1 = MONITOR, 2 = LOCKDOWN, defaults to MONITOR |
-| FailClosed                    | Bool       | If true, execution will be denied when there is an error reading or processing an executable file. |
+| FailClosed                    | Bool       | If true and the ClientMode is LOCKDOWN: execution will be denied when there is an error reading or processing an executable file. |
 | FileChangesRegex\*            | String     | The regex of paths to log file changes. Regexes are specified in ICU format. |
 | AllowedPathRegex\*            | String     | A regex to allow if the binary or certificate scopes did not allow/block execution.  Regexes are specified in ICU format. |
 | BlockedPathRegex\*            | String     | A regex to block if the binary or certificate scopes did not allow/block an execution.  Regexes are specified in ICU format. |

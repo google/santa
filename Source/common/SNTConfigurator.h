@@ -40,9 +40,9 @@
 ///  This controls Santa's behavior when a failure occurs, such as an
 ///  inability to read a file. By default, to prevent bugs or misconfiguration
 ///  from rendering a machine inoperable Santa will fail open and allow
-///  execution. With this setting enabled, Santa will fail closed, offering
-///  a higher level of security but with a higher potential for causing
-///  problems.
+///  execution. With this setting enabled, Santa will fail closed if the client
+///  is in LOCKDOWN mode, offering a higher level of security but with a higher
+///  potential for causing problems.
 ///
 @property(readonly, nonatomic) BOOL failClosed;
 

@@ -281,6 +281,7 @@
   [self.mockFileInfo stopMocking];
   self.mockFileInfo = OCMClassMock([SNTFileInfo class]);
 
+  OCMExpect([self.mockConfigurator clientMode]).andReturn(SNTClientModeLockdown);
   OCMStub([self.mockFileInfo alloc]).andReturn(nil);
   OCMStub([self.mockFileInfo initWithPath:OCMOCK_ANY error:[OCMArg setTo:nil]])
     .andReturn(nil);
