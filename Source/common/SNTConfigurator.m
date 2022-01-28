@@ -96,6 +96,7 @@ static NSString *const kFCMAPIKey = @"FCMAPIKey";
 
 // The keys managed by a sync server or mobileconfig.
 static NSString *const kClientModeKey = @"ClientMode";
+static NSString *const kFailClosedKey = @"FailClosed";
 static NSString *const kBlockUSBMountKey = @"BlockUSBMount";
 static NSString *const kRemountUSBModeKey = @"RemountUSBMode";
 static NSString *const kEnableTransitiveRulesKey = @"EnableTransitiveRules";
@@ -142,6 +143,7 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
     };
     _forcedConfigKeyTypes = @{
       kClientModeKey : number,
+      kFailClosedKey : number,
       kEnableTransitiveRulesKey : number,
       kEnableTransitiveRulesKeyDeprecated : number,
       kFileChangesRegexKey : re,
@@ -427,6 +429,12 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
   if (newMode == SNTClientModeMonitor || newMode == SNTClientModeLockdown) {
     [self updateSyncStateForKey:kClientModeKey value:@(newMode)];
   }
+}
+
+- (BOOL)failClosed {
+  NSNumber *n = self.configState[kFailClosedKey];
+  if (n) return [n boolValue];
+  return NO;
 }
 
 - (BOOL)enableTransitiveRules {
