@@ -33,6 +33,7 @@ const static NSString *kAllowTransitive = @"AllowTransitive";
 const static NSString *kUnknownEventState = @"Unknown";
 const static NSString *kBlockPrinterWorkaround = @"BlockPrinterWorkaround";
 const static NSString *kAllowNoFileInfo = @"AllowNoFileInfo";
+const static NSString *kDenyNoFileInfo = @"DenyNoFileInfo";
 const static NSString *kAllowNullVNode = @"AllowNullVNode";
 
 @class MOLCodesignChecker;

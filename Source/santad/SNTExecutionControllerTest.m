@@ -95,12 +95,11 @@
   NSDictionary *eventCounter = [metricSet export][@"metrics"][@"/santa/events"];
   BOOL foundField;
   for (NSDictionary *fieldValue in eventCounter[@"fields"][@"action_response"]) {
-    if ([expectedFieldValueName isEqualToString:fieldValue[@"value"]]) {
-      XCTAssertEqualObjects(expectedValue, fieldValue[@"data"],
-                            @"%@ counter does not match expected value", expectedFieldValueName);
-      foundField = YES;
-      break;
-    }
+    if (![expectedFieldValueName isEqualToString:fieldValue[@"value"]]) continue;
+    XCTAssertEqualObjects(expectedValue, fieldValue[@"data"],
+                          @"%@ counter does not match expected value", expectedFieldValueName);
+    foundField = YES;
+    break;
   }
 
   if (!foundField) {
@@ -275,6 +274,26 @@
 
   [self checkMetricCounters:kBlockUnknown expected:@2];
   [self checkMetricCounters:kAllowUnknown expected:@1];
+}
+
+- (void)testUnreadable {
+  // Undo the default mocks
+  [self.mockFileInfo stopMocking];
+  self.mockFileInfo = OCMClassMock([SNTFileInfo class]);
+
+  OCMStub([self.mockFileInfo alloc]).andReturn(nil);
+  OCMStub([self.mockFileInfo initWithPath:OCMOCK_ANY error:[OCMArg setTo:nil]])
+    .andReturn(nil);
+
+  OCMExpect([self.mockConfigurator failClosed]).andReturn(NO);
+  [self.sut validateBinaryWithMessage:[self getMessage]];
+  OCMVerify([self.mockDriverManager postAction:ACTION_RESPOND_ALLOW forMessage:[self getMessage]]);
+  [self checkMetricCounters:kAllowNoFileInfo expected:@1];
+
+  OCMExpect([self.mockConfigurator failClosed]).andReturn(YES);
+  [self.sut validateBinaryWithMessage:[self getMessage]];
+  OCMVerify([self.mockDriverManager postAction:ACTION_RESPOND_ALLOW forMessage:[self getMessage]]);
+  [self checkMetricCounters:kDenyNoFileInfo expected:@1];
 }
 
 - (void)testMissingShasum {
