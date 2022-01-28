@@ -281,20 +281,30 @@
   [self.mockFileInfo stopMocking];
   self.mockFileInfo = OCMClassMock([SNTFileInfo class]);
 
-  OCMExpect([self.mockConfigurator clientMode]).andReturn(SNTClientModeLockdown);
   OCMStub([self.mockFileInfo alloc]).andReturn(nil);
   OCMStub([self.mockFileInfo initWithPath:OCMOCK_ANY error:[OCMArg setTo:nil]])
     .andReturn(nil);
 
+  // Lockdown mode, no fail-closed
+  OCMExpect([self.mockConfigurator clientMode]).andReturn(SNTClientModeLockdown);
   OCMExpect([self.mockConfigurator failClosed]).andReturn(NO);
   [self.sut validateBinaryWithMessage:[self getMessage]];
   OCMVerify([self.mockDriverManager postAction:ACTION_RESPOND_ALLOW forMessage:[self getMessage]]);
   [self checkMetricCounters:kAllowNoFileInfo expected:@1];
 
+  // Lockdown mode, fail-closed
+  OCMExpect([self.mockConfigurator clientMode]).andReturn(SNTClientModeLockdown);
+  OCMExpect([self.mockConfigurator failClosed]).andReturn(YES);
+  [self.sut validateBinaryWithMessage:[self getMessage]];
+  OCMVerify([self.mockDriverManager postAction:ACTION_RESPOND_DENY forMessage:[self getMessage]]);
+  [self checkMetricCounters:kDenyNoFileInfo expected:@1];
+
+  // Monitor mode, fail-closed
+  OCMExpect([self.mockConfigurator clientMode]).andReturn(SNTClientModeMonitor);
   OCMExpect([self.mockConfigurator failClosed]).andReturn(YES);
   [self.sut validateBinaryWithMessage:[self getMessage]];
   OCMVerify([self.mockDriverManager postAction:ACTION_RESPOND_ALLOW forMessage:[self getMessage]]);
-  [self checkMetricCounters:kDenyNoFileInfo expected:@1];
+  [self checkMetricCounters:kAllowNoFileInfo expected:@1];
 }
 
 - (void)testMissingShasum {
