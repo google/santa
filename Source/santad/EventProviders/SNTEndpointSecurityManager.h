@@ -30,10 +30,6 @@
 // The populated buffer will be NUL terminated.
 + (BOOL)populateBufferFromESFile:(es_file_t *)file buffer:(char *)buffer size:(size_t)size;
 
-// Returns YES if the path was truncated.
-// The populated buffer will be NUL terminated.
-+ (BOOL)populateBufferFromString:(const char *)string buffer:(char *)buffer size:(size_t)size;
-
 @property(nonatomic, copy) void (^decisionCallback)(santa_message_t);
 @property(nonatomic, copy) void (^logCallback)(santa_message_t);
 @property(readonly, nonatomic) es_client_t *client;
