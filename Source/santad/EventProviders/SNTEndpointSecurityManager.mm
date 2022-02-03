@@ -24,6 +24,9 @@
 #include <libproc.h>
 #include <atomic>
 
+// Gleaned from https://opensource.apple.com/source/xnu/xnu-4903.241.1/bsd/sys/proc_internal.h
+static const pid_t PID_MAX = 99999;
+
 @interface SNTEndpointSecurityManager () {
   std::atomic<bool> _compilerPIDs[PID_MAX];
 }
@@ -111,9 +114,9 @@
           // Create a transitive rule if the file was modified by a running compiler
           if ([self isCompilerPID:pid]) {
             santa_message_t sm = {};
-            BOOL truncated = [self populateBufferFromESFile:m->event.close.target
-                                                     buffer:sm.path
-                                                       size:sizeof(sm.path)];
+            BOOL truncated = [SNTEndpointSecurityManager populateBufferFromESFile:m->event.close.target
+                                                                           buffer:sm.path
+                                                                             size:sizeof(sm.path)];
             if (truncated) {
               LOGE(@"CLOSE: error creating transitive rule, the path is truncated: path=%s pid=%d",
                    sm.path, pid);
@@ -373,10 +376,9 @@
       targetProcess = m->process;
       NSString *p = @(m->event.link.target_dir->path.data);
       p = [p stringByAppendingPathComponent:@(m->event.link.target_filename.data)];
-      [self populateBufferFromString:p.UTF8String
-                              length:p.length
-                              buffer:sm.newpath
-                                size:sizeof(sm.newpath)];
+      [SNTEndpointSecurityManager populateBufferFromString:p.UTF8String
+                                                    buffer:sm.newpath
+                                                      size:sizeof(sm.newpath)];
       callback = self.logCallback;
       break;
     }
@@ -395,7 +397,9 @@
 
   // Deny auth exec events if the path doesn't fit in the santa message.
   // TODO(bur/rah): Add support for larger paths.
-  if ([self populateBufferFromESFile:targetFile buffer:sm.path size:sizeof(sm.path)] &&
+  if ([SNTEndpointSecurityManager populateBufferFromESFile:targetFile
+                                                    buffer:sm.path
+                                                      size:sizeof(sm.path)] &&
       m->event_type == ES_EVENT_TYPE_AUTH_EXEC) {
     LOGE(@"path is truncated, deny: %s", sm.path);
     es_respond_auth_result(self.client, m, ES_AUTH_RESULT_DENY, false);
@@ -523,22 +527,17 @@
 #pragma mark helpers
 
 // Returns YES if the path was truncated.
-// The populated path will be NUL terminated.
-- (BOOL)populateBufferFromESFile:(es_file_t *)file buffer:(char *)buffer size:(size_t)size {
-  return [self populateBufferFromString:file->path.data
-                                 length:file->path.length
-                                 buffer:buffer
-                                   size:size];
+// The populated buffer will be NUL terminated.
++ (BOOL)populateBufferFromESFile:(es_file_t *)file buffer:(char *)buffer size:(size_t)size {
+  return [SNTEndpointSecurityManager populateBufferFromString:file->path.data
+                                                       buffer:buffer
+                                                         size:size];
 }
 
 // Returns YES if the path was truncated.
-// The populated path will be NUL terminated.
-- (BOOL)populateBufferFromString:(const char *)string
-                          length:(size_t)length
-                          buffer:(char *)buffer
-                            size:(size_t)size {
-  if (length++ > size) length = size;
-  return strlcpy(buffer, string, length) >= length;
+// The populated buffer will be NUL terminated.
++ (BOOL)populateBufferFromString:(const char *)string buffer:(char *)buffer size:(size_t)size {
+  return strlcpy(buffer, string, size) >= size;
 }
 
 - (BOOL)populateRenamedNewPathFromESMessage:(es_event_rename_t)mv
@@ -549,16 +548,15 @@
     case ES_DESTINATION_TYPE_NEW_PATH: {
       NSString *p = @(mv.destination.new_path.dir->path.data);
       p = [p stringByAppendingPathComponent:@(mv.destination.new_path.filename.data)];
-      truncated = [self populateBufferFromString:p.UTF8String
-                                          length:p.length
-                                          buffer:buffer
-                                            size:size];
+      truncated = [SNTEndpointSecurityManager populateBufferFromString:p.UTF8String
+                                                                buffer:buffer
+                                                                  size:size];
       break;
     }
     case ES_DESTINATION_TYPE_EXISTING_FILE: {
-      truncated = [self populateBufferFromESFile:mv.destination.existing_file
-                                          buffer:buffer
-                                            size:size];
+      truncated = [SNTEndpointSecurityManager populateBufferFromESFile:mv.destination.existing_file
+                                                                buffer:buffer
+                                                                  size:size];
       break;
     }
   }
