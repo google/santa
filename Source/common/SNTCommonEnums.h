@@ -92,6 +92,7 @@ typedef NS_ENUM(NSInteger, SNTBundleEventAction) {
 typedef NS_ENUM(NSInteger, SNTEventLogType) {
   SNTEventLogTypeSyslog,
   SNTEventLogTypeFilelog,
+  SNTEventLogTypeProtobuf,
 };
 
 typedef NS_ENUM(NSInteger, SNTMetricFormatType) {

@@ -421,6 +421,9 @@ static const pid_t PID_MAX = 99999;
   sm.ppid = targetProcess->original_ppid;
   proc_name((m->event_type == ES_EVENT_TYPE_AUTH_EXEC) ? sm.ppid : sm.pid, sm.pname, 1024);
   callback(sm);
+  if (sm.args_array) {
+    CFBridgingRelease(sm.args_array);
+  }
 }
 
 - (void)listenForDecisionRequests:(void (^)(santa_message_t))callback API_AVAILABLE(macos(10.15)) {

@@ -26,6 +26,34 @@ es_string_token_t MakeStringToken(const NSString *_Nonnull s) {
     .data = [s UTF8String],
   };
 }
+
+es_file_t MakeESFile(const char *path) {
+  es_file_t esFile = {};
+
+  esFile.path.data = path;
+  esFile.path.length = strlen(path);
+  esFile.path_truncated = false;
+
+  // Note: stat info is currently unused / not populated
+
+  return esFile;
+}
+
+es_process_t MakeESProcess(es_file_t *esFile) {
+  es_process_t esProc = {};
+  esProc.executable = esFile;
+  return esProc;
+}
+
+es_message_t MakeESMessage(es_event_type_t eventType, es_process_t *instigator) {
+  es_message_t esMsg = {};
+
+  esMsg.event_type = eventType;
+  esMsg.process = instigator;
+
+  return esMsg;
+}
+
 CF_EXTERN_C_END
 
 @implementation ESMessage

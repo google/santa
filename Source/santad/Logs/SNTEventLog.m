@@ -25,6 +25,7 @@
 #import "Source/santad/SNTDatabaseController.h"
 
 #import "Source/santad/Logs/SNTFileEventLog.h"
+#import "Source/santad/Logs/SNTProtobufEventLog.h"
 #import "Source/santad/Logs/SNTSyslogEventLog.h"
 
 @interface SNTEventLog ()
@@ -92,7 +93,11 @@
   [self doesNotRecognizeSelector:_cmd];
 }
 
-- (void)writeLog:(NSString *)log {
+- (void)logAllowlist:(SNTAllowlistInfo *)allowlistInfo {
+  [self doesNotRecognizeSelector:_cmd];
+}
+
+- (void)forceFlush {
   [self doesNotRecognizeSelector:_cmd];
 }
 
@@ -380,7 +385,11 @@
  Security.framework so that we can still build against the 10.11 SDK.  If the path has not been
  translocated or if running on macOS prior to 10.12, this method returns nil.
  */
-- (NSString *)originalPathForTranslocation:(santa_message_t)message {
+- (NSString *)originalPathForTranslocation:(const santa_message_t *)message {
+  if (!message) {
+    return nil;
+  }
+
   // The first time this function is called, we attempt to find the addresses of
   // SecTranslocateIsTranslocatedURL and SecTranslocateCreateOriginalPathForURL inside of the
   // Security.framework library.  If we were successful, handle will be non-NULL and is never
@@ -405,7 +414,7 @@
   if (!IsTranslocatedURL || !CreateOriginalPathForURL) return nil;
 
   // Determine if the executable URL has been translocated or not.
-  CFURLRef cfExecURL = (__bridge CFURLRef)[NSURL fileURLWithPath:@(message.path)];
+  CFURLRef cfExecURL = (__bridge CFURLRef)[NSURL fileURLWithPath:@(message->path)];
   bool isTranslocated = false;
   if (!IsTranslocatedURL(cfExecURL, &isTranslocated, NULL) || !isTranslocated) return nil;
 
@@ -413,7 +422,7 @@
     // launched the executable.  So we temporarily drop from root down to this uid, then reset.
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wdeprecated"
-  pthread_setugid_np(message.uid, message.gid);
+  pthread_setugid_np(message->uid, message->gid);
   NSURL *origURL = CFBridgingRelease(CreateOriginalPathForURL(cfExecURL, NULL));
   pthread_setugid_np(KAUTH_UID_NONE, KAUTH_GID_NONE);
 #pragma clang diagnostic pop
@@ -422,7 +431,7 @@
 }
 
 + (instancetype)logger {
-  static SNTEventLog *logger;
+  static SNTEventLog *logger = nil;
   static dispatch_once_t onceToken;
   dispatch_once(&onceToken, ^{
     switch ([[SNTConfigurator configurator] eventLogType]) {
@@ -432,6 +441,10 @@
       }
       case SNTEventLogTypeFilelog: {
         logger = [[SNTFileEventLog alloc] init];
+        break;
+      }
+      case SNTEventLogTypeProtobuf: {
+        logger = [[SNTProtobufEventLog alloc] init];
         break;
       }
       default: logger = nil;

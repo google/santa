@@ -5,8 +5,10 @@ package(features = ["-layering_check"])
 
 licenses(["notice"])
 
+package(default_visibility = ["//:santa_package_group"])
+
 objc_library(
-    name = "santad_lib",
+    name = "database_controller",
     srcs = [
         "DataLayer/SNTDatabaseTable.h",
         "DataLayer/SNTDatabaseTable.m",
@@ -14,6 +16,118 @@ objc_library(
         "DataLayer/SNTEventTable.m",
         "DataLayer/SNTRuleTable.h",
         "DataLayer/SNTRuleTable.m",
+        "SNTDatabaseController.h",
+        "SNTDatabaseController.m",
+    ],
+    deps = [
+        "//Source/common:SNTCachedDecision",
+        "//Source/common:SNTFileInfo",
+        "//Source/common:SNTLogging",
+        "//Source/common:SNTRule",
+        "//Source/common:SNTStoredEvent",
+        "@FMDB",
+        "@MOLCodesignChecker",
+    ],
+)
+
+objc_library(
+    name = "endpoint_security_manager",
+    srcs = [
+        "EventProviders/SNTEndpointSecurityManager.h",
+        "EventProviders/SNTEndpointSecurityManager.mm",
+        "EventProviders/SNTEventProvider.h",
+    ],
+    sdk_dylibs = [
+        "EndpointSecurity",
+        "bsm",
+    ],
+    deps = [
+        "//Source/common:SNTKernelCommon",
+        "//Source/common:SNTPrefixTree",
+        "//Source/common:SantaCache",
+    ],
+)
+
+objc_library(
+    name = "event_logs_common",
+    srcs = [
+        "DataLayer/SNTDatabaseTable.h",
+        "DataLayer/SNTRuleTable.h",
+        "Logs/SNTEventLog.h",
+        "Logs/SNTEventLog.m",
+        "Logs/SNTFileEventLog.h",
+        "Logs/SNTLogOutput.h",
+        "Logs/SNTProtobufEventLog.h",
+        "Logs/SNTSyslogEventLog.h",
+        "SNTDatabaseController.h",
+    ],
+    deps = [
+        ":database_controller",
+        "//Source/common:SNTAllowlistInfo",
+        "//Source/common:SNTCachedDecision",
+        "//Source/common:SNTConfigurator",
+        "//Source/common:SNTKernelCommon",
+        "//Source/common:SNTLogging",
+        "//Source/common:SNTRule",
+        "//Source/common:SNTStoredEvent",
+    ],
+)
+
+objc_library(
+    name = "protobuf_event_logs",
+    srcs = [
+        "Logs/SNTProtobufEventLog.h",
+        "Logs/SNTProtobufEventLog.m",
+        "Logs/SNTSimpleMaildir.h",
+        "Logs/SNTSimpleMaildir.m",
+    ],
+    deps = [
+        ":event_logs_common",
+        "//Source/common:SNTMetricSet",
+        "//Source/common:log_objc_proto",
+    ],
+)
+
+objc_library(
+    name = "syslog_event_logs",
+    srcs = [
+        "EventProviders/SNTEndpointSecurityManager.h",
+        "EventProviders/SNTEventProvider.h",
+        "Logs/SNTSyslogEventLog.h",
+        "Logs/SNTSyslogEventLog.m",
+    ],
+    deps = [
+        ":endpoint_security_manager",
+        ":event_logs_common",
+    ],
+)
+
+objc_library(
+    name = "file_event_logs",
+    srcs = [
+        "Logs/SNTFileEventLog.h",
+        "Logs/SNTFileEventLog.m",
+    ],
+    deps = [
+        ":event_logs_common",
+    ],
+)
+
+objc_library(
+    name = "event_logs",
+    deps = [
+        ":file_event_logs",
+        ":protobuf_event_logs",
+        ":syslog_event_logs",
+    ],
+)
+
+objc_library(
+    name = "santad_lib",
+    srcs = [
+        "DataLayer/SNTDatabaseTable.h",
+        "DataLayer/SNTEventTable.h",
+        "DataLayer/SNTRuleTable.h",
         "EventProviders/SNTCachingEndpointSecurityManager.h",
         "EventProviders/SNTCachingEndpointSecurityManager.mm",
         "EventProviders/SNTDeviceManager.h",
@@ -21,14 +135,7 @@ objc_library(
         "EventProviders/SNTDriverManager.h",
         "EventProviders/SNTDriverManager.m",
         "EventProviders/SNTEndpointSecurityManager.h",
-        "EventProviders/SNTEndpointSecurityManager.mm",
         "EventProviders/SNTEventProvider.h",
-        "Logs/SNTEventLog.h",
-        "Logs/SNTEventLog.m",
-        "Logs/SNTFileEventLog.h",
-        "Logs/SNTFileEventLog.m",
-        "Logs/SNTSyslogEventLog.h",
-        "Logs/SNTSyslogEventLog.m",
         "SNTApplication.h",
         "SNTApplication.m",
         "SNTCompilerController.h",
@@ -36,7 +143,6 @@ objc_library(
         "SNTDaemonControlController.h",
         "SNTDaemonControlController.m",
         "SNTDatabaseController.h",
-        "SNTDatabaseController.m",
         "SNTExecutionController.h",
         "SNTExecutionController.m",
         "SNTNotificationQueue.h",
@@ -56,27 +162,24 @@ objc_library(
         "IOKit",
     ],
     deps = [
+        ":database_controller",
+        ":endpoint_security_manager",
+        ":event_logs",
         "//Source/common:SNTBlockMessage",
-        "//Source/common:SNTCachedDecision",
         "//Source/common:SNTCommonEnums",
         "//Source/common:SNTConfigurator",
         "//Source/common:SNTDeviceEvent",
         "//Source/common:SNTDropRootPrivs",
         "//Source/common:SNTFileInfo",
-        "//Source/common:SNTKernelCommon",
-        "//Source/common:SNTLogging",
         "//Source/common:SNTMetricSet",
-        "//Source/common:SNTPrefixTree",
         "//Source/common:SNTRule",
         "//Source/common:SNTStoredEvent",
         "//Source/common:SNTXPCControlInterface",
         "//Source/common:SNTXPCMetricServiceInterface",
         "//Source/common:SNTXPCNotifierInterface",
         "//Source/common:SNTXPCSyncdInterface",
-        "//Source/common:SantaCache",
         "//Source/santad:SNTApplicationCoreMetrics",
         "@FMDB",
-        "@MOLCodesignChecker",
         "@MOLXPCConnection",
     ],
 )
@@ -320,6 +423,21 @@ santa_unit_test(
     ],
 )
 
+santa_unit_test(
+    name = "SNTProtobufEventLogTest",
+    srcs = [
+        "Logs/SNTProtobufEventLogTest.m",
+    ],
+    minimum_os_version = "10.15",
+    deps = [
+        ":EndpointSecurityTestLib",
+        ":event_logs",
+        "//Source/common:SNTConfigurator",
+        "//Source/common:log_objc_proto",
+        "@OCMock",
+    ],
+)
+
 test_suite(
     name = "unit_tests",
     tests = [
@@ -329,6 +447,7 @@ test_suite(
         ":SNTEndpointSecurityManagerTest",
         ":SNTEventTableTest",
         ":SNTExecutionControllerTest",
+        ":SNTProtobufEventLogTest",
         ":SNTRuleTableTest",
     ],
     visibility = ["//:santa_package_group"],
