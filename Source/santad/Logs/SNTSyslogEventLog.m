@@ -17,6 +17,7 @@
 #include <EndpointSecurity/EndpointSecurity.h>
 #import <libproc.h>
 
+#import "Source/common/SNTAllowlistInfo.h"
 #import "Source/common/SNTCachedDecision.h"
 #import "Source/common/SNTConfigurator.h"
 #import "Source/common/SNTLogging.h"
@@ -192,14 +193,14 @@
                  [self sanitizeString:@(message.path)]];
 
   // Check for app translocation by GateKeeper, and log original path if the case.
-  NSString *originalPath = [self originalPathForTranslocation:message];
+  NSString *originalPath = [self originalPathForTranslocation:&message];
   if (originalPath) {
     [outLog appendFormat:@"|origpath=%@", [self sanitizeString:originalPath]];
   }
 
   if (logArgs) {
     if (message.args_array) {
-      NSArray *args = CFBridgingRelease(message.args_array);
+      NSArray *args = (__bridge NSArray*)message.args_array;
       [outLog appendFormat:@"|args=%@", [args componentsJoinedByString:@" "]];
     } else {
       [self addArgsForPid:message.pid toString:outLog];
@@ -288,8 +289,19 @@
   [self writeLog:s];
 }
 
+- (void)logAllowList:(SNTAllowlistInfo *)allowlistInfo {
+  [self writeLog:[NSString
+      stringWithFormat:@"action=ALLOWLIST|pid=%d|pidversion=%d|path=%@|sha256=%@",
+          allowlistInfo.pid, allowlistInfo.pidversion, allowlistInfo.targetPath,
+          allowlistInfo.sha256]];
+}
+
 - (void)writeLog:(NSString *)log {
   LOGI(@"%@", log);
+}
+
+- (void)forceFlush {
+  // Nothing to do
 }
 
 @end

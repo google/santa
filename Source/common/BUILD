@@ -1,3 +1,4 @@
+
 load("//:helper.bzl", "santa_unit_test")
 
 package(default_visibility = ["//:santa_package_group"])
@@ -50,6 +51,12 @@ objc_library(
         ":SNTCommonEnums",
         ":SNTKernelCommon",
     ],
+)
+
+objc_library(
+    name = "SNTAllowlistInfo",
+    srcs = ["SNTAllowlistInfo.m"],
+    hdrs = ["SNTAllowlistInfo.h"],
 )
 
 objc_library(

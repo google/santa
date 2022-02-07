@@ -169,6 +169,15 @@
 @property(readonly, nonatomic) NSString *eventLogPath;
 
 ///
+///  If eventLogType is set to protobuf, eventMailDirectory will provide the base path used for
+///  saving logs.
+///  Defaults to /var/db/santa/mail.
+///
+///  @note: This property is KVO compliant, but should only be read once at santad startup.
+///
+@property(readonly, nonatomic) NSString *eventMailDirectory;
+
+///
 /// Enabling this appends the Santa machine ID to the end of each log line. If nothing
 /// has been overriden, this is the host's UUID.
 /// Defaults to NO.

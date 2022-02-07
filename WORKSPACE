@@ -12,6 +12,27 @@ git_repository(
     remote = "https://github.com/bazelbuild/rules_apple.git",
 )
 
+load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
+
+http_archive(
+    name = "rules_proto_grpc",
+    sha256 = "28724736b7ff49a48cb4b2b8cfa373f89edfcb9e8e492a8d5ab60aa3459314c8",
+    strip_prefix = "rules_proto_grpc-4.0.1",
+    urls = ["https://github.com/rules-proto-grpc/rules_proto_grpc/archive/4.0.1.tar.gz"],
+)
+
+load("@rules_proto_grpc//:repositories.bzl", "rules_proto_grpc_toolchains", "rules_proto_grpc_repos")
+rules_proto_grpc_toolchains()
+rules_proto_grpc_repos()
+
+load("@rules_proto//proto:repositories.bzl", "rules_proto_dependencies", "rules_proto_toolchains")
+rules_proto_dependencies()
+rules_proto_toolchains()
+
+
+load("@rules_proto_grpc//objc:repositories.bzl", rules_proto_grpc_objc_repos = "objc_repos")
+rules_proto_grpc_objc_repos()
+
 load("@build_bazel_rules_apple//apple:repositories.bzl", "apple_rules_dependencies")
 
 apple_rules_dependencies()

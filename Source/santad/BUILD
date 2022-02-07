@@ -3,8 +3,23 @@ load("//:helper.bzl", "santa_unit_test")
 
 licenses(["notice"])
 
+load("@rules_proto_grpc//objc:defs.bzl", "objc_proto_library")
+
+package(default_visibility = ["//:santa_package_group"])
+
+proto_library(
+    name = "santad_proto",
+    srcs = ["santad.proto"],
+)
+objc_proto_library(
+    name = "santad_objc_proto",
+    protos = [":santad_proto"],
+    non_arc_srcs = ["Santad.pbobjc.m"],
+    copts = ["-fno-objc-arc"],
+)
+
 objc_library(
-    name = "santad_lib",
+    name = "santad_database_controller",
     srcs = [
         "DataLayer/SNTDatabaseTable.h",
         "DataLayer/SNTDatabaseTable.m",
@@ -12,6 +27,98 @@ objc_library(
         "DataLayer/SNTEventTable.m",
         "DataLayer/SNTRuleTable.h",
         "DataLayer/SNTRuleTable.m",
+        "SNTDatabaseController.h",
+        "SNTDatabaseController.m",
+    ],
+    deps = [
+        "//Source/common:SNTCachedDecision",
+        "//Source/common:SNTFileInfo",
+        "//Source/common:SNTLogging",
+        "//Source/common:SNTRule",
+        "//Source/common:SNTStoredEvent",
+        "@FMDB",
+        "@MOLCodesignChecker",
+    ],
+)
+
+objc_library(
+    name = "santad_event_logs_common",
+    srcs = [
+        "DataLayer/SNTDatabaseTable.h",
+        "DataLayer/SNTRuleTable.h",
+        "Logs/SNTEventLog.h",
+        "Logs/SNTEventLog.m",
+        "Logs/SNTFileEventLog.h",
+        "Logs/SNTLogOutput.h",
+        "Logs/SNTProtobufEventLog.h",
+        "Logs/SNTSyslogEventLog.h",
+        "SNTDatabaseController.h",
+    ],
+    deps = [
+        ":santad_database_controller",
+        "//Source/common:SNTAllowlistInfo",
+        "//Source/common:SNTCachedDecision",
+        "//Source/common:SNTConfigurator",
+        "//Source/common:SNTKernelCommon",
+        "//Source/common:SNTLogging",
+        "//Source/common:SNTRule",
+        "//Source/common:SNTStoredEvent",
+    ],
+)
+
+objc_library(
+    name = "santad_protobuf_event_logs",
+    srcs = [
+        "Logs/SNTProtobufEventLog.h",
+        "Logs/SNTProtobufEventLog.m",
+        "Logs/SNTSimpleMaildir.h",
+        "Logs/SNTSimpleMaildir.m",
+    ],
+    deps = [
+        ":santad_objc_proto",
+        ":santad_event_logs_common",
+    ],
+)
+
+objc_library(
+    name = "santad_syslog_event_logs",
+    srcs = [
+        "EventProviders/SNTEndpointSecurityManager.h",
+        "EventProviders/SNTEventProvider.h",
+        "Logs/SNTSyslogEventLog.h",
+        "Logs/SNTSyslogEventLog.m",
+    ],
+    deps = [
+        ":santad_event_logs_common",
+    ],
+)
+
+objc_library(
+    name = "santad_file_event_logs",
+    srcs = [
+        "Logs/SNTFileEventLog.h",
+        "Logs/SNTFileEventLog.m",
+    ],
+    deps = [
+        ":santad_event_logs_common",
+    ],
+)
+
+objc_library(
+    name = "santad_event_logs",
+    deps = [
+        ":santad_file_event_logs",
+        ":santad_protobuf_event_logs",
+        ":santad_syslog_event_logs",
+    ],
+)
+
+objc_library(
+    name = "santad_lib",
+    srcs = [
+        "DataLayer/SNTDatabaseTable.h",
+        "DataLayer/SNTEventTable.h",
+        "DataLayer/SNTRuleTable.h",
         "EventProviders/SNTCachingEndpointSecurityManager.h",
         "EventProviders/SNTCachingEndpointSecurityManager.mm",
         "EventProviders/SNTDeviceManager.h",
@@ -21,12 +128,6 @@ objc_library(
         "EventProviders/SNTEndpointSecurityManager.h",
         "EventProviders/SNTEndpointSecurityManager.mm",
         "EventProviders/SNTEventProvider.h",
-        "Logs/SNTEventLog.h",
-        "Logs/SNTEventLog.m",
-        "Logs/SNTFileEventLog.h",
-        "Logs/SNTFileEventLog.m",
-        "Logs/SNTSyslogEventLog.h",
-        "Logs/SNTSyslogEventLog.m",
         "SNTApplication.h",
         "SNTApplication.m",
         "SNTCompilerController.h",
@@ -34,7 +135,6 @@ objc_library(
         "SNTDaemonControlController.h",
         "SNTDaemonControlController.m",
         "SNTDatabaseController.h",
-        "SNTDatabaseController.m",
         "SNTExecutionController.h",
         "SNTExecutionController.m",
         "SNTNotificationQueue.h",
@@ -54,14 +154,14 @@ objc_library(
         "IOKit",
     ],
     deps = [
+        ":santad_database_controller",
+        ":santad_event_logs",
         "//Source/common:SNTBlockMessage",
-        "//Source/common:SNTCachedDecision",
         "//Source/common:SNTCommonEnums",
         "//Source/common:SNTConfigurator",
         "//Source/common:SNTDropRootPrivs",
         "//Source/common:SNTFileInfo",
         "//Source/common:SNTKernelCommon",
-        "//Source/common:SNTLogging",
         "//Source/common:SNTMetricSet",
         "//Source/common:SNTPrefixTree",
         "//Source/common:SNTRule",
@@ -73,7 +173,6 @@ objc_library(
         "//Source/common:SantaCache",
         "//Source/santad:SNTApplicationCoreMetrics",
         "@FMDB",
-        "@MOLCodesignChecker",
         "@MOLXPCConnection",
     ],
 )
@@ -317,6 +416,20 @@ santa_unit_test(
     ],
 )
 
+santa_unit_test(
+    name = "SNTProtobufEventLogTest",
+    srcs = [
+        "Logs/SNTProtobufEventLogTest.m",
+    ],
+    minimum_os_version = "10.15",
+    deps = [
+        ":santad_objc_proto",
+        ":santad_protobuf_event_logs",
+        "//Source/common:SNTConfigurator",
+        "@OCMock",
+    ],
+)
+
 test_suite(
     name = "unit_tests",
     tests = [
@@ -326,6 +439,7 @@ test_suite(
         ":SNTEventTableTest",
         ":SNTExecutionControllerTest",
         ":SNTRuleTableTest",
+        ":SNTProtobufEventLogTest",
     ],
     visibility = ["//:santa_package_group"],
 )

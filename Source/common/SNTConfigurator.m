@@ -77,6 +77,7 @@ static NSString *const kFileChangesPrefixFiltersKey = @"FileChangesPrefixFilters
 
 static NSString *const kEventLogType = @"EventLogType";
 static NSString *const kEventLogPath = @"EventLogPath";
+static NSString *const kEventMailDirectory = @"EventMailDirectory";
 
 static NSString *const kEnableMachineIDDecoration = @"EnableMachineIDDecoration";
 
@@ -180,6 +181,7 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
       kMachineIDPlistKeyKey : string,
       kEventLogType : string,
       kEventLogPath : string,
+      kEventMailDirectory : string,
       kEnableMachineIDDecoration : number,
       kEnableSystemExtension : number,
       kEnableSysxCache : number,
@@ -354,6 +356,10 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
 }
 
 + (NSSet *)keyPathsForValuesAffectingEventLogPath {
+  return [self configStateSet];
+}
+
++ (NSSet *)keyPathsForValuesAffectingEventMailDirectory {
   return [self configStateSet];
 }
 
@@ -648,12 +654,22 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
 }
 
 - (SNTEventLogType)eventLogType {
-  NSString *s = [self.configState[kEventLogType] lowercaseString];
-  return [s isEqualToString:@"syslog"] ? SNTEventLogTypeSyslog : SNTEventLogTypeFilelog;
+  NSString *logType = [self.configState[kEventLogType] lowercaseString];
+  if ([logType isEqualToString:@"protobuf"]) {
+    return SNTEventLogTypeProtobuf;
+  } else if ([logType isEqualToString:@"syslog"]) {
+    return SNTEventLogTypeSyslog;
+  } else {
+    return SNTEventLogTypeFilelog;
+  }
 }
 
 - (NSString *)eventLogPath {
   return self.configState[kEventLogPath] ?: @"/var/db/santa/santa.log";
+}
+
+- (NSString *)eventMailDirectory {
+  return self.configState[kEventMailDirectory] ?: @"/var/db/santa/mail";
 }
 
 - (BOOL)enableMachineIDDecoration {

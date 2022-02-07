@@ -1,0 +1,141 @@
+syntax = "proto3";
+
+option objc_class_prefix = "SNT";
+// option go_api_flag = "OPEN_TO_OPAQUE_HYBRID";
+
+package santa;
+
+message LegacyProcessInfo {
+  int32 pid = 1;
+  int32 pidversion = 2;
+  int32 ppid = 3;
+  int32 uid = 4;
+  string user = 5;
+  int32 gid = 6;
+  string group = 7;
+}
+
+message LegacyFileModification {
+  enum Action {
+    LEGACY_FILE_MODIFICATION_ACTION_UNKNOWN = 0;
+    LEGACY_FILE_MODIFICATION_ACTION_DELETE = 1;
+    LEGACY_FILE_MODIFICATION_ACTION_EXCHANGE = 2;
+    LEGACY_FILE_MODIFICATION_ACTION_LINK = 3;
+    LEGACY_FILE_MODIFICATION_ACTION_RENAME = 4;
+    LEGACY_FILE_MODIFICATION_ACTION_WRITE = 5;
+  }
+
+  Action action = 1;
+  string path = 2;
+  string newpath = 3;
+  string process = 4;
+  string process_path = 5;
+  LegacyProcessInfo process_info = 6;
+  string machine_id = 7;
+}
+
+message LegacyExecution {
+  enum Decision {
+    LEGACY_EXECUTION_DECISION_UNKNOWN = 0;
+    LEGACY_EXECUTION_DECISION_ALLOW = 1;
+    LEGACY_EXECUTION_DECISION_DENY = 2;
+  }
+
+  enum Reason {
+    LEGACY_EXECUTION_REASON_UNKNOWN = 0;
+    LEGACY_EXECUTION_REASON_BINARY = 1;
+    LEGACY_EXECUTION_REASON_CERT = 2;
+    LEGACY_EXECUTION_REASON_COMPILER = 3;
+    LEGACY_EXECUTION_REASON_NOT_RUNNING = 4;
+    LEGACY_EXECUTION_REASON_PENDING_TRANSITIVE = 5;
+    LEGACY_EXECUTION_REASON_SCOPE = 6;
+    LEGACY_EXECUTION_REASON_TEAM_ID = 7;
+    LEGACY_EXECUTION_REASON_TRANSITIVE = 8;
+  }
+
+  enum Mode {
+    LEGACY_EXECUTION_MODE_UNKNOWN = 0;
+    LEGACY_EXECUTION_MODE_LOCKDOWN = 1;
+    LEGACY_EXECUTION_MODE_MONITOR = 2;
+  }
+
+  Decision decision = 1;
+  Reason reason = 2;
+  string explain = 3;
+  string sha256 = 4;
+  string cert_sha256 = 5;
+  string cert_cn = 6;
+  string quarantine_url = 7;
+  LegacyProcessInfo process_info = 8;
+  Mode mode = 9;
+  string path = 10;
+  string original_path = 11;
+  repeated string args = 12;
+  string machine_id = 13;
+}
+
+message LegacyDiskAppeared {
+  string mount = 1;
+  string volume = 2;
+  string bsd_name = 3;
+  string fs = 4;
+  string model = 5;
+  string serial = 6;
+  string bus = 7;
+  string dmg_path = 8;
+  string appearance = 9;
+}
+
+message LegacyDiskDisappeared {
+  string mount = 1;
+  string volume = 2;
+  string bsd_name = 3;
+}
+
+message LegacyBundle {
+  string sha256 = 1;
+  string bundle_hash = 2;
+  string bundle_name = 3;
+  string bundle_id = 4;
+  string bundle_path = 5;
+  string path = 6;
+}
+
+message LegacyFork {
+  LegacyProcessInfo process_info = 1;
+}
+
+message LegacyExit {
+  LegacyProcessInfo process_info = 1;
+}
+
+message LegacyAllowlist {
+  int32 pid = 1;
+  int32 pidversion = 2;
+  string path = 3;
+  string sha256 = 4;
+}
+
+message LegacyMessage {
+  oneof LegacyMessageType {
+    LegacyFileModification file_modification = 1;
+    LegacyExecution execution = 2;
+    LegacyDiskAppeared disk_appeared = 3;
+    LegacyDiskDisappeared disk_disappeared = 4;
+    LegacyBundle bundle = 5;
+    LegacyFork fork = 6;
+    LegacyExit exit = 7;
+    LegacyAllowlist allowlist = 8;
+  }
+}
+
+message SantaMessage {
+  oneof MessageType {
+    LegacyMessage legacy_message = 1;
+  }
+}
+
+// TODO: Any
+message LogBatch {
+  repeated SantaMessage records = 1;
+}
