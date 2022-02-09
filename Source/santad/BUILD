@@ -440,7 +440,8 @@ santa_unit_test(
     minimum_os_version = "10.15",
     deps = [
         ":santad_objc_proto",
-        ":santad_protobuf_event_logs",
+        ":santad_event_logs",
+        ":EndpointSecurityTestLib",
         "//Source/common:SNTConfigurator",
         "@OCMock",
     ],

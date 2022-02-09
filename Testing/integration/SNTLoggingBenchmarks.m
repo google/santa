@@ -16,15 +16,14 @@
 #import <Foundation/Foundation.h>
 #import <getopt.h>
 #import <stdlib.h>
-// #import <OCMock/OCMock.h>
 
 #import "Source/common/SNTConfigurator.h"
+#import "Source/santad/EventProviders/EndpointSecurityTestUtil.h"
 #import "Source/santad/Logs/SNTFileEventLog.h"
 #import "Source/santad/Logs/SNTProtobufEventLog.h"
 #import "Source/santad/Logs/SNTSyslogEventLog.h"
 
 @interface SNTConfigurator(Testing)
-// @property(readwrite) NSString *eventLogPath;
 @property NSMutableDictionary *configState;
 @end
 
@@ -32,42 +31,6 @@ void usage(void)
 {
   fprintf(stderr, "Usage: %s [-i <iterations>] [-l (file|syslog|protobuf)]\n",
       getprogname());
-}
-
-//
-// TODO: Move these to a shared location (stolen from SNTProtobufEventLogTest)
-//
-es_file_t
-createESFile(const char *path)
-{
-  es_file_t esFile = {0};
-
-  esFile.path.data = path;
-  esFile.path.length = strlen(path);
-  esFile.path_truncated = false;
-
-  // Note: stat info is currently unused / not populated
-
-  return esFile;
-}
-
-es_process_t
-createESProcess(es_file_t *esFile)
-{
-  es_process_t esProc = {0};
-  esProc.executable = esFile;
-  return esProc;
-}
-
-es_message_t
-createESMessage(es_event_type_t eventType, es_process_t *instigator)
-{
-  es_message_t esMsg = {0};
-
-  esMsg.event_type = eventType;
-  esMsg.process = instigator;
-
-  return esMsg;
 }
 
 void runLogFileModification(santa_message_t *msg, SNTEventLog *eventLog)
@@ -93,9 +56,9 @@ void setup(int iterations, SNTEventLog *eventLog)
   static const char *commonNewPath = "/foo/bar.txt";
   NSArray *execArgs = @[@"/sbin/launchd", @"--init", @"--testing"];
 
-  es_file_t esFile = createESFile(commonPath);
-  es_process_t esProc = createESProcess(&esFile);
-  es_message_t esMsg = createESMessage(ES_EVENT_TYPE_NOTIFY_RENAME, &esProc);
+  es_file_t esFile = MakeESFile(commonPath);
+  es_process_t esProc = MakeESProcess(&esFile);
+  es_message_t esMsg = MakeESMessage(ES_EVENT_TYPE_NOTIFY_RENAME, &esProc);
 
   santa_message_t santaMsg = {0};
 

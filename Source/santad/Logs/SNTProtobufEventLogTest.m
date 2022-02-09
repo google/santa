@@ -24,6 +24,7 @@
 #import "Source/common/SNTConfigurator.h"
 #import "Source/common/SNTLogging.h"
 #import "Source/common/SNTStoredEvent.h"
+#import "Source/santad/EventProviders/EndpointSecurityTestUtil.h"
 #import "Source/santad/Logs/SNTProtobufEventLog.h"
 #import "Source/santad/Logs/SNTSimpleMaildir.h"
 
@@ -136,39 +137,6 @@ santa_message_t getBasicSantaMessage(santa_action_t action)
   return santaMsg;
 }
 
-es_file_t
-createESFile(const char *path)
-{
-  es_file_t esFile = {0};
-
-  esFile.path.data = path;
-  esFile.path.length = strlen(path);
-  esFile.path_truncated = false;
-
-  // Note: stat info is currently unused / not populated
-
-  return esFile;
-}
-
-es_process_t
-createESProcess(es_file_t *esFile)
-{
-  es_process_t esProc = {0};
-  esProc.executable = esFile;
-  return esProc;
-}
-
-es_message_t
-createESMessage(es_event_type_t eventType, es_process_t *instigator)
-{
-  es_message_t esMsg = {0};
-
-  esMsg.event_type = eventType;
-  esMsg.process = instigator;
-
-  return esMsg;
-}
-
 @implementation SNTProtobufEventLogTest
 
 - (void)setUp {
@@ -192,9 +160,9 @@ createESMessage(es_event_type_t eventType, es_process_t *instigator)
   NSString *targetPath = @"/bar/foo.txt";
 
   // Create a test ES message with some important data set
-  es_file_t esFile = createESFile([processPath UTF8String]);
-  es_process_t esProc = createESProcess(&esFile);
-  es_message_t esMsg = createESMessage(ES_EVENT_TYPE_NOTIFY_RENAME, &esProc);
+  es_file_t esFile = MakeESFile([processPath UTF8String]);
+  es_process_t esProc = MakeESProcess(&esFile);
+  es_message_t esMsg = MakeESMessage(ES_EVENT_TYPE_NOTIFY_RENAME, &esProc);
   
   santa_message_t santaMsg = getBasicSantaMessage(ACTION_NOTIFY_RENAME);
   strlcpy(santaMsg.path, [sourcePath UTF8String], sizeof(santaMsg.path));
