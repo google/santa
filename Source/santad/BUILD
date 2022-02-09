@@ -42,6 +42,24 @@ objc_library(
 )
 
 objc_library(
+    name = "santad_endpoint_security_manager",
+    srcs = [
+        "EventProviders/SNTEventProvider.h",
+        "EventProviders/SNTEndpointSecurityManager.h",
+        "EventProviders/SNTEndpointSecurityManager.mm",
+    ],
+    deps = [
+        "//Source/common:SNTKernelCommon",
+        "//Source/common:SNTPrefixTree",
+        "//Source/common:SantaCache",
+    ],
+    sdk_dylibs = [
+        "EndpointSecurity",
+        "bsm",
+    ],
+)
+
+objc_library(
     name = "santad_event_logs_common",
     srcs = [
         "DataLayer/SNTDatabaseTable.h",
@@ -90,6 +108,7 @@ objc_library(
     ],
     deps = [
         ":santad_event_logs_common",
+        ":santad_endpoint_security_manager",
     ],
 )
 
@@ -126,7 +145,6 @@ objc_library(
         "EventProviders/SNTDriverManager.h",
         "EventProviders/SNTDriverManager.m",
         "EventProviders/SNTEndpointSecurityManager.h",
-        "EventProviders/SNTEndpointSecurityManager.mm",
         "EventProviders/SNTEventProvider.h",
         "SNTApplication.h",
         "SNTApplication.m",
@@ -156,21 +174,19 @@ objc_library(
     deps = [
         ":santad_database_controller",
         ":santad_event_logs",
+        ":santad_endpoint_security_manager",
         "//Source/common:SNTBlockMessage",
         "//Source/common:SNTCommonEnums",
         "//Source/common:SNTConfigurator",
         "//Source/common:SNTDropRootPrivs",
         "//Source/common:SNTFileInfo",
-        "//Source/common:SNTKernelCommon",
         "//Source/common:SNTMetricSet",
-        "//Source/common:SNTPrefixTree",
         "//Source/common:SNTRule",
         "//Source/common:SNTStoredEvent",
         "//Source/common:SNTXPCControlInterface",
         "//Source/common:SNTXPCMetricServiceInterface",
         "//Source/common:SNTXPCNotifierInterface",
         "//Source/common:SNTXPCSyncdInterface",
-        "//Source/common:SantaCache",
         "//Source/santad:SNTApplicationCoreMetrics",
         "@FMDB",
         "@MOLXPCConnection",
