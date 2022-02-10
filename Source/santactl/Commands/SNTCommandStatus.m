@@ -188,6 +188,7 @@ REGISTER_COMMAND_NAME(@"status")
         @"watchdog_ram_events" : @(ramEvents),
         @"watchdog_cpu_peak" : @(cpuPeak),
         @"watchdog_ram_peak" : @(ramPeak),
+        @"block_usb" : @(configurator.blockUSBMount),
       },
       @"database" : @{
         @"binary_rules" : @(binaryRuleCount),
@@ -212,6 +213,9 @@ REGISTER_COMMAND_NAME(@"status")
         @"non_root_cache_count" : @(nonRootCacheCount),
       };
     }
+    if (configurator.blockUSBMount && [configurator.remountUSBMode count] > 0) {
+      stats[@"daemon"][@"remount_usb_mode"] = configurator.remountUSBMode;
+    }
     NSData *statsData = [NSJSONSerialization dataWithJSONObject:stats
                                                         options:NSJSONWritingPrettyPrinted
                                                           error:nil];
@@ -229,6 +233,14 @@ REGISTER_COMMAND_NAME(@"status")
       printf("  %-25s | %lld\n", "Root cache count", rootCacheCount);
       printf("  %-25s | %lld\n", "Non-root cache count", nonRootCacheCount);
     }
+
+    printf("  %-25s | %d\n", "USB Blocking", configurator.blockUSBMount);
+
+    if (configurator.blockUSBMount && [configurator.remountUSBMode count] > 0) {
+      printf("  %-25s | %s\n", "USB Remounting Mode:",
+             [[configurator.remountUSBMode componentsJoinedByString:@", "] UTF8String]);
+    }
+
     printf(">>> Database Info\n");
     printf("  %-25s | %lld\n", "Binary Rules", binaryRuleCount);
     printf("  %-25s | %lld\n", "Certificate Rules", certRuleCount);
