@@ -26,19 +26,20 @@
 #import "Source/santad/Logs/SNTSimpleMaildir.h"
 #import "Source/santad/Santad.pbobjc.h"
 
-@interface SNTProtobufEventLog()
-@property (readonly) id<SNTLogOutput> logOutput;
+@interface SNTProtobufEventLog ()
+@property(readonly) id<SNTLogOutput> logOutput;
 @end
 
 @implementation SNTProtobufEventLog
 
 - (instancetype)init {
-  return [self initWithLog:[[SNTSimpleMaildir alloc] 
-                            initWithBaseDirectory:[[SNTConfigurator configurator] eventMailDirectory]
-                                   filenamePrefix:@"out.log"
-                                fileSizeThreshold:3*1024
-                               spoolSizeThreshold:500 * 1024 * 1024
-                            maxTimeBetweenFlushes:5.0]];
+  return
+    [self initWithLog:[[SNTSimpleMaildir alloc]
+                        initWithBaseDirectory:[[SNTConfigurator configurator] eventMailDirectory]
+                               filenamePrefix:@"out.log"
+                            fileSizeThreshold:3 * 1024
+                           spoolSizeThreshold:500 * 1024 * 1024
+                        maxTimeBetweenFlushes:5.0]];
 }
 
 - (instancetype)initWithLog:(id<SNTLogOutput>)log {
@@ -66,7 +67,7 @@
 }
 
 - (SNTLegacyFileModification_Action)protobufActionForSantaMessageAction:(santa_action_t)action {
-    switch (action) {
+  switch (action) {
     case ACTION_NOTIFY_DELETE:
       return SNTLegacyFileModification_Action_LegacyFileModificationActionDelete;
     case ACTION_NOTIFY_EXCHANGE:
@@ -77,12 +78,11 @@
       return SNTLegacyFileModification_Action_LegacyFileModificationActionRename;
     case ACTION_NOTIFY_WRITE:
       return SNTLegacyFileModification_Action_LegacyFileModificationActionWrite;
-    default:
-      return SNTLegacyFileModification_Action_LegacyFileModificationActionUnknown;
+    default: return SNTLegacyFileModification_Action_LegacyFileModificationActionUnknown;
   }
 }
 
-- (NSString *)newpathForSantaMessage:(santa_message_t*)message {
+- (NSString *)newpathForSantaMessage:(santa_message_t *)message {
   if (!message) {
     return nil;
   }
@@ -90,20 +90,18 @@
   switch (message->action) {
     case ACTION_NOTIFY_EXCHANGE:
     case ACTION_NOTIFY_LINK:
-    case ACTION_NOTIFY_RENAME:
-      return @(message->newpath);
-    default:
-      return nil;
+    case ACTION_NOTIFY_RENAME: return @(message->newpath);
+    default: return nil;
   }
 }
 
-- (NSString *)processPathForSantaMessage:(santa_message_t*)message {
+- (NSString *)processPathForSantaMessage:(santa_message_t *)message {
   if (!message) {
     return nil;
   }
 
   // If we have an ES message, use the path provided by the ES framework.
-  // Otherwise, attempt to lookup the path. Note that this will fail if the 
+  // Otherwise, attempt to lookup the path. Note that this will fail if the
   // process being queried has already exited.
   if (message->es_message) {
     switch (message->action) {
@@ -112,10 +110,9 @@
       case ACTION_NOTIFY_LINK:
       case ACTION_NOTIFY_RENAME:
       case ACTION_NOTIFY_WRITE: {
-        return @(((es_message_t*)message->es_message)->process->executable->path.data);
+        return @(((es_message_t *)message->es_message)->process->executable->path.data);
       }
-      default:
-        return nil;
+      default: return nil;
     }
   } else {
     char path[PATH_MAX];
@@ -125,7 +122,7 @@
   }
 }
 
-- (SNTLegacyProcessInfo *)protobufProcessInfoForSantaMessage:(santa_message_t*)message {
+- (SNTLegacyProcessInfo *)protobufProcessInfoForSantaMessage:(santa_message_t *)message {
   if (!message) {
     return nil;
   }
@@ -156,38 +153,26 @@
 
 - (SNTLegacyExecution_Reason)protobufReasonForCachedDecision:(SNTCachedDecision *)cd {
   switch (cd.decision) {
-    case SNTEventStateAllowBinary:
-      return SNTLegacyExecution_Reason_LegacyExecutionReasonBinary;
-    case SNTEventStateAllowCompiler:
-      return SNTLegacyExecution_Reason_LegacyExecutionReasonCompiler;
+    case SNTEventStateAllowBinary: return SNTLegacyExecution_Reason_LegacyExecutionReasonBinary;
+    case SNTEventStateAllowCompiler: return SNTLegacyExecution_Reason_LegacyExecutionReasonCompiler;
     case SNTEventStateAllowTransitive:
       return SNTLegacyExecution_Reason_LegacyExecutionReasonTransitive;
     case SNTEventStateAllowPendingTransitive:
       return SNTLegacyExecution_Reason_LegacyExecutionReasonPendingTransitive;
-    case SNTEventStateAllowCertificate:
-      return SNTLegacyExecution_Reason_LegacyExecutionReasonCert;
-    case SNTEventStateAllowScope:
-      return SNTLegacyExecution_Reason_LegacyExecutionReasonScope;
-    case SNTEventStateAllowTeamID:
-      return SNTLegacyExecution_Reason_LegacyExecutionReasonTeamId;
-    case SNTEventStateAllowUnknown:
-      return SNTLegacyExecution_Reason_LegacyExecutionReasonUnknown;
-    case SNTEventStateBlockBinary:
-      return SNTLegacyExecution_Reason_LegacyExecutionReasonBinary;
-    case SNTEventStateBlockCertificate:
-      return SNTLegacyExecution_Reason_LegacyExecutionReasonCert;
-    case SNTEventStateBlockScope:
-      return SNTLegacyExecution_Reason_LegacyExecutionReasonScope;
-    case SNTEventStateBlockTeamID:
-      return SNTLegacyExecution_Reason_LegacyExecutionReasonTeamId;
-    case SNTEventStateBlockUnknown:
-      return SNTLegacyExecution_Reason_LegacyExecutionReasonUnknown;
+    case SNTEventStateAllowCertificate: return SNTLegacyExecution_Reason_LegacyExecutionReasonCert;
+    case SNTEventStateAllowScope: return SNTLegacyExecution_Reason_LegacyExecutionReasonScope;
+    case SNTEventStateAllowTeamID: return SNTLegacyExecution_Reason_LegacyExecutionReasonTeamId;
+    case SNTEventStateAllowUnknown: return SNTLegacyExecution_Reason_LegacyExecutionReasonUnknown;
+    case SNTEventStateBlockBinary: return SNTLegacyExecution_Reason_LegacyExecutionReasonBinary;
+    case SNTEventStateBlockCertificate: return SNTLegacyExecution_Reason_LegacyExecutionReasonCert;
+    case SNTEventStateBlockScope: return SNTLegacyExecution_Reason_LegacyExecutionReasonScope;
+    case SNTEventStateBlockTeamID: return SNTLegacyExecution_Reason_LegacyExecutionReasonTeamId;
+    case SNTEventStateBlockUnknown: return SNTLegacyExecution_Reason_LegacyExecutionReasonUnknown;
 
     case SNTEventStateAllow:
     case SNTEventStateUnknown:
     case SNTEventStateBundleBinary:
-    case SNTEventStateBlock:
-      return SNTLegacyExecution_Reason_LegacyExecutionReasonNotRunning;
+    case SNTEventStateBlock: return SNTLegacyExecution_Reason_LegacyExecutionReasonNotRunning;
   }
 
   return SNTLegacyExecution_Reason_LegacyExecutionReasonUnknown;
@@ -195,18 +180,15 @@
 
 - (SNTLegacyExecution_Mode)protobufModeForClientMode:(SNTClientMode)mode {
   switch (mode) {
-    case SNTClientModeMonitor:
-      return SNTLegacyExecution_Mode_LegacyExecutionModeMonitor;
-    case SNTClientModeLockdown:
-      return SNTLegacyExecution_Mode_LegacyExecutionModeLockdown;
-    case SNTClientModeUnknown:
-      return SNTLegacyExecution_Mode_LegacyExecutionModeUnknown;
+    case SNTClientModeMonitor: return SNTLegacyExecution_Mode_LegacyExecutionModeMonitor;
+    case SNTClientModeLockdown: return SNTLegacyExecution_Mode_LegacyExecutionModeLockdown;
+    case SNTClientModeUnknown: return SNTLegacyExecution_Mode_LegacyExecutionModeUnknown;
   }
   return SNTLegacyExecution_Mode_LegacyExecutionModeUnknown;
 }
 
 - (void)logFileModification:(santa_message_t)message {
-	SNTLegacyFileModification *fileMod = [[SNTLegacyFileModification alloc] init];
+  SNTLegacyFileModification *fileMod = [[SNTLegacyFileModification alloc] init];
 
   fileMod.action = [self protobufActionForSantaMessageAction:message.action];
   fileMod.path = @(message.path);
@@ -214,8 +196,8 @@
   fileMod.process = @(message.pname);
   fileMod.processPath = [self processPathForSantaMessage:&message];
   fileMod.processInfo = [self protobufProcessInfoForSantaMessage:&message];
-  fileMod.machineId = [[SNTConfigurator configurator] enableMachineIDDecoration] ?
-    self.machineID : nil;
+  fileMod.machineId =
+    [[SNTConfigurator configurator] enableMachineIDDecoration] ? self.machineID : nil;
 
   SNTLegacyMessage *legacyMsg = [[SNTLegacyMessage alloc] init];
   legacyMsg.fileModification = fileMod;
@@ -236,9 +218,9 @@
   exec.mode = [self protobufModeForClientMode:[[SNTConfigurator configurator] clientMode]];
   exec.path = @(message.path);
   exec.originalPath = [self originalPathForTranslocation:&message];
-  exec.argsArray = [(__bridge NSArray*)message.args_array mutableCopy];
-  exec.machineId = [[SNTConfigurator configurator] enableMachineIDDecoration] ?
-    self.machineID : nil;
+  exec.argsArray = [(__bridge NSArray *)message.args_array mutableCopy];
+  exec.machineId =
+    [[SNTConfigurator configurator] enableMachineIDDecoration] ? self.machineID : nil;
 
   SNTLegacyMessage *legacyMsg = [[SNTLegacyMessage alloc] init];
   legacyMsg.execution = exec;
@@ -269,15 +251,14 @@
     serial = [serial stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
   }
 
-  NSString *model = [NSString stringWithFormat:@"%@ %@",
-      diskProperties[@"DADeviceVendor"] ?: @"",
-      diskProperties[@"DADeviceModel"] ?: @""];
+  NSString *model = [NSString stringWithFormat:@"%@ %@", diskProperties[@"DADeviceVendor"] ?: @"",
+                                               diskProperties[@"DADeviceModel"] ?: @""];
   model = [model stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
 
-  NSString *appearanceDateString =
-      [self.dateFormatter stringFromDate:
-          [NSDate dateWithTimeIntervalSinceReferenceDate:
-              [diskProperties[@"DAAppearanceTime"] doubleValue]]];
+  NSString *appearanceDateString = [self.dateFormatter
+    stringFromDate:[NSDate
+                     dateWithTimeIntervalSinceReferenceDate:[diskProperties[@"DAAppearanceTime"]
+                                                              doubleValue]]];
 
   SNTLegacyDiskAppeared *diskAppeared = [[SNTLegacyDiskAppeared alloc] init];
   diskAppeared.mount = [diskProperties[@"DAVolumePath"] path];

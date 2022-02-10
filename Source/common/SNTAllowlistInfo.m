@@ -18,8 +18,8 @@
 
 - (instancetype)initWithPid:(pid_t)pid
                  pidversion:(int)pidver
-                 targetPath:(NSString*)targetPath
-                     sha256:(NSString*)hash {
+                 targetPath:(NSString *)targetPath
+                     sha256:(NSString *)hash {
   self = [super init];
   if (self) {
     _pid = pid;

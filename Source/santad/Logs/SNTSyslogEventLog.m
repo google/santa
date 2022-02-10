@@ -200,7 +200,7 @@
 
   if (logArgs) {
     if (message.args_array) {
-      NSArray *args = (__bridge NSArray*)message.args_array;
+      NSArray *args = (__bridge NSArray *)message.args_array;
       [outLog appendFormat:@"|args=%@", [args componentsJoinedByString:@" "]];
     } else {
       [self addArgsForPid:message.pid toString:outLog];
@@ -290,10 +290,10 @@
 }
 
 - (void)logAllowList:(SNTAllowlistInfo *)allowlistInfo {
-  [self writeLog:[NSString
-      stringWithFormat:@"action=ALLOWLIST|pid=%d|pidversion=%d|path=%@|sha256=%@",
-          allowlistInfo.pid, allowlistInfo.pidversion, allowlistInfo.targetPath,
-          allowlistInfo.sha256]];
+  [self
+    writeLog:[NSString stringWithFormat:@"action=ALLOWLIST|pid=%d|pidversion=%d|path=%@|sha256=%@",
+                                        allowlistInfo.pid, allowlistInfo.pidversion,
+                                        allowlistInfo.targetPath, allowlistInfo.sha256]];
 }
 
 - (void)writeLog:(NSString *)log {

@@ -1,9 +1,8 @@
 load("@build_bazel_rules_apple//apple:macos.bzl", "macos_bundle")
 load("//:helper.bzl", "santa_unit_test")
+load("@rules_proto_grpc//objc:defs.bzl", "objc_proto_library")
 
 licenses(["notice"])
-
-load("@rules_proto_grpc//objc:defs.bzl", "objc_proto_library")
 
 package(default_visibility = ["//:santa_package_group"])
 
@@ -11,11 +10,12 @@ proto_library(
     name = "santad_proto",
     srcs = ["santad.proto"],
 )
+
 objc_proto_library(
     name = "santad_objc_proto",
-    protos = [":santad_proto"],
-    non_arc_srcs = ["Santad.pbobjc.m"],
     copts = ["-fno-objc-arc"],
+    non_arc_srcs = ["Santad.pbobjc.m"],
+    protos = [":santad_proto"],
 )
 
 objc_library(
@@ -44,18 +44,18 @@ objc_library(
 objc_library(
     name = "santad_endpoint_security_manager",
     srcs = [
-        "EventProviders/SNTEventProvider.h",
         "EventProviders/SNTEndpointSecurityManager.h",
         "EventProviders/SNTEndpointSecurityManager.mm",
+        "EventProviders/SNTEventProvider.h",
+    ],
+    sdk_dylibs = [
+        "EndpointSecurity",
+        "bsm",
     ],
     deps = [
         "//Source/common:SNTKernelCommon",
         "//Source/common:SNTPrefixTree",
         "//Source/common:SantaCache",
-    ],
-    sdk_dylibs = [
-        "EndpointSecurity",
-        "bsm",
     ],
 )
 
@@ -93,8 +93,8 @@ objc_library(
         "Logs/SNTSimpleMaildir.m",
     ],
     deps = [
-        ":santad_objc_proto",
         ":santad_event_logs_common",
+        ":santad_objc_proto",
     ],
 )
 
@@ -107,8 +107,8 @@ objc_library(
         "Logs/SNTSyslogEventLog.m",
     ],
     deps = [
-        ":santad_event_logs_common",
         ":santad_endpoint_security_manager",
+        ":santad_event_logs_common",
     ],
 )
 
@@ -173,8 +173,8 @@ objc_library(
     ],
     deps = [
         ":santad_database_controller",
-        ":santad_event_logs",
         ":santad_endpoint_security_manager",
+        ":santad_event_logs",
         "//Source/common:SNTBlockMessage",
         "//Source/common:SNTCommonEnums",
         "//Source/common:SNTConfigurator",
@@ -439,9 +439,9 @@ santa_unit_test(
     ],
     minimum_os_version = "10.15",
     deps = [
-        ":santad_objc_proto",
-        ":santad_event_logs",
         ":EndpointSecurityTestLib",
+        ":santad_event_logs",
+        ":santad_objc_proto",
         "//Source/common:SNTConfigurator",
         "@OCMock",
     ],
@@ -455,8 +455,8 @@ test_suite(
         ":SNTEndpointSecurityManagerTest",
         ":SNTEventTableTest",
         ":SNTExecutionControllerTest",
-        ":SNTRuleTableTest",
         ":SNTProtobufEventLogTest",
+        ":SNTRuleTableTest",
     ],
     visibility = ["//:santa_package_group"],
 )

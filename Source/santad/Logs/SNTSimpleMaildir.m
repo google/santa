@@ -90,9 +90,10 @@ NS_ASSUME_NONNULL_BEGIN
     _outputProto = nil;
     _createdFileCount = 0;
 
-    _flushQueue = dispatch_queue_create("com.google.santa.daemon.mail", 
-        dispatch_queue_attr_make_with_qos_class(
-            DISPATCH_QUEUE_SERIAL_WITH_AUTORELEASE_POOL, QOS_CLASS_DEFAULT, 0));
+    _flushQueue =
+      dispatch_queue_create("com.google.santa.daemon.mail",
+                            dispatch_queue_attr_make_with_qos_class(
+                              DISPATCH_QUEUE_SERIAL_WITH_AUTORELEASE_POOL, QOS_CLASS_DEFAULT, 0));
 
     typeof(self) __weak weakSelf = self;
     _flushTimer = [NSTimer scheduledTimerWithTimeInterval:maxTimeBetweenFlushes
@@ -194,9 +195,9 @@ NS_ASSUME_NONNULL_BEGIN
   BOOL isDir;
   if (![[NSFileManager defaultManager] fileExistsAtPath:dir isDirectory:&isDir]) {
     return [[NSFileManager defaultManager] createDirectoryAtPath:dir
-                              withIntermediateDirectories:NO
-                                               attributes:nil
-                                                    error:error];
+                                     withIntermediateDirectories:NO
+                                                      attributes:nil
+                                                           error:error];
   } else if (!isDir) {
     if (error) {
       *error = MakeError([NSString stringWithFormat:@"%@ is not a directory", dir]);
@@ -209,8 +210,8 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (BOOL)createSpoolDirectoriesWithError:(NSError **)error {
   return [self createDirectory:_baseDirectory withError:error] &&
-      [self createDirectory:_tmpDirectory withError:error] &&
-      [self createDirectory:_newDirectory withError:error];
+         [self createDirectory:_tmpDirectory withError:error] &&
+         [self createDirectory:_newDirectory withError:error];
 }
 
 - (size_t)spoolDirectorySizeWithError:(NSError **)error {
@@ -227,8 +228,8 @@ NS_ASSUME_NONNULL_BEGIN
   for (NSString *filename in filenames) {
     NSError *attributesError = nil;
     NSDictionary<NSFileAttributeKey, id> *attributes =
-        [fm attributesOfItemAtPath:[_newDirectory stringByAppendingPathComponent:filename]
-                             error:&attributesError];
+      [fm attributesOfItemAtPath:[_newDirectory stringByAppendingPathComponent:filename]
+                           error:&attributesError];
     if (attributesError) {
       if (error) {
         *error = MakeError(@"spool_dir_attribute_retrieval_error");

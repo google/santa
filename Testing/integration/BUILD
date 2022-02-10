@@ -37,7 +37,6 @@ objc_library(
         "//Source/santad:EndpointSecurityTestLib",
         "//Source/santad:santad_event_logs",
     ],
-
 )
 
 macos_command_line_application(

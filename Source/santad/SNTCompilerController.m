@@ -82,11 +82,10 @@
       if (![ruleTable addRules:@[ rule ] cleanSlate:NO error:&err]) {
         LOGE(@"unable to add new transitive rule to database: %@", err.localizedDescription);
       } else {
-        [[SNTEventLog logger] logAllowlist:[[SNTAllowlistInfo alloc]
-            initWithPid:message.pid
-             pidversion:message.pidversion
-             targetPath:target
-                 sha256:fi.SHA256]];
+        [[SNTEventLog logger] logAllowlist:[[SNTAllowlistInfo alloc] initWithPid:message.pid
+                                                                      pidversion:message.pidversion
+                                                                      targetPath:target
+                                                                          sha256:fi.SHA256]];
       }
     }
   }

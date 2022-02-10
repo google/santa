@@ -23,38 +23,33 @@
 #import "Source/santad/Logs/SNTProtobufEventLog.h"
 #import "Source/santad/Logs/SNTSyslogEventLog.h"
 
-@interface SNTConfigurator(Testing)
+@interface SNTConfigurator (Testing)
 @property NSMutableDictionary *configState;
 @end
 
-void usage(void)
-{
-  fprintf(stderr, "Usage: %s [-i <iterations>] [-l (file|syslog|protobuf)]\n",
-      getprogname());
+void usage(void) {
+  fprintf(stderr, "Usage: %s [-i <iterations>] [-l (file|syslog|protobuf)]\n", getprogname());
 }
 
-void runLogFileModification(santa_message_t *msg, SNTEventLog *eventLog)
-{
+void runLogFileModification(santa_message_t *msg, SNTEventLog *eventLog) {
   msg->action = ACTION_NOTIFY_RENAME;
   [eventLog logFileModification:*msg];
 }
 
-BOOL createTestDir(NSURL *dir)
-{
+BOOL createTestDir(NSURL *dir) {
   return [[NSFileManager defaultManager] createDirectoryAtURL:dir
                                   withIntermediateDirectories:YES
                                                    attributes:nil
                                                         error:nil];
 }
 
-void setup(int iterations, SNTEventLog *eventLog)
-{
+void setup(int iterations, SNTEventLog *eventLog) {
   // Create and populate necessary values and data structures in advance to
   // minimze the effect on overall run time.
   static const char *commonProcName = "launchd";
   static const char *commonPath = "/sbin/launchd";
   static const char *commonNewPath = "/foo/bar.txt";
-  NSArray *execArgs = @[@"/sbin/launchd", @"--init", @"--testing"];
+  NSArray *execArgs = @[ @"/sbin/launchd", @"--init", @"--testing" ];
 
   es_file_t esFile = MakeESFile(commonPath);
   es_process_t esProc = MakeESProcess(&esFile);
@@ -72,7 +67,7 @@ void setup(int iterations, SNTEventLog *eventLog)
   strlcpy(santaMsg.newpath, commonNewPath, sizeof(santaMsg.newpath));
   strlcpy(santaMsg.pname, commonProcName, sizeof(santaMsg.pname));
 
-  santaMsg.args_array = (__bridge void*)execArgs;
+  santaMsg.args_array = (__bridge void *)execArgs;
   santaMsg.es_message = &esMsg;
 
   for (int i = 0; i < iterations; i++) {
@@ -95,9 +90,7 @@ int main(int argc, char *argv[]) {
 
     while ((ch = getopt_long(argc, argv, "i:l:", longopts, NULL)) != -1) {
       switch (ch) {
-        case 'i':
-          iterations = atoi(optarg);
-          break;
+        case 'i': iterations = atoi(optarg); break;
         case 'l':
           if (strcmp(optarg, "syslog") == 0) {
             eventLogClass = [SNTSyslogEventLog class];
@@ -110,23 +103,25 @@ int main(int argc, char *argv[]) {
             exit(1);
           }
           break;
-        default:
-          usage();
-          exit(1);
+        default: usage(); exit(1);
       }
     }
 
-    NSURL *santaTestDir = [NSURL fileURLWithPath:
-        [NSTemporaryDirectory() stringByAppendingPathComponent:@"santa_test"]];
+    NSURL *santaTestDir =
+      [NSURL fileURLWithPath:[NSTemporaryDirectory() stringByAppendingPathComponent:@"santa_test"]];
     NSURL *tempDir = [santaTestDir URLByAppendingPathComponent:[[NSUUID UUID] UUIDString]];
     NSURL *mailDir = [tempDir URLByAppendingPathComponent:@"pblogger"];
     NSURL *fileDir = [tempDir URLByAppendingPathComponent:@"filelogger"];
     NSString *eventLogPath = [[fileDir URLByAppendingPathComponent:@"santa.log"] path];
 
     [[NSFileManager defaultManager] createDirectoryAtURL:mailDir
-        withIntermediateDirectories:YES attributes:nil error:nil];
+                             withIntermediateDirectories:YES
+                                              attributes:nil
+                                                   error:nil];
     [[NSFileManager defaultManager] createDirectoryAtURL:fileDir
-        withIntermediateDirectories:YES attributes:nil error:nil];
+                             withIntermediateDirectories:YES
+                                              attributes:nil
+                                                   error:nil];
 
     configurator.configState[@"EventLogPath"] = eventLogPath;
     configurator.configState[@"EventMailDirectory"] = mailDir.path;
