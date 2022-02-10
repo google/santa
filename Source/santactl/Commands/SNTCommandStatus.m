@@ -189,6 +189,9 @@ REGISTER_COMMAND_NAME(@"status")
         @"watchdog_cpu_peak" : @(cpuPeak),
         @"watchdog_ram_peak" : @(ramPeak),
         @"block_usb" : @(configurator.blockUSBMount),
+        @"remount_usb_mode" : (configurator.blockUSBMount && configurator.remountUSBMode.count
+                                 ? configurator.remountUSBMode
+                                 : @""),
       },
       @"database" : @{
         @"binary_rules" : @(binaryRuleCount),
@@ -213,9 +216,6 @@ REGISTER_COMMAND_NAME(@"status")
         @"non_root_cache_count" : @(nonRootCacheCount),
       };
     }
-    if (configurator.blockUSBMount && [configurator.remountUSBMode count] > 0) {
-      stats[@"daemon"][@"remount_usb_mode"] = configurator.remountUSBMode;
-    }
     NSData *statsData = [NSJSONSerialization dataWithJSONObject:stats
                                                         options:NSJSONWritingPrettyPrinted
                                                           error:nil];
@@ -234,9 +234,9 @@ REGISTER_COMMAND_NAME(@"status")
       printf("  %-25s | %lld\n", "Non-root cache count", nonRootCacheCount);
     }
 
-    printf("  %-25s | %d\n", "USB Blocking", configurator.blockUSBMount);
+    printf("  %-25s | %s\n", "USB Blocking", (configurator.blockUSBMount ? "Yes" : "No"));
 
-    if (configurator.blockUSBMount && [configurator.remountUSBMode count] > 0) {
+    if (configurator.blockUSBMount && configurator.remountUSBMode.count > 0) {
       printf("  %-25s | %s\n", "USB Remounting Mode:",
              [[configurator.remountUSBMode componentsJoinedByString:@", "] UTF8String]);
     }
