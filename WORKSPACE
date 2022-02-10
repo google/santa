@@ -8,7 +8,7 @@ load(
 
 git_repository(
     name = "build_bazel_rules_apple",
-    commit = "a2deaf0e557edaad295533d1b21aa88ce1f0227d",  # Latest commit that fixes https://github.com/google/santa/issues/595
+    commit = "4246cfe864953025cdaa105d8105679fcd1fba29",  # Latest commit that fixes https://github.com/google/santa/issues/1358
     remote = "https://github.com/bazelbuild/rules_apple.git",
 )
 
