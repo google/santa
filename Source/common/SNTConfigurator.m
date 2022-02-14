@@ -771,9 +771,6 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
   return [configuredInterval unsignedIntegerValue];
 }
 
-
-
-
 - (NSDictionary *)extraMetricLabels {
   return self.configState[kMetricExtraLabels];
 }
