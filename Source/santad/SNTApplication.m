@@ -101,10 +101,15 @@
       deviceManager.remountArgs = [configurator remountUSBMode];
     }
 
+    NSString *deviceBlockMsg = deviceManager.remountArgs != nil
+                                 ? [configurator remountUSBBlockMessage]
+                                 : [configurator bannedUSBBlockMessage];
+
     deviceManager.deviceBlockCallback = ^(SNTDeviceEvent *event) {
       NSLog(@"wtf '%@' '%@'", event.mntfromname, event.mntonname);
-      [[self.notQueue.notifierConnection remoteObjectProxy] postUSBBlockNotification:event
-                                                                   withCustomMessage:nil];
+      [[self.notQueue.notifierConnection remoteObjectProxy]
+        postUSBBlockNotification:event
+               withCustomMessage:deviceBlockMsg];
     };
 
     _deviceManager = deviceManager;

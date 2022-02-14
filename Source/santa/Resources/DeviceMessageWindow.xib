@@ -14,14 +14,14 @@
         <customObject id="-3" userLabel="Application" customClass="NSObject"/>
         <window title="Santa Blocked Execution" allowsToolTipsWhenApplicationIsInactive="NO" autorecalculatesKeyViewLoop="NO" visibleAtLaunch="NO" animationBehavior="none" id="9Bq-yh-54f" customClass="SNTMessageWindow">
             <windowStyleMask key="styleMask" utility="YES"/>
-            <rect key="contentRect" x="167" y="107" width="540" height="479"/>
-            <rect key="screenRect" x="0.0" y="0.0" width="2560" height="1415"/>
+            <rect key="contentRect" x="167" y="107" width="515" height="298"/>
+            <rect key="screenRect" x="0.0" y="0.0" width="1440" height="875"/>
             <view key="contentView" id="Iwq-Lx-rLv">
-                <rect key="frame" x="0.0" y="0.0" width="540" height="479"/>
+                <rect key="frame" x="0.0" y="0.0" width="515" height="298"/>
                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                 <subviews>
                     <button focusRingType="none" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="kiB-jZ-69S">
-                        <rect key="frame" x="16" y="451" width="37" height="32"/>
+                        <rect key="frame" x="16" y="270" width="37" height="32"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                         <buttonCell key="cell" type="push" title="Hidden Button" alternateTitle="This button exists so neither of the other two buttons is pre-selected when the dialog opens." bezelStyle="rounded" alignment="center" borderStyle="border" focusRingType="none" transparent="YES" imageScaling="proportionallyDown" inset="2" id="XGa-Sl-F4t">
                             <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
@@ -32,7 +32,7 @@
                         </buttonCell>
                     </button>
                     <textField verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" setsMaxLayoutWidthAtFirstLayout="YES" textCompletion="NO" translatesAutoresizingMaskIntoConstraints="NO" id="cD5-Su-lXR" customClass="SNTAccessibleTextField">
-                        <rect key="frame" x="43" y="371" width="454" height="16"/>
+                        <rect key="frame" x="31" y="190" width="454" height="16"/>
                         <constraints>
                             <constraint firstAttribute="width" constant="450" id="XgJ-EV-tBa"/>
                         </constraints>
@@ -46,7 +46,7 @@
                         </connections>
                     </textField>
                     <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="d9e-Wv-Y5H" userLabel="Label: Path">
-                        <rect key="frame" x="8" y="300" width="142" height="16"/>
+                        <rect key="frame" x="8" y="119" width="142" height="16"/>
                         <constraints>
                             <constraint firstAttribute="width" constant="138" id="Kqd-nX-7df"/>
                         </constraints>
@@ -60,7 +60,7 @@
                         </textFieldCell>
                     </textField>
                     <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="YNz-ka-cBi" userLabel="Label: Path">
-                        <rect key="frame" x="8" y="276" width="142" height="16"/>
+                        <rect key="frame" x="8" y="95" width="142" height="16"/>
                         <constraints>
                             <constraint firstAttribute="width" constant="138" id="3wU-P0-gAC"/>
                         </constraints>
@@ -74,7 +74,7 @@
                         </textFieldCell>
                     </textField>
                     <textField toolTip="Device Name" verticalHuggingPriority="900" horizontalCompressionResistancePriority="250" verticalCompressionResistancePriority="1000" ambiguous="YES" setsMaxLayoutWidthAtFirstLayout="YES" translatesAutoresizingMaskIntoConstraints="NO" id="pc8-G9-4pJ" customClass="SNTAccessibleTextField">
-                        <rect key="frame" x="187" y="300" width="315" height="16"/>
+                        <rect key="frame" x="187" y="119" width="315" height="16"/>
                         <constraints>
                             <constraint firstAttribute="width" constant="311" id="xVR-j3-dLw"/>
                         </constraints>
@@ -88,7 +88,7 @@
                         </connections>
                     </textField>
                     <textField toolTip="Device BSD Path" verticalHuggingPriority="900" horizontalCompressionResistancePriority="250" verticalCompressionResistancePriority="1000" ambiguous="YES" setsMaxLayoutWidthAtFirstLayout="YES" translatesAutoresizingMaskIntoConstraints="NO" id="bDE-Tl-UHg" customClass="SNTAccessibleTextField">
-                        <rect key="frame" x="187" y="276" width="315" height="16"/>
+                        <rect key="frame" x="187" y="95" width="315" height="16"/>
                         <constraints>
                             <constraint firstAttribute="width" constant="311" id="p1W-f9-KBX"/>
                         </constraints>
@@ -118,11 +118,10 @@ DQ
                         <accessibility description="Dismiss Dialog"/>
                         <connections>
                             <action selector="closeWindow:" target="-2" id="qQq-gh-8lw"/>
-                            <outlet property="nextKeyView" destination="7ua-5a-uSd" id="4KL-Z2-1op"/>
                         </connections>
                     </button>
                     <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="t8c-Fx-e5h">
-                        <rect key="frame" x="229" y="409" width="82" height="40"/>
+                        <rect key="frame" x="217" y="228" width="82" height="40"/>
                         <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" refusesFirstResponder="YES" sendsActionOnEndEditing="YES" title="Santa" id="7YA-iB-Zma">
                             <font key="font" metaFont="systemUltraLight" size="34"/>
                             <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
@@ -151,7 +150,7 @@ DQ
             <connections>
                 <outlet property="initialFirstResponder" destination="kiB-jZ-69S" id="I96-dS-lq5"/>
             </connections>
-            <point key="canvasLocation" x="274" y="326.5"/>
+            <point key="canvasLocation" x="261.5" y="236"/>
         </window>
         <userDefaultsController representsSharedInstance="YES" id="iXx-cu-WYe"/>
     </objects>

@@ -66,6 +66,9 @@ static NSString *const kEventDetailURLKey = @"EventDetailURL";
 static NSString *const kEventDetailTextKey = @"EventDetailText";
 static NSString *const kUnknownBlockMessage = @"UnknownBlockMessage";
 static NSString *const kBannedBlockMessage = @"BannedBlockMessage";
+static NSString *const kBannedUSBBlockMessage = @"BannedUSBBlockMessage";
+static NSString *const kRemountUSBBlockMessage = @"RemountUSBBlockMessage";
+
 static NSString *const kModeNotificationMonitor = @"ModeNotificationMonitor";
 static NSString *const kModeNotificationLockdown = @"ModeNotificationLockdown";
 
@@ -162,6 +165,8 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
       kEventDetailTextKey : string,
       kUnknownBlockMessage : string,
       kBannedBlockMessage : string,
+      kBannedUSBBlockMessage : string,
+      kRemountUSBBlockMessage : string,
       kModeNotificationMonitor : string,
       kModeNotificationLockdown : string,
       kSyncBaseURLKey : string,
@@ -559,6 +564,14 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
 
 - (NSString *)bannedBlockMessage {
   return self.configState[kBannedBlockMessage];
+}
+
+- (NSString *)bannedUSBBlockMessage {
+  return self.configState[kBannedUSBBlockMessage];
+}
+
+- (NSString *)remountUSBBlockMessage {
+  return self.configState[kRemountUSBBlockMessage];
 }
 
 - (NSString *)modeNotificationMonitor {

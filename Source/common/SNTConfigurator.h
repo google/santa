@@ -247,6 +247,20 @@
 @property(readonly, nonatomic) NSString *bannedBlockMessage;
 
 ///
+/// This is the message shown to the user when a USB storage device's mount is denied
+/// from the BlockUSB configuration setting. If not configured, a reasonable
+/// default is provided.
+///
+@property(readonly, nonatomic) NSString *bannedUSBBlockMessage;
+
+///
+/// This is the message shown to the user when a USB storage device's mount is forcibly
+/// remounted to a different set of permissions from the BlockUSB and RemountUSBMode
+/// configuration settings. If not configured, a reasonable default is provided.
+///
+@property(readonly, nonatomic) NSString *remountUSBBlockMessage;
+
+///
 ///  The notification text to display when the client goes into MONITOR mode.
 ///  Defaults to "Switching into Monitor mode"
 ///
