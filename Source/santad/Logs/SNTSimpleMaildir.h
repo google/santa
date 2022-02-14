@@ -14,7 +14,7 @@
 
 #import <Foundation/Foundation.h>
 
-#import "Source/santad/Santad.pbobjc.h"
+#import "Source/common/Santa.pbobjc.h"
 #import "Source/santad/Logs/SNTLogOutput.h"
 
 NS_ASSUME_NONNULL_BEGIN
@@ -24,7 +24,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (instancetype)initWithBaseDirectory:(NSString *)baseDirectory
                        filenamePrefix:(NSString *)filenamePrefix
                     fileSizeThreshold:(size_t)fileSiszeThreshold
-                   spoolSizeThreshold:(size_t)spoolSizeThreshold
+               directorySizeThreshold:(size_t)directorySizeThreshold
                 maxTimeBetweenFlushes:(NSTimeInterval)maxTimeBetweenFlushes
     NS_DESIGNATED_INITIALIZER;
 

@@ -14,7 +14,7 @@
 
 #import <Foundation/Foundation.h>
 
-#import "Source/santad/Santad.pbobjc.h"
+#import "Source/common/Santa.pbobjc.h"
 
 NS_ASSUME_NONNULL_BEGIN
 

@@ -1,8 +1,21 @@
 load("//:helper.bzl", "santa_unit_test")
+load("@rules_proto_grpc//objc:defs.bzl", "objc_proto_library")
 
 package(default_visibility = ["//:santa_package_group"])
 
 licenses(["notice"])
+
+proto_library(
+    name = "log_proto",
+    srcs = ["santa.proto"],
+)
+
+objc_proto_library(
+    name = "log_objc_proto",
+    copts = ["-fno-objc-arc"],
+    non_arc_srcs = ["Santa.pbobjc.m"],
+    protos = [":log_proto"],
+)
 
 cc_library(
     name = "SantaCache",

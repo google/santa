@@ -28,21 +28,21 @@ test_suite(
 )
 
 objc_library(
-    name = "santa_logging_benchmarks_lib",
+    name = "logging_benchmarks_lib",
     testonly = 1,
     srcs = [
         "SNTLoggingBenchmarks.m",
     ],
     deps = [
         "//Source/santad:EndpointSecurityTestLib",
-        "//Source/santad:santad_event_logs",
+        "//Source/santad:event_logs",
     ],
 )
 
 macos_command_line_application(
-    name = "santa_logging_benchmarks_bin",
+    name = "logging_benchmarks_bin",
     testonly = 1,
     bundle_id = "com.goole.santa.benchmark.logging",
     minimum_os_version = "10.15",
-    deps = [":santa_logging_benchmarks_lib"],
+    deps = [":logging_benchmarks_lib"],
 )

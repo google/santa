@@ -12,6 +12,16 @@
 ///    See the License for the specific language governing permissions and
 ///    limitations under the License.
 
+/// This benchmarking program pairs well with the hyperfine benchmarking utility:
+/// https://github.com/sharkdp/hyperfine
+///
+/// Some example invocations:
+/// - Compare performance of different in-memory buffer sizes by controlling file size threshold
+///   hyperfine --warmup 3 -P fssize 50 500 -D 50 'santa_logging_benchmarks_bin -i 20000 -l protobuf -f {fssize} -s 500 -t 5'
+///
+/// - Compare the file logger vs the protobuf logger
+///   hyperfine --warmup 3 --parameter-list logger file,protobuf 'santa_logging_benchmarks_bin -i 100000 -l {logger} -f 100 -s 500 -t 5'
+
 #import <EndpointSecurity/EndpointSecurity.h>
 #import <Foundation/Foundation.h>
 #import <getopt.h>
@@ -84,12 +94,16 @@ int main(int argc, char *argv[]) {
     };
 
     int ch;
-    int iterations = 10;
-    Class eventLogClass = [SNTFileEventLog class];
+    int iterations = 5000;
+    Class eventLogClass = [SNTProtobufEventLog class];
     SNTConfigurator *configurator = [SNTConfigurator configurator];
+    unsigned int fileSize = 100;
+    unsigned int dirSize = 500;
+    float flushFrequency = 5.0;
 
-    while ((ch = getopt_long(argc, argv, "i:l:", longopts, NULL)) != -1) {
+    while ((ch = getopt_long(argc, argv, "f:i:l:s:t:", longopts, NULL)) != -1) {
       switch (ch) {
+        case 'f': fileSize = atoi(optarg); break;
         case 'i': iterations = atoi(optarg); break;
         case 'l':
           if (strcmp(optarg, "syslog") == 0) {
@@ -103,6 +117,8 @@ int main(int argc, char *argv[]) {
             exit(1);
           }
           break;
+        case 's': dirSize = atoi(optarg); break;
+        case 't': flushFrequency = (float)atoi(optarg); break;
         default: usage(); exit(1);
       }
     }
@@ -124,10 +140,13 @@ int main(int argc, char *argv[]) {
                                                    error:nil];
 
     configurator.configState[@"EventLogPath"] = eventLogPath;
-    configurator.configState[@"EventMailDirectory"] = mailDir.path;
+    configurator.configState[@"MailDirectory"] = mailDir.path;
+    configurator.configState[@"MailDirectoryFileSizeThresholdKB"] = @(fileSize);
+    configurator.configState[@"MailDirectorySizeThresholdMB"] = @(dirSize);
+    configurator.configState[@"MailDirectoryEventMaxFlushTimeSec"] = @(flushFrequency);
 
     NSLog(@"Using log path: %@", configurator.eventLogPath);
-    NSLog(@"Using mail dir: %@", configurator.eventMailDirectory);
+    NSLog(@"Using mail dir: %@", configurator.mailDirectory);
     NSLog(@"Using logger: %@", eventLogClass);
 
     SNTEventLog *eventLog = [[eventLogClass alloc] init];

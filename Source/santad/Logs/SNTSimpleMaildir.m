@@ -63,6 +63,9 @@ NS_ASSUME_NONNULL_BEGIN
   /** Temporary storage for SNTSantaMessage in an SNTLogBatch. */
   SNTLogBatch *_outputProto;
 
+  /** Current serialized size of all events in the _outputProto batch */
+  size_t _outputProtoSerializedSize;
+
   /** Current size of the file system spooling directory. */
   size_t _estimatedSpoolSize;
 
@@ -76,7 +79,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (instancetype)initWithBaseDirectory:(NSString *)baseDirectory
                        filenamePrefix:(NSString *)filenamePrefix
                     fileSizeThreshold:(size_t)fileSizeThreshold
-                   spoolSizeThreshold:(size_t)spoolSizeThreshold
+               directorySizeThreshold:(size_t)directorySizeThreshold
                 maxTimeBetweenFlushes:(NSTimeInterval)maxTimeBetweenFlushes {
   self = [super init];
   if (self) {
@@ -85,10 +88,11 @@ NS_ASSUME_NONNULL_BEGIN
     _newDirectory = [baseDirectory stringByAppendingPathComponent:@"new"];
     _filenamePrefix = [filenamePrefix copy];
     _fileSizeThreshold = fileSizeThreshold;
-    _spoolSizeThreshold = spoolSizeThreshold;
+    _spoolSizeThreshold = directorySizeThreshold;
     _estimatedSpoolSize = SIZE_T_MAX;  // Force a recalculation of the spool directory size
-    _outputProto = nil;
     _createdFileCount = 0;
+    _outputProto = [[SNTLogBatch alloc] init];
+    _outputProtoSerializedSize = 0;
 
     _flushQueue =
       dispatch_queue_create("com.google.santa.daemon.mail",
@@ -178,10 +182,11 @@ NS_ASSUME_NONNULL_BEGIN
   }
 
   if (error && !*error) {
-    _estimatedSpoolSize += [_outputProto serializedSize];
+    _estimatedSpoolSize += _outputProtoSerializedSize;
   }
   // Clear output buffer.
-  _outputProto = nil;
+  _outputProto = [[SNTLogBatch alloc] init];
+  _outputProtoSerializedSize = 0;
   return outputEventCount;
 }
 
@@ -244,14 +249,13 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)logEvent:(SNTSantaMessage *)event {
   dispatch_sync(_flushQueue, ^{
-    if (!_outputProto) {
-      _outputProto = [[SNTLogBatch alloc] init];
-    }
-    if ([_outputProto serializedSize] + [event serializedSize] > _fileSizeThreshold) {
+    if (_outputProtoSerializedSize > _fileSizeThreshold) {
       [self flushLockedWithError:nil];
     }
 
     [_outputProto.recordsArray addObject:event];
+    // Note: +2 added to account for serialization of extra record in the _outputProto array
+    _outputProtoSerializedSize += [event serializedSize] + 2;
   });
 }
 

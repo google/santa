@@ -1,25 +1,12 @@
 load("@build_bazel_rules_apple//apple:macos.bzl", "macos_bundle")
 load("//:helper.bzl", "santa_unit_test")
-load("@rules_proto_grpc//objc:defs.bzl", "objc_proto_library")
 
 licenses(["notice"])
 
 package(default_visibility = ["//:santa_package_group"])
 
-proto_library(
-    name = "santad_proto",
-    srcs = ["santad.proto"],
-)
-
-objc_proto_library(
-    name = "santad_objc_proto",
-    copts = ["-fno-objc-arc"],
-    non_arc_srcs = ["Santad.pbobjc.m"],
-    protos = [":santad_proto"],
-)
-
 objc_library(
-    name = "santad_database_controller",
+    name = "database_controller",
     srcs = [
         "DataLayer/SNTDatabaseTable.h",
         "DataLayer/SNTDatabaseTable.m",
@@ -42,7 +29,7 @@ objc_library(
 )
 
 objc_library(
-    name = "santad_endpoint_security_manager",
+    name = "endpoint_security_manager",
     srcs = [
         "EventProviders/SNTEndpointSecurityManager.h",
         "EventProviders/SNTEndpointSecurityManager.mm",
@@ -60,7 +47,7 @@ objc_library(
 )
 
 objc_library(
-    name = "santad_event_logs_common",
+    name = "event_logs_common",
     srcs = [
         "DataLayer/SNTDatabaseTable.h",
         "DataLayer/SNTRuleTable.h",
@@ -73,7 +60,7 @@ objc_library(
         "SNTDatabaseController.h",
     ],
     deps = [
-        ":santad_database_controller",
+        ":database_controller",
         "//Source/common:SNTAllowlistInfo",
         "//Source/common:SNTCachedDecision",
         "//Source/common:SNTConfigurator",
@@ -85,7 +72,7 @@ objc_library(
 )
 
 objc_library(
-    name = "santad_protobuf_event_logs",
+    name = "protobuf_event_logs",
     srcs = [
         "Logs/SNTProtobufEventLog.h",
         "Logs/SNTProtobufEventLog.m",
@@ -93,13 +80,13 @@ objc_library(
         "Logs/SNTSimpleMaildir.m",
     ],
     deps = [
-        ":santad_event_logs_common",
-        ":santad_objc_proto",
+        ":event_logs_common",
+        "//Source/common:log_objc_proto",
     ],
 )
 
 objc_library(
-    name = "santad_syslog_event_logs",
+    name = "syslog_event_logs",
     srcs = [
         "EventProviders/SNTEndpointSecurityManager.h",
         "EventProviders/SNTEventProvider.h",
@@ -107,28 +94,28 @@ objc_library(
         "Logs/SNTSyslogEventLog.m",
     ],
     deps = [
-        ":santad_endpoint_security_manager",
-        ":santad_event_logs_common",
+        ":endpoint_security_manager",
+        ":event_logs_common",
     ],
 )
 
 objc_library(
-    name = "santad_file_event_logs",
+    name = "file_event_logs",
     srcs = [
         "Logs/SNTFileEventLog.h",
         "Logs/SNTFileEventLog.m",
     ],
     deps = [
-        ":santad_event_logs_common",
+        ":event_logs_common",
     ],
 )
 
 objc_library(
-    name = "santad_event_logs",
+    name = "event_logs",
     deps = [
-        ":santad_file_event_logs",
-        ":santad_protobuf_event_logs",
-        ":santad_syslog_event_logs",
+        ":file_event_logs",
+        ":protobuf_event_logs",
+        ":syslog_event_logs",
     ],
 )
 
@@ -172,9 +159,9 @@ objc_library(
         "IOKit",
     ],
     deps = [
-        ":santad_database_controller",
-        ":santad_endpoint_security_manager",
-        ":santad_event_logs",
+        ":database_controller",
+        ":endpoint_security_manager",
+        ":event_logs",
         "//Source/common:SNTBlockMessage",
         "//Source/common:SNTCommonEnums",
         "//Source/common:SNTConfigurator",
@@ -440,9 +427,9 @@ santa_unit_test(
     minimum_os_version = "10.15",
     deps = [
         ":EndpointSecurityTestLib",
-        ":santad_event_logs",
-        ":santad_objc_proto",
+        ":event_logs",
         "//Source/common:SNTConfigurator",
+        "//Source/common:log_objc_proto",
         "@OCMock",
     ],
 )

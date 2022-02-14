@@ -23,8 +23,8 @@
 #import "Source/common/SNTCachedDecision.h"
 #import "Source/common/SNTConfigurator.h"
 #import "Source/common/SNTStoredEvent.h"
+#import "Source/common/Santa.pbobjc.h"
 #import "Source/santad/Logs/SNTSimpleMaildir.h"
-#import "Source/santad/Santad.pbobjc.h"
 
 @interface SNTProtobufEventLog ()
 @property(readonly) id<SNTLogOutput> logOutput;
@@ -33,30 +33,29 @@
 @implementation SNTProtobufEventLog
 
 - (instancetype)init {
-  return
-    [self initWithLog:[[SNTSimpleMaildir alloc]
-                        initWithBaseDirectory:[[SNTConfigurator configurator] eventMailDirectory]
+  SNTSimpleMaildir *mailDir = [[SNTSimpleMaildir alloc]
+                        initWithBaseDirectory:[[SNTConfigurator configurator] mailDirectory]
                                filenamePrefix:@"out.log"
-                            fileSizeThreshold:3 * 1024
-                           spoolSizeThreshold:500 * 1024 * 1024
-                        maxTimeBetweenFlushes:5.0]];
+                            fileSizeThreshold:[[SNTConfigurator configurator] mailDirectoryFileSizeThresholdKB] * 1024
+                       directorySizeThreshold:[[SNTConfigurator configurator] mailDirectorySizeThresholdMB] * 1024 * 1024
+                        maxTimeBetweenFlushes:[[SNTConfigurator configurator] mailDirectoryEventMaxFlushTimeSec]];
+  return [self initWithLog:mailDir];
 }
 
 - (instancetype)initWithLog:(id<SNTLogOutput>)log {
+  if (!_logOutput) {
+    return nil;
+  }
+
   self = [super init];
   if (self) {
     _logOutput = log;
-
-    if (!_logOutput) {
-      self = nil;
-      return nil;
-    }
   }
   return self;
 }
 
 - (void)forceFlush {
-  [_logOutput flush];
+  [self.logOutput flush];
 }
 
 - (void)wrapMessageAndLog:(SNTLegacyMessage *)legacyMsg {
