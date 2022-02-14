@@ -453,6 +453,11 @@
 @property(readonly, nonatomic) NSUInteger metricExportInterval;
 
 ///
+/// Duration in seconds for metrics export timeout. Defaults to 30;
+///
+@property(readonly, nonatomic) NSUInteger metricExportTimeout;
+
+///
 ///  Retrieve an initialized singleton configurator object using the default file path.
 ///
 + (instancetype)configurator;

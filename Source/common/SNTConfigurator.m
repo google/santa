@@ -113,6 +113,7 @@ static NSString *const kBlockedPathRegexKeyDeprecated = @"BlacklistRegex";
 static NSString *const kMetricFormat = @"MetricFormat";
 static NSString *const kMetricURL = @"MetricURL";
 static NSString *const kMetricExportInterval = @"MetricExportInterval";
+static NSString *const kMetricExportTimeout = @"MetricExportTimeout";
 static NSString *const kMetricExtraLabels = @"MetricExtraLabels";
 
 // The keys managed by a sync server.
@@ -198,6 +199,7 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
       kMetricFormat : string,
       kMetricURL : string,
       kMetricExportInterval : number,
+      kMetricExportTimeout : number,
       kMetricExtraLabels : dictionary,
     };
     _defaults = [NSUserDefaults standardUserDefaults];
@@ -765,6 +767,16 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
 // Returns a default value of 30 (for 30 seconds).
 - (NSUInteger)metricExportInterval {
   NSNumber *configuredInterval = self.configState[kMetricExportInterval];
+
+  if (configuredInterval == nil) {
+    return 30;
+  }
+  return [configuredInterval unsignedIntegerValue];
+}
+
+// Returns a default value of 30 (for 30 seconds).
+- (NSUInteger)metricExportTimeout {
+  NSNumber *configuredInterval = self.configState[kMetricExportTimeout];
 
   if (configuredInterval == nil) {
     return 30;

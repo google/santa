@@ -14,6 +14,7 @@
 #import <MOLAuthenticatingURLSession/MOLAuthenticatingURLSession.h>
 #include <dispatch/dispatch.h>
 
+#import "Source/common/SNTConfigurator.h"
 #import "Source/common/SNTLogging.h"
 #import "Source/santametricservice/Writers/SNTMetricHTTPWriter.h"
 
@@ -49,37 +50,45 @@
     dispatch_group_enter(requests);
 
     request.HTTPBody = (NSData *)value;
-    [[_session dataTaskWithRequest:request
-                 completionHandler:^(NSData *_Nullable data, NSURLResponse *_Nullable response,
-                                     NSError *_Nullable err) {
-                   if (err != nil) {
-                     _blockError = err;
-                     *stop = YES;
-                   } else if (response == nil) {
-                     *stop = YES;
-                   } else if ([response isKindOfClass:[NSHTTPURLResponse class]]) {
-                     NSHTTPURLResponse *httpResponse = (NSHTTPURLResponse *)response;
+    NSURLSessionDataTask *task = [_session
+      dataTaskWithRequest:request
+        completionHandler:^(NSData *_Nullable data, NSURLResponse *_Nullable response,
+                            NSError *_Nullable err) {
+          if (err != nil) {
+            _blockError = err;
+            *stop = YES;
+          } else if (response == nil) {
+            *stop = YES;
+          } else if ([response isKindOfClass:[NSHTTPURLResponse class]]) {
+            NSHTTPURLResponse *httpResponse = (NSHTTPURLResponse *)response;
 
-                     // Check HTTP error codes and create errors for any non-200.
-                     if (httpResponse && httpResponse.statusCode != 200) {
-                       _blockError = [[NSError alloc]
-                         initWithDomain:@"com.google.santa.metricservice.writers.http"
-                                   code:httpResponse.statusCode
-                               userInfo:@{
-                                 NSLocalizedDescriptionKey : [NSString
-                                   stringWithFormat:@"received http status code %ld from %@",
-                                                    httpResponse.statusCode, url]
-                               }];
-                       *stop = YES;
-                     }
-                   }
-                   dispatch_group_leave(requests);
-                 }] resume];
+            // Check HTTP error codes and create errors for any non-200.
+            if (httpResponse && httpResponse.statusCode != 200) {
+              _blockError = [[NSError alloc]
+                initWithDomain:@"com.google.santa.metricservice.writers.http"
+                          code:httpResponse.statusCode
+                      userInfo:@{
+                        NSLocalizedDescriptionKey :
+                          [NSString stringWithFormat:@"received http status code %ld from %@",
+                                                     httpResponse.statusCode, url]
+                      }];
+              *stop = YES;
+            }
+          }
+          dispatch_group_leave(requests);
+        }];
 
-    // Wait up to 30 seconds for the request to complete.
-    if (dispatch_group_wait(requests, (int64_t)(30.0 * NSEC_PER_SEC)) != 0) {
+    [task resume];
+
+    SNTConfigurator *config = [SNTConfigurator configurator];
+    int64_t timeout = (int64_t)config.metricExportTimeout;
+
+    // Wait up to timeout seconds for the request to complete.
+    if (dispatch_group_wait(requests, (timeout * NSEC_PER_SEC)) != 0) {
+      [task cancel];
       NSString *errMsg =
-        [NSString stringWithFormat:@"HTTP request to %@ timed out after 30 seconds", url];
+        [NSString stringWithFormat:@"HTTP request to %@ timed out after %lu seconds", url,
+                                   (unsigned long)timeout];
 
       _blockError = [[NSError alloc] initWithDomain:@"com.google.santa.metricservice.writers.http"
                                                code:ETIMEDOUT
