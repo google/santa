@@ -39,6 +39,7 @@ objc_library(
     ],
     deps = [
         ":SNTMetricWriter",
+        "//Source/common:SNTConfigurator",
         "//Source/common:SNTLogging",
         "@MOLAuthenticatingURLSession",
     ],
