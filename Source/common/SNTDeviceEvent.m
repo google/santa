@@ -37,4 +37,8 @@
                                     [self.remountArgs componentsJoinedByString:@", "]];
 }
 
+- (NSString *)readableRemountArgs {
+  return [self.remountArgs componentsJoinedByString:@", "];
+}
+
 @end

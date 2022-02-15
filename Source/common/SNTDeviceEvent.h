@@ -20,4 +20,6 @@
 @property NSString *mntfromname;
 @property NSArray<NSString *> *remountArgs;
 
+- (NSString *)readableRemountArgs;
+
 @end
