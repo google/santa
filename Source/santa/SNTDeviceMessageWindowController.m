@@ -50,7 +50,7 @@ NS_ASSUME_NONNULL_BEGIN
   }
   if (self.event.remountArgs && [self.event.remountArgs count] > 0) {
     return [SNTBlockMessage
-      formatMessage:@"The following device has remounted with reduced permissions."];
+      formatMessage:@"The following device has been remounted with reduced permissions."];
   }
 
   return [SNTBlockMessage formatMessage:@"The following device has been blocked from mounting."];

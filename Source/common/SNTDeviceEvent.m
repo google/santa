@@ -38,7 +38,17 @@
 }
 
 - (NSString *)readableRemountArgs {
-  return [self.remountArgs componentsJoinedByString:@", "];
+  NSMutableArray<NSString *> *readable = [NSMutableArray array];
+  for (NSString *arg in self.remountArgs) {
+    if ([arg isEqualToString:@"rdonly"]) {
+      [readable addObject:@"read-only"];
+    } else if ([arg isEqualToString:@"noexec"]) {
+      [readable addObject:@"block executables"];
+    } else {
+      [readable addObject:arg];
+    }
+  }
+  return [readable componentsJoinedByString:@", "];
 }
 
 @end
