@@ -25,8 +25,8 @@ NS_ASSUME_NONNULL_BEGIN
 ///
 @interface SNTDeviceMessageWindowController : SNTMessageWindowController
 
-@property(weak) IBOutlet NSTextField *mountPointLabel;
-@property(weak) IBOutlet NSTextField *mountPathLabel;
+@property(weak) IBOutlet NSTextField *remountArgsLabel;
+@property(weak) IBOutlet NSTextField *remountArgsTitle;
 
 // The device event this window is for.
 @property(readonly) SNTDeviceEvent *event;

@@ -36,20 +36,24 @@ NS_ASSUME_NONNULL_BEGIN
   return self;
 }
 
+- (void)loadWindow {
+  [super loadWindow];
+  if (!self.event.remountArgs || [self.event.remountArgs count] <= 0) {
+    [self.remountArgsLabel removeFromSuperview];
+    [self.remountArgsTitle removeFromSuperview];
+  }
+}
+
 - (NSAttributedString *)attributedCustomMessage {
   if (self.customMessage) {
     return [SNTBlockMessage formatMessage:self.customMessage];
   }
-
-  if (self.event.remountArgs) {
+  if (self.event.remountArgs && [self.event.remountArgs count] > 0) {
     return [SNTBlockMessage
-      formatMessage:[NSString
-                      stringWithFormat:
-                        @"The following device was remounted with the following permissions: [%@].",
-                        [self.event.remountArgs componentsJoinedByString:@","]]];
-  } else {
-    return [SNTBlockMessage formatMessage:@"The following device has been blocked from mounting."];
+      formatMessage:@"The following device has remounted with reduced permissions."];
   }
+
+  return [SNTBlockMessage formatMessage:@"The following device has been blocked from mounting."];
 }
 
 - (NSString *)messageHash {
