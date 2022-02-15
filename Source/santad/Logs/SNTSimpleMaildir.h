@@ -30,7 +30,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (instancetype)init NS_UNAVAILABLE;
 
-- (void)logEvent:(SNTSantaMessage *)message;
+- (void)logEvent:(SNTPBSantaMessage *)message;
 - (void)flush;
 
 @end

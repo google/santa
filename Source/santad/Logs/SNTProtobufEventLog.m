@@ -58,26 +58,26 @@
   [self.logOutput flush];
 }
 
-- (void)wrapMessageAndLog:(SNTLegacyMessage *)legacyMsg {
-  SNTSantaMessage *sm = [[SNTSantaMessage alloc] init];
-  sm.legacyMessage = legacyMsg;
+- (void)wrapMessageAndLog:(void(^)(SNTPBSantaMessage*))setMessage {
+  SNTPBSantaMessage *sm = [[SNTPBSantaMessage alloc] init];
+  setMessage(sm);
 
   [self.logOutput logEvent:sm];
 }
 
-- (SNTLegacyFileModification_Action)protobufActionForSantaMessageAction:(santa_action_t)action {
+- (SNTPBFileModification_Action)protobufActionForSantaMessageAction:(santa_action_t)action {
   switch (action) {
     case ACTION_NOTIFY_DELETE:
-      return SNTLegacyFileModification_Action_LegacyFileModificationActionDelete;
+      return SNTPBFileModification_Action_FileModificationActionDelete;
     case ACTION_NOTIFY_EXCHANGE:
-      return SNTLegacyFileModification_Action_LegacyFileModificationActionExchange;
+      return SNTPBFileModification_Action_FileModificationActionExchange;
     case ACTION_NOTIFY_LINK:
-      return SNTLegacyFileModification_Action_LegacyFileModificationActionLink;
+      return SNTPBFileModification_Action_FileModificationActionLink;
     case ACTION_NOTIFY_RENAME:
-      return SNTLegacyFileModification_Action_LegacyFileModificationActionRename;
+      return SNTPBFileModification_Action_FileModificationActionRename;
     case ACTION_NOTIFY_WRITE:
-      return SNTLegacyFileModification_Action_LegacyFileModificationActionWrite;
-    default: return SNTLegacyFileModification_Action_LegacyFileModificationActionUnknown;
+      return SNTPBFileModification_Action_FileModificationActionWrite;
+    default: return SNTPBFileModification_Action_FileModificationActionUnknown;
   }
 }
 
@@ -121,12 +121,12 @@
   }
 }
 
-- (SNTLegacyProcessInfo *)protobufProcessInfoForSantaMessage:(santa_message_t *)message {
+- (SNTPBProcessInfo *)protobufProcessInfoForSantaMessage:(santa_message_t *)message {
   if (!message) {
     return nil;
   }
 
-  SNTLegacyProcessInfo *procInfo = [[SNTLegacyProcessInfo alloc] init];
+  SNTPBProcessInfo *procInfo = [[SNTPBProcessInfo alloc] init];
 
   procInfo.pid = message->pid;
   procInfo.pidversion = message->pidversion;
@@ -140,54 +140,54 @@
   return procInfo;
 }
 
-- (SNTLegacyExecution_Decision)protobufDecisionForCachedDecision:(SNTCachedDecision *)cd {
+- (SNTPBExecution_Decision)protobufDecisionForCachedDecision:(SNTCachedDecision *)cd {
   if (cd.decision & SNTEventStateBlock) {
-    return SNTLegacyExecution_Decision_LegacyExecutionDecisionDeny;
+    return SNTPBExecution_Decision_ExecutionDecisionDeny;
   } else if (cd.decision & SNTEventStateAllow) {
-    return SNTLegacyExecution_Decision_LegacyExecutionDecisionAllow;
+    return SNTPBExecution_Decision_ExecutionDecisionAllow;
   } else {
-    return SNTLegacyExecution_Decision_LegacyExecutionDecisionUnknown;
+    return SNTPBExecution_Decision_ExecutionDecisionUnknown;
   }
 }
 
-- (SNTLegacyExecution_Reason)protobufReasonForCachedDecision:(SNTCachedDecision *)cd {
+- (SNTPBExecution_Reason)protobufReasonForCachedDecision:(SNTCachedDecision *)cd {
   switch (cd.decision) {
-    case SNTEventStateAllowBinary: return SNTLegacyExecution_Reason_LegacyExecutionReasonBinary;
-    case SNTEventStateAllowCompiler: return SNTLegacyExecution_Reason_LegacyExecutionReasonCompiler;
+    case SNTEventStateAllowBinary: return SNTPBExecution_Reason_ExecutionReasonBinary;
+    case SNTEventStateAllowCompiler: return SNTPBExecution_Reason_ExecutionReasonCompiler;
     case SNTEventStateAllowTransitive:
-      return SNTLegacyExecution_Reason_LegacyExecutionReasonTransitive;
+      return SNTPBExecution_Reason_ExecutionReasonTransitive;
     case SNTEventStateAllowPendingTransitive:
-      return SNTLegacyExecution_Reason_LegacyExecutionReasonPendingTransitive;
-    case SNTEventStateAllowCertificate: return SNTLegacyExecution_Reason_LegacyExecutionReasonCert;
-    case SNTEventStateAllowScope: return SNTLegacyExecution_Reason_LegacyExecutionReasonScope;
-    case SNTEventStateAllowTeamID: return SNTLegacyExecution_Reason_LegacyExecutionReasonTeamId;
-    case SNTEventStateAllowUnknown: return SNTLegacyExecution_Reason_LegacyExecutionReasonUnknown;
-    case SNTEventStateBlockBinary: return SNTLegacyExecution_Reason_LegacyExecutionReasonBinary;
-    case SNTEventStateBlockCertificate: return SNTLegacyExecution_Reason_LegacyExecutionReasonCert;
-    case SNTEventStateBlockScope: return SNTLegacyExecution_Reason_LegacyExecutionReasonScope;
-    case SNTEventStateBlockTeamID: return SNTLegacyExecution_Reason_LegacyExecutionReasonTeamId;
-    case SNTEventStateBlockUnknown: return SNTLegacyExecution_Reason_LegacyExecutionReasonUnknown;
+      return SNTPBExecution_Reason_ExecutionReasonPendingTransitive;
+    case SNTEventStateAllowCertificate: return SNTPBExecution_Reason_ExecutionReasonCert;
+    case SNTEventStateAllowScope: return SNTPBExecution_Reason_ExecutionReasonScope;
+    case SNTEventStateAllowTeamID: return SNTPBExecution_Reason_ExecutionReasonTeamId;
+    case SNTEventStateAllowUnknown: return SNTPBExecution_Reason_ExecutionReasonUnknown;
+    case SNTEventStateBlockBinary: return SNTPBExecution_Reason_ExecutionReasonBinary;
+    case SNTEventStateBlockCertificate: return SNTPBExecution_Reason_ExecutionReasonCert;
+    case SNTEventStateBlockScope: return SNTPBExecution_Reason_ExecutionReasonScope;
+    case SNTEventStateBlockTeamID: return SNTPBExecution_Reason_ExecutionReasonTeamId;
+    case SNTEventStateBlockUnknown: return SNTPBExecution_Reason_ExecutionReasonUnknown;
 
     case SNTEventStateAllow:
     case SNTEventStateUnknown:
     case SNTEventStateBundleBinary:
-    case SNTEventStateBlock: return SNTLegacyExecution_Reason_LegacyExecutionReasonNotRunning;
+    case SNTEventStateBlock: return SNTPBExecution_Reason_ExecutionReasonNotRunning;
   }
 
-  return SNTLegacyExecution_Reason_LegacyExecutionReasonUnknown;
+  return SNTPBExecution_Reason_ExecutionReasonUnknown;
 }
 
-- (SNTLegacyExecution_Mode)protobufModeForClientMode:(SNTClientMode)mode {
+- (SNTPBExecution_Mode)protobufModeForClientMode:(SNTClientMode)mode {
   switch (mode) {
-    case SNTClientModeMonitor: return SNTLegacyExecution_Mode_LegacyExecutionModeMonitor;
-    case SNTClientModeLockdown: return SNTLegacyExecution_Mode_LegacyExecutionModeLockdown;
-    case SNTClientModeUnknown: return SNTLegacyExecution_Mode_LegacyExecutionModeUnknown;
+    case SNTClientModeMonitor: return SNTPBExecution_Mode_ExecutionModeMonitor;
+    case SNTClientModeLockdown: return SNTPBExecution_Mode_ExecutionModeLockdown;
+    case SNTClientModeUnknown: return SNTPBExecution_Mode_ExecutionModeUnknown;
   }
-  return SNTLegacyExecution_Mode_LegacyExecutionModeUnknown;
+  return SNTPBExecution_Mode_ExecutionModeUnknown;
 }
 
 - (void)logFileModification:(santa_message_t)message {
-  SNTLegacyFileModification *fileMod = [[SNTLegacyFileModification alloc] init];
+  SNTPBFileModification *fileMod = [[SNTPBFileModification alloc] init];
 
   fileMod.action = [self protobufActionForSantaMessageAction:message.action];
   fileMod.path = @(message.path);
@@ -198,14 +198,13 @@
   fileMod.machineId =
     [[SNTConfigurator configurator] enableMachineIDDecoration] ? self.machineID : nil;
 
-  SNTLegacyMessage *legacyMsg = [[SNTLegacyMessage alloc] init];
-  legacyMsg.fileModification = fileMod;
-
-  [self wrapMessageAndLog:legacyMsg];
+  [self wrapMessageAndLog:^(SNTPBSantaMessage*sm) {
+    sm.fileModification = fileMod;
+  }];
 }
 
 - (void)logExecution:(santa_message_t)message withDecision:(SNTCachedDecision *)cd {
-  SNTLegacyExecution *exec = [[SNTLegacyExecution alloc] init];
+  SNTPBExecution *exec = [[SNTPBExecution alloc] init];
   exec.decision = [self protobufDecisionForCachedDecision:cd];
   exec.reason = [self protobufReasonForCachedDecision:cd];
   exec.explain = cd.decisionExtra;
@@ -221,10 +220,9 @@
   exec.machineId =
     [[SNTConfigurator configurator] enableMachineIDDecoration] ? self.machineID : nil;
 
-  SNTLegacyMessage *legacyMsg = [[SNTLegacyMessage alloc] init];
-  legacyMsg.execution = exec;
-
-  [self wrapMessageAndLog:legacyMsg];
+  [self wrapMessageAndLog:^(SNTPBSantaMessage*sm) {
+    sm.execution = exec;
+  }];
 }
 
 - (void)logDeniedExecution:(SNTCachedDecision *)cd withMessage:(santa_message_t)message {
@@ -259,7 +257,7 @@
                      dateWithTimeIntervalSinceReferenceDate:[diskProperties[@"DAAppearanceTime"]
                                                               doubleValue]]];
 
-  SNTLegacyDiskAppeared *diskAppeared = [[SNTLegacyDiskAppeared alloc] init];
+  SNTPBDiskAppeared *diskAppeared = [[SNTPBDiskAppeared alloc] init];
   diskAppeared.mount = [diskProperties[@"DAVolumePath"] path];
   diskAppeared.volume = diskProperties[@"DAVolumeName"];
   diskAppeared.bsdName = diskProperties[@"DAMediaBSDName"];
@@ -270,28 +268,26 @@
   diskAppeared.dmgPath = dmgPath;
   diskAppeared.appearance = appearanceDateString;
 
-  SNTLegacyMessage *legacyMsg = [[SNTLegacyMessage alloc] init];
-  legacyMsg.diskAppeared = diskAppeared;
-
-  [self wrapMessageAndLog:legacyMsg];
+  [self wrapMessageAndLog:^(SNTPBSantaMessage*sm) {
+    sm.diskAppeared = diskAppeared;
+  }];
 }
 
 - (void)logDiskDisappeared:(NSDictionary *)diskProperties {
-  SNTLegacyDiskDisappeared *diskDisappeared = [[SNTLegacyDiskDisappeared alloc] init];
+  SNTPBDiskDisappeared *diskDisappeared = [[SNTPBDiskDisappeared alloc] init];
 
   diskDisappeared.mount = [diskProperties[@"DAVolumePath"] path];
   diskDisappeared.volume = diskProperties[@"DAVolumeName"];
   diskDisappeared.bsdName = diskProperties[@"DAMediaBSDName"];
 
-  SNTLegacyMessage *legacyMsg = [[SNTLegacyMessage alloc] init];
-  legacyMsg.diskDisappeared = diskDisappeared;
-
-  [self wrapMessageAndLog:legacyMsg];
+  [self wrapMessageAndLog:^(SNTPBSantaMessage*sm) {
+    sm.diskDisappeared = diskDisappeared;
+  }];
 }
 
 - (void)logBundleHashingEvents:(NSArray<SNTStoredEvent *> *)events {
   for (SNTStoredEvent *event in events) {
-    SNTLegacyBundle *bundle = [[SNTLegacyBundle alloc] init];
+    SNTPBBundle *bundle = [[SNTPBBundle alloc] init];
 
     bundle.sha256 = event.fileSHA256;
     bundle.bundleHash = event.fileBundleHash;
@@ -300,47 +296,43 @@
     bundle.bundlePath = event.fileBundlePath;
     bundle.path = event.filePath;
 
-    SNTLegacyMessage *legacyMsg = [[SNTLegacyMessage alloc] init];
-    legacyMsg.bundle = bundle;
-
-    [self wrapMessageAndLog:legacyMsg];
+    [self wrapMessageAndLog:^(SNTPBSantaMessage*sm) {
+      sm.bundle = bundle;
+    }];
   }
 }
 
 - (void)logFork:(santa_message_t)message {
-  SNTLegacyFork *forkEvent = [[SNTLegacyFork alloc] init];
+  SNTPBFork *forkEvent = [[SNTPBFork alloc] init];
 
   forkEvent.processInfo = [self protobufProcessInfoForSantaMessage:&message];
 
-  SNTLegacyMessage *legacyMsg = [[SNTLegacyMessage alloc] init];
-  legacyMsg.fork = forkEvent;
-
-  [self wrapMessageAndLog:legacyMsg];
+  [self wrapMessageAndLog:^(SNTPBSantaMessage*sm) {
+    sm.fork = forkEvent;
+  }];
 }
 
 - (void)logExit:(santa_message_t)message {
-  SNTLegacyExit *exitEvent = [[SNTLegacyExit alloc] init];
+  SNTPBExit *exitEvent = [[SNTPBExit alloc] init];
 
   exitEvent.processInfo = [self protobufProcessInfoForSantaMessage:&message];
 
-  SNTLegacyMessage *legacyMsg = [[SNTLegacyMessage alloc] init];
-  legacyMsg.exit = exitEvent;
-
-  [self wrapMessageAndLog:legacyMsg];
+  [self wrapMessageAndLog:^(SNTPBSantaMessage*sm) {
+    sm.exit = exitEvent;
+  }];
 }
 
 - (void)logAllowlist:(SNTAllowlistInfo *)allowlistInfo {
-  SNTLegacyAllowlist *allowlistEvent = [[SNTLegacyAllowlist alloc] init];
+  SNTPBAllowlist *allowlistEvent = [[SNTPBAllowlist alloc] init];
 
   allowlistEvent.pid = allowlistInfo.pid;
   allowlistEvent.pidversion = allowlistInfo.pidversion;
   allowlistEvent.path = allowlistInfo.targetPath;
   allowlistEvent.sha256 = allowlistInfo.sha256;
 
-  SNTLegacyMessage *legacyMsg = [[SNTLegacyMessage alloc] init];
-  legacyMsg.allowlist = allowlistEvent;
-
-  [self wrapMessageAndLog:legacyMsg];
+  [self wrapMessageAndLog:^(SNTPBSantaMessage*sm) {
+    sm.allowlist = allowlistEvent;
+  }];
 }
 
 @end

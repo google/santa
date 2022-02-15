@@ -20,7 +20,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 @protocol SNTLogOutput<NSObject>
 
-- (void)logEvent:(SNTSantaMessage *)event;
+- (void)logEvent:(SNTPBSantaMessage *)event;
 - (void)flush;
 
 @end

@@ -61,7 +61,7 @@ NS_ASSUME_NONNULL_BEGIN
   size_t _spoolSizeThreshold;
 
   /** Temporary storage for SNTSantaMessage in an SNTLogBatch. */
-  SNTLogBatch *_outputProto;
+  SNTPBLogBatch *_outputProto;
 
   /** Current serialized size of all events in the _outputProto batch */
   size_t _outputProtoSerializedSize;
@@ -91,7 +91,7 @@ NS_ASSUME_NONNULL_BEGIN
     _spoolSizeThreshold = directorySizeThreshold;
     _estimatedSpoolSize = SIZE_T_MAX;  // Force a recalculation of the spool directory size
     _createdFileCount = 0;
-    _outputProto = [[SNTLogBatch alloc] init];
+    _outputProto = [[SNTPBLogBatch alloc] init];
     _outputProtoSerializedSize = 0;
 
     _flushQueue =
@@ -185,7 +185,7 @@ NS_ASSUME_NONNULL_BEGIN
     _estimatedSpoolSize += _outputProtoSerializedSize;
   }
   // Clear output buffer.
-  _outputProto = [[SNTLogBatch alloc] init];
+  _outputProto = [[SNTPBLogBatch alloc] init];
   _outputProtoSerializedSize = 0;
   return outputEventCount;
 }
@@ -247,7 +247,7 @@ NS_ASSUME_NONNULL_BEGIN
   return totalSize;
 }
 
-- (void)logEvent:(SNTSantaMessage *)event {
+- (void)logEvent:(SNTPBSantaMessage *)event {
   dispatch_sync(_flushQueue, ^{
     if (_outputProtoSerializedSize > _fileSizeThreshold) {
       [self flushLockedWithError:nil];

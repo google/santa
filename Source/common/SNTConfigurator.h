@@ -183,7 +183,7 @@
 ///
 ///  If eventLogType is set to protobuf, mailDirectoryFileSizeThresholdKB sets the per-file size
 ///  limit for files saved in the mailDirectory.
-///  Defaults to 500.
+///  Defaults to 100.
 ///
 ///  @note: This property is KVO compliant, but should only be read once at santad startup.
 ///
@@ -192,7 +192,7 @@
 ///
 ///  If eventLogType is set to protobuf, mailDirectorySizeThresholdMB sets the total size
 ///  limit for all files saved in the mailDirectory.
-///  Defaults to 100.
+///  Defaults to 500.
 ///
 ///  @note: This property is KVO compliant, but should only be read once at santad startup.
 ///
