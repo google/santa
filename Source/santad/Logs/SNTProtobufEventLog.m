@@ -34,16 +34,17 @@
 
 - (instancetype)init {
   SNTSimpleMaildir *mailDir = [[SNTSimpleMaildir alloc]
-                        initWithBaseDirectory:[[SNTConfigurator configurator] mailDirectory]
-                               filenamePrefix:@"out.log"
-                            fileSizeThreshold:[[SNTConfigurator configurator] mailDirectoryFileSizeThresholdKB] * 1024
-                       directorySizeThreshold:[[SNTConfigurator configurator] mailDirectorySizeThresholdMB] * 1024 * 1024
-                        maxTimeBetweenFlushes:[[SNTConfigurator configurator] mailDirectoryEventMaxFlushTimeSec]];
+     initWithBaseDirectory:[[SNTConfigurator configurator] mailDirectory]
+            filenamePrefix:@"out.log"
+         fileSizeThreshold:[[SNTConfigurator configurator] mailDirectoryFileSizeThresholdKB] * 1024
+    directorySizeThreshold:[[SNTConfigurator configurator] mailDirectorySizeThresholdMB] * 1024 *
+                           1024
+     maxTimeBetweenFlushes:[[SNTConfigurator configurator] mailDirectoryEventMaxFlushTimeSec]];
   return [self initWithLog:mailDir];
 }
 
 - (instancetype)initWithLog:(id<SNTLogOutput>)log {
-  if (!_logOutput) {
+  if (!log) {
     return nil;
   }
 
@@ -58,25 +59,19 @@
   [self.logOutput flush];
 }
 
-- (void)wrapMessageAndLog:(void(^)(SNTPBSantaMessage*))setMessage {
+- (void)wrapMessageAndLog:(void (^)(SNTPBSantaMessage *))setMessage {
   SNTPBSantaMessage *sm = [[SNTPBSantaMessage alloc] init];
   setMessage(sm);
-
   [self.logOutput logEvent:sm];
 }
 
 - (SNTPBFileModification_Action)protobufActionForSantaMessageAction:(santa_action_t)action {
   switch (action) {
-    case ACTION_NOTIFY_DELETE:
-      return SNTPBFileModification_Action_FileModificationActionDelete;
-    case ACTION_NOTIFY_EXCHANGE:
-      return SNTPBFileModification_Action_FileModificationActionExchange;
-    case ACTION_NOTIFY_LINK:
-      return SNTPBFileModification_Action_FileModificationActionLink;
-    case ACTION_NOTIFY_RENAME:
-      return SNTPBFileModification_Action_FileModificationActionRename;
-    case ACTION_NOTIFY_WRITE:
-      return SNTPBFileModification_Action_FileModificationActionWrite;
+    case ACTION_NOTIFY_DELETE: return SNTPBFileModification_Action_FileModificationActionDelete;
+    case ACTION_NOTIFY_EXCHANGE: return SNTPBFileModification_Action_FileModificationActionExchange;
+    case ACTION_NOTIFY_LINK: return SNTPBFileModification_Action_FileModificationActionLink;
+    case ACTION_NOTIFY_RENAME: return SNTPBFileModification_Action_FileModificationActionRename;
+    case ACTION_NOTIFY_WRITE: return SNTPBFileModification_Action_FileModificationActionWrite;
     default: return SNTPBFileModification_Action_FileModificationActionUnknown;
   }
 }
@@ -154,8 +149,7 @@
   switch (cd.decision) {
     case SNTEventStateAllowBinary: return SNTPBExecution_Reason_ExecutionReasonBinary;
     case SNTEventStateAllowCompiler: return SNTPBExecution_Reason_ExecutionReasonCompiler;
-    case SNTEventStateAllowTransitive:
-      return SNTPBExecution_Reason_ExecutionReasonTransitive;
+    case SNTEventStateAllowTransitive: return SNTPBExecution_Reason_ExecutionReasonTransitive;
     case SNTEventStateAllowPendingTransitive:
       return SNTPBExecution_Reason_ExecutionReasonPendingTransitive;
     case SNTEventStateAllowCertificate: return SNTPBExecution_Reason_ExecutionReasonCert;
@@ -198,7 +192,7 @@
   fileMod.machineId =
     [[SNTConfigurator configurator] enableMachineIDDecoration] ? self.machineID : nil;
 
-  [self wrapMessageAndLog:^(SNTPBSantaMessage*sm) {
+  [self wrapMessageAndLog:^(SNTPBSantaMessage *sm) {
     sm.fileModification = fileMod;
   }];
 }
@@ -220,7 +214,7 @@
   exec.machineId =
     [[SNTConfigurator configurator] enableMachineIDDecoration] ? self.machineID : nil;
 
-  [self wrapMessageAndLog:^(SNTPBSantaMessage*sm) {
+  [self wrapMessageAndLog:^(SNTPBSantaMessage *sm) {
     sm.execution = exec;
   }];
 }
@@ -268,7 +262,7 @@
   diskAppeared.dmgPath = dmgPath;
   diskAppeared.appearance = appearanceDateString;
 
-  [self wrapMessageAndLog:^(SNTPBSantaMessage*sm) {
+  [self wrapMessageAndLog:^(SNTPBSantaMessage *sm) {
     sm.diskAppeared = diskAppeared;
   }];
 }
@@ -280,7 +274,7 @@
   diskDisappeared.volume = diskProperties[@"DAVolumeName"];
   diskDisappeared.bsdName = diskProperties[@"DAMediaBSDName"];
 
-  [self wrapMessageAndLog:^(SNTPBSantaMessage*sm) {
+  [self wrapMessageAndLog:^(SNTPBSantaMessage *sm) {
     sm.diskDisappeared = diskDisappeared;
   }];
 }
@@ -296,7 +290,7 @@
     bundle.bundlePath = event.fileBundlePath;
     bundle.path = event.filePath;
 
-    [self wrapMessageAndLog:^(SNTPBSantaMessage*sm) {
+    [self wrapMessageAndLog:^(SNTPBSantaMessage *sm) {
       sm.bundle = bundle;
     }];
   }
@@ -307,7 +301,7 @@
 
   forkEvent.processInfo = [self protobufProcessInfoForSantaMessage:&message];
 
-  [self wrapMessageAndLog:^(SNTPBSantaMessage*sm) {
+  [self wrapMessageAndLog:^(SNTPBSantaMessage *sm) {
     sm.fork = forkEvent;
   }];
 }
@@ -317,7 +311,7 @@
 
   exitEvent.processInfo = [self protobufProcessInfoForSantaMessage:&message];
 
-  [self wrapMessageAndLog:^(SNTPBSantaMessage*sm) {
+  [self wrapMessageAndLog:^(SNTPBSantaMessage *sm) {
     sm.exit = exitEvent;
   }];
 }
@@ -330,7 +324,7 @@
   allowlistEvent.path = allowlistInfo.targetPath;
   allowlistEvent.sha256 = allowlistInfo.sha256;
 
-  [self wrapMessageAndLog:^(SNTPBSantaMessage*sm) {
+  [self wrapMessageAndLog:^(SNTPBSantaMessage *sm) {
     sm.allowlist = allowlistEvent;
   }];
 }

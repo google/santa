@@ -12,6 +12,7 @@
 ///    See the License for the specific language governing permissions and
 ///    limitations under the License.
 
+// clang-format off
 /// This benchmarking program pairs well with the hyperfine benchmarking utility:
 /// https://github.com/sharkdp/hyperfine
 ///
@@ -21,6 +22,7 @@
 ///
 /// - Compare the file logger vs the protobuf logger
 ///   hyperfine --warmup 3 --parameter-list logger file,protobuf 'santa_logging_benchmarks_bin -i 100000 -l {logger} -f 100 -s 500 -t 5'
+// clang-format on
 
 #import <EndpointSecurity/EndpointSecurity.h>
 #import <Foundation/Foundation.h>

@@ -18,12 +18,29 @@
 #include <stdio.h>
 
 #import "Source/common/SNTLogging.h"
+#import "Source/common/SNTMetricSet.h"
+
+static NSString *kDefaultMetricFieldName = @"result";
+static NSString *kErrorUserInfoKey = @"MetricsFieldName";
 
 /** Helper for creating errors. */
 static NSError *MakeError(NSString *description) {
   return [NSError errorWithDomain:@"com.google.santa"
                              code:1
-                         userInfo:@{NSLocalizedDescriptionKey : description}];
+                         userInfo:@{kErrorUserInfoKey : description}];
+}
+
+static NSString *ErrorToMetricFieldName(NSError *error) {
+  if (!error) {
+    return kDefaultMetricFieldName;
+  } else {
+    NSString *fieldName = error.userInfo[kErrorUserInfoKey];
+    if (fieldName) {
+      return fieldName;
+    } else {
+      return [NSString stringWithFormat:@"%@:%d", error.domain, (int)error.code];
+    }
+  }
 }
 
 size_t SNTRoundUpToNextPage(size_t size) {
@@ -60,7 +77,7 @@ NS_ASSUME_NONNULL_BEGIN
   /** Threshold for the estimated spool size. */
   size_t _spoolSizeThreshold;
 
-  /** Temporary storage for SNTSantaMessage in an SNTLogBatch. */
+  /** Temporary storage for SNTPBSantaMessage in an SNTPBLogBatch. */
   SNTPBLogBatch *_outputProto;
 
   /** Current serialized size of all events in the _outputProto batch */
@@ -74,6 +91,12 @@ NS_ASSUME_NONNULL_BEGIN
 
   /** Dispatch queue to synchronize flush operations */
   dispatch_queue_t _flushQueue;
+
+  /** Counter for successful and failed event flushing to disk. */
+  SNTMetricCounter *_eventsFlushedCounter;
+
+  /** Counter for successful and failed event queueing in memory. */
+  SNTMetricCounter *_eventsQueuedCounter;
 }
 
 - (instancetype)initWithBaseDirectory:(NSString *)baseDirectory
@@ -93,6 +116,16 @@ NS_ASSUME_NONNULL_BEGIN
     _createdFileCount = 0;
     _outputProto = [[SNTPBLogBatch alloc] init];
     _outputProtoSerializedSize = 0;
+
+    _eventsFlushedCounter = [[SNTMetricSet sharedInstance]
+      counterWithName:@"/santa/events_flushed"
+           fieldNames:@[ kDefaultMetricFieldName ]
+             helpText:@"Number of events flushed, with the result of the flush operation"];
+    _eventsQueuedCounter = [[SNTMetricSet sharedInstance]
+      counterWithName:@"/santa/events_queued"
+           fieldNames:@[ kDefaultMetricFieldName ]
+             helpText:@"Number of events queued in memory, with the result "
+                      @"of their conversion to anyproto"];
 
     _flushQueue =
       dispatch_queue_create("com.google.santa.daemon.mail",
@@ -125,15 +158,15 @@ NS_ASSUME_NONNULL_BEGIN
  * Returns the number of events that we attempted to flush, and populates the error if that flush
  * failed.
  */
-- (int)flushLockedWithError:(NSError **)error {
+- (void)flushLockedWithError:(NSError **)error {
   NSAssert([_outputProto.recordsArray count] < INT_MAX, @"Too many records");
-  int outputEventCount = (int)[_outputProto.recordsArray count];
-  if (outputEventCount == 0) {
-    return 0;
+
+  if ([_outputProto.recordsArray count] == 0) {
+    return;
   }
 
   if (![self createSpoolDirectoriesWithError:error]) {
-    return outputEventCount;
+    return;
   }
 
   if (_estimatedSpoolSize > _spoolSizeThreshold) {
@@ -142,7 +175,7 @@ NS_ASSUME_NONNULL_BEGIN
       if (error) {
         *error = MakeError(@"file_system_threshold_exceeded");
       }
-      return outputEventCount;
+      return;
     }
   }
 
@@ -157,11 +190,13 @@ NS_ASSUME_NONNULL_BEGIN
     if (error) {
       *error = MakeError(@"data_loss_on_open");
     }
-    return outputEventCount;
+    return;
   }
 
+  BOOL writeSuccess = NO;
   @try {
     [_outputProto writeToOutputStream:outputFile];
+    writeSuccess = YES;
   } @catch (NSException *exception) {
     NSLog(@"Error while writing to %@: %@", outputFilepath, exception);
     if (error) {
@@ -170,12 +205,18 @@ NS_ASSUME_NONNULL_BEGIN
   }
 
   [outputFile close];
+
+  if (!writeSuccess) {
+    // Unable to successfully write all data.
+    [[NSFileManager defaultManager] removeItemAtPath:outputFilepath error:nil];
+    return;
+  }
+
   if (![[NSFileManager defaultManager] moveItemAtPath:outputFilepath
                                                toPath:exposedFilepath
                                                 error:nil]) {
+    // Delete the tmp file if unable to move
     [[NSFileManager defaultManager] removeItemAtPath:outputFilepath error:nil];
-    // TODO: delete files in /tmp when move fails. Spool directory could be removed
-    // by Santa on startup.
     if (error) {
       *error = MakeError(@"data_loss_on_move");
     }
@@ -184,28 +225,43 @@ NS_ASSUME_NONNULL_BEGIN
   if (error && !*error) {
     _estimatedSpoolSize += _outputProtoSerializedSize;
   }
+
+  return;
+}
+
+- (void)flushAndUpdateCountersLocked {
+  NSError *error = nil;
+  [self flushLockedWithError:&error];
+
+  [_eventsFlushedCounter incrementBy:[_outputProto.recordsArray count]
+                      forFieldValues:@[ ErrorToMetricFieldName(error) ]];
+
   // Clear output buffer.
   _outputProto = [[SNTPBLogBatch alloc] init];
   _outputProtoSerializedSize = 0;
-  return outputEventCount;
 }
 
 - (void)flush {
   dispatch_sync(_flushQueue, ^{
-    [self flushLockedWithError:nil];
+    [self flushAndUpdateCountersLocked];
   });
 }
 
 - (BOOL)createDirectory:(NSString *)dir withError:(NSError **)error {
   BOOL isDir;
   if (![[NSFileManager defaultManager] fileExistsAtPath:dir isDirectory:&isDir]) {
-    return [[NSFileManager defaultManager] createDirectoryAtPath:dir
-                                     withIntermediateDirectories:NO
-                                                      attributes:nil
-                                                           error:error];
+    if (![[NSFileManager defaultManager] createDirectoryAtPath:dir
+                                   withIntermediateDirectories:NO
+                                                    attributes:nil
+                                                         error:nil]) {
+      if (error) {
+        *error = MakeError(@"failed_to_create_dir");
+      }
+      return NO;
+    }
   } else if (!isDir) {
     if (error) {
-      *error = MakeError([NSString stringWithFormat:@"%@ is not a directory", dir]);
+      *error = MakeError(@"dir_exists_as_regular_file");
     }
     return NO;
   }
@@ -250,10 +306,11 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)logEvent:(SNTPBSantaMessage *)event {
   dispatch_sync(_flushQueue, ^{
     if (_outputProtoSerializedSize > _fileSizeThreshold) {
-      [self flushLockedWithError:nil];
+      [self flushAndUpdateCountersLocked];
     }
 
     [_outputProto.recordsArray addObject:event];
+    [_eventsQueuedCounter incrementForFieldValues:@[ kDefaultMetricFieldName ]];
     // Note: +2 added to account for serialization of extra record in the _outputProto array
     _outputProtoSerializedSize += [event serializedSize] + 2;
   });

@@ -81,6 +81,7 @@ objc_library(
     ],
     deps = [
         ":event_logs_common",
+        "//Source/common:SNTMetricSet",
         "//Source/common:log_objc_proto",
     ],
 )

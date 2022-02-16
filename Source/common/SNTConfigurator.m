@@ -378,7 +378,8 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
 }
 
 + (NSSet *)keyPathsForValuesAffectingMailDirectoryEventMaxFlushTimeSec {
-  return [self configStateSet]; }
+  return [self configStateSet];
+}
 
 + (NSSet *)keyPathsForValuesAffectingEnableMachineIDDecoration {
   return [self configStateSet];
@@ -690,18 +691,21 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
 }
 
 - (NSUInteger)mailDirectoryFileSizeThresholdKB {
-  return self.configState[kMailDirectoryFileSizeThresholdKB] ?
-      [self.configState[kMailDirectoryFileSizeThresholdKB] unsignedIntegerValue] : 100;
+  return self.configState[kMailDirectoryFileSizeThresholdKB]
+           ? [self.configState[kMailDirectoryFileSizeThresholdKB] unsignedIntegerValue]
+           : 100;
 }
 
 - (NSUInteger)mailDirectorySizeThresholdMB {
-  return self.configState[kMailDirectorySizeThresholdMB] ?
-      [self.configState[kMailDirectorySizeThresholdMB] unsignedIntegerValue] : 500;
+  return self.configState[kMailDirectorySizeThresholdMB]
+           ? [self.configState[kMailDirectorySizeThresholdMB] unsignedIntegerValue]
+           : 500;
 }
 
 - (float)mailDirMaxFlushTime {
-  return self.configState[kMailDirectoryEventMaxFlushTimeSec] ?
-      [self.configState[kMailDirectoryEventMaxFlushTimeSec] floatValue] : 5.0;
+  return self.configState[kMailDirectoryEventMaxFlushTimeSec]
+           ? [self.configState[kMailDirectoryEventMaxFlushTimeSec] floatValue]
+           : 5.0;
 }
 
 - (BOOL)enableMachineIDDecoration {
