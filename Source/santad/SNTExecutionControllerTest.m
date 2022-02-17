@@ -285,8 +285,8 @@
   OCMStub([self.mockFileInfo initWithPath:OCMOCK_ANY error:[OCMArg setTo:nil]]).andReturn(nil);
 
   // Lockdown mode, no fail-closed
-  OCMExpect([self.mockConfigurator failClosed]).andReturn(NO);
-  OCMExpect([self.mockConfigurator clientMode]).andReturn(SNTClientModeLockdown);
+  OCMStub([self.mockConfigurator failClosed]).andReturn(NO);
+  OCMStub([self.mockConfigurator clientMode]).andReturn(SNTClientModeLockdown);
   [self.sut validateBinaryWithMessage:[self getMessage]];
   OCMVerify([self.mockDriverManager postAction:ACTION_RESPOND_ALLOW forMessage:[self getMessage]]);
   [self checkMetricCounters:kAllowNoFileInfo expected:@2];
@@ -301,8 +301,8 @@
   OCMStub([self.mockFileInfo initWithPath:OCMOCK_ANY error:[OCMArg setTo:nil]]).andReturn(nil);
 
   // Lockdown mode, fail-closed
-  OCMExpect([self.mockConfigurator failClosed]).andReturn(YES);
-  OCMExpect([self.mockConfigurator clientMode]).andReturn(SNTClientModeLockdown);
+  OCMStub([self.mockConfigurator failClosed]).andReturn(YES);
+  OCMStub([self.mockConfigurator clientMode]).andReturn(SNTClientModeLockdown);
   [self.sut validateBinaryWithMessage:[self getMessage]];
   OCMVerify([self.mockDriverManager postAction:ACTION_RESPOND_DENY forMessage:[self getMessage]]);
   [self checkMetricCounters:kDenyNoFileInfo expected:@1];
@@ -317,8 +317,8 @@
   OCMStub([self.mockFileInfo initWithPath:OCMOCK_ANY error:[OCMArg setTo:nil]]).andReturn(nil);
 
   // Monitor mode, fail-closed
-  OCMExpect([self.mockConfigurator failClosed]).andReturn(YES);
-  OCMExpect([self.mockConfigurator clientMode]).andReturn(SNTClientModeMonitor);
+  OCMStub([self.mockConfigurator failClosed]).andReturn(YES);
+  OCMStub([self.mockConfigurator clientMode]).andReturn(SNTClientModeMonitor);
   [self.sut validateBinaryWithMessage:[self getMessage]];
   OCMVerify([self.mockDriverManager postAction:ACTION_RESPOND_ALLOW forMessage:[self getMessage]]);
   [self checkMetricCounters:kAllowNoFileInfo expected:@1];
