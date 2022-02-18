@@ -107,6 +107,23 @@ objc_library(
     ],
 )
 
+objc_library(
+    name = "DiskArbitrationTestLib",
+    testonly = 1,
+    srcs = [
+        "EventProviders/DiskArbitrationTestUtil.h",
+        "EventProviders/DiskArbitrationTestUtil.mm",
+    ],
+    sdk_dylibs = [
+        "EndpointSecurity",
+        "bsm",
+    ],
+    sdk_frameworks = [
+        "DiskArbitration",
+        "IOKit",
+    ],
+)
+
 macos_bundle(
     name = "com.google.santa.daemon",
     bundle_extension = "systemextension",
@@ -230,6 +247,7 @@ santa_unit_test(
         "bsm",
     ],
     deps = [
+        ":DiskArbitrationTestLib",
         ":EndpointSecurityTestLib",
         ":santad_lib",
         "//Source/common:SNTKernelCommon",
@@ -297,4 +315,17 @@ santa_unit_test(
         "//Source/santametricservice/Formats:SNTMetricFormatTestHelper",
         "@OCMock",
     ],
+)
+
+test_suite(
+    name = "unit_tests",
+    tests = [
+        ":SNTApplicationCoreMetricsTest",
+        ":SNTApplicationTest",
+        ":SNTEndpointSecurityManagerTest",
+        ":SNTEventTableTest",
+        ":SNTExecutionControllerTest",
+        ":SNTRuleTableTest",
+    ],
+    visibility = ["//:santa_package_group"],
 )

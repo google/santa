@@ -43,8 +43,8 @@
   SNTMetricRawJSONFormat *formatter = [[SNTMetricRawJSONFormat alloc] init];
   NSDictionary *validMetricsDict = [SNTMetricFormatTestHelper createValidMetricsDictionary];
 
-  NSArray<NSData *> *output = [formatter convert:validMetricsDict error:nil];
-  output = [formatter convert:validMetricsDict error:NULL];
+  [formatter convert:validMetricsDict error:nil];
+  [formatter convert:validMetricsDict error:NULL];
 }
 
 @end

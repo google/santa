@@ -130,12 +130,19 @@ static NSString *const kPrinterProxyPostMonterey =
     return;
   }
 
+  SNTConfigurator *config = [SNTConfigurator configurator];
+
   NSError *fileInfoError;
   SNTFileInfo *binInfo = [[SNTFileInfo alloc] initWithPath:@(message.path) error:&fileInfoError];
   if (unlikely(!binInfo)) {
     LOGE(@"Failed to read file %@: %@", @(message.path), fileInfoError.localizedDescription);
-    [self.eventProvider postAction:ACTION_RESPOND_ALLOW forMessage:message];
-    [self.events incrementForFieldValues:@[ (NSString *)kAllowNoFileInfo ]];
+    if (config.failClosed && config.clientMode == SNTClientModeLockdown) {
+      [self.eventProvider postAction:ACTION_RESPOND_DENY forMessage:message];
+      [self.events incrementForFieldValues:@[ (NSString *)kDenyNoFileInfo ]];
+    } else {
+      [self.eventProvider postAction:ACTION_RESPOND_ALLOW forMessage:message];
+      [self.events incrementForFieldValues:@[ (NSString *)kAllowNoFileInfo ]];
+    }
     return;
   }
 
@@ -223,21 +230,24 @@ static NSString *const kPrinterProxyPostMonterey =
     se.quarantineTimestamp = binInfo.quarantineTimestamp;
     se.quarantineAgentBundleID = binInfo.quarantineAgentBundleID;
 
-    dispatch_async(_eventQueue, ^{
-      [self.eventTable addStoredEvent:se];
-    });
+    // Only store events if there is a sync server configured.
+    if (config.syncBaseURL) {
+      dispatch_async(_eventQueue, ^{
+        [self.eventTable addStoredEvent:se];
+      });
+    }
 
     // If binary was blocked, do the needful
     if (action != ACTION_RESPOND_ALLOW && action != ACTION_RESPOND_ALLOW_COMPILER) {
       [[SNTEventLog logger] logDeniedExecution:cd withMessage:message];
 
-      if ([[SNTConfigurator configurator] enableBundles] && binInfo.bundle) {
+      if (config.enableBundles && binInfo.bundle) {
         // If the binary is part of a bundle, find and hash all the related binaries in the bundle.
         // Let the GUI know hashing is needed. Once the hashing is complete the GUI will send a
         // message to santad to perform the upload logic for bundles.
         // See syncBundleEvent:relatedEvents: for more info.
         se.needsBundleHash = YES;
-      } else if ([[SNTConfigurator configurator] syncBaseURL]) {
+      } else if (config.syncBaseURL) {
         // So the server has something to show the user straight away, initiate an event
         // upload for the blocked binary rather than waiting for the next sync.
         dispatch_async(_eventQueue, ^{

@@ -44,7 +44,8 @@ void diskMountedCallback(DADiskRef disk, DADissenterRef dissenter, void *context
 void diskAppearedCallback(DADiskRef disk, void *context) {
   NSDictionary *props = CFBridgingRelease(DADiskCopyDescription(disk));
   if (![props[@"DAVolumeMountable"] boolValue]) return;
-  [[SNTEventLog logger] logDiskAppeared:props];
+  SNTEventLog *logger = [SNTEventLog logger];
+  if (logger) [logger logDiskAppeared:props];
 }
 
 void diskDescriptionChangedCallback(DADiskRef disk, CFArrayRef keys, void *context) {
@@ -52,7 +53,8 @@ void diskDescriptionChangedCallback(DADiskRef disk, CFArrayRef keys, void *conte
   if (![props[@"DAVolumeMountable"] boolValue]) return;
 
   if (props[@"DAVolumePath"]) {
-    [[SNTEventLog logger] logDiskAppeared:props];
+    SNTEventLog *logger = [SNTEventLog logger];
+    if (logger) [logger logDiskAppeared:props];
   }
 }
 
@@ -60,7 +62,8 @@ void diskDisappearedCallback(DADiskRef disk, void *context) {
   NSDictionary *props = CFBridgingRelease(DADiskCopyDescription(disk));
   if (![props[@"DAVolumeMountable"] boolValue]) return;
 
-  [[SNTEventLog logger] logDiskDisappeared:props];
+  SNTEventLog *logger = [SNTEventLog logger];
+  if (logger) [logger logDiskDisappeared:props];
 }
 
 NSArray<NSString *> *maskToMountArgs(long remountOpts) {
@@ -105,25 +108,25 @@ long mountArgsToMask(NSArray<NSString *> *args) {
 @interface SNTDeviceManager ()
 
 @property DASessionRef diskArbSession;
-@property(readonly, nonatomic) es_client_t *client;
+@property(nonatomic, readonly) es_client_t *client;
 @property(nonatomic, readonly) dispatch_queue_t esAuthQueue;
+@property(nonatomic, readonly) dispatch_queue_t diskQueue;
 @end
 
 @implementation SNTDeviceManager
 
-- (instancetype)init API_AVAILABLE(macos(10.15)) {
+- (instancetype _Nonnull)init API_AVAILABLE(macos(10.15)) {
   self = [super init];
   if (self) {
     _blockUSBMount = false;
 
-    dispatch_queue_t disk_queue =
-      dispatch_queue_create("com.google.santad.disk_queue", DISPATCH_QUEUE_SERIAL);
+    _diskQueue = dispatch_queue_create("com.google.santad.disk_queue", DISPATCH_QUEUE_SERIAL);
 
     _esAuthQueue =
       dispatch_queue_create("com.google.santa.daemon.es_device_auth", DISPATCH_QUEUE_CONCURRENT);
 
     _diskArbSession = DASessionCreate(NULL);
-    DASessionSetDispatchQueue(_diskArbSession, disk_queue);
+    DASessionSetDispatchQueue(_diskArbSession, _diskQueue);
 
     if (@available(macos 10.15, *)) [self initES];
   }
@@ -205,16 +208,17 @@ long mountArgsToMask(NSArray<NSString *> *args) {
   // TODO(tnek): Log all of the other attributes available in diskInfo into a structured log format.
   NSDictionary *diskInfo = CFBridgingRelease(DADiskCopyDescription(disk));
   BOOL isRemovable = [diskInfo[(__bridge NSString *)kDADiskDescriptionMediaRemovableKey] boolValue];
-  BOOL isUSB = [diskInfo[@"DADeviceProtocol"] isEqualTo:@"USB"];
+  BOOL isUSB =
+    [diskInfo[(__bridge NSString *)kDADiskDescriptionDeviceProtocolKey] isEqualTo:@"USB"];
 
   if (!isRemovable || !isUSB) {
     es_respond_auth_result(self.client, m, ES_AUTH_RESULT_ALLOW, false);
     return;
   }
 
-  es_respond_auth_result(self.client, m, ES_AUTH_RESULT_DENY, false);
+  BOOL shouldRemount = self.remountArgs != nil && [self.remountArgs count] > 0;
 
-  if (self.remountArgs != nil && [self.remountArgs count] > 0) {
+  if (shouldRemount) {
     long remountOpts = mountArgsToMask(self.remountArgs);
     if (mountMode & remountOpts) {
       es_respond_auth_result(self.client, m, ES_AUTH_RESULT_ALLOW, false);
@@ -227,6 +231,7 @@ long mountArgsToMask(NSArray<NSString *> *args) {
          newMode);
     [self remount:disk mountMode:newMode];
   }
+  es_respond_auth_result(self.client, m, ES_AUTH_RESULT_DENY, false);
 }
 
 - (void)remount:(DADiskRef)disk mountMode:(long)remountMask {
@@ -237,6 +242,7 @@ long mountArgsToMask(NSArray<NSString *> *args) {
 
   DADiskMountWithArguments(disk, NULL, kDADiskMountOptionDefault, diskMountedCallback,
                            (__bridge void *)self, (CFStringRef *)argv);
+
   free(argv);
 }
 

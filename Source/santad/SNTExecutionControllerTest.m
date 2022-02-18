@@ -53,6 +53,8 @@
 
   self.mockConfigurator = OCMClassMock([SNTConfigurator class]);
   OCMStub([self.mockConfigurator configurator]).andReturn(self.mockConfigurator);
+  NSURL *url = [NSURL URLWithString:@"https://localhost/test"];
+  OCMStub([self.mockConfigurator syncBaseURL]).andReturn(url);
 
   self.mockDriverManager = OCMClassMock([SNTDriverManager class]);
 
@@ -93,12 +95,11 @@
   NSDictionary *eventCounter = [metricSet export][@"metrics"][@"/santa/events"];
   BOOL foundField;
   for (NSDictionary *fieldValue in eventCounter[@"fields"][@"action_response"]) {
-    if ([expectedFieldValueName isEqualToString:fieldValue[@"value"]]) {
-      XCTAssertEqualObjects(expectedValue, fieldValue[@"data"],
-                            @"%@ counter does not match expected value", expectedFieldValueName);
-      foundField = YES;
-      break;
-    }
+    if (![expectedFieldValueName isEqualToString:fieldValue[@"value"]]) continue;
+    XCTAssertEqualObjects(expectedValue, fieldValue[@"data"],
+                          @"%@ counter does not match expected value", expectedFieldValueName);
+    foundField = YES;
+    break;
   }
 
   if (!foundField) {
@@ -273,6 +274,54 @@
 
   [self checkMetricCounters:kBlockUnknown expected:@2];
   [self checkMetricCounters:kAllowUnknown expected:@1];
+}
+
+- (void)testUnreadableFailOpenLockdown {
+  // Undo the default mocks
+  [self.mockFileInfo stopMocking];
+  self.mockFileInfo = OCMClassMock([SNTFileInfo class]);
+
+  OCMStub([self.mockFileInfo alloc]).andReturn(nil);
+  OCMStub([self.mockFileInfo initWithPath:OCMOCK_ANY error:[OCMArg setTo:nil]]).andReturn(nil);
+
+  // Lockdown mode, no fail-closed
+  OCMStub([self.mockConfigurator failClosed]).andReturn(NO);
+  OCMStub([self.mockConfigurator clientMode]).andReturn(SNTClientModeLockdown);
+  [self.sut validateBinaryWithMessage:[self getMessage]];
+  OCMVerify([self.mockDriverManager postAction:ACTION_RESPOND_ALLOW forMessage:[self getMessage]]);
+  [self checkMetricCounters:kAllowNoFileInfo expected:@2];
+}
+
+- (void)testUnreadableFailClosedLockdown {
+  // Undo the default mocks
+  [self.mockFileInfo stopMocking];
+  self.mockFileInfo = OCMClassMock([SNTFileInfo class]);
+
+  OCMStub([self.mockFileInfo alloc]).andReturn(nil);
+  OCMStub([self.mockFileInfo initWithPath:OCMOCK_ANY error:[OCMArg setTo:nil]]).andReturn(nil);
+
+  // Lockdown mode, fail-closed
+  OCMStub([self.mockConfigurator failClosed]).andReturn(YES);
+  OCMStub([self.mockConfigurator clientMode]).andReturn(SNTClientModeLockdown);
+  [self.sut validateBinaryWithMessage:[self getMessage]];
+  OCMVerify([self.mockDriverManager postAction:ACTION_RESPOND_DENY forMessage:[self getMessage]]);
+  [self checkMetricCounters:kDenyNoFileInfo expected:@1];
+}
+
+- (void)testUnreadableFailClosedMonitor {
+  // Undo the default mocks
+  [self.mockFileInfo stopMocking];
+  self.mockFileInfo = OCMClassMock([SNTFileInfo class]);
+
+  OCMStub([self.mockFileInfo alloc]).andReturn(nil);
+  OCMStub([self.mockFileInfo initWithPath:OCMOCK_ANY error:[OCMArg setTo:nil]]).andReturn(nil);
+
+  // Monitor mode, fail-closed
+  OCMStub([self.mockConfigurator failClosed]).andReturn(YES);
+  OCMStub([self.mockConfigurator clientMode]).andReturn(SNTClientModeMonitor);
+  [self.sut validateBinaryWithMessage:[self getMessage]];
+  OCMVerify([self.mockDriverManager postAction:ACTION_RESPOND_ALLOW forMessage:[self getMessage]]);
+  [self checkMetricCounters:kAllowNoFileInfo expected:@1];
 }
 
 - (void)testMissingShasum {

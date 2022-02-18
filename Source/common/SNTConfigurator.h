@@ -26,7 +26,7 @@
 #pragma mark - Daemon Settings
 
 ///
-///  The operating mode.
+///  The operating mode. Defaults to MONITOR.
 ///
 @property(readonly, nonatomic) SNTClientMode clientMode;
 
@@ -34,6 +34,17 @@
 ///  Set the operating mode as received from a sync server.
 ///
 - (void)setSyncServerClientMode:(SNTClientMode)newMode;
+
+///
+///  Enable Fail Close mode. Defaults to NO.
+///  This controls Santa's behavior when a failure occurs, such as an
+///  inability to read a file. By default, to prevent bugs or misconfiguration
+///  from rendering a machine inoperable Santa will fail open and allow
+///  execution. With this setting enabled, Santa will fail closed if the client
+///  is in LOCKDOWN mode, offering a higher level of security but with a higher
+///  potential for causing problems.
+///
+@property(readonly, nonatomic) BOOL failClosed;
 
 ///
 ///  The regex of allowed paths. Regexes are specified in ICU format.
@@ -426,6 +437,11 @@
 /// Duration in seconds of how often the metrics should be exported.
 ///
 @property(readonly, nonatomic) NSUInteger metricExportInterval;
+
+///
+/// Duration in seconds for metrics export timeout. Defaults to 30;
+///
+@property(readonly, nonatomic) NSUInteger metricExportTimeout;
 
 ///
 ///  Retrieve an initialized singleton configurator object using the default file path.

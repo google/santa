@@ -21,10 +21,11 @@ also known as mobileconfig files, which are in an Apple-specific XML format.
 
 | Key                           | Value Type | Description                              |
 | ----------------------------- | ---------- | ---------------------------------------- |
-| ClientMode*                   | Integer    | 1 = MONITOR, 2 = LOCKDOWN, defaults to MONITOR |
-| FileChangesRegex*             | String     | The regex of paths to log file changes. Regexes are specified in ICU format. |
-| AllowedPathRegex*             | String     | A regex to allow if the binary or certificate scopes did not allow/block execution.  Regexes are specified in ICU format. |
-| BlockedPathRegex*             | String     | A regex to block if the binary or certificate scopes did not allow/block an execution.  Regexes are specified in ICU format. |
+| ClientMode\*                  | Integer    | 1 = MONITOR, 2 = LOCKDOWN, defaults to MONITOR |
+| FailClosed                    | Bool       | If true and the ClientMode is LOCKDOWN: execution will be denied when there is an error reading or processing an executable file. |
+| FileChangesRegex\*            | String     | The regex of paths to log file changes. Regexes are specified in ICU format. |
+| AllowedPathRegex\*            | String     | A regex to allow if the binary or certificate scopes did not allow/block execution.  Regexes are specified in ICU format. |
+| BlockedPathRegex\*            | String     | A regex to block if the binary or certificate scopes did not allow/block an execution.  Regexes are specified in ICU format. |
 | EnableBadSignatureProtection  | Bool       | Enable bad signature protection, defaults to NO. If this flag is set to YES, binaries with a bad signing chain will be blocked even in MONITOR mode, **unless** the binary is allowed by an explicit rule. |
 | EnablePageZeroProtection      | Bool       | Enable `__PAGEZERO` protection, defaults to YES. If this flag is set to YES, 32-bit binaries that are missing the `__PAGEZERO` segment will be blocked even in MONITOR mode, **unless** the binary is allowed by an explicit rule. |
 | EnableSysxCache               | Bool       | Enables a secondary cache that ensures better performance when multiple EndpointSecurity system extensions are installed. Defaults to YES in 2021.8, defaults to NO in earlier versions. |
@@ -55,7 +56,8 @@ also known as mobileconfig files, which are in an Apple-specific XML format.
 | EnableMachineIDDecoration     | Bool       | If YES, this appends the MachineID to the end of each log line. Defaults to NO.       |
 | MetricFormat                  | String     | Format to export metrics as, supported formats are "rawjson" for a single JSON blob and "monarchjson" for a format consumable by Google's Monarch tooling. Defaults to "". |
 | MetricURL                     | String     | URL describing where monitoring metrics should be exported.  |
-| MetricExportInterval          | Integer    | Number of seconds to wait between exporting metrics. Defaults to 30.  
+| MetricExportInterval          | Integer    | Number of seconds to wait between exporting metrics. Defaults to 30.  |
+| MetricExportTimeout           | Integer    | Number of seconds to wait before a timeout occurs when exporting metrics. Defaults to 30.  |
 | MetricExtraLabels             | Dictionary | A map of key value pairs to add to all metric root labels. (e.g. a=b,c=d) defaults to @{}). If a previously set key (e.g. host_name is set to "" then the key is remove from the metric root labels. Alternatively if a value is set for an existing key then the new value will override the old. |
 
 

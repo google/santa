@@ -4,6 +4,7 @@
 #import <MOLAuthenticatingURLSession/MOLAuthenticatingURLSession.h>
 #import <OCMock/OCMock.h>
 
+#import "Source/common/SNTConfigurator.h"
 #import "Source/santametricservice/Writers/SNTMetricHTTPWriter.h"
 
 @interface SNTMetricHTTPWriterTest : XCTestCase
@@ -12,6 +13,7 @@
 @property id mockMOLAuthenticatingURLSession;
 @property NSMutableArray<NSDictionary *> *mockResponses;
 @property SNTMetricHTTPWriter *httpWriter;
+@property id mockConfigurator;
 @end
 
 @implementation SNTMetricHTTPWriterTest
@@ -27,6 +29,9 @@
 
   self.httpWriter = [[SNTMetricHTTPWriter alloc] init];
   self.mockResponses = [[NSMutableArray alloc] init];
+
+  self.mockConfigurator = OCMClassMock([SNTConfigurator class]);
+  OCMStub([self.mockConfigurator configurator]).andReturn(self.mockConfigurator);
 
   // This must be marked __unsafe_unretained because we're going to store into
   // it using NSInvocation's getArgument:atIndex: method which takes a void*
@@ -180,5 +185,19 @@
   result = [self.httpWriter write:@[ JSONdata ] toURL:url error:NULL];
 
   XCTAssertFalse(result);
+}
+
+- (void)testEnsureTimeoutsDoNotCrashWriter {
+  NSURL *url = [NSURL URLWithString:@"http://localhost:11444"];
+
+  // Queue up two responses for nil and NULL.
+  [self createMockResponseWithURL:url withCode:400 withData:nil withError:nil];
+  // Set the timeout to 0 second
+  OCMStub([self.mockConfigurator metricExportTimeout]).andReturn(0);
+
+  NSData *JSONdata = [@"{\"foo\": \"bar\"}\r\n" dataUsingEncoding:NSUTF8StringEncoding];
+
+  BOOL result = [self.httpWriter write:@[ JSONdata ] toURL:url error:nil];
+  XCTAssertEqual(NO, result);
 }
 @end

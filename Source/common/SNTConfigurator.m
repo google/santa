@@ -96,6 +96,7 @@ static NSString *const kFCMAPIKey = @"FCMAPIKey";
 
 // The keys managed by a sync server or mobileconfig.
 static NSString *const kClientModeKey = @"ClientMode";
+static NSString *const kFailClosedKey = @"FailClosed";
 static NSString *const kBlockUSBMountKey = @"BlockUSBMount";
 static NSString *const kRemountUSBModeKey = @"RemountUSBMode";
 static NSString *const kEnableTransitiveRulesKey = @"EnableTransitiveRules";
@@ -109,6 +110,7 @@ static NSString *const kBlockedPathRegexKeyDeprecated = @"BlacklistRegex";
 static NSString *const kMetricFormat = @"MetricFormat";
 static NSString *const kMetricURL = @"MetricURL";
 static NSString *const kMetricExportInterval = @"MetricExportInterval";
+static NSString *const kMetricExportTimeout = @"MetricExportTimeout";
 static NSString *const kMetricExtraLabels = @"MetricExtraLabels";
 
 // The keys managed by a sync server.
@@ -142,6 +144,7 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
     };
     _forcedConfigKeyTypes = @{
       kClientModeKey : number,
+      kFailClosedKey : number,
       kEnableTransitiveRulesKey : number,
       kEnableTransitiveRulesKeyDeprecated : number,
       kFileChangesRegexKey : re,
@@ -191,6 +194,7 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
       kMetricFormat : string,
       kMetricURL : string,
       kMetricExportInterval : number,
+      kMetricExportTimeout : number,
       kMetricExtraLabels : dictionary,
     };
     _defaults = [NSUserDefaults standardUserDefaults];
@@ -427,6 +431,12 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
   if (newMode == SNTClientModeMonitor || newMode == SNTClientModeLockdown) {
     [self updateSyncStateForKey:kClientModeKey value:@(newMode)];
   }
+}
+
+- (BOOL)failClosed {
+  NSNumber *n = self.configState[kFailClosedKey];
+  if (n) return [n boolValue];
+  return NO;
 }
 
 - (BOOL)enableTransitiveRules {
@@ -744,6 +754,16 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
 // Returns a default value of 30 (for 30 seconds).
 - (NSUInteger)metricExportInterval {
   NSNumber *configuredInterval = self.configState[kMetricExportInterval];
+
+  if (configuredInterval == nil) {
+    return 30;
+  }
+  return [configuredInterval unsignedIntegerValue];
+}
+
+// Returns a default value of 30 (for 30 seconds).
+- (NSUInteger)metricExportTimeout {
+  NSNumber *configuredInterval = self.configState[kMetricExportTimeout];
 
   if (configuredInterval == nil) {
     return 30;

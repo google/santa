@@ -21,6 +21,7 @@
 #import "Source/common/SNTConfigurator.h"
 #import "Source/common/SNTLogging.h"
 #import "Source/common/SNTStoredEvent.h"
+#import "Source/santad/EventProviders/SNTEndpointSecurityManager.h"
 
 @implementation SNTSyslogEventLog
 
@@ -66,12 +67,11 @@
   char ppath[PATH_MAX] = "(null)";
   if (message.es_message) {
     es_message_t *m = message.es_message;
-    es_string_token_t path = m->process->executable->path;
-    size_t length = path.length;
-    if (length++ > PATH_MAX) length = PATH_MAX;
-    strlcpy(ppath, path.data, length);
+    [SNTEndpointSecurityManager populateBufferFromESFile:m->process->executable
+                                                  buffer:ppath
+                                                    size:sizeof(ppath)];
   } else {
-    proc_pidpath(message.pid, ppath, PATH_MAX);
+    proc_pidpath(message.pid, ppath, sizeof(ppath));
   }
 
   [outStr

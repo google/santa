@@ -45,7 +45,10 @@
                                                         error = e;
                                                         dispatch_semaphore_signal(sema);
                                                       }];
-  dispatch_semaphore_wait(sema, dispatch_time(DISPATCH_TIME_NOW, 300 * NSEC_PER_SEC));
+  if (dispatch_semaphore_wait(sema, dispatch_time(DISPATCH_TIME_NOW, 300 * NSEC_PER_SEC))) {
+    LOGE(@"Failed to add rule(s) to database: timeout sending rules to daemon");
+    return NO;
+  }
 
   if (error) {
     LOGE(@"Failed to add rule(s) to database: %@", error.localizedDescription);
