@@ -232,7 +232,6 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)flushAndUpdateCountersLocked {
   NSError *error = nil;
   [self flushLockedWithError:&error];
-
   [_eventsFlushedCounter incrementBy:[_outputProto.recordsArray count]
                       forFieldValues:@[ ErrorToMetricFieldName(error) ]];
 
@@ -305,14 +304,38 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)logEvent:(SNTPBSantaMessage *)event {
   dispatch_sync(_flushQueue, ^{
+    // Note: The `serializedSize` method is costly. In order to calculate the
+    // size of the `_outputProto` accurately, we need to add both the serialized
+    // size of the new event plus additional overhead incurred from adding the
+    // new event to the current array of events. The `anyObjOverhead` is used
+    // to store the calculated overhead when the first event is logged and the
+    // overhead is then used when calculating `_outputProtoSerializedSize`.
+    static size_t anyObjOverhead = 0;
+    static dispatch_once_t onceToken;
+
     if (_outputProtoSerializedSize > _fileSizeThreshold) {
       [self flushAndUpdateCountersLocked];
     }
 
-    [_outputProto.recordsArray addObject:event];
-    [_eventsQueuedCounter incrementForFieldValues:@[ kDefaultMetricFieldName ]];
-    // Note: +2 added to account for serialization of extra record in the _outputProto array
-    _outputProtoSerializedSize += [event serializedSize] + 2;
+    NSError *error = nil;
+    GPBAny *any = [GPBAny anyWithMessage:event error:nil];
+    if (any) {
+      [_outputProto.recordsArray addObject:any];
+
+      dispatch_once(&onceToken, ^{
+        size_t outputSerializedSize = [_outputProto serializedSize];
+        size_t eventSerializedSize = [event serializedSize];
+        if (outputSerializedSize > eventSerializedSize) {
+          anyObjOverhead = outputSerializedSize - eventSerializedSize;
+        }
+      });
+
+      _outputProtoSerializedSize += [event serializedSize] + anyObjOverhead;
+    } else {
+      error = MakeError(@"enqueue_error");
+    }
+
+    [_eventsQueuedCounter incrementForFieldValues:@[ ErrorToMetricFieldName(error) ]];
   });
 }
 

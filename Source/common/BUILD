@@ -11,6 +11,7 @@ licenses(["notice"])
 proto_library(
     name = "log_proto",
     srcs = ["santa.proto"],
+    deps = ["@com_google_protobuf//:any_proto"],
 )
 
 objc_proto_library(

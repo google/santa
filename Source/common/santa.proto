@@ -1,5 +1,7 @@
 syntax = "proto3";
 
+import "google/protobuf/any.proto";
+
 option objc_class_prefix = "SNTPB";
 // option go_api_flag = "OPEN_TO_OPAQUE_HYBRID";
 
@@ -129,7 +131,6 @@ message SantaMessage {
   }
 }
 
-// TODO: Any
 message LogBatch {
-  repeated SantaMessage records = 1;
+  repeated google.protobuf.Any records = 1;
 }
