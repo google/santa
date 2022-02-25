@@ -45,15 +45,7 @@ NS_ASSUME_NONNULL_BEGIN
 }
 
 - (NSAttributedString *)attributedCustomMessage {
-  if (self.customMessage) {
-    return [SNTBlockMessage formatMessage:self.customMessage];
-  }
-  if (self.event.remountArgs && [self.event.remountArgs count] > 0) {
-    return [SNTBlockMessage
-      formatMessage:@"The following device has been remounted with reduced permissions."];
-  }
-
-  return [SNTBlockMessage formatMessage:@"The following device has been blocked from mounting."];
+  return [SNTBlockMessage formatMessage:self.customMessage];
 }
 
 - (NSString *)messageHash {
