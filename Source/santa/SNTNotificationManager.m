@@ -82,12 +82,12 @@ static NSString *const silencedNotificationsKey = @"SilencedNotifications";
 }
 
 - (BOOL)notificationAlreadyQueued:(SNTMessageWindowController *)pendingMsg {
-    for (SNTMessageWindowController *msg in self.pendingNotifications) {
-        if ([msg messageHash] == [pendingMsg messageHash]) {
-            return YES;
-        }
+  for (SNTMessageWindowController *msg in self.pendingNotifications) {
+    if ([msg messageHash] == [pendingMsg messageHash]) {
+      return YES;
     }
-    return NO;
+  }
+  return NO;
 }
 
 - (void)queueMessage:(SNTMessageWindowController *)pendingMsg {
