@@ -16,6 +16,8 @@
 
 @interface SNTDeviceEvent : NSObject <NSSecureCoding>
 
+- (instancetype)initWithOnName:(NSString *)mntonname fromName:(NSString *)mntfromname;
+
 @property NSString *mntonname;
 @property NSString *mntfromname;
 @property NSArray<NSString *> *remountArgs;

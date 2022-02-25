@@ -12,6 +12,15 @@
   [decoder decodeObjectOfClasses:[NSSet setWithObjects:[NSArray class], [cls class], nil] \
                           forKey:key]
 
+- (instancetype)initWithOnName:(NSString *)mntonname fromName:(NSString *)mntfromname {
+  self = [super init];
+  if (self) {
+    _mntonname = mntonname;
+    _mntfromname = mntfromname;
+  }
+  return self;
+}
+
 + (BOOL)supportsSecureCoding {
   return YES;
 }

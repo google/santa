@@ -219,9 +219,10 @@ NS_ASSUME_NONNULL_BEGIN
     return;
   }
 
-  SNTDeviceEvent *event = [[SNTDeviceEvent alloc] init];
-  event.mntonname = [NSString stringWithUTF8String:m->event.mount.statfs->f_mntonname];
-  event.mntfromname = [NSString stringWithUTF8String:m->event.mount.statfs->f_mntfromname];
+  SNTDeviceEvent *event = [[SNTDeviceEvent alloc]
+    initWithOnName:[NSString stringWithUTF8String:m->event.mount.statfs->f_mntonname]
+          fromName:[NSString stringWithUTF8String:m->event.mount.statfs->f_mntfromname]];
+
   BOOL shouldRemount = self.remountArgs != nil && [self.remountArgs count] > 0;
 
   if (shouldRemount) {
