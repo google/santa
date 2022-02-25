@@ -106,7 +106,6 @@
                                  : [configurator bannedUSBBlockMessage];
 
     deviceManager.deviceBlockCallback = ^(SNTDeviceEvent *event) {
-      NSLog(@"wtf '%@' '%@'", event.mntfromname, event.mntonname);
       [[self.notQueue.notifierConnection remoteObjectProxy]
         postUSBBlockNotification:event
                withCustomMessage:deviceBlockMsg];

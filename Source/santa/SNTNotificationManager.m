@@ -81,11 +81,18 @@ static NSString *const silencedNotificationsKey = @"SilencedNotifications";
   [ud setObject:d forKey:silencedNotificationsKey];
 }
 
+- (BOOL)notificationAlreadyQueued:(SNTMessageWindowController *)pendingMsg {
+    for (SNTMessageWindowController *msg in self.pendingNotifications) {
+        if ([msg messageHash] == [pendingMsg messageHash]) {
+            return YES;
+        }
+    }
+    return NO;
+}
+
 - (void)queueMessage:(SNTMessageWindowController *)pendingMsg {
   NSString *messageHash = [pendingMsg messageHash];
-  // See if this message is already in the list of pending notifications.
-  NSPredicate *predicate = [NSPredicate predicateWithFormat:@"messageHash==%@", messageHash];
-  if ([[self.pendingNotifications filteredArrayUsingPredicate:predicate] count]) return;
+  if ([self notificationAlreadyQueued:pendingMsg]) return;
 
   // See if this message is silenced.
   NSUserDefaults *ud = [NSUserDefaults standardUserDefaults];

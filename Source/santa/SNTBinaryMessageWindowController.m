@@ -74,6 +74,7 @@
 }
 
 - (void)loadWindow {
+  [super loadWindow];
   if (![[SNTConfigurator configurator] eventDetailURL]) {
     [self.openEventButton removeFromSuperview];
   } else {
