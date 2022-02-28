@@ -23,6 +23,7 @@
 #include <atomic>
 #include <memory>
 
+#import "Source/common/SNTDeviceEvent.h"
 #import "Source/common/SNTLogging.h"
 #import "Source/santad/Logs/SNTEventLog.h"
 
@@ -105,6 +106,8 @@ long mountArgsToMask(NSArray<NSString *> *args) {
   return flags;
 }
 
+NS_ASSUME_NONNULL_BEGIN
+
 @interface SNTDeviceManager ()
 
 @property DASessionRef diskArbSession;
@@ -115,7 +118,7 @@ long mountArgsToMask(NSArray<NSString *> *args) {
 
 @implementation SNTDeviceManager
 
-- (instancetype _Nonnull)init API_AVAILABLE(macos(10.15)) {
+- (instancetype)init API_AVAILABLE(macos(10.15)) {
   self = [super init];
   if (self) {
     _blockUSBMount = false;
@@ -216,9 +219,14 @@ long mountArgsToMask(NSArray<NSString *> *args) {
     return;
   }
 
+  SNTDeviceEvent *event = [[SNTDeviceEvent alloc]
+    initWithOnName:[NSString stringWithUTF8String:m->event.mount.statfs->f_mntonname]
+          fromName:[NSString stringWithUTF8String:m->event.mount.statfs->f_mntfromname]];
+
   BOOL shouldRemount = self.remountArgs != nil && [self.remountArgs count] > 0;
 
   if (shouldRemount) {
+    event.remountArgs = self.remountArgs;
     long remountOpts = mountArgsToMask(self.remountArgs);
     if (mountMode & remountOpts) {
       es_respond_auth_result(self.client, m, ES_AUTH_RESULT_ALLOW, false);
@@ -231,6 +239,11 @@ long mountArgsToMask(NSArray<NSString *> *args) {
          newMode);
     [self remount:disk mountMode:newMode];
   }
+
+  if (self.deviceBlockCallback) {
+    self.deviceBlockCallback(event);
+  }
+
   es_respond_auth_result(self.client, m, ES_AUTH_RESULT_DENY, false);
 }
 
@@ -298,3 +311,5 @@ long mountArgsToMask(NSArray<NSString *> *args) {
 }
 
 @end
+
+NS_ASSUME_NONNULL_END

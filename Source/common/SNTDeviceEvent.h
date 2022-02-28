@@ -1,4 +1,4 @@
-/// Copyright 2015 Google Inc. All rights reserved.
+/// Copyright 2022 Google Inc. All rights reserved.
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -12,18 +12,16 @@
 ///    See the License for the specific language governing permissions and
 ///    limitations under the License.
 
-#import <Cocoa/Cocoa.h>
+#import <Foundation/Foundation.h>
 
-#import "Source/common/SNTXPCNotifierInterface.h"
-#import "Source/santa/SNTBinaryMessageWindowController.h"
-#import "Source/santa/SNTDeviceMessageWindowController.h"
-#import "Source/santa/SNTMessageWindowController.h"
+@interface SNTDeviceEvent : NSObject <NSSecureCoding>
 
-///
-///  Keeps track of pending notifications and ensures only one is presented to the user at a time.
-///
-@interface SNTNotificationManager : NSObject <SNTMessageWindowControllerDelegate, SNTNotifierXPC>
+- (instancetype)initWithOnName:(NSString *)mntonname fromName:(NSString *)mntfromname;
 
-@property NSXPCListenerEndpoint *notificationListener;
+@property NSString *mntonname;
+@property NSString *mntfromname;
+@property NSArray<NSString *> *remountArgs;
+
+- (NSString *)readableRemountArgs;
 
 @end

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="14460.31" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES">
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="19455" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES">
     <dependencies>
-        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="14460.31"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="19455"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <objects>
@@ -21,8 +21,8 @@
         <window title="Santa Blocked Execution" allowsToolTipsWhenApplicationIsInactive="NO" autorecalculatesKeyViewLoop="NO" visibleAtLaunch="NO" animationBehavior="none" id="9Bq-yh-54f" customClass="SNTMessageWindow">
             <windowStyleMask key="styleMask" utility="YES"/>
             <rect key="contentRect" x="167" y="107" width="540" height="479"/>
-            <rect key="screenRect" x="0.0" y="0.0" width="3840" height="1577"/>
-            <view key="contentView" id="Iwq-Lx-rLv">
+            <rect key="screenRect" x="0.0" y="0.0" width="2560" height="1415"/>
+            <view key="contentView" misplaced="YES" id="Iwq-Lx-rLv">
                 <rect key="frame" x="0.0" y="0.0" width="540" height="479"/>
                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                 <subviews>
@@ -41,7 +41,7 @@
                         </connections>
                     </button>
                     <textField verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" setsMaxLayoutWidthAtFirstLayout="YES" textCompletion="NO" translatesAutoresizingMaskIntoConstraints="NO" id="cD5-Su-lXR" customClass="SNTAccessibleTextField">
-                        <rect key="frame" x="43" y="369" width="454" height="17"/>
+                        <rect key="frame" x="43" y="354" width="454" height="16"/>
                         <constraints>
                             <constraint firstAttribute="width" constant="450" id="XgJ-EV-tBa"/>
                         </constraints>
@@ -56,7 +56,7 @@
                         </connections>
                     </textField>
                     <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="d9e-Wv-Y5H" userLabel="Label: Path">
-                        <rect key="frame" x="8" y="297" width="142" height="17"/>
+                        <rect key="frame" x="8" y="283" width="142" height="16"/>
                         <constraints>
                             <constraint firstAttribute="width" constant="138" id="Kqd-nX-7df"/>
                         </constraints>
@@ -70,7 +70,7 @@
                         </textFieldCell>
                     </textField>
                     <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="YNz-ka-cBi" userLabel="Label: Path">
-                        <rect key="frame" x="8" y="272" width="142" height="17"/>
+                        <rect key="frame" x="8" y="259" width="142" height="16"/>
                         <constraints>
                             <constraint firstAttribute="width" constant="138" id="3wU-P0-gAC"/>
                         </constraints>
@@ -84,7 +84,7 @@
                         </textFieldCell>
                     </textField>
                     <textField toolTip="Binary Name" verticalHuggingPriority="900" horizontalCompressionResistancePriority="250" verticalCompressionResistancePriority="1000" setsMaxLayoutWidthAtFirstLayout="YES" translatesAutoresizingMaskIntoConstraints="NO" id="pc8-G9-4pJ" customClass="SNTAccessibleTextField">
-                        <rect key="frame" x="187" y="297" width="315" height="17"/>
+                        <rect key="frame" x="187" y="283" width="315" height="16"/>
                         <constraints>
                             <constraint firstAttribute="width" constant="311" id="xVR-j3-dLw"/>
                         </constraints>
@@ -98,7 +98,7 @@
                         </connections>
                     </textField>
                     <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="lvJ-Rk-UT5" userLabel="Label: Publisher">
-                        <rect key="frame" x="8" y="247" width="142" height="17"/>
+                        <rect key="frame" x="8" y="235" width="142" height="16"/>
                         <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="right" title="Publisher" id="yL9-yD-JXX">
                             <font key="font" metaFont="systemBold"/>
                             <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
@@ -109,7 +109,7 @@
                         </textFieldCell>
                     </textField>
                     <textField toolTip="Publisher" verticalHuggingPriority="900" horizontalCompressionResistancePriority="250" verticalCompressionResistancePriority="1000" setsMaxLayoutWidthAtFirstLayout="YES" translatesAutoresizingMaskIntoConstraints="NO" id="C3G-wL-u7w" userLabel="Publisher" customClass="SNTAccessibleTextField">
-                        <rect key="frame" x="187" y="247" width="315" height="17"/>
+                        <rect key="frame" x="187" y="235" width="315" height="16"/>
                         <constraints>
                             <constraint firstAttribute="width" constant="311" id="Dem-wH-KHm"/>
                         </constraints>
@@ -127,7 +127,7 @@
                         </connections>
                     </textField>
                     <button toolTip="Show code signing certificate chain" translatesAutoresizingMaskIntoConstraints="NO" id="cJf-k6-OxS" userLabel="Publisher Certs Button">
-                        <rect key="frame" x="62" y="248" width="15" height="15"/>
+                        <rect key="frame" x="62" y="235" width="15" height="15"/>
                         <constraints>
                             <constraint firstAttribute="width" constant="15" id="QTm-Iv-m5p"/>
                             <constraint firstAttribute="height" constant="15" id="YwG-0s-jop"/>
@@ -149,7 +149,7 @@
                         </connections>
                     </button>
                     <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="KEB-eH-x2Y" userLabel="Label: Identifier">
-                        <rect key="frame" x="8" y="222" width="142" height="17"/>
+                        <rect key="frame" x="8" y="212" width="142" height="16"/>
                         <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="right" title="Identifier" id="eKN-Ic-5zy">
                             <font key="font" metaFont="systemBold"/>
                             <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
@@ -160,7 +160,7 @@
                         </textFieldCell>
                     </textField>
                     <textField toolTip="SHA-256" verticalHuggingPriority="900" horizontalCompressionResistancePriority="250" verticalCompressionResistancePriority="1000" setsMaxLayoutWidthAtFirstLayout="YES" translatesAutoresizingMaskIntoConstraints="NO" id="PXc-xv-A28">
-                        <rect key="frame" x="187" y="222" width="219" height="17"/>
+                        <rect key="frame" x="187" y="214" width="219" height="13"/>
                         <constraints>
                             <constraint firstAttribute="width" constant="215" id="4hh-R2-86s"/>
                         </constraints>
@@ -177,7 +177,7 @@
                         </connections>
                     </textField>
                     <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="MhO-U0-MLR" userLabel="Label: Bundle Identifier">
-                        <rect key="frame" x="8" y="197" width="142" height="17"/>
+                        <rect key="frame" x="8" y="191" width="142" height="16"/>
                         <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="right" title="Bundle Identifier" id="LEe-u0-52o">
                             <font key="font" metaFont="systemBold"/>
                             <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
@@ -195,7 +195,7 @@
                         </connections>
                     </textField>
                     <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="eQb-0a-76J" userLabel="Label: Parent">
-                        <rect key="frame" x="8" y="157" width="142" height="17"/>
+                        <rect key="frame" x="8" y="156" width="142" height="16"/>
                         <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="right" title="Parent" id="gze-4A-1w5">
                             <font key="font" metaFont="systemBold"/>
                             <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
@@ -206,7 +206,7 @@
                         </textFieldCell>
                     </textField>
                     <textField toolTip="Parent Process" verticalHuggingPriority="900" horizontalCompressionResistancePriority="250" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="f1p-GL-O3o" userLabel="Parent" customClass="SNTAccessibleTextField">
-                        <rect key="frame" x="187" y="157" width="294" height="17"/>
+                        <rect key="frame" x="187" y="156" width="294" height="16"/>
                         <constraints>
                             <constraint firstAttribute="width" constant="290" id="h3Y-mO-38F"/>
                         </constraints>
@@ -229,7 +229,7 @@
                         </connections>
                     </textField>
                     <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="oFj-ol-xpL" userLabel="Label: User">
-                        <rect key="frame" x="8" y="132" width="142" height="17"/>
+                        <rect key="frame" x="8" y="132" width="142" height="16"/>
                         <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="right" title="User" id="1ut-uT-hQD">
                             <font key="font" metaFont="systemBold"/>
                             <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
@@ -240,7 +240,7 @@
                         </textFieldCell>
                     </textField>
                     <button verticalHuggingPriority="750" horizontalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="7ua-5a-uSd">
-                        <rect key="frame" x="154" y="34" width="112" height="23"/>
+                        <rect key="frame" x="153" y="35" width="114" height="23"/>
                         <constraints>
                             <constraint firstAttribute="width" priority="900" constant="112" id="Pec-Pa-4aZ"/>
                         </constraints>
@@ -258,7 +258,7 @@ DQ
                         </connections>
                     </button>
                     <textField toolTip="Binary Path" verticalHuggingPriority="900" horizontalCompressionResistancePriority="250" verticalCompressionResistancePriority="1000" setsMaxLayoutWidthAtFirstLayout="YES" translatesAutoresizingMaskIntoConstraints="NO" id="bDE-Tl-UHg" customClass="SNTAccessibleTextField">
-                        <rect key="frame" x="187" y="272" width="315" height="17"/>
+                        <rect key="frame" x="187" y="259" width="315" height="16"/>
                         <constraints>
                             <constraint firstAttribute="width" constant="311" id="p1W-f9-KBX"/>
                         </constraints>
@@ -272,7 +272,7 @@ DQ
                         </connections>
                     </textField>
                     <button translatesAutoresizingMaskIntoConstraints="NO" id="5D8-GP-a4l">
-                        <rect key="frame" x="113" y="80" width="315" height="29"/>
+                        <rect key="frame" x="110" y="80" width="319" height="29"/>
                         <constraints>
                             <constraint firstAttribute="height" constant="25" id="KvD-X6-CsO"/>
                         </constraints>
@@ -285,7 +285,7 @@ DQ
                         </connections>
                     </button>
                     <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="BbV-3h-mmL" userLabel="Dismiss Button">
-                        <rect key="frame" x="278" y="34" width="110" height="23"/>
+                        <rect key="frame" x="277" y="33" width="112" height="25"/>
                         <constraints>
                             <constraint firstAttribute="width" constant="110" id="6Uh-Bd-N64"/>
                             <constraint firstAttribute="height" constant="22" id="GH6-nw-6rD"/>
@@ -305,7 +305,7 @@ DQ
                         </connections>
                     </button>
                     <textField toolTip="Executing User" verticalHuggingPriority="900" horizontalCompressionResistancePriority="250" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="h6f-PY-cc0" customClass="SNTAccessibleTextField">
-                        <rect key="frame" x="187" y="132" width="294" height="17"/>
+                        <rect key="frame" x="187" y="132" width="294" height="16"/>
                         <constraints>
                             <constraint firstAttribute="width" constant="290" id="on6-pj-m2k"/>
                         </constraints>
@@ -322,14 +322,14 @@ DQ
                             </binding>
                         </connections>
                     </textField>
-                    <progressIndicator wantsLayer="YES" canDrawConcurrently="YES" horizontalHuggingPriority="750" verticalHuggingPriority="750" maxValue="1" bezeled="NO" controlSize="small" style="bar" translatesAutoresizingMaskIntoConstraints="NO" id="VyY-Yg-JOe">
-                        <rect key="frame" x="187" y="199" width="217" height="12"/>
+                    <progressIndicator wantsLayer="YES" horizontalHuggingPriority="750" verticalHuggingPriority="750" maxValue="1" bezeled="NO" controlSize="small" style="bar" translatesAutoresizingMaskIntoConstraints="NO" id="VyY-Yg-JOe">
+                        <rect key="frame" x="187" y="193" width="217" height="12"/>
                         <constraints>
                             <constraint firstAttribute="width" constant="217" id="M22-Dv-KIP"/>
                         </constraints>
                     </progressIndicator>
                     <textField toolTip="Bundle SHA-256" verticalHuggingPriority="900" horizontalCompressionResistancePriority="250" verticalCompressionResistancePriority="1000" setsMaxLayoutWidthAtFirstLayout="YES" translatesAutoresizingMaskIntoConstraints="NO" id="xP7-jE-NF8">
-                        <rect key="frame" x="187" y="197" width="219" height="17"/>
+                        <rect key="frame" x="187" y="193" width="219" height="13"/>
                         <constraints>
                             <constraint firstAttribute="width" constant="215" id="s7W-o9-2nN"/>
                         </constraints>
@@ -346,7 +346,7 @@ DQ
                         </connections>
                     </textField>
                     <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="LHV-gV-vyf">
-                        <rect key="frame" x="187" y="182" width="219" height="17"/>
+                        <rect key="frame" x="187" y="180" width="219" height="13"/>
                         <constraints>
                             <constraint firstAttribute="width" constant="215" id="LUu-Vd-peN"/>
                         </constraints>
@@ -357,7 +357,7 @@ DQ
                         </textFieldCell>
                     </textField>
                     <box horizontalHuggingPriority="750" boxType="custom" borderType="line" title="Line" titlePosition="noTitle" translatesAutoresizingMaskIntoConstraints="NO" id="4Li-ul-zIi">
-                        <rect key="frame" x="168" y="132" width="1" height="207"/>
+                        <rect key="frame" x="168" y="132" width="1" height="191"/>
                         <constraints>
                             <constraint firstAttribute="width" constant="1" id="0o1-Jh-epf"/>
                         </constraints>
@@ -366,7 +366,7 @@ DQ
                         <font key="titleFont" metaFont="system"/>
                     </box>
                     <textField toolTip="Application Name" verticalHuggingPriority="900" horizontalCompressionResistancePriority="250" verticalCompressionResistancePriority="1000" setsMaxLayoutWidthAtFirstLayout="YES" translatesAutoresizingMaskIntoConstraints="NO" id="qgf-Jf-cJr" customClass="SNTAccessibleTextField">
-                        <rect key="frame" x="187" y="322" width="315" height="17"/>
+                        <rect key="frame" x="187" y="307" width="315" height="17"/>
                         <constraints>
                             <constraint firstAttribute="width" constant="311" id="Pav-ZA-iAu"/>
                         </constraints>
@@ -384,7 +384,7 @@ DQ
                         </connections>
                     </textField>
                     <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="pDa-fA-vnC" userLabel="Label: Application">
-                        <rect key="frame" x="8" y="322" width="142" height="17"/>
+                        <rect key="frame" x="8" y="307" width="142" height="16"/>
                         <constraints>
                             <constraint firstAttribute="width" constant="138" id="8mA-zi-Ev7"/>
                         </constraints>
@@ -405,7 +405,7 @@ DQ
                         </connections>
                     </textField>
                     <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="t8c-Fx-e5h">
-                        <rect key="frame" x="229" y="408" width="82" height="41"/>
+                        <rect key="frame" x="229" y="392" width="82" height="40"/>
                         <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" refusesFirstResponder="YES" sendsActionOnEndEditing="YES" title="Santa" id="7YA-iB-Zma">
                             <font key="font" metaFont="systemUltraLight" size="34"/>
                             <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>

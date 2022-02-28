@@ -19,6 +19,7 @@
 #include <sys/mount.h>
 
 #import "Source/common/SNTConfigurator.h"
+#import "Source/common/SNTDeviceEvent.h"
 #import "Source/santad/EventProviders/SNTDeviceManager.h"
 
 #import "Source/santad/EventProviders/DiskArbitrationTestUtil.h"
@@ -132,10 +133,28 @@
   deviceManager.blockUSBMount = YES;
   deviceManager.remountArgs = @[ @"noexec", @"rdonly" ];
 
+  XCTestExpectation *expectation =
+    [self expectationWithDescription:@"Wait for SNTDeviceManager's blockCallback to trigger"];
+
+  __block NSString *gotmntonname, *gotmntfromname;
+  __block NSArray<NSString *> *gotRemountedArgs;
+  deviceManager.deviceBlockCallbacks = ^(SNTDeviceEvent *event) {
+    gotRemountedArgs = event.remountArgs;
+    gotmntonname = event.mntonname;
+    gotmntfromname = event.mntfromname;
+    [expectation fulfill];
+  };
+
   ESResponse *got = [self triggerTestMount:deviceManager mockES:mockES mockDA:mockDA];
 
   XCTAssertEqual(got.result, ES_AUTH_RESULT_DENY);
   XCTAssertEqual(mockDA.wasRemounted, YES);
+
+  [self waitForExpectations:@[ expectation ] timeout:60.0];
+
+  XCTAssertEqualObjects(gotRemountedArgs, deviceManager.remountArgs);
+  XCTAssertEqualObjects(gotmntonname, @"/Volumes/KATE'S 4G");
+  XCTAssertEqualObjects(gotmntfromname, @"/dev/disk2s1");
 }
 
 - (void)testBlockNoRemount {
@@ -148,10 +167,27 @@
   SNTDeviceManager *deviceManager = [[SNTDeviceManager alloc] init];
   deviceManager.blockUSBMount = YES;
 
+  XCTestExpectation *expectation =
+    [self expectationWithDescription:@"Wait for SNTDeviceManager's blockCallback to trigger"];
+
+  __block NSString *gotmntonname, *gotmntfromname;
+  __block NSArray<NSString *> *gotRemountedArgs;
+  deviceManager.deviceBlockCallbacks = ^(SNTDeviceEvent *event) {
+    gotRemountedArgs = event.remountArgs;
+    gotmntonname = event.mntonname;
+    gotmntfromname = event.mntfromname;
+    [expectation fulfill];
+  };
+
   ESResponse *got = [self triggerTestMount:deviceManager mockES:mockES mockDA:mockDA];
 
   XCTAssertEqual(got.result, ES_AUTH_RESULT_DENY);
-  XCTAssertEqual(mockDA.wasRemounted, NO);
+
+  [self waitForExpectations:@[ expectation ] timeout:60.0];
+
+  XCTAssertNil(gotRemountedArgs);
+  XCTAssertEqualObjects(gotmntonname, @"/Volumes/KATE'S 4G");
+  XCTAssertEqualObjects(gotmntfromname, @"/dev/disk2s1");
 }
 
 @end

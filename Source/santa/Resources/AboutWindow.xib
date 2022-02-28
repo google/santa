@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="14460.31" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES">
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="19455" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES">
     <dependencies>
-        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="14460.31"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="19455"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <objects>
@@ -17,7 +17,7 @@
         <window title="Santa" allowsToolTipsWhenApplicationIsInactive="NO" autorecalculatesKeyViewLoop="NO" releasedWhenClosed="NO" visibleAtLaunch="NO" animationBehavior="default" id="F0z-JX-Cv5">
             <windowStyleMask key="styleMask" titled="YES" closable="YES"/>
             <rect key="contentRect" x="196" y="240" width="480" height="200"/>
-            <rect key="screenRect" x="0.0" y="0.0" width="3840" height="1577"/>
+            <rect key="screenRect" x="0.0" y="0.0" width="2560" height="1415"/>
             <view key="contentView" id="se5-gp-TjO">
                 <rect key="frame" x="0.0" y="0.0" width="480" height="200"/>
                 <autoresizingMask key="autoresizingMask"/>
@@ -47,7 +47,7 @@ There are no user-configurable settings.</string>
                         </textFieldCell>
                     </textField>
                     <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="SRu-Kf-vu5">
-                        <rect key="frame" x="130" y="21" width="111" height="32"/>
+                        <rect key="frame" x="129" y="21" width="113" height="32"/>
                         <constraints>
                             <constraint firstAttribute="width" constant="99" id="JHv-2J-QSe"/>
                         </constraints>
@@ -60,7 +60,7 @@ There are no user-configurable settings.</string>
                         </connections>
                     </button>
                     <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="Udo-BY-n7e">
-                        <rect key="frame" x="240" y="21" width="111" height="32"/>
+                        <rect key="frame" x="239" y="21" width="113" height="32"/>
                         <constraints>
                             <constraint firstAttribute="width" constant="99" id="2Xc-ax-2bV"/>
                         </constraints>
