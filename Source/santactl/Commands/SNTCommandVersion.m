@@ -90,18 +90,25 @@ REGISTER_COMMAND_NAME(@"version")
   return @"not found";
 }
 
+- (NSString *)composeVersionsFromDict:(NSDictionary *)dict {
+  if (!dict[@"CFBundleVersion"]) return @"";
+  NSString *productVersion = dict[@"CFBundleShortVersionString"];
+  NSString *buildVersion = [[dict[@"CFBundleVersion"] componentsSeparatedByString:@"."] lastObject];
+  return [NSString stringWithFormat:@"%@ (build %@)", productVersion, buildVersion];
+}
+
 - (NSString *)santadVersion {
   SNTFileInfo *daemonInfo = [[SNTFileInfo alloc] initWithPath:@(kSantaDPath)];
-  return daemonInfo.bundleVersion ?: @"";
+  return [self composeVersionsFromDict:daemonInfo.infoPlist];
 }
 
 - (NSString *)santaAppVersion {
   SNTFileInfo *guiInfo = [[SNTFileInfo alloc] initWithPath:@(kSantaAppPath)];
-  return guiInfo.bundleVersion ?: @"";
+  return [self composeVersionsFromDict:guiInfo.infoPlist];
 }
 
 - (NSString *)santactlVersion {
-  return [[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleVersion"] ?: @"";
+  return [self composeVersionsFromDict:[[NSBundle mainBundle] infoDictionary]];
 }
 
 @end
