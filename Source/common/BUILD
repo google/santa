@@ -31,12 +31,22 @@ objc_library(
 )
 
 objc_library(
+    name = "SNTDeviceEvent",
+    srcs = ["SNTDeviceEvent.m"],
+    hdrs = ["SNTDeviceEvent.h"],
+    deps = [
+        ":SNTCommonEnums",
+    ],
+)
+
+objc_library(
     name = "SNTBlockMessage_SantaGUI",
     srcs = ["SNTBlockMessage.m"],
     hdrs = ["SNTBlockMessage.h"],
     defines = ["SANTAGUI"],
     deps = [
         ":SNTConfigurator",
+        ":SNTDeviceEvent",
         ":SNTLogging",
         ":SNTStoredEvent",
     ],

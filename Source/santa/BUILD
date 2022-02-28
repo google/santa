@@ -15,6 +15,10 @@ objc_library(
         "SNTAccessibleTextField.m",
         "SNTAppDelegate.h",
         "SNTAppDelegate.m",
+        "SNTBinaryMessageWindowController.h",
+        "SNTBinaryMessageWindowController.m",
+        "SNTDeviceMessageWindowController.h",
+        "SNTDeviceMessageWindowController.m",
         "SNTMessageWindow.h",
         "SNTMessageWindow.m",
         "SNTMessageWindowController.h",
@@ -25,6 +29,7 @@ objc_library(
     ],
     data = [
         "Resources/AboutWindow.xib",
+        "Resources/DeviceMessageWindow.xib",
         "Resources/MessageWindow.xib",
     ],
     sdk_frameworks = [
