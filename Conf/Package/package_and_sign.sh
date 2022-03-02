@@ -50,7 +50,7 @@ readonly INPUT_SANTACTL="${INPUT_APP}/Contents/MacOS/santactl"
 readonly INPUT_SANTABS="${INPUT_APP}/Contents/MacOS/santabundleservice"
 readonly INPUT_SANTAMS="${INPUT_APP}/Contents/MacOS/santametricservice"
 
-readonly RELEASE_NAME="santa-$(/usr/bin/defaults read "${INPUT_APP}/Contents/Info.plist" CFBundleVersion)"
+readonly RELEASE_NAME="santa-$(/usr/bin/defaults read "${INPUT_APP}/Contents/Info.plist" CFBundleShortVersionString)"
 
 readonly SCRATCH=$(/usr/bin/mktemp -d "${TMPDIR}/santa-"XXXXXX)
 readonly APP_PKG_ROOT="${SCRATCH}/app_pkg_root"
