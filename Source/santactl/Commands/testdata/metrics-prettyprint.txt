@@ -10,7 +10,7 @@
 >>> Metrics 
   Metric Name               | /santa/rules
   Description               | Number of rules
-  Type                      | SNTMetricTypeGaugeInt64 7
+  Type                      | SNTMetricTypeGaugeInt64
   Field                     | rule_type=binary
   Created                   | 2021-09-16T21:07:34.826Z
   Last Updated              | 2021-09-16T21:07:34.826Z
@@ -22,14 +22,14 @@
 
   Metric Name               | /proc/memory/resident_size
   Description               | The resident set size of this process
-  Type                      | SNTMetricTypeGaugeInt64 7
+  Type                      | SNTMetricTypeGaugeInt64
   Created                   | 2021-09-16T21:07:34.826Z
   Last Updated              | 2021-09-16T21:07:34.826Z
   Data                      | 123456789
 
   Metric Name               | /santa/events
   Description               | Count of process exec events on the host
-  Type                      | SNTMetricTypeCounter 9
+  Type                      | SNTMetricTypeCounter
   Field                     | rule_type=binary
   Created                   | 2021-09-16T21:07:34.826Z
   Last Updated              | 2021-09-16T21:07:34.826Z
@@ -41,28 +41,28 @@
 
   Metric Name               | /santa/using_endpoint_security_framework
   Description               | Is santad using the endpoint security framework
-  Type                      | SNTMetricTypeConstantBool 1
+  Type                      | SNTMetricTypeConstantBool
   Created                   | 2021-09-16T21:07:34.826Z
   Last Updated              | 2021-09-16T21:07:34.826Z
   Data                      | 1
 
   Metric Name               | /proc/birth_timestamp
   Description               | Start time of this santad instance, in microseconds since epoch
-  Type                      | SNTMetricTypeConstantInt64 3
+  Type                      | SNTMetricTypeConstantInt64
   Created                   | 2021-09-16T21:07:34.826Z
   Last Updated              | 2021-09-16T21:07:34.826Z
   Data                      | 1250999830800
 
   Metric Name               | /proc/memory/virtual_size
   Description               | The virtual memory size of this process
-  Type                      | SNTMetricTypeGaugeInt64 7
+  Type                      | SNTMetricTypeGaugeInt64
   Created                   | 2021-09-16T21:07:34.826Z
   Last Updated              | 2021-09-16T21:07:34.826Z
   Data                      | 987654321
 
   Metric Name               | /build/label
   Description               | Software version running
-  Type                      | SNTMetricTypeConstantString 2
+  Type                      | SNTMetricTypeConstantString
   Created                   | 2021-09-16T21:07:34.826Z
   Last Updated              | 2021-09-16T21:07:34.826Z
   Data                      | 20210809.0.1

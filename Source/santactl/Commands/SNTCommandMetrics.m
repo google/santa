@@ -138,6 +138,25 @@ REGISTER_COMMAND_NAME(@"metrics")
     fprintf(stderr, "Failed to retrieve metrics from daemon\n\n");
   }
 
+  // Filter the metric list, if requested.
+  for (NSString *arg in [arguments reverseObjectEnumerator]) {
+    if ([arg hasPrefix:@"-"]) continue;
+
+    NSMutableDictionary *m = [metrics[@"metrics"] mutableCopy];
+    for (NSString *metricName in metrics[@"metrics"]) {
+      if (![metricName hasPrefix:arg]) {
+        [m removeObjectForKey:metricName];
+      }
+    }
+
+    NSMutableDictionary *t = [metrics mutableCopy];
+    t[@"metrics"] = m;
+
+    metrics = t;
+
+    break;
+  }
+
   [self prettyPrintMetrics:metrics asJSON:[arguments containsObject:@"--json"]];
   exit(0);
 }
