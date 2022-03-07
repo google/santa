@@ -14,6 +14,7 @@
 
 #import "Source/santad/Logs/SNTSimpleMaildir.h"
 
+#include <mach/mach_time.h>
 #include <malloc/malloc.h>
 #include <stdio.h>
 
@@ -38,13 +39,27 @@ static NSString *ErrorToMetricFieldName(NSError *error) {
   return error.userInfo[kErrorUserInfoKey] ?: [NSString stringWithFormat:@"%@:%d", error.domain, (int)error.code];
 }
 
-size_t SNTRoundUpToNextPage(size_t size) {
+static size_t SNTRoundUpToNextPage(size_t size) {
   const size_t pageSize = 4096;
 
   if (size % pageSize == 0) {
     return size;
   }
   return pageSize * ((size / pageSize) + 1);
+}
+
+static uint64_t getUptimeSeconds() {
+  static dispatch_once_t onceToken;
+  static mach_timebase_info_data_t info;
+
+  dispatch_once(&onceToken, ^{
+    mach_timebase_info(&info);
+  });
+
+  uint64_t cur = mach_absolute_time();
+
+  // Convert from nanoseconds to seconds
+  return cur * info.numer / (1000 * 1000 * 1000 * info.denom);
 }
 
 NS_ASSUME_NONNULL_BEGIN
@@ -91,7 +106,14 @@ NS_ASSUME_NONNULL_BEGIN
   /** Counter for successful and failed event queueing in memory. */
   SNTMetricCounter *_eventsQueuedCounter;
 
-  // TODO: New metric for estimated spool size
+  /** Gauge for the overall spool size, calculated periodically. */
+  SNTMetricInt64Gauge *_spoolSizeGauge;
+
+  /**
+   * Mach absolute time in seconds of the last time the spool size
+   * was calculated.
+   */
+  uint64_t _lastCalculatedSpoolSizeTime;
 }
 
 - (instancetype)initWithBaseDirectory:(NSString *)baseDirectory
@@ -111,6 +133,7 @@ NS_ASSUME_NONNULL_BEGIN
     _createdFileCount = 0;
     _outputProto = [[SNTPBLogBatch alloc] init];
     _outputProtoSerializedSize = 0;
+    _lastCalculatedSpoolSizeTime = 0;
 
     _eventsFlushedCounter = [[SNTMetricSet sharedInstance]
       counterWithName:@"/santa/events_flushed"
@@ -121,6 +144,31 @@ NS_ASSUME_NONNULL_BEGIN
            fieldNames:@[ kDefaultMetricFieldName ]
              helpText:@"Number of events queued in memory, with the result "
                       @"of their conversion to anyproto"];
+    _spoolSizeGauge = [[SNTMetricSet sharedInstance]
+      int64GaugeWithName:@"/santa/spool_size"
+              fieldNames:@[ kDefaultMetricFieldName ]
+                helpText:@"Snapshot of the current pool size"];
+
+    [[SNTMetricSet sharedInstance] registerCallback:^(void) {
+      // Only calculate spool size for metrics every 5 minutes
+      static const int frequencySecs = 300;
+      uint64_t curTime = getUptimeSeconds();
+      if (curTime - _lastCalculatedSpoolSizeTime >= frequencySecs) {
+        NSError *err = nil;
+        size_t curSize = [SNTSimpleMaildir spoolDirectorySize:_newDirectory
+                                            withError:&err];
+
+        if (err) {
+          // Failed to calculate spool size. Try again next time...
+          return;
+        }
+
+        _lastCalculatedSpoolSizeTime = curTime;
+
+        [_spoolSizeGauge set:curSize
+              forFieldValues:@[ kDefaultMetricFieldName ]];
+      }
+    }];
 
     _flushQueue =
       dispatch_queue_create("com.google.santa.daemon.mail",
@@ -165,7 +213,7 @@ NS_ASSUME_NONNULL_BEGIN
   }
 
   if (_estimatedSpoolSize > _spoolSizeThreshold) {
-    _estimatedSpoolSize = [self spoolDirectorySizeWithError:error];
+    _estimatedSpoolSize = [SNTSimpleMaildir spoolDirectorySize:_newDirectory withError:error];
     if (_estimatedSpoolSize > _spoolSizeThreshold) {
       if (error) {
         *error = MakeError(@"file_system_threshold_exceeded");
@@ -273,11 +321,11 @@ NS_ASSUME_NONNULL_BEGIN
          [self createDirectory:_newDirectory withError:error];
 }
 
-- (size_t)spoolDirectorySizeWithError:(NSError **)error {
++ (size_t)spoolDirectorySize:(NSString *)newDirectory withError:(NSError **)error {
   size_t totalSize = 0;
   NSFileManager *fm = [NSFileManager defaultManager];
   NSError *enumerationError = nil;
-  NSArray<NSString *> *filenames = [fm contentsOfDirectoryAtPath:_newDirectory
+  NSArray<NSString *> *filenames = [fm contentsOfDirectoryAtPath:newDirectory
                                                            error:&enumerationError];
   if (enumerationError) {
     *error = MakeError(@"spool_dir_enumeration_error");
@@ -287,7 +335,7 @@ NS_ASSUME_NONNULL_BEGIN
   for (NSString *filename in filenames) {
     NSError *attributesError = nil;
     NSDictionary<NSFileAttributeKey, id> *attributes =
-      [fm attributesOfItemAtPath:[_newDirectory stringByAppendingPathComponent:filename]
+      [fm attributesOfItemAtPath:[newDirectory stringByAppendingPathComponent:filename]
                            error:&attributesError];
     if (attributesError) {
       if (error) {
