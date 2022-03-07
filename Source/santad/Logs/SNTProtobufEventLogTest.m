@@ -62,11 +62,10 @@ SNTStoredEvent *createTestBundleStoredEvent(NSBundle *bundle, NSString *fakeBund
   return event;
 }
 
-id getEventForMessage(SNTPBSantaMessage *santaMsg,
-                      SNTPBSantaMessage_MessageType_OneOfCase expectedCase, NSString *propertyName,
-                      Class expectedClass) {
-  if (santaMsg.messageTypeOneOfCase != expectedCase) {
-    LOGE(@"Unexpected message type. Had: %d, Expected: %d", santaMsg.messageTypeOneOfCase,
+id getEventForMessage(SNTPBSantaMessage *santaMsg, SNTPBSantaMessage_Message_OneOfCase expectedCase,
+                      NSString *propertyName, Class expectedClass) {
+  if (santaMsg.messageOneOfCase != expectedCase) {
+    LOGE(@"Unexpected message type. Had: %d, Expected: %d", santaMsg.messageOneOfCase,
          expectedCase);
     return nil;
   }
@@ -87,16 +86,13 @@ NSBundle *getBundleForSystemApplication(NSString *appName) {
 }
 
 void assertProcessInfoMatchesExpected(SNTPBProcessInfo *procInfo, const santa_message_t *expected) {
-  NSLog(@"p: %d/%d, pv: %d/%d, pp: %d/%d, u: %d/%d, g: %d/%d, un: %@/%@, gn: %@/%@", procInfo.pid,
-        expected->pid, procInfo.pidversion, expected->pidversion, procInfo.ppid, expected->ppid,
-        procInfo.uid, expected->uid, procInfo.gid, expected->gid, procInfo.user,
-        @(user_from_uid(expected->uid, 0)), procInfo.group, @(group_from_gid(expected->gid, 0)));
-  XCTAssertTrue(procInfo.pid == expected->pid && procInfo.pidversion == expected->pidversion &&
-                  procInfo.ppid == expected->ppid && procInfo.uid == expected->uid &&
-                  procInfo.gid == expected->gid &&
-                  [procInfo.user isEqualToString:@(user_from_uid(expected->uid, 0))] &&
-                  [procInfo.group isEqualToString:@(group_from_gid(expected->gid, 0))],
-                "Unexpected process info encountered");
+  XCTAssertTrue(procInfo.pid == expected->pid);
+  XCTAssertTrue(procInfo.pidversion == expected->pidversion);
+  XCTAssertTrue(procInfo.ppid == expected->ppid);
+  XCTAssertTrue(procInfo.uid == expected->uid);
+  XCTAssertTrue(procInfo.gid == expected->gid);
+  XCTAssertTrue([procInfo.user isEqualToString:@(user_from_uid(expected->uid, 0))]);
+  XCTAssertTrue([procInfo.group isEqualToString:@(group_from_gid(expected->gid, 0))]);
 }
 
 // Creates a basic santa message with only process-related info filled out.
@@ -148,26 +144,26 @@ santa_message_t getBasicSantaMessage(santa_action_t action) {
   santaMsg.args_array = nil;
   santaMsg.es_message = &esMsg;
 
-  OCMExpect([self.mockLogOutput
-    logEvent:[OCMArg checkWithBlock:^BOOL(SNTPBSantaMessage *sm) {
-      SNTPBFileModification *fileMod =
-        getEventForMessage(sm, SNTPBSantaMessage_MessageType_OneOfCase_FileModification,
-                           @"fileModification", [SNTPBFileModification class]);
+  OCMExpect([self.mockLogOutput logEvent:[OCMArg checkWithBlock:^BOOL(SNTPBSantaMessage *sm) {
+                                  SNTPBFileModification *fileMod = getEventForMessage(
+                                    sm, SNTPBSantaMessage_Message_OneOfCase_FileModification,
+                                    @"fileModification", [SNTPBFileModification class]);
 
-      if (fileMod.action != SNTPBFileModification_Action_FileModificationActionRename ||
-          ![fileMod.path isEqualToString:sourcePath] ||
-          ![fileMod.newpath isEqualToString:targetPath] ||
-          ![fileMod.process isEqualToString:processName] ||
-          ![fileMod.processPath isEqualToString:processPath] || !fileMod.hasProcessInfo ||
-          fileMod.processInfo == nil || [fileMod.machineId length] != 0) {
-        LOGE(@"Unexpected file modification data");
-        return NO;
-      }
+                                  if (fileMod.action != SNTPBFileModification_Action_ActionRename ||
+                                      ![fileMod.path isEqualToString:sourcePath] ||
+                                      ![fileMod.newpath isEqualToString:targetPath] ||
+                                      ![fileMod.process isEqualToString:processName] ||
+                                      ![fileMod.processPath isEqualToString:processPath] ||
+                                      !fileMod.hasProcessInfo || fileMod.processInfo == nil ||
+                                      [fileMod.machineId length] != 0) {
+                                    LOGE(@"Unexpected file modification data");
+                                    return NO;
+                                  }
 
-      assertProcessInfoMatchesExpected(fileMod.processInfo, &santaMsg);
+                                  assertProcessInfoMatchesExpected(fileMod.processInfo, &santaMsg);
 
-      return YES;
-    }]]);
+                                  return YES;
+                                }]]);
 
   SNTProtobufEventLog *eventLog = [[SNTProtobufEventLog alloc] initWithLog:self.mockLogOutput];
   [eventLog logFileModification:santaMsg];
@@ -202,17 +198,16 @@ santa_message_t getBasicSantaMessage(santa_action_t action) {
 
   OCMExpect([self.mockLogOutput
     logEvent:[OCMArg checkWithBlock:^BOOL(SNTPBSantaMessage *sm) {
-      SNTPBExecution *exec =
-        getEventForMessage(sm, SNTPBSantaMessage_MessageType_OneOfCase_Execution, @"execution",
-                           [SNTPBExecution class]);
+      SNTPBExecution *exec = getEventForMessage(sm, SNTPBSantaMessage_Message_OneOfCase_Execution,
+                                                @"execution", [SNTPBExecution class]);
 
-      if (exec.decision != SNTPBExecution_Decision_ExecutionDecisionDeny ||
-          exec.reason != SNTPBExecution_Reason_ExecutionReasonTeamId ||
+      if (exec.decision != SNTPBExecution_Decision_DecisionDeny ||
+          exec.reason != SNTPBExecution_Reason_ReasonTeamId ||
           ![exec.explain isEqualToString:explanation] || ![exec.sha256 isEqualToString:sha256] ||
           ![exec.certSha256 isEqualToString:certSHA256] ||
           ![exec.certCn isEqualToString:commonName] ||
           ![exec.quarantineURL isEqualToString:quarantineURL] || !exec.hasProcessInfo ||
-          exec.processInfo == nil || exec.mode != SNTPBExecution_Mode_ExecutionModeLockdown ||
+          exec.processInfo == nil || exec.mode != SNTPBExecution_Mode_ModeLockdown ||
           ![exec.path isEqualToString:processPath] || [exec.originalPath length] != 0 ||
           ![exec.argsArray isEqualToArray:execArgs] || [exec.machineId length] != 0) {
         LOGE(@"Unexpected execution data");
@@ -256,8 +251,8 @@ santa_message_t getBasicSantaMessage(santa_action_t action) {
   OCMExpect([self.mockLogOutput
     logEvent:[OCMArg checkWithBlock:^BOOL(SNTPBSantaMessage *sm) {
       SNTPBDiskAppeared *diskAppeared =
-        getEventForMessage(sm, SNTPBSantaMessage_MessageType_OneOfCase_DiskAppeared,
-                           @"diskAppeared", [SNTPBDiskAppeared class]);
+        getEventForMessage(sm, SNTPBSantaMessage_Message_OneOfCase_DiskAppeared, @"diskAppeared",
+                           [SNTPBDiskAppeared class]);
 
       if (![diskAppeared.mount isEqualToString:mount] ||
           ![diskAppeared.volume isEqualToString:volume] ||
@@ -303,7 +298,7 @@ santa_message_t getBasicSantaMessage(santa_action_t action) {
 
   OCMExpect([self.mockLogOutput logEvent:[OCMArg checkWithBlock:^BOOL(SNTPBSantaMessage *sm) {
                                   SNTPBDiskDisappeared *diskDisappeared = getEventForMessage(
-                                    sm, SNTPBSantaMessage_MessageType_OneOfCase_DiskDisappeared,
+                                    sm, SNTPBSantaMessage_Message_OneOfCase_DiskDisappeared,
                                     @"diskDisappeared", [SNTPBDiskDisappeared class]);
 
                                   if (![diskDisappeared.mount isEqualToString:mount] ||
@@ -334,7 +329,7 @@ santa_message_t getBasicSantaMessage(santa_action_t action) {
     OCMExpect([self.mockLogOutput
       logEvent:[OCMArg checkWithBlock:^BOOL(SNTPBSantaMessage *sm) {
         SNTPBBundle *bundleEvent = getEventForMessage(
-          sm, SNTPBSantaMessage_MessageType_OneOfCase_Bundle, @"bundle", [SNTPBBundle class]);
+          sm, SNTPBSantaMessage_Message_OneOfCase_Bundle, @"bundle", [SNTPBBundle class]);
 
         if (![bundleEvent.sha256 isEqualToString:storedEvent.fileSHA256] ||
             ![bundleEvent.bundleHash isEqualToString:storedEvent.fileBundleHash] ||
@@ -361,7 +356,7 @@ santa_message_t getBasicSantaMessage(santa_action_t action) {
 
   OCMExpect([self.mockLogOutput
     logEvent:[OCMArg checkWithBlock:^BOOL(SNTPBSantaMessage *sm) {
-      SNTPBFork *forkEvent = getEventForMessage(sm, SNTPBSantaMessage_MessageType_OneOfCase_Fork,
+      SNTPBFork *forkEvent = getEventForMessage(sm, SNTPBSantaMessage_Message_OneOfCase_Fork,
                                                 @"fork", [SNTPBFork class]);
 
       if (!forkEvent.hasProcessInfo || forkEvent.processInfo == nil) {
@@ -385,7 +380,7 @@ santa_message_t getBasicSantaMessage(santa_action_t action) {
 
   OCMExpect([self.mockLogOutput
     logEvent:[OCMArg checkWithBlock:^BOOL(SNTPBSantaMessage *sm) {
-      SNTPBExit *exitEvent = getEventForMessage(sm, SNTPBSantaMessage_MessageType_OneOfCase_Exit,
+      SNTPBExit *exitEvent = getEventForMessage(sm, SNTPBSantaMessage_Message_OneOfCase_Exit,
                                                 @"exit", [SNTPBExit class]);
 
       if (!exitEvent.hasProcessInfo || exitEvent.processInfo == nil) {
@@ -412,9 +407,8 @@ santa_message_t getBasicSantaMessage(santa_action_t action) {
 
   OCMExpect([self.mockLogOutput
     logEvent:[OCMArg checkWithBlock:^BOOL(SNTPBSantaMessage *sm) {
-      SNTPBAllowlist *allowlistEvent =
-        getEventForMessage(sm, SNTPBSantaMessage_MessageType_OneOfCase_Allowlist, @"allowlist",
-                           [SNTPBAllowlist class]);
+      SNTPBAllowlist *allowlistEvent = getEventForMessage(
+        sm, SNTPBSantaMessage_Message_OneOfCase_Allowlist, @"allowlist", [SNTPBAllowlist class]);
 
       if (allowlistEvent.pid != allowlistInfo.pid ||
           allowlistEvent.pidversion != allowlistInfo.pidversion ||

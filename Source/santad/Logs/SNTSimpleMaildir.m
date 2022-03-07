@@ -33,14 +33,9 @@ static NSError *MakeError(NSString *description) {
 static NSString *ErrorToMetricFieldName(NSError *error) {
   if (!error) {
     return kDefaultMetricFieldName;
-  } else {
-    NSString *fieldName = error.userInfo[kErrorUserInfoKey];
-    if (fieldName) {
-      return fieldName;
-    } else {
-      return [NSString stringWithFormat:@"%@:%d", error.domain, (int)error.code];
-    }
   }
+
+  return error.userInfo[kErrorUserInfoKey] ?: [NSString stringWithFormat:@"%@:%d", error.domain, (int)error.code];
 }
 
 size_t SNTRoundUpToNextPage(size_t size) {
@@ -49,14 +44,12 @@ size_t SNTRoundUpToNextPage(size_t size) {
   if (size % pageSize == 0) {
     return size;
   }
-  return pageSize * ((int)(size / pageSize) + 1);
+  return pageSize * ((size / pageSize) + 1);
 }
 
 NS_ASSUME_NONNULL_BEGIN
 
 @implementation SNTSimpleMaildir {
-  // TODO(mlwhite): Add support for metrics
-
   /** The prefix to use for new log files. */
   NSString *_filenamePrefix;
 
@@ -97,6 +90,8 @@ NS_ASSUME_NONNULL_BEGIN
 
   /** Counter for successful and failed event queueing in memory. */
   SNTMetricCounter *_eventsQueuedCounter;
+
+  // TODO: New metric for estimated spool size
 }
 
 - (instancetype)initWithBaseDirectory:(NSString *)baseDirectory
@@ -248,9 +243,11 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (BOOL)createDirectory:(NSString *)dir withError:(NSError **)error {
   BOOL isDir;
+  // Check if the path exists
   if (![[NSFileManager defaultManager] fileExistsAtPath:dir isDirectory:&isDir]) {
+    // If path doesn't exist, attempt to create it
     if (![[NSFileManager defaultManager] createDirectoryAtPath:dir
-                                   withIntermediateDirectories:NO
+                                   withIntermediateDirectories:YES
                                                     attributes:nil
                                                          error:nil]) {
       if (error) {
@@ -259,12 +256,14 @@ NS_ASSUME_NONNULL_BEGIN
       return NO;
     }
   } else if (!isDir) {
+    // The path existed, but it wasn't a directory
     if (error) {
-      *error = MakeError(@"dir_exists_as_regular_file");
+      *error = MakeError(@"path_exists_not_directory");
     }
     return NO;
   }
 
+  // If we made it here, the directory was created or already existed
   return YES;
 }
 

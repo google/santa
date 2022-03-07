@@ -1,125 +1,131 @@
+//
+// !!! WARNING !!!
+// This proto is in beta format and subject to change.
+//
+
 syntax = "proto3";
 
 import "google/protobuf/any.proto";
 
 option objc_class_prefix = "SNTPB";
-// option go_api_flag = "OPEN_TO_OPAQUE_HYBRID";
 
 package santa;
 
 message ProcessInfo {
-  int32 pid = 1;
-  int32 pidversion = 2;
-  int32 ppid = 3;
-  int32 uid = 4;
-  string user = 5;
-  int32 gid = 6;
-  string group = 7;
+  optional int32 pid = 1;
+  optional int32 pidversion = 2;
+  optional int32 ppid = 3;
+  optional int32 uid = 4;
+  optional string user = 5;
+  optional int32 gid = 6;
+  optional string group = 7;
 }
 
 message FileModification {
   enum Action {
-    FILE_MODIFICATION_ACTION_UNKNOWN = 0;
-    FILE_MODIFICATION_ACTION_DELETE = 1;
-    FILE_MODIFICATION_ACTION_EXCHANGE = 2;
-    FILE_MODIFICATION_ACTION_LINK = 3;
-    FILE_MODIFICATION_ACTION_RENAME = 4;
-    FILE_MODIFICATION_ACTION_WRITE = 5;
+    ACTION_UNKNOWN = 0;
+    ACTION_DELETE = 1;
+    ACTION_EXCHANGE = 2;
+    ACTION_LINK = 3;
+    ACTION_RENAME = 4;
+    ACTION_WRITE = 5;
   }
 
-  Action action = 1;
-  string path = 2;
-  string newpath = 3;
-  string process = 4;
-  string process_path = 5;
-  ProcessInfo process_info = 6;
-  string machine_id = 7;
+  optional Action action = 1;
+  optional string path = 2;
+  optional string newpath = 3;
+  optional string process = 4;
+  optional string process_path = 5;
+  optional ProcessInfo process_info = 6;
+  optional string machine_id = 7;
 }
 
 message Execution {
   enum Decision {
-    EXECUTION_DECISION_UNKNOWN = 0;
-    EXECUTION_DECISION_ALLOW = 1;
-    EXECUTION_DECISION_DENY = 2;
+    DECISION_UNKNOWN = 0;
+    DECISION_ALLOW = 1;
+    DECISION_DENY = 2;
   }
 
   enum Reason {
-    EXECUTION_REASON_UNKNOWN = 0;
-    EXECUTION_REASON_BINARY = 1;
-    EXECUTION_REASON_CERT = 2;
-    EXECUTION_REASON_COMPILER = 3;
-    EXECUTION_REASON_NOT_RUNNING = 4;
-    EXECUTION_REASON_PENDING_TRANSITIVE = 5;
-    EXECUTION_REASON_SCOPE = 6;
-    EXECUTION_REASON_TEAM_ID = 7;
-    EXECUTION_REASON_TRANSITIVE = 8;
+    REASON_UNKNOWN = 0;
+    REASON_BINARY = 1;
+    REASON_CERT = 2;
+    REASON_COMPILER = 3;
+    REASON_NOT_RUNNING = 4;
+    REASON_PENDING_TRANSITIVE = 5;
+    REASON_SCOPE = 6;
+    REASON_TEAM_ID = 7;
+    REASON_TRANSITIVE = 8;
   }
 
   enum Mode {
-    EXECUTION_MODE_UNKNOWN = 0;
-    EXECUTION_MODE_LOCKDOWN = 1;
-    EXECUTION_MODE_MONITOR = 2;
+    MODE_UNKNOWN = 0;
+    MODE_LOCKDOWN = 1;
+    MODE_MONITOR = 2;
   }
 
-  Decision decision = 1;
-  Reason reason = 2;
-  string explain = 3;
-  string sha256 = 4;
-  string cert_sha256 = 5;
-  string cert_cn = 6;
-  string quarantine_url = 7;
-  ProcessInfo process_info = 8;
-  Mode mode = 9;
-  string path = 10;
-  string original_path = 11;
+  optional Decision decision = 1;
+  optional Reason reason = 2;
+  optional string explain = 3;
+  optional string sha256 = 4;
+  optional string cert_sha256 = 5;
+  optional string cert_cn = 6;
+  optional string quarantine_url = 7;
+  optional ProcessInfo process_info = 8;
+  optional Mode mode = 9;
+  optional string path = 10;
+  optional string original_path = 11;
   repeated string args = 12;
-  string machine_id = 13;
+  optional string machine_id = 13;
 }
 
 message DiskAppeared {
-  string mount = 1;
-  string volume = 2;
-  string bsd_name = 3;
-  string fs = 4;
-  string model = 5;
-  string serial = 6;
-  string bus = 7;
-  string dmg_path = 8;
-  string appearance = 9;
+  optional string mount = 1;
+  optional string volume = 2;
+  optional string bsd_name = 3;
+  optional string fs = 4;
+  optional string model = 5;
+  optional string serial = 6;
+  optional string bus = 7;
+  optional string dmg_path = 8;
+  optional string appearance = 9;
 }
 
 message DiskDisappeared {
-  string mount = 1;
-  string volume = 2;
-  string bsd_name = 3;
+  optional string mount = 1;
+  optional string volume = 2;
+  optional string bsd_name = 3;
 }
 
 message Bundle {
-  string sha256 = 1;
-  string bundle_hash = 2;
-  string bundle_name = 3;
-  string bundle_id = 4;
-  string bundle_path = 5;
-  string path = 6;
+  // This is the hash of the file within the bundle that triggered the event
+  optional string sha256 = 1;
+  // This is the hash of the hashes of all executables in the bundle
+  optional string bundle_hash = 2;
+  optional string bundle_name = 3;
+  optional string bundle_id = 4;
+  optional string bundle_path = 5;
+  optional string path = 6;
 }
 
 message Fork {
-  ProcessInfo process_info = 1;
+  optional ProcessInfo process_info = 1;
 }
 
 message Exit {
-  ProcessInfo process_info = 1;
+  optional ProcessInfo process_info = 1;
 }
 
 message Allowlist {
-  int32 pid = 1;
-  int32 pidversion = 2;
-  string path = 3;
-  string sha256 = 4;
+  optional int32 pid = 1;
+  optional int32 pidversion = 2;
+  optional string path = 3;
+  optional string sha256 = 4;
 }
 
 message SantaMessage {
-  oneof MessageType {
+  oneof message {
     FileModification file_modification = 1;
     Execution execution = 2;
     DiskAppeared disk_appeared = 3;

@@ -67,12 +67,12 @@
 
 - (SNTPBFileModification_Action)protobufActionForSantaMessageAction:(santa_action_t)action {
   switch (action) {
-    case ACTION_NOTIFY_DELETE: return SNTPBFileModification_Action_FileModificationActionDelete;
-    case ACTION_NOTIFY_EXCHANGE: return SNTPBFileModification_Action_FileModificationActionExchange;
-    case ACTION_NOTIFY_LINK: return SNTPBFileModification_Action_FileModificationActionLink;
-    case ACTION_NOTIFY_RENAME: return SNTPBFileModification_Action_FileModificationActionRename;
-    case ACTION_NOTIFY_WRITE: return SNTPBFileModification_Action_FileModificationActionWrite;
-    default: return SNTPBFileModification_Action_FileModificationActionUnknown;
+    case ACTION_NOTIFY_DELETE: return SNTPBFileModification_Action_ActionDelete;
+    case ACTION_NOTIFY_EXCHANGE: return SNTPBFileModification_Action_ActionExchange;
+    case ACTION_NOTIFY_LINK: return SNTPBFileModification_Action_ActionLink;
+    case ACTION_NOTIFY_RENAME: return SNTPBFileModification_Action_ActionRename;
+    case ACTION_NOTIFY_WRITE: return SNTPBFileModification_Action_ActionWrite;
+    default: return SNTPBFileModification_Action_ActionUnknown;
   }
 }
 
@@ -82,8 +82,8 @@
   }
 
   switch (message->action) {
-    case ACTION_NOTIFY_EXCHANGE:
-    case ACTION_NOTIFY_LINK:
+    case ACTION_NOTIFY_EXCHANGE: OS_FALLTHROUGH;
+    case ACTION_NOTIFY_LINK: OS_FALLTHROUGH;
     case ACTION_NOTIFY_RENAME: return @(message->newpath);
     default: return nil;
   }
@@ -99,10 +99,10 @@
   // process being queried has already exited.
   if (message->es_message) {
     switch (message->action) {
-      case ACTION_NOTIFY_DELETE:
-      case ACTION_NOTIFY_EXCHANGE:
-      case ACTION_NOTIFY_LINK:
-      case ACTION_NOTIFY_RENAME:
+      case ACTION_NOTIFY_DELETE: OS_FALLTHROUGH;
+      case ACTION_NOTIFY_EXCHANGE: OS_FALLTHROUGH;
+      case ACTION_NOTIFY_LINK: OS_FALLTHROUGH;
+      case ACTION_NOTIFY_RENAME: OS_FALLTHROUGH;
       case ACTION_NOTIFY_WRITE: {
         return @(((es_message_t *)message->es_message)->process->executable->path.data);
       }
@@ -137,47 +137,46 @@
 
 - (SNTPBExecution_Decision)protobufDecisionForCachedDecision:(SNTCachedDecision *)cd {
   if (cd.decision & SNTEventStateBlock) {
-    return SNTPBExecution_Decision_ExecutionDecisionDeny;
+    return SNTPBExecution_Decision_DecisionDeny;
   } else if (cd.decision & SNTEventStateAllow) {
-    return SNTPBExecution_Decision_ExecutionDecisionAllow;
+    return SNTPBExecution_Decision_DecisionAllow;
   } else {
-    return SNTPBExecution_Decision_ExecutionDecisionUnknown;
+    return SNTPBExecution_Decision_DecisionUnknown;
   }
 }
 
 - (SNTPBExecution_Reason)protobufReasonForCachedDecision:(SNTCachedDecision *)cd {
   switch (cd.decision) {
-    case SNTEventStateAllowBinary: return SNTPBExecution_Reason_ExecutionReasonBinary;
-    case SNTEventStateAllowCompiler: return SNTPBExecution_Reason_ExecutionReasonCompiler;
-    case SNTEventStateAllowTransitive: return SNTPBExecution_Reason_ExecutionReasonTransitive;
-    case SNTEventStateAllowPendingTransitive:
-      return SNTPBExecution_Reason_ExecutionReasonPendingTransitive;
-    case SNTEventStateAllowCertificate: return SNTPBExecution_Reason_ExecutionReasonCert;
-    case SNTEventStateAllowScope: return SNTPBExecution_Reason_ExecutionReasonScope;
-    case SNTEventStateAllowTeamID: return SNTPBExecution_Reason_ExecutionReasonTeamId;
-    case SNTEventStateAllowUnknown: return SNTPBExecution_Reason_ExecutionReasonUnknown;
-    case SNTEventStateBlockBinary: return SNTPBExecution_Reason_ExecutionReasonBinary;
-    case SNTEventStateBlockCertificate: return SNTPBExecution_Reason_ExecutionReasonCert;
-    case SNTEventStateBlockScope: return SNTPBExecution_Reason_ExecutionReasonScope;
-    case SNTEventStateBlockTeamID: return SNTPBExecution_Reason_ExecutionReasonTeamId;
-    case SNTEventStateBlockUnknown: return SNTPBExecution_Reason_ExecutionReasonUnknown;
+    case SNTEventStateAllowBinary: return SNTPBExecution_Reason_ReasonBinary;
+    case SNTEventStateAllowCompiler: return SNTPBExecution_Reason_ReasonCompiler;
+    case SNTEventStateAllowTransitive: return SNTPBExecution_Reason_ReasonTransitive;
+    case SNTEventStateAllowPendingTransitive: return SNTPBExecution_Reason_ReasonPendingTransitive;
+    case SNTEventStateAllowCertificate: return SNTPBExecution_Reason_ReasonCert;
+    case SNTEventStateAllowScope: return SNTPBExecution_Reason_ReasonScope;
+    case SNTEventStateAllowTeamID: return SNTPBExecution_Reason_ReasonTeamId;
+    case SNTEventStateAllowUnknown: return SNTPBExecution_Reason_ReasonUnknown;
+    case SNTEventStateBlockBinary: return SNTPBExecution_Reason_ReasonBinary;
+    case SNTEventStateBlockCertificate: return SNTPBExecution_Reason_ReasonCert;
+    case SNTEventStateBlockScope: return SNTPBExecution_Reason_ReasonScope;
+    case SNTEventStateBlockTeamID: return SNTPBExecution_Reason_ReasonTeamId;
+    case SNTEventStateBlockUnknown: return SNTPBExecution_Reason_ReasonUnknown;
 
-    case SNTEventStateAllow:
-    case SNTEventStateUnknown:
-    case SNTEventStateBundleBinary:
-    case SNTEventStateBlock: return SNTPBExecution_Reason_ExecutionReasonNotRunning;
+    case SNTEventStateAllow: OS_FALLTHROUGH;
+    case SNTEventStateUnknown: OS_FALLTHROUGH;
+    case SNTEventStateBundleBinary: OS_FALLTHROUGH;
+    case SNTEventStateBlock: return SNTPBExecution_Reason_ReasonNotRunning;
   }
 
-  return SNTPBExecution_Reason_ExecutionReasonUnknown;
+  return SNTPBExecution_Reason_ReasonUnknown;
 }
 
 - (SNTPBExecution_Mode)protobufModeForClientMode:(SNTClientMode)mode {
   switch (mode) {
-    case SNTClientModeMonitor: return SNTPBExecution_Mode_ExecutionModeMonitor;
-    case SNTClientModeLockdown: return SNTPBExecution_Mode_ExecutionModeLockdown;
-    case SNTClientModeUnknown: return SNTPBExecution_Mode_ExecutionModeUnknown;
+    case SNTClientModeMonitor: return SNTPBExecution_Mode_ModeMonitor;
+    case SNTClientModeLockdown: return SNTPBExecution_Mode_ModeLockdown;
+    case SNTClientModeUnknown: return SNTPBExecution_Mode_ModeUnknown;
   }
-  return SNTPBExecution_Mode_ExecutionModeUnknown;
+  return SNTPBExecution_Mode_ModeUnknown;
 }
 
 - (void)logFileModification:(santa_message_t)message {
