@@ -122,12 +122,16 @@ int main(int argc, const char *argv[]) {
     NSDictionary *infoDict = [[NSBundle mainBundle] infoDictionary];
     NSProcessInfo *pi = [NSProcessInfo processInfo];
 
+    NSString *productVersion = infoDict[@"CFBundleShortVersionString"];
+    NSString *buildVersion =
+      [[infoDict[@"CFBundleVersion"] componentsSeparatedByString:@"."] lastObject];
+
     if ([pi.arguments containsObject:@"-v"]) {
-      printf("%s\n", [infoDict[@"CFBundleVersion"] UTF8String]);
+      printf("%s (build %s)\n", [productVersion UTF8String], [buildVersion UTF8String]);
       return 0;
     }
 
-    LOGI(@"Started, version %@", infoDict[@"CFBundleVersion"]);
+    LOGI(@"Started, version %@ (build %@)", productVersion, buildVersion);
 
     // Handle the case of macOS < 10.15 updating to >= 10.15.
     if ([[SNTConfigurator configurator] enableSystemExtension]) {

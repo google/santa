@@ -58,6 +58,7 @@ objc_library(
         "//Source/common:SNTCachedDecision",
         "//Source/common:SNTCommonEnums",
         "//Source/common:SNTConfigurator",
+        "//Source/common:SNTDeviceEvent",
         "//Source/common:SNTDropRootPrivs",
         "//Source/common:SNTFileInfo",
         "//Source/common:SNTKernelCommon",

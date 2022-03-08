@@ -24,11 +24,16 @@
 
 ///
 ///  Return a message suitable for presenting to the user.
-///  Uses either the configured message depending on the event type or a custom message
-///  if the rule that blocked this file included one.
 ///
 ///  In SantaGUI this will return an NSAttributedString with links and formatting included
 ///  while for santad all HTML will be properly stripped.
+///
++ (NSAttributedString *)formatMessage:(NSString *)message;
+
+///
+///  Uses either the configured message depending on the event type or a custom message
+///  if the rule that blocked this file included one, formatted using
+///  +[SNTBlockMessage formatMessage].
 ///
 + (NSAttributedString *)attributedBlockMessageForEvent:(SNTStoredEvent *)event
                                          customMessage:(NSString *)customMessage;

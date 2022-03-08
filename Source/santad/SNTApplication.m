@@ -19,6 +19,7 @@
 
 #import "Source/common/SNTCommonEnums.h"
 #import "Source/common/SNTConfigurator.h"
+#import "Source/common/SNTDeviceEvent.h"
 #import "Source/common/SNTDropRootPrivs.h"
 #import "Source/common/SNTLogging.h"
 #import "Source/common/SNTMetricSet.h"
@@ -92,11 +93,25 @@
       return nil;
     }
 
-    _deviceManager = [[SNTDeviceManager alloc] init];
-    self.deviceManager.blockUSBMount = [configurator blockUSBMount];
+    self.notQueue = [[SNTNotificationQueue alloc] init];
+
+    SNTDeviceManager *deviceManager = [[SNTDeviceManager alloc] init];
+    deviceManager.blockUSBMount = [configurator blockUSBMount];
     if ([configurator remountUSBMode] != nil) {
-      self.deviceManager.remountArgs = [configurator remountUSBMode];
+      deviceManager.remountArgs = [configurator remountUSBMode];
     }
+
+    NSString *deviceBlockMsg = deviceManager.remountArgs != nil
+                                 ? [configurator remountUSBBlockMessage]
+                                 : [configurator bannedUSBBlockMessage];
+
+    deviceManager.deviceBlockCallback = ^(SNTDeviceEvent *event) {
+      [[self.notQueue.notifierConnection remoteObjectProxy]
+        postUSBBlockNotification:event
+               withCustomMessage:deviceBlockMsg];
+    };
+
+    _deviceManager = deviceManager;
 
     dispatch_async(dispatch_get_global_queue(QOS_CLASS_BACKGROUND, 0), ^{
       // The filter is reset when santad disconnects from the driver.
@@ -107,7 +122,6 @@
       [self.eventProvider fileModificationPrefixFilterAdd:[configurator fileChangesPrefixFilters]];
     });
 
-    self.notQueue = [[SNTNotificationQueue alloc] init];
     SNTSyncdQueue *syncdQueue = [[SNTSyncdQueue alloc] init];
 
     // Restart santactl if it goes down
