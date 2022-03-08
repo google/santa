@@ -84,7 +84,8 @@
     int64_t timeout = (int64_t)config.metricExportTimeout;
 
     // Wait up to timeout seconds for the request to complete.
-    if (dispatch_group_wait(requests, dispatch_time(DISPATCH_TIME_NOW, (timeout * NSEC_PER_SEC))) != 0) {
+    if (dispatch_group_wait(requests, dispatch_time(DISPATCH_TIME_NOW, (timeout * NSEC_PER_SEC))) !=
+        0) {
       [task cancel];
       NSString *errMsg =
         [NSString stringWithFormat:@"HTTP request to %@ timed out after %lu seconds", url,
