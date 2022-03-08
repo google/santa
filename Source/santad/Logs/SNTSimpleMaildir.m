@@ -36,7 +36,8 @@ static NSString *ErrorToMetricFieldName(NSError *error) {
     return kDefaultMetricFieldName;
   }
 
-  return error.userInfo[kErrorUserInfoKey] ?: [NSString stringWithFormat:@"%@:%d", error.domain, (int)error.code];
+  return error.userInfo[kErrorUserInfoKey]
+           ?: [NSString stringWithFormat:@"%@:%d", error.domain, (int)error.code];
 }
 
 static size_t SNTRoundUpToNextPage(size_t size) {
@@ -144,19 +145,20 @@ NS_ASSUME_NONNULL_BEGIN
            fieldNames:@[ kDefaultMetricFieldName ]
              helpText:@"Number of events queued in memory, with the result "
                       @"of their conversion to anyproto"];
-    _spoolSizeGauge = [[SNTMetricSet sharedInstance]
-      int64GaugeWithName:@"/santa/spool_size"
-              fieldNames:@[ kDefaultMetricFieldName ]
-                helpText:@"Snapshot of the current pool size"];
+    _spoolSizeGauge =
+      [[SNTMetricSet sharedInstance] int64GaugeWithName:@"/santa/spool_size"
+                                             fieldNames:@[ kDefaultMetricFieldName ]
+                                               helpText:@"Snapshot of the current pool size"];
 
     [[SNTMetricSet sharedInstance] registerCallback:^(void) {
       // Only calculate spool size for metrics every 5 minutes
       static const int frequencySecs = 300;
+
       uint64_t curTime = getUptimeSeconds();
+
       if (curTime - _lastCalculatedSpoolSizeTime >= frequencySecs) {
         NSError *err = nil;
-        size_t curSize = [SNTSimpleMaildir spoolDirectorySize:_newDirectory
-                                            withError:&err];
+        size_t curSize = [SNTSimpleMaildir spoolDirectorySize:_newDirectory withError:&err];
 
         if (err) {
           // Failed to calculate spool size. Try again next time...
@@ -165,8 +167,7 @@ NS_ASSUME_NONNULL_BEGIN
 
         _lastCalculatedSpoolSizeTime = curTime;
 
-        [_spoolSizeGauge set:curSize
-              forFieldValues:@[ kDefaultMetricFieldName ]];
+        [_spoolSizeGauge set:curSize forFieldValues:@[ kDefaultMetricFieldName ]];
       }
     }];
 
