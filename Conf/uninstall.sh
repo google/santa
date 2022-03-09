@@ -10,6 +10,9 @@
 /bin/launchctl list EQHXZ8M8AV.com.google.santa.daemon > /dev/null 2>&1 && /Applications/Santa.app/Contents/MacOS/Santa --unload-system-extension
 
 /bin/launchctl remove com.google.santad
+# remove helper XPC services
+/bin/launchctl remove com.google.santa.bundleservice
+/bin/launchctl remove com.google.santa.metricservice
 sleep 1
 /sbin/kextunload -b com.google.santa-driver >/dev/null 2>&1
 user=$(/usr/bin/stat -f '%u' /dev/console)
