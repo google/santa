@@ -1,11 +1,12 @@
 load("@build_bazel_rules_apple//apple:macos.bzl", "macos_bundle")
 load("//:helper.bzl", "santa_unit_test")
 
-package(features = ["-layering_check"])
+package(
+    default_visibility = ["//:santa_package_group"],
+    features = ["-layering_check"],
+)
 
 licenses(["notice"])
-
-package(default_visibility = ["//:santa_package_group"])
 
 objc_library(
     name = "database_controller",
