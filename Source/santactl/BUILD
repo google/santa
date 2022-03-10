@@ -3,7 +3,10 @@ load("//:helper.bzl", "santa_unit_test")
 
 licenses(["notice"])
 
-package(default_visibility = ["//:santa_package_group"])
+package(
+    default_visibility = ["//:santa_package_group"],
+    features = ["-layering_check"],
+)
 
 objc_library(
     name = "santactl_lib",

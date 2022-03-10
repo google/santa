@@ -1,6 +1,8 @@
 load("@build_bazel_rules_apple//apple:macos.bzl", "macos_bundle")
 load("//:helper.bzl", "santa_unit_test")
 
+package(features = ["-layering_check"])
+
 licenses(["notice"])
 
 objc_library(
