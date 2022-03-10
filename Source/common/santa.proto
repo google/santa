@@ -6,6 +6,7 @@
 syntax = "proto3";
 
 import "google/protobuf/any.proto";
+import "google/protobuf/timestamp.proto";
 
 option objc_class_prefix = "SNTPB";
 
@@ -125,15 +126,17 @@ message Allowlist {
 }
 
 message SantaMessage {
+  google.protobuf.Timestamp event_time = 1;
+
   oneof message {
-    FileModification file_modification = 1;
-    Execution execution = 2;
-    DiskAppeared disk_appeared = 3;
-    DiskDisappeared disk_disappeared = 4;
-    Bundle bundle = 5;
-    Fork fork = 6;
-    Exit exit = 7;
-    Allowlist allowlist = 8;
+    FileModification file_modification = 2;
+    Execution execution = 3;
+    DiskAppeared disk_appeared = 4;
+    DiskDisappeared disk_disappeared = 5;
+    Bundle bundle = 6;
+    Fork fork = 7;
+    Exit exit = 8;
+    Allowlist allowlist = 9;
   }
 }
 

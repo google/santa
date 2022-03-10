@@ -62,10 +62,11 @@ void setup(int iterations, SNTEventLog *eventLog) {
   static const char *commonPath = "/sbin/launchd";
   static const char *commonNewPath = "/foo/bar.txt";
   NSArray *execArgs = @[ @"/sbin/launchd", @"--init", @"--testing" ];
+  struct timespec ts = {123, 456};
 
   es_file_t esFile = MakeESFile(commonPath);
   es_process_t esProc = MakeESProcess(&esFile);
-  es_message_t esMsg = MakeESMessage(ES_EVENT_TYPE_NOTIFY_RENAME, &esProc);
+  es_message_t esMsg = MakeESMessage(ES_EVENT_TYPE_NOTIFY_RENAME, &esProc, ts);
 
   santa_message_t santaMsg = {0};
 

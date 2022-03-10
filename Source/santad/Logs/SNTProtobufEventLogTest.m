@@ -131,11 +131,12 @@ santa_message_t getBasicSantaMessage(santa_action_t action) {
   NSString *processPath = @"/sbin/launchd";
   NSString *sourcePath = @"/foo/bar.txt";
   NSString *targetPath = @"/bar/foo.txt";
+  struct timespec ts = {123, 456};
 
   // Create a test ES message with some important data set
   es_file_t esFile = MakeESFile([processPath UTF8String]);
   es_process_t esProc = MakeESProcess(&esFile);
-  es_message_t esMsg = MakeESMessage(ES_EVENT_TYPE_NOTIFY_RENAME, &esProc);
+  es_message_t esMsg = MakeESMessage(ES_EVENT_TYPE_NOTIFY_RENAME, &esProc, ts);
 
   santa_message_t santaMsg = getBasicSantaMessage(ACTION_NOTIFY_RENAME);
   strlcpy(santaMsg.path, [sourcePath UTF8String], sizeof(santaMsg.path));
@@ -145,6 +146,13 @@ santa_message_t getBasicSantaMessage(santa_action_t action) {
   santaMsg.es_message = &esMsg;
 
   OCMExpect([self.mockLogOutput logEvent:[OCMArg checkWithBlock:^BOOL(SNTPBSantaMessage *sm) {
+                                  // Note: Only checking seconds because nano conversion can drift
+                                  // slightly due to double precision.
+                                  if (sm.eventTime.seconds != ts.tv_sec) {
+                                    LOGE(@"Unexpected message event time");
+                                    return NO;
+                                  }
+
                                   SNTPBFileModification *fileMod = getEventForMessage(
                                     sm, SNTPBSantaMessage_Message_OneOfCase_FileModification,
                                     @"fileModification", [SNTPBFileModification class]);

@@ -59,10 +59,23 @@
   [self.logOutput flush];
 }
 
-- (void)wrapMessageAndLog:(void (^)(SNTPBSantaMessage *))setMessage {
-  SNTPBSantaMessage *sm = [[SNTPBSantaMessage alloc] init];
-  setMessage(sm);
-  [self.logOutput logEvent:sm];
+- (void)logWithSantaMessage:(santa_message_t *)santaMsg
+                    wrapper:(void (^)(SNTPBSantaMessage *))setMessage {
+  SNTPBSantaMessage *smpb = [[SNTPBSantaMessage alloc] init];
+  if (santaMsg && santaMsg->es_message) {
+    struct timespec ts = ((es_message_t *)santaMsg->es_message)->time;
+    NSDate *esTime =
+      [NSDate dateWithTimeIntervalSince1970:(double)(ts.tv_sec) + (((double)ts.tv_nsec) / 1E9)];
+    smpb.eventTime = [[GPBTimestamp alloc] initWithDate:esTime];
+  } else {
+    smpb.eventTime = [[GPBTimestamp alloc] initWithDate:[NSDate date]];
+  }
+  setMessage(smpb);
+  [self.logOutput logEvent:smpb];
+}
+
+- (void)logWithWrapper:(void (^)(SNTPBSantaMessage *))setMessage {
+  return [self logWithSantaMessage:nil wrapper:setMessage];
 }
 
 - (SNTPBFileModification_Action)protobufActionForSantaMessageAction:(santa_action_t)action {
@@ -191,9 +204,10 @@
   fileMod.machineId =
     [[SNTConfigurator configurator] enableMachineIDDecoration] ? self.machineID : nil;
 
-  [self wrapMessageAndLog:^(SNTPBSantaMessage *sm) {
-    sm.fileModification = fileMod;
-  }];
+  [self logWithSantaMessage:&message
+                    wrapper:^(SNTPBSantaMessage *sm) {
+                      sm.fileModification = fileMod;
+                    }];
 }
 
 - (void)logExecution:(santa_message_t)message withDecision:(SNTCachedDecision *)cd {
@@ -213,9 +227,10 @@
   exec.machineId =
     [[SNTConfigurator configurator] enableMachineIDDecoration] ? self.machineID : nil;
 
-  [self wrapMessageAndLog:^(SNTPBSantaMessage *sm) {
-    sm.execution = exec;
-  }];
+  [self logWithSantaMessage:&message
+                    wrapper:^(SNTPBSantaMessage *sm) {
+                      sm.execution = exec;
+                    }];
 }
 
 - (void)logDeniedExecution:(SNTCachedDecision *)cd withMessage:(santa_message_t)message {
@@ -261,7 +276,7 @@
   diskAppeared.dmgPath = dmgPath;
   diskAppeared.appearance = appearanceDateString;
 
-  [self wrapMessageAndLog:^(SNTPBSantaMessage *sm) {
+  [self logWithWrapper:^(SNTPBSantaMessage *sm) {
     sm.diskAppeared = diskAppeared;
   }];
 }
@@ -273,7 +288,7 @@
   diskDisappeared.volume = diskProperties[@"DAVolumeName"];
   diskDisappeared.bsdName = diskProperties[@"DAMediaBSDName"];
 
-  [self wrapMessageAndLog:^(SNTPBSantaMessage *sm) {
+  [self logWithWrapper:^(SNTPBSantaMessage *sm) {
     sm.diskDisappeared = diskDisappeared;
   }];
 }
@@ -289,7 +304,7 @@
     bundle.bundlePath = event.fileBundlePath;
     bundle.path = event.filePath;
 
-    [self wrapMessageAndLog:^(SNTPBSantaMessage *sm) {
+    [self logWithWrapper:^(SNTPBSantaMessage *sm) {
       sm.bundle = bundle;
     }];
   }
@@ -300,9 +315,10 @@
 
   forkEvent.processInfo = [self protobufProcessInfoForSantaMessage:&message];
 
-  [self wrapMessageAndLog:^(SNTPBSantaMessage *sm) {
-    sm.fork = forkEvent;
-  }];
+  [self logWithSantaMessage:&message
+                    wrapper:^(SNTPBSantaMessage *sm) {
+                      sm.fork = forkEvent;
+                    }];
 }
 
 - (void)logExit:(santa_message_t)message {
@@ -310,9 +326,10 @@
 
   exitEvent.processInfo = [self protobufProcessInfoForSantaMessage:&message];
 
-  [self wrapMessageAndLog:^(SNTPBSantaMessage *sm) {
-    sm.exit = exitEvent;
-  }];
+  [self logWithSantaMessage:&message
+                    wrapper:^(SNTPBSantaMessage *sm) {
+                      sm.exit = exitEvent;
+                    }];
 }
 
 - (void)logAllowlist:(SNTAllowlistInfo *)allowlistInfo {
@@ -323,7 +340,7 @@
   allowlistEvent.path = allowlistInfo.targetPath;
   allowlistEvent.sha256 = allowlistInfo.sha256;
 
-  [self wrapMessageAndLog:^(SNTPBSantaMessage *sm) {
+  [self logWithWrapper:^(SNTPBSantaMessage *sm) {
     sm.allowlist = allowlistEvent;
   }];
 }

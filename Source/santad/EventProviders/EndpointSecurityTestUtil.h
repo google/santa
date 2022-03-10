@@ -21,7 +21,7 @@ es_string_token_t MakeStringToken(const NSString *_Nonnull s);
 
 es_file_t MakeESFile(const char *_Nonnull path);
 es_process_t MakeESProcess(es_file_t *_Nonnull esFile);
-es_message_t MakeESMessage(es_event_type_t eventType, es_process_t *_Nonnull instigator);
+es_message_t MakeESMessage(es_event_type_t eventType, es_process_t *_Nonnull instigator, struct timespec ts);
 CF_EXTERN_C_END
 
 @class ESMessage;

@@ -45,9 +45,10 @@ es_process_t MakeESProcess(es_file_t *esFile) {
   return esProc;
 }
 
-es_message_t MakeESMessage(es_event_type_t eventType, es_process_t *instigator) {
+es_message_t MakeESMessage(es_event_type_t eventType, es_process_t *instigator, struct timespec ts) {
   es_message_t esMsg = {};
 
+  esMsg.time = ts;
   esMsg.event_type = eventType;
   esMsg.process = instigator;
 
