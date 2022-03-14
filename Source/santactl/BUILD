@@ -5,7 +5,7 @@ licenses(["notice"])
 
 package(
     default_visibility = ["//:santa_package_group"],
-    features = ["-layering_check"],
+    features = ["layering_check"],
 )
 
 objc_library(
@@ -36,11 +36,11 @@ objc_library(
     sdk_frameworks = ["IOKit"],
     deps = [
         "//Source/common:SNTCachedDecision",
+        "//Source/common:SNTCommon",
         "//Source/common:SNTCommonEnums",
         "//Source/common:SNTConfigurator",
         "//Source/common:SNTDropRootPrivs",
         "//Source/common:SNTFileInfo",
-        "//Source/common:SNTCommon",
         "//Source/common:SNTLogging",
         "//Source/common:SNTMetricSet",
         "//Source/common:SNTRule",

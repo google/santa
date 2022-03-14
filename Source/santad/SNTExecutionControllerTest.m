@@ -25,17 +25,26 @@
 #import "Source/common/SNTRule.h"
 #import "Source/santad/DataLayer/SNTEventTable.h"
 #import "Source/santad/DataLayer/SNTRuleTable.h"
-#import "Source/santad/EventProviders/SNTDriverManager.h"
+#import "Source/santad/EventProviders/SNTEventProvider.h"
 
 @interface SNTExecutionControllerTest : XCTestCase
 @property id mockConfigurator;
 @property id mockCodesignChecker;
-@property id mockDriverManager;
+@property id mockEventProvider;
 @property id mockFileInfo;
 @property id mockRuleDatabase;
 @property id mockEventDatabase;
 
 @property SNTExecutionController *sut;
+@end
+
+@interface SNTTestEventProvider : NSObject
+- (int)postAction:(santa_action_t)action forMessage:(santa_message_t)sm;
+@end
+@implementation SNTTestEventProvider
+- (int)postAction:(santa_action_t)action forMessage:(santa_message_t)sm {
+  return 0;
+}
 @end
 
 @implementation SNTExecutionControllerTest
@@ -56,7 +65,7 @@
   NSURL *url = [NSURL URLWithString:@"https://localhost/test"];
   OCMStub([self.mockConfigurator syncBaseURL]).andReturn(url);
 
-  self.mockDriverManager = OCMClassMock([SNTDriverManager class]);
+  self.mockEventProvider = OCMClassMock([SNTTestEventProvider class]);
 
   self.mockFileInfo = OCMClassMock([SNTFileInfo class]);
   OCMStub([self.mockFileInfo alloc]).andReturn(self.mockFileInfo);
@@ -68,7 +77,7 @@
   self.mockRuleDatabase = OCMClassMock([SNTRuleTable class]);
   self.mockEventDatabase = OCMClassMock([SNTEventTable class]);
 
-  self.sut = [[SNTExecutionController alloc] initWithEventProvider:self.mockDriverManager
+  self.sut = [[SNTExecutionController alloc] initWithEventProvider:self.mockEventProvider
                                                          ruleTable:self.mockRuleDatabase
                                                         eventTable:self.mockEventDatabase
                                                      notifierQueue:nil
@@ -119,7 +128,7 @@
 
   [self.sut validateBinaryWithMessage:[self getMessage]];
 
-  OCMVerify([self.mockDriverManager postAction:ACTION_RESPOND_ALLOW forMessage:[self getMessage]]);
+  OCMVerify([self.mockEventProvider postAction:ACTION_RESPOND_ALLOW forMessage:[self getMessage]]);
   [self checkMetricCounters:@"AllowBinary" expected:@2];
 }
 
@@ -135,7 +144,7 @@
 
   [self.sut validateBinaryWithMessage:[self getMessage]];
 
-  OCMVerify([self.mockDriverManager postAction:ACTION_RESPOND_DENY forMessage:[self getMessage]]);
+  OCMVerify([self.mockEventProvider postAction:ACTION_RESPOND_DENY forMessage:[self getMessage]]);
 
   // verify that we're incrementing the binary block
   [self checkMetricCounters:@"BlockBinary" expected:@1];
@@ -156,7 +165,7 @@
 
   [self.sut validateBinaryWithMessage:[self getMessage]];
 
-  OCMVerify([self.mockDriverManager postAction:ACTION_RESPOND_ALLOW forMessage:[self getMessage]]);
+  OCMVerify([self.mockEventProvider postAction:ACTION_RESPOND_ALLOW forMessage:[self getMessage]]);
   [self checkMetricCounters:kAllowCertificate expected:@1];
 }
 
@@ -177,7 +186,7 @@
 
   [self.sut validateBinaryWithMessage:[self getMessage]];
 
-  OCMVerify([self.mockDriverManager postAction:ACTION_RESPOND_DENY forMessage:[self getMessage]]);
+  OCMVerify([self.mockEventProvider postAction:ACTION_RESPOND_DENY forMessage:[self getMessage]]);
   OCMVerifyAllWithDelay(self.mockEventDatabase, 1);
   [self checkMetricCounters:@"BlockCertificate" expected:@1];
 }
@@ -195,7 +204,7 @@
 
   [self.sut validateBinaryWithMessage:[self getMessage]];
 
-  OCMVerify([self.mockDriverManager postAction:ACTION_RESPOND_ALLOW_COMPILER
+  OCMVerify([self.mockEventProvider postAction:ACTION_RESPOND_ALLOW_COMPILER
                                     forMessage:[self getMessage]]);
   [self checkMetricCounters:kAllowCompiler expected:@1];
 }
@@ -213,7 +222,7 @@
 
   [self.sut validateBinaryWithMessage:[self getMessage]];
 
-  OCMVerify([self.mockDriverManager postAction:ACTION_RESPOND_ALLOW forMessage:[self getMessage]]);
+  OCMVerify([self.mockEventProvider postAction:ACTION_RESPOND_ALLOW forMessage:[self getMessage]]);
   [self checkMetricCounters:kAllowBinary expected:@1];
 }
 
@@ -230,7 +239,7 @@
 
   [self.sut validateBinaryWithMessage:[self getMessage]];
 
-  OCMVerify([self.mockDriverManager postAction:ACTION_RESPOND_ALLOW forMessage:[self getMessage]]);
+  OCMVerify([self.mockEventProvider postAction:ACTION_RESPOND_ALLOW forMessage:[self getMessage]]);
 
   [self checkMetricCounters:@"AllowBinary" expected:@2];
 }
@@ -251,7 +260,7 @@
 
   [self.sut validateBinaryWithMessage:[self getMessage]];
 
-  OCMVerify([self.mockDriverManager postAction:ACTION_RESPOND_DENY forMessage:[self getMessage]]);
+  OCMVerify([self.mockEventProvider postAction:ACTION_RESPOND_DENY forMessage:[self getMessage]]);
   OCMVerifyAllWithDelay(self.mockEventDatabase, 1);
   [self checkMetricCounters:kAllowBinary expected:@2];
   [self checkMetricCounters:kAllowTransitive expected:@1];
@@ -265,11 +274,11 @@
   OCMExpect([self.mockEventDatabase addStoredEvent:OCMOCK_ANY]);
 
   [self.sut validateBinaryWithMessage:[self getMessage]];
-  OCMVerify([self.mockDriverManager postAction:ACTION_RESPOND_ALLOW forMessage:[self getMessage]]);
+  OCMVerify([self.mockEventProvider postAction:ACTION_RESPOND_ALLOW forMessage:[self getMessage]]);
 
   OCMExpect([self.mockConfigurator clientMode]).andReturn(SNTClientModeLockdown);
   [self.sut validateBinaryWithMessage:[self getMessage]];
-  OCMVerify([self.mockDriverManager postAction:ACTION_RESPOND_DENY forMessage:[self getMessage]]);
+  OCMVerify([self.mockEventProvider postAction:ACTION_RESPOND_DENY forMessage:[self getMessage]]);
   OCMVerifyAllWithDelay(self.mockEventDatabase, 1);
 
   [self checkMetricCounters:kBlockUnknown expected:@2];
@@ -288,7 +297,7 @@
   OCMStub([self.mockConfigurator failClosed]).andReturn(NO);
   OCMStub([self.mockConfigurator clientMode]).andReturn(SNTClientModeLockdown);
   [self.sut validateBinaryWithMessage:[self getMessage]];
-  OCMVerify([self.mockDriverManager postAction:ACTION_RESPOND_ALLOW forMessage:[self getMessage]]);
+  OCMVerify([self.mockEventProvider postAction:ACTION_RESPOND_ALLOW forMessage:[self getMessage]]);
   [self checkMetricCounters:kAllowNoFileInfo expected:@2];
 }
 
@@ -304,7 +313,7 @@
   OCMStub([self.mockConfigurator failClosed]).andReturn(YES);
   OCMStub([self.mockConfigurator clientMode]).andReturn(SNTClientModeLockdown);
   [self.sut validateBinaryWithMessage:[self getMessage]];
-  OCMVerify([self.mockDriverManager postAction:ACTION_RESPOND_DENY forMessage:[self getMessage]]);
+  OCMVerify([self.mockEventProvider postAction:ACTION_RESPOND_DENY forMessage:[self getMessage]]);
   [self checkMetricCounters:kDenyNoFileInfo expected:@1];
 }
 
@@ -320,13 +329,13 @@
   OCMStub([self.mockConfigurator failClosed]).andReturn(YES);
   OCMStub([self.mockConfigurator clientMode]).andReturn(SNTClientModeMonitor);
   [self.sut validateBinaryWithMessage:[self getMessage]];
-  OCMVerify([self.mockDriverManager postAction:ACTION_RESPOND_ALLOW forMessage:[self getMessage]]);
+  OCMVerify([self.mockEventProvider postAction:ACTION_RESPOND_ALLOW forMessage:[self getMessage]]);
   [self checkMetricCounters:kAllowNoFileInfo expected:@1];
 }
 
 - (void)testMissingShasum {
   [self.sut validateBinaryWithMessage:[self getMessage]];
-  OCMVerify([self.mockDriverManager postAction:ACTION_RESPOND_ALLOW forMessage:[self getMessage]]);
+  OCMVerify([self.mockEventProvider postAction:ACTION_RESPOND_ALLOW forMessage:[self getMessage]]);
   [self checkMetricCounters:kAllowScope expected:@1];
 }
 
@@ -334,7 +343,7 @@
   OCMStub([self.mockFileInfo isMachO]).andReturn(NO);
   OCMStub([self.mockConfigurator clientMode]).andReturn(SNTClientModeLockdown);
   [self.sut validateBinaryWithMessage:[self getMessage]];
-  OCMVerify([self.mockDriverManager postAction:ACTION_RESPOND_ALLOW forMessage:[self getMessage]]);
+  OCMVerify([self.mockEventProvider postAction:ACTION_RESPOND_ALLOW forMessage:[self getMessage]]);
   [self checkMetricCounters:kAllowScope expected:@2];
 }
 
@@ -343,7 +352,7 @@
   OCMStub([self.mockFileInfo isMissingPageZero]).andReturn(YES);
   OCMExpect([self.mockEventDatabase addStoredEvent:OCMOCK_ANY]);
   [self.sut validateBinaryWithMessage:[self getMessage]];
-  OCMVerify([self.mockDriverManager postAction:ACTION_RESPOND_DENY forMessage:[self getMessage]]);
+  OCMVerify([self.mockEventProvider postAction:ACTION_RESPOND_DENY forMessage:[self getMessage]]);
   OCMVerifyAllWithDelay(self.mockEventDatabase, 1);
   [self checkMetricCounters:kBlockUnknown expected:@3];
 }

@@ -31,7 +31,6 @@
 #import "Source/santad/DataLayer/SNTRuleTable.h"
 #import "Source/santad/EventProviders/SNTCachingEndpointSecurityManager.h"
 #import "Source/santad/EventProviders/SNTDeviceManager.h"
-#import "Source/santad/EventProviders/SNTDriverManager.h"
 #import "Source/santad/EventProviders/SNTEndpointSecurityManager.h"
 #import "Source/santad/EventProviders/SNTEventProvider.h"
 #import "Source/santad/Logs/SNTEventLog.h"
@@ -61,19 +60,12 @@
   if (self) {
     SNTConfigurator *configurator = [SNTConfigurator configurator];
 
-    // Choose an event logger.
-    // Locate and connect to driver / SystemExtension
-    if ([configurator enableSystemExtension]) {
-      if ([configurator enableSysxCache]) {
-        LOGI(@"Using CachingEndpointSecurity as event provider.");
-        _eventProvider = [[SNTCachingEndpointSecurityManager alloc] init];
-      } else {
-        LOGI(@"Using EndpointSecurity as event provider.");
-        _eventProvider = [[SNTEndpointSecurityManager alloc] init];
-      }
+    if ([configurator enableSysxCache]) {
+      LOGI(@"Using CachingEndpointSecurity as event provider.");
+      _eventProvider = [[SNTCachingEndpointSecurityManager alloc] init];
     } else {
-      LOGI(@"Using Kauth as event provider.");
-      _eventProvider = [[SNTDriverManager alloc] init];
+      LOGI(@"Using EndpointSecurity as event provider.");
+      _eventProvider = [[SNTEndpointSecurityManager alloc] init];
     }
 
     if (!_eventProvider) {
