@@ -93,7 +93,6 @@ void cleanup() {
   LOGI(@"com.google.santa.daemon is running from an unexpected path: cleaning up");
   NSFileManager *fm = [NSFileManager defaultManager];
   [fm removeItemAtPath:@"/Library/LaunchDaemons/com.google.santad.plist" error:NULL];
-  [fm removeItemAtPath:@"/Library/Extensions/santa-driver.kext" error:NULL];
 
   LOGI(@"loading com.google.santa.daemon as a SystemExtension");
   NSTask *t = [[NSTask alloc] init];
