@@ -3,7 +3,7 @@ load("@rules_proto_grpc//objc:defs.bzl", "objc_proto_library")
 
 package(
     default_visibility = ["//:santa_package_group"],
-    features = ["layering_check"],
+    features = ["-layering_check"],
 )
 
 licenses(["notice"])
