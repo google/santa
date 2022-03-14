@@ -132,9 +132,7 @@ int main(int argc, const char *argv[]) {
     LOGI(@"Started, version %@ (build %@)", productVersion, buildVersion);
 
     // Handle the case of macOS < 10.15 updating to >= 10.15.
-    if ([[SNTConfigurator configurator] enableSystemExtension]) {
-      if ([pi.arguments.firstObject isEqualToString:@(kSantaDPath)]) cleanup();
-    }
+    if ([pi.arguments.firstObject isEqualToString:@(kSantaDPath)]) cleanup();
 
     SNTApplication *s = [[SNTApplication alloc] init];
     [s start];

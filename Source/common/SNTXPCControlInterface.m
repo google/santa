@@ -27,13 +27,10 @@ NSString *const kBundleID = @"com.google.santa.daemon";
 @implementation SNTXPCControlInterface
 
 + (NSString *)serviceID {
-  if ([[SNTConfigurator configurator] enableSystemExtension]) {
-    MOLCodesignChecker *cs = [[MOLCodesignChecker alloc] initWithSelf];
-    // "teamid.com.google.santa.daemon.xpc"
-    NSString *t = cs.signingInformation[@"teamid"];
-    return [NSString stringWithFormat:@"%@.%@.xpc", t, kBundleID];
-  }
-  return kBundleID;
+  MOLCodesignChecker *cs = [[MOLCodesignChecker alloc] initWithSelf];
+  // "teamid.com.google.santa.daemon.xpc"
+  NSString *t = cs.signingInformation[@"teamid"];
+  return [NSString stringWithFormat:@"%@.%@.xpc", t, kBundleID];
 }
 
 + (NSString *)systemExtensionID {
