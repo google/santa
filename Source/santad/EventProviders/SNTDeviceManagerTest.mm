@@ -138,7 +138,7 @@
 
   __block NSString *gotmntonname, *gotmntfromname;
   __block NSArray<NSString *> *gotRemountedArgs;
-  deviceManager.deviceBlockCallbacks = ^(SNTDeviceEvent *event) {
+  deviceManager.deviceBlockCallback = ^(SNTDeviceEvent *event) {
     gotRemountedArgs = event.remountArgs;
     gotmntonname = event.mntonname;
     gotmntfromname = event.mntfromname;
@@ -172,7 +172,7 @@
 
   __block NSString *gotmntonname, *gotmntfromname;
   __block NSArray<NSString *> *gotRemountedArgs;
-  deviceManager.deviceBlockCallbacks = ^(SNTDeviceEvent *event) {
+  deviceManager.deviceBlockCallback = ^(SNTDeviceEvent *event) {
     gotRemountedArgs = event.remountArgs;
     gotmntonname = event.mntonname;
     gotmntfromname = event.mntfromname;

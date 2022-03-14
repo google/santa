@@ -325,6 +325,7 @@ test_suite(
     tests = [
         ":SNTApplicationCoreMetricsTest",
         ":SNTApplicationTest",
+        ":SNTDeviceManagerTest",
         ":SNTEndpointSecurityManagerTest",
         ":SNTEventTableTest",
         ":SNTExecutionControllerTest",
