@@ -16,10 +16,10 @@
 #import <IOKit/kext/KextManager.h>
 #import <MOLXPCConnection/MOLXPCConnection.h>
 
+#import "Source/common/SNTCommon.h"
 #import "Source/common/SNTCommonEnums.h"
 #import "Source/common/SNTConfigurator.h"
 #import "Source/common/SNTFileInfo.h"
-#import "Source/common/SNTCommon.h"
 #import "Source/santactl/SNTCommand.h"
 #import "Source/santactl/SNTCommandController.h"
 
