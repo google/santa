@@ -57,7 +57,6 @@ objc_library(
         "Logs/SNTEventLog.h",
         "Logs/SNTEventLog.m",
         "Logs/SNTFileEventLog.h",
-        "Logs/SNTLogOutput.h",
         "Logs/SNTProtobufEventLog.h",
         "Logs/SNTSyslogEventLog.h",
         "SNTDatabaseController.h",
@@ -77,6 +76,7 @@ objc_library(
 objc_library(
     name = "protobuf_event_logs",
     srcs = [
+        "Logs/SNTLogOutput.h",
         "Logs/SNTProtobufEventLog.h",
         "Logs/SNTProtobufEventLog.m",
         "Logs/SNTSimpleMaildir.h",
