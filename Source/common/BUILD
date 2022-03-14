@@ -1,12 +1,16 @@
 load("//:helper.bzl", "santa_unit_test")
 
-package(default_visibility = ["//:santa_package_group"])
+package(
+    default_visibility = ["//:santa_package_group"],
+    features = ["-layering_check"],
+)
 
 licenses(["notice"])
 
 cc_library(
     name = "SantaCache",
     hdrs = ["SantaCache.h"],
+    features = ["layering_check"],
     deps = ["//Source/common:SNTKernelCommon"],
 )
 
@@ -101,6 +105,7 @@ cc_library(
         "TARGET_OS_OSX",
         "TARGET_OS_MAC",
     ],
+    features = ["layering_check"],
 )
 
 cc_library(
@@ -129,6 +134,7 @@ cc_library(
     srcs = ["SNTPrefixTree.cc"],
     hdrs = ["SNTPrefixTree.h"],
     copts = ["-std=c++11"],
+    features = ["layering_check"],
     deps = [":SNTLogging"],
 )
 
@@ -146,6 +152,7 @@ cc_library(
         "TARGET_OS_OSX",
         "TARGET_OS_MAC",
     ],
+    features = ["layering_check"],
     deps = [":SNTLoggingKernel"],
 )
 
@@ -169,6 +176,7 @@ objc_library(
 cc_library(
     name = "SNTStrengthify",
     hdrs = ["SNTStrengthify.h"],
+    features = ["layering_check"],
 )
 
 objc_library(
