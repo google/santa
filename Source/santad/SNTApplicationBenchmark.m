@@ -35,7 +35,6 @@
   self.mockSNTDatabaseController = OCMClassMock([SNTDatabaseController class]);
   self.mockConfigurator = OCMClassMock([SNTConfigurator class]);
   OCMStub([self.mockConfigurator configurator]).andReturn(self.mockConfigurator);
-  OCMStub([self.mockConfigurator enableSystemExtension]).andReturn(true);
   OCMStub([self.mockConfigurator enableSysxCache]).andReturn(false);
 }
 

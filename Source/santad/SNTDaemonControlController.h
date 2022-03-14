@@ -15,8 +15,8 @@
 #import <Foundation/Foundation.h>
 
 #import "Source/common/SNTXPCControlInterface.h"
+#import "Source/santad/EventProviders/SNTEventProvider.h"
 
-@class SNTDriverManager;
 @class SNTEventLog;
 @class SNTNotificationQueue;
 @class SNTSyncdQueue;
@@ -26,7 +26,7 @@
 ///
 @interface SNTDaemonControlController : NSObject <SNTDaemonControlXPC>
 
-- (instancetype)initWithEventProvider:(SNTDriverManager *)driverManager
+- (instancetype)initWithEventProvider:(id<SNTEventProvider>)driverManager
                     notificationQueue:(SNTNotificationQueue *)notQueue
                            syncdQueue:(SNTSyncdQueue *)syncdQueue;
 @end

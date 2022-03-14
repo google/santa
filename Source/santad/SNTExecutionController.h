@@ -15,7 +15,7 @@
 #import <Foundation/Foundation.h>
 
 #import "Source/common/SNTCommonEnums.h"
-#include "Source/common/SNTKernelCommon.h"
+#include "Source/common/SNTCommon.h"
 #include "Source/santad/EventProviders/SNTEventProvider.h"
 
 const static NSString *kBlockBinary = @"BlockBinary";

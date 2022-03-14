@@ -17,7 +17,6 @@
 #import "Source/common/SNTCommonEnums.h"
 #import "Source/common/SNTConfigurator.h"
 #import "Source/common/SNTLogging.h"
-#import "Source/santad/EventProviders/SNTDriverManager.h"
 #import "Source/santad/SNTApplication.h"
 
 #include <mach/task.h>
@@ -94,8 +93,6 @@ void cleanup() {
   LOGI(@"com.google.santa.daemon is running from an unexpected path: cleaning up");
   NSFileManager *fm = [NSFileManager defaultManager];
   [fm removeItemAtPath:@"/Library/LaunchDaemons/com.google.santad.plist" error:NULL];
-  [SNTDriverManager unloadDriver];
-  [fm removeItemAtPath:@"/Library/Extensions/santa-driver.kext" error:NULL];
 
   LOGI(@"loading com.google.santa.daemon as a SystemExtension");
   NSTask *t = [[NSTask alloc] init];
@@ -134,9 +131,7 @@ int main(int argc, const char *argv[]) {
     LOGI(@"Started, version %@ (build %@)", productVersion, buildVersion);
 
     // Handle the case of macOS < 10.15 updating to >= 10.15.
-    if ([[SNTConfigurator configurator] enableSystemExtension]) {
-      if ([pi.arguments.firstObject isEqualToString:@(kSantaDPath)]) cleanup();
-    }
+    if ([pi.arguments.firstObject isEqualToString:@(kSantaDPath)]) cleanup();
 
     SNTApplication *s = [[SNTApplication alloc] init];
     [s start];

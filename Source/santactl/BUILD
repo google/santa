@@ -36,11 +36,11 @@ objc_library(
     sdk_frameworks = ["IOKit"],
     deps = [
         "//Source/common:SNTCachedDecision",
+        "//Source/common:SNTCommon",
         "//Source/common:SNTCommonEnums",
         "//Source/common:SNTConfigurator",
         "//Source/common:SNTDropRootPrivs",
         "//Source/common:SNTFileInfo",
-        "//Source/common:SNTKernelCommon",
         "//Source/common:SNTLogging",
         "//Source/common:SNTMetricSet",
         "//Source/common:SNTRule",

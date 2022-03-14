@@ -87,7 +87,6 @@ static NSString *const kMailDirectoryEventMaxFlushTimeSec = @"MailDirectoryEvent
 
 static NSString *const kEnableMachineIDDecoration = @"EnableMachineIDDecoration";
 
-static NSString *const kEnableSystemExtension = @"EnableSystemExtension";
 static NSString *const kEnableSysxCache = @"EnableSysxCache";
 
 static NSString *const kEnableForkAndExitLogging = @"EnableForkAndExitLogging";
@@ -195,7 +194,6 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
       kMailDirectorySizeThresholdMB : number,
       kMailDirectoryEventMaxFlushTimeSec : number,
       kEnableMachineIDDecoration : number,
-      kEnableSystemExtension : number,
       kEnableSysxCache : number,
       kEnableForkAndExitLogging : number,
       kIgnoreOtherEndpointSecurityClients : number,
@@ -394,10 +392,6 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
 
 + (NSSet *)keyPathsForValuesAffectingEnableTransitiveRules {
   return [self syncAndConfigStateSet];
-}
-
-+ (NSSet *)keyPathsForValuesAffectingEnableSystemExtension {
-  return [self configStateSet];
 }
 
 + (NSSet *)keyPathsForValuesAffectingEnableSysxCache {
@@ -733,17 +727,6 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
 - (BOOL)enableMachineIDDecoration {
   NSNumber *number = self.configState[kEnableMachineIDDecoration];
   return number ? [number boolValue] : NO;
-}
-
-- (BOOL)enableSystemExtension {
-  if (@available(macOS 10.15, *)) {
-    NSFileManager *fm = [NSFileManager defaultManager];
-    if (![fm fileExistsAtPath:@"/Library/Extensions/santa-driver.kext"]) return YES;
-    NSNumber *number = self.configState[kEnableSystemExtension];
-    return number ? [number boolValue] : YES;
-  } else {
-    return NO;
-  }
 }
 
 - (BOOL)enableSysxCache {

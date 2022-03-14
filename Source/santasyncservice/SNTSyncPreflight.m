@@ -16,8 +16,8 @@
 
 #import <MOLXPCConnection/MOLXPCConnection.h>
 
+#import "Source/common/SNTCommon.h"
 #import "Source/common/SNTConfigurator.h"
-#import "Source/common/SNTKernelCommon.h"
 #import "Source/common/SNTLogging.h"
 #import "Source/common/SNTSystemInfo.h"
 #import "Source/common/SNTXPCControlInterface.h"

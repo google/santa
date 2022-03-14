@@ -80,7 +80,7 @@ REGISTER_COMMAND_NAME(@"status")
 
   SNTConfigurator *configurator = [SNTConfigurator configurator];
 
-  BOOL cachingEnabled = (![configurator enableSystemExtension] || [configurator enableSysxCache]);
+  BOOL cachingEnabled = [configurator enableSysxCache];
 
   // Kext status
   __block uint64_t rootCacheCount = -1, nonRootCacheCount = -1;
