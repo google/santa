@@ -153,9 +153,10 @@
 ///  Defines how event logs are stored. Options are:
 ///    SNTEventLogTypeSyslog: Sent to ASL or ULS (if built with the 10.12 SDK or later).
 ///    SNTEventLogTypeFilelog: Sent to a file on disk. Use eventLogPath to specify a path.
-///    SNTEventLogTypeProtobuf: Sent to a file on disk, using maildir format. Use mailDirectory to
-///      specify a path. Use mailDirectoryFileSizeThresholdKB, mailDirectorySizeThresholdMB and
-///      mailDirectoryEventMaxFlushTimeSec to configure additional maildir format settings.
+///    SNTEventLogTypeProtobuf: (BETA) Sent to a file on disk, using maildir format. Use
+///      mailDirectory to specify a path. Use mailDirectoryFileSizeThresholdKB,
+///      mailDirectorySizeThresholdMB and mailDirectoryEventMaxFlushTimeSec to configure
+///      additional maildir format settings.
 ///    Defaults to SNTEventLogTypeFilelog.
 ///    For mobileconfigs use EventLogType as the key and syslog or filelog strings as the value.
 ///
