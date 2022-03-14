@@ -18,6 +18,7 @@
 
 @class SNTCachedDecision;
 @class SNTStoredEvent;
+@class SNTAllowlistInfo;
 
 ///
 ///  Abstract interface for logging execution and file write events to syslog
@@ -37,7 +38,8 @@
 - (void)logBundleHashingEvents:(NSArray<SNTStoredEvent *> *)events;
 - (void)logFork:(santa_message_t)message;
 - (void)logExit:(santa_message_t)message;
-- (void)writeLog:(NSString *)log;
+- (void)logAllowlist:(SNTAllowlistInfo *)allowlistInfo;
+- (void)forceFlush;
 
 // Methods for storing, retrieving, and removing cached decisions.
 - (void)cacheDecision:(SNTCachedDecision *)cd;
@@ -54,7 +56,7 @@
 - (NSString *)nameForGID:(gid_t)gid;
 - (NSString *)sanitizeString:(NSString *)inStr;
 - (NSString *)serialForDevice:(NSString *)devPath;
-- (NSString *)originalPathForTranslocation:(santa_message_t)message;
+- (NSString *)originalPathForTranslocation:(const santa_message_t *)message;
 
 // A cache for usernames and groups.
 @property(readonly, nonatomic) NSCache<NSNumber *, NSString *> *userNameMap;

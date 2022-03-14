@@ -80,6 +80,10 @@ static NSString *const kFileChangesPrefixFiltersKey = @"FileChangesPrefixFilters
 
 static NSString *const kEventLogType = @"EventLogType";
 static NSString *const kEventLogPath = @"EventLogPath";
+static NSString *const kMailDirectory = @"MailDirectory";
+static NSString *const kMailDirectoryFileSizeThresholdKB = @"MailDirectoryFileSizeThresholdKB";
+static NSString *const kMailDirectorySizeThresholdMB = @"MailDirectorySizeThresholdMB";
+static NSString *const kMailDirectoryEventMaxFlushTimeSec = @"MailDirectoryEventMaxFlushTimeSec";
 
 static NSString *const kEnableMachineIDDecoration = @"EnableMachineIDDecoration";
 
@@ -186,6 +190,10 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
       kMachineIDPlistKeyKey : string,
       kEventLogType : string,
       kEventLogPath : string,
+      kMailDirectory : string,
+      kMailDirectoryFileSizeThresholdKB : number,
+      kMailDirectorySizeThresholdMB : number,
+      kMailDirectoryEventMaxFlushTimeSec : number,
       kEnableMachineIDDecoration : number,
       kEnableSystemExtension : number,
       kEnableSysxCache : number,
@@ -361,6 +369,22 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
 }
 
 + (NSSet *)keyPathsForValuesAffectingEventLogPath {
+  return [self configStateSet];
+}
+
++ (NSSet *)keyPathsForValuesAffectingMailDirectory {
+  return [self configStateSet];
+}
+
++ (NSSet *)keyPathsForValuesAffectingMailDirectoryFileSizeThresholdKB {
+  return [self configStateSet];
+}
+
++ (NSSet *)keyPathsForValuesAffectingMailDirectorySizeThresholdMB {
+  return [self configStateSet];
+}
+
++ (NSSet *)keyPathsForValuesAffectingMailDirectoryEventMaxFlushTimeSec {
   return [self configStateSet];
 }
 
@@ -670,12 +694,40 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
 }
 
 - (SNTEventLogType)eventLogType {
-  NSString *s = [self.configState[kEventLogType] lowercaseString];
-  return [s isEqualToString:@"syslog"] ? SNTEventLogTypeSyslog : SNTEventLogTypeFilelog;
+  NSString *logType = [self.configState[kEventLogType] lowercaseString];
+  if ([logType isEqualToString:@"protobuf"]) {
+    return SNTEventLogTypeProtobuf;
+  } else if ([logType isEqualToString:@"syslog"]) {
+    return SNTEventLogTypeSyslog;
+  } else {
+    return SNTEventLogTypeFilelog;
+  }
 }
 
 - (NSString *)eventLogPath {
   return self.configState[kEventLogPath] ?: @"/var/db/santa/santa.log";
+}
+
+- (NSString *)mailDirectory {
+  return self.configState[kMailDirectory] ?: @"/var/db/santa/mail";
+}
+
+- (NSUInteger)mailDirectoryFileSizeThresholdKB {
+  return self.configState[kMailDirectoryFileSizeThresholdKB]
+           ? [self.configState[kMailDirectoryFileSizeThresholdKB] unsignedIntegerValue]
+           : 100;
+}
+
+- (NSUInteger)mailDirectorySizeThresholdMB {
+  return self.configState[kMailDirectorySizeThresholdMB]
+           ? [self.configState[kMailDirectorySizeThresholdMB] unsignedIntegerValue]
+           : 500;
+}
+
+- (float)mailDirMaxFlushTime {
+  return self.configState[kMailDirectoryEventMaxFlushTimeSec]
+           ? [self.configState[kMailDirectoryEventMaxFlushTimeSec] floatValue]
+           : 5.0;
 }
 
 - (BOOL)enableMachineIDDecoration {

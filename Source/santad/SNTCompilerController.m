@@ -14,6 +14,7 @@
 
 #import "Source/santad/SNTCompilerController.h"
 
+#import "Source/common/SNTAllowlistInfo.h"
 #import "Source/common/SNTCachedDecision.h"
 #import "Source/common/SNTCommonEnums.h"
 #import "Source/common/SNTFileInfo.h"
@@ -60,10 +61,10 @@
 - (void)createTransitiveRule:(santa_message_t)message {
   [self saveFakeDecision:message];
 
-  char *target = message.path;
+  NSString *target = @(message.path);
 
   // Check if this file is an executable.
-  SNTFileInfo *fi = [[SNTFileInfo alloc] initWithPath:@(target)];
+  SNTFileInfo *fi = [[SNTFileInfo alloc] initWithPath:target];
   if (fi.isExecutable) {
     // Check if there is an existing (non-transitive) rule for this file.  We leave existing rules
     // alone, so that a allowlist or blocklist rule can't be overwritten by a transitive one.
@@ -81,10 +82,10 @@
       if (![ruleTable addRules:@[ rule ] cleanSlate:NO error:&err]) {
         LOGE(@"unable to add new transitive rule to database: %@", err.localizedDescription);
       } else {
-        [[SNTEventLog logger]
-          writeLog:[NSString
-                     stringWithFormat:@"action=ALLOWLIST|pid=%d|pidversion=%d|path=%s|sha256=%@",
-                                      message.pid, message.pidversion, target, fi.SHA256]];
+        [[SNTEventLog logger] logAllowlist:[[SNTAllowlistInfo alloc] initWithPid:message.pid
+                                                                      pidversion:message.pidversion
+                                                                      targetPath:target
+                                                                          sha256:fi.SHA256]];
       }
     }
   }
