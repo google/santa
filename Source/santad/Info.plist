@@ -18,6 +18,8 @@
 	<string>Google, LLC.</string>
 	<key>NSSystemExtensionUsageDescription</key>
 	<string>Santa knows who is naughty and nice.</string>
+        <key>NSEndpointSecurityEarlyBoot</key>
+        <true/>
 	<key>CFBundleExecutable</key>
 	<string>com.google.santa.daemon</string>
 </dict>
