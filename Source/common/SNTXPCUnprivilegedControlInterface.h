@@ -16,7 +16,7 @@
 #import <MOLCertificate/MOLCertificate.h>
 
 #import "Source/common/SNTCommonEnums.h"
-#import "Source/common/SNTKernelCommon.h"
+#import "Source/common/SNTCommon.h"
 
 @class SNTRule;
 @class SNTStoredEvent;

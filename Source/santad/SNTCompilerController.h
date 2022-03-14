@@ -14,7 +14,7 @@
 
 #import <Foundation/Foundation.h>
 
-#import "Source/common/SNTKernelCommon.h"
+#import "Source/common/SNTCommon.h"
 
 @class SNTDriverManager;
 @class SNTEventLog;

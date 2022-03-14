@@ -14,7 +14,7 @@
 
 #import <Foundation/Foundation.h>
 
-#include "Source/common/SNTKernelCommon.h"
+#include "Source/common/SNTCommon.h"
 
 @class SNTCachedDecision;
 @class SNTStoredEvent;

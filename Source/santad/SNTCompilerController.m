@@ -18,7 +18,7 @@
 #import "Source/common/SNTCachedDecision.h"
 #import "Source/common/SNTCommonEnums.h"
 #import "Source/common/SNTFileInfo.h"
-#import "Source/common/SNTKernelCommon.h"
+#import "Source/common/SNTCommon.h"
 #import "Source/common/SNTLogging.h"
 #import "Source/common/SNTRule.h"
 #import "Source/santad/DataLayer/SNTRuleTable.h"

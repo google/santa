@@ -54,7 +54,6 @@ run_command(
 sudo launchctl unload /Library/LaunchDaemons/com.google.santad.plist 2>/dev/null
 sudo launchctl unload /Library/LaunchDaemons/com.google.santa.bundleservice.plist 2>/dev/null
 sudo launchctl unload /Library/LaunchDaemons/com.google.santa.metricservice.plist 2>/dev/null
-sudo kextunload -b com.google.santa-driver 2>/dev/null
 launchctl unload /Library/LaunchAgents/com.google.santa.plist 2>/dev/null
 """,
 )
@@ -73,14 +72,11 @@ run_command(
     name = "reload",
     srcs = [
         "//Source/santa:Santa",
-        "//Source/santa_driver",
     ],
     cmd = """
 set -e
 
 rm -rf /tmp/bazel_santa_reload
-unzip -d /tmp/bazel_santa_reload \
-    $${BUILD_WORKSPACE_DIRECTORY}/bazel-out/*$(COMPILATION_MODE)*/bin/Source/santa_driver/santa_driver.zip >/dev/null
 unzip -d /tmp/bazel_santa_reload \
     $${BUILD_WORKSPACE_DIRECTORY}/bazel-out/*$(COMPILATION_MODE)*/bin/Source/santa/Santa.zip >/dev/null
 echo "You may be asked for your password for sudo"
@@ -178,55 +174,6 @@ genrule(
 
       # Create final output tar
       tar -C $(@D) -czpf $(@) binaries dsym conf
-    """,
-    }),
-    heuristic_label_expansion = 0,
-)
-
-genrule(
-    name = "release_driver",
-    srcs = [
-        "//Source/santa_driver",
-    ],
-    outs = ["santa-driver-" + SANTA_VERSION + ".tar.gz"],
-    cmd = select({
-        "//conditions:default": """
-        echo "ERROR: Trying to create a release tarball without optimization."
-        echo "Please add '-c opt' flag to bazel invocation"
-        """,
-        ":opt_build": """
-      # Extract santa_driver.zip
-      for SRC in $(SRCS); do
-        if [ "$$(basename $${SRC})" == "santa_driver.zip" ]; then
-          mkdir -p $(@D)/binaries
-          unzip -q $${SRC} -d $(@D)/binaries >/dev/null
-        fi
-      done
-
-      # Gather together the dSYMs. Throw an error if no dSYMs were found
-      for SRC in $(SRCS); do
-        case $${SRC} in
-          *santa-driver.kext.dSYM*Info.plist)
-            mkdir -p $(@D)/dsym
-            cp -LR $$(dirname $$(dirname $${SRC})) $(@D)/dsym/santa-driver.kext.dSYM
-            ;;
-        esac
-      done
-
-      # Cause a build failure if the dSYMs are missing.
-      if [[ ! -d "$(@D)/dsym" ]]; then
-        echo "dsym dir missing: Did you forget to use --apple_generate_dsym?"
-        echo "This flag is required for the 'release' target."
-        exit 1
-      fi
-
-      # Update all the timestamps to now. Bazel avoids timestamps to allow
-      # builds to be hermetic and cacheable but for releases we want the
-      # timestamps to be more-or-less correct.
-      find $(@D)/{binaries,dsym} -exec touch {} \\;
-
-      # Create final output tar
-      tar -C $(@D) -czpf $(@) binaries dsym
     """,
     }),
     heuristic_label_expansion = 0,
