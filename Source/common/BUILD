@@ -28,7 +28,7 @@ cc_library(
     name = "SantaCache",
     hdrs = ["SantaCache.h"],
     features = ["layering_check"],
-    deps = ["//Source/common:SNTKernelCommon"],
+    deps = ["//Source/common:SNTCommon"],
 )
 
 santa_unit_test(
@@ -37,7 +37,7 @@ santa_unit_test(
         "SantaCache.h",
         "SantaCacheTest.mm",
     ],
-    deps = ["//Source/common:SNTKernelCommon"],
+    deps = ["//Source/common:SNTCommon"],
 )
 
 objc_library(
@@ -78,8 +78,8 @@ objc_library(
     srcs = ["SNTCachedDecision.m"],
     hdrs = ["SNTCachedDecision.h"],
     deps = [
+        ":SNTCommon",
         ":SNTCommonEnums",
-        ":SNTKernelCommon",
     ],
 )
 
@@ -122,27 +122,13 @@ objc_library(
 )
 
 cc_library(
-    name = "SNTKernelCommon",
-    hdrs = ["SNTKernelCommon.h"],
+    name = "SNTCommon",
+    hdrs = ["SNTCommon.h"],
     defines = [
         "TARGET_OS_OSX",
         "TARGET_OS_MAC",
     ],
     features = ["layering_check"],
-)
-
-cc_library(
-    name = "SNTLoggingKernel",
-    hdrs = ["SNTLogging.h"],
-    copts = [
-        "-mkernel",
-        "-I__BAZEL_XCODE_SDKROOT__/System/Library/Frameworks/Kernel.framework/Headers",
-    ],
-    defines = [
-        "KERNEL",
-        "TARGET_OS_OSX",
-        "TARGET_OS_MAC",
-    ],
 )
 
 objc_library(
@@ -159,24 +145,6 @@ cc_library(
     copts = ["-std=c++11"],
     features = ["layering_check"],
     deps = [":SNTLogging"],
-)
-
-cc_library(
-    name = "SNTPrefixTreeKernel",
-    srcs = ["SNTPrefixTree.cc"],
-    hdrs = ["SNTPrefixTree.h"],
-    copts = [
-        "-std=c++11",
-        "-mkernel",
-        "-I__BAZEL_XCODE_SDKROOT__/System/Library/Frameworks/Kernel.framework/Headers",
-    ],
-    defines = [
-        "KERNEL",
-        "TARGET_OS_OSX",
-        "TARGET_OS_MAC",
-    ],
-    features = ["layering_check"],
-    deps = [":SNTLoggingKernel"],
 )
 
 objc_library(
@@ -282,8 +250,8 @@ objc_library(
     srcs = ["SNTXPCUnprivilegedControlInterface.m"],
     hdrs = ["SNTXPCUnprivilegedControlInterface.h"],
     deps = [
+        ":SNTCommon",
         ":SNTCommonEnums",
-        ":SNTKernelCommon",
         ":SNTRule",
         ":SNTStoredEvent",
         ":SNTXPCBundleServiceInterface",

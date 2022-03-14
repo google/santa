@@ -20,7 +20,7 @@
 #include <stdint.h>
 #include <sys/cdefs.h>
 
-#include "Source/common/SNTKernelCommon.h"
+#include "Source/common/SNTCommon.h"
 
 #ifdef KERNEL
 #include <IOKit/IOLib.h>

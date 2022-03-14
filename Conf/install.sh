@@ -27,7 +27,7 @@ fi
 # Unload metric service
 /bin/launchctl remove com.google.santa.metricservice >/dev/null 2>&1
 
-# Unload kext.
+# Unload kext. 
 /sbin/kextunload -b com.google.santa-driver >/dev/null 2>&1
 
 # Determine if anyone is logged into the GUI
@@ -52,10 +52,6 @@ GUI_USER=$(/usr/bin/stat -f '%u' /dev/console)
 /bin/mkdir -p /var/db/santa
 
 /bin/cp -r ${BINARIES}/Santa.app /Applications
-
-# Only copy the kext if the SystemExtension is not present.
-# This prevents Santa from dueling itself if the "EnableSystemExtension" config is set to false.
-/bin/launchctl list EQHXZ8M8AV.com.google.santa.daemon > /dev/null 2>&1 || /bin/cp -r ${BINARIES}/santa-driver.kext /Library/Extensions && /usr/sbin/kextcache -update-volume / -bundle-id com.google.santa-driver
 
 /bin/mkdir -p /usr/local/bin
 /bin/ln -s /Applications/Santa.app/Contents/MacOS/santactl /usr/local/bin 2>/dev/null

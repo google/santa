@@ -3,7 +3,7 @@ load("//:helper.bzl", "santa_unit_test")
 
 package(
     default_visibility = ["//:santa_package_group"],
-    features = ["-layering_check"],
+    features = ["layering_check"],
 )
 
 licenses(["notice"])
@@ -32,18 +32,26 @@ objc_library(
 )
 
 objc_library(
+    name = "SNTEventProvider",
+    hdrs = ["EventProviders/SNTEventProvider.h"],
+    deps = [
+        "//Source/common:SNTCommon",
+    ],
+)
+
+objc_library(
     name = "endpoint_security_manager",
     srcs = [
         "EventProviders/SNTEndpointSecurityManager.h",
         "EventProviders/SNTEndpointSecurityManager.mm",
-        "EventProviders/SNTEventProvider.h",
     ],
     sdk_dylibs = [
         "EndpointSecurity",
         "bsm",
     ],
     deps = [
-        "//Source/common:SNTKernelCommon",
+        ":SNTEventProvider",
+        "//Source/common:SNTCommon",
         "//Source/common:SNTPrefixTree",
         "//Source/common:SantaCache",
     ],
@@ -65,8 +73,8 @@ objc_library(
         ":database_controller",
         "//Source/common:SNTAllowlistInfo",
         "//Source/common:SNTCachedDecision",
+        "//Source/common:SNTCommon",
         "//Source/common:SNTConfigurator",
-        "//Source/common:SNTKernelCommon",
         "//Source/common:SNTLogging",
         "//Source/common:SNTRule",
         "//Source/common:SNTStoredEvent",
@@ -133,8 +141,6 @@ objc_library(
         "EventProviders/SNTCachingEndpointSecurityManager.mm",
         "EventProviders/SNTDeviceManager.h",
         "EventProviders/SNTDeviceManager.mm",
-        "EventProviders/SNTDriverManager.h",
-        "EventProviders/SNTDriverManager.m",
         "EventProviders/SNTEndpointSecurityManager.h",
         "EventProviders/SNTEventProvider.h",
         "SNTApplication.h",
@@ -265,10 +271,10 @@ santa_unit_test(
         ":santad_lib",
         "//Source/common:SNTBlockMessage",
         "//Source/common:SNTCachedDecision",
+        "//Source/common:SNTCommon",
         "//Source/common:SNTCommonEnums",
         "//Source/common:SNTDropRootPrivs",
         "//Source/common:SNTFileInfo",
-        "//Source/common:SNTKernelCommon",
         "//Source/common:SNTLogging",
         "//Source/common:SNTMetricSet",
         "//Source/common:SNTPrefixTree",
@@ -337,7 +343,7 @@ santa_unit_test(
     ],
     deps = [
         ":EndpointSecurityTestLib",
-        "//Source/common:SNTKernelCommon",
+        "//Source/common:SNTCommon",
         "//Source/common:SNTPrefixTree",
         "//Source/common:SantaCache",
     ],
@@ -357,7 +363,7 @@ santa_unit_test(
         ":DiskArbitrationTestLib",
         ":EndpointSecurityTestLib",
         ":santad_lib",
-        "//Source/common:SNTKernelCommon",
+        "//Source/common:SNTCommon",
         "//Source/common:SNTPrefixTree",
         "//Source/common:SantaCache",
         "@OCMock",

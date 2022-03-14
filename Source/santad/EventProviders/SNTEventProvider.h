@@ -14,7 +14,7 @@
 
 #import <Foundation/Foundation.h>
 
-#include "Source/common/SNTKernelCommon.h"
+#include "Source/common/SNTCommon.h"
 
 @protocol SNTEventProvider <NSObject>
 

@@ -216,16 +216,6 @@
 @property(readonly, nonatomic) BOOL enableMachineIDDecoration;
 
 ///
-///  Use the bundled SystemExtension on macOS 10.15+, defaults to YES.
-///  Disable to continue using the bundled KEXT.
-///  This is a one way switch, if this is ever true on macOS 10.15+ the KEXT will be deleted.
-///  This gives admins control over the timing of switching to the SystemExtension. The intended use
-///  case is to have an MDM deliver the requisite SystemExtension and TCC profiles before attempting
-///  to load.
-///
-@property(readonly, nonatomic) BOOL enableSystemExtension;
-
-///
 ///  Use an internal cache for decisions instead of relying on the caching
 ///  mechanism built-in to the EndpointSecurity framework. This may increase
 ///  performance, particularly when Santa is run alongside other system

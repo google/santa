@@ -14,16 +14,16 @@
 
 #import <Foundation/Foundation.h>
 
-#import "Source/common/SNTKernelCommon.h"
+#import "Source/common/SNTCommon.h"
+#import "Source/santad/EventProviders/SNTEventProvider.h"
 
-@class SNTDriverManager;
 @class SNTEventLog;
 
 @interface SNTCompilerController : NSObject
 // Designated initializer takes a SNTEventLog instance so that we can
 // call saveDecisionDetails: to create a fake cached decision for transitive
 // rule creation requests that are still pending.
-- (instancetype)initWithEventProvider:(SNTDriverManager *)driverManager;
+- (instancetype)initWithEventProvider:(id<SNTEventProvider>)eventProvider;
 
 // Whenever an executable file is closed or renamed whitelist the resulting file.
 // We assume that we have already determined that the writing process was a compiler.
