@@ -13,7 +13,6 @@
 ///    limitations under the License.
 
 #import <Foundation/Foundation.h>
-#import <IOKit/kext/KextManager.h>
 #import <MOLXPCConnection/MOLXPCConnection.h>
 
 #import "Source/common/SNTCommon.h"
@@ -50,7 +49,6 @@ REGISTER_COMMAND_NAME(@"version")
 - (void)runWithArguments:(NSArray *)arguments {
   if ([arguments containsObject:@"--json"]) {
     NSDictionary *versions = @{
-      @"santa-driver" : [self santaKextVersion],
       @"santad" : [self santadVersion],
       @"santactl" : [self santactlVersion],
       @"SantaGUI" : [self santaAppVersion],
@@ -62,32 +60,11 @@ REGISTER_COMMAND_NAME(@"version")
                                                   encoding:NSUTF8StringEncoding];
     printf("%s\n", [versionsStr UTF8String]);
   } else {
-    printf("%-15s | %s\n", "santa-driver", [[self santaKextVersion] UTF8String]);
     printf("%-15s | %s\n", "santad", [[self santadVersion] UTF8String]);
     printf("%-15s | %s\n", "santactl", [[self santactlVersion] UTF8String]);
     printf("%-15s | %s\n", "SantaGUI", [[self santaAppVersion] UTF8String]);
   }
   exit(0);
-}
-
-- (NSString *)santaKextVersion {
-  if ([[SNTConfigurator configurator] enableSystemExtension]) {
-    return @"un-needed (SystemExtension being used)";
-  }
-
-  NSDictionary *loadedKexts = CFBridgingRelease(KextManagerCopyLoadedKextInfo(
-    (__bridge CFArrayRef) @[ @(USERCLIENT_ID) ], (__bridge CFArrayRef) @[ @"CFBundleVersion" ]));
-
-  if (loadedKexts[@(USERCLIENT_ID)][@"CFBundleVersion"]) {
-    return loadedKexts[@(USERCLIENT_ID)][@"CFBundleVersion"];
-  }
-
-  SNTFileInfo *driverInfo = [[SNTFileInfo alloc] initWithPath:@(kKextPath)];
-  if (driverInfo) {
-    return [driverInfo.bundleVersion stringByAppendingString:@" (unloaded)"];
-  }
-
-  return @"not found";
 }
 
 - (NSString *)composeVersionsFromDict:(NSDictionary *)dict {
