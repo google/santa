@@ -20,22 +20,17 @@
 #include <stdint.h>
 #include <sys/cdefs.h>
 
-#include "Source/common/SNTCommon.h"
-
-// Support for unit testing.
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+
+#include "Source/common/SNTCommon.h"
+
 #define panic(args...) \
   printf(args);        \
   printf("\n");        \
   abort()
-#define IOMallocAligned(sz, alignment) malloc(sz);
-#define IOFreeAligned(addr, sz) free(addr)
-#define OSTestAndSet OSAtomicTestAndSet
-#define OSTestAndClear(bit, addr) OSAtomicTestAndClear(bit, addr) == 0
-#define OSIncrementAtomic(addr) OSAtomicIncrement64((volatile int64_t *)addr)
-#define OSDecrementAtomic(addr) OSAtomicDecrement64((volatile int64_t *)addr)
+
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wdeprecated-declarations"
 
@@ -84,8 +79,7 @@ class SantaCache {
         (1 << (32 -
                __builtin_clz((((uint32_t)max_size_ / per_bucket) - 1) ?: 1)));
     if (unlikely(bucket_count_ > UINT32_MAX)) bucket_count_ = UINT32_MAX;
-    buckets_ = (struct bucket *)IOMallocAligned(
-        bucket_count_ * sizeof(struct bucket), 2);
+    buckets_ = (struct bucket *)malloc(bucket_count_ * sizeof(struct bucket));
     bzero(buckets_, bucket_count_ * sizeof(struct bucket));
   }
 
@@ -94,7 +88,7 @@ class SantaCache {
   */
   ~SantaCache() {
     clear();
-    IOFreeAligned(buckets_, bucket_count_ * sizeof(struct bucket));
+    free(buckets_);
   }
 
   /**
@@ -169,7 +163,7 @@ class SantaCache {
       struct entry *entry = (struct entry *)((uintptr_t)bucket->head - 1);
       while (entry != nullptr) {
         struct entry *next_entry = entry->next;
-        IOFreeAligned(entry, sizeof(struct entry));
+        free(entry);
         entry = next_entry;
       }
     }
@@ -280,8 +274,8 @@ class SantaCache {
           } else {
             bucket->head = (struct entry *)((uintptr_t)entry->next + 1);
           }
-          IOFreeAligned(entry, sizeof(struct entry));
-          OSDecrementAtomic(&count_);
+          free(entry);
+          OSAtomicDecrement64((volatile int64_t *)&count_);
         }
 
         unlock(bucket);
@@ -314,14 +308,13 @@ class SantaCache {
 
     // Allocate a new entry, set the key and value, then put this new entry at
     // the head of this bucket's linked list.
-    struct entry *new_entry =
-        (struct entry *)IOMallocAligned(sizeof(struct entry), 2);
+    struct entry *new_entry = (struct entry *)malloc(sizeof(struct entry));
     bzero(new_entry, sizeof(struct entry));
     new_entry->key = key;
     new_entry->value = value;
     new_entry->next = (struct entry *)((uintptr_t)bucket->head - 1);
     bucket->head = (struct entry *)((uintptr_t)new_entry + 1);
-    OSIncrementAtomic(&count_);
+    OSAtomicIncrement64((volatile int64_t *)&count_);
 
     unlock(bucket);
     return true;
@@ -331,7 +324,7 @@ class SantaCache {
     Lock a bucket. Spins until the lock is acquired.
   */
   inline void lock(struct bucket *bucket) const {
-    while (OSTestAndSet(7, (volatile uint8_t *)&bucket->head))
+    while (OSAtomicTestAndSet(7, (volatile uint8_t *)&bucket->head))
       ;
   }
 
@@ -339,7 +332,8 @@ class SantaCache {
     Unlock a bucket. Panics if the lock wasn't locked.
   */
   inline void unlock(struct bucket *bucket) const {
-    if (unlikely(OSTestAndClear(7, (volatile uint8_t *)&bucket->head))) {
+    if (unlikely(OSAtomicTestAndClear(7, (volatile uint8_t *)&bucket->head) ==
+                 0)) {
       panic("SantaCache::unlock(): Tried to unlock an unlocked lock");
     }
   }

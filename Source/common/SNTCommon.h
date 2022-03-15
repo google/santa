@@ -13,7 +13,7 @@
 ///    limitations under the License.
 
 ///
-/// Common defines between kernel <-> userspace
+/// Common defines between daemon <-> client
 ///
 
 #ifndef SANTA__COMMON__COMMON_H
@@ -25,11 +25,6 @@
 // Branch prediction
 #define likely(x) __builtin_expect(!!(x), 1)
 #define unlikely(x) __builtin_expect(!!(x), 0)
-
-typedef enum {
-  QUEUETYPE_DECISION,
-  QUEUETYPE_LOG,
-} santa_queuetype_t;
 
 // Enum defining actions that can be passed down the IODataQueue and in
 // response methods.
@@ -112,11 +107,5 @@ typedef struct {
   // NSArray of the arguments.
   void *args_array;
 } santa_message_t;
-
-// Used for the kSantaUserClientCacheBucketCount request.
-typedef struct {
-  uint16_t per_bucket[1024];
-  uint64_t start;
-} santa_bucket_count_t;
 
 #endif  // SANTA__COMMON__COMMON_H

@@ -13,7 +13,7 @@
 ///    limitations under the License.
 
 ///
-/// Logging definitions, for both kernel and user space.
+/// Logging definitions
 ///
 
 #ifndef SANTA__COMMON__LOGGING_H
