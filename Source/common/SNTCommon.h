@@ -16,39 +16,15 @@
 /// Common defines between kernel <-> userspace
 ///
 
-#ifndef SANTA__COMMON__KERNELCOMMON_H
-#define SANTA__COMMON__KERNELCOMMON_H
+#ifndef SANTA__COMMON__COMMON_H
+#define SANTA__COMMON__COMMON_H
 
 #include <stdint.h>
 #include <sys/param.h>
 
-// Defines the name of the userclient class and the driver bundle ID.
-#define USERCLIENT_CLASS "com_google_SantaDriver"
-#define USERCLIENT_ID "com.google.santa-driver"
-
 // Branch prediction
 #define likely(x) __builtin_expect(!!(x), 1)
 #define unlikely(x) __builtin_expect(!!(x), 0)
-
-// List of methods supported by the driver.
-enum SantaDriverMethods {
-  kSantaUserClientOpen,
-  kSantaUserClientAllowBinary,
-  kSantaUserClientAllowCompiler,
-  kSantaUserClientDenyBinary,
-  kSantaUserClientAcknowledgeBinary,
-  kSantaUserClientClearCache,
-  kSantaUserClientRemoveCacheEntry,
-  kSantaUserClientCacheCount,
-  kSantaUserClientCheckCache,
-  kSantaUserClientCacheBucketCount,
-  kSantaUserClientFilemodPrefixFilterAdd,
-  kSantaUserClientFilemodPrefixFilterReset,
-
-  // Any methods supported by the driver should be added above this line to
-  // ensure this remains the count of methods.
-  kSantaUserClientNMethods,
-};
 
 typedef enum {
   QUEUETYPE_DECISION,
@@ -143,4 +119,4 @@ typedef struct {
   uint64_t start;
 } santa_bucket_count_t;
 
-#endif  // SANTA__COMMON__KERNELCOMMON_H
+#endif  // SANTA__COMMON__COMMON_H

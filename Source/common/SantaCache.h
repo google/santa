@@ -22,9 +22,6 @@
 
 #include "Source/common/SNTCommon.h"
 
-#ifdef KERNEL
-#include <IOKit/IOLib.h>
-#else  // KERNEL
 // Support for unit testing.
 #include <cstdio>
 #include <cstdlib>
@@ -41,7 +38,6 @@
 #define OSDecrementAtomic(addr) OSAtomicDecrement64((volatile int64_t *)addr)
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wdeprecated-declarations"
-#endif  // KERNEL
 
 /**
   A type to specialize to help SantaCache with its hashing.
@@ -375,8 +371,6 @@ class SantaCache {
   }
 };
 
-#ifndef KERNEL
 #pragma clang diagnostic pop
-#endif
 
 #endif  // SANTA__SANTA_DRIVER__SANTACACHE_H
