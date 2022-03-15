@@ -37,7 +37,7 @@ void diskMountedCallback(DADiskRef disk, DADissenterRef dissenter, void *context
     IOReturn errorCode = err_get_code(status);
 
     LOGE(
-      @"SNTDeviceManager: dissenter status codes: system: %d, subsystem: %d, err: %d; status: %s",
+      "SNTDeviceManager: dissenter status codes: system: %d, subsystem: %d, err: %d; status: %s",
       systemCode, subSystemCode, errorCode, [statusString UTF8String]);
   }
 }
@@ -101,7 +101,7 @@ long mountArgsToMask(NSArray<NSString *> *args) {
     else if ([arg isEqualToString:@"async"])
       flags |= MNT_ASYNC;
     else
-      LOGE(@"SNTDeviceManager: unexpected mount arg: %@", arg);
+      LOGE("SNTDeviceManager: unexpected mount arg: %@", arg);
   }
   return flags;
 }
@@ -148,16 +148,16 @@ NS_ASSUME_NONNULL_BEGIN
 
     switch (ret) {
       case ES_NEW_CLIENT_RESULT_SUCCESS:
-        LOGI(@"Connected to EndpointSecurity");
+        LOGI("Connected to EndpointSecurity");
         _client = client;
         return;
       case ES_NEW_CLIENT_RESULT_ERR_NOT_PERMITTED:
-        LOGE(@"Unable to create EndpointSecurity client, not full-disk access permitted");
-        LOGE(@"Sleeping for 30s before restarting.");
+        LOGE("Unable to create EndpointSecurity client, not full-disk access permitted");
+        LOGE("Sleeping for 30s before restarting.");
         sleep(30);
         exit(ret);
       default:
-        LOGE(@"Unable to create es client: %d. Sleeping for a minute.", ret);
+        LOGE("Unable to create es client: %d. Sleeping for a minute.", ret);
         sleep(60);
         continue;
     }
@@ -174,7 +174,7 @@ NS_ASSUME_NONNULL_BEGIN
 
   es_return_t sret = es_subscribe(self.client, events, sizeof(events) / sizeof(es_event_type_t));
   if (sret != ES_RETURN_SUCCESS)
-    LOGE(@"SNTDeviceManager: unable to subscribe to auth mount events: %d", sret);
+    LOGE("SNTDeviceManager: unable to subscribe to auth mount events: %d", sret);
 }
 
 - (void)listenDA {
@@ -201,7 +201,7 @@ NS_ASSUME_NONNULL_BEGIN
 
   long mountMode = m->event.mount.statfs->f_flags;
   pid_t pid = audit_token_to_pid(m->process->audit_token);
-  LOGI(@"SNTDeviceManager: mount syscall arriving from path: %s, pid: %d, fflags: %lu",
+  LOGI("SNTDeviceManager: mount syscall arriving from path: %s, pid: %d, fflags: %lu",
        m->process->executable->path.data, pid, mountMode);
 
   DADiskRef disk =
@@ -234,7 +234,7 @@ NS_ASSUME_NONNULL_BEGIN
     }
 
     long newMode = mountMode | remountOpts;
-    LOGI(@"SNTDeviceManager: remounting device '%s'->'%s', flags (%lu) -> (%lu)",
+    LOGI("SNTDeviceManager: remounting device '%s'->'%s', flags (%lu) -> (%lu)",
          m->event.mount.statfs->f_mntfromname, m->event.mount.statfs->f_mntonname, mountMode,
          newMode);
     [self remount:disk mountMode:newMode];
@@ -275,7 +275,7 @@ NS_ASSUME_NONNULL_BEGIN
     responded = std::make_shared<std::atomic<bool>>(false);
     dispatch_after(timeout, self.esAuthQueue, ^(void) {
       if (responded->load()) return;
-      LOGE(@"SNTDeviceManager: deadline reached: deny pid=%d ret=%d",
+      LOGE("SNTDeviceManager: deadline reached: deny pid=%d ret=%d",
            audit_token_to_pid(m->process->audit_token),
            es_respond_auth_result(c, m, ES_AUTH_RESULT_DENY, false));
     });
@@ -306,7 +306,7 @@ NS_ASSUME_NONNULL_BEGIN
     case ES_EVENT_TYPE_NOTIFY_MOUNT: {
       break;
     }
-    default: LOGE(@"SNTDeviceManager: unexpected event type: %d", m->event_type);
+    default: LOGE("SNTDeviceManager: unexpected event type: %d", m->event_type);
   }
 }
 

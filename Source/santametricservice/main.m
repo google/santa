@@ -23,13 +23,13 @@
 
 int main(int argc, const char *argv[]) {
   if (!DropRootPrivileges()) {
-    LOGE(@"unable to drop root privileges, exiting.");
+    LOGE("unable to drop root privileges, exiting.");
     exit(1);
   };
 
   @autoreleasepool {
     NSDictionary *infoDict = [[NSBundle mainBundle] infoDictionary];
-    LOGI(@"Started, version %@", infoDict[@"CFBundleVersion"]);
+    LOGI("Started, version %@", infoDict[@"CFBundleVersion"]);
     MOLXPCConnection *c =
       [[MOLXPCConnection alloc] initServerWithName:[SNTXPCMetricServiceInterface serviceID]];
     c.privilegedInterface = c.unprivilegedInterface =

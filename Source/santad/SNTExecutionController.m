@@ -124,7 +124,7 @@ static NSString *const kPrinterProxyPostMonterey =
 - (void)validateBinaryWithMessage:(santa_message_t)message {
   // Get info about the file. If we can't get this info, allow execution and log an error.
   if (unlikely(message.path == NULL)) {
-    LOGE(@"Path for vnode_id is NULL: %llu/%llu", message.vnode_id.fsid, message.vnode_id.fileid);
+    LOGE("Path for vnode_id is NULL: %llu/%llu", message.vnode_id.fsid, message.vnode_id.fileid);
     [self.eventProvider postAction:ACTION_RESPOND_ALLOW forMessage:message];
     [self.events incrementForFieldValues:@[ (NSString *)kAllowNullVNode ]];
     return;
@@ -135,7 +135,7 @@ static NSString *const kPrinterProxyPostMonterey =
   NSError *fileInfoError;
   SNTFileInfo *binInfo = [[SNTFileInfo alloc] initWithPath:@(message.path) error:&fileInfoError];
   if (unlikely(!binInfo)) {
-    LOGE(@"Failed to read file %@: %@", @(message.path), fileInfoError.localizedDescription);
+    LOGE("Failed to read file %@: %@", @(message.path), fileInfoError.localizedDescription);
     if (config.failClosed && config.clientMode == SNTClientModeLockdown) {
       [self.eventProvider postAction:ACTION_RESPOND_DENY forMessage:message];
       [self.events incrementForFieldValues:@[ (NSString *)kDenyNoFileInfo ]];
@@ -155,7 +155,7 @@ static NSString *const kPrinterProxyPostMonterey =
 
   // If the binary is large let santa-driver know we received the request and we are working on it.
   if (binInfo.fileSize > kLargeBinarySize) {
-    LOGD(@"%@ is larger than %zu. Letting santa-driver know we are working on it.", binInfo.path,
+    LOGD("%@ is larger than %zu. Letting santa-driver know we are working on it.", binInfo.path,
          kLargeBinarySize);
     [self.eventProvider postAction:ACTION_RESPOND_ACK forMessage:message];
     // TODO(markowsky): Maybe add a metric here for how many large executables we're seeing.
@@ -308,7 +308,7 @@ static NSString *const kPrinterProxyPostMonterey =
     [outFh synchronizeFile];
     [outFh closeFile];
 
-    LOGW(@"PrinterProxy workaround applied to %@", fi.path);
+    LOGW("PrinterProxy workaround applied to %@", fi.path);
 
     return YES;
   }

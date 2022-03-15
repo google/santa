@@ -65,7 +65,7 @@ void *watchdogThreadFunction(__unused void *idata) {
         prevTotalTime = totalTime;
 
         if (percentage > cpuWarnThreshold) {
-          LOGW(@"Watchdog: potentially high CPU use, ~%.2f%% over last %d seconds.", percentage,
+          LOGW("Watchdog: potentially high CPU use, ~%.2f%% over last %d seconds.", percentage,
                timeInterval);
           watchdogCPUEvents++;
         }
@@ -75,7 +75,7 @@ void *watchdogThreadFunction(__unused void *idata) {
         // RAM
         double ramUseMB = (double)taskInfo.resident_size / 1024 / 1024;
         if (ramUseMB > memWarnThreshold && ramUseMB > prevRamUseMB) {
-          LOGW(@"Watchdog: potentially high RAM use, RSS is %.2fMB.", ramUseMB);
+          LOGW("Watchdog: potentially high RAM use, RSS is %.2fMB.", ramUseMB);
           watchdogRAMEvents++;
         }
         prevRamUseMB = ramUseMB;
@@ -90,11 +90,11 @@ void *watchdogThreadFunction(__unused void *idata) {
 }
 
 void cleanup() {
-  LOGI(@"com.google.santa.daemon is running from an unexpected path: cleaning up");
+  LOGI("com.google.santa.daemon is running from an unexpected path: cleaning up");
   NSFileManager *fm = [NSFileManager defaultManager];
   [fm removeItemAtPath:@"/Library/LaunchDaemons/com.google.santad.plist" error:NULL];
 
-  LOGI(@"loading com.google.santa.daemon as a SystemExtension");
+  LOGI("loading com.google.santa.daemon as a SystemExtension");
   NSTask *t = [[NSTask alloc] init];
   t.launchPath = [@(kSantaAppPath) stringByAppendingString:@"/Contents/MacOS/Santa"];
   t.arguments = @[ @"--load-system-extension" ];
@@ -128,7 +128,7 @@ int main(int argc, const char *argv[]) {
       return 0;
     }
 
-    LOGI(@"Started, version %@ (build %@)", productVersion, buildVersion);
+    LOGI("Started, version %@ (build %@)", productVersion, buildVersion);
 
     // Handle the case of macOS < 10.15 updating to >= 10.15.
     if ([pi.arguments.firstObject isEqualToString:@(kSantaDPath)]) cleanup();

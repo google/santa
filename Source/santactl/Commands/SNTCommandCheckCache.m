@@ -54,19 +54,19 @@ REGISTER_COMMAND_NAME(@"checkcache")
     checkCacheForVnodeID:vnodeID
                withReply:^(santa_action_t action) {
                  if (action == ACTION_RESPOND_ALLOW) {
-                   LOGI(@"File exists in [allowlist] kernel cache");
+                   LOGI("File exists in [allowlist] kernel cache");
                    exit(0);
                  } else if (action == ACTION_RESPOND_DENY) {
-                   LOGI(@"File exists in [blocklist] kernel cache");
+                   LOGI("File exists in [blocklist] kernel cache");
                    exit(0);
                  } else if (action == ACTION_RESPOND_ALLOW_COMPILER) {
-                   LOGI(@"File exists in [allowlist compiler] kernel cache");
+                   LOGI("File exists in [allowlist compiler] kernel cache");
                    exit(0);
                  } else if (action == ACTION_RESPOND_ALLOW_PENDING_TRANSITIVE) {
-                   LOGI(@"File exists in [allowlist pending_transitive] kernel cache");
+                   LOGI("File exists in [allowlist pending_transitive] kernel cache");
                    exit(0);
                  } else if (action == ACTION_UNSET) {
-                   LOGE(@"File does not exist in cache");
+                   LOGE("File does not exist in cache");
                    exit(1);
                  }
                }];

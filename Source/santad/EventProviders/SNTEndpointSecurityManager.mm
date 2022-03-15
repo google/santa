@@ -87,7 +87,7 @@ static const pid_t PID_MAX = 99999;
           es_respond_auth_result(self.client, m, ES_AUTH_RESULT_ALLOW, false);
         }
         if (self.selfPID != pid) {
-          LOGD(@"Skipping event type: 0x%x from es_client pid: %d", m->event_type, pid);
+          LOGD("Skipping event type: 0x%x from es_client pid: %d", m->event_type, pid);
         }
         return;
       }
@@ -118,7 +118,7 @@ static const pid_t PID_MAX = 99999;
                                                                            buffer:sm.path
                                                                              size:sizeof(sm.path)];
             if (truncated) {
-              LOGE(@"CLOSE: error creating transitive rule, the path is truncated: path=%s pid=%d",
+              LOGE("CLOSE: error creating transitive rule, the path is truncated: path=%s pid=%d",
                    sm.path, pid);
               break;
             }
@@ -128,7 +128,7 @@ static const pid_t PID_MAX = 99999;
             sm.action = ACTION_NOTIFY_WHITELIST;
             sm.pid = pid;
             sm.pidversion = pidversion;
-            LOGI(@"CLOSE: creating a transitive rule: path=%s pid=%d", sm.path, sm.pid);
+            LOGI("CLOSE: creating a transitive rule: path=%s pid=%d", sm.path, sm.pid);
             self.decisionCallback(sm);
           }
 
@@ -143,7 +143,7 @@ static const pid_t PID_MAX = 99999;
                                                                 buffer:sm.path
                                                                   size:sizeof(sm.path)];
             if (truncated) {
-              LOGE(@"RENAME: error creating transitive rule, the path is truncated: path=%s pid=%d",
+              LOGE("RENAME: error creating transitive rule, the path is truncated: path=%s pid=%d",
                    sm.path, pid);
               break;
             }
@@ -153,7 +153,7 @@ static const pid_t PID_MAX = 99999;
             sm.action = ACTION_NOTIFY_WHITELIST;
             sm.pid = pid;
             sm.pidversion = pidversion;
-            LOGI(@"RENAME: creating a transitive rule: path=%s pid=%d", sm.path, sm.pid);
+            LOGI("RENAME: creating a transitive rule: path=%s pid=%d", sm.path, sm.pid);
             self.decisionCallback(sm);
           }
 
@@ -209,7 +209,7 @@ static const pid_t PID_MAX = 99999;
           auto responded = std::make_shared<std::atomic<bool>>(false);
           dispatch_after(dispatch_time(m->deadline, NSEC_PER_SEC * -5), self.esAuthQueue, ^(void) {
             if (responded->load()) return;
-            LOGE(@"Deadline reached: deny pid=%d ret=%d", pid,
+            LOGE("Deadline reached: deny pid=%d ret=%d", pid,
                  es_respond_auth_result(self.client, m, ES_AUTH_RESULT_DENY, false));
           });
 
@@ -242,16 +242,16 @@ static const pid_t PID_MAX = 99999;
 
     switch (ret) {
       case ES_NEW_CLIENT_RESULT_SUCCESS:
-        LOGI(@"Connected to EndpointSecurity");
+        LOGI("Connected to EndpointSecurity");
         _client = client;
         return;
       case ES_NEW_CLIENT_RESULT_ERR_NOT_PERMITTED:
-        LOGE(@"Unable to create EndpointSecurity client, not full-disk access permitted");
-        LOGE(@"Sleeping for 30s before restarting.");
+        LOGE("Unable to create EndpointSecurity client, not full-disk access permitted");
+        LOGE("Sleeping for 30s before restarting.");
         sleep(30);
         exit(ret);
       default:
-        LOGE(@"Unable to create es client: %d. Sleeping for a minute.", ret);
+        LOGE("Unable to create es client: %d. Sleeping for a minute.", ret);
         sleep(60);
         continue;
     }
@@ -308,7 +308,7 @@ static const pid_t PID_MAX = 99999;
                                               encoding:NSUTF8StringEncoding];
       if ([self isDatabasePath:path] &&
           audit_token_to_pid(m->process->audit_token) != self.selfPID) {
-        LOGW(@"Preventing attempt to delete Santa databases!");
+        LOGW("Preventing attempt to delete Santa databases!");
         es_respond_auth_result(self.client, m, ES_AUTH_RESULT_DENY, true);
         return;
       }
@@ -323,7 +323,7 @@ static const pid_t PID_MAX = 99999;
 
       if ([self isDatabasePath:path] &&
           audit_token_to_pid(m->process->audit_token) != self.selfPID) {
-        LOGW(@"Preventing attempt to rename Santa databases!");
+        LOGW("Preventing attempt to rename Santa databases!");
         es_respond_auth_result(self.client, m, ES_AUTH_RESULT_DENY, true);
         return;
       }
@@ -334,7 +334,7 @@ static const pid_t PID_MAX = 99999;
                                                     encoding:NSUTF8StringEncoding];
         if ([self isDatabasePath:destPath] &&
             audit_token_to_pid(m->process->audit_token) != self.selfPID) {
-          LOGW(@"Preventing attempt to overwrite Santa databases!");
+          LOGW("Preventing attempt to overwrite Santa databases!");
           es_respond_auth_result(self.client, m, ES_AUTH_RESULT_DENY, true);
           return;
         }
@@ -348,7 +348,7 @@ static const pid_t PID_MAX = 99999;
                                                  length:identifier.length
                                                encoding:NSUTF8StringEncoding];
       if ([ident isEqualToString:@"com.google.santa-driver"]) {
-        LOGW(@"Preventing attempt to load Santa kext!");
+        LOGW("Preventing attempt to load Santa kext!");
         es_respond_auth_result(self.client, m, ES_AUTH_RESULT_DENY, true);
         return;
       }
@@ -392,7 +392,7 @@ static const pid_t PID_MAX = 99999;
       callback = self.logCallback;
       break;
     }
-    default: LOGE(@"Unknown es message: %d", m->event_type); return;
+    default: LOGE("Unknown es message: %d", m->event_type); return;
   }
 
   // Deny auth exec events if the path doesn't fit in the santa message.
@@ -401,7 +401,7 @@ static const pid_t PID_MAX = 99999;
                                                     buffer:sm.path
                                                       size:sizeof(sm.path)] &&
       m->event_type == ES_EVENT_TYPE_AUTH_EXEC) {
-    LOGE(@"path is truncated, deny: %s", sm.path);
+    LOGE("path is truncated, deny: %s", sm.path);
     es_respond_auth_result(self.client, m, ES_AUTH_RESULT_DENY, false);
     return;
   }
@@ -442,7 +442,7 @@ static const pid_t PID_MAX = 99999;
     ES_EVENT_TYPE_NOTIFY_EXIT,
   };
   es_return_t sret = es_subscribe(self.client, events, sizeof(events) / sizeof(es_event_type_t));
-  if (sret != ES_RETURN_SUCCESS) LOGE(@"Unable to subscribe to auth events: %d", sret);
+  if (sret != ES_RETURN_SUCCESS) LOGE("Unable to subscribe to auth events: %d", sret);
 
   // There's a gap between creating a client and subscribing to events. Creating the client
   // triggers a cache flush automatically but any events that happen in this gap could be allowed
@@ -460,7 +460,7 @@ static const pid_t PID_MAX = 99999;
     ES_EVENT_TYPE_NOTIFY_RENAME, ES_EVENT_TYPE_NOTIFY_UNLINK, ES_EVENT_TYPE_NOTIFY_FORK,
   };
   es_return_t sret = es_subscribe(self.client, events, sizeof(events) / sizeof(es_event_type_t));
-  if (sret != ES_RETURN_SUCCESS) LOGE(@"Unable to subscribe to notify events: %d", sret);
+  if (sret != ES_RETURN_SUCCESS) LOGE("Unable to subscribe to notify events: %d", sret);
 }
 
 - (int)postAction:(santa_action_t)action
@@ -584,12 +584,12 @@ static const pid_t PID_MAX = 99999;
 
 - (void)setIsCompilerPID:(pid_t)pid {
   if (pid < 1) {
-    LOGE(@"Unable to watch compiler pid=%d", pid);
+    LOGE("Unable to watch compiler pid=%d", pid);
   } else if (pid >= PID_MAX) {
-    LOGE(@"Unable to watch compiler pid=%d >= PID_MAX(%d)", pid, PID_MAX);
+    LOGE("Unable to watch compiler pid=%d >= PID_MAX(%d)", pid, PID_MAX);
   } else {
     self->_compilerPIDs[pid].store(true);
-    LOGD(@"Watching compiler pid=%d", pid);
+    LOGD("Watching compiler pid=%d", pid);
   }
 }
 

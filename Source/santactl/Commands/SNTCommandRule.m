@@ -180,7 +180,7 @@ REGISTER_COMMAND_NAME(@"rule")
                      if (error) {
                        printf("Failed to modify rules: %s",
                               [error.localizedDescription UTF8String]);
-                       LOGD(@"Failure reason: %@", error.localizedFailureReason);
+                       LOGD("Failure reason: %@", error.localizedFailureReason);
                        exit(1);
                      } else {
                        NSString *ruleType;

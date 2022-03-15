@@ -80,7 +80,7 @@
       // Add the new rule to the rules database.
       NSError *err;
       if (![ruleTable addRules:@[ rule ] cleanSlate:NO error:&err]) {
-        LOGE(@"unable to add new transitive rule to database: %@", err.localizedDescription);
+        LOGE("unable to add new transitive rule to database: %@", err.localizedDescription);
       } else {
         [[SNTEventLog logger] logAllowlist:[[SNTAllowlistInfo alloc] initWithPid:message.pid
                                                                       pidversion:message.pidversion

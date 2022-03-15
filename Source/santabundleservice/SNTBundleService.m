@@ -53,7 +53,7 @@
     MOLXPCConnection *c = [[MOLXPCConnection alloc] initClientWithListener:listener];
     c.remoteInterface = [SNTXPCNotifierInterface notifierInterface];
     c.acceptedHandler = ^{
-      LOGI(@"Connected to Santa.app");
+      LOGI("Connected to Santa.app");
     };
     [c resume];
     self.notifierConnection = c;
@@ -114,7 +114,7 @@
 }
 
 - (void)spindown {
-  LOGI(@"Spinning down");
+  LOGI("Spinning down");
   exit(0);
 }
 

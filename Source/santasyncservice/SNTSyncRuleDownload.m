@@ -46,13 +46,13 @@
                                                         dispatch_semaphore_signal(sema);
                                                       }];
   if (dispatch_semaphore_wait(sema, dispatch_time(DISPATCH_TIME_NOW, 300 * NSEC_PER_SEC))) {
-    LOGE(@"Failed to add rule(s) to database: timeout sending rules to daemon");
+    LOGE("Failed to add rule(s) to database: timeout sending rules to daemon");
     return NO;
   }
 
   if (error) {
-    LOGE(@"Failed to add rule(s) to database: %@", error.localizedDescription);
-    LOGD(@"Failure reason: %@", error.localizedFailureReason);
+    LOGE("Failed to add rule(s) to database: %@", error.localizedDescription);
+    LOGD("Failure reason: %@", error.localizedFailureReason);
     return NO;
   }
 
@@ -64,7 +64,7 @@
                                                         }];
   dispatch_semaphore_wait(sema, dispatch_time(DISPATCH_TIME_NOW, 5 * NSEC_PER_SEC));
 
-  LOGI(@"Processed %lu rules", newRules.count);
+  LOGI("Processed %lu rules", newRules.count);
 
   // Send out push notifications about any newly allowed binaries
   // that had been previously blocked by santad.
@@ -99,7 +99,7 @@
         count++;
       }
     }
-    LOGI(@"Received %u rules", count);
+    LOGI("Received %u rules", count);
     cursor = response[kCursor];
   } while (cursor);
   return newRules;

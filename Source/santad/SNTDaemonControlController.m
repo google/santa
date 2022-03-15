@@ -116,7 +116,7 @@ double watchdogRAMPeak = 0;
 
   // The actual cache flushing happens after the new rules have been added to the database.
   if (flushCache) {
-    LOGI(@"Flushing decision cache");
+    LOGI("Flushing decision cache");
     [self.eventProvider flushCacheNonRootOnly:NO];
   }
 

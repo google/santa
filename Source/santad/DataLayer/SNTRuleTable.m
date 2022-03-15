@@ -81,8 +81,8 @@ static const NSUInteger kTransitiveRuleExpirationSeconds = 6 * 30 * 24 * 3600;
     if ([csInfo signingInformationMatches:self.launchdCSInfo]) {
       systemBin = YES;
     } else if (![csInfo signingInformationMatches:self.santadCSInfo]) {
-      LOGE(@"Unable to validate critical system binary. "
-           @"pid 1: %@, santad: %@ and %@: %@ do not match.",
+      LOGE("Unable to validate critical system binary. "
+           "pid 1: %@, santad: %@ and %@: %@ do not match.",
            self.launchdCSInfo.leafCertificate, self.santadCSInfo.leafCertificate, path,
            csInfo.leafCertificate);
       continue;
@@ -341,7 +341,7 @@ static const NSUInteger kTransitiveRuleExpirationSeconds = 6 * 30 * 24 * 3600;
   [self inDatabase:^(FMDatabase *db) {
     if (![db executeUpdate:@"UPDATE rules SET timestamp=? WHERE identifier=? AND type=?",
                            @(rule.timestamp), rule.identifier, @(rule.type)]) {
-      LOGE(@"Could not update timestamp for rule with sha256=%@", rule.identifier);
+      LOGE("Could not update timestamp for rule with sha256=%@", rule.identifier);
     }
   }];
 }
@@ -362,7 +362,7 @@ static const NSUInteger kTransitiveRuleExpirationSeconds = 6 * 30 * 24 * 3600;
   [self inDatabase:^(FMDatabase *db) {
     if (![db executeUpdate:@"DELETE FROM rules WHERE state=? AND timestamp < ?",
                            @(SNTRuleStateAllowTransitive), @(outdatedTimestamp)]) {
-      LOGE(@"Could not remove outdated transitive rules");
+      LOGE("Could not remove outdated transitive rules");
     }
   }];
 

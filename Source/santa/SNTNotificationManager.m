@@ -100,13 +100,13 @@ static NSString *const silencedNotificationsKey = @"SilencedNotifications";
   if ([silenceDate isKindOfClass:[NSDate class]]) {
     NSDate *oneDayAgo = [NSDate dateWithTimeIntervalSinceNow:-86400];
     if ([silenceDate compare:[NSDate date]] == NSOrderedDescending) {
-      LOGI(@"Notification silence: date is in the future, ignoring");
+      LOGI("Notification silence: date is in the future, ignoring");
       [self updateSilenceDate:nil forHash:messageHash];
     } else if ([silenceDate compare:oneDayAgo] == NSOrderedAscending) {
-      LOGI(@"Notification silence: date is more than one day ago, ignoring");
+      LOGI("Notification silence: date is more than one day ago, ignoring");
       [self updateSilenceDate:nil forHash:messageHash];
     } else {
-      LOGI(@"Notification silence: dropping notification for %@", messageHash);
+      LOGI("Notification silence: dropping notification for %@", messageHash);
       return;
     }
   }
@@ -234,7 +234,7 @@ static NSString *const silencedNotificationsKey = @"SilencedNotifications";
 
 - (void)postBlockNotification:(SNTStoredEvent *)event withCustomMessage:(NSString *)message {
   if (!event) {
-    LOGI(@"Error: Missing event object in message received from daemon!");
+    LOGI("Error: Missing event object in message received from daemon!");
     return;
   }
 
@@ -254,7 +254,7 @@ static NSString *const silencedNotificationsKey = @"SilencedNotifications";
 
 - (void)postUSBBlockNotification:(SNTDeviceEvent *)event withCustomMessage:(NSString *)message {
   if (!event) {
-    LOGI(@"Error: Missing event object in message received from daemon!");
+    LOGI("Error: Missing event object in message received from daemon!");
     return;
   }
   SNTDeviceMessageWindowController *pendingMsg =

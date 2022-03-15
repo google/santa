@@ -297,7 +297,7 @@
 }
 
 - (void)writeLog:(NSString *)log {
-  LOGI(@"%@", log);
+  LOGI("%@", log);
 }
 
 - (void)forceFlush {

@@ -94,12 +94,12 @@
   SNTConfigurator *config = [SNTConfigurator configurator];
 
   if (![config exportMetrics]) {
-    LOGD(@"received metrics message while not configured to export metrics.");
+    LOGD("received metrics message while not configured to export metrics.");
     return;
   }
 
   if (metrics == nil) {
-    LOGE(@"nil metrics dictionary sent for export");
+    LOGE("nil metrics dictionary sent for export");
     return;
   }
 
@@ -109,7 +109,7 @@
                                                        error:&err];
 
   if (err != nil) {
-    LOGE(@"unable to format metrics as  %@", [self messageFromError:err]);
+    LOGE("unable to format metrics as  %@", [self messageFromError:err]);
     return;
   }
 
@@ -120,7 +120,7 @@
 
     if (!ok) {
       if (err != nil) {
-        LOGE(@"unable to write metrics: %@", [self messageFromError:err]);
+        LOGE("unable to write metrics: %@", [self messageFromError:err]);
       }
     }
   }

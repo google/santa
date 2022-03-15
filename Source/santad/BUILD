@@ -22,6 +22,7 @@ objc_library(
     ],
     deps = [
         "//Source/common:SNTCachedDecision",
+        "//Source/common:SNTConfigurator",
         "//Source/common:SNTFileInfo",
         "//Source/common:SNTLogging",
         "//Source/common:SNTRule",
@@ -52,6 +53,7 @@ objc_library(
     deps = [
         ":SNTEventProvider",
         "//Source/common:SNTCommon",
+        "//Source/common:SNTConfigurator",
         "//Source/common:SNTPrefixTree",
         "//Source/common:SantaCache",
     ],
@@ -344,6 +346,7 @@ santa_unit_test(
     deps = [
         ":EndpointSecurityTestLib",
         "//Source/common:SNTCommon",
+        "//Source/common:SNTConfigurator",
         "//Source/common:SNTPrefixTree",
         "//Source/common:SantaCache",
     ],

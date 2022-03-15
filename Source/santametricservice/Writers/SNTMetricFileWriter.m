@@ -40,7 +40,7 @@
   // open the file and write it.
   @autoreleasepool {
     if (![url isFileURL]) {
-      LOGE(@"url supplied to SNTMetricFileOutput is not a file url, given %@", url.absoluteString);
+      LOGE("url supplied to SNTMetricFileOutput is not a file url, given %@", url.absoluteString);
       return NO;
     }
 
@@ -48,7 +48,7 @@
     const char newline[1] = {'\n'};
 
     if (file == nil) {
-      LOGE(@"Unable to open file %@ to write metrics", url.path);
+      LOGE("Unable to open file %@ to write metrics", url.path);
       return NO;
     }
 

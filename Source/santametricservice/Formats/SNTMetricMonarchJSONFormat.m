@@ -58,13 +58,13 @@ const NSString *kKey = @"key";
                          withMetric:(NSDictionary *)metric
                                into:(NSMutableDictionary *)monarchMetric {
   if (!metric[@"type"]) {
-    LOGE(@"metric type not supposed to be nil for %@", metricName);
+    LOGE("metric type not supposed to be nil for %@", metricName);
     return;
   }
 
   NSNumber *type = metric[@"type"];
   if (![type isKindOfClass:[NSNumber class]]) {
-    LOGE(@"%@ [@\"type\"] is not a number", metricName);
+    LOGE("%@ [@\"type\"] is not a number", metricName);
     return;
   }
 
@@ -94,7 +94,7 @@ const NSString *kKey = @"key";
       monarchMetric[kValueType] = kInt64ValueType;
       break;
     default:
-      LOGE(@"encountered unknown SNTMetricType - %ld for %@", (SNTMetricType)metric[@"type"],
+      LOGE("encountered unknown SNTMetricType - %ld for %@", (SNTMetricType)metric[@"type"],
            metricName);
       break;
   }
@@ -116,7 +116,7 @@ const NSString *kKey = @"key";
         [self->_dateFormatter stringFromDate:entry[@"last_updated"]];
 
       if (!metric[@"type"]) {
-        LOGE(@"metric type is nil");
+        LOGE("metric type is nil");
         continue;
       }
 
@@ -132,7 +132,7 @@ const NSString *kKey = @"key";
         case SNTMetricTypeGaugeDouble: monarchDataEntry[@"doubleValue"] = entry[@"data"]; break;
         case SNTMetricTypeConstantString:
         case SNTMetricTypeGaugeString: monarchDataEntry[kStringValue] = entry[@"data"]; break;
-        default: LOGE(@"encountered unknown SNTMetricType %ld", [type longValue]); break;
+        default: LOGE("encountered unknown SNTMetricType %ld", [type longValue]); break;
       }
       [monarchMetricData addObject:monarchDataEntry];
     }

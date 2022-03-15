@@ -58,12 +58,12 @@ REGISTER_COMMAND_NAME(@"sync")
 - (void)runWithArguments:(NSArray *)arguments {
   // Ensure we have no privileges
   if (!DropRootPrivileges()) {
-    LOGE(@"Failed to drop root privileges. Exiting.");
+    LOGE("Failed to drop root privileges. Exiting.");
     exit(1);
   }
 
   if (![[SNTConfigurator configurator] syncBaseURL]) {
-    LOGE(@"Missing SyncBaseURL. Exiting.");
+    LOGE("Missing SyncBaseURL. Exiting.");
     exit(1);
   }
 
@@ -92,12 +92,12 @@ REGISTER_COMMAND_NAME(@"sync")
   self.listener.privilegedInterface = [SNTXPCSyncdInterface syncdInterface];
   self.listener.exportedObject = self.syncManager;
   self.listener.acceptedHandler = ^{
-    LOGD(@"santad <--> santactl connections established");
+    LOGD("santad <--> santactl connections established");
     dispatch_semaphore_signal(sema);
   };
   self.listener.invalidationHandler = ^{
     // If santad is unloaded kill santactl
-    LOGD(@"exiting");
+    LOGD("exiting");
     exit(0);
   };
   [self.listener resume];

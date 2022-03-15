@@ -180,7 +180,7 @@
   SNTFileInfo *fileInfo;
   NSError *error;
   fileInfo = [[SNTFileInfo alloc] initWithPath:filePath error:&error];
-  if (!fileInfo) LOGW(@"Failed to read file %@: %@", filePath, error.localizedDescription);
+  if (!fileInfo) LOGW("Failed to read file %@: %@", filePath, error.localizedDescription);
   return [self decisionForFileInfo:fileInfo
                         fileSHA256:fileSHA256
                  certificateSHA256:certificateSHA256

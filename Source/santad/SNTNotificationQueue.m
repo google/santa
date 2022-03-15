@@ -39,7 +39,7 @@ static const int kMaximumNotifications = 10;
 - (void)addEvent:(SNTStoredEvent *)event customMessage:(NSString *)message {
   if (!event) return;
   if (self.pendingNotifications.count > kMaximumNotifications) {
-    LOGI(@"Pending GUI notification count is over %d, dropping.", kMaximumNotifications);
+    LOGI("Pending GUI notification count is over %d, dropping.", kMaximumNotifications);
     return;
   }
 

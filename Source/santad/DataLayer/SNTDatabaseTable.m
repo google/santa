@@ -34,7 +34,7 @@
     [db inDatabase:^(FMDatabase *db) {
       if (![db goodConnection]) {
         if ([db lastErrorCode] == SQLITE_LOCKED) {
-          LOGW(@"The database '%@' is locked by another process. Aborting.", [db databasePath]);
+          LOGW("The database '%@' is locked by another process. Aborting.", [db databasePath]);
           [db close];
           bail = YES;
           return;
@@ -71,7 +71,7 @@
     uint32_t newVersion = [self initializeDatabase:db fromVersion:currentVersion];
     if (newVersion < 1) return;
 
-    LOGI(@"Updated %@ from version %d to %d", [self className], currentVersion, newVersion);
+    LOGI("Updated %@ from version %d to %d", [self className], currentVersion, newVersion);
 
     [db setUserVersion:newVersion];
   }];

@@ -23,7 +23,7 @@
 int main(int argc, const char *argv[]) {
   @autoreleasepool {
     NSDictionary *infoDict = [[NSBundle mainBundle] infoDictionary];
-    LOGI(@"Started, version %@", infoDict[@"CFBundleVersion"]);
+    LOGI("Started, version %@", infoDict[@"CFBundleVersion"]);
     MOLXPCConnection *c =
       [[MOLXPCConnection alloc] initServerWithName:[SNTXPCSyncServiceInterface serviceID]];
     c.privilegedInterface = c.unprivilegedInterface =

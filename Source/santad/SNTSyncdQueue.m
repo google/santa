@@ -84,7 +84,7 @@
       if (block) block();
       dispatch_semaphore_signal(self.sema);
     } else {
-      LOGD(@"Dropping block %@ from com.google.syncd_queue", block);
+      LOGD("Dropping block %@ from com.google.syncd_queue", block);
     }
   });
 }

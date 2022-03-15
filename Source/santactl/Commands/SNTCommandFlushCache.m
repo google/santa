@@ -49,10 +49,10 @@ REGISTER_COMMAND_NAME(@"flushcache")
 - (void)runWithArguments:(NSArray *)arguments {
   [[self.daemonConn remoteObjectProxy] flushCache:^(BOOL success) {
     if (success) {
-      LOGI(@"Cache flush requested");
+      LOGI("Cache flush requested");
       exit(0);
     } else {
-      LOGE(@"Cache flush failed");
+      LOGE("Cache flush failed");
       exit(1);
     }
   }];

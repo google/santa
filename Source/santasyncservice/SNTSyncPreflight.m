@@ -76,7 +76,7 @@
 
   // If user requested it or we've never had a successful sync, try from a clean slate.
   if ([[[NSProcessInfo processInfo] arguments] containsObject:@"--clean"] || syncClean) {
-    LOGD(@"Clean sync requested by user");
+    LOGD("Clean sync requested by user");
     requestDict[kRequestCleanSync] = @YES;
   }
 
@@ -144,7 +144,7 @@
   }
 
   if ([resp[kCleanSync] boolValue]) {
-    LOGD(@"Clean sync requested by server");
+    LOGD("Clean sync requested by server");
     self.syncState.cleanSync = YES;
   }
 

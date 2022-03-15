@@ -202,7 +202,7 @@ static void reachabilityHandler(SCNetworkReachabilityRef target, SCNetworkReacha
 #pragma mark reachability methods
 
 - (void)reachabilityRestored {
-  LOGD(@"Reachability restored. Reconnect after a backoff of %i seconds", _backoffSeconds);
+  LOGD("Reachability restored. Reconnect after a backoff of %i seconds", _backoffSeconds);
   [self stopReachability];
   dispatch_time_t t = dispatch_time(DISPATCH_TIME_NOW, _backoffSeconds * NSEC_PER_SEC);
   dispatch_after(t, dispatch_get_main_queue(), ^{
@@ -213,7 +213,7 @@ static void reachabilityHandler(SCNetworkReachabilityRef target, SCNetworkReacha
 /**  Start listening for network state changes on a background thread. */
 - (void)startReachability {
   if (self.reachability) return;
-  LOGD(@"Reachability started.");
+  LOGD("Reachability started.");
   self.reachability =
     SCNetworkReachabilityCreateWithName(kCFAllocatorDefault, _connectComponents.host.UTF8String);
   SCNetworkReachabilityContext context = {.info = (__bridge void *)self};
@@ -242,7 +242,7 @@ static void reachabilityHandler(SCNetworkReachabilityRef target, SCNetworkReacha
 }
 
 - (void)connectHelper {
-  LOGD(@"Connecting...");
+  LOGD("Connecting...");
   [self cancelConnections];
 
   // Reuse checkin credentials / FCM token if allready registered.
@@ -265,7 +265,7 @@ static void reachabilityHandler(SCNetworkReachabilityRef target, SCNetworkReacha
 
 - (void)checkinDataHandler:(NSData *)data {
   id jo = [NSJSONSerialization JSONObjectWithData:data options:0 error:NULL];
-  LOGD(@"checkin: %@", jo);
+  LOGD("checkin: %@", jo);
   NSDictionary *checkin = [self extractCheckinFrom:jo];
   if (!checkin) return;
   self.androidID = [(NSNumber *)checkin[kAndroidIDKey] stringValue];
@@ -310,7 +310,7 @@ static void reachabilityHandler(SCNetworkReachabilityRef target, SCNetworkReacha
   if (c.count == 2) {
     NSString *tok = c[1];
     if ([tok isEqualToString:@"PHONE_REGISTRATION_ERROR"]) {
-      LOGD(@"register: PHONE_REGISTRATION_ERROR - retrying");
+      LOGD("register: PHONE_REGISTRATION_ERROR - retrying");
       sleep(1);
       return [self register];
     }
@@ -386,10 +386,10 @@ static void reachabilityHandler(SCNetworkReachabilityRef target, SCNetworkReacha
                                           options:0
                                             error:&err];
   if (!jo) {
-    if (err) LOGD(@"processMessagesFromData err: %@", err);
+    if (err) LOGD("processMessagesFromData err: %@", err);
     return;
   }
-  LOGD(@"processMessagesFromData: %@", jo);
+  LOGD("processMessagesFromData: %@", jo);
 
   if (![jo isKindOfClass:[NSArray class]]) return;
   for (id md in jo) {
@@ -417,7 +417,7 @@ static void reachabilityHandler(SCNetworkReachabilityRef target, SCNetworkReacha
     // If a backoff is already set, double it, with a max of kBackoffMaxSeconds.
     _backoffSeconds = _backoffSeconds * 2 ?: arc4random_uniform(11) + 5;
     if (_backoffSeconds > _backoffMaxSeconds) _backoffSeconds = _backoffMaxSeconds;
-    if (error) LOGD(@"handleHTTPReponse err: %@", error);
+    if (error) LOGD("handleHTTPReponse err: %@", error);
     [self startReachability];
   }
 }

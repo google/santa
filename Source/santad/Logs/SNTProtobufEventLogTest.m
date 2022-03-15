@@ -65,7 +65,7 @@ SNTStoredEvent *createTestBundleStoredEvent(NSBundle *bundle, NSString *fakeBund
 id getEventForMessage(SNTPBSantaMessage *santaMsg, SNTPBSantaMessage_Message_OneOfCase expectedCase,
                       NSString *propertyName, Class expectedClass) {
   if (santaMsg.messageOneOfCase != expectedCase) {
-    LOGE(@"Unexpected message type. Had: %d, Expected: %d", santaMsg.messageOneOfCase,
+    LOGE("Unexpected message type. Had: %d, Expected: %d", santaMsg.messageOneOfCase,
          expectedCase);
     return nil;
   }
@@ -149,7 +149,7 @@ santa_message_t getBasicSantaMessage(santa_action_t action) {
                                   // Note: Only checking seconds because nano conversion can drift
                                   // slightly due to double precision.
                                   if (sm.eventTime.seconds != ts.tv_sec) {
-                                    LOGE(@"Unexpected message event time");
+                                    LOGE("Unexpected message event time");
                                     return NO;
                                   }
 
@@ -164,7 +164,7 @@ santa_message_t getBasicSantaMessage(santa_action_t action) {
                                       ![fileMod.processPath isEqualToString:processPath] ||
                                       !fileMod.hasProcessInfo || fileMod.processInfo == nil ||
                                       [fileMod.machineId length] != 0) {
-                                    LOGE(@"Unexpected file modification data");
+                                    LOGE("Unexpected file modification data");
                                     return NO;
                                   }
 
@@ -218,7 +218,7 @@ santa_message_t getBasicSantaMessage(santa_action_t action) {
           exec.processInfo == nil || exec.mode != SNTPBExecution_Mode_ModeLockdown ||
           ![exec.path isEqualToString:processPath] || [exec.originalPath length] != 0 ||
           ![exec.argsArray isEqualToArray:execArgs] || [exec.machineId length] != 0) {
-        LOGE(@"Unexpected execution data");
+        LOGE("Unexpected execution data");
         return NO;
       }
 
@@ -271,7 +271,7 @@ santa_message_t getBasicSantaMessage(santa_action_t action) {
           ![diskAppeared.serial isEqualToString:serial] ||
           ![diskAppeared.bus isEqualToString:deviceProto] || [diskAppeared.dmgPath length] != 0 ||
           ![diskAppeared.appearance isEqualToString:appeared]) {
-        LOGE(@"Unexpected disk appeared data");
+        LOGE("Unexpected disk appeared data");
         return NO;
       }
 
@@ -312,7 +312,7 @@ santa_message_t getBasicSantaMessage(santa_action_t action) {
                                   if (![diskDisappeared.mount isEqualToString:mount] ||
                                       ![diskDisappeared.volume isEqualToString:volume] ||
                                       ![diskDisappeared.bsdName isEqualToString:bsdName]) {
-                                    LOGE(@"Unexpected disk disappeared data");
+                                    LOGE("Unexpected disk disappeared data");
                                     return NO;
                                   }
 
@@ -345,7 +345,7 @@ santa_message_t getBasicSantaMessage(santa_action_t action) {
             ![bundleEvent.bundleId isEqualToString:storedEvent.fileBundleID] ||
             ![bundleEvent.bundlePath isEqualToString:storedEvent.fileBundlePath] ||
             ![bundleEvent.path isEqualToString:storedEvent.filePath]) {
-          LOGE(@"Unexpected bundle event data for: %@", storedEvent.filePath);
+          LOGE("Unexpected bundle event data for: %@", storedEvent.filePath);
           return NO;
         }
 
@@ -368,7 +368,7 @@ santa_message_t getBasicSantaMessage(santa_action_t action) {
                                                 @"fork", [SNTPBFork class]);
 
       if (!forkEvent.hasProcessInfo || forkEvent.processInfo == nil) {
-        LOGE(@"Unexpected fork data");
+        LOGE("Unexpected fork data");
         return NO;
       }
 
@@ -392,7 +392,7 @@ santa_message_t getBasicSantaMessage(santa_action_t action) {
                                                 @"exit", [SNTPBExit class]);
 
       if (!exitEvent.hasProcessInfo || exitEvent.processInfo == nil) {
-        LOGE(@"Unexpected exit data");
+        LOGE("Unexpected exit data");
         return NO;
       }
 
@@ -422,7 +422,7 @@ santa_message_t getBasicSantaMessage(santa_action_t action) {
           allowlistEvent.pidversion != allowlistInfo.pidversion ||
           ![allowlistEvent.path isEqualToString:allowlistInfo.targetPath] ||
           ![allowlistEvent.sha256 isEqualToString:allowlistInfo.sha256]) {
-        LOGE(@"Unexpected allowlist data");
+        LOGE("Unexpected allowlist data");
         return NO;
       }
 

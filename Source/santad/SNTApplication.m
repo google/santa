@@ -61,27 +61,27 @@
     SNTConfigurator *configurator = [SNTConfigurator configurator];
 
     if ([configurator enableSysxCache]) {
-      LOGI(@"Using CachingEndpointSecurity as event provider.");
+      LOGI("Using CachingEndpointSecurity as event provider.");
       _eventProvider = [[SNTCachingEndpointSecurityManager alloc] init];
     } else {
-      LOGI(@"Using EndpointSecurity as event provider.");
+      LOGI("Using EndpointSecurity as event provider.");
       _eventProvider = [[SNTEndpointSecurityManager alloc] init];
     }
 
     if (!_eventProvider) {
-      LOGE(@"Failed to connect to driver, exiting.");
+      LOGE("Failed to connect to driver, exiting.");
       return nil;
     }
 
     // Initialize tables
     SNTRuleTable *ruleTable = [SNTDatabaseController ruleTable];
     if (!ruleTable) {
-      LOGE(@"Failed to initialize rule table.");
+      LOGE("Failed to initialize rule table.");
       return nil;
     }
     SNTEventTable *eventTable = [SNTDatabaseController eventTable];
     if (!eventTable) {
-      LOGE(@"Failed to initialize event table.");
+      LOGE("Failed to initialize event table.");
       return nil;
     }
 
@@ -193,7 +193,7 @@
 }
 
 - (void)start {
-  LOGI(@"Connected to driver, activating.");
+  LOGI("Connected to driver, activating.");
 
   [self performSelectorInBackground:@selector(beginListeningForDecisionRequests) withObject:nil];
   [self performSelectorInBackground:@selector(beginListeningForLogRequests) withObject:nil];
@@ -204,7 +204,7 @@
   [self.eventProvider listenForDecisionRequests:^(santa_message_t message) {
     switch (message.action) {
       case ACTION_REQUEST_SHUTDOWN: {
-        LOGI(@"Driver requested a shutdown");
+        LOGI("Driver requested a shutdown");
         exit(0);
       }
       case ACTION_REQUEST_BINARY: {
@@ -218,7 +218,7 @@
         break;
       }
       default: {
-        LOGE(@"Received decision request without a valid action: %d", message.action);
+        LOGE("Received decision request without a valid action: %d", message.action);
         exit(1);
       }
     }
@@ -247,7 +247,7 @@
       }
       case ACTION_NOTIFY_FORK: [[SNTEventLog logger] logFork:message]; break;
       case ACTION_NOTIFY_EXIT: [[SNTEventLog logger] logExit:message]; break;
-      default: LOGE(@"Received log request without a valid action: %d", message.action); break;
+      default: LOGE("Received log request without a valid action: %d", message.action); break;
     }
   }];
 }
@@ -277,7 +277,7 @@ dispatch_source_t createDispatchTimer(uint64_t interval, uint64_t leeway, dispat
 - (void)startMetricsPoll {
   NSUInteger interval = [[SNTConfigurator configurator] metricExportInterval];
 
-  LOGI(@"starting to export metrics every %ld seconds", interval);
+  LOGI("starting to export metrics every %ld seconds", interval);
   void (^exportMetricsBlock)(void) = ^{
     [[self.metricsConnection remoteObjectProxy]
       exportForMonitoring:[[SNTMetricSet sharedInstance] export]];
@@ -289,7 +289,7 @@ dispatch_source_t createDispatchTimer(uint64_t interval, uint64_t leeway, dispat
     _metricsConnection = [SNTXPCMetricServiceInterface configuredConnection];
     [_metricsConnection resume];
 
-    LOGD(@"registering core metrics");
+    LOGD("registering core metrics");
     SNTRegisterCoreMetrics();
     exportMetricsBlock();
   });
@@ -297,7 +297,7 @@ dispatch_source_t createDispatchTimer(uint64_t interval, uint64_t leeway, dispat
   dispatch_source_t timer = createDispatchTimer(interval * NSEC_PER_SEC, 1ull * NSEC_PER_SEC,
                                                 dispatch_get_main_queue(), exportMetricsBlock);
   if (!timer) {
-    LOGE(@"failed to created timer for exporting metrics");
+    LOGE("failed to created timer for exporting metrics");
     return;
   }
 
@@ -306,7 +306,7 @@ dispatch_source_t createDispatchTimer(uint64_t interval, uint64_t leeway, dispat
 
 - (void)stopMetricsPoll {
   if (!_metricsTimer) {
-    LOGE(@"stopMetricsPoll called while _metricsTimer is nil");
+    LOGE("stopMetricsPoll called while _metricsTimer is nil");
     return;
   }
 
@@ -318,7 +318,7 @@ dispatch_source_t createDispatchTimer(uint64_t interval, uint64_t leeway, dispat
   [self stopSyncd];
   self.syncdPID = fork();
   if (self.syncdPID == -1) {
-    LOGI(@"Failed to fork");
+    LOGI("Failed to fork");
     self.syncdPID = 0;
   } else if (self.syncdPID == 0) {
     // The santactl executable will drop privileges just after the XPC
@@ -326,13 +326,13 @@ dispatch_source_t createDispatchTimer(uint64_t interval, uint64_t leeway, dispat
     // the XPC authentication can occur
     _exit(execl(kSantaCtlPath, kSantaCtlPath, "sync", "--daemon", "--syslog", NULL));
   }
-  LOGI(@"santactl started with pid: %i", self.syncdPID);
+  LOGI("santactl started with pid: %i", self.syncdPID);
 }
 
 - (void)stopSyncd {
   if (!self.syncdPID) return;
   int ret = kill(self.syncdPID, SIGKILL);
-  LOGD(@"kill(%i, 9) = %i", self.syncdPID, ret);
+  LOGD("kill(%i, 9) = %i", self.syncdPID, ret);
   self.syncdPID = 0;
 }
 
@@ -361,7 +361,7 @@ dispatch_source_t createDispatchTimer(uint64_t interval, uint64_t leeway, dispat
       [change[oldKey] isKindOfClass:[NSRegularExpression class]] ? change[oldKey] : nil;
     if (!new && !old) return;
     if (![new.pattern isEqualToString:old.pattern]) {
-      LOGI(@"Changed [allow|deny]list regex, flushing cache");
+      LOGI("Changed [allow|deny]list regex, flushing cache");
       [self.eventProvider flushCacheNonRootOnly:NO];
     }
   } else if ([keyPath isEqualToString:NSStringFromSelector(@selector(exportMetrics))]) {
@@ -369,10 +369,10 @@ dispatch_source_t createDispatchTimer(uint64_t interval, uint64_t leeway, dispat
     BOOL old = [change[oldKey] boolValue];
 
     if (old == NO && new == YES) {
-      LOGI(@"metricsExport changed NO -> YES, starting to export metrics");
+      LOGI("metricsExport changed NO -> YES, starting to export metrics");
       [self startMetricsPoll];
     } else if (old == YES && new == NO) {
-      LOGI(@"metricsExport changed YES -> NO, stopping export of metrics");
+      LOGI("metricsExport changed YES -> NO, stopping export of metrics");
       [self stopMetricsPoll];
     }
   } else if ([keyPath isEqualToString:NSStringFromSelector(@selector(metricExportInterval))]) {
@@ -381,7 +381,7 @@ dispatch_source_t createDispatchTimer(uint64_t interval, uint64_t leeway, dispat
     NSUInteger old = [ change[oldKey] unsignedIntegerValue ];
     // clang-format on
 
-    LOGI(@"MetricExportInterval changed from %ld to %ld restarting export", old, new);
+    LOGI("MetricExportInterval changed from %ld to %ld restarting export", old, new);
 
     [self stopMetricsPoll];
     [self startMetricsPoll];
@@ -390,7 +390,7 @@ dispatch_source_t createDispatchTimer(uint64_t interval, uint64_t leeway, dispat
     BOOL old = [change[oldKey] boolValue];
 
     if (new != old) {
-      LOGI(@"BlockUSBMount changed: %d -> %d", old, new);
+      LOGI("BlockUSBMount changed: %d -> %d", old, new);
       self.deviceManager.blockUSBMount = new;
     }
   } else if ([keyPath isEqualToString:NSStringFromSelector(@selector(remountUSBMode))]) {
@@ -401,7 +401,7 @@ dispatch_source_t createDispatchTimer(uint64_t interval, uint64_t leeway, dispat
       [change[oldKey] isKindOfClass:[NSArray class]] ? (NSArray<NSString *> *)change[oldKey] : nil;
 
     if (![old isEqualToArray:new]) {
-      LOGI(@"RemountArgs changed: %s -> %s", [[old componentsJoinedByString:@","] UTF8String],
+      LOGI("RemountArgs changed: %s -> %s", [[old componentsJoinedByString:@","] UTF8String],
            [[new componentsJoinedByString:@","] UTF8String]);
       self.deviceManager.remountArgs = new;
     }
@@ -410,7 +410,7 @@ dispatch_source_t createDispatchTimer(uint64_t interval, uint64_t leeway, dispat
 
 - (void)clientModeDidChange:(SNTClientMode)clientMode {
   if (clientMode == SNTClientModeLockdown) {
-    LOGI(@"Changed client mode, flushing cache.");
+    LOGI("Changed client mode, flushing cache.");
     [self.eventProvider flushCacheNonRootOnly:NO];
   }
   [[self.notQueue.notifierConnection remoteObjectProxy] postClientModeNotification:clientMode];
@@ -418,13 +418,13 @@ dispatch_source_t createDispatchTimer(uint64_t interval, uint64_t leeway, dispat
 
 - (void)syncBaseURLDidChange:(NSURL *)syncBaseURL {
   if (syncBaseURL) {
-    LOGI(@"Starting santactl with new SyncBaseURL: %@", syncBaseURL);
+    LOGI("Starting santactl with new SyncBaseURL: %@", syncBaseURL);
     [NSObject cancelPreviousPerformRequestsWithTarget:[SNTConfigurator configurator]
                                              selector:@selector(clearSyncState)
                                                object:nil];
     [self startSyncd];
   } else {
-    LOGI(@"SyncBaseURL removed, killing santactl pid: %i", self.syncdPID);
+    LOGI("SyncBaseURL removed, killing santactl pid: %i", self.syncdPID);
     [self stopSyncd];
     // Keep the syncState active for 10 min in case com.apple.ManagedClient is flapping.
     [[SNTConfigurator configurator] performSelector:@selector(clearSyncState)

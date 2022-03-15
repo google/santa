@@ -113,9 +113,9 @@ static void reachabilityHandler(SCNetworkReachabilityRef target, SCNetworkReacha
       syncState.allowlistNotificationQueue = self.allowlistNotificationQueue;
       SNTSyncRuleDownload *p = [[SNTSyncRuleDownload alloc] initWithState:syncState];
       if ([p sync]) {
-        LOGD(@"Rule download complete");
+        LOGD("Rule download complete");
       } else {
-        LOGE(@"Rule download failed");
+        LOGE("Rule download failed");
       }
       self.targetedRuleSync = NO;
       [self unlockAction:kRuleSync];
@@ -145,9 +145,9 @@ static void reachabilityHandler(SCNetworkReachabilityRef target, SCNetworkReacha
   if (isFromBundle) syncState.eventBatchSize = self.eventBatchSize;
   SNTSyncEventUpload *p = [[SNTSyncEventUpload alloc] initWithState:syncState];
   if (events && [p uploadEvents:events]) {
-    LOGD(@"Events upload complete");
+    LOGD("Events upload complete");
   } else {
-    LOGE(@"Events upload failed.  Will retry again once %@ is reachable",
+    LOGE("Events upload failed.  Will retry again once %@ is reachable",
          [[SNTConfigurator configurator] syncBaseURL].absoluteString);
     [self startReachability];
   }
@@ -164,16 +164,16 @@ static void reachabilityHandler(SCNetworkReachabilityRef target, SCNetworkReacha
   if ([p uploadEvents:@[ event ]]) {
     if ([syncState.bundleBinaryRequests containsObject:event.fileBundleHash]) {
       reply(SNTBundleEventActionSendEvents);
-      LOGD(@"Needs related events");
+      LOGD("Needs related events");
     } else {
       reply(SNTBundleEventActionDropEvents);
-      LOGD(@"Bundle event upload complete");
+      LOGD("Bundle event upload complete");
     }
   } else {
     // Related bundle events will be stored and eventually synced, whether the server actually
     // wanted them or not.  If they weren't needed the server will simply ignore them.
     reply(SNTBundleEventActionStoreEvents);
-    LOGE(@"Bundle event upload failed.  Will retry again once %@ is reachable",
+    LOGE("Bundle event upload failed.  Will retry again once %@ is reachable",
          [[SNTConfigurator configurator] syncBaseURL].absoluteString);
     [self startReachability];
   }
@@ -187,10 +187,10 @@ static void reachabilityHandler(SCNetworkReachabilityRef target, SCNetworkReacha
 
 - (void)listenForPushNotificationsWithSyncState:(SNTSyncState *)syncState {
   if ([self.FCMToken isEqualToString:syncState.FCMToken]) {
-    LOGD(@"Already listening for push notifications");
+    LOGD("Already listening for push notifications");
     return;
   }
-  LOGD(@"Start listening for push notifications");
+  LOGD("Start listening for push notifications");
 
   WEAKIFY(self);
 
@@ -204,22 +204,22 @@ static void reachabilityHandler(SCNetworkReachabilityRef target, SCNetworkReacha
                                         messageHandler:^(NSDictionary *message) {
                                           if (!message || message[@"noOp"]) return;
                                           STRONGIFY(self);
-                                          LOGD(@"%@", message);
+                                          LOGD("%@", message);
                                           [self.FCMClient acknowledgeMessage:message];
                                           [self processFCMMessage:message withMachineID:machineID];
                                         }];
 
   self.FCMClient.tokenHandler = ^(NSString *t) {
     STRONGIFY(self);
-    LOGD(@"tokenHandler: %@", t);
+    LOGD("tokenHandler: %@", t);
     self.FCMToken = t;
     [self preflightOnly:YES];
   };
 
   self.FCMClient.connectionErrorHandler = ^(NSHTTPURLResponse *response, NSError *error) {
     STRONGIFY(self);
-    if (response) LOGE(@"FCM fatal response: %@", response);
-    if (error) LOGE(@"FCM fatal error: %@", error);
+    if (response) LOGE("FCM fatal response: %@", response);
+    if (error) LOGE("FCM fatal error: %@", error);
     [self.FCMClient disconnect];
     self.FCMClient = nil;
     self.FCMToken = nil;
@@ -233,13 +233,13 @@ static void reachabilityHandler(SCNetworkReachabilityRef target, SCNetworkReacha
   NSDictionary *message = [self messageFromMessageData:[self messageDataFromFCMmessage:FCMmessage]];
 
   if (!message) {
-    LOGD(@"Push notification message is not in the expected format...dropping message");
+    LOGD("Push notification message is not in the expected format...dropping message");
     return;
   }
 
   NSString *action = message[kFCMActionKey];
   if (!action) {
-    LOGD(@"Push notification message contains no action");
+    LOGD("Push notification message contains no action");
     return;
   }
 
@@ -258,19 +258,19 @@ static void reachabilityHandler(SCNetworkReachabilityRef target, SCNetworkReacha
     }];
   }
 
-  LOGD(@"Push notification action: %@ received", action);
+  LOGD("Push notification action: %@ received", action);
 
   if ([action isEqualToString:kFullSync]) {
     [self fullSync];
   } else if ([action isEqualToString:kRuleSync]) {
     NSString *targetHostID = message[kFCMTargetHostIDKey];
     if (targetHostID && [targetHostID caseInsensitiveCompare:machineID] == NSOrderedSame) {
-      LOGD(@"Targeted rule_sync for host_id: %@", targetHostID);
+      LOGD("Targeted rule_sync for host_id: %@", targetHostID);
       self.targetedRuleSync = YES;
       [self ruleSync];
     } else {
       uint32_t delaySeconds = arc4random_uniform((uint32_t)self.FCMGlobalRuleSyncDeadline);
-      LOGD(@"Global rule_sync, staggering: %u second delay", delaySeconds);
+      LOGD("Global rule_sync, staggering: %u second delay", delaySeconds);
       [self ruleSyncSecondsFromNow:delaySeconds];
     }
   } else if ([action isEqualToString:kConfigSync]) {
@@ -278,7 +278,7 @@ static void reachabilityHandler(SCNetworkReachabilityRef target, SCNetworkReacha
   } else if ([action isEqualToString:kLogSync]) {
     [self fullSync];
   } else {
-    LOGD(@"Unrecognised action: %@", action);
+    LOGD("Unrecognised action: %@", action);
   }
 }
 
@@ -290,7 +290,7 @@ static void reachabilityHandler(SCNetworkReachabilityRef target, SCNetworkReacha
 
 - (NSDictionary *)messageFromMessageData:(NSData *)messageData {
   if (!messageData) {
-    LOGD(@"Unable to parse push notification message data");
+    LOGD("Unable to parse push notification message data");
     return nil;
   }
   NSError *error;
@@ -298,7 +298,7 @@ static void reachabilityHandler(SCNetworkReachabilityRef target, SCNetworkReacha
                                                              options:0
                                                                error:&error];
   if (!rawMessage) {
-    LOGD(@"Unable to parse push notification message data: %@", error);
+    LOGD("Unable to parse push notification message data: %@", error);
     return nil;
   }
 
@@ -321,7 +321,7 @@ static void reachabilityHandler(SCNetworkReachabilityRef target, SCNetworkReacha
 
 - (void)fullSyncSecondsFromNow:(uint64_t)seconds {
   if (![self checkLockAction:kFullSync]) {
-    LOGD(@"%@ in progress, dropping reschedule request", kFullSync);
+    LOGD("%@ in progress, dropping reschedule request", kFullSync);
     return;
   }
   [self rescheduleTimerQueue:self.fullSyncTimer secondsFromNow:seconds];
@@ -333,7 +333,7 @@ static void reachabilityHandler(SCNetworkReachabilityRef target, SCNetworkReacha
 
 - (void)ruleSyncSecondsFromNow:(uint64_t)seconds {
   if (![self checkLockAction:kRuleSync]) {
-    LOGD(@"%@ in progress, dropping reschedule request", kRuleSync);
+    LOGD("%@ in progress, dropping reschedule request", kRuleSync);
     return;
   }
   [self rescheduleTimerQueue:self.ruleSyncTimer secondsFromNow:seconds];
@@ -352,11 +352,11 @@ static void reachabilityHandler(SCNetworkReachabilityRef target, SCNetworkReacha
 }
 
 - (void)preflightOnly:(BOOL)preflightOnly {
-  LOGD(@"Preflight starting");
+  LOGD("Preflight starting");
   SNTSyncState *syncState = [self createSyncState];
   SNTSyncPreflight *p = [[SNTSyncPreflight alloc] initWithState:syncState];
   if ([p sync]) {
-    LOGD(@"Preflight complete");
+    LOGD("Preflight complete");
 
     // Clean up reachability if it was started for a non-network error
     [self stopReachability];
@@ -369,7 +369,7 @@ static void reachabilityHandler(SCNetworkReachabilityRef target, SCNetworkReacha
       self.FCMGlobalRuleSyncDeadline = syncState.FCMGlobalRuleSyncDeadline;
       [self listenForPushNotificationsWithSyncState:syncState];
     } else if (syncState.daemon) {
-      LOGD(@"FCM not enabled. Sync every %lu min.", syncState.fullSyncInterval / 60);
+      LOGD("FCM not enabled. Sync every %lu min.", syncState.fullSyncInterval / 60);
       [self.FCMClient disconnect];
       self.FCMClient = nil;
       self.fullSyncInterval = syncState.fullSyncInterval;
@@ -380,48 +380,48 @@ static void reachabilityHandler(SCNetworkReachabilityRef target, SCNetworkReacha
     return [self eventUploadWithSyncState:syncState];
   } else {
     if (!syncState.daemon) {
-      LOGE(@"Preflight failed, aborting run");
+      LOGE("Preflight failed, aborting run");
       exit(1);
     }
-    LOGE(@"Preflight failed, will try again once %@ is reachable",
+    LOGE("Preflight failed, will try again once %@ is reachable",
          [[SNTConfigurator configurator] syncBaseURL].absoluteString);
     [self startReachability];
   }
 }
 
 - (void)eventUploadWithSyncState:(SNTSyncState *)syncState {
-  LOGD(@"Event upload starting");
+  LOGD("Event upload starting");
   SNTSyncEventUpload *p = [[SNTSyncEventUpload alloc] initWithState:syncState];
   if ([p sync]) {
-    LOGD(@"Event upload complete");
+    LOGD("Event upload complete");
     return [self ruleDownloadWithSyncState:syncState];
   } else {
-    LOGE(@"Event upload failed, aborting run");
+    LOGE("Event upload failed, aborting run");
     if (!syncState.daemon) exit(1);
   }
 }
 
 - (void)ruleDownloadWithSyncState:(SNTSyncState *)syncState {
-  LOGD(@"Rule download starting");
+  LOGD("Rule download starting");
   SNTSyncRuleDownload *p = [[SNTSyncRuleDownload alloc] initWithState:syncState];
   if ([p sync]) {
-    LOGD(@"Rule download complete");
+    LOGD("Rule download complete");
     return [self postflightWithSyncState:syncState];
   } else {
-    LOGE(@"Rule download failed, aborting run");
+    LOGE("Rule download failed, aborting run");
     if (!syncState.daemon) exit(1);
   }
 }
 
 - (void)postflightWithSyncState:(SNTSyncState *)syncState {
-  LOGD(@"Postflight starting");
+  LOGD("Postflight starting");
   SNTSyncPostflight *p = [[SNTSyncPostflight alloc] initWithState:syncState];
   if ([p sync]) {
-    LOGD(@"Postflight complete");
-    LOGI(@"Sync completed successfully");
+    LOGD("Postflight complete");
+    LOGI("Sync completed successfully");
     if (!syncState.daemon) exit(0);
   } else {
-    LOGE(@"Postflight failed");
+    LOGE("Postflight failed");
     if (!syncState.daemon) exit(1);
   }
 }
@@ -444,22 +444,22 @@ static void reachabilityHandler(SCNetworkReachabilityRef target, SCNetworkReacha
 
   syncState.syncBaseURL = config.syncBaseURL;
   if (syncState.syncBaseURL.absoluteString.length == 0) {
-    LOGE(@"Missing SyncBaseURL. Can't sync without it.");
+    LOGE("Missing SyncBaseURL. Can't sync without it.");
     if (!syncState.daemon) exit(1);
   } else if (![syncState.syncBaseURL.scheme isEqual:@"https"]) {
-    LOGW(@"SyncBaseURL is not over HTTPS!");
+    LOGW("SyncBaseURL is not over HTTPS!");
   }
 
   syncState.machineID = config.machineID;
   if (syncState.machineID.length == 0) {
-    LOGE(@"Missing Machine ID. Can't sync without it.");
+    LOGE("Missing Machine ID. Can't sync without it.");
     if (!syncState.daemon) exit(1);
   }
 
   syncState.machineOwner = config.machineOwner;
   if (syncState.machineOwner.length == 0) {
     syncState.machineOwner = @"";
-    LOGW(@"Missing Machine Owner.");
+    LOGW("Missing Machine Owner.");
   }
 
   dispatch_group_t group = dispatch_group_create();
@@ -482,7 +482,7 @@ static void reachabilityHandler(SCNetworkReachabilityRef target, SCNetworkReacha
   authURLSession.refusesRedirects = YES;
   authURLSession.serverHostname = syncState.syncBaseURL.host;
   authURLSession.loggingBlock = ^(NSString *line) {
-    LOGD(@"%@", line);
+    LOGD("%@", line);
   };
 
   // Configure server auth

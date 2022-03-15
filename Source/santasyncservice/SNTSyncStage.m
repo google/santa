@@ -59,7 +59,7 @@
     NSError *error;
     requestBody = [NSJSONSerialization dataWithJSONObject:dictionary options:0 error:&error];
     if (error) {
-      LOGD(@"Failed to encode JSON request: %@", error);
+      LOGD("Failed to encode JSON request: %@", error);
       return nil;
     }
   }
@@ -93,7 +93,7 @@
       nanosleep(&ts, NULL);
     }
 
-    LOGD(@"Performing request, attempt %d", attempt);
+    LOGD("Performing request, attempt %d", attempt);
     data = [self performRequest:request timeout:timeout response:&response error:&error];
     if (response.statusCode == 200) break;
 
@@ -121,7 +121,7 @@
       code = (long)error.code;
       errStr = error.localizedDescription;
     }
-    LOGE(@"HTTP Response: %ld %@", code, errStr);
+    LOGE("HTTP Response: %ld %@", code, errStr);
     return nil;
   }
 
@@ -130,7 +130,7 @@
   NSDictionary *dict = [NSJSONSerialization JSONObjectWithData:[self stripXssi:data]
                                                        options:0
                                                          error:&error];
-  if (error) LOGD(@"Failed to decode JSON response: %@", error);
+  if (error) LOGD("Failed to decode JSON response: %@", error);
 
   return dict ?: @{};
 }
@@ -202,10 +202,10 @@
                                                   reply:^{
                                                   }];
       self.syncState.xsrfToken = headers[kXSRFToken];
-      LOGD(@"Retrieved new XSRF token");
+      LOGD("Retrieved new XSRF token");
       success = YES;
     } else {
-      LOGD(@"Failed to retrieve XSRF token");
+      LOGD("Failed to retrieve XSRF token");
     }
   };
   return success;

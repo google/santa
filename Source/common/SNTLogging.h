@@ -19,38 +19,12 @@
 #ifndef SANTA__COMMON__LOGGING_H
 #define SANTA__COMMON__LOGGING_H
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+#import <os/log.h>
 
-#import <Foundation/Foundation.h>
-
-typedef enum : NSUInteger {
-  LOG_LEVEL_ERROR,
-  LOG_LEVEL_WARN,
-  LOG_LEVEL_INFO,
-  LOG_LEVEL_DEBUG
-} LogLevel;
-
-///
-///  Logging function.
-///  @param level one of the levels defined above
-///  @param destination a FILE, generally stdout/stderr. If the file is closed, the log
-///      will instead be sent to syslog.
-///  @param format the printf style format string
-///  @param ... the arguments to format.
-///
-void logMessage(LogLevel level, FILE *destination, NSString *format, ...)
-  __attribute__((format(__NSString__, 3, 4)));
-
-/// Simple logging macros
-#define LOGD(logFormat, ...) logMessage(LOG_LEVEL_DEBUG, stdout, logFormat, ##__VA_ARGS__)
-#define LOGI(logFormat, ...) logMessage(LOG_LEVEL_INFO, stdout, logFormat, ##__VA_ARGS__)
-#define LOGW(logFormat, ...) logMessage(LOG_LEVEL_WARN, stderr, logFormat, ##__VA_ARGS__)
-#define LOGE(logFormat, ...) logMessage(LOG_LEVEL_ERROR, stderr, logFormat, ##__VA_ARGS__)
-
-#ifdef __cplusplus
-}  // extern C
-#endif
+#define LOG_WITH_TYPE(type, fmt, ...) os_log_with_type(OS_LOG_DEFAULT, type, fmt, ##__VA_ARGS__)
+#define LOGD(fmt, ...) LOG_WITH_TYPE(OS_LOG_TYPE_DEBUG, "D " fmt, ##__VA_ARGS__)
+#define LOGI(fmt, ...) LOG_WITH_TYPE(OS_LOG_TYPE_INFO, "I " fmt, ##__VA_ARGS__)
+#define LOGW(fmt, ...) LOG_WITH_TYPE(OS_LOG_TYPE_DEFAULT, "W " fmt, ##__VA_ARGS__)
+#define LOGE(fmt, ...) LOG_WITH_TYPE(OS_LOG_TYPE_ERROR, "E " fmt, ##__VA_ARGS__)
 
 #endif  // SANTA__COMMON__LOGGING_H
