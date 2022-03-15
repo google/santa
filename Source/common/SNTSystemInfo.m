@@ -64,7 +64,7 @@
 + (NSString *)modelIdentifier {
   struct utsname systemInfo;
   uname(&systemInfo);
-  return [NSString stringWithCString:systemInfo.machine encoding:NSUTF8StringEncoding];
+  return @(systemInfo.machine);
 }
 
 #pragma mark - Internal
