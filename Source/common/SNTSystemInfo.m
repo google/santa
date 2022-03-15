@@ -13,7 +13,7 @@
 ///    limitations under the License.
 
 #import "Source/common/SNTSystemInfo.h"
-#import <sys/utsname.h>
+#include <sys/sysctl.h>
 
 @implementation SNTSystemInfo
 
@@ -62,9 +62,10 @@
 }
 
 + (NSString *)modelIdentifier {
-  struct utsname systemInfo;
-  uname(&systemInfo);
-  return @(systemInfo.machine);
+  char model[32];
+  size_t len = 32;
+  sysctlbyname("hw.model", model, &len, NULL, 0);
+  return @(model);
 }
 
 #pragma mark - Internal
