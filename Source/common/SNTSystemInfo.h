@@ -49,4 +49,9 @@
 ///
 + (NSString *)longHostname;
 
+///
+///  @return Model Identifier
+///
++ (NSString *)modelIdentifier;
+
 @end
