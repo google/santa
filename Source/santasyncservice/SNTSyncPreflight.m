@@ -37,6 +37,7 @@
   requestDict[kHostname] = [SNTSystemInfo longHostname];
   requestDict[kOSVer] = [SNTSystemInfo osVersion];
   requestDict[kOSBuild] = [SNTSystemInfo osBuild];
+  requestDict[kModelIdentifier] = [SNTSystemInfo modelIdentifier];
   requestDict[kSantaVer] = [[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleVersion"];
   requestDict[kPrimaryUser] = self.syncState.machineOwner;
   if (self.syncState.FCMToken) requestDict[kFCMToken] = self.syncState.FCMToken;
