@@ -12,8 +12,8 @@
 ///    See the License for the specific language governing permissions and
 ///    limitations under the License.
 
-#import <sys/utsname.h>
 #import "Source/common/SNTSystemInfo.h"
+#import <sys/utsname.h>
 
 @implementation SNTSystemInfo
 
