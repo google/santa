@@ -101,7 +101,6 @@ typedef NS_ENUM(NSInteger, SNTMetricFormatType) {
   SNTMetricFormatTypeMonarchJSON,
 };
 
-static const char *kKextPath = "/Library/Extensions/santa-driver.kext";
 static const char *kSantaDPath =
   "/Applications/Santa.app/Contents/Library/SystemExtensions/"
   "com.google.santa.daemon.systemextension/Contents/MacOS/com.google.santa.daemon";

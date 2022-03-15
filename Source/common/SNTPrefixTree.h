@@ -18,15 +18,11 @@
 #include <IOKit/IOReturn.h>
 #include <sys/param.h>
 
-#ifdef KERNEL
-#include <libkern/locks.h>
-#else
 // Support for unit testing.
 #include <pthread.h>
 #include <stdint.h>
 
 #include <mutex>
-#endif  // KERNEL
 
 ///
 ///  SantaPrefixTree is a simple prefix tree implementation.
@@ -88,16 +84,8 @@ class SNTPrefixTree {
   uint32_t max_nodes_;
   uint32_t node_count_;
 
-#ifdef KERNEL
-  lck_grp_t *spt_lock_grp_;
-  lck_grp_attr_t *spt_lock_grp_attr_;
-  lck_attr_t *spt_lock_attr_;
-  lck_rw_t *spt_lock_;
-  lck_mtx_t *spt_add_lock_;
-#else   // KERNEL
   pthread_rwlock_t spt_lock_;
   std::mutex *spt_add_lock_;
-#endif  // KERNEL
 };
 
 #endif /* SANTA__SANTA_DRIVER__SANTAPREFIXTREE_H */
