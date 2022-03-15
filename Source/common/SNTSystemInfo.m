@@ -12,6 +12,7 @@
 ///    See the License for the specific language governing permissions and
 ///    limitations under the License.
 
+#import <sys/utsname.h>
 #import "Source/common/SNTSystemInfo.h"
 
 @implementation SNTSystemInfo
@@ -58,6 +59,12 @@
   char hostname[MAXHOSTNAMELEN];
   gethostname(hostname, (int)sizeof(hostname));
   return @(hostname);
+}
+
++ (NSString *)modelIdentifier {
+  struct utsname systemInfo;
+  uname(&systemInfo);
+  return [NSString stringWithCString:systemInfo.machine encoding:NSUTF8StringEncoding];
 }
 
 #pragma mark - Internal
