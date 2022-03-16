@@ -9,10 +9,8 @@
 
 <choice id="default">
     <pkg-ref id="com.google.santa"/>
-    <pkg-ref id="com.google.santa-driver"/>
 </choice>
 
 <pkg-ref id="com.google.santa">app.pkg</pkg-ref>
-<pkg-ref id="com.google.santa-driver" active="system.compareVersions(my.target.systemVersion.ProductVersion, '10.15') &lt; 0">kext.pkg</pkg-ref>
 
 </installer-gui-script>
