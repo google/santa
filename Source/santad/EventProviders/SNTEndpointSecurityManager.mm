@@ -179,6 +179,14 @@ static const pid_t PID_MAX = 99999;
           });
           return;
         }
+        case ES_EVENT_TYPE_NOTIFY_UNMOUNT: {
+          // Flush the non-root cache - the root disk cannot be unmounted
+          // so it isn't necessary to flush its cache.
+          [self flushCacheNonRootOnly:YES];
+
+          // Skip all other processing
+          return;
+        }
         case ES_EVENT_TYPE_NOTIFY_FORK: {
           // Skip the standard pipeline and just log.
           if (![config enableForkAndExitLogging]) return;
@@ -440,6 +448,10 @@ static const pid_t PID_MAX = 99999;
     // This is in the decision callback because it's used for detecting
     // the exit of a 'compiler' used by transitive whitelisting.
     ES_EVENT_TYPE_NOTIFY_EXIT,
+
+    // This is in the decision callback because it's used for clearing the
+    // caches when a disk is unmounted.
+    ES_EVENT_TYPE_NOTIFY_UNMOUNT,
   };
   es_return_t sret = es_subscribe(self.client, events, sizeof(events) / sizeof(es_event_type_t));
   if (sret != ES_RETURN_SUCCESS) LOGE(@"Unable to subscribe to auth events: %d", sret);
@@ -447,7 +459,7 @@ static const pid_t PID_MAX = 99999;
   // There's a gap between creating a client and subscribing to events. Creating the client
   // triggers a cache flush automatically but any events that happen in this gap could be allowed
   // and cached, so we force the cache to flush again.
-  [self flushCacheNonRootOnly:YES];
+  [self flushCacheNonRootOnly:NO];
 }
 
 - (void)listenForLogRequests:(void (^)(santa_message_t))callback API_AVAILABLE(macos(10.15)) {
