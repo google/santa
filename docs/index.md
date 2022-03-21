@@ -35,8 +35,7 @@ For those who want even more details on how Santa works under the hood, this sec
 
 There are five main components that make up Santa whose core functionality is described in snippets below. For additional detail on each component, visit their respective pages. These quick descriptions do not encompass all the jobs performed by each component, but do provide a quick look at the basic functionality utilized to achieve the goal of binary authorization.
 
-* [santa-driver](details/santa-driver.md): A macOS kernel extension that participates in `execve()` decisions.
-* [santad](details/santad.md): A user-land root daemon that makes decisions on behalf of santa-driver requests.
+* [santad](details/santad.md): A user-land root daemon that makes decisions.
 * [santactl](details/santactl.md): A user-land anonymous daemon that communicates with a sync server for configurations and policies. santactl can also be used by a user to manually configure Santa when using the local configuration.
 * [santa-gui](details/santa-gui.md): A user-land GUI daemon that displays notifications when an `execve()` is blocked.
 * [santabs](details/santabs.md): A user-land root daemon that finds Mach-O binaries within a bundle and creates events for them.
