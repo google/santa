@@ -22,6 +22,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <memory>
 
 #include "Source/common/SNTCommon.h"
 
@@ -70,15 +71,7 @@ class SantaCache {
         (1 << (32 -
                __builtin_clz((((uint32_t)max_size_ / per_bucket) - 1) ?: 1)));
     if (unlikely(bucket_count_ > UINT32_MAX)) bucket_count_ = UINT32_MAX;
-    buckets_ = new struct bucket[bucket_count_];
-  }
-
-  /**
-    Clear and free memory
-  */
-  ~SantaCache() {
-    clear();
-    delete[] buckets_;
+    buckets_ = std::unique_ptr<struct bucket[]>(new bucket[bucket_count_]);
   }
 
   /**
@@ -144,9 +137,7 @@ class SantaCache {
   void clear() {
     for (uint32_t i = 0; i < bucket_count_; ++i) {
       struct bucket *bucket = &buckets_[i];
-      // We grab the lock so nothing can use this bucket while we're erasing it
-      // and never release it. It'll be 'released' when the bzero call happens
-      // at the end of this function.
+      // We grab the lock so nothing can use this bucket while we're erasing it.
       bucket->lock();
 
       // Free the bucket's entries, if there are any.
@@ -161,10 +152,8 @@ class SantaCache {
     // Reset cache count.
     count_ = 0;
 
-    // This resets all of the bucket counts and locks. Releasing the locks for
-    // each bucket isn't really atomic here but each bucket will be zero'd
-    // before the lock is released as the lock is the last thing in a bucket.
-    bzero(buckets_, bucket_count_ * sizeof(struct bucket));
+    // Unlock all the buckets.
+    for (uint32_t i = 0; i < bucket_count_; ++i) (&buckets_[i])->unlock();
   }
 
   /**
@@ -309,7 +298,7 @@ class SantaCache {
 
     // Allocate a new entry, set the key and value, then put this new entry at
     // the head of this bucket's linked list.
-    struct entry *new_entry = new struct entry;
+    struct entry *new_entry = new struct entry();
     new_entry->key = key;
     new_entry->value = value;
     new_entry->next = (struct entry *)((uintptr_t)bucket->head);
@@ -325,7 +314,7 @@ class SantaCache {
   uint64_t max_size_;
   uint32_t bucket_count_;
 
-  struct bucket *buckets_;
+  std::unique_ptr<struct bucket[]> buckets_;
 
   /**
     Holder for a 'zero' entry for the current type
