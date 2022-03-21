@@ -80,7 +80,6 @@ To view all of the component versions `santactl version`
 
 ```sh
 ⇒  santactl version
-santa-driver    | 0.9.19
 santad          | 0.9.19
 santactl        | 0.9.19
 SantaGUI        | 0.9.19
@@ -91,7 +90,6 @@ Again, a JSON version is available `santactl version --json`
 ```sh
 ⇒  santactl version --json
 {
-  "santa-driver" : "0.9.19",
   "santad" : "0.9.19",
   "SantaGUI" : "0.9.19",
   "santactl" : "0.9.19"
@@ -408,35 +406,3 @@ BundleID: com.ridiculousfish.HexFiend
 
 See the [santabs.md](santabs.md) document for more information on bundles and
 bundle hashes.
-
-##### checkcache
-
-This is used to check if a particular file is apart of santa-driver's kernel
-cache. Mainly for debugging purposes.
-
-```sh
-⇒  santactl checkcache /usr/bin/yes
-File does not exist in cache
-⇒  /usr/bin/yes
-y
-y
-y
-y
-y
-^C
-⇒  santactl checkcache /usr/bin/yes
-File exists in [allowlist] kernel cache
-```
-
-##### flushcache
-
-This can be used to flush santa-driver's kernel cache, as shown here.
-
-```sh
-⇒  santactl checkcache /usr/bin/yes
-File exists in [allowlist] kernel cache
-⇒  sudo santactl flushcache
-Cache flush requested
-⇒  santactl checkcache /usr/bin/yes
-File does not exist in cache
-```
