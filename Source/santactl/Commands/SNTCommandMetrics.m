@@ -128,7 +128,7 @@ REGISTER_COMMAND_NAME(@"metrics")
   NSMutableDictionary *inner = [NSMutableDictionary dictionary];
   __block BOOL hadFilter = NO;
 
-  [metrics[@"metrics"] enumerateKeysAndObjectsUsingBlock:^(NSString *key, id value, BOOL* stop) {
+  [metrics[@"metrics"] enumerateKeysAndObjectsUsingBlock:^(NSString *key, id value, BOOL *stop) {
     for (NSString *arg in args) {
       if ([arg hasPrefix:@"-"]) continue;
 

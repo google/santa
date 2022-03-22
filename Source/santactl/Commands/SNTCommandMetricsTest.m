@@ -140,14 +140,17 @@
   filtered = [metricsCmd filterMetrics:metricDict withArguments:@[]];
   XCTAssertEqualObjects(metricDict[@"metrics"], filtered[@"metrics"], @"No filtering with no args");
 
-  filtered = [metricsCmd filterMetrics:metricDict withArguments:@[@"--json"]];
-  XCTAssertEqualObjects(metricDict[@"metrics"], filtered[@"metrics"], @"No filtering with no metric args");
+  filtered = [metricsCmd filterMetrics:metricDict withArguments:@[ @"--json" ]];
+  XCTAssertEqualObjects(metricDict[@"metrics"], filtered[@"metrics"],
+                        @"No filtering with no metric args");
 
-  filtered = [metricsCmd filterMetrics:metricDict withArguments:@[@"--json", @"/santa"]];
-  XCTAssertEqual(((NSDictionary *)filtered[@"metrics"]).count, 3, @"Expected filter of metrics with /santa to return 3 metrics");
+  filtered = [metricsCmd filterMetrics:metricDict withArguments:@[ @"--json", @"/santa" ]];
+  XCTAssertEqual(((NSDictionary *)filtered[@"metrics"]).count, 3,
+                 @"Expected filter of metrics with /santa to return 3 metrics");
 
-  filtered = [metricsCmd filterMetrics:metricDict withArguments:@[@"/build", @"/santa"]];
-  XCTAssertEqual(((NSDictionary *)filtered[@"metrics"]).count, 4, @"Expected filter of metrics with /build and /santa to return 4 metrics");
+  filtered = [metricsCmd filterMetrics:metricDict withArguments:@[ @"/build", @"/santa" ]];
+  XCTAssertEqual(((NSDictionary *)filtered[@"metrics"]).count, 4,
+                 @"Expected filter of metrics with /build and /santa to return 4 metrics");
 }
 
 @end
