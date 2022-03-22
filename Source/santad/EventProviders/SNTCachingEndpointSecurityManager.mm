@@ -29,6 +29,9 @@ uint64_t SantaCacheHasher<santa_vnode_id_t>(santa_vnode_id_t const &t) {
 }
 
 @implementation SNTCachingEndpointSecurityManager {
+  // Create 2 separate caches, mapping from the (filesysem + vnode ID) to a decision with a timestamp.
+  // The root cache is for decisions on the root volume, which can never be unmounted and the other
+  // is for executions from all other volumes. This cache will be emptied if any volume is unmounted.
   SantaCache<santa_vnode_id_t, uint64_t> *_rootDecisionCache;
   SantaCache<santa_vnode_id_t, uint64_t> *_nonRootDecisionCache;
   uint64_t _rootVnodeID;
@@ -40,7 +43,8 @@ uint64_t SantaCacheHasher<santa_vnode_id_t>(santa_vnode_id_t const &t) {
     _rootDecisionCache = new SantaCache<santa_vnode_id_t, uint64_t>();
     _nonRootDecisionCache = new SantaCache<santa_vnode_id_t, uint64_t>();
 
-    // If we fail to retrieve the root vnode ID we'll put everything in the root cache.
+    // Store the filesystem ID of the root vnode for split-cache usage.
+    // If the stat fails for any reason _rootVnodeID will be 0 and all decisions will be in a single cache.
     struct stat rootStat;
     if (stat("/", &rootStat) == 0) {
       _rootVnodeID = (uint64_t)rootStat.st_dev;
