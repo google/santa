@@ -73,7 +73,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: Run All Tests
-        run: bazel test :unit_tests --define=SANTA_BUILD_TYPE=ci
+        run: bazel test :unit_tests --define=SANTA_BUILD_TYPE=ci --test_output=errors
 
   test_coverage:
     runs-on: macos-11
