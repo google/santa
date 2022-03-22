@@ -41,6 +41,7 @@ REGISTER_COMMAND_NAME(@"metrics")
 
 + (NSString *)longHelpText {
   return (@"Provides metrics about Santa's operation while it's running.\n"
+          @"Pass prefixes to filter list of metrics, if desired.\n"
           @"  Use --json to output in JSON format");
 }
 
@@ -122,6 +123,26 @@ REGISTER_COMMAND_NAME(@"metrics")
   [self prettyPrintMetricValues:normalizedMetrics[@"metrics"]];
 }
 
+- (NSDictionary *)filterMetrics:(NSDictionary *)metrics withArguments:(NSArray *)args {
+  NSMutableDictionary *outer = [metrics mutableCopy];
+  NSMutableDictionary *inner = [NSMutableDictionary dictionary];
+  __block BOOL hadFilter = NO;
+
+  [metrics[@"metrics"] enumerateKeysAndObjectsUsingBlock:^(NSString *key, id value, BOOL* stop) {
+    for (NSString *arg in args) {
+      if ([arg hasPrefix:@"-"]) continue;
+
+      hadFilter = YES;
+      if ([key hasPrefix:arg]) {
+        inner[key] = value;
+      }
+    }
+  }];
+
+  outer[@"metrics"] = inner;
+  return hadFilter ? outer : metrics;
+}
+
 - (void)runWithArguments:(NSArray *)arguments {
   __block NSDictionary *metrics;
 
@@ -138,24 +159,7 @@ REGISTER_COMMAND_NAME(@"metrics")
     fprintf(stderr, "Failed to retrieve metrics from daemon\n\n");
   }
 
-  // Filter the metric list, if requested.
-  for (NSString *arg in [arguments reverseObjectEnumerator]) {
-    if ([arg hasPrefix:@"-"]) continue;
-
-    NSMutableDictionary *m = [metrics[@"metrics"] mutableCopy];
-    for (NSString *metricName in metrics[@"metrics"]) {
-      if (![metricName hasPrefix:arg]) {
-        [m removeObjectForKey:metricName];
-      }
-    }
-
-    NSMutableDictionary *t = [metrics mutableCopy];
-    t[@"metrics"] = m;
-
-    metrics = t;
-
-    break;
-  }
+  metrics = [self filterMetrics:metrics withArguments:arguments];
 
   [self prettyPrintMetrics:metrics asJSON:[arguments containsObject:@"--json"]];
   exit(0);
