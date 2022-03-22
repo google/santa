@@ -10,10 +10,6 @@ Most IPC within Santa is done by way of Apple's
 to provide client multiplexing, signature validation of connecting clients and
 forced connection establishment. This is called SNTXPCConnection.
 
-Communication between santad and santa-driver (KEXT) is done with a
-[IOUserClient](https://developer.apple.com/documentation/kernel/iouserclient?language=objc)
-subclass and IOKit/IOKitLib.h functions.
-
 ##### Who starts who?
 
 The santad and Santa (GUI) processes are both started and kept alive by launchd

@@ -30,9 +30,3 @@ flight, including messages related to the system extension:
 ```sh
 /usr/bin/log show --info --debug --predicate 'senderImagePath CONTAINS[c] "santa"'
 ```
-
-For those still using the kernel extension, you could use a more specific command:
-
-```sh
-/usr/bin/log show --info --debug --predicate 'senderImagePath == "/Library/Extensions/santa-driver.kext/Contents/MacOS/santa-driver"'
-````

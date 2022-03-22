@@ -4,7 +4,7 @@ parent: Details
 
 # santabs
 
-The santabs process is an XPC service for the santa-driver.kext bundle, meaning
+The santabs process is an XPC service for the santad bundle, meaning
 only binaries within that bundle can launch santabs. It will be launched with
 the same privileges as its calling process. Currently, santad is the only caller
 of santabs, so santabs runs as root.
