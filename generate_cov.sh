@@ -19,7 +19,7 @@ function build() {
 }
 
 function generate_lcov() {
-    object_files=$(find -L $(bazel info bazel-bin) -type f -exec file -L {} \; | grep "Mach-O" | sed 's,:.*,,' | grep -v 'testdata')
+    object_files=$(find -L $(bazel info bazel-bin) -type f -exec file -L {} \; | grep "Mach-O" | sed 's,:.*,,' | grep -v 'testdata' | grep -v 'bazel-out')
     bazel_base=$(bazel info execution_root)
 
     true > $COV_FILE
