@@ -66,7 +66,7 @@ macos_application(
     ],
     entitlements = "Santa.app.entitlements",
     infoplists = ["Info.plist"],
-    minimum_os_version = "10.9",
+    minimum_os_version = "10.15",
     provisioning_profile = select({
         "//:ci_build": None,
         "//conditions:default": "Santa_Dev.provisionprofile",

@@ -22,7 +22,7 @@ def santa_unit_test(
         srcs = [],
         deps = [],
         size = "medium",
-        minimum_os_version = "10.9",
+        minimum_os_version = "10.15",
         resources = [],
         structured_resources = [],
         copts = [],

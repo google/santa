@@ -14,18 +14,6 @@ function cleanup() {
 }
 trap cleanup EXIT
 
-function randomize_version() {
-    VERSION_FILE="$GIT_ROOT/version.bzl"
-    # Create a random version ID for the generated Santa version.
-    # The system extension won't replace itself if the version string isn't different than the one
-    # presently installed.
-    cp $VERSION_FILE $TMP_DIR
-    RANDOM_VERSION="$RANDOM.$RANDOM"
-
-    echo "Setting version to $RANDOM_VERSION"
-    echo "SANTA_VERSION = \"$RANDOM_VERSION\"" > $VERSION_FILE
-}
-
 function build_custom_signed() {
     SANTAD_PATH=Santa.app/Contents/Library/SystemExtensions/com.google.santa.daemon.systemextension/Contents/MacOS/com.google.santa.daemon
     SANTA_BIN_PATH=Santa.app/Contents/MacOS
@@ -33,7 +21,14 @@ function build_custom_signed() {
     SANTAD_ENTITLEMENTS="$GIT_ROOT/Source/santad/com.google.santa.daemon.systemextension.entitlements"
     SIGNING_IDENTITY="localhost"
 
-    bazel build --apple_generate_dsym -c opt --define=SANTA_BUILD_TYPE=ci --define=apple.propagate_embedded_extra_outputs=yes --macos_cpus=x86_64,arm64 //:release
+    bazel build \
+      --apple_generate_dsym \
+      -c opt \
+      --define=SANTA_BUILD_TYPE=ci \
+      --define=apple.propagate_embedded_extra_outputs=yes \
+      --macos_cpus=x86_64,arm64 \
+      --embed_label="santa_${RANDOM}.${RANDOM}.${RANDOM}"
+      //:release
 
     echo "> Build complete, installing santa"
     tar xvf $GIT_ROOT/bazel-bin/santa-*.tar.gz -C $TMP_DIR
@@ -73,14 +68,6 @@ function install() {
 }
 
 function main() {
-    for i in "$@"; do
-        case $i in
-            --randomize_version)
-                randomize_version
-                ;;
-        esac
-    done
-
     build
     install
 }

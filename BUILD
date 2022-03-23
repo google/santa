@@ -1,6 +1,5 @@
 load("@build_bazel_rules_apple//apple:versioning.bzl", "apple_bundle_version")
 load("//:helper.bzl", "run_command")
-load("//:version.bzl", "SANTA_VERSION")
 
 package(default_visibility = ["//:santa_package_group"])
 
@@ -11,13 +10,14 @@ exports_files(["LICENSE"])
 # The version label for mac_* rules.
 apple_bundle_version(
     name = "version",
-    build_label_pattern = "{build}",
-    build_version = SANTA_VERSION + ".{build}",
+    build_label_pattern = ".*\\.santa_{release}\\.{build}",
+    build_version = "{release}.{build}",
     capture_groups = {
-        "build": "\\d+",
+      "release": "\\d{4}\\.\\d+",
+      "build": "\\d+"
     },
     fallback_build_label = "1",
-    short_version_string = SANTA_VERSION,
+    short_version_string = "{release}",
 )
 
 # Used to detect release builds
@@ -107,7 +107,7 @@ genrule(
         "Conf/Package/postinstall",
         "Conf/Package/preinstall",
     ],
-    outs = ["santa-" + SANTA_VERSION + ".tar.gz"],
+    outs = ["santa-release.tar.gz"],
     cmd = select({
         "//conditions:default": """
         echo "ERROR: Trying to create a release tarball without optimization."

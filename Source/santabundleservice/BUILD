@@ -24,7 +24,7 @@ macos_command_line_application(
     name = "santabundleservice",
     bundle_id = "com.google.santa.bundleservice",
     infoplists = ["Info.plist"],
-    minimum_os_version = "10.9",
+    minimum_os_version = "10.15",
     version = "//:version",
     visibility = ["//:santa_package_group"],
     deps = [":santabs_lib"],
