@@ -29,21 +29,34 @@ uint64_t SantaCacheHasher<santa_vnode_id_t>(santa_vnode_id_t const &t) {
 }
 
 @implementation SNTCachingEndpointSecurityManager {
-  SantaCache<santa_vnode_id_t, uint64_t> *_decisionCache;
+  // Create 2 separate caches, mapping from the (filesysem + vnode ID) to a decision with a timestamp.
+  // The root cache is for decisions on the root volume, which can never be unmounted and the other
+  // is for executions from all other volumes. This cache will be emptied if any volume is unmounted.
+  SantaCache<santa_vnode_id_t, uint64_t> *_rootDecisionCache;
+  SantaCache<santa_vnode_id_t, uint64_t> *_nonRootDecisionCache;
+  uint64_t _rootVnodeID;
 }
 
 - (instancetype)init {
   self = [super init];
   if (self) {
-    // TODO(rah): Consider splitting into root/non-root cache
-    _decisionCache = new SantaCache<santa_vnode_id_t, uint64_t>();
+    _rootDecisionCache = new SantaCache<santa_vnode_id_t, uint64_t>();
+    _nonRootDecisionCache = new SantaCache<santa_vnode_id_t, uint64_t>();
+
+    // Store the filesystem ID of the root vnode for split-cache usage.
+    // If the stat fails for any reason _rootVnodeID will be 0 and all decisions will be in a single cache.
+    struct stat rootStat;
+    if (stat("/", &rootStat) == 0) {
+      _rootVnodeID = (uint64_t)rootStat.st_dev;
+    }
   }
 
   return self;
 }
 
 - (void)dealloc {
-  if (_decisionCache) delete _decisionCache;
+  if (_rootDecisionCache) delete _rootDecisionCache;
+  if (_nonRootDecisionCache) delete _nonRootDecisionCache;
 }
 
 - (BOOL)respondFromCache:(es_message_t *)m API_AVAILABLE(macos(10.15)) {
@@ -120,6 +133,7 @@ uint64_t SantaCacheHasher<santa_vnode_id_t>(santa_vnode_id_t const &t) {
 - (void)addToCache:(santa_vnode_id_t)identifier
           decision:(santa_action_t)decision
       currentTicks:(uint64_t)microsecs {
+  auto _decisionCache = [self cacheForVnodeID:identifier];
   switch (decision) {
     case ACTION_REQUEST_BINARY:
       _decisionCache->set(identifier, (uint64_t)ACTION_REQUEST_BINARY << 56, 0);
@@ -150,25 +164,21 @@ uint64_t SantaCacheHasher<santa_vnode_id_t>(santa_vnode_id_t const &t) {
 }
 
 - (BOOL)flushCacheNonRootOnly:(BOOL)nonRootOnly API_AVAILABLE(macos(10.15)) {
-  _decisionCache->clear();
+  _nonRootDecisionCache->clear();
+  if (!nonRootOnly) _rootDecisionCache->clear();
   if (!self.connectionEstablished) return YES;  // if not connected, there's nothing to flush.
   return es_clear_cache(self.client) == ES_CLEAR_CACHE_RESULT_SUCCESS;
 }
 
 - (NSArray<NSNumber *> *)cacheCounts {
-  return @[ @(_decisionCache->count()), @(0) ];
-}
-
-- (NSArray<NSNumber *> *)cacheBucketCount {
-  // TODO: add this, maybe.
-  return nil;
+  return @[ @(_rootDecisionCache->count()), @(_nonRootDecisionCache->count()) ];
 }
 
 - (santa_action_t)checkCache:(santa_vnode_id_t)vnodeID {
   auto result = ACTION_UNSET;
   uint64_t decision_time = 0;
 
-  uint64_t cache_val = _decisionCache->get(vnodeID);
+  uint64_t cache_val = [self cacheForVnodeID:vnodeID]->get(vnodeID);
   if (cache_val == 0) return result;
 
   // Decision is stored in upper 8 bits, timestamp in remaining 56.
@@ -179,7 +189,7 @@ uint64_t SantaCacheHasher<santa_vnode_id_t>(santa_vnode_id_t const &t) {
     if (result == ACTION_RESPOND_DENY) {
       auto expiry_time = decision_time + (500 * 100000);  // kMaxCacheDenyTimeMilliseconds
       if (expiry_time < GetCurrentUptime()) {
-        _decisionCache->remove(vnodeID);
+        [self cacheForVnodeID:vnodeID]->remove(vnodeID);
         return ACTION_UNSET;
       }
     }
@@ -188,9 +198,13 @@ uint64_t SantaCacheHasher<santa_vnode_id_t>(santa_vnode_id_t const &t) {
 }
 
 - (kern_return_t)removeCacheEntryForVnodeID:(santa_vnode_id_t)vnodeID {
-  _decisionCache->remove(vnodeID);
+  [self cacheForVnodeID:vnodeID]->remove(vnodeID);
   // TODO(rah): Look at a replacement for wakeup(), maybe NSCondition
   return 0;
+}
+
+- (SantaCache<santa_vnode_id_t, uint64_t> *)cacheForVnodeID:(santa_vnode_id_t)vnodeID {
+  return (vnodeID.fsid == _rootVnodeID || _rootVnodeID == 0) ? _rootDecisionCache : _nonRootDecisionCache;
 }
 
 @end

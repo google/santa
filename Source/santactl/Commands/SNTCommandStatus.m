@@ -82,7 +82,7 @@ REGISTER_COMMAND_NAME(@"status")
 
   BOOL cachingEnabled = [configurator enableSysxCache];
 
-  // Kext status
+  // Cache status
   __block uint64_t rootCacheCount = -1, nonRootCacheCount = -1;
   if (cachingEnabled) {
     dispatch_group_enter(group);
@@ -237,6 +237,7 @@ REGISTER_COMMAND_NAME(@"status")
     if (cachingEnabled) {
       printf(">>> Cache Info\n");
       printf("  %-25s | %lld\n", "Root cache count", rootCacheCount);
+      printf("  %-25s | %lld\n", "Non-root cache count", nonRootCacheCount);
     }
 
     printf(">>> Database Info\n");
