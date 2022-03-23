@@ -12,12 +12,21 @@
 ///    See the License for the specific language governing permissions and
 ///    limitations under the License.
 
-#import <Foundation/Foundation.h>
+#import "Source/common/SNTAllowlistInfo.h"
 
-#import "Source/santactl/SNTCommand.h"
-#import "Source/santactl/SNTCommandController.h"
+@implementation SNTAllowlistInfo
 
-@interface SNTCommandMetrics : SNTCommand <SNTCommandProtocol>
-- (void)prettyPrintMetrics:(NSDictionary *)metircs asJSON:(BOOL)exportJSON;
-- (NSDictionary *)filterMetrics:(NSDictionary *)metrics withArguments:(NSArray *)args;
+- (instancetype)initWithPid:(pid_t)pid
+                 pidversion:(int)pidver
+                 targetPath:(NSString *)targetPath
+                     sha256:(NSString *)hash {
+  self = [super init];
+  if (self) {
+    _pid = pid;
+    _pidversion = pidver;
+    _targetPath = targetPath;
+    _sha256 = hash;
+  }
+  return self;
+}
 @end

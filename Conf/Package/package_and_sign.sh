@@ -44,7 +44,6 @@ function die {
 }
 
 readonly INPUT_APP="${RELEASE_ROOT}/binaries/Santa.app"
-readonly INPUT_KEXT="${RELEASE_ROOT}/binaries/santa-driver.kext"
 readonly INPUT_SYSX="${INPUT_APP}/Contents/Library/SystemExtensions/com.google.santa.daemon.systemextension"
 readonly INPUT_SANTACTL="${INPUT_APP}/Contents/MacOS/santactl"
 readonly INPUT_SANTABS="${INPUT_APP}/Contents/MacOS/santabundleservice"
@@ -54,19 +53,18 @@ readonly RELEASE_NAME="santa-$(/usr/bin/defaults read "${INPUT_APP}/Contents/Inf
 
 readonly SCRATCH=$(/usr/bin/mktemp -d "${TMPDIR}/santa-"XXXXXX)
 readonly APP_PKG_ROOT="${SCRATCH}/app_pkg_root"
-readonly KEXT_PKG_ROOT="${SCRATCH}/kext_pkg_root"
 readonly APP_PKG_SCRIPTS="${SCRATCH}/pkg_scripts"
 readonly ENTITLEMENTS="${SCRATCH}/entitlements"
 
 readonly SCRIPT_PATH="$(/usr/bin/dirname -- ${BASH_SOURCE[0]})"
 
-/bin/mkdir -p "${APP_PKG_ROOT}" "${KEXT_PKG_ROOT}" "${APP_PKG_SCRIPTS}" "${ENTITLEMENTS}"
+/bin/mkdir -p "${APP_PKG_ROOT}" "${APP_PKG_SCRIPTS}" "${ENTITLEMENTS}"
 
 readonly DMG_PATH="${ARTIFACTS_DIR}/${RELEASE_NAME}.dmg"
 readonly TAR_PATH="${ARTIFACTS_DIR}/${RELEASE_NAME}.tar.gz"
 
 # Sign all of binaries/bundles. Maintain inside-out ordering where necessary
-for ARTIFACT in "${INPUT_SANTACTL}" "${INPUT_SANTABS}" "${INPUT_SANTAMS}" "${INPUT_SYSX}" "${INPUT_APP}" "${INPUT_KEXT}"; do
+for ARTIFACT in "${INPUT_SANTACTL}" "${INPUT_SANTABS}" "${INPUT_SANTAMS}" "${INPUT_SYSX}" "${INPUT_APP}"; do
   BN=$(/usr/bin/basename "${ARTIFACT}")
   EN="${ENTITLEMENTS}/${BN}.entitlements"
 
@@ -85,7 +83,7 @@ for ARTIFACT in "${INPUT_SANTACTL}" "${INPUT_SANTABS}" "${INPUT_SANTAMS}" "${INP
 done
 
 # Notarize all the bundles
-for ARTIFACT in "${INPUT_SYSX}" "${INPUT_APP}" "${INPUT_KEXT}"; do
+for ARTIFACT in "${INPUT_SYSX}" "${INPUT_APP}"; do
   BN=$(/usr/bin/basename "${ARTIFACT}")
 
   echo "zipping ${BN}"
@@ -96,8 +94,8 @@ for ARTIFACT in "${INPUT_SYSX}" "${INPUT_APP}" "${INPUT_KEXT}"; do
   "${NOTARIZATION_TOOL}" --file "${SCRATCH}/${BN}.zip" --primary-bundle-id "${PBID}"
 done
 
-# Staple the App and Kext.
-for ARTIFACT in "${INPUT_APP}" "${INPUT_KEXT}"; do
+# Staple the App.
+for ARTIFACT in "${INPUT_APP}"; do
   BN=$(/usr/bin/basename "${ARTIFACT}")
 
   echo "stapling ${BN}"
@@ -152,22 +150,6 @@ echo "creating app pkg"
   --component-plist "${SCRATCH}/component.plist" \
   --scripts "${APP_PKG_SCRIPTS}" \
   "${SCRATCH}/app.pkg"
-
-echo "creating kext pkg"
-/bin/mkdir -p "${KEXT_PKG_ROOT}/Library/Extensions"
-/bin/cp -vXR "${RELEASE_ROOT}/binaries/santa-driver.kext" "${KEXT_PKG_ROOT}/Library/Extensions/"
-/usr/bin/pkgbuild --analyze --root "${KEXT_PKG_ROOT}" "${SCRATCH}/component.plist"
-/usr/bin/plutil -replace BundleIsRelocatable -bool NO "${SCRATCH}/component.plist"
-/usr/bin/plutil -replace BundleIsVersionChecked -bool NO "${SCRATCH}/component.plist"
-/usr/bin/plutil -replace BundleOverwriteAction -string upgrade "${SCRATCH}/component.plist"
-/usr/bin/plutil -replace ChildBundles -json "[]" "${SCRATCH}/component.plist"
-
-# Build kext package
-/usr/bin/pkgbuild --identifier "com.google.santa-driver" \
-  --version "$(echo "${RELEASE_NAME}" | cut -d - -f2)" \
-  --root "${KEXT_PKG_ROOT}" \
-  --component-plist "${SCRATCH}/component.plist" \
-  "${SCRATCH}/kext.pkg"
 
 # Build signed distribution package
 echo "productbuild pkg"

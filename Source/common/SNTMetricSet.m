@@ -27,9 +27,9 @@ NSString *SNTMetricMakeStringFromMetricType(SNTMetricType metricType) {
     case SNTMetricTypeGaugeInt64: typeStr = @"SNTMetricTypeGaugeInt64"; break;
     case SNTMetricTypeGaugeDouble: typeStr = @"SNTMetricTypeGaugeDouble"; break;
     case SNTMetricTypeCounter: typeStr = @"SNTMetricTypeCounter"; break;
-    default: typeStr = @"SNTMetricTypeUnknown"; break;
+    default: typeStr = [NSString stringWithFormat:@"SNTMetricTypeUnknown %ld", metricType]; break;
   }
-  return [NSString stringWithFormat:@"%@ %ld", typeStr, metricType];
+  return typeStr;
 }
 
 /**

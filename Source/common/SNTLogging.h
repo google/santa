@@ -13,26 +13,11 @@
 ///    limitations under the License.
 
 ///
-/// Logging definitions, for both kernel and user space.
+/// Logging definitions
 ///
 
 #ifndef SANTA__COMMON__LOGGING_H
 #define SANTA__COMMON__LOGGING_H
-
-#ifdef KERNEL
-
-#include <IOKit/IOLib.h>
-
-#ifdef DEBUG
-#define LOGD(format, ...) IOLog("D santa-driver: " format "\n", ##__VA_ARGS__);
-#else  // DEBUG
-#define LOGD(format, ...)
-#endif  // DEBUG
-#define LOGI(format, ...) IOLog("I santa-driver: " format "\n", ##__VA_ARGS__);
-#define LOGW(format, ...) IOLog("W santa-driver: " format "\n", ##__VA_ARGS__);
-#define LOGE(format, ...) IOLog("E santa-driver: " format "\n", ##__VA_ARGS__);
-
-#else  // KERNEL
 
 #ifdef __cplusplus
 extern "C" {
@@ -67,7 +52,5 @@ void logMessage(LogLevel level, FILE *destination, NSString *format, ...)
 #ifdef __cplusplus
 }  // extern C
 #endif
-
-#endif  // KERNEL
 
 #endif  // SANTA__COMMON__LOGGING_H

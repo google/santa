@@ -33,7 +33,6 @@
   [super setUp];
   fclose(stdout);
   self.mockSNTDatabaseController = OCMClassMock([SNTDatabaseController class]);
-  XCTAssertTrue([[SNTConfigurator configurator] enableSystemExtension]);
 }
 
 - (void)tearDown {

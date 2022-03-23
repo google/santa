@@ -14,13 +14,6 @@
 
 #include "Source/common/SNTPrefixTree.h"
 
-#ifdef KERNEL
-#include <libkern/locks.h>
-
-#include "Source/common/SNTLogging.h"
-
-#else
-
 #include <string.h>
 
 #include <mutex>
@@ -46,25 +39,14 @@
 
 #define lck_mtx_lock(l) l->lock()
 #define lck_mtx_unlock(l) l->unlock()
-#endif  // KERNEL
 
 SNTPrefixTree::SNTPrefixTree(uint32_t max_nodes) {
   root_ = new SantaPrefixNode();
   node_count_ = 0;
   max_nodes_ = max_nodes;
 
-#ifdef KERNEL
-  spt_lock_grp_attr_ = lck_grp_attr_alloc_init();
-  spt_lock_grp_ =
-      lck_grp_alloc_init("santa-prefix-tree-lock", spt_lock_grp_attr_);
-  spt_lock_attr_ = lck_attr_alloc_init();
-
-  spt_lock_ = lck_rw_alloc_init(spt_lock_grp_, spt_lock_attr_);
-  spt_add_lock_ = lck_mtx_alloc_init(spt_lock_grp_, spt_lock_attr_);
-#else
   pthread_rwlock_init(&spt_lock_, nullptr);
   spt_add_lock_ = new std::mutex;
-#endif
 }
 
 IOReturn SNTPrefixTree::AddPrefix(const char *prefix, uint64_t *node_count) {
@@ -241,32 +223,5 @@ SNTPrefixTree::~SNTPrefixTree() {
   root_ = nullptr;
   lck_rw_unlock_exclusive(spt_lock_);
 
-#ifdef KERNEL
-  if (spt_lock_) {
-    lck_rw_free(spt_lock_, spt_lock_grp_);
-    spt_lock_ = nullptr;
-  }
-
-  if (spt_add_lock_) {
-    lck_mtx_free(spt_add_lock_, spt_lock_grp_);
-    spt_add_lock_ = nullptr;
-  }
-
-  if (spt_lock_attr_) {
-    lck_attr_free(spt_lock_attr_);
-    spt_lock_attr_ = nullptr;
-  }
-
-  if (spt_lock_grp_) {
-    lck_grp_free(spt_lock_grp_);
-    spt_lock_grp_ = nullptr;
-  }
-
-  if (spt_lock_grp_attr_) {
-    lck_grp_attr_free(spt_lock_grp_attr_);
-    spt_lock_grp_attr_ = nullptr;
-  }
-#else
   pthread_rwlock_destroy(&spt_lock_);
-#endif
 }

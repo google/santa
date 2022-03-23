@@ -14,10 +14,26 @@
 
 #import <Foundation/Foundation.h>
 
-#import "Source/santactl/SNTCommand.h"
-#import "Source/santactl/SNTCommandController.h"
+#import "Source/common/Santa.pbobjc.h"
+#import "Source/santad/Logs/SNTLogOutput.h"
 
-@interface SNTCommandMetrics : SNTCommand <SNTCommandProtocol>
-- (void)prettyPrintMetrics:(NSDictionary *)metircs asJSON:(BOOL)exportJSON;
-- (NSDictionary *)filterMetrics:(NSDictionary *)metrics withArguments:(NSArray *)args;
+NS_ASSUME_NONNULL_BEGIN
+
+@interface SNTSimpleMaildir : NSObject<SNTLogOutput>
+
+- (instancetype)initWithBaseDirectory:(NSString *)baseDirectory
+                       filenamePrefix:(NSString *)filenamePrefix
+                    fileSizeThreshold:(size_t)fileSiszeThreshold
+               directorySizeThreshold:(size_t)directorySizeThreshold
+                maxTimeBetweenFlushes:(NSTimeInterval)maxTimeBetweenFlushes
+    NS_DESIGNATED_INITIALIZER;
+
+- (instancetype)init NS_UNAVAILABLE;
+
+- (void)logEvent:(SNTPBSantaMessage *)message;
+- (void)flush;
+
 @end
+
+NS_ASSUME_NONNULL_END
+

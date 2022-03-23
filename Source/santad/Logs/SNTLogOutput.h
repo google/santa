@@ -14,10 +14,15 @@
 
 #import <Foundation/Foundation.h>
 
-#import "Source/santactl/SNTCommand.h"
-#import "Source/santactl/SNTCommandController.h"
+#import "Source/common/Santa.pbobjc.h"
 
-@interface SNTCommandMetrics : SNTCommand <SNTCommandProtocol>
-- (void)prettyPrintMetrics:(NSDictionary *)metircs asJSON:(BOOL)exportJSON;
-- (NSDictionary *)filterMetrics:(NSDictionary *)metrics withArguments:(NSArray *)args;
+NS_ASSUME_NONNULL_BEGIN
+
+@protocol SNTLogOutput<NSObject>
+
+- (void)logEvent:(SNTPBSantaMessage *)event;
+- (void)flush;
+
 @end
+
+NS_ASSUME_NONNULL_END

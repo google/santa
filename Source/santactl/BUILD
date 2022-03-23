@@ -5,7 +5,7 @@ licenses(["notice"])
 
 package(
     default_visibility = ["//:santa_package_group"],
-    features = ["-layering_check"],
+    features = ["layering_check"],
 )
 
 objc_library(
@@ -36,11 +36,11 @@ objc_library(
     sdk_frameworks = ["IOKit"],
     deps = [
         "//Source/common:SNTCachedDecision",
+        "//Source/common:SNTCommon",
         "//Source/common:SNTCommonEnums",
         "//Source/common:SNTConfigurator",
         "//Source/common:SNTDropRootPrivs",
         "//Source/common:SNTFileInfo",
-        "//Source/common:SNTKernelCommon",
         "//Source/common:SNTLogging",
         "//Source/common:SNTMetricSet",
         "//Source/common:SNTRule",
@@ -66,7 +66,7 @@ macos_command_line_application(
         "--options library,kill,runtime",
     ],
     infoplists = ["Info.plist"],
-    minimum_os_version = "10.9",
+    minimum_os_version = "10.15",
     provisioning_profile = select({
         "//:ci_build": None,
         "//conditions:default": "Santa_Dev.provisionprofile",

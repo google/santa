@@ -1,4 +1,4 @@
-/// Copyright 2015 Google Inc. All rights reserved.
+/// Copyright 2021 Google Inc. All rights reserved.
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -14,29 +14,19 @@
 
 #import <Foundation/Foundation.h>
 
-#import "Source/common/SNTCommonEnums.h"
-#import "Source/common/SNTCommon.h"
-
-@class MOLCertificate;
-
 ///
-///  Store information about executions from decision making for later logging.
+///  Store information about new allowlist rules for later logging.
 ///
-@interface SNTCachedDecision : NSObject
+@interface SNTAllowlistInfo : NSObject
 
-@property santa_vnode_id_t vnodeId;
-@property SNTEventState decision;
-@property NSString *decisionExtra;
+@property pid_t pid;
+@property int pidversion;
+@property NSString *targetPath;
 @property NSString *sha256;
 
-@property NSString *certSHA256;
-@property NSString *certCommonName;
-@property NSArray<MOLCertificate *> *certChain;
-@property NSString *teamID;
-
-@property NSString *quarantineURL;
-
-@property NSString *customMsg;
-@property BOOL silentBlock;
+- (instancetype)initWithPid:(pid_t)pid
+                 pidversion:(int)pidver
+                 targetPath:(NSString*)targetPath
+                     sha256:(NSString*)hash;
 
 @end

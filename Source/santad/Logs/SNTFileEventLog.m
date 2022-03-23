@@ -96,4 +96,10 @@
   [self.buffer setLength:0];
 }
 
+- (void)forceFlush {
+  dispatch_sync(self.q, ^{
+    [self flushBuffer];
+  });
+}
+
 @end

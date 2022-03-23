@@ -1,0 +1,145 @@
+//
+// !!! WARNING !!!
+// This proto is in beta format and subject to change.
+//
+
+syntax = "proto3";
+
+import "google/protobuf/any.proto";
+import "google/protobuf/timestamp.proto";
+
+option objc_class_prefix = "SNTPB";
+
+package santa;
+
+message ProcessInfo {
+  optional int32 pid = 1;
+  optional int32 pidversion = 2;
+  optional int32 ppid = 3;
+  optional int32 uid = 4;
+  optional string user = 5;
+  optional int32 gid = 6;
+  optional string group = 7;
+}
+
+message FileModification {
+  enum Action {
+    ACTION_UNKNOWN = 0;
+    ACTION_DELETE = 1;
+    ACTION_EXCHANGE = 2;
+    ACTION_LINK = 3;
+    ACTION_RENAME = 4;
+    ACTION_WRITE = 5;
+  }
+
+  optional Action action = 1;
+  optional string path = 2;
+  optional string newpath = 3;
+  optional string process = 4;
+  optional string process_path = 5;
+  optional ProcessInfo process_info = 6;
+  optional string machine_id = 7;
+}
+
+message Execution {
+  enum Decision {
+    DECISION_UNKNOWN = 0;
+    DECISION_ALLOW = 1;
+    DECISION_DENY = 2;
+  }
+
+  enum Reason {
+    REASON_UNKNOWN = 0;
+    REASON_BINARY = 1;
+    REASON_CERT = 2;
+    REASON_COMPILER = 3;
+    REASON_NOT_RUNNING = 4;
+    REASON_PENDING_TRANSITIVE = 5;
+    REASON_SCOPE = 6;
+    REASON_TEAM_ID = 7;
+    REASON_TRANSITIVE = 8;
+  }
+
+  enum Mode {
+    MODE_UNKNOWN = 0;
+    MODE_LOCKDOWN = 1;
+    MODE_MONITOR = 2;
+  }
+
+  optional Decision decision = 1;
+  optional Reason reason = 2;
+  optional string explain = 3;
+  optional string sha256 = 4;
+  optional string cert_sha256 = 5;
+  optional string cert_cn = 6;
+  optional string quarantine_url = 7;
+  optional ProcessInfo process_info = 8;
+  optional Mode mode = 9;
+  optional string path = 10;
+  optional string original_path = 11;
+  repeated string args = 12;
+  optional string machine_id = 13;
+}
+
+message DiskAppeared {
+  optional string mount = 1;
+  optional string volume = 2;
+  optional string bsd_name = 3;
+  optional string fs = 4;
+  optional string model = 5;
+  optional string serial = 6;
+  optional string bus = 7;
+  optional string dmg_path = 8;
+  optional string appearance = 9;
+}
+
+message DiskDisappeared {
+  optional string mount = 1;
+  optional string volume = 2;
+  optional string bsd_name = 3;
+}
+
+message Bundle {
+  // This is the hash of the file within the bundle that triggered the event
+  optional string sha256 = 1;
+  // This is the hash of the hashes of all executables in the bundle
+  optional string bundle_hash = 2;
+  optional string bundle_name = 3;
+  optional string bundle_id = 4;
+  optional string bundle_path = 5;
+  optional string path = 6;
+}
+
+message Fork {
+  optional ProcessInfo process_info = 1;
+}
+
+message Exit {
+  optional ProcessInfo process_info = 1;
+}
+
+message Allowlist {
+  optional int32 pid = 1;
+  optional int32 pidversion = 2;
+  optional string path = 3;
+  optional string sha256 = 4;
+}
+
+message SantaMessage {
+  google.protobuf.Timestamp event_time = 1;
+
+  oneof message {
+    FileModification file_modification = 2;
+    Execution execution = 3;
+    DiskAppeared disk_appeared = 4;
+    DiskDisappeared disk_disappeared = 5;
+    Bundle bundle = 6;
+    Fork fork = 7;
+    Exit exit = 8;
+    Allowlist allowlist = 9;
+  }
+}
+
+message LogBatch {
+  repeated google.protobuf.Any records = 1;
+}

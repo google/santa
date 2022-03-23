@@ -80,10 +80,13 @@ static NSString *const kFileChangesPrefixFiltersKey = @"FileChangesPrefixFilters
 
 static NSString *const kEventLogType = @"EventLogType";
 static NSString *const kEventLogPath = @"EventLogPath";
+static NSString *const kMailDirectory = @"MailDirectory";
+static NSString *const kMailDirectoryFileSizeThresholdKB = @"MailDirectoryFileSizeThresholdKB";
+static NSString *const kMailDirectorySizeThresholdMB = @"MailDirectorySizeThresholdMB";
+static NSString *const kMailDirectoryEventMaxFlushTimeSec = @"MailDirectoryEventMaxFlushTimeSec";
 
 static NSString *const kEnableMachineIDDecoration = @"EnableMachineIDDecoration";
 
-static NSString *const kEnableSystemExtension = @"EnableSystemExtension";
 static NSString *const kEnableSysxCache = @"EnableSysxCache";
 
 static NSString *const kEnableForkAndExitLogging = @"EnableForkAndExitLogging";
@@ -186,8 +189,11 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
       kMachineIDPlistKeyKey : string,
       kEventLogType : string,
       kEventLogPath : string,
+      kMailDirectory : string,
+      kMailDirectoryFileSizeThresholdKB : number,
+      kMailDirectorySizeThresholdMB : number,
+      kMailDirectoryEventMaxFlushTimeSec : number,
       kEnableMachineIDDecoration : number,
-      kEnableSystemExtension : number,
       kEnableSysxCache : number,
       kEnableForkAndExitLogging : number,
       kIgnoreOtherEndpointSecurityClients : number,
@@ -364,16 +370,28 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
   return [self configStateSet];
 }
 
++ (NSSet *)keyPathsForValuesAffectingMailDirectory {
+  return [self configStateSet];
+}
+
++ (NSSet *)keyPathsForValuesAffectingMailDirectoryFileSizeThresholdKB {
+  return [self configStateSet];
+}
+
++ (NSSet *)keyPathsForValuesAffectingMailDirectorySizeThresholdMB {
+  return [self configStateSet];
+}
+
++ (NSSet *)keyPathsForValuesAffectingMailDirectoryEventMaxFlushTimeSec {
+  return [self configStateSet];
+}
+
 + (NSSet *)keyPathsForValuesAffectingEnableMachineIDDecoration {
   return [self configStateSet];
 }
 
 + (NSSet *)keyPathsForValuesAffectingEnableTransitiveRules {
   return [self syncAndConfigStateSet];
-}
-
-+ (NSSet *)keyPathsForValuesAffectingEnableSystemExtension {
-  return [self configStateSet];
 }
 
 + (NSSet *)keyPathsForValuesAffectingEnableSysxCache {
@@ -670,28 +688,45 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
 }
 
 - (SNTEventLogType)eventLogType {
-  NSString *s = [self.configState[kEventLogType] lowercaseString];
-  return [s isEqualToString:@"syslog"] ? SNTEventLogTypeSyslog : SNTEventLogTypeFilelog;
+  NSString *logType = [self.configState[kEventLogType] lowercaseString];
+  if ([logType isEqualToString:@"protobuf"]) {
+    return SNTEventLogTypeProtobuf;
+  } else if ([logType isEqualToString:@"syslog"]) {
+    return SNTEventLogTypeSyslog;
+  } else {
+    return SNTEventLogTypeFilelog;
+  }
 }
 
 - (NSString *)eventLogPath {
   return self.configState[kEventLogPath] ?: @"/var/db/santa/santa.log";
 }
 
+- (NSString *)mailDirectory {
+  return self.configState[kMailDirectory] ?: @"/var/db/santa/mail";
+}
+
+- (NSUInteger)mailDirectoryFileSizeThresholdKB {
+  return self.configState[kMailDirectoryFileSizeThresholdKB]
+           ? [self.configState[kMailDirectoryFileSizeThresholdKB] unsignedIntegerValue]
+           : 100;
+}
+
+- (NSUInteger)mailDirectorySizeThresholdMB {
+  return self.configState[kMailDirectorySizeThresholdMB]
+           ? [self.configState[kMailDirectorySizeThresholdMB] unsignedIntegerValue]
+           : 500;
+}
+
+- (float)mailDirMaxFlushTime {
+  return self.configState[kMailDirectoryEventMaxFlushTimeSec]
+           ? [self.configState[kMailDirectoryEventMaxFlushTimeSec] floatValue]
+           : 5.0;
+}
+
 - (BOOL)enableMachineIDDecoration {
   NSNumber *number = self.configState[kEnableMachineIDDecoration];
   return number ? [number boolValue] : NO;
-}
-
-- (BOOL)enableSystemExtension {
-  if (@available(macOS 10.15, *)) {
-    NSFileManager *fm = [NSFileManager defaultManager];
-    if (![fm fileExistsAtPath:@"/Library/Extensions/santa-driver.kext"]) return YES;
-    NSNumber *number = self.configState[kEnableSystemExtension];
-    return number ? [number boolValue] : YES;
-  } else {
-    return NO;
-  }
 }
 
 - (BOOL)enableSysxCache {

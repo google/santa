@@ -12,12 +12,10 @@
 ///    See the License for the specific language governing permissions and
 ///    limitations under the License.
 
-#import <Foundation/Foundation.h>
+#import "Source/santad/Logs/SNTEventLog.h"
 
-#import "Source/santactl/SNTCommand.h"
-#import "Source/santactl/SNTCommandController.h"
+@interface SNTProtobufEventLog : SNTEventLog
 
-@interface SNTCommandMetrics : SNTCommand <SNTCommandProtocol>
-- (void)prettyPrintMetrics:(NSDictionary *)metircs asJSON:(BOOL)exportJSON;
-- (NSDictionary *)filterMetrics:(NSDictionary *)metrics withArguments:(NSArray *)args;
+- (void)logFileModification:(santa_message_t)message;
+
 @end

@@ -16,8 +16,8 @@
 
 #import <MOLXPCConnection/MOLXPCConnection.h>
 
+#import "Source/common/SNTCommon.h"
 #import "Source/common/SNTConfigurator.h"
-#import "Source/common/SNTKernelCommon.h"
 #import "Source/common/SNTLogging.h"
 #import "Source/common/SNTSystemInfo.h"
 #import "Source/common/SNTXPCControlInterface.h"
@@ -37,6 +37,7 @@
   requestDict[kHostname] = [SNTSystemInfo longHostname];
   requestDict[kOSVer] = [SNTSystemInfo osVersion];
   requestDict[kOSBuild] = [SNTSystemInfo osBuild];
+  requestDict[kModelIdentifier] = [SNTSystemInfo modelIdentifier];
   requestDict[kSantaVer] = [[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleVersion"];
   requestDict[kPrimaryUser] = self.syncState.machineOwner;
   if (self.syncState.FCMToken) requestDict[kFCMToken] = self.syncState.FCMToken;

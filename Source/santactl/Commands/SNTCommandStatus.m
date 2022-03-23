@@ -80,9 +80,9 @@ REGISTER_COMMAND_NAME(@"status")
 
   SNTConfigurator *configurator = [SNTConfigurator configurator];
 
-  BOOL cachingEnabled = (![configurator enableSystemExtension] || [configurator enableSysxCache]);
+  BOOL cachingEnabled = [configurator enableSysxCache];
 
-  // Kext status
+  // Cache status
   __block uint64_t rootCacheCount = -1, nonRootCacheCount = -1;
   if (cachingEnabled) {
     dispatch_group_enter(group);
@@ -228,17 +228,16 @@ REGISTER_COMMAND_NAME(@"status")
     printf("  %-25s | %s\n", "File Logging", (fileLogging ? "Yes" : "No"));
     printf("  %-25s | %lld  (Peak: %.2f%%)\n", "Watchdog CPU Events", cpuEvents, cpuPeak);
     printf("  %-25s | %lld  (Peak: %.2fMB)\n", "Watchdog RAM Events", ramEvents, ramPeak);
+    printf("  %-25s | %s\n", "USB Blocking", (configurator.blockUSBMount ? "Yes" : "No"));
+    if (configurator.blockUSBMount && configurator.remountUSBMode.count > 0) {
+      printf("  %-25s | %s\n", "USB Remounting Mode:",
+             [[configurator.remountUSBMode componentsJoinedByString:@", "] UTF8String]);
+    }
+
     if (cachingEnabled) {
       printf(">>> Cache Info\n");
       printf("  %-25s | %lld\n", "Root cache count", rootCacheCount);
       printf("  %-25s | %lld\n", "Non-root cache count", nonRootCacheCount);
-    }
-
-    printf("  %-25s | %s\n", "USB Blocking", (configurator.blockUSBMount ? "Yes" : "No"));
-
-    if (configurator.blockUSBMount && configurator.remountUSBMode.count > 0) {
-      printf("  %-25s | %s\n", "USB Remounting Mode:",
-             [[configurator.remountUSBMode componentsJoinedByString:@", "] UTF8String]);
     }
 
     printf(">>> Database Info\n");

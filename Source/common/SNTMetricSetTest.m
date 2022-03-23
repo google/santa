@@ -45,10 +45,10 @@
   XCTAssertNotNil(c, @"Expected returned SNTMetricCounter to not be nil");
   [c incrementForFieldValues:@[ @"certificate" ]];
   XCTAssertEqual(1, [c getCountForFieldValues:@[ @"certificate" ]],
-                 @"Counter not incremendted by 1");
+                 @"Counter not incremented by 1");
   [c incrementBy:3 forFieldValues:@[ @"certificate" ]];
   XCTAssertEqual(4, [c getCountForFieldValues:@[ @"certificate" ]],
-                 @"Counter not incremendted by 3");
+                 @"Counter not incremented by 3");
 }
 
 - (void)testExportNSDictionary {
@@ -630,39 +630,39 @@
     },
     @{
       @"input" : [NSNumber numberWithInt:SNTMetricTypeConstantBool],
-      @"expected" : @"SNTMetricTypeConstantBool 1"
+      @"expected" : @"SNTMetricTypeConstantBool"
     },
     @{
       @"input" : [NSNumber numberWithInt:SNTMetricTypeConstantString],
-      @"expected" : @"SNTMetricTypeConstantString 2"
+      @"expected" : @"SNTMetricTypeConstantString"
     },
     @{
       @"input" : [NSNumber numberWithInt:SNTMetricTypeConstantInt64],
-      @"expected" : @"SNTMetricTypeConstantInt64 3"
+      @"expected" : @"SNTMetricTypeConstantInt64"
     },
     @{
       @"input" : [NSNumber numberWithInt:SNTMetricTypeConstantDouble],
-      @"expected" : @"SNTMetricTypeConstantDouble 4"
+      @"expected" : @"SNTMetricTypeConstantDouble"
     },
     @{
       @"input" : [NSNumber numberWithInt:SNTMetricTypeGaugeBool],
-      @"expected" : @"SNTMetricTypeGaugeBool 5"
+      @"expected" : @"SNTMetricTypeGaugeBool"
     },
     @{
       @"input" : [NSNumber numberWithInt:SNTMetricTypeGaugeString],
-      @"expected" : @"SNTMetricTypeGaugeString 6"
+      @"expected" : @"SNTMetricTypeGaugeString"
     },
     @{
       @"input" : [NSNumber numberWithInt:SNTMetricTypeGaugeInt64],
-      @"expected" : @"SNTMetricTypeGaugeInt64 7"
+      @"expected" : @"SNTMetricTypeGaugeInt64"
     },
     @{
       @"input" : [NSNumber numberWithInt:SNTMetricTypeGaugeDouble],
-      @"expected" : @"SNTMetricTypeGaugeDouble 8"
+      @"expected" : @"SNTMetricTypeGaugeDouble"
     },
     @{
       @"input" : [NSNumber numberWithInt:SNTMetricTypeCounter],
-      @"expected" : @"SNTMetricTypeCounter 9"
+      @"expected" : @"SNTMetricTypeCounter"
     }
   ];
 

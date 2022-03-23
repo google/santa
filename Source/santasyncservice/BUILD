@@ -5,7 +5,7 @@ licenses(["notice"])
 
 package(
     default_visibility = ["//:santa_package_group"],
-    features = ["-layering_check"],
+    features = ["layering_check"],
 )
 
 objc_library(
@@ -117,7 +117,7 @@ macos_command_line_application(
     name = "santasyncservice",
     bundle_id = "com.google.santa.syncservice",
     infoplists = ["Info.plist"],
-    minimum_os_version = "10.9",
+    minimum_os_version = "10.15",
     version = "//:version",
     visibility = ["//:santa_package_group"],
     deps = [":santass_lib"],
