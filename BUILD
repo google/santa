@@ -10,13 +10,13 @@ exports_files(["LICENSE"])
 # The version label for mac_* rules.
 apple_bundle_version(
     name = "version",
-    build_label_pattern = ".*\\.santa_{release}\\.{build}",
+    build_label_pattern = ".*santa_{release}\\.{build}",
     build_version = "{release}.{build}",
     capture_groups = {
       "release": "\\d{4}\\.\\d+",
       "build": "\\d+"
     },
-    fallback_build_label = "1",
+    fallback_build_label = "santa_9999.1.1",
     short_version_string = "{release}",
 )
 
