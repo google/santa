@@ -87,7 +87,7 @@ jobs:
         uses: coverallsapp/github-action@master
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          path-to-lcov: ./CoverageData/info.lcov
+          path-to-lcov: ./bazel-out/_coverage/_coverage_report.dat
           flag-name: Unit
 
   benchmark:
