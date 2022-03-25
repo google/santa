@@ -7,6 +7,9 @@ redirect_from:
 
 # Binary Authorization Overview
 
+NOTE: This doc is out-dated and will be updated soon. We don't rely on a Kernel 
+Extension anymore.
+
 #### Background
 
 The decision flow starts in the kernel. The macOS kernel is extensible by way of
