@@ -93,7 +93,7 @@ objc_library(
     deps = [
         ":event_logs_common",
         "//Source/common:SNTMetricSet",
-        "//Source/common:log_objc_proto",
+        "//Source/common:santa_objc_proto",
     ],
 )
 
@@ -440,7 +440,7 @@ santa_unit_test(
         ":EndpointSecurityTestLib",
         ":event_logs",
         "//Source/common:SNTConfigurator",
-        "//Source/common:log_objc_proto",
+        "//Source/common:santa_objc_proto",
         "@OCMock",
     ],
 )
