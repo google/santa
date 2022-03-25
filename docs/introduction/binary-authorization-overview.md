@@ -14,10 +14,7 @@ a kernel extension (KEXT). macOS makes available kernel programming interfaces
 (KPIs) to be used by a KEXT. Santa utilizes the Kernel Authorization (Kauth)
 KPI. This is a very powerful and verbose interface that gives Santa the ability
 to listen in on most vnode and file systems operations and to take actions,
-directly or indirectly, on the operations being performed. Still, there are some
-limitations to Kauth which are pointed out in the santa-driver document. For
-more information on the santa-driver KEXT see the
-[santa-driver.md](../details/santa-driver.md) document.
+directly or indirectly, on the operations being performed.
 
 #### Flow of an execve()
 
