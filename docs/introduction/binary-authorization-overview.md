@@ -46,9 +46,7 @@ documentation. This flow does not cover the logging component of Santa, see the
         `execve()` the same `vnode_id`, santa-driver will have that thread wait
         for the in-flight decision from santad. All subsequent `execve()`s for
         the same `vnode_id` will use the decision in the cache as explained
-        in #2, until the cache is invalidated. See the
-        [santa-driver.md](../details/santa-driver.md) document for more details
-        on the cache invalidation.
+        in #2, until the cache is invalidated. 
     *   If the executing file is written to while any of the threads are waiting
         for a response the `ACTION_REQUEST_BINARY` entry is removed, forcing the
         decision-making process to be restarted.
