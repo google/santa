@@ -9,7 +9,7 @@ package(
 licenses(["notice"])
 
 proto_library(
-    name = "log_proto",
+    name = "santa_proto",
     srcs = ["santa.proto"],
     deps = [
         "@com_google_protobuf//:any_proto",
@@ -18,10 +18,10 @@ proto_library(
 )
 
 objc_proto_library(
-    name = "log_objc_proto",
+    name = "santa_objc_proto",
     copts = ["-fno-objc-arc"],
     non_arc_srcs = ["Santa.pbobjc.m"],
-    protos = [":log_proto"],
+    protos = [":santa_proto"],
 )
 
 cc_library(
