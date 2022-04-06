@@ -114,9 +114,10 @@ static const pid_t PID_MAX = 99999;
           // Create a transitive rule if the file was modified by a running compiler
           if ([self isCompilerPID:pid]) {
             santa_message_t sm = {};
-            BOOL truncated = [SNTEndpointSecurityManager populateBufferFromESFile:m->event.close.target
-                                                                           buffer:sm.path
-                                                                             size:sizeof(sm.path)];
+            BOOL truncated =
+              [SNTEndpointSecurityManager populateBufferFromESFile:m->event.close.target
+                                                            buffer:sm.path
+                                                              size:sizeof(sm.path)];
             if (truncated) {
               LOGE(@"CLOSE: error creating transitive rule, the path is truncated: path=%s pid=%d",
                    sm.path, pid);
@@ -182,7 +183,12 @@ static const pid_t PID_MAX = 99999;
         case ES_EVENT_TYPE_NOTIFY_UNMOUNT: {
           // Flush the non-root cache - the root disk cannot be unmounted
           // so it isn't necessary to flush its cache.
-          [self flushCacheNonRootOnly:YES];
+          //
+          // Flushing the cache calls back into ES. We need to perform this off the handler thread
+          // otherwise we could potentially deadlock.
+          dispatch_async(self.esAuthQueue, ^() {
+            [self flushCacheNonRootOnly:YES];
+          });
 
           // Skip all other processing
           return;
