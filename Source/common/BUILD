@@ -3,7 +3,7 @@ load("@rules_proto_grpc//objc:defs.bzl", "objc_proto_library")
 
 package(
     default_visibility = ["//:santa_package_group"],
-    features = ["layering_check"],
+    features = ["-layering_check"],
 )
 
 licenses(["notice"])
@@ -11,6 +11,7 @@ licenses(["notice"])
 proto_library(
     name = "santa_proto",
     srcs = ["santa.proto"],
+    features = ["layering_check"],
     deps = [
         "@com_google_protobuf//:any_proto",
         "@com_google_protobuf//:timestamp_proto",
