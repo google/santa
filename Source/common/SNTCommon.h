@@ -26,8 +26,6 @@
 #define likely(x) __builtin_expect(!!(x), 1)
 #define unlikely(x) __builtin_expect(!!(x), 0)
 
-// Enum defining actions that can be passed down the IODataQueue and in
-// response methods.
 typedef enum {
   ACTION_UNSET = 0,
 
@@ -74,15 +72,9 @@ typedef struct santa_vnode_id_t {
   bool operator==(const santa_vnode_id_t &rhs) const {
     return fsid == rhs.fsid && fileid == rhs.fileid;
   }
-  // This _must not_ be used for anything security-sensitive. It exists solely
-  // to make the msleep/wakeup calls easier.
-  uint64_t unsafe_simple_id() const {
-    return (((uint64_t)fsid << 32) | fileid);
-  }
 #endif
 } santa_vnode_id_t;
 
-// Message struct that is sent down the IODataQueue.
 typedef struct {
   santa_action_t action;
   santa_vnode_id_t vnode_id;
@@ -93,18 +85,17 @@ typedef struct {
   pid_t ppid;
   char path[MAXPATHLEN];
   char newpath[MAXPATHLEN];
+  char ttypath[MAXPATHLEN];
   // For file events, this is the process name.
   // For exec requests, this is the parent process name.
   // While process names can technically be 4*MAXPATHLEN, that never
   // actually happens, so only take MAXPATHLEN and throw away any excess.
   char pname[MAXPATHLEN];
 
-  // For messages that originate from EndpointSecurity, this points to a copy of
-  // the message.
+  // This points to a copy of the original ES message.
   void *es_message;
 
-  // For messages that originate from EndpointSecurity, this points to an
-  // NSArray of the arguments.
+  // This points to an NSArray of the process arguments.
   void *args_array;
 } santa_message_t;
 
