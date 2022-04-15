@@ -326,6 +326,9 @@ santa_unit_test(
         "@MOLCertificate",
         "@MOLCodesignChecker",
     ],
+    sdk_dylibs = [
+        "EndpointSecurity",
+    ],
 )
 
 santa_unit_test(
