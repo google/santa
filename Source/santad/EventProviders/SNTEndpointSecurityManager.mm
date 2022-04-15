@@ -45,10 +45,8 @@ static const pid_t PID_MAX = 99999;
   if (self) {
     // To avoid nil deref from es_events arriving before listenForDecisionRequests or
     // listenForLogRequests in the  MockEndpointSecurity testing util.
-    _decisionCallback = ^(santa_message_t) {
-    };
-    _logCallback = ^(santa_message_t) {
-    };
+    _decisionCallback = ^(santa_message_t) {};
+    _logCallback = ^(santa_message_t) {};
     [self establishClient];
     _prefixTree = new SNTPrefixTree();
     _esAuthQueue =
@@ -294,6 +292,10 @@ static const pid_t PID_MAX = 99999;
       targetFile = m->event.exec.target->executable;
       targetProcess = m->event.exec.target;
       callback = self.decisionCallback;
+
+      [SNTEndpointSecurityManager populateBufferFromESFile:m->process->tty
+                                                    buffer:sm.ttypath
+                                                      size:sizeof(sm.ttypath)];
       break;
     }
     case ES_EVENT_TYPE_NOTIFY_EXEC: {
@@ -550,6 +552,7 @@ static const pid_t PID_MAX = 99999;
 // Returns YES if the path was truncated.
 // The populated buffer will be NUL terminated.
 + (BOOL)populateBufferFromESFile:(es_file_t *)file buffer:(char *)buffer size:(size_t)size {
+  if (file == NULL) return NO;
   return [SNTEndpointSecurityManager populateBufferFromString:file->path.data
                                                        buffer:buffer
                                                          size:size];
