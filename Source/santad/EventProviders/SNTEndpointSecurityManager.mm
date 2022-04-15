@@ -552,7 +552,7 @@ static const pid_t PID_MAX = 99999;
 // Returns YES if the path was truncated.
 // The populated buffer will be NUL terminated.
 + (BOOL)populateBufferFromESFile:(es_file_t *)file buffer:(char *)buffer size:(size_t)size {
-  if (file == NULL) return;
+  if (file == NULL) return NO;
   return [SNTEndpointSecurityManager populateBufferFromString:file->path.data
                                                        buffer:buffer
                                                          size:size];

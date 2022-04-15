@@ -13,7 +13,6 @@
 ///    limitations under the License.
 
 #import "Source/santad/SNTApplication.h"
-#import "Source/santad/SNTApplicationCoreMetrics.h"
 
 #import <MOLXPCConnection/MOLXPCConnection.h>
 
@@ -34,6 +33,7 @@
 #import "Source/santad/EventProviders/SNTEndpointSecurityManager.h"
 #import "Source/santad/EventProviders/SNTEventProvider.h"
 #import "Source/santad/Logs/SNTEventLog.h"
+#import "Source/santad/SNTApplicationCoreMetrics.h"
 #import "Source/santad/SNTCompilerController.h"
 #import "Source/santad/SNTDaemonControlController.h"
 #import "Source/santad/SNTDatabaseController.h"
