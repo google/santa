@@ -30,7 +30,13 @@ static const NSUInteger kTransitiveRuleCullingThreshold = 500000;
 // Consider transitive rules out of date if they haven't been used in six months.
 static const NSUInteger kTransitiveRuleExpirationSeconds = 6 * 30 * 24 * 3600;
 
-static void addPathsFromDefaultMuteSet(NSMutableSet *criticalPaths) API_AVAILABLE(macos(12.0)) {
+static void addPathsFromDefaultMuteSet(NSMutableSet *criticalPaths) {
+  // Note: This function uses API introduced in macOS 12, but we want to continue to support
+  // building in older environments. API Availability checks do not help for this use case,
+  // instead we use the following preprocessor macros to conditionally compile these API. The
+  // drawback here is that if a pre-macOS 12 SDK is used to build Santa and it is then deployed
+  // on macOS 12 or later, the dynamic mute set will not be computed.
+#if defined(MAC_OS_VERSION_12_0) && MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_VERSION_12_0
   // Create a temporary ES client in order to grab the default set of muted paths.
   // TODO(mlw): Reorganize this code so that a temporary ES client doesn't need to be created
   es_client_t *client = NULL;
@@ -60,6 +66,7 @@ static void addPathsFromDefaultMuteSet(NSMutableSet *criticalPaths) API_AVAILABL
 
   es_release_muted_paths(mps);
   es_delete_client(client);
+#endif
 }
 
 @interface SNTRuleTable ()

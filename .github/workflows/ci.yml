@@ -53,8 +53,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [macos-11]
-    runs-on: [macos-10.15, macos-11]
+        os: [macos-10.15, macos-11]
+    runs-on: ${{ matrix.os }}
     needs: [preqs]
     if: needs.preqs.outputs.run_build_and_tests == 'true'
     steps:
@@ -66,8 +66,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [macos-11]
-    runs-on: [macos-10.15, macos-11]
+        os: [macos-10.15, macos-11]
+    runs-on: ${{ matrix.os }}
     needs: [preqs]
     if: needs.preqs.outputs.run_build_and_tests == 'true'
     steps:
