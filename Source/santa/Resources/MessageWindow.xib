@@ -22,12 +22,12 @@
             <windowStyleMask key="styleMask" utility="YES"/>
             <rect key="contentRect" x="167" y="107" width="540" height="479"/>
             <rect key="screenRect" x="0.0" y="0.0" width="1728" height="1079"/>
-            <view key="contentView" misplaced="YES" id="Iwq-Lx-rLv">
-                <rect key="frame" x="0.0" y="0.0" width="540" height="479"/>
+            <view key="contentView" id="Iwq-Lx-rLv">
+                <rect key="frame" x="0.0" y="0.0" width="540" height="462"/>
                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                 <subviews>
                     <button focusRingType="none" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="kiB-jZ-69S">
-                        <rect key="frame" x="16" y="451" width="37" height="32"/>
+                        <rect key="frame" x="16" y="434" width="37" height="32"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                         <buttonCell key="cell" type="push" title="Hidden Button" alternateTitle="This button exists so neither of the other two buttons is pre-selected when the dialog opens." bezelStyle="rounded" alignment="center" borderStyle="border" focusRingType="none" transparent="YES" imageScaling="proportionallyDown" inset="2" id="XGa-Sl-F4t">
                             <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
@@ -292,6 +292,9 @@ DQ
                         <buttonCell key="cell" type="push" title="Ignore" bezelStyle="rounded" alignment="center" state="on" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="XR6-Xa-gP4">
                             <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
                             <font key="font" metaFont="system"/>
+                            <string key="keyEquivalent" base64-UTF8="YES">
+Gw
+</string>
                         </buttonCell>
                         <accessibility description="Dismiss Dialog"/>
                         <connections>
