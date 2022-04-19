@@ -175,7 +175,7 @@ static NSString *const kPrinterProxyPostMonterey =
   if (action == ACTION_RESPOND_ALLOW) {
     [[SNTEventLog logger] cacheDecision:cd];
   } else {
-    ttyPath = [self ttyPathForPID:message.ppid];
+    ttyPath = @(message.ttypath);
   }
 
   // Upgrade the action to ACTION_RESPOND_ALLOW_COMPILER when appropriate, because we want the
@@ -322,19 +322,6 @@ static NSString *const kPrinterProxyPostMonterey =
   SNTFileInfo *proxyInfo = [[SNTFileInfo alloc] initWithPath:kPrinterProxyPostMonterey];
   if (!proxyInfo) proxyInfo = [[SNTFileInfo alloc] initWithPath:kPrinterProxyPreMonterey];
   return proxyInfo;
-}
-
-- (NSString *)ttyPathForPID:(pid_t)pid {
-  if (pid < 2) return nil;  // don't bother even looking for launchd.
-
-  struct proc_bsdinfo taskInfo = {};
-  if (proc_pidinfo(pid, PROC_PIDTBSDINFO, 0, &taskInfo, sizeof(taskInfo)) < 1) return nil;
-
-  // 16-bytes here is for future-proofing. Currently kern.tty.ptmx_max is
-  // limited to 999 so 12 bytes should be enough.
-  char devPath[16] = "/dev/";
-  snprintf(devPath, 16, "/dev/%s", devname(taskInfo.e_tdev, S_IFCHR));
-  return @(devPath);
 }
 
 - (void)printMessage:(NSString *)msg toTTY:(NSString *)path {

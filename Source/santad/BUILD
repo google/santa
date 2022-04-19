@@ -3,7 +3,7 @@ load("//:helper.bzl", "santa_unit_test")
 
 package(
     default_visibility = ["//:santa_package_group"],
-    features = ["layering_check"],
+    features = ["-layering_check"],
 )
 
 licenses(["notice"])
@@ -93,7 +93,7 @@ objc_library(
     deps = [
         ":event_logs_common",
         "//Source/common:SNTMetricSet",
-        "//Source/common:log_objc_proto",
+        "//Source/common:santa_objc_proto",
     ],
 )
 
@@ -326,6 +326,9 @@ santa_unit_test(
         "@MOLCertificate",
         "@MOLCodesignChecker",
     ],
+    sdk_dylibs = [
+        "EndpointSecurity",
+    ],
 )
 
 santa_unit_test(
@@ -440,7 +443,7 @@ santa_unit_test(
         ":EndpointSecurityTestLib",
         ":event_logs",
         "//Source/common:SNTConfigurator",
-        "//Source/common:log_objc_proto",
+        "//Source/common:santa_objc_proto",
         "@OCMock",
     ],
 )
