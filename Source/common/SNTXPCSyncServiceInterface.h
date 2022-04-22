@@ -41,9 +41,6 @@
 // in the queue. If the queue is full calls to this method will be dropped and
 // SNTSyncStatusTypeTooManySyncsInProgress will be passed into the reply block.
 //
-// The SNTSyncStatusTypeSyncStarted will be passed into the reply block when the sync starts. The
-// reply block will be called again with a SNTSyncStatusType when the sync has completed or failed.
-//
 // Pass true to isClean to perform a clean sync, defaults to false.
 //
 - (void)syncWithLogListener:(NSXPCListenerEndpoint *)logListener

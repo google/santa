@@ -126,11 +126,11 @@ static NSString *const kFCMTargetHostIDKey = @"target_host_id";
   NSString *fileHash = message[kFCMFileHashKey];
   NSString *fileName = message[kFCMFileNameKey];
   if (fileName && fileHash) {
-    [[SNTPushNotificationsTracker tracker] addNotification:@{kFileName : fileName}.mutableCopy
+    [[SNTPushNotificationsTracker tracker] addNotification:[@{kFileName : fileName} mutableCopy]
                                                    forHash:fileHash];
   }
 
-  LOGD(@"Push notification action: %@ received", action);
+  LOGD(@"Push notification action '%@' received", action);
 
   if ([action isEqualToString:kFullSync] || [action isEqualToString:kConfigSync] ||
       [action isEqualToString:kLogSync]) {

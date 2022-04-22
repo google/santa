@@ -103,7 +103,6 @@ typedef NS_ENUM(NSInteger, SNTSyncStatusType) {
   SNTSyncStatusTypeRuleDownloadFailed,
   SNTSyncStatusTypePostflightFailed,
   SNTSyncStatusTypeTooManySyncsInProgress,
-  SNTSyncStatusTypeNoSyncServer,
   SNTSyncStatusTypeMissingSyncBaseURL,
   SNTSyncStatusTypeMissingMachineID,
   SNTSyncStatusTypeDaemonTimeout,
