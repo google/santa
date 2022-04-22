@@ -23,6 +23,7 @@
 #import "Source/common/SNTXPCControlInterface.h"
 #import "Source/santasyncservice/NSData+Zlib.h"
 #import "Source/santasyncservice/SNTSyncConstants.h"
+#import "Source/santasyncservice/SNTSyncLogging.h"
 #import "Source/santasyncservice/SNTSyncState.h"
 
 @implementation SNTSyncEventUpload
@@ -60,7 +61,7 @@
     // A list of bundle hashes that require their related binary events to be uploaded.
     self.syncState.bundleBinaryRequests = r[kEventUploadBundleBinaries];
 
-    LOGI(@"Uploaded %lu events", uploadEvents.count);
+    SLOGI(@"Uploaded %lu events", uploadEvents.count);
   }
 
   // Remove event IDs. For Bundle Events the ID is 0 so nothing happens.

@@ -49,6 +49,7 @@ objc_library(
         "//Source/common:SNTSystemInfo",
         "//Source/common:SNTXPCBundleServiceInterface",
         "//Source/common:SNTXPCControlInterface",
+        "//Source/common:SNTXPCSyncServiceInterface",
         "//Source/common:SNTXPCUnprivilegedControlInterface",
         "//Source/santasyncservice:sync_lib",
         "@FMDB",

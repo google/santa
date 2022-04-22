@@ -18,14 +18,11 @@
 #import "Source/common/SNTConfigurator.h"
 #import "Source/common/SNTDropRootPrivs.h"
 #import "Source/common/SNTLogging.h"
-#import "Source/common/SNTXPCControlInterface.h"
+#import "Source/common/SNTXPCSyncServiceInterface.h"
 #import "Source/santactl/SNTCommand.h"
 #import "Source/santactl/SNTCommandController.h"
-#import "Source/santasyncservice/SNTSyncManager.h"
 
-@interface SNTCommandSync : SNTCommand <SNTCommandProtocol>
-@property MOLXPCConnection *listener;
-@property SNTSyncManager *syncManager;
+@interface SNTCommandSync : SNTCommand <SNTCommandProtocol, SNTSyncServiceLogReceiverXPC>
 @end
 
 @implementation SNTCommandSync
@@ -38,9 +35,8 @@ REGISTER_COMMAND_NAME(@"sync")
   return YES;
 }
 
-// Connect to santad while we are root, so that we pass the XPC authentication.
 + (BOOL)requiresDaemonConn {
-  return YES;
+  return NO;  // We talk directly with the syncservice.
 }
 
 + (NSString *)shortHelpText {
@@ -66,53 +62,38 @@ REGISTER_COMMAND_NAME(@"sync")
     LOGE(@"Missing SyncBaseURL. Exiting.");
     exit(1);
   }
+  MOLXPCConnection *ss = [SNTXPCSyncServiceInterface configuredConnection];
+  ss.invalidationHandler = ^(void) {
+    LOGE(@"Failed to connect to the sync service.");
+    exit(1);
+  };
+  [ss resume];
 
-  BOOL daemon = [arguments containsObject:@"--daemon"];
-  self.syncManager = [[SNTSyncManager alloc] initWithDaemonConnection:self.daemonConn
-                                                             isDaemon:daemon];
+  NSXPCListener *logListener = [NSXPCListener anonymousListener];
+  MOLXPCConnection *lr = [[MOLXPCConnection alloc] initServerWithListener:logListener];
+  lr.exportedObject = self;
+  lr.unprivilegedInterface =
+    [NSXPCInterface interfaceWithProtocol:@protocol(SNTSyncServiceLogReceiverXPC)];
+  [lr resume];
+  BOOL isClean = [NSProcessInfo.processInfo.arguments containsObject:@"--clean"];
+  [[ss remoteObjectProxy]
+    syncWithLogListener:logListener.endpoint
+                isClean:isClean
+                  reply:^(SNTSyncStatusType status) {
+                    if (status == SNTSyncStatusTypeTooManySyncsInProgress) {
+                      [self didReceiveLog:@"Too many syncs in progress, try again later."];
+                    }
+                    exit((int)status);
+                  }];
 
-  // Dropping root privileges to the 'nobody' user causes the default NSURLCache to throw
-  // sandbox errors, which are benign but annoying. This line disables the cache entirely.
-  [NSURLCache setSharedURLCache:[[NSURLCache alloc] initWithMemoryCapacity:0
-                                                              diskCapacity:0
-                                                                  diskPath:nil]];
-
-  if (!self.syncManager.daemon) return [self.syncManager fullSync];
-  [self syncdWithDaemonConnection:self.daemonConn];
+  // Do not return from this scope.
+  [[NSRunLoop mainRunLoop] run];
 }
 
-#pragma mark daemon methods
-
-- (void)syncdWithDaemonConnection:(MOLXPCConnection *)daemonConn {
-  dispatch_semaphore_t sema = dispatch_semaphore_create(0);
-
-  // Create listener for return connection from daemon.
-  NSXPCListener *listener = [NSXPCListener anonymousListener];
-  self.listener = [[MOLXPCConnection alloc] initServerWithListener:listener];
-  self.listener.privilegedInterface = [SNTXPCSyncdInterface syncdInterface];
-  self.listener.exportedObject = self.syncManager;
-  self.listener.acceptedHandler = ^{
-    LOGD(@"santad <--> santactl connections established");
-    dispatch_semaphore_signal(sema);
-  };
-  self.listener.invalidationHandler = ^{
-    // If santad is unloaded kill santactl
-    LOGD(@"exiting");
-    exit(0);
-  };
-  [self.listener resume];
-
-  // Tell daemon to connect back to the above listener.
-  [[daemonConn remoteObjectProxy] setSyncdListener:listener.endpoint];
-
-  // Now wait for the connection to come in.
-  if (dispatch_semaphore_wait(sema, dispatch_time(DISPATCH_TIME_NOW, 5 * NSEC_PER_SEC))) {
-    self.listener.invalidationHandler = nil;
-    [self.listener invalidate];
-    [self performSelectorInBackground:@selector(syncdWithDaemonConnection:) withObject:daemonConn];
-  }
-
-  [self.syncManager fullSyncSecondsFromNow:15];
+/// Implement the SNTSyncServiceLogReceiverXPC protocol.
+- (void)didReceiveLog:(NSString *)log {
+  printf("%s\n", log.UTF8String);
+  fflush(stdout);
 }
 
 @end

@@ -132,5 +132,5 @@ extern const NSUInteger kDefaultEventBatchSize;
 ///  Are represented in seconds
 ///
 extern const NSUInteger kDefaultFullSyncInterval;
-extern const NSUInteger kDefaultFCMFullSyncInterval;
-extern const NSUInteger kDefaultFCMGlobalRuleSyncDeadline;
+extern const NSUInteger kDefaultPushNotificationsFullSyncInterval;
+extern const NSUInteger kDefaultPushNotificationsGlobalRuleSyncDeadline;

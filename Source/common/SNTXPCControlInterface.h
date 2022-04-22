@@ -55,7 +55,6 @@
 ///
 ///  Syncd Ops
 ///
-- (void)setSyncdListener:(NSXPCListenerEndpoint *)listener;
 - (void)postRuleSyncNotificationWithCustomMessage:(NSString *)message reply:(void (^)(void))reply;
 
 @end

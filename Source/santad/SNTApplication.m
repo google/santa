@@ -26,6 +26,7 @@
 #import "Source/common/SNTXPCControlInterface.h"
 #import "Source/common/SNTXPCMetricServiceInterface.h"
 #import "Source/common/SNTXPCNotifierInterface.h"
+#import "Source/common/SNTXPCSyncServiceInterface.h"
 #import "Source/common/SNTXPCUnprivilegedControlInterface.h"
 #import "Source/santad/DataLayer/SNTEventTable.h"
 #import "Source/santad/DataLayer/SNTRuleTable.h"
@@ -48,9 +49,9 @@
 @property SNTDeviceManager *deviceManager;
 @property MOLXPCConnection *controlConnection;
 @property SNTNotificationQueue *notQueue;
-@property pid_t syncdPID;
 @property MOLXPCConnection *metricsConnection;
 @property dispatch_source_t metricsTimer;
+@property SNTSyncdQueue *syncdQueue;
 @end
 
 @implementation SNTApplication
@@ -114,12 +115,8 @@
       [self.eventProvider fileModificationPrefixFilterAdd:[configurator fileChangesPrefixFilters]];
     });
 
-    SNTSyncdQueue *syncdQueue = [[SNTSyncdQueue alloc] init];
-
-    // Restart santactl if it goes down
-    syncdQueue.invalidationHandler = ^{
-      [self startSyncd];
-    };
+    self.notQueue = [[SNTNotificationQueue alloc] init];
+    self.syncdQueue = [[SNTSyncdQueue alloc] init];
 
     // Listen for actionable config changes.
     NSKeyValueObservingOptions bits = (NSKeyValueObservingOptionNew | NSKeyValueObservingOptionOld);
@@ -160,7 +157,7 @@
     SNTDaemonControlController *dc =
       [[SNTDaemonControlController alloc] initWithEventProvider:_eventProvider
                                               notificationQueue:self.notQueue
-                                                     syncdQueue:syncdQueue];
+                                                     syncdQueue:self.syncdQueue];
 
     _controlConnection =
       [[MOLXPCConnection alloc] initServerWithName:[SNTXPCControlInterface serviceID]];
@@ -178,9 +175,9 @@
                                                                   ruleTable:ruleTable
                                                                  eventTable:eventTable
                                                               notifierQueue:self.notQueue
-                                                                 syncdQueue:syncdQueue];
-    // Start up santactl as a daemon if a sync server exists.
-    [self startSyncd];
+                                                                 syncdQueue:self.syncdQueue];
+    // Establish a connection with the sync service if a sync server exists.
+    [self establishSyncServiceConnection];
 
     if (!_execController) return nil;
 
@@ -313,27 +310,20 @@ dispatch_source_t createDispatchTimer(uint64_t interval, uint64_t leeway, dispat
   dispatch_source_cancel(_metricsTimer);
 }
 
-- (void)startSyncd {
+- (void)establishSyncServiceConnection {
+  // The syncBaseURL check is here to stop retrying if the sync server is removed.
+  // See -[syncBaseURLDidChange:] for more info.
   if (![[SNTConfigurator configurator] syncBaseURL]) return;
-  [self stopSyncd];
-  self.syncdPID = fork();
-  if (self.syncdPID == -1) {
-    LOGI(@"Failed to fork");
-    self.syncdPID = 0;
-  } else if (self.syncdPID == 0) {
-    // The santactl executable will drop privileges just after the XPC
-    // connection has been estabilished; this is done this way so that
-    // the XPC authentication can occur
-    _exit(execl(kSantaCtlPath, kSantaCtlPath, "sync", "--daemon", "--syslog", NULL));
-  }
-  LOGI(@"santactl started with pid: %i", self.syncdPID);
-}
-
-- (void)stopSyncd {
-  if (!self.syncdPID) return;
-  int ret = kill(self.syncdPID, SIGKILL);
-  LOGD(@"kill(%i, 9) = %i", self.syncdPID, ret);
-  self.syncdPID = 0;
+  MOLXPCConnection *ss = [SNTXPCSyncServiceInterface configuredConnection];
+  // This will handle retying connection establishment if there are issues with the service
+  // during initialization (missing binary, malformed plist, bad code signature, etc.).
+  // Once those issues are resolved the connection will establish.
+  // This will also handle reestablishment if the service crashes or is killed.
+  ss.invalidationHandler = ^(void) {
+    [self establishSyncServiceConnection];
+  };
+  [ss resume];  // If there are issues establishing the connection resume will block for 2 seconds.
+  self.syncdQueue.syncConnection = ss;
 }
 
 - (void)observeValueForKeyPath:(NSString *)keyPath
@@ -418,14 +408,15 @@ dispatch_source_t createDispatchTimer(uint64_t interval, uint64_t leeway, dispat
 
 - (void)syncBaseURLDidChange:(NSURL *)syncBaseURL {
   if (syncBaseURL) {
-    LOGI(@"Starting santactl with new SyncBaseURL: %@", syncBaseURL);
+    LOGI(@"Establishing a new sync service connection with SyncBaseURL: %@", syncBaseURL);
     [NSObject cancelPreviousPerformRequestsWithTarget:[SNTConfigurator configurator]
                                              selector:@selector(clearSyncState)
                                                object:nil];
-    [self startSyncd];
+    [[self.syncdQueue.syncConnection remoteObjectProxy] spindown];
+    [self establishSyncServiceConnection];
   } else {
-    LOGI(@"SyncBaseURL removed, killing santactl pid: %i", self.syncdPID);
-    [self stopSyncd];
+    LOGI(@"SyncBaseURL removed, spinning down sync service");
+    [[self.syncdQueue.syncConnection remoteObjectProxy] spindown];
     // Keep the syncState active for 10 min in case com.apple.ManagedClient is flapping.
     [[SNTConfigurator configurator] performSelector:@selector(clearSyncState)
                                          withObject:nil

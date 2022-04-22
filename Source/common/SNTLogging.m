@@ -32,6 +32,11 @@ void syslogClientDestructor(void *arg) {
 #pragma clang diagnostic pop
 }
 
+LogLevel EffectiveLogLevel() {
+  LOGD(@"Ensuring logLevel is set");
+  return logLevel;
+}
+
 void logMessage(LogLevel level, FILE *destination, NSString *format, ...) {
   static BOOL useSyslog = NO;
   static NSString *binaryName;
