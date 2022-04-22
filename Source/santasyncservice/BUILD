@@ -96,6 +96,7 @@ santa_unit_test(
     sdk_dylibs = ["libz"],
     deps = [
         ":FCM_lib",
+        ":broadcaster_lib",
         "//Source/common:SNTCommonEnums",
         "//Source/common:SNTConfigurator",
         "//Source/common:SNTDropRootPrivs",
