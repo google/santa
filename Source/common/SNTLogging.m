@@ -19,12 +19,6 @@
 #import <asl.h>
 #import <pthread.h>
 
-#ifdef DEBUG
-static LogLevel logLevel = LOG_LEVEL_DEBUG;
-#else
-static LogLevel logLevel = LOG_LEVEL_INFO;  // default to info
-#endif
-
 void syslogClientDestructor(void *arg) {
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wdeprecated-declarations"
@@ -33,7 +27,17 @@ void syslogClientDestructor(void *arg) {
 }
 
 LogLevel EffectiveLogLevel() {
-  LOGD(@"Ensuring logLevel is set");
+#ifdef DEBUG
+  static LogLevel logLevel = LOG_LEVEL_DEBUG;
+#else
+  static LogLevel logLevel = LOG_LEVEL_INFO;  // default to info
+#endif
+  static dispatch_once_t onceToken;
+  dispatch_once(&onceToken, ^{
+    if ([SNTConfigurator configurator].enableDebugLogging) {
+      logLevel = LOG_LEVEL_DEBUG;
+    }
+  });
   return logLevel;
 }
 
@@ -46,10 +50,6 @@ void logMessage(LogLevel level, FILE *destination, NSString *format, ...) {
   dispatch_once(&pred, ^{
     binaryName = [[NSProcessInfo processInfo] processName];
 
-    if ([SNTConfigurator configurator].enableDebugLogging) {
-      logLevel = LOG_LEVEL_DEBUG;
-    }
-
     // If requested, redirect output to syslog.
     if ([[[NSProcessInfo processInfo] arguments] containsObject:@"--syslog"] ||
         [binaryName isEqualToString:@"com.google.santa.daemon"]) {
@@ -58,7 +58,7 @@ void logMessage(LogLevel level, FILE *destination, NSString *format, ...) {
     }
   });
 
-  if (logLevel < level) return;
+  if (EffectiveLogLevel() < level) return;
 
   va_list args;
   va_start(args, format);
