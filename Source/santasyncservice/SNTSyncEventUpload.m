@@ -99,12 +99,14 @@
       ADDKEY(newEvent, kDecision, kDecisionAllowCertificate);
       break;
     case SNTEventStateAllowScope: ADDKEY(newEvent, kDecision, kDecisionAllowScope); break;
+    case SNTEventStateAllowTeamID: ADDKEY(newEvent, kDecision, kDecisionAllowTeamID); break;
     case SNTEventStateBlockUnknown: ADDKEY(newEvent, kDecision, kDecisionBlockUnknown); break;
     case SNTEventStateBlockBinary: ADDKEY(newEvent, kDecision, kDecisionBlockBinary); break;
     case SNTEventStateBlockCertificate:
       ADDKEY(newEvent, kDecision, kDecisionBlockCertificate);
       break;
     case SNTEventStateBlockScope: ADDKEY(newEvent, kDecision, kDecisionBlockScope); break;
+    case SNTEventStateBlockTeamID: ADDKEY(newEvent, kDecision, kDecisionBlockTeamID); break;
     case SNTEventStateBundleBinary:
       ADDKEY(newEvent, kDecision, kDecisionBundleBinary);
       [newEvent removeObjectForKey:kExecutionTime];
