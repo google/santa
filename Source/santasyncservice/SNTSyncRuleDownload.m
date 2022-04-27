@@ -13,13 +13,15 @@
 ///    limitations under the License.
 
 #import "Source/santasyncservice/SNTSyncRuleDownload.h"
+#include "Source/santasyncservice/SNTPushNotificationsTracker.h"
 
 #import <MOLXPCConnection/MOLXPCConnection.h>
 
-#import "Source/common/SNTLogging.h"
 #import "Source/common/SNTRule.h"
 #import "Source/common/SNTXPCControlInterface.h"
+#import "Source/santasyncservice/SNTPushNotificationsTracker.h"
 #import "Source/santasyncservice/SNTSyncConstants.h"
+#import "Source/santasyncservice/SNTSyncLogging.h"
 #import "Source/santasyncservice/SNTSyncState.h"
 
 @implementation SNTSyncRuleDownload
@@ -46,13 +48,13 @@
                                                         dispatch_semaphore_signal(sema);
                                                       }];
   if (dispatch_semaphore_wait(sema, dispatch_time(DISPATCH_TIME_NOW, 300 * NSEC_PER_SEC))) {
-    LOGE(@"Failed to add rule(s) to database: timeout sending rules to daemon");
+    SLOGE(@"Failed to add rule(s) to database: timeout sending rules to daemon");
     return NO;
   }
 
   if (error) {
-    LOGE(@"Failed to add rule(s) to database: %@", error.localizedDescription);
-    LOGD(@"Failure reason: %@", error.localizedFailureReason);
+    SLOGE(@"Failed to add rule(s) to database: %@", error.localizedDescription);
+    SLOGD(@"Failure reason: %@", error.localizedFailureReason);
     return NO;
   }
 
@@ -64,14 +66,11 @@
                                                         }];
   dispatch_semaphore_wait(sema, dispatch_time(DISPATCH_TIME_NOW, 5 * NSEC_PER_SEC));
 
-  LOGI(@"Processed %lu rules", newRules.count);
+  SLOGI(@"Processed %lu rules", newRules.count);
 
   // Send out push notifications about any newly allowed binaries
   // that had been previously blocked by santad.
-  [self.syncState.allowlistNotificationQueue addOperationWithBlock:^{
-    [self announceUnblockingRules:newRules];
-  }];
-
+  [self announceUnblockingRules:newRules];
   return YES;
 }
 
@@ -99,7 +98,7 @@
         count++;
       }
     }
-    LOGI(@"Received %u rules", count);
+    SLOGI(@"Received %u rules", count);
     cursor = response[kCursor];
   } while (cursor);
   return newRules;
@@ -108,28 +107,25 @@
 // Send out push notifications for allowed bundles/binaries whose rule download was preceded by
 // an associated announcing FCM message.
 - (void)announceUnblockingRules:(NSArray<SNTRule *> *)newRules {
-  if (!self.syncState.targetedRuleSync) return;
-
   NSMutableArray *processed = [NSMutableArray array];
+  SNTPushNotificationsTracker *tracker = [SNTPushNotificationsTracker tracker];
+  [[tracker all]
+    enumerateKeysAndObjectsUsingBlock:^(NSString *key, NSDictionary *notifier, BOOL *stop) {
+      // Each notifier object is a dictionary with name and count keys. If the count has been
+      // decremented to zero, then this means that we have downloaded all of the rules associated
+      // with this SHA256 hash (which might be a bundle hash or a binary hash), in which case we are
+      // OK to show a notification that the named bundle/binary can be run.
+      NSNumber *remaining = notifier[kFileBundleBinaryCount];
+      if (remaining && [remaining intValue] == 0) {
+        [processed addObject:key];
+        NSString *message = [NSString stringWithFormat:@"%@ can now be run", notifier[kFileName]];
+        [[self.daemonConn remoteObjectProxy] postRuleSyncNotificationWithCustomMessage:message
+                                                                                 reply:^{
+                                                                                 }];
+      }
+    }];
 
-  for (NSString *key in self.syncState.allowlistNotifications) {
-    // Each notifier object is a dictionary with name and count keys. If the count has been
-    // decremented to zero, then this means that we have downloaded all of the rules associated with
-    // this SHA256 hash (which might be a bundle hash or a binary hash), in which case we are OK to
-    // show a notification that the named bundle/binary can be run.
-    NSDictionary *notifier = self.syncState.allowlistNotifications[key];
-    NSNumber *remaining = notifier[kFileBundleBinaryCount];
-    if (remaining && [remaining intValue] == 0) {
-      [processed addObject:key];
-      NSString *message = [NSString stringWithFormat:@"%@ can now be run", notifier[kFileName]];
-      [[self.daemonConn remoteObjectProxy] postRuleSyncNotificationWithCustomMessage:message
-                                                                               reply:^{
-                                                                               }];
-    }
-  }
-
-  // Remove all entries from allowlistNotifications dictionary that had zero count.
-  [self.syncState.allowlistNotifications removeObjectsForKeys:processed];
+  [tracker removeNotificationsForHashes:processed];
 }
 
 // Converts rule information downloaded from the server into a SNTRule.  Because any information
@@ -188,30 +184,11 @@
       primaryHash = newRule.identifier;
     }
 
-    // As we read in rules, we update the "remaining count" information stored in
-    // allowlistNotifications. This count represents the number of rules associated with the primary
-    // hash that still need to be downloaded and added.
-    [self.syncState.allowlistNotificationQueue addOperationWithBlock:^{
-      NSMutableDictionary *notifier = self.syncState.allowlistNotifications[primaryHash];
-      if (notifier) {
-        NSNumber *ruleCount = dict[kFileBundleBinaryCount];
-        NSNumber *remaining = notifier[kFileBundleBinaryCount];
-        if (remaining) {  // bundle rule with existing count
-          // If the primary hash already has an associated count field, just decrement it.
-          notifier[kFileBundleBinaryCount] = @([remaining intValue] - 1);
-        } else if (ruleCount) {  // bundle rule seen for first time
-          // Downloaded rules including count information are associated with bundles.
-          // The first time we see a rule for a given bundle hash, add a count field with an
-          // initial value equal to the number of associated rules, then decrement this value by 1
-          // to account for the rule that we've just downloaded.
-          notifier[kFileBundleBinaryCount] = @([ruleCount intValue] - 1);
-        } else {  // non-bundle binary rule
-          // Downloaded rule had no count information, meaning it is a singleton non-bundle rule.
-          // Therefore there are no more rules associated with this hash to download.
-          notifier[kFileBundleBinaryCount] = @0;
-        }
-      }
-    }];
+    // As we read in rules, we update the "remaining count" information. This count represents the
+    // number of rules associated with the primary hash that still need to be downloaded and added.
+    [[SNTPushNotificationsTracker tracker]
+      decrementPendingRulesForHash:primaryHash
+                    totalRuleCount:dict[kFileBundleBinaryCount]];
   }
 
   return newRule;

@@ -20,6 +20,7 @@
 #import "Source/common/SNTXPCControlInterface.h"
 #import "Source/santasyncservice/NSData+Zlib.h"
 #import "Source/santasyncservice/SNTSyncConstants.h"
+#import "Source/santasyncservice/SNTSyncLogging.h"
 #import "Source/santasyncservice/SNTSyncState.h"
 
 @interface SNTSyncStage ()
@@ -59,7 +60,7 @@
     NSError *error;
     requestBody = [NSJSONSerialization dataWithJSONObject:dictionary options:0 error:&error];
     if (error) {
-      LOGD(@"Failed to encode JSON request: %@", error);
+      SLOGD(@"Failed to encode JSON request: %@", error);
       return nil;
     }
   }
@@ -93,7 +94,7 @@
       nanosleep(&ts, NULL);
     }
 
-    LOGD(@"Performing request, attempt %d", attempt);
+    SLOGD(@"Performing request, attempt %d", attempt);
     data = [self performRequest:request timeout:timeout response:&response error:&error];
     if (response.statusCode == 200) break;
 
@@ -130,7 +131,7 @@
   NSDictionary *dict = [NSJSONSerialization JSONObjectWithData:[self stripXssi:data]
                                                        options:0
                                                          error:&error];
-  if (error) LOGD(@"Failed to decode JSON response: %@", error);
+  if (error) SLOGD(@"Failed to decode JSON response: %@", error);
 
   return dict ?: @{};
 }
@@ -202,10 +203,10 @@
                                                   reply:^{
                                                   }];
       self.syncState.xsrfToken = headers[kXSRFToken];
-      LOGD(@"Retrieved new XSRF token");
+      SLOGD(@"Retrieved new XSRF token");
       success = YES;
     } else {
-      LOGD(@"Failed to retrieve XSRF token");
+      SLOGD(@"Failed to retrieve XSRF token");
     }
   };
   return success;

@@ -239,9 +239,7 @@
 - (void)testPreflightCleanSync {
   SNTSyncPreflight *sut = [[SNTSyncPreflight alloc] initWithState:self.syncState];
 
-  id processInfoMock = OCMClassMock([NSProcessInfo class]);
-  OCMStub([processInfoMock processInfo]).andReturn(processInfoMock);
-  [OCMStub([processInfoMock arguments]) andReturn:@[ @"xctest", @"--clean" ]];
+  OCMStub([self.daemonConnRop syncCleanRequired:([OCMArg invokeBlockWithArgs:@YES, nil])]);
 
   NSData *respData = [self dataFromDict:@{kCleanSync : @YES}];
   [self stubRequestBody:respData

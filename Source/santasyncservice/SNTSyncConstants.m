@@ -127,5 +127,5 @@ NSString *const kLogSync = @"log_sync";
 
 const NSUInteger kDefaultEventBatchSize = 50;
 const NSUInteger kDefaultFullSyncInterval = 600;
-const NSUInteger kDefaultFCMFullSyncInterval = 14400;
-const NSUInteger kDefaultFCMGlobalRuleSyncDeadline = 600;
+const NSUInteger kDefaultPushNotificationsFullSyncInterval = 14400;
+const NSUInteger kDefaultPushNotificationsGlobalRuleSyncDeadline = 600;

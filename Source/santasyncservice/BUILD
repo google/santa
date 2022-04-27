@@ -23,10 +23,16 @@ objc_library(
     srcs = [
         "NSData+Zlib.h",
         "NSData+Zlib.m",
+        "SNTPushNotifications.h",
+        "SNTPushNotifications.m",
+        "SNTPushNotificationsTracker.h",
+        "SNTPushNotificationsTracker.m",
         "SNTSyncConstants.h",
         "SNTSyncConstants.m",
         "SNTSyncEventUpload.h",
         "SNTSyncEventUpload.m",
+        "SNTSyncLogging.h",
+        "SNTSyncLogging.m",
         "SNTSyncManager.m",
         "SNTSyncPostflight.h",
         "SNTSyncPostflight.m",
@@ -43,10 +49,11 @@ objc_library(
     sdk_dylibs = ["libz"],
     deps = [
         ":FCM_lib",
+        ":broadcaster_lib",
         "//Source/common:SNTFileInfo",
         "//Source/common:SNTLogging",
         "//Source/common:SNTXPCControlInterface",
-        "//Source/common:SNTXPCSyncdInterface",
+        "//Source/common:SNTXPCSyncServiceInterface",
         "@MOLAuthenticatingURLSession",
         "@MOLXPCConnection",
     ],
@@ -60,10 +67,16 @@ santa_unit_test(
     srcs = [
         "NSData+Zlib.h",
         "NSData+Zlib.m",
+        "SNTPushNotifications.h",
+        "SNTPushNotifications.m",
+        "SNTPushNotificationsTracker.h",
+        "SNTPushNotificationsTracker.m",
         "SNTSyncConstants.h",
         "SNTSyncConstants.m",
         "SNTSyncEventUpload.h",
         "SNTSyncEventUpload.m",
+        "SNTSyncLogging.h",
+        "SNTSyncLogging.m",
         "SNTSyncPostflight.h",
         "SNTSyncPostflight.m",
         "SNTSyncPreflight.h",
@@ -83,6 +96,7 @@ santa_unit_test(
     sdk_dylibs = ["libz"],
     deps = [
         ":FCM_lib",
+        ":broadcaster_lib",
         "//Source/common:SNTCommonEnums",
         "//Source/common:SNTConfigurator",
         "//Source/common:SNTDropRootPrivs",
@@ -91,10 +105,19 @@ santa_unit_test(
         "//Source/common:SNTRule",
         "//Source/common:SNTStoredEvent",
         "//Source/common:SNTXPCControlInterface",
-        "//Source/common:SNTXPCSyncdInterface",
         "@MOLAuthenticatingURLSession",
         "@MOLXPCConnection",
         "@OCMock",
+    ],
+)
+
+objc_library(
+    name = "broadcaster_lib",
+    srcs = ["SNTSyncBroadcaster.m"],
+    hdrs = ["SNTSyncBroadcaster.h"],
+    deps = [
+        "//Source/common:SNTXPCSyncServiceInterface",
+        "@MOLXPCConnection",
     ],
 )
 
@@ -106,7 +129,10 @@ objc_library(
         "main.m",
     ],
     deps = [
+        ":sync_lib",
+        "//Source/common:SNTDropRootPrivs",
         "//Source/common:SNTLogging",
+        "//Source/common:SNTXPCControlInterface",
         "//Source/common:SNTXPCSyncServiceInterface",
         "@MOLCodesignChecker",
         "@MOLXPCConnection",
@@ -116,8 +142,17 @@ objc_library(
 macos_command_line_application(
     name = "santasyncservice",
     bundle_id = "com.google.santa.syncservice",
+    codesignopts = [
+        "--timestamp",
+        "--force",
+        "--options library,kill,runtime",
+    ],
     infoplists = ["Info.plist"],
     minimum_os_version = "10.15",
+    provisioning_profile = select({
+        "//:ci_build": None,
+        "//conditions:default": "Santa_Dev.provisionprofile",
+    }),
     version = "//:version",
     visibility = ["//:santa_package_group"],
     deps = [":santass_lib"],

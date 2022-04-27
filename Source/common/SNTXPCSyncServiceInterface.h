@@ -20,18 +20,37 @@
 
 @class SNTStoredEvent;
 
-///  A block that reports the number of rules processed.
-///  TODO(bur): Add more details about the sync.
-typedef void (^SNTFullSyncReplyBlock)(NSNumber *rulesProcessed);
-
+///
 ///  Protocol implemented by syncservice and utilized by daemon and ctl for communication with a
 ///  sync server.
+///
 @protocol SNTSyncServiceXPC
 - (void)postEventsToSyncServer:(NSArray<SNTStoredEvent *> *)events fromBundle:(BOOL)fromBundle;
 - (void)postBundleEventToSyncServer:(SNTStoredEvent *)event
                               reply:(void (^)(SNTBundleEventAction))reply;
 - (void)isFCMListening:(void (^)(BOOL))reply;
-- (void)performFullSyncWithReply:(SNTFullSyncReplyBlock)reply;
+
+// The syncservice regularly syncs with a configured sync server. Use this method to sync out of
+// band. The syncservice ensures syncs do not run concurrently.
+//
+// Pass an NSXPCListenerEndpoint whose associated NSXPCListener exports an object that implements
+// the SNTSyncServiceLogReceiverXPC protocol. The caller will receive sync logs over this listener.
+// This is required.
+//
+// Syncs are enqueued in order and executed serially. kMaxEnqueuedSyncs limits the number of syncs
+// in the queue. If the queue is full calls to this method will be dropped and
+// SNTSyncStatusTypeTooManySyncsInProgress will be passed into the reply block.
+//
+// Pass true to isClean to perform a clean sync, defaults to false.
+//
+- (void)syncWithLogListener:(NSXPCListenerEndpoint *)logListener
+                    isClean:(BOOL)cleanSync
+                      reply:(void (^)(SNTSyncStatusType))reply;
+
+// Spindown the syncservice. The syncservice will not automatically start back up.
+// A new connection to the syncservice will bring it back up. This allows us to avoid running
+// the syncservice needlessly when there is no configured sync server.
+- (void)spindown;
 @end
 
 @interface SNTXPCSyncServiceInterface : NSObject
@@ -53,4 +72,12 @@ typedef void (^SNTFullSyncReplyBlock)(NSNumber *rulesProcessed);
 ///
 + (MOLXPCConnection *)configuredConnection;
 
+@end
+
+///
+///  Protocol implemented by santactl sync and used to receive log messages from
+///  the syncservice during a user initiated sync.
+///
+@protocol SNTSyncServiceLogReceiverXPC
+- (void)didReceiveLog:(NSString *)log;
 @end

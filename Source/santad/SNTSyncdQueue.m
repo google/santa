@@ -18,7 +18,7 @@
 
 #import "Source/common/SNTLogging.h"
 #import "Source/common/SNTStoredEvent.h"
-#import "Source/common/SNTXPCSyncdInterface.h"
+#import "Source/common/SNTXPCSyncServiceInterface.h"
 
 @interface SNTSyncdQueue ()
 @property NSCache<NSString *, NSDate *> *uploadBackoff;
@@ -45,15 +45,14 @@
   NSString *hash = isFromBundle ? first.fileBundleHash : first.fileSHA256;
   if (![self backoffForPrimaryHash:hash]) return;
   [self dispatchBlockOnSyncdQueue:^{
-    [self.syncdConnection.remoteObjectProxy postEventsToSyncServer:events
-                                                      isFromBundle:isFromBundle];
+    [self.syncConnection.remoteObjectProxy postEventsToSyncServer:events fromBundle:isFromBundle];
   }];
 }
 
 - (void)addBundleEvent:(SNTStoredEvent *)event reply:(void (^)(SNTBundleEventAction))reply {
   if (![self backoffForPrimaryHash:event.fileBundleHash]) return;
   [self dispatchBlockOnSyncdQueue:^{
-    [self.syncdConnection.remoteObjectProxy
+    [self.syncConnection.remoteObjectProxy
       postBundleEventToSyncServer:event
                             reply:^(SNTBundleEventAction action) {
                               // Remove the backoff entry for the initial block event. The same
