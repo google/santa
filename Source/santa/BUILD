@@ -54,6 +54,7 @@ macos_application(
         "//Source/santactl": "MacOS",
         "//Source/santabundleservice": "MacOS",
         "//Source/santametricservice": "MacOS",
+        "//Source/santasyncservice": "MacOS",
         "//Source/santad:com.google.santa.daemon": "Library/SystemExtensions",
     },
     app_icons = glob(["Resources/Images.xcassets/**"]),

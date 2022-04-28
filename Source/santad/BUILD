@@ -184,7 +184,7 @@ objc_library(
         "//Source/common:SNTXPCControlInterface",
         "//Source/common:SNTXPCMetricServiceInterface",
         "//Source/common:SNTXPCNotifierInterface",
-        "//Source/common:SNTXPCSyncdInterface",
+        "//Source/common:SNTXPCSyncServiceInterface",
         "//Source/santad:SNTApplicationCoreMetrics",
         "@FMDB",
         "@MOLXPCConnection",
@@ -280,7 +280,6 @@ santa_unit_test(
         "//Source/common:SNTPrefixTree",
         "//Source/common:SNTRule",
         "//Source/common:SNTXPCNotifierInterface",
-        "//Source/common:SNTXPCSyncdInterface",
         "//Source/common:SantaCache",
         "@MOLCodesignChecker",
         "@MOLXPCConnection",
@@ -325,6 +324,9 @@ santa_unit_test(
         "@FMDB",
         "@MOLCertificate",
         "@MOLCodesignChecker",
+    ],
+    sdk_dylibs = [
+        "EndpointSecurity",
     ],
 )
 

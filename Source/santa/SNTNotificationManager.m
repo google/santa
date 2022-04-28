@@ -156,6 +156,7 @@ static NSString *const silencedNotificationsKey = @"SilencedNotifications";
   // Otherwise abandon bundle hashing and display the blockable event.
   if (dispatch_semaphore_wait(sema, dispatch_time(DISPATCH_TIME_NOW, 5 * NSEC_PER_SEC))) {
     [withController updateBlockNotification:event withBundleHash:nil];
+    LOGE(@"Timeout connecting to bundle service");
     return;
   }
 

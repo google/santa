@@ -49,6 +49,9 @@ void logMessage(LogLevel level, FILE *destination, NSString *format, ...)
 #define LOGW(logFormat, ...) logMessage(LOG_LEVEL_WARN, stderr, logFormat, ##__VA_ARGS__)
 #define LOGE(logFormat, ...) logMessage(LOG_LEVEL_ERROR, stderr, logFormat, ##__VA_ARGS__)
 
+/// Get the logging level for this process.
+LogLevel EffectiveLogLevel();
+
 #ifdef __cplusplus
 }  // extern C
 #endif

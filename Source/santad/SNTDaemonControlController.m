@@ -26,7 +26,7 @@
 #import "Source/common/SNTStrengthify.h"
 #import "Source/common/SNTXPCBundleServiceInterface.h"
 #import "Source/common/SNTXPCNotifierInterface.h"
-#import "Source/common/SNTXPCSyncdInterface.h"
+#import "Source/common/SNTXPCSyncServiceInterface.h"
 #import "Source/santad/DataLayer/SNTEventTable.h"
 #import "Source/santad/DataLayer/SNTRuleTable.h"
 #import "Source/santad/EventProviders/SNTEventProvider.h"
@@ -272,26 +272,8 @@ double watchdogRAMPeak = 0;
 
 #pragma mark syncd Ops
 
-- (void)setSyncdListener:(NSXPCListenerEndpoint *)listener {
-  // Only allow one active syncd connection
-  if (self.syncdQueue.syncdConnection) return;
-  MOLXPCConnection *c = [[MOLXPCConnection alloc] initClientWithListener:listener];
-  c.remoteInterface = [SNTXPCSyncdInterface syncdInterface];
-  c.invalidationHandler = ^{
-    [self.syncdQueue stopSyncingEvents];
-    [self.syncdQueue.syncdConnection invalidate];
-    self.syncdQueue.syncdConnection = nil;
-    if (self.syncdQueue.invalidationHandler) self.syncdQueue.invalidationHandler();
-  };
-  c.acceptedHandler = ^{
-    [self.syncdQueue startSyncingEvents];
-  };
-  [c resume];
-  self.syncdQueue.syncdConnection = c;
-}
-
 - (void)pushNotifications:(void (^)(BOOL))reply {
-  [self.syncdQueue.syncdConnection.remoteObjectProxy isFCMListening:^(BOOL response) {
+  [self.syncdQueue.syncConnection.remoteObjectProxy isFCMListening:^(BOOL response) {
     reply(response);
   }];
 }

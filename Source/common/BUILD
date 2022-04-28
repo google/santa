@@ -227,16 +227,6 @@ objc_library(
 )
 
 objc_library(
-    name = "SNTXPCSyncdInterface",
-    srcs = ["SNTXPCSyncdInterface.m"],
-    hdrs = ["SNTXPCSyncdInterface.h"],
-    deps = [
-        ":SNTCommonEnums",
-        ":SNTStoredEvent",
-    ],
-)
-
-objc_library(
     name = "SNTXPCSyncServiceInterface",
     srcs = ["SNTXPCSyncServiceInterface.m"],
     hdrs = ["SNTXPCSyncServiceInterface.h"],
