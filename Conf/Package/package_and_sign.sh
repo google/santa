@@ -114,11 +114,11 @@ echo "verifying signatures"
   "${RELEASE_ROOT}/binaries/"* || die "bad signature"
 
 echo "creating fresh release tarball"
-/bin/mkdir -p "${RELEASE_ROOT}/${RELEASE_NAME}"
-/bin/cp -r "${RELEASE_ROOT}/binaries" "${RELEASE_ROOT}/${RELEASE_NAME}"
-/bin/cp -r "${RELEASE_ROOT}/conf" "${RELEASE_ROOT}/${RELEASE_NAME}"
-/bin/cp -r "${RELEASE_ROOT}/dsym" "${RELEASE_ROOT}/${RELEASE_NAME}"
-/usr/bin/tar -C "${RELEASE_ROOT}" -czvf "${TAR_PATH}" "${RELEASE_NAME}" || die "failed to create release tarball"
+/bin/mkdir -p "${SCRATCH}/tar_root/${RELEASE_NAME}"
+/bin/cp -r "${RELEASE_ROOT}/binaries" "${SCRATCH}/tar_root/${RELEASE_NAME}"
+/bin/cp -r "${RELEASE_ROOT}/conf" "${SCRATCH}/tar_root/${RELEASE_NAME}"
+/bin/cp -r "${RELEASE_ROOT}/dsym" "${SCRATCH}/tar_root/${RELEASE_NAME}"
+/usr/bin/tar -C "${SCRATCH}/tar_root" -czvf "${TAR_PATH}" "${RELEASE_NAME}" || die "failed to create release tarball"
 
 echo "creating app pkg"
 /bin/mkdir -p "${APP_PKG_ROOT}/Applications" \
