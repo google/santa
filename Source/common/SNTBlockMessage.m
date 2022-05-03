@@ -123,6 +123,11 @@
       [formatStr stringByReplacingOccurrencesOfString:@"%file_sha%"
                                            withString:event.fileBundleHash ?: event.fileSHA256];
   }
+  if (event.fileSHA256) {
+    formatStr =
+      [formatStr stringByReplacingOccurrencesOfString:@"%bundle_or_file_sha%"
+                                           withString:event.fileBundleHash ?: event.fileSHA256];
+  }
   if (event.executingUser) {
     formatStr = [formatStr stringByReplacingOccurrencesOfString:@"%username%"
                                                      withString:event.executingUser];
