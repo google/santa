@@ -66,7 +66,7 @@ also known as mobileconfig files, which are in an Apple-specific XML format.
 | MetricExtraLabels                 | Dictionary | A map of key value pairs to add to all metric root labels. (e.g. a=b,c=d) defaults to @{}). If a previously set key (e.g. host_name is set to "" then the key is remove from the metric root labels. Alternatively if a value is set for an existing key then the new value will override the old. |
 
 
-*overridable by the sync server: run `santactl status` to check the current
+\*overridable by the sync server: run `santactl status` to check the current
 running config
 
 ##### EventDetailURL
@@ -77,14 +77,15 @@ take them to a web page with more information about that event.
 This property contains a kind of format string to be turned into the URL to send
 them to. The following sequences will be replaced in the final URL:
 
-| Key          | Description                              |
-| ------------ | ---------------------------------------- |
-| %file_sha%   | SHA-256 of the file that was blocked     |
-| %machine_id% | ID of the machine                        |
-| %username%   | The executing user                       |
-| %serial%     | System's serial number                   |
-| %uuid%       | System's UUID                            |
-| %hostname%   | System's full hostname                   |
+| Key                     | Description                                                                    |
+| ----------------------- | ------------------------------------------------------------------------------ |
+| %file_sha%              | SHA-256 of the file that was blocked                                           |
+| %bundle\_or\_file\_sha% | SHA-256 of the file that was blocked or the bundle containing it, if available |
+| %machine\_id%           | ID of the machine                                                              |
+| %username%              | The executing user                                                             |
+| %serial%                | System's serial number                                                         |
+| %uuid%                  | System's UUID                                                                  |
+| %hostname%              | System's full hostname                                                         |
 
 For example: `https://sync-server-hostname/%machine_id%/%file_sha%`
 
