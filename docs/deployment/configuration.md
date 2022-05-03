@@ -39,6 +39,7 @@ also known as mobileconfig files, which are in an Apple-specific XML format.
 | ModeNotificationLockdown          | String     | The notification text to display when the client goes into Lockdown mode. Defaults to "Switching into Lockdown mode". |
 | SyncBaseURL                       | String     | The base URL of the sync server.         |
 | SyncProxyConfiguration            | Dictionary | The proxy configuration to use when syncing. See the [Apple Documentation](https://developer.apple.com/documentation/cfnetwork/global_proxy_settings_constants) for details on the keys that can be used in this dictionary. |
+| SyncEnableCleanSyncEventUpload    | Bool       | If true, events will be uploaded to the sync server even if a clean sync is requested. Defaults to false. |
 | ClientAuthCertificateFile         | String     | If set, this contains the location of a PKCS#12 certificate to be used for sync authentication. |
 | ClientAuthCertificatePassword     | String     | Contains the password for the PKCS#12 certificate. |
 | ClientAuthCertificateCN           | String     | If set, this is the Common Name of a certificate in the System keychain to be used for sync authentication. The corresponding private key must also be in the keychain. |
@@ -65,7 +66,7 @@ also known as mobileconfig files, which are in an Apple-specific XML format.
 | MetricExtraLabels                 | Dictionary | A map of key value pairs to add to all metric root labels. (e.g. a=b,c=d) defaults to @{}). If a previously set key (e.g. host_name is set to "" then the key is remove from the metric root labels. Alternatively if a value is set for an existing key then the new value will override the old. |
 
 
-*overridable by the sync server: run `santactl status` to check the current
+\*overridable by the sync server: run `santactl status` to check the current
 running config
 
 ##### EventDetailURL
@@ -76,14 +77,15 @@ take them to a web page with more information about that event.
 This property contains a kind of format string to be turned into the URL to send
 them to. The following sequences will be replaced in the final URL:
 
-| Key          | Description                              |
-| ------------ | ---------------------------------------- |
-| %file_sha%   | SHA-256 of the file that was blocked     |
-| %machine_id% | ID of the machine                        |
-| %username%   | The executing user                       |
-| %serial%     | System's serial number                   |
-| %uuid%       | System's UUID                            |
-| %hostname%   | System's full hostname                   |
+| Key                     | Description                                                                    |
+| ----------------------- | ------------------------------------------------------------------------------ |
+| %file_sha%              | SHA-256 of the file that was blocked                                           |
+| %bundle\_or\_file\_sha% | SHA-256 of the file that was blocked or the bundle containing it, if available |
+| %machine\_id%           | ID of the machine                                                              |
+| %username%              | The executing user                                                             |
+| %serial%                | System's serial number                                                         |
+| %uuid%                  | System's UUID                                                                  |
+| %hostname%              | System's full hostname                                                         |
 
 For example: `https://sync-server-hostname/%machine_id%/%file_sha%`
 

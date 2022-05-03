@@ -412,6 +412,11 @@
 @property(readonly, nonatomic) NSString *syncClientAuthCertificateIssuer;
 
 ///
+///  If true, syncs will upload events when a clean sync is requested. Defaults to false.
+///
+@property(readonly, nonatomic) BOOL enableCleanSyncEventUpload;
+
+///
 ///  If true, forks and exits will be logged. Defaults to false.
 ///
 @property(readonly, nonatomic) BOOL enableForkAndExitLogging;
