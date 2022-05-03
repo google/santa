@@ -46,6 +46,7 @@ static NSString *const kMobileConfigDomain = @"com.google.santa";
 /// The keys managed by a mobileconfig.
 static NSString *const kSyncBaseURLKey = @"SyncBaseURL";
 static NSString *const kSyncProxyConfigKey = @"SyncProxyConfiguration";
+static NSString *const kSyncEnableCleanSyncEventUpload = @"SyncEnableCleanSyncEventUpload";
 static NSString *const kClientAuthCertificateFileKey = @"ClientAuthCertificateFile";
 static NSString *const kClientAuthCertificatePasswordKey = @"ClientAuthCertificatePassword";
 static NSString *const kClientAuthCertificateCNKey = @"ClientAuthCertificateCN";
@@ -732,6 +733,11 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
 - (BOOL)enableSysxCache {
   NSNumber *number = self.configState[kEnableSysxCache];
   return number ? [number boolValue] : YES;
+}
+
+- (BOOL)enableCleanSyncEventUpload {
+  NSNumber *number = self.configState[kSyncEnableCleanSyncEventUpload];
+  return number ? [number boolValue] : NO;
 }
 
 - (BOOL)enableForkAndExitLogging {
