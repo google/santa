@@ -121,7 +121,7 @@
   if (event.fileSHA256) {
     formatStr =
       [formatStr stringByReplacingOccurrencesOfString:@"%file_sha%"
-                                           withString:event.fileBundleHash ?: event.fileSHA256];
+                                           withString:event.fileSHA256];
   }
   if (event.fileSHA256) {
     formatStr =
