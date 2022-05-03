@@ -17,6 +17,7 @@
 #import <MOLCertificate/MOLCertificate.h>
 #import <MOLXPCConnection/MOLXPCConnection.h>
 
+#import "Source/common/SNTConfigurator.h"
 #import "Source/common/SNTFileInfo.h"
 #import "Source/common/SNTLogging.h"
 #import "Source/common/SNTStoredEvent.h"
@@ -54,7 +55,7 @@
     if (uploadEvents.count >= self.syncState.eventBatchSize) break;
   }
 
-  if (!self.syncState.cleanSync) {
+  if (!self.syncState.cleanSync || [[SNTConfigurator configurator] enableCleanSyncEventUpload]) {
     NSDictionary *r = [self performRequest:[self requestWithDictionary:@{kEvents : uploadEvents}]];
     if (!r) return NO;
 
