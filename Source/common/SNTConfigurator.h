@@ -417,6 +417,12 @@
 @property(readonly, nonatomic) BOOL enableCleanSyncEventUpload;
 
 ///
+///  If true, events will be uploaded for all executions, even those that are allowed.
+///  Use with caution, this generates a lot of events. Defaults to false.
+///
+@property(readonly, nonatomic) BOOL enableAllEventUpload;
+
+///
 ///  If true, forks and exits will be logged. Defaults to false.
 ///
 @property(readonly, nonatomic) BOOL enableForkAndExitLogging;

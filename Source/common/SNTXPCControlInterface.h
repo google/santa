@@ -51,6 +51,7 @@
 - (void)setRemountUSBMode:(NSArray *)remountUSBMode reply:(void (^)(void))reply;
 - (void)setEnableBundles:(BOOL)bundlesEnabled reply:(void (^)(void))reply;
 - (void)setEnableTransitiveRules:(BOOL)enabled reply:(void (^)(void))reply;
+- (void)setEnableAllEventUpload:(BOOL)enabled reply:(void (^)(void))reply;
 
 ///
 ///  Syncd Ops

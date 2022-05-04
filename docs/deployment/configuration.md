@@ -64,6 +64,7 @@ also known as mobileconfig files, which are in an Apple-specific XML format.
 | MetricExportInterval              | Integer    | Number of seconds to wait between exporting metrics. Defaults to 30.  |
 | MetricExportTimeout               | Integer    | Number of seconds to wait before a timeout occurs when exporting metrics. Defaults to 30.  |
 | MetricExtraLabels                 | Dictionary | A map of key value pairs to add to all metric root labels. (e.g. a=b,c=d) defaults to @{}). If a previously set key (e.g. host_name is set to "" then the key is remove from the metric root labels. Alternatively if a value is set for an existing key then the new value will override the old. |
+| EnableAllEventUpload              | Bool       | If YES, the client will upload all execution events to the sync server, including those that were explicitly allowed. |
 
 
 \*overridable by the sync server: run `santactl status` to check the current
@@ -210,6 +211,7 @@ ways to install configuration profiles:
 | fcm\_global\_rule\_sync\_deadline\* | Integer    | The max time to wait before performing a rule sync when a global rule sync FCM message is received. This allows syncing to be staggered for global events to avoid spikes in server load. Defaults to 600 secs (10 min). |
 | enable\_bundles\*                   | Bool       | If set to `True` the bundle scanning feature is enabled. Defaults to `False`. |
 | enable\_transitive\_rules           | Bool       | If set to `True` the transitive rule feature is enabled. Defaults to `False`. |
+| enable\_all\_event\_upload          | Bool       | If set to `True` the client will upload events for all executions, including those that are explicitly allowed. |
 | block\_usb\_mass\_storage           | Bool       | If set to 'True' blocking USB Mass storage feature is enabled. Defaults to `False`. | 
 | remount\_usb\_mode                  | Array      | Array of strings for arguments to pass to mount -o (any of "rdonly", "noexec", "nosuid", "nobrowse", "noowners", "nodev", "async", "-j"). when forcibly remounting devices. No default. |
 
