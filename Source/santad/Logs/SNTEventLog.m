@@ -447,7 +447,10 @@
         logger = [[SNTProtobufEventLog alloc] init];
         break;
       }
-      default: logger = nil;
+      case SNTEventLogTypeNull: {
+        logger = nil;
+        break;
+      }
     }
   });
   return logger;
