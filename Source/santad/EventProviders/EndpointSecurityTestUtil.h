@@ -68,6 +68,20 @@ API_UNAVAILABLE(ios, tvos, watchos)
 es_new_client_result_t es_new_client(es_client_t *_Nullable *_Nonnull client,
                                      es_handler_block_t _Nonnull handler);
 
+API_AVAILABLE(macos(12.0))
+API_UNAVAILABLE(ios, tvos, watchos)
+es_return_t es_muted_paths_events(es_client_t * _Nonnull client, 
+                      es_muted_paths_t * _Nonnull * _Nullable muted_paths);
+
+API_AVAILABLE(macos(12.0))
+API_UNAVAILABLE(ios, tvos, watchos)
+es_return_t es_muted_paths_events(es_client_t * _Nonnull client, 
+                      es_muted_paths_t * _Nonnull * _Nullable muted_paths);
+
+API_AVAILABLE(macos(12.0)) 
+API_UNAVAILABLE(ios, tvos, watchos)
+void es_release_muted_paths(es_muted_paths_t * _Nonnull muted_paths);
+
 API_AVAILABLE(macos(10.15))
 API_UNAVAILABLE(ios, tvos, watchos)
 es_respond_result_t es_respond_auth_result(es_client_t *_Nonnull client,

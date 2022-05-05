@@ -205,6 +205,24 @@ CF_EXTERN_C_END
   [self.clients addObject:mockClient];
 }
 
+- (BOOL)removeClient:(es_client_t *_Nonnull) client {
+  MockESClient *clientToRemove = nil;
+  for (MockESClient *c in self.clients) {
+      if (client == (__bridge es_client_t *)c) {
+        clientToRemove = c;
+        break;
+      }
+    }
+
+  if (!clientToRemove) {
+    NSLog(@"Attempted to remove unknown mock es client.");
+    return NO;
+  }
+
+  [self.clients removeObject: clientToRemove];
+  return YES;
+}
+
 - (void)triggerHandler:(es_message_t *_Nonnull)msg {
   for (MockESClient *client in self.clients) {
     if (client.subscriptions[msg->event_type]) {
@@ -281,9 +299,30 @@ es_new_client_result_t es_new_client(es_client_t *_Nullable *_Nonnull client,
   return ES_NEW_CLIENT_RESULT_SUCCESS;
 };
 
+API_AVAILABLE(macos(12.0))
+API_UNAVAILABLE(ios, tvos, watchos)
+es_return_t es_muted_paths_events(es_client_t * _Nonnull client, 
+                      es_muted_paths_t * _Nonnull * _Nullable muted_paths) {
+  
+  es_muted_paths_t *tmp = (es_muted_paths_t *)malloc(sizeof(es_muted_paths_t));
+
+  tmp->count = 0;
+  *muted_paths = (es_muted_paths_t * _Nullable)tmp;
+
+  return ES_RETURN_SUCCESS;
+};
+
+API_AVAILABLE(macos(12.0)) 
+API_UNAVAILABLE(ios, tvos, watchos)
+void es_release_muted_paths(es_muted_paths_t * _Nonnull muted_paths) {
+  free(muted_paths);
+}
+
 API_AVAILABLE(macos(10.15))
 API_UNAVAILABLE(ios, tvos, watchos) es_return_t es_delete_client(es_client_t *_Nullable client) {
-  [[MockEndpointSecurity mockEndpointSecurity] reset];
+  if (![[MockEndpointSecurity mockEndpointSecurity] removeClient: client]) {
+    return ES_RETURN_ERROR;
+  }
   return ES_RETURN_SUCCESS;
 };
 
