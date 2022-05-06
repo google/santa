@@ -191,7 +191,7 @@ static NSString *const kPrinterProxyPostMonterey =
   [self incrementEventCounters:cd.decision];
 
   // Log to database if necessary.
-  if ([[SNTCnfigurator configurator] enableAllEventUpload] ||
+  if ([[SNTCnfigurator configurator].enableAllEventUpload] ||
       (cd.decision != SNTEventStateAllowBinary && cd.decision != SNTEventStateAllowCompiler &&
        cd.decision != SNTEventStateAllowTransitive &&
        cd.decision != SNTEventStateAllowCertificate && cd.decision != SNTEventStateAllowTeamID &&
