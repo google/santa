@@ -21,7 +21,8 @@ es_string_token_t MakeStringToken(const NSString *_Nonnull s);
 
 es_file_t MakeESFile(const char *_Nonnull path);
 es_process_t MakeESProcess(es_file_t *_Nonnull esFile);
-es_message_t MakeESMessage(es_event_type_t eventType, es_process_t *_Nonnull instigator, struct timespec ts);
+es_message_t MakeESMessage(es_event_type_t eventType, es_process_t *_Nonnull instigator,
+                           struct timespec ts);
 CF_EXTERN_C_END
 
 @class ESMessage;
@@ -68,10 +69,16 @@ API_UNAVAILABLE(ios, tvos, watchos)
 es_new_client_result_t es_new_client(es_client_t *_Nullable *_Nonnull client,
                                      es_handler_block_t _Nonnull handler);
 
+#if defined(MAC_OS_VERSION_12_0) && MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_VERSION_12_0
 API_AVAILABLE(macos(12.0))
 API_UNAVAILABLE(ios, tvos, watchos)
-es_return_t es_muted_paths_events(es_client_t * _Nonnull client, 
-                      es_muted_paths_t * _Nonnull * _Nullable muted_paths);
+es_return_t es_muted_paths_events(es_client_t *_Nonnull client,
+                                  es_muted_paths_t *_Nonnull *_Nullable muted_paths);
+
+API_AVAILABLE(macos(12.0))
+API_UNAVAILABLE(ios, tvos, watchos)
+void es_release_muted_paths(es_muted_paths_t *_Nonnull muted_paths);
+#endif
 
 API_AVAILABLE(macos(10.15))
 API_UNAVAILABLE(ios, tvos, watchos)
