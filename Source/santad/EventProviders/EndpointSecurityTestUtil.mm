@@ -45,7 +45,8 @@ es_process_t MakeESProcess(es_file_t *esFile) {
   return esProc;
 }
 
-es_message_t MakeESMessage(es_event_type_t eventType, es_process_t *instigator, struct timespec ts) {
+es_message_t MakeESMessage(es_event_type_t eventType, es_process_t *instigator,
+                           struct timespec ts) {
   es_message_t esMsg = {};
 
   esMsg.time = ts;
@@ -205,6 +206,18 @@ CF_EXTERN_C_END
   [self.clients addObject:mockClient];
 }
 
+- (BOOL)removeClient:(es_client_t *_Nonnull)client {
+  MockESClient *clientToRemove = [self findClient:client];
+
+  if (!clientToRemove) {
+    NSLog(@"Attempted to remove unknown mock es client.");
+    return NO;
+  }
+
+  [self.clients removeObject:clientToRemove];
+  return YES;
+}
+
 - (void)triggerHandler:(es_message_t *_Nonnull)msg {
   for (MockESClient *client in self.clients) {
     if (client.subscriptions[msg->event_type]) {
@@ -233,17 +246,24 @@ CF_EXTERN_C_END
   return ES_RESPOND_RESULT_SUCCESS;
 };
 
+- (MockESClient *)findClient:(es_client_t *)client {
+  for (MockESClient *c in self.clients) {
+    // Since we're mocking out a C interface and using this exact pointer as our
+    // client identifier, only check for pointer equality.
+    if (client == (__bridge es_client_t *)c) {
+      return c;
+    }
+  }
+  return nil;
+}
+
 - (void)setSubscriptions:(const es_event_type_t *_Nonnull)events
              event_count:(uint32_t)event_count
                    value:(NSNumber *)value
                   client:(es_client_t *)client {
   @synchronized(self) {
-    MockESClient *toUpdate = nil;
-    for (MockESClient *c in self.clients) {
-      if (client == (__bridge es_client_t *)c) {
-        toUpdate = c;
-      }
-    }
+    MockESClient *toUpdate = [self findClient:client];
+
     if (toUpdate == nil) {
       NSLog(@"setting subscription for unknown client");
       return;
@@ -281,9 +301,31 @@ es_new_client_result_t es_new_client(es_client_t *_Nullable *_Nonnull client,
   return ES_NEW_CLIENT_RESULT_SUCCESS;
 };
 
+#if defined(MAC_OS_VERSION_12_0) && MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_VERSION_12_0
+API_AVAILABLE(macos(12.0))
+API_UNAVAILABLE(ios, tvos, watchos)
+es_return_t es_muted_paths_events(es_client_t *_Nonnull client,
+                                  es_muted_paths_t *_Nonnull *_Nullable muted_paths) {
+  es_muted_paths_t *tmp = (es_muted_paths_t *)malloc(sizeof(es_muted_paths_t));
+
+  tmp->count = 0;
+  *muted_paths = (es_muted_paths_t *_Nullable)tmp;
+
+  return ES_RETURN_SUCCESS;
+};
+
+API_AVAILABLE(macos(12.0))
+API_UNAVAILABLE(ios, tvos, watchos)
+void es_release_muted_paths(es_muted_paths_t *_Nonnull muted_paths) {
+  free(muted_paths);
+}
+#endif
+
 API_AVAILABLE(macos(10.15))
 API_UNAVAILABLE(ios, tvos, watchos) es_return_t es_delete_client(es_client_t *_Nullable client) {
-  [[MockEndpointSecurity mockEndpointSecurity] reset];
+  if (![[MockEndpointSecurity mockEndpointSecurity] removeClient:client]) {
+    return ES_RETURN_ERROR;
+  }
   return ES_RETURN_SUCCESS;
 };
 

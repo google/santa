@@ -3,14 +3,15 @@ load("@rules_proto_grpc//objc:defs.bzl", "objc_proto_library")
 
 package(
     default_visibility = ["//:santa_package_group"],
-    features = ["layering_check"],
+    features = ["-layering_check"],
 )
 
 licenses(["notice"])
 
 proto_library(
-    name = "log_proto",
+    name = "santa_proto",
     srcs = ["santa.proto"],
+    features = ["layering_check"],
     deps = [
         "@com_google_protobuf//:any_proto",
         "@com_google_protobuf//:timestamp_proto",
@@ -18,10 +19,10 @@ proto_library(
 )
 
 objc_proto_library(
-    name = "log_objc_proto",
+    name = "santa_objc_proto",
     copts = ["-fno-objc-arc"],
     non_arc_srcs = ["Santa.pbobjc.m"],
-    protos = [":log_proto"],
+    protos = [":santa_proto"],
 )
 
 cc_library(
@@ -223,16 +224,6 @@ objc_library(
     srcs = ["SNTMetricSet.m"],
     hdrs = ["SNTMetricSet.h"],
     deps = [":SNTCommonEnums"],
-)
-
-objc_library(
-    name = "SNTXPCSyncdInterface",
-    srcs = ["SNTXPCSyncdInterface.m"],
-    hdrs = ["SNTXPCSyncdInterface.h"],
-    deps = [
-        ":SNTCommonEnums",
-        ":SNTStoredEvent",
-    ],
 )
 
 objc_library(

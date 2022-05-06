@@ -17,12 +17,14 @@
 #import <MOLCertificate/MOLCertificate.h>
 #import <MOLXPCConnection/MOLXPCConnection.h>
 
+#import "Source/common/SNTConfigurator.h"
 #import "Source/common/SNTFileInfo.h"
 #import "Source/common/SNTLogging.h"
 #import "Source/common/SNTStoredEvent.h"
 #import "Source/common/SNTXPCControlInterface.h"
 #import "Source/santasyncservice/NSData+Zlib.h"
 #import "Source/santasyncservice/SNTSyncConstants.h"
+#import "Source/santasyncservice/SNTSyncLogging.h"
 #import "Source/santasyncservice/SNTSyncState.h"
 
 @implementation SNTSyncEventUpload
@@ -53,14 +55,14 @@
     if (uploadEvents.count >= self.syncState.eventBatchSize) break;
   }
 
-  if (!self.syncState.cleanSync) {
+  if (!self.syncState.cleanSync || [[SNTConfigurator configurator] enableCleanSyncEventUpload]) {
     NSDictionary *r = [self performRequest:[self requestWithDictionary:@{kEvents : uploadEvents}]];
     if (!r) return NO;
 
     // A list of bundle hashes that require their related binary events to be uploaded.
     self.syncState.bundleBinaryRequests = r[kEventUploadBundleBinaries];
 
-    LOGI(@"Uploaded %lu events", uploadEvents.count);
+    SLOGI(@"Uploaded %lu events", uploadEvents.count);
   }
 
   // Remove event IDs. For Bundle Events the ID is 0 so nothing happens.
@@ -98,12 +100,14 @@
       ADDKEY(newEvent, kDecision, kDecisionAllowCertificate);
       break;
     case SNTEventStateAllowScope: ADDKEY(newEvent, kDecision, kDecisionAllowScope); break;
+    case SNTEventStateAllowTeamID: ADDKEY(newEvent, kDecision, kDecisionAllowTeamID); break;
     case SNTEventStateBlockUnknown: ADDKEY(newEvent, kDecision, kDecisionBlockUnknown); break;
     case SNTEventStateBlockBinary: ADDKEY(newEvent, kDecision, kDecisionBlockBinary); break;
     case SNTEventStateBlockCertificate:
       ADDKEY(newEvent, kDecision, kDecisionBlockCertificate);
       break;
     case SNTEventStateBlockScope: ADDKEY(newEvent, kDecision, kDecisionBlockScope); break;
+    case SNTEventStateBlockTeamID: ADDKEY(newEvent, kDecision, kDecisionBlockTeamID); break;
     case SNTEventStateBundleBinary:
       ADDKEY(newEvent, kDecision, kDecisionBundleBinary);
       [newEvent removeObjectForKey:kExecutionTime];

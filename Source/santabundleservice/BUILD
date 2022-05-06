@@ -23,8 +23,17 @@ objc_library(
 macos_command_line_application(
     name = "santabundleservice",
     bundle_id = "com.google.santa.bundleservice",
+    codesignopts = [
+        "--timestamp",
+        "--force",
+        "--options library,kill,runtime",
+    ],
     infoplists = ["Info.plist"],
     minimum_os_version = "10.15",
+    provisioning_profile = select({
+        "//:ci_build": None,
+        "//conditions:default": "//profiles:santa_dev",
+    }),
     version = "//:version",
     visibility = ["//:santa_package_group"],
     deps = [":santabs_lib"],

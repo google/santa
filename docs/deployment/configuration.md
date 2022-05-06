@@ -24,8 +24,8 @@ also known as mobileconfig files, which are in an Apple-specific XML format.
 | ClientMode\*                      | Integer    | 1 = MONITOR, 2 = LOCKDOWN, defaults to MONITOR |
 | FailClosed                        | Bool       | If true and the ClientMode is LOCKDOWN: execution will be denied when there is an error reading or processing an executable file. |
 | FileChangesRegex\*                | String     | The regex of paths to log file changes. Regexes are specified in ICU format. |
-| AllowedPathRegex\*                | String     | A regex to allow if the binary or certificate scopes did not allow/block execution.  Regexes are specified in ICU format. |
-| BlockedPathRegex\*                | String     | A regex to block if the binary or certificate scopes did not allow/block an execution.  Regexes are specified in ICU format. |
+| AllowedPathRegex\*                | String     | A regex to allow if the binary, certificate, or Team ID scopes did not allow/block execution.  Regexes are specified in ICU format. |
+| BlockedPathRegex\*                | String     | A regex to block if the binary, certificate, or Team ID scopes did not allow/block an execution.  Regexes are specified in ICU format. |
 | EnableBadSignatureProtection      | Bool       | Enable bad signature protection, defaults to NO. If this flag is set to YES, binaries with a bad signing chain will be blocked even in MONITOR mode, **unless** the binary is allowed by an explicit rule. |
 | EnablePageZeroProtection          | Bool       | Enable `__PAGEZERO` protection, defaults to YES. If this flag is set to YES, 32-bit binaries that are missing the `__PAGEZERO` segment will be blocked even in MONITOR mode, **unless** the binary is allowed by an explicit rule. |
 | EnableSysxCache                   | Bool       | Enables a secondary cache that ensures better performance when multiple EndpointSecurity system extensions are installed. Defaults to YES in 2021.8, defaults to NO in earlier versions. |
@@ -39,6 +39,7 @@ also known as mobileconfig files, which are in an Apple-specific XML format.
 | ModeNotificationLockdown          | String     | The notification text to display when the client goes into Lockdown mode. Defaults to "Switching into Lockdown mode". |
 | SyncBaseURL                       | String     | The base URL of the sync server.         |
 | SyncProxyConfiguration            | Dictionary | The proxy configuration to use when syncing. See the [Apple Documentation](https://developer.apple.com/documentation/cfnetwork/global_proxy_settings_constants) for details on the keys that can be used in this dictionary. |
+| SyncEnableCleanSyncEventUpload    | Bool       | If true, events will be uploaded to the sync server even if a clean sync is requested. Defaults to false. |
 | ClientAuthCertificateFile         | String     | If set, this contains the location of a PKCS#12 certificate to be used for sync authentication. |
 | ClientAuthCertificatePassword     | String     | Contains the password for the PKCS#12 certificate. |
 | ClientAuthCertificateCN           | String     | If set, this is the Common Name of a certificate in the System keychain to be used for sync authentication. The corresponding private key must also be in the keychain. |
@@ -51,7 +52,7 @@ also known as mobileconfig files, which are in an Apple-specific XML format.
 | MachineOwnerKey                   | String     | The key to use on MachineOwnerPlist.     |
 | MachineIDPlist                    | String     | The path to a plist that contains the MachineOwnerKey / value pair. |
 | MachineIDKey                      | String     | The key to use on MachineIDPlist.        |
-| EventLogType                      | String     | Defines how event logs are stored. Options are 1) syslog: Sent to ASL or ULS (if built with the 10.12 SDK or later). 2) filelog: Sent to a file on disk. Use EventLogPath to specify a path. 3) protobuf (BETA): Sent to file on disk using maildir format. Defaults to filelog.      |
+| EventLogType                      | String     | Defines how event logs are stored. Options are 1) syslog: Sent to ASL or ULS (if built with the 10.12 SDK or later). 2) filelog: Sent to a file on disk. Use EventLogPath to specify a path. 3) protobuf (BETA): Sent to file on disk using maildir format. 4) null: Don't output any event logs. Defaults to filelog.      |
 | EventLogPath                      | String     | If EventLogType is set to filelog, EventLogPath will provide the path to save logs. Defaults to /var/db/santa/santa.log. If you change this value ensure you also update com.google.santa.newsyslog.conf with the new path.        |
 | MailDirectory                     | String     | If EventLogType is set to protobuf, MailDirectory will provide the the base directory used to save files according to the maildir format. Defaults to /var/db/santa/mail. |
 | MailDirectoryFileSizeThresholdKB  | Integer    | If EventLogType is set to protobuf, MailDirectoryFileSizeThresholdKB defines the per-file size limit for files stored in the mail directory. Events are buffered in memory until this threshold would be exceeded (or MailDirectoryEventMaxFlushTimeSec is exceeded). Defaults to 100. |
@@ -63,9 +64,10 @@ also known as mobileconfig files, which are in an Apple-specific XML format.
 | MetricExportInterval              | Integer    | Number of seconds to wait between exporting metrics. Defaults to 30.  |
 | MetricExportTimeout               | Integer    | Number of seconds to wait before a timeout occurs when exporting metrics. Defaults to 30.  |
 | MetricExtraLabels                 | Dictionary | A map of key value pairs to add to all metric root labels. (e.g. a=b,c=d) defaults to @{}). If a previously set key (e.g. host_name is set to "" then the key is remove from the metric root labels. Alternatively if a value is set for an existing key then the new value will override the old. |
+| EnableAllEventUpload              | Bool       | If YES, the client will upload all execution events to the sync server, including those that were explicitly allowed. |
 
 
-*overridable by the sync server: run `santactl status` to check the current
+\*overridable by the sync server: run `santactl status` to check the current
 running config
 
 ##### EventDetailURL
@@ -76,14 +78,15 @@ take them to a web page with more information about that event.
 This property contains a kind of format string to be turned into the URL to send
 them to. The following sequences will be replaced in the final URL:
 
-| Key          | Description                              |
-| ------------ | ---------------------------------------- |
-| %file_sha%   | SHA-256 of the file that was blocked     |
-| %machine_id% | ID of the machine                        |
-| %username%   | The executing user                       |
-| %serial%     | System's serial number                   |
-| %uuid%       | System's UUID                            |
-| %hostname%   | System's full hostname                   |
+| Key                     | Description                                                                    |
+| ----------------------- | ------------------------------------------------------------------------------ |
+| %file_sha%              | SHA-256 of the file that was blocked                                           |
+| %bundle\_or\_file\_sha% | SHA-256 of the file that was blocked or the bundle containing it, if available |
+| %machine\_id%           | ID of the machine                                                              |
+| %username%              | The executing user                                                             |
+| %serial%                | System's serial number                                                         |
+| %uuid%                  | System's UUID                                                                  |
+| %hostname%              | System's full hostname                                                         |
 
 For example: `https://sync-server-hostname/%machine_id%/%file_sha%`
 
@@ -208,6 +211,7 @@ ways to install configuration profiles:
 | fcm\_global\_rule\_sync\_deadline\* | Integer    | The max time to wait before performing a rule sync when a global rule sync FCM message is received. This allows syncing to be staggered for global events to avoid spikes in server load. Defaults to 600 secs (10 min). |
 | enable\_bundles\*                   | Bool       | If set to `True` the bundle scanning feature is enabled. Defaults to `False`. |
 | enable\_transitive\_rules           | Bool       | If set to `True` the transitive rule feature is enabled. Defaults to `False`. |
+| enable\_all\_event\_upload          | Bool       | If set to `True` the client will upload events for all executions, including those that are explicitly allowed. |
 | block\_usb\_mass\_storage           | Bool       | If set to 'True' blocking USB Mass storage feature is enabled. Defaults to `False`. | 
 | remount\_usb\_mode                  | Array      | Array of strings for arguments to pass to mount -o (any of "rdonly", "noexec", "nosuid", "nobrowse", "noowners", "nodev", "async", "-j"). when forcibly remounting devices. No default. |
 

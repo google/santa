@@ -13,6 +13,7 @@
 # remove helper XPC services
 /bin/launchctl remove com.google.santa.bundleservice
 /bin/launchctl remove com.google.santa.metricservice
+/bin/launchctl remove com.google.santa.syncservice
 sleep 1
 /sbin/kextunload -b com.google.santa-driver >/dev/null 2>&1
 user=$(/usr/bin/stat -f '%u' /dev/console)
@@ -28,6 +29,7 @@ user=$(/usr/bin/stat -f '%u' /dev/console)
 /bin/rm -f /Library/LaunchDaemons/com.google.santad.plist
 /bin/rm -f /Library/LaunchDaemons/com.google.santa.bundleservice.plist
 /bin/rm -f /Library/LaunchDaemons/com.google.santa.metricservice.plist
+/bin/rm -f /Library/LaunchDaemons/com.google.santa.syncservice.plist
 /bin/rm -f /private/etc/asl/com.google.santa.asl.conf
 /bin/rm -f /private/etc/newsyslog.d/com.google.santa.newsyslog.conf
 /bin/rm -f /usr/local/bin/santactl # just a symlink

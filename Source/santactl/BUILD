@@ -5,7 +5,7 @@ licenses(["notice"])
 
 package(
     default_visibility = ["//:santa_package_group"],
-    features = ["layering_check"],
+    features = ["-layering_check"],
 )
 
 objc_library(
@@ -49,6 +49,7 @@ objc_library(
         "//Source/common:SNTSystemInfo",
         "//Source/common:SNTXPCBundleServiceInterface",
         "//Source/common:SNTXPCControlInterface",
+        "//Source/common:SNTXPCSyncServiceInterface",
         "//Source/common:SNTXPCUnprivilegedControlInterface",
         "//Source/santasyncservice:sync_lib",
         "@FMDB",
@@ -69,7 +70,7 @@ macos_command_line_application(
     minimum_os_version = "10.15",
     provisioning_profile = select({
         "//:ci_build": None,
-        "//conditions:default": "Santa_Dev.provisionprofile",
+        "//conditions:default": "//profiles:santa_dev",
     }),
     version = "//:version",
     deps = [":santactl_lib"],

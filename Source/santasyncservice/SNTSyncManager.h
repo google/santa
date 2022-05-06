@@ -14,16 +14,14 @@
 
 #import <Foundation/Foundation.h>
 
-#import "Source/common/SNTXPCSyncdInterface.h"
+#import "Source/common/SNTXPCSyncServiceInterface.h"
 
 @class MOLXPCConnection;
 
 ///
 ///  Handles push notifications and periodic syncing with a sync server.
 ///
-@interface SNTSyncManager : NSObject <SNTSyncdXPC>
-
-@property(readonly, nonatomic) BOOL daemon;
+@interface SNTSyncManager : NSObject
 
 ///
 ///  Use the designated initializer initWithDaemonConnection:isDaemon:
@@ -34,22 +32,42 @@
 ///  Designated initializer.
 ///
 ///  @param daemonConn A connection to santad.
-///  @param daemon Set to YES if periodic syncing should occur.
-///                Set to NO if a single sync should be performed. NO is default.
 ///
-- (instancetype)initWithDaemonConnection:(MOLXPCConnection *)daemonConn
-                                isDaemon:(BOOL)daemon NS_DESIGNATED_INITIALIZER;
+- (instancetype)initWithDaemonConnection:(MOLXPCConnection *)daemonConn NS_DESIGNATED_INITIALIZER;
 
 ///
-///  Perform a full sync immediately. Non-blocking.
-///  If a full sync is already running new requests will be dropped.
+///  Perform a sync immediately. Non-blocking.
+///  If a sync is already running new requests will be dropped.
 ///
-- (void)fullSync;
+- (void)sync;
 
 ///
-///  Perform a full sync seconds from now. Non-blocking.
-///  If a full sync is already running new requests will be dropped.
+///  Perform a sync seconds from now. Non-blocking.
+///  If a sync is already running new requests will be dropped.
 ///
-- (void)fullSyncSecondsFromNow:(uint64_t)seconds;
+- (void)syncSecondsFromNow:(uint64_t)seconds;
+
+///
+///  Perform an out of band sync.
+///
+///  Syncs are enqueued in order and executed serially. kMaxEnqueuedSyncs limits the number of syncs
+///  in the queue. If the queue is full calls to this method will be dropped and
+///  SNTSyncStatusTypeTooManySyncsInProgress will be passed into the reply block.
+///
+///  The SNTSyncStatusTypeSyncStarted will be passed into the reply block when the sync starts. The
+///  reply block will be called again with a SNTSyncStatusType when the sync has completed or
+///  failed.
+///
+///  Pass true to isClean to perform a clean sync, defaults to false.
+///
+- (void)syncAndMakeItClean:(BOOL)clean withReply:(void (^)(SNTSyncStatusType))reply;
+
+///
+///  Handle SNTSyncServiceXPC messages forwarded from SNTSyncService.
+///
+- (void)postEventsToSyncServer:(NSArray<SNTStoredEvent *> *)events fromBundle:(BOOL)isFromBundle;
+- (void)postBundleEventToSyncServer:(SNTStoredEvent *)event
+                              reply:(void (^)(SNTBundleEventAction))reply;
+- (void)isFCMListening:(void (^)(BOOL))reply;
 
 @end

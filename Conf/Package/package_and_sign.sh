@@ -48,6 +48,7 @@ readonly INPUT_SYSX="${INPUT_APP}/Contents/Library/SystemExtensions/com.google.s
 readonly INPUT_SANTACTL="${INPUT_APP}/Contents/MacOS/santactl"
 readonly INPUT_SANTABS="${INPUT_APP}/Contents/MacOS/santabundleservice"
 readonly INPUT_SANTAMS="${INPUT_APP}/Contents/MacOS/santametricservice"
+readonly INPUT_SANTASS="${INPUT_APP}/Contents/MacOS/santasyncservice"
 
 readonly RELEASE_NAME="santa-$(/usr/bin/defaults read "${INPUT_APP}/Contents/Info.plist" CFBundleShortVersionString)"
 
@@ -64,7 +65,7 @@ readonly DMG_PATH="${ARTIFACTS_DIR}/${RELEASE_NAME}.dmg"
 readonly TAR_PATH="${ARTIFACTS_DIR}/${RELEASE_NAME}.tar.gz"
 
 # Sign all of binaries/bundles. Maintain inside-out ordering where necessary
-for ARTIFACT in "${INPUT_SANTACTL}" "${INPUT_SANTABS}" "${INPUT_SANTAMS}" "${INPUT_SYSX}" "${INPUT_APP}"; do
+for ARTIFACT in "${INPUT_SANTACTL}" "${INPUT_SANTABS}" "${INPUT_SANTAMS}" "${INPUT_SANTASS}" "${INPUT_SYSX}" "${INPUT_APP}"; do
   BN=$(/usr/bin/basename "${ARTIFACT}")
   EN="${ENTITLEMENTS}/${BN}.entitlements"
 
@@ -113,11 +114,11 @@ echo "verifying signatures"
   "${RELEASE_ROOT}/binaries/"* || die "bad signature"
 
 echo "creating fresh release tarball"
-/bin/mkdir -p "${RELEASE_ROOT}/${RELEASE_NAME}"
-/bin/cp -r "${RELEASE_ROOT}/binaries" "${RELEASE_ROOT}/${RELEASE_NAME}"
-/bin/cp -r "${RELEASE_ROOT}/conf" "${RELEASE_ROOT}/${RELEASE_NAME}"
-/bin/cp -r "${RELEASE_ROOT}/dsym" "${RELEASE_ROOT}/${RELEASE_NAME}"
-/usr/bin/tar -C "${RELEASE_ROOT}" -czvf "${TAR_PATH}" "${RELEASE_NAME}" || die "failed to create release tarball"
+/bin/mkdir -p "${SCRATCH}/tar_root/${RELEASE_NAME}"
+/bin/cp -r "${RELEASE_ROOT}/binaries" "${SCRATCH}/tar_root/${RELEASE_NAME}"
+/bin/cp -r "${RELEASE_ROOT}/conf" "${SCRATCH}/tar_root/${RELEASE_NAME}"
+/bin/cp -r "${RELEASE_ROOT}/dsym" "${SCRATCH}/tar_root/${RELEASE_NAME}"
+/usr/bin/tar -C "${SCRATCH}/tar_root" -czvf "${TAR_PATH}" "${RELEASE_NAME}" || die "failed to create release tarball"
 
 echo "creating app pkg"
 /bin/mkdir -p "${APP_PKG_ROOT}/Applications" \
@@ -130,6 +131,7 @@ echo "creating app pkg"
 /bin/cp -vX "${RELEASE_ROOT}/conf/com.google.santa.plist" "${APP_PKG_ROOT}/Library/LaunchAgents/"
 /bin/cp -vX "${RELEASE_ROOT}/conf/com.google.santa.bundleservice.plist" "${APP_PKG_ROOT}/Library/LaunchDaemons/"
 /bin/cp -vX "${RELEASE_ROOT}/conf/com.google.santa.metricservice.plist" "${APP_PKG_ROOT}/Library/LaunchDaemons/"
+/bin/cp -vX "${RELEASE_ROOT}/conf/com.google.santa.syncservice.plist" "${APP_PKG_ROOT}/Library/LaunchDaemons/"
 /bin/cp -vX "${RELEASE_ROOT}/conf/com.google.santa.asl.conf" "${APP_PKG_ROOT}/private/etc/asl/"
 /bin/cp -vX "${RELEASE_ROOT}/conf/com.google.santa.newsyslog.conf" "${APP_PKG_ROOT}/private/etc/newsyslog.d/"
 /bin/cp -vXL "${SCRIPT_PATH}/preinstall" "${APP_PKG_SCRIPTS}/"

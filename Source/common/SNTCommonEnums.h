@@ -93,6 +93,22 @@ typedef NS_ENUM(NSInteger, SNTEventLogType) {
   SNTEventLogTypeSyslog,
   SNTEventLogTypeFilelog,
   SNTEventLogTypeProtobuf,
+  SNTEventLogTypeNull,
+};
+
+// The return status of a sync.
+typedef NS_ENUM(NSInteger, SNTSyncStatusType) {
+  SNTSyncStatusTypeSuccess,
+  SNTSyncStatusTypePreflightFailed,
+  SNTSyncStatusTypeEventUploadFailed,
+  SNTSyncStatusTypeRuleDownloadFailed,
+  SNTSyncStatusTypePostflightFailed,
+  SNTSyncStatusTypeTooManySyncsInProgress,
+  SNTSyncStatusTypeMissingSyncBaseURL,
+  SNTSyncStatusTypeMissingMachineID,
+  SNTSyncStatusTypeDaemonTimeout,
+  SNTSyncStatusTypeSyncStarted,
+  SNTSyncStatusTypeUnknown,
 };
 
 typedef NS_ENUM(NSInteger, SNTMetricFormatType) {

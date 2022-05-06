@@ -3,7 +3,7 @@ load("//:helper.bzl", "santa_unit_test")
 
 package(
     default_visibility = ["//:santa_package_group"],
-    features = ["layering_check"],
+    features = ["-layering_check"],
 )
 
 licenses(["notice"])
@@ -93,7 +93,7 @@ objc_library(
     deps = [
         ":event_logs_common",
         "//Source/common:SNTMetricSet",
-        "//Source/common:log_objc_proto",
+        "//Source/common:santa_objc_proto",
     ],
 )
 
@@ -184,7 +184,7 @@ objc_library(
         "//Source/common:SNTXPCControlInterface",
         "//Source/common:SNTXPCMetricServiceInterface",
         "//Source/common:SNTXPCNotifierInterface",
-        "//Source/common:SNTXPCSyncdInterface",
+        "//Source/common:SNTXPCSyncServiceInterface",
         "//Source/santad:SNTApplicationCoreMetrics",
         "@FMDB",
         "@MOLXPCConnection",
@@ -251,7 +251,7 @@ macos_bundle(
     minimum_os_version = "10.15",
     provisioning_profile = select({
         "//:ci_build": None,
-        "//conditions:default": "Santa_Daemon_Dev.provisionprofile",
+        "//conditions:default": "//profiles:daemon_dev",
     }),
     version = "//:version",
     visibility = ["//:santa_package_group"],
@@ -280,7 +280,6 @@ santa_unit_test(
         "//Source/common:SNTPrefixTree",
         "//Source/common:SNTRule",
         "//Source/common:SNTXPCNotifierInterface",
-        "//Source/common:SNTXPCSyncdInterface",
         "//Source/common:SantaCache",
         "@MOLCodesignChecker",
         "@MOLXPCConnection",
@@ -325,6 +324,9 @@ santa_unit_test(
         "@FMDB",
         "@MOLCertificate",
         "@MOLCodesignChecker",
+    ],
+    sdk_dylibs = [
+        "EndpointSecurity",
     ],
 )
 
@@ -440,7 +442,7 @@ santa_unit_test(
         ":EndpointSecurityTestLib",
         ":event_logs",
         "//Source/common:SNTConfigurator",
-        "//Source/common:log_objc_proto",
+        "//Source/common:santa_objc_proto",
         "@OCMock",
     ],
 )

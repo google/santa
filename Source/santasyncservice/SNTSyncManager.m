@@ -24,51 +24,34 @@
 #import "Source/common/SNTStoredEvent.h"
 #import "Source/common/SNTStrengthify.h"
 #import "Source/common/SNTXPCControlInterface.h"
-#import "Source/common/SNTXPCSyncdInterface.h"
+#import "Source/santasyncservice/SNTPushNotifications.h"
 #import "Source/santasyncservice/SNTSyncConstants.h"
 #import "Source/santasyncservice/SNTSyncEventUpload.h"
-#import "Source/santasyncservice/SNTSyncFCM.h"
+#import "Source/santasyncservice/SNTSyncLogging.h"
 #import "Source/santasyncservice/SNTSyncPostflight.h"
 #import "Source/santasyncservice/SNTSyncPreflight.h"
 #import "Source/santasyncservice/SNTSyncRuleDownload.h"
 #import "Source/santasyncservice/SNTSyncState.h"
 
-static NSString *const kFCMActionKey = @"action";
-static NSString *const kFCMFileHashKey = @"file_hash";
-static NSString *const kFCMFileNameKey = @"file_name";
-static NSString *const kFCMTargetHostIDKey = @"target_host_id";
+static const uint8_t kMaxEnqueuedSyncs = 2;
 
-@interface SNTSyncManager () {
+@interface SNTSyncManager () <SNTPushNotificationsDelegate> {
   SCNetworkReachabilityRef _reachability;
 }
 
 @property(nonatomic) dispatch_source_t fullSyncTimer;
 @property(nonatomic) dispatch_source_t ruleSyncTimer;
 
-@property(nonatomic) NSCache *dispatchLock;
-
-// allowlistNotifications dictionary stores info from FCM messages.  The binary/bundle hash is used
-// as a key mapping to values that are themselves dictionaries.  These dictionary values contain the
-// name of the binary/bundle and a count of associated binary rules.
-@property(nonatomic) NSMutableDictionary *allowlistNotifications;
-
-// allowlistNotificationQueue is used to serialize access to the allowlistNotifications dictionary.
-@property(nonatomic) NSOperationQueue *allowlistNotificationQueue;
-
-@property NSUInteger fullSyncInterval;
-
-@property NSUInteger FCMFullSyncInterval;
-@property NSUInteger FCMGlobalRuleSyncDeadline;
-@property NSUInteger eventBatchSize;
-
-@property SNTSyncFCM *FCMClient;
-@property NSString *FCMToken;
+@property(nonatomic, readonly) dispatch_queue_t syncQueue;
+@property(nonatomic, readonly) dispatch_semaphore_t syncLimiter;
 
 @property(nonatomic) MOLXPCConnection *daemonConn;
 
-@property BOOL targetedRuleSync;
-
 @property(nonatomic) BOOL reachable;
+
+@property SNTPushNotifications *pushNotifications;
+
+@property NSUInteger eventBatchSize;
 
 @end
 
@@ -90,45 +73,26 @@ static void reachabilityHandler(SCNetworkReachabilityRef target, SCNetworkReacha
 
 #pragma mark init
 
-- (instancetype)initWithDaemonConnection:(MOLXPCConnection *)daemonConn isDaemon:(BOOL)daemon {
+- (instancetype)initWithDaemonConnection:(MOLXPCConnection *)daemonConn {
   self = [super init];
   if (self) {
     _daemonConn = daemonConn;
-    _daemon = daemon;
+    _pushNotifications = [[SNTPushNotifications alloc] init];
+    _pushNotifications.delegate = self;
     _fullSyncTimer = [self createSyncTimerWithBlock:^{
-      [self rescheduleTimerQueue:self.fullSyncTimer secondsFromNow:self.FCMFullSyncInterval];
-      if (![[SNTConfigurator configurator] syncBaseURL]) return;
-      [self lockAction:kFullSync];
-      [self preflight];
-      [self unlockAction:kFullSync];
+      [self rescheduleTimerQueue:self.fullSyncTimer
+                  secondsFromNow:_pushNotifications.pushNotificationsFullSyncInterval];
+      [self syncAndMakeItClean:NO withReply:NULL];
     }];
     _ruleSyncTimer = [self createSyncTimerWithBlock:^{
       dispatch_source_set_timer(self.ruleSyncTimer, DISPATCH_TIME_FOREVER, DISPATCH_TIME_FOREVER,
                                 0);
-      if (![[SNTConfigurator configurator] syncBaseURL]) return;
-      [self lockAction:kRuleSync];
-      SNTSyncState *syncState = [self createSyncState];
-      syncState.targetedRuleSync = self.targetedRuleSync;
-      syncState.allowlistNotifications = self.allowlistNotifications;
-      syncState.allowlistNotificationQueue = self.allowlistNotificationQueue;
-      SNTSyncRuleDownload *p = [[SNTSyncRuleDownload alloc] initWithState:syncState];
-      if ([p sync]) {
-        LOGD(@"Rule download complete");
-      } else {
-        LOGE(@"Rule download failed");
-      }
-      self.targetedRuleSync = NO;
-      [self unlockAction:kRuleSync];
+      [self ruleSyncImpl];
     }];
-    _dispatchLock = [[NSCache alloc] init];
-    _allowlistNotifications = [NSMutableDictionary dictionary];
-    _allowlistNotificationQueue = [[NSOperationQueue alloc] init];
-    _allowlistNotificationQueue.maxConcurrentOperationCount = 1;  // make this a serial queue
+    _syncQueue = dispatch_queue_create("com.google.santa.syncservice", DISPATCH_QUEUE_SERIAL);
+    _syncLimiter = dispatch_semaphore_create(kMaxEnqueuedSyncs);
 
-    _fullSyncInterval = kDefaultFullSyncInterval;
     _eventBatchSize = kDefaultEventBatchSize;
-    _FCMFullSyncInterval = kDefaultFCMFullSyncInterval;
-    _FCMGlobalRuleSyncDeadline = kDefaultFCMGlobalRuleSyncDeadline;
   }
   return self;
 }
@@ -138,10 +102,15 @@ static void reachabilityHandler(SCNetworkReachabilityRef target, SCNetworkReacha
   [self stopReachability];
 }
 
-#pragma mark SNTSyncdXPC protocol methods
+#pragma mark SNTSyncServiceXPC methods
 
-- (void)postEventsToSyncServer:(NSArray<SNTStoredEvent *> *)events isFromBundle:(BOOL)isFromBundle {
-  SNTSyncState *syncState = [self createSyncState];
+- (void)postEventsToSyncServer:(NSArray<SNTStoredEvent *> *)events fromBundle:(BOOL)isFromBundle {
+  SNTSyncStatusType status = SNTSyncStatusTypeUnknown;
+  SNTSyncState *syncState = [self createSyncStateWithStatus:&status];
+  if (!syncState) {
+    LOGE(@"Events upload failed to create sync state: %ld", status);
+    return;
+  }
   if (isFromBundle) syncState.eventBatchSize = self.eventBatchSize;
   SNTSyncEventUpload *p = [[SNTSyncEventUpload alloc] initWithState:syncState];
   if (events && [p uploadEvents:events]) {
@@ -159,7 +128,13 @@ static void reachabilityHandler(SCNetworkReachabilityRef target, SCNetworkReacha
     reply(SNTBundleEventActionDropEvents);
     return;
   }
-  SNTSyncState *syncState = [self createSyncState];
+  SNTSyncStatusType status = SNTSyncStatusTypeUnknown;
+  SNTSyncState *syncState = [self createSyncStateWithStatus:&status];
+  if (!syncState) {
+    LOGE(@"Bundle event upload failed to create sync state: %ld", status);
+    reply(SNTBundleEventActionDropEvents);
+    return;
+  }
   SNTSyncEventUpload *p = [[SNTSyncEventUpload alloc] initWithState:syncState];
   if ([p uploadEvents:@[ event ]]) {
     if ([syncState.bundleBinaryRequests containsObject:event.fileBundleHash]) {
@@ -180,151 +155,43 @@ static void reachabilityHandler(SCNetworkReachabilityRef target, SCNetworkReacha
 }
 
 - (void)isFCMListening:(void (^)(BOOL))reply {
-  reply(self.FCMClient.isConnected);
+  reply(self.pushNotifications.isConnected);
 }
 
-#pragma mark push notification methods
+#pragma mark sync control / SNTPushNotificationsDelegate methods
 
-- (void)listenForPushNotificationsWithSyncState:(SNTSyncState *)syncState {
-  if ([self.FCMToken isEqualToString:syncState.FCMToken]) {
-    LOGD(@"Already listening for push notifications");
-    return;
-  }
-  LOGD(@"Start listening for push notifications");
-
-  WEAKIFY(self);
-
-  [self.FCMClient disconnect];
-  NSString *machineID = syncState.machineID;
-  SNTConfigurator *config = [SNTConfigurator configurator];
-  self.FCMClient = [[SNTSyncFCM alloc] initWithProject:config.fcmProject
-                                                entity:config.fcmEntity
-                                                apiKey:config.fcmAPIKey
-                                  sessionConfiguration:syncState.session.configuration.copy
-                                        messageHandler:^(NSDictionary *message) {
-                                          if (!message || message[@"noOp"]) return;
-                                          STRONGIFY(self);
-                                          LOGD(@"%@", message);
-                                          [self.FCMClient acknowledgeMessage:message];
-                                          [self processFCMMessage:message withMachineID:machineID];
-                                        }];
-
-  self.FCMClient.tokenHandler = ^(NSString *t) {
-    STRONGIFY(self);
-    LOGD(@"tokenHandler: %@", t);
-    self.FCMToken = t;
-    [self preflightOnly:YES];
-  };
-
-  self.FCMClient.connectionErrorHandler = ^(NSHTTPURLResponse *response, NSError *error) {
-    STRONGIFY(self);
-    if (response) LOGE(@"FCM fatal response: %@", response);
-    if (error) LOGE(@"FCM fatal error: %@", error);
-    [self.FCMClient disconnect];
-    self.FCMClient = nil;
-    self.FCMToken = nil;
-    [self rescheduleTimerQueue:self.fullSyncTimer secondsFromNow:kDefaultFullSyncInterval];
-  };
-
-  [self.FCMClient connect];
+- (void)sync {
+  [self syncSecondsFromNow:0];
 }
 
-- (void)processFCMMessage:(NSDictionary *)FCMmessage withMachineID:(NSString *)machineID {
-  NSDictionary *message = [self messageFromMessageData:[self messageDataFromFCMmessage:FCMmessage]];
-
-  if (!message) {
-    LOGD(@"Push notification message is not in the expected format...dropping message");
-    return;
-  }
-
-  NSString *action = message[kFCMActionKey];
-  if (!action) {
-    LOGD(@"Push notification message contains no action");
-    return;
-  }
-
-  // We assume that the incoming FCM message contains name of binary/bundle and a hash.  Rule count
-  // info for bundles will be sent out later with the rules themselves.  If the message is related
-  // to a bundle, the hash is a bundle hash, otherwise it is just a hash for a single binary.
-  // For later use, we store a mapping of bundle/binary hash to a dictionary containing the
-  // binary/bundle name so we can send out relevant notifications once the rules are actually
-  // downloaded & added to local database.  We use a dictionary value so that we can later add a
-  // count field when we start downloading the rules and receive the count information.
-  NSString *fileHash = message[kFCMFileHashKey];
-  NSString *fileName = message[kFCMFileNameKey];
-  if (fileName && fileHash) {
-    [self.allowlistNotificationQueue addOperationWithBlock:^{
-      self.allowlistNotifications[fileHash] = @{kFileName : fileName}.mutableCopy;
-    }];
-  }
-
-  LOGD(@"Push notification action: %@ received", action);
-
-  if ([action isEqualToString:kFullSync]) {
-    [self fullSync];
-  } else if ([action isEqualToString:kRuleSync]) {
-    NSString *targetHostID = message[kFCMTargetHostIDKey];
-    if (targetHostID && [targetHostID caseInsensitiveCompare:machineID] == NSOrderedSame) {
-      LOGD(@"Targeted rule_sync for host_id: %@", targetHostID);
-      self.targetedRuleSync = YES;
-      [self ruleSync];
-    } else {
-      uint32_t delaySeconds = arc4random_uniform((uint32_t)self.FCMGlobalRuleSyncDeadline);
-      LOGD(@"Global rule_sync, staggering: %u second delay", delaySeconds);
-      [self ruleSyncSecondsFromNow:delaySeconds];
-    }
-  } else if ([action isEqualToString:kConfigSync]) {
-    [self fullSync];
-  } else if ([action isEqualToString:kLogSync]) {
-    [self fullSync];
-  } else {
-    LOGD(@"Unrecognised action: %@", action);
-  }
-}
-
-- (NSData *)messageDataFromFCMmessage:(NSDictionary *)FCMmessage {
-  if (![FCMmessage[@"data"] isKindOfClass:[NSDictionary class]]) return nil;
-  if (![FCMmessage[@"data"][@"blob"] isKindOfClass:[NSString class]]) return nil;
-  return [FCMmessage[@"data"][@"blob"] dataUsingEncoding:NSUTF8StringEncoding];
-}
-
-- (NSDictionary *)messageFromMessageData:(NSData *)messageData {
-  if (!messageData) {
-    LOGD(@"Unable to parse push notification message data");
-    return nil;
-  }
-  NSError *error;
-  NSDictionary *rawMessage = [NSJSONSerialization JSONObjectWithData:messageData
-                                                             options:0
-                                                               error:&error];
-  if (!rawMessage) {
-    LOGD(@"Unable to parse push notification message data: %@", error);
-    return nil;
-  }
-
-  // Create a new message dropping unexpected values
-  NSArray *allowedKeys = @[ kFCMActionKey, kFCMFileHashKey, kFCMFileNameKey, kFCMTargetHostIDKey ];
-  NSMutableDictionary *message = [NSMutableDictionary dictionaryWithCapacity:allowedKeys.count];
-  for (NSString *key in allowedKeys) {
-    if ([rawMessage[key] isKindOfClass:[NSString class]] && [rawMessage[key] length]) {
-      message[key] = rawMessage[key];
-    }
-  }
-  return message.count ? [message copy] : nil;
-}
-
-#pragma mark sync timer control
-
-- (void)fullSync {
-  [self fullSyncSecondsFromNow:0];
-}
-
-- (void)fullSyncSecondsFromNow:(uint64_t)seconds {
-  if (![self checkLockAction:kFullSync]) {
-    LOGD(@"%@ in progress, dropping reschedule request", kFullSync);
-    return;
-  }
+- (void)syncSecondsFromNow:(uint64_t)seconds {
   [self rescheduleTimerQueue:self.fullSyncTimer secondsFromNow:seconds];
+}
+
+- (void)syncAndMakeItClean:(BOOL)clean withReply:(void (^)(SNTSyncStatusType))reply {
+  if (dispatch_semaphore_wait(self.syncLimiter, DISPATCH_TIME_NOW)) {
+    if (reply) reply(SNTSyncStatusTypeTooManySyncsInProgress);
+    return;
+  }
+  dispatch_async(self.syncQueue, ^() {
+    SLOGI(@"Starting sync...");
+    if (clean) {
+      dispatch_semaphore_t sema = dispatch_semaphore_create(0);
+      [[self.daemonConn remoteObjectProxy] setSyncCleanRequired:YES
+                                                          reply:^() {
+                                                            dispatch_semaphore_signal(sema);
+                                                          }];
+      if (dispatch_semaphore_wait(sema, dispatch_time(DISPATCH_TIME_NOW, 2 * NSEC_PER_SEC))) {
+        SLOGE(@"Timeout waiting for daemon");
+        if (reply) reply(SNTSyncStatusTypeDaemonTimeout);
+        return;
+      }
+    }
+    if (reply) reply(SNTSyncStatusTypeSyncStarted);
+    SNTSyncStatusType status = [self preflight];
+    if (reply) reply(status);
+    dispatch_semaphore_signal(self.syncLimiter);
+  });
 }
 
 - (void)ruleSync {
@@ -332,10 +199,6 @@ static void reachabilityHandler(SCNetworkReachabilityRef target, SCNetworkReacha
 }
 
 - (void)ruleSyncSecondsFromNow:(uint64_t)seconds {
-  if (![self checkLockAction:kRuleSync]) {
-    LOGD(@"%@ in progress, dropping reschedule request", kRuleSync);
-    return;
-  }
   [self rescheduleTimerQueue:self.ruleSyncTimer secondsFromNow:seconds];
 }
 
@@ -344,86 +207,105 @@ static void reachabilityHandler(SCNetworkReachabilityRef target, SCNetworkReacha
   uint64_t leeway = (seconds * 0.5) * NSEC_PER_SEC;
   dispatch_source_set_timer(timerQueue, dispatch_walltime(NULL, interval), interval, leeway);
 }
+- (void)ruleSyncImpl {
+  // Rule only syncs are exclusivly scheduled by self.ruleSyncTimer. We do not need to worry about
+  // using self.syncLimiter here. However we do want to do the work on self.syncQueue so we do not
+  // overlap with a full sync.
+  dispatch_async(self.syncQueue, ^() {
+    if (![[SNTConfigurator configurator] syncBaseURL]) return;
+    SNTSyncStatusType status = SNTSyncStatusTypeUnknown;
+    SNTSyncState *syncState = [self createSyncStateWithStatus:&status];
+    if (!syncState) {
+      LOGE(@"Rule sync failed to create sync state: %ld", status);
+      return;
+    }
+    SNTSyncRuleDownload *p = [[SNTSyncRuleDownload alloc] initWithState:syncState];
+    BOOL ret = [p sync];
+    LOGD(@"Rule download %@", ret ? @"complete" : @"failed");
+  });
+}
+
+- (void)preflightSync {
+  [self preflightOnly:YES];
+}
 
 #pragma mark syncing chain
 
-- (void)preflight {
-  [self preflightOnly:NO];
+- (SNTSyncStatusType)preflight {
+  return [self preflightOnly:NO];
 }
 
-- (void)preflightOnly:(BOOL)preflightOnly {
-  LOGD(@"Preflight starting");
-  SNTSyncState *syncState = [self createSyncState];
+- (SNTSyncStatusType)preflightOnly:(BOOL)preflightOnly {
+  SNTSyncStatusType status = SNTSyncStatusTypeUnknown;
+  SNTSyncState *syncState = [self createSyncStateWithStatus:&status];
+  if (!syncState) {
+    return status;
+  }
+
+  SLOGD(@"Preflight starting");
   SNTSyncPreflight *p = [[SNTSyncPreflight alloc] initWithState:syncState];
   if ([p sync]) {
-    LOGD(@"Preflight complete");
+    SLOGD(@"Preflight complete");
 
     // Clean up reachability if it was started for a non-network error
     [self stopReachability];
 
     self.eventBatchSize = syncState.eventBatchSize;
 
-    // Start listening for push notifications with a full sync every FCMFullSyncInterval
-    if (syncState.daemon && [SNTConfigurator configurator].fcmEnabled) {
-      self.FCMFullSyncInterval = syncState.FCMFullSyncInterval;
-      self.FCMGlobalRuleSyncDeadline = syncState.FCMGlobalRuleSyncDeadline;
-      [self listenForPushNotificationsWithSyncState:syncState];
-    } else if (syncState.daemon) {
-      LOGD(@"FCM not enabled. Sync every %lu min.", syncState.fullSyncInterval / 60);
-      [self.FCMClient disconnect];
-      self.FCMClient = nil;
-      self.fullSyncInterval = syncState.fullSyncInterval;
-      [self rescheduleTimerQueue:self.fullSyncTimer secondsFromNow:self.fullSyncInterval];
+    // Start listening for push notifications with a full sync every
+    // pushNotificationsFullSyncInterval.
+    if ([SNTConfigurator configurator].fcmEnabled) {
+      [self.pushNotifications listenWithSyncState:syncState];
+    } else {
+      LOGD(@"Push notifications are not enabled. Sync every %lu min.",
+           syncState.fullSyncInterval / 60);
+      [self rescheduleTimerQueue:self.fullSyncTimer secondsFromNow:syncState.fullSyncInterval];
     }
 
-    if (preflightOnly) return;
+    if (preflightOnly) return SNTSyncStatusTypeSuccess;
     return [self eventUploadWithSyncState:syncState];
-  } else {
-    if (!syncState.daemon) {
-      LOGE(@"Preflight failed, aborting run");
-      exit(1);
-    }
-    LOGE(@"Preflight failed, will try again once %@ is reachable",
-         [[SNTConfigurator configurator] syncBaseURL].absoluteString);
-    [self startReachability];
   }
+
+  SLOGE(@"Preflight failed, will try again once %@ is reachable",
+        [[SNTConfigurator configurator] syncBaseURL].absoluteString);
+  [self startReachability];
+  return SNTSyncStatusTypePreflightFailed;
 }
 
-- (void)eventUploadWithSyncState:(SNTSyncState *)syncState {
-  LOGD(@"Event upload starting");
+- (SNTSyncStatusType)eventUploadWithSyncState:(SNTSyncState *)syncState {
+  SLOGD(@"Event upload starting");
   SNTSyncEventUpload *p = [[SNTSyncEventUpload alloc] initWithState:syncState];
   if ([p sync]) {
-    LOGD(@"Event upload complete");
+    SLOGD(@"Event upload complete");
     return [self ruleDownloadWithSyncState:syncState];
-  } else {
-    LOGE(@"Event upload failed, aborting run");
-    if (!syncState.daemon) exit(1);
   }
+
+  SLOGE(@"Event upload failed, aborting run");
+  return SNTSyncStatusTypeEventUploadFailed;
 }
 
-- (void)ruleDownloadWithSyncState:(SNTSyncState *)syncState {
-  LOGD(@"Rule download starting");
+- (SNTSyncStatusType)ruleDownloadWithSyncState:(SNTSyncState *)syncState {
+  SLOGD(@"Rule download starting");
   SNTSyncRuleDownload *p = [[SNTSyncRuleDownload alloc] initWithState:syncState];
   if ([p sync]) {
-    LOGD(@"Rule download complete");
+    SLOGD(@"Rule download complete");
     return [self postflightWithSyncState:syncState];
-  } else {
-    LOGE(@"Rule download failed, aborting run");
-    if (!syncState.daemon) exit(1);
   }
+
+  SLOGE(@"Rule download failed, aborting run");
+  return SNTSyncStatusTypeRuleDownloadFailed;
 }
 
-- (void)postflightWithSyncState:(SNTSyncState *)syncState {
-  LOGD(@"Postflight starting");
+- (SNTSyncStatusType)postflightWithSyncState:(SNTSyncState *)syncState {
+  SLOGD(@"Postflight starting");
   SNTSyncPostflight *p = [[SNTSyncPostflight alloc] initWithState:syncState];
   if ([p sync]) {
-    LOGD(@"Postflight complete");
-    LOGI(@"Sync completed successfully");
-    if (!syncState.daemon) exit(0);
-  } else {
-    LOGE(@"Postflight failed");
-    if (!syncState.daemon) exit(1);
+    SLOGD(@"Postflight complete");
+    SLOGI(@"Sync completed successfully");
+    return SNTSyncStatusTypeSuccess;
   }
+  SLOGE(@"Postflight failed");
+  return SNTSyncStatusTypePostflightFailed;
 }
 
 #pragma mark internal helpers
@@ -437,29 +319,31 @@ static void reachabilityHandler(SCNetworkReachabilityRef target, SCNetworkReacha
   return timerQueue;
 }
 
-- (SNTSyncState *)createSyncState {
+- (SNTSyncState *)createSyncStateWithStatus:(SNTSyncStatusType *)status {
   // Gather some data needed during some sync stages
   SNTSyncState *syncState = [[SNTSyncState alloc] init];
   SNTConfigurator *config = [SNTConfigurator configurator];
 
   syncState.syncBaseURL = config.syncBaseURL;
   if (syncState.syncBaseURL.absoluteString.length == 0) {
-    LOGE(@"Missing SyncBaseURL. Can't sync without it.");
-    if (!syncState.daemon) exit(1);
+    SLOGE(@"Missing SyncBaseURL. Can't sync without it.");
+    if (*status) *status = SNTSyncStatusTypeMissingSyncBaseURL;
+    return nil;
   } else if (![syncState.syncBaseURL.scheme isEqual:@"https"]) {
-    LOGW(@"SyncBaseURL is not over HTTPS!");
+    SLOGW(@"SyncBaseURL is not over HTTPS!");
   }
 
   syncState.machineID = config.machineID;
   if (syncState.machineID.length == 0) {
-    LOGE(@"Missing Machine ID. Can't sync without it.");
-    if (!syncState.daemon) exit(1);
+    SLOGE(@"Missing Machine ID. Can't sync without it.");
+    if (*status) *status = SNTSyncStatusTypeMissingMachineID;
+    return nil;
   }
 
   syncState.machineOwner = config.machineOwner;
   if (syncState.machineOwner.length == 0) {
     syncState.machineOwner = @"";
-    LOGW(@"Missing Machine Owner.");
+    SLOGW(@"Missing Machine Owner.");
   }
 
   dispatch_group_t group = dispatch_group_create();
@@ -482,7 +366,7 @@ static void reachabilityHandler(SCNetworkReachabilityRef target, SCNetworkReacha
   authURLSession.refusesRedirects = YES;
   authURLSession.serverHostname = syncState.syncBaseURL.host;
   authURLSession.loggingBlock = ^(NSString *line) {
-    LOGD(@"%@", line);
+    SLOGD(@"%@", line);
   };
 
   // Configure server auth
@@ -504,27 +388,14 @@ static void reachabilityHandler(SCNetworkReachabilityRef target, SCNetworkReacha
 
   syncState.session = [authURLSession session];
   syncState.daemonConn = self.daemonConn;
-  syncState.daemon = self.daemon;
 
   syncState.compressedContentEncoding =
     config.enableBackwardsCompatibleContentEncoding ? @"zlib" : @"deflate";
 
-  syncState.FCMToken = self.FCMToken;
+  syncState.pushNotificationsToken = self.pushNotifications.token;
 
   dispatch_group_wait(group, dispatch_time(DISPATCH_TIME_NOW, 5 * NSEC_PER_SEC));
   return syncState;
-}
-
-- (void)lockAction:(NSString *)action {
-  [self.dispatchLock setObject:@YES forKey:action];
-}
-
-- (void)unlockAction:(NSString *)action {
-  [self.dispatchLock removeObjectForKey:action];
-}
-
-- (BOOL)checkLockAction:(NSString *)action {
-  return ([self.dispatchLock objectForKey:action] == nil);
 }
 
 #pragma mark reachability methods
@@ -533,7 +404,7 @@ static void reachabilityHandler(SCNetworkReachabilityRef target, SCNetworkReacha
   _reachable = reachable;
   if (reachable) {
     [self stopReachability];
-    [self fullSync];
+    [self sync];
   }
 }
 

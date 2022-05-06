@@ -7,6 +7,9 @@ redirect_from:
 
 # Binary Authorization Overview
 
+NOTE: This doc is out-dated and will be updated soon. We don't rely on a Kernel 
+Extension anymore.
+
 #### Background
 
 The decision flow starts in the kernel. The macOS kernel is extensible by way of
@@ -14,10 +17,7 @@ a kernel extension (KEXT). macOS makes available kernel programming interfaces
 (KPIs) to be used by a KEXT. Santa utilizes the Kernel Authorization (Kauth)
 KPI. This is a very powerful and verbose interface that gives Santa the ability
 to listen in on most vnode and file systems operations and to take actions,
-directly or indirectly, on the operations being performed. Still, there are some
-limitations to Kauth which are pointed out in the santa-driver document. For
-more information on the santa-driver KEXT see the
-[santa-driver.md](../details/santa-driver.md) document.
+directly or indirectly, on the operations being performed.
 
 #### Flow of an execve()
 
@@ -49,9 +49,7 @@ documentation. This flow does not cover the logging component of Santa, see the
         `execve()` the same `vnode_id`, santa-driver will have that thread wait
         for the in-flight decision from santad. All subsequent `execve()`s for
         the same `vnode_id` will use the decision in the cache as explained
-        in #2, until the cache is invalidated. See the
-        [santa-driver.md](../details/santa-driver.md) document for more details
-        on the cache invalidation.
+        in #2, until the cache is invalidated. 
     *   If the executing file is written to while any of the threads are waiting
         for a response the `ACTION_REQUEST_BINARY` entry is removed, forcing the
         decision-making process to be restarted.

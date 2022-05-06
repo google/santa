@@ -35,18 +35,20 @@
 /// An XSRF token to send in the headers with each request.
 @property NSString *xsrfToken;
 
-/// Full sync interval in seconds without FCM to update kDefaultFullSyncInterval => when FCM
-/// is not used, defaults to 10m.
+/// Full sync interval in seconds, defaults to kDefaultFullSyncInterval. If push notifications are
+/// being used this interval will be ignored in favor of pushNotificationsFullSyncInterval.
 @property NSUInteger fullSyncInterval;
 
-/// An FCM token to subscribe to push notifications.
-@property(copy) NSString *FCMToken;
+/// An token to subscribe to push notifications.
+@property(copy) NSString *pushNotificationsToken;
 
-/// Full sync interval in seconds while listening for FCM messages.
-@property NSUInteger FCMFullSyncInterval;
+/// Full sync interval in seconds while listening for push notifications, defaults to
+/// kDefaultPushNotificationsFullSyncInterval.
+@property NSUInteger pushNotificationsFullSyncInterval;
 
-/// Leeway time in seconds when receiving a global rule sync message.
-@property NSUInteger FCMGlobalRuleSyncDeadline;
+/// Leeway time in seconds when receiving a global rule sync push notification, defaults to
+/// kDefaultPushNotificationsGlobalRuleSyncDeadline.
+@property NSUInteger pushNotificationsGlobalRuleSyncDeadline;
 
 /// Machine identifier and owner.
 @property(copy) NSString *machineID;
@@ -68,18 +70,6 @@
 
 /// Array of bundle IDs to find binaries for.
 @property NSArray *bundleBinaryRequests;
-
-/// Returns YES if the santactl session is running as a daemon, returns NO otherwise.
-@property BOOL daemon;
-
-/// Returns YES if the session is targeted for this machine, returns NO otherwise.
-@property BOOL targetedRuleSync;
-
-/// Reference to the sync manager's ruleSyncCache. Used to lookup binary names for notifications.
-@property(weak) NSMutableDictionary *allowlistNotifications;
-
-/// Reference to the serial operation queue used for accessing allowlistNotifications.
-@property(weak) NSOperationQueue *allowlistNotificationQueue;
 
 /// The header value for ContentEncoding when sending compressed content.
 /// Either "deflate" (default) or "zlib".

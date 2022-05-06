@@ -13,8 +13,8 @@ apple_bundle_version(
     build_label_pattern = ".*santa_{release}\\.{build}",
     build_version = "{release}.{build}",
     capture_groups = {
-      "release": "\\d{4}\\.\\d+",
-      "build": "\\d+"
+        "release": "\\d{4}\\.\\d+",
+        "build": "\\d+",
     },
     fallback_build_label = "santa_9999.1.1",
     short_version_string = "{release}",
@@ -54,6 +54,7 @@ run_command(
 sudo launchctl unload /Library/LaunchDaemons/com.google.santad.plist 2>/dev/null
 sudo launchctl unload /Library/LaunchDaemons/com.google.santa.bundleservice.plist 2>/dev/null
 sudo launchctl unload /Library/LaunchDaemons/com.google.santa.metricservice.plist 2>/dev/null
+sudo launchctl unload /Library/LaunchDaemons/com.google.santa.syncservice.plist 2>/dev/null
 launchctl unload /Library/LaunchAgents/com.google.santa.plist 2>/dev/null
 """,
 )
@@ -64,6 +65,7 @@ run_command(
 sudo launchctl load /Library/LaunchDaemons/com.google.santad.plist
 sudo launchctl load /Library/LaunchDaemons/com.google.santa.bundleservice.plist
 sudo launchctl load /Library/LaunchDaemons/com.google.santa.metricservice.plist
+sudo launchctl load /Library/LaunchDaemons/com.google.santa.syncservice.plist
 launchctl load /Library/LaunchAgents/com.google.santa.plist
 """,
 )
@@ -98,6 +100,7 @@ genrule(
         "Conf/uninstall.sh",
         "Conf/com.google.santa.bundleservice.plist",
         "Conf/com.google.santa.metricservice.plist",
+        "Conf/com.google.santa.syncservice.plist",
         "Conf/com.google.santad.plist",
         "Conf/com.google.santa.plist",
         "Conf/com.google.santa.newsyslog.conf",
@@ -148,6 +151,10 @@ genrule(
           *santametricservice.dSYM*Info.plist)
             mkdir -p $(@D)/dsym
             cp -LR $$(dirname $$(dirname $${SRC})) $(@D)/dsym/santametricservice.dSYM
+            ;;
+          *santasyncservice.dSYM*Info.plist)
+            mkdir -p $(@D)/dsym
+            cp -LR $$(dirname $$(dirname $${SRC})) $(@D)/dsym/santasyncservice.dSYM
             ;;
           *Santa.app.dSYM*Info.plist)
             mkdir -p $(@D)/dsym

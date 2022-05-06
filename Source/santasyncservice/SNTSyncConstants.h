@@ -50,6 +50,7 @@ extern NSString *const kEnableBundlesDeprecated;
 extern NSString *const kEnableTransitiveRules;
 extern NSString *const kEnableTransitiveRulesDeprecated;
 extern NSString *const kEnableTransitiveRulesSuperDeprecated;
+extern NSString *const kEnableAllEventUpload;
 
 extern NSString *const kEvents;
 extern NSString *const kFileSHA256;
@@ -62,10 +63,12 @@ extern NSString *const kDecisionAllowUnknown;
 extern NSString *const kDecisionAllowBinary;
 extern NSString *const kDecisionAllowCertificate;
 extern NSString *const kDecisionAllowScope;
+extern NSString *const kDecisionAllowTeamID;
 extern NSString *const kDecisionBlockUnknown;
 extern NSString *const kDecisionBlockBinary;
 extern NSString *const kDecisionBlockCertificate;
 extern NSString *const kDecisionBlockScope;
+extern NSString *const kDecisionBlockTeamID;
 extern NSString *const kDecisionUnknown;
 extern NSString *const kDecisionBundleBinary;
 extern NSString *const kLoggedInUsers;
@@ -132,5 +135,5 @@ extern const NSUInteger kDefaultEventBatchSize;
 ///  Are represented in seconds
 ///
 extern const NSUInteger kDefaultFullSyncInterval;
-extern const NSUInteger kDefaultFCMFullSyncInterval;
-extern const NSUInteger kDefaultFCMGlobalRuleSyncDeadline;
+extern const NSUInteger kDefaultPushNotificationsFullSyncInterval;
+extern const NSUInteger kDefaultPushNotificationsGlobalRuleSyncDeadline;

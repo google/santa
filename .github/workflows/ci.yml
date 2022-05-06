@@ -52,7 +52,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [macos-10.15, macos-11]
+        os: [macos-10.15, macos-11, macos-12]
     runs-on: ${{ matrix.os }}
     needs: [preqs]
     if: needs.preqs.outputs.run_build_and_tests == 'true'
@@ -75,7 +75,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [macos-10.15, macos-11]
+        os: [macos-10.15, macos-11, macos-12]
     runs-on: ${{ matrix.os }}
     needs: [preqs]
     if: needs.preqs.outputs.run_build_and_tests == 'true'
@@ -116,7 +116,7 @@ jobs:
         uses: coverallsapp/github-action@master
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          path-to-lcov: ./CoverageData/info.lcov
+          path-to-lcov: ./bazel-out/_coverage/_coverage_report.dat
           flag-name: Unit
 
   benchmark:

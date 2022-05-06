@@ -14,6 +14,7 @@
 
 #import "Source/santad/DataLayer/SNTRuleTable.h"
 
+#import <EndpointSecurity/EndpointSecurity.h>
 #import <MOLCertificate/MOLCertificate.h>
 #import <MOLCodesignChecker/MOLCodesignChecker.h>
 
@@ -29,6 +30,45 @@ static const NSUInteger kTransitiveRuleCullingThreshold = 500000;
 // Consider transitive rules out of date if they haven't been used in six months.
 static const NSUInteger kTransitiveRuleExpirationSeconds = 6 * 30 * 24 * 3600;
 
+static void addPathsFromDefaultMuteSet(NSMutableSet *criticalPaths) API_AVAILABLE(macos(12.0)) {
+  // Note: This function uses API introduced in macOS 12, but we want to continue to support
+  // building in older environments. API Availability checks do not help for this use case,
+  // instead we use the following preprocessor macros to conditionally compile these API. The
+  // drawback here is that if a pre-macOS 12 SDK is used to build Santa and it is then deployed
+  // on macOS 12 or later, the dynamic mute set will not be computed.
+#if defined(MAC_OS_VERSION_12_0) && MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_VERSION_12_0
+  // Create a temporary ES client in order to grab the default set of muted paths.
+  // TODO(mlw): Reorganize this code so that a temporary ES client doesn't need to be created
+  es_client_t *client = NULL;
+  es_new_client_result_t ret = es_new_client(&client, ^(es_client_t *c, const es_message_t *m){
+                                               // noop
+                                             });
+
+  if (ret != ES_NEW_CLIENT_RESULT_SUCCESS) {
+    // Creating the client failed, so we cannot grab the current default mute set.
+    LOGE(@"Failed to create client to grab default muted paths");
+    return;
+  }
+
+  es_muted_paths_t *mps = NULL;
+  if (es_muted_paths_events(client, &mps) != ES_RETURN_SUCCESS) {
+    LOGE(@"Failed to obtain list of default muted paths.");
+    es_delete_client(client);
+    return;
+  }
+
+  for (size_t i = 0; i < mps->count; i++) {
+    // Only add literal paths, prefix paths would require recursive directory search
+    if (mps->paths[i].type == ES_MUTE_PATH_TYPE_LITERAL) {
+      [criticalPaths addObject:@(mps->paths[i].path.data)];
+    }
+  }
+
+  es_release_muted_paths(mps);
+  es_delete_client(client);
+#endif
+}
+
 @interface SNTRuleTable ()
 @property MOLCodesignChecker *santadCSInfo;
 @property MOLCodesignChecker *launchdCSInfo;
@@ -42,32 +82,54 @@ static const NSUInteger kTransitiveRuleExpirationSeconds = 6 * 30 * 24 * 3600;
 //  ES on Monterey now has a “default mute set” of paths that are automatically applied to each ES
 //  client. This mute set contains most (not all) AUTH event types for some paths that were deemed
 //  “system critical”.
-//  Retain this list for < 12.0 versions of ES, but we should be able to rely on the paths muted by
-//  default (visible with es_muted_paths_events any time after connecting a new client and before
-//  modifying any of the mute state).
 + (NSArray *)criticalSystemBinaryPaths {
-  return @[
-    @"/usr/libexec/trustd",
-    @"/usr/libexec/xpcproxy",
-    @"/usr/libexec/amfid",
-    @"/usr/libexec/opendirectoryd",
-    @"/usr/libexec/runningboardd",
-    @"/usr/libexec/syspolicyd",
-    @"/usr/libexec/watchdogd",
-    @"/usr/libexec/cfprefsd",
-    @"/usr/sbin/securityd",
-    @"/System/Library/PrivateFrameworks/TCC.framework/Versions/A/Resources/tccd",
-    @"/System/Library/PrivateFrameworks/SkyLight.framework/Versions/A/Resources/WindowServer",
-    @"/usr/sbin/ocspd",
-    @"/usr/lib/dyld",
-    @"/Applications/Santa.app/Contents/MacOS/Santa",
-    @"/Applications/Santa.app/Contents/MacOS/santactl",
-    @"/Applications/Santa.app/Contents/MacOS/santabundleservice",
-    // This entry is for on <10.15 - on 10.15+ the binary is actually executed
-    // from a system-controlled path but will only ever be executed by
-    // the OS anyway.
-    @"/Applications/Santa.app/Contents/Library/SystemExtensions/com.google.santa.daemon.systemextension/Contents/MacOS/com.google.santa.daemon",
-  ];
+  static dispatch_once_t onceToken;
+  static NSArray *criticalPaths = nil;
+  dispatch_once(&onceToken, ^{
+    // These paths have previously existed in the ES default mute set. They are hardcoded
+    // here in case grabbing the current default mute set fails, or if Santa is running on
+    // an OS that did not yet support this feature.
+    NSSet *fallbackDefaultMuteSet = [[NSSet alloc] initWithArray:@[
+      @"/System/Library/PrivateFrameworks/SkyLight.framework/Versions/A/Resources/WindowServer",
+      @"/System/Library/PrivateFrameworks/TCC.framework/Support/tccd",
+      @"/System/Library/PrivateFrameworks/TCC.framework/Versions/A/Resources/tccd",
+      @"/usr/sbin/cfprefsd",
+      @"/usr/sbin/securityd",
+      @"/usr/libexec/opendirectoryd",
+      @"/usr/libexec/sandboxd",
+      @"/usr/libexec/syspolicyd",
+      @"/usr/libexec/runningboardd",
+      @"/usr/libexec/amfid",
+      @"/usr/libexec/watchdogd",
+    ]];
+
+    // This is a Santa-curated list of paths to check on startup. This list will be merged
+    // with the set of default muted paths from ES.
+    NSSet *santaDefinedCriticalPaths = [NSSet setWithArray:@[
+      @"/usr/libexec/trustd",
+      @"/usr/lib/dyld",
+      @"/usr/libexec/xpcproxy",
+      @"/usr/sbin/ocspd",
+      @"/Applications/Santa.app/Contents/MacOS/Santa",
+      @"/Applications/Santa.app/Contents/MacOS/santactl",
+      @"/Applications/Santa.app/Contents/MacOS/santabundleservice",
+      @"/Applications/Santa.app/Contents/MacOS/santametricservice",
+      @"/Applications/Santa.app/Contents/MacOS/santasyncservice",
+    ]];
+
+    // Combine the fallback default mute set and Santa-curated set
+    NSMutableSet *superSet = [NSMutableSet setWithSet:fallbackDefaultMuteSet];
+    [superSet unionSet:santaDefinedCriticalPaths];
+
+    if (@available(macOS 12.0, *)) {
+      // Attempt to add the real default mute set
+      addPathsFromDefaultMuteSet(superSet);
+    }
+
+    criticalPaths = [superSet allObjects];
+  });
+
+  return criticalPaths;
 }
 
 - (void)setupSystemCriticalBinaries {

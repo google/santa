@@ -22,6 +22,7 @@
 #import "Source/common/SNTSystemInfo.h"
 #import "Source/common/SNTXPCControlInterface.h"
 #import "Source/santasyncservice/SNTSyncConstants.h"
+#import "Source/santasyncservice/SNTSyncLogging.h"
 #import "Source/santasyncservice/SNTSyncState.h"
 
 @implementation SNTSyncPreflight
@@ -40,7 +41,9 @@
   requestDict[kModelIdentifier] = [SNTSystemInfo modelIdentifier];
   requestDict[kSantaVer] = [[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleVersion"];
   requestDict[kPrimaryUser] = self.syncState.machineOwner;
-  if (self.syncState.FCMToken) requestDict[kFCMToken] = self.syncState.FCMToken;
+  if (self.syncState.pushNotificationsToken) {
+    requestDict[kFCMToken] = self.syncState.pushNotificationsToken;
+  }
 
   dispatch_group_t group = dispatch_group_create();
   dispatch_group_enter(group);
@@ -75,8 +78,8 @@
   dispatch_group_wait(group, dispatch_time(DISPATCH_TIME_NOW, 2 * NSEC_PER_SEC));
 
   // If user requested it or we've never had a successful sync, try from a clean slate.
-  if ([[[NSProcessInfo processInfo] arguments] containsObject:@"--clean"] || syncClean) {
-    LOGD(@"Clean sync requested by user");
+  if (syncClean) {
+    SLOGD(@"Clean sync requested by user");
     requestDict[kRequestCleanSync] = @YES;
   }
 
@@ -103,15 +106,23 @@
                                                             dispatch_group_leave(group);
                                                           }];
 
+  dispatch_group_enter(group);
+  NSNumber *enableAllEventUpload = resp[kEnableAllEventUpload];
+  [[self.daemonConn remoteObjectProxy] setEnableAllEventUpload:[enableAllEventUpload boolValue]
+                                                         reply:^{
+                                                           dispatch_group_leave(group);
+                                                         }];
+
   self.syncState.eventBatchSize = [resp[kBatchSize] unsignedIntegerValue] ?: kDefaultEventBatchSize;
 
   // Don't let these go too low
   NSUInteger FCMIntervalValue = [resp[kFCMFullSyncInterval] unsignedIntegerValue];
-  self.syncState.FCMFullSyncInterval =
-    (FCMIntervalValue < kDefaultFullSyncInterval) ? kDefaultFCMFullSyncInterval : FCMIntervalValue;
+  self.syncState.pushNotificationsFullSyncInterval = (FCMIntervalValue < kDefaultFullSyncInterval)
+                                                       ? kDefaultPushNotificationsFullSyncInterval
+                                                       : FCMIntervalValue;
   FCMIntervalValue = [resp[kFCMGlobalRuleSyncDeadline] unsignedIntegerValue];
-  self.syncState.FCMGlobalRuleSyncDeadline =
-    (FCMIntervalValue < 60) ? kDefaultFCMGlobalRuleSyncDeadline : FCMIntervalValue;
+  self.syncState.pushNotificationsGlobalRuleSyncDeadline =
+    (FCMIntervalValue < 60) ? kDefaultPushNotificationsGlobalRuleSyncDeadline : FCMIntervalValue;
 
   // Check if our sync interval has changed
   NSUInteger intervalValue = [resp[kFullSyncInterval] unsignedIntegerValue];
@@ -144,7 +155,7 @@
   }
 
   if ([resp[kCleanSync] boolValue]) {
-    LOGD(@"Clean sync requested by server");
+    SLOGD(@"Clean sync requested by server");
     self.syncState.cleanSync = YES;
   }
 

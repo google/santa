@@ -45,10 +45,8 @@ static const pid_t PID_MAX = 99999;
   if (self) {
     // To avoid nil deref from es_events arriving before listenForDecisionRequests or
     // listenForLogRequests in the  MockEndpointSecurity testing util.
-    _decisionCallback = ^(santa_message_t) {
-    };
-    _logCallback = ^(santa_message_t) {
-    };
+    _decisionCallback = ^(santa_message_t) {};
+    _logCallback = ^(santa_message_t) {};
     [self establishClient];
     _prefixTree = new SNTPrefixTree();
     _esAuthQueue =
@@ -114,9 +112,10 @@ static const pid_t PID_MAX = 99999;
           // Create a transitive rule if the file was modified by a running compiler
           if ([self isCompilerPID:pid]) {
             santa_message_t sm = {};
-            BOOL truncated = [SNTEndpointSecurityManager populateBufferFromESFile:m->event.close.target
-                                                                           buffer:sm.path
-                                                                             size:sizeof(sm.path)];
+            BOOL truncated =
+              [SNTEndpointSecurityManager populateBufferFromESFile:m->event.close.target
+                                                            buffer:sm.path
+                                                              size:sizeof(sm.path)];
             if (truncated) {
               LOGE(@"CLOSE: error creating transitive rule, the path is truncated: path=%s pid=%d",
                    sm.path, pid);
@@ -182,7 +181,12 @@ static const pid_t PID_MAX = 99999;
         case ES_EVENT_TYPE_NOTIFY_UNMOUNT: {
           // Flush the non-root cache - the root disk cannot be unmounted
           // so it isn't necessary to flush its cache.
-          [self flushCacheNonRootOnly:YES];
+          //
+          // Flushing the cache calls back into ES. We need to perform this off the handler thread
+          // otherwise we could potentially deadlock.
+          dispatch_async(self.esAuthQueue, ^() {
+            [self flushCacheNonRootOnly:YES];
+          });
 
           // Skip all other processing
           return;
@@ -288,6 +292,10 @@ static const pid_t PID_MAX = 99999;
       targetFile = m->event.exec.target->executable;
       targetProcess = m->event.exec.target;
       callback = self.decisionCallback;
+
+      [SNTEndpointSecurityManager populateBufferFromESFile:m->process->tty
+                                                    buffer:sm.ttypath
+                                                      size:sizeof(sm.ttypath)];
       break;
     }
     case ES_EVENT_TYPE_NOTIFY_EXEC: {
@@ -544,6 +552,7 @@ static const pid_t PID_MAX = 99999;
 // Returns YES if the path was truncated.
 // The populated buffer will be NUL terminated.
 + (BOOL)populateBufferFromESFile:(es_file_t *)file buffer:(char *)buffer size:(size_t)size {
+  if (file == NULL) return NO;
   return [SNTEndpointSecurityManager populateBufferFromString:file->path.data
                                                        buffer:buffer
                                                          size:size];
