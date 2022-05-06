@@ -755,7 +755,7 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
   NSNumber *n = self.syncState[kEnableAllEventUploadKey];
   if (n) return [n boolValue];
 
-  return [self.configState[kEnableAllEventUploadKey];
+  return [self.configState[kEnableAllEventUploadKey] boolValue];
 }
 
 - (void)setEnableAllEventUpload:(BOOL)enabled {

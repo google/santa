@@ -421,7 +421,7 @@
 ///  If true, events will be uploaded for all executions, even those that are allowed.
 ///  Use with caution, this generates a lot of events. Defaults to false.
 ///
-@property(readonly, nonatomic) BOOL enableAllEventUpload;
+@property(nonatomic) BOOL enableAllEventUpload;
 
 ///
 ///  If true, forks and exits will be logged. Defaults to false.
