@@ -73,11 +73,6 @@ API_UNAVAILABLE(ios, tvos, watchos)
 es_return_t es_muted_paths_events(es_client_t * _Nonnull client, 
                       es_muted_paths_t * _Nonnull * _Nullable muted_paths);
 
-API_AVAILABLE(macos(12.0))
-API_UNAVAILABLE(ios, tvos, watchos)
-es_return_t es_muted_paths_events(es_client_t * _Nonnull client, 
-                      es_muted_paths_t * _Nonnull * _Nullable muted_paths);
-
 API_AVAILABLE(macos(10.15))
 API_UNAVAILABLE(ios, tvos, watchos)
 es_respond_result_t es_respond_auth_result(es_client_t *_Nonnull client,
