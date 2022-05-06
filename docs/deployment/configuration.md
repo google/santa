@@ -52,7 +52,7 @@ also known as mobileconfig files, which are in an Apple-specific XML format.
 | MachineOwnerKey                   | String     | The key to use on MachineOwnerPlist.     |
 | MachineIDPlist                    | String     | The path to a plist that contains the MachineOwnerKey / value pair. |
 | MachineIDKey                      | String     | The key to use on MachineIDPlist.        |
-| EventLogType                      | String     | Defines how event logs are stored. Options are 1) syslog: Sent to ASL or ULS (if built with the 10.12 SDK or later). 2) filelog: Sent to a file on disk. Use EventLogPath to specify a path. 3) protobuf (BETA): Sent to file on disk using maildir format. Defaults to filelog.      |
+| EventLogType                      | String     | Defines how event logs are stored. Options are 1) syslog: Sent to ASL or ULS (if built with the 10.12 SDK or later). 2) filelog: Sent to a file on disk. Use EventLogPath to specify a path. 3) protobuf (BETA): Sent to file on disk using maildir format. 4) null: Don't output any event logs. Defaults to filelog.      |
 | EventLogPath                      | String     | If EventLogType is set to filelog, EventLogPath will provide the path to save logs. Defaults to /var/db/santa/santa.log. If you change this value ensure you also update com.google.santa.newsyslog.conf with the new path.        |
 | MailDirectory                     | String     | If EventLogType is set to protobuf, MailDirectory will provide the the base directory used to save files according to the maildir format. Defaults to /var/db/santa/mail. |
 | MailDirectoryFileSizeThresholdKB  | Integer    | If EventLogType is set to protobuf, MailDirectoryFileSizeThresholdKB defines the per-file size limit for files stored in the mail directory. Events are buffered in memory until this threshold would be exceeded (or MailDirectoryEventMaxFlushTimeSec is exceeded). Defaults to 100. |
@@ -64,6 +64,7 @@ also known as mobileconfig files, which are in an Apple-specific XML format.
 | MetricExportInterval              | Integer    | Number of seconds to wait between exporting metrics. Defaults to 30.  |
 | MetricExportTimeout               | Integer    | Number of seconds to wait before a timeout occurs when exporting metrics. Defaults to 30.  |
 | MetricExtraLabels                 | Dictionary | A map of key value pairs to add to all metric root labels. (e.g. a=b,c=d) defaults to @{}). If a previously set key (e.g. host_name is set to "" then the key is remove from the metric root labels. Alternatively if a value is set for an existing key then the new value will override the old. |
+| EnableAllEventUpload              | Bool       | If YES, the client will upload all execution events to the sync server, including those that were explicitly allowed. |
 
 
 \*overridable by the sync server: run `santactl status` to check the current
@@ -210,6 +211,7 @@ ways to install configuration profiles:
 | fcm\_global\_rule\_sync\_deadline\* | Integer    | The max time to wait before performing a rule sync when a global rule sync FCM message is received. This allows syncing to be staggered for global events to avoid spikes in server load. Defaults to 600 secs (10 min). |
 | enable\_bundles\*                   | Bool       | If set to `True` the bundle scanning feature is enabled. Defaults to `False`. |
 | enable\_transitive\_rules           | Bool       | If set to `True` the transitive rule feature is enabled. Defaults to `False`. |
+| enable\_all\_event\_upload          | Bool       | If set to `True` the client will upload events for all executions, including those that are explicitly allowed. |
 | block\_usb\_mass\_storage           | Bool       | If set to 'True' blocking USB Mass storage feature is enabled. Defaults to `False`. | 
 | remount\_usb\_mode                  | Array      | Array of strings for arguments to pass to mount -o (any of "rdonly", "noexec", "nosuid", "nobrowse", "noowners", "nodev", "async", "-j"). when forcibly remounting devices. No default. |
 

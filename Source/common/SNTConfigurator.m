@@ -112,6 +112,7 @@ static NSString *const kAllowedPathRegexKey = @"AllowedPathRegex";
 static NSString *const kAllowedPathRegexKeyDeprecated = @"WhitelistRegex";
 static NSString *const kBlockedPathRegexKey = @"BlockedPathRegex";
 static NSString *const kBlockedPathRegexKeyDeprecated = @"BlacklistRegex";
+static NSString *const kEnableAllEventUploadKey = @"EnableAllEventUpload";
 
 // TODO(markowsky): move these to sync server only.
 static NSString *const kMetricFormat = @"MetricFormat";
@@ -147,7 +148,8 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
       kRemountUSBModeKey : array,
       kFullSyncLastSuccess : date,
       kRuleSyncLastSuccess : date,
-      kSyncCleanRequired : number
+      kSyncCleanRequired : number,
+      kEnableAllEventUploadKey : number,
     };
     _forcedConfigKeyTypes = @{
       kClientModeKey : number,
@@ -208,6 +210,7 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
       kMetricExportInterval : number,
       kMetricExportTimeout : number,
       kMetricExtraLabels : dictionary,
+      kEnableAllEventUploadKey : number,
     };
     _defaults = [NSUserDefaults standardUserDefaults];
     [_defaults addSuiteNamed:@"com.google.santa"];
@@ -392,6 +395,10 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
 }
 
 + (NSSet *)keyPathsForValuesAffectingEnableTransitiveRules {
+  return [self syncAndConfigStateSet];
+}
+
++ (NSSet *)keyPathsForValuesAffectingEnableAllEventUpload {
   return [self syncAndConfigStateSet];
 }
 
@@ -694,6 +701,10 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
     return SNTEventLogTypeProtobuf;
   } else if ([logType isEqualToString:@"syslog"]) {
     return SNTEventLogTypeSyslog;
+  } else if ([logType isEqualToString:@"null"]) {
+    return SNTEventLogTypeNull;
+  } else if ([logType isEqualToString:@"file"]) {
+    return SNTEventLogTypeFilelog;
   } else {
     return SNTEventLogTypeFilelog;
   }
@@ -738,6 +749,17 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
 - (BOOL)enableCleanSyncEventUpload {
   NSNumber *number = self.configState[kSyncEnableCleanSyncEventUpload];
   return number ? [number boolValue] : NO;
+}
+
+- (BOOL)enableAllEventUpload {
+  NSNumber *n = self.syncState[kEnableAllEventUploadKey];
+  if (n) return [n boolValue];
+
+  return [self.configState[kEnableAllEventUploadKey] boolValue];
+}
+
+- (void)setEnableAllEventUpload:(BOOL)enabled {
+  [self updateSyncStateForKey:kEnableAllEventUploadKey value:@(enabled)];
 }
 
 - (BOOL)enableForkAndExitLogging {

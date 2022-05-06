@@ -252,6 +252,15 @@ double watchdogRAMPeak = 0;
   reply();
 }
 
+- (void)enableAllEventUpload:(void (^)(BOOL))reply {
+  reply([SNTConfigurator configurator].enableAllEventUpload);
+}
+
+- (void)setEnableAllEventUpload:(BOOL)enabled reply:(void (^)(void))reply {
+  [[SNTConfigurator configurator] setEnableAllEventUpload:enabled];
+  reply();
+}
+
 #pragma mark Metrics Ops
 
 - (void)metrics:(void (^)(NSDictionary *))reply {

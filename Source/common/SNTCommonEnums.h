@@ -93,6 +93,7 @@ typedef NS_ENUM(NSInteger, SNTEventLogType) {
   SNTEventLogTypeSyslog,
   SNTEventLogTypeFilelog,
   SNTEventLogTypeProtobuf,
+  SNTEventLogTypeNull,
 };
 
 // The return status of a sync.
