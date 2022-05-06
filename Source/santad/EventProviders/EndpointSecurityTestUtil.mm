@@ -207,13 +207,7 @@ CF_EXTERN_C_END
 }
 
 - (BOOL)removeClient:(es_client_t *_Nonnull)client {
-  MockESClient *clientToRemove;
-  for (MockESClient *c in self.clients) {
-    if (client == (__bridge es_client_t *)c) {
-      clientToRemove = c;
-      break;
-    }
-  }
+  MockESClient *clientToRemove = [self findClient:client];
 
   if (!clientToRemove) {
     NSLog(@"Attempted to remove unknown mock es client.");
@@ -252,17 +246,24 @@ CF_EXTERN_C_END
   return ES_RESPOND_RESULT_SUCCESS;
 };
 
+- (MockESClient *)findClient:(es_client_t *)client {
+  for (MockESClient *c in self.clients) {
+    // Since we're mocking out a C interface and using this exact pointer as our
+    // client identifier, only check for pointer equality.
+    if (client == (__bridge es_client_t *)c) {
+      return c;
+    }
+  }
+  return nil;
+}
+
 - (void)setSubscriptions:(const es_event_type_t *_Nonnull)events
              event_count:(uint32_t)event_count
                    value:(NSNumber *)value
                   client:(es_client_t *)client {
   @synchronized(self) {
-    MockESClient *toUpdate = nil;
-    for (MockESClient *c in self.clients) {
-      if (client == (__bridge es_client_t *)c) {
-        toUpdate = c;
-      }
-    }
+    MockESClient *toUpdate = [self findClient:client];
+
     if (toUpdate == nil) {
       NSLog(@"setting subscription for unknown client");
       return;
