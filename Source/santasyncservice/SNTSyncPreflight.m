@@ -106,6 +106,13 @@
                                                             dispatch_group_leave(group);
                                                           }];
 
+  dispatch_group_enter(group);
+  NSNumber *enableAllEventUpload = resp[kEnableAllEventUpload];
+  [[self.daemonConn remoteObjectProxy] setEnableAllEventUpload:[enableAllEventUpload boolValue]
+                                                         reply:^{
+                                                           dispatch_group_leave(group);
+                                                         }];
+
   self.syncState.eventBatchSize = [resp[kBatchSize] unsignedIntegerValue] ?: kDefaultEventBatchSize;
 
   // Don't let these go too low
