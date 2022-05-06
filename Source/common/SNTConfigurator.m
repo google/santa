@@ -703,6 +703,8 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
     return SNTEventLogTypeSyslog;
   } else if ([logType isEqualToString:@"null"]) {
     return SNTEventLogTypeNull;
+  } else if ([logType isEqualToString:@"file"]) {
+    return SNTEventLogTypeFilelog;
   } else {
     return SNTEventLogTypeFilelog;
   }

@@ -448,6 +448,7 @@
         break;
       }
       case SNTEventLogTypeNull: {
+        // Messages sent to nil objects do nothing, which is perfect for a null logger.
         logger = nil;
         break;
       }
