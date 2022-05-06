@@ -207,7 +207,7 @@ CF_EXTERN_C_END
 }
 
 - (BOOL)removeClient:(es_client_t *_Nonnull)client {
-  MockESClient *clientToRemove = nil;
+  MockESClient *clientToRemove;
   for (MockESClient *c in self.clients) {
     if (client == (__bridge es_client_t *)c) {
       clientToRemove = c;
