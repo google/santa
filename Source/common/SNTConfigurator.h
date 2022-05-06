@@ -151,9 +151,10 @@
 
 ///
 ///  Defines how event logs are stored. Options are:
-///    SNTEventLogTypeSyslog: Sent to ASL or ULS (if built with the 10.12 SDK or later).
-///    SNTEventLogTypeFilelog: Sent to a file on disk. Use eventLogPath to specify a path.
-///    SNTEventLogTypeProtobuf: (BETA) Sent to a file on disk, using maildir format. Use
+///    SNTEventLogTypeSyslog "syslog": Sent to ASL or ULS (if built with the 10.12 SDK or later).
+///    SNTEventLogTypeFilelog "file": Sent to a file on disk. Use eventLogPath to specify a path.
+///    SNTEventLogTypeNull "null": Logs nothing
+///    SNTEventLogTypeProtobuf "protobuf": (BETA) Sent to a file on disk, using maildir format. Use
 ///      mailDirectory to specify a path. Use mailDirectoryFileSizeThresholdKB,
 ///      mailDirectorySizeThresholdMB and mailDirectoryEventMaxFlushTimeSec to configure
 ///      additional maildir format settings.
@@ -420,7 +421,7 @@
 ///  If true, events will be uploaded for all executions, even those that are allowed.
 ///  Use with caution, this generates a lot of events. Defaults to false.
 ///
-@property(readonly, nonatomic) BOOL enableAllEventUpload;
+@property(nonatomic) BOOL enableAllEventUpload;
 
 ///
 ///  If true, forks and exits will be logged. Defaults to false.

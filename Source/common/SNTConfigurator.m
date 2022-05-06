@@ -701,6 +701,10 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
     return SNTEventLogTypeProtobuf;
   } else if ([logType isEqualToString:@"syslog"]) {
     return SNTEventLogTypeSyslog;
+  } else if ([logType isEqualToString:@"null"]) {
+    return SNTEventLogTypeNull;
+  } else if ([logType isEqualToString:@"file"]) {
+    return SNTEventLogTypeFilelog;
   } else {
     return SNTEventLogTypeFilelog;
   }
@@ -751,7 +755,7 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
   NSNumber *n = self.syncState[kEnableAllEventUploadKey];
   if (n) return [n boolValue];
 
-  return [self.configState[kEnableAllEventUploadKey];
+  return [self.configState[kEnableAllEventUploadKey] boolValue];
 }
 
 - (void)setEnableAllEventUpload:(BOOL)enabled {
