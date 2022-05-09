@@ -119,10 +119,15 @@
   if (!formatStr.length) return nil;
 
   if (event.fileSHA256) {
-    formatStr = [formatStr stringByReplacingOccurrencesOfString:@"%file_sha%"
+    // This key is deprecated, use %file_identifier% or %bundle_or_file_identifier%
+    formatStr =
+      [formatStr stringByReplacingOccurrencesOfString:@"%file_sha%"
+                                           withString:event.fileBundleHash ?: event.fileSHA256];
+
+    formatStr = [formatStr stringByReplacingOccurrencesOfString:@"%file_identifier%"
                                                      withString:event.fileSHA256];
     formatStr =
-      [formatStr stringByReplacingOccurrencesOfString:@"%bundle_or_file_sha%"
+      [formatStr stringByReplacingOccurrencesOfString:@"%bundle_or_file_identifier%"
                                            withString:event.fileBundleHash ?: event.fileSHA256];
   }
   if (event.executingUser) {

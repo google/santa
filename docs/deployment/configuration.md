@@ -78,15 +78,16 @@ take them to a web page with more information about that event.
 This property contains a kind of format string to be turned into the URL to send
 them to. The following sequences will be replaced in the final URL:
 
-| Key                     | Description                                                                    |
-| ----------------------- | ------------------------------------------------------------------------------ |
-| %file_sha%              | SHA-256 of the file that was blocked                                           |
-| %bundle\_or\_file\_sha% | SHA-256 of the file that was blocked or the bundle containing it, if available |
-| %machine\_id%           | ID of the machine                                                              |
-| %username%              | The executing user                                                             |
-| %serial%                | System's serial number                                                         |
-| %uuid%                  | System's UUID                                                                  |
-| %hostname%              | System's full hostname                                                         |
+| Key                            | Description                                                                    |
+| ------------------------------ | ------------------------------------------------------------------------------ |
+| %file_identifier%              | SHA-256 of the file that was blocked                                           |
+| %bundle\_or\_file\_identifier% | SHA-256 of the file that was blocked or the bundle containing it, if available |
+| %file_sha%                     | Deprecated, acts like bundle\_or\_file\_identifier                             |
+| %machine\_id%                  | ID of the machine                                                              |
+| %username%                     | The executing user                                                             |
+| %serial%                       | System's serial number                                                         |
+| %uuid%                         | System's UUID                                                                  |
+| %hostname%                     | System's full hostname                                                         |
 
 For example: `https://sync-server-hostname/%machine_id%/%file_sha%`
 
