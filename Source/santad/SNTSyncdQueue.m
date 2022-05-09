@@ -23,7 +23,6 @@
 @interface SNTSyncdQueue ()
 @property NSCache<NSString *, NSDate *> *uploadBackoff;
 @property dispatch_queue_t syncdQueue;
-@property dispatch_semaphore_t sema;
 @end
 
 @implementation SNTSyncdQueue
@@ -34,7 +33,6 @@
     _uploadBackoff = [[NSCache alloc] init];
     _uploadBackoff.countLimit = 128;
     _syncdQueue = dispatch_queue_create("com.google.syncd_queue", DISPATCH_QUEUE_SERIAL);
-    _sema = dispatch_semaphore_create(0);
   }
   return self;
 }
@@ -66,25 +64,10 @@
   }];
 }
 
-- (void)startSyncingEvents {
-  dispatch_semaphore_signal(self.sema);
-}
-
-- (void)stopSyncingEvents {
-  self.sema = dispatch_semaphore_create(0);
-}
-
-// Hold events for a few seconds to allow santad and santactl to establish connections.
-// If the connections are not established in time drop the event from the queue.
-// They will be uploaded during a full sync.
 - (void)dispatchBlockOnSyncdQueue:(void (^)(void))block {
+  if (!block) return;
   dispatch_async(self.syncdQueue, ^{
-    if (!dispatch_semaphore_wait(self.sema, dispatch_time(DISPATCH_TIME_NOW, 2 * NSEC_PER_SEC))) {
-      if (block) block();
-      dispatch_semaphore_signal(self.sema);
-    } else {
-      LOGD(@"Dropping block %@ from com.google.syncd_queue", block);
-    }
+    block();
   });
 }
 
