@@ -25,7 +25,5 @@
 
 - (void)addEvents:(NSArray<SNTStoredEvent *> *)events isFromBundle:(BOOL)isFromBundle;
 - (void)addBundleEvent:(SNTStoredEvent *)event reply:(void (^)(SNTBundleEventAction))reply;
-- (void)startSyncingEvents;
-- (void)stopSyncingEvents;
 
 @end
