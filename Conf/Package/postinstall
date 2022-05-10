@@ -26,6 +26,9 @@ mkdir -p /usr/local/bin
 # Load com.google.santa.metricservice
 /bin/launchctl load -w /Library/LaunchDaemons/com.google.santa.metricservice.plist
 
+# Load com.google.santa.syncservice
+/bin/launchctl load -w /Library/LaunchDaemons/com.google.santa.syncservice.plist
+
 GUI_USER=$(/usr/bin/stat -f '%u' /dev/console)
 [[ -z "${GUI_USER}" ]] && exit 0
 
