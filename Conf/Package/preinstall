@@ -9,6 +9,7 @@
 /bin/launchctl remove com.google.santad || true
 /bin/launchctl remove com.google.santa.bundleservice || true
 /bin/launchctl remove com.google.santa.metricservice || true
+/bin/launchctl remove com.google.santa.syncservice || true
 
 /bin/sleep 1
 
