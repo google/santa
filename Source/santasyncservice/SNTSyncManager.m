@@ -266,8 +266,8 @@ static void reachabilityHandler(SCNetworkReachabilityRef target, SCNetworkReacha
     return [self eventUploadWithSyncState:syncState];
   }
 
-  SLOGE(@"Preflight failed, will try again once %@ is reachable",
-        [[SNTConfigurator configurator] syncBaseURL].absoluteString);
+  LOGE(@"Preflight failed, will try again once %@ is reachable",
+       [[SNTConfigurator configurator] syncBaseURL].absoluteString);
   [self startReachability];
   return SNTSyncStatusTypePreflightFailed;
 }
