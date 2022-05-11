@@ -15,6 +15,7 @@
 #import "Source/santa/SNTNotificationManager.h"
 
 #import <MOLXPCConnection/MOLXPCConnection.h>
+#import <UserNotifications/UserNotifications.h>
 
 #import "Source/common/SNTBlockMessage.h"
 #import "Source/common/SNTConfigurator.h"
@@ -58,7 +59,7 @@ static NSString *const silencedNotificationsKey = @"SilencedNotifications";
   [self.pendingNotifications removeObject:self.currentWindowController];
   self.currentWindowController = nil;
 
-  if ([self.pendingNotifications count]) {
+  if (self.pendingNotifications.count) {
     [self showQueuedWindow];
   } else {
     MOLXPCConnection *bc = [SNTXPCBundleServiceInterface configuredConnection];
@@ -207,36 +208,52 @@ static NSString *const silencedNotificationsKey = @"SilencedNotifications";
 #pragma mark SNTNotifierXPC protocol methods
 
 - (void)postClientModeNotification:(SNTClientMode)clientmode {
-  NSUserNotification *un = [[NSUserNotification alloc] init];
-  un.title = @"Santa";
-  un.hasActionButton = NO;
-  NSString *customMsg;
+  UNUserNotificationCenter *un = [UNUserNotificationCenter currentNotificationCenter];
+
+  UNMutableNotificationContent *content = [[UNMutableNotificationContent alloc] init];
+  content.title = @"Santa";
+
   switch (clientmode) {
-    case SNTClientModeMonitor:
-      un.informativeText = @"Switching into Monitor mode";
-      customMsg = [[SNTConfigurator configurator] modeNotificationMonitor];
-      if (!customMsg) break;
-      if (!customMsg.length) return;
-      un.informativeText = [SNTBlockMessage stringFromHTML:customMsg];
+    case SNTClientModeMonitor: {
+      content.body = @"Switching into Monitor mode";
+      NSString *customMsg = [[SNTConfigurator configurator] modeNotificationMonitor];
+      if (customMsg.length) {
+        content.body = [SNTBlockMessage stringFromHTML:customMsg];
+      }
       break;
-    case SNTClientModeLockdown:
-      un.informativeText = @"Switching into Lockdown mode";
-      customMsg = [[SNTConfigurator configurator] modeNotificationLockdown];
-      if (!customMsg) break;
-      if (!customMsg.length) return;
-      un.informativeText = [SNTBlockMessage stringFromHTML:customMsg];
+    }
+    case SNTClientModeLockdown: {
+      content.body = @"Switching into Lockdown mode";
+      NSString *customMsg = [[SNTConfigurator configurator] modeNotificationLockdown];
+      if (customMsg.length) {
+        content.body = [SNTBlockMessage stringFromHTML:customMsg];
+      }
       break;
+    }
     default: return;
   }
-  [[NSUserNotificationCenter defaultUserNotificationCenter] deliverNotification:un];
+
+  UNNotificationRequest *req =
+    [UNNotificationRequest requestWithIdentifier:@"clientModeNotification"
+                                         content:content
+                                         trigger:nil];
+
+  [un addNotificationRequest:req withCompletionHandler:nil];
 }
 
 - (void)postRuleSyncNotificationWithCustomMessage:(NSString *)message {
-  NSUserNotification *un = [[NSUserNotification alloc] init];
-  un.title = @"Santa";
-  un.hasActionButton = NO;
-  un.informativeText = message ?: @"Requested application can now be run";
-  [[NSUserNotificationCenter defaultUserNotificationCenter] deliverNotification:un];
+  UNUserNotificationCenter *un = [UNUserNotificationCenter currentNotificationCenter];
+
+  UNMutableNotificationContent *content = [[UNMutableNotificationContent alloc] init];
+  content.title = @"Santa";
+  content.body = message ?: @"Requested application can now be run";
+
+  UNNotificationRequest *req =
+    [UNNotificationRequest requestWithIdentifier:@"clientModeNotification"
+                                         content:content
+                                         trigger:nil];
+
+  [un addNotificationRequest:req withCompletionHandler:nil];
 }
 
 - (void)postBlockNotification:(SNTStoredEvent *)event withCustomMessage:(NSString *)message {

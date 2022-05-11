@@ -36,6 +36,7 @@ objc_library(
         "IOKit",
         "SecurityInterface",
         "SystemExtensions",
+        "UserNotifications",
     ],
     deps = [
         "//Source/common:SNTBlockMessage_SantaGUI",
