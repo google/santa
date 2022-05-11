@@ -217,17 +217,21 @@ static NSString *const silencedNotificationsKey = @"SilencedNotifications";
     case SNTClientModeMonitor: {
       content.body = @"Switching into Monitor mode";
       NSString *customMsg = [[SNTConfigurator configurator] modeNotificationMonitor];
-      if (customMsg.length) {
-        content.body = [SNTBlockMessage stringFromHTML:customMsg];
-      }
+      if (!customMsg) break;
+      // If a custom message is added but as an empty string, disable notifications.
+      if (!customMsg.length) return;
+
+      content.body = [SNTBlockMessage stringFromHTML:customMsg];
       break;
     }
     case SNTClientModeLockdown: {
       content.body = @"Switching into Lockdown mode";
       NSString *customMsg = [[SNTConfigurator configurator] modeNotificationLockdown];
-      if (customMsg.length) {
-        content.body = [SNTBlockMessage stringFromHTML:customMsg];
-      }
+      if (!customMsg) break;
+      // If a custom message is added but as an empty string, disable notifications.
+      if (!customMsg.length) return;
+
+      content.body = [SNTBlockMessage stringFromHTML:customMsg];
       break;
     }
     default: return;
@@ -249,7 +253,7 @@ static NSString *const silencedNotificationsKey = @"SilencedNotifications";
   content.body = message ?: @"Requested application can now be run";
 
   UNNotificationRequest *req =
-    [UNNotificationRequest requestWithIdentifier:@"clientModeNotification"
+    [UNNotificationRequest requestWithIdentifier:@"ruleSyncNotification"
                                          content:content
                                          trigger:nil];
 
