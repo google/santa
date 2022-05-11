@@ -254,10 +254,9 @@ static NSString *const silencedNotificationsKey = @"SilencedNotifications";
 
   NSString *identifier = [NSString stringWithFormat:@"ruleSyncNotification_%@", content.body];
 
-  UNNotificationRequest *req =
-    [UNNotificationRequest requestWithIdentifier:identifier
-                                         content:content
-                                         trigger:nil];
+  UNNotificationRequest *req = [UNNotificationRequest requestWithIdentifier:identifier
+                                                                    content:content
+                                                                    trigger:nil];
 
   [un addNotificationRequest:req withCompletionHandler:nil];
 }
