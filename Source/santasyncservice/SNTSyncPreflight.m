@@ -75,7 +75,11 @@
     dispatch_group_leave(group);
   }];
 
-  dispatch_group_wait(group, dispatch_time(DISPATCH_TIME_NOW, 2 * NSEC_PER_SEC));
+  // Stop the sync if we are unable to communicate with daemon.
+  if (!dispatch_group_wait(group, dispatch_time(DISPATCH_TIME_NOW, 2 * NSEC_PER_SEC))) {
+    SLOGE(@"Unable to communicate with daemon.");
+    return NO;
+  }
 
   // If user requested it or we've never had a successful sync, try from a clean slate.
   if (syncClean) {
