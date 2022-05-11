@@ -28,7 +28,8 @@
 }
 
 - (NSString *)messageHash {
-  return @"";
+  [self doesNotRecognizeSelector:_cmd];
+  return nil;
 }
 
 @end

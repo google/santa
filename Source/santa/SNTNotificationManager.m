@@ -83,9 +83,7 @@ static NSString *const silencedNotificationsKey = @"SilencedNotifications";
 
 - (BOOL)notificationAlreadyQueued:(SNTMessageWindowController *)pendingMsg {
   for (SNTMessageWindowController *msg in self.pendingNotifications) {
-    if ([msg messageHash] == [pendingMsg messageHash]) {
-      return YES;
-    }
+    if ([[msg messageHash] isEqual:[pendingMsg messageHash]]) return YES;
   }
   return NO;
 }
@@ -233,6 +231,14 @@ static NSString *const silencedNotificationsKey = @"SilencedNotifications";
   [[NSUserNotificationCenter defaultUserNotificationCenter] deliverNotification:un];
 }
 
+- (void)postRuleSyncNotificationWithCustomMessage:(NSString *)message {
+  NSUserNotification *un = [[NSUserNotification alloc] init];
+  un.title = @"Santa";
+  un.hasActionButton = NO;
+  un.informativeText = message ?: @"Requested application can now be run";
+  [[NSUserNotificationCenter defaultUserNotificationCenter] deliverNotification:un];
+}
+
 - (void)postBlockNotification:(SNTStoredEvent *)event withCustomMessage:(NSString *)message {
   if (!event) {
     LOGI(@"Error: Missing event object in message received from daemon!");
@@ -243,14 +249,6 @@ static NSString *const silencedNotificationsKey = @"SilencedNotifications";
     [[SNTBinaryMessageWindowController alloc] initWithEvent:event andMessage:message];
 
   [self queueMessage:pendingMsg];
-}
-
-- (void)postRuleSyncNotificationWithCustomMessage:(NSString *)message {
-  NSUserNotification *un = [[NSUserNotification alloc] init];
-  un.title = @"Santa";
-  un.hasActionButton = NO;
-  un.informativeText = message ?: @"Requested application can now be run";
-  [[NSUserNotificationCenter defaultUserNotificationCenter] deliverNotification:un];
 }
 
 - (void)postUSBBlockNotification:(SNTDeviceEvent *)event withCustomMessage:(NSString *)message {
