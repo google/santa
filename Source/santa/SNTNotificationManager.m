@@ -252,8 +252,10 @@ static NSString *const silencedNotificationsKey = @"SilencedNotifications";
   content.title = @"Santa";
   content.body = message ?: @"Requested application can now be run";
 
+  NSString *identifier = [NSString stringWithFormat:@"ruleSyncNotification_%@", content.body];
+
   UNNotificationRequest *req =
-    [UNNotificationRequest requestWithIdentifier:@"ruleSyncNotification"
+    [UNNotificationRequest requestWithIdentifier:identifier
                                          content:content
                                          trigger:nil];
 
