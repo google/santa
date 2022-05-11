@@ -28,7 +28,7 @@
 @property(readonly, nonatomic) NSDictionary *forcedConfigKeyTypes;
 
 /// Holds the configurations from a sync server and mobileconfig.
-@property NSMutableDictionary *syncState;
+@property NSDictionary *syncState;
 @property NSMutableDictionary *configState;
 
 /// Was --debug passed as an argument to this process?
