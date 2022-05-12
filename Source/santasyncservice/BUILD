@@ -5,7 +5,6 @@ licenses(["notice"])
 
 package(
     default_visibility = ["//:santa_package_group"],
-    features = ["-layering_check"],
 )
 
 objc_library(
@@ -50,11 +49,19 @@ objc_library(
     deps = [
         ":FCM_lib",
         ":broadcaster_lib",
+        "//Source/common:SNTCommon",
+        "//Source/common:SNTCommonEnums",
+        "//Source/common:SNTConfigurator",
         "//Source/common:SNTFileInfo",
         "//Source/common:SNTLogging",
+        "//Source/common:SNTRule",
+        "//Source/common:SNTStoredEvent",
+        "//Source/common:SNTStrengthify",
+        "//Source/common:SNTSystemInfo",
         "//Source/common:SNTXPCControlInterface",
         "//Source/common:SNTXPCSyncServiceInterface",
         "@MOLAuthenticatingURLSession",
+        "@MOLCertificate",
         "@MOLXPCConnection",
     ],
 )
@@ -129,6 +136,7 @@ objc_library(
         "main.m",
     ],
     deps = [
+        ":broadcaster_lib",
         ":sync_lib",
         "//Source/common:SNTDropRootPrivs",
         "//Source/common:SNTLogging",

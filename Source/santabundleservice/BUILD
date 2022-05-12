@@ -2,6 +2,10 @@ load("@build_bazel_rules_apple//apple:macos.bzl", "macos_command_line_applicatio
 
 licenses(["notice"])
 
+package(
+    default_visibility = ["//:santa_package_group"],
+)
+
 objc_library(
     name = "santabs_lib",
     srcs = [
@@ -12,6 +16,7 @@ objc_library(
     deps = [
         "//Source/common:SNTFileInfo",
         "//Source/common:SNTLogging",
+        "//Source/common:SNTStoredEvent",
         "//Source/common:SNTXPCBundleServiceInterface",
         "//Source/common:SNTXPCNotifierInterface",
         "@FMDB",

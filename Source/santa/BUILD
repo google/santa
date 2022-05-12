@@ -2,6 +2,10 @@ load("@build_bazel_rules_apple//apple:macos.bzl", "macos_application")
 
 licenses(["notice"])
 
+package(
+    default_visibility = ["//:santa_package_group"],
+)
+
 exports_files([
     "Resources/Images.xcassets/AppIcon.appiconset/santa-hat-icon-256.png",
 ])
@@ -41,9 +45,13 @@ objc_library(
     deps = [
         "//Source/common:SNTBlockMessage_SantaGUI",
         "//Source/common:SNTConfigurator",
+        "//Source/common:SNTDeviceEvent",
         "//Source/common:SNTLogging",
+        "//Source/common:SNTStoredEvent",
+        "//Source/common:SNTStrengthify",
         "//Source/common:SNTXPCControlInterface",
         "//Source/common:SNTXPCNotifierInterface",
+        "@MOLCertificate",
         "@MOLCodesignChecker",
         "@MOLXPCConnection",
     ],

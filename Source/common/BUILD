@@ -3,7 +3,6 @@ load("@rules_proto_grpc//objc:defs.bzl", "objc_proto_library")
 
 package(
     default_visibility = ["//:santa_package_group"],
-    features = ["-layering_check"],
 )
 
 licenses(["notice"])
@@ -11,7 +10,6 @@ licenses(["notice"])
 proto_library(
     name = "santa_proto",
     srcs = ["santa.proto"],
-    features = ["layering_check"],
     deps = [
         "@com_google_protobuf//:any_proto",
         "@com_google_protobuf//:timestamp_proto",
@@ -28,7 +26,6 @@ objc_proto_library(
 cc_library(
     name = "SantaCache",
     hdrs = ["SantaCache.h"],
-    features = ["layering_check"],
     deps = ["//Source/common:SNTCommon"],
 )
 
@@ -49,15 +46,7 @@ objc_library(
         ":SNTConfigurator",
         ":SNTLogging",
         ":SNTStoredEvent",
-    ],
-)
-
-objc_library(
-    name = "SNTDeviceEvent",
-    srcs = ["SNTDeviceEvent.m"],
-    hdrs = ["SNTDeviceEvent.h"],
-    deps = [
-        ":SNTCommonEnums",
+        ":SNTSystemInfo",
     ],
 )
 
@@ -71,6 +60,7 @@ objc_library(
         ":SNTDeviceEvent",
         ":SNTLogging",
         ":SNTStoredEvent",
+        ":SNTSystemInfo",
     ],
 )
 
@@ -80,6 +70,15 @@ objc_library(
     hdrs = ["SNTCachedDecision.h"],
     deps = [
         ":SNTCommon",
+        ":SNTCommonEnums",
+    ],
+)
+
+objc_library(
+    name = "SNTDeviceEvent",
+    srcs = ["SNTDeviceEvent.m"],
+    hdrs = ["SNTDeviceEvent.h"],
+    deps = [
         ":SNTCommonEnums",
     ],
 )
@@ -129,7 +128,6 @@ cc_library(
         "TARGET_OS_OSX",
         "TARGET_OS_MAC",
     ],
-    features = ["layering_check"],
 )
 
 objc_library(
@@ -144,7 +142,6 @@ cc_library(
     srcs = ["SNTPrefixTree.cc"],
     hdrs = ["SNTPrefixTree.h"],
     copts = ["-std=c++11"],
-    features = ["layering_check"],
     deps = [":SNTLogging"],
 )
 
@@ -168,7 +165,6 @@ objc_library(
 cc_library(
     name = "SNTStrengthify",
     hdrs = ["SNTStrengthify.h"],
-    features = ["layering_check"],
 )
 
 objc_library(
@@ -202,9 +198,12 @@ objc_library(
     srcs = ["SNTXPCControlInterface.m"],
     hdrs = ["SNTXPCControlInterface.h"],
     deps = [
+        ":SNTCommonEnums",
         ":SNTConfigurator",
+        ":SNTRule",
         ":SNTStoredEvent",
         ":SNTXPCUnprivilegedControlInterface",
+        "@MOLCodesignChecker",
         "@MOLXPCConnection",
     ],
 )
@@ -231,6 +230,7 @@ objc_library(
     srcs = ["SNTXPCSyncServiceInterface.m"],
     hdrs = ["SNTXPCSyncServiceInterface.h"],
     deps = [
+        ":SNTCommonEnums",
         ":SNTStoredEvent",
         "@MOLXPCConnection",
     ],

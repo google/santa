@@ -3,7 +3,6 @@ load("//:helper.bzl", "santa_unit_test")
 
 package(
     default_visibility = ["//:santa_package_group"],
-    features = ["-layering_check"],
 )
 
 licenses(["notice"])
@@ -22,11 +21,14 @@ objc_library(
     ],
     deps = [
         "//Source/common:SNTCachedDecision",
+        "//Source/common:SNTCommonEnums",
+        "//Source/common:SNTConfigurator",
         "//Source/common:SNTFileInfo",
         "//Source/common:SNTLogging",
         "//Source/common:SNTRule",
         "//Source/common:SNTStoredEvent",
         "@FMDB",
+        "@MOLCertificate",
         "@MOLCodesignChecker",
     ],
 )
@@ -52,6 +54,8 @@ objc_library(
     deps = [
         ":SNTEventProvider",
         "//Source/common:SNTCommon",
+        "//Source/common:SNTConfigurator",
+        "//Source/common:SNTLogging",
         "//Source/common:SNTPrefixTree",
         "//Source/common:SantaCache",
     ],
@@ -69,15 +73,20 @@ objc_library(
         "Logs/SNTSyslogEventLog.h",
         "SNTDatabaseController.h",
     ],
+    hdrs = [
+        "Logs/SNTEventLog.h",
+    ],
     deps = [
         ":database_controller",
         "//Source/common:SNTAllowlistInfo",
         "//Source/common:SNTCachedDecision",
         "//Source/common:SNTCommon",
+        "//Source/common:SNTCommonEnums",
         "//Source/common:SNTConfigurator",
         "//Source/common:SNTLogging",
         "//Source/common:SNTRule",
         "//Source/common:SNTStoredEvent",
+        "@FMDB",
     ],
 )
 
@@ -92,7 +101,13 @@ objc_library(
     ],
     deps = [
         ":event_logs_common",
+        "//Source/common:SNTAllowlistInfo",
+        "//Source/common:SNTCachedDecision",
+        "//Source/common:SNTCommon",
+        "//Source/common:SNTConfigurator",
+        "//Source/common:SNTLogging",
         "//Source/common:SNTMetricSet",
+        "//Source/common:SNTStoredEvent",
         "//Source/common:santa_objc_proto",
     ],
 )
@@ -108,6 +123,12 @@ objc_library(
     deps = [
         ":endpoint_security_manager",
         ":event_logs_common",
+        "//Source/common:SNTAllowlistInfo",
+        "//Source/common:SNTCachedDecision",
+        "//Source/common:SNTCommon",
+        "//Source/common:SNTConfigurator",
+        "//Source/common:SNTStoredEvent",
+        "//Source/common:SNTLogging",
     ],
 )
 
@@ -116,9 +137,14 @@ objc_library(
     srcs = [
         "Logs/SNTFileEventLog.h",
         "Logs/SNTFileEventLog.m",
+        "Logs/SNTSyslogEventLog.h",
     ],
     deps = [
         ":event_logs_common",
+        "//Source/common:SNTCommon",
+        "//Source/common:SNTConfigurator",
+        "//Source/common:SNTLogging",
+        "//Source/common:SNTStrengthify",
     ],
 )
 
@@ -129,6 +155,7 @@ objc_library(
         ":protobuf_event_logs",
         ":syslog_event_logs",
     ],
+    hdrs = ["Logs/SNTEventLog.h"],
 )
 
 objc_library(
@@ -172,21 +199,31 @@ objc_library(
         ":database_controller",
         ":endpoint_security_manager",
         ":event_logs",
+        ":SNTApplicationCoreMetrics",
+        "//Source/common:SantaCache",
+        "//Source/common:SNTAllowlistInfo",
         "//Source/common:SNTBlockMessage",
+        "//Source/common:SNTCachedDecision",
+        "//Source/common:SNTCommon",
         "//Source/common:SNTCommonEnums",
         "//Source/common:SNTConfigurator",
         "//Source/common:SNTDeviceEvent",
         "//Source/common:SNTDropRootPrivs",
         "//Source/common:SNTFileInfo",
+        "//Source/common:SNTLogging",
         "//Source/common:SNTMetricSet",
         "//Source/common:SNTRule",
         "//Source/common:SNTStoredEvent",
+        "//Source/common:SNTStrengthify",
+        "//Source/common:SNTXPCBundleServiceInterface",
         "//Source/common:SNTXPCControlInterface",
         "//Source/common:SNTXPCMetricServiceInterface",
         "//Source/common:SNTXPCNotifierInterface",
         "//Source/common:SNTXPCSyncServiceInterface",
-        "//Source/santad:SNTApplicationCoreMetrics",
+        "//Source/common:SNTXPCUnprivilegedControlInterface",
         "@FMDB",
+        "@MOLCertificate",
+        "@MOLCodesignChecker",
         "@MOLXPCConnection",
     ],
 )

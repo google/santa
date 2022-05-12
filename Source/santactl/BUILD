@@ -5,7 +5,6 @@ licenses(["notice"])
 
 package(
     default_visibility = ["//:santa_package_group"],
-    features = ["-layering_check"],
 )
 
 objc_library(
@@ -53,6 +52,7 @@ objc_library(
         "//Source/common:SNTXPCUnprivilegedControlInterface",
         "//Source/santasyncservice:sync_lib",
         "@FMDB",
+        "@MOLCertificate",
         "@MOLCodesignChecker",
         "@MOLXPCConnection",
     ],
