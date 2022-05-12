@@ -248,6 +248,9 @@ objc_library(
         "EventProviders/EndpointSecurityTestUtil.h",
         "EventProviders/EndpointSecurityTestUtil.mm",
     ],
+    hdrs = [
+        "EventProviders/EndpointSecurityTestUtil.h",
+    ],
     sdk_dylibs = [
         "EndpointSecurity",
         "bsm",
@@ -299,6 +302,11 @@ macos_bundle(
 santa_unit_test(
     name = "SNTExecutionControllerTest",
     srcs = [
+        "SNTExecutionController.h",
+        "DataLayer/SNTDatabaseTable.h",
+        "DataLayer/SNTEventTable.h",
+        "DataLayer/SNTRuleTable.h",
+        "EventProviders/SNTEventProvider.h",
         "SNTExecutionControllerTest.m",
     ],
     sdk_dylibs = [
@@ -311,6 +319,7 @@ santa_unit_test(
         "//Source/common:SNTCachedDecision",
         "//Source/common:SNTCommon",
         "//Source/common:SNTCommonEnums",
+        "//Source/common:SNTConfigurator",
         "//Source/common:SNTDropRootPrivs",
         "//Source/common:SNTFileInfo",
         "//Source/common:SNTLogging",
@@ -319,6 +328,8 @@ santa_unit_test(
         "//Source/common:SNTRule",
         "//Source/common:SNTXPCNotifierInterface",
         "//Source/common:SantaCache",
+        "@FMDB",
+        "@MOLCertificate",
         "@MOLCodesignChecker",
         "@MOLXPCConnection",
         "@OCMock",
@@ -355,6 +366,7 @@ santa_unit_test(
     ],
     deps = [
         "//Source/common:SNTCachedDecision",
+        "//Source/common:SNTCommonEnums",
         "//Source/common:SNTConfigurator",
         "//Source/common:SNTFileInfo",
         "//Source/common:SNTLogging",
@@ -383,7 +395,9 @@ santa_unit_test(
     ],
     deps = [
         ":EndpointSecurityTestLib",
+        "//Source/common:SNTConfigurator",
         "//Source/common:SNTCommon",
+        "//Source/common:SNTLogging",
         "//Source/common:SNTPrefixTree",
         "//Source/common:SantaCache",
     ],
@@ -392,6 +406,8 @@ santa_unit_test(
 santa_unit_test(
     name = "SNTDeviceManagerTest",
     srcs = [
+        "EventProviders/DiskArbitrationTestUtil.h",
+        "EventProviders/SNTDeviceManager.h",
         "EventProviders/SNTDeviceManagerTest.mm",
     ],
     minimum_os_version = "10.15",
@@ -404,6 +420,8 @@ santa_unit_test(
         ":EndpointSecurityTestLib",
         ":santad_lib",
         "//Source/common:SNTCommon",
+        "//Source/common:SNTConfigurator",
+        "//Source/common:SNTDeviceEvent",
         "//Source/common:SNTPrefixTree",
         "//Source/common:SantaCache",
         "@OCMock",
@@ -413,7 +431,9 @@ santa_unit_test(
 santa_unit_test(
     name = "SNTApplicationTest",
     srcs = [
+        "SNTApplication.h",
         "SNTApplicationTest.m",
+        "SNTDatabaseController.h",
     ],
     data = [
         "//Source/santad/testdata:binaryrules_testdata",
@@ -426,6 +446,9 @@ santa_unit_test(
     deps = [
         ":EndpointSecurityTestLib",
         ":santad_lib",
+        "//Source/common:SNTConfigurator",
+        "@FMDB",
+        "@MOLCertificate",
         "@MOLCodesignChecker",
         "@MOLXPCConnection",
         "@OCMock",
@@ -463,6 +486,7 @@ santa_unit_test(
     deps = [
         ":SNTApplicationCoreMetrics",
         "//Source/common:SNTCommonEnums",
+        "//Source/common:SNTConfigurator",
         "//Source/common:SNTMetricSet",
         "//Source/common:SNTSystemInfo",
         "//Source/santametricservice/Formats:SNTMetricFormatTestHelper",
@@ -473,13 +497,21 @@ santa_unit_test(
 santa_unit_test(
     name = "SNTProtobufEventLogTest",
     srcs = [
+        "Logs/SNTLogOutput.h",
+        "Logs/SNTProtobufEventLog.h",
         "Logs/SNTProtobufEventLogTest.m",
+        "Logs/SNTSimpleMaildir.h",
     ],
     minimum_os_version = "10.15",
     deps = [
         ":EndpointSecurityTestLib",
         ":event_logs",
+        "//Source/common:SNTAllowlistInfo",
+        "//Source/common:SNTCachedDecision",
         "//Source/common:SNTConfigurator",
+        "//Source/common:SNTLogging",
+        "//Source/common:SNTRule",
+        "//Source/common:SNTStoredEvent",
         "//Source/common:santa_objc_proto",
         "@OCMock",
     ],
