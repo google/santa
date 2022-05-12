@@ -154,6 +154,7 @@ objc_library(
         ":file_event_logs",
         ":protobuf_event_logs",
         ":syslog_event_logs",
+        "//Source/common:SNTCommon",
     ],
     hdrs = ["Logs/SNTEventLog.h"],
 )
