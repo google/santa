@@ -2,7 +2,6 @@ load("//:helper.bzl", "santa_unit_test")
 
 package(
     default_visibility = ["//:santa_package_group"],
-    features = ["-layering_check"],
 )
 
 licenses(["notice"])
@@ -30,6 +29,9 @@ objc_library(
         "SNTMetricRawJSONFormat.h",
         "SNTMetricRawJSONFormat.m",
     ],
+    hdrs = [
+        "SNTMetricRawJSONFormat.h",
+    ],
     deps = [
         ":SNTMetricFormat",
         "//Source/common:SNTLogging",
@@ -42,6 +44,9 @@ objc_library(
         "SNTMetricFormat.h",
         "SNTMetricMonarchJSONFormat.h",
         "SNTMetricMonarchJSONFormat.m",
+    ],
+    hdrs = [
+        "SNTMetricMonarchJSONFormat.h",
     ],
     deps = [
         ":SNTMetricFormat",
