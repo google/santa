@@ -140,6 +140,19 @@
   return [NSData dataWithContentsOfFile:path];
 }
 
+- (void)setupDefaultDaemonConnResponses {
+  OCMStub([self.daemonConnRop
+    databaseRuleCounts:([OCMArg invokeBlockWithArgs:OCMOCK_VALUE(0),  // binary
+                                                    OCMOCK_VALUE(0),  // cert
+                                                    OCMOCK_VALUE(0),  // compiler
+                                                    OCMOCK_VALUE(0),  // transitive
+                                                    OCMOCK_VALUE(0),  // teamID
+                                                    nil])]);
+  OCMStub([self.daemonConnRop syncCleanRequired:([OCMArg invokeBlockWithArgs:@NO, nil])]);
+  OCMStub([self.daemonConnRop
+    clientMode:([OCMArg invokeBlockWithArgs:OCMOCK_VALUE(SNTClientModeMonitor), nil])]);
+}
+
 #pragma mark - SNTSyncStage Tests
 
 - (void)testBaseFetchXSRFTokenSuccess {
@@ -186,6 +199,7 @@
 #pragma mark - SNTSyncPreflight Tests
 
 - (void)testPreflightBasicResponse {
+  [self setupDefaultDaemonConnResponses];
   SNTSyncPreflight *sut = [[SNTSyncPreflight alloc] initWithState:self.syncState];
 
   NSData *respData = [self dataFromFixture:@"sync_preflight_basic.json"];
@@ -199,6 +213,7 @@
 }
 
 - (void)testPreflightBlockUSBMount {
+  [self setupDefaultDaemonConnResponses];
   SNTSyncPreflight *sut = [[SNTSyncPreflight alloc] initWithState:self.syncState];
 
   NSData *respData = [self dataFromFixture:@"sync_preflight_toggle_blockusb.json"];
@@ -239,6 +254,15 @@
 - (void)testPreflightCleanSync {
   SNTSyncPreflight *sut = [[SNTSyncPreflight alloc] initWithState:self.syncState];
 
+  OCMStub([self.daemonConnRop
+    databaseRuleCounts:([OCMArg invokeBlockWithArgs:OCMOCK_VALUE(0),  // binary
+                                                    OCMOCK_VALUE(0),  // cert
+                                                    OCMOCK_VALUE(0),  // compiler
+                                                    OCMOCK_VALUE(0),  // transitive
+                                                    OCMOCK_VALUE(0),  // teamID
+                                                    nil])]);
+  OCMStub([self.daemonConnRop
+    clientMode:([OCMArg invokeBlockWithArgs:OCMOCK_VALUE(SNTClientModeMonitor), nil])]);
   OCMStub([self.daemonConnRop syncCleanRequired:([OCMArg invokeBlockWithArgs:@YES, nil])]);
 
   NSData *respData = [self dataFromDict:@{kCleanSync : @YES}];
@@ -257,6 +281,7 @@
 }
 
 - (void)testPreflightLockdown {
+  [self setupDefaultDaemonConnResponses];
   SNTSyncPreflight *sut = [[SNTSyncPreflight alloc] initWithState:self.syncState];
 
   NSData *respData = [self dataFromFixture:@"sync_preflight_lockdown.json"];
