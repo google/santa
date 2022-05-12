@@ -90,6 +90,7 @@ santa_unit_test(
         "//Source/common:SNTCachedDecision",
         "//Source/common:SNTFileInfo",
         "//Source/common:SNTLogging",
+        "//Source/common:SNTRule",
         "//Source/common:SNTXPCControlInterface",
         "@MOLCertificate",
         "@MOLCodesignChecker",
@@ -100,13 +101,23 @@ santa_unit_test(
 
 santa_unit_test(
     name = "SNTCommandMetricsTest",
-    srcs = ["Commands/SNTCommandMetricsTest.m"],
+    srcs = [
+        "SNTCommand.h",
+        "SNTCommandController.h",
+        "Commands/SNTCommandMetrics.h",
+        "Commands/SNTCommandMetricsTest.m",
+    ],
     structured_resources = glob(["Commands/testdata/*"]),
     visibility = ["//:santa_package_group"],
     deps = [
         ":santactl_lib",
+        "//Source/common:SNTCommonEnums",
+        "//Source/common:SNTConfigurator",
+        "//Source/common:SNTMetricSet",
+        "//Source/common:SNTXPCControlInterface",
         "//Source/santametricservice/Formats:SNTMetricFormatTestHelper",
         "@OCMock",
+        "@MOLXPCConnection",
     ],
 )
 

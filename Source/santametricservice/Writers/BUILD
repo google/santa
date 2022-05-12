@@ -33,6 +33,7 @@ santa_unit_test(
     ],
     deps = [
         ":SNTMetricFileWriter",
+        "//Source/common:SNTConfigurator",
     ],
 )
 
@@ -60,7 +61,9 @@ santa_unit_test(
     ],
     deps = [
         ":SNTMetricHTTPWriter",
+        "//Source/common:SNTConfigurator",
         "@OCMock",
+        "@MOLAuthenticatingURLSession",
     ],
 )
 

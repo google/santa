@@ -14,6 +14,9 @@ objc_library(
         "SNTMetricService.m",
         "main.m",
     ],
+    hdrs = [
+        "SNTMetricService.h",
+    ],
     deps = [
         "//Source/common:SNTConfigurator",
         "//Source/common:SNTDropRootPrivs",
@@ -35,8 +38,12 @@ santa_unit_test(
     structured_resources = ["//Source/santametricservice/Formats:testdata"],
     deps = [
         ":SNTMetricServiceLib",
+        "//Source/common:SNTCommonEnums",
+        "//Source/common:SNTConfigurator",
+        "//Source/common:SNTMetricSet",
         "//Source/santametricservice/Formats:SNTMetricFormatTestHelper",
         "@OCMock",
+        "@MOLAuthenticatingURLSession",
     ],
 )
 
