@@ -47,8 +47,8 @@ function build_provisionprofile_signed() {
 }
 
 function build() {
-    SANTA_DAEMON_PROVPROFILE=$GIT_ROOT/Source/santad/Santa_Daemon_Dev.provisionprofile
-    SANTA_PROVPROFILE=$GIT_ROOT/Source/santa/Santa_Dev.provisionprofile
+    SANTA_DAEMON_PROVPROFILE=$GIT_ROOT/profiles/Santa_Daemon_Dev.provisionprofile
+    SANTA_PROVPROFILE=$GIT_ROOT/profiles/Santa_Dev.provisionprofile
 
     if [[ -f $SANTA_DAEMON_PROVPROFILE && -f $SANTA_PROVPROFILE ]]; then
         echo "Using provisionprofiles in $SANTA_DAEMON_PROVPROFILE and $SANTA_PROVPROFILE"
