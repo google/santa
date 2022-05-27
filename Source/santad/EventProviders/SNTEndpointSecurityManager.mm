@@ -48,6 +48,7 @@ static const pid_t PID_MAX = 99999;
     _decisionCallback = ^(santa_message_t) {};
     _logCallback = ^(santa_message_t) {};
     [self establishClient];
+    [self muteSelf];
     _prefixTree = new SNTPrefixTree();
     _esAuthQueue =
       dispatch_queue_create("com.google.santa.daemon.es_auth", DISPATCH_QUEUE_CONCURRENT);
@@ -70,6 +71,19 @@ static const pid_t PID_MAX = 99999;
   if (_prefixTree) delete _prefixTree;
 }
 
+- (void)muteSelf {
+  audit_token_t myAuditToken;
+  mach_msg_type_number_t count = TASK_AUDIT_TOKEN_COUNT;
+  if (task_info(mach_task_self(), TASK_AUDIT_TOKEN, (task_info_t)&myAuditToken, &count) ==
+        KERN_SUCCESS) {
+    if (es_mute_process(self.client, &myAuditToken) != ES_RETURN_SUCCESS) {
+      LOGW(@"Failed to mute this client's process, its events will not be muted.");
+    }
+  } else {
+    LOGW(@"Failed to fetch this client's audit token. Its events will not be muted.");
+  }
+}
+
 - (void)establishClient API_AVAILABLE(macos(10.15)) {
   while (!self.client) {
     SNTConfigurator *config = [SNTConfigurator configurator];
@@ -84,9 +98,7 @@ static const pid_t PID_MAX = 99999;
         if (m->action_type == ES_ACTION_TYPE_AUTH) {
           es_respond_auth_result(self.client, m, ES_AUTH_RESULT_ALLOW, false);
         }
-        if (self.selfPID != pid) {
-          LOGD(@"Skipping event type: 0x%x from es_client pid: %d", m->event_type, pid);
-        }
+
         return;
       }
 
