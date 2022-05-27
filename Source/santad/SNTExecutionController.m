@@ -308,7 +308,7 @@ static NSString *const kPrinterProxyPostMonterey =
 
     copyfile_flags_t copyflags = COPYFILE_ALL | COPYFILE_UNLINK;
     if (copyfile(proxyFi.path.UTF8String, fi.path.UTF8String, NULL, copyflags) != 0) {
-      LOGW(@"Failed to apply PrinterProxy workaround for %@", fi.path);
+      LOGE(@"Failed to apply PrinterProxy workaround for %@", fi.path);
     } else {
       LOGW(@"PrinterProxy workaround applied to: %@", fi.path);
     }
