@@ -14,6 +14,7 @@
 
 #import "Source/santad/SNTExecutionController.h"
 
+#include <copyfile.h>
 #include <libproc.h>
 #include <pwd.h>
 #include <utmpx.h>
@@ -305,15 +306,12 @@ static NSString *const kPrinterProxyPostMonterey =
     SNTFileInfo *proxyFi = [self printerProxyFileInfo];
     if ([proxyFi.SHA256 isEqual:fi.SHA256]) return NO;
 
-    NSFileHandle *inFh = [NSFileHandle fileHandleForReadingAtPath:proxyFi.path];
-    NSFileHandle *outFh = [NSFileHandle fileHandleForWritingAtPath:fi.path];
-    [outFh writeData:[inFh readDataToEndOfFile]];
-    [inFh closeFile];
-    [outFh truncateFileAtOffset:[outFh offsetInFile]];
-    [outFh synchronizeFile];
-    [outFh closeFile];
-
-    LOGW(@"PrinterProxy workaround applied to %@", fi.path);
+    copyfile_flags_t copyflags = COPYFILE_ALL | COPYFILE_UNLINK;
+    if (copyfile(proxyFi.path.UTF8String, fi.path.UTF8String, NULL, copyflags) != 0) {
+      LOGE(@"Failed to apply PrinterProxy workaround for %@", fi.path);
+    } else {
+      LOGI(@"PrinterProxy workaround applied to: %@", fi.path);
+    }
 
     return YES;
   }
