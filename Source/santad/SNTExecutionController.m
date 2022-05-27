@@ -135,11 +135,14 @@ static NSString *const kPrinterProxyPostMonterey =
   NSError *fileInfoError;
   SNTFileInfo *binInfo = [[SNTFileInfo alloc] initWithPath:@(message.path) error:&fileInfoError];
   if (unlikely(!binInfo)) {
-    LOGE(@"Failed to read file %@: %@", @(message.path), fileInfoError.localizedDescription);
     if (config.failClosed && config.clientMode == SNTClientModeLockdown) {
+      LOGE(@"Failed to read file %@: %@ and denying action", @(message.path),
+           fileInfoError.localizedDescription);
       [self.eventProvider postAction:ACTION_RESPOND_DENY forMessage:message];
       [self.events incrementForFieldValues:@[ (NSString *)kDenyNoFileInfo ]];
     } else {
+      LOGE(@"Failed to read file %@: %@ but allowing action", @(message.path),
+           fileInfoError.localizedDescription);
       [self.eventProvider postAction:ACTION_RESPOND_ALLOW forMessage:message];
       [self.events incrementForFieldValues:@[ (NSString *)kAllowNoFileInfo ]];
     }
