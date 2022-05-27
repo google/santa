@@ -41,11 +41,10 @@
 }
 
 - (ESResponse *)triggerTestMountEvent:(SNTDeviceManager *)deviceManager
-                          mockES:(MockEndpointSecurity *)mockES
-                          mockDA:(MockDiskArbitration *)mockDA
-                          eventType:(es_event_type_t)eventType
-                          diskInfoProtocol:(NSString *)protocol {
-
+                               mockES:(MockEndpointSecurity *)mockES
+                               mockDA:(MockDiskArbitration *)mockDA
+                            eventType:(es_event_type_t)eventType
+                     diskInfoOverrides:(NSDictionary *)diskInfo {
   if (!deviceManager.subscribed) {
     // [deviceManager listen] is synchronous, but we want to asynchronously dispatch it
     // with an enforced timeout to ensure that we never run into issues where the client
@@ -76,7 +75,7 @@
 
   MockDADisk *disk = [[MockDADisk alloc] init];
   disk.diskDescription = @{
-    (__bridge NSString *)kDADiskDescriptionDeviceProtocolKey : protocol,
+    (__bridge NSString *)kDADiskDescriptionDeviceProtocolKey : @"USB",
     (__bridge NSString *)kDADiskDescriptionMediaRemovableKey : @YES,
     @"DAVolumeMountable" : @YES,
     @"DAVolumePath" : test_mntonname,
@@ -86,6 +85,14 @@
     @"DAAppearanceTime" : @0,
     @"DAMediaBSDName" : test_mntfromname,
   };
+
+  if (diskInfo != nil) {
+    NSMutableDictionary *mergedDiskDescription = [disk.diskDescription mutableCopy];
+    for (NSString *key in diskInfo) {
+      mergedDiskDescription[key] = diskInfo[key];
+    }
+    disk.diskDescription = (NSDictionary *)mergedDiskDescription;
+  }
 
   [mockDA insert:disk bsdName:test_mntfromname];
 
@@ -100,7 +107,8 @@
     }
   }];
 
-  XCTestExpectation *mountExpectation = [self expectationWithDescription:@"Wait for response from ES"];
+  XCTestExpectation *mountExpectation =
+    [self expectationWithDescription:@"Wait for response from ES"];
   __block ESResponse *got;
   [mockES registerResponseCallback:eventType
                       withCallback:^(ESResponse *r) {
@@ -125,8 +133,12 @@
 
   SNTDeviceManager *deviceManager = [[SNTDeviceManager alloc] init];
   deviceManager.blockUSBMount = NO;
-  ESResponse *got = [self triggerTestMountEvent:deviceManager mockES:mockES
-                          mockDA:mockDA eventType:ES_EVENT_TYPE_AUTH_MOUNT diskInfoProtocol:@"USB"];
+  ESResponse *got = [self triggerTestMountEvent:deviceManager
+                                         mockES:mockES
+                                         mockDA:mockDA
+                                      eventType:ES_EVENT_TYPE_AUTH_MOUNT
+                                      diskInfoOverrides:nil];
+
   XCTAssertEqual(got.result, ES_AUTH_RESULT_ALLOW);
 }
 
@@ -153,7 +165,11 @@
     [expectation fulfill];
   };
 
-  ESResponse *got = [self triggerTestMountEvent:deviceManager mockES:mockES mockDA:mockDA eventType:ES_EVENT_TYPE_AUTH_MOUNT diskInfoProtocol:@"USB"];
+  ESResponse *got = [self triggerTestMountEvent:deviceManager
+                                         mockES:mockES
+                                         mockDA:mockDA
+                                      eventType:ES_EVENT_TYPE_AUTH_MOUNT
+                                      diskInfoOverrides:nil];
 
   XCTAssertEqual(got.result, ES_AUTH_RESULT_DENY);
   XCTAssertEqual(mockDA.wasRemounted, YES);
@@ -187,7 +203,11 @@
     [expectation fulfill];
   };
 
-  ESResponse *got = [self triggerTestMountEvent:deviceManager mockES:mockES mockDA:mockDA eventType:ES_EVENT_TYPE_AUTH_MOUNT diskInfoProtocol:@"USB"];
+  ESResponse *got = [self triggerTestMountEvent:deviceManager
+                                         mockES:mockES
+                                         mockDA:mockDA
+                                      eventType:ES_EVENT_TYPE_AUTH_MOUNT
+                                      diskInfoOverrides:nil];
 
   XCTAssertEqual(got.result, ES_AUTH_RESULT_DENY);
 
@@ -221,7 +241,11 @@
     [expectation fulfill];
   };
 
-  ESResponse *got = [self triggerTestMountEvent: deviceManager mockES: mockES mockDA: mockDA eventType:ES_EVENT_TYPE_AUTH_REMOUNT diskInfoProtocol:@"USB"];
+  ESResponse *got = [self triggerTestMountEvent:deviceManager
+                                         mockES:mockES
+                                         mockDA:mockDA
+                                      eventType:ES_EVENT_TYPE_AUTH_REMOUNT
+                                      diskInfoOverrides:nil];
 
   XCTAssertEqual(got.result, ES_AUTH_RESULT_DENY);
   XCTAssertEqual(mockDA.wasRemounted, YES);
@@ -234,8 +258,7 @@
 }
 
 - (void)testEnsureDMGsDoNotPrompt {
-
- MockEndpointSecurity *mockES = [MockEndpointSecurity mockEndpointSecurity];
+  MockEndpointSecurity *mockES = [MockEndpointSecurity mockEndpointSecurity];
   [mockES reset];
 
   MockDiskArbitration *mockDA = [MockDiskArbitration mockDiskArbitration];
@@ -249,8 +272,18 @@
     XCTFail(@"Should not be called");
   };
 
+  NSDictionary *diskInfo = @{
+    (__bridge NSString *)kDADiskDescriptionDeviceProtocolKey: @"Virtual Interface",
+    (__bridge NSString *)kDADiskDescriptionDeviceModelKey: @"Disk Image",
+    (__bridge NSString *)kDADiskDescriptionMediaNameKey: @"disk image",
+  };
 
-  ESResponse *got = [self triggerTestMountEvent:deviceManager mockES:mockES mockDA: mockDA eventType:ES_EVENT_TYPE_AUTH_MOUNT diskInfoProtocol:@"Virtual Interface"];
+
+  ESResponse *got = [self triggerTestMountEvent:deviceManager
+                                         mockES:mockES
+                                         mockDA:mockDA
+                                      eventType:ES_EVENT_TYPE_AUTH_MOUNT
+                                      diskInfoOverrides:diskInfo];
 
   XCTAssertEqual(got.result, ES_AUTH_RESULT_ALLOW);
   XCTAssertEqual(mockDA.wasRemounted, NO);

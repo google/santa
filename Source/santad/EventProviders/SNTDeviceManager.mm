@@ -204,50 +204,46 @@ NS_ASSUME_NONNULL_BEGIN
   BOOL isRemount = NO;
 
   switch (m->event_type) {
-    case  ES_EVENT_TYPE_AUTH_MOUNT:
-      eventStatFS = m->event.mount.statfs;
-      break;
+    case ES_EVENT_TYPE_AUTH_MOUNT: eventStatFS = m->event.mount.statfs; break;
     case ES_EVENT_TYPE_AUTH_REMOUNT:
       eventStatFS = m->event.remount.statfs;
       isRemount = YES;
       break;
     default:
       LOGE(@"Unexpected Event Type passed to DeviceManager handleAuthMount: %d", m->event_type);
+      assert("Wrong event type");
       // Fail closed.
       es_respond_auth_result(self.client, m, ES_AUTH_RESULT_DENY, false);
-      return; 
-    break;
+      return;
   }
 
   long mountMode = eventStatFS->f_flags;
   pid_t pid = audit_token_to_pid(m->process->audit_token);
-  LOGI(@"SNTDeviceManager: mount syscall arriving from path: %s, pid: %d, fflags: %lu",
+  LOGD(@"SNTDeviceManager: mount syscall arriving from path: %s, pid: %d, fflags: %lu",
        m->process->executable->path.data, pid, mountMode);
 
-  DADiskRef disk =
-    DADiskCreateFromBSDName(NULL, self.diskArbSession, eventStatFS->f_mntfromname);
+  DADiskRef disk = DADiskCreateFromBSDName(NULL, self.diskArbSession, eventStatFS->f_mntfromname);
   CFAutorelease(disk);
 
   // TODO(tnek): Log all of the other attributes available in diskInfo into a structured log format.
   NSDictionary *diskInfo = CFBridgingRelease(DADiskCopyDescription(disk));
-  BOOL isInternal =  [diskInfo[(__bridge NSString *)kDADiskDescriptionDeviceInternalKey] boolValue];
+  BOOL isInternal = [diskInfo[(__bridge NSString *)kDADiskDescriptionDeviceInternalKey] boolValue];
   BOOL isRemovable = [diskInfo[(__bridge NSString *)kDADiskDescriptionMediaRemovableKey] boolValue];
   BOOL isEjectable = [diskInfo[(__bridge NSString *)kDADiskDescriptionMediaEjectableKey] boolValue];
-  NSString* protocol = diskInfo[(__bridge NSString *)kDADiskDescriptionDeviceProtocolKey];
+  NSString *protocol = diskInfo[(__bridge NSString *)kDADiskDescriptionDeviceProtocolKey];
   BOOL isUSB = [protocol isEqualToString:@"USB"];
-  BOOL isDMG = [protocol isEqualToString:@"Virtual Interface"];
+  BOOL isVirtual = [protocol isEqualToString: @"Virtual Interface"];
 
-  NSString* kind = diskInfo[(__bridge NSString *)kDADiskDescriptionMediaKindKey];
+  NSString *kind = diskInfo[(__bridge NSString *)kDADiskDescriptionMediaKindKey];
 
-  //TODO: check kind and protocol for banned things (e.g. MTP).
-  LOGD(@"SNTDeviceManager: DiskInfo Protocol: %@", protocol);
-  LOGD(@"SNTDeviceManager: DiskInfo Kind: %@", kind);
-  LOGD(@"SNTDeviceManager: DiskInfo isInternal: %d", isInternal);
-  LOGD(@"SNTDeviceManager: DiskInfo isRemovable: %d", isRemovable);
-  LOGD(@"SNTDeviceManager: DiskInfo isEjectable: %d", isEjectable);
+  // TODO: check kind and protocol for banned things (e.g. MTP).
+  LOGD(@"SNTDeviceManager: DiskInfo Protocol: %@ Kind: %@ isInternal: %d isRemovable: %d "
+       @"isEjectable: %d",
+       protocol, kind, isInternal, isRemovable, isEjectable);
 
-  // If the device isn't a DMG or removable we're ok with the operation.
-  if (isInternal || isDMG || (!isRemovable && !isEjectable && !isUSB)) {
+  // If the device isn't a Virtual device (DMG/ramdisk etc.) or removable we're
+  // ok with the operation.
+  if (isInternal || isVirtual || (!isRemovable && !isEjectable && !isUSB)) {
     es_respond_auth_result(self.client, m, ES_AUTH_RESULT_ALLOW, false);
     return;
   }
@@ -256,7 +252,7 @@ NS_ASSUME_NONNULL_BEGIN
     initWithOnName:[NSString stringWithUTF8String:eventStatFS->f_mntonname]
           fromName:[NSString stringWithUTF8String:eventStatFS->f_mntfromname]];
 
-  BOOL shouldRemount = self.remountArgs != nil && [self.remountArgs count] > 0; 
+  BOOL shouldRemount = self.remountArgs != nil && [self.remountArgs count] > 0;
 
   if (shouldRemount) {
     event.remountArgs = self.remountArgs;
@@ -273,8 +269,7 @@ NS_ASSUME_NONNULL_BEGIN
 
     long newMode = mountMode | remountOpts;
     LOGI(@"SNTDeviceManager: remounting device '%s'->'%s', flags (%lu) -> (%lu)",
-         eventStatFS->f_mntfromname, eventStatFS->f_mntonname, mountMode,
-         newMode);
+         eventStatFS->f_mntfromname, eventStatFS->f_mntonname, mountMode, newMode);
     [self remount:disk mountMode:newMode];
   }
 
@@ -336,18 +331,16 @@ NS_ASSUME_NONNULL_BEGIN
              withClient:(es_client_t *)c API_AVAILABLE(macos(10.15)) {
   switch (m->event_type) {
     case ES_EVENT_TYPE_AUTH_REMOUNT: {
-        [[fallthrough]];
+      [[fallthrough]];
     }
     case ES_EVENT_TYPE_AUTH_MOUNT: {
       [self handleAuthMount:m withClient:c];
-      // Intentional fallthrough
-      [[fallthrough]];
-    }
-    // TODO(tnek): log any extra data here about mounts.
-    case ES_EVENT_TYPE_NOTIFY_MOUNT: {
       break;
     }
-    default: LOGE(@"SNTDeviceManager: unexpected event type: %d", m->event_type);
+
+    default: 
+      LOGE(@"SNTDeviceManager: unexpected event type: %d", m->event_type);
+      break;
   }
 }
 
