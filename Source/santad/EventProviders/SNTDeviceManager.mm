@@ -211,9 +211,9 @@ NS_ASSUME_NONNULL_BEGIN
       break;
     default:
       LOGE(@"Unexpected Event Type passed to DeviceManager handleAuthMount: %d", m->event_type);
-      assert("Wrong event type");
       // Fail closed.
       es_respond_auth_result(self.client, m, ES_AUTH_RESULT_DENY, false);
+      assert("SNTDeviceManager: wrong event type");
       return;
   }
 
@@ -241,8 +241,9 @@ NS_ASSUME_NONNULL_BEGIN
        @"isEjectable: %d",
        protocol, kind, isInternal, isRemovable, isEjectable);
 
-  // If the device isn't a Virtual device (DMG/ramdisk etc.) or removable we're
-  // ok with the operation.
+  // If the device is internal or virtual we are okay with the operation. We
+  // also are okay with operations for devices that are non-removal as long as
+  // they are NOT a USB device.
   if (isInternal || isVirtual || (!isRemovable && !isEjectable && !isUSB)) {
     es_respond_auth_result(self.client, m, ES_AUTH_RESULT_ALLOW, false);
     return;
