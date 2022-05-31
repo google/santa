@@ -34,7 +34,6 @@ static const pid_t PID_MAX = 99999;
 @property(nonatomic) SNTPrefixTree *prefixTree;
 @property(nonatomic, readonly) dispatch_queue_t esAuthQueue;
 @property(nonatomic, readonly) dispatch_queue_t esNotifyQueue;
-@property(nonatomic, readonly) pid_t selfPID;
 
 @end
 
@@ -57,7 +56,6 @@ static const pid_t PID_MAX = 99999;
     _esNotifyQueue =
       dispatch_queue_create("com.google.santa.daemon.es_notify", DISPATCH_QUEUE_CONCURRENT);
     dispatch_set_target_queue(_esNotifyQueue, dispatch_get_global_queue(QOS_CLASS_BACKGROUND, 0));
-    _selfPID = getpid();
   }
 
   return self;
@@ -76,12 +74,17 @@ static const pid_t PID_MAX = 99999;
   mach_msg_type_number_t count = TASK_AUDIT_TOKEN_COUNT;
   if (task_info(mach_task_self(), TASK_AUDIT_TOKEN, (task_info_t)&myAuditToken, &count) ==
         KERN_SUCCESS) {
-    if (es_mute_process(self.client, &myAuditToken) != ES_RETURN_SUCCESS) {
-      LOGW(@"Failed to mute this client's process, its events will not be muted.");
+    if (es_mute_process(self.client, &myAuditToken) == ES_RETURN_SUCCESS) {
+      return;
+    } else {
+      LOGE(@"Failed to mute this client's process, its events will not be muted.");
     }
   } else {
-    LOGW(@"Failed to fetch this client's audit token. Its events will not be muted.");
+    LOGE(@"Failed to fetch this client's audit token. Its events will not be muted.");
   }
+
+  // If we get here, Santa was unable to mute itself. Assume transitory and bail.
+  exit(EXIT_FAILURE);
 }
 
 - (void)establishClient API_AVAILABLE(macos(10.15)) {
@@ -247,9 +250,6 @@ static const pid_t PID_MAX = 99999;
           break;
         }
         case ES_ACTION_TYPE_NOTIFY: {
-          // Don't log fileop events from com.google.santa.daemon
-          if (self.selfPID == pid && m->event_type != ES_EVENT_TYPE_NOTIFY_EXEC) return;
-
           // Copy the message and return control back to ES
           es_message_t *mc = es_copy_message(m);
           dispatch_async(self.esNotifyQueue, ^{
@@ -334,8 +334,7 @@ static const pid_t PID_MAX = 99999;
       NSString *path = [[NSString alloc] initWithBytes:pathToken.data
                                                 length:pathToken.length
                                               encoding:NSUTF8StringEncoding];
-      if ([self isDatabasePath:path] &&
-          audit_token_to_pid(m->process->audit_token) != self.selfPID) {
+      if ([self isDatabasePath:path]) {
         LOGW(@"Preventing attempt to delete Santa databases!");
         es_respond_auth_result(self.client, m, ES_AUTH_RESULT_DENY, true);
         return;
@@ -349,8 +348,7 @@ static const pid_t PID_MAX = 99999;
                                                 length:pathToken.length
                                               encoding:NSUTF8StringEncoding];
 
-      if ([self isDatabasePath:path] &&
-          audit_token_to_pid(m->process->audit_token) != self.selfPID) {
+      if ([self isDatabasePath:path]) {
         LOGW(@"Preventing attempt to rename Santa databases!");
         es_respond_auth_result(self.client, m, ES_AUTH_RESULT_DENY, true);
         return;
@@ -360,8 +358,7 @@ static const pid_t PID_MAX = 99999;
         NSString *destPath = [[NSString alloc] initWithBytes:destToken.data
                                                       length:destToken.length
                                                     encoding:NSUTF8StringEncoding];
-        if ([self isDatabasePath:destPath] &&
-            audit_token_to_pid(m->process->audit_token) != self.selfPID) {
+        if ([self isDatabasePath:destPath]) {
           LOGW(@"Preventing attempt to overwrite Santa databases!");
           es_respond_auth_result(self.client, m, ES_AUTH_RESULT_DENY, true);
           return;
