@@ -301,6 +301,11 @@ es_new_client_result_t es_new_client(es_client_t *_Nullable *_Nonnull client,
   return ES_NEW_CLIENT_RESULT_SUCCESS;
 };
 
+es_return_t es_mute_process(es_client_t * _Nonnull client,
+                            const audit_token_t * _Nonnull audit_token) {
+  return ES_RETURN_SUCCESS;
+}
+
 #if defined(MAC_OS_VERSION_12_0) && MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_VERSION_12_0
 API_AVAILABLE(macos(12.0))
 API_UNAVAILABLE(ios, tvos, watchos)
