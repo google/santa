@@ -3,3 +3,4 @@ build --apple_generate_dsym --define=apple.propagate_embedded_extra_outputs=yes
 build --copt=-Werror
 build --copt=-Wall
 build --copt=-Wno-error=deprecated-declarations
+build --per_file_copt=.*\.mm\$@-std=c++17
