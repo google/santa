@@ -278,6 +278,132 @@ objc_library(
     ],
 )
 
+objc_library(
+  name = "EndpointSecurityEnrichedTypes",
+  hdrs = ["EventProviders/EndpointSecurity/EnrichedTypes.h"],
+  deps = [
+    ":EndpointSecurityMessage",
+  ]
+)
+
+objc_library(
+  name = "EndpointSecuritySerializer",
+  hdrs = ["Logs/EndpointSecurity/Serializers/Serializer.h"],
+  deps = [
+    ":EndpointSecurityMessage",
+    ":EndpointSecurityEnrichedTypes",
+  ]
+)
+
+objc_library(
+  name = "EndpointSecuritySerializerBasicString",
+  srcs = ["Logs/EndpointSecurity/Serializers/BasicString.mm"],
+  hdrs = ["Logs/EndpointSecurity/Serializers/BasicString.h"],
+  deps = [
+    ":EndpointSecuritySerializer",
+    "//Source/common:SNTLogging",
+  ]
+)
+
+objc_library(
+  name = "EndpointSecurityWriter",
+  hdrs = ["Logs/EndpointSecurity/Writers/Writer.h"],
+)
+
+objc_library(
+  name = "EndpointSecurityWriterSyslog",
+  srcs = ["Logs/EndpointSecurity/Writers/Syslog.mm"],
+  hdrs = ["Logs/EndpointSecurity/Writers/Syslog.h"],
+  deps = [
+    ":EndpointSecurityWriter",
+  ]
+)
+
+objc_library(
+  name = "EndpointSecurityLogger",
+  hdrs = ["Logs/EndpointSecurity/Logger.h"],
+  deps = [
+    ":EndpointSecuritySerializer",
+    ":EndpointSecurityWriter",
+  ],
+)
+
+objc_library(
+  name = "EndpointSecurityMessage",
+  srcs = [
+    "EventProviders/EndpointSecurity/EndpointSecurityAPI.h",
+    "EventProviders/EndpointSecurity/Message.mm",
+  ],
+  hdrs = ["EventProviders/EndpointSecurity/Message.h"],
+  deps = [
+    ":EndpointSecurityClient",
+  ]
+)
+
+objc_library(
+  name = "EndpointSecurityClient",
+  hdrs = ["EventProviders/EndpointSecurity/Client.h"],
+)
+
+objc_library(
+  name = "EndpointSecurityAPI",
+  srcs = ["EventProviders/EndpointSecurity/EndpointSecurityAPI.mm"],
+  hdrs = ["EventProviders/EndpointSecurity/EndpointSecurityAPI.h"],
+  deps = [
+    ":EndpointSecurityClient",
+    ":EndpointSecurityMessage",
+  ],
+)
+
+objc_library(
+    name = "santad",
+    srcs = ["santad.mm"],
+    hdrs = ["santad.h"],
+    deps = [
+        # ":database_controller",
+        ":EndpointSecurityAPI",
+        # ":SNTEndpointSecurityEventManager",
+        # ":SNTExecutionController",
+        ":EndpointSecuritySerializerBasicString",
+        ":EndpointSecurityWriterSyslog",
+        ":EndpointSecurityLogger",
+    ],
+)
+
+objc_library(
+    name = "santad_main",
+    srcs = ["main.mm"],
+    deps = [
+        #":SNTDaemonControlController",
+        ":santad",
+        "//Source/common:SNTLogging",
+    ],
+    sdk_dylibs = [
+        "EndpointSecurity",
+    ],
+)
+
+macos_bundle(
+    name = "com.google.santad.sysext",
+    bundle_extension = "systemextension",
+    bundle_id = "com.google.santa.daemon",
+    codesignopts = [
+        "--timestamp",
+        "--force",
+        "--options library,kill,runtime",
+    ],
+    infoplists = ["Info.plist"],
+    linkopts = ["-execute"],
+    minimum_os_version = "10.15",
+    provisioning_profile = select({
+        "//:ci_build": None,
+        "//conditions:default": "//profiles:daemon_dev",
+    }),
+    version = "//:version",
+    visibility = ["//:santa_package_group"],
+    deps = [":santad_main"],
+)
+
 macos_bundle(
     name = "com.google.santa.daemon",
     bundle_extension = "systemextension",
