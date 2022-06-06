@@ -229,6 +229,9 @@ static const pid_t PID_MAX = 99999;
 
       switch (m->action_type) {
         case ES_ACTION_TYPE_AUTH: {
+          // Copy the message
+          es_message_t *mc = es_copy_message(m);
+
           // Create a timer to deny the execution 5 seconds before the deadline,
           // if a response hasn't already been sent. This block will still be enqueued if
           // the the deadline - 5 secs is < DISPATCH_TIME_NOW.
@@ -237,11 +240,10 @@ static const pid_t PID_MAX = 99999;
           dispatch_after(dispatch_time(m->deadline, NSEC_PER_SEC * -5), self.esAuthQueue, ^(void) {
             if (responded->load()) return;
             LOGE(@"Deadline reached: deny pid=%d ret=%d", pid,
-                 es_respond_auth_result(self.client, m, ES_AUTH_RESULT_DENY, false));
+                 es_respond_auth_result(self.client, mc, ES_AUTH_RESULT_DENY, false));
           });
 
-          // Copy the message and return control back to ES
-          es_message_t *mc = es_copy_message(m);
+          // Dispatch off to the handler and return control to ES.
           dispatch_async(self.esAuthQueue, ^{
             [self messageHandler:mc];
             responded->store(true);
