@@ -232,35 +232,28 @@ static const pid_t PID_MAX = 99999;
           // Copy the message
           es_message_t *mc = es_copy_message(m);
 
-          std::shared_ptr<std::atomic<bool>> responded;
-          dispatch_semaphore_t processingSema = dispatch_semaphore_create(1);
-          dispatch_semaphore_t deadlineExpiredSema = dispatch_semaphore_create(0);
+          auto responded = std::make_shared<std::atomic<bool>>(false);
 
           // Create a timer to deny the execution 5 seconds before the deadline,
           // if a response hasn't already been sent. This block will still be enqueued if
           // the the deadline - 5 secs is < DISPATCH_TIME_NOW.
           // As of 10.15.5, a typical deadline is 60 seconds.
           dispatch_after(dispatch_time(m->deadline, NSEC_PER_SEC * -5), self.esAuthQueue, ^(void) {
-            if (dispatch_semaphore_wait(processingSema, DISPATCH_TIME_NOW) != 0) {
+            if (responded->exchange(true)) {
               // Handler has already responded, nothing to do.
               return;
             }
-            if (responded->load()) return;
             LOGE(@"SNTEndpointSecurityManager: deadline reached: deny pid=%d ret=%d", pid,
                  es_respond_auth_result(self.client, mc, ES_AUTH_RESULT_DENY, false));
-            dispatch_semaphore_signal(deadlineExpiredSema);
+            es_free_message(mc);
           });
 
           // Dispatch off to the handler and return control to ES.
           dispatch_async(self.esAuthQueue, ^{
             [self messageHandler:mc];
-            responded->store(true);
-            if (dispatch_semaphore_wait(processingSema, DISPATCH_TIME_NOW) != 0) {
-              // Deadline expired, wait for deadline block to finish.
-              dispatch_semaphore_wait(deadlineExpiredSema, DISPATCH_TIME_FOREVER);
+            if (!responded->exchange(true)) {
+              es_free_message(mc);
             }
-            es_free_message(mc);
-            dispatch_semaphore_signal(processingSema);
           });
           break;
         }

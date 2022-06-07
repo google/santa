@@ -272,33 +272,26 @@ NS_ASSUME_NONNULL_BEGIN
   // This isn't an issue for notify events, so we're in no rush for those.
   es_message_t *mc = es_copy_message(m);
 
-  std::shared_ptr<std::atomic<bool>> responded;
-  dispatch_semaphore_t processingSema = dispatch_semaphore_create(1);
-  dispatch_semaphore_t deadlineExpiredSema = dispatch_semaphore_create(0);
+  auto responded = std::make_shared<std::atomic<bool>>(false);
 
   if (m->action_type == ES_ACTION_TYPE_AUTH) {
     dispatch_after(timeout, self.esAuthQueue, ^(void) {
-      if (dispatch_semaphore_wait(processingSema, DISPATCH_TIME_NOW) != 0) {
+      if (responded->exchange(true)) {
         // Handler already responded, nothing to do.
         return;
       }
-      if (responded->load()) return;
       LOGE(@"SNTDeviceManager: deadline reached: deny pid=%d ret=%d",
            audit_token_to_pid(m->process->audit_token),
            es_respond_auth_result(c, m, ES_AUTH_RESULT_DENY, false));
-      dispatch_semaphore_signal(deadlineExpiredSema);
+      es_free_message(mc);
     });
   }
 
   dispatch_async(self.esAuthQueue, ^{
     [self handleESMessage:m withClient:c];
-    responded->store(true);
-    if (dispatch_semaphore_wait(processingSema, DISPATCH_TIME_NOW) != 0) {
-      // Deadline expired, wait for deadline block to finish.
-      dispatch_semaphore_wait(deadlineExpiredSema, DISPATCH_TIME_FOREVER);
+    if (!responded->exchange(true)) {
+      es_free_message(mc);
     }
-    es_free_message(mc);
-    dispatch_semaphore_signal(processingSema);
   });
 }
 
