@@ -295,6 +295,7 @@ NS_ASSUME_NONNULL_BEGIN
       dispatch_semaphore_wait(deadlineExpiredSema, DISPATCH_TIME_FOREVER);
     }
     es_free_message(mc);
+    dispatch_semaphore_signal(processingSema);
   });
 }
 

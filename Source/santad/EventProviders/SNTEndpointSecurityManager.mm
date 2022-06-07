@@ -257,6 +257,7 @@ static const pid_t PID_MAX = 99999;
               dispatch_semaphore_wait(deadlineExpiredSema, DISPATCH_TIME_FOREVER);
             }
             es_free_message(mc);
+            dispatch_semaphore_signal(processingSema);
           });
           break;
         }
