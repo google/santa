@@ -232,6 +232,7 @@ static const pid_t PID_MAX = 99999;
           // Copy the message
           es_message_t *mc = es_copy_message(m);
 
+          std::shared_ptr<std::atomic<bool>> responded;
           dispatch_semaphore_t processingSema = dispatch_semaphore_create(1);
           dispatch_semaphore_t deadlineExpiredSema = dispatch_semaphore_create(0);
 
@@ -244,7 +245,8 @@ static const pid_t PID_MAX = 99999;
               // Handler has already responded, nothing to do.
               return;
             }
-            LOGE(@"Deadline reached: deny pid=%d ret=%d", pid,
+            if (responded->load()) return;
+            LOGE(@"SNTEndpointSecurityManager: deadline reached: deny pid=%d ret=%d", pid,
                  es_respond_auth_result(self.client, mc, ES_AUTH_RESULT_DENY, false));
             dispatch_semaphore_signal(deadlineExpiredSema);
           });
@@ -252,6 +254,7 @@ static const pid_t PID_MAX = 99999;
           // Dispatch off to the handler and return control to ES.
           dispatch_async(self.esAuthQueue, ^{
             [self messageHandler:mc];
+            responded->store(true);
             if (dispatch_semaphore_wait(processingSema, DISPATCH_TIME_NOW) != 0) {
               // Deadline expired, wait for deadline block to finish.
               dispatch_semaphore_wait(deadlineExpiredSema, DISPATCH_TIME_FOREVER);
