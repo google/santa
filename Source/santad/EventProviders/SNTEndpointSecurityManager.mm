@@ -232,34 +232,30 @@ static const pid_t PID_MAX = 99999;
           // Copy the message
           es_message_t *mc = es_copy_message(m);
 
-          dispatch_group_t releaseGroup = dispatch_group_create();
+          dispatch_semaphore_t processingSema = dispatch_semaphore_create(1);
+          dispatch_semaphore_t deadlineExpiredSema = dispatch_semaphore_create(0);
 
           // Create a timer to deny the execution 5 seconds before the deadline,
           // if a response hasn't already been sent. This block will still be enqueued if
           // the the deadline - 5 secs is < DISPATCH_TIME_NOW.
           // As of 10.15.5, a typical deadline is 60 seconds.
-          auto responded = std::make_shared<std::atomic<bool>>(false);
-          dispatch_group_enter(releaseGroup);
           dispatch_after(dispatch_time(m->deadline, NSEC_PER_SEC * -5), self.esAuthQueue, ^(void) {
-            if (responded->load()) {
-              dispatch_group_leave(releaseGroup();
+            if (dispatch_semaphore_wait(processingSema, DISPATCH_TIME_NOW) != 0) {
+              // Handler has already responded, nothing to do.
               return;
             }
             LOGE(@"Deadline reached: deny pid=%d ret=%d", pid,
                  es_respond_auth_result(self.client, mc, ES_AUTH_RESULT_DENY, false));
-            dispatch_group_leave(releaseGroup();
+            dispatch_semaphore_signal(deadlineExpiredSema);
           });
 
           // Dispatch off to the handler and return control to ES.
-          dispatch_group_enter(releaseGroup);
           dispatch_async(self.esAuthQueue, ^{
             [self messageHandler:mc];
-            responded->store(true);
-            dispatch_group_leave(releaseGroup);
-          });
-
-          dispatch_async(Q, ^{
-            dispatch_group_wait(releaseGroup, DISPATCH_TIME_FOREVER);
+            if (dispatch_semaphore_wait(processingSema, DISPATCH_TIME_NOW) != 0) {
+              // Deadline expired, wait for deadline block to finish.
+              dispatch_semaphore_wait(deadlineExpiredSema, DISPATCH_TIME_FOREVER);
+            }
             es_free_message(mc);
           });
           break;
