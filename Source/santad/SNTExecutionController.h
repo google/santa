@@ -14,9 +14,10 @@
 
 #import <Foundation/Foundation.h>
 
+#include "Source/santad/EventProviders/EndpointSecurity/Message.h"
+
 #import "Source/common/SNTCommonEnums.h"
-#include "Source/common/SNTCommon.h"
-#include "Source/santad/EventProviders/SNTEventProvider.h"
+#import "Source/common/SNTCommon.h"
 
 const static NSString *kBlockBinary = @"BlockBinary";
 const static NSString *kAllowBinary = @"AllowBinary";
@@ -34,7 +35,7 @@ const static NSString *kUnknownEventState = @"Unknown";
 const static NSString *kBlockPrinterWorkaround = @"BlockPrinterWorkaround";
 const static NSString *kAllowNoFileInfo = @"AllowNoFileInfo";
 const static NSString *kDenyNoFileInfo = @"DenyNoFileInfo";
-const static NSString *kAllowNullVNode = @"AllowNullVNode";
+const static NSString *kAllowNullVNode = @"AllowNullVNode"; // TODO: Remove
 
 @class MOLCodesignChecker;
 @class SNTDriverManager;
@@ -54,19 +55,19 @@ const static NSString *kAllowNullVNode = @"AllowNullVNode";
 ///
 @interface SNTExecutionController : NSObject
 
-- (instancetype)initWithEventProvider:(id<SNTEventProvider>)eventProvider
-                            ruleTable:(SNTRuleTable *)ruleTable
-                           eventTable:(SNTEventTable *)eventTable
-                        notifierQueue:(SNTNotificationQueue *)notifierQueue
-                           syncdQueue:(SNTSyncdQueue *)syncdQueue;
+- (instancetype)initWithRuleTable:(SNTRuleTable *)ruleTable
+                       eventTable:(SNTEventTable *)eventTable
+                    notifierQueue:(SNTNotificationQueue *)notifierQueue
+                       syncdQueue:(SNTSyncdQueue *)syncdQueue;
 
 ///
 ///  Handles the logic of deciding whether to allow the binary to run or not, sends the response to
-///  the kernel, logs the event to the log and if necessary stores the event in the database and
-///  sends a notification to the GUI agent.
+///  the given `postAction` block. Also logs the event to the log and if necessary stores the event
+///  in the database and sends a notification to the GUI agent.
 ///
-///  @param message The message sent from the kernel.
+///  @param message The message received from the EndpointSecurity event provider.
+///  @param postAction The block invoked with the desired response result.
 ///
-- (void)validateBinaryWithMessage:(santa_message_t)message;
+- (void)validateExecEvent:(const santa::santad::event_providers::endpoint_security::Message&)esMsg postAction:(int (^)(santa_action_t))postAction;
 
 @end

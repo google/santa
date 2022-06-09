@@ -38,6 +38,8 @@ static const pid_t PID_MAX = 99999;
 @end
 
 @implementation SNTEndpointSecurityManager
+// TODO: This whole class goes away, temporarily adding method to make the compiler happy...
+- (void) enable {}
 
 - (instancetype)init API_AVAILABLE(macos(10.15)) {
   self = [super init];
@@ -230,7 +232,10 @@ static const pid_t PID_MAX = 99999;
       switch (m->action_type) {
         case ES_ACTION_TYPE_AUTH: {
           // Copy the message
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
           es_message_t *mc = es_copy_message(m);
+#pragma clang diagnostic pop
 
           dispatch_semaphore_t processingSema = dispatch_semaphore_create(0);
           // Add 1 to the processing semaphore. We're not creating it with a starting
@@ -260,16 +265,25 @@ static const pid_t PID_MAX = 99999;
               // Deadline expired, wait for deadline block to finish.
               dispatch_semaphore_wait(deadlineExpiredSema, DISPATCH_TIME_FOREVER);
             }
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
             es_free_message(mc);
+#pragma clang diagnostic pop
           });
           break;
         }
         case ES_ACTION_TYPE_NOTIFY: {
           // Copy the message and return control back to ES
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
           es_message_t *mc = es_copy_message(m);
+#pragma clang diagnostic pop
           dispatch_async(self.esNotifyQueue, ^{
             [self messageHandler:mc];
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
             es_free_message(mc);
+#pragma clang diagnostic pop
           });
           break;
         }

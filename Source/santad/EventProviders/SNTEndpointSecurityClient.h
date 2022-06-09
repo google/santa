@@ -1,4 +1,4 @@
-/// Copyright 2017 Google Inc. All rights reserved.
+/// Copyright 2022 Google Inc. All rights reserved.
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -12,19 +12,9 @@
 ///    See the License for the specific language governing permissions and
 ///    limitations under the License.
 
-#import <Foundation/Foundation.h>
+#include "Source/santad/EventProviders/SNTEndpointSecurityClientBase.h"
 
-#import "Source/common/SNTCommon.h"
-
-@class SNTEventLog;
-
-@interface SNTCompilerController : NSObject
-
-// Whenever an executable file is closed or renamed whitelist the resulting file.
-// We assume that we have already determined that the writing process was a compiler.
-- (void)createTransitiveRule:(santa_message_t)message;
-
-- (BOOL)isCompilerPID:(pid_t)pid;
-- (void)setIsCompilerPID:(pid_t)pid;
-- (void)setNotCompilerPID:(pid_t)pid;
+/// This should be treated as an Abstract Base Class and not directly instantiated
+@interface SNTEndpointSecurityClient : NSObject<SNTEndpointSecurityClientBase>
+- (instancetype)init NS_UNAVAILABLE;
 @end

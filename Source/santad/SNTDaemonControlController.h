@@ -26,7 +26,7 @@
 ///
 @interface SNTDaemonControlController : NSObject <SNTDaemonControlXPC>
 
-- (instancetype)initWithEventProvider:(id<SNTEventProvider>)driverManager
+- (instancetype)initWithEventProvider:(id<SNTCachingEventProvider>)cachingProvider
                     notificationQueue:(SNTNotificationQueue *)notQueue
                            syncdQueue:(SNTSyncdQueue *)syncdQueue;
 @end

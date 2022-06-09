@@ -14,7 +14,7 @@
 
 #import "Source/santad/SNTExecutionController.h"
 
-#include <copyfile.h>
+#include <bsm/libbsm.h>
 #include <libproc.h>
 #include <pwd.h>
 #include <utmpx.h>
@@ -34,11 +34,12 @@
 #import "Source/common/SNTStoredEvent.h"
 #import "Source/santad/DataLayer/SNTEventTable.h"
 #import "Source/santad/DataLayer/SNTRuleTable.h"
-#import "Source/santad/EventProviders/SNTEventProvider.h"
 #import "Source/santad/Logs/SNTEventLog.h"
 #import "Source/santad/SNTNotificationQueue.h"
 #import "Source/santad/SNTPolicyProcessor.h"
 #import "Source/santad/SNTSyncdQueue.h"
+
+using santa::santad::event_providers::endpoint_security::Message;
 
 // A binary is considered large at ~30MB. Large binaries take longer to hash and consequently
 // longer to post a decision back to santa-driver. When a binary is considered large santad will
@@ -47,7 +48,6 @@
 static size_t kLargeBinarySize = 30 * 1024 * 1024;
 
 @interface SNTExecutionController ()
-@property id<SNTEventProvider> eventProvider;
 @property SNTEventTable *eventTable;
 @property SNTNotificationQueue *notifierQueue;
 @property SNTPolicyProcessor *policyProcessor;
@@ -70,14 +70,12 @@ static NSString *const kPrinterProxyPostMonterey =
 
 #pragma mark Initializers
 
-- (instancetype)initWithEventProvider:(id<SNTEventProvider>)eventProvider
-                            ruleTable:(SNTRuleTable *)ruleTable
+- (instancetype)initWithRuleTable:(SNTRuleTable *)ruleTable
                            eventTable:(SNTEventTable *)eventTable
                         notifierQueue:(SNTNotificationQueue *)notifierQueue
                            syncdQueue:(SNTSyncdQueue *)syncdQueue {
   self = [super init];
   if (self) {
-    _eventProvider = eventProvider;
     _ruleTable = ruleTable;
     _eventTable = eventTable;
     _notifierQueue = notifierQueue;
@@ -122,29 +120,27 @@ static NSString *const kPrinterProxyPostMonterey =
 
 #pragma mark Binary Validation
 
-- (void)validateBinaryWithMessage:(santa_message_t)message {
-  // Get info about the file. If we can't get this info, allow execution and log an error.
-  if (unlikely(message.path == NULL)) {
-    LOGE(@"Path for vnode_id is NULL: %llu/%llu", message.vnode_id.fsid, message.vnode_id.fileid);
-    [self.eventProvider postAction:ACTION_RESPOND_ALLOW forMessage:message];
-    [self.events incrementForFieldValues:@[ (NSString *)kAllowNullVNode ]];
-    return;
+- (void)validateExecEvent:(const Message&)esMsg
+               postAction:(int (^)(santa_action_t))postAction {
+  if (esMsg->event_type != ES_EVENT_TYPE_AUTH_EXEC) {
+    // Programming error. Bail.
+    LOGE(@"Attempt to validate non-EXEC event. Event type: %d", esMsg->event_type);
+    exit(EXIT_FAILURE);
   }
 
+  // Get info about the file. If we can't get this info, respond appropriately and log an error.
   SNTConfigurator *config = [SNTConfigurator configurator];
+  const es_process_t* targetProc = esMsg->event.exec.target;
 
   NSError *fileInfoError;
-  SNTFileInfo *binInfo = [[SNTFileInfo alloc] initWithPath:@(message.path) error:&fileInfoError];
+  SNTFileInfo *binInfo = [[SNTFileInfo alloc] initWithPath:@(targetProc->executable->path.data) error:&fileInfoError];
   if (unlikely(!binInfo)) {
+    LOGE(@"Failed to read file %@: %@", @(targetProc->executable->path.data), fileInfoError.localizedDescription);
     if (config.failClosed && config.clientMode == SNTClientModeLockdown) {
-      LOGE(@"Failed to read file %@: %@ and denying action", @(message.path),
-           fileInfoError.localizedDescription);
-      [self.eventProvider postAction:ACTION_RESPOND_DENY forMessage:message];
+      postAction(ACTION_RESPOND_DENY);
       [self.events incrementForFieldValues:@[ (NSString *)kDenyNoFileInfo ]];
     } else {
-      LOGE(@"Failed to read file %@: %@ but allowing action", @(message.path),
-           fileInfoError.localizedDescription);
-      [self.eventProvider postAction:ACTION_RESPOND_ALLOW forMessage:message];
+      postAction(ACTION_RESPOND_ALLOW);
       [self.events incrementForFieldValues:@[ (NSString *)kAllowNoFileInfo ]];
     }
     return;
@@ -152,21 +148,19 @@ static NSString *const kPrinterProxyPostMonterey =
 
   // PrinterProxy workaround, see description above the method for more details.
   if ([self printerProxyWorkaround:binInfo]) {
-    [self.eventProvider postAction:ACTION_RESPOND_DENY forMessage:message];
+    postAction(ACTION_RESPOND_DENY);
     [self.events incrementForFieldValues:@[ (NSString *)kBlockPrinterWorkaround ]];
     return;
   }
 
-  // If the binary is large let santa-driver know we received the request and we are working on it.
-  if (binInfo.fileSize > kLargeBinarySize) {
-    LOGD(@"%@ is larger than %zu. Letting santa-driver know we are working on it.", binInfo.path,
-         kLargeBinarySize);
-    [self.eventProvider postAction:ACTION_RESPOND_ACK forMessage:message];
-    // TODO(markowsky): Maybe add a metric here for how many large executables we're seeing.
-  }
+  // TODO(markowsky): Maybe add a metric here for how many large executables we're seeing.
+  // if (binInfo.fileSize > kLargeBinarySize) ...
 
   SNTCachedDecision *cd = [self.policyProcessor decisionForFileInfo:binInfo];
-  cd.vnodeId = message.vnode_id;
+  cd.vnodeId = {
+    .fsid = (uint64_t)targetProc->executable->stat.st_dev,
+    .fileid = targetProc->executable->stat.st_ino
+  };
 
   // Formulate an initial action from the decision.
   santa_action_t action =
@@ -179,7 +173,7 @@ static NSString *const kPrinterProxyPostMonterey =
   if (action == ACTION_RESPOND_ALLOW) {
     [[SNTEventLog logger] cacheDecision:cd];
   } else {
-    ttyPath = @(message.ttypath);
+    ttyPath = @(targetProc->tty->path.data);
   }
 
   // Upgrade the action to ACTION_RESPOND_ALLOW_COMPILER when appropriate, because we want the
@@ -188,18 +182,16 @@ static NSString *const kPrinterProxyPostMonterey =
     action = ACTION_RESPOND_ALLOW_COMPILER;
   }
 
-  // Send the decision to the kernel.
-  [self.eventProvider postAction:action forMessage:message];
+  // Respond with the decision.
+  postAction(action);
 
   // Increment counters;
   [self incrementEventCounters:cd.decision];
 
   // Log to database if necessary.
-  if ([SNTConfigurator configurator].enableAllEventUpload ||
-      (cd.decision != SNTEventStateAllowBinary && cd.decision != SNTEventStateAllowCompiler &&
-       cd.decision != SNTEventStateAllowTransitive &&
-       cd.decision != SNTEventStateAllowCertificate && cd.decision != SNTEventStateAllowTeamID &&
-       cd.decision != SNTEventStateAllowScope)) {
+  if (cd.decision != SNTEventStateAllowBinary && cd.decision != SNTEventStateAllowCompiler &&
+      cd.decision != SNTEventStateAllowTransitive && cd.decision != SNTEventStateAllowCertificate &&
+      cd.decision != SNTEventStateAllowTeamID && cd.decision != SNTEventStateAllowScope) {
     SNTStoredEvent *se = [[SNTStoredEvent alloc] init];
     se.occurrenceDate = [[NSDate alloc] init];
     se.fileSHA256 = cd.sha256;
@@ -208,9 +200,9 @@ static NSString *const kPrinterProxyPostMonterey =
 
     se.signingChain = cd.certChain;
     se.teamID = cd.teamID;
-    se.pid = @(message.pid);
-    se.ppid = @(message.ppid);
-    se.parentName = @(message.pname);
+    se.pid = @(audit_token_to_pid(targetProc->audit_token));
+    se.ppid = @(audit_token_to_pid(targetProc->parent_audit_token));
+    se.parentName = @(esMsg.ParentProcessName().c_str());
 
     // Bundle data
     se.fileBundleID = [binInfo bundleIdentifier];
@@ -224,7 +216,7 @@ static NSString *const kPrinterProxyPostMonterey =
     }
 
     // User data
-    struct passwd *user = getpwuid(message.uid);
+    struct passwd *user = getpwuid(audit_token_to_ruid(targetProc->audit_token));
     if (user) se.executingUser = @(user->pw_name);
     NSArray *loggedInUsers, *currentSessions;
     [self loggedInUsers:&loggedInUsers sessions:&currentSessions];
@@ -246,7 +238,7 @@ static NSString *const kPrinterProxyPostMonterey =
 
     // If binary was blocked, do the needful
     if (action != ACTION_RESPOND_ALLOW && action != ACTION_RESPOND_ALLOW_COMPILER) {
-      [[SNTEventLog logger] logDeniedExecution:cd withMessage:message];
+      // [[SNTEventLog logger] logDeniedExecution:cd withMessage:message];
 
       if (config.enableBundles && binInfo.bundle) {
         // If the binary is part of a bundle, find and hash all the related binaries in the bundle.
@@ -307,12 +299,15 @@ static NSString *const kPrinterProxyPostMonterey =
     SNTFileInfo *proxyFi = [self printerProxyFileInfo];
     if ([proxyFi.SHA256 isEqual:fi.SHA256]) return NO;
 
-    copyfile_flags_t copyflags = COPYFILE_ALL | COPYFILE_UNLINK;
-    if (copyfile(proxyFi.path.UTF8String, fi.path.UTF8String, NULL, copyflags) != 0) {
-      LOGE(@"Failed to apply PrinterProxy workaround for %@", fi.path);
-    } else {
-      LOGI(@"PrinterProxy workaround applied to: %@", fi.path);
-    }
+    NSFileHandle *inFh = [NSFileHandle fileHandleForReadingAtPath:proxyFi.path];
+    NSFileHandle *outFh = [NSFileHandle fileHandleForWritingAtPath:fi.path];
+    [outFh writeData:[inFh readDataToEndOfFile]];
+    [inFh closeFile];
+    [outFh truncateFileAtOffset:[outFh offsetInFile]];
+    [outFh synchronizeFile];
+    [outFh closeFile];
+
+    LOGW(@"PrinterProxy workaround applied to %@", fi.path);
 
     return YES;
   }
