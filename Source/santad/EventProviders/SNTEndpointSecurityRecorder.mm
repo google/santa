@@ -59,7 +59,9 @@ using santa::santad::event_providers::endpoint_security::EnrichedMessage;
 }
 
 - (void)enable {
-  [super subscribe:{ES_EVENT_TYPE_NOTIFY_EXEC, ES_EVENT_TYPE_NOTIFY_FORK, ES_EVENT_TYPE_NOTIFY_EXIT}];
+  [super subscribe:{ES_EVENT_TYPE_NOTIFY_EXEC,
+                    ES_EVENT_TYPE_NOTIFY_FORK,
+                    ES_EVENT_TYPE_NOTIFY_EXIT}];
 }
 
 @end

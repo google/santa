@@ -58,6 +58,35 @@ load("@hedron_compile_commands//:workspace_setup.bzl", "hedron_compile_commands_
 
 hedron_compile_commands_setup()
 
+# oneTBB
+
+git_repository(
+    name = "oneTBB",
+    branch = "master",
+    remote = "https://github.com/oneapi-src/oneTBB/",
+)
+
+# thread-safe-lru
+
+new_git_repository(
+    name = "thread-safe-lru",
+    commit = "df7b21ca075328ae5ce22bf3e042d62fca46382e",
+    remote = "https://github.com/tstarling/thread-safe-lru.git",
+    shallow_since = "1647043200",
+    build_file_content = """
+cc_library(
+    name = "thread-safe-lru",
+    hdrs = glob([
+        "thread-safe-lru/*.h"
+    ]),
+    deps = [
+        "@oneTBB//:tbb",
+    ],
+    visibility = ["//visibility:public"],
+)
+""",
+)
+
 # Macops MOL* dependencies
 
 git_repository(

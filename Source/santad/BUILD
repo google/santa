@@ -198,8 +198,6 @@ objc_library(
         "SNTDaemonControlController.h",
         "SNTDaemonControlController.m",
         "SNTDatabaseController.h",
-        "SNTExecutionController.h",
-        "SNTExecutionController.m",
         "SNTNotificationQueue.h",
         "SNTNotificationQueue.m",
         "SNTPolicyProcessor.h",
@@ -219,6 +217,7 @@ objc_library(
     deps = [
         ":SNTApplicationCoreMetrics",
         ":SNTDatabaseController",
+        ":SNTExecutionController",
         ":endpoint_security_manager",
         ":event_logs",
         "//Source/common:SNTAllowlistInfo",
@@ -422,6 +421,7 @@ objc_library(
     deps = [
         ":EndpointSecurityEnrichedTypes",
         "//Source/common:SNTLogging",
+        "@thread-safe-lru//:thread-safe-lru",
     ]
 )
 

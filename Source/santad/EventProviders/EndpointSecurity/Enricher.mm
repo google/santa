@@ -15,11 +15,18 @@
 #include "Source/santad/EventProviders/EndpointSecurity/Enricher.h"
 
 #include <bsm/libbsm.h>
+#include <grp.h>
+#include <pwd.h>
+#include <sys/types.h>
+#include <uuid/uuid.h>
 
 #include <memory>
 
 #include "Source/common/SNTLogging.h"
 #include "Source/santad/EventProviders/EndpointSecurity/EnrichedTypes.h"
+
+using LRUCache =
+    tstarling::ThreadSafeLRUCache<uid_t, std::optional<std::shared_ptr<std::string>>>;
 
 namespace santa::santad::event_providers::endpoint_security {
 
@@ -68,10 +75,42 @@ EnrichedFile Enricher::Enrich(const es_file_t &es_file) {
 }
 
 std::optional<std::shared_ptr<std::string>> Enricher::UsernameForUID(uid_t uid) {
-  return std::nullopt;
+  LRUCache::ConstAccessor val;
+  if (username_cache_.find(val, uid)) {
+    return *val;
+  } else {
+    std::optional<std::shared_ptr<std::string>> username;
+
+    struct passwd *pw = getpwuid(uid);
+    if (pw) {
+      username = std::make_shared<std::string>(pw->pw_name);
+    } else {
+      username = std::nullopt;
+    }
+
+    username_cache_.insert(uid, username);
+
+    return username;
+  }
 }
 std::optional<std::shared_ptr<std::string>> Enricher::UsernameForGID(gid_t gid) {
-  return std::nullopt;
+  LRUCache::ConstAccessor val;
+  if (groupname_cache_.find(val, gid)) {
+    return *val;
+  } else {
+    std::optional<std::shared_ptr<std::string>> groupname;
+
+    struct group *gr = getgrgid(gid);
+    if (gr) {
+      groupname = std::make_shared<std::string>(gr->gr_name);
+    } else {
+      groupname = std::nullopt;
+    }
+
+    username_cache_.insert(gid, groupname);
+
+    return groupname;
+  }
 }
 
 } // namespace santa::santad::event_providers::endpoint_security
