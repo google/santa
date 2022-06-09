@@ -18,16 +18,27 @@
 
 @protocol SNTEventProvider <NSObject>
 
-- (void)listenForDecisionRequests:(void (^)(santa_message_t message))callback;
-- (void)listenForLogRequests:(void (^)(santa_message_t message))callback;
-- (int)postAction:(santa_action_t)action forMessage:(santa_message_t)sm;
-- (BOOL)flushCacheNonRootOnly:(BOOL)nonRootOnly;
-- (void)fileModificationPrefixFilterAdd:(NSArray *)filters;
-- (void)fileModificationPrefixFilterReset;
+- (void)enable;
+
+// - (void)listenForDecisionRequests:(void (^)(santa_message_t message))callback;
+// - (void)listenForLogRequests:(void (^)(santa_message_t message))callback;
+// - (int)postAction:(santa_action_t)action forMessage:(santa_message_t)sm;
+// - (BOOL)flushCacheNonRootOnly:(BOOL)nonRootOnly;
+// - (void)fileModificationPrefixFilterAdd:(NSArray *)filters;
+// - (void)fileModificationPrefixFilterReset;
+// - (NSArray<NSNumber *> *)cacheCounts;
+// - (NSArray<NSNumber *> *)cacheBucketCount;
+// - (santa_action_t)checkCache:(santa_vnode_id_t)vnodeID;
+// - (kern_return_t)removeCacheEntryForVnodeID:(santa_vnode_id_t)vnodeId;
+// @property(readonly) BOOL connectionEstablished;
+
+@end
+
+@protocol SNTCachingEventProvider <SNTEventProvider>
+
+- (BOOL)flushLocalCacheNonRootOnly:(BOOL)nonRootOnly;
+- (BOOL)flushProviderCache;
 - (NSArray<NSNumber *> *)cacheCounts;
-- (NSArray<NSNumber *> *)cacheBucketCount;
 - (santa_action_t)checkCache:(santa_vnode_id_t)vnodeID;
-- (kern_return_t)removeCacheEntryForVnodeID:(santa_vnode_id_t)vnodeId;
-@property(readonly) BOOL connectionEstablished;
 
 @end

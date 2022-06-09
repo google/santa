@@ -8,28 +8,50 @@ package(
 licenses(["notice"])
 
 objc_library(
-    name = "database_controller",
-    srcs = [
-        "DataLayer/SNTDatabaseTable.h",
-        "DataLayer/SNTDatabaseTable.m",
-        "DataLayer/SNTEventTable.h",
-        "DataLayer/SNTEventTable.m",
-        "DataLayer/SNTRuleTable.h",
-        "DataLayer/SNTRuleTable.m",
-        "SNTDatabaseController.h",
-        "SNTDatabaseController.m",
-    ],
+    name = "SNTDatabaseTable",
+    srcs = ["DataLayer/SNTDatabaseTable.m"],
+    hdrs = ["DataLayer/SNTDatabaseTable.h"],
     deps = [
+        "//Source/common:SNTLogging",
+        "@FMDB",
+    ],
+)
+
+objc_library(
+    name = "SNTRuleTable",
+    srcs = ["DataLayer/SNTRuleTable.m"],
+    hdrs = ["DataLayer/SNTRuleTable.h"],
+    deps = [
+        ":SNTDatabaseTable",
         "//Source/common:SNTCachedDecision",
         "//Source/common:SNTCommonEnums",
-        "//Source/common:SNTConfigurator",
         "//Source/common:SNTFileInfo",
-        "//Source/common:SNTLogging",
         "//Source/common:SNTRule",
-        "//Source/common:SNTStoredEvent",
-        "@FMDB",
         "@MOLCertificate",
         "@MOLCodesignChecker",
+    ],
+)
+
+objc_library(
+    name = "SNTEventTable",
+    srcs = ["DataLayer/SNTEventTable.m"],
+    hdrs = ["DataLayer/SNTEventTable.h"],
+    deps = [
+        ":SNTDatabaseTable",
+        "//Source/common:SNTStoredEvent",
+        "@MOLCertificate",
+    ],
+)
+
+objc_library(
+    name = "SNTDatabaseController",
+    srcs = ["SNTDatabaseController.m"],
+    hdrs = ["SNTDatabaseController.h"],
+    deps = [
+        ":SNTEventTable",
+        ":SNTRuleTable",
+        "//Source/common:SNTLogging",
+        "@FMDB",
     ],
 )
 
@@ -77,7 +99,7 @@ objc_library(
         "Logs/SNTEventLog.h",
     ],
     deps = [
-        ":database_controller",
+        ":SNTDatabaseController",
         "//Source/common:SNTAllowlistInfo",
         "//Source/common:SNTCachedDecision",
         "//Source/common:SNTCommon",
@@ -173,8 +195,6 @@ objc_library(
         "EventProviders/SNTEventProvider.h",
         "SNTApplication.h",
         "SNTApplication.m",
-        "SNTCompilerController.h",
-        "SNTCompilerController.m",
         "SNTDaemonControlController.h",
         "SNTDaemonControlController.m",
         "SNTDatabaseController.h",
@@ -198,7 +218,7 @@ objc_library(
     ],
     deps = [
         ":SNTApplicationCoreMetrics",
-        ":database_controller",
+        ":SNTDatabaseController",
         ":endpoint_security_manager",
         ":event_logs",
         "//Source/common:SNTAllowlistInfo",
@@ -279,80 +299,207 @@ objc_library(
 )
 
 objc_library(
-  name = "EndpointSecurityEnrichedTypes",
-  hdrs = ["EventProviders/EndpointSecurity/EnrichedTypes.h"],
-  deps = [
-    ":EndpointSecurityMessage",
-  ]
+    name = "SNTCompilerController",
+    srcs = ["SNTCompilerController.mm"],
+    hdrs = ["SNTCompilerController.h"],
+    deps = [
+        ":SNTRuleTable",
+        ":event_logs",
+        "//Source/common:SNTAllowlistInfo",
+        "//Source/common:SNTCachedDecision",
+        "//Source/common:SNTCommon",
+        "//Source/common:SNTFileInfo",
+        "//Source/common:SNTLogging",
+        "//Source/common:SNTRule",
+    ],
 )
 
 objc_library(
-  name = "EndpointSecuritySerializer",
-  hdrs = ["Logs/EndpointSecurity/Serializers/Serializer.h"],
-  deps = [
-    ":EndpointSecurityMessage",
-    ":EndpointSecurityEnrichedTypes",
-  ]
+    name = "SNTNotificationQueue",
+    srcs = ["SNTNotificationQueue.m"],
+    hdrs = ["SNTNotificationQueue.h"],
+    deps = [
+        "//Source/common:SNTLogging",
+        "//Source/common:SNTStoredEvent",
+        "//Source/common:SNTXPCNotifierInterface",
+        "@MOLXPCConnection",
+    ],
 )
 
 objc_library(
-  name = "EndpointSecuritySerializerBasicString",
-  srcs = ["Logs/EndpointSecurity/Serializers/BasicString.mm"],
-  hdrs = ["Logs/EndpointSecurity/Serializers/BasicString.h"],
-  deps = [
-    ":EndpointSecuritySerializer",
-    "//Source/common:SNTLogging",
-  ]
+    name = "SNTSyncdQueue",
+    srcs = ["SNTSyncdQueue.m"],
+    hdrs = ["SNTSyncdQueue.h"],
+    deps = [
+        "//Source/common:SNTCommonEnums",
+        "//Source/common:SNTLogging",
+        "//Source/common:SNTStoredEvent",
+        "//Source/common:SNTXPCSyncServiceInterface",
+        "@MOLXPCConnection",
+    ],
 )
 
 objc_library(
-  name = "EndpointSecurityWriter",
-  hdrs = ["Logs/EndpointSecurity/Writers/Writer.h"],
+    name = "SNTPolicyProcessor",
+    srcs = [
+        "DataLayer/SNTDatabaseTable.h",
+        "DataLayer/SNTRuleTable.h",
+        "SNTPolicyProcessor.h",
+        "SNTPolicyProcessor.m",
+    ],
+    deps = [
+        "//Source/common:SNTCachedDecision",
+        "//Source/common:SNTCommon",
+        "//Source/common:SNTCommonEnums",
+        "//Source/common:SNTFileInfo",
+        "//Source/common:SNTLogging",
+        "//Source/common:SNTRule",
+        "@MOLXPCConnection",
+    ],
 )
 
 objc_library(
-  name = "EndpointSecurityWriterSyslog",
-  srcs = ["Logs/EndpointSecurity/Writers/Syslog.mm"],
-  hdrs = ["Logs/EndpointSecurity/Writers/Syslog.h"],
-  deps = [
-    ":EndpointSecurityWriter",
-  ]
+    name = "SNTExecutionController",
+    srcs = ["SNTExecutionController.mm"],
+    hdrs = ["SNTExecutionController.h"],
+    deps = [
+        ":event_logs",
+        ":EndpointSecurityMessage",
+        ":SNTNotificationQueue",
+        ":SNTPolicyProcessor",
+        ":SNTSyncdQueue",
+        "//Source/common:SNTBlockMessage",
+        "//Source/common:SNTCachedDecision",
+        "//Source/common:SNTCommon",
+        "//Source/common:SNTCommonEnums",
+        "//Source/common:SNTDropRootPrivs",
+        "//Source/common:SNTFileInfo",
+        "//Source/common:SNTLogging",
+        "//Source/common:SNTMetricSet",
+        "//Source/common:SNTRule",
+        "@MOLCodesignChecker",
+    ],
 )
 
 objc_library(
-  name = "EndpointSecurityLogger",
-  hdrs = ["Logs/EndpointSecurity/Logger.h"],
-  deps = [
-    ":EndpointSecuritySerializer",
-    ":EndpointSecurityWriter",
-  ],
+    name = "SNTEndpointSecurityClientBase",
+    hdrs = ["EventProviders/SNTEndpointSecurityClientBase.h"],
+    deps = [
+        ":EndpointSecurityAPI",
+        ":EndpointSecurityClient",
+        ":EndpointSecurityMessage",
+    ],
 )
 
 objc_library(
-  name = "EndpointSecurityMessage",
-  srcs = [
-    "EventProviders/EndpointSecurity/EndpointSecurityAPI.h",
-    "EventProviders/EndpointSecurity/Message.mm",
-  ],
-  hdrs = ["EventProviders/EndpointSecurity/Message.h"],
-  deps = [
-    ":EndpointSecurityClient",
-  ]
+    name = "SNTEndpointSecurityClient",
+    srcs = ["EventProviders/SNTEndpointSecurityClient.mm"],
+    hdrs = ["EventProviders/SNTEndpointSecurityClient.h"],
+    deps = [
+        ":SNTEndpointSecurityClientBase",
+        "//Source/common:SNTLogging",
+    ],
 )
 
 objc_library(
-  name = "EndpointSecurityClient",
-  hdrs = ["EventProviders/EndpointSecurity/Client.h"],
+    name = "SNTEndpointSecurityRecorder",
+    srcs = ["EventProviders/SNTEndpointSecurityRecorder.mm"],
+    hdrs = ["EventProviders/SNTEndpointSecurityRecorder.h"],
+    deps = [
+        ":SNTEndpointSecurityClient",
+        ":EndpointSecurityEnricher",
+        ":EndpointSecurityLogger",
+        ":SNTCompilerController",
+        ":SNTEventProvider",
+        "//Source/common:SNTLogging",
+    ],
 )
 
 objc_library(
-  name = "EndpointSecurityAPI",
-  srcs = ["EventProviders/EndpointSecurity/EndpointSecurityAPI.mm"],
-  hdrs = ["EventProviders/EndpointSecurity/EndpointSecurityAPI.h"],
-  deps = [
-    ":EndpointSecurityClient",
-    ":EndpointSecurityMessage",
-  ],
+    name = "EndpointSecurityEnricher",
+    srcs = ["EventProviders/EndpointSecurity/Enricher.mm"],
+    hdrs = ["EventProviders/EndpointSecurity/Enricher.h"],
+    deps = [
+        ":EndpointSecurityEnrichedTypes",
+        "//Source/common:SNTLogging",
+    ]
+)
+
+objc_library(
+    name = "EndpointSecurityEnrichedTypes",
+    hdrs = ["EventProviders/EndpointSecurity/EnrichedTypes.h"],
+    deps = [
+        ":EndpointSecurityMessage",
+    ]
+)
+
+objc_library(
+    name = "EndpointSecuritySerializer",
+    hdrs = ["Logs/EndpointSecurity/Serializers/Serializer.h"],
+    deps = [
+        ":EndpointSecurityMessage",
+        ":EndpointSecurityEnrichedTypes",
+    ]
+)
+
+objc_library(
+    name = "EndpointSecuritySerializerBasicString",
+    srcs = ["Logs/EndpointSecurity/Serializers/BasicString.mm"],
+    hdrs = ["Logs/EndpointSecurity/Serializers/BasicString.h"],
+    deps = [
+        ":EndpointSecuritySerializer",
+        "//Source/common:SNTLogging",
+    ]
+)
+
+objc_library(
+    name = "EndpointSecurityWriter",
+    hdrs = ["Logs/EndpointSecurity/Writers/Writer.h"],
+)
+
+objc_library(
+    name = "EndpointSecurityWriterSyslog",
+    srcs = ["Logs/EndpointSecurity/Writers/Syslog.mm"],
+    hdrs = ["Logs/EndpointSecurity/Writers/Syslog.h"],
+    deps = [
+        ":EndpointSecurityWriter",
+    ]
+)
+
+objc_library(
+    name = "EndpointSecurityLogger",
+    hdrs = ["Logs/EndpointSecurity/Logger.h"],
+    deps = [
+        ":EndpointSecuritySerializer",
+        ":EndpointSecurityWriter",
+    ],
+)
+
+objc_library(
+    name = "EndpointSecurityMessage",
+    srcs = [
+        "EventProviders/EndpointSecurity/EndpointSecurityAPI.h",
+        "EventProviders/EndpointSecurity/Message.mm",
+    ],
+    hdrs = ["EventProviders/EndpointSecurity/Message.h"],
+    deps = [
+        ":EndpointSecurityClient",
+    ]
+)
+
+objc_library(
+    name = "EndpointSecurityClient",
+    hdrs = ["EventProviders/EndpointSecurity/Client.h"],
+)
+
+objc_library(
+    name = "EndpointSecurityAPI",
+    srcs = ["EventProviders/EndpointSecurity/EndpointSecurityAPI.mm"],
+    hdrs = ["EventProviders/EndpointSecurity/EndpointSecurityAPI.h"],
+    deps = [
+        ":EndpointSecurityClient",
+        ":EndpointSecurityMessage",
+    ],
 )
 
 objc_library(
@@ -360,13 +507,43 @@ objc_library(
     srcs = ["santad.mm"],
     hdrs = ["santad.h"],
     deps = [
-        # ":database_controller",
+        ":SNTDatabaseController",
         ":EndpointSecurityAPI",
-        # ":SNTEndpointSecurityEventManager",
-        # ":SNTExecutionController",
+        ":SNTCompilerController",
+        ":SNTEndpointSecurityRecorder",
+        ":SNTExecutionController",
+        ":SNTNotificationQueue",
+        ":EndpointSecurityEnricher",
+        ":SNTSyncdQueue",
         ":EndpointSecuritySerializerBasicString",
         ":EndpointSecurityWriterSyslog",
         ":EndpointSecurityLogger",
+        "//Source/common:SNTLogging",
+    ],
+)
+
+objc_library(
+    name = "SNTDaemonControlController",
+    srcs = [
+        "DataLayer/SNTDatabaseTable.h",
+        "DataLayer/SNTEventTable.h",
+        "DataLayer/SNTRuleTable.h",
+        "EventProviders/SNTEventProvider.h",
+        "SNTDaemonControlController.h",
+        "SNTDaemonControlController.m",
+        "SNTNotificationQueue.h",
+        "SNTPolicyProcessor.h",
+        "SNTSyncdQueue.h",
+    ],
+    deps = [
+        ":event_logs",
+        ":SNTPolicyProcessor",
+        "//Source/common:SNTLogging",
+        "//Source/common:SNTMetricSet",
+        "//Source/common:SNTXPCControlInterface",
+        "//Source/common:SNTXPCNotifierInterface",
+        "//Source/common:SNTXPCSyncServiceInterface",
+        "@FMDB",
     ],
 )
 
@@ -374,7 +551,7 @@ objc_library(
     name = "santad_main",
     srcs = ["main.mm"],
     deps = [
-        #":SNTDaemonControlController",
+        ":SNTDaemonControlController",
         ":santad",
         "//Source/common:SNTLogging",
     ],

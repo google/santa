@@ -48,30 +48,7 @@ REGISTER_COMMAND_NAME(@"cachehistogram")
 }
 
 - (void)runWithArguments:(NSArray *)arguments {
-  [[self.daemonConn remoteObjectProxy] cacheBucketCount:^(NSArray *counts) {
-    NSMutableDictionary<NSNumber *, NSNumber *> *d = [NSMutableDictionary dictionary];
-    [counts enumerateObjectsUsingBlock:^(id _Nonnull obj, NSUInteger idx, BOOL *_Nonnull stop) {
-      d[obj] = @([d[obj] intValue] + 1);
-    }];
-    printf("There are %llu empty buckets\n", [d[@0] unsignedLongLongValue]);
-
-    for (NSNumber *key in [d.allKeys sortedArrayUsingSelector:@selector(compare:)]) {
-      if ([key isEqual:@0]) continue;
-      uint64_t k = [key unsignedLongLongValue];
-      uint64_t v = [d[key] unsignedLongLongValue];
-
-      if ([[[NSProcessInfo processInfo] arguments] containsObject:@"-g"]) {
-        printf("%4llu: ", k);
-        for (uint64_t y = 0; y < v; ++y) {
-          printf("#");
-        }
-        printf("\n");
-      } else {
-        printf("%4llu bucket[s] have %llu %s\n", v, k, k > 1 ? "entries" : "entry");
-      }
-    }
-    exit(0);
-  }];
+  printf("This command is no longer implemented.");
 }
 
 @end

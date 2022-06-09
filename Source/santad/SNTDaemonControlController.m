@@ -44,21 +44,21 @@ double watchdogRAMPeak = 0;
 
 @interface SNTDaemonControlController ()
 @property SNTPolicyProcessor *policyProcessor;
-@property id<SNTEventProvider> eventProvider;
+@property id<SNTCachingEventProvider> cachingEventProvider;
 @property SNTNotificationQueue *notQueue;
 @property SNTSyncdQueue *syncdQueue;
 @end
 
 @implementation SNTDaemonControlController
 
-- (instancetype)initWithEventProvider:(id<SNTEventProvider>)eventProvider
+- (instancetype)initWithEventProvider:(id<SNTCachingEventProvider>)cachingProvider
                     notificationQueue:(SNTNotificationQueue *)notQueue
                            syncdQueue:(SNTSyncdQueue *)syncdQueue {
   self = [super init];
   if (self) {
     _policyProcessor =
       [[SNTPolicyProcessor alloc] initWithRuleTable:[SNTDatabaseController ruleTable]];
-    _eventProvider = eventProvider;
+    _cachingEventProvider = cachingProvider;
     _notQueue = notQueue;
     _syncdQueue = syncdQueue;
   }
@@ -68,20 +68,21 @@ double watchdogRAMPeak = 0;
 #pragma mark Kernel ops
 
 - (void)cacheCounts:(void (^)(uint64_t, uint64_t))reply {
-  NSArray<NSNumber *> *counts = [self.eventProvider cacheCounts];
+  NSArray<NSNumber *> *counts = [self.cachingEventProvider cacheCounts];
   reply([counts[0] unsignedLongLongValue], [counts[1] unsignedLongLongValue]);
 }
 
-- (void)cacheBucketCount:(void (^)(NSArray *))reply {
-  reply([self.eventProvider cacheBucketCount]);
+- (BOOL)flushAllCaches {
+  return [self.cachingEventProvider flushLocalCacheNonRootOnly:NO] &&
+    [self.cachingEventProvider flushProviderCache];
 }
 
 - (void)flushCache:(void (^)(BOOL))reply {
-  reply([self.eventProvider flushCacheNonRootOnly:NO]);
+  reply([self flushAllCaches]);
 }
 
 - (void)checkCacheForVnodeID:(santa_vnode_id_t)vnodeID withReply:(void (^)(santa_action_t))reply {
-  reply([self.eventProvider checkCache:vnodeID]);
+  reply([self.cachingEventProvider checkCache:vnodeID]);
 }
 
 #pragma mark Database ops
@@ -111,8 +112,8 @@ double watchdogRAMPeak = 0;
 
   // The actual cache flushing happens after the new rules have been added to the database.
   if (flushCache) {
-    LOGI(@"Flushing decision cache");
-    [self.eventProvider flushCacheNonRootOnly:NO];
+    LOGI(@"Flushing caches");
+    [self flushAllCaches];
   }
 
   reply(error);

@@ -68,6 +68,7 @@
   char ppath[PATH_MAX] = "(null)";
   if (message.es_message) {
     es_message_t *m = message.es_message;
+    // TODO: Move this somewhere else to decouple from `SNTEndpointSecurityManager`
     [SNTEndpointSecurityManager populateBufferFromESFile:m->process->executable
                                                   buffer:ppath
                                                     size:sizeof(ppath)];

@@ -22,22 +22,37 @@
 #import "Source/common/SNTLogging.h"
 #import "Source/common/SNTRule.h"
 #import "Source/santad/DataLayer/SNTRuleTable.h"
-#import "Source/santad/EventProviders/SNTEventProvider.h"
 #import "Source/santad/Logs/SNTEventLog.h"
 #import "Source/santad/SNTDatabaseController.h"
 
-@interface SNTCompilerController ()
-@property id<SNTEventProvider> eventProvider;
+#include <atomic>
+
+static const pid_t PID_MAX = 99999;
+
+@interface SNTCompilerController () {
+  std::atomic<bool> _compilerPIDs[PID_MAX];
+}
 @end
 
 @implementation SNTCompilerController
 
-- (instancetype)initWithEventProvider:(id<SNTEventProvider>)eventProvider {
-  self = [super init];
-  if (self) {
-    _eventProvider = eventProvider;
+- (BOOL)isCompilerPID:(pid_t)pid {
+  return pid >= 0 && pid < PID_MAX && self->_compilerPIDs[pid].load();
+}
+
+- (void)setIsCompilerPID:(pid_t)pid {
+  if (pid < 1) {
+    LOGE(@"Unable to watch compiler pid=%d", pid);
+  } else if (pid >= PID_MAX) {
+    LOGE(@"Unable to watch compiler pid=%d >= PID_MAX(%d)", pid, PID_MAX);
+  } else {
+    self->_compilerPIDs[pid].store(true);
+    LOGD(@"Watching compiler pid=%d", pid);
   }
-  return self;
+}
+
+- (void)setNotCompilerPID:(pid_t)pid {
+  if (pid && pid < PID_MAX) self->_compilerPIDs[pid].store(false);
 }
 
 // Adds a fake cached decision to SNTEventLog for pending files.  If the file
@@ -90,8 +105,6 @@
     }
   }
 
-  // Remove the temporary allow rule in the kernel decision cache.
-  [self.eventProvider removeCacheEntryForVnodeID:message.vnode_id];
   // Remove the "pending" decision info from SNTEventLog.
   [self removeFakeDecision:message];
 }
