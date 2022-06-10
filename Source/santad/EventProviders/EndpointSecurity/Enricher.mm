@@ -14,6 +14,7 @@
 
 #include "Source/santad/EventProviders/EndpointSecurity/Enricher.h"
 
+#include <EndpointSecurity/ESTypes.h>
 #include <bsm/libbsm.h>
 #include <grp.h>
 #include <pwd.h>
@@ -21,6 +22,7 @@
 #include <uuid/uuid.h>
 
 #include <memory>
+#include <optional>
 
 #include "Source/common/SNTLogging.h"
 #include "Source/santad/EventProviders/EndpointSecurity/EnrichedTypes.h"
@@ -32,6 +34,17 @@ namespace santa::santad::event_providers::endpoint_security {
 
 std::unique_ptr<EnrichedMessage> Enricher::Enrich(Message &&es_msg) {
   switch(es_msg->event_type) {
+    case ES_EVENT_TYPE_NOTIFY_CLOSE:
+      return std::make_unique<EnrichedMessage>(
+        EnrichedClose(std::move(es_msg),
+                       Enrich(*es_msg->process),
+                       Enrich(*es_msg->event.close.target)));
+    case ES_EVENT_TYPE_NOTIFY_EXCHANGEDATA:
+      return std::make_unique<EnrichedMessage>(
+        EnrichedExchange(std::move(es_msg),
+                        Enrich(*es_msg->process),
+                        Enrich(*es_msg->event.exchangedata.file1),
+                        Enrich(*es_msg->event.exchangedata.file2)));
     case ES_EVENT_TYPE_NOTIFY_EXEC:
       return std::make_unique<EnrichedMessage>(
         EnrichedExec(
@@ -50,6 +63,34 @@ std::unique_ptr<EnrichedMessage> Enricher::Enrich(Message &&es_msg) {
     case ES_EVENT_TYPE_NOTIFY_EXIT:
       return std::make_unique<EnrichedMessage>(
         EnrichedExit(std::move(es_msg), Enrich(*es_msg->process)));
+    case ES_EVENT_TYPE_NOTIFY_LINK:
+      return std::make_unique<EnrichedMessage>(
+        EnrichedLink(std::move(es_msg),
+                     Enrich(*es_msg->process),
+                     Enrich(*es_msg->event.link.source),
+                     Enrich(*es_msg->event.link.target_dir)));
+    case ES_EVENT_TYPE_NOTIFY_RENAME: {
+      if (es_msg->event.rename.destination_type == ES_DESTINATION_TYPE_NEW_PATH) {
+        return std::make_unique<EnrichedMessage>(
+            EnrichedRename(std::move(es_msg),
+                           Enrich(*es_msg->process),
+                           Enrich(*es_msg->event.rename.source),
+                           std::nullopt,
+                           Enrich(*es_msg->event.rename.destination.new_path.dir)));
+      } else {
+        return std::make_unique<EnrichedMessage>(
+            EnrichedRename(std::move(es_msg),
+                           Enrich(*es_msg->process),
+                           Enrich(*es_msg->event.rename.source),
+                           Enrich(*es_msg->event.rename.destination.existing_file),
+                           std::nullopt));
+      }
+    }
+    case ES_EVENT_TYPE_NOTIFY_UNLINK:
+      return std::make_unique<EnrichedMessage>(
+        EnrichedUnlink(std::move(es_msg),
+                       Enrich(*es_msg->process),
+                       Enrich(*es_msg->event.unlink.target)));
     default:
       // TODO: Metrics
       // This is a programming error
