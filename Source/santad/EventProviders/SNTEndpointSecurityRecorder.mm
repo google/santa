@@ -13,6 +13,7 @@
 ///    limitations under the License.
 
 #import "Source/santad/EventProviders/SNTEndpointSecurityRecorder.h"
+#include <EndpointSecurity/ESTypes.h>
 
 #include "Source/santad/EventProviders/EndpointSecurity/EnrichedTypes.h"
 #include "Source/santad/EventProviders/EndpointSecurity/Message.h"
@@ -51,7 +52,30 @@ using santa::santad::event_providers::endpoint_security::EnrichedMessage;
 
 - (void)establishClient {
   [super establishClientOrDie:^(es_client_t *c, Message&& esMsg){
+    // Pre-enrichment processing
+    switch (esMsg->event_type) {
+      case ES_EVENT_TYPE_NOTIFY_CLOSE: {
+        if (esMsg->event.close.modified == false) {
+          // Currently only process modified files
+          return;
+        }
+
+        // TODO: Update appropriate caches
+        // TODO: Compiler tracking
+        break;
+      }
+      case ES_EVENT_TYPE_NOTIFY_RENAME: {
+        // TODO: Compiler tracking
+        break;
+      }
+      default:
+        // No other special cases...
+        break;
+    }
+
+    // Enrich the message
     std::unique_ptr<EnrichedMessage> enrichedMsg = _enricher->Enrich(std::move(esMsg));
+
     // TODO: dispatch before logging
     _logger->Log(std::move(enrichedMsg));
   }];
@@ -59,9 +83,16 @@ using santa::santad::event_providers::endpoint_security::EnrichedMessage;
 }
 
 - (void)enable {
-  [super subscribe:{ES_EVENT_TYPE_NOTIFY_EXEC,
-                    ES_EVENT_TYPE_NOTIFY_FORK,
-                    ES_EVENT_TYPE_NOTIFY_EXIT}];
+  [super subscribe:{
+      ES_EVENT_TYPE_NOTIFY_CLOSE,
+      ES_EVENT_TYPE_NOTIFY_EXCHANGEDATA,
+      ES_EVENT_TYPE_NOTIFY_EXEC,
+      ES_EVENT_TYPE_NOTIFY_FORK,
+      ES_EVENT_TYPE_NOTIFY_EXIT,
+      ES_EVENT_TYPE_NOTIFY_LINK,
+      ES_EVENT_TYPE_NOTIFY_RENAME,
+      ES_EVENT_TYPE_NOTIFY_UNLINK,
+  }];
 }
 
 @end

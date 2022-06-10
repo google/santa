@@ -16,11 +16,15 @@ public:
                           const es_message_t* es_msg);
   ~Message();
 
-  Message(const Message &other) = delete;
-  Message& operator=(const Message &other) = delete;
+  Message(Message &&other);
   Message& operator=(Message &&rhs) = delete;
 
-  Message(Message &&other);
+  // Do not support any copy operations.
+  // In macOS 10.15, es_retain_message/es_release_message were unsupported
+  // and required a full copy, which impacts performance if done too much
+  Message(const Message &other) = delete;
+  Message& operator=(const Message &other) = delete;
+
 
   const es_message_t* operator->() const { return es_msg_; }
   const es_message_t& operator*() const { return *es_msg_; }

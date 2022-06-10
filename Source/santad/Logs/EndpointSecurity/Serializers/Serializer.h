@@ -20,11 +20,21 @@ public:
   }
 
   virtual std::vector<uint8_t> SerializeMessage(
+      const santa::santad::event_providers::endpoint_security::EnrichedClose &) = 0;
+  virtual std::vector<uint8_t> SerializeMessage(
+      const santa::santad::event_providers::endpoint_security::EnrichedExchange &) = 0;
+  virtual std::vector<uint8_t> SerializeMessage(
       const santa::santad::event_providers::endpoint_security::EnrichedExec &) = 0;
+  virtual std::vector<uint8_t> SerializeMessage(
+      const santa::santad::event_providers::endpoint_security::EnrichedExit &) = 0;
   virtual std::vector<uint8_t> SerializeMessage(
       const santa::santad::event_providers::endpoint_security::EnrichedFork &) = 0;
   virtual std::vector<uint8_t> SerializeMessage(
-      const santa::santad::event_providers::endpoint_security::EnrichedExit &) = 0;
+      const santa::santad::event_providers::endpoint_security::EnrichedLink &) = 0;
+  virtual std::vector<uint8_t> SerializeMessage(
+      const santa::santad::event_providers::endpoint_security::EnrichedRename &) = 0;
+  virtual std::vector<uint8_t> SerializeMessage(
+      const santa::santad::event_providers::endpoint_security::EnrichedUnlink &) = 0;
 };
 
 } // namespace santa::santad::logs

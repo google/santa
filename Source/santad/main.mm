@@ -100,8 +100,16 @@ int main(int argc, char *argv[]) {
     SantadMain();
 
     // TODO: Remove `--quick` support used during development
-    int timeout = 5;
-    if ([[[NSProcessInfo processInfo] arguments] containsObject:@"--quick"]) {
+
+    NSArray *args = [[NSProcessInfo processInfo] arguments];
+    if ([args count] > 1 && [args[1] isEqualToString:@"--quick"]) {
+      int timeout = 5;
+      if ([args count] > 2) {
+        timeout = atoi([args[2] UTF8String]);
+      }
+
+      LOGI(@"Bailing in %d seconds", timeout);
+
       dispatch_semaphore_t sema = dispatch_semaphore_create(0);
 
       dispatch_after(dispatch_time(DISPATCH_TIME_NOW, timeout * NSEC_PER_SEC),
