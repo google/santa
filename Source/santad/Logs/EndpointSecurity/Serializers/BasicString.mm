@@ -74,7 +74,7 @@ std::vector<uint8_t> BasicString::SerializeMessage(const EnrichedClose &msg) {
 
   std::string s = ss.str();
 
-  LOGE(@"Enriched unlink: %s", s.c_str());
+  LOGE(@"Enriched write: %s", s.c_str());
 
   return std::vector<uint8_t>(s.begin(), s.end());
 }
@@ -94,7 +94,7 @@ std::vector<uint8_t> BasicString::SerializeMessage(const EnrichedExchange &msg) 
 
   std::string s = ss.str();
 
-  LOGE(@"Enriched link: %s", s.c_str());
+  LOGE(@"Enriched exchange: %s", s.c_str());
 
   return std::vector<uint8_t>(s.begin(), s.end());
 }
@@ -197,7 +197,7 @@ std::vector<uint8_t> BasicString::SerializeMessage(const EnrichedRename &msg) {
 
   std::string s = ss.str();
 
-  LOGE(@"Enriched link: %s", s.c_str());
+  LOGE(@"Enriched rename: %s", s.c_str());
 
   return std::vector<uint8_t>(s.begin(), s.end());
 }
@@ -216,7 +216,7 @@ std::vector<uint8_t> BasicString::SerializeMessage(const EnrichedUnlink &msg) {
 
   std::string s = ss.str();
 
-  LOGE(@"Enriched unlink: %s", s.c_str());
+  LOGE(@"Enriched delete: %s", s.c_str());
 
   return std::vector<uint8_t>(s.begin(), s.end());
 }
