@@ -15,6 +15,7 @@
 #import "Source/santad/EventProviders/SNTEndpointSecurityClient.h"
 
 #include "Source/santad/EventProviders/EndpointSecurity/Client.h"
+#include <stdlib.h>
 
 #import "Source/common/SNTLogging.h"
 
@@ -47,11 +48,11 @@ using santa::santad::event_providers::endpoint_security::Message;
     exit(EXIT_FAILURE);
   }
 
-  _esClient = _esApi->NewClient(^(es_client_t *c, Message esMsg) {
+  self->_esClient = self->_esApi->NewClient(^(es_client_t *c, Message esMsg) {
     messageHandler(c, std::move(esMsg));
   });
 
-  if (!_esClient.IsConnected()) {
+  if (!self->_esClient.IsConnected()) {
     switch(_esClient.NewClientResult()) {
       case ES_NEW_CLIENT_RESULT_ERR_NOT_PERMITTED:
         LOGE(@"Unable to create EndpointSecurity client, not full-disk access permitted");
@@ -77,6 +78,27 @@ using santa::santad::event_providers::endpoint_security::Message;
   } else {
     LOGI(@"Connected to EndpointSecurity");
   }
+
+  if (![self muteSelf]) {
+    exit(EXIT_FAILURE);
+  }
+}
+
+- (BOOL)muteSelf {
+  audit_token_t myAuditToken;
+  mach_msg_type_number_t count = TASK_AUDIT_TOKEN_COUNT;
+  if (task_info(mach_task_self(), TASK_AUDIT_TOKEN, (task_info_t)&myAuditToken, &count) ==
+        KERN_SUCCESS) {
+    if (self->_esApi->MuteProcess(self->_esClient, &myAuditToken)) {
+      return YES;
+    } else {
+      LOGE(@"Failed to mute this client's process.");
+    }
+  } else {
+    LOGE(@"Failed to fetch this client's audit token.");
+  }
+
+  return NO;
 }
 
 - (bool)subscribe:(std::set<es_event_type_t>)events {

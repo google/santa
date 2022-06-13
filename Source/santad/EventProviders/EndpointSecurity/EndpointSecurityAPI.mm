@@ -1,4 +1,5 @@
 #include "Source/santad/EventProviders/EndpointSecurity/EndpointSecurityAPI.h"
+#include <EndpointSecurity/ESTypes.h>
 
 #include <set>
 #include <vector>
@@ -59,4 +60,9 @@ bool EndpointSecurityAPI::RespondAuthResult(
     ES_RESPOND_RESULT_SUCCESS;
 }
 
+bool EndpointSecurityAPI::MuteProcess(const Client &client,
+                                      const audit_token_t* tok) {
+  return es_mute_process(client.Get(), tok) == ES_RETURN_SUCCESS;
 }
+
+} // namespace santa::santad::event_providers::endpoint_security
