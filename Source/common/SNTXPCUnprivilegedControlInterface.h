@@ -28,12 +28,11 @@
 @protocol SNTUnprivilegedDaemonControlXPC
 
 ///
-///  Kernel ops
+///  Cache Ops
 ///
 - (void)cacheCounts:(void (^)(uint64_t rootCache, uint64_t nonRootCache))reply;
 - (void)cacheBucketCount:(void (^)(NSArray *))reply;
 - (void)checkCacheForVnodeID:(santa_vnode_id_t)vnodeID withReply:(void (^)(santa_action_t))reply;
-- (void)driverConnectionEstablished:(void (^)(BOOL))reply;
 
 ///
 ///  Database ops

@@ -85,10 +85,6 @@ double watchdogRAMPeak = 0;
   reply([self.eventProvider checkCache:vnodeID]);
 }
 
-- (void)driverConnectionEstablished:(void (^)(BOOL))reply {
-  reply(self.eventProvider.connectionEstablished);
-}
-
 #pragma mark Database ops
 
 - (void)databaseRuleCounts:(void (^)(int64_t binary, int64_t certificate, int64_t compiler,

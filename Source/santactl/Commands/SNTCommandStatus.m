@@ -48,15 +48,9 @@ REGISTER_COMMAND_NAME(@"status")
   dispatch_group_t group = dispatch_group_create();
 
   // Daemon status
-  __block BOOL driverConnected;
   __block NSString *clientMode;
   __block uint64_t cpuEvents, ramEvents;
   __block double cpuPeak, ramPeak;
-  dispatch_group_enter(group);
-  [[self.daemonConn remoteObjectProxy] driverConnectionEstablished:^(BOOL connected) {
-    driverConnected = connected;
-    dispatch_group_leave(group);
-  }];
   dispatch_group_enter(group);
   [[self.daemonConn remoteObjectProxy] clientMode:^(SNTClientMode cm) {
     switch (cm) {
@@ -181,7 +175,7 @@ REGISTER_COMMAND_NAME(@"status")
   if ([arguments containsObject:@"--json"]) {
     NSMutableDictionary *stats = [@{
       @"daemon" : @{
-        @"driver_connected" : @(driverConnected),
+        @"driver_connected" : @(YES),
         @"mode" : clientMode ?: @"null",
         @"file_logging" : @(fileLogging),
         @"watchdog_cpu_events" : @(cpuEvents),
@@ -223,16 +217,15 @@ REGISTER_COMMAND_NAME(@"status")
     printf("%s\n", [statsStr UTF8String]);
   } else {
     printf(">>> Daemon Info\n");
-    printf("  %-25s | %s\n", "Driver Connected", driverConnected ? "Yes" : "No");
     printf("  %-25s | %s\n", "Mode", [clientMode UTF8String]);
     printf("  %-25s | %s\n", "File Logging", (fileLogging ? "Yes" : "No"));
-    printf("  %-25s | %lld  (Peak: %.2f%%)\n", "Watchdog CPU Events", cpuEvents, cpuPeak);
-    printf("  %-25s | %lld  (Peak: %.2fMB)\n", "Watchdog RAM Events", ramEvents, ramPeak);
     printf("  %-25s | %s\n", "USB Blocking", (configurator.blockUSBMount ? "Yes" : "No"));
     if (configurator.blockUSBMount && configurator.remountUSBMode.count > 0) {
       printf("  %-25s | %s\n", "USB Remounting Mode:",
              [[configurator.remountUSBMode componentsJoinedByString:@", "] UTF8String]);
     }
+    printf("  %-25s | %lld  (Peak: %.2f%%)\n", "Watchdog CPU Events", cpuEvents, cpuPeak);
+    printf("  %-25s | %lld  (Peak: %.2fMB)\n", "Watchdog RAM Events", ramEvents, ramPeak);
 
     if (cachingEnabled) {
       printf(">>> Cache Info\n");
