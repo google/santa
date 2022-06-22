@@ -213,7 +213,7 @@ NS_ASSUME_NONNULL_BEGIN
       LOGE(@"Unexpected Event Type passed to DeviceManager handleAuthMount: %d", m->event_type);
       // Fail closed.
       es_respond_auth_result(self.client, m, ES_AUTH_RESULT_DENY, false);
-      assert("SNTDeviceManager: unexpected event type");
+      assert(0 && "SNTDeviceManager: unexpected event type");
       return;
   }
 
