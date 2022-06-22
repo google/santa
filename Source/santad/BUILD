@@ -453,6 +453,7 @@ santa_unit_test(
         "@MOLXPCConnection",
         "@OCMock",
     ],
+    tags = ["exclusive"],
 )
 
 santa_unit_test(
