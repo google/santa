@@ -44,7 +44,7 @@
                                mockES:(MockEndpointSecurity *)mockES
                                mockDA:(MockDiskArbitration *)mockDA
                             eventType:(es_event_type_t)eventType
-                     diskInfoOverrides:(NSDictionary *)diskInfo {
+                    diskInfoOverrides:(NSDictionary *)diskInfo {
   if (!deviceManager.subscribed) {
     // [deviceManager listen] is synchronous, but we want to asynchronously dispatch it
     // with an enforced timeout to ensure that we never run into issues where the client
@@ -137,7 +137,7 @@
                                          mockES:mockES
                                          mockDA:mockDA
                                       eventType:ES_EVENT_TYPE_AUTH_MOUNT
-                                      diskInfoOverrides:nil];
+                              diskInfoOverrides:nil];
 
   XCTAssertEqual(got.result, ES_AUTH_RESULT_ALLOW);
 }
@@ -169,7 +169,7 @@
                                          mockES:mockES
                                          mockDA:mockDA
                                       eventType:ES_EVENT_TYPE_AUTH_MOUNT
-                                      diskInfoOverrides:nil];
+                              diskInfoOverrides:nil];
 
   XCTAssertEqual(got.result, ES_AUTH_RESULT_DENY);
   XCTAssertEqual(mockDA.wasRemounted, YES);
@@ -207,7 +207,7 @@
                                          mockES:mockES
                                          mockDA:mockDA
                                       eventType:ES_EVENT_TYPE_AUTH_MOUNT
-                                      diskInfoOverrides:nil];
+                              diskInfoOverrides:nil];
 
   XCTAssertEqual(got.result, ES_AUTH_RESULT_DENY);
 
@@ -245,7 +245,7 @@
                                          mockES:mockES
                                          mockDA:mockDA
                                       eventType:ES_EVENT_TYPE_AUTH_REMOUNT
-                                      diskInfoOverrides:nil];
+                              diskInfoOverrides:nil];
 
   XCTAssertEqual(got.result, ES_AUTH_RESULT_DENY);
   XCTAssertEqual(mockDA.wasRemounted, YES);
@@ -283,7 +283,7 @@
                                          mockES:mockES
                                          mockDA:mockDA
                                       eventType:ES_EVENT_TYPE_AUTH_MOUNT
-                                      diskInfoOverrides:diskInfo];
+                              diskInfoOverrides:diskInfo];
 
   XCTAssertEqual(got.result, ES_AUTH_RESULT_ALLOW);
   XCTAssertEqual(mockDA.wasRemounted, NO);

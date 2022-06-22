@@ -347,7 +347,7 @@ NS_ASSUME_NONNULL_BEGIN
       break;
     }
 
-    default: 
+    default:
       LOGE(@"SNTDeviceManager: unexpected event type: %d", m->event_type);
       break;
   }
