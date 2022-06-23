@@ -71,6 +71,7 @@ JSON blob. Here is an example of Firefox being blocked and sent for upload:
           "sha256": "b0b1730ecbc7ff4505142c49f1295e6eda6bcaed7e2c68c5be91b5a11001f024"
         }
       ],
+      "team_id": "43AQ936H96",
       "file_bundle_name": "Firefox",
       "executing_user": "bur",
       "ppid": 1,

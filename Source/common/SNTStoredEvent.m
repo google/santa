@@ -49,6 +49,7 @@
   ENCODE(self.fileBundleVersionString, @"fileBundleVersionString");
 
   ENCODE(self.signingChain, @"signingChain");
+  ENCODE(self.teamID, @"teamID");
 
   ENCODE(self.executingUser, @"executingUser");
   ENCODE(self.occurrenceDate, @"occurrenceDate");
@@ -93,6 +94,7 @@
     _fileBundleVersionString = DECODE(NSString, @"fileBundleVersionString");
 
     _signingChain = DECODEARRAY(MOLCertificate, @"signingChain");
+    _teamID = DECODE(NSString, @"teamID");
 
     _executingUser = DECODE(NSString, @"executingUser");
     _occurrenceDate = DECODE(NSDate, @"occurrenceDate");
