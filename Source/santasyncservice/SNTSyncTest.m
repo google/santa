@@ -340,6 +340,8 @@
         XCTAssertEqualObjects(cert[kCertValidFrom], @(1365806075));
         XCTAssertEqualObjects(cert[kCertValidUntil], @(1618266875));
 
+        XCTAssertNil(event[kTeamID]);
+
         event = events[1];
         XCTAssertEqualObjects(event[kFileName], @"hub");
         XCTAssertEqualObjects(event[kExecutingUser], @"foouser");
