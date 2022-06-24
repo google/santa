@@ -15,6 +15,7 @@
 #include <EndpointSecurity/EndpointSecurity.h>
 
 #include <memory>
+#include <string>
 
 #import <Foundation/Foundation.h>
 
@@ -32,8 +33,13 @@
 
 - (bool)subscribe:(std::set<es_event_type_t>)events;
 
-- (bool)respondToMessage:(const santa::santad::event_providers::endpoint_security::Message &)msg
+- (bool)respondToMessage:(const santa::santad::event_providers::endpoint_security::Message&)msg
           withAuthResult:(es_auth_result_t)result
                cacheable:(bool)cacheable;
+
+- (void)processMessage:(santa::santad::event_providers::endpoint_security::Message&&)msg
+               handler:(void(^)(const santa::santad::event_providers::endpoint_security::Message&))messageHandler;
+
+- (bool)isDatabasePath:(const std::string_view)path;
 
 @end

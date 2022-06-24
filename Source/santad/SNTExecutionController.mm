@@ -1,4 +1,4 @@
-/// Copyright 2015 Google Inc. All rights reserved.
+/// Copyright 2022 Google Inc. All rights reserved.
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -19,9 +19,6 @@
 #include <pwd.h>
 #include <utmpx.h>
 
-#include "Source/common/SNTLogging.h"
-#include "Source/common/SNTMetricSet.h"
-
 #import <MOLCodesignChecker/MOLCodesignChecker.h>
 
 #import "Source/common/SNTBlockMessage.h"
@@ -30,22 +27,18 @@
 #import "Source/common/SNTConfigurator.h"
 #import "Source/common/SNTDropRootPrivs.h"
 #import "Source/common/SNTFileInfo.h"
+#import "Source/common/SNTLogging.h"
+#import "Source/common/SNTMetricSet.h"
 #import "Source/common/SNTRule.h"
 #import "Source/common/SNTStoredEvent.h"
 #import "Source/santad/DataLayer/SNTEventTable.h"
 #import "Source/santad/DataLayer/SNTRuleTable.h"
-#import "Source/santad/Logs/SNTEventLog.h"
+#import "Source/santad/SNTDecisionCache.h"
 #import "Source/santad/SNTNotificationQueue.h"
 #import "Source/santad/SNTPolicyProcessor.h"
 #import "Source/santad/SNTSyncdQueue.h"
 
 using santa::santad::event_providers::endpoint_security::Message;
-
-// A binary is considered large at ~30MB. Large binaries take longer to hash and consequently
-// longer to post a decision back to santa-driver. When a binary is considered large santad will
-// let santa-driver know it has received its request and is working on a decision. This allows
-// santa-driver to relax; it does not have to worry about resending the request due to a timeout.
-static size_t kLargeBinarySize = 30 * 1024 * 1024;
 
 @interface SNTExecutionController ()
 @property SNTEventTable *eventTable;
@@ -133,7 +126,8 @@ static NSString *const kPrinterProxyPostMonterey =
   const es_process_t* targetProc = esMsg->event.exec.target;
 
   NSError *fileInfoError;
-  SNTFileInfo *binInfo = [[SNTFileInfo alloc] initWithPath:@(targetProc->executable->path.data) error:&fileInfoError];
+  // Note: EndpointSecurity provides paths that have already been resolved
+  SNTFileInfo *binInfo = [[SNTFileInfo alloc] initWithResolvedPath:@(targetProc->executable->path.data) error:&fileInfoError];
   if (unlikely(!binInfo)) {
     LOGE(@"Failed to read file %@: %@", @(targetProc->executable->path.data), fileInfoError.localizedDescription);
     if (config.failClosed && config.clientMode == SNTClientModeLockdown) {
@@ -154,9 +148,18 @@ static NSString *const kPrinterProxyPostMonterey =
   }
 
   // TODO(markowsky): Maybe add a metric here for how many large executables we're seeing.
-  // if (binInfo.fileSize > kLargeBinarySize) ...
+  // if (binInfo.fileSize > SomeUpperLimit) ...
 
   SNTCachedDecision *cd = [self.policyProcessor decisionForFileInfo:binInfo];
+
+  //
+  // TODO: Remove this bit used for testing during development only...
+  //
+  if (strcmp(esMsg->event.exec.target->executable->path.data, "/usr/bin/bsdtar") == 0) {
+    cd.customMsg = @"Blocked for the lols";
+    cd.decision = SNTEventStateBlockBinary;
+  }
+
   cd.vnodeId = {
     .fsid = (uint64_t)targetProc->executable->stat.st_dev,
     .fileid = targetProc->executable->stat.st_ino
@@ -169,12 +172,7 @@ static NSString *const kPrinterProxyPostMonterey =
   // Save decision details for logging the execution later.  For transitive rules, we also use
   // the shasum stored in the decision details to update the rule's timestamp whenever an
   // ACTION_NOTIFY_EXEC message related to the transitive rule is received.
-  NSString *ttyPath;
-  if (action == ACTION_RESPOND_ALLOW) {
-    [[SNTEventLog logger] cacheDecision:cd];
-  } else {
-    ttyPath = @(targetProc->tty->path.data);
-  }
+  [[SNTDecisionCache sharedCache] cacheDecision:cd];
 
   // Upgrade the action to ACTION_RESPOND_ALLOW_COMPILER when appropriate, because we want the
   // kernel to track this information in its decision cache.
@@ -258,17 +256,21 @@ static NSString *const kPrinterProxyPostMonterey =
         // Let the user know what happened, both on the terminal and in the GUI.
         NSAttributedString *s = [SNTBlockMessage attributedBlockMessageForEvent:se
                                                                   customMessage:cd.customMsg];
-        NSMutableString *msg = [NSMutableString stringWithCapacity:1024];
-        [msg appendFormat:@"\n\033[1mSanta\033[0m\n\n%@\n\n", s.string];
-        [msg appendFormat:@"\033[1mPath:      \033[0m %@\n"
-                          @"\033[1mIdentifier:\033[0m %@\n"
-                          @"\033[1mParent:    \033[0m %@ (%@)\n\n",
-                          se.filePath, se.fileSHA256, se.parentName, se.ppid];
-        NSURL *detailURL = [SNTBlockMessage eventDetailURLForEvent:se];
-        if (detailURL) {
-          [msg appendFormat:@"More info:\n%@\n\n", detailURL.absoluteString];
+
+        if (targetProc->tty->path.length > 0) {
+          NSMutableString *msg = [NSMutableString stringWithCapacity:1024];
+          [msg appendFormat:@"\n\033[1mSanta\033[0m\n\n%@\n\n", s.string];
+          [msg appendFormat:@"\033[1mPath:      \033[0m %@\n"
+                            @"\033[1mIdentifier:\033[0m %@\n"
+                            @"\033[1mParent:    \033[0m %@ (%@)\n\n",
+                            se.filePath, se.fileSHA256, se.parentName, se.ppid];
+          NSURL *detailURL = [SNTBlockMessage eventDetailURLForEvent:se];
+          if (detailURL) {
+            [msg appendFormat:@"More info:\n%@\n\n", detailURL.absoluteString];
+          }
+
+          [self printMessage:msg toTTY:targetProc->tty->path.data];
         }
-        if (ttyPath) [self printMessage:msg toTTY:ttyPath];
 
         [self.notifierQueue addEvent:se customMessage:cd.customMsg];
       }
@@ -323,8 +325,8 @@ static NSString *const kPrinterProxyPostMonterey =
   return proxyInfo;
 }
 
-- (void)printMessage:(NSString *)msg toTTY:(NSString *)path {
-  int fd = open(path.UTF8String, O_WRONLY | O_NOCTTY);
+- (void)printMessage:(NSString *)msg toTTY:(const char *)path {
+  int fd = open(path, O_WRONLY | O_NOCTTY);
   write(fd, msg.UTF8String, msg.length);
   close(fd);
 }

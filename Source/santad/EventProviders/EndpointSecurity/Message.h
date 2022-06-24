@@ -1,3 +1,17 @@
+/// Copyright 2022 Google Inc. All rights reserved.
+///
+/// Licensed under the Apache License, Version 2.0 (the "License");
+/// you may not use this file except in compliance with the License.
+/// You may obtain a copy of the License at
+///
+///    http://www.apache.org/licenses/LICENSE-2.0
+///
+///    Unless required by applicable law or agreed to in writing, software
+///    distributed under the License is distributed on an "AS IS" BASIS,
+///    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+///    See the License for the specific language governing permissions and
+///    limitations under the License.
+
 #ifndef SANTA__SANTAD__EVENTPROVIDERS_ENDPOINTSECURITY_MESSAGE_H
 #define SANTA__SANTAD__EVENTPROVIDERS_ENDPOINTSECURITY_MESSAGE_H
 
@@ -19,17 +33,16 @@ public:
   Message(Message &&other);
   Message& operator=(Message &&rhs) = delete;
 
-  // Do not support any copy operations.
   // In macOS 10.15, es_retain_message/es_release_message were unsupported
-  // and required a full copy, which impacts performance if done too much
-  Message(const Message &other) = delete;
-  Message& operator=(const Message &other) = delete;
+  // and required a full copy, which impacts performance if done too much...
+  // TODO: Add a light ref count layer for macOS 10.15 environments
+  Message(const Message &other);
+  Message& operator=(const Message &other);
 
-
+  // Operators to access underlying es_message_t
   const es_message_t* operator->() const { return es_msg_; }
   const es_message_t& operator*() const { return *es_msg_; }
 
-  std::string ProcessName() const;
   std::string ParentProcessName() const;
 
 private:

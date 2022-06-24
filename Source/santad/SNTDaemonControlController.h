@@ -1,4 +1,4 @@
-/// Copyright 2015 Google Inc. All rights reserved.
+/// Copyright 2022 Google Inc. All rights reserved.
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -12,12 +12,14 @@
 ///    See the License for the specific language governing permissions and
 ///    limitations under the License.
 
+#include <memory>
+
 #import <Foundation/Foundation.h>
 
 #import "Source/common/SNTXPCControlInterface.h"
 #import "Source/santad/EventProviders/SNTEventProvider.h"
+#import "Source/santad/Logs/EndpointSecurity/Logger.h"
 
-@class SNTEventLog;
 @class SNTNotificationQueue;
 @class SNTSyncdQueue;
 
@@ -28,5 +30,6 @@
 
 - (instancetype)initWithEventProvider:(id<SNTCachingEventProvider>)cachingProvider
                     notificationQueue:(SNTNotificationQueue *)notQueue
-                           syncdQueue:(SNTSyncdQueue *)syncdQueue;
+                           syncdQueue:(SNTSyncdQueue *)syncdQueue
+                               logger:(std::shared_ptr<santa::santad::logs::endpoint_security::Logger>)logger;
 @end

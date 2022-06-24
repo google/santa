@@ -101,41 +101,41 @@
   [self doesNotRecognizeSelector:_cmd];
 }
 
-- (void)cacheDecision:(SNTCachedDecision *)cd {
-  dispatch_sync(self.detailStoreQueue, ^{
-    self.detailStore[@(cd.vnodeId.fileid)] = cd;
-  });
-}
+// - (void)cacheDecision:(SNTCachedDecision *)cd {
+//   dispatch_sync(self.detailStoreQueue, ^{
+//     self.detailStore[@(cd.vnodeId.fileid)] = cd;
+//   });
+// }
 
-- (SNTCachedDecision *)cachedDecisionForMessage:(santa_message_t)message {
-  __block SNTCachedDecision *cd;
-  dispatch_sync(self.detailStoreQueue, ^{
-    cd = self.detailStore[@(message.vnode_id.fileid)];
-  });
-  return cd;
-}
+// - (SNTCachedDecision *)cachedDecisionForMessage:(santa_message_t)message {
+//   __block SNTCachedDecision *cd;
+//   dispatch_sync(self.detailStoreQueue, ^{
+//     cd = self.detailStore[@(message.vnode_id.fileid)];
+//   });
+//   return cd;
+// }
 
-- (void)forgetCachedDecisionForVnodeId:(santa_vnode_id_t)vnodeId {
-  dispatch_sync(self.detailStoreQueue, ^{
-    [self.detailStore removeObjectForKey:@(vnodeId.fileid)];
-  });
-}
+// - (void)forgetCachedDecisionForVnodeId:(santa_vnode_id_t)vnodeId {
+//   dispatch_sync(self.detailStoreQueue, ^{
+//     [self.detailStore removeObjectForKey:@(vnodeId.fileid)];
+//   });
+// }
 
-// Whenever a cached decision resulting from a transitive allowlist rule is used to allow the
-// execution of a binary, we update the timestamp on the transitive rule in the rules database.
-// To prevent writing to the database too often, we space out consecutive writes by 3600 seconds.
-- (void)resetTimestampForCachedDecision:(SNTCachedDecision *)cd {
-  if (cd.decision != SNTEventStateAllowTransitive) return;
-  NSDate *lastUpdate = [self.timestampResetMap objectForKey:cd.sha256];
-  if (!lastUpdate || -[lastUpdate timeIntervalSinceNow] > 3600) {
-    SNTRule *rule = [[SNTRule alloc] initWithIdentifier:cd.sha256
-                                                  state:SNTRuleStateAllowTransitive
-                                                   type:SNTRuleTypeBinary
-                                              customMsg:nil];
-    [[SNTDatabaseController ruleTable] resetTimestampForRule:rule];
-    [self.timestampResetMap setObject:[NSDate date] forKey:cd.sha256];
-  }
-}
+// // Whenever a cached decision resulting from a transitive allowlist rule is used to allow the
+// // execution of a binary, we update the timestamp on the transitive rule in the rules database.
+// // To prevent writing to the database too often, we space out consecutive writes by 3600 seconds.
+// - (void)resetTimestampForCachedDecision:(SNTCachedDecision *)cd {
+//   if (cd.decision != SNTEventStateAllowTransitive) return;
+//   NSDate *lastUpdate = [self.timestampResetMap objectForKey:cd.sha256];
+//   if (!lastUpdate || -[lastUpdate timeIntervalSinceNow] > 3600) {
+//     SNTRule *rule = [[SNTRule alloc] initWithIdentifier:cd.sha256
+//                                                   state:SNTRuleStateAllowTransitive
+//                                                    type:SNTRuleTypeBinary
+//                                               customMsg:nil];
+//     [[SNTDatabaseController ruleTable] resetTimestampForRule:rule];
+//     [self.timestampResetMap setObject:[NSDate date] forKey:cd.sha256];
+//   }
+// }
 
 /**
   Sanitizes a given string if necessary, otherwise returns the original.

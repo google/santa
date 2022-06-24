@@ -12,26 +12,19 @@
 ///    See the License for the specific language governing permissions and
 ///    limitations under the License.
 
+#include <sys/stat.h>
+
 #import <Foundation/Foundation.h>
 
-///
-///  Store information about new allowlist rules for later logging.
-///
-@interface SNTAllowlistInfo : NSObject
+#import "Source/common/SNTCachedDecision.h"
 
-@property pid_t pid;
-@property int pidversion;
-@property NSString *targetPath;
-@property NSString *sha256;
+@interface SNTDecisionCache : NSObject
 
-// TODO(mlw): Remove this interface, use audit token variant only
-- (instancetype)initWithPid:(pid_t)pid
-                 pidversion:(int)pidver
-                 targetPath:(NSString*)targetPath
-                     sha256:(NSString*)hash;
++ (instancetype)sharedCache;
 
-- (instancetype)initWithAuditToken:(audit_token_t)token
-                        targetPath:(NSString*)targetPath
-                            sha256:(NSString*)hash;
+- (void)cacheDecision:(SNTCachedDecision *)cd;
+- (SNTCachedDecision *)cachedDecisionForFile:(const struct stat&)statInfo;
+- (void)forgetCachedDecisionForFile:(const struct stat&)statInfo;
+- (void)resetTimestampForCachedDecision:(SNTCachedDecision *)cd;
 
 @end
