@@ -207,6 +207,7 @@ static NSString *const kPrinterProxyPostMonterey =
     se.decision = cd.decision;
 
     se.signingChain = cd.certChain;
+    se.teamID = cd.teamID;
     se.pid = @(message.pid);
     se.ppid = @(message.ppid);
     se.parentName = @(message.pname);

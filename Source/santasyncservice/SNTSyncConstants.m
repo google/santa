@@ -93,6 +93,7 @@ NSString *const kCertOrg = @"org";
 NSString *const kCertOU = @"ou";
 NSString *const kCertValidFrom = @"valid_from";
 NSString *const kCertValidUntil = @"valid_until";
+NSString *const kTeamID = @"team_id";
 NSString *const kQuarantineDataURL = @"quarantine_data_url";
 NSString *const kQuarantineRefererURL = @"quarantine_referer_url";
 NSString *const kQuarantineTimestamp = @"quarantine_timestamp";
