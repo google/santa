@@ -16,7 +16,7 @@ It is named Santa because it keeps track of binaries that are naughty or nice.
 
 The Santa docs are stored in the
 [Docs](https://github.com/google/santa/blob/main/docs) directory and published
-at http://santa.dev.
+at https://santa.dev.
 
 The docs include deployment options, details on how parts of Santa work and
 instructions for developing Santa itself.
