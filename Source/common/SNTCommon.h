@@ -30,18 +30,20 @@ typedef enum {
   ACTION_UNSET = 0,
 
   // REQUESTS
-  ACTION_REQUEST_SHUTDOWN = 10,
+  ACTION_REQUEST_SHUTDOWN = 10, // TODO: Remove
+  // If an operation is awaiting a cache decision from a similar operation
+  // currently being processed, it will poll about every 5 ms for an answer.
   ACTION_REQUEST_BINARY = 11,
 
   // RESPONSES
   ACTION_RESPOND_ALLOW = 20,
   ACTION_RESPOND_DENY = 21,
-  ACTION_RESPOND_TOOLONG = 22,
-  ACTION_RESPOND_ACK = 23,
+  ACTION_RESPOND_TOOLONG = 22, // TODO: Remove
+  ACTION_RESPOND_ACK = 23,     // TODO: Remove
   ACTION_RESPOND_ALLOW_COMPILER = 24,
   // The following response is stored only in the kernel decision cache.
   // It is removed by SNTCompilerController
-  ACTION_RESPOND_ALLOW_PENDING_TRANSITIVE = 25,
+  ACTION_RESPOND_ALLOW_PENDING_TRANSITIVE = 25, // TODO: Remove?
 
   // NOTIFY
   ACTION_NOTIFY_EXEC = 30,
@@ -75,28 +77,28 @@ typedef struct santa_vnode_id_t {
 #endif
 } santa_vnode_id_t;
 
-typedef struct {
-  santa_action_t action;
-  santa_vnode_id_t vnode_id;
-  uid_t uid;
-  gid_t gid;
-  pid_t pid;
-  int pidversion;
-  pid_t ppid;
-  char path[MAXPATHLEN];
-  char newpath[MAXPATHLEN];
-  char ttypath[MAXPATHLEN];
-  // For file events, this is the process name.
-  // For exec requests, this is the parent process name.
-  // While process names can technically be 4*MAXPATHLEN, that never
-  // actually happens, so only take MAXPATHLEN and throw away any excess.
-  char pname[MAXPATHLEN];
+// typedef struct {
+//   santa_action_t action;
+//   santa_vnode_id_t vnode_id;
+//   uid_t uid;
+//   gid_t gid;
+//   pid_t pid;
+//   int pidversion;
+//   pid_t ppid;
+//   char path[MAXPATHLEN];
+//   char newpath[MAXPATHLEN];
+//   char ttypath[MAXPATHLEN];
+//   // For file events, this is the process name.
+//   // For exec requests, this is the parent process name.
+//   // While process names can technically be 4*MAXPATHLEN, that never
+//   // actually happens, so only take MAXPATHLEN and throw away any excess.
+//   char pname[MAXPATHLEN];
 
-  // This points to a copy of the original ES message.
-  void *es_message;
+//   // This points to a copy of the original ES message.
+//   void *es_message;
 
-  // This points to an NSArray of the process arguments.
-  void *args_array;
-} santa_message_t;
+//   // This points to an NSArray of the process arguments.
+//   void *args_array;
+// } santa_message_t;
 
 #endif  // SANTA__COMMON__COMMON_H

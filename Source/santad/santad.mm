@@ -1,3 +1,17 @@
+/// Copyright 2022 Google Inc. All rights reserved.
+///
+/// Licensed under the Apache License, Version 2.0 (the "License");
+/// you may not use this file except in compliance with the License.
+/// You may obtain a copy of the License at
+///
+///    http://www.apache.org/licenses/LICENSE-2.0
+///
+///    Unless required by applicable law or agreed to in writing, software
+///    distributed under the License is distributed on an "AS IS" BASIS,
+///    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+///    See the License for the specific language governing permissions and
+///    limitations under the License.
+
 #include "Source/santad/santad.h"
 
 #include <memory>
@@ -13,7 +27,9 @@
 #import "Source/santad/DataLayer/SNTRuleTable.h"
 #import "Source/santad/SNTCompilerController.h"
 #import "Source/santad/SNTDatabaseController.h"
+#import "Source/santad/EventProviders/SNTEndpointSecurityAuthorizer.h"
 #import "Source/santad/EventProviders/SNTEndpointSecurityRecorder.h"
+#import "Source/santad/EventProviders/SNTEndpointSecurityTamperResistance.h"
 #import "Source/santad/SNTExecutionController.h"
 #import "Source/santad/SNTNotificationQueue.h"
 #import "Source/santad/SNTSyncdQueue.h"
@@ -54,10 +70,25 @@ int SantadMain() {
   auto logger = std::make_shared<Logger>(std::make_unique<BasicString>(),
                                          std::make_unique<Syslog>());
 
-  SNTEndpointSecurityRecorder *event_monitor = [[SNTEndpointSecurityRecorder alloc]
-		initWithESAPI:es_api logger:logger enricher:enricher compilerController:compiler_controller];
+  SNTEndpointSecurityRecorder *monitor_client =
+      [[SNTEndpointSecurityRecorder alloc] initWithESAPI:es_api
+                                                  logger:logger
+                                                enricher:enricher
+                                      compilerController:compiler_controller];
 
-  [event_monitor enable];
+  SNTEndpointSecurityAuthorizer *authorizer_client =
+      [[SNTEndpointSecurityAuthorizer alloc] initWithESAPI:es_api
+                                                    logger:logger
+                                            execController:exec_controller
+                                        compilerController:compiler_controller];
+
+  SNTEndpointSecurityTamperResistance *tamper_client =
+      [[SNTEndpointSecurityTamperResistance alloc] initWithESAPI:es_api
+                                                          logger:logger];
+
+  [monitor_client enable];
+  [authorizer_client enable];
+  [tamper_client enable];
 
   return 0;
 }

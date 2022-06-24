@@ -1,4 +1,4 @@
-/// Copyright 2021 Google Inc. All rights reserved.
+/// Copyright 2022 Google Inc. All rights reserved.
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -13,6 +13,7 @@
 ///    limitations under the License.
 
 #import "Source/common/SNTAllowlistInfo.h"
+#include <bsm/libbsm.h>
 
 @implementation SNTAllowlistInfo
 
@@ -24,6 +25,19 @@
   if (self) {
     _pid = pid;
     _pidversion = pidver;
+    _targetPath = targetPath;
+    _sha256 = hash;
+  }
+  return self;
+}
+
+- (instancetype)initWithAuditToken:(audit_token_t)token
+                        targetPath:(NSString*)targetPath
+                            sha256:(NSString*)hash {
+  self = [super init];
+  if (self) {
+    _pid = audit_token_to_pid(token);
+    _pidversion = audit_token_to_pidversion(token);
     _targetPath = targetPath;
     _sha256 = hash;
   }

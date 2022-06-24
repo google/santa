@@ -4,7 +4,11 @@
 #include <memory>
 #include <vector>
 
-#include "Source/santad/EventProviders/EndpointSecurity/EnrichedTypes.h"
+#import <Foundation/Foundation.h>
+
+#import "Source/santad/EventProviders/EndpointSecurity/EnrichedTypes.h"
+
+@class SNTStoredEvent;
 
 namespace santa::santad::logs::endpoint_security::serializers {
 
@@ -35,6 +39,12 @@ public:
       const santa::santad::event_providers::endpoint_security::EnrichedRename &) = 0;
   virtual std::vector<uint8_t> SerializeMessage(
       const santa::santad::event_providers::endpoint_security::EnrichedUnlink &) = 0;
+
+  virtual std::vector<uint8_t> SerializeAllowList(
+      const santa::santad::event_providers::endpoint_security::Message&,
+      const std::string_view) = 0;
+
+  virtual std::vector<uint8_t> SerializeBundleHashingEvent(SNTStoredEvent*) = 0;
 };
 
 } // namespace santa::santad::logs

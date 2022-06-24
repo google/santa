@@ -13,9 +13,14 @@
 ///    limitations under the License.
 
 #import "Source/santad/EventProviders/SNTEndpointSecurityClient.h"
+#include <bsm/libbsm.h>
 
-#include "Source/santad/EventProviders/EndpointSecurity/Client.h"
+#include <dispatch/dispatch.h>
+#include <mach/mach_time.h>
 #include <stdlib.h>
+
+#include "Source/santad/EventProviders/EndpointSecurity/Message.h"
+#include "Source/santad/EventProviders/EndpointSecurity/Client.h"
 
 #import "Source/common/SNTLogging.h"
 
@@ -26,12 +31,25 @@ using santa::santad::event_providers::endpoint_security::Message;
 @implementation SNTEndpointSecurityClient {
   std::shared_ptr<EndpointSecurityAPI> _esApi;
   Client _esClient;
+  mach_timebase_info_data_t _timebase;
+  dispatch_queue_t _authQueue;
 }
 
 - (instancetype)initWithESAPI:(std::shared_ptr<EndpointSecurityAPI>)esApi {
   self = [super init];
   if (self) {
     _esApi = esApi;
+
+    if (mach_timebase_info(&_timebase) != KERN_SUCCESS) {
+      LOGE(@"Failed to get mach timebase info");
+      // Assumed to be transitory failure. Let the daemon restart.
+      exit(EXIT_FAILURE);
+    }
+
+    _authQueue = dispatch_queue_create(
+        "auth_queue",
+        DISPATCH_QUEUE_CONCURRENT_WITH_AUTORELEASE_POOL);
+
   }
   return self;
 }
@@ -109,6 +127,59 @@ using santa::santad::event_providers::endpoint_security::Message;
           withAuthResult:(es_auth_result_t)result
                cacheable:(bool)cacheable {
   return _esApi->RespondAuthResult(_esClient, msg, result, cacheable);
+}
+
+- (void)processMessage:(Message&&)msg handler:(void(^)(const Message&))messageHandler {
+  dispatch_semaphore_t processingSema = dispatch_semaphore_create(0);
+  // Add 1 to the processing semaphore. We're not creating it with a starting
+  // value of 1 because that requires that the semaphore is not deallocated
+  // until its value matches the starting value, which we don't need.
+  dispatch_semaphore_signal(processingSema);
+  dispatch_semaphore_t deadlineExpiredSema = dispatch_semaphore_create(0);
+
+  uint64_t timeout = NSEC_PER_SEC * -5;
+
+  uint64_t deadlineMachTime = msg->deadline - mach_absolute_time();
+  uint64_t deadlineNano = deadlineMachTime * _timebase.numer / _timebase.denom;
+
+  if (deadlineNano <= timeout) {
+    // TODO???
+    // Note: This currently will result in the event being immediately denied
+  }
+
+  // Workaround for compiler bug that doesn't properly close over variables
+  __block auto processMsg = msg;
+  __block auto deadlineMsg = msg;
+
+  dispatch_after(dispatch_time(DISPATCH_TIME_NOW, deadlineNano - timeout), self->_authQueue, ^(void) {
+    if (dispatch_semaphore_wait(processingSema, DISPATCH_TIME_NOW) != 0) {
+      // Handler has already responded, nothing to do.
+      return;
+    }
+
+    bool res = [self respondToMessage:deadlineMsg
+                       withAuthResult:ES_AUTH_RESULT_DENY
+                            cacheable:false];
+
+    LOGE(@"SNTEndpointSecurityClient: deadline reached: deny pid=%d, event type: %d ret=%d",
+         audit_token_to_pid(deadlineMsg->process->audit_token),
+         deadlineMsg->event_type,
+         res);
+    dispatch_semaphore_signal(deadlineExpiredSema);
+  });
+
+  dispatch_async(self->_authQueue, ^{
+    messageHandler(deadlineMsg);
+    if (dispatch_semaphore_wait(processingSema, DISPATCH_TIME_NOW) != 0) {
+      // Deadline expired, wait for deadline block to finish.
+      dispatch_semaphore_wait(deadlineExpiredSema, DISPATCH_TIME_FOREVER);
+    }
+  });
+}
+
+- (bool)isDatabasePath:(const std::string_view)path {
+  return (path == "/private/var/db/santa/rules.db" ||
+          path == "/private/var/db/santa/events.db");
 }
 
 @end

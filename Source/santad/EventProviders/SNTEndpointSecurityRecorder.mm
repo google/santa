@@ -13,6 +13,7 @@
 ///    limitations under the License.
 
 #import "Source/santad/EventProviders/SNTEndpointSecurityRecorder.h"
+
 #include <EndpointSecurity/ESTypes.h>
 
 #include "Source/santad/EventProviders/EndpointSecurity/EnrichedTypes.h"
@@ -61,11 +62,6 @@ using santa::santad::event_providers::endpoint_security::EnrichedMessage;
         }
 
         // TODO: Update appropriate caches
-        // TODO: Compiler tracking
-        break;
-      }
-      case ES_EVENT_TYPE_NOTIFY_RENAME: {
-        // TODO: Compiler tracking
         break;
       }
       default:
@@ -73,11 +69,13 @@ using santa::santad::event_providers::endpoint_security::EnrichedMessage;
         break;
     }
 
+    [self.compilerController handleEvent:esMsg withLogger:self->_logger];
+
     // Enrich the message
     std::unique_ptr<EnrichedMessage> enrichedMsg = _enricher->Enrich(std::move(esMsg));
 
     // TODO: dispatch before logging
-    _logger->Log(std::move(enrichedMsg));
+    self->_logger->Log(std::move(enrichedMsg));
   }];
   LOGE(@"Client established...");
 }

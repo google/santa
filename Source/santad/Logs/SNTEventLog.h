@@ -16,6 +16,10 @@
 
 #include "Source/common/SNTCommon.h"
 
+//
+// TODO: This whole file goes away soon...
+//
+
 @class SNTCachedDecision;
 @class SNTStoredEvent;
 @class SNTAllowlistInfo;
@@ -41,13 +45,13 @@
 - (void)logAllowlist:(SNTAllowlistInfo *)allowlistInfo;
 - (void)forceFlush;
 
-// Methods for storing, retrieving, and removing cached decisions.
-- (void)cacheDecision:(SNTCachedDecision *)cd;
-- (SNTCachedDecision *)cachedDecisionForMessage:(santa_message_t)message;
-- (void)forgetCachedDecisionForVnodeId:(santa_vnode_id_t)vnodeId;
+// // Methods for storing, retrieving, and removing cached decisions.
+// - (void)cacheDecision:(SNTCachedDecision *)cd;
+// - (SNTCachedDecision *)cachedDecisionForMessage:(santa_message_t)message;
+// - (void)forgetCachedDecisionForVnodeId:(santa_vnode_id_t)vnodeId;
 
-// Method used to record the freshness of transitive rules.
-- (void)resetTimestampForCachedDecision:(SNTCachedDecision *)cd;
+// // Method used to record the freshness of transitive rules.
+// - (void)resetTimestampForCachedDecision:(SNTCachedDecision *)cd;
 
 // String formatter helpers.
 - (void)addArgsForPid:(pid_t)pid toString:(NSMutableString *)str;

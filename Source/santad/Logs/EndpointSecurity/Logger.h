@@ -1,11 +1,31 @@
+/// Copyright 2022 Google Inc. All rights reserved.
+///
+/// Licensed under the Apache License, Version 2.0 (the "License");
+/// you may not use this file except in compliance with the License.
+/// You may obtain a copy of the License at
+///
+///    http://www.apache.org/licenses/LICENSE-2.0
+///
+///    Unless required by applicable law or agreed to in writing, software
+///    distributed under the License is distributed on an "AS IS" BASIS,
+///    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+///    See the License for the specific language governing permissions and
+///    limitations under the License.
+
 #ifndef SANTA__SANTAD__LOGS_ENDPOINTSECURITY_LOGGER_H
 #define SANTA__SANTAD__LOGS_ENDPOINTSECURITY_LOGGER_H
 
 #include <memory>
+#include <string_view>
 
-#include "Source/santad/EventProviders/EndpointSecurity/EnrichedTypes.h"
-#include "Source/santad/Logs/EndpointSecurity/Serializers/Serializer.h"
-#include "Source/santad/Logs/EndpointSecurity/Writers/Writer.h"
+#import <Foundation/Foundation.h>
+
+#import "Source/santad/EventProviders/EndpointSecurity/EnrichedTypes.h"
+#import "Source/santad/EventProviders/EndpointSecurity/Message.h"
+#import "Source/santad/Logs/EndpointSecurity/Serializers/Serializer.h"
+#import "Source/santad/Logs/EndpointSecurity/Writers/Writer.h"
+
+@class SNTStoredEvent;
 
 namespace santa::santad::logs::endpoint_security {
 
@@ -16,9 +36,13 @@ public:
       : serializer_(std::move(serializer)), writer_(std::move(writer)) {}
 
   void Log(
-      std::unique_ptr<santa::santad::event_providers::endpoint_security::EnrichedMessage> msg) {
-    writer_->Write(serializer_->SerializeMessage(std::move(msg)));
-  }
+      std::unique_ptr<santa::santad::event_providers::endpoint_security::EnrichedMessage> msg);
+
+  void LogAllowList(
+      const santa::santad::event_providers::endpoint_security::Message& msg,
+      const std::string_view hash);
+
+  void LogBundleHashingEvents(NSArray<SNTStoredEvent*> *events);
 
 private:
   std::unique_ptr<serializers::Serializer> serializer_;

@@ -1,4 +1,4 @@
-/// Copyright 2015 Google Inc. All rights reserved.
+/// Copyright 2022 Google Inc. All rights reserved.
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -30,11 +30,12 @@
 #import "Source/santad/DataLayer/SNTEventTable.h"
 #import "Source/santad/DataLayer/SNTRuleTable.h"
 #import "Source/santad/EventProviders/SNTEventProvider.h"
-#import "Source/santad/Logs/SNTEventLog.h"
 #import "Source/santad/SNTDatabaseController.h"
 #import "Source/santad/SNTNotificationQueue.h"
 #import "Source/santad/SNTPolicyProcessor.h"
 #import "Source/santad/SNTSyncdQueue.h"
+
+using santa::santad::logs::endpoint_security::Logger;
 
 // Globals used by the santad watchdog thread
 uint64_t watchdogCPUEvents = 0;
@@ -49,13 +50,17 @@ double watchdogRAMPeak = 0;
 @property SNTSyncdQueue *syncdQueue;
 @end
 
-@implementation SNTDaemonControlController
+@implementation SNTDaemonControlController {
+  std::shared_ptr<Logger> _logger;
+}
 
 - (instancetype)initWithEventProvider:(id<SNTCachingEventProvider>)cachingProvider
                     notificationQueue:(SNTNotificationQueue *)notQueue
-                           syncdQueue:(SNTSyncdQueue *)syncdQueue {
+                           syncdQueue:(SNTSyncdQueue *)syncdQueue
+                               logger:(std::shared_ptr<Logger>)logger {
   self = [super init];
   if (self) {
+    _logger = logger;
     _policyProcessor =
       [[SNTPolicyProcessor alloc] initWithRuleTable:[SNTDatabaseController ruleTable]];
     _cachingEventProvider = cachingProvider;
@@ -310,7 +315,7 @@ double watchdogRAMPeak = 0;
   [eventTable addStoredEvent:event];
 
   // Log all of the generated bundle events.
-  [[SNTEventLog logger] logBundleHashingEvents:events];
+  self->_logger->LogBundleHashingEvents(events);
 
   WEAKIFY(self);
 
