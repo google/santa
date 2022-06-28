@@ -95,6 +95,12 @@
 ///
 @property NSArray *signingChain;
 
+
+///
+/// If the executed file was signed, this is the Team ID if present in the signature information.
+///
+@property NSString *teamID;
+
 ///
 ///  The user who executed the binary.
 ///

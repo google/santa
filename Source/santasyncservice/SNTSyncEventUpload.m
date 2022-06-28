@@ -149,6 +149,7 @@
     [signingChain addObject:certDict];
   }
   newEvent[kSigningChain] = signingChain;
+  ADDKEY(newEvent, kTeamID, event.teamID);
 
   return newEvent;
 #undef ADDKEY
