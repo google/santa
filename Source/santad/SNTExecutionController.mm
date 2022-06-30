@@ -114,7 +114,7 @@ static NSString *const kPrinterProxyPostMonterey =
 #pragma mark Binary Validation
 
 - (void)validateExecEvent:(const Message&)esMsg
-               postAction:(int (^)(santa_action_t))postAction {
+               postAction:(bool (^)(santa_action_t))postAction {
   if (esMsg->event_type != ES_EVENT_TYPE_AUTH_EXEC) {
     // Programming error. Bail.
     LOGE(@"Attempt to validate non-EXEC event. Event type: %d", esMsg->event_type);

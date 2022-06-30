@@ -27,6 +27,7 @@
 #import "Source/santad/DataLayer/SNTRuleTable.h"
 #import "Source/santad/SNTCompilerController.h"
 #import "Source/santad/SNTDatabaseController.h"
+#include "Source/santad/EventProviders/AuthResultCache.h"
 #import "Source/santad/EventProviders/SNTEndpointSecurityAuthorizer.h"
 #import "Source/santad/EventProviders/SNTEndpointSecurityRecorder.h"
 #import "Source/santad/EventProviders/SNTEndpointSecurityTamperResistance.h"
@@ -34,6 +35,7 @@
 #import "Source/santad/SNTNotificationQueue.h"
 #import "Source/santad/SNTSyncdQueue.h"
 
+using santa::santad::event_providers::AuthResultCache;
 using santa::santad::event_providers::endpoint_security::EndpointSecurityAPI;
 using santa::santad::event_providers::endpoint_security::Enricher;
 using santa::santad::logs::endpoint_security::serializers::BasicString;
@@ -70,6 +72,8 @@ int SantadMain() {
   auto logger = std::make_shared<Logger>(std::make_unique<BasicString>(),
                                          std::make_unique<Syslog>());
 
+  auto auth_result_cache = std::make_shared<AuthResultCache>();
+
   SNTEndpointSecurityRecorder *monitor_client =
       [[SNTEndpointSecurityRecorder alloc] initWithESAPI:es_api
                                                   logger:logger
@@ -80,7 +84,8 @@ int SantadMain() {
       [[SNTEndpointSecurityAuthorizer alloc] initWithESAPI:es_api
                                                     logger:logger
                                             execController:exec_controller
-                                        compilerController:compiler_controller];
+                                        compilerController:compiler_controller
+                                           authResultCache:auth_result_cache];
 
   SNTEndpointSecurityTamperResistance *tamper_client =
       [[SNTEndpointSecurityTamperResistance alloc] initWithESAPI:es_api

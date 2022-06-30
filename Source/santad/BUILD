@@ -447,6 +447,7 @@ objc_library(
     srcs = ["EventProviders/SNTEndpointSecurityAuthorizer.mm"],
     hdrs = ["EventProviders/SNTEndpointSecurityAuthorizer.h"],
     deps = [
+        ":AuthResultCache",
         ":EndpointSecurityAPI",
         ":EndpointSecurityEnricher",
         ":EndpointSecurityLogger",
@@ -454,7 +455,16 @@ objc_library(
         ":SNTExecutionController",
         ":SNTCompilerController",
         ":SNTEventProvider",
+    ],
+)
+
+objc_library(
+    name = "AuthResultCache",
+    srcs = ["EventProviders/AuthResultCache.mm"],
+    hdrs = ["EventProviders/AuthResultCache.h"],
+    deps = [
         "//Source/common:SantaCache",
+        "//Source/common:SNTLogging",
     ],
 )
 
@@ -555,19 +565,22 @@ objc_library(
     srcs = ["santad.mm"],
     hdrs = ["santad.h"],
     deps = [
-        ":SNTDatabaseController",
+        ":AuthResultCache",
         ":EndpointSecurityAPI",
+        ":EndpointSecurityEnricher",
+        ":EndpointSecurityLogger",
+        ":EndpointSecuritySerializerBasicString",
+        ":EndpointSecurityWriterSyslog",
+        ":SNTDatabaseController",
         ":SNTCompilerController",
         ":SNTEndpointSecurityAuthorizer",
         ":SNTEndpointSecurityRecorder",
         ":SNTEndpointSecurityTamperResistance",
         ":SNTExecutionController",
         ":SNTNotificationQueue",
-        ":EndpointSecurityEnricher",
+
         ":SNTSyncdQueue",
-        ":EndpointSecuritySerializerBasicString",
-        ":EndpointSecurityWriterSyslog",
-        ":EndpointSecurityLogger",
+
         "//Source/common:SNTLogging",
     ],
 )

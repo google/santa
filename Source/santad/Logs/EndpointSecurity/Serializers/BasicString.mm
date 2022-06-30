@@ -19,9 +19,11 @@
 #include <bsm/libbsm.h>
 #include <libgen.h>
 #include <mach/message.h>
+#include <sys/kauth.h>
 #include <sys/param.h>
 
 #import <Security/Security.h>
+#include <unistd.h>
 
 #import "Source/common/SNTCachedDecision.h"
 #import "Source/common/SNTConfigurator.h"
@@ -65,17 +67,37 @@ static inline pid_t RealGroup(const audit_token_t& tok) {
   return audit_token_to_rgid(tok);
 }
 
-static NSString* OriginalPathForTranslocation(const char *path) {
-  if (!path) {
+static inline void SetThreadIDs(uid_t uid, gid_t gid) {
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated"
+  pthread_setugid_np(uid, gid);
+#pragma clang diagnostic pop
+}
+
+static NSString* OriginalPathForTranslocation(const es_process_t* esProc) {
+  if (!esProc) {
     return nil;
   }
 
-  CFURLRef cfExecURL = (__bridge CFURLRef)[NSURL fileURLWithPath:@(path)];
+  CFURLRef cfExecURL = (__bridge CFURLRef)[NSURL fileURLWithPath:@(esProc->executable->path.data)];
   NSURL *origURL = nil;
   bool isTranslocated = false;
 
   if (SecTranslocateIsTranslocatedURL(cfExecURL, &isTranslocated, NULL)) {
+    bool dropPrivs = true;
+    if (@available(macOS 12.0, *)) {
+      dropPrivs = false;
+    }
+
+    if (dropPrivs) {
+      SetThreadIDs(RealUser(esProc->audit_token), RealGroup(esProc->audit_token));
+    }
+
     origURL = CFBridgingRelease(SecTranslocateCreateOriginalPathForURL(cfExecURL, NULL));
+
+    if (dropPrivs) {
+      SetThreadIDs(KAUTH_UID_NONE, KAUTH_GID_NONE);
+    }
   }
 
   return [origURL path];
@@ -321,8 +343,7 @@ std::vector<uint8_t> BasicString::SerializeMessage(const EnrichedExec &msg) {
   ss << "|mode=" << GetModeString()
      << "|path=" << FilePath(esm.event.exec.target->executable);
 
-  NSString *origPath = OriginalPathForTranslocation(
-      FilePath(esm.event.exec.target->executable).data());
+  NSString *origPath = OriginalPathForTranslocation(esm.event.exec.target);
   if (origPath) {
     ss << "|origpath=" << origPath;
   }
