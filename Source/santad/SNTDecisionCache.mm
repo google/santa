@@ -27,7 +27,6 @@
 @property NSCache<NSString *, NSDate *> *timestampResetMap;
 @end
 
-
 @implementation SNTDecisionCache
 
 + (instancetype)sharedCache {

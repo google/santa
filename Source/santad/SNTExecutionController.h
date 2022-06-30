@@ -68,6 +68,7 @@ const static NSString *kAllowNullVNode = @"AllowNullVNode"; // TODO: Remove
 ///  @param message The message received from the EndpointSecurity event provider.
 ///  @param postAction The block invoked with the desired response result.
 ///
-- (void)validateExecEvent:(const santa::santad::event_providers::endpoint_security::Message&)esMsg postAction:(int (^)(santa_action_t))postAction;
+- (void)validateExecEvent:(const santa::santad::event_providers::endpoint_security::Message&)esMsg
+               postAction:(bool (^)(santa_action_t))postAction;
 
 @end

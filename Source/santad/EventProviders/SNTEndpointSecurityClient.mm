@@ -54,10 +54,10 @@ using santa::santad::event_providers::endpoint_security::Message;
   return self;
 }
 
-- (void)dealloc {
-  // TODO: Check: Should be done automagically..
-  //   * es_delete_client(_client)
-}
+// - (void)dealloc {
+//   // TODO: Check: Should be done automagically..
+//   //   * es_delete_client(_client)
+// }
 
 - (void)establishClientOrDie:(void(^)(es_client_t *c, Message&& esMsg))messageHandler {
   if (self->_esClient.IsConnected()) {
@@ -117,6 +117,10 @@ using santa::santad::event_providers::endpoint_security::Message;
   }
 
   return NO;
+}
+
+- (BOOL)clearCache {
+  return _esApi->ClearCache(self->_esClient);
 }
 
 - (bool)subscribe:(std::set<es_event_type_t>)events {

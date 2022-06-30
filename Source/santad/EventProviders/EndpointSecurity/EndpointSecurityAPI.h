@@ -41,6 +41,8 @@ public:
 
   virtual bool MuteProcess(const Client &client, const audit_token_t* tok);
 
+  virtual bool ClearCache(const Client &client);
+
 private:
 };
 

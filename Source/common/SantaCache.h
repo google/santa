@@ -26,7 +26,7 @@
 
 #include "Source/common/SNTCommon.h"
 
-#define panic(args...) \
+#define santa_panic(args...) \
   printf(args);        \
   printf("\n");        \
   abort()
@@ -334,7 +334,7 @@ class SantaCache {
   inline void unlock(struct bucket *bucket) const {
     if (unlikely(OSAtomicTestAndClear(7, (volatile uint8_t *)&bucket->head) ==
                  0)) {
-      panic("SantaCache::unlock(): Tried to unlock an unlocked lock");
+      santa_panic("SantaCache::unlock(): Tried to unlock an unlocked lock");
     }
   }
 

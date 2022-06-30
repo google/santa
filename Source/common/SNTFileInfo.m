@@ -62,6 +62,7 @@
 
 extern NSString *const NSURLQuarantinePropertiesKey WEAK_IMPORT_ATTRIBUTE;
 
+// TODO: Create variant that can handle passed in stat(2) info from ES
 - (instancetype)initWithResolvedPath:(NSString *)path error:(NSError **)error {
   self = [super init];
   if (self) {

@@ -1,0 +1,128 @@
+
+/// Copyright 2022 Google Inc. All rights reserved.
+///
+/// Licensed under the Apache License, Version 2.0 (the "License");
+/// you may not use this file except in compliance with the License.
+/// You may obtain a copy of the License at
+///
+///    http://www.apache.org/licenses/LICENSE-2.0
+///
+///    Unless required by applicable law or agreed to in writing, software
+///    distributed under the License is distributed on an "AS IS" BASIS,
+///    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+///    See the License for the specific language governing permissions and
+///    limitations under the License.
+
+#include "Source/santad/EventProviders/AuthResultCache.h"
+
+#include <mach/clock_types.h>
+#include <time.h>
+
+#import "Source/common/SNTLogging.h"
+
+// Santa currently only flushes caches when new DENY rules are added, not ALLOW
+// rules. This means this value should be low enough so that if a previously
+// denied binary is allowed, it can be re-executed by the user in a timely
+// manner. But the value should be high enough to allow the cache to be
+// effective in the event the binary is executed in rapid succession.
+static const uint64_t kMaxCacheDenyTimeMilliseconds = 1500;
+
+template <>
+uint64_t SantaCacheHasher<santa_vnode_id_t>(santa_vnode_id_t const &t) {
+  return (SantaCacheHasher<uint64_t>(t.fsid) << 1) ^ SantaCacheHasher<uint64_t>(t.fileid);
+}
+
+namespace santa::santad::event_providers {
+
+static inline uint64_t GetCurrentUptime() {
+  return clock_gettime_nsec_np(CLOCK_MONOTONIC);
+}
+
+// Decision is stored in upper 8 bits, timestamp in remaining 56.
+static inline uint64_t CacheableAction(santa_action_t action,
+                                       uint64_t timestamp = GetCurrentUptime()) {
+  return ((uint64_t)action << 56) | (timestamp & 0xFFFFFFFFFFFFFF);
+}
+
+static inline santa_action_t ActionFromCachedValue(uint64_t cachedValue) {
+  return (santa_action_t)(cachedValue >> 56);
+}
+
+static inline uint64_t TimestampFromCachedValue(uint64_t cachedValue) {
+  return (cachedValue & ~(0xFF00000000000000));
+}
+
+AuthResultCache::AuthResultCache() {
+  root_decision_cache_ = new SantaCache<santa_vnode_id_t, uint64_t>();
+  nonroot_decision_cache_ = new SantaCache<santa_vnode_id_t, uint64_t>();
+
+  struct stat sb;
+  if (stat("/", &sb) == 0) {
+    root_inode_ = sb.st_ino;
+  }
+}
+
+AuthResultCache::~AuthResultCache() {
+  delete root_decision_cache_;
+  delete nonroot_decision_cache_;
+}
+
+void AuthResultCache::AddToCache(santa_vnode_id_t vnode_id,
+                                 santa_action_t decision) {
+  auto cache = CacheForVnodeID(vnode_id);
+  switch (decision) {
+    case ACTION_REQUEST_BINARY:
+      cache->set(vnode_id, CacheableAction(ACTION_REQUEST_BINARY, 0), 0);
+      break;
+    case ACTION_RESPOND_ALLOW:
+      OS_FALLTHROUGH;
+    case ACTION_RESPOND_ALLOW_COMPILER:
+      OS_FALLTHROUGH;
+    case ACTION_RESPOND_DENY:
+      cache->set(vnode_id,
+                 CacheableAction(decision),
+                 CacheableAction(ACTION_REQUEST_BINARY, 0));
+      break;
+    default:
+      // This is a programming error. Bail.
+      LOGE(@"Invalid cache value, exiting.");
+      exit(EXIT_FAILURE);
+  }
+  // TODO(rah): Look at a replacement for wakeup(), maybe NSCondition
+}
+
+void AuthResultCache::RemoveFromCache(santa_vnode_id_t vnode_id) {
+  CacheForVnodeID(vnode_id)->remove(vnode_id);
+}
+
+santa_action_t AuthResultCache::CheckCache(santa_vnode_id_t vnode_id) {
+  auto cache = CacheForVnodeID(vnode_id);
+
+  uint64_t cached_val = cache->get(vnode_id);
+  if (cached_val == 0) {
+    return ACTION_UNSET;
+  }
+
+  santa_action_t result = ActionFromCachedValue(cached_val);
+
+
+  if (result == ACTION_RESPOND_DENY) {
+    auto expiry_time = TimestampFromCachedValue(cached_val) +
+                       (kMaxCacheDenyTimeMilliseconds * NSEC_PER_MSEC);
+    if (expiry_time < GetCurrentUptime()) {
+      cache->remove(vnode_id);
+      return ACTION_UNSET;
+    }
+  }
+
+  return result;
+}
+
+SantaCache<santa_vnode_id_t, uint64_t>* AuthResultCache::CacheForVnodeID(
+    santa_vnode_id_t vnode_id) {
+  return (vnode_id.fsid == root_inode_ || root_inode_ == 0) ?
+      root_decision_cache_ :
+      nonroot_decision_cache_;
+}
+
+} // namespace santa::santad::event_providers

@@ -79,4 +79,8 @@ bool EndpointSecurityAPI::MuteProcess(const Client &client,
   return es_mute_process(client.Get(), tok) == ES_RETURN_SUCCESS;
 }
 
+bool EndpointSecurityAPI::ClearCache(const Client &client) {
+  return es_clear_cache(client.Get()) == ES_CLEAR_CACHE_RESULT_SUCCESS;
+}
+
 } // namespace santa::santad::event_providers::endpoint_security

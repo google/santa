@@ -14,9 +14,12 @@
 
 #import "Source/santad/EventProviders/SNTEndpointSecurityAuthorizer.h"
 
+#include <os/base.h>
+#include <cstdlib>
+
 #include <EndpointSecurity/ESTypes.h>
 
-#import "Source/common/SantaCache.h"
+#include "Source/santad/EventProviders/AuthResultCache.h"
 #include "Source/santad/EventProviders/EndpointSecurity/EnrichedTypes.h"
 #include "Source/santad/EventProviders/EndpointSecurity/Message.h"
 
@@ -25,6 +28,14 @@
 using santa::santad::event_providers::endpoint_security::EndpointSecurityAPI;
 using santa::santad::logs::endpoint_security::Logger;
 using santa::santad::event_providers::endpoint_security::Message;
+using santa::santad::event_providers::AuthResultCache;
+
+static inline santa_vnode_id_t VnodeForFile(const es_file_t* esFile) {
+  return santa_vnode_id_t{
+    .fsid = (uint64_t)esFile->stat.st_dev,
+    .fileid = esFile->stat.st_ino,
+  };
+}
 
 @interface SNTEndpointSecurityAuthorizer()
 @property SNTCompilerController* compilerController;
@@ -33,30 +44,20 @@ using santa::santad::event_providers::endpoint_security::Message;
 
 @implementation SNTEndpointSecurityAuthorizer {
   std::shared_ptr<Logger> _logger;
-  SantaCache<santa_vnode_id_t, uint64_t> *_rootDecisionCache;
-  SantaCache<santa_vnode_id_t, uint64_t> *_nonRootDecisionCache;
-  uint64_t _rootVnodeID;
+  std::shared_ptr<AuthResultCache> _authResultCache;
 }
 
 - (instancetype)initWithESAPI:(std::shared_ptr<EndpointSecurityAPI>)esApi
                        logger:(std::shared_ptr<Logger>)logger
                execController:(SNTExecutionController*)execController
-           compilerController:(SNTCompilerController*)compilerController {
+           compilerController:(SNTCompilerController*)compilerController
+              authResultCache:(std::shared_ptr<AuthResultCache>)authResultCache {
   self = [super initWithESAPI:esApi];
   if (self) {
     _logger = logger;
     _execController = execController;
     _compilerController = compilerController;
-
-    _rootDecisionCache = new SantaCache<santa_vnode_id_t, uint64_t>();
-    _nonRootDecisionCache = new SantaCache<santa_vnode_id_t, uint64_t>();
-
-    // Store the filesystem ID of the root vnode for split-cache usage.
-    // If the stat fails for any reason _rootVnodeID will be 0 and all decisions will be in a single cache.
-    struct stat rootStat;
-    if (stat("/", &rootStat) == 0) {
-      _rootVnodeID = (uint64_t)rootStat.st_dev;
-    }
+    _authResultCache = authResultCache;
 
     [self establishClient];
   }
@@ -71,48 +72,82 @@ using santa::santad::event_providers::endpoint_security::Message;
       exit(EXIT_FAILURE);
     }
 
-    [self processMessage:std::move(esMsg) handler:^(const Message& msg){
-      [self.execController validateExecEvent:msg postAction:^int(santa_action_t action){
+    // Automatically deny long file paths
+    if (esMsg->event.exec.target->executable->path_truncated) {
+      [self postAction:ACTION_RESPOND_DENY forMessage:esMsg];
+      return;
+    }
+
+    [self processMessage:std::move(esMsg) handler:^(const Message& msg) {
+      santa_vnode_id_t vnodeId = VnodeForFile(msg->event.exec.target->executable);
+
+      while (true) {
+        auto returnAction = self->_authResultCache->CheckCache(vnodeId);
+        if (RESPONSE_VALID(returnAction)) {
+          bool cacheable = false;
+          es_auth_result_t authResult = ES_AUTH_RESULT_DENY;
+
+          switch (returnAction) {
+            case ACTION_RESPOND_ALLOW_COMPILER:
+              [self.compilerController setIsCompiler:msg->event.exec.target->audit_token];
+              OS_FALLTHROUGH;
+            case ACTION_RESPOND_ALLOW:
+              cacheable = true;
+              authResult = ES_AUTH_RESULT_ALLOW;
+              break;
+            default:
+              break;
+          }
+
+          [self respondToMessage:msg withAuthResult:authResult cacheable:cacheable];
+          return;
+        } else if (returnAction == ACTION_REQUEST_BINARY) {
+          // TODO(rah): Look at a replacement for msleep(), maybe NSCondition
+          usleep(5000);
+        } else {
+          break;
+        }
+      }
+
+      self->_authResultCache->AddToCache(vnodeId, ACTION_REQUEST_BINARY);
+
+      // [self addToCache:vnodeId decision:ACTION_REQUEST_BINARY];
+
+      [self.execController validateExecEvent:msg postAction:^bool(santa_action_t action){
         return [self postAction:action forMessage:msg];
       }];
     }];
   }];
 }
 
-// TODO: Return type
-- (int)postAction:(santa_action_t)action forMessage:(const Message&)esMsg {
+- (bool)postAction:(santa_action_t)action forMessage:(const Message&)esMsg {
   es_auth_result_t authResult;
-  bool cacheable;
+
   switch (action) {
     case ACTION_RESPOND_ALLOW_COMPILER:
       [self.compilerController setIsCompiler:esMsg->process->audit_token];
-      authResult = ES_AUTH_RESULT_ALLOW;
-      // TODO: Why false?
-      cacheable = false;
-      [self.compilerController setIsCompiler:esMsg->process->audit_token];
-      break;
+      OS_FALLTHROUGH;
     case ACTION_RESPOND_ALLOW:
-    case ACTION_RESPOND_ALLOW_PENDING_TRANSITIVE:
       authResult = ES_AUTH_RESULT_ALLOW;
-      cacheable = true;
-      // TODO: Cache
       break;
     case ACTION_RESPOND_DENY:
-      // TODO: Cache
-      OS_FALLTHROUGH;
-    case ACTION_RESPOND_TOOLONG:
       authResult = ES_AUTH_RESULT_DENY;
-      // TODO: Why false? We should just clear caches on rule updates.
-      // Note: Still would get NOTIFY event if want to log attempts
-      cacheable = false;
       break;
     default:
       // This is a programming error. Bail.
-      LOGE(@"Invalid action, exiting.");
+      LOGE(@"Invalid action for postAction, exiting.");
       exit(EXIT_FAILURE);
   }
 
-  return [self respondToMessage:esMsg withAuthResult:authResult cacheable:cacheable];
+  self->_authResultCache->AddToCache(VnodeForFile(esMsg->event.exec.target->executable),
+                                     action);
+
+  // Don't cache DENY results. Santa only flushes ES cache when a new DENY rule
+  // is received. If DENY results were cached and a rule update made the
+  // executable allowable, ES would continue to apply the DENY cached result.
+  return [self respondToMessage:esMsg
+                 withAuthResult:authResult
+                      cacheable:(authResult == ES_AUTH_RESULT_ALLOW)];
 }
 
 - (void)enable {
@@ -120,5 +155,18 @@ using santa::santad::event_providers::endpoint_security::Message;
       ES_EVENT_TYPE_AUTH_EXEC,
   }];
 }
+
+//
+// TODO: Need to port these to the new AuthResultCache
+//
+
+// - (void)flushCacheNonRootOnly:(BOOL)nonRootOnly API_AVAILABLE(macos(10.15)) {
+//   _nonRootDecisionCache->clear();
+//   if (!nonRootOnly) _rootDecisionCache->clear();
+// }
+
+// - (NSArray<NSNumber *> *)cacheCounts {
+//   return @[ @(_rootDecisionCache->count()), @(_nonRootDecisionCache->count()) ];
+// }
 
 @end
