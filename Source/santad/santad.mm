@@ -16,21 +16,22 @@
 
 #include <memory>
 
-#include "Source/santad/EventProviders/EndpointSecurity/EndpointSecurityAPI.h"
-#include "Source/santad/EventProviders/EndpointSecurity/Enricher.h"
-#include "Source/santad/Logs/EndpointSecurity/Logger.h"
-#include "Source/santad/Logs/EndpointSecurity/Serializers/BasicString.h"
-#include "Source/santad/Logs/EndpointSecurity/Writers/Syslog.h"
-
+#import "Source/common/SNTConfigurator.h"
 #import "Source/common/SNTLogging.h"
+#import "Source/common/SNTPrefixTree.h"
 #import "Source/santad/DataLayer/SNTEventTable.h"
 #import "Source/santad/DataLayer/SNTRuleTable.h"
 #import "Source/santad/SNTCompilerController.h"
 #import "Source/santad/SNTDatabaseController.h"
+#include "Source/santad/EventProviders/EndpointSecurity/EndpointSecurityAPI.h"
+#include "Source/santad/EventProviders/EndpointSecurity/Enricher.h"
 #include "Source/santad/EventProviders/AuthResultCache.h"
 #import "Source/santad/EventProviders/SNTEndpointSecurityAuthorizer.h"
 #import "Source/santad/EventProviders/SNTEndpointSecurityRecorder.h"
 #import "Source/santad/EventProviders/SNTEndpointSecurityTamperResistance.h"
+#include "Source/santad/Logs/EndpointSecurity/Logger.h"
+#include "Source/santad/Logs/EndpointSecurity/Serializers/BasicString.h"
+#include "Source/santad/Logs/EndpointSecurity/Writers/Syslog.h"
 #import "Source/santad/SNTExecutionController.h"
 #import "Source/santad/SNTNotificationQueue.h"
 #import "Source/santad/SNTSyncdQueue.h"
@@ -45,6 +46,8 @@ using santa::santad::logs::endpoint_security::Logger;
 // TODO: Change return type
 // int SantadMain(std::shared_ptr<EndpointSecurityAPI> es_api) {
 int SantadMain() {
+  SNTConfigurator *configurator = [SNTConfigurator configurator];
+
   SNTRuleTable *rule_table = [SNTDatabaseController ruleTable];
   if (!rule_table) {
     LOGE(@"Failed to initialize rule table.");
@@ -67,6 +70,17 @@ int SantadMain() {
           notifierQueue:notifier_queue
              syncdQueue:syncd_queue];
 
+  auto prefix_tree = std::make_shared<SNTPrefixTree>();
+
+  // TODO(bur): Add KVO handling for fileChangesPrefixFilters.
+  NSArray *filters =
+      [@[ @"/.", @"/dev/" ]
+          arrayByAddingObjectsFromArray:[configurator fileChangesPrefixFilters]];
+
+  for (NSString *filter in filters) {
+    prefix_tree->AddPrefix([filter fileSystemRepresentation]);
+  }
+
   auto es_api = std::make_shared<EndpointSecurityAPI>();
   std::shared_ptr<Enricher> enricher = std::make_shared<Enricher>();
   auto logger = std::make_shared<Logger>(std::make_unique<BasicString>(),
@@ -79,7 +93,8 @@ int SantadMain() {
                                                   logger:logger
                                                 enricher:enricher
                                       compilerController:compiler_controller
-                                         authResultCache:auth_result_cache];
+                                         authResultCache:auth_result_cache
+                                              prefixTree:prefix_tree];
 
   SNTEndpointSecurityAuthorizer *authorizer_client =
       [[SNTEndpointSecurityAuthorizer alloc] initWithESAPI:es_api

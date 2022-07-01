@@ -12,14 +12,14 @@
 ///    See the License for the specific language governing permissions and
 ///    limitations under the License.
 
+#import "Source/common/SNTPrefixTree.h"
 #include "Source/santad/EventProviders/EndpointSecurity/EndpointSecurityAPI.h"
 #include "Source/santad/EventProviders/EndpointSecurity/Enricher.h"
-#include "Source/santad/Logs/EndpointSecurity/Logger.h"
-
-#import "Source/santad/SNTCompilerController.h"
 #import "Source/santad/EventProviders/AuthResultCache.h"
 #import "Source/santad/EventProviders/SNTEndpointSecurityClient.h"
 #import "Source/santad/EventProviders/SNTEventProvider.h"
+#include "Source/santad/Logs/EndpointSecurity/Logger.h"
+#import "Source/santad/SNTCompilerController.h"
 
 @interface SNTEndpointSecurityRecorder : SNTEndpointSecurityClient<SNTEventProvider>
 
@@ -27,6 +27,7 @@
                        logger:(std::shared_ptr<santa::santad::logs::endpoint_security::Logger>)logger
                      enricher:(std::shared_ptr<santa::santad::event_providers::endpoint_security::Enricher>)enricher
            compilerController:(SNTCompilerController*)compilerController
-              authResultCache:(std::shared_ptr<santa::santad::event_providers::AuthResultCache>)authResultCache;
+              authResultCache:(std::shared_ptr<santa::santad::event_providers::AuthResultCache>)authResultCache
+                   prefixTree:(std::shared_ptr<SNTPrefixTree>)prefixTree;
 
 @end

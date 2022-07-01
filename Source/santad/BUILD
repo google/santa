@@ -428,6 +428,7 @@ objc_library(
         ":SNTCompilerController",
         ":SNTEventProvider",
         "//Source/common:SNTLogging",
+        "//Source/common:SNTPrefixTree",
     ],
 )
 
@@ -579,10 +580,10 @@ objc_library(
         ":SNTEndpointSecurityTamperResistance",
         ":SNTExecutionController",
         ":SNTNotificationQueue",
-
         ":SNTSyncdQueue",
-
+        "//Source/common:SNTConfigurator",
         "//Source/common:SNTLogging",
+        "//Source/common:SNTPrefixTree",
     ],
 )
 
