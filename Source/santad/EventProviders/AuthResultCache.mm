@@ -53,8 +53,8 @@ static inline uint64_t TimestampFromCachedValue(uint64_t cachedValue) {
 }
 
 AuthResultCache::AuthResultCache() {
-  root_decision_cache_ = new SantaCache<santa_vnode_id_t, uint64_t>();
-  nonroot_decision_cache_ = new SantaCache<santa_vnode_id_t, uint64_t>();
+  root_cache_ = new SantaCache<santa_vnode_id_t, uint64_t>();
+  nonroot_cache_ = new SantaCache<santa_vnode_id_t, uint64_t>();
 
   struct stat sb;
   if (stat("/", &sb) == 0) {
@@ -63,8 +63,8 @@ AuthResultCache::AuthResultCache() {
 }
 
 AuthResultCache::~AuthResultCache() {
-  delete root_decision_cache_;
-  delete nonroot_decision_cache_;
+  delete root_cache_;
+  delete nonroot_cache_;
 }
 
 void AuthResultCache::AddToCache(santa_vnode_id_t vnode_id,
@@ -121,8 +121,19 @@ santa_action_t AuthResultCache::CheckCache(santa_vnode_id_t vnode_id) {
 SantaCache<santa_vnode_id_t, uint64_t>* AuthResultCache::CacheForVnodeID(
     santa_vnode_id_t vnode_id) {
   return (vnode_id.fsid == root_inode_ || root_inode_ == 0) ?
-      root_decision_cache_ :
-      nonroot_decision_cache_;
+      root_cache_ :
+      nonroot_cache_;
+}
+
+void AuthResultCache::FlushCache(FlushCacheMode mode) {
+  nonroot_cache_->clear();
+  if (mode == FlushCacheMode::kAllCaches) {
+    root_cache_->clear();
+  }
+}
+
+NSArray<NSNumber*>* AuthResultCache::CacheCounts() {
+  return @[ @(root_cache_->count()), @(nonroot_cache_->count()) ];
 }
 
 } // namespace santa::santad::event_providers

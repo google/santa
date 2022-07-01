@@ -16,11 +16,17 @@
 #define SANTA__SANTAD__EVENTPROVIDERS_AUTHRESULTCACHE_H
 
 #include <sys/stat.h>
+#import <Foundation/Foundation.h>
 
 #include "Source/common/SantaCache.h"
-#include "Source/common/SNTCommon.h"
+#import "Source/common/SNTCommon.h"
 
 namespace santa::santad::event_providers {
+
+enum class FlushCacheMode {
+  kNonRootOnly,
+  kAllCaches,
+};
 
 class AuthResultCache {
 public:
@@ -36,12 +42,16 @@ public:
   virtual void RemoveFromCache(santa_vnode_id_t vnode_id);
   virtual santa_action_t CheckCache(santa_vnode_id_t vnode_id);
 
+  virtual void FlushCache(FlushCacheMode mode);
+
+  virtual NSArray<NSNumber*>* CacheCounts();
+
 private:
   virtual SantaCache<santa_vnode_id_t, uint64_t>* CacheForVnodeID(
       santa_vnode_id_t vnode_id);
 
-  SantaCache<santa_vnode_id_t, uint64_t> *root_decision_cache_;
-  SantaCache<santa_vnode_id_t, uint64_t> *nonroot_decision_cache_;
+  SantaCache<santa_vnode_id_t, uint64_t> *root_cache_;
+  SantaCache<santa_vnode_id_t, uint64_t> *nonroot_cache_;
 
   uint64_t root_inode_;
 };
