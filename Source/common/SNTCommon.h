@@ -44,8 +44,9 @@ typedef enum {
 
 } santa_action_t;
 
-#define RESPONSE_VALID(x)                                   \
-  (x == ACTION_RESPOND_ALLOW || x == ACTION_RESPOND_DENY || \
+#define RESPONSE_VALID(x)              \
+  (x == ACTION_RESPOND_ALLOW ||        \
+   x == ACTION_RESPOND_DENY ||         \
    x == ACTION_RESPOND_ALLOW_COMPILER)
 
 // Struct to manage vnode IDs
@@ -59,29 +60,5 @@ typedef struct santa_vnode_id_t {
   }
 #endif
 } santa_vnode_id_t;
-
-// typedef struct {
-//   santa_action_t action;
-//   santa_vnode_id_t vnode_id;
-//   uid_t uid;
-//   gid_t gid;
-//   pid_t pid;
-//   int pidversion;
-//   pid_t ppid;
-//   char path[MAXPATHLEN];
-//   char newpath[MAXPATHLEN];
-//   char ttypath[MAXPATHLEN];
-//   // For file events, this is the process name.
-//   // For exec requests, this is the parent process name.
-//   // While process names can technically be 4*MAXPATHLEN, that never
-//   // actually happens, so only take MAXPATHLEN and throw away any excess.
-//   char pname[MAXPATHLEN];
-
-//   // This points to a copy of the original ES message.
-//   void *es_message;
-
-//   // This points to an NSArray of the process arguments.
-//   void *args_array;
-// } santa_message_t;
 
 #endif  // SANTA__COMMON__COMMON_H

@@ -111,8 +111,6 @@ static inline santa_vnode_id_t VnodeForFile(const es_file_t* esFile) {
 
       self->_authResultCache->AddToCache(vnodeId, ACTION_REQUEST_BINARY);
 
-      // [self addToCache:vnodeId decision:ACTION_REQUEST_BINARY];
-
       [self.execController validateExecEvent:msg postAction:^bool(santa_action_t action){
         return [self postAction:action forMessage:msg];
       }];
@@ -155,18 +153,5 @@ static inline santa_vnode_id_t VnodeForFile(const es_file_t* esFile) {
       ES_EVENT_TYPE_AUTH_EXEC,
   }];
 }
-
-//
-// TODO: Need to port these to the new AuthResultCache
-//
-
-// - (void)flushCacheNonRootOnly:(BOOL)nonRootOnly API_AVAILABLE(macos(10.15)) {
-//   _nonRootDecisionCache->clear();
-//   if (!nonRootOnly) _rootDecisionCache->clear();
-// }
-
-// - (NSArray<NSNumber *> *)cacheCounts {
-//   return @[ @(_rootDecisionCache->count()), @(_nonRootDecisionCache->count()) ];
-// }
 
 @end
