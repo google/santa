@@ -13,13 +13,12 @@
 ///    limitations under the License.
 
 #import "Source/santad/EventProviders/SNTEndpointSecurityRecorder.h"
-#include "Source/santad/EventProviders/AuthResultCache.h"
 
 #include <EndpointSecurity/ESTypes.h>
 
+#include "Source/santad/EventProviders/AuthResultCache.h"
 #include "Source/santad/EventProviders/EndpointSecurity/EnrichedTypes.h"
 #include "Source/santad/EventProviders/EndpointSecurity/Message.h"
-
 #import "Source/common/SNTLogging.h"
 
 using santa::santad::event_providers::endpoint_security::EndpointSecurityAPI;
@@ -34,22 +33,25 @@ using santa::santad::event_providers::AuthResultCache;
 @end
 
 @implementation SNTEndpointSecurityRecorder {
+  std::shared_ptr<AuthResultCache> _authResultCache;
   std::shared_ptr<Enricher> _enricher;
   std::shared_ptr<Logger> _logger;
-  std::shared_ptr<AuthResultCache> _authResultCache;
+  std::shared_ptr<SNTPrefixTree> _prefixTree;
 }
 
 - (instancetype)initWithESAPI:(std::shared_ptr<EndpointSecurityAPI>)esApi
                        logger:(std::shared_ptr<Logger>)logger
                      enricher:(std::shared_ptr<Enricher>)enricher
            compilerController:(SNTCompilerController*)compilerController
-              authResultCache:(std::shared_ptr<AuthResultCache>)authResultCache {
+              authResultCache:(std::shared_ptr<AuthResultCache>)authResultCache
+                   prefixTree:(std::shared_ptr<SNTPrefixTree>)prefixTree {
   self = [super initWithESAPI:esApi];
   if (self) {
     _enricher = enricher;
     _logger = logger;
     _compilerController = compilerController;
     _authResultCache = authResultCache;
+    _prefixTree = prefixTree;
 
     [self establishClient];
   }
@@ -59,19 +61,37 @@ using santa::santad::event_providers::AuthResultCache;
 - (void)establishClient {
   [super establishClientOrDie:^(es_client_t *c, Message&& esMsg){
     // Pre-enrichment processing
-    switch (esMsg->event_type) {
-      case ES_EVENT_TYPE_NOTIFY_CLOSE: {
+    es_file_t *targetFile = NULL;
+
+    switch(esMsg->event_type) {
+      case ES_EVENT_TYPE_NOTIFY_CLOSE:
         if (esMsg->event.close.modified == false) {
           // Currently only process modified files
           return;
         }
 
         self->_authResultCache->RemoveFromCache(esMsg->event.close.target);
+
+        targetFile = esMsg->event.close.target;
         break;
-      }
+      case ES_EVENT_TYPE_NOTIFY_LINK:
+        targetFile = esMsg->event.link.source;
+        break;
+      case ES_EVENT_TYPE_NOTIFY_RENAME:
+        targetFile = esMsg->event.rename.source;
+        break;
+      case ES_EVENT_TYPE_NOTIFY_UNLINK:
+        targetFile = esMsg->event.unlink.target;
+        break;
       default:
-        // No other special cases...
+        targetFile = NULL;
         break;
+    }
+
+    // Filter file op events matching the prefix tree.
+    if (targetFile != NULL &&
+        self->_prefixTree->HasPrefix(targetFile->path.data)) {
+      return;
     }
 
     [self.compilerController handleEvent:esMsg withLogger:self->_logger];
@@ -82,7 +102,6 @@ using santa::santad::event_providers::AuthResultCache;
     // TODO: dispatch before logging
     self->_logger->Log(std::move(enrichedMsg));
   }];
-  LOGE(@"Client established...");
 }
 
 - (void)enable {

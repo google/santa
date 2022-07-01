@@ -82,7 +82,6 @@ using santa::santad::event_providers::endpoint_security::Message;
         exit(EXIT_FAILURE);
     }
   }];
-  LOGE(@"Client established...");
 }
 
 - (void)enable {
