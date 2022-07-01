@@ -86,13 +86,18 @@ using santa::santad::event_providers::endpoint_security::Message;
 }
 
 - (void)enable {
+  // TODO: For macOS 13, use new mute and invert APIs to limit the
+  // messages sent for these events to Santa-specific directories.
+
   [super subscribe:{
       ES_EVENT_TYPE_AUTH_UNLINK,
       ES_EVENT_TYPE_AUTH_RENAME,
   }];
 
-  // TODO: For macOS 13, use new mute and invert APIs to limit the
-  // messages sent for these events to Santa-specific directories.
+  // There's a gap between creating a client and subscribing to events. Creating the client
+  // triggers a cache flush automatically but any events that happen in this gap could be allowed
+  // and cached, so we force the cache to flush again.
+  [self clearCache];
 }
 
 @end

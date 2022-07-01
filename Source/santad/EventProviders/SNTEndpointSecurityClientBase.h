@@ -40,6 +40,8 @@
 - (void)processMessage:(santa::santad::event_providers::endpoint_security::Message&&)msg
                handler:(void(^)(const santa::santad::event_providers::endpoint_security::Message&))messageHandler;
 
+- (bool)clearCache;
+
 - (bool)isDatabasePath:(const std::string_view)path;
 
 @end

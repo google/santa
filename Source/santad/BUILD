@@ -420,6 +420,7 @@ objc_library(
     srcs = ["EventProviders/SNTEndpointSecurityRecorder.mm"],
     hdrs = ["EventProviders/SNTEndpointSecurityRecorder.h"],
     deps = [
+        ":AuthResultCache",
         ":EndpointSecurityAPI",
         ":SNTEndpointSecurityClient",
         ":EndpointSecurityEnricher",
