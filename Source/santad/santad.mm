@@ -78,7 +78,8 @@ int SantadMain() {
       [[SNTEndpointSecurityRecorder alloc] initWithESAPI:es_api
                                                   logger:logger
                                                 enricher:enricher
-                                      compilerController:compiler_controller];
+                                      compilerController:compiler_controller
+                                         authResultCache:auth_result_cache];
 
   SNTEndpointSecurityAuthorizer *authorizer_client =
       [[SNTEndpointSecurityAuthorizer alloc] initWithESAPI:es_api

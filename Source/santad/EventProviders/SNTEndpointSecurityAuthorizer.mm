@@ -30,13 +30,6 @@ using santa::santad::logs::endpoint_security::Logger;
 using santa::santad::event_providers::endpoint_security::Message;
 using santa::santad::event_providers::AuthResultCache;
 
-static inline santa_vnode_id_t VnodeForFile(const es_file_t* esFile) {
-  return santa_vnode_id_t{
-    .fsid = (uint64_t)esFile->stat.st_dev,
-    .fileid = esFile->stat.st_ino,
-  };
-}
-
 @interface SNTEndpointSecurityAuthorizer()
 @property SNTCompilerController* compilerController;
 @property SNTExecutionController* execController;
@@ -79,10 +72,10 @@ static inline santa_vnode_id_t VnodeForFile(const es_file_t* esFile) {
     }
 
     [self processMessage:std::move(esMsg) handler:^(const Message& msg) {
-      santa_vnode_id_t vnodeId = VnodeForFile(msg->event.exec.target->executable);
+      const es_file_t *target_file = msg->event.exec.target->executable;
 
       while (true) {
-        auto returnAction = self->_authResultCache->CheckCache(vnodeId);
+        auto returnAction = self->_authResultCache->CheckCache(target_file);
         if (RESPONSE_VALID(returnAction)) {
           bool cacheable = false;
           es_auth_result_t authResult = ES_AUTH_RESULT_DENY;
@@ -109,7 +102,7 @@ static inline santa_vnode_id_t VnodeForFile(const es_file_t* esFile) {
         }
       }
 
-      self->_authResultCache->AddToCache(vnodeId, ACTION_REQUEST_BINARY);
+      self->_authResultCache->AddToCache(target_file, ACTION_REQUEST_BINARY);
 
       [self.execController validateExecEvent:msg postAction:^bool(santa_action_t action){
         return [self postAction:action forMessage:msg];
@@ -137,7 +130,7 @@ static inline santa_vnode_id_t VnodeForFile(const es_file_t* esFile) {
       exit(EXIT_FAILURE);
   }
 
-  self->_authResultCache->AddToCache(VnodeForFile(esMsg->event.exec.target->executable),
+  self->_authResultCache->AddToCache(esMsg->event.exec.target->executable,
                                      action);
 
   // Don't cache DENY results. Santa only flushes ES cache when a new DENY rule
@@ -152,6 +145,11 @@ static inline santa_vnode_id_t VnodeForFile(const es_file_t* esFile) {
   [super subscribe:{
       ES_EVENT_TYPE_AUTH_EXEC,
   }];
+
+  // There's a gap between creating a client and subscribing to events. Creating the client
+  // triggers a cache flush automatically but any events that happen in this gap could be allowed
+  // and cached, so we force the cache to flush again.
+  [self clearCache];
 }
 
 @end

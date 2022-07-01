@@ -13,6 +13,7 @@
 ///    limitations under the License.
 
 #import "Source/santad/EventProviders/SNTEndpointSecurityRecorder.h"
+#include "Source/santad/EventProviders/AuthResultCache.h"
 
 #include <EndpointSecurity/ESTypes.h>
 
@@ -26,6 +27,7 @@ using santa::santad::logs::endpoint_security::Logger;
 using santa::santad::event_providers::endpoint_security::Enricher;
 using santa::santad::event_providers::endpoint_security::Message;
 using santa::santad::event_providers::endpoint_security::EnrichedMessage;
+using santa::santad::event_providers::AuthResultCache;
 
 @interface SNTEndpointSecurityRecorder()
 @property SNTCompilerController* compilerController;
@@ -34,17 +36,20 @@ using santa::santad::event_providers::endpoint_security::EnrichedMessage;
 @implementation SNTEndpointSecurityRecorder {
   std::shared_ptr<Enricher> _enricher;
   std::shared_ptr<Logger> _logger;
+  std::shared_ptr<AuthResultCache> _authResultCache;
 }
 
 - (instancetype)initWithESAPI:(std::shared_ptr<EndpointSecurityAPI>)esApi
                        logger:(std::shared_ptr<Logger>)logger
                      enricher:(std::shared_ptr<Enricher>)enricher
-           compilerController:(SNTCompilerController*)compilerController {
+           compilerController:(SNTCompilerController*)compilerController
+              authResultCache:(std::shared_ptr<AuthResultCache>)authResultCache {
   self = [super initWithESAPI:esApi];
   if (self) {
     _enricher = enricher;
     _logger = logger;
     _compilerController = compilerController;
+    _authResultCache = authResultCache;
 
     [self establishClient];
   }
@@ -61,7 +66,7 @@ using santa::santad::event_providers::endpoint_security::EnrichedMessage;
           return;
         }
 
-        // TODO: Update appropriate caches
+        self->_authResultCache->RemoveFromCache(esMsg->event.close.target);
         break;
       }
       default:

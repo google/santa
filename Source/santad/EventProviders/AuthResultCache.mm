@@ -34,6 +34,13 @@ uint64_t SantaCacheHasher<santa_vnode_id_t>(santa_vnode_id_t const &t) {
 
 namespace santa::santad::event_providers {
 
+static inline santa_vnode_id_t VnodeForFile(const es_file_t* es_file) {
+  return santa_vnode_id_t{
+    .fsid = (uint64_t)es_file->stat.st_dev,
+    .fileid = es_file->stat.st_ino,
+  };
+}
+
 static inline uint64_t GetCurrentUptime() {
   return clock_gettime_nsec_np(CLOCK_MONOTONIC);
 }
@@ -67,8 +74,9 @@ AuthResultCache::~AuthResultCache() {
   delete nonroot_cache_;
 }
 
-void AuthResultCache::AddToCache(santa_vnode_id_t vnode_id,
+void AuthResultCache::AddToCache(const es_file_t *es_file,
                                  santa_action_t decision) {
+  santa_vnode_id_t vnode_id = VnodeForFile(es_file);
   auto cache = CacheForVnodeID(vnode_id);
   switch (decision) {
     case ACTION_REQUEST_BINARY:
@@ -91,11 +99,13 @@ void AuthResultCache::AddToCache(santa_vnode_id_t vnode_id,
   // TODO(rah): Look at a replacement for wakeup(), maybe NSCondition
 }
 
-void AuthResultCache::RemoveFromCache(santa_vnode_id_t vnode_id) {
+void AuthResultCache::RemoveFromCache(const es_file_t *es_file) {
+  santa_vnode_id_t vnode_id = VnodeForFile(es_file);
   CacheForVnodeID(vnode_id)->remove(vnode_id);
 }
 
-santa_action_t AuthResultCache::CheckCache(santa_vnode_id_t vnode_id) {
+santa_action_t AuthResultCache::CheckCache(const es_file_t *es_file) {
+  santa_vnode_id_t vnode_id = VnodeForFile(es_file);
   auto cache = CacheForVnodeID(vnode_id);
 
   uint64_t cached_val = cache->get(vnode_id);

@@ -15,8 +15,9 @@
 #ifndef SANTA__SANTAD__EVENTPROVIDERS_AUTHRESULTCACHE_H
 #define SANTA__SANTAD__EVENTPROVIDERS_AUTHRESULTCACHE_H
 
-#include <sys/stat.h>
+#include <EndpointSecurity/EndpointSecurity.h>
 #import <Foundation/Foundation.h>
+#include <sys/stat.h>
 
 #include "Source/common/SantaCache.h"
 #import "Source/common/SNTCommon.h"
@@ -38,9 +39,9 @@ public:
   AuthResultCache(const AuthResultCache &other) = delete;
   AuthResultCache& operator=(const AuthResultCache &other) = delete;
 
-  virtual void AddToCache(santa_vnode_id_t vnode_id, santa_action_t decision);
-  virtual void RemoveFromCache(santa_vnode_id_t vnode_id);
-  virtual santa_action_t CheckCache(santa_vnode_id_t vnode_id);
+  virtual void AddToCache(const es_file_t *es_file, santa_action_t decision);
+  virtual void RemoveFromCache(const es_file_t *es_file);
+  virtual santa_action_t CheckCache(const es_file_t *es_file);
 
   virtual void FlushCache(FlushCacheMode mode);
 

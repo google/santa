@@ -54,11 +54,6 @@ using santa::santad::event_providers::endpoint_security::Message;
   return self;
 }
 
-// - (void)dealloc {
-//   // TODO: Check: Should be done automagically..
-//   //   * es_delete_client(_client)
-// }
-
 - (void)establishClientOrDie:(void(^)(es_client_t *c, Message&& esMsg))messageHandler {
   if (self->_esClient.IsConnected()) {
     // This is a programming error
@@ -102,13 +97,13 @@ using santa::santad::event_providers::endpoint_security::Message;
   }
 }
 
-- (BOOL)muteSelf {
+- (bool)muteSelf {
   audit_token_t myAuditToken;
   mach_msg_type_number_t count = TASK_AUDIT_TOKEN_COUNT;
   if (task_info(mach_task_self(), TASK_AUDIT_TOKEN, (task_info_t)&myAuditToken, &count) ==
         KERN_SUCCESS) {
     if (self->_esApi->MuteProcess(self->_esClient, &myAuditToken)) {
-      return YES;
+      return true;
     } else {
       LOGE(@"Failed to mute this client's process.");
     }
@@ -116,10 +111,10 @@ using santa::santad::event_providers::endpoint_security::Message;
     LOGE(@"Failed to fetch this client's audit token.");
   }
 
-  return NO;
+  return false;
 }
 
-- (BOOL)clearCache {
+- (bool)clearCache {
   return _esApi->ClearCache(self->_esClient);
 }
 
