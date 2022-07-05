@@ -10,7 +10,7 @@ this page will cover troublshooting the system extension and related topics.
 
 ## Confirming Status
 
-While there's an entire page on [santactl](../details/santactl.md), it's one of the best ways to start 
+While there's an entire page on [santactl](../binaries/santactl.md), it's one of the best ways to start 
 determining the cause of an issue:
 
 ```sh
@@ -49,11 +49,11 @@ Santa as well as its details and live connection state
 
 ## Confirming Actions
 
-Looking into [logs](../details/logs.md) would be instructive for the majority
-of how Santa is operating, and the pages on [scopes](../details/scopes.md) and [rules](../details/rules.md) would assist in
+Looking into [logs](../concepts/logs.md) would be instructive for the majority
+of how Santa is operating, and the pages on [scopes](../concepts/scopes.md) and [rules](../concepts/rules.md) would assist in
 determining precendence and why decisions are made. Most helpful is the output of
 `/usr/local/bin/santactl`'s `fileinfo` verb when called with the path/binary in
-question as described on the [santactl](../details/santactl.md) page.
+question as described on the [santactl](../binaries/santactl.md) page.
 
 Depending on the presence or implementation details of a sync server, there may
 be queues and a process for allowing binaries or updated developer certificates.

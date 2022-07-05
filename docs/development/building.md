@@ -126,7 +126,7 @@ the Santa processes in debug mode.
 debugged from Xcode directly. All the other components are launched with
 privileges and/or are scoped to an XPC service that launchd scopes to a hosting
 bundle. Thus the need for the `Attach to Process by PID or Name…` technique. See
-the [ipc](../details/ipc.md) document for for details.
+the [ipc](../concepts/ipc.md) document for for details.
 
 ```sh
 bazel run :reload
