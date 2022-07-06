@@ -13,10 +13,9 @@
 ///    limitations under the License.
 
 #include "Source/santad/EventProviders/EndpointSecurity/EndpointSecurityAPI.h"
-#include "Source/santad/Logs/EndpointSecurity/Logger.h"
-
 #import "Source/santad/EventProviders/SNTEndpointSecurityClient.h"
 #import "Source/santad/EventProviders/SNTEventProvider.h"
+#include "Source/santad/Logs/EndpointSecurity/Logger.h"
 
 @interface SNTEndpointSecurityTamperResistance : SNTEndpointSecurityClient<SNTEventProvider>
 

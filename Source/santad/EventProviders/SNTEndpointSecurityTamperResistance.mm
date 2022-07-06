@@ -13,17 +13,18 @@
 ///    limitations under the License.
 
 #import "Source/santad/EventProviders/SNTEndpointSecurityTamperResistance.h"
-#include <cstdlib>
 
 #include <EndpointSecurity/ESTypes.h>
-
-#include "Source/santad/EventProviders/EndpointSecurity/Message.h"
+#include <stdlib.h>
 
 #import "Source/common/SNTLogging.h"
+#include "Source/santad/EventProviders/EndpointSecurity/Message.h"
 
 using santa::santad::event_providers::endpoint_security::EndpointSecurityAPI;
 using santa::santad::logs::endpoint_security::Logger;
 using santa::santad::event_providers::endpoint_security::Message;
+
+static constexpr std::string_view kSantaKextIdentifier = "com.google.santa-driver";
 
 @implementation SNTEndpointSecurityTamperResistance {
   std::shared_ptr<Logger> _logger;
@@ -77,6 +78,18 @@ using santa::santad::event_providers::endpoint_security::Message;
         [self respondToMessage:esMsg withAuthResult:ES_AUTH_RESULT_ALLOW cacheable:true];
         return;
       }
+
+      case ES_EVENT_TYPE_AUTH_KEXTLOAD: {
+        es_auth_result_t res = ES_AUTH_RESULT_ALLOW;
+        if (strcmp(esMsg->event.kextload.identifier.data,
+                   kSantaKextIdentifier.data()) == 0) {
+          LOGW(@"Preventing attempt to load Santa kext!");
+          res = ES_AUTH_RESULT_DENY;
+        }
+        [self respondToMessage:esMsg withAuthResult:res cacheable:true];
+        return;
+      }
+
       default:
         // Unexpected event type, this is a programming error
         exit(EXIT_FAILURE);
@@ -89,6 +102,7 @@ using santa::santad::event_providers::endpoint_security::Message;
   // messages sent for these events to Santa-specific directories.
 
   [super subscribe:{
+      ES_EVENT_TYPE_AUTH_KEXTLOAD,
       ES_EVENT_TYPE_AUTH_UNLINK,
       ES_EVENT_TYPE_AUTH_RENAME,
   }];

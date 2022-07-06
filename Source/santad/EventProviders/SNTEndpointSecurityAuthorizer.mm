@@ -14,16 +14,14 @@
 
 #import "Source/santad/EventProviders/SNTEndpointSecurityAuthorizer.h"
 
-#include <os/base.h>
-#include <cstdlib>
-
 #include <EndpointSecurity/ESTypes.h>
+#include <os/base.h>
+#include <stdlib.h>
 
+#import "Source/common/SNTLogging.h"
 #include "Source/santad/EventProviders/AuthResultCache.h"
 #include "Source/santad/EventProviders/EndpointSecurity/EnrichedTypes.h"
 #include "Source/santad/EventProviders/EndpointSecurity/Message.h"
-
-#import "Source/common/SNTLogging.h"
 
 using santa::santad::event_providers::endpoint_security::EndpointSecurityAPI;
 using santa::santad::logs::endpoint_security::Logger;
