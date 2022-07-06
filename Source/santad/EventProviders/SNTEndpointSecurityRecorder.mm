@@ -66,7 +66,7 @@ using santa::santad::event_providers::AuthResultCache;
     switch(esMsg->event_type) {
       case ES_EVENT_TYPE_NOTIFY_CLOSE:
         if (esMsg->event.close.modified == false) {
-          // Currently only process modified files
+          // Ignore unmodified files
           return;
         }
 
@@ -88,13 +88,13 @@ using santa::santad::event_providers::AuthResultCache;
         break;
     }
 
+    [self.compilerController handleEvent:esMsg withLogger:self->_logger];
+
     // Filter file op events matching the prefix tree.
     if (targetFile != NULL &&
         self->_prefixTree->HasPrefix(targetFile->path.data)) {
       return;
     }
-
-    [self.compilerController handleEvent:esMsg withLogger:self->_logger];
 
     // Enrich the message
     std::unique_ptr<EnrichedMessage> enrichedMsg = _enricher->Enrich(std::move(esMsg));
