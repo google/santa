@@ -14,16 +14,16 @@
 
 #include "Source/santad/Logs/EndpointSecurity/Serializers/BasicString.h"
 
-#include <sstream>
-
 #include <bsm/libbsm.h>
 #include <libgen.h>
 #include <mach/message.h>
+#import <Security/Security.h>
+#include <stdlib.h>
 #include <sys/kauth.h>
 #include <sys/param.h>
-
-#import <Security/Security.h>
 #include <unistd.h>
+
+#include <sstream>
 
 #import "Source/common/SNTCachedDecision.h"
 #import "Source/common/SNTConfigurator.h"
@@ -47,6 +47,10 @@ extern "C" CFURLRef __nullable SecTranslocateCreateOriginalPathForURL(CFURLRef t
 
 namespace santa::santad::logs::endpoint_security::serializers {
 
+/*
+ * ~~~ BEGIN:
+ * TODO: These functions should be moved to some cmmon util file
+ */
 static inline std::string_view FilePath(const es_file_t* file) {
   return std::string_view(file->path.data);
 }
@@ -103,6 +107,18 @@ static NSString* OriginalPathForTranslocation(const es_process_t* esProc) {
   return [origURL path];
 }
 
+static inline es_file_t* GetAllowListTargetFile(const Message& msg) {
+  switch (msg->event_type) {
+    case ES_EVENT_TYPE_NOTIFY_CLOSE:
+    return msg->event.close.target;
+    case ES_EVENT_TYPE_NOTIFY_RENAME:
+      return msg->event.rename.source;
+    default:
+      // This is a programming error
+      LOGE(@"Unexpected event type for AllowList");
+      exit(EXIT_FAILURE);
+  }
+}
 
 /**
   Sanitize the given C-string, replacing |, \n and \r characters.
@@ -190,6 +206,11 @@ static NSString* sanitizeString(NSString *inStr) {
   }
   return inStr;
 }
+
+/*
+ * TODO: These functions should be moved to some cmmon util file
+ * ~~~ END: ^^^^
+ */
 
 static inline std::string GetDecisionString(SNTEventState event_state) {
   if (event_state & SNTEventStateAllow) {
@@ -485,6 +506,7 @@ std::vector<uint8_t> BasicString::SerializeAllowList(const Message& msg,
 
   ss << "action=ALLOWLIST|pid=" << Pid(msg->process->audit_token)
      << "|pidversion=" << Pidversion(msg->process->audit_token)
+     << "|path=" << FilePath(GetAllowListTargetFile(msg))
      << "|sha256=" << hash;
 
   std::string s = ss.str();

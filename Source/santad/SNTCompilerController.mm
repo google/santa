@@ -70,22 +70,24 @@ static constexpr std::string_view kIgnoredCompilerProcessPathPrefix = "/dev/";
 // Adds a fake cached decision to SNTDecisionCache for pending files. If the file
 // is executed before we can create a transitive rule for it, then we can at
 // least log the pending decision info.
-- (void)saveFakeDecision:(const Message&)esMsg {
+- (void)saveFakeDecision:(const es_file_t*)esFile {
   SNTCachedDecision *cd = [[SNTCachedDecision alloc] init];
   cd.decision = SNTEventStateAllowPendingTransitive;
   cd.vnodeId = {
-    .fsid = (uint64_t)esMsg->process->executable->stat.st_dev,
-    .fileid = esMsg->process->executable->stat.st_ino
+    .fsid = (uint64_t)esFile->stat.st_dev,
+    .fileid = esFile->stat.st_ino
   };
   cd.sha256 = @"pending";
   [[SNTDecisionCache sharedCache] cacheDecision:cd];
 }
 
-- (void)removeFakeDecision:(const Message&)esMsg {
-  [[SNTDecisionCache sharedCache] forgetCachedDecisionForFile:esMsg->process->executable->stat];
+- (void)removeFakeDecision:(const es_file_t*)esFile {
+  [[SNTDecisionCache sharedCache] forgetCachedDecisionForFile:esFile->stat];
 }
 
 - (void)handleEvent:(const Message&)esMsg withLogger:(std::shared_ptr<Logger>)logger {
+  const es_file_t *targetFile = NULL;
+
   switch(esMsg->event_type) {
     case ES_EVENT_TYPE_NOTIFY_CLOSE:
       if (![self isCompiler:esMsg->process->audit_token]) {
@@ -98,30 +100,23 @@ static constexpr std::string_view kIgnoredCompilerProcessPathPrefix = "/dev/";
         return;
       }
 
+      targetFile = esMsg->event.close.target;
+
       break;
     case ES_EVENT_TYPE_NOTIFY_RENAME:
       if (![self isCompiler:esMsg->process->audit_token]) {
         return;
       }
 
-      switch (esMsg->event.rename.destination_type) {
-        case ES_DESTINATION_TYPE_EXISTING_FILE:
-          if (strncmp(kIgnoredCompilerProcessPathPrefix.data(),
-                      esMsg->event.rename.destination.existing_file->path.data,
-                      kIgnoredCompilerProcessPathPrefix.length()) == 0) {
-              return;
-          }
-        case ES_DESTINATION_TYPE_NEW_PATH:
-          // Note: Sufficient to check the parent directory for the prefix
-          if (strncmp(kIgnoredCompilerProcessPathPrefix.data(),
-                      esMsg->event.rename.destination.new_path.dir->path.data,
-                      kIgnoredCompilerProcessPathPrefix.length()) == 0) {
-              return;
-          }
-        default:
-          // Shouldn't happen, means we got bad data from ES...
+      // Note: For RENAME events, we process the `source`. This is the one
+      // that we sould be creating transitive rules for, not the destination.
+      if (strncmp(kIgnoredCompilerProcessPathPrefix.data(),
+                  esMsg->event.rename.source->path.data,
+                  kIgnoredCompilerProcessPathPrefix.length()) == 0) {
           return;
       }
+
+      targetFile = esMsg->event.rename.source;
 
       break;
     case ES_EVENT_TYPE_NOTIFY_EXIT:
@@ -132,19 +127,21 @@ static constexpr std::string_view kIgnoredCompilerProcessPathPrefix = "/dev/";
   }
 
   // If we get here, we need to update transitve rules
-
-  [self createTransitiveRule:esMsg withLogger:logger];
+  if (targetFile) {
+    [self createTransitiveRule:esMsg target:targetFile logger:logger];
+  }
 }
 
 // Assume that this method is called only when we already know that the writing process is a
 // compiler.  It checks if the closed file is executable, and if so, transitively allowlists it.
 // The passed in message contains the pid of the writing process and path of closed file.
-- (void)createTransitiveRule:(const Message&)esMsg withLogger:(std::shared_ptr<Logger>)logger {
-  [self saveFakeDecision:esMsg];
+- (void)createTransitiveRule:(const Message&)esMsg
+                      target:(const es_file_t*)targetFile
+                      logger:(std::shared_ptr<Logger>)logger {
+  [self saveFakeDecision:targetFile];
 
   // Check if this file is an executable.
-  SNTFileInfo *fi = [[SNTFileInfo alloc]
-      initWithResolvedPath:@(esMsg->process->executable->path.data) error:nil];
+  SNTFileInfo *fi = [[SNTFileInfo alloc] initWithResolvedPath:@(targetFile->path.data) error:nil];
   if (fi.isExecutable) {
     // Check if there is an existing (non-transitive) rule for this file.  We leave existing rules
     // alone, so that a allowlist or blocklist rule can't be overwritten by a transitive one.
@@ -168,7 +165,7 @@ static constexpr std::string_view kIgnoredCompilerProcessPathPrefix = "/dev/";
   }
 
   // Remove the "pending" decision info from SNTEventLog.
-  [self removeFakeDecision:esMsg];
+  [self removeFakeDecision:targetFile];
 }
 
 @end
