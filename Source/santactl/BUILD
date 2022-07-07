@@ -69,7 +69,7 @@ macos_command_line_application(
     infoplists = ["Info.plist"],
     minimum_os_version = "10.15",
     provisioning_profile = select({
-        "//:ci_build": None,
+        "//:adhoc_build": None,
         "//conditions:default": "//profiles:santa_dev",
     }),
     version = "//:version",
@@ -102,10 +102,10 @@ santa_unit_test(
 santa_unit_test(
     name = "SNTCommandMetricsTest",
     srcs = [
-        "SNTCommand.h",
-        "SNTCommandController.h",
         "Commands/SNTCommandMetrics.h",
         "Commands/SNTCommandMetricsTest.m",
+        "SNTCommand.h",
+        "SNTCommandController.h",
     ],
     structured_resources = glob(["Commands/testdata/*"]),
     visibility = ["//:santa_package_group"],
@@ -116,8 +116,8 @@ santa_unit_test(
         "//Source/common:SNTMetricSet",
         "//Source/common:SNTXPCControlInterface",
         "//Source/santametricservice/Formats:SNTMetricFormatTestHelper",
-        "@OCMock",
         "@MOLXPCConnection",
+        "@OCMock",
     ],
 )
 

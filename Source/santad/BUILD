@@ -127,8 +127,8 @@ objc_library(
         "//Source/common:SNTCachedDecision",
         "//Source/common:SNTCommon",
         "//Source/common:SNTConfigurator",
-        "//Source/common:SNTStoredEvent",
         "//Source/common:SNTLogging",
+        "//Source/common:SNTStoredEvent",
     ],
 )
 
@@ -150,13 +150,13 @@ objc_library(
 
 objc_library(
     name = "event_logs",
+    hdrs = ["Logs/SNTEventLog.h"],
     deps = [
         ":file_event_logs",
         ":protobuf_event_logs",
         ":syslog_event_logs",
         "//Source/common:SNTCommon",
     ],
-    hdrs = ["Logs/SNTEventLog.h"],
 )
 
 objc_library(
@@ -197,11 +197,10 @@ objc_library(
         "IOKit",
     ],
     deps = [
+        ":SNTApplicationCoreMetrics",
         ":database_controller",
         ":endpoint_security_manager",
         ":event_logs",
-        ":SNTApplicationCoreMetrics",
-        "//Source/common:SantaCache",
         "//Source/common:SNTAllowlistInfo",
         "//Source/common:SNTBlockMessage",
         "//Source/common:SNTCachedDecision",
@@ -222,6 +221,7 @@ objc_library(
         "//Source/common:SNTXPCNotifierInterface",
         "//Source/common:SNTXPCSyncServiceInterface",
         "//Source/common:SNTXPCUnprivilegedControlInterface",
+        "//Source/common:SantaCache",
         "@FMDB",
         "@MOLCertificate",
         "@MOLCodesignChecker",
@@ -287,11 +287,16 @@ macos_bundle(
         "--force",
         "--options library,kill,runtime",
     ],
+    entitlements = select({
+        "//:adhoc_build": "com.google.santa.daemon.systemextension-adhoc.entitlements",
+        # Non-adhoc builds get their entitlements from the provisioning profile.
+        "//conditions:default": None,
+    }),
     infoplists = ["Info.plist"],
     linkopts = ["-execute"],
     minimum_os_version = "10.15",
     provisioning_profile = select({
-        "//:ci_build": None,
+        "//:adhoc_build": None,
         "//conditions:default": "//profiles:daemon_dev",
     }),
     version = "//:version",
@@ -302,11 +307,11 @@ macos_bundle(
 santa_unit_test(
     name = "SNTExecutionControllerTest",
     srcs = [
-        "SNTExecutionController.h",
         "DataLayer/SNTDatabaseTable.h",
         "DataLayer/SNTEventTable.h",
         "DataLayer/SNTRuleTable.h",
         "EventProviders/SNTEventProvider.h",
+        "SNTExecutionController.h",
         "SNTExecutionControllerTest.m",
     ],
     sdk_dylibs = [
@@ -364,6 +369,9 @@ santa_unit_test(
         "DataLayer/SNTRuleTable.m",
         "DataLayer/SNTRuleTableTest.m",
     ],
+    sdk_dylibs = [
+        "EndpointSecurity",
+    ],
     deps = [
         "//Source/common:SNTCachedDecision",
         "//Source/common:SNTCommonEnums",
@@ -374,9 +382,6 @@ santa_unit_test(
         "@FMDB",
         "@MOLCertificate",
         "@MOLCodesignChecker",
-    ],
-    sdk_dylibs = [
-        "EndpointSecurity",
     ],
 )
 
@@ -395,8 +400,8 @@ santa_unit_test(
     ],
     deps = [
         ":EndpointSecurityTestLib",
-        "//Source/common:SNTConfigurator",
         "//Source/common:SNTCommon",
+        "//Source/common:SNTConfigurator",
         "//Source/common:SNTLogging",
         "//Source/common:SNTPrefixTree",
         "//Source/common:SantaCache",
@@ -443,6 +448,7 @@ santa_unit_test(
         "EndpointSecurity",
         "bsm",
     ],
+    tags = ["exclusive"],
     deps = [
         ":EndpointSecurityTestLib",
         ":santad_lib",
@@ -453,7 +459,6 @@ santa_unit_test(
         "@MOLXPCConnection",
         "@OCMock",
     ],
-    tags = ["exclusive"],
 )
 
 santa_unit_test(

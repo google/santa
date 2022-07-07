@@ -27,10 +27,16 @@ NSString *const kBundleID = @"com.google.santa.daemon";
 @implementation SNTXPCControlInterface
 
 + (NSString *)serviceID {
+#ifdef SANTAADHOC
+  // The mach service for an adhoc signed ES sysx uses the "endpoint-security" prefix instead of
+  // the teamid. In Santa's case it will be endpoint-security.com.google.santa.daemon.xpc.
+  return [NSString stringWithFormat:@"endpoint-security.%@.xpc", kBundleID];
+#else
   MOLCodesignChecker *cs = [[MOLCodesignChecker alloc] initWithSelf];
   // "teamid.com.google.santa.daemon.xpc"
   NSString *t = cs.signingInformation[@"teamid"];
   return [NSString stringWithFormat:@"%@.%@.xpc", t, kBundleID];
+#endif
 }
 
 + (NSString *)systemExtensionID {
