@@ -28,10 +28,17 @@
     (std::shared_ptr<santa::santad::event_providers::endpoint_security::EndpointSecurityAPI>)esApi;
 
 - (void)establishClientOrDie:
-    (void(^)(es_client_t *c,
+    (void(^)(es_client_t* c,
              santa::santad::event_providers::endpoint_security::Message&& esMsg))messageHandler;
 
-- (bool)subscribe:(std::set<es_event_type_t>)events;
+- (bool)subscribe:(const std::set<es_event_type_t>&)events;
+
+/// Clears the ES cache after setting subscriptions.
+/// There's a gap between creating a client and subscribing to events. Creating
+/// the client triggers a cache flush automatically but any events that happen
+/// prior to subscribing could've been cached by another client. Clearing after
+/// subscribing mitigates this posibility.
+- (bool)subscribeAndClearCache:(const std::set<es_event_type_t>&)events;
 
 - (bool)respondToMessage:(const santa::santad::event_providers::endpoint_security::Message&)msg
           withAuthResult:(es_auth_result_t)result

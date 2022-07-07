@@ -42,7 +42,10 @@ public:
       const santa::santad::event_providers::endpoint_security::Message& msg,
       const std::string_view hash);
 
-  void LogBundleHashingEvents(NSArray<SNTStoredEvent*> *events);
+  void LogBundleHashingEvents(NSArray<SNTStoredEvent*>* events);
+
+  void LogDiskAppeared(NSDictionary* props);
+  void LogDiskDisappeared(NSDictionary* props);
 
 private:
   std::unique_ptr<serializers::Serializer> serializer_;

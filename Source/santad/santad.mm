@@ -19,6 +19,7 @@
 #import "Source/common/SNTConfigurator.h"
 #import "Source/common/SNTLogging.h"
 #import "Source/common/SNTPrefixTree.h"
+#import "Source/common/SNTXPCNotifierInterface.h"
 #import "Source/santad/DataLayer/SNTEventTable.h"
 #import "Source/santad/DataLayer/SNTRuleTable.h"
 #import "Source/santad/SNTCompilerController.h"
@@ -27,6 +28,7 @@
 #include "Source/santad/EventProviders/EndpointSecurity/Enricher.h"
 #include "Source/santad/EventProviders/AuthResultCache.h"
 #import "Source/santad/EventProviders/SNTEndpointSecurityAuthorizer.h"
+#import "Source/santad/EventProviders/SNTEndpointSecurityDeviceManager.h"
 #import "Source/santad/EventProviders/SNTEndpointSecurityRecorder.h"
 #import "Source/santad/EventProviders/SNTEndpointSecurityTamperResistance.h"
 #include "Source/santad/Logs/EndpointSecurity/Logger.h"
@@ -61,7 +63,7 @@ int SantadMain() {
   }
 
   SNTCompilerController *compiler_controller = [[SNTCompilerController alloc] init];
-  SNTNotificationQueue* notifier_queue = [[SNTNotificationQueue alloc] init];
+  SNTNotificationQueue *notifier_queue = [[SNTNotificationQueue alloc] init];
   SNTSyncdQueue *syncd_queue = [[SNTSyncdQueue alloc] init];
 
   SNTExecutionController *exec_controller = [[SNTExecutionController alloc]
@@ -73,7 +75,7 @@ int SantadMain() {
   auto prefix_tree = std::make_shared<SNTPrefixTree>();
 
   // TODO(bur): Add KVO handling for fileChangesPrefixFilters.
-  NSArray *filters =
+  NSArray<NSString*> *filters =
       [@[ @"/.", @"/dev/" ]
           arrayByAddingObjectsFromArray:[configurator fileChangesPrefixFilters]];
 
@@ -87,6 +89,20 @@ int SantadMain() {
                                          std::make_unique<Syslog>());
 
   auto auth_result_cache = std::make_shared<AuthResultCache>();
+
+  SNTEndpointSecurityDeviceManager *device_client =
+      [[SNTEndpointSecurityDeviceManager alloc] initWithESAPI:es_api
+                                                       logger:logger];
+
+  device_client.blockUSBMount = [configurator blockUSBMount];
+  device_client.remountArgs = [configurator remountUSBMode];
+  device_client.deviceBlockCallback = ^(SNTDeviceEvent *event) {
+      [[notifier_queue.notifierConnection remoteObjectProxy]
+        postUSBBlockNotification:event
+               withCustomMessage:([configurator remountUSBMode] ?
+                                     [configurator bannedUSBBlockMessage] :
+                                     [configurator remountUSBBlockMessage])];
+    };
 
   SNTEndpointSecurityRecorder *monitor_client =
       [[SNTEndpointSecurityRecorder alloc] initWithESAPI:es_api
@@ -109,6 +125,7 @@ int SantadMain() {
 
   [monitor_client enable];
   [authorizer_client enable];
+  [device_client enable];
   [tamper_client enable];
 
   return 0;

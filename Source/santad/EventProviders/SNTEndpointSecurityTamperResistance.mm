@@ -42,7 +42,7 @@ static constexpr std::string_view kSantaKextIdentifier = "com.google.santa-drive
 }
 
 - (void)establishClient {
-  [super establishClientOrDie:^(es_client_t *c, Message&& esMsg){
+  [super establishClientOrDie:^(es_client_t* c, Message&& esMsg) {
     switch (esMsg->event_type) {
       case ES_EVENT_TYPE_AUTH_UNLINK: {
         if ([self isDatabasePath:esMsg->event.unlink.target->path.data]) {
@@ -101,16 +101,11 @@ static constexpr std::string_view kSantaKextIdentifier = "com.google.santa-drive
   // TODO: For macOS 13, use new mute and invert APIs to limit the
   // messages sent for these events to Santa-specific directories.
 
-  [super subscribe:{
+  [super subscribeAndClearCache:{
       ES_EVENT_TYPE_AUTH_KEXTLOAD,
       ES_EVENT_TYPE_AUTH_UNLINK,
       ES_EVENT_TYPE_AUTH_RENAME,
   }];
-
-  // There's a gap between creating a client and subscribing to events. Creating the client
-  // triggers a cache flush automatically but any events that happen in this gap could be allowed
-  // and cached, so we force the cache to flush again.
-  [self clearCache];
 }
 
 @end

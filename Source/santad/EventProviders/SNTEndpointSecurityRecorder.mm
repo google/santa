@@ -59,7 +59,7 @@ using santa::santad::event_providers::AuthResultCache;
 }
 
 - (void)establishClient {
-  [super establishClientOrDie:^(es_client_t *c, Message&& esMsg){
+  [super establishClientOrDie:^(es_client_t* c, Message&& esMsg) {
     // Pre-enrichment processing
     es_file_t *targetFile = NULL;
 
