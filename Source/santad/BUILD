@@ -422,10 +422,10 @@ objc_library(
     deps = [
         ":AuthResultCache",
         ":EndpointSecurityAPI",
-        ":SNTEndpointSecurityClient",
         ":EndpointSecurityEnricher",
         ":EndpointSecurityLogger",
         ":SNTCompilerController",
+        ":SNTEndpointSecurityClient",
         ":SNTEventProvider",
         "//Source/common:SNTLogging",
         "//Source/common:SNTPrefixTree",
@@ -457,6 +457,20 @@ objc_library(
         ":SNTExecutionController",
         ":SNTCompilerController",
         ":SNTEventProvider",
+    ],
+)
+
+objc_library(
+    name = "SNTEndpointSecurityDeviceManager",
+    srcs = ["EventProviders/SNTEndpointSecurityDeviceManager.mm"],
+    hdrs = ["EventProviders/SNTEndpointSecurityDeviceManager.h"],
+    deps = [
+        ":EndpointSecurityAPI",
+        ":EndpointSecurityLogger",
+        ":SNTEndpointSecurityClient",
+        ":SNTEventProvider",
+        "//Source/common:SNTLogging",
+        "//Source/common:SNTDeviceEvent",
     ],
 )
 
@@ -576,6 +590,7 @@ objc_library(
         ":SNTDatabaseController",
         ":SNTCompilerController",
         ":SNTEndpointSecurityAuthorizer",
+        ":SNTEndpointSecurityDeviceManager",
         ":SNTEndpointSecurityRecorder",
         ":SNTEndpointSecurityTamperResistance",
         ":SNTExecutionController",
@@ -584,6 +599,7 @@ objc_library(
         "//Source/common:SNTConfigurator",
         "//Source/common:SNTLogging",
         "//Source/common:SNTPrefixTree",
+        "//Source/common:SNTXPCNotifierInterface",
     ],
 )
 
@@ -620,6 +636,9 @@ objc_library(
     sdk_dylibs = [
         "bsm",
         "EndpointSecurity",
+    ],
+    sdk_frameworks = [
+        "DiskArbitration",
     ],
 )
 

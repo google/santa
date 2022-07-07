@@ -1,4 +1,4 @@
-/// Copyright 2021 Google Inc. All rights reserved.
+/// Copyright 2022 Google Inc. All rights reserved.
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -11,12 +11,15 @@
 ///    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 ///    See the License for the specific language governing permissions and
 ///    limitations under the License.
-#import <DiskArbitration/DiskArbitration.h>
+
+#include <DiskArbitration/DiskArbitration.h>
 #import <Foundation/Foundation.h>
 
-#include <EndpointSecurity/EndpointSecurity.h>
-
-#include "Source/common/SNTDeviceEvent.h"
+#import "Source/common/SNTDeviceEvent.h"
+#include "Source/santad/EventProviders/EndpointSecurity/EndpointSecurityAPI.h"
+#import "Source/santad/EventProviders/SNTEndpointSecurityClient.h"
+#import "Source/santad/EventProviders/SNTEventProvider.h"
+#include "Source/santad/Logs/EndpointSecurity/Logger.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -26,16 +29,14 @@ typedef void (^SNTDeviceBlockCallback)(SNTDeviceEvent *event);
  * Manages DiskArbitration and EndpointSecurity to monitor/block/remount USB
  * storage devices.
  */
-@interface SNTDeviceManager : NSObject
+@interface SNTEndpointSecurityDeviceManager : SNTEndpointSecurityClient<SNTEventProvider>
 
-@property(nonatomic, readwrite) BOOL subscribed;
 @property(nonatomic, readwrite) BOOL blockUSBMount;
 @property(nonatomic, readwrite, nullable) NSArray<NSString *> *remountArgs;
 @property(nonatomic, nullable) SNTDeviceBlockCallback deviceBlockCallback;
 
-- (instancetype)init;
-- (void)listen;
-- (BOOL)subscribed;
+- (instancetype)initWithESAPI:(std::shared_ptr<santa::santad::event_providers::endpoint_security::EndpointSecurityAPI>)esApi
+                       logger:(std::shared_ptr<santa::santad::logs::endpoint_security::Logger>)logger;
 
 @end
 

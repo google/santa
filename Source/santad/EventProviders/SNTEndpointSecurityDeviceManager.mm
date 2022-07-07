@@ -1,4 +1,4 @@
-/// Copyright 2021 Google Inc. All rights reserved.
+/// Copyright 2022 Google Inc. All rights reserved.
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -11,21 +11,39 @@
 ///    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 ///    See the License for the specific language governing permissions and
 ///    limitations under the License.
-#import "Source/santad/EventProviders/SNTDeviceManager.h"
+#import "Source/santad/EventProviders/SNTEndpointSecurityDeviceManager.h"
+#include <EndpointSecurity/ESTypes.h>
 
 #import <DiskArbitration/DiskArbitration.h>
+#include <EndpointSecurity/EndpointSecurity.h>
 #import <Foundation/Foundation.h>
+
+#include <atomic>
+#include <memory>
 
 #include <bsm/libbsm.h>
 #include <errno.h>
 #include <libproc.h>
 #include <sys/mount.h>
-#include <atomic>
-#include <memory>
 
 #import "Source/common/SNTDeviceEvent.h"
 #import "Source/common/SNTLogging.h"
-#import "Source/santad/Logs/SNTEventLog.h"
+
+using santa::santad::event_providers::endpoint_security::EndpointSecurityAPI;
+using santa::santad::logs::endpoint_security::Logger;
+using santa::santad::event_providers::endpoint_security::Message;
+
+@interface SNTEndpointSecurityDeviceManager ()
+
+- (void)logDiskAppeared:(NSDictionary*)props;
+- (void)logDiskDisappeared:(NSDictionary*)props;
+
+@property DASessionRef diskArbSession;
+@property(nonatomic, readonly) es_client_t *client;
+@property(nonatomic, readonly) dispatch_queue_t esAuthQueue;
+@property(nonatomic, readonly) dispatch_queue_t diskQueue;
+
+@end
 
 void diskMountedCallback(DADiskRef disk, DADissenterRef dissenter, void *context) {
   if (dissenter) {
@@ -37,7 +55,7 @@ void diskMountedCallback(DADiskRef disk, DADissenterRef dissenter, void *context
     IOReturn errorCode = err_get_code(status);
 
     LOGE(
-      @"SNTDeviceManager: dissenter status codes: system: %d, subsystem: %d, err: %d; status: %s",
+      @"SNTEndpointSecurityDeviceManager: dissenter status codes: system: %d, subsystem: %d, err: %d; status: %s",
       systemCode, subSystemCode, errorCode, [statusString UTF8String]);
   }
 }
@@ -45,8 +63,10 @@ void diskMountedCallback(DADiskRef disk, DADissenterRef dissenter, void *context
 void diskAppearedCallback(DADiskRef disk, void *context) {
   NSDictionary *props = CFBridgingRelease(DADiskCopyDescription(disk));
   if (![props[@"DAVolumeMountable"] boolValue]) return;
-  SNTEventLog *logger = [SNTEventLog logger];
-  if (logger) [logger logDiskAppeared:props];
+  SNTEndpointSecurityDeviceManager *dm =
+      (__bridge SNTEndpointSecurityDeviceManager*)context;
+
+  [dm logDiskAppeared:props];
 }
 
 void diskDescriptionChangedCallback(DADiskRef disk, CFArrayRef keys, void *context) {
@@ -54,8 +74,10 @@ void diskDescriptionChangedCallback(DADiskRef disk, CFArrayRef keys, void *conte
   if (![props[@"DAVolumeMountable"] boolValue]) return;
 
   if (props[@"DAVolumePath"]) {
-    SNTEventLog *logger = [SNTEventLog logger];
-    if (logger) [logger logDiskAppeared:props];
+    SNTEndpointSecurityDeviceManager *dm =
+      (__bridge SNTEndpointSecurityDeviceManager*)context;
+
+    [dm logDiskAppeared:props];
   }
 }
 
@@ -63,8 +85,10 @@ void diskDisappearedCallback(DADiskRef disk, void *context) {
   NSDictionary *props = CFBridgingRelease(DADiskCopyDescription(disk));
   if (![props[@"DAVolumeMountable"] boolValue]) return;
 
-  SNTEventLog *logger = [SNTEventLog logger];
-  if (logger) [logger logDiskDisappeared:props];
+  SNTEndpointSecurityDeviceManager *dm =
+      (__bridge SNTEndpointSecurityDeviceManager*)context;
+
+  [dm logDiskDisappeared:props];
 }
 
 NSArray<NSString *> *maskToMountArgs(long remountOpts) {
@@ -101,26 +125,22 @@ long mountArgsToMask(NSArray<NSString *> *args) {
     else if ([arg isEqualToString:@"async"])
       flags |= MNT_ASYNC;
     else
-      LOGE(@"SNTDeviceManager: unexpected mount arg: %@", arg);
+      LOGE(@"SNTEndpointSecurityDeviceManager: unexpected mount arg: %@", arg);
   }
   return flags;
 }
 
 NS_ASSUME_NONNULL_BEGIN
 
-@interface SNTDeviceManager ()
+@implementation SNTEndpointSecurityDeviceManager {
+  std::shared_ptr<Logger> _logger;
+}
 
-@property DASessionRef diskArbSession;
-@property(nonatomic, readonly) es_client_t *client;
-@property(nonatomic, readonly) dispatch_queue_t esAuthQueue;
-@property(nonatomic, readonly) dispatch_queue_t diskQueue;
-@end
-
-@implementation SNTDeviceManager
-
-- (instancetype)init API_AVAILABLE(macos(10.15)) {
-  self = [super init];
+- (instancetype)initWithESAPI:(std::shared_ptr<EndpointSecurityAPI>)esApi
+                       logger:(std::shared_ptr<Logger>)logger {
+  self = [super initWithESAPI:esApi];
   if (self) {
+    _logger = logger;
     _blockUSBMount = false;
 
     _diskQueue = dispatch_queue_create("com.google.santad.disk_queue", DISPATCH_QUEUE_SERIAL);
@@ -131,95 +151,67 @@ NS_ASSUME_NONNULL_BEGIN
     _diskArbSession = DASessionCreate(NULL);
     DASessionSetDispatchQueue(_diskArbSession, _diskQueue);
 
-    if (@available(macos 10.15, *)) [self initES];
+    [self establishClient];
   }
   return self;
 }
 
-- (void)initES API_AVAILABLE(macos(10.15)) {
-  while (!self.client) {
-    es_client_t *client = NULL;
-    es_new_client_result_t ret = es_new_client(&client, ^(es_client_t *c, const es_message_t *m) {
-      // Set timeout to 5 seconds before the ES deadline.
-      [self handleESMessageWithTimeout:m
-                            withClient:c
-                               timeout:dispatch_time(m->deadline, NSEC_PER_SEC * -5)];
-    });
+- (void)logDiskAppeared:(NSDictionary *)props {
+  self->_logger->LogDiskAppeared(props);
+}
 
-    switch (ret) {
-      case ES_NEW_CLIENT_RESULT_SUCCESS:
-        LOGI(@"Connected to EndpointSecurity");
-        _client = client;
-        return;
-      case ES_NEW_CLIENT_RESULT_ERR_NOT_PERMITTED:
-        LOGE(@"Unable to create EndpointSecurity client, not full-disk access permitted");
-        LOGE(@"Sleeping for 30s before restarting.");
-        sleep(30);
-        exit(ret);
-      default:
-        LOGE(@"Unable to create es client: %d. Sleeping for a minute.", ret);
-        sleep(60);
-        continue;
+- (void)logDiskDisappeared:(NSDictionary *)props {
+  self->_logger->LogDiskDisappeared(props);
+}
+
+- (void)establishClient {
+  [self establishClientOrDie:^(es_client_t* c, Message&& esMsg) {
+    if (!self.blockUSBMount) {
+      // TODO: We should also unsubscribe from events when this isn't set
+      [self respondToMessage:esMsg withAuthResult:ES_AUTH_RESULT_ALLOW cacheable:false];
+      return;
     }
-  }
+
+    [self processMessage:std::move(esMsg) handler:^(const Message& msg) {
+      es_auth_result_t result = [self handleAuthMount:msg];
+      [self respondToMessage:msg withAuthResult:result cacheable:false];
+    }];
+  }];
 }
 
-- (void)listenES API_AVAILABLE(macos(10.15)) {
-  while (!self.client)
-    usleep(100000);  // 100ms
-
-  es_event_type_t events[] = {
-    ES_EVENT_TYPE_AUTH_MOUNT,
-    ES_EVENT_TYPE_AUTH_REMOUNT,
-  };
-
-  es_return_t sret = es_subscribe(self.client, events, sizeof(events) / sizeof(es_event_type_t));
-  if (sret != ES_RETURN_SUCCESS)
-    LOGE(@"SNTDeviceManager: unable to subscribe to auth mount events: %d", sret);
-}
-
-- (void)listenDA {
+- (void)enable {
   DARegisterDiskAppearedCallback(_diskArbSession, NULL, diskAppearedCallback,
                                  (__bridge void *)self);
   DARegisterDiskDescriptionChangedCallback(_diskArbSession, NULL, NULL,
                                            diskDescriptionChangedCallback, (__bridge void *)self);
   DARegisterDiskDisappearedCallback(_diskArbSession, NULL, diskDisappearedCallback,
                                     (__bridge void *)self);
+
+  [super subscribeAndClearCache:{
+      ES_EVENT_TYPE_AUTH_MOUNT,
+      ES_EVENT_TYPE_AUTH_REMOUNT,
+  }];
 }
 
-- (void)listen {
-  [self listenDA];
-  if (@available(macos 10.15, *)) [self listenES];
-  self.subscribed = YES;
-}
-
-- (void)handleAuthMount:(const es_message_t *)m
-             withClient:(es_client_t *)c API_AVAILABLE(macos(10.15)) {
-  if (!self.blockUSBMount) {
-    es_respond_auth_result(self.client, m, ES_AUTH_RESULT_ALLOW, false);
-    return;
-  }
-
+- (es_auth_result_t)handleAuthMount:(const Message&)m {
   struct statfs *eventStatFS;
-  BOOL isRemount = NO;
 
   switch (m->event_type) {
-    case ES_EVENT_TYPE_AUTH_MOUNT: eventStatFS = m->event.mount.statfs; break;
+    case ES_EVENT_TYPE_AUTH_MOUNT:
+      eventStatFS = m->event.mount.statfs;
+      break;
     case ES_EVENT_TYPE_AUTH_REMOUNT:
       eventStatFS = m->event.remount.statfs;
-      isRemount = YES;
       break;
     default:
+      // This is a programming error
       LOGE(@"Unexpected Event Type passed to DeviceManager handleAuthMount: %d", m->event_type);
-      // Fail closed.
-      es_respond_auth_result(self.client, m, ES_AUTH_RESULT_DENY, false);
-      assert(0 && "SNTDeviceManager: unexpected event type");
-      return;
+      exit(EXIT_FAILURE);
   }
 
   long mountMode = eventStatFS->f_flags;
   pid_t pid = audit_token_to_pid(m->process->audit_token);
-  LOGD(@"SNTDeviceManager: mount syscall arriving from path: %s, pid: %d, fflags: %lu",
+  LOGD(@"SNTEndpointSecurityDeviceManager: mount syscall arriving from path: %s, pid: %d, fflags: %lu",
        m->process->executable->path.data, pid, mountMode);
 
   DADiskRef disk = DADiskCreateFromBSDName(NULL, self.diskArbSession, eventStatFS->f_mntfromname);
@@ -237,7 +229,7 @@ NS_ASSUME_NONNULL_BEGIN
   NSString *kind = diskInfo[(__bridge NSString *)kDADiskDescriptionMediaKindKey];
 
   // TODO: check kind and protocol for banned things (e.g. MTP).
-  LOGD(@"SNTDeviceManager: DiskInfo Protocol: %@ Kind: %@ isInternal: %d isRemovable: %d "
+  LOGD(@"SNTEndpointSecurityDeviceManager: DiskInfo Protocol: %@ Kind: %@ isInternal: %d isRemovable: %d "
        @"isEjectable: %d",
        protocol, kind, isInternal, isRemovable, isEjectable);
 
@@ -245,8 +237,7 @@ NS_ASSUME_NONNULL_BEGIN
   // also are okay with operations for devices that are non-removal as long as
   // they are NOT a USB device.
   if (isInternal || isVirtual || (!isRemovable && !isEjectable && !isUSB)) {
-    es_respond_auth_result(self.client, m, ES_AUTH_RESULT_ALLOW, false);
-    return;
+    return ES_AUTH_RESULT_ALLOW;
   }
 
   SNTDeviceEvent *event = [[SNTDeviceEvent alloc]
@@ -259,17 +250,17 @@ NS_ASSUME_NONNULL_BEGIN
     event.remountArgs = self.remountArgs;
     long remountOpts = mountArgsToMask(self.remountArgs);
 
-    LOGD(@"SNTDeviceManager: mountMode: %@", maskToMountArgs(mountMode));
-    LOGD(@"SNTDeviceManager: remountOpts: %@", maskToMountArgs(remountOpts));
+    LOGD(@"SNTEndpointSecurityDeviceManager: mountMode: %@", maskToMountArgs(mountMode));
+    LOGD(@"SNTEndpointSecurityDeviceManager: remountOpts: %@", maskToMountArgs(remountOpts));
 
-    if ((mountMode & remountOpts) == remountOpts && !isRemount) {
-      LOGD(@"SNTDeviceManager: Allowing as mount as flags match remountOpts");
-      es_respond_auth_result(self.client, m, ES_AUTH_RESULT_ALLOW, false);
-      return;
+    if ((mountMode & remountOpts) == remountOpts &&
+        m->event_type != ES_EVENT_TYPE_AUTH_REMOUNT) {
+      LOGD(@"SNTEndpointSecurityDeviceManager: Allowing as mount as flags match remountOpts");
+      return ES_AUTH_RESULT_ALLOW;
     }
 
     long newMode = mountMode | remountOpts;
-    LOGI(@"SNTDeviceManager: remounting device '%s'->'%s', flags (%lu) -> (%lu)",
+    LOGI(@"SNTEndpointSecurityDeviceManager: remounting device '%s'->'%s', flags (%lu) -> (%lu)",
          eventStatFS->f_mntfromname, eventStatFS->f_mntonname, mountMode, newMode);
     [self remount:disk mountMode:newMode];
   }
@@ -278,7 +269,7 @@ NS_ASSUME_NONNULL_BEGIN
     self.deviceBlockCallback(event);
   }
 
-  es_respond_auth_result(self.client, m, ES_AUTH_RESULT_DENY, false);
+  return ES_AUTH_RESULT_DENY;
 }
 
 - (void)remount:(DADiskRef)disk mountMode:(long)remountMask {
@@ -291,66 +282,6 @@ NS_ASSUME_NONNULL_BEGIN
                            (__bridge void *)self, (CFStringRef *)argv);
 
   free(argv);
-}
-
-// handleESMessage handles an ES message synchronously. This will block all incoming ES events
-// until either we serve a response or we hit the auth deadline. Prefer [SNTDeviceManager
-// handleESMessageWithTimeout]
-// TODO(tnek): generalize this timeout handling logic so that EndpointSecurityManager can use it
-// too.
-- (void)handleESMessageWithTimeout:(const es_message_t *)m
-                        withClient:(es_client_t *)c
-                           timeout:(dispatch_time_t)timeout API_AVAILABLE(macos(10.15)) {
-  // ES will kill our whole client if we don't meet the es_message auth deadline, so we try to
-  // gracefully handle it with a deny-by-default in the worst-case before it can do that.
-  // This isn't an issue for notify events, so we're in no rush for those.
-  es_message_t *mc = es_copy_message(m);
-
-  dispatch_semaphore_t processingSema = dispatch_semaphore_create(0);
-  // Add 1 to the processing semaphore. We're not creating it with a starting
-  // value of 1 because that requires that the semaphore is not deallocated
-  // until its value matches the starting value, which we don't need.
-  dispatch_semaphore_signal(processingSema);
-  dispatch_semaphore_t deadlineExpiredSema = dispatch_semaphore_create(0);
-
-  if (mc->action_type == ES_ACTION_TYPE_AUTH) {
-    dispatch_after(timeout, self.esAuthQueue, ^(void) {
-      if (dispatch_semaphore_wait(processingSema, DISPATCH_TIME_NOW) != 0) {
-        // Handler already responded, nothing to do.
-        return;
-      }
-      LOGE(@"SNTDeviceManager: deadline reached: deny pid=%d ret=%d",
-           audit_token_to_pid(mc->process->audit_token),
-           es_respond_auth_result(c, mc, ES_AUTH_RESULT_DENY, false));
-      dispatch_semaphore_signal(deadlineExpiredSema);
-    });
-  }
-
-  dispatch_async(self.esAuthQueue, ^{
-    [self handleESMessage:mc withClient:c];
-    if (dispatch_semaphore_wait(processingSema, DISPATCH_TIME_NOW) != 0) {
-      // Deadline expired, wait for deadline block to finish.
-      dispatch_semaphore_wait(deadlineExpiredSema, DISPATCH_TIME_FOREVER);
-    }
-    es_free_message(mc);
-  });
-}
-
-- (void)handleESMessage:(const es_message_t *)m
-             withClient:(es_client_t *)c API_AVAILABLE(macos(10.15)) {
-  switch (m->event_type) {
-    case ES_EVENT_TYPE_AUTH_REMOUNT: {
-      [[fallthrough]];
-    }
-    case ES_EVENT_TYPE_AUTH_MOUNT: {
-      [self handleAuthMount:m withClient:c];
-      break;
-    }
-
-    default:
-      LOGE(@"SNTDeviceManager: unexpected event type: %d", m->event_type);
-      break;
-  }
 }
 
 @end

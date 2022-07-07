@@ -29,7 +29,8 @@ public:
 
   virtual Client NewClient(void(^message_handler)(es_client_t*, Message));
 
-  virtual bool Subscribe(const Client &client, std::set<es_event_type_t>);
+  virtual bool Subscribe(const Client &client,
+                         const std::set<es_event_type_t>&);
 
   virtual es_message_t* RetainMessage(const es_message_t* msg);
   virtual void ReleaseMessage(es_message_t* msg);

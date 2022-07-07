@@ -58,8 +58,9 @@ void EndpointSecurityAPI::ReleaseMessage(es_message_t* msg) {
   }
 }
 
-bool EndpointSecurityAPI::Subscribe(const Client &client,
-                                       std::set<es_event_type_t> event_types) {
+bool EndpointSecurityAPI::Subscribe(
+    const Client &client,
+    const std::set<es_event_type_t>& event_types) {
   std::vector<es_event_type_t> subs(event_types.begin(), event_types.end());
   return es_subscribe(client.Get(), subs.data(), (uint32_t)subs.size()) ==
     ES_RETURN_SUCCESS;

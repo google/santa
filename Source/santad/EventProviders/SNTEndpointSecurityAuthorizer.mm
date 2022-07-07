@@ -56,7 +56,7 @@ using santa::santad::event_providers::AuthResultCache;
 }
 
 - (void)establishClient {
-  [self establishClientOrDie:^(es_client_t *c, Message&& esMsg){
+  [self establishClientOrDie:^(es_client_t* c, Message&& esMsg) {
     if (unlikely(esMsg->event_type != ES_EVENT_TYPE_AUTH_EXEC)) {
       // This is a programming error
       LOGE(@"Atteempting to authorize a non-exec event");
@@ -140,14 +140,9 @@ using santa::santad::event_providers::AuthResultCache;
 }
 
 - (void)enable {
-  [super subscribe:{
+  [super subscribeAndClearCache:{
       ES_EVENT_TYPE_AUTH_EXEC,
   }];
-
-  // There's a gap between creating a client and subscribing to events. Creating the client
-  // triggers a cache flush automatically but any events that happen in this gap could be allowed
-  // and cached, so we force the cache to flush again.
-  [self clearCache];
 }
 
 @end

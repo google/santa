@@ -47,6 +47,9 @@ public:
       const std::string_view) override;
 
   std::vector<uint8_t> SerializeBundleHashingEvent(SNTStoredEvent*) override;
+
+  std::vector<uint8_t> SerializeDiskAppeared(NSDictionary*) override;
+  std::vector<uint8_t> SerializeDiskDisappeared(NSDictionary*) override;
 };
 
 } // namespace santa::santad::logs::endpoint_security::serializers

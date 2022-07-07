@@ -54,14 +54,14 @@ using santa::santad::event_providers::endpoint_security::Message;
   return self;
 }
 
-- (void)establishClientOrDie:(void(^)(es_client_t *c, Message&& esMsg))messageHandler {
+- (void)establishClientOrDie:(void(^)(es_client_t* c, Message&& esMsg))messageHandler {
   if (self->_esClient.IsConnected()) {
     // This is a programming error
     LOGE(@"Client already established. Aborting.");
     exit(EXIT_FAILURE);
   }
 
-  self->_esClient = self->_esApi->NewClient(^(es_client_t *c, Message esMsg) {
+  self->_esClient = self->_esApi->NewClient(^(es_client_t* c, Message esMsg) {
     messageHandler(c, std::move(esMsg));
   });
 
@@ -118,8 +118,12 @@ using santa::santad::event_providers::endpoint_security::Message;
   return _esApi->ClearCache(self->_esClient);
 }
 
-- (bool)subscribe:(std::set<es_event_type_t>)events {
+- (bool)subscribe:(const std::set<es_event_type_t>&)events {
   return _esApi->Subscribe(_esClient, events);
+}
+
+- (bool)subscribeAndClearCache:(const std::set<es_event_type_t>&)events {
+  return [self subscribe:events] && [self clearCache];
 }
 
 - (bool)respondToMessage:(const Message &)msg
@@ -147,6 +151,7 @@ using santa::santad::event_providers::endpoint_security::Message;
   }
 
   // Workaround for compiler bug that doesn't properly close over variables
+  // TODO: On macOS 10.15 this will cause extra message copies.
   __block auto processMsg = msg;
   __block auto deadlineMsg = msg;
 

@@ -34,4 +34,12 @@ void Logger::LogBundleHashingEvents(NSArray<SNTStoredEvent*> *events) {
   }
 }
 
+void Logger::LogDiskAppeared(NSDictionary* props) {
+  writer_->Write(serializer_->SerializeDiskAppeared(props));
+}
+
+void Logger::LogDiskDisappeared(NSDictionary* props) {
+  writer_->Write(serializer_->SerializeDiskDisappeared(props));
+}
+
 } // namespace santa::santad::logs::endpoint_security

@@ -45,6 +45,9 @@ public:
       const std::string_view) = 0;
 
   virtual std::vector<uint8_t> SerializeBundleHashingEvent(SNTStoredEvent*) = 0;
+
+  virtual std::vector<uint8_t> SerializeDiskAppeared(NSDictionary*) = 0;
+  virtual std::vector<uint8_t> SerializeDiskDisappeared(NSDictionary*) = 0;
 };
 
 } // namespace santa::santad::logs
