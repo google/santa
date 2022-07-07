@@ -289,7 +289,7 @@ macos_bundle(
     ],
     entitlements = select({
         "//:adhoc_build": "com.google.santa.daemon.systemextension-adhoc.entitlements",
-        # Non-adhoc builds get thier entitlements from the provisioning profile.
+        # Non-adhoc builds get their entitlements from the provisioning profile.
         "//conditions:default": None,
     }),
     infoplists = ["Info.plist"],

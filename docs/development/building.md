@@ -55,10 +55,12 @@ bazel build //Source/santa:Santa --define=SANTA_BUILD_TYPE=adhoc
 
 When working on Santa, it's useful to have a way to quickly reload all of the
 Santa components. For this reason, there's a special rule in the Santa BUILD
-file that will build Santa, unload Santa if it's running, and install the new
+file that will build Santa, unload Santa if it's running, install the new
 Santa in the right place and attempt to load it.
 
-Non-adhoc builds of Santa can only be run by Google developers.
+Non-adhoc debug builds of Santa can only be run by Google developers. This is
+because of bundle id and provisioning profile restrictions bound to Apple
+developer accounts.
 
 ```sh
 bazel run :reload
@@ -83,6 +85,14 @@ Build and run an adhoc debug version of Santa.
 
 ```sh
 bazel run :reload --define=SANTA_BUILD_TYPE=adhoc
+```
+
+Note: if you are currently running a release or non-adhoc dev build of Santa,
+this new adhoc build will show up as a second instance of Santa. Remove the
+non-adhoc instance like so:
+
+```sh
+systemextensionsctl uninstall EQHXZ8M8AV com.google.santa.daemon
 ```
 
 #### Debugging
