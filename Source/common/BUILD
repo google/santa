@@ -197,6 +197,11 @@ objc_library(
     name = "SNTXPCControlInterface",
     srcs = ["SNTXPCControlInterface.m"],
     hdrs = ["SNTXPCControlInterface.h"],
+    defines = select({
+        "//:adhoc_build": ["SANTAADHOC"],
+        "//:ci_build": None,
+        "//conditions:default": None,
+    }),
     deps = [
         ":SNTCommonEnums",
         ":SNTConfigurator",

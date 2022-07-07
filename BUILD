@@ -34,6 +34,13 @@ config_setting(
     visibility = [":santa_package_group"],
 )
 
+# Used for dev builds when SIP is disabled
+config_setting(
+    name = "adhoc_build",
+    values = {"define": "SANTA_BUILD_TYPE=adhoc"},
+    visibility = [":santa_package_group"],
+)
+
 # Used to detect optimized builds
 config_setting(
     name = "opt_build",
