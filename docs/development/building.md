@@ -72,7 +72,11 @@ adhoc build.
 
 **This is only to be done a machine that is actively developing Santa.**
 
-1.  Boot into Recovery Mode: Reboot and hold down `command+r`
+1.  Boot into Recovery Mode:
+    *   For Intel Macs reboot and hold down `command+r`.
+    *   For Apple Silicon Macs press and hold the power button until “Loading
+        startup options” appears. Click Options, then click Continue. If asked,
+        select a volume to recover, then click Next.
 2.  From the utilities menu select `Terminal`
 3.  Disable the KEXT feature of SIP. The kext wording is legacy but the command
     still works well for loading adhoc signed system extensions: `csrutil enable
