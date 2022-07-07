@@ -163,7 +163,6 @@ macos_command_line_application(
     minimum_os_version = "10.15",
     provisioning_profile = select({
         "//:adhoc_build": None,
-        "//:ci_build": None,
         "//conditions:default": "//profiles:santa_dev",
     }),
     version = "//:version",

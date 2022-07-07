@@ -199,7 +199,6 @@ objc_library(
     hdrs = ["SNTXPCControlInterface.h"],
     defines = select({
         "//:adhoc_build": ["SANTAADHOC"],
-        "//:ci_build": None,
         "//conditions:default": None,
     }),
     deps = [

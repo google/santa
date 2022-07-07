@@ -76,14 +76,13 @@ macos_application(
     ],
     entitlements = select({
         "//:adhoc_build": "Santa.app-adhoc.entitlements",
-        "//:ci_build": None,
-        "//conditions:default": "Santa.app.entitlements",
+        # Non-adhoc builds get thier entitlements from the provisioning profile.
+        "//conditions:default": None,
     }),
     infoplists = ["Info.plist"],
     minimum_os_version = "10.15",
     provisioning_profile = select({
         "//:adhoc_build": None,
-        "//:ci_build": None,
         "//conditions:default": "//profiles:santa_dev",
     }),
     version = "//:version",

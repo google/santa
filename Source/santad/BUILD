@@ -289,7 +289,7 @@ macos_bundle(
     ],
     entitlements = select({
         "//:adhoc_build": "com.google.santa.daemon.systemextension-adhoc.entitlements",
-        "//:ci_build": None,
+        # Non-adhoc builds get thier entitlements from the provisioning profile.
         "//conditions:default": None,
     }),
     infoplists = ["Info.plist"],
@@ -297,7 +297,6 @@ macos_bundle(
     minimum_os_version = "10.15",
     provisioning_profile = select({
         "//:adhoc_build": None,
-        "//:ci_build": None,
         "//conditions:default": "//profiles:daemon_dev",
     }),
     version = "//:version",
