@@ -49,7 +49,7 @@ namespace santa::santad::logs::endpoint_security::serializers {
 
 /*
  * ~~~ BEGIN:
- * TODO: These functions should be moved to some cmmon util file
+ * TODO: These functions should be moved to some common util file
  */
 static inline std::string_view FilePath(const es_file_t* file) {
   return std::string_view(file->path.data);
@@ -76,6 +76,61 @@ static inline void SetThreadIDs(uid_t uid, gid_t gid) {
 #pragma clang diagnostic ignored "-Wdeprecated"
   pthread_setugid_np(uid, gid);
 #pragma clang diagnostic pop
+}
+
+static inline const mach_port_t GetDefaultIOKitCommsPort() {
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+  return kIOMasterPortDefault;
+#pragma clang diagnostic pop
+}
+
+static NSString* SerialForDevice(NSString* devPath) {
+  if (!devPath.length) {
+    return nil;
+  }
+  NSString *serial;
+  io_registry_entry_t device = IORegistryEntryFromPath(GetDefaultIOKitCommsPort(), devPath.UTF8String);
+  while (!serial && device) {
+    CFMutableDictionaryRef deviceProperties = NULL;
+    IORegistryEntryCreateCFProperties(device, &deviceProperties, kCFAllocatorDefault, kNilOptions);
+    NSDictionary *properties = CFBridgingRelease(deviceProperties);
+    if (properties[@"Serial Number"]) {
+      serial = properties[@"Serial Number"];
+    } else if (properties[@"kUSBSerialNumberString"]) {
+      serial = properties[@"kUSBSerialNumberString"];
+    }
+
+    if (serial) {
+      IOObjectRelease(device);
+      break;
+    }
+
+    io_registry_entry_t parent;
+    IORegistryEntryGetParentEntry(device, kIOServicePlane, &parent);
+    IOObjectRelease(device);
+    device = parent;
+  }
+
+  return [serial stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
+}
+
+static NSString* DiskImageForDevice(NSString *devPath) {
+  devPath = [devPath stringByDeletingLastPathComponent];
+  if (!devPath.length) {
+    return nil;
+  }
+
+  io_registry_entry_t device = IORegistryEntryFromPath(GetDefaultIOKitCommsPort(), devPath.UTF8String);
+  CFMutableDictionaryRef deviceProperties = NULL;
+  IORegistryEntryCreateCFProperties(device, &deviceProperties, kCFAllocatorDefault, kNilOptions);
+  NSDictionary *properties = CFBridgingRelease(deviceProperties);
+  IOObjectRelease(device);
+
+  NSData *pathData = properties[@"image-path"];
+
+  NSString *result = [[NSString alloc] initWithData:pathData encoding:NSUTF8StringEncoding];
+  return [result stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
 }
 
 static NSString* OriginalPathForTranslocation(const es_process_t* esProc) {
@@ -205,6 +260,20 @@ static NSString* sanitizeString(NSString* inStr) {
     return ret;
   }
   return inStr;
+}
+
+static NSDateFormatter* GetDateFormatter() {
+  static dispatch_once_t onceToken;
+  static NSDateFormatter *dateFormatter;
+
+  dispatch_once(&onceToken, ^{
+    dateFormatter = [[NSDateFormatter alloc] init];
+    dateFormatter.dateFormat = @"yyyy-MM-dd'T'HH:mm:ss.SSS'Z'";
+    dateFormatter.calendar = [NSCalendar calendarWithIdentifier:NSCalendarIdentifierISO8601];
+    dateFormatter.timeZone = [NSTimeZone timeZoneWithName:@"UTC"];
+  });
+
+  return dateFormatter;
 }
 
 /*
@@ -534,10 +603,35 @@ std::vector<uint8_t> BasicString::SerializeBundleHashingEvent(SNTStoredEvent* ev
 }
 
 std::vector<uint8_t> BasicString::SerializeDiskAppeared(NSDictionary* props) {
-  std::stringstream ss;
+  NSString *dmgPath = nil;
+  NSString *serial = nil;
+  if ([props[@"DADeviceModel"] isEqual:@"Disk Image"]) {
+    dmgPath = DiskImageForDevice(props[@"DADevicePath"]);
+  } else {
+    serial = SerialForDevice(props[@"DADevicePath"]);
+  }
 
+  NSString *model = [NSString stringWithFormat:@"%@ %@",
+                        props[@"DADeviceVendor"] ?: @"",
+                        props[@"DADeviceModel"] ?: @""];
+  model = [model stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
+
+  NSString *appearanceDateString =
+    [GetDateFormatter()
+        stringFromDate:[NSDate dateWithTimeIntervalSinceReferenceDate:
+            [props[@"DAAppearanceTime"] doubleValue]]];
+
+  std::stringstream ss;
   ss << "action=DISKAPPEAR"
-     << "|mount=" << [([props[@"DAVolumePath"] path] ?: @"") UTF8String];
+     << "|mount=" << [([props[@"DAVolumePath"] path] ?: @"") UTF8String]
+     << "|volume=" << [(props[@"DAVolumeName"] ?: @"") UTF8String]
+     << "|bsdname=" << [(props[@"DAMediaBSDName"] ?: @"") UTF8String]
+     << "|fs=" << [(props[@"DAVolumeKind"] ?: @"") UTF8String]
+     << "|model=" << [(model ?: @"") UTF8String]
+     << "|serial=" << [(serial ?: @"") UTF8String]
+     << "|bus=" << [(props[@"DADeviceProtocol"] ?: @"") UTF8String]
+     << "|dmgpath=" << [(dmgPath ?: @"") UTF8String]
+     << "|appearance=" << [appearanceDateString UTF8String];
 
   std::string s = ss.str();
 

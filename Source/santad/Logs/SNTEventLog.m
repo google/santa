@@ -140,89 +140,89 @@
 /**
   Sanitizes a given string if necessary, otherwise returns the original.
 */
-- (NSString *)sanitizeString:(NSString *)inStr {
-  NSUInteger length = [inStr lengthOfBytesUsingEncoding:NSUTF8StringEncoding];
-  if (length < 1) return inStr;
+// - (NSString *)sanitizeString:(NSString *)inStr {
+//   NSUInteger length = [inStr lengthOfBytesUsingEncoding:NSUTF8StringEncoding];
+//   if (length < 1) return inStr;
 
-  NSString *ret = [self sanitizeCString:inStr.UTF8String ofLength:length];
-  if (ret) {
-    return ret;
-  }
-  return inStr;
-}
+//   NSString *ret = [self sanitizeCString:inStr.UTF8String ofLength:length];
+//   if (ret) {
+//     return ret;
+//   }
+//   return inStr;
+// }
 
-/**
-  Sanitize the given C-string, replacing |, \n and \r characters.
+// /**
+//   Sanitize the given C-string, replacing |, \n and \r characters.
 
-  @return a new NSString with the replaced contents, if necessary, otherwise nil.
-*/
-- (NSString *)sanitizeCString:(const char *)str ofLength:(NSUInteger)length {
-  NSUInteger bufOffset = 0, strOffset = 0;
-  char c = 0;
-  char *buf = NULL;
-  BOOL shouldFree = NO;
+//   @return a new NSString with the replaced contents, if necessary, otherwise nil.
+// */
+// - (NSString *)sanitizeCString:(const char *)str ofLength:(NSUInteger)length {
+//   NSUInteger bufOffset = 0, strOffset = 0;
+//   char c = 0;
+//   char *buf = NULL;
+//   BOOL shouldFree = NO;
 
-  if (length < 1) return @"";
+//   if (length < 1) return @"";
 
-  // Loop through the string one character at a time, looking for the characters
-  // we want to remove.
-  for (const char *p = str; (c = *p) != 0; ++p) {
-    if (c == '|' || c == '\n' || c == '\r') {
-      if (!buf) {
-        // If string size * 6 is more than 64KiB use malloc, otherwise use stack space.
-        if (length * 6 > 64 * 1024) {
-          buf = malloc(length * 6);
-          shouldFree = YES;
-        } else {
-          buf = alloca(length * 6);
-        }
-      }
+//   // Loop through the string one character at a time, looking for the characters
+//   // we want to remove.
+//   for (const char *p = str; (c = *p) != 0; ++p) {
+//     if (c == '|' || c == '\n' || c == '\r') {
+//       if (!buf) {
+//         // If string size * 6 is more than 64KiB use malloc, otherwise use stack space.
+//         if (length * 6 > 64 * 1024) {
+//           buf = malloc(length * 6);
+//           shouldFree = YES;
+//         } else {
+//           buf = alloca(length * 6);
+//         }
+//       }
 
-      // Copy from the last offset up to the character we just found into the buffer
-      ptrdiff_t diff = p - str;
-      memcpy(buf + bufOffset, str + strOffset, diff - strOffset);
+//       // Copy from the last offset up to the character we just found into the buffer
+//       ptrdiff_t diff = p - str;
+//       memcpy(buf + bufOffset, str + strOffset, diff - strOffset);
 
-      // Update the buffer and string offsets
-      bufOffset += diff - strOffset;
-      strOffset = diff + 1;
+//       // Update the buffer and string offsets
+//       bufOffset += diff - strOffset;
+//       strOffset = diff + 1;
 
-      // Replace the found character and advance the buffer offset
-      switch (c) {
-        case '|':
-          memcpy(buf + bufOffset, "<pipe>", 6);
-          bufOffset += 6;
-          break;
-        case '\n':
-          memcpy(buf + bufOffset, "\\n", 2);
-          bufOffset += 2;
-          break;
-        case '\r':
-          memcpy(buf + bufOffset, "\\r", 2);
-          bufOffset += 2;
-          break;
-      }
-    }
-  }
+//       // Replace the found character and advance the buffer offset
+//       switch (c) {
+//         case '|':
+//           memcpy(buf + bufOffset, "<pipe>", 6);
+//           bufOffset += 6;
+//           break;
+//         case '\n':
+//           memcpy(buf + bufOffset, "\\n", 2);
+//           bufOffset += 2;
+//           break;
+//         case '\r':
+//           memcpy(buf + bufOffset, "\\r", 2);
+//           bufOffset += 2;
+//           break;
+//       }
+//     }
+//   }
 
-  if (strOffset > 0 && strOffset < length) {
-    // Copy any characters from the last match to the end of the string into the buffer.
-    memcpy(buf + bufOffset, str + strOffset, length - strOffset);
-    bufOffset += length - strOffset;
-  }
+//   if (strOffset > 0 && strOffset < length) {
+//     // Copy any characters from the last match to the end of the string into the buffer.
+//     memcpy(buf + bufOffset, str + strOffset, length - strOffset);
+//     bufOffset += length - strOffset;
+//   }
 
-  if (buf) {
-    // Only return a new string if there were matches
-    NSString *ret = [[NSString alloc] initWithBytes:buf
-                                             length:bufOffset
-                                           encoding:NSUTF8StringEncoding];
-    if (shouldFree) {
-      free(buf);
-    }
+//   if (buf) {
+//     // Only return a new string if there were matches
+//     NSString *ret = [[NSString alloc] initWithBytes:buf
+//                                              length:bufOffset
+//                                            encoding:NSUTF8StringEncoding];
+//     if (shouldFree) {
+//       free(buf);
+//     }
 
-    return ret;
-  }
-  return nil;
-}
+//     return ret;
+//   }
+//   return nil;
+// }
 
 /**
   Use sysctl to get the arguments for a PID, appended to the given string.
