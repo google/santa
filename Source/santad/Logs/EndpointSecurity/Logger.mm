@@ -20,7 +20,7 @@ using santa::santad::event_providers::endpoint_security::EnrichedMessage;
 
 namespace santa::santad::logs::endpoint_security {
 
-void Logger::Log(std::unique_ptr<EnrichedMessage> msg) {
+void Logger::Log(std::shared_ptr<EnrichedMessage> msg) {
   writer_->Write(serializer_->SerializeMessage(std::move(msg)));
 }
 

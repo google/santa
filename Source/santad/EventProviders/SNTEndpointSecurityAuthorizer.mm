@@ -75,7 +75,6 @@ using santa::santad::event_providers::AuthResultCache;
       while (true) {
         auto returnAction = self->_authResultCache->CheckCache(target_file);
         if (RESPONSE_VALID(returnAction)) {
-          bool cacheable = false;
           es_auth_result_t authResult = ES_AUTH_RESULT_DENY;
 
           switch (returnAction) {
@@ -83,14 +82,15 @@ using santa::santad::event_providers::AuthResultCache;
               [self.compilerController setIsCompiler:msg->event.exec.target->audit_token];
               OS_FALLTHROUGH;
             case ACTION_RESPOND_ALLOW:
-              cacheable = true;
               authResult = ES_AUTH_RESULT_ALLOW;
               break;
             default:
               break;
           }
 
-          [self respondToMessage:msg withAuthResult:authResult cacheable:cacheable];
+          [self respondToMessage:msg
+                  withAuthResult:authResult
+                       cacheable:(authResult == ES_AUTH_RESULT_ALLOW)];
           return;
         } else if (returnAction == ACTION_REQUEST_BINARY) {
           // TODO(rah): Look at a replacement for msleep(), maybe NSCondition

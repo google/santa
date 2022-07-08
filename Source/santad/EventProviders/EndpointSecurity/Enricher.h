@@ -25,7 +25,7 @@ class Enricher {
 public:
   Enricher() : username_cache_(200), groupname_cache_(200) {}
   virtual ~Enricher() = default;
-  virtual std::unique_ptr<EnrichedMessage> Enrich(Message &&msg);
+  virtual std::shared_ptr<EnrichedMessage> Enrich(Message &&msg);
   virtual EnrichedProcess Enrich(const es_process_t &es_proc);
   virtual EnrichedFile Enrich(const es_file_t &es_file);
 

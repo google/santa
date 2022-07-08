@@ -19,13 +19,16 @@
 #include <mach/mach_time.h>
 #include <stdlib.h>
 
+#import "Source/common/SNTCommon.h"
 #import "Source/common/SNTConfigurator.h"
 #import "Source/common/SNTLogging.h"
+#include "Source/santad/EventProviders/EndpointSecurity/EnrichedTypes.h"
 #include "Source/santad/EventProviders/EndpointSecurity/Message.h"
 #include "Source/santad/EventProviders/EndpointSecurity/Client.h"
 
 using santa::santad::event_providers::endpoint_security::Client;
 using santa::santad::event_providers::endpoint_security::EndpointSecurityAPI;
+using santa::santad::event_providers::endpoint_security::EnrichedMessage;
 using santa::santad::event_providers::endpoint_security::Message;
 
 @implementation SNTEndpointSecurityClient {
@@ -33,6 +36,7 @@ using santa::santad::event_providers::endpoint_security::Message;
   Client _esClient;
   mach_timebase_info_data_t _timebase;
   dispatch_queue_t _authQueue;
+  dispatch_queue_t _notifyQueue;
 }
 
 - (instancetype)initWithESAPI:(std::shared_ptr<EndpointSecurityAPI>)esApi {
@@ -48,6 +52,10 @@ using santa::santad::event_providers::endpoint_security::Message;
 
     _authQueue = dispatch_queue_create(
         "auth_queue",
+        DISPATCH_QUEUE_CONCURRENT_WITH_AUTORELEASE_POOL);
+
+    _notifyQueue = dispatch_queue_create(
+        "notify_queue",
         DISPATCH_QUEUE_CONCURRENT_WITH_AUTORELEASE_POOL);
 
   }
@@ -140,7 +148,20 @@ using santa::santad::event_providers::endpoint_security::Message;
   return _esApi->RespondAuthResult(_esClient, msg, result, cacheable);
 }
 
+- (void)processEnrichedMessage:(std::shared_ptr<EnrichedMessage>)msg
+                       handler:(void(^)(std::shared_ptr<EnrichedMessage>))messageHandler {
+  dispatch_async(_notifyQueue, ^{
+    messageHandler(std::move(msg));
+  });
+}
+
 - (void)processMessage:(Message&&)msg handler:(void(^)(const Message&))messageHandler {
+  if (unlikely(msg->action_type != ES_ACTION_TYPE_AUTH)) {
+    // This is a programming error
+    LOGE(@"Attempting to process non-AUTH message");
+    exit(EXIT_FAILURE);
+  }
+
   dispatch_semaphore_t processingSema = dispatch_semaphore_create(0);
   // Add 1 to the processing semaphore. We're not creating it with a starting
   // value of 1 because that requires that the semaphore is not deallocated

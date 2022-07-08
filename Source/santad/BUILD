@@ -405,7 +405,9 @@ objc_library(
     hdrs = ["EventProviders/SNTEndpointSecurityClient.h"],
     deps = [
         ":EndpointSecurityAPI",
+        ":EndpointSecurityEnrichedTypes",
         ":SNTEndpointSecurityClientBase",
+        "//Source/common:SNTCommon",
         "//Source/common:SNTConfigurator",
         "//Source/common:SNTLogging",
     ],

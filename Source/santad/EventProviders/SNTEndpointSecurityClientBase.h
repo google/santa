@@ -20,6 +20,7 @@
 #import <Foundation/Foundation.h>
 
 #include "Source/santad/EventProviders/EndpointSecurity/EndpointSecurityAPI.h"
+#include "Source/santad/EventProviders/EndpointSecurity/EnrichedTypes.h"
 #include "Source/santad/EventProviders/EndpointSecurity/Message.h"
 
 @protocol SNTEndpointSecurityClientBase
@@ -43,6 +44,9 @@
 - (bool)respondToMessage:(const santa::santad::event_providers::endpoint_security::Message&)msg
           withAuthResult:(es_auth_result_t)result
                cacheable:(bool)cacheable;
+
+- (void)processEnrichedMessage:(std::shared_ptr<santa::santad::event_providers::endpoint_security::EnrichedMessage>)msg
+                       handler:(void(^)(std::shared_ptr<santa::santad::event_providers::endpoint_security::EnrichedMessage>))messageHandler;
 
 - (void)processMessage:(santa::santad::event_providers::endpoint_security::Message&&)msg
                handler:(void(^)(const santa::santad::event_providers::endpoint_security::Message&))messageHandler;
