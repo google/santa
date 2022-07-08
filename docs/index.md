@@ -37,22 +37,22 @@ The following pages give an overview of how Santa accomplishes authorization at 
 
 Additional documentation on the concepts that support the operation of the main components:
 
-* [mode](details/mode.md): An operating mode, either Monitor or Lockdown.
-* [events](details/events.md): Represents an `execve()` that was blocked, or would have been blocked, depending on the mode.
-* [rules](details/rules.md): Represents allow or deny decisions for a given `execve()`. Can either be a binary's SHA-256 hash or a leaf code-signing certificate's SHA-256 hash.
-* [scopes](details/scopes.md): The level at which an `execve()` was allowed or denied from taking place.
-* [ipc](details/ipc.md): How all the components of Santa communicate.
+* [mode](concepts/mode.md): An operating mode, either Monitor or Lockdown.
+* [events](concepts/events.md): Represents an `execve()` that was blocked, or would have been blocked, depending on the mode.
+* [rules](concepts/rules.md): Represents allow or deny decisions for a given `execve()`. Can either be a binary's SHA-256 hash or a leaf code-signing certificate's SHA-256 hash.
+* [scopes](concepts/scopes.md): The level at which an `execve()` was allowed or denied from taking place.
+* [ipc](concepts/ipc.md): How all the components of Santa communicate.
   duction/syncing-overview.
-* [logs](details/logs.md): What and where Santa logs.
+* [logs](concepts/logs.md): What and where Santa logs.
 
 ### Binaries
 
 The following pages describe the main components that make up Santa:
 
-* [santad](details/santad.md): A root daemon that makes decisions.
-* [santactl](details/santactl.md): A command-line utility for inspecting the state and managing local configuration of Santa.
-* [santa-gui](details/santa-gui.md): A GUI daemon that displays notifications when an execution is blocked.
-* [santabs](details/santabs.md): A root daemon that finds binaries within a bundle to allow for easier rule-creation of bundled applications.
+* [santad](binaries/santad.md): A root daemon that makes decisions.
+* [santactl](binaries/santactl.md): A command-line utility for inspecting the state and managing local configuration of Santa.
+* [santa-gui](binaries/santa-gui.md): A GUI daemon that displays notifications when an execution is blocked.
+* [santabs](binaries/santabs.md): A root daemon that finds binaries within a bundle to allow for easier rule-creation of bundled applications.
 
 ### Development
 

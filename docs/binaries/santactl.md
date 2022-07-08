@@ -367,7 +367,7 @@ Recursive lookups of an application or directory is a soon to be added feature
 
 ##### rule
 
-The rule command is covered in the [Rules](rules.md) document.
+The rule command is covered in the [Rules](../concepts/rules.md) document.
 
 ##### sync
 
