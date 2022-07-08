@@ -411,6 +411,7 @@ objc_library(
     deps = [
         ":EndpointSecurityAPI",
         ":SNTEndpointSecurityClientBase",
+        "//Source/common:SNTConfigurator",
         "//Source/common:SNTLogging",
     ],
 )
