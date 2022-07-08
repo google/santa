@@ -21,7 +21,6 @@
 
 #include <atomic>
 
-#import "Source/common/SNTAllowlistInfo.h"
 #import "Source/common/SNTCachedDecision.h"
 #import "Source/common/SNTCommon.h"
 #import "Source/common/SNTCommonEnums.h"
@@ -159,7 +158,7 @@ static constexpr std::string_view kIgnoredCompilerProcessPathPrefix = "/dev/";
       if (![ruleTable addRules:@[ rule ] cleanSlate:NO error:&err]) {
         LOGE(@"unable to add new transitive rule to database: %@", err.localizedDescription);
       } else {
-        logger->LogAllowList(esMsg, [fi.SHA256 UTF8String]);
+        logger->LogAllowlist(esMsg, [fi.SHA256 UTF8String]);
       }
     }
   }

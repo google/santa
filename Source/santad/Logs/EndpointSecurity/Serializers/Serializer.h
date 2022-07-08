@@ -40,7 +40,7 @@ public:
   virtual std::vector<uint8_t> SerializeMessage(
       const santa::santad::event_providers::endpoint_security::EnrichedUnlink &) = 0;
 
-  virtual std::vector<uint8_t> SerializeAllowList(
+  virtual std::vector<uint8_t> SerializeAllowlist(
       const santa::santad::event_providers::endpoint_security::Message&,
       const std::string_view) = 0;
 

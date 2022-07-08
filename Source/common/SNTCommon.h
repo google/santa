@@ -26,21 +26,18 @@
 #define likely(x) __builtin_expect(!!(x), 1)
 #define unlikely(x) __builtin_expect(!!(x), 0)
 
-// TODO: Why the various offsets?
-// These never look to be persisted. Think they can change without
-// affecting previous deployment
 typedef enum {
-  ACTION_UNSET = 0,
+  ACTION_UNSET,
 
   // REQUESTS
   // If an operation is awaiting a cache decision from a similar operation
   // currently being processed, it will poll about every 5 ms for an answer.
-  ACTION_REQUEST_BINARY = 11,
+  ACTION_REQUEST_BINARY,
 
   // RESPONSES
-  ACTION_RESPOND_ALLOW = 20,
-  ACTION_RESPOND_DENY = 21,
-  ACTION_RESPOND_ALLOW_COMPILER = 24,
+  ACTION_RESPOND_ALLOW,
+  ACTION_RESPOND_DENY,
+  ACTION_RESPOND_ALLOW_COMPILER,
 
 } santa_action_t;
 

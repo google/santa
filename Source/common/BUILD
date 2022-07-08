@@ -84,12 +84,6 @@ objc_library(
 )
 
 objc_library(
-    name = "SNTAllowlistInfo",
-    srcs = ["SNTAllowlistInfo.m"],
-    hdrs = ["SNTAllowlistInfo.h"],
-)
-
-objc_library(
     name = "SNTCommonEnums",
     hdrs = ["SNTCommonEnums.h"],
 )

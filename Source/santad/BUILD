@@ -100,7 +100,6 @@ objc_library(
     ],
     deps = [
         ":SNTDatabaseController",
-        "//Source/common:SNTAllowlistInfo",
         "//Source/common:SNTCachedDecision",
         "//Source/common:SNTCommon",
         "//Source/common:SNTCommonEnums",
@@ -123,7 +122,6 @@ objc_library(
     ],
     deps = [
         ":event_logs_common",
-        "//Source/common:SNTAllowlistInfo",
         "//Source/common:SNTCachedDecision",
         "//Source/common:SNTCommon",
         "//Source/common:SNTConfigurator",
@@ -145,7 +143,6 @@ objc_library(
     deps = [
         ":endpoint_security_manager",
         ":event_logs_common",
-        "//Source/common:SNTAllowlistInfo",
         "//Source/common:SNTCachedDecision",
         "//Source/common:SNTCommon",
         "//Source/common:SNTConfigurator",
@@ -220,7 +217,6 @@ objc_library(
         ":SNTExecutionController",
         ":endpoint_security_manager",
         ":event_logs",
-        "//Source/common:SNTAllowlistInfo",
         "//Source/common:SNTBlockMessage",
         "//Source/common:SNTCachedDecision",
         "//Source/common:SNTCommon",
@@ -318,7 +314,6 @@ objc_library(
         ":SNTRuleTable",
         ":EndpointSecurityLogger",
         ":SNTDecisionCache",
-        "//Source/common:SNTAllowlistInfo",
         "//Source/common:SNTCachedDecision",
         "//Source/common:SNTCommon",
         "//Source/common:SNTFileInfo",
@@ -915,7 +910,6 @@ santa_unit_test(
     deps = [
         ":EndpointSecurityTestLib",
         ":event_logs",
-        "//Source/common:SNTAllowlistInfo",
         "//Source/common:SNTCachedDecision",
         "//Source/common:SNTConfigurator",
         "//Source/common:SNTLogging",

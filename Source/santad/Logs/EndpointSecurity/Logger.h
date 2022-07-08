@@ -38,7 +38,7 @@ public:
   void Log(
       std::unique_ptr<santa::santad::event_providers::endpoint_security::EnrichedMessage> msg);
 
-  void LogAllowList(
+  void LogAllowlist(
       const santa::santad::event_providers::endpoint_security::Message& msg,
       const std::string_view hash);
 
