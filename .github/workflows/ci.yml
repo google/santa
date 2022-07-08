@@ -1,49 +1,20 @@
 name: CI
+
 on:
   push:
     branches:
       - '*'
+    paths:
+      - 'Source/**'
   pull_request:
     branches:
       - main
+    paths:
+      - 'Source/**'
 
 jobs:
-  preqs:
-    runs-on: ubuntu-latest
-    outputs:
-      run_build_and_tests: ${{ steps.step1.outputs.run_build_and_tests }}
-
-    steps:
-      - uses: actions/checkout@v2
-      - name: Check If We Need to Run Build/Test
-        id: step1
-        run: |
-          git remote add mainline https://github.com/google/santa.git
-          git fetch mainline main
-          git diff --name-only mainline/main HEAD > files.txt
-          echo "FILES CHANGED: $(wc -l ./files.txt)\n"
-
-          cat files.txt
-
-          build_and_run_tests=0
-
-          for file in `cat files.txt`; do
-            if [[ $file = Source/* ]]; then
-              build_and_run_test=1;
-            fi
-          done
-
-          if [[ $build_and_run_test != 0 ]]; then
-            echo "NEED TO RUN BUILD AND TESTS"
-            echo "::set-output name=run_build_and_tests::true"
-          else
-            echo "::set-output name=run_build_and_tests::false"
-          fi
-
   lint:
     runs-on: ubuntu-latest
-    needs: [preqs]
-    if: needs.preqs.outputs.run_build_and_tests == 'true'
     steps:
       - uses: actions/checkout@v2
       - name: Run linters
@@ -55,8 +26,6 @@ jobs:
       matrix:
         os: [macos-10.15, macos-11, macos-12]
     runs-on: ${{ matrix.os }}
-    needs: [preqs]
-    if: needs.preqs.outputs.run_build_and_tests == 'true'
     steps:
      - uses: actions/checkout@v2
      - name: Build Userspace
@@ -68,8 +37,6 @@ jobs:
       matrix:
         os: [macos-10.15, macos-11, macos-12]
     runs-on: ${{ matrix.os }}
-    needs: [preqs]
-    if: needs.preqs.outputs.run_build_and_tests == 'true'
     steps:
       - uses: actions/checkout@v2
       - name: Run All Tests
@@ -77,8 +44,6 @@ jobs:
 
   test_coverage:
     runs-on: macos-11
-    needs: [preqs]
-    if: needs.preqs.outputs.run_build_and_tests == 'true'
     steps:
       - uses: actions/checkout@v2
       - name: Generate test coverage
@@ -92,8 +57,6 @@ jobs:
 
   benchmark:
     runs-on: macos-11
-    needs: [preqs]
-    if: needs.preqs.outputs.run_build_and_tests == 'true'
     steps:
       - uses: actions/checkout@v2
       - name: Run All Tests
