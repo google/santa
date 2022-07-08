@@ -3,51 +3,58 @@ title: Home
 nav_order: 1
 ---
 
-# Welcome
+# Welcome to the Santa documentation
 
-Santa is a binary authorization system for macOS. Here you will find the
-documentation for understanding how Santa works, how to deploy it and how to
-contribute.
+Santa is a binary authorization system for macOS. It consists of a system extension that allows or denies attempted executions using a set of rules stored in a local database, a GUI agent that notifies the user in case of a block decision, a sync daemon responsible for syncing the database and a server, and a command-line utility for managing the system.
 
-#### Introduction
+It is named Santa because it keeps track of binaries that are naughty or nice.
 
-The following documents give an overview of how Santa accomplishes binary
-authorization at the enterprise scale.
+## Features 
 
-* [Binary Authorization](introduction/binary-authorization-overview.md): How Santa makes allow or deny decisions for any `execve()` taking place.
+* [**Multiple modes:**](concepts/mode.md) In the default `MONITOR` mode, all binaries except those marked as blocked will be allowed to run, whilst being logged and recorded in the events database. In `LOCKDOWN` mode, only listed binaries are allowed to run.
+* [**Event logging:**](concepts/events.md) All binary launches are logged. When in either mode, all unknown or denied binaries are stored in the database to enable later aggregation.
+* [**Certificate-based rules, with override levels:**](concepts/rules.md) Instead of relying on a binary's hash (or 'fingerprint'), executables can be allowed/blocked by their signing certificate. You can therefore allow/block all binaries by a given publisher that were signed with that cert across version updates. A binary can only be allowed by its certificate if its signature validates correctly but a rule for a binary's fingerprint will override a decision for a certificate; i.e. you can allowlist a certificate while blocking a binary signed with that certificate, or vice-versa.
+* **Path-based rules (via NSRegularExpression/ICU):** Binaries can be allowed/blocked based on the path they are launched from by matching against a configurable regex.
+* [**Failsafe cert rules:**](concepts/rules.md#built-in-rules) You cannot put in a deny rule that would block the certificate used to sign launchd, a.k.a. pid 1, and therefore all components used in macOS. The binaries in every OS update (and in some cases entire new versions) are therefore automatically allowed. This does not affect binaries from Apple's App Store, which use various certs that change regularly for common apps. Likewise, you cannot block Santa itself.
+* [**Components validate each other:**](binaries/index.md) Each of the components (the daemons, the GUI agent, and the command-line utility) communicate with each other using XPC and check that their signing certificates are identical before any communication is accepted.
+* **Caching:** Allowed binaries are cached so the processing required to make a request is only done if the binary isn't already cached.
+
+## Documentation overview
+
+### Introduction
+
+The following pages give an overview of how Santa accomplishes authorization at enterprise scale.
+
+* [Binary Authorization](introduction/binary-authorization-overview.md): How Santa makes allow or deny decisions for any execution taking place.
 * [Syncing](introduction/syncing-overview.md): How configuration and rules are applied from a sync server.
 
-#### Deployment
+### Deployment
 
 * [Configuration](deployment/configuration.md): The local and sync server configuration options, along with example needed mobileconfig files.
-* [Troubleshooting](deployment/troubleshooting.md): While there are numerous pages with details on Santa, admins may appreciate a central place to branch off from with common practical issues.
+* [Troubleshooting](deployment/troubleshooting.md): How to troubleshoot issues with your Santa deployment.
 
-#### Development
-
-* [Building Santa](development/building.md): How to build and load Santa for testing on a development machine.
-* [Contributing](development/contributing.md): How to contribute a bug fix or new feature to Santa.
-
-#### Details
-
-For those who want even more details on how Santa works under the hood, this section is for you.
-
-###### Binaries
-
-There are five main components that make up Santa whose core functionality is described in snippets below. For additional detail on each component, visit their respective pages. These quick descriptions do not encompass all the jobs performed by each component, but do provide a quick look at the basic functionality utilized to achieve the goal of binary authorization.
-
-* [santad](details/santad.md): A user-land root daemon that makes decisions.
-* [santactl](details/santactl.md): A user-land anonymous daemon that communicates with a sync server for configurations and policies. santactl can also be used by a user to manually configure Santa when using the local configuration.
-* [santa-gui](details/santa-gui.md): A user-land GUI daemon that displays notifications when an `execve()` is blocked.
-* [santabs](details/santabs.md): A user-land root daemon that finds Mach-O binaries within a bundle and creates events for them.
-
-###### Concepts
+### Concepts
 
 Additional documentation on the concepts that support the operation of the main components:
 
-* [mode](details/mode.md): An operating mode, either Monitor or Lockdown.
-* [events](details/events.md): Represents an `execve()` that was blocked, or would have been blocked, depending on the mode.
-* [rules](details/rules.md): Represents allow or deny decisions for a given `execve()`. Can either be a binary's SHA-256 hash or a leaf code-signing certificate's SHA-256 hash.
-* [scopes](details/scopes.md): The level at which an `execve()` was allowed or denied from taking place.
-* [ipc](details/ipc.md): How all the components of Santa communicate.
+* [mode](concepts/mode.md): An operating mode, either Monitor or Lockdown.
+* [events](concepts/events.md): Represents an `execve()` that was blocked, or would have been blocked, depending on the mode.
+* [rules](concepts/rules.md): Represents allow or deny decisions for a given `execve()`. Can either be a binary's SHA-256 hash or a leaf code-signing certificate's SHA-256 hash.
+* [scopes](concepts/scopes.md): The level at which an `execve()` was allowed or denied from taking place.
+* [ipc](concepts/ipc.md): How all the components of Santa communicate.
   duction/syncing-overview.
-* [logs](details/logs.md): What and where Santa logs.
+* [logs](concepts/logs.md): What and where Santa logs.
+
+### Binaries
+
+The following pages describe the main components that make up Santa:
+
+* [santad](binaries/santad.md): A root daemon that makes decisions.
+* [santactl](binaries/santactl.md): A command-line utility for inspecting the state and managing local configuration of Santa.
+* [santa-gui](binaries/santa-gui.md): A GUI daemon that displays notifications when an execution is blocked.
+* [santabs](binaries/santabs.md): A root daemon that finds binaries within a bundle to allow for easier rule-creation of bundled applications.
+
+### Development
+
+* [Building Santa](development/building.md): How to build and load Santa for testing on a development machine.
+* [Contributing](development/contributing.md): How to contribute a bug fix or new feature to Santa.
