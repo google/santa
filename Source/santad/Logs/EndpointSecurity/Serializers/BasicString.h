@@ -42,7 +42,7 @@ public:
   std::vector<uint8_t> SerializeMessage(
       const santa::santad::event_providers::endpoint_security::EnrichedUnlink &) override;
 
-  std::vector<uint8_t> SerializeAllowList(
+  std::vector<uint8_t> SerializeAllowlist(
       const santa::santad::event_providers::endpoint_security::Message&,
       const std::string_view) override;
 

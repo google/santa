@@ -92,9 +92,9 @@ static NSString* SerialForDevice(NSString* devPath) {
   NSString *serial;
   io_registry_entry_t device = IORegistryEntryFromPath(GetDefaultIOKitCommsPort(), devPath.UTF8String);
   while (!serial && device) {
-    CFMutableDictionaryRef deviceProperties = NULL;
-    IORegistryEntryCreateCFProperties(device, &deviceProperties, kCFAllocatorDefault, kNilOptions);
-    NSDictionary *properties = CFBridgingRelease(deviceProperties);
+    CFMutableDictionaryRef device_properties = NULL;
+    IORegistryEntryCreateCFProperties(device, &device_properties, kCFAllocatorDefault, kNilOptions);
+    NSDictionary *properties = CFBridgingRelease(device_properties);
     if (properties[@"Serial Number"]) {
       serial = properties[@"Serial Number"];
     } else if (properties[@"kUSBSerialNumberString"]) {
@@ -122,15 +122,17 @@ static NSString* DiskImageForDevice(NSString *devPath) {
   }
 
   io_registry_entry_t device = IORegistryEntryFromPath(GetDefaultIOKitCommsPort(), devPath.UTF8String);
-  CFMutableDictionaryRef deviceProperties = NULL;
-  IORegistryEntryCreateCFProperties(device, &deviceProperties, kCFAllocatorDefault, kNilOptions);
-  NSDictionary *properties = CFBridgingRelease(deviceProperties);
+  CFMutableDictionaryRef device_properties = NULL;
+  IORegistryEntryCreateCFProperties(device, &device_properties, kCFAllocatorDefault, kNilOptions);
+  NSDictionary *properties = CFBridgingRelease(device_properties);
   IOObjectRelease(device);
 
-  NSData *pathData = properties[@"image-path"];
-
-  NSString *result = [[NSString alloc] initWithData:pathData encoding:NSUTF8StringEncoding];
-  return [result stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
+  if (properties[@"image-path"]) {
+    NSString *result = [[NSString alloc] initWithData:properties[@"image-path"] encoding:NSUTF8StringEncoding];
+    return [result stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
+  } else {
+    return nil;
+  }
 }
 
 static NSString* OriginalPathForTranslocation(const es_process_t* esProc) {
@@ -569,7 +571,7 @@ std::vector<uint8_t> BasicString::SerializeMessage(const EnrichedUnlink& msg) {
   return std::vector<uint8_t>(s.begin(), s.end());
 }
 
-std::vector<uint8_t> BasicString::SerializeAllowList(const Message& msg,
+std::vector<uint8_t> BasicString::SerializeAllowlist(const Message& msg,
                                                      const std::string_view hash) {
   std::stringstream ss;
 

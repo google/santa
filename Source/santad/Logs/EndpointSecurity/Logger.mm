@@ -24,8 +24,8 @@ void Logger::Log(std::unique_ptr<EnrichedMessage> msg) {
   writer_->Write(serializer_->SerializeMessage(std::move(msg)));
 }
 
-void Logger::LogAllowList(const Message& msg, const std::string_view hash) {
-  writer_->Write(serializer_->SerializeAllowList(msg, hash));
+void Logger::LogAllowlist(const Message& msg, const std::string_view hash) {
+  writer_->Write(serializer_->SerializeAllowlist(msg, hash));
 }
 
 void Logger::LogBundleHashingEvents(NSArray<SNTStoredEvent*> *events) {
