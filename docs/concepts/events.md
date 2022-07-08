@@ -1,5 +1,5 @@
 ---
-parent: Details
+parent: Concepts
 ---
 
 # Events

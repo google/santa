@@ -24,7 +24,7 @@ directly or indirectly, on the operations being performed.
 This is a high level overview of the binary authorization decision
 process. For a more detailed account of each part, see the respective
 documentation. This flow does not cover the logging component of Santa, see the
-[logs.md](../details/logs.md) documentation for more info.
+[logs.md](../concepts/logs.md) documentation for more info.
 
 ###### Kernel Space
 
@@ -62,7 +62,7 @@ documentation. This flow does not cover the logging component of Santa, see the
         a decision, extra care is taken to be as performant as possible.
 2.  santad uses the information it has gathered to make a decision to allow or
     deny the `execve()`. There are more details on how these decisions are made
-    in the [rules.md](../details/rules.md) and [scopes.md](../details/scopes.md)
+    in the [rules.md](../concepts/rules.md) and [scopes.md](../concepts/scopes.md)
     documents.
 3.  The decision is posted back to santa-driver.
 4.  If there was a deny decision, a message is sent to Santa GUI to display a
