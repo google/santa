@@ -13,16 +13,16 @@
 ///    limitations under the License.
 
 #import "Source/santad/EventProviders/SNTEndpointSecurityClient.h"
-#include <bsm/libbsm.h>
 
+#include <bsm/libbsm.h>
 #include <dispatch/dispatch.h>
 #include <mach/mach_time.h>
 #include <stdlib.h>
 
+#import "Source/common/SNTConfigurator.h"
+#import "Source/common/SNTLogging.h"
 #include "Source/santad/EventProviders/EndpointSecurity/Message.h"
 #include "Source/santad/EventProviders/EndpointSecurity/Client.h"
-
-#import "Source/common/SNTLogging.h"
 
 using santa::santad::event_providers::endpoint_security::Client;
 using santa::santad::event_providers::endpoint_security::EndpointSecurityAPI;
@@ -62,6 +62,14 @@ using santa::santad::event_providers::endpoint_security::Message;
   }
 
   self->_esClient = self->_esApi->NewClient(^(es_client_t* c, Message esMsg) {
+    if (esMsg->process->is_es_client &&
+        [[SNTConfigurator configurator] ignoreOtherEndpointSecurityClients]) {
+      if (esMsg->action_type == ES_ACTION_TYPE_AUTH) {
+        [self respondToMessage:esMsg withAuthResult:ES_AUTH_RESULT_ALLOW cacheable:true];
+      }
+      return;
+    }
+
     messageHandler(c, std::move(esMsg));
   });
 
