@@ -28,6 +28,20 @@ using santa::santad::event_providers::endpoint_security::Message;
 using santa::santad::event_providers::endpoint_security::EnrichedMessage;
 using santa::santad::event_providers::AuthResultCache;
 
+static inline es_file_t* GetTargetFileForPrefixTree(const es_message_t* msg) {
+  switch(msg->event_type) {
+      return msg->event.close.target;
+    case ES_EVENT_TYPE_NOTIFY_LINK:
+      return msg->event.link.source;
+    case ES_EVENT_TYPE_NOTIFY_RENAME:
+      return msg->event.rename.source;
+    case ES_EVENT_TYPE_NOTIFY_UNLINK:
+      return msg->event.unlink.target;
+    default:
+      return NULL;
+  }
+}
+
 @interface SNTEndpointSecurityRecorder()
 @property SNTCompilerController* compilerController;
 @end
@@ -61,7 +75,6 @@ using santa::santad::event_providers::AuthResultCache;
 - (void)establishClient {
   [super establishClientOrDie:^(es_client_t* c, Message&& esMsg) {
     // Pre-enrichment processing
-    es_file_t *targetFile = NULL;
 
     switch(esMsg->event_type) {
       case ES_EVENT_TYPE_NOTIFY_CLOSE:
@@ -71,36 +84,28 @@ using santa::santad::event_providers::AuthResultCache;
         }
 
         self->_authResultCache->RemoveFromCache(esMsg->event.close.target);
-
-        targetFile = esMsg->event.close.target;
-        break;
-      case ES_EVENT_TYPE_NOTIFY_LINK:
-        targetFile = esMsg->event.link.source;
-        break;
-      case ES_EVENT_TYPE_NOTIFY_RENAME:
-        targetFile = esMsg->event.rename.source;
-        break;
-      case ES_EVENT_TYPE_NOTIFY_UNLINK:
-        targetFile = esMsg->event.unlink.target;
         break;
       default:
-        targetFile = NULL;
         break;
     }
 
     [self.compilerController handleEvent:esMsg withLogger:self->_logger];
 
     // Filter file op events matching the prefix tree.
+    es_file_t *targetFile = GetTargetFileForPrefixTree(&(*esMsg));
     if (targetFile != NULL &&
         self->_prefixTree->HasPrefix(targetFile->path.data)) {
       return;
     }
 
-    // Enrich the message
-    std::unique_ptr<EnrichedMessage> enrichedMsg = _enricher->Enrich(std::move(esMsg));
+    // Enrich the message inline with the ES handler block to capture enrichment
+    // data as close to the source event as possible.
+    std::shared_ptr<EnrichedMessage> sharedEnrichedMessage = _enricher->Enrich(std::move(esMsg));
 
-    // TODO: dispatch before logging
-    self->_logger->Log(std::move(enrichedMsg));
+    // Asynchronously log the message
+    [self processEnrichedMessage:std::move(sharedEnrichedMessage) handler:^(std::shared_ptr<EnrichedMessage> msg){
+      self->_logger->Log(std::move(msg));
+    }];
   }];
 }
 

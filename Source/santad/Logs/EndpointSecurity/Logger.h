@@ -36,7 +36,7 @@ public:
       : serializer_(std::move(serializer)), writer_(std::move(writer)) {}
 
   void Log(
-      std::unique_ptr<santa::santad::event_providers::endpoint_security::EnrichedMessage> msg);
+      std::shared_ptr<santa::santad::event_providers::endpoint_security::EnrichedMessage> msg);
 
   void LogAllowlist(
       const santa::santad::event_providers::endpoint_security::Message& msg,

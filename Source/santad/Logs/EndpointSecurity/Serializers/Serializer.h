@@ -17,7 +17,7 @@ public:
   virtual ~Serializer() = default;
   // TODO: Return type should be suitable to pass to a serializer:
   std::vector<uint8_t> SerializeMessage(
-      std::unique_ptr<santa::santad::event_providers::endpoint_security::EnrichedMessage> msg) {
+      std::shared_ptr<santa::santad::event_providers::endpoint_security::EnrichedMessage> msg) {
     return std::visit([this](auto &&arg) {
       return this->SerializeMessage(arg);
     }, std::move(msg->msg_));
