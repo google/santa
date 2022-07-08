@@ -27,10 +27,11 @@ config_setting(
     visibility = [":santa_package_group"],
 )
 
-# Used to detect CI builds
+# Adhoc signed - provisioning profiles are not used.
+# Used for CI runs and dev builds when SIP is disabled.
 config_setting(
-    name = "ci_build",
-    values = {"define": "SANTA_BUILD_TYPE=ci"},
+    name = "adhoc_build",
+    values = {"define": "SANTA_BUILD_TYPE=adhoc"},
     visibility = [":santa_package_group"],
 )
 
