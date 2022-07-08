@@ -651,11 +651,16 @@ macos_bundle(
         "--force",
         "--options library,kill,runtime",
     ],
+    entitlements = select({
+        "//:adhoc_build": "com.google.santa.daemon.systemextension-adhoc.entitlements",
+        # Non-adhoc builds get their entitlements from the provisioning profile.
+        "//conditions:default": None,
+    }),
     infoplists = ["Info.plist"],
     linkopts = ["-execute"],
     minimum_os_version = "10.15",
     provisioning_profile = select({
-        "//:ci_build": None,
+        "//:adhoc_build": None,
         "//conditions:default": "//profiles:daemon_dev",
     }),
     version = "//:version",
