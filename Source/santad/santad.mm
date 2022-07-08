@@ -88,11 +88,12 @@ int SantadMain() {
   auto logger = std::make_shared<Logger>(std::make_unique<BasicString>(),
                                          std::make_unique<Syslog>());
 
-  auto auth_result_cache = std::make_shared<AuthResultCache>();
+  auto auth_result_cache = std::make_shared<AuthResultCache>(es_api);
 
   SNTEndpointSecurityDeviceManager *device_client =
       [[SNTEndpointSecurityDeviceManager alloc] initWithESAPI:es_api
-                                                       logger:logger];
+                                                       logger:logger
+                                              authResultCache:auth_result_cache];
 
   device_client.blockUSBMount = [configurator blockUSBMount];
   device_client.remountArgs = [configurator remountUSBMode];

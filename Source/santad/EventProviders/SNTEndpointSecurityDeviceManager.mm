@@ -29,9 +29,11 @@
 #import "Source/common/SNTDeviceEvent.h"
 #import "Source/common/SNTLogging.h"
 
+using santa::santad::event_providers::FlushCacheMode;
+using santa::santad::event_providers::AuthResultCache;
+using santa::santad::event_providers::endpoint_security::Message;
 using santa::santad::event_providers::endpoint_security::EndpointSecurityAPI;
 using santa::santad::logs::endpoint_security::Logger;
-using santa::santad::event_providers::endpoint_security::Message;
 
 @interface SNTEndpointSecurityDeviceManager ()
 
@@ -133,11 +135,13 @@ long mountArgsToMask(NSArray<NSString *> *args) {
 NS_ASSUME_NONNULL_BEGIN
 
 @implementation SNTEndpointSecurityDeviceManager {
+  std::shared_ptr<AuthResultCache> _authResultCache;
   std::shared_ptr<Logger> _logger;
 }
 
 - (instancetype)initWithESAPI:(std::shared_ptr<EndpointSecurityAPI>)esApi
-                       logger:(std::shared_ptr<Logger>)logger {
+                       logger:(std::shared_ptr<Logger>)logger
+              authResultCache:(std::shared_ptr<AuthResultCache>)authResultCache {
   self = [super initWithESAPI:esApi];
   if (self) {
     _logger = logger;
@@ -172,6 +176,11 @@ NS_ASSUME_NONNULL_BEGIN
       return;
     }
 
+    if (esMsg->event_type == ES_EVENT_TYPE_NOTIFY_UNMOUNT) {
+      self->_authResultCache->FlushCache(FlushCacheMode::kNonRootOnly);
+      return;
+    }
+
     [self processMessage:std::move(esMsg) handler:^(const Message& msg) {
       es_auth_result_t result = [self handleAuthMount:msg];
       [self respondToMessage:msg withAuthResult:result cacheable:false];
@@ -190,6 +199,7 @@ NS_ASSUME_NONNULL_BEGIN
   [super subscribeAndClearCache:{
       ES_EVENT_TYPE_AUTH_MOUNT,
       ES_EVENT_TYPE_AUTH_REMOUNT,
+      ES_EVENT_TYPE_NOTIFY_UNMOUNT,
   }];
 }
 

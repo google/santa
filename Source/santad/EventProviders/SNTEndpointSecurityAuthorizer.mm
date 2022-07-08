@@ -34,8 +34,8 @@ using santa::santad::event_providers::AuthResultCache;
 @end
 
 @implementation SNTEndpointSecurityAuthorizer {
-  std::shared_ptr<Logger> _logger;
   std::shared_ptr<AuthResultCache> _authResultCache;
+  std::shared_ptr<Logger> _logger;
 }
 
 - (instancetype)initWithESAPI:(std::shared_ptr<EndpointSecurityAPI>)esApi

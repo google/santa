@@ -15,12 +15,14 @@
 #ifndef SANTA__SANTAD__EVENTPROVIDERS_AUTHRESULTCACHE_H
 #define SANTA__SANTAD__EVENTPROVIDERS_AUTHRESULTCACHE_H
 
+#include <dispatch/dispatch.h>
 #include <EndpointSecurity/EndpointSecurity.h>
 #import <Foundation/Foundation.h>
 #include <sys/stat.h>
 
 #include "Source/common/SantaCache.h"
 #import "Source/common/SNTCommon.h"
+#include "Source/santad/EventProviders/EndpointSecurity/EndpointSecurityAPI.h"
 
 namespace santa::santad::event_providers {
 
@@ -31,7 +33,8 @@ enum class FlushCacheMode {
 
 class AuthResultCache {
 public:
-  AuthResultCache();
+  AuthResultCache(
+      std::shared_ptr<santa::santad::event_providers::endpoint_security::EndpointSecurityAPI> es_api);
   virtual ~AuthResultCache();
 
   AuthResultCache(AuthResultCache &&other) = delete;
@@ -55,6 +58,9 @@ private:
   SantaCache<santa_vnode_id_t, uint64_t> *nonroot_cache_;
 
   uint64_t root_inode_;
+  std::shared_ptr<santa::santad::event_providers::endpoint_security::EndpointSecurityAPI> es_api_;
+  dispatch_queue_t q_;
+
 };
 
 } // namespace santa::santad::event_providers

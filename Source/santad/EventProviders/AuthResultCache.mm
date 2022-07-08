@@ -19,6 +19,10 @@
 #include <time.h>
 
 #import "Source/common/SNTLogging.h"
+#include "Source/santad/EventProviders/EndpointSecurity/Client.h"
+
+using santa::santad::event_providers::endpoint_security::EndpointSecurityAPI;
+using santa::santad::event_providers::endpoint_security::Client;
 
 // Santa currently only flushes caches when new DENY rules are added, not ALLOW
 // rules. This means this value should be low enough so that if a previously
@@ -59,7 +63,8 @@ static inline uint64_t TimestampFromCachedValue(uint64_t cachedValue) {
   return (cachedValue & ~(0xFF00000000000000));
 }
 
-AuthResultCache::AuthResultCache() {
+AuthResultCache::AuthResultCache(std::shared_ptr<EndpointSecurityAPI> es_api)
+    : es_api_(es_api) {
   root_cache_ = new SantaCache<santa_vnode_id_t, uint64_t>();
   nonroot_cache_ = new SantaCache<santa_vnode_id_t, uint64_t>();
 
@@ -67,6 +72,9 @@ AuthResultCache::AuthResultCache() {
   if (stat("/", &sb) == 0) {
     root_inode_ = sb.st_ino;
   }
+
+  q_ = dispatch_queue_create("com.google.santa.santad.auth_result_cache.q",
+                             DISPATCH_QUEUE_SERIAL);
 }
 
 AuthResultCache::~AuthResultCache() {
@@ -139,6 +147,16 @@ void AuthResultCache::FlushCache(FlushCacheMode mode) {
   nonroot_cache_->clear();
   if (mode == FlushCacheMode::kAllCaches) {
     root_cache_->clear();
+
+    // Clear the ES cache when all local caches are flushed. Assume the ES cache
+    // doesn't need to be cleared when only flushing the non-root cache.
+    //
+    // Calling into ES should be done asynchronously since it could otherwise
+    // potentially deadlock
+    dispatch_async(q_, ^{
+      // ES does not need a connected client to clear cache
+      es_api_->ClearCache(Client());
+    });
   }
 }
 

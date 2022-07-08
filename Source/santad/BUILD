@@ -465,6 +465,7 @@ objc_library(
     srcs = ["EventProviders/SNTEndpointSecurityDeviceManager.mm"],
     hdrs = ["EventProviders/SNTEndpointSecurityDeviceManager.h"],
     deps = [
+        ":AuthResultCache",
         ":EndpointSecurityAPI",
         ":EndpointSecurityLogger",
         ":SNTEndpointSecurityClient",
@@ -479,6 +480,8 @@ objc_library(
     srcs = ["EventProviders/AuthResultCache.mm"],
     hdrs = ["EventProviders/AuthResultCache.h"],
     deps = [
+        ":EndpointSecurityAPI",
+        ":EndpointSecurityClient",
         "//Source/common:SantaCache",
         "//Source/common:SNTLogging",
     ],
@@ -533,6 +536,15 @@ objc_library(
     name = "EndpointSecurityWriterSyslog",
     srcs = ["Logs/EndpointSecurity/Writers/Syslog.mm"],
     hdrs = ["Logs/EndpointSecurity/Writers/Syslog.h"],
+    deps = [
+        ":EndpointSecurityWriter",
+    ]
+)
+
+objc_library(
+    name = "EndpointSecurityWriterFile",
+    srcs = ["Logs/EndpointSecurity/Writers/File.mm"],
+    hdrs = ["Logs/EndpointSecurity/Writers/File.h"],
     deps = [
         ":EndpointSecurityWriter",
     ]
