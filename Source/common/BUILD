@@ -100,6 +100,7 @@ objc_library(
     hdrs = ["SNTConfigurator.h"],
     deps = [
         ":SNTCommonEnums",
+        ":SNTRule",
         ":SNTStrengthify",
         ":SNTSystemInfo",
     ],
@@ -149,7 +150,10 @@ objc_library(
     name = "SNTRule",
     srcs = ["SNTRule.m"],
     hdrs = ["SNTRule.h"],
-    deps = [":SNTCommonEnums"],
+    deps = [
+       ":SNTCommonEnums",
+       ":SNTSyncConstants",
+    ],
 )
 
 objc_library(
@@ -165,6 +169,12 @@ objc_library(
 cc_library(
     name = "SNTStrengthify",
     hdrs = ["SNTStrengthify.h"],
+)
+
+objc_library(
+    name = "SNTSyncConstants",
+    srcs = ["SNTSyncConstants.m"],
+    hdrs = ["SNTSyncConstants.h"],
 )
 
 objc_library(

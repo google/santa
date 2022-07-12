@@ -315,6 +315,17 @@ static void addPathsFromDefaultMuteSet(NSMutableSet *criticalPaths) API_AVAILABL
                                      timestamp:0];
   }
 
+  // If there's still no rule, look for a static rule that matches.
+  NSDictionary *staticRules = [[SNTConfigurator configurator] staticRules];
+  if (!rule && staticRules.count) {
+    rule = staticRules[binarySHA256];
+    if (rule.type == SNTRuleTypeBinary) return rule;
+    rule = staticRules[certificateSHA256];
+    if (rule.type == SNTRuleTypeCertificate) return rule;
+    rule = staticRules[teamID];
+    if (rule.type == SNTRuleTypeTeamID) return rule;
+  }
+
   return rule;
 }
 

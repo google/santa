@@ -19,5 +19,4 @@
 @class SNTRule;
 
 @interface SNTSyncRuleDownload : SNTSyncStage
-- (SNTRule *)ruleFromDictionary:(NSDictionary *)dict;
 @end

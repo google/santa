@@ -17,8 +17,8 @@
 #import "Source/common/SNTConfigurator.h"
 #import "Source/common/SNTLogging.h"
 #import "Source/common/SNTStrengthify.h"
+#import "Source/common/SNTSyncConstants.h"
 #import "Source/santasyncservice/SNTPushNotificationsTracker.h"
-#import "Source/santasyncservice/SNTSyncConstants.h"
 #import "Source/santasyncservice/SNTSyncFCM.h"
 #import "Source/santasyncservice/SNTSyncState.h"
 

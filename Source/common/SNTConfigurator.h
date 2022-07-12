@@ -47,6 +47,14 @@
 @property(readonly, nonatomic) BOOL failClosed;
 
 ///
+///  A set of static rules that should always apply. These can be used as a
+///  fallback set of rules for management tools that should always be allowed to
+///  run even if a sync server does something unexpected. It can also be used
+///  as the sole source of rules, distributed with an MDM.
+///
+@property(readonly, nonatomic) NSDictionary *staticRules;
+
+///
 ///  The regex of allowed paths. Regexes are specified in ICU format.
 ///
 ///  The regex flags IXSM can be used, though the s (dotall) and m (multiline) flags are
