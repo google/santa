@@ -99,6 +99,19 @@ non-adhoc instance like so:
 systemextensionsctl uninstall EQHXZ8M8AV com.google.santa.daemon
 ```
 
+#### IDE Setup
+
+We don't generally use Xcode when working on Santa but it's very useful to be
+able to use an IDE when developing. We generally use clangd for this, using a
+tool that will extract the appropriate compile commands automatically from our
+Bazel build rules. To use this:
+
+1) Run `bazel run @hedron_compile_commands//:refresh_all` to generate the
+   `compile_commands.json` file.
+
+2) Follow the [instructions](https://github.com/hedronvision/bazel-compile-commands-extractor#editor-setup--for-autocomplete-based-on-compile_commandsjson)
+   for setting up your editor.
+
 #### Debugging
 
 lldb can be used to debug Santa, similarly to any other project, with some
