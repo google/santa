@@ -151,8 +151,8 @@ objc_library(
     srcs = ["SNTRule.m"],
     hdrs = ["SNTRule.h"],
     deps = [
-       ":SNTCommonEnums",
-       ":SNTSyncConstants",
+        ":SNTCommonEnums",
+        ":SNTSyncConstants",
     ],
 )
 

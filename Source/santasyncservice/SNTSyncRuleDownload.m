@@ -92,7 +92,7 @@
 
     uint32_t count = 0;
     for (NSDictionary *ruleDict in response[kRules]) {
-      SNTRule *rule = [SNTSyncRuleDownload ruleFromDictionary:ruleDict];
+      SNTRule *rule = [[SNTRule alloc] initWithDictionary:ruleDict];
       if (rule) {
         [self processBundleNotificationsForRule:rule fromDictionary:ruleDict];
         [newRules addObject:rule];

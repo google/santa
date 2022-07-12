@@ -62,8 +62,8 @@ santa_unit_test(
     deps = [
         ":SNTMetricHTTPWriter",
         "//Source/common:SNTConfigurator",
-        "@OCMock",
         "@MOLAuthenticatingURLSession",
+        "@OCMock",
     ],
 )
 

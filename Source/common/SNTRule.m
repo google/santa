@@ -67,13 +67,13 @@
         [policyString isEqual:kRulePolicyAllowlistDeprecated]) {
       _state = SNTRuleStateAllow;
     } else if ([policyString isEqual:kRulePolicyAllowlistCompiler] ||
-              [policyString isEqual:kRulePolicyAllowlistCompilerDeprecated]) {
+               [policyString isEqual:kRulePolicyAllowlistCompilerDeprecated]) {
       _state = SNTRuleStateAllowCompiler;
     } else if ([policyString isEqual:kRulePolicyBlocklist] ||
-              [policyString isEqual:kRulePolicyBlocklistDeprecated]) {
+               [policyString isEqual:kRulePolicyBlocklistDeprecated]) {
       _state = SNTRuleStateBlock;
     } else if ([policyString isEqual:kRulePolicySilentBlocklist] ||
-              [policyString isEqual:kRulePolicySilentBlocklistDeprecated]) {
+               [policyString isEqual:kRulePolicySilentBlocklistDeprecated]) {
       _state = SNTRuleStateSilentBlock;
     } else if ([policyString isEqual:kRulePolicyRemove]) {
       _state = SNTRuleStateRemove;
@@ -99,7 +99,6 @@
   }
   return self;
 }
-
 
 #pragma mark NSSecureCoding
 
