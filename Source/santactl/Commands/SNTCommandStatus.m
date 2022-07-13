@@ -166,11 +166,11 @@ REGISTER_COMMAND_NAME(@"status")
   NSString *ruleSyncLastSuccessStr =
     [dateFormatter stringFromDate:ruleSyncLastSuccess] ?: fullSyncLastSuccessStr;
 
-  NSString *syncURLStr = [[[SNTConfigurator configurator] syncBaseURL] absoluteString];
+  NSString *syncURLStr = configurator.syncBaseURL.absoluteString;
 
-  BOOL exportMetrics = [[SNTConfigurator configurator] exportMetrics];
-  NSURL *metricsURLStr = [[SNTConfigurator configurator] metricURL];
-  NSUInteger metricExportInterval = [[SNTConfigurator configurator] metricExportInterval];
+  BOOL exportMetrics = configurator.exportMetrics;
+  NSURL *metricsURLStr = configurator.metricURL;
+  NSUInteger metricExportInterval = configurator.metricExportInterval;
 
   if ([arguments containsObject:@"--json"]) {
     NSMutableDictionary *stats = [@{
@@ -193,6 +193,9 @@ REGISTER_COMMAND_NAME(@"status")
         @"compiler_rules" : @(compilerRuleCount),
         @"transitive_rules" : @(transitiveRuleCount),
         @"events_pending_upload" : @(eventCount),
+      },
+      @"static_rules" : @{
+        @"rule_count" : @(configurator.staticRules.count),
       },
       @"sync" : @{
         @"server" : syncURLStr ?: @"null",
@@ -240,6 +243,11 @@ REGISTER_COMMAND_NAME(@"status")
     printf("  %-25s | %lld\n", "Compiler Rules", compilerRuleCount);
     printf("  %-25s | %lld\n", "Transitive Rules", transitiveRuleCount);
     printf("  %-25s | %lld\n", "Events Pending Upload", eventCount);
+
+    if ([SNTConfigurator configurator].staticRules.count) {
+      printf(">>> Static Rules\n");
+      printf("  %-25s | %lu\n", "Rules", (unsigned long)configurator.staticRules.count);
+    }
 
     if (syncURLStr) {
       printf(">>> Sync Info\n");
