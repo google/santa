@@ -74,12 +74,13 @@ REGISTER_COMMAND_NAME(@"rule")
 
 - (void)runWithArguments:(NSArray *)arguments {
   SNTConfigurator *config = [SNTConfigurator configurator];
-  if ((config.syncBaseURL || config.staticRules.count) && ![arguments containsObject:@"--check"]
+  if ((config.syncBaseURL || config.staticRules.count) &&
+      ![arguments containsObject:@"--check"]
 #ifdef DEBUG
       // DEBUG builds add a --force flag to allow manually adding/removing rules during testing.
       && ![arguments containsObject:@"--force"]) {
 #else
-      ) {
+  ) {
 #endif
     printf("(SyncBaseURL/StaticRules is set, rules are managed centrally.)");
     exit(1);
