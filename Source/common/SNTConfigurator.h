@@ -16,6 +16,8 @@
 
 #import "Source/common/SNTCommonEnums.h"
 
+@class SNTRule;
+
 ///
 ///  Singleton that provides an interface for managing configuration values on disk
 ///  @note This class is designed as a singleton but that is not strictly enforced.
@@ -67,7 +69,10 @@
 ///    </dict>
 ///  </array>
 ///
-@property(readonly, nonatomic) NSDictionary *staticRules;
+///  The return of this property is a dictionary where the keys are the
+///  identifiers of each rule, with the SNTRule as a value
+///
+@property(readonly, nonatomic) NSDictionary<NSString *, SNTRule *> *staticRules;
 
 ///
 ///  The regex of allowed paths. Regexes are specified in ICU format.

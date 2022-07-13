@@ -560,7 +560,7 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
   return args;
 }
 
-- (NSDictionary *)staticRules {
+- (NSDictionary<NSString *, SNTRule *> *)staticRules {
   NSArray *currentRules = self.configState[kStaticRules];
   if (currentRules.hash != self.cachedStaticRulesHash) {
     NSMutableDictionary *rules = [NSMutableDictionary dictionaryWithCapacity:currentRules.count];
