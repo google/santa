@@ -52,6 +52,21 @@
 ///  run even if a sync server does something unexpected. It can also be used
 ///  as the sole source of rules, distributed with an MDM.
 ///
+///  The value of this key should be an array containing dictionaries. Each
+///  dictionary should contain the same keys used for syncing, e.g:
+///
+///  <key>StaticRules</key>
+///  <array>
+///    <dict>
+///      <key>identifier</key>
+///      <string>binary sha256, certificate sha256, team ID</string>
+///      <key>rule_type</key>
+///      <string>BINARY</string>  (one of BINARY, CERTIFICATE or TEAMID)
+///      <key>policy</key>
+///      <string>BLOCKLIST</string>  (one of ALLOWLIST, ALLOWLIST_COMPILER, BLOCKLIST, SILENT_BLOCKLIST)
+///    </dict>
+///  </array>
+///
 @property(readonly, nonatomic) NSDictionary *staticRules;
 
 ///
