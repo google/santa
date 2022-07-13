@@ -22,12 +22,12 @@
 @implementation SNTRuleTest
 
 - (void)testInitWithDictionaryValid {
-  SNTRule *sut; 
-  
+  SNTRule *sut;
+
   sut = [[SNTRule alloc] initWithDictionary:@{
-    @"identifier": @"some-sort-of-identifier",
-    @"policy": @"ALLOWLIST",
-    @"rule_type": @"BINARY",
+    @"identifier" : @"some-sort-of-identifier",
+    @"policy" : @"ALLOWLIST",
+    @"rule_type" : @"BINARY",
   }];
   XCTAssertNotNil(sut);
   XCTAssertEqualObjects(sut.identifier, @"some-sort-of-identifier");
@@ -35,9 +35,9 @@
   XCTAssertEqual(sut.state, SNTRuleStateAllow);
 
   sut = [[SNTRule alloc] initWithDictionary:@{
-    @"sha256": @"some-sort-of-identifier",
-    @"policy": @"BLOCKLIST",
-    @"rule_type": @"CERTIFICATE",
+    @"sha256" : @"some-sort-of-identifier",
+    @"policy" : @"BLOCKLIST",
+    @"rule_type" : @"CERTIFICATE",
   }];
   XCTAssertNotNil(sut);
   XCTAssertEqualObjects(sut.identifier, @"some-sort-of-identifier");
@@ -45,9 +45,9 @@
   XCTAssertEqual(sut.state, SNTRuleStateBlock);
 
   sut = [[SNTRule alloc] initWithDictionary:@{
-    @"identifier": @"some-sort-of-identifier",
-    @"policy": @"SILENT_BLOCKLIST",
-    @"rule_type": @"TEAMID",
+    @"identifier" : @"some-sort-of-identifier",
+    @"policy" : @"SILENT_BLOCKLIST",
+    @"rule_type" : @"TEAMID",
   }];
   XCTAssertNotNil(sut);
   XCTAssertEqualObjects(sut.identifier, @"some-sort-of-identifier");
@@ -55,9 +55,9 @@
   XCTAssertEqual(sut.state, SNTRuleStateSilentBlock);
 
   sut = [[SNTRule alloc] initWithDictionary:@{
-    @"identifier": @"some-sort-of-identifier",
-    @"policy": @"ALLOWLIST_COMPILER",
-    @"rule_type": @"BINARY",
+    @"identifier" : @"some-sort-of-identifier",
+    @"policy" : @"ALLOWLIST_COMPILER",
+    @"rule_type" : @"BINARY",
   }];
   XCTAssertNotNil(sut);
   XCTAssertEqualObjects(sut.identifier, @"some-sort-of-identifier");
@@ -65,9 +65,9 @@
   XCTAssertEqual(sut.state, SNTRuleStateAllowCompiler);
 
   sut = [[SNTRule alloc] initWithDictionary:@{
-    @"identifier": @"some-sort-of-identifier",
-    @"policy": @"REMOVE",
-    @"rule_type": @"TEAMID",
+    @"identifier" : @"some-sort-of-identifier",
+    @"policy" : @"REMOVE",
+    @"rule_type" : @"TEAMID",
   }];
   XCTAssertNotNil(sut);
   XCTAssertEqualObjects(sut.identifier, @"some-sort-of-identifier");
@@ -75,10 +75,10 @@
   XCTAssertEqual(sut.state, SNTRuleStateRemove);
 
   sut = [[SNTRule alloc] initWithDictionary:@{
-    @"identifier": @"some-sort-of-identifier",
-    @"policy": @"ALLOWLIST",
-    @"rule_type": @"TEAMID",
-    @"custom_msg": @"A custom block message",
+    @"identifier" : @"some-sort-of-identifier",
+    @"policy" : @"ALLOWLIST",
+    @"rule_type" : @"TEAMID",
+    @"custom_msg" : @"A custom block message",
   }];
   XCTAssertNotNil(sut);
   XCTAssertEqualObjects(sut.identifier, @"some-sort-of-identifier");
@@ -88,30 +88,29 @@
 }
 
 - (void)testInitWithDictionaryInvalid {
-  SNTRule *sut; 
-  
-  sut = [[SNTRule alloc] initWithDictionary:@{ }];
+  SNTRule *sut;
+
+  sut = [[SNTRule alloc] initWithDictionary:@{}];
   XCTAssertNil(sut);
 
-  sut = [[SNTRule alloc] initWithDictionary:@{ 
-    @"identifier": @"an-identifier",
+  sut = [[SNTRule alloc] initWithDictionary:@{
+    @"identifier" : @"an-identifier",
   }];
   XCTAssertNil(sut);
 
-  sut = [[SNTRule alloc] initWithDictionary:@{ 
-    @"identifier": @"an-identifier",
-    @"policy": @"OTHERPOLICY",
-    @"rule_type": @"BINARY",
+  sut = [[SNTRule alloc] initWithDictionary:@{
+    @"identifier" : @"an-identifier",
+    @"policy" : @"OTHERPOLICY",
+    @"rule_type" : @"BINARY",
   }];
   XCTAssertNil(sut);
 
-  sut = [[SNTRule alloc] initWithDictionary:@{ 
-    @"identifier": @"an-identifier",
-    @"policy": @"ALLOWLIST",
-    @"rule_type": @"OTHER_RULE_TYPE",
+  sut = [[SNTRule alloc] initWithDictionary:@{
+    @"identifier" : @"an-identifier",
+    @"policy" : @"ALLOWLIST",
+    @"rule_type" : @"OTHER_RULE_TYPE",
   }];
   XCTAssertNil(sut);
 }
 
 @end
-
