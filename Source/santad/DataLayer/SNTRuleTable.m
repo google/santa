@@ -277,6 +277,19 @@ static void addPathsFromDefaultMuteSet(NSMutableSet *criticalPaths) API_AVAILABL
                           teamID:(NSString *)teamID {
   __block SNTRule *rule;
 
+  // Look for a static rule that matches.
+  NSDictionary *staticRules = [[SNTConfigurator configurator] staticRules];
+  if (staticRules.count) {
+    rule = staticRules[binarySHA256];
+    if (rule.type == SNTRuleTypeBinary) return rule;
+    rule = staticRules[certificateSHA256];
+    if (rule.type == SNTRuleTypeCertificate) return rule;
+    rule = staticRules[teamID];
+    if (rule.type == SNTRuleTypeTeamID) return rule;
+  }
+
+  // Now query the database.
+  //
   // NOTE: This code is written with the intention that the binary rule is searched for first
   // as Santa is designed to go with the most-specific rule possible.
   //

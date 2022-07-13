@@ -16,6 +16,8 @@
 
 #import "Source/common/SNTCommonEnums.h"
 
+@class SNTRule;
+
 ///
 ///  Singleton that provides an interface for managing configuration values on disk
 ///  @note This class is designed as a singleton but that is not strictly enforced.
@@ -45,6 +47,32 @@
 ///  potential for causing problems.
 ///
 @property(readonly, nonatomic) BOOL failClosed;
+
+///
+///  A set of static rules that should always apply. These can be used as a
+///  fallback set of rules for management tools that should always be allowed to
+///  run even if a sync server does something unexpected. It can also be used
+///  as the sole source of rules, distributed with an MDM.
+///
+///  The value of this key should be an array containing dictionaries. Each
+///  dictionary should contain the same keys used for syncing, e.g:
+///
+///  <key>StaticRules</key>
+///  <array>
+///    <dict>
+///      <key>identifier</key>
+///      <string>binary sha256, certificate sha256, team ID</string>
+///      <key>rule_type</key>
+///      <string>BINARY</string>  (one of BINARY, CERTIFICATE or TEAMID)
+///      <key>policy</key>
+///      <string>BLOCKLIST</string>  (one of ALLOWLIST, ALLOWLIST_COMPILER, BLOCKLIST, SILENT_BLOCKLIST)
+///    </dict>
+///  </array>
+///
+///  The return of this property is a dictionary where the keys are the
+///  identifiers of each rule, with the SNTRule as a value
+///
+@property(readonly, nonatomic) NSDictionary<NSString *, SNTRule *> *staticRules;
 
 ///
 ///  The regex of allowed paths. Regexes are specified in ICU format.

@@ -13,6 +13,7 @@
 ///    limitations under the License.
 
 #import "Source/common/SNTRule.h"
+#import "Source/common/SNTSyncConstants.h"
 
 @interface SNTRule ()
 @property(readwrite) NSUInteger timestamp;
@@ -44,6 +45,58 @@
   // Initialize timestamp to current time if rule is transitive.
   if (self && state == SNTRuleStateAllowTransitive) {
     [self resetTimestamp];
+  }
+  return self;
+}
+
+// Converts rule information downloaded from the server into a SNTRule.  Because any information
+// not recorded by SNTRule is thrown away here, this method is also responsible for dealing with
+// the extra bundle rule information (bundle_hash & rule_count).
+- (instancetype)initWithDictionary:(NSDictionary *)dict {
+  if (![dict isKindOfClass:[NSDictionary class]]) return nil;
+
+  self = [super init];
+  if (self) {
+    _identifier = dict[kRuleIdentifier];
+    if (!_identifier.length) _identifier = dict[kRuleSHA256];
+    if (!_identifier.length) {
+      return nil;
+    }
+
+    NSString *policyString = dict[kRulePolicy];
+    if ([policyString isEqual:kRulePolicyAllowlist] ||
+        [policyString isEqual:kRulePolicyAllowlistDeprecated]) {
+      _state = SNTRuleStateAllow;
+    } else if ([policyString isEqual:kRulePolicyAllowlistCompiler] ||
+               [policyString isEqual:kRulePolicyAllowlistCompilerDeprecated]) {
+      _state = SNTRuleStateAllowCompiler;
+    } else if ([policyString isEqual:kRulePolicyBlocklist] ||
+               [policyString isEqual:kRulePolicyBlocklistDeprecated]) {
+      _state = SNTRuleStateBlock;
+    } else if ([policyString isEqual:kRulePolicySilentBlocklist] ||
+               [policyString isEqual:kRulePolicySilentBlocklistDeprecated]) {
+      _state = SNTRuleStateSilentBlock;
+    } else if ([policyString isEqual:kRulePolicyRemove]) {
+      _state = SNTRuleStateRemove;
+    } else {
+      return nil;
+    }
+
+    NSString *ruleTypeString = dict[kRuleType];
+    if ([ruleTypeString isEqual:kRuleTypeBinary]) {
+      _type = SNTRuleTypeBinary;
+    } else if ([ruleTypeString isEqual:kRuleTypeCertificate]) {
+      _type = SNTRuleTypeCertificate;
+    } else if ([ruleTypeString isEqual:kRuleTypeTeamID]) {
+      _type = SNTRuleTypeTeamID;
+    } else {
+      return nil;
+    }
+
+    NSString *customMsg = dict[kRuleCustomMsg];
+    if (customMsg.length) {
+      _customMsg = customMsg;
+    }
   }
   return self;
 }

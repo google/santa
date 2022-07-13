@@ -12,7 +12,7 @@
 ///    See the License for the specific language governing permissions and
 ///    limitations under the License.
 
-#import "SNTSyncConstants.h"
+#import "Source/common/SNTSyncConstants.h"
 
 NSString *const kXSRFToken = @"X-XSRF-TOKEN";
 

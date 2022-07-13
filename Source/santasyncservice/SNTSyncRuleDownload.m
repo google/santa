@@ -18,9 +18,9 @@
 #import <MOLXPCConnection/MOLXPCConnection.h>
 
 #import "Source/common/SNTRule.h"
+#import "Source/common/SNTSyncConstants.h"
 #import "Source/common/SNTXPCControlInterface.h"
 #import "Source/santasyncservice/SNTPushNotificationsTracker.h"
-#import "Source/santasyncservice/SNTSyncConstants.h"
 #import "Source/santasyncservice/SNTSyncLogging.h"
 #import "Source/santasyncservice/SNTSyncState.h"
 
@@ -92,8 +92,9 @@
 
     uint32_t count = 0;
     for (NSDictionary *ruleDict in response[kRules]) {
-      SNTRule *rule = [self ruleFromDictionary:ruleDict];
+      SNTRule *rule = [[SNTRule alloc] initWithDictionary:ruleDict];
       if (rule) {
+        [self processBundleNotificationsForRule:rule fromDictionary:ruleDict];
         [newRules addObject:rule];
         count++;
       }
@@ -128,60 +129,14 @@
   [tracker removeNotificationsForHashes:processed];
 }
 
-// Converts rule information downloaded from the server into a SNTRule.  Because any information
-// not recorded by SNTRule is thrown away here, this method is also responsible for dealing with
-// the extra bundle rule information (bundle_hash & rule_count).
-- (SNTRule *)ruleFromDictionary:(NSDictionary *)dict {
-  if (![dict isKindOfClass:[NSDictionary class]]) return nil;
-
-  SNTRule *newRule = [[SNTRule alloc] init];
-  newRule.identifier = dict[kRuleIdentifier];
-  if (newRule.identifier == nil) {
-    newRule.identifier = dict[kRuleSHA256];
-  }
-
-  NSString *policyString = dict[kRulePolicy];
-  if ([policyString isEqual:kRulePolicyAllowlist] ||
-      [policyString isEqual:kRulePolicyAllowlistDeprecated]) {
-    newRule.state = SNTRuleStateAllow;
-  } else if ([policyString isEqual:kRulePolicyAllowlistCompiler] ||
-             [policyString isEqual:kRulePolicyAllowlistCompilerDeprecated]) {
-    newRule.state = SNTRuleStateAllowCompiler;
-  } else if ([policyString isEqual:kRulePolicyBlocklist] ||
-             [policyString isEqual:kRulePolicyBlocklistDeprecated]) {
-    newRule.state = SNTRuleStateBlock;
-  } else if ([policyString isEqual:kRulePolicySilentBlocklist] ||
-             [policyString isEqual:kRulePolicySilentBlocklistDeprecated]) {
-    newRule.state = SNTRuleStateSilentBlock;
-  } else if ([policyString isEqual:kRulePolicyRemove]) {
-    newRule.state = SNTRuleStateRemove;
-  } else {
-    return nil;
-  }
-
-  NSString *ruleTypeString = dict[kRuleType];
-  if ([ruleTypeString isEqual:kRuleTypeBinary]) {
-    newRule.type = SNTRuleTypeBinary;
-  } else if ([ruleTypeString isEqual:kRuleTypeCertificate]) {
-    newRule.type = SNTRuleTypeCertificate;
-  } else if ([ruleTypeString isEqual:kRuleTypeTeamID]) {
-    newRule.type = SNTRuleTypeTeamID;
-  } else {
-    return nil;
-  }
-
-  NSString *customMsg = dict[kRuleCustomMsg];
-  if (customMsg.length) {
-    newRule.customMsg = customMsg;
-  }
-
+- (void)processBundleNotificationsForRule:(SNTRule *)rule fromDictionary:(NSDictionary *)dict {
   // Check rule for extra notification related info.
-  if (newRule.state == SNTRuleStateAllow || newRule.state == SNTRuleStateAllowCompiler) {
+  if (rule.state == SNTRuleStateAllow || rule.state == SNTRuleStateAllowCompiler) {
     // primaryHash is the bundle hash if there was a bundle hash included in the rule, otherwise
     // it is simply the binary hash.
     NSString *primaryHash = dict[kFileBundleHash];
     if (primaryHash.length != 64) {
-      primaryHash = newRule.identifier;
+      primaryHash = rule.identifier;
     }
 
     // As we read in rules, we update the "remaining count" information. This count represents the
@@ -190,8 +145,6 @@
       decrementPendingRulesForHash:primaryHash
                     totalRuleCount:dict[kFileBundleBinaryCount]];
   }
-
-  return newRule;
 }
 
 @end

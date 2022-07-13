@@ -16,6 +16,7 @@
 
 #include <sys/stat.h>
 
+#import "Source/common/SNTRule.h"
 #import "Source/common/SNTStrengthify.h"
 #import "Source/common/SNTSystemInfo.h"
 
@@ -33,6 +34,10 @@
 
 /// Was --debug passed as an argument to this process?
 @property(readonly, nonatomic) BOOL debugFlag;
+
+/// Holds the last processed hash of the static rules list.
+@property NSUInteger cachedStaticRulesHash;
+@property NSDictionary *cachedStaticRules;
 @end
 
 @implementation SNTConfigurator
@@ -44,6 +49,7 @@ NSString *const kSyncStateFilePath = @"/var/db/santa/sync-state.plist";
 static NSString *const kMobileConfigDomain = @"com.google.santa";
 
 /// The keys managed by a mobileconfig.
+static NSString *const kStaticRules = @"StaticRules";
 static NSString *const kSyncBaseURLKey = @"SyncBaseURL";
 static NSString *const kSyncProxyConfigKey = @"SyncProxyConfiguration";
 static NSString *const kSyncEnableCleanSyncEventUpload = @"SyncEnableCleanSyncEventUpload";
@@ -176,6 +182,7 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
       kRemountUSBBlockMessage : string,
       kModeNotificationMonitor : string,
       kModeNotificationLockdown : string,
+      kStaticRules : array,
       kSyncBaseURLKey : string,
       kSyncProxyConfigKey : dictionary,
       kClientAuthCertificateFileKey : string,
@@ -279,6 +286,10 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
 }
 
 + (NSSet *)keyPathsForValuesAffectingFileChangesPrefixFiltersKey {
+  return [self configStateSet];
+}
+
++ (NSSet *)keyPathsForValuesAffectingStaticRules {
   return [self configStateSet];
 }
 
@@ -547,6 +558,21 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
     }
   }
   return args;
+}
+
+- (NSDictionary<NSString *, SNTRule *> *)staticRules {
+  NSArray *currentRules = self.configState[kStaticRules];
+  if (currentRules.hash != self.cachedStaticRulesHash) {
+    NSMutableDictionary *rules = [NSMutableDictionary dictionaryWithCapacity:currentRules.count];
+    for (id rule in currentRules) {
+      if (![rule isKindOfClass:[NSDictionary class]]) return self.cachedStaticRules;
+      SNTRule *r = [[SNTRule alloc] initWithDictionary:rule];
+      rules[r.identifier] = r;
+    }
+    self.cachedStaticRules = [rules copy];
+    self.cachedStaticRulesHash = currentRules.hash;
+  }
+  return self.cachedStaticRules;
 }
 
 - (NSURL *)syncBaseURL {

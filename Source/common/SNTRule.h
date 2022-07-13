@@ -65,6 +65,11 @@
                      customMsg:(NSString *)customMsg;
 
 ///
+///  Initialize with a dictionary received from a sync server.
+///
+- (instancetype)initWithDictionary:(NSDictionary *)dict;
+
+///
 ///  Sets timestamp of rule to the current time.
 ///
 - (void)resetTimestamp;

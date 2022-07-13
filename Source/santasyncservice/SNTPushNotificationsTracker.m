@@ -15,7 +15,7 @@
 #import "Source/santasyncservice/SNTPushNotificationsTracker.h"
 
 #import "Source/common/SNTLogging.h"
-#import "Source/santasyncservice/SNTSyncConstants.h"
+#import "Source/common/SNTSyncConstants.h"
 
 @interface SNTPushNotificationsTracker ()
 
