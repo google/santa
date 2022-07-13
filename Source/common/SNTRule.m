@@ -58,8 +58,9 @@
   self = [super init];
   if (self) {
     _identifier = dict[kRuleIdentifier];
-    if (_identifier == nil) {
-      _identifier = dict[kRuleSHA256];
+    if (!_identifier.length) _identifier = dict[kRuleSHA256];
+    if (!_identifier.length) {
+      return nil;
     }
 
     NSString *policyString = dict[kRulePolicy];

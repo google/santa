@@ -156,6 +156,12 @@ objc_library(
     ],
 )
 
+santa_unit_test(
+    name = "SNTRuleTest",
+    srcs = ["SNTRuleTest.m"],
+    deps = [":SNTRule"],
+)
+
 objc_library(
     name = "SNTStoredEvent",
     srcs = ["SNTStoredEvent.m"],
