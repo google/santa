@@ -318,9 +318,12 @@ dispatch_source_t createDispatchTimer(uint64_t interval, uint64_t leeway, dispat
   // This will handle retying connection establishment if there are issues with the service
   // during initialization (missing binary, malformed plist, bad code signature, etc.).
   // Once those issues are resolved the connection will establish.
-  // This will also handle reestablishment if the service crashes or is killed.
+  // This will also handle re-establishment if the service crashes or is killed.
+  WEAKIFY(self);
   ss.invalidationHandler = ^(void) {
-    [self establishSyncServiceConnection];
+    STRONGIFY(self);
+    self.syncdQueue.syncConnection.invalidationHandler = nil;
+    [self performSelectorOnMainThread:@selector(establishSyncServiceConnection) withObject:nil waitUntilDone:YES];
   };
   [ss resume];  // If there are issues establishing the connection resume will block for 2 seconds.
   self.syncdQueue.syncConnection = ss;
