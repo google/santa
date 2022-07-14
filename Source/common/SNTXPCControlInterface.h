@@ -20,7 +20,7 @@
 @protocol SNTDaemonControlXPC <SNTUnprivilegedDaemonControlXPC>
 
 ///
-///  Kernel ops
+///  Cache ops
 ///
 - (void)flushCache:(void (^)(BOOL))reply;
 

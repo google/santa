@@ -140,6 +140,10 @@ double watchdogRAMPeak = 0;
                                                         teamID:teamID]);
 }
 
+- (void)staticRuleCount:(void (^)(int64_t count))reply {
+  reply([SNTConfigurator configurator].staticRules.count);
+}
+
 #pragma mark Decision Ops
 
 - (void)decisionForFilePath:(NSString *)filePath
