@@ -36,8 +36,7 @@
 @property(readonly, nonatomic) BOOL debugFlag;
 
 /// Holds the last processed hash of the static rules list.
-@property NSUInteger cachedStaticRulesHash;
-@property NSDictionary *cachedStaticRules;
+@property(atomic) NSDictionary *cachedStaticRules;
 @end
 
 @implementation SNTConfigurator
@@ -561,17 +560,6 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
 }
 
 - (NSDictionary<NSString *, SNTRule *> *)staticRules {
-  NSArray *currentRules = self.configState[kStaticRules];
-  if (currentRules.hash != self.cachedStaticRulesHash) {
-    NSMutableDictionary *rules = [NSMutableDictionary dictionaryWithCapacity:currentRules.count];
-    for (id rule in currentRules) {
-      if (![rule isKindOfClass:[NSDictionary class]]) return self.cachedStaticRules;
-      SNTRule *r = [[SNTRule alloc] initWithDictionary:rule];
-      rules[r.identifier] = r;
-    }
-    self.cachedStaticRules = [rules copy];
-    self.cachedStaticRulesHash = currentRules.hash;
-  }
   return self.cachedStaticRules;
 }
 
@@ -960,6 +948,9 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
       NSString *pattern = [obj isKindOfClass:[NSString class]] ? obj : nil;
       forcedConfig[key] = [self expressionForPattern:pattern];
     }
+    if ([key isEqualToString:kStaticRules]) {
+      [self cacheStaticRules];
+    }
   }
   return forcedConfig;
 }
@@ -990,6 +981,22 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
 ///
 - (void)handleChange {
   self.configState = [self readForcedConfig];
+}
+
+///
+///  Processes the StaticRules key to create SNTRule objects and caches them for quick use
+///
+- (void)cacheStaticRules {
+  NSArray *staticRules = self.configState[kStaticRules];
+  if (![staticRules isKindOfClass:[NSArray class]]) return;
+
+  NSMutableDictionary *rules = [NSMutableDictionary dictionaryWithCapacity:staticRules.count];
+  for (id rule in staticRules) {
+    if (![rule isKindOfClass:[NSDictionary class]]) return;
+    SNTRule *r = [[SNTRule alloc] initWithDictionary:rule];
+    rules[r.identifier] = r;
+  }
+  self.cachedStaticRules = [rules copy];
 }
 
 @end
