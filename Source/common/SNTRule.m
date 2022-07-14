@@ -58,12 +58,13 @@
   self = [super init];
   if (self) {
     _identifier = dict[kRuleIdentifier];
-    if (!_identifier.length) _identifier = dict[kRuleSHA256];
-    if (!_identifier.length) {
-      return nil;
+    if (![_identifier isKindOfClass:[NSString class]] || !_identifier.length) {
+      _identifier = dict[kRuleSHA256];
     }
+    if (![_identifier isKindOfClass:[NSString class]] || !_identifier.length) return nil;
 
     NSString *policyString = dict[kRulePolicy];
+    if (![policyString isKindOfClass:[NSString class]]) return nil;
     if ([policyString isEqual:kRulePolicyAllowlist] ||
         [policyString isEqual:kRulePolicyAllowlistDeprecated]) {
       _state = SNTRuleStateAllow;
@@ -83,6 +84,7 @@
     }
 
     NSString *ruleTypeString = dict[kRuleType];
+    if (![ruleTypeString isKindOfClass:[NSString class]]) return nil;
     if ([ruleTypeString isEqual:kRuleTypeBinary]) {
       _type = SNTRuleTypeBinary;
     } else if ([ruleTypeString isEqual:kRuleTypeCertificate]) {
@@ -94,7 +96,7 @@
     }
 
     NSString *customMsg = dict[kRuleCustomMsg];
-    if (customMsg.length) {
+    if ([customMsg isKindOfClass:[NSString class]] && customMsg.length) {
       _customMsg = customMsg;
     }
   }
