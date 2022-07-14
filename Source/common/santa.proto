@@ -79,6 +79,7 @@ message Execution {
   optional string original_path = 11;
   repeated string args = 12;
   optional string machine_id = 13;
+  optional string team_id = 14;
 }
 
 message DiskAppeared {

@@ -170,9 +170,13 @@
 
   [outLog appendFormat:@"|sha256=%@", cd.sha256];
 
-  if (cd.certSHA256) {
+  if (cd.certSHA256.length) {
     [outLog appendFormat:@"|cert_sha256=%@|cert_cn=%@", cd.certSHA256,
                          [self sanitizeString:cd.certCommonName]];
+  }
+
+  if (cd.teamID.length) {
+    [outLog appendFormat:@"|teamid=%@", cd.teamID];
   }
 
   if (cd.quarantineURL) {
