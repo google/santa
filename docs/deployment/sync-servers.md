@@ -16,3 +16,5 @@ There are several open-source servers you can sync with:
 * [Zercurity](https://github.com/zercurity/zercurity): A dockerized service for managing and monitoring applications across a large fleet using Santa + Osquery.
 
 Alternatively, `santactl` can configure rules locally without a sync server.
+
+See the [Syncing Overview](../introduction/syncing-overview.md) page for an explanation of how syncing works in Santa.
