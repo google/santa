@@ -468,7 +468,7 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
 }
 
 + (NSSet *)keyPathsForValuesAffectingRemountUSBMode {
-  return [self syncAndConfigStateSet];
+  return [self configStateSet];
 }
 
 + (NSSet *)keyPathsForValuesAffectingRemountUSBBlockMessage {
