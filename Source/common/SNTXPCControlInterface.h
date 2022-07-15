@@ -41,7 +41,6 @@
 ///  Config ops
 ///
 - (void)setClientMode:(SNTClientMode)mode reply:(void (^)(void))reply;
-- (void)setXsrfToken:(NSString *)token reply:(void (^)(void))reply;
 - (void)setFullSyncLastSuccess:(NSDate *)date reply:(void (^)(void))reply;
 - (void)setRuleSyncLastSuccess:(NSDate *)date reply:(void (^)(void))reply;
 - (void)setSyncCleanRequired:(BOOL)cleanReqd reply:(void (^)(void))reply;
