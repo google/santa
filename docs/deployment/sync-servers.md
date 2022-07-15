@@ -6,7 +6,7 @@ nav_order: 3
 
 # Sync Servers
 
-The [`santactl`](../binaries/santactl.md) command-line client includes a flag to synchronize with a management server, which uploads events that have occurred on the machine and downloads new rules. 
+Santa's [SyncBaseURL](configuration.md#sync-base-url) configuration flag allows you to synchronize with a management server, which uploads events that have occurred on the machine and downloads new rules. 
 
 There are several open-source servers you can sync with:
 
