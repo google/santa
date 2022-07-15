@@ -363,7 +363,6 @@
   OCMStub([self.mockFileInfo isMachO]).andReturn(YES);
   OCMStub([self.mockFileInfo SHA256]).andReturn(@"a");
 
-  OCMExpect([self.mockConfigurator clientMode]).andReturn(SNTClientModeMonitor);
   OCMExpect([self.mockConfigurator enableAllEventUpload]).andReturn(YES);
   OCMExpect([self.mockEventDatabase addStoredEvent:OCMOCK_ANY]);
 
