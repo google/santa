@@ -485,6 +485,10 @@ NSString *SNTMetricMakeStringFromMetricType(SNTMetricType metricType) {
   return self;
 }
 
+- (void)reset {
+  _metrics = [[NSMutableDictionary alloc] init];
+}
+
 - (void)addRootLabel:(NSString *)label value:(NSString *)value {
   @synchronized(self) {
     _rootLabels[label] = value;

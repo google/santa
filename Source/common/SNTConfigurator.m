@@ -118,6 +118,7 @@ static NSString *const kAllowedPathRegexKeyDeprecated = @"WhitelistRegex";
 static NSString *const kBlockedPathRegexKey = @"BlockedPathRegex";
 static NSString *const kBlockedPathRegexKeyDeprecated = @"BlacklistRegex";
 static NSString *const kEnableAllEventUploadKey = @"EnableAllEventUpload";
+static NSString *const kDisableUnknownEventUploadKey = @"DisableUnknownEventUpload";
 
 // TODO(markowsky): move these to sync server only.
 static NSString *const kMetricFormat = @"MetricFormat";
@@ -217,6 +218,7 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
       kMetricExportTimeout : number,
       kMetricExtraLabels : dictionary,
       kEnableAllEventUploadKey : number,
+      kDisableUnknownEventUploadKey : number,
     };
     _defaults = [NSUserDefaults standardUserDefaults];
     [_defaults addSuiteNamed:@"com.google.santa"];
@@ -409,6 +411,10 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
 }
 
 + (NSSet *)keyPathsForValuesAffectingEnableAllEventUpload {
+  return [self syncAndConfigStateSet];
+}
+
++ (NSSet *)keyPathsForValuesAffectingDisableUnknownEventUpload {
   return [self syncAndConfigStateSet];
 }
 
@@ -774,6 +780,17 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
 
 - (void)setEnableAllEventUpload:(BOOL)enabled {
   [self updateSyncStateForKey:kEnableAllEventUploadKey value:@(enabled)];
+}
+
+- (BOOL)disableUnknownEventUpload {
+  NSNumber *n = self.syncState[kDisableUnknownEventUploadKey];
+  if (n) return [n boolValue];
+
+  return [self.configState[kDisableUnknownEventUploadKey] boolValue];
+}
+
+- (void)setDisableUnknownEventUpload:(BOOL)enabled {
+  [self updateSyncStateForKey:kDisableUnknownEventUploadKey value:@(enabled)];
 }
 
 - (BOOL)enableForkAndExitLogging {

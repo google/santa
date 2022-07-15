@@ -52,6 +52,7 @@ NSString *const kEnableTransitiveRules = @"enable_transitive_rules";
 NSString *const kEnableTransitiveRulesDeprecated = @"enabled_transitive_whitelisting";
 NSString *const kEnableTransitiveRulesSuperDeprecated = @"transitive_whitelisting_enabled";
 NSString *const kEnableAllEventUpload = @"enable_all_event_upload";
+NSString *const kDisableUnknownEventUpload = @"disable_unknown_event_upload";
 
 NSString *const kEvents = @"events";
 NSString *const kFileSHA256 = @"file_sha256";

@@ -452,6 +452,11 @@
 @property(nonatomic) BOOL enableAllEventUpload;
 
 ///
+///  If true, events will *not* be uploaded for ALLOW_UNKNOWN events for clients in Monitor mode.
+///
+@property(nonatomic) BOOL disableUnknownEventUpload;
+
+///
 ///  If true, forks and exits will be logged. Defaults to false.
 ///
 @property(readonly, nonatomic) BOOL enableForkAndExitLogging;

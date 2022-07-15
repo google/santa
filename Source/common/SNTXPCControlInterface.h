@@ -52,6 +52,7 @@
 - (void)setEnableBundles:(BOOL)bundlesEnabled reply:(void (^)(void))reply;
 - (void)setEnableTransitiveRules:(BOOL)enabled reply:(void (^)(void))reply;
 - (void)setEnableAllEventUpload:(BOOL)enabled reply:(void (^)(void))reply;
+- (void)setDisableUnknownEventUpload:(BOOL)enabled reply:(void (^)(void))reply;
 
 ///
 ///  Syncd Ops
