@@ -109,6 +109,11 @@ NSString *SNTMetricMakeStringFromMetricType(SNTMetricType metricType);
 + (instancetype)sharedInstance;
 
 /**
+ * Resets all the metrics in this set. Intended only for testing.
+ */
+- (void)reset;
+
+/**
  *  Add a root label to the MetricSet.
  */
 - (void)addRootLabel:(NSString *)label value:(NSString *)value;

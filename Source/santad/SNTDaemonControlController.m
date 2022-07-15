@@ -251,6 +251,15 @@ double watchdogRAMPeak = 0;
   reply();
 }
 
+- (void)disableUnknownEventUpload:(void (^)(BOOL))reply {
+  reply([SNTConfigurator configurator].disableUnknownEventUpload);
+}
+
+- (void)setDisableUnknownEventUpload:(BOOL)enabled reply:(void (^)(void))reply {
+  [[SNTConfigurator configurator] setDisableUnknownEventUpload:enabled];
+  reply();
+}
+
 #pragma mark Metrics Ops
 
 - (void)metrics:(void (^)(NSDictionary *))reply {
