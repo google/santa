@@ -1,6 +1,7 @@
 ---
 title: Configuration
 parent: Deployment
+nav_order: 2
 ---
 
 # Configuration

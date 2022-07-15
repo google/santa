@@ -30,6 +30,7 @@ The following pages give an overview of how Santa accomplishes authorization at 
 
 ### Deployment
 
+* [Getting Started](deployment/getting-started.md): A quick guide to setting up your deployment.
 * [Configuration](deployment/configuration.md): The local and sync server configuration options, along with example needed mobileconfig files.
 * [Troubleshooting](deployment/troubleshooting.md): How to troubleshoot issues with your Santa deployment.
 
