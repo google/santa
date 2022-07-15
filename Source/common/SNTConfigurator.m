@@ -475,6 +475,10 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
   return [self syncAndConfigStateSet];
 }
 
++ (NSSet *)keyPathsForValuesAffectingUSBBlockMessage {
+  return [self syncAndConfigStateSet];
+}
+
 #pragma mark Public Interface
 
 - (SNTClientMode)clientMode {
