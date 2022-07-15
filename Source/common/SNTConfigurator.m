@@ -459,6 +459,26 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
   return [self configStateSet];
 }
 
++ (NSSet *)keyPathsForValuesAffectingBlockUSBMount {
+  return [self syncAndConfigStateSet];
+}
+
++ (NSSet *)keyPathsForValuesAffectingBannedUSBBlockMessage {
+  return [self configStateSet];
+}
+
++ (NSSet *)keyPathsForValuesAffectingRemountUSBMode {
+  return [self configStateSet];
+}
+
++ (NSSet *)keyPathsForValuesAffectingRemountUSBBlockMessage {
+  return [self syncAndConfigStateSet];
+}
+
++ (NSSet *)keyPathsForValuesAffectingUsbBlockMessage {
+  return [self syncAndConfigStateSet];
+}
+
 #pragma mark Public Interface
 
 - (SNTClientMode)clientMode {
