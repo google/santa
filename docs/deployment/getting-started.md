@@ -10,8 +10,7 @@ This page shows you the process to get started with your deployment of Santa.
 
 **Note:** You can combine each of the profiles listed in the following steps into a single profile containing the different payloads: configuration, TCC, system extension, and notifications.
 
-1. (Optional) Set up a [sync server](../introduction/syncing-overview.md). Without a sync server, [`santactl`](../binaries/santactl.md) can configure rules locally.
-<!--TODO Add in list of sync servers to another page in docs from ReadMe & expand here with a link to new page/section  -->
+1. (Optional) Set up a [sync server](../introduction/syncing-overview.md). For a list of open-source sync servers, see [Sync Servers](sync-servers.md). Without a sync server, [`santactl`](../binaries/santactl.md) can configure rules locally.
 
 1. Create and install your Santa configuration profile to customize your deployment of Santa. See [Configuration](configuration.md) for a reference list of the available options and an [example profile](https://github.com/google/santa/blob/main/docs/deployment/com.google.santa.example.mobileconfig).
 
