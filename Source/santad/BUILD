@@ -597,6 +597,7 @@ objc_library(
         ":EndpointSecurityLogger",
         ":EndpointSecuritySerializerBasicString",
         ":EndpointSecurityWriterSyslog",
+        ":EndpointSecurityWriterFile",
         ":SNTDatabaseController",
         ":SNTCompilerController",
         ":SNTEndpointSecurityAuthorizer",

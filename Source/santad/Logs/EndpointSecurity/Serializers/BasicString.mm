@@ -18,9 +18,12 @@
 #include <libgen.h>
 #include <mach/message.h>
 #import <Security/Security.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <sys/kauth.h>
 #include <sys/param.h>
+#include <sys/time.h>
+#include <time.h>
 #include <unistd.h>
 
 #include <sstream>
@@ -356,10 +359,31 @@ static inline void AppendUserGroup(std::stringstream& ss,
      << "|group=" << (group.has_value() ? group->get()->c_str() : "(null)");
 }
 
+static char* FormattedDateString(char *buf, size_t len) {
+  struct timeval tv;
+  struct tm tm;
+
+  gettimeofday(&tv, NULL);
+  gmtime_r(&tv.tv_sec, &tm);
+
+  strftime(buf, len, "%Y-%m-%dT%H:%M:%S", &tm);
+  snprintf(buf, len, "%s.%03dZ", buf, tv.tv_usec / 1000);
+
+  return buf;
+}
+
+static inline std::stringstream CreateDefaultStringStream() {
+  char buf[32];
+
+  std::stringstream ss;
+  ss << "[" << FormattedDateString(buf, sizeof(buf)) << "] I santad: ";
+  return ss;
+}
+
 std::vector<uint8_t> BasicString::SerializeMessage(const EnrichedClose& msg) {
   const es_message_t &esm = *msg.es_msg_;
 
-  std::stringstream ss;
+  auto ss = CreateDefaultStringStream();
 
   ss << "action=WRITE|path=" << FilePath(esm.event.close.target);
 
@@ -378,7 +402,7 @@ std::vector<uint8_t> BasicString::SerializeMessage(const EnrichedClose& msg) {
 
 std::vector<uint8_t> BasicString::SerializeMessage(const EnrichedExchange& msg) {
   const es_message_t &esm = *msg.es_msg_;
-  std::stringstream ss;
+  auto ss = CreateDefaultStringStream();
 
   ss << "action=EXCHANGE|path=" << FilePath(esm.event.exchangedata.file1)
     << "|newpath=" << FilePath(esm.event.exchangedata.file2);
@@ -398,7 +422,7 @@ std::vector<uint8_t> BasicString::SerializeMessage(const EnrichedExchange& msg) 
 
 std::vector<uint8_t> BasicString::SerializeMessage(const EnrichedExec& msg) {
   const es_message_t &esm = *msg.es_msg_;
-  std::stringstream ss;
+  auto ss = CreateDefaultStringStream();
 
   SNTCachedDecision *cd = [[SNTDecisionCache sharedCache]
       cachedDecisionForFile:esm.event.exec.target->executable->stat];
@@ -466,7 +490,7 @@ std::vector<uint8_t> BasicString::SerializeMessage(const EnrichedExec& msg) {
 
 std::vector<uint8_t> BasicString::SerializeMessage(const EnrichedExit& msg) {
   const es_message_t &esm = *msg.es_msg_;
-  std::stringstream ss;
+  auto ss = CreateDefaultStringStream();
 
   ss << "action=EXIT|pid=" << Pid(esm.process->audit_token)
     << "|pidversion=" << Pidversion(esm.process->audit_token)
@@ -483,7 +507,7 @@ std::vector<uint8_t> BasicString::SerializeMessage(const EnrichedExit& msg) {
 
 std::vector<uint8_t> BasicString::SerializeMessage(const EnrichedFork& msg) {
   const es_message_t &esm = *msg.es_msg_;
-  std::stringstream ss;
+  auto ss = CreateDefaultStringStream();
 
   ss << "action=FORK|pid=" << Pid(esm.event.fork.child->audit_token)
     << "|pidversion=" << Pidversion(esm.event.fork.child->audit_token)
@@ -500,7 +524,7 @@ std::vector<uint8_t> BasicString::SerializeMessage(const EnrichedFork& msg) {
 
 std::vector<uint8_t> BasicString::SerializeMessage(const EnrichedLink& msg) {
   const es_message_t &esm = *msg.es_msg_;
-  std::stringstream ss;
+  auto ss = CreateDefaultStringStream();
 
   ss << "action=LINK|path=" << FilePath(esm.event.link.source)
     << "|newpath=" << FilePath(esm.event.link.target_dir)
@@ -521,7 +545,7 @@ std::vector<uint8_t> BasicString::SerializeMessage(const EnrichedLink& msg) {
 
 std::vector<uint8_t> BasicString::SerializeMessage(const EnrichedRename& msg) {
   const es_message_t &esm = *msg.es_msg_;
-  std::stringstream ss;
+  auto ss = CreateDefaultStringStream();
 
   ss << "action=RENAME|path=" << FilePath(esm.event.rename.source)
      << "|newpath=";
@@ -554,7 +578,7 @@ std::vector<uint8_t> BasicString::SerializeMessage(const EnrichedRename& msg) {
 
 std::vector<uint8_t> BasicString::SerializeMessage(const EnrichedUnlink& msg) {
   const es_message_t &esm = *msg.es_msg_;
-  std::stringstream ss;
+  auto ss = CreateDefaultStringStream();
 
   ss << "action=DELETE|path=" << FilePath(esm.event.unlink.target);
 
@@ -573,7 +597,7 @@ std::vector<uint8_t> BasicString::SerializeMessage(const EnrichedUnlink& msg) {
 
 std::vector<uint8_t> BasicString::SerializeAllowlist(const Message& msg,
                                                      const std::string_view hash) {
-  std::stringstream ss;
+  auto ss = CreateDefaultStringStream();
 
   ss << "action=ALLOWLIST|pid=" << Pid(msg->process->audit_token)
      << "|pidversion=" << Pidversion(msg->process->audit_token)
@@ -588,7 +612,7 @@ std::vector<uint8_t> BasicString::SerializeAllowlist(const Message& msg,
 }
 
 std::vector<uint8_t> BasicString::SerializeBundleHashingEvent(SNTStoredEvent* event) {
-  std::stringstream ss;
+  auto ss = CreateDefaultStringStream();
 
   ss << "action=BUNDLE|sha256=" << event.fileSHA256
      << "|bundlehash=" << event.fileBundleHash
@@ -623,7 +647,7 @@ std::vector<uint8_t> BasicString::SerializeDiskAppeared(NSDictionary* props) {
         stringFromDate:[NSDate dateWithTimeIntervalSinceReferenceDate:
             [props[@"DAAppearanceTime"] doubleValue]]];
 
-  std::stringstream ss;
+  auto ss = CreateDefaultStringStream();
   ss << "action=DISKAPPEAR"
      << "|mount=" << [([props[@"DAVolumePath"] path] ?: @"") UTF8String]
      << "|volume=" << [(props[@"DAVolumeName"] ?: @"") UTF8String]
@@ -643,7 +667,7 @@ std::vector<uint8_t> BasicString::SerializeDiskAppeared(NSDictionary* props) {
 }
 
 std::vector<uint8_t> BasicString::SerializeDiskDisappeared(NSDictionary* props) {
-  std::stringstream ss;
+  auto ss = CreateDefaultStringStream();
 
   ss << "action=DISKDISAPPEAR"
      << "|mount=" << [([props[@"DAVolumePath"] path] ?: @"") UTF8String]
