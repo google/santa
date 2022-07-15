@@ -53,6 +53,8 @@ static const uint8_t kMaxEnqueuedSyncs = 2;
 
 @property NSUInteger eventBatchSize;
 
+@property NSString *xsrfToken;
+
 @end
 
 // Called when the network state changes
@@ -120,6 +122,7 @@ static void reachabilityHandler(SCNetworkReachabilityRef target, SCNetworkReacha
          [[SNTConfigurator configurator] syncBaseURL].absoluteString);
     [self startReachability];
   }
+  self.xsrfToken = syncState.xsrfToken;
 }
 
 - (void)postBundleEventToSyncServer:(SNTStoredEvent *)event
@@ -152,6 +155,7 @@ static void reachabilityHandler(SCNetworkReachabilityRef target, SCNetworkReacha
          [[SNTConfigurator configurator] syncBaseURL].absoluteString);
     [self startReachability];
   }
+  self.xsrfToken = syncState.xsrfToken;
 }
 
 - (void)isFCMListening:(void (^)(BOOL))reply {
@@ -222,6 +226,7 @@ static void reachabilityHandler(SCNetworkReachabilityRef target, SCNetworkReacha
     SNTSyncRuleDownload *p = [[SNTSyncRuleDownload alloc] initWithState:syncState];
     BOOL ret = [p sync];
     LOGD(@"Rule download %@", ret ? @"complete" : @"failed");
+    self.xsrfToken = syncState.xsrfToken;
   });
 }
 
@@ -246,6 +251,7 @@ static void reachabilityHandler(SCNetworkReachabilityRef target, SCNetworkReacha
   SNTSyncPreflight *p = [[SNTSyncPreflight alloc] initWithState:syncState];
   if ([p sync]) {
     SLOGD(@"Preflight complete");
+    self.xsrfToken = syncState.xsrfToken;
 
     // Clean up reachability if it was started for a non-network error
     [self stopReachability];
@@ -346,12 +352,7 @@ static void reachabilityHandler(SCNetworkReachabilityRef target, SCNetworkReacha
     SLOGW(@"Missing Machine Owner.");
   }
 
-  dispatch_group_t group = dispatch_group_create();
-  dispatch_group_enter(group);
-  [[self.daemonConn remoteObjectProxy] xsrfToken:^(NSString *token) {
-    syncState.xsrfToken = token;
-    dispatch_group_leave(group);
-  }];
+  syncState.xsrfToken = self.xsrfToken;
 
   NSURLSessionConfiguration *sessConfig = [NSURLSessionConfiguration defaultSessionConfiguration];
   sessConfig.connectionProxyDictionary = [[SNTConfigurator configurator] syncProxyConfig];
@@ -394,7 +395,6 @@ static void reachabilityHandler(SCNetworkReachabilityRef target, SCNetworkReacha
 
   syncState.pushNotificationsToken = self.pushNotifications.token;
 
-  dispatch_group_wait(group, dispatch_time(DISPATCH_TIME_NOW, 5 * NSEC_PER_SEC));
   return syncState;
 }
 
