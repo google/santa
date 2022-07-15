@@ -323,7 +323,9 @@ dispatch_source_t createDispatchTimer(uint64_t interval, uint64_t leeway, dispat
   ss.invalidationHandler = ^(void) {
     STRONGIFY(self);
     self.syncdQueue.syncConnection.invalidationHandler = nil;
-    [self performSelectorOnMainThread:@selector(establishSyncServiceConnection) withObject:nil waitUntilDone:YES];
+    [self performSelectorOnMainThread:@selector(establishSyncServiceConnection)
+                           withObject:nil
+                        waitUntilDone:YES];
   };
   [ss resume];  // If there are issues establishing the connection resume will block for 2 seconds.
   self.syncdQueue.syncConnection = ss;
