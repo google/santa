@@ -226,6 +226,7 @@
   exec.argsArray = [(__bridge NSArray *)message.args_array mutableCopy];
   exec.machineId =
     [[SNTConfigurator configurator] enableMachineIDDecoration] ? self.machineID : nil;
+  exec.teamId = cd.teamID;
 
   [self logWithSantaMessage:&message
                     wrapper:^(SNTPBSantaMessage *sm) {
