@@ -199,9 +199,6 @@
     [self performRequest:request timeout:10 response:&response error:NULL];
     if (response.statusCode == 200) {
       NSDictionary *headers = [response allHeaderFields];
-      [[self.daemonConn remoteObjectProxy] setXsrfToken:headers[kXSRFToken]
-                                                  reply:^{
-                                                  }];
       self.syncState.xsrfToken = headers[kXSRFToken];
       SLOGD(@"Retrieved new XSRF token");
       success = YES;

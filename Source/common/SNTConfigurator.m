@@ -223,6 +223,7 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
     _defaults = [NSUserDefaults standardUserDefaults];
     [_defaults addSuiteNamed:@"com.google.santa"];
     _configState = [self readForcedConfig];
+    [self cacheStaticRules];
     _syncState = [self readSyncStateFromDisk] ?: [NSMutableDictionary dictionary];
     _debugFlag = [[NSProcessInfo processInfo].arguments containsObject:@"--debug"];
     [self startWatchingDefaults];
@@ -965,9 +966,6 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
       NSString *pattern = [obj isKindOfClass:[NSString class]] ? obj : nil;
       forcedConfig[key] = [self expressionForPattern:pattern];
     }
-    if ([key isEqualToString:kStaticRules]) {
-      [self cacheStaticRules];
-    }
   }
   return forcedConfig;
 }
@@ -998,6 +996,7 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
 ///
 - (void)handleChange {
   self.configState = [self readForcedConfig];
+  [self cacheStaticRules];
 }
 
 ///
@@ -1007,7 +1006,8 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
   NSArray *staticRules = self.configState[kStaticRules];
   if (![staticRules isKindOfClass:[NSArray class]]) return;
 
-  NSMutableDictionary *rules = [NSMutableDictionary dictionaryWithCapacity:staticRules.count];
+  NSMutableDictionary<NSString *, SNTRule *> *rules =
+    [NSMutableDictionary dictionaryWithCapacity:staticRules.count];
   for (id rule in staticRules) {
     if (![rule isKindOfClass:[NSDictionary class]]) return;
     SNTRule *r = [[SNTRule alloc] initWithDictionary:rule];

@@ -43,7 +43,6 @@ double watchdogCPUPeak = 0;
 double watchdogRAMPeak = 0;
 
 @interface SNTDaemonControlController ()
-@property NSString *_syncXsrfToken;
 @property SNTPolicyProcessor *policyProcessor;
 @property id<SNTEventProvider> eventProvider;
 @property SNTNotificationQueue *notQueue;
@@ -140,6 +139,10 @@ double watchdogRAMPeak = 0;
                                                         teamID:teamID]);
 }
 
+- (void)staticRuleCount:(void (^)(int64_t count))reply {
+  reply([SNTConfigurator configurator].staticRules.count);
+}
+
 #pragma mark Decision Ops
 
 - (void)decisionForFilePath:(NSString *)filePath
@@ -166,15 +169,6 @@ double watchdogRAMPeak = 0;
 
 - (void)setClientMode:(SNTClientMode)mode reply:(void (^)(void))reply {
   [[SNTConfigurator configurator] setSyncServerClientMode:mode];
-  reply();
-}
-
-- (void)xsrfToken:(void (^)(NSString *))reply {
-  reply(self._syncXsrfToken);
-}
-
-- (void)setXsrfToken:(NSString *)token reply:(void (^)(void))reply {
-  self._syncXsrfToken = token;
   reply();
 }
 

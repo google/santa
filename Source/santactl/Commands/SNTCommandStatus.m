@@ -107,6 +107,14 @@ REGISTER_COMMAND_NAME(@"status")
     dispatch_group_leave(group);
   }];
 
+  // Static rule count
+  __block int64_t staticRuleCount = -1;
+  dispatch_group_enter(group);
+  [[self.daemonConn remoteObjectProxy] staticRuleCount:^(int64_t count) {
+    staticRuleCount = count;
+    dispatch_group_leave(group);
+  }];
+
   // Sync status
   __block NSDate *fullSyncLastSuccess;
   dispatch_group_enter(group);
@@ -195,7 +203,7 @@ REGISTER_COMMAND_NAME(@"status")
         @"events_pending_upload" : @(eventCount),
       },
       @"static_rules" : @{
-        @"rule_count" : @(configurator.staticRules.count),
+        @"rule_count" : @(staticRuleCount),
       },
       @"sync" : @{
         @"server" : syncURLStr ?: @"null",
@@ -246,7 +254,7 @@ REGISTER_COMMAND_NAME(@"status")
 
     if ([SNTConfigurator configurator].staticRules.count) {
       printf(">>> Static Rules\n");
-      printf("  %-25s | %lu\n", "Rules", (unsigned long)configurator.staticRules.count);
+      printf("  %-25s | %lld\n", "Rules", staticRuleCount);
     }
 
     if (syncURLStr) {
