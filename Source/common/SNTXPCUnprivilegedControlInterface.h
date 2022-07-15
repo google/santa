@@ -63,7 +63,6 @@
 ///  Config ops
 ///
 - (void)watchdogInfo:(void (^)(uint64_t, uint64_t, double, double))reply;
-- (void)xsrfToken:(void (^)(NSString *))reply;
 - (void)clientMode:(void (^)(SNTClientMode))reply;
 - (void)fullSyncLastSuccess:(void (^)(NSDate *))reply;
 - (void)ruleSyncLastSuccess:(void (^)(NSDate *))reply;
