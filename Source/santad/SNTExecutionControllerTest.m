@@ -388,7 +388,7 @@
 
   [self.sut validateBinaryWithMessage:[self getMessage]];
   OCMVerify([self.mockEventProvider postAction:ACTION_RESPOND_ALLOW forMessage:[self getMessage]]);
-  OCMVerify(never(), [self.mockEventDatabase addStoredEvent:OCMOCK_ANY]);     
+  OCMVerify(never(), [self.mockEventDatabase addStoredEvent:OCMOCK_ANY]);
   [self checkMetricCounters:kAllowUnknown expected:@1];
 }
 
