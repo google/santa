@@ -20,7 +20,7 @@ This page shows you the process to get started with your deployment of Santa.
     - The TCC profile provides Santa the access it requires to read files anywhere on disk. See an [example TCC profile](https://github.com/google/santa/blob/main/docs/deployment/tcc.configuration-profile-policy.santa.example.mobileconfig).
     - The system extension profile allows Santa to run without approval from the user. See an [example system extension profile](https://github.com/google/santa/blob/main/docs/deployment/system-extension-policy.santa.example.mobileconfig).
 
-1. (Optional) Customize and install the notification settings profile. This allows you to set up notifications to alert when Santa is switching [modes](../concepts/mode.html). See an [example notification settings profile](https://github.com/google/santa/blob/main/docs/deployment/notificationsettings.santa.example.mobileconfig). 
+1. (Optional) Customize and install the notification settings profile. This allows you to set up notifications to alert when Santa is switching [modes](../concepts/mode.md). See an [example notification settings profile](https://github.com/google/santa/blob/main/docs/deployment/notificationsettings.santa.example.mobileconfig). 
 
     The notifications modified through this profile are different to the main Santa GUI pop-ups. To configure the [Santa GUI](../binaries/santa-gui.md) notifications, use the [configuration profile](configuration.md) (in step 2).
 
