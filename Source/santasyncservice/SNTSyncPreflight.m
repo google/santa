@@ -117,6 +117,14 @@
                                                            dispatch_group_leave(group);
                                                          }];
 
+  dispatch_group_enter(group);
+  NSNumber *disableUnknownEventUpload = resp[kDisableUnknownEventUpload];
+  [[self.daemonConn remoteObjectProxy]
+    setDisableUnknownEventUpload:[disableUnknownEventUpload boolValue]
+                           reply:^{
+                             dispatch_group_leave(group);
+                           }];
+
   self.syncState.eventBatchSize = [resp[kBatchSize] unsignedIntegerValue] ?: kDefaultEventBatchSize;
 
   // Don't let these go too low

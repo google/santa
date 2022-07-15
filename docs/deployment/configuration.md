@@ -65,6 +65,7 @@ also known as mobileconfig files, which are in an Apple-specific XML format.
 | MetricExportTimeout               | Integer    | Number of seconds to wait before a timeout occurs when exporting metrics. Defaults to 30.  |
 | MetricExtraLabels                 | Dictionary | A map of key value pairs to add to all metric root labels. (e.g. a=b,c=d) defaults to @{}). If a previously set key (e.g. host_name is set to "" then the key is remove from the metric root labels. Alternatively if a value is set for an existing key then the new value will override the old. |
 | EnableAllEventUpload              | Bool       | If YES, the client will upload all execution events to the sync server, including those that were explicitly allowed. |
+| DisableUnknownEventUpload         | Bool       | If YES, the client will *not* upload events for executions of unknown binaries allowed in monitor mode |
 
 
 \*overridable by the sync server: run `santactl status` to check the current

@@ -54,6 +54,8 @@
 
   fclose(stdout);
 
+  [[SNTMetricSet sharedInstance] reset];
+
   self.mockCodesignChecker = OCMClassMock([MOLCodesignChecker class]);
   OCMStub([self.mockCodesignChecker alloc]).andReturn(self.mockCodesignChecker);
 
@@ -111,7 +113,7 @@
     break;
   }
 
-  if (!foundField) {
+  if (!foundField && expectedValue.intValue != 0) {
     XCTFail(@"failed to find %@ field value", expectedFieldValueName);
   }
 }
@@ -129,7 +131,7 @@
   [self.sut validateBinaryWithMessage:[self getMessage]];
 
   OCMVerify([self.mockEventProvider postAction:ACTION_RESPOND_ALLOW forMessage:[self getMessage]]);
-  [self checkMetricCounters:@"AllowBinary" expected:@2];
+  [self checkMetricCounters:@"AllowBinary" expected:@1];
 }
 
 - (void)testBinaryBlockRule {
@@ -241,7 +243,7 @@
 
   OCMVerify([self.mockEventProvider postAction:ACTION_RESPOND_ALLOW forMessage:[self getMessage]]);
 
-  [self checkMetricCounters:@"AllowBinary" expected:@2];
+  [self checkMetricCounters:kAllowTransitive expected:@1];
 }
 
 - (void)testBinaryAllowTransitiveRuleDisabled {
@@ -262,8 +264,8 @@
 
   OCMVerify([self.mockEventProvider postAction:ACTION_RESPOND_DENY forMessage:[self getMessage]]);
   OCMVerifyAllWithDelay(self.mockEventDatabase, 1);
-  [self checkMetricCounters:kAllowBinary expected:@2];
-  [self checkMetricCounters:kAllowTransitive expected:@1];
+  [self checkMetricCounters:kAllowBinary expected:@0];
+  [self checkMetricCounters:kAllowTransitive expected:@0];
 }
 
 - (void)testDefaultDecision {
@@ -281,7 +283,7 @@
   OCMVerify([self.mockEventProvider postAction:ACTION_RESPOND_DENY forMessage:[self getMessage]]);
   OCMVerifyAllWithDelay(self.mockEventDatabase, 1);
 
-  [self checkMetricCounters:kBlockUnknown expected:@2];
+  [self checkMetricCounters:kBlockUnknown expected:@1];
   [self checkMetricCounters:kAllowUnknown expected:@1];
 }
 
@@ -298,7 +300,7 @@
   OCMStub([self.mockConfigurator clientMode]).andReturn(SNTClientModeLockdown);
   [self.sut validateBinaryWithMessage:[self getMessage]];
   OCMVerify([self.mockEventProvider postAction:ACTION_RESPOND_ALLOW forMessage:[self getMessage]]);
-  [self checkMetricCounters:kAllowNoFileInfo expected:@2];
+  [self checkMetricCounters:kAllowNoFileInfo expected:@1];
 }
 
 - (void)testUnreadableFailClosedLockdown {
@@ -344,7 +346,7 @@
   OCMStub([self.mockConfigurator clientMode]).andReturn(SNTClientModeLockdown);
   [self.sut validateBinaryWithMessage:[self getMessage]];
   OCMVerify([self.mockEventProvider postAction:ACTION_RESPOND_ALLOW forMessage:[self getMessage]]);
-  [self checkMetricCounters:kAllowScope expected:@2];
+  [self checkMetricCounters:kAllowScope expected:@1];
 }
 
 - (void)testPageZero {
@@ -354,7 +356,40 @@
   [self.sut validateBinaryWithMessage:[self getMessage]];
   OCMVerify([self.mockEventProvider postAction:ACTION_RESPOND_DENY forMessage:[self getMessage]]);
   OCMVerifyAllWithDelay(self.mockEventDatabase, 1);
-  [self checkMetricCounters:kBlockUnknown expected:@3];
+  [self checkMetricCounters:kBlockUnknown expected:@1];
+}
+
+- (void)testAllEventUpload {
+  OCMStub([self.mockFileInfo isMachO]).andReturn(YES);
+  OCMStub([self.mockFileInfo SHA256]).andReturn(@"a");
+
+  OCMExpect([self.mockConfigurator clientMode]).andReturn(SNTClientModeMonitor);
+  OCMExpect([self.mockConfigurator enableAllEventUpload]).andReturn(YES);
+  OCMExpect([self.mockEventDatabase addStoredEvent:OCMOCK_ANY]);
+
+  SNTRule *rule = [[SNTRule alloc] init];
+  rule.state = SNTRuleStateAllow;
+  rule.type = SNTRuleTypeBinary;
+  OCMStub([self.mockRuleDatabase ruleForBinarySHA256:@"a" certificateSHA256:nil teamID:nil])
+    .andReturn(rule);
+
+  [self.sut validateBinaryWithMessage:[self getMessage]];
+  OCMVerify([self.mockEventProvider postAction:ACTION_RESPOND_ALLOW forMessage:[self getMessage]]);
+  OCMVerifyAllWithDelay(self.mockEventDatabase, 1);
+}
+
+- (void)testDisableUnknownEventUpload {
+  OCMStub([self.mockFileInfo isMachO]).andReturn(YES);
+  OCMStub([self.mockFileInfo SHA256]).andReturn(@"a");
+
+  OCMExpect([self.mockConfigurator clientMode]).andReturn(SNTClientModeMonitor);
+  OCMExpect([self.mockConfigurator enableAllEventUpload]).andReturn(NO);
+  OCMExpect([self.mockConfigurator disableUnknownEventUpload]).andReturn(YES);
+
+  [self.sut validateBinaryWithMessage:[self getMessage]];
+  OCMVerify([self.mockEventProvider postAction:ACTION_RESPOND_ALLOW forMessage:[self getMessage]]);
+  OCMVerify(never(), [self.mockEventDatabase addStoredEvent:OCMOCK_ANY]);
+  [self checkMetricCounters:kAllowUnknown expected:@1];
 }
 
 @end
