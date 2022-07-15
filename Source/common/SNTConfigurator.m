@@ -475,7 +475,7 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
   return [self syncAndConfigStateSet];
 }
 
-+ (NSSet *)keyPathsForValuesAffectingUSBBlockMessage {
++ (NSSet *)keyPathsForValuesAffectingUsbBlockMessage {
   return [self syncAndConfigStateSet];
 }
 
