@@ -464,10 +464,10 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
 }
 
 + (NSSet *)keyPathsForValuesAffectingBannedUSBBlockMessage {
-  return [self syncAndConfigStateSet];
+  return [self configStateSet];
 }
 
-+ (NSSet *)keyPathsForValuesAffectingRemountUSBBlockMode {
++ (NSSet *)keyPathsForValuesAffectingRemountUSBMode {
   return [self syncAndConfigStateSet];
 }
 
