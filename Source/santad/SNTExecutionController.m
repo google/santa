@@ -197,7 +197,7 @@ static NSString *const kPrinterProxyPostMonterey =
   // Log to database if necessary.
   if (config.enableAllEventUpload ||
       (cd.decision == SNTEventStateAllowUnknown && !config.disableUnknownEventUpload) ||
-      cd.decision & SNTEventStateBlock) {
+      (cd.decision & SNTEventStateAllow) == 0) {
     SNTStoredEvent *se = [[SNTStoredEvent alloc] init];
     se.occurrenceDate = [[NSDate alloc] init];
     se.fileSHA256 = cd.sha256;
