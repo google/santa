@@ -959,7 +959,7 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
   syncState[kAllowedPathRegexKey] = [syncState[kAllowedPathRegexKey] pattern];
   syncState[kBlockedPathRegexKey] = [syncState[kBlockedPathRegexKey] pattern];
   [syncState writeToFile:kSyncStateFilePath atomically:YES];
-  [[NSFileManager defaultManager] setAttributes:@{NSFilePosixPermissions : @0644}
+  [[NSFileManager defaultManager] setAttributes:@{NSFilePosixPermissions : @0600}
                                    ofItemAtPath:kSyncStateFilePath
                                           error:NULL];
 }
