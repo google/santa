@@ -111,6 +111,7 @@ objc_library(
     srcs = ["SNTFileInfo.m"],
     hdrs = ["SNTFileInfo.h"],
     deps = [
+        ":SNTLogging",
         "@FMDB",
         "@MOLCodesignChecker",
     ],

@@ -25,6 +25,8 @@
 #include <sys/stat.h>
 #include <sys/xattr.h>
 
+#import "Source/common/SNTLogging.h"
+
 // Simple class to hold the data of a mach_header and the offset within the file
 // in which that header was found.
 @interface MachHeaderWithOffset : NSObject
@@ -64,6 +66,29 @@ extern NSString *const NSURLQuarantinePropertiesKey WEAK_IMPORT_ATTRIBUTE;
 
 // TODO: Create variant that can handle passed in stat(2) info from ES
 - (instancetype)initWithResolvedPath:(NSString *)path error:(NSError **)error {
+  struct stat fileStat;
+  if (path.length) {
+    lstat(path.UTF8String, &fileStat);
+  }
+  return [self initWithResolvedPath:path stat:&fileStat error:error];
+}
+
+- (instancetype)initWithEndpointSecurityFile:(const es_file_t *)esFile
+                                       error:(NSError **)error {
+  return [self initWithResolvedPath:@(esFile->path.data)
+                               stat:&esFile->stat
+                              error:error];
+}
+
+- (instancetype)initWithResolvedPath:(NSString *)path
+                                stat:(struct stat*)fileStat
+                               error:(NSError **)error {
+  if (!fileStat) {
+    // This is a programming error. Bail.
+    LOGE(@"NULL stat buffer unsupported");
+    exit(EXIT_FAILURE);
+  }
+
   self = [super init];
   if (self) {
     _path = path;
@@ -77,9 +102,7 @@ extern NSString *const NSURLQuarantinePropertiesKey WEAK_IMPORT_ATTRIBUTE;
       return nil;
     }
 
-    struct stat fileStat;
-    lstat(_path.UTF8String, &fileStat);
-    if (!((S_IFMT & fileStat.st_mode) == S_IFREG)) {
+    if (!((S_IFMT & fileStat->st_mode) == S_IFREG)) {
       if (error) {
         NSString *errStr = [NSString stringWithFormat:@"Non regular file: %s", strerror(errno)];
         *error = [NSError errorWithDomain:@"com.google.santa.fileinfo"
@@ -89,12 +112,12 @@ extern NSString *const NSURLQuarantinePropertiesKey WEAK_IMPORT_ATTRIBUTE;
       return nil;
     }
 
-    _fileSize = fileStat.st_size;
+    _fileSize = fileStat->st_size;
 
     if (_fileSize == 0) return nil;
 
-    if (fileStat.st_uid != 0) {
-      struct passwd *pwd = getpwuid(fileStat.st_uid);
+    if (fileStat->st_uid != 0) {
+      struct passwd *pwd = getpwuid(fileStat->st_uid);
       if (pwd) {
         _fileOwnerHomeDir = @(pwd->pw_dir);
       }

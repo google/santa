@@ -126,8 +126,7 @@ static NSString *const kPrinterProxyPostMonterey =
   const es_process_t* targetProc = esMsg->event.exec.target;
 
   NSError *fileInfoError;
-  // Note: EndpointSecurity provides paths that have already been resolved
-  SNTFileInfo *binInfo = [[SNTFileInfo alloc] initWithResolvedPath:@(targetProc->executable->path.data) error:&fileInfoError];
+  SNTFileInfo *binInfo = [[SNTFileInfo alloc] initWithEndpointSecurityFile:targetProc->executable error:&fileInfoError];
   if (unlikely(!binInfo)) {
     LOGE(@"Failed to read file %@: %@", @(targetProc->executable->path.data), fileInfoError.localizedDescription);
     if (config.failClosed && config.clientMode == SNTClientModeLockdown) {
