@@ -252,7 +252,7 @@ REGISTER_COMMAND_NAME(@"status")
     printf("  %-25s | %lld\n", "Transitive Rules", transitiveRuleCount);
     printf("  %-25s | %lld\n", "Events Pending Upload", eventCount);
 
-    if ([SNTConfigurator configurator].staticRules.count) {
+    if (staticRuleCount) {
       printf(">>> Static Rules\n");
       printf("  %-25s | %lld\n", "Rules", staticRuleCount);
     }

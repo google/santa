@@ -168,7 +168,7 @@ double watchdogRAMPeak = 0;
 }
 
 - (void)setClientMode:(SNTClientMode)mode reply:(void (^)(void))reply {
-  [[SNTConfigurator configurator] setSyncServerClientMode:mode];
+  [[SNTConfigurator configurator] setClientMode:mode];
   reply();
 }
 
@@ -203,7 +203,7 @@ double watchdogRAMPeak = 0;
   NSRegularExpression *re = [NSRegularExpression regularExpressionWithPattern:pattern
                                                                       options:0
                                                                         error:NULL];
-  [[SNTConfigurator configurator] setSyncServerAllowedPathRegex:re];
+  [[SNTConfigurator configurator] setAllowedPathRegex:re];
   reply();
 }
 
@@ -211,7 +211,7 @@ double watchdogRAMPeak = 0;
   NSRegularExpression *re = [NSRegularExpression regularExpressionWithPattern:pattern
                                                                       options:0
                                                                         error:NULL];
-  [[SNTConfigurator configurator] setSyncServerBlockedPathRegex:re];
+  [[SNTConfigurator configurator] setBlockedPathRegex:re];
   reply();
 }
 

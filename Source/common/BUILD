@@ -96,7 +96,13 @@ objc_library(
 
 objc_library(
     name = "SNTConfigurator",
-    srcs = ["SNTConfigurator.m"],
+    srcs = [
+        "SNTConfigurator.h",
+        "SNTConfigurator.static.h",
+        "SNTConfigurator.static.m",
+        "SNTConfigurator.gen.h",
+        "SNTConfigurator.gen.m",
+    ],
     hdrs = ["SNTConfigurator.h"],
     deps = [
         ":SNTCommonEnums",
@@ -307,4 +313,23 @@ test_suite(
         ":SantaCacheTest",
     ],
     visibility = ["//:santa_package_group"],
+)
+
+genrule(
+    name = "GenConfigurator",
+    outs = [
+        "SNTConfigurator.gen.h",
+        "SNTConfigurator.gen.m",
+    ],
+    cmd = """$(location :GenConfiguratorTool) $(@D)""",
+    tools = [":GenConfiguratorTool"],
+)
+
+py_binary(
+    name = "GenConfiguratorTool",
+    srcs = [
+       "SNTConfigurator.py",
+       "SNTConfiguratorGenerator.py",
+    ],
+    main = "SNTConfigurator.py",
 )
