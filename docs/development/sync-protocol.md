@@ -14,11 +14,6 @@ easily configure and sync rules across a fleet of macOS systems.  In addition to
 distributing rules using a sync server enables an admin to override some local
 configuration options e.g. lockdown mode on both a fleetwide and per host basis.
 
-# Push Notifications
-
-In addition to the Sync Protocol Santa can use FCM Push notifications to trigger a sync to begin.
-
-
 # The Santa Sync Server Protocol Overview
 
 The Sync Protocol is an HTTP/JSON Restful protocol. As such it is
