@@ -1,7 +1,12 @@
 ---
 title: Santa Sync Server Protocol
 parent: Development
+mermaid: true
 ---
+
+{% if page.mermaid %}
+  {% include mermaid.html %}
+{% endif %}
 
 # Overview
 
