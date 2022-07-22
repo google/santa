@@ -1,9 +1,9 @@
 ---
-title: Sync Protocol
+title: Santa Sync Server Protocol
 parent: Development
 ---
 
-# Syncing Overview
+# Overview
 
 This documents describes the protocol between Santa and the Sync Server aka the Sync Protocol. Implementors should be able to use this to create their own Sync Servers.
 
@@ -14,7 +14,7 @@ easily configure and sync rules across a fleet of macOS systems.  In addition to
 distributing rules using a sync server enables an admin to override some local
 configuration options e.g. lockdown mode on both a fleetwide and per host basis.
 
-# The Santa Sync Server Protocol Overview
+# The Santa Sync Server Protocol 50,000ft View
 
 The Sync Protocol is an HTTP/JSON Restful protocol. As such it is
 assumed that both the server and client add `Content-Type` headers are set to
@@ -206,7 +206,7 @@ This transaction may be repeated until all events are uploaded to the sync servi
 | ppid | YES | int | Parent process id of the executable that was blocked | 456 |
 | parent_name | YES | Parent process short command name of the executable that was blocked | "bar" |
 | quarantine_data_url | NO | string |  The actual URL of the quarantined item from the quarantine database that this binary was downloaded from | https://dl.google.com/chrome/mac/stable/GGRO/googlechrome.dmg |
-| quarantine_referer_url | NO | string | Referring URL that lead to the binary being downloaded if known.  | "http://example.com/binary" |
+| quarantine_referer_url | NO | string | Referring URL that lead to the binary being downloaded if known.  | <!-- markdown-link-check-disable -->http://example.com/binary<!-- markdown-link-check-enable --> |
 | quarantine_timestamp | NO | int | Unix Timestamp of when the binary was downloaded or 0 if not quarantined | 0 |
 | quarantine_agent_bundle_id | NO | string | The bundle ID of the software that quarantined the binary | "com.apple.Safari" |
 | signing_chain | NO | list of signing chain objects | Certs used to code sign the executable | See next section |
