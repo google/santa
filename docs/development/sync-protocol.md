@@ -163,7 +163,7 @@ After the `preflight` stage has completed the client then initiates the
 `eventupload` stage if it has any events to upload. If there aren't any events
 this stage is skipped.
 
-It consists of the following transaction.
+It consists of the following transaction, that may be repeated until all events are uploaded..
 
 ```mermaid
 sequenceDiagram
@@ -182,7 +182,7 @@ This transaction may be repeated until all events are uploaded to the sync servi
 
 ##### Event Objects
 
-Events are explained in more depth in the [Events page](docs/concepts/events.md).
+:information_source: Events are explained in more depth in the [Events page](../concepts/events.md).
 
 | Key | Required | Type | Meaning | Example Value |
 |---|---|---|---|---|
@@ -206,7 +206,7 @@ Events are explained in more depth in the [Events page](docs/concepts/events.md)
 | ppid | YES | int | Parent process id of the executable that was blocked | 456 |
 | parent_name | YES | Parent process short command name of the executable that was blocked | "bar" |
 | quarantine_data_url | NO | string |  The actual URL of the quarantined item from the quarantine database that this binary was downloaded from | https://dl.google.com/chrome/mac/stable/GGRO/googlechrome.dmg |
-| quarantine_referer_url | NO | string | Referring URL that lead to the binary being downloaded if known.  | http://example.com/binary |
+| quarantine_referer_url | NO | string | Referring URL that lead to the binary being downloaded if known.  | "http://example.com/binary" |
 | quarantine_timestamp | NO | int | Unix Timestamp of when the binary was downloaded or 0 if not quarantined | 0 |
 | quarantine_agent_bundle_id | NO | string | The bundle ID of the software that quarantined the binary | "com.apple.Safari" |
 | signing_chain | NO | list of signing chain objects | Certs used to code sign the executable | See next section |
@@ -358,7 +358,7 @@ downloading if the rules need to be downloaded in multiple batches.
 ##### Rules Objects
 
 
-:warning Rule objects must have one of either the `identifier` or `sha256` fields.  The `sha256` field is supported for backwards compatability. 
+:warning: Rule objects must have one of either the `identifier` or `sha256` fields.  The `sha256` field is supported for backwards compatability. 
 
 | Key | Required | Type | Meaning | Example Value | 
 |---|---|---|---|---|
