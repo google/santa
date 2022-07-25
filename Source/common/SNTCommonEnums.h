@@ -57,6 +57,7 @@ typedef NS_ENUM(NSInteger, SNTEventState) {
   SNTEventStateBlockCertificate = 1 << 18,
   SNTEventStateBlockScope = 1 << 19,
   SNTEventStateBlockTeamID = 1 << 20,
+  SNTEventStateBlockLongPath = 1 << 21,
 
   // Bits 24-31 store allow decision types
   SNTEventStateAllowUnknown = 1 << 24,

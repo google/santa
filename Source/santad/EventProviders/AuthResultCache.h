@@ -18,6 +18,7 @@
 #include <dispatch/dispatch.h>
 #include <EndpointSecurity/EndpointSecurity.h>
 #import <Foundation/Foundation.h>
+#include <memory>
 #include <sys/stat.h>
 
 #include "Source/common/SantaCache.h"

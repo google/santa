@@ -322,6 +322,8 @@ static inline std::string GetReasonString(SNTEventState event_state) {
       return "SCOPE";
     case SNTEventStateBlockTeamID:
       return "TEAMID";
+    case SNTEventStateBlockLongPath:
+      return "LONG_PATH";
     case SNTEventStateBlockUnknown:
       return "UNKNOWN";
     default:

@@ -70,12 +70,8 @@ static constexpr std::string_view kIgnoredCompilerProcessPathPrefix = "/dev/";
 // is executed before we can create a transitive rule for it, then we can at
 // least log the pending decision info.
 - (void)saveFakeDecision:(const es_file_t*)esFile {
-  SNTCachedDecision *cd = [[SNTCachedDecision alloc] init];
+  SNTCachedDecision *cd = [[SNTCachedDecision alloc] initWithEndpointSecurityFile:esFile];
   cd.decision = SNTEventStateAllowPendingTransitive;
-  cd.vnodeId = {
-    .fsid = (uint64_t)esFile->stat.st_dev,
-    .fileid = esFile->stat.st_ino
-  };
   cd.sha256 = @"pending";
   [[SNTDecisionCache sharedCache] cacheDecision:cd];
 }

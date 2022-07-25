@@ -13,6 +13,7 @@
 ///    limitations under the License.
 
 #import "Source/santad/EventProviders/SNTEndpointSecurityClient.h"
+#include <sys/qos.h>
 
 #include <bsm/libbsm.h>
 #include <dispatch/dispatch.h>
@@ -51,12 +52,18 @@ using santa::santad::event_providers::endpoint_security::Message;
     }
 
     _authQueue = dispatch_queue_create(
-        "auth_queue",
-        DISPATCH_QUEUE_CONCURRENT_WITH_AUTORELEASE_POOL);
+        "com.google.santa.santad.auth_queue",
+        dispatch_queue_attr_make_with_qos_class(
+            DISPATCH_QUEUE_CONCURRENT_WITH_AUTORELEASE_POOL,
+            QOS_CLASS_USER_INTERACTIVE,
+            0));
 
     _notifyQueue = dispatch_queue_create(
-        "notify_queue",
-        DISPATCH_QUEUE_CONCURRENT_WITH_AUTORELEASE_POOL);
+        "com.google.santa.santad.notify_queue",
+        dispatch_queue_attr_make_with_qos_class(
+            DISPATCH_QUEUE_CONCURRENT_WITH_AUTORELEASE_POOL,
+            QOS_CLASS_BACKGROUND,
+            0));
 
   }
   return self;
@@ -85,6 +92,7 @@ using santa::santad::event_providers::endpoint_security::Message;
     switch(_esClient.NewClientResult()) {
       case ES_NEW_CLIENT_RESULT_ERR_NOT_PERMITTED:
         LOGE(@"Unable to create EndpointSecurity client, not full-disk access permitted");
+        break;
       case ES_NEW_CLIENT_RESULT_ERR_NOT_ENTITLED:
         LOGE(@"Unable to create EndpointSecurity client, not entitled");
         break;
@@ -116,18 +124,18 @@ using santa::santad::event_providers::endpoint_security::Message;
 - (bool)muteSelf {
   audit_token_t myAuditToken;
   mach_msg_type_number_t count = TASK_AUDIT_TOKEN_COUNT;
-  if (task_info(mach_task_self(), TASK_AUDIT_TOKEN, (task_info_t)&myAuditToken, &count) ==
+  if (task_info(mach_task_self(), TASK_AUDIT_TOKEN, (task_info_t)&myAuditToken, &count) !=
         KERN_SUCCESS) {
-    if (self->_esApi->MuteProcess(self->_esClient, &myAuditToken)) {
-      return true;
-    } else {
-      LOGE(@"Failed to mute this client's process.");
-    }
-  } else {
     LOGE(@"Failed to fetch this client's audit token.");
+    return false;
   }
 
-  return false;
+  if (!self->_esApi->MuteProcess(self->_esClient, &myAuditToken)) {
+    LOGE(@"Failed to mute this client's process.");
+    return false;
+  }
+
+  return true;
 }
 
 - (bool)clearCache {

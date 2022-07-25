@@ -12,6 +12,7 @@
 ///    See the License for the specific language governing permissions and
 ///    limitations under the License.
 
+#import <EndpointSecurity/EndpointSecurity.h>
 #import <Foundation/Foundation.h>
 
 #import "Source/common/SNTCommonEnums.h"
@@ -23,6 +24,8 @@
 ///  Store information about executions from decision making for later logging.
 ///
 @interface SNTCachedDecision : NSObject
+
+- (instancetype)initWithEndpointSecurityFile:(const es_file_t *)esFile;
 
 @property santa_vnode_id_t vnodeId;
 @property SNTEventState decision;

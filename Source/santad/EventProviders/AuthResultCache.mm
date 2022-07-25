@@ -104,7 +104,6 @@ void AuthResultCache::AddToCache(const es_file_t *es_file,
       LOGE(@"Invalid cache value, exiting.");
       exit(EXIT_FAILURE);
   }
-  // TODO(rah): Look at a replacement for wakeup(), maybe NSCondition
 }
 
 void AuthResultCache::RemoveFromCache(const es_file_t *es_file) {

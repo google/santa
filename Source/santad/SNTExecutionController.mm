@@ -13,6 +13,7 @@
 ///    limitations under the License.
 
 #import "Source/santad/SNTExecutionController.h"
+#include <sys/param.h>
 
 #include <bsm/libbsm.h>
 #include <libproc.h>
@@ -39,6 +40,8 @@
 #import "Source/santad/SNTSyncdQueue.h"
 
 using santa::santad::event_providers::endpoint_security::Message;
+
+static const size_t kMaxAllowedPathLength = MAXPATHLEN - 1; // -1 to account for null terminator
 
 @interface SNTExecutionController ()
 @property SNTEventTable *eventTable;
@@ -105,6 +108,7 @@ static NSString *const kPrinterProxyPostMonterey =
     case SNTEventStateAllowUnknown: eventTypeStr = kAllowUnknown; break;
     case SNTEventStateAllowCompiler: eventTypeStr = kAllowCompiler; break;
     case SNTEventStateAllowTransitive: eventTypeStr = kAllowTransitive; break;
+    case SNTEventStateBlockLongPath: eventTypeStr = kBlockLongPath; break;
     default: eventTypeStr = kUnknownEventState; break;
   }
 
@@ -113,9 +117,42 @@ static NSString *const kPrinterProxyPostMonterey =
 
 #pragma mark Binary Validation
 
+- (bool)synchronousShouldProcessExecEvent:(const Message&)esMsg {
+  if (unlikely(esMsg->event_type != ES_EVENT_TYPE_AUTH_EXEC)) {
+    // Programming error. Bail.
+    LOGE(@"Attempt to validate non-EXEC event. Event type: %d", esMsg->event_type);
+    exit(EXIT_FAILURE);
+  }
+
+  const es_process_t *targetProc = esMsg->event.exec.target;
+
+  if (targetProc->executable->path.length > kMaxAllowedPathLength ||
+      targetProc->executable->path_truncated) {
+    // Store a SNTCachedDecision so that this event gets properly logged
+    SNTCachedDecision *cd = [[SNTCachedDecision alloc] initWithEndpointSecurityFile:targetProc->executable];
+    cd.decision = SNTEventStateBlockLongPath;
+    cd.customMsg = [NSString stringWithFormat:@"Path exceeded max length for processing (%zu)",
+        targetProc->executable->path.length];
+
+    if (targetProc->team_id.data) {
+      cd.teamID = [NSString stringWithUTF8String:targetProc->team_id.data];
+    }
+
+    // TODO: We should be able to grab signing info. We should probably abstract this
+    // functionality out from the SNTPolicyProcessor.
+
+    [[SNTDecisionCache sharedCache] cacheDecision:cd];
+
+    return NO;
+  }
+
+  // An SNTCachedDecision will be created later on during full processing
+  return YES;
+}
+
 - (void)validateExecEvent:(const Message&)esMsg
                postAction:(bool (^)(santa_action_t))postAction {
-  if (esMsg->event_type != ES_EVENT_TYPE_AUTH_EXEC) {
+  if (unlikely(esMsg->event_type != ES_EVENT_TYPE_AUTH_EXEC)) {
     // Programming error. Bail.
     LOGE(@"Attempt to validate non-EXEC event. Event type: %d", esMsg->event_type);
     exit(EXIT_FAILURE);

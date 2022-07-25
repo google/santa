@@ -35,6 +35,7 @@ const static NSString *kUnknownEventState = @"Unknown";
 const static NSString *kBlockPrinterWorkaround = @"BlockPrinterWorkaround";
 const static NSString *kAllowNoFileInfo = @"AllowNoFileInfo";
 const static NSString *kDenyNoFileInfo = @"DenyNoFileInfo";
+const static NSString *kBlockLongPath = @"BlockLongPath";
 const static NSString *kAllowNullVNode = @"AllowNullVNode"; // TODO: Remove
 
 @class MOLCodesignChecker;
@@ -71,4 +72,14 @@ const static NSString *kAllowNullVNode = @"AllowNullVNode"; // TODO: Remove
 - (void)validateExecEvent:(const santa::santad::event_providers::endpoint_security::Message&)esMsg
                postAction:(bool (^)(santa_action_t))postAction;
 
+///
+/// Perform light, synchronous processing of the given event to decide whether or not the
+/// event should undergo full processing. The checks done by this function MUST NOT block
+/// the thread (e.g. perform no XPC) and should be fast and efficient so as to mitigate
+/// potential buildup of event backlog.
+///
+///  @param message The message received from the EndpointSecurity event provider.
+///  @return bool True if the event should be processed, otherwise false.
+///
+- (bool)synchronousShouldProcessExecEvent:(const santa::santad::event_providers::endpoint_security::Message&)esMsg;
 @end

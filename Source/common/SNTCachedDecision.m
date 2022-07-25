@@ -15,4 +15,14 @@
 #import "Source/common/SNTCachedDecision.h"
 
 @implementation SNTCachedDecision
+
+- (instancetype)initWithEndpointSecurityFile:(const es_file_t *)esFile {
+  self = [super init];
+  if (self) {
+    _vnodeId.fsid = (uint64_t)esFile->stat.st_dev;
+    _vnodeId.fileid = esFile->stat.st_ino;
+  }
+  return self;
+}
+
 @end

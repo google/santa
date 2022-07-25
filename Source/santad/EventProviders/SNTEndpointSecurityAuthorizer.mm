@@ -63,8 +63,7 @@ using santa::santad::event_providers::AuthResultCache;
       exit(EXIT_FAILURE);
     }
 
-    // Automatically deny long file paths
-    if (esMsg->event.exec.target->executable->path_truncated) {
+    if (![self.execController synchronousShouldProcessExecEvent:esMsg]) {
       [self postAction:ACTION_RESPOND_DENY forMessage:esMsg];
       return;
     }
@@ -93,7 +92,8 @@ using santa::santad::event_providers::AuthResultCache;
                        cacheable:(authResult == ES_AUTH_RESULT_ALLOW)];
           return;
         } else if (returnAction == ACTION_REQUEST_BINARY) {
-          // TODO(rah): Look at a replacement for msleep(), maybe NSCondition
+          // TODO(mlw): Look into caching a `Deferred<value>` to better prevent raciness of multiple
+          // threads checking the cache simultaneously. Also can mitigate need to poll.
           usleep(5000);
         } else {
           break;
