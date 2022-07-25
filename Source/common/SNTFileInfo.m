@@ -64,7 +64,6 @@
 
 extern NSString *const NSURLQuarantinePropertiesKey WEAK_IMPORT_ATTRIBUTE;
 
-// TODO: Create variant that can handle passed in stat(2) info from ES
 - (instancetype)initWithResolvedPath:(NSString *)path error:(NSError **)error {
   struct stat fileStat;
   if (path.length) {
@@ -81,7 +80,7 @@ extern NSString *const NSURLQuarantinePropertiesKey WEAK_IMPORT_ATTRIBUTE;
 }
 
 - (instancetype)initWithResolvedPath:(NSString *)path
-                                stat:(struct stat*)fileStat
+                                stat:(const struct stat*)fileStat
                                error:(NSError **)error {
   if (!fileStat) {
     // This is a programming error. Bail.
