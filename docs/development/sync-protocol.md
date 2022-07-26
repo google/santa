@@ -22,9 +22,9 @@ The sync protocol is an HTTP/JSON based protocol. As such it is
 assumed that both the server and client add `Content-Type` headers are set to
 `application/json`. 
 
-The Sync Protocol is client initiated and consists of 4 request-response
+The sync protocol is client initiated and consists of 4 request-response
 transactions called stages, `preflight`, `eventupload`, `ruledownload`, and `postflight`. 
-A sync may consist of all 4 stages, or just the `ruledownload` stage.
+A sync may consist of all 4 stages, just the `eventupload` stage or just the `ruledownload` stage.
 
 | Stage | What it Does |
 |---|---|
@@ -58,7 +58,7 @@ Where `<machine_id>` is a unique string identifier for the client by default San
 
 ## Authentication
 
-The protocol expects to the client to authenticate the server via SSL/TLS. Additionally, a sync server may support client certificates and use mutual TLS.
+The protocol expects the client to authenticate the server via SSL/TLS. Additionally, a sync server may support client certificates and use mutual TLS.
 
 ## Stages
 
@@ -91,14 +91,13 @@ The request consists of the following JSON keys:
 | model_identifier | NO | string | The model of the macOS system  | | 
 | santa_version | YES | string | 2022.3 |
 | primary_user  | YES | string | The username | markowsky |
-| fcm_token     | NO | string | Firebase cloud messaging token (for push notifications) |  |
 | binary_rule_count | NO | int | Number of binary allow / deny rules the client has at time of sync| 1000 |
 | certificate_rule_count | NO | int | Number of certificate allow / deny rules the client has at time of sync | 3400 |
 | compiler_rule_count | NO | int | Number of compiler rules the client has time of sync |
 | transitive_rule_count | NO | int | Number of transitive rules the client has at the time of sync |
 | teamid_rule_count | NO | int | Number of TeamID rules the client has at the time of sync | 24 |
 | client_mode | YES | string | the mode the client is operating in, either "LOCKDOWN" or "MONITOR" | LOCKDOWN |
-| clean_sync | NO | bool | true |
+| clean_sync | NO | bool | the client has requested that a clean sync of its rules from the server. | true |
 
 
 ### Example preflight request JSON Payload:
@@ -115,7 +114,6 @@ The request consists of the following JSON keys:
   "certificate_rule_count" : 2364,
   "teamid_rule_count" : 0,
   "os_build" : "21F5048e",
-  "fcm_token" : "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXy88D1MWVn3c79waWewilH4vhK8TV1FMQn8dncj4XekvKuFhhvFCNNdI0gc02-IIx_lRGgUkhPmwNBE_T32h6LYQbR5U04aZY_Q0",
   "transitive_rule_count" : 0,
   "os_version" : "12.4",
   "model_identifier" : "MacBookPro15,1",
@@ -125,25 +123,21 @@ The request consists of the following JSON keys:
 
 #### `preflight` Response 
 
-If all of the data is well formed, the server responds with a HTTP 200 and provides a JSON response with the 
-When a 200 is returned by the server it has a JSON object in the response.
+If all of the data is well formed, the server responds with an HTTP status code of 200 and provides a JSON response.
 
-This returns a JSON object of with the following keys:
+The JSON object has the following keys:
 
 | Key | Required | Type | Meaning | Example Value |
 |---|---|---|---|---|
 | enable_bundles | NO | boolean | Enabled bundle scanning  | true |
-| bundles_enabled | NO | boolean |  **DEPRECATED** Enable bundle scanning (use `enable_bundles`)  | true |
 | enable_transitive_rules | NO | boolean | Whether or not to enable transitive allowlisting | true |
 | batch_size | YES | integer | Number of events to upload at a time | 128 | 
-| fcm_full_sync_interval | NO | integer | Number of seconds between full syncs | 14400 |
-| fcm_global_rule_sync_deadline | NO | unsigned integer | How often to download new rules from the sync server in seconds | 600 |
 | full_sync_interval | YES | integer | Number of seconds between full syncs | 600 | 
 | client_mode | YES | string | Operating mode to set for the client | either "MONITOR" or "LOCKDOWN" |
 | allowed_path_regex | YES | list of strings | List of regular expressions to allow a binary to execute from a path | ["/Users/markowsk/foo/.*"] | 
 | blocked_path_regex | YES | list of strings | List of regular expressions to block a binary from executing by path | ["/tmp/"] |
-| block_usb_mount | NO | boolean | Block usb mass storage devices | true |
-| remount_usb__mode | NO | string |  |
+| block_usb_mount | NO | boolean | Block USB mass storage devices | true |
+| remount_usb_mode | NO | string | Force USB mass storage devices to be remounted with the following permissions (see [configuration](../deployment/configuration.md)) |  | 
 | clean_sync | YES | boolean | Whether or not the rules should be dropped and synced entirely from the server | true |
 
 #### Example Preflight Response Payload
@@ -155,8 +149,6 @@ This returns a JSON object of with the following keys:
  "allowed_path_regex": null, 
  "blocked_path_regex": null, 
  "clean_sync": false, 
- "fcm_full_sync_interval": 14400, 
- "fcm_global_rule_sync_deadline": 600,
  "bundles_enabled": true, 
  "enable_transitive_rules": false
 }
@@ -175,8 +167,6 @@ sequenceDiagram
    client ->> server: POST /eventupload/<machine_id>
    server -->> client: eventupload response
 ```
-
-This transaction may be repeated until all events are uploaded to the sync service.
 
 #### `eventupload` Request
 
@@ -211,7 +201,7 @@ This transaction may be repeated until all events are uploaded to the sync servi
 | ppid | YES | int | Parent process id of the executable that was blocked | 456 |
 | parent_name | YES | Parent process short command name of the executable that was blocked | "bar" |
 | quarantine_data_url | NO | string |  The actual URL of the quarantined item from the quarantine database that this binary was downloaded from | https://dl.google.com/chrome/mac/stable/GGRO/googlechrome.dmg |
-| quarantine_referer_url | NO | string | Referring URL that lead to the binary being downloaded if known.  | <!-- markdown-link-check-disable -->http://example.com/binary<!-- markdown-link-check-enable --> |
+| quarantine_referer_url | NO | string | Referring URL that lead to the binary being downloaded if known.  | https://www.google.com/chrome/downloads/ |
 | quarantine_timestamp | NO | int | Unix Timestamp of when the binary was downloaded or 0 if not quarantined | 0 |
 | quarantine_agent_bundle_id | NO | string | The bundle ID of the software that quarantined the binary | "com.apple.Safari" |
 | signing_chain | NO | list of signing chain objects | Certs used to code sign the executable | See next section |
@@ -294,7 +284,7 @@ The server should reply with an HTTP 200 if the request was successfully receive
 
 | Key | Required | Type | Meaning | Example Value |
 |---|---|---|---|---|
-| event_upload_bundle_binaries | NO | list of strings | An array of bundle hashes that the sync server needs to be uploaded |  |
+| event_upload_bundle_binaries | NO | list of strings | An array of bundle hashes that the sync server needs to be uploaded | ["8621d92262aef379d3cfe9e099f287be5b996a281995b5cc64932f7d62f3dc85"] |
 
 ##### `eventupload` Response Example Payload 
 
@@ -307,7 +297,7 @@ The server should reply with an HTTP 200 if the request was successfully receive
 
 ### Rule Download
 
-After Events have been uploaded to the Sync server, the Client then initiates the `rulesdownload` request. 
+After Events have been uploaded to the Sync server, the Client then initiates the `ruledownload` request. 
 
 Like the previous stages this is a simple HTTP request response cycle like so:
 
@@ -316,8 +306,6 @@ sequenceDiagram
    client ->> server: POST /ruledownload/<machine_id>
    server -->> client: ruledownload response
 ```
-
-This stage may be performed many times depending on the rule batch size set during the `preflight` stage. 
 
 If either the client or server requested a clean sync in the preflight stage, the client is expected to purge its existing rules and download new rules from the sync server.
 
