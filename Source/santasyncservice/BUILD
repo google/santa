@@ -182,6 +182,7 @@ macos_command_line_application(
 test_suite(
     name = "unit_tests",
     tests = [
+        ":NSDataZlibTest",
         ":SNTSyncTest",
     ],
     visibility = ["//:santa_package_group"],
