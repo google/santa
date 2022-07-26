@@ -3,16 +3,6 @@ title: Santa Sync Server Protocol
 parent: Development
 ---
 
-<script src="https://unpkg.com/mermaid@9.1.3/dist/mermaid.min.js"></script>
-<script>
-   document.addEventListener("DOMContentLoaded", function(event) { 
-    mermaid.initialize({
-      startOnLoad:true,
-      theme: "forest",
-    });
-    window.mermaid.init(undefined, document.querySelectorAll('.language-mermaid'));
-});
-</script>
 
 # Summary
 
@@ -436,3 +426,16 @@ The request is empty and should not be parsed by the sync server.
 #### `postflight` Response
 
 The server should reply with an HTTP 200 if the request was successfully received and processed. Any message body is ignored by the client.
+
+<div id="mermaidjs-code" style="visibility: hidden">
+<script src="https://unpkg.com/mermaid@9.1.3/dist/mermaid.min.js"></script>
+<script>
+   document.addEventListener("DOMContentLoaded", function(event) { 
+    mermaid.initialize({
+      startOnLoad:true,
+      theme: "forest",
+    });
+    window.mermaid.init(undefined, document.querySelectorAll('.language-mermaid'));
+});
+</script>
+</div>
