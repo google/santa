@@ -384,7 +384,7 @@ downloading if the rules need to be downloaded in multiple batches.
 | custom_msg | NO | string | A custom message to display when the rule matches | "Hello" |
 | creation_time | NO | float64 | time the rule was created | 1573543803.349378 |
 | file_bundle_binary_count | NO | integer | The number of binaries in a bundle | 13 |
-| file_bundle_hash | NO | string | The SHA256 of all binaries in a bundle. |
+| file_bundle_hash | NO | string | The SHA256 of all binaries in a bundle. | "7466e3687f540bcb7792c6d14d5a186667dbe18a85021857b42effe9f0370805" |
 
 
 ##### Example `ruledownload` Response Payload
