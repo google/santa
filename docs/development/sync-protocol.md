@@ -352,7 +352,7 @@ On the first request the payload is an empty dictionary
 {}
 ```
 
-In the `ruledownload` response a special field called `cursor` will exist if there are more rules to download from server. The value and form of this field is left to the sync server implementor but is used to track where the next batch of rules should start.
+In the `ruledownload` response a special field called `cursor` will exist if there are more rules to download from server. The value and form of this field is left to the sync server implementor. It is expected to be used to track where the next batch of rules should start.
 
 On subsequent requests to the server the `cursor` field is sent with the value from the previous response e.g.
 
@@ -369,12 +369,10 @@ downloading if the rules need to be downloaded in multiple batches.
 | Key | Required | Type | Meaning |
 |---|---|---|---|
 | cursor | NO | string | Used to continue a rule download in a future request |
-| rules | YES | list of Rule objects | List of rule objects |
+| rules | YES | list of Rule objects | List of rule objects (see next section). |
 
 ##### Rules Objects
 
-
-:warning: Rule objects must have one of either the `identifier` or `sha256` fields.  The `sha256` field is supported for backwards compatability. 
 
 | Key | Required | Type | Meaning | Example Value | 
 |---|---|---|---|---|
