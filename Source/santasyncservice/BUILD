@@ -122,13 +122,13 @@ santa_unit_test(
 
 santa_unit_test(
     name = "NSDataZlibTest",
-    sdk_dylibs = ["libz"],
-    resources = glob(["testdata/sync_preflight_basic.*"]),
     srcs = [
         "NSData+Zlib.h",
         "NSData+Zlib.m",
         "NSDataZlibTest.m",
     ],
+    resources = glob(["testdata/sync_preflight_basic.*"]),
+    sdk_dylibs = ["libz"],
 )
 
 objc_library(
