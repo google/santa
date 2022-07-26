@@ -3,30 +3,31 @@ title: Santa Sync Server Protocol
 parent: Development
 mermaid: true
 ---
-
+<!--
 {% if page.mermaid %}
   {% include mermaid.html %}
-{% endif %}
+{% endif %} -->
 
-# Overview
+# Summary
 
-This documents describes the protocol between Santa and the Sync Server aka the Sync Protocol. Implementors should be able to use this to create their own Sync Servers.
+This document describes the protocol between Santa and the sync server also known as the sync protocol. Implementors should be able to use this to create their own sync servers.
 
 ## Background
 
 Santa can be run and configured with a sync server. This allows an admin to
 easily configure and sync rules across a fleet of macOS systems.  In addition to
-distributing rules using a sync server enables an admin to override some local
-configuration options e.g. lockdown mode on both a fleetwide and per host basis.
+distributing rules, using a sync server enables an admin to override some local
+configuration options e.g. `LOCKDOWN` mode on both a fleet-wide and
+per-host basis.
 
-# The Santa Sync Server Protocol 50,000ft View
+# The Santa Sync Server Protocol Overview
 
-The Sync Protocol is an HTTP/JSON Restful protocol. As such it is
+The sync protocol is an HTTP/JSON Restful protocol. As such it is
 assumed that both the server and client add `Content-Type` headers are set to
 `application/json`. 
 
 The Sync Protocol is client initiated and consists of 4 request-response
-transactions called stages, `preflight`, `eventupload`, `ruledownload` and `postflight`. 
+transactions called stages, `preflight`, `eventupload`, `ruledownload`, and `postflight`. 
 A sync may consist of all 4 stages, or just the `ruledownload` stage.
 
 | Stage | What it Does |
@@ -36,7 +37,7 @@ A sync may consist of all 4 stages, or just the `ruledownload` stage.
 | **Rule Download** | Retrieves new rules |
 | **Postflight** | Reports stats | 
 
-If the server returns a value other than 200 for any stage than the sync stops and the next stage is not performed.
+If the server returns an HTTP status other than `200` for any stage than the sync stops and the next stage is not performed.
 
 At a high level this looks like the following sequence:
 
@@ -58,7 +59,7 @@ Santa makes this is the string `IOPlatformUUID` from IOKit's
 
 ## Authentication
 
-The protocol expects to the client to authenticate the server via SSL/TLS. Additionally Sync Server's may support client certificates and use mutual TLS.
+The protocol expects to the client to authenticate the server via SSL/TLS. Additionally, a sync server may support client certificates and use mutual TLS.
 
 ## Stages
 
@@ -101,7 +102,7 @@ The request consists of the following JSON keys:
 | clean_sync | NO | bool | true |
 
 
-Example Preflight request JSON Payload:
+### Example preflight request JSON Payload:
 
 ```json
 {
@@ -168,7 +169,7 @@ After the `preflight` stage has completed the client then initiates the
 `eventupload` stage if it has any events to upload. If there aren't any events
 this stage is skipped.
 
-It consists of the following transaction, that may be repeated until all events are uploaded..
+It consists of the following transaction, that may be repeated until all events are uploaded.
 
 ```mermaid
 sequenceDiagram
@@ -319,14 +320,13 @@ sequenceDiagram
 
 This stage may be performed many times depending on the rule batch size set during the `preflight` stage. 
 
-In the event that the client requested a clean sync or the server responded with a `clean_sync` in the preflight stage then it is expected that the client will throw out its rules and the sync server should supply the client with all of the rules configured for it. 
+If either the client or server requested a clean sync in the preflight stage, the client is expected to purge its existing rules and download new rules from the sync server.
 
 If a clean sync was not requested by either the client or the sync service, then the sync service should only send new rules seen since the last time the client synced.
 
 #### `ruledownload` Request
 
-Rules are retrieved from the sync server by having the client (Santa) issues an
-HTTP POST request to the url `/ruledownload/<machine_id>`
+Rules are retrieved from the sync server by having the client (Santa) issue an HTTP POST request to the url `/ruledownload/<machine_id>`
 
 | Key | Required | Type | Meaning |
 |---|---|---|---|
@@ -351,7 +351,7 @@ On subsequent requests to the server the cursor field is sent with the value fro
 
 #### `ruledownload` Response
 
-When a `ruledownload` request is received the sync server responds with a JSON object
+When a `ruledownload` request is received, the sync server responds with a JSON object
 containing a list of rule objects and a cursor so the client can resume
 downloading if the rules need to be downloaded in multiple batches. 
 
@@ -408,11 +408,9 @@ downloading if the rules need to be downloaded in multiple batches.
 }
 ```
 
-Old style rule
-
 ### Postflight
 
-The postflight stage is used for the client to inform the sync server that it has successfully finished syncing. After sending the request the client is expected to update its internal state applying any configuration changes sent by the sync server during the preflight step.
+The postflight stage is used for the client to inform the sync server that it has successfully finished syncing. After sending the request, the client is expected to update its internal state applying any configuration changes sent by the sync server during the preflight step.
 
 This stage uses an HTTP POST request to the url `/postflight/<machine_id>`
 
@@ -424,7 +422,7 @@ sequenceDiagram
 
 #### `postflight` Request
 
-The request is empty and should not be parsed by the sync server
+The request is empty and should not be parsed by the sync server.
 
 #### `postflight` Response
 
