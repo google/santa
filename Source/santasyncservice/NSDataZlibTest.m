@@ -45,4 +45,10 @@
   XCTAssertEqualObjects([sut gzipCompressed], want);
 }
 
+- (void)testCompressEmpty {
+  NSData *sut = [NSData data];
+  XCTAssertNil([sut zlibCompressed]);
+  XCTAssertNil([sut gzipCompressed]);
+};
+
 @end
