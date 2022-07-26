@@ -172,7 +172,7 @@ This returns a JSON object of with the following keys:
 }
 ```
 
-### Event Upload
+### EventUpload
 
 After the `preflight` stage has completed the client then initiates the
 `eventupload` stage if it has any events to upload. If there aren't any events
@@ -352,9 +352,9 @@ On the first request the payload is an empty dictionary
 {}
 ```
 
-The server will then send a response with the number of rules specified in the preflight response `rule_batch` the response will also contain a special field called `cursor`. The value and form of this field is left to the sync server implementor but is used to indicate that the client is ready for the next batch of rules.
+In the `ruledownload` response a special field called `cursor` will exist if there are more rules to download from server. The value and form of this field is left to the sync server implementor but is used to track where the next batch of rules should start.
 
-On subsequent requests to the server the cursor field is sent with the value from the previous response.
+On subsequent requests to the server the `cursor` field is sent with the value from the previous response e.g.
 
 ```json
 {"cursor":"CpgBChcKCnVwZGF0ZWRfZHQSCQjh94a58uLlAhJ5ahVzfmdvb2dsZS5jb206YXBwbm90aHJyYAsSCUJsb2NrYWJsZSJAMTczOThkYWQzZDAxZGRmYzllMmEwYjBiMWQxYzQyMjY1OWM2ZjA3YmU1MmY3ZjQ1OTVmNDNlZjRhZWI5MGI4YQwLEgRSdWxlGICA8MvA0tIJDBgAIAA="}
@@ -368,7 +368,7 @@ downloading if the rules need to be downloaded in multiple batches.
 
 | Key | Required | Type | Meaning |
 |---|---|---|---|
-| cursor | NO | string | used to continue a rule download in a future request |
+| cursor | NO | string | Used to continue a rule download in a future request |
 | rules | YES | list of Rule objects | List of rule objects |
 
 ##### Rules Objects
@@ -379,12 +379,12 @@ downloading if the rules need to be downloaded in multiple batches.
 | Key | Required | Type | Meaning | Example Value | 
 |---|---|---|---|---|
 | identifier | YES | string | The attribute of the binary the rule should match on e.g. the team ID of a binary or sha256 hash value | "ff2a7daa4c25cbd5b057e4471c6a22aba7d154dadfb5cce139c37cf795f41c9c" |
-| sha256 | YES if `identifier` is not used | string | The sha256 of an attribute of the binary the rule should match on sha256 hash value of the binary or one of its signing certificates | "ff2a7daa4c25cbd5b057e4471c6a22aba7d154dadfb5cce139c37cf795f41c9c" 
-| policy | YES | string | identifies the action to perform in response to the rule matching must be one of the examples. | "ALLOWLIST","ALLOWLIST_COMPILER", "BLACKLIST", "BLOCKLIST", "REMOVE", "SILENT_BLACKLIST", "SILENT_BLOCKLIST", "WHITELIST", "WHITELIST_COMPILER"  |
+| policy | YES | string | identifies the action to perform in response to the rule matching must be one of the examples. | "ALLOWLIST","ALLOWLIST_COMPILER", "BLOCKLIST", "REMOVE",  "SILENT_BLOCKLIST" |
 | rule_type | YES | string | identifies the type of rule must be one of he examples | "BINARY", "CERTIFICATE", "TEAMID" | 
-| custom_msg | NO | string | a custom message to display when the rule matches | "Hello" |
+| custom_msg | NO | string | A custom message to display when the rule matches | "Hello" |
 | creation_time | NO | float64 | time the rule was created | 1573543803.349378 |
-| file_bundle_binary_count | NO | 
+| file_bundle_binary_count | NO | integer | The number of binaries in a bundle | 13 |
+| file_bundle_hash | NO | string | The SHA256 of all binaries in a bundle. |
 
 
 ##### Example `ruledownload` Response Payload
