@@ -22,7 +22,7 @@ per-host basis.
 
 # The Santa Sync Server Protocol Overview
 
-The sync protocol is an HTTP/JSON Restful protocol. As such it is
+The sync protocol is an HTTP/JSON based protocol. As such it is
 assumed that both the server and client add `Content-Type` headers are set to
 `application/json`. 
 
@@ -323,6 +323,8 @@ This stage may be performed many times depending on the rule batch size set duri
 If either the client or server requested a clean sync in the preflight stage, the client is expected to purge its existing rules and download new rules from the sync server.
 
 If a clean sync was not requested by either the client or the sync service, then the sync service should only send new rules seen since the last time the client synced.
+
+Santa applies rules idempoently and is designed to receive rules multiple times without issue.
 
 #### `ruledownload` Request
 
