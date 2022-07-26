@@ -468,4 +468,36 @@
   OCMVerify([self.daemonConnRop databaseRuleAddRules:rules cleanSlate:NO reply:OCMOCK_ANY]);
 }
 
+#pragma mark - SNTSyncPostflight Tests
+
+- (void)testPostflightBasicResponse {
+  [self setupDefaultDaemonConnResponses];
+  SNTSyncPostflight *sut = [[SNTSyncPostflight alloc] initWithState:self.syncState];
+
+  [self stubRequestBody:nil response:nil error:nil validateBlock:nil];
+
+  XCTAssertTrue([sut sync]);
+  OCMVerify([self.daemonConnRop setFullSyncLastSuccess:OCMOCK_ANY reply:OCMOCK_ANY]);
+
+  self.syncState.clientMode = SNTClientModeMonitor;
+  XCTAssertTrue([sut sync]);
+  OCMVerify([self.daemonConnRop setClientMode:SNTClientModeMonitor reply:OCMOCK_ANY]);
+
+  self.syncState.cleanSync = YES;
+  XCTAssertTrue([sut sync]);
+  OCMVerify([self.daemonConnRop setSyncCleanRequired:NO reply:OCMOCK_ANY]);
+
+  self.syncState.allowlistRegex = @"^horse$";
+  self.syncState.blocklistRegex = @"^donkey$";
+  XCTAssertTrue([sut sync]);
+  OCMVerify([self.daemonConnRop setAllowedPathRegex:@"^horse$" reply:OCMOCK_ANY]);
+  OCMVerify([self.daemonConnRop setBlockedPathRegex:@"^donkey$" reply:OCMOCK_ANY]);
+
+  self.syncState.blockUSBMount = YES;
+  self.syncState.remountUSBMode = @[ @"readonly" ];
+  XCTAssertTrue([sut sync]);
+  OCMVerify([self.daemonConnRop setBlockUSBMount:YES reply:OCMOCK_ANY]);
+  OCMVerify([self.daemonConnRop setRemountUSBMode:@[ @"readonly" ] reply:OCMOCK_ANY]);
+}
+
 @end

@@ -120,6 +120,17 @@ santa_unit_test(
     ],
 )
 
+santa_unit_test(
+    name = "NSDataZlibTest",
+    srcs = [
+        "NSData+Zlib.h",
+        "NSData+Zlib.m",
+        "NSDataZlibTest.m",
+    ],
+    resources = glob(["testdata/sync_preflight_basic.*"]),
+    sdk_dylibs = ["libz"],
+)
+
 objc_library(
     name = "broadcaster_lib",
     srcs = ["SNTSyncBroadcaster.m"],
@@ -171,6 +182,7 @@ macos_command_line_application(
 test_suite(
     name = "unit_tests",
     tests = [
+        ":NSDataZlibTest",
         ":SNTSyncTest",
     ],
     visibility = ["//:santa_package_group"],
