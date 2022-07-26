@@ -1,12 +1,18 @@
 ---
 title: Santa Sync Server Protocol
 parent: Development
-mermaid: true
 ---
-<!--
-{% if page.mermaid %}
-  {% include mermaid.html %}
-{% endif %} -->
+
+<script src="https://unpkg.com/mermaid@9.1.3/dist/mermaid.min.js"></script>
+<script>
+   document.addEventListener("DOMContentLoaded", function(event) { 
+    mermaid.initialize({
+      startOnLoad:true,
+      theme: "forest",
+    });
+    window.mermaid.init(undefined, document.querySelectorAll('.language-mermaid'));
+});
+</script>
 
 # Summary
 
@@ -45,17 +51,20 @@ At a high level this looks like the following sequence:
 sequenceDiagram
    client ->> server: POST /preflight/<machine_id>
    server -->> client: preflight response (200)
+   loop until all events are uploaded
    client ->> server: POST /eventupload/<machine_id>
    server -->> client: eventupload response (200)
+   end
+   loop until all rules are downloaded
    client ->> server: GET /ruledownload/<machine_id>
    server --> client: ruledownload response (200)
+   end
    client ->> server: POST /postflight/<machine_id> request
    server -->> client: postflight response (200)
 ```
 
-Where `<machine_id>` is a unique string identifier for the client by default
-Santa makes this is the string `IOPlatformUUID` from IOKit's
-`IOPlatformExpertDevice` aka the hardware UUID.
+Where `<machine_id>` is a unique string identifier for the client by default Santa uses the `IOPlatformUUID` from IOKit's
+`IOPlatformExpertDevice`. It may also be set using the [MachineID, MachineIDPlist, and MachineIDKey options](../deployment/configuration.md) in the configuration.
 
 ## Authentication
 
