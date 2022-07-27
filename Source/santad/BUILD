@@ -598,8 +598,9 @@ objc_library(
         ":EndpointSecuritySerializerBasicString",
         ":EndpointSecurityWriterSyslog",
         ":EndpointSecurityWriterFile",
-        ":SNTDatabaseController",
         ":SNTCompilerController",
+        ":SNTDaemonControlController",
+        ":SNTDatabaseController",
         ":SNTEndpointSecurityAuthorizer",
         ":SNTEndpointSecurityDeviceManager",
         ":SNTEndpointSecurityRecorder",
@@ -622,6 +623,7 @@ objc_library(
     ],
     hdrs = ["SNTDaemonControlController.h"],
     deps = [
+        ":AuthResultCache",
         ":EndpointSecurityLogger",
         ":SNTDatabaseController",
         ":SNTNotificationQueue",
@@ -654,7 +656,7 @@ objc_library(
 )
 
 macos_bundle(
-    name = "com.google.santad.sysext",
+    name = "com.google.santa.daemon",
     bundle_extension = "systemextension",
     bundle_id = "com.google.santa.daemon",
     codesignopts = [
@@ -680,7 +682,7 @@ macos_bundle(
 )
 
 macos_bundle(
-    name = "com.google.santa.daemon",
+    name = "com.google.santa.daemon_orig",
     bundle_extension = "systemextension",
     bundle_id = "com.google.santa.daemon",
     codesignopts = [

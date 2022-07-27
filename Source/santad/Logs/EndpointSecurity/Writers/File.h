@@ -36,7 +36,7 @@ public:
   File(NSString* path, dispatch_queue_t q, dispatch_source_t timer_source);
   ~File();
 
-  void Write(const std::vector<uint8_t> &bytes) override;
+  void Write(std::vector<uint8_t>&& bytes) override;
 
 private:
   void OpenFileHandle();

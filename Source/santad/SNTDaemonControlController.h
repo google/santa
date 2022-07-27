@@ -12,12 +12,12 @@
 ///    See the License for the specific language governing permissions and
 ///    limitations under the License.
 
-#include <memory>
-
 #import <Foundation/Foundation.h>
 
+#include <memory>
+
 #import "Source/common/SNTXPCControlInterface.h"
-#import "Source/santad/EventProviders/SNTEventProvider.h"
+#include "Source/santad/EventProviders/AuthResultCache.h"
 #import "Source/santad/Logs/EndpointSecurity/Logger.h"
 
 @class SNTNotificationQueue;
@@ -28,8 +28,8 @@
 ///
 @interface SNTDaemonControlController : NSObject <SNTDaemonControlXPC>
 
-- (instancetype)initWithEventProvider:(id<SNTCachingEventProvider>)cachingProvider
-                    notificationQueue:(SNTNotificationQueue *)notQueue
-                           syncdQueue:(SNTSyncdQueue *)syncdQueue
-                               logger:(std::shared_ptr<santa::santad::logs::endpoint_security::Logger>)logger;
+- (instancetype)initWithAuthResultCache:(std::shared_ptr<santa::santad::event_providers::AuthResultCache>)authResultCache
+                      notificationQueue:(SNTNotificationQueue *)notQueue
+                            syncdQueue:(SNTSyncdQueue *)syncdQueue
+                                logger:(std::shared_ptr<santa::santad::logs::endpoint_security::Logger>)logger;
 @end

@@ -13,6 +13,7 @@
 ///    limitations under the License.
 
 #import "Source/santad/SNTDaemonControlController.h"
+#include <memory>
 
 #import <MOLXPCConnection/MOLXPCConnection.h>
 
@@ -29,12 +30,13 @@
 #import "Source/common/SNTXPCSyncServiceInterface.h"
 #import "Source/santad/DataLayer/SNTEventTable.h"
 #import "Source/santad/DataLayer/SNTRuleTable.h"
-#import "Source/santad/EventProviders/SNTEventProvider.h"
 #import "Source/santad/SNTDatabaseController.h"
 #import "Source/santad/SNTNotificationQueue.h"
 #import "Source/santad/SNTPolicyProcessor.h"
 #import "Source/santad/SNTSyncdQueue.h"
 
+using santa::santad::event_providers::AuthResultCache;
+using santa::santad::event_providers::FlushCacheMode;
 using santa::santad::logs::endpoint_security::Logger;
 
 // Globals used by the santad watchdog thread
@@ -45,25 +47,25 @@ double watchdogRAMPeak = 0;
 
 @interface SNTDaemonControlController ()
 @property SNTPolicyProcessor *policyProcessor;
-@property id<SNTCachingEventProvider> cachingEventProvider;
 @property SNTNotificationQueue *notQueue;
 @property SNTSyncdQueue *syncdQueue;
 @end
 
 @implementation SNTDaemonControlController {
+  std::shared_ptr<AuthResultCache> _authResultCache;
   std::shared_ptr<Logger> _logger;
 }
 
-- (instancetype)initWithEventProvider:(id<SNTCachingEventProvider>)cachingProvider
-                    notificationQueue:(SNTNotificationQueue *)notQueue
-                           syncdQueue:(SNTSyncdQueue *)syncdQueue
-                               logger:(std::shared_ptr<Logger>)logger {
+- (instancetype)initWithAuthResultCache:(std::shared_ptr<AuthResultCache>)authResultCache
+                      notificationQueue:(SNTNotificationQueue *)notQueue
+                            syncdQueue:(SNTSyncdQueue *)syncdQueue
+                                logger:(std::shared_ptr<Logger>)logger {
   self = [super init];
   if (self) {
     _logger = logger;
     _policyProcessor =
       [[SNTPolicyProcessor alloc] initWithRuleTable:[SNTDatabaseController ruleTable]];
-    _cachingEventProvider = cachingProvider;
+    _authResultCache = authResultCache;
     _notQueue = notQueue;
     _syncdQueue = syncdQueue;
   }
@@ -73,21 +75,21 @@ double watchdogRAMPeak = 0;
 #pragma mark Kernel ops
 
 - (void)cacheCounts:(void (^)(uint64_t, uint64_t))reply {
-  NSArray<NSNumber *> *counts = [self.cachingEventProvider cacheCounts];
+  NSArray<NSNumber *> *counts = self->_authResultCache->CacheCounts();
   reply([counts[0] unsignedLongLongValue], [counts[1] unsignedLongLongValue]);
 }
 
-- (BOOL)flushAllCaches {
-  return [self.cachingEventProvider flushLocalCacheNonRootOnly:NO] &&
-    [self.cachingEventProvider flushProviderCache];
+- (void)flushAllCaches {
+  self->_authResultCache->FlushCache(FlushCacheMode::kAllCaches);
 }
 
 - (void)flushCache:(void (^)(BOOL))reply {
-  reply([self flushAllCaches]);
+  [self flushAllCaches];
+  reply(YES);
 }
 
 - (void)checkCacheForVnodeID:(santa_vnode_id_t)vnodeID withReply:(void (^)(santa_action_t))reply {
-  reply([self.cachingEventProvider checkCache:vnodeID]);
+  reply(self->_authResultCache->CheckCache(vnodeID));
 }
 
 #pragma mark Database ops

@@ -15,6 +15,11 @@
 #ifndef SANTA__SANTAD_SANTAD_H
 #define SANTA__SANTAD_SANTAD_H
 
-int SantadMain();
+#import <MOLXPCConnection/MOLXPCConnection.h>
+#include "Source/santad/Logs/EndpointSecurity/Writers/File.h"
+
+int SantadMain(
+    MOLXPCConnection* controlConnection,
+    std::shared_ptr<santa::santad::logs::endpoint_security::writers::File> file);
 
 #endif

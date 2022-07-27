@@ -112,7 +112,10 @@ void AuthResultCache::RemoveFromCache(const es_file_t *es_file) {
 }
 
 santa_action_t AuthResultCache::CheckCache(const es_file_t *es_file) {
-  santa_vnode_id_t vnode_id = VnodeForFile(es_file);
+  return CheckCache(VnodeForFile(es_file));
+}
+
+santa_action_t AuthResultCache::CheckCache(santa_vnode_id_t vnode_id) {
   auto cache = CacheForVnodeID(vnode_id);
 
   uint64_t cached_val = cache->get(vnode_id);

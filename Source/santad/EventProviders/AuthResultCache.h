@@ -46,6 +46,7 @@ public:
   virtual void AddToCache(const es_file_t *es_file, santa_action_t decision);
   virtual void RemoveFromCache(const es_file_t *es_file);
   virtual santa_action_t CheckCache(const es_file_t *es_file);
+  virtual santa_action_t CheckCache(santa_vnode_id_t vnode_id);
 
   virtual void FlushCache(FlushCacheMode mode);
 

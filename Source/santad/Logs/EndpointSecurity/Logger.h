@@ -31,8 +31,8 @@ namespace santa::santad::logs::endpoint_security {
 
 class Logger {
 public:
-  Logger(std::unique_ptr<serializers::Serializer> serializer,
-                 std::unique_ptr<writers::Writer> writer)
+  Logger(std::shared_ptr<serializers::Serializer> serializer,
+         std::shared_ptr<writers::Writer> writer)
       : serializer_(std::move(serializer)), writer_(std::move(writer)) {}
 
   void Log(
@@ -48,8 +48,8 @@ public:
   void LogDiskDisappeared(NSDictionary* props);
 
 private:
-  std::unique_ptr<serializers::Serializer> serializer_;
-  std::unique_ptr<writers::Writer> writer_;
+  std::shared_ptr<serializers::Serializer> serializer_;
+  std::shared_ptr<writers::Writer> writer_;
 };
 
 } // namespace santa::santad::logs::endpoint_security

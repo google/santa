@@ -19,8 +19,7 @@
 namespace santa::santad::logs::endpoint_security::writers {
 
 // TODO: Move this over to `syslog`...
-void Syslog::Write(
-    const std::vector<uint8_t> &bytes) {
+void Syslog::Write(std::vector<uint8_t>&& bytes) {
   os_log(OS_LOG_DEFAULT, "%{public}s", bytes.data());
 }
 

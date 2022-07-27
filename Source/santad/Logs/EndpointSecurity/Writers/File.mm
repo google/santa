@@ -42,13 +42,16 @@ std::shared_ptr<File> File::Create(NSString* path) {
   auto ret_writer = std::make_shared<File>(path, q, timer_source);
   ret_writer->WatchLogFile();
 
-  auto shared_this = ret_writer->shared_from_this();
-  dispatch_source_set_event_handler(timer_source, ^{
-    shared_this->FlushBuffer();
+  std::weak_ptr<File> weak_writer(ret_writer);
+  dispatch_source_set_event_handler(ret_writer->timer_source_, ^{
+    std::shared_ptr<File> shared_writer = weak_writer.lock();
+    if (!shared_writer) {
+      return;
+    }
+    shared_writer->FlushBuffer();
   });
 
-  dispatch_resume(timer_source);
-
+  dispatch_resume(ret_writer->timer_source_);
 
   return ret_writer;
 }
@@ -61,8 +64,6 @@ File::File(NSString* path, dispatch_queue_t q, dispatch_source_t timer_source)
 }
 
 void File::WatchLogFile() {
-  auto weak_this = weak_from_this();
-
   if (watch_source_) {
     dispatch_source_cancel(watch_source_);
   }
@@ -73,12 +74,8 @@ void File::WatchLogFile() {
       DISPATCH_VNODE_DELETE | DISPATCH_VNODE_RENAME,
       q_);
 
+  auto shared_this = shared_from_this();
   dispatch_source_set_event_handler(watch_source_, ^{
-    std::shared_ptr<File> shared_this = weak_this.lock();
-    if (!shared_this) {
-      return;
-    }
-
     [shared_this->file_handle_ closeFile];
     shared_this->OpenFileHandle();
     shared_this->WatchLogFile();
@@ -103,11 +100,18 @@ void File::OpenFileHandle() {
   [file_handle_ seekToEndOfFile];
 }
 
-void File::Write(const std::vector<uint8_t>& bytes) {
+void File::Write(std::vector<uint8_t>&& bytes) {
+  auto shared_this = shared_from_this();
+
+  // Workaround to move `bytes` into the block without a copy
+  __block auto temp_bytes = std::move(bytes);
+
   dispatch_async(q_, ^{
-    buffer_.insert(buffer_.end(), bytes.begin(), bytes.end());
-    if (buffer_.size() > kBufferBatchSizeBytes) {
-      FlushBuffer();
+    auto moved_bytes = std::move(temp_bytes);
+
+    shared_this->buffer_.insert(shared_this->buffer_.end(), moved_bytes.begin(), moved_bytes.end());
+    if (shared_this->buffer_.size() > kBufferBatchSizeBytes) {
+      shared_this->FlushBuffer();
     }
   });
 }

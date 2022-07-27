@@ -21,12 +21,3 @@
 - (void)enable;
 
 @end
-
-@protocol SNTCachingEventProvider <SNTEventProvider>
-
-- (BOOL)flushLocalCacheNonRootOnly:(BOOL)nonRootOnly;
-- (BOOL)flushProviderCache;
-- (NSArray<NSNumber *> *)cacheCounts;
-- (santa_action_t)checkCache:(santa_vnode_id_t)vnodeID;
-
-@end

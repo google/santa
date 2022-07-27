@@ -17,6 +17,7 @@
 #include <memory>
 
 #import "Source/common/SNTConfigurator.h"
+#include "Source/santad/SNTDaemonControlController.h"
 #import "Source/common/SNTLogging.h"
 #import "Source/common/SNTPrefixTree.h"
 #import "Source/common/SNTXPCNotifierInterface.h"
@@ -33,6 +34,7 @@
 #import "Source/santad/EventProviders/SNTEndpointSecurityTamperResistance.h"
 #include "Source/santad/Logs/EndpointSecurity/Logger.h"
 #include "Source/santad/Logs/EndpointSecurity/Serializers/BasicString.h"
+#include "Source/santad/Logs/EndpointSecurity/Writers/File.h"
 #include "Source/santad/Logs/EndpointSecurity/Writers/Syslog.h"
 #import "Source/santad/SNTExecutionController.h"
 #import "Source/santad/SNTNotificationQueue.h"
@@ -43,11 +45,13 @@ using santa::santad::event_providers::endpoint_security::EndpointSecurityAPI;
 using santa::santad::event_providers::endpoint_security::Enricher;
 using santa::santad::logs::endpoint_security::serializers::BasicString;
 using santa::santad::logs::endpoint_security::writers::Syslog;
+using santa::santad::logs::endpoint_security::writers::File;
 using santa::santad::logs::endpoint_security::Logger;
 
 // TODO: Change return type
 // int SantadMain(std::shared_ptr<EndpointSecurityAPI> es_api) {
-int SantadMain() {
+int SantadMain(MOLXPCConnection* controlConnection,
+               std::shared_ptr<File> file) {
   SNTConfigurator *configurator = [SNTConfigurator configurator];
 
   SNTRuleTable *rule_table = [SNTDatabaseController ruleTable];
@@ -85,10 +89,19 @@ int SantadMain() {
 
   auto es_api = std::make_shared<EndpointSecurityAPI>();
   std::shared_ptr<Enricher> enricher = std::make_shared<Enricher>();
-  auto logger = std::make_shared<Logger>(std::make_unique<BasicString>(),
-                                         std::make_unique<Syslog>());
+  auto logger = std::make_shared<Logger>(std::make_shared<BasicString>(),
+                                         file);
 
   auto auth_result_cache = std::make_shared<AuthResultCache>(es_api);
+
+  SNTDaemonControlController *dc =
+      [[SNTDaemonControlController alloc] initWithAuthResultCache:auth_result_cache
+                                                notificationQueue:notifier_queue
+                                                       syncdQueue:syncd_queue
+                                                           logger:logger];
+
+  controlConnection.exportedObject = dc;
+  [controlConnection resume];
 
   SNTEndpointSecurityDeviceManager *device_client =
       [[SNTEndpointSecurityDeviceManager alloc] initWithESAPI:es_api

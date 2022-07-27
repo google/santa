@@ -397,7 +397,7 @@ std::vector<uint8_t> BasicString::SerializeMessage(const EnrichedClose& msg) {
 
   std::string s = ss.str();
 
-  LOGE(@"Enriched write: %s", s.c_str());
+  // LOGE(@"Enriched write: %s", s.c_str());
 
   return std::vector<uint8_t>(s.begin(), s.end());
 }
@@ -417,7 +417,7 @@ std::vector<uint8_t> BasicString::SerializeMessage(const EnrichedExchange& msg) 
 
   std::string s = ss.str();
 
-  LOGE(@"Enriched exchange: %s", s.c_str());
+  // LOGE(@"Enriched exchange: %s", s.c_str());
 
   return std::vector<uint8_t>(s.begin(), s.end());
 }
@@ -485,7 +485,7 @@ std::vector<uint8_t> BasicString::SerializeMessage(const EnrichedExec& msg) {
 
   std::string s = ss.str();
 
-  LOGE(@"Enriched exec: %s", s.c_str());
+  // LOGE(@"Enriched exec: %s", s.c_str());
 
   return std::vector<uint8_t>(s.begin(), s.end());
 }
@@ -502,7 +502,7 @@ std::vector<uint8_t> BasicString::SerializeMessage(const EnrichedExit& msg) {
 
   std::string s = ss.str();
 
-  LOGE(@"Enriched exit: %s", s.c_str());
+  // LOGE(@"Enriched exit: %s", s.c_str());
 
   return std::vector<uint8_t>(s.begin(), s.end());
 }
@@ -519,7 +519,7 @@ std::vector<uint8_t> BasicString::SerializeMessage(const EnrichedFork& msg) {
 
   std::string s = ss.str();
 
-  LOGE(@"Enriched fork: %s", s.c_str());
+  // LOGE(@"Enriched fork: %s", s.c_str());
 
   return std::vector<uint8_t>(s.begin(), s.end());
 }
@@ -540,7 +540,7 @@ std::vector<uint8_t> BasicString::SerializeMessage(const EnrichedLink& msg) {
 
   std::string s = ss.str();
 
-  LOGE(@"Enriched link: %s", s.c_str());
+  // LOGE(@"Enriched link: %s", s.c_str());
 
   return std::vector<uint8_t>(s.begin(), s.end());
 }
@@ -573,7 +573,7 @@ std::vector<uint8_t> BasicString::SerializeMessage(const EnrichedRename& msg) {
 
   std::string s = ss.str();
 
-  LOGE(@"Enriched rename: %s", s.c_str());
+  // LOGE(@"Enriched rename: %s", s.c_str());
 
   return std::vector<uint8_t>(s.begin(), s.end());
 }
@@ -592,7 +592,7 @@ std::vector<uint8_t> BasicString::SerializeMessage(const EnrichedUnlink& msg) {
 
   std::string s = ss.str();
 
-  LOGE(@"Enriched delete: %s", s.c_str());
+  // LOGE(@"Enriched delete: %s", s.c_str());
 
   return std::vector<uint8_t>(s.begin(), s.end());
 }
@@ -608,7 +608,7 @@ std::vector<uint8_t> BasicString::SerializeAllowlist(const Message& msg,
 
   std::string s = ss.str();
 
-  LOGE(@"AllowList: %s", s.c_str());
+  // LOGE(@"AllowList: %s", s.c_str());
 
   return std::vector<uint8_t>(s.begin(), s.end());
 }
@@ -625,7 +625,7 @@ std::vector<uint8_t> BasicString::SerializeBundleHashingEvent(SNTStoredEvent* ev
 
   std::string s = ss.str();
 
-  LOGE(@"BundleHashing: %s", s.c_str());
+  // LOGE(@"BundleHashing: %s", s.c_str());
 
   return std::vector<uint8_t>(s.begin(), s.end());
 }
@@ -663,7 +663,7 @@ std::vector<uint8_t> BasicString::SerializeDiskAppeared(NSDictionary* props) {
 
   std::string s = ss.str();
 
-  LOGE(@"DiskAppeared: %s", s.c_str());
+  // LOGE(@"DiskAppeared: %s", s.c_str());
 
   return std::vector<uint8_t>(s.begin(), s.end());
 }
@@ -678,7 +678,7 @@ std::vector<uint8_t> BasicString::SerializeDiskDisappeared(NSDictionary* props) 
 
   std::string s = ss.str();
 
-  LOGE(@"DiskDisappeared: %s", s.c_str());
+  // LOGE(@"DiskDisappeared: %s", s.c_str());
 
   return std::vector<uint8_t>(s.begin(), s.end());
 }

@@ -15,7 +15,7 @@ namespace santa::santad::logs::endpoint_security::serializers {
 class Serializer {
 public:
   virtual ~Serializer() = default;
-  // TODO: Return type should be suitable to pass to a serializer:
+
   std::vector<uint8_t> SerializeMessage(
       std::shared_ptr<santa::santad::event_providers::endpoint_security::EnrichedMessage> msg) {
     return std::visit([this](auto &&arg) {
