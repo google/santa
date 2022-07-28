@@ -28,8 +28,8 @@ A sync may consist of all 4 stages, just the `eventupload` stage or just the `ru
 
 | Stage | What it Does |
 |---|---|
-| **Preflight** | Report current Santa settings and machine attributes to Sync Server & retrieve configuration settings |
-| **Event Upload** | Report new blockable events to the Sync Server |
+| **Preflight** | Report current Santa settings and machine attributes to sync server & retrieve configuration settings |
+| **Event Upload** | Report new blockable events to the sync server |
 | **Rule Download** | Retrieves new rules |
 | **Postflight** | Reports stats | 
 
