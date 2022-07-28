@@ -37,9 +37,119 @@
 
 /// Holds the last processed hash of the static rules list.
 @property(atomic) NSDictionary *cachedStaticRules;
+
+@property (nonatomic, copy) void (^clientModeChanged)(SNTClientMode);
+@property (nonatomic, copy) void (^syncBaseURLChanged)(NSURL*);
+@property (nonatomic, copy) void (^allowedOrBlockedPathRegexChanged)(void);
+@property (nonatomic, copy) void (^blockUSBMountChanged)(BOOL, BOOL);
+@property (nonatomic, copy) void (^remountUSBModeChanged)(NSArray<NSString *>*,
+                                                          NSArray<NSString *>*);
 @end
 
 @implementation SNTConfigurator
+
+- (void) observeClientMode:(void(^)(SNTClientMode))clientModeChanged
+               syncBaseURL:(void(^)(NSURL*))syncBaseURLChanged
+ allowedOrBlockedPathRegex:(void(^)(void))allowedOrBlockedPathRegexChanged
+             blockUSBMount:(void(^)(BOOL, BOOL))blockUSBMountChanged
+            remountUSBMode:(void(^)(NSArray<NSString *>*, NSArray<NSString *>*))remountUSBModeChanged {
+  dispatch_once_t onceToken;
+  static BOOL setup = FALSE;
+  if (setup) {
+    // This is a programming error. Bail.
+    exit(EXIT_FAILURE);
+  }
+
+  dispatch_once(&onceToken, ^{
+    setup = TRUE;
+  });
+
+  self.clientModeChanged = clientModeChanged;
+  self.syncBaseURLChanged = syncBaseURLChanged;
+  self.allowedOrBlockedPathRegexChanged = allowedOrBlockedPathRegexChanged;
+  self.blockUSBMountChanged = blockUSBMountChanged;
+  self.remountUSBModeChanged = remountUSBModeChanged;
+
+  NSKeyValueObservingOptions bits = (NSKeyValueObservingOptionNew | NSKeyValueObservingOptionOld);
+  [self addObserver:self
+         forKeyPath:NSStringFromSelector(@selector(clientMode))
+            options:bits
+            context:NULL];
+  [self addObserver:self
+         forKeyPath:NSStringFromSelector(@selector(syncBaseURL))
+            options:bits
+            context:NULL];
+  [self addObserver:self
+         forKeyPath:NSStringFromSelector(@selector(allowedPathRegex))
+            options:bits
+            context:NULL];
+  [self addObserver:self
+         forKeyPath:NSStringFromSelector(@selector(blockedPathRegex))
+            options:bits
+            context:NULL];
+  [self addObserver:self
+         forKeyPath:NSStringFromSelector(@selector(blockUSBMount))
+            options:bits
+            context:NULL];
+  [self addObserver:self
+         forKeyPath:NSStringFromSelector(@selector(remountUSBMode))
+            options:bits
+            context:NULL];
+}
+
+- (void)observeValueForKeyPath:(NSString *)keyPath
+                      ofObject:(id)object
+                        change:(NSDictionary<NSString *, id> *)change
+                       context:(void *)context {
+  NSString *newKey = NSKeyValueChangeNewKey;
+  NSString *oldKey = NSKeyValueChangeOldKey;
+
+  if ([keyPath isEqualToString:NSStringFromSelector(@selector(clientMode))]) {
+    SNTClientMode new =
+      [change[newKey] isKindOfClass : [NSNumber class]] ? [ change[newKey] longLongValue ] : 0;
+    SNTClientMode old =
+      [change[oldKey] isKindOfClass:[NSNumber class]] ? [change[oldKey] longLongValue] : 0;
+    if (new != old) {
+      self.clientModeChanged(new);
+    }
+  } else if ([keyPath isEqualToString:NSStringFromSelector(@selector(syncBaseURL))]) {
+    NSURL *new = [ change[newKey] isKindOfClass : [NSURL class] ] ? change[newKey] : nil;
+    NSURL *old = [change[oldKey] isKindOfClass:[NSURL class]] ? change[oldKey] : nil;
+    if (!new && !old) return;
+    if (![new.absoluteString isEqualToString:old.absoluteString]) {
+      self.syncBaseURLChanged(new);
+    }
+  } else if ([keyPath isEqualToString:NSStringFromSelector(@selector(allowedPathRegex))] ||
+             [keyPath isEqualToString:NSStringFromSelector(@selector(blockedPathRegex))]) {
+    NSRegularExpression *new =
+      [change[newKey] isKindOfClass : [NSRegularExpression class]] ? change[newKey] : nil;
+    NSRegularExpression *old =
+      [change[oldKey] isKindOfClass:[NSRegularExpression class]] ? change[oldKey] : nil;
+    if (!new && !old) {
+      return;
+    }
+    if (![new.pattern isEqualToString:old.pattern]) {
+      self.allowedOrBlockedPathRegexChanged();
+    }
+  } else if ([keyPath isEqualToString:NSStringFromSelector(@selector(blockUSBMount))]) {
+    BOOL new = [ change[newKey] boolValue ];
+    BOOL old = [change[oldKey] boolValue];
+
+    if (new != old) {
+      self.blockUSBMountChanged(old, new);
+    }
+  } else if ([keyPath isEqualToString:NSStringFromSelector(@selector(remountUSBMode))]) {
+    NSArray<NSString *> *new = [ change[newKey] isKindOfClass : [NSArray class] ]
+                                 ? (NSArray<NSString *> *)change[newKey]
+                                 : nil;
+    NSArray<NSString *> *old =
+      [change[oldKey] isKindOfClass:[NSArray class]] ? (NSArray<NSString *> *)change[oldKey] : nil;
+
+    if (![old isEqualToArray:new]) {
+      self.remountUSBModeChanged(old, new);
+    }
+  }
+}
 
 /// The hard-coded path to the sync state file.
 NSString *const kSyncStateFilePath = @"/var/db/santa/sync-state.plist";

@@ -21,6 +21,7 @@
 #import "Source/common/SNTLogging.h"
 #import "Source/common/SNTPrefixTree.h"
 #import "Source/common/SNTXPCNotifierInterface.h"
+#import "Source/common/SNTXPCSyncServiceInterface.h"
 #import "Source/santad/DataLayer/SNTEventTable.h"
 #import "Source/santad/DataLayer/SNTRuleTable.h"
 #import "Source/santad/SNTCompilerController.h"
@@ -41,6 +42,7 @@
 #import "Source/santad/SNTSyncdQueue.h"
 
 using santa::santad::event_providers::AuthResultCache;
+using santa::santad::event_providers::FlushCacheMode;
 using santa::santad::event_providers::endpoint_security::EndpointSecurityAPI;
 using santa::santad::event_providers::endpoint_security::Enricher;
 using santa::santad::logs::endpoint_security::serializers::BasicString;
@@ -48,8 +50,29 @@ using santa::santad::logs::endpoint_security::writers::Syslog;
 using santa::santad::logs::endpoint_security::writers::File;
 using santa::santad::logs::endpoint_security::Logger;
 
+static void EstablishSyncServiceConnection(SNTSyncdQueue *syncd_queue) {
+  // The syncBaseURL check is here to stop retrying if the sync server is removed.
+  if (![[SNTConfigurator configurator] syncBaseURL]) {
+    return;
+  }
+
+  MOLXPCConnection *ss = [SNTXPCSyncServiceInterface configuredConnection];
+
+  // This will handle retying connection establishment if there are issues with the service
+  // during initialization (missing binary, malformed plist, bad code signature, etc.).
+  // Once those issues are resolved the connection will establish.
+  // This will also handle re-establishment if the service crashes or is killed.
+  ss.invalidationHandler = ^(void) {
+    syncd_queue.syncConnection.invalidationHandler = nil;
+    dispatch_sync(dispatch_get_main_queue(), ^{
+      EstablishSyncServiceConnection(syncd_queue);
+    });
+  };
+  [ss resume];
+  syncd_queue.syncConnection = ss;
+}
+
 // TODO: Change return type
-// int SantadMain(std::shared_ptr<EndpointSecurityAPI> es_api) {
 int SantadMain(MOLXPCConnection* controlConnection,
                std::shared_ptr<File> file) {
   SNTConfigurator *configurator = [SNTConfigurator configurator];
@@ -136,6 +159,56 @@ int SantadMain(MOLXPCConnection* controlConnection,
   SNTEndpointSecurityTamperResistance *tamper_client =
       [[SNTEndpointSecurityTamperResistance alloc] initWithESAPI:es_api
                                                           logger:logger];
+
+  EstablishSyncServiceConnection(syncd_queue);
+
+  // Begin observing config changes once everything is setup
+  [configurator
+      observeClientMode:^(SNTClientMode clientMode) {
+        if (clientMode == SNTClientModeLockdown) {
+          LOGI(@"Changed client mode to Lockdown, flushing cache.");
+          auth_result_cache->FlushCache(FlushCacheMode::kAllCaches);
+        } else if (clientMode == SNTClientModeMonitor) {
+          LOGI(@"Changed client mode to Monitor.");
+        } else {
+          LOGW(@"Changed client mode to unknown value.");
+        }
+
+        [[notifier_queue.notifierConnection remoteObjectProxy]
+            postClientModeNotification:clientMode];
+      }
+      syncBaseURL:^(NSURL* new_url) {
+        if (new_url) {
+          LOGI(@"Establishing a new sync service connection with SyncBaseURL: %@", new_url);
+          [NSObject cancelPreviousPerformRequestsWithTarget:[SNTConfigurator configurator]
+                                                  selector:@selector(clearSyncState)
+                                                    object:nil];
+          [[syncd_queue.syncConnection remoteObjectProxy] spindown];
+          EstablishSyncServiceConnection(syncd_queue);
+        } else {
+          LOGI(@"SyncBaseURL removed, spinning down sync service");
+          [[syncd_queue.syncConnection remoteObjectProxy] spindown];
+          // Keep the syncState active for 10 min in case com.apple.ManagedClient is flapping.
+          [[SNTConfigurator configurator] performSelector:@selector(clearSyncState)
+                                              withObject:nil
+                                              afterDelay:600];
+        }
+      }
+      allowedOrBlockedPathRegex:^() {
+        LOGI(@"Changed [allow|deny]list regex, flushing cache");
+        auth_result_cache->FlushCache(FlushCacheMode::kAllCaches);
+      }
+      blockUSBMount:^(BOOL old_val, BOOL new_val) {
+        LOGI(@"BlockUSBMount changed: %d -> %d", old_val, new_val);
+        device_client.blockUSBMount = new_val;
+      }
+      remountUSBMode:^(NSArray<NSString *>* old_val, NSArray<NSString *>* new_val) {
+        LOGI(@"RemountArgs changed: %s -> %s",
+             [[old_val componentsJoinedByString:@","] UTF8String],
+             [[new_val componentsJoinedByString:@","] UTF8String]);
+        device_client.remountArgs = new_val;
+      }
+  ];
 
   [monitor_client enable];
   [authorizer_client enable];

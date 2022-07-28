@@ -191,10 +191,10 @@ static NSString *const kPrinterProxyPostMonterey =
   //
   // TODO: Remove this bit used for testing during development only...
   //
-  if (strcmp(esMsg->event.exec.target->executable->path.data, "/usr/bin/bsdtar") == 0) {
-    cd.customMsg = @"Blocked for the lols";
-    cd.decision = SNTEventStateBlockBinary;
-  }
+  // if (strcmp(esMsg->event.exec.target->executable->path.data, "/usr/bin/bsdtar") == 0) {
+  //   cd.customMsg = @"Blocked for the lols";
+  //   cd.decision = SNTEventStateBlockBinary;
+  // }
 
   cd.vnodeId = {
     .fsid = (uint64_t)targetProc->executable->stat.st_dev,
