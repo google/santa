@@ -1,12 +1,12 @@
 ---
-title: Santa Sync Server Protocol
+title: Sync Protocol
 parent: Development
 ---
 
 
 # Summary
 
-This document describes the protocol between Santa and the sync server also known as the sync protocol. Implementors should be able to use this to create their own sync servers.
+This document describes the protocol between Santa and the sync server, also known as the sync protocol. Implementors should be able to use this to create their own sync servers.
 
 ## Background
 
@@ -16,7 +16,7 @@ distributing rules, using a sync server enables an admin to override some local
 configuration options e.g. `LOCKDOWN` mode on both a fleet-wide and
 per-host basis.
 
-# The Santa Sync Server Protocol Overview
+# Protocol Overview
 
 The sync protocol is an HTTP/JSON based protocol. As such it is
 assumed that both the server and client add `Content-Type` headers are set to
@@ -53,8 +53,9 @@ sequenceDiagram
    server -->> client: postflight response (200)
 ```
 
-Where `<machine_id>` is a unique string identifier for the client by default Santa uses the `IOPlatformUUID` from IOKit's
-`IOPlatformExpertDevice`. It may also be set using the [MachineID, MachineIDPlist, and MachineIDKey options](../deployment/configuration.md) in the configuration.
+Where `<machine_id>` is a unique string identifier for the client. By default
+Santa uses the hardware UUID. It may also be set using the [MachineID, MachineIDPlist, and MachineIDKey options](../deployment/configuration.md) in the
+configuration.
 
 ## Authentication
 
@@ -297,7 +298,7 @@ The server should reply with an HTTP 200 if the request was successfully receive
 
 ### Rule Download
 
-After Events have been uploaded to the Sync server, the Client then initiates the `ruledownload` request. 
+After events have been uploaded to the sync server, the `ruledownload` stage begins in a full sync. 
 
 Like the previous stages this is a simple HTTP request response cycle like so:
 
@@ -307,7 +308,7 @@ sequenceDiagram
    server -->> client: ruledownload response
 ```
 
-If either the client or server requested a clean sync in the preflight stage, the client is expected to purge its existing rules and download new rules from the sync server.
+If either the client or server requested a clean sync in the `preflight` stage, the client is expected to purge its existing rules and download new rules from the sync server.
 
 If a clean sync was not requested by either the client or the sync service, then the sync service should only send new rules seen since the last time the client synced.
 
@@ -315,11 +316,11 @@ Santa applies rules idempoently and is designed to receive rules multiple times 
 
 #### `ruledownload` Request
 
-Rules are retrieved from the sync server by having the client (Santa) issue an HTTP POST request to the url `/ruledownload/<machine_id>`
+ This stage is initiated via an HTTP POST request to the URL `/ruledownload/<machine_id>`
 
 | Key | Required | Type | Meaning |
 |---|---|---|---|
-| cursor | NO | string | a field used by the Sync Server to indicate where the next batch of rules should start |
+| cursor | NO | string | a field used by the sync server to indicate where the next batch of rules should start |
 
 
 ##### `ruledownload` Request Example Payload 
