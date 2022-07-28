@@ -67,8 +67,8 @@ All URLs are of the form `/<stage_name>/<machine_id>`, e.g. the preflight URL is
 
 ### Preflight
 
-The preflight stage is used by the client to report host information to the Sync
-Server and to retrieve a limited set of configuration settings from the server.
+The preflight stage is used by the client to report host information to the sync
+server and to retrieve a limited set of configuration settings from the server.
 These configuration options override the initial values set from the application
 configuration profile.
 
