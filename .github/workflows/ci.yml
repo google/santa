@@ -29,7 +29,7 @@ jobs:
      - uses: actions/checkout@v2
      - name: Build Userspace
        run: |
-         echo "echo "{path}" >> $GITHUB_PATH" >> $GITHUB_PATH
+         echo "/opt/homebrew/bin/" >> $GITHUB_PATH
          bazel build --apple_generate_dsym -c opt :release --define=SANTA_BUILD_TYPE=adhoc
 
   unit_tests:
@@ -42,7 +42,7 @@ jobs:
       - uses: actions/checkout@v2
       - name: Run All Tests
         run: |
-         echo "echo "{path}" >> $GITHUB_PATH" >> $GITHUB_PATH
+         echo "/opt/homebrew/bin/" >> $GITHUB_PATH
          bazel test :unit_tests --define=SANTA_BUILD_TYPE=adhoc --test_output=errors
 
   test_coverage:
