@@ -28,10 +28,7 @@ jobs:
     steps:
      - uses: actions/checkout@v2
      - name: Build Userspace
-       run: 
-         - echo $PATH
-         - whoami
-         #- bazel build --apple_generate_dsym -c opt :release --define=SANTA_BUILD_TYPE=adhoc
+       run:  echo $PATH && whoami #bazel build --apple_generate_dsym -c opt :release --define=SANTA_BUILD_TYPE=adhoc
 
   unit_tests:
     strategy:
