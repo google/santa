@@ -25,7 +25,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [macos-10.15, macos-11, macos-12]
+        os: [self-hosted]
     runs-on: ${{ matrix.os }}
     steps:
      - uses: actions/checkout@v2
@@ -36,7 +36,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [macos-10.15, macos-11, macos-12]
+        os: [self-hosted]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v2
