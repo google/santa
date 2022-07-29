@@ -27,10 +27,10 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
      - uses: actions/checkout@v2
+     - name: set path
+       run: echo "/opt/homebrew/bin/" >> $GITHUB_PATH
      - name: Build Userspace
-       run: |
-         echo "/opt/homebrew/bin/" >> $GITHUB_PATH
-         bazel build --apple_generate_dsym -c opt :release --define=SANTA_BUILD_TYPE=adhoc
+       run: bazel build --apple_generate_dsym -c opt :release --define=SANTA_BUILD_TYPE=adhoc
 
   unit_tests:
     strategy:
@@ -40,10 +40,10 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v2
+      - name: set path
+       run: echo "/opt/homebrew/bin/" >> $GITHUB_PATH
       - name: Run All Tests
-        run: |
-         echo "/opt/homebrew/bin/" >> $GITHUB_PATH
-         bazel test :unit_tests --define=SANTA_BUILD_TYPE=adhoc --test_output=errors
+        run: bazel test :unit_tests --define=SANTA_BUILD_TYPE=adhoc --test_output=errors
 
   test_coverage:
     runs-on: macos-11
