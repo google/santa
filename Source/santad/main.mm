@@ -18,8 +18,10 @@
 
 #import "Source/common/SNTLogging.h"
 #import "Source/common/SNTXPCControlInterface.h"
+#include "Source/santad/metrics.h"
 #import "Source/santad/santad.h"
 
+using santa::santad::Metrics;
 using santa::santad::logs::endpoint_security::writers::File;
 
 // Number of seconds to wait between checks.
@@ -150,15 +152,18 @@ int main(int argc, char *argv[]) {
 
     MOLXPCConnection *controlConnection =
         [[MOLXPCConnection alloc] initServerWithName:[SNTXPCControlInterface serviceID]];
-
     controlConnection.privilegedInterface = [SNTXPCControlInterface controlInterface];
     controlConnection.unprivilegedInterface = [SNTXPCUnprivilegedControlInterface controlInterface];
-    // auto es_api = std::make_shared<EndpointSecurityAPI>();
-    // SantadMain(es_api);
-    // TODO: Better handle dependencies
+
+    // TODO: This interval needs to be updated to the proper `metricExportInterval` from the Configurator
+    std::shared_ptr<Metrics> metrics = Metrics::Create(30);
+
     // TODO: This path needs to be updated to the proper one from the Configurator
     auto file = File::Create(@"/var/log/s/s.log");
-    SantadMain(controlConnection, file);
+
+    // auto es_api = std::make_shared<EndpointSecurityAPI>();
+    // TODO: Better handle dependencies
+    SantadMain(controlConnection, file, metrics);
 
     // TODO: Remove `--quick` support used during development
 

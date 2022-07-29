@@ -41,6 +41,7 @@
 #import "Source/santad/SNTNotificationQueue.h"
 #import "Source/santad/SNTSyncdQueue.h"
 
+using santa::santad::Metrics;
 using santa::santad::event_providers::AuthResultCache;
 using santa::santad::event_providers::FlushCacheMode;
 using santa::santad::event_providers::endpoint_security::EndpointSecurityAPI;
@@ -74,7 +75,8 @@ static void EstablishSyncServiceConnection(SNTSyncdQueue *syncd_queue) {
 
 // TODO: Change return type
 int SantadMain(MOLXPCConnection* controlConnection,
-               std::shared_ptr<File> file) {
+               std::shared_ptr<File> file,
+               std::shared_ptr<Metrics> metrics) {
   SNTConfigurator *configurator = [SNTConfigurator configurator];
 
   SNTRuleTable *rule_table = [SNTDatabaseController ruleTable];
@@ -125,6 +127,10 @@ int SantadMain(MOLXPCConnection* controlConnection,
 
   controlConnection.exportedObject = dc;
   [controlConnection resume];
+
+  if ([configurator exportMetrics]) {
+    metrics->StartPoll();
+  }
 
   SNTEndpointSecurityDeviceManager *device_client =
       [[SNTEndpointSecurityDeviceManager alloc] initWithESAPI:es_api

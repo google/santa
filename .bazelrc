@@ -4,3 +4,12 @@ build --copt=-Werror
 build --copt=-Wall
 build --copt=-Wno-error=deprecated-declarations
 build --per_file_copt=.*\.mm\$@-std=c++17
+
+build:asan --strip=never
+build:asan --copt="-Wno-macro-redefined"
+build:asan --copt="-D_FORTIFY_SOURCE=0"
+build:asan --copt="-O1"
+build:asan --copt="-fno-omit-frame-pointer"
+build:asan --copt="-fsanitize=address"
+build:asan --copt="-DADDRESS_SANITIZER"
+build:asan --linkopt="-fsanitize=address"

@@ -16,10 +16,13 @@
 #define SANTA__SANTAD_SANTAD_H
 
 #import <MOLXPCConnection/MOLXPCConnection.h>
+
+#include "Source/santad/metrics.h"
 #include "Source/santad/Logs/EndpointSecurity/Writers/File.h"
 
 int SantadMain(
     MOLXPCConnection* controlConnection,
-    std::shared_ptr<santa::santad::logs::endpoint_security::writers::File> file);
+    std::shared_ptr<santa::santad::logs::endpoint_security::writers::File> file,
+    std::shared_ptr<santa::santad::Metrics> metrics);
 
 #endif

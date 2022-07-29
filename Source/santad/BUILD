@@ -598,6 +598,7 @@ objc_library(
         ":EndpointSecuritySerializerBasicString",
         ":EndpointSecurityWriterSyslog",
         ":EndpointSecurityWriterFile",
+        ":Metrics",
         ":SNTCompilerController",
         ":SNTDaemonControlController",
         ":SNTDatabaseController",
@@ -639,11 +640,25 @@ objc_library(
 )
 
 objc_library(
+    name = "Metrics",
+    srcs = ["metrics.mm"],
+    hdrs = ["metrics.h"],
+    deps = [
+      ":SNTApplicationCoreMetrics",
+      "//Source/common:SNTLogging",
+      "//Source/common:SNTMetricSet",
+      "//Source/common:SNTXPCMetricServiceInterface",
+      "@MOLXPCConnection",
+    ],
+)
+
+objc_library(
     name = "santad_main",
     srcs = ["main.mm"],
     deps = [
         ":SNTDaemonControlController",
         ":santad",
+        "//Source/common:SNTXPCControlInterface",
         "//Source/common:SNTLogging",
     ],
     sdk_dylibs = [

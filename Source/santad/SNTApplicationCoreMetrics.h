@@ -12,6 +12,10 @@
 ///    See the License for the specific language governing permissions and
 ///    limitations under the License.
 
-#import "Source/common/SNTMetricSet.h"
+#include <sys/cdefs.h>
+
+__BEGIN_DECLS
 
 void SNTRegisterCoreMetrics();
+
+__END_DECLS
