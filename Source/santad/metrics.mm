@@ -34,11 +34,6 @@ std::shared_ptr<Metrics> Metrics::Create(uint64_t interval) {
       0,
       q);
 
-  dispatch_source_set_timer(timer_source,
-                            dispatch_time(DISPATCH_TIME_NOW, 0),
-                            interval * NSEC_PER_SEC,
-                            250 * NSEC_PER_MSEC);
-
   MOLXPCConnection *metrics_connection =
       [SNTXPCMetricServiceInterface configuredConnection];
 
@@ -73,6 +68,7 @@ Metrics::Metrics(MOLXPCConnection* metrics_connection,
                  uint64_t interval)
     : q_(q), timer_source_(timer_source), interval_(interval), running_(false) {
   metrics_connection_ = metrics_connection;
+  SetInterval(interval_);
 }
 
 Metrics::~Metrics() {
@@ -81,6 +77,19 @@ Metrics::~Metrics() {
     // set `running_` to true so that nothing will get exported.
     dispatch_resume(timer_source_);
   }
+}
+
+void Metrics::SetInterval(uint64_t interval) {
+  dispatch_sync(q_, ^{
+    LOGI(@"Setting metrics interval to %llu (exporting? %s)",
+         interval,
+         running_ ? "YES" : "NO");
+    interval_ = interval;
+    dispatch_source_set_timer(timer_source_,
+                              dispatch_time(DISPATCH_TIME_NOW, 0),
+                              interval_ * NSEC_PER_SEC,
+                              250 * NSEC_PER_MSEC);
+  });
 }
 
 void Metrics::StartPoll() {

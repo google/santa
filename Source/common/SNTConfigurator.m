@@ -40,6 +40,9 @@
 
 @property (nonatomic, copy) void (^clientModeChanged)(SNTClientMode);
 @property (nonatomic, copy) void (^syncBaseURLChanged)(NSURL*);
+@property (nonatomic, copy) void (^exportMetricsChanged)(BOOL, BOOL);
+@property (nonatomic, copy) void (^metricExportIntervalChanged)(NSUInteger,
+                                                                NSUInteger);
 @property (nonatomic, copy) void (^allowedOrBlockedPathRegexChanged)(void);
 @property (nonatomic, copy) void (^blockUSBMountChanged)(BOOL, BOOL);
 @property (nonatomic, copy) void (^remountUSBModeChanged)(NSArray<NSString *>*,
@@ -50,6 +53,8 @@
 
 - (void) observeClientMode:(void(^)(SNTClientMode))clientModeChanged
                syncBaseURL:(void(^)(NSURL*))syncBaseURLChanged
+             exportMetrics:(void(^)(BOOL, BOOL))exportMetricsChanged
+      metricExportInterval:(void(^)(NSUInteger, NSUInteger))metricExportIntervalChanged
  allowedOrBlockedPathRegex:(void(^)(void))allowedOrBlockedPathRegexChanged
              blockUSBMount:(void(^)(BOOL, BOOL))blockUSBMountChanged
             remountUSBMode:(void(^)(NSArray<NSString *>*, NSArray<NSString *>*))remountUSBModeChanged {
@@ -66,6 +71,8 @@
 
   self.clientModeChanged = clientModeChanged;
   self.syncBaseURLChanged = syncBaseURLChanged;
+  self.exportMetricsChanged = exportMetricsChanged;
+  self.metricExportIntervalChanged = metricExportIntervalChanged;
   self.allowedOrBlockedPathRegexChanged = allowedOrBlockedPathRegexChanged;
   self.blockUSBMountChanged = blockUSBMountChanged;
   self.remountUSBModeChanged = remountUSBModeChanged;
@@ -77,6 +84,14 @@
             context:NULL];
   [self addObserver:self
          forKeyPath:NSStringFromSelector(@selector(syncBaseURL))
+            options:bits
+            context:NULL];
+  [self addObserver:self
+         forKeyPath:NSStringFromSelector(@selector(exportMetrics))
+            options:bits
+            context:NULL];
+  [self addObserver:self
+         forKeyPath:NSStringFromSelector(@selector(metricExportInterval))
             options:bits
             context:NULL];
   [self addObserver:self
@@ -119,6 +134,12 @@
     if (![new.absoluteString isEqualToString:old.absoluteString]) {
       self.syncBaseURLChanged(new);
     }
+  } else if ([keyPath isEqualToString:NSStringFromSelector(@selector(exportMetrics))]) {
+    self.exportMetricsChanged([change[oldKey] boolValue], [change[newKey] boolValue]);
+  } else if ([keyPath isEqualToString:NSStringFromSelector(@selector(metricExportInterval))]) {
+    self.metricExportIntervalChanged([change[oldKey] unsignedIntegerValue],
+                                     [change[newKey] unsignedIntegerValue]);
+
   } else if ([keyPath isEqualToString:NSStringFromSelector(@selector(allowedPathRegex))] ||
              [keyPath isEqualToString:NSStringFromSelector(@selector(blockedPathRegex))]) {
     NSRegularExpression *new =

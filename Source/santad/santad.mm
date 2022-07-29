@@ -200,6 +200,21 @@ int SantadMain(MOLXPCConnection* controlConnection,
                                               afterDelay:600];
         }
       }
+      exportMetrics:^(BOOL old_val, BOOL new_val) {
+        if (old_val == NO && new_val == YES) {
+          LOGI(@"metricsExport changed NO -> YES, starting to export metrics");
+          metrics->StartPoll();
+        } else if (old_val == YES && new_val == NO) {
+          LOGI(@"metricsExport changed YES -> NO, stopping export of metrics");
+          metrics->StopPoll();
+        }
+      }
+      metricExportInterval:^(NSUInteger old_val, NSUInteger new_val) {
+        LOGI(@"MetricExportInterval changed from %ld to %ld restarting export",
+             old_val,
+             new_val);
+        metrics->SetInterval(new_val);
+      }
       allowedOrBlockedPathRegex:^() {
         LOGI(@"Changed [allow|deny]list regex, flushing cache");
         auth_result_cache->FlushCache(FlushCacheMode::kAllCaches);

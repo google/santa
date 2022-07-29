@@ -35,6 +35,7 @@ public:
 
   void StartPoll();
   void StopPoll();
+  void SetInterval(uint64_t interval);
 
 private:
   MOLXPCConnection *metrics_connection_;
