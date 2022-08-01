@@ -34,9 +34,6 @@
 #import "Source/santad/EventProviders/SNTEndpointSecurityRecorder.h"
 #import "Source/santad/EventProviders/SNTEndpointSecurityTamperResistance.h"
 #include "Source/santad/Logs/EndpointSecurity/Logger.h"
-#include "Source/santad/Logs/EndpointSecurity/Serializers/BasicString.h"
-#include "Source/santad/Logs/EndpointSecurity/Writers/File.h"
-#include "Source/santad/Logs/EndpointSecurity/Writers/Syslog.h"
 #import "Source/santad/SNTExecutionController.h"
 #import "Source/santad/SNTNotificationQueue.h"
 #import "Source/santad/SNTSyncdQueue.h"
@@ -46,9 +43,6 @@ using santa::santad::event_providers::AuthResultCache;
 using santa::santad::event_providers::FlushCacheMode;
 using santa::santad::event_providers::endpoint_security::EndpointSecurityAPI;
 using santa::santad::event_providers::endpoint_security::Enricher;
-using santa::santad::logs::endpoint_security::serializers::BasicString;
-using santa::santad::logs::endpoint_security::writers::Syslog;
-using santa::santad::logs::endpoint_security::writers::File;
 using santa::santad::logs::endpoint_security::Logger;
 
 static void EstablishSyncServiceConnection(SNTSyncdQueue *syncd_queue) {
@@ -75,7 +69,7 @@ static void EstablishSyncServiceConnection(SNTSyncdQueue *syncd_queue) {
 
 // TODO: Change return type
 int SantadMain(MOLXPCConnection* controlConnection,
-               std::shared_ptr<File> file,
+               std::shared_ptr<Logger> logger,
                std::shared_ptr<Metrics> metrics) {
   SNTConfigurator *configurator = [SNTConfigurator configurator];
 
@@ -114,8 +108,6 @@ int SantadMain(MOLXPCConnection* controlConnection,
 
   auto es_api = std::make_shared<EndpointSecurityAPI>();
   std::shared_ptr<Enricher> enricher = std::make_shared<Enricher>();
-  auto logger = std::make_shared<Logger>(std::make_shared<BasicString>(),
-                                         file);
 
   auto auth_result_cache = std::make_shared<AuthResultCache>(es_api);
 

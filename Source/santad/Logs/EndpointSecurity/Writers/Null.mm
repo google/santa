@@ -12,18 +12,16 @@
 ///    See the License for the specific language governing permissions and
 ///    limitations under the License.
 
-#include "Source/santad/Logs/EndpointSecurity/Writers/Syslog.h"
-
-#include <os/log.h>
+#include "Source/santad/Logs/EndpointSecurity/Writers/Null.h"
 
 namespace santa::santad::logs::endpoint_security::writers {
 
-std::shared_ptr<Syslog> Syslog::Create() {
-  return std::make_shared<Syslog>();
+std::shared_ptr<Null> Null::Create() {
+  return std::make_shared<Null>();
 }
 
-void Syslog::Write(std::vector<uint8_t>&& bytes) {
-  os_log(OS_LOG_DEFAULT, "%{public}s", bytes.data());
+void Null::Write(std::vector<uint8_t>&& bytes) {
+  // Intentionally do nothing
 }
 
 } // namespace santa::santad::logs::endpoint_security::writers

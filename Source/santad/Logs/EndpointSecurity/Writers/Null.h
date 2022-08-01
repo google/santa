@@ -12,41 +12,22 @@
 ///    See the License for the specific language governing permissions and
 ///    limitations under the License.
 
-#ifndef SANTA__SANTAD__LOGS_ENDPOINTSECURITY_WRITERS_FILE_H
-#define SANTA__SANTAD__LOGS_ENDPOINTSECURITY_WRITERS_FILE_H
+#ifndef SANTA__SANTAD__LOGS_ENDPOINTSECURITY_WRITERS_NULL_H
+#define SANTA__SANTAD__LOGS_ENDPOINTSECURITY_WRITERS_NULL_H
 
 #include "Source/santad/Logs/EndpointSecurity/Writers/Writer.h"
-
-#include <dispatch/dispatch.h>
-#include <Foundation/Foundation.h>
 
 #include <memory>
 #include <vector>
 
 namespace santa::santad::logs::endpoint_security::writers {
 
-class File : public Writer,
-             public std::enable_shared_from_this<File> {
+class Null : public Writer {
 public:
   // Factory
-  static std::shared_ptr<File> Create(NSString* path);
-
-  File(NSString* path, dispatch_queue_t q, dispatch_source_t timer_source);
-  ~File();
+  static std::shared_ptr<Null> Create();
 
   void Write(std::vector<uint8_t>&& bytes) override;
-
-private:
-  void OpenFileHandle();
-  void WatchLogFile();
-  void FlushBuffer();
-
-  std::vector<uint8_t> buffer_;
-  dispatch_queue_t q_;
-  dispatch_source_t timer_source_;
-  dispatch_source_t watch_source_;
-  NSString *path_;
-  NSFileHandle *file_handle_;
 };
 
 } // namespace santa::santad::logs::endpoint_security::writers

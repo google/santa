@@ -12,17 +12,32 @@
 ///    See the License for the specific language governing permissions and
 ///    limitations under the License.
 
-#ifndef SANTA__SANTAD_SANTAD_H
-#define SANTA__SANTAD_SANTAD_H
+#ifndef SANTA__SANTAD__SANTAD_DEPS_H
+#define SANTA__SANTAD__SANTAD_DEPS_H
 
-#import <MOLXPCConnection/MOLXPCConnection.h>
+#include <Foundation/Foundation.h>
 
-#include "Source/santad/metrics.h"
+#include <memory>
+
+#include "Source/common/SNTConfigurationProvider.h"
 #include "Source/santad/Logs/EndpointSecurity/Logger.h"
 
-int SantadMain(
-    MOLXPCConnection* controlConnection,
-    std::shared_ptr<santa::santad::logs::endpoint_security::Logger> logger,
-    std::shared_ptr<santa::santad::Metrics> metrics);
+namespace santa::santad {
+
+class SantadDeps {
+public:
+  static std::unique_ptr<SantadDeps> Create(
+      id<SNTConfigurationProvider> config_provider);
+
+  SantadDeps(
+      std::unique_ptr<santa::santad::logs::endpoint_security::Logger> logger);
+
+  std::shared_ptr<santa::santad::logs::endpoint_security::Logger> logger();
+
+private:
+  std::shared_ptr<santa::santad::logs::endpoint_security::Logger> logger_;
+};
+
+} // namespace santa::santad
 
 #endif

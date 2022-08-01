@@ -12,18 +12,13 @@
 ///    See the License for the specific language governing permissions and
 ///    limitations under the License.
 
-#include "Source/santad/Logs/EndpointSecurity/Writers/Syslog.h"
+#import <Foundation/Foundation.h>
 
-#include <os/log.h>
+#import "Source/common/SNTCommonEnums.h"
 
-namespace santa::santad::logs::endpoint_security::writers {
+@protocol SNTConfigurationProvider <NSObject>
 
-std::shared_ptr<Syslog> Syslog::Create() {
-  return std::make_shared<Syslog>();
-}
+- (SNTEventLogType) eventLogType;
+- (NSString*) eventLogPath;
 
-void Syslog::Write(std::vector<uint8_t>&& bytes) {
-  os_log(OS_LOG_DEFAULT, "%{public}s", bytes.data());
-}
-
-} // namespace santa::santad::logs::endpoint_security::writers
+@end

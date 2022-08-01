@@ -12,18 +12,27 @@
 ///    See the License for the specific language governing permissions and
 ///    limitations under the License.
 
-#include "Source/santad/Logs/EndpointSecurity/Writers/Syslog.h"
+#include "Source/santad/santad_deps.h"
 
-#include <os/log.h>
+#include <memory>
 
-namespace santa::santad::logs::endpoint_security::writers {
+using santa::santad::logs::endpoint_security::Logger;
 
-std::shared_ptr<Syslog> Syslog::Create() {
-  return std::make_shared<Syslog>();
+namespace santa::santad {
+
+std::unique_ptr<SantadDeps> SantadDeps::Create(
+    id<SNTConfigurationProvider> config_provider) {
+
+  return std::make_unique<SantadDeps>(
+      Logger::Create([config_provider eventLogType],
+                     [config_provider eventLogPath]));
 }
 
-void Syslog::Write(std::vector<uint8_t>&& bytes) {
-  os_log(OS_LOG_DEFAULT, "%{public}s", bytes.data());
+SantadDeps::SantadDeps(std::unique_ptr<Logger> logger)
+  : logger_(std::move(logger)) {}
+
+std::shared_ptr<Logger> SantadDeps::logger() {
+  return logger_;
 }
 
-} // namespace santa::santad::logs::endpoint_security::writers
+} // namespace santa::santad

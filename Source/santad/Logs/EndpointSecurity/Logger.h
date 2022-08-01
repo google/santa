@@ -20,6 +20,7 @@
 
 #import <Foundation/Foundation.h>
 
+#import "Source/common/SNTCommonEnums.h"
 #import "Source/santad/EventProviders/EndpointSecurity/EnrichedTypes.h"
 #import "Source/santad/EventProviders/EndpointSecurity/Message.h"
 #import "Source/santad/Logs/EndpointSecurity/Serializers/Serializer.h"
@@ -31,9 +32,11 @@ namespace santa::santad::logs::endpoint_security {
 
 class Logger {
 public:
+  static std::unique_ptr<Logger> Create(SNTEventLogType log_type,
+                                        NSString* event_log_path);
+
   Logger(std::shared_ptr<serializers::Serializer> serializer,
-         std::shared_ptr<writers::Writer> writer)
-      : serializer_(std::move(serializer)), writer_(std::move(writer)) {}
+         std::shared_ptr<writers::Writer> writer);
 
   void Log(
       std::shared_ptr<santa::santad::event_providers::endpoint_security::EnrichedMessage> msg);

@@ -89,11 +89,20 @@ objc_library(
 )
 
 objc_library(
+    name = "SNTConfigurationProvider",
+    hdrs = ["SNTConfigurationProvider.h"],
+    deps = [
+        ":SNTCommonEnums",
+    ],
+)
+
+objc_library(
     name = "SNTConfigurator",
     srcs = ["SNTConfigurator.m"],
     hdrs = ["SNTConfigurator.h"],
     deps = [
         ":SNTCommonEnums",
+        ":SNTConfigurationProvider",
         ":SNTRule",
         ":SNTStrengthify",
         ":SNTSystemInfo",

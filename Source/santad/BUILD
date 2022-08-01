@@ -493,7 +493,7 @@ objc_library(
         ":EndpointSecurityEnrichedTypes",
         "//Source/common:SNTLogging",
         "@thread-safe-lru//:thread-safe-lru",
-    ]
+    ],
 )
 
 objc_library(
@@ -501,7 +501,7 @@ objc_library(
     hdrs = ["EventProviders/EndpointSecurity/EnrichedTypes.h"],
     deps = [
         ":EndpointSecurityMessage",
-    ]
+    ],
 )
 
 objc_library(
@@ -510,7 +510,16 @@ objc_library(
     deps = [
         ":EndpointSecurityMessage",
         ":EndpointSecurityEnrichedTypes",
-    ]
+    ],
+)
+
+objc_library(
+    name = "EndpointSecuritySerializerEmpty",
+    srcs = ["Logs/EndpointSecurity/Serializers/Empty.mm"],
+    hdrs = ["Logs/EndpointSecurity/Serializers/Empty.h"],
+    deps = [
+        ":EndpointSecuritySerializer",
+    ],
 )
 
 objc_library(
@@ -522,7 +531,7 @@ objc_library(
         ":SNTDecisionCache",
         "//Source/common:SNTLogging",
         "//Source/common:SNTStoredEvent",
-    ]
+    ],
 )
 
 objc_library(
@@ -536,7 +545,7 @@ objc_library(
     hdrs = ["Logs/EndpointSecurity/Writers/Syslog.h"],
     deps = [
         ":EndpointSecurityWriter",
-    ]
+    ],
 )
 
 objc_library(
@@ -549,12 +558,27 @@ objc_library(
 )
 
 objc_library(
+    name = "EndpointSecurityWriterNull",
+    srcs = ["Logs/EndpointSecurity/Writers/Null.mm"],
+    hdrs = ["Logs/EndpointSecurity/Writers/Null.h"],
+    deps = [
+        ":EndpointSecurityWriter",
+    ]
+)
+
+objc_library(
     name = "EndpointSecurityLogger",
     srcs = ["Logs/EndpointSecurity/Logger.mm"],
     hdrs = ["Logs/EndpointSecurity/Logger.h"],
     deps = [
         ":EndpointSecuritySerializer",
+        ":EndpointSecuritySerializerBasicString",
+        ":EndpointSecuritySerializerEmpty",
         ":EndpointSecurityWriter",
+        ":EndpointSecurityWriterFile",
+        ":EndpointSecurityWriterNull",
+        ":EndpointSecurityWriterSyslog",
+        "//Source/common:SNTCommonEnums",
         "//Source/common:SNTStoredEvent",
     ],
 )
@@ -568,7 +592,7 @@ objc_library(
     hdrs = ["EventProviders/EndpointSecurity/Message.h"],
     deps = [
         ":EndpointSecurityClient",
-    ]
+    ],
 )
 
 objc_library(
@@ -595,9 +619,6 @@ objc_library(
         ":EndpointSecurityAPI",
         ":EndpointSecurityEnricher",
         ":EndpointSecurityLogger",
-        ":EndpointSecuritySerializerBasicString",
-        ":EndpointSecurityWriterSyslog",
-        ":EndpointSecurityWriterFile",
         ":Metrics",
         ":SNTCompilerController",
         ":SNTDaemonControlController",
@@ -653,13 +674,25 @@ objc_library(
 )
 
 objc_library(
+    name = "santad_deps",
+    srcs = ["santad_deps.mm"],
+    hdrs = ["santad_deps.h"],
+    deps = [
+        ":EndpointSecurityLogger",
+        "//Source/common:SNTConfigurationProvider",
+    ],
+)
+
+objc_library(
     name = "santad_main",
     srcs = ["main.mm"],
     deps = [
-        ":SNTDaemonControlController",
         ":santad",
-        "//Source/common:SNTXPCControlInterface",
+        ":santad_deps",
+        ":SNTDaemonControlController",
+        "//Source/common:SNTConfigurator",
         "//Source/common:SNTLogging",
+        "//Source/common:SNTXPCControlInterface",
     ],
     sdk_dylibs = [
         "bsm",

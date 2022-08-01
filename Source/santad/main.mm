@@ -16,13 +16,15 @@
 #include <dispatch/dispatch.h>
 #include <mach/task.h>
 
+#import "Source/common/SNTConfigurator.h"
 #import "Source/common/SNTLogging.h"
 #import "Source/common/SNTXPCControlInterface.h"
 #include "Source/santad/metrics.h"
 #import "Source/santad/santad.h"
+#include "Source/santad/santad_deps.h"
 
+using santa::santad::SantadDeps;
 using santa::santad::Metrics;
-using santa::santad::logs::endpoint_security::writers::File;
 
 // Number of seconds to wait between checks.
 const int kWatchdogTimeInterval = 30;
@@ -150,6 +152,8 @@ int main(int argc, char *argv[]) {
       LOGE(@"Failed to start Santa watchdog");
     }
 
+    auto deps = SantadDeps::Create([SNTConfigurator configurator]);
+
     MOLXPCConnection *controlConnection =
         [[MOLXPCConnection alloc] initServerWithName:[SNTXPCControlInterface serviceID]];
     controlConnection.privilegedInterface = [SNTXPCControlInterface controlInterface];
@@ -158,12 +162,9 @@ int main(int argc, char *argv[]) {
     // TODO: This interval needs to be updated to the proper `metricExportInterval` from the Configurator
     std::shared_ptr<Metrics> metrics = Metrics::Create(30);
 
-    // TODO: This path needs to be updated to the proper one from the Configurator
-    auto file = File::Create(@"/var/log/s/s.log");
-
     // auto es_api = std::make_shared<EndpointSecurityAPI>();
     // TODO: Better handle dependencies
-    SantadMain(controlConnection, file, metrics);
+    SantadMain(controlConnection, deps->logger(), metrics);
 
     // TODO: Remove `--quick` support used during development
 

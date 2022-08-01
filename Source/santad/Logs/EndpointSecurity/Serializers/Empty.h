@@ -12,8 +12,8 @@
 ///    See the License for the specific language governing permissions and
 ///    limitations under the License.
 
-#ifndef SANTA__SANTAD__LOGS_ENDPOINTSECURITY_SERIALIZERS_BASICSTRING_H
-#define SANTA__SANTAD__LOGS_ENDPOINTSECURITY_SERIALIZERS_BASICSTRING_H
+#ifndef SANTA__SANTAD__LOGS_ENDPOINTSECURITY_SERIALIZERS_EMPTY_H
+#define SANTA__SANTAD__LOGS_ENDPOINTSECURITY_SERIALIZERS_EMPTY_H
 
 #include <memory>
 #include <vector>
@@ -22,10 +22,9 @@
 
 namespace santa::santad::logs::endpoint_security::serializers {
 
-class BasicString
-  : public Serializer {
+class Empty : public Serializer {
 public:
-  static std::shared_ptr<BasicString> Create();
+  static std::shared_ptr<Empty> Create();
 
   std::vector<uint8_t> SerializeMessage(
       const santa::santad::event_providers::endpoint_security::EnrichedClose &) override;

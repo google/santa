@@ -382,6 +382,10 @@ static inline std::stringstream CreateDefaultStringStream() {
   return ss;
 }
 
+std::shared_ptr<BasicString> BasicString::Create() {
+  return std::make_shared<BasicString>();
+}
+
 std::vector<uint8_t> BasicString::SerializeMessage(const EnrichedClose& msg) {
   const es_message_t &esm = *msg.es_msg_;
 
@@ -683,4 +687,4 @@ std::vector<uint8_t> BasicString::SerializeDiskDisappeared(NSDictionary* props) 
   return std::vector<uint8_t>(s.begin(), s.end());
 }
 
-} // namespace santa::santad::logs
+} // namespace santa::santad::logs::endpoint_security::serializers
