@@ -11,30 +11,21 @@ on:
       - 'Source/**'
 
 jobs:
-  lint:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      - name: Run linters
-        run: ./Testing/lint.sh
+  # build_userspace:
+  #   strategy:
+  #     fail-fast: false
+  #     matrix:
+  #       os: [self-hosted]
+  #   runs-on: ${{ matrix.os }}
+  #   steps:
+  #     - uses: actions/checkout@v2
+  #     - name: set path
+  #       run: echo "/opt/homebrew/bin/" >> $GITHUB_PATH
+  #     - name: Build Userspace
+  #       run: bazel build --apple_generate_dsym -c opt :release --define=SANTA_BUILD_TYPE=adhoc
 
-
-  build_userspace:
+  integration:
     strategy:
-      fail-fast: false
-      matrix:
-        os: [self-hosted]
-    runs-on: ${{ matrix.os }}
-    steps:
-     - uses: actions/checkout@v2
-     - name: set path
-       run: echo "/opt/homebrew/bin/" >> $GITHUB_PATH
-     - name: Build Userspace
-       run: bazel build --apple_generate_dsym -c opt :release --define=SANTA_BUILD_TYPE=adhoc
-
-  unit_tests:
-    strategy:
-      fail-fast: false
       matrix:
         os: [self-hosted]
     runs-on: ${{ matrix.os }}
@@ -42,5 +33,25 @@ jobs:
       - uses: actions/checkout@v2
       - name: set path
         run: echo "/opt/homebrew/bin/" >> $GITHUB_PATH
-      - name: Run All Tests
-        run: bazel test :unit_tests --define=SANTA_BUILD_TYPE=adhoc --test_output=errors
+      - name: run moroz
+        run: |
+          go install github.com/groob/moroz/cmd/moroz@latest
+          ./Testing/init_dev_certs.sh
+          ~/go/bin/moroz -configs="$GIT_ROOT/Testing/global.toml" -tls-key server.key -tls-cert server.crt &
+      - name: adhoc run
+        run: bazel run :reload --define=SANTA_BUILD_TYPE=adhoc
+      - name: try running binaries
+        run: bazel test :integration_tests
+
+  # unit_tests:
+  #   strategy:
+  #     fail-fast: false
+  #     matrix:
+  #       os: [self-hosted]
+  #   runs-on: ${{ matrix.os }}
+  #   steps:
+  #     - uses: actions/checkout@v2
+  #     - name: set path
+  #       run: echo "/opt/homebrew/bin/" >> $GITHUB_PATH
+  #     - name: Run All Tests
+  #       run: bazel test :unit_tests --define=SANTA_BUILD_TYPE=adhoc --test_output=errors
