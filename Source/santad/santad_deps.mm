@@ -15,7 +15,12 @@
 #include "Source/santad/santad_deps.h"
 
 #include <memory>
+#include "Source/santad/EventProviders/EndpointSecurity/EndpointSecurityAPI.h"
 
+using santa::santad::Metrics;
+using santa::santad::event_providers::AuthResultCache;
+using santa::santad::event_providers::endpoint_security::EndpointSecurityAPI;
+using santa::santad::event_providers::endpoint_security::Enricher;
 using santa::santad::logs::endpoint_security::Logger;
 
 namespace santa::santad {
@@ -24,15 +29,40 @@ std::unique_ptr<SantadDeps> SantadDeps::Create(
     id<SNTConfigurationProvider> config_provider) {
 
   return std::make_unique<SantadDeps>(
+      [config_provider metricExportTimeout],
+      std::make_shared<EndpointSecurityAPI>(),
       Logger::Create([config_provider eventLogType],
                      [config_provider eventLogPath]));
 }
 
-SantadDeps::SantadDeps(std::unique_ptr<Logger> logger)
-  : logger_(std::move(logger)) {}
+SantadDeps::SantadDeps(
+    NSUInteger metric_export_interval,
+    std::shared_ptr<EndpointSecurityAPI> esapi,
+    std::unique_ptr<::Logger> logger)
+    : esapi_(std::move(esapi)),
+      logger_(std::move(logger)),
+      metrics_(Metrics::Create(metric_export_interval)),
+      enricher_(std::make_shared<::Enricher>()),
+      auth_result_cache_(std::make_shared<::AuthResultCache>(esapi_)) {}
 
-std::shared_ptr<Logger> SantadDeps::logger() {
+
+std::shared_ptr<::AuthResultCache> SantadDeps::AuthResultCache() {
+  return auth_result_cache_;
+}
+
+std::shared_ptr<Enricher> SantadDeps::Enricher() {
+  return enricher_;
+}
+std::shared_ptr<EndpointSecurityAPI> SantadDeps::ESAPI() {
+  return esapi_;
+}
+
+std::shared_ptr<Logger> SantadDeps::Logger() {
   return logger_;
+}
+
+std::shared_ptr<santa::santad::Metrics> SantadDeps::Metrics() {
+  return metrics_;
 }
 
 } // namespace santa::santad

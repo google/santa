@@ -18,11 +18,17 @@
 #import <MOLXPCConnection/MOLXPCConnection.h>
 
 #include "Source/santad/metrics.h"
+#include "Source/santad/EventProviders/AuthResultCache.h"
+#include "Source/santad/EventProviders/EndpointSecurity/EndpointSecurityAPI.h"
+#include "Source/santad/EventProviders/EndpointSecurity/Enricher.h"
 #include "Source/santad/Logs/EndpointSecurity/Logger.h"
 
 int SantadMain(
     MOLXPCConnection* controlConnection,
+    std::shared_ptr<santa::santad::event_providers::endpoint_security::EndpointSecurityAPI> esapi,
     std::shared_ptr<santa::santad::logs::endpoint_security::Logger> logger,
-    std::shared_ptr<santa::santad::Metrics> metrics);
+    std::shared_ptr<santa::santad::Metrics> metrics,
+    std::shared_ptr<santa::santad::event_providers::endpoint_security::Enricher> enricher,
+    std::shared_ptr<santa::santad::event_providers::AuthResultCache> auth_result_cache);
 
 #endif

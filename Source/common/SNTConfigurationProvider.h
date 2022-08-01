@@ -20,5 +20,7 @@
 
 - (SNTEventLogType) eventLogType;
 - (NSString*) eventLogPath;
+- (NSUInteger) metricExportTimeout;
+
 
 @end

@@ -19,12 +19,10 @@
 #import "Source/common/SNTConfigurator.h"
 #import "Source/common/SNTLogging.h"
 #import "Source/common/SNTXPCControlInterface.h"
-#include "Source/santad/metrics.h"
 #import "Source/santad/santad.h"
 #include "Source/santad/santad_deps.h"
 
 using santa::santad::SantadDeps;
-using santa::santad::Metrics;
 
 // Number of seconds to wait between checks.
 const int kWatchdogTimeInterval = 30;
@@ -159,12 +157,13 @@ int main(int argc, char *argv[]) {
     controlConnection.privilegedInterface = [SNTXPCControlInterface controlInterface];
     controlConnection.unprivilegedInterface = [SNTXPCUnprivilegedControlInterface controlInterface];
 
-    // TODO: This interval needs to be updated to the proper `metricExportInterval` from the Configurator
-    std::shared_ptr<Metrics> metrics = Metrics::Create(30);
-
-    // auto es_api = std::make_shared<EndpointSecurityAPI>();
     // TODO: Better handle dependencies
-    SantadMain(controlConnection, deps->logger(), metrics);
+    SantadMain(controlConnection,
+               deps->ESAPI(),
+               deps->Logger(),
+               deps->Metrics(),
+               deps->Enricher(),
+               deps->AuthResultCache());
 
     // TODO: Remove `--quick` support used during development
 

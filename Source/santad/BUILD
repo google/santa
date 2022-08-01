@@ -419,8 +419,8 @@ objc_library(
     hdrs = ["EventProviders/SNTEndpointSecurityRecorder.h"],
     deps = [
         ":AuthResultCache",
-        ":EndpointSecurityAPI",
         ":EndpointSecurityEnricher",
+        ":EndpointSecurityAPI",
         ":EndpointSecurityLogger",
         ":SNTCompilerController",
         ":SNTEndpointSecurityClient",
@@ -678,7 +678,11 @@ objc_library(
     srcs = ["santad_deps.mm"],
     hdrs = ["santad_deps.h"],
     deps = [
+        ":AuthResultCache",
+        ":EndpointSecurityEnricher",
+        ":EndpointSecurityAPI",
         ":EndpointSecurityLogger",
+        ":Metrics",
         "//Source/common:SNTConfigurationProvider",
     ],
 )

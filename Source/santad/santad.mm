@@ -69,8 +69,11 @@ static void EstablishSyncServiceConnection(SNTSyncdQueue *syncd_queue) {
 
 // TODO: Change return type
 int SantadMain(MOLXPCConnection* controlConnection,
+               std::shared_ptr<EndpointSecurityAPI> esapi,
                std::shared_ptr<Logger> logger,
-               std::shared_ptr<Metrics> metrics) {
+               std::shared_ptr<Metrics> metrics,
+               std::shared_ptr<Enricher> enricher,
+               std::shared_ptr<AuthResultCache> auth_result_cache) {
   SNTConfigurator *configurator = [SNTConfigurator configurator];
 
   SNTRuleTable *rule_table = [SNTDatabaseController ruleTable];
@@ -106,11 +109,6 @@ int SantadMain(MOLXPCConnection* controlConnection,
     prefix_tree->AddPrefix([filter fileSystemRepresentation]);
   }
 
-  auto es_api = std::make_shared<EndpointSecurityAPI>();
-  std::shared_ptr<Enricher> enricher = std::make_shared<Enricher>();
-
-  auto auth_result_cache = std::make_shared<AuthResultCache>(es_api);
-
   SNTDaemonControlController *dc =
       [[SNTDaemonControlController alloc] initWithAuthResultCache:auth_result_cache
                                                 notificationQueue:notifier_queue
@@ -125,7 +123,7 @@ int SantadMain(MOLXPCConnection* controlConnection,
   }
 
   SNTEndpointSecurityDeviceManager *device_client =
-      [[SNTEndpointSecurityDeviceManager alloc] initWithESAPI:es_api
+      [[SNTEndpointSecurityDeviceManager alloc] initWithESAPI:esapi
                                                        logger:logger
                                               authResultCache:auth_result_cache];
 
@@ -140,7 +138,7 @@ int SantadMain(MOLXPCConnection* controlConnection,
     };
 
   SNTEndpointSecurityRecorder *monitor_client =
-      [[SNTEndpointSecurityRecorder alloc] initWithESAPI:es_api
+      [[SNTEndpointSecurityRecorder alloc] initWithESAPI:esapi
                                                   logger:logger
                                                 enricher:enricher
                                       compilerController:compiler_controller
@@ -148,14 +146,14 @@ int SantadMain(MOLXPCConnection* controlConnection,
                                               prefixTree:prefix_tree];
 
   SNTEndpointSecurityAuthorizer *authorizer_client =
-      [[SNTEndpointSecurityAuthorizer alloc] initWithESAPI:es_api
+      [[SNTEndpointSecurityAuthorizer alloc] initWithESAPI:esapi
                                                     logger:logger
                                             execController:exec_controller
                                         compilerController:compiler_controller
                                            authResultCache:auth_result_cache];
 
   SNTEndpointSecurityTamperResistance *tamper_client =
-      [[SNTEndpointSecurityTamperResistance alloc] initWithESAPI:es_api
+      [[SNTEndpointSecurityTamperResistance alloc] initWithESAPI:esapi
                                                           logger:logger];
 
   EstablishSyncServiceConnection(syncd_queue);
