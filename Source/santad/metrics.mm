@@ -96,6 +96,7 @@ void Metrics::StartPoll() {
   static dispatch_once_t once_token;
   dispatch_once(&once_token, ^{
     SNTRegisterCoreMetrics();
+    [metrics_connection_ resume];
   });
 
   dispatch_sync(q_, ^{
