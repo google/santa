@@ -611,33 +611,6 @@ objc_library(
 )
 
 objc_library(
-    name = "santad",
-    srcs = ["santad.mm"],
-    hdrs = ["santad.h"],
-    deps = [
-        ":AuthResultCache",
-        ":EndpointSecurityAPI",
-        ":EndpointSecurityEnricher",
-        ":EndpointSecurityLogger",
-        ":Metrics",
-        ":SNTCompilerController",
-        ":SNTDaemonControlController",
-        ":SNTDatabaseController",
-        ":SNTEndpointSecurityAuthorizer",
-        ":SNTEndpointSecurityDeviceManager",
-        ":SNTEndpointSecurityRecorder",
-        ":SNTEndpointSecurityTamperResistance",
-        ":SNTExecutionController",
-        ":SNTNotificationQueue",
-        ":SNTSyncdQueue",
-        "//Source/common:SNTConfigurator",
-        "//Source/common:SNTLogging",
-        "//Source/common:SNTPrefixTree",
-        "//Source/common:SNTXPCNotifierInterface",
-    ],
-)
-
-objc_library(
     name = "SNTDaemonControlController",
     srcs = [
         "EventProviders/SNTEventProvider.h",
@@ -674,6 +647,32 @@ objc_library(
 )
 
 objc_library(
+    name = "santad",
+    srcs = ["santad.mm"],
+    hdrs = ["santad.h"],
+    deps = [
+        ":AuthResultCache",
+        ":EndpointSecurityAPI",
+        ":EndpointSecurityEnricher",
+        ":EndpointSecurityLogger",
+        ":Metrics",
+        ":SNTCompilerController",
+        ":SNTDaemonControlController",
+        ":SNTEndpointSecurityAuthorizer",
+        ":SNTEndpointSecurityDeviceManager",
+        ":SNTEndpointSecurityRecorder",
+        ":SNTEndpointSecurityTamperResistance",
+        ":SNTExecutionController",
+        ":SNTNotificationQueue",
+        ":SNTSyncdQueue",
+        "//Source/common:SNTConfigurator",
+        "//Source/common:SNTLogging",
+        "//Source/common:SNTPrefixTree",
+        "//Source/common:SNTXPCNotifierInterface",
+    ],
+)
+
+objc_library(
     name = "santad_deps",
     srcs = ["santad_deps.mm"],
     hdrs = ["santad_deps.h"],
@@ -683,7 +682,15 @@ objc_library(
         ":EndpointSecurityAPI",
         ":EndpointSecurityLogger",
         ":Metrics",
-        "//Source/common:SNTConfigurationProvider",
+        ":SNTCompilerController",
+        ":SNTDatabaseController",
+        ":SNTExecutionController",
+        ":SNTNotificationQueue",
+        ":SNTSyncdQueue",
+        "//Source/common:SNTPrefixTree",
+        "//Source/common:SNTXPCControlInterface",
+        "//Source/common:SNTXPCUnprivilegedControlInterface",
+        "@MOLXPCConnection",
     ],
 )
 

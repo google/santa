@@ -15,7 +15,6 @@
 #import <Foundation/Foundation.h>
 
 #import "Source/common/SNTCommonEnums.h"
-#import "Source/common/SNTConfigurationProvider.h"
 
 @class SNTRule;
 
@@ -24,7 +23,7 @@
 ///  @note This class is designed as a singleton but that is not strictly enforced.
 ///  @note All properties are KVO compliant.
 ///
-@interface SNTConfigurator : NSObject<SNTConfigurationProvider>
+@interface SNTConfigurator : NSObject
 
 #pragma mark - Daemon Settings
 

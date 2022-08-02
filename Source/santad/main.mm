@@ -18,7 +18,6 @@
 
 #import "Source/common/SNTConfigurator.h"
 #import "Source/common/SNTLogging.h"
-#import "Source/common/SNTXPCControlInterface.h"
 #import "Source/santad/santad.h"
 #include "Source/santad/santad_deps.h"
 
@@ -150,20 +149,28 @@ int main(int argc, char *argv[]) {
       LOGE(@"Failed to start Santa watchdog");
     }
 
-    auto deps = SantadDeps::Create([SNTConfigurator configurator]);
+    SNTConfigurator *configurator = [SNTConfigurator configurator];
 
-    MOLXPCConnection *controlConnection =
-        [[MOLXPCConnection alloc] initServerWithName:[SNTXPCControlInterface serviceID]];
-    controlConnection.privilegedInterface = [SNTXPCControlInterface controlInterface];
-    controlConnection.unprivilegedInterface = [SNTXPCUnprivilegedControlInterface controlInterface];
+    // TODO(bur): Add KVO handling for fileChangesPrefixFilters.
+    NSArray<NSString*> *prefix_filters = [@[ @"/.", @"/dev/" ]
+          arrayByAddingObjectsFromArray:[configurator fileChangesPrefixFilters]];
 
-    // TODO: Better handle dependencies
-    SantadMain(controlConnection,
-               deps->ESAPI(),
+    auto deps = SantadDeps::Create([configurator metricExportInterval],
+                                   [configurator eventLogType],
+                                   [configurator eventLogPath],
+                                   prefix_filters);
+
+    SantadMain(deps->ESAPI(),
                deps->Logger(),
                deps->Metrics(),
                deps->Enricher(),
-               deps->AuthResultCache());
+               deps->AuthResultCache(),
+               deps->ControlConnection(),
+               deps->CompilerController(),
+               deps->NotifierQueue(),
+               deps->SyncdQueue(),
+               deps->ExecController(),
+               deps->PrefixTree());
 
     // TODO: Remove `--quick` support used during development
 

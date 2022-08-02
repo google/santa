@@ -19,13 +19,8 @@
 #import "Source/common/SNTConfigurator.h"
 #include "Source/santad/SNTDaemonControlController.h"
 #import "Source/common/SNTLogging.h"
-#import "Source/common/SNTPrefixTree.h"
 #import "Source/common/SNTXPCNotifierInterface.h"
 #import "Source/common/SNTXPCSyncServiceInterface.h"
-#import "Source/santad/DataLayer/SNTEventTable.h"
-#import "Source/santad/DataLayer/SNTRuleTable.h"
-#import "Source/santad/SNTCompilerController.h"
-#import "Source/santad/SNTDatabaseController.h"
 #include "Source/santad/EventProviders/EndpointSecurity/EndpointSecurityAPI.h"
 #include "Source/santad/EventProviders/EndpointSecurity/Enricher.h"
 #include "Source/santad/EventProviders/AuthResultCache.h"
@@ -34,9 +29,6 @@
 #import "Source/santad/EventProviders/SNTEndpointSecurityRecorder.h"
 #import "Source/santad/EventProviders/SNTEndpointSecurityTamperResistance.h"
 #include "Source/santad/Logs/EndpointSecurity/Logger.h"
-#import "Source/santad/SNTExecutionController.h"
-#import "Source/santad/SNTNotificationQueue.h"
-#import "Source/santad/SNTSyncdQueue.h"
 
 using santa::santad::Metrics;
 using santa::santad::event_providers::AuthResultCache;
@@ -67,47 +59,18 @@ static void EstablishSyncServiceConnection(SNTSyncdQueue *syncd_queue) {
   syncd_queue.syncConnection = ss;
 }
 
-// TODO: Change return type
-int SantadMain(MOLXPCConnection* controlConnection,
-               std::shared_ptr<EndpointSecurityAPI> esapi,
-               std::shared_ptr<Logger> logger,
-               std::shared_ptr<Metrics> metrics,
-               std::shared_ptr<Enricher> enricher,
-               std::shared_ptr<AuthResultCache> auth_result_cache) {
+void SantadMain(std::shared_ptr<EndpointSecurityAPI> esapi,
+                std::shared_ptr<Logger> logger,
+                std::shared_ptr<Metrics> metrics,
+                std::shared_ptr<Enricher> enricher,
+                std::shared_ptr<AuthResultCache> auth_result_cache,
+                MOLXPCConnection* control_connection,
+                SNTCompilerController* compiler_controller,
+                SNTNotificationQueue* notifier_queue,
+                SNTSyncdQueue* syncd_queue,
+                SNTExecutionController* exec_controller,
+                std::shared_ptr<SNTPrefixTree> prefix_tree) {
   SNTConfigurator *configurator = [SNTConfigurator configurator];
-
-  SNTRuleTable *rule_table = [SNTDatabaseController ruleTable];
-  if (!rule_table) {
-    LOGE(@"Failed to initialize rule table.");
-    exit(EXIT_FAILURE);
-  }
-
-  SNTEventTable *event_table = [SNTDatabaseController eventTable];
-  if (!event_table) {
-    LOGE(@"Failed to initialize event table.");
-    exit(EXIT_FAILURE);
-  }
-
-  SNTCompilerController *compiler_controller = [[SNTCompilerController alloc] init];
-  SNTNotificationQueue *notifier_queue = [[SNTNotificationQueue alloc] init];
-  SNTSyncdQueue *syncd_queue = [[SNTSyncdQueue alloc] init];
-
-  SNTExecutionController *exec_controller = [[SNTExecutionController alloc]
-      initWithRuleTable:rule_table
-             eventTable:event_table
-          notifierQueue:notifier_queue
-             syncdQueue:syncd_queue];
-
-  auto prefix_tree = std::make_shared<SNTPrefixTree>();
-
-  // TODO(bur): Add KVO handling for fileChangesPrefixFilters.
-  NSArray<NSString*> *filters =
-      [@[ @"/.", @"/dev/" ]
-          arrayByAddingObjectsFromArray:[configurator fileChangesPrefixFilters]];
-
-  for (NSString *filter in filters) {
-    prefix_tree->AddPrefix([filter fileSystemRepresentation]);
-  }
 
   SNTDaemonControlController *dc =
       [[SNTDaemonControlController alloc] initWithAuthResultCache:auth_result_cache
@@ -115,8 +78,8 @@ int SantadMain(MOLXPCConnection* controlConnection,
                                                        syncdQueue:syncd_queue
                                                            logger:logger];
 
-  controlConnection.exportedObject = dc;
-  [controlConnection resume];
+  control_connection.exportedObject = dc;
+  [control_connection resume];
 
   if ([configurator exportMetrics]) {
     metrics->StartPoll();
@@ -225,6 +188,4 @@ int SantadMain(MOLXPCConnection* controlConnection,
   [authorizer_client enable];
   [device_client enable];
   [tamper_client enable];
-
-  return 0;
 }
