@@ -34,7 +34,7 @@ jobs:
       - name: set path
         run: echo "/opt/homebrew/bin/" >> $GITHUB_PATH
       - name: run moroz
-        run: ~/go/bin/moroz -configs="$GIT_ROOT/Testing/global.toml" -use-tls=false &
+        run: ~/go/bin/moroz -configs="$GITHUB_WORKSPACE/Testing/global.toml" -use-tls=false &
       - name: start santa and sync
         run: |
           bazel run :reload --define=SANTA_BUILD_TYPE=adhoc
