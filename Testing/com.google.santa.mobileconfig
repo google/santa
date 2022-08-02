@@ -32,7 +32,7 @@
 								<key>EventDetailText</key>
 								<string>Open in moroz...</string>
 								<key>EventDetailURL</key>
-                                <string>https://localhost:8080/v1/santa/ruledownload/%file_sha%</string>
+                                <string>http://localhost:8080/v1/santa/ruledownload/%file_sha%</string>
                                 <key>MachineOwner</key>
                                 <string>SomeOwner</string>
 								<key>MachineID</key>
@@ -40,7 +40,7 @@
                                 <key>ClientAuthCertificateCN</key>
                                 <string>santa</string>
 								<key>SyncBaseURL</key>
-								<string>https://localhost:8080/v1/santa/</string>
+								<string>http://localhost:8080/v1/santa/</string>
 								<key>UnknownBlockMessage</key>
 								<string>This application has been blocked from executing&lt;br /&gt;because its trustworthiness cannot be determined.</string>
 							</dict>

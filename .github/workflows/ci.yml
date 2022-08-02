@@ -34,14 +34,13 @@ jobs:
       - name: set path
         run: echo "/opt/homebrew/bin/" >> $GITHUB_PATH
       - name: run moroz
+        run: ~/go/bin/moroz -configs="$GIT_ROOT/Testing/global.toml" -use-tls=false &
+      - name: start santa and sync
         run: |
-          go install github.com/groob/moroz/cmd/moroz@latest
-          ./Testing/init_dev_certs.sh
-          ~/go/bin/moroz -configs="$GIT_ROOT/Testing/global.toml" -tls-key server.key -tls-cert server.crt &
-      - name: adhoc run
-        run: bazel run :reload --define=SANTA_BUILD_TYPE=adhoc
-      - name: try running binaries
-        run: bazel test :integration_tests
+          bazel run :reload --define=SANTA_BUILD_TYPE=adhoc
+          sudo santactl sync --debug
+      - name: run integration test binaries
+        run: bazel test //Testing/integration:integration_tests
 
   # unit_tests:
   #   strategy:
