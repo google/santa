@@ -40,6 +40,36 @@
 								<string>Entering Monitor mode&lt;br/&gt;Please be careful!</string>
 								<key>MoreInfoURL</key>
 								<string>https://sync-server-hostname/moreinfo</string>
+								<key>StaticRules</key>
+								<array>
+									<dict>
+										<!-- Always allow files signed by Google LLC -->
+										<key>identifier</key>
+										<string>EQHXZ8M8AV</string>
+										<key>policy</key>
+										<string>ALLOWLIST</string>
+										<key>rule_type</key>
+										<string>TEAMID</string>
+									</dict>
+									<dict>
+										<!-- Always allow files signed by "Internal Tools Certificate" -->
+										<key>identifier</key>
+										<string>b2617611fb6c008bfe9e05b7a633d4f21c403a0a1a88b514a04c3e5e111be025</string>
+										<key>policy</key>
+										<string>ALLOWLIST</string>
+										<key>rule_type</key>
+										<string>CERTIFICATE</string>
+									</dict>
+									<dict>
+										<!-- Always BLOCK the BundleExample.app binary in Santa's testdata files, for testing -->
+										<key>identifier</key>
+										<string>b7c1e3fd640c5f211c89b02c2c6122f78ce322aa5c56eb0bb54bc422a8f8b670</string>
+										<key>policy</key>
+										<string>BLOCKLIST</string>
+										<key>rule_type</key>
+										<string>BINARY</string>
+									</dict>
+								</array>
 								<key>SyncBaseURL</key>
 								<string>https://sync-server-hostname/api/santa/</string>
 								<key>UnknownBlockMessage</key>
