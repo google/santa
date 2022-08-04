@@ -34,7 +34,7 @@ jobs:
   #       run: python3 Testing/integration/actions/start-vm.py VM.bundle.tar.gz.enc
 
   integration:
-    runs-on: [self-hosted inner]
+    runs-on: inner
     steps:
       - uses: actions/checkout@v2
       - name: set path
