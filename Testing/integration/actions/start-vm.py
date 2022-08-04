@@ -43,7 +43,7 @@ if __name__ == "__main__":
         # extract
         print("Extracting...")
         extracted_path.mkdir()
-        subprocess.check_output(['tar', '-C', VMS_DIR, 'xzf', decrypted_tar_path])
+        subprocess.check_output(['tar', '-C', VMS_DIR, 'xSzf', decrypted_tar_path])
         decrypted_tar_path.unlink()
 
     with tempfile.TemporaryDirectory() as snapshot_dir:
