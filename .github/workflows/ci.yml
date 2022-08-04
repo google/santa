@@ -47,8 +47,8 @@ jobs:
           sudo santactl sync --debug
       - name: run integration test binaries
         run: bazel test //Testing/integration:integration_tests
-      - name: poweroff
-        run: sudo shutdown -h now
+      # - name: poweroff
+      #   run: sudo shutdown -h now
 
   # unit_tests:
   #   strategy:
