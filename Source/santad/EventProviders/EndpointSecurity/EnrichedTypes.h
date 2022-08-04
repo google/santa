@@ -19,11 +19,12 @@
 #ifndef SANTA__SANTAD__EVENTPROVIDERS_ENDPOINTSECURITY_ENRICHEDTYPES_H
 #define SANTA__SANTAD__EVENTPROVIDERS_ENDPOINTSECURITY_ENRICHEDTYPES_H
 
-#include <optional>
-#include <string>
-
 #include <time.h>
 #include <uuid/uuid.h>
+
+#include <optional>
+#include <string>
+#include <variant>
 
 #include "Source/santad/EventProviders/EndpointSecurity/Message.h"
 
