@@ -50,6 +50,7 @@ if __name__ == "__main__":
         print(f"Snapshot: {snapshot_dir}")
         # COW copy the image to this tempdir
         subprocess.check_output(['cp', '-rc', extracted_path, snapshot_dir])
+        subprocess.check_output(['ls', '-alR', snapshot_dir])
         try:
             subprocess.check_output([VMCLI, pathlib.Path(snapshot_dir) / "VM.bundle"], timeout=15*60)
         except subprocess.TimeoutExpired:
