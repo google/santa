@@ -31,10 +31,7 @@ jobs:
       # - name: setup
       #   run: pip3 install google-cloud-storage==2.5.0
       - name: run VM
-        run: |
-          ls -al /opt/VMs
-          ls -al /opt/VMs/VM.bundle
-          python3 Testing/integration/actions/start-vm.py VM.bundle.tar.gz.enc
+        run: python3 Testing/integration/actions/start-vm.py VM.bundle.tar.gz.enc
 
   integration:
     runs-on: inner
