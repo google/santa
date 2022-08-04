@@ -54,7 +54,7 @@ Message& Message::operator=(const Message &other) {
 
 std::string Message::ParentProcessName() const {
   if (parent_pname_.length() == 0) {
-    parent_pname_ = GetProcessName(audit_token_to_pid(es_msg_->process->audit_token));
+    parent_pname_ = GetProcessName(es_msg_->process->ppid);
   }
   return parent_pname_;
 }
