@@ -1,5 +1,5 @@
 load("@build_bazel_rules_apple//apple:macos.bzl", "macos_bundle")
-load("//:helper.bzl", "santa_unit_test")
+load("//:helper.bzl", "santa_unit_test", "santa_unit_gtest")
 
 package(
     default_visibility = ["//:santa_package_group"],
@@ -997,4 +997,14 @@ test_suite(
         ":SNTRuleTableTest",
     ],
     visibility = ["//:santa_package_group"],
+)
+
+santa_unit_gtest(
+  name = "AuthResultCacheTest",
+  srcs = ["EventProviders/AuthResultCacheTest.mm"],
+  deps = [
+      ":AuthResultCache",
+      ":EndpointSecurityAPI",
+      "@com_google_googletest//:gtest",
+  ],
 )

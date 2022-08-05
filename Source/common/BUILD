@@ -303,3 +303,14 @@ test_suite(
     ],
     visibility = ["//:santa_package_group"],
 )
+
+cc_library(
+    name = "TestRunnerGTest",
+    srcs = [
+        "TestRunner.cc",
+    ],
+    alwayslink = 1,
+    deps = [
+        "@com_google_googletest//:gtest",
+    ]
+)

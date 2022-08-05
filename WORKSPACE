@@ -87,6 +87,14 @@ cc_library(
 """,
 )
 
+# Googletest - tag: release-1.12.1
+http_archive(
+    name = "com_google_googletest",
+    urls = ["https://github.com/google/googletest/archive/58d77fa8070e8cec2dc1ed015d66b454c8d78850.zip"],
+    strip_prefix = "googletest-58d77fa8070e8cec2dc1ed015d66b454c8d78850",
+    sha256 = "ab78fa3f912d44d38b785ec011a25f26512aaedc5291f51f3807c592b506d33a",
+)
+
 # Macops MOL* dependencies
 
 git_repository(
