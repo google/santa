@@ -70,7 +70,7 @@ AuthResultCache::AuthResultCache(std::shared_ptr<EndpointSecurityAPI> es_api)
 
   struct stat sb;
   if (stat("/", &sb) == 0) {
-    root_inode_ = sb.st_ino;
+    root_devno_ = sb.st_dev;
   }
 
   q_ = dispatch_queue_create("com.google.santa.santad.auth_result_cache.q",
@@ -140,7 +140,7 @@ santa_action_t AuthResultCache::CheckCache(santa_vnode_id_t vnode_id) {
 
 SantaCache<santa_vnode_id_t, uint64_t>* AuthResultCache::CacheForVnodeID(
     santa_vnode_id_t vnode_id) {
-  return (vnode_id.fsid == root_inode_ || root_inode_ == 0) ?
+  return (vnode_id.fsid == root_devno_ || root_devno_ == 0) ?
       root_cache_ :
       nonroot_cache_;
 }
@@ -155,9 +155,11 @@ void AuthResultCache::FlushCache(FlushCacheMode mode) {
     //
     // Calling into ES should be done asynchronously since it could otherwise
     // potentially deadlock
+
+    auto shared_es_api = es_api_->shared_from_this();
     dispatch_async(q_, ^{
       // ES does not need a connected client to clear cache
-      es_api_->ClearCache(Client());
+      shared_es_api->ClearCache(Client());
     });
   }
 }

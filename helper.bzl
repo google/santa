@@ -79,9 +79,6 @@ def santa_unit_gtest(
 
     native.cc_test(
         name = "%s" % name,
-        srcs = [
-            # "/Source/common/TestRunner.cc",
-        ],
         linkopts = [
           "-force_load $(location :%s_lib)" % name,
         ],

@@ -12,22 +12,161 @@
 ///    See the License for the specific language governing permissions and
 ///    limitations under the License.
 
+#include <EndpointSecurity/EndpointSecurity.h>
 #include <Foundation/Foundation.h>
 #include <gtest/gtest.h>
 
+#include <memory>
+
+#include "Source/common/SNTCommon.h"
 #include "Source/santad/EventProviders/AuthResultCache.h"
 #include "Source/santad/EventProviders/EndpointSecurity/EndpointSecurityAPI.h"
 
 using santa::santad::event_providers::AuthResultCache;
+using santa::santad::event_providers::FlushCacheMode;
 using santa::santad::event_providers::endpoint_security::EndpointSecurityAPI;
 
-TEST(CacheCountsTest, ReturnsExpectedNumberOfCacheCounts) {
-  auto esapi = std::make_shared<EndpointSecurityAPI>();
-  auto cache = std::make_shared<AuthResultCache>(esapi);
 
+// Grab the st_dev number of the root volume to match the root cache
+static uint64_t RootDevno() {
+  static dispatch_once_t once_token;
+  static uint64_t devno;
+  dispatch_once(&once_token, ^{
+    struct stat sb;
+    stat("/", &sb);
+    devno = sb.st_dev;
+  });
+  return devno;
+}
+
+static inline es_file_t MakeCacheableFile(uint64_t devno, uint64_t ino) {
+  return es_file_t{
+    .path = {},
+    .path_truncated = false,
+    .stat = {
+      .st_dev = (dev_t)devno,
+      .st_ino = ino
+    }
+  };
+}
+
+static inline santa_vnode_id_t VnodeForFile(const es_file_t* es_file) {
+  return santa_vnode_id_t{
+    .fsid = (uint64_t)es_file->stat.st_dev,
+    .fileid = es_file->stat.st_ino,
+  };
+}
+
+namespace santa::santad::event_providers {
+
+class AuthResultCacheTest : public AuthResultCache {
+public:
+  // Make base class constructors visible
+  using AuthResultCache::AuthResultCache;
+  // AuthResultCacheTest(std::shared_ptr<EndpointSecurityAPI> es_api)
+  //   : AuthResultCache(std::move(es_api)) {}
+
+
+  auto RootCache() { return root_cache_; }
+  auto NonRootCache() { return nonroot_cache_; }
+};
+
+} // namespace santa::santad::event_providers
+
+using santa::santad::event_providers::AuthResultCacheTest;
+
+static inline void ExpectCacheCounts(std::shared_ptr<AuthResultCache> cache,
+                                     uint64_t root_count,
+                                     uint64_t nonroot_count) {
   NSArray<NSNumber*> *counts = cache->CacheCounts();
 
   EXPECT_TRUE(counts != nil && [counts count] == 2);
-  EXPECT_TRUE(counts[0] != nil && [counts[0] unsignedLongLongValue] == 0);
-  EXPECT_TRUE(counts[1] != nil && [counts[1] unsignedLongLongValue] == 0);
+  EXPECT_TRUE(counts[0] != nil &&
+              [counts[0] unsignedLongLongValue] == root_count);
+  EXPECT_TRUE(counts[1] != nil &&
+              [counts[1] unsignedLongLongValue] == nonroot_count);
 }
+
+TEST(AuthResultCache, EmptyCacheExpectedNumberOfCacheCounts) {
+  auto esapi = std::make_shared<EndpointSecurityAPI>();
+  auto cache = std::make_shared<AuthResultCache>(esapi);
+
+  ExpectCacheCounts(cache, 0, 0);
+}
+
+TEST(AuthResultCache, BasicOperation) {
+  auto esapi = std::make_shared<EndpointSecurityAPI>();
+  auto cache = std::make_shared<AuthResultCacheTest>(esapi);
+
+  es_file_t root_file = MakeCacheableFile(RootDevno(), 111);
+  es_file_t nonroot_file = MakeCacheableFile(RootDevno() + 123, 222);
+
+  // Add the root file to the cache
+  cache->AddToCache(&root_file, ACTION_REQUEST_BINARY);
+
+  ExpectCacheCounts(cache, 1, 0);
+  EXPECT_EQ(cache->CheckCache(&root_file), ACTION_REQUEST_BINARY);
+  EXPECT_EQ(cache->CheckCache(&nonroot_file), ACTION_UNSET);
+
+  // Now add the non-root file
+  cache->AddToCache(&nonroot_file, ACTION_REQUEST_BINARY);
+
+  ExpectCacheCounts(cache, 1, 1);
+  EXPECT_EQ(cache->CheckCache(&root_file), ACTION_REQUEST_BINARY);
+  EXPECT_EQ(cache->CheckCache(&nonroot_file), ACTION_REQUEST_BINARY);
+
+  // Update the cached values
+  cache->AddToCache(&root_file, ACTION_RESPOND_ALLOW);
+  cache->AddToCache(&nonroot_file, ACTION_RESPOND_DENY);
+
+  ExpectCacheCounts(cache, 1, 1);
+  EXPECT_EQ(cache->CheckCache(VnodeForFile(&root_file)), ACTION_RESPOND_ALLOW);
+  EXPECT_EQ(cache->CheckCache(VnodeForFile(&nonroot_file)), ACTION_RESPOND_DENY);
+
+  // Remove the root file
+  cache->RemoveFromCache(&root_file);
+
+  ExpectCacheCounts(cache, 0, 1);
+  EXPECT_EQ(cache->CheckCache(&root_file), ACTION_UNSET);
+  EXPECT_EQ(cache->CheckCache(&nonroot_file), ACTION_RESPOND_DENY);
+}
+
+TEST(AuthResultCache, FlushCache) {
+  auto esapi = std::make_shared<EndpointSecurityAPI>();
+  auto cache = std::make_shared<AuthResultCache>(esapi);
+
+  printf("Just a print to find the function...\n");
+
+  es_file_t root_file = MakeCacheableFile(RootDevno(), 111);
+  es_file_t nonroot_file = MakeCacheableFile(RootDevno() + 123, 111);
+
+  cache->AddToCache(&root_file, ACTION_REQUEST_BINARY);
+  cache->AddToCache(&nonroot_file, ACTION_REQUEST_BINARY);
+
+  ExpectCacheCounts(cache, 1, 1);
+
+  // Flush non-root only
+  cache->FlushCache(FlushCacheMode::kNonRootOnly);
+
+  ExpectCacheCounts(cache, 1, 0);
+
+  // Add back the non-root file
+  cache->AddToCache(&nonroot_file, ACTION_REQUEST_BINARY);
+
+  ExpectCacheCounts(cache, 1, 1);
+
+  // Flush all caches
+  //
+  // TODO: EndpointSecurityAPI must be made injectable since kAllCaches will call into es_clear_cache
+  //
+  // cache->FlushCache(FlushCacheMode::kAllCaches);
+
+  // ExpectCacheCounts(cache, 0, 0);
+}
+
+// TEST(AddToCache, CacheStateMachine) {
+//   auto esapi = std::make_shared<EndpointSecurityAPI>();
+//   auto cache = std::make_shared<AuthResultCacheTest>(esapi);
+// }
+
+// } // namespace santa::santad::event_providers
