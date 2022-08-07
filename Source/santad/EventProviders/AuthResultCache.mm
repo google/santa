@@ -24,13 +24,6 @@
 using santa::santad::event_providers::endpoint_security::EndpointSecurityAPI;
 using santa::santad::event_providers::endpoint_security::Client;
 
-// Santa currently only flushes caches when new DENY rules are added, not ALLOW
-// rules. This means this value should be low enough so that if a previously
-// denied binary is allowed, it can be re-executed by the user in a timely
-// manner. But the value should be high enough to allow the cache to be
-// effective in the event the binary is executed in rapid succession.
-static const uint64_t kMaxCacheDenyTimeMilliseconds = 1500;
-
 template <>
 uint64_t SantaCacheHasher<santa_vnode_id_t>(santa_vnode_id_t const &t) {
   return (SantaCacheHasher<uint64_t>(t.fsid) << 1) ^ SantaCacheHasher<uint64_t>(t.fileid);
@@ -63,8 +56,9 @@ static inline uint64_t TimestampFromCachedValue(uint64_t cachedValue) {
   return (cachedValue & ~(0xFF00000000000000));
 }
 
-AuthResultCache::AuthResultCache(std::shared_ptr<EndpointSecurityAPI> es_api)
-    : es_api_(es_api) {
+AuthResultCache::AuthResultCache(std::shared_ptr<EndpointSecurityAPI> es_api,
+                                 uint64_t cache_deny_time_ms)
+    : es_api_(es_api), cache_deny_time_ns_(cache_deny_time_ms * NSEC_PER_MSEC) {
   root_cache_ = new SantaCache<santa_vnode_id_t, uint64_t>();
   nonroot_cache_ = new SantaCache<santa_vnode_id_t, uint64_t>();
 
@@ -82,23 +76,21 @@ AuthResultCache::~AuthResultCache() {
   delete nonroot_cache_;
 }
 
-void AuthResultCache::AddToCache(const es_file_t *es_file,
+bool AuthResultCache::AddToCache(const es_file_t *es_file,
                                  santa_action_t decision) {
   santa_vnode_id_t vnode_id = VnodeForFile(es_file);
   auto cache = CacheForVnodeID(vnode_id);
   switch (decision) {
     case ACTION_REQUEST_BINARY:
-      cache->set(vnode_id, CacheableAction(ACTION_REQUEST_BINARY, 0), 0);
-      break;
+      return cache->set(vnode_id, CacheableAction(ACTION_REQUEST_BINARY, 0), 0);
     case ACTION_RESPOND_ALLOW:
       OS_FALLTHROUGH;
     case ACTION_RESPOND_ALLOW_COMPILER:
       OS_FALLTHROUGH;
     case ACTION_RESPOND_DENY:
-      cache->set(vnode_id,
-                 CacheableAction(decision),
-                 CacheableAction(ACTION_REQUEST_BINARY, 0));
-      break;
+      return cache->set(vnode_id,
+                        CacheableAction(decision),
+                        CacheableAction(ACTION_REQUEST_BINARY, 0));
     default:
       // This is a programming error. Bail.
       LOGE(@"Invalid cache value, exiting.");
@@ -125,10 +117,8 @@ santa_action_t AuthResultCache::CheckCache(santa_vnode_id_t vnode_id) {
 
   santa_action_t result = ActionFromCachedValue(cached_val);
 
-
   if (result == ACTION_RESPOND_DENY) {
-    auto expiry_time = TimestampFromCachedValue(cached_val) +
-                       (kMaxCacheDenyTimeMilliseconds * NSEC_PER_MSEC);
+    auto expiry_time = TimestampFromCachedValue(cached_val) + cache_deny_time_ns_;
     if (expiry_time < GetCurrentUptime()) {
       cache->remove(vnode_id);
       return ACTION_UNSET;
@@ -155,7 +145,6 @@ void AuthResultCache::FlushCache(FlushCacheMode mode) {
     //
     // Calling into ES should be done asynchronously since it could otherwise
     // potentially deadlock
-
     auto shared_es_api = es_api_->shared_from_this();
     dispatch_async(q_, ^{
       // ES does not need a connected client to clear cache

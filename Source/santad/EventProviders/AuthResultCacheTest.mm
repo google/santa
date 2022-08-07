@@ -16,6 +16,7 @@
 #include <Foundation/Foundation.h>
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
+#include <time.h>
 
 #include <memory>
 
@@ -61,6 +62,7 @@ static inline santa_vnode_id_t VnodeForFile(const es_file_t* es_file) {
 
 namespace santa::santad::event_providers {
 
+// TODO: Not currently used, just remove
 class AuthResultCacheTest : public AuthResultCache {
 public:
   // Make base class constructors visible
@@ -180,9 +182,77 @@ TEST(AuthResultCache, FlushCache) {
   ExpectCacheCounts(cache, 0, 0);
 }
 
-// TEST(AddToCache, CacheStateMachine) {
-//   auto esapi = std::make_shared<EndpointSecurityAPI>();
-//   auto cache = std::make_shared<AuthResultCacheTest>(esapi);
-// }
+TEST(AuthResultCache, CacheStateMachine) {
+  auto esapi = std::make_shared<MockEndpointSecurityAPI>();
+  auto cache = std::make_shared<AuthResultCacheTest>(esapi);
 
-// } // namespace santa::santad::event_providers
+  es_file_t root_file = MakeCacheableFile(RootDevno(), 111);
+
+  // Cached items must first be in the ACTION_REQUEST_BINARY state
+  ASSERT_FALSE(cache->AddToCache(&root_file, ACTION_RESPOND_ALLOW));
+  ASSERT_FALSE(cache->AddToCache(&root_file, ACTION_RESPOND_ALLOW_COMPILER));
+  ASSERT_FALSE(cache->AddToCache(&root_file, ACTION_RESPOND_DENY));
+  ASSERT_EQ(cache->CheckCache(&root_file), ACTION_UNSET);
+
+  ASSERT_TRUE(cache->AddToCache(&root_file, ACTION_REQUEST_BINARY));
+  ASSERT_EQ(cache->CheckCache(&root_file), ACTION_REQUEST_BINARY);
+
+  // Items in the `ACTION_REQUEST_BINARY` state cannot reenter the same state
+  ASSERT_FALSE(cache->AddToCache(&root_file, ACTION_REQUEST_BINARY));
+  ASSERT_EQ(cache->CheckCache(&root_file), ACTION_REQUEST_BINARY);
+
+  santa_action_t allowed_transitions[] = {
+      ACTION_RESPOND_ALLOW,
+      ACTION_RESPOND_ALLOW_COMPILER,
+      ACTION_RESPOND_DENY,
+  };
+
+  for (size_t i = 0;
+       i < sizeof(allowed_transitions) / sizeof(allowed_transitions[0]);
+       i++) {
+    // First make sure the item doesn't exist
+    cache->RemoveFromCache(&root_file);
+    ASSERT_EQ(cache->CheckCache(&root_file), ACTION_UNSET);
+
+    // Now add the item to be in the first allowed state
+    ASSERT_TRUE(cache->AddToCache(&root_file, ACTION_REQUEST_BINARY));
+    ASSERT_EQ(cache->CheckCache(&root_file), ACTION_REQUEST_BINARY);
+
+    // Now assert the allowed transition
+    ASSERT_TRUE(cache->AddToCache(&root_file, allowed_transitions[i]));
+    ASSERT_EQ(cache->CheckCache(&root_file), allowed_transitions[i]);
+  }
+}
+
+TEST(AuthResultCache, CacheExpiry) {
+  auto esapi = std::make_shared<MockEndpointSecurityAPI>();
+  // Create a cache with a lowered cache expiry value
+  uint64_t expiry_ms = 250;
+  auto cache = std::make_shared<AuthResultCacheTest>(esapi, expiry_ms);
+
+  es_file_t root_file = MakeCacheableFile(RootDevno(), 111);
+
+  // Add a file to the cache and put into the ACTION_RESPOND_DENY state
+  ASSERT_TRUE(cache->AddToCache(&root_file, ACTION_REQUEST_BINARY));
+  ASSERT_TRUE(cache->AddToCache(&root_file, ACTION_RESPOND_DENY));
+
+  // Ensure the file exists
+  ASSERT_EQ(cache->CheckCache(&root_file), ACTION_RESPOND_DENY);
+
+  // Wait for the item to expire
+  struct timespec ts {
+    .tv_sec = 0,
+    .tv_nsec = (long)(expiry_ms * NSEC_PER_MSEC),
+  };
+
+  while (nanosleep(&ts, &ts) != 0) {
+    ASSERT_EQ(errno, EINTR);
+  };
+
+  //Check cache counts to make sure the item still exists
+  ExpectCacheCounts(cache, 1, 0);
+
+  // Now check the cache, which will remove the item
+  ASSERT_EQ(cache->CheckCache(&root_file), ACTION_UNSET);
+  ExpectCacheCounts(cache, 0, 0);
+}
