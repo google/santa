@@ -9,6 +9,8 @@ Santa is a binary authorization system for macOS. It consists of a system extens
 
 It is named Santa because it keeps track of binaries that are naughty or nice.
 
+The project and the latest release is available on [**GitHub**](https://github.com/google/santa).
+
 ## Features 
 
 * [**Multiple modes:**](concepts/mode.md) In the default `MONITOR` mode, all binaries except those marked as blocked will be allowed to run, whilst being logged and recorded in the events database. In `LOCKDOWN` mode, only listed binaries are allowed to run.
