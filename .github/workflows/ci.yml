@@ -25,13 +25,15 @@ jobs:
   #       run: bazel build --apple_generate_dsym -c opt :release --define=SANTA_BUILD_TYPE=adhoc
 
   start_vm:
-    runs-on: self-hosted
+    runs-on: outer
     steps:
       - uses: actions/checkout@v2
       # - name: setup
       #   run: pip3 install google-cloud-storage==2.5.0
       - name: run VM
         run: |
+          ls -al ~
+          ls -al ~/Downloads
           ls -al ~/VMs
           ls -al ~/VMs/VM.bundle
           python3 Testing/integration/actions/start-vm.py VM.bundle.tar.gz.enc
