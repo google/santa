@@ -16,6 +16,7 @@
 #include <memory>
 
 #include "Source/common/SNTCommonEnums.h"
+#include "Source/common/SNTLogging.h"
 #include "Source/common/SNTStoredEvent.h"
 #include "Source/santad/Logs/EndpointSecurity/Serializers/BasicString.h"
 #include "Source/santad/Logs/EndpointSecurity/Serializers/Empty.h"
@@ -47,7 +48,9 @@ std::unique_ptr<Logger> Logger::Create(SNTEventLogType log_type,
       return std::make_unique<Logger>(Empty::Create(),
                                       Null::Create());
     default:
-      return nullptr;
+      // Programming error. Bail.
+      LOGE(@"Invalid log type: %ld", log_type);
+      exit(EXIT_FAILURE);
   }
 }
 

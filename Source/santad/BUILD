@@ -579,6 +579,7 @@ objc_library(
         ":EndpointSecurityWriterNull",
         ":EndpointSecurityWriterSyslog",
         "//Source/common:SNTCommonEnums",
+        "//Source/common:SNTLogging",
         "//Source/common:SNTStoredEvent",
     ],
 )
@@ -1007,4 +1008,27 @@ santa_unit_gtest(
       ":EndpointSecurityAPI",
       "@com_google_googletest//:gtest",
   ],
+)
+
+santa_unit_gtest(
+  name = "LoggerTest",
+  srcs = ["Logs/EndpointSecurity/LoggerTest.mm"],
+  deps = [
+      ":EndpointSecurityAPI",
+      ":EndpointSecurityEnrichedTypes",
+      ":EndpointSecurityLogger",
+      ":EndpointSecurityMessage",
+      "//Source/common:SNTCommonEnums",
+      "@com_google_googletest//:gtest",
+  ],
+)
+
+# TODO: Combine with the original `unit_tests` target
+test_suite(
+  name = "gtest_unit_tests",
+  tests = [
+      ":AuthResultCacheTest",
+      ":LoggerTest",
+  ],
+  visibility = ["//:santa_package_group"],
 )

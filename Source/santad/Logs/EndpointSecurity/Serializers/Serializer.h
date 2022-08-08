@@ -6,7 +6,7 @@
 
 #import <Foundation/Foundation.h>
 
-#import "Source/santad/EventProviders/EndpointSecurity/EnrichedTypes.h"
+#include "Source/santad/EventProviders/EndpointSecurity/EnrichedTypes.h"
 
 @class SNTStoredEvent;
 

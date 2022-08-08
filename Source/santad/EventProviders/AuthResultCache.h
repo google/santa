@@ -25,11 +25,6 @@
 #import "Source/common/SNTCommon.h"
 #include "Source/santad/EventProviders/EndpointSecurity/EndpointSecurityAPI.h"
 
-// Forward declarations
-namespace santa::santad::event_providers {
-  class AuthResultCacheTest;
-}
-
 namespace santa::santad::event_providers {
 
 enum class FlushCacheMode {
@@ -62,8 +57,6 @@ public:
   virtual void FlushCache(FlushCacheMode mode);
 
   virtual NSArray<NSNumber*>* CacheCounts();
-
-  friend class santa::santad::event_providers::AuthResultCacheTest;
 
 private:
   virtual SantaCache<santa_vnode_id_t, uint64_t>* CacheForVnodeID(

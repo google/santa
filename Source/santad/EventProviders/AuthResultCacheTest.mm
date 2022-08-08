@@ -60,24 +60,6 @@ static inline santa_vnode_id_t VnodeForFile(const es_file_t* es_file) {
   };
 }
 
-namespace santa::santad::event_providers {
-
-// TODO: Not currently used, just remove
-class AuthResultCacheTest : public AuthResultCache {
-public:
-  // Make base class constructors visible
-  using AuthResultCache::AuthResultCache;
-  // AuthResultCacheTest(std::shared_ptr<EndpointSecurityAPI> es_api)
-  //   : AuthResultCache(std::move(es_api)) {}
-
-  auto RootCache() { return root_cache_; }
-  auto NonRootCache() { return nonroot_cache_; }
-};
-
-} // namespace santa::santad::event_providers
-
-using santa::santad::event_providers::AuthResultCacheTest;
-
 static inline void ExpectCacheCounts(std::shared_ptr<AuthResultCache> cache,
                                      uint64_t root_count,
                                      uint64_t nonroot_count) {
@@ -104,7 +86,7 @@ TEST(AuthResultCache, EmptyCacheExpectedNumberOfCacheCounts) {
 
 TEST(AuthResultCache, BasicOperation) {
   auto esapi = std::make_shared<MockEndpointSecurityAPI>();
-  auto cache = std::make_shared<AuthResultCacheTest>(esapi);
+  auto cache = std::make_shared<AuthResultCache>(esapi);
 
   es_file_t root_file = MakeCacheableFile(RootDevno(), 111);
   es_file_t nonroot_file = MakeCacheableFile(RootDevno() + 123, 222);
@@ -184,7 +166,7 @@ TEST(AuthResultCache, FlushCache) {
 
 TEST(AuthResultCache, CacheStateMachine) {
   auto esapi = std::make_shared<MockEndpointSecurityAPI>();
-  auto cache = std::make_shared<AuthResultCacheTest>(esapi);
+  auto cache = std::make_shared<AuthResultCache>(esapi);
 
   es_file_t root_file = MakeCacheableFile(RootDevno(), 111);
 
@@ -228,7 +210,7 @@ TEST(AuthResultCache, CacheExpiry) {
   auto esapi = std::make_shared<MockEndpointSecurityAPI>();
   // Create a cache with a lowered cache expiry value
   uint64_t expiry_ms = 250;
-  auto cache = std::make_shared<AuthResultCacheTest>(esapi, expiry_ms);
+  auto cache = std::make_shared<AuthResultCache>(esapi, expiry_ms);
 
   es_file_t root_file = MakeCacheableFile(RootDevno(), 111);
 

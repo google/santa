@@ -26,7 +26,11 @@
 #import "Source/santad/Logs/EndpointSecurity/Serializers/Serializer.h"
 #import "Source/santad/Logs/EndpointSecurity/Writers/Writer.h"
 
+// Forward declarations
 @class SNTStoredEvent;
+namespace santa::santad::logs::endpoint_security {
+class LoggerTest;
+}
 
 namespace santa::santad::logs::endpoint_security {
 
@@ -37,6 +41,8 @@ public:
 
   Logger(std::shared_ptr<serializers::Serializer> serializer,
          std::shared_ptr<writers::Writer> writer);
+
+  virtual ~Logger() = default;
 
   void Log(
       std::shared_ptr<santa::santad::event_providers::endpoint_security::EnrichedMessage> msg);
@@ -49,6 +55,8 @@ public:
 
   void LogDiskAppeared(NSDictionary* props);
   void LogDiskDisappeared(NSDictionary* props);
+
+  friend class santa::santad::logs::endpoint_security::LoggerTest;
 
 private:
   std::shared_ptr<serializers::Serializer> serializer_;
