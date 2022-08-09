@@ -10,7 +10,6 @@ AGE = "/opt/bin/age"
 BUCKET = "buildkite-vms"
 VMCLI = "/opt/bin/VMCLI"
 VMS_DIR = pathlib.Path.home() / 'VMs'
-#VMS_DIR = pathlib.Path("/opt/VMs")
 
 if __name__ == "__main__":
     VMS_DIR.mkdir(exist_ok=True)
