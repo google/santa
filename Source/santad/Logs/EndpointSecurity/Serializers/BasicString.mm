@@ -26,8 +26,6 @@
 #include <time.h>
 #include <unistd.h>
 
-#include <sstream>
-
 #import "Source/common/SNTCachedDecision.h"
 #import "Source/common/SNTConfigurator.h"
 #import "Source/common/SNTLogging.h"
@@ -374,16 +372,24 @@ static char* FormattedDateString(char *buf, size_t len) {
   return buf;
 }
 
-static inline std::stringstream CreateDefaultStringStream() {
-  char buf[32];
-
-  std::stringstream ss;
-  ss << "[" << FormattedDateString(buf, sizeof(buf)) << "] I santad: ";
-  return ss;
+std::shared_ptr<BasicString> BasicString::Create(bool prefix_time_name) {
+  return std::make_shared<BasicString>(prefix_time_name);
 }
 
-std::shared_ptr<BasicString> BasicString::Create() {
-  return std::make_shared<BasicString>();
+BasicString::BasicString(bool prefix_time_name)
+  : prefix_time_name_(prefix_time_name) {}
+
+std::stringstream BasicString::CreateDefaultStringStream() {
+  std::stringstream ss;
+
+  if (prefix_time_name_) {
+    char buf[32];
+
+    ss << "[" << FormattedDateString(buf, sizeof(buf)) << "] I santad: ";
+    return ss;
+  }
+
+  return ss;
 }
 
 std::vector<uint8_t> BasicString::SerializeMessage(const EnrichedClose& msg) {
@@ -400,8 +406,6 @@ std::vector<uint8_t> BasicString::SerializeMessage(const EnrichedClose& msg) {
                   msg.instigator_.real_group_);
 
   std::string s = ss.str();
-
-  // LOGE(@"Enriched write: %s", s.c_str());
 
   return std::vector<uint8_t>(s.begin(), s.end());
 }
@@ -420,8 +424,6 @@ std::vector<uint8_t> BasicString::SerializeMessage(const EnrichedExchange& msg) 
                   msg.instigator_.real_group_);
 
   std::string s = ss.str();
-
-  // LOGE(@"Enriched exchange: %s", s.c_str());
 
   return std::vector<uint8_t>(s.begin(), s.end());
 }
@@ -489,8 +491,6 @@ std::vector<uint8_t> BasicString::SerializeMessage(const EnrichedExec& msg) {
 
   std::string s = ss.str();
 
-  // LOGE(@"Enriched exec: %s", s.c_str());
-
   return std::vector<uint8_t>(s.begin(), s.end());
 }
 
@@ -506,8 +506,6 @@ std::vector<uint8_t> BasicString::SerializeMessage(const EnrichedExit& msg) {
 
   std::string s = ss.str();
 
-  // LOGE(@"Enriched exit: %s", s.c_str());
-
   return std::vector<uint8_t>(s.begin(), s.end());
 }
 
@@ -522,8 +520,6 @@ std::vector<uint8_t> BasicString::SerializeMessage(const EnrichedFork& msg) {
     << "|gid=" << RealGroup(esm.event.fork.child->audit_token);
 
   std::string s = ss.str();
-
-  // LOGE(@"Enriched fork: %s", s.c_str());
 
   return std::vector<uint8_t>(s.begin(), s.end());
 }
@@ -543,8 +539,6 @@ std::vector<uint8_t> BasicString::SerializeMessage(const EnrichedLink& msg) {
                   msg.instigator_.real_group_);
 
   std::string s = ss.str();
-
-  // LOGE(@"Enriched link: %s", s.c_str());
 
   return std::vector<uint8_t>(s.begin(), s.end());
 }
@@ -577,8 +571,6 @@ std::vector<uint8_t> BasicString::SerializeMessage(const EnrichedRename& msg) {
 
   std::string s = ss.str();
 
-  // LOGE(@"Enriched rename: %s", s.c_str());
-
   return std::vector<uint8_t>(s.begin(), s.end());
 }
 
@@ -596,8 +588,6 @@ std::vector<uint8_t> BasicString::SerializeMessage(const EnrichedUnlink& msg) {
 
   std::string s = ss.str();
 
-  // LOGE(@"Enriched delete: %s", s.c_str());
-
   return std::vector<uint8_t>(s.begin(), s.end());
 }
 
@@ -612,24 +602,20 @@ std::vector<uint8_t> BasicString::SerializeAllowlist(const Message& msg,
 
   std::string s = ss.str();
 
-  // LOGE(@"AllowList: %s", s.c_str());
-
   return std::vector<uint8_t>(s.begin(), s.end());
 }
 
 std::vector<uint8_t> BasicString::SerializeBundleHashingEvent(SNTStoredEvent* event) {
   auto ss = CreateDefaultStringStream();
 
-  ss << "action=BUNDLE|sha256=" << event.fileSHA256
-     << "|bundlehash=" << event.fileBundleHash
-     << "|bundlename=" << event.fileBundleName
-     << "|bundleid=" << event.fileBundleID
-     << "|bundlepath=" << event.fileBundlePath
-     << "|path=" << event.filePath;
+  ss << "action=BUNDLE|sha256=" << [(event.fileSHA256 ?: @"") UTF8String]
+     << "|bundlehash=" << [(event.fileBundleHash ?: @"") UTF8String]
+     << "|bundlename=" << [(event.fileBundleName ?: @"") UTF8String]
+     << "|bundleid=" << [(event.fileBundleID ?: @"") UTF8String]
+     << "|bundlepath=" << [(event.fileBundlePath ?: @"") UTF8String]
+     << "|path=" << [(event.filePath ?: @"") UTF8String];
 
   std::string s = ss.str();
-
-  // LOGE(@"BundleHashing: %s", s.c_str());
 
   return std::vector<uint8_t>(s.begin(), s.end());
 }
@@ -667,8 +653,6 @@ std::vector<uint8_t> BasicString::SerializeDiskAppeared(NSDictionary* props) {
 
   std::string s = ss.str();
 
-  // LOGE(@"DiskAppeared: %s", s.c_str());
-
   return std::vector<uint8_t>(s.begin(), s.end());
 }
 
@@ -681,8 +665,6 @@ std::vector<uint8_t> BasicString::SerializeDiskDisappeared(NSDictionary* props) 
      << "|bsdname=" << [(props[@"DAMediaBSDName"] ?: @"") UTF8String];
 
   std::string s = ss.str();
-
-  // LOGE(@"DiskDisappeared: %s", s.c_str());
 
   return std::vector<uint8_t>(s.begin(), s.end());
 }

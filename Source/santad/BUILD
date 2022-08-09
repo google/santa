@@ -1001,54 +1001,80 @@ test_suite(
 )
 
 santa_unit_gtest(
-  name = "AuthResultCacheTest",
-  srcs = ["EventProviders/AuthResultCacheTest.mm"],
-  deps = [
-      ":AuthResultCache",
-      ":EndpointSecurityAPI",
-      "@com_google_googletest//:gtest",
-  ],
+    name = "AuthResultCacheTest",
+    srcs = ["EventProviders/AuthResultCacheTest.mm"],
+    deps = [
+        ":AuthResultCache",
+        ":EndpointSecurityAPI",
+        "@com_google_googletest//:gtest",
+    ],
 )
 
 santa_unit_gtest(
-  name = "EndpointSecurityLoggerTest",
-  srcs = ["Logs/EndpointSecurity/LoggerTest.mm"],
-  deps = [
-      ":EndpointSecurityAPI",
-      ":EndpointSecurityEnrichedTypes",
-      ":EndpointSecurityLogger",
-      ":EndpointSecurityMessage",
-      "//Source/common:SNTCommonEnums",
-      "@com_google_googletest//:gtest",
-  ],
+    name = "EndpointSecurityLoggerTest",
+    srcs = ["Logs/EndpointSecurity/LoggerTest.mm"],
+    deps = [
+        ":EndpointSecurityAPI",
+        ":EndpointSecurityEnrichedTypes",
+        ":EndpointSecurityLogger",
+        ":EndpointSecurityMessage",
+        ":EndpointSecuritySerializer",
+        ":EndpointSecuritySerializerBasicString",
+        ":EndpointSecuritySerializerEmpty",
+        ":EndpointSecurityWriter",
+        ":EndpointSecurityWriterFile",
+        ":EndpointSecurityWriterNull",
+        ":EndpointSecurityWriterSyslog",
+        "//Source/common:SNTCommonEnums",
+        "@com_google_googletest//:gtest",
+    ],
 )
 
 santa_unit_gtest(
-  name = "EndpointSecurityWriterFileTest",
-  srcs = ["Logs/EndpointSecurity/Writers/FileTest.mm"],
-  deps = [
-      ":EndpointSecurityWriterFile",
-      "@com_google_googletest//:gtest",
-  ],
+    name = "EndpointSecurityWriterFileTest",
+    srcs = ["Logs/EndpointSecurity/Writers/FileTest.mm"],
+    deps = [
+        ":EndpointSecurityWriterFile",
+        "@com_google_googletest//:gtest",
+    ],
 )
 
 santa_unit_gtest(
-  name = "EndpointSecuritySerializerEmptyTest",
-  srcs = ["Logs/EndpointSecurity/Serializers/EmptyTest.mm"],
-  deps = [
-      ":EndpointSecuritySerializerEmpty",
-      "@com_google_googletest//:gtest",
-  ],
+    name = "EndpointSecuritySerializerEmptyTest",
+    srcs = ["Logs/EndpointSecurity/Serializers/EmptyTest.mm"],
+    deps = [
+        ":EndpointSecuritySerializerEmpty",
+        "@com_google_googletest//:gtest",
+    ],
+)
+
+santa_unit_gtest(
+    name = "EndpointSecuritySerializerBasicStringTest",
+    srcs = ["Logs/EndpointSecurity/Serializers/BasicStringTest.mm"],
+    deps = [
+        ":EndpointSecurityAPI",
+        ":EndpointSecurityEnrichedTypes",
+        ":EndpointSecurityEnricher",
+        ":EndpointSecurityMessage",
+        ":EndpointSecuritySerializer",
+        ":EndpointSecuritySerializerBasicString",
+        "//Source/common:SNTStoredEvent",
+        "@com_google_googletest//:gtest",
+    ],
+    sdk_dylibs = [
+        "bsm",
+    ],
 )
 
 # TODO: Combine with the original `unit_tests` target
 test_suite(
-  name = "gtest_unit_tests",
-  tests = [
-      ":AuthResultCacheTest",
-      ":EndpointSecurityLoggerTest",
-      ":EndpointSecuritySerializerEmptyTest",
-      ":EndpointSecurityWriterFileTest",
-  ],
-  visibility = ["//:santa_package_group"],
+    name = "gtest_unit_tests",
+    tests = [
+        ":AuthResultCacheTest",
+        ":EndpointSecurityLoggerTest",
+        ":EndpointSecuritySerializerBasicStringTest",
+        ":EndpointSecuritySerializerEmptyTest",
+        ":EndpointSecurityWriterFileTest",
+    ],
+    visibility = ["//:santa_package_group"],
 )

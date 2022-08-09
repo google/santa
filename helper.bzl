@@ -58,6 +58,7 @@ def santa_unit_gtest(
         name,
         srcs = [],
         deps = [],
+        sdk_dylibs = [],
         **kwargs):
     """Create a unit test that integrates with `googletest`"""
 
@@ -74,6 +75,7 @@ def santa_unit_gtest(
         srcs = srcs,
         alwayslink = 1,
         deps = deps,
+        sdk_dylibs = sdk_dylibs,
         **kwargs
     )
 

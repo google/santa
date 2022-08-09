@@ -16,16 +16,18 @@
 #define SANTA__SANTAD__LOGS_ENDPOINTSECURITY_SERIALIZERS_BASICSTRING_H
 
 #include <memory>
+#include <sstream>
 #include <vector>
 
 #include "Source/santad/Logs/EndpointSecurity/Serializers/Serializer.h"
 
 namespace santa::santad::logs::endpoint_security::serializers {
 
-class BasicString
-  : public Serializer {
+class BasicString : public Serializer {
 public:
-  static std::shared_ptr<BasicString> Create();
+  static std::shared_ptr<BasicString> Create(bool prefix_time_name = true);
+
+  BasicString(bool prefix_time_name);
 
   std::vector<uint8_t> SerializeMessage(
       const santa::santad::event_providers::endpoint_security::EnrichedClose &) override;
@@ -52,6 +54,11 @@ public:
 
   std::vector<uint8_t> SerializeDiskAppeared(NSDictionary*) override;
   std::vector<uint8_t> SerializeDiskDisappeared(NSDictionary*) override;
+
+private:
+  std::stringstream CreateDefaultStringStream();
+
+  bool prefix_time_name_;
 };
 
 } // namespace santa::santad::logs::endpoint_security::serializers
