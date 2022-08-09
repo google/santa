@@ -34,13 +34,23 @@ using santa::santad::logs::endpoint_security::writers::Syslog;
 
 namespace santa::santad::logs::endpoint_security {
 
+// Flush the write buffer every 5 seconds
+static const uint64_t kFlushBufferTimeoutMS = 5000;
+// Batch writes up to 128kb
+static const size_t kBufferBatchSizeBytes = (1024 * 128);
+// Reserve an extra 4kb of buffer space to account for event overflow
+static const size_t kMaxExpectedWriteSizeBytes = 4096;
+
 // Translate configured log type to appropriate Serializer/Writer pairs
 std::unique_ptr<Logger> Logger::Create(SNTEventLogType log_type,
                                        NSString* event_log_path) {
   switch (log_type) {
     case SNTEventLogTypeFilelog:
       return std::make_unique<Logger>(BasicString::Create(),
-                                      File::Create(event_log_path));
+                                      File::Create(event_log_path,
+                                                   kFlushBufferTimeoutMS,
+                                                   kBufferBatchSizeBytes,
+                                                   kMaxExpectedWriteSizeBytes));
     case SNTEventLogTypeSyslog:
       return std::make_unique<Logger>(BasicString::Create(),
                                       Syslog::Create());

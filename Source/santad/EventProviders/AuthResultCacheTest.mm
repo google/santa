@@ -229,7 +229,7 @@ TEST(AuthResultCache, CacheExpiry) {
 
   while (nanosleep(&ts, &ts) != 0) {
     ASSERT_EQ(errno, EINTR);
-  };
+  }
 
   //Check cache counts to make sure the item still exists
   ExpectCacheCounts(cache, 1, 0);

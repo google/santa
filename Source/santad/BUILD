@@ -1011,7 +1011,7 @@ santa_unit_gtest(
 )
 
 santa_unit_gtest(
-  name = "LoggerTest",
+  name = "EndpointSecurityLoggerTest",
   srcs = ["Logs/EndpointSecurity/LoggerTest.mm"],
   deps = [
       ":EndpointSecurityAPI",
@@ -1023,12 +1023,22 @@ santa_unit_gtest(
   ],
 )
 
+santa_unit_gtest(
+  name = "EndpointSecurityWriterFileTest",
+  srcs = ["Logs/EndpointSecurity/Writers/FileTest.mm"],
+  deps = [
+      ":EndpointSecurityWriterFile",
+      "@com_google_googletest//:gtest",
+  ],
+)
+
 # TODO: Combine with the original `unit_tests` target
 test_suite(
   name = "gtest_unit_tests",
   tests = [
       ":AuthResultCacheTest",
-      ":LoggerTest",
+      ":EndpointSecurityLoggerTest",
+      ":EndpointSecurityWriterFileTest",
   ],
   visibility = ["//:santa_package_group"],
 )

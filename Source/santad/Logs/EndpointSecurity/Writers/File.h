@@ -23,18 +23,32 @@
 #include <memory>
 #include <vector>
 
+// Forward declarations
+namespace santa::santad::logs::endpoint_security::writers {
+class FileTest;
+}
+
 namespace santa::santad::logs::endpoint_security::writers {
 
 class File : public Writer,
              public std::enable_shared_from_this<File> {
 public:
   // Factory
-  static std::shared_ptr<File> Create(NSString* path);
+  static std::shared_ptr<File> Create(NSString* path,
+                                      uint64_t flush_timeout_ms,
+                                      size_t batch_size_bytes,
+                                      size_t max_expected_write_size_bytes);
 
-  File(NSString* path, dispatch_queue_t q, dispatch_source_t timer_source);
+  File(NSString* path,
+       size_t batch_size_bytes,
+       size_t max_expected_write_size_bytes,
+       dispatch_queue_t q,
+       dispatch_source_t timer_source);
   ~File();
 
   void Write(std::vector<uint8_t>&& bytes) override;
+
+  friend class santa::santad::logs::endpoint_security::writers::FileTest;
 
 private:
   void OpenFileHandle();
@@ -42,6 +56,7 @@ private:
   void FlushBuffer();
 
   std::vector<uint8_t> buffer_;
+  size_t batch_size_bytes_;
   dispatch_queue_t q_;
   dispatch_source_t timer_source_;
   dispatch_source_t watch_source_;
