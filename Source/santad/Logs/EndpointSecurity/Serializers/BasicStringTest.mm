@@ -122,6 +122,38 @@ TEST(BasicString, SerializeMessageRename) {
   EXPECT_EQ(want, got);
 }
 
+TEST(BasicString, SerializeMessageUnlink) {
+  es_file_t proc_file = MakeESFile("foobar");
+  es_file_t target_file = MakeESFile("deleted_file");
+  es_process_t proc = MakeESProcess(&proc_file,
+                                    MakeAuditToken(12, 34),
+                                    MakeAuditToken(56, 78));
+  es_message_t es_msg = MakeESMessage(ES_EVENT_TYPE_NOTIFY_UNLINK, &proc);
+  es_msg.event.unlink.target = &target_file;
+
+  auto mock_esapi = std::make_shared<MockEndpointSecurityAPI>();
+  EXPECT_CALL(*mock_esapi, ReleaseMessage(testing::_))
+      .After(EXPECT_CALL(*mock_esapi, RetainMessage(testing::_))
+          .WillOnce(testing::Return(&es_msg)));
+
+  Message msg(mock_esapi, &es_msg);
+
+  Enricher enricher;
+
+  std::shared_ptr<EnrichedMessage> enriched_message = enricher.Enrich(std::move(msg));
+
+  std::shared_ptr<Serializer> bs = BasicString::Create(false);
+  auto ret = bs->SerializeMessage(enriched_message);
+  std::string got(ret.begin(), ret.end());
+
+  std::string want = "action=DELETE|path=deleted_file|pid=12|ppid=56"
+      "|process=foobar|processpath=foobar|uid=-2|user=nobody"
+      "|gid=-2|group=nobody";
+
+  EXPECT_EQ(want, got);
+
+}
+
 TEST(BasicString, SerializeAllowlist) {
   es_file_t file = MakeESFile("foobar");
   es_process_t proc = MakeESProcess(&file,
