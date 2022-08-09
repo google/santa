@@ -1032,12 +1032,22 @@ santa_unit_gtest(
   ],
 )
 
+santa_unit_gtest(
+  name = "EndpointSecuritySerializerEmptyTest",
+  srcs = ["Logs/EndpointSecurity/Serializers/EmptyTest.mm"],
+  deps = [
+      ":EndpointSecuritySerializerEmpty",
+      "@com_google_googletest//:gtest",
+  ],
+)
+
 # TODO: Combine with the original `unit_tests` target
 test_suite(
   name = "gtest_unit_tests",
   tests = [
       ":AuthResultCacheTest",
       ":EndpointSecurityLoggerTest",
+      ":EndpointSecuritySerializerEmptyTest",
       ":EndpointSecurityWriterFileTest",
   ],
   visibility = ["//:santa_package_group"],
