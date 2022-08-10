@@ -49,6 +49,7 @@ objc_library(
         "//Source/common:SNTLogging",
         "//Source/common:SNTStoredEvent",
         "//Source/common:SNTStrengthify",
+        "//Source/common:SNTSyncConstants",
         "//Source/common:SNTXPCControlInterface",
         "//Source/common:SNTXPCNotifierInterface",
         "@MOLCertificate",

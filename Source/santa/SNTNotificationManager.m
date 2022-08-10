@@ -14,6 +14,7 @@
 
 #import "Source/santa/SNTNotificationManager.h"
 
+#import <MOLCertificate/MOLCertificate.h>
 #import <MOLXPCConnection/MOLXPCConnection.h>
 #import <UserNotifications/UserNotifications.h>
 
@@ -23,6 +24,7 @@
 #import "Source/common/SNTLogging.h"
 #import "Source/common/SNTStoredEvent.h"
 #import "Source/common/SNTStrengthify.h"
+#import "Source/common/SNTSyncConstants.h"
 #import "Source/common/SNTXPCControlInterface.h"
 #import "Source/santa/SNTMessageWindowController.h"
 
@@ -112,10 +114,47 @@ static NSString *const silencedNotificationsKey = @"SilencedNotifications";
 
   pendingMsg.delegate = self;
   [self.pendingNotifications addObject:pendingMsg];
+  [self postDistributedNotification:pendingMsg];
 
   if (!self.currentWindowController) {
     [self showQueuedWindow];
   }
+}
+
+- (void)postDistributedNotification:(SNTMessageWindowController *)pendingMsg {
+  if (![pendingMsg isKindOfClass:[SNTBinaryMessageWindowController class]]) {
+    return;
+  }
+  SNTBinaryMessageWindowController *wc = (SNTBinaryMessageWindowController *)pendingMsg;
+  NSDistributedNotificationCenter *dc = [NSDistributedNotificationCenter defaultCenter];
+  NSMutableDictionary *userInfo = [@{
+      kFileSHA256: wc.event.fileSHA256 ?: @"",
+      kFilePath: wc.event.filePath ?: @"",
+      kFileBundleName: wc.event.fileBundleName ?: @"",
+      kFileBundleID: wc.event.fileBundleID ?: @"",
+      kFileBundleVersion: wc.event.fileBundleVersion ?: @"",
+      kFileBundleShortVersionString: wc.event.fileBundleVersionString ?: @"",
+      kTeamID: wc.event.teamID ?: @"",
+      kExecutingUser: wc.event.executingUser ?: @"",
+      kExecutionTime: @([wc.event.occurrenceDate timeIntervalSince1970]) ?: @0,
+      kPID: wc.event.pid ?: @0,
+      kPPID: wc.event.ppid ?: @0,
+      kParentName: wc.event.parentName ?: @"",
+  } mutableCopy];
+
+  MOLCertificate *leafCert = [wc.event.signingChain firstObject];
+  if (leafCert) {
+    userInfo[kCertSHA256] = leafCert.SHA256 ?: @"";
+    userInfo[kCertCN] = leafCert.commonName ?: @"";
+    userInfo[kCertOrg] = leafCert.orgName ?: @"";
+    userInfo[kCertOU] = leafCert.orgUnit ?: @"";
+    userInfo[kCertValidFrom] = @([leafCert.validFrom timeIntervalSince1970]) ?: @0;
+    userInfo[kCertValidUntil] = @([leafCert.validUntil timeIntervalSince1970]) ?: @0;
+  }
+
+  [dc postNotificationName:@"com.google.santa.notification.blockedeexecution"
+                    object:@"com.google.santa"
+                  userInfo:userInfo];
 }
 
 - (void)showQueuedWindow {
