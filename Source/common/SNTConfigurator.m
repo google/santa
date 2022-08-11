@@ -66,7 +66,8 @@ static NSString *const kMachineOwnerPlistKeyKey = @"MachineOwnerKey";
 static NSString *const kMachineIDPlistFileKey = @"MachineIDPlist";
 static NSString *const kMachineIDPlistKeyKey = @"MachineIDKey";
 
-static NSString *const kAboutText = @"AboutText";
+static NSString *const kEnableSilentModeKey = @"EnableSilentMode";
+static NSString *const kAboutTextKey = @"AboutText";
 static NSString *const kMoreInfoURLKey = @"MoreInfoURL";
 static NSString *const kEventDetailURLKey = @"EventDetailURL";
 static NSString *const kEventDetailTextKey = @"EventDetailText";
@@ -172,7 +173,8 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
       kRemountUSBModeKey : array,
       kEnablePageZeroProtectionKey : number,
       kEnableBadSignatureProtectionKey : number,
-      kAboutText : string,
+      kEnableSilentModeKey : string,
+      kAboutTextKey : string,
       kMoreInfoURLKey : string,
       kEventDetailURLKey : string,
       kEventDetailTextKey : string,
@@ -300,6 +302,10 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
 }
 
 + (NSSet *)keyPathsForValuesAffectingEnablePageZeroProtection {
+  return [self configStateSet];
+}
+
++ (NSSet *)keyPathsForValuesAffectingEnableSilentMode {
   return [self configStateSet];
 }
 
@@ -611,8 +617,13 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
   return number ? [number boolValue] : NO;
 }
 
+- (BOOL)enableSilentMode {
+  NSNumber *number = self.configState[kEnableSilentModeKey];
+  return number ? [number boolValue] : NO;
+}
+
 - (NSString *)aboutText {
-  return self.configState[kAboutText];
+  return self.configState[kAboutTextKey];
 }
 
 - (NSURL *)moreInfoURL {

@@ -254,6 +254,8 @@ static NSString *const silencedNotificationsKey = @"SilencedNotifications";
 #pragma mark SNTNotifierXPC protocol methods
 
 - (void)postClientModeNotification:(SNTClientMode)clientmode {
+  if ([SNTConfigurator configurator].enableSilentMode) return;
+
   UNUserNotificationCenter *un = [UNUserNotificationCenter currentNotificationCenter];
 
   UNMutableNotificationContent *content = [[UNMutableNotificationContent alloc] init];
@@ -292,6 +294,8 @@ static NSString *const silencedNotificationsKey = @"SilencedNotifications";
 }
 
 - (void)postRuleSyncNotificationWithCustomMessage:(NSString *)message {
+  if ([SNTConfigurator configurator].enableSilentMode) return;
+
   UNUserNotificationCenter *un = [UNUserNotificationCenter currentNotificationCenter];
 
   UNMutableNotificationContent *content = [[UNMutableNotificationContent alloc] init];
@@ -308,6 +312,8 @@ static NSString *const silencedNotificationsKey = @"SilencedNotifications";
 }
 
 - (void)postBlockNotification:(SNTStoredEvent *)event withCustomMessage:(NSString *)message {
+  if ([SNTConfigurator configurator].enableSilentMode) return;
+
   if (!event) {
     LOGI(@"Error: Missing event object in message received from daemon!");
     return;
@@ -320,6 +326,8 @@ static NSString *const silencedNotificationsKey = @"SilencedNotifications";
 }
 
 - (void)postUSBBlockNotification:(SNTDeviceEvent *)event withCustomMessage:(NSString *)message {
+  if ([SNTConfigurator configurator].enableSilentMode) return;
+
   if (!event) {
     LOGI(@"Error: Missing event object in message received from daemon!");
     return;

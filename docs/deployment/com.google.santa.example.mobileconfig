@@ -20,6 +20,8 @@
 								<integer>1</integer>
 								<key>EnablePageZeroProtection</key>
 								<false/>
+								<key>EnableSilentMode</key>
+								<false/>
 								<key>EventDetailText</key>
 								<string>Open sync server</string>
 								<key>EventDetailURL</key>

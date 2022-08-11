@@ -256,6 +256,16 @@
 #pragma mark - GUI Settings
 
 ///
+///  When silent mode is enabled, Santa will never show notifications for
+///  blocked processes.
+///
+///  This can be a very confusing experience for users, use with caution.
+///
+///  Defaults to NO.
+///
+@property(readonly, nonatomic) BOOL enableSilentMode;
+
+///
 /// The text to display when opening Santa.app.
 /// If unset, the default text will be displayed.
 ///
