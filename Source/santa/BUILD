@@ -1,4 +1,5 @@
 load("@build_bazel_rules_apple//apple:macos.bzl", "macos_application")
+load("//:helper.bzl", "santa_unit_test")
 
 licenses(["notice"])
 
@@ -89,4 +90,18 @@ macos_application(
     version = "//:version",
     visibility = ["//:santa_package_group"],
     deps = [":SantaGUI_lib"],
+)
+
+santa_unit_test(
+    name = "SNTNotificationManagerTest",
+    srcs = [
+        "SNTNotificationManagerTest.m",
+    ],
+    sdk_frameworks = [
+        "Cocoa",
+    ],
+    deps = [
+        ":SantaGUI_lib",
+        "@OCMock",
+    ],
 )
