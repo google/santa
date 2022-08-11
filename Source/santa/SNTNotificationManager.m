@@ -121,6 +121,13 @@ static NSString *const silencedNotificationsKey = @"SilencedNotifications";
   }
 }
 
+// For blocked execution notifications, post an NSDistributedNotificationCenter
+// notification with the important details from the stored event. Distributed
+// notifications are system-wide broadcasts that can be sent by apps and observed
+// from separate processes. This allows users of Santa to write tools that
+// perform actions when we block execution, such as trigger management tools or
+// display an enterprise-specific UI (which is particularly useful when combined
+// with the EnableSilentMode configuration option, to disable Santa's standard UI).
 - (void)postDistributedNotification:(SNTMessageWindowController *)pendingMsg {
   if (![pendingMsg isKindOfClass:[SNTBinaryMessageWindowController class]]) {
     return;
