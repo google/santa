@@ -52,8 +52,8 @@ audit_token_t MakeAuditToken(pid_t pid, pid_t pidver) {
   };
 }
 
-es_string_token_t MakeStringToken(const char* s) {
-  return (es_string_token_t){
+es_string_token_t MakeESStringToken(const char* s) {
+  return es_string_token_t{
     .length = strlen(s),
     .data = s,
   };
@@ -61,37 +61,137 @@ es_string_token_t MakeStringToken(const char* s) {
 
 es_file_t MakeESFile(const char *path) {
   return es_file_t{
-    .path = MakeStringToken(path),
+    .path = MakeESStringToken(path),
     .path_truncated = false,
     .stat = {}
   };
 }
 
-es_process_t MakeESProcess(es_file_t *es_file,
+es_process_t MakeESProcess(es_file_t *file,
                            audit_token_t tok,
                            audit_token_t parent_tok) {
   return es_process_t{
     .audit_token = tok,
     .ppid = audit_token_to_pid(parent_tok),
     .original_ppid = audit_token_to_pid(parent_tok),
-    .executable = es_file,
+    .executable = file,
     .parent_audit_token = parent_tok,
   };
 }
 
-es_message_t MakeESMessage(es_event_type_t event_type,
-                           es_process_t *instigator) {
+es_message_t MakeESMessage(es_event_type_t et, es_process_t *proc) {
   return es_message_t{
-    .event_type = event_type,
-    .process = instigator,
+    .event_type = et,
+    .process = proc,
   };
 }
 
+std::string BasicStringSerializeMessage(es_message_t* es_msg) {
+  auto mock_esapi = std::make_shared<MockEndpointSecurityAPI>();
+  EXPECT_CALL(*mock_esapi, ReleaseMessage(testing::_))
+      .After(EXPECT_CALL(*mock_esapi, RetainMessage(testing::_))
+          .WillOnce(testing::Return(es_msg)));
+
+  std::shared_ptr<EnrichedMessage> enriched_message =
+      Enricher().Enrich(Message(mock_esapi, es_msg));
+
+  std::shared_ptr<Serializer> bs = BasicString::Create(false);
+  auto ret = bs->SerializeMessage(enriched_message);
+  return std::string(ret.begin(), ret.end());
+}
+
+TEST(BasicString, SerializeMessageClose) {
+  es_file_t proc_file = MakeESFile("foobar");
+  es_process_t proc = MakeESProcess(&proc_file,
+                                    MakeAuditToken(12, 34),
+                                    MakeAuditToken(56, 78));
+  es_file_t file = MakeESFile("close_file");
+  es_message_t es_msg = MakeESMessage(ES_EVENT_TYPE_NOTIFY_CLOSE, &proc);
+  es_msg.event.close.modified = true;
+  es_msg.event.close.target = &file;
+
+  std::string got = BasicStringSerializeMessage(&es_msg);
+  std::string want = "action=WRITE|path=close_file"
+      "|pid=12|ppid=56|process=foobar|processpath=foobar"
+      "|uid=-2|user=nobody|gid=-2|group=nobody";
+
+  EXPECT_EQ(want, got);
+}
+
+TEST(BasicString, SerializeMessageExchange) {
+  es_file_t proc_file = MakeESFile("foobar");
+  es_process_t proc = MakeESProcess(&proc_file,
+                                    MakeAuditToken(12, 34),
+                                    MakeAuditToken(56, 78));
+  es_file_t file1 = MakeESFile("exchange_1");
+  es_file_t file2 = MakeESFile("exchange_2");
+  es_message_t es_msg = MakeESMessage(ES_EVENT_TYPE_NOTIFY_EXCHANGEDATA, &proc);
+  es_msg.event.exchangedata.file1 = &file1;
+  es_msg.event.exchangedata.file2 = &file2;
+
+  std::string got = BasicStringSerializeMessage(&es_msg);
+  std::string want = "action=EXCHANGE|path=exchange_1|newpath=exchange_2"
+      "|pid=12|ppid=56|process=foobar|processpath=foobar"
+      "|uid=-2|user=nobody|gid=-2|group=nobody";
+
+  EXPECT_EQ(want, got);
+}
+
+TEST(BasicString, SerializeMessageExit) {
+  es_file_t proc_file = MakeESFile("foobar");
+  es_process_t proc = MakeESProcess(&proc_file,
+                                    MakeAuditToken(12, 34),
+                                    MakeAuditToken(56, 78));
+  es_message_t es_msg = MakeESMessage(ES_EVENT_TYPE_NOTIFY_EXIT, &proc);
+
+  std::string got = BasicStringSerializeMessage(&es_msg);
+  std::string want = "action=EXIT|pid=12|pidversion=34|ppid=56|uid=-2|gid=-2";
+
+  EXPECT_EQ(want, got);
+}
+
+TEST(BasicString, SerializeMessageFork) {
+  es_file_t proc_file = MakeESFile("foobar");
+  es_file_t proc_child_file = MakeESFile("foobar_child");
+  es_process_t proc = MakeESProcess(&proc_file,
+                                    MakeAuditToken(12, 34),
+                                    MakeAuditToken(56, 78));
+  es_process_t proc_child = MakeESProcess(&proc_child_file,
+                                          MakeAuditToken(67, 89),
+                                          MakeAuditToken(12, 34));
+  es_message_t es_msg = MakeESMessage(ES_EVENT_TYPE_NOTIFY_FORK, &proc);
+  es_msg.event.fork.child = &proc_child;
+
+  std::string got = BasicStringSerializeMessage(&es_msg);
+  std::string want = "action=FORK|pid=67|pidversion=89|ppid=12|uid=-2|gid=-2";
+
+  EXPECT_EQ(want, got);
+}
+
+TEST(BasicString, SerializeMessageLink) {
+  es_file_t proc_file = MakeESFile("foobar");
+  es_file_t src_file = MakeESFile("link_src");
+  es_file_t dst_dir = MakeESFile("link_dst");
+  es_process_t proc = MakeESProcess(&proc_file,
+                                    MakeAuditToken(12, 34),
+                                    MakeAuditToken(56, 78));
+  es_message_t es_msg = MakeESMessage(ES_EVENT_TYPE_NOTIFY_LINK, &proc);
+  es_msg.event.link.source = &src_file;
+  es_msg.event.link.target_dir = &dst_dir;
+  es_msg.event.link.target_filename = MakeESStringToken("link_name");
+
+  std::string got = BasicStringSerializeMessage(&es_msg);
+  std::string want = "action=LINK|path=link_src|newpath=link_dst/link_name"
+      "|pid=12|ppid=56|process=foobar|processpath=foobar"
+      "|uid=-2|user=nobody|gid=-2|group=nobody";
+
+  EXPECT_EQ(want, got);
+}
 
 TEST(BasicString, SerializeMessageRename) {
   es_file_t proc_file = MakeESFile("foobar");
-  es_file_t src_file = MakeESFile("src");
-  es_file_t dst_file = MakeESFile("dst");
+  es_file_t src_file = MakeESFile("rename_src");
+  es_file_t dst_file = MakeESFile("rename_dst");
   es_process_t proc = MakeESProcess(&proc_file,
                                     MakeAuditToken(12, 34),
                                     MakeAuditToken(56, 78));
@@ -100,24 +200,10 @@ TEST(BasicString, SerializeMessageRename) {
   es_msg.event.rename.destination_type = ES_DESTINATION_TYPE_EXISTING_FILE;
   es_msg.event.rename.destination.existing_file = &dst_file;
 
-  auto mock_esapi = std::make_shared<MockEndpointSecurityAPI>();
-  EXPECT_CALL(*mock_esapi, ReleaseMessage(testing::_))
-      .After(EXPECT_CALL(*mock_esapi, RetainMessage(testing::_))
-          .WillOnce(testing::Return(&es_msg)));
-
-  Message msg(mock_esapi, &es_msg);
-
-  Enricher enricher;
-
-  std::shared_ptr<EnrichedMessage> enriched_message = enricher.Enrich(std::move(msg));
-
-  std::shared_ptr<Serializer> bs = BasicString::Create(false);
-  auto ret = bs->SerializeMessage(enriched_message);
-  std::string got(ret.begin(), ret.end());
-
-  std::string want = "action=RENAME|path=src|newpath=dst|pid=12|ppid=56"
-      "|process=foobar|processpath=foobar|uid=-2|user=nobody"
-      "|gid=-2|group=nobody";
+  std::string got = BasicStringSerializeMessage(&es_msg);
+  std::string want = "action=RENAME|path=rename_src|newpath=rename_dst"
+      "|pid=12|ppid=56|process=foobar|processpath=foobar"
+      "|uid=-2|user=nobody|gid=-2|group=nobody";
 
   EXPECT_EQ(want, got);
 }
@@ -131,24 +217,10 @@ TEST(BasicString, SerializeMessageUnlink) {
   es_message_t es_msg = MakeESMessage(ES_EVENT_TYPE_NOTIFY_UNLINK, &proc);
   es_msg.event.unlink.target = &target_file;
 
-  auto mock_esapi = std::make_shared<MockEndpointSecurityAPI>();
-  EXPECT_CALL(*mock_esapi, ReleaseMessage(testing::_))
-      .After(EXPECT_CALL(*mock_esapi, RetainMessage(testing::_))
-          .WillOnce(testing::Return(&es_msg)));
-
-  Message msg(mock_esapi, &es_msg);
-
-  Enricher enricher;
-
-  std::shared_ptr<EnrichedMessage> enriched_message = enricher.Enrich(std::move(msg));
-
-  std::shared_ptr<Serializer> bs = BasicString::Create(false);
-  auto ret = bs->SerializeMessage(enriched_message);
-  std::string got(ret.begin(), ret.end());
-
-  std::string want = "action=DELETE|path=deleted_file|pid=12|ppid=56"
-      "|process=foobar|processpath=foobar|uid=-2|user=nobody"
-      "|gid=-2|group=nobody";
+  std::string got = BasicStringSerializeMessage(&es_msg);
+  std::string want = "action=DELETE|path=deleted_file"
+      "|pid=12|ppid=56|process=foobar|processpath=foobar"
+      "|uid=-2|user=nobody|gid=-2|group=nobody";
 
   EXPECT_EQ(want, got);
 
@@ -173,7 +245,8 @@ TEST(BasicString, SerializeAllowlist) {
   auto ret = bs->SerializeAllowlist(msg, "test_hash");
   std::string got(ret.begin(), ret.end());
 
-  std::string want = "action=ALLOWLIST|pid=12|pidversion=34|path=foobar|sha256=test_hash";
+  std::string want = "action=ALLOWLIST|pid=12|pidversion=34|path=foobar"
+      "|sha256=test_hash";
 
   EXPECT_EQ(want, got);
 }
