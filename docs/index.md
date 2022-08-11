@@ -11,7 +11,7 @@ It is named Santa because it keeps track of binaries that are naughty or nice.
 
 The project and the latest release is available on [**GitHub**](https://github.com/google/santa).
 
-## Features 
+## Features
 
 * [**Multiple modes:**](concepts/mode.md) In the default `MONITOR` mode, all binaries except those marked as blocked will be allowed to run, whilst being logged and recorded in the events database. In `LOCKDOWN` mode, only listed binaries are allowed to run.
 * [**Event logging:**](concepts/events.md) All binary launches are logged. When in either mode, all unknown or denied binaries are stored in the database to enable later aggregation.

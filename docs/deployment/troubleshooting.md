@@ -7,11 +7,11 @@ nav_order: 5
 # Troubleshooting
 
 As kernel extensions have been considered deprecated for several OS releases,
-this page will cover troublshooting the system extension and related topics. 
+this page will cover troublshooting the system extension and related topics.
 
 ## Confirming Status
 
-While there's an entire page on [santactl](../binaries/santactl.md), it's one of the best ways to start 
+While there's an entire page on [santactl](../binaries/santactl.md), it's one of the best ways to start
 determining the cause of an issue:
 
 ```sh

@@ -1,7 +1,7 @@
 # Reporting a Vulnerability
 
 If you believe you have found a security vulnerability, we would appreciate private disclosure
-so that we can work on a fix before disclosure. Any vulnerabilities reported to us will be 
+so that we can work on a fix before disclosure. Any vulnerabilities reported to us will be
 disclosed publicly either when a new version with fixes is released or 90 days has passed,
 whichever comes first.
 

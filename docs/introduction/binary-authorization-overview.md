@@ -7,7 +7,7 @@ redirect_from:
 
 # Binary Authorization Overview
 
-NOTE: This doc is out-dated and will be updated soon. We don't rely on a Kernel 
+NOTE: This doc is out-dated and will be updated soon. We don't rely on a Kernel
 Extension anymore.
 
 #### Background
@@ -49,7 +49,7 @@ documentation. This flow does not cover the logging component of Santa, see the
         `execve()` the same `vnode_id`, santa-driver will have that thread wait
         for the in-flight decision from santad. All subsequent `execve()`s for
         the same `vnode_id` will use the decision in the cache as explained
-        in #2, until the cache is invalidated. 
+        in #2, until the cache is invalidated.
     *   If the executing file is written to while any of the threads are waiting
         for a response the `ACTION_REQUEST_BINARY` entry is removed, forcing the
         decision-making process to be restarted.
