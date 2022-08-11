@@ -30,6 +30,7 @@ also known as mobileconfig files, which are in an Apple-specific XML format.
 | EnableBadSignatureProtection      | Bool       | Enable bad signature protection, defaults to NO. If this flag is set to YES, binaries with a bad signing chain will be blocked even in MONITOR mode, **unless** the binary is allowed by an explicit rule. |
 | EnablePageZeroProtection          | Bool       | Enable `__PAGEZERO` protection, defaults to YES. If this flag is set to YES, 32-bit binaries that are missing the `__PAGEZERO` segment will be blocked even in MONITOR mode, **unless** the binary is allowed by an explicit rule. |
 | EnableSysxCache                   | Bool       | Enables a secondary cache that ensures better performance when multiple EndpointSecurity system extensions are installed. Defaults to YES in 2021.8, defaults to NO in earlier versions. |
+| EnableSilentMode                  | Bool       | If true, Santa will not post any GUI notifications. This can be a very confusing experience for users, use with caution. Defaults to NO. |
 | AboutText                         | String     | The text to display when the user opens Santa.app. If unset, the default text will be displayed. |
 | MoreInfoURL                       | String     | The URL to open when the user clicks "More Info..." when opening Santa.app.  If unset, the button will not be displayed. |
 | EventDetailURL                    | String     | See the [EventDetailURL](#eventdetailurl) section below. |
