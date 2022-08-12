@@ -105,6 +105,7 @@ santa_unit_test(
     ],
     deps = [
         ":SantaGUI_lib",
+        "//Source/common:SNTStoredEvent",
         "@OCMock",
     ],
 )
