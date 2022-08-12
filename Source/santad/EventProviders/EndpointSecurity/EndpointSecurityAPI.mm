@@ -24,10 +24,10 @@ Client EndpointSecurityAPI::NewClient(
     void(^message_handler)(es_client_t*, Message)) {
   es_client_t *client = NULL;
 
-  auto shared_es_api = shared_from_this();
+  auto shared_esapi = shared_from_this();
   es_new_client_result_t res = es_new_client(&client, ^(es_client_t* c, const es_message_t* msg) {
     @autoreleasepool {
-      message_handler(c, Message(shared_es_api, msg));
+      message_handler(c, Message(shared_esapi, msg));
     }
   });
 

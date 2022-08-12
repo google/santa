@@ -26,7 +26,7 @@ class EndpointSecurityAPI;
 
 class Message {
 public:
-  Message(std::shared_ptr<EndpointSecurityAPI> es_api,
+  Message(std::shared_ptr<EndpointSecurityAPI> esapi,
                           const es_message_t* es_msg);
   ~Message();
 
@@ -46,7 +46,7 @@ public:
   std::string ParentProcessName() const;
 
 private:
-  std::shared_ptr<EndpointSecurityAPI> es_api_;
+  std::shared_ptr<EndpointSecurityAPI> esapi_;
   es_message_t* es_msg_;
 
   mutable std::string pname_;

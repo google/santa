@@ -21,34 +21,34 @@
 
 namespace santa::santad::event_providers::endpoint_security {
 
-Message::Message(std::shared_ptr<EndpointSecurityAPI> es_api,
-                 const es_message_t* es_msg) : es_api_(es_api) {
-  es_msg_ = es_api_->RetainMessage(es_msg);
+Message::Message(std::shared_ptr<EndpointSecurityAPI> esapi,
+                 const es_message_t* es_msg) : esapi_(esapi) {
+  es_msg_ = esapi_->RetainMessage(es_msg);
 }
 
 Message::~Message() {
   if (es_msg_) {
-    es_api_->ReleaseMessage(es_msg_);
+    esapi_->ReleaseMessage(es_msg_);
   }
 }
 
 Message::Message(Message &&other) {
-  es_api_ = other.es_api_;
+  esapi_ = other.esapi_;
   es_msg_ = other.es_msg_;
   other.es_msg_ = nullptr;
 }
 
 Message::Message(const Message &other) {
-  es_api_ = other.es_api_;
+  esapi_ = other.esapi_;
   es_msg_ = other.es_msg_;
-  es_api_->RetainMessage(es_msg_);
+  esapi_->RetainMessage(es_msg_);
 }
 
 Message& Message::operator=(const Message &other) {
-  es_api_->ReleaseMessage(es_msg_);
-  es_api_ = other.es_api_;
+  esapi_->ReleaseMessage(es_msg_);
+  esapi_ = other.esapi_;
   es_msg_ = other.es_msg_;
-  es_api_->RetainMessage(es_msg_);
+  esapi_->RetainMessage(es_msg_);
   return *this;
 }
 

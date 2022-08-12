@@ -40,7 +40,7 @@ public:
   // timely manner. But the value should be high enough to allow the cache to be
   // effective in the event the binary is executed in rapid succession.
   AuthResultCache(
-      std::shared_ptr<santa::santad::event_providers::endpoint_security::EndpointSecurityAPI> es_api,
+      std::shared_ptr<santa::santad::event_providers::endpoint_security::EndpointSecurityAPI> esapi,
       uint64_t cache_deny_time_ms = 1500);
   virtual ~AuthResultCache();
 
@@ -65,7 +65,7 @@ private:
   SantaCache<santa_vnode_id_t, uint64_t> *root_cache_;
   SantaCache<santa_vnode_id_t, uint64_t> *nonroot_cache_;
 
-  std::shared_ptr<santa::santad::event_providers::endpoint_security::EndpointSecurityAPI> es_api_;
+  std::shared_ptr<santa::santad::event_providers::endpoint_security::EndpointSecurityAPI> esapi_;
   uint64_t root_devno_;
   uint64_t cache_deny_time_ns_;
   dispatch_queue_t q_;
