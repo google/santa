@@ -105,3 +105,11 @@ santa_unit_test(
         "@OCMock",
     ],
 )
+
+test_suite(
+    name = "unit_tests",
+    tests = [
+        ":SNTNotificationManagerTest",
+    ],
+    visibility = ["//:santa_package_group"],
+)
