@@ -13,7 +13,8 @@
 ///    limitations under the License.
 
 #import <Foundation/Foundation.h>
-#include <gtest/gtest.h>
+#import <OCMock/OCMock.h>
+#import <XCTest/XCTest.h>
 
 #include "Source/santad/EventProviders/EndpointSecurity/EnrichedTypes.h"
 #include "Source/santad/Logs/EndpointSecurity/Serializers/Empty.h"
@@ -22,24 +23,31 @@ using santa::santad::logs::endpoint_security::serializers::Empty;
 
 namespace es = santa::santad::event_providers::endpoint_security;
 
-TEST(Empty, AllSerializersReturnEmptyVector) {
-  auto empty = Empty::Create();
+@interface EmptyTest : XCTestCase
+@end
+
+@implementation EmptyTest
+
+- (void)testAllSerializersReturnEmptyVector {
+  auto e = Empty::Create();
 
   // We can get away with passing a fake argument to the `Serialize*` methods
   // instead of constructing real ones since the Empty class never touches the
   // input parameter.
   int fake;
-  EXPECT_EQ(empty->SerializeMessage(*(es::EnrichedClose*)&fake).size(), 0);
-  EXPECT_EQ(empty->SerializeMessage(*(es::EnrichedExchange*)&fake).size(), 0);
-  EXPECT_EQ(empty->SerializeMessage(*(es::EnrichedExec*)&fake).size(), 0);
-  EXPECT_EQ(empty->SerializeMessage(*(es::EnrichedExit*)&fake).size(), 0);
-  EXPECT_EQ(empty->SerializeMessage(*(es::EnrichedFork*)&fake).size(), 0);
-  EXPECT_EQ(empty->SerializeMessage(*(es::EnrichedLink*)&fake).size(), 0);
-  EXPECT_EQ(empty->SerializeMessage(*(es::EnrichedRename*)&fake).size(), 0);
-  EXPECT_EQ(empty->SerializeMessage(*(es::EnrichedUnlink*)&fake).size(), 0);
+  XCTAssertEqual(e->SerializeMessage(*(es::EnrichedClose*)&fake).size(), 0);
+  XCTAssertEqual(e->SerializeMessage(*(es::EnrichedExchange*)&fake).size(), 0);
+  XCTAssertEqual(e->SerializeMessage(*(es::EnrichedExec*)&fake).size(), 0);
+  XCTAssertEqual(e->SerializeMessage(*(es::EnrichedExit*)&fake).size(), 0);
+  XCTAssertEqual(e->SerializeMessage(*(es::EnrichedFork*)&fake).size(), 0);
+  XCTAssertEqual(e->SerializeMessage(*(es::EnrichedLink*)&fake).size(), 0);
+  XCTAssertEqual(e->SerializeMessage(*(es::EnrichedRename*)&fake).size(), 0);
+  XCTAssertEqual(e->SerializeMessage(*(es::EnrichedUnlink*)&fake).size(), 0);
 
-  EXPECT_EQ(empty->SerializeAllowlist(*(es::Message*)&fake, "").size(), 0);
-  EXPECT_EQ(empty->SerializeBundleHashingEvent(nil).size(), 0);
-  EXPECT_EQ(empty->SerializeDiskAppeared(nil).size(), 0);
-  EXPECT_EQ(empty->SerializeDiskDisappeared(nil).size(), 0);
+  XCTAssertEqual(e->SerializeAllowlist(*(es::Message*)&fake, "").size(), 0);
+  XCTAssertEqual(e->SerializeBundleHashingEvent(nil).size(), 0);
+  XCTAssertEqual(e->SerializeDiskAppeared(nil).size(), 0);
+  XCTAssertEqual(e->SerializeDiskDisappeared(nil).size(), 0);
 }
+
+@end
