@@ -134,7 +134,19 @@ static NSString *const silencedNotificationsKey = @"SilencedNotifications";
   }
   SNTBinaryMessageWindowController *wc = (SNTBinaryMessageWindowController *)pendingMsg;
   NSDistributedNotificationCenter *dc = [NSDistributedNotificationCenter defaultCenter];
-  NSMutableDictionary *userInfo = [@{
+  NSMutableArray<NSDictionary *> *signingChain =
+    [NSMutableArray arrayWithCapacity:wc.event.signingChain.count];
+  for (MOLCertificate *cert in wc.event.signingChain) {
+    [signingChain addObject:@{
+      kCertSHA256 : cert.SHA256 ?: @"",
+      kCertCN : cert.commonName ?: @"",
+      kCertOrg : cert.orgName ?: @"",
+      kCertOU : cert.orgUnit ?: @"",
+      kCertValidFrom : @([cert.validFrom timeIntervalSince1970]) ?: @0,
+      kCertValidUntil : @([cert.validUntil timeIntervalSince1970]) ?: @0,
+    }];
+  }
+  NSDictionary *userInfo = @{
     kFileSHA256 : wc.event.fileSHA256 ?: @"",
     kFilePath : wc.event.filePath ?: @"",
     kFileBundleName : wc.event.fileBundleName ?: @"",
@@ -147,17 +159,8 @@ static NSString *const silencedNotificationsKey = @"SilencedNotifications";
     kPID : wc.event.pid ?: @0,
     kPPID : wc.event.ppid ?: @0,
     kParentName : wc.event.parentName ?: @"",
-  } mutableCopy];
-
-  MOLCertificate *leafCert = [wc.event.signingChain firstObject];
-  if (leafCert) {
-    userInfo[kCertSHA256] = leafCert.SHA256 ?: @"";
-    userInfo[kCertCN] = leafCert.commonName ?: @"";
-    userInfo[kCertOrg] = leafCert.orgName ?: @"";
-    userInfo[kCertOU] = leafCert.orgUnit ?: @"";
-    userInfo[kCertValidFrom] = @([leafCert.validFrom timeIntervalSince1970]) ?: @0;
-    userInfo[kCertValidUntil] = @([leafCert.validUntil timeIntervalSince1970]) ?: @0;
-  }
+    kSigningChain : signingChain,
+  };
 
   [dc postNotificationName:@"com.google.santa.notification.blockedeexecution"
                     object:@"com.google.santa"

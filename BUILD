@@ -191,6 +191,7 @@ test_suite(
     name = "unit_tests",
     tests = [
         "//Source/common:unit_tests",
+        "//Source/santa:unit_tests",
         "//Source/santactl:unit_tests",
         "//Source/santad:unit_tests",
         "//Source/santametricservice:unit_tests",
