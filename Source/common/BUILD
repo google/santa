@@ -314,3 +314,13 @@ cc_library(
         "@com_google_googletest//:gtest",
     ]
 )
+
+cc_library(
+    name = "TestUtils",
+    testonly = 1,
+    hdrs = ["TestUtils.h"],
+    deps = [
+        "@com_google_googletest//:gtest",
+        "@OCMock",
+    ],
+)

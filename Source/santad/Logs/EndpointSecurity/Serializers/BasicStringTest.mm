@@ -28,6 +28,7 @@
 #import "Source/common/SNTConfigurator.h"
 #import "Source/common/SNTStoredEvent.h"
 #import "Source/santad/SNTDecisionCache.h"
+#include "Source/common/TestUtils.h"
 #include "Source/santad/EventProviders/EndpointSecurity/EndpointSecurityAPI.h"
 #include "Source/santad/EventProviders/EndpointSecurity/EnrichedTypes.h"
 #include "Source/santad/EventProviders/EndpointSecurity/Enricher.h"
@@ -42,11 +43,7 @@ using santa::santad::event_providers::endpoint_security::Message;
 using santa::santad::logs::endpoint_security::serializers::BasicString;
 using santa::santad::logs::endpoint_security::serializers::Serializer;
 
-#define XCTAssertCppStringEqual(got, want) \
-    XCTAssertTrue((got) == (want), \
-                   "\nMismatched strings.\n\t got: %s\n\twant: %s", \
-                   (got).c_str(), \
-                   (want).c_str())
+
 
 class MockEndpointSecurityAPI : public EndpointSecurityAPI {
 public:
@@ -131,9 +128,8 @@ std::string BasicStringSerializeMessage(es_message_t* es_msg) {
 @property SNTCachedDecision* testCachedDecision;
 @end
 
-@implementation BasicStringTest {
-  struct stat _test_sb;
-}
+@implementation BasicStringTest
+
 - (void)setUp {
   self.mockConfigurator = OCMClassMock([SNTConfigurator class]);
   OCMStub([self.mockConfigurator configurator]).andReturn(self.mockConfigurator);

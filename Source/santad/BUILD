@@ -1001,6 +1001,7 @@ santa_unit_test(
         "//Source/common:SNTCommonEnums",
         "//Source/common:SNTConfigurator",
         "//Source/common:SNTStoredEvent",
+        "//Source/common:TestUtils",
         "@com_google_googletest//:gtest",
         "@OCMock",
     ],
@@ -1010,10 +1011,33 @@ santa_unit_test(
     ],
 )
 
+santa_unit_test(
+    name = "AuthResultCacheTest",
+    srcs = ["EventProviders/AuthResultCacheTest.mm"],
+    deps = [
+        ":AuthResultCache",
+        ":EndpointSecurityAPI",
+        "//Source/common:TestUtils",
+        "@com_google_googletest//:gtest",
+        "@OCMock",
+    ],
+    sdk_dylibs = [
+        "EndpointSecurity",
+    ],
+)
+
 test_suite(
     name = "unit_tests",
     tests = [
+        ":AuthResultCacheTest",
         ":EndpointSecuritySerializerBasicStringTest",
+    ],
+    visibility = ["//:santa_package_group"],
+)
+
+test_suite(
+    name = "unit_tests_ORIG",
+    tests = [
         ":SNTApplicationCoreMetricsTest",
         ":SNTApplicationTest",
         ":SNTDeviceManagerTest",
@@ -1024,16 +1048,6 @@ test_suite(
         ":SNTRuleTableTest",
     ],
     visibility = ["//:santa_package_group"],
-)
-
-santa_unit_gtest(
-    name = "AuthResultCacheTest",
-    srcs = ["EventProviders/AuthResultCacheTest.mm"],
-    deps = [
-        ":AuthResultCache",
-        ":EndpointSecurityAPI",
-        "@com_google_googletest//:gtest",
-    ],
 )
 
 santa_unit_gtest(
