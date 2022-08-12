@@ -32,6 +32,7 @@
 #import "Source/common/SNTStoredEvent.h"
 #import "Source/santad/SNTDecisionCache.h"
 
+using santa::santad::event_providers::endpoint_security::EndpointSecurityAPI;
 using santa::santad::event_providers::endpoint_security::EnrichedClose;
 using santa::santad::event_providers::endpoint_security::EnrichedExchange;
 using santa::santad::event_providers::endpoint_security::EnrichedExec;
@@ -189,7 +190,9 @@ static NSString* sanitizeCString(const char* str, NSUInteger length) {
   char *buf = NULL;
   BOOL shouldFree = NO;
 
-  if (length < 1) return @"";
+  if (length < 1) {
+    return @"";
+  }
 
   // Loop through the string one character at a time, looking for the characters
   // we want to remove.
@@ -372,12 +375,19 @@ static char* FormattedDateString(char *buf, size_t len) {
   return buf;
 }
 
-std::shared_ptr<BasicString> BasicString::Create(bool prefix_time_name) {
-  return std::make_shared<BasicString>(prefix_time_name);
+static inline NSString* NonNull(NSString *str) {
+  return str ?: @"";
 }
 
-BasicString::BasicString(bool prefix_time_name)
-  : prefix_time_name_(prefix_time_name) {}
+std::shared_ptr<BasicString> BasicString::Create(
+    std::shared_ptr<EndpointSecurityAPI> esapi,
+    bool prefix_time_name) {
+  return std::make_shared<BasicString>(esapi, prefix_time_name);
+}
+
+BasicString::BasicString(std::shared_ptr<EndpointSecurityAPI> esapi,
+                         bool prefix_time_name)
+    : esapi_(esapi), prefix_time_name_(prefix_time_name) {}
 
 std::stringstream BasicString::CreateDefaultStringStream() {
   std::stringstream ss;
@@ -447,12 +457,12 @@ std::vector<uint8_t> BasicString::SerializeMessage(const EnrichedExec& msg) {
   }
 
   if (cd.certSHA256) {
-    ss << "|cert_sha256=" << cd.certSHA256
-       << "|cert_cn=" << [sanitizeString(cd.certCommonName) UTF8String];
+    ss << "|cert_sha256=" << [cd.certSHA256 UTF8String]
+       << "|cert_cn=" << [NonNull(sanitizeString(cd.certCommonName)) UTF8String];
   }
 
   if (cd.quarantineURL) {
-    ss << "|quarantine_url=" << [sanitizeString(cd.quarantineURL) UTF8String];
+    ss << "|quarantine_url=" << [NonNull(sanitizeString(cd.quarantineURL)) UTF8String];
   }
 
   ss << "|pid=" << Pid(esm.event.exec.target->audit_token)
@@ -472,7 +482,7 @@ std::vector<uint8_t> BasicString::SerializeMessage(const EnrichedExec& msg) {
     ss << "|origpath=" << origPath;
   }
 
-  uint32_t argCount = es_exec_arg_count(&(esm.event.exec));
+  uint32_t argCount = esapi_->ExecArgCount(&esm.event.exec);
   if (argCount > 0) {
     ss << "|args=";
     for (uint32_t i = 0; i < argCount; i++) {
@@ -480,13 +490,13 @@ std::vector<uint8_t> BasicString::SerializeMessage(const EnrichedExec& msg) {
         ss << " ";
       }
 
-      ss << es_exec_arg(&esm.event.exec, i).data;
+      ss << esapi_->ExecArg(&esm.event.exec, i).data;
     }
   }
 
   if ([[SNTConfigurator configurator] enableMachineIDDecoration]) {
     ss << "|machineid="
-       << [[[SNTConfigurator configurator] machineID] UTF8String];
+       << [NonNull([[SNTConfigurator configurator] machineID]) UTF8String];
   }
 
   std::string s = ss.str();
@@ -608,12 +618,12 @@ std::vector<uint8_t> BasicString::SerializeAllowlist(const Message& msg,
 std::vector<uint8_t> BasicString::SerializeBundleHashingEvent(SNTStoredEvent* event) {
   auto ss = CreateDefaultStringStream();
 
-  ss << "action=BUNDLE|sha256=" << [(event.fileSHA256 ?: @"") UTF8String]
-     << "|bundlehash=" << [(event.fileBundleHash ?: @"") UTF8String]
-     << "|bundlename=" << [(event.fileBundleName ?: @"") UTF8String]
-     << "|bundleid=" << [(event.fileBundleID ?: @"") UTF8String]
-     << "|bundlepath=" << [(event.fileBundlePath ?: @"") UTF8String]
-     << "|path=" << [(event.filePath ?: @"") UTF8String];
+  ss << "action=BUNDLE|sha256=" << [NonNull(event.fileSHA256) UTF8String]
+     << "|bundlehash=" << [NonNull(event.fileBundleHash) UTF8String]
+     << "|bundlename=" << [NonNull(event.fileBundleName) UTF8String]
+     << "|bundleid=" << [NonNull(event.fileBundleID) UTF8String]
+     << "|bundlepath=" << [NonNull(event.fileBundlePath) UTF8String]
+     << "|path=" << [NonNull(event.filePath) UTF8String];
 
   std::string s = ss.str();
 
@@ -630,8 +640,8 @@ std::vector<uint8_t> BasicString::SerializeDiskAppeared(NSDictionary* props) {
   }
 
   NSString *model = [NSString stringWithFormat:@"%@ %@",
-                        props[@"DADeviceVendor"] ?: @"",
-                        props[@"DADeviceModel"] ?: @""];
+                        NonNull(props[@"DADeviceVendor"]),
+                        NonNull(props[@"DADeviceModel"])];
   model = [model stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
 
   NSString *appearanceDateString =
@@ -641,15 +651,15 @@ std::vector<uint8_t> BasicString::SerializeDiskAppeared(NSDictionary* props) {
 
   auto ss = CreateDefaultStringStream();
   ss << "action=DISKAPPEAR"
-     << "|mount=" << [([props[@"DAVolumePath"] path] ?: @"") UTF8String]
-     << "|volume=" << [(props[@"DAVolumeName"] ?: @"") UTF8String]
-     << "|bsdname=" << [(props[@"DAMediaBSDName"] ?: @"") UTF8String]
-     << "|fs=" << [(props[@"DAVolumeKind"] ?: @"") UTF8String]
-     << "|model=" << [(model ?: @"") UTF8String]
-     << "|serial=" << [(serial ?: @"") UTF8String]
-     << "|bus=" << [(props[@"DADeviceProtocol"] ?: @"") UTF8String]
-     << "|dmgpath=" << [(dmgPath ?: @"") UTF8String]
-     << "|appearance=" << [appearanceDateString UTF8String];
+     << "|mount=" << [NonNull([props[@"DAVolumePath"] path]) UTF8String]
+     << "|volume=" << [NonNull(props[@"DAVolumeName"]) UTF8String]
+     << "|bsdname=" << [NonNull(props[@"DAMediaBSDName"]) UTF8String]
+     << "|fs=" << [NonNull(props[@"DAVolumeKind"]) UTF8String]
+     << "|model=" << [NonNull(model) UTF8String]
+     << "|serial=" << [NonNull(serial) UTF8String]
+     << "|bus=" << [NonNull(props[@"DADeviceProtocol"]) UTF8String]
+     << "|dmgpath=" << [NonNull(dmgPath) UTF8String]
+     << "|appearance=" << [NonNull(appearanceDateString) UTF8String];
 
   std::string s = ss.str();
 
@@ -660,9 +670,9 @@ std::vector<uint8_t> BasicString::SerializeDiskDisappeared(NSDictionary* props) 
   auto ss = CreateDefaultStringStream();
 
   ss << "action=DISKDISAPPEAR"
-     << "|mount=" << [([props[@"DAVolumePath"] path] ?: @"") UTF8String]
-     << "|volume=" << [(props[@"DAVolumeName"] ?: @"") UTF8String]
-     << "|bsdname=" << [(props[@"DAMediaBSDName"] ?: @"") UTF8String];
+     << "|mount=" << [NonNull([props[@"DAVolumePath"] path]) UTF8String]
+     << "|volume=" << [NonNull(props[@"DAVolumeName"]) UTF8String]
+     << "|bsdname=" << [NonNull(props[@"DAMediaBSDName"]) UTF8String];
 
   std::string s = ss.str();
 

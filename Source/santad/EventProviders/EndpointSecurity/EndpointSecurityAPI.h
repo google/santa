@@ -24,7 +24,8 @@
 
 namespace santa::santad::event_providers::endpoint_security {
 
-class EndpointSecurityAPI : public std::enable_shared_from_this<EndpointSecurityAPI> {
+class EndpointSecurityAPI
+    : public std::enable_shared_from_this<EndpointSecurityAPI> {
 public:
   virtual ~EndpointSecurityAPI() = default;
 
@@ -44,6 +45,9 @@ public:
   virtual bool MuteProcess(const Client &client, const audit_token_t* tok);
 
   virtual bool ClearCache(const Client &client);
+
+  virtual uint32_t ExecArgCount(const es_event_exec_t *event);
+  virtual es_string_token_t ExecArg(const es_event_exec_t *event, uint32_t index);
 
 private:
 };

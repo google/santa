@@ -100,19 +100,25 @@ TEST(Logger, Create) {
 
   // Note: The EXIT test must come first otherwise googletest complains about
   // additional threads existing before forking.
-  EXPECT_EXIT(Logger::Create((SNTEventLogType)123, @"/tmp/temppy"),
+  EXPECT_EXIT(Logger::Create(nullptr, (SNTEventLogType)123, @"/tmp/temppy"),
               testing::ExitedWithCode(EXIT_FAILURE),
               ".*");
 
-  auto logger = LoggerTest(Logger::Create(SNTEventLogTypeFilelog, @"/tmp/temppy"));
+  auto mock_esapi = std::make_shared<MockEndpointSecurityAPI>();
+  auto logger = LoggerTest(Logger::Create(mock_esapi,
+                                          SNTEventLogTypeFilelog, @"/tmp/temppy"));
   EXPECT_NE(std::dynamic_pointer_cast<BasicString>(logger.Serializer()), nullptr);
   EXPECT_NE(std::dynamic_pointer_cast<File>(logger.Writer()), nullptr);
 
-  logger = LoggerTest(Logger::Create(SNTEventLogTypeSyslog, @"/tmp/temppy"));
+  logger = LoggerTest(Logger::Create(mock_esapi,
+                                     SNTEventLogTypeSyslog,
+                                     @"/tmp/temppy"));
   EXPECT_NE(std::dynamic_pointer_cast<BasicString>(logger.Serializer()), nullptr);
   EXPECT_NE(std::dynamic_pointer_cast<Syslog>(logger.Writer()), nullptr);
 
-  logger = LoggerTest(Logger::Create(SNTEventLogTypeNull, @"/tmp/temppy"));
+  logger = LoggerTest(Logger::Create(mock_esapi,
+                                     SNTEventLogTypeNull,
+                                     @"/tmp/temppy"));
   EXPECT_NE(std::dynamic_pointer_cast<Empty>(logger.Serializer()), nullptr);
   EXPECT_NE(std::dynamic_pointer_cast<Null>(logger.Writer()), nullptr);
 }

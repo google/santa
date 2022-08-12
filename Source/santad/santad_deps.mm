@@ -94,10 +94,12 @@ std::unique_ptr<SantadDeps> SantadDeps::Create(
     prefix_tree->AddPrefix([filter fileSystemRepresentation]);
   }
 
+  std::shared_ptr<EndpointSecurityAPI> esapi = std::make_shared<EndpointSecurityAPI>();
+
   return std::make_unique<SantadDeps>(
       metric_export_interval,
-      std::make_shared<EndpointSecurityAPI>(),
-      Logger::Create(event_log_type, event_log_path),
+      esapi,
+      Logger::Create(esapi, event_log_type, event_log_path),
       control_connection,
       compiler_controller,
       notifier_queue,

@@ -18,10 +18,16 @@
 #import <Foundation/Foundation.h>
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
+#import <OCMock/OCMock.h>
+#import <XCTest/XCTest.h>
 
 #include <string>
 
+#import "Source/common/SNTCachedDecision.h"
+#import "Source/common/SNTCommonEnums.h"
+#import "Source/common/SNTConfigurator.h"
 #import "Source/common/SNTStoredEvent.h"
+#import "Source/santad/SNTDecisionCache.h"
 #include "Source/santad/EventProviders/EndpointSecurity/EndpointSecurityAPI.h"
 #include "Source/santad/EventProviders/EndpointSecurity/EnrichedTypes.h"
 #include "Source/santad/EventProviders/EndpointSecurity/Enricher.h"
@@ -36,10 +42,20 @@ using santa::santad::event_providers::endpoint_security::Message;
 using santa::santad::logs::endpoint_security::serializers::BasicString;
 using santa::santad::logs::endpoint_security::serializers::Serializer;
 
+#define XCTAssertCppStringEqual(got, want) \
+    XCTAssertTrue((got) == (want), \
+                   "\nMismatched strings.\n\t got: %s\n\twant: %s", \
+                   (got).c_str(), \
+                   (want).c_str())
+
 class MockEndpointSecurityAPI : public EndpointSecurityAPI {
 public:
   MOCK_METHOD(es_message_t*, RetainMessage, (const es_message_t* msg));
   MOCK_METHOD(void, ReleaseMessage, (es_message_t* msg));
+  MOCK_METHOD(uint32_t, ExecArgCount, (const es_event_exec_t *event));
+  MOCK_METHOD(es_string_token_t,
+              ExecArg,
+              (const es_event_exec_t *event, uint32_t index));
 };
 
 #define NOBODY ((unsigned int)-2)
@@ -59,11 +75,11 @@ es_string_token_t MakeESStringToken(const char* s) {
   };
 }
 
-es_file_t MakeESFile(const char *path) {
+es_file_t MakeESFile(const char *path, struct stat sb = {}) {
   return es_file_t{
     .path = MakeESStringToken(path),
     .path_truncated = false,
-    .stat = {}
+    .stat = sb,
   };
 }
 
@@ -86,8 +102,9 @@ es_message_t MakeESMessage(es_event_type_t et, es_process_t *proc) {
   };
 }
 
-std::string BasicStringSerializeMessage(es_message_t* es_msg) {
-  auto mock_esapi = std::make_shared<MockEndpointSecurityAPI>();
+std::string BasicStringSerializeMessage(
+    std::shared_ptr<MockEndpointSecurityAPI> mock_esapi,
+    es_message_t* es_msg) {
   EXPECT_CALL(*mock_esapi, ReleaseMessage(testing::_))
       .After(EXPECT_CALL(*mock_esapi, RetainMessage(testing::_))
           .WillOnce(testing::Return(es_msg)));
@@ -95,12 +112,51 @@ std::string BasicStringSerializeMessage(es_message_t* es_msg) {
   std::shared_ptr<EnrichedMessage> enriched_message =
       Enricher().Enrich(Message(mock_esapi, es_msg));
 
-  std::shared_ptr<Serializer> bs = BasicString::Create(false);
+  std::shared_ptr<Serializer> bs = BasicString::Create(mock_esapi, false);
   auto ret = bs->SerializeMessage(enriched_message);
   return std::string(ret.begin(), ret.end());
 }
 
-TEST(BasicString, SerializeMessageClose) {
+std::string BasicStringSerializeMessage(es_message_t* es_msg) {
+  auto mock_esapi = std::make_shared<MockEndpointSecurityAPI>();
+  return BasicStringSerializeMessage(mock_esapi, es_msg);
+}
+
+@interface BasicStringTest : XCTestCase
+@property id mockConfigurator;
+@property id mockDecisionCache;
+
+@property SNTCachedDecision* testCachedDecision;
+@end
+
+@implementation BasicStringTest {
+  struct stat _test_sb;
+}
+- (void)setUp {
+  self.mockConfigurator = OCMClassMock([SNTConfigurator class]);
+  OCMStub([self.mockConfigurator configurator]).andReturn(self.mockConfigurator);
+  OCMStub([self.mockConfigurator clientMode]).andReturn(SNTClientModeLockdown);
+  OCMStub([self.mockConfigurator enableMachineIDDecoration]).andReturn(YES);
+  OCMStub([self.mockConfigurator machineID]).andReturn(@"my_id");
+
+  self.testCachedDecision = [[SNTCachedDecision alloc] init];
+  self.testCachedDecision.decision = SNTEventStateAllowBinary;
+  self.testCachedDecision.decisionExtra = @"extra!";
+  self.testCachedDecision.sha256 = @"1234_hash";
+  self.testCachedDecision.quarantineURL = @"google.com";
+  self.testCachedDecision.certSHA256 = @"5678_hash";
+
+  self.mockDecisionCache = OCMClassMock([SNTDecisionCache class]);
+  OCMStub([self.mockDecisionCache sharedCache]).andReturn(self.mockDecisionCache);
+  OCMStub([self.mockDecisionCache cachedDecisionForFile:{}]).ignoringNonObjectArgs().andReturn(self.testCachedDecision);
+}
+
+- (void)tearDown {
+  [self.mockConfigurator stopMocking];
+  [self.mockDecisionCache stopMocking];
+}
+
+- (void)testSerializeMessageClose {
   es_file_t proc_file = MakeESFile("foobar");
   es_process_t proc = MakeESProcess(&proc_file,
                                     MakeAuditToken(12, 34),
@@ -115,10 +171,10 @@ TEST(BasicString, SerializeMessageClose) {
       "|pid=12|ppid=56|process=foobar|processpath=foobar"
       "|uid=-2|user=nobody|gid=-2|group=nobody";
 
-  EXPECT_EQ(want, got);
+  XCTAssertCppStringEqual(got, want);
 }
 
-TEST(BasicString, SerializeMessageExchange) {
+- (void)testSerializeMessageExchange {
   es_file_t proc_file = MakeESFile("foobar");
   es_process_t proc = MakeESProcess(&proc_file,
                                     MakeAuditToken(12, 34),
@@ -134,10 +190,44 @@ TEST(BasicString, SerializeMessageExchange) {
       "|pid=12|ppid=56|process=foobar|processpath=foobar"
       "|uid=-2|user=nobody|gid=-2|group=nobody";
 
-  EXPECT_EQ(want, got);
+  XCTAssertCppStringEqual(got, want);
 }
 
-TEST(BasicString, SerializeMessageExit) {
+- (void)testSerializeMessageExec {
+  es_file_t proc_file = MakeESFile("foobar");
+  es_process_t proc = MakeESProcess(&proc_file,
+                                    MakeAuditToken(12, 34),
+                                    MakeAuditToken(56, 78));
+  // struct stat sb = {.st_dev = 98765, .st_ino = 1234567};
+  struct stat sb = {};
+  es_file_t exec_file = MakeESFile("execpath", sb);
+  es_process_t proc_exec = MakeESProcess(&exec_file,
+                                    MakeAuditToken(12, 89),
+                                    MakeAuditToken(56, 78));
+
+  es_message_t es_msg = MakeESMessage(ES_EVENT_TYPE_NOTIFY_EXEC, &proc);
+  es_msg.event.exec.target = &proc_exec;
+
+  auto mock_esapi = std::make_shared<MockEndpointSecurityAPI>();
+  EXPECT_CALL(*mock_esapi, ExecArgCount(testing::_))
+      .WillOnce(testing::Return(3));
+
+  EXPECT_CALL(*mock_esapi, ExecArg(testing::_, testing::_))
+      .WillOnce(testing::Return(es_string_token_t{8, "execpath"}))
+      .WillOnce(testing::Return(es_string_token_t{2, "-l"}))
+      .WillOnce(testing::Return(es_string_token_t{2, "-v"}));
+
+  std::string got = BasicStringSerializeMessage(mock_esapi, &es_msg);
+  std::string want = "action=EXEC|decision=ALLOW|reason=BINARY|explain=extra!"
+      "|sha256=1234_hash|cert_sha256=5678_hash|cert_cn="
+      "|quarantine_url=google.com|pid=12|pidversion=89|ppid=56"
+      "|uid=-2|user=nobody|gid=-2|group=nobody"
+      "|mode=L|path=execpath|args=execpath -l -v|machineid=my_id";
+
+  XCTAssertCppStringEqual(got, want);
+}
+
+- (void)testSerializeMessageExit {
   es_file_t proc_file = MakeESFile("foobar");
   es_process_t proc = MakeESProcess(&proc_file,
                                     MakeAuditToken(12, 34),
@@ -147,10 +237,10 @@ TEST(BasicString, SerializeMessageExit) {
   std::string got = BasicStringSerializeMessage(&es_msg);
   std::string want = "action=EXIT|pid=12|pidversion=34|ppid=56|uid=-2|gid=-2";
 
-  EXPECT_EQ(want, got);
+  XCTAssertCppStringEqual(got, want);
 }
 
-TEST(BasicString, SerializeMessageFork) {
+- (void)testSerializeMessageFork {
   es_file_t proc_file = MakeESFile("foobar");
   es_file_t proc_child_file = MakeESFile("foobar_child");
   es_process_t proc = MakeESProcess(&proc_file,
@@ -165,10 +255,10 @@ TEST(BasicString, SerializeMessageFork) {
   std::string got = BasicStringSerializeMessage(&es_msg);
   std::string want = "action=FORK|pid=67|pidversion=89|ppid=12|uid=-2|gid=-2";
 
-  EXPECT_EQ(want, got);
+  XCTAssertCppStringEqual(got, want);
 }
 
-TEST(BasicString, SerializeMessageLink) {
+- (void)testSerializeMessageLink {
   es_file_t proc_file = MakeESFile("foobar");
   es_file_t src_file = MakeESFile("link_src");
   es_file_t dst_dir = MakeESFile("link_dst");
@@ -185,10 +275,10 @@ TEST(BasicString, SerializeMessageLink) {
       "|pid=12|ppid=56|process=foobar|processpath=foobar"
       "|uid=-2|user=nobody|gid=-2|group=nobody";
 
-  EXPECT_EQ(want, got);
+  XCTAssertCppStringEqual(got, want);
 }
 
-TEST(BasicString, SerializeMessageRename) {
+- (void)testSerializeMessageRename {
   es_file_t proc_file = MakeESFile("foobar");
   es_file_t src_file = MakeESFile("rename_src");
   es_file_t dst_file = MakeESFile("rename_dst");
@@ -205,10 +295,10 @@ TEST(BasicString, SerializeMessageRename) {
       "|pid=12|ppid=56|process=foobar|processpath=foobar"
       "|uid=-2|user=nobody|gid=-2|group=nobody";
 
-  EXPECT_EQ(want, got);
+  XCTAssertCppStringEqual(got, want);
 }
 
-TEST(BasicString, SerializeMessageUnlink) {
+- (void)testSerializeMessageUnlink {
   es_file_t proc_file = MakeESFile("foobar");
   es_file_t target_file = MakeESFile("deleted_file");
   es_process_t proc = MakeESProcess(&proc_file,
@@ -222,11 +312,10 @@ TEST(BasicString, SerializeMessageUnlink) {
       "|pid=12|ppid=56|process=foobar|processpath=foobar"
       "|uid=-2|user=nobody|gid=-2|group=nobody";
 
-  EXPECT_EQ(want, got);
-
+  XCTAssertCppStringEqual(got, want);
 }
 
-TEST(BasicString, SerializeAllowlist) {
+- (void)testSerializeAllowlist {
   es_file_t file = MakeESFile("foobar");
   es_process_t proc = MakeESProcess(&file,
                                     MakeAuditToken(12, 34),
@@ -235,23 +324,22 @@ TEST(BasicString, SerializeAllowlist) {
   es_msg.event.close.target = &file;
 
   auto mock_esapi = std::make_shared<MockEndpointSecurityAPI>();
-
   EXPECT_CALL(*mock_esapi, ReleaseMessage(testing::_))
       .After(EXPECT_CALL(*mock_esapi, RetainMessage(testing::_))
           .WillOnce(testing::Return(&es_msg)));
+
   Message msg(mock_esapi, &es_msg);
+  auto ret = BasicString::Create(mock_esapi, false)->SerializeAllowlist(
+      msg, "test_hash");
 
-  auto bs = BasicString::Create(false);
-  auto ret = bs->SerializeAllowlist(msg, "test_hash");
   std::string got(ret.begin(), ret.end());
-
   std::string want = "action=ALLOWLIST|pid=12|pidversion=34|path=foobar"
       "|sha256=test_hash";
 
-  EXPECT_EQ(want, got);
+  XCTAssertCppStringEqual(got, want);
 }
 
-TEST(BasicString, SerializeBundleHashingEvent) {
+- (void)testSerializeBundleHashingEvent {
   SNTStoredEvent *se = [[SNTStoredEvent alloc] init];
 
   se.fileSHA256 = @"file_hash";
@@ -261,18 +349,18 @@ TEST(BasicString, SerializeBundleHashingEvent) {
   se.fileBundlePath = @"file_bundle_path";
   se.filePath = @"file_path";
 
-  auto bs = BasicString::Create(false);
-  auto ret = bs->SerializeBundleHashingEvent(se);
+  auto ret = BasicString::Create(nullptr, false)->SerializeBundleHashingEvent(
+      se);
   std::string got(ret.begin(), ret.end());
 
   std::string want = "action=BUNDLE|sha256=file_hash"
       "|bundlehash=file_bundle_hash|bundlename=file_bundle_Name|bundleid="
       "|bundlepath=file_bundle_path|path=file_path";
 
-  EXPECT_EQ(want, got);
+  XCTAssertCppStringEqual(got, want);
 }
 
-TEST(BasicString, SerializeDiskAppeared) {
+- (void)testSerializeDiskAppeared {
   NSDictionary *props = @{
     @"DADevicePath": @"",
     @"DADeviceVendor": @"vendor",
@@ -284,28 +372,29 @@ TEST(BasicString, SerializeDiskAppeared) {
     @"DADeviceProtocol": @"usb",
   };
 
-  auto bs = BasicString::Create(false);
-  auto ret = bs->SerializeDiskAppeared(props);
+  auto ret = BasicString::Create(nullptr, false)->SerializeDiskAppeared(props);
   std::string got(ret.begin(), ret.end());
 
   std::string want = "action=DISKAPPEAR|mount=path|volume=|bsdname=bsd|fs=apfs"
       "|model=vendor model|serial=|bus=usb|dmgpath="
       "|appearance=2040-09-09T09:09:09.000Z";
 
-  EXPECT_EQ(want, got);
+  XCTAssertCppStringEqual(got, want);
 }
 
-TEST(BasicString, SerializeDiskDisappeared) {
+- (void)testSerializeDiskDisappeared {
   NSDictionary *props = @{
     @"DAVolumePath": [NSURL URLWithString:@"path"],
     @"DAMediaBSDName": @"bsd",
   };
 
-  auto bs = BasicString::Create(false);
-  auto ret = bs->SerializeDiskDisappeared(props);
+  auto ret = BasicString::Create(nullptr, false)->SerializeDiskDisappeared(
+      props);
   std::string got(ret.begin(), ret.end());
 
   std::string want = "action=DISKDISAPPEAR|mount=path|volume=|bsdname=bsd";
 
-  EXPECT_EQ(want, got);
+  XCTAssertCppStringEqual(got, want);
 }
+
+@end

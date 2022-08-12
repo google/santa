@@ -13,7 +13,6 @@
 ///    limitations under the License.
 
 #include "Source/santad/Logs/EndpointSecurity/Logger.h"
-#include <memory>
 
 #include "Source/common/SNTCommonEnums.h"
 #include "Source/common/SNTLogging.h"
@@ -24,8 +23,9 @@
 #include "Source/santad/Logs/EndpointSecurity/Writers/Null.h"
 #include "Source/santad/Logs/EndpointSecurity/Writers/Syslog.h"
 
-using santa::santad::event_providers::endpoint_security::Message;
+using santa::santad::event_providers::endpoint_security::EndpointSecurityAPI;
 using santa::santad::event_providers::endpoint_security::EnrichedMessage;
+using santa::santad::event_providers::endpoint_security::Message;
 using santa::santad::logs::endpoint_security::serializers::BasicString;
 using santa::santad::logs::endpoint_security::serializers::Empty;
 using santa::santad::logs::endpoint_security::writers::File;
@@ -42,17 +42,19 @@ static const size_t kBufferBatchSizeBytes = (1024 * 128);
 static const size_t kMaxExpectedWriteSizeBytes = 4096;
 
 // Translate configured log type to appropriate Serializer/Writer pairs
-std::unique_ptr<Logger> Logger::Create(SNTEventLogType log_type,
-                                       NSString* event_log_path) {
+std::unique_ptr<Logger> Logger::Create(
+      std::shared_ptr<EndpointSecurityAPI> esapi,
+      SNTEventLogType log_type,
+      NSString* event_log_path) {
   switch (log_type) {
     case SNTEventLogTypeFilelog:
-      return std::make_unique<Logger>(BasicString::Create(),
+      return std::make_unique<Logger>(BasicString::Create(esapi),
                                       File::Create(event_log_path,
                                                    kFlushBufferTimeoutMS,
                                                    kBufferBatchSizeBytes,
                                                    kMaxExpectedWriteSizeBytes));
     case SNTEventLogTypeSyslog:
-      return std::make_unique<Logger>(BasicString::Create(),
+      return std::make_unique<Logger>(BasicString::Create(esapi, false),
                                       Syslog::Create());
     case SNTEventLogTypeNull:
       return std::make_unique<Logger>(Empty::Create(),

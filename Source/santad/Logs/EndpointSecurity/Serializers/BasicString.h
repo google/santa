@@ -19,15 +19,20 @@
 #include <sstream>
 #include <vector>
 
+#include "Source/santad/EventProviders/EndpointSecurity/EndpointSecurityAPI.h"
 #include "Source/santad/Logs/EndpointSecurity/Serializers/Serializer.h"
 
 namespace santa::santad::logs::endpoint_security::serializers {
 
 class BasicString : public Serializer {
 public:
-  static std::shared_ptr<BasicString> Create(bool prefix_time_name = true);
+  static std::shared_ptr<BasicString> Create(
+      std::shared_ptr<santa::santad::event_providers::endpoint_security::EndpointSecurityAPI> esapi,
+      bool prefix_time_name = true);
 
-  BasicString(bool prefix_time_name);
+  BasicString(
+      std::shared_ptr<santa::santad::event_providers::endpoint_security::EndpointSecurityAPI> esapi,
+      bool prefix_time_name);
 
   std::vector<uint8_t> SerializeMessage(
       const santa::santad::event_providers::endpoint_security::EnrichedClose &) override;
@@ -58,6 +63,7 @@ public:
 private:
   std::stringstream CreateDefaultStringStream();
 
+  std::shared_ptr<santa::santad::event_providers::endpoint_security::EndpointSecurityAPI> esapi_;
   bool prefix_time_name_;
 };
 

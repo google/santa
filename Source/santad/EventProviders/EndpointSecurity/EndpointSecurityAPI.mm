@@ -84,4 +84,13 @@ bool EndpointSecurityAPI::ClearCache(const Client &client) {
   return es_clear_cache(client.Get()) == ES_CLEAR_CACHE_RESULT_SUCCESS;
 }
 
+uint32_t EndpointSecurityAPI::ExecArgCount(const es_event_exec_t *event) {
+  return es_exec_arg_count(event);
+}
+
+es_string_token_t EndpointSecurityAPI::ExecArg(const es_event_exec_t *event,
+                                               uint32_t index) {
+  return es_exec_arg(event, index);
+}
+
 } // namespace santa::santad::event_providers::endpoint_security

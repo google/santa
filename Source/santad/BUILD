@@ -571,6 +571,7 @@ objc_library(
     srcs = ["Logs/EndpointSecurity/Logger.mm"],
     hdrs = ["Logs/EndpointSecurity/Logger.h"],
     deps = [
+        ":EndpointSecurityAPI",
         ":EndpointSecuritySerializer",
         ":EndpointSecuritySerializerBasicString",
         ":EndpointSecuritySerializerEmpty",
@@ -985,9 +986,34 @@ santa_unit_test(
     ],
 )
 
+santa_unit_test(
+    name = "EndpointSecuritySerializerBasicStringTest",
+    srcs = ["Logs/EndpointSecurity/Serializers/BasicStringTest.mm"],
+    deps = [
+        ":EndpointSecurityAPI",
+        ":EndpointSecurityEnrichedTypes",
+        ":EndpointSecurityEnricher",
+        ":EndpointSecurityMessage",
+        ":EndpointSecuritySerializer",
+        ":EndpointSecuritySerializerBasicString",
+        ":SNTDecisionCache",
+        "//Source/common:SNTCachedDecision",
+        "//Source/common:SNTCommonEnums",
+        "//Source/common:SNTConfigurator",
+        "//Source/common:SNTStoredEvent",
+        "@com_google_googletest//:gtest",
+        "@OCMock",
+    ],
+    sdk_dylibs = [
+        "bsm",
+        "EndpointSecurity",
+    ],
+)
+
 test_suite(
     name = "unit_tests",
     tests = [
+        ":EndpointSecuritySerializerBasicStringTest",
         ":SNTApplicationCoreMetricsTest",
         ":SNTApplicationTest",
         ":SNTDeviceManagerTest",
@@ -1048,31 +1074,12 @@ santa_unit_gtest(
     ],
 )
 
-santa_unit_gtest(
-    name = "EndpointSecuritySerializerBasicStringTest",
-    srcs = ["Logs/EndpointSecurity/Serializers/BasicStringTest.mm"],
-    deps = [
-        ":EndpointSecurityAPI",
-        ":EndpointSecurityEnrichedTypes",
-        ":EndpointSecurityEnricher",
-        ":EndpointSecurityMessage",
-        ":EndpointSecuritySerializer",
-        ":EndpointSecuritySerializerBasicString",
-        "//Source/common:SNTStoredEvent",
-        "@com_google_googletest//:gtest",
-    ],
-    sdk_dylibs = [
-        "bsm",
-    ],
-)
-
 # TODO: Combine with the original `unit_tests` target
 test_suite(
     name = "gtest_unit_tests",
     tests = [
         ":AuthResultCacheTest",
         ":EndpointSecurityLoggerTest",
-        ":EndpointSecuritySerializerBasicStringTest",
         ":EndpointSecuritySerializerEmptyTest",
         ":EndpointSecurityWriterFileTest",
     ],

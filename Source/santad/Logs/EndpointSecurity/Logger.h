@@ -21,10 +21,11 @@
 #import <Foundation/Foundation.h>
 
 #import "Source/common/SNTCommonEnums.h"
-#import "Source/santad/EventProviders/EndpointSecurity/EnrichedTypes.h"
-#import "Source/santad/EventProviders/EndpointSecurity/Message.h"
-#import "Source/santad/Logs/EndpointSecurity/Serializers/Serializer.h"
-#import "Source/santad/Logs/EndpointSecurity/Writers/Writer.h"
+#include "Source/santad/EventProviders/EndpointSecurity/EndpointSecurityAPI.h"
+#include "Source/santad/EventProviders/EndpointSecurity/EnrichedTypes.h"
+#include "Source/santad/EventProviders/EndpointSecurity/Message.h"
+#include "Source/santad/Logs/EndpointSecurity/Serializers/Serializer.h"
+#include "Source/santad/Logs/EndpointSecurity/Writers/Writer.h"
 
 // Forward declarations
 @class SNTStoredEvent;
@@ -36,8 +37,10 @@ namespace santa::santad::logs::endpoint_security {
 
 class Logger {
 public:
-  static std::unique_ptr<Logger> Create(SNTEventLogType log_type,
-                                        NSString* event_log_path);
+  static std::unique_ptr<Logger> Create(
+      std::shared_ptr<santa::santad::event_providers::endpoint_security::EndpointSecurityAPI> esapi,
+      SNTEventLogType log_type,
+      NSString* event_log_path);
 
   Logger(std::shared_ptr<serializers::Serializer> serializer,
          std::shared_ptr<writers::Writer> writer);
