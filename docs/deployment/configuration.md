@@ -216,7 +216,7 @@ ways to install configuration profiles:
 | enable\_bundles\*                   | Bool       | If set to `True` the bundle scanning feature is enabled. Defaults to `False`. |
 | enable\_transitive\_rules           | Bool       | If set to `True` the transitive rule feature is enabled. Defaults to `False`. |
 | enable\_all\_event\_upload          | Bool       | If set to `True` the client will upload events for all executions, including those that are explicitly allowed. |
-| block\_usb\_mass\_storage           | Bool       | If set to 'True' blocking USB Mass storage feature is enabled. Defaults to `False`. | 
+| block\_usb\_mass\_storage           | Bool       | If set to 'True' blocking USB Mass storage feature is enabled. Defaults to `False`. |
 | remount\_usb\_mode                  | Array      | Array of strings for arguments to pass to mount -o (any of "rdonly", "noexec", "nosuid", "nobrowse", "noowners", "nodev", "async", "-j"). when forcibly remounting devices. No default. |
 
 

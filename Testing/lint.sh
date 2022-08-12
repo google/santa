@@ -7,7 +7,10 @@ function main() {
     find $GIT_ROOT \( -name "*.m" -o -name "*.h" -name "*.mm" \) -exec clang-format --Werror --dry-run {} \+
     err="$(( $err | $? ))"
 
-    go get github.com/bazelbuild/buildtools/buildifier
+    ! git grep -EIn $'[ \t]+$'
+    err="$(( $err | $? ))"
+
+    go install github.com/bazelbuild/buildtools/buildifier@latest
     ~/go/bin/buildifier --lint=warn -r $GIT_ROOT
     err="$(( $err | $? ))"
     return $err

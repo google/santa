@@ -119,7 +119,7 @@ REGISTER_COMMAND_NAME(@"metrics")
   printf(">>> Root Labels\n");
   [self prettyPrintRootLabels:normalizedMetrics[@"root_labels"]];
   printf("\n");
-  printf(">>> Metrics \n");
+  printf(">>> Metrics\n");
   [self prettyPrintMetricValues:normalizedMetrics[@"metrics"]];
 }
 

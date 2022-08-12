@@ -4,10 +4,10 @@
     <img src="https://raw.githubusercontent.com/google/santa/main/Source/santa/Resources/Images.xcassets/AppIcon.appiconset/santa-hat-icon-128.png" alt="Santa Icon" />
 </p>
 
-Santa is a binary authorization system for macOS. It consists of a system 
-extension that monitors for executions, a daemon that makes execution decisions 
+Santa is a binary authorization system for macOS. It consists of a system
+extension that monitors for executions, a daemon that makes execution decisions
 based on the contents of a local database, a GUI agent that notifies the user in
-case of a block decision and a command-line utility for managing the system and 
+case of a block decision and a command-line utility for managing the system and
 synchronizing the database with a server.
 
 It is named Santa because it keeps track of binaries that are naughty or nice.

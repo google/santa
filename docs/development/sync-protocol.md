@@ -20,10 +20,10 @@ per-host basis.
 
 The sync protocol is an HTTP/JSON based protocol. As such it is
 assumed that both the server and client add `Content-Type` headers are set to
-`application/json`. 
+`application/json`.
 
 The sync protocol is client initiated and consists of 4 request-response
-transactions called stages, `preflight`, `eventupload`, `ruledownload`, and `postflight`. 
+transactions called stages, `preflight`, `eventupload`, `ruledownload`, and `postflight`.
 A sync may consist of all 4 stages, just the `eventupload` stage or just the `ruledownload` stage.
 
 | Stage | What it Does |
@@ -31,7 +31,7 @@ A sync may consist of all 4 stages, just the `eventupload` stage or just the `ru
 | **Preflight** | Report current Santa settings and machine attributes to sync server & retrieve configuration settings |
 | **Event Upload** | Report new blockable events to the sync server |
 | **Rule Download** | Retrieves new rules |
-| **Postflight** | Reports stats | 
+| **Postflight** | Reports stats |
 
 If the server returns an HTTP status other than `200` for any stage than the sync stops and the next stage is not performed.
 
@@ -83,13 +83,13 @@ sequenceDiagram
 #### `preflight` Request
 The request consists of the following JSON keys:
 
-| Key | Required | Type | Meaning | Example Value | 
+| Key | Required | Type | Meaning | Example Value |
 |---|---|---|---|---|
 | serial_num    | YES | string | The macOS serial number from IOKit `kIOPlatformSerialNumberKey` |  "XXXZ30URLVDQ" |
-| hostname      | YES | string | The FQDN hostname of the client | markowsky.example.com | 
+| hostname      | YES | string | The FQDN hostname of the client | markowsky.example.com |
 | os_version    | YES | string | The OS version of the client from /System/Library/CoreServices/SystemVersion.plist | 12.4 |
 | os_build      | YES | string | The OS build from /System/Library/CoreServices/SystemVersion.plist | "21F5048e" |
-| model_identifier | NO | string | The model of the macOS system  | | 
+| model_identifier | NO | string | The model of the macOS system  | |
 | santa_version | YES | string | 2022.3 |
 | primary_user  | YES | string | The username | markowsky |
 | binary_rule_count | NO | int | Number of binary allow / deny rules the client has at time of sync| 1000 |
@@ -122,7 +122,7 @@ The request consists of the following JSON keys:
 }
 ```
 
-#### `preflight` Response 
+#### `preflight` Response
 
 If all of the data is well formed, the server responds with an HTTP status code of 200 and provides a JSON response.
 
@@ -132,25 +132,25 @@ The JSON object has the following keys:
 |---|---|---|---|---|
 | enable_bundles | NO | boolean | Enabled bundle scanning  | true |
 | enable_transitive_rules | NO | boolean | Whether or not to enable transitive allowlisting | true |
-| batch_size | YES | integer | Number of events to upload at a time | 128 | 
-| full_sync_interval | YES | integer | Number of seconds between full syncs | 600 | 
+| batch_size | YES | integer | Number of events to upload at a time | 128 |
+| full_sync_interval | YES | integer | Number of seconds between full syncs | 600 |
 | client_mode | YES | string | Operating mode to set for the client | either "MONITOR" or "LOCKDOWN" |
-| allowed_path_regex | YES | list of strings | List of regular expressions to allow a binary to execute from a path | ["/Users/markowsk/foo/.*"] | 
+| allowed_path_regex | YES | list of strings | List of regular expressions to allow a binary to execute from a path | ["/Users/markowsk/foo/.*"] |
 | blocked_path_regex | YES | list of strings | List of regular expressions to block a binary from executing by path | ["/tmp/"] |
 | block_usb_mount | NO | boolean | Block USB mass storage devices | true |
-| remount_usb_mode | NO | string | Force USB mass storage devices to be remounted with the following permissions (see [configuration](../deployment/configuration.md)) |  | 
+| remount_usb_mode | NO | string | Force USB mass storage devices to be remounted with the following permissions (see [configuration](../deployment/configuration.md)) |  |
 | clean_sync | YES | boolean | Whether or not the rules should be dropped and synced entirely from the server | true |
 
 #### Example Preflight Response Payload
 
 ```json
 {
- "batch_size": 100, 
- "client_mode": "MONITOR", 
- "allowed_path_regex": null, 
- "blocked_path_regex": null, 
- "clean_sync": false, 
- "bundles_enabled": true, 
+ "batch_size": 100,
+ "client_mode": "MONITOR",
+ "allowed_path_regex": null,
+ "blocked_path_regex": null,
+ "clean_sync": false,
+ "bundles_enabled": true,
  "enable_transitive_rules": false
 }
 ```
@@ -188,7 +188,7 @@ sequenceDiagram
 | executing_user | YES | string | Username that executed the binary | "markowsky" |
 | execution_time | YES | int | Unix timestamp of when the execution occured | 23344234232 |
 | loggedin_users | NO | List of strings | list of usernames logged in according to utmp | ["markowsky"] |
-| current_sessions | YES | List of strings | list of user sessions | ["markowsky@console", "markowsky@ttys000"] | 
+| current_sessions | YES | List of strings | list of user sessions | ["markowsky@console", "markowsky@ttys000"] |
 | decision | YES | string | The decision Santa made for this binary, BUNDLE_BINARY is used to preemptively report binaries in a bundle. **Must be one of the examples**.| "ALLOW_BINARY", "ALLOW_CERTIFICATE", "ALLOW_SCOPE", "ALLOW_TEAMID", "ALLOW_UNKNOWN", "BLOCK_BINARY", "BLOCK_CERTIFICATE", "BLOCK_SCOPE", "BLOCK_TEAMID", "BLOCK_UNKNOWN", "BUNDLE_BINARY" |
 | file_bundle_id | NO | string |  The executable's containing bundle's identifier as specified in the Info.plist | "com.apple.safari" |
 | file_bundle_path | NO | string | The path that the bundle resids in | /Applications/Santa.app |
@@ -219,7 +219,7 @@ sequenceDiagram
 | valid_until | YES | int | Unix timestamp of when the cert expires |  1678983513 |
 
 
-##### `eventupload` Request Example Payload 
+##### `eventupload` Request Example Payload
 
 ```json
 {
@@ -280,14 +280,14 @@ sequenceDiagram
 
 #### `eventupload` Response
 
-The server should reply with an HTTP 200 if the request was successfully received and processed.  
+The server should reply with an HTTP 200 if the request was successfully received and processed.
 
 
 | Key | Required | Type | Meaning | Example Value |
 |---|---|---|---|---|
 | event_upload_bundle_binaries | NO | list of strings | An array of bundle hashes that the sync server needs to be uploaded | ["8621d92262aef379d3cfe9e099f287be5b996a281995b5cc64932f7d62f3dc85"] |
 
-##### `eventupload` Response Example Payload 
+##### `eventupload` Response Example Payload
 
 
 ```json
@@ -298,7 +298,7 @@ The server should reply with an HTTP 200 if the request was successfully receive
 
 ### Rule Download
 
-After events have been uploaded to the sync server, the `ruledownload` stage begins in a full sync. 
+After events have been uploaded to the sync server, the `ruledownload` stage begins in a full sync.
 
 Like the previous stages this is a simple HTTP request response cycle like so:
 
@@ -323,7 +323,7 @@ Santa applies rules idempoently and is designed to receive rules multiple times 
 | cursor | NO | string | a field used by the sync server to indicate where the next batch of rules should start |
 
 
-##### `ruledownload` Request Example Payload 
+##### `ruledownload` Request Example Payload
 
 On the first request the payload is an empty dictionary
 
@@ -343,7 +343,7 @@ On subsequent requests to the server the `cursor` field is sent with the value f
 
 When a `ruledownload` request is received, the sync server responds with a JSON object
 containing a list of rule objects and a cursor so the client can resume
-downloading if the rules need to be downloaded in multiple batches. 
+downloading if the rules need to be downloaded in multiple batches.
 
 | Key | Required | Type | Meaning |
 |---|---|---|---|
@@ -353,11 +353,11 @@ downloading if the rules need to be downloaded in multiple batches.
 ##### Rules Objects
 
 
-| Key | Required | Type | Meaning | Example Value | 
+| Key | Required | Type | Meaning | Example Value |
 |---|---|---|---|---|
 | identifier | YES | string | The attribute of the binary the rule should match on e.g. the team ID of a binary or sha256 hash value | "ff2a7daa4c25cbd5b057e4471c6a22aba7d154dadfb5cce139c37cf795f41c9c" |
 | policy | YES | string | identifies the action to perform in response to the rule matching must be one of the examples. | "ALLOWLIST","ALLOWLIST_COMPILER", "BLOCKLIST", "REMOVE",  "SILENT_BLOCKLIST" |
-| rule_type | YES | string | identifies the type of rule must be one of he examples | "BINARY", "CERTIFICATE", "TEAMID" | 
+| rule_type | YES | string | identifies the type of rule must be one of he examples | "BINARY", "CERTIFICATE", "TEAMID" |
 | custom_msg | NO | string | A custom message to display when the rule matches | "Hello" |
 | creation_time | NO | float64 | time the rule was created | 1573543803.349378 |
 | file_bundle_binary_count | NO | integer | The number of binaries in a bundle | 13 |
@@ -382,7 +382,7 @@ downloading if the rules need to be downloaded in multiple batches.
 		"creation_time": 1573572118.380034,
 		"file_bundle_binary_count": 13,
 		"file_bundle_hash": "7466e3687f540bcb7792c6d14d5a186667dbe18a85021857b42effe9f0370805"
-	}, 
+	},
 	{
 		"identifier": "EQHXZ8M8AV",
 		"rule_type": "TEAMID",
@@ -419,7 +419,7 @@ The server should reply with an HTTP 200 if the request was successfully receive
 <div id="mermaidjs-code" style="visibility: hidden">
 <script src="https://unpkg.com/mermaid@9.1.3/dist/mermaid.min.js"></script>
 <script>
-   document.addEventListener("DOMContentLoaded", function(event) { 
+   document.addEventListener("DOMContentLoaded", function(event) {
     mermaid.initialize({
       startOnLoad:true,
       theme: "forest",

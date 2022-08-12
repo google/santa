@@ -5,7 +5,7 @@ parent: Concepts
 # Rules
 
 Rules provide the primary evaluation mechanism for allowing and blocking
-binaries with Santa on macOS. There are three types of rules: binary, 
+binaries with Santa on macOS. There are three types of rules: binary,
 certificate, and TeamID.
 
 ##### Binary Rules
@@ -67,8 +67,8 @@ SHA-256 hash.
 ##### Apple Developer Team ID Rules
 The Apple Developer Program Team ID is a 10-character identifier issued by Apple
 and tied to developer accounts/organizations. This is distinct from Certificates,
-as a single developer account can and frequently will request/rotate between 
-multiple different signing certificates and entitlements. This is an even more 
+as a single developer account can and frequently will request/rotate between
+multiple different signing certificates and entitlements. This is an even more
 powerful rule with broader reach than individual certificate rules.
 
 ##### Rule Evaluation

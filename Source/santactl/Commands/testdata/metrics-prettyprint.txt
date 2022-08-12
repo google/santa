@@ -7,7 +7,7 @@
   hostname                  | testHost
   username                  | testUser
 
->>> Metrics 
+>>> Metrics
   Metric Name               | /santa/rules
   Description               | Number of rules
   Type                      | SNTMetricTypeGaugeInt64
