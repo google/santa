@@ -17,7 +17,7 @@
 #import <OCMock/OCMock.h>
 #import <XCTest/XCTest.h>
 
-#import "Source/santa/SNTNotificationManager.h"
+#import "Source/gui/SNTNotificationManager.h"
 
 #import "Source/common/SNTStoredEvent.h"
 

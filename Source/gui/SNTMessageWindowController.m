@@ -1,6 +1,6 @@
-#import "Source/santa/SNTMessageWindowController.h"
+#import "Source/gui/SNTMessageWindowController.h"
 
-#import "Source/santa/SNTMessageWindow.h"
+#import "Source/gui/SNTMessageWindow.h"
 
 @implementation SNTMessageWindowController
 

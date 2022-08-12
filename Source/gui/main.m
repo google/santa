@@ -17,7 +17,7 @@
 
 #import "Source/common/SNTConfigurator.h"
 #import "Source/common/SNTXPCControlInterface.h"
-#import "Source/santa/SNTAppDelegate.h"
+#import "Source/gui/SNTAppDelegate.h"
 
 @interface SNTSystemExtensionDelegate : NSObject <OSSystemExtensionRequestDelegate>
 @end

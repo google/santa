@@ -74,14 +74,14 @@ launchctl load /Library/LaunchAgents/com.google.santa.plist
 run_command(
     name = "reload",
     srcs = [
-        "//Source/santa:Santa",
+        "//Source/gui:Santa",
     ],
     cmd = """
 set -e
 
 rm -rf /tmp/bazel_santa_reload
 unzip -d /tmp/bazel_santa_reload \
-    $${BUILD_WORKSPACE_DIRECTORY}/bazel-out/*$(COMPILATION_MODE)*/bin/Source/santa/Santa.zip >/dev/null
+    $${BUILD_WORKSPACE_DIRECTORY}/bazel-out/*$(COMPILATION_MODE)*/bin/Source/gui/Santa.zip >/dev/null
 echo "You may be asked for your password for sudo"
 sudo BINARIES=/tmp/bazel_santa_reload CONF=$${BUILD_WORKSPACE_DIRECTORY}/Conf \
     $${BUILD_WORKSPACE_DIRECTORY}/Conf/install.sh
@@ -96,7 +96,7 @@ echo "Time to stop being naughty"
 genrule(
     name = "release",
     srcs = [
-        "//Source/santa:Santa",
+        "//Source/gui:Santa",
         "Conf/install.sh",
         "Conf/uninstall.sh",
         "Conf/com.google.santa.bundleservice.plist",
@@ -191,7 +191,7 @@ test_suite(
     name = "unit_tests",
     tests = [
         "//Source/common:unit_tests",
-        "//Source/santa:unit_tests",
+        "//Source/gui:unit_tests",
         "//Source/santactl:unit_tests",
         "//Source/santad:unit_tests",
         "//Source/santametricservice:unit_tests",

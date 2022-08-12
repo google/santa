@@ -14,7 +14,7 @@
 #import <Cocoa/Cocoa.h>
 
 #import "Source/common/SNTDeviceEvent.h"
-#import "Source/santa/SNTMessageWindowController.h"
+#import "Source/gui/SNTMessageWindowController.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
