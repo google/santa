@@ -32,6 +32,9 @@ objc_library(
         "SNTNotificationManager.m",
         "main.m",
     ],
+    hdrs = [
+        "SNTNotificationManager.h",
+    ],
     data = [
         "Resources/AboutWindow.xib",
         "Resources/DeviceMessageWindow.xib",
