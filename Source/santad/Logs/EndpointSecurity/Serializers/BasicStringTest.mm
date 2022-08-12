@@ -109,11 +109,13 @@ std::string BasicStringSerializeMessage(
       .After(EXPECT_CALL(*mock_esapi, RetainMessage(testing::_))
           .WillOnce(testing::Return(es_msg)));
 
-  std::shared_ptr<EnrichedMessage> enriched_message =
-      Enricher().Enrich(Message(mock_esapi, es_msg));
-
   std::shared_ptr<Serializer> bs = BasicString::Create(mock_esapi, false);
-  auto ret = bs->SerializeMessage(enriched_message);
+  auto ret = bs->SerializeMessage(
+      Enricher().Enrich(Message(mock_esapi, es_msg)));
+
+  XCTAssertTrue(testing::Mock::VerifyAndClearExpectations(mock_esapi.get()),
+                "Expected calls were not properly mocked");
+
   return std::string(ret.begin(), ret.end());
 }
 
@@ -328,9 +330,11 @@ std::string BasicStringSerializeMessage(es_message_t* es_msg) {
       .After(EXPECT_CALL(*mock_esapi, RetainMessage(testing::_))
           .WillOnce(testing::Return(&es_msg)));
 
-  Message msg(mock_esapi, &es_msg);
   auto ret = BasicString::Create(mock_esapi, false)->SerializeAllowlist(
-      msg, "test_hash");
+      Message(mock_esapi, &es_msg), "test_hash");
+
+  XCTAssertTrue(testing::Mock::VerifyAndClearExpectations(mock_esapi.get()),
+                "Expected calls were not properly mocked");
 
   std::string got(ret.begin(), ret.end());
   std::string want = "action=ALLOWLIST|pid=12|pidversion=34|path=foobar"
