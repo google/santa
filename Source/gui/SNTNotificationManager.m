@@ -12,7 +12,7 @@
 ///    See the License for the specific language governing permissions and
 ///    limitations under the License.
 
-#import "Source/santa/SNTNotificationManager.h"
+#import "Source/gui/SNTNotificationManager.h"
 
 #import <MOLCertificate/MOLCertificate.h>
 #import <MOLXPCConnection/MOLXPCConnection.h>
@@ -26,7 +26,7 @@
 #import "Source/common/SNTStrengthify.h"
 #import "Source/common/SNTSyncConstants.h"
 #import "Source/common/SNTXPCControlInterface.h"
-#import "Source/santa/SNTMessageWindowController.h"
+#import "Source/gui/SNTMessageWindowController.h"
 
 @interface SNTNotificationManager ()
 

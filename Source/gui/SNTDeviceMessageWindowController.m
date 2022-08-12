@@ -12,12 +12,12 @@
 ///    See the License for the specific language governing permissions and
 ///    limitations under the License.
 
-#import "Source/santa/SNTDeviceMessageWindowController.h"
+#import "Source/gui/SNTDeviceMessageWindowController.h"
 
 #import "Source/common/SNTBlockMessage.h"
 #import "Source/common/SNTConfigurator.h"
 #import "Source/common/SNTDeviceEvent.h"
-#import "Source/santa/SNTMessageWindow.h"
+#import "Source/gui/SNTMessageWindow.h"
 
 NS_ASSUME_NONNULL_BEGIN
 

@@ -12,7 +12,7 @@
 ///    See the License for the specific language governing permissions and
 ///    limitations under the License.
 
-#import "Source/santa/SNTBinaryMessageWindowController.h"
+#import "Source/gui/SNTBinaryMessageWindowController.h"
 
 #import <MOLCertificate/MOLCertificate.h>
 #import <SecurityInterface/SFCertificatePanel.h>
@@ -20,7 +20,7 @@
 #import "Source/common/SNTBlockMessage.h"
 #import "Source/common/SNTConfigurator.h"
 #import "Source/common/SNTStoredEvent.h"
-#import "Source/santa/SNTMessageWindow.h"
+#import "Source/gui/SNTMessageWindow.h"
 
 @interface SNTBinaryMessageWindowController ()
 ///  The custom message to display for this event

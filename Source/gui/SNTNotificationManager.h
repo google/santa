@@ -1,4 +1,4 @@
-/// Copyright 2016 Google Inc. All rights reserved.
+/// Copyright 2015 Google Inc. All rights reserved.
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -12,24 +12,18 @@
 ///    See the License for the specific language governing permissions and
 ///    limitations under the License.
 
-#import "Source/santa/SNTAccessibleTextField.h"
+#import <Cocoa/Cocoa.h>
 
-@implementation SNTAccessibleTextField
+#import "Source/common/SNTXPCNotifierInterface.h"
+#import "Source/gui/SNTBinaryMessageWindowController.h"
+#import "Source/gui/SNTDeviceMessageWindowController.h"
+#import "Source/gui/SNTMessageWindowController.h"
 
-- (NSString *)accessibilityLabel {
-  if (self.toolTip && self.stringValue) {
-    return [NSString stringWithFormat:@"%@: %@", self.toolTip, self.stringValue];
-  } else if (self.stringValue) {
-    return self.stringValue;
-  } else if (self.toolTip) {
-    return self.toolTip;
-  } else {
-    return nil;
-  }
-}
+///
+///  Keeps track of pending notifications and ensures only one is presented to the user at a time.
+///
+@interface SNTNotificationManager : NSObject <SNTMessageWindowControllerDelegate, SNTNotifierXPC>
 
-- (NSString *)accessibilityRoleDescription {
-  return @"label";
-}
+@property NSXPCListenerEndpoint *notificationListener;
 
 @end
