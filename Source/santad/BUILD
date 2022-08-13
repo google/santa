@@ -1036,12 +1036,24 @@ santa_unit_test(
     ],
 )
 
+santa_unit_test(
+    name = "EndpointSecurityWriterFileTest",
+    srcs = ["Logs/EndpointSecurity/Writers/FileTest.mm"],
+    deps = [
+        ":EndpointSecurityWriterFile",
+        "//Source/common:TestUtils",
+        "@com_google_googletest//:gtest",
+        "@OCMock",
+    ],
+)
+
 test_suite(
     name = "unit_tests",
     tests = [
         ":AuthResultCacheTest",
         ":EndpointSecuritySerializerBasicStringTest",
         ":EndpointSecuritySerializerEmptyTest",
+        ":EndpointSecurityWriterFileTest",
     ],
     visibility = ["//:santa_package_group"],
 )
@@ -1081,22 +1093,11 @@ santa_unit_gtest(
     ],
 )
 
-santa_unit_gtest(
-    name = "EndpointSecurityWriterFileTest",
-    srcs = ["Logs/EndpointSecurity/Writers/FileTest.mm"],
-    deps = [
-        ":EndpointSecurityWriterFile",
-        "@com_google_googletest//:gtest",
-    ],
-)
-
 # TODO: Combine with the original `unit_tests` target
 test_suite(
     name = "gtest_unit_tests",
     tests = [
         ":EndpointSecurityLoggerTest",
-        ":EndpointSecuritySerializerEmptyTest",
-        ":EndpointSecurityWriterFileTest",
     ],
     visibility = ["//:santa_package_group"],
 )

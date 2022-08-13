@@ -43,8 +43,6 @@ using santa::santad::event_providers::endpoint_security::Message;
 using santa::santad::logs::endpoint_security::serializers::BasicString;
 using santa::santad::logs::endpoint_security::serializers::Serializer;
 
-
-
 class MockEndpointSecurityAPI : public EndpointSecurityAPI {
 public:
   MOCK_METHOD(es_message_t*, RetainMessage, (const es_message_t* msg));

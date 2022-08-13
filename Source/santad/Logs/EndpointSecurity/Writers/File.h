@@ -25,7 +25,7 @@
 
 // Forward declarations
 namespace santa::santad::logs::endpoint_security::writers {
-class FileTest;
+class FilePeer;
 }
 
 namespace santa::santad::logs::endpoint_security::writers {
@@ -48,7 +48,7 @@ public:
 
   void Write(std::vector<uint8_t>&& bytes) override;
 
-  friend class santa::santad::logs::endpoint_security::writers::FileTest;
+  friend class santa::santad::logs::endpoint_security::writers::FilePeer;
 
 private:
   void OpenFileHandle();
