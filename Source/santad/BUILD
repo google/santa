@@ -1,5 +1,5 @@
 load("@build_bazel_rules_apple//apple:macos.bzl", "macos_bundle")
-load("//:helper.bzl", "santa_unit_test", "santa_unit_gtest")
+load("//:helper.bzl", "santa_unit_test")
 
 package(
     default_visibility = ["//:santa_package_group"],
@@ -1047,10 +1047,37 @@ santa_unit_test(
     ],
 )
 
+santa_unit_test(
+    name = "EndpointSecurityLoggerTest",
+    srcs = ["Logs/EndpointSecurity/LoggerTest.mm"],
+    deps = [
+        ":EndpointSecurityAPI",
+        ":EndpointSecurityEnrichedTypes",
+        ":EndpointSecurityLogger",
+        ":EndpointSecurityMessage",
+        ":EndpointSecuritySerializer",
+        ":EndpointSecuritySerializerBasicString",
+        ":EndpointSecuritySerializerEmpty",
+        ":EndpointSecurityWriter",
+        ":EndpointSecurityWriterFile",
+        ":EndpointSecurityWriterNull",
+        ":EndpointSecurityWriterSyslog",
+        "//Source/common:SNTCommonEnums",
+        "//Source/common:TestUtils",
+        "@com_google_googletest//:gtest",
+        "@OCMock",
+    ],
+    sdk_dylibs = [
+        "bsm",
+        "EndpointSecurity",
+    ],
+)
+
 test_suite(
     name = "unit_tests",
     tests = [
         ":AuthResultCacheTest",
+        ":EndpointSecurityLoggerTest",
         ":EndpointSecuritySerializerBasicStringTest",
         ":EndpointSecuritySerializerEmptyTest",
         ":EndpointSecurityWriterFileTest",
@@ -1069,35 +1096,6 @@ test_suite(
         ":SNTExecutionControllerTest",
         ":SNTProtobufEventLogTest",
         ":SNTRuleTableTest",
-    ],
-    visibility = ["//:santa_package_group"],
-)
-
-santa_unit_gtest(
-    name = "EndpointSecurityLoggerTest",
-    srcs = ["Logs/EndpointSecurity/LoggerTest.mm"],
-    deps = [
-        ":EndpointSecurityAPI",
-        ":EndpointSecurityEnrichedTypes",
-        ":EndpointSecurityLogger",
-        ":EndpointSecurityMessage",
-        ":EndpointSecuritySerializer",
-        ":EndpointSecuritySerializerBasicString",
-        ":EndpointSecuritySerializerEmpty",
-        ":EndpointSecurityWriter",
-        ":EndpointSecurityWriterFile",
-        ":EndpointSecurityWriterNull",
-        ":EndpointSecurityWriterSyslog",
-        "//Source/common:SNTCommonEnums",
-        "@com_google_googletest//:gtest",
-    ],
-)
-
-# TODO: Combine with the original `unit_tests` target
-test_suite(
-    name = "gtest_unit_tests",
-    tests = [
-        ":EndpointSecurityLoggerTest",
     ],
     visibility = ["//:santa_package_group"],
 )

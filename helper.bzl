@@ -53,39 +53,3 @@ def santa_unit_test(
         data = data,
         visibility = ["//:__subpackages__"],
     )
-
-def santa_unit_gtest(
-        name,
-        srcs = [],
-        deps = [],
-        sdk_dylibs = [],
-        **kwargs):
-    """Create a unit test that integrates with `googletest`"""
-
-    # Note: In Bazel v5.0.0, there is a bug where `alwayslink` for
-    # the `objc_library` rule is not respected when depended upon by the
-    # `cc_test` rule: https://github.com/bazelbuild/bazel/issues/13510
-    #
-    # The workaround is to `-force_load` the library created from the
-    # `objc_library` rule, which requires looking up the location of the
-    # generated static library.
-    native.objc_library(
-        name = "%s_lib" % name,
-        testonly = 1,
-        srcs = srcs,
-        alwayslink = 1,
-        deps = deps,
-        sdk_dylibs = sdk_dylibs,
-        **kwargs
-    )
-
-    native.cc_test(
-        name = "%s" % name,
-        linkopts = [
-          "-force_load $(location :%s_lib)" % name,
-        ],
-        deps = [
-            ":%s_lib" % name,
-            "//Source/common:TestRunnerGTest",
-        ],
-    )

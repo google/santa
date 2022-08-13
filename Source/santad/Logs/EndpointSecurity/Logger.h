@@ -30,7 +30,7 @@
 // Forward declarations
 @class SNTStoredEvent;
 namespace santa::santad::logs::endpoint_security {
-class LoggerTest;
+class LoggerPeer;
 }
 
 namespace santa::santad::logs::endpoint_security {
@@ -59,7 +59,7 @@ public:
   void LogDiskAppeared(NSDictionary* props);
   void LogDiskDisappeared(NSDictionary* props);
 
-  friend class santa::santad::logs::endpoint_security::LoggerTest;
+  friend class santa::santad::logs::endpoint_security::LoggerPeer;
 
 private:
   std::shared_ptr<serializers::Serializer> serializer_;

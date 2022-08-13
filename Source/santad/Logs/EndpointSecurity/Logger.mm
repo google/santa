@@ -60,9 +60,8 @@ std::unique_ptr<Logger> Logger::Create(
       return std::make_unique<Logger>(Empty::Create(),
                                       Null::Create());
     default:
-      // Programming error. Bail.
       LOGE(@"Invalid log type: %ld", log_type);
-      exit(EXIT_FAILURE);
+      return nullptr;
   }
 }
 

@@ -12,10 +12,11 @@
 ///    See the License for the specific language governing permissions and
 ///    limitations under the License.
 
-// #include <EndpointSecurity/EndpointSecurity.h>
 #include <Foundation/Foundation.h>
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
+#import <OCMock/OCMock.h>
+#import <XCTest/XCTest.h>
 
 #include <memory>
 #include <optional>
@@ -23,6 +24,7 @@
 #include <vector>
 
 #include "Source/common/SNTCommonEnums.h"
+#include "Source/common/TestUtils.h"
 #include "Source/santad/EventProviders/EndpointSecurity/EndpointSecurityAPI.h"
 #include "Source/santad/EventProviders/EndpointSecurity/EnrichedTypes.h"
 #include "Source/santad/EventProviders/EndpointSecurity/Message.h"
@@ -34,7 +36,6 @@
 #include "Source/santad/Logs/EndpointSecurity/Writers/Null.h"
 #include "Source/santad/Logs/EndpointSecurity/Writers/Syslog.h"
 #include "Source/santad/Logs/EndpointSecurity/Writers/Writer.h"
-#include "gmock/gmock.h"
 
 using santa::santad::event_providers::endpoint_security::EndpointSecurityAPI;
 using santa::santad::event_providers::endpoint_security::EnrichedMessage;
@@ -51,12 +52,12 @@ using santa::santad::logs::endpoint_security::writers::Syslog;
 
 namespace santa::santad::logs::endpoint_security {
 
-class LoggerTest : public Logger {
+class LoggerPeer : public Logger {
 public:
   // Make base class constructors visible
   using Logger::Logger;
 
-  LoggerTest(std::unique_ptr<Logger> l) : Logger(l->serializer_, l->writer_) {}
+  LoggerPeer(std::unique_ptr<Logger> l) : Logger(l->serializer_, l->writer_) {}
 
   std::shared_ptr<serializers::Serializer> Serializer() {
     return serializer_;
@@ -69,11 +70,13 @@ public:
 
 } // namespace santa::santad::event_providers
 
-using santa::santad::logs::endpoint_security::LoggerTest;
+using santa::santad::logs::endpoint_security::LoggerPeer;
 
 class MockSerializer : public Empty {
 public:
-  MOCK_METHOD(std::vector<uint8_t>, SerializeMessage, (const EnrichedClose& msg));
+  MOCK_METHOD(std::vector<uint8_t>,
+      SerializeMessage,
+      (const EnrichedClose& msg));
 
   MOCK_METHOD(std::vector<uint8_t>,
       SerializeAllowlist,
@@ -95,48 +98,61 @@ public:
   MOCK_METHOD(void, ReleaseMessage, (es_message_t* msg));
 };
 
-TEST(Logger, Create) {
-  // Ensure that the factory method creates expected serializers/writers pairs
+@interface LoggerTest : XCTestCase
+@end
 
-  // Note: The EXIT test must come first otherwise googletest complains about
-  // additional threads existing before forking.
-  EXPECT_EXIT(Logger::Create(nullptr, (SNTEventLogType)123, @"/tmp/temppy"),
-              testing::ExitedWithCode(EXIT_FAILURE),
-              ".*");
-
-  auto mock_esapi = std::make_shared<MockEndpointSecurityAPI>();
-  auto logger = LoggerTest(Logger::Create(mock_esapi,
-                                          SNTEventLogTypeFilelog, @"/tmp/temppy"));
-  EXPECT_NE(std::dynamic_pointer_cast<BasicString>(logger.Serializer()), nullptr);
-  EXPECT_NE(std::dynamic_pointer_cast<File>(logger.Writer()), nullptr);
-
-  logger = LoggerTest(Logger::Create(mock_esapi,
-                                     SNTEventLogTypeSyslog,
-                                     @"/tmp/temppy"));
-  EXPECT_NE(std::dynamic_pointer_cast<BasicString>(logger.Serializer()), nullptr);
-  EXPECT_NE(std::dynamic_pointer_cast<Syslog>(logger.Writer()), nullptr);
-
-  logger = LoggerTest(Logger::Create(mock_esapi,
-                                     SNTEventLogTypeNull,
-                                     @"/tmp/temppy"));
-  EXPECT_NE(std::dynamic_pointer_cast<Empty>(logger.Serializer()), nullptr);
-  EXPECT_NE(std::dynamic_pointer_cast<Null>(logger.Writer()), nullptr);
+@implementation LoggerTest {
+  std::shared_ptr<MockEndpointSecurityAPI> _mockESApi;
+  std::shared_ptr<MockSerializer> _mockSerializer;
+  std::shared_ptr<MockWriter> _mockWriter;
 }
 
-TEST(Logger, SerializeAndWrite) {
-  // Ensure all Logger::Log* methods call the serializer followed by the writer
+- (void)setUp {
+  self->_mockESApi = std::make_shared<MockEndpointSecurityAPI>();
+  self->_mockSerializer = std::make_shared<MockSerializer>();
+  self->_mockWriter = std::make_shared<MockWriter>();
+}
 
-  auto mock_esapi = std::make_shared<MockEndpointSecurityAPI>();
+- (void)testCreate {
+  // Ensure that the factory method creates expected serializers/writers pairs
+  // auto mockESApi = std::make_shared<MockEndpointSecurityAPI>();
+
+  XCTAssertEqual(nullptr,
+                 Logger::Create(self->_mockESApi,
+                                (SNTEventLogType)123,
+                                @"/tmp"));
+
+  auto logger = LoggerPeer(Logger::Create(self->_mockESApi,
+                                          SNTEventLogTypeFilelog, @"/tmp/temppy"));
+  XCTAssertNotEqual(nullptr, std::dynamic_pointer_cast<BasicString>(logger.Serializer()));
+  XCTAssertNotEqual(nullptr, std::dynamic_pointer_cast<File>(logger.Writer()));
+
+  logger = LoggerPeer(Logger::Create(self->_mockESApi,
+                                     SNTEventLogTypeSyslog,
+                                     @"/tmp/temppy"));
+  XCTAssertNotEqual(nullptr, std::dynamic_pointer_cast<BasicString>(logger.Serializer()));
+  XCTAssertNotEqual(nullptr, std::dynamic_pointer_cast<Syslog>(logger.Writer()));
+
+  logger = LoggerPeer(Logger::Create(self->_mockESApi,
+                                     SNTEventLogTypeNull,
+                                     @"/tmp/temppy"));
+  XCTAssertNotEqual(nullptr, std::dynamic_pointer_cast<Empty>(logger.Serializer()));
+  XCTAssertNotEqual(nullptr, std::dynamic_pointer_cast<Null>(logger.Writer()));
+}
+
+- (void)testLog {
+  // Ensure all Logger::Log* methods call the serializer followed by the writer
   es_message_t msg;
 
   // Note: In this test, `RetainMessage` isn't setup to return anything. This
   // means that the underlying `es_msg_` in the `Message` object is NULL, and
   // therefore no call to `ReleaseMessage` is ever made (hence no expectations).
-  EXPECT_CALL(*mock_esapi, RetainMessage(testing::_));
+  // Because we don't need to operate on the es_msg_, this simplifies the test.
+  EXPECT_CALL(*self->_mockESApi, RetainMessage(testing::_));
 
   auto enriched_msg = std::make_shared<EnrichedMessage>(
       EnrichedClose(
-          Message(mock_esapi, &msg),
+          Message(self->_mockESApi, &msg),
           EnrichedProcess(std::nullopt,
                           std::nullopt,
                           std::nullopt,
@@ -144,50 +160,66 @@ TEST(Logger, SerializeAndWrite) {
                           EnrichedFile(std::nullopt, std::nullopt, std::nullopt)),
           EnrichedFile(std::nullopt, std::nullopt, std::nullopt)));
 
-  auto mock_serializer = std::make_shared<MockSerializer>();
-  auto mock_writer = std::make_shared<MockWriter>();
-  auto logger = Logger(mock_serializer, mock_writer);
-
-  // Log(...)
-  EXPECT_CALL(*mock_serializer,
+  EXPECT_CALL(*self->_mockSerializer,
               SerializeMessage(testing::A<const EnrichedClose&>())).Times(1);
-  EXPECT_CALL(*mock_writer, Write(testing::_)).Times(1);
+  EXPECT_CALL(*self->_mockWriter, Write(testing::_)).Times(1);
 
-  logger.Log(enriched_msg);
+  Logger(self->_mockSerializer, self->_mockWriter).Log(enriched_msg);
 
-  testing::Mock::VerifyAndClearExpectations(mock_esapi.get());
-
-  // LogAllowlist(...)
-  std::string_view test_hash = "this_is_my_test_hash";
-  EXPECT_CALL(*mock_esapi, RetainMessage(testing::_));
-  EXPECT_CALL(*mock_serializer, SerializeAllowlist(testing::_, test_hash));
-  EXPECT_CALL(*mock_writer, Write(testing::_));
-
-  logger.LogAllowlist(Message(mock_esapi, &msg), test_hash);
-
-  testing::Mock::VerifyAndClearExpectations(mock_esapi.get());
-
-  // void LogBundleHashingEvents(...)
-  NSArray<id> *events = @[@"event1", @"event2", @"event3"];
-  EXPECT_CALL(*mock_serializer, SerializeBundleHashingEvent(testing::_))
-      .Times((int)[events count]);
-  EXPECT_CALL(*mock_writer, Write(testing::_))
-      .Times((int)[events count]);
-  logger.LogBundleHashingEvents(events);
-
-  testing::Mock::VerifyAndClearExpectations(mock_esapi.get());
-
-  // LogDiskAppeared(...)
-  EXPECT_CALL(*mock_serializer, SerializeDiskAppeared(testing::_));
-  EXPECT_CALL(*mock_writer, Write(testing::_));
-  logger.LogDiskAppeared(@{@"key": @"value"});
-
-  testing::Mock::VerifyAndClearExpectations(mock_esapi.get());
-
-  // LogDiskDisappeared(...)
-  EXPECT_CALL(*mock_serializer, SerializeDiskDisappeared(testing::_));
-  EXPECT_CALL(*mock_writer, Write(testing::_));
-  logger.LogDiskDisappeared(@{@"key": @"value"});
-
-  testing::Mock::VerifyAndClearExpectations(mock_esapi.get());
+  XCTBubbleMockVerifyAndClearExpectations(self->_mockESApi.get());
+  XCTBubbleMockVerifyAndClearExpectations(self->_mockSerializer.get());
+  XCTBubbleMockVerifyAndClearExpectations(self->_mockWriter.get());
 }
+
+- (void)testLogAllowList {
+  es_message_t msg;
+  std::string_view hash = "this_is_my_test_hash";
+  EXPECT_CALL(*self->_mockESApi, RetainMessage(testing::_));
+  EXPECT_CALL(*self->_mockSerializer, SerializeAllowlist(testing::_, hash));
+  EXPECT_CALL(*self->_mockWriter, Write(testing::_));
+
+  Logger(self->_mockSerializer, self->_mockWriter).LogAllowlist(
+      Message(self->_mockESApi, &msg), hash);
+
+  XCTBubbleMockVerifyAndClearExpectations(self->_mockESApi.get());
+  XCTBubbleMockVerifyAndClearExpectations(self->_mockSerializer.get());
+  XCTBubbleMockVerifyAndClearExpectations(self->_mockWriter.get());
+}
+
+- (void)testLogBundleHashingEvents {
+  NSArray<id> *events = @[@"event1", @"event2", @"event3"];
+  EXPECT_CALL(*self->_mockSerializer, SerializeBundleHashingEvent(testing::_))
+        .Times((int)[events count]);
+  EXPECT_CALL(*self->_mockWriter, Write(testing::_))
+        .Times((int)[events count]);
+
+  Logger(self->_mockSerializer, self->_mockWriter)
+      .LogBundleHashingEvents(events);
+
+  XCTBubbleMockVerifyAndClearExpectations(self->_mockSerializer.get());
+  XCTBubbleMockVerifyAndClearExpectations(self->_mockWriter.get());
+}
+
+- (void)testLogDiskAppeared {
+  EXPECT_CALL(*self->_mockSerializer, SerializeDiskAppeared(testing::_));
+  EXPECT_CALL(*self->_mockWriter, Write(testing::_));
+
+  Logger(self->_mockSerializer, self->_mockWriter)
+      .LogDiskAppeared(@{@"key": @"value"});
+
+  XCTBubbleMockVerifyAndClearExpectations(self->_mockSerializer.get());
+  XCTBubbleMockVerifyAndClearExpectations(self->_mockWriter.get());
+}
+
+- (void)testLogDiskDisappeared {
+  EXPECT_CALL(*self->_mockSerializer, SerializeDiskDisappeared(testing::_));
+  EXPECT_CALL(*self->_mockWriter, Write(testing::_));
+
+  Logger(self->_mockSerializer, self->_mockWriter)
+      .LogDiskDisappeared(@{@"key": @"value"});
+
+  XCTBubbleMockVerifyAndClearExpectations(self->_mockSerializer.get());
+  XCTBubbleMockVerifyAndClearExpectations(self->_mockWriter.get());
+}
+
+@end

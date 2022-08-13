@@ -95,11 +95,21 @@ std::unique_ptr<SantadDeps> SantadDeps::Create(
   }
 
   std::shared_ptr<EndpointSecurityAPI> esapi = std::make_shared<EndpointSecurityAPI>();
+  if (!esapi) {
+    LOGE(@"Failed to create ES API wrapper.");
+    exit(EXIT_FAILURE);
+  }
+
+  std::unique_ptr<::Logger> logger = Logger::Create(esapi, event_log_type, event_log_path);
+  if (!logger) {
+    LOGE(@"Failed to create logger.");
+    exit(EXIT_FAILURE);
+  }
 
   return std::make_unique<SantadDeps>(
       metric_export_interval,
       esapi,
-      Logger::Create(esapi, event_log_type, event_log_path),
+      std::move(logger),
       control_connection,
       compiler_controller,
       notifier_queue,
