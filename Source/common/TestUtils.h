@@ -15,9 +15,11 @@
 #ifndef SANTA__COMMON__TESTUTILS_H
 #define SANTA__COMMON__TESTUTILS_H
 
+#include <bsm/libbsm.h>
+#include <EndpointSecurity/EndpointSecurity.h>
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
-#include <time.h>
+#include <sys/stat.h>
 #import <XCTest/XCTest.h>
 
 #define NOBODY_UID ((unsigned int)-2)
@@ -37,16 +39,15 @@
 
 // Helper to ensure at least `ms` milliseconds are slept, even if the sleep
 // function returns early due to interrupts.
-static inline void SleepMS(long ms) {
-  // Wait for the item to expire
-  struct timespec ts {
-    .tv_sec = 0,
-    .tv_nsec = (long)(ms * NSEC_PER_MSEC),
-  };
+void SleepMS(long ms);
 
-  while (nanosleep(&ts, &ts) != 0) {
-    XCTAssertEqual(errno, EINTR);
-  }
-}
+// Helpers to construct various ES structs
+audit_token_t MakeAuditToken(pid_t pid, pid_t pidver);
+es_string_token_t MakeESStringToken(const char* s);
+es_file_t MakeESFile(const char *path, struct stat sb = {});
+es_process_t MakeESProcess(es_file_t *file,
+                           audit_token_t tok,
+                           audit_token_t parent_tok);
+es_message_t MakeESMessage(es_event_type_t et, es_process_t *proc);
 
 #endif

@@ -44,14 +44,6 @@ Message::Message(const Message &other) {
   esapi_->RetainMessage(es_msg_);
 }
 
-Message& Message::operator=(const Message &other) {
-  esapi_->ReleaseMessage(es_msg_);
-  esapi_ = other.esapi_;
-  es_msg_ = other.es_msg_;
-  esapi_->RetainMessage(es_msg_);
-  return *this;
-}
-
 std::string Message::ParentProcessName() const {
   if (parent_pname_.length() == 0) {
     parent_pname_ = GetProcessName(es_msg_->process->ppid);

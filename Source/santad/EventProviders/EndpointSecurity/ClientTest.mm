@@ -42,7 +42,7 @@ es_return_t es_delete_client(
   gDeleteClientSema = dispatch_semaphore_create(0);
 }
 
-- (void)testConstructors {
+- (void)testConstructorsAndDestructors {
   // Ensure constructors set internal state properly
   // Anonymous scopes used to ensure destructors called as expected
 

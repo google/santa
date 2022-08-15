@@ -31,13 +31,13 @@ public:
   ~Message();
 
   Message(Message &&other);
+  // Note: Safe to implement this, just not currently needed so left deleted.
   Message& operator=(Message &&rhs) = delete;
 
   // In macOS 10.15, es_retain_message/es_release_message were unsupported
   // and required a full copy, which impacts performance if done too much...
-  // TODO: Add a light ref count layer for macOS 10.15 environments
   Message(const Message &other);
-  Message& operator=(const Message &other);
+  Message& operator=(const Message &other) = delete;
 
   // Operators to access underlying es_message_t
   const es_message_t* operator->() const { return es_msg_; }

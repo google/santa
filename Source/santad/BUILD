@@ -1095,6 +1095,22 @@ santa_unit_test(
     ],
 )
 
+santa_unit_test(
+    name = "EndpointSecurityMessageTest",
+    srcs = ["EventProviders/EndpointSecurity/MessageTest.mm"],
+    deps = [
+        ":EndpointSecurityAPI",
+        ":EndpointSecurityMessage",
+        "//Source/common:TestUtils",
+        "@com_google_googletest//:gtest",
+        "@OCMock",
+    ],
+    sdk_dylibs = [
+        "bsm",
+        "EndpointSecurity",
+    ],
+)
+
 
 test_suite(
     name = "unit_tests",
@@ -1103,6 +1119,7 @@ test_suite(
         ":EndpointSecurityClientTest",
         ":EndpointSecurityEnricherTest",
         ":EndpointSecurityLoggerTest",
+        ":EndpointSecurityMessageTest",
         ":EndpointSecuritySerializerBasicStringTest",
         ":EndpointSecuritySerializerEmptyTest",
         ":EndpointSecurityWriterFileTest",

@@ -315,12 +315,16 @@ cc_library(
     ]
 )
 
-cc_library(
+objc_library(
     name = "TestUtils",
     testonly = 1,
+    srcs = ["TestUtils.mm"],
     hdrs = ["TestUtils.h"],
     deps = [
         "@com_google_googletest//:gtest",
         "@OCMock",
     ],
+    sdk_dylibs = [
+      "bsm",
+    ]
 )

@@ -14,7 +14,7 @@
 
 #include <EndpointSecurity/ESTypes.h>
 #include <bsm/libbsm.h>
-#import <EndpointSecurity/EndpointSecurity.h>
+#include <EndpointSecurity/EndpointSecurity.h>
 #import <Foundation/Foundation.h>
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
@@ -53,49 +53,6 @@ public:
               (const es_event_exec_t *event, uint32_t index));
 };
 
-audit_token_t MakeAuditToken(pid_t pid, pid_t pidver) {
-  return audit_token_t{
-    .val = {
-      0, NOBODY_UID, NOBODY_GID, NOBODY_UID, NOBODY_GID,
-      (unsigned int)pid, 0, (unsigned int)pidver,
-    },
-  };
-}
-
-es_string_token_t MakeESStringToken(const char* s) {
-  return es_string_token_t{
-    .length = strlen(s),
-    .data = s,
-  };
-}
-
-es_file_t MakeESFile(const char *path, struct stat sb = {}) {
-  return es_file_t{
-    .path = MakeESStringToken(path),
-    .path_truncated = false,
-    .stat = sb,
-  };
-}
-
-es_process_t MakeESProcess(es_file_t *file,
-                           audit_token_t tok,
-                           audit_token_t parent_tok) {
-  return es_process_t{
-    .audit_token = tok,
-    .ppid = audit_token_to_pid(parent_tok),
-    .original_ppid = audit_token_to_pid(parent_tok),
-    .executable = file,
-    .parent_audit_token = parent_tok,
-  };
-}
-
-es_message_t MakeESMessage(es_event_type_t et, es_process_t *proc) {
-  return es_message_t{
-    .event_type = et,
-    .process = proc,
-  };
-}
-
 std::string BasicStringSerializeMessage(
     std::shared_ptr<MockEndpointSecurityAPI> mock_esapi,
     es_message_t* es_msg) {
@@ -107,8 +64,7 @@ std::string BasicStringSerializeMessage(
   auto ret = bs->SerializeMessage(
       Enricher().Enrich(Message(mock_esapi, es_msg)));
 
-  XCTAssertTrue(testing::Mock::VerifyAndClearExpectations(mock_esapi.get()),
-                "Expected calls were not properly mocked");
+  XCTBubbleMockVerifyAndClearExpectations(mock_esapi.get());
 
   return std::string(ret.begin(), ret.end());
 }
@@ -152,7 +108,7 @@ std::string BasicStringSerializeMessage(es_message_t* es_msg) {
 }
 
 - (void)testSerializeMessageClose {
-  es_file_t proc_file = MakeESFile("foobar");
+  es_file_t proc_file = MakeESFile("foo");
   es_process_t proc = MakeESProcess(&proc_file,
                                     MakeAuditToken(12, 34),
                                     MakeAuditToken(56, 78));
@@ -163,14 +119,14 @@ std::string BasicStringSerializeMessage(es_message_t* es_msg) {
 
   std::string got = BasicStringSerializeMessage(&es_msg);
   std::string want = "action=WRITE|path=close_file"
-      "|pid=12|ppid=56|process=foobar|processpath=foobar"
+      "|pid=12|ppid=56|process=foo|processpath=foo"
       "|uid=-2|user=nobody|gid=-2|group=nobody";
 
   XCTAssertCppStringEqual(got, want);
 }
 
 - (void)testSerializeMessageExchange {
-  es_file_t proc_file = MakeESFile("foobar");
+  es_file_t proc_file = MakeESFile("foo");
   es_process_t proc = MakeESProcess(&proc_file,
                                     MakeAuditToken(12, 34),
                                     MakeAuditToken(56, 78));
@@ -182,18 +138,18 @@ std::string BasicStringSerializeMessage(es_message_t* es_msg) {
 
   std::string got = BasicStringSerializeMessage(&es_msg);
   std::string want = "action=EXCHANGE|path=exchange_1|newpath=exchange_2"
-      "|pid=12|ppid=56|process=foobar|processpath=foobar"
+      "|pid=12|ppid=56|process=foo|processpath=foo"
       "|uid=-2|user=nobody|gid=-2|group=nobody";
 
   XCTAssertCppStringEqual(got, want);
 }
 
 - (void)testSerializeMessageExec {
-  es_file_t proc_file = MakeESFile("foobar");
+  es_file_t proc_file = MakeESFile("foo");
   es_process_t proc = MakeESProcess(&proc_file,
                                     MakeAuditToken(12, 34),
                                     MakeAuditToken(56, 78));
-  // struct stat sb = {.st_dev = 98765, .st_ino = 1234567};
+
   struct stat sb = {};
   es_file_t exec_file = MakeESFile("execpath", sb);
   es_process_t proc_exec = MakeESProcess(&exec_file,
@@ -223,7 +179,7 @@ std::string BasicStringSerializeMessage(es_message_t* es_msg) {
 }
 
 - (void)testSerializeMessageExit {
-  es_file_t proc_file = MakeESFile("foobar");
+  es_file_t proc_file = MakeESFile("foo");
   es_process_t proc = MakeESProcess(&proc_file,
                                     MakeAuditToken(12, 34),
                                     MakeAuditToken(56, 78));
@@ -236,8 +192,8 @@ std::string BasicStringSerializeMessage(es_message_t* es_msg) {
 }
 
 - (void)testSerializeMessageFork {
-  es_file_t proc_file = MakeESFile("foobar");
-  es_file_t proc_child_file = MakeESFile("foobar_child");
+  es_file_t proc_file = MakeESFile("foo");
+  es_file_t proc_child_file = MakeESFile("foo_child");
   es_process_t proc = MakeESProcess(&proc_file,
                                     MakeAuditToken(12, 34),
                                     MakeAuditToken(56, 78));
@@ -254,7 +210,7 @@ std::string BasicStringSerializeMessage(es_message_t* es_msg) {
 }
 
 - (void)testSerializeMessageLink {
-  es_file_t proc_file = MakeESFile("foobar");
+  es_file_t proc_file = MakeESFile("foo");
   es_file_t src_file = MakeESFile("link_src");
   es_file_t dst_dir = MakeESFile("link_dst");
   es_process_t proc = MakeESProcess(&proc_file,
@@ -267,14 +223,14 @@ std::string BasicStringSerializeMessage(es_message_t* es_msg) {
 
   std::string got = BasicStringSerializeMessage(&es_msg);
   std::string want = "action=LINK|path=link_src|newpath=link_dst/link_name"
-      "|pid=12|ppid=56|process=foobar|processpath=foobar"
+      "|pid=12|ppid=56|process=foo|processpath=foo"
       "|uid=-2|user=nobody|gid=-2|group=nobody";
 
   XCTAssertCppStringEqual(got, want);
 }
 
 - (void)testSerializeMessageRename {
-  es_file_t proc_file = MakeESFile("foobar");
+  es_file_t proc_file = MakeESFile("foo");
   es_file_t src_file = MakeESFile("rename_src");
   es_file_t dst_file = MakeESFile("rename_dst");
   es_process_t proc = MakeESProcess(&proc_file,
@@ -287,14 +243,14 @@ std::string BasicStringSerializeMessage(es_message_t* es_msg) {
 
   std::string got = BasicStringSerializeMessage(&es_msg);
   std::string want = "action=RENAME|path=rename_src|newpath=rename_dst"
-      "|pid=12|ppid=56|process=foobar|processpath=foobar"
+      "|pid=12|ppid=56|process=foo|processpath=foo"
       "|uid=-2|user=nobody|gid=-2|group=nobody";
 
   XCTAssertCppStringEqual(got, want);
 }
 
 - (void)testSerializeMessageUnlink {
-  es_file_t proc_file = MakeESFile("foobar");
+  es_file_t proc_file = MakeESFile("foo");
   es_file_t target_file = MakeESFile("deleted_file");
   es_process_t proc = MakeESProcess(&proc_file,
                                     MakeAuditToken(12, 34),
@@ -304,14 +260,14 @@ std::string BasicStringSerializeMessage(es_message_t* es_msg) {
 
   std::string got = BasicStringSerializeMessage(&es_msg);
   std::string want = "action=DELETE|path=deleted_file"
-      "|pid=12|ppid=56|process=foobar|processpath=foobar"
+      "|pid=12|ppid=56|process=foo|processpath=foo"
       "|uid=-2|user=nobody|gid=-2|group=nobody";
 
   XCTAssertCppStringEqual(got, want);
 }
 
 - (void)testSerializeAllowlist {
-  es_file_t file = MakeESFile("foobar");
+  es_file_t file = MakeESFile("foo");
   es_process_t proc = MakeESProcess(&file,
                                     MakeAuditToken(12, 34),
                                     MakeAuditToken(56, 78));
@@ -330,7 +286,7 @@ std::string BasicStringSerializeMessage(es_message_t* es_msg) {
                 "Expected calls were not properly mocked");
 
   std::string got(ret.begin(), ret.end());
-  std::string want = "action=ALLOWLIST|pid=12|pidversion=34|path=foobar"
+  std::string want = "action=ALLOWLIST|pid=12|pidversion=34|path=foo"
       "|sha256=test_hash";
 
   XCTAssertCppStringEqual(got, want);
