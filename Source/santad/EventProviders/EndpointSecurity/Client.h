@@ -27,13 +27,11 @@ public:
                   es_new_client_result_t result)
       : client_(client), result_(result) {}
 
-  explicit Client(std::nullptr_t c)
-      : client_(nullptr), result_(ES_NEW_CLIENT_RESULT_ERR_INTERNAL) {}
-
   Client() : client_(nullptr), result_(ES_NEW_CLIENT_RESULT_ERR_INTERNAL) {}
 
   virtual ~Client() {
     if (client_) {
+      // Special case: Not using EndpointSecurityAPI here due to circular refs.
       es_delete_client(client_);
     }
   }
@@ -55,12 +53,17 @@ public:
   Client(const Client& other) = delete;
   void operator=(const Client& rhs) = delete;
 
-  bool IsConnected() {
+  inline bool IsConnected() {
     return client_ != nullptr && result_ == ES_NEW_CLIENT_RESULT_SUCCESS;
   }
 
-  es_new_client_result_t NewClientResult() { return result_; }
-  es_client_t* Get() const { return client_; }
+  inline es_new_client_result_t NewClientResult() {
+    return result_;
+  }
+
+  inline es_client_t* Get() const {
+    return client_;
+  }
 
 private:
   es_client_t *client_;

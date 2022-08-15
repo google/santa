@@ -1073,10 +1073,20 @@ santa_unit_test(
     ],
 )
 
+santa_unit_test(
+    name = "EndpointSecurityClientTest",
+    srcs = ["EventProviders/EndpointSecurity/ClientTest.mm"],
+    deps = [
+        ":EndpointSecurityClient",
+        "@OCMock",
+    ],
+)
+
 test_suite(
     name = "unit_tests",
     tests = [
         ":AuthResultCacheTest",
+        ":EndpointSecurityClientTest",
         ":EndpointSecurityLoggerTest",
         ":EndpointSecuritySerializerBasicStringTest",
         ":EndpointSecuritySerializerEmptyTest",
