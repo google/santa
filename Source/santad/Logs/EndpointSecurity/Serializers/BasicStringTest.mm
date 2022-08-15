@@ -53,12 +53,11 @@ public:
               (const es_event_exec_t *event, uint32_t index));
 };
 
-#define NOBODY ((unsigned int)-2)
-
 audit_token_t MakeAuditToken(pid_t pid, pid_t pidver) {
   return audit_token_t{
     .val = {
-      0, NOBODY, NOBODY, NOBODY, NOBODY, (unsigned int)pid, 0, (unsigned int)pidver,
+      0, NOBODY_UID, NOBODY_GID, NOBODY_UID, NOBODY_GID,
+      (unsigned int)pid, 0, (unsigned int)pidver,
     },
   };
 }

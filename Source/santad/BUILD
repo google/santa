@@ -1082,11 +1082,26 @@ santa_unit_test(
     ],
 )
 
+santa_unit_test(
+    name = "EndpointSecurityEnricherTest",
+    srcs = ["EventProviders/EndpointSecurity/EnricherTest.mm"],
+    deps = [
+        ":EndpointSecurityEnricher",
+        "//Source/common:TestUtils",
+        "@OCMock",
+    ],
+    sdk_dylibs = [
+        "bsm",
+    ],
+)
+
+
 test_suite(
     name = "unit_tests",
     tests = [
         ":AuthResultCacheTest",
         ":EndpointSecurityClientTest",
+        ":EndpointSecurityEnricherTest",
         ":EndpointSecurityLoggerTest",
         ":EndpointSecuritySerializerBasicStringTest",
         ":EndpointSecuritySerializerEmptyTest",

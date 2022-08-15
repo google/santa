@@ -20,6 +20,9 @@
 #include <time.h>
 #import <XCTest/XCTest.h>
 
+#define NOBODY_UID ((unsigned int)-2)
+#define NOBODY_GID ((unsigned int)-2)
+
 // Bubble up googletest expectation failures to XCTest failures
 #define XCTBubbleMockVerifyAndClearExpectations(mock) \
     XCTAssertTrue(::testing::Mock::VerifyAndClearExpectations(mock), \
