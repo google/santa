@@ -1,25 +1,23 @@
 #import <XCTest/XCTest.h>
 
+#import <Foundation/Foundation.h>
+#import <OCMock/OCMock.h>
 #import "Source/santametricservice/Formats/SNTMetricFormatTestHelper.h"
 #import "Source/santametricservice/Formats/SNTMetricMonarchJSONFormat.h"
 
 @interface SNTMetricMonarchJSONFormatTest : XCTestCase
 @end
 
-// Stub out NSDate's date method
-@implementation NSDate (custom)
-
-+ (instancetype)date {
-  NSDateFormatter *formatter = NSDateFormatter.new;
-  [formatter setDateFormat:@"yyyy-MM-dd HH:mm:ssZZZ"];
-  return [formatter dateFromString:@"2021-09-16 21:08:10+0000"];
-}
-
-@end
-
 @implementation SNTMetricMonarchJSONFormatTest
 
 - (void)testMetricsConversionToJSON {
+  id classMock = OCMClassMock([NSDate class]);
+  NSDateFormatter *testDateFormatter = NSDateFormatter.new;
+  [testDateFormatter setDateFormat:@"yyyy-MM-dd HH:mm:ssZZZ"];
+  NSDate *mockedEndTimestamp = [testDateFormatter dateFromString:@"2021-09-16 21:08:10+0000"];
+
+  OCMStub([classMock date]).andReturn(mockedEndTimestamp);
+
   NSDictionary *validMetricsDict = [SNTMetricFormatTestHelper createValidMetricsDictionary];
   SNTMetricMonarchJSONFormat *formatter = [[SNTMetricMonarchJSONFormat alloc] init];
   NSError *err = nil;
