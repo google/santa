@@ -637,8 +637,8 @@ objc_library(
 
 objc_library(
     name = "Metrics",
-    srcs = ["metrics.mm"],
-    hdrs = ["metrics.h"],
+    srcs = ["Metrics.mm"],
+    hdrs = ["Metrics.h"],
     deps = [
       ":SNTApplicationCoreMetrics",
       "//Source/common:SNTLogging",
@@ -1123,6 +1123,9 @@ test_suite(
         ":EndpointSecuritySerializerBasicStringTest",
         ":EndpointSecuritySerializerEmptyTest",
         ":EndpointSecurityWriterFileTest",
+        ":SNTApplicationCoreMetricsTest",
+        ":SNTEventTableTest",
+        ":SNTRuleTableTest",
     ],
     visibility = ["//:santa_package_group"],
 )
@@ -1130,14 +1133,14 @@ test_suite(
 test_suite(
     name = "unit_tests_ORIG",
     tests = [
-        ":SNTApplicationCoreMetricsTest",
+        # ":SNTApplicationCoreMetricsTest", -- Works as-is
         ":SNTApplicationTest",
         ":SNTDeviceManagerTest",
         ":SNTEndpointSecurityManagerTest",
-        ":SNTEventTableTest",
+        # ":SNTEventTableTest", -- Works as-is
         ":SNTExecutionControllerTest",
-        ":SNTProtobufEventLogTest",
-        ":SNTRuleTableTest",
+        # ":SNTProtobufEventLogTest", -- Deleting
+        # ":SNTRuleTableTest", -- Works as-is
     ],
     visibility = ["//:santa_package_group"],
 )
