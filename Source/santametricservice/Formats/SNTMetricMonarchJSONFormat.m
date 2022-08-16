@@ -100,7 +100,8 @@ const NSString *kKey = @"key";
   }
 }
 
-- (NSArray<NSDictionary *> *)encodeDataForMetric:(NSDictionary *)metric {
+- (NSArray<NSDictionary *> *)encodeDataForMetric:(NSDictionary *)metric
+                                withEndTimestamp:(NSDate *)endTimestamp {
   NSMutableArray<NSDictionary *> *monarchMetricData = [[NSMutableArray alloc] init];
 
   for (NSString *fieldName in metric[@"fields"]) {
@@ -112,8 +113,8 @@ const NSString *kKey = @"key";
       }
 
       monarchDataEntry[kStartTimestamp] = [self->_dateFormatter stringFromDate:entry[@"created"]];
-      monarchDataEntry[kEndTimestamp] =
-        [self->_dateFormatter stringFromDate:entry[@"last_updated"]];
+      // monarch wants all the end timestamp to be updated, even if the value does not change.
+      monarchDataEntry[kEndTimestamp] = [self->_dateFormatter stringFromDate:endTimestamp];
 
       if (!metric[@"type"]) {
         LOGE(@"metric type is nil");
@@ -160,7 +161,9 @@ const NSString *kKey = @"key";
  * formatMetric translates the SNTMetricSet metric entries into those consumable by Monarch.
  **/
 
-- (NSDictionary *)formatMetric:(NSString *)name withMetric:(NSDictionary *)metric {
+- (NSDictionary *)formatMetric:(NSString *)name
+                    withMetric:(NSDictionary *)metric
+              withEndTimestamp:(NSDate *)endTimestamp {
   NSMutableDictionary *monarchMetric = [[NSMutableDictionary alloc] init];
 
   monarchMetric[kMetricName] = name;
@@ -175,7 +178,7 @@ const NSString *kKey = @"key";
   }
 
   [self encodeValueAndStreamKindFor:name withMetric:metric into:monarchMetric];
-  monarchMetric[@"data"] = [self encodeDataForMetric:metric];
+  monarchMetric[@"data"] = [self encodeDataForMetric:metric withEndTimestamp:endTimestamp];
 
   return monarchMetric;
 }
@@ -185,10 +188,12 @@ const NSString *kKey = @"key";
  **/
 - (NSDictionary *)normalize:(NSDictionary *)metrics {
   NSMutableArray<NSDictionary *> *monarchMetrics = [[NSMutableArray alloc] init];
+  NSDate *endTimestamp = [NSDate date];
 
   for (NSString *metricName in metrics[@"metrics"]) {
     [monarchMetrics addObject:[self formatMetric:metricName
-                                      withMetric:metrics[@"metrics"][metricName]]];
+                                      withMetric:metrics[@"metrics"][metricName]
+                                withEndTimestamp:endTimestamp]];
   }
 
   NSMutableArray<NSDictionary *> *rootLabels = [[NSMutableArray alloc] init];

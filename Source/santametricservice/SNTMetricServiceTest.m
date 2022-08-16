@@ -22,6 +22,17 @@ NSDictionary *validMetricsDict = nil;
 @property id mockMOLAuthenticatingURLSession;
 @end
 
+// Stub out NSDate's date method
+@implementation NSDate (custom)
+
++ (instancetype)date {
+  NSDateFormatter *formatter = NSDateFormatter.new;
+  [formatter setDateFormat:@"yyyy-MM-dd HH:mm:ssZZZ"];
+  return [formatter dateFromString:@"2021-09-16 21:08:10+0000"];
+}
+
+@end
+
 @implementation SNTMetricServiceTest
 
 - (void)setUp {
