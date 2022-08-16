@@ -163,7 +163,7 @@ const NSString *kKey = @"key";
 
 - (NSDictionary *)formatMetric:(NSString *)name
                     withMetric:(NSDictionary *)metric
-              withEndTimestamp:(NSDate *)endTimestamp {
+               andEndtimestamp:(NSDate *)endTimestamp {
   NSMutableDictionary *monarchMetric = [[NSMutableDictionary alloc] init];
 
   monarchMetric[kMetricName] = name;
@@ -193,7 +193,7 @@ const NSString *kKey = @"key";
   for (NSString *metricName in metrics[@"metrics"]) {
     [monarchMetrics addObject:[self formatMetric:metricName
                                       withMetric:metrics[@"metrics"][metricName]
-                                withEndTimestamp:endTimestamp]];
+                                 andEndtimestamp:endTimestamp]];
   }
 
   NSMutableArray<NSDictionary *> *rootLabels = [[NSMutableArray alloc] init];
