@@ -138,7 +138,7 @@ static NSString *const kPrinterProxyPostMonterey =
       cd.teamID = [NSString stringWithUTF8String:targetProc->team_id.data];
     }
 
-    // TODO: We should be able to grab signing info. We should probably abstract this
+    // TODO(mlw): We should be able to grab signing info. We should probably abstract this
     // functionality out from the SNTPolicyProcessor.
 
     [[SNTDecisionCache sharedCache] cacheDecision:cd];
@@ -165,11 +165,14 @@ static NSString *const kPrinterProxyPostMonterey =
   NSError *fileInfoError;
   SNTFileInfo *binInfo = [[SNTFileInfo alloc] initWithEndpointSecurityFile:targetProc->executable error:&fileInfoError];
   if (unlikely(!binInfo)) {
-    LOGE(@"Failed to read file %@: %@", @(targetProc->executable->path.data), fileInfoError.localizedDescription);
     if (config.failClosed && config.clientMode == SNTClientModeLockdown) {
+      LOGE(@"Failed to read file %@: %@ and denying action", @(targetProc->executable->path.data),
+           fileInfoError.localizedDescription);
       postAction(ACTION_RESPOND_DENY);
       [self.events incrementForFieldValues:@[ (NSString *)kDenyNoFileInfo ]];
     } else {
+      LOGE(@"Failed to read file %@: %@ but allowing action", @(targetProc->executable->path.data),
+           fileInfoError.localizedDescription);
       postAction(ACTION_RESPOND_ALLOW);
       [self.events incrementForFieldValues:@[ (NSString *)kAllowNoFileInfo ]];
     }

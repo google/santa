@@ -12,19 +12,25 @@
 ///    See the License for the specific language governing permissions and
 ///    limitations under the License.
 
-#include <sys/stat.h>
-
+#include <dispatch/dispatch.h>
 #import <Foundation/Foundation.h>
+#import <OCMock/OCMock.h>
+#import <XCTest/XCTest.h>
 
-#import "Source/common/SNTCachedDecision.h"
+#import "Source/santad/SNTDecisionCache.h"
 
-@interface SNTDecisionCache : NSObject
+@interface SNTDecisionCacheTest : XCTestCase
+@property id mockRuleDatabase;
+@end
 
-+ (instancetype)sharedCache;
+@implementation SNTDecisionCacheTest
 
-- (void)cacheDecision:(SNTCachedDecision *)cd;
-- (SNTCachedDecision *)cachedDecisionForFile:(const struct stat&)statInfo;
-- (void)forgetCachedDecisionForFile:(const struct stat&)statInfo;
-- (void)resetTimestampForCachedDecision:(const struct stat&)statInfo;
+- (void)setUp {
+  // self.mockRuleDatabase = OCMClassMock([SNTRuleTable class]);
+}
+
+- (void)testBasicOperation {
+  // SNTDecisionCache *dc = [SNTDecisionCache sharedCache];
+}
 
 @end

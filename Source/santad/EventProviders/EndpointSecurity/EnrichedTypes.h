@@ -137,6 +137,7 @@ public:
 
   // Allow serializers to access internals
   friend class santa::santad::logs::endpoint_security::serializers::BasicString;
+  friend class santa::santad::logs::endpoint_security::serializers::Serializer;
 
 private:
   Message es_msg_;

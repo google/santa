@@ -41,6 +41,9 @@
 - (instancetype)init {
   self = [super init];
   if (self) {
+    // TODO(mlw): We should protect this structure with a read/write lock
+    // instead of a serial dispatch queue since it's expected that most most
+    // accesses will be lookups, not caching new items.
     _detailStore = [NSMutableDictionary dictionaryWithCapacity:10000];
     _detailStoreQueue =
       dispatch_queue_create("com.google.santad.detail_store", DISPATCH_QUEUE_SERIAL);
@@ -71,13 +74,15 @@
   });
 }
 
-// TODO: Is this the right place for this method?
-
 // Whenever a cached decision resulting from a transitive allowlist rule is used to allow the
 // execution of a binary, we update the timestamp on the transitive rule in the rules database.
 // To prevent writing to the database too often, we space out consecutive writes by 3600 seconds.
-- (void)resetTimestampForCachedDecision:(SNTCachedDecision *)cd {
-  if (cd.decision != SNTEventStateAllowTransitive) return;
+- (void)resetTimestampForCachedDecision:(const struct stat&)statInfo {
+  SNTCachedDecision *cd = [self cachedDecisionForFile:statInfo];
+  if (!cd || cd.decision != SNTEventStateAllowTransitive || !cd.sha256) {
+    return;
+  }
+
   NSDate *lastUpdate = [self.timestampResetMap objectForKey:cd.sha256];
   if (!lastUpdate || -[lastUpdate timeIntervalSinceNow] > 3600) {
     SNTRule *rule = [[SNTRule alloc] initWithIdentifier:cd.sha256

@@ -506,10 +506,12 @@ objc_library(
 
 objc_library(
     name = "EndpointSecuritySerializer",
+    srcs = ["Logs/EndpointSecurity/Serializers/Serializer.mm"],
     hdrs = ["Logs/EndpointSecurity/Serializers/Serializer.h"],
     deps = [
         ":EndpointSecurityMessage",
         ":EndpointSecurityEnrichedTypes",
+        ":SNTDecisionCache",
     ],
 )
 
@@ -1120,6 +1122,15 @@ santa_unit_test(
     ],
 )
 
+santa_unit_test(
+    name = "SNTDecisionCacheTest",
+    srcs = ["SNTDecisionCacheTest.mm"],
+    deps = [
+      ":SNTDecisionCache",
+      "@OCMock",
+    ],
+)
+
 test_suite(
     name = "unit_tests",
     tests = [
@@ -1133,6 +1144,7 @@ test_suite(
         ":EndpointSecurityWriterFileTest",
         ":MetricsTest",
         ":SNTApplicationCoreMetricsTest",
+        ":SNTDecisionCacheTest",
         ":SNTEventTableTest",
         ":SNTRuleTableTest",
     ],
