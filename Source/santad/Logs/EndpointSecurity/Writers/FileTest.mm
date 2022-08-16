@@ -12,6 +12,7 @@
 ///    See the License for the specific language governing permissions and
 ///    limitations under the License.
 
+#include <dispatch/dispatch.h>
 #import <Foundation/Foundation.h>
 #include <gtest/gtest.h>
 #include <sys/stat.h>

@@ -1111,6 +1111,14 @@ santa_unit_test(
     ],
 )
 
+santa_unit_test(
+    name = "MetricsTest",
+    srcs = ["MetricsTest.mm"],
+    deps = [
+        ":Metrics",
+        "@OCMock",
+    ],
+)
 
 test_suite(
     name = "unit_tests",
@@ -1123,6 +1131,7 @@ test_suite(
         ":EndpointSecuritySerializerBasicStringTest",
         ":EndpointSecuritySerializerEmptyTest",
         ":EndpointSecurityWriterFileTest",
+        ":MetricsTest",
         ":SNTApplicationCoreMetricsTest",
         ":SNTEventTableTest",
         ":SNTRuleTableTest",

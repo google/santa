@@ -41,7 +41,11 @@ std::shared_ptr<Metrics> Metrics::Create(uint64_t interval) {
       metrics_connection,
       q,
       timer_source,
-      interval);
+      interval,
+      ^(){
+        SNTRegisterCoreMetrics();
+        [metrics_connection resume];
+      });
 
   std::weak_ptr<Metrics> weak_metrics(metrics);
   dispatch_source_set_event_handler(metrics->timer_source_, ^{
@@ -65,8 +69,13 @@ std::shared_ptr<Metrics> Metrics::Create(uint64_t interval) {
 Metrics::Metrics(MOLXPCConnection* metrics_connection,
                  dispatch_queue_t q,
                  dispatch_source_t timer_source,
-                 uint64_t interval)
-    : q_(q), timer_source_(timer_source), interval_(interval), running_(false) {
+                 uint64_t interval,
+                 void(^run_on_first_start)(void))
+    : q_(q),
+      timer_source_(timer_source),
+      interval_(interval),
+      running_(false),
+      run_on_first_start_(run_on_first_start) {
   metrics_connection_ = metrics_connection;
   SetInterval(interval_);
 }
@@ -95,8 +104,7 @@ void Metrics::SetInterval(uint64_t interval) {
 void Metrics::StartPoll() {
   static dispatch_once_t once_token;
   dispatch_once(&once_token, ^{
-    SNTRegisterCoreMetrics();
-    [metrics_connection_ resume];
+    run_on_first_start_();
   });
 
   dispatch_sync(q_, ^{

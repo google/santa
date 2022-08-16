@@ -22,6 +22,9 @@
 
 namespace santa::santad {
 
+// Test interface - forward declaration
+class MetricsPeer;
+
 class Metrics : public std::enable_shared_from_this<Metrics> {
 public:
   static std::shared_ptr<Metrics> Create(uint64_t interval);
@@ -29,13 +32,16 @@ public:
   Metrics(MOLXPCConnection* metrics_connection,
           dispatch_queue_t q,
           dispatch_source_t timer_source,
-          uint64_t interval);
+          uint64_t interval,
+          void(^run_once_on_start)(void));
 
   ~Metrics();
 
   void StartPoll();
   void StopPoll();
   void SetInterval(uint64_t interval);
+
+  friend class santa::santad::MetricsPeer;
 
 private:
   MOLXPCConnection *metrics_connection_;
@@ -46,6 +52,7 @@ private:
   // This helps manage dispatch source state to ensure the source is not
   // suspended, resumed, or cancelled while in an improper state.
   bool running_;
+  void(^run_on_first_start_)(void);
 };
 
 } // namespace santa::santad
