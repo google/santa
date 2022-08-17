@@ -11,6 +11,7 @@ on:
       - main
     paths:
       - 'Source/**'
+  workflow_dispatch:  # Allows you to run this workflow manually from the Actions tab
 
 jobs:
   lint:
