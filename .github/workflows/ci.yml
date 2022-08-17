@@ -51,6 +51,8 @@ jobs:
         run: sh ./generate_cov.sh
       - name: Coveralls
         uses: coverallsapp/github-action@master
+        env:
+          NODE_COVERALLS_DEBUG: 1
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           path-to-lcov: ./bazel-out/_coverage/_coverage_report.dat
