@@ -18,7 +18,6 @@
 #include "Source/common/TestUtils.h"
 
 @interface SNTCachedDecisionTest : XCTestCase
-@property id mockSNTDatabaseController;
 @end
 
 @implementation SNTCachedDecisionTest
