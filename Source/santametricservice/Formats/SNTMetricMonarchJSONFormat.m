@@ -158,11 +158,12 @@ const NSString *kKey = @"key";
 }
 
 /**
- * formatMetric translates the SNTMetricSet metric entries into those consumable by Monarch.
+ * formatMetric translates the SNTMetricSet metric entries into those consumable
+ * by Monarch.
  **/
 
 - (NSDictionary *)formatMetric:(NSString *)name
-                    withMetric:(NSDictionary *)metric
+                     withValue:(NSDictionary *)metric
                andEndtimestamp:(NSDate *)endTimestamp {
   NSMutableDictionary *monarchMetric = [[NSMutableDictionary alloc] init];
 
@@ -192,7 +193,7 @@ const NSString *kKey = @"key";
 
   for (NSString *metricName in metrics[@"metrics"]) {
     [monarchMetrics addObject:[self formatMetric:metricName
-                                      withMetric:metrics[@"metrics"][metricName]
+                                       withValue:metrics[@"metrics"][metricName]
                                  andEndtimestamp:endTimestamp]];
   }
 

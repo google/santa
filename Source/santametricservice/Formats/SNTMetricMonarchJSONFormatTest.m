@@ -12,11 +12,8 @@
 
 - (void)testMetricsConversionToJSON {
   id classMock = OCMClassMock([NSDate class]);
-  NSDateFormatter *testDateFormatter = NSDateFormatter.new;
-  [testDateFormatter setDateFormat:@"yyyy-MM-dd HH:mm:ssZZZ"];
-  NSDate *mockedEndTimestamp = [testDateFormatter dateFromString:@"2021-09-16 21:08:10+0000"];
-
-  OCMStub([classMock date]).andReturn(mockedEndTimestamp);
+  OCMStub([classMock date])
+    .andReturn([NSDate dateWithTimeIntervalSince1970:1631826490]);  // 2021-09-16 21:08:10Z
 
   NSDictionary *validMetricsDict = [SNTMetricFormatTestHelper createValidMetricsDictionary];
   SNTMetricMonarchJSONFormat *formatter = [[SNTMetricMonarchJSONFormat alloc] init];
