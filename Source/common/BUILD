@@ -293,9 +293,20 @@ santa_unit_test(
     deps = [":SNTMetricSet"],
 )
 
+santa_unit_test(
+    name = "SNTCachedDecisionTest",
+    srcs = ["SNTCachedDecisionTest.mm"],
+    deps = [
+        "//Source/common:SNTCachedDecision",
+        "//Source/common:TestUtils",
+        "@OCMock",
+    ],
+)
+
 test_suite(
     name = "unit_tests",
     tests = [
+        ":SNTCachedDecisionTest",
         ":SNTFileInfoTest",
         ":SNTMetricSetTest",
         ":SNTPrefixTreeTest",
