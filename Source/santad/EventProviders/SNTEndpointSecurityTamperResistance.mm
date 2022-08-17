@@ -45,7 +45,7 @@ static constexpr std::string_view kSantaKextIdentifier = "com.google.santa-drive
   [super establishClientOrDie:^(es_client_t* c, Message&& esMsg) {
     switch (esMsg->event_type) {
       case ES_EVENT_TYPE_AUTH_UNLINK: {
-        if ([self isDatabasePath:esMsg->event.unlink.target->path.data]) {
+        if ([SNTEndpointSecurityTamperResistance isDatabasePath:esMsg->event.unlink.target->path.data]) {
           // Do not cache so that each attempt to remove santa is logged
           [self respondToMessage:esMsg withAuthResult:ES_AUTH_RESULT_DENY cacheable:false];
           LOGW(@"Preventing attempt to delete Santa databases!");
@@ -56,7 +56,7 @@ static constexpr std::string_view kSantaKextIdentifier = "com.google.santa-drive
         return;
       }
       case ES_EVENT_TYPE_AUTH_RENAME: {
-        if ([self isDatabasePath:esMsg->event.rename.source->path.data]) {
+        if ([SNTEndpointSecurityTamperResistance isDatabasePath:esMsg->event.rename.source->path.data]) {
           // Do not cache so that each attempt to remove santa is logged
           [self respondToMessage:esMsg withAuthResult:ES_AUTH_RESULT_DENY cacheable:false];
           LOGW(@"!!! Preventing attempt to rename Santa databases!");
@@ -64,7 +64,7 @@ static constexpr std::string_view kSantaKextIdentifier = "com.google.santa-drive
         }
 
         if (esMsg->event.rename.destination_type == ES_DESTINATION_TYPE_EXISTING_FILE) {
-          if ([self isDatabasePath:esMsg->event.rename.destination.existing_file->path.data]) {
+          if ([SNTEndpointSecurityTamperResistance isDatabasePath:esMsg->event.rename.destination.existing_file->path.data]) {
             [self respondToMessage:esMsg withAuthResult:ES_AUTH_RESULT_DENY cacheable:false];
             LOGW(@"!!! Preventing attempt to overwrite Santa databases!");
             return;
@@ -95,7 +95,7 @@ static constexpr std::string_view kSantaKextIdentifier = "com.google.santa-drive
 }
 
 - (void)enable {
-  // TODO: For macOS 13, use new mute and invert APIs to limit the
+  // TODO(mlw): For macOS 13, use new mute and invert APIs to limit the
   // messages sent for these events to Santa-specific directories.
 
   [super subscribeAndClearCache:{

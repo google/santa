@@ -12,6 +12,7 @@
 ///    See the License for the specific language governing permissions and
 ///    limitations under the License.
 
+#include <bsm/libbsm.h>
 #include <EndpointSecurity/EndpointSecurity.h>
 
 #include <memory>
@@ -53,6 +54,7 @@
 
 - (bool)clearCache;
 
-- (bool)isDatabasePath:(const std::string_view)path;
++ (bool)isDatabasePath:(const std::string_view)path;
++ (bool)populateAuditTokenSelf:(audit_token_t*)tok;
 
 @end

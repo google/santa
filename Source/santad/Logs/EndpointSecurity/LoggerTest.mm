@@ -38,10 +38,10 @@
 #include "Source/santad/Logs/EndpointSecurity/Writers/Writer.h"
 
 using santa::santad::event_providers::endpoint_security::EndpointSecurityAPI;
-using santa::santad::event_providers::endpoint_security::EnrichedMessage;
 using santa::santad::event_providers::endpoint_security::EnrichedClose;
-using santa::santad::event_providers::endpoint_security::EnrichedProcess;
 using santa::santad::event_providers::endpoint_security::EnrichedFile;
+using santa::santad::event_providers::endpoint_security::EnrichedMessage;
+using santa::santad::event_providers::endpoint_security::EnrichedProcess;
 using santa::santad::event_providers::endpoint_security::Message;
 using santa::santad::logs::endpoint_security::Logger;
 using santa::santad::logs::endpoint_security::serializers::BasicString;

@@ -13,12 +13,12 @@
 ///    limitations under the License.
 
 #import "Source/santad/EventProviders/SNTEndpointSecurityClient.h"
-#include <sys/qos.h>
 
 #include <bsm/libbsm.h>
 #include <dispatch/dispatch.h>
 #include <mach/mach_time.h>
 #include <stdlib.h>
+#include <sys/qos.h>
 
 #import "Source/common/SNTCommon.h"
 #import "Source/common/SNTConfigurator.h"
@@ -121,12 +121,20 @@ using santa::santad::event_providers::endpoint_security::Message;
   }
 }
 
-- (bool)muteSelf {
-  audit_token_t myAuditToken;
++ (bool)populateAuditTokenSelf:(audit_token_t*)tok {
   mach_msg_type_number_t count = TASK_AUDIT_TOKEN_COUNT;
-  if (task_info(mach_task_self(), TASK_AUDIT_TOKEN, (task_info_t)&myAuditToken, &count) !=
+  if (task_info(mach_task_self(), TASK_AUDIT_TOKEN, (task_info_t)tok, &count) !=
         KERN_SUCCESS) {
     LOGE(@"Failed to fetch this client's audit token.");
+    return false;
+  }
+
+  return true;
+}
+
+- (bool)muteSelf {
+  audit_token_t myAuditToken;
+  if (![SNTEndpointSecurityClient populateAuditTokenSelf:&myAuditToken]) {
     return false;
   }
 
@@ -217,7 +225,11 @@ using santa::santad::event_providers::endpoint_security::Message;
   });
 }
 
-- (bool)isDatabasePath:(const std::string_view)path {
++ (bool)isDatabasePath:(const std::string_view)path {
+  // TODO(mlw): These values should come from `SNTDatabaseController`. But right
+  // now they live as NSStrings. We should make them `std::string_view` types
+  // in order to use them here efficiently, but will need to make the
+  // `SNTDatabaseController` an ObjC++ file.
   return (path == "/private/var/db/santa/rules.db" ||
           path == "/private/var/db/santa/events.db");
 }

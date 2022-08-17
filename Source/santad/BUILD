@@ -1148,6 +1148,7 @@ santa_unit_test(
         ":EndpointSecurityAPI",
         ":EndpointSecurityClient",
         ":EndpointSecurityMessage",
+        ":EndpointSecurityEnrichedTypes",
         ":SNTEndpointSecurityClient",
         "//Source/common:TestUtils",
         "@com_google_googletest//:gtest",
