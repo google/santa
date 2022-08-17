@@ -1141,6 +1141,24 @@ santa_unit_test(
     ],
 )
 
+santa_unit_test(
+    name = "SNTEndpointSecurityClientTest",
+    srcs = ["EventProviders/SNTEndpointSecurityClientTest.mm"],
+    deps = [
+        ":EndpointSecurityAPI",
+        ":EndpointSecurityClient",
+        ":EndpointSecurityMessage",
+        ":SNTEndpointSecurityClient",
+        "//Source/common:TestUtils",
+        "@com_google_googletest//:gtest",
+        "@OCMock",
+    ],
+    sdk_dylibs = [
+        "bsm",
+        "EndpointSecurity",
+    ],
+)
+
 test_suite(
     name = "unit_tests",
     tests = [
@@ -1155,6 +1173,7 @@ test_suite(
         ":MetricsTest",
         ":SNTApplicationCoreMetricsTest",
         ":SNTDecisionCacheTest",
+        ":SNTEndpointSecurityClientTest",
         ":SNTEventTableTest",
         ":SNTRuleTableTest",
     ],

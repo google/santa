@@ -49,7 +49,6 @@ static constexpr std::string_view kSantaKextIdentifier = "com.google.santa-drive
           // Do not cache so that each attempt to remove santa is logged
           [self respondToMessage:esMsg withAuthResult:ES_AUTH_RESULT_DENY cacheable:false];
           LOGW(@"Preventing attempt to delete Santa databases!");
-          // TODO: Log this attempt
         } else {
           [self respondToMessage:esMsg withAuthResult:ES_AUTH_RESULT_ALLOW cacheable:true];
         }
@@ -61,7 +60,6 @@ static constexpr std::string_view kSantaKextIdentifier = "com.google.santa-drive
           // Do not cache so that each attempt to remove santa is logged
           [self respondToMessage:esMsg withAuthResult:ES_AUTH_RESULT_DENY cacheable:false];
           LOGW(@"!!! Preventing attempt to rename Santa databases!");
-          // TODO: Log this attempt
           return;
         }
 
@@ -69,7 +67,6 @@ static constexpr std::string_view kSantaKextIdentifier = "com.google.santa-drive
           if ([self isDatabasePath:esMsg->event.rename.destination.existing_file->path.data]) {
             [self respondToMessage:esMsg withAuthResult:ES_AUTH_RESULT_DENY cacheable:false];
             LOGW(@"!!! Preventing attempt to overwrite Santa databases!");
-            // TODO: Log this attempt
             return;
           }
         }

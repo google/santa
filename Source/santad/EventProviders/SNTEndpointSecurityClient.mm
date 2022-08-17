@@ -177,8 +177,7 @@ using santa::santad::event_providers::endpoint_security::Message;
   dispatch_semaphore_signal(processingSema);
   dispatch_semaphore_t deadlineExpiredSema = dispatch_semaphore_create(0);
 
-  uint64_t timeout = NSEC_PER_SEC * -5;
-
+  const uint64_t timeout = NSEC_PER_SEC * -5;
   uint64_t deadlineMachTime = msg->deadline - mach_absolute_time();
   uint64_t deadlineNano = deadlineMachTime * _timebase.numer / _timebase.denom;
 
