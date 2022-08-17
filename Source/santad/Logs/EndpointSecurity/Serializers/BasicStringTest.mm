@@ -150,8 +150,7 @@ std::string BasicStringSerializeMessage(es_message_t* es_msg) {
                                     MakeAuditToken(12, 34),
                                     MakeAuditToken(56, 78));
 
-  struct stat sb = {};
-  es_file_t exec_file = MakeESFile("execpath", sb);
+  es_file_t exec_file = MakeESFile("execpath");
   es_process_t proc_exec = MakeESProcess(&exec_file,
                                     MakeAuditToken(12, 89),
                                     MakeAuditToken(56, 78));

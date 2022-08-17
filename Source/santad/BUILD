@@ -1036,6 +1036,9 @@ santa_unit_test(
         ":EndpointSecuritySerializerEmpty",
         "@OCMock",
     ],
+    sdk_dylibs = [
+        "EndpointSecurity",
+    ],
 )
 
 santa_unit_test(
@@ -1126,8 +1129,15 @@ santa_unit_test(
     name = "SNTDecisionCacheTest",
     srcs = ["SNTDecisionCacheTest.mm"],
     deps = [
-      ":SNTDecisionCache",
-      "@OCMock",
+        ":SNTDatabaseController",
+        ":SNTDecisionCache",
+        "//Source/common:SNTCommonEnums",
+        "//Source/common:SNTRule",
+        "//Source/common:TestUtils",
+        "@OCMock",
+    ],
+    sdk_dylibs = [
+        "EndpointSecurity",
     ],
 )
 

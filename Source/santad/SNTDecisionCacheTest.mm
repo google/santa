@@ -14,23 +14,93 @@
 
 #include <dispatch/dispatch.h>
 #import <Foundation/Foundation.h>
+#include "Source/common/SNTCachedDecision.h"
 #import <OCMock/OCMock.h>
+#include <sys/stat.h>
 #import <XCTest/XCTest.h>
 
+#import "Source/common/SNTCommon.h"
+#import "Source/common/SNTCommonEnums.h"
+#import "Source/common/SNTRule.h"
+#include "Source/common/TestUtils.h"
 #import "Source/santad/SNTDecisionCache.h"
+#import "Source/santad/SNTDatabaseController.h"
+#import "Source/santad/DataLayer/SNTRuleTable.h"
+
+SNTCachedDecision* MakeCachedDecision(struct stat sb, SNTEventState decision) {
+  SNTCachedDecision *cd = [[SNTCachedDecision alloc] init];
+
+  cd.decision = decision;
+  cd.sha256 = @"e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855";
+  cd.vnodeId = {
+    .fsid = 0,
+    .fileid = sb.st_ino,
+  };
+
+  return cd;
+}
 
 @interface SNTDecisionCacheTest : XCTestCase
+@property id mockDatabaseController;
 @property id mockRuleDatabase;
 @end
 
 @implementation SNTDecisionCacheTest
 
 - (void)setUp {
-  // self.mockRuleDatabase = OCMClassMock([SNTRuleTable class]);
+  self.mockDatabaseController = OCMClassMock([SNTDatabaseController class]);
+  self.mockRuleDatabase = OCMStrictClassMock([SNTRuleTable class]);
 }
 
 - (void)testBasicOperation {
-  // SNTDecisionCache *dc = [SNTDecisionCache sharedCache];
+  SNTDecisionCache *dc = [SNTDecisionCache sharedCache];
+
+  struct stat sb = MakeStat(1234);
+
+  // First make sure the item isn't in the cache
+  XCTAssertNil([dc cachedDecisionForFile:sb]);
+
+  // Add the item to the cache
+  SNTCachedDecision *cd = MakeCachedDecision(sb, SNTEventStateAllowTeamID);
+  [dc cacheDecision:cd];
+
+  // Ensure the item exists in the cache
+  SNTCachedDecision *cachedCD = [dc cachedDecisionForFile:sb];
+  XCTAssertNotNil(cachedCD);
+  XCTAssertEqual(cachedCD.decision, cd.decision);
+  XCTAssertEqual(cachedCD.vnodeId.fileid, cd.vnodeId.fileid);
+
+  // Delete the item from the cache and ensure it no longer exists
+  [dc forgetCachedDecisionForFile:sb];
+  XCTAssertNil([dc cachedDecisionForFile:sb]);
+}
+
+- (void)testResetTimestampForCachedDecision {
+  SNTDecisionCache *dc = [SNTDecisionCache sharedCache];
+  struct stat sb = MakeStat(1234);
+  SNTCachedDecision *cd =
+      MakeCachedDecision(sb, SNTEventStateAllowTransitive);
+
+  [dc cacheDecision:cd];
+
+  OCMStub([self.mockDatabaseController ruleTable])
+      .andReturn(self.mockRuleDatabase);
+
+  OCMExpect([self.mockRuleDatabase
+      resetTimestampForRule:[OCMArg checkWithBlock:^BOOL(SNTRule* rule){
+        return rule.identifier == cd.sha256 &&
+            rule.state == SNTRuleStateAllowTransitive &&
+            rule.type == SNTRuleTypeBinary;
+      }]]);
+
+  [dc resetTimestampForCachedDecision:sb];
+
+  // Timestamps should not be reset so frequently. Call a second time quickly
+  // but do not register a second expectation so that the test will fail if
+  // timestamps are actually reset a second time.
+  [dc resetTimestampForCachedDecision:sb];
+
+  XCTAssertTrue(OCMVerifyAll(self.mockRuleDatabase));
 }
 
 @end

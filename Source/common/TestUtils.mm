@@ -25,6 +25,13 @@ audit_token_t MakeAuditToken(pid_t pid, pid_t pidver) {
   };
 }
 
+struct stat MakeStat(ino_t ino, dev_t devno) {
+  return (struct stat){
+    .st_dev = devno,
+    .st_ino = ino,
+  };
+}
+
 es_string_token_t MakeESStringToken(const char* s) {
   return es_string_token_t{
     .length = strlen(s),

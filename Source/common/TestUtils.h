@@ -43,6 +43,7 @@ void SleepMS(long ms);
 
 // Helpers to construct various ES structs
 audit_token_t MakeAuditToken(pid_t pid, pid_t pidver);
+struct stat MakeStat(ino_t ino, dev_t devno = 0);
 es_string_token_t MakeESStringToken(const char* s);
 es_file_t MakeESFile(const char *path, struct stat sb = {});
 es_process_t MakeESProcess(es_file_t *file,
