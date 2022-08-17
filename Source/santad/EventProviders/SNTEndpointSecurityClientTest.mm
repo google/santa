@@ -132,9 +132,12 @@ public:
   SNTEndpointSecurityClient *client =
       [[SNTEndpointSecurityClient alloc] initWithESAPI:mockESApi];
 
-  Message msg(mockESApi, &es_msg);
-  XCTAssertTrue(
-      [client respondToMessage:msg withAuthResult:result cacheable:cacheable]);
+  {
+    Message msg(mockESApi, &es_msg);
+    XCTAssertTrue([client respondToMessage:msg
+                            withAuthResult:result
+                                 cacheable:cacheable]);
+  }
 
   XCTBubbleMockVerifyAndClearExpectations(mockESApi.get());
 }
