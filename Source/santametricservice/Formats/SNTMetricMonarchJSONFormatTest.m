@@ -1,5 +1,7 @@
 #import <XCTest/XCTest.h>
 
+#import <Foundation/Foundation.h>
+#import <OCMock/OCMock.h>
 #import "Source/santametricservice/Formats/SNTMetricFormatTestHelper.h"
 #import "Source/santametricservice/Formats/SNTMetricMonarchJSONFormat.h"
 
@@ -9,6 +11,10 @@
 @implementation SNTMetricMonarchJSONFormatTest
 
 - (void)testMetricsConversionToJSON {
+  id classMock = OCMClassMock([NSDate class]);
+  OCMStub([classMock date])
+    .andReturn([NSDate dateWithTimeIntervalSince1970:1631826490]);  // 2021-09-16 21:08:10Z
+
   NSDictionary *validMetricsDict = [SNTMetricFormatTestHelper createValidMetricsDictionary];
   SNTMetricMonarchJSONFormat *formatter = [[SNTMetricMonarchJSONFormat alloc] init];
   NSError *err = nil;
