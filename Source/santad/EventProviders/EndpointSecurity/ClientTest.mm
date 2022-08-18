@@ -117,24 +117,10 @@ es_return_t es_delete_client(
 }
 
 - (void)testIsConnected {
-  {
-    auto c = Client();
-    XCTAssertFalse(c.IsConnected());
-  }
-
-  {
-    int fake;
-    es_client_t *fake_client = (es_client_t*)&fake;
-    auto c = Client(fake_client, ES_NEW_CLIENT_RESULT_ERR_NOT_ENTITLED);
-    XCTAssertFalse(c.IsConnected());
-  }
-
-  {
-    int fake;
-    es_client_t *fake_client = (es_client_t*)&fake;
-    auto c = Client(fake_client, ES_NEW_CLIENT_RESULT_SUCCESS);
-    XCTAssertTrue(c.IsConnected());
-  }
+  XCTAssertFalse(Client().IsConnected());
+  XCTAssertFalse(
+      Client(nullptr, ES_NEW_CLIENT_RESULT_ERR_NOT_ENTITLED).IsConnected());
+  XCTAssertTrue(Client(nullptr, ES_NEW_CLIENT_RESULT_SUCCESS).IsConnected());
 }
 
 @end

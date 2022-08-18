@@ -73,14 +73,17 @@ using santa::santad::event_providers::endpoint_security::Message;
   if (self->_esClient.IsConnected()) {
     // This is a programming error
     LOGE(@"Client already established. Aborting.");
-    exit(EXIT_FAILURE);
+    [NSException raise:@"Client already established"
+                format:@"IsConnected already true"];
   }
 
   self->_esClient = self->_esApi->NewClient(^(es_client_t* c, Message esMsg) {
     if (esMsg->process->is_es_client &&
         [[SNTConfigurator configurator] ignoreOtherEndpointSecurityClients]) {
       if (esMsg->action_type == ES_ACTION_TYPE_AUTH) {
-        [self respondToMessage:esMsg withAuthResult:ES_AUTH_RESULT_ALLOW cacheable:true];
+        [self respondToMessage:esMsg
+                withAuthResult:ES_AUTH_RESULT_ALLOW
+                     cacheable:true];
       }
       return;
     }
@@ -89,35 +92,37 @@ using santa::santad::event_providers::endpoint_security::Message;
   });
 
   if (!self->_esClient.IsConnected()) {
+    NSString *errMsg;
     switch(_esClient.NewClientResult()) {
       case ES_NEW_CLIENT_RESULT_ERR_NOT_PERMITTED:
-        LOGE(@"Unable to create EndpointSecurity client, not full-disk access permitted");
+        errMsg = @"Full-disk access not granted";
         break;
       case ES_NEW_CLIENT_RESULT_ERR_NOT_ENTITLED:
-        LOGE(@"Unable to create EndpointSecurity client, not entitled");
+        errMsg = @"Not entitled";
         break;
       case ES_NEW_CLIENT_RESULT_ERR_NOT_PRIVILEGED:
-        LOGE(@"Unable to create EndpointSecurity client, not running as root");
+        errMsg = @"Not running as root";
         break;
       case ES_NEW_CLIENT_RESULT_ERR_INVALID_ARGUMENT:
-        LOGE(@"Unable to create EndpointSecurity client, invalid argument");
+        errMsg = @"Invalid argument";
         break;
       case ES_NEW_CLIENT_RESULT_ERR_INTERNAL:
-        LOGE(@"Unable to create EndpointSecurity client, internal error");
+        errMsg = @"Internal error";
         break;
       case ES_NEW_CLIENT_RESULT_ERR_TOO_MANY_CLIENTS:
-        LOGE(@"Unable to create EndpointSecurity client, too many simultaneous clients");
+        errMsg = @"Too many simultaneous clients";
         break;
       default:
-        LOGE(@"Unable to create EndpointSecurity client, unknown error");
+        errMsg = @"Unknown error";
     }
-    exit(EXIT_FAILURE);
+    LOGE(@"Unable to create EndpointSecurity client: %@", errMsg);
+    [NSException raise:@"Failed to create ES client" format:@"%@", errMsg];
   } else {
     LOGI(@"Connected to EndpointSecurity");
   }
 
   if (![self muteSelf]) {
-    exit(EXIT_FAILURE);
+    [NSException raise:@"ES Mute Failure" format:@"Failed to mute self"];
   }
 }
 

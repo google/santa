@@ -54,7 +54,7 @@ public:
   void operator=(const Client& rhs) = delete;
 
   inline bool IsConnected() {
-    return client_ != nullptr && result_ == ES_NEW_CLIENT_RESULT_SUCCESS;
+    return result_ == ES_NEW_CLIENT_RESULT_SUCCESS;
   }
 
   inline es_new_client_result_t NewClientResult() {

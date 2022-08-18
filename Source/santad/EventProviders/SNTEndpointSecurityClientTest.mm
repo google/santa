@@ -39,6 +39,9 @@ using santa::santad::event_providers::endpoint_security::Message;
 
 class MockEndpointSecurityAPI : public EndpointSecurityAPI {
 public:
+  MOCK_METHOD(Client, NewClient, (void(^message_handler)
+                                  (es_client_t*, Message)));
+
   MOCK_METHOD(es_message_t*, RetainMessage, (const es_message_t* msg));
   MOCK_METHOD(void, ReleaseMessage, (es_message_t* msg));
 
@@ -65,6 +68,28 @@ public:
 @implementation SNTEndpointSecurityClientTest
 
 - (void)setUp {
+}
+
+- (void)testEstablishClientOrDie {
+  auto mockESApi = std::make_shared<MockEndpointSecurityAPI>();
+
+  EXPECT_CALL(*mockESApi, MuteProcess(testing::_, testing::_))
+      .WillRepeatedly(testing::Return(true));
+
+  EXPECT_CALL(*mockESApi, NewClient(testing::_))
+      .WillOnce(testing::Return(Client()))
+      .WillOnce(testing::Return(Client(nullptr,
+                                       ES_NEW_CLIENT_RESULT_SUCCESS)));
+
+  SNTEndpointSecurityClient *client =
+      [[SNTEndpointSecurityClient alloc] initWithESAPI:mockESApi];
+
+  XCTAssertThrows([client
+      establishClientOrDie:^(es_client_t *c, Message &&esMsg) {}]);
+  XCTAssertNoThrow([client
+      establishClientOrDie:^(es_client_t *c, Message &&esMsg) {}]);
+
+  XCTBubbleMockVerifyAndClearExpectations(mockESApi.get());
 }
 
 - (void)testPopulateAuditTokenSelf {
