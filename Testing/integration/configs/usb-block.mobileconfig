@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>PayloadContent</key>
+	<array>
+		<dict>
+			<key>PayloadContent</key>
+			<dict>
+				<key>com.google.santa</key>
+				<dict>
+					<key>Forced</key>
+					<array>
+						<dict>
+							<key>mcx_preference_settings</key>
+							<dict>
+								<key>BannedBlockMessage</key>
+                <string>This application has been blocked from executing because it has been banned.</string>
+                <key>BlockUSBMount</key>
+                <true/>
+                <key>RemountUSBMode</key>
+                <array>
+                    <string>noexec</string>
+                    <string>rdonly</string>
+                </array>
+								<key>EnableForkAndExitLogging</key>
+								<true/>
+								<key>EnablePageZeroProtection</key>
+								<false/>
+								<key>EnableSystemExtension</key>
+								<true/>
+								<key>EventDetailText</key>
+								<string>Open in moroz...</string>
+								<key>EventDetailURL</key>
+                <string>http://localhost:8080/v1/santa/ruledownload/%file_sha%</string>
+                <key>MachineOwner</key>
+                <string>SomeOwner</string>
+								<key>MachineID</key>
+								<string>00000000-0000-0000-0000-000000000000</string>
+                <key>ClientAuthCertificateCN</key>
+                <string>santa</string>
+								<key>SyncBaseURL</key>
+								<string>http://localhost:8080/v1/santa/</string>
+								<key>UnknownBlockMessage</key>
+								<string>This application has been blocked from executing&lt;br /&gt;because its trustworthiness cannot be determined.</string>
+							</dict>
+						</dict>
+					</array>
+				</dict>
+			</dict>
+			<key>PayloadEnabled</key>
+			<true/>
+			<key>PayloadIdentifier</key>
+			<string>f5177388-e5b0-11eb-b425-7831c1b9bca4</string>
+			<key>PayloadType</key>
+			<string>com.apple.ManagedClient.preferences</string>
+			<key>PayloadUUID</key>
+			<string>e395bf8e-e5b0-11eb-83e4-7831c1b9bca5</string>
+			<key>PayloadVersion</key>
+			<integer>1</integer>
+		</dict>
+	</array>
+	<key>PayloadDescription</key>
+	<string>Manages Santa's settings</string>
+	<key>PayloadDisplayName</key>
+	<string>Santa Configuration 2</string>
+	<key>PayloadIdentifier</key>
+	<string>com.google.santa</string>
+	<key>PayloadOrganization</key>
+	<string>Google LLC</string>
+	<key>PayloadScope</key>
+	<string>System</string>
+	<key>PayloadType</key>
+	<string>Configuration</string>
+	<key>PayloadUUID</key>
+	<string>278163C6-FC14-4AEB-9888-8283FA588435</string>
+	<key>PayloadVersion</key>
+	<integer>2</integer>
+</dict>
+</plist>
