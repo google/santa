@@ -1197,6 +1197,7 @@ test_suite(
         ":EndpointSecurityMessageTest",
         ":EndpointSecuritySerializerBasicStringTest",
         ":EndpointSecuritySerializerEmptyTest",
+        ":EndpointSecuritySerializerUtilitiesTest",
         ":EndpointSecurityWriterFileTest",
         ":MetricsTest",
         ":SNTApplicationCoreMetricsTest",
