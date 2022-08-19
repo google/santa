@@ -54,6 +54,10 @@ jobs:
         with:
           name: coverage.dat
           path: ./bazel-out/_coverage/_coverage_report.dat
+      - uses: actions/upload-artifact@v3
+        with:
+          name: raw_coverages.tgz
+          path: ./raw_coverages.tgz
       - name: Coveralls
         uses: coverallsapp/github-action@master
         env:
