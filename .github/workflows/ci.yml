@@ -50,6 +50,10 @@ jobs:
       - uses: actions/checkout@v2
       - name: Generate test coverage
         run: sh ./generate_cov.sh
+      - uses: actions/upload-artifact@v3
+		with:
+		  name: coverage.dat
+          path: ./bazel-out/_coverage/_coverage_report.dat
       - name: Coveralls
         uses: coverallsapp/github-action@master
         env:
