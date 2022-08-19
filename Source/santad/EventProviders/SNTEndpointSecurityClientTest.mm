@@ -38,7 +38,7 @@ using santa::santad::event_providers::endpoint_security::EnrichedMessage;
 using santa::santad::event_providers::endpoint_security::EnrichedProcess;
 using santa::santad::event_providers::endpoint_security::Message;
 
-// TODO(mlw): Move mock class to own file to not rewrite everywhere.
+// TODO(mlw): Move mock class to own file to not rewrite everywhere
 class MockEndpointSecurityAPI : public EndpointSecurityAPI {
 public:
   MOCK_METHOD(Client, NewClient, (void(^message_handler)
