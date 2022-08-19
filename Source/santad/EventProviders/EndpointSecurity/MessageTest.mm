@@ -67,45 +67,73 @@ public:
 }
 
 - (void)testConstructorsAndDestructors {
-  es_file_t proc_file = MakeESFile("foo");
-  es_process_t proc = MakeESProcess(&proc_file,
+  es_file_t procFile = MakeESFile("foo");
+  es_process_t proc = MakeESProcess(&procFile,
                                     MakeAuditToken(12, 34),
                                     MakeAuditToken(56, 78));
-  es_message_t es_msg = MakeESMessage(ES_EVENT_TYPE_NOTIFY_EXIT, &proc);
+  es_message_t esMsg = MakeESMessage(ES_EVENT_TYPE_NOTIFY_EXIT, &proc);
 
   auto mock_esapi = std::make_shared<MockEndpointSecurityAPI>();
 
   EXPECT_CALL(*mock_esapi, ReleaseMessage(testing::_))
       .After(EXPECT_CALL(*mock_esapi, RetainMessage(testing::_))
-          .WillOnce(testing::Return(&es_msg)));
+          .WillOnce(testing::Return(&esMsg)));
 
   // Constructing a `Message` retains the underlying `es_message_t` and it is
   // released when the `Message` object is destructed.
   {
-    auto msg = Message(mock_esapi, &es_msg);
+    auto msg = Message(mock_esapi, &esMsg);
   }
 
   XCTBubbleMockVerifyAndClearExpectations(mock_esapi.get());
 }
 
+- (void)testCopyConstructor {
+  es_file_t procFile = MakeESFile("foo");
+  es_process_t proc = MakeESProcess(&procFile,
+                                    MakeAuditToken(12, 34),
+                                    MakeAuditToken(56, 78));
+  es_message_t esMsg = MakeESMessage(ES_EVENT_TYPE_NOTIFY_EXIT, &proc);
+
+  auto mockESApi = std::make_shared<MockEndpointSecurityAPI>();
+  EXPECT_CALL(*mockESApi, ReleaseMessage(testing::_))
+      .Times(2)
+      .After(
+          EXPECT_CALL(*mockESApi, RetainMessage(testing::_))
+              .Times(2)
+              .WillRepeatedly(testing::Return(&esMsg)));
+
+  {
+    Message msg1(mockESApi, &esMsg);
+    Message msg2(msg1);
+
+    // Both messages should now point to the same `es_message_t`
+    XCTAssertEqual(msg1.operator->(), &esMsg);
+    XCTAssertEqual(msg2.operator->(), &esMsg);
+  }
+
+  // Ensure the retain/release mocks were called the expected number of times
+  XCTBubbleMockVerifyAndClearExpectations(mockESApi.get());
+}
+
 - (void)testGetParentProcessName {
   // Construct a message where the parent pid is ourself
-  es_file_t proc_file = MakeESFile("foo");
-  es_process_t proc = MakeESProcess(&proc_file,
+  es_file_t procFile = MakeESFile("foo");
+  es_process_t proc = MakeESProcess(&procFile,
                                     MakeAuditToken(12, 34),
                                     MakeAuditToken(getpid(), 0));
-  es_message_t es_msg = MakeESMessage(ES_EVENT_TYPE_NOTIFY_EXIT, &proc);
+  es_message_t esMsg = MakeESMessage(ES_EVENT_TYPE_NOTIFY_EXIT, &proc);
 
   auto mock_esapi = std::make_shared<MockEndpointSecurityAPI>();
 
   EXPECT_CALL(*mock_esapi, ReleaseMessage(testing::_))
       .Times(testing::AnyNumber());
   EXPECT_CALL(*mock_esapi, RetainMessage(testing::_))
-      .WillRepeatedly(testing::Return(&es_msg));
+      .WillRepeatedly(testing::Return(&esMsg));
 
   // Search for an *existing* parent process.
   {
-    Message msg(mock_esapi, &es_msg);
+    Message msg(mock_esapi, &esMsg);
 
     std::string got = msg.ParentProcessName();
     std::string want = getprogname();
@@ -117,11 +145,11 @@ public:
   // Search for a *non-existent* parent process.
   {
     pid_t newPpid = AttemptToFindUnusedPID();
-    proc = MakeESProcess(&proc_file,
+    proc = MakeESProcess(&procFile,
                          MakeAuditToken(12, 34),
                          MakeAuditToken(newPpid, 34));
 
-    Message msg(mock_esapi, &es_msg);
+    Message msg(mock_esapi, &esMsg);
 
     std::string got = msg.ParentProcessName();
     std::string want = "";
