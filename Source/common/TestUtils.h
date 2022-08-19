@@ -49,6 +49,9 @@ es_file_t MakeESFile(const char *path, struct stat sb = {});
 es_process_t MakeESProcess(es_file_t *file,
                            audit_token_t tok,
                            audit_token_t parent_tok);
-es_message_t MakeESMessage(es_event_type_t et, es_process_t *proc);
+es_message_t MakeESMessage(es_event_type_t et,
+                           es_process_t *proc,
+                           bool notify = true,
+                           uint64_t future_deadline_ms = 0);
 
 #endif

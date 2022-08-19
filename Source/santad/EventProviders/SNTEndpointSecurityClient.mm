@@ -13,6 +13,7 @@
 ///    limitations under the License.
 
 #import "Source/santad/EventProviders/SNTEndpointSecurityClient.h"
+#include <EndpointSecurity/ESTypes.h>
 
 #include <bsm/libbsm.h>
 #include <dispatch/dispatch.h>
@@ -32,6 +33,10 @@ using santa::santad::event_providers::endpoint_security::EndpointSecurityAPI;
 using santa::santad::event_providers::endpoint_security::EnrichedMessage;
 using santa::santad::event_providers::endpoint_security::Message;
 
+@interface SNTEndpointSecurityClient ()
+@property int64_t deadlineMarginMS;
+@end;
+
 @implementation SNTEndpointSecurityClient {
   std::shared_ptr<EndpointSecurityAPI> _esApi;
   Client _esClient;
@@ -44,6 +49,7 @@ using santa::santad::event_providers::endpoint_security::Message;
   self = [super init];
   if (self) {
     _esApi = esApi;
+    _deadlineMarginMS = 5000;
 
     if (mach_timebase_info(&_timebase) != KERN_SUCCESS) {
       LOGE(@"Failed to get mach timebase info");
@@ -69,6 +75,27 @@ using santa::santad::event_providers::endpoint_security::Message;
   return self;
 }
 
+- (NSString*)errorMessageForNewClientResult:(es_new_client_result_t)result {
+  switch(result) {
+      case ES_NEW_CLIENT_RESULT_SUCCESS:
+        return nil;
+      case ES_NEW_CLIENT_RESULT_ERR_NOT_PERMITTED:
+        return @"Full-disk access not granted";
+      case ES_NEW_CLIENT_RESULT_ERR_NOT_ENTITLED:
+        return @"Not entitled";
+      case ES_NEW_CLIENT_RESULT_ERR_NOT_PRIVILEGED:
+        return @"Not running as root";
+      case ES_NEW_CLIENT_RESULT_ERR_INVALID_ARGUMENT:
+        return @"Invalid argument";
+      case ES_NEW_CLIENT_RESULT_ERR_INTERNAL:
+        return @"Internal error";
+      case ES_NEW_CLIENT_RESULT_ERR_TOO_MANY_CLIENTS:
+        return @"Too many simultaneous clients";
+      default:
+        return @"Unknown error";
+    }
+}
+
 - (void)establishClientOrDie:(void(^)(es_client_t* c, Message&& esMsg))messageHandler {
   if (self->_esClient.IsConnected()) {
     // This is a programming error
@@ -92,29 +119,8 @@ using santa::santad::event_providers::endpoint_security::Message;
   });
 
   if (!self->_esClient.IsConnected()) {
-    NSString *errMsg;
-    switch(_esClient.NewClientResult()) {
-      case ES_NEW_CLIENT_RESULT_ERR_NOT_PERMITTED:
-        errMsg = @"Full-disk access not granted";
-        break;
-      case ES_NEW_CLIENT_RESULT_ERR_NOT_ENTITLED:
-        errMsg = @"Not entitled";
-        break;
-      case ES_NEW_CLIENT_RESULT_ERR_NOT_PRIVILEGED:
-        errMsg = @"Not running as root";
-        break;
-      case ES_NEW_CLIENT_RESULT_ERR_INVALID_ARGUMENT:
-        errMsg = @"Invalid argument";
-        break;
-      case ES_NEW_CLIENT_RESULT_ERR_INTERNAL:
-        errMsg = @"Internal error";
-        break;
-      case ES_NEW_CLIENT_RESULT_ERR_TOO_MANY_CLIENTS:
-        errMsg = @"Too many simultaneous clients";
-        break;
-      default:
-        errMsg = @"Unknown error";
-    }
+    NSString *errMsg =
+        [self errorMessageForNewClientResult:_esClient.NewClientResult()];
     LOGE(@"Unable to create EndpointSecurity client: %@", errMsg);
     [NSException raise:@"Failed to create ES client" format:@"%@", errMsg];
   } else {
@@ -180,7 +186,8 @@ using santa::santad::event_providers::endpoint_security::Message;
   if (unlikely(msg->action_type != ES_ACTION_TYPE_AUTH)) {
     // This is a programming error
     LOGE(@"Attempting to process non-AUTH message");
-    exit(EXIT_FAILURE);
+    [NSException raise:@"Attempt to process non-auth message"
+                format:@"Unexpected event type received: %d", msg->event_type];
   }
 
   dispatch_semaphore_t processingSema = dispatch_semaphore_create(0);
@@ -190,14 +197,13 @@ using santa::santad::event_providers::endpoint_security::Message;
   dispatch_semaphore_signal(processingSema);
   dispatch_semaphore_t deadlineExpiredSema = dispatch_semaphore_create(0);
 
-  const uint64_t timeout = NSEC_PER_SEC * -5;
+  const uint64_t timeout = NSEC_PER_MSEC * -(self.deadlineMarginMS);
   uint64_t deadlineMachTime = msg->deadline - mach_absolute_time();
   uint64_t deadlineNano = deadlineMachTime * _timebase.numer / _timebase.denom;
 
-  if (deadlineNano <= timeout) {
-    // TODO???
-    // Note: This currently will result in the event being immediately denied
-  }
+  // TODO(mlw): How should we handle `deadlineNano <= timeout`. Will currently
+  // result in the deadline block being dispatched immediately (and therefore
+  // the event will be denied).
 
   // Workaround for compiler bug that doesn't properly close over variables
   // TODO: On macOS 10.15 this will cause extra message copies.

@@ -516,6 +516,16 @@ objc_library(
 )
 
 objc_library(
+    name = "EndpointSecuritySerializerUtilities",
+    srcs = ["Logs/EndpointSecurity/Serializers/Utilities.mm"],
+    hdrs = ["Logs/EndpointSecurity/Serializers/Utilities.h"],
+    deps = [
+        ":EndpointSecurityMessage",
+        "//Source/common:SNTLogging",
+    ],
+)
+
+objc_library(
     name = "EndpointSecuritySerializerEmpty",
     srcs = ["Logs/EndpointSecurity/Serializers/Empty.mm"],
     hdrs = ["Logs/EndpointSecurity/Serializers/Empty.h"],
@@ -530,6 +540,7 @@ objc_library(
     hdrs = ["Logs/EndpointSecurity/Serializers/BasicString.h"],
     deps = [
         ":EndpointSecuritySerializer",
+        ":EndpointSecuritySerializerUtilities",
         ":SNTDecisionCache",
         "//Source/common:SNTLogging",
         "//Source/common:SNTStoredEvent",
@@ -987,6 +998,22 @@ santa_unit_test(
         "@OCMock",
     ],
 )
+
+santa_unit_test(
+    name = "EndpointSecuritySerializerUtilitiesTest",
+    srcs = ["Logs/EndpointSecurity/Serializers/UtilitiesTest.mm"],
+    deps = [
+        ":EndpointSecurityAPI",
+        ":EndpointSecurityMessage",
+        ":EndpointSecuritySerializerUtilities",
+        "//Source/common:TestUtils",
+        "@com_google_googletest//:gtest",
+    ],
+    sdk_dylibs = [
+        "EndpointSecurity",
+    ],
+)
+
 
 santa_unit_test(
     name = "EndpointSecuritySerializerBasicStringTest",

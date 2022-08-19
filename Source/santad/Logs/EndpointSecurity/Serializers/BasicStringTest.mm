@@ -21,6 +21,7 @@
 #import <OCMock/OCMock.h>
 #import <XCTest/XCTest.h>
 
+#include <map>
 #include <string>
 
 #import "Source/common/SNTCachedDecision.h"
@@ -41,6 +42,16 @@ using santa::santad::event_providers::endpoint_security::Enricher;
 using santa::santad::event_providers::endpoint_security::Message;
 using santa::santad::logs::endpoint_security::serializers::BasicString;
 using santa::santad::logs::endpoint_security::serializers::Serializer;
+
+namespace santa::santad::logs::endpoint_security::serializers {
+extern std::string GetDecisionString(SNTEventState event_state);
+extern std::string GetReasonString(SNTEventState event_state);
+extern std::string GetModeString(SNTClientMode mode);
+}
+
+using santa::santad::logs::endpoint_security::serializers::GetDecisionString;
+using santa::santad::logs::endpoint_security::serializers::GetReasonString;
+using santa::santad::logs::endpoint_security::serializers::GetModeString;
 
 class MockEndpointSecurityAPI : public EndpointSecurityAPI {
 public:
@@ -346,6 +357,68 @@ std::string BasicStringSerializeMessage(es_message_t* es_msg) {
   std::string want = "action=DISKDISAPPEAR|mount=path|volume=|bsdname=bsd";
 
   XCTAssertCppStringEqual(got, want);
+}
+
+- (void)testGetDecisionString {
+  std::map<SNTEventState,std::string> stateToDecision = {
+    { SNTEventStateUnknown, "UNKNOWN" },
+    { SNTEventStateBundleBinary, "UNKNOWN" },
+    { SNTEventStateBlockUnknown, "DENY" },
+    { SNTEventStateBlockBinary, "DENY" },
+    { SNTEventStateBlockCertificate, "DENY" },
+    { SNTEventStateBlockScope, "DENY" },
+    { SNTEventStateBlockTeamID, "DENY" },
+    { SNTEventStateBlockLongPath, "DENY" },
+    { SNTEventStateAllowUnknown, "ALLOW" },
+    { SNTEventStateAllowBinary, "ALLOW" },
+    { SNTEventStateAllowCertificate, "ALLOW" },
+    { SNTEventStateAllowScope, "ALLOW" },
+    { SNTEventStateAllowCompiler, "ALLOW" },
+    { SNTEventStateAllowTransitive, "ALLOW" },
+    { SNTEventStateAllowPendingTransitive, "ALLOW" },
+    { SNTEventStateAllowTeamID, "ALLOW" },
+  };
+
+  for (const auto& kv : stateToDecision) {
+    XCTAssertCppStringEqual(GetDecisionString(kv.first), kv.second);
+  }
+}
+
+- (void)testGetReasonString {
+  std::map<SNTEventState,std::string> stateToReason = {
+    { SNTEventStateUnknown, "NOTRUNNING" },
+    { SNTEventStateBundleBinary, "NOTRUNNING" },
+    { SNTEventStateBlockUnknown, "UNKNOWN" },
+    { SNTEventStateBlockBinary, "BINARY" },
+    { SNTEventStateBlockCertificate, "CERT" },
+    { SNTEventStateBlockScope, "SCOPE" },
+    { SNTEventStateBlockTeamID, "TEAMID" },
+    { SNTEventStateBlockLongPath, "LONG_PATH" },
+    { SNTEventStateAllowUnknown, "UNKNOWN" },
+    { SNTEventStateAllowBinary, "BINARY" },
+    { SNTEventStateAllowCertificate, "CERT" },
+    { SNTEventStateAllowScope, "SCOPE" },
+    { SNTEventStateAllowCompiler, "COMPILER" },
+    { SNTEventStateAllowTransitive, "TRANSITIVE" },
+    { SNTEventStateAllowPendingTransitive, "PENDING_TRANSITIVE" },
+    { SNTEventStateAllowTeamID, "TEAMID" },
+  };
+
+  for (const auto& kv : stateToReason) {
+    XCTAssertCppStringEqual(GetReasonString(kv.first), kv.second);
+  }
+}
+
+- (void)testGetModeString {
+  std::map<SNTClientMode,std::string> modeToString = {
+    { SNTClientModeMonitor, "M" },
+    { SNTClientModeLockdown, "L" },
+    { (SNTClientMode)123, "U" },
+  };
+
+  for (const auto& kv : modeToString) {
+    XCTAssertCppStringEqual(GetModeString(kv.first), kv.second);
+  }
 }
 
 @end

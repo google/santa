@@ -17,6 +17,7 @@
 #include <bsm/libbsm.h>
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
+#include <mach/mach_time.h>
 #import <OCMock/OCMock.h>
 #import <XCTest/XCTest.h>
 
@@ -60,15 +61,15 @@ public:
 
 @interface SNTEndpointSecurityClient (Testing)
 - (bool)muteSelf;
+- (NSString*)errorMessageForNewClientResult:(es_new_client_result_t)result;
+
+@property int64_t deadlineMarginMS;
 @end
 
 @interface SNTEndpointSecurityClientTest : XCTestCase
 @end
 
 @implementation SNTEndpointSecurityClientTest
-
-- (void)setUp {
-}
 
 - (void)testEstablishClientOrDie {
   auto mockESApi = std::make_shared<MockEndpointSecurityAPI>();
@@ -90,6 +91,28 @@ public:
       establishClientOrDie:^(es_client_t *c, Message &&esMsg) {}]);
 
   XCTBubbleMockVerifyAndClearExpectations(mockESApi.get());
+}
+
+- (void)testErrorMessageForNewClientResult {
+
+  std::map<es_new_client_result_t, std::string> resultMessagePairs {
+    { ES_NEW_CLIENT_RESULT_SUCCESS, "" },
+    { ES_NEW_CLIENT_RESULT_ERR_NOT_PERMITTED, "Full-disk access not granted" },
+    { ES_NEW_CLIENT_RESULT_ERR_NOT_ENTITLED, "Not entitled" },
+    { ES_NEW_CLIENT_RESULT_ERR_NOT_PRIVILEGED, "Not running as root" },
+    { ES_NEW_CLIENT_RESULT_ERR_INVALID_ARGUMENT, "Invalid argument" },
+    { ES_NEW_CLIENT_RESULT_ERR_INTERNAL, "Internal error" },
+    { ES_NEW_CLIENT_RESULT_ERR_TOO_MANY_CLIENTS, "Too many simultaneous clients" },
+    { (es_new_client_result_t)123, "Unknown error" },
+  };
+
+  SNTEndpointSecurityClient *client =
+      [[SNTEndpointSecurityClient alloc] initWithESAPI:nullptr];
+
+  for (auto kv : resultMessagePairs) {
+    NSString *message = [client errorMessageForNewClientResult:kv.first];
+    XCTAssertEqual(0, strcmp([(message ?: @"") UTF8String], kv.second.c_str()));
+  }
 }
 
 - (void)testPopulateAuditTokenSelf {
@@ -160,11 +183,11 @@ public:
 
   // Have subscribe fail the first time, meaning clear cache only called once.
   EXPECT_CALL(*mockESApi, ClearCache(testing::_))
-      .WillOnce(testing::Return(true))
       .After(
           EXPECT_CALL(*mockESApi, Subscribe(testing::_, testing::_))
               .WillOnce(testing::Return(false))
-              .WillOnce(testing::Return(true)));
+              .WillOnce(testing::Return(true)))//;
+      .WillOnce(testing::Return(true));
 
   XCTAssertFalse([client subscribeAndClearCache:{}]);
   XCTAssertTrue([client subscribeAndClearCache:{}]);
@@ -174,7 +197,7 @@ public:
 
 - (void)testRespondToMessageWithAuthResultCacheable {
   auto mockESApi = std::make_shared<MockEndpointSecurityAPI>();
-  es_message_t es_msg;
+  es_message_t esMsg;
 
   es_auth_result_t result = ES_AUTH_RESULT_DENY;
   bool cacheable = true;
@@ -188,13 +211,13 @@ public:
 
   EXPECT_CALL(*mockESApi, ReleaseMessage(testing::_))
       .After(EXPECT_CALL(*mockESApi, RetainMessage(testing::_))
-          .WillOnce(testing::Return(&es_msg)));
+          .WillOnce(testing::Return(&esMsg)));
 
   SNTEndpointSecurityClient *client =
       [[SNTEndpointSecurityClient alloc] initWithESAPI:mockESApi];
 
   {
-    Message msg(mockESApi, &es_msg);
+    Message msg(mockESApi, &esMsg);
     XCTAssertTrue([client respondToMessage:msg
                             withAuthResult:result
                                  cacheable:cacheable]);
@@ -248,6 +271,145 @@ public:
       isDatabasePath:"/private/var/db/santa/events.db"]);
 
   XCTAssertFalse([SNTEndpointSecurityClient isDatabasePath:"/not/a/db/path"]);
+}
+
+- (void)testProcessMessageHandlerBadEventType {
+  es_file_t proc_file = MakeESFile("foo");
+  es_process_t proc = MakeESProcess(&proc_file, {}, {});
+  es_message_t esMsg = MakeESMessage(ES_EVENT_TYPE_NOTIFY_EXIT, &proc);
+
+  auto mockESApi = std::make_shared<MockEndpointSecurityAPI>();
+  EXPECT_CALL(*mockESApi, ReleaseMessage(testing::_))
+      .Times(testing::AnyNumber());
+  EXPECT_CALL(*mockESApi, RetainMessage(testing::_))
+      .WillRepeatedly(testing::Return(&esMsg));
+
+
+  SNTEndpointSecurityClient *client =
+      [[SNTEndpointSecurityClient alloc] initWithESAPI:mockESApi];
+
+  {
+    XCTAssertThrows([client processMessage:Message(mockESApi, &esMsg)
+                                   handler:^(const Message& msg){}]);
+  }
+
+  XCTBubbleMockVerifyAndClearExpectations(mockESApi.get());
+}
+
+// Note: This test triggers a leak warning on the mock object, however it is
+// benign. The dispatch block to handle deadline expiration in
+// `processMessage:handler:` will retain the mock object an extra time.
+// But since this test sets a long deadline in order to ensure the handler block
+// runs first, the deadline handler block will not have finished executing by
+// the time the test exits, making GMock think the object was leaked.
+- (void)testProcessMessageHandler {
+  es_file_t proc_file = MakeESFile("foo");
+  es_process_t proc = MakeESProcess(&proc_file, {}, {});
+  es_message_t esMsg = MakeESMessage(ES_EVENT_TYPE_AUTH_OPEN,
+                                     &proc,
+                                     false,
+                                     45 * 1000); // Long deadline to not hit
+
+  auto mockESApi = std::make_shared<MockEndpointSecurityAPI>();
+  EXPECT_CALL(*mockESApi, ReleaseMessage(testing::_))
+      .Times(testing::AnyNumber())
+      .After(
+          EXPECT_CALL(*mockESApi, RetainMessage(testing::_))
+              .WillRepeatedly(testing::Return(&esMsg)));
+
+  dispatch_semaphore_t sema = dispatch_semaphore_create(0);
+
+  SNTEndpointSecurityClient *client =
+      [[SNTEndpointSecurityClient alloc] initWithESAPI:mockESApi];
+
+  {
+    XCTAssertNoThrow([client processMessage:Message(mockESApi, &esMsg)
+                                   handler:^(const Message& msg){
+      dispatch_semaphore_signal(sema);
+    }]);
+  }
+
+  XCTAssertEqual(0,
+                 dispatch_semaphore_wait(
+                     sema,
+                     dispatch_time(DISPATCH_TIME_NOW, 5 * NSEC_PER_SEC)),
+                 "Handler block not called within expected time window");
+
+  XCTBubbleMockVerifyAndClearExpectations(mockESApi.get());
+}
+
+- (void)testProcessMessageHandlerWithDeadlineTimeout {
+  // Set a es_message_t deadline of 750ms
+  // Set a deadline leeway in the `SNTEndpointSecurityClient` of 500ms
+  // Mock `RespondAuthResult` which is called from the deadline handler
+  // Signal the semaphore from the mock
+  // Wait a few seconds for the semaphore (should take ~250ms)
+  //
+  // Two semaphotes are used:
+  // 1. deadlineSema - used to wait in the handler block until the deadline
+  //    block has a chance to execute
+  // 2. controlSema - used to block control flow in the test until the
+  //    deadlineSema is signaled (or a timeout waiting on deadlineSema)
+  es_file_t proc_file = MakeESFile("foo");
+  es_process_t proc = MakeESProcess(&proc_file, {}, {});
+  es_message_t esMsg = MakeESMessage(ES_EVENT_TYPE_AUTH_OPEN,
+                                     &proc,
+                                     false,
+                                     750); // 750ms timeout
+
+  auto mockESApi = std::make_shared<MockEndpointSecurityAPI>();
+  EXPECT_CALL(*mockESApi, ReleaseMessage(testing::_))
+      .Times(testing::AnyNumber())
+      .After(
+          EXPECT_CALL(*mockESApi, RetainMessage(testing::_))
+              .WillRepeatedly(testing::Return(&esMsg)));
+
+  dispatch_semaphore_t deadlineSema = dispatch_semaphore_create(0);
+  dispatch_semaphore_t controlSema = dispatch_semaphore_create(0);
+
+  EXPECT_CALL(*mockESApi, RespondAuthResult(testing::_,
+                                            testing::_,
+                                            ES_AUTH_RESULT_DENY,
+                                            false))
+      .WillOnce(testing::InvokeWithoutArgs(^() {
+          // Signal deadlineSema to let the handler block continue execution
+          dispatch_semaphore_signal(deadlineSema);
+          return true;
+      }));
+
+  SNTEndpointSecurityClient *client =
+      [[SNTEndpointSecurityClient alloc] initWithESAPI:mockESApi];
+  client.deadlineMarginMS = 500;
+
+  {
+    __block long result;
+    XCTAssertNoThrow([client processMessage:Message(mockESApi, &esMsg)
+                                    handler:^(const Message& msg){
+      result = dispatch_semaphore_wait(
+          deadlineSema,
+          dispatch_time(DISPATCH_TIME_NOW, 4 * NSEC_PER_SEC));
+
+      // Once done waiting on deadlineSema, trigger controlSema to continue test
+      dispatch_semaphore_signal(controlSema);
+    }]);
+
+    XCTAssertEqual(0,
+                    dispatch_semaphore_wait(
+                        controlSema,
+                        dispatch_time(DISPATCH_TIME_NOW, 10 * NSEC_PER_SEC)),
+                    "Control sema not signaled within expected time window");
+
+    XCTAssertEqual(result, 0);
+  }
+
+  // Allow some time for the threads in `processMessage:handler:` to finish.
+  // It isn't critical that they do, but if the dispatch blocks don't complete
+  // we may get warnings from GMock about calls to ReleaseMessage after
+  // verifying and clearing. Sleep a little bit here to reduce chances of
+  // seeing the warning (but still possible)
+  SleepMS(100);
+
+  XCTBubbleMockVerifyAndClearExpectations(mockESApi.get());
 }
 
 @end

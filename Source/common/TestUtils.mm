@@ -14,6 +14,9 @@
 
 #include "Source/common/TestUtils.h"
 
+#include <dispatch/dispatch.h>
+#include <EndpointSecurity/ESTypes.h>
+#include <mach/mach_time.h>
 #include <time.h>
 
 audit_token_t MakeAuditToken(pid_t pid, pid_t pidver) {
@@ -59,17 +62,40 @@ es_process_t MakeESProcess(es_file_t *file,
   };
 }
 
-es_message_t MakeESMessage(es_event_type_t et, es_process_t *proc) {
+static uint64_t AddMillisToMachTime(uint64_t ms, uint64_t machTime) {
+  static dispatch_once_t onceToken;
+  static mach_timebase_info_data_t timebase;
+
+  dispatch_once(&onceToken, ^{
+    mach_timebase_info(&timebase);
+  });
+
+  // Convert given machTime to nanoseconds
+  uint64_t nanoTime = machTime * timebase.numer / timebase.denom;
+
+  // Add the ms offset
+  nanoTime += (ms * NSEC_PER_MSEC);
+
+  // Convert back to machTime
+  return nanoTime * timebase.denom / timebase.numer;
+}
+
+es_message_t MakeESMessage(es_event_type_t et,
+                           es_process_t *proc,
+                           bool notify,
+                           uint64_t future_deadline_ms) {
   return es_message_t{
     .event_type = et,
     .process = proc,
+    .action_type = (notify) ? ES_ACTION_TYPE_NOTIFY : ES_ACTION_TYPE_AUTH,
+    .deadline = AddMillisToMachTime(future_deadline_ms, mach_absolute_time()),
   };
 }
 
 void SleepMS(long ms) {
   struct timespec ts {
-    .tv_sec = 0,
-    .tv_nsec = (long)(ms * NSEC_PER_MSEC),
+    .tv_sec = ms / 1000,
+    .tv_nsec = (long)((ms % 1000) * NSEC_PER_MSEC),
   };
 
   while (nanosleep(&ts, &ts) != 0) {
