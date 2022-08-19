@@ -12,6 +12,7 @@ function main() {
     --spawn_strategy=standalone \
     --test_env=LCOV_MERGER=/usr/bin/true \
     --test_output=all \
+    --jobs=1 \
     //:unit_tests
 
   # The generated file has most of the source files relative to bazel's
