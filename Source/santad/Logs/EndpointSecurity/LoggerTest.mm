@@ -25,9 +25,9 @@
 
 #include "Source/common/SNTCommonEnums.h"
 #include "Source/common/TestUtils.h"
-#include "Source/santad/EventProviders/EndpointSecurity/EndpointSecurityAPI.h"
 #include "Source/santad/EventProviders/EndpointSecurity/EnrichedTypes.h"
 #include "Source/santad/EventProviders/EndpointSecurity/Message.h"
+#include "Source/santad/EventProviders/EndpointSecurity/MockEndpointSecurityAPI.h"
 #include "Source/santad/Logs/EndpointSecurity/Logger.h"
 #include "Source/santad/Logs/EndpointSecurity/Serializers/Serializer.h"
 #include "Source/santad/Logs/EndpointSecurity/Serializers/BasicString.h"
@@ -37,7 +37,6 @@
 #include "Source/santad/Logs/EndpointSecurity/Writers/Syslog.h"
 #include "Source/santad/Logs/EndpointSecurity/Writers/Writer.h"
 
-using santa::santad::event_providers::endpoint_security::EndpointSecurityAPI;
 using santa::santad::event_providers::endpoint_security::EnrichedClose;
 using santa::santad::event_providers::endpoint_security::EnrichedFile;
 using santa::santad::event_providers::endpoint_security::EnrichedMessage;
@@ -90,12 +89,6 @@ public:
 class MockWriter : public Null {
 public:
   MOCK_METHOD(void, Write, (std::vector<uint8_t>&& bytes));
-};
-
-class MockEndpointSecurityAPI : public EndpointSecurityAPI {
-public:
-  MOCK_METHOD(es_message_t*, RetainMessage, (const es_message_t* msg));
-  MOCK_METHOD(void, ReleaseMessage, (es_message_t* msg));
 };
 
 @interface LoggerTest : XCTestCase

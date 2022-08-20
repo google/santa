@@ -25,39 +25,16 @@
 #include "Source/common/TestUtils.h"
 #import "Source/santad/EventProviders/SNTEndpointSecurityClient.h"
 #include "Source/santad/EventProviders/EndpointSecurity/Client.h"
-#include "Source/santad/EventProviders/EndpointSecurity/EndpointSecurityAPI.h"
+#include "Source/santad/EventProviders/EndpointSecurity/MockEndpointSecurityAPI.h"
 #include "Source/santad/EventProviders/EndpointSecurity/EnrichedTypes.h"
 #include "Source/santad/EventProviders/EndpointSecurity/Message.h"
 
 using santa::santad::event_providers::endpoint_security::Client;
-using santa::santad::event_providers::endpoint_security::EndpointSecurityAPI;
 using santa::santad::event_providers::endpoint_security::EnrichedClose;
 using santa::santad::event_providers::endpoint_security::EnrichedFile;
 using santa::santad::event_providers::endpoint_security::EnrichedMessage;
 using santa::santad::event_providers::endpoint_security::EnrichedProcess;
 using santa::santad::event_providers::endpoint_security::Message;
-
-// TODO(mlw): Move mock class to own file to not rewrite everywhere.
-class MockEndpointSecurityAPI : public EndpointSecurityAPI {
-public:
-  MOCK_METHOD(Client, NewClient, (void(^message_handler)
-                                  (es_client_t*, Message)));
-
-  MOCK_METHOD(es_message_t*, RetainMessage, (const es_message_t* msg));
-  MOCK_METHOD(void, ReleaseMessage, (es_message_t* msg));
-
-  MOCK_METHOD(bool, Subscribe, (const Client &client,
-                                const std::set<es_event_type_t>&));
-  MOCK_METHOD(bool, ClearCache, (const Client &client));
-
-  MOCK_METHOD(bool, MuteProcess, (const Client &client,
-                                  const audit_token_t* tok));
-
-  MOCK_METHOD(bool, RespondAuthResult, (const Client &client,
-                                        const Message& msg,
-                                        es_auth_result_t result,
-                                        bool cache));
-};
 
 @interface SNTEndpointSecurityClient (Testing)
 - (void)establishClientOrDie;

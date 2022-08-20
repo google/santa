@@ -30,14 +30,13 @@
 #import "Source/common/SNTStoredEvent.h"
 #import "Source/santad/SNTDecisionCache.h"
 #include "Source/common/TestUtils.h"
-#include "Source/santad/EventProviders/EndpointSecurity/EndpointSecurityAPI.h"
 #include "Source/santad/EventProviders/EndpointSecurity/EnrichedTypes.h"
 #include "Source/santad/EventProviders/EndpointSecurity/Enricher.h"
 #include "Source/santad/EventProviders/EndpointSecurity/Message.h"
+#include "Source/santad/EventProviders/EndpointSecurity/MockEndpointSecurityAPI.h"
 #include "Source/santad/Logs/EndpointSecurity/Serializers/BasicString.h"
 #include "Source/santad/Logs/EndpointSecurity/Serializers/Serializer.h"
 
-using santa::santad::event_providers::endpoint_security::EndpointSecurityAPI;
 using santa::santad::event_providers::endpoint_security::Enricher;
 using santa::santad::event_providers::endpoint_security::Message;
 using santa::santad::logs::endpoint_security::serializers::BasicString;
@@ -52,16 +51,6 @@ extern std::string GetModeString(SNTClientMode mode);
 using santa::santad::logs::endpoint_security::serializers::GetDecisionString;
 using santa::santad::logs::endpoint_security::serializers::GetReasonString;
 using santa::santad::logs::endpoint_security::serializers::GetModeString;
-
-class MockEndpointSecurityAPI : public EndpointSecurityAPI {
-public:
-  MOCK_METHOD(es_message_t*, RetainMessage, (const es_message_t* msg));
-  MOCK_METHOD(void, ReleaseMessage, (es_message_t* msg));
-  MOCK_METHOD(uint32_t, ExecArgCount, (const es_event_exec_t *event));
-  MOCK_METHOD(es_string_token_t,
-              ExecArg,
-              (const es_event_exec_t *event, uint32_t index));
-};
 
 std::string BasicStringSerializeMessage(
     std::shared_ptr<MockEndpointSecurityAPI> mock_esapi,

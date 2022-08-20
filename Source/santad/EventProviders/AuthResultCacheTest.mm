@@ -26,12 +26,11 @@
 #include "Source/common/TestUtils.h"
 #include "Source/santad/EventProviders/AuthResultCache.h"
 #include "Source/santad/EventProviders/EndpointSecurity/Client.h"
-#include "Source/santad/EventProviders/EndpointSecurity/EndpointSecurityAPI.h"
+#include "Source/santad/EventProviders/EndpointSecurity/MockEndpointSecurityAPI.h"
 
 using santa::santad::event_providers::AuthResultCache;
 using santa::santad::event_providers::FlushCacheMode;
 using santa::santad::event_providers::endpoint_security::Client;
-using santa::santad::event_providers::endpoint_security::EndpointSecurityAPI;
 
 // Grab the st_dev number of the root volume to match the root cache
 static uint64_t RootDevno() {
@@ -75,11 +74,6 @@ static inline void AssertCacheCounts(std::shared_ptr<AuthResultCache> cache,
   XCTAssertEqual([counts[0] unsignedLongLongValue], root_count);
   XCTAssertEqual([counts[1] unsignedLongLongValue], nonroot_count);
 }
-
-class MockEndpointSecurityAPI : public EndpointSecurityAPI {
-  public:
-    MOCK_METHOD(bool, ClearCache, (const Client &client));
-};
 
 @interface AuthResultCacheTest : XCTestCase
 @end

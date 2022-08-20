@@ -32,19 +32,22 @@ public:
       (void(^message_handler)
           (es_client_t*, santa::santad::event_providers::endpoint_security::Message)));
 
-  MOCK_METHOD(es_message_t*, RetainMessage, (const es_message_t* msg));
-  MOCK_METHOD(void, ReleaseMessage, (es_message_t* msg));
-
   MOCK_METHOD(
       bool,
       Subscribe,
       (const santa::santad::event_providers::endpoint_security::Client&,
           const std::set<es_event_type_t>&));
 
+  MOCK_METHOD(es_message_t*, RetainMessage, (const es_message_t* msg));
+  MOCK_METHOD(void, ReleaseMessage, (es_message_t* msg));
+
   MOCK_METHOD(
       bool,
-      ClearCache,
-      (const santa::santad::event_providers::endpoint_security::Client&));
+      RespondAuthResult,
+      (const santa::santad::event_providers::endpoint_security::Client&,
+          const santa::santad::event_providers::endpoint_security::Message& msg,
+          es_auth_result_t result,
+          bool cache));
 
   MOCK_METHOD(
       bool,
@@ -54,11 +57,13 @@ public:
 
   MOCK_METHOD(
       bool,
-      RespondAuthResult,
-      (const santa::santad::event_providers::endpoint_security::Client&,
-          const santa::santad::event_providers::endpoint_security::Message& msg,
-          es_auth_result_t result,
-          bool cache));
+      ClearCache,
+      (const santa::santad::event_providers::endpoint_security::Client&));
+
+  MOCK_METHOD(uint32_t, ExecArgCount, (const es_event_exec_t *event));
+  MOCK_METHOD(es_string_token_t,
+              ExecArg,
+              (const es_event_exec_t *event, uint32_t index));
 };
 
 

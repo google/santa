@@ -16,18 +16,11 @@
 #import <XCTest/XCTest.h>
 
 #include "Source/common/TestUtils.h"
-#include "Source/santad/EventProviders/EndpointSecurity/EndpointSecurityAPI.h"
 #include "Source/santad/EventProviders/EndpointSecurity/Message.h"
+#include "Source/santad/EventProviders/EndpointSecurity/MockEndpointSecurityAPI.h"
 #include "Source/santad/Logs/EndpointSecurity/Serializers/Utilities.h"
 
-using santa::santad::event_providers::endpoint_security::EndpointSecurityAPI;
 using santa::santad::event_providers::endpoint_security::Message;
-
-class MockEndpointSecurityAPI : public EndpointSecurityAPI {
-public:
-  MOCK_METHOD(es_message_t*, RetainMessage, (const es_message_t* msg));
-  MOCK_METHOD(void, ReleaseMessage, (es_message_t* msg));
-};
 
 @interface SerializerUtilitiesTest : XCTestCase
 @end

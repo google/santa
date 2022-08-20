@@ -1004,6 +1004,7 @@ objc_library(
     name = "MockEndpointSecurityAPI",
     hdrs = ["EventProviders/EndpointSecurity/MockEndpointSecurityAPI.h"],
     deps = [
+        ":EndpointSecurityAPI",
         "@com_google_googletest//:gtest",
     ],
     sdk_dylibs = [
@@ -1018,6 +1019,7 @@ santa_unit_test(
         ":EndpointSecurityAPI",
         ":EndpointSecurityMessage",
         ":EndpointSecuritySerializerUtilities",
+        ":MockEndpointSecurityAPI",
         "//Source/common:TestUtils",
         "@com_google_googletest//:gtest",
     ],
@@ -1030,12 +1032,12 @@ santa_unit_test(
     name = "EndpointSecuritySerializerBasicStringTest",
     srcs = ["Logs/EndpointSecurity/Serializers/BasicStringTest.mm"],
     deps = [
-        ":EndpointSecurityAPI",
         ":EndpointSecurityEnrichedTypes",
         ":EndpointSecurityEnricher",
         ":EndpointSecurityMessage",
         ":EndpointSecuritySerializer",
         ":EndpointSecuritySerializerBasicString",
+        ":MockEndpointSecurityAPI",
         ":SNTDecisionCache",
         "//Source/common:SNTCachedDecision",
         "//Source/common:SNTCommonEnums",
@@ -1056,7 +1058,7 @@ santa_unit_test(
     srcs = ["EventProviders/AuthResultCacheTest.mm"],
     deps = [
         ":AuthResultCache",
-        ":EndpointSecurityAPI",
+        ":MockEndpointSecurityAPI",
         "//Source/common:TestUtils",
         "@com_google_googletest//:gtest",
         "@OCMock",
@@ -1094,7 +1096,6 @@ santa_unit_test(
     name = "EndpointSecurityLoggerTest",
     srcs = ["Logs/EndpointSecurity/LoggerTest.mm"],
     deps = [
-        ":EndpointSecurityAPI",
         ":EndpointSecurityEnrichedTypes",
         ":EndpointSecurityLogger",
         ":EndpointSecurityMessage",
@@ -1105,6 +1106,7 @@ santa_unit_test(
         ":EndpointSecurityWriterFile",
         ":EndpointSecurityWriterNull",
         ":EndpointSecurityWriterSyslog",
+        ":MockEndpointSecurityAPI",
         "//Source/common:SNTCommonEnums",
         "//Source/common:TestUtils",
         "@com_google_googletest//:gtest",
@@ -1142,8 +1144,8 @@ santa_unit_test(
     name = "EndpointSecurityMessageTest",
     srcs = ["EventProviders/EndpointSecurity/MessageTest.mm"],
     deps = [
-        ":EndpointSecurityAPI",
         ":EndpointSecurityMessage",
+        ":MockEndpointSecurityAPI",
         "//Source/common:TestUtils",
         "@com_google_googletest//:gtest",
         "@OCMock",
@@ -1183,10 +1185,10 @@ santa_unit_test(
     name = "SNTEndpointSecurityClientTest",
     srcs = ["EventProviders/SNTEndpointSecurityClientTest.mm"],
     deps = [
-        ":EndpointSecurityAPI",
         ":EndpointSecurityClient",
         ":EndpointSecurityMessage",
         ":EndpointSecurityEnrichedTypes",
+        ":MockEndpointSecurityAPI",
         ":SNTEndpointSecurityClient",
         "//Source/common:TestUtils",
         "@com_google_googletest//:gtest",

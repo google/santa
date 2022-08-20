@@ -54,6 +54,8 @@ namespace santa::santad::logs::endpoint_security::serializers {
  * ~~~ BEGIN:
  * TODO: These functions should be moved to some common util file
  */
+
+// TODO(mlw): Return a sanitized string?
 static inline std::string_view FilePath(const es_file_t* file) {
   return std::string_view(file->path.data);
 }
