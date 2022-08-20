@@ -12,9 +12,8 @@
 ///    See the License for the specific language governing permissions and
 ///    limitations under the License.
 
-#include <EndpointSecurity/ESTypes.h>
-#include <EndpointSecurity/EndpointSecurity.h>
 #include <bsm/libbsm.h>
+#include <EndpointSecurity/EndpointSecurity.h>
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 #include <mach/mach_time.h>
@@ -255,7 +254,7 @@ public:
       .After(
           EXPECT_CALL(*mockESApi, Subscribe(testing::_, testing::_))
               .WillOnce(testing::Return(false))
-              .WillOnce(testing::Return(true)))//;
+              .WillOnce(testing::Return(true)))
       .WillOnce(testing::Return(true));
 
   XCTAssertFalse([client subscribeAndClearCache:{}]);

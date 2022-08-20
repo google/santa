@@ -1000,6 +1000,17 @@ santa_unit_test(
     ],
 )
 
+objc_library(
+    name = "MockEndpointSecurityAPI",
+    hdrs = ["EventProviders/EndpointSecurity/MockEndpointSecurityAPI.h"],
+    deps = [
+        "@com_google_googletest//:gtest",
+    ],
+    sdk_dylibs = [
+        "EndpointSecurity",
+    ],
+)
+
 santa_unit_test(
     name = "EndpointSecuritySerializerUtilitiesTest",
     srcs = ["Logs/EndpointSecurity/Serializers/UtilitiesTest.mm"],
@@ -1014,7 +1025,6 @@ santa_unit_test(
         "EndpointSecurity",
     ],
 )
-
 
 santa_unit_test(
     name = "EndpointSecuritySerializerBasicStringTest",
@@ -1188,6 +1198,69 @@ santa_unit_test(
     ],
 )
 
+santa_unit_test(
+    name = "SNTEndpointSecurityAuthorizerTest",
+    srcs = ["EventProviders/SNTEndpointSecurityAuthorizerTest.mm"],
+    deps = [
+        ":MockEndpointSecurityAPI",
+        ":SNTEndpointSecurityAuthorizer",
+        "//Source/common:TestUtils",
+        "@com_google_googletest//:gtest",
+        "@OCMock",
+    ],
+    sdk_dylibs = [
+        "EndpointSecurity",
+    ],
+)
+
+santa_unit_test(
+    name = "SNTEndpointSecurityTamperResistanceTest",
+    srcs = ["EventProviders/SNTEndpointSecurityTamperResistanceTest.mm"],
+    deps = [
+        ":MockEndpointSecurityAPI",
+        ":SNTEndpointSecurityTamperResistance",
+        "//Source/common:TestUtils",
+        "@com_google_googletest//:gtest",
+        "@OCMock",
+    ],
+    sdk_dylibs = [
+        "EndpointSecurity",
+    ],
+)
+
+santa_unit_test(
+    name = "SNTEndpointSecurityRecorderTest",
+    srcs = ["EventProviders/SNTEndpointSecurityRecorderTest.mm"],
+    deps = [
+        ":MockEndpointSecurityAPI",
+        ":SNTEndpointSecurityRecorder",
+        "//Source/common:TestUtils",
+        "@com_google_googletest//:gtest",
+        "@OCMock",
+    ],
+    sdk_dylibs = [
+        "EndpointSecurity",
+    ],
+)
+
+santa_unit_test(
+    name = "SNTEndpointSecurityDeviceManagerTest",
+    srcs = ["EventProviders/SNTEndpointSecurityDeviceManagerTest.mm"],
+    deps = [
+        ":DiskArbitrationTestLib",
+        ":MockEndpointSecurityAPI",
+        ":SNTEndpointSecurityDeviceManager",
+        "//Source/common:SNTConfigurator",
+        "//Source/common:SNTDeviceEvent",
+        "//Source/common:TestUtils",
+        "@com_google_googletest//:gtest",
+        "@OCMock",
+    ],
+    sdk_dylibs = [
+        "EndpointSecurity",
+    ],
+)
+
 test_suite(
     name = "unit_tests",
     tests = [
@@ -1203,7 +1276,11 @@ test_suite(
         ":MetricsTest",
         ":SNTApplicationCoreMetricsTest",
         ":SNTDecisionCacheTest",
+        ":SNTEndpointSecurityAuthorizerTest",
         ":SNTEndpointSecurityClientTest",
+        ":SNTEndpointSecurityDeviceManagerTest",
+        ":SNTEndpointSecurityRecorderTest",
+        ":SNTEndpointSecurityTamperResistanceTest",
         ":SNTEventTableTest",
         ":SNTRuleTableTest",
     ],
