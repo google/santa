@@ -59,6 +59,7 @@ objc_library(
     name = "SNTEventProvider",
     hdrs = ["EventProviders/SNTEventProvider.h"],
     deps = [
+        ":EndpointSecurityMessage",
         "//Source/common:SNTCommon",
     ],
 )

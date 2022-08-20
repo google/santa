@@ -41,8 +41,6 @@ using santa::santad::logs::endpoint_security::Logger;
 - (void)logDiskDisappeared:(NSDictionary*)props;
 
 @property DASessionRef diskArbSession;
-@property(nonatomic, readonly) es_client_t *client;
-@property(nonatomic, readonly) dispatch_queue_t esAuthQueue;
 @property(nonatomic, readonly) dispatch_queue_t diskQueue;
 
 @end
@@ -149,13 +147,10 @@ NS_ASSUME_NONNULL_BEGIN
 
     _diskQueue = dispatch_queue_create("com.google.santad.disk_queue", DISPATCH_QUEUE_SERIAL);
 
-    _esAuthQueue =
-      dispatch_queue_create("com.google.santa.daemon.es_device_auth", DISPATCH_QUEUE_CONCURRENT);
-
     _diskArbSession = DASessionCreate(NULL);
     DASessionSetDispatchQueue(_diskArbSession, _diskQueue);
 
-    [self establishClient];
+    [self establishClientOrDie];
   }
   return self;
 }
@@ -168,23 +163,22 @@ NS_ASSUME_NONNULL_BEGIN
   self->_logger->LogDiskDisappeared(props);
 }
 
-- (void)establishClient {
-  [self establishClientOrDie:^(es_client_t* c, Message&& esMsg) {
-    if (!self.blockUSBMount) {
-      // TODO: We should also unsubscribe from events when this isn't set
-      [self respondToMessage:esMsg withAuthResult:ES_AUTH_RESULT_ALLOW cacheable:false];
-      return;
-    }
+- (void)handleMessage:(Message &&)esMsg {
+  if (!self.blockUSBMount) {
+    // TODO: We should also unsubscribe from events when this isn't set, but
+    // this is generally a low-volume event type.
+    [self respondToMessage:esMsg withAuthResult:ES_AUTH_RESULT_ALLOW cacheable:false];
+    return;
+  }
 
-    if (esMsg->event_type == ES_EVENT_TYPE_NOTIFY_UNMOUNT) {
-      self->_authResultCache->FlushCache(FlushCacheMode::kNonRootOnly);
-      return;
-    }
+  if (esMsg->event_type == ES_EVENT_TYPE_NOTIFY_UNMOUNT) {
+    self->_authResultCache->FlushCache(FlushCacheMode::kNonRootOnly);
+    return;
+  }
 
-    [self processMessage:std::move(esMsg) handler:^(const Message& msg) {
-      es_auth_result_t result = [self handleAuthMount:msg];
-      [self respondToMessage:msg withAuthResult:result cacheable:false];
-    }];
+  [self processMessage:std::move(esMsg) handler:^(const Message& msg) {
+    es_auth_result_t result = [self handleAuthMount:msg];
+    [self respondToMessage:msg withAuthResult:result cacheable:false];
   }];
 }
 

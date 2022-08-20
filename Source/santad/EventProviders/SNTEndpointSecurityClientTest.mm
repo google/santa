@@ -61,8 +61,12 @@ public:
 };
 
 @interface SNTEndpointSecurityClient (Testing)
+- (void)establishClientOrDie;
 - (bool)muteSelf;
 - (NSString*)errorMessageForNewClientResult:(es_new_client_result_t)result;
+- (void)handleMessage:(Message &&)esMsg;
+- (BOOL)shouldHandleMessage:(const Message &)esMsg
+     ignoringOtherESClients:(BOOL)ignoringOtherESClients;
 
 @property int64_t deadlineMarginMS;
 @end
@@ -76,7 +80,7 @@ public:
   auto mockESApi = std::make_shared<MockEndpointSecurityAPI>();
 
   EXPECT_CALL(*mockESApi, MuteProcess(testing::_, testing::_))
-      .WillRepeatedly(testing::Return(true));
+      .WillOnce(testing::Return(true));
 
   EXPECT_CALL(*mockESApi, NewClient(testing::_))
       .WillOnce(testing::Return(Client()))
@@ -86,16 +90,15 @@ public:
   SNTEndpointSecurityClient *client =
       [[SNTEndpointSecurityClient alloc] initWithESAPI:mockESApi];
 
-  XCTAssertThrows([client
-      establishClientOrDie:^(es_client_t *c, Message &&esMsg) {}]);
-  XCTAssertNoThrow([client
-      establishClientOrDie:^(es_client_t *c, Message &&esMsg) {}]);
+  // First time throws because mock triggers failed connection
+  // Second time succeeds
+  XCTAssertThrows([client establishClientOrDie]);
+  XCTAssertNoThrow([client establishClientOrDie]);
 
   XCTBubbleMockVerifyAndClearExpectations(mockESApi.get());
 }
 
 - (void)testErrorMessageForNewClientResult {
-
   std::map<es_new_client_result_t, std::string> resultMessagePairs {
     { ES_NEW_CLIENT_RESULT_SUCCESS, "" },
     { ES_NEW_CLIENT_RESULT_ERR_NOT_PERMITTED, "Full-disk access not granted" },
@@ -114,6 +117,71 @@ public:
     NSString *message = [client errorMessageForNewClientResult:kv.first];
     XCTAssertEqual(0, strcmp([(message ?: @"") UTF8String], kv.second.c_str()));
   }
+}
+
+- (void)testHandleMessage {
+  es_message_t esMsg;
+
+  auto mockESApi = std::make_shared<MockEndpointSecurityAPI>();
+  EXPECT_CALL(*mockESApi, ReleaseMessage(testing::_))
+      .After(
+          EXPECT_CALL(*mockESApi, RetainMessage(testing::_))
+              .WillOnce(testing::Return(&esMsg)));
+
+  SNTEndpointSecurityClient *client =
+      [[SNTEndpointSecurityClient alloc] initWithESAPI:mockESApi];
+
+  {
+    XCTAssertThrows([client handleMessage:Message(mockESApi, &esMsg)]);
+  }
+
+  XCTBubbleMockVerifyAndClearExpectations(mockESApi.get());
+}
+
+- (void)testHandleMessageWithClient {
+  es_file_t file = MakeESFile("foo");
+  es_process_t proc = MakeESProcess(&file, {}, {});
+  es_message_t esMsg = MakeESMessage(ES_EVENT_TYPE_NOTIFY_FORK, &proc);
+
+  auto mockESApi = std::make_shared<MockEndpointSecurityAPI>();
+  EXPECT_CALL(*mockESApi, ReleaseMessage(testing::_))
+      .Times(testing::AnyNumber())
+      .After(
+          EXPECT_CALL(*mockESApi, RetainMessage(testing::_))
+              .WillRepeatedly(testing::Return(&esMsg)));
+
+    // Have subscribe fail the first time, meaning clear cache only called once.
+  EXPECT_CALL(*mockESApi, RespondAuthResult(testing::_,
+                                            testing::_,
+                                            ES_AUTH_RESULT_ALLOW,
+                                            true))
+      .WillOnce(testing::Return(true));
+
+  SNTEndpointSecurityClient *client =
+      [[SNTEndpointSecurityClient alloc] initWithESAPI:mockESApi];
+
+  {
+    Message msg(mockESApi, &esMsg);
+
+    // Is ES client, but don't ignore others == Should Handle
+    esMsg.process->is_es_client = true;
+    XCTAssertTrue([client shouldHandleMessage:msg ignoringOtherESClients:NO]);
+
+    // Not ES client, but ignore others == Should Handle
+    esMsg.process->is_es_client = false;
+    XCTAssertTrue([client shouldHandleMessage:msg ignoringOtherESClients:YES]);
+
+    // Is ES client, don't ignore others, and non-AUTH == Don't Handle
+    esMsg.process->is_es_client = true;
+    XCTAssertFalse([client shouldHandleMessage:msg ignoringOtherESClients:YES]);
+
+    // Is ES client, don't ignore others, and AUTH == Respond and Don't Handle
+    esMsg.process->is_es_client = true;
+    esMsg.action_type = ES_ACTION_TYPE_AUTH;
+    XCTAssertFalse([client shouldHandleMessage:msg ignoringOtherESClients:YES]);
+  }
+
+  XCTBubbleMockVerifyAndClearExpectations(mockESApi.get());
 }
 
 - (void)testPopulateAuditTokenSelf {

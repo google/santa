@@ -29,9 +29,7 @@
 - (instancetype)initWithESAPI:
     (std::shared_ptr<santa::santad::event_providers::endpoint_security::EndpointSecurityAPI>)esApi;
 
-- (void)establishClientOrDie:
-    (void(^)(es_client_t* c,
-             santa::santad::event_providers::endpoint_security::Message&& esMsg))messageHandler;
+- (void)establishClientOrDie;
 
 - (bool)subscribe:(const std::set<es_event_type_t>&)events;
 

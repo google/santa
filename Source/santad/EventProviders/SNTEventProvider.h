@@ -16,8 +16,20 @@
 
 #include "Source/common/SNTCommon.h"
 
+#include "Source/santad/EventProviders/EndpointSecurity/Message.h"
+
+// Protocol that all subclasses of `SNTEndpointSecurityClient` should adhere to.
+// TODO(mlw): Name carried over from before refactor.
+// Probably makes sense to rename.
 @protocol SNTEventProvider <NSObject>
 
+// Called Synchronously and serially for each message provided by the
+// EndpointSecurity framework.
+- (void)handleMessage:(
+    santa::santad::event_providers::endpoint_security::Message &&)esMsg;
+
+// Called after Santa has finished initializing itself.
+// This is an optimal place to subscribe to ES events
 - (void)enable;
 
 @end

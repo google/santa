@@ -36,62 +36,60 @@ static constexpr std::string_view kSantaKextIdentifier = "com.google.santa-drive
   if (self) {
     _logger = logger;
 
-    [self establishClient];
+    [self establishClientOrDie];
   }
   return self;
 }
 
-- (void)establishClient {
-  [super establishClientOrDie:^(es_client_t* c, Message&& esMsg) {
-    switch (esMsg->event_type) {
-      case ES_EVENT_TYPE_AUTH_UNLINK: {
-        if ([SNTEndpointSecurityTamperResistance isDatabasePath:esMsg->event.unlink.target->path.data]) {
-          // Do not cache so that each attempt to remove santa is logged
-          [self respondToMessage:esMsg withAuthResult:ES_AUTH_RESULT_DENY cacheable:false];
-          LOGW(@"Preventing attempt to delete Santa databases!");
-        } else {
-          [self respondToMessage:esMsg withAuthResult:ES_AUTH_RESULT_ALLOW cacheable:true];
-        }
+- (void)handleMessage:(Message &&)esMsg {
+  switch (esMsg->event_type) {
+    case ES_EVENT_TYPE_AUTH_UNLINK: {
+      if ([SNTEndpointSecurityTamperResistance isDatabasePath:esMsg->event.unlink.target->path.data]) {
+        // Do not cache so that each attempt to remove santa is logged
+        [self respondToMessage:esMsg withAuthResult:ES_AUTH_RESULT_DENY cacheable:false];
+        LOGW(@"Preventing attempt to delete Santa databases!");
+      } else {
+        [self respondToMessage:esMsg withAuthResult:ES_AUTH_RESULT_ALLOW cacheable:true];
+      }
 
+      return;
+    }
+    case ES_EVENT_TYPE_AUTH_RENAME: {
+      if ([SNTEndpointSecurityTamperResistance isDatabasePath:esMsg->event.rename.source->path.data]) {
+        // Do not cache so that each attempt to remove santa is logged
+        [self respondToMessage:esMsg withAuthResult:ES_AUTH_RESULT_DENY cacheable:false];
+        LOGW(@"!!! Preventing attempt to rename Santa databases!");
         return;
       }
-      case ES_EVENT_TYPE_AUTH_RENAME: {
-        if ([SNTEndpointSecurityTamperResistance isDatabasePath:esMsg->event.rename.source->path.data]) {
-          // Do not cache so that each attempt to remove santa is logged
+
+      if (esMsg->event.rename.destination_type == ES_DESTINATION_TYPE_EXISTING_FILE) {
+        if ([SNTEndpointSecurityTamperResistance isDatabasePath:esMsg->event.rename.destination.existing_file->path.data]) {
           [self respondToMessage:esMsg withAuthResult:ES_AUTH_RESULT_DENY cacheable:false];
-          LOGW(@"!!! Preventing attempt to rename Santa databases!");
+          LOGW(@"!!! Preventing attempt to overwrite Santa databases!");
           return;
         }
-
-        if (esMsg->event.rename.destination_type == ES_DESTINATION_TYPE_EXISTING_FILE) {
-          if ([SNTEndpointSecurityTamperResistance isDatabasePath:esMsg->event.rename.destination.existing_file->path.data]) {
-            [self respondToMessage:esMsg withAuthResult:ES_AUTH_RESULT_DENY cacheable:false];
-            LOGW(@"!!! Preventing attempt to overwrite Santa databases!");
-            return;
-          }
-        }
-
-        // If we get to here, no more reasons to deny the event, so allow it
-        [self respondToMessage:esMsg withAuthResult:ES_AUTH_RESULT_ALLOW cacheable:true];
-        return;
       }
 
-      case ES_EVENT_TYPE_AUTH_KEXTLOAD: {
-        es_auth_result_t res = ES_AUTH_RESULT_ALLOW;
-        if (strcmp(esMsg->event.kextload.identifier.data,
-                   kSantaKextIdentifier.data()) == 0) {
-          LOGW(@"Preventing attempt to load Santa kext!");
-          res = ES_AUTH_RESULT_DENY;
-        }
-        [self respondToMessage:esMsg withAuthResult:res cacheable:true];
-        return;
-      }
-
-      default:
-        // Unexpected event type, this is a programming error
-        exit(EXIT_FAILURE);
+      // If we get to here, no more reasons to deny the event, so allow it
+      [self respondToMessage:esMsg withAuthResult:ES_AUTH_RESULT_ALLOW cacheable:true];
+      return;
     }
-  }];
+
+    case ES_EVENT_TYPE_AUTH_KEXTLOAD: {
+      es_auth_result_t res = ES_AUTH_RESULT_ALLOW;
+      if (strcmp(esMsg->event.kextload.identifier.data,
+                  kSantaKextIdentifier.data()) == 0) {
+        LOGW(@"Preventing attempt to load Santa kext!");
+        res = ES_AUTH_RESULT_DENY;
+      }
+      [self respondToMessage:esMsg withAuthResult:res cacheable:true];
+      return;
+    }
+
+    default:
+      // Unexpected event type, this is a programming error
+      exit(EXIT_FAILURE);
+  }
 }
 
 - (void)enable {

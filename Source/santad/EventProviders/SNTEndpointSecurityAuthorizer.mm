@@ -50,61 +50,59 @@ using santa::santad::event_providers::AuthResultCache;
     _compilerController = compilerController;
     _authResultCache = authResultCache;
 
-    [self establishClient];
+    [self establishClientOrDie];
   }
   return self;
 }
 
-- (void)establishClient {
-  [self establishClientOrDie:^(es_client_t* c, Message&& esMsg) {
-    if (unlikely(esMsg->event_type != ES_EVENT_TYPE_AUTH_EXEC)) {
-      // This is a programming error
-      LOGE(@"Atteempting to authorize a non-exec event");
-      exit(EXIT_FAILURE);
-    }
+- (void)handleMessage:(Message &&)esMsg {
+  if (unlikely(esMsg->event_type != ES_EVENT_TYPE_AUTH_EXEC)) {
+    // This is a programming error
+    LOGE(@"Atteempting to authorize a non-exec event");
+    exit(EXIT_FAILURE);
+  }
 
-    if (![self.execController synchronousShouldProcessExecEvent:esMsg]) {
-      [self postAction:ACTION_RESPOND_DENY forMessage:esMsg];
-      return;
-    }
+  if (![self.execController synchronousShouldProcessExecEvent:esMsg]) {
+    [self postAction:ACTION_RESPOND_DENY forMessage:esMsg];
+    return;
+  }
 
-    [self processMessage:std::move(esMsg) handler:^(const Message& msg) {
-      const es_file_t *target_file = msg->event.exec.target->executable;
+  [self processMessage:std::move(esMsg) handler:^(const Message& msg) {
+    const es_file_t *target_file = msg->event.exec.target->executable;
 
-      while (true) {
-        auto returnAction = self->_authResultCache->CheckCache(target_file);
-        if (RESPONSE_VALID(returnAction)) {
-          es_auth_result_t authResult = ES_AUTH_RESULT_DENY;
+    while (true) {
+      auto returnAction = self->_authResultCache->CheckCache(target_file);
+      if (RESPONSE_VALID(returnAction)) {
+        es_auth_result_t authResult = ES_AUTH_RESULT_DENY;
 
-          switch (returnAction) {
-            case ACTION_RESPOND_ALLOW_COMPILER:
-              [self.compilerController setIsCompiler:msg->event.exec.target->audit_token];
-              OS_FALLTHROUGH;
-            case ACTION_RESPOND_ALLOW:
-              authResult = ES_AUTH_RESULT_ALLOW;
-              break;
-            default:
-              break;
-          }
-
-          [self respondToMessage:msg
-                  withAuthResult:authResult
-                       cacheable:(authResult == ES_AUTH_RESULT_ALLOW)];
-          return;
-        } else if (returnAction == ACTION_REQUEST_BINARY) {
-          // TODO(mlw): Look into caching a `Deferred<value>` to better prevent raciness of multiple
-          // threads checking the cache simultaneously. Also can mitigate need to poll.
-          usleep(5000);
-        } else {
-          break;
+        switch (returnAction) {
+          case ACTION_RESPOND_ALLOW_COMPILER:
+            [self.compilerController setIsCompiler:msg->event.exec.target->audit_token];
+            OS_FALLTHROUGH;
+          case ACTION_RESPOND_ALLOW:
+            authResult = ES_AUTH_RESULT_ALLOW;
+            break;
+          default:
+            break;
         }
+
+        [self respondToMessage:msg
+                withAuthResult:authResult
+                      cacheable:(authResult == ES_AUTH_RESULT_ALLOW)];
+        return;
+      } else if (returnAction == ACTION_REQUEST_BINARY) {
+        // TODO(mlw): Look into caching a `Deferred<value>` to better prevent raciness of multiple
+        // threads checking the cache simultaneously. Also can mitigate need to poll.
+        usleep(5000);
+      } else {
+        break;
       }
+    }
 
-      self->_authResultCache->AddToCache(target_file, ACTION_REQUEST_BINARY);
+    self->_authResultCache->AddToCache(target_file, ACTION_REQUEST_BINARY);
 
-      [self.execController validateExecEvent:msg postAction:^bool(santa_action_t action){
-        return [self postAction:action forMessage:msg];
-      }];
+    [self.execController validateExecEvent:msg postAction:^bool(santa_action_t action){
+      return [self postAction:action forMessage:msg];
     }];
   }];
 }

@@ -68,45 +68,42 @@ static inline es_file_t* GetTargetFileForPrefixTree(const es_message_t* msg) {
     _authResultCache = authResultCache;
     _prefixTree = prefixTree;
 
-    [self establishClient];
+    [self establishClientOrDie];
   }
   return self;
 }
 
-- (void)establishClient {
-  [super establishClientOrDie:^(es_client_t* c, Message&& esMsg) {
-    // Pre-enrichment processing
+- (void)handleMessage:(Message &&)esMsg {
+  // Pre-enrichment processing
+  switch(esMsg->event_type) {
+    case ES_EVENT_TYPE_NOTIFY_CLOSE:
+      if (esMsg->event.close.modified == false) {
+        // Ignore unmodified files
+        return;
+      }
 
-    switch(esMsg->event_type) {
-      case ES_EVENT_TYPE_NOTIFY_CLOSE:
-        if (esMsg->event.close.modified == false) {
-          // Ignore unmodified files
-          return;
-        }
+      self->_authResultCache->RemoveFromCache(esMsg->event.close.target);
+      break;
+    default:
+      break;
+  }
 
-        self->_authResultCache->RemoveFromCache(esMsg->event.close.target);
-        break;
-      default:
-        break;
-    }
+  [self.compilerController handleEvent:esMsg withLogger:self->_logger];
 
-    [self.compilerController handleEvent:esMsg withLogger:self->_logger];
+  // Filter file op events matching the prefix tree.
+  es_file_t *targetFile = GetTargetFileForPrefixTree(&(*esMsg));
+  if (targetFile != NULL &&
+      self->_prefixTree->HasPrefix(targetFile->path.data)) {
+    return;
+  }
 
-    // Filter file op events matching the prefix tree.
-    es_file_t *targetFile = GetTargetFileForPrefixTree(&(*esMsg));
-    if (targetFile != NULL &&
-        self->_prefixTree->HasPrefix(targetFile->path.data)) {
-      return;
-    }
+  // Enrich the message inline with the ES handler block to capture enrichment
+  // data as close to the source event as possible.
+  std::shared_ptr<EnrichedMessage> sharedEnrichedMessage = _enricher->Enrich(std::move(esMsg));
 
-    // Enrich the message inline with the ES handler block to capture enrichment
-    // data as close to the source event as possible.
-    std::shared_ptr<EnrichedMessage> sharedEnrichedMessage = _enricher->Enrich(std::move(esMsg));
-
-    // Asynchronously log the message
-    [self processEnrichedMessage:std::move(sharedEnrichedMessage) handler:^(std::shared_ptr<EnrichedMessage> msg){
-      self->_logger->Log(std::move(msg));
-    }];
+  // Asynchronously log the message
+  [self processEnrichedMessage:std::move(sharedEnrichedMessage) handler:^(std::shared_ptr<EnrichedMessage> msg){
+    self->_logger->Log(std::move(msg));
   }];
 }
 

@@ -70,7 +70,6 @@ using santa::santad::event_providers::endpoint_security::Message;
             DISPATCH_QUEUE_CONCURRENT_WITH_AUTORELEASE_POOL,
             QOS_CLASS_BACKGROUND,
             0));
-
   }
   return self;
 }
@@ -96,7 +95,27 @@ using santa::santad::event_providers::endpoint_security::Message;
     }
 }
 
-- (void)establishClientOrDie:(void(^)(es_client_t* c, Message&& esMsg))messageHandler {
+- (void)handleMessage:(Message &&)esMsg {
+  // This method should only be used by classes derived
+  // from SNTEndpointSecurityClient.
+  [self doesNotRecognizeSelector:_cmd];
+}
+
+- (BOOL)shouldHandleMessage:(const Message &)esMsg
+     ignoringOtherESClients:(BOOL)ignoringOtherESClients {
+  if (esMsg->process->is_es_client && ignoringOtherESClients) {
+    if (esMsg->action_type == ES_ACTION_TYPE_AUTH) {
+      [self respondToMessage:esMsg
+              withAuthResult:ES_AUTH_RESULT_ALLOW
+                    cacheable:true];
+    }
+    return NO;
+  }
+
+  return YES;
+}
+
+- (void)establishClientOrDie {
   if (self->_esClient.IsConnected()) {
     // This is a programming error
     LOGE(@"Client already established. Aborting.");
@@ -105,17 +124,11 @@ using santa::santad::event_providers::endpoint_security::Message;
   }
 
   self->_esClient = self->_esApi->NewClient(^(es_client_t* c, Message esMsg) {
-    if (esMsg->process->is_es_client &&
-        [[SNTConfigurator configurator] ignoreOtherEndpointSecurityClients]) {
-      if (esMsg->action_type == ES_ACTION_TYPE_AUTH) {
-        [self respondToMessage:esMsg
-                withAuthResult:ES_AUTH_RESULT_ALLOW
-                     cacheable:true];
-      }
-      return;
+    if ([self shouldHandleMessage:esMsg
+           ignoringOtherESClients:[[SNTConfigurator configurator]
+                                      ignoreOtherEndpointSecurityClients]]) {
+      [self handleMessage:std::move(esMsg)];
     }
-
-    messageHandler(c, std::move(esMsg));
   });
 
   if (!self->_esClient.IsConnected()) {
