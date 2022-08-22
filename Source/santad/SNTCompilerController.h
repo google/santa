@@ -12,27 +12,22 @@
 ///    See the License for the specific language governing permissions and
 ///    limitations under the License.
 
-#include <memory>
-
 #include <bsm/libbsm.h>
-
 #import <Foundation/Foundation.h>
+
+#include <memory>
 
 #include "Source/santad/EventProviders/EndpointSecurity/Message.h"
 #include "Source/santad/Logs/EndpointSecurity/Logger.h"
-
-#import "Source/common/SNTCommon.h"
-
-@class SNTEventLog;
 
 @interface SNTCompilerController : NSObject
 
 // This function will determine if the instigating process was a compiler and,
 // for appropriate events, will create appropriate transitive rules.
-- (void)handleEvent:(const santa::santad::event_providers::endpoint_security::Message&)msg
+- (BOOL)handleEvent:(const santa::santad::event_providers::endpoint_security::Message&)msg
          withLogger:(std::shared_ptr<santa::santad::logs::endpoint_security::Logger>)logger;
 
-- (void)setIsCompiler:(const audit_token_t&)tok;
-- (void)setNotCompiler:(const audit_token_t&)tok;
+// Set whether or not the given audit token should be tracked as a compiler
+- (void)setProcess:(const audit_token_t&)tok isCompiler:(bool)isCompiler;
 
 @end

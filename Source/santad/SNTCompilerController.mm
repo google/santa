@@ -13,11 +13,11 @@
 ///    limitations under the License.
 
 #import "Source/santad/SNTCompilerController.h"
-#include <cstring>
-#include <os/base.h>
-#include <mach/message.h>
 
 #include <bsm/libbsm.h>
+#include <mach/message.h>
+#include <os/base.h>
+#include <string.h>
 
 #include <atomic>
 
@@ -49,21 +49,16 @@ static constexpr std::string_view kIgnoredCompilerProcessPathPrefix = "/dev/";
   return pid >= 0 && pid < PID_MAX && self->_compilerPIDs[pid].load();
 }
 
-- (void)setIsCompiler:(const audit_token_t&)tok {
+- (void)setProcess:(const audit_token_t&)tok isCompiler:(bool)isCompiler {
   pid_t pid = audit_token_to_pid(tok);
   if (pid < 1) {
     LOGE(@"Unable to watch compiler pid=%d", pid);
   } else if (pid >= PID_MAX) {
     LOGE(@"Unable to watch compiler pid=%d >= PID_MAX(%d)", pid, PID_MAX);
   } else {
-    self->_compilerPIDs[pid].store(true);
+    self->_compilerPIDs[pid].store(isCompiler);
     LOGD(@"Watching compiler pid=%d", pid);
   }
-}
-
-- (void)setNotCompiler:(const audit_token_t&)tok {
-  pid_t pid = audit_token_to_pid(tok);
-  if (pid && pid < PID_MAX) self->_compilerPIDs[pid].store(false);
 }
 
 // Adds a fake cached decision to SNTDecisionCache for pending files. If the file
@@ -80,19 +75,19 @@ static constexpr std::string_view kIgnoredCompilerProcessPathPrefix = "/dev/";
   [[SNTDecisionCache sharedCache] forgetCachedDecisionForFile:esFile->stat];
 }
 
-- (void)handleEvent:(const Message&)esMsg withLogger:(std::shared_ptr<Logger>)logger {
+- (BOOL)handleEvent:(const Message&)esMsg withLogger:(std::shared_ptr<Logger>)logger {
   const es_file_t *targetFile = NULL;
 
   switch(esMsg->event_type) {
     case ES_EVENT_TYPE_NOTIFY_CLOSE:
       if (![self isCompiler:esMsg->process->audit_token]) {
-        return;
+        return NO;
       }
 
       if (strncmp(kIgnoredCompilerProcessPathPrefix.data(),
                   esMsg->event.close.target->path.data,
                   kIgnoredCompilerProcessPathPrefix.length()) == 0) {
-        return;
+        return NO;
       }
 
       targetFile = esMsg->event.close.target;
@@ -100,7 +95,7 @@ static constexpr std::string_view kIgnoredCompilerProcessPathPrefix = "/dev/";
       break;
     case ES_EVENT_TYPE_NOTIFY_RENAME:
       if (![self isCompiler:esMsg->process->audit_token]) {
-        return;
+        return NO;
       }
 
       // Note: For RENAME events, we process the `source`. This is the one
@@ -108,22 +103,25 @@ static constexpr std::string_view kIgnoredCompilerProcessPathPrefix = "/dev/";
       if (strncmp(kIgnoredCompilerProcessPathPrefix.data(),
                   esMsg->event.rename.source->path.data,
                   kIgnoredCompilerProcessPathPrefix.length()) == 0) {
-          return;
+          return NO;
       }
 
       targetFile = esMsg->event.rename.source;
 
       break;
     case ES_EVENT_TYPE_NOTIFY_EXIT:
-      [self setNotCompiler:esMsg->process->audit_token];
-      return;
+      [self setProcess:esMsg->process->audit_token isCompiler:false];
+      return YES;
     default:
-      return;
+      return NO;
   }
 
   // If we get here, we need to update transitve rules
   if (targetFile) {
     [self createTransitiveRule:esMsg target:targetFile logger:logger];
+    return YES;
+  } else {
+    return NO;
   }
 }
 

@@ -21,6 +21,7 @@
 #include <sys/mount.h>
 
 #include <memory>
+#include <set>
 
 #import "Source/common/SNTConfigurator.h"
 #import "Source/common/SNTDeviceEvent.h"

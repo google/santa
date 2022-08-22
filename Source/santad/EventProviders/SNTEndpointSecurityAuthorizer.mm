@@ -77,7 +77,9 @@ using santa::santad::event_providers::AuthResultCache;
 
         switch (returnAction) {
           case ACTION_RESPOND_ALLOW_COMPILER:
-            [self.compilerController setIsCompiler:msg->event.exec.target->audit_token];
+            [self.compilerController
+                setProcess:msg->event.exec.target->audit_token
+                isCompiler:true];
             OS_FALLTHROUGH;
           case ACTION_RESPOND_ALLOW:
             authResult = ES_AUTH_RESULT_ALLOW;
@@ -91,8 +93,9 @@ using santa::santad::event_providers::AuthResultCache;
                       cacheable:(authResult == ES_AUTH_RESULT_ALLOW)];
         return;
       } else if (returnAction == ACTION_REQUEST_BINARY) {
-        // TODO(mlw): Look into caching a `Deferred<value>` to better prevent raciness of multiple
-        // threads checking the cache simultaneously. Also can mitigate need to poll.
+        // TODO(mlw): Look into caching a `Deferred<value>` to better prevent
+        // raciness of multiple threads checking the cache simultaneously.
+        // Also mitigates need to poll.
         usleep(5000);
       } else {
         break;
@@ -112,7 +115,8 @@ using santa::santad::event_providers::AuthResultCache;
 
   switch (action) {
     case ACTION_RESPOND_ALLOW_COMPILER:
-      [self.compilerController setIsCompiler:esMsg->process->audit_token];
+      [self.compilerController setProcess:esMsg->event.exec.target->audit_token
+                               isCompiler:true];
       OS_FALLTHROUGH;
     case ACTION_RESPOND_ALLOW:
       authResult = ES_AUTH_RESULT_ALLOW;

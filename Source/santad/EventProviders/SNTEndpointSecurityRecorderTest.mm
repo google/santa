@@ -16,8 +16,10 @@
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 #import <OCMock/OCMock.h>
-#include <memory>
 #import <XCTest/XCTest.h>
+
+#include <memory>
+#include <set>
 
 #include "Source/common/TestUtils.h"
 #import "Source/santad/EventProviders/SNTEndpointSecurityRecorder.h"

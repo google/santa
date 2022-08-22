@@ -1263,6 +1263,25 @@ santa_unit_test(
     ],
 )
 
+santa_unit_test(
+    name = "SNTCompilerControllerTest",
+    srcs = ["SNTCompilerControllerTest.mm"],
+    deps = [
+        ":EndpointSecurityMessage",
+        ":MockEndpointSecurityAPI",
+        ":SNTCompilerController",
+        ":SNTDecisionCache",
+        "//Source/common:SNTCachedDecision",
+        "//Source/common:SNTFileInfo",
+        "//Source/common:TestUtils",
+        "@com_google_googletest//:gtest",
+        "@OCMock",
+    ],
+    sdk_dylibs = [
+        "EndpointSecurity",
+    ],
+)
+
 test_suite(
     name = "unit_tests",
     tests = [
@@ -1277,6 +1296,7 @@ test_suite(
         ":EndpointSecurityWriterFileTest",
         ":MetricsTest",
         ":SNTApplicationCoreMetricsTest",
+        ":SNTCompilerControllerTest",
         ":SNTDecisionCacheTest",
         ":SNTEndpointSecurityAuthorizerTest",
         ":SNTEndpointSecurityClientTest",
