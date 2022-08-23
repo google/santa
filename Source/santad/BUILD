@@ -1267,6 +1267,7 @@ santa_unit_test(
     name = "SNTCompilerControllerTest",
     srcs = ["SNTCompilerControllerTest.mm"],
     deps = [
+        ":EndpointSecurityLogger",
         ":EndpointSecurityMessage",
         ":MockEndpointSecurityAPI",
         ":SNTCompilerController",

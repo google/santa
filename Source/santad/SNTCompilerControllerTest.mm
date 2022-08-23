@@ -16,6 +16,8 @@
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 #import <OCMock/OCMock.h>
+#include <cstdio>
+#include <memory>
 #include "Source/santad/SNTCompilerController.h"
 #import <XCTest/XCTest.h>
 
@@ -26,22 +28,14 @@
 #include "Source/common/TestUtils.h"
 #import "Source/santad/SNTCompilerController.h"
 #import "Source/santad/SNTDecisionCache.h"
-#include "Source/santad/Logs/EndpointSecurity/Logger.h"
 #include "Source/santad/EventProviders/EndpointSecurity/Message.h"
 #include "Source/santad/EventProviders/EndpointSecurity/MockEndpointSecurityAPI.h"
+#include "Source/santad/Logs/EndpointSecurity/Logger.h"
 
 using santa::santad::event_providers::endpoint_security::Message;
 using santa::santad::logs::endpoint_security::Logger;
 
 static const pid_t PID_MAX = 99999;
-
-// class MockLogger : public Logger {
-//   public:
-//   MOCK_METHOD(void,
-//               LogAllowlist,
-//               (const santa::santad::event_providers::endpoint_security::Message& msg,
-//                   const std::string_view hash));
-// };
 
 @interface SNTCompilerController (Testing)
 - (BOOL)isCompiler:(const audit_token_t&)tok;
@@ -165,7 +159,6 @@ static const pid_t PID_MAX = 99999;
   audit_token_t notCompilerTok = MakeAuditToken(56, 78);
   es_process_t compilerProc = MakeESProcess(&file, compilerTok, {});
   es_process_t notCompilerProc = MakeESProcess(&file, notCompilerTok, {});
-
   es_message_t esMsg;
 
   auto mockESApi = std::make_shared<MockEndpointSecurityAPI>();
@@ -265,25 +258,6 @@ static const pid_t PID_MAX = 99999;
                   "Unable to verify all expectations");
     [mockCompilerController stopMocking];
   }
-}
-
-- (void)testCreateTransitiveRuleTargetLoggerNonExecutable {
-  // SNTCompilerController *cc = [[SNTCompilerController alloc] init];
-  // id mockCompilerController = OCMPartialMock(cc);
-
-  // OCMExpect([mockCompilerController saveFakeDecision:NULL])
-  //     .ignoringNonObjectArgs();
-  // OCMExpect([mockCompilerController removeFakeDecision:NULL])
-  //     .ignoringNonObjectArgs();
-
-  // id mockFileInfo = OCMClassMock([SNTFileInfo class]);
-  // OCMStub([mockFileInfo isExecutable]).andReturn(FALSE);
-
-
-  // [mockCompilerController stopMocking];
-}
-
-- (void)testCreateTransitiveRuleTargetLogger {
 }
 
 @end
