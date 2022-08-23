@@ -1204,6 +1204,8 @@ santa_unit_test(
     name = "SNTEndpointSecurityAuthorizerTest",
     srcs = ["EventProviders/SNTEndpointSecurityAuthorizerTest.mm"],
     deps = [
+        ":EndpointSecurityClient",
+        ":EndpointSecurityMessage",
         ":MockEndpointSecurityAPI",
         ":SNTEndpointSecurityAuthorizer",
         "//Source/common:TestUtils",
