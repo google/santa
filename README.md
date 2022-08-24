@@ -1,7 +1,7 @@
 # Santa [![CI](https://github.com/google/santa/actions/workflows/ci.yml/badge.svg)](https://github.com/google/santa/actions/workflows/ci.yml)
 
 <p align="center">
-    <img src="https://raw.githubusercontent.com/google/gui/main/Source/santa/Resources/Images.xcassets/AppIcon.appiconset/santa-hat-icon-128.png" alt="Santa Icon" />
+    <img src="https://raw.githubusercontent.com/google/santa/main/Source/gui/Resources/Images.xcassets/AppIcon.appiconset/santa-hat-icon-128.png" alt="Santa Icon" />
 </p>
 
 Santa is a binary authorization system for macOS. It consists of a system
