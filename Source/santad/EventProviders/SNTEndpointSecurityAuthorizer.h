@@ -14,7 +14,6 @@
 
 #include "Source/santad/EventProviders/EndpointSecurity/EndpointSecurityAPI.h"
 #include "Source/santad/EventProviders/EndpointSecurity/Enricher.h"
-#include "Source/santad/Logs/EndpointSecurity/Logger.h"
 
 #import "Source/santad/SNTCompilerController.h"
 #import "Source/santad/SNTExecutionController.h"
@@ -25,7 +24,6 @@
 @interface SNTEndpointSecurityAuthorizer : SNTEndpointSecurityClient<SNTEventProvider>
 
 - (instancetype)initWithESAPI:(std::shared_ptr<santa::santad::event_providers::endpoint_security::EndpointSecurityAPI>)esApi
-                       logger:(std::shared_ptr<santa::santad::logs::endpoint_security::Logger>)logger
                execController:(SNTExecutionController*)execController
            compilerController:(SNTCompilerController*)compilerController
               authResultCache:(std::shared_ptr<santa::santad::event_providers::AuthResultCache>)authResultCache;

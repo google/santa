@@ -47,8 +47,6 @@ static const pid_t PID_MAX = 99999;
 @end
 
 @interface SNTCompilerControllerTest : XCTestCase
-// @property SNTCompilerController *compilerController;
-
 @property id mockDecisionCache;
 @property audit_token_t tok1;
 @property audit_token_t tok2;
@@ -59,8 +57,6 @@ static const pid_t PID_MAX = 99999;
 @implementation SNTCompilerControllerTest
 
 - (void)setUp {
-  // self.compilerController = [[SNTCompilerController alloc] init];
-
   self.mockDecisionCache = OCMClassMock([SNTDecisionCache class]);
   OCMStub([self.mockDecisionCache sharedCache])
       .andReturn(self.mockDecisionCache);

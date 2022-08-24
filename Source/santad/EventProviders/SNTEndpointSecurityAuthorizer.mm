@@ -24,7 +24,6 @@
 #include "Source/santad/EventProviders/EndpointSecurity/Message.h"
 
 using santa::santad::event_providers::endpoint_security::EndpointSecurityAPI;
-using santa::santad::logs::endpoint_security::Logger;
 using santa::santad::event_providers::endpoint_security::Message;
 using santa::santad::event_providers::AuthResultCache;
 
@@ -35,17 +34,14 @@ using santa::santad::event_providers::AuthResultCache;
 
 @implementation SNTEndpointSecurityAuthorizer {
   std::shared_ptr<AuthResultCache> _authResultCache;
-  std::shared_ptr<Logger> _logger;
 }
 
 - (instancetype)initWithESAPI:(std::shared_ptr<EndpointSecurityAPI>)esApi
-                       logger:(std::shared_ptr<Logger>)logger
                execController:(SNTExecutionController*)execController
            compilerController:(SNTCompilerController*)compilerController
               authResultCache:(std::shared_ptr<AuthResultCache>)authResultCache {
   self = [super initWithESAPI:esApi];
   if (self) {
-    _logger = logger;
     _execController = execController;
     _compilerController = compilerController;
     _authResultCache = authResultCache;
@@ -56,7 +52,7 @@ using santa::santad::event_providers::AuthResultCache;
 }
 
 - (void)processMessage:(const Message&)msg {
-const es_file_t *target_file = msg->event.exec.target->executable;
+  const es_file_t *target_file = msg->event.exec.target->executable;
 
   while (true) {
     auto returnAction = self->_authResultCache->CheckCache(target_file);
@@ -105,9 +101,7 @@ const es_file_t *target_file = msg->event.exec.target->executable;
                 format:@"Authorizing unexpected event type: %d", esMsg->event_type];
   }
 
-  printf("\n\nhandleMessage: About to check exec controller: %p\n\n", self.execController);
   if (![self.execController synchronousShouldProcessExecEvent:esMsg]) {
-    printf("\n\ndon't process, post and return...\n\n");
     [self postAction:ACTION_RESPOND_DENY forMessage:esMsg];
     return;
   }
@@ -134,7 +128,8 @@ const es_file_t *target_file = msg->event.exec.target->executable;
     default:
       // This is a programming error. Bail.
       LOGE(@"Invalid action for postAction, exiting.");
-      exit(EXIT_FAILURE);
+      [NSException raise:@"Invalid post action"
+                  format:@"Invalid post action: %d", action];
   }
 
   self->_authResultCache->AddToCache(esMsg->event.exec.target->executable,
