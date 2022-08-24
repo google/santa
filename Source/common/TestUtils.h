@@ -41,6 +41,11 @@
 // function returns early due to interrupts.
 void SleepMS(long ms);
 
+enum class ActionType {
+  Auth,
+  Notify,
+};
+
 // Helpers to construct various ES structs
 audit_token_t MakeAuditToken(pid_t pid, pid_t pidver);
 struct stat MakeStat(ino_t ino, dev_t devno = 0);
@@ -51,7 +56,7 @@ es_process_t MakeESProcess(es_file_t *file,
                            audit_token_t parent_tok);
 es_message_t MakeESMessage(es_event_type_t et,
                            es_process_t *proc,
-                           bool notify = true,
+                           ActionType action_type = ActionType::Notify,
                            uint64_t future_deadline_ms = 0);
 
 #endif

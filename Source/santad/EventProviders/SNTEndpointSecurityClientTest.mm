@@ -352,7 +352,7 @@ using santa::santad::event_providers::endpoint_security::Message;
   es_process_t proc = MakeESProcess(&proc_file, {}, {});
   es_message_t esMsg = MakeESMessage(ES_EVENT_TYPE_AUTH_OPEN,
                                      &proc,
-                                     false,
+                                     ActionType::Auth,
                                      45 * 1000); // Long deadline to not hit
 
   auto mockESApi = std::make_shared<MockEndpointSecurityAPI>();
@@ -399,7 +399,7 @@ using santa::santad::event_providers::endpoint_security::Message;
   es_process_t proc = MakeESProcess(&proc_file, {}, {});
   es_message_t esMsg = MakeESMessage(ES_EVENT_TYPE_AUTH_OPEN,
                                      &proc,
-                                     false,
+                                     ActionType::Auth,
                                      750); // 750ms timeout
 
   auto mockESApi = std::make_shared<MockEndpointSecurityAPI>();

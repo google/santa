@@ -86,7 +86,7 @@ public:
 - (void)testHandleMessage {
   es_file_t file = MakeESFile("foo");
   es_process_t proc = MakeESProcess(&file, {}, {});
-  es_message_t esMsg = MakeESMessage(ES_EVENT_TYPE_AUTH_EXEC, &proc, false);
+  es_message_t esMsg = MakeESMessage(ES_EVENT_TYPE_AUTH_EXEC, &proc, ActionType::Auth);
 
   auto mockESApi = std::make_shared<MockEndpointSecurityAPI>();
   EXPECT_CALL(*mockESApi, NewClient(testing::_))
@@ -169,7 +169,7 @@ public:
   es_process_t execProc = MakeESProcess(&execFile,
                                      MakeAuditToken(12, 23),
                                      MakeAuditToken(34, 45));
-  es_message_t esMsg = MakeESMessage(ES_EVENT_TYPE_AUTH_EXEC, &proc, false);
+  es_message_t esMsg = MakeESMessage(ES_EVENT_TYPE_AUTH_EXEC, &proc, ActionType::Auth);
   esMsg.event.exec.target = &execProc;
 
   auto mockESApi = std::make_shared<MockEndpointSecurityAPI>();
@@ -245,7 +245,7 @@ public:
   es_process_t execProc = MakeESProcess(&execFile,
                                      MakeAuditToken(12, 23),
                                      MakeAuditToken(34, 45));
-  es_message_t esMsg = MakeESMessage(ES_EVENT_TYPE_AUTH_EXEC, &proc, false);
+  es_message_t esMsg = MakeESMessage(ES_EVENT_TYPE_AUTH_EXEC, &proc, ActionType::Auth);
   esMsg.event.exec.target = &execProc;
 
   auto mockESApi = std::make_shared<MockEndpointSecurityAPI>();

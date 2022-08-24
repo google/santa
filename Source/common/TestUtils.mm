@@ -82,12 +82,14 @@ static uint64_t AddMillisToMachTime(uint64_t ms, uint64_t machTime) {
 
 es_message_t MakeESMessage(es_event_type_t et,
                            es_process_t *proc,
-                           bool notify,
+                           ActionType action_type,
                            uint64_t future_deadline_ms) {
   return es_message_t{
     .event_type = et,
     .process = proc,
-    .action_type = (notify) ? ES_ACTION_TYPE_NOTIFY : ES_ACTION_TYPE_AUTH,
+    .action_type = (action_type == ActionType::Notify) ?
+        ES_ACTION_TYPE_NOTIFY :
+        ES_ACTION_TYPE_AUTH,
     .deadline = AddMillisToMachTime(future_deadline_ms, mach_absolute_time()),
   };
 }
