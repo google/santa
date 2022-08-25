@@ -1,8 +1,6 @@
 #!/bin/bash
 set -ueo pipefail
 
-GIT_ROOT=$(git rev-parse --show-toplevel)
-
 if [[ "$(santactl status --json | jq .daemon.block_usb)" != "false" ]]; then
   echo "USB blocking already enabled?" >&2
   exit 1
