@@ -1,4 +1,5 @@
 load("//:helper.bzl", "santa_unit_test")
+load("//:helper.bzl", "run_command")
 load(
     "@build_bazel_rules_apple//apple:macos.bzl",
     "macos_command_line_application",
@@ -47,11 +48,19 @@ macos_command_line_application(
     deps = [":logging_benchmarks_lib"],
 )
 
+run_command(
+    name = "install_profile",
+    cmd = "osascript $${BUILD_WORKSPACE_DIRECTORY}/Testing/integration/install_profile.scpt $${BUILD_WORKSPACE_DIRECTORY}/$$1",
+)
+
 sh_test(
     name = "USBStatusCheck",
     srcs = [
         "test_usb_config_change.sh",
     ],
+    deps = [
+        ":install_profile",
+    ]
 )
 
 test_suite(
