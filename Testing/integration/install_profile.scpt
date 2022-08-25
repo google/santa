@@ -19,7 +19,7 @@ on run argv
 		end tell
 		delay 1
 		tell process "SecurityAgent"
-			set value of text field 2 of window 1 to (paragraph 1 of (read POSIX file "/opt/pass"))
+			set value of text field 2 of window 1 to system attribute "VM_PASSWORD"
 			click button 2 of window 1
 		end tell
 	end tell

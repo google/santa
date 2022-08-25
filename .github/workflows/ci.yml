@@ -37,12 +37,16 @@ jobs:
     runs-on: inner
     strategy:
       fail-fast: false
+    env:
+      VM_PASSWORD: ${{ secrets.VM_PASSWORD }}
     steps:
       - uses: actions/checkout@v2
       - name: set path
         run: echo "/opt/homebrew/bin/" >> $GITHUB_PATH
-      - name: run moroz
-        run: ~/go/bin/moroz -configs="$GITHUB_WORKSPACE/Testing/global.toml" -use-tls=false &
+      - name: install and run moroz
+        run: |
+          go install github.com/groob/moroz/cmd/moroz@latest
+          ~/go/bin/moroz -configs="$GITHUB_WORKSPACE/Testing/global.toml" -use-tls=false &
       - name: install configuration profile
         run: osascript Testing/integration/install_profile.scpt Testing/integration/configs/default.mobileconfig
       - name: start santa and sync
@@ -52,11 +56,7 @@ jobs:
       - name: run integration test binaries
         run: bazel test //Testing/integration:integration_tests
       - name: test config changes
-        run: |
-          [[ "$(santactl status --json | jq .daemon.block_usb)" == "false" ]] || (echo "already blocking USB?" && exit 1)
-          osascript Testing/integration/install_profile.scpt Testing/integration/configs/usb-block.mobileconfig
-          sleep 1
-          [[ "$(santactl status --json | jq .daemon.block_usb)" == "true" ]] || (echo "config change didnt take effect" && exit 1)
+        run: bazel test //Testing/integration:config_changes
       - name: schedule poweroff
         run: sudo shutdown -h +1
 

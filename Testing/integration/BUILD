@@ -46,3 +46,17 @@ macos_command_line_application(
     minimum_os_version = "10.15",
     deps = [":logging_benchmarks_lib"],
 )
+
+sh_test(
+    name = "USBStatusCheck",
+    srcs = [
+        "test_usb_config_change.sh",
+    ],
+)
+
+test_suite(
+    name = "config_changes",
+    tests = [
+        ":USBStatusCheck",
+    ],
+)
