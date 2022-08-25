@@ -21,21 +21,15 @@
 #include "Source/santad/EventProviders/EndpointSecurity/Message.h"
 
 using santa::santad::event_providers::endpoint_security::EndpointSecurityAPI;
-using santa::santad::logs::endpoint_security::Logger;
 using santa::santad::event_providers::endpoint_security::Message;
 
 static constexpr std::string_view kSantaKextIdentifier = "com.google.santa-driver";
 
-@implementation SNTEndpointSecurityTamperResistance {
-  std::shared_ptr<Logger> _logger;
-}
+@implementation SNTEndpointSecurityTamperResistance
 
-- (instancetype)initWithESAPI:(std::shared_ptr<EndpointSecurityAPI>)esApi
-                       logger:(std::shared_ptr<Logger>)logger {
+- (instancetype)initWithESAPI:(std::shared_ptr<EndpointSecurityAPI>)esApi {
   self = [super initWithESAPI:esApi];
   if (self) {
-    _logger = logger;
-
     [self establishClientOrDie];
   }
   return self;
@@ -54,6 +48,7 @@ static constexpr std::string_view kSantaKextIdentifier = "com.google.santa-drive
 
       return;
     }
+
     case ES_EVENT_TYPE_AUTH_RENAME: {
       if ([SNTEndpointSecurityTamperResistance isDatabasePath:esMsg->event.rename.source->path.data]) {
         // Do not cache so that each attempt to remove santa is logged
@@ -88,7 +83,9 @@ static constexpr std::string_view kSantaKextIdentifier = "com.google.santa-drive
 
     default:
       // Unexpected event type, this is a programming error
-      exit(EXIT_FAILURE);
+      [NSException raise:@"Invalid event type"
+                  format:@"Invalid tamper resistance event type: %d",
+                         esMsg->event_type];
   }
 }
 

@@ -1222,6 +1222,8 @@ santa_unit_test(
     name = "SNTEndpointSecurityTamperResistanceTest",
     srcs = ["EventProviders/SNTEndpointSecurityTamperResistanceTest.mm"],
     deps = [
+        ":EndpointSecurityClient",
+        ":EndpointSecurityMessage",
         ":MockEndpointSecurityAPI",
         ":SNTEndpointSecurityTamperResistance",
         "//Source/common:TestUtils",
