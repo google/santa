@@ -48,7 +48,7 @@ using santa::santad::event_providers::endpoint_security::Message;
 - (instancetype)initWithESAPI:(std::shared_ptr<EndpointSecurityAPI>)esApi {
   self = [super init];
   if (self) {
-    _esApi = esApi;
+    _esApi = std::move(esApi);
     _deadlineMarginMS = 5000;
 
     if (mach_timebase_info(&_timebase) != KERN_SUCCESS) {

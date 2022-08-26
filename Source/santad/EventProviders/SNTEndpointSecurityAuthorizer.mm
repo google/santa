@@ -40,7 +40,7 @@ using santa::santad::event_providers::AuthResultCache;
                execController:(SNTExecutionController*)execController
            compilerController:(SNTCompilerController*)compilerController
               authResultCache:(std::shared_ptr<AuthResultCache>)authResultCache {
-  self = [super initWithESAPI:esApi];
+  self = [super initWithESAPI:std::move(esApi)];
   if (self) {
     _execController = execController;
     _compilerController = compilerController;

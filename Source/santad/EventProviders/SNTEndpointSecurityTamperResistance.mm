@@ -15,21 +15,27 @@
 #import "Source/santad/EventProviders/SNTEndpointSecurityTamperResistance.h"
 
 #include <EndpointSecurity/ESTypes.h>
-#include <stdlib.h>
+#include <string.h>
 
 #import "Source/common/SNTLogging.h"
 #include "Source/santad/EventProviders/EndpointSecurity/Message.h"
 
 using santa::santad::event_providers::endpoint_security::EndpointSecurityAPI;
 using santa::santad::event_providers::endpoint_security::Message;
+using santa::santad::logs::endpoint_security::Logger;
 
 static constexpr std::string_view kSantaKextIdentifier = "com.google.santa-driver";
 
-@implementation SNTEndpointSecurityTamperResistance
+@implementation SNTEndpointSecurityTamperResistance {
+  std::shared_ptr<Logger> _logger;
+}
 
-- (instancetype)initWithESAPI:(std::shared_ptr<EndpointSecurityAPI>)esApi {
-  self = [super initWithESAPI:esApi];
+- (instancetype)initWithESAPI:(std::shared_ptr<EndpointSecurityAPI>)esApi
+                       logger:(std::shared_ptr<Logger>)logger {
+  self = [super initWithESAPI:std::move(esApi)];
   if (self) {
+    _logger = logger;
+
     [self establishClientOrDie];
   }
   return self;

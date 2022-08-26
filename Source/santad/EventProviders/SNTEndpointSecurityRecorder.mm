@@ -60,7 +60,7 @@ static inline es_file_t* GetTargetFileForPrefixTree(const es_message_t* msg) {
            compilerController:(SNTCompilerController*)compilerController
               authResultCache:(std::shared_ptr<AuthResultCache>)authResultCache
                    prefixTree:(std::shared_ptr<SNTPrefixTree>)prefixTree {
-  self = [super initWithESAPI:esApi];
+  self = [super initWithESAPI:std::move(esApi)];
   if (self) {
     _enricher = enricher;
     _logger = logger;

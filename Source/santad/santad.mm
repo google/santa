@@ -115,7 +115,8 @@ void SantadMain(std::shared_ptr<EndpointSecurityAPI> esapi,
                                            authResultCache:auth_result_cache];
 
   SNTEndpointSecurityTamperResistance *tamper_client =
-      [[SNTEndpointSecurityTamperResistance alloc] initWithESAPI:esapi];
+      [[SNTEndpointSecurityTamperResistance alloc] initWithESAPI:esapi
+                                                          logger:logger];
 
   EstablishSyncServiceConnection(syncd_queue);
 

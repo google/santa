@@ -437,8 +437,9 @@ objc_library(
     hdrs = ["EventProviders/SNTEndpointSecurityTamperResistance.h"],
     deps = [
         ":EndpointSecurityAPI",
-        ":SNTEndpointSecurityClient",
         ":EndpointSecurityLogger",
+        ":EndpointSecurityMessage",
+        ":SNTEndpointSecurityClient",
         ":SNTEventProvider",
     ],
 )

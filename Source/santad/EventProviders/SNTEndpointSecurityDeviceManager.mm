@@ -140,7 +140,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (instancetype)initWithESAPI:(std::shared_ptr<EndpointSecurityAPI>)esApi
                        logger:(std::shared_ptr<Logger>)logger
               authResultCache:(std::shared_ptr<AuthResultCache>)authResultCache {
-  self = [super initWithESAPI:esApi];
+  self = [super initWithESAPI:std::move(esApi)];
   if (self) {
     _logger = logger;
     _blockUSBMount = false;

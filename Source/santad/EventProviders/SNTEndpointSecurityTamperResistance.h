@@ -12,12 +12,18 @@
 ///    See the License for the specific language governing permissions and
 ///    limitations under the License.
 
+#import <Foundation/Foundation.h>
+
+#include <memory>
+
 #include "Source/santad/EventProviders/EndpointSecurity/EndpointSecurityAPI.h"
 #import "Source/santad/EventProviders/SNTEndpointSecurityClient.h"
 #import "Source/santad/EventProviders/SNTEventProvider.h"
+#include "Source/santad/Logs/EndpointSecurity/Logger.h"
 
 @interface SNTEndpointSecurityTamperResistance : SNTEndpointSecurityClient<SNTEventProvider>
 
-- (instancetype)initWithESAPI:(std::shared_ptr<santa::santad::event_providers::endpoint_security::EndpointSecurityAPI>)esApi;
+- (instancetype)initWithESAPI:(std::shared_ptr<santa::santad::event_providers::endpoint_security::EndpointSecurityAPI>)esApi
+                       logger:(std::shared_ptr<santa::santad::logs::endpoint_security::Logger>)logger;
 
 @end
