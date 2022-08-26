@@ -163,7 +163,9 @@ objc_library(
     visibility = ["//visibility:public"],
 )
 """,
-    commit = "4a49ebb985bc16fae9489771aa35482ccbea14a3",  # tag = v3.8.1
+    commit = "afd2c6924e8a36cb872bc475248b978f743c6050",  # tag = v3.9.1
+    patch_args = ["-p1"],
+    patches = ["//patches/OCMock:503.patch"],
     remote = "https://github.com/erikdoe/ocmock",
     shallow_since = "1609349457 +0100",
 )
