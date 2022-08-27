@@ -45,9 +45,9 @@ public:
   Logger(std::shared_ptr<serializers::Serializer> serializer,
          std::shared_ptr<writers::Writer> writer);
 
-  ~Logger() = default;
+  virtual ~Logger() = default;
 
-  void Log(
+  virtual void Log(
       std::shared_ptr<santa::santad::event_providers::endpoint_security::EnrichedMessage> msg);
 
   void LogAllowlist(

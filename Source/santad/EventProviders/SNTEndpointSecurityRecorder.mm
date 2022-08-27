@@ -28,7 +28,7 @@ using santa::santad::event_providers::endpoint_security::Message;
 using santa::santad::event_providers::endpoint_security::EnrichedMessage;
 using santa::santad::event_providers::AuthResultCache;
 
-static inline es_file_t* GetTargetFileForPrefixTree(const es_message_t* msg) {
+es_file_t* GetTargetFileForPrefixTree(const es_message_t* msg) {
   switch(msg->event_type) {
     case ES_EVENT_TYPE_NOTIFY_CLOSE:
       return msg->event.close.target;

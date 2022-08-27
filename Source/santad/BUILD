@@ -1240,7 +1240,13 @@ santa_unit_test(
     name = "SNTEndpointSecurityRecorderTest",
     srcs = ["EventProviders/SNTEndpointSecurityRecorderTest.mm"],
     deps = [
+        ":AuthResultCache",
+        ":EndpointSecurityClient",
+        ":EndpointSecurityEnricher",
+        ":EndpointSecurityLogger",
+        ":EndpointSecurityMessage",
         ":MockEndpointSecurityAPI",
+        ":SNTCompilerController",
         ":SNTEndpointSecurityRecorder",
         "//Source/common:TestUtils",
         "@com_google_googletest//:gtest",
