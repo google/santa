@@ -783,43 +783,6 @@ macos_bundle(
 )
 
 santa_unit_test(
-    name = "SNTExecutionControllerTest",
-    srcs = [
-        "DataLayer/SNTDatabaseTable.h",
-        "DataLayer/SNTEventTable.h",
-        "DataLayer/SNTRuleTable.h",
-        "EventProviders/SNTEventProvider.h",
-        "SNTExecutionController.h",
-        "SNTExecutionControllerTest.m",
-    ],
-    sdk_dylibs = [
-        "EndpointSecurity",
-        "bsm",
-    ],
-    deps = [
-        ":santad_lib",
-        "//Source/common:SNTBlockMessage",
-        "//Source/common:SNTCachedDecision",
-        "//Source/common:SNTCommon",
-        "//Source/common:SNTCommonEnums",
-        "//Source/common:SNTConfigurator",
-        "//Source/common:SNTDropRootPrivs",
-        "//Source/common:SNTFileInfo",
-        "//Source/common:SNTLogging",
-        "//Source/common:SNTMetricSet",
-        "//Source/common:SNTPrefixTree",
-        "//Source/common:SNTRule",
-        "//Source/common:SNTXPCNotifierInterface",
-        "//Source/common:SantaCache",
-        "@FMDB",
-        "@MOLCertificate",
-        "@MOLCodesignChecker",
-        "@MOLXPCConnection",
-        "@OCMock",
-    ],
-)
-
-santa_unit_test(
     name = "SNTEventTableTest",
     srcs = [
         "DataLayer/SNTDatabaseTable.h",
@@ -1201,6 +1164,41 @@ santa_unit_test(
 )
 
 santa_unit_test(
+    name = "SNTExecutionControllerTest",
+    srcs = ["SNTExecutionControllerTest.mm",],
+    deps = [
+        ":EndpointSecurityMessage",
+        ":MockEndpointSecurityAPI",
+        ":SNTExecutionController",
+        "//Source/common:TestUtils",
+        "@OCMock",
+        # ":santad_lib",
+        # "//Source/common:SNTBlockMessage",
+        # "//Source/common:SNTCachedDecision",
+        # "//Source/common:SNTCommon",
+        # "//Source/common:SNTCommonEnums",
+        # "//Source/common:SNTConfigurator",
+        # "//Source/common:SNTDropRootPrivs",
+        # "//Source/common:SNTFileInfo",
+        # "//Source/common:SNTLogging",
+        # "//Source/common:SNTMetricSet",
+        # "//Source/common:SNTPrefixTree",
+        # "//Source/common:SNTRule",
+        # "//Source/common:SNTXPCNotifierInterface",
+        # "//Source/common:SantaCache",
+        # "@FMDB",
+        # "@MOLCertificate",
+        # "@MOLCodesignChecker",
+        # "@MOLXPCConnection",
+
+    ],
+    sdk_dylibs = [
+        "EndpointSecurity",
+        "bsm",
+    ],
+)
+
+santa_unit_test(
     name = "SNTEndpointSecurityAuthorizerTest",
     srcs = ["EventProviders/SNTEndpointSecurityAuthorizerTest.mm"],
     deps = [
@@ -1328,7 +1326,7 @@ test_suite(
         # ":SNTApplicationCoreMetricsTest", -- Works as-is
         ":SNTApplicationTest",
         ":SNTDeviceManagerTest",
-        ":SNTEndpointSecurityManagerTest",
+        # ":SNTEndpointSecurityManagerTest", -- Ported
         # ":SNTEventTableTest", -- Works as-is
         ":SNTExecutionControllerTest",
         # ":SNTProtobufEventLogTest", -- Deleting

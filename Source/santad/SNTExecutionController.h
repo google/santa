@@ -82,4 +82,5 @@ const static NSString *kAllowNullVNode = @"AllowNullVNode"; // TODO: Remove
 ///  @return bool True if the event should be processed, otherwise false.
 ///
 - (bool)synchronousShouldProcessExecEvent:(const santa::santad::event_providers::endpoint_security::Message&)esMsg;
+
 @end

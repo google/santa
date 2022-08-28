@@ -121,7 +121,9 @@ static NSString *const kPrinterProxyPostMonterey =
   if (unlikely(esMsg->event_type != ES_EVENT_TYPE_AUTH_EXEC)) {
     // Programming error. Bail.
     LOGE(@"Attempt to validate non-EXEC event. Event type: %d", esMsg->event_type);
-    exit(EXIT_FAILURE);
+    [NSException raise:@"Invalid event type"
+                format:@"synchronousShouldProcessExecEvent: Unexpected event type: %d",
+                       esMsg->event_type];
   }
 
   const es_process_t *targetProc = esMsg->event.exec.target;
@@ -155,7 +157,9 @@ static NSString *const kPrinterProxyPostMonterey =
   if (unlikely(esMsg->event_type != ES_EVENT_TYPE_AUTH_EXEC)) {
     // Programming error. Bail.
     LOGE(@"Attempt to validate non-EXEC event. Event type: %d", esMsg->event_type);
-    exit(EXIT_FAILURE);
+    [NSException raise:@"Invalid event type"
+                format:@"validateExecEvent:postAction: Unexpected event type: %d",
+                       esMsg->event_type];
   }
 
   // Get info about the file. If we can't get this info, respond appropriately and log an error.
