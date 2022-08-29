@@ -6,7 +6,7 @@ if [[ "$(santactl status --json | jq .daemon.block_usb)" != "false" ]]; then
   exit 1
 fi
 
-bazel run //Testing/integration:install_profile -- Testing/integration/configs/usb-block.mobileconfig
+osascript Testing/integration/install_profile.scpt Testing/integration/configs/usb-block.mobileconfig
 sleep 1
 
 if [[ "$(santactl status --json | jq .daemon.block_usb)" != "true" ]]; then

@@ -57,6 +57,8 @@ sh_test(
     name = "USBStatusCheck",
     srcs = [
         "test_usb_config_change.sh",
+        "install_profile.scpt",
+        "configs/usb-block.mobileconfig",
     ],
     deps = [
         ":install_profile",
