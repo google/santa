@@ -23,7 +23,9 @@ on run argv
 			click button 2 of window 1
 		end tell
 	end tell
+
 	delay 5
+
 	tell application "System Preferences"
 		quit
 	end tell
