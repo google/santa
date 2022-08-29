@@ -1307,6 +1307,7 @@ test_suite(
         ":SNTEndpointSecurityRecorderTest",
         ":SNTEndpointSecurityTamperResistanceTest",
         ":SNTEventTableTest",
+        ":SNTExecutionControllerTest",
         ":SNTRuleTableTest",
     ],
     visibility = ["//:santa_package_group"],
