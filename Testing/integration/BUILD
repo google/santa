@@ -58,7 +58,7 @@ sh_test(
     srcs = [
         "test_usb_config_change.sh",
     ],
-    deps = [
+    data = [
         "install_profile.scpt",
         "configs/usb-block.mobileconfig",
     ],
