@@ -12,122 +12,125 @@
 ///    See the License for the specific language governing permissions and
 ///    limitations under the License.
 
-// #import <MOLCertificate/MOLCertificate.h>
-// #import <MOLCodesignChecker/MOLCodesignChecker.h>
+#include <dispatch/dispatch.h>
 #include <EndpointSecurity/ESTypes.h>
+#import <MOLCertificate/MOLCertificate.h>
+#import <MOLCodesignChecker/MOLCodesignChecker.h>
+#include "Source/common/SNTCommon.h"
 #import <OCMock/OCMock.h>
+#include "Source/common/SNTCommonEnums.h"
 #import <XCTest/XCTest.h>
 
+#import "Source/common/SNTCachedDecision.h"
+#import "Source/common/SNTCommonEnums.h"
+#import "Source/common/SNTConfigurator.h"
+#import "Source/common/SNTFileInfo.h"
+#import "Source/common/SNTMetricSet.h"
+#import "Source/common/SNTRule.h"
 #include "Source/common/TestUtils.h"
+#import "Source/santad/SNTDecisionCache.h"
 #import "Source/santad/SNTExecutionController.h"
+#import "Source/santad/DataLayer/SNTEventTable.h"
+#import "Source/santad/DataLayer/SNTRuleTable.h"
 #include "Source/santad/EventProviders/EndpointSecurity/Message.h"
 #include "Source/santad/EventProviders/EndpointSecurity/MockEndpointSecurityAPI.h"
 
-// #import "Source/common/SNTConfigurator.h"
-// #import "Source/common/SNTFileInfo.h"
-// #import "Source/common/SNTMetricSet.h"
-// #import "Source/common/SNTRule.h"
-// #import "Source/santad/DataLayer/SNTEventTable.h"
-// #import "Source/santad/DataLayer/SNTRuleTable.h"
-// #import "Source/santad/EventProviders/SNTEventProvider.h"
-
 using santa::santad::event_providers::endpoint_security::Message;
 
+using PostActionBlock = bool(^)(santa_action_t);
+using VerifyPostActionBlock = PostActionBlock(^)(santa_action_t);
+
+VerifyPostActionBlock verifyPostAction = ^PostActionBlock(santa_action_t wantAction) {
+  return ^bool(santa_action_t gotAction) {
+    XCTAssertEqual(gotAction, wantAction);
+  };
+};
+
 @interface SNTExecutionControllerTest : XCTestCase
-// @property id mockConfigurator;
-// @property id mockCodesignChecker;
-// @property id mockEventProvider;
-// @property id mockFileInfo;
-// @property id mockRuleDatabase;
-// @property id mockEventDatabase;
+@property id mockDecisionCache;
+@property id mockConfigurator;
+@property id mockCodesignChecker;
+@property id mockFileInfo;
+@property id mockRuleDatabase;
+@property id mockEventDatabase;
 
-// @property SNTExecutionController *sut;
+@property SNTExecutionController *sut;
 @end
-
-// @interface SNTTestEventProvider : NSObject
-// - (int)postAction:(santa_action_t)action forMessage:(santa_message_t)sm;
-// @end
-// @implementation SNTTestEventProvider
-// - (int)postAction:(santa_action_t)action forMessage:(santa_message_t)sm {
-//   return 0;
-// }
-// @end
 
 @implementation SNTExecutionControllerTest
 
-// - (void)setUp {
-//   [super setUp];
+- (void)setUp {
+  [super setUp];
 
-//   fclose(stdout);
+  self.mockDecisionCache = OCMStrictClassMock([SNTDecisionCache class]);
+  OCMStub([self.mockDecisionCache sharedCache])
+      .andReturn(self.mockDecisionCache);
+  OCMStub([self.mockDecisionCache cacheDecision:OCMOCK_ANY]);
 
-//   [[SNTMetricSet sharedInstance] reset];
+  [[SNTMetricSet sharedInstance] reset];
 
-//   self.mockCodesignChecker = OCMClassMock([MOLCodesignChecker class]);
-//   OCMStub([self.mockCodesignChecker alloc]).andReturn(self.mockCodesignChecker);
+  self.mockCodesignChecker = OCMClassMock([MOLCodesignChecker class]);
+  OCMStub([self.mockCodesignChecker alloc]).andReturn(self.mockCodesignChecker);
+  OCMStub([self.mockCodesignChecker initWithBinaryPath:OCMOCK_ANY error:[OCMArg setTo:NULL]])
+      .andReturn(self.mockCodesignChecker);
 
-//   OCMStub([self.mockCodesignChecker initWithBinaryPath:OCMOCK_ANY error:[OCMArg setTo:NULL]])
-//     .andReturn(self.mockCodesignChecker);
+  self.mockConfigurator = OCMClassMock([SNTConfigurator class]);
+  OCMStub([self.mockConfigurator configurator]).andReturn(self.mockConfigurator);
+  NSURL *url = [NSURL URLWithString:@"https://localhost/test"];
+  OCMStub([self.mockConfigurator syncBaseURL]).andReturn(url);
 
-//   self.mockConfigurator = OCMClassMock([SNTConfigurator class]);
-//   OCMStub([self.mockConfigurator configurator]).andReturn(self.mockConfigurator);
-//   NSURL *url = [NSURL URLWithString:@"https://localhost/test"];
-//   OCMStub([self.mockConfigurator syncBaseURL]).andReturn(url);
+  self.mockFileInfo = OCMClassMock([SNTFileInfo class]);
+  OCMStub([self.mockFileInfo alloc]).andReturn(self.mockFileInfo);
+  OCMStub([self.mockFileInfo initWithEndpointSecurityFile:NULL error:[OCMArg setTo:nil]])
+      .ignoringNonObjectArgs()
+      .andReturn(self.mockFileInfo);
+  OCMStub([self.mockFileInfo codesignCheckerWithError:[OCMArg setTo:nil]])
+      .andReturn(self.mockCodesignChecker);
 
-//   self.mockEventProvider = OCMClassMock([SNTTestEventProvider class]);
+  self.mockRuleDatabase = OCMClassMock([SNTRuleTable class]);
+  self.mockEventDatabase = OCMClassMock([SNTEventTable class]);
 
-//   self.mockFileInfo = OCMClassMock([SNTFileInfo class]);
-//   OCMStub([self.mockFileInfo alloc]).andReturn(self.mockFileInfo);
-//   OCMStub([self.mockFileInfo initWithPath:OCMOCK_ANY error:[OCMArg setTo:nil]])
-//     .andReturn(self.mockFileInfo);
-//   OCMStub([self.mockFileInfo codesignCheckerWithError:[OCMArg setTo:nil]])
-//     .andReturn(self.mockCodesignChecker);
+  self.sut = [[SNTExecutionController alloc]
+      initWithRuleTable:self.mockRuleDatabase
+             eventTable:self.mockEventDatabase
+          notifierQueue:nil
+             syncdQueue:nil];
+}
 
-//   self.mockRuleDatabase = OCMClassMock([SNTRuleTable class]);
-//   self.mockEventDatabase = OCMClassMock([SNTEventTable class]);
+- (void)tearDown {
+  [self.mockEventDatabase stopMocking];
+  [self.mockRuleDatabase stopMocking];
+  [self.mockFileInfo stopMocking];
+  [self.mockConfigurator stopMocking];
+  [self.mockCodesignChecker stopMocking];
+  [self.mockDecisionCache stopMocking];
+}
 
-//   self.sut = [[SNTExecutionController alloc] initWithEventProvider:self.mockEventProvider
-//                                                          ruleTable:self.mockRuleDatabase
-//                                                         eventTable:self.mockEventDatabase
-//                                                      notifierQueue:nil
-//                                                         syncdQueue:nil];
-// }
+- (void)checkMetricCounters:(const NSString *)expectedFieldValueName
+                   expected:(NSNumber *)expectedValue {
+  SNTMetricSet *metricSet = [SNTMetricSet sharedInstance];
+  NSDictionary *eventCounter = [metricSet export][@"metrics"][@"/santa/events"];
+  BOOL foundField;
+  for (NSDictionary *fieldValue in eventCounter[@"fields"][@"action_response"]) {
+    if (![expectedFieldValueName isEqualToString:fieldValue[@"value"]]) continue;
+    XCTAssertEqualObjects(expectedValue, fieldValue[@"data"],
+                          @"%@ counter does not match expected value", expectedFieldValueName);
+    foundField = YES;
+    break;
+  }
 
-///  Return a pre-configured santa_message_ t for testing with.
-// - (santa_message_t)getMessage {
-//   santa_message_t message = {};
-//   message.pid = 12;
-//   message.ppid = 1;
-//   message.vnode_id = [self getVnodeId];
-//   strncpy(message.path, "/a/file", 7);
-//   return message;
-// }
-
-// - (santa_vnode_id_t)getVnodeId {
-//   return (santa_vnode_id_t){.fsid = 1234, .fileid = 5678};
-// }
-
-// - (void)checkMetricCounters:(const NSString *)expectedFieldValueName
-//                    expected:(NSNumber *)expectedValue {
-//   SNTMetricSet *metricSet = [SNTMetricSet sharedInstance];
-//   NSDictionary *eventCounter = [metricSet export][@"metrics"][@"/santa/events"];
-//   BOOL foundField;
-//   for (NSDictionary *fieldValue in eventCounter[@"fields"][@"action_response"]) {
-//     if (![expectedFieldValueName isEqualToString:fieldValue[@"value"]]) continue;
-//     XCTAssertEqualObjects(expectedValue, fieldValue[@"data"],
-//                           @"%@ counter does not match expected value", expectedFieldValueName);
-//     foundField = YES;
-//     break;
-//   }
-
-//   if (!foundField && expectedValue.intValue != 0) {
-//     XCTFail(@"failed to find %@ field value", expectedFieldValueName);
-//   }
-// }
+  if (!foundField && expectedValue.intValue != 0) {
+    XCTFail(@"failed to find %@ field value", expectedFieldValueName);
+  }
+}
 
 - (void)testSynchronousShouldProcessExecEvent {
   es_file_t file = MakeESFile("foo");
   es_process_t proc = MakeESProcess(&file, {}, {});
-  es_message_t esMsg = MakeESMessage(ES_EVENT_TYPE_NOTIFY_EXEC, &proc);
+  es_file_t fileExec = MakeESFile("bar", { .st_dev = 12, .st_ino = 34, });
+  es_process_t procExec = MakeESProcess(&fileExec, {}, {});
+  es_message_t esMsg = MakeESMessage(ES_EVENT_TYPE_AUTH_EXEC, &proc);
+  esMsg.event.exec.target = &procExec;
 
   auto mockESApi = std::make_shared<MockEndpointSecurityAPI>();
   EXPECT_CALL(*mockESApi, ReleaseMessage(testing::_))
@@ -135,291 +138,332 @@ using santa::santad::event_providers::endpoint_security::Message;
   EXPECT_CALL(*mockESApi, RetainMessage(testing::_))
       .WillRepeatedly(testing::Return(&esMsg));
 
-  SNTExecutionController *ec = [[SNTExecutionController alloc]
-      initWithRuleTable:nil
-             eventTable:nil
-          notifierQueue:nil
-             syncdQueue:nil];
+  // Undo the default mocks
+  self.mockDecisionCache = OCMStrictClassMock([SNTDecisionCache class]);
+  OCMStub([self.mockDecisionCache sharedCache])
+      .andReturn(self.mockDecisionCache);
 
+  // Throw on non-AUTH EXEC events
   {
+    esMsg.event_type = ES_EVENT_TYPE_NOTIFY_EXEC;
     Message msg(mockESApi, &esMsg);
-    XCTAssertNoThrow([ec synchronousShouldProcessExecEvent:msg]);
+    XCTAssertThrows([self.sut synchronousShouldProcessExecEvent:msg]);
+  }
+
+  // "Normal" events should be processed
+  {
+    esMsg.event_type = ES_EVENT_TYPE_AUTH_EXEC;
+    Message msg(mockESApi, &esMsg);
+    XCTAssertTrue([self.sut synchronousShouldProcessExecEvent:msg]);
+  }
+
+  // Long or truncated paths are not handled
+  {
+    size_t oldLen = esMsg.event.exec.target->executable->path.length;
+    esMsg.event.exec.target->executable->path.length = 24000;
+    es_file_t *targetExecutable = esMsg.event.exec.target->executable;
+
+    Message msg(mockESApi, &esMsg);
+
+    OCMExpect([self.mockDecisionCache
+        cacheDecision:[OCMArg checkWithBlock:^BOOL(SNTCachedDecision *cd){
+          return cd.decision == SNTEventStateBlockLongPath &&
+              cd.vnodeId.fsid == targetExecutable->stat.st_dev &&
+              cd.vnodeId.fileid == targetExecutable->stat.st_ino;
+        }]]);
+
+    XCTAssertFalse([self.sut synchronousShouldProcessExecEvent:msg]);
+
+    esMsg.event.exec.target->executable->path.length = oldLen;
+    esMsg.event.exec.target->executable->path_truncated = true;
+
+    OCMExpect([self.mockDecisionCache
+        cacheDecision:[OCMArg checkWithBlock:^BOOL(SNTCachedDecision *cd){
+          return cd.decision == SNTEventStateBlockLongPath &&
+              cd.vnodeId.fsid == targetExecutable->stat.st_dev &&
+              cd.vnodeId.fileid == targetExecutable->stat.st_ino;
+        }]]);
+
+    XCTAssertFalse([self.sut synchronousShouldProcessExecEvent:msg]);
+
+    XCTAssertTrue(OCMVerifyAll(self.mockDecisionCache));
   }
 
   XCTBubbleMockVerifyAndClearExpectations(mockESApi.get());
 }
 
-// - (void)testBinaryAllowRule {
-//   OCMStub([self.mockFileInfo isMachO]).andReturn(YES);
-//   OCMStub([self.mockFileInfo SHA256]).andReturn(@"a");
+- (void)validateExecEvent:(santa_action_t)wantAction {
+  es_file_t file = MakeESFile("foo");
+  es_process_t proc = MakeESProcess(&file, {}, {});
+  es_file_t fileExec = MakeESFile("bar", { .st_dev = 12, .st_ino = 34, });
+  es_process_t procExec = MakeESProcess(&fileExec, {}, {});
+  es_message_t esMsg = MakeESMessage(ES_EVENT_TYPE_AUTH_EXEC, &proc);
+  esMsg.event.exec.target = &procExec;
 
-//   SNTRule *rule = [[SNTRule alloc] init];
-//   rule.state = SNTRuleStateAllow;
-//   rule.type = SNTRuleTypeBinary;
-//   OCMStub([self.mockRuleDatabase ruleForBinarySHA256:@"a" certificateSHA256:nil teamID:nil])
-//     .andReturn(rule);
+  auto mockESApi = std::make_shared<MockEndpointSecurityAPI>();
+  EXPECT_CALL(*mockESApi, ReleaseMessage(testing::_))
+      .Times(testing::AnyNumber());
+  EXPECT_CALL(*mockESApi, RetainMessage(testing::_))
+      .WillRepeatedly(testing::Return(&esMsg));
 
-//   [self.sut validateBinaryWithMessage:[self getMessage]];
+  {
+    Message msg(mockESApi, &esMsg);
+    [self.sut validateExecEvent:msg
+                     postAction:verifyPostAction(wantAction)];
+  }
 
-//   OCMVerify([self.mockEventProvider postAction:ACTION_RESPOND_ALLOW forMessage:[self getMessage]]);
-//   [self checkMetricCounters:@"AllowBinary" expected:@1];
-// }
+  XCTBubbleMockVerifyAndClearExpectations(mockESApi.get());
+}
 
-// - (void)testBinaryBlockRule {
-//   OCMStub([self.mockFileInfo isMachO]).andReturn(YES);
-//   OCMStub([self.mockFileInfo SHA256]).andReturn(@"a");
+- (void)testBinaryAllowRule {
+  OCMStub([self.mockFileInfo isMachO]).andReturn(YES);
+  OCMStub([self.mockFileInfo SHA256]).andReturn(@"a");
 
-//   SNTRule *rule = [[SNTRule alloc] init];
-//   rule.state = SNTRuleStateBlock;
-//   rule.type = SNTRuleTypeBinary;
-//   OCMStub([self.mockRuleDatabase ruleForBinarySHA256:@"a" certificateSHA256:nil teamID:nil])
-//     .andReturn(rule);
+  SNTRule *rule = [[SNTRule alloc] init];
+  rule.state = SNTRuleStateAllow;
+  rule.type = SNTRuleTypeBinary;
+  OCMStub([self.mockRuleDatabase ruleForBinarySHA256:@"a" certificateSHA256:nil teamID:nil])
+      .andReturn(rule);
 
-//   [self.sut validateBinaryWithMessage:[self getMessage]];
+  [self validateExecEvent:ACTION_RESPOND_ALLOW];
+  [self checkMetricCounters:kAllowBinary expected:@1];
+}
 
-//   OCMVerify([self.mockEventProvider postAction:ACTION_RESPOND_DENY forMessage:[self getMessage]]);
+- (void)testBinaryBlockRule {
+  OCMStub([self.mockFileInfo isMachO]).andReturn(YES);
+  OCMStub([self.mockFileInfo SHA256]).andReturn(@"a");
 
-//   // verify that we're incrementing the binary block
-//   [self checkMetricCounters:@"BlockBinary" expected:@1];
-// }
+  SNTRule *rule = [[SNTRule alloc] init];
+  rule.state = SNTRuleStateBlock;
+  rule.type = SNTRuleTypeBinary;
+  OCMStub([self.mockRuleDatabase ruleForBinarySHA256:@"a" certificateSHA256:nil teamID:nil])
+    .andReturn(rule);
 
-// - (void)testCertificateAllowRule {
-//   OCMStub([self.mockFileInfo isMachO]).andReturn(YES);
+  [self validateExecEvent:ACTION_RESPOND_DENY];
+  [self checkMetricCounters:kBlockBinary expected:@1];
+}
 
-//   id cert = OCMClassMock([MOLCertificate class]);
-//   OCMStub([self.mockCodesignChecker leafCertificate]).andReturn(cert);
-//   OCMStub([cert SHA256]).andReturn(@"a");
+- (void)testCertificateAllowRule {
+  OCMStub([self.mockFileInfo isMachO]).andReturn(YES);
 
-//   SNTRule *rule = [[SNTRule alloc] init];
-//   rule.state = SNTRuleStateAllow;
-//   rule.type = SNTRuleTypeCertificate;
-//   OCMStub([self.mockRuleDatabase ruleForBinarySHA256:nil certificateSHA256:@"a" teamID:nil])
-//     .andReturn(rule);
+  id cert = OCMClassMock([MOLCertificate class]);
+  OCMStub([self.mockCodesignChecker leafCertificate]).andReturn(cert);
+  OCMStub([cert SHA256]).andReturn(@"a");
 
-//   [self.sut validateBinaryWithMessage:[self getMessage]];
+  SNTRule *rule = [[SNTRule alloc] init];
+  rule.state = SNTRuleStateAllow;
+  rule.type = SNTRuleTypeCertificate;
+  OCMStub([self.mockRuleDatabase ruleForBinarySHA256:nil certificateSHA256:@"a" teamID:nil])
+    .andReturn(rule);
 
-//   OCMVerify([self.mockEventProvider postAction:ACTION_RESPOND_ALLOW forMessage:[self getMessage]]);
-//   [self checkMetricCounters:kAllowCertificate expected:@1];
-// }
+  [self validateExecEvent:ACTION_RESPOND_ALLOW];
+  [self checkMetricCounters:kAllowCertificate expected:@1];
+}
 
-// - (void)testCertificateBlockRule {
-//   OCMStub([self.mockFileInfo isMachO]).andReturn(YES);
+- (void)testCertificateBlockRule {
+  OCMStub([self.mockFileInfo isMachO]).andReturn(YES);
 
-//   id cert = OCMClassMock([MOLCertificate class]);
-//   OCMStub([self.mockCodesignChecker leafCertificate]).andReturn(cert);
-//   OCMStub([cert SHA256]).andReturn(@"a");
+  id cert = OCMClassMock([MOLCertificate class]);
+  OCMStub([self.mockCodesignChecker leafCertificate]).andReturn(cert);
+  OCMStub([cert SHA256]).andReturn(@"a");
 
-//   SNTRule *rule = [[SNTRule alloc] init];
-//   rule.state = SNTRuleStateBlock;
-//   rule.type = SNTRuleTypeCertificate;
-//   OCMStub([self.mockRuleDatabase ruleForBinarySHA256:nil certificateSHA256:@"a" teamID:nil])
-//     .andReturn(rule);
+  SNTRule *rule = [[SNTRule alloc] init];
+  rule.state = SNTRuleStateBlock;
+  rule.type = SNTRuleTypeCertificate;
+  OCMStub([self.mockRuleDatabase ruleForBinarySHA256:nil certificateSHA256:@"a" teamID:nil])
+    .andReturn(rule);
 
-//   OCMExpect([self.mockEventDatabase addStoredEvent:OCMOCK_ANY]);
+  OCMExpect([self.mockEventDatabase addStoredEvent:OCMOCK_ANY]);
 
-//   [self.sut validateBinaryWithMessage:[self getMessage]];
+  [self validateExecEvent:ACTION_RESPOND_DENY];
 
-//   OCMVerify([self.mockEventProvider postAction:ACTION_RESPOND_DENY forMessage:[self getMessage]]);
-//   OCMVerifyAllWithDelay(self.mockEventDatabase, 1);
-//   [self checkMetricCounters:@"BlockCertificate" expected:@1];
-// }
+  OCMVerifyAllWithDelay(self.mockEventDatabase, 1);
+  [self checkMetricCounters:kBlockCertificate expected:@1];
+}
 
-// - (void)testBinaryAllowCompilerRule {
-//   OCMStub([self.mockFileInfo isMachO]).andReturn(YES);
-//   OCMStub([self.mockFileInfo SHA256]).andReturn(@"a");
-//   OCMStub([self.mockConfigurator enableTransitiveRules]).andReturn(YES);
+- (void)testBinaryAllowCompilerRule {
+  OCMStub([self.mockFileInfo isMachO]).andReturn(YES);
+  OCMStub([self.mockFileInfo SHA256]).andReturn(@"a");
+  OCMStub([self.mockConfigurator enableTransitiveRules]).andReturn(YES);
 
-//   SNTRule *rule = [[SNTRule alloc] init];
-//   rule.state = SNTRuleStateAllowCompiler;
-//   rule.type = SNTRuleTypeBinary;
-//   OCMStub([self.mockRuleDatabase ruleForBinarySHA256:@"a" certificateSHA256:nil teamID:nil])
-//     .andReturn(rule);
+  SNTRule *rule = [[SNTRule alloc] init];
+  rule.state = SNTRuleStateAllowCompiler;
+  rule.type = SNTRuleTypeBinary;
+  OCMStub([self.mockRuleDatabase ruleForBinarySHA256:@"a" certificateSHA256:nil teamID:nil])
+    .andReturn(rule);
 
-//   [self.sut validateBinaryWithMessage:[self getMessage]];
+  [self validateExecEvent:ACTION_RESPOND_ALLOW_COMPILER];
+  [self checkMetricCounters:kAllowCompiler expected:@1];
+}
 
-//   OCMVerify([self.mockEventProvider postAction:ACTION_RESPOND_ALLOW_COMPILER
-//                                     forMessage:[self getMessage]]);
-//   [self checkMetricCounters:kAllowCompiler expected:@1];
-// }
+- (void)testBinaryAllowCompilerRuleDisabled {
+  OCMStub([self.mockFileInfo isMachO]).andReturn(YES);
+  OCMStub([self.mockFileInfo SHA256]).andReturn(@"a");
+  OCMStub([self.mockConfigurator enableTransitiveRules]).andReturn(NO);
 
-// - (void)testBinaryAllowCompilerRuleDisabled {
-//   OCMStub([self.mockFileInfo isMachO]).andReturn(YES);
-//   OCMStub([self.mockFileInfo SHA256]).andReturn(@"a");
-//   OCMStub([self.mockConfigurator enableTransitiveRules]).andReturn(NO);
+  SNTRule *rule = [[SNTRule alloc] init];
+  rule.state = SNTRuleStateAllowCompiler;
+  rule.type = SNTRuleTypeBinary;
+  OCMStub([self.mockRuleDatabase ruleForBinarySHA256:@"a" certificateSHA256:nil teamID:nil])
+    .andReturn(rule);
 
-//   SNTRule *rule = [[SNTRule alloc] init];
-//   rule.state = SNTRuleStateAllowCompiler;
-//   rule.type = SNTRuleTypeBinary;
-//   OCMStub([self.mockRuleDatabase ruleForBinarySHA256:@"a" certificateSHA256:nil teamID:nil])
-//     .andReturn(rule);
+  [self validateExecEvent:ACTION_RESPOND_ALLOW];
+  [self checkMetricCounters:kAllowBinary expected:@1];
+}
 
-//   [self.sut validateBinaryWithMessage:[self getMessage]];
+- (void)testBinaryAllowTransitiveRule {
+  OCMStub([self.mockFileInfo isMachO]).andReturn(YES);
+  OCMStub([self.mockFileInfo SHA256]).andReturn(@"a");
+  OCMStub([self.mockConfigurator enableTransitiveRules]).andReturn(YES);
 
-//   OCMVerify([self.mockEventProvider postAction:ACTION_RESPOND_ALLOW forMessage:[self getMessage]]);
-//   [self checkMetricCounters:kAllowBinary expected:@1];
-// }
+  SNTRule *rule = [[SNTRule alloc] init];
+  rule.state = SNTRuleStateAllowTransitive;
+  rule.type = SNTRuleTypeBinary;
+  OCMStub([self.mockRuleDatabase ruleForBinarySHA256:@"a" certificateSHA256:nil teamID:nil])
+    .andReturn(rule);
 
-// - (void)testBinaryAllowTransitiveRule {
-//   OCMStub([self.mockFileInfo isMachO]).andReturn(YES);
-//   OCMStub([self.mockFileInfo SHA256]).andReturn(@"a");
-//   OCMStub([self.mockConfigurator enableTransitiveRules]).andReturn(YES);
+  [self validateExecEvent:ACTION_RESPOND_ALLOW];
+  [self checkMetricCounters:kAllowTransitive expected:@1];
+}
 
-//   SNTRule *rule = [[SNTRule alloc] init];
-//   rule.state = SNTRuleStateAllowTransitive;
-//   rule.type = SNTRuleTypeBinary;
-//   OCMStub([self.mockRuleDatabase ruleForBinarySHA256:@"a" certificateSHA256:nil teamID:nil])
-//     .andReturn(rule);
+- (void)testBinaryAllowTransitiveRuleDisabled {
+  OCMStub([self.mockFileInfo isMachO]).andReturn(YES);
+  OCMStub([self.mockFileInfo SHA256]).andReturn(@"a");
+  OCMStub([self.mockConfigurator clientMode]).andReturn(SNTClientModeLockdown);
+  OCMStub([self.mockConfigurator enableTransitiveRules]).andReturn(NO);
 
-//   [self.sut validateBinaryWithMessage:[self getMessage]];
+  SNTRule *rule = [[SNTRule alloc] init];
+  rule.state = SNTRuleStateAllowTransitive;
+  rule.type = SNTRuleTypeBinary;
+  OCMStub([self.mockRuleDatabase ruleForBinarySHA256:@"a" certificateSHA256:nil teamID:nil])
+    .andReturn(rule);
 
-//   OCMVerify([self.mockEventProvider postAction:ACTION_RESPOND_ALLOW forMessage:[self getMessage]]);
+  OCMExpect([self.mockEventDatabase addStoredEvent:OCMOCK_ANY]);
 
-//   [self checkMetricCounters:kAllowTransitive expected:@1];
-// }
+  [self validateExecEvent:ACTION_RESPOND_DENY];
 
-// - (void)testBinaryAllowTransitiveRuleDisabled {
-//   OCMStub([self.mockFileInfo isMachO]).andReturn(YES);
-//   OCMStub([self.mockFileInfo SHA256]).andReturn(@"a");
-//   OCMStub([self.mockConfigurator clientMode]).andReturn(SNTClientModeLockdown);
-//   OCMStub([self.mockConfigurator enableTransitiveRules]).andReturn(NO);
+  OCMVerifyAllWithDelay(self.mockEventDatabase, 1);
+  [self checkMetricCounters:kAllowBinary expected:@0];
+  [self checkMetricCounters:kAllowTransitive expected:@0];
+}
 
-//   SNTRule *rule = [[SNTRule alloc] init];
-//   rule.state = SNTRuleStateAllowTransitive;
-//   rule.type = SNTRuleTypeBinary;
-//   OCMStub([self.mockRuleDatabase ruleForBinarySHA256:@"a" certificateSHA256:nil teamID:nil])
-//     .andReturn(rule);
+- (void)testDefaultDecision {
+  OCMStub([self.mockFileInfo isMachO]).andReturn(YES);
+  OCMStub([self.mockFileInfo SHA256]).andReturn(@"a");
 
-//   OCMExpect([self.mockEventDatabase addStoredEvent:OCMOCK_ANY]);
+  OCMExpect([self.mockConfigurator clientMode]).andReturn(SNTClientModeMonitor);
+  OCMExpect([self.mockEventDatabase addStoredEvent:OCMOCK_ANY]);
 
-//   [self.sut validateBinaryWithMessage:[self getMessage]];
+  [self validateExecEvent:ACTION_RESPOND_ALLOW];
 
-//   OCMVerify([self.mockEventProvider postAction:ACTION_RESPOND_DENY forMessage:[self getMessage]]);
-//   OCMVerifyAllWithDelay(self.mockEventDatabase, 1);
-//   [self checkMetricCounters:kAllowBinary expected:@0];
-//   [self checkMetricCounters:kAllowTransitive expected:@0];
-// }
+  OCMExpect([self.mockConfigurator clientMode]).andReturn(SNTClientModeLockdown);
 
-// - (void)testDefaultDecision {
-//   OCMStub([self.mockFileInfo isMachO]).andReturn(YES);
-//   OCMStub([self.mockFileInfo SHA256]).andReturn(@"a");
+  [self validateExecEvent:ACTION_RESPOND_DENY];
 
-//   OCMExpect([self.mockConfigurator clientMode]).andReturn(SNTClientModeMonitor);
-//   OCMExpect([self.mockEventDatabase addStoredEvent:OCMOCK_ANY]);
+  OCMVerifyAllWithDelay(self.mockEventDatabase, 1);
+  [self checkMetricCounters:kBlockUnknown expected:@1];
+  [self checkMetricCounters:kAllowUnknown expected:@1];
+}
 
-//   [self.sut validateBinaryWithMessage:[self getMessage]];
-//   OCMVerify([self.mockEventProvider postAction:ACTION_RESPOND_ALLOW forMessage:[self getMessage]]);
+- (void)testUnreadableFailOpenLockdown {
+  // Undo the default mocks
+  [self.mockFileInfo stopMocking];
+  self.mockFileInfo = OCMClassMock([SNTFileInfo class]);
 
-//   OCMExpect([self.mockConfigurator clientMode]).andReturn(SNTClientModeLockdown);
-//   [self.sut validateBinaryWithMessage:[self getMessage]];
-//   OCMVerify([self.mockEventProvider postAction:ACTION_RESPOND_DENY forMessage:[self getMessage]]);
-//   OCMVerifyAllWithDelay(self.mockEventDatabase, 1);
+  OCMStub([self.mockFileInfo alloc]).andReturn(nil);
+  OCMStub([self.mockFileInfo initWithPath:OCMOCK_ANY error:[OCMArg setTo:nil]]).andReturn(nil);
 
-//   [self checkMetricCounters:kBlockUnknown expected:@1];
-//   [self checkMetricCounters:kAllowUnknown expected:@1];
-// }
+  // Lockdown mode, no fail-closed
+  OCMStub([self.mockConfigurator failClosed]).andReturn(NO);
+  OCMStub([self.mockConfigurator clientMode]).andReturn(SNTClientModeLockdown);
 
-// - (void)testUnreadableFailOpenLockdown {
-//   // Undo the default mocks
-//   [self.mockFileInfo stopMocking];
-//   self.mockFileInfo = OCMClassMock([SNTFileInfo class]);
+  [self validateExecEvent:ACTION_RESPOND_ALLOW];
+  [self checkMetricCounters:kAllowNoFileInfo expected:@1];
+}
 
-//   OCMStub([self.mockFileInfo alloc]).andReturn(nil);
-//   OCMStub([self.mockFileInfo initWithPath:OCMOCK_ANY error:[OCMArg setTo:nil]]).andReturn(nil);
+- (void)testUnreadableFailClosedLockdown {
+  // Undo the default mocks
+  [self.mockFileInfo stopMocking];
+  self.mockFileInfo = OCMClassMock([SNTFileInfo class]);
 
-//   // Lockdown mode, no fail-closed
-//   OCMStub([self.mockConfigurator failClosed]).andReturn(NO);
-//   OCMStub([self.mockConfigurator clientMode]).andReturn(SNTClientModeLockdown);
-//   [self.sut validateBinaryWithMessage:[self getMessage]];
-//   OCMVerify([self.mockEventProvider postAction:ACTION_RESPOND_ALLOW forMessage:[self getMessage]]);
-//   [self checkMetricCounters:kAllowNoFileInfo expected:@1];
-// }
+  OCMStub([self.mockFileInfo alloc]).andReturn(nil);
+  OCMStub([self.mockFileInfo initWithPath:OCMOCK_ANY error:[OCMArg setTo:nil]]).andReturn(nil);
 
-// - (void)testUnreadableFailClosedLockdown {
-//   // Undo the default mocks
-//   [self.mockFileInfo stopMocking];
-//   self.mockFileInfo = OCMClassMock([SNTFileInfo class]);
+  // Lockdown mode, fail-closed
+  OCMStub([self.mockConfigurator failClosed]).andReturn(YES);
+  OCMStub([self.mockConfigurator clientMode]).andReturn(SNTClientModeLockdown);
 
-//   OCMStub([self.mockFileInfo alloc]).andReturn(nil);
-//   OCMStub([self.mockFileInfo initWithPath:OCMOCK_ANY error:[OCMArg setTo:nil]]).andReturn(nil);
+  [self validateExecEvent:ACTION_RESPOND_DENY];
+  [self checkMetricCounters:kDenyNoFileInfo expected:@1];
+}
 
-//   // Lockdown mode, fail-closed
-//   OCMStub([self.mockConfigurator failClosed]).andReturn(YES);
-//   OCMStub([self.mockConfigurator clientMode]).andReturn(SNTClientModeLockdown);
-//   [self.sut validateBinaryWithMessage:[self getMessage]];
-//   OCMVerify([self.mockEventProvider postAction:ACTION_RESPOND_DENY forMessage:[self getMessage]]);
-//   [self checkMetricCounters:kDenyNoFileInfo expected:@1];
-// }
+- (void)testUnreadableFailClosedMonitor {
+  // Undo the default mocks
+  [self.mockFileInfo stopMocking];
+  self.mockFileInfo = OCMClassMock([SNTFileInfo class]);
 
-// - (void)testUnreadableFailClosedMonitor {
-//   // Undo the default mocks
-//   [self.mockFileInfo stopMocking];
-//   self.mockFileInfo = OCMClassMock([SNTFileInfo class]);
+  OCMStub([self.mockFileInfo alloc]).andReturn(nil);
+  OCMStub([self.mockFileInfo initWithPath:OCMOCK_ANY error:[OCMArg setTo:nil]]).andReturn(nil);
 
-//   OCMStub([self.mockFileInfo alloc]).andReturn(nil);
-//   OCMStub([self.mockFileInfo initWithPath:OCMOCK_ANY error:[OCMArg setTo:nil]]).andReturn(nil);
+  // Monitor mode, fail-closed
+  OCMStub([self.mockConfigurator failClosed]).andReturn(YES);
+  OCMStub([self.mockConfigurator clientMode]).andReturn(SNTClientModeMonitor);
 
-//   // Monitor mode, fail-closed
-//   OCMStub([self.mockConfigurator failClosed]).andReturn(YES);
-//   OCMStub([self.mockConfigurator clientMode]).andReturn(SNTClientModeMonitor);
-//   [self.sut validateBinaryWithMessage:[self getMessage]];
-//   OCMVerify([self.mockEventProvider postAction:ACTION_RESPOND_ALLOW forMessage:[self getMessage]]);
-//   [self checkMetricCounters:kAllowNoFileInfo expected:@1];
-// }
+  [self validateExecEvent:ACTION_RESPOND_ALLOW];
+  [self checkMetricCounters:kAllowNoFileInfo expected:@1];
+}
 
-// - (void)testMissingShasum {
-//   [self.sut validateBinaryWithMessage:[self getMessage]];
-//   OCMVerify([self.mockEventProvider postAction:ACTION_RESPOND_ALLOW forMessage:[self getMessage]]);
-//   [self checkMetricCounters:kAllowScope expected:@1];
-// }
+- (void)testMissingShasum {
+  [self validateExecEvent:ACTION_RESPOND_ALLOW];
+  [self checkMetricCounters:kAllowScope expected:@1];
+}
 
-// - (void)testOutOfScope {
-//   OCMStub([self.mockFileInfo isMachO]).andReturn(NO);
-//   OCMStub([self.mockConfigurator clientMode]).andReturn(SNTClientModeLockdown);
-//   [self.sut validateBinaryWithMessage:[self getMessage]];
-//   OCMVerify([self.mockEventProvider postAction:ACTION_RESPOND_ALLOW forMessage:[self getMessage]]);
-//   [self checkMetricCounters:kAllowScope expected:@1];
-// }
+- (void)testOutOfScope {
+  OCMStub([self.mockFileInfo isMachO]).andReturn(NO);
+  OCMStub([self.mockConfigurator clientMode]).andReturn(SNTClientModeLockdown);
 
-// - (void)testPageZero {
-//   OCMStub([self.mockFileInfo isMachO]).andReturn(YES);
-//   OCMStub([self.mockFileInfo isMissingPageZero]).andReturn(YES);
-//   OCMExpect([self.mockEventDatabase addStoredEvent:OCMOCK_ANY]);
-//   [self.sut validateBinaryWithMessage:[self getMessage]];
-//   OCMVerify([self.mockEventProvider postAction:ACTION_RESPOND_DENY forMessage:[self getMessage]]);
-//   OCMVerifyAllWithDelay(self.mockEventDatabase, 1);
-//   [self checkMetricCounters:kBlockUnknown expected:@1];
-// }
+  [self validateExecEvent:ACTION_RESPOND_ALLOW];
+  [self checkMetricCounters:kAllowScope expected:@1];
+}
 
-// - (void)testAllEventUpload {
-//   OCMStub([self.mockFileInfo isMachO]).andReturn(YES);
-//   OCMStub([self.mockFileInfo SHA256]).andReturn(@"a");
+- (void)testPageZero {
+  OCMStub([self.mockFileInfo isMachO]).andReturn(YES);
+  OCMStub([self.mockFileInfo isMissingPageZero]).andReturn(YES);
+  OCMExpect([self.mockEventDatabase addStoredEvent:OCMOCK_ANY]);
 
-//   OCMExpect([self.mockConfigurator enableAllEventUpload]).andReturn(YES);
-//   OCMExpect([self.mockEventDatabase addStoredEvent:OCMOCK_ANY]);
+  [self validateExecEvent:ACTION_RESPOND_DENY];
+  OCMVerifyAllWithDelay(self.mockEventDatabase, 1);
+  [self checkMetricCounters:kBlockUnknown expected:@1];
+}
 
-//   SNTRule *rule = [[SNTRule alloc] init];
-//   rule.state = SNTRuleStateAllow;
-//   rule.type = SNTRuleTypeBinary;
-//   OCMStub([self.mockRuleDatabase ruleForBinarySHA256:@"a" certificateSHA256:nil teamID:nil])
-//     .andReturn(rule);
+- (void)testAllEventUpload {
+  OCMStub([self.mockFileInfo isMachO]).andReturn(YES);
+  OCMStub([self.mockFileInfo SHA256]).andReturn(@"a");
 
-//   [self.sut validateBinaryWithMessage:[self getMessage]];
-//   OCMVerify([self.mockEventProvider postAction:ACTION_RESPOND_ALLOW forMessage:[self getMessage]]);
-//   OCMVerifyAllWithDelay(self.mockEventDatabase, 1);
-// }
+  OCMExpect([self.mockConfigurator enableAllEventUpload]).andReturn(YES);
+  OCMExpect([self.mockEventDatabase addStoredEvent:OCMOCK_ANY]);
 
-// - (void)testDisableUnknownEventUpload {
-//   OCMStub([self.mockFileInfo isMachO]).andReturn(YES);
-//   OCMStub([self.mockFileInfo SHA256]).andReturn(@"a");
+  SNTRule *rule = [[SNTRule alloc] init];
+  rule.state = SNTRuleStateAllow;
+  rule.type = SNTRuleTypeBinary;
+  OCMStub([self.mockRuleDatabase ruleForBinarySHA256:@"a" certificateSHA256:nil teamID:nil])
+    .andReturn(rule);
 
-//   OCMExpect([self.mockConfigurator clientMode]).andReturn(SNTClientModeMonitor);
-//   OCMExpect([self.mockConfigurator enableAllEventUpload]).andReturn(NO);
-//   OCMExpect([self.mockConfigurator disableUnknownEventUpload]).andReturn(YES);
+  [self validateExecEvent:ACTION_RESPOND_ALLOW];
+  OCMVerifyAllWithDelay(self.mockEventDatabase, 1);
+}
 
-//   [self.sut validateBinaryWithMessage:[self getMessage]];
-//   OCMVerify([self.mockEventProvider postAction:ACTION_RESPOND_ALLOW forMessage:[self getMessage]]);
-//   OCMVerify(never(), [self.mockEventDatabase addStoredEvent:OCMOCK_ANY]);
-//   [self checkMetricCounters:kAllowUnknown expected:@1];
-// }
+- (void)testDisableUnknownEventUpload {
+  OCMStub([self.mockFileInfo isMachO]).andReturn(YES);
+  OCMStub([self.mockFileInfo SHA256]).andReturn(@"a");
+
+  OCMExpect([self.mockConfigurator clientMode]).andReturn(SNTClientModeMonitor);
+  OCMExpect([self.mockConfigurator enableAllEventUpload]).andReturn(NO);
+  OCMExpect([self.mockConfigurator disableUnknownEventUpload]).andReturn(YES);
+
+  [self validateExecEvent:ACTION_RESPOND_ALLOW];
+  OCMVerify(never(), [self.mockEventDatabase addStoredEvent:OCMOCK_ANY]);
+  [self checkMetricCounters:kAllowUnknown expected:@1];
+}
 
 @end

@@ -279,7 +279,6 @@ static NSString *const kPrinterProxyPostMonterey =
 
     // If binary was blocked, do the needful
     if (action != ACTION_RESPOND_ALLOW && action != ACTION_RESPOND_ALLOW_COMPILER) {
-      // [[SNTEventLog logger] logDeniedExecution:cd withMessage:message];
 
       if (config.enableBundles && binInfo.bundle) {
         // If the binary is part of a bundle, find and hash all the related binaries in the bundle.
@@ -300,7 +299,7 @@ static NSString *const kPrinterProxyPostMonterey =
         NSAttributedString *s = [SNTBlockMessage attributedBlockMessageForEvent:se
                                                                   customMessage:cd.customMsg];
 
-        if (targetProc->tty->path.length > 0) {
+        if (targetProc->tty && targetProc->tty->path.length > 0) {
           NSMutableString *msg = [NSMutableString stringWithCapacity:1024];
           [msg appendFormat:@"\n\033[1mSanta\033[0m\n\n%@\n\n", s.string];
           [msg appendFormat:@"\033[1mPath:      \033[0m %@\n"

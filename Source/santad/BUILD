@@ -1169,27 +1169,19 @@ santa_unit_test(
     deps = [
         ":EndpointSecurityMessage",
         ":MockEndpointSecurityAPI",
+        ":SNTDatabaseController",
+        ":SNTDecisionCache",
         ":SNTExecutionController",
+        "//Source/common:SNTCachedDecision",
+        "//Source/common:SNTCommonEnums",
+        "//Source/common:SNTConfigurator",
+        "//Source/common:SNTFileInfo",
+        "//Source/common:SNTMetricSet",
+        "//Source/common:SNTRule",
         "//Source/common:TestUtils",
         "@OCMock",
-        # ":santad_lib",
-        # "//Source/common:SNTBlockMessage",
-        # "//Source/common:SNTCachedDecision",
-        # "//Source/common:SNTCommon",
-        # "//Source/common:SNTCommonEnums",
-        # "//Source/common:SNTConfigurator",
-        # "//Source/common:SNTDropRootPrivs",
-        # "//Source/common:SNTFileInfo",
-        # "//Source/common:SNTLogging",
-        # "//Source/common:SNTMetricSet",
-        # "//Source/common:SNTPrefixTree",
-        # "//Source/common:SNTRule",
-        # "//Source/common:SNTXPCNotifierInterface",
-        # "//Source/common:SantaCache",
-        # "@FMDB",
-        # "@MOLCertificate",
-        # "@MOLCodesignChecker",
-        # "@MOLXPCConnection",
+        "@MOLCertificate",
+        "@MOLCodesignChecker",
 
     ],
     sdk_dylibs = [
@@ -1328,7 +1320,7 @@ test_suite(
         ":SNTDeviceManagerTest",
         # ":SNTEndpointSecurityManagerTest", -- Ported
         # ":SNTEventTableTest", -- Works as-is
-        ":SNTExecutionControllerTest",
+        # ":SNTExecutionControllerTest", -- Ported
         # ":SNTProtobufEventLogTest", -- Deleting
         # ":SNTRuleTableTest", -- Works as-is
     ],
