@@ -54,10 +54,9 @@ jobs:
           bazel run :reload --define=SANTA_BUILD_TYPE=adhoc
           sudo santactl sync --debug
       - name: run integration test binaries
-        run: |
-          ./Testing/integration/test_usb_config_change.sh
+        run: bazel test //Testing/integration:integration_tests
       - name: test config changes
-        run: bazel test //Testing/integration:config_changes
+        run: bazel test //Testing/integration:e2e_config_changes
       - name: schedule poweroff
         run: sudo shutdown -h +1
 

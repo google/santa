@@ -1,13 +1,13 @@
 on run argv
 	do shell script "open " & item 1 of argv
 
-	delay 1
+	delay 3
 
 	tell application "System Preferences"
 		activate
 	end tell
 
-	delay 1
+	delay 2
 
 	tell application "System Events"
 		tell process "System Preferences"

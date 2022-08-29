@@ -123,6 +123,8 @@ static NSString *const kPrinterProxyPostMonterey =
 #pragma mark Binary Validation
 
 - (void)validateBinaryWithMessage:(santa_message_t)message {
+  NSLog(@"test");
+
   // Get info about the file. If we can't get this info, allow execution and log an error.
   if (unlikely(message.path == NULL)) {
     LOGE(@"Path for vnode_id is NULL: %llu/%llu", message.vnode_id.fsid, message.vnode_id.fileid);

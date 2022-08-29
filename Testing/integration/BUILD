@@ -65,7 +65,7 @@ sh_test(
 )
 
 test_suite(
-    name = "config_changes",
+    name = "e2e_config_changes",
     tests = [
         ":USBStatusCheck",
     ],
