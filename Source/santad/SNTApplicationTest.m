@@ -104,12 +104,7 @@ NSString *testBinariesPath = @"santa/Source/santad/testdata/binaryrules";
   [mockES triggerHandler:msg.message];
 
   [self waitForExpectations:@[ expectation ] timeout:10.0];
-  NSString *clientModeStr;
-  if (clientMode == SNTClientModeLockdown) {
-    clientModeStr = @"LOCKDOWN";
-  } else {
-    clientModeStr = @"MONITOR";
-  }
+  NSString *clientModeStr = (clientMode == SNTClientModeLockdown) ? @"LOCKDOWN" : @"MONITOR";
 
   XCTAssertEqual(got.result, wantResult,
                  @"received unexpected ES response on executing \"%@/%@\" in clientMode %@",

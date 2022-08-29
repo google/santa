@@ -105,6 +105,7 @@ static void addPathsFromDefaultMuteSet(NSMutableSet *criticalPaths) API_AVAILABL
 
     // This is a Santa-curated list of paths to check on startup. This list will be merged
     // with the set of default muted paths from ES.
+
     NSSet *santaDefinedCriticalPaths = [NSSet setWithArray:@[
       @"/usr/libexec/trustd",
       @"/usr/lib/dyld",
@@ -116,8 +117,6 @@ static void addPathsFromDefaultMuteSet(NSMutableSet *criticalPaths) API_AVAILABL
       @"/Applications/Santa.app/Contents/MacOS/santametricservice",
       @"/Applications/Santa.app/Contents/MacOS/santasyncservice",
     ]];
-
-    // TODO for macOS 13 add the cryptexes prefix
 
     // Combine the fallback default mute set and Santa-curated set
     NSMutableSet *superSet = [NSMutableSet setWithSet:fallbackDefaultMuteSet];
