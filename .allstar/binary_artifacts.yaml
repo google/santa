@@ -9,8 +9,10 @@ ignorePaths:
 - Source/common/testdata/DirectoryBundle/Contents/MacOS/DirectoryBundle
 - Source/common/testdata/DirectoryBundle/Contents/Resources/BundleExample.app/Contents/MacOS/BundleExample
 - Source/santad/testdata/binaryrules/badbinary
+- Source/santad/testdata/binaryrules/goodbinary
 - Source/santad/testdata/binaryrules/badcert
 - Source/santad/testdata/binaryrules/banned_teamid_allowed_binary
 - Source/santad/testdata/binaryrules/banned_teamid
 - Source/santad/testdata/binaryrules/goodcert
 - Source/santad/testdata/binaryrules/noop
+- Source/santad/testdata/binaryrules/rules.db
