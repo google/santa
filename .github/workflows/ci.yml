@@ -41,14 +41,14 @@ jobs:
       VM_PASSWORD: ${{ secrets.VM_PASSWORD }}
     steps:
       - uses: actions/checkout@v2
+      - name: install configuration profile
+        run: bazel run //Testing/integration:install_profile -- Testing/integration/configs/default.mobileconfig
       - name: set path
         run: echo "/opt/homebrew/bin/" >> $GITHUB_PATH
       - name: install and run moroz
         run: |
           go install github.com/groob/moroz/cmd/moroz@latest
           ~/go/bin/moroz -configs="$GITHUB_WORKSPACE/Testing/global.toml" -use-tls=false &
-      - name: install configuration profile
-        run: bazel run //Testing/integration:install_profile -- Testing/integration/configs/default.mobileconfig
       - name: start santa and sync
         run: |
           bazel run :reload --define=SANTA_BUILD_TYPE=adhoc
