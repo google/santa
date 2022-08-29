@@ -117,7 +117,7 @@ static void addPathsFromDefaultMuteSet(NSMutableSet *criticalPaths) API_AVAILABL
       @"/Applications/Santa.app/Contents/MacOS/santasyncservice",
     ]];
 
-    //TODO for macOS 13 add the cryptexes prefix
+    // TODO for macOS 13 add the cryptexes prefix
 
     // Combine the fallback default mute set and Santa-curated set
     NSMutableSet *superSet = [NSMutableSet setWithSet:fallbackDefaultMuteSet];
@@ -146,8 +146,8 @@ static void addPathsFromDefaultMuteSet(NSMutableSet *criticalPaths) API_AVAILABL
       systemBin = YES;
     } else if (![csInfo signingInformationMatches:self.santadCSInfo]) {
       LOGE(@"Unable to validate critical system binary %@. "
-           @"pid 1: %@, santad: %@ and %@: %@ do not match.", path,
-           self.launchdCSInfo.leafCertificate, self.santadCSInfo.leafCertificate, path,
+           @"pid 1: %@, santad: %@ and %@: %@ do not match.",
+           path, self.launchdCSInfo.leafCertificate, self.santadCSInfo.leafCertificate, path,
            csInfo.leafCertificate);
       continue;
     }
