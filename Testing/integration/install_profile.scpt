@@ -1,11 +1,9 @@
 on run argv
 	do shell script "open " & item 1 of argv
 
-	delay 3
+	delay 1
 
-	tell application "System Preferences"
-		activate
-	end tell
+  do shell script "open '/System/Applications/System Preferences.app'"
 
 	delay 2
 
