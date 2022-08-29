@@ -105,6 +105,7 @@ static void addPathsFromDefaultMuteSet(NSMutableSet *criticalPaths) API_AVAILABL
 
     // This is a Santa-curated list of paths to check on startup. This list will be merged
     // with the set of default muted paths from ES.
+
     NSSet *santaDefinedCriticalPaths = [NSSet setWithArray:@[
       @"/usr/libexec/trustd",
       @"/usr/lib/dyld",
@@ -143,9 +144,9 @@ static void addPathsFromDefaultMuteSet(NSMutableSet *criticalPaths) API_AVAILABL
     if ([csInfo signingInformationMatches:self.launchdCSInfo]) {
       systemBin = YES;
     } else if (![csInfo signingInformationMatches:self.santadCSInfo]) {
-      LOGE(@"Unable to validate critical system binary. "
+      LOGE(@"Unable to validate critical system binary %@. "
            @"pid 1: %@, santad: %@ and %@: %@ do not match.",
-           self.launchdCSInfo.leafCertificate, self.santadCSInfo.leafCertificate, path,
+           path, self.launchdCSInfo.leafCertificate, self.santadCSInfo.leafCertificate, path,
            csInfo.leafCertificate);
       continue;
     }

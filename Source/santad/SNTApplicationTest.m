@@ -24,6 +24,8 @@
 
 #include "Source/santad/EventProviders/EndpointSecurityTestUtil.h"
 
+NSString *testBinariesPath = @"santa/Source/santad/testdata/binaryrules";
+
 @interface SNTApplicationTest : XCTestCase
 @property id mockSNTDatabaseController;
 @end
@@ -40,11 +42,25 @@
   [super tearDown];
 }
 
-- (void)checkBinaryExecution:(NSString *)binaryName
-                    testPath:(NSString *)testPath
-                  wantResult:(es_auth_result_t)wantResult {
+- (BOOL)checkBinaryExecution:(NSString *)binaryName
+                  wantResult:(es_auth_result_t)wantResult
+                  clientMode:(NSInteger)clientMode {
   MockEndpointSecurity *mockES = [MockEndpointSecurity mockEndpointSecurity];
   [mockES reset];
+
+  id mockConfigurator = OCMClassMock([SNTConfigurator class]);
+
+  OCMStub([mockConfigurator configurator]).andReturn(mockConfigurator);
+  // Ensure that static rules do not interfere.
+  OCMStub([mockConfigurator staticRules]).andReturn(nil);
+  // Ensure the mode is set.
+  OCMStub([mockConfigurator clientMode]).andReturn(clientMode);
+  OCMStub([mockConfigurator failClosed]).andReturn(NO);
+
+  NSString *baseTestPath = @"santa/Source/santad/testdata/binaryrules";
+  NSString *testPath = [NSString pathWithComponents:@[
+    [[[NSProcessInfo processInfo] environment] objectForKey:@"TEST_SRCDIR"], baseTestPath
+  ]];
 
   OCMStub([self.mockSNTDatabaseController databasePath]).andReturn(testPath);
 
@@ -88,31 +104,100 @@
   [mockES triggerHandler:msg.message];
 
   [self waitForExpectations:@[ expectation ] timeout:10.0];
+  NSString *clientModeStr = (clientMode == SNTClientModeLockdown) ? @"LOCKDOWN" : @"MONITOR";
 
-  XCTAssertEqual(got.result, wantResult, @"received unexpected ES response on executing \"%@/%@\"",
-                 testPath, binaryName);
+  XCTAssertEqual(got.result, wantResult,
+                 @"received unexpected ES response on executing \"%@/%@\" in clientMode %@",
+                 testPath, binaryName, clientModeStr);
 }
 
-- (void)testRules {
-  NSString *testPath = @"santa/Source/santad/testdata/binaryrules";
-  NSDictionary *testCases = @{
-    @"badbinary" : [NSNumber numberWithInt:ES_AUTH_RESULT_DENY],
-    @"goodbinary" : [NSNumber numberWithInt:ES_AUTH_RESULT_ALLOW],
-    @"noop" : [NSNumber numberWithInt:ES_AUTH_RESULT_ALLOW],
-    @"banned_teamid" : [NSNumber numberWithInt:ES_AUTH_RESULT_DENY],
-    @"banned_teamid_allowed_binary" : [NSNumber numberWithInt:ES_AUTH_RESULT_ALLOW],
-    @"badcert" : [NSNumber numberWithInt:ES_AUTH_RESULT_DENY],
-    @"goodcert" : [NSNumber numberWithInt:ES_AUTH_RESULT_ALLOW],
-  };
-  NSString *fullTestPath = [NSString pathWithComponents:@[
-    [[[NSProcessInfo processInfo] environment] objectForKey:@"TEST_SRCDIR"], testPath
-  ]];
+/**
+ * testRules ensures that we get the expected outcome when the mocks "execute"
+ * our test binaries.
+ **/
 
-  for (NSString *binary in testCases) {
-    [self checkBinaryExecution:binary
-                      testPath:fullTestPath
-                    wantResult:[testCases[binary] intValue]];
-  }
+- (void)testBinaryWithSHA256BlockRuleIsBlockedInLockdownMode {
+  [self checkBinaryExecution:@"badbinary"
+                  wantResult:ES_AUTH_RESULT_DENY
+                  clientMode:SNTClientModeLockdown];
+}
+
+- (void)testBinaryWithSHA256BlockRuleIsBlockedInMonitorMode {
+  [self checkBinaryExecution:@"badbinary"
+                  wantResult:ES_AUTH_RESULT_DENY
+                  clientMode:SNTClientModeMonitor];
+}
+
+- (void)testBinaryWithSHA256AllowRuleIsNotBlockedInLockdownMode {
+  [self checkBinaryExecution:@"goodbinary"
+                  wantResult:ES_AUTH_RESULT_ALLOW
+                  clientMode:SNTClientModeLockdown];
+}
+
+- (void)testBinaryWithSHA256AllowRuleIsNotBlockedInMonitorMode {
+  [self checkBinaryExecution:@"goodbinary"
+                  wantResult:ES_AUTH_RESULT_ALLOW
+                  clientMode:SNTClientModeMonitor];
+}
+
+- (void)testBinaryWithCertificateAllowRuleIsNotBlockedInLockdownMode {
+  [self checkBinaryExecution:@"goodcert"
+                  wantResult:ES_AUTH_RESULT_ALLOW
+                  clientMode:SNTClientModeLockdown];
+}
+
+- (void)testBinaryWithCertificateAllowRuleIsNotBlockedInMonitorMode {
+  [self checkBinaryExecution:@"goodcert"
+                  wantResult:ES_AUTH_RESULT_ALLOW
+                  clientMode:SNTClientModeMonitor];
+}
+
+- (void)testBinaryWithCertificateBlockRuleIsBlockedInLockdownMode {
+  [self checkBinaryExecution:@"badcert"
+                  wantResult:ES_AUTH_RESULT_DENY
+                  clientMode:SNTClientModeLockdown];
+}
+
+- (void)testBinaryWithCertificateBlockRuleIsNotBlockedInMonitorMode {
+  [self checkBinaryExecution:@"badcert"
+                  wantResult:ES_AUTH_RESULT_DENY
+                  clientMode:SNTClientModeMonitor];
+}
+
+- (void)testBinaryWithTeamIDBlockRuleIsBlockedInLockdownMode {
+  [self checkBinaryExecution:@"banned_teamid"
+                  wantResult:ES_AUTH_RESULT_DENY
+                  clientMode:SNTClientModeLockdown];
+}
+
+- (void)testBinaryWithTeamIDBlockRuleIsBlockedInMonitorMode {
+  [self checkBinaryExecution:@"banned_teamid"
+                  wantResult:ES_AUTH_RESULT_DENY
+                  clientMode:SNTClientModeMonitor];
+}
+
+- (void)testBinaryWithSHA256AllowRuleAndBlockedTeamIDRuleIsAllowedInLockdownMode {
+  [self checkBinaryExecution:@"banned_teamid_allowed_binary"
+                  wantResult:ES_AUTH_RESULT_ALLOW
+                  clientMode:SNTClientModeLockdown];
+}
+
+- (void)testBinaryWithSHA256AllowRuleAndBlockedTeamIDRuleIsAllowedInMonitorMode {
+  [self checkBinaryExecution:@"banned_teamid_allowed_binary"
+                  wantResult:ES_AUTH_RESULT_ALLOW
+                  clientMode:SNTClientModeMonitor];
+}
+
+- (void)testBinaryWithoutBlockOrAllowRuleIsAllowedInLockdownMode {
+  [self checkBinaryExecution:@"noop"
+                  wantResult:ES_AUTH_RESULT_DENY
+                  clientMode:SNTClientModeLockdown];
+}
+
+- (void)testBinaryWithoutBlockOrAllowRuleIsAllowedInMonitorMode {
+  [self checkBinaryExecution:@"noop"
+                  wantResult:ES_AUTH_RESULT_ALLOW
+                  clientMode:SNTClientModeMonitor];
 }
 
 @end
