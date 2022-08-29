@@ -3,9 +3,11 @@ on run argv
 
 	delay 1
 
-  do shell script "open '/System/Applications/System Preferences.app'"
+	tell application "System Preferences"
+		activate
+	end tell
 
-	delay 2
+	delay 1
 
 	tell application "System Events"
 		tell process "System Preferences"

@@ -56,7 +56,12 @@ jobs:
       - name: run integration test binaries
         run: bazel test //Testing/integration:integration_tests
       - name: test config changes
-        run: bazel test //Testing/integration:e2e_config_changes
+        run: |
+          bazel run //Testing/integration:install_profile -- Testing/integration/configs/usb-block.mobileconfig
+          if [[ "$(santactl status --json | jq .daemon.block_usb)" != "true" ]]; then
+            echo "USB blocking config change didnt take effect" >&2
+            exit 1
+          fi
       - name: schedule poweroff
         run: sudo shutdown -h +1
 

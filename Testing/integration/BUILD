@@ -52,21 +52,3 @@ run_command(
     name = "install_profile",
     cmd = "osascript $${BUILD_WORKSPACE_DIRECTORY}/Testing/integration/install_profile.scpt $${BUILD_WORKSPACE_DIRECTORY}/$$1",
 )
-
-sh_test(
-    name = "USBStatusCheck",
-    srcs = [
-        "test_usb_config_change.sh",
-    ],
-    data = [
-        "install_profile.scpt",
-        "configs/usb-block.mobileconfig",
-    ],
-)
-
-test_suite(
-    name = "e2e_config_changes",
-    tests = [
-        ":USBStatusCheck",
-    ],
-)
