@@ -467,6 +467,7 @@ objc_library(
         ":AuthResultCache",
         ":EndpointSecurityAPI",
         ":EndpointSecurityLogger",
+        ":EndpointSecurityMessage",
         ":SNTEndpointSecurityClient",
         ":SNTEventProvider",
         "//Source/common:SNTLogging",
@@ -1252,6 +1253,8 @@ santa_unit_test(
     srcs = ["EventProviders/SNTEndpointSecurityDeviceManagerTest.mm"],
     deps = [
         ":DiskArbitrationTestLib",
+        ":EndpointSecurityClient",
+        ":EndpointSecurityMessage",
         ":MockEndpointSecurityAPI",
         ":SNTEndpointSecurityDeviceManager",
         "//Source/common:SNTConfigurator",
@@ -1261,6 +1264,7 @@ santa_unit_test(
         "@OCMock",
     ],
     sdk_dylibs = [
+        "bsm",
         "EndpointSecurity",
     ],
 )
@@ -1318,7 +1322,7 @@ test_suite(
     tests = [
         # ":SNTApplicationCoreMetricsTest", -- Works as-is
         ":SNTApplicationTest",
-        ":SNTDeviceManagerTest",
+        # ":SNTDeviceManagerTest", -- Ported
         # ":SNTEndpointSecurityManagerTest", -- Ported
         # ":SNTEventTableTest", -- Works as-is
         # ":SNTExecutionControllerTest", -- Ported

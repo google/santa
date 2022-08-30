@@ -52,8 +52,8 @@ struct stat MakeStat(ino_t ino, dev_t devno = 0);
 es_string_token_t MakeESStringToken(const char* s);
 es_file_t MakeESFile(const char *path, struct stat sb = {});
 es_process_t MakeESProcess(es_file_t *file,
-                           audit_token_t tok,
-                           audit_token_t parent_tok);
+                           audit_token_t tok = {},
+                           audit_token_t parent_tok = {});
 es_message_t MakeESMessage(es_event_type_t et,
                            es_process_t *proc,
                            ActionType action_type = ActionType::Notify,

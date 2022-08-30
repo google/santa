@@ -23,6 +23,8 @@
 #include "Source/santad/EventProviders/EndpointSecurity/EndpointSecurityAPI.h"
 #include "Source/santad/EventProviders/EndpointSecurity/Message.h"
 
+using santa::santad::event_providers::endpoint_security::Client;
+
 class MockEndpointSecurityAPI
     : public santa::santad::event_providers::endpoint_security::EndpointSecurityAPI {
 public:
@@ -64,7 +66,28 @@ public:
   MOCK_METHOD(es_string_token_t,
               ExecArg,
               (const es_event_exec_t *event, uint32_t index));
-};
 
+  void SetExpectationsESNewClient() {
+    EXPECT_CALL(*this, NewClient)
+        .WillOnce(testing::Return(
+            santa::santad::event_providers::endpoint_security::Client(
+                nullptr,
+                ES_NEW_CLIENT_RESULT_SUCCESS)));
+    EXPECT_CALL(*this, MuteProcess)
+        .WillOnce(testing::Return(true));
+    EXPECT_CALL(*this, ClearCache)
+        .WillRepeatedly(testing::Return(true));
+    EXPECT_CALL(*this, Subscribe)
+        .WillRepeatedly(testing::Return(true));
+  }
+
+  void SetExpectationsRetainReleaseMessage(es_message_t* msg) {
+    EXPECT_CALL(*this, ReleaseMessage)
+        .Times(testing::AnyNumber());
+    EXPECT_CALL(*this, RetainMessage)
+        .WillRepeatedly(testing::Return(msg));
+  }
+
+};
 
 #endif

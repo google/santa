@@ -12,7 +12,6 @@
 ///    See the License for the specific language governing permissions and
 ///    limitations under the License.
 #import "Source/santad/EventProviders/SNTEndpointSecurityDeviceManager.h"
-#include <EndpointSecurity/ESTypes.h>
 
 #import <DiskArbitration/DiskArbitration.h>
 #include <EndpointSecurity/EndpointSecurity.h>
@@ -28,6 +27,7 @@
 
 #import "Source/common/SNTDeviceEvent.h"
 #import "Source/common/SNTLogging.h"
+#include "Source/santad/EventProviders/EndpointSecurity/Message.h"
 
 using santa::santad::event_providers::FlushCacheMode;
 using santa::santad::event_providers::AuthResultCache;
