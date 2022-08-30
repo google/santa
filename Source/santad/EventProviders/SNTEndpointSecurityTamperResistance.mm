@@ -59,14 +59,14 @@ static constexpr std::string_view kSantaKextIdentifier = "com.google.santa-drive
       if ([SNTEndpointSecurityTamperResistance isDatabasePath:esMsg->event.rename.source->path.data]) {
         // Do not cache so that each attempt to remove santa is logged
         [self respondToMessage:esMsg withAuthResult:ES_AUTH_RESULT_DENY cacheable:false];
-        LOGW(@"!!! Preventing attempt to rename Santa databases!");
+        LOGW(@"Preventing attempt to rename Santa databases!");
         return;
       }
 
       if (esMsg->event.rename.destination_type == ES_DESTINATION_TYPE_EXISTING_FILE) {
         if ([SNTEndpointSecurityTamperResistance isDatabasePath:esMsg->event.rename.destination.existing_file->path.data]) {
           [self respondToMessage:esMsg withAuthResult:ES_AUTH_RESULT_DENY cacheable:false];
-          LOGW(@"!!! Preventing attempt to overwrite Santa databases!");
+          LOGW(@"Preventing attempt to overwrite Santa databases!");
           return;
         }
       }
