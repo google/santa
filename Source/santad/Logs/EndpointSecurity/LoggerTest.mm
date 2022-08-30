@@ -141,7 +141,7 @@ public:
   // means that the underlying `es_msg_` in the `Message` object is NULL, and
   // therefore no call to `ReleaseMessage` is ever made (hence no expectations).
   // Because we don't need to operate on the es_msg_, this simplifies the test.
-  EXPECT_CALL(*self->_mockESApi, RetainMessage(testing::_));
+  EXPECT_CALL(*self->_mockESApi, RetainMessage);
 
   auto enriched_msg = std::make_shared<EnrichedMessage>(
       EnrichedClose(
@@ -155,7 +155,7 @@ public:
 
   EXPECT_CALL(*self->_mockSerializer,
               SerializeMessage(testing::A<const EnrichedClose&>())).Times(1);
-  EXPECT_CALL(*self->_mockWriter, Write(testing::_)).Times(1);
+  EXPECT_CALL(*self->_mockWriter, Write).Times(1);
 
   Logger(self->_mockSerializer, self->_mockWriter).Log(enriched_msg);
 
@@ -167,9 +167,9 @@ public:
 - (void)testLogAllowList {
   es_message_t msg;
   std::string_view hash = "this_is_my_test_hash";
-  EXPECT_CALL(*self->_mockESApi, RetainMessage(testing::_));
+  EXPECT_CALL(*self->_mockESApi, RetainMessage);
   EXPECT_CALL(*self->_mockSerializer, SerializeAllowlist(testing::_, hash));
-  EXPECT_CALL(*self->_mockWriter, Write(testing::_));
+  EXPECT_CALL(*self->_mockWriter, Write);
 
   Logger(self->_mockSerializer, self->_mockWriter).LogAllowlist(
       Message(self->_mockESApi, &msg), hash);
@@ -181,9 +181,9 @@ public:
 
 - (void)testLogBundleHashingEvents {
   NSArray<id> *events = @[@"event1", @"event2", @"event3"];
-  EXPECT_CALL(*self->_mockSerializer, SerializeBundleHashingEvent(testing::_))
+  EXPECT_CALL(*self->_mockSerializer, SerializeBundleHashingEvent)
         .Times((int)[events count]);
-  EXPECT_CALL(*self->_mockWriter, Write(testing::_))
+  EXPECT_CALL(*self->_mockWriter, Write)
         .Times((int)[events count]);
 
   Logger(self->_mockSerializer, self->_mockWriter)
@@ -194,8 +194,8 @@ public:
 }
 
 - (void)testLogDiskAppeared {
-  EXPECT_CALL(*self->_mockSerializer, SerializeDiskAppeared(testing::_));
-  EXPECT_CALL(*self->_mockWriter, Write(testing::_));
+  EXPECT_CALL(*self->_mockSerializer, SerializeDiskAppeared);
+  EXPECT_CALL(*self->_mockWriter, Write);
 
   Logger(self->_mockSerializer, self->_mockWriter)
       .LogDiskAppeared(@{@"key": @"value"});
@@ -205,8 +205,8 @@ public:
 }
 
 - (void)testLogDiskDisappeared {
-  EXPECT_CALL(*self->_mockSerializer, SerializeDiskDisappeared(testing::_));
-  EXPECT_CALL(*self->_mockWriter, Write(testing::_));
+  EXPECT_CALL(*self->_mockSerializer, SerializeDiskDisappeared);
+  EXPECT_CALL(*self->_mockWriter, Write);
 
   Logger(self->_mockSerializer, self->_mockWriter)
       .LogDiskDisappeared(@{@"key": @"value"});

@@ -54,12 +54,12 @@ using santa::santad::event_providers::endpoint_security::Message;
   OCMStub([self.mockConfigurator eventLogType]).andReturn(-1);
 }
 
-- (std::pair<es_auth_result_t, bool>)triggerTestMountEvent:(SNTEndpointSecurityDeviceManager *)deviceManager
-                                                 mockESApi:(std::shared_ptr<MockEndpointSecurityAPI>)mockESApi
-                                                    mockDA:(MockDiskArbitration *)mockDA
-                                                 eventType:(es_event_type_t)eventType
-                                         diskInfoOverrides:(NSDictionary *)diskInfo
-                                        expectedAuthResult:(es_auth_result_t)expectedAuthResult {
+- (void)triggerTestMountEvent:(SNTEndpointSecurityDeviceManager *)deviceManager
+                    mockESApi:(std::shared_ptr<MockEndpointSecurityAPI>)mockESApi
+                       mockDA:(MockDiskArbitration *)mockDA
+                    eventType:(es_event_type_t)eventType
+            diskInfoOverrides:(NSDictionary *)diskInfo
+           expectedAuthResult:(es_auth_result_t)expectedAuthResult {
   [deviceManager enable];
   struct statfs fs = {0};
   NSString *test_mntfromname = @"/dev/disk2s1";
@@ -110,11 +110,8 @@ using santa::santad::event_providers::endpoint_security::Message;
         eventType == ES_EVENT_TYPE_AUTH_REMOUNT);
   }
 
-  __block es_auth_result_t authResult;
-  __block bool cacheable;
   XCTestExpectation *mountExpectation =
       [self expectationWithDescription:@"Wait for response from ES"];
-
 
   EXPECT_CALL(*mockESApi, RespondAuthResult(testing::_,
                                             testing::_,
@@ -134,8 +131,6 @@ using santa::santad::event_providers::endpoint_security::Message;
   [self waitForExpectations:@[ mountExpectation ] timeout:60.0];
 
   [partialDeviceManager stopMocking];
-
-  return { authResult, cacheable };
 }
 
 - (void)testUSBBlockDisabled {

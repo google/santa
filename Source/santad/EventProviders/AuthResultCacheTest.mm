@@ -152,7 +152,7 @@ static inline void AssertCacheCounts(std::shared_ptr<AuthResultCache> cache,
   // The call to ClearCache is asynchronous. Use a semaphore to
   // be notified when the mock is called.
   dispatch_semaphore_t sema = dispatch_semaphore_create(0);
-  EXPECT_CALL(*mock_esapi, ClearCache(testing::_))
+  EXPECT_CALL(*mock_esapi, ClearCache)
       .WillOnce(testing::InvokeWithoutArgs(^() {
           dispatch_semaphore_signal(sema);
           return true;

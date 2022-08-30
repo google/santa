@@ -71,7 +71,7 @@ public:
   id authClient =
       [[SNTEndpointSecurityAuthorizer alloc] initWithESAPI:mockESApi];
 
-  EXPECT_CALL(*mockESApi, ClearCache(testing::_))
+  EXPECT_CALL(*mockESApi, ClearCache)
     .After(
         EXPECT_CALL(*mockESApi, Subscribe(testing::_, expectedEventSubs))
             .WillOnce(testing::Return(true)))
@@ -170,7 +170,7 @@ public:
   mockESApi->SetExpectationsRetainReleaseMessage(&esMsg);
 
   auto mockAuthCache = std::make_shared<MockAuthResultCache>(nullptr);
-  EXPECT_CALL(*mockAuthCache, CheckCache(testing::_))
+  EXPECT_CALL(*mockAuthCache, CheckCache)
       .WillOnce(testing::Return(ACTION_REQUEST_BINARY))
       .WillOnce(testing::Return(ACTION_REQUEST_BINARY))
       .WillOnce(testing::Return(ACTION_RESPOND_ALLOW_COMPILER))

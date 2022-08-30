@@ -102,7 +102,7 @@ public:
   std::shared_ptr<EnrichedMessage> enrichedMsg = std::shared_ptr<EnrichedMessage>(nullptr);
 
   auto mockEnricher = std::make_shared<MockEnricher>();
-  EXPECT_CALL(*mockEnricher, Enrich(testing::_))
+  EXPECT_CALL(*mockEnricher, Enrich)
       .WillOnce(testing::Return(enrichedMsg));
 
   auto mockAuthCache = std::make_shared<MockAuthResultCache>(nullptr);
@@ -115,7 +115,7 @@ public:
   // test will mock the `Log` method that is called in the handler block.
   dispatch_semaphore_t sema = dispatch_semaphore_create(0);
   auto mockLogger = std::make_shared<MockLogger>(nullptr, nullptr);
-  EXPECT_CALL(*mockLogger, Log(testing::_))
+  EXPECT_CALL(*mockLogger, Log)
       .WillOnce(testing::InvokeWithoutArgs(^() {
         dispatch_semaphore_signal(sema);
       }));

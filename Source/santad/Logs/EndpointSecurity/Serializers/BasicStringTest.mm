@@ -156,10 +156,10 @@ std::string BasicStringSerializeMessage(es_message_t* esMsg) {
   esMsg.event.exec.target = &proc_exec;
 
   auto mockESApi = std::make_shared<MockEndpointSecurityAPI>();
-  EXPECT_CALL(*mockESApi, ExecArgCount(testing::_))
+  EXPECT_CALL(*mockESApi, ExecArgCount)
       .WillOnce(testing::Return(3));
 
-  EXPECT_CALL(*mockESApi, ExecArg(testing::_, testing::_))
+  EXPECT_CALL(*mockESApi, ExecArg)
       .WillOnce(testing::Return(es_string_token_t{8, "execpath"}))
       .WillOnce(testing::Return(es_string_token_t{2, "-l"}))
       .WillOnce(testing::Return(es_string_token_t{2, "-v"}));

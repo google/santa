@@ -55,10 +55,10 @@ using santa::santad::event_providers::endpoint_security::Message;
 - (void)testEstablishClientOrDie {
   auto mockESApi = std::make_shared<MockEndpointSecurityAPI>();
 
-  EXPECT_CALL(*mockESApi, MuteProcess(testing::_, testing::_))
+  EXPECT_CALL(*mockESApi, MuteProcess)
       .WillOnce(testing::Return(true));
 
-  EXPECT_CALL(*mockESApi, NewClient(testing::_))
+  EXPECT_CALL(*mockESApi, NewClient)
       .WillOnce(testing::Return(Client()))
       .WillOnce(testing::Return(Client(nullptr,
                                        ES_NEW_CLIENT_RESULT_SUCCESS)));
@@ -167,7 +167,7 @@ using santa::santad::event_providers::endpoint_security::Message;
   SNTEndpointSecurityClient *client =
       [[SNTEndpointSecurityClient alloc] initWithESAPI:mockESApi];
 
-  EXPECT_CALL(*mockESApi, MuteProcess(testing::_, testing::_))
+  EXPECT_CALL(*mockESApi, MuteProcess)
       .WillOnce(testing::Return(true))
       .WillOnce(testing::Return(false));
 
@@ -183,7 +183,7 @@ using santa::santad::event_providers::endpoint_security::Message;
       [[SNTEndpointSecurityClient alloc] initWithESAPI:mockESApi];
 
   // Test the underlying clear cache impl returning both true and false
-  EXPECT_CALL(*mockESApi, ClearCache(testing::_))
+  EXPECT_CALL(*mockESApi, ClearCache)
       .WillOnce(testing::Return(true))
       .WillOnce(testing::Return(false));
 
@@ -220,9 +220,9 @@ using santa::santad::event_providers::endpoint_security::Message;
       [[SNTEndpointSecurityClient alloc] initWithESAPI:mockESApi];
 
   // Have subscribe fail the first time, meaning clear cache only called once.
-  EXPECT_CALL(*mockESApi, ClearCache(testing::_))
+  EXPECT_CALL(*mockESApi, ClearCache)
       .After(
-          EXPECT_CALL(*mockESApi, Subscribe(testing::_, testing::_))
+          EXPECT_CALL(*mockESApi, Subscribe)
               .WillOnce(testing::Return(false))
               .WillOnce(testing::Return(true)))
       .WillOnce(testing::Return(true));
