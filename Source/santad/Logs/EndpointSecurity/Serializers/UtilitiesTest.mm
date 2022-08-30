@@ -68,10 +68,7 @@ using santa::santad::event_providers::endpoint_security::Message;
                                      &proc);
 
   auto mockESApi = std::make_shared<MockEndpointSecurityAPI>();
-  EXPECT_CALL(*mockESApi, ReleaseMessage(testing::_))
-      .Times(testing::AnyNumber());
-  EXPECT_CALL(*mockESApi, RetainMessage(testing::_))
-      .WillRepeatedly(testing::Return(&esMsg));
+  mockESApi->SetExpectationsRetainReleaseMessage(&esMsg);
 
   {
     esMsg.event.close.target = &closeTargetFile;

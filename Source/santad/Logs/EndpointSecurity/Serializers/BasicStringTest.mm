@@ -53,24 +53,22 @@ using santa::santad::logs::endpoint_security::serializers::GetReasonString;
 using santa::santad::logs::endpoint_security::serializers::GetModeString;
 
 std::string BasicStringSerializeMessage(
-    std::shared_ptr<MockEndpointSecurityAPI> mock_esapi,
-    es_message_t* es_msg) {
-  EXPECT_CALL(*mock_esapi, ReleaseMessage(testing::_))
-      .After(EXPECT_CALL(*mock_esapi, RetainMessage(testing::_))
-          .WillOnce(testing::Return(es_msg)));
+    std::shared_ptr<MockEndpointSecurityAPI> mockESApi,
+    es_message_t* esMsg) {
+  mockESApi->SetExpectationsRetainReleaseMessage(esMsg);
 
-  std::shared_ptr<Serializer> bs = BasicString::Create(mock_esapi, false);
+  std::shared_ptr<Serializer> bs = BasicString::Create(mockESApi, false);
   auto ret = bs->SerializeMessage(
-      Enricher().Enrich(Message(mock_esapi, es_msg)));
+      Enricher().Enrich(Message(mockESApi, esMsg)));
 
-  XCTBubbleMockVerifyAndClearExpectations(mock_esapi.get());
+  XCTBubbleMockVerifyAndClearExpectations(mockESApi.get());
 
   return std::string(ret.begin(), ret.end());
 }
 
-std::string BasicStringSerializeMessage(es_message_t* es_msg) {
-  auto mock_esapi = std::make_shared<MockEndpointSecurityAPI>();
-  return BasicStringSerializeMessage(mock_esapi, es_msg);
+std::string BasicStringSerializeMessage(es_message_t* esMsg) {
+  auto mockESApi = std::make_shared<MockEndpointSecurityAPI>();
+  return BasicStringSerializeMessage(mockESApi, esMsg);
 }
 
 @interface BasicStringTest : XCTestCase
@@ -107,16 +105,16 @@ std::string BasicStringSerializeMessage(es_message_t* es_msg) {
 }
 
 - (void)testSerializeMessageClose {
-  es_file_t proc_file = MakeESFile("foo");
-  es_process_t proc = MakeESProcess(&proc_file,
+  es_file_t procFile = MakeESFile("foo");
+  es_process_t proc = MakeESProcess(&procFile,
                                     MakeAuditToken(12, 34),
                                     MakeAuditToken(56, 78));
   es_file_t file = MakeESFile("close_file");
-  es_message_t es_msg = MakeESMessage(ES_EVENT_TYPE_NOTIFY_CLOSE, &proc);
-  es_msg.event.close.modified = true;
-  es_msg.event.close.target = &file;
+  es_message_t esMsg = MakeESMessage(ES_EVENT_TYPE_NOTIFY_CLOSE, &proc);
+  esMsg.event.close.modified = true;
+  esMsg.event.close.target = &file;
 
-  std::string got = BasicStringSerializeMessage(&es_msg);
+  std::string got = BasicStringSerializeMessage(&esMsg);
   std::string want = "action=WRITE|path=close_file"
       "|pid=12|ppid=56|process=foo|processpath=foo"
       "|uid=-2|user=nobody|gid=-2|group=nobody";
@@ -125,17 +123,17 @@ std::string BasicStringSerializeMessage(es_message_t* es_msg) {
 }
 
 - (void)testSerializeMessageExchange {
-  es_file_t proc_file = MakeESFile("foo");
-  es_process_t proc = MakeESProcess(&proc_file,
+  es_file_t procFile = MakeESFile("foo");
+  es_process_t proc = MakeESProcess(&procFile,
                                     MakeAuditToken(12, 34),
                                     MakeAuditToken(56, 78));
   es_file_t file1 = MakeESFile("exchange_1");
   es_file_t file2 = MakeESFile("exchange_2");
-  es_message_t es_msg = MakeESMessage(ES_EVENT_TYPE_NOTIFY_EXCHANGEDATA, &proc);
-  es_msg.event.exchangedata.file1 = &file1;
-  es_msg.event.exchangedata.file2 = &file2;
+  es_message_t esMsg = MakeESMessage(ES_EVENT_TYPE_NOTIFY_EXCHANGEDATA, &proc);
+  esMsg.event.exchangedata.file1 = &file1;
+  esMsg.event.exchangedata.file2 = &file2;
 
-  std::string got = BasicStringSerializeMessage(&es_msg);
+  std::string got = BasicStringSerializeMessage(&esMsg);
   std::string want = "action=EXCHANGE|path=exchange_1|newpath=exchange_2"
       "|pid=12|ppid=56|process=foo|processpath=foo"
       "|uid=-2|user=nobody|gid=-2|group=nobody";
@@ -144,8 +142,8 @@ std::string BasicStringSerializeMessage(es_message_t* es_msg) {
 }
 
 - (void)testSerializeMessageExec {
-  es_file_t proc_file = MakeESFile("foo");
-  es_process_t proc = MakeESProcess(&proc_file,
+  es_file_t procFile = MakeESFile("foo");
+  es_process_t proc = MakeESProcess(&procFile,
                                     MakeAuditToken(12, 34),
                                     MakeAuditToken(56, 78));
 
@@ -154,19 +152,19 @@ std::string BasicStringSerializeMessage(es_message_t* es_msg) {
                                     MakeAuditToken(12, 89),
                                     MakeAuditToken(56, 78));
 
-  es_message_t es_msg = MakeESMessage(ES_EVENT_TYPE_NOTIFY_EXEC, &proc);
-  es_msg.event.exec.target = &proc_exec;
+  es_message_t esMsg = MakeESMessage(ES_EVENT_TYPE_NOTIFY_EXEC, &proc);
+  esMsg.event.exec.target = &proc_exec;
 
-  auto mock_esapi = std::make_shared<MockEndpointSecurityAPI>();
-  EXPECT_CALL(*mock_esapi, ExecArgCount(testing::_))
+  auto mockESApi = std::make_shared<MockEndpointSecurityAPI>();
+  EXPECT_CALL(*mockESApi, ExecArgCount(testing::_))
       .WillOnce(testing::Return(3));
 
-  EXPECT_CALL(*mock_esapi, ExecArg(testing::_, testing::_))
+  EXPECT_CALL(*mockESApi, ExecArg(testing::_, testing::_))
       .WillOnce(testing::Return(es_string_token_t{8, "execpath"}))
       .WillOnce(testing::Return(es_string_token_t{2, "-l"}))
       .WillOnce(testing::Return(es_string_token_t{2, "-v"}));
 
-  std::string got = BasicStringSerializeMessage(mock_esapi, &es_msg);
+  std::string got = BasicStringSerializeMessage(mockESApi, &esMsg);
   std::string want = "action=EXEC|decision=ALLOW|reason=BINARY|explain=extra!"
       "|sha256=1234_hash|cert_sha256=5678_hash|cert_cn="
       "|quarantine_url=google.com|pid=12|pidversion=89|ppid=56"
@@ -177,49 +175,49 @@ std::string BasicStringSerializeMessage(es_message_t* es_msg) {
 }
 
 - (void)testSerializeMessageExit {
-  es_file_t proc_file = MakeESFile("foo");
-  es_process_t proc = MakeESProcess(&proc_file,
+  es_file_t procFile = MakeESFile("foo");
+  es_process_t proc = MakeESProcess(&procFile,
                                     MakeAuditToken(12, 34),
                                     MakeAuditToken(56, 78));
-  es_message_t es_msg = MakeESMessage(ES_EVENT_TYPE_NOTIFY_EXIT, &proc);
+  es_message_t esMsg = MakeESMessage(ES_EVENT_TYPE_NOTIFY_EXIT, &proc);
 
-  std::string got = BasicStringSerializeMessage(&es_msg);
+  std::string got = BasicStringSerializeMessage(&esMsg);
   std::string want = "action=EXIT|pid=12|pidversion=34|ppid=56|uid=-2|gid=-2";
 
   XCTAssertCppStringEqual(got, want);
 }
 
 - (void)testSerializeMessageFork {
-  es_file_t proc_file = MakeESFile("foo");
-  es_file_t proc_child_file = MakeESFile("foo_child");
-  es_process_t proc = MakeESProcess(&proc_file,
+  es_file_t procFile = MakeESFile("foo");
+  es_file_t procChildFile = MakeESFile("foo_child");
+  es_process_t proc = MakeESProcess(&procFile,
                                     MakeAuditToken(12, 34),
                                     MakeAuditToken(56, 78));
-  es_process_t proc_child = MakeESProcess(&proc_child_file,
+  es_process_t procChild = MakeESProcess(&procChildFile,
                                           MakeAuditToken(67, 89),
                                           MakeAuditToken(12, 34));
-  es_message_t es_msg = MakeESMessage(ES_EVENT_TYPE_NOTIFY_FORK, &proc);
-  es_msg.event.fork.child = &proc_child;
+  es_message_t esMsg = MakeESMessage(ES_EVENT_TYPE_NOTIFY_FORK, &proc);
+  esMsg.event.fork.child = &procChild;
 
-  std::string got = BasicStringSerializeMessage(&es_msg);
+  std::string got = BasicStringSerializeMessage(&esMsg);
   std::string want = "action=FORK|pid=67|pidversion=89|ppid=12|uid=-2|gid=-2";
 
   XCTAssertCppStringEqual(got, want);
 }
 
 - (void)testSerializeMessageLink {
-  es_file_t proc_file = MakeESFile("foo");
-  es_file_t src_file = MakeESFile("link_src");
-  es_file_t dst_dir = MakeESFile("link_dst");
-  es_process_t proc = MakeESProcess(&proc_file,
+  es_file_t procFile = MakeESFile("foo");
+  es_file_t srcFile = MakeESFile("link_src");
+  es_file_t dstDir = MakeESFile("link_dst");
+  es_process_t proc = MakeESProcess(&procFile,
                                     MakeAuditToken(12, 34),
                                     MakeAuditToken(56, 78));
-  es_message_t es_msg = MakeESMessage(ES_EVENT_TYPE_NOTIFY_LINK, &proc);
-  es_msg.event.link.source = &src_file;
-  es_msg.event.link.target_dir = &dst_dir;
-  es_msg.event.link.target_filename = MakeESStringToken("link_name");
+  es_message_t esMsg = MakeESMessage(ES_EVENT_TYPE_NOTIFY_LINK, &proc);
+  esMsg.event.link.source = &srcFile;
+  esMsg.event.link.target_dir = &dstDir;
+  esMsg.event.link.target_filename = MakeESStringToken("link_name");
 
-  std::string got = BasicStringSerializeMessage(&es_msg);
+  std::string got = BasicStringSerializeMessage(&esMsg);
   std::string want = "action=LINK|path=link_src|newpath=link_dst/link_name"
       "|pid=12|ppid=56|process=foo|processpath=foo"
       "|uid=-2|user=nobody|gid=-2|group=nobody";
@@ -228,18 +226,18 @@ std::string BasicStringSerializeMessage(es_message_t* es_msg) {
 }
 
 - (void)testSerializeMessageRename {
-  es_file_t proc_file = MakeESFile("foo");
-  es_file_t src_file = MakeESFile("rename_src");
-  es_file_t dst_file = MakeESFile("rename_dst");
-  es_process_t proc = MakeESProcess(&proc_file,
+  es_file_t procFile = MakeESFile("foo");
+  es_file_t srcFile = MakeESFile("rename_src");
+  es_file_t dstFile = MakeESFile("rename_dst");
+  es_process_t proc = MakeESProcess(&procFile,
                                     MakeAuditToken(12, 34),
                                     MakeAuditToken(56, 78));
-  es_message_t es_msg = MakeESMessage(ES_EVENT_TYPE_NOTIFY_RENAME, &proc);
-  es_msg.event.rename.source = &src_file;
-  es_msg.event.rename.destination_type = ES_DESTINATION_TYPE_EXISTING_FILE;
-  es_msg.event.rename.destination.existing_file = &dst_file;
+  es_message_t esMsg = MakeESMessage(ES_EVENT_TYPE_NOTIFY_RENAME, &proc);
+  esMsg.event.rename.source = &srcFile;
+  esMsg.event.rename.destination_type = ES_DESTINATION_TYPE_EXISTING_FILE;
+  esMsg.event.rename.destination.existing_file = &dstFile;
 
-  std::string got = BasicStringSerializeMessage(&es_msg);
+  std::string got = BasicStringSerializeMessage(&esMsg);
   std::string want = "action=RENAME|path=rename_src|newpath=rename_dst"
       "|pid=12|ppid=56|process=foo|processpath=foo"
       "|uid=-2|user=nobody|gid=-2|group=nobody";
@@ -248,15 +246,15 @@ std::string BasicStringSerializeMessage(es_message_t* es_msg) {
 }
 
 - (void)testSerializeMessageUnlink {
-  es_file_t proc_file = MakeESFile("foo");
+  es_file_t procFile = MakeESFile("foo");
   es_file_t target_file = MakeESFile("deleted_file");
-  es_process_t proc = MakeESProcess(&proc_file,
+  es_process_t proc = MakeESProcess(&procFile,
                                     MakeAuditToken(12, 34),
                                     MakeAuditToken(56, 78));
-  es_message_t es_msg = MakeESMessage(ES_EVENT_TYPE_NOTIFY_UNLINK, &proc);
-  es_msg.event.unlink.target = &target_file;
+  es_message_t esMsg = MakeESMessage(ES_EVENT_TYPE_NOTIFY_UNLINK, &proc);
+  esMsg.event.unlink.target = &target_file;
 
-  std::string got = BasicStringSerializeMessage(&es_msg);
+  std::string got = BasicStringSerializeMessage(&esMsg);
   std::string want = "action=DELETE|path=deleted_file"
       "|pid=12|ppid=56|process=foo|processpath=foo"
       "|uid=-2|user=nobody|gid=-2|group=nobody";
@@ -269,18 +267,16 @@ std::string BasicStringSerializeMessage(es_message_t* es_msg) {
   es_process_t proc = MakeESProcess(&file,
                                     MakeAuditToken(12, 34),
                                     MakeAuditToken(56, 78));
-  es_message_t es_msg = MakeESMessage(ES_EVENT_TYPE_NOTIFY_CLOSE, &proc);
-  es_msg.event.close.target = &file;
+  es_message_t esMsg = MakeESMessage(ES_EVENT_TYPE_NOTIFY_CLOSE, &proc);
+  esMsg.event.close.target = &file;
 
-  auto mock_esapi = std::make_shared<MockEndpointSecurityAPI>();
-  EXPECT_CALL(*mock_esapi, ReleaseMessage(testing::_))
-      .After(EXPECT_CALL(*mock_esapi, RetainMessage(testing::_))
-          .WillOnce(testing::Return(&es_msg)));
+  auto mockESApi = std::make_shared<MockEndpointSecurityAPI>();
+  mockESApi->SetExpectationsRetainReleaseMessage(&esMsg);
 
-  auto ret = BasicString::Create(mock_esapi, false)->SerializeAllowlist(
-      Message(mock_esapi, &es_msg), "test_hash");
+  auto ret = BasicString::Create(mockESApi, false)->SerializeAllowlist(
+      Message(mockESApi, &esMsg), "test_hash");
 
-  XCTAssertTrue(testing::Mock::VerifyAndClearExpectations(mock_esapi.get()),
+  XCTAssertTrue(testing::Mock::VerifyAndClearExpectations(mockESApi.get()),
                 "Expected calls were not properly mocked");
 
   std::string got(ret.begin(), ret.end());

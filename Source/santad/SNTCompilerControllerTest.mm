@@ -158,10 +158,7 @@ static const pid_t PID_MAX = 99999;
   es_message_t esMsg;
 
   auto mockESApi = std::make_shared<MockEndpointSecurityAPI>();
-  EXPECT_CALL(*mockESApi, ReleaseMessage(testing::_))
-      .Times(testing::AnyNumber());
-  EXPECT_CALL(*mockESApi, RetainMessage(testing::_))
-      .WillRepeatedly(testing::Return(&esMsg));
+  mockESApi->SetExpectationsRetainReleaseMessage(&esMsg);
 
   SNTCompilerController *cc = [[SNTCompilerController alloc] init];
 

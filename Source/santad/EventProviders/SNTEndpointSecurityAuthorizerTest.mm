@@ -89,14 +89,8 @@ public:
   es_message_t esMsg = MakeESMessage(ES_EVENT_TYPE_AUTH_EXEC, &proc, ActionType::Auth);
 
   auto mockESApi = std::make_shared<MockEndpointSecurityAPI>();
-  EXPECT_CALL(*mockESApi, NewClient(testing::_))
-      .WillOnce(testing::Return(Client(nullptr, ES_NEW_CLIENT_RESULT_SUCCESS)));
-  EXPECT_CALL(*mockESApi, MuteProcess(testing::_, testing::_))
-      .WillOnce(testing::Return(true));
-  EXPECT_CALL(*mockESApi, ReleaseMessage(testing::_))
-      .Times(testing::AnyNumber());
-  EXPECT_CALL(*mockESApi, RetainMessage(testing::_))
-      .WillRepeatedly(testing::Return(&esMsg));
+  mockESApi->SetExpectationsESNewClient();
+  mockESApi->SetExpectationsRetainReleaseMessage(&esMsg);
 
   SNTEndpointSecurityAuthorizer *authClient =
       [[SNTEndpointSecurityAuthorizer alloc] initWithESAPI:mockESApi
@@ -173,14 +167,8 @@ public:
   esMsg.event.exec.target = &execProc;
 
   auto mockESApi = std::make_shared<MockEndpointSecurityAPI>();
-  EXPECT_CALL(*mockESApi, NewClient(testing::_))
-      .WillOnce(testing::Return(Client(nullptr, ES_NEW_CLIENT_RESULT_SUCCESS)));
-  EXPECT_CALL(*mockESApi, MuteProcess(testing::_, testing::_))
-      .WillOnce(testing::Return(true));
-  EXPECT_CALL(*mockESApi, ReleaseMessage(testing::_))
-      .Times(testing::AnyNumber());
-  EXPECT_CALL(*mockESApi, RetainMessage(testing::_))
-      .WillRepeatedly(testing::Return(&esMsg));
+  mockESApi->SetExpectationsESNewClient();
+  mockESApi->SetExpectationsRetainReleaseMessage(&esMsg);
 
   auto mockAuthCache = std::make_shared<MockAuthResultCache>(nullptr);
   EXPECT_CALL(*mockAuthCache, CheckCache(testing::_))
@@ -249,14 +237,8 @@ public:
   esMsg.event.exec.target = &execProc;
 
   auto mockESApi = std::make_shared<MockEndpointSecurityAPI>();
-  EXPECT_CALL(*mockESApi, NewClient(testing::_))
-      .WillOnce(testing::Return(Client(nullptr, ES_NEW_CLIENT_RESULT_SUCCESS)));
-  EXPECT_CALL(*mockESApi, MuteProcess(testing::_, testing::_))
-      .WillOnce(testing::Return(true));
-  EXPECT_CALL(*mockESApi, ReleaseMessage(testing::_))
-      .Times(testing::AnyNumber());
-  EXPECT_CALL(*mockESApi, RetainMessage(testing::_))
-      .WillRepeatedly(testing::Return(&esMsg));
+  mockESApi->SetExpectationsESNewClient();
+  mockESApi->SetExpectationsRetainReleaseMessage(&esMsg);
 
   auto mockAuthCache = std::make_shared<MockAuthResultCache>(nullptr);
   EXPECT_CALL(*mockAuthCache, AddToCache(&execFile, ACTION_RESPOND_ALLOW_COMPILER))

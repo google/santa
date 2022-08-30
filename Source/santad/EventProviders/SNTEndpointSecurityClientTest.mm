@@ -99,10 +99,7 @@ using santa::santad::event_providers::endpoint_security::Message;
   es_message_t esMsg;
 
   auto mockESApi = std::make_shared<MockEndpointSecurityAPI>();
-  EXPECT_CALL(*mockESApi, ReleaseMessage(testing::_))
-      .After(
-          EXPECT_CALL(*mockESApi, RetainMessage(testing::_))
-              .WillOnce(testing::Return(&esMsg)));
+  mockESApi->SetExpectationsRetainReleaseMessage(&esMsg);
 
   SNTEndpointSecurityClient *client =
       [[SNTEndpointSecurityClient alloc] initWithESAPI:mockESApi];
@@ -120,11 +117,7 @@ using santa::santad::event_providers::endpoint_security::Message;
   es_message_t esMsg = MakeESMessage(ES_EVENT_TYPE_NOTIFY_FORK, &proc);
 
   auto mockESApi = std::make_shared<MockEndpointSecurityAPI>();
-  EXPECT_CALL(*mockESApi, ReleaseMessage(testing::_))
-      .Times(testing::AnyNumber())
-      .After(
-          EXPECT_CALL(*mockESApi, RetainMessage(testing::_))
-              .WillRepeatedly(testing::Return(&esMsg)));
+  mockESApi->SetExpectationsRetainReleaseMessage(&esMsg);
 
     // Have subscribe fail the first time, meaning clear cache only called once.
   EXPECT_CALL(*mockESApi, RespondAuthResult(testing::_,
@@ -241,8 +234,9 @@ using santa::santad::event_providers::endpoint_security::Message;
 }
 
 - (void)testRespondToMessageWithAuthResultCacheable {
-  auto mockESApi = std::make_shared<MockEndpointSecurityAPI>();
   es_message_t esMsg;
+  auto mockESApi = std::make_shared<MockEndpointSecurityAPI>();
+  mockESApi->SetExpectationsRetainReleaseMessage(&esMsg);
 
   es_auth_result_t result = ES_AUTH_RESULT_DENY;
   bool cacheable = true;
@@ -253,10 +247,6 @@ using santa::santad::event_providers::endpoint_security::Message;
                                             result,
                                             cacheable))
       .WillOnce(testing::Return(true));
-
-  EXPECT_CALL(*mockESApi, ReleaseMessage(testing::_))
-      .After(EXPECT_CALL(*mockESApi, RetainMessage(testing::_))
-          .WillOnce(testing::Return(&esMsg)));
 
   SNTEndpointSecurityClient *client =
       [[SNTEndpointSecurityClient alloc] initWithESAPI:mockESApi];
@@ -279,7 +269,7 @@ using santa::santad::event_providers::endpoint_security::Message;
   // means that the underlying `es_msg_` in the `Message` object is NULL, and
   // therefore no call to `ReleaseMessage` is ever made (hence no expectations).
   // Because we don't need to operate on the es_msg_, this simplifies the test.
-  EXPECT_CALL(*mockESApi, RetainMessage(testing::_));
+  EXPECT_CALL(*mockESApi, RetainMessage);
 
   SNTEndpointSecurityClient *client =
       [[SNTEndpointSecurityClient alloc] initWithESAPI:mockESApi];
@@ -324,11 +314,7 @@ using santa::santad::event_providers::endpoint_security::Message;
   es_message_t esMsg = MakeESMessage(ES_EVENT_TYPE_NOTIFY_EXIT, &proc);
 
   auto mockESApi = std::make_shared<MockEndpointSecurityAPI>();
-  EXPECT_CALL(*mockESApi, ReleaseMessage(testing::_))
-      .Times(testing::AnyNumber());
-  EXPECT_CALL(*mockESApi, RetainMessage(testing::_))
-      .WillRepeatedly(testing::Return(&esMsg));
-
+  mockESApi->SetExpectationsRetainReleaseMessage(&esMsg);
 
   SNTEndpointSecurityClient *client =
       [[SNTEndpointSecurityClient alloc] initWithESAPI:mockESApi];
@@ -356,11 +342,7 @@ using santa::santad::event_providers::endpoint_security::Message;
                                      45 * 1000); // Long deadline to not hit
 
   auto mockESApi = std::make_shared<MockEndpointSecurityAPI>();
-  EXPECT_CALL(*mockESApi, ReleaseMessage(testing::_))
-      .Times(testing::AnyNumber())
-      .After(
-          EXPECT_CALL(*mockESApi, RetainMessage(testing::_))
-              .WillRepeatedly(testing::Return(&esMsg)));
+  mockESApi->SetExpectationsRetainReleaseMessage(&esMsg);
 
   dispatch_semaphore_t sema = dispatch_semaphore_create(0);
 
@@ -403,11 +385,7 @@ using santa::santad::event_providers::endpoint_security::Message;
                                      750); // 750ms timeout
 
   auto mockESApi = std::make_shared<MockEndpointSecurityAPI>();
-  EXPECT_CALL(*mockESApi, ReleaseMessage(testing::_))
-      .Times(testing::AnyNumber())
-      .After(
-          EXPECT_CALL(*mockESApi, RetainMessage(testing::_))
-              .WillRepeatedly(testing::Return(&esMsg)));
+  mockESApi->SetExpectationsRetainReleaseMessage(&esMsg);
 
   dispatch_semaphore_t deadlineSema = dispatch_semaphore_create(0);
   dispatch_semaphore_t controlSema = dispatch_semaphore_create(0);

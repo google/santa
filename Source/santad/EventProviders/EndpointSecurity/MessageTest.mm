@@ -66,19 +66,16 @@ pid_t AttemptToFindUnusedPID() {
                                     MakeAuditToken(56, 78));
   es_message_t esMsg = MakeESMessage(ES_EVENT_TYPE_NOTIFY_EXIT, &proc);
 
-  auto mock_esapi = std::make_shared<MockEndpointSecurityAPI>();
-
-  EXPECT_CALL(*mock_esapi, ReleaseMessage(testing::_))
-      .After(EXPECT_CALL(*mock_esapi, RetainMessage(testing::_))
-          .WillOnce(testing::Return(&esMsg)));
+  auto mockESApi = std::make_shared<MockEndpointSecurityAPI>();
+  mockESApi->SetExpectationsRetainReleaseMessage(&esMsg);
 
   // Constructing a `Message` retains the underlying `es_message_t` and it is
   // released when the `Message` object is destructed.
   {
-    auto msg = Message(mock_esapi, &esMsg);
+    auto msg = Message(mockESApi, &esMsg);
   }
 
-  XCTBubbleMockVerifyAndClearExpectations(mock_esapi.get());
+  XCTBubbleMockVerifyAndClearExpectations(mockESApi.get());
 }
 
 - (void)testCopyConstructor {
@@ -117,16 +114,12 @@ pid_t AttemptToFindUnusedPID() {
                                     MakeAuditToken(getpid(), 0));
   es_message_t esMsg = MakeESMessage(ES_EVENT_TYPE_NOTIFY_EXIT, &proc);
 
-  auto mock_esapi = std::make_shared<MockEndpointSecurityAPI>();
-
-  EXPECT_CALL(*mock_esapi, ReleaseMessage(testing::_))
-      .Times(testing::AnyNumber());
-  EXPECT_CALL(*mock_esapi, RetainMessage(testing::_))
-      .WillRepeatedly(testing::Return(&esMsg));
+  auto mockESApi = std::make_shared<MockEndpointSecurityAPI>();
+  mockESApi->SetExpectationsRetainReleaseMessage(&esMsg);
 
   // Search for an *existing* parent process.
   {
-    Message msg(mock_esapi, &esMsg);
+    Message msg(mockESApi, &esMsg);
 
     std::string got = msg.ParentProcessName();
     std::string want = getprogname();
@@ -142,7 +135,7 @@ pid_t AttemptToFindUnusedPID() {
                          MakeAuditToken(12, 34),
                          MakeAuditToken(newPpid, 34));
 
-    Message msg(mock_esapi, &esMsg);
+    Message msg(mockESApi, &esMsg);
 
     std::string got = msg.ParentProcessName();
     std::string want = "";

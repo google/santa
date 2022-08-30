@@ -133,10 +133,7 @@ VerifyPostActionBlock verifyPostAction = ^PostActionBlock(santa_action_t wantAct
   esMsg.event.exec.target = &procExec;
 
   auto mockESApi = std::make_shared<MockEndpointSecurityAPI>();
-  EXPECT_CALL(*mockESApi, ReleaseMessage(testing::_))
-      .Times(testing::AnyNumber());
-  EXPECT_CALL(*mockESApi, RetainMessage(testing::_))
-      .WillRepeatedly(testing::Return(&esMsg));
+  mockESApi->SetExpectationsRetainReleaseMessage(&esMsg);
 
   // Undo the default mocks
   self.mockDecisionCache = OCMStrictClassMock([SNTDecisionCache class]);
@@ -201,10 +198,7 @@ VerifyPostActionBlock verifyPostAction = ^PostActionBlock(santa_action_t wantAct
   esMsg.event.exec.target = &procExec;
 
   auto mockESApi = std::make_shared<MockEndpointSecurityAPI>();
-  EXPECT_CALL(*mockESApi, ReleaseMessage(testing::_))
-      .Times(testing::AnyNumber());
-  EXPECT_CALL(*mockESApi, RetainMessage(testing::_))
-      .WillRepeatedly(testing::Return(&esMsg));
+  mockESApi->SetExpectationsRetainReleaseMessage(&esMsg);
 
   {
     Message msg(mockESApi, &esMsg);

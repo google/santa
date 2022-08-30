@@ -100,14 +100,8 @@ public:
   es_file_t targetFile = MakeESFile("bar");
 
   auto mockESApi = std::make_shared<MockEndpointSecurityAPI>();
-  EXPECT_CALL(*mockESApi, NewClient(testing::_))
-      .WillOnce(testing::Return(Client(nullptr, ES_NEW_CLIENT_RESULT_SUCCESS)));
-  EXPECT_CALL(*mockESApi, MuteProcess(testing::_, testing::_))
-      .WillOnce(testing::Return(true));
-  EXPECT_CALL(*mockESApi, ReleaseMessage(testing::_))
-      .Times(testing::AnyNumber());
-  EXPECT_CALL(*mockESApi, RetainMessage(testing::_))
-      .WillRepeatedly(testing::Return(&esMsg));
+  mockESApi->SetExpectationsESNewClient();
+  mockESApi->SetExpectationsRetainReleaseMessage(&esMsg);
 
   std::shared_ptr<EnrichedMessage> enrichedMsg = std::shared_ptr<EnrichedMessage>(nullptr);
 
