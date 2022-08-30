@@ -13,6 +13,7 @@
 ///    limitations under the License.
 
 #import <bsm/libbsm.h>
+#include "gmock/gmock.h"
 #import <DiskArbitration/DiskArbitration.h>
 #include <EndpointSecurity/EndpointSecurity.h>
 #include <gtest/gtest.h>
@@ -57,7 +58,8 @@ using santa::santad::event_providers::endpoint_security::Message;
                                                  mockESApi:(std::shared_ptr<MockEndpointSecurityAPI>)mockESApi
                                                     mockDA:(MockDiskArbitration *)mockDA
                                                  eventType:(es_event_type_t)eventType
-                                         diskInfoOverrides:(NSDictionary *)diskInfo {
+                                         diskInfoOverrides:(NSDictionary *)diskInfo
+                                        expectedAuthResult:(es_auth_result_t)expectedAuthResult {
   [deviceManager enable];
   struct statfs fs = {0};
   NSString *test_mntfromname = @"/dev/disk2s1";
@@ -113,15 +115,15 @@ using santa::santad::event_providers::endpoint_security::Message;
   XCTestExpectation *mountExpectation =
       [self expectationWithDescription:@"Wait for response from ES"];
 
-  EXPECT_CALL(*mockESApi, RespondAuthResult)
-      // .WillOnce(testing::Return(true));
-      .WillOnce(testing::WithArgs<2,3>(testing::Invoke(
-          ^bool(es_auth_result_t result, bool cache) {
-            authResult = result;
-            cacheable = cache;
-            [mountExpectation fulfill];
-            return true;
-          })));
+
+  EXPECT_CALL(*mockESApi, RespondAuthResult(testing::_,
+                                            testing::_,
+                                            expectedAuthResult,
+                                            false))
+      .WillOnce(testing::InvokeWithoutArgs(^bool{
+        [mountExpectation fulfill];
+        return true;
+      }));
 
   {
     mockESApi->SetExpectationsRetainReleaseMessage(&esMsg);
@@ -149,14 +151,12 @@ using santa::santad::event_providers::endpoint_security::Message;
                                               authResultCache:nullptr];
   deviceManager.blockUSBMount = NO;
 
-  auto result = [self triggerTestMountEvent:deviceManager
-                                  mockESApi:mockESApi
-                                     mockDA:mockDA
-                                  eventType:ES_EVENT_TYPE_AUTH_MOUNT
-                          diskInfoOverrides:nil];
-
-  XCTAssertEqual(result.first, ES_AUTH_RESULT_ALLOW);
-  XCTAssertEqual(result.second, false);
+  [self triggerTestMountEvent:deviceManager
+                    mockESApi:mockESApi
+                       mockDA:mockDA
+                    eventType:ES_EVENT_TYPE_AUTH_MOUNT
+            diskInfoOverrides:nil
+           expectedAuthResult:ES_AUTH_RESULT_ALLOW];
 }
 
 - (void)testRemount {
@@ -186,14 +186,13 @@ using santa::santad::event_providers::endpoint_security::Message;
     [expectation fulfill];
   };
 
-  auto result = [self triggerTestMountEvent:deviceManager
-                                  mockESApi:mockESApi
-                                     mockDA:mockDA
-                                  eventType:ES_EVENT_TYPE_AUTH_MOUNT
-                          diskInfoOverrides:nil];
+  [self triggerTestMountEvent:deviceManager
+                    mockESApi:mockESApi
+                       mockDA:mockDA
+                    eventType:ES_EVENT_TYPE_AUTH_MOUNT
+            diskInfoOverrides:nil
+           expectedAuthResult:ES_AUTH_RESULT_DENY];
 
-  XCTAssertEqual(result.first, ES_AUTH_RESULT_DENY);
-  XCTAssertEqual(result.second, false);
   XCTAssertEqual(mockDA.wasRemounted, YES);
 
   [self waitForExpectations:@[ expectation ] timeout:60.0];
@@ -228,14 +227,12 @@ using santa::santad::event_providers::endpoint_security::Message;
     [expectation fulfill];
   };
 
-  auto result = [self triggerTestMountEvent:deviceManager
-                                  mockESApi:mockESApi
-                                     mockDA:mockDA
-                                  eventType:ES_EVENT_TYPE_AUTH_MOUNT
-                          diskInfoOverrides:nil];
-
-  XCTAssertEqual(result.first, ES_AUTH_RESULT_DENY);
-  XCTAssertEqual(result.second, false);
+  [self triggerTestMountEvent:deviceManager
+                    mockESApi:mockESApi
+                       mockDA:mockDA
+                    eventType:ES_EVENT_TYPE_AUTH_MOUNT
+            diskInfoOverrides:nil
+           expectedAuthResult:ES_AUTH_RESULT_DENY];
 
   [self waitForExpectations:@[ expectation ] timeout:60.0];
 
@@ -270,14 +267,13 @@ using santa::santad::event_providers::endpoint_security::Message;
     [expectation fulfill];
   };
 
-  auto result = [self triggerTestMountEvent:deviceManager
-                                  mockESApi:mockESApi
-                                     mockDA:mockDA
-                                  eventType:ES_EVENT_TYPE_AUTH_MOUNT
-                          diskInfoOverrides:nil];
+  [self triggerTestMountEvent:deviceManager
+                    mockESApi:mockESApi
+                       mockDA:mockDA
+                    eventType:ES_EVENT_TYPE_AUTH_MOUNT
+            diskInfoOverrides:nil
+           expectedAuthResult:ES_AUTH_RESULT_DENY];
 
-  XCTAssertEqual(result.first, ES_AUTH_RESULT_DENY);
-  XCTAssertEqual(result.second, false);
   XCTAssertEqual(mockDA.wasRemounted, YES);
 
   [self waitForExpectations:@[ expectation ] timeout:10.0];
@@ -311,15 +307,13 @@ using santa::santad::event_providers::endpoint_security::Message;
     (__bridge NSString *)kDADiskDescriptionMediaNameKey: @"disk image",
   };
 
+  [self triggerTestMountEvent:deviceManager
+                    mockESApi:mockESApi
+                       mockDA:mockDA
+                    eventType:ES_EVENT_TYPE_AUTH_MOUNT
+            diskInfoOverrides:diskInfo
+           expectedAuthResult:ES_AUTH_RESULT_ALLOW];
 
-  auto result = [self triggerTestMountEvent:deviceManager
-                                  mockESApi:mockESApi
-                                     mockDA:mockDA
-                                  eventType:ES_EVENT_TYPE_AUTH_MOUNT
-                          diskInfoOverrides:diskInfo];
-
-  XCTAssertEqual(result.first, ES_AUTH_RESULT_ALLOW);
-  XCTAssertEqual(result.second, false);
   XCTAssertEqual(mockDA.wasRemounted, NO);
 }
 

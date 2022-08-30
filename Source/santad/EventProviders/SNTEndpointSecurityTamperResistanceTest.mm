@@ -28,7 +28,6 @@
 #include "Source/santad/EventProviders/EndpointSecurity/Client.h"
 #include "Source/santad/EventProviders/EndpointSecurity/Message.h"
 
-using santa::santad::event_providers::endpoint_security::Client;
 using santa::santad::event_providers::endpoint_security::Message;
 
 static constexpr std::string_view kEventsDBPath = "/private/var/db/santa/events.db";
