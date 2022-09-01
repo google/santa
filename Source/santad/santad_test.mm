@@ -12,6 +12,7 @@
 ///    See the License for the specific language governing permissions and
 ///    limitations under the License.
 
+#import <dispatch/dispatch.h>
 #import <EndpointSecurity/EndpointSecurity.h>
 #import <Foundation/Foundation.h>
 #include <gmock/gmock.h>
@@ -118,19 +119,18 @@ NSString *testBinariesPath = @"santa/Source/santad/testdata/binaryrules";
   // Need a pointer to esMsg to capture in blocks below.
   es_message_t *heapESMsg = &esMsg;
 
-  __block int retainCount = 0;
-  dispatch_semaphore_t sema = dispatch_semaphore_create(0);
-
   // The test must wait for the ES client async message processing to complete.
   // Otherwise, the `es_message_t` stack variable will go out of scope and will
   // result in undefined behavior in the async dispatch queue block.
   // To do this, track the `Message` retain counts, and only allow the test
   // to continue once the retain count drops to 0 indicating the client is
   // no longer using the message.
+  __block int retainCount = 0;
+  dispatch_semaphore_t sema = dispatch_semaphore_create(0);
   EXPECT_CALL(*mockESApi, ReleaseMessage)
       .WillRepeatedly(^{
         if (retainCount == 0) {
-          XCTAssertTrue(false, "Under retain!");
+          XCTFail("Under retain!");
         }
         retainCount--;
         if (retainCount == 0) {

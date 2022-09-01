@@ -1,4 +1,4 @@
-/// Copyright 2021 Google Inc. All rights reserved.
+/// Copyright 2022 Google Inc. All rights reserved.
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -13,6 +13,7 @@
 ///    limitations under the License.
 
 #import <bsm/libbsm.h>
+#import <dispatch/dispatch.h>
 #include "gmock/gmock.h"
 #import <DiskArbitration/DiskArbitration.h>
 #include <EndpointSecurity/EndpointSecurity.h>
@@ -30,37 +31,40 @@
 #include "Source/common/TestUtils.h"
 #import "Source/santad/EventProviders/SNTEndpointSecurityDeviceManager.h"
 #import "Source/santad/EventProviders/DiskArbitrationTestUtil.h"
-#include "Source/santad/EventProviders/EndpointSecurity/Client.h"
+#include "Source/santad/EventProviders/EndpointSecurity/Message.h"
 #include "Source/santad/EventProviders/EndpointSecurity/MockEndpointSecurityAPI.h"
 
 using santa::santad::event_providers::endpoint_security::Message;
 
 @interface SNTEndpointSecurityDeviceManager (Testing)
-
 - (void)logDiskAppeared:(NSDictionary*)props;
-
 @end
 
 @interface SNTEndpointSecurityDeviceManagerTest : XCTestCase
 @property id mockConfigurator;
+@property MockDiskArbitration *mockDA;
 @end
 
 @implementation SNTEndpointSecurityDeviceManagerTest
 
 - (void)setUp {
   [super setUp];
+
   self.mockConfigurator = OCMClassMock([SNTConfigurator class]);
   OCMStub([self.mockConfigurator configurator]).andReturn(self.mockConfigurator);
   OCMStub([self.mockConfigurator eventLogType]).andReturn(-1);
+
+  self.mockDA = [MockDiskArbitration mockDiskArbitration];
+  [self.mockDA reset];
+
+  fclose(stdout);
 }
 
-- (void)triggerTestMountEvent:(SNTEndpointSecurityDeviceManager *)deviceManager
-                    mockESApi:(std::shared_ptr<MockEndpointSecurityAPI>)mockESApi
-                       mockDA:(MockDiskArbitration *)mockDA
-                    eventType:(es_event_type_t)eventType
+- (void)triggerTestMountEvent:(es_event_type_t)eventType
+                      //  mockDA:(MockDiskArbitration *)mockDA
             diskInfoOverrides:(NSDictionary *)diskInfo
-           expectedAuthResult:(es_auth_result_t)expectedAuthResult {
-  [deviceManager enable];
+           expectedAuthResult:(es_auth_result_t)expectedAuthResult
+           deviceManagerSetup:(void(^)(SNTEndpointSecurityDeviceManager*))setupDMCallback {
   struct statfs fs = {0};
   NSString *test_mntfromname = @"/dev/disk2s1";
   NSString *test_mntonname = @"/Volumes/KATE'S 4G";
@@ -89,16 +93,48 @@ using santa::santad::event_providers::endpoint_security::Message;
     disk.diskDescription = (NSDictionary *)mergedDiskDescription;
   }
 
+  auto mockESApi = std::make_shared<MockEndpointSecurityAPI>();
+  mockESApi->SetExpectationsESNewClient();
+
+  SNTEndpointSecurityDeviceManager *deviceManager =
+      [[SNTEndpointSecurityDeviceManager alloc] initWithESAPI:mockESApi
+                                                       logger:nullptr
+                                              authResultCache:nullptr];
+
+  setupDMCallback(deviceManager);
+
   // Stub the log method since a mock `Logger` object isn't used.
   id partialDeviceManager = OCMPartialMock(deviceManager);
   OCMStub([partialDeviceManager logDiskAppeared:OCMOCK_ANY]);
 
-  [mockDA insert:disk bsdName:test_mntfromname];
+  [self.mockDA insert:disk bsdName:test_mntfromname];
 
   es_file_t file = MakeESFile("foo");
   es_process_t proc = MakeESProcess(&file);
-  es_message_t esMsg = MakeESMessage(eventType, &proc, ActionType::Auth);
-  mockESApi->SetExpectationsRetainReleaseMessage(&esMsg);
+  es_message_t esMsg = MakeESMessage(eventType,
+                                     &proc,
+                                     ActionType::Auth,
+                                     6000);
+  // Need a pointer to esMsg to capture in blocks below.
+  es_message_t *heapESMsg = &esMsg;
+
+  __block int retainCount = 0;
+  dispatch_semaphore_t sema = dispatch_semaphore_create(0);
+  EXPECT_CALL(*mockESApi, ReleaseMessage)
+      .WillRepeatedly(^{
+        if (retainCount == 0) {
+          XCTFail(@"Under retain!");
+        }
+        retainCount--;
+        if (retainCount == 0) {
+          dispatch_semaphore_signal(sema);
+        }
+      });
+  EXPECT_CALL(*mockESApi, RetainMessage)
+      .WillRepeatedly(^{
+        retainCount++;
+        return heapESMsg;
+      });
 
   if (eventType == ES_EVENT_TYPE_AUTH_MOUNT) {
     esMsg.event.mount.statfs = &fs;
@@ -106,8 +142,7 @@ using santa::santad::event_providers::endpoint_security::Message;
     esMsg.event.remount.statfs = &fs;
   } else {
     // Programming error. Fail the test.
-    XCTAssertTrue(eventType == ES_EVENT_TYPE_AUTH_MOUNT ||
-        eventType == ES_EVENT_TYPE_AUTH_REMOUNT);
+    XCTFail(@"Unhandled event type in test: %d", eventType);
   }
 
   XCTestExpectation *mountExpectation =
@@ -122,112 +157,82 @@ using santa::santad::event_providers::endpoint_security::Message;
         return true;
       }));
 
-  {
-    mockESApi->SetExpectationsRetainReleaseMessage(&esMsg);
-    Message msg(mockESApi, &esMsg);
-    [deviceManager handleMessage:std::move(msg)];
-  }
+  [deviceManager handleMessage:Message(mockESApi, &esMsg)];
 
   [self waitForExpectations:@[ mountExpectation ] timeout:60.0];
 
+  XCTAssertEqual(0,
+                  dispatch_semaphore_wait(
+                      sema,
+                      dispatch_time(DISPATCH_TIME_NOW, 5 * NSEC_PER_SEC)),
+                  "Failed waiting for message to be processed...");
+
   [partialDeviceManager stopMocking];
+  XCTBubbleMockVerifyAndClearExpectations(mockESApi.get());
 }
 
 - (void)testUSBBlockDisabled {
-  MockDiskArbitration *mockDA = [MockDiskArbitration mockDiskArbitration];
-  [mockDA reset];
-
-  auto mockESApi = std::make_shared<MockEndpointSecurityAPI>();
-  mockESApi->SetExpectationsESNewClient();
-
-  SNTEndpointSecurityDeviceManager *deviceManager =
-      [[SNTEndpointSecurityDeviceManager alloc] initWithESAPI:mockESApi
-                                                       logger:nullptr
-                                              authResultCache:nullptr];
-  deviceManager.blockUSBMount = NO;
-
-  [self triggerTestMountEvent:deviceManager
-                    mockESApi:mockESApi
-                       mockDA:mockDA
-                    eventType:ES_EVENT_TYPE_AUTH_MOUNT
+  [self triggerTestMountEvent:ES_EVENT_TYPE_AUTH_MOUNT
             diskInfoOverrides:nil
-           expectedAuthResult:ES_AUTH_RESULT_ALLOW];
+           expectedAuthResult:ES_AUTH_RESULT_ALLOW
+           deviceManagerSetup:^(SNTEndpointSecurityDeviceManager *dm) {
+            dm.blockUSBMount = NO;
+          }];
 }
 
 - (void)testRemount {
-  MockDiskArbitration *mockDA = [MockDiskArbitration mockDiskArbitration];
-  [mockDA reset];
-
-  auto mockESApi = std::make_shared<MockEndpointSecurityAPI>();
-  mockESApi->SetExpectationsESNewClient();
-
-  SNTEndpointSecurityDeviceManager *deviceManager =
-      [[SNTEndpointSecurityDeviceManager alloc] initWithESAPI:mockESApi
-                                                       logger:nullptr
-                                              authResultCache:nullptr];
-
-  deviceManager.blockUSBMount = YES;
-  deviceManager.remountArgs = @[ @"noexec", @"rdonly" ];
+  NSArray *wantRemountArgs = @[ @"noexec", @"rdonly" ];
 
   XCTestExpectation *expectation =
     [self expectationWithDescription:@"Wait for SNTDeviceManager's blockCallback to trigger"];
 
   __block NSString *gotmntonname, *gotmntfromname;
   __block NSArray<NSString *> *gotRemountedArgs;
-  deviceManager.deviceBlockCallback = ^(SNTDeviceEvent *event) {
-    gotRemountedArgs = event.remountArgs;
-    gotmntonname = event.mntonname;
-    gotmntfromname = event.mntfromname;
-    [expectation fulfill];
-  };
 
-  [self triggerTestMountEvent:deviceManager
-                    mockESApi:mockESApi
-                       mockDA:mockDA
-                    eventType:ES_EVENT_TYPE_AUTH_MOUNT
+  [self triggerTestMountEvent:ES_EVENT_TYPE_AUTH_MOUNT
             diskInfoOverrides:nil
-           expectedAuthResult:ES_AUTH_RESULT_DENY];
+           expectedAuthResult:ES_AUTH_RESULT_DENY
+           deviceManagerSetup:^(SNTEndpointSecurityDeviceManager *dm) {
+             dm.blockUSBMount = YES;
+             dm.remountArgs = wantRemountArgs;
 
-  XCTAssertEqual(mockDA.wasRemounted, YES);
+             dm.deviceBlockCallback = ^(SNTDeviceEvent *event) {
+               gotRemountedArgs = event.remountArgs;
+               gotmntonname = event.mntonname;
+               gotmntfromname = event.mntfromname;
+               [expectation fulfill];
+             };
+           }];
+
+  XCTAssertEqual(self.mockDA.wasRemounted, YES);
 
   [self waitForExpectations:@[ expectation ] timeout:60.0];
 
-  XCTAssertEqualObjects(gotRemountedArgs, deviceManager.remountArgs);
+  XCTAssertEqualObjects(gotRemountedArgs, wantRemountArgs);
   XCTAssertEqualObjects(gotmntonname, @"/Volumes/KATE'S 4G");
   XCTAssertEqualObjects(gotmntfromname, @"/dev/disk2s1");
 }
 
 - (void)testBlockNoRemount {
-  MockDiskArbitration *mockDA = [MockDiskArbitration mockDiskArbitration];
-  [mockDA reset];
-
-  auto mockESApi = std::make_shared<MockEndpointSecurityAPI>();
-  mockESApi->SetExpectationsESNewClient();
-
-  SNTEndpointSecurityDeviceManager *deviceManager =
-      [[SNTEndpointSecurityDeviceManager alloc] initWithESAPI:mockESApi
-                                                       logger:nullptr
-                                              authResultCache:nullptr];
-  deviceManager.blockUSBMount = YES;
-
   XCTestExpectation *expectation =
     [self expectationWithDescription:@"Wait for SNTDeviceManager's blockCallback to trigger"];
 
   __block NSString *gotmntonname, *gotmntfromname;
   __block NSArray<NSString *> *gotRemountedArgs;
-  deviceManager.deviceBlockCallback = ^(SNTDeviceEvent *event) {
-    gotRemountedArgs = event.remountArgs;
-    gotmntonname = event.mntonname;
-    gotmntfromname = event.mntfromname;
-    [expectation fulfill];
-  };
 
-  [self triggerTestMountEvent:deviceManager
-                    mockESApi:mockESApi
-                       mockDA:mockDA
-                    eventType:ES_EVENT_TYPE_AUTH_MOUNT
+  [self triggerTestMountEvent:ES_EVENT_TYPE_AUTH_MOUNT
             diskInfoOverrides:nil
-           expectedAuthResult:ES_AUTH_RESULT_DENY];
+           expectedAuthResult:ES_AUTH_RESULT_DENY
+           deviceManagerSetup:^(SNTEndpointSecurityDeviceManager *dm) {
+             dm.blockUSBMount = YES;
+
+             dm.deviceBlockCallback = ^(SNTDeviceEvent *event) {
+               gotRemountedArgs = event.remountArgs;
+               gotmntonname = event.mntonname;
+               gotmntfromname = event.mntfromname;
+               [expectation fulfill];
+             };
+           }];
 
   [self waitForExpectations:@[ expectation ] timeout:60.0];
 
@@ -237,79 +242,59 @@ using santa::santad::event_providers::endpoint_security::Message;
 }
 
 - (void)testEnsureRemountsCannotChangePerms {
-  MockDiskArbitration *mockDA = [MockDiskArbitration mockDiskArbitration];
-  [mockDA reset];
-
-  auto mockESApi = std::make_shared<MockEndpointSecurityAPI>();
-  mockESApi->SetExpectationsESNewClient();
-
-  SNTEndpointSecurityDeviceManager *deviceManager =
-      [[SNTEndpointSecurityDeviceManager alloc] initWithESAPI:mockESApi
-                                                       logger:nullptr
-                                              authResultCache:nullptr];
-  deviceManager.blockUSBMount = YES;
-  deviceManager.remountArgs = @[ @"noexec", @"rdonly" ];
+  NSArray *wantRemountArgs = @[ @"noexec", @"rdonly" ];
 
   XCTestExpectation *expectation =
     [self expectationWithDescription:@"Wait for SNTDeviceManager's blockCallback to trigger"];
 
   __block NSString *gotmntonname, *gotmntfromname;
   __block NSArray<NSString *> *gotRemountedArgs;
-  deviceManager.deviceBlockCallback = ^(SNTDeviceEvent *event) {
-    gotRemountedArgs = event.remountArgs;
-    gotmntonname = event.mntonname;
-    gotmntfromname = event.mntfromname;
-    [expectation fulfill];
-  };
 
-  [self triggerTestMountEvent:deviceManager
-                    mockESApi:mockESApi
-                       mockDA:mockDA
-                    eventType:ES_EVENT_TYPE_AUTH_MOUNT
-            diskInfoOverrides:nil
-           expectedAuthResult:ES_AUTH_RESULT_DENY];
+  [self triggerTestMountEvent:ES_EVENT_TYPE_AUTH_MOUNT
+           diskInfoOverrides:nil
+           expectedAuthResult:ES_AUTH_RESULT_DENY
+           deviceManagerSetup:^(SNTEndpointSecurityDeviceManager *dm) {
+             dm.blockUSBMount = YES;
+             dm.remountArgs = wantRemountArgs;
 
-  XCTAssertEqual(mockDA.wasRemounted, YES);
+             dm.deviceBlockCallback = ^(SNTDeviceEvent *event) {
+               gotRemountedArgs = event.remountArgs;
+               gotmntonname = event.mntonname;
+               gotmntfromname = event.mntfromname;
+               [expectation fulfill];
+             };
+           }];
+
+  XCTAssertEqual(self.mockDA.wasRemounted, YES);
 
   [self waitForExpectations:@[ expectation ] timeout:10.0];
 
-  XCTAssertEqualObjects(gotRemountedArgs, deviceManager.remountArgs);
+  XCTAssertEqualObjects(gotRemountedArgs, wantRemountArgs);
   XCTAssertEqualObjects(gotmntonname, @"/Volumes/KATE'S 4G");
   XCTAssertEqualObjects(gotmntfromname, @"/dev/disk2s1");
 }
 
 - (void)testEnsureDMGsDoNotPrompt {
-  MockDiskArbitration *mockDA = [MockDiskArbitration mockDiskArbitration];
-  [mockDA reset];
-
-  auto mockESApi = std::make_shared<MockEndpointSecurityAPI>();
-  mockESApi->SetExpectationsESNewClient();
-
-  SNTEndpointSecurityDeviceManager *deviceManager =
-      [[SNTEndpointSecurityDeviceManager alloc] initWithESAPI:mockESApi
-                                                       logger:nullptr
-                                              authResultCache:nullptr];
-  deviceManager.blockUSBMount = YES;
-  deviceManager.remountArgs = @[ @"noexec", @"rdonly" ];
-
-  deviceManager.deviceBlockCallback = ^(SNTDeviceEvent *event) {
-    XCTFail(@"Should not be called");
-  };
-
+  NSArray *wantRemountArgs = @[ @"noexec", @"rdonly" ];
   NSDictionary *diskInfo = @{
     (__bridge NSString *)kDADiskDescriptionDeviceProtocolKey: @"Virtual Interface",
     (__bridge NSString *)kDADiskDescriptionDeviceModelKey: @"Disk Image",
     (__bridge NSString *)kDADiskDescriptionMediaNameKey: @"disk image",
   };
 
-  [self triggerTestMountEvent:deviceManager
-                    mockESApi:mockESApi
-                       mockDA:mockDA
-                    eventType:ES_EVENT_TYPE_AUTH_MOUNT
+  [self triggerTestMountEvent:ES_EVENT_TYPE_AUTH_MOUNT
             diskInfoOverrides:diskInfo
-           expectedAuthResult:ES_AUTH_RESULT_ALLOW];
+           expectedAuthResult:ES_AUTH_RESULT_ALLOW
+           deviceManagerSetup:^(SNTEndpointSecurityDeviceManager *dm) {
+             dm.blockUSBMount = YES;
+             dm.remountArgs = wantRemountArgs;
 
-  XCTAssertEqual(mockDA.wasRemounted, NO);
+             dm.deviceBlockCallback = ^(SNTDeviceEvent *event) {
+               XCTFail(@"Should not be called");
+             };
+           }];
+
+  XCTAssertEqual(self.mockDA.wasRemounted, NO);
 }
 
 - (void)testEnable {

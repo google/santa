@@ -156,7 +156,7 @@ public:
     XCTAssertEqual(0,
                   dispatch_semaphore_wait(
                       sema,
-                      dispatch_time(DISPATCH_TIME_NOW, 5 * NSEC_PER_SEC)),
+                      dispatch_time(DISPATCH_TIME_NOW, 10 * NSEC_PER_SEC)),
                   "Log wasn't called within expected time window");
   }
 

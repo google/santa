@@ -293,7 +293,7 @@ using santa::santad::event_providers::endpoint_security::Message;
   XCTAssertEqual(0,
                  dispatch_semaphore_wait(
                      sema,
-                     dispatch_time(DISPATCH_TIME_NOW, 5 * NSEC_PER_SEC)),
+                     dispatch_time(DISPATCH_TIME_NOW, 10 * NSEC_PER_SEC)),
                  "Handler block not called within expected time window");
 
   XCTBubbleMockVerifyAndClearExpectations(mockESApi.get());
