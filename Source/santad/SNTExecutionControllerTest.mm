@@ -98,12 +98,9 @@ VerifyPostActionBlock verifyPostAction = ^PostActionBlock(santa_action_t wantAct
 }
 
 - (void)tearDown {
-  [self.mockEventDatabase stopMocking];
-  [self.mockRuleDatabase stopMocking];
-  [self.mockFileInfo stopMocking];
-  [self.mockConfigurator stopMocking];
-  [self.mockCodesignChecker stopMocking];
-  [self.mockDecisionCache stopMocking];
+  // Make sure `self.sut` is deallocated before the mocks are deallocated and
+  // call into `stopMocking`.
+  self.sut = nil;
 }
 
 - (void)checkMetricCounters:(const NSString *)expectedFieldValueName

@@ -28,6 +28,7 @@
 #include "Source/santad/EventProviders/EndpointSecurity/Client.h"
 #include "Source/santad/EventProviders/EndpointSecurity/Message.h"
 
+using santa::santad::event_providers::endpoint_security::Client;
 using santa::santad::event_providers::endpoint_security::Message;
 
 static constexpr std::string_view kEventsDBPath = "/private/var/db/santa/events.db";
@@ -49,7 +50,15 @@ static constexpr std::string_view kSantaKextIdentifier = "com.google.santa-drive
       };
 
   auto mockESApi = std::make_shared<MockEndpointSecurityAPI>();
-  mockESApi->SetExpectationsESNewClient();
+  EXPECT_CALL(*mockESApi, NewClient(testing::_))
+      .WillOnce(testing::Return(Client(nullptr, ES_NEW_CLIENT_RESULT_SUCCESS)));
+  EXPECT_CALL(*mockESApi, MuteProcess(testing::_, testing::_))
+      .WillOnce(testing::Return(true));
+  EXPECT_CALL(*mockESApi, ClearCache(testing::_))
+    .After(
+        EXPECT_CALL(*mockESApi, Subscribe(testing::_, expectedEventSubs))
+            .WillOnce(testing::Return(true)))
+    .WillOnce(testing::Return(true));
 
   SNTEndpointSecurityTamperResistance* tamperClient =
       [[SNTEndpointSecurityTamperResistance alloc] initWithESAPI:mockESApi

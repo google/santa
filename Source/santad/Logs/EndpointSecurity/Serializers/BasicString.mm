@@ -362,6 +362,10 @@ std::vector<uint8_t> BasicString::SerializeMessage(const EnrichedExec& msg) {
        << "|cert_cn=" << [NonNull(sanitizeString(cd.certCommonName)) UTF8String];
   }
 
+  if (cd.teamID.length) {
+    ss << "|teamid=" << [NonNull(cd.teamID) UTF8String];
+  }
+
   if (cd.quarantineURL) {
     ss << "|quarantine_url=" << [NonNull(sanitizeString(cd.quarantineURL)) UTF8String];
   }
