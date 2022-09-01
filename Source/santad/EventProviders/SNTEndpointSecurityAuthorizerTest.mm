@@ -16,8 +16,6 @@
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 #import <OCMock/OCMock.h>
-#include "gmock/gmock.h"
-#include "Source/santad/SNTExecutionController.h"
 #import <XCTest/XCTest.h>
 
 #include <map>
@@ -26,6 +24,7 @@
 
 #include "Source/common/TestUtils.h"
 #import "Source/santad/SNTCompilerController.h"
+#import "Source/santad/SNTExecutionController.h"
 #include "Source/santad/EventProviders/AuthResultCache.h"
 #import "Source/santad/EventProviders/SNTEndpointSecurityAuthorizer.h"
 #include "Source/santad/EventProviders/EndpointSecurity/Client.h"

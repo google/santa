@@ -876,29 +876,31 @@ santa_unit_test(
 )
 
 santa_unit_test(
-    name = "SNTApplicationTest",
-    srcs = [
-        "SNTApplication.h",
-        "SNTApplicationTest.m",
-        "SNTDatabaseController.h",
-    ],
+    name = "santad_test",
+    srcs = ["santad_test.mm"],
     data = [
         "//Source/santad/testdata:binaryrules_testdata",
     ],
     minimum_os_version = "10.15",
     sdk_dylibs = [
-        "EndpointSecurity",
         "bsm",
+        "EndpointSecurity",
+    ],
+    sdk_frameworks = [
+        "DiskArbitration",
     ],
     tags = ["exclusive"],
     deps = [
-        ":EndpointSecurityTestLib",
-        ":santad_lib",
+        ":EndpointSecurityMessage",
+        ":MockEndpointSecurityAPI",
+        ":santad_deps",
+        ":SNTDatabaseController",
+        ":SNTEndpointSecurityAuthorizer",
         "//Source/common:SNTConfigurator",
-        "@FMDB",
+        "//Source/common:TestUtils",
+        "@com_google_googletest//:gtest",
         "@MOLCertificate",
         "@MOLCodesignChecker",
-        "@MOLXPCConnection",
         "@OCMock",
     ],
 )
@@ -1302,6 +1304,7 @@ test_suite(
         ":EndpointSecuritySerializerUtilitiesTest",
         ":EndpointSecurityWriterFileTest",
         ":MetricsTest",
+        ":santad_test",
         ":SNTApplicationCoreMetricsTest",
         ":SNTCompilerControllerTest",
         ":SNTDecisionCacheTest",
@@ -1313,21 +1316,6 @@ test_suite(
         ":SNTEventTableTest",
         ":SNTExecutionControllerTest",
         ":SNTRuleTableTest",
-    ],
-    visibility = ["//:santa_package_group"],
-)
-
-test_suite(
-    name = "unit_tests_ORIG",
-    tests = [
-        # ":SNTApplicationCoreMetricsTest", -- Works as-is
-        ":SNTApplicationTest",
-        # ":SNTDeviceManagerTest", -- Ported
-        # ":SNTEndpointSecurityManagerTest", -- Ported
-        # ":SNTEventTableTest", -- Works as-is
-        # ":SNTExecutionControllerTest", -- Ported
-        # ":SNTProtobufEventLogTest", -- Deleting
-        # ":SNTRuleTableTest", -- Works as-is
     ],
     visibility = ["//:santa_package_group"],
 )

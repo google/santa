@@ -1,4 +1,4 @@
-/// Copyright 2021 Google Inc. All rights reserved.
+/// Copyright 2022 Google Inc. All rights reserved.
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -11,26 +11,36 @@
 ///    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 ///    See the License for the specific language governing permissions and
 ///    limitations under the License.
+
 #import <EndpointSecurity/EndpointSecurity.h>
 #import <Foundation/Foundation.h>
+#include <gmock/gmock.h>
+#include <gtest/gtest.h>
 #import <MOLCertificate/MOLCertificate.h>
 #import <MOLCodesignChecker/MOLCodesignChecker.h>
 #import <OCMock/OCMock.h>
 #import <XCTest/XCTest.h>
 
-#import "Source/common/SNTConfigurator.h"
-#import "Source/santad/SNTApplication.h"
-#import "Source/santad/SNTDatabaseController.h"
+#include <memory>
 
-#include "Source/santad/EventProviders/EndpointSecurityTestUtil.h"
+#import "Source/common/SNTConfigurator.h"
+#include "Source/common/TestUtils.h"
+#include "Source/santad/santad_deps.h"
+#import "Source/santad/SNTDatabaseController.h"
+#import "Source/santad/EventProviders/SNTEndpointSecurityAuthorizer.h"
+#include "Source/santad/EventProviders/EndpointSecurity/Message.h"
+#include "Source/santad/EventProviders/EndpointSecurity/MockEndpointSecurityAPI.h"
+
+using santa::santad::event_providers::endpoint_security::Message;
+using santa::santad::SantadDeps;
 
 NSString *testBinariesPath = @"santa/Source/santad/testdata/binaryrules";
 
-@interface SNTApplicationTest : XCTestCase
+@interface SantadTest : XCTestCase
 @property id mockSNTDatabaseController;
 @end
 
-@implementation SNTApplicationTest
+@implementation SantadTest
 - (void)setUp {
   [super setUp];
   fclose(stdout);
@@ -45,8 +55,8 @@ NSString *testBinariesPath = @"santa/Source/santad/testdata/binaryrules";
 - (BOOL)checkBinaryExecution:(NSString *)binaryName
                   wantResult:(es_auth_result_t)wantResult
                   clientMode:(NSInteger)clientMode {
-  MockEndpointSecurity *mockES = [MockEndpointSecurity mockEndpointSecurity];
-  [mockES reset];
+  auto mockESApi = std::make_shared<MockEndpointSecurityAPI>();
+  mockESApi->SetExpectationsESNewClient();
 
   id mockConfigurator = OCMClassMock([SNTConfigurator class]);
 
@@ -64,51 +74,86 @@ NSString *testBinariesPath = @"santa/Source/santad/testdata/binaryrules";
 
   OCMStub([self.mockSNTDatabaseController databasePath]).andReturn(testPath);
 
-  SNTApplication *app = [[SNTApplication alloc] init];
-  [app start];
+  auto deps = SantadDeps::Create([mockConfigurator metricExportInterval],
+                                 [mockConfigurator eventLogType],
+                                 [mockConfigurator eventLogPath],
+                                 @[@"/.", @"/dev/"]);
 
-  XCTestExpectation *santaInit =
-    [self expectationWithDescription:@"Wait for Santa to subscribe to EndpointSecurity"];
-
-  dispatch_async(dispatch_get_global_queue(QOS_CLASS_BACKGROUND, 0), ^{
-    while ([mockES.subscriptions[ES_EVENT_TYPE_AUTH_EXEC] isEqualTo:@NO])
-      ;
-    [santaInit fulfill];
-  });
-
-  // Ugly hack to deflake the test and allow listenForDecisionRequests to install the correct
-  // decision callback.
-  sleep(1);
-  [self waitForExpectations:@[ santaInit ] timeout:10.0];
+  SNTEndpointSecurityAuthorizer *authClient =
+      [[SNTEndpointSecurityAuthorizer alloc] initWithESAPI:mockESApi
+                                            execController:deps->ExecController()
+                                        compilerController:deps->CompilerController()
+                                           authResultCache:deps->AuthResultCache()];
 
   XCTestExpectation *expectation =
-    [self expectationWithDescription:@"Wait for santa's Auth dispatch queue"];
-  __block ESResponse *got = nil;
-  [mockES registerResponseCallback:ES_EVENT_TYPE_AUTH_EXEC
-                      withCallback:^(ESResponse *r) {
-                        got = r;
-                        [expectation fulfill];
-                      }];
+      [self expectationWithDescription:@"Wait for santa's Auth dispatch queue"];
 
-  NSString *binaryPath = [NSString pathWithComponents:@[ testPath, binaryName ]];
+
+  EXPECT_CALL(*mockESApi, RespondAuthResult(testing::_,
+                                            testing::_,
+                                            wantResult,
+                                            wantResult == ES_AUTH_RESULT_ALLOW))
+      .WillOnce(testing::InvokeWithoutArgs(^bool{
+        [expectation fulfill];
+        return true;
+      }));
+
+  NSString *binaryPath =
+      [[NSString pathWithComponents:@[ testPath, binaryName ]] stringByResolvingSymlinksInPath];
   struct stat fileStat;
   lstat(binaryPath.UTF8String, &fileStat);
-  ESMessage *msg = [[ESMessage alloc] initWithBlock:^(ESMessage *m) {
-    m.binaryPath = binaryPath;
-    m.executable->stat = fileStat;
-    m.message->action_type = ES_ACTION_TYPE_AUTH;
-    m.message->event_type = ES_EVENT_TYPE_AUTH_EXEC;
-    m.message->event = (es_events_t){.exec = {.target = m.process}};
-  }];
+  es_file_t file = MakeESFile([binaryPath UTF8String], fileStat);
+  es_process_t proc = MakeESProcess(&file);
+  // Set a 6 second deadline for the message. The base SNTEndpointSecurityClient
+  // class leaves a 5 second buffer to auto-respond to messages. A 6 second
+  // deadline means there is a 1 second leeway given for the processing block
+  // to finish its tasks and release the `Message`. This will add about 1 second
+  // to the run time of each test case since each one must wait for the
+  // deadline block to run and release the message.
+  es_message_t esMsg = MakeESMessage(ES_EVENT_TYPE_AUTH_EXEC,
+                                     &proc,
+                                     ActionType::Auth,
+                                     6000);
+  esMsg.event.exec.target = &proc;
+  // Need a pointer to esMsg to capture in blocks below.
+  es_message_t *heapESMsg = &esMsg;
 
-  [mockES triggerHandler:msg.message];
+  __block int retainCount = 0;
+  dispatch_semaphore_t sema = dispatch_semaphore_create(0);
+
+  // The test must wait for the ES client async message processing to complete.
+  // Otherwise, the `es_message_t` stack variable will go out of scope and will
+  // result in undefined behavior in the async dispatch queue block.
+  // To do this, track the `Message` retain counts, and only allow the test
+  // to continue once the retain count drops to 0 indicating the client is
+  // no longer using the message.
+  EXPECT_CALL(*mockESApi, ReleaseMessage)
+      .WillRepeatedly(^{
+        if (retainCount == 0) {
+          XCTAssertTrue(false, "Under retain!");
+        }
+        retainCount--;
+        if (retainCount == 0) {
+          dispatch_semaphore_signal(sema);
+        }
+      });
+  EXPECT_CALL(*mockESApi, RetainMessage)
+      .WillRepeatedly(^{
+        retainCount++;
+        return heapESMsg;
+      });
+
+  [authClient handleMessage:Message(mockESApi, &esMsg)];
 
   [self waitForExpectations:@[ expectation ] timeout:10.0];
-  NSString *clientModeStr = (clientMode == SNTClientModeLockdown) ? @"LOCKDOWN" : @"MONITOR";
 
-  XCTAssertEqual(got.result, wantResult,
-                 @"received unexpected ES response on executing \"%@/%@\" in clientMode %@",
-                 testPath, binaryName, clientModeStr);
+  XCTAssertEqual(0,
+                  dispatch_semaphore_wait(
+                      sema,
+                      dispatch_time(DISPATCH_TIME_NOW, 5 * NSEC_PER_SEC)),
+                  "Failed waiting for message to be processed...");
+
+  XCTBubbleMockVerifyAndClearExpectations(mockESApi.get());
 }
 
 /**

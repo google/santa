@@ -33,7 +33,7 @@ Message::~Message() {
 }
 
 Message::Message(Message &&other) {
-  esapi_ = other.esapi_;
+  esapi_ = std::move(other.esapi_);
   es_msg_ = other.es_msg_;
   other.es_msg_ = nullptr;
 }
