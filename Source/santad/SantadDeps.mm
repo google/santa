@@ -12,7 +12,7 @@
 ///    See the License for the specific language governing permissions and
 ///    limitations under the License.
 
-#include "Source/santad/santad_deps.h"
+#include "Source/santad/SantadDeps.h"
 #include <objc/NSObjCRuntime.h>
 
 #include <memory>

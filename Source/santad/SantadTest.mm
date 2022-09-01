@@ -26,7 +26,7 @@
 
 #import "Source/common/SNTConfigurator.h"
 #include "Source/common/TestUtils.h"
-#include "Source/santad/santad_deps.h"
+#include "Source/santad/SantadDeps.h"
 #import "Source/santad/SNTDatabaseController.h"
 #import "Source/santad/EventProviders/SNTEndpointSecurityAuthorizer.h"
 #include "Source/santad/EventProviders/EndpointSecurity/Message.h"

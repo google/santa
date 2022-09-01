@@ -664,9 +664,9 @@ objc_library(
 )
 
 objc_library(
-    name = "santad",
-    srcs = ["santad.mm"],
-    hdrs = ["santad.h"],
+    name = "Santad",
+    srcs = ["Santad.mm"],
+    hdrs = ["Santad.h"],
     deps = [
         ":AuthResultCache",
         ":EndpointSecurityAPI",
@@ -690,9 +690,9 @@ objc_library(
 )
 
 objc_library(
-    name = "santad_deps",
-    srcs = ["santad_deps.mm"],
-    hdrs = ["santad_deps.h"],
+    name = "SantadDeps",
+    srcs = ["SantadDeps.mm"],
+    hdrs = ["SantadDeps.h"],
     deps = [
         ":AuthResultCache",
         ":EndpointSecurityEnricher",
@@ -715,8 +715,8 @@ objc_library(
     name = "santad_main",
     srcs = ["main.mm"],
     deps = [
-        ":santad",
-        ":santad_deps",
+        ":Santad",
+        ":SantadDeps",
         ":SNTDaemonControlController",
         "//Source/common:SNTConfigurator",
         "//Source/common:SNTLogging",
@@ -876,8 +876,8 @@ santa_unit_test(
 )
 
 santa_unit_test(
-    name = "santad_test",
-    srcs = ["santad_test.mm"],
+    name = "SantadTest",
+    srcs = ["SantadTest.mm"],
     data = [
         "//Source/santad/testdata:binaryrules_testdata",
     ],
@@ -893,7 +893,7 @@ santa_unit_test(
     deps = [
         ":EndpointSecurityMessage",
         ":MockEndpointSecurityAPI",
-        ":santad_deps",
+        ":SantadDeps",
         ":SNTDatabaseController",
         ":SNTEndpointSecurityAuthorizer",
         "//Source/common:SNTConfigurator",
@@ -1304,7 +1304,7 @@ test_suite(
         ":EndpointSecuritySerializerUtilitiesTest",
         ":EndpointSecurityWriterFileTest",
         ":MetricsTest",
-        ":santad_test",
+        ":SantadTest",
         ":SNTApplicationCoreMetricsTest",
         ":SNTCompilerControllerTest",
         ":SNTDecisionCacheTest",

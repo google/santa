@@ -18,8 +18,8 @@
 
 #import "Source/common/SNTConfigurator.h"
 #import "Source/common/SNTLogging.h"
-#import "Source/santad/santad.h"
-#include "Source/santad/santad_deps.h"
+#import "Source/santad/Santad.h"
+#include "Source/santad/SantadDeps.h"
 
 using santa::santad::SantadDeps;
 
