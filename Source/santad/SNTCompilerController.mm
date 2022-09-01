@@ -57,7 +57,9 @@ static constexpr std::string_view kIgnoredCompilerProcessPathPrefix = "/dev/";
     LOGE(@"Unable to watch compiler pid=%d >= PID_MAX(%d)", pid, PID_MAX);
   } else {
     self->_compilerPIDs[pid].store(isCompiler);
-    LOGD(@"Watching compiler pid=%d", pid);
+    if (isCompiler) {
+      LOGD(@"Watching compiler pid=%d", pid);
+    }
   }
 }
 

@@ -15,6 +15,7 @@
 #import "Source/common/SNTConfigurator.h"
 
 #include <sys/stat.h>
+#include <os/log.h>
 
 #import "Source/common/SNTRule.h"
 #import "Source/common/SNTStrengthify.h"
@@ -58,10 +59,11 @@
  allowedOrBlockedPathRegex:(void(^)(void))allowedOrBlockedPathRegexChanged
              blockUSBMount:(void(^)(BOOL, BOOL))blockUSBMountChanged
             remountUSBMode:(void(^)(NSArray<NSString *>*, NSArray<NSString *>*))remountUSBModeChanged {
-  dispatch_once_t onceToken;
+  static dispatch_once_t onceToken;
   static BOOL setup = FALSE;
   if (setup) {
     // This is a programming error. Bail.
+    os_log_error(OS_LOG_DEFAULT, "Attempt to setup observers twice.");
     exit(EXIT_FAILURE);
   }
 
