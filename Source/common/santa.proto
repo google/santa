@@ -1,6 +1,7 @@
 //
 // !!! WARNING !!!
-// This proto is in beta format and subject to change.
+// This proto is for demonstration purposes only and will be changing.
+// Do not rely on this format.
 //
 
 syntax = "proto3";

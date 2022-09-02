@@ -65,60 +65,6 @@ objc_library(
 )
 
 objc_library(
-    name = "santad_lib",
-    srcs = [
-        "DataLayer/SNTDatabaseTable.h",
-        "DataLayer/SNTEventTable.h",
-        "DataLayer/SNTRuleTable.h",
-        "SNTDatabaseController.h",
-        "SNTNotificationQueue.h",
-        "SNTNotificationQueue.m",
-        "SNTPolicyProcessor.h",
-        "SNTPolicyProcessor.m",
-        "SNTSyncdQueue.h",
-        "SNTSyncdQueue.m",
-        "main.m",
-    ],
-    sdk_dylibs = [
-        "EndpointSecurity",
-        "bsm",
-    ],
-    sdk_frameworks = [
-        "DiskArbitration",
-        "IOKit",
-    ],
-    deps = [
-        ":SNTApplicationCoreMetrics",
-        ":SNTDatabaseController",
-        ":SNTExecutionController",
-        "//Source/common:SNTBlockMessage",
-        "//Source/common:SNTCachedDecision",
-        "//Source/common:SNTCommon",
-        "//Source/common:SNTCommonEnums",
-        "//Source/common:SNTConfigurator",
-        "//Source/common:SNTDeviceEvent",
-        "//Source/common:SNTDropRootPrivs",
-        "//Source/common:SNTFileInfo",
-        "//Source/common:SNTLogging",
-        "//Source/common:SNTMetricSet",
-        "//Source/common:SNTRule",
-        "//Source/common:SNTStoredEvent",
-        "//Source/common:SNTStrengthify",
-        "//Source/common:SNTXPCBundleServiceInterface",
-        "//Source/common:SNTXPCControlInterface",
-        "//Source/common:SNTXPCMetricServiceInterface",
-        "//Source/common:SNTXPCNotifierInterface",
-        "//Source/common:SNTXPCSyncServiceInterface",
-        "//Source/common:SNTXPCUnprivilegedControlInterface",
-        "//Source/common:SantaCache",
-        "@FMDB",
-        "@MOLCertificate",
-        "@MOLCodesignChecker",
-        "@MOLXPCConnection",
-    ],
-)
-
-objc_library(
     name = "SNTApplicationCoreMetrics",
     srcs = ["SNTApplicationCoreMetrics.m"],
     hdrs = ["SNTApplicationCoreMetrics.h"],
@@ -607,31 +553,22 @@ macos_bundle(
     deps = [":santad_main"],
 )
 
-macos_bundle(
-    name = "com.google.santa.daemon_orig",
-    bundle_extension = "systemextension",
-    bundle_id = "com.google.santa.daemon",
-    codesignopts = [
-        "--timestamp",
-        "--force",
-        "--options library,kill,runtime",
+#
+# Begin test targets
+#
+
+objc_library(
+    name = "MockEndpointSecurityAPI",
+    hdrs = ["EventProviders/EndpointSecurity/MockEndpointSecurityAPI.h"],
+    deps = [
+        ":EndpointSecurityAPI",
+        "@com_google_googletest//:gtest",
     ],
-    entitlements = select({
-        "//:adhoc_build": "com.google.santa.daemon.systemextension-adhoc.entitlements",
-        # Non-adhoc builds get their entitlements from the provisioning profile.
-        "//conditions:default": None,
-    }),
-    infoplists = ["Info.plist"],
-    linkopts = ["-execute"],
-    minimum_os_version = "10.15",
-    provisioning_profile = select({
-        "//:adhoc_build": None,
-        "//conditions:default": "//profiles:daemon_dev",
-    }),
-    version = "//:version",
-    visibility = ["//:santa_package_group"],
-    deps = [":santad_lib"],
+    sdk_dylibs = [
+        "EndpointSecurity",
+    ],
 )
+
 
 santa_unit_test(
     name = "SNTEventTableTest",
@@ -721,18 +658,6 @@ santa_unit_test(
         "//Source/common:SNTSystemInfo",
         "//Source/santametricservice/Formats:SNTMetricFormatTestHelper",
         "@OCMock",
-    ],
-)
-
-objc_library(
-    name = "MockEndpointSecurityAPI",
-    hdrs = ["EventProviders/EndpointSecurity/MockEndpointSecurityAPI.h"],
-    deps = [
-        ":EndpointSecurityAPI",
-        "@com_google_googletest//:gtest",
-    ],
-    sdk_dylibs = [
-        "EndpointSecurity",
     ],
 )
 

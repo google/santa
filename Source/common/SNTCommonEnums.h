@@ -121,5 +121,4 @@ typedef NS_ENUM(NSInteger, SNTMetricFormatType) {
 static const char *kSantaDPath =
   "/Applications/Santa.app/Contents/Library/SystemExtensions/"
   "com.google.santa.daemon.systemextension/Contents/MacOS/com.google.santa.daemon";
-static const char *kSantaCtlPath = "/Applications/Santa.app/Contents/MacOS/santactl";
 static const char *kSantaAppPath = "/Applications/Santa.app";
