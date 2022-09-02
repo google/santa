@@ -19,7 +19,7 @@
 #import "Source/santad/EventProviders/AuthResultCache.h"
 #include "Source/santad/EventProviders/EndpointSecurity/EndpointSecurityAPI.h"
 #import "Source/santad/EventProviders/SNTEndpointSecurityClient.h"
-#import "Source/santad/EventProviders/SNTEventProvider.h"
+#import "Source/santad/EventProviders/SNTEndpointSecurityEventHandler.h"
 #include "Source/santad/Logs/EndpointSecurity/Logger.h"
 
 NS_ASSUME_NONNULL_BEGIN

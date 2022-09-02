@@ -19,7 +19,7 @@
 #import "Source/santad/SNTExecutionController.h"
 #import "Source/santad/EventProviders/AuthResultCache.h"
 #import "Source/santad/EventProviders/SNTEndpointSecurityClient.h"
-#import "Source/santad/EventProviders/SNTEventProvider.h"
+#import "Source/santad/EventProviders/SNTEndpointSecurityEventHandler.h"
 
 @interface SNTEndpointSecurityAuthorizer : SNTEndpointSecurityClient<SNTEventProvider>
 

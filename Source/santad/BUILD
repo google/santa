@@ -56,8 +56,8 @@ objc_library(
 )
 
 objc_library(
-    name = "SNTEventProvider",
-    hdrs = ["EventProviders/SNTEventProvider.h"],
+    name = "SNTEndpointSecurityEventHandler",
+    hdrs = ["EventProviders/SNTEndpointSecurityEventHandler.h"],
     deps = [
         ":EndpointSecurityMessage",
         "//Source/common:SNTCommon",
@@ -224,7 +224,7 @@ objc_library(
         ":EndpointSecurityLogger",
         ":SNTCompilerController",
         ":SNTEndpointSecurityClient",
-        ":SNTEventProvider",
+        ":SNTEndpointSecurityEventHandler",
         "//Source/common:SNTLogging",
         "//Source/common:SNTPrefixTree",
     ],
@@ -239,7 +239,7 @@ objc_library(
         ":EndpointSecurityLogger",
         ":EndpointSecurityMessage",
         ":SNTEndpointSecurityClient",
-        ":SNTEventProvider",
+        ":SNTEndpointSecurityEventHandler",
     ],
 )
 
@@ -254,7 +254,7 @@ objc_library(
         ":SNTEndpointSecurityClient",
         ":SNTExecutionController",
         ":SNTCompilerController",
-        ":SNTEventProvider",
+        ":SNTEndpointSecurityEventHandler",
     ],
 )
 
@@ -268,7 +268,7 @@ objc_library(
         ":EndpointSecurityLogger",
         ":EndpointSecurityMessage",
         ":SNTEndpointSecurityClient",
-        ":SNTEventProvider",
+        ":SNTEndpointSecurityEventHandler",
         "//Source/common:SNTLogging",
         "//Source/common:SNTDeviceEvent",
     ],

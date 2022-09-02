@@ -17,7 +17,7 @@
 #include "Source/santad/EventProviders/EndpointSecurity/Enricher.h"
 #import "Source/santad/EventProviders/AuthResultCache.h"
 #import "Source/santad/EventProviders/SNTEndpointSecurityClient.h"
-#import "Source/santad/EventProviders/SNTEventProvider.h"
+#import "Source/santad/EventProviders/SNTEndpointSecurityEventHandler.h"
 #include "Source/santad/Logs/EndpointSecurity/Logger.h"
 #import "Source/santad/SNTCompilerController.h"
 
