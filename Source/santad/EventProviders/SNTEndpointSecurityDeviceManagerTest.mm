@@ -184,7 +184,8 @@ using santa::santad::event_providers::endpoint_security::Message;
   NSArray *wantRemountArgs = @[ @"noexec", @"rdonly" ];
 
   XCTestExpectation *expectation =
-    [self expectationWithDescription:@"Wait for SNTDeviceManager's blockCallback to trigger"];
+    [self expectationWithDescription:
+        @"Wait for SNTEndpointSecurityDeviceManager's blockCallback to trigger"];
 
   __block NSString *gotmntonname, *gotmntfromname;
   __block NSArray<NSString *> *gotRemountedArgs;
@@ -215,7 +216,8 @@ using santa::santad::event_providers::endpoint_security::Message;
 
 - (void)testBlockNoRemount {
   XCTestExpectation *expectation =
-    [self expectationWithDescription:@"Wait for SNTDeviceManager's blockCallback to trigger"];
+    [self expectationWithDescription:
+        @"Wait for SNTEndpointSecurityDeviceManager's blockCallback to trigger"];
 
   __block NSString *gotmntonname, *gotmntfromname;
   __block NSArray<NSString *> *gotRemountedArgs;
@@ -245,7 +247,8 @@ using santa::santad::event_providers::endpoint_security::Message;
   NSArray *wantRemountArgs = @[ @"noexec", @"rdonly" ];
 
   XCTestExpectation *expectation =
-    [self expectationWithDescription:@"Wait for SNTDeviceManager's blockCallback to trigger"];
+    [self expectationWithDescription:
+        @"Wait for SNTEndpointSecurityDeviceManager's blockCallback to trigger"];
 
   __block NSString *gotmntonname, *gotmntfromname;
   __block NSArray<NSString *> *gotRemountedArgs;

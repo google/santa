@@ -159,7 +159,6 @@ static constexpr std::string_view kIgnoredCompilerProcessPathPrefix = "/dev/";
     }
   }
 
-  // Remove the "pending" decision info from SNTEventLog.
   [self removeFakeDecision:targetFile];
 }
 

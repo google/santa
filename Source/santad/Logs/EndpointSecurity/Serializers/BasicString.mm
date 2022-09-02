@@ -52,7 +52,8 @@ namespace santa::santad::logs::endpoint_security::serializers {
 
 /*
  * ~~~ BEGIN:
- * TODO: These functions should be moved to some common util file
+ * TODO: These functions should be moved to some common util file once
+ * more enrichers exist...
  */
 
 // TODO(mlw): Return a sanitized string?

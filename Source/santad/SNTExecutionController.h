@@ -38,9 +38,6 @@ const static NSString *kDenyNoFileInfo = @"DenyNoFileInfo";
 const static NSString *kBlockLongPath = @"BlockLongPath";
 const static NSString *kAllowNullVNode = @"AllowNullVNode"; // TODO: Remove
 
-@class MOLCodesignChecker;
-@class SNTDriverManager;
-@class SNTEventLog;
 @class SNTEventTable;
 @class SNTNotificationQueue;
 @class SNTRuleTable;

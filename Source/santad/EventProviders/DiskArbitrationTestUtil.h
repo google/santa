@@ -50,7 +50,8 @@ typedef void (^MockDADiskAppearedCallback)(DADiskRef ref);
 @end
 
 //
-// All DiskArbitration functions used in SNTDeviceManager and shimmed out accordingly.
+// All DiskArbitration functions used in SNTEndpointSecurityDeviceManager
+// and shimmed out accordingly.
 //
 CF_EXTERN_C_BEGIN
 

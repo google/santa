@@ -65,107 +65,11 @@ objc_library(
 )
 
 objc_library(
-    name = "event_logs_common",
-    srcs = [
-        "DataLayer/SNTDatabaseTable.h",
-        "DataLayer/SNTRuleTable.h",
-        "Logs/SNTEventLog.h",
-        "Logs/SNTEventLog.m",
-        "Logs/SNTFileEventLog.h",
-        "Logs/SNTProtobufEventLog.h",
-        "Logs/SNTSyslogEventLog.h",
-        "SNTDatabaseController.h",
-    ],
-    hdrs = [
-        "Logs/SNTEventLog.h",
-    ],
-    deps = [
-        ":SNTDatabaseController",
-        "//Source/common:SNTCachedDecision",
-        "//Source/common:SNTCommon",
-        "//Source/common:SNTCommonEnums",
-        "//Source/common:SNTConfigurator",
-        "//Source/common:SNTLogging",
-        "//Source/common:SNTRule",
-        "//Source/common:SNTStoredEvent",
-        "@FMDB",
-    ],
-)
-
-objc_library(
-    name = "protobuf_event_logs",
-    srcs = [
-        "Logs/SNTLogOutput.h",
-        "Logs/SNTProtobufEventLog.h",
-        "Logs/SNTProtobufEventLog.m",
-        "Logs/SNTSimpleMaildir.h",
-        "Logs/SNTSimpleMaildir.m",
-    ],
-    deps = [
-        ":event_logs_common",
-        "//Source/common:SNTCachedDecision",
-        "//Source/common:SNTCommon",
-        "//Source/common:SNTConfigurator",
-        "//Source/common:SNTLogging",
-        "//Source/common:SNTMetricSet",
-        "//Source/common:SNTStoredEvent",
-        "//Source/common:santa_objc_proto",
-    ],
-)
-
-objc_library(
-    name = "syslog_event_logs",
-    srcs = [
-        "Logs/SNTSyslogEventLog.h",
-        "Logs/SNTSyslogEventLog.m",
-    ],
-    deps = [
-        ":event_logs_common",
-        "//Source/common:SNTCachedDecision",
-        "//Source/common:SNTCommon",
-        "//Source/common:SNTConfigurator",
-        "//Source/common:SNTLogging",
-        "//Source/common:SNTStoredEvent",
-    ],
-)
-
-objc_library(
-    name = "file_event_logs",
-    srcs = [
-        "Logs/SNTFileEventLog.h",
-        "Logs/SNTFileEventLog.m",
-        "Logs/SNTSyslogEventLog.h",
-    ],
-    deps = [
-        ":event_logs_common",
-        "//Source/common:SNTCommon",
-        "//Source/common:SNTConfigurator",
-        "//Source/common:SNTLogging",
-        "//Source/common:SNTStrengthify",
-    ],
-)
-
-objc_library(
-    name = "event_logs",
-    hdrs = ["Logs/SNTEventLog.h"],
-    deps = [
-        ":file_event_logs",
-        ":protobuf_event_logs",
-        ":syslog_event_logs",
-        "//Source/common:SNTCommon",
-    ],
-)
-
-objc_library(
     name = "santad_lib",
     srcs = [
         "DataLayer/SNTDatabaseTable.h",
         "DataLayer/SNTEventTable.h",
         "DataLayer/SNTRuleTable.h",
-        "EventProviders/SNTCachingEndpointSecurityManager.h",
-        "EventProviders/SNTCachingEndpointSecurityManager.mm",
-        "EventProviders/SNTDeviceManager.h",
-        "EventProviders/SNTDeviceManager.mm",
         "SNTDatabaseController.h",
         "SNTNotificationQueue.h",
         "SNTNotificationQueue.m",
@@ -187,7 +91,6 @@ objc_library(
         ":SNTApplicationCoreMetrics",
         ":SNTDatabaseController",
         ":SNTExecutionController",
-        ":event_logs",
         "//Source/common:SNTBlockMessage",
         "//Source/common:SNTCachedDecision",
         "//Source/common:SNTCommon",
@@ -224,26 +127,6 @@ objc_library(
         "//Source/common:SNTConfigurator",
         "//Source/common:SNTMetricSet",
         "//Source/common:SNTSystemInfo",
-    ],
-)
-
-objc_library(
-    name = "EndpointSecurityTestLib",
-    testonly = 1,
-    srcs = [
-        "EventProviders/EndpointSecurityTestUtil.h",
-        "EventProviders/EndpointSecurityTestUtil.mm",
-    ],
-    hdrs = [
-        "EventProviders/EndpointSecurityTestUtil.h",
-    ],
-    sdk_dylibs = [
-        "EndpointSecurity",
-        "bsm",
-    ],
-    sdk_frameworks = [
-        "DiskArbitration",
-        "IOKit",
     ],
 )
 
@@ -795,31 +678,6 @@ santa_unit_test(
 )
 
 santa_unit_test(
-    name = "SNTDeviceManagerTest",
-    srcs = [
-        "EventProviders/DiskArbitrationTestUtil.h",
-        "EventProviders/SNTDeviceManager.h",
-        "EventProviders/SNTDeviceManagerTest.mm",
-    ],
-    minimum_os_version = "10.15",
-    sdk_dylibs = [
-        "EndpointSecurity",
-        "bsm",
-    ],
-    deps = [
-        ":DiskArbitrationTestLib",
-        ":EndpointSecurityTestLib",
-        ":santad_lib",
-        "//Source/common:SNTCommon",
-        "//Source/common:SNTConfigurator",
-        "//Source/common:SNTDeviceEvent",
-        "//Source/common:SNTPrefixTree",
-        "//Source/common:SantaCache",
-        "@OCMock",
-    ],
-)
-
-santa_unit_test(
     name = "SantadTest",
     srcs = ["SantadTest.mm"],
     data = [
@@ -862,28 +720,6 @@ santa_unit_test(
         "//Source/common:SNTMetricSet",
         "//Source/common:SNTSystemInfo",
         "//Source/santametricservice/Formats:SNTMetricFormatTestHelper",
-        "@OCMock",
-    ],
-)
-
-santa_unit_test(
-    name = "SNTProtobufEventLogTest",
-    srcs = [
-        "Logs/SNTLogOutput.h",
-        "Logs/SNTProtobufEventLog.h",
-        "Logs/SNTProtobufEventLogTest.m",
-        "Logs/SNTSimpleMaildir.h",
-    ],
-    minimum_os_version = "10.15",
-    deps = [
-        ":EndpointSecurityTestLib",
-        ":event_logs",
-        "//Source/common:SNTCachedDecision",
-        "//Source/common:SNTConfigurator",
-        "//Source/common:SNTLogging",
-        "//Source/common:SNTRule",
-        "//Source/common:SNTStoredEvent",
-        "//Source/common:santa_objc_proto",
         "@OCMock",
     ],
 )

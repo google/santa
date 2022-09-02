@@ -1,3 +1,4 @@
+
 /// Copyright 2022 Google Inc. All rights reserved.
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
@@ -195,14 +196,6 @@ static NSString *const kPrinterProxyPostMonterey =
   // if (binInfo.fileSize > SomeUpperLimit) ...
 
   SNTCachedDecision *cd = [self.policyProcessor decisionForFileInfo:binInfo];
-
-  //
-  // TODO: Remove this bit used for testing during development only...
-  //
-  // if (strcmp(esMsg->event.exec.target->executable->path.data, "/usr/bin/bsdtar") == 0) {
-  //   cd.customMsg = @"Blocked for the lols";
-  //   cd.decision = SNTEventStateBlockBinary;
-  // }
 
   cd.vnodeId = {
     .fsid = (uint64_t)targetProc->executable->stat.st_dev,
