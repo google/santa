@@ -21,7 +21,7 @@
 #include "Source/santad/Logs/EndpointSecurity/Logger.h"
 #import "Source/santad/SNTCompilerController.h"
 
-@interface SNTEndpointSecurityRecorder : SNTEndpointSecurityClient<SNTEventProvider>
+@interface SNTEndpointSecurityRecorder : SNTEndpointSecurityClient<SNTEndpointSecurityEventHandler>
 
 - (instancetype)initWithESAPI:(std::shared_ptr<santa::santad::event_providers::endpoint_security::EndpointSecurityAPI>)esApi
                        logger:(std::shared_ptr<santa::santad::logs::endpoint_security::Logger>)logger

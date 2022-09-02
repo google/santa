@@ -21,7 +21,7 @@
 #import "Source/santad/EventProviders/SNTEndpointSecurityClient.h"
 #import "Source/santad/EventProviders/SNTEndpointSecurityEventHandler.h"
 
-@interface SNTEndpointSecurityAuthorizer : SNTEndpointSecurityClient<SNTEventProvider>
+@interface SNTEndpointSecurityAuthorizer : SNTEndpointSecurityClient<SNTEndpointSecurityEventHandler>
 
 - (instancetype)initWithESAPI:(std::shared_ptr<santa::santad::event_providers::endpoint_security::EndpointSecurityAPI>)esApi
                execController:(SNTExecutionController*)execController

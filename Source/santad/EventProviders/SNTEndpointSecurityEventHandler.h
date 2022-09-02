@@ -19,7 +19,7 @@
 #include "Source/santad/EventProviders/EndpointSecurity/Message.h"
 
 // Protocol that all subclasses of `SNTEndpointSecurityClient` should adhere to.
-@protocol SNTEventProvider <NSObject>
+@protocol SNTEndpointSecurityEventHandler <NSObject>
 
 // Called Synchronously and serially for each message provided by the
 // EndpointSecurity framework.

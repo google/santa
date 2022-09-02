@@ -30,7 +30,7 @@ typedef void (^SNTDeviceBlockCallback)(SNTDeviceEvent *event);
  * Manages DiskArbitration and EndpointSecurity to monitor/block/remount USB
  * storage devices.
  */
-@interface SNTEndpointSecurityDeviceManager : SNTEndpointSecurityClient<SNTEventProvider>
+@interface SNTEndpointSecurityDeviceManager : SNTEndpointSecurityClient<SNTEndpointSecurityEventHandler>
 
 @property(nonatomic, readwrite) BOOL blockUSBMount;
 @property(nonatomic, readwrite, nullable) NSArray<NSString *> *remountArgs;
