@@ -66,10 +66,3 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           path-to-lcov: ./bazel-out/_coverage/_coverage_report.dat
           flag-name: Unit
-
-  benchmark:
-    runs-on: macos-11
-    steps:
-      - uses: actions/checkout@v2
-      - name: Run All Tests
-        run: ./Testing/benchmark.sh

@@ -65,26 +65,6 @@ objc_library(
 )
 
 objc_library(
-    name = "endpoint_security_manager",
-    srcs = [
-        "EventProviders/SNTEndpointSecurityManager.h",
-        "EventProviders/SNTEndpointSecurityManager.mm",
-    ],
-    sdk_dylibs = [
-        "EndpointSecurity",
-        "bsm",
-    ],
-    deps = [
-        ":SNTEventProvider",
-        "//Source/common:SNTCommon",
-        "//Source/common:SNTConfigurator",
-        "//Source/common:SNTLogging",
-        "//Source/common:SNTPrefixTree",
-        "//Source/common:SantaCache",
-    ],
-)
-
-objc_library(
     name = "event_logs_common",
     srcs = [
         "DataLayer/SNTDatabaseTable.h",
@@ -136,13 +116,10 @@ objc_library(
 objc_library(
     name = "syslog_event_logs",
     srcs = [
-        "EventProviders/SNTEndpointSecurityManager.h",
-        "EventProviders/SNTEventProvider.h",
         "Logs/SNTSyslogEventLog.h",
         "Logs/SNTSyslogEventLog.m",
     ],
     deps = [
-        ":endpoint_security_manager",
         ":event_logs_common",
         "//Source/common:SNTCachedDecision",
         "//Source/common:SNTCommon",
@@ -189,12 +166,6 @@ objc_library(
         "EventProviders/SNTCachingEndpointSecurityManager.mm",
         "EventProviders/SNTDeviceManager.h",
         "EventProviders/SNTDeviceManager.mm",
-        "EventProviders/SNTEndpointSecurityManager.h",
-        "EventProviders/SNTEventProvider.h",
-        "SNTApplication.h",
-        "SNTApplication.m",
-        "SNTDaemonControlController.h",
-        "SNTDaemonControlController.m",
         "SNTDatabaseController.h",
         "SNTNotificationQueue.h",
         "SNTNotificationQueue.m",
@@ -216,7 +187,6 @@ objc_library(
         ":SNTApplicationCoreMetrics",
         ":SNTDatabaseController",
         ":SNTExecutionController",
-        ":endpoint_security_manager",
         ":event_logs",
         "//Source/common:SNTBlockMessage",
         "//Source/common:SNTCachedDecision",
@@ -629,10 +599,7 @@ objc_library(
 
 objc_library(
     name = "SNTDaemonControlController",
-    srcs = [
-        "EventProviders/SNTEventProvider.h",
-        "SNTDaemonControlController.mm",
-    ],
+    srcs = ["SNTDaemonControlController.mm"],
     hdrs = ["SNTDaemonControlController.h"],
     deps = [
         ":AuthResultCache",
@@ -828,29 +795,6 @@ santa_unit_test(
 )
 
 santa_unit_test(
-    name = "SNTEndpointSecurityManagerTest",
-    srcs = [
-        "EventProviders/SNTEndpointSecurityManager.h",
-        "EventProviders/SNTEndpointSecurityManager.mm",
-        "EventProviders/SNTEndpointSecurityManagerTest.mm",
-        "EventProviders/SNTEventProvider.h",
-    ],
-    minimum_os_version = "10.15",
-    sdk_dylibs = [
-        "EndpointSecurity",
-        "bsm",
-    ],
-    deps = [
-        ":EndpointSecurityTestLib",
-        "//Source/common:SNTCommon",
-        "//Source/common:SNTConfigurator",
-        "//Source/common:SNTLogging",
-        "//Source/common:SNTPrefixTree",
-        "//Source/common:SantaCache",
-    ],
-)
-
-santa_unit_test(
     name = "SNTDeviceManagerTest",
     srcs = [
         "EventProviders/DiskArbitrationTestUtil.h",
@@ -901,28 +845,6 @@ santa_unit_test(
         "@com_google_googletest//:gtest",
         "@MOLCertificate",
         "@MOLCodesignChecker",
-        "@OCMock",
-    ],
-)
-
-santa_unit_test(
-    name = "SNTApplicationBenchmark",
-    srcs = [
-        "SNTApplicationBenchmark.m",
-    ],
-    data = [
-        "//Source/santad/testdata:binaryrules_testdata",
-    ],
-    minimum_os_version = "10.15",
-    sdk_dylibs = [
-        "EndpointSecurity",
-        "bsm",
-    ],
-    deps = [
-        ":EndpointSecurityTestLib",
-        ":santad_lib",
-        "@MOLCodesignChecker",
-        "@MOLXPCConnection",
         "@OCMock",
     ],
 )

@@ -198,10 +198,3 @@ test_suite(
         "//Source/santasyncservice:unit_tests",
     ],
 )
-
-test_suite(
-    name = "benchmarks",
-    tests = [
-        "//Source/santad:SNTApplicationBenchmark",
-    ],
-)
