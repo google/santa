@@ -72,15 +72,12 @@ extern NSString *const NSURLQuarantinePropertiesKey WEAK_IMPORT_ATTRIBUTE;
   return [self initWithResolvedPath:path stat:&fileStat error:error];
 }
 
-- (instancetype)initWithEndpointSecurityFile:(const es_file_t *)esFile
-                                       error:(NSError **)error {
-  return [self initWithResolvedPath:@(esFile->path.data)
-                               stat:&esFile->stat
-                              error:error];
+- (instancetype)initWithEndpointSecurityFile:(const es_file_t *)esFile error:(NSError **)error {
+  return [self initWithResolvedPath:@(esFile->path.data) stat:&esFile->stat error:error];
 }
 
 - (instancetype)initWithResolvedPath:(NSString *)path
-                                stat:(const struct stat*)fileStat
+                                stat:(const struct stat *)fileStat
                                error:(NSError **)error {
   if (!fileStat) {
     // This is a programming error. Bail.

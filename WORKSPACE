@@ -70,9 +70,6 @@ git_repository(
 
 new_git_repository(
     name = "thread-safe-lru",
-    commit = "df7b21ca075328ae5ce22bf3e042d62fca46382e",
-    remote = "https://github.com/tstarling/thread-safe-lru.git",
-    shallow_since = "1647043200",
     build_file_content = """
 cc_library(
     name = "thread-safe-lru",
@@ -85,14 +82,17 @@ cc_library(
     visibility = ["//visibility:public"],
 )
 """,
+    commit = "df7b21ca075328ae5ce22bf3e042d62fca46382e",
+    remote = "https://github.com/tstarling/thread-safe-lru.git",
+    shallow_since = "1647043200",
 )
 
 # Googletest - tag: release-1.12.1
 http_archive(
     name = "com_google_googletest",
-    urls = ["https://github.com/google/googletest/archive/58d77fa8070e8cec2dc1ed015d66b454c8d78850.zip"],
-    strip_prefix = "googletest-58d77fa8070e8cec2dc1ed015d66b454c8d78850",
     sha256 = "ab78fa3f912d44d38b785ec011a25f26512aaedc5291f51f3807c592b506d33a",
+    strip_prefix = "googletest-58d77fa8070e8cec2dc1ed015d66b454c8d78850",
+    urls = ["https://github.com/google/googletest/archive/58d77fa8070e8cec2dc1ed015d66b454c8d78850.zip"],
 )
 
 # Macops MOL* dependencies

@@ -1,5 +1,4 @@
 load("//:helper.bzl", "santa_unit_test")
-load("@build_bazel_rules_apple//apple:macos.bzl")
 
 package(default_visibility = ["//:santa_package_group"])
 

@@ -14,8 +14,8 @@
 
 #import "Source/common/SNTConfigurator.h"
 
-#include <sys/stat.h>
 #include <os/log.h>
+#include <sys/stat.h>
 
 #import "Source/common/SNTRule.h"
 #import "Source/common/SNTStrengthify.h"
@@ -39,26 +39,26 @@
 /// Holds the last processed hash of the static rules list.
 @property(atomic) NSDictionary *cachedStaticRules;
 
-@property (nonatomic, copy) void (^clientModeChanged)(SNTClientMode);
-@property (nonatomic, copy) void (^syncBaseURLChanged)(NSURL*);
-@property (nonatomic, copy) void (^exportMetricsChanged)(BOOL, BOOL);
-@property (nonatomic, copy) void (^metricExportIntervalChanged)(NSUInteger,
-                                                                NSUInteger);
-@property (nonatomic, copy) void (^allowedOrBlockedPathRegexChanged)(void);
-@property (nonatomic, copy) void (^blockUSBMountChanged)(BOOL, BOOL);
-@property (nonatomic, copy) void (^remountUSBModeChanged)(NSArray<NSString *>*,
-                                                          NSArray<NSString *>*);
+@property(nonatomic, copy) void (^clientModeChanged)(SNTClientMode);
+@property(nonatomic, copy) void (^syncBaseURLChanged)(NSURL *);
+@property(nonatomic, copy) void (^exportMetricsChanged)(BOOL, BOOL);
+@property(nonatomic, copy) void (^metricExportIntervalChanged)(NSUInteger, NSUInteger);
+@property(nonatomic, copy) void (^allowedOrBlockedPathRegexChanged)(void);
+@property(nonatomic, copy) void (^blockUSBMountChanged)(BOOL, BOOL);
+@property(nonatomic, copy) void (^remountUSBModeChanged)
+  (NSArray<NSString *> *, NSArray<NSString *> *);
 @end
 
 @implementation SNTConfigurator
 
-- (void) observeClientMode:(void(^)(SNTClientMode))clientModeChanged
-               syncBaseURL:(void(^)(NSURL*))syncBaseURLChanged
-             exportMetrics:(void(^)(BOOL, BOOL))exportMetricsChanged
-      metricExportInterval:(void(^)(NSUInteger, NSUInteger))metricExportIntervalChanged
- allowedOrBlockedPathRegex:(void(^)(void))allowedOrBlockedPathRegexChanged
-             blockUSBMount:(void(^)(BOOL, BOOL))blockUSBMountChanged
-            remountUSBMode:(void(^)(NSArray<NSString *>*, NSArray<NSString *>*))remountUSBModeChanged {
+- (void)observeClientMode:(void (^)(SNTClientMode))clientModeChanged
+                syncBaseURL:(void (^)(NSURL *))syncBaseURLChanged
+              exportMetrics:(void (^)(BOOL, BOOL))exportMetricsChanged
+       metricExportInterval:(void (^)(NSUInteger, NSUInteger))metricExportIntervalChanged
+  allowedOrBlockedPathRegex:(void (^)(void))allowedOrBlockedPathRegexChanged
+              blockUSBMount:(void (^)(BOOL, BOOL))blockUSBMountChanged
+             remountUSBMode:
+               (void (^)(NSArray<NSString *> *, NSArray<NSString *> *))remountUSBModeChanged {
   static dispatch_once_t onceToken;
   static BOOL setup = FALSE;
   if (setup) {
@@ -123,7 +123,7 @@
 
   if ([keyPath isEqualToString:NSStringFromSelector(@selector(clientMode))]) {
     SNTClientMode new =
-      [change[newKey] isKindOfClass : [NSNumber class]] ? [ change[newKey] longLongValue ] : 0;
+      [ change[newKey] isKindOfClass : [NSNumber class] ] ? [ change[newKey] longLongValue ] : 0;
     SNTClientMode old =
       [change[oldKey] isKindOfClass:[NSNumber class]] ? [change[oldKey] longLongValue] : 0;
     if (new != old) {
@@ -145,7 +145,7 @@
   } else if ([keyPath isEqualToString:NSStringFromSelector(@selector(allowedPathRegex))] ||
              [keyPath isEqualToString:NSStringFromSelector(@selector(blockedPathRegex))]) {
     NSRegularExpression *new =
-      [change[newKey] isKindOfClass : [NSRegularExpression class]] ? change[newKey] : nil;
+      [ change[newKey] isKindOfClass : [NSRegularExpression class] ] ? change[newKey] : nil;
     NSRegularExpression *old =
       [change[oldKey] isKindOfClass:[NSRegularExpression class]] ? change[oldKey] : nil;
     if (!new && !old) {

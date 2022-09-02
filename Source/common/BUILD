@@ -320,11 +320,11 @@ objc_library(
     testonly = 1,
     srcs = ["TestUtils.mm"],
     hdrs = ["TestUtils.h"],
-    deps = [
-        "@com_google_googletest//:gtest",
-        "@OCMock",
-    ],
     sdk_dylibs = [
-      "bsm",
-    ]
+        "bsm",
+    ],
+    deps = [
+        "@OCMock",
+        "@com_google_googletest//:gtest",
+    ],
 )
