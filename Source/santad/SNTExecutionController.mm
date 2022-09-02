@@ -142,8 +142,8 @@ static NSString *const kPrinterProxyPostMonterey =
       cd.teamID = [NSString stringWithUTF8String:targetProc->team_id.data];
     }
 
-    // TODO(mlw): We should be able to grab signing info. We should probably abstract this
-    // functionality out from the SNTPolicyProcessor.
+    // TODO(mlw): We should be able to grab signing info to have more-enriched log messages in the
+    // future. The code to do this should probably be abstracted from the SNTPolicyProcessor.
 
     [[SNTDecisionCache sharedCache] cacheDecision:cd];
 

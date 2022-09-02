@@ -36,7 +36,6 @@ const static NSString *kBlockPrinterWorkaround = @"BlockPrinterWorkaround";
 const static NSString *kAllowNoFileInfo = @"AllowNoFileInfo";
 const static NSString *kDenyNoFileInfo = @"DenyNoFileInfo";
 const static NSString *kBlockLongPath = @"BlockLongPath";
-const static NSString *kAllowNullVNode = @"AllowNullVNode"; // TODO: Remove
 
 @class SNTEventTable;
 @class SNTNotificationQueue;

@@ -115,6 +115,11 @@ public:
                                 (SNTEventLogType)123,
                                 @"/tmp"));
 
+  XCTAssertEqual(nullptr,
+                 Logger::Create(self->_mockESApi,
+                                SNTEventLogTypeProtobuf,
+                                @"/tmp"));
+
   auto logger = LoggerPeer(Logger::Create(self->_mockESApi,
                                           SNTEventLogTypeFilelog, @"/tmp/temppy"));
   XCTAssertNotEqual(nullptr, std::dynamic_pointer_cast<BasicString>(logger.Serializer()));

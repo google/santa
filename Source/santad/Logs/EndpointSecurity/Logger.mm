@@ -59,6 +59,9 @@ std::unique_ptr<Logger> Logger::Create(
     case SNTEventLogTypeNull:
       return std::make_unique<Logger>(Empty::Create(),
                                       Null::Create());
+    case SNTEventLogTypeProtobuf:
+      LOGE(@"The EventLogType value protobuf is not supported in this release");
+      return nullptr;
     default:
       LOGE(@"Invalid log type: %ld", log_type);
       return nullptr;

@@ -172,32 +172,7 @@ int main(int argc, char *argv[]) {
                deps->ExecController(),
                deps->PrefixTree());
 
-    // TODO: Remove `--quick` support used during development
-
-    NSArray *args = [[NSProcessInfo processInfo] arguments];
-    if ([args count] > 1 && [args[1] isEqualToString:@"--quick"]) {
-      int timeout = 5;
-      if ([args count] > 2) {
-        timeout = atoi([args[2] UTF8String]);
-      }
-
-      LOGI(@"Bailing in %d seconds", timeout);
-
-      dispatch_semaphore_t sema = dispatch_semaphore_create(0);
-
-      dispatch_after(dispatch_time(DISPATCH_TIME_NOW, timeout * NSEC_PER_SEC),
-                     dispatch_get_global_queue(QOS_CLASS_USER_INITIATED, 0),
-                     ^{
-        dispatch_semaphore_signal(sema);
-      });
-
-      if (dispatch_semaphore_wait(sema, dispatch_time(DISPATCH_TIME_NOW, (timeout + 2) * NSEC_PER_SEC)) != 0) {
-        LOGE(@"Failed to wakeup, bailing...");
-        exit(EXIT_FAILURE);
-      }
-    } else {
-      [[NSRunLoop mainRunLoop] run];
-    }
+    [[NSRunLoop mainRunLoop] run];
   }
 
   return 0;

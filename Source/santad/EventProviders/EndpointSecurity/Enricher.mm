@@ -110,10 +110,12 @@ EnrichedProcess Enricher::Enrich(const es_process_t &es_proc) {
 }
 
 EnrichedFile Enricher::Enrich(const es_file_t &es_file) {
+    // TODO(mlw): Consider having the enricher perform file hashing. This will
+    // make more sense if we start including hashes in more event types.
     return EnrichedFile(
         UsernameForUID(es_file.stat.st_uid),
         UsernameForGID(es_file.stat.st_gid),
-        std::nullopt /* TODO: hash */);
+        std::nullopt);
 }
 
 std::optional<std::shared_ptr<std::string>> Enricher::UsernameForUID(uid_t uid) {

@@ -244,15 +244,6 @@
 ///
 @property(readonly, nonatomic) BOOL enableMachineIDDecoration;
 
-///
-///  Use an internal cache for decisions instead of relying on the caching
-///  mechanism built-in to the EndpointSecurity framework. This may increase
-///  performance, particularly when Santa is run alongside other system
-///  extensions.
-///  Has no effect if the system extension is not being used. Defaults to NO.
-///
-@property(readonly, nonatomic) BOOL enableSysxCache;
-
 #pragma mark - GUI Settings
 
 ///

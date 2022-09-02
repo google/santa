@@ -227,8 +227,6 @@ static NSString *const kMailDirectoryEventMaxFlushTimeSec = @"MailDirectoryEvent
 
 static NSString *const kEnableMachineIDDecoration = @"EnableMachineIDDecoration";
 
-static NSString *const kEnableSysxCache = @"EnableSysxCache";
-
 static NSString *const kEnableForkAndExitLogging = @"EnableForkAndExitLogging";
 static NSString *const kIgnoreOtherEndpointSecurityClients = @"IgnoreOtherEndpointSecurityClients";
 static NSString *const kEnableDebugLogging = @"EnableDebugLogging";
@@ -339,7 +337,6 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
       kMailDirectorySizeThresholdMB : number,
       kMailDirectoryEventMaxFlushTimeSec : number,
       kEnableMachineIDDecoration : number,
-      kEnableSysxCache : number,
       kEnableForkAndExitLogging : number,
       kIgnoreOtherEndpointSecurityClients : number,
       kEnableDebugLogging : number,
@@ -556,10 +553,6 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
 
 + (NSSet *)keyPathsForValuesAffectingDisableUnknownEventUpload {
   return [self syncAndConfigStateSet];
-}
-
-+ (NSSet *)keyPathsForValuesAffectingEnableSysxCache {
-  return [self configStateSet];
 }
 
 + (NSSet *)keyPathsForValuesAffectingEnableForkAndExitLogging {
@@ -924,11 +917,6 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
 - (BOOL)enableMachineIDDecoration {
   NSNumber *number = self.configState[kEnableMachineIDDecoration];
   return number ? [number boolValue] : NO;
-}
-
-- (BOOL)enableSysxCache {
-  NSNumber *number = self.configState[kEnableSysxCache];
-  return number ? [number boolValue] : YES;
 }
 
 - (BOOL)enableCleanSyncEventUpload {
