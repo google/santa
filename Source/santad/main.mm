@@ -32,8 +32,8 @@ extern "C" double watchdogCPUPeak;
 extern "C" double watchdogRAMPeak;
 
 struct WatchdogState {
-  double prevTotalTime;
-  double prevRamUseMB;
+  double prev_total_time;
+  double prev_ram_use_mb;
 };
 
 ///  Converts a timeval struct to double, converting the microseconds value to seconds.
@@ -48,25 +48,24 @@ static void SantaWatchdog(void *context) {
 
   // Amount of CPU usage to trigger warning, as a percentage averaged over kWatchdogTimeInterval
   // santad's usual CPU usage is 0-3% but can occasionally spike if lots of processes start at once.
-  const int cpuWarnThreshold = 20.0;
+  const int cpu_warn_threshold = 20.0;
 
   // Amount of RAM usage to trigger warning, in MB.
   // santad's usual RAM usage is between 5-50MB but can spike if lots of processes start at once.
-  const int memWarnThreshold = 250;
+  const int mem_warn_threshold = 250;
 
-  struct mach_task_basic_info taskInfo;
-  mach_msg_type_number_t taskInfoCount = MACH_TASK_BASIC_INFO_COUNT;
+  struct mach_task_basic_info info;
+  mach_msg_type_number_t task_info_count = MACH_TASK_BASIC_INFO_COUNT;
 
-  if (task_info(mach_task_self(), MACH_TASK_BASIC_INFO, (task_info_t)&taskInfo, &taskInfoCount) ==
+  if (task_info(mach_task_self(), MACH_TASK_BASIC_INFO, (task_info_t)&info, &task_info_count) ==
       KERN_SUCCESS) {
     // CPU
-    double totalTime =
-      (timeval_to_double(taskInfo.user_time) + timeval_to_double(taskInfo.system_time));
+    double total_time = (timeval_to_double(info.user_time) + timeval_to_double(info.system_time));
     double percentage =
-      (((totalTime - state->prevTotalTime) / (double)kWatchdogTimeInterval) * 100.0);
-    state->prevTotalTime = totalTime;
+      (((total_time - state->prev_total_time) / (double)kWatchdogTimeInterval) * 100.0);
+    state->prev_total_time = total_time;
 
-    if (percentage > cpuWarnThreshold) {
+    if (percentage > cpu_warn_threshold) {
       LOGW(@"Watchdog: potentially high CPU use, ~%.2f%% over last %d seconds.", percentage,
            kWatchdogTimeInterval);
       watchdogCPUEvents++;
@@ -75,20 +74,20 @@ static void SantaWatchdog(void *context) {
     if (percentage > watchdogCPUPeak) watchdogCPUPeak = percentage;
 
     // RAM
-    double ramUseMB = (double)taskInfo.resident_size / 1024 / 1024;
-    if (ramUseMB > memWarnThreshold && ramUseMB > state->prevRamUseMB) {
-      LOGW(@"Watchdog: potentially high RAM use, RSS is %.2fMB.", ramUseMB);
+    double ram_use_mb = (double)info.resident_size / 1024 / 1024;
+    if (ram_use_mb > mem_warn_threshold && ram_use_mb > state->prev_ram_use_mb) {
+      LOGW(@"Watchdog: potentially high RAM use, RSS is %.2fMB.", ram_use_mb);
       watchdogRAMEvents++;
     }
-    state->prevRamUseMB = ramUseMB;
+    state->prev_ram_use_mb = ram_use_mb;
 
-    if (ramUseMB > watchdogRAMPeak) {
-      watchdogRAMPeak = ramUseMB;
+    if (ram_use_mb > watchdogRAMPeak) {
+      watchdogRAMPeak = ram_use_mb;
     }
   }
 }
 
-void cleanupAndReExec() {
+void CleanupAndReExec() {
   LOGI(@"com.google.santa.daemon is running from an unexpected path: cleaning up");
   NSFileManager *fm = [NSFileManager defaultManager];
   [fm removeItemAtPath:@"/Library/LaunchDaemons/com.google.santad.plist" error:NULL];
@@ -115,37 +114,37 @@ int main(int argc, char *argv[]) {
     // Do not wait on child processes
     signal(SIGCHLD, SIG_IGN);
 
-    NSDictionary *infoDict = [[NSBundle mainBundle] infoDictionary];
+    NSDictionary *info_dict = [[NSBundle mainBundle] infoDictionary];
     NSProcessInfo *pi = [NSProcessInfo processInfo];
 
-    NSString *productVersion = infoDict[@"CFBundleShortVersionString"];
-    NSString *buildVersion =
-      [[infoDict[@"CFBundleVersion"] componentsSeparatedByString:@"."] lastObject];
+    NSString *product_version = info_dict[@"CFBundleShortVersionString"];
+    NSString *build_version =
+      [[info_dict[@"CFBundleVersion"] componentsSeparatedByString:@"."] lastObject];
 
     if ([pi.arguments containsObject:@"-v"]) {
-      printf("%s (build %s)\n", [productVersion UTF8String], [buildVersion UTF8String]);
+      printf("%s (build %s)\n", [product_version UTF8String], [build_version UTF8String]);
       return 0;
     }
 
     // Ensure Santa daemon is started as a system extension
     if ([pi.arguments.firstObject isEqualToString:@(kSantaDPath)]) {
       // Does not return
-      cleanupAndReExec();
+      CleanupAndReExec();
     }
 
-    dispatch_queue_t watchdogQueue = dispatch_queue_create(
+    dispatch_queue_t watchdog_queue = dispatch_queue_create(
       "com.google.santa.daemon.watchdog", DISPATCH_QUEUE_SERIAL_WITH_AUTORELEASE_POOL);
-    dispatch_source_t watchdogTimer =
-      dispatch_source_create(DISPATCH_SOURCE_TYPE_TIMER, 0, 0, watchdogQueue);
+    dispatch_source_t watchdog_timer =
+      dispatch_source_create(DISPATCH_SOURCE_TYPE_TIMER, 0, 0, watchdog_queue);
 
-    WatchdogState state = {.prevTotalTime = 0.0, .prevRamUseMB = 0.0};
+    WatchdogState state = {.prev_total_time = 0.0, .prev_ram_use_mb = 0.0};
 
-    if (watchdogTimer) {
-      dispatch_source_set_timer(watchdogTimer, DISPATCH_TIME_NOW,
+    if (watchdog_timer) {
+      dispatch_source_set_timer(watchdog_timer, DISPATCH_TIME_NOW,
                                 kWatchdogTimeInterval * NSEC_PER_SEC, 0);
-      dispatch_source_set_event_handler_f(watchdogTimer, SantaWatchdog);
-      dispatch_set_context(watchdogTimer, &state);
-      dispatch_resume(watchdogTimer);
+      dispatch_source_set_event_handler_f(watchdog_timer, SantaWatchdog);
+      dispatch_set_context(watchdog_timer, &state);
+      dispatch_resume(watchdog_timer);
     } else {
       LOGE(@"Failed to start Santa watchdog");
     }
