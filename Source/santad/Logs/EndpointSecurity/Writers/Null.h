@@ -15,21 +15,21 @@
 #ifndef SANTA__SANTAD__LOGS_ENDPOINTSECURITY_WRITERS_NULL_H
 #define SANTA__SANTAD__LOGS_ENDPOINTSECURITY_WRITERS_NULL_H
 
-#include "Source/santad/Logs/EndpointSecurity/Writers/Writer.h"
-
 #include <memory>
 #include <vector>
+
+#include "Source/santad/Logs/EndpointSecurity/Writers/Writer.h"
 
 namespace santa::santad::logs::endpoint_security::writers {
 
 class Null : public Writer {
-public:
+ public:
   // Factory
   static std::shared_ptr<Null> Create();
 
   void Write(std::vector<uint8_t>&& bytes) override;
 };
 
-} // namespace santa::santad::logs::endpoint_security::writers
+}  // namespace santa::santad::logs::endpoint_security::writers
 
 #endif

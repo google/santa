@@ -58,8 +58,8 @@ double watchdogRAMPeak = 0;
 
 - (instancetype)initWithAuthResultCache:(std::shared_ptr<AuthResultCache>)authResultCache
                       notificationQueue:(SNTNotificationQueue *)notQueue
-                            syncdQueue:(SNTSyncdQueue *)syncdQueue
-                                logger:(std::shared_ptr<Logger>)logger {
+                             syncdQueue:(SNTSyncdQueue *)syncdQueue
+                                 logger:(std::shared_ptr<Logger>)logger {
   self = [super init];
   if (self) {
     _logger = logger;

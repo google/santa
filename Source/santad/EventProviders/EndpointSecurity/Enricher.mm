@@ -27,72 +27,51 @@
 #include "Source/common/SNTLogging.h"
 #include "Source/santad/EventProviders/EndpointSecurity/EnrichedTypes.h"
 
-using LRUCache =
-    tstarling::ThreadSafeLRUCache<uid_t, std::optional<std::shared_ptr<std::string>>>;
+using LRUCache = tstarling::ThreadSafeLRUCache<uid_t, std::optional<std::shared_ptr<std::string>>>;
 
 namespace santa::santad::event_providers::endpoint_security {
 
 std::shared_ptr<EnrichedMessage> Enricher::Enrich(Message &&es_msg) {
-  switch(es_msg->event_type) {
+  switch (es_msg->event_type) {
     case ES_EVENT_TYPE_NOTIFY_CLOSE:
-      return std::make_shared<EnrichedMessage>(
-          EnrichedClose(std::move(es_msg),
-                        Enrich(*es_msg->process),
-                        Enrich(*es_msg->event.close.target)));
+      return std::make_shared<EnrichedMessage>(EnrichedClose(
+        std::move(es_msg), Enrich(*es_msg->process), Enrich(*es_msg->event.close.target)));
     case ES_EVENT_TYPE_NOTIFY_EXCHANGEDATA:
-      return std::make_shared<EnrichedMessage>(
-          EnrichedExchange(std::move(es_msg),
-                           Enrich(*es_msg->process),
-                           Enrich(*es_msg->event.exchangedata.file1),
-                           Enrich(*es_msg->event.exchangedata.file2)));
+      return std::make_shared<EnrichedMessage>(EnrichedExchange(
+        std::move(es_msg), Enrich(*es_msg->process), Enrich(*es_msg->event.exchangedata.file1),
+        Enrich(*es_msg->event.exchangedata.file2)));
     case ES_EVENT_TYPE_NOTIFY_EXEC:
-      return std::make_shared<EnrichedMessage>(
-          EnrichedExec(
-            std::move(es_msg),
-            Enrich(*es_msg->process),
-            Enrich(*es_msg->event.exec.target),
-            (es_msg->version >= 2 && es_msg->event.exec.script) ?
-                std::make_optional(Enrich(*es_msg->event.exec.script)) :
-                std::nullopt,
-            (es_msg->version >= 3) ?
-                std::make_optional(Enrich(*es_msg->event.exec.cwd)) :
-                std::nullopt));
+      return std::make_shared<EnrichedMessage>(EnrichedExec(
+        std::move(es_msg), Enrich(*es_msg->process), Enrich(*es_msg->event.exec.target),
+        (es_msg->version >= 2 && es_msg->event.exec.script)
+          ? std::make_optional(Enrich(*es_msg->event.exec.script))
+          : std::nullopt,
+        (es_msg->version >= 3) ? std::make_optional(Enrich(*es_msg->event.exec.cwd))
+                               : std::nullopt));
     case ES_EVENT_TYPE_NOTIFY_FORK:
-      return std::make_shared<EnrichedMessage>(
-          EnrichedFork(std::move(es_msg),
-                      Enrich(*es_msg->process),
-                      Enrich(*es_msg->event.fork.child)));
+      return std::make_shared<EnrichedMessage>(EnrichedFork(
+        std::move(es_msg), Enrich(*es_msg->process), Enrich(*es_msg->event.fork.child)));
     case ES_EVENT_TYPE_NOTIFY_EXIT:
       return std::make_shared<EnrichedMessage>(
-          EnrichedExit(std::move(es_msg), Enrich(*es_msg->process)));
+        EnrichedExit(std::move(es_msg), Enrich(*es_msg->process)));
     case ES_EVENT_TYPE_NOTIFY_LINK:
       return std::make_shared<EnrichedMessage>(
-          EnrichedLink(std::move(es_msg),
-                      Enrich(*es_msg->process),
-                      Enrich(*es_msg->event.link.source),
-                      Enrich(*es_msg->event.link.target_dir)));
+        EnrichedLink(std::move(es_msg), Enrich(*es_msg->process),
+                     Enrich(*es_msg->event.link.source), Enrich(*es_msg->event.link.target_dir)));
     case ES_EVENT_TYPE_NOTIFY_RENAME: {
       if (es_msg->event.rename.destination_type == ES_DESTINATION_TYPE_NEW_PATH) {
-        return std::make_shared<EnrichedMessage>(
-            EnrichedRename(std::move(es_msg),
-                           Enrich(*es_msg->process),
-                           Enrich(*es_msg->event.rename.source),
-                           std::nullopt,
-                           Enrich(*es_msg->event.rename.destination.new_path.dir)));
+        return std::make_shared<EnrichedMessage>(EnrichedRename(
+          std::move(es_msg), Enrich(*es_msg->process), Enrich(*es_msg->event.rename.source),
+          std::nullopt, Enrich(*es_msg->event.rename.destination.new_path.dir)));
       } else {
-        return std::make_shared<EnrichedMessage>(
-            EnrichedRename(std::move(es_msg),
-                           Enrich(*es_msg->process),
-                           Enrich(*es_msg->event.rename.source),
-                           Enrich(*es_msg->event.rename.destination.existing_file),
-                           std::nullopt));
+        return std::make_shared<EnrichedMessage>(EnrichedRename(
+          std::move(es_msg), Enrich(*es_msg->process), Enrich(*es_msg->event.rename.source),
+          Enrich(*es_msg->event.rename.destination.existing_file), std::nullopt));
       }
     }
     case ES_EVENT_TYPE_NOTIFY_UNLINK:
-      return std::make_shared<EnrichedMessage>(
-          EnrichedUnlink(std::move(es_msg),
-                        Enrich(*es_msg->process),
-                        Enrich(*es_msg->event.unlink.target)));
+      return std::make_shared<EnrichedMessage>(EnrichedUnlink(
+        std::move(es_msg), Enrich(*es_msg->process), Enrich(*es_msg->event.unlink.target)));
     default:
       // This is a programming error
       LOGE(@"Attempting to enrich an unhandled event type: %d", es_msg->event_type);
@@ -101,21 +80,18 @@ std::shared_ptr<EnrichedMessage> Enricher::Enrich(Message &&es_msg) {
 }
 
 EnrichedProcess Enricher::Enrich(const es_process_t &es_proc) {
-  return EnrichedProcess(
-      UsernameForUID(audit_token_to_euid(es_proc.audit_token)),
-      UsernameForGID(audit_token_to_egid(es_proc.audit_token)),
-      UsernameForUID(audit_token_to_ruid(es_proc.audit_token)),
-      UsernameForGID(audit_token_to_rgid(es_proc.audit_token)),
-      Enrich(*es_proc.executable));
+  return EnrichedProcess(UsernameForUID(audit_token_to_euid(es_proc.audit_token)),
+                         UsernameForGID(audit_token_to_egid(es_proc.audit_token)),
+                         UsernameForUID(audit_token_to_ruid(es_proc.audit_token)),
+                         UsernameForGID(audit_token_to_rgid(es_proc.audit_token)),
+                         Enrich(*es_proc.executable));
 }
 
 EnrichedFile Enricher::Enrich(const es_file_t &es_file) {
-    // TODO(mlw): Consider having the enricher perform file hashing. This will
-    // make more sense if we start including hashes in more event types.
-    return EnrichedFile(
-        UsernameForUID(es_file.stat.st_uid),
-        UsernameForGID(es_file.stat.st_gid),
-        std::nullopt);
+  // TODO(mlw): Consider having the enricher perform file hashing. This will
+  // make more sense if we start including hashes in more event types.
+  return EnrichedFile(UsernameForUID(es_file.stat.st_uid), UsernameForGID(es_file.stat.st_gid),
+                      std::nullopt);
 }
 
 std::optional<std::shared_ptr<std::string>> Enricher::UsernameForUID(uid_t uid) {
@@ -157,4 +133,4 @@ std::optional<std::shared_ptr<std::string>> Enricher::UsernameForGID(gid_t gid) 
   }
 }
 
-} // namespace santa::santad::event_providers::endpoint_security
+}  // namespace santa::santad::event_providers::endpoint_security

@@ -23,8 +23,7 @@
 
 // Called Synchronously and serially for each message provided by the
 // EndpointSecurity framework.
-- (void)handleMessage:(
-    santa::santad::event_providers::endpoint_security::Message &&)esMsg;
+- (void)handleMessage:(santa::santad::event_providers::endpoint_security::Message &&)esMsg;
 
 // Called after Santa has finished initializing itself.
 // This is an optimal place to subscribe to ES events

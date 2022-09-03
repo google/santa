@@ -12,16 +12,16 @@
 ///    See the License for the specific language governing permissions and
 ///    limitations under the License.
 
-#import <bsm/libbsm.h>
-#import <dispatch/dispatch.h>
-#include "gmock/gmock.h"
 #import <DiskArbitration/DiskArbitration.h>
 #include <EndpointSecurity/EndpointSecurity.h>
-#include <gtest/gtest.h>
-#include <gmock/gmock.h>
 #import <OCMock/OCMock.h>
 #import <XCTest/XCTest.h>
+#import <bsm/libbsm.h>
+#import <dispatch/dispatch.h>
+#include <gmock/gmock.h>
+#include <gtest/gtest.h>
 #include <sys/mount.h>
+#include "gmock/gmock.h"
 
 #include <memory>
 #include <set>
@@ -29,15 +29,15 @@
 #import "Source/common/SNTConfigurator.h"
 #import "Source/common/SNTDeviceEvent.h"
 #include "Source/common/TestUtils.h"
-#import "Source/santad/EventProviders/SNTEndpointSecurityDeviceManager.h"
 #import "Source/santad/EventProviders/DiskArbitrationTestUtil.h"
 #include "Source/santad/EventProviders/EndpointSecurity/Message.h"
 #include "Source/santad/EventProviders/EndpointSecurity/MockEndpointSecurityAPI.h"
+#import "Source/santad/EventProviders/SNTEndpointSecurityDeviceManager.h"
 
 using santa::santad::event_providers::endpoint_security::Message;
 
 @interface SNTEndpointSecurityDeviceManager (Testing)
-- (void)logDiskAppeared:(NSDictionary*)props;
+- (void)logDiskAppeared:(NSDictionary *)props;
 @end
 
 @interface SNTEndpointSecurityDeviceManagerTest : XCTestCase
@@ -61,10 +61,10 @@ using santa::santad::event_providers::endpoint_security::Message;
 }
 
 - (void)triggerTestMountEvent:(es_event_type_t)eventType
-                      //  mockDA:(MockDiskArbitration *)mockDA
+            //  mockDA:(MockDiskArbitration *)mockDA
             diskInfoOverrides:(NSDictionary *)diskInfo
            expectedAuthResult:(es_auth_result_t)expectedAuthResult
-           deviceManagerSetup:(void(^)(SNTEndpointSecurityDeviceManager*))setupDMCallback {
+           deviceManagerSetup:(void (^)(SNTEndpointSecurityDeviceManager *))setupDMCallback {
   struct statfs fs = {0};
   NSString *test_mntfromname = @"/dev/disk2s1";
   NSString *test_mntonname = @"/Volumes/KATE'S 4G";
@@ -97,9 +97,9 @@ using santa::santad::event_providers::endpoint_security::Message;
   mockESApi->SetExpectationsESNewClient();
 
   SNTEndpointSecurityDeviceManager *deviceManager =
-      [[SNTEndpointSecurityDeviceManager alloc] initWithESAPI:mockESApi
-                                                       logger:nullptr
-                                              authResultCache:nullptr];
+    [[SNTEndpointSecurityDeviceManager alloc] initWithESAPI:mockESApi
+                                                     logger:nullptr
+                                            authResultCache:nullptr];
 
   setupDMCallback(deviceManager);
 
@@ -111,30 +111,25 @@ using santa::santad::event_providers::endpoint_security::Message;
 
   es_file_t file = MakeESFile("foo");
   es_process_t proc = MakeESProcess(&file);
-  es_message_t esMsg = MakeESMessage(eventType,
-                                     &proc,
-                                     ActionType::Auth,
-                                     6000);
+  es_message_t esMsg = MakeESMessage(eventType, &proc, ActionType::Auth, 6000);
   // Need a pointer to esMsg to capture in blocks below.
   es_message_t *heapESMsg = &esMsg;
 
   __block int retainCount = 0;
   dispatch_semaphore_t sema = dispatch_semaphore_create(0);
-  EXPECT_CALL(*mockESApi, ReleaseMessage)
-      .WillRepeatedly(^{
-        if (retainCount == 0) {
-          XCTFail(@"Under retain!");
-        }
-        retainCount--;
-        if (retainCount == 0) {
-          dispatch_semaphore_signal(sema);
-        }
-      });
-  EXPECT_CALL(*mockESApi, RetainMessage)
-      .WillRepeatedly(^{
-        retainCount++;
-        return heapESMsg;
-      });
+  EXPECT_CALL(*mockESApi, ReleaseMessage).WillRepeatedly(^{
+    if (retainCount == 0) {
+      XCTFail(@"Under retain!");
+    }
+    retainCount--;
+    if (retainCount == 0) {
+      dispatch_semaphore_signal(sema);
+    }
+  });
+  EXPECT_CALL(*mockESApi, RetainMessage).WillRepeatedly(^{
+    retainCount++;
+    return heapESMsg;
+  });
 
   if (eventType == ES_EVENT_TYPE_AUTH_MOUNT) {
     esMsg.event.mount.statfs = &fs;
@@ -146,26 +141,21 @@ using santa::santad::event_providers::endpoint_security::Message;
   }
 
   XCTestExpectation *mountExpectation =
-      [self expectationWithDescription:@"Wait for response from ES"];
+    [self expectationWithDescription:@"Wait for response from ES"];
 
-  EXPECT_CALL(*mockESApi, RespondAuthResult(testing::_,
-                                            testing::_,
-                                            expectedAuthResult,
-                                            false))
-      .WillOnce(testing::InvokeWithoutArgs(^bool{
-        [mountExpectation fulfill];
-        return true;
-      }));
+  EXPECT_CALL(*mockESApi, RespondAuthResult(testing::_, testing::_, expectedAuthResult, false))
+    .WillOnce(testing::InvokeWithoutArgs(^bool {
+      [mountExpectation fulfill];
+      return true;
+    }));
 
   [deviceManager handleMessage:Message(mockESApi, &esMsg)];
 
   [self waitForExpectations:@[ mountExpectation ] timeout:60.0];
 
   XCTAssertEqual(0,
-                  dispatch_semaphore_wait(
-                      sema,
-                      dispatch_time(DISPATCH_TIME_NOW, 5 * NSEC_PER_SEC)),
-                  "Failed waiting for message to be processed...");
+                 dispatch_semaphore_wait(sema, dispatch_time(DISPATCH_TIME_NOW, 5 * NSEC_PER_SEC)),
+                 "Failed waiting for message to be processed...");
 
   [partialDeviceManager stopMocking];
   XCTBubbleMockVerifyAndClearExpectations(mockESApi.get());
@@ -176,8 +166,8 @@ using santa::santad::event_providers::endpoint_security::Message;
             diskInfoOverrides:nil
            expectedAuthResult:ES_AUTH_RESULT_ALLOW
            deviceManagerSetup:^(SNTEndpointSecurityDeviceManager *dm) {
-            dm.blockUSBMount = NO;
-          }];
+             dm.blockUSBMount = NO;
+           }];
 }
 
 - (void)testRemount {
@@ -185,7 +175,7 @@ using santa::santad::event_providers::endpoint_security::Message;
 
   XCTestExpectation *expectation =
     [self expectationWithDescription:
-        @"Wait for SNTEndpointSecurityDeviceManager's blockCallback to trigger"];
+            @"Wait for SNTEndpointSecurityDeviceManager's blockCallback to trigger"];
 
   __block NSString *gotmntonname, *gotmntfromname;
   __block NSArray<NSString *> *gotRemountedArgs;
@@ -217,7 +207,7 @@ using santa::santad::event_providers::endpoint_security::Message;
 - (void)testBlockNoRemount {
   XCTestExpectation *expectation =
     [self expectationWithDescription:
-        @"Wait for SNTEndpointSecurityDeviceManager's blockCallback to trigger"];
+            @"Wait for SNTEndpointSecurityDeviceManager's blockCallback to trigger"];
 
   __block NSString *gotmntonname, *gotmntfromname;
   __block NSArray<NSString *> *gotRemountedArgs;
@@ -248,13 +238,13 @@ using santa::santad::event_providers::endpoint_security::Message;
 
   XCTestExpectation *expectation =
     [self expectationWithDescription:
-        @"Wait for SNTEndpointSecurityDeviceManager's blockCallback to trigger"];
+            @"Wait for SNTEndpointSecurityDeviceManager's blockCallback to trigger"];
 
   __block NSString *gotmntonname, *gotmntfromname;
   __block NSArray<NSString *> *gotRemountedArgs;
 
   [self triggerTestMountEvent:ES_EVENT_TYPE_AUTH_MOUNT
-           diskInfoOverrides:nil
+            diskInfoOverrides:nil
            expectedAuthResult:ES_AUTH_RESULT_DENY
            deviceManagerSetup:^(SNTEndpointSecurityDeviceManager *dm) {
              dm.blockUSBMount = YES;
@@ -280,9 +270,9 @@ using santa::santad::event_providers::endpoint_security::Message;
 - (void)testEnsureDMGsDoNotPrompt {
   NSArray *wantRemountArgs = @[ @"noexec", @"rdonly" ];
   NSDictionary *diskInfo = @{
-    (__bridge NSString *)kDADiskDescriptionDeviceProtocolKey: @"Virtual Interface",
-    (__bridge NSString *)kDADiskDescriptionDeviceModelKey: @"Disk Image",
-    (__bridge NSString *)kDADiskDescriptionMediaNameKey: @"disk image",
+    (__bridge NSString *)kDADiskDescriptionDeviceProtocolKey : @"Virtual Interface",
+    (__bridge NSString *)kDADiskDescriptionDeviceModelKey : @"Disk Image",
+    (__bridge NSString *)kDADiskDescriptionMediaNameKey : @"disk image",
   };
 
   [self triggerTestMountEvent:ES_EVENT_TYPE_AUTH_MOUNT
@@ -303,19 +293,17 @@ using santa::santad::event_providers::endpoint_security::Message;
 - (void)testEnable {
   // Ensure the client subscribes to expected event types
   std::set<es_event_type_t> expectedEventSubs{
-      ES_EVENT_TYPE_AUTH_MOUNT,
-      ES_EVENT_TYPE_AUTH_REMOUNT,
-      ES_EVENT_TYPE_NOTIFY_UNMOUNT,
-      };
+    ES_EVENT_TYPE_AUTH_MOUNT,
+    ES_EVENT_TYPE_AUTH_REMOUNT,
+    ES_EVENT_TYPE_NOTIFY_UNMOUNT,
+  };
   auto mockESApi = std::make_shared<MockEndpointSecurityAPI>();
 
-  id deviceClient =
-      [[SNTEndpointSecurityDeviceManager alloc] initWithESAPI:mockESApi];
+  id deviceClient = [[SNTEndpointSecurityDeviceManager alloc] initWithESAPI:mockESApi];
 
   EXPECT_CALL(*mockESApi, ClearCache(testing::_))
-    .After(
-        EXPECT_CALL(*mockESApi, Subscribe(testing::_, expectedEventSubs))
-            .WillOnce(testing::Return(true)))
+    .After(EXPECT_CALL(*mockESApi, Subscribe(testing::_, expectedEventSubs))
+             .WillOnce(testing::Return(true)))
     .WillOnce(testing::Return(true));
 
   [deviceClient enable];

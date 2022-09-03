@@ -43,8 +43,8 @@ static inline double timeval_to_double(time_value_t tv) {
 
 ///  The watchdog thread function, used to monitor santad CPU/RAM usage and print a warning
 ///  if it goes over certain thresholds.
-static void SantaWatchdog(void* context) {
-  WatchdogState *state = (WatchdogState*)context;
+static void SantaWatchdog(void *context) {
+  WatchdogState *state = (WatchdogState *)context;
 
   // Amount of CPU usage to trigger warning, as a percentage averaged over kWatchdogTimeInterval
   // santad's usual CPU usage is 0-3% but can occasionally spike if lots of processes start at once.
@@ -57,12 +57,13 @@ static void SantaWatchdog(void* context) {
   struct mach_task_basic_info taskInfo;
   mach_msg_type_number_t taskInfoCount = MACH_TASK_BASIC_INFO_COUNT;
 
-  if (task_info(mach_task_self(), MACH_TASK_BASIC_INFO, (task_info_t)&taskInfo,
-                &taskInfoCount) == KERN_SUCCESS) {
+  if (task_info(mach_task_self(), MACH_TASK_BASIC_INFO, (task_info_t)&taskInfo, &taskInfoCount) ==
+      KERN_SUCCESS) {
     // CPU
     double totalTime =
       (timeval_to_double(taskInfo.user_time) + timeval_to_double(taskInfo.system_time));
-    double percentage = (((totalTime - state->prevTotalTime) / (double)kWatchdogTimeInterval) * 100.0);
+    double percentage =
+      (((totalTime - state->prevTotalTime) / (double)kWatchdogTimeInterval) * 100.0);
     state->prevTotalTime = totalTime;
 
     if (percentage > cpuWarnThreshold) {
@@ -132,16 +133,16 @@ int main(int argc, char *argv[]) {
       cleanupAndReExec();
     }
 
-    dispatch_queue_t watchdogQueue = dispatch_queue_create("com.google.santa.daemon.watchdog", DISPATCH_QUEUE_SERIAL_WITH_AUTORELEASE_POOL);
-    dispatch_source_t watchdogTimer = dispatch_source_create(DISPATCH_SOURCE_TYPE_TIMER, 0, 0, watchdogQueue);
+    dispatch_queue_t watchdogQueue = dispatch_queue_create(
+      "com.google.santa.daemon.watchdog", DISPATCH_QUEUE_SERIAL_WITH_AUTORELEASE_POOL);
+    dispatch_source_t watchdogTimer =
+      dispatch_source_create(DISPATCH_SOURCE_TYPE_TIMER, 0, 0, watchdogQueue);
 
-    WatchdogState state = {
-      .prevTotalTime = 0.0,
-      .prevRamUseMB = 0.0
-    };
+    WatchdogState state = {.prevTotalTime = 0.0, .prevRamUseMB = 0.0};
 
     if (watchdogTimer) {
-      dispatch_source_set_timer(watchdogTimer, DISPATCH_TIME_NOW, kWatchdogTimeInterval * NSEC_PER_SEC, 0);
+      dispatch_source_set_timer(watchdogTimer, DISPATCH_TIME_NOW,
+                                kWatchdogTimeInterval * NSEC_PER_SEC, 0);
       dispatch_source_set_event_handler_f(watchdogTimer, SantaWatchdog);
       dispatch_set_context(watchdogTimer, &state);
       dispatch_resume(watchdogTimer);
@@ -152,24 +153,15 @@ int main(int argc, char *argv[]) {
     SNTConfigurator *configurator = [SNTConfigurator configurator];
 
     // TODO(bur): Add KVO handling for fileChangesPrefixFilters.
-    NSArray<NSString*> *prefix_filters = [@[ @"/.", @"/dev/" ]
-          arrayByAddingObjectsFromArray:[configurator fileChangesPrefixFilters]];
+    NSArray<NSString *> *prefix_filters =
+      [@[ @"/.", @"/dev/" ] arrayByAddingObjectsFromArray:[configurator fileChangesPrefixFilters]];
 
-    auto deps = SantadDeps::Create([configurator metricExportInterval],
-                                   [configurator eventLogType],
-                                   [configurator eventLogPath],
-                                   prefix_filters);
+    auto deps = SantadDeps::Create([configurator metricExportInterval], [configurator eventLogType],
+                                   [configurator eventLogPath], prefix_filters);
 
-    SantadMain(deps->ESAPI(),
-               deps->Logger(),
-               deps->Metrics(),
-               deps->Enricher(),
-               deps->AuthResultCache(),
-               deps->ControlConnection(),
-               deps->CompilerController(),
-               deps->NotifierQueue(),
-               deps->SyncdQueue(),
-               deps->ExecController(),
+    SantadMain(deps->ESAPI(), deps->Logger(), deps->Metrics(), deps->Enricher(),
+               deps->AuthResultCache(), deps->ControlConnection(), deps->CompilerController(),
+               deps->NotifierQueue(), deps->SyncdQueue(), deps->ExecController(),
                deps->PrefixTree());
 
     [[NSRunLoop mainRunLoop] run];

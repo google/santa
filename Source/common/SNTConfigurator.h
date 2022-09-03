@@ -65,7 +65,8 @@
 ///      <key>rule_type</key>
 ///      <string>BINARY</string>  (one of BINARY, CERTIFICATE or TEAMID)
 ///      <key>policy</key>
-///      <string>BLOCKLIST</string>  (one of ALLOWLIST, ALLOWLIST_COMPILER, BLOCKLIST, SILENT_BLOCKLIST)
+///      <string>BLOCKLIST</string>  (one of ALLOWLIST, ALLOWLIST_COMPILER, BLOCKLIST,
+///      SILENT_BLOCKLIST)
 ///    </dict>
 ///  </array>
 ///
@@ -546,12 +547,13 @@
 ///
 /// Begin observing for configuration changes
 ///
-- (void) observeClientMode:(void(^)(SNTClientMode))clientModeChanged
-               syncBaseURL:(void(^)(NSURL*))syncBaseURLChanged
-             exportMetrics:(void(^)(BOOL, BOOL))exportMetricsChanged
-      metricExportInterval:(void(^)(NSUInteger, NSUInteger))metricExportIntervalChanged
- allowedOrBlockedPathRegex:(void(^)(void))allowedOrBlockedPathRegexChanged
-             blockUSBMount:(void(^)(BOOL, BOOL))blockUSBMountChanged
-            remountUSBMode:(void(^)(NSArray<NSString *>*, NSArray<NSString *>*))remountUSBModeChanged;
+- (void)observeClientMode:(void (^)(SNTClientMode))clientModeChanged
+                syncBaseURL:(void (^)(NSURL *))syncBaseURLChanged
+              exportMetrics:(void (^)(BOOL, BOOL))exportMetricsChanged
+       metricExportInterval:(void (^)(NSUInteger, NSUInteger))metricExportIntervalChanged
+  allowedOrBlockedPathRegex:(void (^)(void))allowedOrBlockedPathRegexChanged
+              blockUSBMount:(void (^)(BOOL, BOOL))blockUSBMountChanged
+             remountUSBMode:
+               (void (^)(NSArray<NSString *> *, NSArray<NSString *> *))remountUSBModeChanged;
 
 @end

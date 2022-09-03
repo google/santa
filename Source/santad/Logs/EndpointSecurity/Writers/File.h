@@ -17,8 +17,8 @@
 
 #include "Source/santad/Logs/EndpointSecurity/Writers/Writer.h"
 
-#include <dispatch/dispatch.h>
 #include <Foundation/Foundation.h>
+#include <dispatch/dispatch.h>
 
 #include <memory>
 #include <vector>
@@ -30,27 +30,22 @@ class FilePeer;
 
 namespace santa::santad::logs::endpoint_security::writers {
 
-class File : public Writer,
-             public std::enable_shared_from_this<File> {
-public:
+class File : public Writer, public std::enable_shared_from_this<File> {
+ public:
   // Factory
-  static std::shared_ptr<File> Create(NSString* path,
-                                      uint64_t flush_timeout_ms,
+  static std::shared_ptr<File> Create(NSString *path, uint64_t flush_timeout_ms,
                                       size_t batch_size_bytes,
                                       size_t max_expected_write_size_bytes);
 
-  File(NSString* path,
-       size_t batch_size_bytes,
-       size_t max_expected_write_size_bytes,
-       dispatch_queue_t q,
-       dispatch_source_t timer_source);
+  File(NSString *path, size_t batch_size_bytes, size_t max_expected_write_size_bytes,
+       dispatch_queue_t q, dispatch_source_t timer_source);
   ~File();
 
-  void Write(std::vector<uint8_t>&& bytes) override;
+  void Write(std::vector<uint8_t> &&bytes) override;
 
   friend class santa::santad::logs::endpoint_security::writers::FilePeer;
 
-private:
+ private:
   void OpenFileHandle();
   void WatchLogFile();
   void FlushBuffer();
@@ -64,6 +59,6 @@ private:
   NSFileHandle *file_handle_;
 };
 
-} // namespace santa::santad::logs::endpoint_security::writers
+}  // namespace santa::santad::logs::endpoint_security::writers
 
 #endif

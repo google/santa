@@ -16,8 +16,8 @@
 
 #include "Source/santad/EventProviders/EndpointSecurity/Message.h"
 
-#import "Source/common/SNTCommonEnums.h"
 #import "Source/common/SNTCommon.h"
+#import "Source/common/SNTCommonEnums.h"
 
 const static NSString *kBlockBinary = @"BlockBinary";
 const static NSString *kAllowBinary = @"AllowBinary";
@@ -65,7 +65,7 @@ const static NSString *kBlockLongPath = @"BlockLongPath";
 ///  @param message The message received from the EndpointSecurity event provider.
 ///  @param postAction The block invoked with the desired response result.
 ///
-- (void)validateExecEvent:(const santa::santad::event_providers::endpoint_security::Message&)esMsg
+- (void)validateExecEvent:(const santa::santad::event_providers::endpoint_security::Message &)esMsg
                postAction:(bool (^)(santa_action_t))postAction;
 
 ///
@@ -77,6 +77,7 @@ const static NSString *kBlockLongPath = @"BlockLongPath";
 ///  @param message The message received from the EndpointSecurity event provider.
 ///  @return bool True if the event should be processed, otherwise false.
 ///
-- (bool)synchronousShouldProcessExecEvent:(const santa::santad::event_providers::endpoint_security::Message&)esMsg;
+- (bool)synchronousShouldProcessExecEvent:
+  (const santa::santad::event_providers::endpoint_security::Message &)esMsg;
 
 @end

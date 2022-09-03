@@ -13,26 +13,26 @@
 ///    limitations under the License.
 
 #include <EndpointSecurity/ESTypes.h>
-#include <gtest/gtest.h>
-#include <gmock/gmock.h>
 #import <OCMock/OCMock.h>
-#include "gmock/gmock.h"
-#include <cstddef>
 #import <XCTest/XCTest.h>
+#include <gmock/gmock.h>
+#include <gtest/gtest.h>
+#include <cstddef>
+#include "gmock/gmock.h"
 
 #include <memory>
 #include <set>
 
 #include "Source/common/TestUtils.h"
-#import "Source/santad/SNTCompilerController.h"
 #import "Source/santad/EventProviders/AuthResultCache.h"
-#import "Source/santad/EventProviders/SNTEndpointSecurityRecorder.h"
 #include "Source/santad/EventProviders/EndpointSecurity/Client.h"
 #include "Source/santad/EventProviders/EndpointSecurity/EnrichedTypes.h"
 #include "Source/santad/EventProviders/EndpointSecurity/Enricher.h"
 #include "Source/santad/EventProviders/EndpointSecurity/Message.h"
 #include "Source/santad/EventProviders/EndpointSecurity/MockEndpointSecurityAPI.h"
+#import "Source/santad/EventProviders/SNTEndpointSecurityRecorder.h"
 #include "Source/santad/Logs/EndpointSecurity/Logger.h"
+#import "Source/santad/SNTCompilerController.h"
 
 using santa::santad::event_providers::AuthResultCache;
 using santa::santad::event_providers::endpoint_security::EnrichedMessage;
@@ -41,19 +41,19 @@ using santa::santad::event_providers::endpoint_security::Message;
 using santa::santad::logs::endpoint_security::Logger;
 
 class MockEnricher : public Enricher {
-public:
+ public:
   MOCK_METHOD(std::shared_ptr<EnrichedMessage>, Enrich, (Message &&));
 };
 
 class MockAuthResultCache : public AuthResultCache {
-public:
+ public:
   using AuthResultCache::AuthResultCache;
 
   MOCK_METHOD(void, RemoveFromCache, (const es_file_t *));
 };
 
 class MockLogger : public Logger {
-public:
+ public:
   using Logger::Logger;
 
   MOCK_METHOD(void, Log, (std::shared_ptr<EnrichedMessage>));
@@ -67,22 +67,15 @@ public:
 - (void)testEnable {
   // Ensure the client subscribes to expected event types
   std::set<es_event_type_t> expectedEventSubs{
-      ES_EVENT_TYPE_NOTIFY_CLOSE,
-      ES_EVENT_TYPE_NOTIFY_EXCHANGEDATA,
-      ES_EVENT_TYPE_NOTIFY_EXEC,
-      ES_EVENT_TYPE_NOTIFY_FORK,
-      ES_EVENT_TYPE_NOTIFY_EXIT,
-      ES_EVENT_TYPE_NOTIFY_LINK,
-      ES_EVENT_TYPE_NOTIFY_RENAME,
-      ES_EVENT_TYPE_NOTIFY_UNLINK,
-      };
+    ES_EVENT_TYPE_NOTIFY_CLOSE,  ES_EVENT_TYPE_NOTIFY_EXCHANGEDATA, ES_EVENT_TYPE_NOTIFY_EXEC,
+    ES_EVENT_TYPE_NOTIFY_FORK,   ES_EVENT_TYPE_NOTIFY_EXIT,         ES_EVENT_TYPE_NOTIFY_LINK,
+    ES_EVENT_TYPE_NOTIFY_RENAME, ES_EVENT_TYPE_NOTIFY_UNLINK,
+  };
   auto mockESApi = std::make_shared<MockEndpointSecurityAPI>();
 
-  id recorderClient =
-      [[SNTEndpointSecurityRecorder alloc] initWithESAPI:mockESApi];
+  id recorderClient = [[SNTEndpointSecurityRecorder alloc] initWithESAPI:mockESApi];
 
-  EXPECT_CALL(*mockESApi, Subscribe(testing::_, expectedEventSubs))
-      .WillOnce(testing::Return(true));
+  EXPECT_CALL(*mockESApi, Subscribe(testing::_, expectedEventSubs)).WillOnce(testing::Return(true));
 
   [recorderClient enable];
 
@@ -102,12 +95,10 @@ public:
   std::shared_ptr<EnrichedMessage> enrichedMsg = std::shared_ptr<EnrichedMessage>(nullptr);
 
   auto mockEnricher = std::make_shared<MockEnricher>();
-  EXPECT_CALL(*mockEnricher, Enrich)
-      .WillOnce(testing::Return(enrichedMsg));
+  EXPECT_CALL(*mockEnricher, Enrich).WillOnce(testing::Return(enrichedMsg));
 
   auto mockAuthCache = std::make_shared<MockAuthResultCache>(nullptr);
-  EXPECT_CALL(*mockAuthCache, RemoveFromCache(&targetFile))
-      .Times(1);
+  EXPECT_CALL(*mockAuthCache, RemoveFromCache(&targetFile)).Times(1);
 
   // NOTE: Currently unable to create a partial mock of the
   // `SNTEndpointSecurityRecorder` object. There is a bug in OCMock that doesn't
@@ -115,22 +106,21 @@ public:
   // test will mock the `Log` method that is called in the handler block.
   dispatch_semaphore_t sema = dispatch_semaphore_create(0);
   auto mockLogger = std::make_shared<MockLogger>(nullptr, nullptr);
-  EXPECT_CALL(*mockLogger, Log)
-      .WillOnce(testing::InvokeWithoutArgs(^() {
-        dispatch_semaphore_signal(sema);
-      }));
+  EXPECT_CALL(*mockLogger, Log).WillOnce(testing::InvokeWithoutArgs(^() {
+    dispatch_semaphore_signal(sema);
+  }));
 
   auto prefixTree = std::make_shared<SNTPrefixTree>();
 
   id mockCC = OCMStrictClassMock([SNTCompilerController class]);
 
   SNTEndpointSecurityRecorder *recorderClient =
-      [[SNTEndpointSecurityRecorder alloc] initWithESAPI:mockESApi
-                                                  logger:mockLogger
-                                                enricher:mockEnricher
-                                      compilerController:mockCC
-                                         authResultCache:mockAuthCache
-                                              prefixTree:prefixTree];
+    [[SNTEndpointSecurityRecorder alloc] initWithESAPI:mockESApi
+                                                logger:mockLogger
+                                              enricher:mockEnricher
+                                    compilerController:mockCC
+                                       authResultCache:mockAuthCache
+                                            prefixTree:prefixTree];
 
   // CLOSE not modified, bail early
   {
@@ -148,16 +138,13 @@ public:
     esMsg.event.close.target = &targetFile;
     Message msg(mockESApi, &esMsg);
 
-    OCMExpect([mockCC handleEvent:msg withLogger:nullptr])
-      .ignoringNonObjectArgs();
+    OCMExpect([mockCC handleEvent:msg withLogger:nullptr]).ignoringNonObjectArgs();
 
     [recorderClient handleMessage:std::move(msg)];
 
-    XCTAssertEqual(0,
-                  dispatch_semaphore_wait(
-                      sema,
-                      dispatch_time(DISPATCH_TIME_NOW, 10 * NSEC_PER_SEC)),
-                  "Log wasn't called within expected time window");
+    XCTAssertEqual(
+      0, dispatch_semaphore_wait(sema, dispatch_time(DISPATCH_TIME_NOW, 10 * NSEC_PER_SEC)),
+      "Log wasn't called within expected time window");
   }
 
   // LINK, Prefix match, bail early
@@ -167,8 +154,7 @@ public:
     prefixTree->AddPrefix(esMsg.event.link.source->path.data);
     Message msg(mockESApi, &esMsg);
 
-    OCMExpect([mockCC handleEvent:msg withLogger:nullptr])
-      .ignoringNonObjectArgs();
+    OCMExpect([mockCC handleEvent:msg withLogger:nullptr]).ignoringNonObjectArgs();
 
     [recorderClient handleMessage:std::move(msg)];
   }
@@ -186,7 +172,7 @@ public:
 - (void)testGetTargetFileForPrefixTree {
   // Ensure `GetTargetFileForPrefixTree` returns expected field for each
   // subscribed event type in the `SNTEndpointSecurityRecorder`.
-  extern es_file_t* GetTargetFileForPrefixTree(const es_message_t* msg);
+  extern es_file_t *GetTargetFileForPrefixTree(const es_message_t *msg);
 
   es_file_t closeFile = MakeESFile("close");
   es_file_t linkFile = MakeESFile("link");

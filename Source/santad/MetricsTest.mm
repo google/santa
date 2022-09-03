@@ -12,10 +12,10 @@
 ///    See the License for the specific language governing permissions and
 ///    limitations under the License.
 
-#include <dispatch/dispatch.h>
 #import <Foundation/Foundation.h>
 #import <OCMock/OCMock.h>
 #import <XCTest/XCTest.h>
+#include <dispatch/dispatch.h>
 
 #include "Source/santad/Metrics.h"
 
@@ -24,20 +24,16 @@ using santa::santad::Metrics;
 namespace santa::santad {
 
 class MetricsPeer : public Metrics {
-public:
+ public:
   // Make base class constructors visible
   using Metrics::Metrics;
 
-  bool IsRunning() {
-    return running_;
-  }
+  bool IsRunning() { return running_; }
 
-  uint64_t Interval() {
-    return interval_;
-  }
+  uint64_t Interval() { return interval_; }
 };
 
-} // namespace santa::santad
+}  // namespace santa::santad
 
 using santa::santad::MetricsPeer;
 
@@ -58,21 +54,14 @@ using santa::santad::MetricsPeer;
 }
 
 - (void)testStartStop {
-  auto metrics = std::make_shared<MetricsPeer>(
-      nil,
-      self.q,
-      self.timer,
-      100,
-      ^{
-        dispatch_semaphore_signal(self.sema);
-      });
+  auto metrics = std::make_shared<MetricsPeer>(nil, self.q, self.timer, 100, ^{
+    dispatch_semaphore_signal(self.sema);
+  });
 
   XCTAssertFalse(metrics->IsRunning());
 
   metrics->StartPoll();
-  XCTAssertEqual(0,
-                 dispatch_semaphore_wait(self.sema,
-                                         DISPATCH_TIME_NOW),
+  XCTAssertEqual(0, dispatch_semaphore_wait(self.sema, DISPATCH_TIME_NOW),
                  "Initialization block never called");
 
   // Should be marked running after starting
@@ -81,9 +70,7 @@ using santa::santad::MetricsPeer;
   metrics->StartPoll();
 
   // Ensure the initialization block isn't called a second time
-  XCTAssertNotEqual(0,
-                    dispatch_semaphore_wait(self.sema,
-                                            DISPATCH_TIME_NOW),
+  XCTAssertNotEqual(0, dispatch_semaphore_wait(self.sema, DISPATCH_TIME_NOW),
                     "Initialization block called second time unexpectedly");
 
   // Double-start doesn't change the running state
@@ -101,12 +88,9 @@ using santa::santad::MetricsPeer;
 }
 
 - (void)testSetInterval {
-  auto metrics = std::make_shared<MetricsPeer>(
-      nil,
-      self.q,
-      self.timer,
-      100,
-      ^{});
+  auto metrics = std::make_shared<MetricsPeer>(nil, self.q, self.timer, 100,
+                                               ^{
+                                               });
 
   XCTAssertEqual(100, metrics->Interval());
 

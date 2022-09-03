@@ -13,39 +13,38 @@
 ///    limitations under the License.
 
 #include <EndpointSecurity/ESTypes.h>
-#include <gtest/gtest.h>
-#include <gmock/gmock.h>
 #import <OCMock/OCMock.h>
 #import <XCTest/XCTest.h>
+#include <gmock/gmock.h>
+#include <gtest/gtest.h>
 
 #include <map>
 #include <memory>
 #include <set>
 
 #include "Source/common/TestUtils.h"
-#import "Source/santad/SNTCompilerController.h"
-#import "Source/santad/SNTExecutionController.h"
 #include "Source/santad/EventProviders/AuthResultCache.h"
-#import "Source/santad/EventProviders/SNTEndpointSecurityAuthorizer.h"
 #include "Source/santad/EventProviders/EndpointSecurity/Client.h"
 #include "Source/santad/EventProviders/EndpointSecurity/Message.h"
 #include "Source/santad/EventProviders/EndpointSecurity/MockEndpointSecurityAPI.h"
+#import "Source/santad/EventProviders/SNTEndpointSecurityAuthorizer.h"
+#import "Source/santad/SNTCompilerController.h"
+#import "Source/santad/SNTExecutionController.h"
 
-using santa::santad::event_providers::endpoint_security::Message;
 using santa::santad::event_providers::AuthResultCache;
+using santa::santad::event_providers::endpoint_security::Message;
 
 class MockAuthResultCache : public AuthResultCache {
-public:
+ public:
   using AuthResultCache::AuthResultCache;
 
-  MOCK_METHOD(bool, AddToCache, (const es_file_t *es_file,
-                                santa_action_t decision));
+  MOCK_METHOD(bool, AddToCache, (const es_file_t *es_file, santa_action_t decision));
   MOCK_METHOD(santa_action_t, CheckCache, (const es_file_t *es_file));
 };
 
 @interface SNTEndpointSecurityAuthorizer (Testing)
-- (void)processMessage:(const Message&)msg;
-- (bool)postAction:(santa_action_t)action forMessage:(const Message&)esMsg;
+- (void)processMessage:(const Message &)msg;
+- (bool)postAction:(santa_action_t)action forMessage:(const Message &)esMsg;
 @end
 
 @interface SNTEndpointSecurityAuthorizerTest : XCTestCase
@@ -64,16 +63,14 @@ public:
 
 - (void)testEnable {
   // Ensure the client subscribes to expected event types
-  std::set<es_event_type_t> expectedEventSubs{ ES_EVENT_TYPE_AUTH_EXEC };
+  std::set<es_event_type_t> expectedEventSubs{ES_EVENT_TYPE_AUTH_EXEC};
   auto mockESApi = std::make_shared<MockEndpointSecurityAPI>();
 
-  id authClient =
-      [[SNTEndpointSecurityAuthorizer alloc] initWithESAPI:mockESApi];
+  id authClient = [[SNTEndpointSecurityAuthorizer alloc] initWithESAPI:mockESApi];
 
   EXPECT_CALL(*mockESApi, ClearCache)
-    .After(
-        EXPECT_CALL(*mockESApi, Subscribe(testing::_, expectedEventSubs))
-            .WillOnce(testing::Return(true)))
+    .After(EXPECT_CALL(*mockESApi, Subscribe(testing::_, expectedEventSubs))
+             .WillOnce(testing::Return(true)))
     .WillOnce(testing::Return(true));
 
   [authClient enable];
@@ -91,10 +88,10 @@ public:
   mockESApi->SetExpectationsRetainReleaseMessage(&esMsg);
 
   SNTEndpointSecurityAuthorizer *authClient =
-      [[SNTEndpointSecurityAuthorizer alloc] initWithESAPI:mockESApi
-                                            execController:self.mockExecController
-                                        compilerController:nil
-                                           authResultCache:nullptr];
+    [[SNTEndpointSecurityAuthorizer alloc] initWithESAPI:mockESApi
+                                          execController:self.mockExecController
+                                      compilerController:nil
+                                         authResultCache:nullptr];
 
   id mockAuthClient = OCMPartialMock(authClient);
 
@@ -114,13 +111,11 @@ public:
       .ignoringNonObjectArgs()
       .andReturn(NO);
 
-    OCMExpect([mockAuthClient postAction:ACTION_RESPOND_DENY
-                              forMessage:Message(mockESApi, &esMsg)])
-        .ignoringNonObjectArgs();
-    OCMStub([mockAuthClient postAction:ACTION_RESPOND_DENY
-                            forMessage:Message(mockESApi, &esMsg)])
-        .ignoringNonObjectArgs()
-        .andDo(nil);
+    OCMExpect([mockAuthClient postAction:ACTION_RESPOND_DENY forMessage:Message(mockESApi, &esMsg)])
+      .ignoringNonObjectArgs();
+    OCMStub([mockAuthClient postAction:ACTION_RESPOND_DENY forMessage:Message(mockESApi, &esMsg)])
+      .ignoringNonObjectArgs()
+      .andDo(nil);
 
     [mockAuthClient handleMessage:std::move(msg)];
     XCTAssertTrue(OCMVerifyAll(mockAuthClient));
@@ -135,13 +130,11 @@ public:
       .ignoringNonObjectArgs()
       .andReturn(YES);
 
-    OCMExpect([mockAuthClient processMessage:Message(mockESApi, &esMsg)
-                                     handler:[OCMArg any]])
-        .ignoringNonObjectArgs();
-    OCMStub([mockAuthClient processMessage:Message(mockESApi, &esMsg)
-                                     handler:[OCMArg any]])
-        .ignoringNonObjectArgs()
-        .andDo(nil);
+    OCMExpect([mockAuthClient processMessage:Message(mockESApi, &esMsg) handler:[OCMArg any]])
+      .ignoringNonObjectArgs();
+    OCMStub([mockAuthClient processMessage:Message(mockESApi, &esMsg) handler:[OCMArg any]])
+      .ignoringNonObjectArgs()
+      .andDo(nil);
 
     [mockAuthClient handleMessage:std::move(msg)];
     XCTAssertTrue(OCMVerifyAll(mockAuthClient));
@@ -158,9 +151,7 @@ public:
   es_file_t file = MakeESFile("foo");
   es_process_t proc = MakeESProcess(&file, {}, {});
   es_file_t execFile = MakeESFile("bar");
-  es_process_t execProc = MakeESProcess(&execFile,
-                                     MakeAuditToken(12, 23),
-                                     MakeAuditToken(34, 45));
+  es_process_t execProc = MakeESProcess(&execFile, MakeAuditToken(12, 23), MakeAuditToken(34, 45));
   es_message_t esMsg = MakeESMessage(ES_EVENT_TYPE_AUTH_EXEC, &proc, ActionType::Auth);
   esMsg.event.exec.target = &execProc;
 
@@ -170,22 +161,21 @@ public:
 
   auto mockAuthCache = std::make_shared<MockAuthResultCache>(nullptr);
   EXPECT_CALL(*mockAuthCache, CheckCache)
-      .WillOnce(testing::Return(ACTION_REQUEST_BINARY))
-      .WillOnce(testing::Return(ACTION_REQUEST_BINARY))
-      .WillOnce(testing::Return(ACTION_RESPOND_ALLOW_COMPILER))
-      .WillOnce(testing::Return(ACTION_UNSET));
+    .WillOnce(testing::Return(ACTION_REQUEST_BINARY))
+    .WillOnce(testing::Return(ACTION_REQUEST_BINARY))
+    .WillOnce(testing::Return(ACTION_RESPOND_ALLOW_COMPILER))
+    .WillOnce(testing::Return(ACTION_UNSET));
   EXPECT_CALL(*mockAuthCache, AddToCache(testing::_, ACTION_REQUEST_BINARY))
-      .WillOnce(testing::Return(true));
+    .WillOnce(testing::Return(true));
 
   id mockCompilerController = OCMStrictClassMock([SNTCompilerController class]);
-  OCMExpect([mockCompilerController setProcess:execProc.audit_token
-                                    isCompiler:true]);
+  OCMExpect([mockCompilerController setProcess:execProc.audit_token isCompiler:true]);
 
   SNTEndpointSecurityAuthorizer *authClient =
-      [[SNTEndpointSecurityAuthorizer alloc] initWithESAPI:mockESApi
-                                            execController:self.mockExecController
-                                        compilerController:mockCompilerController
-                                           authResultCache:mockAuthCache];
+    [[SNTEndpointSecurityAuthorizer alloc] initWithESAPI:mockESApi
+                                          execController:self.mockExecController
+                                      compilerController:mockCompilerController
+                                         authResultCache:mockAuthCache];
   id mockAuthClient = OCMPartialMock(authClient);
 
   // This block tests that processing is held up until an outstanding thread
@@ -207,9 +197,8 @@ public:
   // running the exec controller to validate the exec event.
   {
     Message msg(mockESApi, &esMsg);
-    OCMExpect([self.mockExecController validateExecEvent:msg
-                                              postAction:OCMOCK_ANY])
-        .ignoringNonObjectArgs();
+    OCMExpect([self.mockExecController validateExecEvent:msg postAction:OCMOCK_ANY])
+      .ignoringNonObjectArgs();
 
     [mockAuthClient processMessage:msg];
 
@@ -228,9 +217,7 @@ public:
   es_file_t file = MakeESFile("foo");
   es_process_t proc = MakeESProcess(&file, {}, {});
   es_file_t execFile = MakeESFile("bar");
-  es_process_t execProc = MakeESProcess(&execFile,
-                                     MakeAuditToken(12, 23),
-                                     MakeAuditToken(34, 45));
+  es_process_t execProc = MakeESProcess(&execFile, MakeAuditToken(12, 23), MakeAuditToken(34, 45));
   es_message_t esMsg = MakeESMessage(ES_EVENT_TYPE_AUTH_EXEC, &proc, ActionType::Auth);
   esMsg.event.exec.target = &execProc;
 
@@ -240,39 +227,37 @@ public:
 
   auto mockAuthCache = std::make_shared<MockAuthResultCache>(nullptr);
   EXPECT_CALL(*mockAuthCache, AddToCache(&execFile, ACTION_RESPOND_ALLOW_COMPILER))
-      .WillOnce(testing::Return(true));
+    .WillOnce(testing::Return(true));
   EXPECT_CALL(*mockAuthCache, AddToCache(&execFile, ACTION_RESPOND_ALLOW))
-      .WillOnce(testing::Return(true));
+    .WillOnce(testing::Return(true));
   EXPECT_CALL(*mockAuthCache, AddToCache(&execFile, ACTION_RESPOND_DENY))
-      .WillOnce(testing::Return(true));
+    .WillOnce(testing::Return(true));
 
   id mockCompilerController = OCMStrictClassMock([SNTCompilerController class]);
-  OCMExpect([mockCompilerController setProcess:execProc.audit_token
-                                    isCompiler:true]);
+  OCMExpect([mockCompilerController setProcess:execProc.audit_token isCompiler:true]);
 
   SNTEndpointSecurityAuthorizer *authClient =
-      [[SNTEndpointSecurityAuthorizer alloc] initWithESAPI:mockESApi
-                                            execController:self.mockExecController
-                                        compilerController:mockCompilerController
-                                           authResultCache:mockAuthCache];
+    [[SNTEndpointSecurityAuthorizer alloc] initWithESAPI:mockESApi
+                                          execController:self.mockExecController
+                                      compilerController:mockCompilerController
+                                         authResultCache:mockAuthCache];
   id mockAuthClient = OCMPartialMock(authClient);
 
   {
     Message msg(mockESApi, &esMsg);
 
-    XCTAssertThrows([mockAuthClient postAction:(santa_action_t)123
-                                    forMessage:msg]);
+    XCTAssertThrows([mockAuthClient postAction:(santa_action_t)123 forMessage:msg]);
 
     std::map<santa_action_t, es_auth_result_t> actions = {
-      { ACTION_RESPOND_ALLOW_COMPILER, ES_AUTH_RESULT_ALLOW },
-      { ACTION_RESPOND_ALLOW, ES_AUTH_RESULT_ALLOW },
-      { ACTION_RESPOND_DENY, ES_AUTH_RESULT_DENY },
+      {ACTION_RESPOND_ALLOW_COMPILER, ES_AUTH_RESULT_ALLOW},
+      {ACTION_RESPOND_ALLOW, ES_AUTH_RESULT_ALLOW},
+      {ACTION_RESPOND_DENY, ES_AUTH_RESULT_DENY},
     };
 
     for (const auto &kv : actions) {
       OCMExpect([mockAuthClient respondToMessage:msg
                                   withAuthResult:kv.second
-                                      cacheable:kv.second == ES_AUTH_RESULT_ALLOW]);
+                                       cacheable:kv.second == ES_AUTH_RESULT_ALLOW]);
 
       [mockAuthClient postAction:kv.first forMessage:msg];
     }

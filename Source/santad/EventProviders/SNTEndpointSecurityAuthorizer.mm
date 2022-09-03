@@ -23,13 +23,13 @@
 #include "Source/santad/EventProviders/EndpointSecurity/EnrichedTypes.h"
 #include "Source/santad/EventProviders/EndpointSecurity/Message.h"
 
+using santa::santad::event_providers::AuthResultCache;
 using santa::santad::event_providers::endpoint_security::EndpointSecurityAPI;
 using santa::santad::event_providers::endpoint_security::Message;
-using santa::santad::event_providers::AuthResultCache;
 
-@interface SNTEndpointSecurityAuthorizer()
-@property SNTCompilerController* compilerController;
-@property SNTExecutionController* execController;
+@interface SNTEndpointSecurityAuthorizer ()
+@property SNTCompilerController *compilerController;
+@property SNTExecutionController *execController;
 @end
 
 @implementation SNTEndpointSecurityAuthorizer {
@@ -37,8 +37,8 @@ using santa::santad::event_providers::AuthResultCache;
 }
 
 - (instancetype)initWithESAPI:(std::shared_ptr<EndpointSecurityAPI>)esApi
-               execController:(SNTExecutionController*)execController
-           compilerController:(SNTCompilerController*)compilerController
+               execController:(SNTExecutionController *)execController
+           compilerController:(SNTCompilerController *)compilerController
               authResultCache:(std::shared_ptr<AuthResultCache>)authResultCache {
   self = [super initWithESAPI:std::move(esApi)];
   if (self) {
@@ -51,7 +51,7 @@ using santa::santad::event_providers::AuthResultCache;
   return self;
 }
 
-- (void)processMessage:(const Message&)msg {
+- (void)processMessage:(const Message &)msg {
   const es_file_t *target_file = msg->event.exec.target->executable;
 
   while (true) {
@@ -61,20 +61,15 @@ using santa::santad::event_providers::AuthResultCache;
 
       switch (returnAction) {
         case ACTION_RESPOND_ALLOW_COMPILER:
-          [self.compilerController
-              setProcess:msg->event.exec.target->audit_token
-              isCompiler:true];
+          [self.compilerController setProcess:msg->event.exec.target->audit_token isCompiler:true];
           OS_FALLTHROUGH;
-        case ACTION_RESPOND_ALLOW:
-          authResult = ES_AUTH_RESULT_ALLOW;
-          break;
-        default:
-          break;
+        case ACTION_RESPOND_ALLOW: authResult = ES_AUTH_RESULT_ALLOW; break;
+        default: break;
       }
 
       [self respondToMessage:msg
               withAuthResult:authResult
-                    cacheable:(authResult == ES_AUTH_RESULT_ALLOW)];
+                   cacheable:(authResult == ES_AUTH_RESULT_ALLOW)];
       return;
     } else if (returnAction == ACTION_REQUEST_BINARY) {
       // TODO(mlw): Look into caching a `Deferred<value>` to better prevent
@@ -88,9 +83,10 @@ using santa::santad::event_providers::AuthResultCache;
 
   self->_authResultCache->AddToCache(target_file, ACTION_REQUEST_BINARY);
 
-  [self.execController validateExecEvent:msg postAction:^bool(santa_action_t action) {
-    return [self postAction:action forMessage:msg];
-  }];
+  [self.execController validateExecEvent:msg
+                              postAction:^bool(santa_action_t action) {
+                                return [self postAction:action forMessage:msg];
+                              }];
 }
 
 - (void)handleMessage:(Message &&)esMsg {
@@ -106,34 +102,28 @@ using santa::santad::event_providers::AuthResultCache;
     return;
   }
 
-  [self processMessage:std::move(esMsg) handler:^(const Message& msg) {
-    [self processMessage:msg];
-  }];
+  [self processMessage:std::move(esMsg)
+               handler:^(const Message &msg) {
+                 [self processMessage:msg];
+               }];
 }
 
-- (bool)postAction:(santa_action_t)action forMessage:(const Message&)esMsg {
+- (bool)postAction:(santa_action_t)action forMessage:(const Message &)esMsg {
   es_auth_result_t authResult;
 
   switch (action) {
     case ACTION_RESPOND_ALLOW_COMPILER:
-      [self.compilerController setProcess:esMsg->event.exec.target->audit_token
-                               isCompiler:true];
+      [self.compilerController setProcess:esMsg->event.exec.target->audit_token isCompiler:true];
       OS_FALLTHROUGH;
-    case ACTION_RESPOND_ALLOW:
-      authResult = ES_AUTH_RESULT_ALLOW;
-      break;
-    case ACTION_RESPOND_DENY:
-      authResult = ES_AUTH_RESULT_DENY;
-      break;
+    case ACTION_RESPOND_ALLOW: authResult = ES_AUTH_RESULT_ALLOW; break;
+    case ACTION_RESPOND_DENY: authResult = ES_AUTH_RESULT_DENY; break;
     default:
       // This is a programming error. Bail.
       LOGE(@"Invalid action for postAction, exiting.");
-      [NSException raise:@"Invalid post action"
-                  format:@"Invalid post action: %d", action];
+      [NSException raise:@"Invalid post action" format:@"Invalid post action: %d", action];
   }
 
-  self->_authResultCache->AddToCache(esMsg->event.exec.target->executable,
-                                     action);
+  self->_authResultCache->AddToCache(esMsg->event.exec.target->executable, action);
 
   // Don't cache DENY results. Santa only flushes ES cache when a new DENY rule
   // is received. If DENY results were cached and a rule update made the
@@ -145,8 +135,8 @@ using santa::santad::event_providers::AuthResultCache;
 
 - (void)enable {
   [super subscribeAndClearCache:{
-      ES_EVENT_TYPE_AUTH_EXEC,
-  }];
+                                  ES_EVENT_TYPE_AUTH_EXEC,
+                                }];
 }
 
 @end

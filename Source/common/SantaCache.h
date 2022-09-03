@@ -27,8 +27,8 @@
 #include "Source/common/SNTCommon.h"
 
 #define santa_panic(args...) \
-  printf(args);        \
-  printf("\n");        \
+  printf(args);              \
+  printf("\n");              \
   abort()
 
 #pragma clang diagnostic push

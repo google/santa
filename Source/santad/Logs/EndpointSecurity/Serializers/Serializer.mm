@@ -20,40 +20,32 @@ namespace es = santa::santad::event_providers::endpoint_security;
 
 namespace santa::santad::logs::endpoint_security::serializers {
 
-std::vector<uint8_t> Serializer::SerializeMessageTemplate(
-    const es::EnrichedClose& msg) {
+std::vector<uint8_t> Serializer::SerializeMessageTemplate(const es::EnrichedClose &msg) {
   return SerializeMessage(msg);
 }
-std::vector<uint8_t> Serializer::SerializeMessageTemplate(
-    const es::EnrichedExchange& msg) {
+std::vector<uint8_t> Serializer::SerializeMessageTemplate(const es::EnrichedExchange &msg) {
   return SerializeMessage(msg);
 }
-std::vector<uint8_t> Serializer::SerializeMessageTemplate(
-    const es::EnrichedExec& msg) {
+std::vector<uint8_t> Serializer::SerializeMessageTemplate(const es::EnrichedExec &msg) {
   [[SNTDecisionCache sharedCache]
-      resetTimestampForCachedDecision:msg.es_msg_->event.exec.target->executable->stat];
+    resetTimestampForCachedDecision:msg.es_msg_->event.exec.target->executable->stat];
 
   return SerializeMessage(msg);
 }
-std::vector<uint8_t> Serializer::SerializeMessageTemplate(
-    const es::EnrichedExit& msg) {
+std::vector<uint8_t> Serializer::SerializeMessageTemplate(const es::EnrichedExit &msg) {
   return SerializeMessage(msg);
 }
-std::vector<uint8_t> Serializer::SerializeMessageTemplate(
-    const es::EnrichedFork& msg) {
+std::vector<uint8_t> Serializer::SerializeMessageTemplate(const es::EnrichedFork &msg) {
   return SerializeMessage(msg);
 }
-std::vector<uint8_t> Serializer::SerializeMessageTemplate(
-    const es::EnrichedLink& msg) {
+std::vector<uint8_t> Serializer::SerializeMessageTemplate(const es::EnrichedLink &msg) {
   return SerializeMessage(msg);
 }
-std::vector<uint8_t> Serializer::SerializeMessageTemplate(
-    const es::EnrichedRename& msg) {
+std::vector<uint8_t> Serializer::SerializeMessageTemplate(const es::EnrichedRename &msg) {
   return SerializeMessage(msg);
 }
-std::vector<uint8_t> Serializer::SerializeMessageTemplate(
-    const es::EnrichedUnlink& msg) {
+std::vector<uint8_t> Serializer::SerializeMessageTemplate(const es::EnrichedUnlink &msg) {
   return SerializeMessage(msg);
 }
 
-}; // namespace santa::santad::logs::endpoint_security::serializers
+};  // namespace santa::santad::logs::endpoint_security::serializers

@@ -43,7 +43,7 @@
 
 using santa::santad::event_providers::endpoint_security::Message;
 
-static const size_t kMaxAllowedPathLength = MAXPATHLEN - 1; // -1 to account for null terminator
+static const size_t kMaxAllowedPathLength = MAXPATHLEN - 1;  // -1 to account for null terminator
 
 @interface SNTExecutionController ()
 @property SNTEventTable *eventTable;
@@ -69,9 +69,9 @@ static NSString *const kPrinterProxyPostMonterey =
 #pragma mark Initializers
 
 - (instancetype)initWithRuleTable:(SNTRuleTable *)ruleTable
-                           eventTable:(SNTEventTable *)eventTable
-                        notifierQueue:(SNTNotificationQueue *)notifierQueue
-                           syncdQueue:(SNTSyncdQueue *)syncdQueue {
+                       eventTable:(SNTEventTable *)eventTable
+                    notifierQueue:(SNTNotificationQueue *)notifierQueue
+                       syncdQueue:(SNTSyncdQueue *)syncdQueue {
   self = [super init];
   if (self) {
     _ruleTable = ruleTable;
@@ -119,13 +119,13 @@ static NSString *const kPrinterProxyPostMonterey =
 
 #pragma mark Binary Validation
 
-- (bool)synchronousShouldProcessExecEvent:(const Message&)esMsg {
+- (bool)synchronousShouldProcessExecEvent:(const Message &)esMsg {
   if (unlikely(esMsg->event_type != ES_EVENT_TYPE_AUTH_EXEC)) {
     // Programming error. Bail.
     LOGE(@"Attempt to validate non-EXEC event. Event type: %d", esMsg->event_type);
-    [NSException raise:@"Invalid event type"
-                format:@"synchronousShouldProcessExecEvent: Unexpected event type: %d",
-                       esMsg->event_type];
+    [NSException
+       raise:@"Invalid event type"
+      format:@"synchronousShouldProcessExecEvent: Unexpected event type: %d", esMsg->event_type];
   }
 
   const es_process_t *targetProc = esMsg->event.exec.target;
@@ -133,10 +133,11 @@ static NSString *const kPrinterProxyPostMonterey =
   if (targetProc->executable->path.length > kMaxAllowedPathLength ||
       targetProc->executable->path_truncated) {
     // Store a SNTCachedDecision so that this event gets properly logged
-    SNTCachedDecision *cd = [[SNTCachedDecision alloc] initWithEndpointSecurityFile:targetProc->executable];
+    SNTCachedDecision *cd =
+      [[SNTCachedDecision alloc] initWithEndpointSecurityFile:targetProc->executable];
     cd.decision = SNTEventStateBlockLongPath;
     cd.customMsg = [NSString stringWithFormat:@"Path exceeded max length for processing (%zu)",
-        targetProc->executable->path.length];
+                                              targetProc->executable->path.length];
 
     if (targetProc->team_id.data) {
       cd.teamID = [NSString stringWithUTF8String:targetProc->team_id.data];
@@ -154,22 +155,22 @@ static NSString *const kPrinterProxyPostMonterey =
   return YES;
 }
 
-- (void)validateExecEvent:(const Message&)esMsg
-               postAction:(bool (^)(santa_action_t))postAction {
+- (void)validateExecEvent:(const Message &)esMsg postAction:(bool (^)(santa_action_t))postAction {
   if (unlikely(esMsg->event_type != ES_EVENT_TYPE_AUTH_EXEC)) {
     // Programming error. Bail.
     LOGE(@"Attempt to validate non-EXEC event. Event type: %d", esMsg->event_type);
-    [NSException raise:@"Invalid event type"
-                format:@"validateExecEvent:postAction: Unexpected event type: %d",
-                       esMsg->event_type];
+    [NSException
+       raise:@"Invalid event type"
+      format:@"validateExecEvent:postAction: Unexpected event type: %d", esMsg->event_type];
   }
 
   // Get info about the file. If we can't get this info, respond appropriately and log an error.
   SNTConfigurator *config = [SNTConfigurator configurator];
-  const es_process_t* targetProc = esMsg->event.exec.target;
+  const es_process_t *targetProc = esMsg->event.exec.target;
 
   NSError *fileInfoError;
-  SNTFileInfo *binInfo = [[SNTFileInfo alloc] initWithEndpointSecurityFile:targetProc->executable error:&fileInfoError];
+  SNTFileInfo *binInfo = [[SNTFileInfo alloc] initWithEndpointSecurityFile:targetProc->executable
+                                                                     error:&fileInfoError];
   if (unlikely(!binInfo)) {
     if (config.failClosed && config.clientMode == SNTClientModeLockdown) {
       LOGE(@"Failed to read file %@: %@ and denying action", @(targetProc->executable->path.data),
@@ -197,10 +198,8 @@ static NSString *const kPrinterProxyPostMonterey =
 
   SNTCachedDecision *cd = [self.policyProcessor decisionForFileInfo:binInfo];
 
-  cd.vnodeId = {
-    .fsid = (uint64_t)targetProc->executable->stat.st_dev,
-    .fileid = targetProc->executable->stat.st_ino
-  };
+  cd.vnodeId = {.fsid = (uint64_t)targetProc->executable->stat.st_dev,
+                .fileid = targetProc->executable->stat.st_ino};
 
   // Formulate an initial action from the decision.
   santa_action_t action =
@@ -273,7 +272,6 @@ static NSString *const kPrinterProxyPostMonterey =
 
     // If binary was blocked, do the needful
     if (action != ACTION_RESPOND_ALLOW && action != ACTION_RESPOND_ALLOW_COMPILER) {
-
       if (config.enableBundles && binInfo.bundle) {
         // If the binary is part of a bundle, find and hash all the related binaries in the bundle.
         // Let the GUI know hashing is needed. Once the hashing is complete the GUI will send a

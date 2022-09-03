@@ -12,14 +12,14 @@
 ///    See the License for the specific language governing permissions and
 ///    limitations under the License.
 
-#include <dispatch/dispatch.h>
 #include <EndpointSecurity/ESTypes.h>
 #import <MOLCertificate/MOLCertificate.h>
 #import <MOLCodesignChecker/MOLCodesignChecker.h>
-#include "Source/common/SNTCommon.h"
 #import <OCMock/OCMock.h>
-#include "Source/common/SNTCommonEnums.h"
 #import <XCTest/XCTest.h>
+#include <dispatch/dispatch.h>
+#include "Source/common/SNTCommon.h"
+#include "Source/common/SNTCommonEnums.h"
 
 #import "Source/common/SNTCachedDecision.h"
 #import "Source/common/SNTCommonEnums.h"
@@ -28,17 +28,17 @@
 #import "Source/common/SNTMetricSet.h"
 #import "Source/common/SNTRule.h"
 #include "Source/common/TestUtils.h"
-#import "Source/santad/SNTDecisionCache.h"
-#import "Source/santad/SNTExecutionController.h"
 #import "Source/santad/DataLayer/SNTEventTable.h"
 #import "Source/santad/DataLayer/SNTRuleTable.h"
 #include "Source/santad/EventProviders/EndpointSecurity/Message.h"
 #include "Source/santad/EventProviders/EndpointSecurity/MockEndpointSecurityAPI.h"
+#import "Source/santad/SNTDecisionCache.h"
+#import "Source/santad/SNTExecutionController.h"
 
 using santa::santad::event_providers::endpoint_security::Message;
 
-using PostActionBlock = bool(^)(santa_action_t);
-using VerifyPostActionBlock = PostActionBlock(^)(santa_action_t);
+using PostActionBlock = bool (^)(santa_action_t);
+using VerifyPostActionBlock = PostActionBlock (^)(santa_action_t);
 
 VerifyPostActionBlock verifyPostAction = ^PostActionBlock(santa_action_t wantAction) {
   return ^bool(santa_action_t gotAction) {
@@ -63,8 +63,7 @@ VerifyPostActionBlock verifyPostAction = ^PostActionBlock(santa_action_t wantAct
   [super setUp];
 
   self.mockDecisionCache = OCMStrictClassMock([SNTDecisionCache class]);
-  OCMStub([self.mockDecisionCache sharedCache])
-      .andReturn(self.mockDecisionCache);
+  OCMStub([self.mockDecisionCache sharedCache]).andReturn(self.mockDecisionCache);
   OCMStub([self.mockDecisionCache cacheDecision:OCMOCK_ANY]);
 
   [[SNTMetricSet sharedInstance] reset];
@@ -72,7 +71,7 @@ VerifyPostActionBlock verifyPostAction = ^PostActionBlock(santa_action_t wantAct
   self.mockCodesignChecker = OCMClassMock([MOLCodesignChecker class]);
   OCMStub([self.mockCodesignChecker alloc]).andReturn(self.mockCodesignChecker);
   OCMStub([self.mockCodesignChecker initWithBinaryPath:OCMOCK_ANY error:[OCMArg setTo:NULL]])
-      .andReturn(self.mockCodesignChecker);
+    .andReturn(self.mockCodesignChecker);
 
   self.mockConfigurator = OCMClassMock([SNTConfigurator class]);
   OCMStub([self.mockConfigurator configurator]).andReturn(self.mockConfigurator);
@@ -82,19 +81,18 @@ VerifyPostActionBlock verifyPostAction = ^PostActionBlock(santa_action_t wantAct
   self.mockFileInfo = OCMClassMock([SNTFileInfo class]);
   OCMStub([self.mockFileInfo alloc]).andReturn(self.mockFileInfo);
   OCMStub([self.mockFileInfo initWithEndpointSecurityFile:NULL error:[OCMArg setTo:nil]])
-      .ignoringNonObjectArgs()
-      .andReturn(self.mockFileInfo);
+    .ignoringNonObjectArgs()
+    .andReturn(self.mockFileInfo);
   OCMStub([self.mockFileInfo codesignCheckerWithError:[OCMArg setTo:nil]])
-      .andReturn(self.mockCodesignChecker);
+    .andReturn(self.mockCodesignChecker);
 
   self.mockRuleDatabase = OCMClassMock([SNTRuleTable class]);
   self.mockEventDatabase = OCMClassMock([SNTEventTable class]);
 
-  self.sut = [[SNTExecutionController alloc]
-      initWithRuleTable:self.mockRuleDatabase
-             eventTable:self.mockEventDatabase
-          notifierQueue:nil
-             syncdQueue:nil];
+  self.sut = [[SNTExecutionController alloc] initWithRuleTable:self.mockRuleDatabase
+                                                    eventTable:self.mockEventDatabase
+                                                 notifierQueue:nil
+                                                    syncdQueue:nil];
 }
 
 - (void)tearDown {
@@ -124,7 +122,10 @@ VerifyPostActionBlock verifyPostAction = ^PostActionBlock(santa_action_t wantAct
 - (void)testSynchronousShouldProcessExecEvent {
   es_file_t file = MakeESFile("foo");
   es_process_t proc = MakeESProcess(&file, {}, {});
-  es_file_t fileExec = MakeESFile("bar", { .st_dev = 12, .st_ino = 34, });
+  es_file_t fileExec = MakeESFile("bar", {
+                                           .st_dev = 12,
+                                           .st_ino = 34,
+                                         });
   es_process_t procExec = MakeESProcess(&fileExec, {}, {});
   es_message_t esMsg = MakeESMessage(ES_EVENT_TYPE_AUTH_EXEC, &proc);
   esMsg.event.exec.target = &procExec;
@@ -134,8 +135,7 @@ VerifyPostActionBlock verifyPostAction = ^PostActionBlock(santa_action_t wantAct
 
   // Undo the default mocks
   self.mockDecisionCache = OCMStrictClassMock([SNTDecisionCache class]);
-  OCMStub([self.mockDecisionCache sharedCache])
-      .andReturn(self.mockDecisionCache);
+  OCMStub([self.mockDecisionCache sharedCache]).andReturn(self.mockDecisionCache);
 
   // Throw on non-AUTH EXEC events
   {
@@ -159,24 +159,24 @@ VerifyPostActionBlock verifyPostAction = ^PostActionBlock(santa_action_t wantAct
 
     Message msg(mockESApi, &esMsg);
 
-    OCMExpect([self.mockDecisionCache
-        cacheDecision:[OCMArg checkWithBlock:^BOOL(SNTCachedDecision *cd){
-          return cd.decision == SNTEventStateBlockLongPath &&
-              cd.vnodeId.fsid == targetExecutable->stat.st_dev &&
-              cd.vnodeId.fileid == targetExecutable->stat.st_ino;
-        }]]);
+    OCMExpect(
+      [self.mockDecisionCache cacheDecision:[OCMArg checkWithBlock:^BOOL(SNTCachedDecision *cd) {
+                                return cd.decision == SNTEventStateBlockLongPath &&
+                                       cd.vnodeId.fsid == targetExecutable->stat.st_dev &&
+                                       cd.vnodeId.fileid == targetExecutable->stat.st_ino;
+                              }]]);
 
     XCTAssertFalse([self.sut synchronousShouldProcessExecEvent:msg]);
 
     esMsg.event.exec.target->executable->path.length = oldLen;
     esMsg.event.exec.target->executable->path_truncated = true;
 
-    OCMExpect([self.mockDecisionCache
-        cacheDecision:[OCMArg checkWithBlock:^BOOL(SNTCachedDecision *cd){
-          return cd.decision == SNTEventStateBlockLongPath &&
-              cd.vnodeId.fsid == targetExecutable->stat.st_dev &&
-              cd.vnodeId.fileid == targetExecutable->stat.st_ino;
-        }]]);
+    OCMExpect(
+      [self.mockDecisionCache cacheDecision:[OCMArg checkWithBlock:^BOOL(SNTCachedDecision *cd) {
+                                return cd.decision == SNTEventStateBlockLongPath &&
+                                       cd.vnodeId.fsid == targetExecutable->stat.st_dev &&
+                                       cd.vnodeId.fileid == targetExecutable->stat.st_ino;
+                              }]]);
 
     XCTAssertFalse([self.sut synchronousShouldProcessExecEvent:msg]);
 
@@ -189,7 +189,10 @@ VerifyPostActionBlock verifyPostAction = ^PostActionBlock(santa_action_t wantAct
 - (void)validateExecEvent:(santa_action_t)wantAction {
   es_file_t file = MakeESFile("foo");
   es_process_t proc = MakeESProcess(&file, {}, {});
-  es_file_t fileExec = MakeESFile("bar", { .st_dev = 12, .st_ino = 34, });
+  es_file_t fileExec = MakeESFile("bar", {
+                                           .st_dev = 12,
+                                           .st_ino = 34,
+                                         });
   es_process_t procExec = MakeESProcess(&fileExec, {}, {});
   es_message_t esMsg = MakeESMessage(ES_EVENT_TYPE_AUTH_EXEC, &proc);
   esMsg.event.exec.target = &procExec;
@@ -199,8 +202,7 @@ VerifyPostActionBlock verifyPostAction = ^PostActionBlock(santa_action_t wantAct
 
   {
     Message msg(mockESApi, &esMsg);
-    [self.sut validateExecEvent:msg
-                     postAction:verifyPostAction(wantAction)];
+    [self.sut validateExecEvent:msg postAction:verifyPostAction(wantAction)];
   }
 
   XCTBubbleMockVerifyAndClearExpectations(mockESApi.get());
@@ -214,7 +216,7 @@ VerifyPostActionBlock verifyPostAction = ^PostActionBlock(santa_action_t wantAct
   rule.state = SNTRuleStateAllow;
   rule.type = SNTRuleTypeBinary;
   OCMStub([self.mockRuleDatabase ruleForBinarySHA256:@"a" certificateSHA256:nil teamID:nil])
-      .andReturn(rule);
+    .andReturn(rule);
 
   [self validateExecEvent:ACTION_RESPOND_ALLOW];
   [self checkMetricCounters:kAllowBinary expected:@1];

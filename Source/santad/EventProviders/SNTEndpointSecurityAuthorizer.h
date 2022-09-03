@@ -15,17 +15,22 @@
 #include "Source/santad/EventProviders/EndpointSecurity/EndpointSecurityAPI.h"
 #include "Source/santad/EventProviders/EndpointSecurity/Enricher.h"
 
-#import "Source/santad/SNTCompilerController.h"
-#import "Source/santad/SNTExecutionController.h"
 #import "Source/santad/EventProviders/AuthResultCache.h"
 #import "Source/santad/EventProviders/SNTEndpointSecurityClient.h"
 #import "Source/santad/EventProviders/SNTEndpointSecurityEventHandler.h"
+#import "Source/santad/SNTCompilerController.h"
+#import "Source/santad/SNTExecutionController.h"
 
-@interface SNTEndpointSecurityAuthorizer : SNTEndpointSecurityClient<SNTEndpointSecurityEventHandler>
+@interface SNTEndpointSecurityAuthorizer
+    : SNTEndpointSecurityClient <SNTEndpointSecurityEventHandler>
 
-- (instancetype)initWithESAPI:(std::shared_ptr<santa::santad::event_providers::endpoint_security::EndpointSecurityAPI>)esApi
-               execController:(SNTExecutionController*)execController
-           compilerController:(SNTCompilerController*)compilerController
-              authResultCache:(std::shared_ptr<santa::santad::event_providers::AuthResultCache>)authResultCache;
+- (instancetype)
+       initWithESAPI:
+         (std::shared_ptr<santa::santad::event_providers::endpoint_security::EndpointSecurityAPI>)
+           esApi
+      execController:(SNTExecutionController *)execController
+  compilerController:(SNTCompilerController *)compilerController
+     authResultCache:
+       (std::shared_ptr<santa::santad::event_providers::AuthResultCache>)authResultCache;
 
 @end

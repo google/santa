@@ -23,12 +23,12 @@
 /**
   Sanitizes a given string if necessary, otherwise returns the original.
 */
-NSString* sanitizeString(NSString* inStr);
+NSString *sanitizeString(NSString *inStr);
 
 /**
 
 */
-es_file_t* GetAllowListTargetFile(
-    const santa::santad::event_providers::endpoint_security::Message& msg);
+es_file_t *GetAllowListTargetFile(
+  const santa::santad::event_providers::endpoint_security::Message &msg);
 
 #endif

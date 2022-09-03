@@ -12,12 +12,12 @@
 ///    See the License for the specific language governing permissions and
 ///    limitations under the License.
 
-#include <gtest/gtest.h>
-#include <gmock/gmock.h>
-#include <libproc.h>
 #import <OCMock/OCMock.h>
-#include <stdlib.h>
 #import <XCTest/XCTest.h>
+#include <gmock/gmock.h>
+#include <gtest/gtest.h>
+#include <libproc.h>
+#include <stdlib.h>
 
 #include "Source/common/TestUtils.h"
 #include "Source/santad/EventProviders/EndpointSecurity/Message.h"
@@ -61,9 +61,7 @@ pid_t AttemptToFindUnusedPID() {
 
 - (void)testConstructorsAndDestructors {
   es_file_t procFile = MakeESFile("foo");
-  es_process_t proc = MakeESProcess(&procFile,
-                                    MakeAuditToken(12, 34),
-                                    MakeAuditToken(56, 78));
+  es_process_t proc = MakeESProcess(&procFile, MakeAuditToken(12, 34), MakeAuditToken(56, 78));
   es_message_t esMsg = MakeESMessage(ES_EVENT_TYPE_NOTIFY_EXIT, &proc);
 
   auto mockESApi = std::make_shared<MockEndpointSecurityAPI>();
@@ -71,27 +69,22 @@ pid_t AttemptToFindUnusedPID() {
 
   // Constructing a `Message` retains the underlying `es_message_t` and it is
   // released when the `Message` object is destructed.
-  {
-    auto msg = Message(mockESApi, &esMsg);
-  }
+  { auto msg = Message(mockESApi, &esMsg); }
 
   XCTBubbleMockVerifyAndClearExpectations(mockESApi.get());
 }
 
 - (void)testCopyConstructor {
   es_file_t procFile = MakeESFile("foo");
-  es_process_t proc = MakeESProcess(&procFile,
-                                    MakeAuditToken(12, 34),
-                                    MakeAuditToken(56, 78));
+  es_process_t proc = MakeESProcess(&procFile, MakeAuditToken(12, 34), MakeAuditToken(56, 78));
   es_message_t esMsg = MakeESMessage(ES_EVENT_TYPE_NOTIFY_EXIT, &proc);
 
   auto mockESApi = std::make_shared<MockEndpointSecurityAPI>();
   EXPECT_CALL(*mockESApi, ReleaseMessage(testing::_))
-      .Times(2)
-      .After(
-          EXPECT_CALL(*mockESApi, RetainMessage(testing::_))
-              .Times(2)
-              .WillRepeatedly(testing::Return(&esMsg)));
+    .Times(2)
+    .After(EXPECT_CALL(*mockESApi, RetainMessage(testing::_))
+             .Times(2)
+             .WillRepeatedly(testing::Return(&esMsg)));
 
   {
     Message msg1(mockESApi, &esMsg);
@@ -109,9 +102,7 @@ pid_t AttemptToFindUnusedPID() {
 - (void)testGetParentProcessName {
   // Construct a message where the parent pid is ourself
   es_file_t procFile = MakeESFile("foo");
-  es_process_t proc = MakeESProcess(&procFile,
-                                    MakeAuditToken(12, 34),
-                                    MakeAuditToken(getpid(), 0));
+  es_process_t proc = MakeESProcess(&procFile, MakeAuditToken(12, 34), MakeAuditToken(getpid(), 0));
   es_message_t esMsg = MakeESMessage(ES_EVENT_TYPE_NOTIFY_EXIT, &proc);
 
   auto mockESApi = std::make_shared<MockEndpointSecurityAPI>();
@@ -125,15 +116,12 @@ pid_t AttemptToFindUnusedPID() {
     std::string want = getprogname();
 
     XCTAssertCppStringEqual(got, want);
-
   }
 
   // Search for a *non-existent* parent process.
   {
     pid_t newPpid = AttemptToFindUnusedPID();
-    proc = MakeESProcess(&procFile,
-                         MakeAuditToken(12, 34),
-                         MakeAuditToken(newPpid, 34));
+    proc = MakeESProcess(&procFile, MakeAuditToken(12, 34), MakeAuditToken(newPpid, 34));
 
     Message msg(mockESApi, &esMsg);
 

@@ -15,14 +15,14 @@
 #ifndef SANTA__SANTAD__EVENTPROVIDERS_AUTHRESULTCACHE_H
 #define SANTA__SANTAD__EVENTPROVIDERS_AUTHRESULTCACHE_H
 
-#include <dispatch/dispatch.h>
 #include <EndpointSecurity/EndpointSecurity.h>
 #import <Foundation/Foundation.h>
-#include <memory>
+#include <dispatch/dispatch.h>
 #include <sys/stat.h>
+#include <memory>
 
-#include "Source/common/SantaCache.h"
 #import "Source/common/SNTCommon.h"
+#include "Source/common/SantaCache.h"
 #include "Source/santad/EventProviders/EndpointSecurity/EndpointSecurityAPI.h"
 
 namespace santa::santad::event_providers {
@@ -33,21 +33,21 @@ enum class FlushCacheMode {
 };
 
 class AuthResultCache {
-public:
+ public:
   // Santa currently only flushes caches when new DENY rules are added, not
   // ALLOW rules. This means this value should be low enough so that if a
   // previously denied binary is allowed, it can be re-executed by the user in a
   // timely manner. But the value should be high enough to allow the cache to be
   // effective in the event the binary is executed in rapid succession.
   AuthResultCache(
-      std::shared_ptr<santa::santad::event_providers::endpoint_security::EndpointSecurityAPI> esapi,
-      uint64_t cache_deny_time_ms = 1500);
+    std::shared_ptr<santa::santad::event_providers::endpoint_security::EndpointSecurityAPI> esapi,
+    uint64_t cache_deny_time_ms = 1500);
   virtual ~AuthResultCache();
 
   AuthResultCache(AuthResultCache &&other) = delete;
-  AuthResultCache& operator=(AuthResultCache &&rhs) = delete;
+  AuthResultCache &operator=(AuthResultCache &&rhs) = delete;
   AuthResultCache(const AuthResultCache &other) = delete;
-  AuthResultCache& operator=(const AuthResultCache &other) = delete;
+  AuthResultCache &operator=(const AuthResultCache &other) = delete;
 
   virtual bool AddToCache(const es_file_t *es_file, santa_action_t decision);
   virtual void RemoveFromCache(const es_file_t *es_file);
@@ -56,11 +56,10 @@ public:
 
   virtual void FlushCache(FlushCacheMode mode);
 
-  virtual NSArray<NSNumber*>* CacheCounts();
+  virtual NSArray<NSNumber *> *CacheCounts();
 
-private:
-  virtual SantaCache<santa_vnode_id_t, uint64_t>* CacheForVnodeID(
-      santa_vnode_id_t vnode_id);
+ private:
+  virtual SantaCache<santa_vnode_id_t, uint64_t> *CacheForVnodeID(santa_vnode_id_t vnode_id);
 
   SantaCache<santa_vnode_id_t, uint64_t> *root_cache_;
   SantaCache<santa_vnode_id_t, uint64_t> *nonroot_cache_;
@@ -71,6 +70,6 @@ private:
   dispatch_queue_t q_;
 };
 
-} // namespace santa::santad::event_providers
+}  // namespace santa::santad::event_providers
 
 #endif

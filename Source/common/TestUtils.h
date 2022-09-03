@@ -15,27 +15,26 @@
 #ifndef SANTA__COMMON__TESTUTILS_H
 #define SANTA__COMMON__TESTUTILS_H
 
-#include <bsm/libbsm.h>
 #include <EndpointSecurity/EndpointSecurity.h>
-#include <gtest/gtest.h>
-#include <gmock/gmock.h>
-#include <sys/stat.h>
 #import <XCTest/XCTest.h>
+#include <bsm/libbsm.h>
+#include <gmock/gmock.h>
+#include <gtest/gtest.h>
+#include <sys/stat.h>
 
 #define NOBODY_UID ((unsigned int)-2)
 #define NOBODY_GID ((unsigned int)-2)
 
 // Bubble up googletest expectation failures to XCTest failures
-#define XCTBubbleMockVerifyAndClearExpectations(mock) \
-    XCTAssertTrue(::testing::Mock::VerifyAndClearExpectations(mock), \
-                  "Expected calls were not properly mocked")
+#define XCTBubbleMockVerifyAndClearExpectations(mock)              \
+  XCTAssertTrue(::testing::Mock::VerifyAndClearExpectations(mock), \
+                "Expected calls were not properly mocked")
 
 // Pretty print C++ string match errors
-#define XCTAssertCppStringEqual(got, want) \
-    XCTAssertTrue((got) == (want), \
-                   "\nMismatched strings.\n\t got: %s\n\twant: %s", \
-                   (got).c_str(), \
-                   (want).c_str())
+#define XCTAssertCppStringEqual(got, want)                       \
+  XCTAssertTrue((got) == (want),                                 \
+                "\nMismatched strings.\n\t got: %s\n\twant: %s", \
+                (got).c_str(), (want).c_str())
 
 // Helper to ensure at least `ms` milliseconds are slept, even if the sleep
 // function returns early due to interrupts.
@@ -49,13 +48,11 @@ enum class ActionType {
 // Helpers to construct various ES structs
 audit_token_t MakeAuditToken(pid_t pid, pid_t pidver);
 struct stat MakeStat(ino_t ino, dev_t devno = 0);
-es_string_token_t MakeESStringToken(const char* s);
+es_string_token_t MakeESStringToken(const char *s);
 es_file_t MakeESFile(const char *path, struct stat sb = {});
-es_process_t MakeESProcess(es_file_t *file,
-                           audit_token_t tok = {},
+es_process_t MakeESProcess(es_file_t *file, audit_token_t tok = {},
                            audit_token_t parent_tok = {});
-es_message_t MakeESMessage(es_event_type_t et,
-                           es_process_t *proc,
+es_message_t MakeESMessage(es_event_type_t et, es_process_t *proc,
                            ActionType action_type = ActionType::Notify,
                            uint64_t future_deadline_ms = 100000);
 

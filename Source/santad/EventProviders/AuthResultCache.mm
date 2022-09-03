@@ -21,8 +21,8 @@
 #import "Source/common/SNTLogging.h"
 #include "Source/santad/EventProviders/EndpointSecurity/Client.h"
 
-using santa::santad::event_providers::endpoint_security::EndpointSecurityAPI;
 using santa::santad::event_providers::endpoint_security::Client;
+using santa::santad::event_providers::endpoint_security::EndpointSecurityAPI;
 
 template <>
 uint64_t SantaCacheHasher<santa_vnode_id_t>(santa_vnode_id_t const &t) {
@@ -31,7 +31,7 @@ uint64_t SantaCacheHasher<santa_vnode_id_t>(santa_vnode_id_t const &t) {
 
 namespace santa::santad::event_providers {
 
-static inline santa_vnode_id_t VnodeForFile(const es_file_t* es_file) {
+static inline santa_vnode_id_t VnodeForFile(const es_file_t *es_file) {
   return santa_vnode_id_t{
     .fsid = (uint64_t)es_file->stat.st_dev,
     .fileid = es_file->stat.st_ino,
@@ -67,8 +67,7 @@ AuthResultCache::AuthResultCache(std::shared_ptr<EndpointSecurityAPI> esapi,
     root_devno_ = sb.st_dev;
   }
 
-  q_ = dispatch_queue_create("com.google.santa.santad.auth_result_cache.q",
-                             DISPATCH_QUEUE_SERIAL);
+  q_ = dispatch_queue_create("com.google.santa.santad.auth_result_cache.q", DISPATCH_QUEUE_SERIAL);
 }
 
 AuthResultCache::~AuthResultCache() {
@@ -76,20 +75,16 @@ AuthResultCache::~AuthResultCache() {
   delete nonroot_cache_;
 }
 
-bool AuthResultCache::AddToCache(const es_file_t *es_file,
-                                 santa_action_t decision) {
+bool AuthResultCache::AddToCache(const es_file_t *es_file, santa_action_t decision) {
   santa_vnode_id_t vnode_id = VnodeForFile(es_file);
   auto cache = CacheForVnodeID(vnode_id);
   switch (decision) {
     case ACTION_REQUEST_BINARY:
       return cache->set(vnode_id, CacheableAction(ACTION_REQUEST_BINARY, 0), 0);
-    case ACTION_RESPOND_ALLOW:
-      OS_FALLTHROUGH;
-    case ACTION_RESPOND_ALLOW_COMPILER:
-      OS_FALLTHROUGH;
+    case ACTION_RESPOND_ALLOW: OS_FALLTHROUGH;
+    case ACTION_RESPOND_ALLOW_COMPILER: OS_FALLTHROUGH;
     case ACTION_RESPOND_DENY:
-      return cache->set(vnode_id,
-                        CacheableAction(decision),
+      return cache->set(vnode_id, CacheableAction(decision),
                         CacheableAction(ACTION_REQUEST_BINARY, 0));
     default:
       // This is a programming error. Bail.
@@ -128,11 +123,9 @@ santa_action_t AuthResultCache::CheckCache(santa_vnode_id_t vnode_id) {
   return result;
 }
 
-SantaCache<santa_vnode_id_t, uint64_t>* AuthResultCache::CacheForVnodeID(
-    santa_vnode_id_t vnode_id) {
-  return (vnode_id.fsid == root_devno_ || root_devno_ == 0) ?
-      root_cache_ :
-      nonroot_cache_;
+SantaCache<santa_vnode_id_t, uint64_t> *AuthResultCache::CacheForVnodeID(
+  santa_vnode_id_t vnode_id) {
+  return (vnode_id.fsid == root_devno_ || root_devno_ == 0) ? root_cache_ : nonroot_cache_;
 }
 
 void AuthResultCache::FlushCache(FlushCacheMode mode) {
@@ -153,8 +146,8 @@ void AuthResultCache::FlushCache(FlushCacheMode mode) {
   }
 }
 
-NSArray<NSNumber*>* AuthResultCache::CacheCounts() {
+NSArray<NSNumber *> *AuthResultCache::CacheCounts() {
   return @[ @(root_cache_->count()), @(nonroot_cache_->count()) ];
 }
 
-} // namespace santa::santad::event_providers
+}  // namespace santa::santad::event_providers

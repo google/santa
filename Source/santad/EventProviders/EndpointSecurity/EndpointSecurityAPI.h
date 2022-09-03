@@ -24,34 +24,30 @@
 
 namespace santa::santad::event_providers::endpoint_security {
 
-class EndpointSecurityAPI
-    : public std::enable_shared_from_this<EndpointSecurityAPI> {
-public:
+class EndpointSecurityAPI : public std::enable_shared_from_this<EndpointSecurityAPI> {
+ public:
   virtual ~EndpointSecurityAPI() = default;
 
-  virtual Client NewClient(void(^message_handler)(es_client_t*, Message));
+  virtual Client NewClient(void (^message_handler)(es_client_t *, Message));
 
-  virtual bool Subscribe(const Client &client,
-                         const std::set<es_event_type_t>&);
+  virtual bool Subscribe(const Client &client, const std::set<es_event_type_t> &);
 
-  virtual es_message_t* RetainMessage(const es_message_t* msg);
-  virtual void ReleaseMessage(es_message_t* msg);
+  virtual es_message_t *RetainMessage(const es_message_t *msg);
+  virtual void ReleaseMessage(es_message_t *msg);
 
-  virtual bool RespondAuthResult(const Client &client,
-                                 const Message& msg,
-                                 es_auth_result_t result,
+  virtual bool RespondAuthResult(const Client &client, const Message &msg, es_auth_result_t result,
                                  bool cache);
 
-  virtual bool MuteProcess(const Client &client, const audit_token_t* tok);
+  virtual bool MuteProcess(const Client &client, const audit_token_t *tok);
 
   virtual bool ClearCache(const Client &client);
 
   virtual uint32_t ExecArgCount(const es_event_exec_t *event);
   virtual es_string_token_t ExecArg(const es_event_exec_t *event, uint32_t index);
 
-private:
+ private:
 };
 
-} // namespace santa::santad::event_providers::endpoint_security
+}  // namespace santa::santad::event_providers::endpoint_security
 
 #endif

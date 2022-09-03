@@ -12,8 +12,8 @@
 ///    See the License for the specific language governing permissions and
 ///    limitations under the License.
 
-#include <bsm/libbsm.h>
 #include <EndpointSecurity/EndpointSecurity.h>
+#include <bsm/libbsm.h>
 
 #include <memory>
 #include <string>
@@ -27,32 +27,39 @@
 @protocol SNTEndpointSecurityClientBase
 
 - (instancetype)initWithESAPI:
-    (std::shared_ptr<santa::santad::event_providers::endpoint_security::EndpointSecurityAPI>)esApi;
+  (std::shared_ptr<santa::santad::event_providers::endpoint_security::EndpointSecurityAPI>)esApi;
 
 - (void)establishClientOrDie;
 
-- (bool)subscribe:(const std::set<es_event_type_t>&)events;
+- (bool)subscribe:(const std::set<es_event_type_t> &)events;
 
 /// Clears the ES cache after setting subscriptions.
 /// There's a gap between creating a client and subscribing to events. Creating
 /// the client triggers a cache flush automatically but any events that happen
 /// prior to subscribing could've been cached by another client. Clearing after
 /// subscribing mitigates this posibility.
-- (bool)subscribeAndClearCache:(const std::set<es_event_type_t>&)events;
+- (bool)subscribeAndClearCache:(const std::set<es_event_type_t> &)events;
 
-- (bool)respondToMessage:(const santa::santad::event_providers::endpoint_security::Message&)msg
+- (bool)respondToMessage:(const santa::santad::event_providers::endpoint_security::Message &)msg
           withAuthResult:(es_auth_result_t)result
                cacheable:(bool)cacheable;
 
-- (void)processEnrichedMessage:(std::shared_ptr<santa::santad::event_providers::endpoint_security::EnrichedMessage>)msg
-                       handler:(void(^)(std::shared_ptr<santa::santad::event_providers::endpoint_security::EnrichedMessage>))messageHandler;
+- (void)
+  processEnrichedMessage:
+    (std::shared_ptr<santa::santad::event_providers::endpoint_security::EnrichedMessage>)msg
+                 handler:
+                   (void (^)(std::shared_ptr<
+                             santa::santad::event_providers::endpoint_security::EnrichedMessage>))
+                     messageHandler;
 
-- (void)processMessage:(santa::santad::event_providers::endpoint_security::Message&&)msg
-               handler:(void(^)(const santa::santad::event_providers::endpoint_security::Message&))messageHandler;
+- (void)processMessage:(santa::santad::event_providers::endpoint_security::Message &&)msg
+               handler:
+                 (void (^)(const santa::santad::event_providers::endpoint_security::Message &))
+                   messageHandler;
 
 - (bool)clearCache;
 
 + (bool)isDatabasePath:(const std::string_view)path;
-+ (bool)populateAuditTokenSelf:(audit_token_t*)tok;
++ (bool)populateAuditTokenSelf:(audit_token_t *)tok;
 
 @end

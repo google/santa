@@ -25,48 +25,48 @@
 namespace santa::santad::logs::endpoint_security::serializers {
 
 class BasicString : public Serializer {
-public:
+ public:
   static std::shared_ptr<BasicString> Create(
-      std::shared_ptr<santa::santad::event_providers::endpoint_security::EndpointSecurityAPI> esapi,
-      bool prefix_time_name = true);
+    std::shared_ptr<santa::santad::event_providers::endpoint_security::EndpointSecurityAPI> esapi,
+    bool prefix_time_name = true);
 
   BasicString(
-      std::shared_ptr<santa::santad::event_providers::endpoint_security::EndpointSecurityAPI> esapi,
-      bool prefix_time_name);
+    std::shared_ptr<santa::santad::event_providers::endpoint_security::EndpointSecurityAPI> esapi,
+    bool prefix_time_name);
 
   std::vector<uint8_t> SerializeMessage(
-      const santa::santad::event_providers::endpoint_security::EnrichedClose &) override;
+    const santa::santad::event_providers::endpoint_security::EnrichedClose &) override;
   std::vector<uint8_t> SerializeMessage(
-      const santa::santad::event_providers::endpoint_security::EnrichedExchange &) override;
+    const santa::santad::event_providers::endpoint_security::EnrichedExchange &) override;
   std::vector<uint8_t> SerializeMessage(
-      const santa::santad::event_providers::endpoint_security::EnrichedExec &) override;
+    const santa::santad::event_providers::endpoint_security::EnrichedExec &) override;
   std::vector<uint8_t> SerializeMessage(
-      const santa::santad::event_providers::endpoint_security::EnrichedExit &) override;
+    const santa::santad::event_providers::endpoint_security::EnrichedExit &) override;
   std::vector<uint8_t> SerializeMessage(
-      const santa::santad::event_providers::endpoint_security::EnrichedFork &) override;
+    const santa::santad::event_providers::endpoint_security::EnrichedFork &) override;
   std::vector<uint8_t> SerializeMessage(
-      const santa::santad::event_providers::endpoint_security::EnrichedLink &) override;
+    const santa::santad::event_providers::endpoint_security::EnrichedLink &) override;
   std::vector<uint8_t> SerializeMessage(
-      const santa::santad::event_providers::endpoint_security::EnrichedRename &) override;
+    const santa::santad::event_providers::endpoint_security::EnrichedRename &) override;
   std::vector<uint8_t> SerializeMessage(
-      const santa::santad::event_providers::endpoint_security::EnrichedUnlink &) override;
+    const santa::santad::event_providers::endpoint_security::EnrichedUnlink &) override;
 
   std::vector<uint8_t> SerializeAllowlist(
-      const santa::santad::event_providers::endpoint_security::Message&,
-      const std::string_view) override;
+    const santa::santad::event_providers::endpoint_security::Message &,
+    const std::string_view) override;
 
-  std::vector<uint8_t> SerializeBundleHashingEvent(SNTStoredEvent*) override;
+  std::vector<uint8_t> SerializeBundleHashingEvent(SNTStoredEvent *) override;
 
-  std::vector<uint8_t> SerializeDiskAppeared(NSDictionary*) override;
-  std::vector<uint8_t> SerializeDiskDisappeared(NSDictionary*) override;
+  std::vector<uint8_t> SerializeDiskAppeared(NSDictionary *) override;
+  std::vector<uint8_t> SerializeDiskDisappeared(NSDictionary *) override;
 
-private:
+ private:
   std::stringstream CreateDefaultStringStream();
 
   std::shared_ptr<santa::santad::event_providers::endpoint_security::EndpointSecurityAPI> esapi_;
   bool prefix_time_name_;
 };
 
-} // namespace santa::santad::logs::endpoint_security::serializers
+}  // namespace santa::santad::logs::endpoint_security::serializers
 
 #endif

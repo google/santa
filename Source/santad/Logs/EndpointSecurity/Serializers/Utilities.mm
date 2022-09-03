@@ -23,7 +23,7 @@ using santa::santad::event_providers::endpoint_security::Message;
 
   @return a new NSString with the replaced contents, if necessary, otherwise nil.
 */
-static NSString* sanitizeCString(const char* str, NSUInteger length) {
+static NSString *sanitizeCString(const char *str, NSUInteger length) {
   NSUInteger bufOffset = 0, strOffset = 0;
   char c = 0;
   char *buf = NULL;
@@ -40,10 +40,10 @@ static NSString* sanitizeCString(const char* str, NSUInteger length) {
       if (!buf) {
         // If string size * 6 is more than 64KiB use malloc, otherwise use stack space.
         if (length * 6 > 64 * 1024) {
-          buf = (char*)malloc(length * 6);
+          buf = (char *)malloc(length * 6);
           shouldFree = YES;
         } else {
-          buf = (char*)alloca(length * 6);
+          buf = (char *)alloca(length * 6);
         }
       }
 
@@ -93,7 +93,7 @@ static NSString* sanitizeCString(const char* str, NSUInteger length) {
   return nil;
 }
 
-NSString* sanitizeString(NSString* inStr) {
+NSString *sanitizeString(NSString *inStr) {
   NSUInteger length = [inStr lengthOfBytesUsingEncoding:NSUTF8StringEncoding];
   if (length < 1) return inStr;
 
@@ -104,18 +104,15 @@ NSString* sanitizeString(NSString* inStr) {
   return inStr;
 }
 
-es_file_t* GetAllowListTargetFile(const Message& msg) {
+es_file_t *GetAllowListTargetFile(const Message &msg) {
   switch (msg->event_type) {
-    case ES_EVENT_TYPE_NOTIFY_CLOSE:
-    return msg->event.close.target;
-    case ES_EVENT_TYPE_NOTIFY_RENAME:
-      return msg->event.rename.source;
+    case ES_EVENT_TYPE_NOTIFY_CLOSE: return msg->event.close.target;
+    case ES_EVENT_TYPE_NOTIFY_RENAME: return msg->event.rename.source;
     default:
       // This is a programming error
       LOGE(@"Unexpected event type for AllowList");
       [NSException raise:@"Unexpected type"
-                  format:@"Unexpected event type for AllowList: %d",
-                         msg->event_type];
+                  format:@"Unexpected event type for AllowList: %d", msg->event_type];
       return nil;
   }
 }

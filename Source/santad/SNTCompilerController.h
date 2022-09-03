@@ -12,8 +12,8 @@
 ///    See the License for the specific language governing permissions and
 ///    limitations under the License.
 
-#include <bsm/libbsm.h>
 #import <Foundation/Foundation.h>
+#include <bsm/libbsm.h>
 
 #include <memory>
 
@@ -24,10 +24,10 @@
 
 // This function will determine if the instigating process was a compiler and,
 // for appropriate events, will create appropriate transitive rules.
-- (BOOL)handleEvent:(const santa::santad::event_providers::endpoint_security::Message&)msg
+- (BOOL)handleEvent:(const santa::santad::event_providers::endpoint_security::Message &)msg
          withLogger:(std::shared_ptr<santa::santad::logs::endpoint_security::Logger>)logger;
 
 // Set whether or not the given audit token should be tracked as a compiler
-- (void)setProcess:(const audit_token_t&)tok isCompiler:(bool)isCompiler;
+- (void)setProcess:(const audit_token_t &)tok isCompiler:(bool)isCompiler;
 
 @end

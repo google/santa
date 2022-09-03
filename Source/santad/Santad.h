@@ -29,15 +29,18 @@
 #import "Source/santad/SNTSyncdQueue.h"
 
 void SantadMain(
-    std::shared_ptr<santa::santad::event_providers::endpoint_security::EndpointSecurityAPI> esapi,
+    std::shared_ptr<
+        santa::santad::event_providers::endpoint_security::EndpointSecurityAPI>
+        esapi,
     std::shared_ptr<santa::santad::logs::endpoint_security::Logger> logger,
     std::shared_ptr<santa::santad::Metrics> metrics,
-    std::shared_ptr<santa::santad::event_providers::endpoint_security::Enricher> enricher,
-    std::shared_ptr<santa::santad::event_providers::AuthResultCache> auth_result_cache,
+    std::shared_ptr<santa::santad::event_providers::endpoint_security::Enricher>
+        enricher,
+    std::shared_ptr<santa::santad::event_providers::AuthResultCache>
+        auth_result_cache,
     MOLXPCConnection* control_connection,
     SNTCompilerController* compiler_controller,
-    SNTNotificationQueue* notifier_queue,
-    SNTSyncdQueue* syncd_queue,
+    SNTNotificationQueue* notifier_queue, SNTSyncdQueue* syncd_queue,
     SNTExecutionController* exec_controller,
     std::shared_ptr<SNTPrefixTree> prefix_tree);
 

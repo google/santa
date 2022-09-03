@@ -51,18 +51,18 @@
 ///  Designated initializer.
 ///
 - (instancetype)initWithIdentifier:(NSString *)identifier
-                         state:(SNTRuleState)state
-                          type:(SNTRuleType)type
-                     customMsg:(NSString *)customMsg
-                     timestamp:(NSUInteger)timestamp;
+                             state:(SNTRuleState)state
+                              type:(SNTRuleType)type
+                         customMsg:(NSString *)customMsg
+                         timestamp:(NSUInteger)timestamp;
 
 ///
 ///  Initialize with a default timestamp: current time if rule state is transitive, 0 otherwise.
 ///
 - (instancetype)initWithIdentifier:(NSString *)identifier
-                         state:(SNTRuleState)state
-                          type:(SNTRuleType)type
-                     customMsg:(NSString *)customMsg;
+                             state:(SNTRuleState)state
+                              type:(SNTRuleType)type
+                         customMsg:(NSString *)customMsg;
 
 ///
 ///  Initialize with a dictionary received from a sync server.

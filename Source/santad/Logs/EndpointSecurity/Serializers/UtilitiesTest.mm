@@ -45,15 +45,13 @@ using santa::santad::event_providers::endpoint_security::Message;
   XCTAssertEqualObjects(sanitizeString(@"a|trailing"), @"a<pipe>trailing");
 
   // Create a long string to trigger the malloc path
-  NSString *base = [NSString stringWithFormat:@"%@|abc",
-                              [@"" stringByPaddingToLength:66*1024
-                                                withString:@"A"
-                                           startingAtIndex:0]];
+  NSString *base = [NSString stringWithFormat:@"%@|abc", [@"" stringByPaddingToLength:66 * 1024
+                                                                           withString:@"A"
+                                                                      startingAtIndex:0]];
 
-  NSString *want = [NSString stringWithFormat:@"%@<pipe>abc",
-                              [@"" stringByPaddingToLength:66*1024
-                                                withString:@"A"
-                                           startingAtIndex:0]];
+  NSString *want = [NSString stringWithFormat:@"%@<pipe>abc", [@"" stringByPaddingToLength:66 * 1024
+                                                                                withString:@"A"
+                                                                           startingAtIndex:0]];
 
   NSString *got = sanitizeString(base);
   XCTAssertEqualObjects(got, want);
@@ -64,8 +62,7 @@ using santa::santad::event_providers::endpoint_security::Message;
   es_file_t renameSourceFile = MakeESFile("rename_source");
   es_file_t procFile = MakeESFile("foo");
   es_process_t proc = MakeESProcess(&procFile, {}, {});
-  es_message_t esMsg = MakeESMessage(ES_EVENT_TYPE_NOTIFY_CLOSE,
-                                     &proc);
+  es_message_t esMsg = MakeESMessage(ES_EVENT_TYPE_NOTIFY_CLOSE, &proc);
 
   auto mockESApi = std::make_shared<MockEndpointSecurityAPI>();
   mockESApi->SetExpectationsRetainReleaseMessage(&esMsg);

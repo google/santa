@@ -39,8 +39,7 @@
 ///  @param esFile Pointer to an es_file_t provided by the EndpointSecurity framework.
 ///      Assumes that the path is a resolved path.
 ///
-- (instancetype)initWithEndpointSecurityFile:(const es_file_t *)esFile
-                                       error:(NSError **)error;
+- (instancetype)initWithEndpointSecurityFile:(const es_file_t *)esFile error:(NSError **)error;
 
 ///
 ///  Convenience initializer.

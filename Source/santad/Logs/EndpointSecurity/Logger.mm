@@ -42,56 +42,48 @@ static const size_t kBufferBatchSizeBytes = (1024 * 128);
 static const size_t kMaxExpectedWriteSizeBytes = 4096;
 
 // Translate configured log type to appropriate Serializer/Writer pairs
-std::unique_ptr<Logger> Logger::Create(
-      std::shared_ptr<EndpointSecurityAPI> esapi,
-      SNTEventLogType log_type,
-      NSString* event_log_path) {
+std::unique_ptr<Logger> Logger::Create(std::shared_ptr<EndpointSecurityAPI> esapi,
+                                       SNTEventLogType log_type, NSString *event_log_path) {
   switch (log_type) {
     case SNTEventLogTypeFilelog:
-      return std::make_unique<Logger>(BasicString::Create(esapi),
-                                      File::Create(event_log_path,
-                                                   kFlushBufferTimeoutMS,
-                                                   kBufferBatchSizeBytes,
-                                                   kMaxExpectedWriteSizeBytes));
+      return std::make_unique<Logger>(
+        BasicString::Create(esapi),
+        File::Create(event_log_path, kFlushBufferTimeoutMS, kBufferBatchSizeBytes,
+                     kMaxExpectedWriteSizeBytes));
     case SNTEventLogTypeSyslog:
-      return std::make_unique<Logger>(BasicString::Create(esapi, false),
-                                      Syslog::Create());
-    case SNTEventLogTypeNull:
-      return std::make_unique<Logger>(Empty::Create(),
-                                      Null::Create());
+      return std::make_unique<Logger>(BasicString::Create(esapi, false), Syslog::Create());
+    case SNTEventLogTypeNull: return std::make_unique<Logger>(Empty::Create(), Null::Create());
     case SNTEventLogTypeProtobuf:
       LOGE(@"The EventLogType value protobuf is not supported in this release");
       return nullptr;
-    default:
-      LOGE(@"Invalid log type: %ld", log_type);
-      return nullptr;
+    default: LOGE(@"Invalid log type: %ld", log_type); return nullptr;
   }
 }
 
 Logger::Logger(std::shared_ptr<serializers::Serializer> serializer,
                std::shared_ptr<writers::Writer> writer)
-  : serializer_(std::move(serializer)), writer_(std::move(writer)) {}
+    : serializer_(std::move(serializer)), writer_(std::move(writer)) {}
 
 void Logger::Log(std::shared_ptr<EnrichedMessage> msg) {
   writer_->Write(serializer_->SerializeMessage(std::move(msg)));
 }
 
-void Logger::LogAllowlist(const Message& msg, const std::string_view hash) {
+void Logger::LogAllowlist(const Message &msg, const std::string_view hash) {
   writer_->Write(serializer_->SerializeAllowlist(msg, hash));
 }
 
-void Logger::LogBundleHashingEvents(NSArray<SNTStoredEvent*> *events) {
+void Logger::LogBundleHashingEvents(NSArray<SNTStoredEvent *> *events) {
   for (SNTStoredEvent *se in events) {
     writer_->Write(serializer_->SerializeBundleHashingEvent(se));
   }
 }
 
-void Logger::LogDiskAppeared(NSDictionary* props) {
+void Logger::LogDiskAppeared(NSDictionary *props) {
   writer_->Write(serializer_->SerializeDiskAppeared(props));
 }
 
-void Logger::LogDiskDisappeared(NSDictionary* props) {
+void Logger::LogDiskDisappeared(NSDictionary *props) {
   writer_->Write(serializer_->SerializeDiskDisappeared(props));
 }
 
-} // namespace santa::santad::logs::endpoint_security
+}  // namespace santa::santad::logs::endpoint_security

@@ -23,8 +23,8 @@
 + (instancetype)sharedCache;
 
 - (void)cacheDecision:(SNTCachedDecision *)cd;
-- (SNTCachedDecision *)cachedDecisionForFile:(const struct stat&)statInfo;
-- (void)forgetCachedDecisionForFile:(const struct stat&)statInfo;
-- (void)resetTimestampForCachedDecision:(const struct stat&)statInfo;
+- (SNTCachedDecision *)cachedDecisionForFile:(const struct stat &)statInfo;
+- (void)forgetCachedDecisionForFile:(const struct stat &)statInfo;
+- (void)resetTimestampForCachedDecision:(const struct stat &)statInfo;
 
 @end

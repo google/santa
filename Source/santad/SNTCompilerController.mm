@@ -28,8 +28,8 @@
 #import "Source/common/SNTLogging.h"
 #import "Source/common/SNTRule.h"
 #import "Source/santad/DataLayer/SNTRuleTable.h"
-#import "Source/santad/SNTDecisionCache.h"
 #import "Source/santad/SNTDatabaseController.h"
+#import "Source/santad/SNTDecisionCache.h"
 
 using santa::santad::event_providers::endpoint_security::Message;
 using santa::santad::logs::endpoint_security::Logger;
@@ -44,12 +44,12 @@ static constexpr std::string_view kIgnoredCompilerProcessPathPrefix = "/dev/";
 
 @implementation SNTCompilerController
 
-- (BOOL)isCompiler:(const audit_token_t&)tok {
+- (BOOL)isCompiler:(const audit_token_t &)tok {
   pid_t pid = audit_token_to_pid(tok);
   return pid >= 0 && pid < PID_MAX && self->_compilerPIDs[pid].load();
 }
 
-- (void)setProcess:(const audit_token_t&)tok isCompiler:(bool)isCompiler {
+- (void)setProcess:(const audit_token_t &)tok isCompiler:(bool)isCompiler {
   pid_t pid = audit_token_to_pid(tok);
   if (pid < 1) {
     LOGE(@"Unable to watch compiler pid=%d", pid);
@@ -66,28 +66,27 @@ static constexpr std::string_view kIgnoredCompilerProcessPathPrefix = "/dev/";
 // Adds a fake cached decision to SNTDecisionCache for pending files. If the file
 // is executed before we can create a transitive rule for it, then we can at
 // least log the pending decision info.
-- (void)saveFakeDecision:(const es_file_t*)esFile {
+- (void)saveFakeDecision:(const es_file_t *)esFile {
   SNTCachedDecision *cd = [[SNTCachedDecision alloc] initWithEndpointSecurityFile:esFile];
   cd.decision = SNTEventStateAllowPendingTransitive;
   cd.sha256 = @"pending";
   [[SNTDecisionCache sharedCache] cacheDecision:cd];
 }
 
-- (void)removeFakeDecision:(const es_file_t*)esFile {
+- (void)removeFakeDecision:(const es_file_t *)esFile {
   [[SNTDecisionCache sharedCache] forgetCachedDecisionForFile:esFile->stat];
 }
 
-- (BOOL)handleEvent:(const Message&)esMsg withLogger:(std::shared_ptr<Logger>)logger {
+- (BOOL)handleEvent:(const Message &)esMsg withLogger:(std::shared_ptr<Logger>)logger {
   const es_file_t *targetFile = NULL;
 
-  switch(esMsg->event_type) {
+  switch (esMsg->event_type) {
     case ES_EVENT_TYPE_NOTIFY_CLOSE:
       if (![self isCompiler:esMsg->process->audit_token]) {
         return NO;
       }
 
-      if (strncmp(kIgnoredCompilerProcessPathPrefix.data(),
-                  esMsg->event.close.target->path.data,
+      if (strncmp(kIgnoredCompilerProcessPathPrefix.data(), esMsg->event.close.target->path.data,
                   kIgnoredCompilerProcessPathPrefix.length()) == 0) {
         return NO;
       }
@@ -102,10 +101,9 @@ static constexpr std::string_view kIgnoredCompilerProcessPathPrefix = "/dev/";
 
       // Note: For RENAME events, we process the `source`. This is the one
       // that we sould be creating transitive rules for, not the destination.
-      if (strncmp(kIgnoredCompilerProcessPathPrefix.data(),
-                  esMsg->event.rename.source->path.data,
+      if (strncmp(kIgnoredCompilerProcessPathPrefix.data(), esMsg->event.rename.source->path.data,
                   kIgnoredCompilerProcessPathPrefix.length()) == 0) {
-          return NO;
+        return NO;
       }
 
       targetFile = esMsg->event.rename.source;
@@ -114,8 +112,7 @@ static constexpr std::string_view kIgnoredCompilerProcessPathPrefix = "/dev/";
     case ES_EVENT_TYPE_NOTIFY_EXIT:
       [self setProcess:esMsg->process->audit_token isCompiler:false];
       return YES;
-    default:
-      return NO;
+    default: return NO;
   }
 
   // If we get here, we need to update transitve rules
@@ -130,8 +127,8 @@ static constexpr std::string_view kIgnoredCompilerProcessPathPrefix = "/dev/";
 // Assume that this method is called only when we already know that the writing process is a
 // compiler.  It checks if the closed file is executable, and if so, transitively allowlists it.
 // The passed in message contains the pid of the writing process and path of closed file.
-- (void)createTransitiveRule:(const Message&)esMsg
-                      target:(const es_file_t*)targetFile
+- (void)createTransitiveRule:(const Message &)esMsg
+                      target:(const es_file_t *)targetFile
                       logger:(std::shared_ptr<Logger>)logger {
   [self saveFakeDecision:targetFile];
 

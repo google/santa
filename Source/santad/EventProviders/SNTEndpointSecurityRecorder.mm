@@ -16,35 +16,30 @@
 
 #include <EndpointSecurity/ESTypes.h>
 
+#import "Source/common/SNTLogging.h"
 #include "Source/santad/EventProviders/AuthResultCache.h"
 #include "Source/santad/EventProviders/EndpointSecurity/EnrichedTypes.h"
 #include "Source/santad/EventProviders/EndpointSecurity/Message.h"
-#import "Source/common/SNTLogging.h"
 
+using santa::santad::event_providers::AuthResultCache;
 using santa::santad::event_providers::endpoint_security::EndpointSecurityAPI;
-using santa::santad::logs::endpoint_security::Logger;
+using santa::santad::event_providers::endpoint_security::EnrichedMessage;
 using santa::santad::event_providers::endpoint_security::Enricher;
 using santa::santad::event_providers::endpoint_security::Message;
-using santa::santad::event_providers::endpoint_security::EnrichedMessage;
-using santa::santad::event_providers::AuthResultCache;
+using santa::santad::logs::endpoint_security::Logger;
 
-es_file_t* GetTargetFileForPrefixTree(const es_message_t* msg) {
-  switch(msg->event_type) {
-    case ES_EVENT_TYPE_NOTIFY_CLOSE:
-      return msg->event.close.target;
-    case ES_EVENT_TYPE_NOTIFY_LINK:
-      return msg->event.link.source;
-    case ES_EVENT_TYPE_NOTIFY_RENAME:
-      return msg->event.rename.source;
-    case ES_EVENT_TYPE_NOTIFY_UNLINK:
-      return msg->event.unlink.target;
-    default:
-      return NULL;
+es_file_t *GetTargetFileForPrefixTree(const es_message_t *msg) {
+  switch (msg->event_type) {
+    case ES_EVENT_TYPE_NOTIFY_CLOSE: return msg->event.close.target;
+    case ES_EVENT_TYPE_NOTIFY_LINK: return msg->event.link.source;
+    case ES_EVENT_TYPE_NOTIFY_RENAME: return msg->event.rename.source;
+    case ES_EVENT_TYPE_NOTIFY_UNLINK: return msg->event.unlink.target;
+    default: return NULL;
   }
 }
 
-@interface SNTEndpointSecurityRecorder()
-@property SNTCompilerController* compilerController;
+@interface SNTEndpointSecurityRecorder ()
+@property SNTCompilerController *compilerController;
 @end
 
 @implementation SNTEndpointSecurityRecorder {
@@ -57,7 +52,7 @@ es_file_t* GetTargetFileForPrefixTree(const es_message_t* msg) {
 - (instancetype)initWithESAPI:(std::shared_ptr<EndpointSecurityAPI>)esApi
                        logger:(std::shared_ptr<Logger>)logger
                      enricher:(std::shared_ptr<Enricher>)enricher
-           compilerController:(SNTCompilerController*)compilerController
+           compilerController:(SNTCompilerController *)compilerController
               authResultCache:(std::shared_ptr<AuthResultCache>)authResultCache
                    prefixTree:(std::shared_ptr<SNTPrefixTree>)prefixTree {
   self = [super initWithESAPI:std::move(esApi)];
@@ -75,7 +70,7 @@ es_file_t* GetTargetFileForPrefixTree(const es_message_t* msg) {
 
 - (void)handleMessage:(Message &&)esMsg {
   // Pre-enrichment processing
-  switch(esMsg->event_type) {
+  switch (esMsg->event_type) {
     case ES_EVENT_TYPE_NOTIFY_CLOSE:
       if (esMsg->event.close.modified == false) {
         // Ignore unmodified files
@@ -84,16 +79,14 @@ es_file_t* GetTargetFileForPrefixTree(const es_message_t* msg) {
 
       self->_authResultCache->RemoveFromCache(esMsg->event.close.target);
       break;
-    default:
-      break;
+    default: break;
   }
 
   [self.compilerController handleEvent:esMsg withLogger:self->_logger];
 
   // Filter file op events matching the prefix tree.
   es_file_t *targetFile = GetTargetFileForPrefixTree(&(*esMsg));
-  if (targetFile != NULL &&
-      self->_prefixTree->HasPrefix(targetFile->path.data)) {
+  if (targetFile != NULL && self->_prefixTree->HasPrefix(targetFile->path.data)) {
     return;
   }
 
@@ -102,22 +95,23 @@ es_file_t* GetTargetFileForPrefixTree(const es_message_t* msg) {
   std::shared_ptr<EnrichedMessage> sharedEnrichedMessage = _enricher->Enrich(std::move(esMsg));
 
   // Asynchronously log the message
-  [self processEnrichedMessage:std::move(sharedEnrichedMessage) handler:^(std::shared_ptr<EnrichedMessage> msg){
-    self->_logger->Log(std::move(msg));
-  }];
+  [self processEnrichedMessage:std::move(sharedEnrichedMessage)
+                       handler:^(std::shared_ptr<EnrichedMessage> msg) {
+                         self->_logger->Log(std::move(msg));
+                       }];
 }
 
 - (void)enable {
   [super subscribe:{
-      ES_EVENT_TYPE_NOTIFY_CLOSE,
-      ES_EVENT_TYPE_NOTIFY_EXCHANGEDATA,
-      ES_EVENT_TYPE_NOTIFY_EXEC,
-      ES_EVENT_TYPE_NOTIFY_FORK,
-      ES_EVENT_TYPE_NOTIFY_EXIT,
-      ES_EVENT_TYPE_NOTIFY_LINK,
-      ES_EVENT_TYPE_NOTIFY_RENAME,
-      ES_EVENT_TYPE_NOTIFY_UNLINK,
-  }];
+                     ES_EVENT_TYPE_NOTIFY_CLOSE,
+                     ES_EVENT_TYPE_NOTIFY_EXCHANGEDATA,
+                     ES_EVENT_TYPE_NOTIFY_EXEC,
+                     ES_EVENT_TYPE_NOTIFY_FORK,
+                     ES_EVENT_TYPE_NOTIFY_EXIT,
+                     ES_EVENT_TYPE_NOTIFY_LINK,
+                     ES_EVENT_TYPE_NOTIFY_RENAME,
+                     ES_EVENT_TYPE_NOTIFY_UNLINK,
+                   }];
 }
 
 @end

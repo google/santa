@@ -44,7 +44,8 @@ static constexpr std::string_view kSantaKextIdentifier = "com.google.santa-drive
 - (void)handleMessage:(Message &&)esMsg {
   switch (esMsg->event_type) {
     case ES_EVENT_TYPE_AUTH_UNLINK: {
-      if ([SNTEndpointSecurityTamperResistance isDatabasePath:esMsg->event.unlink.target->path.data]) {
+      if ([SNTEndpointSecurityTamperResistance
+            isDatabasePath:esMsg->event.unlink.target->path.data]) {
         // Do not cache so that each attempt to remove santa is logged
         [self respondToMessage:esMsg withAuthResult:ES_AUTH_RESULT_DENY cacheable:false];
         LOGW(@"Preventing attempt to delete Santa databases!");
@@ -56,7 +57,8 @@ static constexpr std::string_view kSantaKextIdentifier = "com.google.santa-drive
     }
 
     case ES_EVENT_TYPE_AUTH_RENAME: {
-      if ([SNTEndpointSecurityTamperResistance isDatabasePath:esMsg->event.rename.source->path.data]) {
+      if ([SNTEndpointSecurityTamperResistance
+            isDatabasePath:esMsg->event.rename.source->path.data]) {
         // Do not cache so that each attempt to remove santa is logged
         [self respondToMessage:esMsg withAuthResult:ES_AUTH_RESULT_DENY cacheable:false];
         LOGW(@"Preventing attempt to rename Santa databases!");
@@ -64,7 +66,8 @@ static constexpr std::string_view kSantaKextIdentifier = "com.google.santa-drive
       }
 
       if (esMsg->event.rename.destination_type == ES_DESTINATION_TYPE_EXISTING_FILE) {
-        if ([SNTEndpointSecurityTamperResistance isDatabasePath:esMsg->event.rename.destination.existing_file->path.data]) {
+        if ([SNTEndpointSecurityTamperResistance
+              isDatabasePath:esMsg->event.rename.destination.existing_file->path.data]) {
           [self respondToMessage:esMsg withAuthResult:ES_AUTH_RESULT_DENY cacheable:false];
           LOGW(@"Preventing attempt to overwrite Santa databases!");
           return;
@@ -78,8 +81,7 @@ static constexpr std::string_view kSantaKextIdentifier = "com.google.santa-drive
 
     case ES_EVENT_TYPE_AUTH_KEXTLOAD: {
       es_auth_result_t res = ES_AUTH_RESULT_ALLOW;
-      if (strcmp(esMsg->event.kextload.identifier.data,
-                  kSantaKextIdentifier.data()) == 0) {
+      if (strcmp(esMsg->event.kextload.identifier.data, kSantaKextIdentifier.data()) == 0) {
         LOGW(@"Preventing attempt to load Santa kext!");
         res = ES_AUTH_RESULT_DENY;
       }
@@ -90,8 +92,7 @@ static constexpr std::string_view kSantaKextIdentifier = "com.google.santa-drive
     default:
       // Unexpected event type, this is a programming error
       [NSException raise:@"Invalid event type"
-                  format:@"Invalid tamper resistance event type: %d",
-                         esMsg->event_type];
+                  format:@"Invalid tamper resistance event type: %d", esMsg->event_type];
   }
 }
 
@@ -100,10 +101,10 @@ static constexpr std::string_view kSantaKextIdentifier = "com.google.santa-drive
   // messages sent for these events to Santa-specific directories.
 
   [super subscribeAndClearCache:{
-      ES_EVENT_TYPE_AUTH_KEXTLOAD,
-      ES_EVENT_TYPE_AUTH_UNLINK,
-      ES_EVENT_TYPE_AUTH_RENAME,
-  }];
+                                  ES_EVENT_TYPE_AUTH_KEXTLOAD,
+                                  ES_EVENT_TYPE_AUTH_UNLINK,
+                                  ES_EVENT_TYPE_AUTH_RENAME,
+                                }];
 }
 
 @end

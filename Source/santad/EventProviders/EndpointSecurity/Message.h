@@ -15,29 +15,29 @@
 #ifndef SANTA__SANTAD__EVENTPROVIDERS_ENDPOINTSECURITY_MESSAGE_H
 #define SANTA__SANTAD__EVENTPROVIDERS_ENDPOINTSECURITY_MESSAGE_H
 
+#import <EndpointSecurity/EndpointSecurity.h>
+
 #include <memory>
 #include <string>
-
-#import <EndpointSecurity/EndpointSecurity.h>
 
 namespace santa::santad::event_providers::endpoint_security {
 
 class EndpointSecurityAPI;
 
 class Message {
-public:
+ public:
   Message(std::shared_ptr<EndpointSecurityAPI> esapi,
-                          const es_message_t* es_msg);
+          const es_message_t* es_msg);
   ~Message();
 
-  Message(Message &&other);
+  Message(Message&& other);
   // Note: Safe to implement this, just not currently needed so left deleted.
-  Message& operator=(Message &&rhs) = delete;
+  Message& operator=(Message&& rhs) = delete;
 
   // In macOS 10.15, es_retain_message/es_release_message were unsupported
   // and required a full copy, which impacts performance if done too much...
-  Message(const Message &other);
-  Message& operator=(const Message &other) = delete;
+  Message(const Message& other);
+  Message& operator=(const Message& other) = delete;
 
   // Operators to access underlying es_message_t
   const es_message_t* operator->() const { return es_msg_; }
@@ -45,7 +45,7 @@ public:
 
   std::string ParentProcessName() const;
 
-private:
+ private:
   std::shared_ptr<EndpointSecurityAPI> esapi_;
   es_message_t* es_msg_;
 
@@ -55,6 +55,6 @@ private:
   std::string GetProcessName(pid_t pid) const;
 };
 
-} // namespace santa::santad::event_providers::endpoint_security
+}  // namespace santa::santad::event_providers::endpoint_security
 
 #endif

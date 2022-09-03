@@ -18,29 +18,17 @@
 
 namespace santa::santad::logs::endpoint_security::writers {
 
-std::shared_ptr<File> File::Create(NSString* path,
-                                   uint64_t flush_timeout_ms,
-                                   size_t batch_size_bytes,
-                                   size_t max_expected_write_size_bytes) {
-  dispatch_queue_t q = dispatch_queue_create(
-      "com.google.santa.file_event_log",
-      DISPATCH_QUEUE_SERIAL_WITH_AUTORELEASE_POOL);
-  dispatch_source_t timer_source = dispatch_source_create(
-      DISPATCH_SOURCE_TYPE_TIMER,
-      0,
-      0,
-      q);
+std::shared_ptr<File> File::Create(NSString *path, uint64_t flush_timeout_ms,
+                                   size_t batch_size_bytes, size_t max_expected_write_size_bytes) {
+  dispatch_queue_t q = dispatch_queue_create("com.google.santa.file_event_log",
+                                             DISPATCH_QUEUE_SERIAL_WITH_AUTORELEASE_POOL);
+  dispatch_source_t timer_source = dispatch_source_create(DISPATCH_SOURCE_TYPE_TIMER, 0, 0, q);
 
-  dispatch_source_set_timer(timer_source,
-                            dispatch_time(DISPATCH_TIME_NOW, 0),
-                            NSEC_PER_MSEC * flush_timeout_ms,
-                            0);
+  dispatch_source_set_timer(timer_source, dispatch_time(DISPATCH_TIME_NOW, 0),
+                            NSEC_PER_MSEC * flush_timeout_ms, 0);
 
-  auto ret_writer = std::make_shared<File>(path,
-                                           batch_size_bytes,
-                                           max_expected_write_size_bytes,
-                                           q,
-                                           timer_source);
+  auto ret_writer =
+    std::make_shared<File>(path, batch_size_bytes, max_expected_write_size_bytes, q, timer_source);
   ret_writer->WatchLogFile();
 
   std::weak_ptr<File> weak_writer(ret_writer);
@@ -57,12 +45,12 @@ std::shared_ptr<File> File::Create(NSString* path,
   return ret_writer;
 }
 
-File::File(NSString* path,
-    size_t batch_size_bytes,
-    size_t max_expected_write_size_bytes,
-    dispatch_queue_t q,
-    dispatch_source_t timer_source)
-    : batch_size_bytes_(batch_size_bytes), q_(q), timer_source_(timer_source), watch_source_(nullptr) {
+File::File(NSString *path, size_t batch_size_bytes, size_t max_expected_write_size_bytes,
+           dispatch_queue_t q, dispatch_source_t timer_source)
+    : batch_size_bytes_(batch_size_bytes),
+      q_(q),
+      timer_source_(timer_source),
+      watch_source_(nullptr) {
   path_ = path;
   buffer_.reserve(batch_size_bytes + max_expected_write_size_bytes);
   OpenFileHandle();
@@ -73,11 +61,8 @@ void File::WatchLogFile() {
     dispatch_source_cancel(watch_source_);
   }
 
-  watch_source_ = dispatch_source_create(
-      DISPATCH_SOURCE_TYPE_VNODE,
-      file_handle_.fileDescriptor,
-      DISPATCH_VNODE_DELETE | DISPATCH_VNODE_RENAME,
-      q_);
+  watch_source_ = dispatch_source_create(DISPATCH_SOURCE_TYPE_VNODE, file_handle_.fileDescriptor,
+                                         DISPATCH_VNODE_DELETE | DISPATCH_VNODE_RENAME, q_);
 
   auto shared_this = shared_from_this();
   dispatch_source_set_event_handler(watch_source_, ^{
@@ -105,7 +90,7 @@ void File::OpenFileHandle() {
   [file_handle_ seekToEndOfFile];
 }
 
-void File::Write(std::vector<uint8_t>&& bytes) {
+void File::Write(std::vector<uint8_t> &&bytes) {
   auto shared_this = shared_from_this();
 
   // Workaround to move `bytes` into the block without a copy
@@ -127,4 +112,4 @@ void File::FlushBuffer() {
   buffer_.clear();
 }
 
-} // namespace santa::santad::logs::endpoint_security::writers
+}  // namespace santa::santad::logs::endpoint_security::writers

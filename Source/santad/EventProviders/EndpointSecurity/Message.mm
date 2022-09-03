@@ -21,8 +21,8 @@
 
 namespace santa::santad::event_providers::endpoint_security {
 
-Message::Message(std::shared_ptr<EndpointSecurityAPI> esapi,
-                 const es_message_t* es_msg) : esapi_(esapi) {
+Message::Message(std::shared_ptr<EndpointSecurityAPI> esapi, const es_message_t *es_msg)
+    : esapi_(esapi) {
   es_msg_ = esapi_->RetainMessage(es_msg);
 }
 
@@ -60,4 +60,4 @@ std::string Message::GetProcessName(pid_t pid) const {
   }
 }
 
-} // namespace santa::santad::event_providers::endpoint_security
+}  // namespace santa::santad::event_providers::endpoint_security

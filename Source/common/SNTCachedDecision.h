@@ -15,8 +15,8 @@
 #import <EndpointSecurity/EndpointSecurity.h>
 #import <Foundation/Foundation.h>
 
-#import "Source/common/SNTCommonEnums.h"
 #import "Source/common/SNTCommon.h"
+#import "Source/common/SNTCommonEnums.h"
 
 @class MOLCertificate;
 

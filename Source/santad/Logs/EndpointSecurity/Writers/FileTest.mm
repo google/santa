@@ -12,8 +12,8 @@
 ///    See the License for the specific language governing permissions and
 ///    limitations under the License.
 
-#include <dispatch/dispatch.h>
 #import <Foundation/Foundation.h>
+#include <dispatch/dispatch.h>
 #include <gtest/gtest.h>
 #include <sys/stat.h>
 
@@ -27,31 +27,25 @@ using santa::santad::logs::endpoint_security::writers::File;
 namespace santa::santad::logs::endpoint_security::writers {
 
 class FilePeer : public File {
-public:
+ public:
   // Make constructors visible
   using File::File;
 
-  NSFileHandle* FileHandle() {
-    return file_handle_;
-  }
+  NSFileHandle *FileHandle() { return file_handle_; }
 
-  void BeginWatchingLogFile() {
-    WatchLogFile();
-  }
+  void BeginWatchingLogFile() { WatchLogFile(); }
 
-  size_t InternalBufferSize() {
-    return buffer_.size();
-  }
+  size_t InternalBufferSize() { return buffer_.size(); }
 };
 
-} // namespace santa::santad::logs::endpoint_security::writers
+}  // namespace santa::santad::logs::endpoint_security::writers
 
 using santa::santad::logs::endpoint_security::writers::FilePeer;
 
-bool WaitFor(bool(^condition)(void)){
+bool WaitFor(bool (^condition)(void)) {
   int attempts = 0;
-  long sleepPerAttemptMS = 10; // Wait 10ms between checks
-  long maxSleep = 2000; // Wait up to 2 seconds for new log file to be created
+  long sleepPerAttemptMS = 10;  // Wait 10ms between checks
+  long maxSleep = 2000;         // Wait up to 2 seconds for new log file to be created
   long maxAttempts = maxSleep / sleepPerAttemptMS;
 
   do {
@@ -66,14 +60,14 @@ bool WaitFor(bool(^condition)(void)){
   return attempts < maxAttempts;
 }
 
-bool WaitForNewLogFile(NSFileManager* fileManager, NSString* path) {
-  return WaitFor(^bool(){
+bool WaitForNewLogFile(NSFileManager *fileManager, NSString *path) {
+  return WaitFor(^bool() {
     return [fileManager fileExistsAtPath:path];
   });
 }
 
 bool WaitForBufferSize(std::shared_ptr<FilePeer> file, size_t expectedSize) {
-  return WaitFor(^bool(){
+  return WaitFor(^bool() {
     return file->InternalBufferSize() == expectedSize;
   });
 }
@@ -90,9 +84,7 @@ bool WaitForBufferSize(std::shared_ptr<FilePeer> file, size_t expectedSize) {
 @implementation FileTest
 
 - (void)setUp {
-  self.path = [NSString stringWithFormat:@"%@santa-%d",
-                                     NSTemporaryDirectory(),
-                                     getpid()];
+  self.path = [NSString stringWithFormat:@"%@santa-%d", NSTemporaryDirectory(), getpid()];
 
   self.logPath = [NSString stringWithFormat:@"%@/log.out", self.path];
   self.logRenamePath = [NSString stringWithFormat:@"%@/log.rename.out", self.path];
@@ -143,9 +135,7 @@ bool WaitForBufferSize(std::shared_ptr<FilePeer> file, size_t expectedSize) {
   XCTAssertNotEqual(wantSBOrig.st_ino, wantSBAfterDelete.st_ino);
 
   // Renaming the current log file will cause a new file to be created
-  XCTAssertTrue([self.fileManager moveItemAtPath:self.logPath
-                                          toPath:self.logRenamePath
-                                            error:nil]);
+  XCTAssertTrue([self.fileManager moveItemAtPath:self.logPath toPath:self.logRenamePath error:nil]);
 
   XCTAssertTrue(WaitForNewLogFile(self.fileManager, self.logPath),
                 "New log file not created within expected time after rename");
@@ -164,11 +154,8 @@ bool WaitForBufferSize(std::shared_ptr<FilePeer> file, size_t expectedSize) {
   // internal buffer. The second will meet/exceed capacity and flush to disk
   size_t bufferSize = 100;
   size_t writeSize = 50;
-  auto file = std::make_shared<FilePeer>(self.logPath,
-                                         bufferSize,
-                                         bufferSize * 2,
-                                         self.q,
-                                         self.timer);
+  auto file =
+    std::make_shared<FilePeer>(self.logPath, bufferSize, bufferSize * 2, self.q, self.timer);
 
   // Starting out, file size and internal buffer are 0
   struct stat gotSB;

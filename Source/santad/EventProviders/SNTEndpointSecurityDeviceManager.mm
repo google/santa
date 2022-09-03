@@ -29,16 +29,16 @@
 #import "Source/common/SNTLogging.h"
 #include "Source/santad/EventProviders/EndpointSecurity/Message.h"
 
-using santa::santad::event_providers::FlushCacheMode;
 using santa::santad::event_providers::AuthResultCache;
-using santa::santad::event_providers::endpoint_security::Message;
+using santa::santad::event_providers::FlushCacheMode;
 using santa::santad::event_providers::endpoint_security::EndpointSecurityAPI;
+using santa::santad::event_providers::endpoint_security::Message;
 using santa::santad::logs::endpoint_security::Logger;
 
 @interface SNTEndpointSecurityDeviceManager ()
 
-- (void)logDiskAppeared:(NSDictionary*)props;
-- (void)logDiskDisappeared:(NSDictionary*)props;
+- (void)logDiskAppeared:(NSDictionary *)props;
+- (void)logDiskDisappeared:(NSDictionary *)props;
 
 @property DASessionRef diskArbSession;
 @property(nonatomic, readonly) dispatch_queue_t diskQueue;
@@ -54,17 +54,16 @@ void diskMountedCallback(DADiskRef disk, DADissenterRef dissenter, void *context
     IOReturn subSystemCode = err_get_sub(status);
     IOReturn errorCode = err_get_code(status);
 
-    LOGE(
-      @"SNTEndpointSecurityDeviceManager: dissenter status codes: system: %d, subsystem: %d, err: %d; status: %s",
-      systemCode, subSystemCode, errorCode, [statusString UTF8String]);
+    LOGE(@"SNTEndpointSecurityDeviceManager: dissenter status codes: system: %d, subsystem: %d, "
+         @"err: %d; status: %s",
+         systemCode, subSystemCode, errorCode, [statusString UTF8String]);
   }
 }
 
 void diskAppearedCallback(DADiskRef disk, void *context) {
   NSDictionary *props = CFBridgingRelease(DADiskCopyDescription(disk));
   if (![props[@"DAVolumeMountable"] boolValue]) return;
-  SNTEndpointSecurityDeviceManager *dm =
-      (__bridge SNTEndpointSecurityDeviceManager*)context;
+  SNTEndpointSecurityDeviceManager *dm = (__bridge SNTEndpointSecurityDeviceManager *)context;
 
   [dm logDiskAppeared:props];
 }
@@ -74,8 +73,7 @@ void diskDescriptionChangedCallback(DADiskRef disk, CFArrayRef keys, void *conte
   if (![props[@"DAVolumeMountable"] boolValue]) return;
 
   if (props[@"DAVolumePath"]) {
-    SNTEndpointSecurityDeviceManager *dm =
-      (__bridge SNTEndpointSecurityDeviceManager*)context;
+    SNTEndpointSecurityDeviceManager *dm = (__bridge SNTEndpointSecurityDeviceManager *)context;
 
     [dm logDiskAppeared:props];
   }
@@ -85,8 +83,7 @@ void diskDisappearedCallback(DADiskRef disk, void *context) {
   NSDictionary *props = CFBridgingRelease(DADiskCopyDescription(disk));
   if (![props[@"DAVolumeMountable"] boolValue]) return;
 
-  SNTEndpointSecurityDeviceManager *dm =
-      (__bridge SNTEndpointSecurityDeviceManager*)context;
+  SNTEndpointSecurityDeviceManager *dm = (__bridge SNTEndpointSecurityDeviceManager *)context;
 
   [dm logDiskDisappeared:props];
 }
@@ -176,10 +173,11 @@ NS_ASSUME_NONNULL_BEGIN
     return;
   }
 
-  [self processMessage:std::move(esMsg) handler:^(const Message& msg) {
-    es_auth_result_t result = [self handleAuthMount:msg];
-    [self respondToMessage:msg withAuthResult:result cacheable:false];
-  }];
+  [self processMessage:std::move(esMsg)
+               handler:^(const Message &msg) {
+                 es_auth_result_t result = [self handleAuthMount:msg];
+                 [self respondToMessage:msg withAuthResult:result cacheable:false];
+               }];
 }
 
 - (void)enable {
@@ -191,22 +189,18 @@ NS_ASSUME_NONNULL_BEGIN
                                     (__bridge void *)self);
 
   [super subscribeAndClearCache:{
-      ES_EVENT_TYPE_AUTH_MOUNT,
-      ES_EVENT_TYPE_AUTH_REMOUNT,
-      ES_EVENT_TYPE_NOTIFY_UNMOUNT,
-  }];
+                                  ES_EVENT_TYPE_AUTH_MOUNT,
+                                  ES_EVENT_TYPE_AUTH_REMOUNT,
+                                  ES_EVENT_TYPE_NOTIFY_UNMOUNT,
+                                }];
 }
 
-- (es_auth_result_t)handleAuthMount:(const Message&)m {
+- (es_auth_result_t)handleAuthMount:(const Message &)m {
   struct statfs *eventStatFS;
 
   switch (m->event_type) {
-    case ES_EVENT_TYPE_AUTH_MOUNT:
-      eventStatFS = m->event.mount.statfs;
-      break;
-    case ES_EVENT_TYPE_AUTH_REMOUNT:
-      eventStatFS = m->event.remount.statfs;
-      break;
+    case ES_EVENT_TYPE_AUTH_MOUNT: eventStatFS = m->event.mount.statfs; break;
+    case ES_EVENT_TYPE_AUTH_REMOUNT: eventStatFS = m->event.remount.statfs; break;
     default:
       // This is a programming error
       LOGE(@"Unexpected Event Type passed to DeviceManager handleAuthMount: %d", m->event_type);
@@ -215,8 +209,9 @@ NS_ASSUME_NONNULL_BEGIN
 
   long mountMode = eventStatFS->f_flags;
   pid_t pid = audit_token_to_pid(m->process->audit_token);
-  LOGD(@"SNTEndpointSecurityDeviceManager: mount syscall arriving from path: %s, pid: %d, fflags: %lu",
-       m->process->executable->path.data, pid, mountMode);
+  LOGD(
+    @"SNTEndpointSecurityDeviceManager: mount syscall arriving from path: %s, pid: %d, fflags: %lu",
+    m->process->executable->path.data, pid, mountMode);
 
   DADiskRef disk = DADiskCreateFromBSDName(NULL, self.diskArbSession, eventStatFS->f_mntfromname);
   CFAutorelease(disk);
@@ -228,12 +223,13 @@ NS_ASSUME_NONNULL_BEGIN
   BOOL isEjectable = [diskInfo[(__bridge NSString *)kDADiskDescriptionMediaEjectableKey] boolValue];
   NSString *protocol = diskInfo[(__bridge NSString *)kDADiskDescriptionDeviceProtocolKey];
   BOOL isUSB = [protocol isEqualToString:@"USB"];
-  BOOL isVirtual = [protocol isEqualToString: @"Virtual Interface"];
+  BOOL isVirtual = [protocol isEqualToString:@"Virtual Interface"];
 
   NSString *kind = diskInfo[(__bridge NSString *)kDADiskDescriptionMediaKindKey];
 
   // TODO: check kind and protocol for banned things (e.g. MTP).
-  LOGD(@"SNTEndpointSecurityDeviceManager: DiskInfo Protocol: %@ Kind: %@ isInternal: %d isRemovable: %d "
+  LOGD(@"SNTEndpointSecurityDeviceManager: DiskInfo Protocol: %@ Kind: %@ isInternal: %d "
+       @"isRemovable: %d "
        @"isEjectable: %d",
        protocol, kind, isInternal, isRemovable, isEjectable);
 
@@ -257,8 +253,7 @@ NS_ASSUME_NONNULL_BEGIN
     LOGD(@"SNTEndpointSecurityDeviceManager: mountMode: %@", maskToMountArgs(mountMode));
     LOGD(@"SNTEndpointSecurityDeviceManager: remountOpts: %@", maskToMountArgs(remountOpts));
 
-    if ((mountMode & remountOpts) == remountOpts &&
-        m->event_type != ES_EVENT_TYPE_AUTH_REMOUNT) {
+    if ((mountMode & remountOpts) == remountOpts && m->event_type != ES_EVENT_TYPE_AUTH_REMOUNT) {
       LOGD(@"SNTEndpointSecurityDeviceManager: Allowing as mount as flags match remountOpts");
       return ES_AUTH_RESULT_ALLOW;
     }

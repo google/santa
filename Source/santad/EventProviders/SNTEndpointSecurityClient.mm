@@ -24,9 +24,9 @@
 #import "Source/common/SNTCommon.h"
 #import "Source/common/SNTConfigurator.h"
 #import "Source/common/SNTLogging.h"
+#include "Source/santad/EventProviders/EndpointSecurity/Client.h"
 #include "Source/santad/EventProviders/EndpointSecurity/EnrichedTypes.h"
 #include "Source/santad/EventProviders/EndpointSecurity/Message.h"
-#include "Source/santad/EventProviders/EndpointSecurity/Client.h"
 
 using santa::santad::event_providers::endpoint_security::Client;
 using santa::santad::event_providers::endpoint_security::EndpointSecurityAPI;
@@ -35,7 +35,8 @@ using santa::santad::event_providers::endpoint_security::Message;
 
 @interface SNTEndpointSecurityClient ()
 @property int64_t deadlineMarginMS;
-@end;
+@end
+;
 
 @implementation SNTEndpointSecurityClient {
   std::shared_ptr<EndpointSecurityAPI> _esApi;
@@ -58,41 +59,29 @@ using santa::santad::event_providers::endpoint_security::Message;
     }
 
     _authQueue = dispatch_queue_create(
-        "com.google.santa.santad.auth_queue",
-        dispatch_queue_attr_make_with_qos_class(
-            DISPATCH_QUEUE_CONCURRENT_WITH_AUTORELEASE_POOL,
-            QOS_CLASS_USER_INTERACTIVE,
-            0));
+      "com.google.santa.santad.auth_queue",
+      dispatch_queue_attr_make_with_qos_class(DISPATCH_QUEUE_CONCURRENT_WITH_AUTORELEASE_POOL,
+                                              QOS_CLASS_USER_INTERACTIVE, 0));
 
     _notifyQueue = dispatch_queue_create(
-        "com.google.santa.santad.notify_queue",
-        dispatch_queue_attr_make_with_qos_class(
-            DISPATCH_QUEUE_CONCURRENT_WITH_AUTORELEASE_POOL,
-            QOS_CLASS_BACKGROUND,
-            0));
+      "com.google.santa.santad.notify_queue",
+      dispatch_queue_attr_make_with_qos_class(DISPATCH_QUEUE_CONCURRENT_WITH_AUTORELEASE_POOL,
+                                              QOS_CLASS_BACKGROUND, 0));
   }
   return self;
 }
 
-- (NSString*)errorMessageForNewClientResult:(es_new_client_result_t)result {
-  switch(result) {
-      case ES_NEW_CLIENT_RESULT_SUCCESS:
-        return nil;
-      case ES_NEW_CLIENT_RESULT_ERR_NOT_PERMITTED:
-        return @"Full-disk access not granted";
-      case ES_NEW_CLIENT_RESULT_ERR_NOT_ENTITLED:
-        return @"Not entitled";
-      case ES_NEW_CLIENT_RESULT_ERR_NOT_PRIVILEGED:
-        return @"Not running as root";
-      case ES_NEW_CLIENT_RESULT_ERR_INVALID_ARGUMENT:
-        return @"Invalid argument";
-      case ES_NEW_CLIENT_RESULT_ERR_INTERNAL:
-        return @"Internal error";
-      case ES_NEW_CLIENT_RESULT_ERR_TOO_MANY_CLIENTS:
-        return @"Too many simultaneous clients";
-      default:
-        return @"Unknown error";
-    }
+- (NSString *)errorMessageForNewClientResult:(es_new_client_result_t)result {
+  switch (result) {
+    case ES_NEW_CLIENT_RESULT_SUCCESS: return nil;
+    case ES_NEW_CLIENT_RESULT_ERR_NOT_PERMITTED: return @"Full-disk access not granted";
+    case ES_NEW_CLIENT_RESULT_ERR_NOT_ENTITLED: return @"Not entitled";
+    case ES_NEW_CLIENT_RESULT_ERR_NOT_PRIVILEGED: return @"Not running as root";
+    case ES_NEW_CLIENT_RESULT_ERR_INVALID_ARGUMENT: return @"Invalid argument";
+    case ES_NEW_CLIENT_RESULT_ERR_INTERNAL: return @"Internal error";
+    case ES_NEW_CLIENT_RESULT_ERR_TOO_MANY_CLIENTS: return @"Too many simultaneous clients";
+    default: return @"Unknown error";
+  }
 }
 
 - (void)handleMessage:(Message &&)esMsg {
@@ -105,9 +94,7 @@ using santa::santad::event_providers::endpoint_security::Message;
      ignoringOtherESClients:(BOOL)ignoringOtherESClients {
   if (esMsg->process->is_es_client && ignoringOtherESClients) {
     if (esMsg->action_type == ES_ACTION_TYPE_AUTH) {
-      [self respondToMessage:esMsg
-              withAuthResult:ES_AUTH_RESULT_ALLOW
-                    cacheable:true];
+      [self respondToMessage:esMsg withAuthResult:ES_AUTH_RESULT_ALLOW cacheable:true];
     }
     return NO;
   }
@@ -119,21 +106,19 @@ using santa::santad::event_providers::endpoint_security::Message;
   if (self->_esClient.IsConnected()) {
     // This is a programming error
     LOGE(@"Client already established. Aborting.");
-    [NSException raise:@"Client already established"
-                format:@"IsConnected already true"];
+    [NSException raise:@"Client already established" format:@"IsConnected already true"];
   }
 
-  self->_esClient = self->_esApi->NewClient(^(es_client_t* c, Message esMsg) {
+  self->_esClient = self->_esApi->NewClient(^(es_client_t *c, Message esMsg) {
     if ([self shouldHandleMessage:esMsg
            ignoringOtherESClients:[[SNTConfigurator configurator]
-                                      ignoreOtherEndpointSecurityClients]]) {
+                                    ignoreOtherEndpointSecurityClients]]) {
       [self handleMessage:std::move(esMsg)];
     }
   });
 
   if (!self->_esClient.IsConnected()) {
-    NSString *errMsg =
-        [self errorMessageForNewClientResult:_esClient.NewClientResult()];
+    NSString *errMsg = [self errorMessageForNewClientResult:_esClient.NewClientResult()];
     LOGE(@"Unable to create EndpointSecurity client: %@", errMsg);
     [NSException raise:@"Failed to create ES client" format:@"%@", errMsg];
   } else {
@@ -145,10 +130,9 @@ using santa::santad::event_providers::endpoint_security::Message;
   }
 }
 
-+ (bool)populateAuditTokenSelf:(audit_token_t*)tok {
++ (bool)populateAuditTokenSelf:(audit_token_t *)tok {
   mach_msg_type_number_t count = TASK_AUDIT_TOKEN_COUNT;
-  if (task_info(mach_task_self(), TASK_AUDIT_TOKEN, (task_info_t)tok, &count) !=
-        KERN_SUCCESS) {
+  if (task_info(mach_task_self(), TASK_AUDIT_TOKEN, (task_info_t)tok, &count) != KERN_SUCCESS) {
     LOGE(@"Failed to fetch this client's audit token.");
     return false;
   }
@@ -174,11 +158,11 @@ using santa::santad::event_providers::endpoint_security::Message;
   return _esApi->ClearCache(self->_esClient);
 }
 
-- (bool)subscribe:(const std::set<es_event_type_t>&)events {
+- (bool)subscribe:(const std::set<es_event_type_t> &)events {
   return _esApi->Subscribe(_esClient, events);
 }
 
-- (bool)subscribeAndClearCache:(const std::set<es_event_type_t>&)events {
+- (bool)subscribeAndClearCache:(const std::set<es_event_type_t> &)events {
   return [self subscribe:events] && [self clearCache];
 }
 
@@ -189,13 +173,13 @@ using santa::santad::event_providers::endpoint_security::Message;
 }
 
 - (void)processEnrichedMessage:(std::shared_ptr<EnrichedMessage>)msg
-                       handler:(void(^)(std::shared_ptr<EnrichedMessage>))messageHandler {
+                       handler:(void (^)(std::shared_ptr<EnrichedMessage>))messageHandler {
   dispatch_async(_notifyQueue, ^{
     messageHandler(std::move(msg));
   });
 }
 
-- (void)processMessage:(Message&&)msg handler:(void(^)(const Message&))messageHandler {
+- (void)processMessage:(Message &&)msg handler:(void (^)(const Message &))messageHandler {
   if (unlikely(msg->action_type != ES_ACTION_TYPE_AUTH)) {
     // This is a programming error
     LOGE(@"Attempting to process non-AUTH message");
@@ -223,22 +207,21 @@ using santa::santad::event_providers::endpoint_security::Message;
   __block auto processMsg = msg;
   __block auto deadlineMsg = msg;
 
-  dispatch_after(dispatch_time(DISPATCH_TIME_NOW, deadlineNano - timeout), self->_authQueue, ^(void) {
-    if (dispatch_semaphore_wait(processingSema, DISPATCH_TIME_NOW) != 0) {
-      // Handler has already responded, nothing to do.
-      return;
-    }
+  dispatch_after(
+    dispatch_time(DISPATCH_TIME_NOW, deadlineNano - timeout), self->_authQueue, ^(void) {
+      if (dispatch_semaphore_wait(processingSema, DISPATCH_TIME_NOW) != 0) {
+        // Handler has already responded, nothing to do.
+        return;
+      }
 
-    bool res = [self respondToMessage:deadlineMsg
-                       withAuthResult:ES_AUTH_RESULT_DENY
-                            cacheable:false];
+      bool res = [self respondToMessage:deadlineMsg
+                         withAuthResult:ES_AUTH_RESULT_DENY
+                              cacheable:false];
 
-    LOGE(@"SNTEndpointSecurityClient: deadline reached: deny pid=%d, event type: %d ret=%d",
-         audit_token_to_pid(deadlineMsg->process->audit_token),
-         deadlineMsg->event_type,
-         res);
-    dispatch_semaphore_signal(deadlineExpiredSema);
-  });
+      LOGE(@"SNTEndpointSecurityClient: deadline reached: deny pid=%d, event type: %d ret=%d",
+           audit_token_to_pid(deadlineMsg->process->audit_token), deadlineMsg->event_type, res);
+      dispatch_semaphore_signal(deadlineExpiredSema);
+    });
 
   dispatch_async(self->_authQueue, ^{
     messageHandler(deadlineMsg);
@@ -254,8 +237,7 @@ using santa::santad::event_providers::endpoint_security::Message;
   // now they live as NSStrings. We should make them `std::string_view` types
   // in order to use them here efficiently, but will need to make the
   // `SNTDatabaseController` an ObjC++ file.
-  return (path == "/private/var/db/santa/rules.db" ||
-          path == "/private/var/db/santa/events.db");
+  return (path == "/private/var/db/santa/rules.db" || path == "/private/var/db/santa/events.db");
 }
 
 @end

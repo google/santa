@@ -32,15 +32,14 @@ using santa::santad::logs::endpoint_security::Logger;
 
 namespace santa::santad {
 
-std::unique_ptr<SantadDeps> SantadDeps::Create(
-    NSUInteger metric_export_interval,
-    SNTEventLogType event_log_type,
-    NSString* event_log_path,
-    NSArray<NSString*>* prefix_filters) {
+std::unique_ptr<SantadDeps> SantadDeps::Create(NSUInteger metric_export_interval,
+                                               SNTEventLogType event_log_type,
+                                               NSString *event_log_path,
+                                               NSArray<NSString *> *prefix_filters) {
   // TODO(mlw): The XPC interfaces should be injectable. Could either make a new
   // protocol defining appropriate methods or accept values as params.
   MOLXPCConnection *control_connection =
-      [[MOLXPCConnection alloc] initServerWithName:[SNTXPCControlInterface serviceID]];
+    [[MOLXPCConnection alloc] initServerWithName:[SNTXPCControlInterface serviceID]];
   if (!control_connection) {
     LOGE(@"Failed to initialize control connection.");
     exit(EXIT_FAILURE);
@@ -79,11 +78,11 @@ std::unique_ptr<SantadDeps> SantadDeps::Create(
     exit(EXIT_FAILURE);
   }
 
-  SNTExecutionController *exec_controller = [[SNTExecutionController alloc]
-      initWithRuleTable:rule_table
-             eventTable:event_table
-          notifierQueue:notifier_queue
-             syncdQueue:syncd_queue];
+  SNTExecutionController *exec_controller =
+    [[SNTExecutionController alloc] initWithRuleTable:rule_table
+                                           eventTable:event_table
+                                        notifierQueue:notifier_queue
+                                           syncdQueue:syncd_queue];
   if (!exec_controller) {
     LOGE(@"Failed to initialize exec controller.");
     exit(EXIT_FAILURE);
@@ -106,28 +105,18 @@ std::unique_ptr<SantadDeps> SantadDeps::Create(
     exit(EXIT_FAILURE);
   }
 
-  return std::make_unique<SantadDeps>(
-      metric_export_interval,
-      esapi,
-      std::move(logger),
-      control_connection,
-      compiler_controller,
-      notifier_queue,
-      syncd_queue,
-      exec_controller,
-      prefix_tree);
+  return std::make_unique<SantadDeps>(metric_export_interval, esapi, std::move(logger),
+                                      control_connection, compiler_controller, notifier_queue,
+                                      syncd_queue, exec_controller, prefix_tree);
 }
 
-SantadDeps::SantadDeps(
-    NSUInteger metric_export_interval,
-    std::shared_ptr<EndpointSecurityAPI> esapi,
-    std::unique_ptr<::Logger> logger,
-    MOLXPCConnection* control_connection,
-    SNTCompilerController* compiler_controller,
-    SNTNotificationQueue* notifier_queue,
-    SNTSyncdQueue* syncd_queue,
-    SNTExecutionController* exec_controller,
-    std::shared_ptr<SNTPrefixTree> prefix_tree)
+SantadDeps::SantadDeps(NSUInteger metric_export_interval,
+                       std::shared_ptr<EndpointSecurityAPI> esapi, std::unique_ptr<::Logger> logger,
+                       MOLXPCConnection *control_connection,
+                       SNTCompilerController *compiler_controller,
+                       SNTNotificationQueue *notifier_queue, SNTSyncdQueue *syncd_queue,
+                       SNTExecutionController *exec_controller,
+                       std::shared_ptr<SNTPrefixTree> prefix_tree)
     : esapi_(std::move(esapi)),
       logger_(std::move(logger)),
       metrics_(Metrics::Create(metric_export_interval)),
@@ -139,7 +128,6 @@ SantadDeps::SantadDeps(
       syncd_queue_(syncd_queue),
       exec_controller_(exec_controller),
       prefix_tree_(prefix_tree) {}
-
 
 std::shared_ptr<::AuthResultCache> SantadDeps::AuthResultCache() {
   return auth_result_cache_;
@@ -160,23 +148,23 @@ std::shared_ptr<santa::santad::Metrics> SantadDeps::Metrics() {
   return metrics_;
 }
 
-MOLXPCConnection* SantadDeps::ControlConnection() {
+MOLXPCConnection *SantadDeps::ControlConnection() {
   return control_connection_;
 }
 
-SNTCompilerController* SantadDeps::CompilerController() {
+SNTCompilerController *SantadDeps::CompilerController() {
   return compiler_controller_;
 }
 
-SNTNotificationQueue* SantadDeps::NotifierQueue() {
+SNTNotificationQueue *SantadDeps::NotifierQueue() {
   return notifier_queue_;
 }
 
-SNTSyncdQueue* SantadDeps::SyncdQueue() {
+SNTSyncdQueue *SantadDeps::SyncdQueue() {
   return syncd_queue_;
 }
 
-SNTExecutionController* SantadDeps::ExecController() {
+SNTExecutionController *SantadDeps::ExecController() {
   return exec_controller_;
 }
 
@@ -184,4 +172,4 @@ std::shared_ptr<SNTPrefixTree> SantadDeps::PrefixTree() {
   return prefix_tree_;
 }
 
-} // namespace santa::santad
+}  // namespace santa::santad

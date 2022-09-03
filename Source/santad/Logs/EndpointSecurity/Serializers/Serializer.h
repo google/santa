@@ -27,63 +27,61 @@
 namespace santa::santad::logs::endpoint_security::serializers {
 
 class Serializer {
-public:
+ public:
   virtual ~Serializer() = default;
 
   std::vector<uint8_t> SerializeMessage(
-      std::shared_ptr<santa::santad::event_providers::endpoint_security::EnrichedMessage> msg) {
-    return std::visit([this](auto &&arg) {
-      return this->SerializeMessageTemplate(arg);
-    }, std::move(msg->msg_));
+    std::shared_ptr<santa::santad::event_providers::endpoint_security::EnrichedMessage> msg) {
+    return std::visit([this](auto &&arg) { return this->SerializeMessageTemplate(arg); },
+                      std::move(msg->msg_));
   }
 
   virtual std::vector<uint8_t> SerializeMessage(
-      const santa::santad::event_providers::endpoint_security::EnrichedClose &) = 0;
+    const santa::santad::event_providers::endpoint_security::EnrichedClose &) = 0;
   virtual std::vector<uint8_t> SerializeMessage(
-      const santa::santad::event_providers::endpoint_security::EnrichedExchange &) = 0;
+    const santa::santad::event_providers::endpoint_security::EnrichedExchange &) = 0;
   virtual std::vector<uint8_t> SerializeMessage(
-      const santa::santad::event_providers::endpoint_security::EnrichedExec &) = 0;
+    const santa::santad::event_providers::endpoint_security::EnrichedExec &) = 0;
   virtual std::vector<uint8_t> SerializeMessage(
-      const santa::santad::event_providers::endpoint_security::EnrichedExit &) = 0;
+    const santa::santad::event_providers::endpoint_security::EnrichedExit &) = 0;
   virtual std::vector<uint8_t> SerializeMessage(
-      const santa::santad::event_providers::endpoint_security::EnrichedFork &) = 0;
+    const santa::santad::event_providers::endpoint_security::EnrichedFork &) = 0;
   virtual std::vector<uint8_t> SerializeMessage(
-      const santa::santad::event_providers::endpoint_security::EnrichedLink &) = 0;
+    const santa::santad::event_providers::endpoint_security::EnrichedLink &) = 0;
   virtual std::vector<uint8_t> SerializeMessage(
-      const santa::santad::event_providers::endpoint_security::EnrichedRename &) = 0;
+    const santa::santad::event_providers::endpoint_security::EnrichedRename &) = 0;
   virtual std::vector<uint8_t> SerializeMessage(
-      const santa::santad::event_providers::endpoint_security::EnrichedUnlink &) = 0;
+    const santa::santad::event_providers::endpoint_security::EnrichedUnlink &) = 0;
 
   virtual std::vector<uint8_t> SerializeAllowlist(
-      const santa::santad::event_providers::endpoint_security::Message&,
-      const std::string_view) = 0;
+    const santa::santad::event_providers::endpoint_security::Message &, const std::string_view) = 0;
 
-  virtual std::vector<uint8_t> SerializeBundleHashingEvent(SNTStoredEvent*) = 0;
+  virtual std::vector<uint8_t> SerializeBundleHashingEvent(SNTStoredEvent *) = 0;
 
-  virtual std::vector<uint8_t> SerializeDiskAppeared(NSDictionary*) = 0;
-  virtual std::vector<uint8_t> SerializeDiskDisappeared(NSDictionary*) = 0;
+  virtual std::vector<uint8_t> SerializeDiskAppeared(NSDictionary *) = 0;
+  virtual std::vector<uint8_t> SerializeDiskDisappeared(NSDictionary *) = 0;
 
-private:
+ private:
   // Template methods used to ensure a place to implement any desired
   // functionality that shouldn't be overridden by derived classes.
   std::vector<uint8_t> SerializeMessageTemplate(
-      const santa::santad::event_providers::endpoint_security::EnrichedClose &);
+    const santa::santad::event_providers::endpoint_security::EnrichedClose &);
   std::vector<uint8_t> SerializeMessageTemplate(
-      const santa::santad::event_providers::endpoint_security::EnrichedExchange &);
+    const santa::santad::event_providers::endpoint_security::EnrichedExchange &);
   std::vector<uint8_t> SerializeMessageTemplate(
-      const santa::santad::event_providers::endpoint_security::EnrichedExec &);
+    const santa::santad::event_providers::endpoint_security::EnrichedExec &);
   std::vector<uint8_t> SerializeMessageTemplate(
-      const santa::santad::event_providers::endpoint_security::EnrichedExit &);
+    const santa::santad::event_providers::endpoint_security::EnrichedExit &);
   std::vector<uint8_t> SerializeMessageTemplate(
-      const santa::santad::event_providers::endpoint_security::EnrichedFork &);
+    const santa::santad::event_providers::endpoint_security::EnrichedFork &);
   std::vector<uint8_t> SerializeMessageTemplate(
-      const santa::santad::event_providers::endpoint_security::EnrichedLink &);
+    const santa::santad::event_providers::endpoint_security::EnrichedLink &);
   std::vector<uint8_t> SerializeMessageTemplate(
-      const santa::santad::event_providers::endpoint_security::EnrichedRename &);
+    const santa::santad::event_providers::endpoint_security::EnrichedRename &);
   std::vector<uint8_t> SerializeMessageTemplate(
-      const santa::santad::event_providers::endpoint_security::EnrichedUnlink &);
+    const santa::santad::event_providers::endpoint_security::EnrichedUnlink &);
 };
 
-} // namespace santa::santad::logs
+}  // namespace santa::santad::logs::endpoint_security::serializers
 
 #endif

@@ -36,11 +36,10 @@ class LoggerPeer;
 namespace santa::santad::logs::endpoint_security {
 
 class Logger {
-public:
+ public:
   static std::unique_ptr<Logger> Create(
-      std::shared_ptr<santa::santad::event_providers::endpoint_security::EndpointSecurityAPI> esapi,
-      SNTEventLogType log_type,
-      NSString* event_log_path);
+    std::shared_ptr<santa::santad::event_providers::endpoint_security::EndpointSecurityAPI> esapi,
+    SNTEventLogType log_type, NSString *event_log_path);
 
   Logger(std::shared_ptr<serializers::Serializer> serializer,
          std::shared_ptr<writers::Writer> writer);
@@ -48,24 +47,23 @@ public:
   virtual ~Logger() = default;
 
   virtual void Log(
-      std::shared_ptr<santa::santad::event_providers::endpoint_security::EnrichedMessage> msg);
+    std::shared_ptr<santa::santad::event_providers::endpoint_security::EnrichedMessage> msg);
 
-  void LogAllowlist(
-      const santa::santad::event_providers::endpoint_security::Message& msg,
-      const std::string_view hash);
+  void LogAllowlist(const santa::santad::event_providers::endpoint_security::Message &msg,
+                    const std::string_view hash);
 
-  void LogBundleHashingEvents(NSArray<SNTStoredEvent*>* events);
+  void LogBundleHashingEvents(NSArray<SNTStoredEvent *> *events);
 
-  void LogDiskAppeared(NSDictionary* props);
-  void LogDiskDisappeared(NSDictionary* props);
+  void LogDiskAppeared(NSDictionary *props);
+  void LogDiskDisappeared(NSDictionary *props);
 
   friend class santa::santad::logs::endpoint_security::LoggerPeer;
 
-private:
+ private:
   std::shared_ptr<serializers::Serializer> serializer_;
   std::shared_ptr<writers::Writer> writer_;
 };
 
-} // namespace santa::santad::logs::endpoint_security
+}  // namespace santa::santad::logs::endpoint_security
 
 #endif

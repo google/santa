@@ -12,9 +12,9 @@
 ///    See the License for the specific language governing permissions and
 ///    limitations under the License.
 
-#include <dispatch/dispatch.h>
 #import <OCMock/OCMock.h>
 #import <XCTest/XCTest.h>
+#include <dispatch/dispatch.h>
 
 #include "Source/santad/EventProviders/EndpointSecurity/Client.h"
 
@@ -27,8 +27,7 @@ dispatch_semaphore_t gSema;
 // to circular dependency issues. It is a special case that uses the underlying
 // ES API `es_delete_client` directly. This test override will signal the
 // `gSema` semaphore to indicate it has been called.
-es_return_t es_delete_client(
-    es_client_t *_Nullable client) {
+es_return_t es_delete_client(es_client_t *_Nullable client) {
   dispatch_semaphore_signal(gSema);
   return ES_RETURN_SUCCESS;
 };
@@ -53,27 +52,25 @@ es_return_t es_delete_client(
     XCTAssertEqual(c.NewClientResult(), ES_NEW_CLIENT_RESULT_ERR_INTERNAL);
   }
 
-  XCTAssertNotEqual(0,
-                    dispatch_semaphore_wait(gSema, DISPATCH_TIME_NOW),
+  XCTAssertNotEqual(0, dispatch_semaphore_wait(gSema, DISPATCH_TIME_NOW),
                     "es_delete_client called unexpectedly");
 
   // Nonnull `es_client_t*` *should* trigger `es_delete_client`
   {
     int fake;
-    es_client_t *fake_client = (es_client_t*)&fake;
+    es_client_t *fake_client = (es_client_t *)&fake;
     auto c = Client(fake_client, ES_NEW_CLIENT_RESULT_SUCCESS);
     XCTAssertEqual(c.Get(), fake_client);
     XCTAssertEqual(c.NewClientResult(), ES_NEW_CLIENT_RESULT_SUCCESS);
   }
 
-  XCTAssertEqual(0,
-                 dispatch_semaphore_wait(gSema, DISPATCH_TIME_NOW),
+  XCTAssertEqual(0, dispatch_semaphore_wait(gSema, DISPATCH_TIME_NOW),
                  "es_delete_client not called within expected time window");
 
   // Test move constructor
   {
     int fake;
-    es_client_t *fake_client = (es_client_t*)&fake;
+    es_client_t *fake_client = (es_client_t *)&fake;
     auto c1 = Client(fake_client, ES_NEW_CLIENT_RESULT_SUCCESS);
 
     Client c2(std::move(c1));
@@ -85,17 +82,15 @@ es_return_t es_delete_client(
 
   // Ensure `es_delete_client` was only called once when both `c1` and `c2`
   // are destructed.
-  XCTAssertEqual(0,
-                dispatch_semaphore_wait(gSema, DISPATCH_TIME_NOW),
-                "es_delete_client not called within expected time window");
-  XCTAssertNotEqual(0,
-                    dispatch_semaphore_wait(gSema, DISPATCH_TIME_NOW),
+  XCTAssertEqual(0, dispatch_semaphore_wait(gSema, DISPATCH_TIME_NOW),
+                 "es_delete_client not called within expected time window");
+  XCTAssertNotEqual(0, dispatch_semaphore_wait(gSema, DISPATCH_TIME_NOW),
                     "es_delete_client called unexpectedly");
 
   // Test move assignment
   {
     int fake;
-    es_client_t *fake_client = (es_client_t*)&fake;
+    es_client_t *fake_client = (es_client_t *)&fake;
     auto c1 = Client(fake_client, ES_NEW_CLIENT_RESULT_SUCCESS);
     Client c2;
 
@@ -108,18 +103,15 @@ es_return_t es_delete_client(
 
   // Ensure `es_delete_client` was only called once when both `c1` and `c2`
   // are destructed.
-  XCTAssertEqual(0,
-                dispatch_semaphore_wait(gSema, DISPATCH_TIME_NOW),
-                "es_delete_client not called within expected time window");
-  XCTAssertNotEqual(0,
-                    dispatch_semaphore_wait(gSema, DISPATCH_TIME_NOW),
+  XCTAssertEqual(0, dispatch_semaphore_wait(gSema, DISPATCH_TIME_NOW),
+                 "es_delete_client not called within expected time window");
+  XCTAssertNotEqual(0, dispatch_semaphore_wait(gSema, DISPATCH_TIME_NOW),
                     "es_delete_client called unexpectedly");
 }
 
 - (void)testIsConnected {
   XCTAssertFalse(Client().IsConnected());
-  XCTAssertFalse(
-      Client(nullptr, ES_NEW_CLIENT_RESULT_ERR_NOT_ENTITLED).IsConnected());
+  XCTAssertFalse(Client(nullptr, ES_NEW_CLIENT_RESULT_ERR_NOT_ENTITLED).IsConnected());
   XCTAssertTrue(Client(nullptr, ES_NEW_CLIENT_RESULT_SUCCESS).IsConnected());
 }
 

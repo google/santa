@@ -30,15 +30,18 @@ typedef void (^SNTDeviceBlockCallback)(SNTDeviceEvent *event);
  * Manages DiskArbitration and EndpointSecurity to monitor/block/remount USB
  * storage devices.
  */
-@interface SNTEndpointSecurityDeviceManager : SNTEndpointSecurityClient<SNTEndpointSecurityEventHandler>
+@interface SNTEndpointSecurityDeviceManager
+    : SNTEndpointSecurityClient <SNTEndpointSecurityEventHandler>
 
 @property(nonatomic, readwrite) BOOL blockUSBMount;
 @property(nonatomic, readwrite, nullable) NSArray<NSString *> *remountArgs;
 @property(nonatomic, nullable) SNTDeviceBlockCallback deviceBlockCallback;
 
-- (instancetype)initWithESAPI:(std::shared_ptr<santa::santad::event_providers::endpoint_security::EndpointSecurityAPI>)esApi
-                       logger:(std::shared_ptr<santa::santad::logs::endpoint_security::Logger>)logger
-                       authResultCache:(std::shared_ptr<santa::santad::event_providers::AuthResultCache>)authResultCache;
+- (instancetype)
+    initWithESAPI:
+      (std::shared_ptr<santa::santad::event_providers::endpoint_security::EndpointSecurityAPI>)esApi
+           logger:(std::shared_ptr<santa::santad::logs::endpoint_security::Logger>)logger
+  authResultCache:(std::shared_ptr<santa::santad::event_providers::AuthResultCache>)authResultCache;
 
 @end
 

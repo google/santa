@@ -13,24 +13,24 @@
 ///    limitations under the License.
 
 #include <EndpointSecurity/EndpointSecurity.h>
-#include <gtest/gtest.h>
-#include <gmock/gmock.h>
 #import <OCMock/OCMock.h>
+#import <XCTest/XCTest.h>
+#include <gmock/gmock.h>
+#include <gtest/gtest.h>
 #include <cstdio>
 #include <memory>
 #include "Source/santad/SNTCompilerController.h"
-#import <XCTest/XCTest.h>
 
 #include <string_view>
 
 #import "Source/common/SNTCachedDecision.h"
 #import "Source/common/SNTFileInfo.h"
 #include "Source/common/TestUtils.h"
-#import "Source/santad/SNTCompilerController.h"
-#import "Source/santad/SNTDecisionCache.h"
 #include "Source/santad/EventProviders/EndpointSecurity/Message.h"
 #include "Source/santad/EventProviders/EndpointSecurity/MockEndpointSecurityAPI.h"
 #include "Source/santad/Logs/EndpointSecurity/Logger.h"
+#import "Source/santad/SNTCompilerController.h"
+#import "Source/santad/SNTDecisionCache.h"
 
 using santa::santad::event_providers::endpoint_security::Message;
 using santa::santad::logs::endpoint_security::Logger;
@@ -38,11 +38,11 @@ using santa::santad::logs::endpoint_security::Logger;
 static const pid_t PID_MAX = 99999;
 
 @interface SNTCompilerController (Testing)
-- (BOOL)isCompiler:(const audit_token_t&)tok;
-- (void)saveFakeDecision:(const es_file_t*)esFile;
-- (void)removeFakeDecision:(const es_file_t*)esFile;
-- (void)createTransitiveRule:(const Message&)esMsg
-                      target:(const es_file_t*)targetFile
+- (BOOL)isCompiler:(const audit_token_t &)tok;
+- (void)saveFakeDecision:(const es_file_t *)esFile;
+- (void)removeFakeDecision:(const es_file_t *)esFile;
+- (void)createTransitiveRule:(const Message &)esMsg
+                      target:(const es_file_t *)targetFile
                       logger:(std::shared_ptr<Logger>)logger;
 @end
 
@@ -58,8 +58,7 @@ static const pid_t PID_MAX = 99999;
 
 - (void)setUp {
   self.mockDecisionCache = OCMClassMock([SNTDecisionCache class]);
-  OCMStub([self.mockDecisionCache sharedCache])
-      .andReturn(self.mockDecisionCache);
+  OCMStub([self.mockDecisionCache sharedCache]).andReturn(self.mockDecisionCache);
 
   self.tok1 = MakeAuditToken(12, 11);
   self.tok2 = MakeAuditToken(34, 22);
@@ -118,33 +117,36 @@ static const pid_t PID_MAX = 99999;
 }
 
 - (void)testSaveFakeDecision {
-  es_file_t file = MakeESFile("foo", { .st_dev = 12, .st_ino = 34, });
+  es_file_t file = MakeESFile("foo", {
+                                       .st_dev = 12,
+                                       .st_ino = 34,
+                                     });
 
-  OCMExpect([self.mockDecisionCache cacheDecision:
-      [OCMArg checkWithBlock:^BOOL(SNTCachedDecision* cd) {
-        return cd.vnodeId.fsid == file.stat.st_dev &&
-            cd.vnodeId.fileid == file.stat.st_ino &&
-            cd.decision == SNTEventStateAllowPendingTransitive &&
-            [cd.sha256 isEqualToString:@"pending"];
-  }]]);
+  OCMExpect([self.mockDecisionCache
+    cacheDecision:[OCMArg checkWithBlock:^BOOL(SNTCachedDecision *cd) {
+      return cd.vnodeId.fsid == file.stat.st_dev && cd.vnodeId.fileid == file.stat.st_ino &&
+             cd.decision == SNTEventStateAllowPendingTransitive &&
+             [cd.sha256 isEqualToString:@"pending"];
+    }]]);
 
   SNTCompilerController *cc = [[SNTCompilerController alloc] init];
   [cc saveFakeDecision:&file];
 
-  XCTAssertTrue(OCMVerifyAll(self.mockDecisionCache),
-                "Unable to verify all expectations");
+  XCTAssertTrue(OCMVerifyAll(self.mockDecisionCache), "Unable to verify all expectations");
 }
 
 - (void)testRemoveFakeDecision {
-  es_file_t file = MakeESFile("foo", { .st_dev = 12, .st_ino = 34, });
+  es_file_t file = MakeESFile("foo", {
+                                       .st_dev = 12,
+                                       .st_ino = 34,
+                                     });
 
   OCMExpect([self.mockDecisionCache forgetCachedDecisionForFile:file.stat]);
 
   SNTCompilerController *cc = [[SNTCompilerController alloc] init];
   [cc removeFakeDecision:&file];
 
-  XCTAssertTrue(OCMVerifyAll(self.mockDecisionCache),
-                "Unable to verify all expectations");
+  XCTAssertTrue(OCMVerifyAll(self.mockDecisionCache), "Unable to verify all expectations");
 }
 
 - (void)testHandleEventWithLogger {
@@ -204,13 +206,11 @@ static const pid_t PID_MAX = 99999;
     Message msg(mockESApi, &esMsg);
 
     id mockCompilerController = OCMPartialMock(cc);
-    OCMExpect([mockCompilerController setProcess:compilerProc.audit_token
-                                      isCompiler:false]);
+    OCMExpect([mockCompilerController setProcess:compilerProc.audit_token isCompiler:false]);
 
     XCTAssertTrue([cc handleEvent:msg withLogger:nullptr]);
 
-    XCTAssertTrue(OCMVerifyAll(mockCompilerController),
-                  "Unable to verify all expectations");
+    XCTAssertTrue(OCMVerifyAll(mockCompilerController), "Unable to verify all expectations");
     [mockCompilerController stopMocking];
   }
 
@@ -222,15 +222,14 @@ static const pid_t PID_MAX = 99999;
 
     id mockCompilerController = OCMPartialMock(cc);
 
-    OCMExpect([mockCompilerController
-                  createTransitiveRule:msg
-                                target:esMsg.event.close.target
-                                logger:nullptr]).ignoringNonObjectArgs();
+    OCMExpect([mockCompilerController createTransitiveRule:msg
+                                                    target:esMsg.event.close.target
+                                                    logger:nullptr])
+      .ignoringNonObjectArgs();
 
     XCTAssertTrue([cc handleEvent:msg withLogger:nullptr]);
 
-    XCTAssertTrue(OCMVerifyAll(mockCompilerController),
-                  "Unable to verify all expectations");
+    XCTAssertTrue(OCMVerifyAll(mockCompilerController), "Unable to verify all expectations");
     [mockCompilerController stopMocking];
   }
   {
@@ -240,15 +239,14 @@ static const pid_t PID_MAX = 99999;
 
     id mockCompilerController = OCMPartialMock(cc);
 
-    OCMExpect([mockCompilerController
-                  createTransitiveRule:msg
-                                target:esMsg.event.close.target
-                                logger:nullptr]).ignoringNonObjectArgs();
+    OCMExpect([mockCompilerController createTransitiveRule:msg
+                                                    target:esMsg.event.close.target
+                                                    logger:nullptr])
+      .ignoringNonObjectArgs();
 
     XCTAssertTrue([cc handleEvent:msg withLogger:nullptr]);
 
-    XCTAssertTrue(OCMVerifyAll(mockCompilerController),
-                  "Unable to verify all expectations");
+    XCTAssertTrue(OCMVerifyAll(mockCompilerController), "Unable to verify all expectations");
     [mockCompilerController stopMocking];
   }
 }

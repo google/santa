@@ -15,16 +15,15 @@
 #ifndef SANTA__SANTAD__EVENTPROVIDERS_ENDPOINTSECURITY_CLIENT_H
 #define SANTA__SANTAD__EVENTPROVIDERS_ENDPOINTSECURITY_CLIENT_H
 
-#include <cstddef>
-
 #import <EndpointSecurity/EndpointSecurity.h>
+
+#include <cstddef>
 
 namespace santa::santad::event_providers::endpoint_security {
 
 class Client {
-public:
-  explicit Client(es_client_t* client,
-                  es_new_client_result_t result)
+ public:
+  explicit Client(es_client_t* client, es_new_client_result_t result)
       : client_(client), result_(result) {}
 
   Client() : client_(nullptr), result_(ES_NEW_CLIENT_RESULT_ERR_INTERNAL) {}
@@ -53,23 +52,17 @@ public:
   Client(const Client& other) = delete;
   void operator=(const Client& rhs) = delete;
 
-  inline bool IsConnected() {
-    return result_ == ES_NEW_CLIENT_RESULT_SUCCESS;
-  }
+  inline bool IsConnected() { return result_ == ES_NEW_CLIENT_RESULT_SUCCESS; }
 
-  inline es_new_client_result_t NewClientResult() {
-    return result_;
-  }
+  inline es_new_client_result_t NewClientResult() { return result_; }
 
-  inline es_client_t* Get() const {
-    return client_;
-  }
+  inline es_client_t* Get() const { return client_; }
 
-private:
-  es_client_t *client_;
+ private:
+  es_client_t* client_;
   es_new_client_result_t result_;
 };
 
-} // namespace santa::santad::event_providers::endpoint_security
+}  // namespace santa::santad::event_providers::endpoint_security
 
 #endif

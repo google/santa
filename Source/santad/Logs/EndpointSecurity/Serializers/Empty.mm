@@ -30,53 +30,52 @@ std::shared_ptr<Empty> Empty::Create() {
   return std::make_shared<Empty>();
 }
 
-std::vector<uint8_t> Empty::SerializeMessage(const EnrichedClose& msg) {
+std::vector<uint8_t> Empty::SerializeMessage(const EnrichedClose &msg) {
   return {};
 }
 
-std::vector<uint8_t> Empty::SerializeMessage(const EnrichedExchange& msg) {
+std::vector<uint8_t> Empty::SerializeMessage(const EnrichedExchange &msg) {
   return {};
 }
 
-std::vector<uint8_t> Empty::SerializeMessage(const EnrichedExec& msg) {
+std::vector<uint8_t> Empty::SerializeMessage(const EnrichedExec &msg) {
   return {};
 }
 
-std::vector<uint8_t> Empty::SerializeMessage(const EnrichedExit& msg) {
+std::vector<uint8_t> Empty::SerializeMessage(const EnrichedExit &msg) {
   return {};
 }
 
-std::vector<uint8_t> Empty::SerializeMessage(const EnrichedFork& msg) {
+std::vector<uint8_t> Empty::SerializeMessage(const EnrichedFork &msg) {
   return {};
 }
 
-std::vector<uint8_t> Empty::SerializeMessage(const EnrichedLink& msg) {
+std::vector<uint8_t> Empty::SerializeMessage(const EnrichedLink &msg) {
   return {};
 }
 
-std::vector<uint8_t> Empty::SerializeMessage(const EnrichedRename& msg) {
+std::vector<uint8_t> Empty::SerializeMessage(const EnrichedRename &msg) {
   return {};
 }
 
-std::vector<uint8_t> Empty::SerializeMessage(const EnrichedUnlink& msg) {
+std::vector<uint8_t> Empty::SerializeMessage(const EnrichedUnlink &msg) {
   return {};
 }
 
-std::vector<uint8_t> Empty::SerializeAllowlist(const Message& msg,
-                                                     const std::string_view hash) {
+std::vector<uint8_t> Empty::SerializeAllowlist(const Message &msg, const std::string_view hash) {
   return {};
 }
 
-std::vector<uint8_t> Empty::SerializeBundleHashingEvent(SNTStoredEvent* event) {
+std::vector<uint8_t> Empty::SerializeBundleHashingEvent(SNTStoredEvent *event) {
   return {};
 }
 
-std::vector<uint8_t> Empty::SerializeDiskAppeared(NSDictionary* props) {
+std::vector<uint8_t> Empty::SerializeDiskAppeared(NSDictionary *props) {
   return {};
 }
 
-std::vector<uint8_t> Empty::SerializeDiskDisappeared(NSDictionary* props) {
+std::vector<uint8_t> Empty::SerializeDiskDisappeared(NSDictionary *props) {
   return {};
 }
 
-} // namespace santa::santad::logs::endpoint_security::serializers
+}  // namespace santa::santad::logs::endpoint_security::serializers

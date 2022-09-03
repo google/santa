@@ -22,8 +22,8 @@ std::shared_ptr<Syslog> Syslog::Create() {
   return std::make_shared<Syslog>();
 }
 
-void Syslog::Write(std::vector<uint8_t>&& bytes) {
+void Syslog::Write(std::vector<uint8_t> &&bytes) {
   os_log(OS_LOG_DEFAULT, "%{public}s", bytes.data());
 }
 
-} // namespace santa::santad::logs::endpoint_security::writers
+}  // namespace santa::santad::logs::endpoint_security::writers

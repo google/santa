@@ -12,22 +12,22 @@
 ///    See the License for the specific language governing permissions and
 ///    limitations under the License.
 
-#include <dispatch/dispatch.h>
 #import <Foundation/Foundation.h>
-#include "Source/common/SNTCachedDecision.h"
 #import <OCMock/OCMock.h>
-#include <sys/stat.h>
 #import <XCTest/XCTest.h>
+#include <dispatch/dispatch.h>
+#include <sys/stat.h>
+#include "Source/common/SNTCachedDecision.h"
 
 #import "Source/common/SNTCommon.h"
 #import "Source/common/SNTCommonEnums.h"
 #import "Source/common/SNTRule.h"
 #include "Source/common/TestUtils.h"
-#import "Source/santad/SNTDecisionCache.h"
-#import "Source/santad/SNTDatabaseController.h"
 #import "Source/santad/DataLayer/SNTRuleTable.h"
+#import "Source/santad/SNTDatabaseController.h"
+#import "Source/santad/SNTDecisionCache.h"
 
-SNTCachedDecision* MakeCachedDecision(struct stat sb, SNTEventState decision) {
+SNTCachedDecision *MakeCachedDecision(struct stat sb, SNTEventState decision) {
   SNTCachedDecision *cd = [[SNTCachedDecision alloc] init];
 
   cd.decision = decision;
@@ -78,20 +78,17 @@ SNTCachedDecision* MakeCachedDecision(struct stat sb, SNTEventState decision) {
 - (void)testResetTimestampForCachedDecision {
   SNTDecisionCache *dc = [SNTDecisionCache sharedCache];
   struct stat sb = MakeStat(1234);
-  SNTCachedDecision *cd =
-      MakeCachedDecision(sb, SNTEventStateAllowTransitive);
+  SNTCachedDecision *cd = MakeCachedDecision(sb, SNTEventStateAllowTransitive);
 
   [dc cacheDecision:cd];
 
-  OCMStub([self.mockDatabaseController ruleTable])
-      .andReturn(self.mockRuleDatabase);
+  OCMStub([self.mockDatabaseController ruleTable]).andReturn(self.mockRuleDatabase);
 
   OCMExpect([self.mockRuleDatabase
-      resetTimestampForRule:[OCMArg checkWithBlock:^BOOL(SNTRule* rule){
-        return rule.identifier == cd.sha256 &&
-            rule.state == SNTRuleStateAllowTransitive &&
-            rule.type == SNTRuleTypeBinary;
-      }]]);
+    resetTimestampForRule:[OCMArg checkWithBlock:^BOOL(SNTRule *rule) {
+      return rule.identifier == cd.sha256 && rule.state == SNTRuleStateAllowTransitive &&
+             rule.type == SNTRuleTypeBinary;
+    }]]);
 
   [dc resetTimestampForCachedDecision:sb];
 

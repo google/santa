@@ -13,21 +13,26 @@
 ///    limitations under the License.
 
 #import "Source/common/SNTPrefixTree.h"
+#import "Source/santad/EventProviders/AuthResultCache.h"
 #include "Source/santad/EventProviders/EndpointSecurity/EndpointSecurityAPI.h"
 #include "Source/santad/EventProviders/EndpointSecurity/Enricher.h"
-#import "Source/santad/EventProviders/AuthResultCache.h"
 #import "Source/santad/EventProviders/SNTEndpointSecurityClient.h"
 #import "Source/santad/EventProviders/SNTEndpointSecurityEventHandler.h"
 #include "Source/santad/Logs/EndpointSecurity/Logger.h"
 #import "Source/santad/SNTCompilerController.h"
 
-@interface SNTEndpointSecurityRecorder : SNTEndpointSecurityClient<SNTEndpointSecurityEventHandler>
+@interface SNTEndpointSecurityRecorder : SNTEndpointSecurityClient <SNTEndpointSecurityEventHandler>
 
-- (instancetype)initWithESAPI:(std::shared_ptr<santa::santad::event_providers::endpoint_security::EndpointSecurityAPI>)esApi
-                       logger:(std::shared_ptr<santa::santad::logs::endpoint_security::Logger>)logger
-                     enricher:(std::shared_ptr<santa::santad::event_providers::endpoint_security::Enricher>)enricher
-           compilerController:(SNTCompilerController*)compilerController
-              authResultCache:(std::shared_ptr<santa::santad::event_providers::AuthResultCache>)authResultCache
-                   prefixTree:(std::shared_ptr<SNTPrefixTree>)prefixTree;
+- (instancetype)
+       initWithESAPI:
+         (std::shared_ptr<santa::santad::event_providers::endpoint_security::EndpointSecurityAPI>)
+           esApi
+              logger:(std::shared_ptr<santa::santad::logs::endpoint_security::Logger>)logger
+            enricher:
+              (std::shared_ptr<santa::santad::event_providers::endpoint_security::Enricher>)enricher
+  compilerController:(SNTCompilerController *)compilerController
+     authResultCache:
+       (std::shared_ptr<santa::santad::event_providers::AuthResultCache>)authResultCache
+          prefixTree:(std::shared_ptr<SNTPrefixTree>)prefixTree;
 
 @end

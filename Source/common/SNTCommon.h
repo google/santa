@@ -41,9 +41,8 @@ typedef enum {
 
 } santa_action_t;
 
-#define RESPONSE_VALID(x)              \
-  (x == ACTION_RESPOND_ALLOW ||        \
-   x == ACTION_RESPOND_DENY ||         \
+#define RESPONSE_VALID(x)                                   \
+  (x == ACTION_RESPOND_ALLOW || x == ACTION_RESPOND_DENY || \
    x == ACTION_RESPOND_ALLOW_COMPILER)
 
 // Struct to manage vnode IDs

@@ -24,28 +24,18 @@
 namespace santa::santad {
 
 std::shared_ptr<Metrics> Metrics::Create(uint64_t interval) {
-  dispatch_queue_t q = dispatch_queue_create(
-      "com.google.santa.santametricsservice.q",
-      DISPATCH_QUEUE_SERIAL_WITH_AUTORELEASE_POOL);
+  dispatch_queue_t q = dispatch_queue_create("com.google.santa.santametricsservice.q",
+                                             DISPATCH_QUEUE_SERIAL_WITH_AUTORELEASE_POOL);
 
-  dispatch_source_t timer_source = dispatch_source_create(
-      DISPATCH_SOURCE_TYPE_TIMER,
-      0,
-      0,
-      q);
+  dispatch_source_t timer_source = dispatch_source_create(DISPATCH_SOURCE_TYPE_TIMER, 0, 0, q);
 
-  MOLXPCConnection *metrics_connection =
-      [SNTXPCMetricServiceInterface configuredConnection];
+  MOLXPCConnection *metrics_connection = [SNTXPCMetricServiceInterface configuredConnection];
 
-  std::shared_ptr<Metrics> metrics = std::make_shared<Metrics>(
-      metrics_connection,
-      q,
-      timer_source,
-      interval,
-      ^(){
-        SNTRegisterCoreMetrics();
-        [metrics_connection resume];
-      });
+  std::shared_ptr<Metrics> metrics =
+    std::make_shared<Metrics>(metrics_connection, q, timer_source, interval, ^() {
+      SNTRegisterCoreMetrics();
+      [metrics_connection resume];
+    });
 
   std::weak_ptr<Metrics> weak_metrics(metrics);
   dispatch_source_set_event_handler(metrics->timer_source_, ^{
@@ -60,17 +50,15 @@ std::shared_ptr<Metrics> Metrics::Create(uint64_t interval) {
     }
 
     [[shared_metrics->metrics_connection_ remoteObjectProxy]
-        exportForMonitoring:[[SNTMetricSet sharedInstance] export]];
+      exportForMonitoring:[[SNTMetricSet sharedInstance] export]];
   });
 
   return metrics;
 }
 
-Metrics::Metrics(MOLXPCConnection* metrics_connection,
-                 dispatch_queue_t q,
-                 dispatch_source_t timer_source,
-                 uint64_t interval,
-                 void(^run_on_first_start)(void))
+Metrics::Metrics(MOLXPCConnection *metrics_connection, dispatch_queue_t q,
+                 dispatch_source_t timer_source, uint64_t interval,
+                 void (^run_on_first_start)(void))
     : q_(q),
       timer_source_(timer_source),
       interval_(interval),
@@ -90,14 +78,10 @@ Metrics::~Metrics() {
 
 void Metrics::SetInterval(uint64_t interval) {
   dispatch_sync(q_, ^{
-    LOGI(@"Setting metrics interval to %llu (exporting? %s)",
-         interval,
-         running_ ? "YES" : "NO");
+    LOGI(@"Setting metrics interval to %llu (exporting? %s)", interval, running_ ? "YES" : "NO");
     interval_ = interval;
-    dispatch_source_set_timer(timer_source_,
-                              dispatch_time(DISPATCH_TIME_NOW, 0),
-                              interval_ * NSEC_PER_SEC,
-                              250 * NSEC_PER_MSEC);
+    dispatch_source_set_timer(timer_source_, dispatch_time(DISPATCH_TIME_NOW, 0),
+                              interval_ * NSEC_PER_SEC, 250 * NSEC_PER_MSEC);
   });
 }
 
@@ -130,4 +114,4 @@ void Metrics::StopPoll() {
   });
 }
 
-} // namespace santa::santad
+}  // namespace santa::santad

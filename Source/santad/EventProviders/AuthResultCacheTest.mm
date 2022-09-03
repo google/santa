@@ -14,11 +14,11 @@
 
 #include <EndpointSecurity/EndpointSecurity.h>
 #include <Foundation/Foundation.h>
-#include <gtest/gtest.h>
-#include <gmock/gmock.h>
 #import <OCMock/OCMock.h>
-#include <time.h>
 #import <XCTest/XCTest.h>
+#include <gmock/gmock.h>
+#include <gtest/gtest.h>
+#include <time.h>
 
 #include <memory>
 
@@ -46,26 +46,19 @@ static uint64_t RootDevno() {
 
 static inline es_file_t MakeCacheableFile(uint64_t devno, uint64_t ino) {
   return es_file_t{
-    .path = {},
-    .path_truncated = false,
-    .stat = {
-      .st_dev = (dev_t)devno,
-      .st_ino = ino
-    }
-  };
+    .path = {}, .path_truncated = false, .stat = {.st_dev = (dev_t)devno, .st_ino = ino}};
 }
 
-static inline santa_vnode_id_t VnodeForFile(const es_file_t* es_file) {
+static inline santa_vnode_id_t VnodeForFile(const es_file_t *es_file) {
   return santa_vnode_id_t{
     .fsid = (uint64_t)es_file->stat.st_dev,
     .fileid = es_file->stat.st_ino,
   };
 }
 
-static inline void AssertCacheCounts(std::shared_ptr<AuthResultCache> cache,
-                                     uint64_t root_count,
+static inline void AssertCacheCounts(std::shared_ptr<AuthResultCache> cache, uint64_t root_count,
                                      uint64_t nonroot_count) {
-  NSArray<NSNumber*> *counts = cache->CacheCounts();
+  NSArray<NSNumber *> *counts = cache->CacheCounts();
 
   XCTAssertNotNil(counts);
   XCTAssertEqual([counts count], 2);
@@ -113,10 +106,8 @@ static inline void AssertCacheCounts(std::shared_ptr<AuthResultCache> cache,
   cache->AddToCache(&nonroot_file, ACTION_RESPOND_DENY);
 
   AssertCacheCounts(cache, 1, 1);
-  XCTAssertEqual(cache->CheckCache(VnodeForFile(&root_file)),
-                 ACTION_RESPOND_ALLOW);
-  XCTAssertEqual(cache->CheckCache(VnodeForFile(&nonroot_file)),
-                 ACTION_RESPOND_DENY);
+  XCTAssertEqual(cache->CheckCache(VnodeForFile(&root_file)), ACTION_RESPOND_ALLOW);
+  XCTAssertEqual(cache->CheckCache(VnodeForFile(&nonroot_file)), ACTION_RESPOND_DENY);
 
   // Remove the root file
   cache->RemoveFromCache(&root_file);
@@ -152,17 +143,14 @@ static inline void AssertCacheCounts(std::shared_ptr<AuthResultCache> cache,
   // The call to ClearCache is asynchronous. Use a semaphore to
   // be notified when the mock is called.
   dispatch_semaphore_t sema = dispatch_semaphore_create(0);
-  EXPECT_CALL(*mock_esapi, ClearCache)
-      .WillOnce(testing::InvokeWithoutArgs(^() {
-          dispatch_semaphore_signal(sema);
-          return true;
-      }));
+  EXPECT_CALL(*mock_esapi, ClearCache).WillOnce(testing::InvokeWithoutArgs(^() {
+    dispatch_semaphore_signal(sema);
+    return true;
+  }));
   cache->FlushCache(FlushCacheMode::kAllCaches);
 
   XCTAssertEqual(0,
-                 dispatch_semaphore_wait(
-                     sema,
-                     dispatch_time(DISPATCH_TIME_NOW, 5 * NSEC_PER_SEC)),
+                 dispatch_semaphore_wait(sema, dispatch_time(DISPATCH_TIME_NOW, 5 * NSEC_PER_SEC)),
                  "ClearCache wasn't called within expected time window");
 
   XCTBubbleMockVerifyAndClearExpectations(mock_esapi.get());
@@ -190,14 +178,12 @@ static inline void AssertCacheCounts(std::shared_ptr<AuthResultCache> cache,
   XCTAssertEqual(cache->CheckCache(&root_file), ACTION_REQUEST_BINARY);
 
   santa_action_t allowed_transitions[] = {
-      ACTION_RESPOND_ALLOW,
-      ACTION_RESPOND_ALLOW_COMPILER,
-      ACTION_RESPOND_DENY,
+    ACTION_RESPOND_ALLOW,
+    ACTION_RESPOND_ALLOW_COMPILER,
+    ACTION_RESPOND_DENY,
   };
 
-  for (size_t i = 0;
-       i < sizeof(allowed_transitions) / sizeof(allowed_transitions[0]);
-       i++) {
+  for (size_t i = 0; i < sizeof(allowed_transitions) / sizeof(allowed_transitions[0]); i++) {
     // First make sure the item doesn't exist
     cache->RemoveFromCache(&root_file);
     XCTAssertEqual(cache->CheckCache(&root_file), ACTION_UNSET);
@@ -230,7 +216,7 @@ static inline void AssertCacheCounts(std::shared_ptr<AuthResultCache> cache,
   // Wait for the item to expire
   SleepMS(expiry_ms);
 
-  //Check cache counts to make sure the item still exists
+  // Check cache counts to make sure the item still exists
   AssertCacheCounts(cache, 1, 0);
 
   // Now check the cache, which will remove the item

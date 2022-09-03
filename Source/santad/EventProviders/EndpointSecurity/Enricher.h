@@ -16,13 +16,13 @@
 
 #include <memory>
 
-#include "thread-safe-lru/lru-cache.h"
 #include "Source/santad/EventProviders/EndpointSecurity/EnrichedTypes.h"
+#include "thread-safe-lru/lru-cache.h"
 
 namespace santa::santad::event_providers::endpoint_security {
 
 class Enricher {
-public:
+ public:
   Enricher() : username_cache_(200), groupname_cache_(200) {}
   virtual ~Enricher() = default;
   virtual std::shared_ptr<EnrichedMessage> Enrich(Message &&msg);
@@ -32,11 +32,15 @@ public:
   virtual std::optional<std::shared_ptr<std::string>> UsernameForUID(uid_t uid);
   virtual std::optional<std::shared_ptr<std::string>> UsernameForGID(gid_t gid);
 
-private:
-  tstarling::ThreadSafeLRUCache<uid_t, std::optional<std::shared_ptr<std::string>>> username_cache_;
-  tstarling::ThreadSafeLRUCache<uid_t, std::optional<std::shared_ptr<std::string>>> groupname_cache_;
+ private:
+  tstarling::ThreadSafeLRUCache<uid_t,
+                                std::optional<std::shared_ptr<std::string>>>
+      username_cache_;
+  tstarling::ThreadSafeLRUCache<uid_t,
+                                std::optional<std::shared_ptr<std::string>>>
+      groupname_cache_;
 };
 
-} // namespace santa::santad::event_providers::endpoint_security
+}  // namespace santa::santad::event_providers::endpoint_security
 
 #endif

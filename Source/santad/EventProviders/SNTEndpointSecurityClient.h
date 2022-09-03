@@ -15,6 +15,6 @@
 #include "Source/santad/EventProviders/SNTEndpointSecurityClientBase.h"
 
 /// This should be treated as an Abstract Base Class and not directly instantiated
-@interface SNTEndpointSecurityClient : NSObject<SNTEndpointSecurityClientBase>
+@interface SNTEndpointSecurityClient : NSObject <SNTEndpointSecurityClientBase>
 - (instancetype)init NS_UNAVAILABLE;
 @end

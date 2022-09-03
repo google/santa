@@ -60,7 +60,7 @@
   });
 }
 
-- (SNTCachedDecision *)cachedDecisionForFile:(const struct stat&)statInfo {
+- (SNTCachedDecision *)cachedDecisionForFile:(const struct stat &)statInfo {
   __block SNTCachedDecision *cd;
   dispatch_sync(self.detailStoreQueue, ^{
     cd = self.detailStore[@(statInfo.st_ino)];
@@ -68,7 +68,7 @@
   return cd;
 }
 
-- (void)forgetCachedDecisionForFile:(const struct stat&)statInfo {
+- (void)forgetCachedDecisionForFile:(const struct stat &)statInfo {
   dispatch_sync(self.detailStoreQueue, ^{
     [self.detailStore removeObjectForKey:@(statInfo.st_ino)];
   });
@@ -77,7 +77,7 @@
 // Whenever a cached decision resulting from a transitive allowlist rule is used to allow the
 // execution of a binary, we update the timestamp on the transitive rule in the rules database.
 // To prevent writing to the database too often, we space out consecutive writes by 3600 seconds.
-- (void)resetTimestampForCachedDecision:(const struct stat&)statInfo {
+- (void)resetTimestampForCachedDecision:(const struct stat &)statInfo {
   SNTCachedDecision *cd = [self cachedDecisionForFile:statInfo];
   if (!cd || cd.decision != SNTEventStateAllowTransitive || !cd.sha256) {
     return;
