@@ -106,7 +106,7 @@ using santa::santad::event_providers::endpoint_security::Message;
 
 - (void)testHandleMessageWithClient {
   es_file_t file = MakeESFile("foo");
-  es_process_t proc = MakeESProcess(&file, {}, {});
+  es_process_t proc = MakeESProcess(&file);
   es_message_t esMsg = MakeESMessage(ES_EVENT_TYPE_NOTIFY_FORK, &proc);
 
   auto mockESApi = std::make_shared<MockEndpointSecurityAPI>();
@@ -279,7 +279,7 @@ using santa::santad::event_providers::endpoint_security::Message;
 
 - (void)testProcessMessageHandlerBadEventType {
   es_file_t proc_file = MakeESFile("foo");
-  es_process_t proc = MakeESProcess(&proc_file, {}, {});
+  es_process_t proc = MakeESProcess(&proc_file);
   es_message_t esMsg = MakeESMessage(ES_EVENT_TYPE_NOTIFY_EXIT, &proc);
 
   auto mockESApi = std::make_shared<MockEndpointSecurityAPI>();
@@ -304,7 +304,7 @@ using santa::santad::event_providers::endpoint_security::Message;
 // the time the test exits, making GMock think the object was leaked.
 - (void)testProcessMessageHandler {
   es_file_t proc_file = MakeESFile("foo");
-  es_process_t proc = MakeESProcess(&proc_file, {}, {});
+  es_process_t proc = MakeESProcess(&proc_file);
   es_message_t esMsg = MakeESMessage(ES_EVENT_TYPE_AUTH_OPEN, &proc, ActionType::Auth,
                                      45 * 1000);  // Long deadline to not hit
 
@@ -342,7 +342,7 @@ using santa::santad::event_providers::endpoint_security::Message;
   // 2. controlSema - used to block control flow in the test until the
   //    deadlineSema is signaled (or a timeout waiting on deadlineSema)
   es_file_t proc_file = MakeESFile("foo");
-  es_process_t proc = MakeESProcess(&proc_file, {}, {});
+  es_process_t proc = MakeESProcess(&proc_file);
   es_message_t esMsg = MakeESMessage(ES_EVENT_TYPE_AUTH_OPEN, &proc, ActionType::Auth,
                                      750);  // 750ms timeout
 

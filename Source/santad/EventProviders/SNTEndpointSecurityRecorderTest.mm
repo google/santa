@@ -84,7 +84,7 @@ class MockLogger : public Logger {
 
 - (void)testHandleMessage {
   es_file_t file = MakeESFile("foo");
-  es_process_t proc = MakeESProcess(&file, {}, {});
+  es_process_t proc = MakeESProcess(&file);
   es_message_t esMsg = MakeESMessage(ES_EVENT_TYPE_NOTIFY_CLOSE, &proc, ActionType::Auth);
   es_file_t targetFile = MakeESFile("bar");
 

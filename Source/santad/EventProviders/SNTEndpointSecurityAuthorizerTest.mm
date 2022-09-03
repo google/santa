@@ -80,7 +80,7 @@ class MockAuthResultCache : public AuthResultCache {
 
 - (void)testHandleMessage {
   es_file_t file = MakeESFile("foo");
-  es_process_t proc = MakeESProcess(&file, {}, {});
+  es_process_t proc = MakeESProcess(&file);
   es_message_t esMsg = MakeESMessage(ES_EVENT_TYPE_AUTH_EXEC, &proc, ActionType::Auth);
 
   auto mockESApi = std::make_shared<MockEndpointSecurityAPI>();
@@ -149,7 +149,7 @@ class MockAuthResultCache : public AuthResultCache {
   // This test ensures that if there is an outstanding action for
   // an item, it will check the cache again until a result exists.
   es_file_t file = MakeESFile("foo");
-  es_process_t proc = MakeESProcess(&file, {}, {});
+  es_process_t proc = MakeESProcess(&file);
   es_file_t execFile = MakeESFile("bar");
   es_process_t execProc = MakeESProcess(&execFile, MakeAuditToken(12, 23), MakeAuditToken(34, 45));
   es_message_t esMsg = MakeESMessage(ES_EVENT_TYPE_AUTH_EXEC, &proc, ActionType::Auth);
@@ -215,7 +215,7 @@ class MockAuthResultCache : public AuthResultCache {
 
 - (void)testPostAction {
   es_file_t file = MakeESFile("foo");
-  es_process_t proc = MakeESProcess(&file, {}, {});
+  es_process_t proc = MakeESProcess(&file);
   es_file_t execFile = MakeESFile("bar");
   es_process_t execProc = MakeESProcess(&execFile, MakeAuditToken(12, 23), MakeAuditToken(34, 45));
   es_message_t esMsg = MakeESMessage(ES_EVENT_TYPE_AUTH_EXEC, &proc, ActionType::Auth);

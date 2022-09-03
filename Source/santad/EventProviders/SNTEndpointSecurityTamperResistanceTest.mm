@@ -70,7 +70,7 @@ static constexpr std::string_view kSantaKextIdentifier = "com.google.santa-drive
 
 - (void)testHandleMessage {
   es_file_t file = MakeESFile("foo");
-  es_process_t proc = MakeESProcess(&file, {}, {});
+  es_process_t proc = MakeESProcess(&file);
   es_message_t esMsg = MakeESMessage(ES_EVENT_TYPE_AUTH_EXEC, &proc, ActionType::Auth);
 
   es_file_t fileEventsDB = MakeESFile(kEventsDBPath.data());

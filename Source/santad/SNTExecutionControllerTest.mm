@@ -121,12 +121,12 @@ VerifyPostActionBlock verifyPostAction = ^PostActionBlock(santa_action_t wantAct
 
 - (void)testSynchronousShouldProcessExecEvent {
   es_file_t file = MakeESFile("foo");
-  es_process_t proc = MakeESProcess(&file, {}, {});
+  es_process_t proc = MakeESProcess(&file);
   es_file_t fileExec = MakeESFile("bar", {
                                            .st_dev = 12,
                                            .st_ino = 34,
                                          });
-  es_process_t procExec = MakeESProcess(&fileExec, {}, {});
+  es_process_t procExec = MakeESProcess(&fileExec);
   es_message_t esMsg = MakeESMessage(ES_EVENT_TYPE_AUTH_EXEC, &proc);
   esMsg.event.exec.target = &procExec;
 
@@ -188,12 +188,12 @@ VerifyPostActionBlock verifyPostAction = ^PostActionBlock(santa_action_t wantAct
 
 - (void)validateExecEvent:(santa_action_t)wantAction {
   es_file_t file = MakeESFile("foo");
-  es_process_t proc = MakeESProcess(&file, {}, {});
+  es_process_t proc = MakeESProcess(&file);
   es_file_t fileExec = MakeESFile("bar", {
                                            .st_dev = 12,
                                            .st_ino = 34,
                                          });
-  es_process_t procExec = MakeESProcess(&fileExec, {}, {});
+  es_process_t procExec = MakeESProcess(&fileExec);
   es_message_t esMsg = MakeESMessage(ES_EVENT_TYPE_AUTH_EXEC, &proc);
   esMsg.event.exec.target = &procExec;
 

@@ -61,7 +61,7 @@ using santa::santad::event_providers::endpoint_security::Message;
   es_file_t closeTargetFile = MakeESFile("close_target");
   es_file_t renameSourceFile = MakeESFile("rename_source");
   es_file_t procFile = MakeESFile("foo");
-  es_process_t proc = MakeESProcess(&procFile, {}, {});
+  es_process_t proc = MakeESProcess(&procFile);
   es_message_t esMsg = MakeESMessage(ES_EVENT_TYPE_NOTIFY_CLOSE, &proc);
 
   auto mockESApi = std::make_shared<MockEndpointSecurityAPI>();
