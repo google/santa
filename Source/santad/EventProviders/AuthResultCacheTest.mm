@@ -25,12 +25,10 @@
 #include "Source/common/SNTCommon.h"
 #include "Source/common/TestUtils.h"
 #include "Source/santad/EventProviders/AuthResultCache.h"
-#include "Source/santad/EventProviders/EndpointSecurity/Client.h"
 #include "Source/santad/EventProviders/EndpointSecurity/MockEndpointSecurityAPI.h"
 
 using santa::santad::event_providers::AuthResultCache;
 using santa::santad::event_providers::FlushCacheMode;
-using santa::santad::event_providers::endpoint_security::Client;
 
 // Grab the st_dev number of the root volume to match the root cache
 static uint64_t RootDevno() {
@@ -84,48 +82,48 @@ static inline void AssertCacheCounts(std::shared_ptr<AuthResultCache> cache, uin
   auto esapi = std::make_shared<MockEndpointSecurityAPI>();
   auto cache = std::make_shared<AuthResultCache>(esapi);
 
-  es_file_t root_file = MakeCacheableFile(RootDevno(), 111);
-  es_file_t nonroot_file = MakeCacheableFile(RootDevno() + 123, 222);
+  es_file_t rootFile = MakeCacheableFile(RootDevno(), 111);
+  es_file_t nonrootFile = MakeCacheableFile(RootDevno() + 123, 222);
 
   // Add the root file to the cache
-  cache->AddToCache(&root_file, ACTION_REQUEST_BINARY);
+  cache->AddToCache(&rootFile, ACTION_REQUEST_BINARY);
 
   AssertCacheCounts(cache, 1, 0);
-  XCTAssertEqual(cache->CheckCache(&root_file), ACTION_REQUEST_BINARY);
-  XCTAssertEqual(cache->CheckCache(&nonroot_file), ACTION_UNSET);
+  XCTAssertEqual(cache->CheckCache(&rootFile), ACTION_REQUEST_BINARY);
+  XCTAssertEqual(cache->CheckCache(&nonrootFile), ACTION_UNSET);
 
   // Now add the non-root file
-  cache->AddToCache(&nonroot_file, ACTION_REQUEST_BINARY);
+  cache->AddToCache(&nonrootFile, ACTION_REQUEST_BINARY);
 
   AssertCacheCounts(cache, 1, 1);
-  XCTAssertEqual(cache->CheckCache(&root_file), ACTION_REQUEST_BINARY);
-  XCTAssertEqual(cache->CheckCache(&nonroot_file), ACTION_REQUEST_BINARY);
+  XCTAssertEqual(cache->CheckCache(&rootFile), ACTION_REQUEST_BINARY);
+  XCTAssertEqual(cache->CheckCache(&nonrootFile), ACTION_REQUEST_BINARY);
 
   // Update the cached values
-  cache->AddToCache(&root_file, ACTION_RESPOND_ALLOW);
-  cache->AddToCache(&nonroot_file, ACTION_RESPOND_DENY);
+  cache->AddToCache(&rootFile, ACTION_RESPOND_ALLOW);
+  cache->AddToCache(&nonrootFile, ACTION_RESPOND_DENY);
 
   AssertCacheCounts(cache, 1, 1);
-  XCTAssertEqual(cache->CheckCache(VnodeForFile(&root_file)), ACTION_RESPOND_ALLOW);
-  XCTAssertEqual(cache->CheckCache(VnodeForFile(&nonroot_file)), ACTION_RESPOND_DENY);
+  XCTAssertEqual(cache->CheckCache(VnodeForFile(&rootFile)), ACTION_RESPOND_ALLOW);
+  XCTAssertEqual(cache->CheckCache(VnodeForFile(&nonrootFile)), ACTION_RESPOND_DENY);
 
   // Remove the root file
-  cache->RemoveFromCache(&root_file);
+  cache->RemoveFromCache(&rootFile);
 
   AssertCacheCounts(cache, 0, 1);
-  XCTAssertEqual(cache->CheckCache(&root_file), ACTION_UNSET);
-  XCTAssertEqual(cache->CheckCache(&nonroot_file), ACTION_RESPOND_DENY);
+  XCTAssertEqual(cache->CheckCache(&rootFile), ACTION_UNSET);
+  XCTAssertEqual(cache->CheckCache(&nonrootFile), ACTION_RESPOND_DENY);
 }
 
 - (void)testFlushCache {
-  auto mock_esapi = std::make_shared<MockEndpointSecurityAPI>();
-  auto cache = std::make_shared<AuthResultCache>(mock_esapi);
+  auto mockESApi = std::make_shared<MockEndpointSecurityAPI>();
+  auto cache = std::make_shared<AuthResultCache>(mockESApi);
 
-  es_file_t root_file = MakeCacheableFile(RootDevno(), 111);
-  es_file_t nonroot_file = MakeCacheableFile(RootDevno() + 123, 111);
+  es_file_t rootFile = MakeCacheableFile(RootDevno(), 111);
+  es_file_t nonrootFile = MakeCacheableFile(RootDevno() + 123, 111);
 
-  cache->AddToCache(&root_file, ACTION_REQUEST_BINARY);
-  cache->AddToCache(&nonroot_file, ACTION_REQUEST_BINARY);
+  cache->AddToCache(&rootFile, ACTION_REQUEST_BINARY);
+  cache->AddToCache(&nonrootFile, ACTION_REQUEST_BINARY);
 
   AssertCacheCounts(cache, 1, 1);
 
@@ -135,7 +133,7 @@ static inline void AssertCacheCounts(std::shared_ptr<AuthResultCache> cache, uin
   AssertCacheCounts(cache, 1, 0);
 
   // Add back the non-root file
-  cache->AddToCache(&nonroot_file, ACTION_REQUEST_BINARY);
+  cache->AddToCache(&nonrootFile, ACTION_REQUEST_BINARY);
 
   AssertCacheCounts(cache, 1, 1);
 
@@ -143,7 +141,7 @@ static inline void AssertCacheCounts(std::shared_ptr<AuthResultCache> cache, uin
   // The call to ClearCache is asynchronous. Use a semaphore to
   // be notified when the mock is called.
   dispatch_semaphore_t sema = dispatch_semaphore_create(0);
-  EXPECT_CALL(*mock_esapi, ClearCache).WillOnce(testing::InvokeWithoutArgs(^() {
+  EXPECT_CALL(*mockESApi, ClearCache).WillOnce(testing::InvokeWithoutArgs(^() {
     dispatch_semaphore_signal(sema);
     return true;
   }));
@@ -153,29 +151,29 @@ static inline void AssertCacheCounts(std::shared_ptr<AuthResultCache> cache, uin
                  dispatch_semaphore_wait(sema, dispatch_time(DISPATCH_TIME_NOW, 5 * NSEC_PER_SEC)),
                  "ClearCache wasn't called within expected time window");
 
-  XCTBubbleMockVerifyAndClearExpectations(mock_esapi.get());
+  XCTBubbleMockVerifyAndClearExpectations(mockESApi.get());
 
   AssertCacheCounts(cache, 0, 0);
 }
 
 - (void)testCacheStateMachine {
-  auto esapi = std::make_shared<MockEndpointSecurityAPI>();
-  auto cache = std::make_shared<AuthResultCache>(esapi);
+  auto mockESApi = std::make_shared<MockEndpointSecurityAPI>();
+  auto cache = std::make_shared<AuthResultCache>(mockESApi);
 
-  es_file_t root_file = MakeCacheableFile(RootDevno(), 111);
+  es_file_t rootFile = MakeCacheableFile(RootDevno(), 111);
 
   // Cached items must first be in the ACTION_REQUEST_BINARY state
-  XCTAssertFalse(cache->AddToCache(&root_file, ACTION_RESPOND_ALLOW));
-  XCTAssertFalse(cache->AddToCache(&root_file, ACTION_RESPOND_ALLOW_COMPILER));
-  XCTAssertFalse(cache->AddToCache(&root_file, ACTION_RESPOND_DENY));
-  XCTAssertEqual(cache->CheckCache(&root_file), ACTION_UNSET);
+  XCTAssertFalse(cache->AddToCache(&rootFile, ACTION_RESPOND_ALLOW));
+  XCTAssertFalse(cache->AddToCache(&rootFile, ACTION_RESPOND_ALLOW_COMPILER));
+  XCTAssertFalse(cache->AddToCache(&rootFile, ACTION_RESPOND_DENY));
+  XCTAssertEqual(cache->CheckCache(&rootFile), ACTION_UNSET);
 
-  XCTAssertTrue(cache->AddToCache(&root_file, ACTION_REQUEST_BINARY));
-  XCTAssertEqual(cache->CheckCache(&root_file), ACTION_REQUEST_BINARY);
+  XCTAssertTrue(cache->AddToCache(&rootFile, ACTION_REQUEST_BINARY));
+  XCTAssertEqual(cache->CheckCache(&rootFile), ACTION_REQUEST_BINARY);
 
   // Items in the `ACTION_REQUEST_BINARY` state cannot reenter the same state
-  XCTAssertFalse(cache->AddToCache(&root_file, ACTION_REQUEST_BINARY));
-  XCTAssertEqual(cache->CheckCache(&root_file), ACTION_REQUEST_BINARY);
+  XCTAssertFalse(cache->AddToCache(&rootFile, ACTION_REQUEST_BINARY));
+  XCTAssertEqual(cache->CheckCache(&rootFile), ACTION_REQUEST_BINARY);
 
   santa_action_t allowed_transitions[] = {
     ACTION_RESPOND_ALLOW,
@@ -185,42 +183,42 @@ static inline void AssertCacheCounts(std::shared_ptr<AuthResultCache> cache, uin
 
   for (size_t i = 0; i < sizeof(allowed_transitions) / sizeof(allowed_transitions[0]); i++) {
     // First make sure the item doesn't exist
-    cache->RemoveFromCache(&root_file);
-    XCTAssertEqual(cache->CheckCache(&root_file), ACTION_UNSET);
+    cache->RemoveFromCache(&rootFile);
+    XCTAssertEqual(cache->CheckCache(&rootFile), ACTION_UNSET);
 
     // Now add the item to be in the first allowed state
-    XCTAssertTrue(cache->AddToCache(&root_file, ACTION_REQUEST_BINARY));
-    XCTAssertEqual(cache->CheckCache(&root_file), ACTION_REQUEST_BINARY);
+    XCTAssertTrue(cache->AddToCache(&rootFile, ACTION_REQUEST_BINARY));
+    XCTAssertEqual(cache->CheckCache(&rootFile), ACTION_REQUEST_BINARY);
 
     // Now assert the allowed transition
-    XCTAssertTrue(cache->AddToCache(&root_file, allowed_transitions[i]));
-    XCTAssertEqual(cache->CheckCache(&root_file), allowed_transitions[i]);
+    XCTAssertTrue(cache->AddToCache(&rootFile, allowed_transitions[i]));
+    XCTAssertEqual(cache->CheckCache(&rootFile), allowed_transitions[i]);
   }
 }
 
 - (void)testCacheExpiry {
-  auto esapi = std::make_shared<MockEndpointSecurityAPI>();
+  auto mockESApi = std::make_shared<MockEndpointSecurityAPI>();
   // Create a cache with a lowered cache expiry value
-  uint64_t expiry_ms = 250;
-  auto cache = std::make_shared<AuthResultCache>(esapi, expiry_ms);
+  uint64_t expiryMS = 250;
+  auto cache = std::make_shared<AuthResultCache>(mockESApi, expiryMS);
 
-  es_file_t root_file = MakeCacheableFile(RootDevno(), 111);
+  es_file_t rootFile = MakeCacheableFile(RootDevno(), 111);
 
   // Add a file to the cache and put into the ACTION_RESPOND_DENY state
-  XCTAssertTrue(cache->AddToCache(&root_file, ACTION_REQUEST_BINARY));
-  XCTAssertTrue(cache->AddToCache(&root_file, ACTION_RESPOND_DENY));
+  XCTAssertTrue(cache->AddToCache(&rootFile, ACTION_REQUEST_BINARY));
+  XCTAssertTrue(cache->AddToCache(&rootFile, ACTION_RESPOND_DENY));
 
   // Ensure the file exists
-  XCTAssertEqual(cache->CheckCache(&root_file), ACTION_RESPOND_DENY);
+  XCTAssertEqual(cache->CheckCache(&rootFile), ACTION_RESPOND_DENY);
 
   // Wait for the item to expire
-  SleepMS(expiry_ms);
+  SleepMS(expiryMS);
 
   // Check cache counts to make sure the item still exists
   AssertCacheCounts(cache, 1, 0);
 
   // Now check the cache, which will remove the item
-  XCTAssertEqual(cache->CheckCache(&root_file), ACTION_UNSET);
+  XCTAssertEqual(cache->CheckCache(&rootFile), ACTION_UNSET);
   AssertCacheCounts(cache, 0, 0);
 }
 

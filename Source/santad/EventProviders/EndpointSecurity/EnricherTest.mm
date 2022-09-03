@@ -36,14 +36,14 @@ using santa::santad::event_providers::endpoint_security::Enricher;
   XCTAssertTrue(group.has_value());
   XCTAssertEqual(strcmp(group->get()->c_str(), "nobody"), 0);
 
-  auto invalid_uid = (uid_t)-123;
-  auto invalid_gid = (gid_t)-123;
+  auto invalidUID = (uid_t)-123;
+  auto invalidGID = (gid_t)-123;
 
-  auto invalid_user = enricher.UsernameForUID(invalid_uid);
-  XCTAssertFalse(invalid_user.has_value());
+  auto invalidUser = enricher.UsernameForUID(invalidUID);
+  XCTAssertFalse(invalidUser.has_value());
 
-  auto invalid_group = enricher.UsernameForGID(invalid_gid);
-  XCTAssertFalse(invalid_group.has_value());
+  auto invalidGroup = enricher.UsernameForGID(invalidGID);
+  XCTAssertFalse(invalidGroup.has_value());
 }
 
 @end

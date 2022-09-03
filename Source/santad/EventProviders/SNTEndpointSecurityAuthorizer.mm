@@ -52,10 +52,10 @@ using santa::santad::event_providers::endpoint_security::Message;
 }
 
 - (void)processMessage:(const Message &)msg {
-  const es_file_t *target_file = msg->event.exec.target->executable;
+  const es_file_t *targetFile = msg->event.exec.target->executable;
 
   while (true) {
-    auto returnAction = self->_authResultCache->CheckCache(target_file);
+    auto returnAction = self->_authResultCache->CheckCache(targetFile);
     if (RESPONSE_VALID(returnAction)) {
       es_auth_result_t authResult = ES_AUTH_RESULT_DENY;
 
@@ -81,7 +81,7 @@ using santa::santad::event_providers::endpoint_security::Message;
     }
   }
 
-  self->_authResultCache->AddToCache(target_file, ACTION_REQUEST_BINARY);
+  self->_authResultCache->AddToCache(targetFile, ACTION_REQUEST_BINARY);
 
   [self.execController validateExecEvent:msg
                               postAction:^bool(santa_action_t action) {

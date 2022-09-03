@@ -141,12 +141,11 @@ std::string BasicStringSerializeMessage(es_message_t *esMsg) {
   es_file_t procFile = MakeESFile("foo");
   es_process_t proc = MakeESProcess(&procFile, MakeAuditToken(12, 34), MakeAuditToken(56, 78));
 
-  es_file_t exec_file = MakeESFile("execpath");
-  es_process_t proc_exec =
-    MakeESProcess(&exec_file, MakeAuditToken(12, 89), MakeAuditToken(56, 78));
+  es_file_t execFile = MakeESFile("execpath");
+  es_process_t procExec = MakeESProcess(&execFile, MakeAuditToken(12, 89), MakeAuditToken(56, 78));
 
   es_message_t esMsg = MakeESMessage(ES_EVENT_TYPE_NOTIFY_EXEC, &proc);
-  esMsg.event.exec.target = &proc_exec;
+  esMsg.event.exec.target = &procExec;
 
   auto mockESApi = std::make_shared<MockEndpointSecurityAPI>();
   EXPECT_CALL(*mockESApi, ExecArgCount).WillOnce(testing::Return(3));
@@ -230,10 +229,10 @@ std::string BasicStringSerializeMessage(es_message_t *esMsg) {
 
 - (void)testSerializeMessageUnlink {
   es_file_t procFile = MakeESFile("foo");
-  es_file_t target_file = MakeESFile("deleted_file");
+  es_file_t targetFile = MakeESFile("deleted_file");
   es_process_t proc = MakeESProcess(&procFile, MakeAuditToken(12, 34), MakeAuditToken(56, 78));
   es_message_t esMsg = MakeESMessage(ES_EVENT_TYPE_NOTIFY_UNLINK, &proc);
-  esMsg.event.unlink.target = &target_file;
+  esMsg.event.unlink.target = &targetFile;
 
   std::string got = BasicStringSerializeMessage(&esMsg);
   std::string want = "action=DELETE|path=deleted_file"

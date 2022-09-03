@@ -58,9 +58,9 @@ es_return_t es_delete_client(es_client_t *_Nullable client) {
   // Nonnull `es_client_t*` *should* trigger `es_delete_client`
   {
     int fake;
-    es_client_t *fake_client = (es_client_t *)&fake;
-    auto c = Client(fake_client, ES_NEW_CLIENT_RESULT_SUCCESS);
-    XCTAssertEqual(c.Get(), fake_client);
+    es_client_t *fakeClient = (es_client_t *)&fake;
+    auto c = Client(fakeClient, ES_NEW_CLIENT_RESULT_SUCCESS);
+    XCTAssertEqual(c.Get(), fakeClient);
     XCTAssertEqual(c.NewClientResult(), ES_NEW_CLIENT_RESULT_SUCCESS);
   }
 
@@ -70,13 +70,13 @@ es_return_t es_delete_client(es_client_t *_Nullable client) {
   // Test move constructor
   {
     int fake;
-    es_client_t *fake_client = (es_client_t *)&fake;
-    auto c1 = Client(fake_client, ES_NEW_CLIENT_RESULT_SUCCESS);
+    es_client_t *fakeClient = (es_client_t *)&fake;
+    auto c1 = Client(fakeClient, ES_NEW_CLIENT_RESULT_SUCCESS);
 
     Client c2(std::move(c1));
 
     XCTAssertEqual(c1.Get(), nullptr);
-    XCTAssertEqual(c2.Get(), fake_client);
+    XCTAssertEqual(c2.Get(), fakeClient);
     XCTAssertEqual(c2.NewClientResult(), ES_NEW_CLIENT_RESULT_SUCCESS);
   }
 
@@ -90,14 +90,14 @@ es_return_t es_delete_client(es_client_t *_Nullable client) {
   // Test move assignment
   {
     int fake;
-    es_client_t *fake_client = (es_client_t *)&fake;
-    auto c1 = Client(fake_client, ES_NEW_CLIENT_RESULT_SUCCESS);
+    es_client_t *fakeClient = (es_client_t *)&fake;
+    auto c1 = Client(fakeClient, ES_NEW_CLIENT_RESULT_SUCCESS);
     Client c2;
 
     c2 = std::move(c1);
 
     XCTAssertEqual(c1.Get(), nullptr);
-    XCTAssertEqual(c2.Get(), fake_client);
+    XCTAssertEqual(c2.Get(), fakeClient);
     XCTAssertEqual(c2.NewClientResult(), ES_NEW_CLIENT_RESULT_SUCCESS);
   }
 

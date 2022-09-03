@@ -101,13 +101,13 @@ NSString *testBinariesPath = @"santa/Source/santad/testdata/binaryrules";
   lstat(binaryPath.UTF8String, &fileStat);
   es_file_t file = MakeESFile([binaryPath UTF8String], fileStat);
   es_process_t proc = MakeESProcess(&file);
-  // Set a 6 second deadline for the message. The base SNTEndpointSecurityClient
+  // Set a 6.5 second deadline for the message. The base SNTEndpointSecurityClient
   // class leaves a 5 second buffer to auto-respond to messages. A 6 second
-  // deadline means there is a 1 second leeway given for the processing block
+  // deadline means there is a 1.5 second leeway given for the processing block
   // to finish its tasks and release the `Message`. This will add about 1 second
   // to the run time of each test case since each one must wait for the
   // deadline block to run and release the message.
-  es_message_t esMsg = MakeESMessage(ES_EVENT_TYPE_AUTH_EXEC, &proc, ActionType::Auth, 6000);
+  es_message_t esMsg = MakeESMessage(ES_EVENT_TYPE_AUTH_EXEC, &proc, ActionType::Auth, 6500);
   esMsg.event.exec.target = &proc;
   // Need a pointer to esMsg to capture in blocks below.
   es_message_t *heapESMsg = &esMsg;

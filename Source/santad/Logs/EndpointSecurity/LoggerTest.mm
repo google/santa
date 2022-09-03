@@ -130,7 +130,7 @@ class MockWriter : public Null {
   // Because we don't need to operate on the es_msg_, this simplifies the test.
   EXPECT_CALL(*self->_mockESApi, RetainMessage);
 
-  auto enriched_msg = std::make_shared<EnrichedMessage>(
+  auto enrichedMsg = std::make_shared<EnrichedMessage>(
     EnrichedClose(Message(self->_mockESApi, &msg),
                   EnrichedProcess(std::nullopt, std::nullopt, std::nullopt, std::nullopt,
                                   EnrichedFile(std::nullopt, std::nullopt, std::nullopt)),
@@ -140,7 +140,7 @@ class MockWriter : public Null {
     .Times(1);
   EXPECT_CALL(*self->_mockWriter, Write).Times(1);
 
-  Logger(self->_mockSerializer, self->_mockWriter).Log(enriched_msg);
+  Logger(self->_mockSerializer, self->_mockWriter).Log(enrichedMsg);
 
   XCTBubbleMockVerifyAndClearExpectations(self->_mockESApi.get());
   XCTBubbleMockVerifyAndClearExpectations(self->_mockSerializer.get());
