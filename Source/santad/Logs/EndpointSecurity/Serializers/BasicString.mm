@@ -30,7 +30,7 @@
 #import "Source/common/SNTConfigurator.h"
 #import "Source/common/SNTLogging.h"
 #import "Source/common/SNTStoredEvent.h"
-#include "Source/santad/Logs/EndpointSecurity/Serializers/Utilities.h"
+#include "Source/santad/Logs/EndpointSecurity/Serializers/SanitizableString.h"
 #import "Source/santad/SNTDecisionCache.h"
 
 using santa::santad::event_providers::endpoint_security::EndpointSecurityAPI;
@@ -43,6 +43,7 @@ using santa::santad::event_providers::endpoint_security::EnrichedLink;
 using santa::santad::event_providers::endpoint_security::EnrichedRename;
 using santa::santad::event_providers::endpoint_security::EnrichedUnlink;
 using santa::santad::event_providers::endpoint_security::Message;
+using santa::santad::logs::endpoint_security::serializers::SanitizableString;
 
 // These functions are exported by the Security framework, but are not included in headers
 extern "C" Boolean SecTranslocateIsTranslocatedURL(CFURLRef path, bool *isTranslocated,
@@ -52,15 +53,8 @@ extern "C" CFURLRef __nullable SecTranslocateCreateOriginalPathForURL(CFURLRef t
 
 namespace santa::santad::logs::endpoint_security::serializers {
 
-/*
- * ~~~ BEGIN:
- * TODO: These functions should be moved to some common util file once
- * more enrichers exist...
- */
-
-// TODO(mlw): Return a sanitized string?
-static inline std::string_view FilePath(const es_file_t *file) {
-  return std::string_view(file->path.data);
+static inline SanitizableString FilePath(const es_file_t *file) {
+  return SanitizableString(file);
 }
 
 static inline pid_t Pid(const audit_token_t &tok) {
@@ -175,6 +169,19 @@ static NSString *OriginalPathForTranslocation(const es_process_t *esProc) {
   return [origURL path];
 }
 
+es_file_t *GetAllowListTargetFile(const Message &msg) {
+  switch (msg->event_type) {
+    case ES_EVENT_TYPE_NOTIFY_CLOSE: return msg->event.close.target;
+    case ES_EVENT_TYPE_NOTIFY_RENAME: return msg->event.rename.source;
+    default:
+      // This is a programming error
+      LOGE(@"Unexpected event type for AllowList");
+      [NSException raise:@"Unexpected type"
+                  format:@"Unexpected event type for AllowList: %d", msg->event_type];
+      return nil;
+  }
+}
+
 static NSDateFormatter *GetDateFormatter() {
   static dispatch_once_t onceToken;
   static NSDateFormatter *dateFormatter;
@@ -188,12 +195,6 @@ static NSDateFormatter *GetDateFormatter() {
 
   return dateFormatter;
 }
-
-/*
- * TODO: These functions should be moved to some common util file once
- * more enrichers exist...
- * ~~~ END: ^^^^
- */
 
 std::string GetDecisionString(SNTEventState event_state) {
   if (event_state & SNTEventStateAllow) {
@@ -233,14 +234,14 @@ std::string GetModeString(SNTClientMode mode) {
   }
 }
 
-static inline void AppendProcess(std::stringstream &ss, const es_process_t *es_proc) {
+static inline void AppendProcess(std::ostream &ss, const es_process_t *es_proc) {
   char bname[MAXPATHLEN];
   ss << "|pid=" << Pid(es_proc->audit_token) << "|ppid=" << es_proc->original_ppid
-     << "|process=" << basename_r(FilePath(es_proc->executable).data(), bname)
+     << "|process=" << (basename_r(FilePath(es_proc->executable).Sanitized().data(), bname) ?: "")
      << "|processpath=" << FilePath(es_proc->executable);
 }
 
-static inline void AppendUserGroup(std::stringstream &ss, const audit_token_t &tok,
+static inline void AppendUserGroup(std::ostream &ss, const audit_token_t &tok,
                                    std::optional<std::shared_ptr<std::string>> user,
                                    std::optional<std::shared_ptr<std::string>> group) {
   ss << "|uid=" << RealUser(tok) << "|user=" << (user.has_value() ? user->get()->c_str() : "(null)")
@@ -273,8 +274,8 @@ std::shared_ptr<BasicString> BasicString::Create(std::shared_ptr<EndpointSecurit
 BasicString::BasicString(std::shared_ptr<EndpointSecurityAPI> esapi, bool prefix_time_name)
     : esapi_(esapi), prefix_time_name_(prefix_time_name) {}
 
-std::stringstream BasicString::CreateDefaultStringStream() {
-  std::stringstream ss;
+std::ostringstream BasicString::CreateDefaultStringStream() {
+  std::ostringstream ss;
 
   if (prefix_time_name_) {
     char buf[32];
@@ -338,7 +339,7 @@ std::vector<uint8_t> BasicString::SerializeMessage(const EnrichedExec &msg) {
 
   if (cd.certSHA256) {
     ss << "|cert_sha256=" << [cd.certSHA256 UTF8String]
-       << "|cert_cn=" << [NonNull(sanitizeString(cd.certCommonName)) UTF8String];
+       << "|cert_cn=" << SanitizableString(cd.certCommonName);
   }
 
   if (cd.teamID.length) {
@@ -346,7 +347,8 @@ std::vector<uint8_t> BasicString::SerializeMessage(const EnrichedExec &msg) {
   }
 
   if (cd.quarantineURL) {
-    ss << "|quarantine_url=" << [NonNull(sanitizeString(cd.quarantineURL)) UTF8String];
+    // ss << "|quarantine_url=" << [NonNull(sanitizeString(cd.quarantineURL)) UTF8String];
+    ss << "|quarantine_url=" << SanitizableString(cd.quarantineURL);
   }
 
   ss << "|pid=" << Pid(esm.event.exec.target->audit_token)
@@ -361,7 +363,7 @@ std::vector<uint8_t> BasicString::SerializeMessage(const EnrichedExec &msg) {
 
   NSString *origPath = OriginalPathForTranslocation(esm.event.exec.target);
   if (origPath) {
-    ss << "|origpath=" << origPath;
+    ss << "|origpath=" << SanitizableString(origPath);
   }
 
   uint32_t argCount = esapi_->ExecArgCount(&esm.event.exec);
@@ -372,7 +374,7 @@ std::vector<uint8_t> BasicString::SerializeMessage(const EnrichedExec &msg) {
         ss << " ";
       }
 
-      ss << esapi_->ExecArg(&esm.event.exec, i).data;
+      ss << SanitizableString(esapi_->ExecArg(&esm.event.exec, i));
     }
   }
 
@@ -420,7 +422,7 @@ std::vector<uint8_t> BasicString::SerializeMessage(const EnrichedLink &msg) {
 
   ss << "action=LINK|path=" << FilePath(esm.event.link.source)
      << "|newpath=" << FilePath(esm.event.link.target_dir) << "/"
-     << esm.event.link.target_filename.data;
+     << SanitizableString(esm.event.link.target_filename);
 
   AppendProcess(ss, esm.process);
   AppendUserGroup(ss, esm.process->audit_token, msg.instigator_.real_user_,
@@ -443,7 +445,7 @@ std::vector<uint8_t> BasicString::SerializeMessage(const EnrichedRename &msg) {
       break;
     case ES_DESTINATION_TYPE_NEW_PATH:
       ss << FilePath(esm.event.rename.destination.new_path.dir) << "/"
-         << esm.event.rename.destination.new_path.filename.data;
+         << SanitizableString(esm.event.rename.destination.new_path.filename);
       break;
     default: ss << "(null)"; break;
   }

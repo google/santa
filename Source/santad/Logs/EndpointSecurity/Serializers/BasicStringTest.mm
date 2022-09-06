@@ -43,11 +43,13 @@ using santa::santad::logs::endpoint_security::serializers::BasicString;
 using santa::santad::logs::endpoint_security::serializers::Serializer;
 
 namespace santa::santad::logs::endpoint_security::serializers {
+extern es_file_t *GetAllowListTargetFile(const Message &msg);
 extern std::string GetDecisionString(SNTEventState event_state);
 extern std::string GetReasonString(SNTEventState event_state);
 extern std::string GetModeString(SNTClientMode mode);
 }  // namespace santa::santad::logs::endpoint_security::serializers
 
+using santa::santad::logs::endpoint_security::serializers::GetAllowListTargetFile;
 using santa::santad::logs::endpoint_security::serializers::GetDecisionString;
 using santa::santad::logs::endpoint_security::serializers::GetModeString;
 using santa::santad::logs::endpoint_security::serializers::GetReasonString;
@@ -141,7 +143,7 @@ std::string BasicStringSerializeMessage(es_message_t *esMsg) {
   es_file_t procFile = MakeESFile("foo");
   es_process_t proc = MakeESProcess(&procFile, MakeAuditToken(12, 34), MakeAuditToken(56, 78));
 
-  es_file_t execFile = MakeESFile("execpath");
+  es_file_t execFile = MakeESFile("execpath|");
   es_process_t procExec = MakeESProcess(&execFile, MakeAuditToken(12, 89), MakeAuditToken(56, 78));
 
   es_message_t esMsg = MakeESMessage(ES_EVENT_TYPE_NOTIFY_EXEC, &proc);
@@ -151,16 +153,15 @@ std::string BasicStringSerializeMessage(es_message_t *esMsg) {
   EXPECT_CALL(*mockESApi, ExecArgCount).WillOnce(testing::Return(3));
 
   EXPECT_CALL(*mockESApi, ExecArg)
-    .WillOnce(testing::Return(es_string_token_t{8, "execpath"}))
-    .WillOnce(testing::Return(es_string_token_t{2, "-l"}))
-    .WillOnce(testing::Return(es_string_token_t{2, "-v"}));
+    .WillOnce(testing::Return(es_string_token_t{9, "exec|path"}))
+    .WillOnce(testing::Return(es_string_token_t{5, "-l\n-t"}))
+    .WillOnce(testing::Return(es_string_token_t{8, "-v\r--foo"}));
 
   std::string got = BasicStringSerializeMessage(mockESApi, &esMsg);
-  std::string want = "action=EXEC|decision=ALLOW|reason=BINARY|explain=extra!"
-                     "|sha256=1234_hash|cert_sha256=5678_hash|cert_cn="
-                     "|quarantine_url=google.com|pid=12|pidversion=89|ppid=56"
-                     "|uid=-2|user=nobody|gid=-2|group=nobody"
-                     "|mode=L|path=execpath|args=execpath -l -v|machineid=my_id";
+  std::string want = "action=EXEC|decision=ALLOW|reason=BINARY|explain=extra!|sha256=1234_hash|"
+                     "cert_sha256=5678_hash|cert_cn=|quarantine_url=google.com|pid=12|pidversion="
+                     "89|ppid=56|uid=-2|user=nobody|gid=-2|group=nobody|mode=L|path=execpath<pipe>|"
+                     "args=exec<pipe>path -l\\n-t -v\\r--foo|machineid=my_id";
 
   XCTAssertCppStringEqual(got, want);
 }
@@ -379,6 +380,38 @@ std::string BasicStringSerializeMessage(es_message_t *esMsg) {
 
   for (const auto &kv : modeToString) {
     XCTAssertCppStringEqual(GetModeString(kv.first), kv.second);
+  }
+}
+
+- (void)testGetAllowListTargetFile {
+  es_file_t closeTargetFile = MakeESFile("close_target");
+  es_file_t renameSourceFile = MakeESFile("rename_source");
+  es_file_t procFile = MakeESFile("foo");
+  es_process_t proc = MakeESProcess(&procFile);
+  es_message_t esMsg = MakeESMessage(ES_EVENT_TYPE_NOTIFY_CLOSE, &proc);
+
+  auto mockESApi = std::make_shared<MockEndpointSecurityAPI>();
+  mockESApi->SetExpectationsRetainReleaseMessage(&esMsg);
+
+  {
+    esMsg.event.close.target = &closeTargetFile;
+    Message msg(mockESApi, &esMsg);
+    es_file_t *target = GetAllowListTargetFile(msg);
+    XCTAssertEqual(target, &closeTargetFile);
+  }
+
+  {
+    esMsg.event_type = ES_EVENT_TYPE_NOTIFY_RENAME;
+    esMsg.event.rename.source = &renameSourceFile;
+    Message msg(mockESApi, &esMsg);
+    es_file_t *target = GetAllowListTargetFile(msg);
+    XCTAssertEqual(target, &renameSourceFile);
+  }
+
+  {
+    esMsg.event_type = ES_EVENT_TYPE_NOTIFY_EXIT;
+    Message msg(mockESApi, &esMsg);
+    XCTAssertThrows(GetAllowListTargetFile(msg));
   }
 }
 

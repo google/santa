@@ -317,16 +317,6 @@ objc_library(
 )
 
 objc_library(
-    name = "EndpointSecuritySerializerUtilities",
-    srcs = ["Logs/EndpointSecurity/Serializers/Utilities.mm"],
-    hdrs = ["Logs/EndpointSecurity/Serializers/Utilities.h"],
-    deps = [
-        ":EndpointSecurityMessage",
-        "//Source/common:SNTLogging",
-    ],
-)
-
-objc_library(
     name = "EndpointSecuritySerializerEmpty",
     srcs = ["Logs/EndpointSecurity/Serializers/Empty.mm"],
     hdrs = ["Logs/EndpointSecurity/Serializers/Empty.h"],
@@ -336,12 +326,24 @@ objc_library(
 )
 
 objc_library(
+    name = "EndpointSecuritySanitizableString",
+    srcs = ["Logs/EndpointSecurity/Serializers/SanitizableString.mm"],
+    hdrs = ["Logs/EndpointSecurity/Serializers/SanitizableString.h"],
+    sdk_dylibs = [
+        "EndpointSecurity",
+    ],
+    deps = [
+        ":EndpointSecurityMessage",
+    ],
+)
+
+objc_library(
     name = "EndpointSecuritySerializerBasicString",
     srcs = ["Logs/EndpointSecurity/Serializers/BasicString.mm"],
     hdrs = ["Logs/EndpointSecurity/Serializers/BasicString.h"],
     deps = [
+        ":EndpointSecuritySanitizableString",
         ":EndpointSecuritySerializer",
-        ":EndpointSecuritySerializerUtilities",
         ":SNTDecisionCache",
         "//Source/common:SNTLogging",
         "//Source/common:SNTStoredEvent",
@@ -661,18 +663,15 @@ santa_unit_test(
 )
 
 santa_unit_test(
-    name = "EndpointSecuritySerializerUtilitiesTest",
-    srcs = ["Logs/EndpointSecurity/Serializers/UtilitiesTest.mm"],
+    name = "EndpointSecuritySanitizableStringTest",
+    srcs = ["Logs/EndpointSecurity/Serializers/SanitizableStringTest.mm"],
     sdk_dylibs = [
         "EndpointSecurity",
     ],
     deps = [
-        ":EndpointSecurityAPI",
-        ":EndpointSecurityMessage",
-        ":EndpointSecuritySerializerUtilities",
-        ":MockEndpointSecurityAPI",
+        ":EndpointSecuritySanitizableString",
         "//Source/common:TestUtils",
-        "@com_google_googletest//:gtest",
+        "@OCMock",
     ],
 )
 
@@ -980,9 +979,9 @@ test_suite(
         ":EndpointSecurityEnricherTest",
         ":EndpointSecurityLoggerTest",
         ":EndpointSecurityMessageTest",
+        ":EndpointSecuritySanitizableStringTest",
         ":EndpointSecuritySerializerBasicStringTest",
         ":EndpointSecuritySerializerEmptyTest",
-        ":EndpointSecuritySerializerUtilitiesTest",
         ":EndpointSecurityWriterFileTest",
         ":MetricsTest",
         ":SNTApplicationCoreMetricsTest",
