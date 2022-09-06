@@ -20,7 +20,7 @@ namespace santa::santad::logs::endpoint_security::writers {
 
 std::shared_ptr<File> File::Create(NSString *path, uint64_t flush_timeout_ms,
                                    size_t batch_size_bytes, size_t max_expected_write_size_bytes) {
-  dispatch_queue_t q = dispatch_queue_create("com.google.santa.file_event_log",
+  dispatch_queue_t q = dispatch_queue_create("com.google.santa.daemon.file_event_log",
                                              DISPATCH_QUEUE_SERIAL_WITH_AUTORELEASE_POOL);
   dispatch_source_t timer_source = dispatch_source_create(DISPATCH_SOURCE_TYPE_TIMER, 0, 0, q);
 

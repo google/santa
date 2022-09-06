@@ -80,7 +80,8 @@ static NSString *const kPrinterProxyPostMonterey =
     _syncdQueue = syncdQueue;
     _policyProcessor = [[SNTPolicyProcessor alloc] initWithRuleTable:_ruleTable];
 
-    _eventQueue = dispatch_queue_create("com.google.santad.event_upload", DISPATCH_QUEUE_SERIAL);
+    _eventQueue =
+      dispatch_queue_create("com.google.santa.daemon.event_upload", DISPATCH_QUEUE_SERIAL);
 
     // This establishes the XPC connection between libsecurity and syspolicyd.
     // Not doing this causes a deadlock as establishing this link goes through xpcproxy.

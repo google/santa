@@ -142,7 +142,7 @@ NS_ASSUME_NONNULL_BEGIN
     _logger = logger;
     _blockUSBMount = false;
 
-    _diskQueue = dispatch_queue_create("com.google.santad.disk_queue", DISPATCH_QUEUE_SERIAL);
+    _diskQueue = dispatch_queue_create("com.google.santa.daemon.disk_queue", DISPATCH_QUEUE_SERIAL);
 
     _diskArbSession = DASessionCreate(NULL);
     DASessionSetDispatchQueue(_diskArbSession, _diskQueue);

@@ -59,12 +59,12 @@ using santa::santad::event_providers::endpoint_security::Message;
     }
 
     _authQueue = dispatch_queue_create(
-      "com.google.santa.santad.auth_queue",
+      "com.google.santa.daemon.auth_queue",
       dispatch_queue_attr_make_with_qos_class(DISPATCH_QUEUE_CONCURRENT_WITH_AUTORELEASE_POOL,
                                               QOS_CLASS_USER_INTERACTIVE, 0));
 
     _notifyQueue = dispatch_queue_create(
-      "com.google.santa.santad.notify_queue",
+      "com.google.santa.daemon.notify_queue",
       dispatch_queue_attr_make_with_qos_class(DISPATCH_QUEUE_CONCURRENT_WITH_AUTORELEASE_POOL,
                                               QOS_CLASS_BACKGROUND, 0));
   }
