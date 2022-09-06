@@ -11,4 +11,4 @@ jobs:
     steps:
     - uses: actions/checkout@master
     - uses: gaurav-nelson/github-action-markdown-link-check@v1
-    - run: "! git grep -EIn $'[ \t]+$'"
+    - run: "! git grep -EIn $'[ \t]+$' -- ':(exclude)*.patch'"
