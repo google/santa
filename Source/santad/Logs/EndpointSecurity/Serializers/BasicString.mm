@@ -25,6 +25,7 @@
 #include <sys/time.h>
 #include <time.h>
 #include <unistd.h>
+#include <sstream>
 
 #import "Source/common/SNTCachedDecision.h"
 #import "Source/common/SNTConfigurator.h"
@@ -234,14 +235,14 @@ std::string GetModeString(SNTClientMode mode) {
   }
 }
 
-static inline void AppendProcess(std::ostream &ss, const es_process_t *es_proc) {
+static inline void AppendProcess(std::ostringstream &ss, const es_process_t *es_proc) {
   char bname[MAXPATHLEN];
   ss << "|pid=" << Pid(es_proc->audit_token) << "|ppid=" << es_proc->original_ppid
      << "|process=" << (basename_r(FilePath(es_proc->executable).Sanitized().data(), bname) ?: "")
      << "|processpath=" << FilePath(es_proc->executable);
 }
 
-static inline void AppendUserGroup(std::ostream &ss, const audit_token_t &tok,
+static inline void AppendUserGroup(std::ostringstream &ss, const audit_token_t &tok,
                                    std::optional<std::shared_ptr<std::string>> user,
                                    std::optional<std::shared_ptr<std::string>> group) {
   ss << "|uid=" << RealUser(tok) << "|user=" << (user.has_value() ? user->get()->c_str() : "(null)")
@@ -287,6 +288,12 @@ std::ostringstream BasicString::CreateDefaultStringStream() {
   return ss;
 }
 
+inline std::vector<uint8_t> FinalizeStringStream(std::ostringstream &ss) {
+  ss << "\n";
+  std::string str = ss.str();
+  return std::vector<uint8_t>(str.begin(), str.end());
+}
+
 std::vector<uint8_t> BasicString::SerializeMessage(const EnrichedClose &msg) {
   const es_message_t &esm = *msg.es_msg_;
 
@@ -298,9 +305,7 @@ std::vector<uint8_t> BasicString::SerializeMessage(const EnrichedClose &msg) {
   AppendUserGroup(ss, esm.process->audit_token, msg.instigator_.real_user_,
                   msg.instigator_.real_group_);
 
-  std::string s = ss.str();
-
-  return std::vector<uint8_t>(s.begin(), s.end());
+  return FinalizeStringStream(ss);
 }
 
 std::vector<uint8_t> BasicString::SerializeMessage(const EnrichedExchange &msg) {
@@ -314,9 +319,7 @@ std::vector<uint8_t> BasicString::SerializeMessage(const EnrichedExchange &msg) 
   AppendUserGroup(ss, esm.process->audit_token, msg.instigator_.real_user_,
                   msg.instigator_.real_group_);
 
-  std::string s = ss.str();
-
-  return std::vector<uint8_t>(s.begin(), s.end());
+  return FinalizeStringStream(ss);
 }
 
 std::vector<uint8_t> BasicString::SerializeMessage(const EnrichedExec &msg) {
@@ -382,9 +385,7 @@ std::vector<uint8_t> BasicString::SerializeMessage(const EnrichedExec &msg) {
     ss << "|machineid=" << [NonNull([[SNTConfigurator configurator] machineID]) UTF8String];
   }
 
-  std::string s = ss.str();
-
-  return std::vector<uint8_t>(s.begin(), s.end());
+  return FinalizeStringStream(ss);
 }
 
 std::vector<uint8_t> BasicString::SerializeMessage(const EnrichedExit &msg) {
@@ -396,9 +397,7 @@ std::vector<uint8_t> BasicString::SerializeMessage(const EnrichedExit &msg) {
      << "|ppid=" << esm.process->original_ppid << "|uid=" << RealUser(esm.process->audit_token)
      << "|gid=" << RealGroup(esm.process->audit_token);
 
-  std::string s = ss.str();
-
-  return std::vector<uint8_t>(s.begin(), s.end());
+  return FinalizeStringStream(ss);
 }
 
 std::vector<uint8_t> BasicString::SerializeMessage(const EnrichedFork &msg) {
@@ -411,9 +410,7 @@ std::vector<uint8_t> BasicString::SerializeMessage(const EnrichedFork &msg) {
      << "|uid=" << RealUser(esm.event.fork.child->audit_token)
      << "|gid=" << RealGroup(esm.event.fork.child->audit_token);
 
-  std::string s = ss.str();
-
-  return std::vector<uint8_t>(s.begin(), s.end());
+  return FinalizeStringStream(ss);
 }
 
 std::vector<uint8_t> BasicString::SerializeMessage(const EnrichedLink &msg) {
@@ -428,9 +425,7 @@ std::vector<uint8_t> BasicString::SerializeMessage(const EnrichedLink &msg) {
   AppendUserGroup(ss, esm.process->audit_token, msg.instigator_.real_user_,
                   msg.instigator_.real_group_);
 
-  std::string s = ss.str();
-
-  return std::vector<uint8_t>(s.begin(), s.end());
+  return FinalizeStringStream(ss);
 }
 
 std::vector<uint8_t> BasicString::SerializeMessage(const EnrichedRename &msg) {
@@ -454,9 +449,7 @@ std::vector<uint8_t> BasicString::SerializeMessage(const EnrichedRename &msg) {
   AppendUserGroup(ss, esm.process->audit_token, msg.instigator_.real_user_,
                   msg.instigator_.real_group_);
 
-  std::string s = ss.str();
-
-  return std::vector<uint8_t>(s.begin(), s.end());
+  return FinalizeStringStream(ss);
 }
 
 std::vector<uint8_t> BasicString::SerializeMessage(const EnrichedUnlink &msg) {
@@ -469,9 +462,7 @@ std::vector<uint8_t> BasicString::SerializeMessage(const EnrichedUnlink &msg) {
   AppendUserGroup(ss, esm.process->audit_token, msg.instigator_.real_user_,
                   msg.instigator_.real_group_);
 
-  std::string s = ss.str();
-
-  return std::vector<uint8_t>(s.begin(), s.end());
+  return FinalizeStringStream(ss);
 }
 
 std::vector<uint8_t> BasicString::SerializeAllowlist(const Message &msg,
@@ -482,9 +473,7 @@ std::vector<uint8_t> BasicString::SerializeAllowlist(const Message &msg,
      << "|pidversion=" << Pidversion(msg->process->audit_token)
      << "|path=" << FilePath(GetAllowListTargetFile(msg)) << "|sha256=" << hash;
 
-  std::string s = ss.str();
-
-  return std::vector<uint8_t>(s.begin(), s.end());
+  return FinalizeStringStream(ss);
 }
 
 std::vector<uint8_t> BasicString::SerializeBundleHashingEvent(SNTStoredEvent *event) {
@@ -496,9 +485,7 @@ std::vector<uint8_t> BasicString::SerializeBundleHashingEvent(SNTStoredEvent *ev
      << "|bundleid=" << [NonNull(event.fileBundleID) UTF8String] << "|bundlepath=" <<
     [NonNull(event.fileBundlePath) UTF8String] << "|path=" << [NonNull(event.filePath) UTF8String];
 
-  std::string s = ss.str();
-
-  return std::vector<uint8_t>(s.begin(), s.end());
+  return FinalizeStringStream(ss);
 }
 
 std::vector<uint8_t> BasicString::SerializeDiskAppeared(NSDictionary *props) {
@@ -528,9 +515,7 @@ std::vector<uint8_t> BasicString::SerializeDiskAppeared(NSDictionary *props) {
      << "|bus=" << [NonNull(props[@"DADeviceProtocol"]) UTF8String] << "|dmgpath=" <<
     [NonNull(dmgPath) UTF8String] << "|appearance=" << [NonNull(appearanceDateString) UTF8String];
 
-  std::string s = ss.str();
-
-  return std::vector<uint8_t>(s.begin(), s.end());
+  return FinalizeStringStream(ss);
 }
 
 std::vector<uint8_t> BasicString::SerializeDiskDisappeared(NSDictionary *props) {
@@ -541,9 +526,7 @@ std::vector<uint8_t> BasicString::SerializeDiskDisappeared(NSDictionary *props) 
      << "|volume=" << [NonNull(props[@"DAVolumeName"]) UTF8String]
      << "|bsdname=" << [NonNull(props[@"DAMediaBSDName"]) UTF8String];
 
-  std::string s = ss.str();
-
-  return std::vector<uint8_t>(s.begin(), s.end());
+  return FinalizeStringStream(ss);
 }
 
 }  // namespace santa::santad::logs::endpoint_security::serializers
