@@ -62,7 +62,7 @@ hedron_compile_commands_setup()
 
 git_repository(
     name = "oneTBB",
-    branch = "master",
+    commit = "b2b28c5b63fbd0352f66168a42068c437323fb19", # tag = v2021.7.0-rc1
     remote = "https://github.com/oneapi-src/oneTBB/",
 )
 
