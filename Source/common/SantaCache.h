@@ -330,7 +330,8 @@ class SantaCache {
   inline void unlock(struct bucket *bucket) const {
     if (unlikely(OSAtomicTestAndClear(7, (volatile uint8_t *)&bucket->head) ==
                  0)) {
-      os_log_error(OS_LOG_DEFAULT, "SantaCache::unlock(): Tried to unlock an unlocked lock");
+      os_log_error(OS_LOG_DEFAULT,
+                   "SantaCache::unlock(): Tried to unlock an unlocked lock");
       abort();
     }
   }

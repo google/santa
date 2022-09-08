@@ -125,9 +125,11 @@ using santa::santad::event_providers::endpoint_security::Message;
 
   self->_authResultCache->AddToCache(esMsg->event.exec.target->executable, action);
 
-  // Don't cache DENY results. Santa only flushes ES cache when a new DENY rule
-  // is received. If DENY results were cached and a rule update made the
-  // executable allowable, ES would continue to apply the DENY cached result.
+  // Don't let the ES framework cache DENY results. Santa only flushes ES cache
+  // when a new DENY rule is received. If DENY results were cached and a rule
+  // update made the executable allowable, ES would continue to apply the DENY
+  // cached result. Note however that the local AuthResultCache will cache
+  // DENY results.
   return [self respondToMessage:esMsg
                  withAuthResult:authResult
                       cacheable:(authResult == ES_AUTH_RESULT_ALLOW)];
