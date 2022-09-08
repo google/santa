@@ -66,7 +66,7 @@
 ///      <string>BINARY</string>  (one of BINARY, CERTIFICATE or TEAMID)
 ///      <key>policy</key>
 ///      <string>BLOCKLIST</string>  (one of ALLOWLIST, ALLOWLIST_COMPILER, BLOCKLIST,
-///      SILENT_BLOCKLIST)
+///                                   SILENT_BLOCKLIST)
 ///    </dict>
 ///  </array>
 ///
