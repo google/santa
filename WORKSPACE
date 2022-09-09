@@ -51,7 +51,7 @@ git_repository(
     name = "hedron_compile_commands",
     commit = "92db741ee6dee0c4a83a5c58be7747df7b89ed10",
     remote = "https://github.com/hedronvision/bazel-compile-commands-extractor.git",
-    shallow_since = "1640416382 -0800"
+    shallow_since = "1640416382 -0800",
 )
 
 load("@hedron_compile_commands//:workspace_setup.bzl", "hedron_compile_commands_setup")
@@ -62,7 +62,7 @@ hedron_compile_commands_setup()
 
 git_repository(
     name = "oneTBB",
-    commit = "b2b28c5b63fbd0352f66168a42068c437323fb19", # tag = v2021.7.0-rc1
+    commit = "b2b28c5b63fbd0352f66168a42068c437323fb19",  # tag = v2021.7.0-rc1
     remote = "https://github.com/oneapi-src/oneTBB/",
     shallow_since = "1660220888 +0200",
 )
@@ -107,15 +107,15 @@ git_repository(
 
 git_repository(
     name = "MOLCertificate",
+    commit = "288553b8ac75d7dd68159ef5b57652a506b8217c",  # tag = "v2.1",
     remote = "https://github.com/google/macops-molcertificate.git",
-    commit = "288553b8ac75d7dd68159ef5b57652a506b8217c", # tag = "v2.1",
     shallow_since = "1561303966 -0400",
 )
 
 git_repository(
     name = "MOLCodesignChecker",
+    commit = "7ef66f1df15997defd7651b0ea5d6d9ec65a5b4f",  # tag = "v2.2",
     remote = "https://github.com/google/macops-molcodesignchecker.git",
-    commit = "7ef66f1df15997defd7651b0ea5d6d9ec65a5b4f", # tag = "v2.2",
     shallow_since = "1561303990 -0400",
 )
 

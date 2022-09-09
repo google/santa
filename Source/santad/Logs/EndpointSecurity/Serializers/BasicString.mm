@@ -25,7 +25,8 @@
 #include <sys/time.h>
 #include <time.h>
 #include <unistd.h>
-#include <sstream>
+
+#include <string>
 
 #import "Source/common/SNTCachedDecision.h"
 #import "Source/common/SNTConfigurator.h"
@@ -235,19 +236,29 @@ std::string GetModeString(SNTClientMode mode) {
   }
 }
 
-static inline void AppendProcess(std::ostringstream &ss, const es_process_t *es_proc) {
+static inline void AppendProcess(std::string &str, const es_process_t *es_proc) {
   char bname[MAXPATHLEN];
-  ss << "|pid=" << Pid(es_proc->audit_token) << "|ppid=" << es_proc->original_ppid
-     << "|process=" << (basename_r(FilePath(es_proc->executable).Sanitized().data(), bname) ?: "")
-     << "|processpath=" << FilePath(es_proc->executable);
+  str.append("|pid=");
+  str.append(std::to_string(Pid(es_proc->audit_token)));
+  str.append("|ppid=");
+  str.append(std::to_string(es_proc->original_ppid));
+  str.append("|process=");
+  str.append(basename_r(FilePath(es_proc->executable).Sanitized().data(), bname) ?: "");
+  str.append("|processpath=");
+  str.append(FilePath(es_proc->executable).Sanitized());
 }
 
-static inline void AppendUserGroup(std::ostringstream &ss, const audit_token_t &tok,
+static inline void AppendUserGroup(std::string &str, const audit_token_t &tok,
                                    std::optional<std::shared_ptr<std::string>> user,
                                    std::optional<std::shared_ptr<std::string>> group) {
-  ss << "|uid=" << RealUser(tok) << "|user=" << (user.has_value() ? user->get()->c_str() : "(null)")
-     << "|gid=" << RealGroup(tok)
-     << "|group=" << (group.has_value() ? group->get()->c_str() : "(null)");
+  str.append("|uid=");
+  str.append(std::to_string(RealUser(tok)));
+  str.append("|user=");
+  str.append(user.has_value() ? user->get()->c_str() : "(null)");
+  str.append("|gid=");
+  str.append(std::to_string(RealGroup(tok)));
+  str.append("|group=");
+  str.append(group.has_value() ? group->get()->c_str() : "(null)");
 }
 
 static char *FormattedDateString(char *buf, size_t len) {
@@ -275,217 +286,264 @@ std::shared_ptr<BasicString> BasicString::Create(std::shared_ptr<EndpointSecurit
 BasicString::BasicString(std::shared_ptr<EndpointSecurityAPI> esapi, bool prefix_time_name)
     : esapi_(esapi), prefix_time_name_(prefix_time_name) {}
 
-std::ostringstream BasicString::CreateDefaultStringStream() {
-  std::ostringstream ss;
+std::string BasicString::CreateDefaultString() {
+  std::string str;
+  str.reserve(1024);
 
   if (prefix_time_name_) {
     char buf[32];
 
-    ss << "[" << FormattedDateString(buf, sizeof(buf)) << "] I santad: ";
-    return ss;
+    str.append("[");
+    str.append(FormattedDateString(buf, sizeof(buf)));
+    str.append("] I santad: ");
   }
 
-  return ss;
+  return str;
 }
 
-inline std::vector<uint8_t> FinalizeStringStream(std::ostringstream &ss) {
-  ss << "\n";
-  std::string str = ss.str();
+inline std::vector<uint8_t> FinalizeString(std::string &str) {
+  str.append("\n");
   return std::vector<uint8_t>(str.begin(), str.end());
 }
 
 std::vector<uint8_t> BasicString::SerializeMessage(const EnrichedClose &msg) {
   const es_message_t &esm = *msg.es_msg_;
+  auto str = CreateDefaultString();
 
-  auto ss = CreateDefaultStringStream();
+  str.append("action=WRITE|path=");
+  str.append(FilePath(esm.event.close.target).Sanitized());
 
-  ss << "action=WRITE|path=" << FilePath(esm.event.close.target);
-
-  AppendProcess(ss, esm.process);
-  AppendUserGroup(ss, esm.process->audit_token, msg.instigator_.real_user_,
+  AppendProcess(str, esm.process);
+  AppendUserGroup(str, esm.process->audit_token, msg.instigator_.real_user_,
                   msg.instigator_.real_group_);
 
-  return FinalizeStringStream(ss);
+  return FinalizeString(str);
 }
 
 std::vector<uint8_t> BasicString::SerializeMessage(const EnrichedExchange &msg) {
   const es_message_t &esm = *msg.es_msg_;
-  auto ss = CreateDefaultStringStream();
+  auto str = CreateDefaultString();
 
-  ss << "action=EXCHANGE|path=" << FilePath(esm.event.exchangedata.file1)
-     << "|newpath=" << FilePath(esm.event.exchangedata.file2);
+  str.append("action=EXCHANGE|path=");
+  str.append(FilePath(esm.event.exchangedata.file1).Sanitized());
+  str.append("|newpath=");
+  str.append(FilePath(esm.event.exchangedata.file2).Sanitized());
 
-  AppendProcess(ss, esm.process);
-  AppendUserGroup(ss, esm.process->audit_token, msg.instigator_.real_user_,
+  AppendProcess(str, esm.process);
+  AppendUserGroup(str, esm.process->audit_token, msg.instigator_.real_user_,
                   msg.instigator_.real_group_);
 
-  return FinalizeStringStream(ss);
+  return FinalizeString(str);
 }
 
 std::vector<uint8_t> BasicString::SerializeMessage(const EnrichedExec &msg) {
   const es_message_t &esm = *msg.es_msg_;
-  auto ss = CreateDefaultStringStream();
+  auto str = CreateDefaultString();
 
   SNTCachedDecision *cd =
     [[SNTDecisionCache sharedCache] cachedDecisionForFile:esm.event.exec.target->executable->stat];
 
-  ss << "action=EXEC|decision=" << GetDecisionString(cd.decision)
-     << "|reason=" << GetReasonString(cd.decision);
+  str.append("action=EXEC|decision=");
+  str.append(GetDecisionString(cd.decision));
+  str.append("|reason=");
+  str.append(GetReasonString(cd.decision));
 
   if (cd.decisionExtra) {
-    ss << "|explain=" << [cd.decisionExtra UTF8String];
+    str.append("|explain=");
+    str.append([cd.decisionExtra UTF8String]);
   }
 
   if (cd.sha256) {
-    ss << "|sha256=" << [cd.sha256 UTF8String];
+    str.append("|sha256=");
+    str.append([cd.sha256 UTF8String]);
   }
 
   if (cd.certSHA256) {
-    ss << "|cert_sha256=" << [cd.certSHA256 UTF8String]
-       << "|cert_cn=" << SanitizableString(cd.certCommonName);
+    str.append("|cert_sha256=");
+    str.append([cd.certSHA256 UTF8String]);
+    str.append("|cert_cn=");
+    str.append(SanitizableString(cd.certCommonName).Sanitized());
   }
 
   if (cd.teamID.length) {
-    ss << "|teamid=" << [NonNull(cd.teamID) UTF8String];
+    str.append("|teamid=");
+    str.append([NonNull(cd.teamID) UTF8String]);
   }
 
   if (cd.quarantineURL) {
-    // ss << "|quarantine_url=" << [NonNull(sanitizeString(cd.quarantineURL)) UTF8String];
-    ss << "|quarantine_url=" << SanitizableString(cd.quarantineURL);
+    str.append("|quarantine_url=");
+    str.append(SanitizableString(cd.quarantineURL).Sanitized());
   }
 
-  ss << "|pid=" << Pid(esm.event.exec.target->audit_token)
-     << "|pidversion=" << Pidversion(esm.event.exec.target->audit_token)
-     << "|ppid=" << esm.event.exec.target->original_ppid;
+  str.append("|pid=");
+  str.append(std::to_string(Pid(esm.event.exec.target->audit_token)));
+  str.append("|pidversion=");
+  str.append(std::to_string(Pidversion(esm.event.exec.target->audit_token)));
+  str.append("|ppid=");
+  str.append(std::to_string(esm.event.exec.target->original_ppid));
 
-  AppendUserGroup(ss, esm.event.exec.target->audit_token, msg.instigator_.real_user_,
+  AppendUserGroup(str, esm.event.exec.target->audit_token, msg.instigator_.real_user_,
                   msg.instigator_.real_group_);
 
-  ss << "|mode=" << GetModeString([[SNTConfigurator configurator] clientMode])
-     << "|path=" << FilePath(esm.event.exec.target->executable);
+  str.append("|mode=");
+  str.append(GetModeString([[SNTConfigurator configurator] clientMode]));
+  str.append("|path=");
+  str.append(FilePath(esm.event.exec.target->executable).Sanitized());
 
   NSString *origPath = OriginalPathForTranslocation(esm.event.exec.target);
   if (origPath) {
-    ss << "|origpath=" << SanitizableString(origPath);
+    str.append("|origpath=");
+    str.append(SanitizableString(origPath).Sanitized());
   }
 
   uint32_t argCount = esapi_->ExecArgCount(&esm.event.exec);
   if (argCount > 0) {
-    ss << "|args=";
+    str.append("|args=");
     for (uint32_t i = 0; i < argCount; i++) {
       if (i != 0) {
-        ss << " ";
+        str.append(" ");
       }
 
-      ss << SanitizableString(esapi_->ExecArg(&esm.event.exec, i));
+      str.append(SanitizableString(esapi_->ExecArg(&esm.event.exec, i)).Sanitized());
     }
   }
 
   if ([[SNTConfigurator configurator] enableMachineIDDecoration]) {
-    ss << "|machineid=" << [NonNull([[SNTConfigurator configurator] machineID]) UTF8String];
+    str.append("|machineid=");
+    str.append([NonNull([[SNTConfigurator configurator] machineID]) UTF8String]);
   }
 
-  return FinalizeStringStream(ss);
+  return FinalizeString(str);
 }
 
 std::vector<uint8_t> BasicString::SerializeMessage(const EnrichedExit &msg) {
   const es_message_t &esm = *msg.es_msg_;
-  auto ss = CreateDefaultStringStream();
+  auto str = CreateDefaultString();
 
-  ss << "action=EXIT|pid=" << Pid(esm.process->audit_token)
-     << "|pidversion=" << Pidversion(esm.process->audit_token)
-     << "|ppid=" << esm.process->original_ppid << "|uid=" << RealUser(esm.process->audit_token)
-     << "|gid=" << RealGroup(esm.process->audit_token);
+  str.append("action=EXIT|pid=");
+  str.append(std::to_string(Pid(esm.process->audit_token)));
+  str.append("|pidversion=");
+  str.append(std::to_string(Pidversion(esm.process->audit_token)));
+  str.append("|ppid=");
+  str.append(std::to_string(esm.process->original_ppid));
+  str.append("|uid=");
+  str.append(std::to_string(RealUser(esm.process->audit_token)));
+  str.append("|gid=");
+  str.append(std::to_string(RealGroup(esm.process->audit_token)));
 
-  return FinalizeStringStream(ss);
+  return FinalizeString(str);
 }
 
 std::vector<uint8_t> BasicString::SerializeMessage(const EnrichedFork &msg) {
   const es_message_t &esm = *msg.es_msg_;
-  auto ss = CreateDefaultStringStream();
+  auto str = CreateDefaultString();
 
-  ss << "action=FORK|pid=" << Pid(esm.event.fork.child->audit_token)
-     << "|pidversion=" << Pidversion(esm.event.fork.child->audit_token)
-     << "|ppid=" << esm.event.fork.child->original_ppid
-     << "|uid=" << RealUser(esm.event.fork.child->audit_token)
-     << "|gid=" << RealGroup(esm.event.fork.child->audit_token);
+  str.append("action=FORK|pid=");
+  str.append(std::to_string(Pid(esm.event.fork.child->audit_token)));
+  str.append("|pidversion=");
+  str.append(std::to_string(Pidversion(esm.event.fork.child->audit_token)));
+  str.append("|ppid=");
+  str.append(std::to_string(esm.event.fork.child->original_ppid));
+  str.append("|uid=");
+  str.append(std::to_string(RealUser(esm.event.fork.child->audit_token)));
+  str.append("|gid=");
+  str.append(std::to_string(RealGroup(esm.event.fork.child->audit_token)));
 
-  return FinalizeStringStream(ss);
+  return FinalizeString(str);
 }
 
 std::vector<uint8_t> BasicString::SerializeMessage(const EnrichedLink &msg) {
   const es_message_t &esm = *msg.es_msg_;
-  auto ss = CreateDefaultStringStream();
+  auto str = CreateDefaultString();
 
-  ss << "action=LINK|path=" << FilePath(esm.event.link.source)
-     << "|newpath=" << FilePath(esm.event.link.target_dir) << "/"
-     << SanitizableString(esm.event.link.target_filename);
+  str.append("action=LINK|path=");
+  str.append(FilePath(esm.event.link.source).Sanitized());
+  str.append("|newpath=");
+  str.append(FilePath(esm.event.link.target_dir).Sanitized());
+  str.append("/");
+  str.append(SanitizableString(esm.event.link.target_filename).Sanitized());
 
-  AppendProcess(ss, esm.process);
-  AppendUserGroup(ss, esm.process->audit_token, msg.instigator_.real_user_,
+  AppendProcess(str, esm.process);
+  AppendUserGroup(str, esm.process->audit_token, msg.instigator_.real_user_,
                   msg.instigator_.real_group_);
 
-  return FinalizeStringStream(ss);
+  return FinalizeString(str);
 }
 
 std::vector<uint8_t> BasicString::SerializeMessage(const EnrichedRename &msg) {
   const es_message_t &esm = *msg.es_msg_;
-  auto ss = CreateDefaultStringStream();
+  auto str = CreateDefaultString();
 
-  ss << "action=RENAME|path=" << FilePath(esm.event.rename.source) << "|newpath=";
+  str.append("action=RENAME|path=");
+  str.append(FilePath(esm.event.rename.source).Sanitized());
+  str.append("|newpath=");
 
   switch (esm.event.rename.destination_type) {
     case ES_DESTINATION_TYPE_EXISTING_FILE:
-      ss << FilePath(esm.event.rename.destination.existing_file);
+      str.append(FilePath(esm.event.rename.destination.existing_file).Sanitized());
       break;
     case ES_DESTINATION_TYPE_NEW_PATH:
-      ss << FilePath(esm.event.rename.destination.new_path.dir) << "/"
-         << SanitizableString(esm.event.rename.destination.new_path.filename);
+      str.append(FilePath(esm.event.rename.destination.new_path.dir).Sanitized());
+      str.append("/");
+      str.append(SanitizableString(esm.event.rename.destination.new_path.filename).Sanitized());
       break;
-    default: ss << "(null)"; break;
+    default: str.append("(null)"); break;
   }
 
-  AppendProcess(ss, esm.process);
-  AppendUserGroup(ss, esm.process->audit_token, msg.instigator_.real_user_,
+  AppendProcess(str, esm.process);
+  AppendUserGroup(str, esm.process->audit_token, msg.instigator_.real_user_,
                   msg.instigator_.real_group_);
 
-  return FinalizeStringStream(ss);
+  return FinalizeString(str);
 }
 
 std::vector<uint8_t> BasicString::SerializeMessage(const EnrichedUnlink &msg) {
   const es_message_t &esm = *msg.es_msg_;
-  auto ss = CreateDefaultStringStream();
+  auto str = CreateDefaultString();
 
-  ss << "action=DELETE|path=" << FilePath(esm.event.unlink.target);
+  str.append("action=DELETE|path=");
+  str.append(FilePath(esm.event.unlink.target).Sanitized());
 
-  AppendProcess(ss, esm.process);
-  AppendUserGroup(ss, esm.process->audit_token, msg.instigator_.real_user_,
+  AppendProcess(str, esm.process);
+  AppendUserGroup(str, esm.process->audit_token, msg.instigator_.real_user_,
                   msg.instigator_.real_group_);
 
-  return FinalizeStringStream(ss);
+  return FinalizeString(str);
 }
 
 std::vector<uint8_t> BasicString::SerializeAllowlist(const Message &msg,
                                                      const std::string_view hash) {
-  auto ss = CreateDefaultStringStream();
+  auto str = CreateDefaultString();
 
-  ss << "action=ALLOWLIST|pid=" << Pid(msg->process->audit_token)
-     << "|pidversion=" << Pidversion(msg->process->audit_token)
-     << "|path=" << FilePath(GetAllowListTargetFile(msg)) << "|sha256=" << hash;
+  str.append("action=ALLOWLIST|pid=");
+  str.append(std::to_string(Pid(msg->process->audit_token)));
+  str.append("|pidversion=");
+  str.append(std::to_string(Pidversion(msg->process->audit_token)));
+  str.append("|path=");
+  str.append(FilePath(GetAllowListTargetFile(msg)).Sanitized());
+  str.append("|sha256=");
+  str.append(hash);
 
-  return FinalizeStringStream(ss);
+  return FinalizeString(str);
 }
 
 std::vector<uint8_t> BasicString::SerializeBundleHashingEvent(SNTStoredEvent *event) {
-  auto ss = CreateDefaultStringStream();
+  auto str = CreateDefaultString();
 
-  ss << "action=BUNDLE|sha256=" << [NonNull(event.fileSHA256) UTF8String]
-     << "|bundlehash=" << [NonNull(event.fileBundleHash) UTF8String]
-     << "|bundlename=" << [NonNull(event.fileBundleName) UTF8String]
-     << "|bundleid=" << [NonNull(event.fileBundleID) UTF8String] << "|bundlepath=" <<
-    [NonNull(event.fileBundlePath) UTF8String] << "|path=" << [NonNull(event.filePath) UTF8String];
+  str.append("action=BUNDLE|sha256=");
+  str.append([NonNull(event.fileSHA256) UTF8String]);
+  str.append("|bundlehash=");
+  str.append([NonNull(event.fileBundleHash) UTF8String]);
+  str.append("|bundlename=");
+  str.append([NonNull(event.fileBundleName) UTF8String]);
+  str.append("|bundleid=");
+  str.append([NonNull(event.fileBundleID) UTF8String]);
+  str.append("|bundlepath=");
+  str.append([NonNull(event.fileBundlePath) UTF8String]);
+  str.append("|path=");
+  str.append([NonNull(event.filePath) UTF8String]);
 
-  return FinalizeStringStream(ss);
+  return FinalizeString(str);
 }
 
 std::vector<uint8_t> BasicString::SerializeDiskAppeared(NSDictionary *props) {
@@ -505,28 +563,42 @@ std::vector<uint8_t> BasicString::SerializeDiskAppeared(NSDictionary *props) {
     stringFromDate:[NSDate dateWithTimeIntervalSinceReferenceDate:[props[@"DAAppearanceTime"]
                                                                     doubleValue]]];
 
-  auto ss = CreateDefaultStringStream();
-  ss << "action=DISKAPPEAR"
-     << "|mount=" << [NonNull([props[@"DAVolumePath"] path]) UTF8String]
-     << "|volume=" << [NonNull(props[@"DAVolumeName"]) UTF8String]
-     << "|bsdname=" << [NonNull(props[@"DAMediaBSDName"]) UTF8String]
-     << "|fs=" << [NonNull(props[@"DAVolumeKind"]) UTF8String]
-     << "|model=" << [NonNull(model) UTF8String] << "|serial=" << [NonNull(serial) UTF8String]
-     << "|bus=" << [NonNull(props[@"DADeviceProtocol"]) UTF8String] << "|dmgpath=" <<
-    [NonNull(dmgPath) UTF8String] << "|appearance=" << [NonNull(appearanceDateString) UTF8String];
+  auto str = CreateDefaultString();
+  str.append("action=DISKAPPEAR");
+  str.append("|mount=");
+  str.append([NonNull([props[@"DAVolumePath"] path]) UTF8String]);
+  str.append("|volume=");
+  str.append([NonNull(props[@"DAVolumeName"]) UTF8String]);
+  str.append("|bsdname=");
+  str.append([NonNull(props[@"DAMediaBSDName"]) UTF8String]);
+  str.append("|fs=");
+  str.append([NonNull(props[@"DAVolumeKind"]) UTF8String]);
+  str.append("|model=");
+  str.append([NonNull(model) UTF8String]);
+  str.append("|serial=");
+  str.append([NonNull(serial) UTF8String]);
+  str.append("|bus=");
+  str.append([NonNull(props[@"DADeviceProtocol"]) UTF8String]);
+  str.append("|dmgpath=");
+  str.append([NonNull(dmgPath) UTF8String]);
+  str.append("|appearance=");
+  str.append([NonNull(appearanceDateString) UTF8String]);
 
-  return FinalizeStringStream(ss);
+  return FinalizeString(str);
 }
 
 std::vector<uint8_t> BasicString::SerializeDiskDisappeared(NSDictionary *props) {
-  auto ss = CreateDefaultStringStream();
+  auto str = CreateDefaultString();
 
-  ss << "action=DISKDISAPPEAR"
-     << "|mount=" << [NonNull([props[@"DAVolumePath"] path]) UTF8String]
-     << "|volume=" << [NonNull(props[@"DAVolumeName"]) UTF8String]
-     << "|bsdname=" << [NonNull(props[@"DAMediaBSDName"]) UTF8String];
+  str.append("action=DISKDISAPPEAR");
+  str.append("|mount=");
+  str.append([NonNull([props[@"DAVolumePath"] path]) UTF8String]);
+  str.append("|volume=");
+  str.append([NonNull(props[@"DAVolumeName"]) UTF8String]);
+  str.append("|bsdname=");
+  str.append([NonNull(props[@"DAMediaBSDName"]) UTF8String]);
 
-  return FinalizeStringStream(ss);
+  return FinalizeString(str);
 }
 
 }  // namespace santa::santad::logs::endpoint_security::serializers
