@@ -28,12 +28,6 @@
 
 #include "Source/santad/EventProviders/EndpointSecurity/Message.h"
 
-// Forward declarations
-namespace santa::santad::logs::endpoint_security::serializers {
-class Serializer;
-class BasicString;
-}  // namespace santa::santad::logs::endpoint_security::serializers
-
 namespace santa::santad::event_providers::endpoint_security {
 
 class EnrichedFile {
@@ -44,9 +38,6 @@ class EnrichedFile {
       : user_(std::move(user)),
         group_(std::move(group)),
         hash_(std::move(hash)) {}
-
-  // Allow serializers to access internals
-  friend class santa::santad::logs::endpoint_security::serializers::BasicString;
 
  private:
   std::optional<std::shared_ptr<std::string>> user_;
@@ -67,8 +58,12 @@ class EnrichedProcess {
         real_group_(std::move(real_group)),
         executable_(std::move(executable)) {}
 
-  // Allow serializers to access internals
-  friend class santa::santad::logs::endpoint_security::serializers::BasicString;
+  const std::optional<std::shared_ptr<std::string>> &real_user() const {
+    return real_user_;
+  }
+  const std::optional<std::shared_ptr<std::string>> &real_group() const {
+    return real_group_;
+  }
 
  private:
   std::optional<std::shared_ptr<std::string>> effective_user_;
@@ -78,150 +73,120 @@ class EnrichedProcess {
   EnrichedFile executable_;
 };
 
-class EnrichedClose {
+class EnrichedEventType {
+ public:
+  EnrichedEventType(Message &&es_msg, EnrichedProcess &&instigator)
+      : es_msg_(std::move(es_msg)), instigator_(std::move(instigator)) {}
+
+  EnrichedEventType(EnrichedEventType &&other)
+      : es_msg_(std::move(other.es_msg_)),
+        instigator_(std::move(other.instigator_)) {}
+
+  virtual ~EnrichedEventType() = default;
+
+  const es_message_t &es_msg() const { return *es_msg_; }
+
+  const EnrichedProcess &instigator() const { return instigator_; }
+
+ private:
+  Message es_msg_;
+  EnrichedProcess instigator_;
+};
+
+class EnrichedClose : public EnrichedEventType {
  public:
   EnrichedClose(Message &&es_msg, EnrichedProcess &&instigator,
                 EnrichedFile &&target)
-      : es_msg_(std::move(es_msg)),
-        instigator_(std::move(instigator)),
+      : EnrichedEventType(std::move(es_msg), std::move(instigator)),
         target_(std::move(target)) {}
 
-  // Allow serializers to access internals
-  friend class santa::santad::logs::endpoint_security::serializers::BasicString;
-
  private:
-  Message es_msg_;
-  EnrichedProcess instigator_;
   EnrichedFile target_;
 };
 
-class EnrichedExchange {
+class EnrichedExchange : public EnrichedEventType {
  public:
   EnrichedExchange(Message &&es_msg, EnrichedProcess &&instigator,
                    EnrichedFile &&file1, EnrichedFile &&file2)
-      : es_msg_(std::move(es_msg)),
-        instigator_(std::move(instigator)),
+      : EnrichedEventType(std::move(es_msg), std::move(instigator)),
         file1_(std::move(file1)),
         file2_(std::move(file2)) {}
 
-  // Allow serializers to access internals
-  friend class santa::santad::logs::endpoint_security::serializers::BasicString;
-
  private:
-  Message es_msg_;
-  EnrichedProcess instigator_;
   EnrichedFile file1_;
   EnrichedFile file2_;
 };
 
-class EnrichedExec {
+class EnrichedExec : public EnrichedEventType {
  public:
   EnrichedExec(Message &&es_msg, EnrichedProcess &&instigator,
                EnrichedProcess &&target, std::optional<EnrichedFile> &&script,
                std::optional<EnrichedFile> working_dir)
-      : es_msg_(std::move(es_msg)),
-        instigator_(std::move(instigator)),
+      : EnrichedEventType(std::move(es_msg), std::move(instigator)),
         target_(std::move(target)),
         script_(std::move(script)),
         working_dir_(std::move(working_dir)) {}
 
-  // Allow serializers to access internals
-  friend class santa::santad::logs::endpoint_security::serializers::BasicString;
-  friend class santa::santad::logs::endpoint_security::serializers::Serializer;
-
  private:
-  Message es_msg_;
-  EnrichedProcess instigator_;
   EnrichedProcess target_;
   std::optional<EnrichedFile> script_;
   std::optional<EnrichedFile> working_dir_;
 };
 
-class EnrichedExit {
+class EnrichedExit : public EnrichedEventType {
  public:
   EnrichedExit(Message &&es_msg, EnrichedProcess &&instigator)
-      : es_msg_(std::move(es_msg)), instigator_(std::move(instigator)) {}
-
-  // Allow serializers to access internals
-  friend class santa::santad::logs::endpoint_security::serializers::BasicString;
-
- private:
-  Message es_msg_;
-  EnrichedProcess instigator_;
+      : EnrichedEventType(std::move(es_msg), std::move(instigator)) {}
 };
 
-class EnrichedFork {
+class EnrichedFork : public EnrichedEventType {
  public:
   EnrichedFork(Message &&es_msg, EnrichedProcess &&instigator,
                EnrichedProcess &&target)
-      : es_msg_(std::move(es_msg)),
-        instigator_(std::move(instigator)),
+      : EnrichedEventType(std::move(es_msg), std::move(instigator)),
         target_(std::move(target)) {}
 
-  // Allow serializers to access internals
-  friend class santa::santad::logs::endpoint_security::serializers::BasicString;
-
  private:
-  Message es_msg_;
-  EnrichedProcess instigator_;
   EnrichedProcess target_;
 };
 
-class EnrichedLink {
+class EnrichedLink : public EnrichedEventType {
  public:
   EnrichedLink(Message &&es_msg, EnrichedProcess &&instigator,
                EnrichedFile &&source, EnrichedFile &&target_dir)
-      : es_msg_(std::move(es_msg)),
-        instigator_(std::move(instigator)),
+      : EnrichedEventType(std::move(es_msg), std::move(instigator)),
         source_(std::move(source)),
         target_dir_(std::move(target_dir)) {}
 
-  // Allow serializers to access internals
-  friend class santa::santad::logs::endpoint_security::serializers::BasicString;
-
  private:
-  Message es_msg_;
-  EnrichedProcess instigator_;
   EnrichedFile source_;
   EnrichedFile target_dir_;
 };
 
-class EnrichedRename {
+class EnrichedRename : public EnrichedEventType {
  public:
   EnrichedRename(Message &&es_msg, EnrichedProcess &&instigator,
                  EnrichedFile &&source, std::optional<EnrichedFile> &&target,
                  std::optional<EnrichedFile> &&target_dir)
-      : es_msg_(std::move(es_msg)),
-        instigator_(std::move(instigator)),
+      : EnrichedEventType(std::move(es_msg), std::move(instigator)),
         source_(std::move(source)),
         target_(std::move(target)),
         target_dir_(std::move(target_dir)) {}
 
-  // Allow serializers to access internals
-  friend class santa::santad::logs::endpoint_security::serializers::BasicString;
-
  private:
-  Message es_msg_;
-  EnrichedProcess instigator_;
   EnrichedFile source_;
   std::optional<EnrichedFile> target_;
   std::optional<EnrichedFile> target_dir_;
 };
 
-class EnrichedUnlink {
+class EnrichedUnlink : public EnrichedEventType {
  public:
   EnrichedUnlink(Message &&es_msg, EnrichedProcess &&instigator,
                  EnrichedFile &&target)
-      : es_msg_(std::move(es_msg)),
-        instigator_(std::move(instigator)),
+      : EnrichedEventType(std::move(es_msg), std::move(instigator)),
         target_(std::move(target)) {}
 
-  // Allow serializers to access internals
-  friend class santa::santad::logs::endpoint_security::serializers::BasicString;
-
  private:
-  Message es_msg_;
-  EnrichedProcess instigator_;
   EnrichedFile target_;
 };
 
@@ -236,8 +201,7 @@ class EnrichedMessage {
     clock_gettime(CLOCK_REALTIME, &enrichment_time_);
   }
 
-  // Allow serializer to access internals
-  friend class santa::santad::logs::endpoint_security::serializers::Serializer;
+  const EnrichedType &GetEnrichedMessage() { return msg_; }
 
  private:
   uuid_t uuid_;

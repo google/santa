@@ -249,8 +249,8 @@ static inline void AppendProcess(std::string &str, const es_process_t *es_proc) 
 }
 
 static inline void AppendUserGroup(std::string &str, const audit_token_t &tok,
-                                   std::optional<std::shared_ptr<std::string>> user,
-                                   std::optional<std::shared_ptr<std::string>> group) {
+                                   const std::optional<std::shared_ptr<std::string>> &user,
+                                   const std::optional<std::shared_ptr<std::string>> &group) {
   str.append("|uid=");
   str.append(std::to_string(RealUser(tok)));
   str.append("|user=");
@@ -307,21 +307,21 @@ inline std::vector<uint8_t> FinalizeString(std::string &str) {
 }
 
 std::vector<uint8_t> BasicString::SerializeMessage(const EnrichedClose &msg) {
-  const es_message_t &esm = *msg.es_msg_;
+  const es_message_t &esm = msg.es_msg();
   auto str = CreateDefaultString();
 
   str.append("action=WRITE|path=");
   str.append(FilePath(esm.event.close.target).Sanitized());
 
   AppendProcess(str, esm.process);
-  AppendUserGroup(str, esm.process->audit_token, msg.instigator_.real_user_,
-                  msg.instigator_.real_group_);
+  AppendUserGroup(str, esm.process->audit_token, msg.instigator().real_user(),
+                  msg.instigator().real_group());
 
   return FinalizeString(str);
 }
 
 std::vector<uint8_t> BasicString::SerializeMessage(const EnrichedExchange &msg) {
-  const es_message_t &esm = *msg.es_msg_;
+  const es_message_t &esm = msg.es_msg();
   auto str = CreateDefaultString();
 
   str.append("action=EXCHANGE|path=");
@@ -330,14 +330,14 @@ std::vector<uint8_t> BasicString::SerializeMessage(const EnrichedExchange &msg) 
   str.append(FilePath(esm.event.exchangedata.file2).Sanitized());
 
   AppendProcess(str, esm.process);
-  AppendUserGroup(str, esm.process->audit_token, msg.instigator_.real_user_,
-                  msg.instigator_.real_group_);
+  AppendUserGroup(str, esm.process->audit_token, msg.instigator().real_user(),
+                  msg.instigator().real_group());
 
   return FinalizeString(str);
 }
 
 std::vector<uint8_t> BasicString::SerializeMessage(const EnrichedExec &msg) {
-  const es_message_t &esm = *msg.es_msg_;
+  const es_message_t &esm = msg.es_msg();
   auto str = CreateDefaultString();
 
   SNTCachedDecision *cd =
@@ -382,8 +382,8 @@ std::vector<uint8_t> BasicString::SerializeMessage(const EnrichedExec &msg) {
   str.append("|ppid=");
   str.append(std::to_string(esm.event.exec.target->original_ppid));
 
-  AppendUserGroup(str, esm.event.exec.target->audit_token, msg.instigator_.real_user_,
-                  msg.instigator_.real_group_);
+  AppendUserGroup(str, esm.event.exec.target->audit_token, msg.instigator().real_user(),
+                  msg.instigator().real_group());
 
   str.append("|mode=");
   str.append(GetModeString([[SNTConfigurator configurator] clientMode]));
@@ -417,7 +417,7 @@ std::vector<uint8_t> BasicString::SerializeMessage(const EnrichedExec &msg) {
 }
 
 std::vector<uint8_t> BasicString::SerializeMessage(const EnrichedExit &msg) {
-  const es_message_t &esm = *msg.es_msg_;
+  const es_message_t &esm = msg.es_msg();
   auto str = CreateDefaultString();
 
   str.append("action=EXIT|pid=");
@@ -435,7 +435,7 @@ std::vector<uint8_t> BasicString::SerializeMessage(const EnrichedExit &msg) {
 }
 
 std::vector<uint8_t> BasicString::SerializeMessage(const EnrichedFork &msg) {
-  const es_message_t &esm = *msg.es_msg_;
+  const es_message_t &esm = msg.es_msg();
   auto str = CreateDefaultString();
 
   str.append("action=FORK|pid=");
@@ -453,7 +453,7 @@ std::vector<uint8_t> BasicString::SerializeMessage(const EnrichedFork &msg) {
 }
 
 std::vector<uint8_t> BasicString::SerializeMessage(const EnrichedLink &msg) {
-  const es_message_t &esm = *msg.es_msg_;
+  const es_message_t &esm = msg.es_msg();
   auto str = CreateDefaultString();
 
   str.append("action=LINK|path=");
@@ -464,14 +464,14 @@ std::vector<uint8_t> BasicString::SerializeMessage(const EnrichedLink &msg) {
   str.append(SanitizableString(esm.event.link.target_filename).Sanitized());
 
   AppendProcess(str, esm.process);
-  AppendUserGroup(str, esm.process->audit_token, msg.instigator_.real_user_,
-                  msg.instigator_.real_group_);
+  AppendUserGroup(str, esm.process->audit_token, msg.instigator().real_user(),
+                  msg.instigator().real_group());
 
   return FinalizeString(str);
 }
 
 std::vector<uint8_t> BasicString::SerializeMessage(const EnrichedRename &msg) {
-  const es_message_t &esm = *msg.es_msg_;
+  const es_message_t &esm = msg.es_msg();
   auto str = CreateDefaultString();
 
   str.append("action=RENAME|path=");
@@ -491,22 +491,22 @@ std::vector<uint8_t> BasicString::SerializeMessage(const EnrichedRename &msg) {
   }
 
   AppendProcess(str, esm.process);
-  AppendUserGroup(str, esm.process->audit_token, msg.instigator_.real_user_,
-                  msg.instigator_.real_group_);
+  AppendUserGroup(str, esm.process->audit_token, msg.instigator().real_user(),
+                  msg.instigator().real_group());
 
   return FinalizeString(str);
 }
 
 std::vector<uint8_t> BasicString::SerializeMessage(const EnrichedUnlink &msg) {
-  const es_message_t &esm = *msg.es_msg_;
+  const es_message_t &esm = msg.es_msg();
   auto str = CreateDefaultString();
 
   str.append("action=DELETE|path=");
   str.append(FilePath(esm.event.unlink.target).Sanitized());
 
   AppendProcess(str, esm.process);
-  AppendUserGroup(str, esm.process->audit_token, msg.instigator_.real_user_,
-                  msg.instigator_.real_group_);
+  AppendUserGroup(str, esm.process->audit_token, msg.instigator().real_user(),
+                  msg.instigator().real_group());
 
   return FinalizeString(str);
 }

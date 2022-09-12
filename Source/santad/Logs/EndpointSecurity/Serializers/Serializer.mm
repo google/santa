@@ -28,7 +28,7 @@ std::vector<uint8_t> Serializer::SerializeMessageTemplate(const es::EnrichedExch
 }
 std::vector<uint8_t> Serializer::SerializeMessageTemplate(const es::EnrichedExec &msg) {
   [[SNTDecisionCache sharedCache]
-    resetTimestampForCachedDecision:msg.es_msg_->event.exec.target->executable->stat];
+    resetTimestampForCachedDecision:msg.es_msg().event.exec.target->executable->stat];
 
   return SerializeMessage(msg);
 }

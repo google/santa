@@ -32,8 +32,8 @@ class Serializer {
 
   std::vector<uint8_t> SerializeMessage(
     std::shared_ptr<santa::santad::event_providers::endpoint_security::EnrichedMessage> msg) {
-    return std::visit([this](auto &&arg) { return this->SerializeMessageTemplate(arg); },
-                      std::move(msg->msg_));
+    return std::visit([this](const auto &arg) { return this->SerializeMessageTemplate(arg); },
+                      std::move(msg->GetEnrichedMessage()));
   }
 
   virtual std::vector<uint8_t> SerializeMessage(
