@@ -544,16 +544,4 @@
 ///
 - (void)clearSyncState;
 
-///
-/// Begin observing for configuration changes
-///
-- (void)observeClientMode:(void (^)(SNTClientMode))clientModeChanged
-                syncBaseURL:(void (^)(NSURL *))syncBaseURLChanged
-              exportMetrics:(void (^)(BOOL, BOOL))exportMetricsChanged
-       metricExportInterval:(void (^)(NSUInteger, NSUInteger))metricExportIntervalChanged
-  allowedOrBlockedPathRegex:(void (^)(void))allowedOrBlockedPathRegexChanged
-              blockUSBMount:(void (^)(BOOL, BOOL))blockUSBMountChanged
-             remountUSBMode:
-               (void (^)(NSArray<NSString *> *, NSArray<NSString *> *))remountUSBModeChanged;
-
 @end

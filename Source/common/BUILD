@@ -101,6 +101,23 @@ objc_library(
 )
 
 objc_library(
+    name = "SNTKVOManager",
+    srcs = ["SNTKVOManager.mm"],
+    hdrs = ["SNTKVOManager.h"],
+    deps = [
+        ":SNTLogging",
+    ],
+)
+
+santa_unit_test(
+    name = "SNTKVOManagerTest",
+    srcs = ["SNTKVOManagerTest.mm"],
+    deps = [
+        ":SNTKVOManager",
+    ],
+)
+
+objc_library(
     name = "SNTDropRootPrivs",
     srcs = ["SNTDropRootPrivs.m"],
     hdrs = ["SNTDropRootPrivs.h"],
@@ -308,8 +325,10 @@ test_suite(
     tests = [
         ":SNTCachedDecisionTest",
         ":SNTFileInfoTest",
+        ":SNTKVOManagerTest",
         ":SNTMetricSetTest",
         ":SNTPrefixTreeTest",
+        ":SNTRuleTest",
         ":SantaCacheTest",
     ],
     visibility = ["//:santa_package_group"],
