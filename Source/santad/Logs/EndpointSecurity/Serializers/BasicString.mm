@@ -308,7 +308,7 @@ inline std::vector<uint8_t> FinalizeString(std::string &str) {
 
 std::vector<uint8_t> BasicString::SerializeMessage(const EnrichedClose &msg) {
   const es_message_t &esm = msg.es_msg();
-  auto str = CreateDefaultString();
+  std::string str = CreateDefaultString();
 
   str.append("action=WRITE|path=");
   str.append(FilePath(esm.event.close.target).Sanitized());
@@ -322,7 +322,7 @@ std::vector<uint8_t> BasicString::SerializeMessage(const EnrichedClose &msg) {
 
 std::vector<uint8_t> BasicString::SerializeMessage(const EnrichedExchange &msg) {
   const es_message_t &esm = msg.es_msg();
-  auto str = CreateDefaultString();
+  std::string str = CreateDefaultString();
 
   str.append("action=EXCHANGE|path=");
   str.append(FilePath(esm.event.exchangedata.file1).Sanitized());
@@ -338,7 +338,7 @@ std::vector<uint8_t> BasicString::SerializeMessage(const EnrichedExchange &msg) 
 
 std::vector<uint8_t> BasicString::SerializeMessage(const EnrichedExec &msg) {
   const es_message_t &esm = msg.es_msg();
-  auto str = CreateDefaultString();
+  std::string str = CreateDefaultString();
 
   SNTCachedDecision *cd =
     [[SNTDecisionCache sharedCache] cachedDecisionForFile:esm.event.exec.target->executable->stat];
@@ -418,7 +418,7 @@ std::vector<uint8_t> BasicString::SerializeMessage(const EnrichedExec &msg) {
 
 std::vector<uint8_t> BasicString::SerializeMessage(const EnrichedExit &msg) {
   const es_message_t &esm = msg.es_msg();
-  auto str = CreateDefaultString();
+  std::string str = CreateDefaultString();
 
   str.append("action=EXIT|pid=");
   str.append(std::to_string(Pid(esm.process->audit_token)));
@@ -436,7 +436,7 @@ std::vector<uint8_t> BasicString::SerializeMessage(const EnrichedExit &msg) {
 
 std::vector<uint8_t> BasicString::SerializeMessage(const EnrichedFork &msg) {
   const es_message_t &esm = msg.es_msg();
-  auto str = CreateDefaultString();
+  std::string str = CreateDefaultString();
 
   str.append("action=FORK|pid=");
   str.append(std::to_string(Pid(esm.event.fork.child->audit_token)));
@@ -454,7 +454,7 @@ std::vector<uint8_t> BasicString::SerializeMessage(const EnrichedFork &msg) {
 
 std::vector<uint8_t> BasicString::SerializeMessage(const EnrichedLink &msg) {
   const es_message_t &esm = msg.es_msg();
-  auto str = CreateDefaultString();
+  std::string str = CreateDefaultString();
 
   str.append("action=LINK|path=");
   str.append(FilePath(esm.event.link.source).Sanitized());
@@ -472,7 +472,7 @@ std::vector<uint8_t> BasicString::SerializeMessage(const EnrichedLink &msg) {
 
 std::vector<uint8_t> BasicString::SerializeMessage(const EnrichedRename &msg) {
   const es_message_t &esm = msg.es_msg();
-  auto str = CreateDefaultString();
+  std::string str = CreateDefaultString();
 
   str.append("action=RENAME|path=");
   str.append(FilePath(esm.event.rename.source).Sanitized());
@@ -499,7 +499,7 @@ std::vector<uint8_t> BasicString::SerializeMessage(const EnrichedRename &msg) {
 
 std::vector<uint8_t> BasicString::SerializeMessage(const EnrichedUnlink &msg) {
   const es_message_t &esm = msg.es_msg();
-  auto str = CreateDefaultString();
+  std::string str = CreateDefaultString();
 
   str.append("action=DELETE|path=");
   str.append(FilePath(esm.event.unlink.target).Sanitized());
@@ -513,7 +513,7 @@ std::vector<uint8_t> BasicString::SerializeMessage(const EnrichedUnlink &msg) {
 
 std::vector<uint8_t> BasicString::SerializeAllowlist(const Message &msg,
                                                      const std::string_view hash) {
-  auto str = CreateDefaultString();
+  std::string str = CreateDefaultString();
 
   str.append("action=ALLOWLIST|pid=");
   str.append(std::to_string(Pid(msg->process->audit_token)));
@@ -528,7 +528,7 @@ std::vector<uint8_t> BasicString::SerializeAllowlist(const Message &msg,
 }
 
 std::vector<uint8_t> BasicString::SerializeBundleHashingEvent(SNTStoredEvent *event) {
-  auto str = CreateDefaultString();
+  std::string str = CreateDefaultString();
 
   str.append("action=BUNDLE|sha256=");
   str.append([NonNull(event.fileSHA256) UTF8String]);
@@ -563,7 +563,7 @@ std::vector<uint8_t> BasicString::SerializeDiskAppeared(NSDictionary *props) {
     stringFromDate:[NSDate dateWithTimeIntervalSinceReferenceDate:[props[@"DAAppearanceTime"]
                                                                     doubleValue]]];
 
-  auto str = CreateDefaultString();
+  std::string str = CreateDefaultString();
   str.append("action=DISKAPPEAR");
   str.append("|mount=");
   str.append([NonNull([props[@"DAVolumePath"] path]) UTF8String]);
@@ -588,7 +588,7 @@ std::vector<uint8_t> BasicString::SerializeDiskAppeared(NSDictionary *props) {
 }
 
 std::vector<uint8_t> BasicString::SerializeDiskDisappeared(NSDictionary *props) {
-  auto str = CreateDefaultString();
+  std::string str = CreateDefaultString();
 
   str.append("action=DISKDISAPPEAR");
   str.append("|mount=");

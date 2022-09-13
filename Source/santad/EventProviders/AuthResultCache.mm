@@ -80,7 +80,7 @@ AuthResultCache::~AuthResultCache() {
 
 bool AuthResultCache::AddToCache(const es_file_t *es_file, santa_action_t decision) {
   santa_vnode_id_t vnode_id = VnodeForFile(es_file);
-  auto cache = CacheForVnodeID(vnode_id);
+  SantaCache<santa_vnode_id_t, uint64_t> *cache = CacheForVnodeID(vnode_id);
   switch (decision) {
     case ACTION_REQUEST_BINARY:
       return cache->set(vnode_id, CacheableAction(ACTION_REQUEST_BINARY, 0), 0);
@@ -106,7 +106,7 @@ santa_action_t AuthResultCache::CheckCache(const es_file_t *es_file) {
 }
 
 santa_action_t AuthResultCache::CheckCache(santa_vnode_id_t vnode_id) {
-  auto cache = CacheForVnodeID(vnode_id);
+  SantaCache<santa_vnode_id_t, uint64_t> *cache = CacheForVnodeID(vnode_id);
 
   uint64_t cached_val = cache->get(vnode_id);
   if (cached_val == 0) {
@@ -116,7 +116,7 @@ santa_action_t AuthResultCache::CheckCache(santa_vnode_id_t vnode_id) {
   santa_action_t result = ActionFromCachedValue(cached_val);
 
   if (result == ACTION_RESPOND_DENY) {
-    auto expiry_time = TimestampFromCachedValue(cached_val) + cache_deny_time_ns_;
+    uint64_t expiry_time = TimestampFromCachedValue(cached_val) + cache_deny_time_ns_;
     if (expiry_time < GetCurrentUptime()) {
       cache->remove(vnode_id);
       return ACTION_UNSET;

@@ -55,7 +55,7 @@ using santa::santad::event_providers::endpoint_security::Message;
   const es_file_t *targetFile = msg->event.exec.target->executable;
 
   while (true) {
-    auto returnAction = self->_authResultCache->CheckCache(targetFile);
+    santa_action_t returnAction = self->_authResultCache->CheckCache(targetFile);
     if (RESPONSE_VALID(returnAction)) {
       es_auth_result_t authResult = ES_AUTH_RESULT_DENY;
 

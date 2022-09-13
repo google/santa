@@ -15,6 +15,7 @@
 #include <Foundation/Foundation.h>
 #include <dispatch/dispatch.h>
 #include <mach/task.h>
+#include <memory>
 
 #import "Source/common/SNTConfigurator.h"
 #import "Source/common/SNTLogging.h"
@@ -155,8 +156,9 @@ int main(int argc, char *argv[]) {
     NSArray<NSString *> *prefix_filters =
       [@[ @"/.", @"/dev/" ] arrayByAddingObjectsFromArray:[configurator fileChangesPrefixFilters]];
 
-    auto deps = SantadDeps::Create([configurator metricExportInterval], [configurator eventLogType],
-                                   [configurator eventLogPath], prefix_filters);
+    std::shared_ptr<SantadDeps> deps =
+      SantadDeps::Create([configurator metricExportInterval], [configurator eventLogType],
+                         [configurator eventLogPath], prefix_filters);
 
     SantadMain(deps->ESAPI(), deps->Logger(), deps->Metrics(), deps->Enricher(),
                deps->AuthResultCache(), deps->ControlConnection(), deps->CompilerController(),

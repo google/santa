@@ -204,8 +204,8 @@ using santa::santad::event_providers::endpoint_security::Message;
 
   // Workaround for compiler bug that doesn't properly close over variables
   // Note: On macOS 10.15 this will cause extra message copies.
-  __block auto processMsg = msg;
-  __block auto deadlineMsg = msg;
+  __block Message processMsg = msg;
+  __block Message deadlineMsg = msg;
 
   dispatch_after(
     dispatch_time(DISPATCH_TIME_NOW, deadlineNano - timeout), self->_authQueue, ^(void) {

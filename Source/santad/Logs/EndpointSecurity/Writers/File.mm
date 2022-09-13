@@ -94,10 +94,10 @@ void File::Write(std::vector<uint8_t> &&bytes) {
   auto shared_this = shared_from_this();
 
   // Workaround to move `bytes` into the block without a copy
-  __block auto temp_bytes = std::move(bytes);
+  __block std::vector<uint8_t> temp_bytes = std::move(bytes);
 
   dispatch_async(q_, ^{
-    auto moved_bytes = std::move(temp_bytes);
+    std::vector<uint8_t> moved_bytes = std::move(temp_bytes);
 
     shared_this->buffer_.insert(shared_this->buffer_.end(), moved_bytes.begin(), moved_bytes.end());
     if (shared_this->buffer_.size() >= batch_size_bytes_) {
