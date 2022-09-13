@@ -59,10 +59,10 @@ class MockLogger : public Logger {
   MOCK_METHOD(void, Log, (std::shared_ptr<EnrichedMessage>));
 };
 
-@interface SNTEndpointSecurityTamperResistanceTest : XCTestCase
+@interface SNTEndpointSecurityRecorderTest : XCTestCase
 @end
 
-@implementation SNTEndpointSecurityTamperResistanceTest
+@implementation SNTEndpointSecurityRecorderTest
 
 - (void)testEnable {
   // Ensure the client subscribes to expected event types
