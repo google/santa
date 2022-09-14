@@ -59,7 +59,7 @@ std::string BasicStringSerializeMessage(std::shared_ptr<MockEndpointSecurityAPI>
   mockESApi->SetExpectationsRetainReleaseMessage(esMsg);
 
   std::shared_ptr<Serializer> bs = BasicString::Create(mockESApi, false);
-  auto ret = bs->SerializeMessage(Enricher().Enrich(Message(mockESApi, esMsg)));
+  std::vector<uint8_t> ret = bs->SerializeMessage(Enricher().Enrich(Message(mockESApi, esMsg)));
 
   XCTBubbleMockVerifyAndClearExpectations(mockESApi.get());
 
@@ -252,8 +252,8 @@ std::string BasicStringSerializeMessage(es_message_t *esMsg) {
   auto mockESApi = std::make_shared<MockEndpointSecurityAPI>();
   mockESApi->SetExpectationsRetainReleaseMessage(&esMsg);
 
-  auto ret = BasicString::Create(mockESApi, false)
-               ->SerializeAllowlist(Message(mockESApi, &esMsg), "test_hash");
+  std::vector<uint8_t> ret = BasicString::Create(mockESApi, false)
+                               ->SerializeAllowlist(Message(mockESApi, &esMsg), "test_hash");
 
   XCTAssertTrue(testing::Mock::VerifyAndClearExpectations(mockESApi.get()),
                 "Expected calls were not properly mocked");
@@ -275,7 +275,7 @@ std::string BasicStringSerializeMessage(es_message_t *esMsg) {
   se.fileBundlePath = @"file_bundle_path";
   se.filePath = @"file_path";
 
-  auto ret = BasicString::Create(nullptr, false)->SerializeBundleHashingEvent(se);
+  std::vector<uint8_t> ret = BasicString::Create(nullptr, false)->SerializeBundleHashingEvent(se);
   std::string got(ret.begin(), ret.end());
 
   std::string want = "action=BUNDLE|sha256=file_hash"
@@ -297,7 +297,7 @@ std::string BasicStringSerializeMessage(es_message_t *esMsg) {
     @"DADeviceProtocol" : @"usb",
   };
 
-  auto ret = BasicString::Create(nullptr, false)->SerializeDiskAppeared(props);
+  std::vector<uint8_t> ret = BasicString::Create(nullptr, false)->SerializeDiskAppeared(props);
   std::string got(ret.begin(), ret.end());
 
   std::string want = "action=DISKAPPEAR|mount=path|volume=|bsdname=bsd|fs=apfs"
@@ -313,7 +313,7 @@ std::string BasicStringSerializeMessage(es_message_t *esMsg) {
     @"DAMediaBSDName" : @"bsd",
   };
 
-  auto ret = BasicString::Create(nullptr, false)->SerializeDiskDisappeared(props);
+  std::vector<uint8_t> ret = BasicString::Create(nullptr, false)->SerializeDiskDisappeared(props);
   std::string got(ret.begin(), ret.end());
 
   std::string want = "action=DISKDISAPPEAR|mount=path|volume=|bsdname=bsd\n";

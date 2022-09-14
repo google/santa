@@ -47,7 +47,7 @@ es_return_t es_delete_client(es_client_t *_Nullable client) {
 
   // Null `es_client_t*` *shouldn't* trigger `es_delete_client`
   {
-    auto c = Client();
+    Client c;
     XCTAssertEqual(c.Get(), nullptr);
     XCTAssertEqual(c.NewClientResult(), ES_NEW_CLIENT_RESULT_ERR_INTERNAL);
   }
@@ -59,7 +59,7 @@ es_return_t es_delete_client(es_client_t *_Nullable client) {
   {
     int fake;
     es_client_t *fakeClient = (es_client_t *)&fake;
-    auto c = Client(fakeClient, ES_NEW_CLIENT_RESULT_SUCCESS);
+    Client c(fakeClient, ES_NEW_CLIENT_RESULT_SUCCESS);
     XCTAssertEqual(c.Get(), fakeClient);
     XCTAssertEqual(c.NewClientResult(), ES_NEW_CLIENT_RESULT_SUCCESS);
   }
@@ -71,7 +71,7 @@ es_return_t es_delete_client(es_client_t *_Nullable client) {
   {
     int fake;
     es_client_t *fakeClient = (es_client_t *)&fake;
-    auto c1 = Client(fakeClient, ES_NEW_CLIENT_RESULT_SUCCESS);
+    Client c1(fakeClient, ES_NEW_CLIENT_RESULT_SUCCESS);
 
     Client c2(std::move(c1));
 
@@ -91,7 +91,7 @@ es_return_t es_delete_client(es_client_t *_Nullable client) {
   {
     int fake;
     es_client_t *fakeClient = (es_client_t *)&fake;
-    auto c1 = Client(fakeClient, ES_NEW_CLIENT_RESULT_SUCCESS);
+    Client c1(fakeClient, ES_NEW_CLIENT_RESULT_SUCCESS);
     Client c2;
 
     c2 = std::move(c1);

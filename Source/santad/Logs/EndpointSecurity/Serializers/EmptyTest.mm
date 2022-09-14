@@ -29,7 +29,7 @@ namespace es = santa::santad::event_providers::endpoint_security;
 @implementation EmptyTest
 
 - (void)testAllSerializersReturnEmptyVector {
-  auto e = Empty::Create();
+  std::shared_ptr<Empty> e = Empty::Create();
 
   // We can get away with passing a fake argument to the `Serialize*` methods
   // instead of constructing real ones since the Empty class never touches the

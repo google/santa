@@ -69,7 +69,7 @@ pid_t AttemptToFindUnusedPID() {
 
   // Constructing a `Message` retains the underlying `es_message_t` and it is
   // released when the `Message` object is destructed.
-  { auto msg = Message(mockESApi, &esMsg); }
+  { Message m(mockESApi, &esMsg); }
 
   XCTBubbleMockVerifyAndClearExpectations(mockESApi.get());
 }

@@ -75,7 +75,7 @@ NSString *testBinariesPath = @"santa/Source/santad/testdata/binaryrules";
 
   OCMStub([self.mockSNTDatabaseController databasePath]).andReturn(testPath);
 
-  auto deps =
+  std::unique_ptr<SantadDeps> deps =
     SantadDeps::Create([mockConfigurator metricExportInterval], [mockConfigurator eventLogType],
                        [mockConfigurator eventLogPath], @[ @"/.", @"/dev/" ]);
 

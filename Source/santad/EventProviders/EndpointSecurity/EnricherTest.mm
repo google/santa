@@ -28,21 +28,21 @@ using santa::santad::event_providers::endpoint_security::Enricher;
 - (void)testUidGid {
   Enricher enricher;
 
-  auto user = enricher.UsernameForUID(NOBODY_UID);
+  std::optional<std::shared_ptr<std::string>> user = enricher.UsernameForUID(NOBODY_UID);
   XCTAssertTrue(user.has_value());
   XCTAssertEqual(strcmp(user->get()->c_str(), "nobody"), 0);
 
-  auto group = enricher.UsernameForGID(NOBODY_GID);
+  std::optional<std::shared_ptr<std::string>> group = enricher.UsernameForGID(NOBODY_GID);
   XCTAssertTrue(group.has_value());
   XCTAssertEqual(strcmp(group->get()->c_str(), "nobody"), 0);
 
-  auto invalidUID = (uid_t)-123;
-  auto invalidGID = (gid_t)-123;
+  uid_t invalidUID = (uid_t)-123;
+  gid_t invalidGID = (gid_t)-123;
 
-  auto invalidUser = enricher.UsernameForUID(invalidUID);
+  std::optional<std::shared_ptr<std::string>> invalidUser = enricher.UsernameForUID(invalidUID);
   XCTAssertFalse(invalidUser.has_value());
 
-  auto invalidGroup = enricher.UsernameForGID(invalidGID);
+  std::optional<std::shared_ptr<std::string>> invalidGroup = enricher.UsernameForGID(invalidGID);
   XCTAssertFalse(invalidGroup.has_value());
 }
 

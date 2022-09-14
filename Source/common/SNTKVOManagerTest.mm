@@ -34,10 +34,10 @@
   Foo *foo = [[Foo alloc] init];
 
   SNTKVOManager *kvo = [[SNTKVOManager alloc] initWithObject:foo
-                                        selector:NSSelectorFromString(@"doesNotExist")
-                                            type:[NSNumber class]
-                                        callback:^(id, id){
-                                        }];
+                                                    selector:NSSelectorFromString(@"doesNotExist")
+                                                        type:[NSNumber class]
+                                                    callback:^(id, id){
+                                                    }];
 
   XCTAssertNil(kvo);
 }
@@ -56,14 +56,15 @@
   __block int oldVal;
   __block int newVal;
 
-  SNTKVOManager *kvo = [[SNTKVOManager alloc] initWithObject:foo
-                                        selector:@selector(propNumber)
-                                            type:[NSNumber class]
-                                        callback:^(NSNumber *oldValue, NSNumber *newValue) {
-                                          oldVal = [oldValue intValue];
-                                          newVal = [newValue intValue];
-                                          dispatch_semaphore_signal(sema);
-                                        }];
+  SNTKVOManager *kvo =
+    [[SNTKVOManager alloc] initWithObject:foo
+                                 selector:@selector(propNumber)
+                                     type:[NSNumber class]
+                                 callback:^(NSNumber *oldValue, NSNumber *newValue) {
+                                   oldVal = [oldValue intValue];
+                                   newVal = [newValue intValue];
+                                   dispatch_semaphore_signal(sema);
+                                 }];
   XCTAssertNotNil(kvo);
 
   // Ensure an update to the observed property triggers the callback
@@ -97,13 +98,13 @@
   __block id newVal;
 
   SNTKVOManager *kvo = [[SNTKVOManager alloc] initWithObject:foo
-                                        selector:@selector(propId)
-                                            type:[NSString class]
-                                        callback:^(id oldValue, id newValue) {
-                                          oldVal = oldValue;
-                                          newVal = newValue;
-                                          dispatch_semaphore_signal(sema);
-                                        }];
+                                                    selector:@selector(propId)
+                                                        type:[NSString class]
+                                                    callback:^(id oldValue, id newValue) {
+                                                      oldVal = oldValue;
+                                                      newVal = newValue;
+                                                      dispatch_semaphore_signal(sema);
+                                                    }];
   XCTAssertNotNil(kvo);
 
   // Update to an unexpected type (here, NSNumber instead of NSString)

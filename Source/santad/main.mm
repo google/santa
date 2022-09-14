@@ -156,7 +156,7 @@ int main(int argc, char *argv[]) {
     NSArray<NSString *> *prefix_filters =
       [@[ @"/.", @"/dev/" ] arrayByAddingObjectsFromArray:[configurator fileChangesPrefixFilters]];
 
-    std::shared_ptr<SantadDeps> deps =
+    std::unique_ptr<SantadDeps> deps =
       SantadDeps::Create([configurator metricExportInterval], [configurator eventLogType],
                          [configurator eventLogPath], prefix_filters);
 
