@@ -98,7 +98,8 @@ static constexpr std::string_view kSantaKextIdentifier = "com.google.santa-drive
 
 - (void)enable {
   // TODO(mlw): For macOS 13, use new mute and invert APIs to limit the
-  // messages sent for these events to Santa-specific directories.
+  // messages sent for these events to the Santa-specific directories
+  // checked in the `handleMessage:` method.
 
   [super subscribeAndClearCache:{
                                   ES_EVENT_TYPE_AUTH_KEXTLOAD,
