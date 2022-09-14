@@ -20,15 +20,15 @@ typedef void (^KVOCallback)(id oldValue, id newValue);
 
 @interface SNTKVOManager : NSObject
 
-// Retrieve the default singleton instance
-+ (instancetype)defaultManager;
+// Add an observer for the selector on the given object. When a KVO notification
+// is received, the callback is called. If the notificaiton contains objects that
+// are not of the expectedType, nil is passed as the argument to the callback.
+// The observer is removed when the returned instance is deallocated.
+- (instancetype)initWithObject:(id)object
+                      selector:(SEL)selector
+                          type:(Class)expectedType
+                      callback:(KVOCallback)callback;
 
-// Register an observer for the selector on the given object. When a KVO notification
-// is received, the callback is called. If the notificaiton contains objects that are
-// not of the expectedType, nil is passed as the argument to the callback.
-- (BOOL)addObserverForObject:(id)object
-                    selector:(SEL)selector
-                        type:(Class)expectedType
-                    callback:(KVOCallback)callback;
+- (instancetype)init NS_UNAVAILABLE;
 
 @end

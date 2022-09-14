@@ -30,29 +30,19 @@
 
 @implementation SNTKVOManagerTest
 
-- (void)testDefaultObserver {
-  // Ensure the singleton getter functions as expected
-  SNTKVOManager *kvo1 = [SNTKVOManager defaultManager];
-  SNTKVOManager *kvo2 = [SNTKVOManager defaultManager];
-
-  XCTAssertEqual(kvo1, kvo2);
-}
-
 - (void)testInvalidSelector {
-  SNTKVOManager *kvoManager = [[SNTKVOManager alloc] init];
   Foo *foo = [[Foo alloc] init];
 
-  BOOL result = [kvoManager addObserverForObject:foo
+  SNTKVOManager *kvo = [[SNTKVOManager alloc] initWithObject:foo
                                         selector:NSSelectorFromString(@"doesNotExist")
                                             type:[NSNumber class]
                                         callback:^(id, id){
                                         }];
 
-  XCTAssertFalse(result);
+  XCTAssertNil(kvo);
 }
 
 - (void)testNormalOperation {
-  SNTKVOManager *kvoManager = [[SNTKVOManager alloc] init];
   Foo *foo = [[Foo alloc] init];
   dispatch_semaphore_t sema = dispatch_semaphore_create(0);
 
@@ -66,7 +56,7 @@
   __block int oldVal;
   __block int newVal;
 
-  BOOL result = [kvoManager addObserverForObject:foo
+  SNTKVOManager *kvo = [[SNTKVOManager alloc] initWithObject:foo
                                         selector:@selector(propNumber)
                                             type:[NSNumber class]
                                         callback:^(NSNumber *oldValue, NSNumber *newValue) {
@@ -74,7 +64,7 @@
                                           newVal = [newValue intValue];
                                           dispatch_semaphore_signal(sema);
                                         }];
-  XCTAssertTrue(result);
+  XCTAssertNotNil(kvo);
 
   // Ensure an update to the observed property triggers the callback
   foo.propNumber = @(update1);
@@ -96,7 +86,6 @@
 }
 
 - (void)testUnexpectedTypes {
-  SNTKVOManager *kvoManager = [[SNTKVOManager alloc] init];
   Foo *foo = [[Foo alloc] init];
   dispatch_semaphore_t sema = dispatch_semaphore_create(0);
 
@@ -107,7 +96,7 @@
   __block id oldVal;
   __block id newVal;
 
-  BOOL result = [kvoManager addObserverForObject:foo
+  SNTKVOManager *kvo = [[SNTKVOManager alloc] initWithObject:foo
                                         selector:@selector(propId)
                                             type:[NSString class]
                                         callback:^(id oldValue, id newValue) {
@@ -115,7 +104,7 @@
                                           newVal = newValue;
                                           dispatch_semaphore_signal(sema);
                                         }];
-  XCTAssertTrue(result);
+  XCTAssertNotNil(kvo);
 
   // Update to an unexpected type (here, NSNumber instead of NSString)
   foo.propId = @(123);

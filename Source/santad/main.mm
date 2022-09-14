@@ -160,12 +160,11 @@ int main(int argc, char *argv[]) {
       SantadDeps::Create([configurator metricExportInterval], [configurator eventLogType],
                          [configurator eventLogPath], prefix_filters);
 
+    // This doesn't return
     SantadMain(deps->ESAPI(), deps->Logger(), deps->Metrics(), deps->Enricher(),
                deps->AuthResultCache(), deps->ControlConnection(), deps->CompilerController(),
                deps->NotifierQueue(), deps->SyncdQueue(), deps->ExecController(),
                deps->PrefixTree());
-
-    [[NSRunLoop mainRunLoop] run];
   }
 
   return 0;

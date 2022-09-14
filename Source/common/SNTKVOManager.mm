@@ -16,83 +16,58 @@
 
 #import "Source/common/SNTLogging.h"
 
-// This is a small class used to hold information needed when an observed value is changed
-@interface SNTObserverInfo : NSObject
+@interface SNTKVOManager ()
 @property KVOCallback callback;
 @property Class expectedType;
-@end
-
-@implementation SNTObserverInfo
-- (instancetype)initWithExpectedType:(Class)expectedType callback:(KVOCallback)callback {
-  self = [super init];
-  if (self) {
-    _expectedType = expectedType;
-    _callback = callback;
-  }
-  return self;
-}
-@end
-
-@interface SNTKVOManager ()
-@property NSMutableDictionary<NSString *, SNTObserverInfo *> *observerInfo;
-@property NSKeyValueObservingOptions bits;
+@property NSString *keyPath;
+@property id object;
 @end
 
 @implementation SNTKVOManager
 
-+ (instancetype)defaultManager {
-  static SNTKVOManager *kvoManager;
-  static dispatch_once_t onceToken;
-  dispatch_once(&onceToken, ^{
-    kvoManager = [[SNTKVOManager alloc] init];
-  });
-  return kvoManager;
-}
-
-- (instancetype)init {
+- (instancetype)initWithObject:(id)object
+                      selector:(SEL)selector
+                          type:(Class)expectedType
+                      callback:(KVOCallback)callback {
   self = [super self];
   if (self) {
-    _observerInfo = [[NSMutableDictionary alloc] init];
-    _bits = (NSKeyValueObservingOptionNew | NSKeyValueObservingOptionOld);
+    NSString *selectorName = NSStringFromSelector(selector);
+    if (![object respondsToSelector:selector]) {
+      LOGE(@"Attempt to add observer for an unknown selector (%@) for object (%@)", selectorName,
+           [object class]);
+      self = nil;
+      return self;
+    }
+
+    _object = object;
+    _keyPath = selectorName;
+    _expectedType = expectedType;
+    _callback = callback;
+
+    [object addObserver:self
+             forKeyPath:selectorName
+                options:(NSKeyValueObservingOptionNew | NSKeyValueObservingOptionOld)
+                context:NULL];
   }
   return self;
 }
 
-- (BOOL)addObserverForObject:(id)object
-                    selector:(SEL)selector
-                        type:(Class)expectedType
-                    callback:(KVOCallback)callback {
-  NSString *selectorName = NSStringFromSelector(selector);
-  if (![object respondsToSelector:selector]) {
-    LOGE(@"Attempt to add observer for an unknown selector (%@) for object (%@)", selectorName,
-         [object class]);
-    return NO;
-  }
-
-  SNTObserverInfo *info = [[SNTObserverInfo alloc] initWithExpectedType:expectedType
-                                                               callback:callback];
-
-  [self.observerInfo setValue:info forKey:selectorName];
-
-  [object addObserver:self forKeyPath:selectorName options:self.bits context:NULL];
-
-  return YES;
+- (void)dealloc {
+  [self.object removeObserver:self forKeyPath:self.keyPath context:NULL];
 }
 
 - (void)observeValueForKeyPath:(NSString *)keyPath
                       ofObject:(id)object
                         change:(NSDictionary<NSString *, id> *)change
                        context:(void *)context {
-  SNTObserverInfo *info = [self.observerInfo objectForKey:keyPath];
-
-  id oldValue = [change[NSKeyValueChangeOldKey] isKindOfClass:info.expectedType]
+  id oldValue = [change[NSKeyValueChangeOldKey] isKindOfClass:self.expectedType]
                   ? change[NSKeyValueChangeOldKey]
                   : nil;
-  id newValue = [change[NSKeyValueChangeNewKey] isKindOfClass:info.expectedType]
+  id newValue = [change[NSKeyValueChangeNewKey] isKindOfClass:self.expectedType]
                   ? change[NSKeyValueChangeNewKey]
                   : nil;
 
-  info.callback(oldValue, newValue);
+  self.callback(oldValue, newValue);
 }
 
 @end

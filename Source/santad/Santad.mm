@@ -117,160 +117,165 @@ void SantadMain(std::shared_ptr<EndpointSecurityAPI> esapi, std::shared_ptr<Logg
 
   EstablishSyncServiceConnection(syncd_queue);
 
-  SNTKVOManager *kvoManager = [SNTKVOManager defaultManager];
-  [kvoManager addObserverForObject:configurator
-                          selector:@selector(clientMode)
-                              type:[NSNumber class]
-                          callback:^(NSNumber *oldValue, NSNumber *newValue) {
-                            if ([oldValue longLongValue] == [newValue longLongValue]) {
-                              return;
-                            }
+  NSArray<SNTKVOManager *> *kvoObservers = [[NSArray alloc]
+    initWithObjects:
+      [[SNTKVOManager alloc] initWithObject:configurator
+                                   selector:@selector(clientMode)
+                                       type:[NSNumber class]
+                                   callback:^(NSNumber *oldValue, NSNumber *newValue) {
+                                     if ([oldValue longLongValue] == [newValue longLongValue]) {
+                                       return;
+                                     }
 
-                            SNTClientMode clientMode = (SNTClientMode)[newValue longLongValue];
+                                     SNTClientMode clientMode =
+                                       (SNTClientMode)[newValue longLongValue];
 
-                            if (clientMode == SNTClientModeLockdown) {
-                              LOGI(@"Changed client mode to Lockdown, flushing cache.");
-                              auth_result_cache->FlushCache(FlushCacheMode::kAllCaches);
-                            } else if (clientMode == SNTClientModeMonitor) {
-                              LOGI(@"Changed client mode to Monitor.");
-                            } else {
-                              LOGW(@"Changed client mode to unknown value.");
-                            }
+                                     if (clientMode == SNTClientModeLockdown) {
+                                       LOGI(@"Changed client mode to Lockdown, flushing cache.");
+                                       auth_result_cache->FlushCache(FlushCacheMode::kAllCaches);
+                                     } else if (clientMode == SNTClientModeMonitor) {
+                                       LOGI(@"Changed client mode to Monitor.");
+                                     } else {
+                                       LOGW(@"Changed client mode to unknown value.");
+                                     }
 
-                            [[notifier_queue.notifierConnection remoteObjectProxy]
-                              postClientModeNotification:clientMode];
-                          }];
+                                     [[notifier_queue.notifierConnection remoteObjectProxy]
+                                       postClientModeNotification:clientMode];
+                                   }],
+      [[SNTKVOManager alloc]
+        initWithObject:configurator
+              selector:@selector(syncBaseURL)
+                  type:[NSURL class]
+              callback:^(NSURL *oldValue, NSURL *newValue) {
+                if ((!newValue && !oldValue) ||
+                    ([newValue.absoluteString isEqualToString:oldValue.absoluteString])) {
+                  return;
+                }
 
-  [kvoManager
-    addObserverForObject:configurator
-                selector:@selector(syncBaseURL)
-                    type:[NSURL class]
-                callback:^(NSURL *oldValue, NSURL *newValue) {
-                  if ((!newValue && !oldValue) ||
-                      ([newValue.absoluteString isEqualToString:oldValue.absoluteString])) {
-                    return;
-                  }
+                if (newValue) {
+                  LOGI(@"Establishing a new sync service connection with SyncBaseURL: %@",
+                       newValue);
+                  [NSObject cancelPreviousPerformRequestsWithTarget:[SNTConfigurator configurator]
+                                                           selector:@selector(clearSyncState)
+                                                             object:nil];
+                  [[syncd_queue.syncConnection remoteObjectProxy] spindown];
+                  EstablishSyncServiceConnection(syncd_queue);
+                } else {
+                  LOGI(@"SyncBaseURL removed, spinning down sync service");
+                  [[syncd_queue.syncConnection remoteObjectProxy] spindown];
+                  // Keep the syncState active for 10 min in case com.apple.ManagedClient is
+                  // flapping.
+                  [[SNTConfigurator configurator] performSelector:@selector(clearSyncState)
+                                                       withObject:nil
+                                                       afterDelay:600];
+                }
+              }],
+      [[SNTKVOManager alloc]
+        initWithObject:configurator
+              selector:@selector(exportMetrics)
+                  type:[NSNumber class]
+              callback:^(NSNumber *oldValue, NSNumber *newValue) {
+                BOOL oldBool = [oldValue boolValue];
+                BOOL newBool = [newValue boolValue];
+                if (oldBool == NO && newBool == YES) {
+                  LOGI(@"metricsExport changed NO -> YES, starting to export metrics");
+                  metrics->StartPoll();
+                } else if (oldBool == YES && newBool == NO) {
+                  LOGI(@"metricsExport changed YES -> NO, stopping export of metrics");
+                  metrics->StopPoll();
+                }
+              }],
+      [[SNTKVOManager alloc]
+        initWithObject:configurator
+              selector:@selector(metricExportInterval)
+                  type:[NSNumber class]
+              callback:^(NSNumber *oldValue, NSNumber *newValue) {
+                uint64_t oldInterval = [oldValue unsignedIntValue];
+                uint64_t newInterval = [newValue unsignedIntValue];
+                LOGI(@"MetricExportInterval changed from %llu to %llu restarting export",
+                     oldInterval, newInterval);
+                metrics->SetInterval(newInterval);
+              }],
+      [[SNTKVOManager alloc]
+        initWithObject:configurator
+              selector:@selector(allowedPathRegex)
+                  type:[NSRegularExpression class]
+              callback:^(NSRegularExpression *oldValue, NSRegularExpression *newValue) {
+                if ((!newValue && !oldValue) ||
+                    ([newValue.pattern isEqualToString:oldValue.pattern])) {
+                  return;
+                }
 
-                  if (newValue) {
-                    LOGI(@"Establishing a new sync service connection with SyncBaseURL: %@",
-                         newValue);
-                    [NSObject cancelPreviousPerformRequestsWithTarget:[SNTConfigurator configurator]
-                                                             selector:@selector(clearSyncState)
-                                                               object:nil];
-                    [[syncd_queue.syncConnection remoteObjectProxy] spindown];
-                    EstablishSyncServiceConnection(syncd_queue);
-                  } else {
-                    LOGI(@"SyncBaseURL removed, spinning down sync service");
-                    [[syncd_queue.syncConnection remoteObjectProxy] spindown];
-                    // Keep the syncState active for 10 min in case com.apple.ManagedClient is
-                    // flapping.
-                    [[SNTConfigurator configurator] performSelector:@selector(clearSyncState)
-                                                         withObject:nil
-                                                         afterDelay:600];
-                  }
-                }];
+                LOGI(@"Changed allowlist regex, flushing cache");
+                auth_result_cache->FlushCache(FlushCacheMode::kAllCaches);
+              }],
+      [[SNTKVOManager alloc]
+        initWithObject:configurator
+              selector:@selector(blockedPathRegex)
+                  type:[NSRegularExpression class]
+              callback:^(NSRegularExpression *oldValue, NSRegularExpression *newValue) {
+                if ((!newValue && !oldValue) ||
+                    ([newValue.pattern isEqualToString:oldValue.pattern])) {
+                  return;
+                }
 
-  [kvoManager addObserverForObject:configurator
-                          selector:@selector(exportMetrics)
-                              type:[NSNumber class]
-                          callback:^(NSNumber *oldValue, NSNumber *newValue) {
-                            BOOL oldBool = [oldValue boolValue];
-                            BOOL newBool = [newValue boolValue];
-                            if (oldBool == NO && newBool == YES) {
-                              LOGI(@"metricsExport changed NO -> YES, starting to export metrics");
-                              metrics->StartPoll();
-                            } else if (oldBool == YES && newBool == NO) {
-                              LOGI(@"metricsExport changed YES -> NO, stopping export of metrics");
-                              metrics->StopPoll();
-                            }
-                          }];
+                LOGI(@"Changed denylist regex, flushing cache");
+                auth_result_cache->FlushCache(FlushCacheMode::kAllCaches);
+              }],
+      [[SNTKVOManager alloc] initWithObject:configurator
+                                   selector:@selector(blockUSBMount)
+                                       type:[NSNumber class]
+                                   callback:^(NSNumber *oldValue, NSNumber *newValue) {
+                                     BOOL oldBool = [oldValue boolValue];
+                                     BOOL newBool = [newValue boolValue];
 
-  [kvoManager
-    addObserverForObject:configurator
-                selector:@selector(metricExportInterval)
-                    type:[NSNumber class]
-                callback:^(NSNumber *oldValue, NSNumber *newValue) {
-                  uint64_t oldInterval = [oldValue unsignedIntValue];
-                  uint64_t newInterval = [newValue unsignedIntValue];
-                  LOGI(@"MetricExportInterval changed from %llu to %llu restarting export",
-                       oldInterval, newInterval);
-                  metrics->SetInterval(newInterval);
-                }];
+                                     if (oldBool == newBool) {
+                                       return;
+                                     }
 
-  [kvoManager addObserverForObject:configurator
-                          selector:@selector(allowedPathRegex)
-                              type:[NSRegularExpression class]
-                          callback:^(NSRegularExpression *oldValue, NSRegularExpression *newValue) {
-                            if ((!newValue && !oldValue) ||
-                                ([newValue.pattern isEqualToString:oldValue.pattern])) {
-                              return;
-                            }
+                                     LOGI(@"BlockUSBMount changed: %d -> %d", oldBool, newBool);
+                                     device_client.blockUSBMount = newBool;
+                                   }],
+      [[SNTKVOManager alloc] initWithObject:configurator
+                                   selector:@selector(remountUSBMode)
+                                       type:[NSArray class]
+                                   callback:^(NSArray *oldValue, NSArray *newValue) {
+                                     if (!oldValue && !newValue) {
+                                       return;
+                                     }
 
-                            LOGI(@"Changed allowlist regex, flushing cache");
-                            auth_result_cache->FlushCache(FlushCacheMode::kAllCaches);
-                          }];
+                                     // Ensure the arrays are composed of strings
+                                     for (id element in oldValue) {
+                                       if (![element isKindOfClass:[NSString class]]) {
+                                         return;
+                                       }
+                                     }
 
-  [kvoManager addObserverForObject:configurator
-                          selector:@selector(blockedPathRegex)
-                              type:[NSRegularExpression class]
-                          callback:^(NSRegularExpression *oldValue, NSRegularExpression *newValue) {
-                            if ((!newValue && !oldValue) ||
-                                ([newValue.pattern isEqualToString:oldValue.pattern])) {
-                              return;
-                            }
+                                     for (id element in newValue) {
+                                       if (![element isKindOfClass:[NSString class]]) {
+                                         return;
+                                       }
+                                     }
 
-                            LOGI(@"Changed denylist regex, flushing cache");
-                            auth_result_cache->FlushCache(FlushCacheMode::kAllCaches);
-                          }];
+                                     if ([oldValue isEqualToArray:newValue]) {
+                                       return;
+                                     }
 
-  [kvoManager addObserverForObject:configurator
-                          selector:@selector(blockUSBMount)
-                              type:[NSNumber class]
-                          callback:^(NSNumber *oldValue, NSNumber *newValue) {
-                            BOOL oldBool = [oldValue boolValue];
-                            BOOL newBool = [newValue boolValue];
+                                     LOGI(@"RemountArgs changed: %@ -> %@",
+                                          [oldValue componentsJoinedByString:@","],
+                                          [newValue componentsJoinedByString:@","]);
+                                     device_client.remountArgs = newValue;
+                                   }],
+      nil];
 
-                            if (oldBool == newBool) {
-                              return;
-                            }
-
-                            LOGI(@"BlockUSBMount changed: %d -> %d", oldBool, newBool);
-                            device_client.blockUSBMount = newBool;
-                          }];
-
-  [kvoManager
-    addObserverForObject:configurator
-                selector:@selector(remountUSBMode)
-                    type:[NSArray class]
-                callback:^(NSArray *oldValue, NSArray *newValue) {
-                  if (!oldValue && !newValue) {
-                    return;
-                  }
-
-                  // Ensure the arrays are composed of strings
-                  for (id element in oldValue) {
-                    if (![element isKindOfClass:[NSString class]]) {
-                      return;
-                    }
-                  }
-
-                  for (id element in newValue) {
-                    if (![element isKindOfClass:[NSString class]]) {
-                      return;
-                    }
-                  }
-
-                  if ([oldValue isEqualToArray:newValue]) {
-                    return;
-                  }
-
-                  LOGI(@"RemountArgs changed: %@ -> %@", [oldValue componentsJoinedByString:@","],
-                       [newValue componentsJoinedByString:@","]);
-                  device_client.remountArgs = newValue;
-                }];
+  // Make the compiler happy. The variable is only used to ensure proper lifetime
+  // of the SNTKVOManager objects it contains.
+  (void)kvoObservers;
 
   [monitor_client enable];
   [authorizer_client enable];
   [device_client enable];
   [tamper_client enable];
+
+  [[NSRunLoop mainRunLoop] run];
 }
