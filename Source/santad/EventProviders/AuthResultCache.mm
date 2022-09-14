@@ -140,7 +140,7 @@ void AuthResultCache::FlushCache(FlushCacheMode mode) {
     // doesn't need to be cleared when only flushing the non-root cache.
     //
     // Calling into ES should be done asynchronously since it could otherwise
-    // potentially deadlock
+    // potentially deadlock.
     auto shared_esapi = esapi_->shared_from_this();
     dispatch_async(q_, ^{
       // ES does not need a connected client to clear cache
