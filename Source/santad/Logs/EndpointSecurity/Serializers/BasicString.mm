@@ -151,7 +151,7 @@ static NSString *OriginalPathForTranslocation(const es_process_t *esProc) {
   NSURL *origURL = nil;
   bool isTranslocated = false;
 
-  if (SecTranslocateIsTranslocatedURL(cfExecURL, &isTranslocated, NULL)) {
+  if (SecTranslocateIsTranslocatedURL(cfExecURL, &isTranslocated, NULL) && isTranslocated) {
     bool dropPrivs = true;
     if (@available(macOS 12.0, *)) {
       dropPrivs = false;
