@@ -14,6 +14,8 @@
 
 #include "Source/santad/Logs/EndpointSecurity/Serializers/Serializer.h"
 
+#include <EndpointSecurity/EndpointSecurity.h>
+
 #import "Source/santad/SNTDecisionCache.h"
 
 namespace es = santa::santad::event_providers::endpoint_security;
@@ -27,8 +29,13 @@ std::vector<uint8_t> Serializer::SerializeMessageTemplate(const es::EnrichedExch
   return SerializeMessage(msg);
 }
 std::vector<uint8_t> Serializer::SerializeMessageTemplate(const es::EnrichedExec &msg) {
-  [[SNTDecisionCache sharedCache]
-    resetTimestampForCachedDecision:msg.es_msg().event.exec.target->executable->stat];
+  const es_message_t &es_msg = msg.es_msg();
+  if (es_msg.action_type == ES_ACTION_TYPE_NOTIFY &&
+      es_msg.action.notify.result.auth == ES_AUTH_RESULT_ALLOW) {
+    // For allowed execs, cached decision timestamps must be updated
+    [[SNTDecisionCache sharedCache]
+      resetTimestampForCachedDecision:msg.es_msg().event.exec.target->executable->stat];
+  }
 
   return SerializeMessage(msg);
 }
