@@ -127,7 +127,7 @@ std::optional<std::shared_ptr<std::string>> Enricher::UsernameForGID(gid_t gid) 
       groupname = std::nullopt;
     }
 
-    username_cache_.insert(gid, groupname);
+    groupname_cache_.insert(gid, groupname);
 
     return groupname;
   }

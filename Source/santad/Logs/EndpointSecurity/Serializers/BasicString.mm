@@ -286,7 +286,7 @@ std::shared_ptr<BasicString> BasicString::Create(std::shared_ptr<EndpointSecurit
 BasicString::BasicString(std::shared_ptr<EndpointSecurityAPI> esapi, bool prefix_time_name)
     : esapi_(esapi), prefix_time_name_(prefix_time_name) {}
 
-std::string BasicString::CreateDefaultString() {
+std::string BasicString::CreateDefaultString(size_t reserved_size) {
   std::string str;
   str.reserve(1024);
 
@@ -303,7 +303,9 @@ std::string BasicString::CreateDefaultString() {
 
 inline std::vector<uint8_t> FinalizeString(std::string &str) {
   str.append("\n");
-  return std::vector<uint8_t>(str.begin(), str.end());
+  std::vector<uint8_t> vec(str.length());
+  std::copy(str.begin(), str.end(), vec.begin());
+  return vec;
 }
 
 std::vector<uint8_t> BasicString::SerializeMessage(const EnrichedClose &msg) {
@@ -338,7 +340,7 @@ std::vector<uint8_t> BasicString::SerializeMessage(const EnrichedExchange &msg) 
 
 std::vector<uint8_t> BasicString::SerializeMessage(const EnrichedExec &msg) {
   const es_message_t &esm = msg.es_msg();
-  std::string str = CreateDefaultString();
+  std::string str = CreateDefaultString(1024);  // EXECs tend to be bigger, reserve more space.
 
   SNTCachedDecision *cd =
     [[SNTDecisionCache sharedCache] cachedDecisionForFile:esm.event.exec.target->executable->stat];

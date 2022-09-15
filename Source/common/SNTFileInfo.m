@@ -50,6 +50,7 @@
 @property NSFileHandle *fileHandle;
 @property NSUInteger fileSize;
 @property NSString *fileOwnerHomeDir;
+@property NSString *sha256Storage;
 
 // Cached properties
 @property NSBundle *bundleRef;
@@ -234,9 +235,13 @@ extern NSString *const NSURLQuarantinePropertiesKey WEAK_IMPORT_ATTRIBUTE;
 }
 
 - (NSString *)SHA256 {
-  NSString *sha256;
-  [self hashSHA1:NULL SHA256:&sha256];
-  return sha256;
+  // Memoize the value
+  if (!self.sha256Storage) {
+    NSString *sha256;
+    [self hashSHA1:NULL SHA256:&sha256];
+    self.sha256Storage = sha256;
+  }
+  return self.sha256Storage;
 }
 
 #pragma mark File Type Info

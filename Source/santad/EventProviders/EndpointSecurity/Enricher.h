@@ -23,7 +23,7 @@ namespace santa::santad::event_providers::endpoint_security {
 
 class Enricher {
  public:
-  Enricher() : username_cache_(200), groupname_cache_(200) {}
+  Enricher() : username_cache_(64), groupname_cache_(64) {}
   virtual ~Enricher() = default;
   virtual std::shared_ptr<EnrichedMessage> Enrich(Message &&msg);
   virtual EnrichedProcess Enrich(const es_process_t &es_proc);

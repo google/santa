@@ -44,7 +44,7 @@
     // TODO(mlw): We should protect this structure with a read/write lock
     // instead of a serial dispatch queue since it's expected that most most
     // accesses will be lookups, not caching new items.
-    _detailStore = [NSMutableDictionary dictionaryWithCapacity:10000];
+    _detailStore = [NSMutableDictionary dictionaryWithCapacity:1000];
     _detailStoreQueue = dispatch_queue_create(
       "com.google.santa.daemon.detail_store",
       dispatch_queue_attr_make_with_qos_class(DISPATCH_QUEUE_SERIAL_WITH_AUTORELEASE_POOL,

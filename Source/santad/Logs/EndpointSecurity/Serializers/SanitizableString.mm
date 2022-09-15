@@ -76,7 +76,9 @@ std::optional<std::string> SanitizableString::SanitizeString(const char *str, si
   for (const char *p = str; (c = *p) != 0; ++p) {
     if (c == '|' || c == '\n' || c == '\r') {
       if (!reservedStringSpace) {
-        buf.reserve(length * 6);
+        // Assume the common case won't grow the string length by more than a
+        // factor of 2. String will grow more if it needs to.
+        buf.reserve(length * 2);
         reservedStringSpace = true;
       }
 

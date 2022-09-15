@@ -61,7 +61,7 @@ class BasicString : public Serializer {
   std::vector<uint8_t> SerializeDiskDisappeared(NSDictionary *) override;
 
  private:
-  std::string CreateDefaultString();
+  std::string CreateDefaultString(size_t reserved_size = 512);
 
   std::shared_ptr<santa::santad::event_providers::endpoint_security::EndpointSecurityAPI> esapi_;
   bool prefix_time_name_;

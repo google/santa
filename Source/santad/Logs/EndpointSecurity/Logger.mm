@@ -35,7 +35,7 @@ using santa::santad::logs::endpoint_security::writers::Syslog;
 namespace santa::santad::logs::endpoint_security {
 
 // Flush the write buffer every 5 seconds
-static const uint64_t kFlushBufferTimeoutMS = 5000;
+static const uint64_t kFlushBufferTimeoutMS = 10000;
 // Batch writes up to 128kb
 static const size_t kBufferBatchSizeBytes = (1024 * 128);
 // Reserve an extra 4kb of buffer space to account for event overflow

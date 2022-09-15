@@ -137,6 +137,11 @@ static void addPathsFromDefaultMuteSet(NSMutableSet *criticalPaths) API_AVAILABL
   NSMutableDictionary *bins = [NSMutableDictionary dictionary];
   for (NSString *path in [SNTRuleTable criticalSystemBinaryPaths]) {
     SNTFileInfo *binInfo = [[SNTFileInfo alloc] initWithPath:path];
+    if (!binInfo.SHA256) {
+      // If there isn't a hash, no need to compute the other info here.
+      // Just continue on to the next binary.
+      continue;
+    }
     MOLCodesignChecker *csInfo = [binInfo codesignCheckerWithError:NULL];
 
     // Make sure the critical system binary is signed by the same chain as launchd/self
