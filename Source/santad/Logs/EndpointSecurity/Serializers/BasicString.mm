@@ -149,7 +149,8 @@ static NSString *OriginalPathForTranslocation(const es_process_t *esProc) {
 
   // Note: Benchmarks showed better performance using `URLWithString` with a `file://` prefix
   // compared to using `fileURLWithPath`.
-  CFURLRef cfExecURL = (__bridge CFURLRef)[NSURL URLWithString:[NSString stringWithFormat:@"file://%s", esProc->executable->path.data]];
+  CFURLRef cfExecURL = (__bridge CFURLRef)
+    [NSURL URLWithString:[NSString stringWithFormat:@"file://%s", esProc->executable->path.data]];
   NSURL *origURL = nil;
   bool isTranslocated = false;
 
