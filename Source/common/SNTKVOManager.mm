@@ -35,8 +35,7 @@
     if (![object respondsToSelector:selector]) {
       LOGE(@"Attempt to add observer for an unknown selector (%@) for object (%@)", selectorName,
            [object class]);
-      self = nil;
-      return self;
+      return nil;
     }
 
     _object = object;

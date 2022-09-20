@@ -21,7 +21,7 @@ typedef void (^KVOCallback)(id oldValue, id newValue);
 @interface SNTKVOManager : NSObject
 
 // Add an observer for the selector on the given object. When a KVO notification
-// is received, the callback is called. If the notificaiton contains objects that
+// is received, the callback is called. If the notification contains objects that
 // are not of the expectedType, nil is passed as the argument to the callback.
 // The observer is removed when the returned instance is deallocated.
 - (instancetype)initWithObject:(id)object
