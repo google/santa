@@ -19,8 +19,6 @@
 
 #include "Source/santad/Metrics.h"
 
-using santa::santad::Metrics;
-
 namespace santa::santad {
 
 class MetricsPeer : public Metrics {

@@ -42,11 +42,12 @@ class Client {
     other.result_ = ES_NEW_CLIENT_RESULT_ERR_INTERNAL;
   }
 
-  void operator=(Client&& rhs) {
+  Client& operator=(Client&& rhs) {
     client_ = rhs.client_;
     result_ = rhs.result_;
     rhs.client_ = nullptr;
     rhs.result_ = ES_NEW_CLIENT_RESULT_ERR_INTERNAL;
+    return *this;
   }
 
   Client(const Client& other) = delete;

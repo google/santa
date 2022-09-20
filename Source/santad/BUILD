@@ -563,6 +563,7 @@ macos_bundle(
 
 objc_library(
     name = "MockEndpointSecurityAPI",
+    testonly = 1,
     hdrs = ["EventProviders/EndpointSecurity/MockEndpointSecurityAPI.h"],
     sdk_dylibs = [
         "EndpointSecurity",

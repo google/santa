@@ -80,7 +80,7 @@ using santa::santad::logs::endpoint_security::serializers::SanitizableString;
   std::ostringstream ss;
   const char *sanitizable = "sani|tizable";
   const char *sanitized = "sani<pipe>tizable";
-  es_string_token_t tok = {.data = sanitizable, .length = strlen(sanitizable)};
+  es_string_token_t tok = {.length = strlen(sanitizable), .data = sanitizable};
 
   ss << SanitizableString(tok);
 

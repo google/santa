@@ -30,7 +30,7 @@ class Metrics : public std::enable_shared_from_this<Metrics> {
   static std::shared_ptr<Metrics> Create(uint64_t interval);
 
   Metrics(MOLXPCConnection *metrics_connection, dispatch_queue_t q, dispatch_source_t timer_source,
-          uint64_t interval, void (^run_once_on_start)(void));
+          uint64_t interval, void (^run_on_first_start)(void));
 
   ~Metrics();
 

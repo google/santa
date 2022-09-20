@@ -22,8 +22,6 @@
 #include "Source/common/TestUtils.h"
 #import "Source/santad/Logs/EndpointSecurity/Writers/File.h"
 
-using santa::santad::logs::endpoint_security::writers::File;
-
 namespace santa::santad::logs::endpoint_security::writers {
 
 class FilePeer : public File {
