@@ -72,6 +72,8 @@ es_file_t *GetTargetFileForPrefixTree(const es_message_t *msg) {
   // Pre-enrichment processing
   switch (esMsg->event_type) {
     case ES_EVENT_TYPE_NOTIFY_CLOSE:
+      // TODO(mlw): Once we move to building with the macOS 13 SDK, we should also check
+      // the `was_mapped_writable` field
       if (esMsg->event.close.modified == false) {
         // Ignore unmodified files
         return;
