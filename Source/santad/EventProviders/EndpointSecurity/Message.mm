@@ -52,6 +52,8 @@ std::string Message::ParentProcessName() const {
 }
 
 std::string Message::GetProcessName(pid_t pid) const {
+  // Note: proc_name() accesses the `pbi_name` field of `struct proc_bsdinfo`. The size of `pname`
+  // here is meant to match the size of `pbi_name`, and one extra byte ensure zero-terminated.
   char pname[MAXCOMLEN * 2 + 1] = {};
   if (proc_name(pid, pname, sizeof(pname)) > 0) {
     return std::string(pname);

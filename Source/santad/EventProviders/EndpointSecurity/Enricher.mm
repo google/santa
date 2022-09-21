@@ -32,6 +32,8 @@ namespace santa::santad::event_providers::endpoint_security {
 Enricher::Enricher() : username_cache_(256), groupname_cache_(256) {}
 
 std::shared_ptr<EnrichedMessage> Enricher::Enrich(Message &&es_msg) {
+  // TODO(mlw): Consider potential design patterns that could help reduce memory usage under load
+  // (such as maybe the flyweight pattern)
   switch (es_msg->event_type) {
     case ES_EVENT_TYPE_NOTIFY_CLOSE:
       return std::make_shared<EnrichedMessage>(EnrichedClose(

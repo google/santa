@@ -21,6 +21,8 @@
 #import "Source/santad/SNTCompilerController.h"
 #import "Source/santad/SNTExecutionController.h"
 
+/// ES Client focused on subscribing to AUTH variants and authorizing the events
+/// based on configured policy.
 @interface SNTEndpointSecurityAuthorizer
     : SNTEndpointSecurityClient <SNTEndpointSecurityEventHandler>
 

@@ -80,6 +80,8 @@ static constexpr std::string_view kSantaKextIdentifier = "com.google.santa-drive
     }
 
     case ES_EVENT_TYPE_AUTH_KEXTLOAD: {
+      // TODO(mlw): Since we don't package the kext anymore, we should consider removing this.
+      // TODO(mlw): Consider logging when kext loads are attempted.
       es_auth_result_t res = ES_AUTH_RESULT_ALLOW;
       if (strcmp(esMsg->event.kextload.identifier.data, kSantaKextIdentifier.data()) == 0) {
         LOGW(@"Preventing attempt to load Santa kext!");

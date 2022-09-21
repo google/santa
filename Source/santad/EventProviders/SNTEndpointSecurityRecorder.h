@@ -21,6 +21,8 @@
 #include "Source/santad/Logs/EndpointSecurity/Logger.h"
 #import "Source/santad/SNTCompilerController.h"
 
+/// ES Client focused on subscribing to NOTIFY event variants with the intention of enriching
+/// received messages and logging the information.
 @interface SNTEndpointSecurityRecorder : SNTEndpointSecurityClient <SNTEndpointSecurityEventHandler>
 
 - (instancetype)

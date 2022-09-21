@@ -21,6 +21,7 @@
 #import "Source/santad/EventProviders/SNTEndpointSecurityEventHandler.h"
 #include "Source/santad/Logs/EndpointSecurity/Logger.h"
 
+/// ES Client focused on mitigating accidental or malicious tampering of Santa and its components.
 @interface SNTEndpointSecurityTamperResistance
     : SNTEndpointSecurityClient <SNTEndpointSecurityEventHandler>
 

@@ -130,10 +130,17 @@ static constexpr std::string_view kIgnoredCompilerProcessPathPrefix = "/dev/";
 - (void)createTransitiveRule:(const Message &)esMsg
                       target:(const es_file_t *)targetFile
                       logger:(std::shared_ptr<Logger>)logger {
+  NSError *error = nil;
+  SNTFileInfo *fi = [[SNTFileInfo alloc] initWithEndpointSecurityFile:targetFile error:&error];
+  if (error) {
+    LOGD(@"Unable to create SNTFileInfo while attempting to create transitive rule. Path: %@",
+         @(targetFile->path.data));
+    return;
+  }
+
   [self saveFakeDecision:targetFile];
 
   // Check if this file is an executable.
-  SNTFileInfo *fi = [[SNTFileInfo alloc] initWithEndpointSecurityFile:targetFile error:nil];
   if (fi.isExecutable) {
     // Check if there is an existing (non-transitive) rule for this file.  We leave existing rules
     // alone, so that a allowlist or blocklist rule can't be overwritten by a transitive one.

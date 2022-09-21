@@ -29,6 +29,8 @@
 - (instancetype)initWithESAPI:
   (std::shared_ptr<santa::santad::event_providers::endpoint_security::EndpointSecurityAPI>)esApi;
 
+/// @note If this fails to establish a new ES client via `es_new_client`, an exception is raised
+/// that should terminate the program.
 - (void)establishClientOrDie;
 
 - (bool)subscribe:(const std::set<es_event_type_t> &)events;
@@ -40,6 +42,12 @@
 /// subscribing mitigates this posibility.
 - (bool)subscribeAndClearCache:(const std::set<es_event_type_t> &)events;
 
+/// Responds to the Message with the given auth result
+///
+/// @param Message The wrapped es_message_t being responded to
+/// @param result Either ES_AUTH_RESULT_ALLOW or ES_AUTH_RESULT_DENY
+/// @param cacheable true if ES should attempt to cache the result, otherwise false
+/// @return true if the response was successful, otherwise false
 - (bool)respondToMessage:(const santa::santad::event_providers::endpoint_security::Message &)msg
           withAuthResult:(es_auth_result_t)result
                cacheable:(bool)cacheable;

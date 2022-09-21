@@ -61,7 +61,6 @@ using santa::santad::event_providers::endpoint_security::Message;
 }
 
 - (void)triggerTestMountEvent:(es_event_type_t)eventType
-            //  mockDA:(MockDiskArbitration *)mockDA
             diskInfoOverrides:(NSDictionary *)diskInfo
            expectedAuthResult:(es_auth_result_t)expectedAuthResult
            deviceManagerSetup:(void (^)(SNTEndpointSecurityDeviceManager *))setupDMCallback {

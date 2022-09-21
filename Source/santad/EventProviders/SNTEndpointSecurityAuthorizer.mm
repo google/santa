@@ -72,6 +72,7 @@ using santa::santad::event_providers::endpoint_security::Message;
                    cacheable:(authResult == ES_AUTH_RESULT_ALLOW)];
       return;
     } else if (returnAction == ACTION_REQUEST_BINARY) {
+      // TODO(mlw): Add a metric here to observe how ofthen this happens in practice.
       // TODO(mlw): Look into caching a `Deferred<value>` to better prevent
       // raciness of multiple threads checking the cache simultaneously.
       // Also mitigates need to poll.
