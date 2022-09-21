@@ -293,7 +293,7 @@ objc_library(
     deps = [
         ":EndpointSecurityEnrichedTypes",
         "//Source/common:SNTLogging",
-        "@thread-safe-lru//:thread-safe-lru",
+        "//Source/common:SantaCache",
     ],
 )
 

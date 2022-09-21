@@ -58,36 +58,6 @@ load("@hedron_compile_commands//:workspace_setup.bzl", "hedron_compile_commands_
 
 hedron_compile_commands_setup()
 
-# oneTBB
-
-git_repository(
-    name = "oneTBB",
-    commit = "b2b28c5b63fbd0352f66168a42068c437323fb19",  # tag = v2021.7.0-rc1
-    remote = "https://github.com/oneapi-src/oneTBB/",
-    shallow_since = "1660220888 +0200",
-)
-
-# thread-safe-lru
-
-new_git_repository(
-    name = "thread-safe-lru",
-    build_file_content = """
-cc_library(
-    name = "thread-safe-lru",
-    hdrs = glob([
-        "thread-safe-lru/*.h"
-    ]),
-    deps = [
-        "@oneTBB//:tbb",
-    ],
-    visibility = ["//visibility:public"],
-)
-""",
-    commit = "df7b21ca075328ae5ce22bf3e042d62fca46382e",
-    remote = "https://github.com/tstarling/thread-safe-lru.git",
-    shallow_since = "1647062781 +1100",
-)
-
 # Googletest - tag: release-1.12.1
 http_archive(
     name = "com_google_googletest",

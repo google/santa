@@ -27,9 +27,9 @@
 #include "Source/common/SNTLogging.h"
 #include "Source/santad/EventProviders/EndpointSecurity/EnrichedTypes.h"
 
-using LRUCache = tstarling::ThreadSafeLRUCache<uid_t, std::optional<std::shared_ptr<std::string>>>;
-
 namespace santa::santad::event_providers::endpoint_security {
+
+Enricher::Enricher() : username_cache_(256), groupname_cache_(256) {}
 
 std::shared_ptr<EnrichedMessage> Enricher::Enrich(Message &&es_msg) {
   switch (es_msg->event_type) {
@@ -95,12 +95,11 @@ EnrichedFile Enricher::Enrich(const es_file_t &es_file) {
 }
 
 std::optional<std::shared_ptr<std::string>> Enricher::UsernameForUID(uid_t uid) {
-  LRUCache::ConstAccessor val;
-  if (username_cache_.find(val, uid)) {
-    return *val;
-  } else {
-    std::optional<std::shared_ptr<std::string>> username;
+  std::optional<std::shared_ptr<std::string>> username = username_cache_.get(uid);
 
+  if (username.has_value()) {
+    return username;
+  } else {
     struct passwd *pw = getpwuid(uid);
     if (pw) {
       username = std::make_shared<std::string>(pw->pw_name);
@@ -108,18 +107,18 @@ std::optional<std::shared_ptr<std::string>> Enricher::UsernameForUID(uid_t uid) 
       username = std::nullopt;
     }
 
-    username_cache_.insert(uid, username);
+    username_cache_.set(uid, username);
 
     return username;
   }
 }
-std::optional<std::shared_ptr<std::string>> Enricher::UsernameForGID(gid_t gid) {
-  LRUCache::ConstAccessor val;
-  if (groupname_cache_.find(val, gid)) {
-    return *val;
-  } else {
-    std::optional<std::shared_ptr<std::string>> groupname;
 
+std::optional<std::shared_ptr<std::string>> Enricher::UsernameForGID(gid_t gid) {
+  std::optional<std::shared_ptr<std::string>> groupname = groupname_cache_.get(gid);
+
+  if (groupname.has_value()) {
+    return groupname;
+  } else {
     struct group *gr = getgrgid(gid);
     if (gr) {
       groupname = std::make_shared<std::string>(gr->gr_name);
@@ -127,7 +126,7 @@ std::optional<std::shared_ptr<std::string>> Enricher::UsernameForGID(gid_t gid) 
       groupname = std::nullopt;
     }
 
-    groupname_cache_.insert(gid, groupname);
+    groupname_cache_.set(gid, groupname);
 
     return groupname;
   }

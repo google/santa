@@ -122,6 +122,13 @@ void SantadMain(std::shared_ptr<EndpointSecurityAPI> esapi, std::shared_ptr<Logg
                                  selector:@selector(clientMode)
                                      type:[NSNumber class]
                                  callback:^(NSNumber *oldValue, NSNumber *newValue) {
+                                   if ([oldValue longLongValue] == [newValue longLongValue]) {
+                                     // Note: This case apparently can happen and if not checked
+                                     // will result in excessive notification messages sent to the
+                                     // user when calling `postClientModeNotification` below
+                                     return;
+                                   }
+
                                    SNTClientMode clientMode =
                                      (SNTClientMode)[newValue longLongValue];
 
