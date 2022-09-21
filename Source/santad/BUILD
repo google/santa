@@ -195,6 +195,7 @@ objc_library(
     deps = [
         ":EndpointSecurityAPI",
         ":EndpointSecurityClient",
+        ":EndpointSecurityEnrichedTypes",
         ":EndpointSecurityMessage",
     ],
 )

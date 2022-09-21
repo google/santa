@@ -85,7 +85,7 @@ using santa::santad::event_providers::endpoint_security::Message;
 
   SNTEndpointSecurityClient *client = [[SNTEndpointSecurityClient alloc] initWithESAPI:nullptr];
 
-  for (auto kv : resultMessagePairs) {
+  for (const auto &kv : resultMessagePairs) {
     NSString *message = [client errorMessageForNewClientResult:kv.first];
     XCTAssertEqual(0, strcmp([(message ?: @"") UTF8String], kv.second.c_str()));
   }
