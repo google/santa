@@ -106,7 +106,7 @@ void CleanupAndReExec() {
   [t launch];
   [t waitUntilExit];
 
-  // This exit will likely never be called because the above launchctl command kill us.
+  // This exit will likely never be called because the above launchctl command will kill us.
   exit(0);
 }
 
