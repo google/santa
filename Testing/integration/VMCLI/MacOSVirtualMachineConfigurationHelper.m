@@ -98,8 +98,6 @@
     VZMacAuxiliaryStorage *auxiliaryStorage = [[VZMacAuxiliaryStorage alloc] initWithContentsOfURL:auxURL];
     macPlatformConfiguration.auxiliaryStorage = auxiliaryStorage;
 
-    // Retrieve the hardware model; you should save this value to disk
-    // during installation.
     NSURL *modelURL = [[NSURL alloc] initFileURLWithPath:[bundleDir stringByAppendingString:@"HardwareModel"]];
     NSData *hardwareModelData = [[NSData alloc] initWithContentsOfURL:modelURL];
     if (!hardwareModelData) {
@@ -116,8 +114,6 @@
     }
     macPlatformConfiguration.hardwareModel = hardwareModel;
 
-    // Retrieve the machine identifier; you should save this value to disk
-    // during installation.
     NSURL *idURL = [[NSURL alloc] initFileURLWithPath:[bundleDir stringByAppendingString:@"MachineIdentifier"]];
     NSData *machineIdentifierData = [[NSData alloc] initWithContentsOfURL:idURL];
     if (!machineIdentifierData) {

@@ -1,10 +1,12 @@
 #!/usr/bin/env python3
+import datetime
+import os
 import pathlib
 import subprocess
 import sys
 import tempfile
 
-#from google.cloud import storage
+from google.cloud import storage
 
 AGE = "/opt/bin/age"
 BUCKET = "buildkite-vms"
@@ -16,22 +18,29 @@ if __name__ == "__main__":
 
     tar_name = sys.argv[1]
     if not tar_name.endswith('.tar.gz.enc'):
-        print("Image name should be encrypted tar.gz file", file=sys.stderr)
+        print("Image name should be .tar.gz.enc file", file=sys.stderr)
         sys.exit(1)
 
     encrypted_tar_path = VMS_DIR / tar_name
     decrypted_tar_path = pathlib.Path(str(encrypted_tar_path)[:-len('.enc')])
     extracted_path = pathlib.Path(str(decrypted_tar_path)[:-len('.tar.gz')])
 
-    if not extracted_path.exists():
-        print(f"Dont have VM {extracted_path}, downloading...")
+    storage_client = storage.Client()
+    bucket = storage_client.bucket(BUCKET)
+    blob = bucket.get_blob(tar_name)
 
-        if not encrypted_tar_path.exists():
-          # download
-          storage_client = storage.Client()
-          bucket = storage_client.bucket(BUCKET)
-          blob = bucket.blob(tar_name)
-          blob.download_to_filename(encrypted_tar_path)
+    if blob is None:
+      print("Specified image doesn't exist in GCS", file=sys.stderr)
+      sys.exit(1)
+
+    try:
+      local_ctime = os.stat(extracted_path).st_ctime
+    except FileNotFoundError:
+      local_ctime = 0
+
+    if blob.updated > datetime.datetime.fromtimestamp(local_ctime, tz=datetime.timezone.utc):
+        print(f"VM {extracted_path} not present or not up to date, downloading...")
+        blob.download_to_filename(encrypted_tar_path)
 
         # decrypt
         print("Decrypting...")
@@ -49,7 +58,6 @@ if __name__ == "__main__":
         print(f"Snapshot: {snapshot_dir}")
         # COW copy the image to this tempdir
         subprocess.check_output(['cp', '-rc', extracted_path, snapshot_dir])
-        subprocess.check_output(['ls', '-alR', snapshot_dir])
         try:
             subprocess.check_output([VMCLI, pathlib.Path(snapshot_dir) / "VM.bundle"], timeout=15*60)
         except subprocess.TimeoutExpired:

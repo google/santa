@@ -32,18 +32,18 @@ objc_library(
 filegroup(
   name = "entitlements",
   srcs = [
-    "VMCLI.entitlements"
-  ]
+      "VMCLI.entitlements",
+  ],
 )
 
 macos_command_line_application(
     name = "VMCLI",
-    codesign_inputs = [
-      ":entitlements",
-    ],
     codesignopts = [
-      "--entitlements=Testing/integration/VMCLI/VMCLI.entitlements",
+        "--entitlements=Testing/integration/VMCLI/VMCLI.entitlements",
     ],
-    deps = [":vmcli_lib"],
+    deps = [
+        ":vmcli_lib",
+        ":entitlements",
+    ],
     minimum_os_version = "12.0",
 )
