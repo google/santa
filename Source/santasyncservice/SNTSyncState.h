@@ -58,7 +58,7 @@
 @property SNTClientMode clientMode;
 @property NSString *allowlistRegex;
 @property NSString *blocklistRegex;
-@property BOOL blockUSBMount;
+@property NSNumber *blockUSBMount;
 // Array of mount args for the forced remounting feature.
 @property NSArray *remountUSBMode;
 

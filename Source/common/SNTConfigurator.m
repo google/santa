@@ -468,15 +468,15 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
 }
 
 + (NSSet *)keyPathsForValuesAffectingRemountUSBMode {
-  return [self configStateSet];
+  return [self syncAndConfigStateSet];
 }
 
 + (NSSet *)keyPathsForValuesAffectingRemountUSBBlockMessage {
-  return [self syncAndConfigStateSet];
+  return [self configStateSet];
 }
 
 + (NSSet *)keyPathsForValuesAffectingUsbBlockMessage {
-  return [self syncAndConfigStateSet];
+  return [self configStateSet];
 }
 
 #pragma mark Public Interface
@@ -577,7 +577,10 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
 }
 
 - (NSArray<NSString *> *)remountUSBMode {
-  NSArray<NSString *> *args = self.configState[kRemountUSBModeKey];
+  NSArray<NSString *> *args = self.syncState[kRemountUSBModeKey];
+  if (!args) {
+    args = (NSArray<NSString *> *)self.configState[kRemountUSBModeKey];
+  }
   for (id arg in args) {
     if (![arg isKindOfClass:[NSString class]]) {
       return nil;
@@ -855,8 +858,10 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
 }
 
 - (BOOL)blockUSBMount {
-  NSNumber *number = self.configState[kBlockUSBMountKey];
-  return number ? [number boolValue] : NO;
+  NSNumber *n = self.syncState[kBlockUSBMountKey];
+  if (n) return [n boolValue];
+
+  return [self.configState[kBlockUSBMountKey] boolValue];
 }
 
 ///
