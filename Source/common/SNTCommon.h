@@ -38,7 +38,6 @@ typedef enum {
   ACTION_RESPOND_ALLOW,
   ACTION_RESPOND_DENY,
   ACTION_RESPOND_ALLOW_COMPILER,
-
 } santa_action_t;
 
 #define RESPONSE_VALID(x)                                   \
