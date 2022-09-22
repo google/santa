@@ -1,4 +1,4 @@
-/// Copyright 2016 Google Inc. All rights reserved.
+/// Copyright 2016-2022 Google Inc. All rights reserved.
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -12,10 +12,14 @@
 ///    See the License for the specific language governing permissions and
 ///    limitations under the License.
 
-#define STRONGIFY(var)                                 \
-  _Pragma("clang diagnostic push")                     \
-      _Pragma("clang diagnostic ignored \"-Wshadow\"") \
-          __strong __typeof(var) var = (Weak_##var);   \
+// clang-format off
+
+#define STRONGIFY(var)                             \
+  _Pragma("clang diagnostic push")                 \
+  _Pragma("clang diagnostic ignored \"-Wshadow\"") \
+  __strong __typeof(var) var = (Weak_##var);   \
   _Pragma("clang diagnostic pop")
 
 #define WEAKIFY(var) __weak __typeof(var) Weak_##var = (var);
+
+// clang-format on

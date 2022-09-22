@@ -1,4 +1,4 @@
-/// Copyright 2015 Google Inc. All rights reserved.
+/// Copyright 2015-2022 Google Inc. All rights reserved.
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -12,6 +12,7 @@
 ///    See the License for the specific language governing permissions and
 ///    limitations under the License.
 
+#import <EndpointSecurity/EndpointSecurity.h>
 #import <Foundation/Foundation.h>
 
 @class MOLCodesignChecker;
@@ -31,6 +32,14 @@
 ///      describing the problem.
 ///
 - (instancetype)initWithPath:(NSString *)path error:(NSError **)error;
+
+///
+///  Convenience initializer.
+///
+///  @param esFile Pointer to an es_file_t provided by the EndpointSecurity framework.
+///      Assumes that the path is a resolved path.
+///
+- (instancetype)initWithEndpointSecurityFile:(const es_file_t *)esFile error:(NSError **)error;
 
 ///
 ///  Convenience initializer.

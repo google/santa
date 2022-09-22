@@ -51,12 +51,20 @@ git_repository(
     name = "hedron_compile_commands",
     commit = "92db741ee6dee0c4a83a5c58be7747df7b89ed10",
     remote = "https://github.com/hedronvision/bazel-compile-commands-extractor.git",
-    shallow_since = "1638167585 -0800",
+    shallow_since = "1640416382 -0800",
 )
 
 load("@hedron_compile_commands//:workspace_setup.bzl", "hedron_compile_commands_setup")
 
 hedron_compile_commands_setup()
+
+# Googletest - tag: release-1.12.1
+http_archive(
+    name = "com_google_googletest",
+    sha256 = "ab78fa3f912d44d38b785ec011a25f26512aaedc5291f51f3807c592b506d33a",
+    strip_prefix = "googletest-58d77fa8070e8cec2dc1ed015d66b454c8d78850",
+    urls = ["https://github.com/google/googletest/archive/58d77fa8070e8cec2dc1ed015d66b454c8d78850.zip"],
+)
 
 # Macops MOL* dependencies
 
@@ -69,14 +77,16 @@ git_repository(
 
 git_repository(
     name = "MOLCertificate",
+    commit = "288553b8ac75d7dd68159ef5b57652a506b8217c",  # tag = "v2.1",
     remote = "https://github.com/google/macops-molcertificate.git",
-    tag = "v2.1",
+    shallow_since = "1561303966 -0400",
 )
 
 git_repository(
     name = "MOLCodesignChecker",
+    commit = "7ef66f1df15997defd7651b0ea5d6d9ec65a5b4f",  # tag = "v2.2",
     remote = "https://github.com/google/macops-molcodesignchecker.git",
-    tag = "v2.2",
+    shallow_since = "1561303990 -0400",
 )
 
 git_repository(
@@ -126,7 +136,9 @@ objc_library(
     visibility = ["//visibility:public"],
 )
 """,
-    commit = "4a49ebb985bc16fae9489771aa35482ccbea14a3",  # tag = v3.8.1
+    commit = "afd2c6924e8a36cb872bc475248b978f743c6050",  # tag = v3.9.1
+    patch_args = ["-p1"],
+    patches = ["//external_patches/OCMock:503.patch"],
     remote = "https://github.com/erikdoe/ocmock",
     shallow_since = "1609349457 +0100",
 )

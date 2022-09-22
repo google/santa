@@ -1,4 +1,4 @@
-/// Copyright 2016 Google Inc. All rights reserved.
+/// Copyright 2016-2022 Google Inc. All rights reserved.
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
 
 #include <libkern/OSAtomic.h>
 #include <libkern/OSTypes.h>
+#include <os/log.h>
 #include <stdint.h>
 #include <sys/cdefs.h>
 
@@ -25,11 +26,6 @@
 #include <cstring>
 
 #include "Source/common/SNTCommon.h"
-
-#define panic(args...) \
-  printf(args);        \
-  printf("\n");        \
-  abort()
 
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wdeprecated-declarations"
@@ -334,7 +330,9 @@ class SantaCache {
   inline void unlock(struct bucket *bucket) const {
     if (unlikely(OSAtomicTestAndClear(7, (volatile uint8_t *)&bucket->head) ==
                  0)) {
-      panic("SantaCache::unlock(): Tried to unlock an unlocked lock");
+      os_log_error(OS_LOG_DEFAULT,
+                   "SantaCache::unlock(): Tried to unlock an unlocked lock");
+      abort();
     }
   }
 

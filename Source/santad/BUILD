@@ -8,224 +8,59 @@ package(
 licenses(["notice"])
 
 objc_library(
-    name = "database_controller",
-    srcs = [
-        "DataLayer/SNTDatabaseTable.h",
-        "DataLayer/SNTDatabaseTable.m",
-        "DataLayer/SNTEventTable.h",
-        "DataLayer/SNTEventTable.m",
-        "DataLayer/SNTRuleTable.h",
-        "DataLayer/SNTRuleTable.m",
-        "SNTDatabaseController.h",
-        "SNTDatabaseController.m",
-    ],
+    name = "SNTDatabaseTable",
+    srcs = ["DataLayer/SNTDatabaseTable.m"],
+    hdrs = ["DataLayer/SNTDatabaseTable.h"],
     deps = [
+        "//Source/common:SNTLogging",
+        "@FMDB",
+    ],
+)
+
+objc_library(
+    name = "SNTRuleTable",
+    srcs = ["DataLayer/SNTRuleTable.m"],
+    hdrs = ["DataLayer/SNTRuleTable.h"],
+    deps = [
+        ":SNTDatabaseTable",
         "//Source/common:SNTCachedDecision",
         "//Source/common:SNTCommonEnums",
-        "//Source/common:SNTConfigurator",
         "//Source/common:SNTFileInfo",
-        "//Source/common:SNTLogging",
         "//Source/common:SNTRule",
-        "//Source/common:SNTStoredEvent",
-        "@FMDB",
         "@MOLCertificate",
         "@MOLCodesignChecker",
     ],
 )
 
 objc_library(
-    name = "SNTEventProvider",
-    hdrs = ["EventProviders/SNTEventProvider.h"],
+    name = "SNTEventTable",
+    srcs = ["DataLayer/SNTEventTable.m"],
+    hdrs = ["DataLayer/SNTEventTable.h"],
     deps = [
-        "//Source/common:SNTCommon",
-    ],
-)
-
-objc_library(
-    name = "endpoint_security_manager",
-    srcs = [
-        "EventProviders/SNTEndpointSecurityManager.h",
-        "EventProviders/SNTEndpointSecurityManager.mm",
-    ],
-    sdk_dylibs = [
-        "EndpointSecurity",
-        "bsm",
-    ],
-    deps = [
-        ":SNTEventProvider",
-        "//Source/common:SNTCommon",
-        "//Source/common:SNTConfigurator",
-        "//Source/common:SNTLogging",
-        "//Source/common:SNTPrefixTree",
-        "//Source/common:SantaCache",
-    ],
-)
-
-objc_library(
-    name = "event_logs_common",
-    srcs = [
-        "DataLayer/SNTDatabaseTable.h",
-        "DataLayer/SNTRuleTable.h",
-        "Logs/SNTEventLog.h",
-        "Logs/SNTEventLog.m",
-        "Logs/SNTFileEventLog.h",
-        "Logs/SNTProtobufEventLog.h",
-        "Logs/SNTSyslogEventLog.h",
-        "SNTDatabaseController.h",
-    ],
-    hdrs = [
-        "Logs/SNTEventLog.h",
-    ],
-    deps = [
-        ":database_controller",
-        "//Source/common:SNTAllowlistInfo",
-        "//Source/common:SNTCachedDecision",
-        "//Source/common:SNTCommon",
-        "//Source/common:SNTCommonEnums",
-        "//Source/common:SNTConfigurator",
-        "//Source/common:SNTLogging",
-        "//Source/common:SNTRule",
+        ":SNTDatabaseTable",
         "//Source/common:SNTStoredEvent",
-        "@FMDB",
-    ],
-)
-
-objc_library(
-    name = "protobuf_event_logs",
-    srcs = [
-        "Logs/SNTLogOutput.h",
-        "Logs/SNTProtobufEventLog.h",
-        "Logs/SNTProtobufEventLog.m",
-        "Logs/SNTSimpleMaildir.h",
-        "Logs/SNTSimpleMaildir.m",
-    ],
-    deps = [
-        ":event_logs_common",
-        "//Source/common:SNTAllowlistInfo",
-        "//Source/common:SNTCachedDecision",
-        "//Source/common:SNTCommon",
-        "//Source/common:SNTConfigurator",
-        "//Source/common:SNTLogging",
-        "//Source/common:SNTMetricSet",
-        "//Source/common:SNTStoredEvent",
-        "//Source/common:santa_objc_proto",
-    ],
-)
-
-objc_library(
-    name = "syslog_event_logs",
-    srcs = [
-        "EventProviders/SNTEndpointSecurityManager.h",
-        "EventProviders/SNTEventProvider.h",
-        "Logs/SNTSyslogEventLog.h",
-        "Logs/SNTSyslogEventLog.m",
-    ],
-    deps = [
-        ":endpoint_security_manager",
-        ":event_logs_common",
-        "//Source/common:SNTAllowlistInfo",
-        "//Source/common:SNTCachedDecision",
-        "//Source/common:SNTCommon",
-        "//Source/common:SNTConfigurator",
-        "//Source/common:SNTLogging",
-        "//Source/common:SNTStoredEvent",
-    ],
-)
-
-objc_library(
-    name = "file_event_logs",
-    srcs = [
-        "Logs/SNTFileEventLog.h",
-        "Logs/SNTFileEventLog.m",
-        "Logs/SNTSyslogEventLog.h",
-    ],
-    deps = [
-        ":event_logs_common",
-        "//Source/common:SNTCommon",
-        "//Source/common:SNTConfigurator",
-        "//Source/common:SNTLogging",
-        "//Source/common:SNTStrengthify",
-    ],
-)
-
-objc_library(
-    name = "event_logs",
-    hdrs = ["Logs/SNTEventLog.h"],
-    deps = [
-        ":file_event_logs",
-        ":protobuf_event_logs",
-        ":syslog_event_logs",
-        "//Source/common:SNTCommon",
-    ],
-)
-
-objc_library(
-    name = "santad_lib",
-    srcs = [
-        "DataLayer/SNTDatabaseTable.h",
-        "DataLayer/SNTEventTable.h",
-        "DataLayer/SNTRuleTable.h",
-        "EventProviders/SNTCachingEndpointSecurityManager.h",
-        "EventProviders/SNTCachingEndpointSecurityManager.mm",
-        "EventProviders/SNTDeviceManager.h",
-        "EventProviders/SNTDeviceManager.mm",
-        "EventProviders/SNTEndpointSecurityManager.h",
-        "EventProviders/SNTEventProvider.h",
-        "SNTApplication.h",
-        "SNTApplication.m",
-        "SNTCompilerController.h",
-        "SNTCompilerController.m",
-        "SNTDaemonControlController.h",
-        "SNTDaemonControlController.m",
-        "SNTDatabaseController.h",
-        "SNTExecutionController.h",
-        "SNTExecutionController.m",
-        "SNTNotificationQueue.h",
-        "SNTNotificationQueue.m",
-        "SNTPolicyProcessor.h",
-        "SNTPolicyProcessor.m",
-        "SNTSyncdQueue.h",
-        "SNTSyncdQueue.m",
-        "main.m",
-    ],
-    sdk_dylibs = [
-        "EndpointSecurity",
-        "bsm",
-    ],
-    sdk_frameworks = [
-        "DiskArbitration",
-        "IOKit",
-    ],
-    deps = [
-        ":SNTApplicationCoreMetrics",
-        ":database_controller",
-        ":endpoint_security_manager",
-        ":event_logs",
-        "//Source/common:SNTAllowlistInfo",
-        "//Source/common:SNTBlockMessage",
-        "//Source/common:SNTCachedDecision",
-        "//Source/common:SNTCommon",
-        "//Source/common:SNTCommonEnums",
-        "//Source/common:SNTConfigurator",
-        "//Source/common:SNTDeviceEvent",
-        "//Source/common:SNTDropRootPrivs",
-        "//Source/common:SNTFileInfo",
-        "//Source/common:SNTLogging",
-        "//Source/common:SNTMetricSet",
-        "//Source/common:SNTRule",
-        "//Source/common:SNTStoredEvent",
-        "//Source/common:SNTStrengthify",
-        "//Source/common:SNTXPCBundleServiceInterface",
-        "//Source/common:SNTXPCControlInterface",
-        "//Source/common:SNTXPCMetricServiceInterface",
-        "//Source/common:SNTXPCNotifierInterface",
-        "//Source/common:SNTXPCSyncServiceInterface",
-        "//Source/common:SNTXPCUnprivilegedControlInterface",
-        "//Source/common:SantaCache",
-        "@FMDB",
         "@MOLCertificate",
-        "@MOLCodesignChecker",
-        "@MOLXPCConnection",
+    ],
+)
+
+objc_library(
+    name = "SNTDatabaseController",
+    srcs = ["SNTDatabaseController.m"],
+    hdrs = ["SNTDatabaseController.h"],
+    deps = [
+        ":SNTEventTable",
+        ":SNTRuleTable",
+        "//Source/common:SNTLogging",
+        "@FMDB",
+    ],
+)
+
+objc_library(
+    name = "SNTEndpointSecurityEventHandler",
+    hdrs = ["EventProviders/SNTEndpointSecurityEventHandler.h"],
+    deps = [
+        ":EndpointSecurityMessage",
+        "//Source/common:SNTCommon",
     ],
 )
 
@@ -238,26 +73,6 @@ objc_library(
         "//Source/common:SNTConfigurator",
         "//Source/common:SNTMetricSet",
         "//Source/common:SNTSystemInfo",
-    ],
-)
-
-objc_library(
-    name = "EndpointSecurityTestLib",
-    testonly = 1,
-    srcs = [
-        "EventProviders/EndpointSecurityTestUtil.h",
-        "EventProviders/EndpointSecurityTestUtil.mm",
-    ],
-    hdrs = [
-        "EventProviders/EndpointSecurityTestUtil.h",
-    ],
-    sdk_dylibs = [
-        "EndpointSecurity",
-        "bsm",
-    ],
-    sdk_frameworks = [
-        "DiskArbitration",
-        "IOKit",
     ],
 )
 
@@ -275,6 +90,445 @@ objc_library(
     sdk_frameworks = [
         "DiskArbitration",
         "IOKit",
+    ],
+)
+
+objc_library(
+    name = "SNTDecisionCache",
+    srcs = ["SNTDecisionCache.mm"],
+    hdrs = ["SNTDecisionCache.h"],
+    deps = [
+        ":SNTDatabaseController",
+        "//Source/common:SNTCachedDecision",
+        "//Source/common:SNTCommonEnums",
+        "//Source/common:SNTRule",
+    ],
+)
+
+objc_library(
+    name = "SNTCompilerController",
+    srcs = ["SNTCompilerController.mm"],
+    hdrs = ["SNTCompilerController.h"],
+    deps = [
+        ":EndpointSecurityLogger",
+        ":EndpointSecurityMessage",
+        ":SNTDecisionCache",
+        ":SNTRuleTable",
+        "//Source/common:SNTCachedDecision",
+        "//Source/common:SNTCommon",
+        "//Source/common:SNTFileInfo",
+        "//Source/common:SNTLogging",
+        "//Source/common:SNTRule",
+    ],
+)
+
+objc_library(
+    name = "SNTNotificationQueue",
+    srcs = ["SNTNotificationQueue.m"],
+    hdrs = ["SNTNotificationQueue.h"],
+    deps = [
+        "//Source/common:SNTLogging",
+        "//Source/common:SNTStoredEvent",
+        "//Source/common:SNTXPCNotifierInterface",
+        "@MOLXPCConnection",
+    ],
+)
+
+objc_library(
+    name = "SNTSyncdQueue",
+    srcs = ["SNTSyncdQueue.m"],
+    hdrs = ["SNTSyncdQueue.h"],
+    deps = [
+        "//Source/common:SNTCommonEnums",
+        "//Source/common:SNTLogging",
+        "//Source/common:SNTStoredEvent",
+        "//Source/common:SNTXPCSyncServiceInterface",
+        "@MOLXPCConnection",
+    ],
+)
+
+objc_library(
+    name = "SNTPolicyProcessor",
+    srcs = [
+        "DataLayer/SNTDatabaseTable.h",
+        "DataLayer/SNTRuleTable.h",
+        "SNTPolicyProcessor.h",
+        "SNTPolicyProcessor.m",
+    ],
+    deps = [
+        "//Source/common:SNTCachedDecision",
+        "//Source/common:SNTCommon",
+        "//Source/common:SNTCommonEnums",
+        "//Source/common:SNTFileInfo",
+        "//Source/common:SNTLogging",
+        "//Source/common:SNTRule",
+        "@MOLXPCConnection",
+    ],
+)
+
+objc_library(
+    name = "SNTExecutionController",
+    srcs = ["SNTExecutionController.mm"],
+    hdrs = ["SNTExecutionController.h"],
+    deps = [
+        ":EndpointSecurityMessage",
+        ":SNTDecisionCache",
+        ":SNTNotificationQueue",
+        ":SNTPolicyProcessor",
+        ":SNTSyncdQueue",
+        "//Source/common:SNTBlockMessage",
+        "//Source/common:SNTCachedDecision",
+        "//Source/common:SNTCommon",
+        "//Source/common:SNTCommonEnums",
+        "//Source/common:SNTDropRootPrivs",
+        "//Source/common:SNTFileInfo",
+        "//Source/common:SNTLogging",
+        "//Source/common:SNTMetricSet",
+        "//Source/common:SNTRule",
+        "@MOLCodesignChecker",
+    ],
+)
+
+objc_library(
+    name = "SNTEndpointSecurityClientBase",
+    hdrs = ["EventProviders/SNTEndpointSecurityClientBase.h"],
+    deps = [
+        ":EndpointSecurityAPI",
+        ":EndpointSecurityClient",
+        ":EndpointSecurityEnrichedTypes",
+        ":EndpointSecurityMessage",
+    ],
+)
+
+objc_library(
+    name = "SNTEndpointSecurityClient",
+    srcs = ["EventProviders/SNTEndpointSecurityClient.mm"],
+    hdrs = ["EventProviders/SNTEndpointSecurityClient.h"],
+    deps = [
+        ":EndpointSecurityAPI",
+        ":EndpointSecurityEnrichedTypes",
+        ":SNTEndpointSecurityClientBase",
+        "//Source/common:SNTCommon",
+        "//Source/common:SNTConfigurator",
+        "//Source/common:SNTLogging",
+    ],
+)
+
+objc_library(
+    name = "SNTEndpointSecurityRecorder",
+    srcs = ["EventProviders/SNTEndpointSecurityRecorder.mm"],
+    hdrs = ["EventProviders/SNTEndpointSecurityRecorder.h"],
+    deps = [
+        ":AuthResultCache",
+        ":EndpointSecurityAPI",
+        ":EndpointSecurityEnricher",
+        ":EndpointSecurityLogger",
+        ":SNTCompilerController",
+        ":SNTEndpointSecurityClient",
+        ":SNTEndpointSecurityEventHandler",
+        "//Source/common:SNTLogging",
+        "//Source/common:SNTPrefixTree",
+    ],
+)
+
+objc_library(
+    name = "SNTEndpointSecurityTamperResistance",
+    srcs = ["EventProviders/SNTEndpointSecurityTamperResistance.mm"],
+    hdrs = ["EventProviders/SNTEndpointSecurityTamperResistance.h"],
+    deps = [
+        ":EndpointSecurityAPI",
+        ":EndpointSecurityLogger",
+        ":EndpointSecurityMessage",
+        ":SNTEndpointSecurityClient",
+        ":SNTEndpointSecurityEventHandler",
+    ],
+)
+
+objc_library(
+    name = "SNTEndpointSecurityAuthorizer",
+    srcs = ["EventProviders/SNTEndpointSecurityAuthorizer.mm"],
+    hdrs = ["EventProviders/SNTEndpointSecurityAuthorizer.h"],
+    deps = [
+        ":AuthResultCache",
+        ":EndpointSecurityAPI",
+        ":EndpointSecurityEnricher",
+        ":SNTCompilerController",
+        ":SNTEndpointSecurityClient",
+        ":SNTEndpointSecurityEventHandler",
+        ":SNTExecutionController",
+    ],
+)
+
+objc_library(
+    name = "SNTEndpointSecurityDeviceManager",
+    srcs = ["EventProviders/SNTEndpointSecurityDeviceManager.mm"],
+    hdrs = ["EventProviders/SNTEndpointSecurityDeviceManager.h"],
+    deps = [
+        ":AuthResultCache",
+        ":EndpointSecurityAPI",
+        ":EndpointSecurityLogger",
+        ":EndpointSecurityMessage",
+        ":SNTEndpointSecurityClient",
+        ":SNTEndpointSecurityEventHandler",
+        "//Source/common:SNTDeviceEvent",
+        "//Source/common:SNTLogging",
+    ],
+)
+
+objc_library(
+    name = "AuthResultCache",
+    srcs = ["EventProviders/AuthResultCache.mm"],
+    hdrs = ["EventProviders/AuthResultCache.h"],
+    deps = [
+        ":EndpointSecurityAPI",
+        ":EndpointSecurityClient",
+        "//Source/common:SNTLogging",
+        "//Source/common:SantaCache",
+    ],
+)
+
+objc_library(
+    name = "EndpointSecurityEnricher",
+    srcs = ["EventProviders/EndpointSecurity/Enricher.mm"],
+    hdrs = ["EventProviders/EndpointSecurity/Enricher.h"],
+    deps = [
+        ":EndpointSecurityEnrichedTypes",
+        "//Source/common:SNTLogging",
+        "//Source/common:SantaCache",
+    ],
+)
+
+objc_library(
+    name = "EndpointSecurityEnrichedTypes",
+    hdrs = ["EventProviders/EndpointSecurity/EnrichedTypes.h"],
+    deps = [
+        ":EndpointSecurityMessage",
+    ],
+)
+
+objc_library(
+    name = "EndpointSecuritySerializer",
+    srcs = ["Logs/EndpointSecurity/Serializers/Serializer.mm"],
+    hdrs = ["Logs/EndpointSecurity/Serializers/Serializer.h"],
+    deps = [
+        ":EndpointSecurityEnrichedTypes",
+        ":EndpointSecurityMessage",
+        ":SNTDecisionCache",
+    ],
+)
+
+objc_library(
+    name = "EndpointSecuritySerializerEmpty",
+    srcs = ["Logs/EndpointSecurity/Serializers/Empty.mm"],
+    hdrs = ["Logs/EndpointSecurity/Serializers/Empty.h"],
+    deps = [
+        ":EndpointSecuritySerializer",
+    ],
+)
+
+objc_library(
+    name = "EndpointSecuritySanitizableString",
+    srcs = ["Logs/EndpointSecurity/Serializers/SanitizableString.mm"],
+    hdrs = ["Logs/EndpointSecurity/Serializers/SanitizableString.h"],
+    sdk_dylibs = [
+        "EndpointSecurity",
+    ],
+    deps = [
+        ":EndpointSecurityMessage",
+    ],
+)
+
+objc_library(
+    name = "EndpointSecuritySerializerBasicString",
+    srcs = ["Logs/EndpointSecurity/Serializers/BasicString.mm"],
+    hdrs = ["Logs/EndpointSecurity/Serializers/BasicString.h"],
+    deps = [
+        ":EndpointSecuritySanitizableString",
+        ":EndpointSecuritySerializer",
+        ":SNTDecisionCache",
+        "//Source/common:SNTLogging",
+        "//Source/common:SNTStoredEvent",
+    ],
+)
+
+objc_library(
+    name = "EndpointSecurityWriter",
+    hdrs = ["Logs/EndpointSecurity/Writers/Writer.h"],
+)
+
+objc_library(
+    name = "EndpointSecurityWriterSyslog",
+    srcs = ["Logs/EndpointSecurity/Writers/Syslog.mm"],
+    hdrs = ["Logs/EndpointSecurity/Writers/Syslog.h"],
+    deps = [
+        ":EndpointSecurityWriter",
+    ],
+)
+
+objc_library(
+    name = "EndpointSecurityWriterFile",
+    srcs = ["Logs/EndpointSecurity/Writers/File.mm"],
+    hdrs = ["Logs/EndpointSecurity/Writers/File.h"],
+    deps = [
+        ":EndpointSecurityWriter",
+    ],
+)
+
+objc_library(
+    name = "EndpointSecurityWriterNull",
+    srcs = ["Logs/EndpointSecurity/Writers/Null.mm"],
+    hdrs = ["Logs/EndpointSecurity/Writers/Null.h"],
+    deps = [
+        ":EndpointSecurityWriter",
+    ],
+)
+
+objc_library(
+    name = "EndpointSecurityLogger",
+    srcs = ["Logs/EndpointSecurity/Logger.mm"],
+    hdrs = ["Logs/EndpointSecurity/Logger.h"],
+    deps = [
+        ":EndpointSecurityAPI",
+        ":EndpointSecuritySerializer",
+        ":EndpointSecuritySerializerBasicString",
+        ":EndpointSecuritySerializerEmpty",
+        ":EndpointSecurityWriter",
+        ":EndpointSecurityWriterFile",
+        ":EndpointSecurityWriterNull",
+        ":EndpointSecurityWriterSyslog",
+        "//Source/common:SNTCommonEnums",
+        "//Source/common:SNTLogging",
+        "//Source/common:SNTStoredEvent",
+    ],
+)
+
+objc_library(
+    name = "EndpointSecurityMessage",
+    srcs = [
+        "EventProviders/EndpointSecurity/EndpointSecurityAPI.h",
+        "EventProviders/EndpointSecurity/Message.mm",
+    ],
+    hdrs = ["EventProviders/EndpointSecurity/Message.h"],
+    deps = [
+        ":EndpointSecurityClient",
+    ],
+)
+
+objc_library(
+    name = "EndpointSecurityClient",
+    hdrs = ["EventProviders/EndpointSecurity/Client.h"],
+)
+
+objc_library(
+    name = "EndpointSecurityAPI",
+    srcs = ["EventProviders/EndpointSecurity/EndpointSecurityAPI.mm"],
+    hdrs = ["EventProviders/EndpointSecurity/EndpointSecurityAPI.h"],
+    deps = [
+        ":EndpointSecurityClient",
+        ":EndpointSecurityMessage",
+    ],
+)
+
+objc_library(
+    name = "SNTDaemonControlController",
+    srcs = ["SNTDaemonControlController.mm"],
+    hdrs = ["SNTDaemonControlController.h"],
+    deps = [
+        ":AuthResultCache",
+        ":EndpointSecurityLogger",
+        ":SNTDatabaseController",
+        ":SNTNotificationQueue",
+        ":SNTPolicyProcessor",
+        ":SNTSyncdQueue",
+        "//Source/common:SNTLogging",
+        "//Source/common:SNTMetricSet",
+        "//Source/common:SNTXPCControlInterface",
+        "//Source/common:SNTXPCNotifierInterface",
+        "//Source/common:SNTXPCSyncServiceInterface",
+        "@FMDB",
+    ],
+)
+
+objc_library(
+    name = "Metrics",
+    srcs = ["Metrics.mm"],
+    hdrs = ["Metrics.h"],
+    deps = [
+        ":SNTApplicationCoreMetrics",
+        "//Source/common:SNTLogging",
+        "//Source/common:SNTMetricSet",
+        "//Source/common:SNTXPCMetricServiceInterface",
+        "@MOLXPCConnection",
+    ],
+)
+
+objc_library(
+    name = "Santad",
+    srcs = ["Santad.mm"],
+    hdrs = ["Santad.h"],
+    deps = [
+        ":AuthResultCache",
+        ":EndpointSecurityAPI",
+        ":EndpointSecurityEnricher",
+        ":EndpointSecurityLogger",
+        ":Metrics",
+        ":SNTCompilerController",
+        ":SNTDaemonControlController",
+        ":SNTEndpointSecurityAuthorizer",
+        ":SNTEndpointSecurityDeviceManager",
+        ":SNTEndpointSecurityRecorder",
+        ":SNTEndpointSecurityTamperResistance",
+        ":SNTExecutionController",
+        ":SNTNotificationQueue",
+        ":SNTSyncdQueue",
+        "//Source/common:SNTCommonEnums",
+        "//Source/common:SNTConfigurator",
+        "//Source/common:SNTKVOManager",
+        "//Source/common:SNTLogging",
+        "//Source/common:SNTPrefixTree",
+        "//Source/common:SNTXPCNotifierInterface",
+    ],
+)
+
+objc_library(
+    name = "SantadDeps",
+    srcs = ["SantadDeps.mm"],
+    hdrs = ["SantadDeps.h"],
+    deps = [
+        ":AuthResultCache",
+        ":EndpointSecurityAPI",
+        ":EndpointSecurityEnricher",
+        ":EndpointSecurityLogger",
+        ":Metrics",
+        ":SNTCompilerController",
+        ":SNTDatabaseController",
+        ":SNTExecutionController",
+        ":SNTNotificationQueue",
+        ":SNTSyncdQueue",
+        "//Source/common:SNTPrefixTree",
+        "//Source/common:SNTXPCControlInterface",
+        "//Source/common:SNTXPCUnprivilegedControlInterface",
+        "@MOLXPCConnection",
+    ],
+)
+
+objc_library(
+    name = "santad_main",
+    srcs = ["main.mm"],
+    sdk_dylibs = [
+        "bsm",
+        "EndpointSecurity",
+    ],
+    sdk_frameworks = [
+        "DiskArbitration",
+    ],
+    deps = [
+        ":SNTDaemonControlController",
+        ":Santad",
+        ":SantadDeps",
+        "//Source/common:SNTConfigurator",
+        "//Source/common:SNTLogging",
+        "//Source/common:SNTXPCControlInterface",
     ],
 )
 
@@ -301,43 +555,23 @@ macos_bundle(
     }),
     version = "//:version",
     visibility = ["//:santa_package_group"],
-    deps = [":santad_lib"],
+    deps = [":santad_main"],
 )
 
-santa_unit_test(
-    name = "SNTExecutionControllerTest",
-    srcs = [
-        "DataLayer/SNTDatabaseTable.h",
-        "DataLayer/SNTEventTable.h",
-        "DataLayer/SNTRuleTable.h",
-        "EventProviders/SNTEventProvider.h",
-        "SNTExecutionController.h",
-        "SNTExecutionControllerTest.m",
-    ],
+#
+# Begin test targets
+#
+
+objc_library(
+    name = "MockEndpointSecurityAPI",
+    testonly = 1,
+    hdrs = ["EventProviders/EndpointSecurity/MockEndpointSecurityAPI.h"],
     sdk_dylibs = [
         "EndpointSecurity",
-        "bsm",
     ],
     deps = [
-        ":santad_lib",
-        "//Source/common:SNTBlockMessage",
-        "//Source/common:SNTCachedDecision",
-        "//Source/common:SNTCommon",
-        "//Source/common:SNTCommonEnums",
-        "//Source/common:SNTConfigurator",
-        "//Source/common:SNTDropRootPrivs",
-        "//Source/common:SNTFileInfo",
-        "//Source/common:SNTLogging",
-        "//Source/common:SNTMetricSet",
-        "//Source/common:SNTPrefixTree",
-        "//Source/common:SNTRule",
-        "//Source/common:SNTXPCNotifierInterface",
-        "//Source/common:SantaCache",
-        "@FMDB",
-        "@MOLCertificate",
-        "@MOLCodesignChecker",
-        "@MOLXPCConnection",
-        "@OCMock",
+        ":EndpointSecurityAPI",
+        "@com_google_googletest//:gtest",
     ],
 )
 
@@ -386,100 +620,32 @@ santa_unit_test(
 )
 
 santa_unit_test(
-    name = "SNTEndpointSecurityManagerTest",
-    srcs = [
-        "EventProviders/SNTEndpointSecurityManager.h",
-        "EventProviders/SNTEndpointSecurityManager.mm",
-        "EventProviders/SNTEndpointSecurityManagerTest.mm",
-        "EventProviders/SNTEventProvider.h",
-    ],
-    minimum_os_version = "10.15",
-    sdk_dylibs = [
-        "EndpointSecurity",
-        "bsm",
-    ],
-    deps = [
-        ":EndpointSecurityTestLib",
-        "//Source/common:SNTCommon",
-        "//Source/common:SNTConfigurator",
-        "//Source/common:SNTLogging",
-        "//Source/common:SNTPrefixTree",
-        "//Source/common:SantaCache",
-    ],
-)
-
-santa_unit_test(
-    name = "SNTDeviceManagerTest",
-    srcs = [
-        "EventProviders/DiskArbitrationTestUtil.h",
-        "EventProviders/SNTDeviceManager.h",
-        "EventProviders/SNTDeviceManagerTest.mm",
-    ],
-    minimum_os_version = "10.15",
-    sdk_dylibs = [
-        "EndpointSecurity",
-        "bsm",
-    ],
-    deps = [
-        ":DiskArbitrationTestLib",
-        ":EndpointSecurityTestLib",
-        ":santad_lib",
-        "//Source/common:SNTCommon",
-        "//Source/common:SNTConfigurator",
-        "//Source/common:SNTDeviceEvent",
-        "//Source/common:SNTPrefixTree",
-        "//Source/common:SantaCache",
-        "@OCMock",
-    ],
-)
-
-santa_unit_test(
-    name = "SNTApplicationTest",
-    srcs = [
-        "SNTApplication.h",
-        "SNTApplicationTest.m",
-        "SNTDatabaseController.h",
-    ],
+    name = "SantadTest",
+    srcs = ["SantadTest.mm"],
     data = [
         "//Source/santad/testdata:binaryrules_testdata",
     ],
     minimum_os_version = "10.15",
     sdk_dylibs = [
-        "EndpointSecurity",
         "bsm",
+        "EndpointSecurity",
+    ],
+    sdk_frameworks = [
+        "DiskArbitration",
     ],
     tags = ["exclusive"],
     deps = [
-        ":EndpointSecurityTestLib",
-        ":santad_lib",
+        ":EndpointSecurityMessage",
+        ":MockEndpointSecurityAPI",
+        ":SNTDatabaseController",
+        ":SNTEndpointSecurityAuthorizer",
+        ":SantadDeps",
         "//Source/common:SNTConfigurator",
-        "@FMDB",
+        "//Source/common:TestUtils",
         "@MOLCertificate",
         "@MOLCodesignChecker",
-        "@MOLXPCConnection",
         "@OCMock",
-    ],
-)
-
-santa_unit_test(
-    name = "SNTApplicationBenchmark",
-    srcs = [
-        "SNTApplicationBenchmark.m",
-    ],
-    data = [
-        "//Source/santad/testdata:binaryrules_testdata",
-    ],
-    minimum_os_version = "10.15",
-    sdk_dylibs = [
-        "EndpointSecurity",
-        "bsm",
-    ],
-    deps = [
-        ":EndpointSecurityTestLib",
-        ":santad_lib",
-        "@MOLCodesignChecker",
-        "@MOLXPCConnection",
-        "@OCMock",
+        "@com_google_googletest//:gtest",
     ],
 )
 
@@ -501,39 +667,339 @@ santa_unit_test(
 )
 
 santa_unit_test(
-    name = "SNTProtobufEventLogTest",
-    srcs = [
-        "Logs/SNTLogOutput.h",
-        "Logs/SNTProtobufEventLog.h",
-        "Logs/SNTProtobufEventLogTest.m",
-        "Logs/SNTSimpleMaildir.h",
+    name = "EndpointSecuritySanitizableStringTest",
+    srcs = ["Logs/EndpointSecurity/Serializers/SanitizableStringTest.mm"],
+    sdk_dylibs = [
+        "EndpointSecurity",
     ],
-    minimum_os_version = "10.15",
     deps = [
-        ":EndpointSecurityTestLib",
-        ":event_logs",
-        "//Source/common:SNTAllowlistInfo",
-        "//Source/common:SNTCachedDecision",
-        "//Source/common:SNTConfigurator",
-        "//Source/common:SNTLogging",
-        "//Source/common:SNTRule",
-        "//Source/common:SNTStoredEvent",
-        "//Source/common:santa_objc_proto",
+        ":EndpointSecuritySanitizableString",
+        "//Source/common:TestUtils",
         "@OCMock",
+    ],
+)
+
+santa_unit_test(
+    name = "EndpointSecuritySerializerBasicStringTest",
+    srcs = ["Logs/EndpointSecurity/Serializers/BasicStringTest.mm"],
+    sdk_dylibs = [
+        "bsm",
+        "EndpointSecurity",
+    ],
+    deps = [
+        ":EndpointSecurityEnrichedTypes",
+        ":EndpointSecurityEnricher",
+        ":EndpointSecurityMessage",
+        ":EndpointSecuritySerializer",
+        ":EndpointSecuritySerializerBasicString",
+        ":MockEndpointSecurityAPI",
+        ":SNTDecisionCache",
+        "//Source/common:SNTCachedDecision",
+        "//Source/common:SNTCommonEnums",
+        "//Source/common:SNTConfigurator",
+        "//Source/common:SNTStoredEvent",
+        "//Source/common:TestUtils",
+        "@OCMock",
+        "@com_google_googletest//:gtest",
+    ],
+)
+
+santa_unit_test(
+    name = "AuthResultCacheTest",
+    srcs = ["EventProviders/AuthResultCacheTest.mm"],
+    sdk_dylibs = [
+        "EndpointSecurity",
+    ],
+    deps = [
+        ":AuthResultCache",
+        ":MockEndpointSecurityAPI",
+        "//Source/common:TestUtils",
+        "@OCMock",
+        "@com_google_googletest//:gtest",
+    ],
+)
+
+santa_unit_test(
+    name = "EndpointSecuritySerializerEmptyTest",
+    srcs = ["Logs/EndpointSecurity/Serializers/EmptyTest.mm"],
+    sdk_dylibs = [
+        "EndpointSecurity",
+    ],
+    deps = [
+        ":EndpointSecurityEnrichedTypes",
+        ":EndpointSecuritySerializerEmpty",
+        "@OCMock",
+    ],
+)
+
+santa_unit_test(
+    name = "EndpointSecurityWriterFileTest",
+    srcs = ["Logs/EndpointSecurity/Writers/FileTest.mm"],
+    deps = [
+        ":EndpointSecurityWriterFile",
+        "//Source/common:TestUtils",
+        "@OCMock",
+        "@com_google_googletest//:gtest",
+    ],
+)
+
+santa_unit_test(
+    name = "EndpointSecurityLoggerTest",
+    srcs = ["Logs/EndpointSecurity/LoggerTest.mm"],
+    sdk_dylibs = [
+        "bsm",
+        "EndpointSecurity",
+    ],
+    deps = [
+        ":EndpointSecurityEnrichedTypes",
+        ":EndpointSecurityLogger",
+        ":EndpointSecurityMessage",
+        ":EndpointSecuritySerializer",
+        ":EndpointSecuritySerializerBasicString",
+        ":EndpointSecuritySerializerEmpty",
+        ":EndpointSecurityWriter",
+        ":EndpointSecurityWriterFile",
+        ":EndpointSecurityWriterNull",
+        ":EndpointSecurityWriterSyslog",
+        ":MockEndpointSecurityAPI",
+        "//Source/common:SNTCommonEnums",
+        "//Source/common:TestUtils",
+        "@OCMock",
+        "@com_google_googletest//:gtest",
+    ],
+)
+
+santa_unit_test(
+    name = "EndpointSecurityClientTest",
+    srcs = ["EventProviders/EndpointSecurity/ClientTest.mm"],
+    deps = [
+        ":EndpointSecurityClient",
+        "@OCMock",
+    ],
+)
+
+santa_unit_test(
+    name = "EndpointSecurityEnricherTest",
+    srcs = ["EventProviders/EndpointSecurity/EnricherTest.mm"],
+    sdk_dylibs = [
+        "bsm",
+    ],
+    deps = [
+        ":EndpointSecurityEnricher",
+        "//Source/common:TestUtils",
+        "@OCMock",
+    ],
+)
+
+santa_unit_test(
+    name = "EndpointSecurityMessageTest",
+    srcs = ["EventProviders/EndpointSecurity/MessageTest.mm"],
+    sdk_dylibs = [
+        "bsm",
+        "EndpointSecurity",
+    ],
+    deps = [
+        ":EndpointSecurityMessage",
+        ":MockEndpointSecurityAPI",
+        "//Source/common:TestUtils",
+        "@OCMock",
+        "@com_google_googletest//:gtest",
+    ],
+)
+
+santa_unit_test(
+    name = "MetricsTest",
+    srcs = ["MetricsTest.mm"],
+    deps = [
+        ":Metrics",
+        "@OCMock",
+    ],
+)
+
+santa_unit_test(
+    name = "SNTDecisionCacheTest",
+    srcs = ["SNTDecisionCacheTest.mm"],
+    sdk_dylibs = [
+        "EndpointSecurity",
+    ],
+    deps = [
+        ":SNTDatabaseController",
+        ":SNTDecisionCache",
+        "//Source/common:SNTCommonEnums",
+        "//Source/common:SNTRule",
+        "//Source/common:TestUtils",
+        "@OCMock",
+    ],
+)
+
+santa_unit_test(
+    name = "SNTEndpointSecurityClientTest",
+    srcs = ["EventProviders/SNTEndpointSecurityClientTest.mm"],
+    sdk_dylibs = [
+        "bsm",
+        "EndpointSecurity",
+    ],
+    deps = [
+        ":EndpointSecurityClient",
+        ":EndpointSecurityEnrichedTypes",
+        ":EndpointSecurityMessage",
+        ":MockEndpointSecurityAPI",
+        ":SNTEndpointSecurityClient",
+        "//Source/common:TestUtils",
+        "@OCMock",
+        "@com_google_googletest//:gtest",
+    ],
+)
+
+santa_unit_test(
+    name = "SNTExecutionControllerTest",
+    srcs = ["SNTExecutionControllerTest.mm"],
+    sdk_dylibs = [
+        "EndpointSecurity",
+        "bsm",
+    ],
+    deps = [
+        ":EndpointSecurityMessage",
+        ":MockEndpointSecurityAPI",
+        ":SNTDatabaseController",
+        ":SNTDecisionCache",
+        ":SNTExecutionController",
+        "//Source/common:SNTCachedDecision",
+        "//Source/common:SNTCommonEnums",
+        "//Source/common:SNTConfigurator",
+        "//Source/common:SNTFileInfo",
+        "//Source/common:SNTMetricSet",
+        "//Source/common:SNTRule",
+        "//Source/common:TestUtils",
+        "@MOLCertificate",
+        "@MOLCodesignChecker",
+        "@OCMock",
+    ],
+)
+
+santa_unit_test(
+    name = "SNTEndpointSecurityAuthorizerTest",
+    srcs = ["EventProviders/SNTEndpointSecurityAuthorizerTest.mm"],
+    sdk_dylibs = [
+        "EndpointSecurity",
+    ],
+    deps = [
+        ":AuthResultCache",
+        ":EndpointSecurityClient",
+        ":EndpointSecurityMessage",
+        ":MockEndpointSecurityAPI",
+        ":SNTCompilerController",
+        ":SNTEndpointSecurityAuthorizer",
+        "//Source/common:TestUtils",
+        "@OCMock",
+        "@com_google_googletest//:gtest",
+    ],
+)
+
+santa_unit_test(
+    name = "SNTEndpointSecurityTamperResistanceTest",
+    srcs = ["EventProviders/SNTEndpointSecurityTamperResistanceTest.mm"],
+    sdk_dylibs = [
+        "EndpointSecurity",
+    ],
+    deps = [
+        ":EndpointSecurityClient",
+        ":EndpointSecurityMessage",
+        ":MockEndpointSecurityAPI",
+        ":SNTEndpointSecurityTamperResistance",
+        "//Source/common:TestUtils",
+        "@OCMock",
+        "@com_google_googletest//:gtest",
+    ],
+)
+
+santa_unit_test(
+    name = "SNTEndpointSecurityRecorderTest",
+    srcs = ["EventProviders/SNTEndpointSecurityRecorderTest.mm"],
+    sdk_dylibs = [
+        "EndpointSecurity",
+    ],
+    deps = [
+        ":AuthResultCache",
+        ":EndpointSecurityClient",
+        ":EndpointSecurityEnricher",
+        ":EndpointSecurityLogger",
+        ":EndpointSecurityMessage",
+        ":MockEndpointSecurityAPI",
+        ":SNTCompilerController",
+        ":SNTEndpointSecurityRecorder",
+        "//Source/common:TestUtils",
+        "@OCMock",
+        "@com_google_googletest//:gtest",
+    ],
+)
+
+santa_unit_test(
+    name = "SNTEndpointSecurityDeviceManagerTest",
+    srcs = ["EventProviders/SNTEndpointSecurityDeviceManagerTest.mm"],
+    sdk_dylibs = [
+        "bsm",
+        "EndpointSecurity",
+    ],
+    deps = [
+        ":DiskArbitrationTestLib",
+        ":EndpointSecurityClient",
+        ":EndpointSecurityMessage",
+        ":MockEndpointSecurityAPI",
+        ":SNTEndpointSecurityDeviceManager",
+        "//Source/common:SNTConfigurator",
+        "//Source/common:SNTDeviceEvent",
+        "//Source/common:TestUtils",
+        "@OCMock",
+        "@com_google_googletest//:gtest",
+    ],
+)
+
+santa_unit_test(
+    name = "SNTCompilerControllerTest",
+    srcs = ["SNTCompilerControllerTest.mm"],
+    sdk_dylibs = [
+        "EndpointSecurity",
+    ],
+    deps = [
+        ":EndpointSecurityLogger",
+        ":EndpointSecurityMessage",
+        ":MockEndpointSecurityAPI",
+        ":SNTCompilerController",
+        ":SNTDecisionCache",
+        "//Source/common:SNTCachedDecision",
+        "//Source/common:SNTFileInfo",
+        "//Source/common:TestUtils",
+        "@OCMock",
+        "@com_google_googletest//:gtest",
     ],
 )
 
 test_suite(
     name = "unit_tests",
     tests = [
+        ":AuthResultCacheTest",
+        ":EndpointSecurityClientTest",
+        ":EndpointSecurityEnricherTest",
+        ":EndpointSecurityLoggerTest",
+        ":EndpointSecurityMessageTest",
+        ":EndpointSecuritySanitizableStringTest",
+        ":EndpointSecuritySerializerBasicStringTest",
+        ":EndpointSecuritySerializerEmptyTest",
+        ":EndpointSecurityWriterFileTest",
+        ":MetricsTest",
         ":SNTApplicationCoreMetricsTest",
-        ":SNTApplicationTest",
-        ":SNTDeviceManagerTest",
-        ":SNTEndpointSecurityManagerTest",
+        ":SNTCompilerControllerTest",
+        ":SNTDecisionCacheTest",
+        ":SNTEndpointSecurityAuthorizerTest",
+        ":SNTEndpointSecurityClientTest",
+        ":SNTEndpointSecurityDeviceManagerTest",
+        ":SNTEndpointSecurityRecorderTest",
+        ":SNTEndpointSecurityTamperResistanceTest",
         ":SNTEventTableTest",
         ":SNTExecutionControllerTest",
-        ":SNTProtobufEventLogTest",
         ":SNTRuleTableTest",
+        ":SantadTest",
     ],
     visibility = ["//:santa_package_group"],
 )

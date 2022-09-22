@@ -1,4 +1,4 @@
-/// Copyright 2015 Google Inc. All rights reserved.
+/// Copyright 2015-2022 Google Inc. All rights reserved.
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -25,6 +25,8 @@
 #include <sys/stat.h>
 #include <sys/xattr.h>
 
+#import "Source/common/SNTLogging.h"
+
 // Simple class to hold the data of a mach_header and the offset within the file
 // in which that header was found.
 @interface MachHeaderWithOffset : NSObject
@@ -48,6 +50,7 @@
 @property NSFileHandle *fileHandle;
 @property NSUInteger fileSize;
 @property NSString *fileOwnerHomeDir;
+@property NSString *sha256Storage;
 
 // Cached properties
 @property NSBundle *bundleRef;
@@ -63,6 +66,26 @@
 extern NSString *const NSURLQuarantinePropertiesKey WEAK_IMPORT_ATTRIBUTE;
 
 - (instancetype)initWithResolvedPath:(NSString *)path error:(NSError **)error {
+  struct stat fileStat;
+  if (path.length) {
+    lstat(path.UTF8String, &fileStat);
+  }
+  return [self initWithResolvedPath:path stat:&fileStat error:error];
+}
+
+- (instancetype)initWithEndpointSecurityFile:(const es_file_t *)esFile error:(NSError **)error {
+  return [self initWithResolvedPath:@(esFile->path.data) stat:&esFile->stat error:error];
+}
+
+- (instancetype)initWithResolvedPath:(NSString *)path
+                                stat:(const struct stat *)fileStat
+                               error:(NSError **)error {
+  if (!fileStat) {
+    // This is a programming error. Bail.
+    LOGE(@"NULL stat buffer unsupported");
+    exit(EXIT_FAILURE);
+  }
+
   self = [super init];
   if (self) {
     _path = path;
@@ -76,9 +99,7 @@ extern NSString *const NSURLQuarantinePropertiesKey WEAK_IMPORT_ATTRIBUTE;
       return nil;
     }
 
-    struct stat fileStat;
-    lstat(_path.UTF8String, &fileStat);
-    if (!((S_IFMT & fileStat.st_mode) == S_IFREG)) {
+    if (!((S_IFMT & fileStat->st_mode) == S_IFREG)) {
       if (error) {
         NSString *errStr = [NSString stringWithFormat:@"Non regular file: %s", strerror(errno)];
         *error = [NSError errorWithDomain:@"com.google.santa.fileinfo"
@@ -88,12 +109,12 @@ extern NSString *const NSURLQuarantinePropertiesKey WEAK_IMPORT_ATTRIBUTE;
       return nil;
     }
 
-    _fileSize = fileStat.st_size;
+    _fileSize = fileStat->st_size;
 
     if (_fileSize == 0) return nil;
 
-    if (fileStat.st_uid != 0) {
-      struct passwd *pwd = getpwuid(fileStat.st_uid);
+    if (fileStat->st_uid != 0) {
+      struct passwd *pwd = getpwuid(fileStat->st_uid);
       if (pwd) {
         _fileOwnerHomeDir = @(pwd->pw_dir);
       }
@@ -214,9 +235,13 @@ extern NSString *const NSURLQuarantinePropertiesKey WEAK_IMPORT_ATTRIBUTE;
 }
 
 - (NSString *)SHA256 {
-  NSString *sha256;
-  [self hashSHA1:NULL SHA256:&sha256];
-  return sha256;
+  // Memoize the value
+  if (!self.sha256Storage) {
+    NSString *sha256;
+    [self hashSHA1:NULL SHA256:&sha256];
+    self.sha256Storage = sha256;
+  }
+  return self.sha256Storage;
 }
 
 #pragma mark File Type Info

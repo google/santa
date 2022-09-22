@@ -11,6 +11,7 @@ function main() {
     --combined_report=lcov \
     --spawn_strategy=standalone \
     --test_env=LCOV_MERGER=/usr/bin/true \
+    --test_output=all \
     //:unit_tests
 
   # The generated file has most of the source files relative to bazel's
@@ -23,5 +24,6 @@ function main() {
   sed -i '' '/SF:\/Applications.*/,/end_of_record/d' ${COV_FILE}
   sed -i '' '/SF:.*santa\/bazel-out.*/,/end_of_record/d' ${COV_FILE}
 
+  find bazel-out/ -name "*.dat" -type f | tar -czf "raw_coverages.tgz" -T -
 }
 main

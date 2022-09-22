@@ -1,4 +1,4 @@
-/// Copyright 2015 Google Inc. All rights reserved.
+/// Copyright 2015-2022 Google Inc. All rights reserved.
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -74,18 +74,14 @@ REGISTER_COMMAND_NAME(@"status")
 
   SNTConfigurator *configurator = [SNTConfigurator configurator];
 
-  BOOL cachingEnabled = [configurator enableSysxCache];
-
   // Cache status
   __block uint64_t rootCacheCount = -1, nonRootCacheCount = -1;
-  if (cachingEnabled) {
-    dispatch_group_enter(group);
-    [[self.daemonConn remoteObjectProxy] cacheCounts:^(uint64_t rootCache, uint64_t nonRootCache) {
-      rootCacheCount = rootCache;
-      nonRootCacheCount = nonRootCache;
-      dispatch_group_leave(group);
-    }];
-  }
+  dispatch_group_enter(group);
+  [[self.daemonConn remoteObjectProxy] cacheCounts:^(uint64_t rootCache, uint64_t nonRootCache) {
+    rootCacheCount = rootCache;
+    nonRootCacheCount = nonRootCache;
+    dispatch_group_leave(group);
+  }];
 
   // Database counts
   __block int64_t eventCount = -1, binaryRuleCount = -1, certRuleCount = -1, teamIDRuleCount = -1;
@@ -215,12 +211,12 @@ REGISTER_COMMAND_NAME(@"status")
         @"transitive_rules" : @(enableTransitiveRules),
       },
     } mutableCopy];
-    if (cachingEnabled) {
-      stats[@"cache"] = @{
-        @"root_cache_count" : @(rootCacheCount),
-        @"non_root_cache_count" : @(nonRootCacheCount),
-      };
-    }
+
+    stats[@"cache"] = @{
+      @"root_cache_count" : @(rootCacheCount),
+      @"non_root_cache_count" : @(nonRootCacheCount),
+    };
+
     NSData *statsData = [NSJSONSerialization dataWithJSONObject:stats
                                                         options:NSJSONWritingPrettyPrinted
                                                           error:nil];
@@ -238,11 +234,9 @@ REGISTER_COMMAND_NAME(@"status")
     printf("  %-25s | %lld  (Peak: %.2f%%)\n", "Watchdog CPU Events", cpuEvents, cpuPeak);
     printf("  %-25s | %lld  (Peak: %.2fMB)\n", "Watchdog RAM Events", ramEvents, ramPeak);
 
-    if (cachingEnabled) {
-      printf(">>> Cache Info\n");
-      printf("  %-25s | %lld\n", "Root cache count", rootCacheCount);
-      printf("  %-25s | %lld\n", "Non-root cache count", nonRootCacheCount);
-    }
+    printf(">>> Cache Info\n");
+    printf("  %-25s | %lld\n", "Root cache count", rootCacheCount);
+    printf("  %-25s | %lld\n", "Non-root cache count", nonRootCacheCount);
 
     printf(">>> Database Info\n");
     printf("  %-25s | %lld\n", "Binary Rules", binaryRuleCount);

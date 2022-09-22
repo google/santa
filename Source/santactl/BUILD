@@ -26,7 +26,6 @@ objc_library(
         "//:opt_build": [],
         "//conditions:default": [
             "Commands/SNTCommandBundleInfo.m",
-            "Commands/SNTCommandCacheHistogram.m",
             "Commands/SNTCommandCheckCache.m",
             "Commands/SNTCommandFlushCache.m",
         ],

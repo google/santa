@@ -1,4 +1,4 @@
-/// Copyright 2021 Google Inc. All rights reserved.
+/// Copyright 2014-2022 Google Inc. All rights reserved.
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -37,6 +37,7 @@
 
 /// Holds the last processed hash of the static rules list.
 @property(atomic) NSDictionary *cachedStaticRules;
+
 @end
 
 @implementation SNTConfigurator
@@ -93,8 +94,6 @@ static NSString *const kMailDirectorySizeThresholdMB = @"MailDirectorySizeThresh
 static NSString *const kMailDirectoryEventMaxFlushTimeSec = @"MailDirectoryEventMaxFlushTimeSec";
 
 static NSString *const kEnableMachineIDDecoration = @"EnableMachineIDDecoration";
-
-static NSString *const kEnableSysxCache = @"EnableSysxCache";
 
 static NSString *const kEnableForkAndExitLogging = @"EnableForkAndExitLogging";
 static NSString *const kIgnoreOtherEndpointSecurityClients = @"IgnoreOtherEndpointSecurityClients";
@@ -206,7 +205,6 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
       kMailDirectorySizeThresholdMB : number,
       kMailDirectoryEventMaxFlushTimeSec : number,
       kEnableMachineIDDecoration : number,
-      kEnableSysxCache : number,
       kEnableForkAndExitLogging : number,
       kIgnoreOtherEndpointSecurityClients : number,
       kEnableDebugLogging : number,
@@ -423,10 +421,6 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
 
 + (NSSet *)keyPathsForValuesAffectingDisableUnknownEventUpload {
   return [self syncAndConfigStateSet];
-}
-
-+ (NSSet *)keyPathsForValuesAffectingEnableSysxCache {
-  return [self configStateSet];
 }
 
 + (NSSet *)keyPathsForValuesAffectingEnableForkAndExitLogging {
@@ -791,11 +785,6 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
 - (BOOL)enableMachineIDDecoration {
   NSNumber *number = self.configState[kEnableMachineIDDecoration];
   return number ? [number boolValue] : NO;
-}
-
-- (BOOL)enableSysxCache {
-  NSNumber *number = self.configState[kEnableSysxCache];
-  return number ? [number boolValue] : YES;
 }
 
 - (BOOL)enableCleanSyncEventUpload {

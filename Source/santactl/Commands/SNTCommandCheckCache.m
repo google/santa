@@ -1,4 +1,4 @@
-/// Copyright 2016 Google Inc. All rights reserved.
+/// Copyright 2016-2022 Google Inc. All rights reserved.
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -61,9 +61,6 @@ REGISTER_COMMAND_NAME(@"checkcache")
                    exit(0);
                  } else if (action == ACTION_RESPOND_ALLOW_COMPILER) {
                    LOGI(@"File exists in [allowlist compiler] kernel cache");
-                   exit(0);
-                 } else if (action == ACTION_RESPOND_ALLOW_PENDING_TRANSITIVE) {
-                   LOGI(@"File exists in [allowlist pending_transitive] kernel cache");
                    exit(0);
                  } else if (action == ACTION_UNSET) {
                    LOGE(@"File does not exist in cache");

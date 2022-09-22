@@ -1,4 +1,4 @@
-/// Copyright 2015 Google Inc. All rights reserved.
+/// Copyright 2015-2022 Google Inc. All rights reserved.
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -12,10 +12,11 @@
 ///    See the License for the specific language governing permissions and
 ///    limitations under the License.
 
+#import <EndpointSecurity/EndpointSecurity.h>
 #import <Foundation/Foundation.h>
 
-#import "Source/common/SNTCommonEnums.h"
 #import "Source/common/SNTCommon.h"
+#import "Source/common/SNTCommonEnums.h"
 
 @class MOLCertificate;
 
@@ -23,6 +24,8 @@
 ///  Store information about executions from decision making for later logging.
 ///
 @interface SNTCachedDecision : NSObject
+
+- (instancetype)initWithEndpointSecurityFile:(const es_file_t *)esFile;
 
 @property santa_vnode_id_t vnodeId;
 @property SNTEventState decision;

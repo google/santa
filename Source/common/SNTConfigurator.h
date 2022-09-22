@@ -1,4 +1,4 @@
-/// Copyright 2015 Google Inc. All rights reserved.
+/// Copyright 2015-2022 Google Inc. All rights reserved.
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -65,7 +65,8 @@
 ///      <key>rule_type</key>
 ///      <string>BINARY</string>  (one of BINARY, CERTIFICATE or TEAMID)
 ///      <key>policy</key>
-///      <string>BLOCKLIST</string>  (one of ALLOWLIST, ALLOWLIST_COMPILER, BLOCKLIST, SILENT_BLOCKLIST)
+///      <string>BLOCKLIST</string>  (one of ALLOWLIST, ALLOWLIST_COMPILER, BLOCKLIST,
+///                                   SILENT_BLOCKLIST)
 ///    </dict>
 ///  </array>
 ///
@@ -243,15 +244,6 @@
 /// Defaults to NO.
 ///
 @property(readonly, nonatomic) BOOL enableMachineIDDecoration;
-
-///
-///  Use an internal cache for decisions instead of relying on the caching
-///  mechanism built-in to the EndpointSecurity framework. This may increase
-///  performance, particularly when Santa is run alongside other system
-///  extensions.
-///  Has no effect if the system extension is not being used. Defaults to NO.
-///
-@property(readonly, nonatomic) BOOL enableSysxCache;
 
 #pragma mark - GUI Settings
 

@@ -1,4 +1,4 @@
-/// Copyright 2015 Google Inc. All rights reserved.
+/// Copyright 2015-2022 Google Inc. All rights reserved.
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -15,8 +15,8 @@
 #import <Foundation/Foundation.h>
 #import <MOLCertificate/MOLCertificate.h>
 
-#import "Source/common/SNTCommonEnums.h"
 #import "Source/common/SNTCommon.h"
+#import "Source/common/SNTCommonEnums.h"
 
 @class SNTRule;
 @class SNTStoredEvent;
@@ -31,7 +31,6 @@
 ///  Cache Ops
 ///
 - (void)cacheCounts:(void (^)(uint64_t rootCache, uint64_t nonRootCache))reply;
-- (void)cacheBucketCount:(void (^)(NSArray *))reply;
 - (void)checkCacheForVnodeID:(santa_vnode_id_t)vnodeID withReply:(void (^)(santa_action_t))reply;
 
 ///
