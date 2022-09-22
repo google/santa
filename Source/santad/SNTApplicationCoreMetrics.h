@@ -12,6 +12,9 @@
 ///    See the License for the specific language governing permissions and
 ///    limitations under the License.
 
+#ifndef SANTA__SANTAD__APPLICATIONCOREMETRICS_H
+#define SANTA__SANTAD__APPLICATIONCOREMETRICS_H
+
 #include <sys/cdefs.h>
 
 __BEGIN_DECLS
@@ -19,3 +22,5 @@ __BEGIN_DECLS
 void SNTRegisterCoreMetrics();
 
 __END_DECLS
+
+#endif
