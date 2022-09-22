@@ -47,7 +47,7 @@ jobs:
         run: echo "/opt/homebrew/bin/" >> $GITHUB_PATH
       - name: install and run moroz
         run: |
-          go install github.com/kallsyms/moroz/cmd/moroz@ee0a5a7b
+          go install github.com/kallsyms/moroz/cmd/moroz@d0bba3f4
           ~/go/bin/moroz -configs="$GITHUB_WORKSPACE/Testing/integration/configs/moroz_default/global.toml" -use-tls=false &
       - name: start santa and sync
         run: |
