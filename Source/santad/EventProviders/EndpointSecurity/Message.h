@@ -15,7 +15,7 @@
 #ifndef SANTA__SANTAD__EVENTPROVIDERS_ENDPOINTSECURITY_MESSAGE_H
 #define SANTA__SANTAD__EVENTPROVIDERS_ENDPOINTSECURITY_MESSAGE_H
 
-#import <EndpointSecurity/EndpointSecurity.h>
+#include <EndpointSecurity/EndpointSecurity.h>
 
 #include <memory>
 #include <string>

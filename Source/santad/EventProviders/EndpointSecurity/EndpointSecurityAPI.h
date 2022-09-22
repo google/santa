@@ -16,6 +16,7 @@
 #define SANTA__SANTAD__EVENTPROVIDERS_ENDPOINTSECURITY_ENDPOINTSECURITYAPI_H
 
 #include <EndpointSecurity/EndpointSecurity.h>
+#import <Foundation/Foundation.h>
 
 #include <set>
 
@@ -44,8 +45,6 @@ class EndpointSecurityAPI : public std::enable_shared_from_this<EndpointSecurity
 
   virtual uint32_t ExecArgCount(const es_event_exec_t *event);
   virtual es_string_token_t ExecArg(const es_event_exec_t *event, uint32_t index);
-
- private:
 };
 
 }  // namespace santa::santad::event_providers::endpoint_security
