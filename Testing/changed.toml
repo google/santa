@@ -1,11 +1,6 @@
 client_mode = "MONITOR"
 batch_size = 100
-
-[[rules]]
-rule_type = "BINARY"
-policy = "BLOCKLIST"
-identifier = "432ad7907dbcfb2ddc0552a398b2c78539c1a230468d87f914f650e061756dbd"
-custom_msg = "deny bad test binary"
+block_usb_mount = true
 
 [[rules]]
 rule_type = "CERTIFICATE"
