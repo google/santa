@@ -521,6 +521,7 @@ objc_library(
         "//Source/common:SNTLogging",
         "//Source/common:SNTPrefixTree",
         "//Source/common:SNTXPCNotifierInterface",
+        "//Source/common:SNTXPCSyncServiceInterface",
         "@MOLXPCConnection",
     ],
 )
