@@ -15,6 +15,8 @@
 #ifndef SANTA__SANTAD__LOGS_ENDPOINTSECURITY_SERIALIZERS_EMPTY_H
 #define SANTA__SANTAD__LOGS_ENDPOINTSECURITY_SERIALIZERS_EMPTY_H
 
+#import <Foundation/Foundation.h>
+
 #include <memory>
 #include <vector>
 

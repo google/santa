@@ -15,7 +15,7 @@
 #ifndef SANTA__SANTAD__EVENTPROVIDERS_ENDPOINTSECURITY_CLIENT_H
 #define SANTA__SANTAD__EVENTPROVIDERS_ENDPOINTSECURITY_CLIENT_H
 
-#import <EndpointSecurity/EndpointSecurity.h>
+#include <EndpointSecurity/EndpointSecurity.h>
 
 #include <cstddef>
 

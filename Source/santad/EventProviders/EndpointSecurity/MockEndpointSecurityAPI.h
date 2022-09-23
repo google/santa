@@ -16,8 +16,11 @@
 #define SANTA__SANTAD__EVENTPROVIDERS_ENDPOINTSECURITY_MOCKENDPOINTSECURITYAPI_H
 
 #include <EndpointSecurity/EndpointSecurity.h>
+#import <Foundation/Foundation.h>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
+
+#include <set>
 
 #include "Source/santad/EventProviders/EndpointSecurity/Client.h"
 #include "Source/santad/EventProviders/EndpointSecurity/EndpointSecurityAPI.h"
