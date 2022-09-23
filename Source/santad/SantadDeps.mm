@@ -13,7 +13,6 @@
 ///    limitations under the License.
 
 #include "Source/santad/SantadDeps.h"
-#include <objc/NSObjCRuntime.h>
 
 #include <memory>
 
