@@ -284,6 +284,7 @@ objc_library(
     deps = [
         ":EndpointSecurityAPI",
         ":EndpointSecurityClient",
+        "//Source/common:SNTCommon",
         "//Source/common:SNTLogging",
         "//Source/common:SantaCache",
     ],
@@ -715,6 +716,7 @@ santa_unit_test(
     deps = [
         ":AuthResultCache",
         ":MockEndpointSecurityAPI",
+        "//Source/common:SNTCommon",
         "//Source/common:TestUtils",
         "@OCMock",
         "@com_google_googletest//:gtest",
