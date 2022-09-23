@@ -25,7 +25,6 @@
 #import "Source/common/SNTRule.h"
 #import "Source/common/SNTStoredEvent.h"
 #import "Source/common/SNTStrengthify.h"
-#import "Source/common/SNTXPCBundleServiceInterface.h"
 #import "Source/common/SNTXPCNotifierInterface.h"
 #import "Source/common/SNTXPCSyncServiceInterface.h"
 #import "Source/santad/DataLayer/SNTEventTable.h"

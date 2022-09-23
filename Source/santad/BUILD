@@ -462,15 +462,24 @@ objc_library(
         ":AuthResultCache",
         ":EndpointSecurityLogger",
         ":SNTDatabaseController",
+        ":SNTEventTable",
         ":SNTNotificationQueue",
         ":SNTPolicyProcessor",
+        ":SNTRuleTable",
         ":SNTSyncdQueue",
+        "//Source/common:SNTCachedDecision",
+        "//Source/common:SNTCommonEnums",
+        "//Source/common:SNTConfigurator",
         "//Source/common:SNTLogging",
         "//Source/common:SNTMetricSet",
+        "//Source/common:SNTRule",
+        "//Source/common:SNTStrengthify",
+        "//Source/common:SNTStoredEvent",
         "//Source/common:SNTXPCControlInterface",
         "//Source/common:SNTXPCNotifierInterface",
         "//Source/common:SNTXPCSyncServiceInterface",
         "@FMDB",
+        "@MOLXPCConnection",
     ],
 )
 
@@ -512,6 +521,8 @@ objc_library(
         "//Source/common:SNTLogging",
         "//Source/common:SNTPrefixTree",
         "//Source/common:SNTXPCNotifierInterface",
+        "//Source/common:SNTXPCSyncServiceInterface",
+        "@MOLXPCConnection",
     ],
 )
 
