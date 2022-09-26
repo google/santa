@@ -18,6 +18,7 @@
 #include <dispatch/dispatch.h>
 #include <mach/mach_time.h>
 #include <time.h>
+#include <uuid/uuid.h>
 
 audit_token_t MakeAuditToken(pid_t pid, pid_t pidver) {
   return audit_token_t{
@@ -25,9 +26,9 @@ audit_token_t MakeAuditToken(pid_t pid, pid_t pidver) {
       {
         0,
         NOBODY_UID,
-        NOBODY_GID,
+        NOGROUP_GID,
         NOBODY_UID,
-        NOBODY_GID,
+        NOGROUP_GID,
         (unsigned int)pid,
         0,
         (unsigned int)pidver,
@@ -35,10 +36,24 @@ audit_token_t MakeAuditToken(pid_t pid, pid_t pidver) {
   };
 }
 
-struct stat MakeStat(ino_t ino, dev_t devno) {
+struct stat MakeStat(int offset) {
   return (struct stat){
-    .st_dev = devno,
-    .st_ino = ino,
+    .st_dev = 1 + offset,
+    .st_mode = (mode_t)(2 + offset),
+    .st_nlink = (nlink_t)(3 + offset),
+    .st_ino = (uint64_t)(4 + offset),
+    .st_uid = NOBODY_UID,
+    .st_gid = NOGROUP_GID,
+    .st_rdev = 5 + offset,
+    .st_atimespec = {.tv_sec = 100 + offset, .tv_nsec = 200 + offset},
+    .st_mtimespec = {.tv_sec = 101 + offset, .tv_nsec = 21 + offset},
+    .st_ctimespec = {.tv_sec = 102 + offset, .tv_nsec = 202 + offset},
+    .st_birthtimespec = {.tv_sec = 103 + offset, .tv_nsec = 203 + offset},
+    .st_size = 6 + offset,
+    .st_blocks = 7 + offset,
+    .st_blksize = 8 + offset,
+    .st_flags = (uint32_t)(9 + offset),
+    .st_gen = (uint32_t)(10 + offset),
   };
 }
 

@@ -375,6 +375,17 @@ objc_library(
 )
 
 objc_library(
+    name = "EndpointSecuritySerializerProtobuf",
+    srcs = ["Logs/EndpointSecurity/Serializers/Protobuf.mm"],
+    hdrs = ["Logs/EndpointSecurity/Serializers/Protobuf.h"],
+    deps = [
+        ":EndpointSecurityAPI",
+        ":EndpointSecuritySerializer",
+        "//Source/common:santa_cc_proto_library_wrapper",
+    ],
+)
+
+objc_library(
     name = "EndpointSecurityWriter",
     hdrs = ["Logs/EndpointSecurity/Writers/Writer.h"],
 )
@@ -740,6 +751,26 @@ santa_unit_test(
         "//Source/common:SNTConfigurator",
         "//Source/common:SNTStoredEvent",
         "//Source/common:TestUtils",
+        "@OCMock",
+        "@com_google_googletest//:gtest",
+    ],
+)
+
+santa_unit_test(
+    name = "EndpointSecuritySerializerProtobufTest",
+    srcs = ["Logs/EndpointSecurity/Serializers/ProtobufTest.mm"],
+    data = [
+        "//Source/santad/testdata:protobuf_json_testdata",
+    ],
+    deps = [
+        ":EndpointSecurityEnrichedTypes",
+        ":EndpointSecurityEnricher",
+        ":EndpointSecurityMessage",
+        ":EndpointSecuritySerializer",
+        ":EndpointSecuritySerializerProtobuf",
+        ":MockEndpointSecurityAPI",
+        "//Source/common:TestUtils",
+        "//Source/common:santa_cc_proto_library_wrapper",
         "@OCMock",
         "@com_google_googletest//:gtest",
     ],

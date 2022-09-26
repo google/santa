@@ -32,9 +32,9 @@ using santa::santad::event_providers::endpoint_security::Enricher;
   XCTAssertTrue(user.has_value());
   XCTAssertEqual(strcmp(user->get()->c_str(), "nobody"), 0);
 
-  std::optional<std::shared_ptr<std::string>> group = enricher.UsernameForGID(NOBODY_GID);
+  std::optional<std::shared_ptr<std::string>> group = enricher.UsernameForGID(NOGROUP_GID);
   XCTAssertTrue(group.has_value());
-  XCTAssertEqual(strcmp(group->get()->c_str(), "nobody"), 0);
+  XCTAssertEqual(strcmp(group->get()->c_str(), "nogroup"), 0);
 
   uid_t invalidUID = (uid_t)-123;
   gid_t invalidGID = (gid_t)-123;

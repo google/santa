@@ -58,6 +58,12 @@ class EnrichedProcess {
         real_group_(std::move(real_group)),
         executable_(std::move(executable)) {}
 
+  const std::optional<std::shared_ptr<std::string>> &effective_user() const {
+    return effective_user_;
+  }
+  const std::optional<std::shared_ptr<std::string>> &effective_group() const {
+    return effective_group_;
+  }
   const std::optional<std::shared_ptr<std::string>> &real_user() const {
     return real_user_;
   }
@@ -76,21 +82,30 @@ class EnrichedProcess {
 class EnrichedEventType {
  public:
   EnrichedEventType(Message &&es_msg, EnrichedProcess &&instigator)
-      : es_msg_(std::move(es_msg)), instigator_(std::move(instigator)) {}
+      : es_msg_(std::move(es_msg)), instigator_(std::move(instigator)) {
+    uuid_generate_random(uuid_);
+    clock_gettime(CLOCK_REALTIME, &enrichment_time_);
+  }
 
   EnrichedEventType(EnrichedEventType &&other)
       : es_msg_(std::move(other.es_msg_)),
-        instigator_(std::move(other.instigator_)) {}
+        instigator_(std::move(other.instigator_)),
+        enrichment_time_(std::move(other.enrichment_time_)) {
+    uuid_copy(uuid_, other.uuid_);
+  }
 
   virtual ~EnrichedEventType() = default;
 
   const es_message_t &es_msg() const { return *es_msg_; }
-
   const EnrichedProcess &instigator() const { return instigator_; }
+  const uuid_t &uuid() const { return uuid_; }
+  struct timespec enrichment_time() const { return enrichment_time_; }
 
  private:
   Message es_msg_;
   EnrichedProcess instigator_;
+  struct timespec enrichment_time_;
+  uuid_t uuid_;
 };
 
 class EnrichedClose : public EnrichedEventType {
@@ -99,6 +114,11 @@ class EnrichedClose : public EnrichedEventType {
                 EnrichedFile &&target)
       : EnrichedEventType(std::move(es_msg), std::move(instigator)),
         target_(std::move(target)) {}
+
+  EnrichedClose(EnrichedClose &&other)
+      : EnrichedEventType(std::move(other)),
+        target_(std::move(other.target_)) {}
+  EnrichedClose(const EnrichedClose &other) = delete;
 
  private:
   EnrichedFile target_;
@@ -196,16 +216,11 @@ using EnrichedType =
 
 class EnrichedMessage {
  public:
-  EnrichedMessage(EnrichedType &&msg) : msg_(std::move(msg)) {
-    uuid_generate(uuid_);
-    clock_gettime(CLOCK_REALTIME, &enrichment_time_);
-  }
+  EnrichedMessage(EnrichedType &&msg) : msg_(std::move(msg)) {}
 
   const EnrichedType &GetEnrichedMessage() { return msg_; }
 
  private:
-  uuid_t uuid_;
-  struct timespec enrichment_time_;
   EnrichedType msg_;
 };
 

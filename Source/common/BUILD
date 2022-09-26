@@ -1,5 +1,5 @@
 load("//:helper.bzl", "santa_unit_test")
-load("@rules_proto_grpc//objc:defs.bzl", "objc_proto_library")
+load("@rules_cc//cc:defs.bzl", "cc_proto_library")
 
 package(
     default_visibility = ["//:santa_package_group"],
@@ -8,19 +8,35 @@ package(
 licenses(["notice"])
 
 proto_library(
-    name = "santa_proto",
-    srcs = ["santa.proto"],
+    name = "santa_new_proto",
+    srcs = ["santa_new.proto"],
     deps = [
         "@com_google_protobuf//:any_proto",
         "@com_google_protobuf//:timestamp_proto",
     ],
 )
 
-objc_proto_library(
-    name = "santa_objc_proto",
-    copts = ["-fno-objc-arc"],
-    non_arc_srcs = ["Santa.pbobjc.m"],
-    protos = [":santa_proto"],
+cc_proto_library(
+    name = "santa_cc_proto",
+    deps = [":santa_new_proto"],
+)
+
+# Note: Simple wrapper for a `cc_proto_library` target which cannot be directly
+# depended upon by an `objc_library` target.
+cc_library(
+    name = "santa_cc_proto_library_wrapper",
+    deps = [
+        ":santa_cc_proto",
+    ],
+)
+
+proto_library(
+    name = "santa_proto",
+    srcs = ["santa.proto"],
+    deps = [
+        "@com_google_protobuf//:any_proto",
+        "@com_google_protobuf//:timestamp_proto",
+    ],
 )
 
 cc_library(

@@ -12,7 +12,6 @@
 ///    See the License for the specific language governing permissions and
 ///    limitations under the License.
 
-#include <EndpointSecurity/ESTypes.h>
 #include <EndpointSecurity/EndpointSecurity.h>
 #import <Foundation/Foundation.h>
 #import <OCMock/OCMock.h>
@@ -117,7 +116,7 @@ std::string BasicStringSerializeMessage(es_message_t *esMsg) {
   std::string got = BasicStringSerializeMessage(&esMsg);
   std::string want = "action=WRITE|path=close_file"
                      "|pid=12|ppid=56|process=foo|processpath=foo"
-                     "|uid=-2|user=nobody|gid=-2|group=nobody\n";
+                     "|uid=-2|user=nobody|gid=-1|group=nogroup\n";
 
   XCTAssertCppStringEqual(got, want);
 }
@@ -134,7 +133,7 @@ std::string BasicStringSerializeMessage(es_message_t *esMsg) {
   std::string got = BasicStringSerializeMessage(&esMsg);
   std::string want = "action=EXCHANGE|path=exchange_1|newpath=exchange_2"
                      "|pid=12|ppid=56|process=foo|processpath=foo"
-                     "|uid=-2|user=nobody|gid=-2|group=nobody\n";
+                     "|uid=-2|user=nobody|gid=-1|group=nogroup\n";
 
   XCTAssertCppStringEqual(got, want);
 }
@@ -158,10 +157,11 @@ std::string BasicStringSerializeMessage(es_message_t *esMsg) {
     .WillOnce(testing::Return(es_string_token_t{8, "-v\r--foo"}));
 
   std::string got = BasicStringSerializeMessage(mockESApi, &esMsg);
-  std::string want = "action=EXEC|decision=ALLOW|reason=BINARY|explain=extra!|sha256=1234_hash|"
-                     "cert_sha256=5678_hash|cert_cn=|quarantine_url=google.com|pid=12|pidversion="
-                     "89|ppid=56|uid=-2|user=nobody|gid=-2|group=nobody|mode=L|path=execpath<pipe>|"
-                     "args=exec<pipe>path -l\\n-t -v\\r--foo|machineid=my_id\n";
+  std::string want =
+    "action=EXEC|decision=ALLOW|reason=BINARY|explain=extra!|sha256=1234_hash|"
+    "cert_sha256=5678_hash|cert_cn=|quarantine_url=google.com|pid=12|pidversion="
+    "89|ppid=56|uid=-2|user=nobody|gid=-1|group=nogroup|mode=L|path=execpath<pipe>|"
+    "args=exec<pipe>path -l\\n-t -v\\r--foo|machineid=my_id\n";
 
   XCTAssertCppStringEqual(got, want);
 }
@@ -172,7 +172,7 @@ std::string BasicStringSerializeMessage(es_message_t *esMsg) {
   es_message_t esMsg = MakeESMessage(ES_EVENT_TYPE_NOTIFY_EXIT, &proc);
 
   std::string got = BasicStringSerializeMessage(&esMsg);
-  std::string want = "action=EXIT|pid=12|pidversion=34|ppid=56|uid=-2|gid=-2\n";
+  std::string want = "action=EXIT|pid=12|pidversion=34|ppid=56|uid=-2|gid=-1\n";
 
   XCTAssertCppStringEqual(got, want);
 }
@@ -187,7 +187,7 @@ std::string BasicStringSerializeMessage(es_message_t *esMsg) {
   esMsg.event.fork.child = &procChild;
 
   std::string got = BasicStringSerializeMessage(&esMsg);
-  std::string want = "action=FORK|pid=67|pidversion=89|ppid=12|uid=-2|gid=-2\n";
+  std::string want = "action=FORK|pid=67|pidversion=89|ppid=12|uid=-2|gid=-1\n";
 
   XCTAssertCppStringEqual(got, want);
 }
@@ -205,7 +205,7 @@ std::string BasicStringSerializeMessage(es_message_t *esMsg) {
   std::string got = BasicStringSerializeMessage(&esMsg);
   std::string want = "action=LINK|path=link_src|newpath=link_dst/link_name"
                      "|pid=12|ppid=56|process=foo|processpath=foo"
-                     "|uid=-2|user=nobody|gid=-2|group=nobody\n";
+                     "|uid=-2|user=nobody|gid=-1|group=nogroup\n";
 
   XCTAssertCppStringEqual(got, want);
 }
@@ -223,7 +223,7 @@ std::string BasicStringSerializeMessage(es_message_t *esMsg) {
   std::string got = BasicStringSerializeMessage(&esMsg);
   std::string want = "action=RENAME|path=rename_src|newpath=rename_dst"
                      "|pid=12|ppid=56|process=foo|processpath=foo"
-                     "|uid=-2|user=nobody|gid=-2|group=nobody\n";
+                     "|uid=-2|user=nobody|gid=-1|group=nogroup\n";
 
   XCTAssertCppStringEqual(got, want);
 }
@@ -238,7 +238,7 @@ std::string BasicStringSerializeMessage(es_message_t *esMsg) {
   std::string got = BasicStringSerializeMessage(&esMsg);
   std::string want = "action=DELETE|path=deleted_file"
                      "|pid=12|ppid=56|process=foo|processpath=foo"
-                     "|uid=-2|user=nobody|gid=-2|group=nobody\n";
+                     "|uid=-2|user=nobody|gid=-1|group=nogroup\n";
 
   XCTAssertCppStringEqual(got, want);
 }

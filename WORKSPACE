@@ -14,27 +14,17 @@ http_archive(
 )
 
 http_archive(
-    name = "rules_proto_grpc",
-    sha256 = "28724736b7ff49a48cb4b2b8cfa373f89edfcb9e8e492a8d5ab60aa3459314c8",
-    strip_prefix = "rules_proto_grpc-4.0.1",
-    urls = ["https://github.com/rules-proto-grpc/rules_proto_grpc/archive/4.0.1.tar.gz"],
+    name = "com_google_protobuf",
+    patch_args = ["-p1"],
+    patches = ["//external_patches/com_google_protobuf:10120.patch"],
+    sha256 = "73c95c7b0c13f597a6a1fec7121b07e90fd12b4ed7ff5a781253b3afe07fc077",
+    strip_prefix = "protobuf-3.21.6",
+    urls = ["https://github.com/protocolbuffers/protobuf/archive/v3.21.6.tar.gz"],
 )
 
-load("@rules_proto_grpc//:repositories.bzl", "rules_proto_grpc_repos", "rules_proto_grpc_toolchains")
+load("@com_google_protobuf//:protobuf_deps.bzl", "protobuf_deps")
 
-rules_proto_grpc_toolchains()
-
-rules_proto_grpc_repos()
-
-load("@rules_proto//proto:repositories.bzl", "rules_proto_dependencies", "rules_proto_toolchains")
-
-rules_proto_dependencies()
-
-rules_proto_toolchains()
-
-load("@rules_proto_grpc//objc:repositories.bzl", rules_proto_grpc_objc_repos = "objc_repos")
-
-rules_proto_grpc_objc_repos()
+protobuf_deps()
 
 load("@build_bazel_rules_apple//apple:repositories.bzl", "apple_rules_dependencies")
 
