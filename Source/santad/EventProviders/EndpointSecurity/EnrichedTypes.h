@@ -39,6 +39,13 @@ class EnrichedFile {
         group_(std::move(group)),
         hash_(std::move(hash)) {}
 
+  EnrichedFile(EnrichedFile &&other)
+      : user_(std::move(other.user_)),
+        group_(std::move(other.group_)),
+        hash_(std::move(other.hash_)) {}
+
+  EnrichedFile(const EnrichedFile &other) = delete;
+
  private:
   std::optional<std::shared_ptr<std::string>> user_;
   std::optional<std::shared_ptr<std::string>> group_;
@@ -57,6 +64,15 @@ class EnrichedProcess {
         real_user_(std::move(real_user)),
         real_group_(std::move(real_group)),
         executable_(std::move(executable)) {}
+
+  EnrichedProcess(EnrichedProcess &&other)
+      : effective_user_(std::move(other.effective_user_)),
+        effective_group_(std::move(other.effective_group_)),
+        real_user_(std::move(other.real_user_)),
+        real_group_(std::move(other.real_group_)),
+        executable_(std::move(other.executable_)) {}
+
+  EnrichedProcess(const EnrichedProcess &other) = delete;
 
   const std::optional<std::shared_ptr<std::string>> &effective_user() const {
     return effective_user_;
@@ -94,6 +110,8 @@ class EnrichedEventType {
     uuid_copy(uuid_, other.uuid_);
   }
 
+  EnrichedEventType(const EnrichedEventType &other) = delete;
+
   virtual ~EnrichedEventType() = default;
 
   const es_message_t &es_msg() const { return *es_msg_; }
@@ -118,6 +136,7 @@ class EnrichedClose : public EnrichedEventType {
   EnrichedClose(EnrichedClose &&other)
       : EnrichedEventType(std::move(other)),
         target_(std::move(other.target_)) {}
+
   EnrichedClose(const EnrichedClose &other) = delete;
 
  private:
@@ -131,6 +150,13 @@ class EnrichedExchange : public EnrichedEventType {
       : EnrichedEventType(std::move(es_msg), std::move(instigator)),
         file1_(std::move(file1)),
         file2_(std::move(file2)) {}
+
+  EnrichedExchange(EnrichedExchange &&other)
+      : EnrichedEventType(std::move(other)),
+        file1_(std::move(other.file1_)),
+        file2_(std::move(other.file2_)) {}
+
+  EnrichedExchange(const EnrichedExchange &other) = delete;
 
  private:
   EnrichedFile file1_;
@@ -147,6 +173,14 @@ class EnrichedExec : public EnrichedEventType {
         script_(std::move(script)),
         working_dir_(std::move(working_dir)) {}
 
+  EnrichedExec(EnrichedExec &&other)
+      : EnrichedEventType(std::move(other)),
+        target_(std::move(other.target_)),
+        script_(std::move(other.script_)),
+        working_dir_(std::move(other.working_dir_)) {}
+
+  EnrichedExec(const EnrichedExec &other) = delete;
+
  private:
   EnrichedProcess target_;
   std::optional<EnrichedFile> script_;
@@ -157,6 +191,10 @@ class EnrichedExit : public EnrichedEventType {
  public:
   EnrichedExit(Message &&es_msg, EnrichedProcess &&instigator)
       : EnrichedEventType(std::move(es_msg), std::move(instigator)) {}
+
+  EnrichedExit(EnrichedExit &&other) : EnrichedEventType(std::move(other)) {}
+
+  EnrichedExit(const EnrichedExit &other) = delete;
 };
 
 class EnrichedFork : public EnrichedEventType {
@@ -165,6 +203,12 @@ class EnrichedFork : public EnrichedEventType {
                EnrichedProcess &&target)
       : EnrichedEventType(std::move(es_msg), std::move(instigator)),
         target_(std::move(target)) {}
+
+  EnrichedFork(EnrichedFork &&other)
+      : EnrichedEventType(std::move(other)),
+        target_(std::move(other.target_)) {}
+
+  EnrichedFork(const EnrichedFork &other) = delete;
 
  private:
   EnrichedProcess target_;
@@ -177,6 +221,13 @@ class EnrichedLink : public EnrichedEventType {
       : EnrichedEventType(std::move(es_msg), std::move(instigator)),
         source_(std::move(source)),
         target_dir_(std::move(target_dir)) {}
+
+  EnrichedLink(EnrichedLink &&other)
+      : EnrichedEventType(std::move(other)),
+        source_(std::move(other.source_)),
+        target_dir_(std::move(other.target_dir_)) {}
+
+  EnrichedLink(const EnrichedLink &other) = delete;
 
  private:
   EnrichedFile source_;
@@ -193,6 +244,14 @@ class EnrichedRename : public EnrichedEventType {
         target_(std::move(target)),
         target_dir_(std::move(target_dir)) {}
 
+  EnrichedRename(EnrichedRename &&other)
+      : EnrichedEventType(std::move(other)),
+        source_(std::move(other.source_)),
+        target_(std::move(other.target_)),
+        target_dir_(std::move(other.target_dir_)) {}
+
+  EnrichedRename(const EnrichedRename &other) = delete;
+
  private:
   EnrichedFile source_;
   std::optional<EnrichedFile> target_;
@@ -205,6 +264,12 @@ class EnrichedUnlink : public EnrichedEventType {
                  EnrichedFile &&target)
       : EnrichedEventType(std::move(es_msg), std::move(instigator)),
         target_(std::move(target)) {}
+
+  EnrichedUnlink(EnrichedUnlink &&other)
+      : EnrichedEventType(std::move(other)),
+        target_(std::move(other.target_)) {}
+
+  EnrichedUnlink(const EnrichedUnlink &other) = delete;
 
  private:
   EnrichedFile target_;
