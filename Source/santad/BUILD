@@ -338,6 +338,20 @@ objc_library(
 )
 
 objc_library(
+    name = "EndpointSecuritySerializerUtilities",
+    srcs = ["Logs/EndpointSecurity/Serializers/Utilities.mm"],
+    hdrs = ["Logs/EndpointSecurity/Serializers/Utilities.h"],
+    deps = [
+        ":EndpointSecurityEnrichedTypes",
+        ":EndpointSecurityMessage",
+        ":SNTDecisionCache",
+    ],
+    sdk_dylibs = [
+      "bsm",
+    ]
+)
+
+objc_library(
     name = "EndpointSecuritySerializerEmpty",
     srcs = ["Logs/EndpointSecurity/Serializers/Empty.mm"],
     hdrs = ["Logs/EndpointSecurity/Serializers/Empty.h"],
@@ -366,6 +380,7 @@ objc_library(
         ":EndpointSecurityAPI",
         ":EndpointSecuritySanitizableString",
         ":EndpointSecuritySerializer",
+        ":EndpointSecuritySerializerUtilities",
         ":SNTDecisionCache",
         "//Source/common:SNTCachedDecision",
         "//Source/common:SNTConfigurator",
@@ -381,8 +396,12 @@ objc_library(
     deps = [
         ":EndpointSecurityAPI",
         ":EndpointSecuritySerializer",
-        "//Source/common:santa_cc_proto_library_wrapper",
+        ":EndpointSecuritySerializerUtilities",
+        ":SNTDecisionCache",
+        "//Source/common:SNTCachedDecision",
+        "//Source/common:SNTConfigurator",
         "//Source/common:SNTLogging",
+        "//Source/common:santa_cc_proto_library_wrapper",
     ],
 )
 
@@ -770,6 +789,7 @@ santa_unit_test(
         ":EndpointSecuritySerializer",
         ":EndpointSecuritySerializerProtobuf",
         ":MockEndpointSecurityAPI",
+        "//Source/common:SNTCommonEnums",
         "//Source/common:TestUtils",
         "//Source/common:santa_cc_proto_library_wrapper",
         "@OCMock",

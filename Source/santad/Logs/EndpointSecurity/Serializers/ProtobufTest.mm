@@ -14,17 +14,18 @@
 
 #include <EndpointSecurity/EndpointSecurity.h>
 #import <Foundation/Foundation.h>
-#include <sys/signal.h>
-#include <sys/wait.h>
 #import <OCMock/OCMock.h>
 #import <XCTest/XCTest.h>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
+#include <sys/signal.h>
+#include <sys/wait.h>
 #include <time.h>
 #include <uuid/uuid.h>
 
 #include <google/protobuf/util/json_util.h>
 
+#include "Source/common/SNTCommonEnums.h"
 #include "Source/common/TestUtils.h"
 #include "Source/common/santa_new.pb.h"
 #include "Source/santad/EventProviders/EndpointSecurity/EnrichedTypes.h"
@@ -55,9 +56,15 @@ namespace pb = santa::pb;
 
 namespace santa::santad::logs::endpoint_security::serializers {
 extern void EncodeExitStatus(pb::Exit *pbExit, int exitStatus);
-}
+extern pb::Execution::Decision GetDecisionEnum(SNTEventState event_state);
+extern pb::Execution::Reason GetReasonEnum(SNTEventState event_state);
+extern pb::Execution::Mode GetModeEnum(SNTClientMode mode);
+}  // namespace santa::santad::logs::endpoint_security::serializers
 
 using santa::santad::logs::endpoint_security::serializers::EncodeExitStatus;
+using santa::santad::logs::endpoint_security::serializers::GetDecisionEnum;
+using santa::santad::logs::endpoint_security::serializers::GetModeEnum;
+using santa::santad::logs::endpoint_security::serializers::GetReasonEnum;
 
 JsonPrintOptions DefaultJsonPrintOptions() {
   JsonPrintOptions options;
@@ -188,6 +195,87 @@ void SerializeAndCheck(es_message_t *esMsg, NSString *jsonFileName) {
 
   SerializeAndCheck(&esMsg, @"close.json");
 }
+
+- (void)testGetDecisionEnum {
+  std::map<SNTEventState, pb::Execution::Decision> stateToDecision = {
+    {SNTEventStateUnknown, pb::Execution::DECISION_UNKNOWN},
+    {SNTEventStateBundleBinary, pb::Execution::DECISION_UNKNOWN},
+    {SNTEventStateBlockUnknown, pb::Execution::DECISION_DENY},
+    {SNTEventStateBlockBinary, pb::Execution::DECISION_DENY},
+    {SNTEventStateBlockCertificate, pb::Execution::DECISION_DENY},
+    {SNTEventStateBlockScope, pb::Execution::DECISION_DENY},
+    {SNTEventStateBlockTeamID, pb::Execution::DECISION_DENY},
+    {SNTEventStateBlockLongPath, pb::Execution::DECISION_DENY},
+    {SNTEventStateAllowUnknown, pb::Execution::DECISION_ALLOW},
+    {SNTEventStateAllowBinary, pb::Execution::DECISION_ALLOW},
+    {SNTEventStateAllowCertificate, pb::Execution::DECISION_ALLOW},
+    {SNTEventStateAllowScope, pb::Execution::DECISION_ALLOW},
+    {SNTEventStateAllowCompiler, pb::Execution::DECISION_ALLOW},
+    {SNTEventStateAllowTransitive, pb::Execution::DECISION_ALLOW},
+    {SNTEventStateAllowPendingTransitive, pb::Execution::DECISION_ALLOW},
+    {SNTEventStateAllowTeamID, pb::Execution::DECISION_ALLOW},
+  };
+
+  for (const auto &kv : stateToDecision) {
+    XCTAssertEqual(GetDecisionEnum(kv.first), kv.second, @"Bad decision for state: %ld", kv.first);
+  }
+}
+
+- (void)testGetReasonEnum {
+  std::map<SNTEventState, pb::Execution::Reason> stateToReason = {
+    {SNTEventStateUnknown, pb::Execution::REASON_NOT_RUNNING},
+    {SNTEventStateBundleBinary, pb::Execution::REASON_NOT_RUNNING},
+    {SNTEventStateBlockUnknown, pb::Execution::REASON_UNKNOWN},
+    {SNTEventStateBlockBinary, pb::Execution::REASON_BINARY},
+    {SNTEventStateBlockCertificate, pb::Execution::REASON_CERT},
+    {SNTEventStateBlockScope, pb::Execution::REASON_SCOPE},
+    {SNTEventStateBlockTeamID, pb::Execution::REASON_TEAM_ID},
+    {SNTEventStateBlockLongPath, pb::Execution::REASON_LONG_PATH},
+    {SNTEventStateAllowUnknown, pb::Execution::REASON_UNKNOWN},
+    {SNTEventStateAllowBinary, pb::Execution::REASON_BINARY},
+    {SNTEventStateAllowCertificate, pb::Execution::REASON_CERT},
+    {SNTEventStateAllowScope, pb::Execution::REASON_SCOPE},
+    {SNTEventStateAllowCompiler, pb::Execution::REASON_COMPILER},
+    {SNTEventStateAllowTransitive, pb::Execution::REASON_TRANSITIVE},
+    {SNTEventStateAllowPendingTransitive, pb::Execution::REASON_PENDING_TRANSITIVE},
+    {SNTEventStateAllowTeamID, pb::Execution::REASON_TEAM_ID},
+  };
+
+  for (const auto &kv : stateToReason) {
+    XCTAssertEqual(GetReasonEnum(kv.first), kv.second, @"Bad reason for state: %ld", kv.first);
+  }
+}
+
+- (void)testGetModeEnum {
+  std::map<SNTClientMode, pb::Execution::Mode> stateToMode = {
+    {SNTClientModeUnknown, pb::Execution::MODE_UNKNOWN},
+    {SNTClientModeMonitor, pb::Execution::MODE_MONITOR},
+    {SNTClientModeLockdown, pb::Execution::MODE_LOCKDOWN},
+    {(SNTClientMode)123, pb::Execution::MODE_UNKNOWN},
+  };
+
+  for (const auto &kv : stateToMode) {
+    XCTAssertEqual(GetModeEnum(kv.first), kv.second, @"Bad mode for state: %ld", kv.first);
+  }
+}
+
+// - (void)testSerializeMessageExec {
+//   es_file_t procFile = MakeESFile("foo", MakeStat(100));
+//   es_file_t ttyFile = MakeESFile("footty", MakeStat(200));
+//   es_process_t proc = MakeESProcess(&procFile, MakeAuditToken(12, 34), MakeAuditToken(56, 78));
+//   es_file_t procFileTarget = MakeESFile("fooexec", MakeStat(300));
+//   es_process_t procTarget =
+//     MakeESProcess(&procFileTarget, MakeAuditToken(12, 34), MakeAuditToken(56, 78));
+//   es_file_t fileCwd = MakeESFile("cwd", MakeStat(400));
+//   es_file_t fileScript = MakeESFile("script.sh", MakeStat(500));
+//   es_message_t esMsg = MakeESMessage(ES_EVENT_TYPE_NOTIFY_EXIT, &proc);
+//   esMsg.process->tty = &ttyFile;
+//   esMsg.event.exec.target = &procTarget;
+//   esMsg.event.exec.cwd = &fileCwd;
+//   esMsg.event.exec.script = &fileScript;
+
+//   SerializeAndCheck(&esMsg, @"exec.json");
+// }
 
 - (void)testSerializeMessageExchange {
   es_file_t procFile = MakeESFile("foo", MakeStat(100));

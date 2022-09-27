@@ -33,6 +33,7 @@
 #import "Source/common/SNTLogging.h"
 #import "Source/common/SNTStoredEvent.h"
 #include "Source/santad/Logs/EndpointSecurity/Serializers/SanitizableString.h"
+#include "Source/santad/Logs/EndpointSecurity/Serializers/Utilities.h"
 #import "Source/santad/SNTDecisionCache.h"
 
 using santa::santad::event_providers::endpoint_security::EndpointSecurityAPI;
@@ -46,39 +47,15 @@ using santa::santad::event_providers::endpoint_security::EnrichedRename;
 using santa::santad::event_providers::endpoint_security::EnrichedUnlink;
 using santa::santad::event_providers::endpoint_security::Message;
 
-// These functions are exported by the Security framework, but are not included in headers
-extern "C" Boolean SecTranslocateIsTranslocatedURL(CFURLRef path, bool *isTranslocated,
-                                                   CFErrorRef *__nullable error);
-extern "C" CFURLRef __nullable SecTranslocateCreateOriginalPathForURL(CFURLRef translocatedPath,
-                                                                      CFErrorRef *__nullable error);
-
 namespace santa::santad::logs::endpoint_security::serializers {
+
+using Utilities::Pid;
+using Utilities::Pidversion;
+using Utilities::RealUser;
+using Utilities::RealGroup;
 
 static inline SanitizableString FilePath(const es_file_t *file) {
   return SanitizableString(file);
-}
-
-static inline pid_t Pid(const audit_token_t &tok) {
-  return audit_token_to_pid(tok);
-}
-
-static inline pid_t Pidversion(const audit_token_t &tok) {
-  return audit_token_to_pidversion(tok);
-}
-
-static inline pid_t RealUser(const audit_token_t &tok) {
-  return audit_token_to_ruid(tok);
-}
-
-static inline pid_t RealGroup(const audit_token_t &tok) {
-  return audit_token_to_rgid(tok);
-}
-
-static inline void SetThreadIDs(uid_t uid, gid_t gid) {
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wdeprecated"
-  pthread_setugid_np(uid, gid);
-#pragma clang diagnostic pop
 }
 
 static inline const mach_port_t GetDefaultIOKitCommsPort() {
@@ -139,38 +116,6 @@ static NSString *DiskImageForDevice(NSString *devPath) {
   } else {
     return nil;
   }
-}
-
-static NSString *OriginalPathForTranslocation(const es_process_t *esProc) {
-  if (!esProc) {
-    return nil;
-  }
-
-  // Note: Benchmarks showed better performance using `URLWithString` with a `file://` prefix
-  // compared to using `fileURLWithPath`.
-  CFURLRef cfExecURL = (__bridge CFURLRef)
-    [NSURL URLWithString:[NSString stringWithFormat:@"file://%s", esProc->executable->path.data]];
-  NSURL *origURL = nil;
-  bool isTranslocated = false;
-
-  if (SecTranslocateIsTranslocatedURL(cfExecURL, &isTranslocated, NULL) && isTranslocated) {
-    bool dropPrivs = true;
-    if (@available(macOS 12.0, *)) {
-      dropPrivs = false;
-    }
-
-    if (dropPrivs) {
-      SetThreadIDs(RealUser(esProc->audit_token), RealGroup(esProc->audit_token));
-    }
-
-    origURL = CFBridgingRelease(SecTranslocateCreateOriginalPathForURL(cfExecURL, NULL));
-
-    if (dropPrivs) {
-      SetThreadIDs(KAUTH_UID_NONE, KAUTH_GID_NONE);
-    }
-  }
-
-  return [origURL path];
 }
 
 es_file_t *GetAllowListTargetFile(const Message &msg) {
@@ -394,7 +339,7 @@ std::vector<uint8_t> BasicString::SerializeMessage(const EnrichedExec &msg) {
   str.append("|path=");
   str.append(FilePath(esm.event.exec.target->executable).Sanitized());
 
-  NSString *origPath = OriginalPathForTranslocation(esm.event.exec.target);
+  NSString *origPath = Utilities::OriginalPathForTranslocation(esm.event.exec.target);
   if (origPath) {
     str.append("|origpath=");
     str.append(SanitizableString(origPath).Sanitized());

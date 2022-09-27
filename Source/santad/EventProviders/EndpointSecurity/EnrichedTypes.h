@@ -194,6 +194,12 @@ class EnrichedExec : public EnrichedEventType {
 
   EnrichedExec(const EnrichedExec &other) = delete;
 
+  const EnrichedProcess &target() const { return target_; }
+  const std::optional<EnrichedFile> &script() const { return script_; }
+  const std::optional<EnrichedFile> &working_dir() const {
+    return working_dir_;
+  }
+
  private:
   EnrichedProcess target_;
   std::optional<EnrichedFile> script_;

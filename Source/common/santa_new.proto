@@ -106,7 +106,7 @@ message Execution {
   ProcessInfo target = 2;
 
   File script = 3;
-  File workingDirectory = 4;
+  File working_directory = 4;
 
   repeated string args = 5;
   repeated string envs = 6;
@@ -128,8 +128,8 @@ message Execution {
     REASON_SCOPE = 6;
     REASON_TEAM_ID = 7;
     REASON_TRANSITIVE = 8;
-    // TODO: How to report denials from other ES clients
-    REASON_OTHER_ES_CLIENT = 9;
+    REASON_LONG_PATH = 9;
+    REASON_NOT_RUNNING = 10;
   }
   Reason reason = 9;
 
@@ -145,6 +145,10 @@ message Execution {
   string explain = 12;
   string quarantine_url = 13;
   string original_path = 14;
+
+  //
+  // TODO TODO: MACHINE ID?
+  //
 }
 
 message Fork {
