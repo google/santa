@@ -10,6 +10,8 @@
   },
   "responsible_id": {},
   "original_parent_pid": 56,
+  "group_id": 111,
+  "session_id": 222,
   "effective_user": {
    "uid": -2,
    "name": "nobody"
@@ -26,6 +28,8 @@
    "gid": -1,
    "name": "nogroup"
   },
+  "is_platform_binary": true,
+  "is_es_client": true,
   "executable": {
    "path": "foo",
    "stat": {
@@ -81,15 +85,17 @@
  },
  "target": {
   "id": {
-   "pid": 12,
-   "pidversion": 34
+   "pid": 23,
+   "pidversion": 45
   },
   "parent_id": {
-   "pid": 56,
-   "pidversion": 78
+   "pid": 67,
+   "pidversion": 89
   },
   "responsible_id": {},
-  "original_parent_pid": 56,
+  "original_parent_pid": 67,
+  "group_id": 111,
+  "session_id": 222,
   "effective_user": {
    "uid": -2,
    "name": "nobody"
@@ -106,6 +112,14 @@
    "gid": -1,
    "name": "nogroup"
   },
+  "is_platform_binary": true,
+  "is_es_client": true,
+  "code_signature": {
+   "cdhash": "QUFBQUFBQUFBQUFBQUFBQUFBQUE=",
+   "signing_id": "my_signing_id",
+   "team_id": "my_team_id"
+  },
+  "cs_flags": 536871680,
   "executable": {
    "path": "fooexec",
    "stat": {

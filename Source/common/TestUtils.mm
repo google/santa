@@ -77,6 +77,10 @@ es_process_t MakeESProcess(es_file_t *file, audit_token_t tok, audit_token_t par
     .audit_token = tok,
     .ppid = audit_token_to_pid(parent_tok),
     .original_ppid = audit_token_to_pid(parent_tok),
+    .group_id = 111,
+    .session_id = 222,
+    .is_platform_binary = true,
+    .is_es_client = true,
     .executable = file,
     .parent_audit_token = parent_tok,
   };

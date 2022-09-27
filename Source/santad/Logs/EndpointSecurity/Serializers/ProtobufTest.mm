@@ -14,6 +14,7 @@
 
 #include <EndpointSecurity/EndpointSecurity.h>
 #import <Foundation/Foundation.h>
+#include <Kernel/kern/cs_blobs.h>
 #import <OCMock/OCMock.h>
 #import <XCTest/XCTest.h>
 #include <gmock/gmock.h>
@@ -22,6 +23,7 @@
 #include <sys/wait.h>
 #include <time.h>
 #include <uuid/uuid.h>
+#include <cstring>
 
 #include <google/protobuf/util/json_util.h>
 
@@ -165,10 +167,8 @@ void CheckProto(const pb::SantaMessage &santaMsg, std::shared_ptr<EnrichedMessag
     enrichedMsg->GetEnrichedMessage());
 }
 
-void SerializeAndCheck(es_message_t *esMsg, NSString *jsonFileName) {
-  auto mockESApi = std::make_shared<MockEndpointSecurityAPI>();
-  mockESApi->SetExpectationsRetainReleaseMessage(esMsg);
-
+void SerializeAndCheck(std::shared_ptr<MockEndpointSecurityAPI> mockESApi, es_message_t *esMsg,
+                       NSString *jsonFileName) {
   std::shared_ptr<Serializer> bs = Protobuf::Create(mockESApi);
   std::shared_ptr<EnrichedMessage> enrichedMsg = Enricher().Enrich(Message(mockESApi, esMsg));
 
@@ -179,6 +179,13 @@ void SerializeAndCheck(es_message_t *esMsg, NSString *jsonFileName) {
   XCTAssertTrue(santaMsg.ParseFromString(protoStr));
 
   CheckProto(santaMsg, enrichedMsg, jsonFileName);
+}
+
+void SerializeAndCheck(es_message_t *esMsg, NSString *jsonFileName) {
+  auto mockESApi = std::make_shared<MockEndpointSecurityAPI>();
+  mockESApi->SetExpectationsRetainReleaseMessage(esMsg);
+
+  SerializeAndCheck(std::move(mockESApi), esMsg, jsonFileName);
 }
 
 @interface ProtobufTest : XCTestCase
@@ -214,7 +221,6 @@ void SerializeAndCheck(es_message_t *esMsg, NSString *jsonFileName) {
   [self.mockConfigurator stopMocking];
   [self.mockDecisionCache stopMocking];
 }
-
 
 - (void)testSerializeMessageClose {
   es_file_t procFile = MakeESFile("foo", MakeStat(100));
@@ -298,11 +304,19 @@ void SerializeAndCheck(es_message_t *esMsg, NSString *jsonFileName) {
   es_process_t proc = MakeESProcess(&procFile, MakeAuditToken(12, 34), MakeAuditToken(56, 78));
   es_file_t procFileTarget = MakeESFile("fooexec", MakeStat(300));
   es_process_t procTarget =
-    MakeESProcess(&procFileTarget, MakeAuditToken(12, 34), MakeAuditToken(56, 78));
+    MakeESProcess(&procFileTarget, MakeAuditToken(23, 45), MakeAuditToken(67, 89));
   es_file_t fileCwd = MakeESFile("cwd", MakeStat(400));
   es_file_t fileScript = MakeESFile("script.sh", MakeStat(500));
   es_message_t esMsg = MakeESMessage(ES_EVENT_TYPE_NOTIFY_EXEC, &proc);
+  es_string_token_t tokSigningId = MakeESStringToken("my_signing_id");
+  es_string_token_t tokTeamId = MakeESStringToken("my_team_id");
   esMsg.process->tty = &ttyFile;
+
+  procTarget.codesigning_flags = CS_SIGNED | CS_HARD | CS_KILL;
+  memset(procTarget.cdhash, 'A', sizeof(esMsg.event.exec.target->cdhash));
+  procTarget.signing_id = tokSigningId;
+  procTarget.team_id = tokTeamId;
+
   esMsg.event.exec.target = &procTarget;
   esMsg.event.exec.cwd = &fileCwd;
   esMsg.event.exec.script = &fileScript;

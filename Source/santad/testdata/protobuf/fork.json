@@ -10,6 +10,8 @@
   },
   "responsible_id": {},
   "original_parent_pid": 56,
+  "group_id": 111,
+  "session_id": 222,
   "effective_user": {
    "uid": -2,
    "name": "nobody"
@@ -26,6 +28,8 @@
    "gid": -1,
    "name": "nogroup"
   },
+  "is_platform_binary": true,
+  "is_es_client": true,
   "executable": {
    "path": "foo",
    "stat": {
@@ -90,6 +94,8 @@
   },
   "responsible_id": {},
   "original_parent_pid": 56,
+  "group_id": 111,
+  "session_id": 222,
   "effective_user": {
    "uid": -2,
    "name": "nobody"
@@ -106,6 +112,8 @@
    "gid": -1,
    "name": "nogroup"
   },
+  "is_platform_binary": true,
+  "is_es_client": true,
   "executable": {
    "path": "foo_child",
    "stat": {

@@ -1093,6 +1093,7 @@ test_suite(
         ":EndpointSecuritySanitizableStringTest",
         ":EndpointSecuritySerializerBasicStringTest",
         ":EndpointSecuritySerializerEmptyTest",
+        ":EndpointSecuritySerializerProtobufTest",
         ":EndpointSecurityWriterFileTest",
         ":MetricsTest",
         ":SNTApplicationCoreMetricsTest",
