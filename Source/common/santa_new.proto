@@ -69,7 +69,8 @@ message File {
 message FileDescriptor {
   int32 fd = 1;
   uint32 type = 2;
-  uint64 pipe_id = 3;
+  string type_name = 3;
+  uint64 pipe_id = 4;
 }
 
 message ProcessInfo {

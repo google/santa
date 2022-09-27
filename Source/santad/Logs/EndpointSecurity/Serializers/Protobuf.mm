@@ -277,6 +277,23 @@ std::vector<uint8_t> Protobuf::SerializeMessage(const EnrichedExchange &msg) {
   return FinalizeProto(santa_msg);
 }
 
+std::string GetFileDescriptorTypeName(uint32_t fdtype) {
+  switch (fdtype) {
+    case PROX_FDTYPE_ATALK: return "ATALK";
+    case PROX_FDTYPE_VNODE: return "VNODE";
+    case PROX_FDTYPE_SOCKET: return "SOCKET";
+    case PROX_FDTYPE_PSHM: return "PSHM";
+    case PROX_FDTYPE_PSEM: return "PSEM";
+    case PROX_FDTYPE_KQUEUE: return "KQUEUE";
+    case PROX_FDTYPE_PIPE: return "PIPE";
+    case PROX_FDTYPE_FSEVENTS: return "FSEVENTS";
+    case PROX_FDTYPE_NETPOLICY: return "NETPOLICY";
+    case PROX_FDTYPE_CHANNEL: return "CHANNEL";
+    case PROX_FDTYPE_NEXUS: return "NEXUS";
+    default: return "UNKNOWN";
+  }
+}
+
 std::vector<uint8_t> Protobuf::SerializeMessage(const EnrichedExec &msg) {
   Arena arena;
   pb::SantaMessage *santa_msg = CreateDefaultProto(&arena, msg);
@@ -323,6 +340,7 @@ std::vector<uint8_t> Protobuf::SerializeMessage(const EnrichedExec &msg) {
         pb::FileDescriptor *pb_fd = pb_exec->add_fds();
         pb_fd->set_fd(fd->fd);
         pb_fd->set_type(fd->fdtype);
+        pb_fd->set_type_name(GetFileDescriptorTypeName(fd->fdtype));
         if (fd->fdtype == PROX_FDTYPE_PIPE) {
           pb_fd->set_pipe_id(fd->pipe.pipe_id);
         }
