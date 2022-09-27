@@ -19,6 +19,7 @@
 #import <XCTest/XCTest.h>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
+#include <sys/proc_info.h>
 #include <sys/signal.h>
 #include <sys/wait.h>
 #include <time.h>
@@ -167,8 +168,10 @@ void CheckProto(const pb::SantaMessage &santaMsg, std::shared_ptr<EnrichedMessag
     enrichedMsg->GetEnrichedMessage());
 }
 
-void SerializeAndCheck(std::shared_ptr<MockEndpointSecurityAPI> mockESApi, es_message_t *esMsg,
+void SerializeAndCheck(std::shared_ptr<MockEndpointSecurityAPI> &&mockESApiTmp, es_message_t *esMsg,
                        NSString *jsonFileName) {
+  std::shared_ptr<MockEndpointSecurityAPI> mockESApi = std::move(mockESApiTmp);
+  mockESApi->SetExpectationsRetainReleaseMessage(esMsg);
   std::shared_ptr<Serializer> bs = Protobuf::Create(mockESApi);
   std::shared_ptr<EnrichedMessage> enrichedMsg = Enricher().Enrich(Message(mockESApi, esMsg));
 
@@ -179,12 +182,13 @@ void SerializeAndCheck(std::shared_ptr<MockEndpointSecurityAPI> mockESApi, es_me
   XCTAssertTrue(santaMsg.ParseFromString(protoStr));
 
   CheckProto(santaMsg, enrichedMsg, jsonFileName);
+
+  // XCTBubbleMockVerifyAndClearExpectations(mockESApi.get());
+  ::testing::Mock::VerifyAndClearExpectations(mockESApi.get());
 }
 
 void SerializeAndCheck(es_message_t *esMsg, NSString *jsonFileName) {
   auto mockESApi = std::make_shared<MockEndpointSecurityAPI>();
-  mockESApi->SetExpectationsRetainReleaseMessage(esMsg);
-
   SerializeAndCheck(std::move(mockESApi), esMsg, jsonFileName);
 }
 
@@ -321,7 +325,33 @@ void SerializeAndCheck(es_message_t *esMsg, NSString *jsonFileName) {
   esMsg.event.exec.cwd = &fileCwd;
   esMsg.event.exec.script = &fileScript;
 
-  SerializeAndCheck(&esMsg, @"exec.json");
+  auto mockESApi = std::make_shared<MockEndpointSecurityAPI>();
+  EXPECT_CALL(*mockESApi, ExecArgCount).WillOnce(testing::Return(3));
+
+  EXPECT_CALL(*mockESApi, ExecArg)
+    .WillOnce(testing::Return(MakeESStringToken("exec_path")))
+    .WillOnce(testing::Return(MakeESStringToken("-l")))
+    .WillOnce(testing::Return(MakeESStringToken("--foo")));
+  // TODO TODO: Sanitize args
+  // .WillOnce(testing::Return(es_string_token_t{9, "exec|path"}))
+  // .WillOnce(testing::Return(es_string_token_t{5, "-l\n-t"}))
+  // .WillOnce(testing::Return(es_string_token_t{8, "-v\r--foo"}));
+
+  EXPECT_CALL(*mockESApi, ExecEnvCount).WillOnce(testing::Return(2));
+  EXPECT_CALL(*mockESApi, ExecEnv)
+    .WillOnce(testing::Return(MakeESStringToken("ENV_PATH=/path/to/bin:/and/another")))
+    .WillOnce(testing::Return(MakeESStringToken("DEBUG=1")));
+
+  es_fd_t fd1 = {.fd = 1, .fdtype = PROX_FDTYPE_VNODE};
+  es_fd_t fd2 = {.fd = 2, .fdtype = PROX_FDTYPE_SOCKET};
+  es_fd_t fd3 = {.fd = 3, .fdtype = PROX_FDTYPE_PIPE, .pipe = {.pipe_id = 123}};
+  EXPECT_CALL(*mockESApi, ExecFDCount).WillOnce(testing::Return(3));
+  EXPECT_CALL(*mockESApi, ExecFD)
+    .WillOnce(testing::Return(&fd1))
+    .WillOnce(testing::Return(&fd2))
+    .WillOnce(testing::Return(&fd3));
+
+  SerializeAndCheck(std::move(mockESApi), &esMsg, @"exec.json");
 }
 
 - (void)testSerializeMessageExchange {

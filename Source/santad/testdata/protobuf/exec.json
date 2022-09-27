@@ -152,6 +152,30 @@
    }
   }
  },
+ "args": [
+  "exec_path",
+  "-l",
+  "--foo"
+ ],
+ "envs": [
+  "ENV_PATH=/path/to/bin:/and/another",
+  "DEBUG=1"
+ ],
+ "fds": [
+  {
+   "fd": 1,
+   "type": 1
+  },
+  {
+   "fd": 2,
+   "type": 2
+  },
+  {
+   "fd": 3,
+   "type": 6,
+   "pipe_id": "123"
+  }
+ ],
  "decision": "DECISION_ALLOW",
  "reason": "REASON_BINARY",
  "mode": "MODE_LOCKDOWN",

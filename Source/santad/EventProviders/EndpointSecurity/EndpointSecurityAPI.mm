@@ -84,4 +84,20 @@ es_string_token_t EndpointSecurityAPI::ExecArg(const es_event_exec_t *event, uin
   return es_exec_arg(event, index);
 }
 
+uint32_t EndpointSecurityAPI::ExecEnvCount(const es_event_exec_t *event) {
+  return es_exec_env_count(event);
+}
+
+es_string_token_t EndpointSecurityAPI::ExecEnv(const es_event_exec_t *event, uint32_t index) {
+  return es_exec_env(event, index);
+}
+
+uint32_t EndpointSecurityAPI::ExecFDCount(const es_event_exec_t *event) {
+  return es_exec_fd_count(event);
+}
+
+const es_fd_t *EndpointSecurityAPI::ExecFD(const es_event_exec_t *event, uint32_t index) {
+  return es_exec_fd(event, index);
+}
+
 }  // namespace santa::santad::event_providers::endpoint_security

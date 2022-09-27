@@ -18,6 +18,7 @@
 #include <bsm/libbsm.h>
 #include <google/protobuf/arena.h>
 #include <mach/message.h>
+#include <sys/proc_info.h>
 #include <sys/wait.h>
 #include <uuid/uuid.h>
 
@@ -296,6 +297,37 @@ std::vector<uint8_t> Protobuf::SerializeMessage(const EnrichedExec &msg) {
   if (msg.working_dir().has_value()) {
     EncodeFile(pb_exec->mutable_working_directory(), msg.es_msg().event.exec.cwd,
                msg.working_dir().value());
+  }
+
+  uint32_t arg_count = esapi_->ExecArgCount(&msg.es_msg().event.exec);
+  if (arg_count > 0) {
+    for (uint32_t i = 0; i < arg_count; i++) {
+      es_string_token_t tok = esapi_->ExecArg(&msg.es_msg().event.exec, i);
+      pb_exec->add_args(tok.data, tok.length);
+    }
+  }
+
+  uint32_t env_count = esapi_->ExecEnvCount(&msg.es_msg().event.exec);
+  if (env_count > 0) {
+    for (uint32_t i = 0; i < env_count; i++) {
+      es_string_token_t tok = esapi_->ExecEnv(&msg.es_msg().event.exec, i);
+      pb_exec->add_envs(tok.data, tok.length);
+    }
+  }
+
+  if (@available(macOS 11.0, *)) {
+    uint32_t fd_count = esapi_->ExecFDCount(&msg.es_msg().event.exec);
+    if (fd_count > 0) {
+      for (uint32_t i = 0; i < fd_count; i++) {
+        const es_fd_t *fd = esapi_->ExecFD(&msg.es_msg().event.exec, i);
+        pb::FileDescriptor *pb_fd = pb_exec->add_fds();
+        pb_fd->set_fd(fd->fd);
+        pb_fd->set_type(fd->fdtype);
+        if (fd->fdtype == PROX_FDTYPE_PIPE) {
+          pb_fd->set_pipe_id(fd->pipe.pipe_id);
+        }
+      }
+    }
   }
 
   pb_exec->set_decision(GetDecisionEnum(cd.decision));
