@@ -43,6 +43,7 @@ using VerifyPostActionBlock = PostActionBlock (^)(santa_action_t);
 VerifyPostActionBlock verifyPostAction = ^PostActionBlock(santa_action_t wantAction) {
   return ^bool(santa_action_t gotAction) {
     XCTAssertEqual(gotAction, wantAction);
+    return true;
   };
 };
 
