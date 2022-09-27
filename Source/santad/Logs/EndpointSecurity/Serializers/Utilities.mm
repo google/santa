@@ -65,4 +65,4 @@ NSString *OriginalPathForTranslocation(const es_process_t *es_proc) {
   return [origURL path];
 }
 
-}
+}  // namespace santa::santad::logs::endpoint_security::serializers::Utilities

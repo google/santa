@@ -15,9 +15,9 @@
 #ifndef SANTA__SANTAD__LOGS_ENDPOINTSECURITY_SERIALIZERS_UTILITIES_H
 #define SANTA__SANTAD__LOGS_ENDPOINTSECURITY_SERIALIZERS_UTILITIES_H
 
-#include <bsm/libbsm.h>
 #include <EndpointSecurity/EndpointSecurity.h>
 #import <Foundation/Foundation.h>
+#include <bsm/libbsm.h>
 
 namespace santa::santad::logs::endpoint_security::serializers::Utilities {
 

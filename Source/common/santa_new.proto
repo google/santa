@@ -146,9 +146,7 @@ message Execution {
   string quarantine_url = 13;
   string original_path = 14;
 
-  //
-  // TODO TODO: MACHINE ID?
-  //
+  string machine_id = 15;
 }
 
 message Fork {

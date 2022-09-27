@@ -288,7 +288,7 @@ std::vector<uint8_t> Protobuf::SerializeMessage(const EnrichedExec &msg) {
   pb::Execution *pb_exec = santa_msg->mutable_execution();
 
   EncodeProcessInfo(pb_exec->mutable_instigator(), msg.es_msg().process, msg.instigator());
-  EncodeProcessInfo(pb_exec->mutable_target(), msg.es_msg().event.exec.target, msg.target());
+  EncodeProcessInfo(pb_exec->mutable_target(), msg.es_msg().event.exec.target, msg.target(), cd);
   if (msg.script().has_value()) {
     EncodeFile(pb_exec->mutable_script(), msg.es_msg().event.exec.script, msg.script().value());
   }
@@ -310,8 +310,6 @@ std::vector<uint8_t> Protobuf::SerializeMessage(const EnrichedExec &msg) {
     pb_exec->set_explain([cd.decisionExtra UTF8String], [cd.decisionExtra length]);
   }
 
-  // TODO TODO: Thread thru exec file hash...
-
   if (cd.quarantineURL) {
     pb_exec->set_quarantine_url([cd.quarantineURL UTF8String], [cd.quarantineURL length]);
   }
@@ -319,6 +317,11 @@ std::vector<uint8_t> Protobuf::SerializeMessage(const EnrichedExec &msg) {
   NSString *orig_path = Utilities::OriginalPathForTranslocation(msg.es_msg().event.exec.target);
   if (orig_path) {
     pb_exec->set_original_path([orig_path UTF8String], [orig_path length]);
+  }
+
+  if ([[SNTConfigurator configurator] enableMachineIDDecoration]) {
+    pb_exec->set_machine_id([[[SNTConfigurator configurator] machineID] UTF8String],
+                            [[[SNTConfigurator configurator] machineID] length]);
   }
 
   return FinalizeProto(santa_msg);

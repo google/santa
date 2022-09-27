@@ -25,7 +25,9 @@
 
 #include <google/protobuf/util/json_util.h>
 
+#import "Source/common/SNTCachedDecision.h"
 #include "Source/common/SNTCommonEnums.h"
+#import "Source/common/SNTConfigurator.h"
 #include "Source/common/TestUtils.h"
 #include "Source/common/santa_new.pb.h"
 #include "Source/santad/EventProviders/EndpointSecurity/EnrichedTypes.h"
@@ -34,6 +36,7 @@
 #include "Source/santad/EventProviders/EndpointSecurity/MockEndpointSecurityAPI.h"
 #include "Source/santad/Logs/EndpointSecurity/Serializers/Protobuf.h"
 #include "Source/santad/Logs/EndpointSecurity/Serializers/Serializer.h"
+#import "Source/santad/SNTDecisionCache.h"
 
 using google::protobuf::Timestamp;
 using google::protobuf::util::JsonPrintOptions;
@@ -179,9 +182,39 @@ void SerializeAndCheck(es_message_t *esMsg, NSString *jsonFileName) {
 }
 
 @interface ProtobufTest : XCTestCase
+@property id mockConfigurator;
+@property id mockDecisionCache;
+@property SNTCachedDecision *testCachedDecision;
 @end
 
 @implementation ProtobufTest
+
+- (void)setUp {
+  self.mockConfigurator = OCMClassMock([SNTConfigurator class]);
+  OCMStub([self.mockConfigurator configurator]).andReturn(self.mockConfigurator);
+  OCMStub([self.mockConfigurator clientMode]).andReturn(SNTClientModeLockdown);
+  OCMStub([self.mockConfigurator enableMachineIDDecoration]).andReturn(YES);
+  OCMStub([self.mockConfigurator machineID]).andReturn(@"my_machine_id");
+
+  self.testCachedDecision = [[SNTCachedDecision alloc] init];
+  self.testCachedDecision.decision = SNTEventStateAllowBinary;
+  self.testCachedDecision.decisionExtra = @"extra!";
+  self.testCachedDecision.sha256 = @"1234_file_hash";
+  self.testCachedDecision.quarantineURL = @"google.com";
+  self.testCachedDecision.certSHA256 = @"5678_cert_hash";
+
+  self.mockDecisionCache = OCMClassMock([SNTDecisionCache class]);
+  OCMStub([self.mockDecisionCache sharedCache]).andReturn(self.mockDecisionCache);
+  OCMStub([self.mockDecisionCache cachedDecisionForFile:{}])
+    .ignoringNonObjectArgs()
+    .andReturn(self.testCachedDecision);
+}
+
+- (void)tearDown {
+  [self.mockConfigurator stopMocking];
+  [self.mockDecisionCache stopMocking];
+}
+
 
 - (void)testSerializeMessageClose {
   es_file_t procFile = MakeESFile("foo", MakeStat(100));
@@ -259,23 +292,23 @@ void SerializeAndCheck(es_message_t *esMsg, NSString *jsonFileName) {
   }
 }
 
-// - (void)testSerializeMessageExec {
-//   es_file_t procFile = MakeESFile("foo", MakeStat(100));
-//   es_file_t ttyFile = MakeESFile("footty", MakeStat(200));
-//   es_process_t proc = MakeESProcess(&procFile, MakeAuditToken(12, 34), MakeAuditToken(56, 78));
-//   es_file_t procFileTarget = MakeESFile("fooexec", MakeStat(300));
-//   es_process_t procTarget =
-//     MakeESProcess(&procFileTarget, MakeAuditToken(12, 34), MakeAuditToken(56, 78));
-//   es_file_t fileCwd = MakeESFile("cwd", MakeStat(400));
-//   es_file_t fileScript = MakeESFile("script.sh", MakeStat(500));
-//   es_message_t esMsg = MakeESMessage(ES_EVENT_TYPE_NOTIFY_EXIT, &proc);
-//   esMsg.process->tty = &ttyFile;
-//   esMsg.event.exec.target = &procTarget;
-//   esMsg.event.exec.cwd = &fileCwd;
-//   esMsg.event.exec.script = &fileScript;
+- (void)testSerializeMessageExec {
+  es_file_t procFile = MakeESFile("foo", MakeStat(100));
+  es_file_t ttyFile = MakeESFile("footty", MakeStat(200));
+  es_process_t proc = MakeESProcess(&procFile, MakeAuditToken(12, 34), MakeAuditToken(56, 78));
+  es_file_t procFileTarget = MakeESFile("fooexec", MakeStat(300));
+  es_process_t procTarget =
+    MakeESProcess(&procFileTarget, MakeAuditToken(12, 34), MakeAuditToken(56, 78));
+  es_file_t fileCwd = MakeESFile("cwd", MakeStat(400));
+  es_file_t fileScript = MakeESFile("script.sh", MakeStat(500));
+  es_message_t esMsg = MakeESMessage(ES_EVENT_TYPE_NOTIFY_EXEC, &proc);
+  esMsg.process->tty = &ttyFile;
+  esMsg.event.exec.target = &procTarget;
+  esMsg.event.exec.cwd = &fileCwd;
+  esMsg.event.exec.script = &fileScript;
 
-//   SerializeAndCheck(&esMsg, @"exec.json");
-// }
+  SerializeAndCheck(&esMsg, @"exec.json");
+}
 
 - (void)testSerializeMessageExchange {
   es_file_t procFile = MakeESFile("foo", MakeStat(100));

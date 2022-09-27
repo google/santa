@@ -51,8 +51,8 @@ namespace santa::santad::logs::endpoint_security::serializers {
 
 using Utilities::Pid;
 using Utilities::Pidversion;
-using Utilities::RealUser;
 using Utilities::RealGroup;
+using Utilities::RealUser;
 
 static inline SanitizableString FilePath(const es_file_t *file) {
   return SanitizableString(file);
