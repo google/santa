@@ -14,11 +14,12 @@
 
 #include <EndpointSecurity/EndpointSecurity.h>
 #import <Foundation/Foundation.h>
+#include <sys/signal.h>
+#include <sys/wait.h>
 #import <OCMock/OCMock.h>
 #import <XCTest/XCTest.h>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
-#include <sys/stat.h>
 #include <time.h>
 #include <uuid/uuid.h>
 
@@ -36,6 +37,7 @@
 using google::protobuf::Timestamp;
 using google::protobuf::util::JsonPrintOptions;
 using santa::santad::event_providers::endpoint_security::EnrichedClose;
+using santa::santad::event_providers::endpoint_security::EnrichedEventType;
 using santa::santad::event_providers::endpoint_security::EnrichedExchange;
 using santa::santad::event_providers::endpoint_security::EnrichedExec;
 using santa::santad::event_providers::endpoint_security::EnrichedExit;
@@ -50,6 +52,12 @@ using santa::santad::logs::endpoint_security::serializers::Protobuf;
 using santa::santad::logs::endpoint_security::serializers::Serializer;
 
 namespace pb = santa::pb;
+
+namespace santa::santad::logs::endpoint_security::serializers {
+extern void EncodeExitStatus(pb::Exit *pbExit, int exitStatus);
+}
+
+using santa::santad::logs::endpoint_security::serializers::EncodeExitStatus;
 
 JsonPrintOptions DefaultJsonPrintOptions() {
   JsonPrintOptions options;
@@ -76,7 +84,7 @@ NSString *TestJsonPath(NSString *jsonFileName) {
 
 NSString *LoadTestJson(NSString *jsonFileName) {
   NSError *err = nil;
-  NSString *jsonData = [NSString stringWithContentsOfFile:TestJsonPath(@"close.json")
+  NSString *jsonData = [NSString stringWithContentsOfFile:TestJsonPath(jsonFileName)
                                                  encoding:NSUTF8StringEncoding
                                                     error:&err];
 
@@ -101,34 +109,66 @@ void CheckSantaMessage(const pb::SantaMessage &santaMsg, const es_message_t &esM
   XCTAssertTrue(CompareTime(santaMsg.event_time(), esMsg.time));
 }
 
-void CheckProto(const pb::SantaMessage &santaMsg, const EnrichedClose &enrichedClose) {
-  CheckSantaMessage(santaMsg, enrichedClose.es_msg(), enrichedClose.uuid(),
-                    enrichedClose.enrichment_time());
-  NSString *wantData = LoadTestJson(@"close.json");
-
-  JsonPrintOptions options = DefaultJsonPrintOptions();
-  std::string json;
-  google::protobuf::util::MessageToJsonString(santaMsg.close(), &json, options);
-  XCTAssertEqualObjects([NSString stringWithUTF8String:json.c_str()], wantData);
+const google::protobuf::Message &SantaMessageEvent(const pb::SantaMessage &santaMsg) {
+  switch (santaMsg.event_case()) {
+    case santa::pb::SantaMessage::kExecution: return santaMsg.execution();
+    case santa::pb::SantaMessage::kFork: return santaMsg.fork();
+    case santa::pb::SantaMessage::kExit: return santaMsg.exit();
+    case santa::pb::SantaMessage::kClose: return santaMsg.close();
+    case santa::pb::SantaMessage::kRename: return santaMsg.rename();
+    case santa::pb::SantaMessage::kUnlink: return santaMsg.unlink();
+    case santa::pb::SantaMessage::kLink: return santaMsg.link();
+    case santa::pb::SantaMessage::kExchangedata: return santaMsg.exchangedata();
+    case santa::pb::SantaMessage::kDisk: return santaMsg.disk();
+    case santa::pb::SantaMessage::kBundle: return santaMsg.bundle();
+    case santa::pb::SantaMessage::kAllowlist: return santaMsg.allowlist();
+    case santa::pb::SantaMessage::EVENT_NOT_SET:
+      XCTFail(@"Protobuf message SantaMessage did not set an 'event' field");
+      OS_FALLTHROUGH;
+    default:
+      [NSException raise:@"Required protobuf field not set"
+                  format:@"SantaMessage missing required field 'event'"];
+      abort();
+  }
 }
 
-void CheckProto(const pb::SantaMessage &santaMsg, const EnrichedExchange &enrichedExchange) {}
+std::string ConvertMessageToJsonString(const pb::SantaMessage &santaMsg) {
+  JsonPrintOptions options = DefaultJsonPrintOptions();
+  const google::protobuf::Message &message = SantaMessageEvent(santaMsg);
 
-void CheckProto(const pb::SantaMessage &santaMsg, const EnrichedExec &enrichedExec) {}
+  std::string json;
+  google::protobuf::util::MessageToJsonString(message, &json, options);
+  return json;
+}
 
-void CheckProto(const pb::SantaMessage &santaMsg, const EnrichedExit &enrichedExit) {}
+void CheckProto(const pb::SantaMessage &santaMsg, std::shared_ptr<EnrichedMessage> enrichedMsg,
+                NSString *jsonFileName) {
+  return std::visit(
+    [santaMsg, jsonFileName](const EnrichedEventType &enrichedEvent) {
+      CheckSantaMessage(santaMsg, enrichedEvent.es_msg(), enrichedEvent.uuid(),
+                        enrichedEvent.enrichment_time());
+      NSString *wantData = LoadTestJson(jsonFileName);
+      std::string got = ConvertMessageToJsonString(santaMsg);
 
-void CheckProto(const pb::SantaMessage &santaMsg, const EnrichedFork &enrichedFork) {}
+      XCTAssertEqualObjects([NSString stringWithUTF8String:got.c_str()], wantData);
+    },
+    enrichedMsg->GetEnrichedMessage());
+}
 
-void CheckProto(const pb::SantaMessage &santaMsg, const EnrichedLink &enrichedLink) {}
+void SerializeAndCheck(es_message_t *esMsg, NSString *jsonFileName) {
+  auto mockESApi = std::make_shared<MockEndpointSecurityAPI>();
+  mockESApi->SetExpectationsRetainReleaseMessage(esMsg);
 
-void CheckProto(const pb::SantaMessage &santaMsg, const EnrichedRename &enrichedRename) {}
+  std::shared_ptr<Serializer> bs = Protobuf::Create(mockESApi);
+  std::shared_ptr<EnrichedMessage> enrichedMsg = Enricher().Enrich(Message(mockESApi, esMsg));
 
-void CheckProto(const pb::SantaMessage &santaMsg, const EnrichedUnlink &enrichedUnlink) {}
+  std::vector<uint8_t> vec = bs->SerializeMessage(enrichedMsg);
+  std::string protoStr(vec.begin(), vec.end());
 
-void CheckProto(const pb::SantaMessage &santaMsg, std::shared_ptr<EnrichedMessage> enrichedMsg) {
-  return std::visit([santaMsg](const auto &arg) { return CheckProto(santaMsg, arg); },
-                    enrichedMsg->GetEnrichedMessage());
+  pb::SantaMessage santaMsg;
+  XCTAssertTrue(santaMsg.ParseFromString(protoStr));
+
+  CheckProto(santaMsg, enrichedMsg, jsonFileName);
 }
 
 @interface ProtobufTest : XCTestCase
@@ -146,19 +186,71 @@ void CheckProto(const pb::SantaMessage &santaMsg, std::shared_ptr<EnrichedMessag
   esMsg.event.close.modified = true;
   esMsg.event.close.target = &file;
 
-  auto mockESApi = std::make_shared<MockEndpointSecurityAPI>();
-  mockESApi->SetExpectationsRetainReleaseMessage(&esMsg);
+  SerializeAndCheck(&esMsg, @"close.json");
+}
 
-  std::shared_ptr<Serializer> bs = Protobuf::Create(mockESApi);
+- (void)testSerializeMessageExchange {
+  es_file_t procFile = MakeESFile("foo", MakeStat(100));
+  es_file_t ttyFile = MakeESFile("footty", MakeStat(200));
+  es_process_t proc = MakeESProcess(&procFile, MakeAuditToken(12, 34), MakeAuditToken(56, 78));
+  es_file_t file1 = MakeESFile("exchange_file_1", MakeStat(300));
+  es_file_t file2 = MakeESFile("exchange_file_1", MakeStat(400));
+  es_message_t esMsg = MakeESMessage(ES_EVENT_TYPE_NOTIFY_EXCHANGEDATA, &proc);
+  esMsg.process->tty = &ttyFile;
+  esMsg.event.exchangedata.file1 = &file1;
+  esMsg.event.exchangedata.file2 = &file2;
 
-  std::shared_ptr<EnrichedMessage> enrichedClose = Enricher().Enrich(Message(mockESApi, &esMsg));
-  std::vector<uint8_t> vec = bs->SerializeMessage(enrichedClose);
-  std::string protoStr(vec.begin(), vec.end());
+  SerializeAndCheck(&esMsg, @"exchangedata.json");
+}
 
-  pb::SantaMessage santaMsg;
-  XCTAssertTrue(santaMsg.ParseFromString(protoStr));
+- (void)testSerializeMessageExit {
+  es_file_t procFile = MakeESFile("foo", MakeStat(100));
+  es_file_t ttyFile = MakeESFile("footty", MakeStat(200));
+  es_process_t proc = MakeESProcess(&procFile, MakeAuditToken(12, 34), MakeAuditToken(56, 78));
+  es_message_t esMsg = MakeESMessage(ES_EVENT_TYPE_NOTIFY_EXIT, &proc);
+  esMsg.process->tty = &ttyFile;
+  esMsg.event.exit.stat = W_EXITCODE(1, 0);
 
-  CheckProto(santaMsg, enrichedClose);
+  SerializeAndCheck(&esMsg, @"exit.json");
+}
+
+- (void)testEncodeExitStatus {
+  {
+    pb::Exit pbExit;
+    EncodeExitStatus(&pbExit, W_EXITCODE(1, 0));
+    XCTAssertTrue(pbExit.has_exited());
+    XCTAssertEqual(1, pbExit.exited().exit_status());
+  }
+
+  {
+    pb::Exit pbExit;
+    EncodeExitStatus(&pbExit, W_EXITCODE(2, SIGUSR1));
+    XCTAssertTrue(pbExit.has_signaled());
+    XCTAssertEqual(SIGUSR1, pbExit.signaled().signal());
+  }
+
+  {
+    pb::Exit pbExit;
+    EncodeExitStatus(&pbExit, W_STOPCODE(SIGSTOP));
+    XCTAssertTrue(pbExit.has_stopped());
+    XCTAssertEqual(SIGSTOP, pbExit.stopped().signal());
+  }
+}
+
+- (void)testSerializeMessageFork {
+  es_file_t procFile = MakeESFile("foo", MakeStat(100));
+  es_file_t procFileChild = MakeESFile("foo_child", MakeStat(200));
+  es_file_t ttyFile = MakeESFile("footty", MakeStat(300));
+  es_file_t ttyFileChild = MakeESFile("footty", MakeStat(400));
+  es_process_t proc = MakeESProcess(&procFile, MakeAuditToken(12, 34), MakeAuditToken(56, 78));
+  es_process_t procChild =
+    MakeESProcess(&procFileChild, MakeAuditToken(12, 34), MakeAuditToken(56, 78));
+  es_message_t esMsg = MakeESMessage(ES_EVENT_TYPE_NOTIFY_FORK, &proc);
+  esMsg.process->tty = &ttyFile;
+  esMsg.event.fork.child = &procChild;
+  esMsg.event.fork.child->tty = &ttyFileChild;
+
+  SerializeAndCheck(&esMsg, @"fork.json");
 }
 
 @end

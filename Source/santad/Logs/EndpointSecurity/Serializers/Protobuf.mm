@@ -18,10 +18,12 @@
 #include <bsm/libbsm.h>
 #include <google/protobuf/arena.h>
 #include <mach/message.h>
+#include <sys/wait.h>
 #include <uuid/uuid.h>
 
 #include "Source/common/SNTCachedDecision.h"
 #include "Source/common/santa_new.pb.h"
+#include "Source/common/SNTLogging.h"
 #include "Source/santad/EventProviders/EndpointSecurity/EndpointSecurityAPI.h"
 
 using google::protobuf::Arena;
@@ -29,9 +31,11 @@ using google::protobuf::Timestamp;
 
 using santa::santad::event_providers::endpoint_security::EndpointSecurityAPI;
 using santa::santad::event_providers::endpoint_security::EnrichedClose;
+using santa::santad::event_providers::endpoint_security::EnrichedEventType;
 using santa::santad::event_providers::endpoint_security::EnrichedExchange;
 using santa::santad::event_providers::endpoint_security::EnrichedExec;
 using santa::santad::event_providers::endpoint_security::EnrichedExit;
+using santa::santad::event_providers::endpoint_security::EnrichedFile;
 using santa::santad::event_providers::endpoint_security::EnrichedFork;
 using santa::santad::event_providers::endpoint_security::EnrichedLink;
 using santa::santad::event_providers::endpoint_security::EnrichedProcess;
@@ -46,16 +50,6 @@ std::shared_ptr<Protobuf> Protobuf::Create(std::shared_ptr<EndpointSecurityAPI> 
 }
 
 Protobuf::Protobuf(std::shared_ptr<EndpointSecurityAPI> esapi) : esapi_(esapi) {}
-
-static inline pb::SantaMessage *CreateDefaultProto(Arena *arena) {
-  return Arena::CreateMessage<pb::SantaMessage>(arena);
-}
-
-static inline std::vector<uint8_t> FinalizeProto(pb::SantaMessage *santa_msg) {
-  std::vector<uint8_t> vec(santa_msg->ByteSizeLong());
-  santa_msg->SerializeToArray(vec.data(), (int)vec.capacity());
-  return vec;
-}
 
 static inline void EncodeUUID(pb::SantaMessage *santa_msg, const uuid_t &uuid) {
   uuid_string_t uuid_str;
@@ -81,9 +75,9 @@ static inline void EncodeUserInfo(pb::UserInfo *user_info, uid_t uid,
   }
 }
 
-static inline void EncodeGroupInfo(pb::GroupInfo *group_info, gid_t uid,
+static inline void EncodeGroupInfo(pb::GroupInfo *group_info, gid_t gid,
                                    const std::optional<std::shared_ptr<std::string>> &name) {
-  group_info->set_gid(uid);
+  group_info->set_gid(gid);
   if (name.has_value()) {
     group_info->set_name(*name->get());
   }
@@ -94,11 +88,15 @@ static inline void EncodeHash(pb::Hash *hash, NSString *sha256) {
   hash->set_hash([sha256 UTF8String], [sha256 length]);
 }
 
-static inline void EncodeStat(pb::Stat *stat, const struct stat &sb) {
+static inline void EncodeStat(pb::Stat *stat, const struct stat &sb,
+                              const std::optional<std::shared_ptr<std::string>> &username,
+                              const std::optional<std::shared_ptr<std::string>> &groupname) {
   stat->set_dev(sb.st_dev);
   stat->set_mode(sb.st_mode);
   stat->set_nlink(sb.st_nlink);
   stat->set_ino(sb.st_ino);
+  EncodeUserInfo(stat->mutable_user(), sb.st_uid, username);
+  EncodeGroupInfo(stat->mutable_group(), sb.st_gid, groupname);
   stat->set_rdev(sb.st_rdev);
   EncodeTimestamp(stat->mutable_access_time(), sb.st_atimespec);
   EncodeTimestamp(stat->mutable_modification_time(), sb.st_mtimespec);
@@ -111,10 +109,11 @@ static inline void EncodeStat(pb::Stat *stat, const struct stat &sb) {
   stat->set_gen(sb.st_gen);
 }
 
-static inline void EncodeFile(pb::File *file, const es_file_t *es_file, NSString *sha256 = nil) {
+static inline void EncodeFile(pb::File *file, const es_file_t *es_file,
+                              const EnrichedFile &enriched_file, NSString *sha256 = nil) {
   file->set_path(es_file->path.data, es_file->path.length);
   file->set_truncated(es_file->path_truncated);
-  EncodeStat(file->mutable_stat(), es_file->stat);
+  EncodeStat(file->mutable_stat(), es_file->stat, enriched_file.user(), enriched_file.group());
   if (sha256) {
     EncodeHash(file->mutable_hash(), sha256);
   }
@@ -157,15 +156,46 @@ static inline void EncodeProcessInfo(pb::ProcessInfo *proc_info, const es_proces
 
   proc_info->set_cs_flags(es_proc->codesigning_flags);
 
-  EncodeFile(proc_info->mutable_executable(), es_proc->executable, cd.sha256);
+  EncodeFile(proc_info->mutable_executable(), es_proc->executable, enriched_proc.executable(),
+             cd.sha256);
   if (es_proc->tty) {
-    EncodeFile(proc_info->mutable_tty(), es_proc->tty, nil);
+    // Note: TTY's are not currently enriched. Create an empty enriched file for encoding.
+    EnrichedFile enriched_file(std::nullopt, std::nullopt, std::nullopt);
+    EncodeFile(proc_info->mutable_tty(), es_proc->tty, enriched_file, nil);
   }
+}
+
+void EncodeExitStatus(pb::Exit *pbExit, int exitStatus) {
+  if (WIFEXITED(exitStatus)) {
+    pbExit->mutable_exited()->set_exit_status(WEXITSTATUS(exitStatus));
+  } else if (WIFSIGNALED(exitStatus)) {
+    pbExit->mutable_signaled()->set_signal(WTERMSIG(exitStatus));
+  } else if (WIFSTOPPED(exitStatus)) {
+    pbExit->mutable_stopped()->set_signal(WSTOPSIG(exitStatus));
+  } else {
+    LOGE(@"Unknown exit status encountered: %d", exitStatus);
+  }
+}
+
+static inline pb::SantaMessage *CreateDefaultProto(Arena *arena, const EnrichedEventType &msg) {
+  pb::SantaMessage *santa_msg = Arena::CreateMessage<pb::SantaMessage>(arena);
+
+  EncodeUUID(santa_msg, msg.uuid());
+  EncodeTimestamp(santa_msg->mutable_event_time(), msg.es_msg().time);
+  EncodeTimestamp(santa_msg->mutable_processed_time(), msg.enrichment_time());
+
+  return santa_msg;
+}
+
+static inline std::vector<uint8_t> FinalizeProto(pb::SantaMessage *santa_msg) {
+  std::vector<uint8_t> vec(santa_msg->ByteSizeLong());
+  santa_msg->SerializeToArray(vec.data(), (int)vec.capacity());
+  return vec;
 }
 
 std::vector<uint8_t> Protobuf::SerializeMessage(const EnrichedClose &msg) {
   Arena arena;
-  pb::SantaMessage *santa_msg = CreateDefaultProto(&arena);
+  pb::SantaMessage *santa_msg = CreateDefaultProto(&arena, msg);
 
   EncodeUUID(santa_msg, msg.uuid());
   EncodeTimestamp(santa_msg->mutable_event_time(), msg.es_msg().time);
@@ -174,14 +204,23 @@ std::vector<uint8_t> Protobuf::SerializeMessage(const EnrichedClose &msg) {
   pb::Close *close = santa_msg->mutable_close();
 
   EncodeProcessInfo(close->mutable_instigator(), msg.es_msg().process, msg.instigator());
-  EncodeFile(close->mutable_target(), msg.es_msg().event.close.target);
+  EncodeFile(close->mutable_target(), msg.es_msg().event.close.target, msg.target());
   close->set_modified(msg.es_msg().event.close.modified);
 
   return FinalizeProto(santa_msg);
 }
 
 std::vector<uint8_t> Protobuf::SerializeMessage(const EnrichedExchange &msg) {
-  return {};
+  Arena arena;
+  pb::SantaMessage *santa_msg = CreateDefaultProto(&arena, msg);
+
+  pb::Exchangedata *exchangedata = santa_msg->mutable_exchangedata();
+
+  EncodeProcessInfo(exchangedata->mutable_instigator(), msg.es_msg().process, msg.instigator());
+  EncodeFile(exchangedata->mutable_file1(), msg.es_msg().event.exchangedata.file1, msg.file1());
+  EncodeFile(exchangedata->mutable_file2(), msg.es_msg().event.exchangedata.file2, msg.file2());
+
+  return FinalizeProto(santa_msg);
 }
 
 std::vector<uint8_t> Protobuf::SerializeMessage(const EnrichedExec &msg) {
@@ -189,11 +228,27 @@ std::vector<uint8_t> Protobuf::SerializeMessage(const EnrichedExec &msg) {
 }
 
 std::vector<uint8_t> Protobuf::SerializeMessage(const EnrichedExit &msg) {
-  return {};
+  Arena arena;
+  pb::SantaMessage *santa_msg = CreateDefaultProto(&arena, msg);
+
+  pb::Exit *pbExit = santa_msg->mutable_exit();
+
+  EncodeProcessInfo(pbExit->mutable_instigator(), msg.es_msg().process, msg.instigator());
+  EncodeExitStatus(pbExit, msg.es_msg().event.exit.stat);
+
+  return FinalizeProto(santa_msg);
 }
 
 std::vector<uint8_t> Protobuf::SerializeMessage(const EnrichedFork &msg) {
-  return {};
+  Arena arena;
+  pb::SantaMessage *santa_msg = CreateDefaultProto(&arena, msg);
+
+  pb::Fork *pbFork = santa_msg->mutable_fork();
+
+  EncodeProcessInfo(pbFork->mutable_instigator(), msg.es_msg().process, msg.instigator());
+  EncodeProcessInfo(pbFork->mutable_child(), msg.es_msg().event.fork.child, msg.child());
+
+  return FinalizeProto(santa_msg);
 }
 
 std::vector<uint8_t> Protobuf::SerializeMessage(const EnrichedLink &msg) {

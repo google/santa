@@ -46,6 +46,13 @@ class EnrichedFile {
 
   EnrichedFile(const EnrichedFile &other) = delete;
 
+  const std::optional<std::shared_ptr<std::string>> &user() const {
+    return user_;
+  }
+  const std::optional<std::shared_ptr<std::string>> &group() const {
+    return group_;
+  }
+
  private:
   std::optional<std::shared_ptr<std::string>> user_;
   std::optional<std::shared_ptr<std::string>> group_;
@@ -86,6 +93,7 @@ class EnrichedProcess {
   const std::optional<std::shared_ptr<std::string>> &real_group() const {
     return real_group_;
   }
+  const EnrichedFile &executable() const { return executable_; }
 
  private:
   std::optional<std::shared_ptr<std::string>> effective_user_;
@@ -139,6 +147,8 @@ class EnrichedClose : public EnrichedEventType {
 
   EnrichedClose(const EnrichedClose &other) = delete;
 
+  const EnrichedFile &target() const { return target_; }
+
  private:
   EnrichedFile target_;
 };
@@ -157,6 +167,9 @@ class EnrichedExchange : public EnrichedEventType {
         file2_(std::move(other.file2_)) {}
 
   EnrichedExchange(const EnrichedExchange &other) = delete;
+
+  const EnrichedFile &file1() const { return file1_; }
+  const EnrichedFile &file2() const { return file2_; }
 
  private:
   EnrichedFile file1_;
@@ -200,18 +213,19 @@ class EnrichedExit : public EnrichedEventType {
 class EnrichedFork : public EnrichedEventType {
  public:
   EnrichedFork(Message &&es_msg, EnrichedProcess &&instigator,
-               EnrichedProcess &&target)
+               EnrichedProcess &&child)
       : EnrichedEventType(std::move(es_msg), std::move(instigator)),
-        target_(std::move(target)) {}
+        child_(std::move(child)) {}
 
   EnrichedFork(EnrichedFork &&other)
-      : EnrichedEventType(std::move(other)),
-        target_(std::move(other.target_)) {}
+      : EnrichedEventType(std::move(other)), child_(std::move(other.child_)) {}
 
   EnrichedFork(const EnrichedFork &other) = delete;
 
+  const EnrichedProcess &child() const { return child_; }
+
  private:
-  EnrichedProcess target_;
+  EnrichedProcess child_;
 };
 
 class EnrichedLink : public EnrichedEventType {

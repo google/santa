@@ -382,6 +382,7 @@ objc_library(
         ":EndpointSecurityAPI",
         ":EndpointSecuritySerializer",
         "//Source/common:santa_cc_proto_library_wrapper",
+        "//Source/common:SNTLogging",
     ],
 )
 

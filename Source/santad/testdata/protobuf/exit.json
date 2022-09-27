@@ -79,32 +79,7 @@
    }
   }
  },
- "target": {
-  "path": "close_file",
-  "stat": {
-   "dev": 301,
-   "mode": 302,
-   "nlink": 303,
-   "ino": "304",
-   "user": {
-    "uid": -2,
-    "name": "nobody"
-   },
-   "group": {
-    "gid": -1,
-    "name": "nogroup"
-   },
-   "rdev": 305,
-   "access_time": "1970-01-01T00:06:40.000000500Z",
-   "modification_time": "1970-01-01T00:06:41.000000321Z",
-   "change_time": "1970-01-01T00:06:42.000000502Z",
-   "birth_time": "1970-01-01T00:06:43.000000503Z",
-   "size": "306",
-   "blocks": "307",
-   "blksize": 308,
-   "flags": 309,
-   "gen": 310
-  }
- },
- "modified": true
+ "exited": {
+  "exit_status": 1
+ }
 }
