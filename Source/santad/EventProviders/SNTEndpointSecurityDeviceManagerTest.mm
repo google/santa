@@ -28,12 +28,22 @@
 #import "Source/common/SNTConfigurator.h"
 #import "Source/common/SNTDeviceEvent.h"
 #include "Source/common/TestUtils.h"
+#include "Source/santad/EventProviders/AuthResultCache.h"
 #import "Source/santad/EventProviders/DiskArbitrationTestUtil.h"
 #include "Source/santad/EventProviders/EndpointSecurity/Message.h"
 #include "Source/santad/EventProviders/EndpointSecurity/MockEndpointSecurityAPI.h"
 #import "Source/santad/EventProviders/SNTEndpointSecurityDeviceManager.h"
 
+using santa::santad::event_providers::AuthResultCache;
+using santa::santad::event_providers::FlushCacheMode;
 using santa::santad::event_providers::endpoint_security::Message;
+
+class MockAuthResultCache : public AuthResultCache {
+ public:
+  using AuthResultCache::AuthResultCache;
+
+  MOCK_METHOD(void, FlushCache, (FlushCacheMode mode));
+};
 
 @interface SNTEndpointSecurityDeviceManager (Testing)
 - (void)logDiskAppeared:(NSDictionary *)props;
@@ -286,6 +296,31 @@ using santa::santad::event_providers::endpoint_security::Message;
            }];
 
   XCTAssertEqual(self.mockDA.wasRemounted, NO);
+}
+
+- (void)testNotifyUnmountFlushesCache {
+  es_file_t file = MakeESFile("foo");
+  es_process_t proc = MakeESProcess(&file);
+  es_message_t esMsg = MakeESMessage(ES_EVENT_TYPE_NOTIFY_UNMOUNT, &proc);
+
+  auto mockESApi = std::make_shared<MockEndpointSecurityAPI>();
+  mockESApi->SetExpectationsESNewClient();
+  mockESApi->SetExpectationsRetainReleaseMessage(&esMsg);
+
+  auto mockAuthCache = std::make_shared<MockAuthResultCache>(nullptr);
+  EXPECT_CALL(*mockAuthCache, FlushCache);
+
+  SNTEndpointSecurityDeviceManager *deviceManager =
+    [[SNTEndpointSecurityDeviceManager alloc] initWithESAPI:mockESApi
+                                                     logger:nullptr
+                                            authResultCache:mockAuthCache];
+
+  deviceManager.blockUSBMount = YES;
+
+  [deviceManager handleMessage:Message(mockESApi, &esMsg)];
+
+  XCTBubbleMockVerifyAndClearExpectations(mockESApi.get());
+  XCTBubbleMockVerifyAndClearExpectations(mockAuthCache.get());
 }
 
 - (void)testEnable {

@@ -140,6 +140,7 @@ NS_ASSUME_NONNULL_BEGIN
   self = [super initWithESAPI:std::move(esApi)];
   if (self) {
     _logger = logger;
+    _authResultCache = authResultCache;
     _blockUSBMount = false;
 
     _diskQueue = dispatch_queue_create("com.google.santa.daemon.disk_queue", DISPATCH_QUEUE_SERIAL);
