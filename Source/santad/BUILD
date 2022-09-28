@@ -473,8 +473,8 @@ objc_library(
         "//Source/common:SNTLogging",
         "//Source/common:SNTMetricSet",
         "//Source/common:SNTRule",
-        "//Source/common:SNTStrengthify",
         "//Source/common:SNTStoredEvent",
+        "//Source/common:SNTStrengthify",
         "//Source/common:SNTXPCControlInterface",
         "//Source/common:SNTXPCNotifierInterface",
         "//Source/common:SNTXPCSyncServiceInterface",
@@ -993,6 +993,7 @@ santa_unit_test(
         "EndpointSecurity",
     ],
     deps = [
+        ":AuthResultCache",
         ":DiskArbitrationTestLib",
         ":EndpointSecurityClient",
         ":EndpointSecurityMessage",
