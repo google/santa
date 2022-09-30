@@ -66,6 +66,10 @@ static inline void EncodeTimestamp(Timestamp *timestamp, struct timespec ts) {
   timestamp->set_nanos((int32_t)ts.tv_nsec);
 }
 
+static inline void EncodeTimestamp(Timestamp *timestamp, struct timeval tv) {
+  EncodeTimestamp(timestamp, (struct timespec){tv.tv_sec, tv.tv_usec * 1000});
+}
+
 static inline void EncodeProcessID(pb::ProcessID *proc_id, const audit_token_t &tok) {
   proc_id->set_pid(audit_token_to_pid(tok));
   proc_id->set_pidversion(audit_token_to_pidversion(tok));
@@ -169,6 +173,10 @@ static inline void EncodeProcessInfo(pb::ProcessInfo *pb_proc_info, uint32_t mes
     // Note: TTY's are not currently enriched. Create an empty enriched file for encoding.
     EnrichedFile enriched_file(std::nullopt, std::nullopt, std::nullopt);
     EncodeFile(pb_proc_info->mutable_tty(), es_proc->tty, enriched_file, nil);
+  }
+
+  if (message_version >= 3) {
+    EncodeTimestamp(pb_proc_info->mutable_start_time(), es_proc->start_time);
   }
 }
 

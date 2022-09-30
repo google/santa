@@ -81,7 +81,8 @@
     "flags": 209,
     "gen": 210
    }
-  }
+  },
+  "start_time": "1970-01-01T00:00:00Z"
  },
  "target": {
   "id": {
@@ -150,7 +151,8 @@
     "type": "HASH_ALGO_SHA256",
     "hash": "1234_file_hash"
    }
-  }
+  },
+  "start_time": "1970-01-01T00:00:00Z"
  },
  "script": {
   "path": "script.sh",

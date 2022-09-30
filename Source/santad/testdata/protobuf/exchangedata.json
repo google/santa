@@ -81,7 +81,8 @@
     "flags": 209,
     "gen": 210
    }
-  }
+  },
+  "start_time": "1970-01-01T00:00:00Z"
  },
  "file1": {
   "path": "exchange_file_1",
