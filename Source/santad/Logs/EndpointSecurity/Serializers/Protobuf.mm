@@ -14,6 +14,7 @@
 
 #include "Source/santad/Logs/EndpointSecurity/Serializers/Protobuf.h"
 
+#include <EndpointSecurity/EndpointSecurity.h>
 #include <Kernel/kern/cs_blobs.h>
 #include <bsm/libbsm.h>
 #include <google/protobuf/arena.h>
@@ -201,6 +202,12 @@ void EncodeCertificateInfo(pb::CertificateInfo *pb_cert_info, NSString *cert_has
   if (common_name) {
     pb_cert_info->set_common_name([common_name UTF8String], [common_name length]);
   }
+}
+
+void EncodeDirAndFile(std::string *buf, const es_file_t *dir, const es_string_token_t file) {
+  buf->append(dir->path.data);
+  buf->append("/");
+  buf->append(file.data);
 }
 
 pb::Execution::Decision GetDecisionEnum(SNTEventState event_state) {
@@ -418,7 +425,17 @@ std::vector<uint8_t> Protobuf::SerializeMessage(const EnrichedFork &msg) {
 }
 
 std::vector<uint8_t> Protobuf::SerializeMessage(const EnrichedLink &msg) {
-  return {};
+  Arena arena;
+  pb::SantaMessage *santa_msg = CreateDefaultProto(&arena, msg);
+
+  pb::Link *pb_link = santa_msg->mutable_link();
+  EncodeProcessInfo(pb_link->mutable_instigator(), msg.es_msg().version, msg.es_msg().process,
+                    msg.instigator());
+  EncodeFile(pb_link->mutable_source(), msg.es_msg().event.link.source, msg.source());
+  EncodeDirAndFile(pb_link->mutable_target(), msg.es_msg().event.link.target_dir,
+                   msg.es_msg().event.link.target_filename);
+
+  return FinalizeProto(santa_msg);
 }
 
 std::vector<uint8_t> Protobuf::SerializeMessage(const EnrichedRename &msg) {

@@ -249,6 +249,8 @@ class EnrichedLink : public EnrichedEventType {
 
   EnrichedLink(const EnrichedLink &other) = delete;
 
+  const EnrichedFile &source() const { return source_; }
+
  private:
   EnrichedFile source_;
   EnrichedFile target_dir_;

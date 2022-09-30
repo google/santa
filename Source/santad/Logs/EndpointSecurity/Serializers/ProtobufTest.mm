@@ -243,6 +243,20 @@ void SerializeAndCheck(es_message_t *esMsg, NSString *jsonFileName) {
   SerializeAndCheck(&esMsg, @"close.json");
 }
 
+- (void)testSerializeMessageExchange {
+  es_file_t procFile = MakeESFile("foo", MakeStat(100));
+  es_file_t ttyFile = MakeESFile("footty", MakeStat(200));
+  es_process_t proc = MakeESProcess(&procFile, MakeAuditToken(12, 34), MakeAuditToken(56, 78));
+  es_file_t file1 = MakeESFile("exchange_file_1", MakeStat(300));
+  es_file_t file2 = MakeESFile("exchange_file_1", MakeStat(400));
+  es_message_t esMsg = MakeESMessage(ES_EVENT_TYPE_NOTIFY_EXCHANGEDATA, &proc);
+  esMsg.process->tty = &ttyFile;
+  esMsg.event.exchangedata.file1 = &file1;
+  esMsg.event.exchangedata.file2 = &file2;
+
+  SerializeAndCheck(&esMsg, @"exchangedata.json");
+}
+
 - (void)testGetDecisionEnum {
   std::map<SNTEventState, pb::Execution::Decision> stateToDecision = {
     {SNTEventStateUnknown, pb::Execution::DECISION_UNKNOWN},
@@ -379,20 +393,6 @@ void SerializeAndCheck(es_message_t *esMsg, NSString *jsonFileName) {
   SerializeAndCheck(std::move(mockESApi), &esMsg, @"exec.json");
 }
 
-- (void)testSerializeMessageExchange {
-  es_file_t procFile = MakeESFile("foo", MakeStat(100));
-  es_file_t ttyFile = MakeESFile("footty", MakeStat(200));
-  es_process_t proc = MakeESProcess(&procFile, MakeAuditToken(12, 34), MakeAuditToken(56, 78));
-  es_file_t file1 = MakeESFile("exchange_file_1", MakeStat(300));
-  es_file_t file2 = MakeESFile("exchange_file_1", MakeStat(400));
-  es_message_t esMsg = MakeESMessage(ES_EVENT_TYPE_NOTIFY_EXCHANGEDATA, &proc);
-  esMsg.process->tty = &ttyFile;
-  esMsg.event.exchangedata.file1 = &file1;
-  esMsg.event.exchangedata.file2 = &file2;
-
-  SerializeAndCheck(&esMsg, @"exchangedata.json");
-}
-
 - (void)testSerializeMessageExit {
   es_file_t procFile = MakeESFile("foo", MakeStat(100));
   es_file_t ttyFile = MakeESFile("footty", MakeStat(200));
@@ -441,6 +441,22 @@ void SerializeAndCheck(es_message_t *esMsg, NSString *jsonFileName) {
   esMsg.event.fork.child->tty = &ttyFileChild;
 
   SerializeAndCheck(&esMsg, @"fork.json");
+}
+
+- (void)testSerializeMessageLink {
+  es_file_t procFile = MakeESFile("foo", MakeStat(100));
+  es_file_t ttyFile = MakeESFile("footty", MakeStat(200));
+  es_process_t proc = MakeESProcess(&procFile, MakeAuditToken(12, 34), MakeAuditToken(56, 78));
+  es_message_t esMsg = MakeESMessage(ES_EVENT_TYPE_NOTIFY_LINK, &proc);
+  es_file_t fileSource = MakeESFile("source", MakeStat(300));
+  es_file_t fileTargetDir = MakeESFile("target_dir");
+  es_string_token_t targetTok = MakeESStringToken("target_file");
+  esMsg.process->tty = &ttyFile;
+  esMsg.event.link.source = &fileSource;
+  esMsg.event.link.target_dir = &fileTargetDir;
+  esMsg.event.link.target_filename = targetTok;
+
+  SerializeAndCheck(&esMsg, @"link.json");
 }
 
 @end
