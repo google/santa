@@ -65,10 +65,12 @@ extern void EncodeExitStatus(pb::Exit *pbExit, int exitStatus);
 extern pb::Execution::Decision GetDecisionEnum(SNTEventState event_state);
 extern pb::Execution::Reason GetReasonEnum(SNTEventState event_state);
 extern pb::Execution::Mode GetModeEnum(SNTClientMode mode);
+extern std::string_view GetFileDescriptorTypeName(uint32_t fdtype);
 }  // namespace santa::santad::logs::endpoint_security::serializers
 
 using santa::santad::logs::endpoint_security::serializers::EncodeExitStatus;
 using santa::santad::logs::endpoint_security::serializers::GetDecisionEnum;
+using santa::santad::logs::endpoint_security::serializers::GetFileDescriptorTypeName;
 using santa::santad::logs::endpoint_security::serializers::GetModeEnum;
 using santa::santad::logs::endpoint_security::serializers::GetReasonEnum;
 
@@ -172,19 +174,21 @@ void SerializeAndCheck(std::shared_ptr<MockEndpointSecurityAPI> &&mockESApiTmp, 
                        NSString *jsonFileName) {
   std::shared_ptr<MockEndpointSecurityAPI> mockESApi = std::move(mockESApiTmp);
   mockESApi->SetExpectationsRetainReleaseMessage(esMsg);
-  std::shared_ptr<Serializer> bs = Protobuf::Create(mockESApi);
-  std::shared_ptr<EnrichedMessage> enrichedMsg = Enricher().Enrich(Message(mockESApi, esMsg));
 
-  std::vector<uint8_t> vec = bs->SerializeMessage(enrichedMsg);
-  std::string protoStr(vec.begin(), vec.end());
+  {
+    std::shared_ptr<Serializer> bs = Protobuf::Create(mockESApi);
+    std::shared_ptr<EnrichedMessage> enrichedMsg = Enricher().Enrich(Message(mockESApi, esMsg));
 
-  pb::SantaMessage santaMsg;
-  XCTAssertTrue(santaMsg.ParseFromString(protoStr));
+    std::vector<uint8_t> vec = bs->SerializeMessage(enrichedMsg);
+    std::string protoStr(vec.begin(), vec.end());
 
-  CheckProto(santaMsg, enrichedMsg, jsonFileName);
+    pb::SantaMessage santaMsg;
+    XCTAssertTrue(santaMsg.ParseFromString(protoStr));
 
-  // XCTBubbleMockVerifyAndClearExpectations(mockESApi.get());
-  ::testing::Mock::VerifyAndClearExpectations(mockESApi.get());
+    CheckProto(santaMsg, enrichedMsg, jsonFileName);
+  }
+
+  XCTBubbleMockVerifyAndClearExpectations(mockESApi.get());
 }
 
 void SerializeAndCheck(es_message_t *esMsg, NSString *jsonFileName) {
@@ -290,15 +294,36 @@ void SerializeAndCheck(es_message_t *esMsg, NSString *jsonFileName) {
 }
 
 - (void)testGetModeEnum {
-  std::map<SNTClientMode, pb::Execution::Mode> stateToMode = {
+  std::map<SNTClientMode, pb::Execution::Mode> clientModeToExecMode = {
     {SNTClientModeUnknown, pb::Execution::MODE_UNKNOWN},
     {SNTClientModeMonitor, pb::Execution::MODE_MONITOR},
     {SNTClientModeLockdown, pb::Execution::MODE_LOCKDOWN},
     {(SNTClientMode)123, pb::Execution::MODE_UNKNOWN},
   };
 
-  for (const auto &kv : stateToMode) {
+  for (const auto &kv : clientModeToExecMode) {
     XCTAssertEqual(GetModeEnum(kv.first), kv.second, @"Bad mode for state: %ld", kv.first);
+  }
+}
+
+- (void)testGetFileDescriptorTypeName {
+  std::map<uint32_t, std::string_view> fdtypeToName = {
+    {PROX_FDTYPE_ATALK, "ATALK"},
+    {PROX_FDTYPE_VNODE, "VNODE"},
+    {PROX_FDTYPE_SOCKET, "SOCKET"},
+    {PROX_FDTYPE_PSHM, "PSHM"},
+    {PROX_FDTYPE_PSEM, "PSEM"},
+    {PROX_FDTYPE_KQUEUE, "KQUEUE"},
+    {PROX_FDTYPE_PIPE, "PIPE"},
+    {PROX_FDTYPE_FSEVENTS, "FSEVENTS"},
+    {PROX_FDTYPE_NETPOLICY, "NETPOLICY"},
+    {10 /* PROX_FDTYPE_CHANNEL */, "CHANNEL"},
+    {11 /* PROX_FDTYPE_NEXUS */, "NEXUS"},
+  };
+
+  for (const auto &kv : fdtypeToName) {
+    XCTAssertEqual(GetFileDescriptorTypeName(kv.first), kv.second,
+                   @"Bad fd type name for fdtype: %u", kv.first);
   }
 }
 

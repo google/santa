@@ -123,12 +123,15 @@ static inline void EncodeFile(pb::File *pb_file, const es_file_t *es_file,
   }
 }
 
-static inline void EncodeProcessInfo(pb::ProcessInfo *pb_proc_info, const es_process_t *es_proc,
+static inline void EncodeProcessInfo(pb::ProcessInfo *pb_proc_info, uint32_t message_version,
+                                     const es_process_t *es_proc,
                                      const EnrichedProcess &enriched_proc,
                                      SNTCachedDecision *cd = nil) {
   EncodeProcessID(pb_proc_info->mutable_id(), es_proc->audit_token);
   EncodeProcessID(pb_proc_info->mutable_parent_id(), es_proc->parent_audit_token);
-  EncodeProcessID(pb_proc_info->mutable_responsible_id(), es_proc->responsible_audit_token);
+  if (message_version >= 4) {
+    EncodeProcessID(pb_proc_info->mutable_responsible_id(), es_proc->responsible_audit_token);
+  }
 
   pb_proc_info->set_original_parent_pid(es_proc->original_ppid);
   pb_proc_info->set_group_id(es_proc->group_id);
@@ -162,7 +165,7 @@ static inline void EncodeProcessInfo(pb::ProcessInfo *pb_proc_info, const es_pro
 
   EncodeFile(pb_proc_info->mutable_executable(), es_proc->executable, enriched_proc.executable(),
              cd.sha256);
-  if (es_proc->tty) {
+  if (message_version >= 2 && es_proc->tty) {
     // Note: TTY's are not currently enriched. Create an empty enriched file for encoding.
     EnrichedFile enriched_file(std::nullopt, std::nullopt, std::nullopt);
     EncodeFile(pb_proc_info->mutable_tty(), es_proc->tty, enriched_file, nil);
@@ -231,6 +234,25 @@ pb::Execution::Mode GetModeEnum(SNTClientMode mode) {
   }
 }
 
+std::string_view GetFileDescriptorTypeName(uint32_t fdtype) {
+  switch (fdtype) {
+    case PROX_FDTYPE_ATALK: return "ATALK";
+    case PROX_FDTYPE_VNODE: return "VNODE";
+    case PROX_FDTYPE_SOCKET: return "SOCKET";
+    case PROX_FDTYPE_PSHM: return "PSHM";
+    case PROX_FDTYPE_PSEM: return "PSEM";
+    case PROX_FDTYPE_KQUEUE: return "KQUEUE";
+    case PROX_FDTYPE_PIPE: return "PIPE";
+    case PROX_FDTYPE_FSEVENTS: return "FSEVENTS";
+    case PROX_FDTYPE_NETPOLICY: return "NETPOLICY";
+    // Note: CHANNEL and NEXUS types weren't exposed until Xcode v13 SDK.
+    // Not using the macros to be able to build on older SDK versions.
+    case 10 /* PROX_FDTYPE_CHANNEL */: return "CHANNEL";
+    case 11 /* PROX_FDTYPE_NEXUS */: return "NEXUS";
+    default: return "UNKNOWN";
+  }
+}
+
 static inline pb::SantaMessage *CreateDefaultProto(Arena *arena, const EnrichedEventType &msg) {
   pb::SantaMessage *santa_msg = Arena::CreateMessage<pb::SantaMessage>(arena);
 
@@ -257,7 +279,8 @@ std::vector<uint8_t> Protobuf::SerializeMessage(const EnrichedClose &msg) {
 
   pb::Close *pb_close = santa_msg->mutable_close();
 
-  EncodeProcessInfo(pb_close->mutable_instigator(), msg.es_msg().process, msg.instigator());
+  EncodeProcessInfo(pb_close->mutable_instigator(), msg.es_msg().version, msg.es_msg().process,
+                    msg.instigator());
   EncodeFile(pb_close->mutable_target(), msg.es_msg().event.close.target, msg.target());
   pb_close->set_modified(msg.es_msg().event.close.modified);
 
@@ -270,28 +293,12 @@ std::vector<uint8_t> Protobuf::SerializeMessage(const EnrichedExchange &msg) {
 
   pb::Exchangedata *pb_exchangedata = santa_msg->mutable_exchangedata();
 
-  EncodeProcessInfo(pb_exchangedata->mutable_instigator(), msg.es_msg().process, msg.instigator());
+  EncodeProcessInfo(pb_exchangedata->mutable_instigator(), msg.es_msg().version,
+                    msg.es_msg().process, msg.instigator());
   EncodeFile(pb_exchangedata->mutable_file1(), msg.es_msg().event.exchangedata.file1, msg.file1());
   EncodeFile(pb_exchangedata->mutable_file2(), msg.es_msg().event.exchangedata.file2, msg.file2());
 
   return FinalizeProto(santa_msg);
-}
-
-std::string GetFileDescriptorTypeName(uint32_t fdtype) {
-  switch (fdtype) {
-    case PROX_FDTYPE_ATALK: return "ATALK";
-    case PROX_FDTYPE_VNODE: return "VNODE";
-    case PROX_FDTYPE_SOCKET: return "SOCKET";
-    case PROX_FDTYPE_PSHM: return "PSHM";
-    case PROX_FDTYPE_PSEM: return "PSEM";
-    case PROX_FDTYPE_KQUEUE: return "KQUEUE";
-    case PROX_FDTYPE_PIPE: return "PIPE";
-    case PROX_FDTYPE_FSEVENTS: return "FSEVENTS";
-    case PROX_FDTYPE_NETPOLICY: return "NETPOLICY";
-    case PROX_FDTYPE_CHANNEL: return "CHANNEL";
-    case PROX_FDTYPE_NEXUS: return "NEXUS";
-    default: return "UNKNOWN";
-  }
 }
 
 std::vector<uint8_t> Protobuf::SerializeMessage(const EnrichedExec &msg) {
@@ -305,45 +312,43 @@ std::vector<uint8_t> Protobuf::SerializeMessage(const EnrichedExec &msg) {
 
   pb::Execution *pb_exec = santa_msg->mutable_execution();
 
-  EncodeProcessInfo(pb_exec->mutable_instigator(), msg.es_msg().process, msg.instigator());
-  EncodeProcessInfo(pb_exec->mutable_target(), msg.es_msg().event.exec.target, msg.target(), cd);
-  if (msg.script().has_value()) {
+  EncodeProcessInfo(pb_exec->mutable_instigator(), msg.es_msg().version, msg.es_msg().process,
+                    msg.instigator());
+  EncodeProcessInfo(pb_exec->mutable_target(), msg.es_msg().version, msg.es_msg().event.exec.target,
+                    msg.target(), cd);
+
+  if (msg.es_msg().version >= 2 && msg.script().has_value()) {
     EncodeFile(pb_exec->mutable_script(), msg.es_msg().event.exec.script, msg.script().value());
   }
 
-  if (msg.working_dir().has_value()) {
+  if (msg.es_msg().version >= 3 && msg.working_dir().has_value()) {
     EncodeFile(pb_exec->mutable_working_directory(), msg.es_msg().event.exec.cwd,
                msg.working_dir().value());
   }
 
   uint32_t arg_count = esapi_->ExecArgCount(&msg.es_msg().event.exec);
-  if (arg_count > 0) {
-    for (uint32_t i = 0; i < arg_count; i++) {
-      es_string_token_t tok = esapi_->ExecArg(&msg.es_msg().event.exec, i);
-      pb_exec->add_args(tok.data, tok.length);
-    }
+  for (uint32_t i = 0; i < arg_count; i++) {
+    es_string_token_t tok = esapi_->ExecArg(&msg.es_msg().event.exec, i);
+    pb_exec->add_args(tok.data, tok.length);
   }
 
   uint32_t env_count = esapi_->ExecEnvCount(&msg.es_msg().event.exec);
-  if (env_count > 0) {
-    for (uint32_t i = 0; i < env_count; i++) {
-      es_string_token_t tok = esapi_->ExecEnv(&msg.es_msg().event.exec, i);
-      pb_exec->add_envs(tok.data, tok.length);
-    }
+  for (uint32_t i = 0; i < env_count; i++) {
+    es_string_token_t tok = esapi_->ExecEnv(&msg.es_msg().event.exec, i);
+    pb_exec->add_envs(tok.data, tok.length);
   }
 
   if (@available(macOS 11.0, *)) {
     uint32_t fd_count = esapi_->ExecFDCount(&msg.es_msg().event.exec);
-    if (fd_count > 0) {
-      for (uint32_t i = 0; i < fd_count; i++) {
-        const es_fd_t *fd = esapi_->ExecFD(&msg.es_msg().event.exec, i);
-        pb::FileDescriptor *pb_fd = pb_exec->add_fds();
-        pb_fd->set_fd(fd->fd);
-        pb_fd->set_type(fd->fdtype);
-        pb_fd->set_type_name(GetFileDescriptorTypeName(fd->fdtype));
-        if (fd->fdtype == PROX_FDTYPE_PIPE) {
-          pb_fd->set_pipe_id(fd->pipe.pipe_id);
-        }
+    for (uint32_t i = 0; i < fd_count; i++) {
+      const es_fd_t *fd = esapi_->ExecFD(&msg.es_msg().event.exec, i);
+      pb::FileDescriptor *pb_fd = pb_exec->add_fds();
+      pb_fd->set_fd(fd->fd);
+      pb_fd->set_type(fd->fdtype);
+      std::string_view type_name = GetFileDescriptorTypeName(fd->fdtype);
+      pb_fd->set_type_name(type_name.data(), type_name.length());
+      if (fd->fdtype == PROX_FDTYPE_PIPE) {
+        pb_fd->set_pipe_id(fd->pipe.pipe_id);
       }
     }
   }
@@ -383,7 +388,8 @@ std::vector<uint8_t> Protobuf::SerializeMessage(const EnrichedExit &msg) {
 
   pb::Exit *pb_exit = santa_msg->mutable_exit();
 
-  EncodeProcessInfo(pb_exit->mutable_instigator(), msg.es_msg().process, msg.instigator());
+  EncodeProcessInfo(pb_exit->mutable_instigator(), msg.es_msg().version, msg.es_msg().process,
+                    msg.instigator());
   EncodeExitStatus(pb_exit, msg.es_msg().event.exit.stat);
 
   return FinalizeProto(santa_msg);
@@ -395,8 +401,10 @@ std::vector<uint8_t> Protobuf::SerializeMessage(const EnrichedFork &msg) {
 
   pb::Fork *pb_fork = santa_msg->mutable_fork();
 
-  EncodeProcessInfo(pb_fork->mutable_instigator(), msg.es_msg().process, msg.instigator());
-  EncodeProcessInfo(pb_fork->mutable_child(), msg.es_msg().event.fork.child, msg.child());
+  EncodeProcessInfo(pb_fork->mutable_instigator(), msg.es_msg().version, msg.es_msg().process,
+                    msg.instigator());
+  EncodeProcessInfo(pb_fork->mutable_child(), msg.es_msg().version, msg.es_msg().event.fork.child,
+                    msg.child());
 
   return FinalizeProto(santa_msg);
 }

@@ -106,13 +106,27 @@ static uint64_t AddMillisToMachTime(uint64_t ms, uint64_t machTime) {
 
 es_message_t MakeESMessage(es_event_type_t et, es_process_t *proc, ActionType action_type,
                            uint64_t future_deadline_ms) {
-  return es_message_t{
+  es_message_t es_msg = {
     .deadline = AddMillisToMachTime(future_deadline_ms, mach_absolute_time()),
     .process = proc,
     .action_type =
       (action_type == ActionType::Notify) ? ES_ACTION_TYPE_NOTIFY : ES_ACTION_TYPE_AUTH,
     .event_type = et,
   };
+
+  if (@available(macOS 13.0, *)) {
+    es_msg.version = 6;
+  } else if (@available(macOS 12.3, *)) {
+    es_msg.version = 5;
+  } else if (@available(macOS 11.0, *)) {
+    es_msg.version = 4;
+  } else if (@available(macOS 10.15.6, *)) {
+    es_msg.version = 3;
+  } else {
+    es_msg.version = 1;
+  }
+
+  return es_msg;
 }
 
 void SleepMS(long ms) {
