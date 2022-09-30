@@ -48,8 +48,9 @@ std::shared_ptr<EnrichedMessage> Enricher::Enrich(Message &&es_msg) {
         (es_msg->version >= 2 && es_msg->event.exec.script)
           ? std::make_optional(Enrich(*es_msg->event.exec.script))
           : std::nullopt,
-        (es_msg->version >= 3) ? std::make_optional(Enrich(*es_msg->event.exec.cwd))
-                               : std::nullopt));
+        (es_msg->version >= 3 && es_msg->event.exec.cwd)
+          ? std::make_optional(Enrich(*es_msg->event.exec.cwd))
+          : std::nullopt));
     case ES_EVENT_TYPE_NOTIFY_FORK:
       return std::make_shared<EnrichedMessage>(EnrichedFork(
         std::move(es_msg), Enrich(*es_msg->process), Enrich(*es_msg->event.fork.child)));
