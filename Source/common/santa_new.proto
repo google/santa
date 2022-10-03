@@ -191,14 +191,11 @@ message Exchangedata {
   File file2 = 3;
 }
 
-// If the destination file already exists, `destination` will be populated
-// Else `directory` and `filename` will be provided.
 message Rename {
   ProcessInfo instigator = 1;
   File source = 2;
-  File destination = 3;
-  File destination_directory = 4;
-  string destination_filename = 5;
+  string target = 3;
+  bool target_existed = 4;
 }
 
 message Unlink {

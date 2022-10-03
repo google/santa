@@ -204,10 +204,14 @@ void EncodeCertificateInfo(pb::CertificateInfo *pb_cert_info, NSString *cert_has
   }
 }
 
-void EncodeDirAndFile(std::string *buf, const es_file_t *dir, const es_string_token_t file) {
+void EncodePath(std::string *buf, const es_file_t *dir, const es_string_token_t file) {
   buf->append(dir->path.data);
   buf->append("/");
   buf->append(file.data);
+}
+
+void EncodePath(std::string *buf, const es_file_t *es_file) {
+  buf->append(es_file->path.data);
 }
 
 pb::Execution::Decision GetDecisionEnum(SNTEventState event_state) {
@@ -432,14 +436,30 @@ std::vector<uint8_t> Protobuf::SerializeMessage(const EnrichedLink &msg) {
   EncodeProcessInfo(pb_link->mutable_instigator(), msg.es_msg().version, msg.es_msg().process,
                     msg.instigator());
   EncodeFile(pb_link->mutable_source(), msg.es_msg().event.link.source, msg.source());
-  EncodeDirAndFile(pb_link->mutable_target(), msg.es_msg().event.link.target_dir,
-                   msg.es_msg().event.link.target_filename);
+  EncodePath(pb_link->mutable_target(), msg.es_msg().event.link.target_dir,
+             msg.es_msg().event.link.target_filename);
 
   return FinalizeProto(santa_msg);
 }
 
 std::vector<uint8_t> Protobuf::SerializeMessage(const EnrichedRename &msg) {
-  return {};
+  Arena arena;
+  pb::SantaMessage *santa_msg = CreateDefaultProto(&arena, msg);
+
+  pb::Rename *pb_rename = santa_msg->mutable_rename();
+  EncodeProcessInfo(pb_rename->mutable_instigator(), msg.es_msg().version, msg.es_msg().process,
+                    msg.instigator());
+  EncodeFile(pb_rename->mutable_source(), msg.es_msg().event.rename.source, msg.source());
+  if (msg.es_msg().event.rename.destination_type == ES_DESTINATION_TYPE_EXISTING_FILE) {
+    EncodePath(pb_rename->mutable_target(), msg.es_msg().event.rename.destination.existing_file);
+    pb_rename->set_target_existed(true);
+  } else {
+    EncodePath(pb_rename->mutable_target(), msg.es_msg().event.rename.destination.new_path.dir,
+               msg.es_msg().event.rename.destination.new_path.filename);
+    pb_rename->set_target_existed(false);
+  }
+
+  return FinalizeProto(santa_msg);
 }
 
 std::vector<uint8_t> Protobuf::SerializeMessage(const EnrichedUnlink &msg) {

@@ -459,4 +459,24 @@ void SerializeAndCheck(es_event_type_t eventType,
                     });
 }
 
+- (void)testSerializeMessageRename {
+  __block es_file_t fileSource = MakeESFile("source", MakeStat(300));
+  __block es_file_t fileTargetDir = MakeESFile("target_dir");
+  es_string_token_t targetTok = MakeESStringToken("target_file");
+
+  SerializeAndCheck(ES_EVENT_TYPE_NOTIFY_RENAME,
+                    ^(std::shared_ptr<MockEndpointSecurityAPI> mockESApi, es_message_t *esMsg) {
+                      esMsg->event.rename.source = &fileSource;
+                      // Test new and existing destination types
+                      if (esMsg->version == 4) {
+                        esMsg->event.rename.destination.existing_file = &fileTargetDir;
+                        esMsg->event.rename.destination_type = ES_DESTINATION_TYPE_EXISTING_FILE;
+                      } else {
+                        esMsg->event.rename.destination.new_path.dir = &fileTargetDir;
+                        esMsg->event.rename.destination.new_path.filename = targetTok;
+                        esMsg->event.rename.destination_type = ES_DESTINATION_TYPE_NEW_PATH;
+                      }
+                    });
+}
+
 @end

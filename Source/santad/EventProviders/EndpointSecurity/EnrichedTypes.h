@@ -274,6 +274,8 @@ class EnrichedRename : public EnrichedEventType {
 
   EnrichedRename(const EnrichedRename &other) = delete;
 
+  const EnrichedFile &source() const { return source_; }
+
  private:
   EnrichedFile source_;
   std::optional<EnrichedFile> target_;
