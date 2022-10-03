@@ -295,6 +295,8 @@ class EnrichedUnlink : public EnrichedEventType {
 
   EnrichedUnlink(const EnrichedUnlink &other) = delete;
 
+  const EnrichedFile &target() const { return target_; }
+
  private:
   EnrichedFile target_;
 };

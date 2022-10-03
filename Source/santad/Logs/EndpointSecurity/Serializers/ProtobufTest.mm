@@ -479,4 +479,15 @@ void SerializeAndCheck(es_event_type_t eventType,
                     });
 }
 
+- (void)testSerializeMessageUnlink {
+  __block es_file_t fileTarget = MakeESFile("unlink_file", MakeStat(300));
+  __block es_file_t fileTargetParent = MakeESFile("unlink_file_parent", MakeStat(400));
+
+  SerializeAndCheck(ES_EVENT_TYPE_NOTIFY_UNLINK,
+                    ^(std::shared_ptr<MockEndpointSecurityAPI> mockESApi, es_message_t *esMsg) {
+                      esMsg->event.unlink.target = &fileTarget;
+                      esMsg->event.unlink.parent_dir = &fileTargetParent;
+                    });
+}
+
 @end

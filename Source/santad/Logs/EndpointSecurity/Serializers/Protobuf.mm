@@ -463,7 +463,15 @@ std::vector<uint8_t> Protobuf::SerializeMessage(const EnrichedRename &msg) {
 }
 
 std::vector<uint8_t> Protobuf::SerializeMessage(const EnrichedUnlink &msg) {
-  return {};
+  Arena arena;
+  pb::SantaMessage *santa_msg = CreateDefaultProto(&arena, msg);
+
+  pb::Unlink *pb_unlink = santa_msg->mutable_unlink();
+  EncodeProcessInfo(pb_unlink->mutable_instigator(), msg.es_msg().version, msg.es_msg().process,
+                    msg.instigator());
+  EncodeFile(pb_unlink->mutable_target(), msg.es_msg().event.unlink.target, msg.target());
+
+  return FinalizeProto(santa_msg);
 }
 
 std::vector<uint8_t> Protobuf::SerializeAllowlist(const Message &msg, const std::string_view hash) {
