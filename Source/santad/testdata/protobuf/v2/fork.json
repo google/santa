@@ -59,26 +59,26 @@
   "tty": {
    "path": "footty",
    "stat": {
-    "dev": 301,
-    "mode": 302,
-    "nlink": 303,
-    "ino": "304",
+    "dev": 201,
+    "mode": 202,
+    "nlink": 203,
+    "ino": "204",
     "user": {
      "uid": -2
     },
     "group": {
      "gid": -1
     },
-    "rdev": 305,
-    "access_time": "1970-01-01T00:06:40.000000500Z",
-    "modification_time": "1970-01-01T00:06:41.000000321Z",
-    "change_time": "1970-01-01T00:06:42.000000502Z",
-    "birth_time": "1970-01-01T00:06:43.000000503Z",
-    "size": "306",
-    "blocks": "307",
-    "blksize": 308,
-    "flags": 309,
-    "gen": 310
+    "rdev": 205,
+    "access_time": "1970-01-01T00:05:00.000000400Z",
+    "modification_time": "1970-01-01T00:05:01.000000221Z",
+    "change_time": "1970-01-01T00:05:02.000000402Z",
+    "birth_time": "1970-01-01T00:05:03.000000403Z",
+    "size": "206",
+    "blocks": "207",
+    "blksize": 208,
+    "flags": 209,
+    "gen": 210
    }
   }
  },
@@ -115,10 +115,10 @@
   "executable": {
    "path": "foo_child",
    "stat": {
-    "dev": 201,
-    "mode": 202,
-    "nlink": 203,
-    "ino": "204",
+    "dev": 301,
+    "mode": 302,
+    "nlink": 303,
+    "ino": "304",
     "user": {
      "uid": -2,
      "name": "nobody"
@@ -127,16 +127,16 @@
      "gid": -1,
      "name": "nogroup"
     },
-    "rdev": 205,
-    "access_time": "1970-01-01T00:05:00.000000400Z",
-    "modification_time": "1970-01-01T00:05:01.000000221Z",
-    "change_time": "1970-01-01T00:05:02.000000402Z",
-    "birth_time": "1970-01-01T00:05:03.000000403Z",
-    "size": "206",
-    "blocks": "207",
-    "blksize": 208,
-    "flags": 209,
-    "gen": 210
+    "rdev": 305,
+    "access_time": "1970-01-01T00:06:40.000000500Z",
+    "modification_time": "1970-01-01T00:06:41.000000321Z",
+    "change_time": "1970-01-01T00:06:42.000000502Z",
+    "birth_time": "1970-01-01T00:06:43.000000503Z",
+    "size": "306",
+    "blocks": "307",
+    "blksize": 308,
+    "flags": 309,
+    "gen": 310
    }
   },
   "tty": {

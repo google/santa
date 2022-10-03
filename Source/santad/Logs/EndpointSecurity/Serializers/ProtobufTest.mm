@@ -98,8 +98,23 @@ NSString *TestJsonPath(NSString *jsonFileName, uint32_t version) {
   return [NSString pathWithComponents:@[ testPath, testDataRepoVersionPath, jsonFileName ]];
 }
 
-NSString *LoadTestJson(NSString *jsonFileName, uint32_t version) {
+NSString *EventTypeToFilename(es_event_type_t eventType) {
+  switch (eventType) {
+    case ES_EVENT_TYPE_NOTIFY_CLOSE: return @"close.json";
+    case ES_EVENT_TYPE_NOTIFY_EXCHANGEDATA: return @"exchangedata.json";
+    case ES_EVENT_TYPE_NOTIFY_EXEC: return @"exec.json";
+    case ES_EVENT_TYPE_NOTIFY_EXIT: return @"exit.json";
+    case ES_EVENT_TYPE_NOTIFY_FORK: return @"fork.json";
+    case ES_EVENT_TYPE_NOTIFY_LINK: return @"link.json";
+    case ES_EVENT_TYPE_NOTIFY_RENAME: return @"rename.json";
+    case ES_EVENT_TYPE_NOTIFY_UNLINK: return @"unlink.json";
+    default: XCTFail(@"Unhandled event type: %d", eventType); return nil;
+  }
+}
+
+NSString *LoadTestJson(es_event_type_t eventType, uint32_t version) {
   NSError *err = nil;
+  NSString *jsonFileName = EventTypeToFilename(eventType);
   NSString *jsonData = [NSString stringWithContentsOfFile:TestJsonPath(jsonFileName, version)
                                                  encoding:NSUTF8StringEncoding
                                                     error:&err];
@@ -157,13 +172,13 @@ std::string ConvertMessageToJsonString(const pb::SantaMessage &santaMsg) {
   return json;
 }
 
-void CheckProto(const pb::SantaMessage &santaMsg, std::shared_ptr<EnrichedMessage> enrichedMsg,
-                NSString *jsonFileName) {
+void CheckProto(const pb::SantaMessage &santaMsg, std::shared_ptr<EnrichedMessage> enrichedMsg) {
   return std::visit(
-    [santaMsg, jsonFileName](const EnrichedEventType &enrichedEvent) {
+    [santaMsg](const EnrichedEventType &enrichedEvent) {
       CheckSantaMessage(santaMsg, enrichedEvent.es_msg(), enrichedEvent.uuid(),
                         enrichedEvent.enrichment_time());
-      NSString *wantData = LoadTestJson(jsonFileName, enrichedEvent.es_msg().version);
+      NSString *wantData =
+        LoadTestJson(enrichedEvent.es_msg().event_type, enrichedEvent.es_msg().version);
       std::string got = ConvertMessageToJsonString(santaMsg);
 
       XCTAssertEqualObjects([NSString stringWithUTF8String:got.c_str()], wantData);
@@ -171,10 +186,10 @@ void CheckProto(const pb::SantaMessage &santaMsg, std::shared_ptr<EnrichedMessag
     enrichedMsg->GetEnrichedMessage());
 }
 
-void SerializeAndCheck(std::shared_ptr<MockEndpointSecurityAPI> &&mockESApiTmp, es_message_t *esMsg,
-                       NSString *jsonFileName) {
-  std::shared_ptr<MockEndpointSecurityAPI> mockESApi = std::move(mockESApiTmp);
-  mockESApi->SetExpectationsRetainReleaseMessage(esMsg);
+void SerializeAndCheck(es_event_type_t eventType,
+                       void (^messageSetup)(std::shared_ptr<MockEndpointSecurityAPI>,
+                                            es_message_t *)) {
+  std::shared_ptr<MockEndpointSecurityAPI> mockESApi = std::make_shared<MockEndpointSecurityAPI>();
 
   for (uint32_t cur_version = 1; cur_version <= MaxSupportedESMessageVersionForCurrentOS();
        cur_version++) {
@@ -183,10 +198,19 @@ void SerializeAndCheck(std::shared_ptr<MockEndpointSecurityAPI> &&mockESApiTmp, 
       continue;
     }
 
-    esMsg->version = cur_version;
+    es_file_t procFile = MakeESFile("foo", MakeStat(100));
+    es_file_t ttyFile = MakeESFile("footty", MakeStat(200));
+    es_process_t proc = MakeESProcess(&procFile, MakeAuditToken(12, 34), MakeAuditToken(56, 78));
+    es_message_t esMsg = MakeESMessage(eventType, &proc);
+    esMsg.process->tty = &ttyFile;
+    esMsg.version = cur_version;
+
+    mockESApi->SetExpectationsRetainReleaseMessage(&esMsg);
+
+    messageSetup(mockESApi, &esMsg);
 
     std::shared_ptr<Serializer> bs = Protobuf::Create(mockESApi);
-    std::shared_ptr<EnrichedMessage> enrichedMsg = Enricher().Enrich(Message(mockESApi, esMsg));
+    std::shared_ptr<EnrichedMessage> enrichedMsg = Enricher().Enrich(Message(mockESApi, &esMsg));
 
     std::vector<uint8_t> vec = bs->SerializeMessage(enrichedMsg);
     std::string protoStr(vec.begin(), vec.end());
@@ -194,15 +218,10 @@ void SerializeAndCheck(std::shared_ptr<MockEndpointSecurityAPI> &&mockESApiTmp, 
     pb::SantaMessage santaMsg;
     XCTAssertTrue(santaMsg.ParseFromString(protoStr));
 
-    CheckProto(santaMsg, enrichedMsg, jsonFileName);
+    CheckProto(santaMsg, enrichedMsg);
   }
 
   XCTBubbleMockVerifyAndClearExpectations(mockESApi.get());
-}
-
-void SerializeAndCheck(es_message_t *esMsg, NSString *jsonFileName) {
-  auto mockESApi = std::make_shared<MockEndpointSecurityAPI>();
-  SerializeAndCheck(std::move(mockESApi), esMsg, jsonFileName);
 }
 
 @interface ProtobufTest : XCTestCase
@@ -240,30 +259,24 @@ void SerializeAndCheck(es_message_t *esMsg, NSString *jsonFileName) {
 }
 
 - (void)testSerializeMessageClose {
-  es_file_t procFile = MakeESFile("foo", MakeStat(100));
-  es_file_t ttyFile = MakeESFile("footty", MakeStat(200));
-  es_process_t proc = MakeESProcess(&procFile, MakeAuditToken(12, 34), MakeAuditToken(56, 78));
-  es_file_t file = MakeESFile("close_file", MakeStat(300));
-  es_message_t esMsg = MakeESMessage(ES_EVENT_TYPE_NOTIFY_CLOSE, &proc);
-  esMsg.process->tty = &ttyFile;
-  esMsg.event.close.modified = true;
-  esMsg.event.close.target = &file;
+  __block es_file_t file = MakeESFile("close_file", MakeStat(300));
 
-  SerializeAndCheck(&esMsg, @"close.json");
+  SerializeAndCheck(ES_EVENT_TYPE_NOTIFY_CLOSE,
+                    ^(std::shared_ptr<MockEndpointSecurityAPI> mockESApi, es_message_t *esMsg) {
+                      esMsg->event.close.modified = true;
+                      esMsg->event.close.target = &file;
+                    });
 }
 
 - (void)testSerializeMessageExchange {
-  es_file_t procFile = MakeESFile("foo", MakeStat(100));
-  es_file_t ttyFile = MakeESFile("footty", MakeStat(200));
-  es_process_t proc = MakeESProcess(&procFile, MakeAuditToken(12, 34), MakeAuditToken(56, 78));
-  es_file_t file1 = MakeESFile("exchange_file_1", MakeStat(300));
-  es_file_t file2 = MakeESFile("exchange_file_1", MakeStat(400));
-  es_message_t esMsg = MakeESMessage(ES_EVENT_TYPE_NOTIFY_EXCHANGEDATA, &proc);
-  esMsg.process->tty = &ttyFile;
-  esMsg.event.exchangedata.file1 = &file1;
-  esMsg.event.exchangedata.file2 = &file2;
+  __block es_file_t file1 = MakeESFile("exchange_file_1", MakeStat(300));
+  __block es_file_t file2 = MakeESFile("exchange_file_1", MakeStat(400));
 
-  SerializeAndCheck(&esMsg, @"exchangedata.json");
+  SerializeAndCheck(ES_EVENT_TYPE_NOTIFY_EXCHANGEDATA,
+                    ^(std::shared_ptr<MockEndpointSecurityAPI> mockESApi, es_message_t *esMsg) {
+                      esMsg->event.exchangedata.file1 = &file1;
+                      esMsg->event.exchangedata.file2 = &file2;
+                    });
 }
 
 - (void)testGetDecisionEnum {
@@ -287,8 +300,7 @@ void SerializeAndCheck(es_message_t *esMsg, NSString *jsonFileName) {
   };
 
   for (const auto &kv : stateToDecision) {
-    XCTAssertEqual(GetDecisionEnum(kv.first), kv.second, @"Bad decision for state: %ld",
-    kv.first);
+    XCTAssertEqual(GetDecisionEnum(kv.first), kv.second, @"Bad decision for state: %ld", kv.first);
   }
 }
 
@@ -352,55 +364,50 @@ void SerializeAndCheck(es_message_t *esMsg, NSString *jsonFileName) {
 }
 
 - (void)testSerializeMessageExec {
-  es_file_t procFile = MakeESFile("foo", MakeStat(100));
-  es_file_t ttyFile = MakeESFile("footty", MakeStat(200));
-  es_process_t proc = MakeESProcess(&procFile, MakeAuditToken(12, 34), MakeAuditToken(56, 78));
   es_file_t procFileTarget = MakeESFile("fooexec", MakeStat(300));
-  es_process_t procTarget =
+  __block es_process_t procTarget =
     MakeESProcess(&procFileTarget, MakeAuditToken(23, 45), MakeAuditToken(67, 89));
-  es_file_t fileCwd = MakeESFile("cwd", MakeStat(400));
-  es_file_t fileScript = MakeESFile("script.sh", MakeStat(500));
-  es_message_t esMsg = MakeESMessage(ES_EVENT_TYPE_NOTIFY_EXEC, &proc);
-  es_string_token_t tokSigningId = MakeESStringToken("my_signing_id");
-  es_string_token_t tokTeamId = MakeESStringToken("my_team_id");
-  esMsg.process->tty = &ttyFile;
+  __block es_file_t fileCwd = MakeESFile("cwd", MakeStat(400));
+  __block es_file_t fileScript = MakeESFile("script.sh", MakeStat(500));
+  __block es_fd_t fd1 = {.fd = 1, .fdtype = PROX_FDTYPE_VNODE};
+  __block es_fd_t fd2 = {.fd = 2, .fdtype = PROX_FDTYPE_SOCKET};
+  __block es_fd_t fd3 = {.fd = 3, .fdtype = PROX_FDTYPE_PIPE, .pipe = {.pipe_id = 123}};
 
   procTarget.codesigning_flags = CS_SIGNED | CS_HARD | CS_KILL;
-  memset(procTarget.cdhash, 'A', sizeof(esMsg.event.exec.target->cdhash));
-  procTarget.signing_id = tokSigningId;
-  procTarget.team_id = tokTeamId;
+  memset(procTarget.cdhash, 'A', sizeof(procTarget.cdhash));
+  procTarget.signing_id = MakeESStringToken("my_signing_id");
+  procTarget.team_id = MakeESStringToken("my_team_id");
 
-  esMsg.event.exec.target = &procTarget;
-  esMsg.event.exec.cwd = &fileCwd;
-  esMsg.event.exec.script = &fileScript;
+  SerializeAndCheck(ES_EVENT_TYPE_NOTIFY_EXEC, ^(std::shared_ptr<MockEndpointSecurityAPI> mockESApi,
+                                                 es_message_t *esMsg) {
+    esMsg->event.exec.target = &procTarget;
+    esMsg->event.exec.cwd = &fileCwd;
+    esMsg->event.exec.script = &fileScript;
 
-  auto mockESApi = std::make_shared<MockEndpointSecurityAPI>();
-  EXPECT_CALL(*mockESApi, ExecArgCount).WillRepeatedly(testing::Return(3));
+    EXPECT_CALL(*mockESApi, ExecArgCount).WillOnce(testing::Return(3));
+    EXPECT_CALL(*mockESApi, ExecArg)
+      .WillOnce(testing::Return(MakeESStringToken("exec_path")))
+      .WillOnce(testing::Return(MakeESStringToken("-l")))
+      .WillOnce(testing::Return(MakeESStringToken("--foo")));
 
-  EXPECT_CALL(*mockESApi, ExecArg)
-    .WillRepeatedly(testing::Return(MakeESStringToken("--foo")));
+    EXPECT_CALL(*mockESApi, ExecEnvCount).WillOnce(testing::Return(2));
+    EXPECT_CALL(*mockESApi, ExecEnv)
+      .WillOnce(testing::Return(MakeESStringToken("ENV_PATH=/path/to/bin:/and/another")))
+      .WillOnce(testing::Return(MakeESStringToken("DEBUG=1")));
 
-  EXPECT_CALL(*mockESApi, ExecEnvCount).WillRepeatedly(testing::Return(2));
-  EXPECT_CALL(*mockESApi, ExecEnv)
-    .WillRepeatedly(testing::Return(MakeESStringToken("ENV_PATH=/path/to/bin:/and/another")));
-
-  es_fd_t fd = {.fd = 3, .fdtype = PROX_FDTYPE_PIPE, .pipe = {.pipe_id = 123}};
-  EXPECT_CALL(*mockESApi, ExecFDCount).WillRepeatedly(testing::Return(1));
-  EXPECT_CALL(*mockESApi, ExecFD)
-    .WillRepeatedly(testing::Return(&fd));
-
-  SerializeAndCheck(std::move(mockESApi), &esMsg, @"exec.json");
+    EXPECT_CALL(*mockESApi, ExecFDCount).WillOnce(testing::Return(3));
+    EXPECT_CALL(*mockESApi, ExecFD)
+      .WillOnce(testing::Return(&fd1))
+      .WillOnce(testing::Return(&fd2))
+      .WillOnce(testing::Return(&fd3));
+  });
 }
 
 - (void)testSerializeMessageExit {
-  es_file_t procFile = MakeESFile("foo", MakeStat(100));
-  es_file_t ttyFile = MakeESFile("footty", MakeStat(200));
-  es_process_t proc = MakeESProcess(&procFile, MakeAuditToken(12, 34), MakeAuditToken(56, 78));
-  es_message_t esMsg = MakeESMessage(ES_EVENT_TYPE_NOTIFY_EXIT, &proc);
-  esMsg.process->tty = &ttyFile;
-  esMsg.event.exit.stat = W_EXITCODE(1, 0);
-
-  SerializeAndCheck(&esMsg, @"exit.json");
+  SerializeAndCheck(ES_EVENT_TYPE_NOTIFY_EXIT,
+                    ^(std::shared_ptr<MockEndpointSecurityAPI> mockESApi, es_message_t *esMsg) {
+                      esMsg->event.exit.stat = W_EXITCODE(1, 0);
+                    });
 }
 
 - (void)testEncodeExitStatus {
@@ -427,35 +434,29 @@ void SerializeAndCheck(es_message_t *esMsg, NSString *jsonFileName) {
 }
 
 - (void)testSerializeMessageFork {
-  es_file_t procFile = MakeESFile("foo", MakeStat(100));
-  es_file_t procFileChild = MakeESFile("foo_child", MakeStat(200));
-  es_file_t ttyFile = MakeESFile("footty", MakeStat(300));
-  es_file_t ttyFileChild = MakeESFile("footty", MakeStat(400));
-  es_process_t proc = MakeESProcess(&procFile, MakeAuditToken(12, 34), MakeAuditToken(56, 78));
-  es_process_t procChild =
+  __block es_file_t procFileChild = MakeESFile("foo_child", MakeStat(300));
+  __block es_file_t ttyFileChild = MakeESFile("footty", MakeStat(400));
+  __block es_process_t procChild =
     MakeESProcess(&procFileChild, MakeAuditToken(12, 34), MakeAuditToken(56, 78));
-  es_message_t esMsg = MakeESMessage(ES_EVENT_TYPE_NOTIFY_FORK, &proc);
-  esMsg.process->tty = &ttyFile;
-  esMsg.event.fork.child = &procChild;
-  esMsg.event.fork.child->tty = &ttyFileChild;
+  procChild.tty = &ttyFileChild;
 
-  SerializeAndCheck(&esMsg, @"fork.json");
+  SerializeAndCheck(ES_EVENT_TYPE_NOTIFY_FORK,
+                    ^(std::shared_ptr<MockEndpointSecurityAPI> mockESApi, es_message_t *esMsg) {
+                      esMsg->event.fork.child = &procChild;
+                    });
 }
 
 - (void)testSerializeMessageLink {
-  es_file_t procFile = MakeESFile("foo", MakeStat(100));
-  es_file_t ttyFile = MakeESFile("footty", MakeStat(200));
-  es_process_t proc = MakeESProcess(&procFile, MakeAuditToken(12, 34), MakeAuditToken(56, 78));
-  es_message_t esMsg = MakeESMessage(ES_EVENT_TYPE_NOTIFY_LINK, &proc);
-  es_file_t fileSource = MakeESFile("source", MakeStat(300));
-  es_file_t fileTargetDir = MakeESFile("target_dir");
+  __block es_file_t fileSource = MakeESFile("source", MakeStat(300));
+  __block es_file_t fileTargetDir = MakeESFile("target_dir");
   es_string_token_t targetTok = MakeESStringToken("target_file");
-  esMsg.process->tty = &ttyFile;
-  esMsg.event.link.source = &fileSource;
-  esMsg.event.link.target_dir = &fileTargetDir;
-  esMsg.event.link.target_filename = targetTok;
 
-  SerializeAndCheck(&esMsg, @"link.json");
+  SerializeAndCheck(ES_EVENT_TYPE_NOTIFY_LINK,
+                    ^(std::shared_ptr<MockEndpointSecurityAPI> mockESApi, es_message_t *esMsg) {
+                      esMsg->event.link.source = &fileSource;
+                      esMsg->event.link.target_dir = &fileTargetDir;
+                      esMsg->event.link.target_filename = targetTok;
+                    });
 }
 
 @end

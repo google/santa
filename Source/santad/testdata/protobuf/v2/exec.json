@@ -178,15 +178,25 @@
   }
  },
  "args": [
-  "--foo",
-  "--foo",
+  "exec_path",
+  "-l",
   "--foo"
  ],
  "envs": [
   "ENV_PATH=/path/to/bin:/and/another",
-  "ENV_PATH=/path/to/bin:/and/another"
+  "DEBUG=1"
  ],
  "fds": [
+  {
+   "fd": 1,
+   "type": 1,
+   "type_name": "VNODE"
+  },
+  {
+   "fd": 2,
+   "type": 2,
+   "type_name": "SOCKET"
+  },
   {
    "fd": 3,
    "type": 6,
