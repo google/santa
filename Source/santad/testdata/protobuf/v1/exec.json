@@ -1,0 +1,157 @@
+{
+ "instigator": {
+  "id": {
+   "pid": 12,
+   "pidversion": 34
+  },
+  "parent_id": {
+   "pid": 56,
+   "pidversion": 78
+  },
+  "original_parent_pid": 56,
+  "group_id": 111,
+  "session_id": 222,
+  "effective_user": {
+   "uid": -2,
+   "name": "nobody"
+  },
+  "effective_group": {
+   "gid": -1,
+   "name": "nogroup"
+  },
+  "real_user": {
+   "uid": -2,
+   "name": "nobody"
+  },
+  "real_group": {
+   "gid": -1,
+   "name": "nogroup"
+  },
+  "is_platform_binary": true,
+  "is_es_client": true,
+  "executable": {
+   "path": "foo",
+   "stat": {
+    "dev": 101,
+    "mode": 102,
+    "nlink": 103,
+    "ino": "104",
+    "user": {
+     "uid": -2,
+     "name": "nobody"
+    },
+    "group": {
+     "gid": -1,
+     "name": "nogroup"
+    },
+    "rdev": 105,
+    "access_time": "1970-01-01T00:03:20.000000300Z",
+    "modification_time": "1970-01-01T00:03:21.000000121Z",
+    "change_time": "1970-01-01T00:03:22.000000302Z",
+    "birth_time": "1970-01-01T00:03:23.000000303Z",
+    "size": "106",
+    "blocks": "107",
+    "blksize": 108,
+    "flags": 109,
+    "gen": 110
+   }
+  }
+ },
+ "target": {
+  "id": {
+   "pid": 23,
+   "pidversion": 45
+  },
+  "parent_id": {
+   "pid": 67,
+   "pidversion": 89
+  },
+  "original_parent_pid": 67,
+  "group_id": 111,
+  "session_id": 222,
+  "effective_user": {
+   "uid": -2,
+   "name": "nobody"
+  },
+  "effective_group": {
+   "gid": -1,
+   "name": "nogroup"
+  },
+  "real_user": {
+   "uid": -2,
+   "name": "nobody"
+  },
+  "real_group": {
+   "gid": -1,
+   "name": "nogroup"
+  },
+  "is_platform_binary": true,
+  "is_es_client": true,
+  "code_signature": {
+   "cdhash": "QUFBQUFBQUFBQUFBQUFBQUFBQUE=",
+   "signing_id": "my_signing_id",
+   "team_id": "my_team_id"
+  },
+  "cs_flags": 536871680,
+  "executable": {
+   "path": "fooexec",
+   "stat": {
+    "dev": 301,
+    "mode": 302,
+    "nlink": 303,
+    "ino": "304",
+    "user": {
+     "uid": -2,
+     "name": "nobody"
+    },
+    "group": {
+     "gid": -1,
+     "name": "nogroup"
+    },
+    "rdev": 305,
+    "access_time": "1970-01-01T00:06:40.000000500Z",
+    "modification_time": "1970-01-01T00:06:41.000000321Z",
+    "change_time": "1970-01-01T00:06:42.000000502Z",
+    "birth_time": "1970-01-01T00:06:43.000000503Z",
+    "size": "306",
+    "blocks": "307",
+    "blksize": 308,
+    "flags": 309,
+    "gen": 310
+   },
+   "hash": {
+    "type": "HASH_ALGO_SHA256",
+    "hash": "1234_file_hash"
+   }
+  }
+ },
+ "args": [
+  "--foo",
+  "--foo",
+  "--foo"
+ ],
+ "envs": [
+  "ENV_PATH=/path/to/bin:/and/another",
+  "ENV_PATH=/path/to/bin:/and/another"
+ ],
+ "fds": [
+  {
+   "fd": 3,
+   "type": 6,
+   "type_name": "PIPE",
+   "pipe_id": "123"
+  }
+ ],
+ "decision": "DECISION_ALLOW",
+ "reason": "REASON_BINARY",
+ "mode": "MODE_LOCKDOWN",
+ "certificate_info": {
+  "hash": {
+   "type": "HASH_ALGO_SHA256",
+   "hash": "5678_cert_hash"
+  }
+ },
+ "explain": "extra!",
+ "quarantine_url": "google.com",
+ "machine_id": "my_machine_id"
+}

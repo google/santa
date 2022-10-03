@@ -104,6 +104,21 @@ static uint64_t AddMillisToMachTime(uint64_t ms, uint64_t machTime) {
   return nanoTime * timebase.denom / timebase.numer;
 }
 
+uint32_t MaxSupportedESMessageVersionForCurrentOS() {
+  // Note: ES message v3 was only in betas.
+  if (@available(macOS 13.0, *)) {
+    return 6;
+  } else if (@available(macOS 12.3, *)) {
+    return 5;
+  } else if (@available(macOS 11.0, *)) {
+    return 4;
+  } else if (@available(macOS 10.15.4, *)) {
+    return 2;
+  } else {
+    return 1;
+  }
+}
+
 es_message_t MakeESMessage(es_event_type_t et, es_process_t *proc, ActionType action_type,
                            uint64_t future_deadline_ms) {
   es_message_t es_msg = {
@@ -114,17 +129,7 @@ es_message_t MakeESMessage(es_event_type_t et, es_process_t *proc, ActionType ac
     .event_type = et,
   };
 
-  if (@available(macOS 13.0, *)) {
-    es_msg.version = 6;
-  } else if (@available(macOS 12.3, *)) {
-    es_msg.version = 5;
-  } else if (@available(macOS 11.0, *)) {
-    es_msg.version = 4;
-  } else if (@available(macOS 10.15.6, *)) {
-    es_msg.version = 3;
-  } else {
-    es_msg.version = 1;
-  }
+  es_msg.version = MaxSupportedESMessageVersionForCurrentOS();
 
   return es_msg;
 }

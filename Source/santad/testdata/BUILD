@@ -8,6 +8,6 @@ filegroup(
 
 filegroup(
     name = "protobuf_json_testdata",
-    srcs = glob(["protobuf/*.json"]),
+    srcs = glob(["protobuf/**/*.json"]),
     visibility = ["//:santa_package_group"],
 )

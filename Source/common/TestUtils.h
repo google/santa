@@ -66,4 +66,6 @@ es_message_t MakeESMessage(es_event_type_t et, es_process_t *proc,
                            ActionType action_type = ActionType::Notify,
                            uint64_t future_deadline_ms = 100000);
 
+uint32_t MaxSupportedESMessageVersionForCurrentOS();
+
 #endif

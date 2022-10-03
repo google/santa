@@ -83,10 +83,11 @@ JsonPrintOptions DefaultJsonPrintOptions() {
   return options;
 }
 
-NSString *TestJsonPath(NSString *jsonFileName) {
+NSString *TestJsonPath(NSString *jsonFileName, uint32_t version) {
   static dispatch_once_t onceToken;
   static NSString *testPath;
   static NSString *testDataRepoPath = @"santa/Source/santad/testdata/protobuf";
+  NSString *testDataRepoVersionPath = [NSString stringWithFormat:@"v%u", version];
 
   dispatch_once(&onceToken, ^{
     testPath = [NSString pathWithComponents:@[
@@ -94,12 +95,12 @@ NSString *TestJsonPath(NSString *jsonFileName) {
     ]];
   });
 
-  return [NSString pathWithComponents:@[ testPath, jsonFileName ]];
+  return [NSString pathWithComponents:@[ testPath, testDataRepoVersionPath, jsonFileName ]];
 }
 
-NSString *LoadTestJson(NSString *jsonFileName) {
+NSString *LoadTestJson(NSString *jsonFileName, uint32_t version) {
   NSError *err = nil;
-  NSString *jsonData = [NSString stringWithContentsOfFile:TestJsonPath(jsonFileName)
+  NSString *jsonData = [NSString stringWithContentsOfFile:TestJsonPath(jsonFileName, version)
                                                  encoding:NSUTF8StringEncoding
                                                     error:&err];
 
@@ -162,7 +163,7 @@ void CheckProto(const pb::SantaMessage &santaMsg, std::shared_ptr<EnrichedMessag
     [santaMsg, jsonFileName](const EnrichedEventType &enrichedEvent) {
       CheckSantaMessage(santaMsg, enrichedEvent.es_msg(), enrichedEvent.uuid(),
                         enrichedEvent.enrichment_time());
-      NSString *wantData = LoadTestJson(jsonFileName);
+      NSString *wantData = LoadTestJson(jsonFileName, enrichedEvent.es_msg().version);
       std::string got = ConvertMessageToJsonString(santaMsg);
 
       XCTAssertEqualObjects([NSString stringWithUTF8String:got.c_str()], wantData);
@@ -175,7 +176,15 @@ void SerializeAndCheck(std::shared_ptr<MockEndpointSecurityAPI> &&mockESApiTmp, 
   std::shared_ptr<MockEndpointSecurityAPI> mockESApi = std::move(mockESApiTmp);
   mockESApi->SetExpectationsRetainReleaseMessage(esMsg);
 
-  {
+  for (uint32_t cur_version = 1; cur_version <= MaxSupportedESMessageVersionForCurrentOS();
+       cur_version++) {
+    if (cur_version == 3) {
+      // Note: Version 3 was only in a macOS beta.
+      continue;
+    }
+
+    esMsg->version = cur_version;
+
     std::shared_ptr<Serializer> bs = Protobuf::Create(mockESApi);
     std::shared_ptr<EnrichedMessage> enrichedMsg = Enricher().Enrich(Message(mockESApi, esMsg));
 
@@ -278,7 +287,8 @@ void SerializeAndCheck(es_message_t *esMsg, NSString *jsonFileName) {
   };
 
   for (const auto &kv : stateToDecision) {
-    XCTAssertEqual(GetDecisionEnum(kv.first), kv.second, @"Bad decision for state: %ld", kv.first);
+    XCTAssertEqual(GetDecisionEnum(kv.first), kv.second, @"Bad decision for state: %ld",
+    kv.first);
   }
 }
 
@@ -365,30 +375,19 @@ void SerializeAndCheck(es_message_t *esMsg, NSString *jsonFileName) {
   esMsg.event.exec.script = &fileScript;
 
   auto mockESApi = std::make_shared<MockEndpointSecurityAPI>();
-  EXPECT_CALL(*mockESApi, ExecArgCount).WillOnce(testing::Return(3));
+  EXPECT_CALL(*mockESApi, ExecArgCount).WillRepeatedly(testing::Return(3));
 
   EXPECT_CALL(*mockESApi, ExecArg)
-    .WillOnce(testing::Return(MakeESStringToken("exec_path")))
-    .WillOnce(testing::Return(MakeESStringToken("-l")))
-    .WillOnce(testing::Return(MakeESStringToken("--foo")));
-  // TODO TODO: Sanitize args
-  // .WillOnce(testing::Return(es_string_token_t{9, "exec|path"}))
-  // .WillOnce(testing::Return(es_string_token_t{5, "-l\n-t"}))
-  // .WillOnce(testing::Return(es_string_token_t{8, "-v\r--foo"}));
+    .WillRepeatedly(testing::Return(MakeESStringToken("--foo")));
 
-  EXPECT_CALL(*mockESApi, ExecEnvCount).WillOnce(testing::Return(2));
+  EXPECT_CALL(*mockESApi, ExecEnvCount).WillRepeatedly(testing::Return(2));
   EXPECT_CALL(*mockESApi, ExecEnv)
-    .WillOnce(testing::Return(MakeESStringToken("ENV_PATH=/path/to/bin:/and/another")))
-    .WillOnce(testing::Return(MakeESStringToken("DEBUG=1")));
+    .WillRepeatedly(testing::Return(MakeESStringToken("ENV_PATH=/path/to/bin:/and/another")));
 
-  es_fd_t fd1 = {.fd = 1, .fdtype = PROX_FDTYPE_VNODE};
-  es_fd_t fd2 = {.fd = 2, .fdtype = PROX_FDTYPE_SOCKET};
-  es_fd_t fd3 = {.fd = 3, .fdtype = PROX_FDTYPE_PIPE, .pipe = {.pipe_id = 123}};
-  EXPECT_CALL(*mockESApi, ExecFDCount).WillOnce(testing::Return(3));
+  es_fd_t fd = {.fd = 3, .fdtype = PROX_FDTYPE_PIPE, .pipe = {.pipe_id = 123}};
+  EXPECT_CALL(*mockESApi, ExecFDCount).WillRepeatedly(testing::Return(1));
   EXPECT_CALL(*mockESApi, ExecFD)
-    .WillOnce(testing::Return(&fd1))
-    .WillOnce(testing::Return(&fd2))
-    .WillOnce(testing::Return(&fd3));
+    .WillRepeatedly(testing::Return(&fd));
 
   SerializeAndCheck(std::move(mockESApi), &esMsg, @"exec.json");
 }
