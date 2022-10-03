@@ -85,7 +85,7 @@ objc_library(
 
 objc_library(
     name = "SNTCommonEnums",
-    hdrs = ["SNTCommonEnums.h"],
+    textual_hdrs = ["SNTCommonEnums.h"],
 )
 
 objc_library(
