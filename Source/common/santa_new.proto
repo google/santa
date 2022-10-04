@@ -50,9 +50,7 @@ message Stat {
 message Hash {
   enum HashAlgo {
     HASH_ALGO_UNKNOWN = 0;
-    HASH_ALGO_MD5 = 1;
-    HASH_ALGO_SHA1 = 2;
-    HASH_ALGO_SHA256 = 3;
+    HASH_ALGO_SHA256 = 1;
   }
 
   HashAlgo type = 1;
@@ -240,10 +238,8 @@ message Bundle {
 }
 
 message Allowlist {
-  int32 pid = 1;
-  int32 pidversion = 2;
-  string path = 3;
-  Hash hash = 4;
+  ProcessInfo instigator = 1;
+  File target = 2;
 }
 
 message SantaMessage {

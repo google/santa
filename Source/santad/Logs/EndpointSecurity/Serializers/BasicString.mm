@@ -53,6 +53,7 @@ using Utilities::Pid;
 using Utilities::Pidversion;
 using Utilities::RealGroup;
 using Utilities::RealUser;
+using Utilities::NonNull;
 
 static inline SanitizableString FilePath(const es_file_t *file) {
   return SanitizableString(file);
@@ -115,19 +116,6 @@ static NSString *DiskImageForDevice(NSString *devPath) {
     return [result stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
   } else {
     return nil;
-  }
-}
-
-es_file_t *GetAllowListTargetFile(const Message &msg) {
-  switch (msg->event_type) {
-    case ES_EVENT_TYPE_NOTIFY_CLOSE: return msg->event.close.target;
-    case ES_EVENT_TYPE_NOTIFY_RENAME: return msg->event.rename.source;
-    default:
-      // This is a programming error
-      LOGE(@"Unexpected event type for AllowList");
-      [NSException raise:@"Unexpected type"
-                  format:@"Unexpected event type for AllowList: %d", msg->event_type];
-      return nil;
   }
 }
 
@@ -219,10 +207,6 @@ static char *FormattedDateString(char *buf, size_t len) {
   snprintf(buf, len, "%s.%03dZ", buf, tv.tv_usec / 1000);
 
   return buf;
-}
-
-static inline NSString *NonNull(NSString *str) {
-  return str ?: @"";
 }
 
 std::shared_ptr<BasicString> BasicString::Create(std::shared_ptr<EndpointSecurityAPI> esapi,
@@ -469,7 +453,7 @@ std::vector<uint8_t> BasicString::SerializeAllowlist(const Message &msg,
   str.append("|pidversion=");
   str.append(std::to_string(Pidversion(msg->process->audit_token)));
   str.append("|path=");
-  str.append(FilePath(GetAllowListTargetFile(msg)).Sanitized());
+  str.append(FilePath(Utilities::GetAllowListTargetFile(msg)).Sanitized());
   str.append("|sha256=");
   str.append(hash);
 

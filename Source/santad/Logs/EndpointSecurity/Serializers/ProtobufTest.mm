@@ -31,6 +31,7 @@
 #import "Source/common/SNTCachedDecision.h"
 #include "Source/common/SNTCommonEnums.h"
 #import "Source/common/SNTConfigurator.h"
+#import "Source/common/SNTStoredEvent.h"
 #include "Source/common/TestUtils.h"
 #include "Source/common/santa_new.pb.h"
 #include "Source/santad/EventProviders/EndpointSecurity/EnrichedTypes.h"
@@ -112,9 +113,8 @@ NSString *EventTypeToFilename(es_event_type_t eventType) {
   }
 }
 
-NSString *LoadTestJson(es_event_type_t eventType, uint32_t version) {
+NSString *LoadTestJson(NSString *jsonFileName, uint32_t version) {
   NSError *err = nil;
-  NSString *jsonFileName = EventTypeToFilename(eventType);
   NSString *jsonData = [NSString stringWithContentsOfFile:TestJsonPath(jsonFileName, version)
                                                  encoding:NSUTF8StringEncoding
                                                     error:&err];
@@ -177,8 +177,8 @@ void CheckProto(const pb::SantaMessage &santaMsg, std::shared_ptr<EnrichedMessag
     [santaMsg](const EnrichedEventType &enrichedEvent) {
       CheckSantaMessage(santaMsg, enrichedEvent.es_msg(), enrichedEvent.uuid(),
                         enrichedEvent.enrichment_time());
-      NSString *wantData =
-        LoadTestJson(enrichedEvent.es_msg().event_type, enrichedEvent.es_msg().version);
+      NSString *wantData = LoadTestJson(EventTypeToFilename(enrichedEvent.es_msg().event_type),
+                                        enrichedEvent.es_msg().version);
       std::string got = ConvertMessageToJsonString(santaMsg);
 
       XCTAssertEqualObjects([NSString stringWithUTF8String:got.c_str()], wantData);
@@ -488,6 +488,83 @@ void SerializeAndCheck(es_event_type_t eventType,
                       esMsg->event.unlink.target = &fileTarget;
                       esMsg->event.unlink.parent_dir = &fileTargetParent;
                     });
+}
+
+- (void)testSerializeAllowlist {
+  std::shared_ptr<MockEndpointSecurityAPI> mockESApi = std::make_shared<MockEndpointSecurityAPI>();
+
+  for (uint32_t cur_version = 1; cur_version <= MaxSupportedESMessageVersionForCurrentOS();
+       cur_version++) {
+    if (cur_version == 3) {
+      // Note: Version 3 was only in a macOS beta.
+      continue;
+    }
+
+    es_file_t procFile = MakeESFile("foo", MakeStat(100));
+    es_file_t ttyFile = MakeESFile("footty", MakeStat(200));
+    es_file_t closeFile = MakeESFile("close_file", MakeStat(300));
+    es_process_t proc = MakeESProcess(&procFile, MakeAuditToken(12, 34), MakeAuditToken(56, 78));
+    es_message_t esMsg = MakeESMessage(ES_EVENT_TYPE_NOTIFY_CLOSE, &proc);
+    esMsg.process->tty = &ttyFile;
+    esMsg.version = cur_version;
+    esMsg.event.close.modified = true;
+    esMsg.event.close.target = &closeFile;
+
+    mockESApi->SetExpectationsRetainReleaseMessage(&esMsg);
+
+    std::shared_ptr<Serializer> bs = Protobuf::Create(mockESApi);
+
+    std::vector<uint8_t> vec = bs->SerializeAllowlist(Message(mockESApi, &esMsg), "hash_value");
+    std::string protoStr(vec.begin(), vec.end());
+
+    pb::SantaMessage santaMsg;
+    XCTAssertTrue(santaMsg.ParseFromString(protoStr));
+
+    NSString *wantData = LoadTestJson(@"allowlist.json", esMsg.version);
+    std::string got = ConvertMessageToJsonString(santaMsg);
+
+    XCTAssertEqualObjects([NSString stringWithUTF8String:got.c_str()], wantData);
+  }
+
+  XCTBubbleMockVerifyAndClearExpectations(mockESApi.get());
+}
+
+- (void)testSerializeBundleHashingEvent {
+  SNTStoredEvent *se = [[SNTStoredEvent alloc] init];
+
+  se.fileSHA256 = @"file_hash";
+  se.fileBundleHash = @"file_bundle_hash";
+  se.fileBundleName = @"file_bundle_name";
+  se.fileBundleID = nil;
+  se.fileBundlePath = @"file_bundle_path";
+  se.filePath = @"file_path";
+
+  std::shared_ptr<MockEndpointSecurityAPI> mockESApi = std::make_shared<MockEndpointSecurityAPI>();
+  std::shared_ptr<Serializer> bs = Protobuf::Create(mockESApi);
+
+  std::vector<uint8_t> vec = bs->SerializeBundleHashingEvent(se);
+  std::string protoStr(vec.begin(), vec.end());
+
+  pb::SantaMessage santaMsg;
+  XCTAssertTrue(santaMsg.ParseFromString(protoStr));
+
+  XCTAssertTrue(santaMsg.has_bundle());
+
+  const pb::Bundle &pbBundle = santaMsg.bundle();
+
+  pb::Hash pbHash = pbBundle.file_hash();
+  XCTAssertEqualObjects(@(pbHash.hash().c_str()), se.fileSHA256);
+  XCTAssertEqual(pbHash.type(), pb::Hash::HASH_ALGO_SHA256);
+
+  pbHash = pbBundle.bundle_hash();
+  XCTAssertEqualObjects(@(pbHash.hash().c_str()), se.fileBundleHash);
+  XCTAssertEqual(pbHash.type(), pb::Hash::HASH_ALGO_SHA256);
+
+  XCTAssertEqualObjects(@(pbBundle.bundle_name().c_str()), se.fileBundleName);
+  XCTAssertEqualObjects(@(pbBundle.bundle_id().c_str()), @"");
+  XCTAssertEqualObjects(@(pbBundle.bundle_path().c_str()), se.fileBundlePath);
+  XCTAssertEqualObjects(@(pbBundle.path().c_str()), se.filePath);
+
 }
 
 @end

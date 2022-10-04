@@ -32,6 +32,9 @@ namespace santa::santad::event_providers::endpoint_security {
 
 class EnrichedFile {
  public:
+  EnrichedFile()
+      : user_(std::nullopt), group_(std::nullopt), hash_(std::nullopt) {}
+
   EnrichedFile(std::optional<std::shared_ptr<std::string>> &&user,
                std::optional<std::shared_ptr<std::string>> &&group,
                std::optional<std::shared_ptr<std::string>> &&hash)
@@ -61,6 +64,12 @@ class EnrichedFile {
 
 class EnrichedProcess {
  public:
+  EnrichedProcess()
+      : effective_user_(std::nullopt),
+        effective_group_(std::nullopt),
+        real_user_(std::nullopt),
+        real_group_(std::nullopt) {}
+
   EnrichedProcess(std::optional<std::shared_ptr<std::string>> &&effective_user,
                   std::optional<std::shared_ptr<std::string>> &&effective_group,
                   std::optional<std::shared_ptr<std::string>> &&real_user,

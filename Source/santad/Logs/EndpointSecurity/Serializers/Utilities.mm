@@ -14,15 +14,13 @@
 
 #include "Source/santad/Logs/EndpointSecurity/Serializers/Utilities.h"
 
-// #include <bsm/libbsm.h>
-// #include <EndpointSecurity/EndpointSecurity.h>
-// #import <Foundation/Foundation.h>
-
 // These functions are exported by the Security framework, but are not included in headers
 extern "C" Boolean SecTranslocateIsTranslocatedURL(CFURLRef path, bool *isTranslocated,
                                                    CFErrorRef *__nullable error);
 extern "C" CFURLRef __nullable SecTranslocateCreateOriginalPathForURL(CFURLRef translocatedPath,
                                                                       CFErrorRef *__nullable error);
+
+using santa::santad::event_providers::endpoint_security::Message;
 
 namespace santa::santad::logs::endpoint_security::serializers::Utilities {
 
@@ -63,6 +61,18 @@ NSString *OriginalPathForTranslocation(const es_process_t *es_proc) {
   }
 
   return [origURL path];
+}
+
+es_file_t *GetAllowListTargetFile(const Message &msg) {
+  switch (msg->event_type) {
+    case ES_EVENT_TYPE_NOTIFY_CLOSE: return msg->event.close.target;
+    case ES_EVENT_TYPE_NOTIFY_RENAME: return msg->event.rename.source;
+    default:
+      // This is a programming error
+      [NSException raise:@"Unexpected type"
+                  format:@"Unexpected event type for AllowList: %d", msg->event_type];
+      return nil;
+  }
 }
 
 }  // namespace santa::santad::logs::endpoint_security::serializers::Utilities

@@ -21,11 +21,15 @@
 #include <mach/message.h>
 #include <sys/proc_info.h>
 #include <sys/wait.h>
+#include <time.h>
 #include <uuid/uuid.h>
+
+#include <optional>
 
 #import "Source/common/SNTCachedDecision.h"
 #import "Source/common/SNTConfigurator.h"
 #include "Source/common/SNTLogging.h"
+#import "Source/common/SNTStoredEvent.h"
 #include "Source/common/santa_new.pb.h"
 #include "Source/santad/EventProviders/EndpointSecurity/EndpointSecurityAPI.h"
 #include "Source/santad/Logs/EndpointSecurity/Serializers/Utilities.h"
@@ -47,6 +51,7 @@ using santa::santad::event_providers::endpoint_security::EnrichedProcess;
 using santa::santad::event_providers::endpoint_security::EnrichedRename;
 using santa::santad::event_providers::endpoint_security::EnrichedUnlink;
 using santa::santad::event_providers::endpoint_security::Message;
+using santa::santad::logs::endpoint_security::serializers::Utilities::NonNull;
 
 namespace santa::santad::logs::endpoint_security::serializers {
 
@@ -93,8 +98,10 @@ static inline void EncodeGroupInfo(pb::GroupInfo *pb_group_info, gid_t gid,
 }
 
 static inline void EncodeHash(pb::Hash *pb_hash, NSString *sha256) {
-  pb_hash->set_type(pb::Hash::HASH_ALGO_SHA256);
-  pb_hash->set_hash([sha256 UTF8String], [sha256 length]);
+  if (sha256) {
+    pb_hash->set_type(pb::Hash::HASH_ALGO_SHA256);
+    pb_hash->set_hash([sha256 UTF8String], [sha256 length]);
+  }
 }
 
 static inline void EncodeStat(pb::Stat *pb_stat, const struct stat &sb,
@@ -278,6 +285,22 @@ static inline pb::SantaMessage *CreateDefaultProto(Arena *arena, const EnrichedE
   EncodeUUID(santa_msg, msg.uuid());
   EncodeTimestamp(santa_msg->mutable_event_time(), msg.es_msg().time);
   EncodeTimestamp(santa_msg->mutable_processed_time(), msg.enrichment_time());
+
+  return santa_msg;
+}
+
+static inline pb::SantaMessage *CreateDefaultProto(Arena *arena) {
+  pb::SantaMessage *santa_msg = Arena::CreateMessage<pb::SantaMessage>(arena);
+
+  uuid_t uuid;
+  uuid_generate_random(uuid);
+
+  struct timespec ts;
+  clock_gettime(CLOCK_REALTIME, &ts);
+
+  EncodeUUID(santa_msg, uuid);
+  EncodeTimestamp(santa_msg->mutable_event_time(), ts);
+  EncodeTimestamp(santa_msg->mutable_processed_time(), ts);
 
   return santa_msg;
 }
@@ -475,11 +498,38 @@ std::vector<uint8_t> Protobuf::SerializeMessage(const EnrichedUnlink &msg) {
 }
 
 std::vector<uint8_t> Protobuf::SerializeAllowlist(const Message &msg, const std::string_view hash) {
-  return {};
+  Arena arena;
+  pb::SantaMessage *santa_msg = CreateDefaultProto(&arena);
+
+  const es_file_t *es_file = Utilities::GetAllowListTargetFile(msg);
+
+  EnrichedFile enriched_file(std::nullopt, std::nullopt, std::nullopt);
+  EnrichedProcess enriched_process;
+
+  pb::Allowlist *pb_allowlist = santa_msg->mutable_allowlist();
+  EncodeProcessInfo(pb_allowlist->mutable_instigator(), msg->version, msg->process,
+                    enriched_process);
+
+  EncodeFile(pb_allowlist->mutable_target(), es_file, enriched_file,
+             [NSString stringWithFormat:@"%s", hash.data()]);
+
+  return FinalizeProto(santa_msg);
 }
 
 std::vector<uint8_t> Protobuf::SerializeBundleHashingEvent(SNTStoredEvent *event) {
-  return {};
+  Arena arena;
+  pb::SantaMessage *santa_msg = CreateDefaultProto(&arena);
+
+  pb::Bundle *pb_bundle = santa_msg->mutable_bundle();
+
+  EncodeHash(pb_bundle->mutable_file_hash(), event.fileSHA256);
+  EncodeHash(pb_bundle->mutable_bundle_hash(), event.fileBundleHash);
+  pb_bundle->set_bundle_name([NonNull(event.fileBundleName) UTF8String]);
+  pb_bundle->set_bundle_id([NonNull(event.fileBundleID) UTF8String]);
+  pb_bundle->set_bundle_path([NonNull(event.fileBundlePath) UTF8String]);
+  pb_bundle->set_path([NonNull(event.filePath) UTF8String]);
+
+  return FinalizeProto(santa_msg);
 }
 
 std::vector<uint8_t> Protobuf::SerializeDiskAppeared(NSDictionary *props) {
