@@ -395,11 +395,13 @@ void SerializeAndCheck(es_event_type_t eventType,
       .WillOnce(testing::Return(MakeESStringToken("ENV_PATH=/path/to/bin:/and/another")))
       .WillOnce(testing::Return(MakeESStringToken("DEBUG=1")));
 
-    EXPECT_CALL(*mockESApi, ExecFDCount).WillOnce(testing::Return(3));
-    EXPECT_CALL(*mockESApi, ExecFD)
-      .WillOnce(testing::Return(&fd1))
-      .WillOnce(testing::Return(&fd2))
-      .WillOnce(testing::Return(&fd3));
+    if (esMsg->version >= 4) {
+      EXPECT_CALL(*mockESApi, ExecFDCount).WillOnce(testing::Return(3));
+      EXPECT_CALL(*mockESApi, ExecFD)
+        .WillOnce(testing::Return(&fd1))
+        .WillOnce(testing::Return(&fd2))
+        .WillOnce(testing::Return(&fd3));
+    }
   });
 }
 

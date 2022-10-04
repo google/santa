@@ -394,7 +394,7 @@ std::vector<uint8_t> Protobuf::SerializeMessage(const EnrichedExec &msg) {
     pb_exec->add_envs(tok.data, tok.length);
   }
 
-  if (@available(macOS 11.0, *)) {
+  if (msg.es_msg().version >= 4) {
     uint32_t fd_count = esapi_->ExecFDCount(&msg.es_msg().event.exec);
     for (uint32_t i = 0; i < fd_count; i++) {
       const es_fd_t *fd = esapi_->ExecFD(&msg.es_msg().event.exec, i);
