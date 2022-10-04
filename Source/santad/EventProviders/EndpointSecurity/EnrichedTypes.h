@@ -134,7 +134,10 @@ class EnrichedEventType {
   const es_message_t &es_msg() const { return *es_msg_; }
   const EnrichedProcess &instigator() const { return instigator_; }
   const uuid_t &uuid() const { return uuid_; }
-  struct timespec enrichment_time() const { return enrichment_time_; }
+  struct timespec enrichment_time() const {
+    // No reason to return a reference
+    return enrichment_time_;
+  }
 
  private:
   Message es_msg_;

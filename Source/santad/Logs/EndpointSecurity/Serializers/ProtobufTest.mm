@@ -539,15 +539,11 @@ void SerializeAndCheck(es_event_type_t eventType,
   se.fileBundlePath = @"file_bundle_path";
   se.filePath = @"file_path";
 
-  std::shared_ptr<MockEndpointSecurityAPI> mockESApi = std::make_shared<MockEndpointSecurityAPI>();
-  std::shared_ptr<Serializer> bs = Protobuf::Create(mockESApi);
-
-  std::vector<uint8_t> vec = bs->SerializeBundleHashingEvent(se);
+  std::vector<uint8_t> vec = Protobuf::Create(nullptr)->SerializeBundleHashingEvent(se);
   std::string protoStr(vec.begin(), vec.end());
 
   pb::SantaMessage santaMsg;
   XCTAssertTrue(santaMsg.ParseFromString(protoStr));
-
   XCTAssertTrue(santaMsg.has_bundle());
 
   const pb::Bundle &pbBundle = santaMsg.bundle();
@@ -564,6 +560,80 @@ void SerializeAndCheck(es_event_type_t eventType,
   XCTAssertEqualObjects(@(pbBundle.bundle_id().c_str()), @"");
   XCTAssertEqualObjects(@(pbBundle.bundle_path().c_str()), se.fileBundlePath);
   XCTAssertEqualObjects(@(pbBundle.path().c_str()), se.filePath);
+}
+
+- (void)testSerializeDiskAppeared {
+  NSDictionary *props = @{
+    @"DADevicePath" : @"",
+    @"DADeviceVendor" : @"vendor",
+    @"DADeviceModel" : @"model",
+    @"DAAppearanceTime" : @(123456789),
+    @"DAVolumePath" : [NSURL URLWithString:@"path"],
+    @"DAMediaBSDName" : @"bsd",
+    @"DAVolumeKind" : @"apfs",
+    @"DADeviceProtocol" : @"usb",
+  };
+
+  std::vector<uint8_t> vec = Protobuf::Create(nullptr)->SerializeDiskAppeared(props);
+  std::string protoStr(vec.begin(), vec.end());
+
+  pb::SantaMessage santaMsg;
+  XCTAssertTrue(santaMsg.ParseFromString(protoStr));
+  XCTAssertTrue(santaMsg.has_disk());
+
+  const pb::Disk &pbDisk = santaMsg.disk();
+
+  XCTAssertEqual(pbDisk.action(), pb::Disk::ACTION_APPEARED);
+
+  XCTAssertEqualObjects(@(pbDisk.mount().c_str()), [props[@"DAVolumePath"] path]);
+  XCTAssertEqualObjects(@(pbDisk.volume().c_str()), @"");
+  XCTAssertEqualObjects(@(pbDisk.bsd_name().c_str()), props[@"DAMediaBSDName"]);
+  XCTAssertEqualObjects(@(pbDisk.fs().c_str()), props[@"DAVolumeKind"]);
+  XCTAssertEqualObjects(@(pbDisk.model().c_str()), @"vendor model");
+  XCTAssertEqualObjects(@(pbDisk.serial().c_str()), @"");
+  XCTAssertEqualObjects(@(pbDisk.bus().c_str()), props[@"DADeviceProtocol"]);
+  XCTAssertEqualObjects(@(pbDisk.dmg_path().c_str()), @"");
+
+  // Note: `DAAppearanceTime` is treated as a reference time since 2001 and is converted to a
+  // reference time of 1970. Skip the calculation in the test here, just ensure the value is set.
+  XCTAssertGreaterThan(pbDisk.appearance().seconds(), 1);
+}
+
+- (void)testSerializeDiskDisppeared {
+  NSDictionary *props = @{
+    @"DADevicePath" : @"",
+    @"DADeviceVendor" : @"vendor",
+    @"DADeviceModel" : @"model",
+    @"DAAppearanceTime" : @(123456789),
+    @"DAVolumePath" : [NSURL URLWithString:@"path"],
+    @"DAMediaBSDName" : @"bsd",
+    @"DAVolumeKind" : @"apfs",
+    @"DADeviceProtocol" : @"usb",
+  };
+
+  std::vector<uint8_t> vec = Protobuf::Create(nullptr)->SerializeDiskDisappeared(props);
+  std::string protoStr(vec.begin(), vec.end());
+
+  pb::SantaMessage santaMsg;
+  XCTAssertTrue(santaMsg.ParseFromString(protoStr));
+  XCTAssertTrue(santaMsg.has_disk());
+
+  const pb::Disk &pbDisk = santaMsg.disk();
+
+  XCTAssertEqual(pbDisk.action(), pb::Disk::ACTION_DISAPPEARED);
+
+  XCTAssertEqualObjects(@(pbDisk.mount().c_str()), [props[@"DAVolumePath"] path]);
+  XCTAssertEqualObjects(@(pbDisk.volume().c_str()), @"");
+  XCTAssertEqualObjects(@(pbDisk.bsd_name().c_str()), props[@"DAMediaBSDName"]);
+  XCTAssertEqualObjects(@(pbDisk.fs().c_str()), props[@"DAVolumeKind"]);
+  XCTAssertEqualObjects(@(pbDisk.model().c_str()), @"vendor model");
+  XCTAssertEqualObjects(@(pbDisk.serial().c_str()), @"");
+  XCTAssertEqualObjects(@(pbDisk.bus().c_str()), props[@"DADeviceProtocol"]);
+  XCTAssertEqualObjects(@(pbDisk.dmg_path().c_str()), @"");
+
+  // Note: `DAAppearanceTime` is treated as a reference time since 2001 and is converted to a
+  // reference time of 1970. Skip the calculation in the test here, just ensure the value is set.
+  XCTAssertGreaterThan(pbDisk.appearance().seconds(), 1);
 }
 
 @end

@@ -63,6 +63,66 @@ NSString *OriginalPathForTranslocation(const es_process_t *es_proc) {
   return [origURL path];
 }
 
+static inline const mach_port_t GetDefaultIOKitCommsPort() {
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+  return kIOMasterPortDefault;
+#pragma clang diagnostic pop
+}
+
+NSString *SerialForDevice(NSString *devPath) {
+  if (!devPath.length) {
+    return nil;
+  }
+  NSString *serial;
+  io_registry_entry_t device =
+    IORegistryEntryFromPath(GetDefaultIOKitCommsPort(), devPath.UTF8String);
+  while (!serial && device) {
+    CFMutableDictionaryRef device_properties = NULL;
+    IORegistryEntryCreateCFProperties(device, &device_properties, kCFAllocatorDefault, kNilOptions);
+    NSDictionary *properties = CFBridgingRelease(device_properties);
+    if (properties[@"Serial Number"]) {
+      serial = properties[@"Serial Number"];
+    } else if (properties[@"kUSBSerialNumberString"]) {
+      serial = properties[@"kUSBSerialNumberString"];
+    }
+
+    if (serial) {
+      IOObjectRelease(device);
+      break;
+    }
+
+    io_registry_entry_t parent;
+    IORegistryEntryGetParentEntry(device, kIOServicePlane, &parent);
+    IOObjectRelease(device);
+    device = parent;
+  }
+
+  return [serial stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
+}
+
+NSString *DiskImageForDevice(NSString *devPath) {
+  devPath = [devPath stringByDeletingLastPathComponent];
+  if (!devPath.length) {
+    return nil;
+  }
+
+  io_registry_entry_t device =
+    IORegistryEntryFromPath(GetDefaultIOKitCommsPort(), devPath.UTF8String);
+  CFMutableDictionaryRef device_properties = NULL;
+  IORegistryEntryCreateCFProperties(device, &device_properties, kCFAllocatorDefault, kNilOptions);
+  NSDictionary *properties = CFBridgingRelease(device_properties);
+  IOObjectRelease(device);
+
+  if (properties[@"image-path"]) {
+    NSString *result = [[NSString alloc] initWithData:properties[@"image-path"]
+                                             encoding:NSUTF8StringEncoding];
+    return [result stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
+  } else {
+    return nil;
+  }
+}
+
 es_file_t *GetAllowListTargetFile(const Message &msg) {
   switch (msg->event_type) {
     case ES_EVENT_TYPE_NOTIFY_CLOSE: return msg->event.close.target;

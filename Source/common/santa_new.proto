@@ -223,7 +223,7 @@ message Disk {
   string serial = 7;
   string bus = 8;
   string dmg_path = 9;
-  string appearance = 10;
+  google.protobuf.Timestamp appearance = 10;
 }
 
 message Bundle {

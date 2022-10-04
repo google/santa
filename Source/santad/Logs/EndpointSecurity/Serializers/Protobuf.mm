@@ -19,6 +19,7 @@
 #include <bsm/libbsm.h>
 #include <google/protobuf/arena.h>
 #include <mach/message.h>
+#include <math.h>
 #include <sys/proc_info.h>
 #include <sys/wait.h>
 #include <time.h>
@@ -51,7 +52,13 @@ using santa::santad::event_providers::endpoint_security::EnrichedProcess;
 using santa::santad::event_providers::endpoint_security::EnrichedRename;
 using santa::santad::event_providers::endpoint_security::EnrichedUnlink;
 using santa::santad::event_providers::endpoint_security::Message;
+using santa::santad::logs::endpoint_security::serializers::Utilities::EffectiveGroup;
+using santa::santad::logs::endpoint_security::serializers::Utilities::EffectiveUser;
 using santa::santad::logs::endpoint_security::serializers::Utilities::NonNull;
+using santa::santad::logs::endpoint_security::serializers::Utilities::Pid;
+using santa::santad::logs::endpoint_security::serializers::Utilities::Pidversion;
+using santa::santad::logs::endpoint_security::serializers::Utilities::RealGroup;
+using santa::santad::logs::endpoint_security::serializers::Utilities::RealUser;
 
 namespace santa::santad::logs::endpoint_security::serializers {
 
@@ -77,8 +84,8 @@ static inline void EncodeTimestamp(Timestamp *timestamp, struct timeval tv) {
 }
 
 static inline void EncodeProcessID(pb::ProcessID *proc_id, const audit_token_t &tok) {
-  proc_id->set_pid(audit_token_to_pid(tok));
-  proc_id->set_pidversion(audit_token_to_pidversion(tok));
+  proc_id->set_pid(Pid(tok));
+  proc_id->set_pidversion(Pidversion(tok));
 }
 
 static inline void EncodeUserInfo(pb::UserInfo *pb_user_info, uid_t uid,
@@ -149,13 +156,13 @@ static inline void EncodeProcessInfo(pb::ProcessInfo *pb_proc_info, uint32_t mes
   pb_proc_info->set_group_id(es_proc->group_id);
   pb_proc_info->set_session_id(es_proc->session_id);
 
-  EncodeUserInfo(pb_proc_info->mutable_effective_user(), audit_token_to_euid(es_proc->audit_token),
+  EncodeUserInfo(pb_proc_info->mutable_effective_user(), EffectiveUser(es_proc->audit_token),
                  enriched_proc.effective_user());
-  EncodeUserInfo(pb_proc_info->mutable_real_user(), audit_token_to_ruid(es_proc->audit_token),
+  EncodeUserInfo(pb_proc_info->mutable_real_user(), RealUser(es_proc->audit_token),
                  enriched_proc.real_user());
-  EncodeGroupInfo(pb_proc_info->mutable_effective_group(),
-                  audit_token_to_egid(es_proc->audit_token), enriched_proc.effective_group());
-  EncodeGroupInfo(pb_proc_info->mutable_real_group(), audit_token_to_rgid(es_proc->audit_token),
+  EncodeGroupInfo(pb_proc_info->mutable_effective_group(), EffectiveGroup(es_proc->audit_token),
+                  enriched_proc.effective_group());
+  EncodeGroupInfo(pb_proc_info->mutable_real_group(), RealGroup(es_proc->audit_token),
                   enriched_proc.real_group());
 
   pb_proc_info->set_is_platform_binary(es_proc->is_platform_binary);
@@ -200,8 +207,8 @@ void EncodeExitStatus(pb::Exit *pb_exit, int exitStatus) {
   }
 }
 
-void EncodeCertificateInfo(pb::CertificateInfo *pb_cert_info, NSString *cert_hash,
-                           NSString *common_name) {
+static inline void EncodeCertificateInfo(pb::CertificateInfo *pb_cert_info, NSString *cert_hash,
+                                         NSString *common_name) {
   if (cert_hash) {
     EncodeHash(pb_cert_info->mutable_hash(), cert_hash);
   }
@@ -211,14 +218,21 @@ void EncodeCertificateInfo(pb::CertificateInfo *pb_cert_info, NSString *cert_has
   }
 }
 
-void EncodePath(std::string *buf, const es_file_t *dir, const es_string_token_t file) {
+static inline void EncodePath(std::string *buf, const es_file_t *dir,
+                              const es_string_token_t file) {
   buf->append(dir->path.data);
   buf->append("/");
   buf->append(file.data);
 }
 
-void EncodePath(std::string *buf, const es_file_t *es_file) {
+static inline void EncodePath(std::string *buf, const es_file_t *es_file) {
   buf->append(es_file->path.data);
+}
+
+static inline void EncodeString(std::string *buf, NSString *value) {
+  if (value) {
+    buf->append(std::string_view([value UTF8String], [value length]));
+  }
 }
 
 pb::Execution::Decision GetDecisionEnum(SNTEventState event_state) {
@@ -532,12 +546,64 @@ std::vector<uint8_t> Protobuf::SerializeBundleHashingEvent(SNTStoredEvent *event
   return FinalizeProto(santa_msg);
 }
 
+static void EncodeDisk(pb::Disk *pb_disk, pb::Disk_Action action, NSDictionary *props) {
+  pb_disk->set_action(action);
+
+  NSString *dmg_path = nil;
+  NSString *serial = nil;
+  if ([props[@"DADeviceModel"] isEqual:@"Disk Image"]) {
+    dmg_path = Utilities::DiskImageForDevice(props[@"DADevicePath"]);
+  } else {
+    serial = Utilities::SerialForDevice(props[@"DADevicePath"]);
+  }
+
+  NSString *model = [NSString
+    stringWithFormat:@"%@ %@", NonNull(props[@"DADeviceVendor"]), NonNull(props[@"DADeviceModel"])];
+  model = [model stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
+
+  EncodeString(pb_disk->mutable_mount(), [props[@"DAVolumePath"] path]);
+  EncodeString(pb_disk->mutable_volume(), props[@"DAVolumeName"]);
+  EncodeString(pb_disk->mutable_bsd_name(), props[@"DAMediaBSDName"]);
+  EncodeString(pb_disk->mutable_fs(), props[@"DAVolumeKind"]);
+  EncodeString(pb_disk->mutable_model(), model);
+  EncodeString(pb_disk->mutable_serial(), serial);
+  EncodeString(pb_disk->mutable_bus(), props[@"DADeviceProtocol"]);
+  EncodeString(pb_disk->mutable_dmg_path(), dmg_path);
+
+  if (props[@"DAAppearanceTime"]) {
+    // Note: `DAAppearanceTime` is set via `CFAbsoluteTimeGetCurrent`, which uses the defined
+    // reference date of `Jan 1 2001 00:00:00 GMT` (not the typical `00:00:00 UTC on 1 January
+    // 1970`).
+    NSDate *appearance =
+      [NSDate dateWithTimeIntervalSinceReferenceDate:[props[@"DAAppearanceTime"] doubleValue]];
+    NSTimeInterval interval = [appearance timeIntervalSince1970];
+    double seconds;
+    double fractional = modf(interval, &seconds);
+    struct timespec ts = {
+      .tv_sec = (long)seconds,
+      .tv_nsec = (long)(fractional * NSEC_PER_SEC),
+    };
+    EncodeTimestamp(pb_disk->mutable_appearance(), ts);
+    Timestamp timestamp = pb_disk->appearance();
+  }
+}
+
 std::vector<uint8_t> Protobuf::SerializeDiskAppeared(NSDictionary *props) {
-  return {};
+  Arena arena;
+  pb::SantaMessage *santa_msg = CreateDefaultProto(&arena);
+
+  EncodeDisk(santa_msg->mutable_disk(), pb::Disk::ACTION_APPEARED, props);
+
+  return FinalizeProto(santa_msg);
 }
 
 std::vector<uint8_t> Protobuf::SerializeDiskDisappeared(NSDictionary *props) {
-  return {};
+  Arena arena;
+  pb::SantaMessage *santa_msg = CreateDefaultProto(&arena);
+
+  EncodeDisk(santa_msg->mutable_disk(), pb::Disk::ACTION_DISAPPEARED, props);
+
+  return FinalizeProto(santa_msg);
 }
 
 }  // namespace santa::santad::logs::endpoint_security::serializers

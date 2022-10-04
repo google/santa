@@ -46,77 +46,16 @@ using santa::santad::event_providers::endpoint_security::EnrichedLink;
 using santa::santad::event_providers::endpoint_security::EnrichedRename;
 using santa::santad::event_providers::endpoint_security::EnrichedUnlink;
 using santa::santad::event_providers::endpoint_security::Message;
+using santa::santad::logs::endpoint_security::serializers::Utilities::NonNull;
+using santa::santad::logs::endpoint_security::serializers::Utilities::Pid;
+using santa::santad::logs::endpoint_security::serializers::Utilities::Pidversion;
+using santa::santad::logs::endpoint_security::serializers::Utilities::RealGroup;
+using santa::santad::logs::endpoint_security::serializers::Utilities::RealUser;
 
 namespace santa::santad::logs::endpoint_security::serializers {
 
-using Utilities::NonNull;
-using Utilities::Pid;
-using Utilities::Pidversion;
-using Utilities::RealGroup;
-using Utilities::RealUser;
-
 static inline SanitizableString FilePath(const es_file_t *file) {
   return SanitizableString(file);
-}
-
-static inline const mach_port_t GetDefaultIOKitCommsPort() {
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wdeprecated-declarations"
-  return kIOMasterPortDefault;
-#pragma clang diagnostic pop
-}
-
-static NSString *SerialForDevice(NSString *devPath) {
-  if (!devPath.length) {
-    return nil;
-  }
-  NSString *serial;
-  io_registry_entry_t device =
-    IORegistryEntryFromPath(GetDefaultIOKitCommsPort(), devPath.UTF8String);
-  while (!serial && device) {
-    CFMutableDictionaryRef device_properties = NULL;
-    IORegistryEntryCreateCFProperties(device, &device_properties, kCFAllocatorDefault, kNilOptions);
-    NSDictionary *properties = CFBridgingRelease(device_properties);
-    if (properties[@"Serial Number"]) {
-      serial = properties[@"Serial Number"];
-    } else if (properties[@"kUSBSerialNumberString"]) {
-      serial = properties[@"kUSBSerialNumberString"];
-    }
-
-    if (serial) {
-      IOObjectRelease(device);
-      break;
-    }
-
-    io_registry_entry_t parent;
-    IORegistryEntryGetParentEntry(device, kIOServicePlane, &parent);
-    IOObjectRelease(device);
-    device = parent;
-  }
-
-  return [serial stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
-}
-
-static NSString *DiskImageForDevice(NSString *devPath) {
-  devPath = [devPath stringByDeletingLastPathComponent];
-  if (!devPath.length) {
-    return nil;
-  }
-
-  io_registry_entry_t device =
-    IORegistryEntryFromPath(GetDefaultIOKitCommsPort(), devPath.UTF8String);
-  CFMutableDictionaryRef device_properties = NULL;
-  IORegistryEntryCreateCFProperties(device, &device_properties, kCFAllocatorDefault, kNilOptions);
-  NSDictionary *properties = CFBridgingRelease(device_properties);
-  IOObjectRelease(device);
-
-  if (properties[@"image-path"]) {
-    NSString *result = [[NSString alloc] initWithData:properties[@"image-path"]
-                                             encoding:NSUTF8StringEncoding];
-    return [result stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
-  } else {
-    return nil;
-  }
 }
 
 static NSDateFormatter *GetDateFormatter() {
@@ -480,12 +419,12 @@ std::vector<uint8_t> BasicString::SerializeBundleHashingEvent(SNTStoredEvent *ev
 }
 
 std::vector<uint8_t> BasicString::SerializeDiskAppeared(NSDictionary *props) {
-  NSString *dmgPath = nil;
+  NSString *dmg_path = nil;
   NSString *serial = nil;
   if ([props[@"DADeviceModel"] isEqual:@"Disk Image"]) {
-    dmgPath = DiskImageForDevice(props[@"DADevicePath"]);
+    dmg_path = Utilities::DiskImageForDevice(props[@"DADevicePath"]);
   } else {
-    serial = SerialForDevice(props[@"DADevicePath"]);
+    serial = Utilities::SerialForDevice(props[@"DADevicePath"]);
   }
 
   NSString *model = [NSString
@@ -513,7 +452,7 @@ std::vector<uint8_t> BasicString::SerializeDiskAppeared(NSDictionary *props) {
   str.append("|bus=");
   str.append([NonNull(props[@"DADeviceProtocol"]) UTF8String]);
   str.append("|dmgpath=");
-  str.append([NonNull(dmgPath) UTF8String]);
+  str.append([NonNull(dmg_path) UTF8String]);
   str.append("|appearance=");
   str.append([NonNull(appearanceDateString) UTF8String]);
 

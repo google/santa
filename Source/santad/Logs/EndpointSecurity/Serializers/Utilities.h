@@ -39,14 +39,23 @@ static inline pid_t RealGroup(const audit_token_t &tok) {
   return audit_token_to_rgid(tok);
 }
 
+static inline pid_t EffectiveUser(const audit_token_t &tok) {
+  return audit_token_to_euid(tok);
+}
+
+static inline pid_t EffectiveGroup(const audit_token_t &tok) {
+  return audit_token_to_egid(tok);
+}
+
 static inline NSString *NonNull(NSString *str) {
   return str ?: @"";
 }
 
+NSString *OriginalPathForTranslocation(const es_process_t *es_proc);
+NSString *SerialForDevice(NSString *devPath);
+NSString *DiskImageForDevice(NSString *devPath);
 es_file_t *GetAllowListTargetFile(
   const santa::santad::event_providers::endpoint_security::Message &msg);
-
-NSString *OriginalPathForTranslocation(const es_process_t *es_proc);
 
 }  // namespace santa::santad::logs::endpoint_security::serializers::Utilities
 
