@@ -8,8 +8,8 @@ package(
 licenses(["notice"])
 
 proto_library(
-    name = "santa_new_proto",
-    srcs = ["santa_new.proto"],
+    name = "santa_proto",
+    srcs = ["santa.proto"],
     deps = [
         "@com_google_protobuf//:any_proto",
         "@com_google_protobuf//:timestamp_proto",
@@ -18,7 +18,7 @@ proto_library(
 
 cc_proto_library(
     name = "santa_cc_proto",
-    deps = [":santa_new_proto"],
+    deps = [":santa_proto"],
 )
 
 # Note: Simple wrapper for a `cc_proto_library` target which cannot be directly
@@ -27,15 +27,6 @@ cc_library(
     name = "santa_cc_proto_library_wrapper",
     deps = [
         ":santa_cc_proto",
-    ],
-)
-
-proto_library(
-    name = "santa_proto",
-    srcs = ["santa.proto"],
-    deps = [
-        "@com_google_protobuf//:any_proto",
-        "@com_google_protobuf//:timestamp_proto",
     ],
 )
 
