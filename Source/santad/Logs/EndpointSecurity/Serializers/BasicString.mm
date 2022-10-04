@@ -49,11 +49,11 @@ using santa::santad::event_providers::endpoint_security::Message;
 
 namespace santa::santad::logs::endpoint_security::serializers {
 
+using Utilities::NonNull;
 using Utilities::Pid;
 using Utilities::Pidversion;
 using Utilities::RealGroup;
 using Utilities::RealUser;
-using Utilities::NonNull;
 
 static inline SanitizableString FilePath(const es_file_t *file) {
   return SanitizableString(file);

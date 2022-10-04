@@ -564,7 +564,6 @@ void SerializeAndCheck(es_event_type_t eventType,
   XCTAssertEqualObjects(@(pbBundle.bundle_id().c_str()), @"");
   XCTAssertEqualObjects(@(pbBundle.bundle_path().c_str()), se.fileBundlePath);
   XCTAssertEqualObjects(@(pbBundle.path().c_str()), se.filePath);
-
 }
 
 @end

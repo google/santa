@@ -756,8 +756,8 @@ santa_unit_test(
     name = "EndpointSecuritySerializerUtilitiesTest",
     srcs = ["Logs/EndpointSecurity/Serializers/UtilitiesTest.mm"],
     deps = [
-        ":EndpointSecuritySerializerUtilities",
         ":EndpointSecurityMessage",
+        ":EndpointSecuritySerializerUtilities",
         ":MockEndpointSecurityAPI",
         "//Source/common:TestUtils",
         "@OCMock",
