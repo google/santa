@@ -66,9 +66,6 @@ google::protobuf::Any TestAnyTimestamp(int64_t s, int32_t n) {
                         withIntermediateDirectories:YES
                                          attributes:nil
                                               error:nil]);
-
-  // NSLog(@"testDir: %@", self.testDir);
-  // NSLog(@"baseDir: %@", self.baseDir);
 }
 
 - (void)tearDown {
