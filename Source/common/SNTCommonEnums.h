@@ -1,4 +1,4 @@
-/// Copyright 2015 Google Inc. All rights reserved.
+/// Copyright 2015-2022 Google Inc. All rights reserved.
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -57,6 +57,7 @@ typedef NS_ENUM(NSInteger, SNTEventState) {
   SNTEventStateBlockCertificate = 1 << 18,
   SNTEventStateBlockScope = 1 << 19,
   SNTEventStateBlockTeamID = 1 << 20,
+  SNTEventStateBlockLongPath = 1 << 21,
 
   // Bits 24-31 store allow decision types
   SNTEventStateAllowUnknown = 1 << 24,
@@ -120,5 +121,4 @@ typedef NS_ENUM(NSInteger, SNTMetricFormatType) {
 static const char *kSantaDPath =
   "/Applications/Santa.app/Contents/Library/SystemExtensions/"
   "com.google.santa.daemon.systemextension/Contents/MacOS/com.google.santa.daemon";
-static const char *kSantaCtlPath = "/Applications/Santa.app/Contents/MacOS/santactl";
 static const char *kSantaAppPath = "/Applications/Santa.app";

@@ -1,4 +1,4 @@
-/// Copyright 2015 Google Inc. All rights reserved.
+/// Copyright 2015-2022 Google Inc. All rights reserved.
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -51,18 +51,18 @@
 ///  Designated initializer.
 ///
 - (instancetype)initWithIdentifier:(NSString *)identifier
-                         state:(SNTRuleState)state
-                          type:(SNTRuleType)type
-                     customMsg:(NSString *)customMsg
-                     timestamp:(NSUInteger)timestamp;
+                             state:(SNTRuleState)state
+                              type:(SNTRuleType)type
+                         customMsg:(NSString *)customMsg
+                         timestamp:(NSUInteger)timestamp;
 
 ///
 ///  Initialize with a default timestamp: current time if rule state is transitive, 0 otherwise.
 ///
 - (instancetype)initWithIdentifier:(NSString *)identifier
-                         state:(SNTRuleState)state
-                          type:(SNTRuleType)type
-                     customMsg:(NSString *)customMsg;
+                             state:(SNTRuleState)state
+                              type:(SNTRuleType)type
+                         customMsg:(NSString *)customMsg;
 
 ///
 ///  Initialize with a dictionary received from a sync server.

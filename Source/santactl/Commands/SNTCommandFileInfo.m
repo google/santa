@@ -1,4 +1,4 @@
-/// Copyright 2015 Google Inc. All rights reserved.
+/// Copyright 2015-2022 Google Inc. All rights reserved.
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -385,6 +385,7 @@ REGISTER_COMMAND_NAME(@"fileinfo")
         case SNTEventStateBlockScope: [output appendString:@" (Scope)"]; break;
         case SNTEventStateAllowCompiler: [output appendString:@" (Compiler)"]; break;
         case SNTEventStateAllowTransitive: [output appendString:@" (Transitive)"]; break;
+        case SNTEventStateBlockLongPath: [output appendString:@" (Long Path)"]; break;
 
         default: output = @"None".mutableCopy; break;
       }

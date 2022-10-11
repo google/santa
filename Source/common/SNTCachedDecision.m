@@ -1,4 +1,4 @@
-/// Copyright 2015 Google Inc. All rights reserved.
+/// Copyright 2015-2022 Google Inc. All rights reserved.
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -15,4 +15,14 @@
 #import "Source/common/SNTCachedDecision.h"
 
 @implementation SNTCachedDecision
+
+- (instancetype)initWithEndpointSecurityFile:(const es_file_t *)esFile {
+  self = [super init];
+  if (self) {
+    _vnodeId.fsid = (uint64_t)esFile->stat.st_dev;
+    _vnodeId.fileid = esFile->stat.st_ino;
+  }
+  return self;
+}
+
 @end

@@ -1,4 +1,4 @@
-/// Copyright 2017 Google Inc. All rights reserved.
+/// Copyright 2017-2022 Google Inc. All rights reserved.
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -13,19 +13,21 @@
 ///    limitations under the License.
 
 #import <Foundation/Foundation.h>
+#include <bsm/libbsm.h>
 
-#import "Source/common/SNTCommon.h"
-#import "Source/santad/EventProviders/SNTEventProvider.h"
+#include <memory>
 
-@class SNTEventLog;
+#include "Source/santad/EventProviders/EndpointSecurity/Message.h"
+#include "Source/santad/Logs/EndpointSecurity/Logger.h"
 
 @interface SNTCompilerController : NSObject
-// Designated initializer takes a SNTEventLog instance so that we can
-// call saveDecisionDetails: to create a fake cached decision for transitive
-// rule creation requests that are still pending.
-- (instancetype)initWithEventProvider:(id<SNTEventProvider>)eventProvider;
 
-// Whenever an executable file is closed or renamed whitelist the resulting file.
-// We assume that we have already determined that the writing process was a compiler.
-- (void)createTransitiveRule:(santa_message_t)message;
+// This function will determine if the instigating process was a compiler and,
+// for appropriate events, will create appropriate transitive rules.
+- (BOOL)handleEvent:(const santa::santad::event_providers::endpoint_security::Message &)msg
+         withLogger:(std::shared_ptr<santa::santad::logs::endpoint_security::Logger>)logger;
+
+// Set whether or not the given audit token should be tracked as a compiler
+- (void)setProcess:(const audit_token_t &)tok isCompiler:(bool)isCompiler;
+
 @end

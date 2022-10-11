@@ -35,14 +35,6 @@ expected when mass-deploying.
 
 - Additionally, confirm the system extension and TCC/PPPC profiles are present
 as mentioned under the ["MDM-Specific Client Configuration"](configuration.md) section of that page
-- If there is no "Cache Info" section, the EnableSysxCache key may not
-be present in the payload configuring Santa or the framework applying the key
-locally may not have properly loaded it into the applicable domain. You can
-confirm its presence or absence with the following command:
-
-```sh
-sudo /usr/bin/profiles -L -o stdout-xml | grep -A1 EnableSysxCache
-```
 
 - The local preferences would dictate the sync server used as well, and the
 next sections help you confirm how many rules have in fact been recognized by

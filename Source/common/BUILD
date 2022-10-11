@@ -84,14 +84,8 @@ objc_library(
 )
 
 objc_library(
-    name = "SNTAllowlistInfo",
-    srcs = ["SNTAllowlistInfo.m"],
-    hdrs = ["SNTAllowlistInfo.h"],
-)
-
-objc_library(
     name = "SNTCommonEnums",
-    hdrs = ["SNTCommonEnums.h"],
+    textual_hdrs = ["SNTCommonEnums.h"],
 )
 
 objc_library(
@@ -107,6 +101,23 @@ objc_library(
 )
 
 objc_library(
+    name = "SNTKVOManager",
+    srcs = ["SNTKVOManager.mm"],
+    hdrs = ["SNTKVOManager.h"],
+    deps = [
+        ":SNTLogging",
+    ],
+)
+
+santa_unit_test(
+    name = "SNTKVOManagerTest",
+    srcs = ["SNTKVOManagerTest.mm"],
+    deps = [
+        ":SNTKVOManager",
+    ],
+)
+
+objc_library(
     name = "SNTDropRootPrivs",
     srcs = ["SNTDropRootPrivs.m"],
     hdrs = ["SNTDropRootPrivs.h"],
@@ -117,6 +128,7 @@ objc_library(
     srcs = ["SNTFileInfo.m"],
     hdrs = ["SNTFileInfo.h"],
     deps = [
+        ":SNTLogging",
         "@FMDB",
         "@MOLCodesignChecker",
     ],
@@ -298,13 +310,40 @@ santa_unit_test(
     deps = [":SNTMetricSet"],
 )
 
+santa_unit_test(
+    name = "SNTCachedDecisionTest",
+    srcs = ["SNTCachedDecisionTest.mm"],
+    deps = [
+        "//Source/common:SNTCachedDecision",
+        "//Source/common:TestUtils",
+        "@OCMock",
+    ],
+)
+
 test_suite(
     name = "unit_tests",
     tests = [
+        ":SNTCachedDecisionTest",
         ":SNTFileInfoTest",
+        ":SNTKVOManagerTest",
         ":SNTMetricSetTest",
         ":SNTPrefixTreeTest",
+        ":SNTRuleTest",
         ":SantaCacheTest",
     ],
     visibility = ["//:santa_package_group"],
+)
+
+objc_library(
+    name = "TestUtils",
+    testonly = 1,
+    srcs = ["TestUtils.mm"],
+    hdrs = ["TestUtils.h"],
+    sdk_dylibs = [
+        "bsm",
+    ],
+    deps = [
+        "@OCMock",
+        "@com_google_googletest//:gtest",
+    ],
 )

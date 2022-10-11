@@ -1,4 +1,4 @@
-/// Copyright 2015 Google Inc. All rights reserved.
+/// Copyright 2015-2022 Google Inc. All rights reserved.
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -18,8 +18,11 @@
 @implementation SNTSystemInfo
 
 + (NSString *)serialNumber {
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
   io_service_t platformExpert =
     IOServiceGetMatchingService(kIOMasterPortDefault, IOServiceMatching("IOPlatformExpertDevice"));
+#pragma clang diagnostic pop
   if (!platformExpert) return nil;
 
   NSString *serial = CFBridgingRelease(IORegistryEntryCreateCFProperty(
@@ -31,8 +34,11 @@
 }
 
 + (NSString *)hardwareUUID {
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
   io_service_t platformExpert =
     IOServiceGetMatchingService(kIOMasterPortDefault, IOServiceMatching("IOPlatformExpertDevice"));
+#pragma clang diagnostic pop
   if (!platformExpert) return nil;
 
   NSString *uuid = CFBridgingRelease(IORegistryEntryCreateCFProperty(

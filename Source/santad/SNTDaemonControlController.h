@@ -1,4 +1,4 @@
-/// Copyright 2015 Google Inc. All rights reserved.
+/// Copyright 2015-2022 Google Inc. All rights reserved.
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -14,10 +14,12 @@
 
 #import <Foundation/Foundation.h>
 
-#import "Source/common/SNTXPCControlInterface.h"
-#import "Source/santad/EventProviders/SNTEventProvider.h"
+#include <memory>
 
-@class SNTEventLog;
+#import "Source/common/SNTXPCControlInterface.h"
+#include "Source/santad/EventProviders/AuthResultCache.h"
+#import "Source/santad/Logs/EndpointSecurity/Logger.h"
+
 @class SNTNotificationQueue;
 @class SNTSyncdQueue;
 
@@ -26,7 +28,10 @@
 ///
 @interface SNTDaemonControlController : NSObject <SNTDaemonControlXPC>
 
-- (instancetype)initWithEventProvider:(id<SNTEventProvider>)driverManager
-                    notificationQueue:(SNTNotificationQueue *)notQueue
-                           syncdQueue:(SNTSyncdQueue *)syncdQueue;
+- (instancetype)
+  initWithAuthResultCache:
+    (std::shared_ptr<santa::santad::event_providers::AuthResultCache>)authResultCache
+        notificationQueue:(SNTNotificationQueue *)notQueue
+               syncdQueue:(SNTSyncdQueue *)syncdQueue
+                   logger:(std::shared_ptr<santa::santad::logs::endpoint_security::Logger>)logger;
 @end

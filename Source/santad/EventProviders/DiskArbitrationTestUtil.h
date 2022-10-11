@@ -1,4 +1,4 @@
-/// Copyright 2021 Google Inc. All rights reserved.
+/// Copyright 2021-2022 Google Inc. All rights reserved.
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -50,7 +50,8 @@ typedef void (^MockDADiskAppearedCallback)(DADiskRef ref);
 @end
 
 //
-// All DiskArbitration functions used in SNTDeviceManager and shimmed out accordingly.
+// All DiskArbitration functions used in SNTEndpointSecurityDeviceManager
+// and shimmed out accordingly.
 //
 CF_EXTERN_C_BEGIN
 

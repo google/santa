@@ -1,4 +1,4 @@
-/// Copyright 2015 Google Inc. All rights reserved.
+/// Copyright 2015-2022 Google Inc. All rights reserved.
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -15,8 +15,8 @@
 #import <Foundation/Foundation.h>
 #import <MOLCertificate/MOLCertificate.h>
 
-#import "Source/common/SNTCommonEnums.h"
 #import "Source/common/SNTCommon.h"
+#import "Source/common/SNTCommonEnums.h"
 
 @class MOLCodesignChecker;
 @class SNTCachedDecision;

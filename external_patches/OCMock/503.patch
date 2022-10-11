@@ -1,0 +1,115 @@
+From 84fcb4d370644332e12c2d3c4a38796d9c1e3fd3 Mon Sep 17 00:00:00 2001
+From: Dave MacLachlan <dmaclach@gmail.com>
+Date: Mon, 12 Jul 2021 17:00:45 -0700
+Subject: [PATCH] Fix up crash when calling object_getClass on non object.
+
+This fixes up a crash that was found in Chrome when running on an iOS 15 device.
+It did not show up on the simulator.
+
+https://chromium-review.googlesource.com/c/chromium/src/+/3011651
+
+Calling `object_getClass` on something that isn't an object is at best undefined
+behavior.
+---
+ Source/OCMock/OCMArg.m             |  6 +++---
+ Source/OCMock/OCMPassByRefSetter.h |  3 +++
+ Source/OCMock/OCMPassByRefSetter.m | 32 ++++++++++++++++++++++++++++++
+ 3 files changed, 38 insertions(+), 3 deletions(-)
+
+diff --git a/Source/OCMock/OCMArg.m b/Source/OCMock/OCMArg.m
+index 063181ac..9902d610 100644
+--- a/Source/OCMock/OCMArg.m
++++ b/Source/OCMock/OCMArg.m
+@@ -35,7 +35,7 @@ + (void *)anyPointer
+ 
+ + (id __autoreleasing *)anyObjectRef
+ {
+-    return (id *)0x01234567;
++    return (id *)[self anyPointer];
+ }
+ 
+ + (SEL)anySelector
+@@ -127,9 +127,9 @@ + (id)resolveSpecialValues:(NSValue *)value
+     if(type[0] == '^')
+     {
+         void *pointer = [value pointerValue];
+-        if(pointer == (void *)0x01234567)
++        if(pointer == [self anyPointer])
+             return [OCMArg any];
+-        if((pointer != NULL) && (object_getClass((id)pointer) == [OCMPassByRefSetter class]))
++        if((pointer != NULL) && [OCMPassByRefSetter ptrIsPassByRefSetter:pointer])
+             return (id)pointer;
+     }
+     else if(type[0] == ':')
+diff --git a/Source/OCMock/OCMPassByRefSetter.h b/Source/OCMock/OCMPassByRefSetter.h
+index a02c67f5..f3d68ff4 100644
+--- a/Source/OCMock/OCMPassByRefSetter.h
++++ b/Source/OCMock/OCMPassByRefSetter.h
+@@ -23,4 +23,7 @@
+ 
+ - (id)initWithValue:(id)value;
+ 
++// Returns YES if ptr is actually a OCMPassByRefSetter
+++ (BOOL)ptrIsPassByRefSetter:(void*)ptr;
++
+ @end
+diff --git a/Source/OCMock/OCMPassByRefSetter.m b/Source/OCMock/OCMPassByRefSetter.m
+index b3e20755..8f30459b 100644
+--- a/Source/OCMock/OCMPassByRefSetter.m
++++ b/Source/OCMock/OCMPassByRefSetter.m
+@@ -19,11 +19,30 @@
+ 
+ @implementation OCMPassByRefSetter
+ 
++// Stores a reference to each of our OCMPassByRefSetters so that OCMArg can
++// check any given pointer to verify that it is an OCMPassByRefSetter.
++// The pointers are stored as naked pointers with no reference counts.
++// Note: all accesses protected by @synchronized(gPointerTable)
++static NSHashTable *gPointerTable = NULL;
++
+++ (void)initialize
++{
++    if (self == [OCMPassByRefSetter class])
++    {
++        gPointerTable = [[NSHashTable hashTableWithOptions:NSPointerFunctionsOpaqueMemory | NSPointerFunctionsOpaquePersonality] retain];
++    }
++}
++
+ - (id)initWithValue:(id)aValue
+ {
+     if((self = [super init]))
+     {
+         value = [aValue retain];
++        @synchronized(gPointerTable)
++        {
++            // This will throw if somehow we manage to put two of the same pointer in the table.
++            NSHashInsertKnownAbsent(gPointerTable, self);
++        }
+     }
+ 
+     return self;
+@@ -32,6 +51,11 @@ - (id)initWithValue:(id)aValue
+ - (void)dealloc
+ {
+     [value release];
++    @synchronized(gPointerTable)
++    {
++        NSAssert(NSHashGet(gPointerTable, self) != NULL, @"self should be in the hash table");
++        NSHashRemove(gPointerTable, self);
++    }
+     [super dealloc];
+ }
+ 
+@@ -47,4 +71,12 @@ - (void)handleArgument:(id)arg
+     }
+ }
+ 
+++ (BOOL)ptrIsPassByRefSetter:(void*)ptr
++{
++    @synchronized(gPointerTable)
++    {
++        return NSHashGet(gPointerTable, ptr) != NULL;
++    }
++}
++
+ @end
