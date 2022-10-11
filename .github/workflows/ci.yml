@@ -11,95 +11,64 @@ on:
       - 'Source/**'
 
 jobs:
-  # build_userspace:
-  #   strategy:
-  #     fail-fast: false
-  #     matrix:
-  #       os: [self-hosted]
-  #   runs-on: ${{ matrix.os }}
-  #   steps:
-  #     - uses: actions/checkout@v2
-  #     - name: set path
-  #       run: echo "/opt/homebrew/bin/" >> $GITHUB_PATH
-  #     - name: Build Userspace
-  #       run: bazel build --apple_generate_dsym -c opt :release --define=SANTA_BUILD_TYPE=adhoc
+  build_userspace:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [self-hosted]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v2
+      - name: set path
+        run: echo "/opt/homebrew/bin/" >> $GITHUB_PATH
+      - name: Build Userspace
+        run: bazel build --apple_generate_dsym -c opt :release --define=SANTA_BUILD_TYPE=adhoc
 
-  # start_vm:
-  #   runs-on: outer
-  #   steps:
-  #     - uses: actions/checkout@v2
-  #     # - name: setup
-  #     #   run: pip3 install google-cloud-storage==2.5.0
-  #     - name: run VM
-  #       run: python3 Testing/integration/actions/start-vm.py VM.bundle.tar.gz.enc
+  start_vm:
+    runs-on: e2e-host
+    steps:
+      - uses: actions/checkout@v2
+      - name: Start VM
+        run: python3 Testing/integration/actions/start-vm.py VM.bundle.tar.gz.enc
 
   integration:
-    runs-on: inner
+    runs-on: e2e-vm
     strategy:
       fail-fast: false
     env:
       VM_PASSWORD: ${{ secrets.VM_PASSWORD }}
     steps:
       - uses: actions/checkout@v2
-      - name: install configuration profile
+      - name: Install configuration profile
         run: bazel run //Testing/integration:install_profile -- Testing/integration/configs/default.mobileconfig
-      - name: set path
+      - name: Add homebrew to PATH
         run: echo "/opt/homebrew/bin/" >> $GITHUB_PATH
-      - name: install and run moroz
+      - name: Install and start moroz
         run: |
           go install github.com/kallsyms/moroz/cmd/moroz@d0bba3f4
           ~/go/bin/moroz -configs="$GITHUB_WORKSPACE/Testing/integration/configs/moroz_default/global.toml" -use-tls=false &
-      - name: start santa and sync
+      - name: Start santa and sync
         run: |
           bazel run :reload --define=SANTA_BUILD_TYPE=adhoc
           sudo santactl sync --debug
-      - name: run integration test binaries
+      - name: Run integration test binaries
         run: bazel test //Testing/integration:integration_tests
-      - name: test config changes
-        run: |
-          set -x
-          bazel run //Testing/integration:install_profile -- Testing/integration/configs/usb-block.mobileconfig
-          if [[ "$(santactl status --json | jq .daemon.block_usb)" != "true" ]]; then
-            echo "USB blocking config change didnt take effect" >&2
-            exit 1
-          fi
-      - name: test sync server changes
-        run: |
-          set -x
-          bazel run //Testing/integration:install_profile -- Testing/integration/configs/minimal.mobileconfig
-          bazel run :reload --define=SANTA_BUILD_TYPE=adhoc
-          sudo santactl sync --debug
-          if [[ "$(santactl status --json | jq .daemon.block_usb)" != "false" ]]; then
-            echo "USB blocking enabled with minimal config" >&2
-            exit 1
-          fi
-          killall moroz
-          ~/go/bin/moroz -configs="$GITHUB_WORKSPACE/Testing/integration/configs/moroz_changed/global.toml" -use-tls=false &
-          sudo santactl sync --debug
-          if [[ "$(santactl status --json | jq .daemon.block_usb)" != "true" ]]; then
-            echo "USB blocking config change didnt take effect" >&2
-            exit 1
-          fi
-          set +e
-          ./Source/santad/testdata/binaryrules/badbinary
-          previously_blocklisted=$?
-          set -e
-          if [[ $previously_blocklisted != 0 ]]; then
-            echo "Removal from blocklist failed" >&2
-            exit 1
-          fi
-      - name: schedule poweroff
+      - name: Test config changes
+        run: ./Testing/integration/test_config_changes.sh
+      - name: Test sync server changes
+        run: ./Testing/integration/test_sync_changes.sh
+      - name: Poweroff
         run: sudo shutdown -h +1
 
-  # unit_tests:
-  #   strategy:
-  #     fail-fast: false
-  #     matrix:
-  #       os: [self-hosted]
-  #   runs-on: ${{ matrix.os }}
-  #   steps:
-  #     - uses: actions/checkout@v2
-  #     - name: set path
-  #       run: echo "/opt/homebrew/bin/" >> $GITHUB_PATH
-  #     - name: Run All Tests
-  #       run: bazel test :unit_tests --define=SANTA_BUILD_TYPE=adhoc --test_output=errors
+  unit_tests:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [self-hosted]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v2
+      - name: set path
+        run: echo "/opt/homebrew/bin/" >> $GITHUB_PATH
+      - name: Run All Tests
+        run: bazel test :unit_tests --define=SANTA_BUILD_TYPE=adhoc --test_output=errors

@@ -1,7 +1,17 @@
+// Adapted from https://developer.apple.com/documentation/virtualization/running_macos_in_a_virtual_machine_on_apple_silicon_macs
+/*
+Copyright © 2022 Apple Inc.
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+*/
+
 #import "MacOSVirtualMachineConfigurationHelper.h"
 
 #import <Foundation/Foundation.h>
-#include <err.h>
 
 @implementation MacOSVirtualMachineConfigurationHelper
 
@@ -46,7 +56,8 @@
     NSError *error;
     VZDiskImageStorageDeviceAttachment *diskAttachment = [[VZDiskImageStorageDeviceAttachment alloc] initWithURL:diskURL readOnly:ro error:&error];
     if (!diskAttachment) {
-        errx(1, "Failed to create VZDiskImageStorageDeviceAttachment: %s", [error.localizedDescription UTF8String]);
+        NSLog(@"Failed to create VZDiskImageStorageDeviceAttachment: %@", error.localizedDescription);
+        exit(-1);
     }
     VZVirtioBlockDeviceConfiguration *disk = [[VZVirtioBlockDeviceConfiguration alloc] initWithAttachment:diskAttachment];
 
@@ -89,8 +100,13 @@
 
 + (VZMacPlatformConfiguration *)createMacPlatformConfigurationWithBundleDir:(NSString *)bundleDir
 {
+    if (![bundleDir hasSuffix:@"/"]) {
+      bundleDir = [bundleDir stringByAppendingString:@"/"];
+    }
+
     if (![[NSFileManager defaultManager] fileExistsAtPath:bundleDir]) {
-        errx(1, "Missing Virtual Machine Bundle at %s. Run InstallationTool first to create it.", [bundleDir UTF8String]);
+        NSLog(@"Missing virtual machine bundle at %@. Run InstallationTool first to create it.", bundleDir);
+        exit(-1);
     }
 
     VZMacPlatformConfiguration *macPlatformConfiguration = [[VZMacPlatformConfiguration alloc] init];
@@ -101,28 +117,33 @@
     NSURL *modelURL = [[NSURL alloc] initFileURLWithPath:[bundleDir stringByAppendingString:@"HardwareModel"]];
     NSData *hardwareModelData = [[NSData alloc] initWithContentsOfURL:modelURL];
     if (!hardwareModelData) {
-        errx(1, "Failed to retrieve hardware model data.");
+        NSLog(@"Failed to read hardware model data");
+        exit(-1);
     }
 
     VZMacHardwareModel *hardwareModel = [[VZMacHardwareModel alloc] initWithDataRepresentation:hardwareModelData];
     if (!hardwareModel) {
-        errx(1, "Failed to create hardware model.");
+        NSLog(@"Failed to create hardware model");
+        exit(-1);
     }
 
     if (!hardwareModel.supported) {
-        errx(1, "The hardware model isn't supported on the current host");
+        NSLog(@"Hardware model not supported on current host");
+        exit(-1);
     }
     macPlatformConfiguration.hardwareModel = hardwareModel;
 
     NSURL *idURL = [[NSURL alloc] initFileURLWithPath:[bundleDir stringByAppendingString:@"MachineIdentifier"]];
     NSData *machineIdentifierData = [[NSData alloc] initWithContentsOfURL:idURL];
     if (!machineIdentifierData) {
-        errx(1, "Failed to retrieve machine identifier data.");
+        NSLog(@"Failed to read machine identifier data");
+        exit(-1);
     }
 
     VZMacMachineIdentifier *machineIdentifier = [[VZMacMachineIdentifier alloc] initWithDataRepresentation:machineIdentifierData];
     if (!machineIdentifier) {
-        errx(1, "Failed to create machine identifier.");
+        NSLog(@"Failed to create machine identifier");
+        exit(-1);
     }
     macPlatformConfiguration.machineIdentifier = machineIdentifier;
 
@@ -148,24 +169,25 @@
     return configuration;
 }
 
-+ (VZVirtualMachine *)createVirtualMachineWithBundleDir:(NSString *)bundleDir
++ (VZVirtualMachine *)createVirtualMachineWithBundleDir:(NSString *)bundleDir roDisk:(NSString *)roDisk
 {
     VZVirtualMachineConfiguration *configuration = [self createBaseVirtualMachineConfigurationWithBundleDir:bundleDir];
+    if (roDisk) {
+      configuration.storageDevices = [configuration.storageDevices arrayByAddingObject:[self createBlockDeviceConfigurationForDisk:[[NSURL alloc] initFileURLWithPath:roDisk] readOnly:YES]];
+    }
     NSError *error;
     if (![configuration validateWithError:&error]) {
-        errx(1, "Failed to validate configuration: %s", [error.localizedDescription UTF8String]);
+        NSLog(@"Failed to validate configuration: %@", error.localizedDescription);
+        exit(-1);
     }
 
     return [[VZVirtualMachine alloc] initWithConfiguration:configuration];
 }
 
-+ (VZVirtualMachine *)createVirtualMachineWithBundleDir:(NSString *)bundleDir roDisk:(NSString *)roDisk
-{
-    VZVirtualMachineConfiguration *configuration = [self createBaseVirtualMachineConfigurationWithBundleDir:bundleDir];
-    configuration.storageDevices = [configuration.storageDevices arrayByAddingObject:[self createBlockDeviceConfigurationForDisk:[[NSURL alloc] initFileURLWithPath:roDisk] readOnly:YES]];
-    assert([configuration validateWithError:nil]);
 
-    return [[VZVirtualMachine alloc] initWithConfiguration:configuration];
++ (VZVirtualMachine *)createVirtualMachineWithBundleDir:(NSString *)bundleDir
+{
+    return [self createVirtualMachineWithBundleDir:bundleDir roDisk:nil];
 }
 
 @end

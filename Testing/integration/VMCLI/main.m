@@ -10,7 +10,7 @@
 @implementation MacOSVirtualMachineDelegate
 - (void)virtualMachine:(VZVirtualMachine *)virtualMachine didStopWithError:(NSError *)error
 {
-    NSLog(@"Virtual Machine did stop with error. %@", error.localizedDescription);
+    NSLog(@"Virtual Machine errored: %@", error.localizedDescription);
     exit(-1);
 }
 
@@ -24,7 +24,7 @@
 
 int main(int argc, const char *argv[]) {
   if (argc != 2) {
-    printf("Usage: %s bundle_path", argv[0]);
+    fprintf(stderr, "Usage: %s bundle_path", argv[0]);
     exit(-1);
   }
 

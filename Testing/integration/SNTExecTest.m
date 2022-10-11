@@ -56,7 +56,7 @@
     [[[NSProcessInfo processInfo] environment] objectForKey:@"TEST_SRCDIR"], testPath
   ]];
   NSDictionary *testCases = @{
-    //@"goodbinary" : @YES,  // TODO(nickmg): this binary didn't make it into the repo
+    @"goodbinary" : @YES,
     @"badbinary" : @NO,
     @"noop" : @YES,
   };

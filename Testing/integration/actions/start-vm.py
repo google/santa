@@ -9,9 +9,10 @@ import tempfile
 from google.cloud import storage
 
 AGE = "/opt/bin/age"
-BUCKET = "buildkite-vms"
+BUCKET = "santa-e2e-vms"
 VMCLI = "/opt/bin/VMCLI"
 VMS_DIR = pathlib.Path.home() / 'VMs'
+TIMEOUT = 15 * 60  # in seconds
 
 if __name__ == "__main__":
     VMS_DIR.mkdir(exist_ok=True)
@@ -45,8 +46,7 @@ if __name__ == "__main__":
         # decrypt
         print("Decrypting...")
         subprocess.check_output([AGE, '--decrypt', '-o', decrypted_tar_path, encrypted_tar_path])
-        # TODO(nickmg): once we know this works it's fine to delete
-        #encrypted_tar_path.unlink()
+        encrypted_tar_path.unlink()
 
         # extract
         print("Extracting...")
@@ -59,9 +59,9 @@ if __name__ == "__main__":
         # COW copy the image to this tempdir
         subprocess.check_output(['cp', '-rc', extracted_path, snapshot_dir])
         try:
-            subprocess.check_output([VMCLI, pathlib.Path(snapshot_dir) / "VM.bundle"], timeout=15*60)
+            subprocess.check_output([VMCLI, pathlib.Path(snapshot_dir) / "VM.bundle"], timeout=TIMEOUT)
         except subprocess.TimeoutExpired:
-            print("VM timed out after 15 minutes")
+            print("VM timed out")
         except:
             raise
 
