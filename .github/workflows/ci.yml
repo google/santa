@@ -22,12 +22,10 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [self-hosted]
+        os: [macos-10.15, macos-11, macos-12]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v2
-      - name: set path
-        run: echo "/opt/homebrew/bin/" >> $GITHUB_PATH
       - name: Build Userspace
         run: bazel build --apple_generate_dsym -c opt :release --define=SANTA_BUILD_TYPE=adhoc
 
@@ -71,12 +69,10 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [self-hosted]
+        os: [macos-10.15, macos-11, macos-12]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v2
-      - name: set path
-        run: echo "/opt/homebrew/bin/" >> $GITHUB_PATH
       - name: Run All Tests
         run: bazel test :unit_tests --define=SANTA_BUILD_TYPE=adhoc --test_output=errors
 
