@@ -397,9 +397,11 @@ std::vector<uint8_t> Protobuf::SerializeMessage(const EnrichedExec &msg) {
   }
 
   if (msg.es_msg().version >= 4) {
+    int32_t max_fd = -1;
     uint32_t fd_count = esapi_->ExecFDCount(&msg.es_msg().event.exec);
     for (uint32_t i = 0; i < fd_count; i++) {
       const es_fd_t *fd = esapi_->ExecFD(&msg.es_msg().event.exec, i);
+      max_fd = std::max(max_fd, fd->fd);
       ::pbv1::FileDescriptor *pb_fd = pb_exec->add_fds();
       pb_fd->set_fd(fd->fd);
       pb_fd->set_fd_type(GetFileDescriptorType(fd->fdtype));
@@ -407,6 +409,10 @@ std::vector<uint8_t> Protobuf::SerializeMessage(const EnrichedExec &msg) {
         pb_fd->set_pipe_id(fd->pipe.pipe_id);
       }
     }
+
+    // If the `max_fd` seen is less than `last_fd`, we know that ES truncated
+    // the set of returned file descriptors
+    pb_exec->set_fd_list_truncated(max_fd < msg.es_msg().event.exec.last_fd);
   }
 
   pb_exec->set_decision(GetDecisionEnum(cd.decision));

@@ -385,6 +385,13 @@ void SerializeAndCheck(es_event_type_t eventType,
     esMsg->event.exec.cwd = &fileCwd;
     esMsg->event.exec.script = &fileScript;
 
+    // For version 5, simulate a "truncated" set of FDs
+    if (esMsg->version == 5) {
+      esMsg->event.exec.last_fd = 123;
+    } else {
+      esMsg->event.exec.last_fd = 3;
+    }
+
     EXPECT_CALL(*mockESApi, ExecArgCount).WillOnce(testing::Return(3));
     EXPECT_CALL(*mockESApi, ExecArg)
       .WillOnce(testing::Return(MakeESStringToken("exec_path")))

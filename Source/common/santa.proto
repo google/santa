@@ -205,13 +205,16 @@ message Execution {
   // List of file descriptors
   repeated FileDescriptor fds = 7;
 
+  // Whether or not the list of `fds` is complete or contains partial info
+  bool fd_list_truncated = 8;
+
   // Whether or not the target execution was allowed
   enum Decision {
     DECISION_UNKNOWN = 0;
     DECISION_ALLOW = 1;
     DECISION_DENY = 2;
   }
-  Decision decision = 8;
+  Decision decision = 9;
 
   // The policy applied when determining the decision
   enum Reason {
@@ -226,7 +229,7 @@ message Execution {
     REASON_LONG_PATH = 9;
     REASON_NOT_RUNNING = 10;
   }
-  Reason reason = 9;
+  Reason reason = 10;
 
   // The mode Santa was in when the decision was applied
   enum Mode {
@@ -234,23 +237,23 @@ message Execution {
     MODE_LOCKDOWN = 1;
     MODE_MONITOR = 2;
   }
-  Mode mode = 10;
+  Mode mode = 11;
 
   // Certificate information for the target executable
-  CertificateInfo certificate_info = 11;
+  CertificateInfo certificate_info = 12;
 
   // Additional Santa metadata
-  string explain = 12;
+  string explain = 13;
 
   // Information known to LaunchServices about the target executable file
-  string quarantine_url = 13;
+  string quarantine_url = 14;
 
   // The original path on disk of the target executable
   // Applies when executables are translocated
-  string original_path = 14;
+  string original_path = 15;
 
   // Machine ID of the host emitting this log
-  string machine_id = 15;
+  string machine_id = 16;
 }
 
 // Information about a fork event
