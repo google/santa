@@ -55,7 +55,7 @@ SNTCachedDecision *MakeCachedDecision(struct stat sb, SNTEventState decision) {
 - (void)testBasicOperation {
   SNTDecisionCache *dc = [SNTDecisionCache sharedCache];
 
-  struct stat sb = MakeStat(1234);
+  struct stat sb = MakeStat();
 
   // First make sure the item isn't in the cache
   XCTAssertNil([dc cachedDecisionForFile:sb]);
@@ -77,7 +77,7 @@ SNTCachedDecision *MakeCachedDecision(struct stat sb, SNTEventState decision) {
 
 - (void)testResetTimestampForCachedDecision {
   SNTDecisionCache *dc = [SNTDecisionCache sharedCache];
-  struct stat sb = MakeStat(1234);
+  struct stat sb = MakeStat();
   SNTCachedDecision *cd = MakeCachedDecision(sb, SNTEventStateAllowTransitive);
 
   [dc cacheDecision:cd];

@@ -1,5 +1,5 @@
 load("//:helper.bzl", "santa_unit_test")
-load("@rules_proto_grpc//objc:defs.bzl", "objc_proto_library")
+load("@rules_cc//cc:defs.bzl", "cc_proto_library")
 
 package(
     default_visibility = ["//:santa_package_group"],
@@ -16,11 +16,18 @@ proto_library(
     ],
 )
 
-objc_proto_library(
-    name = "santa_objc_proto",
-    copts = ["-fno-objc-arc"],
-    non_arc_srcs = ["Santa.pbobjc.m"],
-    protos = [":santa_proto"],
+cc_proto_library(
+    name = "santa_cc_proto",
+    deps = [":santa_proto"],
+)
+
+# Note: Simple wrapper for a `cc_proto_library` target which cannot be directly
+# depended upon by an `objc_library` target.
+cc_library(
+    name = "santa_cc_proto_library_wrapper",
+    deps = [
+        ":santa_cc_proto",
+    ],
 )
 
 cc_library(

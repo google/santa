@@ -33,6 +33,7 @@
 #import "Source/common/SNTLogging.h"
 #import "Source/common/SNTStoredEvent.h"
 #include "Source/santad/Logs/EndpointSecurity/Serializers/SanitizableString.h"
+#include "Source/santad/Logs/EndpointSecurity/Serializers/Utilities.h"
 #import "Source/santad/SNTDecisionCache.h"
 
 using santa::santad::event_providers::endpoint_security::EndpointSecurityAPI;
@@ -45,145 +46,16 @@ using santa::santad::event_providers::endpoint_security::EnrichedLink;
 using santa::santad::event_providers::endpoint_security::EnrichedRename;
 using santa::santad::event_providers::endpoint_security::EnrichedUnlink;
 using santa::santad::event_providers::endpoint_security::Message;
-
-// These functions are exported by the Security framework, but are not included in headers
-extern "C" Boolean SecTranslocateIsTranslocatedURL(CFURLRef path, bool *isTranslocated,
-                                                   CFErrorRef *__nullable error);
-extern "C" CFURLRef __nullable SecTranslocateCreateOriginalPathForURL(CFURLRef translocatedPath,
-                                                                      CFErrorRef *__nullable error);
+using santa::santad::logs::endpoint_security::serializers::Utilities::NonNull;
+using santa::santad::logs::endpoint_security::serializers::Utilities::Pid;
+using santa::santad::logs::endpoint_security::serializers::Utilities::Pidversion;
+using santa::santad::logs::endpoint_security::serializers::Utilities::RealGroup;
+using santa::santad::logs::endpoint_security::serializers::Utilities::RealUser;
 
 namespace santa::santad::logs::endpoint_security::serializers {
 
 static inline SanitizableString FilePath(const es_file_t *file) {
   return SanitizableString(file);
-}
-
-static inline pid_t Pid(const audit_token_t &tok) {
-  return audit_token_to_pid(tok);
-}
-
-static inline pid_t Pidversion(const audit_token_t &tok) {
-  return audit_token_to_pidversion(tok);
-}
-
-static inline pid_t RealUser(const audit_token_t &tok) {
-  return audit_token_to_ruid(tok);
-}
-
-static inline pid_t RealGroup(const audit_token_t &tok) {
-  return audit_token_to_rgid(tok);
-}
-
-static inline void SetThreadIDs(uid_t uid, gid_t gid) {
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wdeprecated"
-  pthread_setugid_np(uid, gid);
-#pragma clang diagnostic pop
-}
-
-static inline const mach_port_t GetDefaultIOKitCommsPort() {
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wdeprecated-declarations"
-  return kIOMasterPortDefault;
-#pragma clang diagnostic pop
-}
-
-static NSString *SerialForDevice(NSString *devPath) {
-  if (!devPath.length) {
-    return nil;
-  }
-  NSString *serial;
-  io_registry_entry_t device =
-    IORegistryEntryFromPath(GetDefaultIOKitCommsPort(), devPath.UTF8String);
-  while (!serial && device) {
-    CFMutableDictionaryRef device_properties = NULL;
-    IORegistryEntryCreateCFProperties(device, &device_properties, kCFAllocatorDefault, kNilOptions);
-    NSDictionary *properties = CFBridgingRelease(device_properties);
-    if (properties[@"Serial Number"]) {
-      serial = properties[@"Serial Number"];
-    } else if (properties[@"kUSBSerialNumberString"]) {
-      serial = properties[@"kUSBSerialNumberString"];
-    }
-
-    if (serial) {
-      IOObjectRelease(device);
-      break;
-    }
-
-    io_registry_entry_t parent;
-    IORegistryEntryGetParentEntry(device, kIOServicePlane, &parent);
-    IOObjectRelease(device);
-    device = parent;
-  }
-
-  return [serial stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
-}
-
-static NSString *DiskImageForDevice(NSString *devPath) {
-  devPath = [devPath stringByDeletingLastPathComponent];
-  if (!devPath.length) {
-    return nil;
-  }
-
-  io_registry_entry_t device =
-    IORegistryEntryFromPath(GetDefaultIOKitCommsPort(), devPath.UTF8String);
-  CFMutableDictionaryRef device_properties = NULL;
-  IORegistryEntryCreateCFProperties(device, &device_properties, kCFAllocatorDefault, kNilOptions);
-  NSDictionary *properties = CFBridgingRelease(device_properties);
-  IOObjectRelease(device);
-
-  if (properties[@"image-path"]) {
-    NSString *result = [[NSString alloc] initWithData:properties[@"image-path"]
-                                             encoding:NSUTF8StringEncoding];
-    return [result stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
-  } else {
-    return nil;
-  }
-}
-
-static NSString *OriginalPathForTranslocation(const es_process_t *esProc) {
-  if (!esProc) {
-    return nil;
-  }
-
-  // Note: Benchmarks showed better performance using `URLWithString` with a `file://` prefix
-  // compared to using `fileURLWithPath`.
-  CFURLRef cfExecURL = (__bridge CFURLRef)
-    [NSURL URLWithString:[NSString stringWithFormat:@"file://%s", esProc->executable->path.data]];
-  NSURL *origURL = nil;
-  bool isTranslocated = false;
-
-  if (SecTranslocateIsTranslocatedURL(cfExecURL, &isTranslocated, NULL) && isTranslocated) {
-    bool dropPrivs = true;
-    if (@available(macOS 12.0, *)) {
-      dropPrivs = false;
-    }
-
-    if (dropPrivs) {
-      SetThreadIDs(RealUser(esProc->audit_token), RealGroup(esProc->audit_token));
-    }
-
-    origURL = CFBridgingRelease(SecTranslocateCreateOriginalPathForURL(cfExecURL, NULL));
-
-    if (dropPrivs) {
-      SetThreadIDs(KAUTH_UID_NONE, KAUTH_GID_NONE);
-    }
-  }
-
-  return [origURL path];
-}
-
-es_file_t *GetAllowListTargetFile(const Message &msg) {
-  switch (msg->event_type) {
-    case ES_EVENT_TYPE_NOTIFY_CLOSE: return msg->event.close.target;
-    case ES_EVENT_TYPE_NOTIFY_RENAME: return msg->event.rename.source;
-    default:
-      // This is a programming error
-      LOGE(@"Unexpected event type for AllowList");
-      [NSException raise:@"Unexpected type"
-                  format:@"Unexpected event type for AllowList: %d", msg->event_type];
-      return nil;
-  }
 }
 
 static NSDateFormatter *GetDateFormatter() {
@@ -274,10 +146,6 @@ static char *FormattedDateString(char *buf, size_t len) {
   snprintf(buf, len, "%s.%03dZ", buf, tv.tv_usec / 1000);
 
   return buf;
-}
-
-static inline NSString *NonNull(NSString *str) {
-  return str ?: @"";
 }
 
 std::shared_ptr<BasicString> BasicString::Create(std::shared_ptr<EndpointSecurityAPI> esapi,
@@ -394,7 +262,7 @@ std::vector<uint8_t> BasicString::SerializeMessage(const EnrichedExec &msg) {
   str.append("|path=");
   str.append(FilePath(esm.event.exec.target->executable).Sanitized());
 
-  NSString *origPath = OriginalPathForTranslocation(esm.event.exec.target);
+  NSString *origPath = Utilities::OriginalPathForTranslocation(esm.event.exec.target);
   if (origPath) {
     str.append("|origpath=");
     str.append(SanitizableString(origPath).Sanitized());
@@ -524,7 +392,7 @@ std::vector<uint8_t> BasicString::SerializeAllowlist(const Message &msg,
   str.append("|pidversion=");
   str.append(std::to_string(Pidversion(msg->process->audit_token)));
   str.append("|path=");
-  str.append(FilePath(GetAllowListTargetFile(msg)).Sanitized());
+  str.append(FilePath(Utilities::GetAllowListTargetFile(msg)).Sanitized());
   str.append("|sha256=");
   str.append(hash);
 
@@ -551,12 +419,12 @@ std::vector<uint8_t> BasicString::SerializeBundleHashingEvent(SNTStoredEvent *ev
 }
 
 std::vector<uint8_t> BasicString::SerializeDiskAppeared(NSDictionary *props) {
-  NSString *dmgPath = nil;
+  NSString *dmg_path = nil;
   NSString *serial = nil;
   if ([props[@"DADeviceModel"] isEqual:@"Disk Image"]) {
-    dmgPath = DiskImageForDevice(props[@"DADevicePath"]);
+    dmg_path = Utilities::DiskImageForDevice(props[@"DADevicePath"]);
   } else {
-    serial = SerialForDevice(props[@"DADevicePath"]);
+    serial = Utilities::SerialForDevice(props[@"DADevicePath"]);
   }
 
   NSString *model = [NSString
@@ -584,7 +452,7 @@ std::vector<uint8_t> BasicString::SerializeDiskAppeared(NSDictionary *props) {
   str.append("|bus=");
   str.append([NonNull(props[@"DADeviceProtocol"]) UTF8String]);
   str.append("|dmgpath=");
-  str.append([NonNull(dmgPath) UTF8String]);
+  str.append([NonNull(dmg_path) UTF8String]);
   str.append("|appearance=");
   str.append([NonNull(appearanceDateString) UTF8String]);
 
