@@ -220,18 +220,15 @@
  "fds": [
   {
    "fd": 1,
-   "type": 1,
-   "type_name": "VNODE"
+   "fd_type": "FD_TYPE_VNODE"
   },
   {
    "fd": 2,
-   "type": 2,
-   "type_name": "SOCKET"
+   "fd_type": "FD_TYPE_SOCKET"
   },
   {
    "fd": 3,
-   "type": 6,
-   "type_name": "PIPE",
+   "fd_type": "FD_TYPE_PIPE",
    "pipe_id": "123"
   }
  ],

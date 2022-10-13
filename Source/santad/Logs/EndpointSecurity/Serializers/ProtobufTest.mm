@@ -66,12 +66,12 @@ extern void EncodeExitStatus(pb::Exit *pbExit, int exitStatus);
 extern pb::Execution::Decision GetDecisionEnum(SNTEventState event_state);
 extern pb::Execution::Reason GetReasonEnum(SNTEventState event_state);
 extern pb::Execution::Mode GetModeEnum(SNTClientMode mode);
-extern std::string_view GetFileDescriptorTypeName(uint32_t fdtype);
+extern pb::FileDescriptor::FDType GetFileDescriptorType(uint32_t fdtype);
 }  // namespace santa::santad::logs::endpoint_security::serializers
 
 using santa::santad::logs::endpoint_security::serializers::EncodeExitStatus;
 using santa::santad::logs::endpoint_security::serializers::GetDecisionEnum;
-using santa::santad::logs::endpoint_security::serializers::GetFileDescriptorTypeName;
+using santa::santad::logs::endpoint_security::serializers::GetFileDescriptorType;
 using santa::santad::logs::endpoint_security::serializers::GetModeEnum;
 using santa::santad::logs::endpoint_security::serializers::GetReasonEnum;
 
@@ -342,23 +342,23 @@ void SerializeAndCheck(es_event_type_t eventType,
   }
 }
 
-- (void)testGetFileDescriptorTypeName {
-  std::map<uint32_t, std::string_view> fdtypeToName = {
-    {PROX_FDTYPE_ATALK, "ATALK"},
-    {PROX_FDTYPE_VNODE, "VNODE"},
-    {PROX_FDTYPE_SOCKET, "SOCKET"},
-    {PROX_FDTYPE_PSHM, "PSHM"},
-    {PROX_FDTYPE_PSEM, "PSEM"},
-    {PROX_FDTYPE_KQUEUE, "KQUEUE"},
-    {PROX_FDTYPE_PIPE, "PIPE"},
-    {PROX_FDTYPE_FSEVENTS, "FSEVENTS"},
-    {PROX_FDTYPE_NETPOLICY, "NETPOLICY"},
-    {10 /* PROX_FDTYPE_CHANNEL */, "CHANNEL"},
-    {11 /* PROX_FDTYPE_NEXUS */, "NEXUS"},
+- (void)testGetFileDescriptorType {
+  std::map<uint32_t, pb::FileDescriptor::FDType> fdtypeToEnumType = {
+    {PROX_FDTYPE_ATALK, pb::FileDescriptor::FD_TYPE_ATALK},
+    {PROX_FDTYPE_VNODE, pb::FileDescriptor::FD_TYPE_VNODE},
+    {PROX_FDTYPE_SOCKET, pb::FileDescriptor::FD_TYPE_SOCKET},
+    {PROX_FDTYPE_PSHM, pb::FileDescriptor::FD_TYPE_PSHM},
+    {PROX_FDTYPE_PSEM, pb::FileDescriptor::FD_TYPE_PSEM},
+    {PROX_FDTYPE_KQUEUE, pb::FileDescriptor::FD_TYPE_KQUEUE},
+    {PROX_FDTYPE_PIPE, pb::FileDescriptor::FD_TYPE_PIPE},
+    {PROX_FDTYPE_FSEVENTS, pb::FileDescriptor::FD_TYPE_FSEVENTS},
+    {PROX_FDTYPE_NETPOLICY, pb::FileDescriptor::FD_TYPE_NETPOLICY},
+    {10 /* PROX_FDTYPE_CHANNEL */, pb::FileDescriptor::FD_TYPE_CHANNEL},
+    {11 /* PROX_FDTYPE_NEXUS */, pb::FileDescriptor::FD_TYPE_NEXUS},
   };
 
-  for (const auto &kv : fdtypeToName) {
-    XCTAssertEqual(GetFileDescriptorTypeName(kv.first), kv.second,
+  for (const auto &kv : fdtypeToEnumType) {
+    XCTAssertEqual(GetFileDescriptorType(kv.first), kv.second,
                    @"Bad fd type name for fdtype: %u", kv.first);
   }
 }

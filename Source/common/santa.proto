@@ -71,10 +71,24 @@ message File {
 }
 
 message FileDescriptor {
+  enum FDType {
+    FD_TYPE_UNKNOWN = 0;
+    FD_TYPE_ATALK = 1;
+    FD_TYPE_VNODE = 2;
+    FD_TYPE_SOCKET = 3;
+    FD_TYPE_PSHM = 4;
+    FD_TYPE_PSEM = 5;
+    FD_TYPE_KQUEUE = 6;
+    FD_TYPE_PIPE = 7;
+    FD_TYPE_FSEVENTS = 8;
+    FD_TYPE_NETPOLICY = 9;
+    FD_TYPE_CHANNEL = 10;
+    FD_TYPE_NEXUS = 11;
+  }
+
   int32 fd = 1;
-  uint32 type = 2;
-  string type_name = 3;
-  uint64 pipe_id = 4;
+  FDType fd_type = 2;
+  uint64 pipe_id = 3;
 }
 
 message ProcessInfo {

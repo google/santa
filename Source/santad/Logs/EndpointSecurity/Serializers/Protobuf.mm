@@ -274,22 +274,22 @@ pb::Execution::Mode GetModeEnum(SNTClientMode mode) {
   }
 }
 
-std::string_view GetFileDescriptorTypeName(uint32_t fdtype) {
+pb::FileDescriptor::FDType GetFileDescriptorType(uint32_t fdtype) {
   switch (fdtype) {
-    case PROX_FDTYPE_ATALK: return "ATALK";
-    case PROX_FDTYPE_VNODE: return "VNODE";
-    case PROX_FDTYPE_SOCKET: return "SOCKET";
-    case PROX_FDTYPE_PSHM: return "PSHM";
-    case PROX_FDTYPE_PSEM: return "PSEM";
-    case PROX_FDTYPE_KQUEUE: return "KQUEUE";
-    case PROX_FDTYPE_PIPE: return "PIPE";
-    case PROX_FDTYPE_FSEVENTS: return "FSEVENTS";
-    case PROX_FDTYPE_NETPOLICY: return "NETPOLICY";
+    case PROX_FDTYPE_ATALK: return pb::FileDescriptor::FD_TYPE_ATALK;
+    case PROX_FDTYPE_VNODE: return pb::FileDescriptor::FD_TYPE_VNODE;
+    case PROX_FDTYPE_SOCKET: return pb::FileDescriptor::FD_TYPE_SOCKET;
+    case PROX_FDTYPE_PSHM: return pb::FileDescriptor::FD_TYPE_PSHM;
+    case PROX_FDTYPE_PSEM: return pb::FileDescriptor::FD_TYPE_PSEM;
+    case PROX_FDTYPE_KQUEUE: return pb::FileDescriptor::FD_TYPE_KQUEUE;
+    case PROX_FDTYPE_PIPE: return pb::FileDescriptor::FD_TYPE_PIPE;
+    case PROX_FDTYPE_FSEVENTS: return pb::FileDescriptor::FD_TYPE_FSEVENTS;
+    case PROX_FDTYPE_NETPOLICY: return pb::FileDescriptor::FD_TYPE_NETPOLICY;
     // Note: CHANNEL and NEXUS types weren't exposed until Xcode v13 SDK.
     // Not using the macros to be able to build on older SDK versions.
-    case 10 /* PROX_FDTYPE_CHANNEL */: return "CHANNEL";
-    case 11 /* PROX_FDTYPE_NEXUS */: return "NEXUS";
-    default: return "UNKNOWN";
+    case 10 /* PROX_FDTYPE_CHANNEL */: return pb::FileDescriptor::FD_TYPE_CHANNEL;
+    case 11 /* PROX_FDTYPE_NEXUS */: return pb::FileDescriptor::FD_TYPE_NEXUS;
+    default: return pb::FileDescriptor::FD_TYPE_UNKNOWN;
   }
 }
 
@@ -400,9 +400,7 @@ std::vector<uint8_t> Protobuf::SerializeMessage(const EnrichedExec &msg) {
       const es_fd_t *fd = esapi_->ExecFD(&msg.es_msg().event.exec, i);
       pb::FileDescriptor *pb_fd = pb_exec->add_fds();
       pb_fd->set_fd(fd->fd);
-      pb_fd->set_type(fd->fdtype);
-      std::string_view type_name = GetFileDescriptorTypeName(fd->fdtype);
-      pb_fd->set_type_name(type_name.data(), type_name.length());
+      pb_fd->set_fd_type(GetFileDescriptorType(fd->fdtype));
       if (fd->fdtype == PROX_FDTYPE_PIPE) {
         pb_fd->set_pipe_id(fd->pipe.pipe_id);
       }
