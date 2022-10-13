@@ -15,7 +15,6 @@ proto_library(
 
 cc_proto_library(
     name = "binaryproto_cc_proto",
-    visibility = ["//visibility:public"],
     deps = [
         ":binaryproto_proto",
     ],
