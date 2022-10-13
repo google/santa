@@ -8,7 +8,8 @@ import tempfile
 
 from google.cloud import storage
 
-AGE = "/opt/bin/age"
+MINISIGN = "/opt/bin/minisign"
+PUBKEY = "/opt/santa-e2e-vm-signer.pub"
 BUCKET = "santa-e2e-vms"
 VMCLI = "/opt/bin/VMCLI"
 VMS_DIR = pathlib.Path.home() / 'VMs'
@@ -18,13 +19,12 @@ if __name__ == "__main__":
     VMS_DIR.mkdir(exist_ok=True)
 
     tar_name = sys.argv[1]
-    if not tar_name.endswith('.tar.gz.enc'):
-        print("Image name should be .tar.gz.enc file", file=sys.stderr)
+    if not tar_name.endswith('.tar.gz'):
+        print("Image name should be .tar.gz file", file=sys.stderr)
         sys.exit(1)
 
-    encrypted_tar_path = VMS_DIR / tar_name
-    decrypted_tar_path = pathlib.Path(str(encrypted_tar_path)[:-len('.enc')])
-    extracted_path = pathlib.Path(str(decrypted_tar_path)[:-len('.tar.gz')])
+    tar_path = VMS_DIR / tar_name
+    extracted_path = pathlib.Path(str(tar_path)[:-len('.tar.gz')])
 
     storage_client = storage.Client()
     bucket = storage_client.bucket(BUCKET)
@@ -41,18 +41,21 @@ if __name__ == "__main__":
 
     if blob.updated > datetime.datetime.fromtimestamp(local_ctime, tz=datetime.timezone.utc):
         print(f"VM {extracted_path} not present or not up to date, downloading...")
-        blob.download_to_filename(encrypted_tar_path)
+        blob.download_to_filename(tar_path)
+        sig_blob = bucket.get_blob(str(tar_name) + '.minisig')
+        if sig_blob is None:
+          print("Image signature doesn't exist in GCS", file=sys.stderr)
+          sys.exit(1)
 
-        # decrypt
-        print("Decrypting...")
-        subprocess.check_output([AGE, '--decrypt', '-o', decrypted_tar_path, encrypted_tar_path])
-        encrypted_tar_path.unlink()
+        sig_blob.download_to_filename(str(tar_path) + '.minisig')
 
-        # extract
+        print("Verifying signature...")
+        subprocess.check_output([MINISIGN, '-V', '-m', tar_path, '-p', PUBKEY])
+
         print("Extracting...")
         extracted_path.mkdir()
-        subprocess.check_output(['tar', '-C', VMS_DIR, '-x', '-S', '-z', '-f', decrypted_tar_path])
-        decrypted_tar_path.unlink()
+        subprocess.check_output(['tar', '-C', VMS_DIR, '-x', '-S', '-z', '-f', tar_path])
+        tar_path.unlink()
 
     with tempfile.TemporaryDirectory() as snapshot_dir:
         print(f"Snapshot: {snapshot_dir}")
