@@ -59,14 +59,14 @@ using santa::santad::event_providers::endpoint_security::Message;
 using santa::santad::logs::endpoint_security::serializers::Protobuf;
 using santa::santad::logs::endpoint_security::serializers::Serializer;
 
-namespace pb = santa::pb;
+namespace pbv1 = ::santa::pb::v1;
 
 namespace santa::santad::logs::endpoint_security::serializers {
-extern void EncodeExitStatus(pb::Exit *pbExit, int exitStatus);
-extern pb::Execution::Decision GetDecisionEnum(SNTEventState event_state);
-extern pb::Execution::Reason GetReasonEnum(SNTEventState event_state);
-extern pb::Execution::Mode GetModeEnum(SNTClientMode mode);
-extern pb::FileDescriptor::FDType GetFileDescriptorType(uint32_t fdtype);
+extern void EncodeExitStatus(::pbv1::Exit *pbExit, int exitStatus);
+extern ::pbv1::Execution::Decision GetDecisionEnum(SNTEventState event_state);
+extern ::pbv1::Execution::Reason GetReasonEnum(SNTEventState event_state);
+extern ::pbv1::Execution::Mode GetModeEnum(SNTClientMode mode);
+extern ::pbv1::FileDescriptor::FDType GetFileDescriptorType(uint32_t fdtype);
 }  // namespace santa::santad::logs::endpoint_security::serializers
 
 using santa::santad::logs::endpoint_security::serializers::EncodeExitStatus;
@@ -130,7 +130,7 @@ bool CompareTime(const Timestamp &timestamp, struct timespec ts) {
   return timestamp.seconds() == ts.tv_sec && timestamp.nanos() == ts.tv_nsec;
 }
 
-void CheckSantaMessage(const pb::SantaMessage &santaMsg, const es_message_t &esMsg,
+void CheckSantaMessage(const ::pbv1::SantaMessage &santaMsg, const es_message_t &esMsg,
                        const uuid_t &uuid, struct timespec enrichmentTime) {
   uuid_string_t uuidStr;
   uuid_unparse_lower(uuid, uuidStr);
@@ -140,20 +140,20 @@ void CheckSantaMessage(const pb::SantaMessage &santaMsg, const es_message_t &esM
   XCTAssertTrue(CompareTime(santaMsg.event_time(), esMsg.time));
 }
 
-const google::protobuf::Message &SantaMessageEvent(const pb::SantaMessage &santaMsg) {
+const google::protobuf::Message &SantaMessageEvent(const ::pbv1::SantaMessage &santaMsg) {
   switch (santaMsg.event_case()) {
-    case santa::pb::SantaMessage::kExecution: return santaMsg.execution();
-    case santa::pb::SantaMessage::kFork: return santaMsg.fork();
-    case santa::pb::SantaMessage::kExit: return santaMsg.exit();
-    case santa::pb::SantaMessage::kClose: return santaMsg.close();
-    case santa::pb::SantaMessage::kRename: return santaMsg.rename();
-    case santa::pb::SantaMessage::kUnlink: return santaMsg.unlink();
-    case santa::pb::SantaMessage::kLink: return santaMsg.link();
-    case santa::pb::SantaMessage::kExchangedata: return santaMsg.exchangedata();
-    case santa::pb::SantaMessage::kDisk: return santaMsg.disk();
-    case santa::pb::SantaMessage::kBundle: return santaMsg.bundle();
-    case santa::pb::SantaMessage::kAllowlist: return santaMsg.allowlist();
-    case santa::pb::SantaMessage::EVENT_NOT_SET:
+    case ::pbv1::SantaMessage::kExecution: return santaMsg.execution();
+    case ::pbv1::SantaMessage::kFork: return santaMsg.fork();
+    case ::pbv1::SantaMessage::kExit: return santaMsg.exit();
+    case ::pbv1::SantaMessage::kClose: return santaMsg.close();
+    case ::pbv1::SantaMessage::kRename: return santaMsg.rename();
+    case ::pbv1::SantaMessage::kUnlink: return santaMsg.unlink();
+    case ::pbv1::SantaMessage::kLink: return santaMsg.link();
+    case ::pbv1::SantaMessage::kExchangedata: return santaMsg.exchangedata();
+    case ::pbv1::SantaMessage::kDisk: return santaMsg.disk();
+    case ::pbv1::SantaMessage::kBundle: return santaMsg.bundle();
+    case ::pbv1::SantaMessage::kAllowlist: return santaMsg.allowlist();
+    case ::pbv1::SantaMessage::EVENT_NOT_SET:
       XCTFail(@"Protobuf message SantaMessage did not set an 'event' field");
       OS_FALLTHROUGH;
     default:
@@ -163,7 +163,7 @@ const google::protobuf::Message &SantaMessageEvent(const pb::SantaMessage &santa
   }
 }
 
-std::string ConvertMessageToJsonString(const pb::SantaMessage &santaMsg) {
+std::string ConvertMessageToJsonString(const ::pbv1::SantaMessage &santaMsg) {
   JsonPrintOptions options = DefaultJsonPrintOptions();
   const google::protobuf::Message &message = SantaMessageEvent(santaMsg);
 
@@ -172,7 +172,8 @@ std::string ConvertMessageToJsonString(const pb::SantaMessage &santaMsg) {
   return json;
 }
 
-void CheckProto(const pb::SantaMessage &santaMsg, std::shared_ptr<EnrichedMessage> enrichedMsg) {
+void CheckProto(const ::pbv1::SantaMessage &santaMsg,
+                std::shared_ptr<EnrichedMessage> enrichedMsg) {
   return std::visit(
     [santaMsg](const EnrichedEventType &enrichedEvent) {
       CheckSantaMessage(santaMsg, enrichedEvent.es_msg(), enrichedEvent.uuid(),
@@ -215,7 +216,7 @@ void SerializeAndCheck(es_event_type_t eventType,
     std::vector<uint8_t> vec = bs->SerializeMessage(enrichedMsg);
     std::string protoStr(vec.begin(), vec.end());
 
-    pb::SantaMessage santaMsg;
+    ::pbv1::SantaMessage santaMsg;
     XCTAssertTrue(santaMsg.ParseFromString(protoStr));
 
     CheckProto(santaMsg, enrichedMsg);
@@ -280,23 +281,23 @@ void SerializeAndCheck(es_event_type_t eventType,
 }
 
 - (void)testGetDecisionEnum {
-  std::map<SNTEventState, pb::Execution::Decision> stateToDecision = {
-    {SNTEventStateUnknown, pb::Execution::DECISION_UNKNOWN},
-    {SNTEventStateBundleBinary, pb::Execution::DECISION_UNKNOWN},
-    {SNTEventStateBlockUnknown, pb::Execution::DECISION_DENY},
-    {SNTEventStateBlockBinary, pb::Execution::DECISION_DENY},
-    {SNTEventStateBlockCertificate, pb::Execution::DECISION_DENY},
-    {SNTEventStateBlockScope, pb::Execution::DECISION_DENY},
-    {SNTEventStateBlockTeamID, pb::Execution::DECISION_DENY},
-    {SNTEventStateBlockLongPath, pb::Execution::DECISION_DENY},
-    {SNTEventStateAllowUnknown, pb::Execution::DECISION_ALLOW},
-    {SNTEventStateAllowBinary, pb::Execution::DECISION_ALLOW},
-    {SNTEventStateAllowCertificate, pb::Execution::DECISION_ALLOW},
-    {SNTEventStateAllowScope, pb::Execution::DECISION_ALLOW},
-    {SNTEventStateAllowCompiler, pb::Execution::DECISION_ALLOW},
-    {SNTEventStateAllowTransitive, pb::Execution::DECISION_ALLOW},
-    {SNTEventStateAllowPendingTransitive, pb::Execution::DECISION_ALLOW},
-    {SNTEventStateAllowTeamID, pb::Execution::DECISION_ALLOW},
+  std::map<SNTEventState, ::pbv1::Execution::Decision> stateToDecision = {
+    {SNTEventStateUnknown, ::pbv1::Execution::DECISION_UNKNOWN},
+    {SNTEventStateBundleBinary, ::pbv1::Execution::DECISION_UNKNOWN},
+    {SNTEventStateBlockUnknown, ::pbv1::Execution::DECISION_DENY},
+    {SNTEventStateBlockBinary, ::pbv1::Execution::DECISION_DENY},
+    {SNTEventStateBlockCertificate, ::pbv1::Execution::DECISION_DENY},
+    {SNTEventStateBlockScope, ::pbv1::Execution::DECISION_DENY},
+    {SNTEventStateBlockTeamID, ::pbv1::Execution::DECISION_DENY},
+    {SNTEventStateBlockLongPath, ::pbv1::Execution::DECISION_DENY},
+    {SNTEventStateAllowUnknown, ::pbv1::Execution::DECISION_ALLOW},
+    {SNTEventStateAllowBinary, ::pbv1::Execution::DECISION_ALLOW},
+    {SNTEventStateAllowCertificate, ::pbv1::Execution::DECISION_ALLOW},
+    {SNTEventStateAllowScope, ::pbv1::Execution::DECISION_ALLOW},
+    {SNTEventStateAllowCompiler, ::pbv1::Execution::DECISION_ALLOW},
+    {SNTEventStateAllowTransitive, ::pbv1::Execution::DECISION_ALLOW},
+    {SNTEventStateAllowPendingTransitive, ::pbv1::Execution::DECISION_ALLOW},
+    {SNTEventStateAllowTeamID, ::pbv1::Execution::DECISION_ALLOW},
   };
 
   for (const auto &kv : stateToDecision) {
@@ -305,23 +306,23 @@ void SerializeAndCheck(es_event_type_t eventType,
 }
 
 - (void)testGetReasonEnum {
-  std::map<SNTEventState, pb::Execution::Reason> stateToReason = {
-    {SNTEventStateUnknown, pb::Execution::REASON_NOT_RUNNING},
-    {SNTEventStateBundleBinary, pb::Execution::REASON_NOT_RUNNING},
-    {SNTEventStateBlockUnknown, pb::Execution::REASON_UNKNOWN},
-    {SNTEventStateBlockBinary, pb::Execution::REASON_BINARY},
-    {SNTEventStateBlockCertificate, pb::Execution::REASON_CERT},
-    {SNTEventStateBlockScope, pb::Execution::REASON_SCOPE},
-    {SNTEventStateBlockTeamID, pb::Execution::REASON_TEAM_ID},
-    {SNTEventStateBlockLongPath, pb::Execution::REASON_LONG_PATH},
-    {SNTEventStateAllowUnknown, pb::Execution::REASON_UNKNOWN},
-    {SNTEventStateAllowBinary, pb::Execution::REASON_BINARY},
-    {SNTEventStateAllowCertificate, pb::Execution::REASON_CERT},
-    {SNTEventStateAllowScope, pb::Execution::REASON_SCOPE},
-    {SNTEventStateAllowCompiler, pb::Execution::REASON_COMPILER},
-    {SNTEventStateAllowTransitive, pb::Execution::REASON_TRANSITIVE},
-    {SNTEventStateAllowPendingTransitive, pb::Execution::REASON_PENDING_TRANSITIVE},
-    {SNTEventStateAllowTeamID, pb::Execution::REASON_TEAM_ID},
+  std::map<SNTEventState, ::pbv1::Execution::Reason> stateToReason = {
+    {SNTEventStateUnknown, ::pbv1::Execution::REASON_NOT_RUNNING},
+    {SNTEventStateBundleBinary, ::pbv1::Execution::REASON_NOT_RUNNING},
+    {SNTEventStateBlockUnknown, ::pbv1::Execution::REASON_UNKNOWN},
+    {SNTEventStateBlockBinary, ::pbv1::Execution::REASON_BINARY},
+    {SNTEventStateBlockCertificate, ::pbv1::Execution::REASON_CERT},
+    {SNTEventStateBlockScope, ::pbv1::Execution::REASON_SCOPE},
+    {SNTEventStateBlockTeamID, ::pbv1::Execution::REASON_TEAM_ID},
+    {SNTEventStateBlockLongPath, ::pbv1::Execution::REASON_LONG_PATH},
+    {SNTEventStateAllowUnknown, ::pbv1::Execution::REASON_UNKNOWN},
+    {SNTEventStateAllowBinary, ::pbv1::Execution::REASON_BINARY},
+    {SNTEventStateAllowCertificate, ::pbv1::Execution::REASON_CERT},
+    {SNTEventStateAllowScope, ::pbv1::Execution::REASON_SCOPE},
+    {SNTEventStateAllowCompiler, ::pbv1::Execution::REASON_COMPILER},
+    {SNTEventStateAllowTransitive, ::pbv1::Execution::REASON_TRANSITIVE},
+    {SNTEventStateAllowPendingTransitive, ::pbv1::Execution::REASON_PENDING_TRANSITIVE},
+    {SNTEventStateAllowTeamID, ::pbv1::Execution::REASON_TEAM_ID},
   };
 
   for (const auto &kv : stateToReason) {
@@ -330,11 +331,11 @@ void SerializeAndCheck(es_event_type_t eventType,
 }
 
 - (void)testGetModeEnum {
-  std::map<SNTClientMode, pb::Execution::Mode> clientModeToExecMode = {
-    {SNTClientModeUnknown, pb::Execution::MODE_UNKNOWN},
-    {SNTClientModeMonitor, pb::Execution::MODE_MONITOR},
-    {SNTClientModeLockdown, pb::Execution::MODE_LOCKDOWN},
-    {(SNTClientMode)123, pb::Execution::MODE_UNKNOWN},
+  std::map<SNTClientMode, ::pbv1::Execution::Mode> clientModeToExecMode = {
+    {SNTClientModeUnknown, ::pbv1::Execution::MODE_UNKNOWN},
+    {SNTClientModeMonitor, ::pbv1::Execution::MODE_MONITOR},
+    {SNTClientModeLockdown, ::pbv1::Execution::MODE_LOCKDOWN},
+    {(SNTClientMode)123, ::pbv1::Execution::MODE_UNKNOWN},
   };
 
   for (const auto &kv : clientModeToExecMode) {
@@ -343,23 +344,23 @@ void SerializeAndCheck(es_event_type_t eventType,
 }
 
 - (void)testGetFileDescriptorType {
-  std::map<uint32_t, pb::FileDescriptor::FDType> fdtypeToEnumType = {
-    {PROX_FDTYPE_ATALK, pb::FileDescriptor::FD_TYPE_ATALK},
-    {PROX_FDTYPE_VNODE, pb::FileDescriptor::FD_TYPE_VNODE},
-    {PROX_FDTYPE_SOCKET, pb::FileDescriptor::FD_TYPE_SOCKET},
-    {PROX_FDTYPE_PSHM, pb::FileDescriptor::FD_TYPE_PSHM},
-    {PROX_FDTYPE_PSEM, pb::FileDescriptor::FD_TYPE_PSEM},
-    {PROX_FDTYPE_KQUEUE, pb::FileDescriptor::FD_TYPE_KQUEUE},
-    {PROX_FDTYPE_PIPE, pb::FileDescriptor::FD_TYPE_PIPE},
-    {PROX_FDTYPE_FSEVENTS, pb::FileDescriptor::FD_TYPE_FSEVENTS},
-    {PROX_FDTYPE_NETPOLICY, pb::FileDescriptor::FD_TYPE_NETPOLICY},
-    {10 /* PROX_FDTYPE_CHANNEL */, pb::FileDescriptor::FD_TYPE_CHANNEL},
-    {11 /* PROX_FDTYPE_NEXUS */, pb::FileDescriptor::FD_TYPE_NEXUS},
+  std::map<uint32_t, ::pbv1::FileDescriptor::FDType> fdtypeToEnumType = {
+    {PROX_FDTYPE_ATALK, ::pbv1::FileDescriptor::FD_TYPE_ATALK},
+    {PROX_FDTYPE_VNODE, ::pbv1::FileDescriptor::FD_TYPE_VNODE},
+    {PROX_FDTYPE_SOCKET, ::pbv1::FileDescriptor::FD_TYPE_SOCKET},
+    {PROX_FDTYPE_PSHM, ::pbv1::FileDescriptor::FD_TYPE_PSHM},
+    {PROX_FDTYPE_PSEM, ::pbv1::FileDescriptor::FD_TYPE_PSEM},
+    {PROX_FDTYPE_KQUEUE, ::pbv1::FileDescriptor::FD_TYPE_KQUEUE},
+    {PROX_FDTYPE_PIPE, ::pbv1::FileDescriptor::FD_TYPE_PIPE},
+    {PROX_FDTYPE_FSEVENTS, ::pbv1::FileDescriptor::FD_TYPE_FSEVENTS},
+    {PROX_FDTYPE_NETPOLICY, ::pbv1::FileDescriptor::FD_TYPE_NETPOLICY},
+    {10 /* PROX_FDTYPE_CHANNEL */, ::pbv1::FileDescriptor::FD_TYPE_CHANNEL},
+    {11 /* PROX_FDTYPE_NEXUS */, ::pbv1::FileDescriptor::FD_TYPE_NEXUS},
   };
 
   for (const auto &kv : fdtypeToEnumType) {
-    XCTAssertEqual(GetFileDescriptorType(kv.first), kv.second,
-                   @"Bad fd type name for fdtype: %u", kv.first);
+    XCTAssertEqual(GetFileDescriptorType(kv.first), kv.second, @"Bad fd type name for fdtype: %u",
+                   kv.first);
   }
 }
 
@@ -414,21 +415,21 @@ void SerializeAndCheck(es_event_type_t eventType,
 
 - (void)testEncodeExitStatus {
   {
-    pb::Exit pbExit;
+    ::pbv1::Exit pbExit;
     EncodeExitStatus(&pbExit, W_EXITCODE(1, 0));
     XCTAssertTrue(pbExit.has_exited());
     XCTAssertEqual(1, pbExit.exited().exit_status());
   }
 
   {
-    pb::Exit pbExit;
+    ::pbv1::Exit pbExit;
     EncodeExitStatus(&pbExit, W_EXITCODE(2, SIGUSR1));
     XCTAssertTrue(pbExit.has_signaled());
     XCTAssertEqual(SIGUSR1, pbExit.signaled().signal());
   }
 
   {
-    pb::Exit pbExit;
+    ::pbv1::Exit pbExit;
     EncodeExitStatus(&pbExit, W_STOPCODE(SIGSTOP));
     XCTAssertTrue(pbExit.has_stopped());
     XCTAssertEqual(SIGSTOP, pbExit.stopped().signal());
@@ -519,7 +520,7 @@ void SerializeAndCheck(es_event_type_t eventType,
     std::vector<uint8_t> vec = bs->SerializeAllowlist(Message(mockESApi, &esMsg), "hash_value");
     std::string protoStr(vec.begin(), vec.end());
 
-    pb::SantaMessage santaMsg;
+    ::pbv1::SantaMessage santaMsg;
     XCTAssertTrue(santaMsg.ParseFromString(protoStr));
 
     NSString *wantData = LoadTestJson(@"allowlist.json", esMsg.version);
@@ -544,19 +545,19 @@ void SerializeAndCheck(es_event_type_t eventType,
   std::vector<uint8_t> vec = Protobuf::Create(nullptr)->SerializeBundleHashingEvent(se);
   std::string protoStr(vec.begin(), vec.end());
 
-  pb::SantaMessage santaMsg;
+  ::pbv1::SantaMessage santaMsg;
   XCTAssertTrue(santaMsg.ParseFromString(protoStr));
   XCTAssertTrue(santaMsg.has_bundle());
 
-  const pb::Bundle &pbBundle = santaMsg.bundle();
+  const ::pbv1::Bundle &pbBundle = santaMsg.bundle();
 
-  pb::Hash pbHash = pbBundle.file_hash();
+  ::pbv1::Hash pbHash = pbBundle.file_hash();
   XCTAssertEqualObjects(@(pbHash.hash().c_str()), se.fileSHA256);
-  XCTAssertEqual(pbHash.type(), pb::Hash::HASH_ALGO_SHA256);
+  XCTAssertEqual(pbHash.type(), ::pbv1::Hash::HASH_ALGO_SHA256);
 
   pbHash = pbBundle.bundle_hash();
   XCTAssertEqualObjects(@(pbHash.hash().c_str()), se.fileBundleHash);
-  XCTAssertEqual(pbHash.type(), pb::Hash::HASH_ALGO_SHA256);
+  XCTAssertEqual(pbHash.type(), ::pbv1::Hash::HASH_ALGO_SHA256);
 
   XCTAssertEqualObjects(@(pbBundle.bundle_name().c_str()), se.fileBundleName);
   XCTAssertEqualObjects(@(pbBundle.bundle_id().c_str()), @"");
@@ -579,13 +580,13 @@ void SerializeAndCheck(es_event_type_t eventType,
   std::vector<uint8_t> vec = Protobuf::Create(nullptr)->SerializeDiskAppeared(props);
   std::string protoStr(vec.begin(), vec.end());
 
-  pb::SantaMessage santaMsg;
+  ::pbv1::SantaMessage santaMsg;
   XCTAssertTrue(santaMsg.ParseFromString(protoStr));
   XCTAssertTrue(santaMsg.has_disk());
 
-  const pb::Disk &pbDisk = santaMsg.disk();
+  const ::pbv1::Disk &pbDisk = santaMsg.disk();
 
-  XCTAssertEqual(pbDisk.action(), pb::Disk::ACTION_APPEARED);
+  XCTAssertEqual(pbDisk.action(), ::pbv1::Disk::ACTION_APPEARED);
 
   XCTAssertEqualObjects(@(pbDisk.mount().c_str()), [props[@"DAVolumePath"] path]);
   XCTAssertEqualObjects(@(pbDisk.volume().c_str()), @"");
@@ -616,13 +617,13 @@ void SerializeAndCheck(es_event_type_t eventType,
   std::vector<uint8_t> vec = Protobuf::Create(nullptr)->SerializeDiskDisappeared(props);
   std::string protoStr(vec.begin(), vec.end());
 
-  pb::SantaMessage santaMsg;
+  ::pbv1::SantaMessage santaMsg;
   XCTAssertTrue(santaMsg.ParseFromString(protoStr));
   XCTAssertTrue(santaMsg.has_disk());
 
-  const pb::Disk &pbDisk = santaMsg.disk();
+  const ::pbv1::Disk &pbDisk = santaMsg.disk();
 
-  XCTAssertEqual(pbDisk.action(), pb::Disk::ACTION_DISAPPEARED);
+  XCTAssertEqual(pbDisk.action(), ::pbv1::Disk::ACTION_DISAPPEARED);
 
   XCTAssertEqualObjects(@(pbDisk.mount().c_str()), [props[@"DAVolumePath"] path]);
   XCTAssertEqualObjects(@(pbDisk.volume().c_str()), @"");

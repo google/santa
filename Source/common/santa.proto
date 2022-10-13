@@ -11,7 +11,7 @@ import "google/protobuf/timestamp.proto";
 
 option objc_class_prefix = "SNTPB";
 
-package santa.pb;
+package santa.pb.v1;
 
 message UserInfo {
   int32 uid = 1;
