@@ -35,6 +35,7 @@
 #include "Source/santad/EventProviders/EndpointSecurity/EndpointSecurityAPI.h"
 #include "Source/santad/Logs/EndpointSecurity/Serializers/Utilities.h"
 #import "Source/santad/SNTDecisionCache.h"
+#include "google/protobuf/timestamp.pb.h"
 
 using google::protobuf::Arena;
 using google::protobuf::Timestamp;

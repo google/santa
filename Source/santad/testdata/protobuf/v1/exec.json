@@ -29,8 +29,10 @@
   },
   "is_platform_binary": true,
   "is_es_client": true,
+  "cs_flags": 0,
   "executable": {
    "path": "foo",
+   "truncated": false,
    "stat": {
     "dev": 101,
     "mode": 102,
@@ -95,6 +97,7 @@
   "cs_flags": 536871680,
   "executable": {
    "path": "fooexec",
+   "truncated": false,
    "stat": {
     "dev": 301,
     "mode": 302,

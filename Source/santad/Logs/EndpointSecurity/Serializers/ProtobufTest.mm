@@ -41,19 +41,13 @@
 #include "Source/santad/Logs/EndpointSecurity/Serializers/Protobuf.h"
 #include "Source/santad/Logs/EndpointSecurity/Serializers/Serializer.h"
 #import "Source/santad/SNTDecisionCache.h"
+#include "google/protobuf/any.pb.h"
+#include "google/protobuf/timestamp.pb.h"
 
 using google::protobuf::Timestamp;
 using google::protobuf::util::JsonPrintOptions;
-using santa::santad::event_providers::endpoint_security::EnrichedClose;
 using santa::santad::event_providers::endpoint_security::EnrichedEventType;
-using santa::santad::event_providers::endpoint_security::EnrichedExchange;
-using santa::santad::event_providers::endpoint_security::EnrichedExec;
-using santa::santad::event_providers::endpoint_security::EnrichedExit;
-using santa::santad::event_providers::endpoint_security::EnrichedFork;
-using santa::santad::event_providers::endpoint_security::EnrichedLink;
 using santa::santad::event_providers::endpoint_security::EnrichedMessage;
-using santa::santad::event_providers::endpoint_security::EnrichedRename;
-using santa::santad::event_providers::endpoint_security::EnrichedUnlink;
 using santa::santad::event_providers::endpoint_security::Enricher;
 using santa::santad::event_providers::endpoint_security::Message;
 using santa::santad::logs::endpoint_security::serializers::Protobuf;
@@ -168,7 +162,7 @@ std::string ConvertMessageToJsonString(const ::pbv1::SantaMessage &santaMsg) {
   const google::protobuf::Message &message = SantaMessageEvent(santaMsg);
 
   std::string json;
-  google::protobuf::util::MessageToJsonString(message, &json, options);
+  XCTAssertTrue(google::protobuf::util::MessageToJsonString(message, &json, options).ok());
   return json;
 }
 

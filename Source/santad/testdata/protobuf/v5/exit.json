@@ -8,7 +8,10 @@
    "pid": 56,
    "pidversion": 78
   },
-  "responsible_id": {},
+  "responsible_id": {
+   "pid": 0,
+   "pidversion": 0
+  },
   "original_parent_pid": 56,
   "group_id": 111,
   "session_id": 222,
@@ -30,8 +33,10 @@
   },
   "is_platform_binary": true,
   "is_es_client": true,
+  "cs_flags": 0,
   "executable": {
    "path": "foo",
+   "truncated": false,
    "stat": {
     "dev": 101,
     "mode": 102,
@@ -59,6 +64,7 @@
   },
   "tty": {
    "path": "footty",
+   "truncated": false,
    "stat": {
     "dev": 201,
     "mode": 202,
