@@ -41,6 +41,8 @@
 #include "Source/santad/Logs/EndpointSecurity/Serializers/Protobuf.h"
 #include "Source/santad/Logs/EndpointSecurity/Serializers/Serializer.h"
 #import "Source/santad/SNTDecisionCache.h"
+#include "google/protobuf/any.pb.h"
+#include "google/protobuf/timestamp.pb.h"
 
 using google::protobuf::Timestamp;
 using google::protobuf::util::JsonPrintOptions;
