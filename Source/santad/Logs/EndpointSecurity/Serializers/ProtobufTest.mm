@@ -33,7 +33,7 @@
 #import "Source/common/SNTConfigurator.h"
 #import "Source/common/SNTStoredEvent.h"
 #include "Source/common/TestUtils.h"
-#include "Source/common/santa.pb.h"
+#include "Source/common/santa_proto_include_wrapper.h"
 #include "Source/santad/EventProviders/EndpointSecurity/EnrichedTypes.h"
 #include "Source/santad/EventProviders/EndpointSecurity/Enricher.h"
 #include "Source/santad/EventProviders/EndpointSecurity/Message.h"
