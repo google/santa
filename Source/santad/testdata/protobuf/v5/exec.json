@@ -8,7 +8,10 @@
    "pid": 56,
    "pidversion": 78
   },
-  "responsible_id": {},
+  "responsible_id": {
+   "pid": 0,
+   "pidversion": 0
+  },
   "original_parent_pid": 56,
   "group_id": 111,
   "session_id": 222,
@@ -30,8 +33,10 @@
   },
   "is_platform_binary": true,
   "is_es_client": true,
+  "cs_flags": 0,
   "executable": {
    "path": "foo",
+   "truncated": false,
    "stat": {
     "dev": 101,
     "mode": 102,
@@ -59,6 +64,7 @@
   },
   "tty": {
    "path": "footty",
+   "truncated": false,
    "stat": {
     "dev": 201,
     "mode": 202,
@@ -93,7 +99,10 @@
    "pid": 67,
    "pidversion": 89
   },
-  "responsible_id": {},
+  "responsible_id": {
+   "pid": 0,
+   "pidversion": 0
+  },
   "original_parent_pid": 67,
   "group_id": 111,
   "session_id": 222,
@@ -123,6 +132,7 @@
   "cs_flags": 536871680,
   "executable": {
    "path": "fooexec",
+   "truncated": false,
    "stat": {
     "dev": 301,
     "mode": 302,
@@ -156,6 +166,7 @@
  },
  "script": {
   "path": "script.sh",
+  "truncated": false,
   "stat": {
    "dev": 501,
    "mode": 502,
@@ -183,6 +194,7 @@
  },
  "working_directory": {
   "path": "cwd",
+  "truncated": false,
   "stat": {
    "dev": 401,
    "mode": 402,

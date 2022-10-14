@@ -29,8 +29,10 @@
   },
   "is_platform_binary": true,
   "is_es_client": true,
+  "cs_flags": 0,
   "executable": {
    "path": "foo",
+   "truncated": false,
    "stat": {
     "dev": 101,
     "mode": 102,
@@ -58,6 +60,7 @@
   },
   "tty": {
    "path": "footty",
+   "truncated": false,
    "stat": {
     "dev": 201,
     "mode": 202,
@@ -112,8 +115,10 @@
   },
   "is_platform_binary": true,
   "is_es_client": true,
+  "cs_flags": 0,
   "executable": {
    "path": "foo_child",
+   "truncated": false,
    "stat": {
     "dev": 301,
     "mode": 302,
@@ -141,6 +146,7 @@
   },
   "tty": {
    "path": "footty",
+   "truncated": false,
    "stat": {
     "dev": 401,
     "mode": 402,
