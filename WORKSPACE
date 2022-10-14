@@ -13,19 +13,6 @@ http_archive(
     urls = ["https://github.com/bazelbuild/rules_apple/releases/download/1.1.0/rules_apple.1.1.0.tar.gz"],
 )
 
-http_archive(
-    name = "com_google_protobuf",
-    patch_args = ["-p1"],
-    patches = ["//external_patches/com_google_protobuf:10120.patch"],
-    sha256 = "73c95c7b0c13f597a6a1fec7121b07e90fd12b4ed7ff5a781253b3afe07fc077",
-    strip_prefix = "protobuf-3.21.6",
-    urls = ["https://github.com/protocolbuffers/protobuf/archive/v3.21.6.tar.gz"],
-)
-
-load("@com_google_protobuf//:protobuf_deps.bzl", "protobuf_deps")
-
-protobuf_deps()
-
 load("@build_bazel_rules_apple//apple:repositories.bzl", "apple_rules_dependencies")
 
 apple_rules_dependencies()
@@ -55,6 +42,29 @@ http_archive(
     strip_prefix = "googletest-58d77fa8070e8cec2dc1ed015d66b454c8d78850",
     urls = ["https://github.com/google/googletest/archive/58d77fa8070e8cec2dc1ed015d66b454c8d78850.zip"],
 )
+
+# Abseil - Abseil LTS branch, June 2022, Patch 1
+http_archive(
+    name = "com_google_absl",
+    sha256 = "b9f490fae1c0d89a19073a081c3c588452461e5586e4ae31bc50a8f36339135e",
+    strip_prefix = "abseil-cpp-8c0b94e793a66495e0b1f34a5eb26bd7dc672db0",
+    urls = ["https://github.com/abseil/abseil-cpp/archive/8c0b94e793a66495e0b1f34a5eb26bd7dc672db0.zip"],
+)
+
+http_archive(
+    name = "com_google_protobuf",
+    patch_args = ["-p1"],
+    patches = ["//external_patches/com_google_protobuf:10120.patch"],
+    sha256 = "73c95c7b0c13f597a6a1fec7121b07e90fd12b4ed7ff5a781253b3afe07fc077",
+    strip_prefix = "protobuf-3.21.6",
+    urls = ["https://github.com/protocolbuffers/protobuf/archive/v3.21.6.tar.gz"],
+)
+
+# Note: Protobuf deps must be loaded after defining the ABSL archive since
+# protobuf repo would pull an in earlier version of ABSL.
+load("@com_google_protobuf//:protobuf_deps.bzl", "protobuf_deps")
+
+protobuf_deps()
 
 # Macops MOL* dependencies
 

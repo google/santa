@@ -1124,6 +1124,7 @@ test_suite(
         ":SNTExecutionControllerTest",
         ":SNTRuleTableTest",
         ":SantadTest",
+        "//Source/santad/Logs/EndpointSecurity/Writers/FSSpool:fsspool_test"
     ],
     visibility = ["//:santa_package_group"],
 )
