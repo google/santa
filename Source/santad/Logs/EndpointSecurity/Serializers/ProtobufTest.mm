@@ -170,7 +170,7 @@ std::string ConvertMessageToJsonString(const ::pbv1::SantaMessage &santaMsg) {
   const google::protobuf::Message &message = SantaMessageEvent(santaMsg);
 
   std::string json;
-  google::protobuf::util::MessageToJsonString(message, &json, options);
+  XCTAssertTrue(google::protobuf::util::MessageToJsonString(message, &json, options).ok());
   return json;
 }
 
