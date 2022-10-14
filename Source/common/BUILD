@@ -25,6 +25,7 @@ cc_proto_library(
 # depended upon by an `objc_library` target.
 cc_library(
     name = "santa_cc_proto_library_wrapper",
+    hdrs = ["santa_proto_include_wrapper.h"],
     deps = [
         ":santa_cc_proto",
     ],
