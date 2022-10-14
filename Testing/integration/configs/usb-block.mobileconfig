@@ -20,8 +20,8 @@
 								<true/>
 								<key>RemountUSBMode</key>
 								<array>
-										<string>noexec</string>
-										<string>rdonly</string>
+									<string>noexec</string>
+									<string>rdonly</string>
 								</array>
 								<key>EnableForkAndExitLogging</key>
 								<true/>
