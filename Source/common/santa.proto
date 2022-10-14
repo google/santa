@@ -15,53 +15,53 @@ package santa.pb.v1;
 
 // User ID and associated username
 message UserInfo {
-  int32 uid = 1;
-  string name = 2;
+  optional int32 uid = 1;
+  optional string name = 2;
 }
 
 // Group ID and associated group name
 message GroupInfo {
-  int32 gid = 1;
-  string name = 2;
+  optional int32 gid = 1;
+  optional string name = 2;
 }
 
 // A process is uniquely identified on macOS by its pid and pidversion
 message ProcessID {
-  int32 pid = 1;
-  int32 pidversion = 2;
+  optional int32 pid = 1;
+  optional int32 pidversion = 2;
 }
 
 // Code signature information
 message CodeSignature {
   // The code directory hash identifies a specific version of a program
-  bytes cdhash = 1;
+  optional bytes cdhash = 1;
 
   // The signing id of the code signature
-  string signing_id = 2;
+  optional string signing_id = 2;
 
   // The team id of the code signature
-  string team_id = 3;
+  optional string team_id = 3;
 }
 
 // Stat information for a file
 // Mimics data from `stat(2)`
 message Stat {
-  int32 dev = 1;
-  uint32 mode = 2;
-  uint32 nlink = 3;
-  uint64 ino = 4;
-  UserInfo user = 5;
-  GroupInfo group = 6;
-  int32 rdev = 7;
-  google.protobuf.Timestamp access_time = 8;
-  google.protobuf.Timestamp modification_time = 9;
-  google.protobuf.Timestamp change_time = 10;
-  google.protobuf.Timestamp birth_time = 11;
-  int64 size = 12;
-  int64 blocks = 13;
-  int32 blksize = 14;
-  uint32 flags = 15;
-  int32 gen = 16;
+  optional int32 dev = 1;
+  optional uint32 mode = 2;
+  optional uint32 nlink = 3;
+  optional uint64 ino = 4;
+  optional UserInfo user = 5;
+  optional GroupInfo group = 6;
+  optional int32 rdev = 7;
+  optional google.protobuf.Timestamp access_time = 8;
+  optional google.protobuf.Timestamp modification_time = 9;
+  optional google.protobuf.Timestamp change_time = 10;
+  optional google.protobuf.Timestamp birth_time = 11;
+  optional int64 size = 12;
+  optional int64 blocks = 13;
+  optional int32 blksize = 14;
+  optional uint32 flags = 15;
+  optional int32 gen = 16;
 }
 
 // Hash value and metadata describing hash algorithm used
@@ -71,23 +71,23 @@ message Hash {
     HASH_ALGO_SHA256 = 1;
   }
 
-  HashAlgo type = 1;
-  string hash = 2;
+  optional HashAlgo type = 1;
+  optional string hash = 2;
 }
 
 // File information
 message File {
   // File path
-  string path = 1;
+  optional string path = 1;
 
   // Whether or not the path is truncated
-  bool truncated = 2;
+  optional bool truncated = 2;
 
   // Stat information
-  Stat stat = 3;
+  optional Stat stat = 3;
 
   // Hash of file contents
-  Hash hash = 4;
+  optional Hash hash = 4;
 }
 
 // File descriptor information
@@ -109,92 +109,92 @@ message FileDescriptor {
   }
 
   // File descriptor value
-  int32 fd = 1;
+  optional int32 fd = 1;
 
   // Type of file object
-  FDType fd_type = 2;
+  optional FDType fd_type = 2;
 
   // Unique id of the pipe for correlation with other file descriptors
   // pointing to the same or other end of the same pipe
   // Note: Only valid when `fd_type` is `FD_TYPE_PIPE`
-  uint64 pipe_id = 3;
+  optional uint64 pipe_id = 3;
 }
 
 // Process information
 message ProcessInfo {
   // Process ID of the process
-  ProcessID id = 1;
+  optional ProcessID id = 1;
 
   // Process ID of the parent process
-  ProcessID parent_id = 2;
+  optional ProcessID parent_id = 2;
 
   // Process ID of the process responsible for this one
-  ProcessID responsible_id = 3;
+  optional ProcessID responsible_id = 3;
 
   // Original parent ID, remains stable in the event a process is reparented
-  int32 original_parent_pid = 4;
+  optional int32 original_parent_pid = 4;
 
   // Process group id the process belongs to
-  int32 group_id = 5;
+  optional int32 group_id = 5;
 
   // Session id the process belongs to
-  int32 session_id = 6;
+  optional int32 session_id = 6;
 
   // Effective user/group info
-  UserInfo effective_user = 7;
-  GroupInfo effective_group = 8;
+  optional UserInfo effective_user = 7;
+  optional GroupInfo effective_group = 8;
 
   // Real user/group info
-  UserInfo real_user = 9;
-  GroupInfo real_group = 10;
+  optional UserInfo real_user = 9;
+  optional GroupInfo real_group = 10;
 
   // Whether or not the process was signed with Apple certificates
-  bool is_platform_binary = 11;
+  optional bool is_platform_binary = 11;
 
   // Whether or not the process is an ES client
-  bool is_es_client = 12;
+  optional bool is_es_client = 12;
 
   // Code signature information for the process
-  CodeSignature code_signature = 13;
+  optional CodeSignature code_signature = 13;
 
   // Codesigning flags for the process (from `<Kernel/kern/cs_blobs.h>`)
-  uint32 cs_flags = 14;
+  optional uint32 cs_flags = 14;
 
   // File information for the executable backing this process
-  File executable = 15;
+  optional File executable = 15;
 
   // File information for the associated TTY
-  File tty = 16;
+  optional File tty = 16;
 
   // Time the process was started
-  google.protobuf.Timestamp start_time = 17;
+  optional google.protobuf.Timestamp start_time = 17;
 }
 
 // Certificate information
 message CertificateInfo {
   // Hash of the certificate data
-  Hash hash = 1;
+  optional Hash hash = 1;
 
   // Common name used in the certificate
-  string common_name = 2;
+  optional string common_name = 2;
 }
 
 // Information about a process execution event
 message Execution {
   // The process that executed the new image (e.g. the process that called
   // `execve(2)` or `posix_spawn(2)``)
-  ProcessInfo instigator = 1;
+  optional ProcessInfo instigator = 1;
 
   // Process info for the newly formed execution
-  ProcessInfo target = 2;
+  optional ProcessInfo target = 2;
 
   // Script file information
   // Only valid when a script was executed directly and not as an argument to
   // an interpreter (e.g.  `./foo.sh`, not `/bin/sh ./foo.sh`)
-  File script = 3;
+  optional File script = 3;
 
   // The current working directory of the `target` at exec time
-  File working_directory = 4;
+  optional File working_directory = 4;
 
   // List of process arguments
   repeated string args = 5;
@@ -206,7 +206,7 @@ message Execution {
   repeated FileDescriptor fds = 7;
 
   // Whether or not the list of `fds` is complete or contains partial info
-  bool fd_list_truncated = 8;
+  optional bool fd_list_truncated = 8;
 
   // Whether or not the target execution was allowed
   enum Decision {
@@ -214,7 +214,7 @@ message Execution {
     DECISION_ALLOW = 1;
     DECISION_DENY = 2;
   }
-  Decision decision = 9;
+  optional Decision decision = 9;
 
   // The policy applied when determining the decision
   enum Reason {
@@ -229,7 +229,7 @@ message Execution {
     REASON_LONG_PATH = 9;
     REASON_NOT_RUNNING = 10;
   }
-  Reason reason = 10;
+  optional Reason reason = 10;
 
   // The mode Santa was in when the decision was applied
   enum Mode {
@@ -237,47 +237,47 @@ message Execution {
     MODE_LOCKDOWN = 1;
     MODE_MONITOR = 2;
   }
-  Mode mode = 11;
+  optional Mode mode = 11;
 
   // Certificate information for the target executable
-  CertificateInfo certificate_info = 12;
+  optional CertificateInfo certificate_info = 12;
 
   // Additional Santa metadata
-  string explain = 13;
+  optional string explain = 13;
 
   // Information known to LaunchServices about the target executable file
-  string quarantine_url = 14;
+  optional string quarantine_url = 14;
 
   // The original path on disk of the target executable
   // Applies when executables are translocated
-  string original_path = 15;
+  optional string original_path = 15;
 
   // Machine ID of the host emitting this log
-  string machine_id = 16;
+  optional string machine_id = 16;
 }
 
 // Information about a fork event
 message Fork {
   // The forking process
-  ProcessInfo instigator = 1;
+  optional ProcessInfo instigator = 1;
 
   // The newly formed child process
-  ProcessInfo child = 2;
+  optional ProcessInfo child = 2;
 }
 
 // Information about an exit event
 message Exit {
   // The process that is exiting
-  ProcessInfo instigator = 1;
+  optional ProcessInfo instigator = 1;
 
   // Exit status code information
   message Exited {
-    int32 exit_status = 1;
+    optional int32 exit_status = 1;
   }
 
   // Signal code
   message Signaled {
-    int32 signal = 1;
+    optional int32 signal = 1;
   }
 
   // Information on how/why the process exited
@@ -291,74 +291,74 @@ message Exit {
 // Information about an open event
 message Open {
   // The process that is opening the file
-  ProcessInfo instigator = 1;
+  optional ProcessInfo instigator = 1;
 
   // The file being opened
-  File target = 2;
+  optional File target = 2;
 
   // Bitmask of flags used to open the file
   // Note: Represents the mask applied by the kernel, not the typical `open(2)`
   // flags (e.g. FREAD, FWRITE instead of O_RDONLY, O_RDWR, etc...)
-  int32 flags = 3;
+  optional int32 flags = 3;
 }
 
 // Information about a close event
 message Close {
   // The process closing the file
-  ProcessInfo instigator = 1;
+  optional ProcessInfo instigator = 1;
 
   // The file being closed
-  File target = 2;
+  optional File target = 2;
 
   // Whether or not the file was written to
-  bool modified = 3;
+  optional bool modified = 3;
 }
 
 // Information about an exchagedata event
 // This event is not applicable to all filesystems (notably APFS)
 message Exchangedata {
   // The process that is exchanging the data
-  ProcessInfo instigator = 1;
+  optional ProcessInfo instigator = 1;
 
   // File information for the two files in the exchangedata operation
-  File file1 = 2;
-  File file2 = 3;
+  optional File file1 = 2;
+  optional File file2 = 3;
 }
 
 // Information about a rename event
 message Rename {
   // The process renaming the file
-  ProcessInfo instigator = 1;
+  optional ProcessInfo instigator = 1;
 
   // The source file being renamed
-  File source = 2;
+  optional File source = 2;
 
   // The target path when the rename is complete
-  string target = 3;
+  optional string target = 3;
 
   // Whether or not the target path previously existed
-  bool target_existed = 4;
+  optional bool target_existed = 4;
 }
 
 // Information about an unlink event
 message Unlink {
   // The process deleting the file
-  ProcessInfo instigator = 1;
+  optional ProcessInfo instigator = 1;
 
   // The file being deleted
-  File target = 2;
+  optional File target = 2;
 }
 
 // Information about a link event
 message Link {
   // The process performing the link
-  ProcessInfo instigator = 1;
+  optional ProcessInfo instigator = 1;
 
   // The source file being linked
-  File source = 2;
+  optional File source = 2;
 
   // The path of the new link
-  string target = 3;
+  optional string target = 3;
 }
 
 // Information about when disks are added or removed
@@ -369,77 +369,77 @@ message Disk {
     ACTION_APPEARED = 1;
     ACTION_DISAPPEARED = 2;
   }
-  Action action = 1;
+  optional Action action = 1;
 
   // Volume path
-  string mount = 2;
+  optional string mount = 2;
 
   // Volume name
-  string volume = 3;
+  optional string volume = 3;
 
   // Media BSD name
-  string bsd_name = 4;
+  optional string bsd_name = 4;
 
   // Kind of volume
-  string fs = 5;
+  optional string fs = 5;
 
   // Device vendor and model information
-  string model = 6;
+  optional string model = 6;
 
   // Serial number of the device
-  string serial = 7;
+  optional string serial = 7;
 
   // Device protocol
-  string bus = 8;
+  optional string bus = 8;
 
   // Path of the DMG
-  string dmg_path = 9;
+  optional string dmg_path = 9;
 
   // Time device appeared/disappeared
-  google.protobuf.Timestamp appearance = 10;
+  optional google.protobuf.Timestamp appearance = 10;
 }
 
 // Information emitted when Santa captures bundle information
 message Bundle {
   // This is the hash of the file within the bundle that triggered the event
-  Hash file_hash = 1;
+  optional Hash file_hash = 1;
 
   // This is the hash of the hashes of all executables in the bundle
-  Hash bundle_hash = 2;
+  optional Hash bundle_hash = 2;
 
   // Name of the bundle
-  string bundle_name = 3;
+  optional string bundle_name = 3;
 
   // Bundle identifier
-  string bundle_id = 4;
+  optional string bundle_id = 4;
 
   // Bundle path
-  string bundle_path = 5;
+  optional string bundle_path = 5;
 
   // Path of the file within the bundle that triggered the event
-  string path = 6;
+  optional string path = 6;
 }
 
 // Information for a transitive allowlist rule
 message Allowlist {
   // The process that caused the allowlist rule to be generated
-  ProcessInfo instigator = 1;
+  optional ProcessInfo instigator = 1;
 
   // The file the new allowlist rule applies to
-  File target = 2;
+  optional File target = 2;
 }
 
 // A message encapsulating a single event
 message SantaMessage {
   // Unique, per-event generated
   // Can allow client to relate events across time
-  string uuid = 1;
+  optional string uuid = 1;
 
   // Timestamp when the event occurred
-  google.protobuf.Timestamp event_time = 2;
+  optional google.protobuf.Timestamp event_time = 2;
 
   // Timestamp when Santa finished processing the event
-  google.protobuf.Timestamp processed_time = 3;
+  optional google.protobuf.Timestamp processed_time = 3;
 
   // Event type being described by this message
   oneof event {
