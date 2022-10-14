@@ -8,7 +8,7 @@ import tempfile
 
 from google.cloud import storage
 
-MINISIGN = "/opt/bin/minisign"
+COSIGN = "/opt/bin/cosign"
 PUBKEY = "/opt/santa-e2e-vm-signer.pub"
 BUCKET = "santa-e2e-vms"
 VMCLI = "/opt/bin/VMCLI"
@@ -42,15 +42,16 @@ if __name__ == "__main__":
     if blob.updated > datetime.datetime.fromtimestamp(local_ctime, tz=datetime.timezone.utc):
         print(f"VM {extracted_path} not present or not up to date, downloading...")
         blob.download_to_filename(tar_path)
-        sig_blob = bucket.get_blob(str(tar_name) + '.minisig')
+        sig_blob = bucket.get_blob(str(tar_name) + '.sig')
         if sig_blob is None:
           print("Image signature doesn't exist in GCS", file=sys.stderr)
           sys.exit(1)
 
-        sig_blob.download_to_filename(str(tar_path) + '.minisig')
+        sig_path = str(tar_path) + '.sig'
+        sig_blob.download_to_filename(sig_path)
 
         print("Verifying signature...")
-        subprocess.check_output([MINISIGN, '-V', '-m', tar_path, '-p', PUBKEY])
+        subprocess.check_output([COSIGN, 'verify-blob', '--key', PUBKEY, '--signature', sig_path, tar_path])
 
         print("Extracting...")
         extracted_path.mkdir()
