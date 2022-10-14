@@ -14,9 +14,9 @@
 
 #include "Source/santad/Logs/EndpointSecurity/Writers/FSSpool/fsspool_log_batch_writer.h"
 
-#include <string>
-
 #include <os/log.h>
+
+#include <string>
 
 #include "absl/status/status.h"
 
@@ -31,7 +31,8 @@ FsSpoolLogBatchWriter::FsSpoolLogBatchWriter(FsSpoolWriter* fs_spool_writer,
 FsSpoolLogBatchWriter::~FsSpoolLogBatchWriter() {
   absl::Status s = FlushNoLock();
   if (!s.ok()) {
-    os_log(OS_LOG_DEFAULT, "Flush() failed with %s", s.ToString(absl::StatusToStringMode::kWithEverything).c_str());
+    os_log(OS_LOG_DEFAULT, "Flush() failed with %s",
+           s.ToString(absl::StatusToStringMode::kWithEverything).c_str());
     // LOG(WARNING) << "Flush() failed with " << s;
   }
 }

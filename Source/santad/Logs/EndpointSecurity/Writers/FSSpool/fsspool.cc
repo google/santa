@@ -21,6 +21,7 @@
 #include <limits>
 #include <string>
 
+#include "Source/santad/Logs/EndpointSecurity/Writers/FSSpool/fsspool_platform_specific.h"
 #include "absl/random/random.h"
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
@@ -29,7 +30,6 @@
 #include "absl/strings/string_view.h"
 #include "absl/strings/substitute.h"
 #include "absl/time/time.h"
-#include "Source/santad/Logs/EndpointSecurity/Writers/FSSpool/fsspool_platform_specific.h"
 
 namespace fsspool {
 
@@ -108,7 +108,9 @@ absl::Status WriteTmpFile(const std::string& path, absl::string_view msg) {
     if (Unlink(path.c_str()) < 0) {
       // This is very unlikely (e.g. somehow permissions for the file changed
       // since creation?), still worth logging the error.
-      return absl::ErrnoToStatus(errno, absl::StrCat("Writing to ", path, " failed (and deleting failed too)"));
+      return absl::ErrnoToStatus(
+          errno, absl::StrCat("Writing to ", path,
+                              " failed (and deleting failed too)"));
     }
     return write_status;
   }
@@ -172,18 +174,18 @@ absl::Status FsSpoolWriter::BuildDirectoryStructureIfNeeded() {
   if (!IsDirectory(spool_dir_)) {
     if (!IsDirectory(base_dir_)) {
       if (absl::Status status = MkDir(base_dir_); !status.ok()) {
-        return status; // failed to create base directory
+        return status;  // failed to create base directory
       }
     }
 
     if (absl::Status status = MkDir(spool_dir_); !status.ok()) {
-      return status; // failed to create spool directory;
+      return status;  // failed to create spool directory;
     }
   }
   if (!IsDirectory(tmp_dir_)) {
     // No need to check the base directory too, since spool_dir_ exists.
     if (absl::Status status = MkDir(tmp_dir_); !status.ok()) {
-      return status; // failed to create tmp directory
+      return status;  // failed to create tmp directory
     }
   }
   return absl::OkStatus();
@@ -197,7 +199,7 @@ std::string FsSpoolWriter::UniqueFilename() {
 
 absl::Status FsSpoolWriter::WriteMessage(absl::string_view msg) {
   if (absl::Status status = BuildDirectoryStructureIfNeeded(); !status.ok()) {
-    return status; // << "can't create directory structure for writer";
+    return status;  // << "can't create directory structure for writer";
   }
   // Flush messages to a file in the temporary directory.
   const std::string fname = UniqueFilename();
@@ -209,22 +211,23 @@ absl::Status FsSpoolWriter::WriteMessage(absl::string_view msg) {
   if (spool_size_estimate_ > max_spool_size_) {
     absl::StatusOr<size_t> estimate = EstimateDirSize(spool_dir_);
     if (!estimate.ok()) {
-      return estimate.status(); // failed to recompute spool size
+      return estimate.status();  // failed to recompute spool size
     }
     spool_size_estimate_ = *estimate;
     if (spool_size_estimate_ > max_spool_size_) {
       // Still over the limit: avoid writing.
-      return absl::UnavailableError("Spool size estimate greater than max allowed");
+      return absl::UnavailableError(
+          "Spool size estimate greater than max allowed");
     }
   }
   spool_size_estimate_ += EstimateDiskOccupation(msg.size());
 
   if (absl::Status status = WriteTmpFile(tmp_file, msg); !status.ok()) {
-    return status; // writing to temporary file
+    return status;  // writing to temporary file
   }
 
   if (absl::Status status = RenameFile(tmp_file, spool_file); !status.ok()) {
-    return status; // "moving tmp_file to the spooling area
+    return status;  // "moving tmp_file to the spooling area
   }
 
   return absl::OkStatus();
