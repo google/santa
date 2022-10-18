@@ -64,6 +64,7 @@ class BasicString : public Serializer {
 
  private:
   std::string CreateDefaultString(size_t reserved_size = 512);
+  std::vector<uint8_t> FinalizeString(std::string &str);
 
   std::shared_ptr<santa::santad::event_providers::endpoint_security::EndpointSecurityAPI> esapi_;
   bool prefix_time_name_;

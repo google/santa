@@ -15,12 +15,29 @@
 #include "Source/santad/Logs/EndpointSecurity/Serializers/Serializer.h"
 
 #include <EndpointSecurity/EndpointSecurity.h>
+#include <string_view>
 
+#import "Source/common/SNTConfigurator.h"
 #import "Source/santad/SNTDecisionCache.h"
 
 namespace es = santa::santad::event_providers::endpoint_security;
 
 namespace santa::santad::logs::endpoint_security::serializers {
+
+Serializer::Serializer() {
+  if ([[SNTConfigurator configurator] enableMachineIDDecoration]) {
+    enabled_machine_id_ = true;
+    machine_id_ = [[[SNTConfigurator configurator] machineID] UTF8String] ?: "";
+  }
+}
+
+bool Serializer::EnabledMachineID() {
+  return enabled_machine_id_;
+}
+
+std::string_view Serializer::MachineID() {
+  return std::string_view(machine_id_);
+};
 
 std::vector<uint8_t> Serializer::SerializeMessageTemplate(const es::EnrichedClose &msg) {
   return SerializeMessage(msg);
