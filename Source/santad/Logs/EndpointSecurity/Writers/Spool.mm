@@ -1,0 +1,97 @@
+/// Copyright 2022 Google LLC
+///
+/// Licensed under the Apache License, Version 2.0 (the "License");
+/// you may not use this file except in compliance with the License.
+/// You may obtain a copy of the License at
+///
+///     https://www.apache.org/licenses/LICENSE-2.0
+///
+/// Unless required by applicable law or agreed to in writing, software
+/// distributed under the License is distributed on an "AS IS" BASIS,
+/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+/// See the License for the specific language governing permissions and
+/// limitations under the License.
+
+#import "Source/santad/Logs/EndpointSecurity/Writers/Spool.h"
+
+#import "Source/common/SNTLogging.h"
+#include "Source/common/santa_proto_include_wrapper.h"
+
+static const char *kTypeGoogleApisComPrefix = "type.googleapis.com/";
+
+namespace santa::santad::logs::endpoint_security::writers {
+
+std::shared_ptr<Spool> Spool::Create(std::string_view base_dir, size_t max_spool_disk_size,
+                                     size_t max_spool_batch_size, uint64_t flush_timeout_ms) {
+  dispatch_queue_t q = dispatch_queue_create("com.google.santa.daemon.file_base_q",
+                                             DISPATCH_QUEUE_SERIAL_WITH_AUTORELEASE_POOL);
+  dispatch_source_t timer_source = dispatch_source_create(DISPATCH_SOURCE_TYPE_TIMER, 0, 0, q);
+  dispatch_source_set_timer(timer_source, dispatch_time(DISPATCH_TIME_NOW, 0),
+                            NSEC_PER_MSEC * flush_timeout_ms, 0);
+
+  auto spool_writer = std::make_shared<Spool>(base_dir, max_spool_disk_size, max_spool_batch_size,
+                                              flush_timeout_ms, q, timer_source);
+
+  spool_writer->BeginFlushTask();
+
+  return spool_writer;
+}
+
+void Spool::BeginFlushTask() {
+  if (flush_task_started_) {
+    return;
+  }
+
+  std::weak_ptr<Spool> weak_writer = weak_from_this();
+  dispatch_source_set_event_handler(timer_source_, ^{
+    std::shared_ptr<Spool> shared_writer = weak_writer.lock();
+    if (!shared_writer) {
+      return;
+    }
+
+    if (!log_batch_writer_.Flush().ok()) {
+      LOGE(@"Spool writer: periodic flush failed.");
+    }
+  });
+
+  dispatch_resume(timer_source_);
+  flush_task_started_ = true;
+}
+
+Spool::Spool(std::string_view base_dir, size_t max_spool_disk_size, size_t max_spool_batch_size,
+             uint64_t flush_timeout_ms, dispatch_queue_t q, dispatch_source_t timer_source)
+    : q_(q),
+      timer_source_(timer_source),
+      spool_writer_(base_dir, max_spool_disk_size),
+      log_batch_writer_(&spool_writer_, max_spool_batch_size) {
+  type_url_ = kTypeGoogleApisComPrefix + ::santa::pb::v1::SantaMessage::descriptor()->full_name();
+}
+
+Spool::~Spool() {
+  if (flush_task_started_) {
+    dispatch_source_cancel(timer_source_);
+  }
+}
+
+void Spool::Write(std::vector<uint8_t> &&bytes) {
+  auto shared_this = shared_from_this();
+
+  // Workaround to move `bytes` into the block without a copy
+  __block std::vector<uint8_t> temp_bytes = std::move(bytes);
+
+  dispatch_async(q_, ^{
+    std::vector<uint8_t> moved_bytes = std::move(temp_bytes);
+
+    // Manually pack an `Any` with a pre-serialized SantaMessage
+    google::protobuf::Any any;
+    any.set_value(moved_bytes.data(), moved_bytes.size());
+    any.set_type_url(type_url_);
+
+    auto status = log_batch_writer_.WriteMessage(any);
+    if (!status.ok()) {
+      LOGE(@"ProtoEventLogger::LogProto failed with: %s", status.ToString().c_str());
+    }
+  });
+}
+
+}  // namespace santa::santad::logs::endpoint_security::writers
