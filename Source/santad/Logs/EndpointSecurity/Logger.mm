@@ -13,14 +13,17 @@
 ///    limitations under the License.
 
 #include "Source/santad/Logs/EndpointSecurity/Logger.h"
+#include <memory>
 
 #include "Source/common/SNTCommonEnums.h"
 #include "Source/common/SNTLogging.h"
 #include "Source/common/SNTStoredEvent.h"
 #include "Source/santad/Logs/EndpointSecurity/Serializers/BasicString.h"
 #include "Source/santad/Logs/EndpointSecurity/Serializers/Empty.h"
+#include "Source/santad/Logs/EndpointSecurity/Serializers/Protobuf.h"
 #include "Source/santad/Logs/EndpointSecurity/Writers/File.h"
 #include "Source/santad/Logs/EndpointSecurity/Writers/Null.h"
+#include "Source/santad/Logs/EndpointSecurity/Writers/Spool.h"
 #include "Source/santad/Logs/EndpointSecurity/Writers/Syslog.h"
 
 using santa::santad::event_providers::endpoint_security::EndpointSecurityAPI;
@@ -28,8 +31,10 @@ using santa::santad::event_providers::endpoint_security::EnrichedMessage;
 using santa::santad::event_providers::endpoint_security::Message;
 using santa::santad::logs::endpoint_security::serializers::BasicString;
 using santa::santad::logs::endpoint_security::serializers::Empty;
+using santa::santad::logs::endpoint_security::serializers::Protobuf;
 using santa::santad::logs::endpoint_security::writers::File;
 using santa::santad::logs::endpoint_security::writers::Null;
+using santa::santad::logs::endpoint_security::writers::Spool;
 using santa::santad::logs::endpoint_security::writers::Syslog;
 
 namespace santa::santad::logs::endpoint_security {
@@ -40,6 +45,8 @@ static const uint64_t kFlushBufferTimeoutMS = 10000;
 static const size_t kBufferBatchSizeBytes = (1024 * 128);
 // Reserve an extra 4kb of buffer space to account for event overflow
 static const size_t kMaxExpectedWriteSizeBytes = 4096;
+// Maximum amount of disk space to use for logs (100MB)
+static const size_t kMaxDiskSizeBytes = (1024 * 1024 * 100);
 
 // Translate configured log type to appropriate Serializer/Writer pairs
 std::unique_ptr<Logger> Logger::Create(std::shared_ptr<EndpointSecurityAPI> esapi,
@@ -54,8 +61,11 @@ std::unique_ptr<Logger> Logger::Create(std::shared_ptr<EndpointSecurityAPI> esap
       return std::make_unique<Logger>(BasicString::Create(esapi, false), Syslog::Create());
     case SNTEventLogTypeNull: return std::make_unique<Logger>(Empty::Create(), Null::Create());
     case SNTEventLogTypeProtobuf:
-      LOGE(@"The EventLogType value protobuf is not supported in this release");
-      return nullptr;
+      LOGW(@"The EventLogType value protobuf is currently in beta. The protobuf schema is subject "
+           @"to change.");
+      return std::make_unique<Logger>(Protobuf::Create(esapi),
+                                      Spool::Create("/tmp/base", kMaxDiskSizeBytes,
+                                                    kBufferBatchSizeBytes, kFlushBufferTimeoutMS));
     default: LOGE(@"Invalid log type: %ld", log_type); return nullptr;
   }
 }

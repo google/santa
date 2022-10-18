@@ -8,30 +8,30 @@ package(
 )
 
 objc_library(
-  name = "santactl_cmd",
-  srcs = [
-      "SNTCommand.m",
-      "SNTCommandController.m",
-  ],
-  hdrs = [
-      "SNTCommandController.h",
-      "SNTCommand.h",
-  ],
-  deps = [
-      "//Source/common:SNTXPCControlInterface",
-      "@MOLXPCConnection",
-  ],
+    name = "santactl_cmd",
+    srcs = [
+        "SNTCommand.m",
+        "SNTCommandController.m",
+    ],
+    hdrs = [
+        "SNTCommand.h",
+        "SNTCommandController.h",
+    ],
+    deps = [
+        "//Source/common:SNTXPCControlInterface",
+        "@MOLXPCConnection",
+    ],
 )
 
 objc_library(
-  name = "SNTCommandPrintLog",
-  srcs = ["Commands/SNTCommandPrintLog.mm"],
-  deps = [
-      ":santactl_cmd",
-      "//Source/common:SNTLogging",
-      "//Source/common:santa_cc_proto_library_wrapper",
-      "//Source/santad/Logs/EndpointSecurity/Writers/FSSpool:binaryproto_cc_proto_library_wrapper",
-  ],
+    name = "SNTCommandPrintLog",
+    srcs = ["Commands/SNTCommandPrintLog.mm"],
+    deps = [
+        ":santactl_cmd",
+        "//Source/common:SNTLogging",
+        "//Source/common:santa_cc_proto_library_wrapper",
+        "//Source/santad/Logs/EndpointSecurity/Writers/FSSpool:binaryproto_cc_proto_library_wrapper",
+    ],
 )
 
 objc_library(
@@ -56,8 +56,8 @@ objc_library(
     sdk_dylibs = ["libz"],
     sdk_frameworks = ["IOKit"],
     deps = [
-        ":santactl_cmd",
         ":SNTCommandPrintLog",
+        ":santactl_cmd",
         "//Source/common:SNTCachedDecision",
         "//Source/common:SNTCommon",
         "//Source/common:SNTCommonEnums",

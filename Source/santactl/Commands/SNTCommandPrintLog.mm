@@ -19,8 +19,8 @@
 #include <iostream>
 #include <string>
 
-#include "Source/common/santa_proto_include_wrapper.h"
 #include "Source/common/SNTLogging.h"
+#include "Source/common/santa_proto_include_wrapper.h"
 #import "Source/santactl/SNTCommand.h"
 #import "Source/santactl/SNTCommandController.h"
 #include "Source/santad/Logs/EndpointSecurity/Writers/FSSpool/binaryproto.pb.h"
@@ -61,7 +61,8 @@ REGISTER_COMMAND_NAME(@"printlog")
   options.preserve_proto_field_names = true;
   options.add_whitespace = true;
 
-  for (NSString *path in arguments) {
+  for (int argIdx = 0; argIdx < [arguments count]; argIdx++) {
+    NSString *path = arguments[argIdx];
     int fd = open([path UTF8String], O_RDONLY);
     if (fd == -1) {
       LOGE(@"Failed to open '%@': errno: %d: %s", path, errno, strerror(errno));
@@ -77,11 +78,18 @@ REGISTER_COMMAND_NAME(@"printlog")
       continue;
     }
 
-    std::cout << "[\n";
+    if (argIdx != 0) {
+      std::cout << ",";
+    } else {
+      // Print the opening outer JSON array
+      std::cout << "[";
+    }
+    std::cout << "\n[\n";
+
     int numRecords = logBatch.records_size();
 
     for (int i = 0; i < numRecords; i++) {
-      const google::protobuf::Any& any = logBatch.records(i);
+      const google::protobuf::Any &any = logBatch.records(i);
       ::pbv1::SantaMessage santaMsg;
       if (!any.UnpackTo(&santaMsg)) {
         LOGE(@"Failed to unpack Any proto to SantaMessage in file '%@'", path);
@@ -97,8 +105,14 @@ REGISTER_COMMAND_NAME(@"printlog")
       std::cout << json;
     }
 
-    std::cout << "]" << std::endl;
+    std::cout << "]" << std::flush;
+
+    if (argIdx == ([arguments count] - 1)) {
+      // Print the closing outer JSON array
+      std::cout << "]\n";
+    }
   }
+
   exit(EXIT_SUCCESS);
 }
 
