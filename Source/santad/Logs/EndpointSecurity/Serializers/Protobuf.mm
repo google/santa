@@ -17,7 +17,6 @@
 #include <EndpointSecurity/EndpointSecurity.h>
 #include <Kernel/kern/cs_blobs.h>
 #include <bsm/libbsm.h>
-// #include <google/protobuf/arena.h>
 #include <mach/message.h>
 #include <math.h>
 #include <sys/proc_info.h>
@@ -31,7 +30,6 @@
 #import "Source/common/SNTConfigurator.h"
 #include "Source/common/SNTLogging.h"
 #import "Source/common/SNTStoredEvent.h"
-// #include "Source/common/santa_proto_include_wrapper.h"
 #include "Source/santad/EventProviders/EndpointSecurity/EndpointSecurityAPI.h"
 #include "Source/santad/Logs/EndpointSecurity/Serializers/Utilities.h"
 #import "Source/santad/SNTDecisionCache.h"
