@@ -158,8 +158,8 @@
     self.syncState.blocklistRegex = resp[kBlockedPathRegexDeprecated];
   }
 
-  if ([resp[kBlockUSBMount] boolValue]) {
-    self.syncState.blockUSBMount = YES;
+  if ([resp[kBlockUSBMount] isKindOfClass:[NSNumber class]]) {
+    self.syncState.blockUSBMount = resp[kBlockUSBMount];
   }
 
   if ([resp[kRemountUSBMode] isKindOfClass:[NSArray class]]) {

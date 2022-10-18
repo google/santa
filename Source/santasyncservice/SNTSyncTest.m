@@ -212,17 +212,39 @@
   XCTAssertNil(self.syncState.blocklistRegex);
 }
 
-- (void)testPreflightBlockUSBMount {
+- (void)testPreflightTurnOnBlockUSBMount {
   [self setupDefaultDaemonConnResponses];
   SNTSyncPreflight *sut = [[SNTSyncPreflight alloc] initWithState:self.syncState];
 
-  NSData *respData = [self dataFromFixture:@"sync_preflight_toggle_blockusb.json"];
+  NSData *respData = [self dataFromFixture:@"sync_preflight_turn_on_blockusb.json"];
   [self stubRequestBody:respData response:nil error:nil validateBlock:nil];
 
   XCTAssertTrue([sut sync]);
-  XCTAssertEqual(self.syncState.blockUSBMount, true);
+  XCTAssertEqualObjects(self.syncState.blockUSBMount, @1);
   NSArray<NSString *> *wantRemountUSBMode = @[ @"rdonly", @"noexec" ];
   XCTAssertEqualObjects(self.syncState.remountUSBMode, wantRemountUSBMode);
+}
+
+- (void)testPreflightTurnOffBlockUSBMount {
+  [self setupDefaultDaemonConnResponses];
+  SNTSyncPreflight *sut = [[SNTSyncPreflight alloc] initWithState:self.syncState];
+
+  NSData *respData = [self dataFromFixture:@"sync_preflight_turn_off_blockusb.json"];
+  [self stubRequestBody:respData response:nil error:nil validateBlock:nil];
+
+  XCTAssertTrue([sut sync]);
+  XCTAssertEqualObjects(self.syncState.blockUSBMount, @0);
+}
+
+- (void)testPreflightBlockUSBMountAbsent {
+  [self setupDefaultDaemonConnResponses];
+  SNTSyncPreflight *sut = [[SNTSyncPreflight alloc] initWithState:self.syncState];
+
+  NSData *respData = [self dataFromFixture:@"sync_preflight_blockusb_absent.json"];
+  [self stubRequestBody:respData response:nil error:nil validateBlock:nil];
+
+  XCTAssertTrue([sut sync]);
+  XCTAssertNil(self.syncState.blockUSBMount);
 }
 
 - (void)testPreflightDatabaseCounts {
@@ -493,11 +515,15 @@
   OCMVerify([self.daemonConnRop setAllowedPathRegex:@"^horse$" reply:OCMOCK_ANY]);
   OCMVerify([self.daemonConnRop setBlockedPathRegex:@"^donkey$" reply:OCMOCK_ANY]);
 
-  self.syncState.blockUSBMount = YES;
+  self.syncState.blockUSBMount = @1;
   self.syncState.remountUSBMode = @[ @"readonly" ];
   XCTAssertTrue([sut sync]);
   OCMVerify([self.daemonConnRop setBlockUSBMount:YES reply:OCMOCK_ANY]);
   OCMVerify([self.daemonConnRop setRemountUSBMode:@[ @"readonly" ] reply:OCMOCK_ANY]);
+
+  self.syncState.blockUSBMount = @0;
+  XCTAssertTrue([sut sync]);
+  OCMVerify([self.daemonConnRop setBlockUSBMount:NO reply:OCMOCK_ANY]);
 }
 
 @end

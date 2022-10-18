@@ -59,9 +59,9 @@
                                                        reply:replyBlock];
   }
 
-  if (self.syncState.blockUSBMount) {
+  if (self.syncState.blockUSBMount != nil) {
     dispatch_group_enter(group);
-    [[self.daemonConn remoteObjectProxy] setBlockUSBMount:self.syncState.blockUSBMount
+    [[self.daemonConn remoteObjectProxy] setBlockUSBMount:[self.syncState.blockUSBMount boolValue]
                                                     reply:replyBlock];
   }
   if (self.syncState.remountUSBMode) {
