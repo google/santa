@@ -32,19 +32,22 @@ namespace santa::santad::logs::endpoint_security::writers {
 class SpoolPeer;
 }
 
-namespace santa::santad::logs::endpoint_security::writers {
+using CreateSpoolWriterFunc = ::fsspool::FsSpoolWriter (^)(std::string_view base_dir,
+                                                           size_t max_spool_disk_size);
 
+using CreateLogBatchWriterFunc = ::fsspool::FsSpoolLogBatchWriter (^)(
+  ::fsspool::FsSpoolWriter *fs_spool_writer, size_t max_spool_batch_size);
+
+namespace santa::santad::logs::endpoint_security::writers {
 class Spool : public Writer, public std::enable_shared_from_this<Spool> {
  public:
   // Factory
-  static std::shared_ptr<Spool> Create(std::string_view base_dir,
-                                       size_t max_spool_disk_size,
-                                       size_t max_spool_batch_size,
-                                       uint64_t flush_timeout_ms);
+  static std::shared_ptr<Spool> Create(std::string_view base_dir, size_t max_spool_disk_size,
+                                       size_t max_spool_batch_size, uint64_t flush_timeout_ms);
 
-  Spool(std::string_view base_dir, size_t max_spool_disk_size,
-        size_t max_spool_batch_size, uint64_t flush_timeout_ms,
-        dispatch_queue_t q, dispatch_source_t timer_source);
+  Spool(dispatch_queue_t q, dispatch_source_t timer_source, std::string_view base_dir,
+        size_t max_spool_disk_size, size_t max_spool_batch_size,
+        CreateSpoolWriterFunc CreateSpoolWriter, CreateLogBatchWriterFunc CreateLogBatchWriter);
 
   ~Spool();
 

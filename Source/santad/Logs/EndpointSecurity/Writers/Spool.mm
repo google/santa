@@ -29,12 +29,34 @@ std::shared_ptr<Spool> Spool::Create(std::string_view base_dir, size_t max_spool
   dispatch_source_set_timer(timer_source, dispatch_time(DISPATCH_TIME_NOW, 0),
                             NSEC_PER_MSEC * flush_timeout_ms, 0);
 
-  auto spool_writer = std::make_shared<Spool>(base_dir, max_spool_disk_size, max_spool_batch_size,
-                                              flush_timeout_ms, q, timer_source);
+  auto spool_writer = std::make_shared<Spool>(
+    q, timer_source, base_dir, max_spool_disk_size, max_spool_batch_size,
+    ^(std::string_view base_dir, size_t max_spool_disk_size) {
+      return ::fsspool::FsSpoolWriter(base_dir, max_spool_disk_size);
+    },
+    ^(::fsspool::FsSpoolWriter *fs_spool_writer, size_t max_spool_batch_size) {
+      return ::fsspool::FsSpoolLogBatchWriter(fs_spool_writer, max_spool_batch_size);
+    });
 
   spool_writer->BeginFlushTask();
 
   return spool_writer;
+}
+
+Spool::Spool(dispatch_queue_t q, dispatch_source_t timer_source, std::string_view base_dir,
+             size_t max_spool_disk_size, size_t max_spool_batch_size,
+             CreateSpoolWriterFunc CreateSpoolWriter, CreateLogBatchWriterFunc CreateLogBatchWriter)
+    : q_(q),
+      timer_source_(timer_source),
+      spool_writer_(CreateSpoolWriter(base_dir, max_spool_disk_size)),
+      log_batch_writer_(CreateLogBatchWriter(&spool_writer_, max_spool_batch_size)) {
+  type_url_ = kTypeGoogleApisComPrefix + ::santa::pb::v1::SantaMessage::descriptor()->full_name();
+}
+
+Spool::~Spool() {
+  if (flush_task_started_) {
+    dispatch_source_cancel(timer_source_);
+  }
 }
 
 void Spool::BeginFlushTask() {
@@ -56,21 +78,6 @@ void Spool::BeginFlushTask() {
 
   dispatch_resume(timer_source_);
   flush_task_started_ = true;
-}
-
-Spool::Spool(std::string_view base_dir, size_t max_spool_disk_size, size_t max_spool_batch_size,
-             uint64_t flush_timeout_ms, dispatch_queue_t q, dispatch_source_t timer_source)
-    : q_(q),
-      timer_source_(timer_source),
-      spool_writer_(base_dir, max_spool_disk_size),
-      log_batch_writer_(&spool_writer_, max_spool_batch_size) {
-  type_url_ = kTypeGoogleApisComPrefix + ::santa::pb::v1::SantaMessage::descriptor()->full_name();
-}
-
-Spool::~Spool() {
-  if (flush_task_started_) {
-    dispatch_source_cancel(timer_source_);
-  }
 }
 
 void Spool::Write(std::vector<uint8_t> &&bytes) {
