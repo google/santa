@@ -13,7 +13,6 @@
 /// limitations under the License.
 
 #import <Foundation/Foundation.h>
-#include <sys/_types/_useconds_t.h>
 #import <XCTest/XCTest.h>
 #include <dispatch/dispatch.h>
 #include <gtest/gtest.h>
@@ -87,8 +86,8 @@ using santa::santad::logs::endpoint_security::writers::SpoolPeer;
 }
 
 - (void)testWrite {
-  const useconds_t waitTime = 1000000; // 1.0 seconds
-  const useconds_t shortWaitTime = 250000; // 0.25 seconds
+  const useconds_t waitTime = 1000000;      // 1.0 seconds
+  const useconds_t shortWaitTime = 250000;  // 0.25 seconds
   const size_t writeSize = 50;
   const uint64 periodicFlushMS = 400;
   NSError *err = nil;
@@ -97,8 +96,8 @@ using santa::santad::logs::endpoint_security::writers::SpoolPeer;
     std::make_shared<SpoolPeer>(self.q, self.timer, [self.baseDir UTF8String], 10240, 1024);
 
   // Set a custom timer interval for this test
-  dispatch_source_set_timer(self.timer, dispatch_time(DISPATCH_TIME_NOW, 0), NSEC_PER_MSEC * periodicFlushMS,
-                            0);
+  dispatch_source_set_timer(self.timer, dispatch_time(DISPATCH_TIME_NOW, 0),
+                            NSEC_PER_MSEC * periodicFlushMS, 0);
 
   spool->Write(std::vector<uint8_t>(writeSize, 'A'));
 

@@ -51,7 +51,17 @@ REGISTER_COMMAND_NAME(@"printlog")
 }
 
 + (NSString *)longHelpText {
-  return @"Prints the contents of Santa protobuf log files as JSON.";
+  return @"Prints the contents of serialized Santa protobuf logs as JSON.\n"
+         @"Multiple paths can be provided. The output is a list of all the \n"
+         @"SantaMessage entries per-file. E.g.: \n"
+         @"  [\n"
+         @"    [\n"
+         @"      ... file 1 contents ...\n"
+         @"    ],\n"
+         @"    [\n"
+         @"      ... file N contents ...\n"
+         @"    ]\n"
+         @"  ]";
 }
 
 - (void)runWithArguments:(NSArray *)arguments {
