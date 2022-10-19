@@ -48,8 +48,8 @@ static const size_t kMaxExpectedWriteSizeBytes = 4096;
 // Translate configured log type to appropriate Serializer/Writer pairs
 std::unique_ptr<Logger> Logger::Create(std::shared_ptr<EndpointSecurityAPI> esapi,
                                        SNTEventLogType log_type, NSString *event_log_path,
-                                       NSString *spool_log_path, size_t spool_file_size_threshold,
-                                       size_t spool_dir_size_threshold,
+                                       NSString *spool_log_path, size_t spool_dir_size_threshold,
+                                       size_t spool_file_size_threshold,
                                        uint64_t spool_flush_timeout_ms) {
   switch (log_type) {
     case SNTEventLogTypeFilelog:
