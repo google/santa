@@ -183,10 +183,10 @@
 ///    SNTEventLogTypeSyslog "syslog": Sent to ASL or ULS (if built with the 10.12 SDK or later).
 ///    SNTEventLogTypeFilelog "file": Sent to a file on disk. Use eventLogPath to specify a path.
 ///    SNTEventLogTypeNull "null": Logs nothing
-///    SNTEventLogTypeProtobuf "protobuf": (BETA) Sent to a file on disk, using maildir format. Use
-///      mailDirectory to specify a path. Use mailDirectoryFileSizeThresholdKB,
-///      mailDirectorySizeThresholdMB and mailDirectoryEventMaxFlushTimeSec to configure
-///      additional maildir format settings.
+///    SNTEventLogTypeProtobuf "protobuf": (BETA) Sent to a file on disk, using a maildir-like format. Use
+///      spoolDirectory to specify a path. Use spoolDirectoryFileSizeThresholdKB,
+///      spoolDirectorySizeThresholdMB and spoolDirectoryEventMaxFlushTimeSec to configure
+///      additional settings.
 ///    Defaults to SNTEventLogTypeFilelog.
 ///    For mobileconfigs use EventLogType as the key and syslog or filelog strings as the value.
 ///
@@ -203,34 +203,34 @@
 @property(readonly, nonatomic) NSString *eventLogPath;
 
 ///
-///  If eventLogType is set to protobuf, mailDirectory will provide the base path used for
-///  saving logs using the maildir format.
-///  Defaults to /var/db/santa/mail.
+///  If eventLogType is set to protobuf, spoolDirectory will provide the base path used for
+///  saving logs using a maildir-like format.
+///  Defaults to /var/db/santa/spool.
 ///
 ///  @note: This property is KVO compliant, but should only be read once at santad startup.
 ///
-@property(readonly, nonatomic) NSString *mailDirectory;
+@property(readonly, nonatomic) NSString *spoolDirectory;
 
 ///
-///  If eventLogType is set to protobuf, mailDirectoryFileSizeThresholdKB sets the per-file size
-///  limit for files saved in the mailDirectory.
+///  If eventLogType is set to protobuf, spoolDirectoryFileSizeThresholdKB sets the per-file size
+///  limit for files saved in the spoolDirectory.
 ///  Defaults to 100.
 ///
 ///  @note: This property is KVO compliant, but should only be read once at santad startup.
 ///
-@property(readonly, nonatomic) NSUInteger mailDirectoryFileSizeThresholdKB;
+@property(readonly, nonatomic) NSUInteger spoolDirectoryFileSizeThresholdKB;
 
 ///
-///  If eventLogType is set to protobuf, mailDirectorySizeThresholdMB sets the total size
-///  limit for all files saved in the mailDirectory.
+///  If eventLogType is set to protobuf, spoolDirectorySizeThresholdMB sets the total size
+///  limit for all files saved in the spoolDirectory.
 ///  Defaults to 500.
 ///
 ///  @note: This property is KVO compliant, but should only be read once at santad startup.
 ///
-@property(readonly, nonatomic) NSUInteger mailDirectorySizeThresholdMB;
+@property(readonly, nonatomic) NSUInteger spoolDirectorySizeThresholdMB;
 
 ///
-///  If eventLogType is set to protobuf, mailDirectoryEventMaxFlushTimeSec sets the maximum amount
+///  If eventLogType is set to protobuf, spoolDirectoryEventMaxFlushTimeSec sets the maximum amount
 ///  of time an event will be stored in memory before being written to disk.
 ///  Defaults to 5.0.
 ///
