@@ -9,6 +9,12 @@ on run argv
 
 	delay 2
 
+	tell application "System Preferences"
+		activate
+	end tell
+
+	delay 2
+
 	tell application "System Events"
 		tell process "System Preferences"
 			click menu item "Profiles" of menu 1 of menu bar item "View" of menu bar 1
