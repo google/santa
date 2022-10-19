@@ -45,6 +45,12 @@ class EndpointSecurityAPI : public std::enable_shared_from_this<EndpointSecurity
 
   virtual uint32_t ExecArgCount(const es_event_exec_t *event);
   virtual es_string_token_t ExecArg(const es_event_exec_t *event, uint32_t index);
+
+  virtual uint32_t ExecEnvCount(const es_event_exec_t *event);
+  virtual es_string_token_t ExecEnv(const es_event_exec_t *event, uint32_t index);
+
+  virtual uint32_t ExecFDCount(const es_event_exec_t *event);
+  virtual const es_fd_t *ExecFD(const es_event_exec_t *event, uint32_t index);
 };
 
 }  // namespace santa::santad::event_providers::endpoint_security

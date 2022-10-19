@@ -334,6 +334,21 @@ objc_library(
         ":EndpointSecurityEnrichedTypes",
         ":EndpointSecurityMessage",
         ":SNTDecisionCache",
+        "//Source/common:SNTConfigurator",
+    ],
+)
+
+objc_library(
+    name = "EndpointSecuritySerializerUtilities",
+    srcs = ["Logs/EndpointSecurity/Serializers/Utilities.mm"],
+    hdrs = ["Logs/EndpointSecurity/Serializers/Utilities.h"],
+    sdk_dylibs = [
+        "bsm",
+    ],
+    deps = [
+        ":EndpointSecurityEnrichedTypes",
+        ":EndpointSecurityMessage",
+        ":SNTDecisionCache",
     ],
 )
 
@@ -366,11 +381,29 @@ objc_library(
         ":EndpointSecurityAPI",
         ":EndpointSecuritySanitizableString",
         ":EndpointSecuritySerializer",
+        ":EndpointSecuritySerializerUtilities",
         ":SNTDecisionCache",
         "//Source/common:SNTCachedDecision",
         "//Source/common:SNTConfigurator",
         "//Source/common:SNTLogging",
         "//Source/common:SNTStoredEvent",
+    ],
+)
+
+objc_library(
+    name = "EndpointSecuritySerializerProtobuf",
+    srcs = ["Logs/EndpointSecurity/Serializers/Protobuf.mm"],
+    hdrs = ["Logs/EndpointSecurity/Serializers/Protobuf.h"],
+    deps = [
+        ":EndpointSecurityAPI",
+        ":EndpointSecuritySerializer",
+        ":EndpointSecuritySerializerUtilities",
+        ":SNTDecisionCache",
+        "//Source/common:SNTCachedDecision",
+        "//Source/common:SNTConfigurator",
+        "//Source/common:SNTLogging",
+        "//Source/common:SNTStoredEvent",
+        "//Source/common:santa_cc_proto_library_wrapper",
     ],
 )
 
@@ -721,6 +754,19 @@ santa_unit_test(
 )
 
 santa_unit_test(
+    name = "EndpointSecuritySerializerUtilitiesTest",
+    srcs = ["Logs/EndpointSecurity/Serializers/UtilitiesTest.mm"],
+    deps = [
+        ":EndpointSecurityMessage",
+        ":EndpointSecuritySerializerUtilities",
+        ":MockEndpointSecurityAPI",
+        "//Source/common:TestUtils",
+        "@OCMock",
+        "@com_google_googletest//:gtest",
+    ],
+)
+
+santa_unit_test(
     name = "EndpointSecuritySerializerBasicStringTest",
     srcs = ["Logs/EndpointSecurity/Serializers/BasicStringTest.mm"],
     sdk_dylibs = [
@@ -740,6 +786,31 @@ santa_unit_test(
         "//Source/common:SNTConfigurator",
         "//Source/common:SNTStoredEvent",
         "//Source/common:TestUtils",
+        "@OCMock",
+        "@com_google_googletest//:gtest",
+    ],
+)
+
+santa_unit_test(
+    name = "EndpointSecuritySerializerProtobufTest",
+    srcs = ["Logs/EndpointSecurity/Serializers/ProtobufTest.mm"],
+    data = [
+        "//Source/santad/testdata:protobuf_json_testdata",
+    ],
+    deps = [
+        ":EndpointSecurityEnrichedTypes",
+        ":EndpointSecurityEnricher",
+        ":EndpointSecurityMessage",
+        ":EndpointSecuritySerializer",
+        ":EndpointSecuritySerializerProtobuf",
+        ":MockEndpointSecurityAPI",
+        ":SNTDecisionCache",
+        "//Source/common:SNTCachedDecision",
+        "//Source/common:SNTCommonEnums",
+        "//Source/common:SNTConfigurator",
+        "//Source/common:SNTStoredEvent",
+        "//Source/common:TestUtils",
+        "//Source/common:santa_cc_proto_library_wrapper",
         "@OCMock",
         "@com_google_googletest//:gtest",
     ],
@@ -1038,6 +1109,8 @@ test_suite(
         ":EndpointSecuritySanitizableStringTest",
         ":EndpointSecuritySerializerBasicStringTest",
         ":EndpointSecuritySerializerEmptyTest",
+        ":EndpointSecuritySerializerProtobufTest",
+        ":EndpointSecuritySerializerUtilitiesTest",
         ":EndpointSecurityWriterFileTest",
         ":MetricsTest",
         ":SNTApplicationCoreMetricsTest",
@@ -1052,6 +1125,7 @@ test_suite(
         ":SNTExecutionControllerTest",
         ":SNTRuleTableTest",
         ":SantadTest",
+        "//Source/santad/Logs/EndpointSecurity/Writers/FSSpool:fsspool_test",
     ],
     visibility = ["//:santa_package_group"],
 )

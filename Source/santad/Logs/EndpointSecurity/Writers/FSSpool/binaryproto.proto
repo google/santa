@@ -1,0 +1,12 @@
+syntax = "proto3";
+
+package santa.fsspool.binaryproto;
+
+import "google/protobuf/any.proto";
+
+option objc_class_prefix = "FSS";
+
+// A LogBatch is a simple array of protos.
+message LogBatch {
+  repeated google.protobuf.Any records = 1;
+}

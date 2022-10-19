@@ -67,6 +67,8 @@ also known as mobileconfig files, which are in an Apple-specific XML format.
 | MetricExtraLabels                 | Dictionary | A map of key value pairs to add to all metric root labels. (e.g. a=b,c=d) defaults to @{}). If a previously set key (e.g. host_name is set to "" then the key is remove from the metric root labels. Alternatively if a value is set for an existing key then the new value will override the old. |
 | EnableAllEventUpload              | Bool       | If YES, the client will upload all execution events to the sync server, including those that were explicitly allowed. |
 | DisableUnknownEventUpload         | Bool       | If YES, the client will *not* upload events for executions of unknown binaries allowed in monitor mode |
+| BlockUSBMount                     | Bool       | If set to 'True' blocking USB Mass storage feature is enabled. Defaults to `False`. |
+| RemountUSBMode                    | Array      | Array of strings for arguments to pass to mount -o (any of "rdonly", "noexec", "nosuid", "nobrowse", "noowners", "nodev", "async", "-j"). when forcibly remounting devices. No default. |
 
 
 \*overridable by the sync server: run `santactl status` to check the current
@@ -215,7 +217,7 @@ ways to install configuration profiles:
 | enable\_bundles\*                   | Bool       | If set to `True` the bundle scanning feature is enabled. Defaults to `False`. |
 | enable\_transitive\_rules           | Bool       | If set to `True` the transitive rule feature is enabled. Defaults to `False`. |
 | enable\_all\_event\_upload          | Bool       | If set to `True` the client will upload events for all executions, including those that are explicitly allowed. |
-| block\_usb\_mass\_storage           | Bool       | If set to 'True' blocking USB Mass storage feature is enabled. Defaults to `False`. |
+| block\_usb\_mount                   | Bool       | If set to 'True' blocking USB Mass storage feature is enabled. Defaults to `False`. |
 | remount\_usb\_mode                  | Array      | Array of strings for arguments to pass to mount -o (any of "rdonly", "noexec", "nosuid", "nobrowse", "noowners", "nodev", "async", "-j"). when forcibly remounting devices. No default. |
 
 

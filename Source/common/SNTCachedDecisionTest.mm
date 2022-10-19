@@ -24,7 +24,7 @@
 
 - (void)testSNTCachedDecisionInit {
   // Ensure the vnodeId field is properly set from the es_file_t
-  struct stat sb = MakeStat(1234, 5678);
+  struct stat sb = MakeStat();
   es_file_t file = MakeESFile("foo", sb);
 
   SNTCachedDecision *cd = [[SNTCachedDecision alloc] initWithEndpointSecurityFile:&file];

@@ -57,6 +57,12 @@ class MockEndpointSecurityAPI
   MOCK_METHOD(uint32_t, ExecArgCount, (const es_event_exec_t *event));
   MOCK_METHOD(es_string_token_t, ExecArg, (const es_event_exec_t *event, uint32_t index));
 
+  MOCK_METHOD(uint32_t, ExecEnvCount, (const es_event_exec_t *event));
+  MOCK_METHOD(es_string_token_t, ExecEnv, (const es_event_exec_t *event, uint32_t index));
+
+  MOCK_METHOD(uint32_t, ExecFDCount, (const es_event_exec_t *event));
+  MOCK_METHOD(const es_fd_t *, ExecFD, (const es_event_exec_t *event, uint32_t index));
+
   void SetExpectationsESNewClient() {
     EXPECT_CALL(*this, NewClient)
       .WillOnce(testing::Return(santa::santad::event_providers::endpoint_security::Client(

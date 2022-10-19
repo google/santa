@@ -23,7 +23,7 @@
 #include <sys/stat.h>
 
 #define NOBODY_UID ((unsigned int)-2)
-#define NOBODY_GID ((unsigned int)-2)
+#define NOGROUP_GID ((unsigned int)-1)
 
 // Bubble up googletest expectation failures to XCTest failures
 #define XCTBubbleMockVerifyAndClearExpectations(mock)              \
@@ -47,14 +47,25 @@ enum class ActionType {
   Notify,
 };
 
+//
 // Helpers to construct various ES structs
+//
+
 audit_token_t MakeAuditToken(pid_t pid, pid_t pidver);
-struct stat MakeStat(ino_t ino, dev_t devno = 0);
+
+/// Construct a `struct stat` buffer with each member having a unique value.
+/// @param offset An optional offset to be added to each member. useful when
+///   a test has multiple stats and you'd like for them each to have different
+///   values across the members.
+struct stat MakeStat(int offset = 0);
+
 es_string_token_t MakeESStringToken(const char *s);
 es_file_t MakeESFile(const char *path, struct stat sb = {});
 es_process_t MakeESProcess(es_file_t *file, audit_token_t tok = {}, audit_token_t parent_tok = {});
 es_message_t MakeESMessage(es_event_type_t et, es_process_t *proc,
                            ActionType action_type = ActionType::Notify,
                            uint64_t future_deadline_ms = 100000);
+
+uint32_t MaxSupportedESMessageVersionForCurrentOS();
 
 #endif
