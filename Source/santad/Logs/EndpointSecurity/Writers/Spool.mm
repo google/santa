@@ -48,8 +48,12 @@ Spool::Spool(dispatch_queue_t q, dispatch_source_t timer_source, std::string_vie
 
 Spool::~Spool() {
   // Note: `log_batch_writer_` is automatically flushed when destroyed
-  if (flush_task_started_) {
+  if (!flush_task_started_) {
+    // The timer_source_ must be resumed to ensure it has a proper retain count before being
+    // destroyed. Additionally, it should first be cancelled to ensure the timer isn't ever fired
+    // (see man page for `dispatch_source_cancel(3)`).
     dispatch_source_cancel(timer_source_);
+    dispatch_resume(timer_source_);
   }
 }
 

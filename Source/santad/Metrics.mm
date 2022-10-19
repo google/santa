@@ -44,11 +44,6 @@ std::shared_ptr<Metrics> Metrics::Create(uint64_t interval) {
       return;
     }
 
-    // Ensure we're marked as `running_`, otherwise bail
-    if (!shared_metrics->running_) {
-      return;
-    }
-
     [[shared_metrics->metrics_connection_ remoteObjectProxy]
       exportForMonitoring:[[SNTMetricSet sharedInstance] export]];
   });
@@ -70,8 +65,10 @@ Metrics::Metrics(MOLXPCConnection *metrics_connection, dispatch_queue_t q,
 
 Metrics::~Metrics() {
   if (!running_) {
-    // The source must be resumed prior to being cancelled. However, do not
-    // set `running_` to true so that nothing will get exported.
+    // The timer_source_ must be resumed to ensure it has a proper retain count before being
+    // destroyed. Additionally, it should first be cancelled to ensure the timer isn't ever fired
+    // (see man page for `dispatch_source_cancel(3)`).
+    dispatch_source_cancel(timer_source_);
     dispatch_resume(timer_source_);
   }
 }
