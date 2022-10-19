@@ -40,8 +40,6 @@ jobs:
 
   integration:
     runs-on: e2e-vm
-    strategy:
-      fail-fast: false
     env:
       VM_PASSWORD: ${{ secrets.VM_PASSWORD }}
     steps:
@@ -54,9 +52,10 @@ jobs:
         run: |
           go install github.com/kallsyms/moroz/cmd/moroz@d0bba3f4
           ~/go/bin/moroz -configs="$GITHUB_WORKSPACE/Testing/integration/configs/moroz_default/global.toml" -use-tls=false &
-      - name: Start santa and sync
+      - name: Build, install, and sync santa
         run: |
           bazel run :reload --define=SANTA_BUILD_TYPE=adhoc
+          bazel run //Testing/integration:allow_sysex
           sudo santactl sync --debug
       - name: Run integration test binaries
         run: bazel test //Testing/integration:integration_tests
@@ -65,6 +64,7 @@ jobs:
       - name: Test sync server changes
         run: ./Testing/integration/test_sync_changes.sh
       - name: Poweroff
+        if: ${{ always() }}
         run: sudo shutdown -h +1
 
   unit_tests:

@@ -27,3 +27,8 @@ run_command(
     name = "install_profile",
     cmd = "osascript $${BUILD_WORKSPACE_DIRECTORY}/Testing/integration/install_profile.scpt $${BUILD_WORKSPACE_DIRECTORY}/$$1",
 )
+
+run_command(
+    name = "allow_sysex",
+    cmd = "osascript $${BUILD_WORKSPACE_DIRECTORY}/Testing/integration/allow_sysex.scpt",
+)
