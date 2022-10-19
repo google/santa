@@ -1,7 +1,7 @@
 #!/bin/bash
 set -x
 
-bazel run //Testing/integration:install_profile -- Testing/integration/configs/minimal.mobileconfig
+bazel run //Testing/integration:install_profile -- Testing/integration/configs/default.mobileconfig
 bazel run :reload --define=SANTA_BUILD_TYPE=adhoc
 
 sudo santactl sync --debug
