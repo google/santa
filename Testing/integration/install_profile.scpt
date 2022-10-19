@@ -29,4 +29,6 @@ on run argv
 	tell application "System Preferences"
 		quit
 	end tell
+
+	delay 2
 end run
