@@ -13,7 +13,6 @@
 ///    limitations under the License.
 
 #include "Source/santad/Logs/EndpointSecurity/Logger.h"
-#include <memory>
 
 #include "Source/common/SNTCommonEnums.h"
 #include "Source/common/SNTLogging.h"
