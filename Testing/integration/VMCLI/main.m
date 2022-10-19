@@ -4,23 +4,20 @@
 
 #import "MacOSVirtualMachineConfigurationHelper.h"
 
-@interface MacOSVirtualMachineDelegate : NSObject<VZVirtualMachineDelegate>
+@interface MacOSVirtualMachineDelegate : NSObject <VZVirtualMachineDelegate>
 @end
 
 @implementation MacOSVirtualMachineDelegate
-- (void)virtualMachine:(VZVirtualMachine *)virtualMachine didStopWithError:(NSError *)error
-{
-    NSLog(@"Virtual Machine errored: %@", error.localizedDescription);
-    exit(-1);
+- (void)virtualMachine:(VZVirtualMachine *)virtualMachine didStopWithError:(NSError *)error {
+  NSLog(@"Virtual Machine errored: %@", error.localizedDescription);
+  exit(-1);
 }
 
-- (void)guestDidStopVirtualMachine:(VZVirtualMachine *)virtualMachine
-{
-    NSLog(@"Guest did stop virtual machine.");
-    exit(0);
+- (void)guestDidStopVirtualMachine:(VZVirtualMachine *)virtualMachine {
+  NSLog(@"Guest did stop virtual machine.");
+  exit(0);
 }
 @end
-
 
 int main(int argc, const char *argv[]) {
   if (argc != 2) {
@@ -33,16 +30,17 @@ int main(int argc, const char *argv[]) {
     bundleDir = [bundleDir stringByAppendingString:@"/"];
   }
 
-  VZVirtualMachine *vm = [MacOSVirtualMachineConfigurationHelper createVirtualMachineWithBundleDir:bundleDir];
+  VZVirtualMachine *vm =
+    [MacOSVirtualMachineConfigurationHelper createVirtualMachineWithBundleDir:bundleDir];
 
   MacOSVirtualMachineDelegate *delegate = [MacOSVirtualMachineDelegate new];
   vm.delegate = delegate;
 
-  [vm startWithCompletionHandler:^(NSError * _Nullable error) {
-      if (error) {
-          NSLog(@"%@", error.localizedDescription);
-          abort();
-      }
+  [vm startWithCompletionHandler:^(NSError *_Nullable error) {
+    if (error) {
+      NSLog(@"%@", error.localizedDescription);
+      abort();
+    }
   }];
 
   dispatch_main();
