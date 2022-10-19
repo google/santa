@@ -877,6 +877,8 @@ santa_unit_test(
     deps = [
         ":EndpointSecurityWriterSpool",
         "//Source/common:TestUtils",
+        "//Source/santad/Logs/EndpointSecurity/Writers/FSSpool:fsspool",
+        "//Source/santad/Logs/EndpointSecurity/Writers/FSSpool:fsspool_log_batch_writer",
     ],
 )
 
