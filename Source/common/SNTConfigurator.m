@@ -776,13 +776,13 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
 - (NSUInteger)spoolDirectorySizeThresholdMB {
   return self.configState[kSpoolDirectorySizeThresholdMB]
            ? [self.configState[kSpoolDirectorySizeThresholdMB] unsignedIntegerValue]
-           : 500;
+           : 100;
 }
 
 - (float)spoolDirectoryEventMaxFlushTimeSec {
   return self.configState[kSpoolDirectoryEventMaxFlushTimeSec]
            ? [self.configState[kSpoolDirectoryEventMaxFlushTimeSec] floatValue]
-           : 5.0;
+           : 10.0;
 }
 
 - (BOOL)enableMachineIDDecoration {

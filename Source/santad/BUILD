@@ -591,6 +591,7 @@ objc_library(
         ":SNTNotificationQueue",
         ":SNTRuleTable",
         ":SNTSyncdQueue",
+        "//Source/common:SNTConfigurator",
         "//Source/common:SNTLogging",
         "//Source/common:SNTPrefixTree",
         "//Source/common:SNTXPCControlInterface",

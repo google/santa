@@ -44,12 +44,13 @@ static const uint64_t kFlushBufferTimeoutMS = 10000;
 static const size_t kBufferBatchSizeBytes = (1024 * 128);
 // Reserve an extra 4kb of buffer space to account for event overflow
 static const size_t kMaxExpectedWriteSizeBytes = 4096;
-// Maximum amount of disk space to use for logs (100MB)
-static const size_t kMaxDiskSizeBytes = (1024 * 1024 * 100);
 
 // Translate configured log type to appropriate Serializer/Writer pairs
 std::unique_ptr<Logger> Logger::Create(std::shared_ptr<EndpointSecurityAPI> esapi,
-                                       SNTEventLogType log_type, NSString *event_log_path) {
+                                       SNTEventLogType log_type, NSString *event_log_path,
+                                       NSString *spool_log_path, size_t spool_file_size_threshold,
+                                       size_t spool_dir_size_threshold,
+                                       uint64_t spool_flush_timeout_ms) {
   switch (log_type) {
     case SNTEventLogTypeFilelog:
       return std::make_unique<Logger>(
@@ -62,9 +63,10 @@ std::unique_ptr<Logger> Logger::Create(std::shared_ptr<EndpointSecurityAPI> esap
     case SNTEventLogTypeProtobuf:
       LOGW(@"The EventLogType value protobuf is currently in beta. The protobuf schema is subject "
            @"to change.");
-      return std::make_unique<Logger>(Protobuf::Create(esapi),
-                                      Spool::Create("/tmp/base", kMaxDiskSizeBytes,
-                                                    kBufferBatchSizeBytes, kFlushBufferTimeoutMS));
+      return std::make_unique<Logger>(
+        Protobuf::Create(esapi),
+        Spool::Create([spool_log_path UTF8String], spool_dir_size_threshold,
+                      spool_file_size_threshold, spool_flush_timeout_ms));
     default: LOGE(@"Invalid log type: %ld", log_type); return nullptr;
   }
 }

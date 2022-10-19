@@ -183,8 +183,8 @@
 ///    SNTEventLogTypeSyslog "syslog": Sent to ASL or ULS (if built with the 10.12 SDK or later).
 ///    SNTEventLogTypeFilelog "file": Sent to a file on disk. Use eventLogPath to specify a path.
 ///    SNTEventLogTypeNull "null": Logs nothing
-///    SNTEventLogTypeProtobuf "protobuf": (BETA) Sent to a file on disk, using a maildir-like format. Use
-///      spoolDirectory to specify a path. Use spoolDirectoryFileSizeThresholdKB,
+///    SNTEventLogTypeProtobuf "protobuf": (BETA) Sent to a file on disk, using a maildir-like
+///      format. Use spoolDirectory to specify a path. Use spoolDirectoryFileSizeThresholdKB,
 ///      spoolDirectorySizeThresholdMB and spoolDirectoryEventMaxFlushTimeSec to configure
 ///      additional settings.
 ///    Defaults to SNTEventLogTypeFilelog.
@@ -223,7 +223,7 @@
 ///
 ///  If eventLogType is set to protobuf, spoolDirectorySizeThresholdMB sets the total size
 ///  limit for all files saved in the spoolDirectory.
-///  Defaults to 500.
+///  Defaults to 100.
 ///
 ///  @note: This property is KVO compliant, but should only be read once at santad startup.
 ///
@@ -232,11 +232,11 @@
 ///
 ///  If eventLogType is set to protobuf, spoolDirectoryEventMaxFlushTimeSec sets the maximum amount
 ///  of time an event will be stored in memory before being written to disk.
-///  Defaults to 5.0.
+///  Defaults to 10.0.
 ///
 ///  @note: This property is KVO compliant, but should only be read once at santad startup.
 ///
-@property(readonly, nonatomic) float mailDirectoryEventMaxFlushTimeSec;
+@property(readonly, nonatomic) float spoolDirectoryEventMaxFlushTimeSec;
 
 ///
 /// Enabling this appends the Santa machine ID to the end of each log line. If nothing
