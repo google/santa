@@ -251,9 +251,6 @@ message Execution {
   // The original path on disk of the target executable
   // Applies when executables are translocated
   optional string original_path = 15;
-
-  // Machine ID of the host emitting this log
-  optional string machine_id = 16;
 }
 
 // Information about a fork event
@@ -435,11 +432,15 @@ message SantaMessage {
   // Can allow client to relate events across time
   optional string uuid = 1;
 
+  // Machine ID of the host emitting this log
+  // Only valid when EnableMachineIDDecoration configuration option is set
+  optional string machine_id = 2;
+
   // Timestamp when the event occurred
-  optional google.protobuf.Timestamp event_time = 2;
+  optional google.protobuf.Timestamp event_time = 3;
 
   // Timestamp when Santa finished processing the event
-  optional google.protobuf.Timestamp processed_time = 3;
+  optional google.protobuf.Timestamp processed_time = 4;
 
   // Event type being described by this message
   oneof event {

@@ -171,8 +171,13 @@ std::string BasicString::CreateDefaultString(size_t reserved_size) {
   return str;
 }
 
-inline std::vector<uint8_t> FinalizeString(std::string &str) {
+std::vector<uint8_t> BasicString::FinalizeString(std::string &str) {
+  if (EnabledMachineID()) {
+    str.append("|machineid=");
+    str.append(MachineID());
+  }
   str.append("\n");
+
   std::vector<uint8_t> vec(str.length());
   std::copy(str.begin(), str.end(), vec.begin());
   return vec;
@@ -278,11 +283,6 @@ std::vector<uint8_t> BasicString::SerializeMessage(const EnrichedExec &msg) {
 
       str.append(SanitizableString(esapi_->ExecArg(&esm.event.exec, i)).Sanitized());
     }
-  }
-
-  if ([[SNTConfigurator configurator] enableMachineIDDecoration]) {
-    str.append("|machineid=");
-    str.append([NonNull([[SNTConfigurator configurator] machineID]) UTF8String]);
   }
 
   return FinalizeString(str);

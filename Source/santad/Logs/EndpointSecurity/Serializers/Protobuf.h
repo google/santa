@@ -16,10 +16,12 @@
 #define SANTA__SANTAD__LOGS_ENDPOINTSECURITY_SERIALIZERS_PROTOBUF_H
 
 #import <Foundation/Foundation.h>
+#include <google/protobuf/arena.h>
 
 #include <memory>
 #include <vector>
 
+#include "Source/common/santa_proto_include_wrapper.h"
 #include "Source/santad/EventProviders/EndpointSecurity/EndpointSecurityAPI.h"
 #include "Source/santad/Logs/EndpointSecurity/Serializers/Serializer.h"
 
@@ -60,6 +62,16 @@ class Protobuf : public Serializer {
   std::vector<uint8_t> SerializeDiskDisappeared(NSDictionary *) override;
 
  private:
+  ::santa::pb::v1::SantaMessage *CreateDefaultProto(google::protobuf::Arena *arena);
+  ::santa::pb::v1::SantaMessage *CreateDefaultProto(
+    google::protobuf::Arena *arena,
+    const santa::santad::event_providers::endpoint_security::EnrichedEventType &msg);
+  ::santa::pb::v1::SantaMessage *CreateDefaultProto(google::protobuf::Arena *arena,
+                                                    const uuid_t &uuid, struct timespec event_time,
+                                                    struct timespec processed_time);
+
+  std::vector<uint8_t> FinalizeProto(::santa::pb::v1::SantaMessage *santa_msg);
+
   std::shared_ptr<santa::santad::event_providers::endpoint_security::EndpointSecurityAPI> esapi_;
 };
 

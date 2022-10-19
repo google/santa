@@ -255,6 +255,5 @@
   }
  },
  "explain": "extra!",
- "quarantine_url": "google.com",
- "machine_id": "my_machine_id"
+ "quarantine_url": "google.com"
 }

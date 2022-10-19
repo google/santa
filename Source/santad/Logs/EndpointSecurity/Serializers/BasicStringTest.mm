@@ -114,7 +114,7 @@ std::string BasicStringSerializeMessage(es_message_t *esMsg) {
   std::string got = BasicStringSerializeMessage(&esMsg);
   std::string want = "action=WRITE|path=close_file"
                      "|pid=12|ppid=56|process=foo|processpath=foo"
-                     "|uid=-2|user=nobody|gid=-1|group=nogroup\n";
+                     "|uid=-2|user=nobody|gid=-1|group=nogroup|machineid=my_id\n";
 
   XCTAssertCppStringEqual(got, want);
 }
@@ -127,6 +127,11 @@ std::string BasicStringSerializeMessage(es_message_t *esMsg) {
   es_message_t esMsg = MakeESMessage(ES_EVENT_TYPE_NOTIFY_EXCHANGEDATA, &proc);
   esMsg.event.exchangedata.file1 = &file1;
   esMsg.event.exchangedata.file2 = &file2;
+
+  // Arbitrarily overwriting mock to test not adding machine id in this event
+  self.mockConfigurator = OCMClassMock([SNTConfigurator class]);
+  OCMStub([self.mockConfigurator configurator]).andReturn(self.mockConfigurator);
+  OCMStub([self.mockConfigurator enableMachineIDDecoration]).andReturn(NO);
 
   std::string got = BasicStringSerializeMessage(&esMsg);
   std::string want = "action=EXCHANGE|path=exchange_1|newpath=exchange_2"
@@ -170,7 +175,7 @@ std::string BasicStringSerializeMessage(es_message_t *esMsg) {
   es_message_t esMsg = MakeESMessage(ES_EVENT_TYPE_NOTIFY_EXIT, &proc);
 
   std::string got = BasicStringSerializeMessage(&esMsg);
-  std::string want = "action=EXIT|pid=12|pidversion=34|ppid=56|uid=-2|gid=-1\n";
+  std::string want = "action=EXIT|pid=12|pidversion=34|ppid=56|uid=-2|gid=-1|machineid=my_id\n";
 
   XCTAssertCppStringEqual(got, want);
 }
@@ -185,7 +190,7 @@ std::string BasicStringSerializeMessage(es_message_t *esMsg) {
   esMsg.event.fork.child = &procChild;
 
   std::string got = BasicStringSerializeMessage(&esMsg);
-  std::string want = "action=FORK|pid=67|pidversion=89|ppid=12|uid=-2|gid=-1\n";
+  std::string want = "action=FORK|pid=67|pidversion=89|ppid=12|uid=-2|gid=-1|machineid=my_id\n";
 
   XCTAssertCppStringEqual(got, want);
 }
@@ -203,7 +208,7 @@ std::string BasicStringSerializeMessage(es_message_t *esMsg) {
   std::string got = BasicStringSerializeMessage(&esMsg);
   std::string want = "action=LINK|path=link_src|newpath=link_dst/link_name"
                      "|pid=12|ppid=56|process=foo|processpath=foo"
-                     "|uid=-2|user=nobody|gid=-1|group=nogroup\n";
+                     "|uid=-2|user=nobody|gid=-1|group=nogroup|machineid=my_id\n";
 
   XCTAssertCppStringEqual(got, want);
 }
@@ -221,7 +226,7 @@ std::string BasicStringSerializeMessage(es_message_t *esMsg) {
   std::string got = BasicStringSerializeMessage(&esMsg);
   std::string want = "action=RENAME|path=rename_src|newpath=rename_dst"
                      "|pid=12|ppid=56|process=foo|processpath=foo"
-                     "|uid=-2|user=nobody|gid=-1|group=nogroup\n";
+                     "|uid=-2|user=nobody|gid=-1|group=nogroup|machineid=my_id\n";
 
   XCTAssertCppStringEqual(got, want);
 }
@@ -236,7 +241,7 @@ std::string BasicStringSerializeMessage(es_message_t *esMsg) {
   std::string got = BasicStringSerializeMessage(&esMsg);
   std::string want = "action=DELETE|path=deleted_file"
                      "|pid=12|ppid=56|process=foo|processpath=foo"
-                     "|uid=-2|user=nobody|gid=-1|group=nogroup\n";
+                     "|uid=-2|user=nobody|gid=-1|group=nogroup|machineid=my_id\n";
 
   XCTAssertCppStringEqual(got, want);
 }
@@ -258,7 +263,7 @@ std::string BasicStringSerializeMessage(es_message_t *esMsg) {
 
   std::string got(ret.begin(), ret.end());
   std::string want = "action=ALLOWLIST|pid=12|pidversion=34|path=foo"
-                     "|sha256=test_hash\n";
+                     "|sha256=test_hash|machineid=my_id\n";
 
   XCTAssertCppStringEqual(got, want);
 }
@@ -278,7 +283,7 @@ std::string BasicStringSerializeMessage(es_message_t *esMsg) {
 
   std::string want = "action=BUNDLE|sha256=file_hash"
                      "|bundlehash=file_bundle_hash|bundlename=file_bundle_Name|bundleid="
-                     "|bundlepath=file_bundle_path|path=file_path\n";
+                     "|bundlepath=file_bundle_path|path=file_path|machineid=my_id\n";
 
   XCTAssertCppStringEqual(got, want);
 }
@@ -294,6 +299,11 @@ std::string BasicStringSerializeMessage(es_message_t *esMsg) {
     @"DAVolumeKind" : @"apfs",
     @"DADeviceProtocol" : @"usb",
   };
+
+  // Arbitrarily overwriting mock to test not adding machine id in this event
+  self.mockConfigurator = OCMClassMock([SNTConfigurator class]);
+  OCMStub([self.mockConfigurator configurator]).andReturn(self.mockConfigurator);
+  OCMStub([self.mockConfigurator enableMachineIDDecoration]).andReturn(NO);
 
   std::vector<uint8_t> ret = BasicString::Create(nullptr, false)->SerializeDiskAppeared(props);
   std::string got(ret.begin(), ret.end());
@@ -314,7 +324,7 @@ std::string BasicStringSerializeMessage(es_message_t *esMsg) {
   std::vector<uint8_t> ret = BasicString::Create(nullptr, false)->SerializeDiskDisappeared(props);
   std::string got(ret.begin(), ret.end());
 
-  std::string want = "action=DISKDISAPPEAR|mount=path|volume=|bsdname=bsd\n";
+  std::string want = "action=DISKDISAPPEAR|mount=path|volume=|bsdname=bsd|machineid=my_id\n";
 
   XCTAssertCppStringEqual(got, want);
 }

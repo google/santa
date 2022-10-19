@@ -28,6 +28,7 @@ namespace santa::santad::logs::endpoint_security::serializers {
 
 class Serializer {
  public:
+  Serializer();
   virtual ~Serializer() = default;
 
   std::vector<uint8_t> SerializeMessage(
@@ -35,6 +36,9 @@ class Serializer {
     return std::visit([this](const auto &arg) { return this->SerializeMessageTemplate(arg); },
                       msg->GetEnrichedMessage());
   }
+
+  bool EnabledMachineID();
+  std::string_view MachineID();
 
   virtual std::vector<uint8_t> SerializeMessage(
     const santa::santad::event_providers::endpoint_security::EnrichedClose &) = 0;
@@ -80,6 +84,9 @@ class Serializer {
     const santa::santad::event_providers::endpoint_security::EnrichedRename &);
   std::vector<uint8_t> SerializeMessageTemplate(
     const santa::santad::event_providers::endpoint_security::EnrichedUnlink &);
+
+  bool enabled_machine_id_ = false;
+  std::string machine_id_;
 };
 
 }  // namespace santa::santad::logs::endpoint_security::serializers

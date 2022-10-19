@@ -17,7 +17,6 @@
 #include <EndpointSecurity/EndpointSecurity.h>
 #include <Kernel/kern/cs_blobs.h>
 #include <bsm/libbsm.h>
-#include <google/protobuf/arena.h>
 #include <mach/message.h>
 #include <math.h>
 #include <sys/proc_info.h>
@@ -31,7 +30,6 @@
 #import "Source/common/SNTConfigurator.h"
 #include "Source/common/SNTLogging.h"
 #import "Source/common/SNTStoredEvent.h"
-#include "Source/common/santa_proto_include_wrapper.h"
 #include "Source/santad/EventProviders/EndpointSecurity/EndpointSecurityAPI.h"
 #include "Source/santad/Logs/EndpointSecurity/Serializers/Utilities.h"
 #import "Source/santad/SNTDecisionCache.h"
@@ -238,6 +236,12 @@ static inline void EncodeString(std::string *buf, NSString *value) {
   }
 }
 
+static inline void EncodeString(std::string *buf, std::string_view value) {
+  if (value.length() > 0) {
+    buf->append(std::string_view(value.data(), value.length()));
+  }
+}
+
 ::pbv1::Execution::Decision GetDecisionEnum(SNTEventState event_state) {
   if (event_state & SNTEventStateAllow) {
     return ::pbv1::Execution::DECISION_ALLOW;
@@ -296,33 +300,36 @@ static inline void EncodeString(std::string *buf, NSString *value) {
   }
 }
 
-static inline ::pbv1::SantaMessage *CreateDefaultProto(Arena *arena, const EnrichedEventType &msg) {
+::pbv1::SantaMessage *Protobuf::CreateDefaultProto(Arena *arena, const uuid_t &uuid,
+                                                   struct timespec event_time,
+                                                   struct timespec processed_time) {
   ::pbv1::SantaMessage *santa_msg = Arena::CreateMessage<::pbv1::SantaMessage>(arena);
 
-  EncodeUUID(santa_msg, msg.uuid());
-  EncodeTimestamp(santa_msg->mutable_event_time(), msg.es_msg().time);
-  EncodeTimestamp(santa_msg->mutable_processed_time(), msg.enrichment_time());
+  EncodeUUID(santa_msg, uuid);
+  if (EnabledMachineID()) {
+    EncodeString(santa_msg->mutable_machine_id(), MachineID());
+  }
+  EncodeTimestamp(santa_msg->mutable_event_time(), event_time);
+  EncodeTimestamp(santa_msg->mutable_processed_time(), processed_time);
 
   return santa_msg;
 }
 
-static inline ::pbv1::SantaMessage *CreateDefaultProto(Arena *arena) {
-  ::pbv1::SantaMessage *santa_msg = Arena::CreateMessage<::pbv1::SantaMessage>(arena);
+::pbv1::SantaMessage *Protobuf::CreateDefaultProto(Arena *arena, const EnrichedEventType &msg) {
+  return CreateDefaultProto(arena, msg.uuid(), msg.es_msg().time, msg.enrichment_time());
+}
 
+::pbv1::SantaMessage *Protobuf::CreateDefaultProto(Arena *arena) {
   uuid_t uuid;
   uuid_generate_random(uuid);
 
   struct timespec ts;
   clock_gettime(CLOCK_REALTIME, &ts);
 
-  EncodeUUID(santa_msg, uuid);
-  EncodeTimestamp(santa_msg->mutable_event_time(), ts);
-  EncodeTimestamp(santa_msg->mutable_processed_time(), ts);
-
-  return santa_msg;
+  return CreateDefaultProto(arena, uuid, ts, ts);
 }
 
-static inline std::vector<uint8_t> FinalizeProto(::pbv1::SantaMessage *santa_msg) {
+std::vector<uint8_t> Protobuf::FinalizeProto(::pbv1::SantaMessage *santa_msg) {
   std::vector<uint8_t> vec(santa_msg->ByteSizeLong());
   santa_msg->SerializeToArray(vec.data(), (int)vec.capacity());
   return vec;
@@ -435,11 +442,6 @@ std::vector<uint8_t> Protobuf::SerializeMessage(const EnrichedExec &msg) {
   NSString *orig_path = Utilities::OriginalPathForTranslocation(msg.es_msg().event.exec.target);
   if (orig_path) {
     pb_exec->set_original_path([orig_path UTF8String], [orig_path length]);
-  }
-
-  if ([[SNTConfigurator configurator] enableMachineIDDecoration]) {
-    pb_exec->set_machine_id([[[SNTConfigurator configurator] machineID] UTF8String],
-                            [[[SNTConfigurator configurator] machineID] length]);
   }
 
   return FinalizeProto(santa_msg);
