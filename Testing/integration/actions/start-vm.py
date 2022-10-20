@@ -7,10 +7,13 @@ import sys
 import tempfile
 
 from google.cloud import storage
+from google.oauth2 import service_account
 
+PROJECT = "santa-e2e"
+SA_KEY = "/opt/santa-e2e-sa.json"
+BUCKET = "santa-e2e-vms"
 COSIGN = "/opt/bin/cosign"
 PUBKEY = "/opt/santa-e2e-vm-signer.pub"
-BUCKET = "santa-e2e-vms"
 VMCLI = "/opt/bin/VMCLI"
 VMS_DIR = pathlib.Path.home() / 'VMs'
 TIMEOUT = 15 * 60  # in seconds
@@ -26,7 +29,12 @@ if __name__ == "__main__":
     tar_path = VMS_DIR / tar_name
     extracted_path = pathlib.Path(str(tar_path)[:-len('.tar.gz')])
 
-    storage_client = storage.Client()
+    storage_client = storage.Client(
+      project=PROJECT,
+      credentials=service_account.Credentials.from_service_account_info(
+        json.loads(open(SA_KEY, 'r').read())
+      ),
+    )
     bucket = storage_client.bucket(BUCKET)
     blob = bucket.get_blob(tar_name)
 
@@ -54,7 +62,6 @@ if __name__ == "__main__":
         subprocess.check_output([COSIGN, 'verify-blob', '--key', PUBKEY, '--signature', sig_path, tar_path])
 
         print("Extracting...")
-        extracted_path.mkdir()
         subprocess.check_output(['tar', '-C', VMS_DIR, '-x', '-S', '-z', '-f', tar_path])
         tar_path.unlink()
 
@@ -63,7 +70,7 @@ if __name__ == "__main__":
         # COW copy the image to this tempdir
         subprocess.check_output(['cp', '-rc', extracted_path, snapshot_dir])
         try:
-            subprocess.check_output([VMCLI, pathlib.Path(snapshot_dir) / "VM.bundle"], timeout=TIMEOUT)
+            subprocess.check_output([VMCLI, pathlib.Path(snapshot_dir)], timeout=TIMEOUT)
         except subprocess.TimeoutExpired:
             print("VM timed out")
         except:

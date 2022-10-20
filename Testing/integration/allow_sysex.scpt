@@ -1,13 +1,11 @@
 on run argv
-	tell application "System Preferences"
-		activate
-	end tell
+	if application "System Preferences" is running then
+		tell application "System Preferences" to quit
+	end if
 
 	delay 2
 
-	tell application "System Preferences"
-		activate
-	end tell
+	tell application "System Preferences" to activate
 
 	delay 2
 
@@ -26,9 +24,7 @@ on run argv
 
 	delay 2
 
-	tell application "System Preferences"
-		quit
-	end tell
+	tell application "System Preferences" to quit
 
 	delay 2
 end run

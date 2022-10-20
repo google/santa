@@ -4,8 +4,8 @@ on:
   push:
     branches:
       - '*'
-#    paths:
-#      - 'Source/**'
+    # paths:
+    #   - 'Source/**'
   pull_request:
     branches:
       - main
@@ -36,7 +36,9 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: Start VM
-        run: python3 Testing/integration/actions/start-vm.py VM.bundle.tar.gz.enc
+        run: |
+          pip3 install --user google-cloud-storage==2.5.0
+          python3 Testing/integration/actions/start-vm.py macOS_12.bundle.tar.gz
 
   integration:
     runs-on: e2e-vm
