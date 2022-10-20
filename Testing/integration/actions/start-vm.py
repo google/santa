@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import datetime
+import json
 import os
 import pathlib
 import subprocess
@@ -70,7 +71,7 @@ if __name__ == "__main__":
         # COW copy the image to this tempdir
         subprocess.check_output(['cp', '-rc', extracted_path, snapshot_dir])
         try:
-            subprocess.check_output([VMCLI, pathlib.Path(snapshot_dir)], timeout=TIMEOUT)
+            subprocess.check_output([VMCLI, pathlib.Path(snapshot_dir) / extracted_path.name], timeout=TIMEOUT)
         except subprocess.TimeoutExpired:
             print("VM timed out")
         except:
