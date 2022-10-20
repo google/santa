@@ -4,19 +4,6 @@ load(
 )
 
 objc_library(
-    name = "configuration_helper",
-    srcs = [
-        "MacOSVirtualMachineConfigurationHelper.m",
-    ],
-    hdrs = [
-        "MacOSVirtualMachineConfigurationHelper.h",
-    ],
-    sdk_frameworks = [
-        "Virtualization",
-    ],
-)
-
-objc_library(
     name = "vmcli_lib",
     srcs = [
         "main.m",
@@ -25,7 +12,8 @@ objc_library(
         "Virtualization",
     ],
     deps = [
-        ":configuration_helper",
+        "//Testing/integration/VM/Common:configuration_helper",
+        "//Testing/integration/VM/Common:error",
     ],
 )
 
@@ -39,7 +27,7 @@ filegroup(
 macos_command_line_application(
     name = "VMCLI",
     codesignopts = [
-        "--entitlements=Testing/integration/VMCLI/VMCLI.entitlements",
+        "--entitlements=Testing/integration/VM/VMCLI/VMCLI.entitlements",
     ],
     minimum_os_version = "12.0",
     deps = [
