@@ -38,11 +38,14 @@ std::shared_ptr<Spool> Spool::Create(std::string_view base_dir, size_t max_spool
 }
 
 Spool::Spool(dispatch_queue_t q, dispatch_source_t timer_source, std::string_view base_dir,
-             size_t max_spool_disk_size, size_t max_spool_batch_size)
+             size_t max_spool_disk_size, size_t max_spool_batch_size,
+             void (^write_complete_f)(void), void (^flush_task_complete_f)(void))
     : q_(q),
       timer_source_(timer_source),
       spool_writer_(base_dir, max_spool_disk_size),
-      log_batch_writer_(&spool_writer_, max_spool_batch_size) {
+      log_batch_writer_(&spool_writer_, max_spool_batch_size),
+      write_complete_f_(write_complete_f),
+      flush_task_complete_f_(flush_task_complete_f) {
   type_url_ = kTypeGoogleApisComPrefix + ::santa::pb::v1::SantaMessage::descriptor()->full_name();
 }
 
@@ -72,6 +75,10 @@ void Spool::BeginFlushTask() {
     if (!shared_writer->Flush()) {
       LOGE(@"Spool writer: periodic flush failed.");
     }
+
+    if (shared_writer->flush_task_complete_f_) {
+      shared_writer->flush_task_complete_f_();
+    }
   });
 
   dispatch_resume(timer_source_);
@@ -99,6 +106,10 @@ void Spool::Write(std::vector<uint8_t> &&bytes) {
     auto status = log_batch_writer_.WriteMessage(any);
     if (!status.ok()) {
       LOGE(@"ProtoEventLogger::LogProto failed with: %s", status.ToString().c_str());
+    }
+
+    if (write_complete_f_) {
+      write_complete_f_();
     }
   });
 }

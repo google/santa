@@ -86,14 +86,28 @@ using santa::santad::logs::endpoint_security::writers::SpoolPeer;
 }
 
 - (void)testWrite {
-  const useconds_t waitTime = 1000000;      // 1.0 seconds
-  const useconds_t shortWaitTime = 250000;  // 0.25 seconds
   const size_t writeSize = 50;
   const uint64 periodicFlushMS = 400;
   NSError *err = nil;
 
-  auto spool =
-    std::make_shared<SpoolPeer>(self.q, self.timer, [self.baseDir UTF8String], 10240, 1024);
+  dispatch_semaphore_t semaWrite = dispatch_semaphore_create(0);
+  dispatch_semaphore_t semaFlush = dispatch_semaphore_create(0);
+  __block int flushCount = 0;
+
+  auto spool = std::make_shared<SpoolPeer>(
+    self.q, self.timer, [self.baseDir UTF8String], 10240, 1024,
+    ^{
+      dispatch_semaphore_signal(semaWrite);
+    },
+    ^{
+      flushCount++;
+      if (flushCount <= 2) {
+        // The first flush is the initial fire.
+        // The second flush should flush the new contents to disk
+        // Afterwards, nothing else waits on the semaphore, so stop signaling
+        dispatch_semaphore_signal(semaFlush);
+      }
+    });
 
   // Set a custom timer interval for this test
   dispatch_source_set_timer(self.timer, dispatch_time(DISPATCH_TIME_NOW, 0),
@@ -101,8 +115,13 @@ using santa::santad::logs::endpoint_security::writers::SpoolPeer;
 
   spool->Write(std::vector<uint8_t>(writeSize, 'A'));
 
-  // Sleep for 1.25 seconds
-  usleep(waitTime);
+  XCTAssertEqual(
+    0, dispatch_semaphore_wait(semaWrite, dispatch_time(DISPATCH_TIME_NOW, 5 * NSEC_PER_SEC)),
+    "Second write didn't compelte within expected window");
+
+  // Sleep for a short time. Nothing should happen, but want to help ensure that if somehow
+  // if somehow timers were active that would be caught and fail the test.
+  sleep(1);
 
   // Ensure nothing exists yet because periodic flush been started
   XCTAssertEqual([[self.fileMgr contentsOfDirectoryAtPath:self.spoolDir error:&err] count], 0);
@@ -116,8 +135,9 @@ using santa::santad::logs::endpoint_security::writers::SpoolPeer;
   // Start the periodic flush task
   spool->BeginFlushTask();
 
-  // Do a short wait to let the timer do the initial fire
-  usleep(shortWaitTime);
+  XCTAssertEqual(
+    0, dispatch_semaphore_wait(semaFlush, dispatch_time(DISPATCH_TIME_NOW, 5 * NSEC_PER_SEC)),
+    "Initial flush task firing didn't occur within expected window");
 
   // Ensure no growth in the amount of data
   XCTAssertEqual([[self.fileMgr contentsOfDirectoryAtPath:self.spoolDir error:&err] count], 1);
@@ -125,8 +145,13 @@ using santa::santad::logs::endpoint_security::writers::SpoolPeer;
   // Write a second log entry and begin the period
   spool->Write(std::vector<uint8_t>(writeSize, 'B'));
 
-  // Wait for the periodic task to run
-  usleep(waitTime);
+  XCTAssertEqual(
+    0, dispatch_semaphore_wait(semaWrite, dispatch_time(DISPATCH_TIME_NOW, 5 * NSEC_PER_SEC)),
+    "Second write didn't compelte within expected window");
+
+  XCTAssertEqual(
+    0, dispatch_semaphore_wait(semaFlush, dispatch_time(DISPATCH_TIME_NOW, 5 * NSEC_PER_SEC)),
+    "Initial flush task firing didn't occur within expected window");
 
   // Ensure the new log entry appears
   XCTAssertEqual([[self.fileMgr contentsOfDirectoryAtPath:self.spoolDir error:&err] count], 2);
