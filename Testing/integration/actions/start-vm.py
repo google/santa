@@ -3,6 +3,7 @@ import datetime
 import json
 import os
 import pathlib
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -50,17 +51,38 @@ if __name__ == "__main__":
 
     if blob.updated > datetime.datetime.fromtimestamp(local_ctime, tz=datetime.timezone.utc):
         print(f"VM {extracted_path} not present or not up to date, downloading...")
+
+        # Remove the old version of the image if present
+        try:
+          shutil.rmtree(extracted_path)
+        except FileNotFoundError:
+          pass
+
         blob.download_to_filename(tar_path)
-        sig_blob = bucket.get_blob(str(tar_name) + '.sig')
+
+        hash_blob = bucket.get_blob(str(tar_name) + '.sha256')
+        if hash_blob is None:
+          print("Image hash doesn't exist in GCS", file=sys.stderr)
+          sys.exit(1)
+
+        sig_blob = bucket.get_blob(str(tar_name) + '.sha256.sig')
         if sig_blob is None:
           print("Image signature doesn't exist in GCS", file=sys.stderr)
           sys.exit(1)
 
-        sig_path = str(tar_path) + '.sig'
+        hash_path = str(tar_path) + '.sha256'
+        hash_blob.download_to_filename(hash_path)
+        sig_path = str(tar_path) + '.sha256.sig'
         sig_blob.download_to_filename(sig_path)
 
+        # cosign OOMs trying to sign/verify the tarball itself, so sign/verify
+        # the SHA256 of the tarball.
         print("Verifying signature...")
-        subprocess.check_output([COSIGN, 'verify-blob', '--key', PUBKEY, '--signature', sig_path, tar_path])
+
+        # Verify the signature of the hash file is OK
+        subprocess.check_output([COSIGN, 'verify-blob', '--key', PUBKEY, '--signature', sig_path, hash_path])
+        # Then verify that the hash matches what we downloaded
+        subprocess.check_output(["shasum", "-a", "256", "-c", hash_path])
 
         print("Extracting...")
         subprocess.check_output(['tar', '-C', VMS_DIR, '-x', '-S', '-z', '-f', tar_path])
