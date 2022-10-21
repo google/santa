@@ -31,9 +31,11 @@
 #include "Source/santad/Logs/EndpointSecurity/Logger.h"
 #include "Source/santad/Logs/EndpointSecurity/Serializers/BasicString.h"
 #include "Source/santad/Logs/EndpointSecurity/Serializers/Empty.h"
+#include "Source/santad/Logs/EndpointSecurity/Serializers/Protobuf.h"
 #include "Source/santad/Logs/EndpointSecurity/Serializers/Serializer.h"
 #include "Source/santad/Logs/EndpointSecurity/Writers/File.h"
 #include "Source/santad/Logs/EndpointSecurity/Writers/Null.h"
+#include "Source/santad/Logs/EndpointSecurity/Writers/Spool.h"
 #include "Source/santad/Logs/EndpointSecurity/Writers/Syslog.h"
 #include "Source/santad/Logs/EndpointSecurity/Writers/Writer.h"
 
@@ -45,8 +47,10 @@ using santa::santad::event_providers::endpoint_security::Message;
 using santa::santad::logs::endpoint_security::Logger;
 using santa::santad::logs::endpoint_security::serializers::BasicString;
 using santa::santad::logs::endpoint_security::serializers::Empty;
+using santa::santad::logs::endpoint_security::serializers::Protobuf;
 using santa::santad::logs::endpoint_security::writers::File;
 using santa::santad::logs::endpoint_security::writers::Null;
+using santa::santad::logs::endpoint_security::writers::Spool;
 using santa::santad::logs::endpoint_security::writers::Syslog;
 
 namespace santa::santad::logs::endpoint_security {
@@ -92,20 +96,28 @@ class MockWriter : public Null {
   // Ensure that the factory method creates expected serializers/writers pairs
   auto mockESApi = std::make_shared<MockEndpointSecurityAPI>();
 
-  XCTAssertEqual(nullptr, Logger::Create(mockESApi, (SNTEventLogType)123, @"/tmp"));
-  XCTAssertEqual(nullptr, Logger::Create(mockESApi, SNTEventLogTypeProtobuf, @"/tmp"));
+  XCTAssertEqual(nullptr, Logger::Create(mockESApi, (SNTEventLogType)123, @"/tmp/temppy",
+                                         @"/tmp/spool", 1, 1, 1));
 
-  LoggerPeer logger(Logger::Create(mockESApi, SNTEventLogTypeFilelog, @"/tmp/temppy"));
+  LoggerPeer logger(
+    Logger::Create(mockESApi, SNTEventLogTypeFilelog, @"/tmp/temppy", @"/tmp/spool", 1, 1, 1));
   XCTAssertNotEqual(nullptr, std::dynamic_pointer_cast<BasicString>(logger.Serializer()));
   XCTAssertNotEqual(nullptr, std::dynamic_pointer_cast<File>(logger.Writer()));
 
-  logger = LoggerPeer(Logger::Create(mockESApi, SNTEventLogTypeSyslog, @"/tmp/temppy"));
+  logger = LoggerPeer(
+    Logger::Create(mockESApi, SNTEventLogTypeSyslog, @"/tmp/temppy", @"/tmp/spool", 1, 1, 1));
   XCTAssertNotEqual(nullptr, std::dynamic_pointer_cast<BasicString>(logger.Serializer()));
   XCTAssertNotEqual(nullptr, std::dynamic_pointer_cast<Syslog>(logger.Writer()));
 
-  logger = LoggerPeer(Logger::Create(mockESApi, SNTEventLogTypeNull, @"/tmp/temppy"));
+  logger = LoggerPeer(
+    Logger::Create(mockESApi, SNTEventLogTypeNull, @"/tmp/temppy", @"/tmp/spool", 1, 1, 1));
   XCTAssertNotEqual(nullptr, std::dynamic_pointer_cast<Empty>(logger.Serializer()));
   XCTAssertNotEqual(nullptr, std::dynamic_pointer_cast<Null>(logger.Writer()));
+
+  logger = LoggerPeer(
+    Logger::Create(mockESApi, SNTEventLogTypeProtobuf, @"/tmp/temppy", @"/tmp/spool", 1, 1, 1));
+  XCTAssertNotEqual(nullptr, std::dynamic_pointer_cast<Protobuf>(logger.Serializer()));
+  XCTAssertNotEqual(nullptr, std::dynamic_pointer_cast<Spool>(logger.Writer()));
 }
 
 - (void)testLog {

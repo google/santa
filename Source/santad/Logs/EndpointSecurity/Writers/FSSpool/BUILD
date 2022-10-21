@@ -21,6 +21,14 @@ cc_proto_library(
 )
 
 cc_library(
+    name = "binaryproto_cc_proto_library_wrapper",
+    hdrs = ["binaryproto_proto_include_wrapper.h"],
+    deps = [
+        ":binaryproto_cc_proto",
+    ],
+)
+
+cc_library(
     name = "fsspool",
     srcs = [
         "fsspool.cc",

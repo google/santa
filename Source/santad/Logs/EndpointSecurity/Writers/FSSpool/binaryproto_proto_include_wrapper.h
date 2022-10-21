@@ -12,9 +12,9 @@
 /// See the License for the specific language governing permissions and
 /// limitations under the License.
 
-#ifndef SANTA__COMMON_SANTA_PROTO_INCLUDE_WRAPPER_H
-#define SANTA__COMMON_SANTA_PROTO_INCLUDE_WRAPPER_H
+#ifndef SANTA__SANTAD__LOGS_ENDPOINTSECURITY_WRITERS_FSSPOOL_BINARYPROTO_PROTO_INCLUDE_WRAPPER_H
+#define SANTA__SANTAD__LOGS_ENDPOINTSECURITY_WRITERS_FSSPOOL_BINARYPROTO_PROTO_INCLUDE_WRAPPER_H
 
-#include "Source/common/santa.pb.h"
+#include "Source/santad/Logs/EndpointSecurity/Writers/FSSpool/binaryproto.pb.h"
 
 #endif

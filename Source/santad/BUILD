@@ -431,6 +431,19 @@ objc_library(
 )
 
 objc_library(
+    name = "EndpointSecurityWriterSpool",
+    srcs = ["Logs/EndpointSecurity/Writers/Spool.mm"],
+    hdrs = ["Logs/EndpointSecurity/Writers/Spool.h"],
+    deps = [
+        ":EndpointSecurityWriter",
+        "//Source/common:SNTLogging",
+        "//Source/common:santa_cc_proto_library_wrapper",
+        "//Source/santad/Logs/EndpointSecurity/Writers/FSSpool:fsspool",
+        "//Source/santad/Logs/EndpointSecurity/Writers/FSSpool:fsspool_log_batch_writer",
+    ],
+)
+
+objc_library(
     name = "EndpointSecurityWriterNull",
     srcs = ["Logs/EndpointSecurity/Writers/Null.mm"],
     hdrs = ["Logs/EndpointSecurity/Writers/Null.h"],
@@ -450,9 +463,11 @@ objc_library(
         ":EndpointSecuritySerializer",
         ":EndpointSecuritySerializerBasicString",
         ":EndpointSecuritySerializerEmpty",
+        ":EndpointSecuritySerializerProtobuf",
         ":EndpointSecurityWriter",
         ":EndpointSecurityWriterFile",
         ":EndpointSecurityWriterNull",
+        ":EndpointSecurityWriterSpool",
         ":EndpointSecurityWriterSyslog",
         "//Source/common:SNTCommonEnums",
         "//Source/common:SNTLogging",
@@ -576,6 +591,7 @@ objc_library(
         ":SNTNotificationQueue",
         ":SNTRuleTable",
         ":SNTSyncdQueue",
+        "//Source/common:SNTConfigurator",
         "//Source/common:SNTLogging",
         "//Source/common:SNTPrefixTree",
         "//Source/common:SNTXPCControlInterface",
@@ -857,6 +873,17 @@ santa_unit_test(
 )
 
 santa_unit_test(
+    name = "EndpointSecurityWriterSpoolTest",
+    srcs = ["Logs/EndpointSecurity/Writers/SpoolTest.mm"],
+    deps = [
+        ":EndpointSecurityWriterSpool",
+        "//Source/common:TestUtils",
+        "//Source/santad/Logs/EndpointSecurity/Writers/FSSpool:fsspool",
+        "//Source/santad/Logs/EndpointSecurity/Writers/FSSpool:fsspool_log_batch_writer",
+    ],
+)
+
+santa_unit_test(
     name = "EndpointSecurityLoggerTest",
     srcs = ["Logs/EndpointSecurity/LoggerTest.mm"],
     sdk_dylibs = [
@@ -870,9 +897,11 @@ santa_unit_test(
         ":EndpointSecuritySerializer",
         ":EndpointSecuritySerializerBasicString",
         ":EndpointSecuritySerializerEmpty",
+        ":EndpointSecuritySerializerProtobuf",
         ":EndpointSecurityWriter",
         ":EndpointSecurityWriterFile",
         ":EndpointSecurityWriterNull",
+        ":EndpointSecurityWriterSpool",
         ":EndpointSecurityWriterSyslog",
         ":MockEndpointSecurityAPI",
         "//Source/common:SNTCommonEnums",
@@ -1112,6 +1141,7 @@ test_suite(
         ":EndpointSecuritySerializerProtobufTest",
         ":EndpointSecuritySerializerUtilitiesTest",
         ":EndpointSecurityWriterFileTest",
+        ":EndpointSecurityWriterSpoolTest",
         ":MetricsTest",
         ":SNTApplicationCoreMetricsTest",
         ":SNTCompilerControllerTest",

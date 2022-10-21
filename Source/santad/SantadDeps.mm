@@ -14,8 +14,6 @@
 
 #include "Source/santad/SantadDeps.h"
 
-#include <memory>
-
 #import "Source/common/SNTLogging.h"
 #import "Source/common/SNTXPCControlInterface.h"
 #import "Source/santad/DataLayer/SNTEventTable.h"
@@ -31,10 +29,7 @@ using santa::santad::logs::endpoint_security::Logger;
 
 namespace santa::santad {
 
-std::unique_ptr<SantadDeps> SantadDeps::Create(NSUInteger metric_export_interval,
-                                               SNTEventLogType event_log_type,
-                                               NSString *event_log_path,
-                                               NSArray<NSString *> *prefix_filters) {
+std::unique_ptr<SantadDeps> SantadDeps::Create(SNTConfigurator *configurator) {
   // TODO(mlw): The XPC interfaces should be injectable. Could either make a new
   // protocol defining appropriate methods or accept values as params.
   MOLXPCConnection *control_connection =
@@ -88,6 +83,10 @@ std::unique_ptr<SantadDeps> SantadDeps::Create(NSUInteger metric_export_interval
   }
 
   std::shared_ptr<SNTPrefixTree> prefix_tree = std::make_shared<SNTPrefixTree>();
+
+  // TODO(bur): Add KVO handling for fileChangesPrefixFilters.
+  NSArray<NSString *> *prefix_filters =
+    [@[ @"/.", @"/dev/" ] arrayByAddingObjectsFromArray:[configurator fileChangesPrefixFilters]];
   for (NSString *filter in prefix_filters) {
     prefix_tree->AddPrefix([filter fileSystemRepresentation]);
   }
@@ -98,13 +97,19 @@ std::unique_ptr<SantadDeps> SantadDeps::Create(NSUInteger metric_export_interval
     exit(EXIT_FAILURE);
   }
 
-  std::unique_ptr<::Logger> logger = Logger::Create(esapi, event_log_type, event_log_path);
+  size_t spool_file_threshold_bytes = [configurator spoolDirectoryFileSizeThresholdKB] * 1024;
+  size_t spool_dir_threshold_bytes = [configurator spoolDirectorySizeThresholdMB] * 1024 * 1024;
+  uint64_t spool_flush_timeout_ms = [configurator spoolDirectoryEventMaxFlushTimeSec] * 1000;
+
+  std::unique_ptr<::Logger> logger = Logger::Create(
+    esapi, [configurator eventLogType], [configurator eventLogPath], [configurator spoolDirectory],
+    spool_dir_threshold_bytes, spool_file_threshold_bytes, spool_flush_timeout_ms);
   if (!logger) {
     LOGE(@"Failed to create logger.");
     exit(EXIT_FAILURE);
   }
 
-  return std::make_unique<SantadDeps>(metric_export_interval, esapi, std::move(logger),
+  return std::make_unique<SantadDeps>([configurator metricExportInterval], esapi, std::move(logger),
                                       control_connection, compiler_controller, notifier_queue,
                                       syncd_queue, exec_controller, prefix_tree);
 }

@@ -39,7 +39,9 @@ class Logger {
  public:
   static std::unique_ptr<Logger> Create(
     std::shared_ptr<santa::santad::event_providers::endpoint_security::EndpointSecurityAPI> esapi,
-    SNTEventLogType log_type, NSString *event_log_path);
+    SNTEventLogType log_type, NSString *event_log_path, NSString *spool_log_path,
+    size_t spool_dir_size_threshold, size_t spool_file_size_threshold,
+    uint64_t spool_flush_timeout_ms);
 
   Logger(std::shared_ptr<serializers::Serializer> serializer,
          std::shared_ptr<writers::Writer> writer);
