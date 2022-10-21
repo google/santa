@@ -22,9 +22,9 @@
 #include <sys/proc_info.h>
 #include <sys/wait.h>
 #include <time.h>
-#include <uuid/uuid.h>
 
 #include <optional>
+#include <string_view>
 
 #import "Source/common/SNTCachedDecision.h"
 #import "Source/common/SNTConfigurator.h"
@@ -69,12 +69,6 @@ std::shared_ptr<Protobuf> Protobuf::Create(std::shared_ptr<EndpointSecurityAPI> 
 
 Protobuf::Protobuf(std::shared_ptr<EndpointSecurityAPI> esapi) : esapi_(esapi) {}
 
-static inline void EncodeUUID(::pbv1::SantaMessage *pb_santa_msg, const uuid_t &uuid) {
-  uuid_string_t uuid_str;
-  uuid_unparse_lower(uuid, uuid_str);
-  pb_santa_msg->set_uuid(uuid_str, sizeof(uuid_str) - 1);
-}
-
 static inline void EncodeTimestamp(Timestamp *timestamp, struct timespec ts) {
   timestamp->set_seconds(ts.tv_sec);
   timestamp->set_nanos((int32_t)ts.tv_nsec);
@@ -87,6 +81,29 @@ static inline void EncodeTimestamp(Timestamp *timestamp, struct timeval tv) {
 static inline void EncodeProcessID(pbv1::ProcessID *proc_id, const audit_token_t &tok) {
   proc_id->set_pid(Pid(tok));
   proc_id->set_pidversion(Pidversion(tok));
+}
+
+static inline void EncodePath(std::string *buf, const es_file_t *dir,
+                              const es_string_token_t file) {
+  buf->append(std::string_view(dir->path.data, dir->path.length));
+  buf->append("/");
+  buf->append(std::string_view(file.data, file.length));
+}
+
+static inline void EncodePath(std::string *buf, const es_file_t *es_file) {
+  buf->append(std::string_view(es_file->path.data, es_file->path.length));
+}
+
+static inline void EncodeString(std::string *buf, NSString *value) {
+  if (value) {
+    buf->append(std::string_view([value UTF8String], [value length]));
+  }
+}
+
+static inline void EncodeString(std::string *buf, std::string_view value) {
+  if (value.length() > 0) {
+    buf->append(std::string_view(value.data(), value.length()));
+  }
 }
 
 static inline void EncodeUserInfo(::pbv1::UserInfo *pb_user_info, uid_t uid,
@@ -133,14 +150,41 @@ static inline void EncodeStat(::pbv1::Stat *pb_stat, const struct stat &sb,
   pb_stat->set_gen(sb.st_gen);
 }
 
-static inline void EncodeFile(::pbv1::File *pb_file, const es_file_t *es_file,
-                              const EnrichedFile &enriched_file, NSString *sha256 = nil) {
-  pb_file->set_path(es_file->path.data, es_file->path.length);
+static inline void EncodeFileInfo(::pbv1::FileInfo *pb_file, const es_file_t *es_file,
+                                  const EnrichedFile &enriched_file, NSString *sha256 = nil) {
+  EncodePath(pb_file->mutable_path(), es_file);
   pb_file->set_truncated(es_file->path_truncated);
   EncodeStat(pb_file->mutable_stat(), es_file->stat, enriched_file.user(), enriched_file.group());
   if (sha256) {
     EncodeHash(pb_file->mutable_hash(), sha256);
   }
+}
+
+static inline void EncodeFileInfoLight(::pbv1::FileInfoLight *pb_file, const es_file_t *es_file) {
+  EncodePath(pb_file->mutable_path(), es_file);
+  pb_file->set_truncated(es_file->path_truncated);
+}
+
+static inline void EncodeProcessInfoLight(::pbv1::ProcessInfoLight *pb_proc_info,
+                                          uint32_t message_version, const es_process_t *es_proc,
+                                          const EnrichedProcess &enriched_proc) {
+  EncodeProcessID(pb_proc_info->mutable_id(), es_proc->audit_token);
+  EncodeProcessID(pb_proc_info->mutable_parent_id(), es_proc->parent_audit_token);
+
+  pb_proc_info->set_original_parent_pid(es_proc->original_ppid);
+  pb_proc_info->set_group_id(es_proc->group_id);
+  pb_proc_info->set_session_id(es_proc->session_id);
+
+  EncodeUserInfo(pb_proc_info->mutable_effective_user(), EffectiveUser(es_proc->audit_token),
+                 enriched_proc.effective_user());
+  EncodeUserInfo(pb_proc_info->mutable_real_user(), RealUser(es_proc->audit_token),
+                 enriched_proc.real_user());
+  EncodeGroupInfo(pb_proc_info->mutable_effective_group(), EffectiveGroup(es_proc->audit_token),
+                  enriched_proc.effective_group());
+  EncodeGroupInfo(pb_proc_info->mutable_real_group(), RealGroup(es_proc->audit_token),
+                  enriched_proc.real_group());
+
+  EncodeFileInfoLight(pb_proc_info->mutable_executable(), es_proc->executable);
 }
 
 static inline void EncodeProcessInfo(::pbv1::ProcessInfo *pb_proc_info, uint32_t message_version,
@@ -183,12 +227,10 @@ static inline void EncodeProcessInfo(::pbv1::ProcessInfo *pb_proc_info, uint32_t
 
   pb_proc_info->set_cs_flags(es_proc->codesigning_flags);
 
-  EncodeFile(pb_proc_info->mutable_executable(), es_proc->executable, enriched_proc.executable(),
-             cd.sha256);
+  EncodeFileInfo(pb_proc_info->mutable_executable(), es_proc->executable,
+                 enriched_proc.executable(), cd.sha256);
   if (message_version >= 2 && es_proc->tty) {
-    // Note: TTY's are not currently enriched. Create an empty enriched file for encoding.
-    EnrichedFile enriched_file(std::nullopt, std::nullopt, std::nullopt);
-    EncodeFile(pb_proc_info->mutable_tty(), es_proc->tty, enriched_file, nil);
+    EncodeFileInfoLight(pb_proc_info->mutable_tty(), es_proc->tty);
   }
 
   if (message_version >= 3) {
@@ -216,29 +258,6 @@ static inline void EncodeCertificateInfo(::pbv1::CertificateInfo *pb_cert_info, 
 
   if (common_name) {
     pb_cert_info->set_common_name([common_name UTF8String], [common_name length]);
-  }
-}
-
-static inline void EncodePath(std::string *buf, const es_file_t *dir,
-                              const es_string_token_t file) {
-  buf->append(dir->path.data);
-  buf->append("/");
-  buf->append(file.data);
-}
-
-static inline void EncodePath(std::string *buf, const es_file_t *es_file) {
-  buf->append(es_file->path.data);
-}
-
-static inline void EncodeString(std::string *buf, NSString *value) {
-  if (value) {
-    buf->append(std::string_view([value UTF8String], [value length]));
-  }
-}
-
-static inline void EncodeString(std::string *buf, std::string_view value) {
-  if (value.length() > 0) {
-    buf->append(std::string_view(value.data(), value.length()));
   }
 }
 
@@ -300,12 +319,10 @@ static inline void EncodeString(std::string *buf, std::string_view value) {
   }
 }
 
-::pbv1::SantaMessage *Protobuf::CreateDefaultProto(Arena *arena, const uuid_t &uuid,
-                                                   struct timespec event_time,
+::pbv1::SantaMessage *Protobuf::CreateDefaultProto(Arena *arena, struct timespec event_time,
                                                    struct timespec processed_time) {
   ::pbv1::SantaMessage *santa_msg = Arena::CreateMessage<::pbv1::SantaMessage>(arena);
 
-  EncodeUUID(santa_msg, uuid);
   if (EnabledMachineID()) {
     EncodeString(santa_msg->mutable_machine_id(), MachineID());
   }
@@ -316,17 +333,14 @@ static inline void EncodeString(std::string *buf, std::string_view value) {
 }
 
 ::pbv1::SantaMessage *Protobuf::CreateDefaultProto(Arena *arena, const EnrichedEventType &msg) {
-  return CreateDefaultProto(arena, msg.uuid(), msg.es_msg().time, msg.enrichment_time());
+  return CreateDefaultProto(arena, msg.es_msg().time, msg.enrichment_time());
 }
 
 ::pbv1::SantaMessage *Protobuf::CreateDefaultProto(Arena *arena) {
-  uuid_t uuid;
-  uuid_generate_random(uuid);
-
   struct timespec ts;
   clock_gettime(CLOCK_REALTIME, &ts);
 
-  return CreateDefaultProto(arena, uuid, ts, ts);
+  return CreateDefaultProto(arena, ts, ts);
 }
 
 std::vector<uint8_t> Protobuf::FinalizeProto(::pbv1::SantaMessage *santa_msg) {
@@ -339,15 +353,11 @@ std::vector<uint8_t> Protobuf::SerializeMessage(const EnrichedClose &msg) {
   Arena arena;
   ::pbv1::SantaMessage *santa_msg = CreateDefaultProto(&arena, msg);
 
-  EncodeUUID(santa_msg, msg.uuid());
-  EncodeTimestamp(santa_msg->mutable_event_time(), msg.es_msg().time);
-  EncodeTimestamp(santa_msg->mutable_processed_time(), msg.enrichment_time());
-
   ::pbv1::Close *pb_close = santa_msg->mutable_close();
 
-  EncodeProcessInfo(pb_close->mutable_instigator(), msg.es_msg().version, msg.es_msg().process,
-                    msg.instigator());
-  EncodeFile(pb_close->mutable_target(), msg.es_msg().event.close.target, msg.target());
+  EncodeProcessInfoLight(pb_close->mutable_instigator(), msg.es_msg().version, msg.es_msg().process,
+                         msg.instigator());
+  EncodeFileInfo(pb_close->mutable_target(), msg.es_msg().event.close.target, msg.target());
   pb_close->set_modified(msg.es_msg().event.close.modified);
 
   return FinalizeProto(santa_msg);
@@ -359,10 +369,12 @@ std::vector<uint8_t> Protobuf::SerializeMessage(const EnrichedExchange &msg) {
 
   ::pbv1::Exchangedata *pb_exchangedata = santa_msg->mutable_exchangedata();
 
-  EncodeProcessInfo(pb_exchangedata->mutable_instigator(), msg.es_msg().version,
-                    msg.es_msg().process, msg.instigator());
-  EncodeFile(pb_exchangedata->mutable_file1(), msg.es_msg().event.exchangedata.file1, msg.file1());
-  EncodeFile(pb_exchangedata->mutable_file2(), msg.es_msg().event.exchangedata.file2, msg.file2());
+  EncodeProcessInfoLight(pb_exchangedata->mutable_instigator(), msg.es_msg().version,
+                         msg.es_msg().process, msg.instigator());
+  EncodeFileInfo(pb_exchangedata->mutable_file1(), msg.es_msg().event.exchangedata.file1,
+                 msg.file1());
+  EncodeFileInfo(pb_exchangedata->mutable_file2(), msg.es_msg().event.exchangedata.file2,
+                 msg.file2());
 
   return FinalizeProto(santa_msg);
 }
@@ -378,18 +390,18 @@ std::vector<uint8_t> Protobuf::SerializeMessage(const EnrichedExec &msg) {
 
   ::pbv1::Execution *pb_exec = santa_msg->mutable_execution();
 
-  EncodeProcessInfo(pb_exec->mutable_instigator(), msg.es_msg().version, msg.es_msg().process,
-                    msg.instigator());
+  EncodeProcessInfoLight(pb_exec->mutable_instigator(), msg.es_msg().version, msg.es_msg().process,
+                         msg.instigator());
   EncodeProcessInfo(pb_exec->mutable_target(), msg.es_msg().version, msg.es_msg().event.exec.target,
                     msg.target(), cd);
 
   if (msg.es_msg().version >= 2 && msg.script().has_value()) {
-    EncodeFile(pb_exec->mutable_script(), msg.es_msg().event.exec.script, msg.script().value());
+    EncodeFileInfo(pb_exec->mutable_script(), msg.es_msg().event.exec.script, msg.script().value());
   }
 
   if (msg.es_msg().version >= 3 && msg.working_dir().has_value()) {
-    EncodeFile(pb_exec->mutable_working_directory(), msg.es_msg().event.exec.cwd,
-               msg.working_dir().value());
+    EncodeFileInfo(pb_exec->mutable_working_directory(), msg.es_msg().event.exec.cwd,
+                   msg.working_dir().value());
   }
 
   uint32_t arg_count = esapi_->ExecArgCount(&msg.es_msg().event.exec);
@@ -453,8 +465,8 @@ std::vector<uint8_t> Protobuf::SerializeMessage(const EnrichedExit &msg) {
 
   ::pbv1::Exit *pb_exit = santa_msg->mutable_exit();
 
-  EncodeProcessInfo(pb_exit->mutable_instigator(), msg.es_msg().version, msg.es_msg().process,
-                    msg.instigator());
+  EncodeProcessInfoLight(pb_exit->mutable_instigator(), msg.es_msg().version, msg.es_msg().process,
+                         msg.instigator());
   EncodeExitStatus(pb_exit, msg.es_msg().event.exit.stat);
 
   return FinalizeProto(santa_msg);
@@ -466,10 +478,10 @@ std::vector<uint8_t> Protobuf::SerializeMessage(const EnrichedFork &msg) {
 
   ::pbv1::Fork *pb_fork = santa_msg->mutable_fork();
 
-  EncodeProcessInfo(pb_fork->mutable_instigator(), msg.es_msg().version, msg.es_msg().process,
-                    msg.instigator());
-  EncodeProcessInfo(pb_fork->mutable_child(), msg.es_msg().version, msg.es_msg().event.fork.child,
-                    msg.child());
+  EncodeProcessInfoLight(pb_fork->mutable_instigator(), msg.es_msg().version, msg.es_msg().process,
+                         msg.instigator());
+  EncodeProcessInfoLight(pb_fork->mutable_child(), msg.es_msg().version,
+                         msg.es_msg().event.fork.child, msg.child());
 
   return FinalizeProto(santa_msg);
 }
@@ -479,9 +491,9 @@ std::vector<uint8_t> Protobuf::SerializeMessage(const EnrichedLink &msg) {
   ::pbv1::SantaMessage *santa_msg = CreateDefaultProto(&arena, msg);
 
   ::pbv1::Link *pb_link = santa_msg->mutable_link();
-  EncodeProcessInfo(pb_link->mutable_instigator(), msg.es_msg().version, msg.es_msg().process,
-                    msg.instigator());
-  EncodeFile(pb_link->mutable_source(), msg.es_msg().event.link.source, msg.source());
+  EncodeProcessInfoLight(pb_link->mutable_instigator(), msg.es_msg().version, msg.es_msg().process,
+                         msg.instigator());
+  EncodeFileInfo(pb_link->mutable_source(), msg.es_msg().event.link.source, msg.source());
   EncodePath(pb_link->mutable_target(), msg.es_msg().event.link.target_dir,
              msg.es_msg().event.link.target_filename);
 
@@ -493,9 +505,9 @@ std::vector<uint8_t> Protobuf::SerializeMessage(const EnrichedRename &msg) {
   ::pbv1::SantaMessage *santa_msg = CreateDefaultProto(&arena, msg);
 
   ::pbv1::Rename *pb_rename = santa_msg->mutable_rename();
-  EncodeProcessInfo(pb_rename->mutable_instigator(), msg.es_msg().version, msg.es_msg().process,
-                    msg.instigator());
-  EncodeFile(pb_rename->mutable_source(), msg.es_msg().event.rename.source, msg.source());
+  EncodeProcessInfoLight(pb_rename->mutable_instigator(), msg.es_msg().version,
+                         msg.es_msg().process, msg.instigator());
+  EncodeFileInfo(pb_rename->mutable_source(), msg.es_msg().event.rename.source, msg.source());
   if (msg.es_msg().event.rename.destination_type == ES_DESTINATION_TYPE_EXISTING_FILE) {
     EncodePath(pb_rename->mutable_target(), msg.es_msg().event.rename.destination.existing_file);
     pb_rename->set_target_existed(true);
@@ -513,9 +525,9 @@ std::vector<uint8_t> Protobuf::SerializeMessage(const EnrichedUnlink &msg) {
   ::pbv1::SantaMessage *santa_msg = CreateDefaultProto(&arena, msg);
 
   ::pbv1::Unlink *pb_unlink = santa_msg->mutable_unlink();
-  EncodeProcessInfo(pb_unlink->mutable_instigator(), msg.es_msg().version, msg.es_msg().process,
-                    msg.instigator());
-  EncodeFile(pb_unlink->mutable_target(), msg.es_msg().event.unlink.target, msg.target());
+  EncodeProcessInfoLight(pb_unlink->mutable_instigator(), msg.es_msg().version,
+                         msg.es_msg().process, msg.instigator());
+  EncodeFileInfo(pb_unlink->mutable_target(), msg.es_msg().event.unlink.target, msg.target());
 
   return FinalizeProto(santa_msg);
 }
@@ -530,11 +542,11 @@ std::vector<uint8_t> Protobuf::SerializeAllowlist(const Message &msg, const std:
   EnrichedProcess enriched_process;
 
   ::pbv1::Allowlist *pb_allowlist = santa_msg->mutable_allowlist();
-  EncodeProcessInfo(pb_allowlist->mutable_instigator(), msg->version, msg->process,
-                    enriched_process);
+  EncodeProcessInfoLight(pb_allowlist->mutable_instigator(), msg->version, msg->process,
+                         enriched_process);
 
-  EncodeFile(pb_allowlist->mutable_target(), es_file, enriched_file,
-             [NSString stringWithFormat:@"%s", hash.data()]);
+  EncodeFileInfo(pb_allowlist->mutable_target(), es_file, enriched_file,
+                 [NSString stringWithFormat:@"%s", hash.data()]);
 
   return FinalizeProto(santa_msg);
 }

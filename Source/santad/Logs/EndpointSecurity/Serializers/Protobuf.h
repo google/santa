@@ -67,7 +67,7 @@ class Protobuf : public Serializer {
     google::protobuf::Arena *arena,
     const santa::santad::event_providers::endpoint_security::EnrichedEventType &msg);
   ::santa::pb::v1::SantaMessage *CreateDefaultProto(google::protobuf::Arena *arena,
-                                                    const uuid_t &uuid, struct timespec event_time,
+                                                    struct timespec event_time,
                                                     struct timespec processed_time);
 
   std::vector<uint8_t> FinalizeProto(::santa::pb::v1::SantaMessage *santa_msg);

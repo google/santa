@@ -76,7 +76,7 @@ message Hash {
 }
 
 // File information
-message File {
+message FileInfo {
   // File path
   optional string path = 1;
 
@@ -88,6 +88,15 @@ message File {
 
   // Hash of file contents
   optional Hash hash = 4;
+}
+
+// Light variant of `FileInfo` message to help minimize on-disk/on-wire sizes
+message FileInfoLight {
+  // File path
+  optional string path = 1;
+
+  // Whether or not the path is truncated
+  optional bool truncated = 2;
 }
 
 // File descriptor information
@@ -161,13 +170,42 @@ message ProcessInfo {
   optional uint32 cs_flags = 14;
 
   // File information for the executable backing this process
-  optional File executable = 15;
+  optional FileInfo executable = 15;
 
   // File information for the associated TTY
-  optional File tty = 16;
+  optional FileInfoLight tty = 16;
 
   // Time the process was started
   optional google.protobuf.Timestamp start_time = 17;
+}
+
+// Light variant of ProcessInfo message to help minimize on-disk/on-wire sizes
+message ProcessInfoLight {
+  // Process ID of the process
+  optional ProcessID id = 1;
+
+  // Process ID of the parent process
+  optional ProcessID parent_id = 2;
+
+  // Original parent ID, remains stable in the event a process is reparented
+  optional int32 original_parent_pid = 3;
+
+  // Process group id the process belongs to
+  optional int32 group_id = 4;
+
+  // Session id the process belongs to
+  optional int32 session_id = 5;
+
+  // Effective user/group info
+  optional UserInfo effective_user = 6;
+  optional GroupInfo effective_group = 7;
+
+  // Real user/group info
+  optional UserInfo real_user = 8;
+  optional GroupInfo real_group = 9;
+
+  // File information for the executable backing this process
+  optional FileInfoLight executable = 10;
 }
 
 // Certificate information
@@ -183,7 +221,7 @@ message CertificateInfo {
 message Execution {
   // The process that executed the new image (e.g. the process that called
   // `execve(2)` or `posix_spawn(2)``)
-  optional ProcessInfo instigator = 1;
+  optional ProcessInfoLight instigator = 1;
 
   // Process info for the newly formed execution
   optional ProcessInfo target = 2;
@@ -191,10 +229,10 @@ message Execution {
   // Script file information
   // Only valid when a script was executed directly and not as an argument to
   // an interpreter (e.g.  `./foo.sh`, not `/bin/sh ./foo.sh`)
-  optional File script = 3;
+  optional FileInfo script = 3;
 
   // The current working directory of the `target` at exec time
-  optional File working_directory = 4;
+  optional FileInfo working_directory = 4;
 
   // List of process arguments
   repeated string args = 5;
@@ -256,16 +294,16 @@ message Execution {
 // Information about a fork event
 message Fork {
   // The forking process
-  optional ProcessInfo instigator = 1;
+  optional ProcessInfoLight instigator = 1;
 
   // The newly formed child process
-  optional ProcessInfo child = 2;
+  optional ProcessInfoLight child = 2;
 }
 
 // Information about an exit event
 message Exit {
   // The process that is exiting
-  optional ProcessInfo instigator = 1;
+  optional ProcessInfoLight instigator = 1;
 
   // Exit status code information
   message Exited {
@@ -288,10 +326,10 @@ message Exit {
 // Information about an open event
 message Open {
   // The process that is opening the file
-  optional ProcessInfo instigator = 1;
+  optional ProcessInfoLight instigator = 1;
 
   // The file being opened
-  optional File target = 2;
+  optional FileInfo target = 2;
 
   // Bitmask of flags used to open the file
   // Note: Represents the mask applied by the kernel, not the typical `open(2)`
@@ -302,10 +340,10 @@ message Open {
 // Information about a close event
 message Close {
   // The process closing the file
-  optional ProcessInfo instigator = 1;
+  optional ProcessInfoLight instigator = 1;
 
   // The file being closed
-  optional File target = 2;
+  optional FileInfo target = 2;
 
   // Whether or not the file was written to
   optional bool modified = 3;
@@ -315,20 +353,20 @@ message Close {
 // This event is not applicable to all filesystems (notably APFS)
 message Exchangedata {
   // The process that is exchanging the data
-  optional ProcessInfo instigator = 1;
+  optional ProcessInfoLight instigator = 1;
 
   // File information for the two files in the exchangedata operation
-  optional File file1 = 2;
-  optional File file2 = 3;
+  optional FileInfo file1 = 2;
+  optional FileInfo file2 = 3;
 }
 
 // Information about a rename event
 message Rename {
   // The process renaming the file
-  optional ProcessInfo instigator = 1;
+  optional ProcessInfoLight instigator = 1;
 
   // The source file being renamed
-  optional File source = 2;
+  optional FileInfo source = 2;
 
   // The target path when the rename is complete
   optional string target = 3;
@@ -340,19 +378,19 @@ message Rename {
 // Information about an unlink event
 message Unlink {
   // The process deleting the file
-  optional ProcessInfo instigator = 1;
+  optional ProcessInfoLight instigator = 1;
 
   // The file being deleted
-  optional File target = 2;
+  optional FileInfo target = 2;
 }
 
 // Information about a link event
 message Link {
   // The process performing the link
-  optional ProcessInfo instigator = 1;
+  optional ProcessInfoLight instigator = 1;
 
   // The source file being linked
-  optional File source = 2;
+  optional FileInfo source = 2;
 
   // The path of the new link
   optional string target = 3;
@@ -420,27 +458,23 @@ message Bundle {
 // Information for a transitive allowlist rule
 message Allowlist {
   // The process that caused the allowlist rule to be generated
-  optional ProcessInfo instigator = 1;
+  optional ProcessInfoLight instigator = 1;
 
   // The file the new allowlist rule applies to
-  optional File target = 2;
+  optional FileInfo target = 2;
 }
 
 // A message encapsulating a single event
 message SantaMessage {
-  // Unique, per-event generated
-  // Can allow client to relate events across time
-  optional string uuid = 1;
-
   // Machine ID of the host emitting this log
   // Only valid when EnableMachineIDDecoration configuration option is set
-  optional string machine_id = 2;
+  optional string machine_id = 1;
 
   // Timestamp when the event occurred
-  optional google.protobuf.Timestamp event_time = 3;
+  optional google.protobuf.Timestamp event_time = 2;
 
   // Timestamp when Santa finished processing the event
-  optional google.protobuf.Timestamp processed_time = 4;
+  optional google.protobuf.Timestamp processed_time = 3;
 
   // Event type being described by this message
   oneof event {

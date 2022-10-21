@@ -125,11 +125,7 @@ bool CompareTime(const Timestamp &timestamp, struct timespec ts) {
 }
 
 void CheckSantaMessage(const ::pbv1::SantaMessage &santaMsg, const es_message_t &esMsg,
-                       const uuid_t &uuid, struct timespec enrichmentTime) {
-  uuid_string_t uuidStr;
-  uuid_unparse_lower(uuid, uuidStr);
-
-  XCTAssertEqual(strcmp(santaMsg.uuid().c_str(), uuidStr), 0);
+                       struct timespec enrichmentTime) {
   XCTAssertTrue(CompareTime(santaMsg.processed_time(), enrichmentTime));
   XCTAssertTrue(CompareTime(santaMsg.event_time(), esMsg.time));
 }
@@ -170,8 +166,7 @@ void CheckProto(const ::pbv1::SantaMessage &santaMsg,
                 std::shared_ptr<EnrichedMessage> enrichedMsg) {
   return std::visit(
     [santaMsg](const EnrichedEventType &enrichedEvent) {
-      CheckSantaMessage(santaMsg, enrichedEvent.es_msg(), enrichedEvent.uuid(),
-                        enrichedEvent.enrichment_time());
+      CheckSantaMessage(santaMsg, enrichedEvent.es_msg(), enrichedEvent.enrichment_time());
       NSString *wantData = LoadTestJson(EventTypeToFilename(enrichedEvent.es_msg().event_type),
                                         enrichedEvent.es_msg().version);
       std::string got = ConvertMessageToJsonString(santaMsg);
