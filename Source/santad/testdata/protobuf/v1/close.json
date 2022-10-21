@@ -27,36 +27,9 @@
    "gid": -1,
    "name": "nogroup"
   },
-  "is_platform_binary": true,
-  "is_es_client": true,
-  "cs_flags": 0,
   "executable": {
    "path": "foo",
-   "truncated": false,
-   "stat": {
-    "dev": 101,
-    "mode": 102,
-    "nlink": 103,
-    "ino": "104",
-    "user": {
-     "uid": -2,
-     "name": "nobody"
-    },
-    "group": {
-     "gid": -1,
-     "name": "nogroup"
-    },
-    "rdev": 105,
-    "access_time": "1970-01-01T00:03:20.000000300Z",
-    "modification_time": "1970-01-01T00:03:21.000000121Z",
-    "change_time": "1970-01-01T00:03:22.000000302Z",
-    "birth_time": "1970-01-01T00:03:23.000000303Z",
-    "size": "106",
-    "blocks": "107",
-    "blksize": 108,
-    "flags": 109,
-    "gen": 110
-   }
+   "truncated": false
   }
  },
  "target": {
