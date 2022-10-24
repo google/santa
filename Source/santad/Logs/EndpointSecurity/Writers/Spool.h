@@ -15,7 +15,7 @@
 #ifndef SANTA__SANTAD__LOGS_ENDPOINTSECURITY_WRITERS_SPOOL_H
 #define SANTA__SANTAD__LOGS_ENDPOINTSECURITY_WRITERS_SPOOL_H
 
-#include <Foundation/Foundation.h>
+#import <Foundation/Foundation.h>
 #include <dispatch/dispatch.h>
 
 #include <memory>
