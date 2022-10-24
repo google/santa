@@ -37,8 +37,10 @@ git tag --sort=-creatordate
 Build a debug version of Santa:
 
 ```sh
-bazel build //Source/santa:Santa
+bazel build //Source/gui:Santa
 ```
+
+This will build and sign all of the santa components (UI and services).
 
 For developers who do not have access to Google's code signing certificate and
 provisioning profiles, use the `--define=SANTA_BUILD_TYPE=adhoc` flag. This will
@@ -48,7 +50,7 @@ Note: In order to run an adhoc signed Santa SIP must be disabled. See the
 running section below.
 
 ```sh
-bazel build //Source/santa:Santa --define=SANTA_BUILD_TYPE=adhoc
+bazel build //Source/gui:Santa --define=SANTA_BUILD_TYPE=adhoc
 ```
 
 #### Running
