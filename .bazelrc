@@ -6,6 +6,9 @@ build --copt=-Wno-error=deprecated-declarations
 build --per_file_copt=.*\.mm\$@-std=c++17
 build --cxxopt=-std=c++17
 
+build --copt=-DSANTA_OPEN_SOURCE=1
+build --cxxopt=-DSANTA_OPEN_SOURCE=1
+
 build:asan --strip=never
 build:asan --copt="-Wno-macro-redefined"
 build:asan --copt="-D_FORTIFY_SOURCE=0"

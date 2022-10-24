@@ -16,6 +16,7 @@
 
 #import "Source/common/SNTLogging.h"
 #include "Source/common/santa_proto_include_wrapper.h"
+#include "absl/strings/string_view.h"
 
 static const char *kTypeGoogleApisComPrefix = "type.googleapis.com/";
 
@@ -42,7 +43,7 @@ Spool::Spool(dispatch_queue_t q, dispatch_source_t timer_source, std::string_vie
              void (^write_complete_f)(void), void (^flush_task_complete_f)(void))
     : q_(q),
       timer_source_(timer_source),
-      spool_writer_(base_dir, max_spool_disk_size),
+      spool_writer_(absl::string_view(base_dir.data(), base_dir.length()), max_spool_disk_size),
       log_batch_writer_(&spool_writer_, max_spool_batch_size),
       write_complete_f_(write_complete_f),
       flush_task_complete_f_(flush_task_complete_f) {
@@ -100,7 +101,11 @@ void Spool::Write(std::vector<uint8_t> &&bytes) {
 
     // Manually pack an `Any` with a pre-serialized SantaMessage
     google::protobuf::Any any;
+#if SANTA_OPEN_SOURCE
     any.set_value(moved_bytes.data(), moved_bytes.size());
+#else
+    any.set_value(absl::string_view((const char*)moved_bytes.data(), moved_bytes.size()));
+#endif
     any.set_type_url(type_url_);
 
     auto status = log_batch_writer_.WriteMessage(any);
