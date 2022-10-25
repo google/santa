@@ -22,7 +22,9 @@
 #include "Source/santad/EventProviders/AuthResultCache.h"
 #include "Source/santad/EventProviders/EndpointSecurity/EnrichedTypes.h"
 #include "Source/santad/EventProviders/EndpointSecurity/Message.h"
+#include "Source/santad/Metrics.h"
 
+using santa::santad::EventDisposition;
 using santa::santad::event_providers::AuthResultCache;
 using santa::santad::event_providers::endpoint_security::EndpointSecurityAPI;
 using santa::santad::event_providers::endpoint_security::Message;
@@ -37,10 +39,13 @@ using santa::santad::event_providers::endpoint_security::Message;
 }
 
 - (instancetype)initWithESAPI:(std::shared_ptr<EndpointSecurityAPI>)esApi
+                      metrics:(std::shared_ptr<santa::santad::Metrics>)metrics
                execController:(SNTExecutionController *)execController
            compilerController:(SNTCompilerController *)compilerController
               authResultCache:(std::shared_ptr<AuthResultCache>)authResultCache {
-  self = [super initWithESAPI:std::move(esApi)];
+  self = [super initWithESAPI:std::move(esApi)
+                      metrics:std::move(metrics)
+                    processor:santa::santad::Processor::kAuthorizer];
   if (self) {
     _execController = execController;
     _compilerController = compilerController;
@@ -90,7 +95,8 @@ using santa::santad::event_providers::endpoint_security::Message;
                               }];
 }
 
-- (void)handleMessage:(Message &&)esMsg {
+- (void)handleMessage:(Message &&)esMsg
+   recordEventMetrics:(void (^)(EventDisposition))recordEventMetrics {
   if (unlikely(esMsg->event_type != ES_EVENT_TYPE_AUTH_EXEC)) {
     // This is a programming error
     LOGE(@"Atteempting to authorize a non-exec event");
@@ -100,12 +106,14 @@ using santa::santad::event_providers::endpoint_security::Message;
 
   if (![self.execController synchronousShouldProcessExecEvent:esMsg]) {
     [self postAction:ACTION_RESPOND_DENY forMessage:esMsg];
+    recordEventMetrics(EventDisposition::kDropped);
     return;
   }
 
   [self processMessage:std::move(esMsg)
                handler:^(const Message &msg) {
                  [self processMessage:msg];
+                 recordEventMetrics(EventDisposition::kProcessed);
                }];
 }
 

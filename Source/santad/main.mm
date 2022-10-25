@@ -19,6 +19,7 @@
 
 #import "Source/common/SNTConfigurator.h"
 #import "Source/common/SNTLogging.h"
+#import "Source/common/SNTMetricSet.h"
 #import "Source/santad/Santad.h"
 #include "Source/santad/SantadDeps.h"
 
@@ -150,7 +151,8 @@ int main(int argc, char *argv[]) {
       LOGE(@"Failed to start Santa watchdog");
     }
 
-    std::unique_ptr<SantadDeps> deps = SantadDeps::Create([SNTConfigurator configurator]);
+    std::unique_ptr<SantadDeps> deps =
+      SantadDeps::Create([SNTConfigurator configurator], [SNTMetricSet sharedInstance]);
 
     // This doesn't return
     SantadMain(deps->ESAPI(), deps->Logger(), deps->Metrics(), deps->Enricher(),

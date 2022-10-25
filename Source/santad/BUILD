@@ -62,6 +62,7 @@ objc_library(
     hdrs = ["EventProviders/SNTEndpointSecurityEventHandler.h"],
     deps = [
         ":EndpointSecurityMessage",
+        ":Metrics",
         "//Source/common:SNTCommon",
     ],
 )
@@ -208,6 +209,7 @@ objc_library(
         ":EndpointSecurityClient",
         ":EndpointSecurityEnrichedTypes",
         ":EndpointSecurityMessage",
+        ":Metrics",
     ],
 )
 
@@ -220,6 +222,7 @@ objc_library(
         ":EndpointSecurityClient",
         ":EndpointSecurityEnrichedTypes",
         ":EndpointSecurityMessage",
+        ":Metrics",
         ":SNTEndpointSecurityClientBase",
         "//Source/common:SNTCommon",
         "//Source/common:SNTConfigurator",
@@ -238,6 +241,7 @@ objc_library(
         ":EndpointSecurityEnricher",
         ":EndpointSecurityLogger",
         ":EndpointSecurityMessage",
+        ":Metrics",
         ":SNTCompilerController",
         ":SNTEndpointSecurityClient",
         ":SNTEndpointSecurityEventHandler",
@@ -254,6 +258,7 @@ objc_library(
         ":EndpointSecurityAPI",
         ":EndpointSecurityLogger",
         ":EndpointSecurityMessage",
+        ":Metrics",
         ":SNTEndpointSecurityClient",
         ":SNTEndpointSecurityEventHandler",
         "//Source/common:SNTLogging",
@@ -270,6 +275,7 @@ objc_library(
         ":EndpointSecurityEnrichedTypes",
         ":EndpointSecurityEnricher",
         ":EndpointSecurityMessage",
+        ":Metrics",
         ":SNTCompilerController",
         ":SNTEndpointSecurityClient",
         ":SNTEndpointSecurityEventHandler",
@@ -287,6 +293,7 @@ objc_library(
         ":EndpointSecurityAPI",
         ":EndpointSecurityLogger",
         ":EndpointSecurityMessage",
+        ":Metrics",
         ":SNTEndpointSecurityClient",
         ":SNTEndpointSecurityEventHandler",
         "//Source/common:SNTDeviceEvent",
@@ -617,6 +624,7 @@ objc_library(
         ":SantadDeps",
         "//Source/common:SNTConfigurator",
         "//Source/common:SNTLogging",
+        "//Source/common:SNTMetricSet",
         "//Source/common:SNTXPCControlInterface",
     ],
 )
