@@ -440,6 +440,7 @@ objc_library(
         "//Source/common:santa_cc_proto_library_wrapper",
         "//Source/santad/Logs/EndpointSecurity/Writers/FSSpool:fsspool",
         "//Source/santad/Logs/EndpointSecurity/Writers/FSSpool:fsspool_log_batch_writer",
+        "@com_google_absl//absl/strings",
     ],
 )
 

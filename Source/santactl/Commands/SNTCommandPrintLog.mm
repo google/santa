@@ -111,7 +111,9 @@ REGISTER_COMMAND_NAME(@"printlog")
       }
 
       std::string json;
-      MessageToJsonString(santaMsg, &json, options);
+      if (!MessageToJsonString(santaMsg, &json, options).ok()) {
+        LOGE(@"Unable to convert message to JSON in file: '%@'", path);
+      }
       std::cout << json;
     }
 

@@ -36,9 +36,6 @@ class SpoolPeer : public Spool {
 
 }  // namespace santa::santad::logs::endpoint_security::writers
 
-using ::fsspool::FsSpoolLogBatchWriter;
-using ::fsspool::FsSpoolWriter;
-using santa::santad::logs::endpoint_security::writers::Spool;
 using santa::santad::logs::endpoint_security::writers::SpoolPeer;
 
 @interface SpoolTest : XCTestCase
