@@ -23,7 +23,7 @@
 #include "Source/common/santa_proto_include_wrapper.h"
 #import "Source/santactl/SNTCommand.h"
 #import "Source/santactl/SNTCommandController.h"
-#include "Source/santad/Logs/EndpointSecurity/Writers/FSSpool/binaryproto.pb.h"
+#include "Source/santad/Logs/EndpointSecurity/Writers/FSSpool/binaryproto_proto_include_wrapper.h"
 #include "google/protobuf/any.pb.h"
 
 using google::protobuf::util::JsonPrintOptions;

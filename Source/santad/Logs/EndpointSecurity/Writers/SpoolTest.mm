@@ -15,7 +15,6 @@
 #import <Foundation/Foundation.h>
 #import <XCTest/XCTest.h>
 #include <dispatch/dispatch.h>
-#include <gtest/gtest.h>
 #include <unistd.h>
 #include <memory>
 
