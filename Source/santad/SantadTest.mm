@@ -29,9 +29,11 @@
 #include "Source/santad/EventProviders/EndpointSecurity/Message.h"
 #include "Source/santad/EventProviders/EndpointSecurity/MockEndpointSecurityAPI.h"
 #import "Source/santad/EventProviders/SNTEndpointSecurityAuthorizer.h"
+#import "Source/santad/Metrics.h"
 #import "Source/santad/SNTDatabaseController.h"
 #include "Source/santad/SantadDeps.h"
 
+using santa::santad::EventDisposition;
 using santa::santad::SantadDeps;
 using santa::santad::event_providers::endpoint_security::Message;
 
@@ -75,10 +77,11 @@ NSString *testBinariesPath = @"santa/Source/santad/testdata/binaryrules";
 
   OCMStub([self.mockSNTDatabaseController databasePath]).andReturn(testPath);
 
-  std::unique_ptr<SantadDeps> deps = SantadDeps::Create(mockConfigurator);
+  std::unique_ptr<SantadDeps> deps = SantadDeps::Create(mockConfigurator, nil);
 
   SNTEndpointSecurityAuthorizer *authClient =
     [[SNTEndpointSecurityAuthorizer alloc] initWithESAPI:mockESApi
+                                                 metrics:deps->Metrics()
                                           execController:deps->ExecController()
                                       compilerController:deps->CompilerController()
                                          authResultCache:deps->AuthResultCache()];
@@ -132,7 +135,10 @@ NSString *testBinariesPath = @"santa/Source/santad/testdata/binaryrules";
     return heapESMsg;
   });
 
-  [authClient handleMessage:Message(mockESApi, &esMsg)];
+  [authClient handleMessage:Message(mockESApi, &esMsg)
+         recordEventMetrics:^(santa::santad::EventDisposition d){
+           // This block intentionally left blank
+         }];
 
   [self waitForExpectations:@[ expectation ] timeout:10.0];
 

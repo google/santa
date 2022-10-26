@@ -28,9 +28,11 @@
 #include "Source/santad/EventProviders/EndpointSecurity/Message.h"
 #include "Source/santad/EventProviders/EndpointSecurity/MockEndpointSecurityAPI.h"
 #import "Source/santad/EventProviders/SNTEndpointSecurityAuthorizer.h"
+#include "Source/santad/Metrics.h"
 #import "Source/santad/SNTCompilerController.h"
 #import "Source/santad/SNTExecutionController.h"
 
+using santa::santad::EventDisposition;
 using santa::santad::event_providers::AuthResultCache;
 using santa::santad::event_providers::endpoint_security::Message;
 
@@ -66,7 +68,10 @@ class MockAuthResultCache : public AuthResultCache {
   std::set<es_event_type_t> expectedEventSubs{ES_EVENT_TYPE_AUTH_EXEC};
   auto mockESApi = std::make_shared<MockEndpointSecurityAPI>();
 
-  id authClient = [[SNTEndpointSecurityAuthorizer alloc] initWithESAPI:mockESApi];
+  id authClient =
+    [[SNTEndpointSecurityAuthorizer alloc] initWithESAPI:mockESApi
+                                                 metrics:nullptr
+                                               processor:santa::santad::Processor::kAuthorizer];
 
   EXPECT_CALL(*mockESApi, ClearCache)
     .After(EXPECT_CALL(*mockESApi, Subscribe(testing::_, expectedEventSubs))
@@ -87,8 +92,18 @@ class MockAuthResultCache : public AuthResultCache {
   mockESApi->SetExpectationsESNewClient();
   mockESApi->SetExpectationsRetainReleaseMessage(&esMsg);
 
+  // There is a benign leak of the mock object in this test.
+  // `handleMessage:recordEventMetrics:` will call `processMessage:handler:` in the parent
+  // class. This will dispatch to two blocks and create message copies. The block that
+  // handles `deadline` timeouts will not complete before the test finishes, and the
+  // mock object will think that it has been leaked.
+  ::testing::Mock::AllowLeak(mockESApi.get());
+
+  dispatch_semaphore_t semaMetrics = dispatch_semaphore_create(0);
+
   SNTEndpointSecurityAuthorizer *authClient =
     [[SNTEndpointSecurityAuthorizer alloc] initWithESAPI:mockESApi
+                                                 metrics:nullptr
                                           execController:self.mockExecController
                                       compilerController:nil
                                          authResultCache:nullptr];
@@ -99,7 +114,10 @@ class MockAuthResultCache : public AuthResultCache {
   {
     // Temporarily change the event type
     esMsg.event_type = ES_EVENT_TYPE_NOTIFY_EXEC;
-    XCTAssertThrows([authClient handleMessage:Message(mockESApi, &esMsg)]);
+    XCTAssertThrows([authClient handleMessage:Message(mockESApi, &esMsg)
+                           recordEventMetrics:^(EventDisposition d) {
+                             XCTFail("Unhandled event types shouldn't call metrics recorder");
+                           }]);
     esMsg.event_type = ES_EVENT_TYPE_AUTH_EXEC;
   }
 
@@ -117,7 +135,13 @@ class MockAuthResultCache : public AuthResultCache {
       .ignoringNonObjectArgs()
       .andDo(nil);
 
-    [mockAuthClient handleMessage:std::move(msg)];
+    [mockAuthClient handleMessage:std::move(msg)
+               recordEventMetrics:^(EventDisposition d) {
+                 XCTAssertEqual(d, EventDisposition::kDropped);
+                 dispatch_semaphore_signal(semaMetrics);
+               }];
+
+    XCTAssertSemaTrue(semaMetrics, 5, "Metrics not recorded within expected window");
     XCTAssertTrue(OCMVerifyAll(mockAuthClient));
   }
 
@@ -130,13 +154,18 @@ class MockAuthResultCache : public AuthResultCache {
       .ignoringNonObjectArgs()
       .andReturn(YES);
 
-    OCMExpect([mockAuthClient processMessage:Message(mockESApi, &esMsg) handler:[OCMArg any]])
-      .ignoringNonObjectArgs();
-    OCMStub([mockAuthClient processMessage:Message(mockESApi, &esMsg) handler:[OCMArg any]])
+    OCMExpect([mockAuthClient processMessage:Message(mockESApi, &esMsg)]).ignoringNonObjectArgs();
+    OCMStub([mockAuthClient processMessage:Message(mockESApi, &esMsg)])
       .ignoringNonObjectArgs()
       .andDo(nil);
 
-    [mockAuthClient handleMessage:std::move(msg)];
+    [mockAuthClient handleMessage:std::move(msg)
+               recordEventMetrics:^(EventDisposition d) {
+                 XCTAssertEqual(d, EventDisposition::kProcessed);
+                 dispatch_semaphore_signal(semaMetrics);
+               }];
+
+    XCTAssertSemaTrue(semaMetrics, 5, "Metrics not recorded within expected window");
     XCTAssertTrue(OCMVerifyAll(mockAuthClient));
   }
 
@@ -173,6 +202,7 @@ class MockAuthResultCache : public AuthResultCache {
 
   SNTEndpointSecurityAuthorizer *authClient =
     [[SNTEndpointSecurityAuthorizer alloc] initWithESAPI:mockESApi
+                                                 metrics:nullptr
                                           execController:self.mockExecController
                                       compilerController:mockCompilerController
                                          authResultCache:mockAuthCache];
@@ -238,6 +268,7 @@ class MockAuthResultCache : public AuthResultCache {
 
   SNTEndpointSecurityAuthorizer *authClient =
     [[SNTEndpointSecurityAuthorizer alloc] initWithESAPI:mockESApi
+                                                 metrics:nullptr
                                           execController:self.mockExecController
                                       compilerController:mockCompilerController
                                          authResultCache:mockAuthCache];

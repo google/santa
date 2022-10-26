@@ -12,14 +12,26 @@
 ///    See the License for the specific language governing permissions and
 ///    limitations under the License.
 
+#include <EndpointSecurity/EndpointSecurity.h>
 #import <Foundation/Foundation.h>
 #import <OCMock/OCMock.h>
 #import <XCTest/XCTest.h>
 #include <dispatch/dispatch.h>
 
+#include <map>
+
+#include "Source/common/SNTMetricSet.h"
+#include "Source/common/TestUtils.h"
 #include "Source/santad/Metrics.h"
 
+using santa::santad::EventDisposition;
+using santa::santad::Processor;
+
 namespace santa::santad {
+
+extern const NSString *ProcessorToString(Processor processor);
+extern const NSString *EventTypeToString(es_event_type_t eventType);
+extern const NSString *EventDispositionToString(EventDisposition d);
 
 class MetricsPeer : public Metrics {
  public:
@@ -33,7 +45,10 @@ class MetricsPeer : public Metrics {
 
 }  // namespace santa::santad
 
+using santa::santad::EventDispositionToString;
+using santa::santad::EventTypeToString;
 using santa::santad::MetricsPeer;
+using santa::santad::ProcessorToString;
 
 @interface MetricsTest : XCTestCase
 @property dispatch_queue_t q;
@@ -52,7 +67,7 @@ using santa::santad::MetricsPeer;
 }
 
 - (void)testStartStop {
-  auto metrics = std::make_shared<MetricsPeer>(nil, self.q, self.timer, 100, ^{
+  auto metrics = std::make_shared<MetricsPeer>(nil, self.q, self.timer, 100, nil, nil, ^{
     dispatch_semaphore_signal(self.sema);
   });
 
@@ -86,7 +101,7 @@ using santa::santad::MetricsPeer;
 }
 
 - (void)testSetInterval {
-  auto metrics = std::make_shared<MetricsPeer>(nil, self.q, self.timer, 100,
+  auto metrics = std::make_shared<MetricsPeer>(nil, self.q, self.timer, 100, nil, nil,
                                                ^{
                                                });
 
@@ -94,6 +109,91 @@ using santa::santad::MetricsPeer;
 
   metrics->SetInterval(200);
   XCTAssertEqual(200, metrics->Interval());
+}
+
+- (void)testProcessorToString {
+  std::map<Processor, NSString *> processorToString = {
+    {Processor::kAuthorizer, @"Authorizer"},
+    {Processor::kDeviceManager, @"DeviceManager"},
+    {Processor::kRecorder, @"Recorder"},
+    {Processor::kTamperResistance, @"TamperResistance"},
+  };
+
+  for (const auto &kv : processorToString) {
+    XCTAssertEqualObjects(ProcessorToString(kv.first), kv.second);
+  }
+
+  XCTAssertThrows(ProcessorToString((Processor)12345));
+}
+
+- (void)testEventTypeToString {
+  std::map<es_event_type_t, NSString *> eventTypeToString = {
+    {ES_EVENT_TYPE_AUTH_EXEC, @"AuthExec"},
+    {ES_EVENT_TYPE_AUTH_KEXTLOAD, @"AuthKextload"},
+    {ES_EVENT_TYPE_AUTH_MOUNT, @"AuthMount"},
+    {ES_EVENT_TYPE_AUTH_REMOUNT, @"AuthRemount"},
+    {ES_EVENT_TYPE_AUTH_RENAME, @"AuthRename"},
+    {ES_EVENT_TYPE_AUTH_UNLINK, @"AuthUnlink"},
+    {ES_EVENT_TYPE_NOTIFY_CLOSE, @"NotifyClose"},
+    {ES_EVENT_TYPE_NOTIFY_EXCHANGEDATA, @"NotifyExchangedata"},
+    {ES_EVENT_TYPE_NOTIFY_EXEC, @"NotifyExec"},
+    {ES_EVENT_TYPE_NOTIFY_EXIT, @"NotifyExit"},
+    {ES_EVENT_TYPE_NOTIFY_FORK, @"NotifyFork"},
+    {ES_EVENT_TYPE_NOTIFY_LINK, @"NotifyLink"},
+    {ES_EVENT_TYPE_NOTIFY_RENAME, @"NotifyRename"},
+    {ES_EVENT_TYPE_NOTIFY_UNLINK, @"NotifyUnlink"},
+    {ES_EVENT_TYPE_NOTIFY_UNMOUNT, @"NotifyUnmount"},
+  };
+
+  for (const auto &kv : eventTypeToString) {
+    XCTAssertEqualObjects(EventTypeToString(kv.first), kv.second);
+  }
+
+  XCTAssertThrows(EventTypeToString((es_event_type_t)12345));
+}
+
+- (void)testEventDispositionToString {
+  std::map<EventDisposition, NSString *> dispositionToString = {
+    {EventDisposition::kDropped, @"Dropped"},
+    {EventDisposition::kProcessed, @"Processed"},
+  };
+
+  for (const auto &kv : dispositionToString) {
+    XCTAssertEqualObjects(EventDispositionToString(kv.first), kv.second);
+  }
+
+  XCTAssertThrows(EventDispositionToString((EventDisposition)12345));
+}
+
+- (void)testSetEventMetrics {
+  id mockEventProcessingTimes = OCMClassMock([SNTMetricInt64Gauge class]);
+  id mockEventCounts = OCMClassMock([SNTMetricCounter class]);
+  int64_t nanos = 1234;
+
+  OCMStub([mockEventCounts incrementForFieldValues:[OCMArg any]])
+    .ignoringNonObjectArgs()
+    .andDo(^(NSInvocation *inv) {
+      dispatch_semaphore_signal(self.sema);
+    });
+
+  OCMStub([(SNTMetricInt64Gauge *)mockEventProcessingTimes set:nanos forFieldValues:OCMOCK_ANY])
+  .ignoringNonObjectArgs()
+    .andDo(^(NSInvocation *inv) {
+      dispatch_semaphore_signal(self.sema);
+    });
+
+  auto metrics = std::make_shared<MetricsPeer>(nil, self.q, self.timer, 100,
+                                               mockEventProcessingTimes, mockEventCounts,
+                                               ^{
+                                                 // This block intentionally left blank
+                                               });
+
+  metrics->SetEventMetrics(Processor::kAuthorizer, ES_EVENT_TYPE_AUTH_EXEC,
+                           EventDisposition::kProcessed, nanos);
+
+  // Note: Wait on the semaphore twice, once for each metric
+  XCTAssertSemaTrue(self.sema, 5, "Failed waiting for metrics to update");
+  XCTAssertSemaTrue(self.sema, 5, "Failed waiting for metrics to update");
 }
 
 @end

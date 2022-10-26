@@ -674,6 +674,21 @@ objc_library(
     ],
 )
 
+objc_library(
+    name = "MockMetrics",
+    testonly = 1,
+    hdrs = ["MockMetrics.h"],
+    # sdk_dylibs = [
+    #     "EndpointSecurity",
+    # ],
+    deps = [
+        ":Metrics",
+        "//Source/common:SNTMetricSet",
+        # ":EndpointSecurityMessage",
+        "@com_google_googletest//:gtest",
+    ],
+)
+
 santa_unit_test(
     name = "SNTEventTableTest",
     srcs = [
@@ -735,6 +750,7 @@ santa_unit_test(
     tags = ["exclusive"],
     deps = [
         ":EndpointSecurityMessage",
+        ":Metrics",
         ":MockEndpointSecurityAPI",
         ":SNTDatabaseController",
         ":SNTEndpointSecurityAuthorizer",
@@ -963,6 +979,8 @@ santa_unit_test(
     srcs = ["MetricsTest.mm"],
     deps = [
         ":Metrics",
+        "//Source/common:SNTMetricSet",
+        "//Source/common:TestUtils",
         "@OCMock",
     ],
 )
@@ -997,6 +1015,7 @@ santa_unit_test(
         ":EndpointSecurityClient",
         ":EndpointSecurityEnrichedTypes",
         ":EndpointSecurityMessage",
+        ":Metrics",
         ":MockEndpointSecurityAPI",
         ":SNTEndpointSecurityClient",
         "//Source/common:TestUtils",
@@ -1044,6 +1063,7 @@ santa_unit_test(
         ":AuthResultCache",
         ":EndpointSecurityClient",
         ":EndpointSecurityMessage",
+        ":Metrics",
         ":MockEndpointSecurityAPI",
         ":SNTCompilerController",
         ":SNTEndpointSecurityAuthorizer",
@@ -1063,6 +1083,7 @@ santa_unit_test(
     deps = [
         ":EndpointSecurityClient",
         ":EndpointSecurityMessage",
+        ":Metrics",
         ":MockEndpointSecurityAPI",
         ":SNTEndpointSecurityTamperResistance",
         "//Source/common:SNTLogging",
@@ -1085,6 +1106,7 @@ santa_unit_test(
         ":EndpointSecurityEnricher",
         ":EndpointSecurityLogger",
         ":EndpointSecurityMessage",
+        ":Metrics",
         ":MockEndpointSecurityAPI",
         ":SNTCompilerController",
         ":SNTEndpointSecurityRecorder",
@@ -1106,6 +1128,7 @@ santa_unit_test(
         ":DiskArbitrationTestLib",
         ":EndpointSecurityClient",
         ":EndpointSecurityMessage",
+        ":Metrics",
         ":MockEndpointSecurityAPI",
         ":SNTEndpointSecurityDeviceManager",
         "//Source/common:SNTConfigurator",

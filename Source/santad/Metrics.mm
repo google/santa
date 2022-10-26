@@ -23,11 +23,9 @@
 
 static const NSString *kProcessorAuthorizer = @"Authorizer";
 static const NSString *kProcessorDeviceManager = @"DeviceManager";
-static const NSString *kProcessorGlobal = @"Global";
 static const NSString *kProcessorRecorder = @"Recorder";
 static const NSString *kProcessorTamperResistance = @"TamperResistance";
 
-static const NSString *kEventTypeGlobal = @"Global";
 static const NSString *kEventTypeAuthExec = @"AuthExec";
 static const NSString *kEventTypeAuthKextload = @"AuthKextload";
 static const NSString *kEventTypeAuthMount = @"AuthMount";
@@ -44,26 +42,12 @@ static const NSString *kEventTypeNotifyRename = @"NotifyRename";
 static const NSString *kEventTypeNotifyUnlink = @"NotifyUnlink";
 static const NSString *kEventTypeNotifyUnmount = @"NotifyUnmount";
 
-static const NSString *kEventTypeGlobalDropped = @"GlobalDropped";
-static const NSString *kEventTypeAuthExecDropped = @"AuthExecDropped";
-static const NSString *kEventTypeAuthKextloadDropped = @"AuthKextloadDropped";
-static const NSString *kEventTypeAuthMountDropped = @"AuthMountDropped";
-static const NSString *kEventTypeAuthRemountDropped = @"AuthRemountDropped";
-static const NSString *kEventTypeAuthRenameDropped = @"AuthRenameDropped";
-static const NSString *kEventTypeAuthUnlinkDropped = @"AuthUnlinkDropped";
-static const NSString *kEventTypeNotifyCloseDropped = @"NotifyCloseDropped";
-static const NSString *kEventTypeNotifyExchangedataDropped = @"NotifyExchangedataDropped";
-static const NSString *kEventTypeNotifyExecDropped = @"NotifyExecDropped";
-static const NSString *kEventTypeNotifyExitDropped = @"NotifyExitDropped";
-static const NSString *kEventTypeNotifyForkDropped = @"NotifyForkDropped";
-static const NSString *kEventTypeNotifyLinkDropped = @"NotifyLinkDropped";
-static const NSString *kEventTypeNotifyRenameDropped = @"NotifyRenameDropped";
-static const NSString *kEventTypeNotifyUnlinkDropped = @"NotifyUnlinkDropped";
-static const NSString *kEventTypeNotifyUnmountDropped = @"NotifyUnmountDropped";
+static const NSString *kEventDispositionDropped = @"Dropped";
+static const NSString *kEventDispositionProcessed = @"Processed";
 
 namespace santa::santad {
 
-const NSString *SantaProcessorToString(Processor processor) {
+const NSString *ProcessorToString(Processor processor) {
   switch (processor) {
     case Processor::kAuthorizer: return kProcessorAuthorizer;
     case Processor::kDeviceManager: return kProcessorDeviceManager;
@@ -98,26 +82,12 @@ const NSString *EventTypeToString(es_event_type_t eventType) {
   }
 }
 
-const NSString *DroppedEventTypeToString(es_event_type_t eventType) {
-  switch (eventType) {
-    case ES_EVENT_TYPE_AUTH_EXEC: return kEventTypeAuthExecDropped;
-    case ES_EVENT_TYPE_AUTH_KEXTLOAD: return kEventTypeAuthKextloadDropped;
-    case ES_EVENT_TYPE_AUTH_MOUNT: return kEventTypeAuthMountDropped;
-    case ES_EVENT_TYPE_AUTH_REMOUNT: return kEventTypeAuthRemountDropped;
-    case ES_EVENT_TYPE_AUTH_RENAME: return kEventTypeAuthRenameDropped;
-    case ES_EVENT_TYPE_AUTH_UNLINK: return kEventTypeAuthUnlinkDropped;
-    case ES_EVENT_TYPE_NOTIFY_CLOSE: return kEventTypeNotifyCloseDropped;
-    case ES_EVENT_TYPE_NOTIFY_EXCHANGEDATA: return kEventTypeNotifyExchangedataDropped;
-    case ES_EVENT_TYPE_NOTIFY_EXEC: return kEventTypeNotifyExecDropped;
-    case ES_EVENT_TYPE_NOTIFY_EXIT: return kEventTypeNotifyExitDropped;
-    case ES_EVENT_TYPE_NOTIFY_FORK: return kEventTypeNotifyForkDropped;
-    case ES_EVENT_TYPE_NOTIFY_LINK: return kEventTypeNotifyLinkDropped;
-    case ES_EVENT_TYPE_NOTIFY_RENAME: return kEventTypeNotifyRenameDropped;
-    case ES_EVENT_TYPE_NOTIFY_UNLINK: return kEventTypeNotifyUnlinkDropped;
-    case ES_EVENT_TYPE_NOTIFY_UNMOUNT: return kEventTypeNotifyUnmountDropped;
+const NSString *EventDispositionToString(EventDisposition d) {
+  switch (d) {
+    case EventDisposition::kDropped: return kEventDispositionDropped;
+    case EventDisposition::kProcessed: return kEventDispositionProcessed;
     default:
-      [NSException raise:@"Invalid dropped event type"
-                  format:@"Invalid dropped event type: %d", eventType];
+      [NSException raise:@"Invalid processor" format:@"Unknown processor value: %d", d];
       return nil;
   }
 }
@@ -132,7 +102,7 @@ std::shared_ptr<Metrics> Metrics::Create(SNTMetricSet *metricSet, uint64_t inter
 
   SNTMetricInt64Gauge *event_processing_times =
     [metricSet int64GaugeWithName:@"/santa/event_processing_time"
-                       fieldNames:@[ @"Processor", @"Event" ]
+                       fieldNames:@[ @"Processor", @"Event", @"Disposition" ]
                          helpText:@"Time to process various event types by each processor"];
 
   SNTMetricCounter *event_counts =
@@ -227,46 +197,14 @@ void Metrics::StopPoll() {
 }
 
 void Metrics::SetEventMetrics(Processor processor, es_event_type_t event_type,
-                              EventDisposition disposition, int64_t nanos) {
+                              EventDisposition event_disposition, int64_t nanos) {
   dispatch_async(events_q_, ^{
-    NSString *processorName = (NSString *)SantaProcessorToString(processor);
+    NSString *processorName = (NSString *)ProcessorToString(processor);
     NSString *eventName = (NSString *)EventTypeToString(event_type);
+    NSString *disposition = (NSString *)EventDispositionToString(event_disposition);
 
-    // Per-processor, per-eventType
-    [event_counts_ incrementForFieldValues:@[ processorName, eventName ]];
-    [event_processing_times_ set:nanos forFieldValues:@[ processorName, eventName ]];
-
-    // Per-processor, totals
-    [event_counts_ incrementForFieldValues:@[ processorName, (NSString *)kEventTypeGlobal ]];
-    [event_processing_times_ set:nanos
-                  forFieldValues:@[ processorName, (NSString *)kEventTypeGlobal ]];
-
-    // Global, per-eventType
-    [event_counts_ incrementForFieldValues:@[ (NSString *)kProcessorGlobal, eventName ]];
-    [event_processing_times_ set:nanos forFieldValues:@[ (NSString *)kProcessorGlobal, eventName ]];
-
-    // Global, totals
-    [event_counts_
-      incrementForFieldValues:@[ (NSString *)kProcessorGlobal, (NSString *)kEventTypeGlobal ]];
-    [event_processing_times_ set:nanos
-                  forFieldValues:@[ (NSString *)kProcessorGlobal, (NSString *)kEventTypeGlobal ]];
-
-    if (disposition == EventDisposition::kDropped) {
-      NSString *eventNameDropped = (NSString *)DroppedEventTypeToString(event_type);
-
-      // Per-processor, per-eventType dropped counts
-      [event_counts_ incrementForFieldValues:@[ processorName, eventNameDropped ]];
-      // Per-processor, total dropped counts
-      [event_counts_
-        incrementForFieldValues:@[ processorName, (NSString *)kEventTypeGlobalDropped ]];
-
-      // Global, per-eventType dropped counts
-      [event_counts_ incrementForFieldValues:@[ (NSString *)kProcessorGlobal, eventNameDropped ]];
-      // Global, total event counts
-      [event_counts_ incrementForFieldValues:@[
-        (NSString *)kProcessorGlobal, (NSString *)kEventTypeGlobalDropped
-      ]];
-    }
+    [event_counts_ incrementForFieldValues:@[ processorName, eventName, disposition ]];
+    [event_processing_times_ set:nanos forFieldValues:@[ processorName, eventName, disposition ]];
   });
 }
 

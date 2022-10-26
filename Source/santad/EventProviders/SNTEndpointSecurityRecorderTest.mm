@@ -31,8 +31,11 @@
 #include "Source/santad/EventProviders/EndpointSecurity/MockEndpointSecurityAPI.h"
 #import "Source/santad/EventProviders/SNTEndpointSecurityRecorder.h"
 #include "Source/santad/Logs/EndpointSecurity/Logger.h"
+#include "Source/santad/Metrics.h"
 #import "Source/santad/SNTCompilerController.h"
 
+using santa::santad::EventDisposition;
+using santa::santad::Processor;
 using santa::santad::event_providers::AuthResultCache;
 using santa::santad::event_providers::endpoint_security::EnrichedMessage;
 using santa::santad::event_providers::endpoint_security::Enricher;
@@ -72,7 +75,9 @@ class MockLogger : public Logger {
   };
   auto mockESApi = std::make_shared<MockEndpointSecurityAPI>();
 
-  id recorderClient = [[SNTEndpointSecurityRecorder alloc] initWithESAPI:mockESApi];
+  id recorderClient = [[SNTEndpointSecurityRecorder alloc] initWithESAPI:mockESApi
+                                                                 metrics:nullptr
+                                                               processor:Processor::kRecorder];
 
   EXPECT_CALL(*mockESApi, Subscribe(testing::_, expectedEventSubs)).WillOnce(testing::Return(true));
 
@@ -99,6 +104,8 @@ class MockLogger : public Logger {
   auto mockAuthCache = std::make_shared<MockAuthResultCache>(nullptr);
   EXPECT_CALL(*mockAuthCache, RemoveFromCache(&targetFile)).Times(1);
 
+  dispatch_semaphore_t semaMetrics = dispatch_semaphore_create(0);
+
   // NOTE: Currently unable to create a partial mock of the
   // `SNTEndpointSecurityRecorder` object. There is a bug in OCMock that doesn't
   // properly handle the `processEnrichedMessage:handler:` block. Instead this
@@ -115,6 +122,7 @@ class MockLogger : public Logger {
 
   SNTEndpointSecurityRecorder *recorderClient =
     [[SNTEndpointSecurityRecorder alloc] initWithESAPI:mockESApi
+                                               metrics:nullptr
                                                 logger:mockLogger
                                               enricher:mockEnricher
                                     compilerController:mockCC
@@ -127,7 +135,13 @@ class MockLogger : public Logger {
     esMsg.event.close.modified = false;
     esMsg.event.close.target = NULL;
 
-    XCTAssertNoThrow([recorderClient handleMessage:Message(mockESApi, &esMsg)]);
+    XCTAssertNoThrow([recorderClient handleMessage:Message(mockESApi, &esMsg)
+                                recordEventMetrics:^(EventDisposition d) {
+                                  XCTAssertEqual(d, EventDisposition::kDropped);
+                                  dispatch_semaphore_signal(semaMetrics);
+                                }]);
+
+    XCTAssertSemaTrue(semaMetrics, 5, "Metrics not recorded within expected window");
   }
 
   // CLOSE modified, remove from cache
@@ -139,11 +153,14 @@ class MockLogger : public Logger {
 
     OCMExpect([mockCC handleEvent:msg withLogger:nullptr]).ignoringNonObjectArgs();
 
-    [recorderClient handleMessage:std::move(msg)];
+    [recorderClient handleMessage:std::move(msg)
+               recordEventMetrics:^(EventDisposition d) {
+                 XCTAssertEqual(d, EventDisposition::kProcessed);
+                 dispatch_semaphore_signal(semaMetrics);
+               }];
 
-    XCTAssertEqual(
-      0, dispatch_semaphore_wait(sema, dispatch_time(DISPATCH_TIME_NOW, 10 * NSEC_PER_SEC)),
-      "Log wasn't called within expected time window");
+    XCTAssertSemaTrue(semaMetrics, 5, "Metrics not recorded within expected window");
+    XCTAssertSemaTrue(sema, 5, "Log wasn't called within expected time window");
   }
 
   // LINK, Prefix match, bail early
@@ -155,7 +172,13 @@ class MockLogger : public Logger {
 
     OCMExpect([mockCC handleEvent:msg withLogger:nullptr]).ignoringNonObjectArgs();
 
-    [recorderClient handleMessage:std::move(msg)];
+    [recorderClient handleMessage:std::move(msg)
+               recordEventMetrics:^(EventDisposition d) {
+                 XCTAssertEqual(d, EventDisposition::kDropped);
+                 dispatch_semaphore_signal(semaMetrics);
+               }];
+
+    XCTAssertSemaTrue(semaMetrics, 5, "Metrics not recorded within expected window");
   }
 
   XCTAssertTrue(OCMVerifyAll(mockCC));
