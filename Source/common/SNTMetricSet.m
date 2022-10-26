@@ -280,15 +280,12 @@ NSString *SNTMetricMakeStringFromMetricType(SNTMetricType metricType) {
   if (_fieldNames.count == 0) {
     metricDict[@"fields"][@""] = @[ [self encodeMetricValueForFieldValues:@[]] ];
   } else {
-    for (NSString *fieldName in _fieldNames) {
-      NSMutableArray *fieldVals = [[NSMutableArray alloc] init];
+    NSMutableArray *fieldVals = [[NSMutableArray alloc] init];
 
-      for (NSArray<NSString *> *fieldValues in _metricsForFieldValues) {
-        [fieldVals addObject:[self encodeMetricValueForFieldValues:fieldValues]];
-      }
-
-      metricDict[@"fields"][fieldName] = fieldVals;
+    for (NSArray<NSString *> *fieldValues in _metricsForFieldValues) {
+      [fieldVals addObject:[self encodeMetricValueForFieldValues:fieldValues]];
     }
+    metricDict[@"fields"][[_fieldNames componentsJoinedByString:@","]] = fieldVals;
   }
   return metricDict;
 }
