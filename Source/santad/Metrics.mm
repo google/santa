@@ -102,12 +102,12 @@ std::shared_ptr<Metrics> Metrics::Create(SNTMetricSet *metricSet, uint64_t inter
 
   SNTMetricInt64Gauge *event_processing_times =
     [metricSet int64GaugeWithName:@"/santa/event_processing_time"
-                       fieldNames:@[ @"Processor", @"Event", @"Disposition" ]
+                       fieldNames:@[ @"Processor", @"Event" ]
                          helpText:@"Time to process various event types by each processor"];
 
   SNTMetricCounter *event_counts =
     [metricSet counterWithName:@"/santa/event_count"
-                    fieldNames:@[ @"Processor", @"Event" ]
+                    fieldNames:@[ @"Processor", @"Event", @"Disposition" ]
                       helpText:@"Events received and processed by each processor"];
 
   std::shared_ptr<Metrics> metrics = std::make_shared<Metrics>(
@@ -204,7 +204,7 @@ void Metrics::SetEventMetrics(Processor processor, es_event_type_t event_type,
     NSString *disposition = (NSString *)EventDispositionToString(event_disposition);
 
     [event_counts_ incrementForFieldValues:@[ processorName, eventName, disposition ]];
-    [event_processing_times_ set:nanos forFieldValues:@[ processorName, eventName, disposition ]];
+    [event_processing_times_ set:nanos forFieldValues:@[ processorName, eventName ]];
   });
 }
 
