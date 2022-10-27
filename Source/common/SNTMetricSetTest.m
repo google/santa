@@ -697,7 +697,7 @@
           },
         ],
       },
-    }
+    },
   };
 
   NSDictionary *got = [metricSet export][@"metrics"];

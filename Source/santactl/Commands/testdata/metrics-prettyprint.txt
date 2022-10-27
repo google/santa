@@ -30,14 +30,14 @@
   Metric Name               | /santa/events
   Description               | Count of process exec events on the host
   Type                      | SNTMetricTypeCounter
-  Field                     | rule_type=binary
-  Created                   | 2021-09-16T21:07:34.826Z
-  Last Updated              | 2021-09-16T21:07:34.826Z
-  Data                      | 1
-  Field                     | rule_type=certificate
+  Field                     | rule_type=certificate,client=authorizer
   Created                   | 2021-09-16T21:07:34.826Z
   Last Updated              | 2021-09-16T21:07:34.826Z
   Data                      | 2
+  Field                     | rule_type=binary,client=authorizer
+  Created                   | 2021-09-16T21:07:34.826Z
+  Last Updated              | 2021-09-16T21:07:34.826Z
+  Data                      | 1
 
   Metric Name               | /santa/using_endpoint_security_framework
   Description               | Is santad using the endpoint security framework

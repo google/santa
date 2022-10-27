@@ -68,14 +68,33 @@ REGISTER_COMMAND_NAME(@"metrics")
 
     for (NSString *fieldName in metric[@"fields"]) {
       for (NSDictionary *field in metric[@"fields"][fieldName]) {
-        const char *fieldNameStr = [fieldName cStringUsingEncoding:NSUTF8StringEncoding];
-        const char *fieldValueStr = [field[@"value"] cStringUsingEncoding:NSUTF8StringEncoding];
+        //const char *fieldNameStr = [fieldName cStringUsingEncoding:NSUTF8StringEncoding];
+        //const char *fieldValueStr = [field[@"value"] cStringUsingEncoding:NSUTF8StringEncoding];
         const char *createdStr = [field[@"created"] UTF8String];
         const char *lastUpdatedStr = [field[@"last_updated"] UTF8String];
         const char *data = [[NSString stringWithFormat:@"%@", field[@"data"]] UTF8String];
 
-        if (strlen(fieldNameStr) > 0) {
-          printf("  %-25s | %s=%s\n", "Field", fieldNameStr, fieldValueStr);
+        NSArray<NSString *> *fields = [fieldName componentsSeparatedByString:@","];
+        NSArray<NSString *> *fieldValues = [field[@"value"] componentsSeparatedByString:@","];
+
+        if (fields.count != fieldValues.count) {
+          //TODO Log Error
+          continue;
+        }
+
+        NSString *fieldDisplayString = @"";
+
+        if (fields.count >= 1 && ![@"" isEqualToString: fields[0]]) {
+        for (int i = 0; i < fields.count; i++) {
+          fieldDisplayString = [fieldDisplayString stringByAppendingString:[NSString stringWithFormat:@"%@=%@",fields[i], fieldValues[i]]];
+          if (i < fields.count - 1) {
+            fieldDisplayString = [fieldDisplayString stringByAppendingString:@","];
+          }
+        }
+        }
+
+        if (![fieldDisplayString isEqualToString: @""]) {
+          printf("  %-25s | %s\n", "Field", [fieldDisplayString UTF8String]);
         }
 
         printf("  %-25s | %s\n", "Created", createdStr);

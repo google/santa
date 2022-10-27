@@ -67,21 +67,14 @@
             {
               "name" : "rule_type",
               "fieldType" : "STRING"
+            },
+            {
+              "name" : "client",
+              "fieldType" : "STRING"
             }
           ],
           "streamKind" : "CUMULATIVE",
           "data" : [
-            {
-              "int64Value" : 1,
-              "endTimestamp" : "2021-09-16T21:08:10.000Z",
-              "field" : [
-                {
-                  "name" : "rule_type",
-                  "stringValue" : "binary"
-                }
-              ],
-              "startTimestamp" : "2021-09-16T21:07:34.826Z"
-            },
             {
               "int64Value" : 2,
               "endTimestamp" : "2021-09-16T21:08:10.000Z",
@@ -89,6 +82,25 @@
                 {
                   "name" : "rule_type",
                   "stringValue" : "certificate"
+                },
+                {
+                  "name" : "client",
+                  "stringValue" : "authorizer"
+                }
+              ],
+              "startTimestamp" : "2021-09-16T21:07:34.826Z"
+            },
+            {
+              "int64Value" : 1,
+              "endTimestamp" : "2021-09-16T21:08:10.000Z",
+              "field" : [
+                {
+                  "name" : "rule_type",
+                  "stringValue" : "binary"
+                },
+                {
+                  "name" : "client",
+                  "stringValue" : "authorizer"
                 }
               ],
               "startTimestamp" : "2021-09-16T21:07:34.826Z"
