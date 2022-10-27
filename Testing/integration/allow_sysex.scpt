@@ -5,7 +5,7 @@ on run argv
 
 	delay 2
 
-	tell application "System Preferences" to activate
+	do shell script "open '/System/Applications/System Preferences.app'"
 
 	delay 2
 
