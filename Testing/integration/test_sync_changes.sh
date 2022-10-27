@@ -2,15 +2,12 @@
 set -x
 
 bazel run //Testing/integration:install_profile -- Testing/integration/configs/default.mobileconfig
-bazel run :reload --define=SANTA_BUILD_TYPE=adhoc
 
 # Reset moroz to default config
 killall moroz
 ~/go/bin/moroz -configs="$GITHUB_WORKSPACE/Testing/integration/configs/moroz_default/global.toml" -use-tls=false &
 
 sudo santactl sync --debug
-
-sleep 3
 
 # Ensure baseline binary blocking
 set +e
@@ -33,8 +30,6 @@ killall moroz
 ~/go/bin/moroz -configs="$GITHUB_WORKSPACE/Testing/integration/configs/moroz_changed/global.toml" -use-tls=false &
 
 sudo santactl sync --debug
-
-sleep 3
 
 set +e
 ./Source/santad/testdata/binaryrules/badbinary
