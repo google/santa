@@ -674,21 +674,6 @@ objc_library(
     ],
 )
 
-objc_library(
-    name = "MockMetrics",
-    testonly = 1,
-    hdrs = ["MockMetrics.h"],
-    # sdk_dylibs = [
-    #     "EndpointSecurity",
-    # ],
-    deps = [
-        ":Metrics",
-        "//Source/common:SNTMetricSet",
-        # ":EndpointSecurityMessage",
-        "@com_google_googletest//:gtest",
-    ],
-)
-
 santa_unit_test(
     name = "SNTEventTableTest",
     srcs = [
