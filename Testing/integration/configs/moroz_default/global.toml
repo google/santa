@@ -1,3 +1,4 @@
+clean_sync = true
 client_mode = "MONITOR"
 batch_size = 100
 
