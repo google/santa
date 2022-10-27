@@ -5,14 +5,14 @@ on run argv
 
 	delay 2
 
-	do shell script "open '/System/Applications/System Preferences.app'"
-
-	delay 2
-
 	tell application "System Events"
+		tell process "UserNotificationCenter"
+			click button "Open Security Preferences" of window 1
+		end tell
+
+		delay 3
+
 		tell process "System Preferences"
-			click menu item "Security & Privacy" of menu 1 of menu bar item "View" of menu bar 1
-			delay 3
 			click button "Click the lock to make changes." of window "Security & Privacy"
 			delay 1
 			set value of text field "Password" of sheet 1 of window "Security & Privacy" to system attribute "VM_PASSWORD"

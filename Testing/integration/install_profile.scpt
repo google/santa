@@ -7,7 +7,7 @@ on run argv
 
 	delay 2
 
-	do shell script "open '/System/Applications/System Preferences.app'"
+	tell application "System Preferences" to activate
 
 	delay 2
 
