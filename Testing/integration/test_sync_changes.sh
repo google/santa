@@ -21,7 +21,7 @@ if [[ $blocked == 0 ]]; then
   exit 1
 fi
 
-if [[ "$(santactl status --json | jq .daemon.block_usb)" != "false" ]]; then
+if [[ "$(sudo santactl status --json | jq .daemon.block_usb)" != "false" ]]; then
   echo "USB blocking enabled with minimal config" >&2
   exit 1
 fi
@@ -42,9 +42,7 @@ if [[ $blocked != 0 ]]; then
   exit 1
 fi
 
-# TODO(nickmg): USB blocking configuration changes over sync protocol are broken
-# Re-enable when they're not
-# if [[ "$(santactl status --json | jq .daemon.block_usb)" != "true" ]]; then
-#   echo "USB blocking config change didnt take effect" >&2
-#   exit 1
-# fi
+if [[ "$(sudo santactl status --json | jq .daemon.block_usb)" != "true" ]]; then
+  echo "USB blocking config change didnt take effect" >&2
+  exit 1
+fi
