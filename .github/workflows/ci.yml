@@ -4,8 +4,8 @@ on:
   push:
     branches:
       - '*'
-    # paths:
-    #   - 'Source/**'
+    paths:
+      - 'Source/**'
   pull_request:
     branches:
       - main
@@ -13,32 +13,32 @@ on:
       - 'Source/**'
 
 jobs:
-  # lint:
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - uses: actions/checkout@v2
-  #     - name: Run linters
-  #       run: ./Testing/lint.sh
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Run linters
+        run: ./Testing/lint.sh
 
-  # build_userspace:
-  #   strategy:
-  #     fail-fast: false
-  #     matrix:
-  #       os: [macos-10.15, macos-11, macos-12]
-  #   runs-on: ${{ matrix.os }}
-  #   steps:
-  #     - uses: actions/checkout@v2
-  #     - name: Build Userspace
-  #       run: bazel build --apple_generate_dsym -c opt :release --define=SANTA_BUILD_TYPE=adhoc
+  build_userspace:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-10.15, macos-11, macos-12]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v2
+      - name: Build Userspace
+        run: bazel build --apple_generate_dsym -c opt :release --define=SANTA_BUILD_TYPE=adhoc
 
-  # start_vm:
-  #   runs-on: e2e-host
-  #   steps:
-  #     - uses: actions/checkout@v2
-  #     - name: Start VM
-  #       run: |
-  #         pip3 install --user google-cloud-storage==2.5.0
-  #         python3 Testing/integration/actions/start-vm.py macOS_12.bundle.tar.gz
+  start_vm:
+    runs-on: e2e-host
+    steps:
+      - uses: actions/checkout@v2
+      - name: Start VM
+        run: |
+          pip3 install --user google-cloud-storage==2.5.0
+          python3 Testing/integration/actions/start-vm.py macOS_12.bundle.tar.gz
 
   integration:
     runs-on: e2e-vm
@@ -65,30 +65,30 @@ jobs:
         run: ./Testing/integration/test_config_changes.sh
       - name: Test sync server changes
         run: ./Testing/integration/test_sync_changes.sh
-      # - name: Poweroff
-      #   if: ${{ always() }}
-      #   run: sudo shutdown -h +1
+      - name: Poweroff
+        if: ${{ always() }}
+        run: sudo shutdown -h +1
 
-  # unit_tests:
-  #   strategy:
-  #     fail-fast: false
-  #     matrix:
-  #       os: [macos-10.15, macos-11, macos-12]
-  #   runs-on: ${{ matrix.os }}
-  #   steps:
-  #     - uses: actions/checkout@v2
-  #     - name: Run All Tests
-  #       run: bazel test :unit_tests --define=SANTA_BUILD_TYPE=adhoc --test_output=errors
+  unit_tests:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-10.15, macos-11, macos-12]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v2
+      - name: Run All Tests
+        run: bazel test :unit_tests --define=SANTA_BUILD_TYPE=adhoc --test_output=errors
 
-  # test_coverage:
-  #   runs-on: macos-11
-  #   steps:
-  #     - uses: actions/checkout@v2
-  #     - name: Generate test coverage
-  #       run: sh ./generate_cov.sh
-  #     - name: Coveralls
-  #       uses: coverallsapp/github-action@master
-  #       with:
-  #         github-token: ${{ secrets.GITHUB_TOKEN }}
-  #         path-to-lcov: ./bazel-out/_coverage/_coverage_report.dat
-  #         flag-name: Unit
+  test_coverage:
+    runs-on: macos-11
+    steps:
+      - uses: actions/checkout@v2
+      - name: Generate test coverage
+        run: sh ./generate_cov.sh
+      - name: Coveralls
+        uses: coverallsapp/github-action@master
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path-to-lcov: ./bazel-out/_coverage/_coverage_report.dat
+          flag-name: Unit
