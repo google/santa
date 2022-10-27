@@ -82,7 +82,7 @@ if __name__ == "__main__":
         # Verify the signature of the hash file is OK
         subprocess.check_output([COSIGN, 'verify-blob', '--key', PUBKEY, '--signature', sig_path, hash_path])
         # Then verify that the hash matches what we downloaded
-        subprocess.check_output(["shasum", "-a", "256", "-c", hash_path])
+        subprocess.check_output(["shasum", "-a", "256", "-c", hash_path], cwd=VMS_DIR)
 
         print("Extracting...")
         subprocess.check_output(['tar', '-C', VMS_DIR, '-x', '-S', '-z', '-f', tar_path])
