@@ -176,8 +176,8 @@ using santa::santad::ProcessorToString;
       dispatch_semaphore_signal(self.sema);
     });
 
-  OCMStub([(SNTMetricInt64Gauge *)mockEventProcessingTimes set:nanos forFieldValues:OCMOCK_ANY])
-  .ignoringNonObjectArgs()
+  OCMStub([(SNTMetricInt64Gauge *)mockEventProcessingTimes set:nanos forFieldValues:[OCMArg any]])
+    .ignoringNonObjectArgs()
     .andDo(^(NSInvocation *inv) {
       dispatch_semaphore_signal(self.sema);
     });
