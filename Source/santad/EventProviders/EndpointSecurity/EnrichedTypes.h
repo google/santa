@@ -20,7 +20,6 @@
 #define SANTA__SANTAD__EVENTPROVIDERS_ENDPOINTSECURITY_ENRICHEDTYPES_H
 
 #include <time.h>
-#include <uuid/uuid.h>
 
 #include <optional>
 #include <string>
@@ -116,16 +115,13 @@ class EnrichedEventType {
  public:
   EnrichedEventType(Message &&es_msg, EnrichedProcess &&instigator)
       : es_msg_(std::move(es_msg)), instigator_(std::move(instigator)) {
-    uuid_generate_random(uuid_);
     clock_gettime(CLOCK_REALTIME, &enrichment_time_);
   }
 
   EnrichedEventType(EnrichedEventType &&other)
       : es_msg_(std::move(other.es_msg_)),
         instigator_(std::move(other.instigator_)),
-        enrichment_time_(std::move(other.enrichment_time_)) {
-    uuid_copy(uuid_, other.uuid_);
-  }
+        enrichment_time_(std::move(other.enrichment_time_)) {}
 
   EnrichedEventType(const EnrichedEventType &other) = delete;
 
@@ -133,7 +129,6 @@ class EnrichedEventType {
 
   const es_message_t &es_msg() const { return *es_msg_; }
   const EnrichedProcess &instigator() const { return instigator_; }
-  const uuid_t &uuid() const { return uuid_; }
   struct timespec enrichment_time() const {
     // No reason to return a reference
     return enrichment_time_;
@@ -143,7 +138,6 @@ class EnrichedEventType {
   Message es_msg_;
   EnrichedProcess instigator_;
   struct timespec enrichment_time_;
-  uuid_t uuid_;
 };
 
 class EnrichedClose : public EnrichedEventType {

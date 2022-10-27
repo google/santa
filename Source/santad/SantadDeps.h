@@ -20,6 +20,7 @@
 
 #include <memory>
 
+#include "Source/common/SNTConfigurator.h"
 #include "Source/common/SNTPrefixTree.h"
 #include "Source/santad/EventProviders/AuthResultCache.h"
 #include "Source/santad/EventProviders/EndpointSecurity/EndpointSecurityAPI.h"
@@ -35,10 +36,7 @@ namespace santa::santad {
 
 class SantadDeps {
  public:
-  static std::unique_ptr<SantadDeps> Create(NSUInteger metric_export_interval,
-                                            SNTEventLogType event_log_type,
-                                            NSString *event_log_path,
-                                            NSArray<NSString *> *prefix_filters);
+  static std::unique_ptr<SantadDeps> Create(SNTConfigurator *configurator);
 
   SantadDeps(
     NSUInteger metric_export_interval,

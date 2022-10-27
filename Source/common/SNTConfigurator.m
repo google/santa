@@ -88,10 +88,10 @@ static NSString *const kFileChangesPrefixFiltersKey = @"FileChangesPrefixFilters
 
 static NSString *const kEventLogType = @"EventLogType";
 static NSString *const kEventLogPath = @"EventLogPath";
-static NSString *const kMailDirectory = @"MailDirectory";
-static NSString *const kMailDirectoryFileSizeThresholdKB = @"MailDirectoryFileSizeThresholdKB";
-static NSString *const kMailDirectorySizeThresholdMB = @"MailDirectorySizeThresholdMB";
-static NSString *const kMailDirectoryEventMaxFlushTimeSec = @"MailDirectoryEventMaxFlushTimeSec";
+static NSString *const kSpoolDirectory = @"SpoolDirectory";
+static NSString *const kSpoolDirectoryFileSizeThresholdKB = @"SpoolDirectoryFileSizeThresholdKB";
+static NSString *const kSpoolDirectorySizeThresholdMB = @"SpoolDirectorySizeThresholdMB";
+static NSString *const kSpoolDirectoryEventMaxFlushTimeSec = @"SpoolDirectoryEventMaxFlushTimeSec";
 
 static NSString *const kEnableMachineIDDecoration = @"EnableMachineIDDecoration";
 
@@ -200,10 +200,10 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
       kMachineIDPlistKeyKey : string,
       kEventLogType : string,
       kEventLogPath : string,
-      kMailDirectory : string,
-      kMailDirectoryFileSizeThresholdKB : number,
-      kMailDirectorySizeThresholdMB : number,
-      kMailDirectoryEventMaxFlushTimeSec : number,
+      kSpoolDirectory : string,
+      kSpoolDirectoryFileSizeThresholdKB : number,
+      kSpoolDirectorySizeThresholdMB : number,
+      kSpoolDirectoryEventMaxFlushTimeSec : number,
       kEnableMachineIDDecoration : number,
       kEnableForkAndExitLogging : number,
       kIgnoreOtherEndpointSecurityClients : number,
@@ -391,19 +391,19 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
   return [self configStateSet];
 }
 
-+ (NSSet *)keyPathsForValuesAffectingMailDirectory {
++ (NSSet *)keyPathsForValuesAffectingSpoolDirectory {
   return [self configStateSet];
 }
 
-+ (NSSet *)keyPathsForValuesAffectingMailDirectoryFileSizeThresholdKB {
++ (NSSet *)keyPathsForValuesAffectingSpoolDirectoryFileSizeThresholdKB {
   return [self configStateSet];
 }
 
-+ (NSSet *)keyPathsForValuesAffectingMailDirectorySizeThresholdMB {
++ (NSSet *)keyPathsForValuesAffectingSpoolDirectorySizeThresholdMB {
   return [self configStateSet];
 }
 
-+ (NSSet *)keyPathsForValuesAffectingMailDirectoryEventMaxFlushTimeSec {
++ (NSSet *)keyPathsForValuesAffectingSpoolDirectoryEventMaxFlushTimeSec {
   return [self configStateSet];
 }
 
@@ -763,26 +763,26 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
   return self.configState[kEventLogPath] ?: @"/var/db/santa/santa.log";
 }
 
-- (NSString *)mailDirectory {
-  return self.configState[kMailDirectory] ?: @"/var/db/santa/mail";
+- (NSString *)spoolDirectory {
+  return self.configState[kSpoolDirectory] ?: @"/var/db/santa/spool";
 }
 
-- (NSUInteger)mailDirectoryFileSizeThresholdKB {
-  return self.configState[kMailDirectoryFileSizeThresholdKB]
-           ? [self.configState[kMailDirectoryFileSizeThresholdKB] unsignedIntegerValue]
+- (NSUInteger)spoolDirectoryFileSizeThresholdKB {
+  return self.configState[kSpoolDirectoryFileSizeThresholdKB]
+           ? [self.configState[kSpoolDirectoryFileSizeThresholdKB] unsignedIntegerValue]
            : 100;
 }
 
-- (NSUInteger)mailDirectorySizeThresholdMB {
-  return self.configState[kMailDirectorySizeThresholdMB]
-           ? [self.configState[kMailDirectorySizeThresholdMB] unsignedIntegerValue]
-           : 500;
+- (NSUInteger)spoolDirectorySizeThresholdMB {
+  return self.configState[kSpoolDirectorySizeThresholdMB]
+           ? [self.configState[kSpoolDirectorySizeThresholdMB] unsignedIntegerValue]
+           : 100;
 }
 
-- (float)mailDirMaxFlushTime {
-  return self.configState[kMailDirectoryEventMaxFlushTimeSec]
-           ? [self.configState[kMailDirectoryEventMaxFlushTimeSec] floatValue]
-           : 5.0;
+- (float)spoolDirectoryEventMaxFlushTimeSec {
+  return self.configState[kSpoolDirectoryEventMaxFlushTimeSec]
+           ? [self.configState[kSpoolDirectoryEventMaxFlushTimeSec] floatValue]
+           : 10.0;
 }
 
 - (BOOL)enableMachineIDDecoration {

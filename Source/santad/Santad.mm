@@ -94,8 +94,8 @@ void SantadMain(std::shared_ptr<EndpointSecurityAPI> esapi, std::shared_ptr<Logg
     [[notifier_queue.notifierConnection remoteObjectProxy]
       postUSBBlockNotification:event
              withCustomMessage:([configurator remountUSBMode]
-                                  ? [configurator bannedUSBBlockMessage]
-                                  : [configurator remountUSBBlockMessage])];
+                                  ? [configurator remountUSBBlockMessage]
+                                  : [configurator bannedUSBBlockMessage])];
   };
 
   SNTEndpointSecurityRecorder *monitor_client =

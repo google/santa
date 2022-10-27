@@ -19,7 +19,6 @@
 #include <grp.h>
 #include <pwd.h>
 #include <sys/types.h>
-#include <uuid/uuid.h>
 
 #include <memory>
 #include <optional>

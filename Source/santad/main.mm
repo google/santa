@@ -150,15 +150,7 @@ int main(int argc, char *argv[]) {
       LOGE(@"Failed to start Santa watchdog");
     }
 
-    SNTConfigurator *configurator = [SNTConfigurator configurator];
-
-    // TODO(bur): Add KVO handling for fileChangesPrefixFilters.
-    NSArray<NSString *> *prefix_filters =
-      [@[ @"/.", @"/dev/" ] arrayByAddingObjectsFromArray:[configurator fileChangesPrefixFilters]];
-
-    std::unique_ptr<SantadDeps> deps =
-      SantadDeps::Create([configurator metricExportInterval], [configurator eventLogType],
-                         [configurator eventLogPath], prefix_filters);
+    std::unique_ptr<SantadDeps> deps = SantadDeps::Create([SNTConfigurator configurator]);
 
     // This doesn't return
     SantadMain(deps->ESAPI(), deps->Logger(), deps->Metrics(), deps->Enricher(),
