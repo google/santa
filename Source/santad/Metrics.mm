@@ -87,7 +87,7 @@ const NSString *EventDispositionToString(EventDisposition d) {
     case EventDisposition::kDropped: return kEventDispositionDropped;
     case EventDisposition::kProcessed: return kEventDispositionProcessed;
     default:
-      [NSException raise:@"Invalid processor" format:@"Unknown processor value: %d", d];
+      [NSException raise:@"Invalid disposition" format:@"Unknown disposition value: %d", d];
       return nil;
   }
 }

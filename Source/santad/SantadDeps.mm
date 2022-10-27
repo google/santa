@@ -112,7 +112,6 @@ std::unique_ptr<SantadDeps> SantadDeps::Create(SNTConfigurator *configurator,
     exit(EXIT_FAILURE);
   }
 
-  // TODO: `SNTMetricSet sharedInstance` should be injected
   std::shared_ptr<::Metrics> metrics =
     Metrics::Create(metric_set, [configurator metricExportInterval]);
   if (!metrics) {
