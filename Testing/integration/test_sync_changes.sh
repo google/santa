@@ -10,6 +10,8 @@ killall moroz
 
 sudo santactl sync --debug
 
+sleep 3
+
 # Ensure baseline binary blocking
 set +e
 ./Source/santad/testdata/binaryrules/badbinary
@@ -31,6 +33,8 @@ killall moroz
 ~/go/bin/moroz -configs="$GITHUB_WORKSPACE/Testing/integration/configs/moroz_changed/global.toml" -use-tls=false &
 
 sudo santactl sync --debug
+
+sleep 3
 
 set +e
 ./Source/santad/testdata/binaryrules/badbinary
