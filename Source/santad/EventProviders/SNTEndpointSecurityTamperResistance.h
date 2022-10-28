@@ -20,6 +20,7 @@
 #import "Source/santad/EventProviders/SNTEndpointSecurityClient.h"
 #import "Source/santad/EventProviders/SNTEndpointSecurityEventHandler.h"
 #include "Source/santad/Logs/EndpointSecurity/Logger.h"
+#include "Source/santad/Metrics.h"
 
 /// ES Client focused on mitigating accidental or malicious tampering of Santa and its components.
 @interface SNTEndpointSecurityTamperResistance
@@ -28,6 +29,7 @@
 - (instancetype)
   initWithESAPI:
     (std::shared_ptr<santa::santad::event_providers::endpoint_security::EndpointSecurityAPI>)esApi
+        metrics:(std::shared_ptr<santa::santad::Metrics>)metrics
          logger:(std::shared_ptr<santa::santad::logs::endpoint_security::Logger>)logger;
 
 @end

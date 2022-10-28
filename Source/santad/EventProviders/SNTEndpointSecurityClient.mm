@@ -13,8 +13,8 @@
 ///    limitations under the License.
 
 #import "Source/santad/EventProviders/SNTEndpointSecurityClient.h"
-#include <EndpointSecurity/ESTypes.h>
 
+#include <EndpointSecurity/EndpointSecurity.h>
 #include <bsm/libbsm.h>
 #include <dispatch/dispatch.h>
 #include <mach/mach_time.h>
@@ -27,7 +27,11 @@
 #include "Source/santad/EventProviders/EndpointSecurity/Client.h"
 #include "Source/santad/EventProviders/EndpointSecurity/EnrichedTypes.h"
 #include "Source/santad/EventProviders/EndpointSecurity/Message.h"
+#include "Source/santad/Metrics.h"
 
+using santa::santad::EventDisposition;
+using santa::santad::Metrics;
+using santa::santad::Processor;
 using santa::santad::event_providers::endpoint_security::Client;
 using santa::santad::event_providers::endpoint_security::EndpointSecurityAPI;
 using santa::santad::event_providers::endpoint_security::EnrichedMessage;
@@ -36,21 +40,26 @@ using santa::santad::event_providers::endpoint_security::Message;
 @interface SNTEndpointSecurityClient ()
 @property int64_t deadlineMarginMS;
 @end
-;
 
 @implementation SNTEndpointSecurityClient {
   std::shared_ptr<EndpointSecurityAPI> _esApi;
+  std::shared_ptr<Metrics> _metrics;
   Client _esClient;
   mach_timebase_info_data_t _timebase;
   dispatch_queue_t _authQueue;
   dispatch_queue_t _notifyQueue;
+  Processor _processor;
 }
 
-- (instancetype)initWithESAPI:(std::shared_ptr<EndpointSecurityAPI>)esApi {
+- (instancetype)initWithESAPI:(std::shared_ptr<EndpointSecurityAPI>)esApi
+                      metrics:(std::shared_ptr<Metrics>)metrics
+                    processor:(Processor)processor {
   self = [super init];
   if (self) {
     _esApi = std::move(esApi);
+    _metrics = std::move(metrics);
     _deadlineMarginMS = 5000;
+    _processor = processor;
 
     if (mach_timebase_info(&_timebase) != KERN_SUCCESS) {
       LOGE(@"Failed to get mach timebase info");
@@ -84,7 +93,8 @@ using santa::santad::event_providers::endpoint_security::Message;
   }
 }
 
-- (void)handleMessage:(Message &&)esMsg {
+- (void)handleMessage:(Message &&)esMsg
+   recordEventMetrics:(void (^)(EventDisposition disposition))recordEventMetrics {
   // This method should only be used by classes derived
   // from SNTEndpointSecurityClient.
   [self doesNotRecognizeSelector:_cmd];
@@ -110,10 +120,21 @@ using santa::santad::event_providers::endpoint_security::Message;
   }
 
   self->_esClient = self->_esApi->NewClient(^(es_client_t *c, Message esMsg) {
+    int64_t processingStart = clock_gettime_nsec_np(CLOCK_MONOTONIC);
+    es_event_type_t eventType = esMsg->event_type;
     if ([self shouldHandleMessage:esMsg
            ignoringOtherESClients:[[SNTConfigurator configurator]
                                     ignoreOtherEndpointSecurityClients]]) {
-      [self handleMessage:std::move(esMsg)];
+      [self handleMessage:std::move(esMsg)
+        recordEventMetrics:^(EventDisposition disposition) {
+          int64_t processingEnd = clock_gettime_nsec_np(CLOCK_MONOTONIC);
+          self->_metrics->SetEventMetrics(self->_processor, eventType, disposition,
+                                          processingEnd - processingStart);
+        }];
+    } else {
+      int64_t processingEnd = clock_gettime_nsec_np(CLOCK_MONOTONIC);
+      self->_metrics->SetEventMetrics(self->_processor, eventType, EventDisposition::kDropped,
+                                      processingEnd - processingStart);
     }
   });
 

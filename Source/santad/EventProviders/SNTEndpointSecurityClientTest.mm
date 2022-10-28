@@ -28,7 +28,9 @@
 #include "Source/santad/EventProviders/EndpointSecurity/Message.h"
 #include "Source/santad/EventProviders/EndpointSecurity/MockEndpointSecurityAPI.h"
 #import "Source/santad/EventProviders/SNTEndpointSecurityClient.h"
+#include "Source/santad/Metrics.h"
 
+using santa::santad::Processor;
 using santa::santad::event_providers::endpoint_security::Client;
 using santa::santad::event_providers::endpoint_security::EnrichedClose;
 using santa::santad::event_providers::endpoint_security::EnrichedFile;
@@ -40,7 +42,8 @@ using santa::santad::event_providers::endpoint_security::Message;
 - (void)establishClientOrDie;
 - (bool)muteSelf;
 - (NSString *)errorMessageForNewClientResult:(es_new_client_result_t)result;
-- (void)handleMessage:(Message &&)esMsg;
+- (void)handleMessage:(Message &&)esMsg
+   recordEventMetrics:(void (^)(santa::santad::EventDisposition disposition))recordEventMetrics;
 - (BOOL)shouldHandleMessage:(const Message &)esMsg
      ignoringOtherESClients:(BOOL)ignoringOtherESClients;
 
@@ -61,7 +64,10 @@ using santa::santad::event_providers::endpoint_security::Message;
     .WillOnce(testing::Return(Client()))
     .WillOnce(testing::Return(Client(nullptr, ES_NEW_CLIENT_RESULT_SUCCESS)));
 
-  SNTEndpointSecurityClient *client = [[SNTEndpointSecurityClient alloc] initWithESAPI:mockESApi];
+  SNTEndpointSecurityClient *client =
+    [[SNTEndpointSecurityClient alloc] initWithESAPI:mockESApi
+                                             metrics:nullptr
+                                           processor:Processor::kUnknown];
 
   // First time throws because mock triggers failed connection
   // Second time succeeds
@@ -83,7 +89,10 @@ using santa::santad::event_providers::endpoint_security::Message;
     {(es_new_client_result_t)123, "Unknown error"},
   };
 
-  SNTEndpointSecurityClient *client = [[SNTEndpointSecurityClient alloc] initWithESAPI:nullptr];
+  SNTEndpointSecurityClient *client =
+    [[SNTEndpointSecurityClient alloc] initWithESAPI:nullptr
+                                             metrics:nullptr
+                                           processor:Processor::kUnknown];
 
   for (const auto &kv : resultMessagePairs) {
     NSString *message = [client errorMessageForNewClientResult:kv.first];
@@ -97,9 +106,12 @@ using santa::santad::event_providers::endpoint_security::Message;
   auto mockESApi = std::make_shared<MockEndpointSecurityAPI>();
   mockESApi->SetExpectationsRetainReleaseMessage(&esMsg);
 
-  SNTEndpointSecurityClient *client = [[SNTEndpointSecurityClient alloc] initWithESAPI:mockESApi];
+  SNTEndpointSecurityClient *client =
+    [[SNTEndpointSecurityClient alloc] initWithESAPI:mockESApi
+                                             metrics:nullptr
+                                           processor:Processor::kUnknown];
 
-  { XCTAssertThrows([client handleMessage:Message(mockESApi, &esMsg)]); }
+  { XCTAssertThrows([client handleMessage:Message(mockESApi, &esMsg) recordEventMetrics:nil]); }
 
   XCTBubbleMockVerifyAndClearExpectations(mockESApi.get());
 }
@@ -116,7 +128,10 @@ using santa::santad::event_providers::endpoint_security::Message;
   EXPECT_CALL(*mockESApi, RespondAuthResult(testing::_, testing::_, ES_AUTH_RESULT_ALLOW, true))
     .WillOnce(testing::Return(true));
 
-  SNTEndpointSecurityClient *client = [[SNTEndpointSecurityClient alloc] initWithESAPI:mockESApi];
+  SNTEndpointSecurityClient *client =
+    [[SNTEndpointSecurityClient alloc] initWithESAPI:mockESApi
+                                             metrics:nullptr
+                                           processor:Processor::kUnknown];
 
   {
     Message msg(mockESApi, &esMsg);
@@ -153,7 +168,10 @@ using santa::santad::event_providers::endpoint_security::Message;
 
 - (void)testMuteSelf {
   auto mockESApi = std::make_shared<MockEndpointSecurityAPI>();
-  SNTEndpointSecurityClient *client = [[SNTEndpointSecurityClient alloc] initWithESAPI:mockESApi];
+  SNTEndpointSecurityClient *client =
+    [[SNTEndpointSecurityClient alloc] initWithESAPI:mockESApi
+                                             metrics:nullptr
+                                           processor:Processor::kUnknown];
 
   EXPECT_CALL(*mockESApi, MuteProcess)
     .WillOnce(testing::Return(true))
@@ -167,7 +185,10 @@ using santa::santad::event_providers::endpoint_security::Message;
 
 - (void)testClearCache {
   auto mockESApi = std::make_shared<MockEndpointSecurityAPI>();
-  SNTEndpointSecurityClient *client = [[SNTEndpointSecurityClient alloc] initWithESAPI:mockESApi];
+  SNTEndpointSecurityClient *client =
+    [[SNTEndpointSecurityClient alloc] initWithESAPI:mockESApi
+                                             metrics:nullptr
+                                           processor:Processor::kUnknown];
 
   // Test the underlying clear cache impl returning both true and false
   EXPECT_CALL(*mockESApi, ClearCache)
@@ -182,7 +203,10 @@ using santa::santad::event_providers::endpoint_security::Message;
 
 - (void)testSubscribe {
   auto mockESApi = std::make_shared<MockEndpointSecurityAPI>();
-  SNTEndpointSecurityClient *client = [[SNTEndpointSecurityClient alloc] initWithESAPI:mockESApi];
+  SNTEndpointSecurityClient *client =
+    [[SNTEndpointSecurityClient alloc] initWithESAPI:mockESApi
+                                             metrics:nullptr
+                                           processor:Processor::kUnknown];
 
   std::set<es_event_type_t> events = {
     ES_EVENT_TYPE_NOTIFY_CLOSE,
@@ -202,7 +226,10 @@ using santa::santad::event_providers::endpoint_security::Message;
 
 - (void)testSubscribeAndClearCache {
   auto mockESApi = std::make_shared<MockEndpointSecurityAPI>();
-  SNTEndpointSecurityClient *client = [[SNTEndpointSecurityClient alloc] initWithESAPI:mockESApi];
+  SNTEndpointSecurityClient *client =
+    [[SNTEndpointSecurityClient alloc] initWithESAPI:mockESApi
+                                             metrics:nullptr
+                                           processor:Processor::kUnknown];
 
   // Have subscribe fail the first time, meaning clear cache only called once.
   EXPECT_CALL(*mockESApi, ClearCache)
@@ -229,7 +256,10 @@ using santa::santad::event_providers::endpoint_security::Message;
   EXPECT_CALL(*mockESApi, RespondAuthResult(testing::_, testing::_, result, cacheable))
     .WillOnce(testing::Return(true));
 
-  SNTEndpointSecurityClient *client = [[SNTEndpointSecurityClient alloc] initWithESAPI:mockESApi];
+  SNTEndpointSecurityClient *client =
+    [[SNTEndpointSecurityClient alloc] initWithESAPI:mockESApi
+                                             metrics:nullptr
+                                           processor:Processor::kUnknown];
 
   {
     Message msg(mockESApi, &esMsg);
@@ -249,7 +279,10 @@ using santa::santad::event_providers::endpoint_security::Message;
   // Because we don't need to operate on the es_msg_, this simplifies the test.
   EXPECT_CALL(*mockESApi, RetainMessage);
 
-  SNTEndpointSecurityClient *client = [[SNTEndpointSecurityClient alloc] initWithESAPI:mockESApi];
+  SNTEndpointSecurityClient *client =
+    [[SNTEndpointSecurityClient alloc] initWithESAPI:mockESApi
+                                             metrics:nullptr
+                                           processor:Processor::kUnknown];
 
   es_message_t esMsg;
   auto enrichedMsg = std::make_shared<EnrichedMessage>(
@@ -285,7 +318,10 @@ using santa::santad::event_providers::endpoint_security::Message;
   auto mockESApi = std::make_shared<MockEndpointSecurityAPI>();
   mockESApi->SetExpectationsRetainReleaseMessage(&esMsg);
 
-  SNTEndpointSecurityClient *client = [[SNTEndpointSecurityClient alloc] initWithESAPI:mockESApi];
+  SNTEndpointSecurityClient *client =
+    [[SNTEndpointSecurityClient alloc] initWithESAPI:mockESApi
+                                             metrics:nullptr
+                                           processor:Processor::kUnknown];
 
   {
     XCTAssertThrows([client processMessage:Message(mockESApi, &esMsg)
@@ -313,7 +349,10 @@ using santa::santad::event_providers::endpoint_security::Message;
 
   dispatch_semaphore_t sema = dispatch_semaphore_create(0);
 
-  SNTEndpointSecurityClient *client = [[SNTEndpointSecurityClient alloc] initWithESAPI:mockESApi];
+  SNTEndpointSecurityClient *client =
+    [[SNTEndpointSecurityClient alloc] initWithESAPI:mockESApi
+                                             metrics:nullptr
+                                           processor:Processor::kUnknown];
 
   {
     XCTAssertNoThrow([client processMessage:Message(mockESApi, &esMsg)
@@ -359,7 +398,10 @@ using santa::santad::event_providers::endpoint_security::Message;
       return true;
     }));
 
-  SNTEndpointSecurityClient *client = [[SNTEndpointSecurityClient alloc] initWithESAPI:mockESApi];
+  SNTEndpointSecurityClient *client =
+    [[SNTEndpointSecurityClient alloc] initWithESAPI:mockESApi
+                                             metrics:nullptr
+                                           processor:Processor::kUnknown];
   client.deadlineMarginMS = 500;
 
   {

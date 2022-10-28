@@ -85,6 +85,7 @@ void SantadMain(std::shared_ptr<EndpointSecurityAPI> esapi, std::shared_ptr<Logg
 
   SNTEndpointSecurityDeviceManager *device_client =
     [[SNTEndpointSecurityDeviceManager alloc] initWithESAPI:esapi
+                                                    metrics:metrics
                                                      logger:logger
                                             authResultCache:auth_result_cache];
 
@@ -100,6 +101,7 @@ void SantadMain(std::shared_ptr<EndpointSecurityAPI> esapi, std::shared_ptr<Logg
 
   SNTEndpointSecurityRecorder *monitor_client =
     [[SNTEndpointSecurityRecorder alloc] initWithESAPI:esapi
+                                               metrics:metrics
                                                 logger:logger
                                               enricher:enricher
                                     compilerController:compiler_controller
@@ -108,12 +110,13 @@ void SantadMain(std::shared_ptr<EndpointSecurityAPI> esapi, std::shared_ptr<Logg
 
   SNTEndpointSecurityAuthorizer *authorizer_client =
     [[SNTEndpointSecurityAuthorizer alloc] initWithESAPI:esapi
+                                                 metrics:metrics
                                           execController:exec_controller
                                       compilerController:compiler_controller
                                          authResultCache:auth_result_cache];
 
   SNTEndpointSecurityTamperResistance *tamper_client =
-    [[SNTEndpointSecurityTamperResistance alloc] initWithESAPI:esapi logger:logger];
+    [[SNTEndpointSecurityTamperResistance alloc] initWithESAPI:esapi metrics:metrics logger:logger];
 
   EstablishSyncServiceConnection(syncd_queue);
 

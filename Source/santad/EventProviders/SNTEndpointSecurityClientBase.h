@@ -23,11 +23,15 @@
 #include "Source/santad/EventProviders/EndpointSecurity/EndpointSecurityAPI.h"
 #include "Source/santad/EventProviders/EndpointSecurity/EnrichedTypes.h"
 #include "Source/santad/EventProviders/EndpointSecurity/Message.h"
+#include "Source/santad/Metrics.h"
 
 @protocol SNTEndpointSecurityClientBase
 
-- (instancetype)initWithESAPI:
-  (std::shared_ptr<santa::santad::event_providers::endpoint_security::EndpointSecurityAPI>)esApi;
+- (instancetype)
+  initWithESAPI:
+    (std::shared_ptr<santa::santad::event_providers::endpoint_security::EndpointSecurityAPI>)esApi
+        metrics:(std::shared_ptr<santa::santad::Metrics>)metrics
+      processor:(santa::santad::Processor)processor;
 
 /// @note If this fails to establish a new ES client via `es_new_client`, an exception is raised
 /// that should terminate the program.

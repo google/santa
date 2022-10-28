@@ -19,6 +19,7 @@
 #import "Source/santad/EventProviders/SNTEndpointSecurityClient.h"
 #import "Source/santad/EventProviders/SNTEndpointSecurityEventHandler.h"
 #include "Source/santad/Logs/EndpointSecurity/Logger.h"
+#import "Source/santad/Metrics.h"
 #import "Source/santad/SNTCompilerController.h"
 
 /// ES Client focused on subscribing to NOTIFY event variants with the intention of enriching
@@ -29,6 +30,7 @@
        initWithESAPI:
          (std::shared_ptr<santa::santad::event_providers::endpoint_security::EndpointSecurityAPI>)
            esApi
+             metrics:(std::shared_ptr<santa::santad::Metrics>)metrics
               logger:(std::shared_ptr<santa::santad::logs::endpoint_security::Logger>)logger
             enricher:
               (std::shared_ptr<santa::santad::event_providers::endpoint_security::Enricher>)enricher

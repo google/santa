@@ -62,6 +62,7 @@ objc_library(
     hdrs = ["EventProviders/SNTEndpointSecurityEventHandler.h"],
     deps = [
         ":EndpointSecurityMessage",
+        ":Metrics",
         "//Source/common:SNTCommon",
     ],
 )
@@ -208,6 +209,7 @@ objc_library(
         ":EndpointSecurityClient",
         ":EndpointSecurityEnrichedTypes",
         ":EndpointSecurityMessage",
+        ":Metrics",
     ],
 )
 
@@ -220,6 +222,7 @@ objc_library(
         ":EndpointSecurityClient",
         ":EndpointSecurityEnrichedTypes",
         ":EndpointSecurityMessage",
+        ":Metrics",
         ":SNTEndpointSecurityClientBase",
         "//Source/common:SNTCommon",
         "//Source/common:SNTConfigurator",
@@ -238,6 +241,7 @@ objc_library(
         ":EndpointSecurityEnricher",
         ":EndpointSecurityLogger",
         ":EndpointSecurityMessage",
+        ":Metrics",
         ":SNTCompilerController",
         ":SNTEndpointSecurityClient",
         ":SNTEndpointSecurityEventHandler",
@@ -254,6 +258,7 @@ objc_library(
         ":EndpointSecurityAPI",
         ":EndpointSecurityLogger",
         ":EndpointSecurityMessage",
+        ":Metrics",
         ":SNTEndpointSecurityClient",
         ":SNTEndpointSecurityEventHandler",
         "//Source/common:SNTLogging",
@@ -270,6 +275,7 @@ objc_library(
         ":EndpointSecurityEnrichedTypes",
         ":EndpointSecurityEnricher",
         ":EndpointSecurityMessage",
+        ":Metrics",
         ":SNTCompilerController",
         ":SNTEndpointSecurityClient",
         ":SNTEndpointSecurityEventHandler",
@@ -287,6 +293,7 @@ objc_library(
         ":EndpointSecurityAPI",
         ":EndpointSecurityLogger",
         ":EndpointSecurityMessage",
+        ":Metrics",
         ":SNTEndpointSecurityClient",
         ":SNTEndpointSecurityEventHandler",
         "//Source/common:SNTDeviceEvent",
@@ -617,6 +624,7 @@ objc_library(
         ":SantadDeps",
         "//Source/common:SNTConfigurator",
         "//Source/common:SNTLogging",
+        "//Source/common:SNTMetricSet",
         "//Source/common:SNTXPCControlInterface",
     ],
 )
@@ -727,6 +735,7 @@ santa_unit_test(
     tags = ["exclusive"],
     deps = [
         ":EndpointSecurityMessage",
+        ":Metrics",
         ":MockEndpointSecurityAPI",
         ":SNTDatabaseController",
         ":SNTEndpointSecurityAuthorizer",
@@ -955,6 +964,8 @@ santa_unit_test(
     srcs = ["MetricsTest.mm"],
     deps = [
         ":Metrics",
+        "//Source/common:SNTMetricSet",
+        "//Source/common:TestUtils",
         "@OCMock",
     ],
 )
@@ -989,6 +1000,7 @@ santa_unit_test(
         ":EndpointSecurityClient",
         ":EndpointSecurityEnrichedTypes",
         ":EndpointSecurityMessage",
+        ":Metrics",
         ":MockEndpointSecurityAPI",
         ":SNTEndpointSecurityClient",
         "//Source/common:TestUtils",
@@ -1036,6 +1048,7 @@ santa_unit_test(
         ":AuthResultCache",
         ":EndpointSecurityClient",
         ":EndpointSecurityMessage",
+        ":Metrics",
         ":MockEndpointSecurityAPI",
         ":SNTCompilerController",
         ":SNTEndpointSecurityAuthorizer",
@@ -1055,6 +1068,7 @@ santa_unit_test(
     deps = [
         ":EndpointSecurityClient",
         ":EndpointSecurityMessage",
+        ":Metrics",
         ":MockEndpointSecurityAPI",
         ":SNTEndpointSecurityTamperResistance",
         "//Source/common:SNTLogging",
@@ -1077,6 +1091,7 @@ santa_unit_test(
         ":EndpointSecurityEnricher",
         ":EndpointSecurityLogger",
         ":EndpointSecurityMessage",
+        ":Metrics",
         ":MockEndpointSecurityAPI",
         ":SNTCompilerController",
         ":SNTEndpointSecurityRecorder",
@@ -1098,6 +1113,7 @@ santa_unit_test(
         ":DiskArbitrationTestLib",
         ":EndpointSecurityClient",
         ":EndpointSecurityMessage",
+        ":Metrics",
         ":MockEndpointSecurityAPI",
         ":SNTEndpointSecurityDeviceManager",
         "//Source/common:SNTConfigurator",
