@@ -24,6 +24,7 @@ const NSString *kStreamKind = @"streamKind";
 const NSString *kValueType = @"valueType";
 const NSString *kDescription = @"description";
 const NSString *kData = @"data";
+const NSString *kField = @"field";
 const NSString *kFieldDescriptor = @"fieldDescriptor";
 const NSString *kBoolValue = @"boolValue";
 const NSString *kBoolValueType = @"BOOL";
@@ -54,9 +55,9 @@ const NSString *kKey = @"key";
   return self;
 }
 
-- (void)encodeValueAndStreamKindFor:(NSString *)metricName
-                         withMetric:(NSDictionary *)metric
-                               into:(NSMutableDictionary *)monarchMetric {
+- (void)encodeValueTypeAndStreamKindFor:(NSString *)metricName
+                             withMetric:(NSDictionary *)metric
+                                   into:(NSMutableDictionary *)monarchMetric {
   if (!metric[@"type"]) {
     LOGE(@"metric type not supposed to be nil for %@", metricName);
     return;
@@ -109,7 +110,20 @@ const NSString *kKey = @"key";
       NSMutableDictionary *monarchDataEntry = [[NSMutableDictionary alloc] init];
 
       if (![fieldName isEqualToString:@""]) {
-        monarchDataEntry[@"field"] = @[ @{kName : fieldName, kStringValue : entry[@"value"]} ];
+        // We encode multiple fields as a single comma separated string.
+        NSArray<NSString *> *fieldNames = [fieldName componentsSeparatedByString:@","];
+        NSArray<NSString *> *fieldValues = [entry[@"value"] componentsSeparatedByString:@","];
+
+        if (fieldNames.count != fieldValues.count) {
+          LOGE(@"malformed metric data encountered: %@", fieldName);
+          continue;
+        }
+        monarchDataEntry[kField] = [[NSMutableArray alloc] init];
+
+        for (int i = 0; i < fieldNames.count; i++) {
+          [monarchDataEntry[kField]
+            addObject:@{kName : fieldNames[i], kStringValue : fieldValues[i]}];
+        }
       }
 
       monarchDataEntry[kStartTimestamp] = [self->_dateFormatter stringFromDate:entry[@"created"]];
@@ -146,12 +160,16 @@ const NSString *kKey = @"key";
  * Translates SNTMetricSet fields to monarch's expected format. In this implementation only string
  * type fields are supported.
  */
-- (NSArray<NSDictionary *> *)encodeFieldsFor:(NSDictionary *)metric {
+- (NSArray<NSDictionary *> *)encodeFieldDescriptorsFor:(NSDictionary *)metric {
   NSMutableArray<NSDictionary *> *monarchFields = [[NSMutableArray alloc] init];
 
-  for (NSString *fieldName in metric[@"fields"]) {
-    if (![fieldName isEqualToString:@""]) {
-      [monarchFields addObject:@{kName : fieldName, @"fieldType" : kStringValueType}];
+  for (NSString *field in metric[@"fields"]) {
+    if (![field isEqualToString:@""]) {
+      // we encode multiple field names as comma separated strings.
+      NSArray<NSString *> *fieldNames = [field componentsSeparatedByString:@","];
+      for (NSString *fieldName in fieldNames) {
+        [monarchFields addObject:@{kName : fieldName, @"fieldType" : kStringValueType}];
+      }
     }
   }
   return monarchFields;
@@ -173,12 +191,12 @@ const NSString *kKey = @"key";
     monarchMetric[kDescription] = metric[kDescription];
   }
 
-  NSArray<NSDictionary *> *fieldDescriptorEntries = [self encodeFieldsFor:metric];
+  NSArray<NSDictionary *> *fieldDescriptorEntries = [self encodeFieldDescriptorsFor:metric];
   if (fieldDescriptorEntries.count > 0) {
-    monarchMetric[kFieldDescriptor] = [self encodeFieldsFor:metric];
+    monarchMetric[kFieldDescriptor] = fieldDescriptorEntries;
   }
 
-  [self encodeValueAndStreamKindFor:name withMetric:metric into:monarchMetric];
+  [self encodeValueTypeAndStreamKindFor:name withMetric:metric into:monarchMetric];
   monarchMetric[@"data"] = [self encodeDataForMetric:metric withEndTimestamp:endTimestamp];
 
   return monarchMetric;

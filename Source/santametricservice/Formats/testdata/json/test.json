@@ -24,18 +24,18 @@
       "type" : 9,
       "description" : "Count of process exec events on the host",
       "fields" : {
-        "rule_type" : [
+        "rule_type,client" : [
           {
-            "value" : "binary",
-            "created" : "2021-09-16T21:07:34.826Z",
-            "last_updated" : "2021-09-16T21:07:34.826Z",
-            "data" : 1
-          },
-          {
-            "value" : "certificate",
+            "value" : "certificate,authorizer",
             "created" : "2021-09-16T21:07:34.826Z",
             "last_updated" : "2021-09-16T21:07:34.826Z",
             "data" : 2
+          },
+          {
+            "value" : "binary,authorizer",
+            "created" : "2021-09-16T21:07:34.826Z",
+            "last_updated" : "2021-09-16T21:07:34.826Z",
+            "data" : 1
           }
         ]
       }
