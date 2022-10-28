@@ -278,10 +278,14 @@ void SantadMain(std::shared_ptr<EndpointSecurityAPI> esapi, std::shared_ptr<Logg
   // of the SNTKVOManager objects it contains.
   (void)kvoObservers;
 
-  [monitor_client enable];
+  // IMPORTANT: ES will hold up third party execs until early boot clients make
+  // their first subscription. Ensuring the `Authorizer` client is enabled first
+  // means that the AUTH EXEC event is subscribed first and Santa can apply
+  // execution policy appropriately.
   [authorizer_client enable];
-  [device_client enable];
   [tamper_client enable];
+  [monitor_client enable];
+  [device_client enable];
 
   [[NSRunLoop mainRunLoop] run];
 }
