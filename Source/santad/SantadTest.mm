@@ -33,7 +33,6 @@
 #import "Source/santad/SNTDatabaseController.h"
 #include "Source/santad/SantadDeps.h"
 
-using santa::santad::EventDisposition;
 using santa::santad::SantadDeps;
 using santa::santad::event_providers::endpoint_security::Message;
 

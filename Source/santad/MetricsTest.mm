@@ -170,11 +170,9 @@ using santa::santad::ProcessorToString;
   id mockEventCounts = OCMClassMock([SNTMetricCounter class]);
   int64_t nanos = 1234;
 
-  OCMStub([mockEventCounts incrementForFieldValues:[OCMArg any]])
-    .ignoringNonObjectArgs()
-    .andDo(^(NSInvocation *inv) {
-      dispatch_semaphore_signal(self.sema);
-    });
+  OCMStub([mockEventCounts incrementForFieldValues:[OCMArg any]]).andDo(^(NSInvocation *inv) {
+    dispatch_semaphore_signal(self.sema);
+  });
 
   OCMStub([(SNTMetricInt64Gauge *)mockEventProcessingTimes set:nanos forFieldValues:[OCMArg any]])
     .ignoringNonObjectArgs()
