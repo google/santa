@@ -1,6 +1,6 @@
 load(
     "@build_bazel_rules_apple//apple:macos.bzl",
-    "macos_command_line_application",
+    "macos_application",
 )
 
 objc_library(
@@ -24,21 +24,13 @@ objc_library(
     ],
 )
 
-filegroup(
-    name = "entitlements",
-    srcs = [
-        "InstallationTool.entitlements",
-    ],
-)
-
-macos_command_line_application(
+macos_application(
     name = "InstallationTool",
-    codesignopts = [
-        "--entitlements=Testing/integration/VM/InstallationTool/InstallationTool.entitlements",
-    ],
+    bundle_id = "com.google.santa.e2e.installation-tool",
+    infoplists = ["//Testing/integration/VM/Common:plist"],
+    entitlements = "//Testing/integration/VM/Common:entitlements",
     minimum_os_version = "12.0",
     deps = [
-        ":entitlements",
         ":installationtool_lib",
     ],
 )

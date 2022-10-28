@@ -1,6 +1,6 @@
 load(
     "@build_bazel_rules_apple//apple:macos.bzl",
-    "macos_command_line_application",
+    "macos_application",
 )
 
 objc_library(
@@ -17,21 +17,13 @@ objc_library(
     ],
 )
 
-filegroup(
-    name = "entitlements",
-    srcs = [
-        "VMCLI.entitlements",
-    ],
-)
-
-macos_command_line_application(
+macos_application(
     name = "VMCLI",
-    codesignopts = [
-        "--entitlements=Testing/integration/VM/VMCLI/VMCLI.entitlements",
-    ],
+    bundle_id = "com.google.santa.e2e.vmcli",
+    infoplists = ["//Testing/integration/VM/Common:plist"],
+    entitlements = "//Testing/integration/VM/Common:entitlements",
     minimum_os_version = "12.0",
     deps = [
-        ":entitlements",
         ":vmcli_lib",
     ],
 )

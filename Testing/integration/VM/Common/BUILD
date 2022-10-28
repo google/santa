@@ -1,3 +1,9 @@
+package(
+    default_visibility = [
+        "//Testing/integration/VM:__subpackages__",
+    ],
+)
+
 objc_library(
     name = "configuration_helper",
     srcs = [
@@ -8,9 +14,6 @@ objc_library(
     ],
     sdk_frameworks = [
         "Virtualization",
-    ],
-    visibility = [
-        "//Testing/integration/VM:__subpackages__",
     ],
 )
 
@@ -25,9 +28,6 @@ objc_library(
     sdk_frameworks = [
         "Virtualization",
     ],
-    visibility = [
-        "//Testing/integration/VM:__subpackages__",
-    ],
 )
 
 objc_library(
@@ -35,7 +35,18 @@ objc_library(
     hdrs = [
         "Error.h",
     ],
-    visibility = [
-        "//Testing/integration/VM:__subpackages__",
+)
+
+filegroup(
+    name = "entitlements",
+    srcs = [
+        "VM.entitlements",
+    ],
+)
+
+filegroup(
+    name = "plist",
+    srcs = [
+        "Info.plist",
     ],
 )
