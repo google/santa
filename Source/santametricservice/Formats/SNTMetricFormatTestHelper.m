@@ -70,7 +70,7 @@
                          value:(long long)(0x12345668910)];
   // Add Metrics
   SNTMetricCounter *c = [metricSet counterWithName:@"/santa/events"
-                                        fieldNames:@[ @"rule_type", @"client"]
+                                        fieldNames:@[ @"rule_type", @"client" ]
                                           helpText:@"Count of process exec events on the host"];
 
   [c incrementForFieldValues:@[ @"binary", @"authorizer" ]];

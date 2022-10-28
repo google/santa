@@ -56,8 +56,8 @@ const NSString *kKey = @"key";
 }
 
 - (void)encodeValueTypeAndStreamKindFor:(NSString *)metricName
-                         withMetric:(NSDictionary *)metric
-                               into:(NSMutableDictionary *)monarchMetric {
+                             withMetric:(NSDictionary *)metric
+                                   into:(NSMutableDictionary *)monarchMetric {
   if (!metric[@"type"]) {
     LOGE(@"metric type not supposed to be nil for %@", metricName);
     return;
@@ -115,13 +115,14 @@ const NSString *kKey = @"key";
         NSArray<NSString *> *fieldValues = [entry[@"value"] componentsSeparatedByString:@","];
 
         if (fieldNames.count != fieldValues.count) {
-          LOGE(@"malformed metric data encounterd: %@", fieldName);
+          LOGE(@"malformed metric data encountered: %@", fieldName);
           continue;
         }
         monarchDataEntry[kField] = [[NSMutableArray alloc] init];
 
         for (int i = 0; i < fieldNames.count; i++) {
-          [monarchDataEntry[kField] addObject: @{kName: fieldNames[i], kStringValue: fieldValues[i]}];
+          [monarchDataEntry[kField]
+            addObject:@{kName : fieldNames[i], kStringValue : fieldValues[i]}];
         }
       }
 
@@ -169,7 +170,7 @@ const NSString *kKey = @"key";
       for (NSString *fieldName in fieldNames) {
         [monarchFields addObject:@{kName : fieldName, @"fieldType" : kStringValueType}];
       }
-    } 
+    }
   }
   return monarchFields;
 }
