@@ -171,7 +171,6 @@ using santa::santad::ProcessorToString;
   int64_t nanos = 1234;
 
   OCMStub([mockEventCounts incrementForFieldValues:[OCMArg any]])
-    .ignoringNonObjectArgs()
     .andDo(^(NSInvocation *inv) {
       dispatch_semaphore_signal(self.sema);
     });
