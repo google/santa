@@ -53,7 +53,6 @@ using santa::santad::ProcessorToString;
 @interface MetricsTest : XCTestCase
 @property dispatch_queue_t q;
 @property dispatch_semaphore_t sema;
-@property dispatch_source_t timer;
 @end
 
 @implementation MetricsTest
@@ -61,13 +60,12 @@ using santa::santad::ProcessorToString;
 - (void)setUp {
   self.q = dispatch_queue_create(NULL, DISPATCH_QUEUE_SERIAL);
   XCTAssertNotNil(self.q);
-  self.timer = dispatch_source_create(DISPATCH_SOURCE_TYPE_TIMER, 0, 0, self.q);
-  XCTAssertNotNil(self.timer);
   self.sema = dispatch_semaphore_create(0);
 }
 
 - (void)testStartStop {
-  auto metrics = std::make_shared<MetricsPeer>(nil, self.q, self.timer, 100, nil, nil, ^{
+  dispatch_source_t timer = dispatch_source_create(DISPATCH_SOURCE_TYPE_TIMER, 0, 0, self.q);
+  auto metrics = std::make_shared<MetricsPeer>(nil, self.q, timer, 100, nil, nil, ^{
     dispatch_semaphore_signal(self.sema);
   });
 
@@ -101,7 +99,8 @@ using santa::santad::ProcessorToString;
 }
 
 - (void)testSetInterval {
-  auto metrics = std::make_shared<MetricsPeer>(nil, self.q, self.timer, 100, nil, nil,
+  dispatch_source_t timer = dispatch_source_create(DISPATCH_SOURCE_TYPE_TIMER, 0, 0, self.q);
+  auto metrics = std::make_shared<MetricsPeer>(nil, self.q, timer, 100, nil, nil,
                                                ^{
                                                });
 
@@ -180,8 +179,9 @@ using santa::santad::ProcessorToString;
       dispatch_semaphore_signal(self.sema);
     });
 
-  auto metrics = std::make_shared<MetricsPeer>(nil, self.q, self.timer, 100,
-                                               mockEventProcessingTimes, mockEventCounts,
+  dispatch_source_t timer = dispatch_source_create(DISPATCH_SOURCE_TYPE_TIMER, 0, 0, self.q);
+  auto metrics = std::make_shared<MetricsPeer>(nil, self.q, timer, 100, mockEventProcessingTimes,
+                                               mockEventCounts,
                                                ^{
                                                  // This block intentionally left blank
                                                });
