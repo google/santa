@@ -73,6 +73,10 @@ es_file_t *GetTargetFileForPrefixTree(const es_message_t *msg) {
   return self;
 }
 
+- (NSString *)description {
+  return @"Recorder";
+}
+
 - (void)handleMessage:(Message &&)esMsg
    recordEventMetrics:(void (^)(EventDisposition))recordEventMetrics {
   // Pre-enrichment processing
@@ -82,7 +86,9 @@ es_file_t *GetTargetFileForPrefixTree(const es_message_t *msg) {
       // the `was_mapped_writable` field
       if (esMsg->event.close.modified == false) {
         // Ignore unmodified files
-        recordEventMetrics(EventDisposition::kDropped);
+        // Note: Do not record metrics in this case. These are not considered "drops"
+        // because this is not a failure case. Ideally we would tell ES to not send
+        // these events in the first place but no such mechanism currently exists.
         return;
       }
 

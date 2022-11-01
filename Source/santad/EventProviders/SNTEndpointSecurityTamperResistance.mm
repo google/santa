@@ -46,6 +46,10 @@ static constexpr std::string_view kSantaKextIdentifier = "com.google.santa-drive
   return self;
 }
 
+- (NSString *)description {
+  return @"Tamper Resistance";
+}
+
 - (void)handleMessage:(Message &&)esMsg
    recordEventMetrics:(void (^)(EventDisposition))recordEventMetrics {
   es_auth_result_t result = ES_AUTH_RESULT_ALLOW;
