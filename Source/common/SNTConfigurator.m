@@ -172,7 +172,7 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
       kRemountUSBModeKey : array,
       kEnablePageZeroProtectionKey : number,
       kEnableBadSignatureProtectionKey : number,
-      kEnableSilentModeKey : string,
+      kEnableSilentModeKey : number,
       kAboutTextKey : string,
       kMoreInfoURLKey : string,
       kEventDetailURLKey : string,
