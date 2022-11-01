@@ -137,11 +137,8 @@ class MockLogger : public Logger {
 
     XCTAssertNoThrow([recorderClient handleMessage:Message(mockESApi, &esMsg)
                                 recordEventMetrics:^(EventDisposition d) {
-                                  XCTAssertEqual(d, EventDisposition::kDropped);
-                                  dispatch_semaphore_signal(semaMetrics);
+                                  XCTFail("Metrics record callback should not be called here");
                                 }]);
-
-    XCTAssertSemaTrue(semaMetrics, 5, "Metrics not recorded within expected window");
   }
 
   // CLOSE modified, remove from cache
