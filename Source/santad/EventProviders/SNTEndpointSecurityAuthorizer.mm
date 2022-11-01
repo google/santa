@@ -56,6 +56,10 @@ using santa::santad::event_providers::endpoint_security::Message;
   return self;
 }
 
+- (NSString *)description {
+  return @"Authorizer";
+}
+
 - (void)processMessage:(const Message &)msg {
   const es_file_t *targetFile = msg->event.exec.target->executable;
 

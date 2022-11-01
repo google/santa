@@ -166,6 +166,10 @@ NS_ASSUME_NONNULL_BEGIN
   self->_logger->LogDiskDisappeared(props);
 }
 
+- (NSString *)description {
+  return @"Device Manager";
+}
+
 - (void)handleMessage:(Message &&)esMsg
    recordEventMetrics:(void (^)(EventDisposition))recordEventMetrics {
   if (!self.blockUSBMount) {

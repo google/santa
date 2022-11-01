@@ -143,7 +143,7 @@ using santa::santad::event_providers::endpoint_security::Message;
     LOGE(@"Unable to create EndpointSecurity client: %@", errMsg);
     [NSException raise:@"Failed to create ES client" format:@"%@", errMsg];
   } else {
-    LOGI(@"Connected to EndpointSecurity");
+    LOGI(@"Connected to EndpointSecurity (%@)", self);
   }
 
   if (![self muteSelf]) {
