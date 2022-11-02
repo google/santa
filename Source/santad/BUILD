@@ -411,6 +411,7 @@ objc_library(
         "//Source/common:SNTLogging",
         "//Source/common:SNTStoredEvent",
         "//Source/common:santa_cc_proto_library_wrapper",
+        "@com_google_absl//absl/synchronization",
     ],
 )
 
@@ -442,6 +443,7 @@ objc_library(
     srcs = ["Logs/EndpointSecurity/Writers/Spool.mm"],
     hdrs = ["Logs/EndpointSecurity/Writers/Spool.h"],
     deps = [
+        ":EndpointSecuritySerializerProtobuf",
         ":EndpointSecurityWriter",
         "//Source/common:SNTLogging",
         "//Source/common:santa_cc_proto_library_wrapper",

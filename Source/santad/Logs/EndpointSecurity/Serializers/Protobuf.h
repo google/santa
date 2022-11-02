@@ -24,6 +24,7 @@
 #include "Source/common/santa_proto_include_wrapper.h"
 #include "Source/santad/EventProviders/EndpointSecurity/EndpointSecurityAPI.h"
 #include "Source/santad/Logs/EndpointSecurity/Serializers/Serializer.h"
+#include "absl/synchronization/mutex.h"
 
 namespace santa::santad::logs::endpoint_security::serializers {
 
@@ -61,18 +62,23 @@ class Protobuf : public Serializer {
   std::vector<uint8_t> SerializeDiskAppeared(NSDictionary *) override;
   std::vector<uint8_t> SerializeDiskDisappeared(NSDictionary *) override;
 
+  bool Drain(std::string *output, size_t threshold);
+
  private:
-  ::santa::pb::v1::SantaMessage *CreateDefaultProto(google::protobuf::Arena *arena);
+  ::santa::pb::v1::SantaMessage *CreateDefaultProto();
   ::santa::pb::v1::SantaMessage *CreateDefaultProto(
-    google::protobuf::Arena *arena,
     const santa::santad::event_providers::endpoint_security::EnrichedEventType &msg);
-  ::santa::pb::v1::SantaMessage *CreateDefaultProto(google::protobuf::Arena *arena,
-                                                    struct timespec event_time,
+  ::santa::pb::v1::SantaMessage *CreateDefaultProto(struct timespec event_time,
                                                     struct timespec processed_time);
 
   std::vector<uint8_t> FinalizeProto(::santa::pb::v1::SantaMessage *santa_msg);
 
   std::shared_ptr<santa::santad::event_providers::endpoint_security::EndpointSecurityAPI> esapi_;
+
+  google::protobuf::Arena arena_;
+  absl::Mutex batch_lock_;
+  ::santa::pb::v1::SantaMessageBatch *santa_message_batch_;
+  ABSL_GUARDED_BY(batch_lock_) size_t bytes_batched_ = 0;
 };
 
 }  // namespace santa::santad::logs::endpoint_security::serializers

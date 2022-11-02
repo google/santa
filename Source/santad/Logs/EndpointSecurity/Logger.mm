@@ -60,13 +60,16 @@ std::unique_ptr<Logger> Logger::Create(std::shared_ptr<EndpointSecurityAPI> esap
     case SNTEventLogTypeSyslog:
       return std::make_unique<Logger>(BasicString::Create(esapi, false), Syslog::Create());
     case SNTEventLogTypeNull: return std::make_unique<Logger>(Empty::Create(), Null::Create());
-    case SNTEventLogTypeProtobuf:
+    case SNTEventLogTypeProtobuf: {
+      std::shared_ptr<Protobuf> proto_serializer = Protobuf::Create(esapi);
       LOGW(@"The EventLogType value protobuf is currently in beta. The protobuf schema is subject "
            @"to change.");
       return std::make_unique<Logger>(
-        Protobuf::Create(esapi),
-        Spool::Create([spool_log_path UTF8String], spool_dir_size_threshold,
-                      spool_file_size_threshold, spool_flush_timeout_ms));
+        proto_serializer,
+        // Note: batch size of `1` because batching is done in the `Protobuf` serializer
+        Spool::Create(proto_serializer, [spool_log_path UTF8String], spool_dir_size_threshold,
+                      spool_file_size_threshold, 1, spool_flush_timeout_ms));
+    }
     default: LOGE(@"Invalid log type: %ld", log_type); return nullptr;
   }
 }

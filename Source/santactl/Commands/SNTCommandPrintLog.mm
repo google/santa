@@ -28,7 +28,8 @@
 
 using google::protobuf::util::JsonPrintOptions;
 using google::protobuf::util::MessageToJsonString;
-using santa::fsspool::binaryproto::LogBatch;
+// using santa::fsspool::binaryproto::LogBatch;
+using santa::pb::v1::LogBatch;
 namespace pbv1 = ::santa::pb::v1;
 
 @interface SNTCommandPrintLog : SNTCommand <SNTCommandProtocol>
@@ -88,36 +89,19 @@ REGISTER_COMMAND_NAME(@"printlog")
       continue;
     }
 
+    std::string json;
+    if (!MessageToJsonString(logBatch, &json, options).ok()) {
+      LOGE(@"Unable to convert message to JSON in file: '%@'", path);
+    }
+
     if (argIdx != 0) {
-      std::cout << ",";
+      std::cout << ",\n" << std::flush;
     } else {
       // Print the opening outer JSON array
       std::cout << "[";
     }
-    std::cout << "\n[\n";
 
-    int numRecords = logBatch.records_size();
-
-    for (int i = 0; i < numRecords; i++) {
-      const google::protobuf::Any &any = logBatch.records(i);
-      ::pbv1::SantaMessage santaMsg;
-      if (!any.UnpackTo(&santaMsg)) {
-        LOGE(@"Failed to unpack Any proto to SantaMessage in file '%@'", path);
-        break;
-      }
-
-      if (i != 0) {
-        std::cout << ",\n";
-      }
-
-      std::string json;
-      if (!MessageToJsonString(santaMsg, &json, options).ok()) {
-        LOGE(@"Unable to convert message to JSON in file: '%@'", path);
-      }
-      std::cout << json;
-    }
-
-    std::cout << "]" << std::flush;
+    std::cout << json;
 
     if (argIdx == ([arguments count] - 1)) {
       // Print the closing outer JSON array
