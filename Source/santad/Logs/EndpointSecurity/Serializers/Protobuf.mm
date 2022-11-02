@@ -102,23 +102,28 @@ static inline void EncodePath(std::string *buf, const es_file_t *es_file) {
   buf->append(std::string_view(es_file->path.data, es_file->path.length));
 }
 
-static inline void EncodeString(std::string *buf, NSString *value) {
-  if (value) {
-    buf->append(std::string_view([value UTF8String], [value length]));
-  }
-}
+#define ENCODE_STRING_VIEW(f, s)                                       \
+  do {                                                                 \
+    static_assert(std::is_same<decltype(s), std::string_view>::value); \
+    if (s.length() > 0) {                                              \
+      f()->append(s);                                                  \
+    }                                                                  \
+  } while (0)
 
-static inline void EncodeString(std::string *buf, std::string_view value) {
-  if (value.length() > 0) {
-    buf->append(std::string_view(value.data(), value.length()));
-  }
-}
+#define ENCODE_NSSTRING(f, s)                                     \
+  do {                                                            \
+    static_assert(std::is_same<decltype(s), NSString *>::value || \
+                  std::is_same<decltype(s), id>::value);          \
+    if ([s length] > 0) {                                         \
+      f()->append(std::string_view([s UTF8String], [s length]));  \
+    }                                                             \
+  } while (0)
 
 static inline void EncodeUserInfo(::pbv1::UserInfo *pb_user_info, uid_t uid,
                                   const std::optional<std::shared_ptr<std::string>> &name) {
   pb_user_info->set_uid(uid);
   if (name.has_value()) {
-    EncodeString(pb_user_info->mutable_name(), *name->get());
+    ENCODE_STRING_VIEW(pb_user_info->mutable_name, std::string_view(*name->get()));
   }
 }
 
@@ -126,14 +131,14 @@ static inline void EncodeGroupInfo(::pbv1::GroupInfo *pb_group_info, gid_t gid,
                                    const std::optional<std::shared_ptr<std::string>> &name) {
   pb_group_info->set_gid(gid);
   if (name.has_value()) {
-    EncodeString(pb_group_info->mutable_name(), *name->get());
+    ENCODE_STRING_VIEW(pb_group_info->mutable_name, std::string_view(*name->get()));
   }
 }
 
 static inline void EncodeHash(::pbv1::Hash *pb_hash, NSString *sha256) {
   if (sha256) {
     pb_hash->set_type(::pbv1::Hash::HASH_ALGO_SHA256);
-    EncodeString(pb_hash->mutable_hash(), sha256);
+    ENCODE_NSSTRING(pb_hash->mutable_hash, sha256);
   }
 }
 
@@ -223,16 +228,16 @@ static inline void EncodeProcessInfo(::pbv1::ProcessInfo *pb_proc_info, uint32_t
 
   if (es_proc->codesigning_flags & CS_SIGNED) {
     ::pbv1::CodeSignature *pb_code_sig = pb_proc_info->mutable_code_signature();
-    EncodeString(pb_code_sig->mutable_cdhash(),
-                 std::string_view((char *)es_proc->cdhash, sizeof(es_proc->cdhash)));
+    ENCODE_STRING_VIEW(pb_code_sig->mutable_cdhash,
+                       std::string_view((char *)es_proc->cdhash, sizeof(es_proc->cdhash)));
     if (es_proc->signing_id.length > 0) {
-      EncodeString(pb_code_sig->mutable_signing_id(),
-                   std::string_view(es_proc->signing_id.data, es_proc->signing_id.length));
+      ENCODE_STRING_VIEW(pb_code_sig->mutable_signing_id,
+                         std::string_view(es_proc->signing_id.data, es_proc->signing_id.length));
     }
 
     if (es_proc->team_id.length > 0) {
-      EncodeString(pb_code_sig->mutable_team_id(),
-                   std::string_view(es_proc->team_id.data, es_proc->team_id.length));
+      ENCODE_STRING_VIEW(pb_code_sig->mutable_team_id,
+                         std::string_view(es_proc->team_id.data, es_proc->team_id.length));
     }
   }
 
@@ -267,9 +272,7 @@ static inline void EncodeCertificateInfo(::pbv1::CertificateInfo *pb_cert_info, 
     EncodeHash(pb_cert_info->mutable_hash(), cert_hash);
   }
 
-  if (common_name) {
-    EncodeString(pb_cert_info->mutable_common_name(), common_name);
-  }
+  ENCODE_NSSTRING(pb_cert_info->mutable_common_name, common_name);
 }
 
 ::pbv1::Execution::Decision GetDecisionEnum(SNTEventState event_state) {
@@ -343,7 +346,7 @@ Protobuf::Protobuf(std::shared_ptr<EndpointSecurityAPI> esapi) : esapi_(std::mov
   ::pbv1::SantaMessage *santa_msg = Arena::CreateMessage<::pbv1::SantaMessage>(&arena_);
 
   if (EnabledMachineID()) {
-    EncodeString(santa_msg->mutable_machine_id(), MachineID());
+    ENCODE_STRING_VIEW(santa_msg->mutable_machine_id, MachineID());
   }
   EncodeTimestamp(santa_msg->mutable_event_time(), event_time);
   EncodeTimestamp(santa_msg->mutable_processed_time(), processed_time);
@@ -480,11 +483,11 @@ std::vector<uint8_t> Protobuf::SerializeMessage(const EnrichedExec &msg) {
     EncodeCertificateInfo(pb_exec->mutable_certificate_info(), cd.certSHA256, cd.certCommonName);
   }
 
-  EncodeString(pb_exec->mutable_explain(), cd.decisionExtra);
-  EncodeString(pb_exec->mutable_quarantine_url(), cd.quarantineURL);
+  ENCODE_NSSTRING(pb_exec->mutable_explain, cd.decisionExtra);
+  ENCODE_NSSTRING(pb_exec->mutable_quarantine_url, cd.quarantineURL);
 
   NSString *orig_path = Utilities::OriginalPathForTranslocation(msg.es_msg().event.exec.target);
-  EncodeString(pb_exec->mutable_original_path(), orig_path);
+  ENCODE_NSSTRING(pb_exec->mutable_original_path, orig_path);
 
   return FinalizeProto(santa_msg);
 }
@@ -582,10 +585,10 @@ std::vector<uint8_t> Protobuf::SerializeBundleHashingEvent(SNTStoredEvent *event
 
   EncodeHash(pb_bundle->mutable_file_hash(), event.fileSHA256);
   EncodeHash(pb_bundle->mutable_bundle_hash(), event.fileBundleHash);
-  EncodeString(pb_bundle->mutable_bundle_name(), NonNull(event.fileBundleName));
-  EncodeString(pb_bundle->mutable_bundle_id(), NonNull(event.fileBundleID));
-  EncodeString(pb_bundle->mutable_bundle_path(), NonNull(event.fileBundlePath));
-  EncodeString(pb_bundle->mutable_path(), NonNull(event.filePath));
+  ENCODE_NSSTRING(pb_bundle->mutable_bundle_name, event.fileBundleName);
+  ENCODE_NSSTRING(pb_bundle->mutable_bundle_id, event.fileBundleID);
+  ENCODE_NSSTRING(pb_bundle->mutable_bundle_path, event.fileBundlePath);
+  ENCODE_NSSTRING(pb_bundle->mutable_path, event.filePath);
 
   return FinalizeProto(santa_msg);
 }
@@ -605,14 +608,14 @@ static void EncodeDisk(::pbv1::Disk *pb_disk, ::pbv1::Disk_Action action, NSDict
     stringWithFormat:@"%@ %@", NonNull(props[@"DADeviceVendor"]), NonNull(props[@"DADeviceModel"])];
   model = [model stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
 
-  EncodeString(pb_disk->mutable_mount(), [props[@"DAVolumePath"] path]);
-  EncodeString(pb_disk->mutable_volume(), props[@"DAVolumeName"]);
-  EncodeString(pb_disk->mutable_bsd_name(), props[@"DAMediaBSDName"]);
-  EncodeString(pb_disk->mutable_fs(), props[@"DAVolumeKind"]);
-  EncodeString(pb_disk->mutable_model(), model);
-  EncodeString(pb_disk->mutable_serial(), serial);
-  EncodeString(pb_disk->mutable_bus(), props[@"DADeviceProtocol"]);
-  EncodeString(pb_disk->mutable_dmg_path(), dmg_path);
+  ENCODE_NSSTRING(pb_disk->mutable_mount, [props[@"DAVolumePath"] path]);
+  ENCODE_NSSTRING(pb_disk->mutable_volume, props[@"DAVolumeName"]);
+  ENCODE_NSSTRING(pb_disk->mutable_bsd_name, props[@"DAMediaBSDName"]);
+  ENCODE_NSSTRING(pb_disk->mutable_fs, props[@"DAVolumeKind"]);
+  ENCODE_NSSTRING(pb_disk->mutable_model, model);
+  ENCODE_NSSTRING(pb_disk->mutable_serial, serial);
+  ENCODE_NSSTRING(pb_disk->mutable_bus, props[@"DADeviceProtocol"]);
+  ENCODE_NSSTRING(pb_disk->mutable_dmg_path, dmg_path);
 
   if (props[@"DAAppearanceTime"]) {
     // Note: `DAAppearanceTime` is set via `CFAbsoluteTimeGetCurrent`, which uses the defined

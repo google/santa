@@ -30,6 +30,8 @@ namespace santa::santad::logs::endpoint_security::serializers {
 
 class Protobuf : public Serializer {
  public:
+  using Serializer::SerializeMessage;
+
   static std::shared_ptr<Protobuf> Create(
     std::shared_ptr<santa::santad::event_providers::endpoint_security::EndpointSecurityAPI> esapi);
 

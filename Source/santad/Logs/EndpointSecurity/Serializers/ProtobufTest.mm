@@ -199,16 +199,25 @@ void SerializeAndCheck(es_event_type_t eventType,
 
     messageSetup(mockESApi, &esMsg);
 
-    std::shared_ptr<Serializer> bs = Protobuf::Create(mockESApi);
+    std::shared_ptr<Protobuf> bs = Protobuf::Create(mockESApi);
     std::shared_ptr<EnrichedMessage> enrichedMsg = Enricher().Enrich(Message(mockESApi, &esMsg));
 
     std::vector<uint8_t> vec = bs->SerializeMessage(enrichedMsg);
-    std::string protoStr(vec.begin(), vec.end());
 
-    ::pbv1::SantaMessage santaMsg;
-    XCTAssertTrue(santaMsg.ParseFromString(protoStr));
+    // The proto serializer never returns data. Consumers must call `Drain`.
+    XCTAssertEqual(0, vec.size());
 
-    CheckProto(santaMsg, enrichedMsg);
+    std::string protoStr;
+    bs->Drain(&protoStr, 0);
+    XCTAssertNotEqual(0, protoStr.size());
+
+    ::pbv1::SantaMessageBatch santaMsgBatch;
+    XCTAssertTrue(santaMsgBatch.ParseFromString(protoStr));
+
+    // Should only be 1 batched message
+    XCTAssertEqual(1, santaMsgBatch.messages_size());
+
+    CheckProto(santaMsgBatch.messages(0), enrichedMsg);
   }
 
   XCTBubbleMockVerifyAndClearExpectations(mockESApi.get());
@@ -511,16 +520,25 @@ void SerializeAndCheck(es_event_type_t eventType,
 
     mockESApi->SetExpectationsRetainReleaseMessage(&esMsg);
 
-    std::shared_ptr<Serializer> bs = Protobuf::Create(mockESApi);
+    std::shared_ptr<Protobuf> bs = Protobuf::Create(mockESApi);
 
     std::vector<uint8_t> vec = bs->SerializeAllowlist(Message(mockESApi, &esMsg), "hash_value");
-    std::string protoStr(vec.begin(), vec.end());
 
-    ::pbv1::SantaMessage santaMsg;
-    XCTAssertTrue(santaMsg.ParseFromString(protoStr));
+    // The proto serializer never returns data. Consumers must call `Drain`.
+    XCTAssertEqual(0, vec.size());
+
+    std::string protoStr;
+    bs->Drain(&protoStr, 0);
+    XCTAssertNotEqual(0, protoStr.size());
+
+    ::pbv1::SantaMessageBatch santaMsgBatch;
+    XCTAssertTrue(santaMsgBatch.ParseFromString(protoStr));
+
+    // Should only be 1 batched message
+    XCTAssertEqual(1, santaMsgBatch.messages_size());
 
     NSString *wantData = LoadTestJson(@"allowlist.json", esMsg.version);
-    std::string got = ConvertMessageToJsonString(santaMsg);
+    std::string got = ConvertMessageToJsonString(santaMsgBatch.messages(0));
 
     XCTAssertEqualObjects([NSString stringWithUTF8String:got.c_str()], wantData);
   }
@@ -538,11 +556,24 @@ void SerializeAndCheck(es_event_type_t eventType,
   se.fileBundlePath = @"file_bundle_path";
   se.filePath = @"file_path";
 
-  std::vector<uint8_t> vec = Protobuf::Create(nullptr)->SerializeBundleHashingEvent(se);
-  std::string protoStr(vec.begin(), vec.end());
+  std::shared_ptr<Protobuf> bs = Protobuf::Create(nullptr);
+  std::vector<uint8_t> vec = bs->SerializeBundleHashingEvent(se);
 
-  ::pbv1::SantaMessage santaMsg;
-  XCTAssertTrue(santaMsg.ParseFromString(protoStr));
+  // The proto serializer never returns data. Consumers must call `Drain`.
+  XCTAssertEqual(0, vec.size());
+
+  std::string protoStr;
+  bs->Drain(&protoStr, 0);
+  XCTAssertNotEqual(0, protoStr.size());
+
+  ::pbv1::SantaMessageBatch santaMsgBatch;
+  XCTAssertTrue(santaMsgBatch.ParseFromString(protoStr));
+
+  // Should only be 1 batched message
+  XCTAssertEqual(1, santaMsgBatch.messages_size());
+
+  const ::pbv1::SantaMessage &santaMsg = santaMsgBatch.messages(0);
+
   XCTAssertTrue(santaMsg.has_bundle());
 
   const ::pbv1::Bundle &pbBundle = santaMsg.bundle();
@@ -556,7 +587,7 @@ void SerializeAndCheck(es_event_type_t eventType,
   XCTAssertEqual(pbHash.type(), ::pbv1::Hash::HASH_ALGO_SHA256);
 
   XCTAssertEqualObjects(@(pbBundle.bundle_name().c_str()), se.fileBundleName);
-  XCTAssertEqualObjects(@(pbBundle.bundle_id().c_str()), @"");
+  XCTAssertFalse(pbBundle.has_bundle_id());
   XCTAssertEqualObjects(@(pbBundle.bundle_path().c_str()), se.fileBundlePath);
   XCTAssertEqualObjects(@(pbBundle.path().c_str()), se.filePath);
 }
@@ -573,11 +604,24 @@ void SerializeAndCheck(es_event_type_t eventType,
     @"DADeviceProtocol" : @"usb",
   };
 
-  std::vector<uint8_t> vec = Protobuf::Create(nullptr)->SerializeDiskAppeared(props);
-  std::string protoStr(vec.begin(), vec.end());
+  std::shared_ptr<Protobuf> bs = Protobuf::Create(nullptr);
+  std::vector<uint8_t> vec = bs->SerializeDiskAppeared(props);
 
-  ::pbv1::SantaMessage santaMsg;
-  XCTAssertTrue(santaMsg.ParseFromString(protoStr));
+  // The proto serializer never returns data. Consumers must call `Drain`.
+  XCTAssertEqual(0, vec.size());
+
+  std::string protoStr;
+  bs->Drain(&protoStr, 0);
+  XCTAssertNotEqual(0, protoStr.size());
+
+  ::pbv1::SantaMessageBatch santaMsgBatch;
+  XCTAssertTrue(santaMsgBatch.ParseFromString(protoStr));
+
+  // Should only be 1 batched message
+  XCTAssertEqual(1, santaMsgBatch.messages_size());
+
+  const ::pbv1::SantaMessage &santaMsg = santaMsgBatch.messages(0);
+
   XCTAssertTrue(santaMsg.has_disk());
 
   const ::pbv1::Disk &pbDisk = santaMsg.disk();
@@ -585,13 +629,13 @@ void SerializeAndCheck(es_event_type_t eventType,
   XCTAssertEqual(pbDisk.action(), ::pbv1::Disk::ACTION_APPEARED);
 
   XCTAssertEqualObjects(@(pbDisk.mount().c_str()), [props[@"DAVolumePath"] path]);
-  XCTAssertEqualObjects(@(pbDisk.volume().c_str()), @"");
+  XCTAssertFalse(pbDisk.has_volume());
   XCTAssertEqualObjects(@(pbDisk.bsd_name().c_str()), props[@"DAMediaBSDName"]);
   XCTAssertEqualObjects(@(pbDisk.fs().c_str()), props[@"DAVolumeKind"]);
   XCTAssertEqualObjects(@(pbDisk.model().c_str()), @"vendor model");
-  XCTAssertEqualObjects(@(pbDisk.serial().c_str()), @"");
+  XCTAssertFalse(pbDisk.has_serial());
   XCTAssertEqualObjects(@(pbDisk.bus().c_str()), props[@"DADeviceProtocol"]);
-  XCTAssertEqualObjects(@(pbDisk.dmg_path().c_str()), @"");
+  XCTAssertFalse(pbDisk.has_dmg_path());
 
   // Note: `DAAppearanceTime` is treated as a reference time since 2001 and is converted to a
   // reference time of 1970. Skip the calculation in the test here, just ensure the value is set.
@@ -610,11 +654,24 @@ void SerializeAndCheck(es_event_type_t eventType,
     @"DADeviceProtocol" : @"usb",
   };
 
-  std::vector<uint8_t> vec = Protobuf::Create(nullptr)->SerializeDiskDisappeared(props);
-  std::string protoStr(vec.begin(), vec.end());
+  std::shared_ptr<Protobuf> bs = Protobuf::Create(nullptr);
+  std::vector<uint8_t> vec = bs->SerializeDiskDisappeared(props);
 
-  ::pbv1::SantaMessage santaMsg;
-  XCTAssertTrue(santaMsg.ParseFromString(protoStr));
+  // The proto serializer never returns data. Consumers must call `Drain`.
+  XCTAssertEqual(0, vec.size());
+
+  std::string protoStr;
+  bs->Drain(&protoStr, 0);
+  XCTAssertNotEqual(0, protoStr.size());
+
+  ::pbv1::SantaMessageBatch santaMsgBatch;
+  XCTAssertTrue(santaMsgBatch.ParseFromString(protoStr));
+
+  // Should only be 1 batched message
+  XCTAssertEqual(1, santaMsgBatch.messages_size());
+
+  const ::pbv1::SantaMessage &santaMsg = santaMsgBatch.messages(0);
+
   XCTAssertTrue(santaMsg.has_disk());
 
   const ::pbv1::Disk &pbDisk = santaMsg.disk();
@@ -622,13 +679,13 @@ void SerializeAndCheck(es_event_type_t eventType,
   XCTAssertEqual(pbDisk.action(), ::pbv1::Disk::ACTION_DISAPPEARED);
 
   XCTAssertEqualObjects(@(pbDisk.mount().c_str()), [props[@"DAVolumePath"] path]);
-  XCTAssertEqualObjects(@(pbDisk.volume().c_str()), @"");
+  XCTAssertFalse(pbDisk.has_volume());
   XCTAssertEqualObjects(@(pbDisk.bsd_name().c_str()), props[@"DAMediaBSDName"]);
   XCTAssertEqualObjects(@(pbDisk.fs().c_str()), props[@"DAVolumeKind"]);
   XCTAssertEqualObjects(@(pbDisk.model().c_str()), @"vendor model");
-  XCTAssertEqualObjects(@(pbDisk.serial().c_str()), @"");
+  XCTAssertFalse(pbDisk.has_serial());
   XCTAssertEqualObjects(@(pbDisk.bus().c_str()), props[@"DADeviceProtocol"]);
-  XCTAssertEqualObjects(@(pbDisk.dmg_path().c_str()), @"");
+  XCTAssertFalse(pbDisk.has_dmg_path());
 
   // Note: `DAAppearanceTime` is treated as a reference time since 2001 and is converted to a
   // reference time of 1970. Skip the calculation in the test here, just ensure the value is set.
