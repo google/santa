@@ -38,13 +38,19 @@ std::shared_ptr<Spool> Spool::Create(std::string_view base_dir, size_t max_spool
   return spool_writer;
 }
 
+// Note: The `log_batch_writer_` has the batch size set to SIZE_T_MAX. This is because
+// the decision on whether or not to flush is controlled by the Spool class here based
+// on a "size of bytes" threshold, not "count of records" threshold used by the
+// FsSpoolLogBatchWriter. As such, calling `FsSpoolLogBatchWriter::WriteMessage`
+// should never flush.
 Spool::Spool(dispatch_queue_t q, dispatch_source_t timer_source, std::string_view base_dir,
-             size_t max_spool_disk_size, size_t max_spool_batch_size,
-             void (^write_complete_f)(void), void (^flush_task_complete_f)(void))
+             size_t max_spool_disk_size, size_t max_spool_file_size, void (^write_complete_f)(void),
+             void (^flush_task_complete_f)(void))
     : q_(q),
       timer_source_(timer_source),
       spool_writer_(absl::string_view(base_dir.data(), base_dir.length()), max_spool_disk_size),
-      log_batch_writer_(&spool_writer_, max_spool_batch_size),
+      log_batch_writer_(&spool_writer_, SIZE_T_MAX),
+      spool_file_size_threshold_(max_spool_file_size),
       write_complete_f_(write_complete_f),
       flush_task_complete_f_(flush_task_complete_f) {
   type_url_ = kTypeGoogleApisComPrefix + ::santa::pb::v1::SantaMessage::descriptor()->full_name();
@@ -87,7 +93,12 @@ void Spool::BeginFlushTask() {
 }
 
 bool Spool::Flush() {
-  return log_batch_writer_.Flush().ok();
+  if (log_batch_writer_.Flush().ok()) {
+    accumulated_bytes_ = 0;
+    return true;
+  } else {
+    return false;
+  }
 }
 
 void Spool::Write(std::vector<uint8_t> &&bytes) {
@@ -108,13 +119,18 @@ void Spool::Write(std::vector<uint8_t> &&bytes) {
 #endif
     any.set_type_url(type_url_);
 
-    auto status = log_batch_writer_.WriteMessage(any);
+    auto status = shared_this->log_batch_writer_.WriteMessage(any);
     if (!status.ok()) {
       LOGE(@"ProtoEventLogger::LogProto failed with: %s", status.ToString().c_str());
     }
 
-    if (write_complete_f_) {
-      write_complete_f_();
+    shared_this->accumulated_bytes_ += moved_bytes.size();
+    if (shared_this->accumulated_bytes_ >= shared_this->spool_file_size_threshold_) {
+      shared_this->Flush();
+    }
+
+    if (shared_this->write_complete_f_) {
+      shared_this->write_complete_f_();
     }
   });
 }

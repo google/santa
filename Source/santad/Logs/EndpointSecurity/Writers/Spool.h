@@ -37,10 +37,10 @@ class Spool : public Writer, public std::enable_shared_from_this<Spool> {
  public:
   // Factory
   static std::shared_ptr<Spool> Create(std::string_view base_dir, size_t max_spool_disk_size,
-                                       size_t max_spool_batch_size, uint64_t flush_timeout_ms);
+                                       size_t max_spool_file_size, uint64_t flush_timeout_ms);
 
   Spool(dispatch_queue_t q, dispatch_source_t timer_source, std::string_view base_dir,
-        size_t max_spool_disk_size, size_t max_spool_batch_size,
+        size_t max_spool_disk_size, size_t max_spool_file_size,
         void (^write_complete_f)(void) = nullptr, void (^flush_task_complete_f)(void) = nullptr);
 
   ~Spool();
@@ -58,10 +58,13 @@ class Spool : public Writer, public std::enable_shared_from_this<Spool> {
   dispatch_source_t timer_source_ = NULL;
   ::fsspool::FsSpoolWriter spool_writer_;
   ::fsspool::FsSpoolLogBatchWriter log_batch_writer_;
+  size_t spool_file_size_threshold_;
   std::string type_url_;
   bool flush_task_started_ = false;
   void (^write_complete_f_)(void);
   void (^flush_task_complete_f_)(void);
+
+  size_t accumulated_bytes_ = 0;
 };
 
 }  // namespace santa::santad::logs::endpoint_security::writers
