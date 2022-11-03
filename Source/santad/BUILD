@@ -841,6 +841,7 @@ santa_unit_test(
         "//Source/common:TestUtils",
         "//Source/common:santa_cc_proto_library_wrapper",
         "@OCMock",
+        "@com_google_absl//absl/synchronization",
         "@com_google_googletest//:gtest",
     ],
 )
@@ -888,11 +889,16 @@ santa_unit_test(
 santa_unit_test(
     name = "EndpointSecurityWriterSpoolTest",
     srcs = ["Logs/EndpointSecurity/Writers/SpoolTest.mm"],
+    sdk_dylibs = [
+        "EndpointSecurity",
+    ],
     deps = [
+        ":EndpointSecuritySerializerProtobuf",
         ":EndpointSecurityWriterSpool",
         "//Source/common:TestUtils",
         "//Source/santad/Logs/EndpointSecurity/Writers/FSSpool:fsspool",
         "//Source/santad/Logs/EndpointSecurity/Writers/FSSpool:fsspool_log_batch_writer",
+        "@com_google_googletest//:gtest",
     ],
 )
 

@@ -26,6 +26,11 @@
 #include "Source/santad/Logs/EndpointSecurity/Serializers/Serializer.h"
 #include "absl/synchronization/mutex.h"
 
+// Forward declarations
+namespace santa::santad::logs::endpoint_security::serializers {
+class ProtobufPeer;
+}
+
 namespace santa::santad::logs::endpoint_security::serializers {
 
 class Protobuf : public Serializer {
@@ -64,7 +69,10 @@ class Protobuf : public Serializer {
   std::vector<uint8_t> SerializeDiskAppeared(NSDictionary *) override;
   std::vector<uint8_t> SerializeDiskDisappeared(NSDictionary *) override;
 
-  bool Drain(std::string *output, size_t threshold);
+  virtual bool Drain(std::string *output, size_t threshold);
+
+  // Peer class for testing
+  friend class santa::santad::logs::endpoint_security::serializers::ProtobufPeer;
 
  private:
   ::santa::pb::v1::SantaMessage *CreateDefaultProto();

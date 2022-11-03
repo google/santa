@@ -18,6 +18,7 @@
 #import <OCMock/OCMock.h>
 #import <XCTest/XCTest.h>
 #include <gmock/gmock.h>
+#include <google/protobuf/util/json_util.h>
 #include <gtest/gtest.h>
 #include <sys/proc_info.h>
 #include <sys/signal.h>
@@ -26,7 +27,7 @@
 #include <uuid/uuid.h>
 #include <cstring>
 
-#include <google/protobuf/util/json_util.h>
+#include <vector>
 
 #import "Source/common/SNTCachedDecision.h"
 #include "Source/common/SNTCommonEnums.h"
@@ -41,6 +42,7 @@
 #include "Source/santad/Logs/EndpointSecurity/Serializers/Protobuf.h"
 #include "Source/santad/Logs/EndpointSecurity/Serializers/Serializer.h"
 #import "Source/santad/SNTDecisionCache.h"
+#include "absl/synchronization/mutex.h"
 #include "google/protobuf/any.pb.h"
 #include "google/protobuf/timestamp.pb.h"
 
@@ -61,6 +63,20 @@ extern ::pbv1::Execution::Decision GetDecisionEnum(SNTEventState event_state);
 extern ::pbv1::Execution::Reason GetReasonEnum(SNTEventState event_state);
 extern ::pbv1::Execution::Mode GetModeEnum(SNTClientMode mode);
 extern ::pbv1::FileDescriptor::FDType GetFileDescriptorType(uint32_t fdtype);
+
+class ProtobufPeer : public Protobuf {
+ public:
+  // Make constructors visible
+  using Protobuf::Protobuf;
+
+  std::vector<uint8_t> AddTestProtoToBatch() { return FinalizeProto(CreateDefaultProto()); }
+
+  size_t BatchSize() {
+    absl::MutexLock lock(&batch_lock_);
+    return bytes_batched_;
+  }
+};
+
 }  // namespace santa::santad::logs::endpoint_security::serializers
 
 using santa::santad::logs::endpoint_security::serializers::EncodeExitStatus;
@@ -68,6 +84,7 @@ using santa::santad::logs::endpoint_security::serializers::GetDecisionEnum;
 using santa::santad::logs::endpoint_security::serializers::GetFileDescriptorType;
 using santa::santad::logs::endpoint_security::serializers::GetModeEnum;
 using santa::santad::logs::endpoint_security::serializers::GetReasonEnum;
+using santa::santad::logs::endpoint_security::serializers::ProtobufPeer;
 
 JsonPrintOptions DefaultJsonPrintOptions() {
   JsonPrintOptions options;
@@ -544,6 +561,28 @@ void SerializeAndCheck(es_event_type_t eventType,
   }
 
   XCTBubbleMockVerifyAndClearExpectations(mockESApi.get());
+}
+
+- (void)testDrain {
+  auto protobuf = std::make_shared<ProtobufPeer>(nullptr);
+
+  std::vector<uint8_t> vec = protobuf->AddTestProtoToBatch();
+  XCTAssertNotEqual(0, protobuf->BatchSize());
+
+  std::string output;
+
+  // Threshold above batch size shouldn't successully drain
+  XCTAssertFalse(protobuf->Drain(&output, 99999));
+
+  // Drain the current contents
+  XCTAssertTrue(protobuf->Drain(&output, 0));
+
+  // The string should be populated with data
+  XCTAssertNotEqual(0, output.length());
+
+  // Batch size should go to 0 after last drain. Attempting a second drain
+  // without any data shouldn't be successful.
+  XCTAssertFalse(protobuf->Drain(&output, 0));
 }
 
 - (void)testSerializeBundleHashingEvent {

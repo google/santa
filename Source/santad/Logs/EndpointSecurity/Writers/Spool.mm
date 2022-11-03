@@ -107,9 +107,7 @@ void Spool::BeginPeriodicTask() {
 
     shared_writer->WriteFromDataSource(0);
 
-    // Only flush if batch size is larger than 1, otherwise flushes
-    // happen on every write.
-    if (shared_writer->max_spool_batch_size_ > 1 && !shared_writer->Flush()) {
+    if (!shared_writer->Flush()) {
       LOGE(@"Spool writer: periodic flush failed.");
     }
 

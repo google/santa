@@ -15,10 +15,15 @@
 #import <Foundation/Foundation.h>
 #import <XCTest/XCTest.h>
 #include <dispatch/dispatch.h>
+#include <gmock/gmock.h>
+#include <gtest/gtest.h>
 #include <unistd.h>
+
 #include <memory>
+#include <vector>
 
 #include "Source/common/TestUtils.h"
+#include "Source/santad/Logs/EndpointSecurity/Serializers/Protobuf.h"
 #include "Source/santad/Logs/EndpointSecurity/Writers/FSSpool/fsspool.h"
 #include "Source/santad/Logs/EndpointSecurity/Writers/FSSpool/fsspool_log_batch_writer.h"
 #include "Source/santad/Logs/EndpointSecurity/Writers/Spool.h"
@@ -31,11 +36,23 @@ class SpoolPeer : public Spool {
   using Spool::Spool;
 
   std::string GetTypeUrl() { return type_url_; }
+
+  void StopPeriodicTask() {
+    dispatch_suspend(timer_source_);
+    flush_task_started_ = false;
+  }
 };
 
 }  // namespace santa::santad::logs::endpoint_security::writers
 
+using santa::santad::logs::endpoint_security::serializers::Protobuf;
 using santa::santad::logs::endpoint_security::writers::SpoolPeer;
+
+class MockProtobuf : public Protobuf {
+ public:
+  using Protobuf::Protobuf;
+  MOCK_METHOD(bool, Drain, (std::string * output, size_t threshold));
+};
 
 @interface SpoolTest : XCTestCase
 @property dispatch_queue_t q;
@@ -75,27 +92,43 @@ using santa::santad::logs::endpoint_security::writers::SpoolPeer;
 
 - (void)testTypeUrl {
   // Ensure the manually created type url isn't modified
-  auto spool =
-    std::make_shared<SpoolPeer>(self.q, self.timer, [self.baseDir UTF8String], 10240, 1024);
-  std::string wantTypeUrl("type.googleapis.com/santa.pb.v1.SantaMessage");
+  auto spool = std::make_shared<SpoolPeer>(nullptr, self.q, self.timer, [self.baseDir UTF8String],
+                                           10240, 1024, 1);
+  std::string wantTypeUrl("type.googleapis.com/santa.pb.v1.SantaMessageBatch");
   XCTAssertCppStringEqual(spool->GetTypeUrl(), wantTypeUrl);
 }
 
 - (void)testWrite {
-  const size_t writeSize = 50;
   const uint64 periodicFlushMS = 400;
+  const size_t max_file_size = 256;
   NSError *err = nil;
+
+  bool (^DrainBlock)(std::string *, size_t) = ^bool(std::string *output, size_t threshold) {
+    if (threshold > 0) {
+      output->append(max_file_size, 'A');
+      return true;
+    } else {
+      return false;
+    }
+  };
+
+  // The mock is expected tp be called twice via the `Write` method and twice
+  // via the periodic task. These calls are distinguished by the threshold arg.
+  auto mockProtobuf = std::make_shared<MockProtobuf>(nullptr);
+  EXPECT_CALL(*mockProtobuf, Drain(testing::_, max_file_size)).Times(2).WillRepeatedly(DrainBlock);
+  EXPECT_CALL(*mockProtobuf, Drain(testing::_, 0)).Times(2).WillRepeatedly(DrainBlock);
 
   dispatch_semaphore_t semaWrite = dispatch_semaphore_create(0);
   dispatch_semaphore_t semaFlush = dispatch_semaphore_create(0);
   __block int flushCount = 0;
 
   auto spool = std::make_shared<SpoolPeer>(
-    self.q, self.timer, [self.baseDir UTF8String], 10240, 1024,
+    mockProtobuf, self.q, self.timer, [self.baseDir UTF8String], 10240, max_file_size, 1,
     ^{
       dispatch_semaphore_signal(semaWrite);
     },
     ^{
+      printf("FLUSH FIRED\n");
       flushCount++;
       if (flushCount <= 2) {
         // The first flush is the initial fire.
@@ -109,11 +142,9 @@ using santa::santad::logs::endpoint_security::writers::SpoolPeer;
   dispatch_source_set_timer(self.timer, dispatch_time(DISPATCH_TIME_NOW, 0),
                             NSEC_PER_MSEC * periodicFlushMS, 0);
 
-  spool->Write(std::vector<uint8_t>(writeSize, 'A'));
+  spool->Write(std::vector<uint8_t>{});
 
-  XCTAssertEqual(
-    0, dispatch_semaphore_wait(semaWrite, dispatch_time(DISPATCH_TIME_NOW, 5 * NSEC_PER_SEC)),
-    "Second write didn't compelte within expected window");
+  XCTAssertSemaTrue(semaWrite, 5, "First write didn't complete within expected window");
 
   // Sleep for a short time. Nothing should happen, but want to help ensure that if somehow
   // if somehow timers were active that would be caught and fail the test.
@@ -129,25 +160,20 @@ using santa::santad::logs::endpoint_security::writers::SpoolPeer;
   XCTAssertEqual([[self.fileMgr contentsOfDirectoryAtPath:self.spoolDir error:&err] count], 1);
 
   // Start the periodic flush task
-  spool->BeginFlushTask();
+  spool->BeginPeriodicTask();
 
-  XCTAssertEqual(
-    0, dispatch_semaphore_wait(semaFlush, dispatch_time(DISPATCH_TIME_NOW, 5 * NSEC_PER_SEC)),
-    "Initial flush task firing didn't occur within expected window");
+  XCTAssertSemaTrue(semaFlush, 5, "Initial flush task firing didn't occur within expected window");
 
   // Ensure no growth in the amount of data
   XCTAssertEqual([[self.fileMgr contentsOfDirectoryAtPath:self.spoolDir error:&err] count], 1);
 
-  // Write a second log entry and begin the period
-  spool->Write(std::vector<uint8_t>(writeSize, 'B'));
+  // Write a second log entry
+  spool->Write(std::vector<uint8_t>{});
 
-  XCTAssertEqual(
-    0, dispatch_semaphore_wait(semaWrite, dispatch_time(DISPATCH_TIME_NOW, 5 * NSEC_PER_SEC)),
-    "Second write didn't compelte within expected window");
+  XCTAssertSemaTrue(semaWrite, 5, "Second write didn't compelete within expected window");
+  XCTAssertSemaTrue(semaFlush, 5, "Second flush task firing didn't occur within expected window");
 
-  XCTAssertEqual(
-    0, dispatch_semaphore_wait(semaFlush, dispatch_time(DISPATCH_TIME_NOW, 5 * NSEC_PER_SEC)),
-    "Initial flush task firing didn't occur within expected window");
+  spool->StopPeriodicTask();
 
   // Ensure the new log entry appears
   XCTAssertEqual([[self.fileMgr contentsOfDirectoryAtPath:self.spoolDir error:&err] count], 2);
