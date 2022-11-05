@@ -43,6 +43,7 @@ void SantadMain(
     SNTCompilerController* compiler_controller,
     SNTNotificationQueue* notifier_queue, SNTSyncdQueue* syncd_queue,
     SNTExecutionController* exec_controller,
-    std::shared_ptr<santa::common::PrefixTree<santa::common::Unit>> prefix_tree);
+    std::shared_ptr<santa::common::PrefixTree<santa::common::Unit>>
+        prefix_tree);
 
 #endif

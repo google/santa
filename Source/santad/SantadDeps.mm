@@ -93,7 +93,7 @@ std::unique_ptr<SantadDeps> SantadDeps::Create(SNTConfigurator *configurator,
   NSArray<NSString *> *prefix_filters =
     [@[ @"/.", @"/dev/" ] arrayByAddingObjectsFromArray:[configurator fileChangesPrefixFilters]];
   for (NSString *filter in prefix_filters) {
-    prefix_tree->InsertPrefix([filter fileSystemRepresentation], Unit{});
+    prefix_tree->InsertPrefix([filter fileSystemRepresentation], Unit {});
   }
 
   std::shared_ptr<EndpointSecurityAPI> esapi = std::make_shared<EndpointSecurityAPI>();
