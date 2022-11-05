@@ -168,6 +168,11 @@ objc_library(
 )
 
 objc_library(
+    name = "Unit",
+    hdrs = ["Unit.h"],
+)
+
+objc_library(
     name = "SNTRule",
     srcs = ["SNTRule.m"],
     hdrs = ["SNTRule.h"],

@@ -20,9 +20,10 @@
 
 #include <memory>
 
+#include "Source/common/PrefixTree.h"
 #include "Source/common/SNTConfigurator.h"
 #import "Source/common/SNTMetricSet.h"
-#include "Source/common/SNTPrefixTree.h"
+#include "Source/common/Unit.h"
 #include "Source/santad/EventProviders/AuthResultCache.h"
 #include "Source/santad/EventProviders/EndpointSecurity/EndpointSecurityAPI.h"
 #include "Source/santad/EventProviders/EndpointSecurity/Enricher.h"
@@ -50,7 +51,7 @@ class SantadDeps {
       SNTCompilerController *compiler_controller,
       SNTNotificationQueue *notifier_queue, SNTSyncdQueue *syncd_queue,
       SNTExecutionController *exec_controller,
-      std::shared_ptr<SNTPrefixTree> prefix_tree);
+      std::shared_ptr<santa::common::PrefixTree<santa::common::Unit>> prefix_tree);
 
   std::shared_ptr<santa::santad::event_providers::AuthResultCache>
   AuthResultCache();
@@ -66,7 +67,7 @@ class SantadDeps {
   SNTNotificationQueue *NotifierQueue();
   SNTSyncdQueue *SyncdQueue();
   SNTExecutionController *ExecController();
-  std::shared_ptr<SNTPrefixTree> PrefixTree();
+  std::shared_ptr<santa::common::PrefixTree<santa::common::Unit>> PrefixTree();
 
  private:
   std::shared_ptr<
@@ -84,7 +85,7 @@ class SantadDeps {
   SNTNotificationQueue *notifier_queue_;
   SNTSyncdQueue *syncd_queue_;
   SNTExecutionController *exec_controller_;
-  std::shared_ptr<SNTPrefixTree> prefix_tree_;
+  std::shared_ptr<santa::common::PrefixTree<santa::common::Unit>> prefix_tree_;
 };
 
 }  // namespace santa::santad

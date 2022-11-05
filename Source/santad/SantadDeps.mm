@@ -23,6 +23,8 @@
 #include "Source/santad/EventProviders/EndpointSecurity/EndpointSecurityAPI.h"
 #import "Source/santad/SNTDatabaseController.h"
 
+using santa::common::PrefixTree;
+using santa::common::Unit;
 using santa::santad::Metrics;
 using santa::santad::event_providers::AuthResultCache;
 using santa::santad::event_providers::endpoint_security::EndpointSecurityAPI;
@@ -85,13 +87,13 @@ std::unique_ptr<SantadDeps> SantadDeps::Create(SNTConfigurator *configurator,
     exit(EXIT_FAILURE);
   }
 
-  std::shared_ptr<SNTPrefixTree> prefix_tree = std::make_shared<SNTPrefixTree>();
+  std::shared_ptr<::PrefixTree<Unit>> prefix_tree = std::make_shared<::PrefixTree<Unit>>();
 
   // TODO(bur): Add KVO handling for fileChangesPrefixFilters.
   NSArray<NSString *> *prefix_filters =
     [@[ @"/.", @"/dev/" ] arrayByAddingObjectsFromArray:[configurator fileChangesPrefixFilters]];
   for (NSString *filter in prefix_filters) {
-    prefix_tree->AddPrefix([filter fileSystemRepresentation]);
+    prefix_tree->InsertPrefix([filter fileSystemRepresentation], Unit{});
   }
 
   std::shared_ptr<EndpointSecurityAPI> esapi = std::make_shared<EndpointSecurityAPI>();
@@ -130,7 +132,7 @@ SantadDeps::SantadDeps(std::shared_ptr<EndpointSecurityAPI> esapi,
                        SNTCompilerController *compiler_controller,
                        SNTNotificationQueue *notifier_queue, SNTSyncdQueue *syncd_queue,
                        SNTExecutionController *exec_controller,
-                       std::shared_ptr<SNTPrefixTree> prefix_tree)
+                       std::shared_ptr<::PrefixTree<Unit>> prefix_tree)
     : esapi_(std::move(esapi)),
       logger_(std::move(logger)),
       metrics_(std::move(metrics)),
@@ -182,7 +184,7 @@ SNTExecutionController *SantadDeps::ExecController() {
   return exec_controller_;
 }
 
-std::shared_ptr<SNTPrefixTree> SantadDeps::PrefixTree() {
+std::shared_ptr<PrefixTree<Unit>> SantadDeps::PrefixTree() {
   return prefix_tree_;
 }
 

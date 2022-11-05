@@ -17,7 +17,8 @@
 
 #import <MOLXPCConnection/MOLXPCConnection.h>
 
-#include "Source/common/SNTPrefixTree.h"
+#include "Source/common/PrefixTree.h"
+#include "Source/common/Unit.h"
 #include "Source/santad/EventProviders/AuthResultCache.h"
 #include "Source/santad/EventProviders/EndpointSecurity/EndpointSecurityAPI.h"
 #include "Source/santad/EventProviders/EndpointSecurity/Enricher.h"
@@ -42,6 +43,6 @@ void SantadMain(
     SNTCompilerController* compiler_controller,
     SNTNotificationQueue* notifier_queue, SNTSyncdQueue* syncd_queue,
     SNTExecutionController* exec_controller,
-    std::shared_ptr<SNTPrefixTree> prefix_tree);
+    std::shared_ptr<santa::common::PrefixTree<santa::common::Unit>> prefix_tree);
 
 #endif

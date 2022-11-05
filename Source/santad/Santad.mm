@@ -16,6 +16,7 @@
 
 #include <memory>
 
+#include "Source/common/PrefixTree.h"
 #import "Source/common/SNTCommonEnums.h"
 #import "Source/common/SNTConfigurator.h"
 #import "Source/common/SNTKVOManager.h"
@@ -32,6 +33,8 @@
 #include "Source/santad/Logs/EndpointSecurity/Logger.h"
 #include "Source/santad/SNTDaemonControlController.h"
 
+using santa::common::PrefixTree;
+using santa::common::Unit;
 using santa::santad::Metrics;
 using santa::santad::event_providers::AuthResultCache;
 using santa::santad::event_providers::FlushCacheMode;
@@ -67,7 +70,7 @@ void SantadMain(std::shared_ptr<EndpointSecurityAPI> esapi, std::shared_ptr<Logg
                 MOLXPCConnection *control_connection, SNTCompilerController *compiler_controller,
                 SNTNotificationQueue *notifier_queue, SNTSyncdQueue *syncd_queue,
                 SNTExecutionController *exec_controller,
-                std::shared_ptr<SNTPrefixTree> prefix_tree) {
+                std::shared_ptr<santa::common::PrefixTree<santa::common::Unit>> prefix_tree) {
   SNTConfigurator *configurator = [SNTConfigurator configurator];
 
   SNTDaemonControlController *dc =
