@@ -112,29 +112,29 @@ using santa::common::PrefixTree;
   const uint32_t maxDepth = 100;
   PrefixTree<int> tree(100);
 
-  XCTAssertEqual(tree.node_count_, 0);
+  XCTAssertEqual(tree.NodeCount(), 0);
 
   // Start with a small string
   XCTAssertTrue(tree.InsertPrefix("asdf", 0));
-  XCTAssertEqual(tree.node_count_, 4);
+  XCTAssertEqual(tree.NodeCount(), 4);
 
   // Add a couple more characters to the existing string
   XCTAssertTrue(tree.InsertPrefix("asdfgh", 0));
-  XCTAssertEqual(tree.node_count_, 6);
+  XCTAssertEqual(tree.NodeCount(), 6);
 
   // Inserting a string that exceeds max depth doesn't increase node count
   XCTAssertFalse(tree.InsertPrefix(std::string(maxDepth + 10, 'A').c_str(), 0));
-  XCTAssertEqual(tree.node_count_, 6);
+  XCTAssertEqual(tree.NodeCount(), 6);
 
   // Add a new string that is a prefix of an existing string
   // This should increment the count by one since a new terminal node exists
   XCTAssertTrue(tree.InsertPrefix("as", 0));
-  XCTAssertEqual(tree.node_count_, 7);
+  XCTAssertEqual(tree.NodeCount(), 7);
 
   // Re-inserting onto an existing node shouldn't modify the count
   tree.InsertLiteral("as", 0);
   tree.InsertPrefix("as", 0);
-  XCTAssertEqual(tree.node_count_, 7);
+  XCTAssertEqual(tree.NodeCount(), 7);
 }
 
 - (void)testReset {
@@ -142,19 +142,19 @@ using santa::common::PrefixTree;
   PrefixTree<int> tree;
 
   tree.Reset();
-  XCTAssertEqual(tree.node_count_, 0);
+  XCTAssertEqual(tree.NodeCount(), 0);
 
   XCTAssertTrue(tree.InsertPrefix("asdf", 0));
   XCTAssertTrue(tree.InsertPrefix("qwerty", 0));
 
   XCTAssertTrue(tree.HasPrefix("asdf"));
   XCTAssertTrue(tree.HasPrefix("qwerty"));
-  XCTAssertEqual(tree.node_count_, 10);
+  XCTAssertEqual(tree.NodeCount(), 10);
 
   tree.Reset();
   XCTAssertFalse(tree.HasPrefix("asdf"));
   XCTAssertFalse(tree.HasPrefix("qwerty"));
-  XCTAssertEqual(tree.node_count_, 0);
+  XCTAssertEqual(tree.NodeCount(), 0);
 }
 
 - (void)testComplexValues {
