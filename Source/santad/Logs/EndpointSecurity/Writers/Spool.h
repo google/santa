@@ -58,13 +58,18 @@ class Spool : public Writer, public std::enable_shared_from_this<Spool> {
   dispatch_source_t timer_source_ = NULL;
   ::fsspool::FsSpoolWriter spool_writer_;
   ::fsspool::FsSpoolLogBatchWriter log_batch_writer_;
-  size_t spool_file_size_threshold_;
+  const size_t spool_file_size_threshold_;
+  // Make a "leniency factor" of 20%. This will be used to allow some more
+  // records to accumulate in the event flushing fails for some reason.
+  const double spool_file_size_threshold_leniency_factor_ = 1.2;
+  const size_t spool_file_size_threshold_leniency_;
   std::string type_url_;
   bool flush_task_started_ = false;
   void (^write_complete_f_)(void);
   void (^flush_task_complete_f_)(void);
 
   size_t accumulated_bytes_ = 0;
+
 };
 
 }  // namespace santa::santad::logs::endpoint_security::writers

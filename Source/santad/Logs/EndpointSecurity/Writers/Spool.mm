@@ -51,6 +51,8 @@ Spool::Spool(dispatch_queue_t q, dispatch_source_t timer_source, std::string_vie
       spool_writer_(absl::string_view(base_dir.data(), base_dir.length()), max_spool_disk_size),
       log_batch_writer_(&spool_writer_, SIZE_T_MAX),
       spool_file_size_threshold_(max_spool_file_size),
+      spool_file_size_threshold_leniency_(spool_file_size_threshold_ *
+                                          spool_file_size_threshold_leniency_factor_),
       write_complete_f_(write_complete_f),
       flush_task_complete_f_(flush_task_complete_f) {
   type_url_ = kTypeGoogleApisComPrefix + ::santa::pb::v1::SantaMessage::descriptor()->full_name();
@@ -125,7 +127,8 @@ void Spool::Write(std::vector<uint8_t> &&bytes) {
 
     // Only write the new message if we have room left.
     // This will account for Flush failing above.
-    if (shared_this->accumulated_bytes_ < shared_this->spool_file_size_threshold_) {
+    // Use the more lenient threshold here in case the Flush failures are transitory.
+    if (shared_this->accumulated_bytes_ < shared_this->spool_file_size_threshold_leniency_) {
       auto status = shared_this->log_batch_writer_.WriteMessage(any);
       if (!status.ok()) {
         LOGE(@"ProtoEventLogger::LogProto failed with: %s", status.ToString().c_str());
