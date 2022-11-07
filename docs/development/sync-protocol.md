@@ -135,8 +135,8 @@ The JSON object has the following keys:
 | batch_size | YES | integer | Number of events to upload at a time | 128 |
 | full_sync_interval | YES | integer | Number of seconds between full syncs | 600 |
 | client_mode | YES | string | Operating mode to set for the client | either "MONITOR" or "LOCKDOWN" |
-| allowed_path_regex | YES | list of strings | List of regular expressions to allow a binary to execute from a path | ["/Users/markowsk/foo/.*"] |
-| blocked_path_regex | YES | list of strings | List of regular expressions to block a binary from executing by path | ["/tmp/"] |
+| allowed_path_regex | NO | string | Regular expression to allow a binary to execute from a path | "/Users/markowsk/foo/.*" |
+| blocked_path_regex | NO | string | Regular expression to block a binary from executing by path | "/tmp/" |
 | block_usb_mount | NO | boolean | Block USB mass storage devices | true |
 | remount_usb_mode | NO | string | Force USB mass storage devices to be remounted with the following permissions (see [configuration](../deployment/configuration.md)) |  |
 | clean_sync | YES | boolean | Whether or not the rules should be dropped and synced entirely from the server | true |
