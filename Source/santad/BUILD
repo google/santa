@@ -35,6 +35,26 @@ objc_library(
 )
 
 objc_library(
+    name = "WatchItems",
+    srcs = ["DataLayer/WatchItems.mm"],
+    hdrs = ["DataLayer/WatchItems.h"],
+    deps = [
+        "//Source/common:PrefixTree",
+        "//Source/common:SNTLogging",
+    ],
+)
+
+santa_unit_test(
+    name = "WatchItemsTest",
+    srcs = ["DataLayer/WatchItemsTest.mm"],
+    deps = [
+        ":WatchItems",
+        "//Source/common:PrefixTree",
+        "@OCMock",
+    ],
+)
+
+objc_library(
     name = "SNTEventTable",
     srcs = ["DataLayer/SNTEventTable.m"],
     hdrs = ["DataLayer/SNTEventTable.h"],
