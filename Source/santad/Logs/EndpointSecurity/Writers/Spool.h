@@ -69,7 +69,6 @@ class Spool : public Writer, public std::enable_shared_from_this<Spool> {
   void (^flush_task_complete_f_)(void);
 
   size_t accumulated_bytes_ = 0;
-
 };
 
 }  // namespace santa::santad::logs::endpoint_security::writers
