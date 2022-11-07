@@ -119,14 +119,19 @@ void Spool::Write(std::vector<uint8_t> &&bytes) {
 #endif
     any.set_type_url(type_url_);
 
-    auto status = shared_this->log_batch_writer_.WriteMessage(any);
-    if (!status.ok()) {
-      LOGE(@"ProtoEventLogger::LogProto failed with: %s", status.ToString().c_str());
-    }
-
-    shared_this->accumulated_bytes_ += moved_bytes.size();
     if (shared_this->accumulated_bytes_ >= shared_this->spool_file_size_threshold_) {
       shared_this->Flush();
+    }
+
+    // Only write the new message if we have room left.
+    // This will account for Flush failing above.
+    if (shared_this->accumulated_bytes_ < shared_this->spool_file_size_threshold_) {
+      auto status = shared_this->log_batch_writer_.WriteMessage(any);
+      if (!status.ok()) {
+        LOGE(@"ProtoEventLogger::LogProto failed with: %s", status.ToString().c_str());
+      }
+
+      shared_this->accumulated_bytes_ += moved_bytes.size();
     }
 
     if (shared_this->write_complete_f_) {
