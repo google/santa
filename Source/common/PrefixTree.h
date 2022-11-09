@@ -201,7 +201,8 @@ class PrefixTree {
     }
 
     // For deep trees, a recursive approach will generate too many stack frames.
-    // Make a "stack" and walk the tree.
+    // Since the depth of the tree is configurable, err on the side of caution
+    // and use a "stack" to walk the tree in a non-recursive manner.
     TreeNode **stack = new TreeNode *[node_count_ + 1];
     if (!stack) {
       LOGE(@"Unable to prune tree!");

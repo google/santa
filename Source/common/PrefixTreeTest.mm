@@ -42,6 +42,10 @@ using santa::common::PrefixTree;
   XCTAssertTrue(tree.HasPrefix("/foo/bar/baz"));
   XCTAssertTrue(tree.HasPrefix("/foo/bar.txt"));
   XCTAssertFalse(tree.HasPrefix("/baz"));
+
+  // Empty strings are not supported
+  XCTAssertFalse(tree.InsertLiteral("", 0));
+  XCTAssertFalse(tree.InsertPrefix("", 0));
 }
 
 - (void)testHasPrefix {
