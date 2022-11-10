@@ -13,10 +13,26 @@
 /// limitations under the License.
 
 #include "Source/santad/DataLayer/WatchItems.h"
+#include <cstddef>
+#include <set>
+#include <utility>
+
+#ifdef __BLOCKS__
+#pragma push_macro("__BLOCKS__")
+#define REDEF_BLOCKS
+#undef __BLOCKS__
+#endif
+#include <glob.h>
+#ifdef REDEF_BLOCKS
+#pragma pop_macro("__BLOCKS__")
+#endif
 
 #include <memory>
 
+#import "Source/common/PrefixTree.h"
 #import "Source/common/SNTLogging.h"
+
+using santa::common::PrefixTree;
 
 static const NSString *kWatchItemConfigKeyPath = @"Path";
 static const NSString *kWatchItemConfigKeyWriteOnly = @"WriteOnly";
@@ -103,9 +119,9 @@ std::vector<std::string> ConfigArrayToVector(NSArray *array) {
   return vec;
 }
 
-WatchItem::WatchItem(std::string n, std::string p, bool wo, bool ip, bool ao,
-                     std::vector<std::string> &&abp, std::vector<std::string> &&acs,
-                     std::vector<std::string> &&ati, std::vector<std::string> &&ach)
+WatchItemPolicy::WatchItemPolicy(std::string n, std::string p, bool wo, bool ip, bool ao,
+                                 std::vector<std::string> &&abp, std::vector<std::string> &&acs,
+                                 std::vector<std::string> &&ati, std::vector<std::string> &&ach)
     : name(n),
       path(p),
       write_only(wo),
@@ -115,6 +131,25 @@ WatchItem::WatchItem(std::string n, std::string p, bool wo, bool ip, bool ao,
       allowed_certificates_sha256(std::move(acs)),
       allowed_team_ids(std::move(ati)),
       allowed_cdhashes(std::move(ach)) {}
+
+WatchItem::WatchItem(std::string p, bool ip) : path(p), is_prefix(ip) {}
+
+bool WatchItem::operator<(const WatchItem &wi) const {
+  // Essentialy implements the same `operator<` logic as `std::pair`
+  if (path < wi.path) {
+    return true;
+  } else if (path > wi.path) {
+    return false;
+  } else if (is_prefix < wi.is_prefix) {
+    return true;
+  } else {
+    return false;
+  }
+}
+
+std::ostream &operator<<(std::ostream &os, const WatchItem &wi) {
+  return os << wi.path << "(" << (wi.is_prefix ? "p" : "l") << ")";
+}
 
 std::unique_ptr<WatchItems> WatchItems::Create(NSString *config_path,
                                                uint64_t reapply_config_frequency_secs) {
@@ -134,38 +169,58 @@ std::unique_ptr<WatchItems> WatchItems::Create(NSString *config_path,
 WatchItems::WatchItems(NSString *config_path, dispatch_source_t timer_source)
     : config_path_(config_path), timer_source_(timer_source) {}
 
-void WatchItems::ReloadConfig() {
-  NSDictionary *new_config = [NSDictionary dictionaryWithContentsOfFile:config_path_];
+bool WatchItems::BuildPolicyTree(const std::vector<std::shared_ptr<WatchItemPolicy>> &watch_items,
+                                 PrefixTree<std::shared_ptr<WatchItemPolicy>> &tree,
+                                 std::set<WatchItem> &paths) {
+  for (const std::shared_ptr<WatchItemPolicy> &item : watch_items) {
+    glob_t g;
+    int err = glob(item->path.c_str(), 0, nullptr, &g);
+    if (err != 0 && err != GLOB_NOMATCH) {
+      LOGE(@"Failed to generate path names for watch item: %s", item->name.c_str());
+      return false;
+    }
 
-  if ([new_config isEqualToDictionary:current_config_]) {
-    // Config wasn't updated, nothing to do
-    return;
+    for (size_t i = g.gl_offs; i < g.gl_pathc; i++) {
+      if (item->is_prefix) {
+        tree.InsertPrefix(g.gl_pathv[i], item);
+      } else {
+        tree.InsertLiteral(g.gl_pathv[i], item);
+      }
+
+      paths.insert(WatchItem{g.gl_pathv[i], item->is_prefix});
+    }
   }
 
-  LOGI(@"File system monitoring config changed. Applying new settings.");
+  return true;
+}
 
-  std::vector<std::shared_ptr<WatchItem>> new_watch_items;
+bool WatchItems::ParseConfig(NSDictionary *config,
+                             std::vector<std::shared_ptr<WatchItemPolicy>> &watch_items) {
+  bool config_ok = true;
 
-  for (id key in new_config) {
+  for (id key in config) {
     if (![key isKindOfClass:[NSString class]]) {
       LOGE(@"In valid key %@ (class: %@), skipping", key, NSStringFromClass([key class]));
-      continue;
+      config_ok = false;
+      break;
     }
 
-    if (![new_config[key] isKindOfClass:[NSDictionary class]]) {
+    if (![config[key] isKindOfClass:[NSDictionary class]]) {
       LOGE(@"Config for '%@' must be a dictionary (got: %@), skipping", key,
-           NSStringFromClass([new_config[key] class]));
-      continue;
+           NSStringFromClass([config[key] class]));
+      config_ok = false;
+      break;
     }
 
-    NSDictionary *watch_item = new_config[key];
+    NSDictionary *watch_item = config[key];
 
     if (!ConfirmValidWatchItemConfig(watch_item)) {
       LOGE(@"Invalid config for watch item: '%@', skipping", key);
-      continue;
+      config_ok = false;
+      break;
     }
 
-    new_watch_items.push_back(std::make_shared<WatchItem>(
+    watch_items.push_back(std::make_shared<WatchItemPolicy>(
       [key UTF8String], [watch_item[kWatchItemConfigKeyPath] UTF8String],
       [(watch_item[kWatchItemConfigKeyWriteOnly] ?: @(0)) boolValue],
       [(watch_item[kWatchItemConfigKeyIsPrefix] ?: @(0)) boolValue],
@@ -175,6 +230,40 @@ void WatchItems::ReloadConfig() {
       ConfigArrayToVector(watch_item[kWatchItemConfigKeyAllowedTeamIDs]),
       ConfigArrayToVector(watch_item[kWatchItemConfigKeyAllowedCDHashes])));
   }
+
+  return config_ok;
+}
+
+void WatchItems::ReloadConfig() {
+  NSDictionary *new_config = [NSDictionary dictionaryWithContentsOfFile:config_path_];
+  if ([new_config isEqualToDictionary:current_config_]) {
+    // Config wasn't updated, nothing to do
+    return;
+  }
+
+  LOGI(@"File system monitoring config changed. Applying new settings.");
+
+  std::vector<std::shared_ptr<WatchItemPolicy>> new_watch_items;
+
+  if (!ParseConfig(new_config, new_watch_items)) {
+    LOGE(@"Failed to apply new filesystem monitoring config");
+    return;
+  }
+
+  PrefixTree<std::shared_ptr<WatchItemPolicy>> new_tree;
+  std::set<WatchItem> new_monitored_paths;
+
+  BuildPolicyTree(new_watch_items, new_tree, new_monitored_paths);
+
+  std::set<WatchItem> removed_items;
+  std::set_difference(currently_monitored_paths_.begin(), currently_monitored_paths_.end(),
+                      new_monitored_paths.begin(), new_monitored_paths.end(),
+                      std::inserter(removed_items, removed_items.begin()));
+
+  std::set<WatchItem> added_items;
+  std::set_difference(currently_monitored_paths_.begin(), currently_monitored_paths_.end(),
+                      new_monitored_paths.begin(), new_monitored_paths.end(),
+                      std::inserter(added_items, added_items.begin()));
 
   current_config_ = new_config;
 }
