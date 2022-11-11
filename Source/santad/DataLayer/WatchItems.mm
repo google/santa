@@ -34,14 +34,14 @@
 
 using santa::common::PrefixTree;
 
-static const NSString *kWatchItemConfigKeyPath = @"Path";
-static const NSString *kWatchItemConfigKeyWriteOnly = @"WriteOnly";
-static const NSString *kWatchItemConfigKeyIsPrefix = @"IsPrefix";
-static const NSString *kWatchItemConfigKeyAuditOnly = @"AuditOnly";
-static const NSString *kWatchItemConfigKeyAllowedBinaryPaths = @"AllowedBinaryPaths";
-static const NSString *kWatchItemConfigKeyAllowedCertificatesSha256 = @"AllowedCertificatesSha256";
-static const NSString *kWatchItemConfigKeyAllowedTeamIDs = @"AllowedTeamIDs";
-static const NSString *kWatchItemConfigKeyAllowedCDHashes = @"AllowedCDHashes";
+const NSString *kWatchItemConfigKeyPath = @"Path";
+const NSString *kWatchItemConfigKeyWriteOnly = @"WriteOnly";
+const NSString *kWatchItemConfigKeyIsPrefix = @"IsPrefix";
+const NSString *kWatchItemConfigKeyAuditOnly = @"AuditOnly";
+const NSString *kWatchItemConfigKeyAllowedBinaryPaths = @"AllowedBinaryPaths";
+const NSString *kWatchItemConfigKeyAllowedCertificatesSha256 = @"AllowedCertificatesSha256";
+const NSString *kWatchItemConfigKeyAllowedTeamIDs = @"AllowedTeamIDs";
+const NSString *kWatchItemConfigKeyAllowedCDHashes = @"AllowedCDHashes";
 
 namespace santa::santad::data_layer {
 
@@ -147,6 +147,10 @@ bool WatchItem::operator<(const WatchItem &wi) const {
   }
 }
 
+bool WatchItem::operator==(const WatchItem &wi) const {
+  return is_prefix == wi.is_prefix && path == wi.path;
+}
+
 std::ostream &operator<<(std::ostream &os, const WatchItem &wi) {
   return os << wi.path << "(" << (wi.is_prefix ? "p" : "l") << ")";
 }
@@ -234,15 +238,21 @@ bool WatchItems::ParseConfig(NSDictionary *config,
   return config_ok;
 }
 
-void WatchItems::ReloadConfig() {
-  NSDictionary *new_config = [NSDictionary dictionaryWithContentsOfFile:config_path_];
-  if ([new_config isEqualToDictionary:current_config_]) {
-    // Config wasn't updated, nothing to do
-    return;
-  }
+bool WatchItems::SetCurrentConfig(
+  std::unique_ptr<PrefixTree<std::shared_ptr<WatchItemPolicy>>> new_tree,
+  std::set<WatchItem> &&new_monitored_paths) {
+  absl::MutexLock lock(&lock_);
 
-  LOGI(@"File system monitoring config changed. Applying new settings.");
+  // TODO(mlw): In upcoming PR, need to use ES API to stop watching removed paths,
+  // and start watching newly configured paths.
 
+  std::swap(watch_items_, new_tree);
+  std::swap(currently_monitored_paths_, new_monitored_paths);
+
+  return true;
+}
+
+void WatchItems::ReloadConfig(NSDictionary *new_config) {
   std::vector<std::shared_ptr<WatchItemPolicy>> new_watch_items;
 
   if (!ParseConfig(new_config, new_watch_items)) {
@@ -250,22 +260,22 @@ void WatchItems::ReloadConfig() {
     return;
   }
 
-  PrefixTree<std::shared_ptr<WatchItemPolicy>> new_tree;
+  auto new_tree = std::make_unique<PrefixTree<std::shared_ptr<WatchItemPolicy>>>();
   std::set<WatchItem> new_monitored_paths;
 
-  BuildPolicyTree(new_watch_items, new_tree, new_monitored_paths);
+  if (!BuildPolicyTree(new_watch_items, *new_tree, new_monitored_paths)) {
+    LOGE(@"Failed to build new filesystem monitoring policy");
+    return;
+  }
 
-  std::set<WatchItem> removed_items;
-  std::set_difference(currently_monitored_paths_.begin(), currently_monitored_paths_.end(),
-                      new_monitored_paths.begin(), new_monitored_paths.end(),
-                      std::inserter(removed_items, removed_items.begin()));
+  if (new_monitored_paths == currently_monitored_paths_) {
+    LOGD(@"No changes to set of watched paths.");
+    return;
+  }
 
-  std::set<WatchItem> added_items;
-  std::set_difference(currently_monitored_paths_.begin(), currently_monitored_paths_.end(),
-                      new_monitored_paths.begin(), new_monitored_paths.end(),
-                      std::inserter(added_items, added_items.begin()));
+  LOGI(@"Updating set of configured watch paths");
 
-  current_config_ = new_config;
+  SetCurrentConfig(std::move(new_tree), std::move(new_monitored_paths));
 }
 
 void WatchItems::BeginPeriodicTask() {
@@ -280,8 +290,14 @@ void WatchItems::BeginPeriodicTask() {
       return;
     }
 
-    shared_watcher->ReloadConfig();
+    shared_watcher->ReloadConfig(
+      [NSDictionary dictionaryWithContentsOfFile:shared_watcher->config_path_]);
   });
+}
+
+std::optional<std::shared_ptr<WatchItemPolicy>> WatchItems::FindPolicyForPath(const char *input) {
+  absl::ReaderMutexLock lock(&lock_);
+  return watch_items_->LookupLongestMatchingPrefix(input);
 }
 
 }  // namespace santa::santad::data_layer

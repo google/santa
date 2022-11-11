@@ -26,6 +26,15 @@
 
 #include "Source/common/PrefixTree.h"
 
+extern const NSString *kWatchItemConfigKeyPath;
+extern const NSString *kWatchItemConfigKeyWriteOnly;
+extern const NSString *kWatchItemConfigKeyIsPrefix;
+extern const NSString *kWatchItemConfigKeyAuditOnly;
+extern const NSString *kWatchItemConfigKeyAllowedBinaryPaths;
+extern const NSString *kWatchItemConfigKeyAllowedCertificatesSha256;
+extern const NSString *kWatchItemConfigKeyAllowedTeamIDs;
+extern const NSString *kWatchItemConfigKeyAllowedCDHashes;
+
 // Forward declarations
 namespace santa::santad::data_layer {
 class WatchItemsPeer;
@@ -56,6 +65,7 @@ struct WatchItem {
   bool is_prefix;
 
   bool operator<(const WatchItem &wi) const;
+  bool operator==(const WatchItem &wi) const;
   friend std::ostream &operator<<(std::ostream &os, const WatchItem &wi);
 };
 
@@ -65,23 +75,27 @@ class WatchItems : public std::enable_shared_from_this<WatchItems> {
   WatchItems(NSString *config_path_, dispatch_source_t timer_source);
 
   void BeginPeriodicTask();
-  void ReloadConfig();
-  bool ParseConfig(NSDictionary *config, std::vector<std::shared_ptr<WatchItemPolicy>> &policies);
 
-  bool BuildPolicyTree(const std::vector<std::shared_ptr<WatchItemPolicy>> &watch_items,
-                       santa::common::PrefixTree<std::shared_ptr<WatchItemPolicy>> &tree,
-                       std::set<WatchItem> &paths);
+  std::optional<std::shared_ptr<WatchItemPolicy>> FindPolicyForPath(const char *input);
 
   friend class santa::santad::data_layer::WatchItemsPeer;
 
  private:
+  void ReloadConfig(NSDictionary *new_config);
+  bool SetCurrentConfig(
+    std::unique_ptr<santa::common::PrefixTree<std::shared_ptr<WatchItemPolicy>>> new_tree,
+    std::set<WatchItem> &&new_monitored_paths);
+  bool ParseConfig(NSDictionary *config, std::vector<std::shared_ptr<WatchItemPolicy>> &policies);
+  bool BuildPolicyTree(const std::vector<std::shared_ptr<WatchItemPolicy>> &watch_items,
+                       santa::common::PrefixTree<std::shared_ptr<WatchItemPolicy>> &tree,
+                       std::set<WatchItem> &paths);
+
   NSString *config_path_;
   dispatch_source_t timer_source_;
-  santa::common::PrefixTree<std::shared_ptr<WatchItemPolicy>> watch_items_;
+  std::unique_ptr<santa::common::PrefixTree<std::shared_ptr<WatchItemPolicy>>> watch_items_;
   std::set<WatchItem> currently_monitored_paths_;
   absl::Mutex lock_;
   bool periodic_task_started_ = false;
-  NSDictionary *current_config_ = nil;
 };
 
 }  // namespace santa::santad::data_layer

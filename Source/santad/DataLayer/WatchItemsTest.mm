@@ -21,13 +21,13 @@
 #include <algorithm>
 #include <iostream>
 #include <memory>
-#include <stack>
 #include <vector>
 
 #define SANTA_PREFIX_TREE_DEBUG 1
 #include "Source/common/PrefixTree.h"
 #include "Source/santad/DataLayer/WatchItems.h"
 
+using santa::common::PrefixTree;
 using santa::santad::data_layer::WatchItem;
 using santa::santad::data_layer::WatchItemPolicy;
 using santa::santad::data_layer::WatchItems;
@@ -36,6 +36,9 @@ namespace santa::santad::data_layer {
 
 class WatchItemsPeer : public WatchItems {
  public:
+  using WatchItems::BuildPolicyTree;
+  using WatchItems::currently_monitored_paths_;
+  using WatchItems::ReloadConfig;
   using WatchItems::WatchItems;
 };
 
@@ -43,22 +46,8 @@ class WatchItemsPeer : public WatchItems {
 
 using santa::santad::data_layer::WatchItemsPeer;
 
-void pushd(std::stack<std::string> &dirStack, std::string dir) {
-  char *buf = new char[PATH_MAX]();
-  getcwd(buf, PATH_MAX);
-
-  dirStack.push(buf);
-  delete[] buf;
-
-  chdir(dir.c_str());
-}
-
-void popd(std::stack<std::string> &dirStack) {
-  chdir(dirStack.top().c_str());
-  dirStack.pop();
-}
-
-auto print = [](const auto &v, std::string_view start = "", std::string_view end = "") {
+template <typename T>
+void print(const T &v, std::string_view start = "", std::string_view end = "\n") {
   std::cout << start << "{ ";
   for (const auto &i : v)
     std::cout << i << ' ';
@@ -68,12 +57,14 @@ auto print = [](const auto &v, std::string_view start = "", std::string_view end
 @interface WatchItemsTest : XCTestCase
 @property NSFileManager *fileMgr;
 @property NSString *testDir;
+@property NSMutableArray *dirStack;
 @property dispatch_queue_t q;
 @end
 
 @implementation WatchItemsTest
 
 - (void)setUp {
+  self.dirStack = [[NSMutableArray alloc] init];
   self.fileMgr = [NSFileManager defaultManager];
   self.testDir =
     [NSString stringWithFormat:@"%@santa-watchitems-%d", NSTemporaryDirectory(), getpid()];
@@ -91,10 +82,29 @@ auto print = [](const auto &v, std::string_view start = "", std::string_view end
   XCTAssertTrue([self.fileMgr removeItemAtPath:self.testDir error:nil]);
 }
 
-- (void)createDirStructure:(NSArray *)fs rootedAt:(NSString *)root {
-  char *buf = new char[PATH_MAX]();
-  getcwd(buf, PATH_MAX);
-  chdir([root UTF8String]);
+- (void)pushd:(NSString *)path withRoot:(NSString *)root {
+  NSString *dir = [NSString pathWithComponents:@[ root, path ]];
+  NSString *origCwd = [self.fileMgr currentDirectoryPath];
+  XCTAssertNotNil(origCwd);
+
+  XCTAssertTrue([self.fileMgr changeCurrentDirectoryPath:dir]);
+  [self.dirStack addObject:origCwd];
+}
+
+- (void)pushd:(NSString *)dir {
+  [self pushd:dir withRoot:self.testDir];
+}
+
+- (void)popd {
+  NSString *dir = [self.dirStack lastObject];
+  XCTAssertTrue([self.fileMgr changeCurrentDirectoryPath:dir]);
+  [self.dirStack removeLastObject];
+}
+
+- (void)createTestDirStructure:(NSArray *)fs rootedAt:(NSString *)root {
+  NSString *origCwd = [self.fileMgr currentDirectoryPath];
+  XCTAssertNotNil(origCwd);
+  XCTAssertTrue([self.fileMgr changeCurrentDirectoryPath:root]);
 
   for (id item in fs) {
     if ([item isKindOfClass:[NSString class]]) {
@@ -107,23 +117,18 @@ auto print = [](const auto &v, std::string_view start = "", std::string_view end
                                                attributes:nil
                                                     error:nil]);
 
-        [self createDirStructure:item[dir] rootedAt:dir];
+        [self createTestDirStructure:item[dir] rootedAt:dir];
       }
     } else {
       XCTFail("Unexpected dir structure item: %@: %@", item, [item class]);
     }
   }
 
-  chdir(buf);
-  delete[] buf;
+  XCTAssertTrue([self.fileMgr changeCurrentDirectoryPath:origCwd]);
 }
 
-- (NSString *)createTestDirPath:(NSString *)path withRoot:(NSString *)root {
-  return [NSString pathWithComponents:@[ self.testDir, root, path ]];
-}
-
-- (NSString *)createTestDirPath:(NSString *)path {
-  return [NSString pathWithComponents:@[ self.testDir, path ]];
+- (void)createTestDirStructure:(NSArray *)fs {
+  [self createTestDirStructure:fs rootedAt:self.testDir];
 }
 
 - (void)testBasic {
@@ -166,16 +171,16 @@ auto print = [](const auto &v, std::string_view start = "", std::string_view end
     @"b" : @[ @"f1", @"f2" ],
   } ];
 
-  [self createDirStructure:fs rootedAt:self.testDir];
+  [self createTestDirStructure:fs];
 
-  std::stack<std::string> dirStack;
+  // std::stack<std::string> dirStack;
   WatchItemsPeer watchItems(@"config.plist", NULL);
 
   std::vector<std::shared_ptr<WatchItemPolicy>> configuredWatchItems1;
   std::vector<std::shared_ptr<WatchItemPolicy>> configuredWatchItems2;
 
-  santa::common::PrefixTree<std::shared_ptr<WatchItemPolicy>> tree1;
-  santa::common::PrefixTree<std::shared_ptr<WatchItemPolicy>> tree2;
+  auto tree1 = std::make_unique<PrefixTree<std::shared_ptr<WatchItemPolicy>>>();
+  auto tree2 = std::make_unique<PrefixTree<std::shared_ptr<WatchItemPolicy>>>();
 
   std::set<WatchItem> paths1;
   std::set<WatchItem> paths2;
@@ -183,30 +188,57 @@ auto print = [](const auto &v, std::string_view start = "", std::string_view end
   // Add initial set of items as "prefix" types
   configuredWatchItems1.push_back(std::make_shared<WatchItemPolicy>("wi2", "./*", false, true));
 
-  pushd(dirStack, [[self createTestDirPath:@"a"] UTF8String]);
-  watchItems.BuildPolicyTree(configuredWatchItems1, tree1, paths1);
-  popd(dirStack);
+  [self pushd:@"a"];
+  watchItems.BuildPolicyTree(configuredWatchItems1, *tree1, paths1);
+  [self popd];
 
   printf("First Generate...\n");
-  tree1.Print();
+  tree1->Print();
 
   // Re-apply policy as "literal" types
   configuredWatchItems2.push_back(std::make_shared<WatchItemPolicy>("wi2", "./*"));
 
-  pushd(dirStack, [[self createTestDirPath:@"b"] UTF8String]);
-  watchItems.BuildPolicyTree(configuredWatchItems2, tree2, paths2);
-  popd(dirStack);
+  [self pushd:@"b"];
+  watchItems.BuildPolicyTree(configuredWatchItems2, *tree2, paths2);
+  [self popd];
 
   printf("Second Generate...\n");
-  tree2.Print();
+  tree2->Print();
 
   std::set<WatchItem> removed_items;
   std::set_difference(paths1.begin(), paths1.end(), paths2.begin(), paths2.end(),
                       std::inserter(removed_items, removed_items.begin()));
 
-  print(paths1, "paths1: ", "\n");
-  print(paths2, "paths2: ", "\n");
-  print(removed_items, "Diff: ", "\n");
+  print(paths1, "paths1: ");
+  print(paths2, "paths2: ");
+  print(removed_items, "Diff: ");
+}
+
+- (void)testReload {
+  [self createTestDirStructure:@[
+    @{
+      @"a" : @[ @"f1", @"f2" ],
+    },
+    @{
+      @"b" : @[ @"f1" ],
+    },
+  ]];
+
+  NSDictionary *config = @{@"all_files" : @{kWatchItemConfigKeyPath : @"*"}};
+
+  WatchItemsPeer watchItems(@"config.plist", NULL);
+
+  [self pushd:@"a"];
+  watchItems.ReloadConfig(config);
+  [self popd];
+
+  print(watchItems.currently_monitored_paths_, "Watch paths (initial): ");
+
+  [self pushd:@"b"];
+  watchItems.ReloadConfig(config);
+  [self popd];
+
+  print(watchItems.currently_monitored_paths_, "Watch paths (reloaded): ");
 }
 
 @end
