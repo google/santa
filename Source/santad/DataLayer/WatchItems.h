@@ -43,9 +43,10 @@ class WatchItemsPeer;
 namespace santa::santad::data_layer {
 
 struct WatchItemPolicy {
-  WatchItemPolicy(std::string n, std::string p, bool wo = false, bool ip = false, bool ao = true,
-                  std::vector<std::string> &&abp = {}, std::vector<std::string> &&acs = {},
-                  std::vector<std::string> &&ati = {}, std::vector<std::string> &&ach = {});
+  WatchItemPolicy(std::string_view n, std::string_view p, bool wo = false, bool ip = false,
+                  bool ao = true, std::vector<std::string> &&abp = {},
+                  std::vector<std::string> &&acs = {}, std::vector<std::string> &&ati = {},
+                  std::vector<std::string> &&ach = {});
 
   std::string name;
   std::string path;
@@ -71,6 +72,8 @@ struct WatchItem {
 
 class WatchItems : public std::enable_shared_from_this<WatchItems> {
  public:
+  using WatchItemsTree = santa::common::PrefixTree<std::shared_ptr<WatchItemPolicy>>;
+
   std::unique_ptr<WatchItems> Create(NSString *config_path, uint64_t reapply_config_frequency_secs);
   WatchItems(NSString *config_path_, dispatch_source_t timer_source);
 
@@ -82,17 +85,15 @@ class WatchItems : public std::enable_shared_from_this<WatchItems> {
 
  private:
   void ReloadConfig(NSDictionary *new_config);
-  bool SetCurrentConfig(
-    std::unique_ptr<santa::common::PrefixTree<std::shared_ptr<WatchItemPolicy>>> new_tree,
-    std::set<WatchItem> &&new_monitored_paths);
+  bool SetCurrentConfig(std::unique_ptr<WatchItemsTree> new_tree,
+                        std::set<WatchItem> &&new_monitored_paths);
   bool ParseConfig(NSDictionary *config, std::vector<std::shared_ptr<WatchItemPolicy>> &policies);
   bool BuildPolicyTree(const std::vector<std::shared_ptr<WatchItemPolicy>> &watch_items,
-                       santa::common::PrefixTree<std::shared_ptr<WatchItemPolicy>> &tree,
-                       std::set<WatchItem> &paths);
+                       WatchItemsTree &tree, std::set<WatchItem> &paths);
 
   NSString *config_path_;
   dispatch_source_t timer_source_;
-  std::unique_ptr<santa::common::PrefixTree<std::shared_ptr<WatchItemPolicy>>> watch_items_;
+  std::unique_ptr<WatchItemsTree> watch_items_;
   std::set<WatchItem> currently_monitored_paths_;
   absl::Mutex lock_;
   bool periodic_task_started_ = false;

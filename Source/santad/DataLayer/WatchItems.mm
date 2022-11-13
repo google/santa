@@ -119,7 +119,7 @@ std::vector<std::string> ConfigArrayToVector(NSArray *array) {
   return vec;
 }
 
-WatchItemPolicy::WatchItemPolicy(std::string n, std::string p, bool wo, bool ip, bool ao,
+WatchItemPolicy::WatchItemPolicy(std::string_view n, std::string_view p, bool wo, bool ip, bool ao,
                                  std::vector<std::string> &&abp, std::vector<std::string> &&acs,
                                  std::vector<std::string> &&ati, std::vector<std::string> &&ach)
     : name(n),
@@ -171,7 +171,9 @@ std::unique_ptr<WatchItems> WatchItems::Create(NSString *config_path,
 }
 
 WatchItems::WatchItems(NSString *config_path, dispatch_source_t timer_source)
-    : config_path_(config_path), timer_source_(timer_source) {}
+    : config_path_(config_path),
+      timer_source_(timer_source),
+      watch_items_(std::make_unique<WatchItemsTree>()) {}
 
 bool WatchItems::BuildPolicyTree(const std::vector<std::shared_ptr<WatchItemPolicy>> &watch_items,
                                  PrefixTree<std::shared_ptr<WatchItemPolicy>> &tree,

@@ -20,11 +20,13 @@
 
 #include <algorithm>
 #include <iostream>
+#include <map>
 #include <memory>
 #include <vector>
 
 #define SANTA_PREFIX_TREE_DEBUG 1
 #include "Source/common/PrefixTree.h"
+#include "Source/common/TestUtils.h"
 #include "Source/santad/DataLayer/WatchItems.h"
 
 using santa::common::PrefixTree;
@@ -39,6 +41,7 @@ class WatchItemsPeer : public WatchItems {
   using WatchItems::BuildPolicyTree;
   using WatchItems::currently_monitored_paths_;
   using WatchItems::ReloadConfig;
+  using WatchItems::watch_items_;
   using WatchItems::WatchItems;
 };
 
@@ -53,6 +56,13 @@ void print(const T &v, std::string_view start = "", std::string_view end = "\n")
     std::cout << i << ' ';
   std::cout << "} " << end;
 };
+
+static constexpr std::string_view kBadPolicyName("__BAD_NAME__");
+static constexpr std::string_view kBadPolicyPath("__BAD_PATH__");
+
+static std::shared_ptr<WatchItemPolicy> MakeBadPolicy() {
+  return std::make_shared<WatchItemPolicy>(kBadPolicyName, kBadPolicyPath);
+}
 
 @interface WatchItemsTest : XCTestCase
 @property NSFileManager *fileMgr;
@@ -173,7 +183,6 @@ void print(const T &v, std::string_view start = "", std::string_view end = "\n")
 
   [self createTestDirStructure:fs];
 
-  // std::stack<std::string> dirStack;
   WatchItemsPeer watchItems(@"config.plist", NULL);
 
   std::vector<std::shared_ptr<WatchItemPolicy>> configuredWatchItems1;
@@ -214,7 +223,7 @@ void print(const T &v, std::string_view start = "", std::string_view end = "\n")
   print(removed_items, "Diff: ");
 }
 
-- (void)testReload {
+- (void)testBasicReload {
   [self createTestDirStructure:@[
     @{
       @"a" : @[ @"f1", @"f2" ],
@@ -233,12 +242,60 @@ void print(const T &v, std::string_view start = "", std::string_view end = "\n")
   [self popd];
 
   print(watchItems.currently_monitored_paths_, "Watch paths (initial): ");
+  watchItems.watch_items_->Print();
 
   [self pushd:@"b"];
   watchItems.ReloadConfig(config);
   [self popd];
 
   print(watchItems.currently_monitored_paths_, "Watch paths (reloaded): ");
+  watchItems.watch_items_->Print();
+}
+
+- (void)testPolicyLookup {
+  [self createTestDirStructure:@[
+    @{
+      @"foo" : @[ @"bar.txt", @"bar.txt.tmp" ],
+      @"baz" : @[ @{@"qaz" : @[]} ],
+    },
+    @"f1",
+  ]];
+
+  NSDictionary *config = @{
+    @"foo_subdir" : @{
+      kWatchItemConfigKeyPath : @"./foo",
+      kWatchItemConfigKeyIsPrefix : @(YES),
+    },
+    @"bar_txt" : @{
+      kWatchItemConfigKeyPath : @"./foo/bar.txt",
+      kWatchItemConfigKeyIsPrefix : @(NO),
+    },
+  };
+
+  WatchItemsPeer watchItems(@"config.plist", NULL);
+
+  // Initially nothing should be in the map
+  XCTAssertFalse(watchItems.FindPolicyForPath("./foo").has_value());
+
+  [self pushd:@""];
+  watchItems.ReloadConfig(config);
+  [self popd];
+
+  print(watchItems.currently_monitored_paths_, "Watch paths: ");
+  watchItems.watch_items_->Print();
+
+  const std::map<std::string_view, std::string_view> pathToPolicyName = {
+    {"./foo", "foo_subdir"},
+    {"./foo/bar.txt.tmp", "foo_subdir"},
+    {"./foo/bar.txt", "bar_txt"},
+    {"./does/not/exist", kBadPolicyName},
+  };
+
+  for (const auto &kv : pathToPolicyName) {
+    std::optional<std::shared_ptr<WatchItemPolicy>> policy =
+      watchItems.FindPolicyForPath(kv.first.data());
+    XCTAssertCStringEqual(policy.value_or(MakeBadPolicy())->name.c_str(), kv.second.data());
+  }
 }
 
 @end
