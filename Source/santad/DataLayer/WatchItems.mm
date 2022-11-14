@@ -17,15 +17,20 @@
 #include <set>
 #include <utility>
 
-#ifdef __BLOCKS__
+// Note: Because this file is compiled with block support, there is a compiler
+// error including `<glob.h>`:
+//
+// error: call to implicitly-deleted default constructor of 'glob_t'
+//
+// This is because of the `glob_t` member field `gl_errblk` being an ObjC pointer.
+// Because we don't rely on the error function in this implementation,
+// we undef `__BLOCKS__` so that the `gl_errblk` type isn't added to
+// the union.
 #pragma push_macro("__BLOCKS__")
 #define REDEF_BLOCKS
 #undef __BLOCKS__
-#endif
 #include <glob.h>
-#ifdef REDEF_BLOCKS
 #pragma pop_macro("__BLOCKS__")
-#endif
 
 #include <memory>
 
