@@ -22,7 +22,9 @@
 #include <memory>
 #include <set>
 
+#include "Source/common/PrefixTree.h"
 #include "Source/common/TestUtils.h"
+#include "Source/common/Unit.h"
 #import "Source/santad/EventProviders/AuthResultCache.h"
 #include "Source/santad/EventProviders/EndpointSecurity/Client.h"
 #include "Source/santad/EventProviders/EndpointSecurity/EnrichedTypes.h"
@@ -34,6 +36,8 @@
 #include "Source/santad/Metrics.h"
 #import "Source/santad/SNTCompilerController.h"
 
+using santa::common::PrefixTree;
+using santa::common::Unit;
 using santa::santad::EventDisposition;
 using santa::santad::Processor;
 using santa::santad::event_providers::AuthResultCache;
@@ -116,7 +120,7 @@ class MockLogger : public Logger {
     dispatch_semaphore_signal(sema);
   }));
 
-  auto prefixTree = std::make_shared<SNTPrefixTree>();
+  auto prefixTree = std::make_shared<PrefixTree<Unit>>();
 
   id mockCC = OCMStrictClassMock([SNTCompilerController class]);
 
@@ -164,7 +168,7 @@ class MockLogger : public Logger {
   {
     esMsg.event_type = ES_EVENT_TYPE_NOTIFY_LINK;
     esMsg.event.link.source = &targetFile;
-    prefixTree->AddPrefix(esMsg.event.link.source->path.data);
+    prefixTree->InsertPrefix(esMsg.event.link.source->path.data, Unit{});
     Message msg(mockESApi, &esMsg);
 
     OCMExpect([mockCC handleEvent:msg withLogger:nullptr]).ignoringNonObjectArgs();
