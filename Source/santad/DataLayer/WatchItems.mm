@@ -170,7 +170,8 @@ std::shared_ptr<WatchItems> WatchItems::Create(NSString *config_path,
   return std::make_unique<WatchItems>(config_path, timer_source);
 }
 
-WatchItems::WatchItems(NSString *config_path, dispatch_source_t timer_source, void (^periodic_task_complete_f)(void))
+WatchItems::WatchItems(NSString *config_path, dispatch_source_t timer_source,
+                       void (^periodic_task_complete_f)(void))
     : config_path_(config_path),
       timer_source_(timer_source),
       periodic_task_complete_f_(periodic_task_complete_f),

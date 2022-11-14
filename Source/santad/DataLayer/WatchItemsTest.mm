@@ -45,14 +45,6 @@ class WatchItemsPeer : public WatchItems {
 
 using santa::santad::data_layer::WatchItemsPeer;
 
-template <typename T>
-void print(const T &v, std::string_view start = "", std::string_view end = "\n") {
-  std::cout << start << "{ ";
-  for (const auto &i : v)
-    std::cout << i << ' ';
-  std::cout << "} " << end;
-};
-
 static constexpr std::string_view kBadPolicyName("__BAD_NAME__");
 static constexpr std::string_view kBadPolicyPath("__BAD_PATH__");
 

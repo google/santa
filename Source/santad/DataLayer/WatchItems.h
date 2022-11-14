@@ -77,7 +77,8 @@ class WatchItems : public std::enable_shared_from_this<WatchItems> {
   // Factory
   std::shared_ptr<WatchItems> Create(NSString *config_path, uint64_t reapply_config_frequency_secs);
 
-  WatchItems(NSString *config_path_, dispatch_source_t timer_source, void (^periodic_task_complete_f)(void) = nullptr);
+  WatchItems(NSString *config_path_, dispatch_source_t timer_source,
+             void (^periodic_task_complete_f)(void) = nullptr);
   ~WatchItems();
 
   void BeginPeriodicTask();
