@@ -155,7 +155,7 @@ std::ostream &operator<<(std::ostream &os, const WatchItem &wi) {
   return os << wi.path << "(" << (wi.is_prefix ? "p" : "l") << ")";
 }
 
-std::unique_ptr<WatchItems> WatchItems::Create(NSString *config_path,
+std::shared_ptr<WatchItems> WatchItems::Create(NSString *config_path,
                                                uint64_t reapply_config_frequency_secs) {
   if (!config_path) {
     return nullptr;
@@ -170,10 +170,21 @@ std::unique_ptr<WatchItems> WatchItems::Create(NSString *config_path,
   return std::make_unique<WatchItems>(config_path, timer_source);
 }
 
-WatchItems::WatchItems(NSString *config_path, dispatch_source_t timer_source)
+WatchItems::WatchItems(NSString *config_path, dispatch_source_t timer_source, void (^periodic_task_complete_f)(void))
     : config_path_(config_path),
       timer_source_(timer_source),
+      periodic_task_complete_f_(periodic_task_complete_f),
       watch_items_(std::make_unique<WatchItemsTree>()) {}
+
+WatchItems::~WatchItems() {
+  if (!periodic_task_started_ && timer_source_ != NULL) {
+    // The timer_source_ must be resumed to ensure it has a proper retain count before being
+    // destroyed. Additionally, it should first be cancelled to ensure the timer isn't ever fired
+    // (see man page for `dispatch_source_cancel(3)`).
+    dispatch_source_cancel(timer_source_);
+    dispatch_resume(timer_source_);
+  }
+}
 
 bool WatchItems::BuildPolicyTree(const std::vector<std::shared_ptr<WatchItemPolicy>> &watch_items,
                                  PrefixTree<std::shared_ptr<WatchItemPolicy>> &tree,
@@ -242,7 +253,7 @@ bool WatchItems::ParseConfig(NSDictionary *config,
 
 bool WatchItems::SetCurrentConfig(
   std::unique_ptr<PrefixTree<std::shared_ptr<WatchItemPolicy>>> new_tree,
-  std::set<WatchItem> &&new_monitored_paths) {
+  std::set<WatchItem> &&new_monitored_paths, NSDictionary *new_config) {
   absl::MutexLock lock(&lock_);
 
   // TODO(mlw): In upcoming PR, need to use ES API to stop watching removed paths,
@@ -250,6 +261,7 @@ bool WatchItems::SetCurrentConfig(
 
   std::swap(watch_items_, new_tree);
   std::swap(currently_monitored_paths_, new_monitored_paths);
+  current_config_ = new_config;
 
   return true;
 }
@@ -270,14 +282,15 @@ void WatchItems::ReloadConfig(NSDictionary *new_config) {
     return;
   }
 
-  if (new_monitored_paths == currently_monitored_paths_) {
+  if (new_monitored_paths == currently_monitored_paths_ &&
+      [current_config_ isEqualToDictionary:new_config]) {
     LOGD(@"No changes to set of watched paths.");
     return;
   }
 
-  LOGI(@"Updating set of configured watch paths");
+  LOGD(@"Updating set of configured watch paths");
 
-  SetCurrentConfig(std::move(new_tree), std::move(new_monitored_paths));
+  SetCurrentConfig(std::move(new_tree), std::move(new_monitored_paths), new_config);
 }
 
 void WatchItems::BeginPeriodicTask() {
@@ -294,7 +307,14 @@ void WatchItems::BeginPeriodicTask() {
 
     shared_watcher->ReloadConfig(
       [NSDictionary dictionaryWithContentsOfFile:shared_watcher->config_path_]);
+
+    if (shared_watcher->periodic_task_complete_f_) {
+      shared_watcher->periodic_task_complete_f_();
+    }
   });
+
+  dispatch_resume(timer_source_);
+  periodic_task_started_ = true;
 }
 
 std::optional<std::shared_ptr<WatchItemPolicy>> WatchItems::FindPolicyForPath(const char *input) {

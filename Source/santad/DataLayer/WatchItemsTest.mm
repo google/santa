@@ -24,7 +24,6 @@
 #include <memory>
 #include <vector>
 
-#define SANTA_PREFIX_TREE_DEBUG 1
 #include "Source/common/PrefixTree.h"
 #include "Source/common/TestUtils.h"
 #include "Source/santad/DataLayer/WatchItems.h"
@@ -38,10 +37,7 @@ namespace santa::santad::data_layer {
 
 class WatchItemsPeer : public WatchItems {
  public:
-  using WatchItems::BuildPolicyTree;
-  using WatchItems::currently_monitored_paths_;
   using WatchItems::ReloadConfig;
-  using WatchItems::watch_items_;
   using WatchItems::WatchItems;
 };
 
@@ -141,89 +137,7 @@ static std::shared_ptr<WatchItemPolicy> MakeBadPolicy() {
   [self createTestDirStructure:fs rootedAt:self.testDir];
 }
 
-- (void)testBasic {
-  NSArray *fs = @[
-    @{
-      @"a" : @[
-        @{
-          @"d1" : @[
-            @"f1",
-            @"f2",
-            @{
-              @"d1_nested" : @[],
-            },
-          ],
-          @"d2" : @[
-            @"f1",
-          ]
-        },
-        @"f1",
-        @"f2",
-      ],
-    },
-    @{
-      @"b" : @[
-        @{
-          @"d1" : @[
-            @"f1",
-            @"f2",
-          ],
-          @"d2" : @[
-            @"f1",
-          ]
-        },
-        @"f1",
-      ],
-    }
-  ];
-  fs = @[ @{
-    @"a" : @[ @"f1", @"f2" ],
-    @"b" : @[ @"f1", @"f2" ],
-  } ];
-
-  [self createTestDirStructure:fs];
-
-  WatchItemsPeer watchItems(@"config.plist", NULL);
-
-  std::vector<std::shared_ptr<WatchItemPolicy>> configuredWatchItems1;
-  std::vector<std::shared_ptr<WatchItemPolicy>> configuredWatchItems2;
-
-  auto tree1 = std::make_unique<PrefixTree<std::shared_ptr<WatchItemPolicy>>>();
-  auto tree2 = std::make_unique<PrefixTree<std::shared_ptr<WatchItemPolicy>>>();
-
-  std::set<WatchItem> paths1;
-  std::set<WatchItem> paths2;
-
-  // Add initial set of items as "prefix" types
-  configuredWatchItems1.push_back(std::make_shared<WatchItemPolicy>("wi2", "./*", false, true));
-
-  [self pushd:@"a"];
-  watchItems.BuildPolicyTree(configuredWatchItems1, *tree1, paths1);
-  [self popd];
-
-  printf("First Generate...\n");
-  tree1->Print();
-
-  // Re-apply policy as "literal" types
-  configuredWatchItems2.push_back(std::make_shared<WatchItemPolicy>("wi2", "./*"));
-
-  [self pushd:@"b"];
-  watchItems.BuildPolicyTree(configuredWatchItems2, *tree2, paths2);
-  [self popd];
-
-  printf("Second Generate...\n");
-  tree2->Print();
-
-  std::set<WatchItem> removed_items;
-  std::set_difference(paths1.begin(), paths1.end(), paths2.begin(), paths2.end(),
-                      std::inserter(removed_items, removed_items.begin()));
-
-  print(paths1, "paths1: ");
-  print(paths2, "paths2: ");
-  print(removed_items, "Diff: ");
-}
-
-- (void)testBasicReload {
+- (void)testReloadScenarios {
   [self createTestDirStructure:@[
     @{
       @"a" : @[ @"f1", @"f2" ],
@@ -233,26 +147,111 @@ static std::shared_ptr<WatchItemPolicy> MakeBadPolicy() {
     },
   ]];
 
-  NSDictionary *config = @{@"all_files" : @{kWatchItemConfigKeyPath : @"*"}};
+  NSDictionary *allFilesPolicy = @{kWatchItemConfigKeyPath : @"*"};
+  NSDictionary *configAllFilesOriginal = @{@"all_files_orig" : allFilesPolicy};
+  NSDictionary *configAllFilesRename = @{@"all_files_rename" : allFilesPolicy};
 
-  WatchItemsPeer watchItems(@"config.plist", NULL);
+  std::optional<std::shared_ptr<WatchItemPolicy>> policy;
 
-  [self pushd:@"a"];
-  watchItems.ReloadConfig(config);
+  // Changes in config dictionary will update policy info even if the
+  // filesystem didn't change.
+  {
+    WatchItemsPeer watchItems(nil, NULL);
+    [self pushd:@"a"];
+    watchItems.ReloadConfig(configAllFilesOriginal);
+
+    policy = watchItems.FindPolicyForPath("f1");
+    XCTAssertCStringEqual(policy.value_or(MakeBadPolicy())->name.c_str(), "all_files_orig");
+
+    watchItems.ReloadConfig(configAllFilesRename);
+    policy = watchItems.FindPolicyForPath("f1");
+    XCTAssertCStringEqual(policy.value_or(MakeBadPolicy())->name.c_str(), "all_files_rename");
+
+    policy = watchItems.FindPolicyForPath("f1");
+    XCTAssertCStringEqual(policy.value_or(MakeBadPolicy())->name.c_str(), "all_files_rename");
+    [self popd];
+  }
+
+  // Changes to fileystem structure are reflected when a config is reloaded
+  {
+    WatchItemsPeer watchItems(nil, NULL);
+    [self pushd:@"a"];
+    watchItems.ReloadConfig(configAllFilesOriginal);
+    [self popd];
+
+    policy = watchItems.FindPolicyForPath("f2");
+    XCTAssertCStringEqual(policy.value_or(MakeBadPolicy())->name.c_str(), "all_files_orig");
+
+    [self pushd:@"b"];
+    watchItems.ReloadConfig(configAllFilesOriginal);
+    [self popd];
+
+    policy = watchItems.FindPolicyForPath("f2");
+    XCTAssertFalse(policy.has_value());
+  }
+}
+
+- (void)testPeriodicTask {
+  // Ensure watch item policy memory is properly handled
+  [self createTestDirStructure:@[ @"f1", @"f2", @"weird1" ]];
+
+  NSDictionary *fFiles = @{
+    kWatchItemConfigKeyPath : @"f?",
+    kWatchItemConfigKeyIsPrefix : @(NO),
+  };
+  NSDictionary *weirdFiles = @{
+    kWatchItemConfigKeyPath : @"weird?",
+    kWatchItemConfigKeyIsPrefix : @(NO),
+  };
+
+  NSString *configFile = @"config.plist";
+  NSDictionary *firstConfig = @{@"f_files" : fFiles};
+  NSDictionary *secondConfig = @{@"f_files" : fFiles, @"weird_files" : weirdFiles};
+
+  // std::optional<std::shared_ptr<WatchItemPolicy>> policy;
+
+  dispatch_source_t timer = dispatch_source_create(DISPATCH_SOURCE_TYPE_TIMER, 0, 0, self.q);
+  (void)timer;
+
+  const uint64 periodicFlushMS = 1000;
+  dispatch_source_set_timer(timer, dispatch_time(DISPATCH_TIME_NOW, 0),
+                            NSEC_PER_MSEC * periodicFlushMS, 0);
+
+  dispatch_semaphore_t sema = dispatch_semaphore_create(0);
+  auto watchItems = std::make_shared<WatchItemsPeer>(configFile, timer, ^{
+    dispatch_semaphore_signal(sema);
+  });
+
+  // Move into the base test directory and write the config to disk
+  [self pushd:@""];
+  XCTAssertTrue([firstConfig writeToFile:configFile atomically:YES]);
+
+  // Ensure no policy has been loaded yet
+  XCTAssertFalse(watchItems->FindPolicyForPath("f1").has_value());
+  XCTAssertFalse(watchItems->FindPolicyForPath("weird1").has_value());
+
+  // Begin the periodic task
+  watchItems->BeginPeriodicTask();
+
+  // The first run of the task starts immediately
+  // Wait for the first iteration and check for the expected policy
+  XCTAssertSemaTrue(sema, 5, "Periodic task did not complete within expected window");
+  XCTAssertTrue(watchItems->FindPolicyForPath("f1").has_value());
+  XCTAssertFalse(watchItems->FindPolicyForPath("weird1").has_value());
+
+  // Write the config update
+  XCTAssertTrue([secondConfig writeToFile:configFile atomically:YES]);
+
+  // Wait for the new config to be loaded and check for the new expected policies
+  XCTAssertSemaTrue(sema, 5, "Periodic task did not complete within expected window");
+  XCTAssertTrue(watchItems->FindPolicyForPath("f1").has_value());
+  XCTAssertTrue(watchItems->FindPolicyForPath("weird1").has_value());
+
   [self popd];
-
-  print(watchItems.currently_monitored_paths_, "Watch paths (initial): ");
-  watchItems.watch_items_->Print();
-
-  [self pushd:@"b"];
-  watchItems.ReloadConfig(config);
-  [self popd];
-
-  print(watchItems.currently_monitored_paths_, "Watch paths (reloaded): ");
-  watchItems.watch_items_->Print();
 }
 
 - (void)testPolicyLookup {
+  // Test multiple, more comprehensive poolicies before/after config reload
   [self createTestDirStructure:@[
     @{
       @"foo" : @[ @"bar.txt", @"bar.txt.tmp" ],
@@ -261,40 +260,116 @@ static std::shared_ptr<WatchItemPolicy> MakeBadPolicy() {
     @"f1",
   ]];
 
-  NSDictionary *config = @{
+  NSMutableDictionary *config = [[NSMutableDictionary alloc] init];
+  [config setDictionary:@{
     @"foo_subdir" : @{
       kWatchItemConfigKeyPath : @"./foo",
       kWatchItemConfigKeyIsPrefix : @(YES),
-    },
-    @"bar_txt" : @{
-      kWatchItemConfigKeyPath : @"./foo/bar.txt",
-      kWatchItemConfigKeyIsPrefix : @(NO),
-    },
-  };
+    }
+  }];
 
-  WatchItemsPeer watchItems(@"config.plist", NULL);
+  WatchItemsPeer watchItems(nil, NULL);
 
   // Initially nothing should be in the map
   XCTAssertFalse(watchItems.FindPolicyForPath("./foo").has_value());
 
+  // Load the initial config
   [self pushd:@""];
   watchItems.ReloadConfig(config);
   [self popd];
 
-  print(watchItems.currently_monitored_paths_, "Watch paths: ");
-  watchItems.watch_items_->Print();
+  {
+    // Test expected values with the inital policy
+    const std::map<std::string_view, std::string_view> pathToPolicyName = {
+      {"./foo", "foo_subdir"},
+      {"./foo/bar.txt.tmp", "foo_subdir"},
+      {"./foo/bar.txt", "foo_subdir"},
+      {"./does/not/exist", kBadPolicyName},
+    };
 
-  const std::map<std::string_view, std::string_view> pathToPolicyName = {
-    {"./foo", "foo_subdir"},
-    {"./foo/bar.txt.tmp", "foo_subdir"},
-    {"./foo/bar.txt", "bar_txt"},
-    {"./does/not/exist", kBadPolicyName},
+    for (const auto &kv : pathToPolicyName) {
+      std::optional<std::shared_ptr<WatchItemPolicy>> policy =
+        watchItems.FindPolicyForPath(kv.first.data());
+      XCTAssertCStringEqual(policy.value_or(MakeBadPolicy())->name.c_str(), kv.second.data());
+    }
+  }
+
+  // Add a new policy and reload the config
+  NSDictionary *barTxtFilePolicy = @{
+    kWatchItemConfigKeyPath : @"./foo/bar.txt",
+    kWatchItemConfigKeyIsPrefix : @(NO),
   };
+  [config setObject:barTxtFilePolicy forKey:@"bar_txt"];
 
-  for (const auto &kv : pathToPolicyName) {
-    std::optional<std::shared_ptr<WatchItemPolicy>> policy =
-      watchItems.FindPolicyForPath(kv.first.data());
-    XCTAssertCStringEqual(policy.value_or(MakeBadPolicy())->name.c_str(), kv.second.data());
+  // Load the updated config
+  [self pushd:@""];
+  watchItems.ReloadConfig(config);
+  [self popd];
+
+  {
+    // Test expected values with the updated policy
+    const std::map<std::string_view, std::string_view> pathToPolicyName = {
+      {"./foo", "foo_subdir"},
+      {"./foo/bar.txt.tmp", "foo_subdir"},
+      {"./foo/bar.txt", "bar_txt"},
+      {"./does/not/exist", kBadPolicyName},
+    };
+
+    for (const auto &kv : pathToPolicyName) {
+      std::optional<std::shared_ptr<WatchItemPolicy>> policy =
+        watchItems.FindPolicyForPath(kv.first.data());
+      XCTAssertCStringEqual(policy.value_or(MakeBadPolicy())->name.c_str(), kv.second.data());
+    }
+  }
+
+  // Add a catch-all policy that should only affect the previously non-matching path
+  NSDictionary *catchAllFilePolicy = @{
+    kWatchItemConfigKeyPath : @".",
+    kWatchItemConfigKeyIsPrefix : @(YES),
+  };
+  [config setObject:catchAllFilePolicy forKey:@"dot_everything"];
+
+  // Load the updated config
+  [self pushd:@""];
+  watchItems.ReloadConfig(config);
+  [self popd];
+
+  {
+    // Test expected values with the catch-all policy
+    const std::map<std::string_view, std::string_view> pathToPolicyName = {
+      {"./foo", "foo_subdir"},
+      {"./foo/bar.txt.tmp", "foo_subdir"},
+      {"./foo/bar.txt", "bar_txt"},
+      {"./does/not/exist", "dot_everything"},
+    };
+
+    for (const auto &kv : pathToPolicyName) {
+      std::optional<std::shared_ptr<WatchItemPolicy>> policy =
+        watchItems.FindPolicyForPath(kv.first.data());
+      XCTAssertCStringEqual(policy.value_or(MakeBadPolicy())->name.c_str(), kv.second.data());
+    }
+  }
+
+  // Now remove the foo_subdir rule, previous matches should fallback to the catch-all
+  [config removeObjectForKey:@"foo_subdir"];
+  [self pushd:@""];
+  watchItems.ReloadConfig(config);
+  [self popd];
+
+  {
+    // Test expected values with the foo_subdir policy removed
+    const std::map<std::string_view, std::string_view> pathToPolicyName = {
+      {"./foo", "dot_everything"},
+      {"./foo/bar.txt.tmp", "dot_everything"},
+      {"./foo/bar.txt", "bar_txt"},
+      {"./does/not/exist", "dot_everything"},
+    };
+
+    for (const auto &kv : pathToPolicyName) {
+      std::optional<std::shared_ptr<WatchItemPolicy>> policy =
+        watchItems.FindPolicyForPath(kv.first.data());
+      XCTAssertCStringEqual(policy.value_or(MakeBadPolicy())->name.c_str(), kv.second.data());
+    }
   }
 }
 

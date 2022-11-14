@@ -74,8 +74,11 @@ class WatchItems : public std::enable_shared_from_this<WatchItems> {
  public:
   using WatchItemsTree = santa::common::PrefixTree<std::shared_ptr<WatchItemPolicy>>;
 
-  std::unique_ptr<WatchItems> Create(NSString *config_path, uint64_t reapply_config_frequency_secs);
-  WatchItems(NSString *config_path_, dispatch_source_t timer_source);
+  // Factory
+  std::shared_ptr<WatchItems> Create(NSString *config_path, uint64_t reapply_config_frequency_secs);
+
+  WatchItems(NSString *config_path_, dispatch_source_t timer_source, void (^periodic_task_complete_f)(void) = nullptr);
+  ~WatchItems();
 
   void BeginPeriodicTask();
 
@@ -86,14 +89,16 @@ class WatchItems : public std::enable_shared_from_this<WatchItems> {
  private:
   void ReloadConfig(NSDictionary *new_config);
   bool SetCurrentConfig(std::unique_ptr<WatchItemsTree> new_tree,
-                        std::set<WatchItem> &&new_monitored_paths);
+                        std::set<WatchItem> &&new_monitored_paths, NSDictionary *new_config);
   bool ParseConfig(NSDictionary *config, std::vector<std::shared_ptr<WatchItemPolicy>> &policies);
   bool BuildPolicyTree(const std::vector<std::shared_ptr<WatchItemPolicy>> &watch_items,
                        WatchItemsTree &tree, std::set<WatchItem> &paths);
 
   NSString *config_path_;
   dispatch_source_t timer_source_;
+  void (^periodic_task_complete_f_)(void);
   std::unique_ptr<WatchItemsTree> watch_items_;
+  NSDictionary *current_config_;
   std::set<WatchItem> currently_monitored_paths_;
   absl::Mutex lock_;
   bool periodic_task_started_ = false;
