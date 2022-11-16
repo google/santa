@@ -158,12 +158,18 @@ objc_library(
     deps = [":SNTConfigurator"],
 )
 
-cc_library(
-    name = "SNTPrefixTree",
-    srcs = ["SNTPrefixTree.cc"],
-    hdrs = ["SNTPrefixTree.h"],
-    copts = ["-std=c++11"],
-    deps = [":SNTLogging"],
+objc_library(
+    name = "PrefixTree",
+    hdrs = ["PrefixTree.h"],
+    deps = [
+        ":SNTLogging",
+        "@com_google_absl//absl/synchronization",
+    ],
+)
+
+objc_library(
+    name = "Unit",
+    hdrs = ["Unit.h"],
 )
 
 objc_library(
@@ -307,9 +313,9 @@ santa_unit_test(
 )
 
 santa_unit_test(
-    name = "SNTPrefixTreeTest",
-    srcs = ["SNTPrefixTreeTest.mm"],
-    deps = [":SNTPrefixTree"],
+    name = "PrefixTreeTest",
+    srcs = ["PrefixTreeTest.mm"],
+    deps = [":PrefixTree"],
 )
 
 santa_unit_test(
@@ -331,11 +337,11 @@ santa_unit_test(
 test_suite(
     name = "unit_tests",
     tests = [
+        ":PrefixTreeTest",
         ":SNTCachedDecisionTest",
         ":SNTFileInfoTest",
         ":SNTKVOManagerTest",
         ":SNTMetricSetTest",
-        ":SNTPrefixTreeTest",
         ":SNTRuleTest",
         ":SantaCacheTest",
     ],

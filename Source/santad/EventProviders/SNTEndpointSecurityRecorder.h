@@ -12,7 +12,8 @@
 ///    See the License for the specific language governing permissions and
 ///    limitations under the License.
 
-#import "Source/common/SNTPrefixTree.h"
+#import "Source/common/PrefixTree.h"
+#import "Source/common/Unit.h"
 #import "Source/santad/EventProviders/AuthResultCache.h"
 #include "Source/santad/EventProviders/EndpointSecurity/EndpointSecurityAPI.h"
 #include "Source/santad/EventProviders/EndpointSecurity/Enricher.h"
@@ -37,6 +38,6 @@
   compilerController:(SNTCompilerController *)compilerController
      authResultCache:
        (std::shared_ptr<santa::santad::event_providers::AuthResultCache>)authResultCache
-          prefixTree:(std::shared_ptr<SNTPrefixTree>)prefixTree;
+          prefixTree:(std::shared_ptr<santa::common::PrefixTree<santa::common::Unit>>)prefixTree;
 
 @end
