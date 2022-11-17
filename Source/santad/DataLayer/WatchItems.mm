@@ -114,19 +114,18 @@ bool ConfirmValidWatchItemConfig(const NSDictionary *watch_item_dict) {
   return success;
 }
 
-std::vector<std::string> ConfigArrayToVector(NSArray *array) {
-  std::vector<std::string> vec;
-  vec.reserve([array count]);
+std::set<std::string> ConfigArrayToSet(NSArray<NSString*> *array) {
+  std::set<std::string> strings;
 
   for (NSString *obj in array) {
-    vec.push_back(std::string([obj UTF8String]));
+    strings.insert(std::string([obj UTF8String]));
   }
-  return vec;
+  return strings;
 }
 
 WatchItemPolicy::WatchItemPolicy(std::string_view n, std::string_view p, bool wo, bool ip, bool ao,
-                                 std::vector<std::string> &&abp, std::vector<std::string> &&acs,
-                                 std::vector<std::string> &&ati, std::vector<std::string> &&ach)
+                                 std::set<std::string> &&abp, std::set<std::string> &&acs,
+                                 std::set<std::string> &&ati, std::set<std::string> &&ach)
     : name(n),
       path(p),
       write_only(wo),
@@ -218,7 +217,7 @@ bool WatchItems::BuildPolicyTree(const std::vector<std::shared_ptr<WatchItemPoli
 }
 
 bool WatchItems::ParseConfig(NSDictionary *config,
-                             std::vector<std::shared_ptr<WatchItemPolicy>> &watch_items) {
+                             std::vector<std::shared_ptr<WatchItemPolicy>> &policies) {
   bool config_ok = true;
 
   for (id key in config) {
@@ -243,15 +242,15 @@ bool WatchItems::ParseConfig(NSDictionary *config,
       break;
     }
 
-    watch_items.push_back(std::make_shared<WatchItemPolicy>(
+    policies.push_back(std::make_shared<WatchItemPolicy>(
       [key UTF8String], [watch_item[kWatchItemConfigKeyPath] UTF8String],
       [(watch_item[kWatchItemConfigKeyWriteOnly] ?: @(0)) boolValue],
       [(watch_item[kWatchItemConfigKeyIsPrefix] ?: @(0)) boolValue],
       [(watch_item[kWatchItemConfigKeyAuditOnly] ?: @(1)) boolValue],
-      ConfigArrayToVector(watch_item[kWatchItemConfigKeyAllowedBinaryPaths]),
-      ConfigArrayToVector(watch_item[kWatchItemConfigKeyAllowedCertificatesSha256]),
-      ConfigArrayToVector(watch_item[kWatchItemConfigKeyAllowedTeamIDs]),
-      ConfigArrayToVector(watch_item[kWatchItemConfigKeyAllowedCDHashes])));
+      ConfigArrayToSet(watch_item[kWatchItemConfigKeyAllowedBinaryPaths]),
+      ConfigArrayToSet(watch_item[kWatchItemConfigKeyAllowedCertificatesSha256]),
+      ConfigArrayToSet(watch_item[kWatchItemConfigKeyAllowedTeamIDs]),
+      ConfigArrayToSet(watch_item[kWatchItemConfigKeyAllowedCDHashes])));
   }
 
   return config_ok;
@@ -273,9 +272,9 @@ bool WatchItems::SetCurrentConfig(
 }
 
 void WatchItems::ReloadConfig(NSDictionary *new_config) {
-  std::vector<std::shared_ptr<WatchItemPolicy>> new_watch_items;
+  std::vector<std::shared_ptr<WatchItemPolicy>> new_policies;
 
-  if (!ParseConfig(new_config, new_watch_items)) {
+  if (!ParseConfig(new_config, new_policies)) {
     LOGE(@"Failed to apply new filesystem monitoring config");
     return;
   }
@@ -283,7 +282,7 @@ void WatchItems::ReloadConfig(NSDictionary *new_config) {
   auto new_tree = std::make_unique<PrefixTree<std::shared_ptr<WatchItemPolicy>>>();
   std::set<WatchItem> new_monitored_paths;
 
-  if (!BuildPolicyTree(new_watch_items, *new_tree, new_monitored_paths)) {
+  if (!BuildPolicyTree(new_policies, *new_tree, new_monitored_paths)) {
     LOGE(@"Failed to build new filesystem monitoring policy");
     return;
   }

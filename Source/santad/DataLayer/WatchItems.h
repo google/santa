@@ -44,19 +44,19 @@ namespace santa::santad::data_layer {
 
 struct WatchItemPolicy {
   WatchItemPolicy(std::string_view n, std::string_view p, bool wo = false, bool ip = false,
-                  bool ao = true, std::vector<std::string> &&abp = {},
-                  std::vector<std::string> &&acs = {}, std::vector<std::string> &&ati = {},
-                  std::vector<std::string> &&ach = {});
+                  bool ao = true, std::set<std::string> &&abp = {},
+                  std::set<std::string> &&acs = {}, std::set<std::string> &&ati = {},
+                  std::set<std::string> &&ach = {});
 
   std::string name;
   std::string path;
   bool write_only;
   bool is_prefix;
   bool audit_only;
-  std::vector<std::string> allowed_binary_paths;
-  std::vector<std::string> allowed_certificates_sha256;
-  std::vector<std::string> allowed_team_ids;
-  std::vector<std::string> allowed_cdhashes;
+  std::set<std::string> allowed_binary_paths;
+  std::set<std::string> allowed_certificates_sha256;
+  std::set<std::string> allowed_team_ids;
+  std::set<std::string> allowed_cdhashes;
 };
 
 struct WatchItem {
