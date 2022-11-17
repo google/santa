@@ -172,7 +172,7 @@ std::shared_ptr<WatchItems> WatchItems::Create(NSString *config_path,
   dispatch_source_set_timer(timer_source, dispatch_time(DISPATCH_TIME_NOW, 0),
                             NSEC_PER_SEC * reapply_config_frequency_secs, 0);
 
-  return std::make_unique<WatchItems>(config_path, timer_source);
+  return std::make_shared<WatchItems>(config_path, timer_source);
 }
 
 WatchItems::WatchItems(NSString *config_path, dispatch_source_t timer_source,
