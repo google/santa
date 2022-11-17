@@ -29,7 +29,6 @@
 #include "Source/santad/DataLayer/WatchItems.h"
 
 using santa::common::PrefixTree;
-using santa::santad::data_layer::WatchItem;
 using santa::santad::data_layer::WatchItemPolicy;
 using santa::santad::data_layer::WatchItems;
 

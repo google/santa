@@ -114,7 +114,7 @@ bool ConfirmValidWatchItemConfig(const NSDictionary *watch_item_dict) {
   return success;
 }
 
-std::set<std::string> ConfigArrayToSet(NSArray<NSString*> *array) {
+static std::set<std::string> ConfigArrayToSet(NSArray<NSString *> *array) {
   std::set<std::string> strings;
 
   for (NSString *obj in array) {
@@ -135,29 +135,6 @@ WatchItemPolicy::WatchItemPolicy(std::string_view n, std::string_view p, bool wo
       allowed_certificates_sha256(std::move(acs)),
       allowed_team_ids(std::move(ati)),
       allowed_cdhashes(std::move(ach)) {}
-
-WatchItem::WatchItem(std::string p, bool ip) : path(p), is_prefix(ip) {}
-
-bool WatchItem::operator<(const WatchItem &wi) const {
-  // Essentialy implements the same `operator<` logic as `std::pair`
-  if (path < wi.path) {
-    return true;
-  } else if (path > wi.path) {
-    return false;
-  } else if (is_prefix < wi.is_prefix) {
-    return true;
-  } else {
-    return false;
-  }
-}
-
-bool WatchItem::operator==(const WatchItem &wi) const {
-  return is_prefix == wi.is_prefix && path == wi.path;
-}
-
-std::ostream &operator<<(std::ostream &os, const WatchItem &wi) {
-  return os << wi.path << "(" << (wi.is_prefix ? "p" : "l") << ")";
-}
 
 std::shared_ptr<WatchItems> WatchItems::Create(NSString *config_path,
                                                uint64_t reapply_config_frequency_secs) {
@@ -193,7 +170,7 @@ WatchItems::~WatchItems() {
 
 bool WatchItems::BuildPolicyTree(const std::vector<std::shared_ptr<WatchItemPolicy>> &watch_items,
                                  PrefixTree<std::shared_ptr<WatchItemPolicy>> &tree,
-                                 std::set<WatchItem> &paths) {
+                                 std::set<std::string> &paths) {
   for (const std::shared_ptr<WatchItemPolicy> &item : watch_items) {
     glob_t g;
     int err = glob(item->path.c_str(), 0, nullptr, &g);
@@ -209,7 +186,7 @@ bool WatchItems::BuildPolicyTree(const std::vector<std::shared_ptr<WatchItemPoli
         tree.InsertLiteral(g.gl_pathv[i], item);
       }
 
-      paths.insert(WatchItem{g.gl_pathv[i], item->is_prefix});
+      paths.insert(g.gl_pathv[i]);
     }
   }
 
@@ -258,7 +235,7 @@ bool WatchItems::ParseConfig(NSDictionary *config,
 
 bool WatchItems::SetCurrentConfig(
   std::unique_ptr<PrefixTree<std::shared_ptr<WatchItemPolicy>>> new_tree,
-  std::set<WatchItem> &&new_monitored_paths, NSDictionary *new_config) {
+  std::set<std::string> &&new_monitored_paths, NSDictionary *new_config) {
   absl::MutexLock lock(&lock_);
 
   // TODO(mlw): In upcoming PR, need to use ES API to stop watching removed paths,
@@ -280,7 +257,7 @@ void WatchItems::ReloadConfig(NSDictionary *new_config) {
   }
 
   auto new_tree = std::make_unique<PrefixTree<std::shared_ptr<WatchItemPolicy>>>();
-  std::set<WatchItem> new_monitored_paths;
+  std::set<std::string> new_monitored_paths;
 
   if (!BuildPolicyTree(new_policies, *new_tree, new_monitored_paths)) {
     LOGE(@"Failed to build new filesystem monitoring policy");

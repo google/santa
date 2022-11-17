@@ -59,17 +59,6 @@ struct WatchItemPolicy {
   std::set<std::string> allowed_cdhashes;
 };
 
-struct WatchItem {
-  WatchItem(std::string p, bool ip);
-
-  std::string path;
-  bool is_prefix;
-
-  bool operator<(const WatchItem &wi) const;
-  bool operator==(const WatchItem &wi) const;
-  friend std::ostream &operator<<(std::ostream &os, const WatchItem &wi);
-};
-
 class WatchItems : public std::enable_shared_from_this<WatchItems> {
  public:
   using WatchItemsTree = santa::common::PrefixTree<std::shared_ptr<WatchItemPolicy>>;
@@ -90,17 +79,17 @@ class WatchItems : public std::enable_shared_from_this<WatchItems> {
  private:
   void ReloadConfig(NSDictionary *new_config);
   bool SetCurrentConfig(std::unique_ptr<WatchItemsTree> new_tree,
-                        std::set<WatchItem> &&new_monitored_paths, NSDictionary *new_config);
+                        std::set<std::string> &&new_monitored_paths, NSDictionary *new_config);
   bool ParseConfig(NSDictionary *config, std::vector<std::shared_ptr<WatchItemPolicy>> &policies);
   bool BuildPolicyTree(const std::vector<std::shared_ptr<WatchItemPolicy>> &watch_items,
-                       WatchItemsTree &tree, std::set<WatchItem> &paths);
+                       WatchItemsTree &tree, std::set<std::string> &paths);
 
   NSString *config_path_;
   dispatch_source_t timer_source_;
   void (^periodic_task_complete_f_)(void);
   std::unique_ptr<WatchItemsTree> watch_items_;
   NSDictionary *current_config_;
-  std::set<WatchItem> currently_monitored_paths_;
+  std::set<std::string> currently_monitored_paths_;
   absl::Mutex lock_;
   bool periodic_task_started_ = false;
 };
