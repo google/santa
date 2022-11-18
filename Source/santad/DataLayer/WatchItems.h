@@ -57,6 +57,8 @@ struct WatchItemPolicy {
   std::set<std::string> allowed_certificates_sha256;
   std::set<std::string> allowed_team_ids;
   std::set<std::string> allowed_cdhashes;
+  // TODO(xyz): Need to store these in a fancier way
+  // std::set<std::array<uint8_t, 20>> allowed_cdhashes;
 };
 
 class WatchItems : public std::enable_shared_from_this<WatchItems> {
@@ -64,7 +66,8 @@ class WatchItems : public std::enable_shared_from_this<WatchItems> {
   using WatchItemsTree = santa::common::PrefixTree<std::shared_ptr<WatchItemPolicy>>;
 
   // Factory
-  std::shared_ptr<WatchItems> Create(NSString *config_path, uint64_t reapply_config_frequency_secs);
+  static std::shared_ptr<WatchItems> Create(NSString *config_path,
+                                            uint64_t reapply_config_frequency_secs);
 
   WatchItems(NSString *config_path_, dispatch_source_t timer_source,
              void (^periodic_task_complete_f)(void) = nullptr);

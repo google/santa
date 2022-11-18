@@ -23,6 +23,7 @@
 #import "Source/common/SNTLogging.h"
 #import "Source/common/SNTXPCNotifierInterface.h"
 #import "Source/common/SNTXPCSyncServiceInterface.h"
+#include "Source/santad/DataLayer/WatchItems.h"
 #include "Source/santad/EventProviders/AuthResultCache.h"
 #include "Source/santad/EventProviders/EndpointSecurity/EndpointSecurityAPI.h"
 #include "Source/santad/EventProviders/EndpointSecurity/Enricher.h"
@@ -30,12 +31,14 @@
 #import "Source/santad/EventProviders/SNTEndpointSecurityDeviceManager.h"
 #import "Source/santad/EventProviders/SNTEndpointSecurityRecorder.h"
 #import "Source/santad/EventProviders/SNTEndpointSecurityTamperResistance.h"
+#import "Source/santad/EventProviders/SNTEndpointSecurityWatcher.h"
 #include "Source/santad/Logs/EndpointSecurity/Logger.h"
 #include "Source/santad/SNTDaemonControlController.h"
 
 using santa::common::PrefixTree;
 using santa::common::Unit;
 using santa::santad::Metrics;
+using santa::santad::data_layer::WatchItems;
 using santa::santad::event_providers::AuthResultCache;
 using santa::santad::event_providers::FlushCacheMode;
 using santa::santad::event_providers::endpoint_security::EndpointSecurityAPI;
@@ -65,7 +68,9 @@ static void EstablishSyncServiceConnection(SNTSyncdQueue *syncd_queue) {
 }
 
 void SantadMain(std::shared_ptr<EndpointSecurityAPI> esapi, std::shared_ptr<Logger> logger,
-                std::shared_ptr<Metrics> metrics, std::shared_ptr<Enricher> enricher,
+                std::shared_ptr<Metrics> metrics,
+                std::shared_ptr<santa::santad::data_layer::WatchItems> watch_items,
+                std::shared_ptr<Enricher> enricher,
                 std::shared_ptr<AuthResultCache> auth_result_cache,
                 MOLXPCConnection *control_connection, SNTCompilerController *compiler_controller,
                 SNTNotificationQueue *notifier_queue, SNTSyncdQueue *syncd_queue,
@@ -120,6 +125,13 @@ void SantadMain(std::shared_ptr<EndpointSecurityAPI> esapi, std::shared_ptr<Logg
 
   SNTEndpointSecurityTamperResistance *tamper_client =
     [[SNTEndpointSecurityTamperResistance alloc] initWithESAPI:esapi metrics:metrics logger:logger];
+
+  SNTEndpointSecurityWatcher *watcher_client =
+    [[SNTEndpointSecurityWatcher alloc] initWithESAPI:esapi
+                                              metrics:metrics
+                                               logger:logger
+                                           watchItems:nullptr];
+  (void)watcher_client;
 
   EstablishSyncServiceConnection(syncd_queue);
 

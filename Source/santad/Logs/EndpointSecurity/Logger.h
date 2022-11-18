@@ -59,6 +59,8 @@ class Logger {
   void LogDiskAppeared(NSDictionary *props);
   void LogDiskDisappeared(NSDictionary *props);
 
+  void LogAccess(const santa::santad::event_providers::endpoint_security::Message &msg);
+
   friend class santa::santad::logs::endpoint_security::LoggerPeer;
 
  private:

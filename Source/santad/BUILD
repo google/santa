@@ -309,6 +309,21 @@ objc_library(
 )
 
 objc_library(
+    name = "SNTEndpointSecurityWatcher",
+    srcs = ["EventProviders/SNTEndpointSecurityWatcher.mm"],
+    hdrs = ["EventProviders/SNTEndpointSecurityWatcher.h"],
+    deps = [
+        ":EndpointSecurityAPI",
+        ":EndpointSecurityLogger",
+        ":EndpointSecurityMessage",
+        ":SNTEndpointSecurityClient",
+        ":SNTEndpointSecurityEventHandler",
+        ":WatchItems",
+        "//Source/common:Unit",
+    ],
+)
+
+objc_library(
     name = "SNTEndpointSecurityDeviceManager",
     srcs = ["EventProviders/SNTEndpointSecurityDeviceManager.mm"],
     hdrs = ["EventProviders/SNTEndpointSecurityDeviceManager.h"],
@@ -594,9 +609,11 @@ objc_library(
         ":SNTEndpointSecurityDeviceManager",
         ":SNTEndpointSecurityRecorder",
         ":SNTEndpointSecurityTamperResistance",
+        ":SNTEndpointSecurityWatcher",
         ":SNTExecutionController",
         ":SNTNotificationQueue",
         ":SNTSyncdQueue",
+        ":WatchItems",
         "//Source/common:PrefixTree",
         "//Source/common:SNTCommonEnums",
         "//Source/common:SNTConfigurator",
@@ -626,6 +643,7 @@ objc_library(
         ":SNTNotificationQueue",
         ":SNTRuleTable",
         ":SNTSyncdQueue",
+        ":WatchItems",
         "//Source/common:PrefixTree",
         "//Source/common:SNTConfigurator",
         "//Source/common:SNTLogging",
@@ -1083,6 +1101,23 @@ santa_unit_test(
         ":SNTExecutionController",
         "//Source/common:SNTCommonEnums",
         "//Source/common:TestUtils",
+        "@OCMock",
+        "@com_google_googletest//:gtest",
+    ],
+)
+
+santa_unit_test(
+    name = "SNTEndpointSecurityWatcherTest",
+    srcs = ["EventProviders/SNTEndpointSecurityWatcherTest.mm"],
+    sdk_dylibs = [
+        "EndpointSecurity",
+    ],
+    deps = [
+        ":EndpointSecurityMessage",
+        ":MockEndpointSecurityAPI",
+        ":SNTEndpointSecurityWatcher",
+        "//Source/common:TestUtils",
+        "//Source/common:Unit",
         "@OCMock",
         "@com_google_googletest//:gtest",
     ],

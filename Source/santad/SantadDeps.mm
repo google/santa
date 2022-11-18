@@ -20,12 +20,14 @@
 #import "Source/common/SNTXPCControlInterface.h"
 #import "Source/santad/DataLayer/SNTEventTable.h"
 #import "Source/santad/DataLayer/SNTRuleTable.h"
+#include "Source/santad/DataLayer/WatchItems.h"
 #include "Source/santad/EventProviders/EndpointSecurity/EndpointSecurityAPI.h"
 #import "Source/santad/SNTDatabaseController.h"
 
 using santa::common::PrefixTree;
 using santa::common::Unit;
 using santa::santad::Metrics;
+using santa::santad::data_layer::WatchItems;
 using santa::santad::event_providers::AuthResultCache;
 using santa::santad::event_providers::endpoint_security::EndpointSecurityAPI;
 using santa::santad::event_providers::endpoint_security::Enricher;
@@ -114,6 +116,8 @@ std::unique_ptr<SantadDeps> SantadDeps::Create(SNTConfigurator *configurator,
     exit(EXIT_FAILURE);
   }
 
+  std::shared_ptr<::WatchItems> watch_items = WatchItems::Create(@"TODO_CONFIG_PATH", 60 * 10);
+
   std::shared_ptr<::Metrics> metrics =
     Metrics::Create(metric_set, [configurator metricExportInterval]);
   if (!metrics) {
@@ -121,13 +125,14 @@ std::unique_ptr<SantadDeps> SantadDeps::Create(SNTConfigurator *configurator,
     exit(EXIT_FAILURE);
   }
 
-  return std::make_unique<SantadDeps>(esapi, metrics, std::move(logger), control_connection,
-                                      compiler_controller, notifier_queue, syncd_queue,
-                                      exec_controller, prefix_tree);
+  return std::make_unique<SantadDeps>(
+    esapi, std::move(logger), std::move(metrics), std::move(watch_items), control_connection,
+    compiler_controller, notifier_queue, syncd_queue, exec_controller, prefix_tree);
 }
 
-SantadDeps::SantadDeps(std::shared_ptr<EndpointSecurityAPI> esapi,
-                       std::shared_ptr<::Metrics> metrics, std::unique_ptr<::Logger> logger,
+SantadDeps::SantadDeps(std::shared_ptr<EndpointSecurityAPI> esapi, std::unique_ptr<::Logger> logger,
+                       std::shared_ptr<::Metrics> metrics,
+                       std::shared_ptr<::WatchItems> watch_items,
                        MOLXPCConnection *control_connection,
                        SNTCompilerController *compiler_controller,
                        SNTNotificationQueue *notifier_queue, SNTSyncdQueue *syncd_queue,
@@ -136,6 +141,7 @@ SantadDeps::SantadDeps(std::shared_ptr<EndpointSecurityAPI> esapi,
     : esapi_(std::move(esapi)),
       logger_(std::move(logger)),
       metrics_(std::move(metrics)),
+      watch_items_(std::move(watch_items)),
       enricher_(std::make_shared<::Enricher>()),
       auth_result_cache_(std::make_shared<::AuthResultCache>(esapi_)),
       control_connection_(control_connection),
@@ -162,6 +168,10 @@ std::shared_ptr<Logger> SantadDeps::Logger() {
 
 std::shared_ptr<::Metrics> SantadDeps::Metrics() {
   return metrics_;
+}
+
+std::shared_ptr<::WatchItems> SantadDeps::WatchItems() {
+  return watch_items_;
 }
 
 MOLXPCConnection *SantadDeps::ControlConnection() {

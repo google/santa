@@ -38,6 +38,8 @@ class EndpointSecurityAPI : public std::enable_shared_from_this<EndpointSecurity
 
   virtual bool RespondAuthResult(const Client &client, const Message &msg, es_auth_result_t result,
                                  bool cache);
+  virtual bool RespondFlagsResult(const Client &client, const Message &msg, uint32_t allowed_flags,
+                                  bool cache);
 
   virtual bool MuteProcess(const Client &client, const audit_token_t *tok);
 

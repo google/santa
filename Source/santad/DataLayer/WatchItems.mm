@@ -286,6 +286,10 @@ void WatchItems::BeginPeriodicTask() {
 }
 
 std::optional<std::shared_ptr<WatchItemPolicy>> WatchItems::FindPolicyForPath(const char *input) {
+  if (!input) {
+    return std::nullopt;
+  }
+
   absl::ReaderMutexLock lock(&lock_);
   return watch_items_->LookupLongestMatchingPrefix(input);
 }
