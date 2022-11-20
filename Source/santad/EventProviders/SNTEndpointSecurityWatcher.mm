@@ -119,6 +119,8 @@ PathTargets GetPathTargets(const Message &msg) {
   if (self) {
     _watchItems = std::move(watchItems);
     _logger = std::move(logger);
+
+    [self establishClientOrDie];
   }
   return self;
 }

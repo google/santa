@@ -184,7 +184,12 @@ using santa::santad::event_providers::endpoint_security::Message;
 - (bool)respondToMessage:(const Message &)msg
           withAuthResult:(es_auth_result_t)result
                cacheable:(bool)cacheable {
-  return _esApi->RespondAuthResult(_esClient, msg, result, cacheable);
+  if (msg->event_type == ES_EVENT_TYPE_AUTH_OPEN) {
+    return _esApi->RespondFlagsResult(
+      _esClient, msg, (result == ES_AUTH_RESULT_ALLOW) ? 0xffffffff : 0x0, cacheable);
+  } else {
+    return _esApi->RespondAuthResult(_esClient, msg, result, cacheable);
+  }
 }
 
 - (void)processEnrichedMessage:(std::shared_ptr<EnrichedMessage>)msg

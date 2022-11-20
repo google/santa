@@ -13,6 +13,7 @@
 ///    limitations under the License.
 
 #include "Source/santad/SantadDeps.h"
+
 #include <memory>
 
 #import "Source/common/SNTLogging.h"
@@ -116,7 +117,9 @@ std::unique_ptr<SantadDeps> SantadDeps::Create(SNTConfigurator *configurator,
     exit(EXIT_FAILURE);
   }
 
-  std::shared_ptr<::WatchItems> watch_items = WatchItems::Create(@"TODO_CONFIG_PATH", 60 * 10);
+  std::shared_ptr<::WatchItems> watch_items =
+    WatchItems::Create([configurator filesystemMonitoringPlistPath],
+                       [configurator filesystemMonitoringPolicyUpdateIntervalSec]);
 
   std::shared_ptr<::Metrics> metrics =
     Metrics::Create(metric_set, [configurator metricExportInterval]);

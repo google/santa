@@ -130,8 +130,7 @@ void SantadMain(std::shared_ptr<EndpointSecurityAPI> esapi, std::shared_ptr<Logg
     [[SNTEndpointSecurityWatcher alloc] initWithESAPI:esapi
                                               metrics:metrics
                                                logger:logger
-                                           watchItems:nullptr];
-  (void)watcher_client;
+                                           watchItems:watch_items];
 
   EstablishSyncServiceConnection(syncd_queue);
 
@@ -299,6 +298,7 @@ void SantadMain(std::shared_ptr<EndpointSecurityAPI> esapi, std::shared_ptr<Logg
   // execution policy appropriately.
   [authorizer_client enable];
   [tamper_client enable];
+  [watcher_client enable];
   [monitor_client enable];
   [device_client enable];
 

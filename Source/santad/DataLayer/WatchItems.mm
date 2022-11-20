@@ -24,6 +24,7 @@
 
 using santa::common::PrefixTree;
 
+const NSString *kWatchItemConfigKeyWatchItems = @"WatchItems";
 const NSString *kWatchItemConfigKeyPath = @"Path";
 const NSString *kWatchItemConfigKeyWriteOnly = @"WriteOnly";
 const NSString *kWatchItemConfigKeyIsPrefix = @"IsPrefix";
@@ -124,6 +125,12 @@ WatchItemPolicy::WatchItemPolicy(std::string_view n, std::string_view p, bool wo
 std::shared_ptr<WatchItems> WatchItems::Create(NSString *config_path,
                                                uint64_t reapply_config_frequency_secs) {
   if (!config_path) {
+    LOGW(@"Watch item config not provided");
+    return nullptr;
+  }
+
+  if (reapply_config_frequency_secs < 1) {
+    LOGW(@"Invalid watch item update interval provided (0)");
     return nullptr;
   }
 
@@ -183,21 +190,28 @@ bool WatchItems::ParseConfig(NSDictionary *config,
                              std::vector<std::shared_ptr<WatchItemPolicy>> &policies) {
   bool config_ok = true;
 
-  for (id key in config) {
+  id watch_items = config[kWatchItemConfigKeyWatchItems];
+
+  if (![watch_items isKindOfClass:[NSDictionary class]]) {
+    LOGE(@"Missing top level WatchItems key");
+    return false;
+  }
+
+  for (id key in watch_items) {
     if (![key isKindOfClass:[NSString class]]) {
       LOGE(@"Invalid key %@ (class: %@)", key, NSStringFromClass([key class]));
       config_ok = false;
       break;
     }
 
-    if (![config[key] isKindOfClass:[NSDictionary class]]) {
-      LOGE(@"Config for '%@' must be a dictionary (got: %@)", key,
-           NSStringFromClass([config[key] class]));
+    if (![watch_items[key] isKindOfClass:[NSDictionary class]]) {
+      LOGE(@"Config for '%@' must be a dictionary (got: %@), skipping", key,
+           NSStringFromClass([watch_items[key] class]));
       config_ok = false;
       break;
     }
 
-    NSDictionary *watch_item = config[key];
+    NSDictionary *watch_item = watch_items[key];
 
     if (!ConfirmValidWatchItemConfig(watch_item)) {
       LOGE(@"Invalid config for watch item: '%@'", key);
