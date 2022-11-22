@@ -19,6 +19,8 @@
 #include <Kernel/kern/cs_blobs.h>
 #include <sys/fcntl.h>
 
+#include <algorithm>
+#include <array>
 #include <cstdlib>
 #include <memory>
 #include <optional>
@@ -125,10 +127,15 @@ PathTargets GetPathTargets(const Message &msg) {
   return self;
 }
 
+- (NSString *)description {
+  return @"Watcher";
+}
+
 // The operation is allowed when:
 //   - No policy exists
 //   - The policy is write-only, but the operation is read-only
 //   - The operation was instigated by an allowed process
+//   - If the instigating process is signed, the codesignature is valid
 // Otherwise the operation is denied.
 - (es_auth_result_t)getResponseForMessage:(const Message &)msg
                                withPolicy:
@@ -136,6 +143,14 @@ PathTargets GetPathTargets(const Message &msg) {
   // If no policy exists, everything is allowed
   if (!optionalPolicy.has_value()) {
     return ES_AUTH_RESULT_ALLOW;
+  }
+
+  // If the process is signed but has an invalid signature, it is denied
+  if ((msg->process->codesigning_flags & (CS_SIGNED | CS_VALID)) == CS_SIGNED) {
+    // TODO(mlw): Think about how to make stronger guarantees here to handle
+    // programs becoming invalid after first being granted access. Maybe we
+    // should only allow things that have hardened runtime flags set?
+    return ES_AUTH_RESULT_DENY;
   }
 
   std::shared_ptr<WatchItemPolicy> policy = optionalPolicy.value();
@@ -167,21 +182,33 @@ PathTargets GetPathTargets(const Message &msg) {
   // Check if the instigating process has an allowed TeamID
   if (msg->process->team_id.data &&
       policy->allowed_team_ids.count(msg->process->team_id.data) > 0) {
+    LOGE(@"Allowing TEAMID access to %s from %s (pid: %d) | policy: %s",
+         msg->event.open.file->path.data, msg->process->executable->path.data,
+         msg->process->audit_token.val[5], policy->name.c_str());
     return ES_AUTH_RESULT_ALLOW;
   }
 
   // Check if the instigating process path opening the file is allowed
   if (policy->allowed_binary_paths.count(msg->process->executable->path.data) > 0) {
+    LOGE(@"Allowing PATH access to %s from %s (pid: %d) | policy: %s", msg->event.open.file->path.data,
+         msg->process->executable->path.data, msg->process->audit_token.val[5],
+         policy->name.c_str());
     return ES_AUTH_RESULT_ALLOW;
   }
 
-  // TODO(xyz): Need to handle looking up `SNTCachedDecision`'s in
+  // TODO(xyz): Need to handle looking up `SNTCachedDecision`'s in decision cache
   // or to check `allowed_certificates_sha256`
 
-  // TODO(xyz): Need to first store cdhashes in a better format to
-  // match what we get from ES
-  // if (msg->process->codesigning_flags & CS_SIGNED && policy->allowed_cdhashes.count()) {
-  // }
+  if (msg->process->codesigning_flags & CS_SIGNED) {
+    std::array<uint8_t, CS_CDHASH_LEN> bytes;
+    std::copy(std::begin(msg->process->cdhash), std::end(msg->process->cdhash), std::begin(bytes));
+    if (policy->allowed_cdhashes.count(bytes) > 0) {
+      LOGE(@"Allowing CDHASH access to %s from %s (pid: %d) | policy: %s", msg->event.open.file->path.data,
+         msg->process->executable->path.data, msg->process->audit_token.val[5],
+         policy->name.c_str());
+      return ES_AUTH_RESULT_ALLOW;
+    }
+  }
 
   // If we get here, a policy existed and no exceptions were found. Log it.
   self->_logger->LogAccess(msg);
@@ -190,6 +217,11 @@ PathTargets GetPathTargets(const Message &msg) {
   if (policy->audit_only) {
     return ES_AUTH_RESULT_ALLOW;
   } else {
+    // TODO(xyz): Write to TTY like in exec controller?
+    // TODO(xyz): Need new config iitem for custom message in UI
+    LOGE(@"Denying access to %s from %s (pid: %d) | policy: %s", msg->event.open.file->path.data,
+         msg->process->executable->path.data, msg->process->audit_token.val[5],
+         policy->name.c_str());
     return ES_AUTH_RESULT_DENY;
   }
 }
@@ -238,23 +270,24 @@ PathTargets GetPathTargets(const Message &msg) {
 }
 
 - (void)enable {
-  std::set<es_event_type_t> events{
-    ES_EVENT_TYPE_AUTH_OPEN,
-    ES_EVENT_TYPE_AUTH_LINK,
-    ES_EVENT_TYPE_AUTH_RENAME,
-    ES_EVENT_TYPE_AUTH_UNLINK,
-  };
+  // std::set<es_event_type_t> events{
+  //   ES_EVENT_TYPE_AUTH_OPEN,
+  //   ES_EVENT_TYPE_AUTH_LINK,
+  //   ES_EVENT_TYPE_AUTH_RENAME,
+  //   ES_EVENT_TYPE_AUTH_UNLINK,
+  // };
 
-  if (@available(macOS 10.15.1, *)) {
-    events.insert(ES_EVENT_TYPE_AUTH_CLONE);
-    events.insert(ES_EVENT_TYPE_AUTH_EXCHANGEDATA);
-  }
+  // if (@available(macOS 10.15.1, *)) {
+  //   events.insert(ES_EVENT_TYPE_AUTH_CLONE);
+  //   events.insert(ES_EVENT_TYPE_AUTH_EXCHANGEDATA);
+  // }
 
-  if (@available(macOS 12.0, *)) {
-    events.insert(ES_EVENT_TYPE_AUTH_COPYFILE);
-  }
+  // if (@available(macOS 12.0, *)) {
+  //   events.insert(ES_EVENT_TYPE_AUTH_COPYFILE);
+  // }
 
-  [super subscribeAndClearCache:events];
+  // [super subscribeAndClearCache:events];
+  [super subscribeAndClearCache:{ES_EVENT_TYPE_AUTH_OPEN}];
 }
 
 @end

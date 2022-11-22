@@ -13,9 +13,14 @@
 /// limitations under the License.
 
 #include "Source/santad/DataLayer/WatchItems.h"
+
+#include <CommonCrypto/CommonDigest.h>
+#include <ctype.h>
 #include <glob.h>
+
 #include <cstddef>
 #include <memory>
+#include <optional>
 #include <set>
 #include <utility>
 
@@ -62,6 +67,20 @@ bool CheckTypeAll(const NSArray *array, const NSString *key, Class cls) {
   return true;
 }
 
+bool ConfirmValidHexString(NSString *str, size_t expected_length) {
+  if ([str length] != expected_length) {
+    return false;
+  }
+
+  for (int i = 0; i < [str length]; i++) {
+    if (!isxdigit([str characterAtIndex:i])) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
 bool ConfirmValidWatchItemConfig(const NSDictionary *watch_item_dict) {
   NSDictionary *configTypes = @{
     kWatchItemConfigKeyPath : [NSString class],
@@ -97,30 +116,89 @@ bool ConfirmValidWatchItemConfig(const NSDictionary *watch_item_dict) {
     }
   }];
 
+  // Check the allowed cdhashes contain valid hex encoded data
+  if (success) {
+    [watch_item_dict[kWatchItemConfigKeyAllowedCDHashes]
+      enumerateObjectsUsingBlock:^(NSString *obj, NSUInteger idx, BOOL *stop) {
+        success = ConfirmValidHexString(obj, CS_CDHASH_LEN * 2);
+        if (!success) {
+          *stop = YES;
+        }
+      }];
+  }
+
+  // Check the allowed certificate hashes contain valid hex encoded data
+  if (success) {
+    [watch_item_dict[kWatchItemConfigKeyAllowedCertificatesSha256]
+      enumerateObjectsUsingBlock:^(NSString *obj, NSUInteger idx, BOOL *stop) {
+        success = ConfirmValidHexString(obj, CC_SHA256_DIGEST_LENGTH * 2);
+        if (!success) {
+          *stop = YES;
+        }
+      }];
+  }
+
   return success;
 }
 
-static std::set<std::string> ConfigArrayToSet(NSArray<NSString *> *array) {
+static std::set<std::string> StringArrayToSet(NSArray<NSString *> *array) {
   std::set<std::string> strings;
 
   for (NSString *obj in array) {
     strings.insert(std::string([obj UTF8String]));
   }
+
   return strings;
 }
 
+static inline uint8_t HexCharToByte(int c) {
+  if (c > '9') {
+    return (std::tolower(c) - 'a' + 10);
+  } else {
+    return (c - '0');
+  }
+}
+
+template <uint32_t length>
+static std::array<uint8_t, length> HexStringToByteArray(NSString *str) {
+  std::array<uint8_t, length> bytes;
+
+  NSString *lower_str = [str lowercaseString];
+
+  for (int i = 0; i < [lower_str length] / 2; i++) {
+    char n1 = [lower_str characterAtIndex:(i * 2)];
+    char n2 = [lower_str characterAtIndex:(i * 2 + 1)];
+
+    bytes[i] = (HexCharToByte(n1) << 4) | HexCharToByte(n2);
+  }
+
+  return bytes;
+}
+
+template <uint32_t length>
+static std::set<std::array<uint8_t, length>> HexStringArrayToSet(NSArray<NSString *> *array) {
+  std::set<std::array<uint8_t, length>> data;
+
+  for (NSString *obj in array) {
+    data.insert(HexStringToByteArray<length>(obj));
+  }
+
+  return data;
+}
+
 WatchItemPolicy::WatchItemPolicy(std::string_view n, std::string_view p, bool wo, bool ip, bool ao,
-                                 std::set<std::string> &&abp, std::set<std::string> &&acs,
-                                 std::set<std::string> &&ati, std::set<std::string> &&ach)
+                                 std::set<std::string> &&abp, std::set<std::string> &&ati,
+                                 std::set<std::array<uint8_t, CS_CDHASH_LEN>> &&ach,
+                                 std::set<std::array<uint8_t, CC_SHA256_DIGEST_LENGTH>> &&acs)
     : name(n),
       path(p),
       write_only(wo),
       is_prefix(ip),
       audit_only(ao),
       allowed_binary_paths(std::move(abp)),
-      allowed_certificates_sha256(std::move(acs)),
       allowed_team_ids(std::move(ati)),
-      allowed_cdhashes(std::move(ach)) {}
+      allowed_cdhashes(std::move(ach)),
+      allowed_certificates_sha256(std::move(acs)) {}
 
 std::shared_ptr<WatchItems> WatchItems::Create(NSString *config_path,
                                                uint64_t reapply_config_frequency_secs) {
@@ -224,10 +302,11 @@ bool WatchItems::ParseConfig(NSDictionary *config,
       [(watch_item[kWatchItemConfigKeyWriteOnly] ?: @(0)) boolValue],
       [(watch_item[kWatchItemConfigKeyIsPrefix] ?: @(0)) boolValue],
       [(watch_item[kWatchItemConfigKeyAuditOnly] ?: @(1)) boolValue],
-      ConfigArrayToSet(watch_item[kWatchItemConfigKeyAllowedBinaryPaths]),
-      ConfigArrayToSet(watch_item[kWatchItemConfigKeyAllowedCertificatesSha256]),
-      ConfigArrayToSet(watch_item[kWatchItemConfigKeyAllowedTeamIDs]),
-      ConfigArrayToSet(watch_item[kWatchItemConfigKeyAllowedCDHashes])));
+      StringArrayToSet(watch_item[kWatchItemConfigKeyAllowedBinaryPaths]),
+      StringArrayToSet(watch_item[kWatchItemConfigKeyAllowedTeamIDs]),
+      HexStringArrayToSet<CS_CDHASH_LEN>(watch_item[kWatchItemConfigKeyAllowedCDHashes]),
+      HexStringArrayToSet<CC_SHA256_DIGEST_LENGTH>(
+        watch_item[kWatchItemConfigKeyAllowedCertificatesSha256])));
   }
 
   return config_ok;

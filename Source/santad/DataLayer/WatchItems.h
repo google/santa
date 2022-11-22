@@ -15,13 +15,17 @@
 #ifndef SANTA__SANTAD__DATALAYER_WATCHITEMS_H
 #define SANTA__SANTAD__DATALAYER_WATCHITEMS_H
 
+#include <CommonCrypto/CommonDigest.h>
 #import <Foundation/Foundation.h>
+#include <Kernel/kern/cs_blobs.h>
 #include <dispatch/dispatch.h>
-#include <utility>
 
+#include <array>
 #include <memory>
+#include <optional>
 #include <set>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "Source/common/PrefixTree.h"
@@ -45,8 +49,9 @@ namespace santa::santad::data_layer {
 struct WatchItemPolicy {
   WatchItemPolicy(std::string_view n, std::string_view p, bool wo = false, bool ip = false,
                   bool ao = true, std::set<std::string> &&abp = {},
-                  std::set<std::string> &&acs = {}, std::set<std::string> &&ati = {},
-                  std::set<std::string> &&ach = {});
+                  std::set<std::string> &&ati = {},
+                  std::set<std::array<uint8_t, CS_CDHASH_LEN>> &&ach = {},
+                  std::set<std::array<uint8_t, CC_SHA256_DIGEST_LENGTH>> &&acs = {});
 
   std::string name;
   std::string path;
@@ -54,11 +59,9 @@ struct WatchItemPolicy {
   bool is_prefix;
   bool audit_only;
   std::set<std::string> allowed_binary_paths;
-  std::set<std::string> allowed_certificates_sha256;
   std::set<std::string> allowed_team_ids;
-  std::set<std::string> allowed_cdhashes;
-  // TODO(xyz): Need to store these in a fancier way
-  // std::set<std::array<uint8_t, 20>> allowed_cdhashes;
+  std::set<std::array<uint8_t, CS_CDHASH_LEN>> allowed_cdhashes;
+  std::set<std::array<uint8_t, CC_SHA256_DIGEST_LENGTH>> allowed_certificates_sha256;
 };
 
 class WatchItems : public std::enable_shared_from_this<WatchItems> {
