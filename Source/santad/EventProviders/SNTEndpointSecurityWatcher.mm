@@ -190,9 +190,9 @@ PathTargets GetPathTargets(const Message &msg) {
 
   // Check if the instigating process path opening the file is allowed
   if (policy->allowed_binary_paths.count(msg->process->executable->path.data) > 0) {
-    LOGE(@"Allowing PATH access to %s from %s (pid: %d) | policy: %s", msg->event.open.file->path.data,
-         msg->process->executable->path.data, msg->process->audit_token.val[5],
-         policy->name.c_str());
+    LOGE(@"Allowing PATH access to %s from %s (pid: %d) | policy: %s",
+         msg->event.open.file->path.data, msg->process->executable->path.data,
+         msg->process->audit_token.val[5], policy->name.c_str());
     return ES_AUTH_RESULT_ALLOW;
   }
 
@@ -203,9 +203,9 @@ PathTargets GetPathTargets(const Message &msg) {
     std::array<uint8_t, CS_CDHASH_LEN> bytes;
     std::copy(std::begin(msg->process->cdhash), std::end(msg->process->cdhash), std::begin(bytes));
     if (policy->allowed_cdhashes.count(bytes) > 0) {
-      LOGE(@"Allowing CDHASH access to %s from %s (pid: %d) | policy: %s", msg->event.open.file->path.data,
-         msg->process->executable->path.data, msg->process->audit_token.val[5],
-         policy->name.c_str());
+      LOGE(@"Allowing CDHASH access to %s from %s (pid: %d) | policy: %s",
+           msg->event.open.file->path.data, msg->process->executable->path.data,
+           msg->process->audit_token.val[5], policy->name.c_str());
       return ES_AUTH_RESULT_ALLOW;
     }
   }
