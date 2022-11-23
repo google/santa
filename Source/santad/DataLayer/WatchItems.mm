@@ -189,7 +189,7 @@ static std::set<std::array<uint8_t, length>> HexStringArrayToSet(NSArray<NSStrin
 WatchItemPolicy::WatchItemPolicy(std::string_view n, std::string_view p, bool wo, bool ip, bool ao,
                                  std::set<std::string> &&abp, std::set<std::string> &&ati,
                                  std::set<std::array<uint8_t, CS_CDHASH_LEN>> &&ach,
-                                 std::set<std::array<uint8_t, CC_SHA256_DIGEST_LENGTH>> &&acs)
+                                 std::set<std::string> &&acs)
     : name(n),
       path(p),
       write_only(wo),
@@ -305,8 +305,7 @@ bool WatchItems::ParseConfig(NSDictionary *config,
       StringArrayToSet(watch_item[kWatchItemConfigKeyAllowedBinaryPaths]),
       StringArrayToSet(watch_item[kWatchItemConfigKeyAllowedTeamIDs]),
       HexStringArrayToSet<CS_CDHASH_LEN>(watch_item[kWatchItemConfigKeyAllowedCDHashes]),
-      HexStringArrayToSet<CC_SHA256_DIGEST_LENGTH>(
-        watch_item[kWatchItemConfigKeyAllowedCertificatesSha256])));
+      StringArrayToSet(watch_item[kWatchItemConfigKeyAllowedCertificatesSha256])));
   }
 
   return config_ok;

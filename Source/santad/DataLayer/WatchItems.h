@@ -51,7 +51,7 @@ struct WatchItemPolicy {
                   bool ao = true, std::set<std::string> &&abp = {},
                   std::set<std::string> &&ati = {},
                   std::set<std::array<uint8_t, CS_CDHASH_LEN>> &&ach = {},
-                  std::set<std::array<uint8_t, CC_SHA256_DIGEST_LENGTH>> &&acs = {});
+                  std::set<std::string> &&acs = {});
 
   std::string name;
   std::string path;
@@ -61,7 +61,7 @@ struct WatchItemPolicy {
   std::set<std::string> allowed_binary_paths;
   std::set<std::string> allowed_team_ids;
   std::set<std::array<uint8_t, CS_CDHASH_LEN>> allowed_cdhashes;
-  std::set<std::array<uint8_t, CC_SHA256_DIGEST_LENGTH>> allowed_certificates_sha256;
+  std::set<std::string> allowed_certificates_sha256;
 };
 
 class WatchItems : public std::enable_shared_from_this<WatchItems> {

@@ -31,6 +31,7 @@
 #include "Source/common/Unit.h"
 #include "Source/santad/DataLayer/WatchItems.h"
 #include "Source/santad/EventProviders/EndpointSecurity/Message.h"
+#include "Source/santad/SNTDecisionCache.h"
 
 using santa::common::Unit;
 using santa::santad::EventDisposition;
@@ -101,6 +102,7 @@ PathTargets GetPathTargets(const Message &msg) {
 }
 
 @interface SNTEndpointSecurityWatcher ()
+@property SNTDecisionCache *decisionCache;
 @property BOOL isSubscribed;
 @end
 
@@ -121,6 +123,8 @@ PathTargets GetPathTargets(const Message &msg) {
   if (self) {
     _watchItems = std::move(watchItems);
     _logger = std::move(logger);
+
+    _decisionCache = [SNTDecisionCache sharedCache];
 
     [self establishClientOrDie];
   }
@@ -179,15 +183,6 @@ PathTargets GetPathTargets(const Message &msg) {
       exit(EXIT_FAILURE);
   }
 
-  // Check if the instigating process has an allowed TeamID
-  if (msg->process->team_id.data &&
-      policy->allowed_team_ids.count(msg->process->team_id.data) > 0) {
-    LOGE(@"Allowing TEAMID access to %s from %s (pid: %d) | policy: %s",
-         msg->event.open.file->path.data, msg->process->executable->path.data,
-         msg->process->audit_token.val[5], policy->name.c_str());
-    return ES_AUTH_RESULT_ALLOW;
-  }
-
   // Check if the instigating process path opening the file is allowed
   if (policy->allowed_binary_paths.count(msg->process->executable->path.data) > 0) {
     LOGE(@"Allowing PATH access to %s from %s (pid: %d) | policy: %s",
@@ -196,17 +191,38 @@ PathTargets GetPathTargets(const Message &msg) {
     return ES_AUTH_RESULT_ALLOW;
   }
 
-  // TODO(xyz): Need to handle looking up `SNTCachedDecision`'s in decision cache
-  // or to check `allowed_certificates_sha256`
-
+  // TeamID, CDHash, and Cert Hashes are only valid if the binary is signed
   if (msg->process->codesigning_flags & CS_SIGNED) {
-    std::array<uint8_t, CS_CDHASH_LEN> bytes;
-    std::copy(std::begin(msg->process->cdhash), std::end(msg->process->cdhash), std::begin(bytes));
-    if (policy->allowed_cdhashes.count(bytes) > 0) {
-      LOGE(@"Allowing CDHASH access to %s from %s (pid: %d) | policy: %s",
+    // Check if the instigating process has an allowed TeamID
+    if (msg->process->team_id.data &&
+        policy->allowed_team_ids.count(msg->process->team_id.data) > 0) {
+      LOGE(@"Allowing TEAMID access to %s from %s (pid: %d) | policy: %s",
            msg->event.open.file->path.data, msg->process->executable->path.data,
            msg->process->audit_token.val[5], policy->name.c_str());
       return ES_AUTH_RESULT_ALLOW;
+    }
+
+    if (policy->allowed_cdhashes.size() > 0) {
+      std::array<uint8_t, CS_CDHASH_LEN> bytes;
+      std::copy(std::begin(msg->process->cdhash), std::end(msg->process->cdhash),
+                std::begin(bytes));
+      if (policy->allowed_cdhashes.count(bytes) > 0) {
+        LOGE(@"Allowing CDHASH access to %s from %s (pid: %d) | policy: %s",
+             msg->event.open.file->path.data, msg->process->executable->path.data,
+             msg->process->audit_token.val[5], policy->name.c_str());
+        return ES_AUTH_RESULT_ALLOW;
+      }
+    }
+
+    if (policy->allowed_certificates_sha256.size() > 0) {
+      SNTCachedDecision *cd =
+        [self.decisionCache cachedDecisionForFile:msg->process->executable->stat];
+      if (cd.certSHA256 && policy->allowed_certificates_sha256.count([cd.certSHA256 UTF8String])) {
+        LOGE(@"Allowing CERT HASH access to %s from %s (pid: %d) | policy: %s",
+             msg->event.open.file->path.data, msg->process->executable->path.data,
+             msg->process->audit_token.val[5], policy->name.c_str());
+        return ES_AUTH_RESULT_ALLOW;
+      }
     }
   }
 
