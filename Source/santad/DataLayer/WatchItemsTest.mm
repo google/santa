@@ -51,6 +51,10 @@ static std::shared_ptr<WatchItemPolicy> MakeBadPolicy() {
   return std::make_shared<WatchItemPolicy>(kBadPolicyName, kBadPolicyPath);
 }
 
+static NSMutableDictionary *WrapWatchItemsConfig(NSDictionary *config) {
+  return [@{@"WatchItems" : [config mutableCopy]} mutableCopy];
+}
+
 @interface WatchItemsTest : XCTestCase
 @property NSFileManager *fileMgr;
 @property NSString *testDir;
@@ -139,8 +143,10 @@ static std::shared_ptr<WatchItemPolicy> MakeBadPolicy() {
   ]];
 
   NSDictionary *allFilesPolicy = @{kWatchItemConfigKeyPath : @"*"};
-  NSDictionary *configAllFilesOriginal = @{@"all_files_orig" : allFilesPolicy};
-  NSDictionary *configAllFilesRename = @{@"all_files_rename" : allFilesPolicy};
+  NSDictionary *configAllFilesOriginal =
+    WrapWatchItemsConfig(@{@"all_files_orig" : allFilesPolicy});
+  NSDictionary *configAllFilesRename =
+    WrapWatchItemsConfig(@{@"all_files_rename" : allFilesPolicy});
 
   std::optional<std::shared_ptr<WatchItemPolicy>> policy;
 
@@ -196,8 +202,9 @@ static std::shared_ptr<WatchItemPolicy> MakeBadPolicy() {
   };
 
   NSString *configFile = @"config.plist";
-  NSDictionary *firstConfig = @{@"f_files" : fFiles};
-  NSDictionary *secondConfig = @{@"f_files" : fFiles, @"weird_files" : weirdFiles};
+  NSDictionary *firstConfig = WrapWatchItemsConfig(@{@"f_files" : fFiles});
+  NSDictionary *secondConfig =
+    WrapWatchItemsConfig(@{@"f_files" : fFiles, @"weird_files" : weirdFiles});
 
   // std::optional<std::shared_ptr<WatchItemPolicy>> policy;
 
@@ -251,13 +258,12 @@ static std::shared_ptr<WatchItemPolicy> MakeBadPolicy() {
     @"f1",
   ]];
 
-  NSMutableDictionary *config = [[NSMutableDictionary alloc] init];
-  [config setDictionary:@{
+  NSMutableDictionary *config = WrapWatchItemsConfig(@{
     @"foo_subdir" : @{
       kWatchItemConfigKeyPath : @"./foo",
       kWatchItemConfigKeyIsPrefix : @(YES),
     }
-  }];
+  });
 
   WatchItemsPeer watchItems(nil, NULL);
 
@@ -290,7 +296,7 @@ static std::shared_ptr<WatchItemPolicy> MakeBadPolicy() {
     kWatchItemConfigKeyPath : @"./foo/bar.txt",
     kWatchItemConfigKeyIsPrefix : @(NO),
   };
-  [config setObject:barTxtFilePolicy forKey:@"bar_txt"];
+  [config[@"WatchItems"] setObject:barTxtFilePolicy forKey:@"bar_txt"];
 
   // Load the updated config
   [self pushd:@""];
@@ -318,7 +324,7 @@ static std::shared_ptr<WatchItemPolicy> MakeBadPolicy() {
     kWatchItemConfigKeyPath : @".",
     kWatchItemConfigKeyIsPrefix : @(YES),
   };
-  [config setObject:catchAllFilePolicy forKey:@"dot_everything"];
+  [config[@"WatchItems"] setObject:catchAllFilePolicy forKey:@"dot_everything"];
 
   // Load the updated config
   [self pushd:@""];
@@ -342,7 +348,7 @@ static std::shared_ptr<WatchItemPolicy> MakeBadPolicy() {
   }
 
   // Now remove the foo_subdir rule, previous matches should fallback to the catch-all
-  [config removeObjectForKey:@"foo_subdir"];
+  [config[@"WatchItems"] removeObjectForKey:@"foo_subdir"];
   [self pushd:@""];
   watchItems.ReloadConfig(config);
   [self popd];
