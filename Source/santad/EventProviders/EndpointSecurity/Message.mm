@@ -22,8 +22,8 @@
 namespace santa::santad::event_providers::endpoint_security {
 
 Message::Message(std::shared_ptr<EndpointSecurityAPI> esapi, const es_message_t *es_msg)
-    : esapi_(esapi) {
-  es_msg_ = esapi_->RetainMessage(es_msg);
+    : esapi_(esapi), es_msg_(es_msg) {
+  esapi_->RetainMessage(es_msg);
 }
 
 Message::~Message() {

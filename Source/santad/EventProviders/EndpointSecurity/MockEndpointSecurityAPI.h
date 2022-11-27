@@ -39,8 +39,8 @@ class MockEndpointSecurityAPI
               (const santa::santad::event_providers::endpoint_security::Client &,
                const std::set<es_event_type_t> &));
 
-  MOCK_METHOD(es_message_t *, RetainMessage, (const es_message_t *msg));
-  MOCK_METHOD(void, ReleaseMessage, (es_message_t * msg));
+  MOCK_METHOD(void, RetainMessage, (const es_message_t *msg));
+  MOCK_METHOD(void, ReleaseMessage, (const es_message_t * msg));
 
   MOCK_METHOD(bool, RespondAuthResult,
               (const santa::santad::event_providers::endpoint_security::Client &,
@@ -72,9 +72,9 @@ class MockEndpointSecurityAPI
     EXPECT_CALL(*this, Subscribe).WillRepeatedly(testing::Return(true));
   }
 
-  void SetExpectationsRetainReleaseMessage(es_message_t *msg) {
+  void SetExpectationsRetainReleaseMessage() {
     EXPECT_CALL(*this, ReleaseMessage).Times(testing::AnyNumber());
-    EXPECT_CALL(*this, RetainMessage).WillRepeatedly(testing::Return(msg));
+    EXPECT_CALL(*this, RetainMessage).Times(testing::AnyNumber());
   }
 };
 

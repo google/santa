@@ -100,7 +100,7 @@ static constexpr std::string_view kSantaKextIdentifier = "com.google.santa-drive
 
   auto mockESApi = std::make_shared<MockEndpointSecurityAPI>();
   mockESApi->SetExpectationsESNewClient();
-  mockESApi->SetExpectationsRetainReleaseMessage(&esMsg);
+  mockESApi->SetExpectationsRetainReleaseMessage();
 
   SNTEndpointSecurityTamperResistance *tamperClient =
     [[SNTEndpointSecurityTamperResistance alloc] initWithESAPI:mockESApi

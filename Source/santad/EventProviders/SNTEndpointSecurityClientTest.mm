@@ -104,7 +104,7 @@ using santa::santad::event_providers::endpoint_security::Message;
   es_message_t esMsg;
 
   auto mockESApi = std::make_shared<MockEndpointSecurityAPI>();
-  mockESApi->SetExpectationsRetainReleaseMessage(&esMsg);
+  mockESApi->SetExpectationsRetainReleaseMessage();
 
   SNTEndpointSecurityClient *client =
     [[SNTEndpointSecurityClient alloc] initWithESAPI:mockESApi
@@ -122,7 +122,7 @@ using santa::santad::event_providers::endpoint_security::Message;
   es_message_t esMsg = MakeESMessage(ES_EVENT_TYPE_NOTIFY_FORK, &proc);
 
   auto mockESApi = std::make_shared<MockEndpointSecurityAPI>();
-  mockESApi->SetExpectationsRetainReleaseMessage(&esMsg);
+  mockESApi->SetExpectationsRetainReleaseMessage();
 
   // Have subscribe fail the first time, meaning clear cache only called once.
   EXPECT_CALL(*mockESApi, RespondAuthResult(testing::_, testing::_, ES_AUTH_RESULT_ALLOW, true))
@@ -247,7 +247,7 @@ using santa::santad::event_providers::endpoint_security::Message;
 - (void)testRespondToMessageWithAuthResultCacheable {
   es_message_t esMsg;
   auto mockESApi = std::make_shared<MockEndpointSecurityAPI>();
-  mockESApi->SetExpectationsRetainReleaseMessage(&esMsg);
+  mockESApi->SetExpectationsRetainReleaseMessage();
 
   es_auth_result_t result = ES_AUTH_RESULT_DENY;
   bool cacheable = true;
@@ -270,21 +270,17 @@ using santa::santad::event_providers::endpoint_security::Message;
 }
 
 - (void)testProcessEnrichedMessageHandler {
+  es_message_t esMsg;
   dispatch_semaphore_t sema = dispatch_semaphore_create(0);
   auto mockESApi = std::make_shared<MockEndpointSecurityAPI>();
 
-  // Note: In this test, `RetainMessage` isn't setup to return anything. This
-  // means that the underlying `es_msg_` in the `Message` object is NULL, and
-  // therefore no call to `ReleaseMessage` is ever made (hence no expectations).
-  // Because we don't need to operate on the es_msg_, this simplifies the test.
-  EXPECT_CALL(*mockESApi, RetainMessage);
+  mockESApi->SetExpectationsRetainReleaseMessage();
 
   SNTEndpointSecurityClient *client =
     [[SNTEndpointSecurityClient alloc] initWithESAPI:mockESApi
                                              metrics:nullptr
                                            processor:Processor::kUnknown];
 
-  es_message_t esMsg;
   auto enrichedMsg = std::make_shared<EnrichedMessage>(
     EnrichedClose(Message(mockESApi, &esMsg),
                   EnrichedProcess(std::nullopt, std::nullopt, std::nullopt, std::nullopt,
@@ -316,7 +312,7 @@ using santa::santad::event_providers::endpoint_security::Message;
   es_message_t esMsg = MakeESMessage(ES_EVENT_TYPE_NOTIFY_EXIT, &proc);
 
   auto mockESApi = std::make_shared<MockEndpointSecurityAPI>();
-  mockESApi->SetExpectationsRetainReleaseMessage(&esMsg);
+  mockESApi->SetExpectationsRetainReleaseMessage();
 
   SNTEndpointSecurityClient *client =
     [[SNTEndpointSecurityClient alloc] initWithESAPI:mockESApi
@@ -345,7 +341,7 @@ using santa::santad::event_providers::endpoint_security::Message;
                                      45 * 1000);  // Long deadline to not hit
 
   auto mockESApi = std::make_shared<MockEndpointSecurityAPI>();
-  mockESApi->SetExpectationsRetainReleaseMessage(&esMsg);
+  mockESApi->SetExpectationsRetainReleaseMessage();
 
   dispatch_semaphore_t sema = dispatch_semaphore_create(0);
 
@@ -386,7 +382,7 @@ using santa::santad::event_providers::endpoint_security::Message;
                                      750);  // 750ms timeout
 
   auto mockESApi = std::make_shared<MockEndpointSecurityAPI>();
-  mockESApi->SetExpectationsRetainReleaseMessage(&esMsg);
+  mockESApi->SetExpectationsRetainReleaseMessage();
 
   dispatch_semaphore_t deadlineSema = dispatch_semaphore_create(0);
   dispatch_semaphore_t controlSema = dispatch_semaphore_create(0);
