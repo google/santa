@@ -82,8 +82,7 @@ pid_t AttemptToFindUnusedPID() {
   auto mockESApi = std::make_shared<MockEndpointSecurityAPI>();
   EXPECT_CALL(*mockESApi, ReleaseMessage(testing::_))
     .Times(2)
-    .After(EXPECT_CALL(*mockESApi, RetainMessage(testing::_))
-             .Times(2));
+    .After(EXPECT_CALL(*mockESApi, RetainMessage(testing::_)).Times(2));
 
   {
     Message msg1(mockESApi, &esMsg);
