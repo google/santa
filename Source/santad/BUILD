@@ -76,6 +76,7 @@ objc_library(
         "//Source/common:SNTConfigurator",
         "//Source/common:SNTMetricSet",
         "//Source/common:SNTSystemInfo",
+        "//Source/common:SystemResources",
     ],
 )
 
@@ -630,6 +631,7 @@ objc_library(
         "//Source/common:SNTLogging",
         "//Source/common:SNTMetricSet",
         "//Source/common:SNTXPCControlInterface",
+        "//Source/common:SystemResources",
     ],
 )
 

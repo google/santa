@@ -31,6 +31,15 @@ cc_library(
     ],
 )
 
+objc_library(
+    name = "SystemResources",
+    srcs = ["SystemResources.m"],
+    hdrs = ["SystemResources.h"],
+    deps = [
+        ":SNTLogging",
+    ],
+)
+
 cc_library(
     name = "SantaCache",
     hdrs = ["SantaCache.h"],

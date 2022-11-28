@@ -12,14 +12,17 @@
 ///    See the License for the specific language governing permissions and
 ///    limitations under the License.
 
-#import "Source/common/SNTCommonEnums.h"
-#import "Source/common/SNTConfigurator.h"
-#import "Source/common/SNTMetricSet.h"
-#import "Source/common/SNTSystemInfo.h"
+#import "Source/santad/SNTApplicationCoreMetrics.h"
 
 #import <Foundation/Foundation.h>
 #include <mach/mach.h>
 #include <sys/resource.h>
+
+#import "Source/common/SNTCommonEnums.h"
+#import "Source/common/SNTConfigurator.h"
+#import "Source/common/SNTMetricSet.h"
+#import "Source/common/SNTSystemInfo.h"
+#import "Source/common/SystemResources.h"
 
 /**
  * Register the mode metric checking the config before reporting the status.
@@ -63,21 +66,17 @@ static void RegisterMemoryAndCPUMetrics(SNTMetricSet *metricSet) {
                           helpText:@"CPU time consumed by this process, in seconds"];
 
   [metricSet registerCallback:^(void) {
-    struct mach_task_basic_info info;
-    mach_msg_type_number_t size = MACH_TASK_BASIC_INFO_COUNT;
-    kern_return_t ret =
-      task_info(mach_task_self(), MACH_TASK_BASIC_INFO, (task_info_t)&info, &size);
-
-    if (ret != KERN_SUCCESS) {
+    struct proc_taskinfo pti;
+    if (!GetTaskInfo(&pti)) {
       return;
     }
 
-    [vsize set:info.virtual_size forFieldValues:@[]];
-    [rsize set:info.resident_size forFieldValues:@[]];
+    [vsize set:pti.pti_virtual_size forFieldValues:@[]];
+    [rsize set:pti.pti_resident_size forFieldValues:@[]];
 
     // convert times to seconds
-    double user_time = info.user_time.seconds + (info.user_time.microseconds / 1e6);
-    double system_time = info.system_time.seconds + (info.system_time.microseconds / 1e6);
+    double user_time = MachTimeToNanos(pti.pti_total_user) / (double)NSEC_PER_SEC;
+    double system_time = MachTimeToNanos(pti.pti_total_system) / (double)NSEC_PER_SEC;
 
     [cpuUsage set:user_time forFieldValues:@[ @"user" ]];
     [cpuUsage set:system_time forFieldValues:@[ @"system" ]];
