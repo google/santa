@@ -49,7 +49,7 @@ BOOL GetTaskInfo(struct proc_taskinfo *pti_out) {
   if (proc_pidinfo(getpid(), PROC_PIDTASKINFO, 0, &pti, PROC_PIDTASKINFO_SIZE) <
       PROC_PIDTASKINFO_SIZE) {
     LOGW(@"Unable to get system resource information");
-    return NOTE_DELETE;
+    return NO;
   }
 
   *pti_out = pti;
