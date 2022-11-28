@@ -223,58 +223,58 @@ sequenceDiagram
 
 ```json
 {
-	"events": [{
-		"file_path": "\/Applications\/Santa.app\/Contents\/MacOS",
-		"file_bundle_version": "9999.1.1",
-		"parent_name": "launchd",
-		"logged_in_users": [
-			"markowsky"
-		],
-		"quarantine_timestamp": 0,
-		"signing_chain": [{
-				"cn": "Apple Development: Google Development (XXXXXXXXXX)",
-				"valid_until": 1678983513,
-				"org": "Google LLC",
-				"valid_from": 1647447514,
-				"ou": "XXXXXXXXXX",
-				"sha256": "7ae80b9ab38af0c63a9a81765f434d9a7cd8f720eb6037ef303de39d779bc258"
-			},
-			{
-				"cn": "Apple Worldwide Developer Relations Certification Authority",
-				"valid_until": 1897776000,
-				"org": "Apple Inc.",
-				"valid_from": 1582136027,
-				"ou": "G3",
-				"sha256": "dcf21878c77f4198e4b4614f03d696d89c66c66008d4244e1b99161aac91601f"
-			},
-			{
-				"cn": "Apple Root CA",
-				"valid_until": 2054670036,
-				"org": "Apple Inc.",
-				"valid_from": 1146001236,
-				"ou": "Apple Certification Authority",
-				"sha256": "b0b1730ecbc7ff4505142c49f1295e6eda6bcaed7e2c68c5be91b5a11001f024"
-			}
-		],
-		"file_bundle_name": "santasyncservice",
-		"executing_user": "root",
-		"ppid": 1,
-		"file_bundle_path": "/Applications/Santa.app",
-		"file_name": "santasyncservice",
-		"execution_time": 1657764366.475035,
-		"file_sha256": "8621d92262aef379d3cfe9e099f287be5b996a281995b5cc64932f7d62f3dc85",
-		"decision": "ALLOW_BINARY",
-		"file_bundle_id": "com.google.santa.syncservice",
-		"file_bundle_version_string": "9999.1.1",
-		"pid": 2595,
-		"current_sessions": [
-			"markowsky@console",
-			"markowsky@ttys000",
-			"markowsky@ttys001",
-			"markowsky@ttys003"
-		],
-		"team_id": "XXXXXXXXXX"
-	}]
+  "events": [{
+    "file_path": "\/Applications\/Santa.app\/Contents\/MacOS",
+    "file_bundle_version": "9999.1.1",
+    "parent_name": "launchd",
+    "logged_in_users": [
+      "markowsky"
+    ],
+    "quarantine_timestamp": 0,
+    "signing_chain": [{
+        "cn": "Apple Development: Google Development (XXXXXXXXXX)",
+        "valid_until": 1678983513,
+        "org": "Google LLC",
+        "valid_from": 1647447514,
+        "ou": "XXXXXXXXXX",
+        "sha256": "7ae80b9ab38af0c63a9a81765f434d9a7cd8f720eb6037ef303de39d779bc258"
+      },
+      {
+        "cn": "Apple Worldwide Developer Relations Certification Authority",
+        "valid_until": 1897776000,
+        "org": "Apple Inc.",
+        "valid_from": 1582136027,
+        "ou": "G3",
+        "sha256": "dcf21878c77f4198e4b4614f03d696d89c66c66008d4244e1b99161aac91601f"
+      },
+      {
+        "cn": "Apple Root CA",
+        "valid_until": 2054670036,
+        "org": "Apple Inc.",
+        "valid_from": 1146001236,
+        "ou": "Apple Certification Authority",
+        "sha256": "b0b1730ecbc7ff4505142c49f1295e6eda6bcaed7e2c68c5be91b5a11001f024"
+      }
+    ],
+    "file_bundle_name": "santasyncservice",
+    "executing_user": "root",
+    "ppid": 1,
+    "file_bundle_path": "/Applications/Santa.app",
+    "file_name": "santasyncservice",
+    "execution_time": 1657764366.475035,
+    "file_sha256": "8621d92262aef379d3cfe9e099f287be5b996a281995b5cc64932f7d62f3dc85",
+    "decision": "ALLOW_BINARY",
+    "file_bundle_id": "com.google.santa.syncservice",
+    "file_bundle_version_string": "9999.1.1",
+    "pid": 2595,
+    "current_sessions": [
+      "markowsky@console",
+      "markowsky@ttys000",
+      "markowsky@ttys001",
+      "markowsky@ttys003"
+    ],
+    "team_id": "XXXXXXXXXX"
+  }]
 }
 ```
 
@@ -312,7 +312,7 @@ If either the client or server requested a clean sync in the `preflight` stage, 
 
 If a clean sync was not requested by either the client or the sync service, then the sync service should only send new rules seen since the last time the client synced.
 
-Santa applies rules idempoently and is designed to receive rules multiple times without issue.
+Santa applies rules idempotently and is designed to receive rules multiple times without issue.
 
 #### `ruledownload` Request
 
@@ -368,31 +368,31 @@ downloading if the rules need to be downloaded in multiple batches.
 
 ```json
 {
-	"rules": [{
-		"identifier": "ff2a7daa4c25cbd5b057e4471c6a22aba7d154dadfb5cce139c37cf795f41c9c",
-		"rule_type": "CERTIFICATE",
-		"policy": "BLOCKLIST",
-		"custom_msg": "",
-		"creation_time": 1573543803.349378
-	}, {
-		"identifier": "233e741538e1cdf4835b3f2662e372cf0c2694b7e20b4e4663559c7fb0a9f234",
-		"rule_type": "BINARY",
-		"policy": "ALLOWLIST",
-		"custom_msg": "",
-		"creation_time": 1573572118.380034,
-		"file_bundle_binary_count": 13,
-		"file_bundle_hash": "7466e3687f540bcb7792c6d14d5a186667dbe18a85021857b42effe9f0370805"
-	},
-	{
-		"identifier": "EQHXZ8M8AV",
-		"rule_type": "TEAMID",
-		"policy": "ALLOWLIST",
-		"custom_msg": "Allow Software Google's Team ID",
-		"creation_time": 1576623399.151607,
-		"file_bundle_binary_count": 7,
-		"file_bundle_hash": "e4736dd3a731f5f71850984175c0ec54dcde06021af18f476eb480c707fbecda"
-	}],
-	"cursor": "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXzfmdvb2dsZS5jb206YXBwbm90aHJyYAsSCUJsb2NrYWJsZSJANGYyYTA2MjY1ZjRiODQ2M2Y2YjI0MmNiZTMwMTNkMGZhNjlkNDUxNmI4OTU3Y2I3ZDAxZDcyMTJkM2NhZmZiNAwLEgRSdWxlGICA8Kehk9MKDBgAIAA="
+  "rules": [{
+    "identifier": "ff2a7daa4c25cbd5b057e4471c6a22aba7d154dadfb5cce139c37cf795f41c9c",
+    "rule_type": "CERTIFICATE",
+    "policy": "BLOCKLIST",
+    "custom_msg": "",
+    "creation_time": 1573543803.349378
+  }, {
+    "identifier": "233e741538e1cdf4835b3f2662e372cf0c2694b7e20b4e4663559c7fb0a9f234",
+    "rule_type": "BINARY",
+    "policy": "ALLOWLIST",
+    "custom_msg": "",
+    "creation_time": 1573572118.380034,
+    "file_bundle_binary_count": 13,
+    "file_bundle_hash": "7466e3687f540bcb7792c6d14d5a186667dbe18a85021857b42effe9f0370805"
+  },
+  {
+    "identifier": "EQHXZ8M8AV",
+    "rule_type": "TEAMID",
+    "policy": "ALLOWLIST",
+    "custom_msg": "Allow Software Google's Team ID",
+    "creation_time": 1576623399.151607,
+    "file_bundle_binary_count": 7,
+    "file_bundle_hash": "e4736dd3a731f5f71850984175c0ec54dcde06021af18f476eb480c707fbecda"
+  }],
+  "cursor": "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXzfmdvb2dsZS5jb206YXBwbm90aHJyYAsSCUJsb2NrYWJsZSJANGYyYTA2MjY1ZjRiODQ2M2Y2YjI0MmNiZTMwMTNkMGZhNjlkNDUxNmI4OTU3Y2I3ZDAxZDcyMTJkM2NhZmZiNAwLEgRSdWxlGICA8Kehk9MKDBgAIAA="
 }
 ```
 
