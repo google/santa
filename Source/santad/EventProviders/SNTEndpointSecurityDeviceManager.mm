@@ -237,6 +237,7 @@ NS_ASSUME_NONNULL_BEGIN
   BOOL isEjectable = [diskInfo[(__bridge NSString *)kDADiskDescriptionMediaEjectableKey] boolValue];
   NSString *protocol = diskInfo[(__bridge NSString *)kDADiskDescriptionDeviceProtocolKey];
   BOOL isUSB = [protocol isEqualToString:@"USB"];
+  BOOL isSecureDigital = [protocol isEqualToString:@"Secure Digital"];
   BOOL isVirtual = [protocol isEqualToString:@"Virtual Interface"];
 
   NSString *kind = diskInfo[(__bridge NSString *)kDADiskDescriptionMediaKindKey];
@@ -250,7 +251,7 @@ NS_ASSUME_NONNULL_BEGIN
   // If the device is internal or virtual we are okay with the operation. We
   // also are okay with operations for devices that are non-removal as long as
   // they are NOT a USB device.
-  if (isInternal || isVirtual || (!isRemovable && !isEjectable && !isUSB)) {
+  if (isInternal || isVirtual || (!isRemovable && !isEjectable && !isUSB && !isSecureDigital)) {
     return ES_AUTH_RESULT_ALLOW;
   }
 
