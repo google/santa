@@ -20,6 +20,7 @@
 #import "Source/common/SNTConfigurator.h"
 #import "Source/common/SNTLogging.h"
 #import "Source/common/SNTMetricSet.h"
+#import "Source/common/SystemResources.h"
 #import "Source/santad/Santad.h"
 #include "Source/santad/SantadDeps.h"
 
@@ -38,11 +39,6 @@ struct WatchdogState {
   double prev_ram_use_mb;
 };
 
-///  Converts a timeval struct to double, converting the microseconds value to seconds.
-static inline double timeval_to_double(time_value_t tv) {
-  return (double)tv.seconds + (double)tv.microseconds / 1000000.0;
-}
-
 ///  The watchdog thread function, used to monitor santad CPU/RAM usage and print a warning
 ///  if it goes over certain thresholds.
 static void SantaWatchdog(void *context) {
@@ -56,13 +52,11 @@ static void SantaWatchdog(void *context) {
   // santad's usual RAM usage is between 5-50MB but can spike if lots of processes start at once.
   const int mem_warn_threshold = 250;
 
-  struct mach_task_basic_info info;
-  mach_msg_type_number_t task_info_count = MACH_TASK_BASIC_INFO_COUNT;
+  std::optional<SantaTaskInfo> tinfo = GetTaskInfo();
 
-  if (task_info(mach_task_self(), MACH_TASK_BASIC_INFO, (task_info_t)&info, &task_info_count) ==
-      KERN_SUCCESS) {
+  if (tinfo.has_value()) {
     // CPU
-    double total_time = (timeval_to_double(info.user_time) + timeval_to_double(info.system_time));
+    double total_time = tinfo->total_user_nanos + tinfo->total_system_nanos / (double)NSEC_PER_SEC;
     double percentage =
       (((total_time - state->prev_total_time) / (double)kWatchdogTimeInterval) * 100.0);
     state->prev_total_time = total_time;
@@ -76,7 +70,7 @@ static void SantaWatchdog(void *context) {
     if (percentage > watchdogCPUPeak) watchdogCPUPeak = percentage;
 
     // RAM
-    double ram_use_mb = (double)info.resident_size / 1024 / 1024;
+    double ram_use_mb = (double)tinfo->resident_size / 1024 / 1024;
     if (ram_use_mb > mem_warn_threshold && ram_use_mb > state->prev_ram_use_mb) {
       LOGW(@"Watchdog: potentially high RAM use, RSS is %.2fMB.", ram_use_mb);
       watchdogRAMEvents++;

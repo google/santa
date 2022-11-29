@@ -31,6 +31,15 @@ cc_library(
     ],
 )
 
+objc_library(
+    name = "SystemResources",
+    srcs = ["SystemResources.mm"],
+    hdrs = ["SystemResources.h"],
+    deps = [
+        ":SNTLogging",
+    ],
+)
+
 cc_library(
     name = "SantaCache",
     hdrs = ["SantaCache.h"],
@@ -357,6 +366,7 @@ objc_library(
         "bsm",
     ],
     deps = [
+        ":SystemResources",
         "@OCMock",
         "@com_google_googletest//:gtest",
     ],

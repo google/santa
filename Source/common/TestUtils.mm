@@ -19,6 +19,7 @@
 #include <mach/mach_time.h>
 #include <time.h>
 #include <uuid/uuid.h>
+#include "Source/common/SystemResources.h"
 
 audit_token_t MakeAuditToken(pid_t pid, pid_t pidver) {
   return audit_token_t{
@@ -87,21 +88,13 @@ es_process_t MakeESProcess(es_file_t *file, audit_token_t tok, audit_token_t par
 }
 
 static uint64_t AddMillisToMachTime(uint64_t ms, uint64_t machTime) {
-  static dispatch_once_t onceToken;
-  static mach_timebase_info_data_t timebase;
-
-  dispatch_once(&onceToken, ^{
-    mach_timebase_info(&timebase);
-  });
-
-  // Convert given machTime to nanoseconds
-  uint64_t nanoTime = machTime * timebase.numer / timebase.denom;
+  uint64_t nanoTime = MachTimeToNanos(machTime);
 
   // Add the ms offset
   nanoTime += (ms * NSEC_PER_MSEC);
 
   // Convert back to machTime
-  return nanoTime * timebase.denom / timebase.numer;
+  return NanosToMachTime(nanoTime);
 }
 
 uint32_t MaxSupportedESMessageVersionForCurrentOS() {
