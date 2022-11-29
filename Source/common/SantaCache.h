@@ -53,12 +53,12 @@ class SantaCache {
   /**
     Clear and free memory
   */
-  ~SantaCache() { clear(); }
+  ~SantaCache() { Clear(); }
 
   /**
     Get an element from the cache. Returns zero_ if item doesn't exist.
   */
-  ValueT get(KeyT key) {
+  ValueT Get(KeyT key) {
     absl::ReaderMutexLock lock(&lock_);
 
     const auto iter = cache_.find(key);
@@ -80,7 +80,7 @@ class SantaCache {
 
     @return true if the value was set.
   */
-  bool set(const KeyT &key, const ValueT &value) {
+  bool Set(const KeyT &key, const ValueT &value) {
     absl::MutexLock lock(&lock_);
     return SetLocked(key, value, {}, false);
   }
@@ -99,7 +99,7 @@ class SantaCache {
 
     @return true if the value was set
   */
-  bool set(const KeyT &key, const ValueT &value, const ValueT &previous_value) {
+  bool Set(const KeyT &key, const ValueT &value, const ValueT &previous_value) {
     absl::MutexLock lock(&lock_);
     return SetLocked(key, value, previous_value, true);
   }
@@ -107,7 +107,7 @@ class SantaCache {
   /**
     Remove a key from the cache
   */
-  inline void remove(const KeyT &key) {
+  inline void Remove(const KeyT &key) {
     absl::MutexLock lock(&lock_);
     RemoveLocked(key);
   }
@@ -115,7 +115,7 @@ class SantaCache {
   /**
     Remove all entries
   */
-  void clear() {
+  void Clear() {
     absl::MutexLock lock(&lock_);
     ClearLocked();
   }
@@ -123,7 +123,7 @@ class SantaCache {
   /**
     Return number of entries currently in cache.
   */
-  uint64_t count() const {
+  uint64_t Count() const {
     absl::ReaderMutexLock lock(&lock_);
     return CountLocked();
   }

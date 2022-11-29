@@ -97,7 +97,7 @@ EnrichedFile Enricher::Enrich(const es_file_t &es_file) {
 }
 
 std::optional<std::shared_ptr<std::string>> Enricher::UsernameForUID(uid_t uid) {
-  std::optional<std::shared_ptr<std::string>> username = username_cache_.get(uid);
+  std::optional<std::shared_ptr<std::string>> username = username_cache_.Get(uid);
 
   if (username.has_value()) {
     return username;
@@ -109,14 +109,14 @@ std::optional<std::shared_ptr<std::string>> Enricher::UsernameForUID(uid_t uid) 
       username = std::nullopt;
     }
 
-    username_cache_.set(uid, username);
+    username_cache_.Set(uid, username);
 
     return username;
   }
 }
 
 std::optional<std::shared_ptr<std::string>> Enricher::UsernameForGID(gid_t gid) {
-  std::optional<std::shared_ptr<std::string>> groupname = groupname_cache_.get(gid);
+  std::optional<std::shared_ptr<std::string>> groupname = groupname_cache_.Get(gid);
 
   if (groupname.has_value()) {
     return groupname;
@@ -128,7 +128,7 @@ std::optional<std::shared_ptr<std::string>> Enricher::UsernameForGID(gid_t gid) 
       groupname = std::nullopt;
     }
 
-    groupname_cache_.set(gid, groupname);
+    groupname_cache_.Set(gid, groupname);
 
     return groupname;
   }

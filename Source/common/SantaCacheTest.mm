@@ -32,31 +32,31 @@
 - (void)testSetAndGet {
   auto sut = SantaCache<uint64_t, uint64_t>();
 
-  sut.set(72057611258548992llu, 10000192);
-  XCTAssertEqual(sut.get(72057611258548992llu), 10000192);
+  sut.Set(72057611258548992llu, 10000192);
+  XCTAssertEqual(sut.Get(72057611258548992llu), 10000192);
 }
 
 - (void)testCacheRemove {
   auto sut = SantaCache<uint64_t, uint64_t>();
 
-  sut.set(0xDEADBEEF, 42);
-  sut.remove(0xDEADBEEF);
+  sut.Set(0xDEADBEEF, 42);
+  sut.Remove(0xDEADBEEF);
 
-  XCTAssertEqual(sut.get(0xDEADBEEF), 0);
+  XCTAssertEqual(sut.Get(0xDEADBEEF), 0);
 }
 
 - (void)testCacheResetAtLimit {
   auto sut = SantaCache<uint64_t, uint64_t>(5);
 
-  sut.set(1, 42);
-  sut.set(2, 42);
-  sut.set(3, 42);
-  sut.set(4, 42);
-  sut.set(5, 42);
-  XCTAssertEqual(sut.get(3), 42);
-  sut.set(6, 42);
-  XCTAssertEqual(sut.get(3), 0);
-  XCTAssertEqual(sut.get(6), 42);
+  sut.Set(1, 42);
+  sut.Set(2, 42);
+  sut.Set(3, 42);
+  sut.Set(4, 42);
+  sut.Set(5, 42);
+  XCTAssertEqual(sut.Get(3), 42);
+  sut.Set(6, 42);
+  XCTAssertEqual(sut.Get(3), 0);
+  XCTAssertEqual(sut.Get(6), 42);
 }
 
 - (void)testThreading {
@@ -68,14 +68,14 @@
     dispatch_group_enter(group);
     dispatch_async(dispatch_get_global_queue(QOS_CLASS_DEFAULT, 0), ^{
       for (int i = 0; i < 5000; ++i)
-        sut->set(i, 10000 - i);
+        sut->Set(i, 10000 - i);
       dispatch_group_leave(group);
     });
 
     dispatch_group_enter(group);
     dispatch_async(dispatch_get_global_queue(QOS_CLASS_DEFAULT, 0), ^{
       for (int i = 5000; i < 10000; ++i)
-        sut->set(i, 10000 - i);
+        sut->Set(i, 10000 - i);
       dispatch_group_leave(group);
     });
 
@@ -84,7 +84,7 @@
     }
 
     for (int i = 0; i < 10000; ++i)
-      XCTAssertEqual(sut->get(i), 10000 - i);
+      XCTAssertEqual(sut->Get(i), 10000 - i);
   }
 
   delete sut;
@@ -93,31 +93,31 @@
 - (void)testCount {
   auto sut = SantaCache<uint64_t, int>();
 
-  XCTAssertEqual(sut.count(), 0);
+  XCTAssertEqual(sut.Count(), 0);
 
-  sut.set(4012, 42);
-  sut.set(42, 0);
-  sut.set(0x8BADF00D, 40010);
+  sut.Set(4012, 42);
+  sut.Set(42, 0);
+  sut.Set(0x8BADF00D, 40010);
 
-  XCTAssertEqual(sut.count(), 2);
+  XCTAssertEqual(sut.Count(), 2);
 }
 
 - (void)testDoubles {
   auto sut = SantaCache<double, double>();
 
-  sut.set(3.14, 2.718281);
-  sut.set(1.41429, 2.5029);
-  sut.set(4.6692, 1.2020569);
-  sut.set(1.61803398, 0.57721);
+  sut.Set(3.14, 2.718281);
+  sut.Set(1.41429, 2.5029);
+  sut.Set(4.6692, 1.2020569);
+  sut.Set(1.61803398, 0.57721);
 
-  XCTAssertEqual(sut.count(), 4);
-  XCTAssertEqual(sut.get(3.14), 2.718281);
-  XCTAssertEqual(sut.get(1.41429), 2.5029);
-  XCTAssertEqual(sut.get(4.6692), 1.2020569);
-  XCTAssertEqual(sut.get(1.61803398), 0.57721);
+  XCTAssertEqual(sut.Count(), 4);
+  XCTAssertEqual(sut.Get(3.14), 2.718281);
+  XCTAssertEqual(sut.Get(1.41429), 2.5029);
+  XCTAssertEqual(sut.Get(4.6692), 1.2020569);
+  XCTAssertEqual(sut.Get(1.61803398), 0.57721);
 
-  XCTAssertEqual(sut.get(5.5555), 0);
-  XCTAssertEqual(sut.get(3.1459124), 0);
+  XCTAssertEqual(sut.Get(5.5555), 0);
+  XCTAssertEqual(sut.Get(3.1459124), 0);
 }
 
 - (void)testStrings {
@@ -126,39 +126,39 @@
   std::string s1 = "foo";
   std::string s2 = "bar";
 
-  sut.set(s1, "deadbeef");
-  sut.set(s2, "feedface");
+  sut.Set(s1, "deadbeef");
+  sut.Set(s2, "feedface");
 
-  XCTAssertEqual(sut.count(), 2);
-  XCTAssertEqual(sut.get(s1), "deadbeef");
-  XCTAssertEqual(sut.get(s2), "feedface");
+  XCTAssertEqual(sut.Count(), 2);
+  XCTAssertEqual(sut.Get(s1), "deadbeef");
+  XCTAssertEqual(sut.Get(s2), "feedface");
 
-  sut.remove(s2);
+  sut.Remove(s2);
 
-  XCTAssertTrue(sut.get(s2).empty());
+  XCTAssertTrue(sut.Get(s2).empty());
 }
 
 - (void)testCompareAndSwap {
   auto sut = SantaCache<uint64_t, uint64_t>(100);
 
-  sut.set(1, 42);
-  sut.set(1, 666, 1);
-  sut.set(1, 666, 0);
-  XCTAssertEqual(sut.get(1), 42);
+  sut.Set(1, 42);
+  sut.Set(1, 666, 1);
+  sut.Set(1, 666, 0);
+  XCTAssertEqual(sut.Get(1), 42);
 
-  sut.set(1, 0);
-  XCTAssertEqual(sut.get(1), 0);
+  sut.Set(1, 0);
+  XCTAssertEqual(sut.Get(1), 0);
 
-  sut.set(1, 42, 1);
-  XCTAssertEqual(sut.get(1), 0);
+  sut.Set(1, 42, 1);
+  XCTAssertEqual(sut.Get(1), 0);
 
-  sut.set(1, 42, 0);
-  XCTAssertEqual(sut.get(1), 42);
+  sut.Set(1, 42, 0);
+  XCTAssertEqual(sut.Get(1), 42);
 
-  sut.set(1, 0, 666);
-  XCTAssertEqual(sut.get(1), 42);
-  sut.set(1, 0, 42);
-  XCTAssertEqual(sut.get(1), 0);
+  sut.Set(1, 0, 666);
+  XCTAssertEqual(sut.Get(1), 42);
+  sut.Set(1, 0, 42);
+  XCTAssertEqual(sut.Get(1), 0);
 }
 
 struct S {
@@ -183,13 +183,13 @@ struct std::hash<S> {
   S s1 = {1024, 2048};
   S s2 = {4096, 8192};
   S s3 = {16384, 32768};
-  sut.set(s1, 10);
-  sut.set(s2, 20);
-  sut.set(s3, 30);
+  sut.Set(s1, 10);
+  sut.Set(s2, 20);
+  sut.Set(s3, 30);
 
-  XCTAssertEqual(sut.get(s1), 10);
-  XCTAssertEqual(sut.get(s2), 20);
-  XCTAssertEqual(sut.get(s3), 30);
+  XCTAssertEqual(sut.Get(s1), 10);
+  XCTAssertEqual(sut.Get(s2), 20);
+  XCTAssertEqual(sut.Get(s3), 30);
 }
 
 @end

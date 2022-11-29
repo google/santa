@@ -85,11 +85,11 @@ bool AuthResultCache::AddToCache(const es_file_t *es_file, santa_action_t decisi
   SantaCache<santa_vnode_id_t, uint64_t> *cache = CacheForVnodeID(vnode_id);
   switch (decision) {
     case ACTION_REQUEST_BINARY:
-      return cache->set(vnode_id, CacheableAction(ACTION_REQUEST_BINARY, 0), 0);
+      return cache->Set(vnode_id, CacheableAction(ACTION_REQUEST_BINARY, 0), 0);
     case ACTION_RESPOND_ALLOW: OS_FALLTHROUGH;
     case ACTION_RESPOND_ALLOW_COMPILER: OS_FALLTHROUGH;
     case ACTION_RESPOND_DENY:
-      return cache->set(vnode_id, CacheableAction(decision),
+      return cache->Set(vnode_id, CacheableAction(decision),
                         CacheableAction(ACTION_REQUEST_BINARY, 0));
     default:
       // This is a programming error. Bail.
@@ -100,7 +100,7 @@ bool AuthResultCache::AddToCache(const es_file_t *es_file, santa_action_t decisi
 
 void AuthResultCache::RemoveFromCache(const es_file_t *es_file) {
   santa_vnode_id_t vnode_id = VnodeForFile(es_file);
-  CacheForVnodeID(vnode_id)->remove(vnode_id);
+  CacheForVnodeID(vnode_id)->Remove(vnode_id);
 }
 
 santa_action_t AuthResultCache::CheckCache(const es_file_t *es_file) {
@@ -110,7 +110,7 @@ santa_action_t AuthResultCache::CheckCache(const es_file_t *es_file) {
 santa_action_t AuthResultCache::CheckCache(santa_vnode_id_t vnode_id) {
   SantaCache<santa_vnode_id_t, uint64_t> *cache = CacheForVnodeID(vnode_id);
 
-  uint64_t cached_val = cache->get(vnode_id);
+  uint64_t cached_val = cache->Get(vnode_id);
   if (cached_val == 0) {
     return ACTION_UNSET;
   }
@@ -120,7 +120,7 @@ santa_action_t AuthResultCache::CheckCache(santa_vnode_id_t vnode_id) {
   if (result == ACTION_RESPOND_DENY) {
     uint64_t expiry_time = TimestampFromCachedValue(cached_val) + cache_deny_time_ns_;
     if (expiry_time < GetCurrentUptime()) {
-      cache->remove(vnode_id);
+      cache->Remove(vnode_id);
       return ACTION_UNSET;
     }
   }
@@ -134,9 +134,9 @@ SantaCache<santa_vnode_id_t, uint64_t> *AuthResultCache::CacheForVnodeID(
 }
 
 void AuthResultCache::FlushCache(FlushCacheMode mode) {
-  nonroot_cache_->clear();
+  nonroot_cache_->Clear();
   if (mode == FlushCacheMode::kAllCaches) {
-    root_cache_->clear();
+    root_cache_->Clear();
 
     // Clear the ES cache when all local caches are flushed. Assume the ES cache
     // doesn't need to be cleared when only flushing the non-root cache.
@@ -152,7 +152,7 @@ void AuthResultCache::FlushCache(FlushCacheMode mode) {
 }
 
 NSArray<NSNumber *> *AuthResultCache::CacheCounts() {
-  return @[ @(root_cache_->count()), @(nonroot_cache_->count()) ];
+  return @[ @(root_cache_->Count()), @(nonroot_cache_->Count()) ];
 }
 
 }  // namespace santa::santad::event_providers
