@@ -106,16 +106,8 @@ PathTargets GetPathTargets(const Message &msg) {
   }
 }
 
-// TODO(xyz): Put in common place, shared with AuthResultCache
-static inline santa_vnode_id_t VnodeForFile(const es_file_t *es_file) {
-  return santa_vnode_id_t{
-    .fsid = (uint64_t)es_file->stat.st_dev,
-    .fileid = es_file->stat.st_ino,
-  };
-}
-
 template <>
-uint64_t SantaCacheHasher<santa_vnode_id_t>(santa_vnode_id_t const &t) {
+uint64_t SantaCacheHasher<SantaVnode>(SantaVnode const &t) {
   return (SantaCacheHasher<uint64_t>(t.fsid) << 1) ^ SantaCacheHasher<uint64_t>(t.fileid);
 }
 
@@ -127,7 +119,7 @@ uint64_t SantaCacheHasher<santa_vnode_id_t>(santa_vnode_id_t const &t) {
 @implementation SNTEndpointSecurityWatcher {
   std::shared_ptr<Logger> _logger;
   std::shared_ptr<WatchItems> _watchItems;
-  SantaCache<santa_vnode_id_t, NSString *> _certHashCache;
+  SantaCache<SantaVnode, NSString *> _certHashCache;
 }
 
 - (instancetype)
@@ -235,7 +227,7 @@ uint64_t SantaCacheHasher<santa_vnode_id_t>(santa_vnode_id_t const &t) {
 
     if (policy->allowed_certificates_sha256.size() > 0) {
       // First see if we've already cached this value
-      santa_vnode_id_t vnodeID = VnodeForFile(msg->process->executable);
+      SantaVnode vnodeID = SantaVnode::VnodeForFile(msg->process->executable);
       NSString *result = self->_certHashCache.get(vnodeID);
       if (!result) {
         // If this wasn't already cached, try finding a cached SNTCachedDecision
