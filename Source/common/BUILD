@@ -74,7 +74,7 @@ objc_library(
 
 objc_library(
     name = "SNTCachedDecision",
-    srcs = ["SNTCachedDecision.m"],
+    srcs = ["SNTCachedDecision.mm"],
     hdrs = ["SNTCachedDecision.h"],
     deps = [
         ":SNTCommon",

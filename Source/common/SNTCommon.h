@@ -47,8 +47,8 @@ typedef enum {
 
 // Struct to manage vnode IDs
 typedef struct SantaVnode {
-  uint64_t fsid;
-  uint64_t fileid;
+  dev_t fsid;
+  ino_t fileid;
 
 #ifdef __cplusplus
   bool operator==(const SantaVnode &rhs) const {
@@ -57,7 +57,7 @@ typedef struct SantaVnode {
 
   static inline SantaVnode VnodeForFile(const es_file_t *es_file) {
     return SantaVnode{
-        .fsid = (uint64_t)es_file->stat.st_dev,
+        .fsid = es_file->stat.st_dev,
         .fileid = es_file->stat.st_ino,
     };
   }
