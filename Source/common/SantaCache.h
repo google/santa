@@ -47,8 +47,7 @@ class SantaCache {
     @param maximum_size The maximum number of entries in this cache. Once this
         number is reached all the entries will be purged.
   */
-  SantaCache(uint64_t maximum_size = 10000)
-      : max_size_(maximum_size) {}
+  SantaCache(uint64_t maximum_size = 10000) : max_size_(maximum_size) {}
 
   /**
     Clear and free memory
@@ -130,9 +129,7 @@ class SantaCache {
 
  private:
   ABSL_SHARED_LOCKS_REQUIRED(lock_)
-  uint64_t CountLocked() const {
-    return cache_.size();
-  }
+  uint64_t CountLocked() const { return cache_.size(); }
 
   ABSL_EXCLUSIVE_LOCKS_REQUIRED(lock_)
   void ClearLocked() { cache_.clear(); }
@@ -156,8 +153,8 @@ class SantaCache {
     @return true if the entry was set, false if it was not
   */
   ABSL_EXCLUSIVE_LOCKS_REQUIRED(lock_)
-  bool SetLocked(const KeyT &key, const ValueT &value, const ValueT &previous_value,
-           bool has_prev_value) {
+  bool SetLocked(const KeyT &key, const ValueT &value,
+                 const ValueT &previous_value, bool has_prev_value) {
     const auto iter = cache_.find(key);
 
     if (has_prev_value) {
