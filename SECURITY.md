@@ -7,6 +7,6 @@ whichever comes first.
 
 To report vulnerabilities to us privately, please e-mail `santa-team@google.com`.
 If you want to encrypt your e-mail, you can use our GPG key `0x92AFE41DAB49BBB6`
-available on pool.sks-keyservers.net:
+available on keyserver.ubuntu.com:
 
-`gpg --keyserver pool.sks-keyservers.net --recv-key 0x92AFE41DAB49BBB6`
+`gpg --keyserver keyserver.ubuntu.com --recv-key 0x92AFE41DAB49BBB6`
