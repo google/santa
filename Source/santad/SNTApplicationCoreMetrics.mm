@@ -66,17 +66,17 @@ static void RegisterMemoryAndCPUMetrics(SNTMetricSet *metricSet) {
                           helpText:@"CPU time consumed by this process, in seconds"];
 
   [metricSet registerCallback:^(void) {
-    struct proc_taskinfo pti;
-    if (!GetTaskInfo(&pti)) {
+    std::optional<SantaTaskInfo> tinfo = GetTaskInfo();
+    if (!tinfo.has_value()) {
       return;
     }
 
-    [vsize set:pti.pti_virtual_size forFieldValues:@[]];
-    [rsize set:pti.pti_resident_size forFieldValues:@[]];
+    [vsize set:tinfo->virtual_size forFieldValues:@[]];
+    [rsize set:tinfo->resident_size forFieldValues:@[]];
 
     // convert times to seconds
-    double user_time = MachTimeToNanos(pti.pti_total_user) / (double)NSEC_PER_SEC;
-    double system_time = MachTimeToNanos(pti.pti_total_system) / (double)NSEC_PER_SEC;
+    double user_time = tinfo->total_user_nanos / (double)NSEC_PER_SEC;
+    double system_time = tinfo->total_system_nanos / (double)NSEC_PER_SEC;
 
     [cpuUsage set:user_time forFieldValues:@[ @"user" ]];
     [cpuUsage set:system_time forFieldValues:@[ @"system" ]];

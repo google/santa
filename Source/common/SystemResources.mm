@@ -18,6 +18,7 @@
 #include <libproc.h>
 #include <mach/kern_return.h>
 #include <unistd.h>
+#include <optional>
 
 #include "Source/common/SNTLogging.h"
 
@@ -49,15 +50,19 @@ uint64_t NanosToMachTime(uint64_t nanos) {
   return nanos * timebase.denom / timebase.numer;
 }
 
-BOOL GetTaskInfo(struct proc_taskinfo *pti_out) {
+std::optional<SantaTaskInfo> GetTaskInfo() {
   struct proc_taskinfo pti;
 
   if (proc_pidinfo(getpid(), PROC_PIDTASKINFO, 0, &pti, PROC_PIDTASKINFO_SIZE) <
       PROC_PIDTASKINFO_SIZE) {
     LOGW(@"Unable to get system resource information");
-    return NO;
+    return std::nullopt;
   }
 
-  *pti_out = pti;
-  return YES;
+  return SantaTaskInfo{
+    .virtual_size = pti.pti_virtual_size,
+    .resident_size = pti.pti_resident_size,
+    .total_user_nanos = MachTimeToNanos(pti.pti_total_user),
+    .total_system_nanos = MachTimeToNanos(pti.pti_total_system),
+  };
 }

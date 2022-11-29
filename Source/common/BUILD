@@ -33,7 +33,7 @@ cc_library(
 
 objc_library(
     name = "SystemResources",
-    srcs = ["SystemResources.m"],
+    srcs = ["SystemResources.mm"],
     hdrs = ["SystemResources.h"],
     deps = [
         ":SNTLogging",

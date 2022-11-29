@@ -20,7 +20,14 @@
 #include <sys/cdefs.h>
 #include <sys/proc_info.h>
 
-__BEGIN_DECLS
+#include <optional>
+
+struct SantaTaskInfo {
+  uint64_t virtual_size;
+  uint64_t resident_size;
+  uint64_t total_user_nanos;
+  uint64_t total_system_nanos;
+};
 
 // Convert mach absolute time to nanoseconds
 uint64_t MachTimeToNanos(uint64_t mach_time);
@@ -29,8 +36,6 @@ uint64_t MachTimeToNanos(uint64_t mach_time);
 uint64_t NanosToMachTime(uint64_t nanos);
 
 // Get the result of proc_pidinfo with the PROC_PIDTASKINFO flavor
-BOOL GetTaskInfo(struct proc_taskinfo *pti_out);
-
-__END_DECLS
+std::optional<SantaTaskInfo> GetTaskInfo();
 
 #endif

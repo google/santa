@@ -69,7 +69,7 @@ objc_library(
 
 objc_library(
     name = "SNTApplicationCoreMetrics",
-    srcs = ["SNTApplicationCoreMetrics.m"],
+    srcs = ["SNTApplicationCoreMetrics.mm"],
     hdrs = ["SNTApplicationCoreMetrics.h"],
     deps = [
         "//Source/common:SNTCommonEnums",
@@ -759,7 +759,7 @@ santa_unit_test(
 santa_unit_test(
     name = "SNTApplicationCoreMetricsTest",
     srcs = [
-        "SNTApplicationCoreMetricsTest.m",
+        "SNTApplicationCoreMetricsTest.mm",
     ],
     minimum_os_version = "10.15",
     deps = [

@@ -52,12 +52,11 @@ static void SantaWatchdog(void *context) {
   // santad's usual RAM usage is between 5-50MB but can spike if lots of processes start at once.
   const int mem_warn_threshold = 250;
 
-  struct proc_taskinfo pti;
+  std::optional<SantaTaskInfo> tinfo = GetTaskInfo();
 
-  if (GetTaskInfo(&pti)) {
+  if (tinfo.has_value()) {
     // CPU
-    double total_time =
-      MachTimeToNanos(pti.pti_total_user + pti.pti_total_system) / (double)NSEC_PER_SEC;
+    double total_time = tinfo->total_user_nanos + tinfo->total_system_nanos / (double)NSEC_PER_SEC;
     double percentage =
       (((total_time - state->prev_total_time) / (double)kWatchdogTimeInterval) * 100.0);
     state->prev_total_time = total_time;
@@ -71,7 +70,7 @@ static void SantaWatchdog(void *context) {
     if (percentage > watchdogCPUPeak) watchdogCPUPeak = percentage;
 
     // RAM
-    double ram_use_mb = (double)pti.pti_resident_size / 1024 / 1024;
+    double ram_use_mb = (double)tinfo->resident_size / 1024 / 1024;
     if (ram_use_mb > mem_warn_threshold && ram_use_mb > state->prev_ram_use_mb) {
       LOGW(@"Watchdog: potentially high RAM use, RSS is %.2fMB.", ram_use_mb);
       watchdogRAMEvents++;
