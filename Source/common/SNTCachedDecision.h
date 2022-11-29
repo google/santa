@@ -27,7 +27,7 @@
 
 - (instancetype)initWithEndpointSecurityFile:(const es_file_t *)esFile;
 
-@property santa_vnode_id_t vnodeId;
+@property SantaVnode vnodeId;
 @property SNTEventState decision;
 @property NSString *decisionExtra;
 @property NSString *sha256;

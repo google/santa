@@ -19,6 +19,7 @@
 #ifndef SANTA__COMMON__COMMON_H
 #define SANTA__COMMON__COMMON_H
 
+#include <EndpointSecurity/EndpointSecurity.h>
 #include <stdint.h>
 #include <sys/param.h>
 
@@ -45,15 +46,22 @@ typedef enum {
    x == ACTION_RESPOND_ALLOW_COMPILER)
 
 // Struct to manage vnode IDs
-typedef struct santa_vnode_id_t {
-  uint64_t fsid;
-  uint64_t fileid;
+typedef struct SantaVnode {
+  dev_t fsid;
+  ino_t fileid;
 
 #ifdef __cplusplus
-  bool operator==(const santa_vnode_id_t &rhs) const {
+  bool operator==(const SantaVnode &rhs) const {
     return fsid == rhs.fsid && fileid == rhs.fileid;
   }
+
+  static inline SantaVnode VnodeForFile(const es_file_t *es_file) {
+    return SantaVnode{
+        .fsid = es_file->stat.st_dev,
+        .fileid = es_file->stat.st_ino,
+    };
+  }
 #endif
-} santa_vnode_id_t;
+} SantaVnode;
 
 #endif  // SANTA__COMMON__COMMON_H

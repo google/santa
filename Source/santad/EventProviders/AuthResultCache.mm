@@ -25,18 +25,11 @@ using santa::santad::event_providers::endpoint_security::Client;
 using santa::santad::event_providers::endpoint_security::EndpointSecurityAPI;
 
 template <>
-uint64_t SantaCacheHasher<santa_vnode_id_t>(santa_vnode_id_t const &t) {
+uint64_t SantaCacheHasher<SantaVnode>(SantaVnode const &t) {
   return (SantaCacheHasher<uint64_t>(t.fsid) << 1) ^ SantaCacheHasher<uint64_t>(t.fileid);
 }
 
 namespace santa::santad::event_providers {
-
-static inline santa_vnode_id_t VnodeForFile(const es_file_t *es_file) {
-  return santa_vnode_id_t{
-    .fsid = (uint64_t)es_file->stat.st_dev,
-    .fileid = es_file->stat.st_ino,
-  };
-}
 
 static inline uint64_t GetCurrentUptime() {
   return clock_gettime_nsec_np(CLOCK_MONOTONIC);
@@ -59,8 +52,8 @@ static inline uint64_t TimestampFromCachedValue(uint64_t cachedValue) {
 AuthResultCache::AuthResultCache(std::shared_ptr<EndpointSecurityAPI> esapi,
                                  uint64_t cache_deny_time_ms)
     : esapi_(esapi), cache_deny_time_ns_(cache_deny_time_ms * NSEC_PER_MSEC) {
-  root_cache_ = new SantaCache<santa_vnode_id_t, uint64_t>();
-  nonroot_cache_ = new SantaCache<santa_vnode_id_t, uint64_t>();
+  root_cache_ = new SantaCache<SantaVnode, uint64_t>();
+  nonroot_cache_ = new SantaCache<SantaVnode, uint64_t>();
 
   struct stat sb;
   if (stat("/", &sb) == 0) {
@@ -79,8 +72,8 @@ AuthResultCache::~AuthResultCache() {
 }
 
 bool AuthResultCache::AddToCache(const es_file_t *es_file, santa_action_t decision) {
-  santa_vnode_id_t vnode_id = VnodeForFile(es_file);
-  SantaCache<santa_vnode_id_t, uint64_t> *cache = CacheForVnodeID(vnode_id);
+  SantaVnode vnode_id = SantaVnode::VnodeForFile(es_file);
+  SantaCache<SantaVnode, uint64_t> *cache = CacheForVnodeID(vnode_id);
   switch (decision) {
     case ACTION_REQUEST_BINARY:
       return cache->set(vnode_id, CacheableAction(ACTION_REQUEST_BINARY, 0), 0);
@@ -97,16 +90,16 @@ bool AuthResultCache::AddToCache(const es_file_t *es_file, santa_action_t decisi
 }
 
 void AuthResultCache::RemoveFromCache(const es_file_t *es_file) {
-  santa_vnode_id_t vnode_id = VnodeForFile(es_file);
+  SantaVnode vnode_id = SantaVnode::VnodeForFile(es_file);
   CacheForVnodeID(vnode_id)->remove(vnode_id);
 }
 
 santa_action_t AuthResultCache::CheckCache(const es_file_t *es_file) {
-  return CheckCache(VnodeForFile(es_file));
+  return CheckCache(SantaVnode::VnodeForFile(es_file));
 }
 
-santa_action_t AuthResultCache::CheckCache(santa_vnode_id_t vnode_id) {
-  SantaCache<santa_vnode_id_t, uint64_t> *cache = CacheForVnodeID(vnode_id);
+santa_action_t AuthResultCache::CheckCache(SantaVnode vnode_id) {
+  SantaCache<SantaVnode, uint64_t> *cache = CacheForVnodeID(vnode_id);
 
   uint64_t cached_val = cache->get(vnode_id);
   if (cached_val == 0) {
@@ -126,8 +119,7 @@ santa_action_t AuthResultCache::CheckCache(santa_vnode_id_t vnode_id) {
   return result;
 }
 
-SantaCache<santa_vnode_id_t, uint64_t> *AuthResultCache::CacheForVnodeID(
-  santa_vnode_id_t vnode_id) {
+SantaCache<SantaVnode, uint64_t> *AuthResultCache::CacheForVnodeID(SantaVnode vnode_id) {
   return (vnode_id.fsid == root_devno_ || root_devno_ == 0) ? root_cache_ : nonroot_cache_;
 }
 

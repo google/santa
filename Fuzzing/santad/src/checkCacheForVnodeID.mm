@@ -28,7 +28,7 @@ extern "C" int LLVMFuzzerTestOneInput(const std::uint8_t *data, std::size_t size
     return 1;
   }
 
-  santa_vnode_id_t vnodeID = {};
+  SantaVnode vnodeID = {};
   std::memcpy(&vnodeID, data, size);
 
   MOLXPCConnection *daemonConn = [SNTXPCControlInterface configuredConnection];

@@ -47,13 +47,6 @@ static inline es_file_t MakeCacheableFile(uint64_t devno, uint64_t ino) {
     .path = {}, .path_truncated = false, .stat = {.st_dev = (dev_t)devno, .st_ino = ino}};
 }
 
-static inline santa_vnode_id_t VnodeForFile(const es_file_t *es_file) {
-  return santa_vnode_id_t{
-    .fsid = (uint64_t)es_file->stat.st_dev,
-    .fileid = es_file->stat.st_ino,
-  };
-}
-
 static inline void AssertCacheCounts(std::shared_ptr<AuthResultCache> cache, uint64_t root_count,
                                      uint64_t nonroot_count) {
   NSArray<NSNumber *> *counts = cache->CacheCounts();
@@ -104,8 +97,8 @@ static inline void AssertCacheCounts(std::shared_ptr<AuthResultCache> cache, uin
   cache->AddToCache(&nonrootFile, ACTION_RESPOND_DENY);
 
   AssertCacheCounts(cache, 1, 1);
-  XCTAssertEqual(cache->CheckCache(VnodeForFile(&rootFile)), ACTION_RESPOND_ALLOW);
-  XCTAssertEqual(cache->CheckCache(VnodeForFile(&nonrootFile)), ACTION_RESPOND_DENY);
+  XCTAssertEqual(cache->CheckCache(SantaVnode::VnodeForFile(&rootFile)), ACTION_RESPOND_ALLOW);
+  XCTAssertEqual(cache->CheckCache(SantaVnode::VnodeForFile(&nonrootFile)), ACTION_RESPOND_DENY);
 
   // Remove the root file
   cache->RemoveFromCache(&rootFile);
