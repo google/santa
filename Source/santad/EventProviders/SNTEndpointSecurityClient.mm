@@ -24,6 +24,7 @@
 #import "Source/common/SNTCommon.h"
 #import "Source/common/SNTConfigurator.h"
 #import "Source/common/SNTLogging.h"
+#include "Source/common/SystemResources.h"
 #include "Source/santad/EventProviders/EndpointSecurity/Client.h"
 #include "Source/santad/EventProviders/EndpointSecurity/EnrichedTypes.h"
 #include "Source/santad/EventProviders/EndpointSecurity/Message.h"
@@ -45,7 +46,6 @@ using santa::santad::event_providers::endpoint_security::Message;
   std::shared_ptr<EndpointSecurityAPI> _esApi;
   std::shared_ptr<Metrics> _metrics;
   Client _esClient;
-  mach_timebase_info_data_t _timebase;
   dispatch_queue_t _authQueue;
   dispatch_queue_t _notifyQueue;
   Processor _processor;
@@ -60,12 +60,6 @@ using santa::santad::event_providers::endpoint_security::Message;
     _metrics = std::move(metrics);
     _deadlineMarginMS = 5000;
     _processor = processor;
-
-    if (mach_timebase_info(&_timebase) != KERN_SUCCESS) {
-      LOGE(@"Failed to get mach timebase info");
-      // Assumed to be transitory failure. Let the daemon restart.
-      exit(EXIT_FAILURE);
-    }
 
     _authQueue = dispatch_queue_create(
       "com.google.santa.daemon.auth_queue",
@@ -216,8 +210,8 @@ using santa::santad::event_providers::endpoint_security::Message;
   dispatch_semaphore_t deadlineExpiredSema = dispatch_semaphore_create(0);
 
   const uint64_t timeout = NSEC_PER_MSEC * (self.deadlineMarginMS);
-  uint64_t deadlineMachTime = msg->deadline - mach_absolute_time();
-  uint64_t deadlineNano = deadlineMachTime * _timebase.numer / _timebase.denom;
+
+  uint64_t deadlineNano = MachTimeToNanos(msg->deadline - mach_absolute_time());
 
   // TODO(mlw): How should we handle `deadlineNano <= timeout`. Will currently
   // result in the deadline block being dispatched immediately (and therefore

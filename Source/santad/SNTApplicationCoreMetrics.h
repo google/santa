@@ -17,10 +17,6 @@
 
 #include <sys/cdefs.h>
 
-__BEGIN_DECLS
-
 void SNTRegisterCoreMetrics();
-
-__END_DECLS
 
 #endif
