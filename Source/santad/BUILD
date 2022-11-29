@@ -320,7 +320,11 @@ objc_library(
         ":SNTEndpointSecurityClient",
         ":SNTEndpointSecurityEventHandler",
         ":WatchItems",
+        "//Source/common:SNTCommon",
+        "//Source/common:SantaCache",
         "//Source/common:Unit",
+        "@MOLCertificate",
+        "@MOLCodesignChecker",
     ],
 )
 

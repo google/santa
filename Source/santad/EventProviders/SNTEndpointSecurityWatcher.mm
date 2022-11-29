@@ -14,9 +14,10 @@
 
 #include "Source/santad/EventProviders/SNTEndpointSecurityWatcher.h"
 
-#include <EndpointSecurity/ESTypes.h>
 #include <EndpointSecurity/EndpointSecurity.h>
 #include <Kernel/kern/cs_blobs.h>
+#import <MOLCertificate/MOLCertificate.h>
+#import <MOLCodesignChecker/MOLCodesignChecker.h>
 #include <sys/fcntl.h>
 
 #include <algorithm>
@@ -28,6 +29,8 @@
 #include <type_traits>
 #include <variant>
 
+#include "Source/common/SNTCommon.h"
+#include "Source/common/SantaCache.h"
 #include "Source/common/Unit.h"
 #include "Source/santad/DataLayer/WatchItems.h"
 #include "Source/santad/EventProviders/EndpointSecurity/Message.h"
@@ -48,6 +51,8 @@ using santa::santad::logs::endpoint_security::Logger;
 // `std::string_view` if possible, otherwise if a new string must be constructed an
 // `std::string` is used.
 using PathTargets = std::pair<std::string_view, std::variant<std::string_view, std::string, Unit>>;
+
+static const char *kBadCertHash = "BAD_CERT_HASH";
 
 static inline std::string_view PathView(const es_file_t *esFile) {
   return std::string_view(esFile->path.data, esFile->path.length);
@@ -101,6 +106,19 @@ PathTargets GetPathTargets(const Message &msg) {
   }
 }
 
+// TODO(xyz): Put in common place, shared with AuthResultCache
+static inline santa_vnode_id_t VnodeForFile(const es_file_t *es_file) {
+  return santa_vnode_id_t{
+    .fsid = (uint64_t)es_file->stat.st_dev,
+    .fileid = es_file->stat.st_ino,
+  };
+}
+
+template <>
+uint64_t SantaCacheHasher<santa_vnode_id_t>(santa_vnode_id_t const &t) {
+  return (SantaCacheHasher<uint64_t>(t.fsid) << 1) ^ SantaCacheHasher<uint64_t>(t.fileid);
+}
+
 @interface SNTEndpointSecurityWatcher ()
 @property SNTDecisionCache *decisionCache;
 @property BOOL isSubscribed;
@@ -109,6 +127,7 @@ PathTargets GetPathTargets(const Message &msg) {
 @implementation SNTEndpointSecurityWatcher {
   std::shared_ptr<Logger> _logger;
   std::shared_ptr<WatchItems> _watchItems;
+  SantaCache<santa_vnode_id_t, NSString *> _certHashCache;
 }
 
 - (instancetype)
@@ -215,9 +234,40 @@ PathTargets GetPathTargets(const Message &msg) {
     }
 
     if (policy->allowed_certificates_sha256.size() > 0) {
-      SNTCachedDecision *cd =
-        [self.decisionCache cachedDecisionForFile:msg->process->executable->stat];
-      if (cd.certSHA256 && policy->allowed_certificates_sha256.count([cd.certSHA256 UTF8String])) {
+      // First see if we've already cached this value
+      santa_vnode_id_t vnodeID = VnodeForFile(msg->process->executable);
+      NSString *result = self->_certHashCache.get(vnodeID);
+      if (!result) {
+        // If this wasn't already cached, try finding a cached SNTCachedDecision
+        SNTCachedDecision *cd =
+          [self.decisionCache cachedDecisionForFile:msg->process->executable->stat];
+        if (cd) {
+          // There was an existing cached decision, use its cert hash
+          result = cd.certSHA256;
+        } else {
+          // If the cached decision didn't exist, try a manual lookup
+          NSError *e = nil;
+          MOLCodesignChecker *csInfo =
+            [[MOLCodesignChecker alloc] initWithBinaryPath:@(msg->process->executable->path.data)
+                                                     error:&e];
+          if (!e) {
+            result = csInfo.leafCertificate.SHA256;
+          }
+        }
+
+        if (!result) {
+          // If result is still nil, there isn't much recourse... We will
+          // assume that this error isn't transient and set a terminal value
+          // in the cache to prevent continous attempts to lookup cert hash.
+          result = @(kBadCertHash);
+        }
+
+        if (result) {
+          self->_certHashCache.set(vnodeID, result);
+        }
+      }
+
+      if (result && policy->allowed_certificates_sha256.count([result UTF8String])) {
         LOGE(@"Allowing CERT HASH access to %s from %s (pid: %d) | policy: %s",
              msg->event.open.file->path.data, msg->process->executable->path.data,
              msg->process->audit_token.val[5], policy->name.c_str());
