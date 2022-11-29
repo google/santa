@@ -22,11 +22,11 @@
 
 __BEGIN_DECLS
 
-// Get the mach timebase for the system
-mach_timebase_info_data_t GetTimebase();
-
 // Convert mach absolute time to nanoseconds
 uint64_t MachTimeToNanos(uint64_t mach_time);
+
+// Convert nanoseconds to mach absolute time
+uint64_t NanosToMachTime(uint64_t nanos);
 
 // Get the result of proc_pidinfo with the PROC_PIDTASKINFO flavor
 BOOL GetTaskInfo(struct proc_taskinfo *pti_out);

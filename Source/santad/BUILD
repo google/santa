@@ -228,6 +228,7 @@ objc_library(
         "//Source/common:SNTCommon",
         "//Source/common:SNTConfigurator",
         "//Source/common:SNTLogging",
+        "//Source/common:SystemResources",
     ],
 )
 

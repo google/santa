@@ -21,7 +21,7 @@
 
 #include "Source/common/SNTLogging.h"
 
-mach_timebase_info_data_t GetTimebase() {
+static mach_timebase_info_data_t GetTimebase() {
   static dispatch_once_t once_token;
   static mach_timebase_info_data_t timebase;
 
@@ -41,6 +41,12 @@ uint64_t MachTimeToNanos(uint64_t mach_time) {
   mach_timebase_info_data_t timebase = GetTimebase();
 
   return mach_time * timebase.numer / timebase.denom;
+}
+
+uint64_t NanosToMachTime(uint64_t nanos) {
+  mach_timebase_info_data_t timebase = GetTimebase();
+
+  return nanos * timebase.denom / timebase.numer;
 }
 
 BOOL GetTaskInfo(struct proc_taskinfo *pti_out) {
