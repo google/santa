@@ -52,17 +52,17 @@ class AuthResultCache {
   virtual bool AddToCache(const es_file_t *es_file, santa_action_t decision);
   virtual void RemoveFromCache(const es_file_t *es_file);
   virtual santa_action_t CheckCache(const es_file_t *es_file);
-  virtual santa_action_t CheckCache(santa_vnode_id_t vnode_id);
+  virtual santa_action_t CheckCache(SantaVnode vnode_id);
 
   virtual void FlushCache(FlushCacheMode mode);
 
   virtual NSArray<NSNumber *> *CacheCounts();
 
  private:
-  virtual SantaCache<santa_vnode_id_t, uint64_t> *CacheForVnodeID(santa_vnode_id_t vnode_id);
+  virtual SantaCache<SantaVnode, uint64_t> *CacheForVnodeID(SantaVnode vnode_id);
 
-  SantaCache<santa_vnode_id_t, uint64_t> *root_cache_;
-  SantaCache<santa_vnode_id_t, uint64_t> *nonroot_cache_;
+  SantaCache<SantaVnode, uint64_t> *root_cache_;
+  SantaCache<SantaVnode, uint64_t> *nonroot_cache_;
 
   std::shared_ptr<santa::santad::event_providers::endpoint_security::EndpointSecurityAPI> esapi_;
   uint64_t root_devno_;
