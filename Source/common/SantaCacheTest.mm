@@ -1,16 +1,16 @@
-/// Copyright 2016 Google Inc. All rights reserved.
+/// Copyright 2022 Google LLC
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
 /// You may obtain a copy of the License at
 ///
-///    http://www.apache.org/licenses/LICENSE-2.0
+///     https://www.apache.org/licenses/LICENSE-2.0
 ///
-///    Unless required by applicable law or agreed to in writing, software
-///    distributed under the License is distributed on an "AS IS" BASIS,
-///    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-///    See the License for the specific language governing permissions and
-///    limitations under the License.
+/// Unless required by applicable law or agreed to in writing, software
+/// distributed under the License is distributed on an "AS IS" BASIS,
+/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+/// See the License for the specific language governing permissions and
+/// limitations under the License.
 
 #import <XCTest/XCTest.h>
 
@@ -45,30 +45,6 @@
   XCTAssertEqual(sut.get(0xDEADBEEF), 0);
 }
 
-- (void)testBucketGrowCopy {
-  auto sut = SantaCache<uint64_t, uint64_t>();
-
-  sut.set(386, 42);
-  sut.set(2434, 42);
-
-  XCTAssertEqual(sut.get(386), 42);
-  XCTAssertEqual(sut.get(2434), 42);
-}
-
-- (void)testBucketShrinkCopy {
-  auto sut = SantaCache<uint64_t, uint64_t>(100, 1);
-
-  sut.set(386, 42);
-  sut.set(2434, 42);
-  sut.set(4482, 42);
-
-  sut.remove(2434);
-
-  XCTAssertEqual(sut.get(386), 42);
-  XCTAssertEqual(sut.get(2434), 0);
-  XCTAssertEqual(sut.get(4482), 42);
-}
-
 - (void)testCacheResetAtLimit {
   auto sut = SantaCache<uint64_t, uint64_t>(5);
 
@@ -81,57 +57,6 @@
   sut.set(6, 42);
   XCTAssertEqual(sut.get(3), 0);
   XCTAssertEqual(sut.get(6), 42);
-}
-
-// Helper to test bucket distributions for uint64_t/uint64_t combinations.
-- (void)distributionTestHelper:(SantaCache<uint64_t, uint64_t> *)sut bucketRatio:(int)br {
-  uint16_t count[512];
-  uint16_t array_size = 512;
-  uint64_t start_bucket = 0;
-  std::vector<uint16_t> per_bucket;
-  do {
-    sut->bucket_counts(count, &array_size, &start_bucket);
-    for (int i = 0; i < array_size; ++i) {
-      per_bucket.push_back(count[i]);
-    }
-  } while (start_bucket > 0);
-
-  // Calculate mean
-  double mean = std::accumulate(per_bucket.begin(), per_bucket.end(), 0.0) / per_bucket.size();
-  XCTAssertLessThanOrEqual(mean, br, @"Mean per-bucket count is greater than %d", br);
-
-  // Calculate stdev
-  double accum = 0.0;
-  std::for_each(per_bucket.begin(), per_bucket.end(),
-                [&](const double d) { accum += (d - mean) * (d - mean); });
-  double stddev = sqrt(accum / (per_bucket.size() - 1));
-  double maxStdDev = (double)br / 2;
-  XCTAssertLessThanOrEqual(stddev, maxStdDev,
-                           @"Standard deviation between buckets is greater than %f", maxStdDev);
-}
-
-- (void)testDistributionRandomKeys {
-  const int bucket_ratio = 5;
-  auto sut = new SantaCache<uint64_t, uint64_t>(5000, bucket_ratio);
-
-  // Fill the cache with random keys, all set to 1.
-  for (int i = 0; i < 4000; ++i) {
-    sut->set((uint64_t)arc4random() << 32 | arc4random(), 1);
-  }
-
-  [self distributionTestHelper:sut bucketRatio:bucket_ratio];
-}
-
-- (void)testDistributionMontonicKeys {
-  const int bucket_ratio = 5;
-  auto sut = new SantaCache<uint64_t, uint64_t>(5000, bucket_ratio);
-
-  // Fill the cache with monotonic keys, all set to 1.
-  for (int i = 0; i < 4000; ++i) {
-    sut->set(i, 1);
-  }
-
-  [self distributionTestHelper:sut bucketRatio:bucket_ratio];
 }
 
 - (void)testThreading {
@@ -195,11 +120,6 @@
   XCTAssertEqual(sut.get(3.1459124), 0);
 }
 
-template <>
-uint64_t SantaCacheHasher<std::string>(std::string const &s) {
-  return std::hash<std::string>{}(s);
-}
-
 - (void)testStrings {
   auto sut = SantaCache<std::string, std::string>();
 
@@ -219,7 +139,7 @@ uint64_t SantaCacheHasher<std::string>(std::string const &s) {
 }
 
 - (void)testCompareAndSwap {
-  auto sut = SantaCache<uint64_t, uint64_t>(100, 2);
+  auto sut = SantaCache<uint64_t, uint64_t>(100);
 
   sut.set(1, 42);
   sut.set(1, 666, 1);
@@ -245,17 +165,20 @@ struct S {
   uint64_t first_val;
   uint64_t second_val;
 
-  bool operator==(const S &rhs) {
+  bool operator==(const S &rhs) const {
     return first_val == rhs.first_val && second_val == rhs.second_val;
   }
 };
+
 template <>
-uint64_t SantaCacheHasher<S>(S const &s) {
-  return SantaCacheHasher<uint64_t>(s.first_val) ^ (SantaCacheHasher<uint64_t>(s.second_val) << 1);
-}
+struct std::hash<S> {
+  std::size_t operator()(S const &s) const noexcept {
+    return (std::hash<uint64_t>{}(s.first_val) << 1) ^ std::hash<uint64_t>{}(s.second_val);
+  }
+};
 
 - (void)testStructKeys {
-  auto sut = SantaCache<S, uint64_t>(10, 2);
+  auto sut = SantaCache<S, uint64_t>(10);
 
   S s1 = {1024, 2048};
   S s2 = {4096, 8192};
@@ -267,24 +190,6 @@ uint64_t SantaCacheHasher<S>(S const &s) {
   XCTAssertEqual(sut.get(s1), 10);
   XCTAssertEqual(sut.get(s2), 20);
   XCTAssertEqual(sut.get(s3), 30);
-}
-
-- (void)testBucketCounts {
-  auto sut = new SantaCache<uint64_t, uint64_t>(UINT16_MAX, 1);
-
-  // These tests verify that the bucket_counts() function can't be abused
-  // with integer {over,under}flow issues in the input or going out-of-bounds
-  // on the buckets array.
-  uint16_t size = 2048;
-  uint64_t start = (UINT64_MAX - 2047);
-  uint16_t per_bucket_counts[2048];
-  sut->bucket_counts(per_bucket_counts, &size, &start);
-  XCTAssertEqual(start, 0, @"Check a high start can't overflow");
-
-  size = UINT16_MAX;
-  start = UINT16_MAX - 1;
-  sut->bucket_counts(per_bucket_counts, &size, &start);
-  XCTAssertEqual(start, 0, @"Check a large size can't overflow");
 }
 
 @end

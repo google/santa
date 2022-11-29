@@ -25,9 +25,11 @@ using santa::santad::event_providers::endpoint_security::Client;
 using santa::santad::event_providers::endpoint_security::EndpointSecurityAPI;
 
 template <>
-uint64_t SantaCacheHasher<santa_vnode_id_t>(santa_vnode_id_t const &t) {
-  return (SantaCacheHasher<uint64_t>(t.fsid) << 1) ^ SantaCacheHasher<uint64_t>(t.fileid);
-}
+struct std::hash<santa_vnode_id_t> {
+  std::size_t operator()(santa_vnode_id_t const &vnode) const noexcept {
+    return (std::hash<uint64_t>{}(vnode.fsid) << 1) ^ std::hash<uint64_t>{}(vnode.fileid);
+  }
+};
 
 namespace santa::santad::event_providers {
 

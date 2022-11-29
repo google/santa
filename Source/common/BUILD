@@ -34,16 +34,19 @@ cc_library(
 cc_library(
     name = "SantaCache",
     hdrs = ["SantaCache.h"],
-    deps = ["//Source/common:SNTCommon"],
+    deps = [
+        "//Source/common:SNTCommon",
+        "@com_google_absl//absl/synchronization",
+    ],
 )
 
 santa_unit_test(
     name = "SantaCacheTest",
-    srcs = [
-        "SantaCache.h",
-        "SantaCacheTest.mm",
+    srcs = ["SantaCacheTest.mm"],
+    deps = [
+        ":SantaCache",
+        "//Source/common:SNTCommon",
     ],
-    deps = ["//Source/common:SNTCommon"],
 )
 
 objc_library(

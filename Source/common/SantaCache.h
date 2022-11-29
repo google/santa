@@ -1,16 +1,16 @@
-/// Copyright 2016-2022 Google Inc. All rights reserved.
+/// Copyright 2022 Google LLC
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
 /// You may obtain a copy of the License at
 ///
-///    http://www.apache.org/licenses/LICENSE-2.0
+///     https://www.apache.org/licenses/LICENSE-2.0
 ///
-///    Unless required by applicable law or agreed to in writing, software
-///    distributed under the License is distributed on an "AS IS" BASIS,
-///    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-///    See the License for the specific language governing permissions and
-///    limitations under the License.
+/// Unless required by applicable law or agreed to in writing, software
+/// distributed under the License is distributed on an "AS IS" BASIS,
+/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+/// See the License for the specific language governing permissions and
+/// limitations under the License.
 
 #ifndef SANTA__SANTA_DRIVER__SANTACACHE_H
 #define SANTA__SANTA_DRIVER__SANTACACHE_H
@@ -24,35 +24,19 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <unordered_map>
 
 #include "Source/common/SNTCommon.h"
-
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+#include "absl/synchronization/mutex.h"
 
 /**
-  A type to specialize to help SantaCache with its hashing.
+  A simple cache built on top of an std::unordered_map
 
-  The default works for numeric types with a multiplicative hash
-  using a prime near to the golden ratio, per Knuth.
-*/
-template <typename T>
-uint64_t SantaCacheHasher(T const &t) {
-  return (uint64_t)t * 11400714819323198549UL;
-};
-
-/**
-  A somewhat simple, concurrent linked-list hash table intended for use in IOKit
-  kernel extensions.
-
-  The type used for keys must overload the == operator and a specialization of
-  SantaCacheHasher must exist for it.
+  The type used for keys must provide a specialized std::hash template
+  for the key type and overload `operator()`.
 
   Enforces a maximum size by clearing all entries if a new value
   is added that would go over the maximum size declared at creation.
-
-  The number of buckets is calculated as `maximum_size` / `per_bucket`
-  rounded up to the next power of 2. Locking is done per-bucket.
 */
 template <typename KeyT, typename ValueT>
 class SantaCache {
@@ -62,48 +46,27 @@ class SantaCache {
 
     @param maximum_size The maximum number of entries in this cache. Once this
         number is reached all the entries will be purged.
-    @param per_bucket The target number of entries in each bucket when cache is
-    full. A higher number will result in better performance but higher memory
-    usage. Cannot be higher than 64 to try and ensure buckets don't overflow.
   */
-  SantaCache(uint64_t maximum_size = 10000, uint8_t per_bucket = 5) {
-    if (unlikely(per_bucket > maximum_size)) per_bucket = (uint8_t)maximum_size;
-    if (unlikely(per_bucket < 1)) per_bucket = 1;
-    if (unlikely(per_bucket > 64)) per_bucket = 64;
-    max_size_ = maximum_size;
-    bucket_count_ =
-        (1 << (32 -
-               __builtin_clz((((uint32_t)max_size_ / per_bucket) - 1) ?: 1)));
-    if (unlikely(bucket_count_ > UINT32_MAX)) bucket_count_ = UINT32_MAX;
-    buckets_ = (struct bucket *)malloc(bucket_count_ * sizeof(struct bucket));
-    bzero(buckets_, bucket_count_ * sizeof(struct bucket));
-  }
+  SantaCache(uint64_t maximum_size = 10000)
+      : max_size_(maximum_size) {}
 
   /**
     Clear and free memory
   */
-  ~SantaCache() {
-    clear();
-    free(buckets_);
-  }
+  ~SantaCache() { clear(); }
 
   /**
     Get an element from the cache. Returns zero_ if item doesn't exist.
   */
   ValueT get(KeyT key) {
-    struct bucket *bucket = &buckets_[hash(key)];
-    lock(bucket);
-    struct entry *entry = (struct entry *)((uintptr_t)bucket->head - 1);
-    while (entry != nullptr) {
-      if (entry->key == key) {
-        ValueT val = entry->value;
-        unlock(bucket);
-        return val;
-      }
-      entry = entry->next;
+    absl::ReaderMutexLock lock(&lock_);
+
+    const auto iter = cache_.find(key);
+    if (iter != cache_.end()) {
+      return iter->second;
+    } else {
+      return zero_;
     }
-    unlock(bucket);
-    return zero_;
   }
 
   /**
@@ -118,7 +81,8 @@ class SantaCache {
     @return true if the value was set.
   */
   bool set(const KeyT &key, const ValueT &value) {
-    return set(key, value, {}, false);
+    absl::MutexLock lock(&lock_);
+    return SetLocked(key, value, {}, false);
   }
 
   /**
@@ -136,101 +100,45 @@ class SantaCache {
     @return true if the value was set
   */
   bool set(const KeyT &key, const ValueT &value, const ValueT &previous_value) {
-    return set(key, value, previous_value, true);
+    absl::MutexLock lock(&lock_);
+    return SetLocked(key, value, previous_value, true);
   }
 
   /**
-    An alias for `set(key, zero_)`
+    Remove a key from the cache
   */
-  inline void remove(const KeyT &key) { set(key, zero_); }
+  inline void remove(const KeyT &key) {
+    absl::MutexLock lock(&lock_);
+    RemoveLocked(key);
+  }
 
   /**
-    Remove all entries and free bucket memory.
+    Remove all entries
   */
   void clear() {
-    for (uint32_t i = 0; i < bucket_count_; ++i) {
-      struct bucket *bucket = &buckets_[i];
-      // We grab the lock so nothing can use this bucket while we're erasing it
-      // and never release it. It'll be 'released' when the bzero call happens
-      // at the end of this function.
-      lock(bucket);
-
-      // Free the bucket's entries, if there are any.
-      struct entry *entry = (struct entry *)((uintptr_t)bucket->head - 1);
-      while (entry != nullptr) {
-        struct entry *next_entry = entry->next;
-        free(entry);
-        entry = next_entry;
-      }
-    }
-
-    // Reset cache count, no atomicity needed as we hold all the bucket locks.
-    count_ = 0;
-
-    // This resets all of the bucket counts and locks. Releasing the locks for
-    // each bucket isn't really atomic here but each bucket will be zero'd
-    // before the lock is released as the lock is the last thing in a bucket.
-    bzero(buckets_, bucket_count_ * sizeof(struct bucket));
+    absl::MutexLock lock(&lock_);
+    ClearLocked();
   }
 
   /**
     Return number of entries currently in cache.
   */
-  inline uint64_t count() const { return count_; }
-
-  /**
-    Fill in the per_bucket_counts array with the number of entries in each
-    bucket.
-
-    The per_buckets_count array will contain the per-bucket counts, up to the
-    number in array_size. The start_bucket parameter will determine which bucket
-    to start off with and upon return will contain either 0 if no buckets are
-    remaining or the next bucket to begin with when called again.
-  */
-  void bucket_counts(uint16_t *per_bucket_counts, uint16_t *array_size,
-                     uint64_t *start_bucket) {
-    if (per_bucket_counts == nullptr || array_size == nullptr ||
-        start_bucket == nullptr)
-      return;
-
-    uint64_t start = *start_bucket;
-    if (start >= bucket_count_) {
-      *start_bucket = 0;
-      return;
-    }
-
-    uint16_t size = *array_size;
-    if (start + size > bucket_count_) size = (uint16_t)(bucket_count_ - start);
-
-    for (uint16_t i = 0; i < size; ++i) {
-      uint16_t count = 0;
-      struct bucket *bucket = &buckets_[start++];
-      lock(bucket);
-      struct entry *entry = (struct entry *)((uintptr_t)bucket->head - 1);
-      while (entry != nullptr) {
-        if (entry->value != zero_) ++count;
-        entry = entry->next;
-      }
-      unlock(bucket);
-      per_bucket_counts[i] = count;
-    }
-
-    *array_size = size;
-    *start_bucket = (start >= bucket_count_) ? 0 : start;
+  uint64_t count() const {
+    absl::ReaderMutexLock lock(&lock_);
+    return CountLocked();
   }
 
  private:
-  struct entry {
-    KeyT key;
-    ValueT value;
-    struct entry *next;
-  };
+  ABSL_SHARED_LOCKS_REQUIRED(lock_)
+  uint64_t CountLocked() const {
+    return cache_.size();
+  }
 
-  struct bucket {
-    // The least significant bit of this pointer is always 0 (due to alignment),
-    // so we utilize that bit as the lock for the bucket.
-    struct entry *head;
-  };
+  ABSL_EXCLUSIVE_LOCKS_REQUIRED(lock_)
+  void ClearLocked() { cache_.clear(); }
+
+  ABSL_EXCLUSIVE_LOCKS_REQUIRED(lock_)
+  void RemoveLocked(const KeyT &key) { cache_.erase(key); }
 
   /**
     Set an element in the cache.
@@ -247,122 +155,49 @@ class SantaCache {
 
     @return true if the entry was set, false if it was not
   */
-  bool set(const KeyT &key, const ValueT &value, const ValueT &previous_value,
+  ABSL_EXCLUSIVE_LOCKS_REQUIRED(lock_)
+  bool SetLocked(const KeyT &key, const ValueT &value, const ValueT &previous_value,
            bool has_prev_value) {
-    struct bucket *bucket = &buckets_[hash(key)];
-    lock(bucket);
-    struct entry *entry = (struct entry *)((uintptr_t)bucket->head - 1);
-    struct entry *previous_entry = nullptr;
-    while (entry != nullptr) {
-      if (entry->key == key) {
-        ValueT existing_value = entry->value;
+    const auto iter = cache_.find(key);
 
-        if (has_prev_value && previous_value != existing_value) {
-          unlock(bucket);
-          return false;
-        }
-
-        entry->value = value;
-
-        if (value == zero_) {
-          if (previous_entry != nullptr) {
-            previous_entry->next = entry->next;
-          } else {
-            bucket->head = (struct entry *)((uintptr_t)entry->next + 1);
-          }
-          free(entry);
-          OSAtomicDecrement64((volatile int64_t *)&count_);
-        }
-
-        unlock(bucket);
-        return true;
+    if (has_prev_value) {
+      if ((iter != cache_.end() && previous_value != iter->second) ||
+          (iter == cache_.end() && previous_value != zero_)) {
+        // Existing value didn't match expected (or there was no existing value
+        // and the expected previous value wasn't the zero_ value)
+        return false;
       }
-      previous_entry = entry;
-      entry = entry->next;
     }
 
-    // If value is zero_, we're clearing but there's nothing to clear
-    // so we don't need to do anything else. Alternatively, if has_prev_value
-    // is true and is not zero_ we don't want to set a value.
-    if (value == zero_ || (has_prev_value && previous_value != zero_)) {
-      unlock(bucket);
-      return false;
+    if (value == zero_) {
+      // Setting to the zero_ value removes the element by definition
+      RemoveLocked(key);
+      return true;
     }
 
-    // Check that adding this new item won't take the cache
-    // over its maximum size.
-    if (count_ + 1 > max_size_) {
-      unlock(bucket);
-      lock(&clear_bucket_);
-      // Check again in case clear has already run while waiting for lock
-      if (count_ + 1 > max_size_) {
-        clear();
-      }
-      lock(bucket);
-      unlock(&clear_bucket_);
+    uint64_t new_size = CountLocked();
+    if (iter == cache_.end()) {
+      // If this key didn't previously exist, we'll be growing the
+      // size of the cache
+      new_size += 1;
     }
 
-    // Allocate a new entry, set the key and value, then put this new entry at
-    // the head of this bucket's linked list.
-    struct entry *new_entry = (struct entry *)malloc(sizeof(struct entry));
-    bzero(new_entry, sizeof(struct entry));
-    new_entry->key = key;
-    new_entry->value = value;
-    new_entry->next = (struct entry *)((uintptr_t)bucket->head - 1);
-    bucket->head = (struct entry *)((uintptr_t)new_entry + 1);
-    OSAtomicIncrement64((volatile int64_t *)&count_);
+    if (new_size > max_size_) {
+      ClearLocked();
+    }
 
-    unlock(bucket);
+    cache_.insert_or_assign(key, value);
     return true;
   }
 
-  /**
-    Lock a bucket. Spins until the lock is acquired.
-  */
-  inline void lock(struct bucket *bucket) const {
-    while (OSAtomicTestAndSet(7, (volatile uint8_t *)&bucket->head))
-      ;
-  }
-
-  /**
-    Unlock a bucket. Panics if the lock wasn't locked.
-  */
-  inline void unlock(struct bucket *bucket) const {
-    if (unlikely(OSAtomicTestAndClear(7, (volatile uint8_t *)&bucket->head) ==
-                 0)) {
-      os_log_error(OS_LOG_DEFAULT,
-                   "SantaCache::unlock(): Tried to unlock an unlocked lock");
-      abort();
-    }
-  }
-
-  uint64_t count_ = 0;
-
   uint64_t max_size_;
-  uint32_t bucket_count_;
-
-  struct bucket *buckets_;
+  std::unordered_map<KeyT, ValueT> cache_;
+  mutable absl::Mutex lock_;
 
   /**
     Holder for a 'zero' entry for the current type
   */
   const ValueT zero_ = {};
-
-  /**
-    Special bucket used when automatically clearing due to size
-    to prevent two threads trying to clear at the same time and
-    getting stuck.
-  */
-  struct bucket clear_bucket_ = {};
-
-  /**
-    Hash a key to determine which bucket it belongs in.
-  */
-  inline uint64_t hash(KeyT input) const {
-    return SantaCacheHasher<KeyT>(input) % bucket_count_;
-  }
 };
-
-#pragma clang diagnostic pop
 
 #endif  // SANTA__SANTA_DRIVER__SANTACACHE_H
