@@ -56,7 +56,7 @@ static void SantaWatchdog(void *context) {
 
   if (GetTaskInfo(&pti)) {
     // CPU
-    double total_time = (double)MachTimeToNanos(pti.pti_total_user + pti.pti_total_system);
+    double total_time = MachTimeToNanos(pti.pti_total_user + pti.pti_total_system) / (double)NSEC_PER_SEC;
     double percentage =
       (((total_time - state->prev_total_time) / (double)kWatchdogTimeInterval) * 100.0);
     state->prev_total_time = total_time;
