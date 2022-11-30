@@ -18,7 +18,6 @@
 #import <OCMock/OCMock.h>
 #import <XCTest/XCTest.h>
 #include <dispatch/dispatch.h>
-#include "Source/common/SNTCommon.h"
 #include "Source/common/SNTCommonEnums.h"
 
 #import "Source/common/SNTCachedDecision.h"

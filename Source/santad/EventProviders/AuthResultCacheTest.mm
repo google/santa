@@ -22,7 +22,7 @@
 
 #include <memory>
 
-#include "Source/common/SNTCommon.h"
+#include "Source/common/SantaVnode.h"
 #include "Source/common/TestUtils.h"
 #include "Source/santad/EventProviders/AuthResultCache.h"
 #include "Source/santad/EventProviders/EndpointSecurity/MockEndpointSecurityAPI.h"

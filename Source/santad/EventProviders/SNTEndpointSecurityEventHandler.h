@@ -14,8 +14,6 @@
 
 #import <Foundation/Foundation.h>
 
-#include "Source/common/SNTCommon.h"
-
 #include "Source/santad/EventProviders/EndpointSecurity/Message.h"
 #include "Source/santad/Metrics.h"
 

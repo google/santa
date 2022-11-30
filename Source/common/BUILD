@@ -60,6 +60,11 @@ objc_library(
 )
 
 objc_library(
+    name = "SantaVnode",
+    hdrs = ["SantaVnode.h"],
+)
+
+objc_library(
     name = "SNTBlockMessage",
     srcs = ["SNTBlockMessage.m"],
     hdrs = ["SNTBlockMessage.h"],
@@ -90,7 +95,7 @@ objc_library(
     srcs = ["SNTCachedDecision.mm"],
     hdrs = ["SNTCachedDecision.h"],
     deps = [
-        ":SNTCommon",
+        ":SantaVnode",
         ":SNTCommonEnums",
     ],
 )
@@ -152,15 +157,6 @@ objc_library(
         ":SNTLogging",
         "@FMDB",
         "@MOLCodesignChecker",
-    ],
-)
-
-cc_library(
-    name = "SNTCommon",
-    hdrs = ["SNTCommon.h"],
-    defines = [
-        "TARGET_OS_OSX",
-        "TARGET_OS_MAC",
     ],
 )
 
@@ -300,7 +296,7 @@ objc_library(
     srcs = ["SNTXPCUnprivilegedControlInterface.m"],
     hdrs = ["SNTXPCUnprivilegedControlInterface.h"],
     deps = [
-        ":SNTCommon",
+        ":SantaVnode",
         ":SNTCommonEnums",
         ":SNTRule",
         ":SNTStoredEvent",

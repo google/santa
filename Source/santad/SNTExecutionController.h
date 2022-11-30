@@ -16,7 +16,6 @@
 
 #include "Source/santad/EventProviders/EndpointSecurity/Message.h"
 
-#import "Source/common/SNTCommon.h"
 #import "Source/common/SNTCommonEnums.h"
 
 const static NSString *kBlockBinary = @"BlockBinary";
