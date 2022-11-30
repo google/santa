@@ -283,6 +283,7 @@ objc_library(
         ":SNTEndpointSecurityClient",
         ":SNTEndpointSecurityEventHandler",
         ":SNTExecutionController",
+        "//Source/common:SNTCommonEnums",
         "//Source/common:SNTLogging",
     ],
 )
@@ -312,6 +313,7 @@ objc_library(
         ":EndpointSecurityAPI",
         ":EndpointSecurityClient",
         "//Source/common:SNTCommon",
+        "//Source/common:SNTCommonEnums",
         "//Source/common:SNTLogging",
         "//Source/common:SantaCache",
     ],
@@ -1060,6 +1062,7 @@ santa_unit_test(
         ":SNTCompilerController",
         ":SNTEndpointSecurityAuthorizer",
         ":SNTExecutionController",
+        "//Source/common:SNTCommonEnums",
         "//Source/common:TestUtils",
         "@OCMock",
         "@com_google_googletest//:gtest",

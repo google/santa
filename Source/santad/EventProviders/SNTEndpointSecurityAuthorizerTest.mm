@@ -22,6 +22,7 @@
 #include <memory>
 #include <set>
 
+#include "Source/common/SNTCommonEnums.h"
 #include "Source/common/TestUtils.h"
 #include "Source/santad/EventProviders/AuthResultCache.h"
 #include "Source/santad/EventProviders/EndpointSecurity/Client.h"
@@ -40,13 +41,13 @@ class MockAuthResultCache : public AuthResultCache {
  public:
   using AuthResultCache::AuthResultCache;
 
-  MOCK_METHOD(bool, AddToCache, (const es_file_t *es_file, santa_action_t decision));
-  MOCK_METHOD(santa_action_t, CheckCache, (const es_file_t *es_file));
+  MOCK_METHOD(bool, AddToCache, (const es_file_t *es_file, SNTAction decision));
+  MOCK_METHOD(SNTAction, CheckCache, (const es_file_t *es_file));
 };
 
 @interface SNTEndpointSecurityAuthorizer (Testing)
 - (void)processMessage:(const Message &)msg;
-- (bool)postAction:(santa_action_t)action forMessage:(const Message &)esMsg;
+- (bool)postAction:(SNTAction)action forMessage:(const Message &)esMsg;
 @end
 
 @interface SNTEndpointSecurityAuthorizerTest : XCTestCase
@@ -129,9 +130,10 @@ class MockAuthResultCache : public AuthResultCache {
       .ignoringNonObjectArgs()
       .andReturn(NO);
 
-    OCMExpect([mockAuthClient postAction:ACTION_RESPOND_DENY forMessage:Message(mockESApi, &esMsg)])
+    OCMExpect([mockAuthClient postAction:SNTActionRespondDeny
+                              forMessage:Message(mockESApi, &esMsg)])
       .ignoringNonObjectArgs();
-    OCMStub([mockAuthClient postAction:ACTION_RESPOND_DENY forMessage:Message(mockESApi, &esMsg)])
+    OCMStub([mockAuthClient postAction:SNTActionRespondDeny forMessage:Message(mockESApi, &esMsg)])
       .ignoringNonObjectArgs()
       .andDo(nil);
 
@@ -190,11 +192,11 @@ class MockAuthResultCache : public AuthResultCache {
 
   auto mockAuthCache = std::make_shared<MockAuthResultCache>(nullptr);
   EXPECT_CALL(*mockAuthCache, CheckCache)
-    .WillOnce(testing::Return(ACTION_REQUEST_BINARY))
-    .WillOnce(testing::Return(ACTION_REQUEST_BINARY))
-    .WillOnce(testing::Return(ACTION_RESPOND_ALLOW_COMPILER))
-    .WillOnce(testing::Return(ACTION_UNSET));
-  EXPECT_CALL(*mockAuthCache, AddToCache(testing::_, ACTION_REQUEST_BINARY))
+    .WillOnce(testing::Return(SNTActionRequestBinary))
+    .WillOnce(testing::Return(SNTActionRequestBinary))
+    .WillOnce(testing::Return(SNTActionRespondAllowCompiler))
+    .WillOnce(testing::Return(SNTActionUnset));
+  EXPECT_CALL(*mockAuthCache, AddToCache(testing::_, SNTActionRequestBinary))
     .WillOnce(testing::Return(true));
 
   id mockCompilerController = OCMStrictClassMock([SNTCompilerController class]);
@@ -210,7 +212,7 @@ class MockAuthResultCache : public AuthResultCache {
 
   // This block tests that processing is held up until an outstanding thread
   // processing another event completes and returns a result. This test
-  // specifically will check the `ACTION_RESPOND_ALLOW_COMPILER` flow.
+  // specifically will check the `SNTActionRespondAllowCompiler` flow.
   {
     Message msg(mockESApi, &esMsg);
     OCMExpect([mockAuthClient respondToMessage:msg
@@ -256,11 +258,11 @@ class MockAuthResultCache : public AuthResultCache {
   mockESApi->SetExpectationsRetainReleaseMessage();
 
   auto mockAuthCache = std::make_shared<MockAuthResultCache>(nullptr);
-  EXPECT_CALL(*mockAuthCache, AddToCache(&execFile, ACTION_RESPOND_ALLOW_COMPILER))
+  EXPECT_CALL(*mockAuthCache, AddToCache(&execFile, SNTActionRespondAllowCompiler))
     .WillOnce(testing::Return(true));
-  EXPECT_CALL(*mockAuthCache, AddToCache(&execFile, ACTION_RESPOND_ALLOW))
+  EXPECT_CALL(*mockAuthCache, AddToCache(&execFile, SNTActionRespondAllow))
     .WillOnce(testing::Return(true));
-  EXPECT_CALL(*mockAuthCache, AddToCache(&execFile, ACTION_RESPOND_DENY))
+  EXPECT_CALL(*mockAuthCache, AddToCache(&execFile, SNTActionRespondDeny))
     .WillOnce(testing::Return(true));
 
   id mockCompilerController = OCMStrictClassMock([SNTCompilerController class]);
@@ -277,12 +279,12 @@ class MockAuthResultCache : public AuthResultCache {
   {
     Message msg(mockESApi, &esMsg);
 
-    XCTAssertThrows([mockAuthClient postAction:(santa_action_t)123 forMessage:msg]);
+    XCTAssertThrows([mockAuthClient postAction:(SNTAction)123 forMessage:msg]);
 
-    std::map<santa_action_t, es_auth_result_t> actions = {
-      {ACTION_RESPOND_ALLOW_COMPILER, ES_AUTH_RESULT_ALLOW},
-      {ACTION_RESPOND_ALLOW, ES_AUTH_RESULT_ALLOW},
-      {ACTION_RESPOND_DENY, ES_AUTH_RESULT_DENY},
+    std::map<SNTAction, es_auth_result_t> actions = {
+      {SNTActionRespondAllowCompiler, ES_AUTH_RESULT_ALLOW},
+      {SNTActionRespondAllow, ES_AUTH_RESULT_ALLOW},
+      {SNTActionRespondDeny, ES_AUTH_RESULT_DENY},
     };
 
     for (const auto &kv : actions) {

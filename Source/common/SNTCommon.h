@@ -27,24 +27,6 @@
 #define likely(x) __builtin_expect(!!(x), 1)
 #define unlikely(x) __builtin_expect(!!(x), 0)
 
-typedef enum {
-  ACTION_UNSET,
-
-  // REQUESTS
-  // If an operation is awaiting a cache decision from a similar operation
-  // currently being processed, it will poll about every 5 ms for an answer.
-  ACTION_REQUEST_BINARY,
-
-  // RESPONSES
-  ACTION_RESPOND_ALLOW,
-  ACTION_RESPOND_DENY,
-  ACTION_RESPOND_ALLOW_COMPILER,
-} santa_action_t;
-
-#define RESPONSE_VALID(x)                                   \
-  (x == ACTION_RESPOND_ALLOW || x == ACTION_RESPOND_DENY || \
-   x == ACTION_RESPOND_ALLOW_COMPILER)
-
 // Struct to manage vnode IDs
 typedef struct SantaVnode {
   dev_t fsid;

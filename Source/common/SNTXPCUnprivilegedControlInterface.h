@@ -31,7 +31,7 @@
 ///  Cache Ops
 ///
 - (void)cacheCounts:(void (^)(uint64_t rootCache, uint64_t nonRootCache))reply;
-- (void)checkCacheForVnodeID:(SantaVnode)vnodeID withReply:(void (^)(santa_action_t))reply;
+- (void)checkCacheForVnodeID:(SantaVnode)vnodeID withReply:(void (^)(SNTAction))reply;
 
 ///
 ///  Database ops

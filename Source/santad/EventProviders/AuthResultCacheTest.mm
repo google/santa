@@ -79,33 +79,33 @@ static inline void AssertCacheCounts(std::shared_ptr<AuthResultCache> cache, uin
   es_file_t nonrootFile = MakeCacheableFile(RootDevno() + 123, 222);
 
   // Add the root file to the cache
-  cache->AddToCache(&rootFile, ACTION_REQUEST_BINARY);
+  cache->AddToCache(&rootFile, SNTActionRequestBinary);
 
   AssertCacheCounts(cache, 1, 0);
-  XCTAssertEqual(cache->CheckCache(&rootFile), ACTION_REQUEST_BINARY);
-  XCTAssertEqual(cache->CheckCache(&nonrootFile), ACTION_UNSET);
+  XCTAssertEqual(cache->CheckCache(&rootFile), SNTActionRequestBinary);
+  XCTAssertEqual(cache->CheckCache(&nonrootFile), SNTActionUnset);
 
   // Now add the non-root file
-  cache->AddToCache(&nonrootFile, ACTION_REQUEST_BINARY);
+  cache->AddToCache(&nonrootFile, SNTActionRequestBinary);
 
   AssertCacheCounts(cache, 1, 1);
-  XCTAssertEqual(cache->CheckCache(&rootFile), ACTION_REQUEST_BINARY);
-  XCTAssertEqual(cache->CheckCache(&nonrootFile), ACTION_REQUEST_BINARY);
+  XCTAssertEqual(cache->CheckCache(&rootFile), SNTActionRequestBinary);
+  XCTAssertEqual(cache->CheckCache(&nonrootFile), SNTActionRequestBinary);
 
   // Update the cached values
-  cache->AddToCache(&rootFile, ACTION_RESPOND_ALLOW);
-  cache->AddToCache(&nonrootFile, ACTION_RESPOND_DENY);
+  cache->AddToCache(&rootFile, SNTActionRespondAllow);
+  cache->AddToCache(&nonrootFile, SNTActionRespondDeny);
 
   AssertCacheCounts(cache, 1, 1);
-  XCTAssertEqual(cache->CheckCache(SantaVnode::VnodeForFile(&rootFile)), ACTION_RESPOND_ALLOW);
-  XCTAssertEqual(cache->CheckCache(SantaVnode::VnodeForFile(&nonrootFile)), ACTION_RESPOND_DENY);
+  XCTAssertEqual(cache->CheckCache(SantaVnode::VnodeForFile(&rootFile)), SNTActionRespondAllow);
+  XCTAssertEqual(cache->CheckCache(SantaVnode::VnodeForFile(&nonrootFile)), SNTActionRespondDeny);
 
   // Remove the root file
   cache->RemoveFromCache(&rootFile);
 
   AssertCacheCounts(cache, 0, 1);
-  XCTAssertEqual(cache->CheckCache(&rootFile), ACTION_UNSET);
-  XCTAssertEqual(cache->CheckCache(&nonrootFile), ACTION_RESPOND_DENY);
+  XCTAssertEqual(cache->CheckCache(&rootFile), SNTActionUnset);
+  XCTAssertEqual(cache->CheckCache(&nonrootFile), SNTActionRespondDeny);
 }
 
 - (void)testFlushCache {
@@ -115,8 +115,8 @@ static inline void AssertCacheCounts(std::shared_ptr<AuthResultCache> cache, uin
   es_file_t rootFile = MakeCacheableFile(RootDevno(), 111);
   es_file_t nonrootFile = MakeCacheableFile(RootDevno() + 123, 111);
 
-  cache->AddToCache(&rootFile, ACTION_REQUEST_BINARY);
-  cache->AddToCache(&nonrootFile, ACTION_REQUEST_BINARY);
+  cache->AddToCache(&rootFile, SNTActionRequestBinary);
+  cache->AddToCache(&nonrootFile, SNTActionRequestBinary);
 
   AssertCacheCounts(cache, 1, 1);
 
@@ -126,7 +126,7 @@ static inline void AssertCacheCounts(std::shared_ptr<AuthResultCache> cache, uin
   AssertCacheCounts(cache, 1, 0);
 
   // Add back the non-root file
-  cache->AddToCache(&nonrootFile, ACTION_REQUEST_BINARY);
+  cache->AddToCache(&nonrootFile, SNTActionRequestBinary);
 
   AssertCacheCounts(cache, 1, 1);
 
@@ -155,33 +155,33 @@ static inline void AssertCacheCounts(std::shared_ptr<AuthResultCache> cache, uin
 
   es_file_t rootFile = MakeCacheableFile(RootDevno(), 111);
 
-  // Cached items must first be in the ACTION_REQUEST_BINARY state
-  XCTAssertFalse(cache->AddToCache(&rootFile, ACTION_RESPOND_ALLOW));
-  XCTAssertFalse(cache->AddToCache(&rootFile, ACTION_RESPOND_ALLOW_COMPILER));
-  XCTAssertFalse(cache->AddToCache(&rootFile, ACTION_RESPOND_DENY));
-  XCTAssertEqual(cache->CheckCache(&rootFile), ACTION_UNSET);
+  // Cached items must first be in the SNTActionRequestBinary state
+  XCTAssertFalse(cache->AddToCache(&rootFile, SNTActionRespondAllow));
+  XCTAssertFalse(cache->AddToCache(&rootFile, SNTActionRespondAllowCompiler));
+  XCTAssertFalse(cache->AddToCache(&rootFile, SNTActionRespondDeny));
+  XCTAssertEqual(cache->CheckCache(&rootFile), SNTActionUnset);
 
-  XCTAssertTrue(cache->AddToCache(&rootFile, ACTION_REQUEST_BINARY));
-  XCTAssertEqual(cache->CheckCache(&rootFile), ACTION_REQUEST_BINARY);
+  XCTAssertTrue(cache->AddToCache(&rootFile, SNTActionRequestBinary));
+  XCTAssertEqual(cache->CheckCache(&rootFile), SNTActionRequestBinary);
 
-  // Items in the `ACTION_REQUEST_BINARY` state cannot reenter the same state
-  XCTAssertFalse(cache->AddToCache(&rootFile, ACTION_REQUEST_BINARY));
-  XCTAssertEqual(cache->CheckCache(&rootFile), ACTION_REQUEST_BINARY);
+  // Items in the `SNTActionRequestBinary` state cannot reenter the same state
+  XCTAssertFalse(cache->AddToCache(&rootFile, SNTActionRequestBinary));
+  XCTAssertEqual(cache->CheckCache(&rootFile), SNTActionRequestBinary);
 
-  santa_action_t allowed_transitions[] = {
-    ACTION_RESPOND_ALLOW,
-    ACTION_RESPOND_ALLOW_COMPILER,
-    ACTION_RESPOND_DENY,
+  SNTAction allowed_transitions[] = {
+    SNTActionRespondAllow,
+    SNTActionRespondAllowCompiler,
+    SNTActionRespondDeny,
   };
 
   for (size_t i = 0; i < sizeof(allowed_transitions) / sizeof(allowed_transitions[0]); i++) {
     // First make sure the item doesn't exist
     cache->RemoveFromCache(&rootFile);
-    XCTAssertEqual(cache->CheckCache(&rootFile), ACTION_UNSET);
+    XCTAssertEqual(cache->CheckCache(&rootFile), SNTActionUnset);
 
     // Now add the item to be in the first allowed state
-    XCTAssertTrue(cache->AddToCache(&rootFile, ACTION_REQUEST_BINARY));
-    XCTAssertEqual(cache->CheckCache(&rootFile), ACTION_REQUEST_BINARY);
+    XCTAssertTrue(cache->AddToCache(&rootFile, SNTActionRequestBinary));
+    XCTAssertEqual(cache->CheckCache(&rootFile), SNTActionRequestBinary);
 
     // Now assert the allowed transition
     XCTAssertTrue(cache->AddToCache(&rootFile, allowed_transitions[i]));
@@ -197,12 +197,12 @@ static inline void AssertCacheCounts(std::shared_ptr<AuthResultCache> cache, uin
 
   es_file_t rootFile = MakeCacheableFile(RootDevno(), 111);
 
-  // Add a file to the cache and put into the ACTION_RESPOND_DENY state
-  XCTAssertTrue(cache->AddToCache(&rootFile, ACTION_REQUEST_BINARY));
-  XCTAssertTrue(cache->AddToCache(&rootFile, ACTION_RESPOND_DENY));
+  // Add a file to the cache and put into the SNTActionRespondDeny state
+  XCTAssertTrue(cache->AddToCache(&rootFile, SNTActionRequestBinary));
+  XCTAssertTrue(cache->AddToCache(&rootFile, SNTActionRespondDeny));
 
   // Ensure the file exists
-  XCTAssertEqual(cache->CheckCache(&rootFile), ACTION_RESPOND_DENY);
+  XCTAssertEqual(cache->CheckCache(&rootFile), SNTActionRespondDeny);
 
   // Wait for the item to expire
   SleepMS(expiryMS);
@@ -211,7 +211,7 @@ static inline void AssertCacheCounts(std::shared_ptr<AuthResultCache> cache, uin
   AssertCacheCounts(cache, 1, 0);
 
   // Now check the cache, which will remove the item
-  XCTAssertEqual(cache->CheckCache(&rootFile), ACTION_UNSET);
+  XCTAssertEqual(cache->CheckCache(&rootFile), SNTActionUnset);
   AssertCacheCounts(cache, 0, 0);
 }
 

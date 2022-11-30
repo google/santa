@@ -44,14 +44,14 @@ documentation. This flow does not cover the logging component of Santa, see the
 4.  If there is no entry for the `vnode_id` in the cache a few actions occur:
     *   santa-driver hands off the decision making to santad.
     *   A new entry is created in the cache for the `vnode_id` with a special
-        value of `ACTION_REQUEST_BINARY`. This is used as a placeholder until
+        value of `SNTActionRequestBinary`. This is used as a placeholder until
         the decision from santad comes back. If another process tries to
         `execve()` the same `vnode_id`, santa-driver will have that thread wait
         for the in-flight decision from santad. All subsequent `execve()`s for
         the same `vnode_id` will use the decision in the cache as explained
         in #2, until the cache is invalidated.
     *   If the executing file is written to while any of the threads are waiting
-        for a response the `ACTION_REQUEST_BINARY` entry is removed, forcing the
+        for a response the `SNTActionRequestBinary` entry is removed, forcing the
         decision-making process to be restarted.
 
 ###### User Space
