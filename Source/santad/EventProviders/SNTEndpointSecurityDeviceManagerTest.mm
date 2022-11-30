@@ -124,8 +124,6 @@ class MockAuthResultCache : public AuthResultCache {
   es_file_t file = MakeESFile("foo");
   es_process_t proc = MakeESProcess(&file);
   es_message_t esMsg = MakeESMessage(eventType, &proc, ActionType::Auth, 6000);
-  // Need a pointer to esMsg to capture in blocks below.
-  es_message_t *heapESMsg = &esMsg;
 
   dispatch_semaphore_t semaMetrics = dispatch_semaphore_create(0);
 
@@ -142,7 +140,6 @@ class MockAuthResultCache : public AuthResultCache {
   });
   EXPECT_CALL(*mockESApi, RetainMessage).WillRepeatedly(^{
     retainCount++;
-    return heapESMsg;
   });
 
   if (eventType == ES_EVENT_TYPE_AUTH_MOUNT) {
@@ -317,7 +314,7 @@ class MockAuthResultCache : public AuthResultCache {
 
   auto mockESApi = std::make_shared<MockEndpointSecurityAPI>();
   mockESApi->SetExpectationsESNewClient();
-  mockESApi->SetExpectationsRetainReleaseMessage(&esMsg);
+  mockESApi->SetExpectationsRetainReleaseMessage();
 
   auto mockAuthCache = std::make_shared<MockAuthResultCache>(nullptr);
   EXPECT_CALL(*mockAuthCache, FlushCache);

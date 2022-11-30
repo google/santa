@@ -195,7 +195,7 @@ void SerializeAndCheck(es_event_type_t eventType,
     esMsg.process->tty = &ttyFile;
     esMsg.version = cur_version;
 
-    mockESApi->SetExpectationsRetainReleaseMessage(&esMsg);
+    mockESApi->SetExpectationsRetainReleaseMessage();
 
     messageSetup(mockESApi, &esMsg);
 
@@ -509,7 +509,7 @@ void SerializeAndCheck(es_event_type_t eventType,
     esMsg.event.close.modified = true;
     esMsg.event.close.target = &closeFile;
 
-    mockESApi->SetExpectationsRetainReleaseMessage(&esMsg);
+    mockESApi->SetExpectationsRetainReleaseMessage();
 
     std::shared_ptr<Serializer> bs = Protobuf::Create(mockESApi);
 

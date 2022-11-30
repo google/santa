@@ -59,12 +59,8 @@
 
       [entryData appendBytes:newline length:1];
 
-      if (@available(macos 10.15, *)) {
-        if (![file writeData:entryData error:error]) {
-          return NO;
-        }
-      } else {
-        [file writeData:entryData];
+      if (![file writeData:entryData error:error]) {
+        return NO;
       }
     }
   }

@@ -53,7 +53,7 @@ using santa::santad::logs::endpoint_security::serializers::GetReasonString;
 
 std::string BasicStringSerializeMessage(std::shared_ptr<MockEndpointSecurityAPI> mockESApi,
                                         es_message_t *esMsg) {
-  mockESApi->SetExpectationsRetainReleaseMessage(esMsg);
+  mockESApi->SetExpectationsRetainReleaseMessage();
 
   std::shared_ptr<Serializer> bs = BasicString::Create(mockESApi, false);
   std::vector<uint8_t> ret = bs->SerializeMessage(Enricher().Enrich(Message(mockESApi, esMsg)));
@@ -253,7 +253,7 @@ std::string BasicStringSerializeMessage(es_message_t *esMsg) {
   esMsg.event.close.target = &file;
 
   auto mockESApi = std::make_shared<MockEndpointSecurityAPI>();
-  mockESApi->SetExpectationsRetainReleaseMessage(&esMsg);
+  mockESApi->SetExpectationsRetainReleaseMessage();
 
   std::vector<uint8_t> ret = BasicString::Create(mockESApi, false)
                                ->SerializeAllowlist(Message(mockESApi, &esMsg), "test_hash");

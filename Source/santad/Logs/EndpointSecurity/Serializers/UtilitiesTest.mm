@@ -38,7 +38,7 @@ using santa::santad::logs::endpoint_security::serializers::Utilities::GetAllowLi
   es_message_t esMsg = MakeESMessage(ES_EVENT_TYPE_NOTIFY_CLOSE, &proc);
 
   auto mockESApi = std::make_shared<MockEndpointSecurityAPI>();
-  mockESApi->SetExpectationsRetainReleaseMessage(&esMsg);
+  mockESApi->SetExpectationsRetainReleaseMessage();
 
   {
     esMsg.event.close.target = &closeTargetFile;

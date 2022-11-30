@@ -109,8 +109,6 @@ NSString *testBinariesPath = @"santa/Source/santad/testdata/binaryrules";
   // deadline block to run and release the message.
   es_message_t esMsg = MakeESMessage(ES_EVENT_TYPE_AUTH_EXEC, &proc, ActionType::Auth, 6500);
   esMsg.event.exec.target = &proc;
-  // Need a pointer to esMsg to capture in blocks below.
-  es_message_t *heapESMsg = &esMsg;
 
   // The test must wait for the ES client async message processing to complete.
   // Otherwise, the `es_message_t` stack variable will go out of scope and will
@@ -131,7 +129,6 @@ NSString *testBinariesPath = @"santa/Source/santad/testdata/binaryrules";
   });
   EXPECT_CALL(*mockESApi, RetainMessage).WillRepeatedly(^{
     retainCount++;
-    return heapESMsg;
   });
 
   [authClient handleMessage:Message(mockESApi, &esMsg)

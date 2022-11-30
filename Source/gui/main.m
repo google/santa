@@ -62,28 +62,24 @@ int main(int argc, const char *argv[]) {
       sysxOperation = @(2);
     }
     if (sysxOperation) {
-      if (@available(macOS 10.15, *)) {
-        NSString *e = [SNTXPCControlInterface systemExtensionID];
-        dispatch_queue_t q = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_HIGH, 0);
-        OSSystemExtensionRequest *req;
-        if (sysxOperation.intValue == 1) {
-          NSLog(@"Requesting SystemExtension activation");
-          req = [OSSystemExtensionRequest activationRequestForExtension:e queue:q];
-        } else if (sysxOperation.intValue == 2) {
-          NSLog(@"Requesting SystemExtension deactivation");
-          req = [OSSystemExtensionRequest deactivationRequestForExtension:e queue:q];
-        }
-        if (req) {
-          SNTSystemExtensionDelegate *ed = [[SNTSystemExtensionDelegate alloc] init];
-          req.delegate = ed;
-          [[OSSystemExtensionManager sharedManager] submitRequest:req];
-          dispatch_after(dispatch_time(DISPATCH_TIME_NOW, NSEC_PER_SEC * 60), q, ^{
-            exit(1);
-          });
-          [[NSRunLoop mainRunLoop] run];
-        }
-      } else {
-        exit(1);
+      NSString *e = [SNTXPCControlInterface systemExtensionID];
+      dispatch_queue_t q = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_HIGH, 0);
+      OSSystemExtensionRequest *req;
+      if (sysxOperation.intValue == 1) {
+        NSLog(@"Requesting SystemExtension activation");
+        req = [OSSystemExtensionRequest activationRequestForExtension:e queue:q];
+      } else if (sysxOperation.intValue == 2) {
+        NSLog(@"Requesting SystemExtension deactivation");
+        req = [OSSystemExtensionRequest deactivationRequestForExtension:e queue:q];
+      }
+      if (req) {
+        SNTSystemExtensionDelegate *ed = [[SNTSystemExtensionDelegate alloc] init];
+        req.delegate = ed;
+        [[OSSystemExtensionManager sharedManager] submitRequest:req];
+        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, NSEC_PER_SEC * 60), q, ^{
+          exit(1);
+        });
+        [[NSRunLoop mainRunLoop] run];
       }
     }
 

@@ -652,7 +652,7 @@ macos_bundle(
     }),
     infoplists = ["Info.plist"],
     linkopts = ["-execute"],
-    minimum_os_version = "10.15",
+    minimum_os_version = "11.0",
     provisioning_profile = select({
         "//:adhoc_build": None,
         "//conditions:default": "//profiles:daemon_dev",
@@ -731,7 +731,7 @@ santa_unit_test(
     data = [
         "//Source/santad/testdata:binaryrules_testdata",
     ],
-    minimum_os_version = "10.15",
+    minimum_os_version = "11.0",
     sdk_dylibs = [
         "bsm",
         "EndpointSecurity",
@@ -761,7 +761,7 @@ santa_unit_test(
     srcs = [
         "SNTApplicationCoreMetricsTest.mm",
     ],
-    minimum_os_version = "10.15",
+    minimum_os_version = "11.0",
     deps = [
         ":SNTApplicationCoreMetrics",
         "//Source/common:SNTCommonEnums",

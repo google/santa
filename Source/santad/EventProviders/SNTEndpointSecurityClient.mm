@@ -218,7 +218,6 @@ using santa::santad::event_providers::endpoint_security::Message;
   // the event will be denied).
 
   // Workaround for compiler bug that doesn't properly close over variables
-  // Note: On macOS 10.15 this will cause extra message copies.
   __block Message processMsg = msg;
   __block Message deadlineMsg = msg;
 

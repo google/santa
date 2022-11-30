@@ -65,7 +65,7 @@ pid_t AttemptToFindUnusedPID() {
   es_message_t esMsg = MakeESMessage(ES_EVENT_TYPE_NOTIFY_EXIT, &proc);
 
   auto mockESApi = std::make_shared<MockEndpointSecurityAPI>();
-  mockESApi->SetExpectationsRetainReleaseMessage(&esMsg);
+  mockESApi->SetExpectationsRetainReleaseMessage();
 
   // Constructing a `Message` retains the underlying `es_message_t` and it is
   // released when the `Message` object is destructed.
@@ -82,9 +82,7 @@ pid_t AttemptToFindUnusedPID() {
   auto mockESApi = std::make_shared<MockEndpointSecurityAPI>();
   EXPECT_CALL(*mockESApi, ReleaseMessage(testing::_))
     .Times(2)
-    .After(EXPECT_CALL(*mockESApi, RetainMessage(testing::_))
-             .Times(2)
-             .WillRepeatedly(testing::Return(&esMsg)));
+    .After(EXPECT_CALL(*mockESApi, RetainMessage(testing::_)).Times(2));
 
   {
     Message msg1(mockESApi, &esMsg);
@@ -106,7 +104,7 @@ pid_t AttemptToFindUnusedPID() {
   es_message_t esMsg = MakeESMessage(ES_EVENT_TYPE_NOTIFY_EXIT, &proc);
 
   auto mockESApi = std::make_shared<MockEndpointSecurityAPI>();
-  mockESApi->SetExpectationsRetainReleaseMessage(&esMsg);
+  mockESApi->SetExpectationsRetainReleaseMessage();
 
   // Search for an *existing* parent process.
   {
