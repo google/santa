@@ -21,7 +21,7 @@
 #include <stdlib.h>
 #include <sys/qos.h>
 
-#import "Source/common/SNTCommon.h"
+#include "Source/common/BranchPrediction.h"
 #import "Source/common/SNTConfigurator.h"
 #import "Source/common/SNTLogging.h"
 #include "Source/common/SystemResources.h"

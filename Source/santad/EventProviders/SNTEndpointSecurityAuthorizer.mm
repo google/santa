@@ -18,6 +18,7 @@
 #include <os/base.h>
 #include <stdlib.h>
 
+#import "Source/common/BranchPrediction.h"
 #import "Source/common/SNTCommonEnums.h"
 #import "Source/common/SNTLogging.h"
 #include "Source/santad/EventProviders/AuthResultCache.h"

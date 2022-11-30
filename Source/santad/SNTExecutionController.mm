@@ -24,6 +24,7 @@
 
 #import <MOLCodesignChecker/MOLCodesignChecker.h>
 
+#include "Source/common/BranchPrediction.h"
 #import "Source/common/SNTBlockMessage.h"
 #import "Source/common/SNTCachedDecision.h"
 #import "Source/common/SNTCommonEnums.h"

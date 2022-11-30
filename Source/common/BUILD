@@ -43,7 +43,7 @@ objc_library(
 cc_library(
     name = "SantaCache",
     hdrs = ["SantaCache.h"],
-    deps = ["//Source/common:SNTCommon"],
+    deps = ["//Source/common:BranchPrediction"],
 )
 
 santa_unit_test(
@@ -52,7 +52,11 @@ santa_unit_test(
         "SantaCache.h",
         "SantaCacheTest.mm",
     ],
-    deps = ["//Source/common:SNTCommon"],
+)
+
+objc_library(
+    name = "BranchPrediction",
+    hdrs = ["BranchPrediction.h"],
 )
 
 objc_library(

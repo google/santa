@@ -23,10 +23,6 @@
 #include <stdint.h>
 #include <sys/param.h>
 
-// Branch prediction
-#define likely(x) __builtin_expect(!!(x), 1)
-#define unlikely(x) __builtin_expect(!!(x), 0)
-
 // Struct to manage vnode IDs
 typedef struct SantaVnode {
   dev_t fsid;
