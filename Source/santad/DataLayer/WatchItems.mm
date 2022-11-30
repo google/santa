@@ -199,13 +199,13 @@ bool WatchItems::ParseConfig(NSDictionary *config,
 
   for (id key in config) {
     if (![key isKindOfClass:[NSString class]]) {
-      LOGE(@"In valid key %@ (class: %@), skipping", key, NSStringFromClass([key class]));
+      LOGE(@"Invalid key %@ (class: %@)", key, NSStringFromClass([key class]));
       config_ok = false;
       break;
     }
 
     if (![config[key] isKindOfClass:[NSDictionary class]]) {
-      LOGE(@"Config for '%@' must be a dictionary (got: %@), skipping", key,
+      LOGE(@"Config for '%@' must be a dictionary (got: %@)", key,
            NSStringFromClass([config[key] class]));
       config_ok = false;
       break;
@@ -214,7 +214,7 @@ bool WatchItems::ParseConfig(NSDictionary *config,
     NSDictionary *watch_item = config[key];
 
     if (!ConfirmValidWatchItemConfig(watch_item)) {
-      LOGE(@"Invalid config for watch item: '%@', skipping", key);
+      LOGE(@"Invalid config for watch item: '%@'", key);
       config_ok = false;
       break;
     }
