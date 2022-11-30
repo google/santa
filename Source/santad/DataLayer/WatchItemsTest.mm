@@ -242,7 +242,7 @@ static std::shared_ptr<WatchItemPolicy> MakeBadPolicy() {
 }
 
 - (void)testPolicyLookup {
-  // Test multiple, more comprehensive poolicies before/after config reload
+  // Test multiple, more comprehensive policies before/after config reload
   [self createTestDirStructure:@[
     @{
       @"foo" : @[ @"bar.txt", @"bar.txt.tmp" ],
