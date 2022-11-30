@@ -19,15 +19,11 @@
 #include <time.h>
 
 #import "Source/common/SNTLogging.h"
+#import "Source/common/SantaVnodeHash.h"
 #include "Source/santad/EventProviders/EndpointSecurity/Client.h"
 
 using santa::santad::event_providers::endpoint_security::Client;
 using santa::santad::event_providers::endpoint_security::EndpointSecurityAPI;
-
-template <>
-uint64_t SantaCacheHasher<SantaVnode>(SantaVnode const &t) {
-  return (SantaCacheHasher<uint64_t>(t.fsid) << 1) ^ SantaCacheHasher<uint64_t>(t.fileid);
-}
 
 namespace santa::santad::event_providers {
 

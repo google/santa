@@ -184,10 +184,9 @@ objc_library(
         ":SNTPolicyProcessor",
         ":SNTRuleTable",
         ":SNTSyncdQueue",
+        "//Source/common:BranchPrediction",
         "//Source/common:SNTBlockMessage",
         "//Source/common:SNTCachedDecision",
-        "//Source/common:BranchPrediction",
-        "//Source/common:SantaVnode",
         "//Source/common:SNTCommonEnums",
         "//Source/common:SNTConfigurator",
         "//Source/common:SNTDropRootPrivs",
@@ -196,6 +195,7 @@ objc_library(
         "//Source/common:SNTMetricSet",
         "//Source/common:SNTRule",
         "//Source/common:SNTStoredEvent",
+        "//Source/common:SantaVnode",
         "@MOLCodesignChecker",
     ],
 )
@@ -311,10 +311,11 @@ objc_library(
     deps = [
         ":EndpointSecurityAPI",
         ":EndpointSecurityClient",
-        "//Source/common:SantaVnode",
         "//Source/common:SNTCommonEnums",
         "//Source/common:SNTLogging",
         "//Source/common:SantaCache",
+        "//Source/common:SantaVnode",
+        "//Source/common:SantaVnodeHash",
     ],
 )
 

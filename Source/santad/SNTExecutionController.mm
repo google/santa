@@ -25,7 +25,6 @@
 #import <MOLCodesignChecker/MOLCodesignChecker.h>
 
 #include "Source/common/BranchPrediction.h"
-#include "Source/common/SantaVnode.h"
 #import "Source/common/SNTBlockMessage.h"
 #import "Source/common/SNTCachedDecision.h"
 #import "Source/common/SNTCommonEnums.h"
@@ -36,6 +35,7 @@
 #import "Source/common/SNTMetricSet.h"
 #import "Source/common/SNTRule.h"
 #import "Source/common/SNTStoredEvent.h"
+#include "Source/common/SantaVnode.h"
 #import "Source/santad/DataLayer/SNTEventTable.h"
 #import "Source/santad/DataLayer/SNTRuleTable.h"
 #import "Source/santad/SNTDecisionCache.h"

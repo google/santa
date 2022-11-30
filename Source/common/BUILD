@@ -65,6 +65,16 @@ objc_library(
 )
 
 objc_library(
+    name = "SantaVnodeHash",
+    srcs = ["SantaVnodeHash.mm"],
+    hdrs = ["SantaVnodeHash.h"],
+    deps = [
+        ":SantaCache",
+        ":SantaVnode",
+    ],
+)
+
+objc_library(
     name = "SNTBlockMessage",
     srcs = ["SNTBlockMessage.m"],
     hdrs = ["SNTBlockMessage.h"],
@@ -95,8 +105,8 @@ objc_library(
     srcs = ["SNTCachedDecision.mm"],
     hdrs = ["SNTCachedDecision.h"],
     deps = [
-        ":SantaVnode",
         ":SNTCommonEnums",
+        ":SantaVnode",
     ],
 )
 
@@ -296,11 +306,11 @@ objc_library(
     srcs = ["SNTXPCUnprivilegedControlInterface.m"],
     hdrs = ["SNTXPCUnprivilegedControlInterface.h"],
     deps = [
-        ":SantaVnode",
         ":SNTCommonEnums",
         ":SNTRule",
         ":SNTStoredEvent",
         ":SNTXPCBundleServiceInterface",
+        ":SantaVnode",
         "@MOLCertificate",
         "@MOLXPCConnection",
     ],

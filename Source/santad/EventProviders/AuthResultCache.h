@@ -21,9 +21,9 @@
 #include <sys/stat.h>
 #include <memory>
 
-#import "Source/common/SantaVnode.h"
 #import "Source/common/SNTCommonEnums.h"
 #include "Source/common/SantaCache.h"
+#import "Source/common/SantaVnode.h"
 #include "Source/santad/EventProviders/EndpointSecurity/EndpointSecurityAPI.h"
 
 namespace santa::santad::event_providers {
