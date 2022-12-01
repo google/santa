@@ -29,8 +29,9 @@
 #include <type_traits>
 #include <variant>
 
-#include "Source/common/SNTCommon.h"
 #include "Source/common/SantaCache.h"
+#include "Source/common/SantaVnode.h"
+#include "Source/common/SantaVnodeHash.h"
 #include "Source/common/Unit.h"
 #include "Source/santad/DataLayer/WatchItems.h"
 #include "Source/santad/EventProviders/EndpointSecurity/Message.h"
@@ -328,23 +329,18 @@ uint64_t SantaCacheHasher<SantaVnode>(SantaVnode const &t) {
 }
 
 - (void)enable {
-  // std::set<es_event_type_t> events{
-  //   ES_EVENT_TYPE_AUTH_OPEN,
-  //   ES_EVENT_TYPE_AUTH_LINK,
-  //   ES_EVENT_TYPE_AUTH_RENAME,
-  //   ES_EVENT_TYPE_AUTH_UNLINK,
-  // };
+//   std::set<es_event_type_t> events{
+//     ES_EVENT_TYPE_AUTH_OPEN,   ES_EVENT_TYPE_AUTH_LINK,  ES_EVENT_TYPE_AUTH_RENAME,
+//     ES_EVENT_TYPE_AUTH_UNLINK, ES_EVENT_TYPE_AUTH_CLONE, ES_EVENT_TYPE_AUTH_EXCHANGEDATA,
+//   };
 
-  // if (@available(macOS 10.15.1, *)) {
-  //   events.insert(ES_EVENT_TYPE_AUTH_CLONE);
-  //   events.insert(ES_EVENT_TYPE_AUTH_EXCHANGEDATA);
-  // }
+// #if defined(MAC_OS_VERSION_12_0) && MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_VERSION_12_0
+//   if (@available(macOS 12.0, *)) {
+//     events.insert(ES_EVENT_TYPE_AUTH_COPYFILE);
+//   }
+// #endif
 
-  // if (@available(macOS 12.0, *)) {
-  //   events.insert(ES_EVENT_TYPE_AUTH_COPYFILE);
-  // }
-
-  // [super subscribeAndClearCache:events];
+//   [super subscribeAndClearCache:events];
   [super subscribeAndClearCache:{ES_EVENT_TYPE_AUTH_OPEN}];
 }
 

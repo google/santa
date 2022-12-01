@@ -39,10 +39,15 @@ extern PathTargets GetPathTargets(const Message &msg);
 
 - (void)testEnable {
   std::set<es_event_type_t> expectedEventSubs{
-    ES_EVENT_TYPE_AUTH_OPEN,     ES_EVENT_TYPE_AUTH_LINK,  ES_EVENT_TYPE_AUTH_RENAME,
-    ES_EVENT_TYPE_AUTH_UNLINK,   ES_EVENT_TYPE_AUTH_CLONE, ES_EVENT_TYPE_AUTH_EXCHANGEDATA,
-    ES_EVENT_TYPE_AUTH_COPYFILE,
+    ES_EVENT_TYPE_AUTH_OPEN,   ES_EVENT_TYPE_AUTH_LINK,  ES_EVENT_TYPE_AUTH_RENAME,
+    ES_EVENT_TYPE_AUTH_UNLINK, ES_EVENT_TYPE_AUTH_CLONE, ES_EVENT_TYPE_AUTH_EXCHANGEDATA,
   };
+
+#if defined(MAC_OS_VERSION_12_0) && MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_VERSION_12_0
+  if (@available(macOS 12.0, *)) {
+    expectedEventSubs.insert(ES_EVENT_TYPE_AUTH_COPYFILE);
+  }
+#endif
 
   auto mockESApi = std::make_shared<MockEndpointSecurityAPI>();
 
@@ -73,7 +78,7 @@ extern PathTargets GetPathTargets(const Message &msg);
   es_message_t esMsg;
 
   auto mockESApi = std::make_shared<MockEndpointSecurityAPI>();
-  mockESApi->SetExpectationsRetainReleaseMessage(&esMsg);
+  mockESApi->SetExpectationsRetainReleaseMessage();
 
   Message msg(mockESApi, &esMsg);
 
@@ -138,31 +143,29 @@ extern PathTargets GetPathTargets(const Message &msg);
     XCTAssertTrue(std::holds_alternative<Unit>(targets.second));
   }
 
-  if (@available(macOS 10.15.1, *)) {
-    {
-      esMsg.event_type = ES_EVENT_TYPE_AUTH_CLONE;
-      esMsg.event.clone.source = &testFile1;
-      esMsg.event.clone.target_dir = &testDir;
-      esMsg.event.clone.target_name = testTok;
+  {
+    esMsg.event_type = ES_EVENT_TYPE_AUTH_CLONE;
+    esMsg.event.clone.source = &testFile1;
+    esMsg.event.clone.target_dir = &testDir;
+    esMsg.event.clone.target_name = testTok;
 
-      PathTargets targets = GetPathTargets(msg);
+    PathTargets targets = GetPathTargets(msg);
 
-      XCTAssertCStringEqual(targets.first.data(), testFile1.path.data);
-      XCTAssertTrue(std::holds_alternative<std::string>(targets.second));
-      XCTAssertCppStringEqual(std::get<std::string>(targets.second), dirTok);
-    }
+    XCTAssertCStringEqual(targets.first.data(), testFile1.path.data);
+    XCTAssertTrue(std::holds_alternative<std::string>(targets.second));
+    XCTAssertCppStringEqual(std::get<std::string>(targets.second), dirTok);
+  }
 
-    {
-      esMsg.event_type = ES_EVENT_TYPE_AUTH_EXCHANGEDATA;
-      esMsg.event.exchangedata.file1 = &testFile1;
-      esMsg.event.exchangedata.file2 = &testFile2;
+  {
+    esMsg.event_type = ES_EVENT_TYPE_AUTH_EXCHANGEDATA;
+    esMsg.event.exchangedata.file1 = &testFile1;
+    esMsg.event.exchangedata.file2 = &testFile2;
 
-      PathTargets targets = GetPathTargets(msg);
+    PathTargets targets = GetPathTargets(msg);
 
-      XCTAssertCStringEqual(targets.first.data(), testFile1.path.data);
-      XCTAssertTrue(std::holds_alternative<std::string_view>(targets.second));
-      XCTAssertCStringEqual(std::get<std::string_view>(targets.second).data(), testFile2.path.data);
-    }
+    XCTAssertCStringEqual(targets.first.data(), testFile1.path.data);
+    XCTAssertTrue(std::holds_alternative<std::string_view>(targets.second));
+    XCTAssertCStringEqual(std::get<std::string_view>(targets.second).data(), testFile2.path.data);
   }
 
   if (@available(macOS 12.0, *)) {
