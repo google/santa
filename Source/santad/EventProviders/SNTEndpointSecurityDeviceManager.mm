@@ -250,7 +250,7 @@ NS_ASSUME_NONNULL_BEGIN
 
   // If the device is internal or virtual we are okay with the operation. We
   // also are okay with operations for devices that are non-removal as long as
-  // they are NOT a USB device.
+  // they are NOT a USB device, or an SD Card.
   if (isInternal || isVirtual || (!isRemovable && !isEjectable && !isUSB && !isSecureDigital)) {
     return ES_AUTH_RESULT_ALLOW;
   }
