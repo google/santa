@@ -52,17 +52,17 @@ REGISTER_COMMAND_NAME(@"checkcache")
   SantaVnode vnodeID = [self vnodeIDForFile:arguments.firstObject];
   [[self.daemonConn remoteObjectProxy]
     checkCacheForVnodeID:vnodeID
-               withReply:^(santa_action_t action) {
-                 if (action == ACTION_RESPOND_ALLOW) {
+               withReply:^(SNTAction action) {
+                 if (action == SNTActionRespondAllow) {
                    LOGI(@"File exists in [allowlist] kernel cache");
                    exit(0);
-                 } else if (action == ACTION_RESPOND_DENY) {
+                 } else if (action == SNTActionRespondDeny) {
                    LOGI(@"File exists in [blocklist] kernel cache");
                    exit(0);
-                 } else if (action == ACTION_RESPOND_ALLOW_COMPILER) {
+                 } else if (action == SNTActionRespondAllowCompiler) {
                    LOGI(@"File exists in [allowlist compiler] kernel cache");
                    exit(0);
-                 } else if (action == ACTION_UNSET) {
+                 } else if (action == SNTActionUnset) {
                    LOGE(@"File does not exist in cache");
                    exit(1);
                  }

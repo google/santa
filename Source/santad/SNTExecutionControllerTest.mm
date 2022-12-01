@@ -18,7 +18,6 @@
 #import <OCMock/OCMock.h>
 #import <XCTest/XCTest.h>
 #include <dispatch/dispatch.h>
-#include "Source/common/SNTCommon.h"
 #include "Source/common/SNTCommonEnums.h"
 
 #import "Source/common/SNTCachedDecision.h"
@@ -37,11 +36,11 @@
 
 using santa::santad::event_providers::endpoint_security::Message;
 
-using PostActionBlock = bool (^)(santa_action_t);
-using VerifyPostActionBlock = PostActionBlock (^)(santa_action_t);
+using PostActionBlock = bool (^)(SNTAction);
+using VerifyPostActionBlock = PostActionBlock (^)(SNTAction);
 
-VerifyPostActionBlock verifyPostAction = ^PostActionBlock(santa_action_t wantAction) {
-  return ^bool(santa_action_t gotAction) {
+VerifyPostActionBlock verifyPostAction = ^PostActionBlock(SNTAction wantAction) {
+  return ^bool(SNTAction gotAction) {
     XCTAssertEqual(gotAction, wantAction);
     return true;
   };
@@ -187,7 +186,7 @@ VerifyPostActionBlock verifyPostAction = ^PostActionBlock(santa_action_t wantAct
   XCTBubbleMockVerifyAndClearExpectations(mockESApi.get());
 }
 
-- (void)validateExecEvent:(santa_action_t)wantAction {
+- (void)validateExecEvent:(SNTAction)wantAction {
   es_file_t file = MakeESFile("foo");
   es_process_t proc = MakeESProcess(&file);
   es_file_t fileExec = MakeESFile("bar", {
@@ -219,7 +218,7 @@ VerifyPostActionBlock verifyPostAction = ^PostActionBlock(santa_action_t wantAct
   OCMStub([self.mockRuleDatabase ruleForBinarySHA256:@"a" certificateSHA256:nil teamID:nil])
     .andReturn(rule);
 
-  [self validateExecEvent:ACTION_RESPOND_ALLOW];
+  [self validateExecEvent:SNTActionRespondAllow];
   [self checkMetricCounters:kAllowBinary expected:@1];
 }
 
@@ -233,7 +232,7 @@ VerifyPostActionBlock verifyPostAction = ^PostActionBlock(santa_action_t wantAct
   OCMStub([self.mockRuleDatabase ruleForBinarySHA256:@"a" certificateSHA256:nil teamID:nil])
     .andReturn(rule);
 
-  [self validateExecEvent:ACTION_RESPOND_DENY];
+  [self validateExecEvent:SNTActionRespondDeny];
   [self checkMetricCounters:kBlockBinary expected:@1];
 }
 
@@ -250,7 +249,7 @@ VerifyPostActionBlock verifyPostAction = ^PostActionBlock(santa_action_t wantAct
   OCMStub([self.mockRuleDatabase ruleForBinarySHA256:nil certificateSHA256:@"a" teamID:nil])
     .andReturn(rule);
 
-  [self validateExecEvent:ACTION_RESPOND_ALLOW];
+  [self validateExecEvent:SNTActionRespondAllow];
   [self checkMetricCounters:kAllowCertificate expected:@1];
 }
 
@@ -269,7 +268,7 @@ VerifyPostActionBlock verifyPostAction = ^PostActionBlock(santa_action_t wantAct
 
   OCMExpect([self.mockEventDatabase addStoredEvent:OCMOCK_ANY]);
 
-  [self validateExecEvent:ACTION_RESPOND_DENY];
+  [self validateExecEvent:SNTActionRespondDeny];
 
   OCMVerifyAllWithDelay(self.mockEventDatabase, 1);
   [self checkMetricCounters:kBlockCertificate expected:@1];
@@ -286,7 +285,7 @@ VerifyPostActionBlock verifyPostAction = ^PostActionBlock(santa_action_t wantAct
   OCMStub([self.mockRuleDatabase ruleForBinarySHA256:@"a" certificateSHA256:nil teamID:nil])
     .andReturn(rule);
 
-  [self validateExecEvent:ACTION_RESPOND_ALLOW_COMPILER];
+  [self validateExecEvent:SNTActionRespondAllowCompiler];
   [self checkMetricCounters:kAllowCompiler expected:@1];
 }
 
@@ -301,7 +300,7 @@ VerifyPostActionBlock verifyPostAction = ^PostActionBlock(santa_action_t wantAct
   OCMStub([self.mockRuleDatabase ruleForBinarySHA256:@"a" certificateSHA256:nil teamID:nil])
     .andReturn(rule);
 
-  [self validateExecEvent:ACTION_RESPOND_ALLOW];
+  [self validateExecEvent:SNTActionRespondAllow];
   [self checkMetricCounters:kAllowBinary expected:@1];
 }
 
@@ -316,7 +315,7 @@ VerifyPostActionBlock verifyPostAction = ^PostActionBlock(santa_action_t wantAct
   OCMStub([self.mockRuleDatabase ruleForBinarySHA256:@"a" certificateSHA256:nil teamID:nil])
     .andReturn(rule);
 
-  [self validateExecEvent:ACTION_RESPOND_ALLOW];
+  [self validateExecEvent:SNTActionRespondAllow];
   [self checkMetricCounters:kAllowTransitive expected:@1];
 }
 
@@ -334,7 +333,7 @@ VerifyPostActionBlock verifyPostAction = ^PostActionBlock(santa_action_t wantAct
 
   OCMExpect([self.mockEventDatabase addStoredEvent:OCMOCK_ANY]);
 
-  [self validateExecEvent:ACTION_RESPOND_DENY];
+  [self validateExecEvent:SNTActionRespondDeny];
 
   OCMVerifyAllWithDelay(self.mockEventDatabase, 1);
   [self checkMetricCounters:kAllowBinary expected:@0];
@@ -348,11 +347,11 @@ VerifyPostActionBlock verifyPostAction = ^PostActionBlock(santa_action_t wantAct
   OCMExpect([self.mockConfigurator clientMode]).andReturn(SNTClientModeMonitor);
   OCMExpect([self.mockEventDatabase addStoredEvent:OCMOCK_ANY]);
 
-  [self validateExecEvent:ACTION_RESPOND_ALLOW];
+  [self validateExecEvent:SNTActionRespondAllow];
 
   OCMExpect([self.mockConfigurator clientMode]).andReturn(SNTClientModeLockdown);
 
-  [self validateExecEvent:ACTION_RESPOND_DENY];
+  [self validateExecEvent:SNTActionRespondDeny];
 
   OCMVerifyAllWithDelay(self.mockEventDatabase, 1);
   [self checkMetricCounters:kBlockUnknown expected:@1];
@@ -371,7 +370,7 @@ VerifyPostActionBlock verifyPostAction = ^PostActionBlock(santa_action_t wantAct
   OCMStub([self.mockConfigurator failClosed]).andReturn(NO);
   OCMStub([self.mockConfigurator clientMode]).andReturn(SNTClientModeLockdown);
 
-  [self validateExecEvent:ACTION_RESPOND_ALLOW];
+  [self validateExecEvent:SNTActionRespondAllow];
   [self checkMetricCounters:kAllowNoFileInfo expected:@1];
 }
 
@@ -387,7 +386,7 @@ VerifyPostActionBlock verifyPostAction = ^PostActionBlock(santa_action_t wantAct
   OCMStub([self.mockConfigurator failClosed]).andReturn(YES);
   OCMStub([self.mockConfigurator clientMode]).andReturn(SNTClientModeLockdown);
 
-  [self validateExecEvent:ACTION_RESPOND_DENY];
+  [self validateExecEvent:SNTActionRespondDeny];
   [self checkMetricCounters:kDenyNoFileInfo expected:@1];
 }
 
@@ -403,12 +402,12 @@ VerifyPostActionBlock verifyPostAction = ^PostActionBlock(santa_action_t wantAct
   OCMStub([self.mockConfigurator failClosed]).andReturn(YES);
   OCMStub([self.mockConfigurator clientMode]).andReturn(SNTClientModeMonitor);
 
-  [self validateExecEvent:ACTION_RESPOND_ALLOW];
+  [self validateExecEvent:SNTActionRespondAllow];
   [self checkMetricCounters:kAllowNoFileInfo expected:@1];
 }
 
 - (void)testMissingShasum {
-  [self validateExecEvent:ACTION_RESPOND_ALLOW];
+  [self validateExecEvent:SNTActionRespondAllow];
   [self checkMetricCounters:kAllowScope expected:@1];
 }
 
@@ -416,7 +415,7 @@ VerifyPostActionBlock verifyPostAction = ^PostActionBlock(santa_action_t wantAct
   OCMStub([self.mockFileInfo isMachO]).andReturn(NO);
   OCMStub([self.mockConfigurator clientMode]).andReturn(SNTClientModeLockdown);
 
-  [self validateExecEvent:ACTION_RESPOND_ALLOW];
+  [self validateExecEvent:SNTActionRespondAllow];
   [self checkMetricCounters:kAllowScope expected:@1];
 }
 
@@ -425,7 +424,7 @@ VerifyPostActionBlock verifyPostAction = ^PostActionBlock(santa_action_t wantAct
   OCMStub([self.mockFileInfo isMissingPageZero]).andReturn(YES);
   OCMExpect([self.mockEventDatabase addStoredEvent:OCMOCK_ANY]);
 
-  [self validateExecEvent:ACTION_RESPOND_DENY];
+  [self validateExecEvent:SNTActionRespondDeny];
   OCMVerifyAllWithDelay(self.mockEventDatabase, 1);
   [self checkMetricCounters:kBlockUnknown expected:@1];
 }
@@ -443,7 +442,7 @@ VerifyPostActionBlock verifyPostAction = ^PostActionBlock(santa_action_t wantAct
   OCMStub([self.mockRuleDatabase ruleForBinarySHA256:@"a" certificateSHA256:nil teamID:nil])
     .andReturn(rule);
 
-  [self validateExecEvent:ACTION_RESPOND_ALLOW];
+  [self validateExecEvent:SNTActionRespondAllow];
   OCMVerifyAllWithDelay(self.mockEventDatabase, 1);
 }
 
@@ -455,7 +454,7 @@ VerifyPostActionBlock verifyPostAction = ^PostActionBlock(santa_action_t wantAct
   OCMExpect([self.mockConfigurator enableAllEventUpload]).andReturn(NO);
   OCMExpect([self.mockConfigurator disableUnknownEventUpload]).andReturn(YES);
 
-  [self validateExecEvent:ACTION_RESPOND_ALLOW];
+  [self validateExecEvent:SNTActionRespondAllow];
   OCMVerify(never(), [self.mockEventDatabase addStoredEvent:OCMOCK_ANY]);
   [self checkMetricCounters:kAllowUnknown expected:@1];
 }
