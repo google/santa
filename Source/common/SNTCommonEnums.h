@@ -19,6 +19,23 @@
 ///  The integer values are also stored in the database and so shouldn't be changed.
 ///
 
+typedef NS_ENUM(NSInteger, SNTAction) {
+  SNTActionUnset,
+
+  // REQUESTS
+  // If an operation is awaiting a cache decision from a similar operation
+  // currently being processed, it will poll about every 5 ms for an answer.
+  SNTActionRequestBinary,
+
+  // RESPONSES
+  SNTActionRespondAllow,
+  SNTActionRespondDeny,
+  SNTActionRespondAllowCompiler,
+};
+
+#define RESPONSE_VALID(x) \
+  (x == SNTActionRespondAllow || x == SNTActionRespondDeny || x == SNTActionRespondAllowCompiler)
+
 typedef NS_ENUM(NSInteger, SNTRuleType) {
   SNTRuleTypeUnknown,
 

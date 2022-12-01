@@ -21,8 +21,9 @@
 #include <sys/stat.h>
 #include <memory>
 
-#import "Source/common/SNTCommon.h"
+#import "Source/common/SNTCommonEnums.h"
 #include "Source/common/SantaCache.h"
+#import "Source/common/SantaVnode.h"
 #include "Source/santad/EventProviders/EndpointSecurity/EndpointSecurityAPI.h"
 
 namespace santa::santad::event_providers {
@@ -49,10 +50,10 @@ class AuthResultCache {
   AuthResultCache(const AuthResultCache &other) = delete;
   AuthResultCache &operator=(const AuthResultCache &other) = delete;
 
-  virtual bool AddToCache(const es_file_t *es_file, santa_action_t decision);
+  virtual bool AddToCache(const es_file_t *es_file, SNTAction decision);
   virtual void RemoveFromCache(const es_file_t *es_file);
-  virtual santa_action_t CheckCache(const es_file_t *es_file);
-  virtual santa_action_t CheckCache(SantaVnode vnode_id);
+  virtual SNTAction CheckCache(const es_file_t *es_file);
+  virtual SNTAction CheckCache(SantaVnode vnode_id);
 
   virtual void FlushCache(FlushCacheMode mode);
 

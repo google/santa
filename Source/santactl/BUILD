@@ -59,7 +59,6 @@ objc_library(
         ":SNTCommandPrintLog",
         ":santactl_cmd",
         "//Source/common:SNTCachedDecision",
-        "//Source/common:SNTCommon",
         "//Source/common:SNTCommonEnums",
         "//Source/common:SNTConfigurator",
         "//Source/common:SNTDropRootPrivs",

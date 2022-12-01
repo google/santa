@@ -43,16 +43,35 @@ objc_library(
 cc_library(
     name = "SantaCache",
     hdrs = ["SantaCache.h"],
-    deps = ["//Source/common:SNTCommon"],
+    deps = [":BranchPrediction"],
 )
 
 santa_unit_test(
     name = "SantaCacheTest",
-    srcs = [
-        "SantaCache.h",
-        "SantaCacheTest.mm",
+    srcs = ["SantaCacheTest.mm"],
+    deps = [
+        ":SantaCache",
     ],
-    deps = ["//Source/common:SNTCommon"],
+)
+
+objc_library(
+    name = "BranchPrediction",
+    hdrs = ["BranchPrediction.h"],
+)
+
+objc_library(
+    name = "SantaVnode",
+    hdrs = ["SantaVnode.h"],
+)
+
+objc_library(
+    name = "SantaVnodeHash",
+    srcs = ["SantaVnodeHash.mm"],
+    hdrs = ["SantaVnodeHash.h"],
+    deps = [
+        ":SantaCache",
+        ":SantaVnode",
+    ],
 )
 
 objc_library(
@@ -86,8 +105,8 @@ objc_library(
     srcs = ["SNTCachedDecision.mm"],
     hdrs = ["SNTCachedDecision.h"],
     deps = [
-        ":SNTCommon",
         ":SNTCommonEnums",
+        ":SantaVnode",
     ],
 )
 
@@ -148,15 +167,6 @@ objc_library(
         ":SNTLogging",
         "@FMDB",
         "@MOLCodesignChecker",
-    ],
-)
-
-cc_library(
-    name = "SNTCommon",
-    hdrs = ["SNTCommon.h"],
-    defines = [
-        "TARGET_OS_OSX",
-        "TARGET_OS_MAC",
     ],
 )
 
@@ -296,11 +306,11 @@ objc_library(
     srcs = ["SNTXPCUnprivilegedControlInterface.m"],
     hdrs = ["SNTXPCUnprivilegedControlInterface.h"],
     deps = [
-        ":SNTCommon",
         ":SNTCommonEnums",
         ":SNTRule",
         ":SNTStoredEvent",
         ":SNTXPCBundleServiceInterface",
+        ":SantaVnode",
         "@MOLCertificate",
         "@MOLXPCConnection",
     ],

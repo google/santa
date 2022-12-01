@@ -47,7 +47,6 @@ objc_library(
     deps = [
         ":FCM_lib",
         ":broadcaster_lib",
-        "//Source/common:SNTCommon",
         "//Source/common:SNTCommonEnums",
         "//Source/common:SNTConfigurator",
         "//Source/common:SNTFileInfo",
@@ -101,7 +100,6 @@ santa_unit_test(
     deps = [
         ":FCM_lib",
         ":broadcaster_lib",
-        "//Source/common:SNTCommon",
         "//Source/common:SNTCommonEnums",
         "//Source/common:SNTConfigurator",
         "//Source/common:SNTDropRootPrivs",
