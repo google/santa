@@ -309,9 +309,9 @@ objc_library(
 )
 
 objc_library(
-    name = "SNTEndpointSecurityWatcher",
-    srcs = ["EventProviders/SNTEndpointSecurityWatcher.mm"],
-    hdrs = ["EventProviders/SNTEndpointSecurityWatcher.h"],
+    name = "SNTEndpointSecurityFileAccessAuthorizer",
+    srcs = ["EventProviders/SNTEndpointSecurityFileAccessAuthorizer.mm"],
+    hdrs = ["EventProviders/SNTEndpointSecurityFileAccessAuthorizer.h"],
     deps = [
         ":EndpointSecurityAPI",
         ":EndpointSecurityLogger",
@@ -613,9 +613,9 @@ objc_library(
         ":SNTDaemonControlController",
         ":SNTEndpointSecurityAuthorizer",
         ":SNTEndpointSecurityDeviceManager",
+        ":SNTEndpointSecurityFileAccessAuthorizer",
         ":SNTEndpointSecurityRecorder",
         ":SNTEndpointSecurityTamperResistance",
-        ":SNTEndpointSecurityWatcher",
         ":SNTExecutionController",
         ":SNTNotificationQueue",
         ":SNTSyncdQueue",
@@ -1113,15 +1113,15 @@ santa_unit_test(
 )
 
 santa_unit_test(
-    name = "SNTEndpointSecurityWatcherTest",
-    srcs = ["EventProviders/SNTEndpointSecurityWatcherTest.mm"],
+    name = "SNTEndpointSecurityFileAccessAuthorizerTest",
+    srcs = ["EventProviders/SNTEndpointSecurityFileAccessAuthorizerTest.mm"],
     sdk_dylibs = [
         "EndpointSecurity",
     ],
     deps = [
         ":EndpointSecurityMessage",
         ":MockEndpointSecurityAPI",
-        ":SNTEndpointSecurityWatcher",
+        ":SNTEndpointSecurityFileAccessAuthorizer",
         "//Source/common:TestUtils",
         "//Source/common:Unit",
         "@OCMock",

@@ -40,7 +40,7 @@ enum class Processor {
   kDeviceManager,
   kRecorder,
   kTamperResistance,
-  kWatcher,
+  kFileAccessAuthorizer,
 };
 
 class Metrics : public std::enable_shared_from_this<Metrics> {

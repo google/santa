@@ -12,7 +12,7 @@
 /// See the License for the specific language governing permissions and
 /// limitations under the License.
 
-#include "Source/santad/EventProviders/SNTEndpointSecurityWatcher.h"
+#import "Source/santad/EventProviders/SNTEndpointSecurityFileAccessAuthorizer.h"
 
 #include <EndpointSecurity/ESTypes.h>
 #import <OCMock/OCMock.h>
@@ -32,10 +32,10 @@ using santa::santad::event_providers::endpoint_security::Message;
 using PathTargets = std::pair<std::string_view, std::variant<std::string_view, std::string, Unit>>;
 extern PathTargets GetPathTargets(const Message &msg);
 
-@interface SNTEndpointSecurityWatcherTest : XCTestCase
+@interface SNTEndpointSecurityFileAccessAuthorizerTest : XCTestCase
 @end
 
-@implementation SNTEndpointSecurityWatcherTest
+@implementation SNTEndpointSecurityFileAccessAuthorizerTest
 
 - (void)testEnable {
   std::set<es_event_type_t> expectedEventSubs{
@@ -51,17 +51,17 @@ extern PathTargets GetPathTargets(const Message &msg);
 
   auto mockESApi = std::make_shared<MockEndpointSecurityAPI>();
 
-  id watcherClient =
-    [[SNTEndpointSecurityWatcher alloc] initWithESAPI:mockESApi
-                                              metrics:nullptr
-                                            processor:santa::santad::Processor::kWatcher];
+  id fileAccessClient = [[SNTEndpointSecurityFileAccessAuthorizer alloc]
+    initWithESAPI:mockESApi
+          metrics:nullptr
+        processor:santa::santad::Processor::kFileAccessAuthorizer];
 
   EXPECT_CALL(*mockESApi, ClearCache)
     .After(EXPECT_CALL(*mockESApi, Subscribe(testing::_, expectedEventSubs))
              .WillOnce(testing::Return(true)))
     .WillOnce(testing::Return(true));
 
-  [watcherClient enable];
+  [fileAccessClient enable];
 
   XCTBubbleMockVerifyAndClearExpectations(mockESApi.get());
 }

@@ -12,7 +12,7 @@
 /// See the License for the specific language governing permissions and
 /// limitations under the License.
 
-#include "Source/santad/EventProviders/SNTEndpointSecurityWatcher.h"
+#import "Source/santad/EventProviders/SNTEndpointSecurityFileAccessAuthorizer.h"
 
 #include <EndpointSecurity/EndpointSecurity.h>
 #include <Kernel/kern/cs_blobs.h>
@@ -101,8 +101,9 @@ PathTargets GetPathTargets(const Message &msg) {
                 Path(msg->event.copyfile.target_dir, msg->event.copyfile.target_name)};
       }
     default:
-      [NSException raise:@"Unexpected event type"
-                  format:@"Watcher client does not handle event: %d", msg->event_type];
+      [NSException
+         raise:@"Unexpected event type"
+        format:@"File Access Authorizer client does not handle event: %d", msg->event_type];
       exit(EXIT_FAILURE);
   }
 }
@@ -112,12 +113,12 @@ uint64_t SantaCacheHasher<SantaVnode>(SantaVnode const &t) {
   return (SantaCacheHasher<uint64_t>(t.fsid) << 1) ^ SantaCacheHasher<uint64_t>(t.fileid);
 }
 
-@interface SNTEndpointSecurityWatcher ()
+@interface SNTEndpointSecurityFileAccessAuthorizer ()
 @property SNTDecisionCache *decisionCache;
 @property BOOL isSubscribed;
 @end
 
-@implementation SNTEndpointSecurityWatcher {
+@implementation SNTEndpointSecurityFileAccessAuthorizer {
   std::shared_ptr<Logger> _logger;
   std::shared_ptr<WatchItems> _watchItems;
   SantaCache<SantaVnode, NSString *> _certHashCache;
@@ -131,7 +132,7 @@ uint64_t SantaCacheHasher<SantaVnode>(SantaVnode const &t) {
      watchItems:(std::shared_ptr<WatchItems>)watchItems {
   self = [super initWithESAPI:std::move(esApi)
                       metrics:std::move(metrics)
-                    processor:santa::santad::Processor::kWatcher];
+                    processor:santa::santad::Processor::kFileAccessAuthorizer];
   if (self) {
     _watchItems = std::move(watchItems);
     _logger = std::move(logger);
@@ -144,7 +145,7 @@ uint64_t SantaCacheHasher<SantaVnode>(SantaVnode const &t) {
 }
 
 - (NSString *)description {
-  return @"Watcher";
+  return @"FileAccessAuthorizer";
 }
 
 // The operation is allowed when:
@@ -191,7 +192,8 @@ uint64_t SantaCacheHasher<SantaVnode>(SantaVnode const &t) {
       break;
     default:
       [NSException raise:@"Unexpected event type"
-                  format:@"Received unexpected event type in the watcher: %d", msg->event_type];
+                  format:@"Received unexpected event type in the file access authorizer: %d",
+                         msg->event_type];
       exit(EXIT_FAILURE);
   }
 
@@ -329,19 +331,19 @@ uint64_t SantaCacheHasher<SantaVnode>(SantaVnode const &t) {
 }
 
 - (void)enable {
-//   std::set<es_event_type_t> events{
-//     ES_EVENT_TYPE_AUTH_OPEN,   ES_EVENT_TYPE_AUTH_LINK,  ES_EVENT_TYPE_AUTH_RENAME,
-//     ES_EVENT_TYPE_AUTH_UNLINK, ES_EVENT_TYPE_AUTH_CLONE, ES_EVENT_TYPE_AUTH_EXCHANGEDATA,
-//   };
+  std::set<es_event_type_t> events{
+    ES_EVENT_TYPE_AUTH_OPEN,   ES_EVENT_TYPE_AUTH_LINK,  ES_EVENT_TYPE_AUTH_RENAME,
+    ES_EVENT_TYPE_AUTH_UNLINK, ES_EVENT_TYPE_AUTH_CLONE, ES_EVENT_TYPE_AUTH_EXCHANGEDATA,
+  };
 
-// #if defined(MAC_OS_VERSION_12_0) && MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_VERSION_12_0
-//   if (@available(macOS 12.0, *)) {
-//     events.insert(ES_EVENT_TYPE_AUTH_COPYFILE);
-//   }
-// #endif
+#if defined(MAC_OS_VERSION_12_0) && MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_VERSION_12_0
+  if (@available(macOS 12.0, *)) {
+    events.insert(ES_EVENT_TYPE_AUTH_COPYFILE);
+  }
+#endif
 
-//   [super subscribeAndClearCache:events];
-  [super subscribeAndClearCache:{ES_EVENT_TYPE_AUTH_OPEN}];
+  [super subscribeAndClearCache:events];
+  // [super subscribeAndClearCache:{ES_EVENT_TYPE_AUTH_OPEN}];
 }
 
 @end

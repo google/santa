@@ -29,9 +29,9 @@
 #include "Source/santad/EventProviders/EndpointSecurity/Enricher.h"
 #import "Source/santad/EventProviders/SNTEndpointSecurityAuthorizer.h"
 #import "Source/santad/EventProviders/SNTEndpointSecurityDeviceManager.h"
+#import "Source/santad/EventProviders/SNTEndpointSecurityFileAccessAuthorizer.h"
 #import "Source/santad/EventProviders/SNTEndpointSecurityRecorder.h"
 #import "Source/santad/EventProviders/SNTEndpointSecurityTamperResistance.h"
-#import "Source/santad/EventProviders/SNTEndpointSecurityWatcher.h"
 #include "Source/santad/Logs/EndpointSecurity/Logger.h"
 #include "Source/santad/SNTDaemonControlController.h"
 
@@ -126,11 +126,11 @@ void SantadMain(std::shared_ptr<EndpointSecurityAPI> esapi, std::shared_ptr<Logg
   SNTEndpointSecurityTamperResistance *tamper_client =
     [[SNTEndpointSecurityTamperResistance alloc] initWithESAPI:esapi metrics:metrics logger:logger];
 
-  SNTEndpointSecurityWatcher *watcher_client =
-    [[SNTEndpointSecurityWatcher alloc] initWithESAPI:esapi
-                                              metrics:metrics
-                                               logger:logger
-                                           watchItems:watch_items];
+  SNTEndpointSecurityFileAccessAuthorizer *fs_client =
+    [[SNTEndpointSecurityFileAccessAuthorizer alloc] initWithESAPI:esapi
+                                                           metrics:metrics
+                                                            logger:logger
+                                                        watchItems:watch_items];
 
   EstablishSyncServiceConnection(syncd_queue);
 
@@ -298,7 +298,7 @@ void SantadMain(std::shared_ptr<EndpointSecurityAPI> esapi, std::shared_ptr<Logg
   // execution policy appropriately.
   [authorizer_client enable];
   [tamper_client enable];
-  [watcher_client enable];
+  [fs_client enable];
   [monitor_client enable];
   [device_client enable];
 

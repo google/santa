@@ -23,7 +23,8 @@
 #include "Source/santad/Logs/EndpointSecurity/Logger.h"
 #include "Source/santad/Metrics.h"
 
-@interface SNTEndpointSecurityWatcher : SNTEndpointSecurityClient <SNTEndpointSecurityEventHandler>
+@interface SNTEndpointSecurityFileAccessAuthorizer
+    : SNTEndpointSecurityClient <SNTEndpointSecurityEventHandler>
 
 - (instancetype)
   initWithESAPI:
