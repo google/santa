@@ -34,6 +34,7 @@
 #import "Source/santad/EventProviders/SNTEndpointSecurityTamperResistance.h"
 #include "Source/santad/Logs/EndpointSecurity/Logger.h"
 #include "Source/santad/SNTDaemonControlController.h"
+#include "Source/santad/SNTDecisionCache.h"
 
 using santa::common::PrefixTree;
 using santa::common::Unit;
@@ -130,7 +131,8 @@ void SantadMain(std::shared_ptr<EndpointSecurityAPI> esapi, std::shared_ptr<Logg
     [[SNTEndpointSecurityFileAccessAuthorizer alloc] initWithESAPI:esapi
                                                            metrics:metrics
                                                             logger:logger
-                                                        watchItems:watch_items];
+                                                        watchItems:watch_items
+                                                     decisionCache:[SNTDecisionCache sharedCache]];
 
   EstablishSyncServiceConnection(syncd_queue);
 

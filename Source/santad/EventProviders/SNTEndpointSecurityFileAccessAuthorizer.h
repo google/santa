@@ -22,6 +22,7 @@
 #import "Source/santad/EventProviders/SNTEndpointSecurityEventHandler.h"
 #include "Source/santad/Logs/EndpointSecurity/Logger.h"
 #include "Source/santad/Metrics.h"
+#import "Source/santad/SNTDecisionCache.h"
 
 @interface SNTEndpointSecurityFileAccessAuthorizer
     : SNTEndpointSecurityClient <SNTEndpointSecurityEventHandler>
@@ -31,6 +32,7 @@
     (std::shared_ptr<santa::santad::event_providers::endpoint_security::EndpointSecurityAPI>)esApi
         metrics:(std::shared_ptr<santa::santad::Metrics>)metrics
          logger:(std::shared_ptr<santa::santad::logs::endpoint_security::Logger>)logger
-     watchItems:(std::shared_ptr<santa::santad::data_layer::WatchItems>)watchItems;
+     watchItems:(std::shared_ptr<santa::santad::data_layer::WatchItems>)watchItems
+  decisionCache:(SNTDecisionCache *)decisionCache;
 
 @end

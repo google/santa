@@ -35,7 +35,6 @@
 #include "Source/common/Unit.h"
 #include "Source/santad/DataLayer/WatchItems.h"
 #include "Source/santad/EventProviders/EndpointSecurity/Message.h"
-#include "Source/santad/SNTDecisionCache.h"
 
 using santa::common::Unit;
 using santa::santad::EventDisposition;
@@ -53,7 +52,7 @@ using santa::santad::logs::endpoint_security::Logger;
 // `std::string` is used.
 using PathTargets = std::pair<std::string_view, std::variant<std::string_view, std::string, Unit>>;
 
-static const char *kBadCertHash = "BAD_CERT_HASH";
+const char *kBadCertHash = "BAD_CERT_HASH";
 
 static inline std::string_view PathView(const es_file_t *esFile) {
   return std::string_view(esFile->path.data, esFile->path.length);
@@ -65,6 +64,13 @@ static inline std::string_view PathView(const es_string_token_t &tok) {
 
 static inline std::string Path(const es_file_t *dir, const es_string_token_t &name) {
   return std::string(PathView(dir)) + std::string(PathView(name));
+}
+
+es_auth_result_t CombinePolicyResults(es_auth_result_t result1, es_auth_result_t result2) {
+  // If either policy denied the operation, the operation is denied
+  return ((result1 == ES_AUTH_RESULT_DENY || result2 == ES_AUTH_RESULT_DENY)
+            ? ES_AUTH_RESULT_DENY
+            : ES_AUTH_RESULT_ALLOW);
 }
 
 PathTargets GetPathTargets(const Message &msg) {
@@ -129,7 +135,8 @@ uint64_t SantaCacheHasher<SantaVnode>(SantaVnode const &t) {
     (std::shared_ptr<santa::santad::event_providers::endpoint_security::EndpointSecurityAPI>)esApi
         metrics:(std::shared_ptr<santa::santad::Metrics>)metrics
          logger:(std::shared_ptr<santa::santad::logs::endpoint_security::Logger>)logger
-     watchItems:(std::shared_ptr<WatchItems>)watchItems {
+     watchItems:(std::shared_ptr<WatchItems>)watchItems
+  decisionCache:(SNTDecisionCache *)decisionCache {
   self = [super initWithESAPI:std::move(esApi)
                       metrics:std::move(metrics)
                     processor:santa::santad::Processor::kFileAccessAuthorizer];
@@ -137,7 +144,7 @@ uint64_t SantaCacheHasher<SantaVnode>(SantaVnode const &t) {
     _watchItems = std::move(watchItems);
     _logger = std::move(logger);
 
-    _decisionCache = [SNTDecisionCache sharedCache];
+    _decisionCache = decisionCache;
 
     [self establishClientOrDie];
   }
@@ -146,6 +153,42 @@ uint64_t SantaCacheHasher<SantaVnode>(SantaVnode const &t) {
 
 - (NSString *)description {
   return @"FileAccessAuthorizer";
+}
+
+- (NSString *)getCertificateHash:(es_file_t *)esFile {
+  // First see if we've already cached this value
+  SantaVnode vnodeID = SantaVnode::VnodeForFile(esFile);
+  NSString *result = self->_certHashCache.get(vnodeID);
+  if (!result) {
+    // If this wasn't already cached, try finding a cached SNTCachedDecision
+    SNTCachedDecision *cd = [self.decisionCache cachedDecisionForFile:esFile->stat];
+    if (cd) {
+      // There was an existing cached decision, use its cert hash
+      result = cd.certSHA256;
+    } else {
+      // If the cached decision didn't exist, try a manual lookup
+      NSError *e = nil;
+      MOLCodesignChecker *csInfo =
+        [[MOLCodesignChecker alloc] initWithBinaryPath:@(esFile->path.data) error:&e];
+      if (!e) {
+        result = csInfo.leafCertificate.SHA256;
+      }
+    }
+
+    if (!result) {
+      // If result is still nil, there isn't much recourse... We will
+      // assume that this error isn't transient and set a terminal value
+      // in the cache to prevent continous attempts to lookup cert hash.
+      result = @(kBadCertHash);
+    }
+
+    // Finally, add the result to the cache to prevent future lookups
+    if (result) {
+      self->_certHashCache.set(vnodeID, result);
+    }
+  }
+
+  return result;
 }
 
 // The operation is allowed when:
@@ -199,7 +242,7 @@ uint64_t SantaCacheHasher<SantaVnode>(SantaVnode const &t) {
 
   // Check if the instigating process path opening the file is allowed
   if (policy->allowed_binary_paths.count(msg->process->executable->path.data) > 0) {
-    LOGE(@"Allowing PATH access to %s from %s (pid: %d) | policy: %s",
+    LOGD(@"Allowing PATH access to %s from %s (pid: %d) | policy: %s",
          msg->event.open.file->path.data, msg->process->executable->path.data,
          msg->process->audit_token.val[5], policy->name.c_str());
     return ES_AUTH_RESULT_ALLOW;
@@ -210,7 +253,7 @@ uint64_t SantaCacheHasher<SantaVnode>(SantaVnode const &t) {
     // Check if the instigating process has an allowed TeamID
     if (msg->process->team_id.data &&
         policy->allowed_team_ids.count(msg->process->team_id.data) > 0) {
-      LOGE(@"Allowing TEAMID access to %s from %s (pid: %d) | policy: %s",
+      LOGD(@"Allowing TEAMID access to %s from %s (pid: %d) | policy: %s",
            msg->event.open.file->path.data, msg->process->executable->path.data,
            msg->process->audit_token.val[5], policy->name.c_str());
       return ES_AUTH_RESULT_ALLOW;
@@ -221,7 +264,7 @@ uint64_t SantaCacheHasher<SantaVnode>(SantaVnode const &t) {
       std::copy(std::begin(msg->process->cdhash), std::end(msg->process->cdhash),
                 std::begin(bytes));
       if (policy->allowed_cdhashes.count(bytes) > 0) {
-        LOGE(@"Allowing CDHASH access to %s from %s (pid: %d) | policy: %s",
+        LOGD(@"Allowing CDHASH access to %s from %s (pid: %d) | policy: %s",
              msg->event.open.file->path.data, msg->process->executable->path.data,
              msg->process->audit_token.val[5], policy->name.c_str());
         return ES_AUTH_RESULT_ALLOW;
@@ -229,41 +272,9 @@ uint64_t SantaCacheHasher<SantaVnode>(SantaVnode const &t) {
     }
 
     if (policy->allowed_certificates_sha256.size() > 0) {
-      // First see if we've already cached this value
-      SantaVnode vnodeID = SantaVnode::VnodeForFile(msg->process->executable);
-      NSString *result = self->_certHashCache.get(vnodeID);
-      if (!result) {
-        // If this wasn't already cached, try finding a cached SNTCachedDecision
-        SNTCachedDecision *cd =
-          [self.decisionCache cachedDecisionForFile:msg->process->executable->stat];
-        if (cd) {
-          // There was an existing cached decision, use its cert hash
-          result = cd.certSHA256;
-        } else {
-          // If the cached decision didn't exist, try a manual lookup
-          NSError *e = nil;
-          MOLCodesignChecker *csInfo =
-            [[MOLCodesignChecker alloc] initWithBinaryPath:@(msg->process->executable->path.data)
-                                                     error:&e];
-          if (!e) {
-            result = csInfo.leafCertificate.SHA256;
-          }
-        }
-
-        if (!result) {
-          // If result is still nil, there isn't much recourse... We will
-          // assume that this error isn't transient and set a terminal value
-          // in the cache to prevent continous attempts to lookup cert hash.
-          result = @(kBadCertHash);
-        }
-
-        if (result) {
-          self->_certHashCache.set(vnodeID, result);
-        }
-      }
-
+      NSString *result = [self getCertificateHash:msg->process->executable];
       if (result && policy->allowed_certificates_sha256.count([result UTF8String])) {
-        LOGE(@"Allowing CERT HASH access to %s from %s (pid: %d) | policy: %s",
+        LOGD(@"Allowing CERT HASH access to %s from %s (pid: %d) | policy: %s",
              msg->event.open.file->path.data, msg->process->executable->path.data,
              msg->process->audit_token.val[5], policy->name.c_str());
         return ES_AUTH_RESULT_ALLOW;
@@ -280,7 +291,7 @@ uint64_t SantaCacheHasher<SantaVnode>(SantaVnode const &t) {
   } else {
     // TODO(xyz): Write to TTY like in exec controller?
     // TODO(xyz): Need new config iitem for custom message in UI
-    LOGE(@"Denying access to %s from %s (pid: %d) | policy: %s", msg->event.open.file->path.data,
+    LOGI(@"Denying access to %s from %s (pid: %d) | policy: %s", msg->event.open.file->path.data,
          msg->process->executable->path.data, msg->process->audit_token.val[5],
          policy->name.c_str());
     return ES_AUTH_RESULT_DENY;
@@ -309,12 +320,7 @@ uint64_t SantaCacheHasher<SantaVnode>(SantaVnode const &t) {
 
   es_auth_result_t policyResult1 = [self getResponseForMessage:msg withPolicy:policy1];
   es_auth_result_t policyResult2 = [self getResponseForMessage:msg withPolicy:policy2];
-
-  // If either policy denied the operation, the operation is denied
-  es_auth_result_t policyResult =
-    ((policyResult1 == ES_AUTH_RESULT_DENY || policyResult2 == ES_AUTH_RESULT_DENY)
-       ? ES_AUTH_RESULT_DENY
-       : ES_AUTH_RESULT_ALLOW);
+  es_auth_result_t policyResult = CombinePolicyResults(policyResult1, policyResult2);
 
   [self respondToMessage:msg
           withAuthResult:policyResult
