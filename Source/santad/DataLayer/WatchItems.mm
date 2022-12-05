@@ -156,8 +156,8 @@ WatchItems::~WatchItems() {
 bool WatchItems::BuildPolicyTree(const std::vector<std::shared_ptr<WatchItemPolicy>> &watch_items,
                                  PrefixTree<std::shared_ptr<WatchItemPolicy>> &tree,
                                  std::set<std::string> &paths) {
+  glob_t *g = (glob_t *)alloca(sizeof(glob_t));
   for (const std::shared_ptr<WatchItemPolicy> &item : watch_items) {
-    glob_t *g = (glob_t *)alloca(sizeof(glob_t));
     int err = glob(item->path.c_str(), 0, nullptr, g);
     if (err != 0 && err != GLOB_NOMATCH) {
       LOGE(@"Failed to generate path names for watch item: %s", item->name.c_str());
@@ -174,6 +174,7 @@ bool WatchItems::BuildPolicyTree(const std::vector<std::shared_ptr<WatchItemPoli
       paths.insert(g->gl_pathv[i]);
     }
   }
+  globfree(g);
 
   return true;
 }
