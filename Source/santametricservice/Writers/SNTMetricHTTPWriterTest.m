@@ -111,7 +111,7 @@
     XCTAssertEqual(NO, result, @"result of call to write did not fail as expected");
     XCTAssertNotNil(err);
     XCTAssertEqual(code, err.code);
-    XCTAssertEqual(@"com.google.santa.metricservice.writers.http", err.domain);
+    XCTAssertEqualObjects(@"com.google.santa.metricservice.writers.http", err.domain);
 
     NSString *expectedErrMsg = [NSString
       stringWithFormat:@"received http status code %ld from %@", code, url.absoluteString];

@@ -179,13 +179,14 @@
           }];
 
   // Stub succeeding request
-  [self stubRequestBody:nil
-               response:nil
-                  error:nil
-          validateBlock:^BOOL(NSURLRequest *req) {
-            return ([req.URL.absoluteString containsString:@"/a/"] &&
-                    [[req valueForHTTPHeaderField:@"X-XSRF-TOKEN"] isEqual:@"my-xsrf-token"]);
-          }];
+  [self
+    stubRequestBody:nil
+           response:nil
+              error:nil
+      validateBlock:^BOOL(NSURLRequest *req) {
+        return ([req.URL.absoluteString containsString:@"/a/"] &&
+                [[req valueForHTTPHeaderField:@"X-XSRF-TOKEN"] isEqualToString:@"my-xsrf-token"]);
+      }];
 
   NSString *stageName = [@"a" stringByAppendingFormat:@"/%@", self.syncState.machineID];
   NSURL *u1 = [NSURL URLWithString:stageName relativeToURL:self.syncState.syncBaseURL];
