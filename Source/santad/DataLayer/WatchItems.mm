@@ -173,8 +173,8 @@ bool WatchItems::BuildPolicyTree(const std::vector<std::shared_ptr<WatchItemPoli
 
       paths.insert(g->gl_pathv[i]);
     }
+    globfree(g);
   }
-  globfree(g);
 
   return true;
 }
