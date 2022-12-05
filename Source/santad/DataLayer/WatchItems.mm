@@ -13,26 +13,11 @@
 /// limitations under the License.
 
 #include "Source/santad/DataLayer/WatchItems.h"
+#include <glob.h>
 #include <cstddef>
+#include <memory>
 #include <set>
 #include <utility>
-
-// Note: Because this file is compiled with block support, there is a compiler
-// error including `<glob.h>`:
-//
-// error: call to implicitly-deleted default constructor of 'glob_t'
-//
-// This is because of the `glob_t` member field `gl_errblk` being an ObjC pointer.
-// Because we don't rely on the error function in this implementation,
-// we undef `__BLOCKS__` so that the `gl_errblk` type isn't added to
-// the union.
-#pragma push_macro("__BLOCKS__")
-#define REDEF_BLOCKS
-#undef __BLOCKS__
-#include <glob.h>
-#pragma pop_macro("__BLOCKS__")
-
-#include <memory>
 
 #import "Source/common/PrefixTree.h"
 #import "Source/common/SNTLogging.h"
@@ -172,21 +157,21 @@ bool WatchItems::BuildPolicyTree(const std::vector<std::shared_ptr<WatchItemPoli
                                  PrefixTree<std::shared_ptr<WatchItemPolicy>> &tree,
                                  std::set<std::string> &paths) {
   for (const std::shared_ptr<WatchItemPolicy> &item : watch_items) {
-    glob_t g;
-    int err = glob(item->path.c_str(), 0, nullptr, &g);
+    glob_t *g = (glob_t *)alloca(sizeof(glob_t));
+    int err = glob(item->path.c_str(), 0, nullptr, g);
     if (err != 0 && err != GLOB_NOMATCH) {
       LOGE(@"Failed to generate path names for watch item: %s", item->name.c_str());
       return false;
     }
 
-    for (size_t i = g.gl_offs; i < g.gl_pathc; i++) {
+    for (size_t i = g->gl_offs; i < g->gl_pathc; i++) {
       if (item->is_prefix) {
-        tree.InsertPrefix(g.gl_pathv[i], item);
+        tree.InsertPrefix(g->gl_pathv[i], item);
       } else {
-        tree.InsertLiteral(g.gl_pathv[i], item);
+        tree.InsertLiteral(g->gl_pathv[i], item);
       }
 
-      paths.insert(g.gl_pathv[i]);
+      paths.insert(g->gl_pathv[i]);
     }
   }
 
