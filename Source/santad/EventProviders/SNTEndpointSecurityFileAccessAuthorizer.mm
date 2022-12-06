@@ -13,7 +13,6 @@
 /// limitations under the License.
 
 #import "Source/santad/EventProviders/SNTEndpointSecurityFileAccessAuthorizer.h"
-#include <EndpointSecurity/ESTypes.h>
 
 #include <EndpointSecurity/EndpointSecurity.h>
 #include <Kernel/kern/cs_blobs.h>
