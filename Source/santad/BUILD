@@ -729,6 +729,17 @@ objc_library(
     ],
 )
 
+objc_library(
+    name = "MockLogger",
+    testonly = 1,
+    hdrs = ["Logs/EndpointSecurity/MockLogger.h"],
+    deps = [
+        ":EndpointSecurityLogger",
+        ":EndpointSecurityMessage",
+        "@com_google_googletest//:gtest",
+    ],
+)
+
 santa_unit_test(
     name = "SNTEventTableTest",
     srcs = [
@@ -1123,8 +1134,10 @@ santa_unit_test(
         ":EndpointSecurityLogger",
         ":EndpointSecurityMessage",
         ":MockEndpointSecurityAPI",
+        ":MockLogger",
         ":SNTDecisionCache",
         ":SNTEndpointSecurityFileAccessAuthorizer",
+        ":WatchItems",
         "//Source/common:SNTCachedDecision",
         "//Source/common:TestUtils",
         "//Source/common:Unit",

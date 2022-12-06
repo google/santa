@@ -13,6 +13,7 @@
 /// limitations under the License.
 
 #import "Source/santad/EventProviders/SNTEndpointSecurityFileAccessAuthorizer.h"
+#include <EndpointSecurity/ESTypes.h>
 
 #include <EndpointSecurity/EndpointSecurity.h>
 #include <Kernel/kern/cs_blobs.h>
@@ -191,30 +192,8 @@ uint64_t SantaCacheHasher<SantaVnode>(SantaVnode const &t) {
   return result;
 }
 
-// The operation is allowed when:
-//   - No policy exists
-//   - The policy is write-only, but the operation is read-only
-//   - The operation was instigated by an allowed process
-//   - If the instigating process is signed, the codesignature is valid
-// Otherwise the operation is denied.
-- (es_auth_result_t)getResponseForMessage:(const Message &)msg
-                               withPolicy:
-                                 (std::optional<std::shared_ptr<WatchItemPolicy>>)optionalPolicy {
-  // If no policy exists, everything is allowed
-  if (!optionalPolicy.has_value()) {
-    return ES_AUTH_RESULT_ALLOW;
-  }
-
-  // If the process is signed but has an invalid signature, it is denied
-  if ((msg->process->codesigning_flags & (CS_SIGNED | CS_VALID)) == CS_SIGNED) {
-    // TODO(mlw): Think about how to make stronger guarantees here to handle
-    // programs becoming invalid after first being granted access. Maybe we
-    // should only allow things that have hardened runtime flags set?
-    return ES_AUTH_RESULT_DENY;
-  }
-
-  std::shared_ptr<WatchItemPolicy> policy = optionalPolicy.value();
-
+- (std::optional<es_auth_result_t>)specialCaseForPolicy:(std::shared_ptr<WatchItemPolicy>)policy
+                                                message:(const Message &)msg {
   constexpr int openFlagsIndicatingWrite = FWRITE | O_APPEND | O_TRUNC;
 
   switch (msg->event_type) {
@@ -240,11 +219,41 @@ uint64_t SantaCacheHasher<SantaVnode>(SantaVnode const &t) {
       exit(EXIT_FAILURE);
   }
 
+  return std::nullopt;
+}
+
+// The operation is allowed when:
+//   - No policy exists
+//   - The policy is write-only, but the operation is read-only
+//   - The operation was instigated by an allowed process
+//   - If the instigating process is signed, the codesignature is valid
+// Otherwise the operation is denied.
+- (es_auth_result_t)applyPolicy:(std::optional<std::shared_ptr<WatchItemPolicy>>)optionalPolicy
+                      toMessage:(const Message &)msg {
+  // If no policy exists, everything is allowed
+  if (!optionalPolicy.has_value()) {
+    return ES_AUTH_RESULT_ALLOW;
+  }
+
+  // If the process is signed but has an invalid signature, it is denied
+  if ((msg->process->codesigning_flags & (CS_SIGNED | CS_VALID)) == CS_SIGNED) {
+    // TODO(mlw): Think about how to make stronger guarantees here to handle
+    // programs becoming invalid after first being granted access. Maybe we
+    // should only allow things that have hardened runtime flags set?
+    return ES_AUTH_RESULT_DENY;
+  }
+
+  std::shared_ptr<WatchItemPolicy> policy = optionalPolicy.value();
+
+  // Check if this action contains any special case that would produce
+  // an immediate result.
+  std::optional<es_auth_result_t> specialCase = [self specialCaseForPolicy:policy message:msg];
+  if (specialCase.has_value()) {
+    return specialCase.value();
+  }
+
   // Check if the instigating process path opening the file is allowed
   if (policy->allowed_binary_paths.count(msg->process->executable->path.data) > 0) {
-    LOGD(@"Allowing PATH access to %s from %s (pid: %d) | policy: %s",
-         msg->event.open.file->path.data, msg->process->executable->path.data,
-         msg->process->audit_token.val[5], policy->name.c_str());
     return ES_AUTH_RESULT_ALLOW;
   }
 
@@ -253,30 +262,23 @@ uint64_t SantaCacheHasher<SantaVnode>(SantaVnode const &t) {
     // Check if the instigating process has an allowed TeamID
     if (msg->process->team_id.data &&
         policy->allowed_team_ids.count(msg->process->team_id.data) > 0) {
-      LOGD(@"Allowing TEAMID access to %s from %s (pid: %d) | policy: %s",
-           msg->event.open.file->path.data, msg->process->executable->path.data,
-           msg->process->audit_token.val[5], policy->name.c_str());
       return ES_AUTH_RESULT_ALLOW;
     }
 
     if (policy->allowed_cdhashes.size() > 0) {
+      // Check if the instigating process has an allowed CDHash
       std::array<uint8_t, CS_CDHASH_LEN> bytes;
       std::copy(std::begin(msg->process->cdhash), std::end(msg->process->cdhash),
                 std::begin(bytes));
       if (policy->allowed_cdhashes.count(bytes) > 0) {
-        LOGD(@"Allowing CDHASH access to %s from %s (pid: %d) | policy: %s",
-             msg->event.open.file->path.data, msg->process->executable->path.data,
-             msg->process->audit_token.val[5], policy->name.c_str());
         return ES_AUTH_RESULT_ALLOW;
       }
     }
 
     if (policy->allowed_certificates_sha256.size() > 0) {
+      // Check if the instigating process has an allowed certificate hash
       NSString *result = [self getCertificateHash:msg->process->executable];
       if (result && policy->allowed_certificates_sha256.count([result UTF8String])) {
-        LOGD(@"Allowing CERT HASH access to %s from %s (pid: %d) | policy: %s",
-             msg->event.open.file->path.data, msg->process->executable->path.data,
-             msg->process->audit_token.val[5], policy->name.c_str());
         return ES_AUTH_RESULT_ALLOW;
       }
     }
@@ -291,9 +293,6 @@ uint64_t SantaCacheHasher<SantaVnode>(SantaVnode const &t) {
   } else {
     // TODO(xyz): Write to TTY like in exec controller?
     // TODO(xyz): Need new config iitem for custom message in UI
-    LOGI(@"Denying access to %s from %s (pid: %d) | policy: %s", msg->event.open.file->path.data,
-         msg->process->executable->path.data, msg->process->audit_token.val[5],
-         policy->name.c_str());
     return ES_AUTH_RESULT_DENY;
   }
 }
@@ -318,8 +317,8 @@ uint64_t SantaCacheHasher<SantaVnode>(SantaVnode const &t) {
     },
     targets.second);
 
-  es_auth_result_t policyResult1 = [self getResponseForMessage:msg withPolicy:policy1];
-  es_auth_result_t policyResult2 = [self getResponseForMessage:msg withPolicy:policy2];
+  es_auth_result_t policyResult1 = [self applyPolicy:policy1 toMessage:msg];
+  es_auth_result_t policyResult2 = [self applyPolicy:policy2 toMessage:msg];
   es_auth_result_t policyResult = CombinePolicyResults(policyResult1, policyResult2);
 
   [self respondToMessage:msg
