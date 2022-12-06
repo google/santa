@@ -69,11 +69,11 @@ bool CheckTypeAll(const NSArray *array, const NSString *key, Class cls) {
 }
 
 bool ConfirmValidHexString(NSString *str, size_t expected_length) {
-  if ([str length] != expected_length) {
+  if (str.length != expected_length) {
     return false;
   }
 
-  for (int i = 0; i < [str length]; i++) {
+  for (int i = 0; i < str.length; i++) {
     if (!isxdigit([str characterAtIndex:i])) {
       return false;
     }

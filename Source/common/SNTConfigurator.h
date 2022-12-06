@@ -241,12 +241,12 @@
 ///
 ///  If set, contains the path to the filesystem monitoring config plist.
 ///
-///  @note: This property is KVO compliant, but should only be read once at santad startup.
+///  @note: This property is KVO compliant, but is only read once at santad startup.
 ///
-@property(readonly, nonatomic) NSString *filesystemMonitoringPlistPath;
+@property(readonly, nonatomic) NSString *filesystemMonitoringPolicyPlistPath;
 
 ///
-///  If filesystemMonitoringPlistPath is set, filesystemMonitoringPolicyUpdateIntervalSec
+///  If filesystemMonitoringPolicyPlistPath is set, filesystemMonitoringPolicyUpdateIntervalSec
 ///  sets the number of seconds between times that the configuration file is re-read.
 ///  Defaults to 600 seconds (10 minutes)
 ///

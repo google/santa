@@ -41,7 +41,7 @@ using santa::common::Unit;
 using santa::santad::data_layer::WatchItemPolicy;
 using santa::santad::event_providers::endpoint_security::Message;
 
-extern const char *kBadCertHash;
+extern NSString *kBadCertHash;
 
 using PathTargets = std::pair<std::string_view, std::variant<std::string_view, std::string, Unit>>;
 extern PathTargets GetPathTargets(const Message &msg);
@@ -111,7 +111,7 @@ extern es_auth_result_t CombinePolicyResults(es_auth_result_t result1, es_auth_r
     .andReturn(self.cscMock);
 
   got = [accessClient getCertificateHash:&esFile1];
-  want = @(kBadCertHash);
+  want = kBadCertHash;
 
   XCTAssertEqualObjects(got, want);
 

@@ -52,7 +52,7 @@ using santa::santad::logs::endpoint_security::Logger;
 // `std::string` is used.
 using PathTargets = std::pair<std::string_view, std::variant<std::string_view, std::string, Unit>>;
 
-const char *kBadCertHash = "BAD_CERT_HASH";
+NSString *kBadCertHash = @"BAD_CERT_HASH";
 
 static inline std::string_view PathView(const es_file_t *esFile) {
   return std::string_view(esFile->path.data, esFile->path.length);
@@ -88,10 +88,9 @@ PathTargets GetPathTargets(const Message &msg) {
                 Path(msg->event.rename.destination.new_path.dir,
                      msg->event.rename.destination.new_path.filename)};
       } else {
-        [NSException raise:@"Unexpected destination type"
-                    format:@"Rename event encountered with unexpected destination type: %d",
-                           msg->event.rename.destination_type];
-        exit(EXIT_FAILURE);
+        LOGW(@"Unexpected destination type for rename event: %d. Ignoring destination.",
+             msg->event.rename.destination_type);
+        return {PathView(msg->event.rename.source), Unit{}};
       }
     case ES_EVENT_TYPE_AUTH_UNLINK: return {PathView(msg->event.unlink.target), Unit{}};
     case ES_EVENT_TYPE_AUTH_CLONE:
@@ -112,11 +111,6 @@ PathTargets GetPathTargets(const Message &msg) {
         format:@"File Access Authorizer client does not handle event: %d", msg->event_type];
       exit(EXIT_FAILURE);
   }
-}
-
-template <>
-uint64_t SantaCacheHasher<SantaVnode>(SantaVnode const &t) {
-  return (SantaCacheHasher<uint64_t>(t.fsid) << 1) ^ SantaCacheHasher<uint64_t>(t.fileid);
 }
 
 @interface SNTEndpointSecurityFileAccessAuthorizer ()
@@ -167,7 +161,7 @@ uint64_t SantaCacheHasher<SantaVnode>(SantaVnode const &t) {
       result = cd.certSHA256;
     } else {
       // If the cached decision didn't exist, try a manual lookup
-      NSError *e = nil;
+      NSError *e;
       MOLCodesignChecker *csInfo =
         [[MOLCodesignChecker alloc] initWithBinaryPath:@(esFile->path.data) error:&e];
       if (!e) {
@@ -175,17 +169,15 @@ uint64_t SantaCacheHasher<SantaVnode>(SantaVnode const &t) {
       }
     }
 
-    if (!result) {
+    if (!result.length) {
       // If result is still nil, there isn't much recourse... We will
       // assume that this error isn't transient and set a terminal value
       // in the cache to prevent continous attempts to lookup cert hash.
-      result = @(kBadCertHash);
+      result = kBadCertHash;
     }
 
     // Finally, add the result to the cache to prevent future lookups
-    if (result) {
-      self->_certHashCache.set(vnodeID, result);
-    }
+    self->_certHashCache.set(vnodeID, result);
   }
 
   return result;
@@ -291,7 +283,7 @@ uint64_t SantaCacheHasher<SantaVnode>(SantaVnode const &t) {
     return ES_AUTH_RESULT_ALLOW;
   } else {
     // TODO(xyz): Write to TTY like in exec controller?
-    // TODO(xyz): Need new config iitem for custom message in UI
+    // TODO(xyz): Need new config item for custom message in UI
     return ES_AUTH_RESULT_DENY;
   }
 }

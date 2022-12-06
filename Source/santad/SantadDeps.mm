@@ -118,7 +118,7 @@ std::unique_ptr<SantadDeps> SantadDeps::Create(SNTConfigurator *configurator,
   }
 
   std::shared_ptr<::WatchItems> watch_items =
-    WatchItems::Create([configurator filesystemMonitoringPlistPath],
+    WatchItems::Create([configurator filesystemMonitoringPolicyPlistPath],
                        [configurator filesystemMonitoringPolicyUpdateIntervalSec]);
 
   std::shared_ptr<::Metrics> metrics =

@@ -93,7 +93,8 @@ static NSString *const kSpoolDirectoryFileSizeThresholdKB = @"SpoolDirectoryFile
 static NSString *const kSpoolDirectorySizeThresholdMB = @"SpoolDirectorySizeThresholdMB";
 static NSString *const kSpoolDirectoryEventMaxFlushTimeSec = @"SpoolDirectoryEventMaxFlushTimeSec";
 
-static NSString *const kFilesystemMonitoringPlistPath = @"FilesystemMonitoringPlistPath";
+static NSString *const kFilesystemMonitoringPolicyPlistPath =
+  @"FilesystemMonitoringPolicyPlistPath";
 static NSString *const kFilesystemMonitoringPolicyUpdateIntervalSec =
   @"FilesystemMonitoringPolicyUpdateIntervalSec";
 
@@ -208,7 +209,7 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
       kSpoolDirectoryFileSizeThresholdKB : number,
       kSpoolDirectorySizeThresholdMB : number,
       kSpoolDirectoryEventMaxFlushTimeSec : number,
-      kFilesystemMonitoringPlistPath : string,
+      kFilesystemMonitoringPolicyPlistPath : string,
       kFilesystemMonitoringPolicyUpdateIntervalSec : number,
       kEnableMachineIDDecoration : number,
       kEnableForkAndExitLogging : number,
@@ -413,7 +414,7 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
   return [self configStateSet];
 }
 
-+ (NSSet *)keyPathsForValuesAffectingkFilesystemMonitoringPlistPath {
++ (NSSet *)keyPathsForValuesAffectingFilesystemMonitoringPolicyPlistPath {
   return [self configStateSet];
 }
 
@@ -799,8 +800,8 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
            : 15.0;
 }
 
-- (NSString *)filesystemMonitoringPlistPath {
-  return self.configState[kFilesystemMonitoringPlistPath];
+- (NSString *)filesystemMonitoringPolicyPlistPath {
+  return self.configState[kFilesystemMonitoringPolicyPlistPath];
 }
 
 - (uint32_t)filesystemMonitoringPolicyUpdateIntervalSec {
