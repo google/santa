@@ -301,7 +301,7 @@ void SantadMain(std::shared_ptr<EndpointSecurityAPI> esapi, std::shared_ptr<Logg
   [authorizer_client enable];
   [tamper_client enable];
   // [access_authorizer_client enable];
-  (void)access_authorizer_client; // NOTE: For now, not enabling
+  (void)access_authorizer_client;  // NOTE: For now, not enabling
   [monitor_client enable];
   [device_client enable];
 
