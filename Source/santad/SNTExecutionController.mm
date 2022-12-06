@@ -24,6 +24,7 @@
 
 #import <MOLCodesignChecker/MOLCodesignChecker.h>
 
+#include "Source/common/BranchPrediction.h"
 #import "Source/common/SNTBlockMessage.h"
 #import "Source/common/SNTCachedDecision.h"
 #import "Source/common/SNTCommonEnums.h"
@@ -34,6 +35,7 @@
 #import "Source/common/SNTMetricSet.h"
 #import "Source/common/SNTRule.h"
 #import "Source/common/SNTStoredEvent.h"
+#include "Source/common/SantaVnode.h"
 #import "Source/santad/DataLayer/SNTEventTable.h"
 #import "Source/santad/DataLayer/SNTRuleTable.h"
 #import "Source/santad/SNTDecisionCache.h"
@@ -156,7 +158,7 @@ static NSString *const kPrinterProxyPostMonterey =
   return YES;
 }
 
-- (void)validateExecEvent:(const Message &)esMsg postAction:(bool (^)(santa_action_t))postAction {
+- (void)validateExecEvent:(const Message &)esMsg postAction:(bool (^)(SNTAction))postAction {
   if (unlikely(esMsg->event_type != ES_EVENT_TYPE_AUTH_EXEC)) {
     // Programming error. Bail.
     LOGE(@"Attempt to validate non-EXEC event. Event type: %d", esMsg->event_type);
@@ -176,12 +178,12 @@ static NSString *const kPrinterProxyPostMonterey =
     if (config.failClosed && config.clientMode == SNTClientModeLockdown) {
       LOGE(@"Failed to read file %@: %@ and denying action", @(targetProc->executable->path.data),
            fileInfoError.localizedDescription);
-      postAction(ACTION_RESPOND_DENY);
+      postAction(SNTActionRespondDeny);
       [self.events incrementForFieldValues:@[ (NSString *)kDenyNoFileInfo ]];
     } else {
       LOGE(@"Failed to read file %@: %@ but allowing action", @(targetProc->executable->path.data),
            fileInfoError.localizedDescription);
-      postAction(ACTION_RESPOND_ALLOW);
+      postAction(SNTActionRespondAllow);
       [self.events incrementForFieldValues:@[ (NSString *)kAllowNoFileInfo ]];
     }
     return;
@@ -189,7 +191,7 @@ static NSString *const kPrinterProxyPostMonterey =
 
   // PrinterProxy workaround, see description above the method for more details.
   if ([self printerProxyWorkaround:binInfo]) {
-    postAction(ACTION_RESPOND_DENY);
+    postAction(SNTActionRespondDeny);
     [self.events incrementForFieldValues:@[ (NSString *)kBlockPrinterWorkaround ]];
     return;
   }
@@ -199,22 +201,21 @@ static NSString *const kPrinterProxyPostMonterey =
 
   SNTCachedDecision *cd = [self.policyProcessor decisionForFileInfo:binInfo];
 
-  cd.vnodeId = {.fsid = (uint64_t)targetProc->executable->stat.st_dev,
-                .fileid = targetProc->executable->stat.st_ino};
+  cd.vnodeId = SantaVnode::VnodeForFile(targetProc->executable);
 
   // Formulate an initial action from the decision.
-  santa_action_t action =
-    (SNTEventStateAllow & cd.decision) ? ACTION_RESPOND_ALLOW : ACTION_RESPOND_DENY;
+  SNTAction action =
+    (SNTEventStateAllow & cd.decision) ? SNTActionRespondAllow : SNTActionRespondDeny;
 
   // Save decision details for logging the execution later.  For transitive rules, we also use
   // the shasum stored in the decision details to update the rule's timestamp whenever an
   // ACTION_NOTIFY_EXEC message related to the transitive rule is received.
   [[SNTDecisionCache sharedCache] cacheDecision:cd];
 
-  // Upgrade the action to ACTION_RESPOND_ALLOW_COMPILER when appropriate, because we want the
+  // Upgrade the action to SNTActionRespondAllowCompiler when appropriate, because we want the
   // kernel to track this information in its decision cache.
   if (cd.decision == SNTEventStateAllowCompiler) {
-    action = ACTION_RESPOND_ALLOW_COMPILER;
+    action = SNTActionRespondAllowCompiler;
   }
 
   // Respond with the decision.
@@ -272,7 +273,7 @@ static NSString *const kPrinterProxyPostMonterey =
     }
 
     // If binary was blocked, do the needful
-    if (action != ACTION_RESPOND_ALLOW && action != ACTION_RESPOND_ALLOW_COMPILER) {
+    if (action != SNTActionRespondAllow && action != SNTActionRespondAllowCompiler) {
       if (config.enableBundles && binInfo.bundle) {
         // If the binary is part of a bundle, find and hash all the related binaries in the bundle.
         // Let the GUI know hashing is needed. Once the hashing is complete the GUI will send a

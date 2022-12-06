@@ -92,10 +92,16 @@ static NSString *const silencedNotificationsKey = @"SilencedNotifications";
 }
 
 - (void)queueMessage:(SNTMessageWindowController *)pendingMsg {
-  NSString *messageHash = [pendingMsg messageHash];
+  // Post a distributed notification, regardless of queue state.
+  [self postDistributedNotification:pendingMsg];
+
+  // If GUI is in silent mode or if there's already a notification queued for
+  // this message, don't do anything else.
+  if ([SNTConfigurator configurator].enableSilentMode) return;
   if ([self notificationAlreadyQueued:pendingMsg]) return;
 
-  // See if this message is silenced.
+  // See if this message has been user-silenced.
+  NSString *messageHash = [pendingMsg messageHash];
   NSUserDefaults *ud = [NSUserDefaults standardUserDefaults];
   NSDate *silenceDate = [ud objectForKey:silencedNotificationsKey][messageHash];
   if ([silenceDate isKindOfClass:[NSDate class]]) {
@@ -114,7 +120,6 @@ static NSString *const silencedNotificationsKey = @"SilencedNotifications";
 
   pendingMsg.delegate = self;
   [self.pendingNotifications addObject:pendingMsg];
-  [self postDistributedNotification:pendingMsg];
 
   if (!self.currentWindowController) {
     [self showQueuedWindow];
@@ -315,8 +320,6 @@ static NSString *const silencedNotificationsKey = @"SilencedNotifications";
 }
 
 - (void)postBlockNotification:(SNTStoredEvent *)event withCustomMessage:(NSString *)message {
-  if ([SNTConfigurator configurator].enableSilentMode) return;
-
   if (!event) {
     LOGI(@"Error: Missing event object in message received from daemon!");
     return;
@@ -329,8 +332,6 @@ static NSString *const silencedNotificationsKey = @"SilencedNotifications";
 }
 
 - (void)postUSBBlockNotification:(SNTDeviceEvent *)event withCustomMessage:(NSString *)message {
-  if ([SNTConfigurator configurator].enableSilentMode) return;
-
   if (!event) {
     LOGI(@"Error: Missing event object in message received from daemon!");
     return;

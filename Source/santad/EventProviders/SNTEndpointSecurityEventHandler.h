@@ -14,16 +14,16 @@
 
 #import <Foundation/Foundation.h>
 
-#include "Source/common/SNTCommon.h"
-
 #include "Source/santad/EventProviders/EndpointSecurity/Message.h"
+#include "Source/santad/Metrics.h"
 
 // Protocol that all subclasses of `SNTEndpointSecurityClient` should adhere to.
 @protocol SNTEndpointSecurityEventHandler <NSObject>
 
 // Called Synchronously and serially for each message provided by the
 // EndpointSecurity framework.
-- (void)handleMessage:(santa::santad::event_providers::endpoint_security::Message &&)esMsg;
+- (void)handleMessage:(santa::santad::event_providers::endpoint_security::Message &&)esMsg
+   recordEventMetrics:(void (^)(santa::santad::EventDisposition))recordEventMetrics;
 
 // Called after Santa has finished initializing itself.
 // This is an optimal place to subscribe to ES events

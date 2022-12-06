@@ -18,11 +18,15 @@
 #include <os/base.h>
 #include <stdlib.h>
 
+#import "Source/common/BranchPrediction.h"
+#import "Source/common/SNTCommonEnums.h"
 #import "Source/common/SNTLogging.h"
 #include "Source/santad/EventProviders/AuthResultCache.h"
 #include "Source/santad/EventProviders/EndpointSecurity/EnrichedTypes.h"
 #include "Source/santad/EventProviders/EndpointSecurity/Message.h"
+#include "Source/santad/Metrics.h"
 
+using santa::santad::EventDisposition;
 using santa::santad::event_providers::AuthResultCache;
 using santa::santad::event_providers::endpoint_security::EndpointSecurityAPI;
 using santa::santad::event_providers::endpoint_security::Message;
@@ -37,10 +41,13 @@ using santa::santad::event_providers::endpoint_security::Message;
 }
 
 - (instancetype)initWithESAPI:(std::shared_ptr<EndpointSecurityAPI>)esApi
+                      metrics:(std::shared_ptr<santa::santad::Metrics>)metrics
                execController:(SNTExecutionController *)execController
            compilerController:(SNTCompilerController *)compilerController
               authResultCache:(std::shared_ptr<AuthResultCache>)authResultCache {
-  self = [super initWithESAPI:std::move(esApi)];
+  self = [super initWithESAPI:std::move(esApi)
+                      metrics:std::move(metrics)
+                    processor:santa::santad::Processor::kAuthorizer];
   if (self) {
     _execController = execController;
     _compilerController = compilerController;
@@ -51,19 +58,23 @@ using santa::santad::event_providers::endpoint_security::Message;
   return self;
 }
 
+- (NSString *)description {
+  return @"Authorizer";
+}
+
 - (void)processMessage:(const Message &)msg {
   const es_file_t *targetFile = msg->event.exec.target->executable;
 
   while (true) {
-    santa_action_t returnAction = self->_authResultCache->CheckCache(targetFile);
+    SNTAction returnAction = self->_authResultCache->CheckCache(targetFile);
     if (RESPONSE_VALID(returnAction)) {
       es_auth_result_t authResult = ES_AUTH_RESULT_DENY;
 
       switch (returnAction) {
-        case ACTION_RESPOND_ALLOW_COMPILER:
+        case SNTActionRespondAllowCompiler:
           [self.compilerController setProcess:msg->event.exec.target->audit_token isCompiler:true];
           OS_FALLTHROUGH;
-        case ACTION_RESPOND_ALLOW: authResult = ES_AUTH_RESULT_ALLOW; break;
+        case SNTActionRespondAllow: authResult = ES_AUTH_RESULT_ALLOW; break;
         default: break;
       }
 
@@ -71,7 +82,7 @@ using santa::santad::event_providers::endpoint_security::Message;
               withAuthResult:authResult
                    cacheable:(authResult == ES_AUTH_RESULT_ALLOW)];
       return;
-    } else if (returnAction == ACTION_REQUEST_BINARY) {
+    } else if (returnAction == SNTActionRequestBinary) {
       // TODO(mlw): Add a metric here to observe how ofthen this happens in practice.
       // TODO(mlw): Look into caching a `Deferred<value>` to better prevent
       // raciness of multiple threads checking the cache simultaneously.
@@ -82,15 +93,16 @@ using santa::santad::event_providers::endpoint_security::Message;
     }
   }
 
-  self->_authResultCache->AddToCache(targetFile, ACTION_REQUEST_BINARY);
+  self->_authResultCache->AddToCache(targetFile, SNTActionRequestBinary);
 
   [self.execController validateExecEvent:msg
-                              postAction:^bool(santa_action_t action) {
+                              postAction:^bool(SNTAction action) {
                                 return [self postAction:action forMessage:msg];
                               }];
 }
 
-- (void)handleMessage:(Message &&)esMsg {
+- (void)handleMessage:(Message &&)esMsg
+   recordEventMetrics:(void (^)(EventDisposition))recordEventMetrics {
   if (unlikely(esMsg->event_type != ES_EVENT_TYPE_AUTH_EXEC)) {
     // This is a programming error
     LOGE(@"Atteempting to authorize a non-exec event");
@@ -99,29 +111,31 @@ using santa::santad::event_providers::endpoint_security::Message;
   }
 
   if (![self.execController synchronousShouldProcessExecEvent:esMsg]) {
-    [self postAction:ACTION_RESPOND_DENY forMessage:esMsg];
+    [self postAction:SNTActionRespondDeny forMessage:esMsg];
+    recordEventMetrics(EventDisposition::kDropped);
     return;
   }
 
   [self processMessage:std::move(esMsg)
                handler:^(const Message &msg) {
                  [self processMessage:msg];
+                 recordEventMetrics(EventDisposition::kProcessed);
                }];
 }
 
-- (bool)postAction:(santa_action_t)action forMessage:(const Message &)esMsg {
+- (bool)postAction:(SNTAction)action forMessage:(const Message &)esMsg {
   es_auth_result_t authResult;
 
   switch (action) {
-    case ACTION_RESPOND_ALLOW_COMPILER:
+    case SNTActionRespondAllowCompiler:
       [self.compilerController setProcess:esMsg->event.exec.target->audit_token isCompiler:true];
       OS_FALLTHROUGH;
-    case ACTION_RESPOND_ALLOW: authResult = ES_AUTH_RESULT_ALLOW; break;
-    case ACTION_RESPOND_DENY: authResult = ES_AUTH_RESULT_DENY; break;
+    case SNTActionRespondAllow: authResult = ES_AUTH_RESULT_ALLOW; break;
+    case SNTActionRespondDeny: authResult = ES_AUTH_RESULT_DENY; break;
     default:
       // This is a programming error. Bail.
       LOGE(@"Invalid action for postAction, exiting.");
-      [NSException raise:@"Invalid post action" format:@"Invalid post action: %d", action];
+      [NSException raise:@"Invalid post action" format:@"Invalid post action: %ld", action];
   }
 
   self->_authResultCache->AddToCache(esMsg->event.exec.target->executable, action);

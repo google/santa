@@ -19,7 +19,9 @@
 
 #import "Source/common/SNTLogging.h"
 #include "Source/santad/EventProviders/EndpointSecurity/Message.h"
+#include "Source/santad/Metrics.h"
 
+using santa::santad::EventDisposition;
 using santa::santad::event_providers::endpoint_security::EndpointSecurityAPI;
 using santa::santad::event_providers::endpoint_security::Message;
 using santa::santad::logs::endpoint_security::Logger;
@@ -31,8 +33,11 @@ static constexpr std::string_view kSantaKextIdentifier = "com.google.santa-drive
 }
 
 - (instancetype)initWithESAPI:(std::shared_ptr<EndpointSecurityAPI>)esApi
+                      metrics:(std::shared_ptr<santa::santad::Metrics>)metrics
                        logger:(std::shared_ptr<Logger>)logger {
-  self = [super initWithESAPI:std::move(esApi)];
+  self = [super initWithESAPI:std::move(esApi)
+                      metrics:std::move(metrics)
+                    processor:santa::santad::Processor::kTamperResistance];
   if (self) {
     _logger = logger;
 
@@ -41,54 +46,51 @@ static constexpr std::string_view kSantaKextIdentifier = "com.google.santa-drive
   return self;
 }
 
-- (void)handleMessage:(Message &&)esMsg {
+- (NSString *)description {
+  return @"Tamper Resistance";
+}
+
+- (void)handleMessage:(Message &&)esMsg
+   recordEventMetrics:(void (^)(EventDisposition))recordEventMetrics {
+  es_auth_result_t result = ES_AUTH_RESULT_ALLOW;
   switch (esMsg->event_type) {
     case ES_EVENT_TYPE_AUTH_UNLINK: {
       if ([SNTEndpointSecurityTamperResistance
             isDatabasePath:esMsg->event.unlink.target->path.data]) {
-        // Do not cache so that each attempt to remove santa is logged
-        [self respondToMessage:esMsg withAuthResult:ES_AUTH_RESULT_DENY cacheable:false];
+        result = ES_AUTH_RESULT_DENY;
         LOGW(@"Preventing attempt to delete Santa databases!");
-      } else {
-        [self respondToMessage:esMsg withAuthResult:ES_AUTH_RESULT_ALLOW cacheable:true];
       }
-
-      return;
+      break;
     }
 
     case ES_EVENT_TYPE_AUTH_RENAME: {
       if ([SNTEndpointSecurityTamperResistance
             isDatabasePath:esMsg->event.rename.source->path.data]) {
-        // Do not cache so that each attempt to remove santa is logged
-        [self respondToMessage:esMsg withAuthResult:ES_AUTH_RESULT_DENY cacheable:false];
+        result = ES_AUTH_RESULT_DENY;
         LOGW(@"Preventing attempt to rename Santa databases!");
-        return;
+        break;
       }
 
       if (esMsg->event.rename.destination_type == ES_DESTINATION_TYPE_EXISTING_FILE) {
         if ([SNTEndpointSecurityTamperResistance
               isDatabasePath:esMsg->event.rename.destination.existing_file->path.data]) {
-          [self respondToMessage:esMsg withAuthResult:ES_AUTH_RESULT_DENY cacheable:false];
+          result = ES_AUTH_RESULT_DENY;
           LOGW(@"Preventing attempt to overwrite Santa databases!");
-          return;
+          break;
         }
       }
 
-      // If we get to here, no more reasons to deny the event, so allow it
-      [self respondToMessage:esMsg withAuthResult:ES_AUTH_RESULT_ALLOW cacheable:true];
-      return;
+      break;
     }
 
     case ES_EVENT_TYPE_AUTH_KEXTLOAD: {
       // TODO(mlw): Since we don't package the kext anymore, we should consider removing this.
       // TODO(mlw): Consider logging when kext loads are attempted.
-      es_auth_result_t res = ES_AUTH_RESULT_ALLOW;
       if (strcmp(esMsg->event.kextload.identifier.data, kSantaKextIdentifier.data()) == 0) {
+        result = ES_AUTH_RESULT_DENY;
         LOGW(@"Preventing attempt to load Santa kext!");
-        res = ES_AUTH_RESULT_DENY;
       }
-      [self respondToMessage:esMsg withAuthResult:res cacheable:true];
-      return;
+      break;
     }
 
     default:
@@ -96,6 +98,13 @@ static constexpr std::string_view kSantaKextIdentifier = "com.google.santa-drive
       [NSException raise:@"Invalid event type"
                   format:@"Invalid tamper resistance event type: %d", esMsg->event_type];
   }
+
+  // Do not cache denied operations so that each tamper attempt is logged
+  [self respondToMessage:esMsg withAuthResult:result cacheable:result == ES_AUTH_RESULT_ALLOW];
+
+  // For this client, a processed event is one that was found to be violating anti-tamper policy
+  recordEventMetrics(result == ES_AUTH_RESULT_DENY ? EventDisposition::kProcessed
+                                                   : EventDisposition::kDropped);
 }
 
 - (void)enable {

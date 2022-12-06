@@ -13,17 +13,86 @@
 ///    limitations under the License.
 
 #include "Source/santad/Metrics.h"
+#include <EndpointSecurity/ESTypes.h>
 
 #include <memory>
 
 #import "Source/common/SNTLogging.h"
-#import "Source/common/SNTMetricSet.h"
 #import "Source/common/SNTXPCMetricServiceInterface.h"
 #import "Source/santad/SNTApplicationCoreMetrics.h"
 
+static const NSString *kProcessorAuthorizer = @"Authorizer";
+static const NSString *kProcessorDeviceManager = @"DeviceManager";
+static const NSString *kProcessorRecorder = @"Recorder";
+static const NSString *kProcessorTamperResistance = @"TamperResistance";
+
+static const NSString *kEventTypeAuthExec = @"AuthExec";
+static const NSString *kEventTypeAuthKextload = @"AuthKextload";
+static const NSString *kEventTypeAuthMount = @"AuthMount";
+static const NSString *kEventTypeAuthRemount = @"AuthRemount";
+static const NSString *kEventTypeAuthRename = @"AuthRename";
+static const NSString *kEventTypeAuthUnlink = @"AuthUnlink";
+static const NSString *kEventTypeNotifyClose = @"NotifyClose";
+static const NSString *kEventTypeNotifyExchangedata = @"NotifyExchangedata";
+static const NSString *kEventTypeNotifyExec = @"NotifyExec";
+static const NSString *kEventTypeNotifyExit = @"NotifyExit";
+static const NSString *kEventTypeNotifyFork = @"NotifyFork";
+static const NSString *kEventTypeNotifyLink = @"NotifyLink";
+static const NSString *kEventTypeNotifyRename = @"NotifyRename";
+static const NSString *kEventTypeNotifyUnlink = @"NotifyUnlink";
+static const NSString *kEventTypeNotifyUnmount = @"NotifyUnmount";
+
+static const NSString *kEventDispositionDropped = @"Dropped";
+static const NSString *kEventDispositionProcessed = @"Processed";
+
 namespace santa::santad {
 
-std::shared_ptr<Metrics> Metrics::Create(uint64_t interval) {
+const NSString *ProcessorToString(Processor processor) {
+  switch (processor) {
+    case Processor::kAuthorizer: return kProcessorAuthorizer;
+    case Processor::kDeviceManager: return kProcessorDeviceManager;
+    case Processor::kRecorder: return kProcessorRecorder;
+    case Processor::kTamperResistance: return kProcessorTamperResistance;
+    default:
+      [NSException raise:@"Invalid processor" format:@"Unknown processor value: %d", processor];
+      return nil;
+  }
+}
+
+const NSString *EventTypeToString(es_event_type_t eventType) {
+  switch (eventType) {
+    case ES_EVENT_TYPE_AUTH_EXEC: return kEventTypeAuthExec;
+    case ES_EVENT_TYPE_AUTH_KEXTLOAD: return kEventTypeAuthKextload;
+    case ES_EVENT_TYPE_AUTH_MOUNT: return kEventTypeAuthMount;
+    case ES_EVENT_TYPE_AUTH_REMOUNT: return kEventTypeAuthRemount;
+    case ES_EVENT_TYPE_AUTH_RENAME: return kEventTypeAuthRename;
+    case ES_EVENT_TYPE_AUTH_UNLINK: return kEventTypeAuthUnlink;
+    case ES_EVENT_TYPE_NOTIFY_CLOSE: return kEventTypeNotifyClose;
+    case ES_EVENT_TYPE_NOTIFY_EXCHANGEDATA: return kEventTypeNotifyExchangedata;
+    case ES_EVENT_TYPE_NOTIFY_EXEC: return kEventTypeNotifyExec;
+    case ES_EVENT_TYPE_NOTIFY_EXIT: return kEventTypeNotifyExit;
+    case ES_EVENT_TYPE_NOTIFY_FORK: return kEventTypeNotifyFork;
+    case ES_EVENT_TYPE_NOTIFY_LINK: return kEventTypeNotifyLink;
+    case ES_EVENT_TYPE_NOTIFY_RENAME: return kEventTypeNotifyRename;
+    case ES_EVENT_TYPE_NOTIFY_UNLINK: return kEventTypeNotifyUnlink;
+    case ES_EVENT_TYPE_NOTIFY_UNMOUNT: return kEventTypeNotifyUnmount;
+    default:
+      [NSException raise:@"Invalid event type" format:@"Invalid event type: %d", eventType];
+      return nil;
+  }
+}
+
+const NSString *EventDispositionToString(EventDisposition d) {
+  switch (d) {
+    case EventDisposition::kDropped: return kEventDispositionDropped;
+    case EventDisposition::kProcessed: return kEventDispositionProcessed;
+    default:
+      [NSException raise:@"Invalid disposition" format:@"Unknown disposition value: %d", d];
+      return nil;
+  }
+}
+
+std::shared_ptr<Metrics> Metrics::Create(SNTMetricSet *metricSet, uint64_t interval) {
   dispatch_queue_t q = dispatch_queue_create("com.google.santa.santametricsservice.q",
                                              DISPATCH_QUEUE_SERIAL_WITH_AUTORELEASE_POOL);
 
@@ -31,8 +100,18 @@ std::shared_ptr<Metrics> Metrics::Create(uint64_t interval) {
 
   MOLXPCConnection *metrics_connection = [SNTXPCMetricServiceInterface configuredConnection];
 
-  std::shared_ptr<Metrics> metrics =
-    std::make_shared<Metrics>(metrics_connection, q, timer_source, interval, ^() {
+  SNTMetricInt64Gauge *event_processing_times =
+    [metricSet int64GaugeWithName:@"/santa/event_processing_time"
+                       fieldNames:@[ @"Processor", @"Event" ]
+                         helpText:@"Time to process various event types by each processor"];
+
+  SNTMetricCounter *event_counts =
+    [metricSet counterWithName:@"/santa/event_count"
+                    fieldNames:@[ @"Processor", @"Event", @"Disposition" ]
+                      helpText:@"Events received and processed by each processor"];
+
+  std::shared_ptr<Metrics> metrics = std::make_shared<Metrics>(
+    metrics_connection, q, timer_source, interval, event_processing_times, event_counts, ^() {
       SNTRegisterCoreMetrics();
       [metrics_connection resume];
     });
@@ -45,7 +124,7 @@ std::shared_ptr<Metrics> Metrics::Create(uint64_t interval) {
     }
 
     [[shared_metrics->metrics_connection_ remoteObjectProxy]
-      exportForMonitoring:[[SNTMetricSet sharedInstance] export]];
+      exportForMonitoring:[metricSet export]];
   });
 
   return metrics;
@@ -53,14 +132,20 @@ std::shared_ptr<Metrics> Metrics::Create(uint64_t interval) {
 
 Metrics::Metrics(MOLXPCConnection *metrics_connection, dispatch_queue_t q,
                  dispatch_source_t timer_source, uint64_t interval,
+                 SNTMetricInt64Gauge *event_processing_times, SNTMetricCounter *event_counts,
                  void (^run_on_first_start)(void))
     : q_(q),
       timer_source_(timer_source),
       interval_(interval),
+      event_processing_times_(event_processing_times),
+      event_counts_(event_counts),
       running_(false),
       run_on_first_start_(run_on_first_start) {
   metrics_connection_ = metrics_connection;
   SetInterval(interval_);
+
+  events_q_ = dispatch_queue_create("com.google.santa.santametricsservice.events_q",
+                                    DISPATCH_QUEUE_SERIAL_WITH_AUTORELEASE_POOL);
 }
 
 Metrics::~Metrics() {
@@ -108,6 +193,18 @@ void Metrics::StopPoll() {
     } else {
       LOGW(@"Attempted to stop metrics poll while already stopped");
     }
+  });
+}
+
+void Metrics::SetEventMetrics(Processor processor, es_event_type_t event_type,
+                              EventDisposition event_disposition, int64_t nanos) {
+  dispatch_async(events_q_, ^{
+    NSString *processorName = (NSString *)ProcessorToString(processor);
+    NSString *eventName = (NSString *)EventTypeToString(event_type);
+    NSString *disposition = (NSString *)EventDispositionToString(event_disposition);
+
+    [event_counts_ incrementForFieldValues:@[ processorName, eventName, disposition ]];
+    [event_processing_times_ set:nanos forFieldValues:@[ processorName, eventName ]];
   });
 }
 

@@ -16,7 +16,6 @@
 
 #include "Source/santad/EventProviders/EndpointSecurity/Message.h"
 
-#import "Source/common/SNTCommon.h"
 #import "Source/common/SNTCommonEnums.h"
 
 const static NSString *kBlockBinary = @"BlockBinary";
@@ -66,7 +65,7 @@ const static NSString *kBlockLongPath = @"BlockLongPath";
 ///  @param postAction The block invoked with the desired response result.
 ///
 - (void)validateExecEvent:(const santa::santad::event_providers::endpoint_security::Message &)esMsg
-               postAction:(bool (^)(santa_action_t))postAction;
+               postAction:(bool (^)(SNTAction))postAction;
 
 ///
 /// Perform light, synchronous processing of the given event to decide whether or not the

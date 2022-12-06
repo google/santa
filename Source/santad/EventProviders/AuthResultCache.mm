@@ -19,37 +19,25 @@
 #include <time.h>
 
 #import "Source/common/SNTLogging.h"
+#import "Source/common/SantaVnodeHash.h"
 #include "Source/santad/EventProviders/EndpointSecurity/Client.h"
 
 using santa::santad::event_providers::endpoint_security::Client;
 using santa::santad::event_providers::endpoint_security::EndpointSecurityAPI;
 
-template <>
-uint64_t SantaCacheHasher<santa_vnode_id_t>(santa_vnode_id_t const &t) {
-  return (SantaCacheHasher<uint64_t>(t.fsid) << 1) ^ SantaCacheHasher<uint64_t>(t.fileid);
-}
-
 namespace santa::santad::event_providers {
-
-static inline santa_vnode_id_t VnodeForFile(const es_file_t *es_file) {
-  return santa_vnode_id_t{
-    .fsid = (uint64_t)es_file->stat.st_dev,
-    .fileid = es_file->stat.st_ino,
-  };
-}
 
 static inline uint64_t GetCurrentUptime() {
   return clock_gettime_nsec_np(CLOCK_MONOTONIC);
 }
 
 // Decision is stored in upper 8 bits, timestamp in remaining 56.
-static inline uint64_t CacheableAction(santa_action_t action,
-                                       uint64_t timestamp = GetCurrentUptime()) {
+static inline uint64_t CacheableAction(SNTAction action, uint64_t timestamp = GetCurrentUptime()) {
   return ((uint64_t)action << 56) | (timestamp & 0xFFFFFFFFFFFFFF);
 }
 
-static inline santa_action_t ActionFromCachedValue(uint64_t cachedValue) {
-  return (santa_action_t)(cachedValue >> 56);
+static inline SNTAction ActionFromCachedValue(uint64_t cachedValue) {
+  return (SNTAction)(cachedValue >> 56);
 }
 
 static inline uint64_t TimestampFromCachedValue(uint64_t cachedValue) {
@@ -59,8 +47,8 @@ static inline uint64_t TimestampFromCachedValue(uint64_t cachedValue) {
 AuthResultCache::AuthResultCache(std::shared_ptr<EndpointSecurityAPI> esapi,
                                  uint64_t cache_deny_time_ms)
     : esapi_(esapi), cache_deny_time_ns_(cache_deny_time_ms * NSEC_PER_MSEC) {
-  root_cache_ = new SantaCache<santa_vnode_id_t, uint64_t>();
-  nonroot_cache_ = new SantaCache<santa_vnode_id_t, uint64_t>();
+  root_cache_ = new SantaCache<SantaVnode, uint64_t>();
+  nonroot_cache_ = new SantaCache<SantaVnode, uint64_t>();
 
   struct stat sb;
   if (stat("/", &sb) == 0) {
@@ -78,17 +66,17 @@ AuthResultCache::~AuthResultCache() {
   delete nonroot_cache_;
 }
 
-bool AuthResultCache::AddToCache(const es_file_t *es_file, santa_action_t decision) {
-  santa_vnode_id_t vnode_id = VnodeForFile(es_file);
-  SantaCache<santa_vnode_id_t, uint64_t> *cache = CacheForVnodeID(vnode_id);
+bool AuthResultCache::AddToCache(const es_file_t *es_file, SNTAction decision) {
+  SantaVnode vnode_id = SantaVnode::VnodeForFile(es_file);
+  SantaCache<SantaVnode, uint64_t> *cache = CacheForVnodeID(vnode_id);
   switch (decision) {
-    case ACTION_REQUEST_BINARY:
-      return cache->set(vnode_id, CacheableAction(ACTION_REQUEST_BINARY, 0), 0);
-    case ACTION_RESPOND_ALLOW: OS_FALLTHROUGH;
-    case ACTION_RESPOND_ALLOW_COMPILER: OS_FALLTHROUGH;
-    case ACTION_RESPOND_DENY:
+    case SNTActionRequestBinary:
+      return cache->set(vnode_id, CacheableAction(SNTActionRequestBinary, 0), 0);
+    case SNTActionRespondAllow: OS_FALLTHROUGH;
+    case SNTActionRespondAllowCompiler: OS_FALLTHROUGH;
+    case SNTActionRespondDeny:
       return cache->set(vnode_id, CacheableAction(decision),
-                        CacheableAction(ACTION_REQUEST_BINARY, 0));
+                        CacheableAction(SNTActionRequestBinary, 0));
     default:
       // This is a programming error. Bail.
       LOGE(@"Invalid cache value, exiting.");
@@ -97,37 +85,36 @@ bool AuthResultCache::AddToCache(const es_file_t *es_file, santa_action_t decisi
 }
 
 void AuthResultCache::RemoveFromCache(const es_file_t *es_file) {
-  santa_vnode_id_t vnode_id = VnodeForFile(es_file);
+  SantaVnode vnode_id = SantaVnode::VnodeForFile(es_file);
   CacheForVnodeID(vnode_id)->remove(vnode_id);
 }
 
-santa_action_t AuthResultCache::CheckCache(const es_file_t *es_file) {
-  return CheckCache(VnodeForFile(es_file));
+SNTAction AuthResultCache::CheckCache(const es_file_t *es_file) {
+  return CheckCache(SantaVnode::VnodeForFile(es_file));
 }
 
-santa_action_t AuthResultCache::CheckCache(santa_vnode_id_t vnode_id) {
-  SantaCache<santa_vnode_id_t, uint64_t> *cache = CacheForVnodeID(vnode_id);
+SNTAction AuthResultCache::CheckCache(SantaVnode vnode_id) {
+  SantaCache<SantaVnode, uint64_t> *cache = CacheForVnodeID(vnode_id);
 
   uint64_t cached_val = cache->get(vnode_id);
   if (cached_val == 0) {
-    return ACTION_UNSET;
+    return SNTActionUnset;
   }
 
-  santa_action_t result = ActionFromCachedValue(cached_val);
+  SNTAction result = ActionFromCachedValue(cached_val);
 
-  if (result == ACTION_RESPOND_DENY) {
+  if (result == SNTActionRespondDeny) {
     uint64_t expiry_time = TimestampFromCachedValue(cached_val) + cache_deny_time_ns_;
     if (expiry_time < GetCurrentUptime()) {
       cache->remove(vnode_id);
-      return ACTION_UNSET;
+      return SNTActionUnset;
     }
   }
 
   return result;
 }
 
-SantaCache<santa_vnode_id_t, uint64_t> *AuthResultCache::CacheForVnodeID(
-  santa_vnode_id_t vnode_id) {
+SantaCache<SantaVnode, uint64_t> *AuthResultCache::CacheForVnodeID(SantaVnode vnode_id) {
   return (vnode_id.fsid == root_devno_ || root_devno_ == 0) ? root_cache_ : nonroot_cache_;
 }
 

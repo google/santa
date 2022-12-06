@@ -28,7 +28,9 @@
 #import "Source/common/SNTDeviceEvent.h"
 #import "Source/common/SNTLogging.h"
 #include "Source/santad/EventProviders/EndpointSecurity/Message.h"
+#include "Source/santad/Metrics.h"
 
+using santa::santad::EventDisposition;
 using santa::santad::event_providers::AuthResultCache;
 using santa::santad::event_providers::FlushCacheMode;
 using santa::santad::event_providers::endpoint_security::EndpointSecurityAPI;
@@ -135,9 +137,12 @@ NS_ASSUME_NONNULL_BEGIN
 }
 
 - (instancetype)initWithESAPI:(std::shared_ptr<EndpointSecurityAPI>)esApi
+                      metrics:(std::shared_ptr<santa::santad::Metrics>)metrics
                        logger:(std::shared_ptr<Logger>)logger
               authResultCache:(std::shared_ptr<AuthResultCache>)authResultCache {
-  self = [super initWithESAPI:std::move(esApi)];
+  self = [super initWithESAPI:std::move(esApi)
+                      metrics:std::move(metrics)
+                    processor:santa::santad::Processor::kDeviceManager];
   if (self) {
     _logger = logger;
     _authResultCache = authResultCache;
@@ -161,16 +166,23 @@ NS_ASSUME_NONNULL_BEGIN
   self->_logger->LogDiskDisappeared(props);
 }
 
-- (void)handleMessage:(Message &&)esMsg {
+- (NSString *)description {
+  return @"Device Manager";
+}
+
+- (void)handleMessage:(Message &&)esMsg
+   recordEventMetrics:(void (^)(EventDisposition))recordEventMetrics {
   if (!self.blockUSBMount) {
     // TODO: We should also unsubscribe from events when this isn't set, but
     // this is generally a low-volume event type.
     [self respondToMessage:esMsg withAuthResult:ES_AUTH_RESULT_ALLOW cacheable:false];
+    recordEventMetrics(EventDisposition::kDropped);
     return;
   }
 
   if (esMsg->event_type == ES_EVENT_TYPE_NOTIFY_UNMOUNT) {
     self->_authResultCache->FlushCache(FlushCacheMode::kNonRootOnly);
+    recordEventMetrics(EventDisposition::kProcessed);
     return;
   }
 
@@ -178,6 +190,7 @@ NS_ASSUME_NONNULL_BEGIN
                handler:^(const Message &msg) {
                  es_auth_result_t result = [self handleAuthMount:msg];
                  [self respondToMessage:msg withAuthResult:result cacheable:false];
+                 recordEventMetrics(EventDisposition::kProcessed);
                }];
 }
 
@@ -224,6 +237,7 @@ NS_ASSUME_NONNULL_BEGIN
   BOOL isEjectable = [diskInfo[(__bridge NSString *)kDADiskDescriptionMediaEjectableKey] boolValue];
   NSString *protocol = diskInfo[(__bridge NSString *)kDADiskDescriptionDeviceProtocolKey];
   BOOL isUSB = [protocol isEqualToString:@"USB"];
+  BOOL isSecureDigital = [protocol isEqualToString:@"Secure Digital"];
   BOOL isVirtual = [protocol isEqualToString:@"Virtual Interface"];
 
   NSString *kind = diskInfo[(__bridge NSString *)kDADiskDescriptionMediaKindKey];
@@ -236,8 +250,8 @@ NS_ASSUME_NONNULL_BEGIN
 
   // If the device is internal or virtual we are okay with the operation. We
   // also are okay with operations for devices that are non-removal as long as
-  // they are NOT a USB device.
-  if (isInternal || isVirtual || (!isRemovable && !isEjectable && !isUSB)) {
+  // they are NOT a USB device, or an SD Card.
+  if (isInternal || isVirtual || (!isRemovable && !isEjectable && !isUSB && !isSecureDigital)) {
     return ES_AUTH_RESULT_ALLOW;
   }
 

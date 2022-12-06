@@ -21,6 +21,7 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 #include <sys/mount.h>
+#include <cstddef>
 
 #include <memory>
 #include <set>
@@ -33,7 +34,9 @@
 #include "Source/santad/EventProviders/EndpointSecurity/Message.h"
 #include "Source/santad/EventProviders/EndpointSecurity/MockEndpointSecurityAPI.h"
 #import "Source/santad/EventProviders/SNTEndpointSecurityDeviceManager.h"
+#include "Source/santad/Metrics.h"
 
+using santa::santad::EventDisposition;
 using santa::santad::event_providers::AuthResultCache;
 using santa::santad::event_providers::FlushCacheMode;
 using santa::santad::event_providers::endpoint_security::Message;
@@ -106,6 +109,7 @@ class MockAuthResultCache : public AuthResultCache {
 
   SNTEndpointSecurityDeviceManager *deviceManager =
     [[SNTEndpointSecurityDeviceManager alloc] initWithESAPI:mockESApi
+                                                    metrics:nullptr
                                                      logger:nullptr
                                             authResultCache:nullptr];
 
@@ -120,8 +124,8 @@ class MockAuthResultCache : public AuthResultCache {
   es_file_t file = MakeESFile("foo");
   es_process_t proc = MakeESProcess(&file);
   es_message_t esMsg = MakeESMessage(eventType, &proc, ActionType::Auth, 6000);
-  // Need a pointer to esMsg to capture in blocks below.
-  es_message_t *heapESMsg = &esMsg;
+
+  dispatch_semaphore_t semaMetrics = dispatch_semaphore_create(0);
 
   __block int retainCount = 0;
   dispatch_semaphore_t sema = dispatch_semaphore_create(0);
@@ -136,7 +140,6 @@ class MockAuthResultCache : public AuthResultCache {
   });
   EXPECT_CALL(*mockESApi, RetainMessage).WillRepeatedly(^{
     retainCount++;
-    return heapESMsg;
   });
 
   if (eventType == ES_EVENT_TYPE_AUTH_MOUNT) {
@@ -157,13 +160,17 @@ class MockAuthResultCache : public AuthResultCache {
       return true;
     }));
 
-  [deviceManager handleMessage:Message(mockESApi, &esMsg)];
+  [deviceManager handleMessage:Message(mockESApi, &esMsg)
+            recordEventMetrics:^(EventDisposition d) {
+              XCTAssertEqual(d, deviceManager.blockUSBMount ? EventDisposition::kProcessed
+                                                            : EventDisposition::kDropped);
+              dispatch_semaphore_signal(semaMetrics);
+            }];
 
   [self waitForExpectations:@[ mountExpectation ] timeout:60.0];
 
-  XCTAssertEqual(0,
-                 dispatch_semaphore_wait(sema, dispatch_time(DISPATCH_TIME_NOW, 5 * NSEC_PER_SEC)),
-                 "Failed waiting for message to be processed...");
+  XCTAssertSemaTrue(semaMetrics, 5, "Metrics not recorded within expected window");
+  XCTAssertSemaTrue(sema, 5, "Failed waiting for message to be processed...");
 
   [partialDeviceManager stopMocking];
   XCTBubbleMockVerifyAndClearExpectations(mockESApi.get());
@@ -303,21 +310,30 @@ class MockAuthResultCache : public AuthResultCache {
   es_process_t proc = MakeESProcess(&file);
   es_message_t esMsg = MakeESMessage(ES_EVENT_TYPE_NOTIFY_UNMOUNT, &proc);
 
+  dispatch_semaphore_t semaMetrics = dispatch_semaphore_create(0);
+
   auto mockESApi = std::make_shared<MockEndpointSecurityAPI>();
   mockESApi->SetExpectationsESNewClient();
-  mockESApi->SetExpectationsRetainReleaseMessage(&esMsg);
+  mockESApi->SetExpectationsRetainReleaseMessage();
 
   auto mockAuthCache = std::make_shared<MockAuthResultCache>(nullptr);
   EXPECT_CALL(*mockAuthCache, FlushCache);
 
   SNTEndpointSecurityDeviceManager *deviceManager =
     [[SNTEndpointSecurityDeviceManager alloc] initWithESAPI:mockESApi
+                                                    metrics:nullptr
                                                      logger:nullptr
                                             authResultCache:mockAuthCache];
 
   deviceManager.blockUSBMount = YES;
 
-  [deviceManager handleMessage:Message(mockESApi, &esMsg)];
+  [deviceManager handleMessage:Message(mockESApi, &esMsg)
+            recordEventMetrics:^(EventDisposition d) {
+              XCTAssertEqual(d, EventDisposition::kProcessed);
+              dispatch_semaphore_signal(semaMetrics);
+            }];
+
+  XCTAssertSemaTrue(semaMetrics, 5, "Metrics not recorded within expected window");
 
   XCTBubbleMockVerifyAndClearExpectations(mockESApi.get());
   XCTBubbleMockVerifyAndClearExpectations(mockAuthCache.get());
@@ -332,7 +348,10 @@ class MockAuthResultCache : public AuthResultCache {
   };
   auto mockESApi = std::make_shared<MockEndpointSecurityAPI>();
 
-  id deviceClient = [[SNTEndpointSecurityDeviceManager alloc] initWithESAPI:mockESApi];
+  id deviceClient = [[SNTEndpointSecurityDeviceManager alloc]
+    initWithESAPI:mockESApi
+          metrics:nullptr
+        processor:santa::santad::Processor::kDeviceManager];
 
   EXPECT_CALL(*mockESApi, ClearCache(testing::_))
     .After(EXPECT_CALL(*mockESApi, Subscribe(testing::_, expectedEventSubs))

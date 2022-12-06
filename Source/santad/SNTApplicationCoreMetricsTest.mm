@@ -54,23 +54,23 @@
 
   // Fix up CPU usage
   metric = mutableMetrics[@"metrics"][@"/proc/cpu_usage"];
-  XCTAssertTrue([metric[@"fields"][@"mode"][0][@"data"] isKindOfClass:[@0.63002 class]],
+  XCTAssertTrue(CFNumberIsFloatType((__bridge CFNumberRef)metric[@"fields"][@"mode"][0][@"data"]),
                 @"/proc/cpu_usage has non-floating point data");
   metric[@"fields"][@"mode"][0][@"data"] = @0.63002;
-  XCTAssertTrue([metric[@"fields"][@"mode"][1][@"data"] isKindOfClass:[@0.29522 class]],
+  XCTAssertTrue(CFNumberIsFloatType((__bridge CFNumberRef)metric[@"fields"][@"mode"][1][@"data"]),
                 @"/proc/cpu_usage has non-floating point data");
   metric[@"fields"][@"mode"][1][@"data"] = @0.29522;
   metric = mutableMetrics[@"metrics"][@"/proc/cpu_usage"];
 
   // Fix up Memory (resident size)
   metric = mutableMetrics[@"metrics"][@"/proc/memory/resident_size"];
-  XCTAssertTrue([metric[@"fields"][@""][0][@"data"] isKindOfClass:[@22097920 class]]);
+  XCTAssertFalse(CFNumberIsFloatType((__bridge CFNumberRef)metric[@"fields"][@""][0][@"data"]));
   metric[@"fields"][@""][0][@"data"] = @22097920;
   mutableMetrics[@"metrics"][@"/proc/memory/resident_size"] = metric;
 
   // Fix up Memory (virtual size)
   metric = mutableMetrics[@"metrics"][@"/proc/memory/virtual_size"];
-  XCTAssertTrue([metric[@"fields"][@""][0][@"data"] isKindOfClass:[@35634683904 class]]);
+  XCTAssertFalse(CFNumberIsFloatType((__bridge CFNumberRef)metric[@"fields"][@""][0][@"data"]));
   metric[@"fields"][@""][0][@"data"] = @35634683904;
   mutableMetrics[@"metrics"][@"/proc/memory/virtual_size"] = metric;
 

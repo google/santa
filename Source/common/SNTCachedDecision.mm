@@ -1,3 +1,4 @@
+
 /// Copyright 2015-2022 Google Inc. All rights reserved.
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,8 +20,7 @@
 - (instancetype)initWithEndpointSecurityFile:(const es_file_t *)esFile {
   self = [super init];
   if (self) {
-    _vnodeId.fsid = (uint64_t)esFile->stat.st_dev;
-    _vnodeId.fileid = esFile->stat.st_ino;
+    _vnodeId = SantaVnode::VnodeForFile(esFile);
   }
   return self;
 }

@@ -33,8 +33,8 @@ class EndpointSecurityAPI : public std::enable_shared_from_this<EndpointSecurity
 
   virtual bool Subscribe(const Client &client, const std::set<es_event_type_t> &);
 
-  virtual es_message_t *RetainMessage(const es_message_t *msg);
-  virtual void ReleaseMessage(es_message_t *msg);
+  virtual void RetainMessage(const es_message_t *msg);
+  virtual void ReleaseMessage(const es_message_t *msg);
 
   virtual bool RespondAuthResult(const Client &client, const Message &msg, es_auth_result_t result,
                                  bool cache);

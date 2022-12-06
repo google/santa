@@ -35,6 +35,27 @@ objc_library(
 )
 
 objc_library(
+    name = "WatchItems",
+    srcs = ["DataLayer/WatchItems.mm"],
+    hdrs = ["DataLayer/WatchItems.h"],
+    deps = [
+        "//Source/common:PrefixTree",
+        "//Source/common:SNTLogging",
+    ],
+)
+
+santa_unit_test(
+    name = "WatchItemsTest",
+    srcs = ["DataLayer/WatchItemsTest.mm"],
+    deps = [
+        ":WatchItems",
+        "//Source/common:PrefixTree",
+        "//Source/common:TestUtils",
+        "@OCMock",
+    ],
+)
+
+objc_library(
     name = "SNTEventTable",
     srcs = ["DataLayer/SNTEventTable.m"],
     hdrs = ["DataLayer/SNTEventTable.h"],
@@ -62,19 +83,20 @@ objc_library(
     hdrs = ["EventProviders/SNTEndpointSecurityEventHandler.h"],
     deps = [
         ":EndpointSecurityMessage",
-        "//Source/common:SNTCommon",
+        ":Metrics",
     ],
 )
 
 objc_library(
     name = "SNTApplicationCoreMetrics",
-    srcs = ["SNTApplicationCoreMetrics.m"],
+    srcs = ["SNTApplicationCoreMetrics.mm"],
     hdrs = ["SNTApplicationCoreMetrics.h"],
     deps = [
         "//Source/common:SNTCommonEnums",
         "//Source/common:SNTConfigurator",
         "//Source/common:SNTMetricSet",
         "//Source/common:SNTSystemInfo",
+        "//Source/common:SystemResources",
     ],
 )
 
@@ -117,7 +139,6 @@ objc_library(
         ":SNTDecisionCache",
         ":SNTRuleTable",
         "//Source/common:SNTCachedDecision",
-        "//Source/common:SNTCommon",
         "//Source/common:SNTCommonEnums",
         "//Source/common:SNTFileInfo",
         "//Source/common:SNTLogging",
@@ -160,7 +181,6 @@ objc_library(
     hdrs = ["SNTPolicyProcessor.h"],
     deps = [
         "//Source/common:SNTCachedDecision",
-        "//Source/common:SNTCommon",
         "//Source/common:SNTCommonEnums",
         "//Source/common:SNTConfigurator",
         "//Source/common:SNTFileInfo",
@@ -185,9 +205,9 @@ objc_library(
         ":SNTPolicyProcessor",
         ":SNTRuleTable",
         ":SNTSyncdQueue",
+        "//Source/common:BranchPrediction",
         "//Source/common:SNTBlockMessage",
         "//Source/common:SNTCachedDecision",
-        "//Source/common:SNTCommon",
         "//Source/common:SNTCommonEnums",
         "//Source/common:SNTConfigurator",
         "//Source/common:SNTDropRootPrivs",
@@ -196,6 +216,7 @@ objc_library(
         "//Source/common:SNTMetricSet",
         "//Source/common:SNTRule",
         "//Source/common:SNTStoredEvent",
+        "//Source/common:SantaVnode",
         "@MOLCodesignChecker",
     ],
 )
@@ -208,6 +229,7 @@ objc_library(
         ":EndpointSecurityClient",
         ":EndpointSecurityEnrichedTypes",
         ":EndpointSecurityMessage",
+        ":Metrics",
     ],
 )
 
@@ -220,10 +242,12 @@ objc_library(
         ":EndpointSecurityClient",
         ":EndpointSecurityEnrichedTypes",
         ":EndpointSecurityMessage",
+        ":Metrics",
         ":SNTEndpointSecurityClientBase",
-        "//Source/common:SNTCommon",
+        "//Source/common:BranchPrediction",
         "//Source/common:SNTConfigurator",
         "//Source/common:SNTLogging",
+        "//Source/common:SystemResources",
     ],
 )
 
@@ -238,11 +262,13 @@ objc_library(
         ":EndpointSecurityEnricher",
         ":EndpointSecurityLogger",
         ":EndpointSecurityMessage",
+        ":Metrics",
         ":SNTCompilerController",
         ":SNTEndpointSecurityClient",
         ":SNTEndpointSecurityEventHandler",
+        "//Source/common:PrefixTree",
         "//Source/common:SNTLogging",
-        "//Source/common:SNTPrefixTree",
+        "//Source/common:Unit",
     ],
 )
 
@@ -254,6 +280,7 @@ objc_library(
         ":EndpointSecurityAPI",
         ":EndpointSecurityLogger",
         ":EndpointSecurityMessage",
+        ":Metrics",
         ":SNTEndpointSecurityClient",
         ":SNTEndpointSecurityEventHandler",
         "//Source/common:SNTLogging",
@@ -270,10 +297,13 @@ objc_library(
         ":EndpointSecurityEnrichedTypes",
         ":EndpointSecurityEnricher",
         ":EndpointSecurityMessage",
+        ":Metrics",
         ":SNTCompilerController",
         ":SNTEndpointSecurityClient",
         ":SNTEndpointSecurityEventHandler",
         ":SNTExecutionController",
+        "//Source/common:BranchPrediction",
+        "//Source/common:SNTCommonEnums",
         "//Source/common:SNTLogging",
     ],
 )
@@ -287,6 +317,7 @@ objc_library(
         ":EndpointSecurityAPI",
         ":EndpointSecurityLogger",
         ":EndpointSecurityMessage",
+        ":Metrics",
         ":SNTEndpointSecurityClient",
         ":SNTEndpointSecurityEventHandler",
         "//Source/common:SNTDeviceEvent",
@@ -301,9 +332,11 @@ objc_library(
     deps = [
         ":EndpointSecurityAPI",
         ":EndpointSecurityClient",
-        "//Source/common:SNTCommon",
+        "//Source/common:SNTCommonEnums",
         "//Source/common:SNTLogging",
         "//Source/common:SantaCache",
+        "//Source/common:SantaVnode",
+        "//Source/common:SantaVnodeHash",
     ],
 )
 
@@ -564,13 +597,14 @@ objc_library(
         ":SNTExecutionController",
         ":SNTNotificationQueue",
         ":SNTSyncdQueue",
+        "//Source/common:PrefixTree",
         "//Source/common:SNTCommonEnums",
         "//Source/common:SNTConfigurator",
         "//Source/common:SNTKVOManager",
         "//Source/common:SNTLogging",
-        "//Source/common:SNTPrefixTree",
         "//Source/common:SNTXPCNotifierInterface",
         "//Source/common:SNTXPCSyncServiceInterface",
+        "//Source/common:Unit",
         "@MOLXPCConnection",
     ],
 )
@@ -592,11 +626,13 @@ objc_library(
         ":SNTNotificationQueue",
         ":SNTRuleTable",
         ":SNTSyncdQueue",
+        "//Source/common:PrefixTree",
         "//Source/common:SNTConfigurator",
         "//Source/common:SNTLogging",
-        "//Source/common:SNTPrefixTree",
+        "//Source/common:SNTMetricSet",
         "//Source/common:SNTXPCControlInterface",
         "//Source/common:SNTXPCUnprivilegedControlInterface",
+        "//Source/common:Unit",
         "@MOLXPCConnection",
     ],
 )
@@ -617,7 +653,9 @@ objc_library(
         ":SantadDeps",
         "//Source/common:SNTConfigurator",
         "//Source/common:SNTLogging",
+        "//Source/common:SNTMetricSet",
         "//Source/common:SNTXPCControlInterface",
+        "//Source/common:SystemResources",
     ],
 )
 
@@ -637,7 +675,7 @@ macos_bundle(
     }),
     infoplists = ["Info.plist"],
     linkopts = ["-execute"],
-    minimum_os_version = "10.15",
+    minimum_os_version = "11.0",
     provisioning_profile = select({
         "//:adhoc_build": None,
         "//conditions:default": "//profiles:daemon_dev",
@@ -716,7 +754,7 @@ santa_unit_test(
     data = [
         "//Source/santad/testdata:binaryrules_testdata",
     ],
-    minimum_os_version = "10.15",
+    minimum_os_version = "11.0",
     sdk_dylibs = [
         "bsm",
         "EndpointSecurity",
@@ -727,6 +765,7 @@ santa_unit_test(
     tags = ["exclusive"],
     deps = [
         ":EndpointSecurityMessage",
+        ":Metrics",
         ":MockEndpointSecurityAPI",
         ":SNTDatabaseController",
         ":SNTEndpointSecurityAuthorizer",
@@ -743,9 +782,9 @@ santa_unit_test(
 santa_unit_test(
     name = "SNTApplicationCoreMetricsTest",
     srcs = [
-        "SNTApplicationCoreMetricsTest.m",
+        "SNTApplicationCoreMetricsTest.mm",
     ],
-    minimum_os_version = "10.15",
+    minimum_os_version = "11.0",
     deps = [
         ":SNTApplicationCoreMetrics",
         "//Source/common:SNTCommonEnums",
@@ -842,7 +881,7 @@ santa_unit_test(
     deps = [
         ":AuthResultCache",
         ":MockEndpointSecurityAPI",
-        "//Source/common:SNTCommon",
+        "//Source/common:SantaVnode",
         "//Source/common:TestUtils",
         "@OCMock",
         "@com_google_googletest//:gtest",
@@ -955,6 +994,8 @@ santa_unit_test(
     srcs = ["MetricsTest.mm"],
     deps = [
         ":Metrics",
+        "//Source/common:SNTMetricSet",
+        "//Source/common:TestUtils",
         "@OCMock",
     ],
 )
@@ -970,7 +1011,6 @@ santa_unit_test(
         ":SNTDecisionCache",
         ":SNTRuleTable",
         "//Source/common:SNTCachedDecision",
-        "//Source/common:SNTCommon",
         "//Source/common:SNTCommonEnums",
         "//Source/common:SNTRule",
         "//Source/common:TestUtils",
@@ -989,6 +1029,7 @@ santa_unit_test(
         ":EndpointSecurityClient",
         ":EndpointSecurityEnrichedTypes",
         ":EndpointSecurityMessage",
+        ":Metrics",
         ":MockEndpointSecurityAPI",
         ":SNTEndpointSecurityClient",
         "//Source/common:TestUtils",
@@ -1013,7 +1054,6 @@ santa_unit_test(
         ":SNTExecutionController",
         ":SNTRuleTable",
         "//Source/common:SNTCachedDecision",
-        "//Source/common:SNTCommon",
         "//Source/common:SNTCommonEnums",
         "//Source/common:SNTConfigurator",
         "//Source/common:SNTFileInfo",
@@ -1036,10 +1076,12 @@ santa_unit_test(
         ":AuthResultCache",
         ":EndpointSecurityClient",
         ":EndpointSecurityMessage",
+        ":Metrics",
         ":MockEndpointSecurityAPI",
         ":SNTCompilerController",
         ":SNTEndpointSecurityAuthorizer",
         ":SNTExecutionController",
+        "//Source/common:SNTCommonEnums",
         "//Source/common:TestUtils",
         "@OCMock",
         "@com_google_googletest//:gtest",
@@ -1055,6 +1097,7 @@ santa_unit_test(
     deps = [
         ":EndpointSecurityClient",
         ":EndpointSecurityMessage",
+        ":Metrics",
         ":MockEndpointSecurityAPI",
         ":SNTEndpointSecurityTamperResistance",
         "//Source/common:SNTLogging",
@@ -1077,10 +1120,13 @@ santa_unit_test(
         ":EndpointSecurityEnricher",
         ":EndpointSecurityLogger",
         ":EndpointSecurityMessage",
+        ":Metrics",
         ":MockEndpointSecurityAPI",
         ":SNTCompilerController",
         ":SNTEndpointSecurityRecorder",
+        "//Source/common:PrefixTree",
         "//Source/common:TestUtils",
+        "//Source/common:Unit",
         "@OCMock",
         "@com_google_googletest//:gtest",
     ],
@@ -1098,6 +1144,7 @@ santa_unit_test(
         ":DiskArbitrationTestLib",
         ":EndpointSecurityClient",
         ":EndpointSecurityMessage",
+        ":Metrics",
         ":MockEndpointSecurityAPI",
         ":SNTEndpointSecurityDeviceManager",
         "//Source/common:SNTConfigurator",
@@ -1156,6 +1203,7 @@ test_suite(
         ":SNTExecutionControllerTest",
         ":SNTRuleTableTest",
         ":SantadTest",
+        ":WatchItemsTest",
         "//Source/santad/Logs/EndpointSecurity/Writers/FSSpool:fsspool_test",
     ],
     visibility = ["//:santa_package_group"],

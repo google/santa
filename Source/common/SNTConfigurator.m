@@ -172,7 +172,7 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
       kRemountUSBModeKey : array,
       kEnablePageZeroProtectionKey : number,
       kEnableBadSignatureProtectionKey : number,
-      kEnableSilentModeKey : string,
+      kEnableSilentModeKey : number,
       kAboutTextKey : string,
       kMoreInfoURLKey : string,
       kEventDetailURLKey : string,
@@ -770,7 +770,7 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
 - (NSUInteger)spoolDirectoryFileSizeThresholdKB {
   return self.configState[kSpoolDirectoryFileSizeThresholdKB]
            ? [self.configState[kSpoolDirectoryFileSizeThresholdKB] unsignedIntegerValue]
-           : 100;
+           : 250;
 }
 
 - (NSUInteger)spoolDirectorySizeThresholdMB {
@@ -782,7 +782,7 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
 - (float)spoolDirectoryEventMaxFlushTimeSec {
   return self.configState[kSpoolDirectoryEventMaxFlushTimeSec]
            ? [self.configState[kSpoolDirectoryEventMaxFlushTimeSec] floatValue]
-           : 10.0;
+           : 15.0;
 }
 
 - (BOOL)enableMachineIDDecoration {

@@ -18,6 +18,7 @@
 #import "Source/santad/EventProviders/AuthResultCache.h"
 #import "Source/santad/EventProviders/SNTEndpointSecurityClient.h"
 #import "Source/santad/EventProviders/SNTEndpointSecurityEventHandler.h"
+#include "Source/santad/Metrics.h"
 #import "Source/santad/SNTCompilerController.h"
 #import "Source/santad/SNTExecutionController.h"
 
@@ -30,6 +31,7 @@
        initWithESAPI:
          (std::shared_ptr<santa::santad::event_providers::endpoint_security::EndpointSecurityAPI>)
            esApi
+             metrics:(std::shared_ptr<santa::santad::Metrics>)metrics
       execController:(SNTExecutionController *)execController
   compilerController:(SNTCompilerController *)compilerController
      authResultCache:

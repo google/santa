@@ -15,8 +15,8 @@
 #import <EndpointSecurity/EndpointSecurity.h>
 #import <Foundation/Foundation.h>
 
-#import "Source/common/SNTCommon.h"
 #import "Source/common/SNTCommonEnums.h"
+#import "Source/common/SantaVnode.h"
 
 @class MOLCertificate;
 
@@ -27,7 +27,7 @@
 
 - (instancetype)initWithEndpointSecurityFile:(const es_file_t *)esFile;
 
-@property santa_vnode_id_t vnodeId;
+@property SantaVnode vnodeId;
 @property SNTEventState decision;
 @property NSString *decisionExtra;
 @property NSString *sha256;

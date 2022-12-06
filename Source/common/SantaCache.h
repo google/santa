@@ -25,7 +25,7 @@
 #include <cstdlib>
 #include <cstring>
 
-#include "Source/common/SNTCommon.h"
+#include "Source/common/BranchPrediction.h"
 
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wdeprecated-declarations"

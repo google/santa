@@ -15,28 +15,49 @@
 #ifndef SANTA__SANTAD__METRICS_H
 #define SANTA__SANTAD__METRICS_H
 
+#include <EndpointSecurity/EndpointSecurity.h>
+#import <Foundation/Foundation.h>
 #import <MOLXPCConnection/MOLXPCConnection.h>
 #include <dispatch/dispatch.h>
 
 #include <memory>
+
+#import "Source/common/SNTMetricSet.h"
 
 namespace santa::santad {
 
 // Test interface - forward declaration
 class MetricsPeer;
 
+enum class EventDisposition {
+  kProcessed = 0,
+  kDropped,
+};
+
+enum class Processor {
+  kUnknown = 0,
+  kAuthorizer,
+  kDeviceManager,
+  kRecorder,
+  kTamperResistance,
+};
+
 class Metrics : public std::enable_shared_from_this<Metrics> {
  public:
-  static std::shared_ptr<Metrics> Create(uint64_t interval);
+  static std::shared_ptr<Metrics> Create(SNTMetricSet *metricSet, uint64_t interval);
 
   Metrics(MOLXPCConnection *metrics_connection, dispatch_queue_t q, dispatch_source_t timer_source,
-          uint64_t interval, void (^run_on_first_start)(void));
+          uint64_t interval, SNTMetricInt64Gauge *event_processing_times,
+          SNTMetricCounter *event_counts, void (^run_on_first_start)(void));
 
   ~Metrics();
 
   void StartPoll();
   void StopPoll();
   void SetInterval(uint64_t interval);
+
+  void SetEventMetrics(Processor processor, es_event_type_t event_type,
+                       EventDisposition disposition, int64_t nanos);
 
   friend class santa::santad::MetricsPeer;
 
@@ -45,11 +66,17 @@ class Metrics : public std::enable_shared_from_this<Metrics> {
   dispatch_queue_t q_;
   dispatch_source_t timer_source_;
   uint64_t interval_;
+  SNTMetricInt64Gauge *event_processing_times_;
+  SNTMetricCounter *event_counts_;
   // Tracks whether or not the timer_source should be running.
   // This helps manage dispatch source state to ensure the source is not
   // suspended, resumed, or cancelled while in an improper state.
   bool running_;
   void (^run_on_first_start_)(void);
+
+  // Separate queue used for setting event metrics
+  // Mitigate issues where capturing metrics could be blocked on exporting
+  dispatch_queue_t events_q_;
 };
 
 }  // namespace santa::santad

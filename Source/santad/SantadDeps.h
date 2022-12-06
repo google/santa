@@ -15,13 +15,15 @@
 #ifndef SANTA__SANTAD__SANTAD_DEPS_H
 #define SANTA__SANTAD__SANTAD_DEPS_H
 
-#include <Foundation/Foundation.h>
+#import <Foundation/Foundation.h>
 #import <MOLXPCConnection/MOLXPCConnection.h>
 
 #include <memory>
 
+#include "Source/common/PrefixTree.h"
 #include "Source/common/SNTConfigurator.h"
-#include "Source/common/SNTPrefixTree.h"
+#import "Source/common/SNTMetricSet.h"
+#include "Source/common/Unit.h"
 #include "Source/santad/EventProviders/AuthResultCache.h"
 #include "Source/santad/EventProviders/EndpointSecurity/EndpointSecurityAPI.h"
 #include "Source/santad/EventProviders/EndpointSecurity/Enricher.h"
@@ -36,19 +38,29 @@ namespace santa::santad {
 
 class SantadDeps {
  public:
-  static std::unique_ptr<SantadDeps> Create(SNTConfigurator *configurator);
+  static std::unique_ptr<SantadDeps> Create(SNTConfigurator *configurator,
+                                            SNTMetricSet *metric_set);
 
   SantadDeps(
-    NSUInteger metric_export_interval,
-    std::shared_ptr<santa::santad::event_providers::endpoint_security::EndpointSecurityAPI> esapi,
-    std::unique_ptr<santa::santad::logs::endpoint_security::Logger> logger,
-    MOLXPCConnection *control_connection, SNTCompilerController *compiler_controller,
-    SNTNotificationQueue *notifier_queue, SNTSyncdQueue *syncd_queue,
-    SNTExecutionController *exec_controller, std::shared_ptr<SNTPrefixTree> prefix_tree);
+      std::shared_ptr<santa::santad::event_providers::endpoint_security::
+                          EndpointSecurityAPI>
+          esapi,
+      std::shared_ptr<santa::santad::Metrics> metrics,
+      std::unique_ptr<santa::santad::logs::endpoint_security::Logger> logger,
+      MOLXPCConnection *control_connection,
+      SNTCompilerController *compiler_controller,
+      SNTNotificationQueue *notifier_queue, SNTSyncdQueue *syncd_queue,
+      SNTExecutionController *exec_controller,
+      std::shared_ptr<santa::common::PrefixTree<santa::common::Unit>>
+          prefix_tree);
 
-  std::shared_ptr<santa::santad::event_providers::AuthResultCache> AuthResultCache();
-  std::shared_ptr<santa::santad::event_providers::endpoint_security::Enricher> Enricher();
-  std::shared_ptr<santa::santad::event_providers::endpoint_security::EndpointSecurityAPI> ESAPI();
+  std::shared_ptr<santa::santad::event_providers::AuthResultCache>
+  AuthResultCache();
+  std::shared_ptr<santa::santad::event_providers::endpoint_security::Enricher>
+  Enricher();
+  std::shared_ptr<
+      santa::santad::event_providers::endpoint_security::EndpointSecurityAPI>
+  ESAPI();
   std::shared_ptr<santa::santad::logs::endpoint_security::Logger> Logger();
   std::shared_ptr<santa::santad::Metrics> Metrics();
   MOLXPCConnection *ControlConnection();
@@ -56,21 +68,25 @@ class SantadDeps {
   SNTNotificationQueue *NotifierQueue();
   SNTSyncdQueue *SyncdQueue();
   SNTExecutionController *ExecController();
-  std::shared_ptr<SNTPrefixTree> PrefixTree();
+  std::shared_ptr<santa::common::PrefixTree<santa::common::Unit>> PrefixTree();
 
  private:
-  std::shared_ptr<santa::santad::event_providers::endpoint_security::EndpointSecurityAPI> esapi_;
+  std::shared_ptr<
+      santa::santad::event_providers::endpoint_security::EndpointSecurityAPI>
+      esapi_;
   std::shared_ptr<santa::santad::logs::endpoint_security::Logger> logger_;
   std::shared_ptr<santa::santad::Metrics> metrics_;
-  std::shared_ptr<santa::santad::event_providers::endpoint_security::Enricher> enricher_;
-  std::shared_ptr<santa::santad::event_providers::AuthResultCache> auth_result_cache_;
+  std::shared_ptr<santa::santad::event_providers::endpoint_security::Enricher>
+      enricher_;
+  std::shared_ptr<santa::santad::event_providers::AuthResultCache>
+      auth_result_cache_;
 
   MOLXPCConnection *control_connection_;
   SNTCompilerController *compiler_controller_;
   SNTNotificationQueue *notifier_queue_;
   SNTSyncdQueue *syncd_queue_;
   SNTExecutionController *exec_controller_;
-  std::shared_ptr<SNTPrefixTree> prefix_tree_;
+  std::shared_ptr<santa::common::PrefixTree<santa::common::Unit>> prefix_tree_;
 };
 
 }  // namespace santa::santad

@@ -33,28 +33,12 @@ Client EndpointSecurityAPI::NewClient(void (^message_handler)(es_client_t *, Mes
   return Client(client, res);
 }
 
-es_message_t *EndpointSecurityAPI::RetainMessage(const es_message_t *msg) {
-  if (@available(macOS 11.0, *)) {
-    es_retain_message(msg);
-    es_message_t *nonconst = const_cast<es_message_t *>(msg);
-    return nonconst;
-  } else {
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wdeprecated-declarations"
-    return es_copy_message(msg);
-#pragma clang diagnostic pop
-  }
+void EndpointSecurityAPI::RetainMessage(const es_message_t *msg) {
+  es_retain_message(msg);
 }
 
-void EndpointSecurityAPI::ReleaseMessage(es_message_t *msg) {
-  if (@available(macOS 11.0, *)) {
-    es_release_message(msg);
-  } else {
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wdeprecated-declarations"
-    return es_free_message(msg);
-#pragma clang diagnostic pop
-  }
+void EndpointSecurityAPI::ReleaseMessage(const es_message_t *msg) {
+  es_release_message(msg);
 }
 
 bool EndpointSecurityAPI::Subscribe(const Client &client,

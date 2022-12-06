@@ -20,6 +20,7 @@
 #import "SNTCommandController.h"
 #import "SNTRule.h"
 #import "SNTXPCControlInterface.h"
+#import "Source/common/SNTCommonEnums.h"
 
 extern "C" int LLVMFuzzerTestOneInput(const std::uint8_t *data, std::size_t size) {
   if (size > 16) {
@@ -28,7 +29,7 @@ extern "C" int LLVMFuzzerTestOneInput(const std::uint8_t *data, std::size_t size
     return 1;
   }
 
-  santa_vnode_id_t vnodeID = {};
+  SantaVnode vnodeID = {};
   std::memcpy(&vnodeID, data, size);
 
   MOLXPCConnection *daemonConn = [SNTXPCControlInterface configuredConnection];
@@ -41,14 +42,14 @@ extern "C" int LLVMFuzzerTestOneInput(const std::uint8_t *data, std::size_t size
 
   [[daemonConn remoteObjectProxy]
     checkCacheForVnodeID:vnodeID
-               withReply:^(santa_action_t action) {
-                 if (action == ACTION_RESPOND_ALLOW) {
+               withReply:^(SNTAction action) {
+                 if (action == SNTActionRespondAllow) {
                    std::cerr << "File exists in [whitelist] kernel cache" << std::endl;
                    ;
-                 } else if (action == ACTION_RESPOND_DENY) {
+                 } else if (action == SNTActionRespondDeny) {
                    std::cerr << "File exists in [blacklist] kernel cache" << std::endl;
                    ;
-                 } else if (action == ACTION_UNSET) {
+                 } else if (action == SNTActionUnset) {
                    std::cerr << "File does not exist in cache" << std::endl;
                    ;
                  }

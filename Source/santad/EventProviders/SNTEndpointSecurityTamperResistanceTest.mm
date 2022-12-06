@@ -17,6 +17,7 @@
 #import <XCTest/XCTest.h>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
+#include <stdlib.h>
 
 #include <map>
 #include <memory>
@@ -27,7 +28,9 @@
 #include "Source/santad/EventProviders/EndpointSecurity/Message.h"
 #include "Source/santad/EventProviders/EndpointSecurity/MockEndpointSecurityAPI.h"
 #import "Source/santad/EventProviders/SNTEndpointSecurityTamperResistance.h"
+#import "Source/santad/Metrics.h"
 
+using santa::santad::EventDisposition;
 using santa::santad::event_providers::endpoint_security::Client;
 using santa::santad::event_providers::endpoint_security::Message;
 
@@ -59,7 +62,9 @@ static constexpr std::string_view kSantaKextIdentifier = "com.google.santa-drive
     .WillOnce(testing::Return(true));
 
   SNTEndpointSecurityTamperResistance *tamperClient =
-    [[SNTEndpointSecurityTamperResistance alloc] initWithESAPI:mockESApi logger:nullptr];
+    [[SNTEndpointSecurityTamperResistance alloc] initWithESAPI:mockESApi
+                                                       metrics:nullptr
+                                                        logger:nullptr];
   id mockTamperClient = OCMPartialMock(tamperClient);
 
   [mockTamperClient enable];
@@ -91,12 +96,16 @@ static constexpr std::string_view kSantaKextIdentifier = "com.google.santa-drive
     {&benignTok, ES_AUTH_RESULT_ALLOW},
   };
 
+  dispatch_semaphore_t semaMetrics = dispatch_semaphore_create(0);
+
   auto mockESApi = std::make_shared<MockEndpointSecurityAPI>();
   mockESApi->SetExpectationsESNewClient();
-  mockESApi->SetExpectationsRetainReleaseMessage(&esMsg);
+  mockESApi->SetExpectationsRetainReleaseMessage();
 
   SNTEndpointSecurityTamperResistance *tamperClient =
-    [[SNTEndpointSecurityTamperResistance alloc] initWithESAPI:mockESApi logger:nullptr];
+    [[SNTEndpointSecurityTamperResistance alloc] initWithESAPI:mockESApi
+                                                       metrics:nullptr
+                                                        logger:nullptr];
 
   id mockTamperClient = OCMPartialMock(tamperClient);
 
@@ -118,7 +127,10 @@ static constexpr std::string_view kSantaKextIdentifier = "com.google.santa-drive
   // First check unhandled event types will crash
   {
     Message msg(mockESApi, &esMsg);
-    XCTAssertThrows([tamperClient handleMessage:Message(mockESApi, &esMsg)]);
+    XCTAssertThrows([tamperClient handleMessage:Message(mockESApi, &esMsg)
+                             recordEventMetrics:^(EventDisposition d) {
+                               XCTFail("Unhandled event types shouldn't call metrics recorder");
+                             }]);
   }
 
   // Check UNLINK tamper events
@@ -128,7 +140,15 @@ static constexpr std::string_view kSantaKextIdentifier = "com.google.santa-drive
       Message msg(mockESApi, &esMsg);
       esMsg.event.unlink.target = kv.first;
 
-      [mockTamperClient handleMessage:std::move(msg)];
+      [mockTamperClient
+             handleMessage:std::move(msg)
+        recordEventMetrics:^(EventDisposition d) {
+          XCTAssertEqual(d, kv.second == ES_AUTH_RESULT_DENY ? EventDisposition::kProcessed
+                                                             : EventDisposition::kDropped);
+          dispatch_semaphore_signal(semaMetrics);
+        }];
+
+      XCTAssertSemaTrue(semaMetrics, 5, "Metrics not recorded within expected window");
 
       XCTAssertEqual(gotAuthResult, kv.second);
       XCTAssertEqual(gotCachable, kv.second == ES_AUTH_RESULT_ALLOW);
@@ -143,8 +163,15 @@ static constexpr std::string_view kSantaKextIdentifier = "com.google.santa-drive
       esMsg.event.rename.source = kv.first;
       esMsg.event.rename.destination_type = ES_DESTINATION_TYPE_NEW_PATH;
 
-      [mockTamperClient handleMessage:std::move(msg)];
+      [mockTamperClient
+             handleMessage:std::move(msg)
+        recordEventMetrics:^(EventDisposition d) {
+          XCTAssertEqual(d, kv.second == ES_AUTH_RESULT_DENY ? EventDisposition::kProcessed
+                                                             : EventDisposition::kDropped);
+          dispatch_semaphore_signal(semaMetrics);
+        }];
 
+      XCTAssertSemaTrue(semaMetrics, 5, "Metrics not recorded within expected window");
       XCTAssertEqual(gotAuthResult, kv.second);
       XCTAssertEqual(gotCachable, kv.second == ES_AUTH_RESULT_ALLOW);
     }
@@ -159,8 +186,15 @@ static constexpr std::string_view kSantaKextIdentifier = "com.google.santa-drive
       esMsg.event.rename.destination_type = ES_DESTINATION_TYPE_EXISTING_FILE;
       esMsg.event.rename.destination.existing_file = kv.first;
 
-      [mockTamperClient handleMessage:std::move(msg)];
+      [mockTamperClient
+             handleMessage:std::move(msg)
+        recordEventMetrics:^(EventDisposition d) {
+          XCTAssertEqual(d, kv.second == ES_AUTH_RESULT_DENY ? EventDisposition::kProcessed
+                                                             : EventDisposition::kDropped);
+          dispatch_semaphore_signal(semaMetrics);
+        }];
 
+      XCTAssertSemaTrue(semaMetrics, 5, "Metrics not recorded within expected window");
       XCTAssertEqual(gotAuthResult, kv.second);
       XCTAssertEqual(gotCachable, kv.second == ES_AUTH_RESULT_ALLOW);
     }
@@ -174,10 +208,17 @@ static constexpr std::string_view kSantaKextIdentifier = "com.google.santa-drive
       Message msg(mockESApi, &esMsg);
       esMsg.event.kextload.identifier = *kv.first;
 
-      [mockTamperClient handleMessage:std::move(msg)];
+      [mockTamperClient
+             handleMessage:std::move(msg)
+        recordEventMetrics:^(EventDisposition d) {
+          XCTAssertEqual(d, kv.second == ES_AUTH_RESULT_DENY ? EventDisposition::kProcessed
+                                                             : EventDisposition::kDropped);
+          dispatch_semaphore_signal(semaMetrics);
+        }];
 
+      XCTAssertSemaTrue(semaMetrics, 5, "Metrics not recorded within expected window");
       XCTAssertEqual(gotAuthResult, kv.second);
-      XCTAssertEqual(gotCachable, true);  // Note: Kext responses always cached
+      XCTAssertEqual(gotCachable, kv.second == ES_AUTH_RESULT_ALLOW);
     }
   }
 

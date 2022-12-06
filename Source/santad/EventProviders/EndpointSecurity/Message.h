@@ -34,8 +34,6 @@ class Message {
   // Note: Safe to implement this, just not currently needed so left deleted.
   Message& operator=(Message&& rhs) = delete;
 
-  // In macOS 10.15, es_retain_message/es_release_message were unsupported
-  // and required a full copy, which impacts performance if done too much...
   Message(const Message& other);
   Message& operator=(const Message& other) = delete;
 
@@ -47,7 +45,7 @@ class Message {
 
  private:
   std::shared_ptr<EndpointSecurityAPI> esapi_;
-  es_message_t* es_msg_;
+  const es_message_t* es_msg_;
 
   mutable std::string pname_;
   mutable std::string parent_pname_;

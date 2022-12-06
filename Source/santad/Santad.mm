@@ -16,6 +16,7 @@
 
 #include <memory>
 
+#include "Source/common/PrefixTree.h"
 #import "Source/common/SNTCommonEnums.h"
 #import "Source/common/SNTConfigurator.h"
 #import "Source/common/SNTKVOManager.h"
@@ -32,6 +33,8 @@
 #include "Source/santad/Logs/EndpointSecurity/Logger.h"
 #include "Source/santad/SNTDaemonControlController.h"
 
+using santa::common::PrefixTree;
+using santa::common::Unit;
 using santa::santad::Metrics;
 using santa::santad::event_providers::AuthResultCache;
 using santa::santad::event_providers::FlushCacheMode;
@@ -67,7 +70,7 @@ void SantadMain(std::shared_ptr<EndpointSecurityAPI> esapi, std::shared_ptr<Logg
                 MOLXPCConnection *control_connection, SNTCompilerController *compiler_controller,
                 SNTNotificationQueue *notifier_queue, SNTSyncdQueue *syncd_queue,
                 SNTExecutionController *exec_controller,
-                std::shared_ptr<SNTPrefixTree> prefix_tree) {
+                std::shared_ptr<santa::common::PrefixTree<santa::common::Unit>> prefix_tree) {
   SNTConfigurator *configurator = [SNTConfigurator configurator];
 
   SNTDaemonControlController *dc =
@@ -85,6 +88,7 @@ void SantadMain(std::shared_ptr<EndpointSecurityAPI> esapi, std::shared_ptr<Logg
 
   SNTEndpointSecurityDeviceManager *device_client =
     [[SNTEndpointSecurityDeviceManager alloc] initWithESAPI:esapi
+                                                    metrics:metrics
                                                      logger:logger
                                             authResultCache:auth_result_cache];
 
@@ -100,6 +104,7 @@ void SantadMain(std::shared_ptr<EndpointSecurityAPI> esapi, std::shared_ptr<Logg
 
   SNTEndpointSecurityRecorder *monitor_client =
     [[SNTEndpointSecurityRecorder alloc] initWithESAPI:esapi
+                                               metrics:metrics
                                                 logger:logger
                                               enricher:enricher
                                     compilerController:compiler_controller
@@ -108,12 +113,13 @@ void SantadMain(std::shared_ptr<EndpointSecurityAPI> esapi, std::shared_ptr<Logg
 
   SNTEndpointSecurityAuthorizer *authorizer_client =
     [[SNTEndpointSecurityAuthorizer alloc] initWithESAPI:esapi
+                                                 metrics:metrics
                                           execController:exec_controller
                                       compilerController:compiler_controller
                                          authResultCache:auth_result_cache];
 
   SNTEndpointSecurityTamperResistance *tamper_client =
-    [[SNTEndpointSecurityTamperResistance alloc] initWithESAPI:esapi logger:logger];
+    [[SNTEndpointSecurityTamperResistance alloc] initWithESAPI:esapi metrics:metrics logger:logger];
 
   EstablishSyncServiceConnection(syncd_queue);
 
@@ -275,10 +281,14 @@ void SantadMain(std::shared_ptr<EndpointSecurityAPI> esapi, std::shared_ptr<Logg
   // of the SNTKVOManager objects it contains.
   (void)kvoObservers;
 
-  [monitor_client enable];
+  // IMPORTANT: ES will hold up third party execs until early boot clients make
+  // their first subscription. Ensuring the `Authorizer` client is enabled first
+  // means that the AUTH EXEC event is subscribed first and Santa can apply
+  // execution policy appropriately.
   [authorizer_client enable];
-  [device_client enable];
   [tamper_client enable];
+  [monitor_client enable];
+  [device_client enable];
 
   [[NSRunLoop mainRunLoop] run];
 }

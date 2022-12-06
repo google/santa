@@ -22,7 +22,6 @@
 #include <atomic>
 
 #import "Source/common/SNTCachedDecision.h"
-#import "Source/common/SNTCommon.h"
 #import "Source/common/SNTCommonEnums.h"
 #import "Source/common/SNTFileInfo.h"
 #import "Source/common/SNTLogging.h"

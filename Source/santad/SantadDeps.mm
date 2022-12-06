@@ -13,14 +13,18 @@
 ///    limitations under the License.
 
 #include "Source/santad/SantadDeps.h"
+#include <memory>
 
 #import "Source/common/SNTLogging.h"
+#import "Source/common/SNTMetricSet.h"
 #import "Source/common/SNTXPCControlInterface.h"
 #import "Source/santad/DataLayer/SNTEventTable.h"
 #import "Source/santad/DataLayer/SNTRuleTable.h"
 #include "Source/santad/EventProviders/EndpointSecurity/EndpointSecurityAPI.h"
 #import "Source/santad/SNTDatabaseController.h"
 
+using santa::common::PrefixTree;
+using santa::common::Unit;
 using santa::santad::Metrics;
 using santa::santad::event_providers::AuthResultCache;
 using santa::santad::event_providers::endpoint_security::EndpointSecurityAPI;
@@ -29,7 +33,8 @@ using santa::santad::logs::endpoint_security::Logger;
 
 namespace santa::santad {
 
-std::unique_ptr<SantadDeps> SantadDeps::Create(SNTConfigurator *configurator) {
+std::unique_ptr<SantadDeps> SantadDeps::Create(SNTConfigurator *configurator,
+                                               SNTMetricSet *metric_set) {
   // TODO(mlw): The XPC interfaces should be injectable. Could either make a new
   // protocol defining appropriate methods or accept values as params.
   MOLXPCConnection *control_connection =
@@ -82,13 +87,13 @@ std::unique_ptr<SantadDeps> SantadDeps::Create(SNTConfigurator *configurator) {
     exit(EXIT_FAILURE);
   }
 
-  std::shared_ptr<SNTPrefixTree> prefix_tree = std::make_shared<SNTPrefixTree>();
+  std::shared_ptr<::PrefixTree<Unit>> prefix_tree = std::make_shared<::PrefixTree<Unit>>();
 
   // TODO(bur): Add KVO handling for fileChangesPrefixFilters.
   NSArray<NSString *> *prefix_filters =
     [@[ @"/.", @"/dev/" ] arrayByAddingObjectsFromArray:[configurator fileChangesPrefixFilters]];
   for (NSString *filter in prefix_filters) {
-    prefix_tree->AddPrefix([filter fileSystemRepresentation]);
+    prefix_tree->InsertPrefix([filter fileSystemRepresentation], Unit {});
   }
 
   std::shared_ptr<EndpointSecurityAPI> esapi = std::make_shared<EndpointSecurityAPI>();
@@ -109,21 +114,28 @@ std::unique_ptr<SantadDeps> SantadDeps::Create(SNTConfigurator *configurator) {
     exit(EXIT_FAILURE);
   }
 
-  return std::make_unique<SantadDeps>([configurator metricExportInterval], esapi, std::move(logger),
-                                      control_connection, compiler_controller, notifier_queue,
-                                      syncd_queue, exec_controller, prefix_tree);
+  std::shared_ptr<::Metrics> metrics =
+    Metrics::Create(metric_set, [configurator metricExportInterval]);
+  if (!metrics) {
+    LOGE(@"Failed to create metrics");
+    exit(EXIT_FAILURE);
+  }
+
+  return std::make_unique<SantadDeps>(esapi, metrics, std::move(logger), control_connection,
+                                      compiler_controller, notifier_queue, syncd_queue,
+                                      exec_controller, prefix_tree);
 }
 
-SantadDeps::SantadDeps(NSUInteger metric_export_interval,
-                       std::shared_ptr<EndpointSecurityAPI> esapi, std::unique_ptr<::Logger> logger,
+SantadDeps::SantadDeps(std::shared_ptr<EndpointSecurityAPI> esapi,
+                       std::shared_ptr<::Metrics> metrics, std::unique_ptr<::Logger> logger,
                        MOLXPCConnection *control_connection,
                        SNTCompilerController *compiler_controller,
                        SNTNotificationQueue *notifier_queue, SNTSyncdQueue *syncd_queue,
                        SNTExecutionController *exec_controller,
-                       std::shared_ptr<SNTPrefixTree> prefix_tree)
+                       std::shared_ptr<::PrefixTree<Unit>> prefix_tree)
     : esapi_(std::move(esapi)),
       logger_(std::move(logger)),
-      metrics_(Metrics::Create(metric_export_interval)),
+      metrics_(std::move(metrics)),
       enricher_(std::make_shared<::Enricher>()),
       auth_result_cache_(std::make_shared<::AuthResultCache>(esapi_)),
       control_connection_(control_connection),
@@ -148,7 +160,7 @@ std::shared_ptr<Logger> SantadDeps::Logger() {
   return logger_;
 }
 
-std::shared_ptr<santa::santad::Metrics> SantadDeps::Metrics() {
+std::shared_ptr<::Metrics> SantadDeps::Metrics() {
   return metrics_;
 }
 
@@ -172,7 +184,7 @@ SNTExecutionController *SantadDeps::ExecController() {
   return exec_controller_;
 }
 
-std::shared_ptr<SNTPrefixTree> SantadDeps::PrefixTree() {
+std::shared_ptr<PrefixTree<Unit>> SantadDeps::PrefixTree() {
   return prefix_tree_;
 }
 

@@ -15,8 +15,8 @@
 #import <Foundation/Foundation.h>
 #import <MOLCertificate/MOLCertificate.h>
 
-#import "Source/common/SNTCommon.h"
 #import "Source/common/SNTCommonEnums.h"
+#import "Source/common/SantaVnode.h"
 
 @class SNTRule;
 @class SNTStoredEvent;
@@ -31,7 +31,7 @@
 ///  Cache Ops
 ///
 - (void)cacheCounts:(void (^)(uint64_t rootCache, uint64_t nonRootCache))reply;
-- (void)checkCacheForVnodeID:(santa_vnode_id_t)vnodeID withReply:(void (^)(santa_action_t))reply;
+- (void)checkCacheForVnodeID:(SantaVnode)vnodeID withReply:(void (^)(SNTAction))reply;
 
 ///
 ///  Database ops

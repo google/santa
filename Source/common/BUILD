@@ -31,19 +31,47 @@ cc_library(
     ],
 )
 
+objc_library(
+    name = "SystemResources",
+    srcs = ["SystemResources.mm"],
+    hdrs = ["SystemResources.h"],
+    deps = [
+        ":SNTLogging",
+    ],
+)
+
 cc_library(
     name = "SantaCache",
     hdrs = ["SantaCache.h"],
-    deps = ["//Source/common:SNTCommon"],
+    deps = [":BranchPrediction"],
 )
 
 santa_unit_test(
     name = "SantaCacheTest",
-    srcs = [
-        "SantaCache.h",
-        "SantaCacheTest.mm",
+    srcs = ["SantaCacheTest.mm"],
+    deps = [
+        ":SantaCache",
     ],
-    deps = ["//Source/common:SNTCommon"],
+)
+
+objc_library(
+    name = "BranchPrediction",
+    hdrs = ["BranchPrediction.h"],
+)
+
+objc_library(
+    name = "SantaVnode",
+    hdrs = ["SantaVnode.h"],
+)
+
+objc_library(
+    name = "SantaVnodeHash",
+    srcs = ["SantaVnodeHash.mm"],
+    hdrs = ["SantaVnodeHash.h"],
+    deps = [
+        ":SantaCache",
+        ":SantaVnode",
+    ],
 )
 
 objc_library(
@@ -74,11 +102,11 @@ objc_library(
 
 objc_library(
     name = "SNTCachedDecision",
-    srcs = ["SNTCachedDecision.m"],
+    srcs = ["SNTCachedDecision.mm"],
     hdrs = ["SNTCachedDecision.h"],
     deps = [
-        ":SNTCommon",
         ":SNTCommonEnums",
+        ":SantaVnode",
     ],
 )
 
@@ -142,15 +170,6 @@ objc_library(
     ],
 )
 
-cc_library(
-    name = "SNTCommon",
-    hdrs = ["SNTCommon.h"],
-    defines = [
-        "TARGET_OS_OSX",
-        "TARGET_OS_MAC",
-    ],
-)
-
 objc_library(
     name = "SNTLogging",
     srcs = ["SNTLogging.m"],
@@ -158,12 +177,18 @@ objc_library(
     deps = [":SNTConfigurator"],
 )
 
-cc_library(
-    name = "SNTPrefixTree",
-    srcs = ["SNTPrefixTree.cc"],
-    hdrs = ["SNTPrefixTree.h"],
-    copts = ["-std=c++11"],
-    deps = [":SNTLogging"],
+objc_library(
+    name = "PrefixTree",
+    hdrs = ["PrefixTree.h"],
+    deps = [
+        ":SNTLogging",
+        "@com_google_absl//absl/synchronization",
+    ],
+)
+
+objc_library(
+    name = "Unit",
+    hdrs = ["Unit.h"],
 )
 
 objc_library(
@@ -281,11 +306,11 @@ objc_library(
     srcs = ["SNTXPCUnprivilegedControlInterface.m"],
     hdrs = ["SNTXPCUnprivilegedControlInterface.h"],
     deps = [
-        ":SNTCommon",
         ":SNTCommonEnums",
         ":SNTRule",
         ":SNTStoredEvent",
         ":SNTXPCBundleServiceInterface",
+        ":SantaVnode",
         "@MOLCertificate",
         "@MOLXPCConnection",
     ],
@@ -307,9 +332,9 @@ santa_unit_test(
 )
 
 santa_unit_test(
-    name = "SNTPrefixTreeTest",
-    srcs = ["SNTPrefixTreeTest.mm"],
-    deps = [":SNTPrefixTree"],
+    name = "PrefixTreeTest",
+    srcs = ["PrefixTreeTest.mm"],
+    deps = [":PrefixTree"],
 )
 
 santa_unit_test(
@@ -331,11 +356,11 @@ santa_unit_test(
 test_suite(
     name = "unit_tests",
     tests = [
+        ":PrefixTreeTest",
         ":SNTCachedDecisionTest",
         ":SNTFileInfoTest",
         ":SNTKVOManagerTest",
         ":SNTMetricSetTest",
-        ":SNTPrefixTreeTest",
         ":SNTRuleTest",
         ":SantaCacheTest",
     ],
@@ -351,6 +376,7 @@ objc_library(
         "bsm",
     ],
     deps = [
+        ":SystemResources",
         "@OCMock",
         "@com_google_googletest//:gtest",
     ],

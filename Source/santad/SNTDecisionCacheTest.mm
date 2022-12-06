@@ -19,7 +19,6 @@
 #include <sys/stat.h>
 #include "Source/common/SNTCachedDecision.h"
 
-#import "Source/common/SNTCommon.h"
 #import "Source/common/SNTCommonEnums.h"
 #import "Source/common/SNTRule.h"
 #include "Source/common/TestUtils.h"

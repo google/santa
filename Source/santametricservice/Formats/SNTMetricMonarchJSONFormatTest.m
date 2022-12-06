@@ -42,6 +42,7 @@
                                       error:&err];
 
   XCTAssertNotNil(expectedJSONDict);
+  XCTAssertNil(err);
   XCTAssertEqualObjects(expectedJSONDict, jsonDict, @"generated JSON does not match golden file.");
 }
 

@@ -21,8 +21,9 @@
 #include <sys/stat.h>
 #include <memory>
 
-#import "Source/common/SNTCommon.h"
+#import "Source/common/SNTCommonEnums.h"
 #include "Source/common/SantaCache.h"
+#import "Source/common/SantaVnode.h"
 #include "Source/santad/EventProviders/EndpointSecurity/EndpointSecurityAPI.h"
 
 namespace santa::santad::event_providers {
@@ -49,20 +50,20 @@ class AuthResultCache {
   AuthResultCache(const AuthResultCache &other) = delete;
   AuthResultCache &operator=(const AuthResultCache &other) = delete;
 
-  virtual bool AddToCache(const es_file_t *es_file, santa_action_t decision);
+  virtual bool AddToCache(const es_file_t *es_file, SNTAction decision);
   virtual void RemoveFromCache(const es_file_t *es_file);
-  virtual santa_action_t CheckCache(const es_file_t *es_file);
-  virtual santa_action_t CheckCache(santa_vnode_id_t vnode_id);
+  virtual SNTAction CheckCache(const es_file_t *es_file);
+  virtual SNTAction CheckCache(SantaVnode vnode_id);
 
   virtual void FlushCache(FlushCacheMode mode);
 
   virtual NSArray<NSNumber *> *CacheCounts();
 
  private:
-  virtual SantaCache<santa_vnode_id_t, uint64_t> *CacheForVnodeID(santa_vnode_id_t vnode_id);
+  virtual SantaCache<SantaVnode, uint64_t> *CacheForVnodeID(SantaVnode vnode_id);
 
-  SantaCache<santa_vnode_id_t, uint64_t> *root_cache_;
-  SantaCache<santa_vnode_id_t, uint64_t> *nonroot_cache_;
+  SantaCache<SantaVnode, uint64_t> *root_cache_;
+  SantaCache<SantaVnode, uint64_t> *nonroot_cache_;
 
   std::shared_ptr<santa::santad::event_providers::endpoint_security::EndpointSecurityAPI> esapi_;
   uint64_t root_devno_;

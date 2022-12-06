@@ -70,11 +70,11 @@
                          value:(long long)(0x12345668910)];
   // Add Metrics
   SNTMetricCounter *c = [metricSet counterWithName:@"/santa/events"
-                                        fieldNames:@[ @"rule_type" ]
+                                        fieldNames:@[ @"rule_type", @"client" ]
                                           helpText:@"Count of process exec events on the host"];
 
-  [c incrementForFieldValues:@[ @"binary" ]];
-  [c incrementBy:2 forFieldValues:@[ @"certificate" ]];
+  [c incrementForFieldValues:@[ @"binary", @"authorizer" ]];
+  [c incrementBy:2 forFieldValues:@[ @"certificate", @"authorizer" ]];
 
   SNTMetricInt64Gauge *g = [metricSet int64GaugeWithName:@"/santa/rules"
                                               fieldNames:@[ @"rule_type" ]

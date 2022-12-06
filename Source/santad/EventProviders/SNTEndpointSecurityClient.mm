@@ -13,21 +13,26 @@
 ///    limitations under the License.
 
 #import "Source/santad/EventProviders/SNTEndpointSecurityClient.h"
-#include <EndpointSecurity/ESTypes.h>
 
+#include <EndpointSecurity/EndpointSecurity.h>
 #include <bsm/libbsm.h>
 #include <dispatch/dispatch.h>
 #include <mach/mach_time.h>
 #include <stdlib.h>
 #include <sys/qos.h>
 
-#import "Source/common/SNTCommon.h"
+#include "Source/common/BranchPrediction.h"
 #import "Source/common/SNTConfigurator.h"
 #import "Source/common/SNTLogging.h"
+#include "Source/common/SystemResources.h"
 #include "Source/santad/EventProviders/EndpointSecurity/Client.h"
 #include "Source/santad/EventProviders/EndpointSecurity/EnrichedTypes.h"
 #include "Source/santad/EventProviders/EndpointSecurity/Message.h"
+#include "Source/santad/Metrics.h"
 
+using santa::santad::EventDisposition;
+using santa::santad::Metrics;
+using santa::santad::Processor;
 using santa::santad::event_providers::endpoint_security::Client;
 using santa::santad::event_providers::endpoint_security::EndpointSecurityAPI;
 using santa::santad::event_providers::endpoint_security::EnrichedMessage;
@@ -36,27 +41,25 @@ using santa::santad::event_providers::endpoint_security::Message;
 @interface SNTEndpointSecurityClient ()
 @property int64_t deadlineMarginMS;
 @end
-;
 
 @implementation SNTEndpointSecurityClient {
   std::shared_ptr<EndpointSecurityAPI> _esApi;
+  std::shared_ptr<Metrics> _metrics;
   Client _esClient;
-  mach_timebase_info_data_t _timebase;
   dispatch_queue_t _authQueue;
   dispatch_queue_t _notifyQueue;
+  Processor _processor;
 }
 
-- (instancetype)initWithESAPI:(std::shared_ptr<EndpointSecurityAPI>)esApi {
+- (instancetype)initWithESAPI:(std::shared_ptr<EndpointSecurityAPI>)esApi
+                      metrics:(std::shared_ptr<Metrics>)metrics
+                    processor:(Processor)processor {
   self = [super init];
   if (self) {
     _esApi = std::move(esApi);
+    _metrics = std::move(metrics);
     _deadlineMarginMS = 5000;
-
-    if (mach_timebase_info(&_timebase) != KERN_SUCCESS) {
-      LOGE(@"Failed to get mach timebase info");
-      // Assumed to be transitory failure. Let the daemon restart.
-      exit(EXIT_FAILURE);
-    }
+    _processor = processor;
 
     _authQueue = dispatch_queue_create(
       "com.google.santa.daemon.auth_queue",
@@ -84,7 +87,8 @@ using santa::santad::event_providers::endpoint_security::Message;
   }
 }
 
-- (void)handleMessage:(Message &&)esMsg {
+- (void)handleMessage:(Message &&)esMsg
+   recordEventMetrics:(void (^)(EventDisposition disposition))recordEventMetrics {
   // This method should only be used by classes derived
   // from SNTEndpointSecurityClient.
   [self doesNotRecognizeSelector:_cmd];
@@ -110,10 +114,21 @@ using santa::santad::event_providers::endpoint_security::Message;
   }
 
   self->_esClient = self->_esApi->NewClient(^(es_client_t *c, Message esMsg) {
+    int64_t processingStart = clock_gettime_nsec_np(CLOCK_MONOTONIC);
+    es_event_type_t eventType = esMsg->event_type;
     if ([self shouldHandleMessage:esMsg
            ignoringOtherESClients:[[SNTConfigurator configurator]
                                     ignoreOtherEndpointSecurityClients]]) {
-      [self handleMessage:std::move(esMsg)];
+      [self handleMessage:std::move(esMsg)
+        recordEventMetrics:^(EventDisposition disposition) {
+          int64_t processingEnd = clock_gettime_nsec_np(CLOCK_MONOTONIC);
+          self->_metrics->SetEventMetrics(self->_processor, eventType, disposition,
+                                          processingEnd - processingStart);
+        }];
+    } else {
+      int64_t processingEnd = clock_gettime_nsec_np(CLOCK_MONOTONIC);
+      self->_metrics->SetEventMetrics(self->_processor, eventType, EventDisposition::kDropped,
+                                      processingEnd - processingStart);
     }
   });
 
@@ -122,7 +137,7 @@ using santa::santad::event_providers::endpoint_security::Message;
     LOGE(@"Unable to create EndpointSecurity client: %@", errMsg);
     [NSException raise:@"Failed to create ES client" format:@"%@", errMsg];
   } else {
-    LOGI(@"Connected to EndpointSecurity");
+    LOGI(@"Connected to EndpointSecurity (%@)", self);
   }
 
   if (![self muteSelf]) {
@@ -195,15 +210,14 @@ using santa::santad::event_providers::endpoint_security::Message;
   dispatch_semaphore_t deadlineExpiredSema = dispatch_semaphore_create(0);
 
   const uint64_t timeout = NSEC_PER_MSEC * (self.deadlineMarginMS);
-  uint64_t deadlineMachTime = msg->deadline - mach_absolute_time();
-  uint64_t deadlineNano = deadlineMachTime * _timebase.numer / _timebase.denom;
+
+  uint64_t deadlineNano = MachTimeToNanos(msg->deadline - mach_absolute_time());
 
   // TODO(mlw): How should we handle `deadlineNano <= timeout`. Will currently
   // result in the deadline block being dispatched immediately (and therefore
   // the event will be denied).
 
   // Workaround for compiler bug that doesn't properly close over variables
-  // Note: On macOS 10.15 this will cause extra message copies.
   __block Message processMsg = msg;
   __block Message deadlineMsg = msg;
 

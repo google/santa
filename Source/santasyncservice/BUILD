@@ -47,7 +47,6 @@ objc_library(
     deps = [
         ":FCM_lib",
         ":broadcaster_lib",
-        "//Source/common:SNTCommon",
         "//Source/common:SNTCommonEnums",
         "//Source/common:SNTConfigurator",
         "//Source/common:SNTFileInfo",
@@ -101,7 +100,6 @@ santa_unit_test(
     deps = [
         ":FCM_lib",
         ":broadcaster_lib",
-        "//Source/common:SNTCommon",
         "//Source/common:SNTCommonEnums",
         "//Source/common:SNTConfigurator",
         "//Source/common:SNTDropRootPrivs",
@@ -169,7 +167,7 @@ macos_command_line_application(
         "--options library,kill,runtime",
     ],
     infoplists = ["Info.plist"],
-    minimum_os_version = "10.15",
+    minimum_os_version = "11.0",
     provisioning_profile = select({
         "//:adhoc_build": None,
         "//conditions:default": "//profiles:santa_dev",

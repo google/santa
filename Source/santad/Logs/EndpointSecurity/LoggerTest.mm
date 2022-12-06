@@ -128,11 +128,7 @@ class MockWriter : public Null {
   // Ensure all Logger::Log* methods call the serializer followed by the writer
   es_message_t msg;
 
-  // Note: In this test, `RetainMessage` isn't setup to return anything. This
-  // means that the underlying `es_msg_` in the `Message` object is NULL, and
-  // therefore no call to `ReleaseMessage` is ever made (hence no expectations).
-  // Because we don't need to operate on the es_msg_, this simplifies the test.
-  EXPECT_CALL(*mockESApi, RetainMessage);
+  mockESApi->SetExpectationsRetainReleaseMessage();
   auto enrichedMsg = std::make_shared<EnrichedMessage>(
     EnrichedClose(Message(mockESApi, &msg),
                   EnrichedProcess(std::nullopt, std::nullopt, std::nullopt, std::nullopt,
@@ -156,7 +152,7 @@ class MockWriter : public Null {
   es_message_t msg;
   std::string_view hash = "this_is_my_test_hash";
 
-  EXPECT_CALL(*mockESApi, RetainMessage);
+  mockESApi->SetExpectationsRetainReleaseMessage();
   EXPECT_CALL(*mockSerializer, SerializeAllowlist(testing::_, hash));
   EXPECT_CALL(*mockWriter, Write);
 

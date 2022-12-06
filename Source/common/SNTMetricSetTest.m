@@ -672,4 +672,35 @@
                           output);
   }
 }
+
+- (void)testEnsureMetricsWithMultipleFieldNamesSerializeOnce {
+  SNTMetricSet *metricSet = [[SNTMetricSet alloc] initWithHostname:@"testHost"
+                                                          username:@"testUser"];
+
+  SNTMetricCounter *c =
+    [metricSet counterWithName:@"/santa/events"
+                    fieldNames:@[ @"client", @"event_type" ]
+                      helpText:@"Count of events on the host for a given ES client"];
+  [c incrementBy:1 forFieldValues:@[ @"device_manager", @"auth_mount" ]];
+
+  NSDictionary *expected = @{
+    @"/santa/events" : @{
+      @"description" : @"Count of events on the host for a given ES client",
+      @"type" : [NSNumber numberWithInt:(int)SNTMetricTypeCounter],
+      @"fields" : @{
+        @"client,event_type" : @[
+          @{
+            @"value" : @"device_manager,auth_mount",
+            @"created" : [NSDate date],
+            @"last_updated" : [NSDate date],
+            @"data" : [NSNumber numberWithInt:1],
+          },
+        ],
+      },
+    },
+  };
+
+  NSDictionary *got = [metricSet export][@"metrics"];
+  XCTAssertEqualObjects(expected, got, @"metrics do not match expected");
+}
 @end

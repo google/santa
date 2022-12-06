@@ -214,7 +214,7 @@
 ///
 ///  If eventLogType is set to protobuf, spoolDirectoryFileSizeThresholdKB sets the per-file size
 ///  limit for files saved in the spoolDirectory.
-///  Defaults to 100.
+///  Defaults to 250.
 ///
 ///  @note: This property is KVO compliant, but should only be read once at santad startup.
 ///
@@ -232,7 +232,7 @@
 ///
 ///  If eventLogType is set to protobuf, spoolDirectoryEventMaxFlushTimeSec sets the maximum amount
 ///  of time an event will be stored in memory before being written to disk.
-///  Defaults to 10.0.
+///  Defaults to 15.0.
 ///
 ///  @note: This property is KVO compliant, but should only be read once at santad startup.
 ///

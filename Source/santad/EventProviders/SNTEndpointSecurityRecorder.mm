@@ -14,13 +14,17 @@
 
 #import "Source/santad/EventProviders/SNTEndpointSecurityRecorder.h"
 
-#include <EndpointSecurity/ESTypes.h>
+#include <EndpointSecurity/EndpointSecurity.h>
 
 #import "Source/common/SNTLogging.h"
 #include "Source/santad/EventProviders/AuthResultCache.h"
 #include "Source/santad/EventProviders/EndpointSecurity/EnrichedTypes.h"
 #include "Source/santad/EventProviders/EndpointSecurity/Message.h"
+#include "Source/santad/Metrics.h"
 
+using santa::common::PrefixTree;
+using santa::common::Unit;
+using santa::santad::EventDisposition;
 using santa::santad::event_providers::AuthResultCache;
 using santa::santad::event_providers::endpoint_security::EndpointSecurityAPI;
 using santa::santad::event_providers::endpoint_security::EnrichedMessage;
@@ -46,16 +50,19 @@ es_file_t *GetTargetFileForPrefixTree(const es_message_t *msg) {
   std::shared_ptr<AuthResultCache> _authResultCache;
   std::shared_ptr<Enricher> _enricher;
   std::shared_ptr<Logger> _logger;
-  std::shared_ptr<SNTPrefixTree> _prefixTree;
+  std::shared_ptr<PrefixTree<Unit>> _prefixTree;
 }
 
 - (instancetype)initWithESAPI:(std::shared_ptr<EndpointSecurityAPI>)esApi
+                      metrics:(std::shared_ptr<santa::santad::Metrics>)metrics
                        logger:(std::shared_ptr<Logger>)logger
                      enricher:(std::shared_ptr<Enricher>)enricher
            compilerController:(SNTCompilerController *)compilerController
               authResultCache:(std::shared_ptr<AuthResultCache>)authResultCache
-                   prefixTree:(std::shared_ptr<SNTPrefixTree>)prefixTree {
-  self = [super initWithESAPI:std::move(esApi)];
+                   prefixTree:(std::shared_ptr<PrefixTree<Unit>>)prefixTree {
+  self = [super initWithESAPI:std::move(esApi)
+                      metrics:std::move(metrics)
+                    processor:santa::santad::Processor::kRecorder];
   if (self) {
     _enricher = enricher;
     _logger = logger;
@@ -68,7 +75,12 @@ es_file_t *GetTargetFileForPrefixTree(const es_message_t *msg) {
   return self;
 }
 
-- (void)handleMessage:(Message &&)esMsg {
+- (NSString *)description {
+  return @"Recorder";
+}
+
+- (void)handleMessage:(Message &&)esMsg
+   recordEventMetrics:(void (^)(EventDisposition))recordEventMetrics {
   // Pre-enrichment processing
   switch (esMsg->event_type) {
     case ES_EVENT_TYPE_NOTIFY_CLOSE:
@@ -76,6 +88,9 @@ es_file_t *GetTargetFileForPrefixTree(const es_message_t *msg) {
       // the `was_mapped_writable` field
       if (esMsg->event.close.modified == false) {
         // Ignore unmodified files
+        // Note: Do not record metrics in this case. These are not considered "drops"
+        // because this is not a failure case. Ideally we would tell ES to not send
+        // these events in the first place but no such mechanism currently exists.
         return;
       }
 
@@ -89,6 +104,7 @@ es_file_t *GetTargetFileForPrefixTree(const es_message_t *msg) {
   // Filter file op events matching the prefix tree.
   es_file_t *targetFile = GetTargetFileForPrefixTree(&(*esMsg));
   if (targetFile != NULL && self->_prefixTree->HasPrefix(targetFile->path.data)) {
+    recordEventMetrics(EventDisposition::kDropped);
     return;
   }
 
@@ -100,6 +116,7 @@ es_file_t *GetTargetFileForPrefixTree(const es_message_t *msg) {
   [self processEnrichedMessage:std::move(sharedEnrichedMessage)
                        handler:^(std::shared_ptr<EnrichedMessage> msg) {
                          self->_logger->Log(std::move(msg));
+                         recordEventMetrics(EventDisposition::kProcessed);
                        }];
 }
 
@@ -108,8 +125,8 @@ es_file_t *GetTargetFileForPrefixTree(const es_message_t *msg) {
                      ES_EVENT_TYPE_NOTIFY_CLOSE,
                      ES_EVENT_TYPE_NOTIFY_EXCHANGEDATA,
                      ES_EVENT_TYPE_NOTIFY_EXEC,
-                     ES_EVENT_TYPE_NOTIFY_FORK,
                      ES_EVENT_TYPE_NOTIFY_EXIT,
+                     ES_EVENT_TYPE_NOTIFY_FORK,
                      ES_EVENT_TYPE_NOTIFY_LINK,
                      ES_EVENT_TYPE_NOTIFY_RENAME,
                      ES_EVENT_TYPE_NOTIFY_UNLINK,

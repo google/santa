@@ -21,6 +21,7 @@
 #import "Source/santad/EventProviders/SNTEndpointSecurityClient.h"
 #import "Source/santad/EventProviders/SNTEndpointSecurityEventHandler.h"
 #include "Source/santad/Logs/EndpointSecurity/Logger.h"
+#include "Source/santad/Metrics.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -40,6 +41,7 @@ typedef void (^SNTDeviceBlockCallback)(SNTDeviceEvent *event);
 - (instancetype)
     initWithESAPI:
       (std::shared_ptr<santa::santad::event_providers::endpoint_security::EndpointSecurityAPI>)esApi
+          metrics:(std::shared_ptr<santa::santad::Metrics>)metrics
            logger:(std::shared_ptr<santa::santad::logs::endpoint_security::Logger>)logger
   authResultCache:(std::shared_ptr<santa::santad::event_providers::AuthResultCache>)authResultCache;
 
