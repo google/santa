@@ -19,6 +19,7 @@
 #include <glob.h>
 
 #include <cstddef>
+#include <cstdlib>
 #include <memory>
 #include <optional>
 #include <set>
@@ -151,25 +152,18 @@ static std::set<std::string> StringArrayToSet(NSArray<NSString *> *array) {
   return strings;
 }
 
-static inline uint8_t HexCharToByte(int c) {
-  if (c > '9') {
-    return (std::tolower(c) - 'a' + 10);
-  } else {
-    return (c - '0');
-  }
-}
-
 template <uint32_t length>
 static std::array<uint8_t, length> HexStringToByteArray(NSString *str) {
   std::array<uint8_t, length> bytes;
 
-  NSString *lower_str = [str lowercaseString];
+  char cur_byte[3];
+  cur_byte[2] = '\0';
 
-  for (int i = 0; i < [lower_str length] / 2; i++) {
-    char n1 = [lower_str characterAtIndex:(i * 2)];
-    char n2 = [lower_str characterAtIndex:(i * 2 + 1)];
+  for (int i = 0; i < [str length] / 2; i++) {
+    cur_byte[0] = [str characterAtIndex:(i * 2)];
+    cur_byte[1] = [str characterAtIndex:(i * 2 + 1)];
 
-    bytes[i] = (HexCharToByte(n1) << 4) | HexCharToByte(n2);
+    bytes[i] = std::strtoul(cur_byte, nullptr, 16);
   }
 
   return bytes;

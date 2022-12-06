@@ -367,7 +367,7 @@ using santa::santad::event_providers::endpoint_security::Message;
 - (void)testProcessMessageHandlerWithDeadlineTimeout {
   // Set a es_message_t deadline of 750ms
   // Set a deadline leeway in the `SNTEndpointSecurityClient` of 500ms
-  // Mock `RespondAuthResult` which is called from the deadline handler
+  // Mock `RespondFlagsResult` which is called from the deadline handler
   // Signal the semaphore from the mock
   // Wait a few seconds for the semaphore (should take ~250ms)
   //
