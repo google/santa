@@ -127,7 +127,7 @@ void SantadMain(std::shared_ptr<EndpointSecurityAPI> esapi, std::shared_ptr<Logg
   SNTEndpointSecurityTamperResistance *tamper_client =
     [[SNTEndpointSecurityTamperResistance alloc] initWithESAPI:esapi metrics:metrics logger:logger];
 
-  SNTEndpointSecurityFileAccessAuthorizer *fs_client =
+  SNTEndpointSecurityFileAccessAuthorizer *access_authorizer_client =
     [[SNTEndpointSecurityFileAccessAuthorizer alloc] initWithESAPI:esapi
                                                            metrics:metrics
                                                             logger:logger
@@ -300,7 +300,8 @@ void SantadMain(std::shared_ptr<EndpointSecurityAPI> esapi, std::shared_ptr<Logg
   // execution policy appropriately.
   [authorizer_client enable];
   [tamper_client enable];
-  [fs_client enable];
+  // [access_authorizer_client enable];
+  (void)access_authorizer_client; // NOTE: For now, not enabling
   [monitor_client enable];
   [device_client enable];
 

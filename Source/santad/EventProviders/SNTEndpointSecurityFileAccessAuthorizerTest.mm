@@ -362,15 +362,8 @@ extern es_auth_result_t CombinePolicyResults(es_auth_result_t result1, es_auth_r
 
 - (void)testEnable {
   std::set<es_event_type_t> expectedEventSubs{
-    ES_EVENT_TYPE_AUTH_OPEN,   ES_EVENT_TYPE_AUTH_LINK,  ES_EVENT_TYPE_AUTH_RENAME,
-    ES_EVENT_TYPE_AUTH_UNLINK, ES_EVENT_TYPE_AUTH_CLONE, ES_EVENT_TYPE_AUTH_EXCHANGEDATA,
+    ES_EVENT_TYPE_AUTH_OPEN,
   };
-
-#if defined(MAC_OS_VERSION_12_0) && MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_VERSION_12_0
-  if (@available(macOS 12.0, *)) {
-    expectedEventSubs.insert(ES_EVENT_TYPE_AUTH_COPYFILE);
-  }
-#endif
 
   auto mockESApi = std::make_shared<MockEndpointSecurityAPI>();
 
