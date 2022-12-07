@@ -491,7 +491,7 @@ message FileAccess {
   }
   optional AccessType access_type = 5;
 
-  // Whether the operation was allowed or denied
+  // Whether the operation was allowed or denied and why
   enum Disposition {
     DISPOSITION_UNKNOWN = 0;
     DISPOSITION_DENIED_POLICY = 1;
