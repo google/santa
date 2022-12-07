@@ -464,6 +464,43 @@ message Allowlist {
   optional FileInfo target = 2;
 }
 
+// Information about access to a watched path
+message FileAccess {
+  // The process that attempted to access the watched path
+  optional ProcessInfo instigator = 1;
+
+  // The path that was accessed
+  optional FileInfoLight watched_path = 2;
+
+  // The version of the policy when the decision was made
+  optional string policy_version = 3;
+
+  // The name of the specific policy that triggered this log
+  optional string policy_name = 4;
+
+  // The event type that attempted to access the watched path
+  enum AccessType {
+    ACCESS_TYPE_UNKNOWN = 0;
+    ACCESS_TYPE_OPEN = 1;
+    ACCESS_TYPE_RENAME = 2;
+    ACCESS_TYPE_UNLINK = 3;
+    ACCESS_TYPE_LINK = 4;
+    ACCESS_TYPE_CLONE = 5;
+    ACCESS_TYPE_EXCHANGEDATA = 6;
+    ACCESS_TYPE_COPYFILE = 7;
+  }
+  optional AccessType access_type = 5;
+
+  // Whether the operation was allowed or denied
+  enum Disposition {
+    DISPOSITION_UNKNOWN = 0;
+    DISPOSITION_DENIED_POLICY = 1;
+    DISPOSITION_DENIED_INVALID_SIGNATURE = 2;
+    DISPOSITION_ALLOWED_AUDIT_ONLY = 3;
+  }
+  optional Disposition disposition = 6;
+}
+
 // A message encapsulating a single event
 message SantaMessage {
   // Machine ID of the host emitting this log
@@ -489,6 +526,7 @@ message SantaMessage {
     Disk disk = 18;
     Bundle bundle = 19;
     Allowlist allowlist = 20;
+    FileAccess file_access = 21;
   };
 }
 
