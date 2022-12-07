@@ -45,6 +45,10 @@
 /// The hard-coded path to the sync state file.
 NSString *const kSyncStateFilePath = @"/var/db/santa/sync-state.plist";
 
+#ifdef DEBUG
+NSString *const kConfigOverrideFilePath = @"/var/db/santa/config-overrides.plist";
+#endif
+
 /// The domain used by mobileconfig.
 static NSString *const kMobileConfigDomain = @"com.google.santa";
 
@@ -1017,6 +1021,18 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
       forcedConfig[key] = [self expressionForPattern:pattern];
     }
   }
+#ifdef DEBUG
+  NSDictionary *overrides = [NSDictionary dictionaryWithContentsOfFile:kConfigOverrideFilePath];
+  for (NSString *key in overrides) {
+    id obj = overrides[key];
+    if (![obj isKindOfClass:self.forcedConfigKeyTypes[key]]) continue;
+    forcedConfig[key] = obj;
+    if (self.forcedConfigKeyTypes[key] == [NSRegularExpression class]) {
+      NSString *pattern = [obj isKindOfClass:[NSString class]] ? obj : nil;
+      forcedConfig[key] = [self expressionForPattern:pattern];
+    }
+  }
+#endif
   return forcedConfig;
 }
 
@@ -1033,12 +1049,49 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
                                            selector:@selector(defaultsChanged:)
                                                name:NSUserDefaultsDidChangeNotification
                                              object:nil];
+#ifdef DEBUG
+  [self watchOverridesFile];
+#endif
 }
+
+#ifdef DEBUG
+- (void)watchOverridesFile {
+  while (![[NSFileManager defaultManager] fileExistsAtPath:kConfigOverrideFilePath]) {
+    [NSThread sleepForTimeInterval:0.2];
+  }
+  [self defaultsChanged:nil];
+
+  int descriptor = open([kConfigOverrideFilePath fileSystemRepresentation], O_EVTONLY);
+  if (descriptor < 0) {
+    return;
+  }
+
+  dispatch_source_t source = dispatch_source_create(
+    DISPATCH_SOURCE_TYPE_VNODE,
+    descriptor,
+    DISPATCH_VNODE_WRITE | DISPATCH_VNODE_RENAME | DISPATCH_VNODE_DELETE,
+    dispatch_get_global_queue(QOS_CLASS_UTILITY, 0));
+  dispatch_source_set_event_handler(source, ^{
+    dispatch_async(dispatch_get_main_queue(), ^{
+      [self defaultsChanged:nil];
+    });
+    unsigned long events = dispatch_source_get_data(source);
+    if ((events & DISPATCH_VNODE_DELETE) || (events & DISPATCH_VNODE_RENAME)) {
+      dispatch_source_cancel(source);
+    }
+  });
+  dispatch_source_set_cancel_handler(source, ^{
+    close(descriptor);
+    [self watchOverridesFile];
+  });
+  dispatch_resume(source);
+}
+#endif
 
 - (void)defaultsChanged:(void *)v {
   SEL handleChange = @selector(handleChange);
   [NSObject cancelPreviousPerformRequestsWithTarget:self selector:handleChange object:nil];
-  [self performSelector:handleChange withObject:nil afterDelay:5.0f];
+  [self performSelector:handleChange withObject:nil afterDelay:1.0f];
 }
 
 ///
