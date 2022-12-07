@@ -1257,6 +1257,7 @@ test_suite(
         ":SNTEndpointSecurityAuthorizerTest",
         ":SNTEndpointSecurityClientTest",
         ":SNTEndpointSecurityDeviceManagerTest",
+        ":SNTEndpointSecurityFileAccessAuthorizerTest",
         ":SNTEndpointSecurityRecorderTest",
         ":SNTEndpointSecurityTamperResistanceTest",
         ":SNTEventTableTest",

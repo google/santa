@@ -79,6 +79,7 @@ class WatchItems : public std::enable_shared_from_this<WatchItems> {
   void BeginPeriodicTask();
 
   std::optional<std::shared_ptr<WatchItemPolicy>> FindPolicyForPath(const char *input);
+  std::string PolicyVersion();
 
   friend class santa::santad::data_layer::WatchItemsPeer;
 
@@ -98,6 +99,7 @@ class WatchItems : public std::enable_shared_from_this<WatchItems> {
   std::set<std::string> currently_monitored_paths_;
   absl::Mutex lock_;
   bool periodic_task_started_ = false;
+  std::string policy_version_;
 };
 
 }  // namespace santa::santad::data_layer
