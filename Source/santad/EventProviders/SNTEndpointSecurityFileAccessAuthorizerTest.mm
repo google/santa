@@ -29,6 +29,7 @@
 #include <variant>
 
 #include "Source/common/SNTCachedDecision.h"
+#import "Source/common/SNTConfigurator.h"
 #include "Source/common/TestUtils.h"
 #include "Source/common/Unit.h"
 #include "Source/santad/DataLayer/WatchItems.h"
@@ -61,6 +62,7 @@ extern es_auth_result_t CombinePolicyResults(es_auth_result_t result1, es_auth_r
 @end
 
 @interface SNTEndpointSecurityFileAccessAuthorizerTest : XCTestCase
+@property id mockConfigurator;
 @property id cscMock;
 @property id dcMock;
 @end
@@ -69,6 +71,9 @@ extern es_auth_result_t CombinePolicyResults(es_auth_result_t result1, es_auth_r
 
 - (void)setUp {
   [super setUp];
+
+  self.mockConfigurator = OCMClassMock([SNTConfigurator class]);
+  OCMStub([self.mockConfigurator configurator]).andReturn(self.mockConfigurator);
 
   self.cscMock = OCMClassMock([MOLCodesignChecker class]);
   OCMStub([self.cscMock alloc]).andReturn(self.cscMock);
@@ -320,12 +325,27 @@ extern es_auth_result_t CombinePolicyResults(es_auth_result_t result1, es_auth_r
   auto policy = std::make_shared<WatchItemPolicy>("foo_policy", "/foo");
   auto optionalPolicy = std::make_optional<std::shared_ptr<WatchItemPolicy>>(policy);
 
-  // Signed but invalid instigating processes are automatically denied
+  // Signed but invalid instigating processes are automatically
+  // denied when `EnableBadSignatureProtection` is true
   {
+    OCMExpect([self.mockConfigurator enableBadSignatureProtection]).andReturn(YES);
     esMsg.process->codesigning_flags = CS_SIGNED;
     Message msg(mockESApi, &esMsg);
     XCTAssertEqual([accessClient applyPolicy:optionalPolicy toMessage:msg],
                    FileAccessPolicyDecision::kDeniedInvalidSignature);
+  }
+
+  // Signed but invalid instigating processes are not automatically
+  // denied when `EnableBadSignatureProtection` is false. Policy
+  // evaluation should continue normally.
+  {
+    OCMExpect([self.mockConfigurator enableBadSignatureProtection]).andReturn(NO);
+    esMsg.process->codesigning_flags = CS_SIGNED;
+    Message msg(mockESApi, &esMsg);
+    policy->allowed_binary_paths.insert(instigatingPath);
+    XCTAssertEqual([accessClient applyPolicy:optionalPolicy toMessage:msg],
+                   FileAccessPolicyDecision::kAllowed);
+    policy->allowed_binary_paths.clear();
   }
 
   // Set the codesign flags to be signed and valid for the remaining tests

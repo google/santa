@@ -29,6 +29,7 @@
 #include <type_traits>
 #include <variant>
 
+#import "Source/common/SNTConfigurator.h"
 #include "Source/common/SantaCache.h"
 #include "Source/common/SantaVnode.h"
 #include "Source/common/SantaVnodeHash.h"
@@ -244,7 +245,8 @@ PathTargets GetPathTargets(const Message &msg) {
   }
 
   // If the process is signed but has an invalid signature, it is denied
-  if ((msg->process->codesigning_flags & (CS_SIGNED | CS_VALID)) == CS_SIGNED) {
+  if (((msg->process->codesigning_flags & (CS_SIGNED | CS_VALID)) == CS_SIGNED) &&
+      [[SNTConfigurator configurator] enableBadSignatureProtection]) {
     // TODO(mlw): Think about how to make stronger guarantees here to handle
     // programs becoming invalid after first being granted access. Maybe we
     // should only allow things that have hardened runtime flags set?
