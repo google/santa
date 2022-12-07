@@ -199,9 +199,8 @@ PathTargets GetPathTargets(const Message &msg) {
   return result;
 }
 
-- (std::optional<FileAccessPolicyDecision>)specialCaseForPolicy:
-                                             (std::shared_ptr<WatchItemPolicy>)policy
-                                                        message:(const Message &)msg {
+- (FileAccessPolicyDecision)specialCaseForPolicy:(std::shared_ptr<WatchItemPolicy>)policy
+                                         message:(const Message &)msg {
   constexpr int openFlagsIndicatingWrite = FWRITE | O_APPEND | O_TRUNC;
 
   switch (msg->event_type) {
@@ -227,7 +226,7 @@ PathTargets GetPathTargets(const Message &msg) {
       exit(EXIT_FAILURE);
   }
 
-  return std::nullopt;
+  return FileAccessPolicyDecision::kNoPolicy;
 }
 
 // The operation is allowed when:
@@ -257,10 +256,10 @@ PathTargets GetPathTargets(const Message &msg) {
 
   // Check if this action contains any special case that would produce
   // an immediate result.
-  std::optional<FileAccessPolicyDecision> specialCase = [self specialCaseForPolicy:policy
+  FileAccessPolicyDecision specialCase = [self specialCaseForPolicy:policy
                                                                            message:msg];
-  if (specialCase.has_value()) {
-    return specialCase.value();
+  if (specialCase != FileAccessPolicyDecision::kNoPolicy) {
+    return specialCase;
   }
 
   // Check if the instigating process path opening the file is allowed

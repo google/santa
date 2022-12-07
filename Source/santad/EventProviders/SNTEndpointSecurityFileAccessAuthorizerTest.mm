@@ -53,9 +53,8 @@ extern es_auth_result_t CombinePolicyResults(es_auth_result_t result1, es_auth_r
 
 @interface SNTEndpointSecurityFileAccessAuthorizer (Testing)
 - (NSString *)getCertificateHash:(es_file_t *)esFile;
-- (std::optional<FileAccessPolicyDecision>)specialCaseForPolicy:
-                                             (std::shared_ptr<WatchItemPolicy>)policy
-                                                        message:(const Message &)msg;
+- (FileAccessPolicyDecision)specialCaseForPolicy:(std::shared_ptr<WatchItemPolicy>)policy
+                                         message:(const Message &)msg;
 - (FileAccessPolicyDecision)applyPolicy:
                               (std::optional<std::shared_ptr<WatchItemPolicy>>)optionalPolicy
                               toMessage:(const Message &)msg;
@@ -225,7 +224,7 @@ extern es_auth_result_t CombinePolicyResults(es_auth_result_t result1, es_auth_r
 
   auto policy = std::make_shared<WatchItemPolicy>("foo_policy", "/foo");
 
-  std::optional<FileAccessPolicyDecision> optionalResult;
+  FileAccessPolicyDecision result;
 
   {
     esMsg.event_type = ES_EVENT_TYPE_AUTH_OPEN;
@@ -235,8 +234,8 @@ extern es_auth_result_t CombinePolicyResults(es_auth_result_t result1, es_auth_r
       policy->write_only = true;
       esMsg.event.open.fflag = FWRITE | FREAD;
       Message msg(mockESApi, &esMsg);
-      optionalResult = [accessClient specialCaseForPolicy:policy message:msg];
-      XCTAssertFalse(optionalResult.has_value());
+      result = [accessClient specialCaseForPolicy:policy message:msg];
+      XCTAssertEqual(result, FileAccessPolicyDecision::kNoPolicy);
     }
 
     // Write-only policy, Read operation
@@ -244,10 +243,8 @@ extern es_auth_result_t CombinePolicyResults(es_auth_result_t result1, es_auth_r
       policy->write_only = true;
       esMsg.event.open.fflag = FREAD;
       Message msg(mockESApi, &esMsg);
-      optionalResult = [accessClient specialCaseForPolicy:policy message:msg];
-      XCTAssertTrue(optionalResult.has_value());
-      XCTAssertEqual(optionalResult.value_or(FileAccessPolicyDecision::kNoPolicy),
-                     FileAccessPolicyDecision::kAllowed);
+      result = [accessClient specialCaseForPolicy:policy message:msg];
+      XCTAssertEqual(result, FileAccessPolicyDecision::kAllowed);
     }
 
     // Read/Write policy, Read operation
@@ -255,8 +252,8 @@ extern es_auth_result_t CombinePolicyResults(es_auth_result_t result1, es_auth_r
       policy->write_only = false;
       esMsg.event.open.fflag = FREAD;
       Message msg(mockESApi, &esMsg);
-      optionalResult = [accessClient specialCaseForPolicy:policy message:msg];
-      XCTAssertFalse(optionalResult.has_value());
+      result = [accessClient specialCaseForPolicy:policy message:msg];
+      XCTAssertEqual(result, FileAccessPolicyDecision::kNoPolicy);
     }
   }
 
@@ -269,8 +266,8 @@ extern es_auth_result_t CombinePolicyResults(es_auth_result_t result1, es_auth_r
   for (const auto &event : eventTypes) {
     esMsg.event_type = event;
     Message msg(mockESApi, &esMsg);
-    optionalResult = [accessClient specialCaseForPolicy:policy message:msg];
-    XCTAssertFalse(optionalResult.has_value());
+    result = [accessClient specialCaseForPolicy:policy message:msg];
+    XCTAssertEqual(result, FileAccessPolicyDecision::kNoPolicy);
   }
 
   // Ensure unsubscribed event types throw an exception
@@ -309,7 +306,8 @@ extern es_auth_result_t CombinePolicyResults(es_auth_result_t result1, es_auth_r
 
   int fake;
   OCMStub([accessClientMock specialCaseForPolicy:nullptr message:*(Message *)&fake])
-    .ignoringNonObjectArgs();
+    .ignoringNonObjectArgs()
+    .andReturn(FileAccessPolicyDecision::kNoPolicy);
 
   OCMStub([accessClientMock getCertificateHash:&esFile])
     .ignoringNonObjectArgs()
