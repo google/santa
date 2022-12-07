@@ -316,6 +316,7 @@ objc_library(
         ":EndpointSecurityAPI",
         ":EndpointSecurityLogger",
         ":EndpointSecurityMessage",
+        ":Metrics",
         ":SNTDecisionCache",
         ":SNTEndpointSecurityClient",
         ":SNTEndpointSecurityEventHandler",
