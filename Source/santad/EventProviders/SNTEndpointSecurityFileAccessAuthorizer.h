@@ -33,7 +33,7 @@ enum class FileAccessPolicyDecision {
 };
 
 @interface SNTEndpointSecurityFileAccessAuthorizer
-    : SNTEndpointSecurityClient <SNTEndpointSecurityEventHandler>
+    : SNTEndpointSecurityClient <SNTEndpointSecurityDynamicEventHandler>
 
 - (instancetype)
   initWithESAPI:

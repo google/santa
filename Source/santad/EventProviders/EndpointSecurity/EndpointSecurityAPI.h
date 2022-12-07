@@ -32,6 +32,7 @@ class EndpointSecurityAPI : public std::enable_shared_from_this<EndpointSecurity
   virtual Client NewClient(void (^message_handler)(es_client_t *, Message));
 
   virtual bool Subscribe(const Client &client, const std::set<es_event_type_t> &);
+  virtual bool UnsubscribeAll(const Client &client);
 
   virtual void RetainMessage(const es_message_t *msg);
   virtual void ReleaseMessage(const es_message_t *msg);

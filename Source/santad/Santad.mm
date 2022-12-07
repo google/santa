@@ -288,6 +288,17 @@ void SantadMain(std::shared_ptr<EndpointSecurityAPI> esapi, std::shared_ptr<Logg
                                         [newValue componentsJoinedByString:@","]);
                                    device_client.remountArgs = newValue;
                                  }],
+    [[SNTKVOManager alloc]
+      initWithObject:configurator
+            selector:@selector(filesystemMonitoringPolicyPlistPath)
+                type:[NSString class]
+            callback:^(NSString *oldValue, NSString *newValue) {
+              if (oldValue != newValue || ![oldValue isEqualToString:newValue]) {
+                LOGI(@"Filesystem monitoring policy config path changed: %@ -> %@", oldValue,
+                     newValue);
+                watch_items->SetConfigPath(newValue);
+              }
+            }],
   ];
 
   // Make the compiler happy. The variable is only used to ensure proper lifetime

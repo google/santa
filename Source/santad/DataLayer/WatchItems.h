@@ -78,12 +78,15 @@ class WatchItems : public std::enable_shared_from_this<WatchItems> {
 
   void BeginPeriodicTask();
 
+  void SetConfigPath(NSString *config_path);
   std::optional<std::shared_ptr<WatchItemPolicy>> FindPolicyForPath(const char *input);
   std::string PolicyVersion();
 
   friend class santa::santad::data_layer::WatchItemsPeer;
 
  private:
+  NSDictionary *ReadConfig();
+  ABSL_SHARED_LOCKS_REQUIRED(lock_) NSDictionary *ReadConfigLocked();
   void ReloadConfig(NSDictionary *new_config);
   bool SetCurrentConfig(std::unique_ptr<WatchItemsTree> new_tree,
                         std::set<std::string> &&new_monitored_paths, NSDictionary *new_config);

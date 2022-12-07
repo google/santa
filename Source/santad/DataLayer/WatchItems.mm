@@ -353,6 +353,19 @@ void WatchItems::ReloadConfig(NSDictionary *new_config) {
   SetCurrentConfig(std::move(new_tree), std::move(new_monitored_paths), new_config);
 }
 
+NSDictionary *WatchItems::ReadConfig() {
+  absl::ReaderMutexLock lock(&lock_);
+  return ReadConfigLocked();
+}
+
+NSDictionary *WatchItems::ReadConfigLocked() {
+  if (config_path_) {
+    return [NSDictionary dictionaryWithContentsOfFile:config_path_];
+  } else {
+    return nil;
+  }
+}
+
 void WatchItems::BeginPeriodicTask() {
   if (periodic_task_started_) {
     return;
@@ -365,8 +378,7 @@ void WatchItems::BeginPeriodicTask() {
       return;
     }
 
-    shared_watcher->ReloadConfig(
-      [NSDictionary dictionaryWithContentsOfFile:shared_watcher->config_path_]);
+    shared_watcher->ReloadConfig(shared_watcher->ReadConfig());
 
     if (shared_watcher->periodic_task_complete_f_) {
       shared_watcher->periodic_task_complete_f_();
@@ -389,6 +401,18 @@ std::optional<std::shared_ptr<WatchItemPolicy>> WatchItems::FindPolicyForPath(co
 
   absl::ReaderMutexLock lock(&lock_);
   return watch_items_->LookupLongestMatchingPrefix(input);
+}
+
+void WatchItems::SetConfigPath(NSString *config_path) {
+  // Acquire the lock to set the config path and read the config, but drop
+  // the lock before reloading the config
+  NSDictionary *config;
+  {
+    absl::MutexLock lock(&lock_);
+    config_path_ = config_path;
+    config = ReadConfigLocked();
+  }
+  ReloadConfig(config);
 }
 
 }  // namespace santa::santad::data_layer

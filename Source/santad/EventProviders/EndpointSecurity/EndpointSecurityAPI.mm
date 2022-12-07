@@ -47,6 +47,10 @@ bool EndpointSecurityAPI::Subscribe(const Client &client,
   return es_subscribe(client.Get(), subs.data(), (uint32_t)subs.size()) == ES_RETURN_SUCCESS;
 }
 
+bool EndpointSecurityAPI::UnsubscribeAll(const Client &client) {
+  return es_unsubscribe_all(client.Get()) == ES_RETURN_SUCCESS;
+}
+
 bool EndpointSecurityAPI::RespondAuthResult(const Client &client, const Message &msg,
                                             es_auth_result_t result, bool cache) {
   return es_respond_auth_result(client.Get(), &(*msg), result, cache) == ES_RESPOND_RESULT_SUCCESS;

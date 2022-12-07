@@ -181,6 +181,10 @@ using santa::santad::event_providers::endpoint_security::Message;
   return [self subscribe:events] && [self clearCache];
 }
 
+- (bool)unsubscribeAll {
+  return _esApi->UnsubscribeAll(_esClient);
+}
+
 - (bool)respondToMessage:(const Message &)msg
           withAuthResult:(es_auth_result_t)result
                cacheable:(bool)cacheable {
