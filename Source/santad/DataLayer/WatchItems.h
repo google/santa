@@ -29,6 +29,7 @@
 #include <vector>
 
 #include "Source/common/PrefixTree.h"
+#import "Source/santad/EventProviders/SNTEndpointSecurityEventHandler.h"
 
 extern const NSString *kWatchItemConfigKeyPath;
 extern const NSString *kWatchItemConfigKeyWriteOnly;
@@ -78,6 +79,8 @@ class WatchItems : public std::enable_shared_from_this<WatchItems> {
 
   void BeginPeriodicTask();
 
+  void RegisterClient(id<SNTEndpointSecurityDynamicEventHandler> client);
+
   void SetConfigPath(NSString *config_path);
   std::optional<std::shared_ptr<WatchItemPolicy>> FindPolicyForPath(const char *input);
   std::string PolicyVersion();
@@ -103,6 +106,7 @@ class WatchItems : public std::enable_shared_from_this<WatchItems> {
   absl::Mutex lock_;
   bool periodic_task_started_ = false;
   std::string policy_version_;
+  std::set<id<SNTEndpointSecurityDynamicEventHandler>> registerd_clients_;
 };
 
 }  // namespace santa::santad::data_layer

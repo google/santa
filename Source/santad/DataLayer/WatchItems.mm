@@ -259,6 +259,11 @@ bool WatchItems::BuildPolicyTree(const std::vector<std::shared_ptr<WatchItemPoli
   return true;
 }
 
+void WatchItems::RegisterClient(id<SNTEndpointSecurityDynamicEventHandler> client) {
+  absl::MutexLock lock(&lock_);
+  registerd_clients_.insert(client);
+}
+
 bool WatchItems::ParseConfig(NSDictionary *config,
                              std::vector<std::shared_ptr<WatchItemPolicy>> &policies) {
   bool config_ok = true;
@@ -322,6 +327,14 @@ bool WatchItems::SetCurrentConfig(
   std::swap(currently_monitored_paths_, new_monitored_paths);
   current_config_ = new_config;
   policy_version_ = [new_config[kWatchItemConfigKeyVersion] UTF8String];
+
+  for (const id<SNTEndpointSecurityDynamicEventHandler> &client : registerd_clients_) {
+    if (currently_monitored_paths_.size() > 0) {
+      [client enable];
+    } else {
+      [client disable];
+    }
+  }
 
   return true;
 }

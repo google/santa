@@ -39,6 +39,7 @@ objc_library(
     srcs = ["DataLayer/WatchItems.mm"],
     hdrs = ["DataLayer/WatchItems.h"],
     deps = [
+        ":SNTEndpointSecurityEventHandler",
         "//Source/common:PrefixTree",
         "//Source/common:SNTLogging",
     ],
