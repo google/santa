@@ -256,8 +256,7 @@ PathTargets GetPathTargets(const Message &msg) {
 
   // Check if this action contains any special case that would produce
   // an immediate result.
-  FileAccessPolicyDecision specialCase = [self specialCaseForPolicy:policy
-                                                                           message:msg];
+  FileAccessPolicyDecision specialCase = [self specialCaseForPolicy:policy message:msg];
   if (specialCase != FileAccessPolicyDecision::kNoPolicy) {
     return specialCase;
   }
