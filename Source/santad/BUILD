@@ -309,6 +309,27 @@ objc_library(
 )
 
 objc_library(
+    name = "SNTEndpointSecurityFileAccessAuthorizer",
+    srcs = ["EventProviders/SNTEndpointSecurityFileAccessAuthorizer.mm"],
+    hdrs = ["EventProviders/SNTEndpointSecurityFileAccessAuthorizer.h"],
+    deps = [
+        ":EndpointSecurityAPI",
+        ":EndpointSecurityLogger",
+        ":EndpointSecurityMessage",
+        ":SNTDecisionCache",
+        ":SNTEndpointSecurityClient",
+        ":SNTEndpointSecurityEventHandler",
+        ":WatchItems",
+        "//Source/common:SantaCache",
+        "//Source/common:SantaVnode",
+        "//Source/common:SantaVnodeHash",
+        "//Source/common:Unit",
+        "@MOLCertificate",
+        "@MOLCodesignChecker",
+    ],
+)
+
+objc_library(
     name = "SNTEndpointSecurityDeviceManager",
     srcs = ["EventProviders/SNTEndpointSecurityDeviceManager.mm"],
     hdrs = ["EventProviders/SNTEndpointSecurityDeviceManager.h"],
@@ -590,13 +611,16 @@ objc_library(
         ":Metrics",
         ":SNTCompilerController",
         ":SNTDaemonControlController",
+        ":SNTDecisionCache",
         ":SNTEndpointSecurityAuthorizer",
         ":SNTEndpointSecurityDeviceManager",
+        ":SNTEndpointSecurityFileAccessAuthorizer",
         ":SNTEndpointSecurityRecorder",
         ":SNTEndpointSecurityTamperResistance",
         ":SNTExecutionController",
         ":SNTNotificationQueue",
         ":SNTSyncdQueue",
+        ":WatchItems",
         "//Source/common:PrefixTree",
         "//Source/common:SNTCommonEnums",
         "//Source/common:SNTConfigurator",
@@ -626,6 +650,7 @@ objc_library(
         ":SNTNotificationQueue",
         ":SNTRuleTable",
         ":SNTSyncdQueue",
+        ":WatchItems",
         "//Source/common:PrefixTree",
         "//Source/common:SNTConfigurator",
         "//Source/common:SNTLogging",
@@ -699,6 +724,17 @@ objc_library(
     deps = [
         ":EndpointSecurityAPI",
         ":EndpointSecurityClient",
+        ":EndpointSecurityMessage",
+        "@com_google_googletest//:gtest",
+    ],
+)
+
+objc_library(
+    name = "MockLogger",
+    testonly = 1,
+    hdrs = ["Logs/EndpointSecurity/MockLogger.h"],
+    deps = [
+        ":EndpointSecurityLogger",
         ":EndpointSecurityMessage",
         "@com_google_googletest//:gtest",
     ],
@@ -1083,6 +1119,30 @@ santa_unit_test(
         ":SNTExecutionController",
         "//Source/common:SNTCommonEnums",
         "//Source/common:TestUtils",
+        "@OCMock",
+        "@com_google_googletest//:gtest",
+    ],
+)
+
+santa_unit_test(
+    name = "SNTEndpointSecurityFileAccessAuthorizerTest",
+    srcs = ["EventProviders/SNTEndpointSecurityFileAccessAuthorizerTest.mm"],
+    sdk_dylibs = [
+        "EndpointSecurity",
+    ],
+    deps = [
+        ":EndpointSecurityLogger",
+        ":EndpointSecurityMessage",
+        ":MockEndpointSecurityAPI",
+        ":MockLogger",
+        ":SNTDecisionCache",
+        ":SNTEndpointSecurityFileAccessAuthorizer",
+        ":WatchItems",
+        "//Source/common:SNTCachedDecision",
+        "//Source/common:TestUtils",
+        "//Source/common:Unit",
+        "@MOLCertificate",
+        "@MOLCodesignChecker",
         "@OCMock",
         "@com_google_googletest//:gtest",
     ],

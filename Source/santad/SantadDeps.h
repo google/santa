@@ -24,6 +24,7 @@
 #include "Source/common/SNTConfigurator.h"
 #import "Source/common/SNTMetricSet.h"
 #include "Source/common/Unit.h"
+#include "Source/santad/DataLayer/WatchItems.h"
 #include "Source/santad/EventProviders/AuthResultCache.h"
 #include "Source/santad/EventProviders/EndpointSecurity/EndpointSecurityAPI.h"
 #include "Source/santad/EventProviders/EndpointSecurity/Enricher.h"
@@ -45,8 +46,9 @@ class SantadDeps {
       std::shared_ptr<santa::santad::event_providers::endpoint_security::
                           EndpointSecurityAPI>
           esapi,
-      std::shared_ptr<santa::santad::Metrics> metrics,
       std::unique_ptr<santa::santad::logs::endpoint_security::Logger> logger,
+      std::shared_ptr<santa::santad::Metrics> metrics,
+      std::shared_ptr<santa::santad::data_layer::WatchItems> watch_items,
       MOLXPCConnection *control_connection,
       SNTCompilerController *compiler_controller,
       SNTNotificationQueue *notifier_queue, SNTSyncdQueue *syncd_queue,
@@ -63,6 +65,7 @@ class SantadDeps {
   ESAPI();
   std::shared_ptr<santa::santad::logs::endpoint_security::Logger> Logger();
   std::shared_ptr<santa::santad::Metrics> Metrics();
+  std::shared_ptr<santa::santad::data_layer::WatchItems> WatchItems();
   MOLXPCConnection *ControlConnection();
   SNTCompilerController *CompilerController();
   SNTNotificationQueue *NotifierQueue();
@@ -76,6 +79,7 @@ class SantadDeps {
       esapi_;
   std::shared_ptr<santa::santad::logs::endpoint_security::Logger> logger_;
   std::shared_ptr<santa::santad::Metrics> metrics_;
+  std::shared_ptr<santa::santad::data_layer::WatchItems> watch_items_;
   std::shared_ptr<santa::santad::event_providers::endpoint_security::Enricher>
       enricher_;
   std::shared_ptr<santa::santad::event_providers::AuthResultCache>

@@ -25,10 +25,12 @@ static const NSString *kProcessorAuthorizer = @"Authorizer";
 static const NSString *kProcessorDeviceManager = @"DeviceManager";
 static const NSString *kProcessorRecorder = @"Recorder";
 static const NSString *kProcessorTamperResistance = @"TamperResistance";
+static const NSString *kProcessorFileAccessAuthorizer = @"FileAccessAuthorizer";
 
 static const NSString *kEventTypeAuthExec = @"AuthExec";
 static const NSString *kEventTypeAuthKextload = @"AuthKextload";
 static const NSString *kEventTypeAuthMount = @"AuthMount";
+static const NSString *kEventTypeAuthOpen = @"AuthOpen";
 static const NSString *kEventTypeAuthRemount = @"AuthRemount";
 static const NSString *kEventTypeAuthRename = @"AuthRename";
 static const NSString *kEventTypeAuthUnlink = @"AuthUnlink";
@@ -53,6 +55,7 @@ const NSString *ProcessorToString(Processor processor) {
     case Processor::kDeviceManager: return kProcessorDeviceManager;
     case Processor::kRecorder: return kProcessorRecorder;
     case Processor::kTamperResistance: return kProcessorTamperResistance;
+    case Processor::kFileAccessAuthorizer: return kProcessorFileAccessAuthorizer;
     default:
       [NSException raise:@"Invalid processor" format:@"Unknown processor value: %d", processor];
       return nil;
@@ -64,6 +67,7 @@ const NSString *EventTypeToString(es_event_type_t eventType) {
     case ES_EVENT_TYPE_AUTH_EXEC: return kEventTypeAuthExec;
     case ES_EVENT_TYPE_AUTH_KEXTLOAD: return kEventTypeAuthKextload;
     case ES_EVENT_TYPE_AUTH_MOUNT: return kEventTypeAuthMount;
+    case ES_EVENT_TYPE_AUTH_OPEN: return kEventTypeAuthOpen;
     case ES_EVENT_TYPE_AUTH_REMOUNT: return kEventTypeAuthRemount;
     case ES_EVENT_TYPE_AUTH_RENAME: return kEventTypeAuthRename;
     case ES_EVENT_TYPE_AUTH_UNLINK: return kEventTypeAuthUnlink;

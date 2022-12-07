@@ -367,7 +367,7 @@ using santa::santad::event_providers::endpoint_security::Message;
 - (void)testProcessMessageHandlerWithDeadlineTimeout {
   // Set a es_message_t deadline of 750ms
   // Set a deadline leeway in the `SNTEndpointSecurityClient` of 500ms
-  // Mock `RespondAuthResult` which is called from the deadline handler
+  // Mock `RespondFlagsResult` which is called from the deadline handler
   // Signal the semaphore from the mock
   // Wait a few seconds for the semaphore (should take ~250ms)
   //
@@ -387,7 +387,7 @@ using santa::santad::event_providers::endpoint_security::Message;
   dispatch_semaphore_t deadlineSema = dispatch_semaphore_create(0);
   dispatch_semaphore_t controlSema = dispatch_semaphore_create(0);
 
-  EXPECT_CALL(*mockESApi, RespondAuthResult(testing::_, testing::_, ES_AUTH_RESULT_DENY, false))
+  EXPECT_CALL(*mockESApi, RespondFlagsResult(testing::_, testing::_, 0x0, false))
     .WillOnce(testing::InvokeWithoutArgs(^() {
       // Signal deadlineSema to let the handler block continue execution
       dispatch_semaphore_signal(deadlineSema);

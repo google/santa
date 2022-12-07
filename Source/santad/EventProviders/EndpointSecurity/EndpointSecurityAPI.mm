@@ -52,6 +52,11 @@ bool EndpointSecurityAPI::RespondAuthResult(const Client &client, const Message 
   return es_respond_auth_result(client.Get(), &(*msg), result, cache) == ES_RESPOND_RESULT_SUCCESS;
 }
 
+bool EndpointSecurityAPI::RespondFlagsResult(const Client &client, const Message &msg,
+                                             uint32_t allowed_flags, bool cache) {
+  return es_respond_flags_result(client.Get(), &(*msg), allowed_flags, cache);
+}
+
 bool EndpointSecurityAPI::MuteProcess(const Client &client, const audit_token_t *tok) {
   return es_mute_process(client.Get(), tok) == ES_RETURN_SUCCESS;
 }

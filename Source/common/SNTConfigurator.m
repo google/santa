@@ -93,6 +93,11 @@ static NSString *const kSpoolDirectoryFileSizeThresholdKB = @"SpoolDirectoryFile
 static NSString *const kSpoolDirectorySizeThresholdMB = @"SpoolDirectorySizeThresholdMB";
 static NSString *const kSpoolDirectoryEventMaxFlushTimeSec = @"SpoolDirectoryEventMaxFlushTimeSec";
 
+static NSString *const kFilesystemMonitoringPolicyPlistPath =
+  @"FilesystemMonitoringPolicyPlistPath";
+static NSString *const kFilesystemMonitoringPolicyUpdateIntervalSec =
+  @"FilesystemMonitoringPolicyUpdateIntervalSec";
+
 static NSString *const kEnableMachineIDDecoration = @"EnableMachineIDDecoration";
 
 static NSString *const kEnableForkAndExitLogging = @"EnableForkAndExitLogging";
@@ -204,6 +209,8 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
       kSpoolDirectoryFileSizeThresholdKB : number,
       kSpoolDirectorySizeThresholdMB : number,
       kSpoolDirectoryEventMaxFlushTimeSec : number,
+      kFilesystemMonitoringPolicyPlistPath : string,
+      kFilesystemMonitoringPolicyUpdateIntervalSec : number,
       kEnableMachineIDDecoration : number,
       kEnableForkAndExitLogging : number,
       kIgnoreOtherEndpointSecurityClients : number,
@@ -404,6 +411,14 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
 }
 
 + (NSSet *)keyPathsForValuesAffectingSpoolDirectoryEventMaxFlushTimeSec {
+  return [self configStateSet];
+}
+
++ (NSSet *)keyPathsForValuesAffectingFilesystemMonitoringPolicyPlistPath {
+  return [self configStateSet];
+}
+
++ (NSSet *)keyPathsForValuesAffectingFilesystemMonitoringPolicyUpdateIntervalSec {
   return [self configStateSet];
 }
 
@@ -783,6 +798,16 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
   return self.configState[kSpoolDirectoryEventMaxFlushTimeSec]
            ? [self.configState[kSpoolDirectoryEventMaxFlushTimeSec] floatValue]
            : 15.0;
+}
+
+- (NSString *)filesystemMonitoringPolicyPlistPath {
+  return self.configState[kFilesystemMonitoringPolicyPlistPath];
+}
+
+- (uint32_t)filesystemMonitoringPolicyUpdateIntervalSec {
+  return self.configState[kFilesystemMonitoringPolicyUpdateIntervalSec]
+           ? [self.configState[kFilesystemMonitoringPolicyUpdateIntervalSec] unsignedIntValue]
+           : 60 * 10;
 }
 
 - (BOOL)enableMachineIDDecoration {

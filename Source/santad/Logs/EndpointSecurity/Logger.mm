@@ -97,4 +97,9 @@ void Logger::LogDiskDisappeared(NSDictionary *props) {
   writer_->Write(serializer_->SerializeDiskDisappeared(props));
 }
 
+void Logger::LogAccess(const Message &msg) {
+  // TODO(xyz): Should likely take an EnrichedMessage
+  LOGE(@"GOT ACCESS EVENT");
+}
+
 }  // namespace santa::santad::logs::endpoint_security

@@ -59,6 +59,10 @@ class PrefixTree {
   }
 
   std::optional<ValueT> LookupLongestMatchingPrefix(const char *input) {
+    if (!input) {
+      return std::nullopt;
+    }
+
     absl::ReaderMutexLock lock(&lock_);
     return LookupLongestMatchingPrefixLocked(input);
   }
