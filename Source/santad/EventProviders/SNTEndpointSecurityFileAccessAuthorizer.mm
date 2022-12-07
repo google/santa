@@ -29,6 +29,7 @@
 #include <type_traits>
 #include <variant>
 
+#import "Source/common/SNTConfigurator.h"
 #include "Source/common/SantaCache.h"
 #include "Source/common/SantaVnode.h"
 #include "Source/common/SantaVnodeHash.h"
@@ -64,6 +65,21 @@ static inline std::string_view PathView(const es_string_token_t &tok) {
 
 static inline std::string Path(const es_file_t *dir, const es_string_token_t &name) {
   return std::string(PathView(dir)) + std::string(PathView(name));
+}
+
+es_auth_result_t FileAccessPolicyDecisionToESAuthResult(FileAccessPolicyDecision disposition) {
+  switch (disposition) {
+    case FileAccessPolicyDecision::kNoPolicy: return ES_AUTH_RESULT_ALLOW;
+    case FileAccessPolicyDecision::kDenied: return ES_AUTH_RESULT_DENY;
+    case FileAccessPolicyDecision::kDeniedInvalidSignature: return ES_AUTH_RESULT_DENY;
+    case FileAccessPolicyDecision::kAllowed: return ES_AUTH_RESULT_ALLOW;
+    case FileAccessPolicyDecision::kAllowedAuditOnly: return ES_AUTH_RESULT_ALLOW;
+    default:
+      // This is a programming error. Bail.
+      LOGE(@"Invalid file access disposition encountered: %d", disposition);
+      [NSException raise:@"Invalid FileAccessPolicyDecision"
+                  format:@"Invalid FileAccessPolicyDecision: %d", disposition];
+  }
 }
 
 es_auth_result_t CombinePolicyResults(es_auth_result_t result1, es_auth_result_t result2) {
@@ -183,15 +199,15 @@ PathTargets GetPathTargets(const Message &msg) {
   return result;
 }
 
-- (std::optional<es_auth_result_t>)specialCaseForPolicy:(std::shared_ptr<WatchItemPolicy>)policy
-                                                message:(const Message &)msg {
+- (FileAccessPolicyDecision)specialCaseForPolicy:(std::shared_ptr<WatchItemPolicy>)policy
+                                         message:(const Message &)msg {
   constexpr int openFlagsIndicatingWrite = FWRITE | O_APPEND | O_TRUNC;
 
   switch (msg->event_type) {
     case ES_EVENT_TYPE_AUTH_OPEN:
       // If the policy is write-only, but the operation isn't a write action, it's allowed
       if (policy->write_only && !(msg->event.open.fflag & openFlagsIndicatingWrite)) {
-        return ES_AUTH_RESULT_ALLOW;
+        return FileAccessPolicyDecision::kAllowed;
       }
 
       break;
@@ -210,7 +226,7 @@ PathTargets GetPathTargets(const Message &msg) {
       exit(EXIT_FAILURE);
   }
 
-  return std::nullopt;
+  return FileAccessPolicyDecision::kNoPolicy;
 }
 
 // The operation is allowed when:
@@ -219,33 +235,35 @@ PathTargets GetPathTargets(const Message &msg) {
 //   - The operation was instigated by an allowed process
 //   - If the instigating process is signed, the codesignature is valid
 // Otherwise the operation is denied.
-- (es_auth_result_t)applyPolicy:(std::optional<std::shared_ptr<WatchItemPolicy>>)optionalPolicy
-                      toMessage:(const Message &)msg {
+- (FileAccessPolicyDecision)applyPolicy:
+                              (std::optional<std::shared_ptr<WatchItemPolicy>>)optionalPolicy
+                              toMessage:(const Message &)msg {
   // If no policy exists, everything is allowed
   if (!optionalPolicy.has_value()) {
-    return ES_AUTH_RESULT_ALLOW;
+    return FileAccessPolicyDecision::kNoPolicy;
   }
 
   // If the process is signed but has an invalid signature, it is denied
-  if ((msg->process->codesigning_flags & (CS_SIGNED | CS_VALID)) == CS_SIGNED) {
+  if (((msg->process->codesigning_flags & (CS_SIGNED | CS_VALID)) == CS_SIGNED) &&
+      [[SNTConfigurator configurator] enableBadSignatureProtection]) {
     // TODO(mlw): Think about how to make stronger guarantees here to handle
     // programs becoming invalid after first being granted access. Maybe we
     // should only allow things that have hardened runtime flags set?
-    return ES_AUTH_RESULT_DENY;
+    return FileAccessPolicyDecision::kDeniedInvalidSignature;
   }
 
   std::shared_ptr<WatchItemPolicy> policy = optionalPolicy.value();
 
   // Check if this action contains any special case that would produce
   // an immediate result.
-  std::optional<es_auth_result_t> specialCase = [self specialCaseForPolicy:policy message:msg];
-  if (specialCase.has_value()) {
-    return specialCase.value();
+  FileAccessPolicyDecision specialCase = [self specialCaseForPolicy:policy message:msg];
+  if (specialCase != FileAccessPolicyDecision::kNoPolicy) {
+    return specialCase;
   }
 
   // Check if the instigating process path opening the file is allowed
   if (policy->allowed_binary_paths.count(msg->process->executable->path.data) > 0) {
-    return ES_AUTH_RESULT_ALLOW;
+    return FileAccessPolicyDecision::kAllowed;
   }
 
   // TeamID, CDHash, and Cert Hashes are only valid if the binary is signed
@@ -253,7 +271,7 @@ PathTargets GetPathTargets(const Message &msg) {
     // Check if the instigating process has an allowed TeamID
     if (msg->process->team_id.data &&
         policy->allowed_team_ids.count(msg->process->team_id.data) > 0) {
-      return ES_AUTH_RESULT_ALLOW;
+      return FileAccessPolicyDecision::kAllowed;
     }
 
     if (policy->allowed_cdhashes.size() > 0) {
@@ -262,7 +280,7 @@ PathTargets GetPathTargets(const Message &msg) {
       std::copy(std::begin(msg->process->cdhash), std::end(msg->process->cdhash),
                 std::begin(bytes));
       if (policy->allowed_cdhashes.count(bytes) > 0) {
-        return ES_AUTH_RESULT_ALLOW;
+        return FileAccessPolicyDecision::kAllowed;
       }
     }
 
@@ -270,7 +288,7 @@ PathTargets GetPathTargets(const Message &msg) {
       // Check if the instigating process has an allowed certificate hash
       NSString *result = [self getCertificateHash:msg->process->executable];
       if (result && policy->allowed_certificates_sha256.count([result UTF8String])) {
-        return ES_AUTH_RESULT_ALLOW;
+        return FileAccessPolicyDecision::kAllowed;
       }
     }
   }
@@ -280,11 +298,11 @@ PathTargets GetPathTargets(const Message &msg) {
 
   // If the policy was audit-only, don't deny the operation
   if (policy->audit_only) {
-    return ES_AUTH_RESULT_ALLOW;
+    return FileAccessPolicyDecision::kAllowedAuditOnly;
   } else {
     // TODO(xyz): Write to TTY like in exec controller?
     // TODO(xyz): Need new config item for custom message in UI
-    return ES_AUTH_RESULT_DENY;
+    return FileAccessPolicyDecision::kDenied;
   }
 }
 
@@ -308,9 +326,11 @@ PathTargets GetPathTargets(const Message &msg) {
     },
     targets.second);
 
-  es_auth_result_t policyResult1 = [self applyPolicy:policy1 toMessage:msg];
-  es_auth_result_t policyResult2 = [self applyPolicy:policy2 toMessage:msg];
-  es_auth_result_t policyResult = CombinePolicyResults(policyResult1, policyResult2);
+  FileAccessPolicyDecision policy1Decision = [self applyPolicy:policy1 toMessage:msg];
+  FileAccessPolicyDecision policy2Decision = [self applyPolicy:policy2 toMessage:msg];
+  es_auth_result_t policyResult =
+    CombinePolicyResults(FileAccessPolicyDecisionToESAuthResult(policy1Decision),
+                         FileAccessPolicyDecisionToESAuthResult(policy2Decision));
 
   [self respondToMessage:msg
           withAuthResult:policyResult

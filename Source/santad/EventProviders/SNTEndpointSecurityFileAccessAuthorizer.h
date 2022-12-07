@@ -24,6 +24,14 @@
 #include "Source/santad/Metrics.h"
 #import "Source/santad/SNTDecisionCache.h"
 
+enum class FileAccessPolicyDecision {
+  kNoPolicy,
+  kDenied,
+  kDeniedInvalidSignature,
+  kAllowed,
+  kAllowedAuditOnly,
+};
+
 @interface SNTEndpointSecurityFileAccessAuthorizer
     : SNTEndpointSecurityClient <SNTEndpointSecurityEventHandler>
 

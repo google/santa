@@ -30,6 +30,7 @@
 
 using santa::common::PrefixTree;
 
+const NSString *kWatchItemConfigKeyVersion = @"Version";
 const NSString *kWatchItemConfigKeyWatchItems = @"WatchItems";
 const NSString *kWatchItemConfigKeyPath = @"Path";
 const NSString *kWatchItemConfigKeyWriteOnly = @"WriteOnly";
@@ -262,10 +263,14 @@ bool WatchItems::ParseConfig(NSDictionary *config,
                              std::vector<std::shared_ptr<WatchItemPolicy>> &policies) {
   bool config_ok = true;
 
+  if (![config[kWatchItemConfigKeyVersion] isKindOfClass:[NSString class]]) {
+    LOGE(@"Missing top level string key '%@'", kWatchItemConfigKeyVersion);
+  }
+
   id watch_items = config[kWatchItemConfigKeyWatchItems];
 
   if (![watch_items isKindOfClass:[NSDictionary class]]) {
-    LOGE(@"Missing top level WatchItems key");
+    LOGE(@"Missing top level dictionary key '%@'", kWatchItemConfigKeyWatchItems);
     return false;
   }
 
@@ -316,6 +321,7 @@ bool WatchItems::SetCurrentConfig(
   std::swap(watch_items_, new_tree);
   std::swap(currently_monitored_paths_, new_monitored_paths);
   current_config_ = new_config;
+  policy_version_ = [new_config[kWatchItemConfigKeyVersion] UTF8String];
 
   return true;
 }
@@ -369,6 +375,11 @@ void WatchItems::BeginPeriodicTask() {
 
   dispatch_resume(timer_source_);
   periodic_task_started_ = true;
+}
+
+std::string WatchItems::PolicyVersion() {
+  absl::ReaderMutexLock lock(&lock_);
+  return policy_version_;
 }
 
 std::optional<std::shared_ptr<WatchItemPolicy>> WatchItems::FindPolicyForPath(const char *input) {

@@ -46,13 +46,14 @@ using santa::santad::data_layer::WatchItemsPeer;
 
 static constexpr std::string_view kBadPolicyName("__BAD_NAME__");
 static constexpr std::string_view kBadPolicyPath("__BAD_PATH__");
+static constexpr std::string_view kVersion("v0.1");
 
 static std::shared_ptr<WatchItemPolicy> MakeBadPolicy() {
   return std::make_shared<WatchItemPolicy>(kBadPolicyName, kBadPolicyPath);
 }
 
 static NSMutableDictionary *WrapWatchItemsConfig(NSDictionary *config) {
-  return [@{@"WatchItems" : [config mutableCopy]} mutableCopy];
+  return [@{@"Version" : @(kVersion.data()), @"WatchItems" : [config mutableCopy]} mutableCopy];
 }
 
 @interface WatchItemsTest : XCTestCase
@@ -368,6 +369,15 @@ static NSMutableDictionary *WrapWatchItemsConfig(NSDictionary *config) {
       XCTAssertCStringEqual(policy.value_or(MakeBadPolicy())->name.c_str(), kv.second.data());
     }
   }
+}
+
+- (void)testPolicyVersion {
+  NSMutableDictionary *config = WrapWatchItemsConfig(@{});
+
+  WatchItemsPeer watchItems(nil, NULL);
+  watchItems.ReloadConfig(config);
+
+  XCTAssertCStringEqual(watchItems.PolicyVersion().c_str(), kVersion.data());
 }
 
 @end

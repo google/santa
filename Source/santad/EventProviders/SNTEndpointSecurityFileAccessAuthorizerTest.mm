@@ -23,11 +23,13 @@
 
 #include <array>
 #include <cstddef>
+#include <map>
 #include <memory>
 #include <optional>
 #include <variant>
 
 #include "Source/common/SNTCachedDecision.h"
+#import "Source/common/SNTConfigurator.h"
 #include "Source/common/TestUtils.h"
 #include "Source/common/Unit.h"
 #include "Source/santad/DataLayer/WatchItems.h"
@@ -46,17 +48,20 @@ extern NSString *kBadCertHash;
 using PathTargets = std::pair<std::string_view, std::variant<std::string_view, std::string, Unit>>;
 extern PathTargets GetPathTargets(const Message &msg);
 
+extern es_auth_result_t FileAccessPolicyDecisionToESAuthResult(FileAccessPolicyDecision decision);
 extern es_auth_result_t CombinePolicyResults(es_auth_result_t result1, es_auth_result_t result2);
 
 @interface SNTEndpointSecurityFileAccessAuthorizer (Testing)
 - (NSString *)getCertificateHash:(es_file_t *)esFile;
-- (std::optional<es_auth_result_t>)specialCaseForPolicy:(std::shared_ptr<WatchItemPolicy>)policy
-                                                message:(const Message &)msg;
-- (es_auth_result_t)applyPolicy:(std::optional<std::shared_ptr<WatchItemPolicy>>)optionalPolicy
-                      toMessage:(const Message &)msg;
+- (FileAccessPolicyDecision)specialCaseForPolicy:(std::shared_ptr<WatchItemPolicy>)policy
+                                         message:(const Message &)msg;
+- (FileAccessPolicyDecision)applyPolicy:
+                              (std::optional<std::shared_ptr<WatchItemPolicy>>)optionalPolicy
+                              toMessage:(const Message &)msg;
 @end
 
 @interface SNTEndpointSecurityFileAccessAuthorizerTest : XCTestCase
+@property id mockConfigurator;
 @property id cscMock;
 @property id dcMock;
 @end
@@ -65,6 +70,9 @@ extern es_auth_result_t CombinePolicyResults(es_auth_result_t result1, es_auth_r
 
 - (void)setUp {
   [super setUp];
+
+  self.mockConfigurator = OCMClassMock([SNTConfigurator class]);
+  OCMStub([self.mockConfigurator configurator]).andReturn(self.mockConfigurator);
 
   self.cscMock = OCMClassMock([MOLCodesignChecker class]);
   OCMStub([self.cscMock alloc]).andReturn(self.cscMock);
@@ -166,6 +174,22 @@ extern es_auth_result_t CombinePolicyResults(es_auth_result_t result1, es_auth_r
   [certMock stopMocking];
 }
 
+- (void)testFileAccessPolicyDecisionToESAuthResult {
+  std::map<FileAccessPolicyDecision, es_auth_result_t> policyDecisionToAuthResult = {
+    {FileAccessPolicyDecision::kNoPolicy, ES_AUTH_RESULT_ALLOW},
+    {FileAccessPolicyDecision::kDenied, ES_AUTH_RESULT_DENY},
+    {FileAccessPolicyDecision::kDeniedInvalidSignature, ES_AUTH_RESULT_DENY},
+    {FileAccessPolicyDecision::kAllowed, ES_AUTH_RESULT_ALLOW},
+    {FileAccessPolicyDecision::kAllowedAuditOnly, ES_AUTH_RESULT_ALLOW},
+  };
+
+  for (const auto &kv : policyDecisionToAuthResult) {
+    XCTAssertEqual(FileAccessPolicyDecisionToESAuthResult(kv.first), kv.second);
+  }
+
+  XCTAssertThrows(FileAccessPolicyDecisionToESAuthResult((FileAccessPolicyDecision)123));
+}
+
 - (void)testCombinePolicyResults {
   // Ensure that the combined result is ES_AUTH_RESULT_DENY if both or either
   // input result is ES_AUTH_RESULT_DENY.
@@ -200,7 +224,7 @@ extern es_auth_result_t CombinePolicyResults(es_auth_result_t result1, es_auth_r
 
   auto policy = std::make_shared<WatchItemPolicy>("foo_policy", "/foo");
 
-  std::optional<es_auth_result_t> optionalResult;
+  FileAccessPolicyDecision result;
 
   {
     esMsg.event_type = ES_EVENT_TYPE_AUTH_OPEN;
@@ -210,8 +234,8 @@ extern es_auth_result_t CombinePolicyResults(es_auth_result_t result1, es_auth_r
       policy->write_only = true;
       esMsg.event.open.fflag = FWRITE | FREAD;
       Message msg(mockESApi, &esMsg);
-      optionalResult = [accessClient specialCaseForPolicy:policy message:msg];
-      XCTAssertFalse(optionalResult.has_value());
+      result = [accessClient specialCaseForPolicy:policy message:msg];
+      XCTAssertEqual(result, FileAccessPolicyDecision::kNoPolicy);
     }
 
     // Write-only policy, Read operation
@@ -219,9 +243,8 @@ extern es_auth_result_t CombinePolicyResults(es_auth_result_t result1, es_auth_r
       policy->write_only = true;
       esMsg.event.open.fflag = FREAD;
       Message msg(mockESApi, &esMsg);
-      optionalResult = [accessClient specialCaseForPolicy:policy message:msg];
-      XCTAssertTrue(optionalResult.has_value());
-      XCTAssertEqual(optionalResult.value_or(ES_AUTH_RESULT_DENY), ES_AUTH_RESULT_ALLOW);
+      result = [accessClient specialCaseForPolicy:policy message:msg];
+      XCTAssertEqual(result, FileAccessPolicyDecision::kAllowed);
     }
 
     // Read/Write policy, Read operation
@@ -229,8 +252,8 @@ extern es_auth_result_t CombinePolicyResults(es_auth_result_t result1, es_auth_r
       policy->write_only = false;
       esMsg.event.open.fflag = FREAD;
       Message msg(mockESApi, &esMsg);
-      optionalResult = [accessClient specialCaseForPolicy:policy message:msg];
-      XCTAssertFalse(optionalResult.has_value());
+      result = [accessClient specialCaseForPolicy:policy message:msg];
+      XCTAssertEqual(result, FileAccessPolicyDecision::kNoPolicy);
     }
   }
 
@@ -243,8 +266,8 @@ extern es_auth_result_t CombinePolicyResults(es_auth_result_t result1, es_auth_r
   for (const auto &event : eventTypes) {
     esMsg.event_type = event;
     Message msg(mockESApi, &esMsg);
-    optionalResult = [accessClient specialCaseForPolicy:policy message:msg];
-    XCTAssertFalse(optionalResult.has_value());
+    result = [accessClient specialCaseForPolicy:policy message:msg];
+    XCTAssertEqual(result, FileAccessPolicyDecision::kNoPolicy);
   }
 
   // Ensure unsubscribed event types throw an exception
@@ -283,7 +306,8 @@ extern es_auth_result_t CombinePolicyResults(es_auth_result_t result1, es_auth_r
 
   int fake;
   OCMStub([accessClientMock specialCaseForPolicy:nullptr message:*(Message *)&fake])
-    .ignoringNonObjectArgs();
+    .ignoringNonObjectArgs()
+    .andReturn(FileAccessPolicyDecision::kNoPolicy);
 
   OCMStub([accessClientMock getCertificateHash:&esFile])
     .ignoringNonObjectArgs()
@@ -292,17 +316,34 @@ extern es_auth_result_t CombinePolicyResults(es_auth_result_t result1, es_auth_r
   // If no policy exists, the operation is allowed
   {
     Message msg(mockESApi, &esMsg);
-    XCTAssertEqual([accessClient applyPolicy:std::nullopt toMessage:msg], ES_AUTH_RESULT_ALLOW);
+    XCTAssertEqual([accessClient applyPolicy:std::nullopt toMessage:msg],
+                   FileAccessPolicyDecision::kNoPolicy);
   }
 
   auto policy = std::make_shared<WatchItemPolicy>("foo_policy", "/foo");
   auto optionalPolicy = std::make_optional<std::shared_ptr<WatchItemPolicy>>(policy);
 
-  // Signed but invalid instigating processes are automatically denied
+  // Signed but invalid instigating processes are automatically
+  // denied when `EnableBadSignatureProtection` is true
   {
+    OCMExpect([self.mockConfigurator enableBadSignatureProtection]).andReturn(YES);
     esMsg.process->codesigning_flags = CS_SIGNED;
     Message msg(mockESApi, &esMsg);
-    XCTAssertEqual([accessClient applyPolicy:optionalPolicy toMessage:msg], ES_AUTH_RESULT_DENY);
+    XCTAssertEqual([accessClient applyPolicy:optionalPolicy toMessage:msg],
+                   FileAccessPolicyDecision::kDeniedInvalidSignature);
+  }
+
+  // Signed but invalid instigating processes are not automatically
+  // denied when `EnableBadSignatureProtection` is false. Policy
+  // evaluation should continue normally.
+  {
+    OCMExpect([self.mockConfigurator enableBadSignatureProtection]).andReturn(NO);
+    esMsg.process->codesigning_flags = CS_SIGNED;
+    Message msg(mockESApi, &esMsg);
+    policy->allowed_binary_paths.insert(instigatingPath);
+    XCTAssertEqual([accessClient applyPolicy:optionalPolicy toMessage:msg],
+                   FileAccessPolicyDecision::kAllowed);
+    policy->allowed_binary_paths.clear();
   }
 
   // Set the codesign flags to be signed and valid for the remaining tests
@@ -312,7 +353,8 @@ extern es_auth_result_t CombinePolicyResults(es_auth_result_t result1, es_auth_r
   {
     Message msg(mockESApi, &esMsg);
     policy->allowed_binary_paths.insert(instigatingPath);
-    XCTAssertEqual([accessClient applyPolicy:optionalPolicy toMessage:msg], ES_AUTH_RESULT_ALLOW);
+    XCTAssertEqual([accessClient applyPolicy:optionalPolicy toMessage:msg],
+                   FileAccessPolicyDecision::kAllowed);
     policy->allowed_binary_paths.clear();
   }
 
@@ -320,7 +362,8 @@ extern es_auth_result_t CombinePolicyResults(es_auth_result_t result1, es_auth_r
   {
     Message msg(mockESApi, &esMsg);
     policy->allowed_team_ids.insert(instigatingTeamID);
-    XCTAssertEqual([accessClient applyPolicy:optionalPolicy toMessage:msg], ES_AUTH_RESULT_ALLOW);
+    XCTAssertEqual([accessClient applyPolicy:optionalPolicy toMessage:msg],
+                   FileAccessPolicyDecision::kAllowed);
     policy->allowed_team_ids.clear();
   }
 
@@ -328,7 +371,8 @@ extern es_auth_result_t CombinePolicyResults(es_auth_result_t result1, es_auth_r
   {
     Message msg(mockESApi, &esMsg);
     policy->allowed_cdhashes.insert(instigatingCDHash);
-    XCTAssertEqual([accessClient applyPolicy:optionalPolicy toMessage:msg], ES_AUTH_RESULT_ALLOW);
+    XCTAssertEqual([accessClient applyPolicy:optionalPolicy toMessage:msg],
+                   FileAccessPolicyDecision::kAllowed);
     policy->allowed_cdhashes.clear();
   }
 
@@ -336,7 +380,8 @@ extern es_auth_result_t CombinePolicyResults(es_auth_result_t result1, es_auth_r
   {
     Message msg(mockESApi, &esMsg);
     policy->allowed_certificates_sha256.insert(instigatingCertHash);
-    XCTAssertEqual([accessClient applyPolicy:optionalPolicy toMessage:msg], ES_AUTH_RESULT_ALLOW);
+    XCTAssertEqual([accessClient applyPolicy:optionalPolicy toMessage:msg],
+                   FileAccessPolicyDecision::kAllowed);
     policy->allowed_certificates_sha256.clear();
   }
 
@@ -346,14 +391,16 @@ extern es_auth_result_t CombinePolicyResults(es_auth_result_t result1, es_auth_r
   {
     policy->audit_only = false;
     Message msg(mockESApi, &esMsg);
-    XCTAssertEqual([accessClient applyPolicy:optionalPolicy toMessage:msg], ES_AUTH_RESULT_DENY);
+    XCTAssertEqual([accessClient applyPolicy:optionalPolicy toMessage:msg],
+                   FileAccessPolicyDecision::kDenied);
   }
 
   // For audit only policies with no exceptions, operations are logged but allowed
   {
     policy->audit_only = true;
     Message msg(mockESApi, &esMsg);
-    XCTAssertEqual([accessClient applyPolicy:optionalPolicy toMessage:msg], ES_AUTH_RESULT_ALLOW);
+    XCTAssertEqual([accessClient applyPolicy:optionalPolicy toMessage:msg],
+                   FileAccessPolicyDecision::kAllowedAuditOnly);
   }
 
   XCTBubbleMockVerifyAndClearExpectations(mockESApi.get());
