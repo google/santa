@@ -56,7 +56,8 @@ static void SantaWatchdog(void *context) {
 
   if (tinfo.has_value()) {
     // CPU
-    double total_time = tinfo->total_user_nanos + tinfo->total_system_nanos / (double)NSEC_PER_SEC;
+    double total_time =
+      (tinfo->total_user_nanos + tinfo->total_system_nanos) / (double)NSEC_PER_SEC;
     double percentage =
       (((total_time - state->prev_total_time) / (double)kWatchdogTimeInterval) * 100.0);
     state->prev_total_time = total_time;
@@ -149,7 +150,7 @@ int main(int argc, char *argv[]) {
       SantadDeps::Create([SNTConfigurator configurator], [SNTMetricSet sharedInstance]);
 
     // This doesn't return
-    SantadMain(deps->ESAPI(), deps->Logger(), deps->Metrics(), deps->Enricher(),
+    SantadMain(deps->ESAPI(), deps->Logger(), deps->Metrics(), deps->WatchItems(), deps->Enricher(),
                deps->AuthResultCache(), deps->ControlConnection(), deps->CompilerController(),
                deps->NotifierQueue(), deps->SyncdQueue(), deps->ExecController(),
                deps->PrefixTree());

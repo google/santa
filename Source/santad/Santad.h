@@ -19,6 +19,7 @@
 
 #include "Source/common/PrefixTree.h"
 #include "Source/common/Unit.h"
+#include "Source/santad/DataLayer/WatchItems.h"
 #include "Source/santad/EventProviders/AuthResultCache.h"
 #include "Source/santad/EventProviders/EndpointSecurity/EndpointSecurityAPI.h"
 #include "Source/santad/EventProviders/EndpointSecurity/Enricher.h"
@@ -35,6 +36,7 @@ void SantadMain(
         esapi,
     std::shared_ptr<santa::santad::logs::endpoint_security::Logger> logger,
     std::shared_ptr<santa::santad::Metrics> metrics,
+    std::shared_ptr<santa::santad::data_layer::WatchItems> watch_items,
     std::shared_ptr<santa::santad::event_providers::endpoint_security::Enricher>
         enricher,
     std::shared_ptr<santa::santad::event_providers::AuthResultCache>

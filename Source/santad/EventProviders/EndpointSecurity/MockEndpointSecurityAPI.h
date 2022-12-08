@@ -46,6 +46,10 @@ class MockEndpointSecurityAPI
               (const santa::santad::event_providers::endpoint_security::Client &,
                const santa::santad::event_providers::endpoint_security::Message &msg,
                es_auth_result_t result, bool cache));
+  MOCK_METHOD(bool, RespondFlagsResult,
+              (const santa::santad::event_providers::endpoint_security::Client &client,
+               const santa::santad::event_providers::endpoint_security::Message &msg,
+               uint32_t allowed_flags, bool cache));
 
   MOCK_METHOD(bool, MuteProcess,
               (const santa::santad::event_providers::endpoint_security::Client &,

@@ -15,13 +15,17 @@
 #ifndef SANTA__SANTAD__DATALAYER_WATCHITEMS_H
 #define SANTA__SANTAD__DATALAYER_WATCHITEMS_H
 
+#include <CommonCrypto/CommonDigest.h>
 #import <Foundation/Foundation.h>
+#include <Kernel/kern/cs_blobs.h>
 #include <dispatch/dispatch.h>
-#include <utility>
 
+#include <array>
 #include <memory>
+#include <optional>
 #include <set>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "Source/common/PrefixTree.h"
@@ -45,8 +49,9 @@ namespace santa::santad::data_layer {
 struct WatchItemPolicy {
   WatchItemPolicy(std::string_view n, std::string_view p, bool wo = false, bool ip = false,
                   bool ao = true, std::set<std::string> &&abp = {},
-                  std::set<std::string> &&acs = {}, std::set<std::string> &&ati = {},
-                  std::set<std::string> &&ach = {});
+                  std::set<std::string> &&ati = {},
+                  std::set<std::array<uint8_t, CS_CDHASH_LEN>> &&ach = {},
+                  std::set<std::string> &&acs = {});
 
   std::string name;
   std::string path;
@@ -54,9 +59,9 @@ struct WatchItemPolicy {
   bool is_prefix;
   bool audit_only;
   std::set<std::string> allowed_binary_paths;
-  std::set<std::string> allowed_certificates_sha256;
   std::set<std::string> allowed_team_ids;
-  std::set<std::string> allowed_cdhashes;
+  std::set<std::array<uint8_t, CS_CDHASH_LEN>> allowed_cdhashes;
+  std::set<std::string> allowed_certificates_sha256;
 };
 
 class WatchItems : public std::enable_shared_from_this<WatchItems> {
@@ -64,7 +69,8 @@ class WatchItems : public std::enable_shared_from_this<WatchItems> {
   using WatchItemsTree = santa::common::PrefixTree<std::shared_ptr<WatchItemPolicy>>;
 
   // Factory
-  std::shared_ptr<WatchItems> Create(NSString *config_path, uint64_t reapply_config_frequency_secs);
+  static std::shared_ptr<WatchItems> Create(NSString *config_path,
+                                            uint64_t reapply_config_frequency_secs);
 
   WatchItems(NSString *config_path_, dispatch_source_t timer_source,
              void (^periodic_task_complete_f)(void) = nullptr);
@@ -73,6 +79,7 @@ class WatchItems : public std::enable_shared_from_this<WatchItems> {
   void BeginPeriodicTask();
 
   std::optional<std::shared_ptr<WatchItemPolicy>> FindPolicyForPath(const char *input);
+  std::string PolicyVersion();
 
   friend class santa::santad::data_layer::WatchItemsPeer;
 
@@ -92,6 +99,7 @@ class WatchItems : public std::enable_shared_from_this<WatchItems> {
   std::set<std::string> currently_monitored_paths_;
   absl::Mutex lock_;
   bool periodic_task_started_ = false;
+  std::string policy_version_;
 };
 
 }  // namespace santa::santad::data_layer
