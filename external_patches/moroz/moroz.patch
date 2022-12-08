@@ -1,0 +1,530 @@
+diff --git a/BUILD b/BUILD
+new file mode 100644
+index 0000000..70bf5d5
+--- /dev/null
++++ b/BUILD
+@@ -0,0 +1,15 @@
++load("@bazel_gazelle//:def.bzl", "gazelle")
++
++# gazelle:prefix github.com/groob/moroz
++gazelle(name = "gazelle")
++
++gazelle(
++    name = "gazelle-update-repos",
++    args = [
++        "-from_file=go.mod",
++        "-to_macro=deps.bzl%go_dependencies",
++        "-prune",
++        "-build_file_proto_mode=disable_global",
++    ],
++    command = "update-repos",
++)
+diff --git a/README.md b/README.md
+index e9949ef..6259d4e 100644
+--- a/README.md
++++ b/README.md
+@@ -4,7 +4,7 @@
+ 
+ Moroz is a server for the [Santa](https://github.com/google/santa) project.
+ 
+-> Santa is a binary whitelisting/blacklisting system for macOS. It consists of a kernel extension that monitors for executions, a userland daemon that makes execution decisions based on the contents of a SQLite database, a GUI agent that notifies the user in case of a block decision and a command-line utility for managing the system and synchronizing the database with a server.
++> Santa is a binary allowlisting/blocklisting system for macOS. It consists of a kernel extension that monitors for executions, a userland daemon that makes execution decisions based on the contents of a SQLite database, a GUI agent that notifies the user in case of a block decision and a command-line utility for managing the system and synchronizing the database with a server.
+ >
+ > Santa is a project of Google's Macintosh Operations Team.
+ 
+@@ -21,21 +21,21 @@ Below is a sample configuration file:
+ 
+ ```toml
+ client_mode = "MONITOR"
+-#blacklist_regex = "^(?:/Users)/.*"
+-#whitelist_regex = "^(?:/Users)/.*"
++#blocklist_regex = "^(?:/Users)/.*"
++#allowlist_regex = "^(?:/Users)/.*"
+ batch_size = 100
+ 
+ [[rules]]
+ rule_type = "BINARY"
+-policy = "BLACKLIST"
++policy = "blocklist"
+ sha256 = "2dc104631939b4bdf5d6bccab76e166e37fe5e1605340cf68dab919df58b8eda"
+-custom_msg = "blacklist firefox"
++custom_msg = "blocklist firefox"
+ 
+ [[rules]]
+ rule_type = "CERTIFICATE"
+-policy = "BLACKLIST"
++policy = "blocklist"
+ sha256 = "e7726cf87cba9e25139465df5bd1557c8a8feed5c7dd338342d8da0959b63c8d"
+-custom_msg = "blacklist dash app certificate"
++custom_msg = "blocklist dash app certificate"
+ ```
+ 
+ # Creating rules
+@@ -52,7 +52,7 @@ BINARY | CERTIFICATE
+ 
+ Values for `policy`:
+ ```
+-BLACKLIST | WHITELIST
++blocklist | allowlist
+ ```
+ 
+ Use the `santactl` command to get the sha256 value: 
+diff --git a/WORKSPACE b/WORKSPACE
+new file mode 100644
+index 0000000..fa182c5
+--- /dev/null
++++ b/WORKSPACE
+@@ -0,0 +1,26 @@
++load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
++
++http_archive(
++    name = "io_bazel_rules_go",
++    sha256 = "ae013bf35bd23234d1dea46b079f1e05ba74ac0321423830119d3e787ec73483",
++    url = "https://github.com/bazelbuild/rules_go/releases/download/v0.36.0/rules_go-v0.36.0.zip",
++)
++
++http_archive(
++    name = "bazel_gazelle",
++    sha256 = "448e37e0dbf61d6fa8f00aaa12d191745e14f07c31cabfa731f0c8e8a4f41b97",
++    url = "https://github.com/bazelbuild/bazel-gazelle/releases/download/v0.28.0/bazel-gazelle-v0.28.0.tar.gz",
++)
++
++load("@io_bazel_rules_go//go:deps.bzl", "go_register_toolchains", "go_rules_dependencies")
++load("@bazel_gazelle//:deps.bzl", "gazelle_dependencies")
++load("//:deps.bzl", "go_dependencies")
++
++# gazelle:repository_macro deps.bzl%go_dependencies
++go_dependencies()
++
++go_rules_dependencies()
++
++go_register_toolchains(version = "1.19.3")
++
++gazelle_dependencies()
+diff --git a/cmd/moroz/BUILD.bazel b/cmd/moroz/BUILD.bazel
+new file mode 100644
+index 0000000..d128d1b
+--- /dev/null
++++ b/cmd/moroz/BUILD.bazel
+@@ -0,0 +1,25 @@
++load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
++
++go_library(
++    name = "moroz_lib",
++    srcs = ["main.go"],
++    importpath = "github.com/groob/moroz/cmd/moroz",
++    visibility = ["//visibility:private"],
++    deps = [
++        "//moroz",
++        "//santaconfig",
++        "@com_github_go_kit_kit//log/level",
++        "@com_github_gorilla_mux//:mux",
++        "@com_github_kolide_kit//env",
++        "@com_github_kolide_kit//httputil",
++        "@com_github_kolide_kit//logutil",
++        "@com_github_kolide_kit//version",
++        "@com_github_oklog_run//:run",
++    ],
++)
++
++go_binary(
++    name = "moroz",
++    embed = [":moroz_lib"],
++    visibility = ["//visibility:public"],
++)
+diff --git a/configs/global.toml b/configs/global.toml
+index 5685bf2..86b4b7f 100644
+--- a/configs/global.toml
++++ b/configs/global.toml
+@@ -1,42 +1,42 @@
+ client_mode = "MONITOR"
+-# blacklist_regex = "^(?:/Users)/.*"
+-# whitelist_regex = "^(?:/Users)/.*"
++# blocklist_regex = "^(?:/Users)/.*"
++# allowlist_regex = "^(?:/Users)/.*"
+ batch_size = 100
+ enable_bundles = false
+-enabled_transitive_whitelisting = true
++enabled_transitive_allowlisting = true
+ 
+ [[rules]]
+ rule_type = "BINARY"
+-policy = "BLACKLIST"
++policy = "blocklist"
+ sha256 = "2dc104631939b4bdf5d6bccab76e166e37fe5e1605340cf68dab919df58b8eda"
+-custom_msg = "blacklist firefox"
++custom_msg = "blocklist firefox"
+ 
+ [[rules]]
+ rule_type = "CERTIFICATE"
+-policy = "BLACKLIST"
++policy = "blocklist"
+ sha256 = "e7726cf87cba9e25139465df5bd1557c8a8feed5c7dd338342d8da0959b63c8d"
+-custom_msg = "blacklist dash app certificate"
++custom_msg = "blocklist dash app certificate"
+ 
+ [[rules]]
+ rule_type = "BINARY"
+-policy = "WHITELIST_COMPILER"
++policy = "allowlist_COMPILER"
+ sha256 = "60d79d1763fefb56716e4a36284300523eb4335c3726fb9070fa83074b02279e"
+-custom_msg = "whitelist go compiler component"
++custom_msg = "allowlist go compiler component"
+ 
+ [[rules]]
+ rule_type = "BINARY"
+-policy = "WHITELIST_COMPILER"
++policy = "allowlist_COMPILER"
+ sha256 = "8e78770685d51324b78588fddc6afc2f8b6cef5231c27eeb97363cc437fec18a"
+-custom_msg = "whitelist go compiler component"
++custom_msg = "allowlist go compiler component"
+ 
+ [[rules]]
+ rule_type = "BINARY"
+-policy = "WHITELIST_COMPILER"
++policy = "allowlist_COMPILER"
+ sha256 = "e88617cfd62809fb10e213c459a52f48e028fae4321e41134c4797465af886b6"
+-custom_msg = "whitelist go compiler component"
++custom_msg = "allowlist go compiler component"
+ 
+ [[rules]]
+ rule_type = "BINARY"
+-policy = "WHITELIST_COMPILER"
++policy = "allowlist_COMPILER"
+ sha256 = "d867fca68bbd7db18e9ced231800e7535bc067852b1e530987bb7f57b5e3a02c"
+-custom_msg = "whitelist go compiler component"
++custom_msg = "allowlist go compiler component"
+diff --git a/deps.bzl b/deps.bzl
+new file mode 100644
+index 0000000..cf39a17
+--- /dev/null
++++ b/deps.bzl
+@@ -0,0 +1,80 @@
++load("@bazel_gazelle//:deps.bzl", "go_repository")
++
++def go_dependencies():
++    go_repository(
++        name = "com_github_burntsushi_toml",
++        build_file_proto_mode = "disable_global",
++        importpath = "github.com/BurntSushi/toml",
++        sum = "h1:OthAm9ZSUx4uAmn3WbPwc06nowWrByRwBsYRhbmFjBs=",
++        version = "v0.2.0",
++    )
++    go_repository(
++        name = "com_github_go_kit_kit",
++        build_file_proto_mode = "disable_global",
++        importpath = "github.com/go-kit/kit",
++        sum = "h1:KeVK+Emj3c3S4eRztFuzbFYb2BAgf2jmwDwyXEri7Lo=",
++        version = "v0.4.0",
++    )
++    go_repository(
++        name = "com_github_go_logfmt_logfmt",
++        build_file_proto_mode = "disable_global",
++        importpath = "github.com/go-logfmt/logfmt",
++        sum = "h1:8HUsc87TaSWLKwrnumgC8/YconD2fJQsRJAsWaPg2ic=",
++        version = "v0.3.0",
++    )
++    go_repository(
++        name = "com_github_go_stack_stack",
++        build_file_proto_mode = "disable_global",
++        importpath = "github.com/go-stack/stack",
++        sum = "h1:S04+lLfST9FvL8dl4R31wVUC/paZp/WQZbLmUgWboGw=",
++        version = "v1.7.0",
++    )
++    go_repository(
++        name = "com_github_gorilla_context",
++        build_file_proto_mode = "disable_global",
++        importpath = "github.com/gorilla/context",
++        sum = "h1:9oNbS1z4rVpbnkHBdPZU4jo9bSmrLpII768arSyMFgk=",
++        version = "v0.0.0-20160226214623-1ea25387ff6f",
++    )
++    go_repository(
++        name = "com_github_gorilla_mux",
++        build_file_proto_mode = "disable_global",
++        importpath = "github.com/gorilla/mux",
++        sum = "h1:KOwqsTYZdeuMacU7CxjMNYEKeBvLbxW+psodrbcEa3A=",
++        version = "v1.6.1",
++    )
++    go_repository(
++        name = "com_github_kolide_kit",
++        build_file_proto_mode = "disable_global",
++        importpath = "github.com/kolide/kit",
++        sum = "h1:8UB0NJBoB/lN2O9zG9+U2klyYE0UhvN2Zrn7HBjhwNY=",
++        version = "v0.0.0-20180912215818-0c28f72eb2b0",
++    )
++    go_repository(
++        name = "com_github_kr_logfmt",
++        build_file_proto_mode = "disable_global",
++        importpath = "github.com/kr/logfmt",
++        sum = "h1:T+h1c/A9Gawja4Y9mFVWj2vyii2bbUNDw3kt9VxK2EY=",
++        version = "v0.0.0-20140226030751-b84e30acd515",
++    )
++    go_repository(
++        name = "com_github_oklog_run",
++        build_file_proto_mode = "disable_global",
++        importpath = "github.com/oklog/run",
++        sum = "h1:Ru7dDtJNOyC66gQ5dQmaCa0qIsAUFY3sFpK1Xk8igrw=",
++        version = "v1.0.0",
++    )
++    go_repository(
++        name = "com_github_pkg_errors",
++        build_file_proto_mode = "disable_global",
++        importpath = "github.com/pkg/errors",
++        sum = "h1:WdK/asTD0HN+q6hsWO3/vpuAkAr+tw6aNJNDFFf0+qw=",
++        version = "v0.8.0",
++    )
++    go_repository(
++        name = "org_golang_x_net",
++        build_file_proto_mode = "disable_global",
++        importpath = "golang.org/x/net",
++        sum = "h1:BLERX6fu5dNMZcaGP2RzbrDZpHQbDkAoG9oiTRXbWr0=",
++        version = "v0.0.0-20180124060956-0ed95abb35c4",
++    )
+diff --git a/moroz/BUILD.bazel b/moroz/BUILD.bazel
+new file mode 100644
+index 0000000..c04dcf4
+--- /dev/null
++++ b/moroz/BUILD.bazel
+@@ -0,0 +1,23 @@
++load("@io_bazel_rules_go//go:def.bzl", "go_library")
++
++go_library(
++    name = "moroz",
++    srcs = [
++        "middleware.go",
++        "server.go",
++        "service.go",
++        "svc_preflight.go",
++        "svc_rule_download.go",
++        "svc_upload_event.go",
++    ],
++    importpath = "github.com/groob/moroz/moroz",
++    visibility = ["//visibility:public"],
++    deps = [
++        "//santa",
++        "@com_github_go_kit_kit//endpoint",
++        "@com_github_go_kit_kit//log",
++        "@com_github_go_kit_kit//transport/http",
++        "@com_github_gorilla_mux//:mux",
++        "@com_github_pkg_errors//:errors",
++    ],
++)
+diff --git a/santa/BUILD.bazel b/santa/BUILD.bazel
+new file mode 100644
+index 0000000..02be620
+--- /dev/null
++++ b/santa/BUILD.bazel
+@@ -0,0 +1,17 @@
++load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
++
++go_library(
++    name = "santa",
++    srcs = ["santa.go"],
++    importpath = "github.com/groob/moroz/santa",
++    visibility = ["//visibility:public"],
++    deps = ["@com_github_pkg_errors//:errors"],
++)
++
++go_test(
++    name = "santa_test",
++    srcs = ["santa_test.go"],
++    data = glob(["testdata/**"]),
++    embed = [":santa"],
++    deps = ["@com_github_burntsushi_toml//:toml"],
++)
+diff --git a/santa/santa.go b/santa/santa.go
+index fe9b3b7..15b1a0b 100644
+--- a/santa/santa.go
++++ b/santa/santa.go
+@@ -20,18 +20,21 @@ type Config struct {
+ type Rule struct {
+ 	RuleType      RuleType `json:"rule_type" toml:"rule_type"`
+ 	Policy        Policy   `json:"policy" toml:"policy"`
+-	SHA256        string   `json:"sha256" toml:"sha256"`
++	Identifier    string   `json:"identifier" toml:"identifier"`
+ 	CustomMessage string   `json:"custom_msg,omitempty" toml:"custom_msg,omitempty"`
+ }
+ 
+ // Preflight representssync response sent to a Santa client by the sync server.
+ type Preflight struct {
+ 	ClientMode                    ClientMode `json:"client_mode" toml:"client_mode"`
+-	BlacklistRegex                string     `json:"blacklist_regex" toml:"blacklist_regex"`
+-	WhitelistRegex                string     `json:"whitelist_regex" toml:"whitelist_regex"`
++	BlocklistRegex                string     `json:"blocklist_regex" toml:"blocklist_regex"`
++	AllowlistRegex                string     `json:"allowlist_regex" toml:"allowlist_regex"`
+ 	BatchSize                     int        `json:"batch_size" toml:"batch_size"`
+ 	EnableBundles                 bool       `json:"enable_bundles" toml:"enable_bundles"`
+-	EnabledTransitiveWhitelisting bool       `json:"enabled_transitive_whitelisting" toml:"enabled_transitive_whitelisting"`
++	EnabledTransitiveallowlisting bool       `json:"enabled_transitive_allowlisting" toml:"enabled_transitive_allowlisting"`
++	BlockUSBMount                 bool       `json:"block_usb_mount" toml:"block_usb_mount"`
++	RemountUSBMode                []string   `json:"remount_usb_mode" toml:"remount_usb_mode"`
++	CleanSync                     bool       `json:"clean_sync" toml:"clean_sync"`
+ }
+ 
+ // A PreflightPayload represents the request sent by a santa client to the sync server.
+@@ -43,7 +46,7 @@ type PreflightPayload struct {
+ 	CertificateRuleCount int        `json:"certificate_rule_count"`
+ 	BinaryRuleCount      int        `json:"binary_rule_count"`
+ 	ClientMode           ClientMode `json:"client_mode"`
+-	SerialNumber         string     `json:"serial_number"`
++	SerialNumber         string     `json:"serial_num"`
+ 	PrimaryUser          string     `json:"primary_user"`
+ }
+ 
+@@ -94,22 +97,22 @@ func (r RuleType) MarshalText() ([]byte, error) {
+ type Policy int
+ 
+ const (
+-	Blacklist Policy = iota
+-	Whitelist
++	Blocklist Policy = iota
++	allowlist
+ 
+-	// WhitelistCompiler is a Transitive Whitelist policy which allows whitelisting binaries created by
+-	// a specific compiler. EnabledTransitiveWhitelisting must be set to true in the Preflight first.
+-	WhitelistCompiler
++	// allowlistCompiler is a Transitive allowlist policy which allows allowlisting binaries created by
++	// a specific compiler. EnabledTransitiveallowlisting must be set to true in the Preflight first.
++	allowlistCompiler
+ )
+ 
+ func (p *Policy) UnmarshalText(text []byte) error {
+ 	switch t := string(text); t {
+-	case "BLACKLIST":
+-		*p = Blacklist
+-	case "WHITELIST":
+-		*p = Whitelist
+-	case "WHITELIST_COMPILER":
+-		*p = WhitelistCompiler
++	case "BLOCKLIST":
++		*p = Blocklist
++	case "ALLOWLIST":
++		*p = allowlist
++	case "ALLOWLIST_COMPILER":
++		*p = allowlistCompiler
+ 	default:
+ 		return errors.Errorf("unknown policy value %q", t)
+ 	}
+@@ -118,12 +121,12 @@ func (p *Policy) UnmarshalText(text []byte) error {
+ 
+ func (p Policy) MarshalText() ([]byte, error) {
+ 	switch p {
+-	case Blacklist:
+-		return []byte("BLACKLIST"), nil
+-	case Whitelist:
+-		return []byte("WHITELIST"), nil
+-	case WhitelistCompiler:
+-		return []byte("WHITELIST_COMPILER"), nil
++	case Blocklist:
++		return []byte("BLOCKLIST"), nil
++	case allowlist:
++		return []byte("ALLOWLIST"), nil
++	case allowlistCompiler:
++		return []byte("ALLOWLIST_COMPILER"), nil
+ 	default:
+ 		return nil, errors.Errorf("unknown policy %d", p)
+ 	}
+diff --git a/santa/santa_test.go b/santa/santa_test.go
+index bc59e72..09823b4 100644
+--- a/santa/santa_test.go
++++ b/santa/santa_test.go
+@@ -24,15 +24,15 @@ func TestConfigMarshalUnmarshal(t *testing.T) {
+ 		t.Errorf("have rule_type %d, want %d\n", have, want)
+ 	}
+ 
+-	if have, want := conf.Rules[0].Policy, Blacklist; have != want {
++	if have, want := conf.Rules[0].Policy, Blocklist; have != want {
+ 		t.Errorf("have policy %d, want %d\n", have, want)
+ 	}
+ 
+-	if have, want := conf.Rules[1].Policy, Whitelist; have != want {
++	if have, want := conf.Rules[1].Policy, allowlist; have != want {
+ 		t.Errorf("have policy %d, want %d\n", have, want)
+ 	}
+ 
+-	if have, want := conf.Rules[2].Policy, WhitelistCompiler; have != want {
++	if have, want := conf.Rules[2].Policy, allowlistCompiler; have != want {
+ 		t.Errorf("have policy %d, want %d\n", have, want)
+ 	}
+ 
+diff --git a/santa/testdata/config_a_toml.golden b/santa/testdata/config_a_toml.golden
+index d3bde9e..edcfd54 100644
+--- a/santa/testdata/config_a_toml.golden
++++ b/santa/testdata/config_a_toml.golden
+@@ -1,42 +1,42 @@
+ client_mode = "LOCKDOWN"
+-blacklist_regex = "^(?:/Users)/.*"
+-whitelist_regex = "^(?:/Users)/.*"
++blocklist_regex = "^(?:/Users)/.*"
++allowlist_regex = "^(?:/Users)/.*"
+ batch_size = 100
+ enable_bundles = false
+-enabled_transitive_whitelisting = true
++enabled_transitive_allowlisting = true
+ 
+ [[rules]]
+   rule_type = "BINARY"
+-  policy = "BLACKLIST"
++  policy = "BLOCKLIST"
+   sha256 = "2dc104631939b4bdf5d6bccab76e166e37fe5e1605340cf68dab919df58b8eda"
+-  custom_msg = "blacklist firefox"
++  custom_msg = "blocklist firefox"
+ 
+ [[rules]]
+   rule_type = "CERTIFICATE"
+-  policy = "WHITELIST"
++  policy = "ALLOWLIST"
+   sha256 = "e7726cf87cba9e25139465df5bd1557c8a8feed5c7dd338342d8da0959b63c8d"
+-  custom_msg = "blacklist dash app certificate"
++  custom_msg = "blocklist dash app certificate"
+ 
+ [[rules]]
+   rule_type = "BINARY"
+-  policy = "WHITELIST_COMPILER"
++  policy = "ALLOWLIST_COMPILER"
+   sha256 = "60d79d1763fefb56716e4a36284300523eb4335c3726fb9070fa83074b02279e"
+-  custom_msg = "whitelist go compiler component"
++  custom_msg = "allowlist go compiler component"
+ 
+ [[rules]]
+   rule_type = "BINARY"
+-  policy = "WHITELIST_COMPILER"
++  policy = "ALLOWLIST_COMPILER"
+   sha256 = "8e78770685d51324b78588fddc6afc2f8b6cef5231c27eeb97363cc437fec18a"
+-  custom_msg = "whitelist go compiler component"
++  custom_msg = "allowlist go compiler component"
+ 
+ [[rules]]
+   rule_type = "BINARY"
+-  policy = "WHITELIST_COMPILER"
++  policy = "ALLOWLIST_COMPILER"
+   sha256 = "e88617cfd62809fb10e213c459a52f48e028fae4321e41134c4797465af886b6"
+-  custom_msg = "whitelist go compiler component"
++  custom_msg = "allowlist go compiler component"
+ 
+ [[rules]]
+   rule_type = "BINARY"
+-  policy = "WHITELIST_COMPILER"
++  policy = "ALLOWLIST_COMPILER"
+   sha256 = "d867fca68bbd7db18e9ced231800e7535bc067852b1e530987bb7f57b5e3a02c"
+-  custom_msg = "whitelist go compiler component"
++  custom_msg = "allowlist go compiler component"
+diff --git a/santaconfig/BUILD.bazel b/santaconfig/BUILD.bazel
+new file mode 100644
+index 0000000..405898e
+--- /dev/null
++++ b/santaconfig/BUILD.bazel
+@@ -0,0 +1,13 @@
++load("@io_bazel_rules_go//go:def.bzl", "go_library")
++
++go_library(
++    name = "santaconfig",
++    srcs = ["config.go"],
++    importpath = "github.com/groob/moroz/santaconfig",
++    visibility = ["//visibility:public"],
++    deps = [
++        "//santa",
++        "@com_github_burntsushi_toml//:toml",
++        "@com_github_pkg_errors//:errors",
++    ],
++)

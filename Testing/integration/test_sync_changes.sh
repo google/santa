@@ -5,7 +5,7 @@ bazel run //Testing/integration:install_profile -- Testing/integration/configs/d
 
 # Reset moroz to default config
 killall moroz
-~/go/bin/moroz -configs="$GITHUB_WORKSPACE/Testing/integration/configs/moroz_default/global.toml" -use-tls=false &
+/tmp/moroz -configs="$GITHUB_WORKSPACE/Testing/integration/configs/moroz_default/global.toml" -use-tls=false &
 
 sudo santactl sync --debug
 
@@ -27,7 +27,7 @@ fi
 
 # Now change moroz to use the changed config, enabling USB blocking and removing the badbinary block rule
 killall moroz
-~/go/bin/moroz -configs="$GITHUB_WORKSPACE/Testing/integration/configs/moroz_changed/global.toml" -use-tls=false &
+/tmp/moroz -configs="$GITHUB_WORKSPACE/Testing/integration/configs/moroz_changed/global.toml" -use-tls=false &
 
 sudo santactl sync --debug
 
