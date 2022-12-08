@@ -1066,11 +1066,10 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
     return;
   }
 
-  dispatch_source_t source = dispatch_source_create(
-    DISPATCH_SOURCE_TYPE_VNODE,
-    descriptor,
-    DISPATCH_VNODE_WRITE | DISPATCH_VNODE_RENAME | DISPATCH_VNODE_DELETE,
-    dispatch_get_global_queue(QOS_CLASS_UTILITY, 0));
+  dispatch_source_t source =
+    dispatch_source_create(DISPATCH_SOURCE_TYPE_VNODE, descriptor,
+                           DISPATCH_VNODE_WRITE | DISPATCH_VNODE_RENAME | DISPATCH_VNODE_DELETE,
+                           dispatch_get_global_queue(QOS_CLASS_UTILITY, 0));
   dispatch_source_set_event_handler(source, ^{
     dispatch_async(dispatch_get_main_queue(), ^{
       [self defaultsChanged:nil];
