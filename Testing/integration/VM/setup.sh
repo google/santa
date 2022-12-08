@@ -36,7 +36,7 @@ mkdir ~/actions-runner
 pushd ~/actions-runner
 curl -o actions-runner-osx-arm64-2.296.0.tar.gz -L https://github.com/actions/runner/releases/download/v2.296.0/actions-runner-osx-arm64-2.296.0.tar.gz
 tar xzf ./actions-runner-osx-arm64-2.296.0.tar.gz
-./config.sh --url https://github.com/kallsyms/santa
+./config.sh --url https://github.com/google/santa
 ./svc.sh install
 ./svc.sh start
 popd
