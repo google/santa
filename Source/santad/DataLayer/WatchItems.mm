@@ -41,6 +41,11 @@ const NSString *kWatchItemConfigKeyAllowedCertificatesSha256 = @"AllowedCertific
 const NSString *kWatchItemConfigKeyAllowedTeamIDs = @"AllowedTeamIDs";
 const NSString *kWatchItemConfigKeyAllowedCDHashes = @"AllowedCDHashes";
 
+// Semi-arbitrary minimum allowed reapplication frequency.
+// Goal is to prevent a configuration setting that would cause too much
+// churn rebuilding glob paths based on the state of the filesystem.
+static const uint64_t kMinReapplyConfigFrequencySecs = 15;
+
 namespace santa::santad::data_layer {
 
 // If the `key` exists in the `dict`, it must be of type `cls`.
@@ -197,13 +202,9 @@ WatchItemPolicy::WatchItemPolicy(std::string_view n, std::string_view p, bool wo
 
 std::shared_ptr<WatchItems> WatchItems::Create(NSString *config_path,
                                                uint64_t reapply_config_frequency_secs) {
-  if (!config_path) {
-    LOGW(@"Watch item config not provided");
-    return nullptr;
-  }
-
-  if (reapply_config_frequency_secs < 1) {
-    LOGW(@"Invalid watch item update interval provided (0)");
+  if (reapply_config_frequency_secs < kMinReapplyConfigFrequencySecs) {
+    LOGW(@"Invalid watch item update interval provided: %llu. Min allowed: %llu",
+         reapply_config_frequency_secs, kMinReapplyConfigFrequencySecs);
     return nullptr;
   }
 
@@ -213,12 +214,13 @@ std::shared_ptr<WatchItems> WatchItems::Create(NSString *config_path,
   dispatch_source_set_timer(timer_source, dispatch_time(DISPATCH_TIME_NOW, 0),
                             NSEC_PER_SEC * reapply_config_frequency_secs, 0);
 
-  return std::make_shared<WatchItems>(config_path, timer_source);
+  return std::make_shared<WatchItems>(config_path, q, timer_source);
 }
 
-WatchItems::WatchItems(NSString *config_path, dispatch_source_t timer_source,
+WatchItems::WatchItems(NSString *config_path, dispatch_queue_t q, dispatch_source_t timer_source,
                        void (^periodic_task_complete_f)(void))
     : config_path_(config_path),
+      q_(q),
       timer_source_(timer_source),
       periodic_task_complete_f_(periodic_task_complete_f),
       watch_items_(std::make_unique<WatchItemsTree>()) {}
@@ -315,55 +317,70 @@ bool WatchItems::ParseConfig(NSDictionary *config,
   return config_ok;
 }
 
-bool WatchItems::SetCurrentConfig(
+void WatchItems::UpdateCurrentState(
   std::unique_ptr<PrefixTree<std::shared_ptr<WatchItemPolicy>>> new_tree,
   std::set<std::string> &&new_monitored_paths, NSDictionary *new_config) {
   absl::MutexLock lock(&lock_);
 
-  // TODO(mlw): In upcoming PR, need to use ES API to stop watching removed paths,
-  // and start watching newly configured paths.
+  // The following conditions require updating the current config:
+  // 1. The current config doesn't exist but the new one does
+  // 2. The current config exists but the new one doesn't
+  // 3. The set of monitored paths changed
+  // 4. The configuration changed
+  if ((current_config_ != nil && new_config == nil) ||
+      (current_config_ == nil && new_config != nil) ||
+      (currently_monitored_paths_ != new_monitored_paths) ||
+      (new_config && ![current_config_ isEqualToDictionary:new_config])) {
 
-  std::swap(watch_items_, new_tree);
-  std::swap(currently_monitored_paths_, new_monitored_paths);
-  current_config_ = new_config;
-  policy_version_ = [new_config[kWatchItemConfigKeyVersion] UTF8String];
+    // TODO(mlw): In upcoming PR, need to use ES API to stop watching removed paths,
+    // and start watching newly configured paths.
 
-  for (const id<SNTEndpointSecurityDynamicEventHandler> &client : registerd_clients_) {
-    if (currently_monitored_paths_.size() > 0) {
-      [client enable];
+    std::swap(watch_items_, new_tree);
+    std::swap(currently_monitored_paths_, new_monitored_paths);
+    current_config_ = new_config;
+    if (new_config) {
+      policy_version_ = [new_config[kWatchItemConfigKeyVersion] UTF8String];
     } else {
-      [client disable];
+      policy_version_ = "";
     }
-  }
 
-  return true;
+    bool anyPathsMonitored = currently_monitored_paths_.size() > 0;
+    for (const id<SNTEndpointSecurityDynamicEventHandler> &client : registerd_clients_) {
+      // Note: Enable clients on an async queue in case they perform any
+      // synchronous work that could trigger ES events. Otherwise they might
+      // trigger AUTH ES events that would attempt to re-enter this object and
+      // potentially deadlock.
+      dispatch_async(q_, ^{
+        if (anyPathsMonitored) {
+          [client enable];
+        } else {
+          [client disable];
+        }
+      });
+    }
+  } else {
+    LOGD(@"No changes to set of watched paths.");
+  }
 }
 
 void WatchItems::ReloadConfig(NSDictionary *new_config) {
   std::vector<std::shared_ptr<WatchItemPolicy>> new_policies;
-
-  if (!ParseConfig(new_config, new_policies)) {
-    LOGE(@"Failed to apply new filesystem monitoring config");
-    return;
-  }
-
   auto new_tree = std::make_unique<PrefixTree<std::shared_ptr<WatchItemPolicy>>>();
   std::set<std::string> new_monitored_paths;
 
-  if (!BuildPolicyTree(new_policies, *new_tree, new_monitored_paths)) {
-    LOGE(@"Failed to build new filesystem monitoring policy");
-    return;
+  if (new_config) {
+    if (!ParseConfig(new_config, new_policies)) {
+      LOGE(@"Failed to apply new filesystem monitoring config");
+      return;
+    }
+
+    if (!BuildPolicyTree(new_policies, *new_tree, new_monitored_paths)) {
+      LOGE(@"Failed to build new filesystem monitoring policy");
+      return;
+    }
   }
 
-  if (new_monitored_paths == currently_monitored_paths_ &&
-      [current_config_ isEqualToDictionary:new_config]) {
-    LOGD(@"No changes to set of watched paths.");
-    return;
-  }
-
-  LOGD(@"Updating set of configured watch paths");
-
-  SetCurrentConfig(std::move(new_tree), std::move(new_monitored_paths), new_config);
+  UpdateCurrentState(std::move(new_tree), std::move(new_monitored_paths), new_config);
 }
 
 NSDictionary *WatchItems::ReadConfig() {

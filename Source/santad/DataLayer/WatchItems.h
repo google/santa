@@ -73,7 +73,7 @@ class WatchItems : public std::enable_shared_from_this<WatchItems> {
   static std::shared_ptr<WatchItems> Create(NSString *config_path,
                                             uint64_t reapply_config_frequency_secs);
 
-  WatchItems(NSString *config_path_, dispatch_source_t timer_source,
+  WatchItems(NSString *config_path_, dispatch_queue_t q, dispatch_source_t timer_source,
              void (^periodic_task_complete_f)(void) = nullptr);
   ~WatchItems();
 
@@ -89,24 +89,27 @@ class WatchItems : public std::enable_shared_from_this<WatchItems> {
 
  private:
   NSDictionary *ReadConfig();
-  ABSL_SHARED_LOCKS_REQUIRED(lock_) NSDictionary *ReadConfigLocked();
+  NSDictionary *ReadConfigLocked() ABSL_SHARED_LOCKS_REQUIRED(lock_);
   void ReloadConfig(NSDictionary *new_config);
-  bool SetCurrentConfig(std::unique_ptr<WatchItemsTree> new_tree,
-                        std::set<std::string> &&new_monitored_paths, NSDictionary *new_config);
+  void UpdateCurrentState(std::unique_ptr<WatchItemsTree> new_tree,
+                          std::set<std::string> &&new_monitored_paths, NSDictionary *new_config);
   bool ParseConfig(NSDictionary *config, std::vector<std::shared_ptr<WatchItemPolicy>> &policies);
   bool BuildPolicyTree(const std::vector<std::shared_ptr<WatchItemPolicy>> &watch_items,
                        WatchItemsTree &tree, std::set<std::string> &paths);
 
   NSString *config_path_;
+  dispatch_queue_t q_;
   dispatch_source_t timer_source_;
   void (^periodic_task_complete_f_)(void);
-  std::unique_ptr<WatchItemsTree> watch_items_;
-  NSDictionary *current_config_;
-  std::set<std::string> currently_monitored_paths_;
+
   absl::Mutex lock_;
+
+  std::unique_ptr<WatchItemsTree> watch_items_ GUARDED_BY(lock_);
+  NSDictionary *current_config_ GUARDED_BY(lock_);
+  std::set<std::string> currently_monitored_paths_ GUARDED_BY(lock_);
+  std::string policy_version_ GUARDED_BY(lock_);
+  std::set<id<SNTEndpointSecurityDynamicEventHandler>> registerd_clients_ GUARDED_BY(lock_);
   bool periodic_task_started_ = false;
-  std::string policy_version_;
-  std::set<id<SNTEndpointSecurityDynamicEventHandler>> registerd_clients_;
 };
 
 }  // namespace santa::santad::data_layer

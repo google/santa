@@ -157,8 +157,6 @@ PathTargets GetPathTargets(const Message &msg) {
     _decisionCache = decisionCache;
 
     [self establishClientOrDie];
-
-    _watchItems->RegisterClient(self);
   }
   return self;
 }

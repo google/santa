@@ -120,6 +120,10 @@ std::unique_ptr<SantadDeps> SantadDeps::Create(SNTConfigurator *configurator,
   std::shared_ptr<::WatchItems> watch_items =
     WatchItems::Create([configurator filesystemMonitoringPolicyPlistPath],
                        [configurator filesystemMonitoringPolicyUpdateIntervalSec]);
+  if (!watch_items) {
+    LOGE(@"Failed to create watch items");
+    exit(EXIT_FAILURE);
+  }
 
   std::shared_ptr<::Metrics> metrics =
     Metrics::Create(metric_set, [configurator metricExportInterval]);

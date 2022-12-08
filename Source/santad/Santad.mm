@@ -133,6 +133,7 @@ void SantadMain(std::shared_ptr<EndpointSecurityAPI> esapi, std::shared_ptr<Logg
                                                             logger:logger
                                                         watchItems:watch_items
                                                      decisionCache:[SNTDecisionCache sharedCache]];
+  watch_items->RegisterClient(access_authorizer_client);
 
   EstablishSyncServiceConnection(syncd_queue);
 
@@ -311,8 +312,8 @@ void SantadMain(std::shared_ptr<EndpointSecurityAPI> esapi, std::shared_ptr<Logg
   // execution policy appropriately.
   [authorizer_client enable];
   [tamper_client enable];
-  // [access_authorizer_client enable];
-  (void)access_authorizer_client;  // NOTE: For now, not enabling
+  // Start monitoring any watched items
+  watch_items->BeginPeriodicTask();
   [monitor_client enable];
   [device_client enable];
 
