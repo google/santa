@@ -53,7 +53,7 @@ using santa::santad::logs::endpoint_security::Logger;
 // `std::string` is used.
 using PathTargets = std::pair<std::string_view, std::variant<std::string_view, std::string, Unit>>;
 
-NSString *const kBadCertHash = @"BAD_CERT_HASH";
+NSString *kBadCertHash = @"BAD_CERT_HASH";
 
 static inline std::string_view PathView(const es_file_t *esFile) {
   return std::string_view(esFile->path.data, esFile->path.length);
@@ -189,7 +189,7 @@ PathTargets GetPathTargets(const Message &msg) {
       // If result is still nil, there isn't much recourse... We will
       // assume that this error isn't transient and set a terminal value
       // in the cache to prevent continous attempts to lookup cert hash.
-      result = (NSString *)kBadCertHash;
+      result = kBadCertHash;
     }
 
     // Finally, add the result to the cache to prevent future lookups
