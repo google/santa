@@ -294,7 +294,7 @@ void SantadMain(std::shared_ptr<EndpointSecurityAPI> esapi, std::shared_ptr<Logg
             selector:@selector(filesystemMonitoringPolicyPlistPath)
                 type:[NSString class]
             callback:^(NSString *oldValue, NSString *newValue) {
-              if (oldValue != newValue || ![oldValue isEqualToString:newValue]) {
+              if (oldValue != newValue || (newValue && ![oldValue isEqualToString:newValue])) {
                 LOGI(@"Filesystem monitoring policy config path changed: %@ -> %@", oldValue,
                      newValue);
                 watch_items->SetConfigPath(newValue);
