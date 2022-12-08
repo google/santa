@@ -1,5 +1,7 @@
+# buildifier: disable=module-docstring
 load("@bazel_gazelle//:deps.bzl", "go_repository")
 
+# buildifier: disable=function-docstring
 def moroz_dependencies():
     go_repository(
         name = "com_github_burntsushi_toml",

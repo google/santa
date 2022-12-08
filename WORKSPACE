@@ -151,7 +151,6 @@ http_archive(
     url = "https://github.com/bazelbuild/rules_go/releases/download/v0.36.0/rules_go-v0.36.0.zip",
 )
 
-
 http_archive(
     name = "bazel_gazelle",
     sha256 = "448e37e0dbf61d6fa8f00aaa12d191745e14f07c31cabfa731f0c8e8a4f41b97",
@@ -175,6 +174,7 @@ load("//external_patches/moroz:deps.bzl", "moroz_dependencies")
 moroz_dependencies()
 
 go_rules_dependencies()
+
 go_register_toolchains(version = "1.19.3")
 
 gazelle_dependencies()

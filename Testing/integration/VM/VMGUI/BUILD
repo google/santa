@@ -28,8 +28,8 @@ objc_library(
 macos_application(
     name = "VMGUI",
     bundle_id = "com.google.santa.e2e.vmgui",
-    infoplists = ["//Testing/integration/VM/Common:plist"],
     entitlements = "//Testing/integration/VM/Common:entitlements",
+    infoplists = ["//Testing/integration/VM/Common:plist"],
     minimum_os_version = "12.0",
     deps = [
         ":vmgui_lib",
