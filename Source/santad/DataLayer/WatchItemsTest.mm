@@ -154,7 +154,7 @@ static NSMutableDictionary *WrapWatchItemsConfig(NSDictionary *config) {
   // Changes in config dictionary will update policy info even if the
   // filesystem didn't change.
   {
-    WatchItemsPeer watchItems(nil, NULL);
+    WatchItemsPeer watchItems(nil, NULL, NULL);
     [self pushd:@"a"];
     watchItems.ReloadConfig(configAllFilesOriginal);
 
@@ -172,7 +172,7 @@ static NSMutableDictionary *WrapWatchItemsConfig(NSDictionary *config) {
 
   // Changes to fileystem structure are reflected when a config is reloaded
   {
-    WatchItemsPeer watchItems(nil, NULL);
+    WatchItemsPeer watchItems(nil, NULL, NULL);
     [self pushd:@"a"];
     watchItems.ReloadConfig(configAllFilesOriginal);
     [self popd];
@@ -217,7 +217,7 @@ static NSMutableDictionary *WrapWatchItemsConfig(NSDictionary *config) {
                             NSEC_PER_MSEC * periodicFlushMS, 0);
 
   dispatch_semaphore_t sema = dispatch_semaphore_create(0);
-  auto watchItems = std::make_shared<WatchItemsPeer>(configFile, timer, ^{
+  auto watchItems = std::make_shared<WatchItemsPeer>(configFile, self.q, timer, ^{
     dispatch_semaphore_signal(sema);
   });
 
@@ -266,7 +266,7 @@ static NSMutableDictionary *WrapWatchItemsConfig(NSDictionary *config) {
     }
   });
 
-  WatchItemsPeer watchItems(nil, NULL);
+  WatchItemsPeer watchItems(nil, NULL, NULL);
 
   // Initially nothing should be in the map
   XCTAssertFalse(watchItems.FindPolicyForPath("./foo").has_value());
@@ -374,7 +374,7 @@ static NSMutableDictionary *WrapWatchItemsConfig(NSDictionary *config) {
 - (void)testPolicyVersion {
   NSMutableDictionary *config = WrapWatchItemsConfig(@{});
 
-  WatchItemsPeer watchItems(nil, NULL);
+  WatchItemsPeer watchItems(nil, NULL, NULL);
   watchItems.ReloadConfig(config);
 
   XCTAssertCStringEqual(watchItems.PolicyVersion().c_str(), kVersion.data());

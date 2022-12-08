@@ -331,7 +331,6 @@ void WatchItems::UpdateCurrentState(
       (current_config_ == nil && new_config != nil) ||
       (currently_monitored_paths_ != new_monitored_paths) ||
       (new_config && ![current_config_ isEqualToDictionary:new_config])) {
-
     // TODO(mlw): In upcoming PR, need to use ES API to stop watching removed paths,
     // and start watching newly configured paths.
 
