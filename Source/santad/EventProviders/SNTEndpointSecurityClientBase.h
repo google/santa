@@ -66,6 +66,12 @@
                              santa::santad::event_providers::endpoint_security::EnrichedMessage>))
                      messageHandler;
 
+- (void)
+  asynchronouslyProcess:(const santa::santad::event_providers::endpoint_security::Message &)msg
+                handler:
+                  (void (^)(const santa::santad::event_providers::endpoint_security::Message &))
+                    messageHandler;
+
 - (void)processMessage:(santa::santad::event_providers::endpoint_security::Message &&)msg
                handler:
                  (void (^)(const santa::santad::event_providers::endpoint_security::Message &))

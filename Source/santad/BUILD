@@ -315,6 +315,8 @@ objc_library(
     hdrs = ["EventProviders/SNTEndpointSecurityFileAccessAuthorizer.h"],
     deps = [
         ":EndpointSecurityAPI",
+        ":EndpointSecurityEnrichedTypes",
+        ":EndpointSecurityEnricher",
         ":EndpointSecurityLogger",
         ":EndpointSecurityMessage",
         ":Metrics",
@@ -322,6 +324,7 @@ objc_library(
         ":SNTEndpointSecurityClient",
         ":SNTEndpointSecurityEventHandler",
         ":WatchItems",
+        "//Source/common:SNTCommonEnums",
         "//Source/common:SNTConfigurator",
         "//Source/common:SantaCache",
         "//Source/common:SantaVnode",

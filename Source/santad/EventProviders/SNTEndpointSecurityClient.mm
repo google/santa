@@ -207,6 +207,13 @@ using santa::santad::event_providers::endpoint_security::Message;
   });
 }
 
+- (void)asynchronouslyProcess:(const Message &)msg
+                      handler:(void (^)(const Message &))messageHandler {
+  dispatch_async(_notifyQueue, ^{
+    messageHandler(msg);
+  });
+}
+
 - (void)processMessage:(Message &&)msg handler:(void (^)(const Message &))messageHandler {
   if (unlikely(msg->action_type != ES_ACTION_TYPE_AUTH)) {
     // This is a programming error
