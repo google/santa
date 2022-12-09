@@ -251,7 +251,7 @@ using santa::santad::event_providers::endpoint_security::Message;
     });
 
   dispatch_async(self->_authQueue, ^{
-    messageHandler(deadlineMsg);
+    messageHandler(processMsg);
     if (dispatch_semaphore_wait(processingSema, DISPATCH_TIME_NOW) != 0) {
       // Deadline expired, wait for deadline block to finish.
       dispatch_semaphore_wait(deadlineExpiredSema, DISPATCH_TIME_FOREVER);
