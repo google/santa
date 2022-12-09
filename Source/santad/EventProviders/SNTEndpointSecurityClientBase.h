@@ -46,6 +46,8 @@
 /// subscribing mitigates this posibility.
 - (bool)subscribeAndClearCache:(const std::set<es_event_type_t> &)events;
 
+- (bool)unsubscribeAll;
+
 /// Responds to the Message with the given auth result
 ///
 /// @param Message The wrapped es_message_t being responded to

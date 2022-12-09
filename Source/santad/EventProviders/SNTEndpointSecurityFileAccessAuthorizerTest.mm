@@ -429,6 +429,24 @@ extern es_auth_result_t CombinePolicyResults(es_auth_result_t result1, es_auth_r
   XCTBubbleMockVerifyAndClearExpectations(mockESApi.get());
 }
 
+- (void)testDisable {
+  auto mockESApi = std::make_shared<MockEndpointSecurityAPI>();
+  mockESApi->SetExpectationsESNewClient();
+
+  SNTEndpointSecurityFileAccessAuthorizer *accessClient =
+    [[SNTEndpointSecurityFileAccessAuthorizer alloc] initWithESAPI:mockESApi
+                                                           metrics:nullptr
+                                                            logger:nullptr
+                                                        watchItems:nullptr
+                                                     decisionCache:nil];
+
+  EXPECT_CALL(*mockESApi, UnsubscribeAll);
+
+  [accessClient disable];
+
+  XCTBubbleMockVerifyAndClearExpectations(mockESApi.get());
+}
+
 - (void)testGetPathTargets {
   // This test ensures that the `GetPathTargets` functions returns the
   // expected combination of targets for each handled event variant

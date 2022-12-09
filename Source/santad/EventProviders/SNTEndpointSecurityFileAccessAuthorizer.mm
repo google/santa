@@ -357,4 +357,8 @@ PathTargets GetPathTargets(const Message &msg) {
   [super subscribeAndClearCache:{ES_EVENT_TYPE_AUTH_OPEN}];
 }
 
+- (void)disable {
+  [super unsubscribeAll];
+}
+
 @end

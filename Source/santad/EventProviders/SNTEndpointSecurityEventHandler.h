@@ -30,3 +30,13 @@
 - (void)enable;
 
 @end
+
+// Extension of the `SNTEndpointSecurityEventHandler` protocol for
+// `SNTEndpointSecurityClient` subclasses that can be dynamically
+// enabled and disabled.
+@protocol SNTEndpointSecurityDynamicEventHandler <SNTEndpointSecurityEventHandler>
+
+// Called when a client should no longer receive events.
+- (void)disable;
+
+@end
