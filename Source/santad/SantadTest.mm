@@ -68,6 +68,7 @@ NSString *testBinariesPath = @"santa/Source/santad/testdata/binaryrules";
   // Ensure the mode is set.
   OCMStub([mockConfigurator clientMode]).andReturn(clientMode);
   OCMStub([mockConfigurator failClosed]).andReturn(NO);
+  OCMStub([mockConfigurator filesystemMonitoringPolicyUpdateIntervalSec]).andReturn(600);
 
   NSString *baseTestPath = @"santa/Source/santad/testdata/binaryrules";
   NSString *testPath = [NSString pathWithComponents:@[
