@@ -34,13 +34,11 @@
 #include "Source/common/SantaCache.h"
 #include "Source/common/SantaVnode.h"
 #include "Source/common/SantaVnodeHash.h"
-#include "Source/common/Unit.h"
 #include "Source/common/santa_proto_include_wrapper.h"
 #include "Source/santad/DataLayer/WatchItems.h"
 #include "Source/santad/EventProviders/EndpointSecurity/EnrichedTypes.h"
 #include "Source/santad/EventProviders/EndpointSecurity/Message.h"
 
-using santa::common::Unit;
 using santa::santad::EventDisposition;
 using santa::santad::data_layer::WatchItemPolicy;
 using santa::santad::data_layer::WatchItems;
@@ -60,12 +58,12 @@ static inline std::string Path(const es_string_token_t &tok) {
   return std::string(tok.data, tok.length);
 }
 
-static inline std::optional<std::string> MaybeTruncatedPath(const es_file_t *esFile) {
+static inline std::optional<std::string> NonTruncatedPath(const es_file_t *esFile) {
   return esFile->path_truncated ? std::optional<std::string>{} : Path(esFile);
 }
 
-static inline std::optional<std::string> MaybeTruncatedPath(const es_file_t *dir,
-                                                            const es_string_token_t &name) {
+static inline std::optional<std::string> NonTruncatedPath(const es_file_t *dir,
+                                                          const es_string_token_t &name) {
   return dir->path_truncated ? std::optional<std::string>{} : Path(dir) + Path(name);
 }
 
@@ -100,48 +98,41 @@ es_auth_result_t CombinePolicyResults(es_auth_result_t result1, es_auth_result_t
             : ES_AUTH_RESULT_ALLOW);
 }
 
-std::optional<std::string> GetPathTarget1(const Message &msg) {
+std::pair<std::optional<std::string>, std::optional<std::string>> GetPathTargets(
+  const Message &msg) {
   switch (msg->event_type) {
-    case ES_EVENT_TYPE_AUTH_OPEN: return MaybeTruncatedPath(msg->event.open.file);
-    case ES_EVENT_TYPE_AUTH_LINK: return MaybeTruncatedPath(msg->event.link.source);
-    case ES_EVENT_TYPE_AUTH_RENAME: return MaybeTruncatedPath(msg->event.rename.source);
-    case ES_EVENT_TYPE_AUTH_UNLINK: return MaybeTruncatedPath(msg->event.unlink.target);
-    case ES_EVENT_TYPE_AUTH_CLONE: return MaybeTruncatedPath(msg->event.clone.source);
-    case ES_EVENT_TYPE_AUTH_EXCHANGEDATA: return MaybeTruncatedPath(msg->event.exchangedata.file1);
-    case ES_EVENT_TYPE_AUTH_COPYFILE: return MaybeTruncatedPath(msg->event.copyfile.source);
-    default:
-      [NSException
-         raise:@"Unexpected event type"
-        format:@"File Access Authorizer client does not handle event: %d", msg->event_type];
-      exit(EXIT_FAILURE);
-  }
-}
-
-std::optional<std::string> GetPathTarget2(const Message &msg) {
-  switch (msg->event_type) {
-    case ES_EVENT_TYPE_AUTH_OPEN: return std::nullopt;
+    case ES_EVENT_TYPE_AUTH_OPEN: return {NonTruncatedPath(msg->event.open.file), std::nullopt};
     case ES_EVENT_TYPE_AUTH_LINK:
-      return MaybeTruncatedPath(msg->event.link.target_dir, msg->event.link.target_filename);
+      return {NonTruncatedPath(msg->event.link.source),
+              NonTruncatedPath(msg->event.link.target_dir, msg->event.link.target_filename)};
     case ES_EVENT_TYPE_AUTH_RENAME:
       if (msg->event.rename.destination_type == ES_DESTINATION_TYPE_EXISTING_FILE) {
-        return MaybeTruncatedPath(msg->event.rename.destination.existing_file);
+        return {NonTruncatedPath(msg->event.rename.source),
+                NonTruncatedPath(msg->event.rename.destination.existing_file)};
       } else if (msg->event.rename.destination_type == ES_DESTINATION_TYPE_NEW_PATH) {
-        return MaybeTruncatedPath(msg->event.rename.destination.new_path.dir,
-                                  msg->event.rename.destination.new_path.filename);
+        return {NonTruncatedPath(msg->event.rename.source),
+                NonTruncatedPath(msg->event.rename.destination.new_path.dir,
+                                 msg->event.rename.destination.new_path.filename)};
       } else {
         LOGW(@"Unexpected destination type for rename event: %d. Ignoring destination.",
              msg->event.rename.destination_type);
-        return std::nullopt;
+        return {NonTruncatedPath(msg->event.rename.source), std::nullopt};
       }
-    case ES_EVENT_TYPE_AUTH_UNLINK: return std::nullopt;
+    case ES_EVENT_TYPE_AUTH_UNLINK:
+      return {NonTruncatedPath(msg->event.unlink.target), std::nullopt};
     case ES_EVENT_TYPE_AUTH_CLONE:
-      return MaybeTruncatedPath(msg->event.link.target_dir, msg->event.clone.target_name);
-    case ES_EVENT_TYPE_AUTH_EXCHANGEDATA: return MaybeTruncatedPath(msg->event.exchangedata.file2);
+      return {NonTruncatedPath(msg->event.clone.source),
+              NonTruncatedPath(msg->event.link.target_dir, msg->event.clone.target_name)};
+    case ES_EVENT_TYPE_AUTH_EXCHANGEDATA:
+      return {NonTruncatedPath(msg->event.exchangedata.file1),
+              NonTruncatedPath(msg->event.exchangedata.file2)};
     case ES_EVENT_TYPE_AUTH_COPYFILE:
       if (msg->event.copyfile.target_file) {
-        return MaybeTruncatedPath(msg->event.copyfile.target_file);
+        return {NonTruncatedPath(msg->event.copyfile.source),
+                NonTruncatedPath(msg->event.copyfile.target_file)};
       } else {
-        return MaybeTruncatedPath(msg->event.copyfile.target_dir, msg->event.copyfile.target_name);
+        return {NonTruncatedPath(msg->event.copyfile.source),
+                NonTruncatedPath(msg->event.copyfile.target_dir, msg->event.copyfile.target_name)};
       }
     default:
       [NSException
@@ -328,7 +319,7 @@ std::optional<std::string> GetPathTarget2(const Message &msg) {
   }
 }
 
-- (FileAccessPolicyDecision)handleTarget:(std::optional<std::string>)optionalTarget
+- (FileAccessPolicyDecision)handleTarget:(const std::optional<std::string> &)optionalTarget
                                      msg:(const Message &)msg {
   if (!optionalTarget.has_value()) {
     return FileAccessPolicyDecision::kNoPolicy;
@@ -364,8 +355,9 @@ std::optional<std::string> GetPathTarget2(const Message &msg) {
 }
 
 - (void)processMessage:(const Message &)msg {
-  FileAccessPolicyDecision target1Decision = [self handleTarget:GetPathTarget1(msg) msg:msg];
-  FileAccessPolicyDecision target2Decision = [self handleTarget:GetPathTarget2(msg) msg:msg];
+  std::pair<std::optional<std::string>, std::optional<std::string>> targets = GetPathTargets(msg);
+  FileAccessPolicyDecision target1Decision = [self handleTarget:targets.first msg:msg];
+  FileAccessPolicyDecision target2Decision = [self handleTarget:targets.second msg:msg];
 
   es_auth_result_t policyResult =
     CombinePolicyResults(FileAccessPolicyDecisionToESAuthResult(target1Decision),
