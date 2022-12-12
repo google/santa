@@ -466,7 +466,7 @@ extern es_auth_result_t CombinePolicyResults(es_auth_result_t result1, es_auth_r
   es_file_t testFile2 = MakeESFile("test_file_2");
   es_file_t testDir = MakeESFile("test_dir");
   es_string_token_t testTok = MakeESStringToken("test_tok");
-  std::string dirTok = std::string(testDir.path.data) + std::string(testTok.data);
+  std::string dirTok = std::string(testDir.path.data) + "/" + std::string(testTok.data);
 
   es_message_t esMsg;
 
