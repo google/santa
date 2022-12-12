@@ -383,6 +383,14 @@ std::vector<uint8_t> BasicString::SerializeMessage(const EnrichedUnlink &msg) {
   return FinalizeString(str);
 }
 
+std::vector<uint8_t> BasicString::SerializeFileAccess(
+  const std::string &policy_version, const std::string &policy_name,
+  const santa::santad::event_providers::endpoint_security::Message &msg,
+  const santa::santad::event_providers::endpoint_security::EnrichedProcess &enriched_process,
+  const std::string &target, FileAccessPolicyDecision decision) {
+  return {};
+}
+
 std::vector<uint8_t> BasicString::SerializeAllowlist(const Message &msg,
                                                      const std::string_view hash) {
   std::string str = CreateDefaultString();

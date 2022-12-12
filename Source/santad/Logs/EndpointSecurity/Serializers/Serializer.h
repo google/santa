@@ -20,6 +20,7 @@
 
 #import <Foundation/Foundation.h>
 
+#import "Source/common/SNTCommonEnums.h"
 #include "Source/santad/EventProviders/EndpointSecurity/EnrichedTypes.h"
 
 @class SNTStoredEvent;
@@ -56,6 +57,12 @@ class Serializer {
     const santa::santad::event_providers::endpoint_security::EnrichedRename &) = 0;
   virtual std::vector<uint8_t> SerializeMessage(
     const santa::santad::event_providers::endpoint_security::EnrichedUnlink &) = 0;
+
+  virtual std::vector<uint8_t> SerializeFileAccess(
+    const std::string &policy_version, const std::string &policy_name,
+    const santa::santad::event_providers::endpoint_security::Message &msg,
+    const santa::santad::event_providers::endpoint_security::EnrichedProcess &enriched_process,
+    const std::string &target, FileAccessPolicyDecision decision) = 0;
 
   virtual std::vector<uint8_t> SerializeAllowlist(
     const santa::santad::event_providers::endpoint_security::Message &, const std::string_view) = 0;

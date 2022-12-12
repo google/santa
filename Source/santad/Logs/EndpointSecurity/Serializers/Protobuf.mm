@@ -532,6 +532,14 @@ std::vector<uint8_t> Protobuf::SerializeMessage(const EnrichedUnlink &msg) {
   return FinalizeProto(santa_msg);
 }
 
+std::vector<uint8_t> Protobuf::SerializeFileAccess(
+  const std::string &policy_version, const std::string &policy_name,
+  const santa::santad::event_providers::endpoint_security::Message &msg,
+  const santa::santad::event_providers::endpoint_security::EnrichedProcess &enriched_process,
+  const std::string &target, FileAccessPolicyDecision decision) {
+  return {};
+}
+
 std::vector<uint8_t> Protobuf::SerializeAllowlist(const Message &msg, const std::string_view hash) {
   Arena arena;
   ::pbv1::SantaMessage *santa_msg = CreateDefaultProto(&arena);

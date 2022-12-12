@@ -62,6 +62,14 @@ std::vector<uint8_t> Empty::SerializeMessage(const EnrichedUnlink &msg) {
   return {};
 }
 
+std::vector<uint8_t> Empty::SerializeFileAccess(
+  const std::string &policy_version, const std::string &policy_name,
+  const santa::santad::event_providers::endpoint_security::Message &msg,
+  const santa::santad::event_providers::endpoint_security::EnrichedProcess &enriched_process,
+  const std::string &target, FileAccessPolicyDecision decision) {
+  return {};
+}
+
 std::vector<uint8_t> Empty::SerializeAllowlist(const Message &msg, const std::string_view hash) {
   return {};
 }
