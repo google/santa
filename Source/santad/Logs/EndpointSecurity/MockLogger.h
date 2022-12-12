@@ -28,7 +28,7 @@ class MockLogger : public santa::santad::logs::endpoint_security::Logger {
   MockLogger() : Logger(nullptr, nullptr) {}
 
   MOCK_METHOD(
-      void, LogAccess,
+      void, LogFileAccess,
       (std::string policy_version, std::string policy_name,
        const santa::santad::event_providers::endpoint_security::Message &msg,
        santa::santad::event_providers::endpoint_security::EnrichedProcess

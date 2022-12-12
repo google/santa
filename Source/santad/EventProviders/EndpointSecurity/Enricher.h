@@ -22,7 +22,11 @@
 namespace santa::santad::event_providers::endpoint_security {
 
 enum class EnrichOptions {
-  kNone,
+  // Specifies default enricher operation.
+  kDefault,
+
+  // This option tells the enricher to only enrich with information that can be
+  // gathered without potentially triggering work from external processes.
   kLocalOnly,
 };
 
@@ -31,15 +35,16 @@ class Enricher {
   Enricher();
   virtual ~Enricher() = default;
   virtual std::shared_ptr<EnrichedMessage> Enrich(Message &&msg);
-  virtual EnrichedProcess Enrich(const es_process_t &es_proc,
-                                 EnrichOptions options = EnrichOptions::kNone);
+  virtual EnrichedProcess Enrich(
+      const es_process_t &es_proc,
+      EnrichOptions options = EnrichOptions::kDefault);
   virtual EnrichedFile Enrich(const es_file_t &es_file,
-                              EnrichOptions options = EnrichOptions::kNone);
+                              EnrichOptions options = EnrichOptions::kDefault);
 
   virtual std::optional<std::shared_ptr<std::string>> UsernameForUID(
-      uid_t uid, EnrichOptions options = EnrichOptions::kNone);
+      uid_t uid, EnrichOptions options = EnrichOptions::kDefault);
   virtual std::optional<std::shared_ptr<std::string>> UsernameForGID(
-      gid_t gid, EnrichOptions options = EnrichOptions::kNone);
+      gid_t gid, EnrichOptions options = EnrichOptions::kDefault);
 
  private:
   SantaCache<uid_t, std::optional<std::shared_ptr<std::string>>>

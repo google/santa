@@ -63,7 +63,7 @@ static inline std::optional<std::string> NonTruncatedPath(const es_file_t *esFil
 
 static inline std::optional<std::string> NonTruncatedPath(const es_file_t *dir,
                                                           const es_string_token_t &name) {
-  return dir->path_truncated ? std::optional<std::string>{} : Path(dir) + Path(name);
+  return dir->path_truncated ? std::optional<std::string>{} : (Path(dir) + "/" + Path(name));
 }
 
 es_auth_result_t FileAccessPolicyDecisionToESAuthResult(FileAccessPolicyDecision decision) {
@@ -338,7 +338,7 @@ std::pair<std::optional<std::string>, std::optional<std::string>> GetPathTargets
 
       [self asynchronouslyProcess:msg
                           handler:^(const Message &esMsg) {
-                            self->_logger->LogAccess(
+                            self->_logger->LogFileAccess(
                               policyVersion, policyName, esMsg,
                               self->_enricher->Enrich(*msg->process, EnrichOptions::kLocalOnly),
                               target, policyDecision);

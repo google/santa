@@ -98,9 +98,9 @@ void Logger::LogDiskDisappeared(NSDictionary *props) {
   writer_->Write(serializer_->SerializeDiskDisappeared(props));
 }
 
-void Logger::LogAccess(std::string policy_version, std::string policy_name, const Message &msg,
-                       EnrichedProcess enriched_process, std::string target,
-                       FileAccessPolicyDecision decision) {
+void Logger::LogFileAccess(std::string policy_version, std::string policy_name, const Message &msg,
+                           EnrichedProcess enriched_process, std::string target,
+                           FileAccessPolicyDecision decision) {
   LOGE(@"policy version: %s, name: %s | proc -> tgt: %s -> %s", policy_version.c_str(),
        policy_name.c_str(), msg->process->executable->path.data, target.c_str());
 }
