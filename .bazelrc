@@ -17,3 +17,9 @@ build:asan --copt="-fno-omit-frame-pointer"
 build:asan --copt="-fsanitize=address"
 build:asan --copt="-DADDRESS_SANITIZER"
 build:asan --linkopt="-fsanitize=address"
+
+build:asan-libfuzzer --copt="-Wno-macro-redefined"
+build:asan-libfuzzer --copt="-D_FORTIFY_SOURCE=0"
+build:asan-libfuzzer --@rules_fuzzing//fuzzing:cc_engine=@rules_fuzzing//fuzzing/engines:libfuzzer
+build:asan-libfuzzer --@rules_fuzzing//fuzzing:cc_engine_instrumentation=libfuzzer
+build:asan-libfuzzer --@rules_fuzzing//fuzzing:cc_engine_sanitizer=asan
