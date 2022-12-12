@@ -132,6 +132,7 @@ void SantadMain(std::shared_ptr<EndpointSecurityAPI> esapi, std::shared_ptr<Logg
                                                            metrics:metrics
                                                             logger:logger
                                                         watchItems:watch_items
+                                                          enricher:enricher
                                                      decisionCache:[SNTDecisionCache sharedCache]];
   watch_items->RegisterClient(access_authorizer_client);
 
