@@ -320,7 +320,7 @@ std::pair<std::optional<std::string>, std::optional<std::string>> GetPathTargets
 }
 
 - (FileAccessPolicyDecision)handleTarget:(const std::optional<std::string> &)optionalTarget
-                                     msg:(const Message &)msg {
+                                 message:(const Message &)msg {
   if (!optionalTarget.has_value()) {
     return FileAccessPolicyDecision::kNoPolicy;
   }
@@ -356,8 +356,8 @@ std::pair<std::optional<std::string>, std::optional<std::string>> GetPathTargets
 
 - (void)processMessage:(const Message &)msg {
   std::pair<std::optional<std::string>, std::optional<std::string>> targets = GetPathTargets(msg);
-  FileAccessPolicyDecision target1Decision = [self handleTarget:targets.first msg:msg];
-  FileAccessPolicyDecision target2Decision = [self handleTarget:targets.second msg:msg];
+  FileAccessPolicyDecision target1Decision = [self handleTarget:targets.first message:msg];
+  FileAccessPolicyDecision target2Decision = [self handleTarget:targets.second message:msg];
 
   es_auth_result_t policyResult =
     CombinePolicyResults(FileAccessPolicyDecisionToESAuthResult(target1Decision),
