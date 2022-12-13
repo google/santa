@@ -45,9 +45,13 @@ namespace santa::santad::logs::endpoint_security::serializers {
 extern std::string GetDecisionString(SNTEventState event_state);
 extern std::string GetReasonString(SNTEventState event_state);
 extern std::string GetModeString(SNTClientMode mode);
+extern std::string GetAccessTypeString(es_event_type_t event_type);
+extern std::string GetFileAccessPolicyDecisionString(FileAccessPolicyDecision decision);
 }  // namespace santa::santad::logs::endpoint_security::serializers
 
+using santa::santad::logs::endpoint_security::serializers::GetAccessTypeString;
 using santa::santad::logs::endpoint_security::serializers::GetDecisionString;
+using santa::santad::logs::endpoint_security::serializers::GetFileAccessPolicyDecisionString;
 using santa::santad::logs::endpoint_security::serializers::GetModeString;
 using santa::santad::logs::endpoint_security::serializers::GetReasonString;
 
@@ -243,6 +247,54 @@ std::string BasicStringSerializeMessage(es_message_t *esMsg) {
                      "|pid=12|ppid=56|process=foo|processpath=foo"
                      "|uid=-2|user=nobody|gid=-1|group=nogroup|machineid=my_id\n";
 
+  XCTAssertCppStringEqual(got, want);
+}
+
+- (void)testGetAccessTypeString {
+  std::map<es_event_type_t, std::string> accessTypeToString = {
+    {ES_EVENT_TYPE_AUTH_OPEN, "OPEN"},         {ES_EVENT_TYPE_AUTH_LINK, "LINK"},
+    {ES_EVENT_TYPE_AUTH_RENAME, "RENAME"},     {ES_EVENT_TYPE_AUTH_UNLINK, "UNLINK"},
+    {ES_EVENT_TYPE_AUTH_CLONE, "CLONE"},       {ES_EVENT_TYPE_AUTH_EXCHANGEDATA, "EXCHANGEDATA"},
+    {ES_EVENT_TYPE_AUTH_COPYFILE, "COPYFILE"}, {(es_event_type_t)1234, "UNKNOWN_TYPE_1234"},
+  };
+
+  for (const auto &kv : accessTypeToString) {
+    XCTAssertCppStringEqual(GetAccessTypeString(kv.first), kv.second);
+  }
+}
+
+- (void)testGetFileAccessPolicyDecisionString {
+  std::map<FileAccessPolicyDecision, std::string> policyDecisionToString = {
+    {FileAccessPolicyDecision::kNoPolicy, "NO_POLICY"},
+    {FileAccessPolicyDecision::kDenied, "DENIED"},
+    {FileAccessPolicyDecision::kDeniedInvalidSignature, "DENIED_INVALID_SIGNATURE"},
+    {FileAccessPolicyDecision::kAllowed, "ALLOWED"},
+    {FileAccessPolicyDecision::kAllowedAuditOnly, "AUDIT_ONLY"},
+    {(FileAccessPolicyDecision)1234, "UNKNOWN_DECISION_1234"},
+  };
+
+  for (const auto &kv : policyDecisionToString) {
+    XCTAssertCppStringEqual(GetFileAccessPolicyDecisionString(kv.first), kv.second);
+  }
+}
+
+- (void)testSerializeFileAccess {
+  es_file_t procFile = MakeESFile("foo");
+  es_process_t proc = MakeESProcess(&procFile, MakeAuditToken(12, 34), MakeAuditToken(56, 78));
+  es_message_t esMsg = MakeESMessage(ES_EVENT_TYPE_AUTH_OPEN, &proc);
+
+  auto mockESApi = std::make_shared<MockEndpointSecurityAPI>();
+  mockESApi->SetExpectationsRetainReleaseMessage();
+
+  std::vector<uint8_t> ret =
+    BasicString::Create(nullptr, false)
+      ->SerializeFileAccess("v1.0", "pol_name", Message(mockESApi, &esMsg),
+                            Enricher().Enrich(*esMsg.process), "file_target",
+                            FileAccessPolicyDecision::kAllowedAuditOnly);
+  std::string got(ret.begin(), ret.end());
+  std::string want =
+    "action=FILE_ACCESS|path=file_target|access_type=OPEN|decision=AUDIT_ONLY|pid=12|ppid=56|"
+    "process=foo|processpath=foo|uid=-2|user=nobody|gid=-1|group=nogroup|machineid=my_id\n";
   XCTAssertCppStringEqual(got, want);
 }
 

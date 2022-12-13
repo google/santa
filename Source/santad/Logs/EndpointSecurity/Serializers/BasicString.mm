@@ -43,6 +43,7 @@ using santa::santad::event_providers::endpoint_security::EnrichedExec;
 using santa::santad::event_providers::endpoint_security::EnrichedExit;
 using santa::santad::event_providers::endpoint_security::EnrichedFork;
 using santa::santad::event_providers::endpoint_security::EnrichedLink;
+using santa::santad::event_providers::endpoint_security::EnrichedProcess;
 using santa::santad::event_providers::endpoint_security::EnrichedRename;
 using santa::santad::event_providers::endpoint_security::EnrichedUnlink;
 using santa::santad::event_providers::endpoint_security::Message;
@@ -107,6 +108,30 @@ std::string GetModeString(SNTClientMode mode) {
     case SNTClientModeMonitor: return "M";
     case SNTClientModeLockdown: return "L";
     default: return "U";
+  }
+}
+
+std::string GetAccessTypeString(es_event_type_t event_type) {
+  switch (event_type) {
+    case ES_EVENT_TYPE_AUTH_OPEN: return "OPEN";
+    case ES_EVENT_TYPE_AUTH_LINK: return "LINK";
+    case ES_EVENT_TYPE_AUTH_RENAME: return "RENAME";
+    case ES_EVENT_TYPE_AUTH_UNLINK: return "UNLINK";
+    case ES_EVENT_TYPE_AUTH_CLONE: return "CLONE";
+    case ES_EVENT_TYPE_AUTH_EXCHANGEDATA: return "EXCHANGEDATA";
+    case ES_EVENT_TYPE_AUTH_COPYFILE: return "COPYFILE";
+    default: return "UNKNOWN_TYPE_" + std::to_string(event_type);
+  }
+}
+
+std::string GetFileAccessPolicyDecisionString(FileAccessPolicyDecision decision) {
+  switch (decision) {
+    case FileAccessPolicyDecision::kNoPolicy: return "NO_POLICY";
+    case FileAccessPolicyDecision::kDenied: return "DENIED";
+    case FileAccessPolicyDecision::kDeniedInvalidSignature: return "DENIED_INVALID_SIGNATURE";
+    case FileAccessPolicyDecision::kAllowed: return "ALLOWED";
+    case FileAccessPolicyDecision::kAllowedAuditOnly: return "AUDIT_ONLY";
+    default: return "UNKNOWN_DECISION_" + std::to_string((int)decision);
   }
 }
 
@@ -383,12 +408,26 @@ std::vector<uint8_t> BasicString::SerializeMessage(const EnrichedUnlink &msg) {
   return FinalizeString(str);
 }
 
-std::vector<uint8_t> BasicString::SerializeFileAccess(
-  const std::string &policy_version, const std::string &policy_name,
-  const santa::santad::event_providers::endpoint_security::Message &msg,
-  const santa::santad::event_providers::endpoint_security::EnrichedProcess &enriched_process,
-  const std::string &target, FileAccessPolicyDecision decision) {
-  return {};
+std::vector<uint8_t> BasicString::SerializeFileAccess(const std::string &policy_version,
+                                                      const std::string &policy_name,
+                                                      const Message &msg,
+                                                      const EnrichedProcess &enriched_process,
+                                                      const std::string &target,
+                                                      FileAccessPolicyDecision decision) {
+  std::string str = CreateDefaultString();
+
+  str.append("action=FILE_ACCESS|path=");
+  str.append(target);
+  str.append("|access_type=");
+  str.append(GetAccessTypeString(msg->event_type));
+  str.append("|decision=");
+  str.append(GetFileAccessPolicyDecisionString(decision));
+
+  AppendProcess(str, msg->process);
+  AppendUserGroup(str, msg->process->audit_token, enriched_process.real_user(),
+                  enriched_process.real_group());
+
+  return FinalizeString(str);
 }
 
 std::vector<uint8_t> BasicString::SerializeAllowlist(const Message &msg,
