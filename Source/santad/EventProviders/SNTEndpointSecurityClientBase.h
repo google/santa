@@ -46,6 +46,8 @@
 /// subscribing mitigates this posibility.
 - (bool)subscribeAndClearCache:(const std::set<es_event_type_t> &)events;
 
+- (bool)unsubscribeAll;
+
 /// Responds to the Message with the given auth result
 ///
 /// @param Message The wrapped es_message_t being responded to
@@ -63,6 +65,12 @@
                    (void (^)(std::shared_ptr<
                              santa::santad::event_providers::endpoint_security::EnrichedMessage>))
                      messageHandler;
+
+- (void)
+  asynchronouslyProcess:(const santa::santad::event_providers::endpoint_security::Message &)msg
+                handler:
+                  (void (^)(const santa::santad::event_providers::endpoint_security::Message &))
+                    messageHandler;
 
 - (void)processMessage:(santa::santad::event_providers::endpoint_security::Message &&)msg
                handler:

@@ -38,6 +38,7 @@ class MockEndpointSecurityAPI
   MOCK_METHOD(bool, Subscribe,
               (const santa::santad::event_providers::endpoint_security::Client &,
                const std::set<es_event_type_t> &));
+  MOCK_METHOD(bool, UnsubscribeAll, (const Client &client));
 
   MOCK_METHOD(void, RetainMessage, (const es_message_t *msg));
   MOCK_METHOD(void, ReleaseMessage, (const es_message_t *msg));

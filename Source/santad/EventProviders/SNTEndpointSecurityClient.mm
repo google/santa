@@ -181,6 +181,10 @@ using santa::santad::event_providers::endpoint_security::Message;
   return [self subscribe:events] && [self clearCache];
 }
 
+- (bool)unsubscribeAll {
+  return _esApi->UnsubscribeAll(_esClient);
+}
+
 - (bool)respondToMessage:(const Message &)msg
           withAuthResult:(es_auth_result_t)result
                cacheable:(bool)cacheable {
@@ -200,6 +204,13 @@ using santa::santad::event_providers::endpoint_security::Message;
                        handler:(void (^)(std::shared_ptr<EnrichedMessage>))messageHandler {
   dispatch_async(_notifyQueue, ^{
     messageHandler(std::move(msg));
+  });
+}
+
+- (void)asynchronouslyProcess:(const Message &)msg
+                      handler:(void (^)(const Message &))messageHandler {
+  dispatch_async(_notifyQueue, ^{
+    messageHandler(msg);
   });
 }
 
@@ -247,7 +258,7 @@ using santa::santad::event_providers::endpoint_security::Message;
     });
 
   dispatch_async(self->_authQueue, ^{
-    messageHandler(deadlineMsg);
+    messageHandler(processMsg);
     if (dispatch_semaphore_wait(processingSema, DISPATCH_TIME_NOW) != 0) {
       // Deadline expired, wait for deadline block to finish.
       dispatch_semaphore_wait(deadlineExpiredSema, DISPATCH_TIME_FOREVER);

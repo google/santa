@@ -18,22 +18,15 @@
 
 #include "Source/santad/DataLayer/WatchItems.h"
 #include "Source/santad/EventProviders/EndpointSecurity/EndpointSecurityAPI.h"
+#include "Source/santad/EventProviders/EndpointSecurity/Enricher.h"
 #import "Source/santad/EventProviders/SNTEndpointSecurityClient.h"
 #import "Source/santad/EventProviders/SNTEndpointSecurityEventHandler.h"
 #include "Source/santad/Logs/EndpointSecurity/Logger.h"
 #include "Source/santad/Metrics.h"
 #import "Source/santad/SNTDecisionCache.h"
 
-enum class FileAccessPolicyDecision {
-  kNoPolicy,
-  kDenied,
-  kDeniedInvalidSignature,
-  kAllowed,
-  kAllowedAuditOnly,
-};
-
 @interface SNTEndpointSecurityFileAccessAuthorizer
-    : SNTEndpointSecurityClient <SNTEndpointSecurityEventHandler>
+    : SNTEndpointSecurityClient <SNTEndpointSecurityDynamicEventHandler>
 
 - (instancetype)
   initWithESAPI:
@@ -41,6 +34,8 @@ enum class FileAccessPolicyDecision {
         metrics:(std::shared_ptr<santa::santad::Metrics>)metrics
          logger:(std::shared_ptr<santa::santad::logs::endpoint_security::Logger>)logger
      watchItems:(std::shared_ptr<santa::santad::data_layer::WatchItems>)watchItems
+       enricher:
+         (std::shared_ptr<santa::santad::event_providers::endpoint_security::Enricher>)enricher
   decisionCache:(SNTDecisionCache *)decisionCache;
 
 @end

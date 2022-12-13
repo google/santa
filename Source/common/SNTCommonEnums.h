@@ -135,6 +135,16 @@ typedef NS_ENUM(NSInteger, SNTMetricFormatType) {
   SNTMetricFormatTypeMonarchJSON,
 };
 
+#ifdef __cplusplus
+enum class FileAccessPolicyDecision {
+  kNoPolicy,
+  kDenied,
+  kDeniedInvalidSignature,
+  kAllowed,
+  kAllowedAuditOnly,
+};
+#endif
+
 static const char *kSantaDPath =
   "/Applications/Santa.app/Contents/Library/SystemExtensions/"
   "com.google.santa.daemon.systemextension/Contents/MacOS/com.google.santa.daemon";
