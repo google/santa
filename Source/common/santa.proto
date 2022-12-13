@@ -470,7 +470,7 @@ message FileAccess {
   optional ProcessInfo instigator = 1;
 
   // The path that was accessed
-  optional FileInfoLight watched_path = 2;
+  optional FileInfoLight target = 2;
 
   // The version of the policy when the decision was made
   optional string policy_version = 3;
@@ -492,13 +492,13 @@ message FileAccess {
   optional AccessType access_type = 5;
 
   // Whether the operation was allowed or denied and why
-  enum Disposition {
-    DISPOSITION_UNKNOWN = 0;
-    DISPOSITION_DENIED_POLICY = 1;
-    DISPOSITION_DENIED_INVALID_SIGNATURE = 2;
-    DISPOSITION_ALLOWED_AUDIT_ONLY = 3;
+  enum PolicyDecision {
+    POLICY_DECISION_UNKNOWN = 0;
+    POLICY_DECISION_DENIED = 1;
+    POLICY_DECISION_DENIED_INVALID_SIGNATURE = 2;
+    POLICY_DECISION_ALLOWED_AUDIT_ONLY = 3;
   }
-  optional Disposition disposition = 6;
+  optional PolicyDecision policy_decision = 6;
 }
 
 // A message encapsulating a single event

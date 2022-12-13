@@ -160,6 +160,12 @@ static inline void EncodeFileInfo(::pbv1::FileInfo *pb_file, const es_file_t *es
   }
 }
 
+static inline void EncodeFileInfoLight(::pbv1::FileInfoLight *pb_file, std::string_view path,
+                                       bool truncated) {
+  EncodeString(pb_file->mutable_path(), path);
+  pb_file->set_truncated(truncated);
+}
+
 static inline void EncodeFileInfoLight(::pbv1::FileInfoLight *pb_file, const es_file_t *es_file) {
   EncodePath(pb_file->mutable_path(), es_file);
   pb_file->set_truncated(es_file->path_truncated);
@@ -319,6 +325,30 @@ static inline void EncodeCertificateInfo(::pbv1::CertificateInfo *pb_cert_info, 
   }
 }
 
+::pbv1::FileAccess::AccessType GetAccessType(es_event_type_t event_type) {
+  switch (event_type) {
+    case ES_EVENT_TYPE_AUTH_OPEN: return ::pbv1::FileAccess::ACCESS_TYPE_OPEN;
+    case ES_EVENT_TYPE_AUTH_LINK: return ::pbv1::FileAccess::ACCESS_TYPE_LINK;
+    case ES_EVENT_TYPE_AUTH_RENAME: return ::pbv1::FileAccess::ACCESS_TYPE_RENAME;
+    case ES_EVENT_TYPE_AUTH_UNLINK: return ::pbv1::FileAccess::ACCESS_TYPE_UNLINK;
+    case ES_EVENT_TYPE_AUTH_CLONE: return ::pbv1::FileAccess::ACCESS_TYPE_CLONE;
+    case ES_EVENT_TYPE_AUTH_EXCHANGEDATA: return ::pbv1::FileAccess::ACCESS_TYPE_EXCHANGEDATA;
+    case ES_EVENT_TYPE_AUTH_COPYFILE: return ::pbv1::FileAccess::ACCESS_TYPE_COPYFILE;
+    default: return ::pbv1::FileAccess::ACCESS_TYPE_UNKNOWN;
+  }
+}
+
+::pbv1::FileAccess::PolicyDecision GetPolicyDecision(FileAccessPolicyDecision decision) {
+  switch (decision) {
+    case FileAccessPolicyDecision::kDenied: return ::pbv1::FileAccess::POLICY_DECISION_DENIED;
+    case FileAccessPolicyDecision::kDeniedInvalidSignature:
+      return ::pbv1::FileAccess::POLICY_DECISION_DENIED_INVALID_SIGNATURE;
+    case FileAccessPolicyDecision::kAllowedAuditOnly:
+      return ::pbv1::FileAccess::POLICY_DECISION_ALLOWED_AUDIT_ONLY;
+    default: return ::pbv1::FileAccess::POLICY_DECISION_UNKNOWN;
+  }
+}
+
 ::pbv1::SantaMessage *Protobuf::CreateDefaultProto(Arena *arena, struct timespec event_time,
                                                    struct timespec processed_time) {
   ::pbv1::SantaMessage *santa_msg = Arena::CreateMessage<::pbv1::SantaMessage>(arena);
@@ -334,6 +364,13 @@ static inline void EncodeCertificateInfo(::pbv1::CertificateInfo *pb_cert_info, 
 
 ::pbv1::SantaMessage *Protobuf::CreateDefaultProto(Arena *arena, const EnrichedEventType &msg) {
   return CreateDefaultProto(arena, msg.es_msg().time, msg.enrichment_time());
+}
+
+::pbv1::SantaMessage *Protobuf::CreateDefaultProto(Arena *arena, const Message &msg) {
+  struct timespec ts;
+  clock_gettime(CLOCK_REALTIME, &ts);
+
+  return CreateDefaultProto(arena, msg->time, ts);
 }
 
 ::pbv1::SantaMessage *Protobuf::CreateDefaultProto(Arena *arena) {
@@ -532,12 +569,26 @@ std::vector<uint8_t> Protobuf::SerializeMessage(const EnrichedUnlink &msg) {
   return FinalizeProto(santa_msg);
 }
 
-std::vector<uint8_t> Protobuf::SerializeFileAccess(
-  const std::string &policy_version, const std::string &policy_name,
-  const santa::santad::event_providers::endpoint_security::Message &msg,
-  const santa::santad::event_providers::endpoint_security::EnrichedProcess &enriched_process,
-  const std::string &target, FileAccessPolicyDecision decision) {
-  return {};
+std::vector<uint8_t> Protobuf::SerializeFileAccess(const std::string &policy_version,
+                                                   const std::string &policy_name,
+                                                   const Message &msg,
+                                                   const EnrichedProcess &enriched_process,
+                                                   const std::string &target,
+                                                   FileAccessPolicyDecision decision) {
+  Arena arena;
+  ::pbv1::SantaMessage *santa_msg = CreateDefaultProto(&arena, msg);
+
+  ::pbv1::FileAccess *file_access = santa_msg->mutable_file_access();
+
+  EncodeProcessInfo(file_access->mutable_instigator(), msg->version, msg->process,
+                    enriched_process);
+  EncodeFileInfoLight(file_access->mutable_target(), target, false);
+  EncodeString(file_access->mutable_policy_version(), policy_version);
+  EncodeString(file_access->mutable_policy_name(), policy_name);
+  file_access->set_access_type(GetAccessType(msg->event_type));
+  file_access->set_policy_decision(GetPolicyDecision(decision));
+
+  return FinalizeProto(santa_msg);
 }
 
 std::vector<uint8_t> Protobuf::SerializeAllowlist(const Message &msg, const std::string_view hash) {
