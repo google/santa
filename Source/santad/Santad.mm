@@ -301,6 +301,14 @@ void SantadMain(std::shared_ptr<EndpointSecurityAPI> esapi, std::shared_ptr<Logg
                 watch_items->SetConfigPath(newValue);
               }
             }],
+    [[SNTKVOManager alloc] initWithObject:configurator
+                                 selector:@selector(staticRules)
+                                     type:[NSArray class]
+                                 callback:^(NSArray *oldValue, NSArray *newValue) {
+                                   if ([oldValue isEqual:newValue]) return;
+                                   LOGI(@"StaticRules set has changed, flushing cache.");
+                                   auth_result_cache->FlushCache(FlushCacheMode::kAllCaches);
+                                 }],
   ];
 
   // Make the compiler happy. The variable is only used to ensure proper lifetime
