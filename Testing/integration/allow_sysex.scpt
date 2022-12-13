@@ -1,3 +1,6 @@
+-- Allows the Santa system extension in System Preferences.
+-- This is run inside test VMs.
+
 on run argv
 	if application "System Preferences" is running then
 		tell application "System Preferences" to quit

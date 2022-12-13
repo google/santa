@@ -1,4 +1,7 @@
 #!/bin/bash
+# This script is manually run to create a read-only disk image
+# which is mounted into new VMs to help automate the setup process.
+
 set -xeuo pipefail
 
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )

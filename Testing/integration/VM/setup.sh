@@ -1,4 +1,6 @@
 #!/bin/bash
+# This script is manually run to (partially) setup new template VMs.
+
 set -xeuo pipefail
 
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
@@ -35,6 +37,7 @@ softwareupdate --install-rosetta --agree-to-license
 mkdir ~/actions-runner
 pushd ~/actions-runner
 curl -o actions-runner-osx-arm64-2.296.0.tar.gz -L https://github.com/actions/runner/releases/download/v2.296.0/actions-runner-osx-arm64-2.296.0.tar.gz
+echo 'e358086b924d2e8d8abf50beec57ee7a3bb0c7d412f13abc51380f1b1894d776  actions-runner-osx-arm64-2.296.0.tar.gz' | shasum -a 256 -c
 tar xzf ./actions-runner-osx-arm64-2.296.0.tar.gz
 ./config.sh --url https://github.com/google/santa
 ./svc.sh install

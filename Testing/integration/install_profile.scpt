@@ -1,3 +1,6 @@
+-- Installs the passed profile (.mobileconfig).
+-- This is run inside test VMs, primarily to configure Santa.
+
 on run argv
 	do shell script "open " & item 1 of argv
 
