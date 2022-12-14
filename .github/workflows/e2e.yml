@@ -8,7 +8,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: Start VM
-        run: python3 Testing/integration/actions/start-vm.py macOS_12.bundle.tar.gz
+        run: python3 Testing/integration/actions/start_vm.py macOS_12.bundle.tar.gz
 
   integration:
     runs-on: e2e-vm

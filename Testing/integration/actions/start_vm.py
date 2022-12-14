@@ -32,11 +32,12 @@ if __name__ == "__main__":
   tar_path = VMS_DIR / tar_name
   extracted_path = pathlib.Path(str(tar_path)[:-len(".tar.gz")])
 
-  storage_client = storage.Client(
-      project=PROJECT,
-      credentials=service_account.Credentials.from_service_account_info(
-          json.loads(open(SA_KEY, "r").read())),
-  )
+  with open(SA_KEY, "rb") as key_file:
+    storage_client = storage.Client(
+        project=PROJECT,
+        credentials=service_account.Credentials.from_service_account_info(
+            json.load(key_file)),
+    )
   bucket = storage_client.bucket(BUCKET)
   blob = bucket.get_blob(tar_name)
 
