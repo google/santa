@@ -20,6 +20,7 @@ using santa::santad::event_providers::endpoint_security::EnrichedExec;
 using santa::santad::event_providers::endpoint_security::EnrichedExit;
 using santa::santad::event_providers::endpoint_security::EnrichedFork;
 using santa::santad::event_providers::endpoint_security::EnrichedLink;
+using santa::santad::event_providers::endpoint_security::EnrichedProcess;
 using santa::santad::event_providers::endpoint_security::EnrichedRename;
 using santa::santad::event_providers::endpoint_security::EnrichedUnlink;
 using santa::santad::event_providers::endpoint_security::Message;
@@ -59,6 +60,14 @@ std::vector<uint8_t> Empty::SerializeMessage(const EnrichedRename &msg) {
 }
 
 std::vector<uint8_t> Empty::SerializeMessage(const EnrichedUnlink &msg) {
+  return {};
+}
+
+std::vector<uint8_t> Empty::SerializeFileAccess(const std::string &policy_version,
+                                                const std::string &policy_name, const Message &msg,
+                                                const EnrichedProcess &enriched_process,
+                                                const std::string &target,
+                                                FileAccessPolicyDecision decision) {
   return {};
 }
 

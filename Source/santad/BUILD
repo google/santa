@@ -393,6 +393,7 @@ objc_library(
         ":EndpointSecurityEnrichedTypes",
         ":EndpointSecurityMessage",
         ":SNTDecisionCache",
+        "//Source/common:SNTCommonEnums",
         "//Source/common:SNTConfigurator",
     ],
 )
