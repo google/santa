@@ -98,11 +98,13 @@ void Logger::LogDiskDisappeared(NSDictionary *props) {
   writer_->Write(serializer_->SerializeDiskDisappeared(props));
 }
 
-void Logger::LogFileAccess(std::string policy_version, std::string policy_name, const Message &msg,
-                           EnrichedProcess enriched_process, std::string target,
-                           FileAccessPolicyDecision decision) {
-  LOGE(@"policy version: %s, name: %s | proc -> tgt: %s -> %s", policy_version.c_str(),
-       policy_name.c_str(), msg->process->executable->path.data, target.c_str());
+void Logger::LogFileAccess(
+  const std::string &policy_version, const std::string &policy_name,
+  const santa::santad::event_providers::endpoint_security::Message &msg,
+  const santa::santad::event_providers::endpoint_security::EnrichedProcess &enriched_process,
+  const std::string &target, FileAccessPolicyDecision decision) {
+  writer_->Write(serializer_->SerializeFileAccess(policy_version, policy_name, msg,
+                                                  enriched_process, target, decision));
 }
 
 }  // namespace santa::santad::logs::endpoint_security

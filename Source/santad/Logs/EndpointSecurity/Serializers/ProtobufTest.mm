@@ -61,12 +61,16 @@ extern ::pbv1::Execution::Decision GetDecisionEnum(SNTEventState event_state);
 extern ::pbv1::Execution::Reason GetReasonEnum(SNTEventState event_state);
 extern ::pbv1::Execution::Mode GetModeEnum(SNTClientMode mode);
 extern ::pbv1::FileDescriptor::FDType GetFileDescriptorType(uint32_t fdtype);
+extern ::pbv1::FileAccess::AccessType GetAccessType(es_event_type_t event_type);
+extern ::pbv1::FileAccess::PolicyDecision GetPolicyDecision(FileAccessPolicyDecision decision);
 }  // namespace santa::santad::logs::endpoint_security::serializers
 
 using santa::santad::logs::endpoint_security::serializers::EncodeExitStatus;
+using santa::santad::logs::endpoint_security::serializers::GetAccessType;
 using santa::santad::logs::endpoint_security::serializers::GetDecisionEnum;
 using santa::santad::logs::endpoint_security::serializers::GetFileDescriptorType;
 using santa::santad::logs::endpoint_security::serializers::GetModeEnum;
+using santa::santad::logs::endpoint_security::serializers::GetPolicyDecision;
 using santa::santad::logs::endpoint_security::serializers::GetReasonEnum;
 
 JsonPrintOptions DefaultJsonPrintOptions() {
@@ -143,6 +147,7 @@ const google::protobuf::Message &SantaMessageEvent(const ::pbv1::SantaMessage &s
     case ::pbv1::SantaMessage::kDisk: return santaMsg.disk();
     case ::pbv1::SantaMessage::kBundle: return santaMsg.bundle();
     case ::pbv1::SantaMessage::kAllowlist: return santaMsg.allowlist();
+    case ::pbv1::SantaMessage::kFileAccess: return santaMsg.file_access();
     case ::pbv1::SantaMessage::EVENT_NOT_SET:
       XCTFail(@"Protobuf message SantaMessage did not set an 'event' field");
       OS_FALLTHROUGH;
@@ -209,6 +214,46 @@ void SerializeAndCheck(es_event_type_t eventType,
     XCTAssertTrue(santaMsg.ParseFromString(protoStr));
 
     CheckProto(santaMsg, enrichedMsg);
+  }
+
+  XCTBubbleMockVerifyAndClearExpectations(mockESApi.get());
+}
+
+void SerializeAndCheckNonESEvents(
+  es_event_type_t eventType, NSString *filename,
+  void (^messageSetup)(std::shared_ptr<MockEndpointSecurityAPI>, es_message_t *),
+  std::vector<uint8_t> (^RunSerializer)(std::shared_ptr<Serializer> serializer,
+                                        const Message &msg)) {
+  std::shared_ptr<MockEndpointSecurityAPI> mockESApi = std::make_shared<MockEndpointSecurityAPI>();
+  mockESApi->SetExpectationsRetainReleaseMessage();
+  std::shared_ptr<Serializer> bs = Protobuf::Create(mockESApi);
+
+  for (uint32_t cur_version = 1; cur_version <= MaxSupportedESMessageVersionForCurrentOS();
+       cur_version++) {
+    if (cur_version == 3) {
+      // Note: Version 3 was only in a macOS beta.
+      continue;
+    }
+
+    es_file_t procFile = MakeESFile("foo", MakeStat(100));
+    es_file_t ttyFile = MakeESFile("footty", MakeStat(200));
+    es_process_t proc = MakeESProcess(&procFile, MakeAuditToken(12, 34), MakeAuditToken(56, 78));
+    es_message_t esMsg = MakeESMessage(eventType, &proc);
+    esMsg.process->tty = &ttyFile;
+    esMsg.version = cur_version;
+
+    messageSetup(mockESApi, &esMsg);
+
+    std::vector<uint8_t> vec = RunSerializer(bs, Message(mockESApi, &esMsg));
+
+    std::string protoStr(vec.begin(), vec.end());
+
+    ::pbv1::SantaMessage santaMsg;
+    XCTAssertTrue(santaMsg.ParseFromString(protoStr));
+    std::string got = ConvertMessageToJsonString(santaMsg);
+    NSString *wantData = LoadTestJson(filename, esMsg.version);
+
+    XCTAssertEqualObjects([NSString stringWithUTF8String:got.c_str()], wantData);
   }
 
   XCTBubbleMockVerifyAndClearExpectations(mockESApi.get());
@@ -489,43 +534,65 @@ void SerializeAndCheck(es_event_type_t eventType,
                     });
 }
 
-- (void)testSerializeAllowlist {
-  std::shared_ptr<MockEndpointSecurityAPI> mockESApi = std::make_shared<MockEndpointSecurityAPI>();
+- (void)testGetAccessType {
+  std::map<es_event_type_t, ::pbv1::FileAccess::AccessType> eventTypeToAccessType = {
+    {ES_EVENT_TYPE_AUTH_OPEN, ::pbv1::FileAccess::ACCESS_TYPE_OPEN},
+    {ES_EVENT_TYPE_AUTH_LINK, ::pbv1::FileAccess::ACCESS_TYPE_LINK},
+    {ES_EVENT_TYPE_AUTH_RENAME, ::pbv1::FileAccess::ACCESS_TYPE_RENAME},
+    {ES_EVENT_TYPE_AUTH_UNLINK, ::pbv1::FileAccess::ACCESS_TYPE_UNLINK},
+    {ES_EVENT_TYPE_AUTH_CLONE, ::pbv1::FileAccess::ACCESS_TYPE_CLONE},
+    {ES_EVENT_TYPE_AUTH_EXCHANGEDATA, ::pbv1::FileAccess::ACCESS_TYPE_EXCHANGEDATA},
+    {ES_EVENT_TYPE_AUTH_COPYFILE, ::pbv1::FileAccess::ACCESS_TYPE_COPYFILE},
+    {(es_event_type_t)1234, ::pbv1::FileAccess::ACCESS_TYPE_UNKNOWN},
+  };
 
-  for (uint32_t cur_version = 1; cur_version <= MaxSupportedESMessageVersionForCurrentOS();
-       cur_version++) {
-    if (cur_version == 3) {
-      // Note: Version 3 was only in a macOS beta.
-      continue;
-    }
-
-    es_file_t procFile = MakeESFile("foo", MakeStat(100));
-    es_file_t ttyFile = MakeESFile("footty", MakeStat(200));
-    es_file_t closeFile = MakeESFile("close_file", MakeStat(300));
-    es_process_t proc = MakeESProcess(&procFile, MakeAuditToken(12, 34), MakeAuditToken(56, 78));
-    es_message_t esMsg = MakeESMessage(ES_EVENT_TYPE_NOTIFY_CLOSE, &proc);
-    esMsg.process->tty = &ttyFile;
-    esMsg.version = cur_version;
-    esMsg.event.close.modified = true;
-    esMsg.event.close.target = &closeFile;
-
-    mockESApi->SetExpectationsRetainReleaseMessage();
-
-    std::shared_ptr<Serializer> bs = Protobuf::Create(mockESApi);
-
-    std::vector<uint8_t> vec = bs->SerializeAllowlist(Message(mockESApi, &esMsg), "hash_value");
-    std::string protoStr(vec.begin(), vec.end());
-
-    ::pbv1::SantaMessage santaMsg;
-    XCTAssertTrue(santaMsg.ParseFromString(protoStr));
-
-    NSString *wantData = LoadTestJson(@"allowlist.json", esMsg.version);
-    std::string got = ConvertMessageToJsonString(santaMsg);
-
-    XCTAssertEqualObjects([NSString stringWithUTF8String:got.c_str()], wantData);
+  for (const auto &kv : eventTypeToAccessType) {
+    XCTAssertEqual(GetAccessType(kv.first), kv.second);
   }
+}
 
-  XCTBubbleMockVerifyAndClearExpectations(mockESApi.get());
+- (void)testGetPolicyDecision {
+  std::map<FileAccessPolicyDecision, ::pbv1::FileAccess::PolicyDecision> policyDecisionEnumToProto =
+    {
+      {FileAccessPolicyDecision::kNoPolicy, ::pbv1::FileAccess::POLICY_DECISION_UNKNOWN},
+      {FileAccessPolicyDecision::kDenied, ::pbv1::FileAccess::POLICY_DECISION_DENIED},
+      {FileAccessPolicyDecision::kDeniedInvalidSignature,
+       ::pbv1::FileAccess::POLICY_DECISION_DENIED_INVALID_SIGNATURE},
+      {FileAccessPolicyDecision::kAllowed, ::pbv1::FileAccess::POLICY_DECISION_UNKNOWN},
+      {FileAccessPolicyDecision::kAllowedAuditOnly,
+       ::pbv1::FileAccess::POLICY_DECISION_ALLOWED_AUDIT_ONLY},
+      {(FileAccessPolicyDecision)1234, ::pbv1::FileAccess::POLICY_DECISION_UNKNOWN},
+  };
+
+  for (const auto &kv : policyDecisionEnumToProto) {
+    XCTAssertEqual(GetPolicyDecision(kv.first), kv.second);
+  }
+}
+
+- (void)testSerializeFileAccess {
+  __block es_file_t openFile = MakeESFile("open_file", MakeStat(300));
+  SerializeAndCheckNonESEvents(
+    ES_EVENT_TYPE_AUTH_OPEN, @"file_access.json",
+    ^(std::shared_ptr<MockEndpointSecurityAPI> mockESApi, es_message_t *esMsg) {
+      esMsg->event.open.file = &openFile;
+    },
+    ^std::vector<uint8_t>(std::shared_ptr<Serializer> serializer, const Message &msg) {
+      return serializer->SerializeFileAccess("policy_version", "policy_name", msg,
+                                             Enricher().Enrich(*msg->process), "target",
+                                             FileAccessPolicyDecision::kDenied);
+    });
+}
+
+- (void)testSerializeAllowlist {
+  __block es_file_t closeFile = MakeESFile("close_file", MakeStat(300));
+  SerializeAndCheckNonESEvents(
+    ES_EVENT_TYPE_NOTIFY_CLOSE, @"allowlist.json",
+    ^(std::shared_ptr<MockEndpointSecurityAPI> mockESApi, es_message_t *esMsg) {
+      esMsg->event.close.target = &closeFile;
+    },
+    ^std::vector<uint8_t>(std::shared_ptr<Serializer> serializer, const Message &msg) {
+      return serializer->SerializeAllowlist(msg, "hash_value");
+    });
 }
 
 - (void)testSerializeBundleHashingEvent {

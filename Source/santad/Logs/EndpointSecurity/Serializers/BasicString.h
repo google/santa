@@ -53,6 +53,12 @@ class BasicString : public Serializer {
   std::vector<uint8_t> SerializeMessage(
     const santa::santad::event_providers::endpoint_security::EnrichedUnlink &) override;
 
+  std::vector<uint8_t> SerializeFileAccess(
+    const std::string &policy_version, const std::string &policy_name,
+    const santa::santad::event_providers::endpoint_security::Message &msg,
+    const santa::santad::event_providers::endpoint_security::EnrichedProcess &enriched_process,
+    const std::string &target, FileAccessPolicyDecision decision) override;
+
   std::vector<uint8_t> SerializeAllowlist(
     const santa::santad::event_providers::endpoint_security::Message &,
     const std::string_view) override;

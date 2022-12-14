@@ -80,6 +80,13 @@ class MockSerializer : public Empty {
   MOCK_METHOD(std::vector<uint8_t>, SerializeBundleHashingEvent, (SNTStoredEvent *));
   MOCK_METHOD(std::vector<uint8_t>, SerializeDiskAppeared, (NSDictionary *));
   MOCK_METHOD(std::vector<uint8_t>, SerializeDiskDisappeared, (NSDictionary *));
+
+  MOCK_METHOD(
+    std::vector<uint8_t>, SerializeFileAccess,
+    (const std::string &policy_version, const std::string &policy_name,
+     const santa::santad::event_providers::endpoint_security::Message &msg,
+     const santa::santad::event_providers::endpoint_security::EnrichedProcess &enriched_process,
+     const std::string &target, FileAccessPolicyDecision decision));
 };
 
 class MockWriter : public Null {
@@ -198,6 +205,26 @@ class MockWriter : public Null {
   EXPECT_CALL(*mockWriter, Write);
 
   Logger(mockSerializer, mockWriter).LogDiskDisappeared(@{@"key" : @"value"});
+
+  XCTBubbleMockVerifyAndClearExpectations(mockSerializer.get());
+  XCTBubbleMockVerifyAndClearExpectations(mockWriter.get());
+}
+
+- (void)testLogFileAccess {
+  auto mockESApi = std::make_shared<MockEndpointSecurityAPI>();
+  auto mockSerializer = std::make_shared<MockSerializer>();
+  auto mockWriter = std::make_shared<MockWriter>();
+  es_message_t msg;
+
+  mockESApi->SetExpectationsRetainReleaseMessage();
+  EXPECT_CALL(*mockSerializer, SerializeFileAccess);
+  EXPECT_CALL(*mockWriter, Write);
+
+  Logger(mockSerializer, mockWriter)
+    .LogFileAccess("v1", "name", Message(mockESApi, &msg),
+                   EnrichedProcess(std::nullopt, std::nullopt, std::nullopt, std::nullopt,
+                                   EnrichedFile(std::nullopt, std::nullopt, std::nullopt)),
+                   "tgt", FileAccessPolicyDecision::kDenied);
 
   XCTBubbleMockVerifyAndClearExpectations(mockSerializer.get());
   XCTBubbleMockVerifyAndClearExpectations(mockWriter.get());
