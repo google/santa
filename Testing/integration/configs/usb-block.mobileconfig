@@ -15,14 +15,14 @@
 							<key>mcx_preference_settings</key>
 							<dict>
 								<key>BannedBlockMessage</key>
-                                <string>This application has been blocked from executing because it has been banned.</string>
-                                <key>BlockUSBMount</key>
-                                <true/>
-                                <key>RemountUSBMode</key>
-                                <array>
-                                    <string>noexec</string>
-                                    <string>rdonly</string>
-                                </array>
+								<string>This application has been blocked from executing because it has been banned.</string>
+								<key>BlockUSBMount</key>
+								<true/>
+								<key>RemountUSBMode</key>
+								<array>
+									<string>noexec</string>
+									<string>rdonly</string>
+								</array>
 								<key>EnableForkAndExitLogging</key>
 								<true/>
 								<key>EnablePageZeroProtection</key>
@@ -32,15 +32,15 @@
 								<key>EventDetailText</key>
 								<string>Open in moroz...</string>
 								<key>EventDetailURL</key>
-                                <string>https://localhost:8080/v1/santa/ruledownload/%file_sha%</string>
-                                <key>MachineOwner</key>
-                                <string>SomeOwner</string>
+								<string>http://localhost:8080/v1/santa/ruledownload/%file_sha%</string>
+								<key>MachineOwner</key>
+								<string>SomeOwner</string>
 								<key>MachineID</key>
 								<string>00000000-0000-0000-0000-000000000000</string>
-                                <key>ClientAuthCertificateCN</key>
-                                <string>santa</string>
+								<key>ClientAuthCertificateCN</key>
+								<string>santa</string>
 								<key>SyncBaseURL</key>
-								<string>https://localhost:8080/v1/santa/</string>
+								<string>http://localhost:8080/v1/santa/</string>
 								<key>UnknownBlockMessage</key>
 								<string>This application has been blocked from executing&lt;br /&gt;because its trustworthiness cannot be determined.</string>
 							</dict>

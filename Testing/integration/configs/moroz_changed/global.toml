@@ -1,0 +1,10 @@
+clean_sync = true
+client_mode = "MONITOR"
+batch_size = 100
+block_usb_mount = true
+
+[[rules]]
+rule_type = "CERTIFICATE"
+policy = "BLOCKLIST"
+identifier = "6a7767fb80ac25fd073db8302cb50bea36512808e045bbc3768659bf503d4d31"
+custom_msg = "deny bad test self-signed cert"

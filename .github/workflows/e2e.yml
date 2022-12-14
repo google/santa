@@ -1,0 +1,41 @@
+name: E2E
+
+on: workflow_dispatch
+
+jobs:
+  start_vm:
+    runs-on: e2e-host
+    steps:
+      - uses: actions/checkout@v2
+      - name: Start VM
+        run: python3 Testing/integration/actions/start-vm.py macOS_12.bundle.tar.gz
+
+  integration:
+    runs-on: e2e-vm
+    env:
+      VM_PASSWORD: ${{ secrets.VM_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v2
+      - name: Install configuration profile
+        run: bazel run //Testing/integration:install_profile -- Testing/integration/configs/default.mobileconfig
+      - name: Add homebrew to PATH
+        run: echo "/opt/homebrew/bin/" >> $GITHUB_PATH
+      - name: Build, install, and start moroz
+        run: |
+          bazel build @com_github_groob_moroz//cmd/moroz:moroz
+          cp bazel-bin/external/com_github_groob_moroz/cmd/moroz/moroz_/moroz /tmp/moroz
+          /tmp/moroz -configs="$GITHUB_WORKSPACE/Testing/integration/configs/moroz_default/global.toml" -use-tls=false &
+      - name: Build, install, and sync santa
+        run: |
+          bazel run :reload --define=SANTA_BUILD_TYPE=adhoc
+          bazel run //Testing/integration:allow_sysex
+          sudo santactl sync --debug
+      - name: Run integration test binaries
+        run: bazel test //Testing/integration:integration_tests
+      - name: Test config changes
+        run: ./Testing/integration/test_config_changes.sh
+      - name: Test sync server changes
+        run: ./Testing/integration/test_sync_changes.sh
+      - name: Poweroff
+        if: ${{ always() }}
+        run: sudo shutdown -h +1
