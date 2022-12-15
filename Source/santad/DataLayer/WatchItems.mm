@@ -225,7 +225,7 @@ WatchItems::~WatchItems() {
 
 bool WatchItems::BuildPolicyTree(const std::vector<std::shared_ptr<WatchItemPolicy>> &watch_items,
                                  PrefixTree<std::shared_ptr<WatchItemPolicy>> &tree,
-                                 std::set<std::string> &paths) {
+                                 std::set<std::pair<std::string, WatchItemPathType>> &paths) {
   glob_t *g = (glob_t *)alloca(sizeof(glob_t));
   for (const std::shared_ptr<WatchItemPolicy> &item : watch_items) {
     int err = glob(item->path.c_str(), 0, nullptr, g);
@@ -241,7 +241,7 @@ bool WatchItems::BuildPolicyTree(const std::vector<std::shared_ptr<WatchItemPoli
         tree.InsertLiteral(g->gl_pathv[i], item);
       }
 
-      paths.insert(g->gl_pathv[i]);
+      paths.insert({g->gl_pathv[i], item->path_type});
     }
     globfree(g);
   }
@@ -309,7 +309,8 @@ bool WatchItems::ParseConfig(NSDictionary *config,
 
 void WatchItems::UpdateCurrentState(
   std::unique_ptr<PrefixTree<std::shared_ptr<WatchItemPolicy>>> new_tree,
-  std::set<std::string> &&new_monitored_paths, NSDictionary *new_config) {
+  std::set<std::pair<std::string, WatchItemPathType>> &&new_monitored_paths,
+  NSDictionary *new_config) {
   absl::MutexLock lock(&lock_);
 
   // The following conditions require updating the current config:
@@ -355,7 +356,7 @@ void WatchItems::UpdateCurrentState(
 void WatchItems::ReloadConfig(NSDictionary *new_config) {
   std::vector<std::shared_ptr<WatchItemPolicy>> new_policies;
   auto new_tree = std::make_unique<PrefixTree<std::shared_ptr<WatchItemPolicy>>>();
-  std::set<std::string> new_monitored_paths;
+  std::set<std::pair<std::string, WatchItemPathType>> new_monitored_paths;
 
   if (new_config) {
     if (!ParseConfig(new_config, new_policies)) {
