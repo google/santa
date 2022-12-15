@@ -337,7 +337,7 @@ std::pair<std::optional<std::string>, std::optional<std::string>> GetPathTargets
       std::string policyVersion = self->_watchItems->PolicyVersion();
 
       [self asynchronouslyProcess:msg
-                          handler:^(const Message &esMsg) {
+                          handler:^(Message &&esMsg) {
                             self->_logger->LogFileAccess(
                               policyVersion, policyName, esMsg,
                               self->_enricher->Enrich(*msg->process, EnrichOptions::kLocalOnly),
