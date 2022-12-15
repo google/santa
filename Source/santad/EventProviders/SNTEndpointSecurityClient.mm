@@ -207,10 +207,10 @@ using santa::santad::event_providers::endpoint_security::Message;
   });
 }
 
-- (void)asynchronouslyProcess:(const Message &)msg
-                      handler:(void (^)(const Message &))messageHandler {
+- (void)asynchronouslyProcess:(Message)msg handler:(void (^)(Message &&))messageHandler {
+  __block Message msgTmp = std::move(msg);
   dispatch_async(_notifyQueue, ^{
-    messageHandler(msg);
+    messageHandler(std::move(msgTmp));
   });
 }
 
