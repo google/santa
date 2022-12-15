@@ -104,11 +104,11 @@ class WatchItems : public std::enable_shared_from_this<WatchItems> {
 
   absl::Mutex lock_;
 
-  std::unique_ptr<WatchItemsTree> watch_items_ GUARDED_BY(lock_);
-  NSDictionary *current_config_ GUARDED_BY(lock_);
-  std::set<std::string> currently_monitored_paths_ GUARDED_BY(lock_);
-  std::string policy_version_ GUARDED_BY(lock_);
-  std::set<id<SNTEndpointSecurityDynamicEventHandler>> registerd_clients_ GUARDED_BY(lock_);
+  std::unique_ptr<WatchItemsTree> watch_items_ ABSL_GUARDED_BY(lock_);
+  NSDictionary *current_config_ ABSL_GUARDED_BY(lock_);
+  std::set<std::string> currently_monitored_paths_ ABSL_GUARDED_BY(lock_);
+  std::string policy_version_ ABSL_GUARDED_BY(lock_);
+  std::set<id<SNTEndpointSecurityDynamicEventHandler>> registerd_clients_ ABSL_GUARDED_BY(lock_);
   bool periodic_task_started_ = false;
 };
 
