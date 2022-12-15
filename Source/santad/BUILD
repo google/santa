@@ -35,11 +35,17 @@ objc_library(
 )
 
 objc_library(
+    name = "WatchItemPolicy",
+    hdrs = ["DataLayer/WatchItemPolicy.h"],
+)
+
+objc_library(
     name = "WatchItems",
     srcs = ["DataLayer/WatchItems.mm"],
     hdrs = ["DataLayer/WatchItems.h"],
     deps = [
         ":SNTEndpointSecurityEventHandler",
+        ":WatchItemPolicy",
         "//Source/common:PrefixTree",
         "//Source/common:SNTLogging",
     ],
@@ -49,6 +55,7 @@ santa_unit_test(
     name = "WatchItemsTest",
     srcs = ["DataLayer/WatchItemsTest.mm"],
     deps = [
+        ":WatchItemPolicy",
         ":WatchItems",
         "//Source/common:PrefixTree",
         "//Source/common:TestUtils",
@@ -1144,6 +1151,7 @@ santa_unit_test(
         ":SNTDecisionCache",
         ":SNTEndpointSecurityFileAccessAuthorizer",
         ":WatchItems",
+        ":WatchItemPolicy",
         "//Source/common:SNTCachedDecision",
         "//Source/common:SNTConfigurator",
         "//Source/common:TestUtils",

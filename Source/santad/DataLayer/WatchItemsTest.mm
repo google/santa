@@ -26,6 +26,7 @@
 
 #include "Source/common/PrefixTree.h"
 #include "Source/common/TestUtils.h"
+#include "Source/santad/DataLayer/WatchItemPolicy.h"
 #include "Source/santad/DataLayer/WatchItems.h"
 
 using santa::common::PrefixTree;

@@ -15,6 +15,7 @@
 #include "Source/santad/DataLayer/WatchItems.h"
 
 #include <CommonCrypto/CommonDigest.h>
+#include <Kernel/kern/cs_blobs.h>
 #include <ctype.h>
 #include <glob.h>
 
@@ -27,6 +28,7 @@
 
 #import "Source/common/PrefixTree.h"
 #import "Source/common/SNTLogging.h"
+#include "Source/santad/DataLayer/WatchItemPolicy.h"
 
 using santa::common::PrefixTree;
 
@@ -186,20 +188,6 @@ static std::set<std::array<uint8_t, length>> HexStringArrayToSet(NSArray<NSStrin
   return data;
 }
 
-WatchItemPolicy::WatchItemPolicy(std::string_view n, std::string_view p, bool wo, bool ip, bool ao,
-                                 std::set<std::string> &&abp, std::set<std::string> &&ati,
-                                 std::set<std::array<uint8_t, CS_CDHASH_LEN>> &&ach,
-                                 std::set<std::string> &&acs)
-    : name(n),
-      path(p),
-      write_only(wo),
-      is_prefix(ip),
-      audit_only(ao),
-      allowed_binary_paths(std::move(abp)),
-      allowed_team_ids(std::move(ati)),
-      allowed_cdhashes(std::move(ach)),
-      allowed_certificates_sha256(std::move(acs)) {}
-
 std::shared_ptr<WatchItems> WatchItems::Create(NSString *config_path,
                                                uint64_t reapply_config_frequency_secs) {
   if (reapply_config_frequency_secs < kMinReapplyConfigFrequencySecs) {
@@ -247,7 +235,7 @@ bool WatchItems::BuildPolicyTree(const std::vector<std::shared_ptr<WatchItemPoli
     }
 
     for (size_t i = g->gl_offs; i < g->gl_pathc; i++) {
-      if (item->is_prefix) {
+      if (item->path_type == WatchItemPathType::kPrefix) {
         tree.InsertPrefix(g->gl_pathv[i], item);
       } else {
         tree.InsertLiteral(g->gl_pathv[i], item);
@@ -306,7 +294,9 @@ bool WatchItems::ParseConfig(NSDictionary *config,
     policies.push_back(std::make_shared<WatchItemPolicy>(
       [key UTF8String], [watch_item[kWatchItemConfigKeyPath] UTF8String],
       [(watch_item[kWatchItemConfigKeyWriteOnly] ?: @(0)) boolValue],
-      [(watch_item[kWatchItemConfigKeyIsPrefix] ?: @(0)) boolValue],
+      ([(watch_item[kWatchItemConfigKeyIsPrefix] ?: @(0)) boolValue] == NO)
+        ? WatchItemPathType::kLiteral
+        : WatchItemPathType::kPrefix,
       [(watch_item[kWatchItemConfigKeyAuditOnly] ?: @(1)) boolValue],
       StringArrayToSet(watch_item[kWatchItemConfigKeyAllowedBinaryPaths]),
       StringArrayToSet(watch_item[kWatchItemConfigKeyAllowedTeamIDs]),

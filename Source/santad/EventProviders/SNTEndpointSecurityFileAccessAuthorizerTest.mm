@@ -31,6 +31,8 @@
 #include "Source/common/SNTCachedDecision.h"
 #import "Source/common/SNTConfigurator.h"
 #include "Source/common/TestUtils.h"
+#include "Source/santad/DataLayer/WatchItemPolicy.h"
+#include "Source/santad/DataLayer/WatchItems.h"
 #include "Source/santad/EventProviders/EndpointSecurity/Message.h"
 #include "Source/santad/EventProviders/EndpointSecurity/MockEndpointSecurityAPI.h"
 #import "Source/santad/EventProviders/SNTEndpointSecurityFileAccessAuthorizer.h"

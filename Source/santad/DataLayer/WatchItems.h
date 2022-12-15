@@ -17,7 +17,6 @@
 
 #include <CommonCrypto/CommonDigest.h>
 #import <Foundation/Foundation.h>
-#include <Kernel/kern/cs_blobs.h>
 #include <dispatch/dispatch.h>
 
 #include <array>
@@ -29,6 +28,7 @@
 #include <vector>
 
 #include "Source/common/PrefixTree.h"
+#include "Source/santad/DataLayer/WatchItemPolicy.h"
 #import "Source/santad/EventProviders/SNTEndpointSecurityEventHandler.h"
 
 extern const NSString *kWatchItemConfigKeyPath;
@@ -46,24 +46,6 @@ class WatchItemsPeer;
 }
 
 namespace santa::santad::data_layer {
-
-struct WatchItemPolicy {
-  WatchItemPolicy(std::string_view n, std::string_view p, bool wo = false, bool ip = false,
-                  bool ao = true, std::set<std::string> &&abp = {},
-                  std::set<std::string> &&ati = {},
-                  std::set<std::array<uint8_t, CS_CDHASH_LEN>> &&ach = {},
-                  std::set<std::string> &&acs = {});
-
-  std::string name;
-  std::string path;
-  bool write_only;
-  bool is_prefix;
-  bool audit_only;
-  std::set<std::string> allowed_binary_paths;
-  std::set<std::string> allowed_team_ids;
-  std::set<std::array<uint8_t, CS_CDHASH_LEN>> allowed_cdhashes;
-  std::set<std::string> allowed_certificates_sha256;
-};
 
 class WatchItems : public std::enable_shared_from_this<WatchItems> {
  public:
