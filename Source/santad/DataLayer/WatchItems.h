@@ -17,7 +17,6 @@
 
 #include <CommonCrypto/CommonDigest.h>
 #import <Foundation/Foundation.h>
-#include <Kernel/kern/cs_blobs.h>
 #include <dispatch/dispatch.h>
 
 #include <array>
@@ -29,6 +28,7 @@
 #include <vector>
 
 #include "Source/common/PrefixTree.h"
+#include "Source/santad/DataLayer/WatchItemPolicy.h"
 #import "Source/santad/EventProviders/SNTEndpointSecurityEventHandler.h"
 
 extern const NSString *kWatchItemConfigKeyPath;
@@ -46,24 +46,6 @@ class WatchItemsPeer;
 }
 
 namespace santa::santad::data_layer {
-
-struct WatchItemPolicy {
-  WatchItemPolicy(std::string_view n, std::string_view p, bool wo = false, bool ip = false,
-                  bool ao = true, std::set<std::string> &&abp = {},
-                  std::set<std::string> &&ati = {},
-                  std::set<std::array<uint8_t, CS_CDHASH_LEN>> &&ach = {},
-                  std::set<std::string> &&acs = {});
-
-  std::string name;
-  std::string path;
-  bool write_only;
-  bool is_prefix;
-  bool audit_only;
-  std::set<std::string> allowed_binary_paths;
-  std::set<std::string> allowed_team_ids;
-  std::set<std::array<uint8_t, CS_CDHASH_LEN>> allowed_cdhashes;
-  std::set<std::string> allowed_certificates_sha256;
-};
 
 class WatchItems : public std::enable_shared_from_this<WatchItems> {
  public:
@@ -92,10 +74,12 @@ class WatchItems : public std::enable_shared_from_this<WatchItems> {
   NSDictionary *ReadConfigLocked() ABSL_SHARED_LOCKS_REQUIRED(lock_);
   void ReloadConfig(NSDictionary *new_config);
   void UpdateCurrentState(std::unique_ptr<WatchItemsTree> new_tree,
-                          std::set<std::string> &&new_monitored_paths, NSDictionary *new_config);
+                          std::set<std::pair<std::string, WatchItemPathType>> &&new_monitored_paths,
+                          NSDictionary *new_config);
   bool ParseConfig(NSDictionary *config, std::vector<std::shared_ptr<WatchItemPolicy>> &policies);
   bool BuildPolicyTree(const std::vector<std::shared_ptr<WatchItemPolicy>> &watch_items,
-                       WatchItemsTree &tree, std::set<std::string> &paths);
+                       WatchItemsTree &tree,
+                       std::set<std::pair<std::string, WatchItemPathType>> &paths);
 
   NSString *config_path_;
   dispatch_queue_t q_;
@@ -106,7 +90,8 @@ class WatchItems : public std::enable_shared_from_this<WatchItems> {
 
   std::unique_ptr<WatchItemsTree> watch_items_ ABSL_GUARDED_BY(lock_);
   NSDictionary *current_config_ ABSL_GUARDED_BY(lock_);
-  std::set<std::string> currently_monitored_paths_ ABSL_GUARDED_BY(lock_);
+  std::set<std::pair<std::string, WatchItemPathType>> currently_monitored_paths_
+    ABSL_GUARDED_BY(lock_);
   std::string policy_version_ ABSL_GUARDED_BY(lock_);
   std::set<id<SNTEndpointSecurityDynamicEventHandler>> registerd_clients_ ABSL_GUARDED_BY(lock_);
   bool periodic_task_started_ = false;

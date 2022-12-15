@@ -15,6 +15,7 @@
 #include "Source/santad/DataLayer/WatchItems.h"
 
 #include <CommonCrypto/CommonDigest.h>
+#include <Kernel/kern/cs_blobs.h>
 #include <ctype.h>
 #include <glob.h>
 
@@ -27,6 +28,7 @@
 
 #import "Source/common/PrefixTree.h"
 #import "Source/common/SNTLogging.h"
+#include "Source/santad/DataLayer/WatchItemPolicy.h"
 
 using santa::common::PrefixTree;
 
@@ -186,20 +188,6 @@ static std::set<std::array<uint8_t, length>> HexStringArrayToSet(NSArray<NSStrin
   return data;
 }
 
-WatchItemPolicy::WatchItemPolicy(std::string_view n, std::string_view p, bool wo, bool ip, bool ao,
-                                 std::set<std::string> &&abp, std::set<std::string> &&ati,
-                                 std::set<std::array<uint8_t, CS_CDHASH_LEN>> &&ach,
-                                 std::set<std::string> &&acs)
-    : name(n),
-      path(p),
-      write_only(wo),
-      is_prefix(ip),
-      audit_only(ao),
-      allowed_binary_paths(std::move(abp)),
-      allowed_team_ids(std::move(ati)),
-      allowed_cdhashes(std::move(ach)),
-      allowed_certificates_sha256(std::move(acs)) {}
-
 std::shared_ptr<WatchItems> WatchItems::Create(NSString *config_path,
                                                uint64_t reapply_config_frequency_secs) {
   if (reapply_config_frequency_secs < kMinReapplyConfigFrequencySecs) {
@@ -237,7 +225,7 @@ WatchItems::~WatchItems() {
 
 bool WatchItems::BuildPolicyTree(const std::vector<std::shared_ptr<WatchItemPolicy>> &watch_items,
                                  PrefixTree<std::shared_ptr<WatchItemPolicy>> &tree,
-                                 std::set<std::string> &paths) {
+                                 std::set<std::pair<std::string, WatchItemPathType>> &paths) {
   glob_t *g = (glob_t *)alloca(sizeof(glob_t));
   for (const std::shared_ptr<WatchItemPolicy> &item : watch_items) {
     int err = glob(item->path.c_str(), 0, nullptr, g);
@@ -247,13 +235,13 @@ bool WatchItems::BuildPolicyTree(const std::vector<std::shared_ptr<WatchItemPoli
     }
 
     for (size_t i = g->gl_offs; i < g->gl_pathc; i++) {
-      if (item->is_prefix) {
+      if (item->path_type == WatchItemPathType::kPrefix) {
         tree.InsertPrefix(g->gl_pathv[i], item);
       } else {
         tree.InsertLiteral(g->gl_pathv[i], item);
       }
 
-      paths.insert(g->gl_pathv[i]);
+      paths.insert({g->gl_pathv[i], item->path_type});
     }
     globfree(g);
   }
@@ -306,7 +294,9 @@ bool WatchItems::ParseConfig(NSDictionary *config,
     policies.push_back(std::make_shared<WatchItemPolicy>(
       [key UTF8String], [watch_item[kWatchItemConfigKeyPath] UTF8String],
       [(watch_item[kWatchItemConfigKeyWriteOnly] ?: @(0)) boolValue],
-      [(watch_item[kWatchItemConfigKeyIsPrefix] ?: @(0)) boolValue],
+      ([(watch_item[kWatchItemConfigKeyIsPrefix] ?: @(0)) boolValue] == NO)
+        ? WatchItemPathType::kLiteral
+        : WatchItemPathType::kPrefix,
       [(watch_item[kWatchItemConfigKeyAuditOnly] ?: @(1)) boolValue],
       StringArrayToSet(watch_item[kWatchItemConfigKeyAllowedBinaryPaths]),
       StringArrayToSet(watch_item[kWatchItemConfigKeyAllowedTeamIDs]),
@@ -319,7 +309,8 @@ bool WatchItems::ParseConfig(NSDictionary *config,
 
 void WatchItems::UpdateCurrentState(
   std::unique_ptr<PrefixTree<std::shared_ptr<WatchItemPolicy>>> new_tree,
-  std::set<std::string> &&new_monitored_paths, NSDictionary *new_config) {
+  std::set<std::pair<std::string, WatchItemPathType>> &&new_monitored_paths,
+  NSDictionary *new_config) {
   absl::MutexLock lock(&lock_);
 
   // The following conditions require updating the current config:
@@ -365,7 +356,7 @@ void WatchItems::UpdateCurrentState(
 void WatchItems::ReloadConfig(NSDictionary *new_config) {
   std::vector<std::shared_ptr<WatchItemPolicy>> new_policies;
   auto new_tree = std::make_unique<PrefixTree<std::shared_ptr<WatchItemPolicy>>>();
-  std::set<std::string> new_monitored_paths;
+  std::set<std::pair<std::string, WatchItemPathType>> new_monitored_paths;
 
   if (new_config) {
     if (!ParseConfig(new_config, new_policies)) {

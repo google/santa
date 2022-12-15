@@ -34,6 +34,7 @@
 #include "Source/common/SantaCache.h"
 #include "Source/common/SantaVnode.h"
 #include "Source/common/SantaVnodeHash.h"
+#include "Source/santad/DataLayer/WatchItemPolicy.h"
 #include "Source/santad/DataLayer/WatchItems.h"
 #include "Source/santad/EventProviders/EndpointSecurity/EnrichedTypes.h"
 #include "Source/santad/EventProviders/EndpointSecurity/Message.h"
