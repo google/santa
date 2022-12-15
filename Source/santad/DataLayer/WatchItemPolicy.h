@@ -17,6 +17,7 @@
 
 #include <Kernel/kern/cs_blobs.h>
 
+#include <array>
 #include <set>
 #include <string>
 #include <string_view>
