@@ -150,7 +150,7 @@ static NSMutableDictionary *WrapWatchItemsConfig(NSDictionary *config) {
   NSDictionary *configAllFilesRename =
     WrapWatchItemsConfig(@{@"all_files_rename" : allFilesPolicy});
 
-  std::optional<std::shared_ptr<WatchItemPolicy>> policy;
+  WatchItems::VersionAndPolicies policies;
 
   // Changes in config dictionary will update policy info even if the
   // filesystem didn't change.
@@ -159,15 +159,18 @@ static NSMutableDictionary *WrapWatchItemsConfig(NSDictionary *config) {
     [self pushd:@"a"];
     watchItems.ReloadConfig(configAllFilesOriginal);
 
-    policy = watchItems.FindPolicyForPath("f1");
-    XCTAssertCStringEqual(policy.value_or(MakeBadPolicy())->name.c_str(), "all_files_orig");
+    policies = watchItems.FindPolciesForPaths({"f1"});
+    XCTAssertCStringEqual(policies.second[0].value_or(MakeBadPolicy())->name.c_str(),
+                          "all_files_orig");
 
     watchItems.ReloadConfig(configAllFilesRename);
-    policy = watchItems.FindPolicyForPath("f1");
-    XCTAssertCStringEqual(policy.value_or(MakeBadPolicy())->name.c_str(), "all_files_rename");
+    policies = watchItems.FindPolciesForPaths({"f1"});
+    XCTAssertCStringEqual(policies.second[0].value_or(MakeBadPolicy())->name.c_str(),
+                          "all_files_rename");
 
-    policy = watchItems.FindPolicyForPath("f1");
-    XCTAssertCStringEqual(policy.value_or(MakeBadPolicy())->name.c_str(), "all_files_rename");
+    policies = watchItems.FindPolciesForPaths({"f1"});
+    XCTAssertCStringEqual(policies.second[0].value_or(MakeBadPolicy())->name.c_str(),
+                          "all_files_rename");
     [self popd];
   }
 
@@ -178,15 +181,16 @@ static NSMutableDictionary *WrapWatchItemsConfig(NSDictionary *config) {
     watchItems.ReloadConfig(configAllFilesOriginal);
     [self popd];
 
-    policy = watchItems.FindPolicyForPath("f2");
-    XCTAssertCStringEqual(policy.value_or(MakeBadPolicy())->name.c_str(), "all_files_orig");
+    policies = watchItems.FindPolciesForPaths({"f2"});
+    XCTAssertCStringEqual(policies.second[0].value_or(MakeBadPolicy())->name.c_str(),
+                          "all_files_orig");
 
     [self pushd:@"b"];
     watchItems.ReloadConfig(configAllFilesOriginal);
     [self popd];
 
-    policy = watchItems.FindPolicyForPath("f2");
-    XCTAssertFalse(policy.has_value());
+    policies = watchItems.FindPolciesForPaths({"f2"});
+    XCTAssertFalse(policies.second[0].has_value());
   }
 }
 
@@ -227,8 +231,8 @@ static NSMutableDictionary *WrapWatchItemsConfig(NSDictionary *config) {
   XCTAssertTrue([firstConfig writeToFile:configFile atomically:YES]);
 
   // Ensure no policy has been loaded yet
-  XCTAssertFalse(watchItems->FindPolicyForPath("f1").has_value());
-  XCTAssertFalse(watchItems->FindPolicyForPath("weird1").has_value());
+  XCTAssertFalse(watchItems->FindPolciesForPaths({"f1"}).second[0].has_value());
+  XCTAssertFalse(watchItems->FindPolciesForPaths({"weird1"}).second[0].has_value());
 
   // Begin the periodic task
   watchItems->BeginPeriodicTask();
@@ -236,16 +240,16 @@ static NSMutableDictionary *WrapWatchItemsConfig(NSDictionary *config) {
   // The first run of the task starts immediately
   // Wait for the first iteration and check for the expected policy
   XCTAssertSemaTrue(sema, 5, "Periodic task did not complete within expected window");
-  XCTAssertTrue(watchItems->FindPolicyForPath("f1").has_value());
-  XCTAssertFalse(watchItems->FindPolicyForPath("weird1").has_value());
+  XCTAssertTrue(watchItems->FindPolciesForPaths({"f1"}).second[0].has_value());
+  XCTAssertFalse(watchItems->FindPolciesForPaths({"weird1"}).second[0].has_value());
 
   // Write the config update
   XCTAssertTrue([secondConfig writeToFile:configFile atomically:YES]);
 
   // Wait for the new config to be loaded and check for the new expected policies
   XCTAssertSemaTrue(sema, 5, "Periodic task did not complete within expected window");
-  XCTAssertTrue(watchItems->FindPolicyForPath("f1").has_value());
-  XCTAssertTrue(watchItems->FindPolicyForPath("weird1").has_value());
+  XCTAssertTrue(watchItems->FindPolciesForPaths({"f1"}).second[0].has_value());
+  XCTAssertTrue(watchItems->FindPolciesForPaths({"weird1"}).second[0].has_value());
 
   [self popd];
 }
@@ -268,9 +272,15 @@ static NSMutableDictionary *WrapWatchItemsConfig(NSDictionary *config) {
   });
 
   WatchItemsPeer watchItems(nil, NULL, NULL);
+  WatchItems::VersionAndPolicies policies;
+
+  // Resultant vector is same size as input vector
+  XCTAssertEqual(watchItems.FindPolciesForPaths({}).second.size(), 0);
+  XCTAssertEqual(watchItems.FindPolciesForPaths({"./foo"}).second.size(), 1);
+  XCTAssertEqual(watchItems.FindPolciesForPaths({"./foo", "./baz"}).second.size(), 2);
 
   // Initially nothing should be in the map
-  XCTAssertFalse(watchItems.FindPolicyForPath("./foo").has_value());
+  XCTAssertFalse(watchItems.FindPolciesForPaths({"./foo"}).second[0].has_value());
 
   // Load the initial config
   [self pushd:@""];
@@ -287,10 +297,16 @@ static NSMutableDictionary *WrapWatchItemsConfig(NSDictionary *config) {
     };
 
     for (const auto &kv : pathToPolicyName) {
-      std::optional<std::shared_ptr<WatchItemPolicy>> policy =
-        watchItems.FindPolicyForPath(kv.first.data());
-      XCTAssertCStringEqual(policy.value_or(MakeBadPolicy())->name.c_str(), kv.second.data());
+      policies = watchItems.FindPolciesForPaths({kv.first});
+      XCTAssertCStringEqual(policies.first.data(), kVersion.data());
+      XCTAssertCStringEqual(policies.second[0].value_or(MakeBadPolicy())->name.c_str(),
+                            kv.second.data());
     }
+
+    // Test multiple lookup
+    policies = watchItems.FindPolciesForPaths({"./foo", "./does/not/exist"});
+    XCTAssertCStringEqual(policies.second[0].value_or(MakeBadPolicy())->name.c_str(), "foo_subdir");
+    XCTAssertFalse(policies.second[1].has_value());
   }
 
   // Add a new policy and reload the config
@@ -315,9 +331,9 @@ static NSMutableDictionary *WrapWatchItemsConfig(NSDictionary *config) {
     };
 
     for (const auto &kv : pathToPolicyName) {
-      std::optional<std::shared_ptr<WatchItemPolicy>> policy =
-        watchItems.FindPolicyForPath(kv.first.data());
-      XCTAssertCStringEqual(policy.value_or(MakeBadPolicy())->name.c_str(), kv.second.data());
+      policies = watchItems.FindPolciesForPaths({kv.first.data()});
+      XCTAssertCStringEqual(policies.second[0].value_or(MakeBadPolicy())->name.c_str(),
+                            kv.second.data());
     }
   }
 
@@ -343,9 +359,9 @@ static NSMutableDictionary *WrapWatchItemsConfig(NSDictionary *config) {
     };
 
     for (const auto &kv : pathToPolicyName) {
-      std::optional<std::shared_ptr<WatchItemPolicy>> policy =
-        watchItems.FindPolicyForPath(kv.first.data());
-      XCTAssertCStringEqual(policy.value_or(MakeBadPolicy())->name.c_str(), kv.second.data());
+      policies = watchItems.FindPolciesForPaths({kv.first.data()});
+      XCTAssertCStringEqual(policies.second[0].value_or(MakeBadPolicy())->name.c_str(),
+                            kv.second.data());
     }
   }
 
@@ -365,9 +381,9 @@ static NSMutableDictionary *WrapWatchItemsConfig(NSDictionary *config) {
     };
 
     for (const auto &kv : pathToPolicyName) {
-      std::optional<std::shared_ptr<WatchItemPolicy>> policy =
-        watchItems.FindPolicyForPath(kv.first.data());
-      XCTAssertCStringEqual(policy.value_or(MakeBadPolicy())->name.c_str(), kv.second.data());
+      policies = watchItems.FindPolciesForPaths({kv.first.data()});
+      XCTAssertCStringEqual(policies.second[0].value_or(MakeBadPolicy())->name.c_str(),
+                            kv.second.data());
     }
   }
 }
