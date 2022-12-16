@@ -415,7 +415,7 @@ std::string WatchItems::PolicyVersion() {
 }
 
 WatchItems::VersionAndPolicies WatchItems::FindPolciesForPaths(
-  std::vector<std::string_view> paths) {
+  const std::vector<std::string> &paths) {
   absl::ReaderMutexLock lock(&lock_);
   std::vector<std::optional<std::shared_ptr<WatchItemPolicy>>> policies;
 

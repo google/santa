@@ -45,7 +45,7 @@ using santa::santad::event_providers::endpoint_security::Message;
 extern NSString *kBadCertHash;
 
 using PathTargetsPair = std::pair<std::optional<std::string>, std::optional<std::string>>;
-extern PathTargetsPair GetPathTargets(const Message &msg);
+extern void PopulatePathTargets(const Message &msg, std::vector<std::string> &targets);
 extern es_auth_result_t FileAccessPolicyDecisionToESAuthResult(FileAccessPolicyDecision decision);
 extern bool ShouldLogDecision(FileAccessPolicyDecision decision);
 extern es_auth_result_t CombinePolicyResults(es_auth_result_t result1, es_auth_result_t result2);
@@ -481,10 +481,11 @@ extern es_auth_result_t CombinePolicyResults(es_auth_result_t result1, es_auth_r
     esMsg.event_type = ES_EVENT_TYPE_AUTH_OPEN;
     esMsg.event.open.file = &testFile1;
 
-    PathTargetsPair targets = GetPathTargets(msg);
+    std::vector<std::string> targets;
+    PopulatePathTargets(msg, targets);
 
-    XCTAssertCStringEqual(targets.first.value().c_str(), testFile1.path.data);
-    XCTAssertFalse(targets.second.has_value());
+    XCTAssertEqual(targets.size(), 1);
+    XCTAssertCStringEqual(targets[0].c_str(), testFile1.path.data);
   }
 
   {
@@ -493,10 +494,12 @@ extern es_auth_result_t CombinePolicyResults(es_auth_result_t result1, es_auth_r
     esMsg.event.link.target_dir = &testDir;
     esMsg.event.link.target_filename = testTok;
 
-    PathTargetsPair targets = GetPathTargets(msg);
+    std::vector<std::string> targets;
+    PopulatePathTargets(msg, targets);
 
-    XCTAssertCStringEqual(targets.first.value().c_str(), testFile1.path.data);
-    XCTAssertCppStringEqual(targets.second.value(), dirTok);
+    XCTAssertEqual(targets.size(), 2);
+    XCTAssertCStringEqual(targets[0].c_str(), testFile1.path.data);
+    XCTAssertCppStringEqual(targets[1], dirTok);
   }
 
   {
@@ -507,10 +510,12 @@ extern es_auth_result_t CombinePolicyResults(es_auth_result_t result1, es_auth_r
       esMsg.event.rename.destination_type = ES_DESTINATION_TYPE_EXISTING_FILE;
       esMsg.event.rename.destination.existing_file = &testFile2;
 
-      PathTargetsPair targets = GetPathTargets(msg);
+      std::vector<std::string> targets;
+      PopulatePathTargets(msg, targets);
 
-      XCTAssertCStringEqual(targets.first.value().c_str(), testFile1.path.data);
-      XCTAssertCStringEqual(targets.second.value().c_str(), testFile2.path.data);
+      XCTAssertEqual(targets.size(), 2);
+      XCTAssertCStringEqual(targets[0].c_str(), testFile1.path.data);
+      XCTAssertCStringEqual(targets[1].c_str(), testFile2.path.data);
     }
 
     {
@@ -518,10 +523,12 @@ extern es_auth_result_t CombinePolicyResults(es_auth_result_t result1, es_auth_r
       esMsg.event.rename.destination.new_path.dir = &testDir;
       esMsg.event.rename.destination.new_path.filename = testTok;
 
-      PathTargetsPair targets = GetPathTargets(msg);
+      std::vector<std::string> targets;
+      PopulatePathTargets(msg, targets);
 
-      XCTAssertCStringEqual(targets.first.value().c_str(), testFile1.path.data);
-      XCTAssertCppStringEqual(targets.second.value(), dirTok);
+      XCTAssertEqual(targets.size(), 2);
+      XCTAssertCStringEqual(targets[0].c_str(), testFile1.path.data);
+      XCTAssertCppStringEqual(targets[1], dirTok);
     }
   }
 
@@ -529,10 +536,11 @@ extern es_auth_result_t CombinePolicyResults(es_auth_result_t result1, es_auth_r
     esMsg.event_type = ES_EVENT_TYPE_AUTH_UNLINK;
     esMsg.event.unlink.target = &testFile1;
 
-    PathTargetsPair targets = GetPathTargets(msg);
+    std::vector<std::string> targets;
+    PopulatePathTargets(msg, targets);
 
-    XCTAssertCStringEqual(targets.first.value().c_str(), testFile1.path.data);
-    XCTAssertFalse(targets.second.has_value());
+    XCTAssertEqual(targets.size(), 1);
+    XCTAssertCStringEqual(targets[0].c_str(), testFile1.path.data);
   }
 
   {
@@ -541,10 +549,12 @@ extern es_auth_result_t CombinePolicyResults(es_auth_result_t result1, es_auth_r
     esMsg.event.clone.target_dir = &testDir;
     esMsg.event.clone.target_name = testTok;
 
-    PathTargetsPair targets = GetPathTargets(msg);
+    std::vector<std::string> targets;
+    PopulatePathTargets(msg, targets);
 
-    XCTAssertCStringEqual(targets.first.value().c_str(), testFile1.path.data);
-    XCTAssertCppStringEqual(targets.second.value(), dirTok);
+    XCTAssertEqual(targets.size(), 2);
+    XCTAssertCStringEqual(targets[0].c_str(), testFile1.path.data);
+    XCTAssertCppStringEqual(targets[1], dirTok);
   }
 
   {
@@ -552,10 +562,12 @@ extern es_auth_result_t CombinePolicyResults(es_auth_result_t result1, es_auth_r
     esMsg.event.exchangedata.file1 = &testFile1;
     esMsg.event.exchangedata.file2 = &testFile2;
 
-    PathTargetsPair targets = GetPathTargets(msg);
+    std::vector<std::string> targets;
+    PopulatePathTargets(msg, targets);
 
-    XCTAssertCStringEqual(targets.first.value().c_str(), testFile1.path.data);
-    XCTAssertCStringEqual(targets.second.value().c_str(), testFile2.path.data);
+    XCTAssertEqual(targets.size(), 2);
+    XCTAssertCStringEqual(targets[0].c_str(), testFile1.path.data);
+    XCTAssertCStringEqual(targets[1].c_str(), testFile2.path.data);
   }
 
   if (@available(macOS 12.0, *)) {
@@ -568,19 +580,23 @@ extern es_auth_result_t CombinePolicyResults(es_auth_result_t result1, es_auth_r
       {
         esMsg.event.copyfile.target_file = nullptr;
 
-        PathTargetsPair targets = GetPathTargets(msg);
+        std::vector<std::string> targets;
+        PopulatePathTargets(msg, targets);
 
-        XCTAssertCStringEqual(targets.first.value().c_str(), testFile1.path.data);
-        XCTAssertCppStringEqual(targets.second.value(), dirTok);
+        XCTAssertEqual(targets.size(), 2);
+        XCTAssertCStringEqual(targets[0].c_str(), testFile1.path.data);
+        XCTAssertCppStringEqual(targets[1], dirTok);
       }
 
       {
         esMsg.event.copyfile.target_file = &testFile2;
 
-        PathTargetsPair targets = GetPathTargets(msg);
+        std::vector<std::string> targets;
+        PopulatePathTargets(msg, targets);
 
-        XCTAssertCStringEqual(targets.first.value().c_str(), testFile1.path.data);
-        XCTAssertCStringEqual(targets.second.value().c_str(), testFile2.path.data);
+        XCTAssertEqual(targets.size(), 2);
+        XCTAssertCStringEqual(targets[0].c_str(), testFile1.path.data);
+        XCTAssertCStringEqual(targets[1].c_str(), testFile2.path.data);
       }
     }
   }
