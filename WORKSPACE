@@ -145,11 +145,11 @@ objc_library(
 
 # Fuzzing
 
-http_archive(
+git_repository(
     name = "rules_fuzzing",
-    sha256 = "23bb074064c6f488d12044934ab1b0631e8e6898d5cf2f6bde087adb01111573",
-    strip_prefix = "rules_fuzzing-0.3.1",
-    urls = ["https://github.com/bazelbuild/rules_fuzzing/archive/v0.3.1.zip"],
+    commit = "b193df79b10dbfb4c623bda23e825e835f12bada",  # PR 213 which fixes macOS
+    remote = "https://github.com/bazelbuild/rules_fuzzing",
+    shallow_since = "1668184479 -0500",
 )
 
 load("@rules_fuzzing//fuzzing:repositories.bzl", "rules_fuzzing_dependencies")
