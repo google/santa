@@ -17,9 +17,11 @@
 
 #include <memory>
 #include <string>
+#include <vector>
 
 #import <Foundation/Foundation.h>
 
+#include "Source/santad/DataLayer/WatchItemPolicy.h"
 #include "Source/santad/EventProviders/EndpointSecurity/EndpointSecurityAPI.h"
 #include "Source/santad/EventProviders/EndpointSecurity/EnrichedTypes.h"
 #include "Source/santad/EventProviders/EndpointSecurity/Message.h"
@@ -47,6 +49,12 @@
 - (bool)subscribeAndClearCache:(const std::set<es_event_type_t> &)events;
 
 - (bool)unsubscribeAll;
+- (bool)unmuteEverything;
+- (bool)enableTargetPathWatching;
+- (bool)muteTargetPaths:
+  (const std::vector<std::pair<std::string, santa::santad::data_layer::WatchItemPathType>> &)paths;
+- (bool)unmuteTargetPaths:
+  (const std::vector<std::pair<std::string, santa::santad::data_layer::WatchItemPathType>> &)paths;
 
 /// Responds to the Message with the given auth result
 ///

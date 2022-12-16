@@ -40,6 +40,9 @@ class MockEndpointSecurityAPI
                const std::set<es_event_type_t> &));
   MOCK_METHOD(bool, UnsubscribeAll, (const Client &client));
 
+  MOCK_METHOD(bool, UnmuteAllPaths, (const Client &client));
+  MOCK_METHOD(bool, UnmuteAllTargetPaths, (const Client &client));
+
   MOCK_METHOD(void, RetainMessage, (const es_message_t *msg));
   MOCK_METHOD(void, ReleaseMessage, (const es_message_t *msg));
 

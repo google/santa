@@ -40,6 +40,7 @@
 #include "Source/santad/EventProviders/EndpointSecurity/Message.h"
 
 using santa::santad::EventDisposition;
+using santa::santad::data_layer::WatchItemPathType;
 using santa::santad::data_layer::WatchItemPolicy;
 using santa::santad::data_layer::WatchItems;
 using santa::santad::event_providers::endpoint_security::EndpointSecurityAPI;
@@ -185,6 +186,9 @@ void PopulatePathTargets(const Message &msg, std::vector<std::string> &targets) 
     _decisionCache = decisionCache;
 
     [self establishClientOrDie];
+
+    [super enableTargetPathWatching];
+    [super unmuteEverything];
   }
   return self;
 }
@@ -407,6 +411,25 @@ void PopulatePathTargets(const Message &msg, std::vector<std::string> &targets) 
 
 - (void)disable {
   [super unsubscribeAll];
+  [super unmuteEverything];
+}
+
+- (void)watchItemsCount:(size_t)count
+               newPaths:(const std::vector<std::pair<std::string, WatchItemPathType>> &)newPaths
+           removedPaths:
+             (const std::vector<std::pair<std::string, WatchItemPathType>> &)removedPaths {
+  if (count == 0) {
+    [self disable];
+  } else {
+    // Stop watching removed paths
+    [super unmuteTargetPaths:removedPaths];
+
+    // Begin watching the added paths
+    [super muteTargetPaths:newPaths];
+
+    // begin receiving events (if not already)
+    [self enable];
+  }
 }
 
 @end

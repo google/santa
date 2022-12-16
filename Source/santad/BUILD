@@ -92,6 +92,7 @@ objc_library(
     deps = [
         ":EndpointSecurityMessage",
         ":Metrics",
+        ":WatchItemPolicy",
     ],
 )
 
@@ -238,6 +239,7 @@ objc_library(
         ":EndpointSecurityEnrichedTypes",
         ":EndpointSecurityMessage",
         ":Metrics",
+        ":WatchItemPolicy",
     ],
 )
 

@@ -51,6 +51,57 @@ bool EndpointSecurityAPI::UnsubscribeAll(const Client &client) {
   return es_unsubscribe_all(client.Get()) == ES_RETURN_SUCCESS;
 }
 
+bool EndpointSecurityAPI::UnmuteAllPaths(const Client &client) {
+  return es_unmute_all_paths(client.Get()) == ES_RETURN_SUCCESS;
+}
+
+bool EndpointSecurityAPI::UnmuteAllTargetPaths(const Client &client) {
+  if (@available(macOS 13.0, *)) {
+    return es_unmute_all_target_paths(client.Get()) == ES_RETURN_SUCCESS;
+  } else {
+    return true;
+  }
+}
+
+bool EndpointSecurityAPI::IsTargetPathMutingInverted(const Client &client) {
+  if (@available(macOS 13.0, *)) {
+    return es_muting_inverted(client.Get(), ES_MUTE_INVERSION_TYPE_TARGET_PATH) == ES_MUTE_INVERTED;
+  } else {
+    return false;
+  }
+}
+
+bool EndpointSecurityAPI::InvertTargetPathMuting(const Client &client) {
+  if (@available(macOS 13.0, *)) {
+    if (!IsTargetPathMutingInverted(client)) {
+      return es_invert_muting(client.Get(), ES_MUTE_INVERSION_TYPE_TARGET_PATH) ==
+             ES_RETURN_SUCCESS;
+    } else {
+      return true;
+    }
+  } else {
+    return false;
+  }
+}
+
+bool EndpointSecurityAPI::MuteTargetPath(const Client &client, std::string_view path,
+                                         es_mute_path_type_t path_type) {
+  if (@available(macOS 13.0, *)) {
+    return es_mute_path(client.Get(), path.data(), path_type) == ES_RETURN_SUCCESS;
+  } else {
+    return false;
+  }
+}
+
+bool EndpointSecurityAPI::UnmuteTargetPath(const Client &client, std::string_view path,
+                                           es_mute_path_type_t path_type) {
+  if (@available(macOS 13.0, *)) {
+    return es_unmute_path(client.Get(), path.data(), path_type) == ES_RETURN_SUCCESS;
+  } else {
+    return true;
+  }
+}
+
 bool EndpointSecurityAPI::RespondAuthResult(const Client &client, const Message &msg,
                                             es_auth_result_t result, bool cache) {
   return es_respond_auth_result(client.Get(), &(*msg), result, cache) == ES_RESPOND_RESULT_SUCCESS;
