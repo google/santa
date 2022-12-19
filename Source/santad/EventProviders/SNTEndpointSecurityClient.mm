@@ -192,7 +192,7 @@ using santa::santad::event_providers::endpoint_security::Message;
 }
 
 - (bool)enableTargetPathWatching {
-  return true;
+  return _esApi->InvertTargetPathMuting(_esClient);
 }
 
 - (bool)muteTargetPaths:(const std::vector<std::pair<std::string, WatchItemPathType>> &)paths {

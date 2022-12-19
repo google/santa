@@ -351,7 +351,7 @@ void PopulatePathTargets(const Message &msg, std::vector<std::string> &targets) 
                           handler:^(Message &&esMsg) {
                             self->_logger->LogFileAccess(
                               policyVersionCopy, policyNameCopy, esMsg,
-                              self->_enricher->Enrich(*msg->process, EnrichOptions::kLocalOnly),
+                              self->_enricher->Enrich(*esMsg->process, EnrichOptions::kLocalOnly),
                               targetCopy, policyDecision);
                           }];
 
