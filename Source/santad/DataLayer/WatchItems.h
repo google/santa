@@ -49,6 +49,8 @@ namespace santa::santad::data_layer {
 
 class WatchItems : public std::enable_shared_from_this<WatchItems> {
  public:
+  using VersionAndPolicies =
+    std::pair<std::string, std::vector<std::optional<std::shared_ptr<WatchItemPolicy>>>>;
   using WatchItemsTree = santa::common::PrefixTree<std::shared_ptr<WatchItemPolicy>>;
 
   // Factory
@@ -64,7 +66,7 @@ class WatchItems : public std::enable_shared_from_this<WatchItems> {
   void RegisterClient(id<SNTEndpointSecurityDynamicEventHandler> client);
 
   void SetConfigPath(NSString *config_path);
-  std::optional<std::shared_ptr<WatchItemPolicy>> FindPolicyForPath(const char *input);
+  VersionAndPolicies FindPolciesForPaths(const std::vector<std::string> &paths);
   std::string PolicyVersion();
 
   friend class santa::santad::data_layer::WatchItemsPeer;
