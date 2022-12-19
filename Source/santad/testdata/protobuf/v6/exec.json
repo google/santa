@@ -186,7 +186,7 @@
    "pipe_id": "123"
   }
  ],
- "fd_list_truncated": true,
+ "fd_list_truncated": false,
  "decision": "DECISION_ALLOW",
  "reason": "REASON_BINARY",
  "mode": "MODE_LOCKDOWN",

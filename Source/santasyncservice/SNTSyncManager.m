@@ -65,8 +65,10 @@ static void reachabilityHandler(SCNetworkReachabilityRef target, SCNetworkReacha
     SNTSyncManager *commandSyncManager = (__bridge SNTSyncManager *)info;
     // Only call the setter when there is a change. This will filter out the redundant calls to this
     // callback whenever the network interface states change.
-    if (commandSyncManager.reachable != (flags & kSCNetworkReachabilityFlagsReachable)) {
-      commandSyncManager.reachable = (flags & kSCNetworkReachabilityFlagsReachable);
+    int reachable =
+      (flags & kSCNetworkReachabilityFlagsReachable) == kSCNetworkReachabilityFlagsReachable;
+    if (commandSyncManager.reachable != reachable) {
+      commandSyncManager.reachable = reachable;
     }
   });
 }
