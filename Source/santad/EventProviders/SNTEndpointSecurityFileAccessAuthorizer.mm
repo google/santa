@@ -156,7 +156,7 @@ void PopulatePathTargets(const Message &msg, std::vector<std::string> &targets) 
 
 @interface SNTEndpointSecurityFileAccessAuthorizer ()
 @property SNTDecisionCache *decisionCache;
-@property BOOL isSubscribed;
+@property bool isSubscribed;
 @end
 
 @implementation SNTEndpointSecurityFileAccessAuthorizer {
@@ -406,12 +406,19 @@ void PopulatePathTargets(const Message &msg, std::vector<std::string> &targets) 
   // ES_EVENT_TYPE_AUTH_CLONE
   // ES_EVENT_TYPE_AUTH_EXCHANGEDATA
   // ES_EVENT_TYPE_AUTH_COPYFILE
-  [super subscribeAndClearCache:{ES_EVENT_TYPE_AUTH_OPEN}];
+  if (!self.isSubscribed) {
+    self.isSubscribed = [super subscribe:{ES_EVENT_TYPE_AUTH_OPEN}];
+    [super clearCache];
+  }
 }
 
 - (void)disable {
-  [super unsubscribeAll];
-  [super unmuteEverything];
+  if (self.isSubscribed) {
+    if ([super unsubscribeAll]) {
+      self.isSubscribed = false;
+    }
+    [super unmuteEverything];
+  }
 }
 
 - (void)watchItemsCount:(size_t)count
