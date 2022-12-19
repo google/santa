@@ -414,13 +414,16 @@ std::string WatchItems::PolicyVersion() {
   return policy_version_;
 }
 
-std::optional<std::shared_ptr<WatchItemPolicy>> WatchItems::FindPolicyForPath(const char *input) {
-  if (!input) {
-    return std::nullopt;
+WatchItems::VersionAndPolicies WatchItems::FindPolciesForPaths(
+  const std::vector<std::string> &paths) {
+  absl::ReaderMutexLock lock(&lock_);
+  std::vector<std::optional<std::shared_ptr<WatchItemPolicy>>> policies;
+
+  for (const auto &path : paths) {
+    policies.push_back(watch_items_->LookupLongestMatchingPrefix(path.data()));
   }
 
-  absl::ReaderMutexLock lock(&lock_);
-  return watch_items_->LookupLongestMatchingPrefix(input);
+  return {policy_version_, policies};
 }
 
 void WatchItems::SetConfigPath(NSString *config_path) {
