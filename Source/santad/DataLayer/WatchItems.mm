@@ -348,7 +348,6 @@ void WatchItems::UpdateCurrentState(
       policy_version_ = "";
     }
 
-    // bool anyPathsMonitored = currently_monitored_paths_.size() > 0;
     for (const id<SNTEndpointSecurityDynamicEventHandler> &client : registerd_clients_) {
       // Note: Enable clients on an async queue in case they perform any
       // synchronous work that could trigger ES events. Otherwise they might

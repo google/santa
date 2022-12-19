@@ -188,7 +188,9 @@ using santa::santad::event_providers::endpoint_security::Message;
 }
 
 - (bool)unmuteEverything {
-  return _esApi->UnmuteAllPaths(_esClient) && _esApi->UnmuteAllTargetPaths(_esClient);
+  bool result = _esApi->UnmuteAllPaths(_esClient);
+  result = _esApi->UnmuteAllTargetPaths(_esClient) && result;
+  return result;
 }
 
 - (bool)enableTargetPathWatching {

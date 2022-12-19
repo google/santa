@@ -1084,6 +1084,7 @@ santa_unit_test(
         ":Metrics",
         ":MockEndpointSecurityAPI",
         ":SNTEndpointSecurityClient",
+        ":WatchItemPolicy",
         "//Source/common:TestUtils",
         "@OCMock",
         "@com_google_googletest//:gtest",
