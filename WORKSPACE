@@ -70,9 +70,9 @@ protobuf_deps()
 
 git_repository(
     name = "MOLAuthenticatingURLSession",
-    commit = "7ef7af5c732eb8b9375af29a65262be5d97ad391",  # tag = v3.0
+    commit = "38b5ee46edb262481b16f950266a11d8cb77127c",  # tag = v3.1
     remote = "https://github.com/google/macops-molauthenticatingurlsession.git",
-    shallow_since = "1620062009 -0400",
+    shallow_since = "1671479898 -0500",
 )
 
 git_repository(
