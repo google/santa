@@ -23,6 +23,7 @@ objc_library(
     hdrs = ["DataLayer/SNTRuleTable.h"],
     deps = [
         ":SNTDatabaseTable",
+        "//Source/common:Platform",
         "//Source/common:SNTCachedDecision",
         "//Source/common:SNTCommonEnums",
         "//Source/common:SNTConfigurator",
@@ -570,6 +571,7 @@ objc_library(
     deps = [
         ":EndpointSecurityClient",
         ":EndpointSecurityMessage",
+        "//Source/common:Platform",
     ],
 )
 
@@ -788,6 +790,7 @@ santa_unit_test(
         "EndpointSecurity",
     ],
     deps = [
+        "//Source/common:Platform",
         "//Source/common:SNTCachedDecision",
         "//Source/common:SNTCommonEnums",
         "//Source/common:SNTConfigurator",
