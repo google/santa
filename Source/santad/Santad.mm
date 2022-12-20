@@ -321,8 +321,11 @@ void SantadMain(std::shared_ptr<EndpointSecurityAPI> esapi, std::shared_ptr<Logg
   // execution policy appropriately.
   [authorizer_client enable];
   [tamper_client enable];
-  // Start monitoring any watched items
-  watch_items->BeginPeriodicTask();
+  if (@available(macOS 13.0, *)) {
+    // Start monitoring any watched items
+    // Note: This feature is only enabled on macOS 13.0+
+    watch_items->BeginPeriodicTask();
+  }
   [monitor_client enable];
   [device_client enable];
 
