@@ -325,7 +325,7 @@ using santa::santad::event_providers::endpoint_security::Message;
     {"c", WatchItemPathType::kPrefix},
   };
 
-  [client muteTargetPaths:paths];
+  XCTAssertFalse([client muteTargetPaths:paths]);
 
   XCTBubbleMockVerifyAndClearExpectations(mockESApi.get());
 }
@@ -352,7 +352,7 @@ using santa::santad::event_providers::endpoint_security::Message;
     {"c", WatchItemPathType::kPrefix},
   };
 
-  [client unmuteTargetPaths:paths];
+  XCTAssertFalse([client unmuteTargetPaths:paths]);
 
   XCTBubbleMockVerifyAndClearExpectations(mockESApi.get());
 }
