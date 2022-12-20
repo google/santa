@@ -50,6 +50,13 @@ extern es_auth_result_t FileAccessPolicyDecisionToESAuthResult(FileAccessPolicyD
 extern bool ShouldLogDecision(FileAccessPolicyDecision decision);
 extern es_auth_result_t CombinePolicyResults(es_auth_result_t result1, es_auth_result_t result2);
 
+void SetExpectationsForFileAccessAuthorizerInit(
+  std::shared_ptr<MockEndpointSecurityAPI> mockESApi) {
+  EXPECT_CALL(*mockESApi, InvertTargetPathMuting).WillOnce(testing::Return(true));
+  EXPECT_CALL(*mockESApi, UnmuteAllPaths).WillOnce(testing::Return(true));
+  EXPECT_CALL(*mockESApi, UnmuteAllTargetPaths).WillOnce(testing::Return(true));
+}
+
 @interface SNTEndpointSecurityFileAccessAuthorizer (Testing)
 - (NSString *)getCertificateHash:(es_file_t *)esFile;
 - (FileAccessPolicyDecision)specialCaseForPolicy:(std::shared_ptr<WatchItemPolicy>)policy
@@ -57,6 +64,8 @@ extern es_auth_result_t CombinePolicyResults(es_auth_result_t result1, es_auth_r
 - (FileAccessPolicyDecision)applyPolicy:
                               (std::optional<std::shared_ptr<WatchItemPolicy>>)optionalPolicy
                               toMessage:(const Message &)msg;
+
+@property bool isSubscribed;
 @end
 
 @interface SNTEndpointSecurityFileAccessAuthorizerTest : XCTestCase
@@ -98,6 +107,7 @@ extern es_auth_result_t CombinePolicyResults(es_auth_result_t result1, es_auth_r
 
   auto mockESApi = std::make_shared<MockEndpointSecurityAPI>();
   mockESApi->SetExpectationsESNewClient();
+  SetExpectationsForFileAccessAuthorizerInit(mockESApi);
 
   SNTEndpointSecurityFileAccessAuthorizer *accessClient =
     [[SNTEndpointSecurityFileAccessAuthorizer alloc] initWithESAPI:mockESApi
@@ -229,6 +239,7 @@ extern es_auth_result_t CombinePolicyResults(es_auth_result_t result1, es_auth_r
   auto mockESApi = std::make_shared<MockEndpointSecurityAPI>();
   mockESApi->SetExpectationsESNewClient();
   mockESApi->SetExpectationsRetainReleaseMessage();
+  SetExpectationsForFileAccessAuthorizerInit(mockESApi);
 
   SNTEndpointSecurityFileAccessAuthorizer *accessClient =
     [[SNTEndpointSecurityFileAccessAuthorizer alloc] initWithESAPI:mockESApi
@@ -309,6 +320,7 @@ extern es_auth_result_t CombinePolicyResults(es_auth_result_t result1, es_auth_r
   auto mockESApi = std::make_shared<MockEndpointSecurityAPI>();
   mockESApi->SetExpectationsESNewClient();
   mockESApi->SetExpectationsRetainReleaseMessage();
+  SetExpectationsForFileAccessAuthorizerInit(mockESApi);
 
   SNTEndpointSecurityFileAccessAuthorizer *accessClient =
     [[SNTEndpointSecurityFileAccessAuthorizer alloc] initWithESAPI:mockESApi
@@ -445,6 +457,7 @@ extern es_auth_result_t CombinePolicyResults(es_auth_result_t result1, es_auth_r
 - (void)testDisable {
   auto mockESApi = std::make_shared<MockEndpointSecurityAPI>();
   mockESApi->SetExpectationsESNewClient();
+  SetExpectationsForFileAccessAuthorizerInit(mockESApi);
 
   SNTEndpointSecurityFileAccessAuthorizer *accessClient =
     [[SNTEndpointSecurityFileAccessAuthorizer alloc] initWithESAPI:mockESApi
@@ -455,7 +468,10 @@ extern es_auth_result_t CombinePolicyResults(es_auth_result_t result1, es_auth_r
                                                      decisionCache:nil];
 
   EXPECT_CALL(*mockESApi, UnsubscribeAll);
+  EXPECT_CALL(*mockESApi, UnmuteAllPaths).WillOnce(testing::Return(true));
+  EXPECT_CALL(*mockESApi, UnmuteAllTargetPaths).WillOnce(testing::Return(true));
 
+  accessClient.isSubscribed = true;
   [accessClient disable];
 
   XCTBubbleMockVerifyAndClearExpectations(mockESApi.get());

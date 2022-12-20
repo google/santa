@@ -556,6 +556,7 @@ objc_library(
     hdrs = ["EventProviders/EndpointSecurity/Message.h"],
     deps = [
         ":EndpointSecurityClient",
+        ":WatchItemPolicy",
     ],
 )
 
@@ -571,6 +572,7 @@ objc_library(
     deps = [
         ":EndpointSecurityClient",
         ":EndpointSecurityMessage",
+        ":WatchItemPolicy",
         "//Source/common:Platform",
     ],
 )
@@ -743,6 +745,7 @@ objc_library(
         ":EndpointSecurityAPI",
         ":EndpointSecurityClient",
         ":EndpointSecurityMessage",
+        ":WatchItemPolicy",
         "@com_google_googletest//:gtest",
     ],
 )

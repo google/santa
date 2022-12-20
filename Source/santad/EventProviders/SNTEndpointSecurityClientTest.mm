@@ -312,11 +312,11 @@ using santa::santad::event_providers::endpoint_security::Message;
 
   // Ensure all paths are attempted to be muted even if some fail.
   // Ensure if any paths fail the overall result is false.
-  EXPECT_CALL(*mockESApi, MuteTargetPath(testing::_, "a", ES_MUTE_PATH_TYPE_TARGET_LITERAL))
+  EXPECT_CALL(*mockESApi, MuteTargetPath(testing::_, "a", WatchItemPathType::kLiteral))
     .WillOnce(testing::Return(true));
-  EXPECT_CALL(*mockESApi, MuteTargetPath(testing::_, "b", ES_MUTE_PATH_TYPE_TARGET_LITERAL))
+  EXPECT_CALL(*mockESApi, MuteTargetPath(testing::_, "b", WatchItemPathType::kLiteral))
     .WillOnce(testing::Return(false));
-  EXPECT_CALL(*mockESApi, MuteTargetPath(testing::_, "c", ES_MUTE_PATH_TYPE_TARGET_PREFIX))
+  EXPECT_CALL(*mockESApi, MuteTargetPath(testing::_, "c", WatchItemPathType::kPrefix))
     .WillOnce(testing::Return(true));
 
   std::vector<std::pair<std::string, WatchItemPathType>> paths = {
@@ -339,11 +339,11 @@ using santa::santad::event_providers::endpoint_security::Message;
 
   // Ensure all paths are attempted to be unmuted even if some fail.
   // Ensure if any paths fail the overall result is false.
-  EXPECT_CALL(*mockESApi, UnmuteTargetPath(testing::_, "a", ES_MUTE_PATH_TYPE_TARGET_LITERAL))
+  EXPECT_CALL(*mockESApi, UnmuteTargetPath(testing::_, "a", WatchItemPathType::kLiteral))
     .WillOnce(testing::Return(true));
-  EXPECT_CALL(*mockESApi, UnmuteTargetPath(testing::_, "b", ES_MUTE_PATH_TYPE_TARGET_LITERAL))
+  EXPECT_CALL(*mockESApi, UnmuteTargetPath(testing::_, "b", WatchItemPathType::kLiteral))
     .WillOnce(testing::Return(false));
-  EXPECT_CALL(*mockESApi, UnmuteTargetPath(testing::_, "c", ES_MUTE_PATH_TYPE_TARGET_PREFIX))
+  EXPECT_CALL(*mockESApi, UnmuteTargetPath(testing::_, "c", WatchItemPathType::kPrefix))
     .WillOnce(testing::Return(true));
 
   std::vector<std::pair<std::string, WatchItemPathType>> paths = {

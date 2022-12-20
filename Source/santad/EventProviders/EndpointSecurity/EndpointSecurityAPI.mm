@@ -19,6 +19,8 @@
 
 #include "Source/common/Platform.h"
 
+using santa::santad::data_layer::WatchItemPathType;
+
 namespace santa::santad::event_providers::endpoint_security {
 
 Client EndpointSecurityAPI::NewClient(void (^message_handler)(es_client_t *, Message)) {
@@ -92,10 +94,13 @@ bool EndpointSecurityAPI::InvertTargetPathMuting(const Client &client) {
 }
 
 bool EndpointSecurityAPI::MuteTargetPath(const Client &client, std::string_view path,
-                                         es_mute_path_type_t path_type) {
+                                         WatchItemPathType path_type) {
 #if HAVE_MACOS_13
   if (@available(macOS 13.0, *)) {
-    return es_mute_path(client.Get(), path.data(), path_type) == ES_RETURN_SUCCESS;
+    return es_mute_path(client.Get(), path.data(),
+                        path_type == WatchItemPathType::kPrefix
+                          ? ES_MUTE_PATH_TYPE_TARGET_PREFIX
+                          : ES_MUTE_PATH_TYPE_TARGET_LITERAL) == ES_RETURN_SUCCESS;
   }
 #endif
 
@@ -103,10 +108,13 @@ bool EndpointSecurityAPI::MuteTargetPath(const Client &client, std::string_view 
 }
 
 bool EndpointSecurityAPI::UnmuteTargetPath(const Client &client, std::string_view path,
-                                           es_mute_path_type_t path_type) {
+                                           WatchItemPathType path_type) {
 #if HAVE_MACOS_13
   if (@available(macOS 13.0, *)) {
-    return es_unmute_path(client.Get(), path.data(), path_type) == ES_RETURN_SUCCESS;
+    return es_unmute_path(client.Get(), path.data(),
+                          path_type == WatchItemPathType::kPrefix
+                            ? ES_MUTE_PATH_TYPE_TARGET_PREFIX
+                            : ES_MUTE_PATH_TYPE_TARGET_LITERAL) == ES_RETURN_SUCCESS;
   }
 #endif
 

@@ -21,6 +21,7 @@
 #include <set>
 #include <string_view>
 
+#include "Source/santad/DataLayer/WatchItemPolicy.h"
 #include "Source/santad/EventProviders/EndpointSecurity/Client.h"
 #include "Source/santad/EventProviders/EndpointSecurity/Message.h"
 
@@ -42,9 +43,9 @@ class EndpointSecurityAPI : public std::enable_shared_from_this<EndpointSecurity
   virtual bool InvertTargetPathMuting(const Client &client);
 
   virtual bool MuteTargetPath(const Client &client, std::string_view path,
-                              es_mute_path_type_t path_type);
+                              santa::santad::data_layer::WatchItemPathType path_type);
   virtual bool UnmuteTargetPath(const Client &client, std::string_view path,
-                                es_mute_path_type_t path_type);
+                                santa::santad::data_layer::WatchItemPathType path_type);
 
   virtual void RetainMessage(const es_message_t *msg);
   virtual void ReleaseMessage(const es_message_t *msg);

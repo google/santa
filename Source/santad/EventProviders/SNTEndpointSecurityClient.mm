@@ -200,11 +200,8 @@ using santa::santad::event_providers::endpoint_security::Message;
 - (bool)muteTargetPaths:(const std::vector<std::pair<std::string, WatchItemPathType>> &)paths {
   bool result = true;
   for (const auto &pathAndTypePair : paths) {
-    result = _esApi->MuteTargetPath(_esClient, pathAndTypePair.first,
-                                    pathAndTypePair.second == WatchItemPathType::kPrefix
-                                      ? ES_MUTE_PATH_TYPE_TARGET_PREFIX
-                                      : ES_MUTE_PATH_TYPE_TARGET_LITERAL) &&
-             result;
+    result =
+      _esApi->MuteTargetPath(_esClient, pathAndTypePair.first, pathAndTypePair.second) && result;
   }
   return result;
 }
@@ -212,11 +209,8 @@ using santa::santad::event_providers::endpoint_security::Message;
 - (bool)unmuteTargetPaths:(const std::vector<std::pair<std::string, WatchItemPathType>> &)paths {
   bool result = true;
   for (const auto &pathAndTypePair : paths) {
-    result = _esApi->UnmuteTargetPath(_esClient, pathAndTypePair.first,
-                                      pathAndTypePair.second == WatchItemPathType::kPrefix
-                                        ? ES_MUTE_PATH_TYPE_TARGET_PREFIX
-                                        : ES_MUTE_PATH_TYPE_TARGET_LITERAL) &&
-             result;
+    result =
+      _esApi->UnmuteTargetPath(_esClient, pathAndTypePair.first, pathAndTypePair.second) && result;
   }
   return result;
 }
