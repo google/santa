@@ -38,7 +38,7 @@
     XCTAssertEqualObjects(sut.path, @"/System/Volumes/Preboot/Cryptexes/App/System/Applications/"
                                     @"Safari.app/Contents/MacOS/Safari");
   } else {
-    XCTAssertEqualObjects(sut.path, @"/System/Safari.app/Contents/MacOS/Safari");
+    XCTAssertEqualObjects(sut.path, @"/Applications/Safari.app/Contents/MacOS/Safari");
   }
 
   sut = [[SNTFileInfo alloc] initWithPath:@"../../../../../../../../../../../../../../../bin/ls"];
