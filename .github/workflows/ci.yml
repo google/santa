@@ -54,3 +54,21 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           path-to-lcov: ./bazel-out/_coverage/_coverage_report.dat
           flag-name: Unit
+
+
+  fuzz:
+    runs-on: self-hosted
+    steps:
+      - uses: actions/checkout@v2
+      - name: Setup libfuzzer
+        run: Fuzzing/install_libclang_fuzzer.sh
+      - name: Cleanup any existing fuzz runs
+        run: rm -rf /tmp/fuzzing
+      - name: Fuzz Mach-O Parsing
+        run: bazel run --config=fuzz //Fuzzing:MachOParse_run -- -- -max_len=32768 -runs=1000000
+      - name: Upload crashes
+        uses: actions/upload-artifact@v1
+        if: failure()
+        with:
+          name: artifacts
+          path: /tmp/fuzzing/artifacts
