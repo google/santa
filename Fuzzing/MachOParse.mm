@@ -4,7 +4,7 @@
 
 #import "Source/common/SNTFileInfo.h"
 
-void FuzzOne(const uint8_t *data, size_t size) {
+extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size) {
   @autoreleasepool {
     NSString *tmpPath = [NSTemporaryDirectory() stringByAppendingPathComponent:[[NSUUID UUID] UUIDString]];
     assert([[NSFileManager defaultManager] createFileAtPath:tmpPath contents:[NSData dataWithBytes:data length:size] attributes:nil]);
@@ -13,12 +13,8 @@ void FuzzOne(const uint8_t *data, size_t size) {
     if (!fi || error != nil) {
       NSLog(@"Error: %@", error);
       [[NSFileManager defaultManager] removeItemAtPath:tmpPath error:nil];
-      return;
+      return -1;
     }
-
-    // Hashing
-    [fi SHA1];
-    [fi SHA256];
 
     // Mach-O Parsing
     [fi architectures];  // forces machHeaders evaluation
@@ -26,4 +22,6 @@ void FuzzOne(const uint8_t *data, size_t size) {
 
     [[NSFileManager defaultManager] removeItemAtPath:tmpPath error:nil];
   }
+
+  return 0;
 }
