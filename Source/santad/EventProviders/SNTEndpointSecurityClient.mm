@@ -25,6 +25,7 @@
 #import "Source/common/SNTConfigurator.h"
 #import "Source/common/SNTLogging.h"
 #include "Source/common/SystemResources.h"
+#include "Source/santad/DataLayer/WatchItemPolicy.h"
 #include "Source/santad/EventProviders/EndpointSecurity/Client.h"
 #include "Source/santad/EventProviders/EndpointSecurity/EnrichedTypes.h"
 #include "Source/santad/EventProviders/EndpointSecurity/Message.h"
@@ -33,6 +34,7 @@
 using santa::santad::EventDisposition;
 using santa::santad::Metrics;
 using santa::santad::Processor;
+using santa::santad::data_layer::WatchItemPathType;
 using santa::santad::event_providers::endpoint_security::Client;
 using santa::santad::event_providers::endpoint_security::EndpointSecurityAPI;
 using santa::santad::event_providers::endpoint_security::EnrichedMessage;
@@ -181,6 +183,38 @@ using santa::santad::event_providers::endpoint_security::Message;
   return [self subscribe:events] && [self clearCache];
 }
 
+- (bool)unsubscribeAll {
+  return _esApi->UnsubscribeAll(_esClient);
+}
+
+- (bool)unmuteEverything {
+  bool result = _esApi->UnmuteAllPaths(_esClient);
+  result = _esApi->UnmuteAllTargetPaths(_esClient) && result;
+  return result;
+}
+
+- (bool)enableTargetPathWatching {
+  return _esApi->InvertTargetPathMuting(_esClient);
+}
+
+- (bool)muteTargetPaths:(const std::vector<std::pair<std::string, WatchItemPathType>> &)paths {
+  bool result = true;
+  for (const auto &pathAndTypePair : paths) {
+    result =
+      _esApi->MuteTargetPath(_esClient, pathAndTypePair.first, pathAndTypePair.second) && result;
+  }
+  return result;
+}
+
+- (bool)unmuteTargetPaths:(const std::vector<std::pair<std::string, WatchItemPathType>> &)paths {
+  bool result = true;
+  for (const auto &pathAndTypePair : paths) {
+    result =
+      _esApi->UnmuteTargetPath(_esClient, pathAndTypePair.first, pathAndTypePair.second) && result;
+  }
+  return result;
+}
+
 - (bool)respondToMessage:(const Message &)msg
           withAuthResult:(es_auth_result_t)result
                cacheable:(bool)cacheable {
@@ -200,6 +234,13 @@ using santa::santad::event_providers::endpoint_security::Message;
                        handler:(void (^)(std::shared_ptr<EnrichedMessage>))messageHandler {
   dispatch_async(_notifyQueue, ^{
     messageHandler(std::move(msg));
+  });
+}
+
+- (void)asynchronouslyProcess:(Message)msg handler:(void (^)(Message &&))messageHandler {
+  __block Message msgTmp = std::move(msg);
+  dispatch_async(_notifyQueue, ^{
+    messageHandler(std::move(msgTmp));
   });
 }
 
@@ -247,7 +288,7 @@ using santa::santad::event_providers::endpoint_security::Message;
     });
 
   dispatch_async(self->_authQueue, ^{
-    messageHandler(deadlineMsg);
+    messageHandler(processMsg);
     if (dispatch_semaphore_wait(processingSema, DISPATCH_TIME_NOW) != 0) {
       // Deadline expired, wait for deadline block to finish.
       dispatch_semaphore_wait(deadlineExpiredSema, DISPATCH_TIME_FOREVER);

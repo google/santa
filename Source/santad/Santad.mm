@@ -132,7 +132,9 @@ void SantadMain(std::shared_ptr<EndpointSecurityAPI> esapi, std::shared_ptr<Logg
                                                            metrics:metrics
                                                             logger:logger
                                                         watchItems:watch_items
+                                                          enricher:enricher
                                                      decisionCache:[SNTDecisionCache sharedCache]];
+  watch_items->RegisterClient(access_authorizer_client);
 
   EstablishSyncServiceConnection(syncd_queue);
 
@@ -288,6 +290,25 @@ void SantadMain(std::shared_ptr<EndpointSecurityAPI> esapi, std::shared_ptr<Logg
                                         [newValue componentsJoinedByString:@","]);
                                    device_client.remountArgs = newValue;
                                  }],
+    [[SNTKVOManager alloc]
+      initWithObject:configurator
+            selector:@selector(filesystemMonitoringPolicyPlistPath)
+                type:[NSString class]
+            callback:^(NSString *oldValue, NSString *newValue) {
+              if (oldValue != newValue || (newValue && ![oldValue isEqualToString:newValue])) {
+                LOGI(@"Filesystem monitoring policy config path changed: %@ -> %@", oldValue,
+                     newValue);
+                watch_items->SetConfigPath(newValue);
+              }
+            }],
+    [[SNTKVOManager alloc] initWithObject:configurator
+                                 selector:@selector(staticRules)
+                                     type:[NSArray class]
+                                 callback:^(NSArray *oldValue, NSArray *newValue) {
+                                   if ([oldValue isEqual:newValue]) return;
+                                   LOGI(@"StaticRules set has changed, flushing cache.");
+                                   auth_result_cache->FlushCache(FlushCacheMode::kAllCaches);
+                                 }],
   ];
 
   // Make the compiler happy. The variable is only used to ensure proper lifetime
@@ -300,8 +321,11 @@ void SantadMain(std::shared_ptr<EndpointSecurityAPI> esapi, std::shared_ptr<Logg
   // execution policy appropriately.
   [authorizer_client enable];
   [tamper_client enable];
-  // [access_authorizer_client enable];
-  (void)access_authorizer_client;  // NOTE: For now, not enabling
+  if (@available(macOS 13.0, *)) {
+    // Start monitoring any watched items
+    // Note: This feature is only enabled on macOS 13.0+
+    watch_items->BeginPeriodicTask();
+  }
   [monitor_client enable];
   [device_client enable];
 

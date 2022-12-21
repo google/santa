@@ -13,6 +13,11 @@ function main() {
     go install github.com/bazelbuild/buildtools/buildifier@latest
     ~/go/bin/buildifier --lint=warn -r $GIT_ROOT
     err="$(( $err | $? ))"
+
+    python3 -m pip install -q pylint
+    find $GIT_ROOT \( -name "*.py" \) -exec python3 -m pylint --score n --rcfile=$GIT_ROOT/.pylintrc {} \+
+    err="$(( $err | $? ))"
+
     return $err
 }
 

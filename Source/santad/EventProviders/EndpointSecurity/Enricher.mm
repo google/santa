@@ -81,26 +81,30 @@ std::shared_ptr<EnrichedMessage> Enricher::Enrich(Message &&es_msg) {
   }
 }
 
-EnrichedProcess Enricher::Enrich(const es_process_t &es_proc) {
-  return EnrichedProcess(UsernameForUID(audit_token_to_euid(es_proc.audit_token)),
-                         UsernameForGID(audit_token_to_egid(es_proc.audit_token)),
-                         UsernameForUID(audit_token_to_ruid(es_proc.audit_token)),
-                         UsernameForGID(audit_token_to_rgid(es_proc.audit_token)),
-                         Enrich(*es_proc.executable));
+EnrichedProcess Enricher::Enrich(const es_process_t &es_proc, EnrichOptions options) {
+  return EnrichedProcess(UsernameForUID(audit_token_to_euid(es_proc.audit_token), options),
+                         UsernameForGID(audit_token_to_egid(es_proc.audit_token), options),
+                         UsernameForUID(audit_token_to_ruid(es_proc.audit_token), options),
+                         UsernameForGID(audit_token_to_rgid(es_proc.audit_token), options),
+                         Enrich(*es_proc.executable, options));
 }
 
-EnrichedFile Enricher::Enrich(const es_file_t &es_file) {
+EnrichedFile Enricher::Enrich(const es_file_t &es_file, EnrichOptions options) {
   // TODO(mlw): Consider having the enricher perform file hashing. This will
   // make more sense if we start including hashes in more event types.
-  return EnrichedFile(UsernameForUID(es_file.stat.st_uid), UsernameForGID(es_file.stat.st_gid),
-                      std::nullopt);
+  return EnrichedFile(UsernameForUID(es_file.stat.st_uid, options),
+                      UsernameForGID(es_file.stat.st_gid, options), std::nullopt);
 }
 
-std::optional<std::shared_ptr<std::string>> Enricher::UsernameForUID(uid_t uid) {
+std::optional<std::shared_ptr<std::string>> Enricher::UsernameForUID(uid_t uid,
+                                                                     EnrichOptions options) {
   std::optional<std::shared_ptr<std::string>> username = username_cache_.get(uid);
 
   if (username.has_value()) {
     return username;
+  } else if (options == EnrichOptions::kLocalOnly) {
+    // If `kLocalOnly` option is set, do not attempt a lookup
+    return std::nullopt;
   } else {
     struct passwd *pw = getpwuid(uid);
     if (pw) {
@@ -115,11 +119,15 @@ std::optional<std::shared_ptr<std::string>> Enricher::UsernameForUID(uid_t uid) 
   }
 }
 
-std::optional<std::shared_ptr<std::string>> Enricher::UsernameForGID(gid_t gid) {
+std::optional<std::shared_ptr<std::string>> Enricher::UsernameForGID(gid_t gid,
+                                                                     EnrichOptions options) {
   std::optional<std::shared_ptr<std::string>> groupname = groupname_cache_.get(gid);
 
   if (groupname.has_value()) {
     return groupname;
+  } else if (options == EnrichOptions::kLocalOnly) {
+    // If `kLocalOnly` option is set, do not attempt a lookup
+    return std::nullopt;
   } else {
     struct group *gr = getgrgid(gid);
     if (gr) {

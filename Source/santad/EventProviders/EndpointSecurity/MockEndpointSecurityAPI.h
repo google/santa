@@ -22,6 +22,7 @@
 
 #include <set>
 
+#include "Source/santad/DataLayer/WatchItemPolicy.h"
 #include "Source/santad/EventProviders/EndpointSecurity/Client.h"
 #include "Source/santad/EventProviders/EndpointSecurity/EndpointSecurityAPI.h"
 #include "Source/santad/EventProviders/EndpointSecurity/Message.h"
@@ -38,6 +39,20 @@ class MockEndpointSecurityAPI
   MOCK_METHOD(bool, Subscribe,
               (const santa::santad::event_providers::endpoint_security::Client &,
                const std::set<es_event_type_t> &));
+  MOCK_METHOD(bool, UnsubscribeAll, (const Client &client));
+
+  MOCK_METHOD(bool, UnmuteAllPaths, (const Client &client));
+  MOCK_METHOD(bool, UnmuteAllTargetPaths, (const Client &client));
+
+  MOCK_METHOD(bool, IsTargetPathMutingInverted, (const Client &client));
+  MOCK_METHOD(bool, InvertTargetPathMuting, (const Client &client));
+
+  MOCK_METHOD(bool, MuteTargetPath,
+              (const Client &client, std::string_view path,
+               santa::santad::data_layer::WatchItemPathType path_type));
+  MOCK_METHOD(bool, UnmuteTargetPath,
+              (const Client &client, std::string_view path,
+               santa::santad::data_layer::WatchItemPathType path_type));
 
   MOCK_METHOD(void, RetainMessage, (const es_message_t *msg));
   MOCK_METHOD(void, ReleaseMessage, (const es_message_t *msg));

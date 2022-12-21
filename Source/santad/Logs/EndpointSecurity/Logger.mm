@@ -27,6 +27,7 @@
 
 using santa::santad::event_providers::endpoint_security::EndpointSecurityAPI;
 using santa::santad::event_providers::endpoint_security::EnrichedMessage;
+using santa::santad::event_providers::endpoint_security::EnrichedProcess;
 using santa::santad::event_providers::endpoint_security::Message;
 using santa::santad::logs::endpoint_security::serializers::BasicString;
 using santa::santad::logs::endpoint_security::serializers::Empty;
@@ -97,9 +98,13 @@ void Logger::LogDiskDisappeared(NSDictionary *props) {
   writer_->Write(serializer_->SerializeDiskDisappeared(props));
 }
 
-void Logger::LogAccess(const Message &msg) {
-  // TODO(xyz): Should likely take an EnrichedMessage
-  LOGE(@"GOT ACCESS EVENT");
+void Logger::LogFileAccess(
+  const std::string &policy_version, const std::string &policy_name,
+  const santa::santad::event_providers::endpoint_security::Message &msg,
+  const santa::santad::event_providers::endpoint_security::EnrichedProcess &enriched_process,
+  const std::string &target, FileAccessPolicyDecision decision) {
+  writer_->Write(serializer_->SerializeFileAccess(policy_version, policy_name, msg,
+                                                  enriched_process, target, decision));
 }
 
 }  // namespace santa::santad::logs::endpoint_security

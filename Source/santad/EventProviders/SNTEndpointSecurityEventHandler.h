@@ -14,6 +14,10 @@
 
 #import <Foundation/Foundation.h>
 
+#include <string>
+#include <vector>
+
+#include "Source/santad/DataLayer/WatchItemPolicy.h"
 #include "Source/santad/EventProviders/EndpointSecurity/Message.h"
 #include "Source/santad/Metrics.h"
 
@@ -28,5 +32,24 @@
 // Called after Santa has finished initializing itself.
 // This is an optimal place to subscribe to ES events
 - (void)enable;
+
+@end
+
+// Extension of the `SNTEndpointSecurityEventHandler` protocol for
+// `SNTEndpointSecurityClient` subclasses that can be dynamically
+// enabled and disabled.
+@protocol SNTEndpointSecurityDynamicEventHandler <SNTEndpointSecurityEventHandler>
+
+// Called when a client should no longer receive events.
+- (void)disable;
+
+- (void)
+  watchItemsCount:(size_t)count
+         newPaths:
+           (const std::vector<std::pair<std::string, santa::santad::data_layer::WatchItemPathType>>
+              &)newPaths
+     removedPaths:
+       (const std::vector<std::pair<std::string, santa::santad::data_layer::WatchItemPathType>> &)
+         removedPaths;
 
 @end

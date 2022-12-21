@@ -52,6 +52,12 @@ class Protobuf : public Serializer {
   std::vector<uint8_t> SerializeMessage(
     const santa::santad::event_providers::endpoint_security::EnrichedUnlink &) override;
 
+  std::vector<uint8_t> SerializeFileAccess(
+    const std::string &policy_version, const std::string &policy_name,
+    const santa::santad::event_providers::endpoint_security::Message &msg,
+    const santa::santad::event_providers::endpoint_security::EnrichedProcess &enriched_process,
+    const std::string &target, FileAccessPolicyDecision decision) override;
+
   std::vector<uint8_t> SerializeAllowlist(
     const santa::santad::event_providers::endpoint_security::Message &,
     const std::string_view) override;
@@ -66,6 +72,9 @@ class Protobuf : public Serializer {
   ::santa::pb::v1::SantaMessage *CreateDefaultProto(
     google::protobuf::Arena *arena,
     const santa::santad::event_providers::endpoint_security::EnrichedEventType &msg);
+  ::santa::pb::v1::SantaMessage *CreateDefaultProto(
+    google::protobuf::Arena *arena,
+    const santa::santad::event_providers::endpoint_security::Message &msg);
   ::santa::pb::v1::SantaMessage *CreateDefaultProto(google::protobuf::Arena *arena,
                                                     struct timespec event_time,
                                                     struct timespec processed_time);

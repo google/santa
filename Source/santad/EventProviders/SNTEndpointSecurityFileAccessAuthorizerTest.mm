@@ -31,7 +31,7 @@
 #include "Source/common/SNTCachedDecision.h"
 #import "Source/common/SNTConfigurator.h"
 #include "Source/common/TestUtils.h"
-#include "Source/common/Unit.h"
+#include "Source/santad/DataLayer/WatchItemPolicy.h"
 #include "Source/santad/DataLayer/WatchItems.h"
 #include "Source/santad/EventProviders/EndpointSecurity/Message.h"
 #include "Source/santad/EventProviders/EndpointSecurity/MockEndpointSecurityAPI.h"
@@ -39,17 +39,23 @@
 #include "Source/santad/Logs/EndpointSecurity/MockLogger.h"
 #include "Source/santad/SNTDecisionCache.h"
 
-using santa::common::Unit;
 using santa::santad::data_layer::WatchItemPolicy;
 using santa::santad::event_providers::endpoint_security::Message;
 
 extern NSString *kBadCertHash;
 
-using PathTargets = std::pair<std::string_view, std::variant<std::string_view, std::string, Unit>>;
-extern PathTargets GetPathTargets(const Message &msg);
-
+using PathTargetsPair = std::pair<std::optional<std::string>, std::optional<std::string>>;
+extern void PopulatePathTargets(const Message &msg, std::vector<std::string> &targets);
 extern es_auth_result_t FileAccessPolicyDecisionToESAuthResult(FileAccessPolicyDecision decision);
+extern bool ShouldLogDecision(FileAccessPolicyDecision decision);
 extern es_auth_result_t CombinePolicyResults(es_auth_result_t result1, es_auth_result_t result2);
+
+void SetExpectationsForFileAccessAuthorizerInit(
+  std::shared_ptr<MockEndpointSecurityAPI> mockESApi) {
+  EXPECT_CALL(*mockESApi, InvertTargetPathMuting).WillOnce(testing::Return(true));
+  EXPECT_CALL(*mockESApi, UnmuteAllPaths).WillOnce(testing::Return(true));
+  EXPECT_CALL(*mockESApi, UnmuteAllTargetPaths).WillOnce(testing::Return(true));
+}
 
 @interface SNTEndpointSecurityFileAccessAuthorizer (Testing)
 - (NSString *)getCertificateHash:(es_file_t *)esFile;
@@ -58,6 +64,8 @@ extern es_auth_result_t CombinePolicyResults(es_auth_result_t result1, es_auth_r
 - (FileAccessPolicyDecision)applyPolicy:
                               (std::optional<std::shared_ptr<WatchItemPolicy>>)optionalPolicy
                               toMessage:(const Message &)msg;
+
+@property bool isSubscribed;
 @end
 
 @interface SNTEndpointSecurityFileAccessAuthorizerTest : XCTestCase
@@ -87,7 +95,7 @@ extern es_auth_result_t CombinePolicyResults(es_auth_result_t result1, es_auth_r
   [super tearDown];
 }
 
-- (void)testGetCertificateHashFailedCodesign {
+- (void)testGetCertificateHash {
   es_file_t esFile1 = MakeESFile("foo", MakeStat(100));
   es_file_t esFile2 = MakeESFile("foo", MakeStat(200));
   es_file_t esFile3 = MakeESFile("foo", MakeStat(300));
@@ -99,12 +107,14 @@ extern es_auth_result_t CombinePolicyResults(es_auth_result_t result1, es_auth_r
 
   auto mockESApi = std::make_shared<MockEndpointSecurityAPI>();
   mockESApi->SetExpectationsESNewClient();
+  SetExpectationsForFileAccessAuthorizerInit(mockESApi);
 
   SNTEndpointSecurityFileAccessAuthorizer *accessClient =
     [[SNTEndpointSecurityFileAccessAuthorizer alloc] initWithESAPI:mockESApi
                                                            metrics:nullptr
                                                             logger:nullptr
                                                         watchItems:nullptr
+                                                          enricher:nullptr
                                                      decisionCache:self.dcMock];
 
   //
@@ -190,6 +200,21 @@ extern es_auth_result_t CombinePolicyResults(es_auth_result_t result1, es_auth_r
   XCTAssertThrows(FileAccessPolicyDecisionToESAuthResult((FileAccessPolicyDecision)123));
 }
 
+- (void)testShouldLogDecision {
+  std::map<FileAccessPolicyDecision, bool> policyDecisionToShouldLog = {
+    {FileAccessPolicyDecision::kNoPolicy, false},
+    {FileAccessPolicyDecision::kDenied, true},
+    {FileAccessPolicyDecision::kDeniedInvalidSignature, true},
+    {FileAccessPolicyDecision::kAllowed, false},
+    {FileAccessPolicyDecision::kAllowedAuditOnly, true},
+    {(FileAccessPolicyDecision)5, false},
+  };
+
+  for (const auto &kv : policyDecisionToShouldLog) {
+    XCTAssertEqual(ShouldLogDecision(kv.first), kv.second);
+  }
+}
+
 - (void)testCombinePolicyResults {
   // Ensure that the combined result is ES_AUTH_RESULT_DENY if both or either
   // input result is ES_AUTH_RESULT_DENY.
@@ -214,12 +239,14 @@ extern es_auth_result_t CombinePolicyResults(es_auth_result_t result1, es_auth_r
   auto mockESApi = std::make_shared<MockEndpointSecurityAPI>();
   mockESApi->SetExpectationsESNewClient();
   mockESApi->SetExpectationsRetainReleaseMessage();
+  SetExpectationsForFileAccessAuthorizerInit(mockESApi);
 
   SNTEndpointSecurityFileAccessAuthorizer *accessClient =
     [[SNTEndpointSecurityFileAccessAuthorizer alloc] initWithESAPI:mockESApi
                                                            metrics:nullptr
                                                             logger:nullptr
                                                         watchItems:nullptr
+                                                          enricher:nullptr
                                                      decisionCache:nil];
 
   auto policy = std::make_shared<WatchItemPolicy>("foo_policy", "/foo");
@@ -290,16 +317,17 @@ extern es_auth_result_t CombinePolicyResults(es_auth_result_t result1, es_auth_r
   memcpy(esProc.cdhash, instigatingCDHash.data(), sizeof(esProc.cdhash));
   es_message_t esMsg = MakeESMessage(ES_EVENT_TYPE_AUTH_OPEN, &esProc);
 
-  auto mockLogger = std::make_shared<MockLogger>();
   auto mockESApi = std::make_shared<MockEndpointSecurityAPI>();
   mockESApi->SetExpectationsESNewClient();
   mockESApi->SetExpectationsRetainReleaseMessage();
+  SetExpectationsForFileAccessAuthorizerInit(mockESApi);
 
   SNTEndpointSecurityFileAccessAuthorizer *accessClient =
     [[SNTEndpointSecurityFileAccessAuthorizer alloc] initWithESAPI:mockESApi
                                                            metrics:nullptr
-                                                            logger:mockLogger
+                                                            logger:nullptr
                                                         watchItems:nullptr
+                                                          enricher:nullptr
                                                      decisionCache:nil];
 
   id accessClientMock = OCMPartialMock(accessClient);
@@ -385,8 +413,6 @@ extern es_auth_result_t CombinePolicyResults(es_auth_result_t result1, es_auth_r
     policy->allowed_certificates_sha256.clear();
   }
 
-  EXPECT_CALL(*mockLogger, LogAccess).Times(2);
-
   // If no exceptions, operations are logged and denied
   {
     policy->audit_only = false;
@@ -404,7 +430,6 @@ extern es_auth_result_t CombinePolicyResults(es_auth_result_t result1, es_auth_r
   }
 
   XCTBubbleMockVerifyAndClearExpectations(mockESApi.get());
-  XCTBubbleMockVerifyAndClearExpectations(mockLogger.get());
 }
 
 - (void)testEnable {
@@ -429,6 +454,29 @@ extern es_auth_result_t CombinePolicyResults(es_auth_result_t result1, es_auth_r
   XCTBubbleMockVerifyAndClearExpectations(mockESApi.get());
 }
 
+- (void)testDisable {
+  auto mockESApi = std::make_shared<MockEndpointSecurityAPI>();
+  mockESApi->SetExpectationsESNewClient();
+  SetExpectationsForFileAccessAuthorizerInit(mockESApi);
+
+  SNTEndpointSecurityFileAccessAuthorizer *accessClient =
+    [[SNTEndpointSecurityFileAccessAuthorizer alloc] initWithESAPI:mockESApi
+                                                           metrics:nullptr
+                                                            logger:nullptr
+                                                        watchItems:nullptr
+                                                          enricher:nullptr
+                                                     decisionCache:nil];
+
+  EXPECT_CALL(*mockESApi, UnsubscribeAll);
+  EXPECT_CALL(*mockESApi, UnmuteAllPaths).WillOnce(testing::Return(true));
+  EXPECT_CALL(*mockESApi, UnmuteAllTargetPaths).WillOnce(testing::Return(true));
+
+  accessClient.isSubscribed = true;
+  [accessClient disable];
+
+  XCTBubbleMockVerifyAndClearExpectations(mockESApi.get());
+}
+
 - (void)testGetPathTargets {
   // This test ensures that the `GetPathTargets` functions returns the
   // expected combination of targets for each handled event variant
@@ -436,7 +484,7 @@ extern es_auth_result_t CombinePolicyResults(es_auth_result_t result1, es_auth_r
   es_file_t testFile2 = MakeESFile("test_file_2");
   es_file_t testDir = MakeESFile("test_dir");
   es_string_token_t testTok = MakeESStringToken("test_tok");
-  std::string dirTok = std::string(testDir.path.data) + std::string(testTok.data);
+  std::string dirTok = std::string(testDir.path.data) + "/" + std::string(testTok.data);
 
   es_message_t esMsg;
 
@@ -449,10 +497,11 @@ extern es_auth_result_t CombinePolicyResults(es_auth_result_t result1, es_auth_r
     esMsg.event_type = ES_EVENT_TYPE_AUTH_OPEN;
     esMsg.event.open.file = &testFile1;
 
-    PathTargets targets = GetPathTargets(msg);
+    std::vector<std::string> targets;
+    PopulatePathTargets(msg, targets);
 
-    XCTAssertCStringEqual(targets.first.data(), testFile1.path.data);
-    XCTAssertTrue(std::holds_alternative<Unit>(targets.second));
+    XCTAssertEqual(targets.size(), 1);
+    XCTAssertCStringEqual(targets[0].c_str(), testFile1.path.data);
   }
 
   {
@@ -461,11 +510,12 @@ extern es_auth_result_t CombinePolicyResults(es_auth_result_t result1, es_auth_r
     esMsg.event.link.target_dir = &testDir;
     esMsg.event.link.target_filename = testTok;
 
-    PathTargets targets = GetPathTargets(msg);
+    std::vector<std::string> targets;
+    PopulatePathTargets(msg, targets);
 
-    XCTAssertCStringEqual(targets.first.data(), testFile1.path.data);
-    XCTAssertTrue(std::holds_alternative<std::string>(targets.second));
-    XCTAssertCppStringEqual(std::get<std::string>(targets.second), dirTok);
+    XCTAssertEqual(targets.size(), 2);
+    XCTAssertCStringEqual(targets[0].c_str(), testFile1.path.data);
+    XCTAssertCppStringEqual(targets[1], dirTok);
   }
 
   {
@@ -476,11 +526,12 @@ extern es_auth_result_t CombinePolicyResults(es_auth_result_t result1, es_auth_r
       esMsg.event.rename.destination_type = ES_DESTINATION_TYPE_EXISTING_FILE;
       esMsg.event.rename.destination.existing_file = &testFile2;
 
-      PathTargets targets = GetPathTargets(msg);
+      std::vector<std::string> targets;
+      PopulatePathTargets(msg, targets);
 
-      XCTAssertCStringEqual(targets.first.data(), testFile1.path.data);
-      XCTAssertTrue(std::holds_alternative<std::string_view>(targets.second));
-      XCTAssertCStringEqual(std::get<std::string_view>(targets.second).data(), testFile2.path.data);
+      XCTAssertEqual(targets.size(), 2);
+      XCTAssertCStringEqual(targets[0].c_str(), testFile1.path.data);
+      XCTAssertCStringEqual(targets[1].c_str(), testFile2.path.data);
     }
 
     {
@@ -488,11 +539,12 @@ extern es_auth_result_t CombinePolicyResults(es_auth_result_t result1, es_auth_r
       esMsg.event.rename.destination.new_path.dir = &testDir;
       esMsg.event.rename.destination.new_path.filename = testTok;
 
-      PathTargets targets = GetPathTargets(msg);
+      std::vector<std::string> targets;
+      PopulatePathTargets(msg, targets);
 
-      XCTAssertCStringEqual(targets.first.data(), testFile1.path.data);
-      XCTAssertTrue(std::holds_alternative<std::string>(targets.second));
-      XCTAssertCppStringEqual(std::get<std::string>(targets.second), dirTok);
+      XCTAssertEqual(targets.size(), 2);
+      XCTAssertCStringEqual(targets[0].c_str(), testFile1.path.data);
+      XCTAssertCppStringEqual(targets[1], dirTok);
     }
   }
 
@@ -500,10 +552,11 @@ extern es_auth_result_t CombinePolicyResults(es_auth_result_t result1, es_auth_r
     esMsg.event_type = ES_EVENT_TYPE_AUTH_UNLINK;
     esMsg.event.unlink.target = &testFile1;
 
-    PathTargets targets = GetPathTargets(msg);
+    std::vector<std::string> targets;
+    PopulatePathTargets(msg, targets);
 
-    XCTAssertCStringEqual(targets.first.data(), testFile1.path.data);
-    XCTAssertTrue(std::holds_alternative<Unit>(targets.second));
+    XCTAssertEqual(targets.size(), 1);
+    XCTAssertCStringEqual(targets[0].c_str(), testFile1.path.data);
   }
 
   {
@@ -512,11 +565,12 @@ extern es_auth_result_t CombinePolicyResults(es_auth_result_t result1, es_auth_r
     esMsg.event.clone.target_dir = &testDir;
     esMsg.event.clone.target_name = testTok;
 
-    PathTargets targets = GetPathTargets(msg);
+    std::vector<std::string> targets;
+    PopulatePathTargets(msg, targets);
 
-    XCTAssertCStringEqual(targets.first.data(), testFile1.path.data);
-    XCTAssertTrue(std::holds_alternative<std::string>(targets.second));
-    XCTAssertCppStringEqual(std::get<std::string>(targets.second), dirTok);
+    XCTAssertEqual(targets.size(), 2);
+    XCTAssertCStringEqual(targets[0].c_str(), testFile1.path.data);
+    XCTAssertCppStringEqual(targets[1], dirTok);
   }
 
   {
@@ -524,11 +578,12 @@ extern es_auth_result_t CombinePolicyResults(es_auth_result_t result1, es_auth_r
     esMsg.event.exchangedata.file1 = &testFile1;
     esMsg.event.exchangedata.file2 = &testFile2;
 
-    PathTargets targets = GetPathTargets(msg);
+    std::vector<std::string> targets;
+    PopulatePathTargets(msg, targets);
 
-    XCTAssertCStringEqual(targets.first.data(), testFile1.path.data);
-    XCTAssertTrue(std::holds_alternative<std::string_view>(targets.second));
-    XCTAssertCStringEqual(std::get<std::string_view>(targets.second).data(), testFile2.path.data);
+    XCTAssertEqual(targets.size(), 2);
+    XCTAssertCStringEqual(targets[0].c_str(), testFile1.path.data);
+    XCTAssertCStringEqual(targets[1].c_str(), testFile2.path.data);
   }
 
   if (@available(macOS 12.0, *)) {
@@ -541,22 +596,23 @@ extern es_auth_result_t CombinePolicyResults(es_auth_result_t result1, es_auth_r
       {
         esMsg.event.copyfile.target_file = nullptr;
 
-        PathTargets targets = GetPathTargets(msg);
+        std::vector<std::string> targets;
+        PopulatePathTargets(msg, targets);
 
-        XCTAssertCStringEqual(targets.first.data(), testFile1.path.data);
-        XCTAssertTrue(std::holds_alternative<std::string>(targets.second));
-        XCTAssertCppStringEqual(std::get<std::string>(targets.second), dirTok);
+        XCTAssertEqual(targets.size(), 2);
+        XCTAssertCStringEqual(targets[0].c_str(), testFile1.path.data);
+        XCTAssertCppStringEqual(targets[1], dirTok);
       }
 
       {
         esMsg.event.copyfile.target_file = &testFile2;
 
-        PathTargets targets = GetPathTargets(msg);
+        std::vector<std::string> targets;
+        PopulatePathTargets(msg, targets);
 
-        XCTAssertCStringEqual(targets.first.data(), testFile1.path.data);
-        XCTAssertTrue(std::holds_alternative<std::string_view>(targets.second));
-        XCTAssertCStringEqual(std::get<std::string_view>(targets.second).data(),
-                              testFile2.path.data);
+        XCTAssertEqual(targets.size(), 2);
+        XCTAssertCStringEqual(targets[0].c_str(), testFile1.path.data);
+        XCTAssertCStringEqual(targets[1].c_str(), testFile2.path.data);
       }
     }
   }

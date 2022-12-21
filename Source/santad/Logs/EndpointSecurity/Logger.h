@@ -59,7 +59,11 @@ class Logger {
   void LogDiskAppeared(NSDictionary *props);
   void LogDiskDisappeared(NSDictionary *props);
 
-  virtual void LogAccess(const santa::santad::event_providers::endpoint_security::Message &msg);
+  virtual void LogFileAccess(
+    const std::string &policy_version, const std::string &policy_name,
+    const santa::santad::event_providers::endpoint_security::Message &msg,
+    const santa::santad::event_providers::endpoint_security::EnrichedProcess &enriched_process,
+    const std::string &target, FileAccessPolicyDecision decision);
 
   friend class santa::santad::logs::endpoint_security::LoggerPeer;
 

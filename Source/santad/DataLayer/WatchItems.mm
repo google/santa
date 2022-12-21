@@ -15,18 +15,24 @@
 #include "Source/santad/DataLayer/WatchItems.h"
 
 #include <CommonCrypto/CommonDigest.h>
+#include <Kernel/kern/cs_blobs.h>
 #include <ctype.h>
 #include <glob.h>
 
+#include <algorithm>
 #include <cstddef>
 #include <cstdlib>
+#include <iterator>
 #include <memory>
 #include <optional>
 #include <set>
+#include <string>
 #include <utility>
+#include <vector>
 
 #import "Source/common/PrefixTree.h"
 #import "Source/common/SNTLogging.h"
+#include "Source/santad/DataLayer/WatchItemPolicy.h"
 
 using santa::common::PrefixTree;
 
@@ -40,6 +46,11 @@ const NSString *kWatchItemConfigKeyAllowedBinaryPaths = @"AllowedBinaryPaths";
 const NSString *kWatchItemConfigKeyAllowedCertificatesSha256 = @"AllowedCertificatesSha256";
 const NSString *kWatchItemConfigKeyAllowedTeamIDs = @"AllowedTeamIDs";
 const NSString *kWatchItemConfigKeyAllowedCDHashes = @"AllowedCDHashes";
+
+// Semi-arbitrary minimum allowed reapplication frequency.
+// Goal is to prevent a configuration setting that would cause too much
+// churn rebuilding glob paths based on the state of the filesystem.
+static const uint64_t kMinReapplyConfigFrequencySecs = 15;
 
 namespace santa::santad::data_layer {
 
@@ -181,29 +192,11 @@ static std::set<std::array<uint8_t, length>> HexStringArrayToSet(NSArray<NSStrin
   return data;
 }
 
-WatchItemPolicy::WatchItemPolicy(std::string_view n, std::string_view p, bool wo, bool ip, bool ao,
-                                 std::set<std::string> &&abp, std::set<std::string> &&ati,
-                                 std::set<std::array<uint8_t, CS_CDHASH_LEN>> &&ach,
-                                 std::set<std::string> &&acs)
-    : name(n),
-      path(p),
-      write_only(wo),
-      is_prefix(ip),
-      audit_only(ao),
-      allowed_binary_paths(std::move(abp)),
-      allowed_team_ids(std::move(ati)),
-      allowed_cdhashes(std::move(ach)),
-      allowed_certificates_sha256(std::move(acs)) {}
-
 std::shared_ptr<WatchItems> WatchItems::Create(NSString *config_path,
                                                uint64_t reapply_config_frequency_secs) {
-  if (!config_path) {
-    LOGW(@"Watch item config not provided");
-    return nullptr;
-  }
-
-  if (reapply_config_frequency_secs < 1) {
-    LOGW(@"Invalid watch item update interval provided (0)");
+  if (reapply_config_frequency_secs < kMinReapplyConfigFrequencySecs) {
+    LOGW(@"Invalid watch item update interval provided: %llu. Min allowed: %llu",
+         reapply_config_frequency_secs, kMinReapplyConfigFrequencySecs);
     return nullptr;
   }
 
@@ -213,12 +206,13 @@ std::shared_ptr<WatchItems> WatchItems::Create(NSString *config_path,
   dispatch_source_set_timer(timer_source, dispatch_time(DISPATCH_TIME_NOW, 0),
                             NSEC_PER_SEC * reapply_config_frequency_secs, 0);
 
-  return std::make_shared<WatchItems>(config_path, timer_source);
+  return std::make_shared<WatchItems>(config_path, q, timer_source);
 }
 
-WatchItems::WatchItems(NSString *config_path, dispatch_source_t timer_source,
+WatchItems::WatchItems(NSString *config_path, dispatch_queue_t q, dispatch_source_t timer_source,
                        void (^periodic_task_complete_f)(void))
     : config_path_(config_path),
+      q_(q),
       timer_source_(timer_source),
       periodic_task_complete_f_(periodic_task_complete_f),
       watch_items_(std::make_unique<WatchItemsTree>()) {}
@@ -235,7 +229,7 @@ WatchItems::~WatchItems() {
 
 bool WatchItems::BuildPolicyTree(const std::vector<std::shared_ptr<WatchItemPolicy>> &watch_items,
                                  PrefixTree<std::shared_ptr<WatchItemPolicy>> &tree,
-                                 std::set<std::string> &paths) {
+                                 std::set<std::pair<std::string, WatchItemPathType>> &paths) {
   glob_t *g = (glob_t *)alloca(sizeof(glob_t));
   for (const std::shared_ptr<WatchItemPolicy> &item : watch_items) {
     int err = glob(item->path.c_str(), 0, nullptr, g);
@@ -245,18 +239,23 @@ bool WatchItems::BuildPolicyTree(const std::vector<std::shared_ptr<WatchItemPoli
     }
 
     for (size_t i = g->gl_offs; i < g->gl_pathc; i++) {
-      if (item->is_prefix) {
+      if (item->path_type == WatchItemPathType::kPrefix) {
         tree.InsertPrefix(g->gl_pathv[i], item);
       } else {
         tree.InsertLiteral(g->gl_pathv[i], item);
       }
 
-      paths.insert(g->gl_pathv[i]);
+      paths.insert({g->gl_pathv[i], item->path_type});
     }
     globfree(g);
   }
 
   return true;
+}
+
+void WatchItems::RegisterClient(id<SNTEndpointSecurityDynamicEventHandler> client) {
+  absl::MutexLock lock(&lock_);
+  registerd_clients_.insert(client);
 }
 
 bool WatchItems::ParseConfig(NSDictionary *config,
@@ -299,7 +298,9 @@ bool WatchItems::ParseConfig(NSDictionary *config,
     policies.push_back(std::make_shared<WatchItemPolicy>(
       [key UTF8String], [watch_item[kWatchItemConfigKeyPath] UTF8String],
       [(watch_item[kWatchItemConfigKeyWriteOnly] ?: @(0)) boolValue],
-      [(watch_item[kWatchItemConfigKeyIsPrefix] ?: @(0)) boolValue],
+      ([(watch_item[kWatchItemConfigKeyIsPrefix] ?: @(0)) boolValue] == NO)
+        ? WatchItemPathType::kLiteral
+        : WatchItemPathType::kPrefix,
       [(watch_item[kWatchItemConfigKeyAuditOnly] ?: @(1)) boolValue],
       StringArrayToSet(watch_item[kWatchItemConfigKeyAllowedBinaryPaths]),
       StringArrayToSet(watch_item[kWatchItemConfigKeyAllowedTeamIDs]),
@@ -310,47 +311,90 @@ bool WatchItems::ParseConfig(NSDictionary *config,
   return config_ok;
 }
 
-bool WatchItems::SetCurrentConfig(
+void WatchItems::UpdateCurrentState(
   std::unique_ptr<PrefixTree<std::shared_ptr<WatchItemPolicy>>> new_tree,
-  std::set<std::string> &&new_monitored_paths, NSDictionary *new_config) {
+  std::set<std::pair<std::string, WatchItemPathType>> &&new_monitored_paths,
+  NSDictionary *new_config) {
   absl::MutexLock lock(&lock_);
 
-  // TODO(mlw): In upcoming PR, need to use ES API to stop watching removed paths,
-  // and start watching newly configured paths.
+  // The following conditions require updating the current config:
+  // 1. The current config doesn't exist but the new one does
+  // 2. The current config exists but the new one doesn't
+  // 3. The set of monitored paths changed
+  // 4. The configuration changed
+  if ((current_config_ != nil && new_config == nil) ||
+      (current_config_ == nil && new_config != nil) ||
+      (currently_monitored_paths_ != new_monitored_paths) ||
+      (new_config && ![current_config_ isEqualToDictionary:new_config])) {
+    std::vector<std::pair<std::string, WatchItemPathType>> paths_to_watch;
+    std::vector<std::pair<std::string, WatchItemPathType>> paths_to_stop_watching;
 
-  std::swap(watch_items_, new_tree);
-  std::swap(currently_monitored_paths_, new_monitored_paths);
-  current_config_ = new_config;
-  policy_version_ = [new_config[kWatchItemConfigKeyVersion] UTF8String];
+    // New paths to watch are those that are in the new set, but not current
+    std::set_difference(new_monitored_paths.begin(), new_monitored_paths.end(),
+                        currently_monitored_paths_.begin(), currently_monitored_paths_.end(),
+                        std::back_inserter(paths_to_watch));
 
-  return true;
+    // Paths to stop watching are in the current set, but not new
+    std::set_difference(currently_monitored_paths_.begin(), currently_monitored_paths_.end(),
+                        new_monitored_paths.begin(), new_monitored_paths.end(),
+                        std::back_inserter(paths_to_stop_watching));
+
+    std::swap(watch_items_, new_tree);
+    std::swap(currently_monitored_paths_, new_monitored_paths);
+    current_config_ = new_config;
+    if (new_config) {
+      policy_version_ = [new_config[kWatchItemConfigKeyVersion] UTF8String];
+    } else {
+      policy_version_ = "";
+    }
+
+    for (const id<SNTEndpointSecurityDynamicEventHandler> &client : registerd_clients_) {
+      // Note: Enable clients on an async queue in case they perform any
+      // synchronous work that could trigger ES events. Otherwise they might
+      // trigger AUTH ES events that would attempt to re-enter this object and
+      // potentially deadlock.
+      dispatch_async(q_, ^{
+        [client watchItemsCount:currently_monitored_paths_.size()
+                       newPaths:paths_to_watch
+                   removedPaths:paths_to_stop_watching];
+      });
+    }
+  } else {
+    LOGD(@"No changes to set of watched paths.");
+  }
 }
 
 void WatchItems::ReloadConfig(NSDictionary *new_config) {
   std::vector<std::shared_ptr<WatchItemPolicy>> new_policies;
-
-  if (!ParseConfig(new_config, new_policies)) {
-    LOGE(@"Failed to apply new filesystem monitoring config");
-    return;
-  }
-
   auto new_tree = std::make_unique<PrefixTree<std::shared_ptr<WatchItemPolicy>>>();
-  std::set<std::string> new_monitored_paths;
+  std::set<std::pair<std::string, WatchItemPathType>> new_monitored_paths;
 
-  if (!BuildPolicyTree(new_policies, *new_tree, new_monitored_paths)) {
-    LOGE(@"Failed to build new filesystem monitoring policy");
-    return;
+  if (new_config) {
+    if (!ParseConfig(new_config, new_policies)) {
+      LOGE(@"Failed to apply new filesystem monitoring config");
+      return;
+    }
+
+    if (!BuildPolicyTree(new_policies, *new_tree, new_monitored_paths)) {
+      LOGE(@"Failed to build new filesystem monitoring policy");
+      return;
+    }
   }
 
-  if (new_monitored_paths == currently_monitored_paths_ &&
-      [current_config_ isEqualToDictionary:new_config]) {
-    LOGD(@"No changes to set of watched paths.");
-    return;
+  UpdateCurrentState(std::move(new_tree), std::move(new_monitored_paths), new_config);
+}
+
+NSDictionary *WatchItems::ReadConfig() {
+  absl::ReaderMutexLock lock(&lock_);
+  return ReadConfigLocked();
+}
+
+NSDictionary *WatchItems::ReadConfigLocked() {
+  if (config_path_) {
+    return [NSDictionary dictionaryWithContentsOfFile:config_path_];
+  } else {
+    return nil;
   }
-
-  LOGD(@"Updating set of configured watch paths");
-
-  SetCurrentConfig(std::move(new_tree), std::move(new_monitored_paths), new_config);
 }
 
 void WatchItems::BeginPeriodicTask() {
@@ -365,8 +409,7 @@ void WatchItems::BeginPeriodicTask() {
       return;
     }
 
-    shared_watcher->ReloadConfig(
-      [NSDictionary dictionaryWithContentsOfFile:shared_watcher->config_path_]);
+    shared_watcher->ReloadConfig(shared_watcher->ReadConfig());
 
     if (shared_watcher->periodic_task_complete_f_) {
       shared_watcher->periodic_task_complete_f_();
@@ -382,13 +425,28 @@ std::string WatchItems::PolicyVersion() {
   return policy_version_;
 }
 
-std::optional<std::shared_ptr<WatchItemPolicy>> WatchItems::FindPolicyForPath(const char *input) {
-  if (!input) {
-    return std::nullopt;
+WatchItems::VersionAndPolicies WatchItems::FindPolciesForPaths(
+  const std::vector<std::string> &paths) {
+  absl::ReaderMutexLock lock(&lock_);
+  std::vector<std::optional<std::shared_ptr<WatchItemPolicy>>> policies;
+
+  for (const auto &path : paths) {
+    policies.push_back(watch_items_->LookupLongestMatchingPrefix(path.data()));
   }
 
-  absl::ReaderMutexLock lock(&lock_);
-  return watch_items_->LookupLongestMatchingPrefix(input);
+  return {policy_version_, policies};
+}
+
+void WatchItems::SetConfigPath(NSString *config_path) {
+  // Acquire the lock to set the config path and read the config, but drop
+  // the lock before reloading the config
+  NSDictionary *config;
+  {
+    absl::MutexLock lock(&lock_);
+    config_path_ = config_path;
+    config = ReadConfigLocked();
+  }
+  ReloadConfig(config);
 }
 
 }  // namespace santa::santad::data_layer

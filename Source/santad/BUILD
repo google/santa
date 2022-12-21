@@ -23,6 +23,7 @@ objc_library(
     hdrs = ["DataLayer/SNTRuleTable.h"],
     deps = [
         ":SNTDatabaseTable",
+        "//Source/common:Platform",
         "//Source/common:SNTCachedDecision",
         "//Source/common:SNTCommonEnums",
         "//Source/common:SNTConfigurator",
@@ -35,10 +36,17 @@ objc_library(
 )
 
 objc_library(
+    name = "WatchItemPolicy",
+    hdrs = ["DataLayer/WatchItemPolicy.h"],
+)
+
+objc_library(
     name = "WatchItems",
     srcs = ["DataLayer/WatchItems.mm"],
     hdrs = ["DataLayer/WatchItems.h"],
     deps = [
+        ":SNTEndpointSecurityEventHandler",
+        ":WatchItemPolicy",
         "//Source/common:PrefixTree",
         "//Source/common:SNTLogging",
     ],
@@ -48,6 +56,7 @@ santa_unit_test(
     name = "WatchItemsTest",
     srcs = ["DataLayer/WatchItemsTest.mm"],
     deps = [
+        ":WatchItemPolicy",
         ":WatchItems",
         "//Source/common:PrefixTree",
         "//Source/common:TestUtils",
@@ -84,6 +93,7 @@ objc_library(
     deps = [
         ":EndpointSecurityMessage",
         ":Metrics",
+        ":WatchItemPolicy",
     ],
 )
 
@@ -230,6 +240,7 @@ objc_library(
         ":EndpointSecurityEnrichedTypes",
         ":EndpointSecurityMessage",
         ":Metrics",
+        ":WatchItemPolicy",
     ],
 )
 
@@ -314,18 +325,21 @@ objc_library(
     hdrs = ["EventProviders/SNTEndpointSecurityFileAccessAuthorizer.h"],
     deps = [
         ":EndpointSecurityAPI",
+        ":EndpointSecurityEnrichedTypes",
+        ":EndpointSecurityEnricher",
         ":EndpointSecurityLogger",
         ":EndpointSecurityMessage",
         ":Metrics",
         ":SNTDecisionCache",
         ":SNTEndpointSecurityClient",
         ":SNTEndpointSecurityEventHandler",
+        ":WatchItemPolicy",
         ":WatchItems",
+        "//Source/common:SNTCommonEnums",
         "//Source/common:SNTConfigurator",
         "//Source/common:SantaCache",
         "//Source/common:SantaVnode",
         "//Source/common:SantaVnodeHash",
-        "//Source/common:Unit",
         "@MOLCertificate",
         "@MOLCodesignChecker",
     ],
@@ -390,6 +404,7 @@ objc_library(
         ":EndpointSecurityEnrichedTypes",
         ":EndpointSecurityMessage",
         ":SNTDecisionCache",
+        "//Source/common:SNTCommonEnums",
         "//Source/common:SNTConfigurator",
     ],
 )
@@ -541,6 +556,7 @@ objc_library(
     hdrs = ["EventProviders/EndpointSecurity/Message.h"],
     deps = [
         ":EndpointSecurityClient",
+        ":WatchItemPolicy",
     ],
 )
 
@@ -556,6 +572,8 @@ objc_library(
     deps = [
         ":EndpointSecurityClient",
         ":EndpointSecurityMessage",
+        ":WatchItemPolicy",
+        "//Source/common:Platform",
     ],
 )
 
@@ -727,6 +745,7 @@ objc_library(
         ":EndpointSecurityAPI",
         ":EndpointSecurityClient",
         ":EndpointSecurityMessage",
+        ":WatchItemPolicy",
         "@com_google_googletest//:gtest",
     ],
 )
@@ -774,6 +793,7 @@ santa_unit_test(
         "EndpointSecurity",
     ],
     deps = [
+        "//Source/common:Platform",
         "//Source/common:SNTCachedDecision",
         "//Source/common:SNTCommonEnums",
         "//Source/common:SNTConfigurator",
@@ -1070,6 +1090,7 @@ santa_unit_test(
         ":Metrics",
         ":MockEndpointSecurityAPI",
         ":SNTEndpointSecurityClient",
+        ":WatchItemPolicy",
         "//Source/common:TestUtils",
         "@OCMock",
         "@com_google_googletest//:gtest",
@@ -1139,11 +1160,11 @@ santa_unit_test(
         ":MockLogger",
         ":SNTDecisionCache",
         ":SNTEndpointSecurityFileAccessAuthorizer",
+        ":WatchItemPolicy",
         ":WatchItems",
         "//Source/common:SNTCachedDecision",
         "//Source/common:SNTConfigurator",
         "//Source/common:TestUtils",
-        "//Source/common:Unit",
         "@MOLCertificate",
         "@MOLCodesignChecker",
         "@OCMock",
