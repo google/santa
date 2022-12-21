@@ -386,7 +386,7 @@ void PopulatePathTargets(const Message &msg, std::vector<std::string> &targets) 
 
   [self respondToMessage:msg
           withAuthResult:policyResult
-               cacheable:(policyResult == ES_AUTH_RESULT_ALLOW)];
+               cacheable:false];
 }
 
 - (void)handleMessage:(santa::santad::event_providers::endpoint_security::Message &&)esMsg
