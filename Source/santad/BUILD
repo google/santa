@@ -23,6 +23,7 @@ objc_library(
     hdrs = ["DataLayer/SNTRuleTable.h"],
     deps = [
         ":SNTDatabaseTable",
+        "//Source/common:Platform",
         "//Source/common:SNTCachedDecision",
         "//Source/common:SNTCommonEnums",
         "//Source/common:SNTConfigurator",
@@ -92,6 +93,7 @@ objc_library(
     deps = [
         ":EndpointSecurityMessage",
         ":Metrics",
+        ":WatchItemPolicy",
     ],
 )
 
@@ -238,6 +240,7 @@ objc_library(
         ":EndpointSecurityEnrichedTypes",
         ":EndpointSecurityMessage",
         ":Metrics",
+        ":WatchItemPolicy",
     ],
 )
 
@@ -553,6 +556,7 @@ objc_library(
     hdrs = ["EventProviders/EndpointSecurity/Message.h"],
     deps = [
         ":EndpointSecurityClient",
+        ":WatchItemPolicy",
     ],
 )
 
@@ -568,6 +572,8 @@ objc_library(
     deps = [
         ":EndpointSecurityClient",
         ":EndpointSecurityMessage",
+        ":WatchItemPolicy",
+        "//Source/common:Platform",
     ],
 )
 
@@ -739,6 +745,7 @@ objc_library(
         ":EndpointSecurityAPI",
         ":EndpointSecurityClient",
         ":EndpointSecurityMessage",
+        ":WatchItemPolicy",
         "@com_google_googletest//:gtest",
     ],
 )
@@ -786,6 +793,7 @@ santa_unit_test(
         "EndpointSecurity",
     ],
     deps = [
+        "//Source/common:Platform",
         "//Source/common:SNTCachedDecision",
         "//Source/common:SNTCommonEnums",
         "//Source/common:SNTConfigurator",
@@ -1082,6 +1090,7 @@ santa_unit_test(
         ":Metrics",
         ":MockEndpointSecurityAPI",
         ":SNTEndpointSecurityClient",
+        ":WatchItemPolicy",
         "//Source/common:TestUtils",
         "@OCMock",
         "@com_google_googletest//:gtest",

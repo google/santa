@@ -65,6 +65,11 @@ objc_library(
 )
 
 objc_library(
+    name = "Platform",
+    hdrs = ["Platform.h"],
+)
+
+objc_library(
     name = "SantaVnodeHash",
     srcs = ["SantaVnodeHash.mm"],
     hdrs = ["SantaVnodeHash.h"],

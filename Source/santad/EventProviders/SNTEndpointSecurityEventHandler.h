@@ -14,6 +14,10 @@
 
 #import <Foundation/Foundation.h>
 
+#include <string>
+#include <vector>
+
+#include "Source/santad/DataLayer/WatchItemPolicy.h"
 #include "Source/santad/EventProviders/EndpointSecurity/Message.h"
 #include "Source/santad/Metrics.h"
 
@@ -38,5 +42,14 @@
 
 // Called when a client should no longer receive events.
 - (void)disable;
+
+- (void)
+  watchItemsCount:(size_t)count
+         newPaths:
+           (const std::vector<std::pair<std::string, santa::santad::data_layer::WatchItemPathType>>
+              &)newPaths
+     removedPaths:
+       (const std::vector<std::pair<std::string, santa::santad::data_layer::WatchItemPathType>> &)
+         removedPaths;
 
 @end

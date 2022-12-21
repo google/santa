@@ -40,6 +40,7 @@
 #include "Source/santad/EventProviders/EndpointSecurity/Message.h"
 
 using santa::santad::EventDisposition;
+using santa::santad::data_layer::WatchItemPathType;
 using santa::santad::data_layer::WatchItemPolicy;
 using santa::santad::data_layer::WatchItems;
 using santa::santad::event_providers::endpoint_security::EndpointSecurityAPI;
@@ -155,7 +156,7 @@ void PopulatePathTargets(const Message &msg, std::vector<std::string> &targets) 
 
 @interface SNTEndpointSecurityFileAccessAuthorizer ()
 @property SNTDecisionCache *decisionCache;
-@property BOOL isSubscribed;
+@property bool isSubscribed;
 @end
 
 @implementation SNTEndpointSecurityFileAccessAuthorizer {
@@ -185,6 +186,9 @@ void PopulatePathTargets(const Message &msg, std::vector<std::string> &targets) 
     _decisionCache = decisionCache;
 
     [self establishClientOrDie];
+
+    [super enableTargetPathWatching];
+    [super unmuteEverything];
   }
   return self;
 }
@@ -347,7 +351,7 @@ void PopulatePathTargets(const Message &msg, std::vector<std::string> &targets) 
                           handler:^(Message &&esMsg) {
                             self->_logger->LogFileAccess(
                               policyVersionCopy, policyNameCopy, esMsg,
-                              self->_enricher->Enrich(*msg->process, EnrichOptions::kLocalOnly),
+                              self->_enricher->Enrich(*esMsg->process, EnrichOptions::kLocalOnly),
                               targetCopy, policyDecision);
                           }];
 
@@ -380,9 +384,7 @@ void PopulatePathTargets(const Message &msg, std::vector<std::string> &targets) 
     prevDecision = curDecision;
   }
 
-  [self respondToMessage:msg
-          withAuthResult:policyResult
-               cacheable:(policyResult == ES_AUTH_RESULT_ALLOW)];
+  [self respondToMessage:msg withAuthResult:policyResult cacheable:false];
 }
 
 - (void)handleMessage:(santa::santad::event_providers::endpoint_security::Message &&)esMsg
@@ -402,11 +404,37 @@ void PopulatePathTargets(const Message &msg, std::vector<std::string> &targets) 
   // ES_EVENT_TYPE_AUTH_CLONE
   // ES_EVENT_TYPE_AUTH_EXCHANGEDATA
   // ES_EVENT_TYPE_AUTH_COPYFILE
-  [super subscribeAndClearCache:{ES_EVENT_TYPE_AUTH_OPEN}];
+  if (!self.isSubscribed) {
+    self.isSubscribed = [super subscribe:{ES_EVENT_TYPE_AUTH_OPEN}];
+    [super clearCache];
+  }
 }
 
 - (void)disable {
-  [super unsubscribeAll];
+  if (self.isSubscribed) {
+    if ([super unsubscribeAll]) {
+      self.isSubscribed = false;
+    }
+    [super unmuteEverything];
+  }
+}
+
+- (void)watchItemsCount:(size_t)count
+               newPaths:(const std::vector<std::pair<std::string, WatchItemPathType>> &)newPaths
+           removedPaths:
+             (const std::vector<std::pair<std::string, WatchItemPathType>> &)removedPaths {
+  if (count == 0) {
+    [self disable];
+  } else {
+    // Stop watching removed paths
+    [super unmuteTargetPaths:removedPaths];
+
+    // Begin watching the added paths
+    [super muteTargetPaths:newPaths];
+
+    // begin receiving events (if not already)
+    [self enable];
+  }
 }
 
 @end

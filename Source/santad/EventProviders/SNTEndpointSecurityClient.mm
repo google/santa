@@ -25,6 +25,7 @@
 #import "Source/common/SNTConfigurator.h"
 #import "Source/common/SNTLogging.h"
 #include "Source/common/SystemResources.h"
+#include "Source/santad/DataLayer/WatchItemPolicy.h"
 #include "Source/santad/EventProviders/EndpointSecurity/Client.h"
 #include "Source/santad/EventProviders/EndpointSecurity/EnrichedTypes.h"
 #include "Source/santad/EventProviders/EndpointSecurity/Message.h"
@@ -33,6 +34,7 @@
 using santa::santad::EventDisposition;
 using santa::santad::Metrics;
 using santa::santad::Processor;
+using santa::santad::data_layer::WatchItemPathType;
 using santa::santad::event_providers::endpoint_security::Client;
 using santa::santad::event_providers::endpoint_security::EndpointSecurityAPI;
 using santa::santad::event_providers::endpoint_security::EnrichedMessage;
@@ -183,6 +185,34 @@ using santa::santad::event_providers::endpoint_security::Message;
 
 - (bool)unsubscribeAll {
   return _esApi->UnsubscribeAll(_esClient);
+}
+
+- (bool)unmuteEverything {
+  bool result = _esApi->UnmuteAllPaths(_esClient);
+  result = _esApi->UnmuteAllTargetPaths(_esClient) && result;
+  return result;
+}
+
+- (bool)enableTargetPathWatching {
+  return _esApi->InvertTargetPathMuting(_esClient);
+}
+
+- (bool)muteTargetPaths:(const std::vector<std::pair<std::string, WatchItemPathType>> &)paths {
+  bool result = true;
+  for (const auto &pathAndTypePair : paths) {
+    result =
+      _esApi->MuteTargetPath(_esClient, pathAndTypePair.first, pathAndTypePair.second) && result;
+  }
+  return result;
+}
+
+- (bool)unmuteTargetPaths:(const std::vector<std::pair<std::string, WatchItemPathType>> &)paths {
+  bool result = true;
+  for (const auto &pathAndTypePair : paths) {
+    result =
+      _esApi->UnmuteTargetPath(_esClient, pathAndTypePair.first, pathAndTypePair.second) && result;
+  }
+  return result;
 }
 
 - (bool)respondToMessage:(const Message &)msg

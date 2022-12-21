@@ -23,6 +23,7 @@
 #include <memory>
 
 #include "Source/common/TestUtils.h"
+#include "Source/santad/DataLayer/WatchItemPolicy.h"
 #include "Source/santad/EventProviders/EndpointSecurity/Client.h"
 #include "Source/santad/EventProviders/EndpointSecurity/EnrichedTypes.h"
 #include "Source/santad/EventProviders/EndpointSecurity/Message.h"
@@ -31,6 +32,7 @@
 #include "Source/santad/Metrics.h"
 
 using santa::santad::Processor;
+using santa::santad::data_layer::WatchItemPathType;
 using santa::santad::event_providers::endpoint_security::Client;
 using santa::santad::event_providers::endpoint_security::EnrichedClose;
 using santa::santad::event_providers::endpoint_security::EnrichedFile;
@@ -244,6 +246,117 @@ using santa::santad::event_providers::endpoint_security::Message;
   XCTBubbleMockVerifyAndClearExpectations(mockESApi.get());
 }
 
+- (void)testUnsubscribeAll {
+  auto mockESApi = std::make_shared<MockEndpointSecurityAPI>();
+  SNTEndpointSecurityClient *client =
+    [[SNTEndpointSecurityClient alloc] initWithESAPI:mockESApi
+                                             metrics:nullptr
+                                           processor:Processor::kUnknown];
+
+  // Test the underlying unsubscribe all impl returning both true and false
+  EXPECT_CALL(*mockESApi, UnsubscribeAll)
+    .WillOnce(testing::Return(true))
+    .WillOnce(testing::Return(false));
+
+  XCTAssertTrue([client unsubscribeAll]);
+  XCTAssertFalse([client unsubscribeAll]);
+
+  XCTBubbleMockVerifyAndClearExpectations(mockESApi.get());
+}
+
+- (void)testUnmuteEverything {
+  auto mockESApi = std::make_shared<MockEndpointSecurityAPI>();
+  SNTEndpointSecurityClient *client =
+    [[SNTEndpointSecurityClient alloc] initWithESAPI:mockESApi
+                                             metrics:nullptr
+                                           processor:Processor::kUnknown];
+
+  // Test variations of underlying unmute impls returning both true and false
+  EXPECT_CALL(*mockESApi, UnmuteAllPaths)
+    .WillOnce(testing::Return(true))
+    .WillOnce(testing::Return(false));
+  EXPECT_CALL(*mockESApi, UnmuteAllTargetPaths)
+    .WillOnce(testing::Return(true))
+    .WillOnce(testing::Return(true));
+
+  XCTAssertTrue([client unmuteEverything]);
+  XCTAssertFalse([client unmuteEverything]);
+
+  XCTBubbleMockVerifyAndClearExpectations(mockESApi.get());
+}
+
+- (void)testEnableTargetPathWatching {
+  auto mockESApi = std::make_shared<MockEndpointSecurityAPI>();
+  SNTEndpointSecurityClient *client =
+    [[SNTEndpointSecurityClient alloc] initWithESAPI:mockESApi
+                                             metrics:nullptr
+                                           processor:Processor::kUnknown];
+
+  // Test the underlying invert nute impl returning both true and false
+  EXPECT_CALL(*mockESApi, InvertTargetPathMuting)
+    .WillOnce(testing::Return(true))
+    .WillOnce(testing::Return(false));
+
+  XCTAssertTrue([client enableTargetPathWatching]);
+  XCTAssertFalse([client enableTargetPathWatching]);
+
+  XCTBubbleMockVerifyAndClearExpectations(mockESApi.get());
+}
+
+- (void)testMuteTargetPaths {
+  auto mockESApi = std::make_shared<MockEndpointSecurityAPI>();
+  SNTEndpointSecurityClient *client =
+    [[SNTEndpointSecurityClient alloc] initWithESAPI:mockESApi
+                                             metrics:nullptr
+                                           processor:Processor::kUnknown];
+
+  // Ensure all paths are attempted to be muted even if some fail.
+  // Ensure if any paths fail the overall result is false.
+  EXPECT_CALL(*mockESApi, MuteTargetPath(testing::_, "a", WatchItemPathType::kLiteral))
+    .WillOnce(testing::Return(true));
+  EXPECT_CALL(*mockESApi, MuteTargetPath(testing::_, "b", WatchItemPathType::kLiteral))
+    .WillOnce(testing::Return(false));
+  EXPECT_CALL(*mockESApi, MuteTargetPath(testing::_, "c", WatchItemPathType::kPrefix))
+    .WillOnce(testing::Return(true));
+
+  std::vector<std::pair<std::string, WatchItemPathType>> paths = {
+    {"a", WatchItemPathType::kLiteral},
+    {"b", WatchItemPathType::kLiteral},
+    {"c", WatchItemPathType::kPrefix},
+  };
+
+  XCTAssertFalse([client muteTargetPaths:paths]);
+
+  XCTBubbleMockVerifyAndClearExpectations(mockESApi.get());
+}
+
+- (void)testUnmuteTargetPaths {
+  auto mockESApi = std::make_shared<MockEndpointSecurityAPI>();
+  SNTEndpointSecurityClient *client =
+    [[SNTEndpointSecurityClient alloc] initWithESAPI:mockESApi
+                                             metrics:nullptr
+                                           processor:Processor::kUnknown];
+
+  // Ensure all paths are attempted to be unmuted even if some fail.
+  // Ensure if any paths fail the overall result is false.
+  EXPECT_CALL(*mockESApi, UnmuteTargetPath(testing::_, "a", WatchItemPathType::kLiteral))
+    .WillOnce(testing::Return(true));
+  EXPECT_CALL(*mockESApi, UnmuteTargetPath(testing::_, "b", WatchItemPathType::kLiteral))
+    .WillOnce(testing::Return(false));
+  EXPECT_CALL(*mockESApi, UnmuteTargetPath(testing::_, "c", WatchItemPathType::kPrefix))
+    .WillOnce(testing::Return(true));
+
+  std::vector<std::pair<std::string, WatchItemPathType>> paths = {
+    {"a", WatchItemPathType::kLiteral},
+    {"b", WatchItemPathType::kLiteral},
+    {"c", WatchItemPathType::kPrefix},
+  };
+
+  XCTAssertFalse([client unmuteTargetPaths:paths]);
+
+  XCTBubbleMockVerifyAndClearExpectations(mockESApi.get());
+}
+
 - (void)testRespondToMessageWithAuthResultCacheable {
   es_message_t esMsg;
   auto mockESApi = std::make_shared<MockEndpointSecurityAPI>();
@@ -280,21 +393,22 @@ using santa::santad::event_providers::endpoint_security::Message;
     [[SNTEndpointSecurityClient alloc] initWithESAPI:mockESApi
                                              metrics:nullptr
                                            processor:Processor::kUnknown];
+  {
+    auto enrichedMsg = std::make_shared<EnrichedMessage>(
+      EnrichedClose(Message(mockESApi, &esMsg),
+                    EnrichedProcess(std::nullopt, std::nullopt, std::nullopt, std::nullopt,
+                                    EnrichedFile(std::nullopt, std::nullopt, std::nullopt)),
+                    EnrichedFile(std::nullopt, std::nullopt, std::nullopt)));
 
-  auto enrichedMsg = std::make_shared<EnrichedMessage>(
-    EnrichedClose(Message(mockESApi, &esMsg),
-                  EnrichedProcess(std::nullopt, std::nullopt, std::nullopt, std::nullopt,
-                                  EnrichedFile(std::nullopt, std::nullopt, std::nullopt)),
-                  EnrichedFile(std::nullopt, std::nullopt, std::nullopt)));
+    [client processEnrichedMessage:enrichedMsg
+                           handler:^(std::shared_ptr<EnrichedMessage> msg) {
+                             dispatch_semaphore_signal(sema);
+                           }];
 
-  [client processEnrichedMessage:enrichedMsg
-                         handler:^(std::shared_ptr<EnrichedMessage> msg) {
-                           dispatch_semaphore_signal(sema);
-                         }];
-
-  XCTAssertEqual(0,
-                 dispatch_semaphore_wait(sema, dispatch_time(DISPATCH_TIME_NOW, 10 * NSEC_PER_SEC)),
-                 "Handler block not called within expected time window");
+    XCTAssertEqual(
+      0, dispatch_semaphore_wait(sema, dispatch_time(DISPATCH_TIME_NOW, 10 * NSEC_PER_SEC)),
+      "Handler block not called within expected time window");
+  }
 
   XCTBubbleMockVerifyAndClearExpectations(mockESApi.get());
 }
@@ -355,11 +469,11 @@ using santa::santad::event_providers::endpoint_security::Message;
                                     handler:^(const Message &msg) {
                                       dispatch_semaphore_signal(sema);
                                     }]);
-  }
 
-  XCTAssertEqual(0,
-                 dispatch_semaphore_wait(sema, dispatch_time(DISPATCH_TIME_NOW, 5 * NSEC_PER_SEC)),
-                 "Handler block not called within expected time window");
+    XCTAssertEqual(
+      0, dispatch_semaphore_wait(sema, dispatch_time(DISPATCH_TIME_NOW, 5 * NSEC_PER_SEC)),
+      "Handler block not called within expected time window");
+  }
 
   XCTBubbleMockVerifyAndClearExpectations(mockESApi.get());
 }

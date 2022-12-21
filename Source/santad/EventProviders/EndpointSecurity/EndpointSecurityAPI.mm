@@ -13,10 +13,13 @@
 ///    limitations under the License.
 
 #include "Source/santad/EventProviders/EndpointSecurity/EndpointSecurityAPI.h"
-#include <EndpointSecurity/ESTypes.h>
 
 #include <set>
 #include <vector>
+
+#include "Source/common/Platform.h"
+
+using santa::santad::data_layer::WatchItemPathType;
 
 namespace santa::santad::event_providers::endpoint_security {
 
@@ -49,6 +52,73 @@ bool EndpointSecurityAPI::Subscribe(const Client &client,
 
 bool EndpointSecurityAPI::UnsubscribeAll(const Client &client) {
   return es_unsubscribe_all(client.Get()) == ES_RETURN_SUCCESS;
+}
+
+bool EndpointSecurityAPI::UnmuteAllPaths(const Client &client) {
+  return es_unmute_all_paths(client.Get()) == ES_RETURN_SUCCESS;
+}
+
+bool EndpointSecurityAPI::UnmuteAllTargetPaths(const Client &client) {
+#if HAVE_MACOS_13
+  if (@available(macOS 13.0, *)) {
+    return es_unmute_all_target_paths(client.Get()) == ES_RETURN_SUCCESS;
+  }
+#endif
+
+  return true;
+}
+
+bool EndpointSecurityAPI::IsTargetPathMutingInverted(const Client &client) {
+#if HAVE_MACOS_13
+  if (@available(macOS 13.0, *)) {
+    return es_muting_inverted(client.Get(), ES_MUTE_INVERSION_TYPE_TARGET_PATH) == ES_MUTE_INVERTED;
+  }
+#endif
+
+  return false;
+}
+
+bool EndpointSecurityAPI::InvertTargetPathMuting(const Client &client) {
+#if HAVE_MACOS_13
+  if (@available(macOS 13.0, *)) {
+    if (!IsTargetPathMutingInverted(client)) {
+      return es_invert_muting(client.Get(), ES_MUTE_INVERSION_TYPE_TARGET_PATH) ==
+             ES_RETURN_SUCCESS;
+    } else {
+      return true;
+    }
+  }
+#endif
+
+  return false;
+}
+
+bool EndpointSecurityAPI::MuteTargetPath(const Client &client, std::string_view path,
+                                         WatchItemPathType path_type) {
+#if HAVE_MACOS_13
+  if (@available(macOS 13.0, *)) {
+    return es_mute_path(client.Get(), path.data(),
+                        path_type == WatchItemPathType::kPrefix
+                          ? ES_MUTE_PATH_TYPE_TARGET_PREFIX
+                          : ES_MUTE_PATH_TYPE_TARGET_LITERAL) == ES_RETURN_SUCCESS;
+  }
+#endif
+
+  return false;
+}
+
+bool EndpointSecurityAPI::UnmuteTargetPath(const Client &client, std::string_view path,
+                                           WatchItemPathType path_type) {
+#if HAVE_MACOS_13
+  if (@available(macOS 13.0, *)) {
+    return es_unmute_path(client.Get(), path.data(),
+                          path_type == WatchItemPathType::kPrefix
+                            ? ES_MUTE_PATH_TYPE_TARGET_PREFIX
+                            : ES_MUTE_PATH_TYPE_TARGET_LITERAL) == ES_RETURN_SUCCESS;
+  }
+#endif
+
+  return true;
 }
 
 bool EndpointSecurityAPI::RespondAuthResult(const Client &client, const Message &msg,

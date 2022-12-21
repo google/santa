@@ -19,12 +19,16 @@
 #include <ctype.h>
 #include <glob.h>
 
+#include <algorithm>
 #include <cstddef>
 #include <cstdlib>
+#include <iterator>
 #include <memory>
 #include <optional>
 #include <set>
+#include <string>
 #include <utility>
+#include <vector>
 
 #import "Source/common/PrefixTree.h"
 #import "Source/common/SNTLogging.h"
@@ -322,8 +326,18 @@ void WatchItems::UpdateCurrentState(
       (current_config_ == nil && new_config != nil) ||
       (currently_monitored_paths_ != new_monitored_paths) ||
       (new_config && ![current_config_ isEqualToDictionary:new_config])) {
-    // TODO(mlw): In upcoming PR, need to use ES API to stop watching removed paths,
-    // and start watching newly configured paths.
+    std::vector<std::pair<std::string, WatchItemPathType>> paths_to_watch;
+    std::vector<std::pair<std::string, WatchItemPathType>> paths_to_stop_watching;
+
+    // New paths to watch are those that are in the new set, but not current
+    std::set_difference(new_monitored_paths.begin(), new_monitored_paths.end(),
+                        currently_monitored_paths_.begin(), currently_monitored_paths_.end(),
+                        std::back_inserter(paths_to_watch));
+
+    // Paths to stop watching are in the current set, but not new
+    std::set_difference(currently_monitored_paths_.begin(), currently_monitored_paths_.end(),
+                        new_monitored_paths.begin(), new_monitored_paths.end(),
+                        std::back_inserter(paths_to_stop_watching));
 
     std::swap(watch_items_, new_tree);
     std::swap(currently_monitored_paths_, new_monitored_paths);
@@ -334,18 +348,15 @@ void WatchItems::UpdateCurrentState(
       policy_version_ = "";
     }
 
-    bool anyPathsMonitored = currently_monitored_paths_.size() > 0;
     for (const id<SNTEndpointSecurityDynamicEventHandler> &client : registerd_clients_) {
       // Note: Enable clients on an async queue in case they perform any
       // synchronous work that could trigger ES events. Otherwise they might
       // trigger AUTH ES events that would attempt to re-enter this object and
       // potentially deadlock.
       dispatch_async(q_, ^{
-        if (anyPathsMonitored) {
-          [client enable];
-        } else {
-          [client disable];
-        }
+        [client watchItemsCount:currently_monitored_paths_.size()
+                       newPaths:paths_to_watch
+                   removedPaths:paths_to_stop_watching];
       });
     }
   } else {
