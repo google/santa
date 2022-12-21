@@ -1,0 +1,24 @@
+name: Fuzzing
+
+on:
+  schedule:
+    - cron: '* 6 * * *' # Every day at 6:00 UTC
+  workflow_dispatch:  # Allows you to run this workflow manually from the Actions tab
+
+jobs:
+  fuzz:
+    runs-on: self-hosted
+    steps:
+      - uses: actions/checkout@v2
+      - name: Setup libfuzzer
+        run: Fuzzing/install_libclang_fuzzer.sh
+      - name: Cleanup any existing fuzz runs
+        run: rm -rf /tmp/fuzzing/artifacts  # N.B. keeps the corpus
+      - name: Fuzz Mach-O Parsing
+        run: bazel run --config=fuzz //Fuzzing:MachOParse_run -- -- -max_len=32768 -runs=1000000
+      - name: Upload crashes
+        uses: actions/upload-artifact@v1
+        if: failure()
+        with:
+          name: artifacts
+          path: /tmp/fuzzing/artifacts
