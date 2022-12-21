@@ -3,7 +3,7 @@
 set -uexo pipefail
 
 CLANG_VERSION=$(clang --version | head -n 1 | cut -d' ' -f 4)
-DST_PATH="/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/${CLANG_VERSION}/lib/darwin/libclang_rt.fuzzer_osx.a"
+DST_PATH="$(xcode-select -p)/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/${CLANG_VERSION}/lib/darwin/libclang_rt.fuzzer_osx.a"
 
 if [ -f ${DST_PATH} ]; then
   exit 0;

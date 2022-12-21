@@ -14,8 +14,11 @@ jobs:
         run: Fuzzing/install_libclang_fuzzer.sh
       - name: Cleanup any existing fuzz runs
         run: rm -rf /tmp/fuzzing/artifacts  # N.B. keeps the corpus
-      - name: Fuzz Mach-O Parsing
-        run: bazel run --config=fuzz //Fuzzing:MachOParse_run -- -- -max_len=32768 -runs=1000000
+      - name: Fuzz
+        run: |
+          for target in $(bazel query 'kind(fuzzing_launcher, //Fuzzing:all)'); do
+            bazel run --config=fuzz $target -- -- -max_len=32768 -runs=1000000
+          done
       - name: Upload crashes
         uses: actions/upload-artifact@v1
         if: failure()

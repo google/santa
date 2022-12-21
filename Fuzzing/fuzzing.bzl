@@ -2,7 +2,7 @@
 
 load("@rules_fuzzing//fuzzing:cc_defs.bzl", "cc_fuzz_test")
 
-def objc_fuzz_test(name, srcs, deps, corpus, **kwargs):
+def objc_fuzz_test(name, srcs, deps, corpus, linkopts=[], **kwargs):
     native.objc_library(
         name = "%s_lib" % name,
         srcs = srcs,
@@ -15,6 +15,6 @@ def objc_fuzz_test(name, srcs, deps, corpus, **kwargs):
         deps = [
             "%s_lib" % name,
         ],
-        linkopts = kwargs.get("linkopts", []),
+        linkopts = linkopts,
         corpus = corpus,
     )

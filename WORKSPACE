@@ -147,7 +147,7 @@ objc_library(
 
 git_repository(
     name = "rules_fuzzing",
-    commit = "b193df79b10dbfb4c623bda23e825e835f12bada",  # PR 213 which fixes macOS
+    commit = "b193df79b10dbfb4c623bda23e825e835f12bada",  # Commit post PR 213 which fixes macOS
     remote = "https://github.com/bazelbuild/rules_fuzzing",
     shallow_since = "1668184479 -0500",
 )
