@@ -63,7 +63,7 @@ jobs:
       - name: Setup libfuzzer
         run: Fuzzing/install_libclang_fuzzer.sh
       - name: Cleanup any existing fuzz runs
-        run: rm -rf /tmp/fuzzing
+        run: rm -rf /tmp/fuzzing/artifacts  # N.B. keeps the corpus
       - name: Fuzz Mach-O Parsing
         run: bazel run --config=fuzz //Fuzzing:MachOParse_run -- -- -max_len=32768 -runs=1000000
       - name: Upload crashes
