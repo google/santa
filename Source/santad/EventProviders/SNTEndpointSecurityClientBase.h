@@ -86,7 +86,8 @@
 
 - (bool)clearCache;
 
-+ (bool)isDatabasePath:(const std::string_view)path;
++ (std::set<std::string>)getProtectedPaths;
++ (bool)isProtectedPath:(const std::string_view)path;
 + (bool)populateAuditTokenSelf:(audit_token_t *)tok;
 
 @end

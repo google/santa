@@ -413,11 +413,11 @@ using santa::santad::event_providers::endpoint_security::Message;
   XCTBubbleMockVerifyAndClearExpectations(mockESApi.get());
 }
 
-- (void)testIsDatabasePath {
-  XCTAssertTrue([SNTEndpointSecurityClient isDatabasePath:"/private/var/db/santa/rules.db"]);
-  XCTAssertTrue([SNTEndpointSecurityClient isDatabasePath:"/private/var/db/santa/events.db"]);
+- (void)testIsProtectedPath {
+  XCTAssertTrue([SNTEndpointSecurityClient isProtectedPath:"/private/var/db/santa/rules.db"]);
+  XCTAssertTrue([SNTEndpointSecurityClient isProtectedPath:"/private/var/db/santa/events.db"]);
 
-  XCTAssertFalse([SNTEndpointSecurityClient isDatabasePath:"/not/a/db/path"]);
+  XCTAssertFalse([SNTEndpointSecurityClient isProtectedPath:"/not/a/db/path"]);
 }
 
 - (void)testProcessMessageHandlerBadEventType {
