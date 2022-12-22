@@ -255,6 +255,7 @@ objc_library(
         ":EndpointSecurityMessage",
         ":Metrics",
         ":SNTEndpointSecurityClientBase",
+        ":WatchItemPolicy",
         "//Source/common:BranchPrediction",
         "//Source/common:SNTConfigurator",
         "//Source/common:SNTLogging",
