@@ -19,8 +19,6 @@ jobs:
       - uses: actions/checkout@v2
       - name: Setup libfuzzer
         run: Fuzzing/install_libclang_fuzzer.sh
-      - name: Cleanup any existing fuzz runs
-        run: rm -rf /tmp/fuzzing/artifacts  # N.B. keeps the corpus
       - name: Fuzz
         run: |
           for target in $(bazel query 'kind(fuzzing_launcher, //Fuzzing:all)'); do
