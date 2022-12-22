@@ -1,5 +1,6 @@
 # Ignore reason: These crafted binaries are used in tests
 ignorePaths:
+- Fuzzing/common/MachOParse_corpus/ret0
 - Source/common/testdata/bad_pagezero
 - Source/common/testdata/missing_pagezero
 - Source/common/testdata/missing_pagezero
