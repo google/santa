@@ -18,10 +18,12 @@
 #include <string.h>
 
 #import "Source/common/SNTLogging.h"
+#include "Source/santad/DataLayer/WatchItemPolicy.h"
 #include "Source/santad/EventProviders/EndpointSecurity/Message.h"
 #include "Source/santad/Metrics.h"
 
 using santa::santad::EventDisposition;
+using santa::santad::data_layer::WatchItemPathType;
 using santa::santad::event_providers::endpoint_security::EndpointSecurityAPI;
 using santa::santad::event_providers::endpoint_security::Message;
 using santa::santad::logs::endpoint_security::Logger;
@@ -56,7 +58,7 @@ static constexpr std::string_view kSantaKextIdentifier = "com.google.santa-drive
   switch (esMsg->event_type) {
     case ES_EVENT_TYPE_AUTH_UNLINK: {
       if ([SNTEndpointSecurityTamperResistance
-            isDatabasePath:esMsg->event.unlink.target->path.data]) {
+            isProtectedPath:esMsg->event.unlink.target->path.data]) {
         result = ES_AUTH_RESULT_DENY;
         LOGW(@"Preventing attempt to delete Santa databases!");
       }
@@ -65,7 +67,7 @@ static constexpr std::string_view kSantaKextIdentifier = "com.google.santa-drive
 
     case ES_EVENT_TYPE_AUTH_RENAME: {
       if ([SNTEndpointSecurityTamperResistance
-            isDatabasePath:esMsg->event.rename.source->path.data]) {
+            isProtectedPath:esMsg->event.rename.source->path.data]) {
         result = ES_AUTH_RESULT_DENY;
         LOGW(@"Preventing attempt to rename Santa databases!");
         break;
@@ -73,7 +75,7 @@ static constexpr std::string_view kSantaKextIdentifier = "com.google.santa-drive
 
       if (esMsg->event.rename.destination_type == ES_DESTINATION_TYPE_EXISTING_FILE) {
         if ([SNTEndpointSecurityTamperResistance
-              isDatabasePath:esMsg->event.rename.destination.existing_file->path.data]) {
+              isProtectedPath:esMsg->event.rename.destination.existing_file->path.data]) {
           result = ES_AUTH_RESULT_DENY;
           LOGW(@"Preventing attempt to overwrite Santa databases!");
           break;
@@ -108,9 +110,20 @@ static constexpr std::string_view kSantaKextIdentifier = "com.google.santa-drive
 }
 
 - (void)enable {
-  // TODO(mlw): For macOS 13, use new mute and invert APIs to limit the
-  // messages sent for these events to the Santa-specific directories
-  // checked in the `handleMessage:` method.
+  [super enableTargetPathWatching];
+  [super unmuteEverything];
+
+  // Get the set of protected paths
+  std::set<std::string> protectedPaths = [SNTEndpointSecurityTamperResistance getProtectedPaths];
+
+  // Iterate the set, and create a vector of literals to mute
+  std::vector<std::pair<std::string, WatchItemPathType>> watchPaths;
+  for (const auto &path : protectedPaths) {
+    watchPaths.push_back({path, WatchItemPathType::kLiteral});
+  }
+
+  // Begin watching the protected set
+  [super muteTargetPaths:watchPaths];
 
   [super subscribeAndClearCache:{
                                   ES_EVENT_TYPE_AUTH_KEXTLOAD,

@@ -24,6 +24,7 @@
 #include <set>
 
 #include "Source/common/TestUtils.h"
+#include "Source/santad/DataLayer/WatchItemPolicy.h"
 #include "Source/santad/EventProviders/EndpointSecurity/Client.h"
 #include "Source/santad/EventProviders/EndpointSecurity/Message.h"
 #include "Source/santad/EventProviders/EndpointSecurity/MockEndpointSecurityAPI.h"
@@ -31,6 +32,7 @@
 #import "Source/santad/Metrics.h"
 
 using santa::santad::EventDisposition;
+using santa::santad::data_layer::WatchItemPathType;
 using santa::santad::event_providers::endpoint_security::Client;
 using santa::santad::event_providers::endpoint_security::Message;
 
@@ -60,6 +62,15 @@ static constexpr std::string_view kSantaKextIdentifier = "com.google.santa-drive
     .After(EXPECT_CALL(*mockESApi, Subscribe(testing::_, expectedEventSubs))
              .WillOnce(testing::Return(true)))
     .WillOnce(testing::Return(true));
+
+  // Setup mocks to handle inverting target path muting
+  EXPECT_CALL(*mockESApi, InvertTargetPathMuting).WillOnce(testing::Return(true));
+  EXPECT_CALL(*mockESApi, UnmuteAllPaths).WillOnce(testing::Return(true));
+  EXPECT_CALL(*mockESApi, UnmuteAllTargetPaths).WillOnce(testing::Return(true));
+
+  // Setup mocks to handle muting the rules db and events db
+  EXPECT_CALL(*mockESApi, MuteTargetPath(testing::_, testing::_, WatchItemPathType::kLiteral))
+    .WillRepeatedly(testing::Return(true));
 
   SNTEndpointSecurityTamperResistance *tamperClient =
     [[SNTEndpointSecurityTamperResistance alloc] initWithESAPI:mockESApi
