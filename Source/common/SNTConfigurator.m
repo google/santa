@@ -1050,7 +1050,9 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
                                                name:NSUserDefaultsDidChangeNotification
                                              object:nil];
 #ifdef DEBUG
-  [self watchOverridesFile];
+  dispatch_async(dispatch_get_global_queue(QOS_CLASS_UTILITY, 0), ^{
+    [self watchOverridesFile];
+  });
 #endif
 }
 
