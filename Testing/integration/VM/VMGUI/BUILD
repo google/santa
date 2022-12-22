@@ -30,7 +30,7 @@ macos_application(
     bundle_id = "com.google.santa.e2e.vmgui",
     entitlements = "//Testing/integration/VM/Common:entitlements",
     infoplists = ["//Testing/integration/VM/Common:plist"],
-    minimum_os_version = "12.0",
+    minimum_os_version = "13.0",
     deps = [
         ":vmgui_lib",
     ],
