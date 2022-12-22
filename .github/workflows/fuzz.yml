@@ -6,8 +6,15 @@ on:
   workflow_dispatch:  # Allows you to run this workflow manually from the Actions tab
 
 jobs:
+  start_vm:
+    runs-on: e2e-host
+    steps:
+      - uses: actions/checkout@v2
+      - name: Start VM
+        run: python3 Testing/integration/actions/start_vm.py macOS_13.bundle.tar.gz
+
   fuzz:
-    runs-on: self-hosted
+    runs-on: e2e-vm
     steps:
       - uses: actions/checkout@v2
       - name: Setup libfuzzer
