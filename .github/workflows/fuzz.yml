@@ -6,14 +6,19 @@ on:
   workflow_dispatch:  # Allows you to run this workflow manually from the Actions tab
 
 jobs:
+  start_vm:
+    runs-on: e2e-host
+    steps:
+      - uses: actions/checkout@v2
+      - name: Start VM
+        run: python3 Testing/integration/actions/start_vm.py macOS_13.bundle.tar.gz
+
   fuzz:
-    runs-on: self-hosted
+    runs-on: e2e-vm
     steps:
       - uses: actions/checkout@v2
       - name: Setup libfuzzer
         run: Fuzzing/install_libclang_fuzzer.sh
-      - name: Cleanup any existing fuzz runs
-        run: rm -rf /tmp/fuzzing/artifacts  # N.B. keeps the corpus
       - name: Fuzz
         run: |
           for target in $(bazel query 'kind(fuzzing_launcher, //Fuzzing:all)'); do
