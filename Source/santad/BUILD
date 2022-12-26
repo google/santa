@@ -295,6 +295,7 @@ objc_library(
         ":Metrics",
         ":SNTEndpointSecurityClient",
         ":SNTEndpointSecurityEventHandler",
+        ":WatchItemPolicy",
         "//Source/common:SNTLogging",
     ],
 )
@@ -1185,6 +1186,7 @@ santa_unit_test(
         ":Metrics",
         ":MockEndpointSecurityAPI",
         ":SNTEndpointSecurityTamperResistance",
+        ":WatchItemPolicy",
         "//Source/common:SNTLogging",
         "//Source/common:TestUtils",
         "@OCMock",

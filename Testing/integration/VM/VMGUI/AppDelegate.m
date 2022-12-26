@@ -27,22 +27,6 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #import <Virtualization/Virtualization.h>
 
-// MARK: Private Virtualization.framework API to boot into recoveryOS
-@interface _VZVirtualMachineStartOptions : NSObject
-
-@property(assign) BOOL bootMacOSRecovery;
-
-@end
-
-@interface VZVirtualMachine (Private)
-
-#if !defined(MAC_OS_VERSION_13_0)
-- (void)_startWithOptions:(_VZVirtualMachineStartOptions *__nullable)options
-        completionHandler:(void (^__nonnull)(NSError *_Nullable errorOrNil))completionHandler;
-#endif
-
-@end
-
 // MARK: AppDelegate
 
 @interface AppDelegate ()
@@ -65,7 +49,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
   dispatch_async(dispatch_get_main_queue(), ^{
     NSArray *args = [[NSProcessInfo processInfo] arguments];
 
-    _VZVirtualMachineStartOptions *options = [_VZVirtualMachineStartOptions new];
+    VZMacOSVirtualMachineStartOptions *options = [VZMacOSVirtualMachineStartOptions new];
     NSString *bundleDir;
     NSString *roDisk;
 
@@ -75,7 +59,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
     int bundleArg = 1;
     if ([args[1] isEqualToString:@"-recovery"]) {
-      options.bootMacOSRecovery = YES;
+      options.startUpFromMacOSRecovery = YES;
       if (args.count < 3) {
         abortWithErrorMessage(@"Usage: VMGUI [-recovery] bundle_path [ro_disk]");
       }
@@ -100,7 +84,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
     self->_virtualMachine.delegate = self->_delegate;
     self->_virtualMachineView.virtualMachine = self->_virtualMachine;
 
-    [self->_virtualMachine _startWithOptions:options
+    [self->_virtualMachine startWithOptions:options
                            completionHandler:^(NSError *_Nullable error) {
                              if (error) {
                                abortWithErrorMessage(error.localizedDescription);

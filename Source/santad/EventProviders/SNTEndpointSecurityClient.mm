@@ -21,6 +21,10 @@
 #include <stdlib.h>
 #include <sys/qos.h>
 
+#include <set>
+#include <string>
+#include <string_view>
+
 #include "Source/common/BranchPrediction.h"
 #import "Source/common/SNTConfigurator.h"
 #import "Source/common/SNTLogging.h"
@@ -39,6 +43,9 @@ using santa::santad::event_providers::endpoint_security::Client;
 using santa::santad::event_providers::endpoint_security::EndpointSecurityAPI;
 using santa::santad::event_providers::endpoint_security::EnrichedMessage;
 using santa::santad::event_providers::endpoint_security::Message;
+
+constexpr std::string_view kProtectedFiles[] = {"/private/var/db/santa/rules.db",
+                                                "/private/var/db/santa/events.db"};
 
 @interface SNTEndpointSecurityClient ()
 @property int64_t deadlineMarginMS;
@@ -296,12 +303,28 @@ using santa::santad::event_providers::endpoint_security::Message;
   });
 }
 
-+ (bool)isDatabasePath:(const std::string_view)path {
++ (std::set<std::string>)getProtectedPaths {
+  std::set<std::string> protectedPathsCopy;
+
+  for (size_t i = 0; i < sizeof(kProtectedFiles) / sizeof(kProtectedFiles[0]); i++) {
+    protectedPathsCopy.insert(std::string(kProtectedFiles[i]));
+  }
+
+  return protectedPathsCopy;
+}
+
++ (bool)isProtectedPath:(const std::string_view)path {
   // TODO(mlw): These values should come from `SNTDatabaseController`. But right
   // now they live as NSStrings. We should make them `std::string_view` types
   // in order to use them here efficiently, but will need to make the
   // `SNTDatabaseController` an ObjC++ file.
-  return (path == "/private/var/db/santa/rules.db" || path == "/private/var/db/santa/events.db");
+  for (size_t i = 0; i < sizeof(kProtectedFiles) / sizeof(kProtectedFiles[0]); i++) {
+    if (path == kProtectedFiles[i]) {
+      return true;
+    }
+  }
+
+  return false;
 }
 
 @end
