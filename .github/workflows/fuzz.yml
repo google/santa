@@ -30,3 +30,6 @@ jobs:
         with:
           name: artifacts
           path: /tmp/fuzzing/artifacts
+      - name: Poweroff VM
+        if: ${{ always() }}
+        run: sudo shutdown -h +1
