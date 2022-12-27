@@ -85,11 +85,11 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
     self->_virtualMachineView.virtualMachine = self->_virtualMachine;
 
     [self->_virtualMachine startWithOptions:options
-                           completionHandler:^(NSError *_Nullable error) {
-                             if (error) {
-                               abortWithErrorMessage(error.localizedDescription);
-                             }
-                           }];
+                          completionHandler:^(NSError *_Nullable error) {
+                            if (error) {
+                              abortWithErrorMessage(error.localizedDescription);
+                            }
+                          }];
   });
 #endif
 }
