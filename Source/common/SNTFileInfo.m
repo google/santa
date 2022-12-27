@@ -642,9 +642,10 @@ extern NSString *const NSURLQuarantinePropertiesKey WEAK_IMPORT_ATTRIBUTE;
 ///
 - (NSData *)safeSubdataWithRange:(NSRange)range {
   @try {
-    if (range.location > self.fileSize || range.length > self.fileSize ||
-        (range.location + range.length) > self.fileSize)
+    NSUInteger size;
+    if (__builtin_add_overflow(range.location, range.length, &size) || size > self.fileSize) {
       return nil;
+    }
     [self.fileHandle seekToFileOffset:range.location];
     NSData *d = [self.fileHandle readDataOfLength:range.length];
     if (d.length != range.length) return nil;
