@@ -2,7 +2,7 @@ name: Fuzzing
 
 on:
   schedule:
-    - cron: '* 6 * * *' # Every day at 6:00 UTC
+    - cron: '0 6 * * *' # Every day at 6:00 UTC
   workflow_dispatch:  # Allows you to run this workflow manually from the Actions tab
 
 jobs:

@@ -1,7 +1,7 @@
 name: continuous
 on:
   schedule:
-    - cron: '* 10 * * *' # Every day at 10:00 UTC
+    - cron: '0 10 * * *' # Every day at 10:00 UTC
   workflow_dispatch:  # Allows you to run this workflow manually from the Actions tab
 
 jobs:
