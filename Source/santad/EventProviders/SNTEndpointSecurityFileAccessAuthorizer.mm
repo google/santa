@@ -52,9 +52,6 @@ using santa::santad::logs::endpoint_security::Logger;
 NSString *kBadCertHash = @"BAD_CERT_HASH";
 
 static constexpr uint32_t kOpenFlagsIndicatingWrite = FWRITE | O_APPEND | O_TRUNC;
-// static constexpr uint32_t kOpenFlagsAllowAll = 0xffffffff;
-// static constexpr uint32_t kOpenFlagsAllowNone = 0x0;
-// static constexpr uint32_t kOpenFlagsAllowRead = (kOpenFlagsAllowAll & ~kOpenFlagsIndicatingWrite);
 
 static inline std::string Path(const es_file_t *esFile) {
   return std::string(esFile->path.data, esFile->path.length);
@@ -76,60 +73,6 @@ static inline void PushBackIfNotTruncated(std::vector<std::string> &vec, const e
     vec.push_back(Path(dir) + "/" + Path(name));
   }
 }
-
-// // A local type to encapsulate fewer options than FileAccessPolicyDecision
-// //
-// enum class FileAccessPolicyDecisionBasic {
-//   kDenied,
-//   kAllowed,
-//   kAllowedReadAccess,
-// };
-
-// FileAccessPolicyDecisionBasic FileAccessPolicyDecisionToBasic(FileAccessPolicyDecision decision) {
-//   switch (decision) {
-//     case FileAccessPolicyDecision::kNoPolicy: return FileAccessPolicyDecisionBasic::kAllowed;
-//     case FileAccessPolicyDecision::kDenied: return FileAccessPolicyDecisionBasic::kDenied;
-//     case FileAccessPolicyDecision::kDeniedInvalidSignature:
-//       return FileAccessPolicyDecisionBasic::kDenied;
-//     case FileAccessPolicyDecision::kAllowed: return FileAccessPolicyDecisionBasic::kAllowed;
-//     case FileAccessPolicyDecision::kAllowedReadAccess:
-//       return FileAccessPolicyDecisionBasic::kAllowedReadAccess;
-//     case FileAccessPolicyDecision::kAllowedAuditOnly:
-//       return FileAccessPolicyDecisionBasic::kAllowed;
-//     default:
-//       // This is a programming error. Bail.
-//       LOGE(@"Invalid file access decision encountered: %d", decision);
-//       [NSException raise:@"Invalid FileAccessPolicyDecision"
-//                   format:@"Invalid FileAccessPolicyDecision: %d", decision];
-//   }
-// }
-
-// es_auth_result_t FileAccessPolicyDecisionBasicToESAuthResult(
-//   FileAccessPolicyDecisionBasic decision) {
-//   switch (decision) {
-//     case FileAccessPolicyDecisionBasic::kDenied: return ES_AUTH_RESULT_DENY;
-//     case FileAccessPolicyDecisionBasic::kAllowed: return ES_AUTH_RESULT_ALLOW;
-//     case FileAccessPolicyDecisionBasic::kAllowedReadAccess: return ES_AUTH_RESULT_ALLOW;
-//     default:
-//       // This is a programming error. Bail.
-//       LOGE(@"Invalid file access decision encountered: %d", decision);
-//       [NSException raise:@"Invalid FileAccessPolicyDecisionBasic"
-//                   format:@"Invalid FileAccessPolicyDecisionBasic: %d", decision];
-//   }
-// }
-
-// uint32_t FileAccessPolicyDecisionBasicToESFlagsResult(FileAccessPolicyDecisionBasic decision) {
-//   switch (decision) {
-//     case FileAccessPolicyDecisionBasic::kDenied: return kOpenFlagsAllowNone;
-//     case FileAccessPolicyDecisionBasic::kAllowed: return kOpenFlagsAllowAll;
-//     case FileAccessPolicyDecisionBasic::kAllowedReadAccess: return kOpenFlagsAllowRead;
-//     default:
-//       // This is a programming error. Bail.
-//       LOGE(@"Invalid file access decision encountered: %d", decision);
-//       [NSException raise:@"Invalid FileAccessPolicyDecisionBasic"
-//                   format:@"Invalid FileAccessPolicyDecisionBasic: %d", decision];
-//   }
-// }
 
 es_auth_result_t FileAccessPolicyDecisionToESAuthResult(FileAccessPolicyDecision decision) {
   switch (decision) {
@@ -155,32 +98,6 @@ bool ShouldLogDecision(FileAccessPolicyDecision decision) {
     default: return false;
   }
 }
-
-// // This function combines the two input decisions into the most restrictive
-// // result. For example:
-// //   * "allowed + denied = denied"
-// //   * "allowed + allowed_read_access = allowed_read_access"
-// FileAccessPolicyDecisionBasic CombinePolicyResultsNewest(FileAccessPolicyDecisionBasic d1,
-//                                                          FileAccessPolicyDecisionBasic d2) {
-//   // If either input is denied, the result is denied
-//   if (d1 == FileAccessPolicyDecisionBasic::kDenied ||
-//       d2 == FileAccessPolicyDecisionBasic::kDenied) {
-//     return FileAccessPolicyDecisionBasic::kDenied;
-//   }
-
-//   // If either input allows read access, the result allows read access
-//   if (d1 == FileAccessPolicyDecisionBasic::kAllowedReadAccess ||
-//       d2 == FileAccessPolicyDecisionBasic::kAllowedReadAccess) {
-//     return FileAccessPolicyDecisionBasic::kAllowedReadAccess;
-//   }
-
-//   return FileAccessPolicyDecisionBasic::kAllowed;
-// }
-
-// uint32_t CombinePolicyResultsNew(uint32_t result1, uint32_t result2) {
-//   // Combine the flags
-//   return result1 & result2;
-// }
 
 es_auth_result_t CombinePolicyResults(es_auth_result_t result1, es_auth_result_t result2) {
   // If either policy denied the operation, the operation is denied
@@ -448,30 +365,6 @@ void PopulatePathTargets(const Message &msg, std::vector<std::string> &targets) 
   return policyDecision;
 }
 
-// - (void)processMessage:(const Message &)msg {
-//   std::vector<std::string> targets;
-//   PopulatePathTargets(msg, targets);
-//   WatchItems::VersionAndPolicies versionAndPolicies =
-//     self->_watchItems->FindPolciesForPaths(targets);
-
-//   es_auth_result_t policyResult = ES_AUTH_RESULT_ALLOW;
-//   FileAccessPolicyDecision prevDecision = FileAccessPolicyDecision::kNoPolicy;
-
-//   for (size_t i = 0; i < targets.size(); i++) {
-//     FileAccessPolicyDecision curDecision = [self handleMessage:msg
-//                                                         target:targets[i]
-//                                                         policy:versionAndPolicies.second[i]
-//                                                  policyVersion:versionAndPolicies.first];
-
-//     policyResult = CombinePolicyResults(FileAccessPolicyDecisionToESAuthResult(prevDecision),
-//                                         FileAccessPolicyDecisionToESAuthResult(curDecision));
-
-//     prevDecision = curDecision;
-//   }
-
-//   [self respondToMessage:msg withAuthResult:policyResult cacheable:false];
-// }
-
 - (void)processMessage:(const Message &)msg {
   std::vector<std::string> targets;
   PopulatePathTargets(msg, targets);
@@ -507,40 +400,6 @@ void PopulatePathTargets(const Message &msg, std::vector<std::string> &targets) 
           withAuthResult:policyResult
                cacheable:(policyResult == ES_AUTH_RESULT_ALLOW && !allow_read_access)];
 }
-
-// - (void)processMessageNew:(const Message &)msg {
-//   std::vector<std::string> targets;
-//   PopulatePathTargets(msg, targets);
-//   WatchItems::VersionAndPolicies versionAndPolicies =
-//     self->_watchItems->FindPolciesForPaths(targets);
-
-//   FileAccessPolicyDecisionBasic policyResult = FileAccessPolicyDecisionBasic::kAllowed;
-
-//   for (size_t i = 0; i < targets.size(); i++) {
-//     FileAccessPolicyDecision curDecision = [self handleMessage:msg
-//                                                         target:targets[i]
-//                                                         policy:versionAndPolicies.second[i]
-//                                                  policyVersion:versionAndPolicies.first];
-
-//     policyResult =
-//       CombinePolicyResultsNewest(policyResult, FileAccessPolicyDecisionToBasic(curDecision));
-//   }
-
-//   // IMPORTANT: A response is only cacheable if the policy result was explicitly
-//   // allowed. An "allow read access" result must not be cached to ensure a future
-//   // non-read accesss can be evaluated. Similarly, denied results must never be
-//   // cached so access attempts can be logged.
-//   if (msg->event_type == ES_EVENT_TYPE_AUTH_OPEN) {
-//     [self respondToMessage:msg
-//            withFlagsResult:FileAccessPolicyDecisionBasicToESFlagsResult(policyResult)
-//                  cacheable:(policyResult == FileAccessPolicyDecisionBasic::kAllowed)];
-
-//   } else {
-//     [self respondToMessage:msg
-//             withAuthResult:FileAccessPolicyDecisionBasicToESAuthResult(policyResult)
-//                  cacheable:(policyResult == FileAccessPolicyDecisionBasic::kAllowed)];
-//   }
-// }
 
 - (void)handleMessage:(santa::santad::event_providers::endpoint_security::Message &&)esMsg
    recordEventMetrics:(void (^)(EventDisposition))recordEventMetrics {
