@@ -6,6 +6,8 @@
 	<string>v0.1-CURRENT</string>
 	<key>WatchItems</key>
 	<dict>
+    <!-- Note the current config supports one path per rule, requiring -->
+    <!-- related paths be split across multiple rules.-->
 		<key>my_watcher_path1</key>
 		<dict>
 			<key>Path</key>
