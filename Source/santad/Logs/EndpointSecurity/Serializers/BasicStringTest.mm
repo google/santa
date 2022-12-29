@@ -269,6 +269,7 @@ std::string BasicStringSerializeMessage(es_message_t *esMsg) {
     {FileAccessPolicyDecision::kDenied, "DENIED"},
     {FileAccessPolicyDecision::kDeniedInvalidSignature, "DENIED_INVALID_SIGNATURE"},
     {FileAccessPolicyDecision::kAllowed, "ALLOWED"},
+    {FileAccessPolicyDecision::kAllowedReadAccess, "ALLOWED_READ_ACCESS"},
     {FileAccessPolicyDecision::kAllowedAuditOnly, "AUDIT_ONLY"},
     {(FileAccessPolicyDecision)1234, "UNKNOWN_DECISION_1234"},
   };

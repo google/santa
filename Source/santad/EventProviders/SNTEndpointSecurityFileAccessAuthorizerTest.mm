@@ -207,6 +207,7 @@ void SetExpectationsForFileAccessAuthorizerInit(
     {FileAccessPolicyDecision::kDenied, true},
     {FileAccessPolicyDecision::kDeniedInvalidSignature, true},
     {FileAccessPolicyDecision::kAllowed, false},
+    {FileAccessPolicyDecision::kAllowedReadAccess, false},
     {FileAccessPolicyDecision::kAllowedAuditOnly, true},
     {(FileAccessPolicyDecision)5, false},
   };
