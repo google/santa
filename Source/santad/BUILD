@@ -49,6 +49,7 @@ objc_library(
         ":WatchItemPolicy",
         "//Source/common:PrefixTree",
         "//Source/common:SNTLogging",
+        "//Source/common:Unit",
     ],
 )
 

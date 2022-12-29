@@ -31,14 +31,14 @@
 #include "Source/santad/DataLayer/WatchItemPolicy.h"
 #import "Source/santad/EventProviders/SNTEndpointSecurityEventHandler.h"
 
-extern const NSString *kWatchItemConfigKeyPath;
-extern const NSString *kWatchItemConfigKeyWriteOnly;
-extern const NSString *kWatchItemConfigKeyIsPrefix;
-extern const NSString *kWatchItemConfigKeyAuditOnly;
-extern const NSString *kWatchItemConfigKeyAllowedBinaryPaths;
-extern const NSString *kWatchItemConfigKeyAllowedCertificatesSha256;
-extern const NSString *kWatchItemConfigKeyAllowedTeamIDs;
-extern const NSString *kWatchItemConfigKeyAllowedCDHashes;
+extern NSString *const kWatchItemConfigKeyPath;
+extern NSString *const kWatchItemConfigKeyWriteOnly;
+extern NSString *const kWatchItemConfigKeyIsPrefix;
+extern NSString *const kWatchItemConfigKeyAuditOnly;
+extern NSString *const kWatchItemConfigKeyAllowedBinaryPaths;
+extern NSString *const kWatchItemConfigKeyAllowedCertificatesSha256;
+extern NSString *const kWatchItemConfigKeyAllowedTeamIDs;
+extern NSString *const kWatchItemConfigKeyAllowedCDHashes;
 
 // Forward declarations
 namespace santa::santad::data_layer {
@@ -78,7 +78,6 @@ class WatchItems : public std::enable_shared_from_this<WatchItems> {
   void UpdateCurrentState(std::unique_ptr<WatchItemsTree> new_tree,
                           std::set<std::pair<std::string, WatchItemPathType>> &&new_monitored_paths,
                           NSDictionary *new_config);
-  bool ParseConfig(NSDictionary *config, std::vector<std::shared_ptr<WatchItemPolicy>> &policies);
   bool BuildPolicyTree(const std::vector<std::shared_ptr<WatchItemPolicy>> &watch_items,
                        WatchItemsTree &tree,
                        std::set<std::pair<std::string, WatchItemPathType>> &paths);

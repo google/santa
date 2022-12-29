@@ -30,12 +30,13 @@ enum class WatchItemPathType {
 };
 
 struct WatchItemPolicy {
+  // TODO: Flip order: make path and path_type next to each other
   WatchItemPolicy(std::string_view n, std::string_view p, bool wo = false,
                   WatchItemPathType pt = WatchItemPathType::kLiteral,
-                  bool ao = true, std::set<std::string> &&abp = {},
-                  std::set<std::string> &&ati = {},
-                  std::set<std::array<uint8_t, CS_CDHASH_LEN>> &&ach = {},
-                  std::set<std::string> &&acs = {})
+                  bool ao = true, std::set<std::string> abp = {},
+                  std::set<std::string> ati = {},
+                  std::set<std::array<uint8_t, CS_CDHASH_LEN>> ach = {},
+                  std::set<std::string> acs = {})
       : name(n),
         path(p),
         write_only(wo),

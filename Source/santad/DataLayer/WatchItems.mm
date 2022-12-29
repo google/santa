@@ -18,6 +18,7 @@
 #include <Kernel/kern/cs_blobs.h>
 #include <ctype.h>
 #include <glob.h>
+#include <sys/syslimits.h>
 
 #include <algorithm>
 #include <cstddef>
@@ -28,24 +29,54 @@
 #include <set>
 #include <string>
 #include <utility>
+#include <variant>
 #include <vector>
 
 #import "Source/common/PrefixTree.h"
 #import "Source/common/SNTLogging.h"
+#import "Source/common/Unit.h"
 #include "Source/santad/DataLayer/WatchItemPolicy.h"
 
 using santa::common::PrefixTree;
+using santa::common::Unit;
+using santa::santad::data_layer::WatchItemPathType;
 
-const NSString *kWatchItemConfigKeyVersion = @"Version";
-const NSString *kWatchItemConfigKeyWatchItems = @"WatchItems";
-const NSString *kWatchItemConfigKeyPath = @"Path";
-const NSString *kWatchItemConfigKeyWriteOnly = @"WriteOnly";
-const NSString *kWatchItemConfigKeyIsPrefix = @"IsPrefix";
-const NSString *kWatchItemConfigKeyAuditOnly = @"AuditOnly";
-const NSString *kWatchItemConfigKeyAllowedBinaryPaths = @"AllowedBinaryPaths";
-const NSString *kWatchItemConfigKeyAllowedCertificatesSha256 = @"AllowedCertificatesSha256";
-const NSString *kWatchItemConfigKeyAllowedTeamIDs = @"AllowedTeamIDs";
-const NSString *kWatchItemConfigKeyAllowedCDHashes = @"AllowedCDHashes";
+using ValidatorBlock = bool (^)(id, NSError **);
+using PathAndTypePair = std::pair<std::string, WatchItemPathType>;
+using PathList = std::vector<PathAndTypePair>;
+
+NSString *const kWatchItemConfigKeyVersion = @"Version";
+NSString *const kWatchItemConfigKeyWatchItems = @"WatchItems";
+NSString *const kWatchItemConfigKeyPaths = @"Paths";
+NSString *const kWatchItemConfigKeyPathsPath = @"Path";
+NSString *const kWatchItemConfigKeyPathsIsPrefix = @"IsPrefix";
+NSString *const kWatchItemConfigKeyOptions = @"Options";
+NSString *const kWatchItemConfigKeyOptionsAllowReadAccess = @"AllowReadAccess";
+NSString *const kWatchItemConfigKeyOptionsAuditOnly = @"AuditOnly";
+NSString *const kWatchItemConfigKeyProcesses = @"Processes";
+NSString *const kWatchItemConfigKeyProcessesBinaryPaths = @"BinaryPaths";
+NSString *const kWatchItemConfigKeyProcessesCertificatesSha256 = @"CertificatesSha256";
+NSString *const kWatchItemConfigKeyProcessesTeamIDs = @"TeamIDs";
+NSString *const kWatchItemConfigKeyProcessesCDHashes = @"CDHashes";
+
+//
+// TODO: Old names, DELETE
+//
+NSString *const kWatchItemConfigKeyPath = @"Path";
+NSString *const kWatchItemConfigKeyAuditOnly = @"AuditOnly";
+NSString *const kWatchItemConfigKeyWriteOnly = @"WriteOnly";
+NSString *const kWatchItemConfigKeyIsPrefix = @"IsPrefix";
+NSString *const kWatchItemConfigKeyAllowedBinaryPaths = @"AllowedBinaryPaths";
+NSString *const kWatchItemConfigKeyAllowedCertificatesSha256 = @"AllowedCertificatesSha256";
+NSString *const kWatchItemConfigKeyAllowedTeamIDs = @"AllowedTeamIDs";
+NSString *const kWatchItemConfigKeyAllowedCDHashes = @"AllowedCDHashes";
+
+static constexpr WatchItemPathType kPolicyDefaultPathType = WatchItemPathType::kLiteral;
+static constexpr bool kPolicyDefaultAllowReadAccess = false;
+static constexpr bool kPolicyDefaultAuditOnly = true;
+
+// https://developer.apple.com/help/account/manage-your-team/locate-your-team-id/
+static constexpr NSUInteger kMaxTeamIDLength = 10;
 
 // Semi-arbitrary minimum allowed reapplication frequency.
 // Goal is to prevent a configuration setting that would cause too much
@@ -54,32 +85,8 @@ static const uint64_t kMinReapplyConfigFrequencySecs = 15;
 
 namespace santa::santad::data_layer {
 
-// If the `key` exists in the `dict`, it must be of type `cls`.
-// Return true if either the key does not exist, or does exist and is the correct type.
-bool CheckType(const NSDictionary *dict, const NSString *key, Class cls) {
-  // If the key exists, it must be of the correct type
-  if (dict[key] && ![dict[key] isKindOfClass:cls]) {
-    LOGE(@"Unexpected type for watch item key '%@' (got: %@, want: %@)", key,
-         NSStringFromClass([dict[key] class]), NSStringFromClass(cls));
-
-    return false;
-  } else {
-    return true;
-  }
-}
-
-bool CheckTypeAll(const NSArray *array, const NSString *key, Class cls) {
-  for (id obj : array) {
-    if (![obj isKindOfClass:cls]) {
-      LOGE(@"Unexpected type for watch item key '%@' (got: %@, want: %@)", key,
-           NSStringFromClass([obj class]), NSStringFromClass(cls));
-      return false;
-    }
-  }
-
-  return true;
-}
-
+/// Ensure the given string has the expected length and only
+/// contains valid hex digits
 bool ConfirmValidHexString(NSString *str, size_t expected_length) {
   if (str.length != expected_length) {
     return false;
@@ -94,66 +101,7 @@ bool ConfirmValidHexString(NSString *str, size_t expected_length) {
   return true;
 }
 
-bool ConfirmValidWatchItemConfig(const NSDictionary *watch_item_dict) {
-  NSDictionary *configTypes = @{
-    kWatchItemConfigKeyPath : [NSString class],
-    kWatchItemConfigKeyWriteOnly : [NSNumber class],
-    kWatchItemConfigKeyIsPrefix : [NSNumber class],
-    kWatchItemConfigKeyAuditOnly : [NSNumber class],
-    kWatchItemConfigKeyAllowedBinaryPaths : [NSArray class],
-    kWatchItemConfigKeyAllowedCertificatesSha256 : [NSArray class],
-    kWatchItemConfigKeyAllowedTeamIDs : [NSArray class],
-    kWatchItemConfigKeyAllowedCDHashes : [NSArray class],
-  };
-
-  __block bool success = false;
-
-  // First ensure the required keys exist
-  if (!watch_item_dict[kWatchItemConfigKeyPath]) {
-    LOGE(@"Missing required key '%@' for watch item", kWatchItemConfigKeyPath);
-    return false;
-  }
-
-  // Ensure all keys are the expected types if they exist
-  [configTypes enumerateKeysAndObjectsUsingBlock:^(NSString *key, Class cls, BOOL *stop) {
-    success = CheckType(watch_item_dict, key, cls);
-
-    // For array types, make sure all the contained objects are strings
-    if (success && cls == [NSArray class]) {
-      success = CheckTypeAll(watch_item_dict[key], key, [NSString class]);
-    }
-
-    // Bail early if any of the checks failed
-    if (!success) {
-      *stop = YES;
-    }
-  }];
-
-  // Check the allowed cdhashes contain valid hex encoded data
-  if (success) {
-    [watch_item_dict[kWatchItemConfigKeyAllowedCDHashes]
-      enumerateObjectsUsingBlock:^(NSString *obj, NSUInteger idx, BOOL *stop) {
-        success = ConfirmValidHexString(obj, CS_CDHASH_LEN * 2);
-        if (!success) {
-          *stop = YES;
-        }
-      }];
-  }
-
-  // Check the allowed certificate hashes contain valid hex encoded data
-  if (success) {
-    [watch_item_dict[kWatchItemConfigKeyAllowedCertificatesSha256]
-      enumerateObjectsUsingBlock:^(NSString *obj, NSUInteger idx, BOOL *stop) {
-        success = ConfirmValidHexString(obj, CC_SHA256_DIGEST_LENGTH * 2);
-        if (!success) {
-          *stop = YES;
-        }
-      }];
-  }
-
-  return success;
-}
-
+/// Convert an NSArray of strings to a set of strings
 static std::set<std::string> StringArrayToSet(NSArray<NSString *> *array) {
   std::set<std::string> strings;
 
@@ -164,6 +112,7 @@ static std::set<std::string> StringArrayToSet(NSArray<NSString *> *array) {
   return strings;
 }
 
+/// Convert an NSString of hex charachters to a byte array
 template <uint32_t length>
 static std::array<uint8_t, length> HexStringToByteArray(NSString *str) {
   std::array<uint8_t, length> bytes;
@@ -181,6 +130,7 @@ static std::array<uint8_t, length> HexStringToByteArray(NSString *str) {
   return bytes;
 }
 
+/// Convert an NSArray of strings to a set of byte arrays
 template <uint32_t length>
 static std::set<std::array<uint8_t, length>> HexStringArrayToSet(NSArray<NSString *> *array) {
   std::set<std::array<uint8_t, length>> data;
@@ -190,6 +140,285 @@ static std::set<std::array<uint8_t, length>> HexStringArrayToSet(NSArray<NSStrin
   }
 
   return data;
+}
+
+/// Ensure the key exists (if required) and the value matches the expected type
+bool VerifyConfigKey(NSString *name, NSDictionary *dict, const NSString *key, Class expected,
+                     bool required = false) {
+  if (dict[key]) {
+    if (![dict[key] isKindOfClass:expected]) {
+      LOGE(@"In watch item '%@': Expected type '%@' for key '%@' (got: %@)", name,
+           NSStringFromClass(expected), key, NSStringFromClass([dict[key] class]));
+      return false;
+    }
+  } else if (required) {
+    LOGE(@"In watch item '%@': Missing required key '%@'", name, key);
+    return false;
+  }
+
+  return true;
+}
+
+/// Ensure all values of the array key in the dictionary conform to the
+/// expected type. If a Validator block is supplied, each item is also
+/// subject to the custom validation method.
+bool VerifyConfigKeyArray(NSString *name, NSDictionary *dict, NSString *key, Class expected,
+                          bool (^Validator)(id, NSError **) = nil) {
+  if (!VerifyConfigKey(name, dict, key, [NSArray class])) {
+    return false;
+  }
+
+  __block bool success = true;
+
+  [dict[key] enumerateObjectsUsingBlock:^(id obj, NSUInteger idx, BOOL *stop) {
+    if (![obj isKindOfClass:[NSString class]]) {
+      success = false;
+      LOGE(@"In watch item '%@': Expected all '%@' types in array key '%@'", name,
+           NSStringFromClass(expected), key);
+      *stop = YES;
+      return;
+    }
+
+    NSError *err;
+    if (Validator && !Validator(obj, &err)) {
+      LOGE(@"In watch item '%@': Invalid content in array key '%@': %@", name, key,
+           err.localizedDescription);
+      success = false;
+      *stop = YES;
+      return;
+    }
+  }];
+
+  return success;
+}
+
+/// The `Paths` array can contain only `string` and `dict` types:
+/// - For `string` types, the default path type `kDefaultPathType` is used
+/// - For `dict` types, there is a required `Path` key. and an optional
+///   `IsPrefix` key to set the path type to something other than the default
+///
+/// Example:
+/// <array>
+///   <string>/my/path</string>
+///   <dict>
+///     <key>Path</key>
+///     <string>/another/partial/path</string>
+///     <key>IsPrefix</key>
+///     <true/>
+///   </dict>
+/// </array>
+std::variant<Unit, PathList> VerifyConfigWatchItemPaths(NSArray<id> *paths, NSString *name) {
+  PathList path_list;
+
+  for (id path in paths) {
+    if ([path isKindOfClass:[NSDictionary class]]) {
+      NSDictionary *path_dict = (NSDictionary *)path;
+      if (![path_dict[kWatchItemConfigKeyPathsPath] isKindOfClass:[NSString class]]) {
+        LOGE(@"In watch item '%@': Missing required 'string' key: '%@'", name,
+             kWatchItemConfigKeyPathsPath);
+        return Unit{};
+      }
+
+      NSString *path_str = path_dict[kWatchItemConfigKeyPathsPath];
+      WatchItemPathType path_type = kPolicyDefaultPathType;
+
+      if (path_dict[kWatchItemConfigKeyPathsIsPrefix]) {
+        if (![path_dict[kWatchItemConfigKeyPathsIsPrefix] isKindOfClass:[NSNumber class]]) {
+          LOGE(@"In watch item '%@': Found optional key '%@', but expected type 'number' (got: %@)",
+               name, kWatchItemConfigKeyPathsIsPrefix,
+               NSStringFromClass([path_dict[kWatchItemConfigKeyPathsIsPrefix] class]));
+          return Unit{};
+        }
+
+        path_type = ([(NSNumber *)path_dict[kWatchItemConfigKeyPathsIsPrefix] boolValue] == NO
+                       ? WatchItemPathType::kLiteral
+                       : WatchItemPathType::kPrefix);
+      }
+
+      path_list.push_back({std::string(path_str.UTF8String, path_str.length), path_type});
+    } else if ([path isKindOfClass:[NSString class]]) {
+      path_list.push_back({std::string(((NSString *)path).UTF8String, ((NSString *)path).length),
+                           kPolicyDefaultPathType});
+    } else {
+      LOGE(@"In watch item '%@': %@ array item with invalid type. Expected 'dict' or 'string' "
+           @"(got: %@)",
+           name, kWatchItemConfigKeyPaths, NSStringFromClass([path class]));
+      return Unit{};
+    }
+  }
+
+  return path_list;
+}
+
+// Given a length, returns a ValidatorBlock that confirms the
+// string is a valid hex string of the given length.
+ValidatorBlock HexValidator(NSUInteger expected_length) {
+  return ^bool(NSString *val, NSError **err) {
+    if (!ConfirmValidHexString(val, expected_length)) {
+      if (err) {
+        NSString *err_str =
+          [NSString stringWithFormat:@"Expected hex string of length %lu", expected_length];
+        *err = [NSError errorWithDomain:@"com.google.santa.watchitems"
+                                   code:100
+                               userInfo:@{NSLocalizedDescriptionKey : err_str}];
+      }
+      return false;
+    }
+
+    return true;
+  };
+}
+
+// Given a max length, returns a ValidatorBlock that confirms the
+// string is a not longer than the max.
+ValidatorBlock MaxLenValidator(NSUInteger max_length) {
+  return ^bool(NSString *val, NSError **err) {
+    if (val.length > max_length) {
+      if (err) {
+        NSString *err_str =
+          [NSString stringWithFormat:@"Value too long. Got: %lu, Max: %lu", val.length, max_length];
+        *err = [NSError errorWithDomain:@"com.google.santa.watchitems"
+                                   code:100
+                               userInfo:@{NSLocalizedDescriptionKey : err_str}];
+      }
+      return false;
+    }
+
+    return true;
+  };
+}
+
+/// Ensure that a given watch item conforms to expected structure
+///
+/// Example:
+/// <dict>
+///   <key>Paths</key>
+///   <array>
+///   ... See VerifyConfigWatchItemPaths for more details
+///   </array>
+///   <key>Options</key>
+///   <dict>
+///     <key>AllowReadAccess</key>
+///     <false/>
+///     <key>AuditOnly</key>
+///     <false/>
+///   </dict>
+///   <key>Processes</key>
+///   <dict>
+///     <key>BinaryPaths</key>
+///     <array/>
+///     <key>TeamIDs</key>
+///     <array/>
+///     <key>CertificatesSha256</key>
+///     <array/>
+///     <key>CDHashes</key>
+///     <array/>
+///   </dict>
+/// </dict>
+bool ParseConfigSingleWatchItem(NSString *name, NSDictionary *watch_item,
+                                std::vector<std::shared_ptr<WatchItemPolicy>> &policies) {
+  if (!VerifyConfigKey(name, watch_item, kWatchItemConfigKeyPaths, [NSArray class], true)) {
+    return false;
+  }
+
+  std::variant<Unit, PathList> path_list =
+    VerifyConfigWatchItemPaths(watch_item[kWatchItemConfigKeyPaths], name);
+
+  if (std::holds_alternative<Unit>(path_list)) {
+    return false;
+  }
+
+  if (!VerifyConfigKey(name, watch_item, kWatchItemConfigKeyOptions, [NSDictionary class])) {
+    return false;
+  }
+
+  NSDictionary *options = watch_item[kWatchItemConfigKeyOptions];
+  if (options) {
+    if (!VerifyConfigKey(name, options, kWatchItemConfigKeyOptionsAllowReadAccess,
+                         [NSNumber class])) {
+      return false;
+    }
+
+    if (!VerifyConfigKey(name, options, kWatchItemConfigKeyOptionsAuditOnly, [NSNumber class])) {
+      return false;
+    }
+  }
+
+  bool allow_read_access = options[kWatchItemConfigKeyOptionsAllowReadAccess]
+                             ? [options[kWatchItemConfigKeyOptionsAllowReadAccess] booleanValue]
+                             : kPolicyDefaultAllowReadAccess;
+  bool audit_only = options[kWatchItemConfigKeyOptionsAuditOnly]
+                      ? [options[kWatchItemConfigKeyOptionsAuditOnly] booleanValue]
+                      : kPolicyDefaultAuditOnly;
+
+  if (!VerifyConfigKey(name, watch_item, kWatchItemConfigKeyProcesses, [NSDictionary class])) {
+    return false;
+  }
+
+  NSDictionary *processes = watch_item[kWatchItemConfigKeyProcesses];
+  if (processes) {
+    if (!VerifyConfigKeyArray(name, processes, kWatchItemConfigKeyProcessesBinaryPaths,
+                              [NSString class], MaxLenValidator(PATH_MAX)) ||
+        !VerifyConfigKeyArray(name, processes, kWatchItemConfigKeyProcessesTeamIDs,
+                              [NSString class], MaxLenValidator(kMaxTeamIDLength)) ||
+        !VerifyConfigKeyArray(name, processes, kWatchItemConfigKeyProcessesCDHashes,
+                              [NSString class], HexValidator(CS_CDHASH_LEN * 2)) ||
+        !VerifyConfigKeyArray(name, processes, kWatchItemConfigKeyProcessesCDHashes,
+                              [NSString class], HexValidator(CC_SHA256_DIGEST_LENGTH * 2))) {
+      return false;
+    }
+  }
+
+  std::set<std::string> team_ids = StringArrayToSet(processes[kWatchItemConfigKeyProcessesTeamIDs]);
+  std::set<std::string> binary_paths =
+    StringArrayToSet(processes[kWatchItemConfigKeyProcessesBinaryPaths]);
+  std::set<std::string> cert_hashes =
+    StringArrayToSet(processes[kWatchItemConfigKeyProcessesCertificatesSha256]);
+  std::set<std::array<uint8_t, CS_CDHASH_LEN>> cdhashes =
+    HexStringArrayToSet<CS_CDHASH_LEN>(processes[kWatchItemConfigKeyProcessesCDHashes]);
+
+  for (const PathAndTypePair &path_type_pair : std::get<PathList>(path_list)) {
+    policies.push_back(std::make_shared<WatchItemPolicy>(
+      [name UTF8String], path_type_pair.first, allow_read_access, path_type_pair.second, audit_only,
+      binary_paths, team_ids, cdhashes, cert_hashes));
+  }
+
+  return true;
+}
+
+bool ParseConfig(NSDictionary *config, std::vector<std::shared_ptr<WatchItemPolicy>> &policies) {
+  if (![config[kWatchItemConfigKeyVersion] isKindOfClass:[NSString class]]) {
+    LOGE(@"Missing top level string key '%@'", kWatchItemConfigKeyVersion);
+    return false;
+  }
+
+  if (config[kWatchItemConfigKeyWatchItems] &&
+      ![config[kWatchItemConfigKeyWatchItems] isKindOfClass:[NSDictionary class]]) {
+    LOGE(@"Top level key '%@' must be a dictionary", kWatchItemConfigKeyWatchItems);
+    return false;
+  }
+
+  NSDictionary *watch_items = config[kWatchItemConfigKeyWatchItems];
+
+  for (id key in watch_items) {
+    if (![key isKindOfClass:[NSString class]]) {
+      LOGE(@"Invalid WatchItems key %@: Expected type '%@' (got: %@)", key,
+           NSStringFromClass([NSString class]), NSStringFromClass([key class]));
+      return false;
+    }
+
+    if (![watch_items[key] isKindOfClass:[NSDictionary class]]) {
+      LOGE(@"Config for '%@' must be a dictionary (got: %@)", key,
+           NSStringFromClass([watch_items[key] class]));
+      return false;
+    }
+
+    if (!ParseConfigSingleWatchItem(key, watch_items[key], policies)) {
+      return false;
+    }
+  }
+
+  return true;
 }
 
 std::shared_ptr<WatchItems> WatchItems::Create(NSString *config_path,
@@ -256,59 +485,6 @@ bool WatchItems::BuildPolicyTree(const std::vector<std::shared_ptr<WatchItemPoli
 void WatchItems::RegisterClient(id<SNTEndpointSecurityDynamicEventHandler> client) {
   absl::MutexLock lock(&lock_);
   registerd_clients_.insert(client);
-}
-
-bool WatchItems::ParseConfig(NSDictionary *config,
-                             std::vector<std::shared_ptr<WatchItemPolicy>> &policies) {
-  bool config_ok = true;
-
-  if (![config[kWatchItemConfigKeyVersion] isKindOfClass:[NSString class]]) {
-    LOGE(@"Missing top level string key '%@'", kWatchItemConfigKeyVersion);
-  }
-
-  id watch_items = config[kWatchItemConfigKeyWatchItems];
-
-  if (![watch_items isKindOfClass:[NSDictionary class]]) {
-    LOGE(@"Missing top level dictionary key '%@'", kWatchItemConfigKeyWatchItems);
-    return false;
-  }
-
-  for (id key in watch_items) {
-    if (![key isKindOfClass:[NSString class]]) {
-      LOGE(@"Invalid key %@ (class: %@)", key, NSStringFromClass([key class]));
-      config_ok = false;
-      break;
-    }
-
-    if (![watch_items[key] isKindOfClass:[NSDictionary class]]) {
-      LOGE(@"Config for '%@' must be a dictionary (got: %@), skipping", key,
-           NSStringFromClass([watch_items[key] class]));
-      config_ok = false;
-      break;
-    }
-
-    NSDictionary *watch_item = watch_items[key];
-
-    if (!ConfirmValidWatchItemConfig(watch_item)) {
-      LOGE(@"Invalid config for watch item: '%@'", key);
-      config_ok = false;
-      break;
-    }
-
-    policies.push_back(std::make_shared<WatchItemPolicy>(
-      [key UTF8String], [watch_item[kWatchItemConfigKeyPath] UTF8String],
-      [(watch_item[kWatchItemConfigKeyWriteOnly] ?: @(0)) boolValue],
-      ([(watch_item[kWatchItemConfigKeyIsPrefix] ?: @(0)) boolValue] == NO)
-        ? WatchItemPathType::kLiteral
-        : WatchItemPathType::kPrefix,
-      [(watch_item[kWatchItemConfigKeyAuditOnly] ?: @(1)) boolValue],
-      StringArrayToSet(watch_item[kWatchItemConfigKeyAllowedBinaryPaths]),
-      StringArrayToSet(watch_item[kWatchItemConfigKeyAllowedTeamIDs]),
-      HexStringArrayToSet<CS_CDHASH_LEN>(watch_item[kWatchItemConfigKeyAllowedCDHashes]),
-      StringArrayToSet(watch_item[kWatchItemConfigKeyAllowedCertificatesSha256])));
-  }
-
-  return config_ok;
 }
 
 void WatchItems::UpdateCurrentState(
