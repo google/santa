@@ -35,10 +35,9 @@ static constexpr bool kWatchItemPolicyDefaultAllowReadAccess = false;
 static constexpr bool kWatchItemPolicyDefaultAuditOnly = true;
 
 struct WatchItemPolicy {
-  // TODO: Flip order: make path and path_type next to each other
   WatchItemPolicy(std::string_view n, std::string_view p,
                   WatchItemPathType pt = kWatchItemPolicyDefaultPathType,
-                  bool wo = kWatchItemPolicyDefaultAllowReadAccess,
+                  bool ara = kWatchItemPolicyDefaultAllowReadAccess,
                   bool ao = kWatchItemPolicyDefaultAuditOnly,
                   std::set<std::string> abp = {},
                   std::set<std::string> ati = {},
@@ -47,7 +46,7 @@ struct WatchItemPolicy {
       : name(n),
         path(p),
         path_type(pt),
-        write_only(wo),
+        allow_read_access(ara),
         audit_only(ao),
         allowed_binary_paths(std::move(abp)),
         allowed_team_ids(std::move(ati)),
@@ -57,7 +56,7 @@ struct WatchItemPolicy {
   std::string name;
   std::string path;
   WatchItemPathType path_type;
-  bool write_only;
+  bool allow_read_access;
   bool audit_only;
   std::set<std::string> allowed_binary_paths;
   std::set<std::string> allowed_team_ids;

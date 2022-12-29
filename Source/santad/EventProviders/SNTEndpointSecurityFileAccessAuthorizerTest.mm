@@ -270,7 +270,7 @@ void SetExpectationsForFileAccessAuthorizerInit(
 
     // Write-only policy, Write operation
     {
-      policy->write_only = true;
+      policy->allow_read_access = true;
       esMsg.event.open.fflag = FWRITE | FREAD;
       Message msg(mockESApi, &esMsg);
       result = [accessClient specialCaseForPolicy:policy target:target message:msg];
@@ -279,7 +279,7 @@ void SetExpectationsForFileAccessAuthorizerInit(
 
     // Write-only policy, Read operation
     {
-      policy->write_only = true;
+      policy->allow_read_access = true;
       esMsg.event.open.fflag = FREAD;
       Message msg(mockESApi, &esMsg);
       result = [accessClient specialCaseForPolicy:policy target:target message:msg];
@@ -288,7 +288,7 @@ void SetExpectationsForFileAccessAuthorizerInit(
 
     // Read/Write policy, Read operation
     {
-      policy->write_only = false;
+      policy->allow_read_access = false;
       esMsg.event.open.fflag = FREAD;
       Message msg(mockESApi, &esMsg);
       result = [accessClient specialCaseForPolicy:policy target:target message:msg];

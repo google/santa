@@ -270,14 +270,14 @@ void PopulatePathTargets(const Message &msg, std::vector<PathTarget> &targets) {
   switch (msg->event_type) {
     case ES_EVENT_TYPE_AUTH_OPEN:
       // If the policy is write-only, but the operation isn't a write action, it's allowed
-      if (policy->write_only && !(msg->event.open.fflag & kOpenFlagsIndicatingWrite)) {
+      if (policy->allow_read_access && !(msg->event.open.fflag & kOpenFlagsIndicatingWrite)) {
         return FileAccessPolicyDecision::kAllowedReadAccess;
       }
       break;
 
     case ES_EVENT_TYPE_AUTH_CLONE:
       // If policy is write-only, readable targets are allowed (e.g. source file)
-      if (policy->write_only && target.isReadable) {
+      if (policy->allow_read_access && target.isReadable) {
         return FileAccessPolicyDecision::kAllowedReadAccess;
       }
       break;
@@ -286,7 +286,7 @@ void PopulatePathTargets(const Message &msg, std::vector<PathTarget> &targets) {
       // Note: Flags for the copyfile event represent the kernel view, not the usersapce
       // copyfile(3) implementation. This means if a `copyfile(3)` flag like `COPYFILE_MOVE`
       // is specified, it will come as a separate `unlink(2)` event, not a flag here.
-      if (policy->write_only && target.isReadable) {
+      if (policy->allow_read_access && target.isReadable) {
         return FileAccessPolicyDecision::kAllowedReadAccess;
       }
       break;
