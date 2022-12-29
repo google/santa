@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>Version</key>
+	<string>v0.2-PROPOSED</string>
+	<key>WatchItems</key>
+	<dict>
+		<key>my_watcher</key>
+		<dict>
+			<key>Paths</key>
+      <array>
+        <!-- Paths can be strings with defaults set (IsPrefix=false) -->
+        <string>/Users/*/path1</string>
+        <!-- Paths can also be dicts with keys to override defautls -->
+        <!-- Currently one attribute, IsPrefix, maybe more in the future -->
+        <dict>
+          <key>Path</key>
+          <string>/Users/*/path2</string>
+          <key>IsPrefix</key>
+          <true/>
+        </dict>
+      </array>
+      <!-- Options that apply to the whole rule are now grouped together to -->
+      <!-- make more clear they apply to the whole rule, not a path. -->
+      <key>Options</key>
+      <dict>
+        <!-- Key changed from `WriteOnly`, makes more clear how this affects -->
+        <!-- runtime (e.g. OPEN vs CLONEFILE "read access") -->
+        <key>AllowReadAccess</key>
+        <false/>
+        <key>AuditOnly</key>
+        <false/>
+        <!-- Expandable to support future options. Potential upcoming ones: -->
+        <!-- Potential upcoming options: -->
+        <!--   * InvertProcessLogic: By default, listed processes are allowed -->
+        <!--     to perform the op. this key could invert that logic such that -->
+        <!--     the listed processes are denied and everything else is allowed. -->
+        <!--   * ProcessLogicAND: By default, a process matching any of the criteria -->
+        <!--     is allowed. This key =would require a process meet all the criteria. -->
+      </dict>
+      <key>Processes</key>
+      <dict>
+        <key>BinaryPaths</key>
+        <array>
+          <string>/bin/cat</string>
+        </array>
+        <key>TeamIDs</key>
+        <array>
+          <string>EQHXZ8M8AV</string>
+        </array>
+        <key>CDHashes</key>
+        <array>
+          <string>7123c34930eba59a371ce445bcdadc717f0defdf</string>
+        </array>
+        <key>CertificatesSha256</key>
+        <array>
+          <string>d84db96af8c2e60ac4c851a21ec460f6f84e0235beb17d24a78712b9b021ed57</string>
+        </array>
+      </dict>
+    </dict>
+	</dict>
+</dict>
+</plist>
