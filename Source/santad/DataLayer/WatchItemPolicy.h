@@ -29,18 +29,25 @@ enum class WatchItemPathType {
   kLiteral,
 };
 
+static constexpr WatchItemPathType kWatchItemPolicyDefaultPathType =
+    WatchItemPathType::kLiteral;
+static constexpr bool kWatchItemPolicyDefaultAllowReadAccess = false;
+static constexpr bool kWatchItemPolicyDefaultAuditOnly = true;
+
 struct WatchItemPolicy {
   // TODO: Flip order: make path and path_type next to each other
-  WatchItemPolicy(std::string_view n, std::string_view p, bool wo = false,
-                  WatchItemPathType pt = WatchItemPathType::kLiteral,
-                  bool ao = true, std::set<std::string> abp = {},
+  WatchItemPolicy(std::string_view n, std::string_view p,
+                  WatchItemPathType pt = kWatchItemPolicyDefaultPathType,
+                  bool wo = kWatchItemPolicyDefaultAllowReadAccess,
+                  bool ao = kWatchItemPolicyDefaultAuditOnly,
+                  std::set<std::string> abp = {},
                   std::set<std::string> ati = {},
                   std::set<std::array<uint8_t, CS_CDHASH_LEN>> ach = {},
                   std::set<std::string> acs = {})
       : name(n),
         path(p),
-        write_only(wo),
         path_type(pt),
+        write_only(wo),
         audit_only(ao),
         allowed_binary_paths(std::move(abp)),
         allowed_team_ids(std::move(ati)),
@@ -49,8 +56,8 @@ struct WatchItemPolicy {
 
   std::string name;
   std::string path;
-  bool write_only;
   WatchItemPathType path_type;
+  bool write_only;
   bool audit_only;
   std::set<std::string> allowed_binary_paths;
   std::set<std::string> allowed_team_ids;

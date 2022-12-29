@@ -71,10 +71,6 @@ NSString *const kWatchItemConfigKeyAllowedCertificatesSha256 = @"AllowedCertific
 NSString *const kWatchItemConfigKeyAllowedTeamIDs = @"AllowedTeamIDs";
 NSString *const kWatchItemConfigKeyAllowedCDHashes = @"AllowedCDHashes";
 
-static constexpr WatchItemPathType kPolicyDefaultPathType = WatchItemPathType::kLiteral;
-static constexpr bool kPolicyDefaultAllowReadAccess = false;
-static constexpr bool kPolicyDefaultAuditOnly = true;
-
 // https://developer.apple.com/help/account/manage-your-team/locate-your-team-id/
 static constexpr NSUInteger kMaxTeamIDLength = 10;
 
@@ -220,7 +216,7 @@ std::variant<Unit, PathList> VerifyConfigWatchItemPaths(NSArray<id> *paths, NSSt
       }
 
       NSString *path_str = path_dict[kWatchItemConfigKeyPathsPath];
-      WatchItemPathType path_type = kPolicyDefaultPathType;
+      WatchItemPathType path_type = kWatchItemPolicyDefaultPathType;
 
       if (path_dict[kWatchItemConfigKeyPathsIsPrefix]) {
         if (![path_dict[kWatchItemConfigKeyPathsIsPrefix] isKindOfClass:[NSNumber class]]) {
@@ -238,7 +234,7 @@ std::variant<Unit, PathList> VerifyConfigWatchItemPaths(NSArray<id> *paths, NSSt
       path_list.push_back({std::string(path_str.UTF8String, path_str.length), path_type});
     } else if ([path isKindOfClass:[NSString class]]) {
       path_list.push_back({std::string(((NSString *)path).UTF8String, ((NSString *)path).length),
-                           kPolicyDefaultPathType});
+                           kWatchItemPolicyDefaultPathType});
     } else {
       LOGE(@"In watch item '%@': %@ array item with invalid type. Expected 'dict' or 'string' "
            @"(got: %@)",
@@ -346,10 +342,10 @@ bool ParseConfigSingleWatchItem(NSString *name, NSDictionary *watch_item,
 
   bool allow_read_access = options[kWatchItemConfigKeyOptionsAllowReadAccess]
                              ? [options[kWatchItemConfigKeyOptionsAllowReadAccess] booleanValue]
-                             : kPolicyDefaultAllowReadAccess;
+                             : kWatchItemPolicyDefaultAllowReadAccess;
   bool audit_only = options[kWatchItemConfigKeyOptionsAuditOnly]
                       ? [options[kWatchItemConfigKeyOptionsAuditOnly] booleanValue]
-                      : kPolicyDefaultAuditOnly;
+                      : kWatchItemPolicyDefaultAuditOnly;
 
   if (!VerifyConfigKey(name, watch_item, kWatchItemConfigKeyProcesses, [NSDictionary class])) {
     return false;
@@ -379,7 +375,7 @@ bool ParseConfigSingleWatchItem(NSString *name, NSDictionary *watch_item,
 
   for (const PathAndTypePair &path_type_pair : std::get<PathList>(path_list)) {
     policies.push_back(std::make_shared<WatchItemPolicy>(
-      [name UTF8String], path_type_pair.first, allow_read_access, path_type_pair.second, audit_only,
+      [name UTF8String], path_type_pair.first, path_type_pair.second, allow_read_access, audit_only,
       binary_paths, team_ids, cdhashes, cert_hashes));
   }
 
