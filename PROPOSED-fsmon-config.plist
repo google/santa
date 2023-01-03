@@ -2,13 +2,13 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-	<key>Version</key>
-	<string>v0.2-PROPOSED</string>
-	<key>WatchItems</key>
-	<dict>
-		<key>my_watcher</key>
-		<dict>
-			<key>Paths</key>
+  <key>Version</key>
+  <string>v0.2-PROPOSED</string>
+  <key>WatchItems</key>
+  <dict>
+    <key>my_watcher</key>
+    <dict>
+      <key>Paths</key>
       <array>
         <!-- Paths can be strings with defaults set (IsPrefix=false) -->
         <string>/Users/*/path1</string>
@@ -37,7 +37,7 @@
         <!--     to perform the op. this key could invert that logic such that -->
         <!--     the listed processes are denied and everything else is allowed. -->
         <!--   * ProcessLogicAND: By default, a process matching any of the criteria -->
-        <!--     is allowed. This key =would require a process meet all the criteria. -->
+        <!--     is allowed. This key would require a process meet all the criteria. -->
       </dict>
       <key>Processes</key>
       <dict>
@@ -59,6 +59,6 @@
         </array>
       </dict>
     </dict>
-	</dict>
+  </dict>
 </dict>
 </plist>
