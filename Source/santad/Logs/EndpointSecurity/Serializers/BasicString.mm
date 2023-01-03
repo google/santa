@@ -130,6 +130,7 @@ std::string GetFileAccessPolicyDecisionString(FileAccessPolicyDecision decision)
     case FileAccessPolicyDecision::kDenied: return "DENIED";
     case FileAccessPolicyDecision::kDeniedInvalidSignature: return "DENIED_INVALID_SIGNATURE";
     case FileAccessPolicyDecision::kAllowed: return "ALLOWED";
+    case FileAccessPolicyDecision::kAllowedReadAccess: return "ALLOWED_READ_ACCESS";
     case FileAccessPolicyDecision::kAllowedAuditOnly: return "AUDIT_ONLY";
     default: return "UNKNOWN_DECISION_" + std::to_string((int)decision);
   }

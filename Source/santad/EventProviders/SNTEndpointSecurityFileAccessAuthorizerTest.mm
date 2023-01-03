@@ -190,6 +190,7 @@ void SetExpectationsForFileAccessAuthorizerInit(
     {FileAccessPolicyDecision::kDenied, ES_AUTH_RESULT_DENY},
     {FileAccessPolicyDecision::kDeniedInvalidSignature, ES_AUTH_RESULT_DENY},
     {FileAccessPolicyDecision::kAllowed, ES_AUTH_RESULT_ALLOW},
+    {FileAccessPolicyDecision::kAllowedReadAccess, ES_AUTH_RESULT_ALLOW},
     {FileAccessPolicyDecision::kAllowedAuditOnly, ES_AUTH_RESULT_ALLOW},
   };
 
@@ -206,6 +207,7 @@ void SetExpectationsForFileAccessAuthorizerInit(
     {FileAccessPolicyDecision::kDenied, true},
     {FileAccessPolicyDecision::kDeniedInvalidSignature, true},
     {FileAccessPolicyDecision::kAllowed, false},
+    {FileAccessPolicyDecision::kAllowedReadAccess, false},
     {FileAccessPolicyDecision::kAllowedAuditOnly, true},
     {(FileAccessPolicyDecision)5, false},
   };
@@ -271,7 +273,7 @@ void SetExpectationsForFileAccessAuthorizerInit(
       esMsg.event.open.fflag = FREAD;
       Message msg(mockESApi, &esMsg);
       result = [accessClient specialCaseForPolicy:policy message:msg];
-      XCTAssertEqual(result, FileAccessPolicyDecision::kAllowed);
+      XCTAssertEqual(result, FileAccessPolicyDecision::kAllowedReadAccess);
     }
 
     // Read/Write policy, Read operation
