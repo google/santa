@@ -62,6 +62,10 @@
 /// @param result Either ES_AUTH_RESULT_ALLOW or ES_AUTH_RESULT_DENY
 /// @param cacheable true if ES should attempt to cache the result, otherwise false
 /// @return true if the response was successful, otherwise false
+///
+/// @note If the msg event type requires a flags response, the correct ES API will automatically
+/// be called. ALLOWED results will be translated to having all flags set, and DENIED results
+/// will be translated to having all flags cleared.
 - (bool)respondToMessage:(const santa::santad::event_providers::endpoint_security::Message &)msg
           withAuthResult:(es_auth_result_t)result
                cacheable:(bool)cacheable;

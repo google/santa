@@ -559,6 +559,7 @@ void SerializeAndCheckNonESEvents(
       {FileAccessPolicyDecision::kDeniedInvalidSignature,
        ::pbv1::FileAccess::POLICY_DECISION_DENIED_INVALID_SIGNATURE},
       {FileAccessPolicyDecision::kAllowed, ::pbv1::FileAccess::POLICY_DECISION_UNKNOWN},
+      {FileAccessPolicyDecision::kAllowedReadAccess, ::pbv1::FileAccess::POLICY_DECISION_UNKNOWN},
       {FileAccessPolicyDecision::kAllowedAuditOnly,
        ::pbv1::FileAccess::POLICY_DECISION_ALLOWED_AUDIT_ONLY},
       {(FileAccessPolicyDecision)1234, ::pbv1::FileAccess::POLICY_DECISION_UNKNOWN},

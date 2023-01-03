@@ -51,6 +51,8 @@ using santa::santad::logs::endpoint_security::Logger;
 
 NSString *kBadCertHash = @"BAD_CERT_HASH";
 
+static constexpr uint32_t kOpenFlagsIndicatingWrite = FWRITE | O_APPEND | O_TRUNC;
+
 static inline std::string Path(const es_file_t *esFile) {
   return std::string(esFile->path.data, esFile->path.length);
 }
@@ -78,6 +80,7 @@ es_auth_result_t FileAccessPolicyDecisionToESAuthResult(FileAccessPolicyDecision
     case FileAccessPolicyDecision::kDenied: return ES_AUTH_RESULT_DENY;
     case FileAccessPolicyDecision::kDeniedInvalidSignature: return ES_AUTH_RESULT_DENY;
     case FileAccessPolicyDecision::kAllowed: return ES_AUTH_RESULT_ALLOW;
+    case FileAccessPolicyDecision::kAllowedReadAccess: return ES_AUTH_RESULT_ALLOW;
     case FileAccessPolicyDecision::kAllowedAuditOnly: return ES_AUTH_RESULT_ALLOW;
     default:
       // This is a programming error. Bail.
@@ -91,7 +94,7 @@ bool ShouldLogDecision(FileAccessPolicyDecision decision) {
   switch (decision) {
     case FileAccessPolicyDecision::kDenied: return true;
     case FileAccessPolicyDecision::kDeniedInvalidSignature: return true;
-    case FileAccessPolicyDecision::kAllowedAuditOnly: return true; ;
+    case FileAccessPolicyDecision::kAllowedAuditOnly: return true;
     default: return false;
   }
 }
@@ -233,13 +236,11 @@ void PopulatePathTargets(const Message &msg, std::vector<std::string> &targets) 
 
 - (FileAccessPolicyDecision)specialCaseForPolicy:(std::shared_ptr<WatchItemPolicy>)policy
                                          message:(const Message &)msg {
-  constexpr int openFlagsIndicatingWrite = FWRITE | O_APPEND | O_TRUNC;
-
   switch (msg->event_type) {
     case ES_EVENT_TYPE_AUTH_OPEN:
       // If the policy is write-only, but the operation isn't a write action, it's allowed
-      if (policy->write_only && !(msg->event.open.fflag & openFlagsIndicatingWrite)) {
-        return FileAccessPolicyDecision::kAllowed;
+      if (policy->write_only && !(msg->event.open.fflag & kOpenFlagsIndicatingWrite)) {
+        return FileAccessPolicyDecision::kAllowedReadAccess;
       }
 
       break;
@@ -371,7 +372,7 @@ void PopulatePathTargets(const Message &msg, std::vector<std::string> &targets) 
     self->_watchItems->FindPolciesForPaths(targets);
 
   es_auth_result_t policyResult = ES_AUTH_RESULT_ALLOW;
-  FileAccessPolicyDecision prevDecision = FileAccessPolicyDecision::kNoPolicy;
+  bool allow_read_access = false;
 
   for (size_t i = 0; i < targets.size(); i++) {
     FileAccessPolicyDecision curDecision = [self handleMessage:msg
@@ -379,12 +380,25 @@ void PopulatePathTargets(const Message &msg, std::vector<std::string> &targets) 
                                                         policy:versionAndPolicies.second[i]
                                                  policyVersion:versionAndPolicies.first];
 
-    policyResult = CombinePolicyResults(FileAccessPolicyDecisionToESAuthResult(prevDecision),
-                                        FileAccessPolicyDecisionToESAuthResult(curDecision));
-    prevDecision = curDecision;
+    policyResult =
+      CombinePolicyResults(policyResult, FileAccessPolicyDecisionToESAuthResult(curDecision));
+
+    // If the overall policy result is deny, then reset allow_read_access.
+    // Otherwise if the current decision would allow read access, set the flag.
+    if (policyResult == ES_AUTH_RESULT_DENY) {
+      allow_read_access = false;
+    } else if (curDecision == FileAccessPolicyDecision::kAllowedReadAccess) {
+      allow_read_access = true;
+    }
   }
 
-  [self respondToMessage:msg withAuthResult:policyResult cacheable:false];
+  // IMPORTANT: A response is only cacheable if the policy result was explicitly
+  // allowed. An "allow read access" result must not be cached to ensure a future
+  // non-read accesss can be evaluated. Similarly, denied results must never be
+  // cached so access attempts can be logged.
+  [self respondToMessage:msg
+          withAuthResult:policyResult
+               cacheable:(policyResult == ES_AUTH_RESULT_ALLOW && !allow_read_access)];
 }
 
 - (void)handleMessage:(santa::santad::event_providers::endpoint_security::Message &&)esMsg

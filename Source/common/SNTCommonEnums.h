@@ -141,6 +141,7 @@ enum class FileAccessPolicyDecision {
   kDenied,
   kDeniedInvalidSignature,
   kAllowed,
+  kAllowedReadAccess,
   kAllowedAuditOnly,
 };
 #endif
