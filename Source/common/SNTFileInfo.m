@@ -572,6 +572,11 @@ extern NSString *const NSURLQuarantinePropertiesKey WEAK_IMPORT_ATTRIBUTE;
     NSData *cmdData = [self safeSubdataWithRange:NSMakeRange(offset, sz_segment)];
     if (!cmdData) return nil;
 
+    struct load_command *lc = (struct load_command *)[cmdData bytes];
+    if (lc->cmdsize < sizeof(struct load_command)) {
+      return nil;
+    }
+
     if (is64) {
       struct segment_command_64 *lc = (struct segment_command_64 *)[cmdData bytes];
       if (lc->cmd == LC_SEGMENT_64 && memcmp(lc->segname, "__TEXT", 6) == 0) {

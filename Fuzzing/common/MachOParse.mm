@@ -29,6 +29,8 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size) {
     // Mach-O Parsing
     [fi architectures];
     [fi isMissingPageZero];
+
+    [fi infoPlist];
   }
 
   if (num_fds_pre != get_num_fds()) {
