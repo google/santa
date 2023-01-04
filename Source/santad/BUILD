@@ -337,6 +337,7 @@ objc_library(
         ":SNTEndpointSecurityEventHandler",
         ":WatchItemPolicy",
         ":WatchItems",
+        "//Source/common:Platform",
         "//Source/common:SNTCommonEnums",
         "//Source/common:SNTConfigurator",
         "//Source/common:SantaCache",

@@ -29,6 +29,7 @@
 #include <type_traits>
 #include <variant>
 
+#include "Source/common/Platform.h"
 #import "Source/common/SNTCommonEnums.h"
 #import "Source/common/SNTConfigurator.h"
 #include "Source/common/SantaCache.h"
@@ -53,6 +54,11 @@ NSString *kBadCertHash = @"BAD_CERT_HASH";
 
 static constexpr uint32_t kOpenFlagsIndicatingWrite = FWRITE | O_APPEND | O_TRUNC;
 
+struct PathTarget {
+  std::string path;
+  bool isReadable;
+};
+
 static inline std::string Path(const es_file_t *esFile) {
   return std::string(esFile->path.data, esFile->path.length);
 }
@@ -61,16 +67,17 @@ static inline std::string Path(const es_string_token_t &tok) {
   return std::string(tok.data, tok.length);
 }
 
-static inline void PushBackIfNotTruncated(std::vector<std::string> &vec, const es_file_t *esFile) {
+static inline void PushBackIfNotTruncated(std::vector<PathTarget> &vec, const es_file_t *esFile,
+                                          bool isReadable = false) {
   if (!esFile->path_truncated) {
-    vec.push_back(Path(esFile));
+    vec.push_back({Path(esFile), isReadable});
   }
 }
 
-static inline void PushBackIfNotTruncated(std::vector<std::string> &vec, const es_file_t *dir,
-                                          const es_string_token_t &name) {
+static inline void PushBackIfNotTruncated(std::vector<PathTarget> &vec, const es_file_t *dir,
+                                          const es_string_token_t &name, bool isReadable = false) {
   if (!dir->path_truncated) {
-    vec.push_back(Path(dir) + "/" + Path(name));
+    vec.push_back({Path(dir) + "/" + Path(name), isReadable});
   }
 }
 
@@ -106,32 +113,32 @@ es_auth_result_t CombinePolicyResults(es_auth_result_t result1, es_auth_result_t
             : ES_AUTH_RESULT_ALLOW);
 }
 
-void PopulatePathTargets(const Message &msg, std::vector<std::string> &targets) {
+void PopulatePathTargets(const Message &msg, std::vector<PathTarget> &targets) {
   switch (msg->event_type) {
-    case ES_EVENT_TYPE_AUTH_OPEN: PushBackIfNotTruncated(targets, msg->event.open.file); break;
+    case ES_EVENT_TYPE_AUTH_OPEN:
+      PushBackIfNotTruncated(targets, msg->event.open.file, true);
+      break;
     case ES_EVENT_TYPE_AUTH_LINK:
       PushBackIfNotTruncated(targets, msg->event.link.source);
       PushBackIfNotTruncated(targets, msg->event.link.target_dir, msg->event.link.target_filename);
       break;
     case ES_EVENT_TYPE_AUTH_RENAME:
+      PushBackIfNotTruncated(targets, msg->event.rename.source);
       if (msg->event.rename.destination_type == ES_DESTINATION_TYPE_EXISTING_FILE) {
-        PushBackIfNotTruncated(targets, msg->event.rename.source);
         PushBackIfNotTruncated(targets, msg->event.rename.destination.existing_file);
       } else if (msg->event.rename.destination_type == ES_DESTINATION_TYPE_NEW_PATH) {
-        PushBackIfNotTruncated(targets, msg->event.rename.source);
         PushBackIfNotTruncated(targets, msg->event.rename.destination.new_path.dir,
                                msg->event.rename.destination.new_path.filename);
       } else {
         LOGW(@"Unexpected destination type for rename event: %d. Ignoring destination.",
              msg->event.rename.destination_type);
-        PushBackIfNotTruncated(targets, msg->event.rename.source);
       }
       break;
     case ES_EVENT_TYPE_AUTH_UNLINK:
       PushBackIfNotTruncated(targets, msg->event.unlink.target);
       break;
     case ES_EVENT_TYPE_AUTH_CLONE:
-      PushBackIfNotTruncated(targets, msg->event.clone.source);
+      PushBackIfNotTruncated(targets, msg->event.clone.source, true);
       PushBackIfNotTruncated(targets, msg->event.link.target_dir, msg->event.clone.target_name);
       break;
     case ES_EVENT_TYPE_AUTH_EXCHANGEDATA:
@@ -139,12 +146,10 @@ void PopulatePathTargets(const Message &msg, std::vector<std::string> &targets) 
       PushBackIfNotTruncated(targets, msg->event.exchangedata.file2);
       break;
     case ES_EVENT_TYPE_AUTH_COPYFILE:
+      PushBackIfNotTruncated(targets, msg->event.copyfile.source, true);
       if (msg->event.copyfile.target_file) {
-        PushBackIfNotTruncated(targets, msg->event.copyfile.source);
         PushBackIfNotTruncated(targets, msg->event.copyfile.target_file);
       } else {
-        PushBackIfNotTruncated(targets, msg->event.copyfile.source);
-
         PushBackIfNotTruncated(targets, msg->event.copyfile.target_dir,
                                msg->event.copyfile.target_name);
       }
@@ -235,6 +240,7 @@ void PopulatePathTargets(const Message &msg, std::vector<std::string> &targets) 
 }
 
 - (FileAccessPolicyDecision)specialCaseForPolicy:(std::shared_ptr<WatchItemPolicy>)policy
+                                          target:(const PathTarget &)target
                                          message:(const Message &)msg {
   switch (msg->event_type) {
     case ES_EVENT_TYPE_AUTH_OPEN:
@@ -242,16 +248,31 @@ void PopulatePathTargets(const Message &msg, std::vector<std::string> &targets) 
       if (policy->write_only && !(msg->event.open.fflag & kOpenFlagsIndicatingWrite)) {
         return FileAccessPolicyDecision::kAllowedReadAccess;
       }
+      break;
 
-      break;
-    case ES_EVENT_TYPE_AUTH_LINK:
-    case ES_EVENT_TYPE_AUTH_RENAME:
-    case ES_EVENT_TYPE_AUTH_UNLINK:
     case ES_EVENT_TYPE_AUTH_CLONE:
-    case ES_EVENT_TYPE_AUTH_EXCHANGEDATA:
-    case ES_EVENT_TYPE_AUTH_COPYFILE:
-      // TODO(xyz): Handle special cases for more event types
+      // If policy is write-only, readable targets are allowed (e.g. source file)
+      if (policy->write_only && target.isReadable) {
+        return FileAccessPolicyDecision::kAllowedReadAccess;
+      }
       break;
+
+    case ES_EVENT_TYPE_AUTH_COPYFILE:
+      // Note: Flags for the copyfile event represent the kernel view, not the usersapce
+      // copyfile(3) implementation. This means if a `copyfile(3)` flag like `COPYFILE_MOVE`
+      // is specified, it will come as a separate `unlink(2)` event, not a flag here.
+      if (policy->write_only && target.isReadable) {
+        return FileAccessPolicyDecision::kAllowedReadAccess;
+      }
+      break;
+
+    case ES_EVENT_TYPE_AUTH_EXCHANGEDATA:
+    case ES_EVENT_TYPE_AUTH_RENAME:
+    case ES_EVENT_TYPE_AUTH_LINK:
+    case ES_EVENT_TYPE_AUTH_UNLINK:
+      // These event types have no special case
+      break;
+
     default:
       [NSException raise:@"Unexpected event type"
                   format:@"Received unexpected event type in the file access authorizer: %d",
@@ -270,6 +291,7 @@ void PopulatePathTargets(const Message &msg, std::vector<std::string> &targets) 
 // Otherwise the operation is denied.
 - (FileAccessPolicyDecision)applyPolicy:
                               (std::optional<std::shared_ptr<WatchItemPolicy>>)optionalPolicy
+                              forTarget:(const PathTarget &)target
                               toMessage:(const Message &)msg {
   // If no policy exists, everything is allowed
   if (!optionalPolicy.has_value()) {
@@ -289,7 +311,9 @@ void PopulatePathTargets(const Message &msg, std::vector<std::string> &targets) 
 
   // Check if this action contains any special case that would produce
   // an immediate result.
-  FileAccessPolicyDecision specialCase = [self specialCaseForPolicy:policy message:msg];
+  FileAccessPolicyDecision specialCase = [self specialCaseForPolicy:policy
+                                                             target:target
+                                                            message:msg];
   if (specialCase != FileAccessPolicyDecision::kNoPolicy) {
     return specialCase;
   }
@@ -336,29 +360,31 @@ void PopulatePathTargets(const Message &msg, std::vector<std::string> &targets) 
 }
 
 - (FileAccessPolicyDecision)handleMessage:(const Message &)msg
-                                   target:(const std::string &)target
+                                   target:(const PathTarget &)target
                                    policy:
                                      (std::optional<std::shared_ptr<WatchItemPolicy>>)optionalPolicy
                             policyVersion:(const std::string &)policyVersion {
-  FileAccessPolicyDecision policyDecision = [self applyPolicy:optionalPolicy toMessage:msg];
+  FileAccessPolicyDecision policyDecision = [self applyPolicy:optionalPolicy
+                                                    forTarget:target
+                                                    toMessage:msg];
 
   if (ShouldLogDecision(policyDecision)) {
     if (optionalPolicy.has_value()) {
       std::string policyNameCopy = optionalPolicy.value()->name;
       std::string policyVersionCopy = policyVersion;
-      std::string targetCopy = target;
+      std::string targetPathCopy = target.path;
 
       [self asynchronouslyProcess:msg
                           handler:^(Message &&esMsg) {
                             self->_logger->LogFileAccess(
                               policyVersionCopy, policyNameCopy, esMsg,
                               self->_enricher->Enrich(*esMsg->process, EnrichOptions::kLocalOnly),
-                              targetCopy, policyDecision);
+                              targetPathCopy, policyDecision);
                           }];
 
     } else {
       LOGE(@"Unexpectedly missing policy: Unable to log file access event: %s -> %s",
-           Path(msg->process->executable).data(), target.c_str());
+           Path(msg->process->executable).data(), target.path.c_str());
     }
   }
 
@@ -366,10 +392,19 @@ void PopulatePathTargets(const Message &msg, std::vector<std::string> &targets) 
 }
 
 - (void)processMessage:(const Message &)msg {
-  std::vector<std::string> targets;
+  std::vector<PathTarget> targets;
+  targets.reserve(2);
   PopulatePathTargets(msg, targets);
-  WatchItems::VersionAndPolicies versionAndPolicies =
-    self->_watchItems->FindPolciesForPaths(targets);
+
+  // Extract the paths from the ve  ctor of PathTargets in order to lookup policies
+  // Note: There should only ever be 1 or 2 items in the vector
+  std::vector<std::string_view> paths;
+  paths.reserve(2);
+  for (const PathTarget &target : targets) {
+    paths.push_back(std::string_view(target.path));
+  }
+
+  WatchItems::VersionAndPolicies versionAndPolicies = self->_watchItems->FindPolciesForPaths(paths);
 
   es_auth_result_t policyResult = ES_AUTH_RESULT_ALLOW;
   bool allow_read_access = false;
@@ -411,15 +446,20 @@ void PopulatePathTargets(const Message &msg, std::vector<std::string> &targets) 
 }
 
 - (void)enable {
-  // TODO(xyz): Will be expanding support to many more event types soon:
-  // ES_EVENT_TYPE_AUTH_LINK
-  // ES_EVENT_TYPE_AUTH_RENAME
-  // ES_EVENT_TYPE_AUTH_UNLINK
-  // ES_EVENT_TYPE_AUTH_CLONE
-  // ES_EVENT_TYPE_AUTH_EXCHANGEDATA
-  // ES_EVENT_TYPE_AUTH_COPYFILE
+  // TODO(xyz): Expand to support ES_EVENT_TYPE_AUTH_LINK
+  std::set<es_event_type_t> events = {
+    ES_EVENT_TYPE_AUTH_CLONE,  ES_EVENT_TYPE_AUTH_EXCHANGEDATA, ES_EVENT_TYPE_AUTH_OPEN,
+    ES_EVENT_TYPE_AUTH_RENAME, ES_EVENT_TYPE_AUTH_UNLINK,
+  };
+
+#if HAVE_MACOS_12
+  if (@available(macOS 12.0, *)) {
+    events.insert(ES_EVENT_TYPE_AUTH_COPYFILE);
+  }
+#endif
+
   if (!self.isSubscribed) {
-    self.isSubscribed = [super subscribe:{ES_EVENT_TYPE_AUTH_OPEN}];
+    self.isSubscribed = [super subscribe:events];
     [super clearCache];
   }
 }
