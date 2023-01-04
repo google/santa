@@ -70,9 +70,9 @@ void SetExpectationsForFileAccessAuthorizerInit(
                                           target:(const PathTarget &)target
                                          message:(const Message &)msg;
 - (FileAccessPolicyDecision)applyPolicy:
-          (std::optional<std::shared_ptr<WatchItemPolicy>>)optionalPolicy
-          forTarget:(const PathTarget &)target
-          toMessage:(const Message &)msg;
+                              (std::optional<std::shared_ptr<WatchItemPolicy>>)optionalPolicy
+                              forTarget:(const PathTarget &)target
+                              toMessage:(const Message &)msg;
 
 @property bool isSubscribed;
 @end
