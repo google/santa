@@ -25,8 +25,6 @@
 			<!-- make more clear they apply to the whole rule, not a path. -->
 			<key>Options</key>
 			<dict>
-				<!-- Key changed from `WriteOnly`, makes more clear how this affects -->
-				<!-- runtime (e.g. OPEN vs CLONEFILE "read access") -->
 				<key>AllowReadAccess</key>
 				<false/>
 				<key>AuditOnly</key>
@@ -36,28 +34,28 @@
 				<!--   * InvertProcessLogic: By default, listed processes are allowed -->
 				<!--     to perform the op. this key could invert that logic such that -->
 				<!--     the listed processes are denied and everything else is allowed. -->
-				<!--   * ProcessLogicAND: By default, a process matching any of the criteria -->
-				<!--     is allowed. This key would require a process meet all the criteria. -->
 			</dict>
 			<key>Processes</key>
-			<dict>
-				<key>BinaryPaths</key>
-				<array>
-					<string>/bin/cat</string>
-				</array>
-				<key>TeamIDs</key>
-				<array>
+			<array>
+				<!-- Process entries are OR'd together - An instigating process -->
+				<!-- matching any of the entries will be allowed to perform the op -->
+				<dict>
+					<!-- Attributes within a dictionary are AND'd together - all -->
+					<!-- criteria must be met for it to be considered a match. -->
+					<key>BinaryPath</key>
+					<string>/Applications/Google Chrome.app/Contents/MacOS/Google Chrome</string>
+					<key>TeamID</key>
 					<string>EQHXZ8M8AV</string>
-				</array>
-				<key>CDHashes</key>
-				<array>
-					<string>7123c34930eba59a371ce445bcdadc717f0defdf</string>
-				</array>
-				<key>CertificatesSha256</key>
-				<array>
-					<string>d84db96af8c2e60ac4c851a21ec460f6f84e0235beb17d24a78712b9b021ed57</string>
-				</array>
-			</dict>
+				</dict>
+				<dict>
+					<key>CertificateSha256</key>
+					<string>AAAA</string>
+				</dict>
+				<dict>
+					<key>CertificateSha256</key>
+					<string>BBBB</string>
+				</dict>
+			</array>
 		</dict>
 	</dict>
 </dict>
