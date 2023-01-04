@@ -21,31 +21,34 @@
 #import "Source/common/SNTXPCMetricServiceInterface.h"
 #import "Source/santad/SNTApplicationCoreMetrics.h"
 
-static const NSString *kProcessorAuthorizer = @"Authorizer";
-static const NSString *kProcessorDeviceManager = @"DeviceManager";
-static const NSString *kProcessorRecorder = @"Recorder";
-static const NSString *kProcessorTamperResistance = @"TamperResistance";
-static const NSString *kProcessorFileAccessAuthorizer = @"FileAccessAuthorizer";
+static NSString *const kProcessorAuthorizer = @"Authorizer";
+static NSString *const kProcessorDeviceManager = @"DeviceManager";
+static NSString *const kProcessorRecorder = @"Recorder";
+static NSString *const kProcessorTamperResistance = @"TamperResistance";
+static NSString *const kProcessorFileAccessAuthorizer = @"FileAccessAuthorizer";
 
-static const NSString *kEventTypeAuthExec = @"AuthExec";
-static const NSString *kEventTypeAuthKextload = @"AuthKextload";
-static const NSString *kEventTypeAuthMount = @"AuthMount";
-static const NSString *kEventTypeAuthOpen = @"AuthOpen";
-static const NSString *kEventTypeAuthRemount = @"AuthRemount";
-static const NSString *kEventTypeAuthRename = @"AuthRename";
-static const NSString *kEventTypeAuthUnlink = @"AuthUnlink";
-static const NSString *kEventTypeNotifyClose = @"NotifyClose";
-static const NSString *kEventTypeNotifyExchangedata = @"NotifyExchangedata";
-static const NSString *kEventTypeNotifyExec = @"NotifyExec";
-static const NSString *kEventTypeNotifyExit = @"NotifyExit";
-static const NSString *kEventTypeNotifyFork = @"NotifyFork";
-static const NSString *kEventTypeNotifyLink = @"NotifyLink";
-static const NSString *kEventTypeNotifyRename = @"NotifyRename";
-static const NSString *kEventTypeNotifyUnlink = @"NotifyUnlink";
-static const NSString *kEventTypeNotifyUnmount = @"NotifyUnmount";
+static NSString *const kEventTypeAuthClone = @"AuthClone";
+static NSString *const kEventTypeAuthCopyfile = @"AuthCopyfile";
+static NSString *const kEventTypeAuthExchangedata = @"AuthExchangedata";
+static NSString *const kEventTypeAuthExec = @"AuthExec";
+static NSString *const kEventTypeAuthKextload = @"AuthKextload";
+static NSString *const kEventTypeAuthMount = @"AuthMount";
+static NSString *const kEventTypeAuthOpen = @"AuthOpen";
+static NSString *const kEventTypeAuthRemount = @"AuthRemount";
+static NSString *const kEventTypeAuthRename = @"AuthRename";
+static NSString *const kEventTypeAuthUnlink = @"AuthUnlink";
+static NSString *const kEventTypeNotifyClose = @"NotifyClose";
+static NSString *const kEventTypeNotifyExchangedata = @"NotifyExchangedata";
+static NSString *const kEventTypeNotifyExec = @"NotifyExec";
+static NSString *const kEventTypeNotifyExit = @"NotifyExit";
+static NSString *const kEventTypeNotifyFork = @"NotifyFork";
+static NSString *const kEventTypeNotifyLink = @"NotifyLink";
+static NSString *const kEventTypeNotifyRename = @"NotifyRename";
+static NSString *const kEventTypeNotifyUnlink = @"NotifyUnlink";
+static NSString *const kEventTypeNotifyUnmount = @"NotifyUnmount";
 
-static const NSString *kEventDispositionDropped = @"Dropped";
-static const NSString *kEventDispositionProcessed = @"Processed";
+static NSString *const kEventDispositionDropped = @"Dropped";
+static NSString *const kEventDispositionProcessed = @"Processed";
 
 namespace santa::santad {
 
@@ -64,6 +67,9 @@ const NSString *ProcessorToString(Processor processor) {
 
 const NSString *EventTypeToString(es_event_type_t eventType) {
   switch (eventType) {
+    case ES_EVENT_TYPE_AUTH_CLONE: return kEventTypeAuthClone;
+    case ES_EVENT_TYPE_AUTH_COPYFILE: return kEventTypeAuthCopyfile;
+    case ES_EVENT_TYPE_AUTH_EXCHANGEDATA: return kEventTypeAuthExchangedata;
     case ES_EVENT_TYPE_AUTH_EXEC: return kEventTypeAuthExec;
     case ES_EVENT_TYPE_AUTH_KEXTLOAD: return kEventTypeAuthKextload;
     case ES_EVENT_TYPE_AUTH_MOUNT: return kEventTypeAuthMount;

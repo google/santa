@@ -127,6 +127,9 @@ using santa::santad::ProcessorToString;
 
 - (void)testEventTypeToString {
   std::map<es_event_type_t, NSString *> eventTypeToString = {
+    {ES_EVENT_TYPE_AUTH_CLONE, @"AuthClone"},
+    {ES_EVENT_TYPE_AUTH_COPYFILE, @"AuthCopyfile"},
+    {ES_EVENT_TYPE_AUTH_EXCHANGEDATA, @"AuthExchangedata"},
     {ES_EVENT_TYPE_AUTH_EXEC, @"AuthExec"},
     {ES_EVENT_TYPE_AUTH_KEXTLOAD, @"AuthKextload"},
     {ES_EVENT_TYPE_AUTH_MOUNT, @"AuthMount"},

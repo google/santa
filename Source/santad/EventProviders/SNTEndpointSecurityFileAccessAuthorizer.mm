@@ -142,7 +142,7 @@ void PopulatePathTargets(const Message &msg, std::vector<PathTarget> &targets) {
       break;
     case ES_EVENT_TYPE_AUTH_CLONE:
       PushBackIfNotTruncated(targets, msg->event.clone.source, true);
-      PushBackIfNotTruncated(targets, msg->event.link.target_dir, msg->event.clone.target_name);
+      PushBackIfNotTruncated(targets, msg->event.clone.target_dir, msg->event.clone.target_name);
       break;
     case ES_EVENT_TYPE_AUTH_EXCHANGEDATA:
       PushBackIfNotTruncated(targets, msg->event.exchangedata.file1);
