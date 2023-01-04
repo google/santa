@@ -1165,6 +1165,7 @@ santa_unit_test(
         ":SNTEndpointSecurityFileAccessAuthorizer",
         ":WatchItemPolicy",
         ":WatchItems",
+        "//Source/common:Platform",
         "//Source/common:SNTCachedDecision",
         "//Source/common:SNTConfigurator",
         "//Source/common:TestUtils",

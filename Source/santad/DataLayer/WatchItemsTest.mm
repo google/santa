@@ -152,8 +152,8 @@ static NSMutableDictionary *WrapWatchItemsConfig(NSDictionary *config) {
 
   WatchItems::VersionAndPolicies policies;
 
-  std::vector<std::string> f1Path = {"f1"};
-  std::vector<std::string> f2Path = {"f2"};
+  std::vector<std::string_view> f1Path = {"f1"};
+  std::vector<std::string_view> f2Path = {"f2"};
 
   // Changes in config dictionary will update policy info even if the
   // filesystem didn't change.
@@ -233,8 +233,8 @@ static NSMutableDictionary *WrapWatchItemsConfig(NSDictionary *config) {
   [self pushd:@""];
   XCTAssertTrue([firstConfig writeToFile:configFile atomically:YES]);
 
-  std::vector<std::string> f1Path = {"f1"};
-  std::vector<std::string> weird1Path = {"weird1"};
+  std::vector<std::string_view> f1Path = {"f1"};
+  std::vector<std::string_view> weird1Path = {"weird1"};
 
   // Ensure no policy has been loaded yet
   XCTAssertFalse(watchItems->FindPolciesForPaths(f1Path).second[0].has_value());
@@ -282,7 +282,7 @@ static NSMutableDictionary *WrapWatchItemsConfig(NSDictionary *config) {
 
   // Resultant vector is same size as input vector
   // Initially nothing should be in the map
-  std::vector<std::string> paths = {};
+  std::vector<std::string_view> paths = {};
   XCTAssertEqual(watchItems.FindPolciesForPaths(paths).second.size(), 0);
   paths.push_back("./foo");
   XCTAssertEqual(watchItems.FindPolciesForPaths(paths).second.size(), 1);
@@ -297,7 +297,7 @@ static NSMutableDictionary *WrapWatchItemsConfig(NSDictionary *config) {
 
   {
     // Test expected values with the inital policy
-    const std::map<std::vector<std::string>, std::string_view> pathToPolicyName = {
+    const std::map<std::vector<std::string_view>, std::string_view> pathToPolicyName = {
       {{"./foo"}, "foo_subdir"},
       {{"./foo/bar.txt.tmp"}, "foo_subdir"},
       {{"./foo/bar.txt"}, "foo_subdir"},
@@ -331,7 +331,7 @@ static NSMutableDictionary *WrapWatchItemsConfig(NSDictionary *config) {
 
   {
     // Test expected values with the updated policy
-    const std::map<std::vector<std::string>, std::string_view> pathToPolicyName = {
+    const std::map<std::vector<std::string_view>, std::string_view> pathToPolicyName = {
       {{"./foo"}, "foo_subdir"},
       {{"./foo/bar.txt.tmp"}, "foo_subdir"},
       {{"./foo/bar.txt"}, "bar_txt"},
@@ -359,7 +359,7 @@ static NSMutableDictionary *WrapWatchItemsConfig(NSDictionary *config) {
 
   {
     // Test expected values with the catch-all policy
-    const std::map<std::vector<std::string>, std::string_view> pathToPolicyName = {
+    const std::map<std::vector<std::string_view>, std::string_view> pathToPolicyName = {
       {{"./foo"}, "foo_subdir"},
       {{"./foo/bar.txt.tmp"}, "foo_subdir"},
       {{"./foo/bar.txt"}, "bar_txt"},
@@ -381,7 +381,7 @@ static NSMutableDictionary *WrapWatchItemsConfig(NSDictionary *config) {
 
   {
     // Test expected values with the foo_subdir policy removed
-    const std::map<std::vector<std::string>, std::string_view> pathToPolicyName = {
+    const std::map<std::vector<std::string_view>, std::string_view> pathToPolicyName = {
       {{"./foo"}, "dot_everything"},
       {{"./foo/bar.txt.tmp"}, "dot_everything"},
       {{"./foo/bar.txt"}, "bar_txt"},

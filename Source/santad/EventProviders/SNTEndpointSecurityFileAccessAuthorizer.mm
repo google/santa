@@ -54,6 +54,9 @@ NSString *kBadCertHash = @"BAD_CERT_HASH";
 
 static constexpr uint32_t kOpenFlagsIndicatingWrite = FWRITE | O_APPEND | O_TRUNC;
 
+// Small structure to hold a complete event path target being operated upon and
+// a bool indicating whether the path is a readable target (e.g. a file being
+// opened or cloned)
 struct PathTarget {
   std::string path;
   bool isReadable;
@@ -446,7 +449,7 @@ void PopulatePathTargets(const Message &msg, std::vector<PathTarget> &targets) {
 }
 
 - (void)enable {
-  // TODO(xyz): Expand to support ES_EVENT_TYPE_AUTH_LINK
+  // TODO(xyz): Expand to support ES_EVENT_TYPE_AUTH_LINK, ES_EVENT_TYPE_AUTH_TRUNCATE
   std::set<es_event_type_t> events = {
     ES_EVENT_TYPE_AUTH_CLONE,  ES_EVENT_TYPE_AUTH_EXCHANGEDATA, ES_EVENT_TYPE_AUTH_OPEN,
     ES_EVENT_TYPE_AUTH_RENAME, ES_EVENT_TYPE_AUTH_UNLINK,
