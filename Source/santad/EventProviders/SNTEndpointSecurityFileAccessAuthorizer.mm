@@ -399,7 +399,7 @@ void PopulatePathTargets(const Message &msg, std::vector<PathTarget> &targets) {
   targets.reserve(2);
   PopulatePathTargets(msg, targets);
 
-  // Extract the paths from the ve  ctor of PathTargets in order to lookup policies
+  // Extract the paths from the vector of PathTargets in order to lookup policies
   // Note: There should only ever be 1 or 2 items in the vector
   std::vector<std::string_view> paths;
   paths.reserve(2);
