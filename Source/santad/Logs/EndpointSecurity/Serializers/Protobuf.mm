@@ -327,13 +327,15 @@ static inline void EncodeCertificateInfo(::pbv1::CertificateInfo *pb_cert_info, 
 
 ::pbv1::FileAccess::AccessType GetAccessType(es_event_type_t event_type) {
   switch (event_type) {
-    case ES_EVENT_TYPE_AUTH_OPEN: return ::pbv1::FileAccess::ACCESS_TYPE_OPEN;
-    case ES_EVENT_TYPE_AUTH_LINK: return ::pbv1::FileAccess::ACCESS_TYPE_LINK;
-    case ES_EVENT_TYPE_AUTH_RENAME: return ::pbv1::FileAccess::ACCESS_TYPE_RENAME;
-    case ES_EVENT_TYPE_AUTH_UNLINK: return ::pbv1::FileAccess::ACCESS_TYPE_UNLINK;
     case ES_EVENT_TYPE_AUTH_CLONE: return ::pbv1::FileAccess::ACCESS_TYPE_CLONE;
-    case ES_EVENT_TYPE_AUTH_EXCHANGEDATA: return ::pbv1::FileAccess::ACCESS_TYPE_EXCHANGEDATA;
+    case ES_EVENT_TYPE_AUTH_CREATE: return ::pbv1::FileAccess::ACCESS_TYPE_CREATE;
     case ES_EVENT_TYPE_AUTH_COPYFILE: return ::pbv1::FileAccess::ACCESS_TYPE_COPYFILE;
+    case ES_EVENT_TYPE_AUTH_EXCHANGEDATA: return ::pbv1::FileAccess::ACCESS_TYPE_EXCHANGEDATA;
+    case ES_EVENT_TYPE_AUTH_LINK: return ::pbv1::FileAccess::ACCESS_TYPE_LINK;
+    case ES_EVENT_TYPE_AUTH_OPEN: return ::pbv1::FileAccess::ACCESS_TYPE_OPEN;
+    case ES_EVENT_TYPE_AUTH_RENAME: return ::pbv1::FileAccess::ACCESS_TYPE_RENAME;
+    case ES_EVENT_TYPE_AUTH_TRUNCATE: return ::pbv1::FileAccess::ACCESS_TYPE_TRUNCATE;
+    case ES_EVENT_TYPE_AUTH_UNLINK: return ::pbv1::FileAccess::ACCESS_TYPE_UNLINK;
     default: return ::pbv1::FileAccess::ACCESS_TYPE_UNKNOWN;
   }
 }

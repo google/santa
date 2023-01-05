@@ -118,13 +118,46 @@ es_auth_result_t CombinePolicyResults(es_auth_result_t result1, es_auth_result_t
 
 void PopulatePathTargets(const Message &msg, std::vector<PathTarget> &targets) {
   switch (msg->event_type) {
-    case ES_EVENT_TYPE_AUTH_OPEN:
-      PushBackIfNotTruncated(targets, msg->event.open.file, true);
+    case ES_EVENT_TYPE_AUTH_CLONE:
+      PushBackIfNotTruncated(targets, msg->event.clone.source, true);
+      PushBackIfNotTruncated(targets, msg->event.clone.target_dir, msg->event.clone.target_name);
       break;
+
+    case ES_EVENT_TYPE_AUTH_CREATE:
+      // AUTH CREATE events should always be ES_DESTINATION_TYPE_NEW_PATH
+      if (msg->event.create.destination_type == ES_DESTINATION_TYPE_NEW_PATH) {
+        PushBackIfNotTruncated(targets, msg->event.create.destination.new_path.dir,
+                               msg->event.create.destination.new_path.filename);
+      } else {
+        LOGW(@"Unexpected destination type for create event: %d. Ignoring target.",
+             msg->event.create.destination_type);
+      }
+      break;
+
+    case ES_EVENT_TYPE_AUTH_COPYFILE:
+      PushBackIfNotTruncated(targets, msg->event.copyfile.source, true);
+      if (msg->event.copyfile.target_file) {
+        PushBackIfNotTruncated(targets, msg->event.copyfile.target_file);
+      } else {
+        PushBackIfNotTruncated(targets, msg->event.copyfile.target_dir,
+                               msg->event.copyfile.target_name);
+      }
+      break;
+
+    case ES_EVENT_TYPE_AUTH_EXCHANGEDATA:
+      PushBackIfNotTruncated(targets, msg->event.exchangedata.file1);
+      PushBackIfNotTruncated(targets, msg->event.exchangedata.file2);
+      break;
+
     case ES_EVENT_TYPE_AUTH_LINK:
       PushBackIfNotTruncated(targets, msg->event.link.source);
       PushBackIfNotTruncated(targets, msg->event.link.target_dir, msg->event.link.target_filename);
       break;
+
+    case ES_EVENT_TYPE_AUTH_OPEN:
+      PushBackIfNotTruncated(targets, msg->event.open.file, true);
+      break;
+
     case ES_EVENT_TYPE_AUTH_RENAME:
       PushBackIfNotTruncated(targets, msg->event.rename.source);
       if (msg->event.rename.destination_type == ES_DESTINATION_TYPE_EXISTING_FILE) {
@@ -137,26 +170,15 @@ void PopulatePathTargets(const Message &msg, std::vector<PathTarget> &targets) {
              msg->event.rename.destination_type);
       }
       break;
+
+    case ES_EVENT_TYPE_AUTH_TRUNCATE:
+      PushBackIfNotTruncated(targets, msg->event.truncate.target);
+      break;
+
     case ES_EVENT_TYPE_AUTH_UNLINK:
       PushBackIfNotTruncated(targets, msg->event.unlink.target);
       break;
-    case ES_EVENT_TYPE_AUTH_CLONE:
-      PushBackIfNotTruncated(targets, msg->event.clone.source, true);
-      PushBackIfNotTruncated(targets, msg->event.clone.target_dir, msg->event.clone.target_name);
-      break;
-    case ES_EVENT_TYPE_AUTH_EXCHANGEDATA:
-      PushBackIfNotTruncated(targets, msg->event.exchangedata.file1);
-      PushBackIfNotTruncated(targets, msg->event.exchangedata.file2);
-      break;
-    case ES_EVENT_TYPE_AUTH_COPYFILE:
-      PushBackIfNotTruncated(targets, msg->event.copyfile.source, true);
-      if (msg->event.copyfile.target_file) {
-        PushBackIfNotTruncated(targets, msg->event.copyfile.target_file);
-      } else {
-        PushBackIfNotTruncated(targets, msg->event.copyfile.target_dir,
-                               msg->event.copyfile.target_name);
-      }
-      break;
+
     default:
       [NSException
          raise:@"Unexpected event type"
@@ -269,9 +291,11 @@ void PopulatePathTargets(const Message &msg, std::vector<PathTarget> &targets) {
       }
       break;
 
+    case ES_EVENT_TYPE_AUTH_CREATE:
     case ES_EVENT_TYPE_AUTH_EXCHANGEDATA:
-    case ES_EVENT_TYPE_AUTH_RENAME:
     case ES_EVENT_TYPE_AUTH_LINK:
+    case ES_EVENT_TYPE_AUTH_RENAME:
+    case ES_EVENT_TYPE_AUTH_TRUNCATE:
     case ES_EVENT_TYPE_AUTH_UNLINK:
       // These event types have no special case
       break;
@@ -451,8 +475,9 @@ void PopulatePathTargets(const Message &msg, std::vector<PathTarget> &targets) {
 - (void)enable {
   // TODO(xyz): Expand to support ES_EVENT_TYPE_AUTH_CREATE, ES_EVENT_TYPE_AUTH_TRUNCATE
   std::set<es_event_type_t> events = {
-    ES_EVENT_TYPE_AUTH_CLONE, ES_EVENT_TYPE_AUTH_EXCHANGEDATA, ES_EVENT_TYPE_AUTH_LINK,
-    ES_EVENT_TYPE_AUTH_OPEN,  ES_EVENT_TYPE_AUTH_RENAME,       ES_EVENT_TYPE_AUTH_UNLINK,
+    ES_EVENT_TYPE_AUTH_CLONE,    ES_EVENT_TYPE_AUTH_CREATE, ES_EVENT_TYPE_AUTH_EXCHANGEDATA,
+    ES_EVENT_TYPE_AUTH_LINK,     ES_EVENT_TYPE_AUTH_OPEN,   ES_EVENT_TYPE_AUTH_RENAME,
+    ES_EVENT_TYPE_AUTH_TRUNCATE, ES_EVENT_TYPE_AUTH_UNLINK,
   };
 
 #if HAVE_MACOS_12

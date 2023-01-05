@@ -342,10 +342,8 @@ void SetExpectationsForFileAccessAuthorizerInit(
 
   // Ensure other handled event types do not have a special case
   std::set<es_event_type_t> eventTypes = {
-    ES_EVENT_TYPE_AUTH_LINK,
-    ES_EVENT_TYPE_AUTH_RENAME,
-    ES_EVENT_TYPE_AUTH_UNLINK,
-    ES_EVENT_TYPE_AUTH_EXCHANGEDATA,
+    ES_EVENT_TYPE_AUTH_CREATE, ES_EVENT_TYPE_AUTH_EXCHANGEDATA, ES_EVENT_TYPE_AUTH_LINK,
+    ES_EVENT_TYPE_AUTH_RENAME, ES_EVENT_TYPE_AUTH_TRUNCATE,     ES_EVENT_TYPE_AUTH_UNLINK,
   };
 
   for (const auto &event : eventTypes) {
@@ -493,8 +491,9 @@ void SetExpectationsForFileAccessAuthorizerInit(
 
 - (void)testEnable {
   std::set<es_event_type_t> expectedEventSubs = {
-    ES_EVENT_TYPE_AUTH_CLONE, ES_EVENT_TYPE_AUTH_EXCHANGEDATA, ES_EVENT_TYPE_AUTH_LINK,
-    ES_EVENT_TYPE_AUTH_OPEN,  ES_EVENT_TYPE_AUTH_RENAME,       ES_EVENT_TYPE_AUTH_UNLINK,
+    ES_EVENT_TYPE_AUTH_CLONE,    ES_EVENT_TYPE_AUTH_CREATE, ES_EVENT_TYPE_AUTH_EXCHANGEDATA,
+    ES_EVENT_TYPE_AUTH_LINK,     ES_EVENT_TYPE_AUTH_OPEN,   ES_EVENT_TYPE_AUTH_RENAME,
+    ES_EVENT_TYPE_AUTH_TRUNCATE, ES_EVENT_TYPE_AUTH_UNLINK,
   };
 
 #if HAVE_MACOS_12
@@ -661,6 +660,32 @@ void SetExpectationsForFileAccessAuthorizerInit(
     XCTAssertFalse(targets[0].isReadable);
     XCTAssertCStringEqual(targets[1].path.c_str(), testFile2.path.data);
     XCTAssertFalse(targets[1].isReadable);
+  }
+
+  {
+    esMsg.event_type = ES_EVENT_TYPE_AUTH_CREATE;
+    esMsg.event.create.destination_type = ES_DESTINATION_TYPE_NEW_PATH;
+    esMsg.event.create.destination.new_path.dir = &testDir;
+    esMsg.event.create.destination.new_path.filename = testTok;
+
+    std::vector<PathTarget> targets;
+    PopulatePathTargets(msg, targets);
+
+    XCTAssertEqual(targets.size(), 1);
+    XCTAssertCppStringEqual(targets[0].path, dirTok);
+    XCTAssertFalse(targets[0].isReadable);
+  }
+
+  {
+    esMsg.event_type = ES_EVENT_TYPE_AUTH_TRUNCATE;
+    esMsg.event.truncate.target = &testFile1;
+
+    std::vector<PathTarget> targets;
+    PopulatePathTargets(msg, targets);
+
+    XCTAssertEqual(targets.size(), 1);
+    XCTAssertCStringEqual(targets[0].path.c_str(), testFile1.path.data);
+    XCTAssertFalse(targets[0].isReadable);
   }
 
   if (@available(macOS 12.0, *)) {

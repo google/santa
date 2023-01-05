@@ -488,6 +488,8 @@ message FileAccess {
     ACCESS_TYPE_CLONE = 5;
     ACCESS_TYPE_EXCHANGEDATA = 6;
     ACCESS_TYPE_COPYFILE = 7;
+    ACCESS_TYPE_CREATE = 8;
+    ACCESS_TYPE_TRUNCATE = 9;
   }
   optional AccessType access_type = 5;
 
