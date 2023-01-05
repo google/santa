@@ -132,6 +132,7 @@ using santa::santad::ProcessorToString;
     {ES_EVENT_TYPE_AUTH_EXCHANGEDATA, @"AuthExchangedata"},
     {ES_EVENT_TYPE_AUTH_EXEC, @"AuthExec"},
     {ES_EVENT_TYPE_AUTH_KEXTLOAD, @"AuthKextload"},
+    {ES_EVENT_TYPE_AUTH_LINK, @"AuthLink"},
     {ES_EVENT_TYPE_AUTH_MOUNT, @"AuthMount"},
     {ES_EVENT_TYPE_AUTH_REMOUNT, @"AuthRemount"},
     {ES_EVENT_TYPE_AUTH_RENAME, @"AuthRename"},

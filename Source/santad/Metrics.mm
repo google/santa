@@ -32,6 +32,7 @@ static NSString *const kEventTypeAuthCopyfile = @"AuthCopyfile";
 static NSString *const kEventTypeAuthExchangedata = @"AuthExchangedata";
 static NSString *const kEventTypeAuthExec = @"AuthExec";
 static NSString *const kEventTypeAuthKextload = @"AuthKextload";
+static NSString *const kEventTypeAuthLink = @"AuthLink";
 static NSString *const kEventTypeAuthMount = @"AuthMount";
 static NSString *const kEventTypeAuthOpen = @"AuthOpen";
 static NSString *const kEventTypeAuthRemount = @"AuthRemount";
@@ -72,6 +73,7 @@ const NSString *EventTypeToString(es_event_type_t eventType) {
     case ES_EVENT_TYPE_AUTH_EXCHANGEDATA: return kEventTypeAuthExchangedata;
     case ES_EVENT_TYPE_AUTH_EXEC: return kEventTypeAuthExec;
     case ES_EVENT_TYPE_AUTH_KEXTLOAD: return kEventTypeAuthKextload;
+    case ES_EVENT_TYPE_AUTH_LINK: return kEventTypeAuthLink;
     case ES_EVENT_TYPE_AUTH_MOUNT: return kEventTypeAuthMount;
     case ES_EVENT_TYPE_AUTH_OPEN: return kEventTypeAuthOpen;
     case ES_EVENT_TYPE_AUTH_REMOUNT: return kEventTypeAuthRemount;
