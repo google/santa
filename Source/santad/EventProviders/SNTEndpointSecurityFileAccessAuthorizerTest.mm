@@ -28,6 +28,7 @@
 #include <optional>
 #include <variant>
 
+#include "Source/common/Platform.h"
 #include "Source/common/SNTCachedDecision.h"
 #import "Source/common/SNTConfigurator.h"
 #include "Source/common/TestUtils.h"
@@ -44,8 +45,14 @@ using santa::santad::event_providers::endpoint_security::Message;
 
 extern NSString *kBadCertHash;
 
+// Duplicate definition for test implementation
+struct PathTarget {
+  std::string path;
+  bool isReadable;
+};
+
 using PathTargetsPair = std::pair<std::optional<std::string>, std::optional<std::string>>;
-extern void PopulatePathTargets(const Message &msg, std::vector<std::string> &targets);
+extern void PopulatePathTargets(const Message &msg, std::vector<PathTarget> &targets);
 extern es_auth_result_t FileAccessPolicyDecisionToESAuthResult(FileAccessPolicyDecision decision);
 extern bool ShouldLogDecision(FileAccessPolicyDecision decision);
 extern es_auth_result_t CombinePolicyResults(es_auth_result_t result1, es_auth_result_t result2);
@@ -60,9 +67,11 @@ void SetExpectationsForFileAccessAuthorizerInit(
 @interface SNTEndpointSecurityFileAccessAuthorizer (Testing)
 - (NSString *)getCertificateHash:(es_file_t *)esFile;
 - (FileAccessPolicyDecision)specialCaseForPolicy:(std::shared_ptr<WatchItemPolicy>)policy
+                                          target:(const PathTarget &)target
                                          message:(const Message &)msg;
 - (FileAccessPolicyDecision)applyPolicy:
                               (std::optional<std::shared_ptr<WatchItemPolicy>>)optionalPolicy
+                              forTarget:(const PathTarget &)target
                               toMessage:(const Message &)msg;
 
 @property bool isSubscribed;
@@ -254,6 +263,7 @@ void SetExpectationsForFileAccessAuthorizerInit(
   auto policy = std::make_shared<WatchItemPolicy>("foo_policy", "/foo");
 
   FileAccessPolicyDecision result;
+  PathTarget target = {.path = "/some/random/path", .isReadable = true};
 
   {
     esMsg.event_type = ES_EVENT_TYPE_AUTH_OPEN;
@@ -263,7 +273,7 @@ void SetExpectationsForFileAccessAuthorizerInit(
       policy->write_only = true;
       esMsg.event.open.fflag = FWRITE | FREAD;
       Message msg(mockESApi, &esMsg);
-      result = [accessClient specialCaseForPolicy:policy message:msg];
+      result = [accessClient specialCaseForPolicy:policy target:target message:msg];
       XCTAssertEqual(result, FileAccessPolicyDecision::kNoPolicy);
     }
 
@@ -272,7 +282,7 @@ void SetExpectationsForFileAccessAuthorizerInit(
       policy->write_only = true;
       esMsg.event.open.fflag = FREAD;
       Message msg(mockESApi, &esMsg);
-      result = [accessClient specialCaseForPolicy:policy message:msg];
+      result = [accessClient specialCaseForPolicy:policy target:target message:msg];
       XCTAssertEqual(result, FileAccessPolicyDecision::kAllowedReadAccess);
     }
 
@@ -281,21 +291,67 @@ void SetExpectationsForFileAccessAuthorizerInit(
       policy->write_only = false;
       esMsg.event.open.fflag = FREAD;
       Message msg(mockESApi, &esMsg);
-      result = [accessClient specialCaseForPolicy:policy message:msg];
+      result = [accessClient specialCaseForPolicy:policy target:target message:msg];
+      XCTAssertEqual(result, FileAccessPolicyDecision::kNoPolicy);
+    }
+  }
+
+  {
+    esMsg.event_type = ES_EVENT_TYPE_AUTH_CLONE;
+
+    // Write-only policy, target readable
+    {
+      policy->write_only = true;
+      target.isReadable = true;
+      Message msg(mockESApi, &esMsg);
+      result = [accessClient specialCaseForPolicy:policy target:target message:msg];
+      XCTAssertEqual(result, FileAccessPolicyDecision::kAllowedReadAccess);
+    }
+
+    // Write-only policy, target not readable
+    {
+      policy->write_only = true;
+      target.isReadable = false;
+      Message msg(mockESApi, &esMsg);
+      result = [accessClient specialCaseForPolicy:policy target:target message:msg];
+      XCTAssertEqual(result, FileAccessPolicyDecision::kNoPolicy);
+    }
+  }
+
+  {
+    esMsg.event_type = ES_EVENT_TYPE_AUTH_COPYFILE;
+
+    // Write-only policy, target readable
+    {
+      policy->write_only = true;
+      target.isReadable = true;
+      Message msg(mockESApi, &esMsg);
+      result = [accessClient specialCaseForPolicy:policy target:target message:msg];
+      XCTAssertEqual(result, FileAccessPolicyDecision::kAllowedReadAccess);
+    }
+
+    // Write-only policy, target not readable
+    {
+      policy->write_only = true;
+      target.isReadable = false;
+      Message msg(mockESApi, &esMsg);
+      result = [accessClient specialCaseForPolicy:policy target:target message:msg];
       XCTAssertEqual(result, FileAccessPolicyDecision::kNoPolicy);
     }
   }
 
   // Ensure other handled event types do not have a special case
   std::set<es_event_type_t> eventTypes = {
-    ES_EVENT_TYPE_AUTH_LINK,  ES_EVENT_TYPE_AUTH_RENAME,       ES_EVENT_TYPE_AUTH_UNLINK,
-    ES_EVENT_TYPE_AUTH_CLONE, ES_EVENT_TYPE_AUTH_EXCHANGEDATA, ES_EVENT_TYPE_AUTH_COPYFILE,
+    ES_EVENT_TYPE_AUTH_LINK,
+    ES_EVENT_TYPE_AUTH_RENAME,
+    ES_EVENT_TYPE_AUTH_UNLINK,
+    ES_EVENT_TYPE_AUTH_EXCHANGEDATA,
   };
 
   for (const auto &event : eventTypes) {
     esMsg.event_type = event;
     Message msg(mockESApi, &esMsg);
-    result = [accessClient specialCaseForPolicy:policy message:msg];
+    result = [accessClient specialCaseForPolicy:policy target:target message:msg];
     XCTAssertEqual(result, FileAccessPolicyDecision::kNoPolicy);
   }
 
@@ -303,7 +359,7 @@ void SetExpectationsForFileAccessAuthorizerInit(
   {
     esMsg.event_type = ES_EVENT_TYPE_AUTH_SIGNAL;
     Message msg(mockESApi, &esMsg);
-    XCTAssertThrows([accessClient specialCaseForPolicy:policy message:msg]);
+    XCTAssertThrows([accessClient specialCaseForPolicy:policy target:target message:msg]);
   }
 }
 
@@ -334,8 +390,9 @@ void SetExpectationsForFileAccessAuthorizerInit(
 
   id accessClientMock = OCMPartialMock(accessClient);
 
+  PathTarget target = {.path = "/some/random/path", .isReadable = true};
   int fake;
-  OCMStub([accessClientMock specialCaseForPolicy:nullptr message:*(Message *)&fake])
+  OCMStub([accessClientMock specialCaseForPolicy:nullptr target:target message:*(Message *)&fake])
     .ignoringNonObjectArgs()
     .andReturn(FileAccessPolicyDecision::kNoPolicy);
 
@@ -346,7 +403,7 @@ void SetExpectationsForFileAccessAuthorizerInit(
   // If no policy exists, the operation is allowed
   {
     Message msg(mockESApi, &esMsg);
-    XCTAssertEqual([accessClient applyPolicy:std::nullopt toMessage:msg],
+    XCTAssertEqual([accessClient applyPolicy:std::nullopt forTarget:target toMessage:msg],
                    FileAccessPolicyDecision::kNoPolicy);
   }
 
@@ -359,7 +416,7 @@ void SetExpectationsForFileAccessAuthorizerInit(
     OCMExpect([self.mockConfigurator enableBadSignatureProtection]).andReturn(YES);
     esMsg.process->codesigning_flags = CS_SIGNED;
     Message msg(mockESApi, &esMsg);
-    XCTAssertEqual([accessClient applyPolicy:optionalPolicy toMessage:msg],
+    XCTAssertEqual([accessClient applyPolicy:optionalPolicy forTarget:target toMessage:msg],
                    FileAccessPolicyDecision::kDeniedInvalidSignature);
   }
 
@@ -371,7 +428,7 @@ void SetExpectationsForFileAccessAuthorizerInit(
     esMsg.process->codesigning_flags = CS_SIGNED;
     Message msg(mockESApi, &esMsg);
     policy->allowed_binary_paths.insert(instigatingPath);
-    XCTAssertEqual([accessClient applyPolicy:optionalPolicy toMessage:msg],
+    XCTAssertEqual([accessClient applyPolicy:optionalPolicy forTarget:target toMessage:msg],
                    FileAccessPolicyDecision::kAllowed);
     policy->allowed_binary_paths.clear();
   }
@@ -383,7 +440,7 @@ void SetExpectationsForFileAccessAuthorizerInit(
   {
     Message msg(mockESApi, &esMsg);
     policy->allowed_binary_paths.insert(instigatingPath);
-    XCTAssertEqual([accessClient applyPolicy:optionalPolicy toMessage:msg],
+    XCTAssertEqual([accessClient applyPolicy:optionalPolicy forTarget:target toMessage:msg],
                    FileAccessPolicyDecision::kAllowed);
     policy->allowed_binary_paths.clear();
   }
@@ -392,7 +449,7 @@ void SetExpectationsForFileAccessAuthorizerInit(
   {
     Message msg(mockESApi, &esMsg);
     policy->allowed_team_ids.insert(instigatingTeamID);
-    XCTAssertEqual([accessClient applyPolicy:optionalPolicy toMessage:msg],
+    XCTAssertEqual([accessClient applyPolicy:optionalPolicy forTarget:target toMessage:msg],
                    FileAccessPolicyDecision::kAllowed);
     policy->allowed_team_ids.clear();
   }
@@ -401,7 +458,7 @@ void SetExpectationsForFileAccessAuthorizerInit(
   {
     Message msg(mockESApi, &esMsg);
     policy->allowed_cdhashes.insert(instigatingCDHash);
-    XCTAssertEqual([accessClient applyPolicy:optionalPolicy toMessage:msg],
+    XCTAssertEqual([accessClient applyPolicy:optionalPolicy forTarget:target toMessage:msg],
                    FileAccessPolicyDecision::kAllowed);
     policy->allowed_cdhashes.clear();
   }
@@ -410,7 +467,7 @@ void SetExpectationsForFileAccessAuthorizerInit(
   {
     Message msg(mockESApi, &esMsg);
     policy->allowed_certificates_sha256.insert(instigatingCertHash);
-    XCTAssertEqual([accessClient applyPolicy:optionalPolicy toMessage:msg],
+    XCTAssertEqual([accessClient applyPolicy:optionalPolicy forTarget:target toMessage:msg],
                    FileAccessPolicyDecision::kAllowed);
     policy->allowed_certificates_sha256.clear();
   }
@@ -419,7 +476,7 @@ void SetExpectationsForFileAccessAuthorizerInit(
   {
     policy->audit_only = false;
     Message msg(mockESApi, &esMsg);
-    XCTAssertEqual([accessClient applyPolicy:optionalPolicy toMessage:msg],
+    XCTAssertEqual([accessClient applyPolicy:optionalPolicy forTarget:target toMessage:msg],
                    FileAccessPolicyDecision::kDenied);
   }
 
@@ -427,7 +484,7 @@ void SetExpectationsForFileAccessAuthorizerInit(
   {
     policy->audit_only = true;
     Message msg(mockESApi, &esMsg);
-    XCTAssertEqual([accessClient applyPolicy:optionalPolicy toMessage:msg],
+    XCTAssertEqual([accessClient applyPolicy:optionalPolicy forTarget:target toMessage:msg],
                    FileAccessPolicyDecision::kAllowedAuditOnly);
   }
 
@@ -435,21 +492,27 @@ void SetExpectationsForFileAccessAuthorizerInit(
 }
 
 - (void)testEnable {
-  std::set<es_event_type_t> expectedEventSubs{
-    ES_EVENT_TYPE_AUTH_OPEN,
+  std::set<es_event_type_t> expectedEventSubs = {
+    ES_EVENT_TYPE_AUTH_CLONE, ES_EVENT_TYPE_AUTH_EXCHANGEDATA, ES_EVENT_TYPE_AUTH_LINK,
+    ES_EVENT_TYPE_AUTH_OPEN,  ES_EVENT_TYPE_AUTH_RENAME,       ES_EVENT_TYPE_AUTH_UNLINK,
   };
 
+#if HAVE_MACOS_12
+  if (@available(macOS 12.0, *)) {
+    expectedEventSubs.insert(ES_EVENT_TYPE_AUTH_COPYFILE);
+  }
+#endif
+
   auto mockESApi = std::make_shared<MockEndpointSecurityAPI>();
+  EXPECT_CALL(*mockESApi, ClearCache)
+    .After(EXPECT_CALL(*mockESApi, Subscribe(testing::_, expectedEventSubs))
+             .WillOnce(testing::Return(true)))
+    .WillOnce(testing::Return(true));
 
   id fileAccessClient = [[SNTEndpointSecurityFileAccessAuthorizer alloc]
     initWithESAPI:mockESApi
           metrics:nullptr
         processor:santa::santad::Processor::kFileAccessAuthorizer];
-
-  EXPECT_CALL(*mockESApi, ClearCache)
-    .After(EXPECT_CALL(*mockESApi, Subscribe(testing::_, expectedEventSubs))
-             .WillOnce(testing::Return(true)))
-    .WillOnce(testing::Return(true));
 
   [fileAccessClient enable];
 
@@ -499,11 +562,12 @@ void SetExpectationsForFileAccessAuthorizerInit(
     esMsg.event_type = ES_EVENT_TYPE_AUTH_OPEN;
     esMsg.event.open.file = &testFile1;
 
-    std::vector<std::string> targets;
+    std::vector<PathTarget> targets;
     PopulatePathTargets(msg, targets);
 
     XCTAssertEqual(targets.size(), 1);
-    XCTAssertCStringEqual(targets[0].c_str(), testFile1.path.data);
+    XCTAssertCStringEqual(targets[0].path.c_str(), testFile1.path.data);
+    XCTAssertTrue(targets[0].isReadable);
   }
 
   {
@@ -512,12 +576,14 @@ void SetExpectationsForFileAccessAuthorizerInit(
     esMsg.event.link.target_dir = &testDir;
     esMsg.event.link.target_filename = testTok;
 
-    std::vector<std::string> targets;
+    std::vector<PathTarget> targets;
     PopulatePathTargets(msg, targets);
 
     XCTAssertEqual(targets.size(), 2);
-    XCTAssertCStringEqual(targets[0].c_str(), testFile1.path.data);
-    XCTAssertCppStringEqual(targets[1], dirTok);
+    XCTAssertCStringEqual(targets[0].path.c_str(), testFile1.path.data);
+    XCTAssertFalse(targets[0].isReadable);
+    XCTAssertCppStringEqual(targets[1].path, dirTok);
+    XCTAssertFalse(targets[1].isReadable);
   }
 
   {
@@ -528,12 +594,14 @@ void SetExpectationsForFileAccessAuthorizerInit(
       esMsg.event.rename.destination_type = ES_DESTINATION_TYPE_EXISTING_FILE;
       esMsg.event.rename.destination.existing_file = &testFile2;
 
-      std::vector<std::string> targets;
+      std::vector<PathTarget> targets;
       PopulatePathTargets(msg, targets);
 
       XCTAssertEqual(targets.size(), 2);
-      XCTAssertCStringEqual(targets[0].c_str(), testFile1.path.data);
-      XCTAssertCStringEqual(targets[1].c_str(), testFile2.path.data);
+      XCTAssertCStringEqual(targets[0].path.c_str(), testFile1.path.data);
+      XCTAssertFalse(targets[0].isReadable);
+      XCTAssertCStringEqual(targets[1].path.c_str(), testFile2.path.data);
+      XCTAssertFalse(targets[1].isReadable);
     }
 
     {
@@ -541,12 +609,14 @@ void SetExpectationsForFileAccessAuthorizerInit(
       esMsg.event.rename.destination.new_path.dir = &testDir;
       esMsg.event.rename.destination.new_path.filename = testTok;
 
-      std::vector<std::string> targets;
+      std::vector<PathTarget> targets;
       PopulatePathTargets(msg, targets);
 
       XCTAssertEqual(targets.size(), 2);
-      XCTAssertCStringEqual(targets[0].c_str(), testFile1.path.data);
-      XCTAssertCppStringEqual(targets[1], dirTok);
+      XCTAssertCStringEqual(targets[0].path.c_str(), testFile1.path.data);
+      XCTAssertFalse(targets[0].isReadable);
+      XCTAssertCppStringEqual(targets[1].path, dirTok);
+      XCTAssertFalse(targets[1].isReadable);
     }
   }
 
@@ -554,11 +624,12 @@ void SetExpectationsForFileAccessAuthorizerInit(
     esMsg.event_type = ES_EVENT_TYPE_AUTH_UNLINK;
     esMsg.event.unlink.target = &testFile1;
 
-    std::vector<std::string> targets;
+    std::vector<PathTarget> targets;
     PopulatePathTargets(msg, targets);
 
     XCTAssertEqual(targets.size(), 1);
-    XCTAssertCStringEqual(targets[0].c_str(), testFile1.path.data);
+    XCTAssertCStringEqual(targets[0].path.c_str(), testFile1.path.data);
+    XCTAssertFalse(targets[0].isReadable);
   }
 
   {
@@ -567,12 +638,14 @@ void SetExpectationsForFileAccessAuthorizerInit(
     esMsg.event.clone.target_dir = &testDir;
     esMsg.event.clone.target_name = testTok;
 
-    std::vector<std::string> targets;
+    std::vector<PathTarget> targets;
     PopulatePathTargets(msg, targets);
 
     XCTAssertEqual(targets.size(), 2);
-    XCTAssertCStringEqual(targets[0].c_str(), testFile1.path.data);
-    XCTAssertCppStringEqual(targets[1], dirTok);
+    XCTAssertCStringEqual(targets[0].path.c_str(), testFile1.path.data);
+    XCTAssertTrue(targets[0].isReadable);
+    XCTAssertCppStringEqual(targets[1].path, dirTok);
+    XCTAssertFalse(targets[1].isReadable);
   }
 
   {
@@ -580,12 +653,14 @@ void SetExpectationsForFileAccessAuthorizerInit(
     esMsg.event.exchangedata.file1 = &testFile1;
     esMsg.event.exchangedata.file2 = &testFile2;
 
-    std::vector<std::string> targets;
+    std::vector<PathTarget> targets;
     PopulatePathTargets(msg, targets);
 
     XCTAssertEqual(targets.size(), 2);
-    XCTAssertCStringEqual(targets[0].c_str(), testFile1.path.data);
-    XCTAssertCStringEqual(targets[1].c_str(), testFile2.path.data);
+    XCTAssertCStringEqual(targets[0].path.c_str(), testFile1.path.data);
+    XCTAssertFalse(targets[0].isReadable);
+    XCTAssertCStringEqual(targets[1].path.c_str(), testFile2.path.data);
+    XCTAssertFalse(targets[1].isReadable);
   }
 
   if (@available(macOS 12.0, *)) {
@@ -598,23 +673,27 @@ void SetExpectationsForFileAccessAuthorizerInit(
       {
         esMsg.event.copyfile.target_file = nullptr;
 
-        std::vector<std::string> targets;
+        std::vector<PathTarget> targets;
         PopulatePathTargets(msg, targets);
 
         XCTAssertEqual(targets.size(), 2);
-        XCTAssertCStringEqual(targets[0].c_str(), testFile1.path.data);
-        XCTAssertCppStringEqual(targets[1], dirTok);
+        XCTAssertCStringEqual(targets[0].path.c_str(), testFile1.path.data);
+        XCTAssertTrue(targets[0].isReadable);
+        XCTAssertCppStringEqual(targets[1].path, dirTok);
+        XCTAssertFalse(targets[1].isReadable);
       }
 
       {
         esMsg.event.copyfile.target_file = &testFile2;
 
-        std::vector<std::string> targets;
+        std::vector<PathTarget> targets;
         PopulatePathTargets(msg, targets);
 
         XCTAssertEqual(targets.size(), 2);
-        XCTAssertCStringEqual(targets[0].c_str(), testFile1.path.data);
-        XCTAssertCStringEqual(targets[1].c_str(), testFile2.path.data);
+        XCTAssertCStringEqual(targets[0].path.c_str(), testFile1.path.data);
+        XCTAssertTrue(targets[0].isReadable);
+        XCTAssertCStringEqual(targets[1].path.c_str(), testFile2.path.data);
+        XCTAssertFalse(targets[1].isReadable);
       }
     }
   }

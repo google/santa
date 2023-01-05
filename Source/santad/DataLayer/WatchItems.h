@@ -66,7 +66,7 @@ class WatchItems : public std::enable_shared_from_this<WatchItems> {
   void RegisterClient(id<SNTEndpointSecurityDynamicEventHandler> client);
 
   void SetConfigPath(NSString *config_path);
-  VersionAndPolicies FindPolciesForPaths(const std::vector<std::string> &paths);
+  VersionAndPolicies FindPolciesForPaths(const std::vector<std::string_view> &paths);
   std::string PolicyVersion();
 
   friend class santa::santad::data_layer::WatchItemsPeer;
