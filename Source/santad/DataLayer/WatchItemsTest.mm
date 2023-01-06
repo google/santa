@@ -144,7 +144,7 @@ static NSMutableDictionary *WrapWatchItemsConfig(NSDictionary *config) {
     },
   ]];
 
-  NSDictionary *allFilesPolicy = @{kWatchItemConfigKeyPath : @"*"};
+  NSDictionary *allFilesPolicy = @{kWatchItemConfigKeyPaths : @[ @"*" ]};
   NSDictionary *configAllFilesOriginal =
     WrapWatchItemsConfig(@{@"all_files_orig" : allFilesPolicy});
   NSDictionary *configAllFilesRename =
@@ -202,12 +202,16 @@ static NSMutableDictionary *WrapWatchItemsConfig(NSDictionary *config) {
   [self createTestDirStructure:@[ @"f1", @"f2", @"weird1" ]];
 
   NSDictionary *fFiles = @{
-    kWatchItemConfigKeyPath : @"f?",
-    kWatchItemConfigKeyIsPrefix : @(NO),
+    kWatchItemConfigKeyPaths : @[ @{
+      kWatchItemConfigKeyPathsPath : @"f?",
+      kWatchItemConfigKeyPathsIsPrefix : @(NO),
+    } ]
   };
   NSDictionary *weirdFiles = @{
-    kWatchItemConfigKeyPath : @"weird?",
-    kWatchItemConfigKeyIsPrefix : @(NO),
+    kWatchItemConfigKeyPaths : @[ @{
+      kWatchItemConfigKeyPathsPath : @"weird?",
+      kWatchItemConfigKeyPathsIsPrefix : @(NO),
+    } ]
   };
 
   NSString *configFile = @"config.plist";
@@ -215,10 +219,7 @@ static NSMutableDictionary *WrapWatchItemsConfig(NSDictionary *config) {
   NSDictionary *secondConfig =
     WrapWatchItemsConfig(@{@"f_files" : fFiles, @"weird_files" : weirdFiles});
 
-  // std::optional<std::shared_ptr<WatchItemPolicy>> policy;
-
   dispatch_source_t timer = dispatch_source_create(DISPATCH_SOURCE_TYPE_TIMER, 0, 0, self.q);
-  (void)timer;
 
   const uint64 periodicFlushMS = 1000;
   dispatch_source_set_timer(timer, dispatch_time(DISPATCH_TIME_NOW, 0),
@@ -272,8 +273,10 @@ static NSMutableDictionary *WrapWatchItemsConfig(NSDictionary *config) {
 
   NSMutableDictionary *config = WrapWatchItemsConfig(@{
     @"foo_subdir" : @{
-      kWatchItemConfigKeyPath : @"./foo",
-      kWatchItemConfigKeyIsPrefix : @(YES),
+      kWatchItemConfigKeyPaths : @[ @{
+        kWatchItemConfigKeyPathsPath : @"./foo",
+        kWatchItemConfigKeyPathsIsPrefix : @(YES),
+      } ]
     }
   });
 
@@ -319,8 +322,10 @@ static NSMutableDictionary *WrapWatchItemsConfig(NSDictionary *config) {
 
   // Add a new policy and reload the config
   NSDictionary *barTxtFilePolicy = @{
-    kWatchItemConfigKeyPath : @"./foo/bar.txt",
-    kWatchItemConfigKeyIsPrefix : @(NO),
+    kWatchItemConfigKeyPaths : @[ @{
+      kWatchItemConfigKeyPathsPath : @"./foo/bar.txt",
+      kWatchItemConfigKeyPathsIsPrefix : @(NO),
+    } ]
   };
   [config[@"WatchItems"] setObject:barTxtFilePolicy forKey:@"bar_txt"];
 
@@ -347,8 +352,10 @@ static NSMutableDictionary *WrapWatchItemsConfig(NSDictionary *config) {
 
   // Add a catch-all policy that should only affect the previously non-matching path
   NSDictionary *catchAllFilePolicy = @{
-    kWatchItemConfigKeyPath : @".",
-    kWatchItemConfigKeyIsPrefix : @(YES),
+    kWatchItemConfigKeyPaths : @[ @{
+      kWatchItemConfigKeyPathsPath : @".",
+      kWatchItemConfigKeyPathsIsPrefix : @(YES),
+    } ]
   };
   [config[@"WatchItems"] setObject:catchAllFilePolicy forKey:@"dot_everything"];
 

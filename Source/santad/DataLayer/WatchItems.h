@@ -31,14 +31,19 @@
 #include "Source/santad/DataLayer/WatchItemPolicy.h"
 #import "Source/santad/EventProviders/SNTEndpointSecurityEventHandler.h"
 
-extern NSString *const kWatchItemConfigKeyPath;
-extern NSString *const kWatchItemConfigKeyWriteOnly;
-extern NSString *const kWatchItemConfigKeyIsPrefix;
-extern NSString *const kWatchItemConfigKeyAuditOnly;
-extern NSString *const kWatchItemConfigKeyAllowedBinaryPaths;
-extern NSString *const kWatchItemConfigKeyAllowedCertificatesSha256;
-extern NSString *const kWatchItemConfigKeyAllowedTeamIDs;
-extern NSString *const kWatchItemConfigKeyAllowedCDHashes;
+extern NSString *const kWatchItemConfigKeyVersion;
+extern NSString *const kWatchItemConfigKeyWatchItems;
+extern NSString *const kWatchItemConfigKeyPaths;
+extern NSString *const kWatchItemConfigKeyPathsPath;
+extern NSString *const kWatchItemConfigKeyPathsIsPrefix;
+extern NSString *const kWatchItemConfigKeyOptions;
+extern NSString *const kWatchItemConfigKeyOptionsAllowReadAccess;
+extern NSString *const kWatchItemConfigKeyOptionsAuditOnly;
+extern NSString *const kWatchItemConfigKeyProcesses;
+extern NSString *const kWatchItemConfigKeyProcessesBinaryPath;
+extern NSString *const kWatchItemConfigKeyProcessesCertificateSha256;
+extern NSString *const kWatchItemConfigKeyProcessesTeamID;
+extern NSString *const kWatchItemConfigKeyProcessesCDHash;
 
 // Forward declarations
 namespace santa::santad::data_layer {
