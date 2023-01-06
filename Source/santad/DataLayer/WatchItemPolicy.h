@@ -41,6 +41,15 @@ struct WatchItemPolicy {
           team_id(ti),
           cdhash(std::move(cdh)),
           certificate_sha256(ch) {}
+
+    bool operator==(const Process &other) const {
+      return binary_path == other.binary_path && team_id == other.team_id &&
+             cdhash == other.cdhash &&
+             certificate_sha256 == other.certificate_sha256;
+    }
+
+    bool operator!=(const Process &other) const { return !(*this == other); }
+
     std::string binary_path;
     std::string team_id;
     std::vector<uint8_t> cdhash;

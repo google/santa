@@ -36,14 +36,16 @@
 #import "Source/common/SNTLogging.h"
 #import "Source/common/Unit.h"
 #include "Source/santad/DataLayer/WatchItemPolicy.h"
-
 using santa::common::PrefixTree;
 using santa::common::Unit;
 using santa::santad::data_layer::WatchItemPathType;
+using santa::santad::data_layer::WatchItemPolicy;
 
+// Type aliases
 using ValidatorBlock = bool (^)(id, NSError **);
 using PathAndTypePair = std::pair<std::string, WatchItemPathType>;
 using PathList = std::vector<PathAndTypePair>;
+using ProcessList = std::vector<WatchItemPolicy::Process>;
 
 NSString *const kWatchItemConfigKeyVersion = @"Version";
 NSString *const kWatchItemConfigKeyWatchItems = @"WatchItems";
@@ -65,7 +67,7 @@ static constexpr NSUInteger kMaxTeamIDLength = 10;
 // Semi-arbitrary minimum allowed reapplication frequency.
 // Goal is to prevent a configuration setting that would cause too much
 // churn rebuilding glob paths based on the state of the filesystem.
-static const uint64_t kMinReapplyConfigFrequencySecs = 15;
+static constexpr uint64_t kMinReapplyConfigFrequencySecs = 15;
 
 namespace santa::santad::data_layer {
 
@@ -86,6 +88,10 @@ bool ConfirmValidHexString(NSString *str, size_t expected_length) {
 }
 
 static std::vector<uint8_t> HexStringToBytes(NSString *str) {
+  if (!str) {
+    return std::vector<uint8_t>{};
+  }
+
   std::vector<uint8_t> bytes;
   bytes.reserve(str.length / 2);
 
@@ -96,10 +102,48 @@ static std::vector<uint8_t> HexStringToBytes(NSString *str) {
     cur_byte[0] = [str characterAtIndex:(i * 2)];
     cur_byte[1] = [str characterAtIndex:(i * 2 + 1)];
 
-    bytes[i] = std::strtoul(cur_byte, nullptr, 16);
+    bytes.push_back(std::strtoul(cur_byte, nullptr, 16));
   }
 
   return bytes;
+}
+
+// Given a length, returns a ValidatorBlock that confirms the
+// string is a valid hex string of the given length.
+ValidatorBlock HexValidator(NSUInteger expected_length) {
+  return ^bool(NSString *val, NSError **err) {
+    if (!ConfirmValidHexString(val, expected_length)) {
+      if (err) {
+        NSString *err_str =
+          [NSString stringWithFormat:@"Expected hex string of length %lu", expected_length];
+        *err = [NSError errorWithDomain:@"com.google.santa.watchitems"
+                                   code:100
+                               userInfo:@{NSLocalizedDescriptionKey : err_str}];
+      }
+      return false;
+    }
+
+    return true;
+  };
+}
+
+// Given a max length, returns a ValidatorBlock that confirms the
+// string is a not longer than the max.
+ValidatorBlock MaxLenValidator(NSUInteger max_length) {
+  return ^bool(NSString *val, NSError **err) {
+    if (val.length > max_length) {
+      if (err) {
+        NSString *err_str =
+          [NSString stringWithFormat:@"Value too long. Got: %lu, Max: %lu", val.length, max_length];
+        *err = [NSError errorWithDomain:@"com.google.santa.watchitems"
+                                   code:101
+                               userInfo:@{NSLocalizedDescriptionKey : err_str}];
+      }
+      return false;
+    }
+
+    return true;
+  };
 }
 
 /// Ensure the key exists (if required) and the value matches the expected type
@@ -174,36 +218,35 @@ bool VerifyConfigKeyArray(NSString *name, NSDictionary *dict, NSString *key, Cla
 ///     <true/>
 ///   </dict>
 /// </array>
-std::variant<Unit, PathList> VerifyConfigWatchItemPaths(NSArray<id> *paths, NSString *name) {
+std::variant<Unit, PathList> VerifyConfigWatchItemPaths(NSString *name, NSArray<id> *paths) {
   PathList path_list;
 
   for (id path in paths) {
     if ([path isKindOfClass:[NSDictionary class]]) {
       NSDictionary *path_dict = (NSDictionary *)path;
-      if (![path_dict[kWatchItemConfigKeyPathsPath] isKindOfClass:[NSString class]]) {
-        LOGE(@"In watch item '%@': Missing required 'string' key: '%@'", name,
-             kWatchItemConfigKeyPathsPath);
+      if (!VerifyConfigKey(name, path_dict, kWatchItemConfigKeyPathsPath, [NSString class], true,
+                           MaxLenValidator(PATH_MAX))) {
         return Unit{};
       }
 
       NSString *path_str = path_dict[kWatchItemConfigKeyPathsPath];
       WatchItemPathType path_type = kWatchItemPolicyDefaultPathType;
 
-      if (path_dict[kWatchItemConfigKeyPathsIsPrefix]) {
-        if (![path_dict[kWatchItemConfigKeyPathsIsPrefix] isKindOfClass:[NSNumber class]]) {
-          LOGE(@"In watch item '%@': Found optional key '%@', but expected type 'number' (got: %@)",
-               name, kWatchItemConfigKeyPathsIsPrefix,
-               NSStringFromClass([path_dict[kWatchItemConfigKeyPathsIsPrefix] class]));
-          return Unit{};
-        }
-
+      if (VerifyConfigKey(name, path_dict, kWatchItemConfigKeyPathsIsPrefix, [NSNumber class])) {
         path_type = ([(NSNumber *)path_dict[kWatchItemConfigKeyPathsIsPrefix] boolValue] == NO
                        ? WatchItemPathType::kLiteral
                        : WatchItemPathType::kPrefix);
+      } else {
+        return Unit{};
       }
 
       path_list.push_back({std::string(path_str.UTF8String, path_str.length), path_type});
     } else if ([path isKindOfClass:[NSString class]]) {
+      if (((NSString *)path).length > PATH_MAX) {
+        LOGE(@"In watch item '%@': Provided path length (%zu) exceed max allowed length (%d)", name,
+             ((NSString *)path).length, PATH_MAX);
+        return Unit{};
+      }
       path_list.push_back({std::string(((NSString *)path).UTF8String, ((NSString *)path).length),
                            kWatchItemPolicyDefaultPathType});
     } else {
@@ -214,45 +257,85 @@ std::variant<Unit, PathList> VerifyConfigWatchItemPaths(NSArray<id> *paths, NSSt
     }
   }
 
+  if (path_list.size() == 0) {
+    LOGE(@"In watch item '%@': No paths specified", name);
+    return Unit{};
+  }
+
   return path_list;
 }
 
-// Given a length, returns a ValidatorBlock that confirms the
-// string is a valid hex string of the given length.
-ValidatorBlock HexValidator(NSUInteger expected_length) {
-  return ^bool(NSString *val, NSError **err) {
-    if (!ConfirmValidHexString(val, expected_length)) {
-      if (err) {
-        NSString *err_str =
-          [NSString stringWithFormat:@"Expected hex string of length %lu", expected_length];
-        *err = [NSError errorWithDomain:@"com.google.santa.watchitems"
-                                   code:100
-                               userInfo:@{NSLocalizedDescriptionKey : err_str}];
-      }
-      return false;
-    }
+/// The `Processes` array can only contain dictionaries. Each dictionary can
+/// contain the attributes that describe a single process.
+///
+/// <array>
+///   <dict>
+///     <key>BinaryPaths</key>
+///     <string>AAAA</string>
+///     <key>TeamIDs</key>
+///     <string>BBBB</string>
+///   </dict>
+///   <dict>
+///     <key>CertificatesSha256</key>
+///     <string>CCCC</string>
+///     <key>CDHashes</key>
+///     <string>DDDD</string>
+///   </dict>
+/// </array>
+std::variant<Unit, ProcessList> VerifyConfigWatchItemProcesses(NSString *name,
+                                                               NSDictionary *watch_item) {
+  __block ProcessList proc_list;
 
-    return true;
-  };
-}
+  if (!VerifyConfigKeyArray(
+        name, watch_item, kWatchItemConfigKeyProcesses, [NSDictionary class],
+        ^bool(NSDictionary *process, NSError **err) {
+          if (!VerifyConfigKey(name, process, kWatchItemConfigKeyProcessesBinaryPath,
+                               [NSString class], false, MaxLenValidator(PATH_MAX)) ||
+              !VerifyConfigKey(name, process, kWatchItemConfigKeyProcessesTeamID, [NSString class],
+                               false, MaxLenValidator(kMaxTeamIDLength)) ||
+              !VerifyConfigKey(name, process, kWatchItemConfigKeyProcessesCDHash, [NSString class],
+                               false, HexValidator(CS_CDHASH_LEN * 2)) ||
+              !VerifyConfigKey(name, process, kWatchItemConfigKeyProcessesCertificateSha256,
+                               [NSString class], false,
+                               HexValidator(CC_SHA256_DIGEST_LENGTH * 2))) {
+            if (err) {
+              *err = [NSError
+                errorWithDomain:@"com.google.santa.watchitems"
+                           code:101
+                       userInfo:@{NSLocalizedDescriptionKey : @"Failed to verify key content"}];
+            }
+            return false;
+          }
 
-// Given a max length, returns a ValidatorBlock that confirms the
-// string is a not longer than the max.
-ValidatorBlock MaxLenValidator(NSUInteger max_length) {
-  return ^bool(NSString *val, NSError **err) {
-    if (val.length > max_length) {
-      if (err) {
-        NSString *err_str =
-          [NSString stringWithFormat:@"Value too long. Got: %lu, Max: %lu", val.length, max_length];
-        *err = [NSError errorWithDomain:@"com.google.santa.watchitems"
-                                   code:100
-                               userInfo:@{NSLocalizedDescriptionKey : err_str}];
-      }
-      return false;
-    }
+          // Ensure at least one attribute set
+          if (!process[kWatchItemConfigKeyProcessesBinaryPath] &&
+              !process[kWatchItemConfigKeyProcessesTeamID] &&
+              !process[kWatchItemConfigKeyProcessesCDHash] &&
+              !process[kWatchItemConfigKeyProcessesCertificateSha256]) {
+            if (err) {
+              *err = [NSError errorWithDomain:@"com.google.santa.watchitems"
+                                         code:101
+                                     userInfo:@{
+                                       NSLocalizedDescriptionKey :
+                                         @"No valid attributes set in process dictionary"
+                                     }];
+            }
+            return false;
+          }
 
-    return true;
-  };
+          proc_list.push_back(WatchItemPolicy::Process(
+            std::string([(process[kWatchItemConfigKeyProcessesBinaryPath] ?: @"") UTF8String]),
+            std::string([(process[kWatchItemConfigKeyProcessesTeamID] ?: @"") UTF8String]),
+            HexStringToBytes(process[kWatchItemConfigKeyProcessesCDHash]),
+            std::string(
+              [(process[kWatchItemConfigKeyProcessesCertificateSha256] ?: @"") UTF8String])));
+
+          return true;
+        })) {
+    return Unit{};
+  }
+
+  return proc_list;
 }
 
 /// Ensure that a given watch item conforms to expected structure
@@ -261,7 +344,7 @@ ValidatorBlock MaxLenValidator(NSUInteger max_length) {
 /// <dict>
 ///   <key>Paths</key>
 ///   <array>
-///   ... See VerifyConfigWatchItemPaths for more details
+///   ... See VerifyConfigWatchItemPaths for more details ...
 ///   </array>
 ///   <key>Options</key>
 ///   <dict>
@@ -272,18 +355,7 @@ ValidatorBlock MaxLenValidator(NSUInteger max_length) {
 ///   </dict>
 ///   <key>Processes</key>
 ///   <array>
-///     <dict>
-///       <key>BinaryPaths</key>
-///       <string>AAAA</string>
-///       <key>TeamIDs</key>
-///       <string>BBBB</string>
-///     </dict>
-///     <dict>
-///       <key>CertificatesSha256</key>
-///       <string>CCCC</string>
-///       <key>CDHashes</key>
-///       <string>DDDD</string>
-///     </dict>
+///   ... See VerifyConfigWatchItemProcesses for more details ...
 ///   </array>
 /// </dict>
 bool ParseConfigSingleWatchItem(NSString *name, NSDictionary *watch_item,
@@ -293,7 +365,7 @@ bool ParseConfigSingleWatchItem(NSString *name, NSDictionary *watch_item,
   }
 
   std::variant<Unit, PathList> path_list =
-    VerifyConfigWatchItemPaths(watch_item[kWatchItemConfigKeyPaths], name);
+    VerifyConfigWatchItemPaths(name, watch_item[kWatchItemConfigKeyPaths]);
 
   if (std::holds_alternative<Unit>(path_list)) {
     return false;
@@ -322,38 +394,15 @@ bool ParseConfigSingleWatchItem(NSString *name, NSDictionary *watch_item,
                       ? [options[kWatchItemConfigKeyOptionsAuditOnly] booleanValue]
                       : kWatchItemPolicyDefaultAuditOnly;
 
-  __block std::vector<WatchItemPolicy::Process> watch_item_processes;
-
-  if (!VerifyConfigKeyArray(
-        name, watch_item, kWatchItemConfigKeyProcesses, [NSDictionary class],
-        ^bool(NSDictionary *process, NSError **err) {
-          if (!VerifyConfigKey(name, process, kWatchItemConfigKeyProcessesBinaryPath,
-                               [NSString class], false, MaxLenValidator(PATH_MAX)) ||
-              !VerifyConfigKey(name, process, kWatchItemConfigKeyProcessesTeamID, [NSString class],
-                               false, MaxLenValidator(kMaxTeamIDLength)) ||
-              !VerifyConfigKey(name, process, kWatchItemConfigKeyProcessesCDHash, [NSString class],
-                               false, HexValidator(CS_CDHASH_LEN * 2)) ||
-              !VerifyConfigKey(name, process, kWatchItemConfigKeyProcessesCertificateSha256,
-                               [NSString class], false,
-                               HexValidator(CC_SHA256_DIGEST_LENGTH * 2))) {
-            return false;
-          }
-
-          watch_item_processes.push_back(WatchItemPolicy::Process(
-            std::string([process[kWatchItemConfigKeyProcessesBinaryPath] UTF8String]),
-            std::string([process[kWatchItemConfigKeyProcessesTeamID] UTF8String]),
-            HexStringToBytes(process[kWatchItemConfigKeyProcessesCDHash]),
-            std::string([process[kWatchItemConfigKeyProcessesCertificateSha256] UTF8String])));
-
-          return true;
-        })) {
+  std::variant<Unit, ProcessList> proc_list = VerifyConfigWatchItemProcesses(name, watch_item);
+  if (std::holds_alternative<Unit>(proc_list)) {
     return false;
   }
 
   for (const PathAndTypePair &path_type_pair : std::get<PathList>(path_list)) {
-    policies.push_back(std::make_shared<WatchItemPolicy>([name UTF8String], path_type_pair.first,
-                                                         path_type_pair.second, allow_read_access,
-                                                         audit_only, watch_item_processes));
+    policies.push_back(std::make_shared<WatchItemPolicy>(
+      [name UTF8String], path_type_pair.first, path_type_pair.second, allow_read_access, audit_only,
+      std::get<ProcessList>(proc_list)));
   }
 
   return true;

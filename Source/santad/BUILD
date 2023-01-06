@@ -61,6 +61,7 @@ santa_unit_test(
         ":WatchItems",
         "//Source/common:PrefixTree",
         "//Source/common:TestUtils",
+        "//Source/common:Unit",
         "@OCMock",
     ],
 )
