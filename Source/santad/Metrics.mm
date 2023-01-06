@@ -29,6 +29,7 @@ static NSString *const kProcessorFileAccessAuthorizer = @"FileAccessAuthorizer";
 
 static NSString *const kEventTypeAuthClone = @"AuthClone";
 static NSString *const kEventTypeAuthCopyfile = @"AuthCopyfile";
+static NSString *const kEventTypeAuthCreate = @"AuthCreate";
 static NSString *const kEventTypeAuthExchangedata = @"AuthExchangedata";
 static NSString *const kEventTypeAuthExec = @"AuthExec";
 static NSString *const kEventTypeAuthKextload = @"AuthKextload";
@@ -37,6 +38,7 @@ static NSString *const kEventTypeAuthMount = @"AuthMount";
 static NSString *const kEventTypeAuthOpen = @"AuthOpen";
 static NSString *const kEventTypeAuthRemount = @"AuthRemount";
 static NSString *const kEventTypeAuthRename = @"AuthRename";
+static NSString *const kEventTypeAuthTruncate = @"AuthTruncate";
 static NSString *const kEventTypeAuthUnlink = @"AuthUnlink";
 static NSString *const kEventTypeNotifyClose = @"NotifyClose";
 static NSString *const kEventTypeNotifyExchangedata = @"NotifyExchangedata";
@@ -70,6 +72,7 @@ const NSString *EventTypeToString(es_event_type_t eventType) {
   switch (eventType) {
     case ES_EVENT_TYPE_AUTH_CLONE: return kEventTypeAuthClone;
     case ES_EVENT_TYPE_AUTH_COPYFILE: return kEventTypeAuthCopyfile;
+    case ES_EVENT_TYPE_AUTH_CREATE: return kEventTypeAuthCreate;
     case ES_EVENT_TYPE_AUTH_EXCHANGEDATA: return kEventTypeAuthExchangedata;
     case ES_EVENT_TYPE_AUTH_EXEC: return kEventTypeAuthExec;
     case ES_EVENT_TYPE_AUTH_KEXTLOAD: return kEventTypeAuthKextload;
@@ -78,6 +81,7 @@ const NSString *EventTypeToString(es_event_type_t eventType) {
     case ES_EVENT_TYPE_AUTH_OPEN: return kEventTypeAuthOpen;
     case ES_EVENT_TYPE_AUTH_REMOUNT: return kEventTypeAuthRemount;
     case ES_EVENT_TYPE_AUTH_RENAME: return kEventTypeAuthRename;
+    case ES_EVENT_TYPE_AUTH_TRUNCATE: return kEventTypeAuthTruncate;
     case ES_EVENT_TYPE_AUTH_UNLINK: return kEventTypeAuthUnlink;
     case ES_EVENT_TYPE_NOTIFY_CLOSE: return kEventTypeNotifyClose;
     case ES_EVENT_TYPE_NOTIFY_EXCHANGEDATA: return kEventTypeNotifyExchangedata;

@@ -536,13 +536,15 @@ void SerializeAndCheckNonESEvents(
 
 - (void)testGetAccessType {
   std::map<es_event_type_t, ::pbv1::FileAccess::AccessType> eventTypeToAccessType = {
-    {ES_EVENT_TYPE_AUTH_OPEN, ::pbv1::FileAccess::ACCESS_TYPE_OPEN},
-    {ES_EVENT_TYPE_AUTH_LINK, ::pbv1::FileAccess::ACCESS_TYPE_LINK},
-    {ES_EVENT_TYPE_AUTH_RENAME, ::pbv1::FileAccess::ACCESS_TYPE_RENAME},
-    {ES_EVENT_TYPE_AUTH_UNLINK, ::pbv1::FileAccess::ACCESS_TYPE_UNLINK},
     {ES_EVENT_TYPE_AUTH_CLONE, ::pbv1::FileAccess::ACCESS_TYPE_CLONE},
-    {ES_EVENT_TYPE_AUTH_EXCHANGEDATA, ::pbv1::FileAccess::ACCESS_TYPE_EXCHANGEDATA},
     {ES_EVENT_TYPE_AUTH_COPYFILE, ::pbv1::FileAccess::ACCESS_TYPE_COPYFILE},
+    {ES_EVENT_TYPE_AUTH_CREATE, ::pbv1::FileAccess::ACCESS_TYPE_CREATE},
+    {ES_EVENT_TYPE_AUTH_EXCHANGEDATA, ::pbv1::FileAccess::ACCESS_TYPE_EXCHANGEDATA},
+    {ES_EVENT_TYPE_AUTH_LINK, ::pbv1::FileAccess::ACCESS_TYPE_LINK},
+    {ES_EVENT_TYPE_AUTH_OPEN, ::pbv1::FileAccess::ACCESS_TYPE_OPEN},
+    {ES_EVENT_TYPE_AUTH_RENAME, ::pbv1::FileAccess::ACCESS_TYPE_RENAME},
+    {ES_EVENT_TYPE_AUTH_TRUNCATE, ::pbv1::FileAccess::ACCESS_TYPE_TRUNCATE},
+    {ES_EVENT_TYPE_AUTH_UNLINK, ::pbv1::FileAccess::ACCESS_TYPE_UNLINK},
     {(es_event_type_t)1234, ::pbv1::FileAccess::ACCESS_TYPE_UNKNOWN},
   };
 
