@@ -71,10 +71,12 @@ static constexpr uint64_t kMinReapplyConfigFrequencySecs = 15;
 
 namespace santa::santad::data_layer {
 
-static NSError *MakeError(NSString *msg) {
-  return [NSError errorWithDomain:@"com.google.santa.watchitems"
-                             code:0
-                         userInfo:@{NSLocalizedDescriptionKey : msg}];
+static void PopulateError(NSError **err, NSString *msg) {
+  if (err) {
+    *err = [NSError errorWithDomain:@"com.google.santa.watchitems"
+                               code:0
+                           userInfo:@{NSLocalizedDescriptionKey : msg}];
+  }
 }
 
 /// Ensure the given string has the expected length and only
@@ -119,10 +121,8 @@ static std::vector<uint8_t> HexStringToBytes(NSString *str) {
 ValidatorBlock HexValidator(NSUInteger expected_length) {
   return ^bool(NSString *val, NSError **err) {
     if (!ConfirmValidHexString(val, expected_length)) {
-      if (err) {
-        *err = MakeError(
-          [NSString stringWithFormat:@"Expected hex string of length %lu", expected_length]);
-      }
+      PopulateError(
+        err, [NSString stringWithFormat:@"Expected hex string of length %lu", expected_length]);
       return false;
     }
 
@@ -135,10 +135,8 @@ ValidatorBlock HexValidator(NSUInteger expected_length) {
 ValidatorBlock MaxLenValidator(NSUInteger max_length) {
   return ^bool(NSString *val, NSError **err) {
     if (val.length > max_length) {
-      if (err) {
-        *err = MakeError([NSString
-          stringWithFormat:@"Value too long. Got: %lu, Max: %lu", val.length, max_length]);
-      }
+      PopulateError(err, [NSString stringWithFormat:@"Value too long. Got: %lu, Max: %lu",
+                                                    val.length, max_length]);
       return false;
     }
 
@@ -147,23 +145,24 @@ ValidatorBlock MaxLenValidator(NSUInteger max_length) {
 }
 
 /// Ensure the key exists (if required) and the value matches the expected type
-bool VerifyConfigKey(NSString *name, NSDictionary *dict, const NSString *key, Class expected,
+bool VerifyConfigKey(NSDictionary *dict, const NSString *key, Class expected, NSError **err,
                      bool required = false, bool (^Validator)(id, NSError **) = nil) {
   if (dict[key]) {
     if (![dict[key] isKindOfClass:expected]) {
-      LOGE(@"In watch item '%@': Expected type '%@' for key '%@' (got: %@)", name,
-           NSStringFromClass(expected), key, NSStringFromClass([dict[key] class]));
+      PopulateError(err, [NSString stringWithFormat:@"Expected type '%@' for key '%@' (got: %@)",
+                                                    NSStringFromClass(expected), key,
+                                                    NSStringFromClass([dict[key] class])]);
       return false;
     }
 
-    NSError *err;
-    if (Validator && !Validator(dict[key], &err)) {
-      LOGE(@"In watch item '%@': Invalid content in key '%@': %@", name, key,
-           err.localizedDescription);
+    NSError *validator_err;
+    if (Validator && !Validator(dict[key], &validator_err)) {
+      PopulateError(err, [NSString stringWithFormat:@"Invalid content in key '%@': %@", key,
+                                                    validator_err.localizedDescription]);
       return false;
     }
   } else if (required) {
-    LOGE(@"In watch item '%@': Missing required key '%@'", name, key);
+    PopulateError(err, [NSString stringWithFormat:@"Missing required key '%@'", key]);
     return false;
   }
 
@@ -173,32 +172,39 @@ bool VerifyConfigKey(NSString *name, NSDictionary *dict, const NSString *key, Cl
 /// Ensure all values of the array key in the dictionary conform to the
 /// expected type. If a Validator block is supplied, each item is also
 /// subject to the custom validation method.
-bool VerifyConfigKeyArray(NSString *name, NSDictionary *dict, NSString *key, Class expected,
+bool VerifyConfigKeyArray(NSDictionary *dict, NSString *key, Class expected, NSError **err,
                           bool (^Validator)(id, NSError **) = nil) {
-  if (!VerifyConfigKey(name, dict, key, [NSArray class])) {
+  if (!VerifyConfigKey(dict, key, [NSArray class], err)) {
     return false;
   }
 
   __block bool success = true;
+  __block NSError *block_err;
 
   [dict[key] enumerateObjectsUsingBlock:^(id obj, NSUInteger idx, BOOL *stop) {
     if (![obj isKindOfClass:expected]) {
       success = false;
-      LOGE(@"In watch item '%@': Expected all '%@' types in array key '%@'", name,
-           NSStringFromClass(expected), key);
+      PopulateError(&block_err,
+                    [NSString stringWithFormat:@"Expected all '%@' types in array key '%@'",
+                                               NSStringFromClass(expected), key]);
       *stop = YES;
       return;
     }
 
-    NSError *err;
-    if (Validator && !Validator(obj, &err)) {
-      LOGE(@"In watch item '%@': Invalid content in array key '%@': %@", name, key,
-           err.localizedDescription);
+    NSError *validator_err;
+    if (Validator && !Validator(obj, &validator_err)) {
+      PopulateError(&block_err,
+                    [NSString stringWithFormat:@"Invalid content in array key '%@': %@", key,
+                                               validator_err.localizedDescription]);
       success = false;
       *stop = YES;
       return;
     }
   }];
+
+  if (!success && block_err) {
+    PopulateError(err, block_err.localizedDescription);
+  }
 
   return success;
 }
@@ -218,13 +224,13 @@ bool VerifyConfigKeyArray(NSString *name, NSDictionary *dict, NSString *key, Cla
 ///     <true/>
 ///   </dict>
 /// </array>
-std::variant<Unit, PathList> VerifyConfigWatchItemPaths(NSString *name, NSArray<id> *paths) {
+std::variant<Unit, PathList> VerifyConfigWatchItemPaths(NSArray<id> *paths, NSError **err) {
   PathList path_list;
 
   for (id path in paths) {
     if ([path isKindOfClass:[NSDictionary class]]) {
       NSDictionary *path_dict = (NSDictionary *)path;
-      if (!VerifyConfigKey(name, path_dict, kWatchItemConfigKeyPathsPath, [NSString class], true,
+      if (!VerifyConfigKey(path_dict, kWatchItemConfigKeyPathsPath, [NSString class], err, true,
                            MaxLenValidator(PATH_MAX))) {
         return Unit{};
       }
@@ -232,7 +238,7 @@ std::variant<Unit, PathList> VerifyConfigWatchItemPaths(NSString *name, NSArray<
       NSString *path_str = path_dict[kWatchItemConfigKeyPathsPath];
       WatchItemPathType path_type = kWatchItemPolicyDefaultPathType;
 
-      if (VerifyConfigKey(name, path_dict, kWatchItemConfigKeyPathsIsPrefix, [NSNumber class])) {
+      if (VerifyConfigKey(path_dict, kWatchItemConfigKeyPathsIsPrefix, [NSNumber class], err)) {
         path_type = ([(NSNumber *)path_dict[kWatchItemConfigKeyPathsIsPrefix] boolValue] == NO
                        ? WatchItemPathType::kLiteral
                        : WatchItemPathType::kPrefix);
@@ -243,22 +249,25 @@ std::variant<Unit, PathList> VerifyConfigWatchItemPaths(NSString *name, NSArray<
       path_list.push_back({std::string(path_str.UTF8String, path_str.length), path_type});
     } else if ([path isKindOfClass:[NSString class]]) {
       if (((NSString *)path).length > PATH_MAX) {
-        LOGE(@"In watch item '%@': Provided path length (%zu) exceed max allowed length (%d)", name,
-             ((NSString *)path).length, PATH_MAX);
+        PopulateError(
+          err,
+          [NSString stringWithFormat:@"Provided path length (%zu) exceed max allowed length (%d)",
+                                     ((NSString *)path).length, PATH_MAX]);
         return Unit{};
       }
       path_list.push_back({std::string(((NSString *)path).UTF8String, ((NSString *)path).length),
                            kWatchItemPolicyDefaultPathType});
     } else {
-      LOGE(@"In watch item '%@': %@ array item with invalid type. Expected 'dict' or 'string' "
-           @"(got: %@)",
-           name, kWatchItemConfigKeyPaths, NSStringFromClass([path class]));
+      PopulateError(
+        err, [NSString stringWithFormat:
+                         @"%@ array item with invalid type. Expected 'dict' or 'string' (got: %@)",
+                         kWatchItemConfigKeyPaths, NSStringFromClass([path class])]);
       return Unit{};
     }
   }
 
   if (path_list.size() == 0) {
-    LOGE(@"In watch item '%@': No paths specified", name);
+    PopulateError(err, [NSString stringWithFormat:@"No paths specified"]);
     return Unit{};
   }
 
@@ -282,25 +291,23 @@ std::variant<Unit, PathList> VerifyConfigWatchItemPaths(NSString *name, NSArray<
 ///     <string>DDDD</string>
 ///   </dict>
 /// </array>
-std::variant<Unit, ProcessList> VerifyConfigWatchItemProcesses(NSString *name,
-                                                               NSDictionary *watch_item) {
+std::variant<Unit, ProcessList> VerifyConfigWatchItemProcesses(NSDictionary *watch_item,
+                                                               NSError **err) {
   __block ProcessList proc_list;
 
   if (!VerifyConfigKeyArray(
-        name, watch_item, kWatchItemConfigKeyProcesses, [NSDictionary class],
+        watch_item, kWatchItemConfigKeyProcesses, [NSDictionary class], err,
         ^bool(NSDictionary *process, NSError **err) {
-          if (!VerifyConfigKey(name, process, kWatchItemConfigKeyProcessesBinaryPath,
-                               [NSString class], false, MaxLenValidator(PATH_MAX)) ||
-              !VerifyConfigKey(name, process, kWatchItemConfigKeyProcessesTeamID, [NSString class],
+          if (!VerifyConfigKey(process, kWatchItemConfigKeyProcessesBinaryPath, [NSString class],
+                               err, false, MaxLenValidator(PATH_MAX)) ||
+              !VerifyConfigKey(process, kWatchItemConfigKeyProcessesTeamID, [NSString class], err,
                                false, MaxLenValidator(kMaxTeamIDLength)) ||
-              !VerifyConfigKey(name, process, kWatchItemConfigKeyProcessesCDHash, [NSString class],
+              !VerifyConfigKey(process, kWatchItemConfigKeyProcessesCDHash, [NSString class], err,
                                false, HexValidator(CS_CDHASH_LEN * 2)) ||
-              !VerifyConfigKey(name, process, kWatchItemConfigKeyProcessesCertificateSha256,
-                               [NSString class], false,
+              !VerifyConfigKey(process, kWatchItemConfigKeyProcessesCertificateSha256,
+                               [NSString class], err, false,
                                HexValidator(CC_SHA256_DIGEST_LENGTH * 2))) {
-            if (err) {
-              *err = MakeError(@"Failed to verify key content");
-            }
+            PopulateError(err, @"Failed to verify key content");
             return false;
           }
 
@@ -309,9 +316,7 @@ std::variant<Unit, ProcessList> VerifyConfigWatchItemProcesses(NSString *name,
               !process[kWatchItemConfigKeyProcessesTeamID] &&
               !process[kWatchItemConfigKeyProcessesCDHash] &&
               !process[kWatchItemConfigKeyProcessesCertificateSha256]) {
-            if (err) {
-              *err = MakeError(@"No valid attributes set in process dictionary");
-            }
+            PopulateError(err, @"No valid attributes set in process dictionary");
             return false;
           }
 
@@ -351,30 +356,31 @@ std::variant<Unit, ProcessList> VerifyConfigWatchItemProcesses(NSString *name,
 ///   </array>
 /// </dict>
 bool ParseConfigSingleWatchItem(NSString *name, NSDictionary *watch_item,
-                                std::vector<std::shared_ptr<WatchItemPolicy>> &policies) {
-  if (!VerifyConfigKey(name, watch_item, kWatchItemConfigKeyPaths, [NSArray class], true)) {
+                                std::vector<std::shared_ptr<WatchItemPolicy>> &policies,
+                                NSError **err) {
+  if (!VerifyConfigKey(watch_item, kWatchItemConfigKeyPaths, [NSArray class], err, true)) {
     return false;
   }
 
   std::variant<Unit, PathList> path_list =
-    VerifyConfigWatchItemPaths(name, watch_item[kWatchItemConfigKeyPaths]);
+    VerifyConfigWatchItemPaths(watch_item[kWatchItemConfigKeyPaths], err);
 
   if (std::holds_alternative<Unit>(path_list)) {
     return false;
   }
 
-  if (!VerifyConfigKey(name, watch_item, kWatchItemConfigKeyOptions, [NSDictionary class])) {
+  if (!VerifyConfigKey(watch_item, kWatchItemConfigKeyOptions, [NSDictionary class], err)) {
     return false;
   }
 
   NSDictionary *options = watch_item[kWatchItemConfigKeyOptions];
   if (options) {
-    if (!VerifyConfigKey(name, options, kWatchItemConfigKeyOptionsAllowReadAccess,
-                         [NSNumber class])) {
+    if (!VerifyConfigKey(options, kWatchItemConfigKeyOptionsAllowReadAccess, [NSNumber class],
+                         err)) {
       return false;
     }
 
-    if (!VerifyConfigKey(name, options, kWatchItemConfigKeyOptionsAuditOnly, [NSNumber class])) {
+    if (!VerifyConfigKey(options, kWatchItemConfigKeyOptionsAuditOnly, [NSNumber class], err)) {
       return false;
     }
   }
@@ -386,7 +392,7 @@ bool ParseConfigSingleWatchItem(NSString *name, NSDictionary *watch_item,
                       ? [options[kWatchItemConfigKeyOptionsAuditOnly] booleanValue]
                       : kWatchItemPolicyDefaultAuditOnly;
 
-  std::variant<Unit, ProcessList> proc_list = VerifyConfigWatchItemProcesses(name, watch_item);
+  std::variant<Unit, ProcessList> proc_list = VerifyConfigWatchItemProcesses(watch_item, err);
   if (std::holds_alternative<Unit>(proc_list)) {
     return false;
   }
@@ -400,15 +406,24 @@ bool ParseConfigSingleWatchItem(NSString *name, NSDictionary *watch_item,
   return true;
 }
 
-bool ParseConfig(NSDictionary *config, std::vector<std::shared_ptr<WatchItemPolicy>> &policies) {
+bool ParseConfig(NSDictionary *config, std::vector<std::shared_ptr<WatchItemPolicy>> &policies,
+                 NSError **err) {
   if (![config[kWatchItemConfigKeyVersion] isKindOfClass:[NSString class]]) {
-    LOGE(@"Missing top level string key '%@'", kWatchItemConfigKeyVersion);
+    PopulateError(err, [NSString stringWithFormat:@"Missing top level string key '%@'",
+                                                  kWatchItemConfigKeyVersion]);
+    return false;
+  }
+
+  if ([(NSString *)config[kWatchItemConfigKeyVersion] length] == 0) {
+    PopulateError(err, [NSString stringWithFormat:@"Top level key '%@' has empty value",
+                                                  kWatchItemConfigKeyVersion]);
     return false;
   }
 
   if (config[kWatchItemConfigKeyWatchItems] &&
       ![config[kWatchItemConfigKeyWatchItems] isKindOfClass:[NSDictionary class]]) {
-    LOGE(@"Top level key '%@' must be a dictionary", kWatchItemConfigKeyWatchItems);
+    PopulateError(err, [NSString stringWithFormat:@"Top level key '%@' must be a dictionary",
+                                                  kWatchItemConfigKeyWatchItems]);
     return false;
   }
 
@@ -416,18 +431,32 @@ bool ParseConfig(NSDictionary *config, std::vector<std::shared_ptr<WatchItemPoli
 
   for (id key in watch_items) {
     if (![key isKindOfClass:[NSString class]]) {
-      LOGE(@"Invalid WatchItems key %@: Expected type '%@' (got: %@)", key,
-           NSStringFromClass([NSString class]), NSStringFromClass([key class]));
+      PopulateError(err,
+                    [NSString stringWithFormat:@"Invalid %@ key %@: Expected type '%@' (got: %@)",
+                                               kWatchItemConfigKeyWatchItems, key,
+                                               NSStringFromClass([NSString class]),
+                                               NSStringFromClass([key class])]);
+      return false;
+    }
+
+    if ([(NSString *)key length] == 0) {
+      PopulateError(err, [NSString stringWithFormat:@"Invalid %@ key with length zero",
+                                                    kWatchItemConfigKeyWatchItems]);
       return false;
     }
 
     if (![watch_items[key] isKindOfClass:[NSDictionary class]]) {
-      LOGE(@"Config for '%@' must be a dictionary (got: %@)", key,
-           NSStringFromClass([watch_items[key] class]));
+      PopulateError(
+        err,
+        [NSString stringWithFormat:@"Value type for watch item '%@' must be a dictionary (got %@)",
+                                   key, NSStringFromClass([watch_items[key] class])]);
       return false;
     }
 
-    if (!ParseConfigSingleWatchItem(key, watch_items[key], policies)) {
+    if (!ParseConfigSingleWatchItem(key, watch_items[key], policies, err)) {
+      PopulateError(err, [NSString stringWithFormat:@"In watch item '%@': %@", key,
+                                                    (err && *err) ? (*err).localizedDescription
+                                                                  : @"Unknown failure"]);
       return false;
     }
   }
@@ -463,8 +492,8 @@ WatchItems::WatchItems(NSString *config_path, dispatch_queue_t q, dispatch_sourc
 WatchItems::~WatchItems() {
   if (!periodic_task_started_ && timer_source_ != NULL) {
     // The timer_source_ must be resumed to ensure it has a proper retain count before being
-    // destroyed. Additionally, it should first be cancelled to ensure the timer isn't ever fired
-    // (see man page for `dispatch_source_cancel(3)`).
+    // destroyed. Additionally, it should first be cancelled to ensure the timer isn't ever
+    // fired (see man page for `dispatch_source_cancel(3)`).
     dispatch_source_cancel(timer_source_);
     dispatch_resume(timer_source_);
   }
@@ -560,8 +589,10 @@ void WatchItems::ReloadConfig(NSDictionary *new_config) {
   std::set<std::pair<std::string, WatchItemPathType>> new_monitored_paths;
 
   if (new_config) {
-    if (!ParseConfig(new_config, new_policies)) {
-      LOGE(@"Failed to apply new filesystem monitoring config");
+    NSError *err;
+    if (!ParseConfig(new_config, new_policies, &err)) {
+      LOGE(@"Failed to parse watch item config: %@",
+           err ? err.localizedDescription : @"Unknown failure");
       return;
     }
 
