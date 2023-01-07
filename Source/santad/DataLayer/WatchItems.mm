@@ -71,6 +71,12 @@ static constexpr uint64_t kMinReapplyConfigFrequencySecs = 15;
 
 namespace santa::santad::data_layer {
 
+static NSError *MakeError(NSString *msg) {
+  return [NSError errorWithDomain:@"com.google.santa.watchitems"
+                             code:0
+                         userInfo:@{NSLocalizedDescriptionKey : msg}];
+}
+
 /// Ensure the given string has the expected length and only
 /// contains valid hex digits
 bool ConfirmValidHexString(NSString *str, size_t expected_length) {
@@ -114,11 +120,8 @@ ValidatorBlock HexValidator(NSUInteger expected_length) {
   return ^bool(NSString *val, NSError **err) {
     if (!ConfirmValidHexString(val, expected_length)) {
       if (err) {
-        NSString *err_str =
-          [NSString stringWithFormat:@"Expected hex string of length %lu", expected_length];
-        *err = [NSError errorWithDomain:@"com.google.santa.watchitems"
-                                   code:100
-                               userInfo:@{NSLocalizedDescriptionKey : err_str}];
+        *err = MakeError(
+          [NSString stringWithFormat:@"Expected hex string of length %lu", expected_length]);
       }
       return false;
     }
@@ -133,11 +136,8 @@ ValidatorBlock MaxLenValidator(NSUInteger max_length) {
   return ^bool(NSString *val, NSError **err) {
     if (val.length > max_length) {
       if (err) {
-        NSString *err_str =
-          [NSString stringWithFormat:@"Value too long. Got: %lu, Max: %lu", val.length, max_length];
-        *err = [NSError errorWithDomain:@"com.google.santa.watchitems"
-                                   code:101
-                               userInfo:@{NSLocalizedDescriptionKey : err_str}];
+        *err = MakeError([NSString
+          stringWithFormat:@"Value too long. Got: %lu, Max: %lu", val.length, max_length]);
       }
       return false;
     }
@@ -299,10 +299,7 @@ std::variant<Unit, ProcessList> VerifyConfigWatchItemProcesses(NSString *name,
                                [NSString class], false,
                                HexValidator(CC_SHA256_DIGEST_LENGTH * 2))) {
             if (err) {
-              *err = [NSError
-                errorWithDomain:@"com.google.santa.watchitems"
-                           code:101
-                       userInfo:@{NSLocalizedDescriptionKey : @"Failed to verify key content"}];
+              *err = MakeError(@"Failed to verify key content");
             }
             return false;
           }
@@ -313,12 +310,7 @@ std::variant<Unit, ProcessList> VerifyConfigWatchItemProcesses(NSString *name,
               !process[kWatchItemConfigKeyProcessesCDHash] &&
               !process[kWatchItemConfigKeyProcessesCertificateSha256]) {
             if (err) {
-              *err = [NSError errorWithDomain:@"com.google.santa.watchitems"
-                                         code:101
-                                     userInfo:@{
-                                       NSLocalizedDescriptionKey :
-                                         @"No valid attributes set in process dictionary"
-                                     }];
+              *err = MakeError(@"No valid attributes set in process dictionary");
             }
             return false;
           }
