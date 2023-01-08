@@ -68,6 +68,17 @@ struct WatchItemPolicy {
         audit_only(ao),
         processes(std::move(procs)) {}
 
+  bool operator==(const WatchItemPolicy &other) const {
+    return name == other.name && path == other.path &&
+           path_type == other.path_type &&
+           allow_read_access == other.allow_read_access &&
+           audit_only == other.audit_only && processes == other.processes;
+  }
+
+  bool operator!=(const WatchItemPolicy &other) const {
+    return !(*this == other);
+  }
+
   std::string name;
   std::string path;
   WatchItemPathType path_type;

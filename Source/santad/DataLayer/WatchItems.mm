@@ -132,9 +132,13 @@ ValidatorBlock HexValidator(NSUInteger expected_length) {
 
 // Given a max length, returns a ValidatorBlock that confirms the
 // string is a not longer than the max.
-ValidatorBlock MaxLenValidator(NSUInteger max_length) {
+ValidatorBlock LenRangeValidator(NSUInteger min_length, NSUInteger max_length) {
   return ^bool(NSString *val, NSError **err) {
-    if (val.length > max_length) {
+    if (val.length < min_length) {
+      PopulateError(err, [NSString stringWithFormat:@"Value too short. Got: %lu, Min: %lu",
+                                                    val.length, min_length]);
+      return false;
+    } else if (val.length > max_length) {
       PopulateError(err, [NSString stringWithFormat:@"Value too long. Got: %lu, Max: %lu",
                                                     val.length, max_length]);
       return false;
@@ -231,7 +235,7 @@ std::variant<Unit, PathList> VerifyConfigWatchItemPaths(NSArray<id> *paths, NSEr
     if ([path isKindOfClass:[NSDictionary class]]) {
       NSDictionary *path_dict = (NSDictionary *)path;
       if (!VerifyConfigKey(path_dict, kWatchItemConfigKeyPathsPath, [NSString class], err, true,
-                           MaxLenValidator(PATH_MAX))) {
+                           LenRangeValidator(1, PATH_MAX))) {
         return Unit{};
       }
 
@@ -248,13 +252,13 @@ std::variant<Unit, PathList> VerifyConfigWatchItemPaths(NSArray<id> *paths, NSEr
 
       path_list.push_back({std::string(path_str.UTF8String, path_str.length), path_type});
     } else if ([path isKindOfClass:[NSString class]]) {
-      if (((NSString *)path).length > PATH_MAX) {
-        PopulateError(
-          err,
-          [NSString stringWithFormat:@"Provided path length (%zu) exceed max allowed length (%d)",
-                                     ((NSString *)path).length, PATH_MAX]);
+      if (!LenRangeValidator(1, PATH_MAX)(path, err)) {
+        PopulateError(err, [NSString stringWithFormat:@"Invalid path length: %@",
+                                                      (err && *err) ? (*err).localizedDescription
+                                                                    : @"Unknown error"]);
         return Unit{};
       }
+
       path_list.push_back({std::string(((NSString *)path).UTF8String, ((NSString *)path).length),
                            kWatchItemPolicyDefaultPathType});
     } else {
@@ -299,9 +303,9 @@ std::variant<Unit, ProcessList> VerifyConfigWatchItemProcesses(NSDictionary *wat
         watch_item, kWatchItemConfigKeyProcesses, [NSDictionary class], err,
         ^bool(NSDictionary *process, NSError **err) {
           if (!VerifyConfigKey(process, kWatchItemConfigKeyProcessesBinaryPath, [NSString class],
-                               err, false, MaxLenValidator(PATH_MAX)) ||
+                               err, false, LenRangeValidator(1, PATH_MAX)) ||
               !VerifyConfigKey(process, kWatchItemConfigKeyProcessesTeamID, [NSString class], err,
-                               false, MaxLenValidator(kMaxTeamIDLength)) ||
+                               false, LenRangeValidator(kMaxTeamIDLength, kMaxTeamIDLength)) ||
               !VerifyConfigKey(process, kWatchItemConfigKeyProcessesCDHash, [NSString class], err,
                                false, HexValidator(CS_CDHASH_LEN * 2)) ||
               !VerifyConfigKey(process, kWatchItemConfigKeyProcessesCertificateSha256,
@@ -386,10 +390,10 @@ bool ParseConfigSingleWatchItem(NSString *name, NSDictionary *watch_item,
   }
 
   bool allow_read_access = options[kWatchItemConfigKeyOptionsAllowReadAccess]
-                             ? [options[kWatchItemConfigKeyOptionsAllowReadAccess] booleanValue]
+                             ? [options[kWatchItemConfigKeyOptionsAllowReadAccess] boolValue]
                              : kWatchItemPolicyDefaultAllowReadAccess;
   bool audit_only = options[kWatchItemConfigKeyOptionsAuditOnly]
-                      ? [options[kWatchItemConfigKeyOptionsAuditOnly] booleanValue]
+                      ? [options[kWatchItemConfigKeyOptionsAuditOnly] boolValue]
                       : kWatchItemPolicyDefaultAuditOnly;
 
   std::variant<Unit, ProcessList> proc_list = VerifyConfigWatchItemProcesses(watch_item, err);
