@@ -1,4 +1,4 @@
----
+docs/deployment/configuration.md---
 title: Configuration
 parent: Deployment
 nav_order: 3
@@ -69,6 +69,8 @@ also known as mobileconfig files, which are in an Apple-specific XML format.
 | DisableUnknownEventUpload         | Bool       | If YES, the client will *not* upload events for executions of unknown binaries allowed in monitor mode |
 | BlockUSBMount                     | Bool       | If set to 'True' blocking USB Mass storage feature is enabled. Defaults to `False`. |
 | RemountUSBMode                    | Array      | Array of strings for arguments to pass to mount -o (any of "rdonly", "noexec", "nosuid", "nobrowse", "noowners", "nodev", "async", "-j"). when forcibly remounting devices. No default. |
+| FileAccessPolicyPlist             | String      | (BETA) Path to a file access configuration plist. |
+| FileAccessPolicyUpdateIntervalSec | Integer     | (BETA) Number of seconds between re-reading the file access policy config and policies/monitored paths updated. |
 
 
 \*overridable by the sync server: run `santactl status` to check the current

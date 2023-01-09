@@ -239,20 +239,21 @@
 @property(readonly, nonatomic) float spoolDirectoryEventMaxFlushTimeSec;
 
 ///
-///  If set, contains the path to the filesystem monitoring config plist.
+///  If set, contains the path to the filesystem access policy config plist.
 ///
 ///  @note: This property is KVO compliant, but is only read once at santad startup.
 ///
-@property(readonly, nonatomic) NSString *filesystemMonitoringPolicyPlistPath;
+@property(readonly, nonatomic) NSString *fileAccessPolicyPlist;
 
 ///
-///  If filesystemMonitoringPolicyPlistPath is set, filesystemMonitoringPolicyUpdateIntervalSec
-///  sets the number of seconds between times that the configuration file is re-read.
+///  If fileAccessPolicyPlist is set, fileAccessPolicyUpdateIntervalSec
+///  sets the number of seconds between times that the configuration file is
+///  re-read and policies reconstructed.
 ///  Defaults to 600 seconds (10 minutes)
 ///
 ///  @note: This property is KVO compliant, but should only be read once at santad startup.
 ///
-@property(readonly, nonatomic) uint32_t filesystemMonitoringPolicyUpdateIntervalSec;
+@property(readonly, nonatomic) uint32_t fileAccessPolicyUpdateIntervalSec;
 
 ///
 /// Enabling this appends the Santa machine ID to the end of each log line. If nothing

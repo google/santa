@@ -117,9 +117,8 @@ std::unique_ptr<SantadDeps> SantadDeps::Create(SNTConfigurator *configurator,
     exit(EXIT_FAILURE);
   }
 
-  std::shared_ptr<::WatchItems> watch_items =
-    WatchItems::Create([configurator filesystemMonitoringPolicyPlistPath],
-                       [configurator filesystemMonitoringPolicyUpdateIntervalSec]);
+  std::shared_ptr<::WatchItems> watch_items = WatchItems::Create(
+    [configurator fileAccessPolicyPlist], [configurator fileAccessPolicyUpdateIntervalSec]);
   if (!watch_items) {
     LOGE(@"Failed to create watch items");
     exit(EXIT_FAILURE);
