@@ -20,6 +20,7 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 #include <sys/fcntl.h>
+#include <cstring>
 
 #include <array>
 #include <cstddef>
@@ -64,11 +65,21 @@ void SetExpectationsForFileAccessAuthorizerInit(
   EXPECT_CALL(*mockESApi, UnmuteAllTargetPaths).WillOnce(testing::Return(true));
 }
 
+// Helper to reset a policy to an empty state
+void ClearWatchItemPolicyProcess(WatchItemPolicy::Process &proc) {
+  proc.binary_path = "";
+  proc.team_id = "";
+  proc.certificate_sha256 = "";
+  proc.cdhash.clear();
+}
+
 @interface SNTEndpointSecurityFileAccessAuthorizer (Testing)
 - (NSString *)getCertificateHash:(es_file_t *)esFile;
 - (FileAccessPolicyDecision)specialCaseForPolicy:(std::shared_ptr<WatchItemPolicy>)policy
                                           target:(const PathTarget &)target
                                          message:(const Message &)msg;
+- (bool)policyProcess:(const WatchItemPolicy::Process &)policyProc
+     matchesESProcess:(const es_process_t *)esProc;
 - (FileAccessPolicyDecision)applyPolicy:
                               (std::optional<std::shared_ptr<WatchItemPolicy>>)optionalPolicy
                               forTarget:(const PathTarget &)target
@@ -301,7 +312,7 @@ void SetExpectationsForFileAccessAuthorizerInit(
 
     // Write-only policy, target readable
     {
-      policy->write_only = true;
+      policy->allow_read_access = true;
       target.isReadable = true;
       Message msg(mockESApi, &esMsg);
       result = [accessClient specialCaseForPolicy:policy target:target message:msg];
@@ -310,7 +321,7 @@ void SetExpectationsForFileAccessAuthorizerInit(
 
     // Write-only policy, target not readable
     {
-      policy->write_only = true;
+      policy->allow_read_access = true;
       target.isReadable = false;
       Message msg(mockESApi, &esMsg);
       result = [accessClient specialCaseForPolicy:policy target:target message:msg];
@@ -323,7 +334,7 @@ void SetExpectationsForFileAccessAuthorizerInit(
 
     // Write-only policy, target readable
     {
-      policy->write_only = true;
+      policy->allow_read_access = true;
       target.isReadable = true;
       Message msg(mockESApi, &esMsg);
       result = [accessClient specialCaseForPolicy:policy target:target message:msg];
@@ -332,7 +343,7 @@ void SetExpectationsForFileAccessAuthorizerInit(
 
     // Write-only policy, target not readable
     {
-      policy->write_only = true;
+      policy->allow_read_access = true;
       target.isReadable = false;
       Message msg(mockESApi, &esMsg);
       result = [accessClient specialCaseForPolicy:policy target:target message:msg];
@@ -361,10 +372,91 @@ void SetExpectationsForFileAccessAuthorizerInit(
   }
 }
 
+- (void)testPolicyProcessMatchesESProcess {
+  const char *instigatingCertHash = "abc123";
+  const char *teamId = "myvalidtid";
+  std::vector<uint8_t> cdhashBytes(CS_CDHASH_LEN);
+  std::fill(cdhashBytes.begin(), cdhashBytes.end(), 0xAA);
+  es_file_t esFile = MakeESFile("foo");
+  es_process_t esProc = MakeESProcess(&esFile);
+  esProc.codesigning_flags = CS_SIGNED;
+  esProc.team_id = MakeESStringToken(teamId);
+  std::memcpy(esProc.cdhash, cdhashBytes.data(), sizeof(esProc.cdhash));
+
+  auto mockESApi = std::make_shared<MockEndpointSecurityAPI>();
+  mockESApi->SetExpectationsESNewClient();
+  mockESApi->SetExpectationsRetainReleaseMessage();
+  SetExpectationsForFileAccessAuthorizerInit(mockESApi);
+
+  SNTEndpointSecurityFileAccessAuthorizer *accessClient =
+    [[SNTEndpointSecurityFileAccessAuthorizer alloc] initWithESAPI:mockESApi
+                                                           metrics:nullptr
+                                                            logger:nullptr
+                                                        watchItems:nullptr
+                                                          enricher:nullptr
+                                                     decisionCache:nil];
+
+  id accessClientMock = OCMPartialMock(accessClient);
+
+  OCMStub([accessClientMock getCertificateHash:&esFile])
+    .ignoringNonObjectArgs()
+    .andReturn(@(instigatingCertHash));
+
+  WatchItemPolicy::Process policyProc("", "", {}, "");
+
+  {
+    // Process policy matching single attribute - path
+    ClearWatchItemPolicyProcess(policyProc);
+    policyProc.binary_path = "foo";
+    XCTAssertTrue([accessClient policyProcess:policyProc matchesESProcess:&esProc]);
+  }
+
+  {
+    // Process policy matching single attribute - TeamID
+    ClearWatchItemPolicyProcess(policyProc);
+    policyProc.team_id = "myvalidtid";
+    XCTAssertTrue([accessClient policyProcess:policyProc matchesESProcess:&esProc]);
+  }
+
+  {
+    // Process policy matching single attribute - cert hash
+    ClearWatchItemPolicyProcess(policyProc);
+    policyProc.certificate_sha256 = instigatingCertHash;
+    XCTAssertTrue([accessClient policyProcess:policyProc matchesESProcess:&esProc]);
+  }
+
+  {
+    // Process policy matching single attribute - cdhash
+    ClearWatchItemPolicyProcess(policyProc);
+    policyProc.cdhash = cdhashBytes;
+    XCTAssertTrue([accessClient policyProcess:policyProc matchesESProcess:&esProc]);
+  }
+
+  {
+    // Process policy with only a subset of matching attributes
+    ClearWatchItemPolicyProcess(policyProc);
+    policyProc.binary_path = "foo";
+    policyProc.team_id = "invalidtid";
+    XCTAssertFalse([accessClient policyProcess:policyProc matchesESProcess:&esProc]);
+  }
+
+  {
+    // Process policy with codesigning-based attributes, but unsigned ES process
+    ClearWatchItemPolicyProcess(policyProc);
+    esProc.codesigning_flags = 0x0;
+    policyProc.team_id = "myvalidtid";
+    XCTAssertFalse([accessClient policyProcess:policyProc matchesESProcess:&esProc]);
+  }
+
+  [accessClientMock stopMocking];
+  XCTBubbleMockVerifyAndClearExpectations(mockESApi.get());
+}
+
 - (void)testApplyPolicyToMessage {
   const char *instigatingPath = "/path/to/proc";
   const char *instigatingTeamID = "my_teamid";
   const char *instigatingCertHash = "abc123";
+  WatchItemPolicy::Process policyProc(instigatingPath, "", {}, "");
   std::array<uint8_t, 20> instigatingCDHash;
   instigatingCDHash.fill(0x41);
   es_file_t esFile = MakeESFile(instigatingPath);
@@ -406,6 +498,7 @@ void SetExpectationsForFileAccessAuthorizerInit(
   }
 
   auto policy = std::make_shared<WatchItemPolicy>("foo_policy", "/foo");
+  policy->processes.push_back(policyProc);
   auto optionalPolicy = std::make_optional<std::shared_ptr<WatchItemPolicy>>(policy);
 
   // Signed but invalid instigating processes are automatically
@@ -425,53 +518,21 @@ void SetExpectationsForFileAccessAuthorizerInit(
     OCMExpect([self.mockConfigurator enableBadSignatureProtection]).andReturn(NO);
     esMsg.process->codesigning_flags = CS_SIGNED;
     Message msg(mockESApi, &esMsg);
-    policy->allowed_binary_paths.insert(instigatingPath);
+    OCMExpect([accessClientMock policyProcess:policyProc matchesESProcess:&esProc])
+      .ignoringNonObjectArgs()
+      .andReturn(true);
     XCTAssertEqual([accessClient applyPolicy:optionalPolicy forTarget:target toMessage:msg],
                    FileAccessPolicyDecision::kAllowed);
-    policy->allowed_binary_paths.clear();
   }
 
   // Set the codesign flags to be signed and valid for the remaining tests
   esMsg.process->codesigning_flags = CS_SIGNED | CS_VALID;
 
-  // Test allowed binary paths matching instigator are allowed
-  {
-    Message msg(mockESApi, &esMsg);
-    policy->allowed_binary_paths.insert(instigatingPath);
-    XCTAssertEqual([accessClient applyPolicy:optionalPolicy forTarget:target toMessage:msg],
-                   FileAccessPolicyDecision::kAllowed);
-    policy->allowed_binary_paths.clear();
-  }
-
-  // Test allowed TeamIDs matching instigator are allowed
-  {
-    Message msg(mockESApi, &esMsg);
-    policy->allowed_team_ids.insert(instigatingTeamID);
-    XCTAssertEqual([accessClient applyPolicy:optionalPolicy forTarget:target toMessage:msg],
-                   FileAccessPolicyDecision::kAllowed);
-    policy->allowed_team_ids.clear();
-  }
-
-  // Test allowed CDHashes matching instigator are allowed
-  {
-    Message msg(mockESApi, &esMsg);
-    policy->allowed_cdhashes.insert(instigatingCDHash);
-    XCTAssertEqual([accessClient applyPolicy:optionalPolicy forTarget:target toMessage:msg],
-                   FileAccessPolicyDecision::kAllowed);
-    policy->allowed_cdhashes.clear();
-  }
-
-  // Test allowed cert hashes matching instigator are allowed
-  {
-    Message msg(mockESApi, &esMsg);
-    policy->allowed_certificates_sha256.insert(instigatingCertHash);
-    XCTAssertEqual([accessClient applyPolicy:optionalPolicy forTarget:target toMessage:msg],
-                   FileAccessPolicyDecision::kAllowed);
-    policy->allowed_certificates_sha256.clear();
-  }
-
   // If no exceptions, operations are logged and denied
   {
+    OCMExpect([accessClientMock policyProcess:policyProc matchesESProcess:&esProc])
+      .ignoringNonObjectArgs()
+      .andReturn(false);
     policy->audit_only = false;
     Message msg(mockESApi, &esMsg);
     XCTAssertEqual([accessClient applyPolicy:optionalPolicy forTarget:target toMessage:msg],
@@ -480,6 +541,9 @@ void SetExpectationsForFileAccessAuthorizerInit(
 
   // For audit only policies with no exceptions, operations are logged but allowed
   {
+    OCMExpect([accessClientMock policyProcess:policyProc matchesESProcess:&esProc])
+      .ignoringNonObjectArgs()
+      .andReturn(false);
     policy->audit_only = true;
     Message msg(mockESApi, &esMsg);
     XCTAssertEqual([accessClient applyPolicy:optionalPolicy forTarget:target toMessage:msg],

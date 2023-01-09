@@ -310,6 +310,48 @@ void PopulatePathTargets(const Message &msg, std::vector<PathTarget> &targets) {
   return FileAccessPolicyDecision::kNoPolicy;
 }
 
+/// An An `es_process_t` must match all criteria within the given
+/// WatchItemPolicy::Process to be considered a match.
+- (bool)policyProcess:(const WatchItemPolicy::Process &)policyProc
+     matchesESProcess:(const es_process_t *)esProc {
+  if (esProc->codesigning_flags & CS_SIGNED) {
+    // Check if the instigating process has an allowed TeamID
+    if (policyProc.team_id.length() > 0 && esProc->team_id.data &&
+        policyProc.team_id != esProc->team_id.data) {
+      return false;
+    }
+
+    // Check if the instigating process has an allowed CDHash
+    if (policyProc.cdhash.size() == CS_CDHASH_LEN &&
+        std::memcmp(policyProc.cdhash.data(), esProc->cdhash, CS_CDHASH_LEN) != 0) {
+      return false;
+    }
+
+    // Check if the instigating process has an allowed certificate hash
+    if (policyProc.certificate_sha256.length() > 0) {
+      NSString *result = [self getCertificateHash:esProc->executable];
+      if (!result || policyProc.certificate_sha256 != [result UTF8String]) {
+        return false;
+      }
+    }
+  } else {
+    // If the process isn't signed, ensure the policy doesn't contain any
+    // attributes that require a signature
+    if (policyProc.team_id.length() > 0 || policyProc.cdhash.size() == CS_CDHASH_LEN ||
+        policyProc.certificate_sha256.length() > 0) {
+      return false;
+    }
+  }
+
+  // Check if the instigating process path opening the file is allowed
+  if (policyProc.binary_path.length() > 0 &&
+      policyProc.binary_path != esProc->executable->path.data) {
+    return false;
+  }
+
+  return true;
+}
+
 // The operation is allowed when:
 //   - No policy exists
 //   - The policy is write-only, but the operation is read-only
@@ -345,35 +387,9 @@ void PopulatePathTargets(const Message &msg, std::vector<PathTarget> &targets) {
     return specialCase;
   }
 
-  // Check if the instigating process path opening the file is allowed
-  if (policy->allowed_binary_paths.count(msg->process->executable->path.data) > 0) {
-    return FileAccessPolicyDecision::kAllowed;
-  }
-
-  // TeamID, CDHash, and Cert Hashes are only valid if the binary is signed
-  if (msg->process->codesigning_flags & CS_SIGNED) {
-    // Check if the instigating process has an allowed TeamID
-    if (msg->process->team_id.data &&
-        policy->allowed_team_ids.count(msg->process->team_id.data) > 0) {
+  for (const WatchItemPolicy::Process &process : policy->processes) {
+    if ([self policyProcess:process matchesESProcess:msg->process]) {
       return FileAccessPolicyDecision::kAllowed;
-    }
-
-    if (policy->allowed_cdhashes.size() > 0) {
-      // Check if the instigating process has an allowed CDHash
-      std::array<uint8_t, CS_CDHASH_LEN> bytes;
-      std::copy(std::begin(msg->process->cdhash), std::end(msg->process->cdhash),
-                std::begin(bytes));
-      if (policy->allowed_cdhashes.count(bytes) > 0) {
-        return FileAccessPolicyDecision::kAllowed;
-      }
-    }
-
-    if (policy->allowed_certificates_sha256.size() > 0) {
-      // Check if the instigating process has an allowed certificate hash
-      NSString *result = [self getCertificateHash:msg->process->executable];
-      if (result && policy->allowed_certificates_sha256.count([result UTF8String])) {
-        return FileAccessPolicyDecision::kAllowed;
-      }
     }
   }
 
