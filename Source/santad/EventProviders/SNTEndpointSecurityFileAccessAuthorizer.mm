@@ -314,6 +314,10 @@ void PopulatePathTargets(const Message &msg, std::vector<PathTarget> &targets) {
 /// WatchItemPolicy::Process to be considered a match.
 - (bool)policyProcess:(const WatchItemPolicy::Process &)policyProc
      matchesESProcess:(const es_process_t *)esProc {
+  // Note: Intentionally not checking `CS_VALID` here - this check must happen
+  // outside of this method. This method is used to individually check each
+  // configured process exception while the check for a valid code signature
+  // is more broad and applies whether or not process exceptions exist.
   if (esProc->codesigning_flags & CS_SIGNED) {
     // Check if the instigating process has an allowed TeamID
     if (policyProc.team_id.length() > 0 && esProc->team_id.data &&

@@ -106,7 +106,7 @@ static std::vector<uint8_t> HexStringToBytes(NSString *str) {
   char cur_byte[3];
   cur_byte[2] = '\0';
 
-  for (int i = 0; i < [str length] / 2; i++) {
+  for (int i = 0; i < str.length / 2; i++) {
     cur_byte[0] = [str characterAtIndex:(i * 2)];
     cur_byte[1] = [str characterAtIndex:(i * 2 + 1)];
 
