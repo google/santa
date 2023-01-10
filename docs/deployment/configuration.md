@@ -1,4 +1,4 @@
-docs/deployment/configuration.md---
+---
 title: Configuration
 parent: Deployment
 nav_order: 3
