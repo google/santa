@@ -17,10 +17,9 @@
 
 #include <Kernel/kern/cs_blobs.h>
 
-#include <array>
-#include <set>
 #include <string>
 #include <string_view>
+#include <vector>
 
 namespace santa::santad::data_layer {
 
@@ -29,32 +28,63 @@ enum class WatchItemPathType {
   kLiteral,
 };
 
+static constexpr WatchItemPathType kWatchItemPolicyDefaultPathType =
+    WatchItemPathType::kLiteral;
+static constexpr bool kWatchItemPolicyDefaultAllowReadAccess = false;
+static constexpr bool kWatchItemPolicyDefaultAuditOnly = true;
+
 struct WatchItemPolicy {
-  WatchItemPolicy(std::string_view n, std::string_view p, bool wo = false,
-                  WatchItemPathType pt = WatchItemPathType::kLiteral,
-                  bool ao = true, std::set<std::string> &&abp = {},
-                  std::set<std::string> &&ati = {},
-                  std::set<std::array<uint8_t, CS_CDHASH_LEN>> &&ach = {},
-                  std::set<std::string> &&acs = {})
+  struct Process {
+    Process(std::string bp, std::string ti, std::vector<uint8_t> cdh,
+            std::string ch)
+        : binary_path(bp),
+          team_id(ti),
+          cdhash(std::move(cdh)),
+          certificate_sha256(ch) {}
+
+    bool operator==(const Process &other) const {
+      return binary_path == other.binary_path && team_id == other.team_id &&
+             cdhash == other.cdhash &&
+             certificate_sha256 == other.certificate_sha256;
+    }
+
+    bool operator!=(const Process &other) const { return !(*this == other); }
+
+    std::string binary_path;
+    std::string team_id;
+    std::vector<uint8_t> cdhash;
+    std::string certificate_sha256;
+  };
+
+  WatchItemPolicy(std::string_view n, std::string_view p,
+                  WatchItemPathType pt = kWatchItemPolicyDefaultPathType,
+                  bool ara = kWatchItemPolicyDefaultAllowReadAccess,
+                  bool ao = kWatchItemPolicyDefaultAuditOnly,
+                  std::vector<Process> procs = {})
       : name(n),
         path(p),
-        write_only(wo),
         path_type(pt),
+        allow_read_access(ara),
         audit_only(ao),
-        allowed_binary_paths(std::move(abp)),
-        allowed_team_ids(std::move(ati)),
-        allowed_cdhashes(std::move(ach)),
-        allowed_certificates_sha256(std::move(acs)) {}
+        processes(std::move(procs)) {}
+
+  bool operator==(const WatchItemPolicy &other) const {
+    return name == other.name && path == other.path &&
+           path_type == other.path_type &&
+           allow_read_access == other.allow_read_access &&
+           audit_only == other.audit_only && processes == other.processes;
+  }
+
+  bool operator!=(const WatchItemPolicy &other) const {
+    return !(*this == other);
+  }
 
   std::string name;
   std::string path;
-  bool write_only;
   WatchItemPathType path_type;
+  bool allow_read_access;
   bool audit_only;
-  std::set<std::string> allowed_binary_paths;
-  std::set<std::string> allowed_team_ids;
-  std::set<std::array<uint8_t, CS_CDHASH_LEN>> allowed_cdhashes;
-  std::set<std::string> allowed_certificates_sha256;
+  std::vector<Process> processes;
 };
 
 }  // namespace santa::santad::data_layer
