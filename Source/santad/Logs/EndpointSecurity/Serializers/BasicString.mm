@@ -419,7 +419,11 @@ std::vector<uint8_t> BasicString::SerializeFileAccess(const std::string &policy_
                                                       FileAccessPolicyDecision decision) {
   std::string str = CreateDefaultString();
 
-  str.append("action=FILE_ACCESS|path=");
+  str.append("action=FILE_ACCESS|policy_version=");
+  str.append(policy_version);
+  str.append("|policy_name=");
+  str.append(policy_name);
+  str.append("|path=");
   str.append(target);
   str.append("|access_type=");
   str.append(GetAccessTypeString(msg->event_type));
