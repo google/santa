@@ -292,7 +292,7 @@ void SantadMain(std::shared_ptr<EndpointSecurityAPI> esapi, std::shared_ptr<Logg
                                  }],
     [[SNTKVOManager alloc]
       initWithObject:configurator
-            selector:@selector(filesystemMonitoringPolicyPlistPath)
+            selector:@selector(fileAccessPolicyPlist)
                 type:[NSString class]
             callback:^(NSString *oldValue, NSString *newValue) {
               if (oldValue != newValue || (newValue && ![oldValue isEqualToString:newValue])) {

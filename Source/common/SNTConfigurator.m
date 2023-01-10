@@ -97,10 +97,8 @@ static NSString *const kSpoolDirectoryFileSizeThresholdKB = @"SpoolDirectoryFile
 static NSString *const kSpoolDirectorySizeThresholdMB = @"SpoolDirectorySizeThresholdMB";
 static NSString *const kSpoolDirectoryEventMaxFlushTimeSec = @"SpoolDirectoryEventMaxFlushTimeSec";
 
-static NSString *const kFilesystemMonitoringPolicyPlistPath =
-  @"FilesystemMonitoringPolicyPlistPath";
-static NSString *const kFilesystemMonitoringPolicyUpdateIntervalSec =
-  @"FilesystemMonitoringPolicyUpdateIntervalSec";
+static NSString *const kFileAccessPolicyPlist = @"FileAccessPolicyPlist";
+static NSString *const kFileAccessPolicyUpdateIntervalSec = @"FileAccessPolicyUpdateIntervalSec";
 
 static NSString *const kEnableMachineIDDecoration = @"EnableMachineIDDecoration";
 
@@ -213,8 +211,8 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
       kSpoolDirectoryFileSizeThresholdKB : number,
       kSpoolDirectorySizeThresholdMB : number,
       kSpoolDirectoryEventMaxFlushTimeSec : number,
-      kFilesystemMonitoringPolicyPlistPath : string,
-      kFilesystemMonitoringPolicyUpdateIntervalSec : number,
+      kFileAccessPolicyPlist : string,
+      kFileAccessPolicyUpdateIntervalSec : number,
       kEnableMachineIDDecoration : number,
       kEnableForkAndExitLogging : number,
       kIgnoreOtherEndpointSecurityClients : number,
@@ -418,11 +416,11 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
   return [self configStateSet];
 }
 
-+ (NSSet *)keyPathsForValuesAffectingFilesystemMonitoringPolicyPlistPath {
++ (NSSet *)keyPathsForValuesAffectingFileAccessPolicyPlist {
   return [self configStateSet];
 }
 
-+ (NSSet *)keyPathsForValuesAffectingFilesystemMonitoringPolicyUpdateIntervalSec {
++ (NSSet *)keyPathsForValuesAffectingFileAccessPolicyUpdateIntervalSec {
   return [self configStateSet];
 }
 
@@ -804,13 +802,13 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
            : 15.0;
 }
 
-- (NSString *)filesystemMonitoringPolicyPlistPath {
-  return self.configState[kFilesystemMonitoringPolicyPlistPath];
+- (NSString *)fileAccessPolicyPlist {
+  return self.configState[kFileAccessPolicyPlist];
 }
 
-- (uint32_t)filesystemMonitoringPolicyUpdateIntervalSec {
-  return self.configState[kFilesystemMonitoringPolicyUpdateIntervalSec]
-           ? [self.configState[kFilesystemMonitoringPolicyUpdateIntervalSec] unsignedIntValue]
+- (uint32_t)fileAccessPolicyUpdateIntervalSec {
+  return self.configState[kFileAccessPolicyUpdateIntervalSec]
+           ? [self.configState[kFileAccessPolicyUpdateIntervalSec] unsignedIntValue]
            : 60 * 10;
 }
 
