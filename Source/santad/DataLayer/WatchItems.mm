@@ -42,12 +42,6 @@ using santa::common::Unit;
 using santa::santad::data_layer::WatchItemPathType;
 using santa::santad::data_layer::WatchItemPolicy;
 
-// Type aliases
-using ValidatorBlock = bool (^)(id, NSError **);
-using PathAndTypePair = std::pair<std::string, WatchItemPathType>;
-using PathList = std::vector<PathAndTypePair>;
-using ProcessList = std::vector<WatchItemPolicy::Process>;
-
 NSString *const kWatchItemConfigKeyVersion = @"Version";
 NSString *const kWatchItemConfigKeyWatchItems = @"WatchItems";
 NSString *const kWatchItemConfigKeyPaths = @"Paths";
@@ -75,6 +69,12 @@ static constexpr NSUInteger kMaxSigningIDLength = 512;
 static constexpr uint64_t kMinReapplyConfigFrequencySecs = 15;
 
 namespace santa::santad::data_layer {
+
+// Type aliases
+using ValidatorBlock = bool (^)(id, NSError **);
+using PathAndTypePair = std::pair<std::string, WatchItemPathType>;
+using PathList = std::vector<PathAndTypePair>;
+using ProcessList = std::vector<WatchItemPolicy::Process>;
 
 static void PopulateError(NSError **err, NSString *msg) {
   if (err) {
