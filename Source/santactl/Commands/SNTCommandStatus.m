@@ -289,7 +289,7 @@ REGISTER_COMMAND_NAME(@"status")
       printf("  %-25s | %lld\n", "Rules", staticRuleCount);
     }
 
-    printf(">>> Watch Items State\n");
+    printf(">>> Watch Items\n");
     printf("  %-25s | %s\n", "Enabled", (watchItemsEnabled ? "Yes" : "No"));
     if (watchItemsEnabled) {
       printf("  %-25s | %s\n", "Policy Version", watchItemsPolicyVersion.UTF8String);
