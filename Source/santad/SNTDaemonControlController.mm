@@ -13,9 +13,10 @@
 ///    limitations under the License.
 
 #import "Source/santad/SNTDaemonControlController.h"
-#include <memory>
 
 #import <MOLXPCConnection/MOLXPCConnection.h>
+
+#include <memory>
 
 #import "Source/common/SNTCachedDecision.h"
 #import "Source/common/SNTCommonEnums.h"
@@ -34,6 +35,8 @@
 #import "Source/santad/SNTPolicyProcessor.h"
 #import "Source/santad/SNTSyncdQueue.h"
 
+using santa::santad::data_layer::WatchItems;
+using santa::santad::data_layer::WatchItemsState;
 using santa::santad::event_providers::AuthResultCache;
 using santa::santad::event_providers::FlushCacheMode;
 using santa::santad::logs::endpoint_security::Logger;
@@ -53,18 +56,21 @@ double watchdogRAMPeak = 0;
 @implementation SNTDaemonControlController {
   std::shared_ptr<AuthResultCache> _authResultCache;
   std::shared_ptr<Logger> _logger;
+  std::shared_ptr<WatchItems> _watchItems;
 }
 
 - (instancetype)initWithAuthResultCache:(std::shared_ptr<AuthResultCache>)authResultCache
                       notificationQueue:(SNTNotificationQueue *)notQueue
                              syncdQueue:(SNTSyncdQueue *)syncdQueue
-                                 logger:(std::shared_ptr<Logger>)logger {
+                                 logger:(std::shared_ptr<Logger>)logger
+                             watchItems:(std::shared_ptr<WatchItems>)watchItems {
   self = [super init];
   if (self) {
     _logger = logger;
     _policyProcessor =
       [[SNTPolicyProcessor alloc] initWithRuleTable:[SNTDatabaseController ruleTable]];
     _authResultCache = authResultCache;
+    _watchItems = std::move(watchItems);
     _notQueue = notQueue;
     _syncdQueue = syncdQueue;
   }
@@ -168,6 +174,19 @@ double watchdogRAMPeak = 0;
 
 - (void)watchdogInfo:(void (^)(uint64_t, uint64_t, double, double))reply {
   reply(watchdogCPUEvents, watchdogRAMEvents, watchdogCPUPeak, watchdogRAMPeak);
+}
+
+- (void)watchItemsState:(void (^)(BOOL, uint64_t, NSString *, NSString *, NSTimeInterval))reply {
+  std::optional<WatchItemsState> optionalState = self->_watchItems->State();
+
+  if (!optionalState.has_value()) {
+    reply(NO, 0, nil, nil, 0);
+  } else {
+    WatchItemsState state = optionalState.value();
+
+    reply(YES, state.rule_count, state.policy_version, state.config_path,
+          state.last_config_load_epoch);
+  }
 }
 
 - (void)clientMode:(void (^)(SNTClientMode))reply {

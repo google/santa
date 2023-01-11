@@ -83,7 +83,8 @@ void SantadMain(std::shared_ptr<EndpointSecurityAPI> esapi, std::shared_ptr<Logg
     [[SNTDaemonControlController alloc] initWithAuthResultCache:auth_result_cache
                                               notificationQueue:notifier_queue
                                                      syncdQueue:syncd_queue
-                                                         logger:logger];
+                                                         logger:logger
+                                                     watchItems:watch_items];
 
   control_connection.exportedObject = dc;
   [control_connection resume];
