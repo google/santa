@@ -53,6 +53,13 @@ class WatchItemsPeer;
 
 namespace santa::santad::data_layer {
 
+struct WatchItemsState {
+  uint64_t rule_count;
+  NSString *policy_version;
+  NSString *config_path;
+  NSTimeInterval last_config_load_epoch;
+};
+
 class WatchItems : public std::enable_shared_from_this<WatchItems> {
  public:
   using VersionAndPolicies =
@@ -73,7 +80,8 @@ class WatchItems : public std::enable_shared_from_this<WatchItems> {
 
   void SetConfigPath(NSString *config_path);
   VersionAndPolicies FindPolciesForPaths(const std::vector<std::string_view> &paths);
-  std::string PolicyVersion();
+
+  std::optional<WatchItemsState> State();
 
   friend class santa::santad::data_layer::WatchItemsPeer;
 
@@ -97,6 +105,7 @@ class WatchItems : public std::enable_shared_from_this<WatchItems> {
 
   std::unique_ptr<WatchItemsTree> watch_items_ ABSL_GUARDED_BY(lock_);
   NSDictionary *current_config_ ABSL_GUARDED_BY(lock_);
+  NSTimeInterval last_update_time_ ABSL_GUARDED_BY(lock_);
   std::set<std::pair<std::string, WatchItemPathType>> currently_monitored_paths_
     ABSL_GUARDED_BY(lock_);
   std::string policy_version_ ABSL_GUARDED_BY(lock_);
