@@ -42,6 +42,7 @@ extern NSString *const kWatchItemConfigKeyOptionsAuditOnly;
 extern NSString *const kWatchItemConfigKeyProcesses;
 extern NSString *const kWatchItemConfigKeyProcessesBinaryPath;
 extern NSString *const kWatchItemConfigKeyProcessesCertificateSha256;
+extern NSString *const kWatchItemConfigKeyProcessesSigningID;
 extern NSString *const kWatchItemConfigKeyProcessesTeamID;
 extern NSString *const kWatchItemConfigKeyProcessesCDHash;
 

@@ -35,15 +35,17 @@ static constexpr bool kWatchItemPolicyDefaultAuditOnly = true;
 
 struct WatchItemPolicy {
   struct Process {
-    Process(std::string bp, std::string ti, std::vector<uint8_t> cdh,
-            std::string ch)
+    Process(std::string bp, std::string sid, std::string ti,
+            std::vector<uint8_t> cdh, std::string ch)
         : binary_path(bp),
+          signing_id(sid),
           team_id(ti),
           cdhash(std::move(cdh)),
           certificate_sha256(ch) {}
 
     bool operator==(const Process &other) const {
-      return binary_path == other.binary_path && team_id == other.team_id &&
+      return binary_path == other.binary_path &&
+             signing_id == other.signing_id && team_id == other.team_id &&
              cdhash == other.cdhash &&
              certificate_sha256 == other.certificate_sha256;
     }
@@ -51,6 +53,7 @@ struct WatchItemPolicy {
     bool operator!=(const Process &other) const { return !(*this == other); }
 
     std::string binary_path;
+    std::string signing_id;
     std::string team_id;
     std::vector<uint8_t> cdhash;
     std::string certificate_sha256;
