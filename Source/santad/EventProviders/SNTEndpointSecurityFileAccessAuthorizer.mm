@@ -320,8 +320,13 @@ void PopulatePathTargets(const Message &msg, std::vector<PathTarget> &targets) {
   // is more broad and applies whether or not process exceptions exist.
   if (esProc->codesigning_flags & CS_SIGNED) {
     // Check if the instigating process has an allowed TeamID
-    if (policyProc.team_id.length() > 0 && esProc->team_id.data &&
+    if (!policyProc.team_id.empty() && esProc->team_id.data &&
         policyProc.team_id != esProc->team_id.data) {
+      return false;
+    }
+
+    if (!policyProc.signing_id.empty() && esProc->signing_id.data &&
+        policyProc.signing_id != esProc->signing_id.data) {
       return false;
     }
 
@@ -332,7 +337,7 @@ void PopulatePathTargets(const Message &msg, std::vector<PathTarget> &targets) {
     }
 
     // Check if the instigating process has an allowed certificate hash
-    if (policyProc.certificate_sha256.length() > 0) {
+    if (!policyProc.certificate_sha256.empty()) {
       NSString *result = [self getCertificateHash:esProc->executable];
       if (!result || policyProc.certificate_sha256 != [result UTF8String]) {
         return false;
@@ -341,8 +346,8 @@ void PopulatePathTargets(const Message &msg, std::vector<PathTarget> &targets) {
   } else {
     // If the process isn't signed, ensure the policy doesn't contain any
     // attributes that require a signature
-    if (policyProc.team_id.length() > 0 || policyProc.cdhash.size() == CS_CDHASH_LEN ||
-        policyProc.certificate_sha256.length() > 0) {
+    if (!policyProc.team_id.empty() || !policyProc.signing_id.empty() ||
+        policyProc.cdhash.size() == CS_CDHASH_LEN || !policyProc.certificate_sha256.empty()) {
       return false;
     }
   }

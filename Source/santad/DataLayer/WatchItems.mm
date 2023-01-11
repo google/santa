@@ -18,6 +18,7 @@
 #include <Kernel/kern/cs_blobs.h>
 #include <ctype.h>
 #include <glob.h>
+#include <objc/NSObjCRuntime.h>
 #include <sys/syslimits.h>
 
 #include <algorithm>
@@ -58,11 +59,15 @@ NSString *const kWatchItemConfigKeyOptionsAuditOnly = @"AuditOnly";
 NSString *const kWatchItemConfigKeyProcesses = @"Processes";
 NSString *const kWatchItemConfigKeyProcessesBinaryPath = @"BinaryPath";
 NSString *const kWatchItemConfigKeyProcessesCertificateSha256 = @"CertificateSha256";
+NSString *const kWatchItemConfigKeyProcessesSigningID = @"SigningID";
 NSString *const kWatchItemConfigKeyProcessesTeamID = @"TeamID";
 NSString *const kWatchItemConfigKeyProcessesCDHash = @"CDHash";
 
 // https://developer.apple.com/help/account/manage-your-team/locate-your-team-id/
 static constexpr NSUInteger kMaxTeamIDLength = 10;
+
+// Semi-arbitrary upper bound.
+static constexpr NSUInteger kMaxSigningIDLength = 512;
 
 // Semi-arbitrary minimum allowed reapplication frequency.
 // Goal is to prevent a configuration setting that would cause too much
@@ -283,16 +288,18 @@ std::variant<Unit, PathList> VerifyConfigWatchItemPaths(NSArray<id> *paths, NSEr
 ///
 /// <array>
 ///   <dict>
-///     <key>BinaryPaths</key>
+///     <key>BinaryPath</key>
 ///     <string>AAAA</string>
-///     <key>TeamIDs</key>
+///     <key>TeamID</key>
 ///     <string>BBBB</string>
 ///   </dict>
 ///   <dict>
-///     <key>CertificatesSha256</key>
+///     <key>CertificateSha256</key>
 ///     <string>CCCC</string>
-///     <key>CDHashes</key>
+///     <key>CDHash</key>
 ///     <string>DDDD</string>
+///     <key>SigningID</key>
+///     <string>EEEE</string>
 ///   </dict>
 /// </array>
 std::variant<Unit, ProcessList> VerifyConfigWatchItemProcesses(NSDictionary *watch_item,
@@ -304,6 +311,8 @@ std::variant<Unit, ProcessList> VerifyConfigWatchItemProcesses(NSDictionary *wat
         ^bool(NSDictionary *process, NSError **err) {
           if (!VerifyConfigKey(process, kWatchItemConfigKeyProcessesBinaryPath, [NSString class],
                                err, false, LenRangeValidator(1, PATH_MAX)) ||
+              !VerifyConfigKey(process, kWatchItemConfigKeyProcessesSigningID, [NSString class],
+                               err, false, LenRangeValidator(1, kMaxSigningIDLength)) ||
               !VerifyConfigKey(process, kWatchItemConfigKeyProcessesTeamID, [NSString class], err,
                                false, LenRangeValidator(kMaxTeamIDLength, kMaxTeamIDLength)) ||
               !VerifyConfigKey(process, kWatchItemConfigKeyProcessesCDHash, [NSString class], err,
@@ -317,6 +326,7 @@ std::variant<Unit, ProcessList> VerifyConfigWatchItemProcesses(NSDictionary *wat
 
           // Ensure at least one attribute set
           if (!process[kWatchItemConfigKeyProcessesBinaryPath] &&
+              !process[kWatchItemConfigKeyProcessesSigningID] &&
               !process[kWatchItemConfigKeyProcessesTeamID] &&
               !process[kWatchItemConfigKeyProcessesCDHash] &&
               !process[kWatchItemConfigKeyProcessesCertificateSha256]) {
@@ -326,6 +336,7 @@ std::variant<Unit, ProcessList> VerifyConfigWatchItemProcesses(NSDictionary *wat
 
           proc_list.push_back(WatchItemPolicy::Process(
             std::string([(process[kWatchItemConfigKeyProcessesBinaryPath] ?: @"") UTF8String]),
+            std::string([(process[kWatchItemConfigKeyProcessesSigningID] ?: @"") UTF8String]),
             std::string([(process[kWatchItemConfigKeyProcessesTeamID] ?: @"") UTF8String]),
             HexStringToBytes(process[kWatchItemConfigKeyProcessesCDHash]),
             std::string(

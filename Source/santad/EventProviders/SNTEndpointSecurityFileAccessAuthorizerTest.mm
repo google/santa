@@ -68,6 +68,7 @@ void SetExpectationsForFileAccessAuthorizerInit(
 // Helper to reset a policy to an empty state
 void ClearWatchItemPolicyProcess(WatchItemPolicy::Process &proc) {
   proc.binary_path = "";
+  proc.signing_id = "";
   proc.team_id = "";
   proc.certificate_sha256 = "";
   proc.cdhash.clear();
@@ -375,12 +376,14 @@ void ClearWatchItemPolicyProcess(WatchItemPolicy::Process &proc) {
 - (void)testPolicyProcessMatchesESProcess {
   const char *instigatingCertHash = "abc123";
   const char *teamId = "myvalidtid";
+  const char *signingId = "com.google.test";
   std::vector<uint8_t> cdhashBytes(CS_CDHASH_LEN);
   std::fill(cdhashBytes.begin(), cdhashBytes.end(), 0xAA);
   es_file_t esFile = MakeESFile("foo");
   es_process_t esProc = MakeESProcess(&esFile);
   esProc.codesigning_flags = CS_SIGNED;
   esProc.team_id = MakeESStringToken(teamId);
+  esProc.signing_id = MakeESStringToken(signingId);
   std::memcpy(esProc.cdhash, cdhashBytes.data(), sizeof(esProc.cdhash));
 
   auto mockESApi = std::make_shared<MockEndpointSecurityAPI>();
@@ -402,20 +405,33 @@ void ClearWatchItemPolicyProcess(WatchItemPolicy::Process &proc) {
     .ignoringNonObjectArgs()
     .andReturn(@(instigatingCertHash));
 
-  WatchItemPolicy::Process policyProc("", "", {}, "");
+  WatchItemPolicy::Process policyProc("", "", "", {}, "");
 
   {
     // Process policy matching single attribute - path
     ClearWatchItemPolicyProcess(policyProc);
     policyProc.binary_path = "foo";
     XCTAssertTrue([accessClient policyProcess:policyProc matchesESProcess:&esProc]);
+    policyProc.binary_path = "badpath";
+    XCTAssertFalse([accessClient policyProcess:policyProc matchesESProcess:&esProc]);
+  }
+
+  {
+    // Process policy matching single attribute - SigningID
+    ClearWatchItemPolicyProcess(policyProc);
+    policyProc.signing_id = signingId;
+    XCTAssertTrue([accessClient policyProcess:policyProc matchesESProcess:&esProc]);
+    policyProc.signing_id = "badid";
+    XCTAssertFalse([accessClient policyProcess:policyProc matchesESProcess:&esProc]);
   }
 
   {
     // Process policy matching single attribute - TeamID
     ClearWatchItemPolicyProcess(policyProc);
-    policyProc.team_id = "myvalidtid";
+    policyProc.team_id = teamId;
     XCTAssertTrue([accessClient policyProcess:policyProc matchesESProcess:&esProc]);
+    policyProc.team_id = "badid";
+    XCTAssertFalse([accessClient policyProcess:policyProc matchesESProcess:&esProc]);
   }
 
   {
@@ -423,6 +439,8 @@ void ClearWatchItemPolicyProcess(WatchItemPolicy::Process &proc) {
     ClearWatchItemPolicyProcess(policyProc);
     policyProc.certificate_sha256 = instigatingCertHash;
     XCTAssertTrue([accessClient policyProcess:policyProc matchesESProcess:&esProc]);
+    policyProc.certificate_sha256 = "badcert";
+    XCTAssertFalse([accessClient policyProcess:policyProc matchesESProcess:&esProc]);
   }
 
   {
@@ -430,6 +448,8 @@ void ClearWatchItemPolicyProcess(WatchItemPolicy::Process &proc) {
     ClearWatchItemPolicyProcess(policyProc);
     policyProc.cdhash = cdhashBytes;
     XCTAssertTrue([accessClient policyProcess:policyProc matchesESProcess:&esProc]);
+    policyProc.cdhash[0] = 0x0;
+    XCTAssertFalse([accessClient policyProcess:policyProc matchesESProcess:&esProc]);
   }
 
   {
@@ -456,7 +476,7 @@ void ClearWatchItemPolicyProcess(WatchItemPolicy::Process &proc) {
   const char *instigatingPath = "/path/to/proc";
   const char *instigatingTeamID = "my_teamid";
   const char *instigatingCertHash = "abc123";
-  WatchItemPolicy::Process policyProc(instigatingPath, "", {}, "");
+  WatchItemPolicy::Process policyProc(instigatingPath, "", "", {}, "");
   std::array<uint8_t, 20> instigatingCDHash;
   instigatingCDHash.fill(0x41);
   es_file_t esFile = MakeESFile(instigatingPath);
