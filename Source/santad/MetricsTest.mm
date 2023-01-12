@@ -65,9 +65,10 @@ using santa::santad::ProcessorToString;
 
 - (void)testStartStop {
   dispatch_source_t timer = dispatch_source_create(DISPATCH_SOURCE_TYPE_TIMER, 0, 0, self.q);
-  auto metrics = std::make_shared<MetricsPeer>(nil, self.q, timer, 100, nil, nil, ^{
-    dispatch_semaphore_signal(self.sema);
-  });
+  auto metrics =
+    std::make_shared<MetricsPeer>(self.q, timer, 100, nil, nil, ^(santa::santad::Metrics *m) {
+      dispatch_semaphore_signal(self.sema);
+    });
 
   XCTAssertFalse(metrics->IsRunning());
 
@@ -100,8 +101,8 @@ using santa::santad::ProcessorToString;
 
 - (void)testSetInterval {
   dispatch_source_t timer = dispatch_source_create(DISPATCH_SOURCE_TYPE_TIMER, 0, 0, self.q);
-  auto metrics = std::make_shared<MetricsPeer>(nil, self.q, timer, 100, nil, nil,
-                                               ^{
+  auto metrics = std::make_shared<MetricsPeer>(self.q, timer, 100, nil, nil,
+                                               ^(santa::santad::Metrics *m){
                                                });
 
   XCTAssertEqual(100, metrics->Interval());
@@ -186,11 +187,11 @@ using santa::santad::ProcessorToString;
     });
 
   dispatch_source_t timer = dispatch_source_create(DISPATCH_SOURCE_TYPE_TIMER, 0, 0, self.q);
-  auto metrics = std::make_shared<MetricsPeer>(nil, self.q, timer, 100, mockEventProcessingTimes,
-                                               mockEventCounts,
-                                               ^{
-                                                 // This block intentionally left blank
-                                               });
+  auto metrics =
+    std::make_shared<MetricsPeer>(self.q, timer, 100, mockEventProcessingTimes, mockEventCounts,
+                                  ^(santa::santad::Metrics *m){
+                                    // This block intentionally left blank
+                                  });
 
   metrics->SetEventMetrics(Processor::kAuthorizer, ES_EVENT_TYPE_AUTH_EXEC,
                            EventDisposition::kProcessed, nanos);

@@ -47,12 +47,13 @@ class Metrics : public std::enable_shared_from_this<Metrics> {
  public:
   static std::shared_ptr<Metrics> Create(SNTMetricSet *metricSet, uint64_t interval);
 
-  Metrics(MOLXPCConnection *metrics_connection, dispatch_queue_t q, dispatch_source_t timer_source,
-          uint64_t interval, SNTMetricInt64Gauge *event_processing_times,
-          SNTMetricCounter *event_counts, void (^run_on_first_start)(void));
+  Metrics(dispatch_queue_t q, dispatch_source_t timer_source, uint64_t interval,
+          SNTMetricInt64Gauge *event_processing_times, SNTMetricCounter *event_counts,
+          void (^run_on_first_start)(Metrics *));
 
   ~Metrics();
 
+  void EstablishConnection();
   void StartPoll();
   void StopPoll();
   void SetInterval(uint64_t interval);
@@ -73,7 +74,7 @@ class Metrics : public std::enable_shared_from_this<Metrics> {
   // This helps manage dispatch source state to ensure the source is not
   // suspended, resumed, or cancelled while in an improper state.
   bool running_;
-  void (^run_on_first_start_)(void);
+  void (^run_on_first_start_)(Metrics *);
 
   // Separate queue used for setting event metrics
   // Mitigate issues where capturing metrics could be blocked on exporting
