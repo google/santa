@@ -114,8 +114,6 @@ std::shared_ptr<Metrics> Metrics::Create(SNTMetricSet *metricSet, uint64_t inter
 
   dispatch_source_t timer_source = dispatch_source_create(DISPATCH_SOURCE_TYPE_TIMER, 0, 0, q);
 
-  MOLXPCConnection *metrics_connection = [SNTXPCMetricServiceInterface configuredConnection];
-
   SNTMetricInt64Gauge *event_processing_times =
     [metricSet int64GaugeWithName:@"/santa/event_processing_time"
                        fieldNames:@[ @"Processor", @"Event" ]
@@ -127,9 +125,9 @@ std::shared_ptr<Metrics> Metrics::Create(SNTMetricSet *metricSet, uint64_t inter
                       helpText:@"Events received and processed by each processor"];
 
   std::shared_ptr<Metrics> metrics = std::make_shared<Metrics>(
-    metrics_connection, q, timer_source, interval, event_processing_times, event_counts, ^() {
+    q, timer_source, interval, event_processing_times, event_counts, ^(Metrics *metrics) {
       SNTRegisterCoreMetrics();
-      [metrics_connection resume];
+      metrics->EstablishConnection();
     });
 
   std::weak_ptr<Metrics> weak_metrics(metrics);
@@ -146,10 +144,9 @@ std::shared_ptr<Metrics> Metrics::Create(SNTMetricSet *metricSet, uint64_t inter
   return metrics;
 }
 
-Metrics::Metrics(MOLXPCConnection *metrics_connection, dispatch_queue_t q,
-                 dispatch_source_t timer_source, uint64_t interval,
+Metrics::Metrics(dispatch_queue_t q, dispatch_source_t timer_source, uint64_t interval,
                  SNTMetricInt64Gauge *event_processing_times, SNTMetricCounter *event_counts,
-                 void (^run_on_first_start)(void))
+                 void (^run_on_first_start)(Metrics *))
     : q_(q),
       timer_source_(timer_source),
       interval_(interval),
@@ -157,7 +154,6 @@ Metrics::Metrics(MOLXPCConnection *metrics_connection, dispatch_queue_t q,
       event_counts_(event_counts),
       running_(false),
       run_on_first_start_(run_on_first_start) {
-  metrics_connection_ = metrics_connection;
   SetInterval(interval_);
 
   events_q_ = dispatch_queue_create("com.google.santa.santametricsservice.events_q",
@@ -174,6 +170,16 @@ Metrics::~Metrics() {
   }
 }
 
+void Metrics::EstablishConnection() {
+  MOLXPCConnection *metrics_connection = [SNTXPCMetricServiceInterface configuredConnection];
+  metrics_connection.invalidationHandler = ^{
+    NSLog(@"Metrics service connection invalidated. Reconnecting...");
+    EstablishConnection();
+  };
+  [metrics_connection resume];
+  metrics_connection_ = metrics_connection;
+}
+
 void Metrics::SetInterval(uint64_t interval) {
   dispatch_sync(q_, ^{
     LOGI(@"Setting metrics interval to %llu (exporting? %s)", interval, running_ ? "YES" : "NO");
@@ -186,7 +192,7 @@ void Metrics::SetInterval(uint64_t interval) {
 void Metrics::StartPoll() {
   static dispatch_once_t once_token;
   dispatch_once(&once_token, ^{
-    run_on_first_start_();
+    run_on_first_start_(this);
   });
 
   dispatch_sync(q_, ^{
