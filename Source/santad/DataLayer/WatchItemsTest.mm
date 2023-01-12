@@ -39,6 +39,7 @@ using santa::santad::data_layer::kWatchItemPolicyDefaultPathType;
 using santa::santad::data_layer::WatchItemPathType;
 using santa::santad::data_layer::WatchItemPolicy;
 using santa::santad::data_layer::WatchItems;
+using santa::santad::data_layer::WatchItemsState;
 
 namespace santatest {
 using PathAndTypePair = std::pair<std::string, WatchItemPathType>;
@@ -776,13 +777,31 @@ static NSString *RepeatedString(NSString *str, NSUInteger len) {
                  WatchItemPolicy("rule", "b", WatchItemPathType::kPrefix, true, false, procs));
 }
 
-- (void)testPolicyVersion {
-  NSMutableDictionary *config = WrapWatchItemsConfig(@{});
+- (void)testState {
+  NSString *configPath = @"my_config_path";
+  NSTimeInterval startTime = [[NSDate date] timeIntervalSince1970];
 
-  WatchItemsPeer watchItems(nil, NULL, NULL);
+  NSMutableDictionary *config = WrapWatchItemsConfig(@{
+    @"rule1" : @{kWatchItemConfigKeyPaths : @[ @"abc" ]},
+    @"rule2" : @{kWatchItemConfigKeyPaths : @[ @"xyz" ]}
+  });
+
+  WatchItemsPeer watchItems(configPath, NULL, NULL);
+
+  // If no policy yet exists, nullopt is returned
+  std::optional<WatchItemsState> optionalState = watchItems.State();
+  XCTAssertFalse(optionalState.has_value());
+
   watchItems.ReloadConfig(config);
 
-  XCTAssertCStringEqual(watchItems.PolicyVersion().c_str(), kVersion.data());
+  optionalState = watchItems.State();
+  XCTAssertTrue(optionalState.has_value());
+  WatchItemsState state = optionalState.value();
+
+  XCTAssertEqual(state.rule_count, [config[kWatchItemConfigKeyWatchItems] count]);
+  XCTAssertCStringEqual(state.policy_version.UTF8String, kVersion.data());
+  XCTAssertEqual(state.config_path, configPath);
+  XCTAssertGreaterThanOrEqual(state.last_config_load_epoch, startTime);
 }
 
 @end

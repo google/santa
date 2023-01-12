@@ -158,6 +158,26 @@ REGISTER_COMMAND_NAME(@"status")
     dispatch_group_leave(group);
   }];
 
+  __block BOOL watchItemsEnabled = NO;
+  __block uint64_t watchItemsRuleCount = 0;
+  __block NSString *watchItemsPolicyVersion = nil;
+  __block NSString *watchItemsConfigPath = nil;
+  __block NSTimeInterval watchItemsLastUpdateEpoch = 0;
+  dispatch_group_enter(group);
+  [[self.daemonConn remoteObjectProxy]
+    watchItemsState:^(BOOL enabled, uint64_t ruleCount, NSString *policyVersion,
+                      NSString *configPath, NSTimeInterval lastUpdateEpoch) {
+      watchItemsEnabled = enabled;
+      if (enabled) {
+        watchItemsRuleCount = ruleCount;
+        watchItemsPolicyVersion = policyVersion;
+        watchItemsConfigPath = configPath;
+        watchItemsLastUpdateEpoch = lastUpdateEpoch;
+      }
+
+      dispatch_group_leave(group);
+    }];
+
   // Wait a maximum of 5s for stats collected from daemon to arrive.
   if (dispatch_group_wait(group, dispatch_time(DISPATCH_TIME_NOW, NSEC_PER_SEC * 5))) {
     fprintf(stderr, "Failed to retrieve some stats from daemon\n\n");
@@ -169,6 +189,10 @@ REGISTER_COMMAND_NAME(@"status")
   NSString *fullSyncLastSuccessStr = [dateFormatter stringFromDate:fullSyncLastSuccess] ?: @"Never";
   NSString *ruleSyncLastSuccessStr =
     [dateFormatter stringFromDate:ruleSyncLastSuccess] ?: fullSyncLastSuccessStr;
+
+  NSString *watchItemsLastUpdateStr =
+    [dateFormatter stringFromDate:[NSDate dateWithTimeIntervalSince1970:watchItemsLastUpdateEpoch]]
+      ?: @"Never";
 
   NSString *syncURLStr = configurator.syncBaseURL.absoluteString;
 
@@ -212,6 +236,22 @@ REGISTER_COMMAND_NAME(@"status")
       },
     } mutableCopy];
 
+    NSDictionary *watchItems;
+    if (watchItemsEnabled) {
+      watchItems = @{
+        @"enabled" : @(watchItemsEnabled),
+        @"rule_count" : @(watchItemsRuleCount),
+        @"policy_version" : watchItemsPolicyVersion,
+        @"config_path" : watchItemsConfigPath,
+        @"last_policy_update" : watchItemsLastUpdateStr ?: @"null",
+      };
+    } else {
+      watchItems = @{
+        @"enabled" : @(watchItemsEnabled),
+      };
+    }
+    stats[@"watch_items"] = watchItems;
+
     stats[@"cache"] = @{
       @"root_cache_count" : @(rootCacheCount),
       @"non_root_cache_count" : @(nonRootCacheCount),
@@ -249,6 +289,15 @@ REGISTER_COMMAND_NAME(@"status")
     if ([SNTConfigurator configurator].staticRules.count) {
       printf(">>> Static Rules\n");
       printf("  %-25s | %lld\n", "Rules", staticRuleCount);
+    }
+
+    printf(">>> Watch Items\n");
+    printf("  %-25s | %s\n", "Enabled", (watchItemsEnabled ? "Yes" : "No"));
+    if (watchItemsEnabled) {
+      printf("  %-25s | %s\n", "Policy Version", watchItemsPolicyVersion.UTF8String);
+      printf("  %-25s | %llu\n", "Rule Count", watchItemsRuleCount);
+      printf("  %-25s | %s\n", "Config Path", watchItemsConfigPath.UTF8String);
+      printf("  %-25s | %s\n", "Last Policy Update", watchItemsLastUpdateStr.UTF8String);
     }
 
     if (syncURLStr) {

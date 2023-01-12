@@ -582,6 +582,8 @@ void WatchItems::UpdateCurrentState(
       policy_version_ = "";
     }
 
+    last_update_time_ = [[NSDate date] timeIntervalSince1970];
+
     for (const id<SNTEndpointSecurityDynamicEventHandler> &client : registerd_clients_) {
       // Note: Enable clients on an async queue in case they perform any
       // synchronous work that could trigger ES events. Otherwise they might
@@ -656,11 +658,6 @@ void WatchItems::BeginPeriodicTask() {
   periodic_task_started_ = true;
 }
 
-std::string WatchItems::PolicyVersion() {
-  absl::ReaderMutexLock lock(&lock_);
-  return policy_version_;
-}
-
 WatchItems::VersionAndPolicies WatchItems::FindPolciesForPaths(
   const std::vector<std::string_view> &paths) {
   absl::ReaderMutexLock lock(&lock_);
@@ -683,6 +680,23 @@ void WatchItems::SetConfigPath(NSString *config_path) {
     config = ReadConfigLocked();
   }
   ReloadConfig(config);
+}
+
+std::optional<WatchItemsState> WatchItems::State() {
+  absl::ReaderMutexLock lock(&lock_);
+
+  if (!current_config_) {
+    return std::nullopt;
+  }
+
+  WatchItemsState state = {
+    .rule_count = [current_config_[kWatchItemConfigKeyWatchItems] count],
+    .policy_version = [NSString stringWithUTF8String:policy_version_.c_str()],
+    .config_path = [config_path_ copy],
+    .last_config_load_epoch = last_update_time_,
+  };
+
+  return state;
 }
 
 }  // namespace santa::santad::data_layer
