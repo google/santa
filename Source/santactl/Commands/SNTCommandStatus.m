@@ -174,6 +174,8 @@ REGISTER_COMMAND_NAME(@"status")
         watchItemsConfigPath = configPath;
         watchItemsLastUpdateEpoch = lastUpdateEpoch;
       }
+
+      dispatch_group_leave(group);
     }];
 
   // Wait a maximum of 5s for stats collected from daemon to arrive.
