@@ -29,9 +29,9 @@ using santa::santad::Processor;
 
 namespace santa::santad {
 
-extern const NSString *ProcessorToString(Processor processor);
-extern const NSString *EventTypeToString(es_event_type_t eventType);
-extern const NSString *EventDispositionToString(EventDisposition d);
+extern NSString *const ProcessorToString(Processor processor);
+extern NSString *const EventTypeToString(es_event_type_t eventType);
+extern NSString *const EventDispositionToString(EventDisposition d);
 
 class MetricsPeer : public Metrics {
  public:
