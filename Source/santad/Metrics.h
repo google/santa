@@ -20,6 +20,7 @@
 #import <MOLXPCConnection/MOLXPCConnection.h>
 #include <dispatch/dispatch.h>
 
+#include <map>
 #include <memory>
 
 #import "Source/common/SNTMetricSet.h"
@@ -43,6 +44,9 @@ enum class Processor {
   kFileAccessAuthorizer,
 };
 
+using EventCountTuple = std::tuple<Processor, es_event_type_t, EventDisposition>;
+using EventTimesTuple = std::tuple<Processor, es_event_type_t>;
+
 class Metrics : public std::enable_shared_from_this<Metrics> {
  public:
   static std::shared_ptr<Metrics> Create(SNTMetricSet *metricSet, uint64_t interval);
@@ -57,6 +61,8 @@ class Metrics : public std::enable_shared_from_this<Metrics> {
   void StartPoll();
   void StopPoll();
   void SetInterval(uint64_t interval);
+
+  void FlushMetrics();
 
   void SetEventMetrics(Processor processor, es_event_type_t event_type,
                        EventDisposition disposition, int64_t nanos);
@@ -79,6 +85,10 @@ class Metrics : public std::enable_shared_from_this<Metrics> {
   // Separate queue used for setting event metrics
   // Mitigate issues where capturing metrics could be blocked on exporting
   dispatch_queue_t events_q_;
+
+  // Small caches for storing event metrics between metrics export operations
+  std::map<EventCountTuple, int64_t> event_counts_cache_;
+  std::map<EventTimesTuple, int64_t> event_times_cache_;
 };
 
 }  // namespace santa::santad

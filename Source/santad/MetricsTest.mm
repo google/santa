@@ -27,11 +27,14 @@
 using santa::santad::EventDisposition;
 using santa::santad::Processor;
 
+using EventCountTuple = std::tuple<Processor, es_event_type_t, EventDisposition>;
+using EventTimesTuple = std::tuple<Processor, es_event_type_t>;
+
 namespace santa::santad {
 
-extern const NSString *ProcessorToString(Processor processor);
-extern const NSString *EventTypeToString(es_event_type_t eventType);
-extern const NSString *EventDispositionToString(EventDisposition d);
+extern NSString *const ProcessorToString(Processor processor);
+extern NSString *const EventTypeToString(es_event_type_t eventType);
+extern NSString *const EventDispositionToString(EventDisposition d);
 
 class MetricsPeer : public Metrics {
  public:
@@ -41,6 +44,9 @@ class MetricsPeer : public Metrics {
   bool IsRunning() { return running_; }
 
   uint64_t Interval() { return interval_; }
+
+  std::map<EventCountTuple, int64_t> &EventCounts() { return event_counts_cache_; };
+  std::map<EventTimesTuple, int64_t> &EventTimes() { return event_times_cache_; };
 };
 
 }  // namespace santa::santad
@@ -172,13 +178,58 @@ using santa::santad::ProcessorToString;
 }
 
 - (void)testSetEventMetrics {
+  int64_t nanos = 1234;
+
+  dispatch_source_t timer = dispatch_source_create(DISPATCH_SOURCE_TYPE_TIMER, 0, 0, self.q);
+  auto metrics = std::make_shared<MetricsPeer>(self.q, timer, 100, nil, nil,
+                                               ^(santa::santad::Metrics *m){
+                                                 // This block intentionally left blank
+                                               });
+
+  // Initial maps are empty
+  XCTAssertEqual(metrics->EventCounts().size(), 0);
+  XCTAssertEqual(metrics->EventTimes().size(), 0);
+
+  metrics->SetEventMetrics(Processor::kAuthorizer, ES_EVENT_TYPE_AUTH_EXEC,
+                           EventDisposition::kProcessed, nanos);
+
+  // Check sizes after setting metrics once
+  XCTAssertEqual(metrics->EventCounts().size(), 1);
+  XCTAssertEqual(metrics->EventTimes().size(), 1);
+
+  metrics->SetEventMetrics(Processor::kAuthorizer, ES_EVENT_TYPE_AUTH_EXEC,
+                           EventDisposition::kProcessed, nanos);
+  metrics->SetEventMetrics(Processor::kAuthorizer, ES_EVENT_TYPE_AUTH_OPEN,
+                           EventDisposition::kProcessed, nanos * 2);
+
+  // Re-check expected counts. One was an update, so should only be 2 items
+  XCTAssertEqual(metrics->EventCounts().size(), 2);
+  XCTAssertEqual(metrics->EventTimes().size(), 2);
+
+  // Check map values
+  EventCountTuple ecExec{Processor::kAuthorizer, ES_EVENT_TYPE_AUTH_EXEC,
+                         EventDisposition::kProcessed};
+  EventCountTuple ecOpen{Processor::kAuthorizer, ES_EVENT_TYPE_AUTH_OPEN,
+                         EventDisposition::kProcessed};
+  EventTimesTuple etExec{Processor::kAuthorizer, ES_EVENT_TYPE_AUTH_EXEC};
+  EventTimesTuple etOpen{Processor::kAuthorizer, ES_EVENT_TYPE_AUTH_OPEN};
+
+  XCTAssertEqual(metrics->EventCounts()[ecExec], 2);
+  XCTAssertEqual(metrics->EventCounts()[ecOpen], 1);
+  XCTAssertEqual(metrics->EventTimes()[etExec], nanos);
+  XCTAssertEqual(metrics->EventTimes()[etOpen], nanos * 2);
+}
+
+- (void)testFlushMetrics {
   id mockEventProcessingTimes = OCMClassMock([SNTMetricInt64Gauge class]);
   id mockEventCounts = OCMClassMock([SNTMetricCounter class]);
   int64_t nanos = 1234;
 
-  OCMStub([mockEventCounts incrementForFieldValues:[OCMArg any]]).andDo(^(NSInvocation *inv) {
-    dispatch_semaphore_signal(self.sema);
-  });
+  OCMStub([mockEventCounts incrementBy:0 forFieldValues:[OCMArg any]])
+    .ignoringNonObjectArgs()
+    .andDo(^(NSInvocation *inv) {
+      dispatch_semaphore_signal(self.sema);
+    });
 
   OCMStub([(SNTMetricInt64Gauge *)mockEventProcessingTimes set:nanos forFieldValues:[OCMArg any]])
     .ignoringNonObjectArgs()
@@ -195,10 +246,25 @@ using santa::santad::ProcessorToString;
 
   metrics->SetEventMetrics(Processor::kAuthorizer, ES_EVENT_TYPE_AUTH_EXEC,
                            EventDisposition::kProcessed, nanos);
+  metrics->SetEventMetrics(Processor::kAuthorizer, ES_EVENT_TYPE_AUTH_OPEN,
+                           EventDisposition::kProcessed, nanos * 2);
 
-  // Note: Wait on the semaphore twice, once for each metric
-  XCTAssertSemaTrue(self.sema, 5, "Failed waiting for metrics to update");
-  XCTAssertSemaTrue(self.sema, 5, "Failed waiting for metrics to update");
+  // First ensure we have the expected map sizes
+  XCTAssertEqual(metrics->EventCounts().size(), 2);
+  XCTAssertEqual(metrics->EventTimes().size(), 2);
+
+  metrics->FlushMetrics();
+
+  // After setting two different event metrics, we expect the sema to be hit
+  // four times - twice each for the event counts and event times maps
+  XCTAssertSemaTrue(self.sema, 5, "Failed waiting for metrics to flush (1)");
+  XCTAssertSemaTrue(self.sema, 5, "Failed waiting for metrics to flush (2)");
+  XCTAssertSemaTrue(self.sema, 5, "Failed waiting for metrics to flush (3)");
+  XCTAssertSemaTrue(self.sema, 5, "Failed waiting for metrics to flush (4)");
+
+  // After a flush, map sizes should be reset to 0
+  XCTAssertEqual(metrics->EventCounts().size(), 0);
+  XCTAssertEqual(metrics->EventTimes().size(), 0);
 }
 
 @end
