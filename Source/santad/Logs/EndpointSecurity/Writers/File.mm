@@ -101,9 +101,9 @@ void File::Write(std::vector<uint8_t> &&bytes) {
   dispatch_async(q_, ^{
     std::vector<uint8_t> moved_bytes = std::move(temp_bytes);
 
-    CopyData(moved_bytes);
+    shared_this->CopyData(moved_bytes);
 
-    if (ShouldFlush()) {
+    if (shared_this->ShouldFlush()) {
       shared_this->FlushBuffer();
     }
   });
