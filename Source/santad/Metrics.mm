@@ -246,7 +246,7 @@ void Metrics::StopPoll() {
 
 void Metrics::SetEventMetrics(Processor processor, es_event_type_t event_type,
                               EventDisposition event_disposition, int64_t nanos) {
-  dispatch_async(events_q_, ^{
+  dispatch_sync(events_q_, ^{
     event_counts_cache_[EventCountTuple{processor, event_type, event_disposition}]++;
     event_times_cache_[EventTimesTuple{processor, event_type}] = nanos;
   });

@@ -29,10 +29,10 @@ class FilePeer : public File {
   // Make constructors visible
   using File::File;
 
-  using File::WatchLogFile;
-  using File::ShouldFlush;
   using File::CopyData;
   using File::EnsureCapacity;
+  using File::ShouldFlush;
+  using File::WatchLogFile;
 
   NSFileHandle *FileHandle() { return file_handle_; }
 

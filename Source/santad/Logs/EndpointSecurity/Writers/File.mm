@@ -121,7 +121,7 @@ void File::EnsureCapacity(size_t additional_bytes) {
 }
 
 // IMPORTANT: Not thread safe.
-void File::CopyData(const std::vector<uint8_t>& bytes) {
+void File::CopyData(const std::vector<uint8_t> &bytes) {
   EnsureCapacity(bytes.size());
   std::copy(bytes.begin(), bytes.end(), buffer_.begin() + buffer_offset_);
   buffer_offset_ += bytes.size();
