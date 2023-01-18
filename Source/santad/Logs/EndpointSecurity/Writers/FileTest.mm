@@ -29,11 +29,15 @@ class FilePeer : public File {
   // Make constructors visible
   using File::File;
 
+  using File::WatchLogFile;
+  using File::ShouldFlush;
+  using File::CopyData;
+  using File::EnsureCapacity;
+
   NSFileHandle *FileHandle() { return file_handle_; }
 
-  void BeginWatchingLogFile() { WatchLogFile(); }
-
-  size_t InternalBufferSize() { return buffer_.size(); }
+  size_t InternalBufferSize() { return buffer_offset_; }
+  size_t InternalBufferCapacity() { return buffer_.capacity(); }
 };
 
 }  // namespace santa::santad::logs::endpoint_security::writers
@@ -109,7 +113,7 @@ bool WaitForBufferSize(std::shared_ptr<FilePeer> file, size_t expectedSize) {
 
 - (void)testWatchLogFile {
   auto file = std::make_shared<FilePeer>(self.logPath, 100, 500, self.q, self.timer);
-  file->BeginWatchingLogFile();
+  file->WatchLogFile();
 
   // Constructing a File object will open the file at the given path
   struct stat wantSBOrig;
@@ -174,6 +178,91 @@ bool WaitForBufferSize(std::shared_ptr<FilePeer> file, size_t expectedSize) {
   XCTAssertEqual(fstat(file->FileHandle().fileDescriptor, &gotSB), 0);
   XCTAssertEqual(100, gotSB.st_size);
   XCTAssertEqual(0, file->InternalBufferSize());
+}
+
+- (void)testEnsureCapacity {
+  const size_t batchSize = 100;
+  auto file =
+    std::make_shared<FilePeer>(self.logPath, batchSize, batchSize * 2, self.q, self.timer);
+
+  // Initial capacity == (batch_size + max_expected_write_size)
+  const size_t initialCapacity = batchSize + (batchSize * 2);
+
+  // Buffer size should initially be 0 and capacity match initial expectations
+  XCTAssertEqual(file->InternalBufferSize(), 0);
+  XCTAssertEqual(file->InternalBufferCapacity(), initialCapacity);
+
+  file->EnsureCapacity(batchSize);
+
+  // No data was written, so size is still 0
+  XCTAssertEqual(file->InternalBufferSize(), 0);
+
+  // Capacity should be unchanged because the amount ensured didn't exceed
+  // the initial amount
+  XCTAssertEqual(file->InternalBufferCapacity(), initialCapacity);
+
+  file->EnsureCapacity(initialCapacity + 100);
+
+  // No data was written, so size is still 0
+  XCTAssertEqual(file->InternalBufferSize(), 0);
+
+  // Capacity should be doubled since the amount ensured was greater than
+  // the previous capacity
+  XCTAssertEqual(file->InternalBufferCapacity(), initialCapacity * 2);
+}
+
+- (void)testCopyData {
+  const size_t batchSize = 100;
+  // Use a buffer to copy that's slightly larger than the batch size
+  std::vector<uint8_t> bytes(batchSize + 2, 'A');
+  auto file =
+    std::make_shared<FilePeer>(self.logPath, batchSize, batchSize * 2, self.q, self.timer);
+
+  // Initial capacity == (batch_size + max_expected_write_size)
+  const size_t initialCapacity = batchSize + (batchSize * 2);
+
+  // Buffer size should initially be 0 and capacity match initial expectations
+  XCTAssertEqual(file->InternalBufferSize(), 0);
+  XCTAssertEqual(file->InternalBufferCapacity(), initialCapacity);
+
+  file->CopyData(bytes);
+
+  // After a copy, buffer size should match copied data size
+  XCTAssertEqual(file->InternalBufferSize(), bytes.size());
+
+  // Do a couple more copies that should require the buffer to grow and then
+  // confirm the size/capacity still matches expectations
+  file->CopyData(bytes);
+  file->CopyData(bytes);
+  XCTAssertEqual(file->InternalBufferSize(), bytes.size() * 3);
+  XCTAssertEqual(file->InternalBufferCapacity(), initialCapacity * 2);
+}
+
+- (void)testShouldFlush {
+  const size_t batchSize = 100;
+  const size_t halfBatch = batchSize / 2;
+  std::vector<uint8_t> bytes(halfBatch);
+  auto file =
+    std::make_shared<FilePeer>(self.logPath, batchSize, batchSize * 2, self.q, self.timer);
+
+  // Should never want to flush with no data in the buffer
+  XCTAssertFalse(file->ShouldFlush());
+
+  // Copy some data into the buffer
+  file->CopyData(bytes);
+
+  // Buffer size should be updated
+  XCTAssertEqual(file->InternalBufferSize(), bytes.size());
+
+  // Still shouldn't flush below the batch size
+  XCTAssertFalse(file->ShouldFlush());
+
+  // Exceed the batch size
+  file->CopyData(bytes);
+  file->CopyData(bytes);
+
+  // Should want to flush now that the batch size is exceeded
+  XCTAssertTrue(file->ShouldFlush());
 }
 
 @end

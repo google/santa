@@ -12,9 +12,11 @@
 ///    See the License for the specific language governing permissions and
 ///    limitations under the License.
 
-#import "Source/santad/Logs/EndpointSecurity/Writers/File.h"
+#include "Source/santad/Logs/EndpointSecurity/Writers/File.h"
 
 #include <memory>
+
+#include "Source/common/BranchPrediction.h"
 
 namespace santa::santad::logs::endpoint_security::writers {
 
@@ -47,12 +49,12 @@ std::shared_ptr<File> File::Create(NSString *path, uint64_t flush_timeout_ms,
 
 File::File(NSString *path, size_t batch_size_bytes, size_t max_expected_write_size_bytes,
            dispatch_queue_t q, dispatch_source_t timer_source)
-    : batch_size_bytes_(batch_size_bytes),
+    : buffer_(batch_size_bytes + max_expected_write_size_bytes),
+      batch_size_bytes_(batch_size_bytes),
       q_(q),
       timer_source_(timer_source),
       watch_source_(nullptr) {
   path_ = path;
-  buffer_.reserve(batch_size_bytes + max_expected_write_size_bytes);
   OpenFileHandle();
 }
 
@@ -99,17 +101,40 @@ void File::Write(std::vector<uint8_t> &&bytes) {
   dispatch_async(q_, ^{
     std::vector<uint8_t> moved_bytes = std::move(temp_bytes);
 
-    shared_this->buffer_.insert(shared_this->buffer_.end(), moved_bytes.begin(), moved_bytes.end());
-    if (shared_this->buffer_.size() >= batch_size_bytes_) {
+    CopyData(moved_bytes);
+
+    if (ShouldFlush()) {
       shared_this->FlushBuffer();
     }
   });
 }
 
+bool File::ShouldFlush() {
+  return buffer_offset_ >= batch_size_bytes_;
+}
+
+// IMPORTANT: Not thread safe.
+void File::EnsureCapacity(size_t additional_bytes) {
+  if ((buffer_offset_ + additional_bytes) > buffer_.capacity()) {
+    buffer_.resize(buffer_.capacity() * 2);
+  }
+}
+
+// IMPORTANT: Not thread safe.
+void File::CopyData(const std::vector<uint8_t>& bytes) {
+  EnsureCapacity(bytes.size());
+  std::copy(bytes.begin(), bytes.end(), buffer_.begin() + buffer_offset_);
+  buffer_offset_ += bytes.size();
+}
+
 // IMPORTANT: Not thread safe.
 void File::FlushBuffer() {
-  write(file_handle_.fileDescriptor, buffer_.data(), buffer_.size());
-  buffer_.clear();
+  if (likely(buffer_offset_ > 0)) {
+    write(file_handle_.fileDescriptor, buffer_.data(), buffer_offset_);
+
+    // After flushing, reset the offset back to 0
+    buffer_offset_ = 0;
+  }
 }
 
 }  // namespace santa::santad::logs::endpoint_security::writers
