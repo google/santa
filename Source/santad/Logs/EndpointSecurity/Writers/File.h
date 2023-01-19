@@ -49,6 +49,10 @@ class File : public Writer, public std::enable_shared_from_this<File> {
   void OpenFileHandle();
   void WatchLogFile();
   void FlushBuffer();
+  bool ShouldFlush();
+
+  void EnsureCapacity(size_t additional_bytes);
+  void CopyData(const std::vector<uint8_t> &bytes);
 
   std::vector<uint8_t> buffer_;
   size_t batch_size_bytes_;
@@ -57,6 +61,12 @@ class File : public Writer, public std::enable_shared_from_this<File> {
   dispatch_source_t watch_source_;
   NSString *path_;
   NSFileHandle *file_handle_;
+
+  // Used to manually track the size of valid data in the `buffer_`.
+  // Benchmarking showed a large amount of time clearing the buffer after
+  // flushes, but that isn't very necessary. Instead we can manually track the
+  // `end` of the buffer and skip clearing the data.
+  size_t buffer_offset_ = 0;
 };
 
 }  // namespace santa::santad::logs::endpoint_security::writers

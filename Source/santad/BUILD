@@ -503,6 +503,7 @@ objc_library(
     hdrs = ["Logs/EndpointSecurity/Writers/File.h"],
     deps = [
         ":EndpointSecurityWriter",
+        "//Source/common:BranchPrediction",
     ],
 )
 

@@ -47,9 +47,6 @@ class Message {
   std::shared_ptr<EndpointSecurityAPI> esapi_;
   const es_message_t* es_msg_;
 
-  mutable std::string pname_;
-  mutable std::string parent_pname_;
-
   std::string GetProcessName(pid_t pid) const;
 };
 

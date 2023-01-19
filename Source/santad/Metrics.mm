@@ -55,7 +55,7 @@ static NSString *const kEventDispositionProcessed = @"Processed";
 
 namespace santa::santad {
 
-const NSString *ProcessorToString(Processor processor) {
+NSString *const ProcessorToString(Processor processor) {
   switch (processor) {
     case Processor::kAuthorizer: return kProcessorAuthorizer;
     case Processor::kDeviceManager: return kProcessorDeviceManager;
@@ -68,7 +68,7 @@ const NSString *ProcessorToString(Processor processor) {
   }
 }
 
-const NSString *EventTypeToString(es_event_type_t eventType) {
+NSString *const EventTypeToString(es_event_type_t eventType) {
   switch (eventType) {
     case ES_EVENT_TYPE_AUTH_CLONE: return kEventTypeAuthClone;
     case ES_EVENT_TYPE_AUTH_COPYFILE: return kEventTypeAuthCopyfile;
@@ -98,7 +98,7 @@ const NSString *EventTypeToString(es_event_type_t eventType) {
   }
 }
 
-const NSString *EventDispositionToString(EventDisposition d) {
+NSString *const EventDispositionToString(EventDisposition d) {
   switch (d) {
     case EventDisposition::kDropped: return kEventDispositionDropped;
     case EventDisposition::kProcessed: return kEventDispositionProcessed;
@@ -136,6 +136,8 @@ std::shared_ptr<Metrics> Metrics::Create(SNTMetricSet *metricSet, uint64_t inter
     if (!shared_metrics) {
       return;
     }
+
+    shared_metrics->FlushMetrics();
 
     [[shared_metrics->metrics_connection_ remoteObjectProxy]
       exportForMonitoring:[metricSet export]];
@@ -182,6 +184,30 @@ void Metrics::EstablishConnection() {
   metrics_connection_ = metrics_connection;
 }
 
+void Metrics::FlushMetrics() {
+  dispatch_sync(events_q_, ^{
+    for (const auto &kv : event_counts_cache_) {
+      NSString *processorName = ProcessorToString(std::get<Processor>(kv.first));
+      NSString *eventName = EventTypeToString(std::get<es_event_type_t>(kv.first));
+      NSString *dispositionName = EventDispositionToString(std::get<EventDisposition>(kv.first));
+
+      [event_counts_ incrementBy:kv.second
+                  forFieldValues:@[ processorName, eventName, dispositionName ]];
+    }
+
+    for (const auto &kv : event_times_cache_) {
+      NSString *processorName = ProcessorToString(std::get<Processor>(kv.first));
+      NSString *eventName = EventTypeToString(std::get<es_event_type_t>(kv.first));
+
+      [event_processing_times_ set:kv.second forFieldValues:@[ processorName, eventName ]];
+    }
+
+    // Reset the maps so the next cycle begins with a clean state
+    event_counts_cache_ = {};
+    event_times_cache_ = {};
+  });
+}
+
 void Metrics::SetInterval(uint64_t interval) {
   dispatch_sync(q_, ^{
     LOGI(@"Setting metrics interval to %llu (exporting? %s)", interval, running_ ? "YES" : "NO");
@@ -222,13 +248,9 @@ void Metrics::StopPoll() {
 
 void Metrics::SetEventMetrics(Processor processor, es_event_type_t event_type,
                               EventDisposition event_disposition, int64_t nanos) {
-  dispatch_async(events_q_, ^{
-    NSString *processorName = (NSString *)ProcessorToString(processor);
-    NSString *eventName = (NSString *)EventTypeToString(event_type);
-    NSString *disposition = (NSString *)EventDispositionToString(event_disposition);
-
-    [event_counts_ incrementForFieldValues:@[ processorName, eventName, disposition ]];
-    [event_processing_times_ set:nanos forFieldValues:@[ processorName, eventName ]];
+  dispatch_sync(events_q_, ^{
+    event_counts_cache_[EventCountTuple{processor, event_type, event_disposition}]++;
+    event_times_cache_[EventTimesTuple{processor, event_type}] = nanos;
   });
 }
 
