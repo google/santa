@@ -175,8 +175,10 @@ Metrics::~Metrics() {
 void Metrics::EstablishConnection() {
   MOLXPCConnection *metrics_connection = [SNTXPCMetricServiceInterface configuredConnection];
   metrics_connection.invalidationHandler = ^{
-    LOGW(@"Metrics service connection invalidated. Reconnecting...");
-    EstablishConnection();
+    dispatch_sync(dispatch_get_main_queue(), ^{
+      LOGW(@"Metrics service connection invalidated. Reconnecting...");
+      EstablishConnection();
+    });
   };
   [metrics_connection resume];
   metrics_connection_ = metrics_connection;
