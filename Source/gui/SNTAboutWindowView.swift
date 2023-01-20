@@ -9,30 +9,28 @@ import Source_common_SNTConfigurator
 }
 
 struct SNTAboutWindowView: View {
-  var w: NSWindow?
-  var c = SNTConfigurator()
+  let w: NSWindow?
+  let c = SNTConfigurator()
 
   var body: some View {
     VStack(spacing:20.0) {
       Text("Santa").font(Font.custom("HelveticaNeue-UltraLight", size: 34.0))
 
       if let t = c.aboutText {
-          Text(t).multilineTextAlignment(.center)
+        Text(t).multilineTextAlignment(.center)
       } else {
-          Text("""
-          Santa is an application control system for macOS.
+        Text("""
+        Santa is an application control system for macOS.
 
-          There are no user-configurable settings.
-          """).multilineTextAlignment(.center)
+        There are no user-configurable settings.
+        """).multilineTextAlignment(.center)
       }
 
       HStack {
-        if let u = c.moreInfoURL {
-            if u.absoluteString.count > 0 {
-              Button(action: moreInfoButton) {
-                Text("More Info...").frame(width: 90.0)
-              }
-            }
+        if c.moreInfoURL?.absoluteString.isEmpty == false {
+          Button(action: moreInfoButton) {
+            Text("More Info...").frame(width: 90.0)
+          }
         }
 
         Button(action: dismissButton) {
@@ -50,7 +48,7 @@ struct SNTAboutWindowView: View {
 
   func moreInfoButton() {
     if let u = c.moreInfoURL {
-        NSWorkspace.shared.open(u)
+      NSWorkspace.shared.open(u)
     }
     w?.close()
   }
@@ -58,8 +56,8 @@ struct SNTAboutWindowView: View {
 
 // Enable previews in Xcode.
 struct SNTAboutWindow_Previews: PreviewProvider {
-    static var previews: some View {
-      SNTAboutWindowView(w: nil)
-    }
+  static var previews: some View {
+    SNTAboutWindowView(w: nil)
+  }
 }
 
