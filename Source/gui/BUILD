@@ -1,4 +1,5 @@
 load("@build_bazel_rules_apple//apple:macos.bzl", "macos_application")
+load("@build_bazel_rules_swift//swift:swift.bzl", "swift_library")
 load("//:helper.bzl", "santa_unit_test")
 
 licenses(["notice"])
@@ -10,6 +11,13 @@ package(
 exports_files([
     "Resources/Images.xcassets/AppIcon.appiconset/santa-hat-icon-256.png",
 ])
+
+swift_library(
+    name = "SNTAboutWindowView",
+    srcs = ["SNTAboutWindowView.swift"],
+    generates_header = 1,
+    deps = ["//Source/common:SNTConfigurator"],
+)
 
 objc_library(
     name = "SantaGUI_lib",
@@ -36,7 +44,6 @@ objc_library(
         "SNTNotificationManager.h",
     ],
     data = [
-        "Resources/AboutWindow.xib",
         "Resources/DeviceMessageWindow.xib",
         "Resources/MessageWindow.xib",
     ],
@@ -47,6 +54,7 @@ objc_library(
         "UserNotifications",
     ],
     deps = [
+        ":SNTAboutWindowView",
         "//Source/common:SNTBlockMessage_SantaGUI",
         "//Source/common:SNTConfigurator",
         "//Source/common:SNTDeviceEvent",

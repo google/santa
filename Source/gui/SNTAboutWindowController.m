@@ -13,30 +13,35 @@
 ///    limitations under the License.
 
 #import "Source/gui/SNTAboutWindowController.h"
+#import "Source/gui/SNTAboutWindowView-Swift.h"
 
 #import "Source/common/SNTConfigurator.h"
 
 @implementation SNTAboutWindowController
 
-- (instancetype)init {
-  return [super initWithWindowNibName:@"AboutWindow"];
+- (void)showWindow:(id)sender {
+  [super showWindow:sender];
+
+  if (self.window) [self.window orderOut:sender];
+
+  self.window =
+    [[NSWindow alloc] initWithContentRect:NSMakeRect(0, 0, 0, 0)
+                                styleMask:NSWindowStyleMaskClosable | NSWindowStyleMaskTitled
+                                  backing:NSBackingStoreBuffered
+                                    defer:NO];
+  self.window.contentViewController = [SNTAboutWindowViewFactory createWithWindow:self.window];
+  self.window.title = @"Santa";
+  self.window.delegate = self;
+  [self.window makeKeyAndOrderFront:nil];
+  [self.window center];
+
+  // Add app to Cmd+Tab and Dock.
+  NSApp.activationPolicy = NSApplicationActivationPolicyRegular;
 }
 
-- (void)loadWindow {
-  [super loadWindow];
-  SNTConfigurator *config = [SNTConfigurator configurator];
-  NSString *aboutText = [config aboutText];
-  if (aboutText) {
-    [self.aboutTextField setStringValue:aboutText];
-  }
-  if (![config moreInfoURL]) {
-    [self.moreInfoButton removeFromSuperview];
-  }
-}
-
-- (IBAction)openMoreInfoURL:(id)sender {
-  [[NSWorkspace sharedWorkspace] openURL:[[SNTConfigurator configurator] moreInfoURL]];
-  [self close];
+- (void)windowWillClose:(NSNotification *)notification {
+  // Remove app from Cmd+Tab and Dock.
+  NSApp.activationPolicy = NSApplicationActivationPolicyAccessory;
 }
 
 @end

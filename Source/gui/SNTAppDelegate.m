@@ -58,7 +58,9 @@
 }
 
 - (BOOL)applicationShouldHandleReopen:(NSApplication *)sender hasVisibleWindows:(BOOL)flag {
-  self.aboutWindowController = [[SNTAboutWindowController alloc] init];
+  if (!self.aboutWindowController) {
+    self.aboutWindowController = [[SNTAboutWindowController alloc] init];
+  }
   [self.aboutWindowController showWindow:self];
   return NO;
 }
