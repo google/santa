@@ -14,5 +14,5 @@
 
 #import <Cocoa/Cocoa.h>
 
-@interface SNTAboutWindowController : NSWindowController<NSWindowDelegate>
+@interface SNTAboutWindowController : NSWindowController <NSWindowDelegate>
 @end
