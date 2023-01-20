@@ -1040,6 +1040,9 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
 }
 
 - (void)startWatchingDefaults {
+  // Only com.google.santa.daemon should listen.
+  NSString *processName = [[NSProcessInfo processInfo] processName];
+  if (![processName isEqualToString:@"com.google.santa.daemon"]) return;
   [[NSNotificationCenter defaultCenter] addObserver:self
                                            selector:@selector(defaultsChanged:)
                                                name:NSUserDefaultsDidChangeNotification
