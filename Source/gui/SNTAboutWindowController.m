@@ -13,30 +13,26 @@
 ///    limitations under the License.
 
 #import "Source/gui/SNTAboutWindowController.h"
+#import "Source/gui/SNTAboutWindowView-Swift.h"
 
 #import "Source/common/SNTConfigurator.h"
 
 @implementation SNTAboutWindowController
 
-- (instancetype)init {
-  return [super initWithWindowNibName:@"AboutWindow"];
-}
+- (void)showWindow:(id)sender {
+  [super showWindow:sender];
 
-- (void)loadWindow {
-  [super loadWindow];
-  SNTConfigurator *config = [SNTConfigurator configurator];
-  NSString *aboutText = [config aboutText];
-  if (aboutText) {
-    [self.aboutTextField setStringValue:aboutText];
-  }
-  if (![config moreInfoURL]) {
-    [self.moreInfoButton removeFromSuperview];
-  }
-}
+  if (self.window) [self.window orderOut:sender];
 
-- (IBAction)openMoreInfoURL:(id)sender {
-  [[NSWorkspace sharedWorkspace] openURL:[[SNTConfigurator configurator] moreInfoURL]];
-  [self close];
+  self.window =
+    [[NSWindow alloc] initWithContentRect:NSMakeRect(0, 0, 0, 0)
+                                styleMask:NSWindowStyleMaskClosable | NSWindowStyleMaskTitled
+                                  backing:NSBackingStoreBuffered
+                                    defer:NO];
+  self.window.contentViewController = [SNTAboutWindowViewFactory createWithWindow:self.window];
+  self.window.title = @"Santa";
+  [self.window makeKeyAndOrderFront:nil];
+  [self.window center];
 }
 
 @end
