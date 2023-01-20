@@ -20,7 +20,6 @@
 #import "Source/common/SNTBlockMessage.h"
 #import "Source/common/SNTConfigurator.h"
 #import "Source/common/SNTStoredEvent.h"
-#import "Source/gui/SNTMessageWindow.h"
 
 @interface SNTBinaryMessageWindowController ()
 ///  The custom message to display for this event

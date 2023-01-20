@@ -4,7 +4,7 @@
 - (void)windowDidCloseSilenceHash:(NSString *)hash;
 @end
 
-@interface SNTMessageWindowController : NSWindowController
+@interface SNTMessageWindowController : NSWindowController <NSWindowDelegate>
 
 - (IBAction)showWindow:(id)sender;
 - (IBAction)closeWindow:(id)sender;

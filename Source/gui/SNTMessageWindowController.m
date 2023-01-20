@@ -1,14 +1,16 @@
 #import "Source/gui/SNTMessageWindowController.h"
 
-#import "Source/gui/SNTMessageWindow.h"
-
 @implementation SNTMessageWindowController
 
 - (IBAction)showWindow:(id)sender {
-  [(SNTMessageWindow *)self.window fadeIn:sender];
+  [self.window setLevel:NSPopUpMenuWindowLevel];
+  [self.window setMovableByWindowBackground:YES];
+  [self.window makeKeyAndOrderFront:sender];
+  [self.window center];
+  [NSApp activateIgnoringOtherApps:YES];
 }
 - (IBAction)closeWindow:(id)sender {
-  [(SNTMessageWindow *)self.window fadeOut:sender];
+  [self.window close];
 }
 
 - (void)windowWillClose:(NSNotification *)notification {
@@ -19,12 +21,6 @@
   } else {
     [self.delegate windowDidCloseSilenceHash:nil];
   }
-}
-
-- (void)loadWindow {
-  [super loadWindow];
-  [self.window setLevel:NSPopUpMenuWindowLevel];
-  [self.window setMovableByWindowBackground:YES];
 }
 
 - (NSString *)messageHash {

@@ -13,11 +13,11 @@
 ///    limitations under the License.
 
 #import "Source/gui/SNTDeviceMessageWindowController.h"
+#import "Source/gui/SNTDeviceMessageWindowView-Swift.h"
 
 #import "Source/common/SNTBlockMessage.h"
 #import "Source/common/SNTConfigurator.h"
 #import "Source/common/SNTDeviceEvent.h"
-#import "Source/gui/SNTMessageWindow.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -28,7 +28,7 @@ NS_ASSUME_NONNULL_BEGIN
 @implementation SNTDeviceMessageWindowController
 
 - (instancetype)initWithEvent:(SNTDeviceEvent *)event message:(nullable NSString *)message {
-  self = [super initWithWindowNibName:@"DeviceMessageWindow"];
+  self = [super init];
   if (self) {
     _event = event;
     _customMessage = message;
@@ -36,12 +36,29 @@ NS_ASSUME_NONNULL_BEGIN
   return self;
 }
 
-- (void)loadWindow {
-  [super loadWindow];
-  if (!self.event.remountArgs || [self.event.remountArgs count] <= 0) {
-    [self.remountArgsLabel removeFromSuperview];
-    [self.remountArgsTitle removeFromSuperview];
-  }
+- (void)showWindow:(id)sender {
+  if (self.window) [self.window orderOut:sender];
+
+  self.window = [[NSWindow alloc] initWithContentRect:NSMakeRect(0, 0, 0, 0)
+                                            styleMask:NSWindowStyleMaskClosable | NSWindowStyleMaskTitled
+                                              backing:NSBackingStoreBuffered
+                                                defer:NO];
+  self.window.contentViewController =
+    [SNTDeviceMessageWindowViewFactory createWithWindow:self.window
+                                                  event:self.event
+                                              customMsg:self.attributedCustomMessage];
+  self.window.delegate = self;
+
+  // Add app to Cmd+Tab and Dock.
+  NSApp.activationPolicy = NSApplicationActivationPolicyRegular;
+
+  [super showWindow:sender];
+}
+
+- (void)windowWillClose:(NSNotification *)notification {
+  // Remove app from Cmd+Tab and Dock.
+  NSApp.activationPolicy = NSApplicationActivationPolicyAccessory;
+  [super windowWillClose:notification];
 }
 
 - (NSAttributedString *)attributedCustomMessage {
