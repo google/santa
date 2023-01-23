@@ -39,10 +39,11 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)showWindow:(id)sender {
   if (self.window) [self.window orderOut:sender];
 
-  self.window = [[NSWindow alloc] initWithContentRect:NSMakeRect(0, 0, 0, 0)
-                                            styleMask:NSWindowStyleMaskClosable | NSWindowStyleMaskTitled
-                                              backing:NSBackingStoreBuffered
-                                                defer:NO];
+  self.window =
+    [[NSWindow alloc] initWithContentRect:NSMakeRect(0, 0, 0, 0)
+                                styleMask:NSWindowStyleMaskClosable | NSWindowStyleMaskTitled
+                                  backing:NSBackingStoreBuffered
+                                    defer:NO];
   self.window.contentViewController =
     [SNTDeviceMessageWindowViewFactory createWithWindow:self.window
                                                   event:self.event
