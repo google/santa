@@ -10,6 +10,7 @@
   [NSApp activateIgnoringOtherApps:YES];
 }
 - (IBAction)closeWindow:(id)sender {
+  [self windowWillClose:sender];
   [self.window close];
 }
 
