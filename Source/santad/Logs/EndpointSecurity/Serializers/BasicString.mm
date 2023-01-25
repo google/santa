@@ -245,6 +245,9 @@ std::vector<uint8_t> BasicString::SerializeMessage(const EnrichedExec &msg) {
   const es_message_t &esm = msg.es_msg();
   std::string str = CreateDefaultString(1024);  // EXECs tend to be bigger, reserve more space.
 
+  // Only need to grab the shared instance once
+  static SNTConfigurator *configurator = [SNTConfigurator configurator];
+
   SNTCachedDecision *cd =
     [[SNTDecisionCache sharedCache] cachedDecisionForFile:esm.event.exec.target->executable->stat];
 
@@ -291,7 +294,7 @@ std::vector<uint8_t> BasicString::SerializeMessage(const EnrichedExec &msg) {
                   msg.instigator().real_group());
 
   str.append("|mode=");
-  str.append(GetModeString([[SNTConfigurator configurator] clientMode]));
+  str.append(GetModeString([configurator clientMode]));
   str.append("|path=");
   str.append(FilePath(esm.event.exec.target->executable).Sanitized());
 
