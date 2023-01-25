@@ -1,6 +1,6 @@
 import SwiftUI
 
-import Source_common_SNTConfigurator
+import santa_common_SNTConfigurator
 
 @objc public class SNTAboutWindowViewFactory : NSObject {
   @objc public static func createWith(window: NSWindow) -> NSViewController {

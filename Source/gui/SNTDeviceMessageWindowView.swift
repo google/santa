@@ -1,7 +1,7 @@
 import SwiftUI
 
-import Source_common_SNTConfigurator
-import Source_common_SNTDeviceEvent
+import santa_common_SNTConfigurator
+import santa_common_SNTDeviceEvent
 
 @objc public class SNTDeviceMessageWindowViewFactory : NSObject {
   @objc public static func createWith(window: NSWindow, event: SNTDeviceEvent, customMsg: NSAttributedString?) -> NSViewController {
