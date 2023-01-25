@@ -428,10 +428,15 @@ bool IsWatchItemNameValid(NSString *watch_item_name, NSError **err) {
     return false;
   }
 
-  NSRegularExpression *regex =
-    [NSRegularExpression regularExpressionWithPattern:@"^[A-Za-z_][A-Za-z0-9_]*$"
-                                              options:0
-                                                error:nil];
+  static dispatch_once_t once_token;
+  static NSRegularExpression *regex;
+
+  dispatch_once(&once_token, ^{
+    // Should only match legal C identifiers
+    regex = [NSRegularExpression regularExpressionWithPattern:@"^[A-Za-z_][A-Za-z0-9_]*$"
+                                                      options:0
+                                                        error:nil];
+  });
 
   if ([regex numberOfMatchesInString:watch_item_name
                              options:0
