@@ -222,8 +222,8 @@ git_repository(
     name = "rules_fuzzing",
     commit = "b193df79b10dbfb4c623bda23e825e835f12bada",  # Commit post PR 213 which fixes macOS
     remote = "https://github.com/bazelbuild/rules_fuzzing",
+    repo_mapping = {"@rules_python": "@rules_python_fuzz"},
     shallow_since = "1668184479 -0500",
-    repo_mapping = {"@rules_python" : "@rules_python_fuzz"},
 )
 
 load("@rules_fuzzing//fuzzing:repositories.bzl", "rules_fuzzing_dependencies")

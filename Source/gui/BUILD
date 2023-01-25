@@ -19,6 +19,18 @@ swift_library(
     deps = ["//Source/common:SNTConfigurator"],
 )
 
+swift_library(
+    name = "SNTDeviceMessageWindowView",
+    srcs = [
+        "SNTDeviceMessageWindowView.swift",
+    ],
+    generates_header = 1,
+    deps = [
+        "//Source/common:SNTConfigurator",
+        "//Source/common:SNTDeviceEvent",
+    ],
+)
+
 objc_library(
     name = "SantaGUI_lib",
     srcs = [
@@ -32,8 +44,6 @@ objc_library(
         "SNTBinaryMessageWindowController.m",
         "SNTDeviceMessageWindowController.h",
         "SNTDeviceMessageWindowController.m",
-        "SNTMessageWindow.h",
-        "SNTMessageWindow.m",
         "SNTMessageWindowController.h",
         "SNTMessageWindowController.m",
         "SNTNotificationManager.h",
@@ -44,7 +54,6 @@ objc_library(
         "SNTNotificationManager.h",
     ],
     data = [
-        "Resources/DeviceMessageWindow.xib",
         "Resources/MessageWindow.xib",
     ],
     sdk_frameworks = [
@@ -55,6 +64,7 @@ objc_library(
     ],
     deps = [
         ":SNTAboutWindowView",
+        ":SNTDeviceMessageWindowView",
         "//Source/common:SNTBlockMessage_SantaGUI",
         "//Source/common:SNTConfigurator",
         "//Source/common:SNTDeviceEvent",

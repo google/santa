@@ -23,10 +23,7 @@ NS_ASSUME_NONNULL_BEGIN
 ///
 ///  Controller for a single message window.
 ///
-@interface SNTDeviceMessageWindowController : SNTMessageWindowController
-
-@property(weak) IBOutlet NSTextField *remountArgsLabel;
-@property(weak) IBOutlet NSTextField *remountArgsTitle;
+@interface SNTDeviceMessageWindowController : SNTMessageWindowController <NSWindowDelegate>
 
 // The device event this window is for.
 @property(readonly) SNTDeviceEvent *event;
