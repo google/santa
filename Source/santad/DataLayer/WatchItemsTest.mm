@@ -51,6 +51,7 @@ namespace santa::santad::data_layer {
 
 extern bool ParseConfig(NSDictionary *config,
                         std::vector<std::shared_ptr<WatchItemPolicy>> &policies, NSError **err);
+extern bool IsWatchItemNameValid(NSString *watch_item_name, NSError **err);
 extern bool ParseConfigSingleWatchItem(NSString *name, NSDictionary *watch_item,
                                        std::vector<std::shared_ptr<WatchItemPolicy>> &policies,
                                        NSError **err);
@@ -66,6 +67,7 @@ class WatchItemsPeer : public WatchItems {
 
 }  // namespace santa::santad::data_layer
 
+using santa::santad::data_layer::IsWatchItemNameValid;
 using santa::santad::data_layer::ParseConfig;
 using santa::santad::data_layer::ParseConfigSingleWatchItem;
 using santa::santad::data_layer::VerifyConfigWatchItemPaths;
@@ -640,6 +642,25 @@ static NSString *RepeatedString(NSString *str, NSUInteger len) {
                                           [certHash UTF8String]));
 }
 
+- (void)testIsWatchItemNameValid {
+  // Only legal C identifiers should be accepted
+  XCTAssertFalse(IsWatchItemNameValid(nil, nil));
+  XCTAssertFalse(IsWatchItemNameValid(@"", nil));
+  XCTAssertFalse(IsWatchItemNameValid(@"1abc", nil));
+  XCTAssertFalse(IsWatchItemNameValid(@"abc-1234", nil));
+  XCTAssertFalse(IsWatchItemNameValid(@"a=b", nil));
+  XCTAssertFalse(IsWatchItemNameValid(@"a!b", nil));
+
+  XCTAssertTrue(IsWatchItemNameValid(@"_", nil));
+  XCTAssertTrue(IsWatchItemNameValid(@"_1", nil));
+  XCTAssertTrue(IsWatchItemNameValid(@"_1_", nil));
+  XCTAssertTrue(IsWatchItemNameValid(@"abc", nil));
+  XCTAssertTrue(IsWatchItemNameValid(@"A", nil));
+  XCTAssertTrue(IsWatchItemNameValid(@"A_B", nil));
+  XCTAssertTrue(IsWatchItemNameValid(@"FooName", nil));
+  XCTAssertTrue(IsWatchItemNameValid(@"bar_Name", nil));
+}
+
 - (void)testParseConfig {
   NSError *err;
   std::vector<std::shared_ptr<WatchItemPolicy>> policies;
@@ -670,16 +691,16 @@ static NSString *RepeatedString(NSString *str, NSUInteger len) {
     ParseConfig(@{kWatchItemConfigKeyVersion : @"1", kWatchItemConfigKeyWatchItems : @{@"" : @{}}},
                 policies, &err));
   XCTAssertFalse(
-    ParseConfig(@{kWatchItemConfigKeyVersion : @"1", kWatchItemConfigKeyWatchItems : @{@"1" : @[]}},
+    ParseConfig(@{kWatchItemConfigKeyVersion : @"1", kWatchItemConfigKeyWatchItems : @{@"a" : @[]}},
                 policies, &err));
   XCTAssertFalse(
-    ParseConfig(@{kWatchItemConfigKeyVersion : @"1", kWatchItemConfigKeyWatchItems : @{@"1" : @{}}},
+    ParseConfig(@{kWatchItemConfigKeyVersion : @"1", kWatchItemConfigKeyWatchItems : @{@"a" : @{}}},
                 policies, &err));
 
   // Minimally successful config with watch item
   XCTAssertTrue(ParseConfig(@{
     kWatchItemConfigKeyVersion : @"1",
-    kWatchItemConfigKeyWatchItems : @{@"1" : @{kWatchItemConfigKeyPaths : @[ @"asdf" ]}}
+    kWatchItemConfigKeyWatchItems : @{@"a" : @{kWatchItemConfigKeyPaths : @[ @"asdf" ]}}
   },
                             policies, &err));
 }

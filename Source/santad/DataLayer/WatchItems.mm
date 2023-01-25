@@ -421,6 +421,29 @@ bool ParseConfigSingleWatchItem(NSString *name, NSDictionary *watch_item,
   return true;
 }
 
+bool IsWatchItemNameValid(NSString *watch_item_name, NSError **err) {
+  if (!watch_item_name) {
+    // This shouldn't be possible as written, but handle just in case
+    PopulateError(err, [NSString stringWithFormat:@"nil watch item name"]);
+    return false;
+  }
+
+  NSRegularExpression *regex =
+    [NSRegularExpression regularExpressionWithPattern:@"^[A-Za-z_][A-Za-z0-9_]*$"
+                                              options:0
+                                                error:nil];
+
+  if ([regex numberOfMatchesInString:watch_item_name
+                             options:0
+                               range:NSMakeRange(0, watch_item_name.length)] != 1) {
+    PopulateError(err, [NSString stringWithFormat:@"Key name must match regular expression \"%@\"",
+                                                  regex.pattern]);
+    return false;
+  }
+
+  return true;
+}
+
 bool ParseConfig(NSDictionary *config, std::vector<std::shared_ptr<WatchItemPolicy>> &policies,
                  NSError **err) {
   if (![config[kWatchItemConfigKeyVersion] isKindOfClass:[NSString class]]) {
@@ -454,9 +477,11 @@ bool ParseConfig(NSDictionary *config, std::vector<std::shared_ptr<WatchItemPoli
       return false;
     }
 
-    if ([(NSString *)key length] == 0) {
-      PopulateError(err, [NSString stringWithFormat:@"Invalid %@ key with length zero",
-                                                    kWatchItemConfigKeyWatchItems]);
+    if (!IsWatchItemNameValid((NSString *)key, err)) {
+      PopulateError(
+        err, [NSString
+               stringWithFormat:@"Invalid %@ key '%@': %@", kWatchItemConfigKeyWatchItems, key,
+                                (err && *err) ? (*err).localizedDescription : @"Unknown failure"]);
       return false;
     }
 
