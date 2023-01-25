@@ -1,8 +1,4 @@
-//
-// !!! WARNING !!!
-// This proto is for demonstration purposes only and will be changing.
-// Do not rely on this format.
-//
+// Important: This schema is currently in BETA
 
 syntax = "proto3";
 
