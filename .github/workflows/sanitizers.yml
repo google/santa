@@ -1,0 +1,16 @@
+name: sanitizers
+on:
+  schedule:
+    - cron: '0 16 * * *'
+  workflow_dispatch:
+
+jobs:
+  ubsan:
+    runs-on: macos-latest
+    strategy:
+      matrix:
+        sanitizer: [asan, tsan, ubsan]
+    steps:
+      - uses: actions/checkout@v2
+      - name: ASAN
+        run: bazel test --config=${{ matrix.sanitizer }} --test_strategy=exclusive --test_output=errors --runs_per_test 50 -t- :unit_tests --define=SANTA_BUILD_TYPE=adhoc
