@@ -422,6 +422,9 @@ std::vector<uint8_t> Protobuf::SerializeMessage(const EnrichedExec &msg) {
   Arena arena;
   ::pbv1::SantaMessage *santa_msg = CreateDefaultProto(&arena, msg);
 
+  // Only need to grab the shared instance once
+  static SNTConfigurator *configurator = [SNTConfigurator configurator];
+
   SNTCachedDecision *cd = [[SNTDecisionCache sharedCache]
     cachedDecisionForFile:msg.es_msg().event.exec.target->executable->stat];
 
@@ -476,7 +479,7 @@ std::vector<uint8_t> Protobuf::SerializeMessage(const EnrichedExec &msg) {
 
   pb_exec->set_decision(GetDecisionEnum(cd.decision));
   pb_exec->set_reason(GetReasonEnum(cd.decision));
-  pb_exec->set_mode(GetModeEnum([[SNTConfigurator configurator] clientMode]));
+  pb_exec->set_mode(GetModeEnum([configurator clientMode]));
 
   if (cd.certSHA256 || cd.certCommonName) {
     EncodeCertificateInfo(pb_exec->mutable_certificate_info(), cd.certSHA256, cd.certCommonName);

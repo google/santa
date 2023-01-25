@@ -49,6 +49,7 @@ constexpr std::string_view kProtectedFiles[] = {"/private/var/db/santa/rules.db"
 
 @interface SNTEndpointSecurityClient ()
 @property int64_t deadlineMarginMS;
+@property SNTConfigurator *configurator;
 @end
 
 @implementation SNTEndpointSecurityClient {
@@ -68,6 +69,7 @@ constexpr std::string_view kProtectedFiles[] = {"/private/var/db/santa/rules.db"
     _esApi = std::move(esApi);
     _metrics = std::move(metrics);
     _deadlineMarginMS = 5000;
+    _configurator = [SNTConfigurator configurator];
     _processor = processor;
 
     _authQueue = dispatch_queue_create(
@@ -103,9 +105,8 @@ constexpr std::string_view kProtectedFiles[] = {"/private/var/db/santa/rules.db"
   [self doesNotRecognizeSelector:_cmd];
 }
 
-- (BOOL)shouldHandleMessage:(const Message &)esMsg
-     ignoringOtherESClients:(BOOL)ignoringOtherESClients {
-  if (esMsg->process->is_es_client && ignoringOtherESClients) {
+- (BOOL)shouldHandleMessage:(const Message &)esMsg {
+  if (esMsg->process->is_es_client && [self.configurator ignoreOtherEndpointSecurityClients]) {
     if (esMsg->action_type == ES_ACTION_TYPE_AUTH) {
       [self respondToMessage:esMsg withAuthResult:ES_AUTH_RESULT_ALLOW cacheable:true];
     }
@@ -125,9 +126,7 @@ constexpr std::string_view kProtectedFiles[] = {"/private/var/db/santa/rules.db"
   self->_esClient = self->_esApi->NewClient(^(es_client_t *c, Message esMsg) {
     int64_t processingStart = clock_gettime_nsec_np(CLOCK_MONOTONIC);
     es_event_type_t eventType = esMsg->event_type;
-    if ([self shouldHandleMessage:esMsg
-           ignoringOtherESClients:[[SNTConfigurator configurator]
-                                    ignoreOtherEndpointSecurityClients]]) {
+    if ([self shouldHandleMessage:esMsg]) {
       [self handleMessage:std::move(esMsg)
         recordEventMetrics:^(EventDisposition disposition) {
           int64_t processingEnd = clock_gettime_nsec_np(CLOCK_MONOTONIC);
