@@ -130,7 +130,7 @@ using santa::santad::event_providers::endpoint_security::Message;
   EXPECT_CALL(*mockESApi, RespondAuthResult(testing::_, testing::_, ES_AUTH_RESULT_ALLOW, true))
     .WillOnce(testing::Return(true));
 
-  id mockConfigurator = OCMClassMock([SNTConfigurator class]);
+  id mockConfigurator = OCMStrictClassMock([SNTConfigurator class]);
   OCMStub([mockConfigurator configurator]).andReturn(mockConfigurator);
 
   SNTEndpointSecurityClient *client =
@@ -147,7 +147,7 @@ using santa::santad::event_providers::endpoint_security::Message;
     XCTAssertTrue([client shouldHandleMessage:msg]);
 
     // Not ES client, but ignore others == Should Handle
-    OCMExpect([mockConfigurator ignoreOtherEndpointSecurityClients]).andReturn(YES);
+    // Don't setup configurator mock since it won't be called when `is_es_client` is false
     esMsg.process->is_es_client = false;
     XCTAssertTrue([client shouldHandleMessage:msg]);
 
@@ -163,7 +163,10 @@ using santa::santad::event_providers::endpoint_security::Message;
     XCTAssertFalse([client shouldHandleMessage:msg]);
   }
 
+  XCTAssertTrue(OCMVerifyAll(mockConfigurator));
   XCTBubbleMockVerifyAndClearExpectations(mockESApi.get());
+
+  [mockConfigurator stopMocking];
 }
 
 - (void)testPopulateAuditTokenSelf {
