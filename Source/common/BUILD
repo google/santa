@@ -119,6 +119,10 @@ objc_library(
     name = "SNTDeviceEvent",
     srcs = ["SNTDeviceEvent.m"],
     hdrs = ["SNTDeviceEvent.h"],
+    module_name = "santa_common_SNTDeviceEvent",
+    sdk_frameworks = [
+        "Foundation",
+    ],
     deps = [
         ":SNTCommonEnums",
     ],
@@ -133,6 +137,10 @@ objc_library(
     name = "SNTConfigurator",
     srcs = ["SNTConfigurator.m"],
     hdrs = ["SNTConfigurator.h"],
+    module_name = "santa_common_SNTConfigurator",
+    sdk_frameworks = [
+        "Foundation",
+    ],
     deps = [
         ":SNTCommonEnums",
         ":SNTRule",
@@ -200,6 +208,9 @@ objc_library(
     name = "SNTRule",
     srcs = ["SNTRule.m"],
     hdrs = ["SNTRule.h"],
+    sdk_frameworks = [
+        "Foundation",
+    ],
     deps = [
         ":SNTCommonEnums",
         ":SNTSyncConstants",
@@ -231,13 +242,19 @@ objc_library(
     name = "SNTSyncConstants",
     srcs = ["SNTSyncConstants.m"],
     hdrs = ["SNTSyncConstants.h"],
+    sdk_frameworks = [
+        "Foundation",
+    ],
 )
 
 objc_library(
     name = "SNTSystemInfo",
     srcs = ["SNTSystemInfo.m"],
     hdrs = ["SNTSystemInfo.h"],
-    sdk_frameworks = ["IOKit"],
+    sdk_frameworks = [
+        "Foundation",
+        "IOKit",
+    ],
 )
 
 objc_library(
