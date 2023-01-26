@@ -20,25 +20,28 @@ build:asan --config=san-common
 build:asan --copt="-fsanitize=address"
 build:asan --copt="-DADDRESS_SANITIZER"
 build:asan --linkopt="-fsanitize=address"
+build:asan --dynamic_mode=off
 
-build:msan --config=san-common
-build:msan --copt="-fsanitize=memory"
-build:msan --copt="-DMEMORY_SANITIZER"
-build:msan --copt="-fsanitize-memory-track-origins"
-build:msan --copt="-fsanitize-memory-use-after-dtor"
-build:msan --action_env="MSAN_OPTIONS=poison_in_dtor=1"
-build:msan --linkopt="-fsanitize=memory"
+# build:msan --config=san-common
+# build:msan --copt="-fsanitize=memory"
+# build:msan --copt="-DMEMORY_SANITIZER"
+# build:msan --copt="-fsanitize-memory-track-origins"
+# build:msan --copt="-fsanitize-memory-use-after-dtor"
+# build:msan --action_env="MSAN_OPTIONS=poison_in_dtor=1"
+# build:msan --linkopt="-fsanitize=memory"
 
 build:tsan --config=san-common
 build:tsan --copt="-fsanitize=thread"
 build:tsan --copt="-DTHREAD_SANITIZER=1"
 build:tsan --linkopt="-fsanitize=thread"
+build:tsan --dynamic_mode=off
 
 build:ubsan --config=san-common
 build:ubsan --copt="-fsanitize=undefined"
 build:ubsan --copt="-DUNDEFINED_SANITIZER=1"
 build:ubsan --copt="-fno-sanitize=function" --copt="-fno-sanitize=vptr"
 build:ubsan --linkopt="-fsanitize=undefined"
+build:ubsan --dynamic_mode=off
 
 build:fuzz --config=san-common
 build:fuzz --@rules_fuzzing//fuzzing:cc_engine=@rules_fuzzing//fuzzing/engines:libfuzzer
