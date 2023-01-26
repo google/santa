@@ -48,6 +48,29 @@ static void RegisterModeMetric(SNTMetricSet *metricSet) {
 }
 
 /**
+ * Register the event log type metric checking the config before reporting the status.
+ */
+static void RegisterModeEventLogType(SNTMetricSet *metricSet) {
+  SNTMetricStringGauge *logType = [metricSet stringGaugeWithName:@"/santa/log_type"
+                                                   fieldNames:@[]
+                                                     helpText:@"Santa's log type"];
+
+  // create a callback that gets the current log type
+  [metricSet registerCallback:^{
+    switch ([[SNTConfigurator configurator] eventLogType]) {
+      case SNTEventLogTypeProtobuf: [logType set:@"protobuf" forFieldValues:@[]]; break;
+      case SNTEventLogTypeSyslog: [logType set:@"syslog" forFieldValues:@[]]; break;
+      case SNTEventLogTypeNull: [logType set:@"null" forFieldValues:@[]]; break;
+      case SNTEventLogTypeFilelog: [logType set:@"file" forFieldValues:@[]]; break;
+      default:
+        // Should never be reached.
+        [logType set:@"unknown" forFieldValues:@[]];
+        break;
+    }
+  }];
+}
+
+/**
  * Register metrics for measuring memory usage.
  */
 static void RegisterMemoryAndCPUMetrics(SNTMetricSet *metricSet) {
@@ -56,7 +79,7 @@ static void RegisterMemoryAndCPUMetrics(SNTMetricSet *metricSet) {
                        fieldNames:@[]
                          helpText:@"The virtual memory size of this process"];
   SNTMetricInt64Gauge *rsize =
-    [metricSet int64GaugeWithName:@"/proc/memory/resident_size"
+    [metricSet int64GaugeWithName:@ "/proc/memory/resident_size"
                        fieldNames:@[]
                          helpText:@"The resident set size of this process"];
 
@@ -129,6 +152,7 @@ static void RegisterCommonSantaMetrics(SNTMetricSet *metricSet) {
                                  value:[SNTSystemInfo osVersion]];
 
   RegisterModeMetric(metricSet);
+  RegisterModeEventLogType(metricSet);
   // TODO(markowsky) Register CSR status
   // TODO(markowsky) Register system extension status
 }

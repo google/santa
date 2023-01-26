@@ -80,6 +80,7 @@
 - (void)testRegisteringCoreMetrics {
   OCMStub([self.mockConfigurator extraMetricLabels]).andReturn(self.extraMetricLabels);
   OCMStub([self.mockConfigurator clientMode]).andReturn(SNTClientModeLockdown);
+  OCMStub([self.mockConfigurator eventLogType]).andReturn(SNTEventLogTypeProtobuf);
 
   SNTRegisterCoreMetrics();
 
@@ -186,6 +187,18 @@
           @"" : @[ @{
             @"created" : fixedDate,
             @"data" : @"lockdown",
+            @"last_updated" : fixedDate,
+            @"value" : @""
+          } ],
+        },
+      },
+      @"/santa/log_type" : @{
+        @"description" : @"Santa's log type",
+        @"type" : @6,
+        @"fields" : @{
+          @"" : @[ @{
+            @"created" : fixedDate,
+            @"data" : @"protobuf",
             @"last_updated" : fixedDate,
             @"value" : @""
           } ],
