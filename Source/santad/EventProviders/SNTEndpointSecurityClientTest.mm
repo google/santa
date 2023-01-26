@@ -22,6 +22,7 @@
 
 #include <memory>
 
+#import "Source/common/SNTConfigurator.h"
 #include "Source/common/TestUtils.h"
 #include "Source/santad/DataLayer/WatchItemPolicy.h"
 #include "Source/santad/EventProviders/EndpointSecurity/Client.h"
@@ -46,8 +47,7 @@ using santa::santad::event_providers::endpoint_security::Message;
 - (NSString *)errorMessageForNewClientResult:(es_new_client_result_t)result;
 - (void)handleMessage:(Message &&)esMsg
    recordEventMetrics:(void (^)(santa::santad::EventDisposition disposition))recordEventMetrics;
-- (BOOL)shouldHandleMessage:(const Message &)esMsg
-     ignoringOtherESClients:(BOOL)ignoringOtherESClients;
+- (BOOL)shouldHandleMessage:(const Message &)esMsg;
 
 @property int64_t deadlineMarginMS;
 @end
@@ -130,6 +130,9 @@ using santa::santad::event_providers::endpoint_security::Message;
   EXPECT_CALL(*mockESApi, RespondAuthResult(testing::_, testing::_, ES_AUTH_RESULT_ALLOW, true))
     .WillOnce(testing::Return(true));
 
+  id mockConfigurator = OCMClassMock([SNTConfigurator class]);
+  OCMStub([mockConfigurator configurator]).andReturn(mockConfigurator);
+
   SNTEndpointSecurityClient *client =
     [[SNTEndpointSecurityClient alloc] initWithESAPI:mockESApi
                                              metrics:nullptr
@@ -139,21 +142,25 @@ using santa::santad::event_providers::endpoint_security::Message;
     Message msg(mockESApi, &esMsg);
 
     // Is ES client, but don't ignore others == Should Handle
+    OCMExpect([mockConfigurator ignoreOtherEndpointSecurityClients]).andReturn(NO);
     esMsg.process->is_es_client = true;
-    XCTAssertTrue([client shouldHandleMessage:msg ignoringOtherESClients:NO]);
+    XCTAssertTrue([client shouldHandleMessage:msg]);
 
     // Not ES client, but ignore others == Should Handle
+    OCMExpect([mockConfigurator ignoreOtherEndpointSecurityClients]).andReturn(YES);
     esMsg.process->is_es_client = false;
-    XCTAssertTrue([client shouldHandleMessage:msg ignoringOtherESClients:YES]);
+    XCTAssertTrue([client shouldHandleMessage:msg]);
 
     // Is ES client, don't ignore others, and non-AUTH == Don't Handle
+    OCMExpect([mockConfigurator ignoreOtherEndpointSecurityClients]).andReturn(YES);
     esMsg.process->is_es_client = true;
-    XCTAssertFalse([client shouldHandleMessage:msg ignoringOtherESClients:YES]);
+    XCTAssertFalse([client shouldHandleMessage:msg]);
 
     // Is ES client, don't ignore others, and AUTH == Respond and Don't Handle
+    OCMExpect([mockConfigurator ignoreOtherEndpointSecurityClients]).andReturn(YES);
     esMsg.process->is_es_client = true;
     esMsg.action_type = ES_ACTION_TYPE_AUTH;
-    XCTAssertFalse([client shouldHandleMessage:msg ignoringOtherESClients:YES]);
+    XCTAssertFalse([client shouldHandleMessage:msg]);
   }
 
   XCTBubbleMockVerifyAndClearExpectations(mockESApi.get());
