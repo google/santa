@@ -52,8 +52,8 @@ static void RegisterModeMetric(SNTMetricSet *metricSet) {
  */
 static void RegisterModeEventLogType(SNTMetricSet *metricSet) {
   SNTMetricStringGauge *logType = [metricSet stringGaugeWithName:@"/santa/log_type"
-                                                   fieldNames:@[]
-                                                     helpText:@"Santa's log type"];
+                                                      fieldNames:@[]
+                                                        helpText:@"Santa's log type"];
 
   // create a callback that gets the current log type
   [metricSet registerCallback:^{
