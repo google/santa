@@ -1,0 +1,30 @@
+name: sanitizers
+on:
+  schedule:
+    - cron: '0 16 * * *'
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: macos-latest
+    strategy:
+      matrix:
+        sanitizer: [asan, tsan, ubsan]
+    steps:
+      - uses: actions/checkout@v2
+      - name: ${{ matrix.sanitizer }}
+        run: |
+          CLANG_VERSION=$(clang --version | head -n 1 | cut -d' ' -f 4)
+          DYLIB_PATH="$(xcode-select -p)/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/${CLANG_VERSION}/lib/darwin/libclang_rt.${{ matrix.sanitizer }}_osx_dynamic.dylib"
+
+          bazel test --config=${{ matrix.sanitizer }} \
+            --test_strategy=exclusive --test_output=errors \
+            --test_env=DYLD_INSERT_LIBRARIES=${DYLIB_PATH} \
+            --runs_per_test 10 -t- :unit_tests \
+            --define=SANTA_BUILD_TYPE=adhoc
+      - name: Upload logs
+        uses: actions/upload-artifact@v1
+        if: failure()
+        with:
+          name: logs
+          path: /tmp/san_out*
