@@ -22,15 +22,15 @@ To enable this feature, the `FileAccessPolicyPlist` key in the main Santa config
 | ------------------- | ------------ | ---------- | -------- | ---------- | ----------- |
 | `Version`           | `<Root>`     | String     | Yes      | N/A        | Version of the configuration. Will be reported in events. |
 | `WatchItems`        | `<Root>`     | Dictionary | No       | N/A        | The set of configuration items that will be monitored by Santa. |
-| `<Name>`            | `WatchItems` | Dictionary | No       | N/A        | A unique name that identifies a single watch item rule. This value will be reported in events. The name must be a legal C identifier (e.g. must conform to the regex `[A-Za-z_][A-Za-z0-9_]*`). |
+| `<Name>`            | `WatchItems` | Dictionary | No       | N/A        | A unique name that identifies a single watch item rule. This value will be reported in events. The name must be a legal C identifier (e.g., must conform to the regex `[A-Za-z_][A-Za-z0-9_]*`). |
 | `Paths`             | `<Name>`     | Array      | Yes      | N/A        | A list of either String or Dictionary types that contain path globs to monitor. String type entires will have default values applied for the attributes that can be manually set with the Dictionary type. |
 | `Path`              | `Paths`      | String     | Yes      | None       | The path glob to monitor. |
 | `IsPrefix`          | `Paths`      | Boolean    | No       | False      | Whether or not the path glob represents a prefix path. |
 | `Options`           | `<Name>`     | Dictionary | No       | N/A        | Customizes the actions for a given rule. |
-| `AllowReadAccess`   | `Options`    | Boolean    | No       | False      | If true, indicates the rule will NOT be applied to actions that are read-only access (e.g. opening a watched path for reading, or cloning a watched path). If false, the rule will apply both to read-only access and access that could modify the watched path. |
+| `AllowReadAccess`   | `Options`    | Boolean    | No       | False      | If true, indicates the rule will **not** be applied to actions that are read-only access (e.g. opening a watched path for reading, or cloning a watched path). If false, the rule will apply both to read-only access and access that could modify the watched path. |
 | `AuditOnly`         | `Options`    | Boolean    | No       | True       | If true, operations violating the rule will only be logged. If false, operations violating the rule will be denied and logged. |
 | `Processes`         | `<Name>`     | Array      | No       | N/A        | A list of dictionaries defining processes that are allowed to access paths matching the globs defined with the `Paths` key. For a process performing the operation to be considered a match, it must match all defined attributes of at least one entry in the list. |
-| `BinaryPath`        | `Processes`  | String     | No       | None       | A path literal an instigating process must be executed from. |
+| `BinaryPath`        | `Processes`  | String     | No       | None       | A path literal that an instigating process must be executed from. |
 | `TeamID`            | `Processes`  | String     | No       | None       | Team ID of the instigating process. |
 | `CertificateSha256` | `Processes`  | String     | No       | None       | SHA256 of the leaf certificate of the instigating process. |
 | `CDHash`            | `Processes`  | String     | No       | None       | CDHash of the instigating process. |
@@ -108,13 +108,13 @@ If a configuration contains multiple rules with duplicate configured paths, only
 
 ### Path Globs
 
-Configured path globs represent a point in time. That is - path globs are expanded when a configuration is applied to generate the set of monitored paths. Currently this is not a "live" representation of the filesystem. For instance, if a new file or directory is added that would match a glob after the configuration is applied, it is not immediately monitored.
+Configured path globs represent a point in time. That is, path globs are expanded when a configuration is applied to generate the set of monitored paths. Currently, this is not a "live" representation of the filesystem. For instance, if a new file or directory is added that would match a glob after the configuration is applied, it is not immediately monitored.
 
 Within the main Santa configuration, the `FileAccessPolicyUpdateIntervalSec` key controls how often any changes to the configuration are applied as well as re-evaluating configured path globs to match the current state of the filesystem.
 
 ### Prefix and Glob Path Evaluation
 
-Combining path globs and the `IsPrefix` key allows configurations greater control over the paths rules should match. Consider the configured path globs:
+Combining path globs and the `IsPrefix` key in a configuration gives greater control over the paths that rules should match. Consider the configured path globs:
 ```
 PG_1: /tmp/*         [IsPrefix = false]
 PG_2: /tmp/*         [IsPrefix = true]
@@ -133,7 +133,7 @@ And a filesystem that contains:
 			d1_f2.txt
 ```
 
-Now assume the configuration is applied, and moments later a new file (`/tmp/file3_new.txt`) new directory (`/tmp/dir2_new`) are both created:
+Now, assume the configuration is applied, and moments later a new file (`/tmp/file3_new.txt`) and a new directory (`/tmp/dir2_new`) are both created:
 * `PG_1` will match against the two original files within `/tmp` and the one directory `dir1` itself (but not nested contents).
 * `PG_2` will match against the two original files within `/tmp` and the one directory `dir1` (as well as nested contents).
 * `PG_3` will match against all original and newly created files and directories within `/tmp` (as well as nested contents).
