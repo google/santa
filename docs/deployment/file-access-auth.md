@@ -17,8 +17,8 @@ File Access Authorization allows admins to configure Santa to monitor filesystem
 To enable this feature, the `FileAccessPolicyPlist` key in the main [Santa configuration](configuration.md) must contain the path to a configuration file. See the format specified in the [Configuration](#configuration) section below. The Santa configuration can also contain the `FileAccessPolicyUpdateIntervalSec` that dictates how often the File Access Authorization configuration is re-applied (see the details on [Path Globs](#path-globs) for more information on what happens during updates).
 
 ## Configuration
-
-| Key                 | Parent       | Type       | Required | Default    | Description |
+<!-- Note: Non-breaking spaces used to hack the column width since otherwise the description is unreadable. -->
+| Key                 | Parent       | Type       | Required | Default    | Description&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; |
 | ------------------- | ------------ | ---------- | -------- | ---------- | ----------- |
 | `Version`           | `<Root>`     | String     | Yes      | N/A        | Version of the configuration. Will be reported in events. |
 | `WatchItems`        | `<Root>`     | Dictionary | No       | N/A        | The set of configuration items that will be monitored by Santa. |
