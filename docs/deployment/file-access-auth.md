@@ -14,7 +14,7 @@ File Access Authorization allows admins to configure Santa to monitor filesystem
 
 ## Enabling the Feature
 
-To enable this feature, the `FileAccessPolicyPlist` key in the main Santa configuration must contain the path to a configuration file (format specified below).
+To enable this feature, the `FileAccessPolicyPlist` key in the main [Santa configuration](configuration.md) must contain the path to a configuration file. See the format specified in the [Configuration](#configuration) section below. The Santa configuration can also contain the `FileAccessPolicyUpdateIntervalSec` that dictates how often the File Access Authorization configuration is re-applied (see the details on [Path Globs](#path-globs) for more information on what happens during updates).
 
 ## Configuration
 
@@ -27,7 +27,7 @@ To enable this feature, the `FileAccessPolicyPlist` key in the main Santa config
 | `Path`              | `Paths`      | String     | Yes      | None       | The path glob to monitor. |
 | `IsPrefix`          | `Paths`      | Boolean    | No       | False      | Whether or not the path glob represents a prefix path. |
 | `Options`           | `<Name>`     | Dictionary | No       | N/A        | Customizes the actions for a given rule. |
-| `AllowReadAccess`   | `Options`    | Boolean    | No       | False      | If true, indicates the rule will **not** be applied to actions that are read-only access (e.g. opening a watched path for reading, or cloning a watched path). If false, the rule will apply both to read-only access and access that could modify the watched path. |
+| `AllowReadAccess`   | `Options`    | Boolean    | No       | False      | If true, indicates the rule will **not** be applied to actions that are read-only access (e.g., opening a watched path for reading, or cloning a watched path). If false, the rule will apply both to read-only access and access that could modify the watched path. |
 | `AuditOnly`         | `Options`    | Boolean    | No       | True       | If true, operations violating the rule will only be logged. If false, operations violating the rule will be denied and logged. |
 | `Processes`         | `<Name>`     | Array      | No       | N/A        | A list of dictionaries defining processes that are allowed to access paths matching the globs defined with the `Paths` key. For a process performing the operation to be considered a match, it must match all defined attributes of at least one entry in the list. |
 | `BinaryPath`        | `Processes`  | String     | No       | None       | A path literal that an instigating process must be executed from. |
@@ -104,11 +104,11 @@ The following table demonstrates which rule will be applied for operations on a 
 | /tmp/foo.txt.tmp | `RULE_1`     | Matches prefix, more specific than `RULE_3`, literal match doesn't apply |
 | /foo             | N/A          | No rules match operations on this path |
 
-If a configuration contains multiple rules with duplicate configured paths, only one rule will be applied to the path. It is undefined which configured rule will be used. Administrators should take care not to define configurations that may have duplicate paths.
+> **IMPORTANT:** If a configuration contains multiple rules with duplicate configured paths, only one rule will be applied to the path. It is undefined which configured rule will be used. Administrators should take care not to define configurations that may have duplicate paths.
 
 ### Path Globs
 
-Configured path globs represent a point in time. That is, path globs are expanded when a configuration is applied to generate the set of monitored paths. Currently, this is not a "live" representation of the filesystem. For instance, if a new file or directory is added that would match a glob after the configuration is applied, it is not immediately monitored.
+Configured path globs represent a point in time. That is, path globs are expanded when a configuration is applied to generate the set of monitored paths. This is not a "live" representation of the filesystem. For instance, if a new file or directory is added that would match a glob after the configuration is applied, it is not immediately monitored.
 
 Within the main Santa configuration, the `FileAccessPolicyUpdateIntervalSec` key controls how often any changes to the configuration are applied as well as re-evaluating configured path globs to match the current state of the filesystem.
 
