@@ -134,14 +134,14 @@ And a filesystem that contains:
 ```
 
 Now assume the configuration is applied, and moments later a new file (`/tmp/file3_new.txt`) new directory (`/tmp/dir2_new`) are both created:
-* `PG_1` will match against the two original files within `/tmp` and the one directory `dir1` itself (but not nested contents)
-* `PG_2` will match against the two original files within `/tmp` and the one directory `dir1` (as well as nested contents)
-* `PG_3` will match against all original and newly created files and directories within `/tmp` (as well as nested contents)
-* `PG_4` will only match `/tmp/file1.txt`
+* `PG_1` will match against the two original files within `/tmp` and the one directory `dir1` itself (but not nested contents).
+* `PG_2` will match against the two original files within `/tmp` and the one directory `dir1` (as well as nested contents).
+* `PG_3` will match against all original and newly created files and directories within `/tmp` (as well as nested contents).
+* `PG_4` will only match `/tmp/file1.txt`.
 
 ### Case Sensitivity
 
-All configured paths are case sensitive (i.e. paths specified in both the `Paths` and `BinaryPath` configuration keys). The case must match the case of the path as stored on the filesystem.
+All configured paths are case sensitive (i.e., paths specified in both the `Paths` and `BinaryPath` configuration keys). The case must match the case of the path as stored on the filesystem.
 
 ### Hard Links
 
