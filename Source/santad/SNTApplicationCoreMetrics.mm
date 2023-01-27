@@ -48,6 +48,29 @@ static void RegisterModeMetric(SNTMetricSet *metricSet) {
 }
 
 /**
+ * Register the event log type metric checking the config before reporting the status.
+ */
+static void RegisterEventLogType(SNTMetricSet *metricSet) {
+  SNTMetricStringGauge *logType = [metricSet stringGaugeWithName:@"/santa/log_type"
+                                                      fieldNames:@[]
+                                                        helpText:@"Santa's log type"];
+
+  // create a callback that gets the current log type
+  [metricSet registerCallback:^{
+    switch ([[SNTConfigurator configurator] eventLogType]) {
+      case SNTEventLogTypeProtobuf: [logType set:@"protobuf" forFieldValues:@[]]; break;
+      case SNTEventLogTypeSyslog: [logType set:@"syslog" forFieldValues:@[]]; break;
+      case SNTEventLogTypeNull: [logType set:@"null" forFieldValues:@[]]; break;
+      case SNTEventLogTypeFilelog: [logType set:@"file" forFieldValues:@[]]; break;
+      default:
+        // Should never be reached.
+        [logType set:@"unknown" forFieldValues:@[]];
+        break;
+    }
+  }];
+}
+
+/**
  * Register metrics for measuring memory usage.
  */
 static void RegisterMemoryAndCPUMetrics(SNTMetricSet *metricSet) {
@@ -129,6 +152,7 @@ static void RegisterCommonSantaMetrics(SNTMetricSet *metricSet) {
                                  value:[SNTSystemInfo osVersion]];
 
   RegisterModeMetric(metricSet);
+  RegisterEventLogType(metricSet);
   // TODO(markowsky) Register CSR status
   // TODO(markowsky) Register system extension status
 }
