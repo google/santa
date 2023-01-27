@@ -1,0 +1,6 @@
+// Support wider pages
+@media (min-width: 50rem) {
+  .main {
+    max-width: none;
+  }
+}
