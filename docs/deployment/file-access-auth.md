@@ -95,6 +95,7 @@ RULE_2: /tmp/foo.txt [IsPrefix=false]
 RULE_3: /tmp         [IsPrefix=true]
 ```
 The following table demonstrates which rule will be applied for operations on a given path:
+
 | Operation Path   | Rule Applied | Reason |
 | ---------------- | ------------ | ------ |
 | /tmp/foo         | `RULE_1`     | Matches prefix, more specific than `RULE_3` |
