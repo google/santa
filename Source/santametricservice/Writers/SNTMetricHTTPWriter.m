@@ -55,8 +55,11 @@
         completionHandler:^(NSData *_Nullable data, NSURLResponse *_Nullable response,
                             NSError *_Nullable err) {
           if (err != nil) {
+            LOGD(@"SNTMetricHTTPWriter: %@", err);
             _blockError = err;
           } else if (response == nil) {
+            // Overwrite the last error as any previous error should show up in
+            // logs if making multiple requests.
             _blockError = nil;
           } else if ([response isKindOfClass:[NSHTTPURLResponse class]]) {
             NSHTTPURLResponse *httpResponse = (NSHTTPURLResponse *)response;
@@ -71,6 +74,7 @@
                           [NSString stringWithFormat:@"received http status code %ld from %@",
                                                      httpResponse.statusCode, url]
                       }];
+            LOGD(@"SNTMetricHTTPWriter: %@", err);
             }
           }
           dispatch_group_leave(requests);
