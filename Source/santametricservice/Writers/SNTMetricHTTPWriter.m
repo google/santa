@@ -46,6 +46,7 @@
   NSURLSessionDataTask *task;
 
   dispatch_group_t requests = dispatch_group_create();
+
   for (NSData *metric in metrics) {
     dispatch_group_enter(requests);
 
@@ -74,28 +75,29 @@
                           [NSString stringWithFormat:@"received http status code %ld from %@",
                                                      httpResponse.statusCode, url]
                       }];
-            LOGD(@"SNTMetricHTTPWriter: %@", err);
+              LOGD(@"SNTMetricHTTPWriter: %@", _blockError);
             }
           }
           dispatch_group_leave(requests);
         }];
 
     [task resume];
-  }
 
-  SNTConfigurator *config = [SNTConfigurator configurator];
-  int64_t timeout = (int64_t)config.metricExportTimeout;
+    SNTConfigurator *config = [SNTConfigurator configurator];
+    int64_t timeout = (int64_t)config.metricExportTimeout;
 
-  // Wait up to timeout seconds for the request to complete.
-  if (dispatch_group_wait(requests, dispatch_time(DISPATCH_TIME_NOW, timeout * NSEC_PER_SEC)) !=
-      0) {
-    [task cancel];
-    NSString *errMsg = [NSString stringWithFormat:@"HTTP request to %@ timed out after %lu seconds",
-                                                  url, (unsigned long)timeout];
+    // Wait up to timeout seconds for the request to complete.
+    if (dispatch_group_wait(requests, dispatch_time(DISPATCH_TIME_NOW, timeout * NSEC_PER_SEC)) !=
+        0) {
+      [task cancel];
+      NSString *errMsg =
+        [NSString stringWithFormat:@"HTTP request to %@ timed out after %lu seconds", url,
+                                   (unsigned long)timeout];
 
-    _blockError = [[NSError alloc] initWithDomain:@"com.google.santa.metricservice.writers.http"
-                                             code:ETIMEDOUT
-                                         userInfo:@{NSLocalizedDescriptionKey : errMsg}];
+      _blockError = [[NSError alloc] initWithDomain:@"com.google.santa.metricservice.writers.http"
+                                               code:ETIMEDOUT
+                                           userInfo:@{NSLocalizedDescriptionKey : errMsg}];
+    }
   }
 
   if (_blockError != nil) {
