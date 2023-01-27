@@ -43,22 +43,21 @@
 
   _authSession.serverHostname = url.host;
   NSURLSession *_session = _authSession.session;
+  NSURLSessionDataTask *task;
 
   dispatch_group_t requests = dispatch_group_create();
-
-  [metrics enumerateObjectsUsingBlock:^(id value, NSUInteger index, BOOL *stop) {
+  for (NSData *metric in metrics) {
     dispatch_group_enter(requests);
 
-    request.HTTPBody = (NSData *)value;
-    NSURLSessionDataTask *task = [_session
+    request.HTTPBody = (NSData *)metric;
+    task = [_session
       dataTaskWithRequest:request
         completionHandler:^(NSData *_Nullable data, NSURLResponse *_Nullable response,
                             NSError *_Nullable err) {
           if (err != nil) {
             _blockError = err;
-            *stop = YES;
           } else if (response == nil) {
-            *stop = YES;
+            _blockError = nil;
           } else if ([response isKindOfClass:[NSHTTPURLResponse class]]) {
             NSHTTPURLResponse *httpResponse = (NSHTTPURLResponse *)response;
 
@@ -72,30 +71,28 @@
                           [NSString stringWithFormat:@"received http status code %ld from %@",
                                                      httpResponse.statusCode, url]
                       }];
-              *stop = YES;
             }
           }
           dispatch_group_leave(requests);
         }];
 
     [task resume];
+  }
 
-    SNTConfigurator *config = [SNTConfigurator configurator];
-    int64_t timeout = (int64_t)config.metricExportTimeout;
+  SNTConfigurator *config = [SNTConfigurator configurator];
+  int64_t timeout = (int64_t)config.metricExportTimeout;
 
-    // Wait up to timeout seconds for the request to complete.
-    if (dispatch_group_wait(requests, dispatch_time(DISPATCH_TIME_NOW, (timeout * NSEC_PER_SEC))) !=
-        0) {
-      [task cancel];
-      NSString *errMsg =
-        [NSString stringWithFormat:@"HTTP request to %@ timed out after %lu seconds", url,
-                                   (unsigned long)timeout];
+  // Wait up to timeout seconds for the request to complete.
+  if (dispatch_group_wait(requests, dispatch_time(DISPATCH_TIME_NOW, timeout * NSEC_PER_SEC)) !=
+      0) {
+    [task cancel];
+    NSString *errMsg = [NSString stringWithFormat:@"HTTP request to %@ timed out after %lu seconds",
+                                                  url, (unsigned long)timeout];
 
-      _blockError = [[NSError alloc] initWithDomain:@"com.google.santa.metricservice.writers.http"
-                                               code:ETIMEDOUT
-                                           userInfo:@{NSLocalizedDescriptionKey : errMsg}];
-    }
-  }];
+    _blockError = [[NSError alloc] initWithDomain:@"com.google.santa.metricservice.writers.http"
+                                             code:ETIMEDOUT
+                                         userInfo:@{NSLocalizedDescriptionKey : errMsg}];
+  }
 
   if (_blockError != nil) {
     // If the caller hasn't passed us an error then we ignore it.
