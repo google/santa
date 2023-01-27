@@ -3,4 +3,12 @@
   .main {
     max-width: none;
   }
+  .side-bar {
+    max-width: 380px;
+  }
+}
+@media (min-width: 1298px) {
+  .main {
+    margin-left: 380px;
+  }
 }
