@@ -50,7 +50,7 @@ static void RegisterModeMetric(SNTMetricSet *metricSet) {
 /**
  * Register the event log type metric checking the config before reporting the status.
  */
-static void RegisterModeEventLogType(SNTMetricSet *metricSet) {
+static void RegisterEventLogType(SNTMetricSet *metricSet) {
   SNTMetricStringGauge *logType = [metricSet stringGaugeWithName:@"/santa/log_type"
                                                       fieldNames:@[]
                                                         helpText:@"Santa's log type"];
@@ -79,7 +79,7 @@ static void RegisterMemoryAndCPUMetrics(SNTMetricSet *metricSet) {
                        fieldNames:@[]
                          helpText:@"The virtual memory size of this process"];
   SNTMetricInt64Gauge *rsize =
-    [metricSet int64GaugeWithName:@ "/proc/memory/resident_size"
+    [metricSet int64GaugeWithName:@"/proc/memory/resident_size"
                        fieldNames:@[]
                          helpText:@"The resident set size of this process"];
 
@@ -152,7 +152,7 @@ static void RegisterCommonSantaMetrics(SNTMetricSet *metricSet) {
                                  value:[SNTSystemInfo osVersion]];
 
   RegisterModeMetric(metricSet);
-  RegisterModeEventLogType(metricSet);
+  RegisterEventLogType(metricSet);
   // TODO(markowsky) Register CSR status
   // TODO(markowsky) Register system extension status
 }
