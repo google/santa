@@ -37,28 +37,40 @@
 - (BOOL)write:(NSArray<NSData *> *)metrics toURL:(NSURL *)url error:(NSError **)error {
   __block NSError *_blockError = nil;
 
+  static SNTConfigurator *config;
+  static dispatch_once_t onceToken;
+
+  dispatch_once(&onceToken, ^{
+    config = [SNTConfigurator configurator];
+  });
+
+  int64_t timeout = (int64_t)config.metricExportTimeout;
+
   NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:url];
   request.HTTPMethod = @"POST";
   [request setValue:@"application/json" forHTTPHeaderField:@"Content-Type"];
 
   _authSession.serverHostname = url.host;
   NSURLSession *_session = _authSession.session;
+  NSURLSessionDataTask *task;
 
   dispatch_group_t requests = dispatch_group_create();
 
-  [metrics enumerateObjectsUsingBlock:^(id value, NSUInteger index, BOOL *stop) {
+  for (NSData *metric in metrics) {
     dispatch_group_enter(requests);
 
-    request.HTTPBody = (NSData *)value;
-    NSURLSessionDataTask *task = [_session
+    request.HTTPBody = (NSData *)metric;
+    task = [_session
       dataTaskWithRequest:request
         completionHandler:^(NSData *_Nullable data, NSURLResponse *_Nullable response,
                             NSError *_Nullable err) {
           if (err != nil) {
+            LOGD(@"SNTMetricHTTPWriter: %@", err);
             _blockError = err;
-            *stop = YES;
           } else if (response == nil) {
-            *stop = YES;
+            // Overwrite the last error as any previous error should show up in
+            // logs if making multiple requests.
+            _blockError = nil;
           } else if ([response isKindOfClass:[NSHTTPURLResponse class]]) {
             NSHTTPURLResponse *httpResponse = (NSHTTPURLResponse *)response;
 
@@ -72,7 +84,7 @@
                           [NSString stringWithFormat:@"received http status code %ld from %@",
                                                      httpResponse.statusCode, url]
                       }];
-              *stop = YES;
+              LOGD(@"SNTMetricHTTPWriter: %@", _blockError);
             }
           }
           dispatch_group_leave(requests);
@@ -80,11 +92,8 @@
 
     [task resume];
 
-    SNTConfigurator *config = [SNTConfigurator configurator];
-    int64_t timeout = (int64_t)config.metricExportTimeout;
-
     // Wait up to timeout seconds for the request to complete.
-    if (dispatch_group_wait(requests, dispatch_time(DISPATCH_TIME_NOW, (timeout * NSEC_PER_SEC))) !=
+    if (dispatch_group_wait(requests, dispatch_time(DISPATCH_TIME_NOW, timeout * NSEC_PER_SEC)) !=
         0) {
       [task cancel];
       NSString *errMsg =
@@ -95,7 +104,7 @@
                                                code:ETIMEDOUT
                                            userInfo:@{NSLocalizedDescriptionKey : errMsg}];
     }
-  }];
+  }
 
   if (_blockError != nil) {
     // If the caller hasn't passed us an error then we ignore it.
