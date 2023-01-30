@@ -22,7 +22,7 @@ To enable this feature, the `FileAccessPolicyPlist` key in the main [Santa confi
 | ------------------- | ------------ | ---------- | -------- | ----------- |
 | `Version`           | `<Root>`     | String     | Yes      | Version of the configuration. Will be reported in events. |
 | `WatchItems`        | `<Root>`     | Dictionary | No       | The set of configuration items that will be monitored by Santa. |
-| `<Name>`            | `WatchItems` | Dictionary | No       | A unique name that identifies a single watch item rule. This value will be reported in events. The name must be a legal C identifier (e.g., must conform to the regex `[A-Za-z_][A-Za-z0-9_]*`). |
+| `<Name>`            | `WatchItems` | Dictionary | No       | A unique name that identifies a single watch item rule. This value will be reported in events. The name must be a legal C identifier (i.e., must conform to the regex `[A-Za-z_][A-Za-z0-9_]*`). |
 | `Paths`             | `<Name>`     | Array      | Yes      | A list of either String or Dictionary types that contain path globs to monitor. String type entires will have default values applied for the attributes that can be manually set with the Dictionary type. |
 | `Path`              | `Paths`      | String     | Yes      | The path glob to monitor. |
 | `IsPrefix`          | `Paths`      | Boolean    | No       | Whether or not the path glob represents a prefix path. (Default = `false`) |
@@ -146,6 +146,17 @@ All configured paths are case sensitive (i.e., paths specified in both the `Path
 ### Hard Links
 
 Due to platform limitations, it is not feasible for Santa to know all links for a given path. To help mitigate bypasses to this feature, Santa will not allow hard links to be created for monitored paths. If hard links previously existed to monitored paths, Santa cannot guarantee that access to watched resources via these other links will be monitored.
+
+### Symbolic Links
+
+Configured path globs must refer to resolved paths only. It is not supported to monitor access on symbolic links. For example, consider the configured path globs:
+
+```
+PG_1: /var/audit/          [IsPrefix = true]
+PG_2: /private/var/audit/  [IsPrefix = true]
+```
+
+`PG_1` will not match any operations because `/var` is a symbolic link. `PG_2` however is properly configured and will match on access to items in the configured directory.
 
 ## Logging
 
