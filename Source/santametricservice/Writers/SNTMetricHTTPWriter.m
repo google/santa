@@ -37,6 +37,9 @@
 - (BOOL)write:(NSArray<NSData *> *)metrics toURL:(NSURL *)url error:(NSError **)error {
   __block NSError *_blockError = nil;
 
+  SNTConfigurator *config = [SNTConfigurator configurator];
+  int64_t timeout = (int64_t)config.metricExportTimeout;
+
   NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:url];
   request.HTTPMethod = @"POST";
   [request setValue:@"application/json" forHTTPHeaderField:@"Content-Type"];
@@ -82,9 +85,6 @@
         }];
 
     [task resume];
-
-    SNTConfigurator *config = [SNTConfigurator configurator];
-    int64_t timeout = (int64_t)config.metricExportTimeout;
 
     // Wait up to timeout seconds for the request to complete.
     if (dispatch_group_wait(requests, dispatch_time(DISPATCH_TIME_NOW, timeout * NSEC_PER_SEC)) !=
