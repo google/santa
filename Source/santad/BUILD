@@ -425,6 +425,9 @@ objc_library(
         ":EndpointSecurityEnrichedTypes",
         ":EndpointSecurityMessage",
         ":SNTDecisionCache",
+        "//Source/common:SantaCache",
+        "//Source/common:SantaVnode",
+        "//Source/common:SantaVnodeHash",
     ],
 )
 
