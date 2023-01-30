@@ -423,6 +423,11 @@ void ClearWatchItemPolicyProcess(WatchItemPolicy::Process &proc) {
     XCTAssertTrue([accessClient policyProcess:policyProc matchesESProcess:&esProc]);
     policyProc.signing_id = "badid";
     XCTAssertFalse([accessClient policyProcess:policyProc matchesESProcess:&esProc]);
+    es_process_t esProcEmptySigningID = MakeESProcess(&esFile);
+    esProcEmptySigningID.codesigning_flags = CS_SIGNED;
+    esProcEmptySigningID.team_id.data = NULL;
+    esProcEmptySigningID.team_id.length = 0;
+    XCTAssertFalse([accessClient policyProcess:policyProc matchesESProcess:&esProcEmptySigningID]);
   }
 
   {
@@ -432,6 +437,11 @@ void ClearWatchItemPolicyProcess(WatchItemPolicy::Process &proc) {
     XCTAssertTrue([accessClient policyProcess:policyProc matchesESProcess:&esProc]);
     policyProc.team_id = "badid";
     XCTAssertFalse([accessClient policyProcess:policyProc matchesESProcess:&esProc]);
+    es_process_t esProcEmptyTeamID = MakeESProcess(&esFile);
+    esProcEmptyTeamID.codesigning_flags = CS_SIGNED;
+    esProcEmptyTeamID.signing_id.data = NULL;
+    esProcEmptyTeamID.signing_id.length = 0;
+    XCTAssertFalse([accessClient policyProcess:policyProc matchesESProcess:&esProcEmptyTeamID]);
   }
 
   {
