@@ -37,7 +37,13 @@
 - (BOOL)write:(NSArray<NSData *> *)metrics toURL:(NSURL *)url error:(NSError **)error {
   __block NSError *_blockError = nil;
 
-  SNTConfigurator *config = [SNTConfigurator configurator];
+  static SNTConfigurator *config;
+  static dispatch_once_t onceToken;
+
+  dispatch_once(&onceToken, ^{
+    config = [SNTConfigurator configurator];
+  });
+
   int64_t timeout = (int64_t)config.metricExportTimeout;
 
   NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:url];
