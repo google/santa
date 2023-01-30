@@ -384,7 +384,7 @@ static inline void EncodeCertificateInfo(::pbv1::CertificateInfo *pb_cert_info, 
 
 std::vector<uint8_t> Protobuf::FinalizeProto(::pbv1::SantaMessage *santa_msg) {
   std::vector<uint8_t> vec(santa_msg->ByteSizeLong());
-  santa_msg->SerializeToArray(vec.data(), (int)vec.capacity());
+  santa_msg->SerializeWithCachedSizesToArray(vec.data());
   return vec;
 }
 
