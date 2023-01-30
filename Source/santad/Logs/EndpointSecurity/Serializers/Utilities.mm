@@ -14,6 +14,10 @@
 
 #include "Source/santad/Logs/EndpointSecurity/Serializers/Utilities.h"
 
+#include "Source/common/SantaCache.h"
+#import "Source/common/SantaVnode.h"
+#include "Source/common/SantaVnodeHash.h"
+
 // These functions are exported by the Security framework, but are not included in headers
 extern "C" Boolean SecTranslocateIsTranslocatedURL(CFURLRef path, bool *isTranslocated,
                                                    CFErrorRef *__nullable error);
@@ -32,7 +36,14 @@ static inline void SetThreadIDs(uid_t uid, gid_t gid) {
 }
 
 NSString *OriginalPathForTranslocation(const es_process_t *es_proc) {
+  // Cache vnodes that have been determined to not be translocated
+  static SantaCache<SantaVnode, bool> isNotTranslocatedCache(1024);
+
   if (!es_proc) {
+    return nil;
+  }
+
+  if (isNotTranslocatedCache.get(SantaVnode::VnodeForFile(es_proc->executable))) {
     return nil;
   }
 
@@ -58,6 +69,8 @@ NSString *OriginalPathForTranslocation(const es_process_t *es_proc) {
     if (dropPrivs) {
       SetThreadIDs(KAUTH_UID_NONE, KAUTH_GID_NONE);
     }
+  } else {
+    isNotTranslocatedCache.set(SantaVnode::VnodeForFile(es_proc->executable), true);
   }
 
   return [origURL path];
