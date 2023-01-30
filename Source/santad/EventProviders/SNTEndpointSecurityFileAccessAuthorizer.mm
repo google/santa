@@ -319,14 +319,18 @@ void PopulatePathTargets(const Message &msg, std::vector<PathTarget> &targets) {
   // configured process exception while the check for a valid code signature
   // is more broad and applies whether or not process exceptions exist.
   if (esProc->codesigning_flags & CS_SIGNED) {
-    // Check if the instigating process has an allowed TeamID
-    if (!policyProc.team_id.empty() && esProc->team_id.data &&
-        policyProc.team_id != esProc->team_id.data) {
+    // If the policy contains a team ID, check that the instigating process
+    // also has a team ID and matches the policy.
+    if (!policyProc.team_id.empty() &&
+        (!esProc->team_id.data || (policyProc.team_id != esProc->team_id.data))) {
+      // We expected a team ID to match against, but the process didn't have one.
       return false;
     }
 
-    if (!policyProc.signing_id.empty() && esProc->signing_id.data &&
-        policyProc.signing_id != esProc->signing_id.data) {
+    // If the policy contains a signing ID, check that the instigating process
+    // also has a signing ID and matches the policy.
+    if (!policyProc.signing_id.empty() &&
+        (!esProc->signing_id.data || (policyProc.signing_id != esProc->signing_id.data))) {
       return false;
     }
 
