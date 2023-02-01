@@ -102,15 +102,6 @@ class MockAuthResultCache : public AuthResultCache {
 
   dispatch_semaphore_t semaMetrics = dispatch_semaphore_create(0);
 
-  SNTEndpointSecurityAuthorizer *authClient =
-    [[SNTEndpointSecurityAuthorizer alloc] initWithESAPI:mockESApi
-                                                 metrics:nullptr
-                                          execController:self.mockExecController
-                                      compilerController:nil
-                                         authResultCache:nullptr];
-
-  id mockAuthClient = OCMPartialMock(authClient);
-
   // Test unhandled event type
   {
     // Temporarily change the event type
@@ -124,6 +115,15 @@ class MockAuthResultCache : public AuthResultCache {
 
   // Test SNTExecutionController determines the event shouldn't be processed
   {
+    SNTEndpointSecurityAuthorizer *authClient =
+      [[SNTEndpointSecurityAuthorizer alloc] initWithESAPI:mockESApi
+                                                  metrics:nullptr
+                                            execController:self.mockExecController
+                                        compilerController:nil
+                                          authResultCache:nullptr];
+
+    id mockAuthClient = OCMPartialMock(authClient);
+
     Message msg(mockESApi, &esMsg);
 
     OCMExpect([self.mockExecController synchronousShouldProcessExecEvent:msg])
@@ -145,11 +145,22 @@ class MockAuthResultCache : public AuthResultCache {
 
     XCTAssertSemaTrue(semaMetrics, 5, "Metrics not recorded within expected window");
     XCTAssertTrue(OCMVerifyAll(mockAuthClient));
+
+    [mockAuthClient stopMocking];
   }
 
   // Test SNTExecutionController determines the event should be processed and
   // processMessage:handler: is called.
   {
+    SNTEndpointSecurityAuthorizer *authClient =
+      [[SNTEndpointSecurityAuthorizer alloc] initWithESAPI:mockESApi
+                                                  metrics:nullptr
+                                            execController:self.mockExecController
+                                        compilerController:nil
+                                          authResultCache:nullptr];
+
+    id mockAuthClient = OCMPartialMock(authClient);
+
     Message msg(mockESApi, &esMsg);
 
     OCMExpect([self.mockExecController synchronousShouldProcessExecEvent:msg])
@@ -169,11 +180,11 @@ class MockAuthResultCache : public AuthResultCache {
 
     XCTAssertSemaTrue(semaMetrics, 5, "Metrics not recorded within expected window");
     XCTAssertTrue(OCMVerifyAll(mockAuthClient));
+
+    [mockAuthClient stopMocking];
   }
 
   XCTBubbleMockVerifyAndClearExpectations(mockESApi.get());
-
-  [mockAuthClient stopMocking];
 }
 
 - (void)testProcessMessageWaitThenAllow {
