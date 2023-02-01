@@ -37,8 +37,6 @@
   NSURLSessionConfiguration *config = [NSURLSessionConfiguration ephemeralSessionConfiguration];
   config.TLSMinimumSupportedProtocolVersion = tls_protocol_version_TLSv12;
   config.HTTPShouldUsePipelining = YES;
-
-  config.timeoutIntervalForRequest = timeout;
   config.timeoutIntervalForResource = timeout;
 
   MOLAuthenticatingURLSession *session =
