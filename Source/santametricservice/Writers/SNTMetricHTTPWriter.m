@@ -18,103 +18,90 @@
 #import "Source/common/SNTLogging.h"
 #import "Source/santametricservice/Writers/SNTMetricHTTPWriter.h"
 
-@implementation SNTMetricHTTPWriter {
- @private
-  MOLAuthenticatingURLSession *_authSession;
-}
+@interface SNTMetricHTTPWriter ()
+@property SNTConfigurator *configurator;
+@end
+
+@implementation SNTMetricHTTPWriter
 
 - (instancetype)init {
   self = [super init];
   if (self) {
-    _authSession = [[MOLAuthenticatingURLSession alloc] init];
+    _configurator = [SNTConfigurator configurator];
   }
   return self;
+}
+
+- (MOLAuthenticatingURLSession *)createSessionWithHostname:(NSURL *)url
+                                                   Timeout:(NSTimeInterval)timeout {
+  NSURLSessionConfiguration *config = [NSURLSessionConfiguration ephemeralSessionConfiguration];
+  config.TLSMinimumSupportedProtocolVersion = tls_protocol_version_TLSv12;
+  config.HTTPShouldUsePipelining = YES;
+
+  config.timeoutIntervalForRequest = timeout;
+  config.timeoutIntervalForResource = timeout;
+
+  MOLAuthenticatingURLSession *session =
+    [[MOLAuthenticatingURLSession alloc] initWithSessionConfiguration:config];
+  session.serverHostname = url.host;
+
+  return session;
 }
 
 /**
  * Post serialzied metrics to the specified URL one object at a time.
  **/
 - (BOOL)write:(NSArray<NSData *> *)metrics toURL:(NSURL *)url error:(NSError **)error {
-  __block NSError *_blockError = nil;
+  NSError *localError;
+  dispatch_semaphore_t sema = dispatch_semaphore_create(0);
 
-  static SNTConfigurator *config;
-  static dispatch_once_t onceToken;
-
-  dispatch_once(&onceToken, ^{
-    config = [SNTConfigurator configurator];
-  });
-
-  int64_t timeout = (int64_t)config.metricExportTimeout;
+  MOLAuthenticatingURLSession *authSession =
+    [self createSessionWithHostname:url Timeout:self.configurator.metricExportTimeout];
 
   NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:url];
   request.HTTPMethod = @"POST";
   [request setValue:@"application/json" forHTTPHeaderField:@"Content-Type"];
 
-  _authSession.serverHostname = url.host;
-  NSURLSession *_session = _authSession.session;
-  NSURLSessionDataTask *task;
-
-  dispatch_group_t requests = dispatch_group_create();
-
   for (NSData *metric in metrics) {
-    dispatch_group_enter(requests);
+    __block NSInteger savedStatusCode = 0;
 
     request.HTTPBody = (NSData *)metric;
-    task = [_session
+    NSURLSessionDataTask *task = [authSession.session
       dataTaskWithRequest:request
         completionHandler:^(NSData *_Nullable data, NSURLResponse *_Nullable response,
                             NSError *_Nullable err) {
-          if (err != nil) {
-            LOGD(@"SNTMetricHTTPWriter: %@", err);
-            _blockError = err;
-          } else if (response == nil) {
-            // Overwrite the last error as any previous error should show up in
-            // logs if making multiple requests.
-            _blockError = nil;
-          } else if ([response isKindOfClass:[NSHTTPURLResponse class]]) {
-            NSHTTPURLResponse *httpResponse = (NSHTTPURLResponse *)response;
-
-            // Check HTTP error codes and create errors for any non-200.
-            if (httpResponse && httpResponse.statusCode != 200) {
-              _blockError = [[NSError alloc]
-                initWithDomain:@"com.google.santa.metricservice.writers.http"
-                          code:httpResponse.statusCode
-                      userInfo:@{
-                        NSLocalizedDescriptionKey :
-                          [NSString stringWithFormat:@"received http status code %ld from %@",
-                                                     httpResponse.statusCode, url]
-                      }];
-              LOGD(@"SNTMetricHTTPWriter: %@", _blockError);
-            }
+          if ([response isKindOfClass:[NSHTTPURLResponse class]]) {
+            savedStatusCode = ((NSHTTPURLResponse *)response).statusCode;
           }
-          dispatch_group_leave(requests);
+          dispatch_semaphore_signal(sema);
         }];
 
     [task resume];
 
-    // Wait up to timeout seconds for the request to complete.
-    if (dispatch_group_wait(requests, dispatch_time(DISPATCH_TIME_NOW, timeout * NSEC_PER_SEC)) !=
-        0) {
-      [task cancel];
-      NSString *errMsg =
-        [NSString stringWithFormat:@"HTTP request to %@ timed out after %lu seconds", url,
-                                   (unsigned long)timeout];
+    dispatch_semaphore_wait(sema, DISPATCH_TIME_FOREVER);
 
-      _blockError = [[NSError alloc] initWithDomain:@"com.google.santa.metricservice.writers.http"
-                                               code:ETIMEDOUT
-                                           userInfo:@{NSLocalizedDescriptionKey : errMsg}];
+    // Note: localError will only store the last error that occured while
+    // sending items from the array of metrics.
+    if (task.error) {
+      localError = task.error;
+    } else if (savedStatusCode != 200) {
+      localError = [[NSError alloc]
+        initWithDomain:@"com.google.santa.metricservice.writers.http"
+                  code:savedStatusCode
+              userInfo:@{
+                NSLocalizedDescriptionKey : [NSString
+                  stringWithFormat:@"received http status code %ld from %@", savedStatusCode, url]
+              }];
     }
   }
 
-  if (_blockError != nil) {
-    // If the caller hasn't passed us an error then we ignore it.
-    if (error != nil) {
-      *error = [_blockError copy];
-    }
-
-    return NO;
+  if (error != nil) {
+    *error = localError;
   }
 
-  return YES;
+  // Success is determined by whether or not any failures occured while sending
+  // any of the metrics.
+  return localError == nil;
 }
+
 @end
