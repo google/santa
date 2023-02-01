@@ -63,24 +63,37 @@
   [request setValue:@"application/json" forHTTPHeaderField:@"Content-Type"];
 
   for (NSData *metric in metrics) {
+    NSError *taskError;
+    NSURLResponse *taskResponse;
     request.HTTPBody = (NSData *)metric;
-    NSURLSessionDataTask *task = [authSession.session
-      dataTaskWithRequest:request
-        completionHandler:^(NSData *_Nullable data, NSURLResponse *_Nullable response,
-                            NSError *_Nullable err) {
-          dispatch_semaphore_signal(sema);
-        }];
 
-    [task resume];
+    // Note: In order to help ease mock writing in tests, the `task` variable is
+    // sequestered into this anonymous scope to help ensure future edits outside
+    // of this scope don'taccess the `task` variable which could mess up how the
+    // tests are written.
+    {
+      NSURLSessionDataTask *task = [authSession.session
+        dataTaskWithRequest:request
+          completionHandler:^(NSData *_Nullable data, NSURLResponse *_Nullable response,
+                              NSError *_Nullable err) {
+            dispatch_semaphore_signal(sema);
+          }];
 
-    dispatch_semaphore_wait(sema, DISPATCH_TIME_FOREVER);
+      [task resume];
+
+      dispatch_semaphore_wait(sema, DISPATCH_TIME_FOREVER);
+
+      // Note: Extracting property values once here to make test mock writing simpler
+      taskError = task.error;
+      taskResponse = task.response;
+    }
 
     // Note: localError will only store the last error that occured while
     // sending items from the array of metrics.
-    if (task.error) {
-      localError = task.error;
-    } else if ([task.response isKindOfClass:[NSHTTPURLResponse class]]) {
-      NSInteger statusCode = ((NSHTTPURLResponse *)task.response).statusCode;
+    if (taskError) {
+      localError = taskError;
+    } else if ([taskResponse isKindOfClass:[NSHTTPURLResponse class]]) {
+      NSInteger statusCode = ((NSHTTPURLResponse *)taskResponse).statusCode;
       if (statusCode != 200) {
         localError = [[NSError alloc]
           initWithDomain:@"com.google.santa.metricservice.writers.http"

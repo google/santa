@@ -25,6 +25,8 @@
 
   OCMStub([self.mockMOLAuthenticatingURLSession alloc])
     .andReturn(self.mockMOLAuthenticatingURLSession);
+  OCMStub([self.mockMOLAuthenticatingURLSession initWithSessionConfiguration:[OCMArg any]])
+    .andReturn(self.mockMOLAuthenticatingURLSession);
   OCMStub([self.mockMOLAuthenticatingURLSession session]).andReturn(self.mockSession);
 
   self.httpWriter = [[SNTMetricHTTPWriter alloc] init];
@@ -46,6 +48,15 @@
 
   void (^callCompletionHandler)(NSInvocation *) = ^(NSInvocation *invocation) {
     NSDictionary *responseValue = self.mockResponses[0];
+
+    if (responseValue[@"error"] != nil) {
+      OCMExpect([(NSURLSessionDataTask *)self.mockSessionDataTask error])
+        .andReturn(responseValue[@"error"]);
+    } else if (((NSHTTPURLResponse *)responseValue[@"response"]).statusCode != 200) {
+      OCMExpect([(NSURLSessionDataTask *)self.mockSessionDataTask response])
+        .andReturn(responseValue[@"response"]);
+    }
+
     if (responseValue != nil && completionHandler != nil) {
       completionHandler(responseValue[@"data"], responseValue[@"response"],
                         responseValue[@"error"]);

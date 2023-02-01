@@ -25,7 +25,9 @@ namespace es = santa::santad::event_providers::endpoint_security;
 namespace santa::santad::logs::endpoint_security::serializers {
 
 Serializer::Serializer() {
-  if ([[SNTConfigurator configurator] enableMachineIDDecoration]) {
+  static SNTConfigurator *configurator = [SNTConfigurator configurator];
+
+  if ([configurator enableMachineIDDecoration]) {
     enabled_machine_id_ = true;
     machine_id_ = [[[SNTConfigurator configurator] machineID] UTF8String] ?: "";
   }
