@@ -63,16 +63,11 @@
   [request setValue:@"application/json" forHTTPHeaderField:@"Content-Type"];
 
   for (NSData *metric in metrics) {
-    __block NSInteger savedStatusCode = 0;
-
     request.HTTPBody = (NSData *)metric;
     NSURLSessionDataTask *task = [authSession.session
       dataTaskWithRequest:request
         completionHandler:^(NSData *_Nullable data, NSURLResponse *_Nullable response,
                             NSError *_Nullable err) {
-          if ([response isKindOfClass:[NSHTTPURLResponse class]]) {
-            savedStatusCode = ((NSHTTPURLResponse *)response).statusCode;
-          }
           dispatch_semaphore_signal(sema);
         }];
 
@@ -84,14 +79,17 @@
     // sending items from the array of metrics.
     if (task.error) {
       localError = task.error;
-    } else if (savedStatusCode != 200) {
-      localError = [[NSError alloc]
-        initWithDomain:@"com.google.santa.metricservice.writers.http"
-                  code:savedStatusCode
-              userInfo:@{
-                NSLocalizedDescriptionKey : [NSString
-                  stringWithFormat:@"received http status code %ld from %@", savedStatusCode, url]
-              }];
+    } else if ([task.response isKindOfClass:[NSHTTPURLResponse class]]) {
+      NSInteger statusCode = ((NSHTTPURLResponse *)task.response).statusCode;
+      if (statusCode != 200) {
+        localError = [[NSError alloc]
+          initWithDomain:@"com.google.santa.metricservice.writers.http"
+                    code:statusCode
+                userInfo:@{
+                  NSLocalizedDescriptionKey : [NSString
+                    stringWithFormat:@"received http status code %ld from %@", statusCode, url]
+                }];
+      }
     }
   }
 
