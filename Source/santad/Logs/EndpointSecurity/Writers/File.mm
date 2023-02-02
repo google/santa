@@ -55,7 +55,7 @@ File::File(NSString *path, size_t batch_size_bytes, size_t max_expected_write_si
       timer_source_(timer_source),
       watch_source_(nullptr) {
   path_ = path;
-  OpenFileHandle();
+  OpenFileHandleLocked();
 }
 
 void File::WatchLogFile() {
@@ -69,7 +69,7 @@ void File::WatchLogFile() {
   auto shared_this = shared_from_this();
   dispatch_source_set_event_handler(watch_source_, ^{
     [shared_this->file_handle_ closeFile];
-    shared_this->OpenFileHandle();
+    shared_this->OpenFileHandleLocked();
     shared_this->WatchLogFile();
   });
 
@@ -83,7 +83,7 @@ File::~File() {
 }
 
 // IMPORTANT: Not thread safe.
-void File::OpenFileHandle() {
+void File::OpenFileHandleLocked() {
   NSFileManager *fm = [NSFileManager defaultManager];
   if (![fm fileExistsAtPath:path_]) {
     [fm createFileAtPath:path_ contents:nil attributes:nil];
@@ -101,7 +101,7 @@ void File::Write(std::vector<uint8_t> &&bytes) {
   dispatch_async(q_, ^{
     std::vector<uint8_t> moved_bytes = std::move(temp_bytes);
 
-    shared_this->CopyData(moved_bytes);
+    shared_this->CopyDataLocked(moved_bytes);
 
     if (shared_this->ShouldFlush()) {
       shared_this->FlushLocked();
@@ -120,15 +120,15 @@ void File::Flush() {
 }
 
 // IMPORTANT: Not thread safe.
-void File::EnsureCapacity(size_t additional_bytes) {
+void File::EnsureCapacityLocked(size_t additional_bytes) {
   if ((buffer_offset_ + additional_bytes) > buffer_.capacity()) {
     buffer_.resize(buffer_.capacity() * 2);
   }
 }
 
 // IMPORTANT: Not thread safe.
-void File::CopyData(const std::vector<uint8_t> &bytes) {
-  EnsureCapacity(bytes.size());
+void File::CopyDataLocked(const std::vector<uint8_t> &bytes) {
+  EnsureCapacityLocked(bytes.size());
   std::copy(bytes.begin(), bytes.end(), buffer_.begin() + buffer_offset_);
   buffer_offset_ += bytes.size();
 }
