@@ -104,6 +104,13 @@ class MockAuthResultCache : public AuthResultCache {
 
   // Test unhandled event type
   {
+    SNTEndpointSecurityAuthorizer *authClient =
+      [[SNTEndpointSecurityAuthorizer alloc] initWithESAPI:mockESApi
+                                                   metrics:nullptr
+                                            execController:self.mockExecController
+                                        compilerController:nil
+                                           authResultCache:nullptr];
+
     // Temporarily change the event type
     esMsg.event_type = ES_EVENT_TYPE_NOTIFY_EXEC;
     XCTAssertThrows([authClient handleMessage:Message(mockESApi, &esMsg)
