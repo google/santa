@@ -129,6 +129,8 @@ NSDictionary *validMetricsDict = nil;
 
   OCMStub([self.mockMOLAuthenticatingURLSession alloc])
     .andReturn(self.mockMOLAuthenticatingURLSession);
+  OCMStub([self.mockMOLAuthenticatingURLSession initWithSessionConfiguration:[OCMArg any]])
+    .andReturn(self.mockMOLAuthenticatingURLSession);
   OCMStub([self.mockMOLAuthenticatingURLSession session]).andReturn(self.mockSession);
 
   NSHTTPURLResponse *response =
