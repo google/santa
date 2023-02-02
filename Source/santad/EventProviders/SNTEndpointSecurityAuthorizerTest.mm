@@ -117,10 +117,10 @@ class MockAuthResultCache : public AuthResultCache {
   {
     SNTEndpointSecurityAuthorizer *authClient =
       [[SNTEndpointSecurityAuthorizer alloc] initWithESAPI:mockESApi
-                                                  metrics:nullptr
+                                                   metrics:nullptr
                                             execController:self.mockExecController
                                         compilerController:nil
-                                          authResultCache:nullptr];
+                                           authResultCache:nullptr];
 
     id mockAuthClient = OCMPartialMock(authClient);
 
@@ -154,10 +154,10 @@ class MockAuthResultCache : public AuthResultCache {
   {
     SNTEndpointSecurityAuthorizer *authClient =
       [[SNTEndpointSecurityAuthorizer alloc] initWithESAPI:mockESApi
-                                                  metrics:nullptr
+                                                   metrics:nullptr
                                             execController:self.mockExecController
                                         compilerController:nil
-                                          authResultCache:nullptr];
+                                           authResultCache:nullptr];
 
     id mockAuthClient = OCMPartialMock(authClient);
 
