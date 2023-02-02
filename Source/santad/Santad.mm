@@ -310,6 +310,22 @@ void SantadMain(std::shared_ptr<EndpointSecurityAPI> esapi, std::shared_ptr<Logg
                                    LOGI(@"StaticRules set has changed, flushing cache.");
                                    auth_result_cache->FlushCache(FlushCacheMode::kAllCaches);
                                  }],
+    [[SNTKVOManager alloc] initWithObject:configurator
+                                 selector:@selector(eventLogType)
+                                     type:[NSNumber class]
+                                 callback:^(NSNumber *oldValue, NSNumber *newValue) {
+                                   NSInteger oldLogType = [oldValue integerValue];
+                                   NSInteger newLogType = [newValue integerValue];
+
+                                   if (oldLogType == newLogType) {
+                                     return;
+                                   }
+
+                                   LOGW(@"EventLogType config changed (%ld --> %ld). Restarting...",
+                                        oldLogType, newLogType);
+
+                                   metrics->Export();
+                                 }],
   ];
 
   // Make the compiler happy. The variable is only used to ensure proper lifetime
