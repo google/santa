@@ -107,4 +107,8 @@ void Logger::LogFileAccess(
                                                   enriched_process, target, decision));
 }
 
+void Logger::Flush() {
+  writer_->Flush();
+}
+
 }  // namespace santa::santad::logs::endpoint_security

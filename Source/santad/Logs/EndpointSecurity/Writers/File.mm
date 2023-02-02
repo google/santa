@@ -39,7 +39,7 @@ std::shared_ptr<File> File::Create(NSString *path, uint64_t flush_timeout_ms,
     if (!shared_writer) {
       return;
     }
-    shared_writer->FlushBuffer();
+    shared_writer->FlushLocked();
   });
 
   dispatch_resume(ret_writer->timer_source_);
@@ -104,13 +104,19 @@ void File::Write(std::vector<uint8_t> &&bytes) {
     shared_this->CopyData(moved_bytes);
 
     if (shared_this->ShouldFlush()) {
-      shared_this->FlushBuffer();
+      shared_this->FlushLocked();
     }
   });
 }
 
 bool File::ShouldFlush() {
   return buffer_offset_ >= batch_size_bytes_;
+}
+
+void File::Flush() {
+  dispatch_sync(q_, ^{
+    FlushLocked();
+  });
 }
 
 // IMPORTANT: Not thread safe.
@@ -128,7 +134,7 @@ void File::CopyData(const std::vector<uint8_t> &bytes) {
 }
 
 // IMPORTANT: Not thread safe.
-void File::FlushBuffer() {
+void File::FlushLocked() {
   if (likely(buffer_offset_ > 0)) {
     write(file_handle_.fileDescriptor, buffer_.data(), buffer_offset_);
 

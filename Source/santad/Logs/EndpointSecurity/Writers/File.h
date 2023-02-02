@@ -42,13 +42,14 @@ class File : public Writer, public std::enable_shared_from_this<File> {
   ~File();
 
   void Write(std::vector<uint8_t> &&bytes) override;
+  void Flush() override;
 
   friend class santa::santad::logs::endpoint_security::writers::FilePeer;
 
  private:
   void OpenFileHandle();
   void WatchLogFile();
-  void FlushBuffer();
+  void FlushLocked();
   bool ShouldFlush();
 
   void EnsureCapacity(size_t additional_bytes);
