@@ -39,7 +39,7 @@ std::vector<uint8_t> Empty::SerializeMessage(const EnrichedExchange &msg) {
   return {};
 }
 
-std::vector<uint8_t> Empty::SerializeMessage(const EnrichedExec &msg) {
+std::vector<uint8_t> Empty::SerializeMessage(const EnrichedExec &msg, SNTCachedDecision *cd) {
   return {};
 }
 

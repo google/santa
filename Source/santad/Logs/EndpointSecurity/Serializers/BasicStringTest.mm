@@ -97,7 +97,7 @@ std::string BasicStringSerializeMessage(es_message_t *esMsg) {
 
   self.mockDecisionCache = OCMClassMock([SNTDecisionCache class]);
   OCMStub([self.mockDecisionCache sharedCache]).andReturn(self.mockDecisionCache);
-  OCMStub([self.mockDecisionCache cachedDecisionForFile:{}])
+  OCMStub([self.mockDecisionCache resetTimestampForCachedDecision:{}])
     .ignoringNonObjectArgs()
     .andReturn(self.testCachedDecision);
 }

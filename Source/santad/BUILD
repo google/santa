@@ -137,6 +137,9 @@ objc_library(
         "//Source/common:SNTCachedDecision",
         "//Source/common:SNTCommonEnums",
         "//Source/common:SNTRule",
+        "//Source/common:SantaCache",
+        "//Source/common:SantaVnode",
+        "//Source/common:SantaVnodeHash",
     ],
 )
 
@@ -409,6 +412,7 @@ objc_library(
         ":EndpointSecurityEnrichedTypes",
         ":EndpointSecurityMessage",
         ":SNTDecisionCache",
+        "//Source/common:SNTCachedDecision",
         "//Source/common:SNTCommonEnums",
         "//Source/common:SNTConfigurator",
     ],
@@ -437,6 +441,7 @@ objc_library(
     hdrs = ["Logs/EndpointSecurity/Serializers/Empty.h"],
     deps = [
         ":EndpointSecuritySerializer",
+        "//Source/common:SNTCachedDecision",
     ],
 )
 

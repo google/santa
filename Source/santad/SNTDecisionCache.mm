@@ -17,17 +17,20 @@
 #include <dispatch/dispatch.h>
 
 #import "Source/common/SNTRule.h"
+#include "Source/common/SantaCache.h"
+#include "Source/common/SantaVnode.h"
+#include "Source/common/SantaVnodeHash.h"
 #import "Source/santad/DataLayer/SNTRuleTable.h"
 #import "Source/santad/SNTDatabaseController.h"
 
 @interface SNTDecisionCache ()
-@property NSMutableDictionary<NSNumber *, SNTCachedDecision *> *detailStore;
-@property dispatch_queue_t detailStoreQueue;
 // Cache for sha256 -> date of last timestamp reset.
 @property NSCache<NSString *, NSDate *> *timestampResetMap;
 @end
 
-@implementation SNTDecisionCache
+@implementation SNTDecisionCache {
+  SantaCache<SantaVnode, SNTCachedDecision *> _decisionCache;
+}
 
 + (instancetype)sharedCache {
   static SNTDecisionCache *cache;
@@ -41,15 +44,6 @@
 - (instancetype)init {
   self = [super init];
   if (self) {
-    // TODO(mlw): We should protect this structure with a read/write lock
-    // instead of a serial dispatch queue since it's expected that most most
-    // accesses will be lookups, not caching new items.
-    _detailStore = [NSMutableDictionary dictionaryWithCapacity:1000];
-    _detailStoreQueue = dispatch_queue_create(
-      "com.google.santa.daemon.detail_store",
-      dispatch_queue_attr_make_with_qos_class(DISPATCH_QUEUE_SERIAL_WITH_AUTORELEASE_POOL,
-                                              QOS_CLASS_USER_INTERACTIVE, 0));
-
     _timestampResetMap = [[NSCache alloc] init];
     _timestampResetMap.countLimit = 100;
   }
@@ -57,32 +51,24 @@
 }
 
 - (void)cacheDecision:(SNTCachedDecision *)cd {
-  dispatch_sync(self.detailStoreQueue, ^{
-    self.detailStore[@(cd.vnodeId.fileid)] = cd;
-  });
+  self->_decisionCache.set(cd.vnodeId, cd);
 }
 
 - (SNTCachedDecision *)cachedDecisionForFile:(const struct stat &)statInfo {
-  __block SNTCachedDecision *cd;
-  dispatch_sync(self.detailStoreQueue, ^{
-    cd = self.detailStore[@(statInfo.st_ino)];
-  });
-  return cd;
+  return self->_decisionCache.get(SantaVnode::VnodeForFile(statInfo));
 }
 
 - (void)forgetCachedDecisionForFile:(const struct stat &)statInfo {
-  dispatch_sync(self.detailStoreQueue, ^{
-    [self.detailStore removeObjectForKey:@(statInfo.st_ino)];
-  });
+  self->_decisionCache.remove(SantaVnode::VnodeForFile(statInfo));
 }
 
 // Whenever a cached decision resulting from a transitive allowlist rule is used to allow the
 // execution of a binary, we update the timestamp on the transitive rule in the rules database.
 // To prevent writing to the database too often, we space out consecutive writes by 3600 seconds.
-- (void)resetTimestampForCachedDecision:(const struct stat &)statInfo {
+- (SNTCachedDecision *)resetTimestampForCachedDecision:(const struct stat &)statInfo {
   SNTCachedDecision *cd = [self cachedDecisionForFile:statInfo];
   if (!cd || cd.decision != SNTEventStateAllowTransitive || !cd.sha256) {
-    return;
+    return cd;
   }
 
   NSDate *lastUpdate = [self.timestampResetMap objectForKey:cd.sha256];
@@ -94,6 +80,8 @@
     [[SNTDatabaseController ruleTable] resetTimestampForRule:rule];
     [self.timestampResetMap setObject:[NSDate date] forKey:cd.sha256];
   }
+
+  return cd;
 }
 
 @end

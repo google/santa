@@ -418,15 +418,12 @@ std::vector<uint8_t> Protobuf::SerializeMessage(const EnrichedExchange &msg) {
   return FinalizeProto(santa_msg);
 }
 
-std::vector<uint8_t> Protobuf::SerializeMessage(const EnrichedExec &msg) {
+std::vector<uint8_t> Protobuf::SerializeMessage(const EnrichedExec &msg, SNTCachedDecision *cd) {
   Arena arena;
   ::pbv1::SantaMessage *santa_msg = CreateDefaultProto(&arena, msg);
 
   // Only need to grab the shared instance once
   static SNTConfigurator *configurator = [SNTConfigurator configurator];
-
-  SNTCachedDecision *cd = [[SNTDecisionCache sharedCache]
-    cachedDecisionForFile:msg.es_msg().event.exec.target->executable->stat];
 
   GetDecisionEnum(cd.decision);
 

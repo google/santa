@@ -15,11 +15,12 @@
 #ifndef SANTA__SANTAD__LOGS_ENDPOINTSECURITY_SERIALIZERS_SERIALIZER_H
 #define SANTA__SANTAD__LOGS_ENDPOINTSECURITY_SERIALIZERS_SERIALIZER_H
 
+#import <Foundation/Foundation.h>
+
 #include <memory>
 #include <vector>
 
-#import <Foundation/Foundation.h>
-
+#import "Source/common/SNTCachedDecision.h"
 #import "Source/common/SNTCommonEnums.h"
 #include "Source/santad/EventProviders/EndpointSecurity/EnrichedTypes.h"
 
@@ -46,7 +47,8 @@ class Serializer {
   virtual std::vector<uint8_t> SerializeMessage(
     const santa::santad::event_providers::endpoint_security::EnrichedExchange &) = 0;
   virtual std::vector<uint8_t> SerializeMessage(
-    const santa::santad::event_providers::endpoint_security::EnrichedExec &) = 0;
+    const santa::santad::event_providers::endpoint_security::EnrichedExec &,
+    SNTCachedDecision *cd) = 0;
   virtual std::vector<uint8_t> SerializeMessage(
     const santa::santad::event_providers::endpoint_security::EnrichedExit &) = 0;
   virtual std::vector<uint8_t> SerializeMessage(

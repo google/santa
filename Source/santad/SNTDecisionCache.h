@@ -25,6 +25,6 @@
 - (void)cacheDecision:(SNTCachedDecision *)cd;
 - (SNTCachedDecision *)cachedDecisionForFile:(const struct stat &)statInfo;
 - (void)forgetCachedDecisionForFile:(const struct stat &)statInfo;
-- (void)resetTimestampForCachedDecision:(const struct stat &)statInfo;
+- (SNTCachedDecision *)resetTimestampForCachedDecision:(const struct stat &)statInfo;
 
 @end
