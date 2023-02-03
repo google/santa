@@ -32,7 +32,7 @@ SNTCachedDecision *MakeCachedDecision(struct stat sb, SNTEventState decision) {
   cd.decision = decision;
   cd.sha256 = @"e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855";
   cd.vnodeId = {
-    .fsid = 0,
+    .fsid = sb.st_dev,
     .fileid = sb.st_ino,
   };
 

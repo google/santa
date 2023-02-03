@@ -24,7 +24,6 @@
 #import "Source/santad/SNTDatabaseController.h"
 
 @interface SNTDecisionCache ()
-@property dispatch_queue_t detailStoreQueue;
 // Cache for sha256 -> date of last timestamp reset.
 @property NSCache<NSString *, NSDate *> *timestampResetMap;
 @end
@@ -45,15 +44,6 @@
 - (instancetype)init {
   self = [super init];
   if (self) {
-    // TODO(mlw): We should protect this structure with a read/write lock
-    // instead of a serial dispatch queue since it's expected that most most
-    // accesses will be lookups, not caching new items.
-    // _detailStore = [NSMutableDictionary dictionaryWithCapacity:1000];
-    _detailStoreQueue = dispatch_queue_create(
-      "com.google.santa.daemon.detail_store",
-      dispatch_queue_attr_make_with_qos_class(DISPATCH_QUEUE_SERIAL_WITH_AUTORELEASE_POOL,
-                                              QOS_CLASS_USER_INTERACTIVE, 0));
-
     _timestampResetMap = [[NSCache alloc] init];
     _timestampResetMap.countLimit = 100;
   }
