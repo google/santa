@@ -77,7 +77,7 @@ double watchdogRAMPeak = 0;
   return self;
 }
 
-#pragma mark Kernel ops
+#pragma mark Cache ops
 
 - (void)cacheCounts:(void (^)(uint64_t, uint64_t))reply {
   NSArray<NSNumber *> *counts = self->_authResultCache->CacheCounts();

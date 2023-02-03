@@ -40,27 +40,27 @@ REGISTER_COMMAND_NAME(@"checkcache")
 }
 
 + (NSString *)shortHelpText {
-  return @"Prints the status of a file in the kernel cache.";
+  return @"Prints the status of a file in the cache.";
 }
 
 + (NSString *)longHelpText {
-  return (@"Checks the in-kernel cache for desired file.\n"
+  return (@"Checks the cache for desired file.\n"
           @"Returns 0 if successful, 1 otherwise");
 }
 
 - (void)runWithArguments:(NSArray *)arguments {
   SantaVnode vnodeID = [self vnodeIDForFile:arguments.firstObject];
-  [[self.daemonConn remoteObjectProxy]
+  [[self.daemonConn synchronousRemoteObjectProxy]
     checkCacheForVnodeID:vnodeID
                withReply:^(SNTAction action) {
                  if (action == SNTActionRespondAllow) {
-                   LOGI(@"File exists in [allowlist] kernel cache");
+                   LOGI(@"File exists in [allowlist] cache");
                    exit(0);
                  } else if (action == SNTActionRespondDeny) {
-                   LOGI(@"File exists in [blocklist] kernel cache");
+                   LOGI(@"File exists in [blocklist] cache");
                    exit(0);
                  } else if (action == SNTActionRespondAllowCompiler) {
-                   LOGI(@"File exists in [allowlist compiler] kernel cache");
+                   LOGI(@"File exists in [allowlist compiler] cache");
                    exit(0);
                  } else if (action == SNTActionUnset) {
                    LOGE(@"File does not exist in cache");
