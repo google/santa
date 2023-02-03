@@ -29,8 +29,8 @@ class FilePeer : public File {
   // Make constructors visible
   using File::File;
 
-  using File::CopyData;
-  using File::EnsureCapacity;
+  using File::CopyDataLocked;
+  using File::EnsureCapacityLocked;
   using File::ShouldFlush;
   using File::WatchLogFile;
 
@@ -192,7 +192,7 @@ bool WaitForBufferSize(std::shared_ptr<FilePeer> file, size_t expectedSize) {
   XCTAssertEqual(file->InternalBufferSize(), 0);
   XCTAssertEqual(file->InternalBufferCapacity(), initialCapacity);
 
-  file->EnsureCapacity(batchSize);
+  file->EnsureCapacityLocked(batchSize);
 
   // No data was written, so size is still 0
   XCTAssertEqual(file->InternalBufferSize(), 0);
@@ -201,7 +201,7 @@ bool WaitForBufferSize(std::shared_ptr<FilePeer> file, size_t expectedSize) {
   // the initial amount
   XCTAssertEqual(file->InternalBufferCapacity(), initialCapacity);
 
-  file->EnsureCapacity(initialCapacity + 100);
+  file->EnsureCapacityLocked(initialCapacity + 100);
 
   // No data was written, so size is still 0
   XCTAssertEqual(file->InternalBufferSize(), 0);
@@ -225,15 +225,15 @@ bool WaitForBufferSize(std::shared_ptr<FilePeer> file, size_t expectedSize) {
   XCTAssertEqual(file->InternalBufferSize(), 0);
   XCTAssertEqual(file->InternalBufferCapacity(), initialCapacity);
 
-  file->CopyData(bytes);
+  file->CopyDataLocked(bytes);
 
   // After a copy, buffer size should match copied data size
   XCTAssertEqual(file->InternalBufferSize(), bytes.size());
 
   // Do a couple more copies that should require the buffer to grow and then
   // confirm the size/capacity still matches expectations
-  file->CopyData(bytes);
-  file->CopyData(bytes);
+  file->CopyDataLocked(bytes);
+  file->CopyDataLocked(bytes);
   XCTAssertEqual(file->InternalBufferSize(), bytes.size() * 3);
   XCTAssertEqual(file->InternalBufferCapacity(), initialCapacity * 2);
 }
@@ -249,7 +249,7 @@ bool WaitForBufferSize(std::shared_ptr<FilePeer> file, size_t expectedSize) {
   XCTAssertFalse(file->ShouldFlush());
 
   // Copy some data into the buffer
-  file->CopyData(bytes);
+  file->CopyDataLocked(bytes);
 
   // Buffer size should be updated
   XCTAssertEqual(file->InternalBufferSize(), bytes.size());
@@ -258,8 +258,8 @@ bool WaitForBufferSize(std::shared_ptr<FilePeer> file, size_t expectedSize) {
   XCTAssertFalse(file->ShouldFlush());
 
   // Exceed the batch size
-  file->CopyData(bytes);
-  file->CopyData(bytes);
+  file->CopyDataLocked(bytes);
+  file->CopyDataLocked(bytes);
 
   // Should want to flush now that the batch size is exceeded
   XCTAssertTrue(file->ShouldFlush());

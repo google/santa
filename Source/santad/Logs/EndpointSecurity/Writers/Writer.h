@@ -24,6 +24,7 @@ class Writer {
   virtual ~Writer() = default;
 
   virtual void Write(std::vector<uint8_t>&& bytes) = 0;
+  virtual void Flush() = 0;
 };
 
 }  // namespace santa::santad::logs::endpoint_security::writers

@@ -28,6 +28,7 @@ namespace santa::santad::logs::endpoint_security::writers {
 class SpoolPeer : public Spool {
  public:
   // Make constructors visible
+  using Spool::FlushLocked;
   using Spool::Spool;
 
   std::string GetTypeUrl() { return type_url_; }
@@ -123,7 +124,7 @@ using santa::santad::logs::endpoint_security::writers::SpoolPeer;
   XCTAssertEqual([[self.fileMgr contentsOfDirectoryAtPath:self.spoolDir error:&err] count], 0);
 
   // Manual Flush
-  XCTAssertTrue(spool->Flush());
+  XCTAssertTrue(spool->FlushLocked());
 
   // A new log entry should exist
   XCTAssertEqual([[self.fileMgr contentsOfDirectoryAtPath:self.spoolDir error:&err] count], 1);

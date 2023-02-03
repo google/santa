@@ -39,6 +39,7 @@ extern NSString *const EventDispositionToString(EventDisposition d);
 class MetricsPeer : public Metrics {
  public:
   // Make base class constructors visible
+  using Metrics::FlushMetrics;
   using Metrics::Metrics;
 
   bool IsRunning() { return running_; }
@@ -72,7 +73,7 @@ using santa::santad::ProcessorToString;
 - (void)testStartStop {
   dispatch_source_t timer = dispatch_source_create(DISPATCH_SOURCE_TYPE_TIMER, 0, 0, self.q);
   auto metrics =
-    std::make_shared<MetricsPeer>(self.q, timer, 100, nil, nil, ^(santa::santad::Metrics *m) {
+    std::make_shared<MetricsPeer>(self.q, timer, 100, nil, nil, nil, ^(santa::santad::Metrics *m) {
       dispatch_semaphore_signal(self.sema);
     });
 
@@ -107,7 +108,7 @@ using santa::santad::ProcessorToString;
 
 - (void)testSetInterval {
   dispatch_source_t timer = dispatch_source_create(DISPATCH_SOURCE_TYPE_TIMER, 0, 0, self.q);
-  auto metrics = std::make_shared<MetricsPeer>(self.q, timer, 100, nil, nil,
+  auto metrics = std::make_shared<MetricsPeer>(self.q, timer, 100, nil, nil, nil,
                                                ^(santa::santad::Metrics *m){
                                                });
 
@@ -181,7 +182,7 @@ using santa::santad::ProcessorToString;
   int64_t nanos = 1234;
 
   dispatch_source_t timer = dispatch_source_create(DISPATCH_SOURCE_TYPE_TIMER, 0, 0, self.q);
-  auto metrics = std::make_shared<MetricsPeer>(self.q, timer, 100, nil, nil,
+  auto metrics = std::make_shared<MetricsPeer>(self.q, timer, 100, nil, nil, nil,
                                                ^(santa::santad::Metrics *m){
                                                  // This block intentionally left blank
                                                });
@@ -238,11 +239,11 @@ using santa::santad::ProcessorToString;
     });
 
   dispatch_source_t timer = dispatch_source_create(DISPATCH_SOURCE_TYPE_TIMER, 0, 0, self.q);
-  auto metrics =
-    std::make_shared<MetricsPeer>(self.q, timer, 100, mockEventProcessingTimes, mockEventCounts,
-                                  ^(santa::santad::Metrics *m){
-                                    // This block intentionally left blank
-                                  });
+  auto metrics = std::make_shared<MetricsPeer>(self.q, timer, 100, mockEventProcessingTimes,
+                                               mockEventCounts, nil,
+                                               ^(santa::santad::Metrics *m){
+                                                 // This block intentionally left blank
+                                               });
 
   metrics->SetEventMetrics(Processor::kAuthorizer, ES_EVENT_TYPE_AUTH_EXEC,
                            EventDisposition::kProcessed, nanos);

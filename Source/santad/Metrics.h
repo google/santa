@@ -49,11 +49,11 @@ using EventTimesTuple = std::tuple<Processor, es_event_type_t>;
 
 class Metrics : public std::enable_shared_from_this<Metrics> {
  public:
-  static std::shared_ptr<Metrics> Create(SNTMetricSet *metricSet, uint64_t interval);
+  static std::shared_ptr<Metrics> Create(SNTMetricSet *metric_set, uint64_t interval);
 
   Metrics(dispatch_queue_t q, dispatch_source_t timer_source, uint64_t interval,
           SNTMetricInt64Gauge *event_processing_times, SNTMetricCounter *event_counts,
-          void (^run_on_first_start)(Metrics *));
+          SNTMetricSet *metric_set, void (^run_on_first_start)(Metrics *));
 
   ~Metrics();
 
@@ -62,7 +62,8 @@ class Metrics : public std::enable_shared_from_this<Metrics> {
   void StopPoll();
   void SetInterval(uint64_t interval);
 
-  void FlushMetrics();
+  // Force an immediate flush and export of metrics
+  void Export();
 
   void SetEventMetrics(Processor processor, es_event_type_t event_type,
                        EventDisposition disposition, int64_t nanos);
@@ -70,16 +71,20 @@ class Metrics : public std::enable_shared_from_this<Metrics> {
   friend class santa::santad::MetricsPeer;
 
  private:
+  void FlushMetrics();
+  void ExportLocked(SNTMetricSet *metric_set);
+
   MOLXPCConnection *metrics_connection_;
   dispatch_queue_t q_;
   dispatch_source_t timer_source_;
   uint64_t interval_;
   SNTMetricInt64Gauge *event_processing_times_;
   SNTMetricCounter *event_counts_;
+  SNTMetricSet *metric_set_;
   // Tracks whether or not the timer_source should be running.
   // This helps manage dispatch source state to ensure the source is not
   // suspended, resumed, or cancelled while in an improper state.
-  bool running_;
+  bool running_ = false;
   void (^run_on_first_start_)(Metrics *);
 
   // Separate queue used for setting event metrics

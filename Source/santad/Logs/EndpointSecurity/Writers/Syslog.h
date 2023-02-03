@@ -26,6 +26,7 @@ class Syslog : public Writer {
   static std::shared_ptr<Syslog> Create();
 
   void Write(std::vector<uint8_t>&& bytes) override;
+  void Flush() override;
 };
 
 }  // namespace santa::santad::logs::endpoint_security::writers

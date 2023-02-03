@@ -108,27 +108,28 @@ NSString *const EventDispositionToString(EventDisposition d) {
   }
 }
 
-std::shared_ptr<Metrics> Metrics::Create(SNTMetricSet *metricSet, uint64_t interval) {
+std::shared_ptr<Metrics> Metrics::Create(SNTMetricSet *metric_set, uint64_t interval) {
   dispatch_queue_t q = dispatch_queue_create("com.google.santa.santametricsservice.q",
                                              DISPATCH_QUEUE_SERIAL_WITH_AUTORELEASE_POOL);
 
   dispatch_source_t timer_source = dispatch_source_create(DISPATCH_SOURCE_TYPE_TIMER, 0, 0, q);
 
   SNTMetricInt64Gauge *event_processing_times =
-    [metricSet int64GaugeWithName:@"/santa/event_processing_time"
-                       fieldNames:@[ @"Processor", @"Event" ]
-                         helpText:@"Time to process various event types by each processor"];
+    [metric_set int64GaugeWithName:@"/santa/event_processing_time"
+                        fieldNames:@[ @"Processor", @"Event" ]
+                          helpText:@"Time to process various event types by each processor"];
 
   SNTMetricCounter *event_counts =
-    [metricSet counterWithName:@"/santa/event_count"
-                    fieldNames:@[ @"Processor", @"Event", @"Disposition" ]
-                      helpText:@"Events received and processed by each processor"];
+    [metric_set counterWithName:@"/santa/event_count"
+                     fieldNames:@[ @"Processor", @"Event", @"Disposition" ]
+                       helpText:@"Events received and processed by each processor"];
 
-  std::shared_ptr<Metrics> metrics = std::make_shared<Metrics>(
-    q, timer_source, interval, event_processing_times, event_counts, ^(Metrics *metrics) {
-      SNTRegisterCoreMetrics();
-      metrics->EstablishConnection();
-    });
+  std::shared_ptr<Metrics> metrics =
+    std::make_shared<Metrics>(q, timer_source, interval, event_processing_times, event_counts,
+                              metric_set, ^(Metrics *metrics) {
+                                SNTRegisterCoreMetrics();
+                                metrics->EstablishConnection();
+                              });
 
   std::weak_ptr<Metrics> weak_metrics(metrics);
   dispatch_source_set_event_handler(metrics->timer_source_, ^{
@@ -137,10 +138,7 @@ std::shared_ptr<Metrics> Metrics::Create(SNTMetricSet *metricSet, uint64_t inter
       return;
     }
 
-    shared_metrics->FlushMetrics();
-
-    [[shared_metrics->metrics_connection_ remoteObjectProxy]
-      exportForMonitoring:[metricSet export]];
+    shared_metrics->ExportLocked(metric_set);
   });
 
   return metrics;
@@ -148,13 +146,13 @@ std::shared_ptr<Metrics> Metrics::Create(SNTMetricSet *metricSet, uint64_t inter
 
 Metrics::Metrics(dispatch_queue_t q, dispatch_source_t timer_source, uint64_t interval,
                  SNTMetricInt64Gauge *event_processing_times, SNTMetricCounter *event_counts,
-                 void (^run_on_first_start)(Metrics *))
+                 SNTMetricSet *metric_set, void (^run_on_first_start)(Metrics *))
     : q_(q),
       timer_source_(timer_source),
       interval_(interval),
       event_processing_times_(event_processing_times),
       event_counts_(event_counts),
-      running_(false),
+      metric_set_(metric_set),
       run_on_first_start_(run_on_first_start) {
   SetInterval(interval_);
 
@@ -182,6 +180,17 @@ void Metrics::EstablishConnection() {
   };
   [metrics_connection resume];
   metrics_connection_ = metrics_connection;
+}
+
+void Metrics::Export() {
+  dispatch_sync(q_, ^{
+    ExportLocked(metric_set_);
+  });
+}
+
+void Metrics::ExportLocked(SNTMetricSet *metric_set) {
+  FlushMetrics();
+  [[metrics_connection_ remoteObjectProxy] exportForMonitoring:[metric_set export]];
 }
 
 void Metrics::FlushMetrics() {
