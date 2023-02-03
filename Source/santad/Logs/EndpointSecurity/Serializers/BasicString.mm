@@ -241,15 +241,12 @@ std::vector<uint8_t> BasicString::SerializeMessage(const EnrichedExchange &msg) 
   return FinalizeString(str);
 }
 
-std::vector<uint8_t> BasicString::SerializeMessage(const EnrichedExec &msg) {
+std::vector<uint8_t> BasicString::SerializeMessage(const EnrichedExec &msg, SNTCachedDecision *cd) {
   const es_message_t &esm = msg.es_msg();
   std::string str = CreateDefaultString(1024);  // EXECs tend to be bigger, reserve more space.
 
   // Only need to grab the shared instance once
   static SNTConfigurator *configurator = [SNTConfigurator configurator];
-
-  SNTCachedDecision *cd =
-    [[SNTDecisionCache sharedCache] cachedDecisionForFile:esm.event.exec.target->executable->stat];
 
   str.append("action=EXEC|decision=");
   str.append(GetDecisionString(cd.decision));

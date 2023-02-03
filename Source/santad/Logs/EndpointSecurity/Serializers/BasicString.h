@@ -21,6 +21,7 @@
 #include <sstream>
 #include <vector>
 
+#import "Source/common/SNTCachedDecision.h"
 #include "Source/santad/EventProviders/EndpointSecurity/EndpointSecurityAPI.h"
 #include "Source/santad/Logs/EndpointSecurity/Serializers/Serializer.h"
 
@@ -41,7 +42,8 @@ class BasicString : public Serializer {
   std::vector<uint8_t> SerializeMessage(
     const santa::santad::event_providers::endpoint_security::EnrichedExchange &) override;
   std::vector<uint8_t> SerializeMessage(
-    const santa::santad::event_providers::endpoint_security::EnrichedExec &) override;
+    const santa::santad::event_providers::endpoint_security::EnrichedExec &,
+    SNTCachedDecision *) override;
   std::vector<uint8_t> SerializeMessage(
     const santa::santad::event_providers::endpoint_security::EnrichedExit &) override;
   std::vector<uint8_t> SerializeMessage(
