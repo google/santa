@@ -166,18 +166,9 @@ REGISTER_COMMAND_NAME(@"metrics")
 - (void)runWithArguments:(NSArray *)arguments {
   __block NSDictionary *metrics;
 
-  dispatch_group_t group = dispatch_group_create();
-  dispatch_group_enter(group);
-
-  [[self.daemonConn remoteObjectProxy] metrics:^(NSDictionary *exportedMetrics) {
+  [[self.daemonConn synchronousRemoteObjectProxy] metrics:^(NSDictionary *exportedMetrics) {
     metrics = exportedMetrics;
-    dispatch_group_leave(group);
   }];
-
-  // Wait a maximum of 5s for metrics collected from daemon to arrive.
-  if (dispatch_group_wait(group, dispatch_time(DISPATCH_TIME_NOW, NSEC_PER_SEC * 5))) {
-    fprintf(stderr, "Failed to retrieve metrics from daemon\n\n");
-  }
 
   metrics = [self filterMetrics:metrics withArguments:arguments];
 

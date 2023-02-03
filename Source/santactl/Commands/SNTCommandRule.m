@@ -210,87 +210,65 @@ REGISTER_COMMAND_NAME(@"rule")
 }
 
 - (void)printStateOfRule:(SNTRule *)rule daemonConnection:(MOLXPCConnection *)daemonConn {
+  id<SNTDaemonControlXPC> rop = [daemonConn synchronousRemoteObjectProxy];
   NSString *fileSHA256 = (rule.type == SNTRuleTypeBinary) ? rule.identifier : nil;
   NSString *certificateSHA256 = (rule.type == SNTRuleTypeCertificate) ? rule.identifier : nil;
   NSString *teamID = (rule.type == SNTRuleTypeTeamID) ? rule.identifier : nil;
-  dispatch_group_t group = dispatch_group_create();
-  dispatch_group_enter(group);
   __block NSMutableString *output;
-  [[daemonConn remoteObjectProxy] decisionForFilePath:nil
-                                           fileSHA256:fileSHA256
-                                    certificateSHA256:certificateSHA256
-                                               teamID:teamID
-                                                reply:^(SNTEventState s) {
-                                                  output = (SNTEventStateAllow & s)
-                                                             ? @"Allowed".mutableCopy
-                                                             : @"Blocked".mutableCopy;
-                                                  switch (s) {
-                                                    case SNTEventStateAllowUnknown:
-                                                    case SNTEventStateBlockUnknown:
-                                                      [output appendString:@" (Unknown)"];
-                                                      break;
-                                                    case SNTEventStateAllowBinary:
-                                                    case SNTEventStateBlockBinary:
-                                                      [output appendString:@" (Binary)"];
-                                                      break;
-                                                    case SNTEventStateAllowCertificate:
-                                                    case SNTEventStateBlockCertificate:
-                                                      [output appendString:@" (Certificate)"];
-                                                      break;
-                                                    case SNTEventStateAllowScope:
-                                                    case SNTEventStateBlockScope:
-                                                      [output appendString:@" (Scope)"];
-                                                      break;
-                                                    case SNTEventStateAllowCompiler:
-                                                      [output appendString:@" (Compiler)"];
-                                                      break;
-                                                    case SNTEventStateAllowTransitive:
-                                                      [output appendString:@" (Transitive)"];
-                                                      break;
-                                                    case SNTEventStateAllowTeamID:
-                                                    case SNTEventStateBlockTeamID:
-                                                      [output appendString:@" (TeamID)"];
-                                                      break;
-                                                    default: output = @"None".mutableCopy; break;
-                                                  }
-                                                  if (isatty(STDOUT_FILENO)) {
-                                                    if ((SNTEventStateAllow & s)) {
-                                                      [output insertString:@"\033[32m" atIndex:0];
-                                                      [output appendString:@"\033[0m"];
-                                                    } else if ((SNTEventStateBlock & s)) {
-                                                      [output insertString:@"\033[31m" atIndex:0];
-                                                      [output appendString:@"\033[0m"];
-                                                    } else {
-                                                      [output insertString:@"\033[33m" atIndex:0];
-                                                      [output appendString:@"\033[0m"];
-                                                    }
-                                                  }
-                                                  dispatch_group_leave(group);
-                                                }];
-  if (dispatch_group_wait(group, dispatch_time(DISPATCH_TIME_NOW, 5 * NSEC_PER_SEC))) {
-    printf("Cannot communicate with daemon");
-    exit(1);
-  }
+  [rop decisionForFilePath:nil
+                fileSHA256:fileSHA256
+         certificateSHA256:certificateSHA256
+                    teamID:teamID
+                     reply:^(SNTEventState s) {
+                       output =
+                         (SNTEventStateAllow & s) ? @"Allowed".mutableCopy : @"Blocked".mutableCopy;
+                       switch (s) {
+                         case SNTEventStateAllowUnknown:
+                         case SNTEventStateBlockUnknown: [output appendString:@" (Unknown)"]; break;
+                         case SNTEventStateAllowBinary:
+                         case SNTEventStateBlockBinary: [output appendString:@" (Binary)"]; break;
+                         case SNTEventStateAllowCertificate:
+                         case SNTEventStateBlockCertificate:
+                           [output appendString:@" (Certificate)"];
+                           break;
+                         case SNTEventStateAllowScope:
+                         case SNTEventStateBlockScope: [output appendString:@" (Scope)"]; break;
+                         case SNTEventStateAllowCompiler:
+                           [output appendString:@" (Compiler)"];
+                           break;
+                         case SNTEventStateAllowTransitive:
+                           [output appendString:@" (Transitive)"];
+                           break;
+                         case SNTEventStateAllowTeamID:
+                         case SNTEventStateBlockTeamID: [output appendString:@" (TeamID)"]; break;
+                         default: output = @"None".mutableCopy; break;
+                       }
+                       if (isatty(STDOUT_FILENO)) {
+                         if ((SNTEventStateAllow & s)) {
+                           [output insertString:@"\033[32m" atIndex:0];
+                           [output appendString:@"\033[0m"];
+                         } else if ((SNTEventStateBlock & s)) {
+                           [output insertString:@"\033[31m" atIndex:0];
+                           [output appendString:@"\033[0m"];
+                         } else {
+                           [output insertString:@"\033[33m" atIndex:0];
+                           [output appendString:@"\033[0m"];
+                         }
+                       }
+                     }];
 
-  dispatch_group_enter(group);
-  [[daemonConn remoteObjectProxy]
-    databaseRuleForBinarySHA256:fileSHA256
-              certificateSHA256:certificateSHA256
-                         teamID:teamID
-                          reply:^(SNTRule *r) {
-                            if (r.state == SNTRuleStateAllowTransitive) {
-                              NSDate *date =
-                                [NSDate dateWithTimeIntervalSinceReferenceDate:r.timestamp];
-                              [output
-                                appendString:[NSString stringWithFormat:@"\nlast access date: %@",
-                                                                        [date description]]];
-                            }
-                            dispatch_group_leave(group);
-                          }];
-  if (dispatch_group_wait(group, dispatch_time(DISPATCH_TIME_NOW, 5 * NSEC_PER_SEC))) {
-    printf("Cannot communicate with daemon");
-    exit(1);
-  }
+  [rop databaseRuleForBinarySHA256:fileSHA256
+                 certificateSHA256:certificateSHA256
+                            teamID:teamID
+                             reply:^(SNTRule *r) {
+                               if (r.state == SNTRuleStateAllowTransitive) {
+                                 NSDate *date =
+                                   [NSDate dateWithTimeIntervalSinceReferenceDate:r.timestamp];
+                                 [output appendString:[NSString
+                                                        stringWithFormat:@"\nlast access date: %@",
+                                                                         [date description]]];
+                               }
+                             }];
 
   printf("%s\n", output.UTF8String);
   exit(0);

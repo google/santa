@@ -44,41 +44,31 @@
     requestDict[kFCMToken] = self.syncState.pushNotificationsToken;
   }
 
-  dispatch_group_t group = dispatch_group_create();
-  dispatch_group_enter(group);
-  [[self.daemonConn remoteObjectProxy]
-    databaseRuleCounts:^(int64_t binary, int64_t certificate, int64_t compiler, int64_t transitive,
-                         int64_t teamID) {
-      requestDict[kBinaryRuleCount] = @(binary);
-      requestDict[kCertificateRuleCount] = @(certificate);
-      requestDict[kCompilerRuleCount] = @(compiler);
-      requestDict[kTransitiveRuleCount] = @(transitive);
-      requestDict[kTeamIDRuleCount] = @(teamID);
-      dispatch_group_leave(group);
-    }];
+  id<SNTDaemonControlXPC> rop = [self.daemonConn synchronousRemoteObjectProxy];
 
-  dispatch_group_enter(group);
-  [[self.daemonConn remoteObjectProxy] clientMode:^(SNTClientMode cm) {
+  // dispatch_group_t group = dispatch_group_create();
+  // dispatch_group_enter(group);
+  [rop databaseRuleCounts:^(int64_t binary, int64_t certificate, int64_t compiler,
+                            int64_t transitive, int64_t teamID) {
+    requestDict[kBinaryRuleCount] = @(binary);
+    requestDict[kCertificateRuleCount] = @(certificate);
+    requestDict[kCompilerRuleCount] = @(compiler);
+    requestDict[kTransitiveRuleCount] = @(transitive);
+    requestDict[kTeamIDRuleCount] = @(teamID);
+  }];
+
+  [rop clientMode:^(SNTClientMode cm) {
     switch (cm) {
       case SNTClientModeMonitor: requestDict[kClientMode] = kClientModeMonitor; break;
       case SNTClientModeLockdown: requestDict[kClientMode] = kClientModeLockdown; break;
       default: break;
     }
-    dispatch_group_leave(group);
   }];
 
   __block BOOL syncClean = NO;
-  dispatch_group_enter(group);
-  [[self.daemonConn remoteObjectProxy] syncCleanRequired:^(BOOL clean) {
+  [rop syncCleanRequired:^(BOOL clean) {
     syncClean = clean;
-    dispatch_group_leave(group);
   }];
-
-  // Stop the sync if we are unable to communicate with daemon.
-  if (dispatch_group_wait(group, dispatch_time(DISPATCH_TIME_NOW, 2 * NSEC_PER_SEC))) {
-    SLOGE(@"Unable to communicate with daemon.");
-    return NO;
-  }
 
   // If user requested it or we've never had a successful sync, try from a clean slate.
   if (syncClean) {
@@ -91,38 +81,29 @@
 
   if (!resp) return NO;
 
-  dispatch_group_enter(group);
   NSNumber *enableBundles = resp[kEnableBundles];
   if (!enableBundles) enableBundles = resp[kEnableBundlesDeprecated];
-  [[self.daemonConn remoteObjectProxy] setEnableBundles:[enableBundles boolValue]
-                                                  reply:^{
-                                                    dispatch_group_leave(group);
-                                                  }];
+  [rop setEnableBundles:[enableBundles boolValue]
+                  reply:^{
+                  }];
 
-  dispatch_group_enter(group);
   NSNumber *enableTransitiveRules = resp[kEnableTransitiveRules];
   if (!enableTransitiveRules) enableTransitiveRules = resp[kEnableTransitiveRulesDeprecated];
   if (!enableTransitiveRules) enableTransitiveRules = resp[kEnableTransitiveRulesSuperDeprecated];
   BOOL enabled = [enableTransitiveRules boolValue];
-  [[self.daemonConn remoteObjectProxy] setEnableTransitiveRules:enabled
-                                                          reply:^{
-                                                            dispatch_group_leave(group);
-                                                          }];
+  [rop setEnableTransitiveRules:enabled
+                          reply:^{
+                          }];
 
-  dispatch_group_enter(group);
   NSNumber *enableAllEventUpload = resp[kEnableAllEventUpload];
-  [[self.daemonConn remoteObjectProxy] setEnableAllEventUpload:[enableAllEventUpload boolValue]
-                                                         reply:^{
-                                                           dispatch_group_leave(group);
-                                                         }];
+  [rop setEnableAllEventUpload:[enableAllEventUpload boolValue]
+                         reply:^{
+                         }];
 
-  dispatch_group_enter(group);
   NSNumber *disableUnknownEventUpload = resp[kDisableUnknownEventUpload];
-  [[self.daemonConn remoteObjectProxy]
-    setDisableUnknownEventUpload:[disableUnknownEventUpload boolValue]
-                           reply:^{
-                             dispatch_group_leave(group);
-                           }];
+  [rop setDisableUnknownEventUpload:[disableUnknownEventUpload boolValue]
+                              reply:^{
+                              }];
 
   self.syncState.eventBatchSize = [resp[kBatchSize] unsignedIntegerValue] ?: kDefaultEventBatchSize;
 
@@ -170,7 +151,6 @@
     self.syncState.cleanSync = YES;
   }
 
-  dispatch_group_wait(group, dispatch_time(DISPATCH_TIME_NOW, 2 * NSEC_PER_SEC));
   return YES;
 }
 
