@@ -28,11 +28,15 @@ typedef struct SantaVnode {
     return fsid == rhs.fsid && fileid == rhs.fileid;
   }
 
-  static inline SantaVnode VnodeForFile(const es_file_t *es_file) {
+  static inline SantaVnode VnodeForFile(const struct stat &sb) {
     return SantaVnode{
-        .fsid = es_file->stat.st_dev,
-        .fileid = es_file->stat.st_ino,
+        .fsid = sb.st_dev,
+        .fileid = sb.st_ino,
     };
+  }
+
+  static inline SantaVnode VnodeForFile(const es_file_t *es_file) {
+    return VnodeForFile(es_file->stat);
   }
 #endif
 } SantaVnode;

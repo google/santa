@@ -24,4 +24,8 @@ void Null::Write(std::vector<uint8_t> &&bytes) {
   // Intentionally do nothing
 }
 
+void Null::Flush() {
+  // Intentionally do nothing
+}
+
 }  // namespace santa::santad::logs::endpoint_security::writers

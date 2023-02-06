@@ -81,7 +81,7 @@ void Spool::BeginFlushTask() {
       return;
     }
 
-    if (!shared_writer->Flush()) {
+    if (!shared_writer->FlushLocked()) {
       LOGE(@"Spool writer: periodic flush failed.");
     }
 
@@ -94,7 +94,13 @@ void Spool::BeginFlushTask() {
   flush_task_started_ = true;
 }
 
-bool Spool::Flush() {
+void Spool::Flush() {
+  dispatch_sync(q_, ^{
+    FlushLocked();
+  });
+}
+
+bool Spool::FlushLocked() {
   if (log_batch_writer_.Flush().ok()) {
     accumulated_bytes_ = 0;
     return true;
@@ -122,7 +128,7 @@ void Spool::Write(std::vector<uint8_t> &&bytes) {
     any.set_type_url(type_url_);
 
     if (shared_this->accumulated_bytes_ >= shared_this->spool_file_size_threshold_) {
-      shared_this->Flush();
+      shared_this->FlushLocked();
     }
 
     // Only write the new message if we have room left.

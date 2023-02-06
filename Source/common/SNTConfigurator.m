@@ -242,7 +242,10 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
 
 #pragma mark Singleton retriever
 
-+ (instancetype)configurator {
+// The returned value is marked unsafe_unretained to avoid unnecessary retain/release handling.
+// The object returned is guaranteed to exist for the lifetime of the process so there's no need
+// to do this handling.
++ (__unsafe_unretained instancetype)configurator {
   static SNTConfigurator *sharedConfigurator;
   static dispatch_once_t onceToken;
   dispatch_once(&onceToken, ^{
@@ -774,6 +777,10 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
   } else {
     return SNTEventLogTypeFilelog;
   }
+}
+
+- (NSString *)eventLogTypeRaw {
+  return self.configState[kEventLogType] ?: @"file";
 }
 
 - (NSString *)eventLogPath {

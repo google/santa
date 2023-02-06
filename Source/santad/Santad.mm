@@ -14,6 +14,7 @@
 
 #include "Source/santad/Santad.h"
 
+#include <cstdlib>
 #include <memory>
 
 #include "Source/common/PrefixTree.h"
@@ -310,6 +311,36 @@ void SantadMain(std::shared_ptr<EndpointSecurityAPI> esapi, std::shared_ptr<Logg
                                    LOGI(@"StaticRules set has changed, flushing cache.");
                                    auth_result_cache->FlushCache(FlushCacheMode::kAllCaches);
                                  }],
+    [[SNTKVOManager alloc]
+      initWithObject:configurator
+            selector:@selector(eventLogType)
+                type:[NSNumber class]
+            callback:^(NSNumber *oldValue, NSNumber *newValue) {
+              NSInteger oldLogType = [oldValue integerValue];
+              NSInteger newLogType = [newValue integerValue];
+
+              if (oldLogType == newLogType) {
+                return;
+              }
+
+              LOGW(@"EventLogType config changed (%ld --> %ld). Restarting...", oldLogType,
+                   newLogType);
+
+              dispatch_semaphore_t sema = dispatch_semaphore_create(0);
+
+              dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_HIGH, 0), ^{
+                logger->Flush();
+                metrics->Export();
+
+                dispatch_semaphore_signal(sema);
+              });
+
+              // Wait for a short amount of time for outstanding data to flush
+              dispatch_semaphore_wait(sema, dispatch_time(DISPATCH_TIME_NOW, 5 * NSEC_PER_SEC));
+
+              // Forcefully exit. The daemon will be restarted immediately.
+              exit(EXIT_SUCCESS);
+            }],
   ];
 
   // Make the compiler happy. The variable is only used to ensure proper lifetime

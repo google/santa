@@ -37,7 +37,7 @@ namespace es = santa::santad::event_providers::endpoint_security;
   int fake;
   XCTAssertEqual(e->SerializeMessage(*(es::EnrichedClose *)&fake).size(), 0);
   XCTAssertEqual(e->SerializeMessage(*(es::EnrichedExchange *)&fake).size(), 0);
-  XCTAssertEqual(e->SerializeMessage(*(es::EnrichedExec *)&fake).size(), 0);
+  XCTAssertEqual(e->SerializeMessage(*(es::EnrichedExec *)&fake, nil).size(), 0);
   XCTAssertEqual(e->SerializeMessage(*(es::EnrichedExit *)&fake).size(), 0);
   XCTAssertEqual(e->SerializeMessage(*(es::EnrichedFork *)&fake).size(), 0);
   XCTAssertEqual(e->SerializeMessage(*(es::EnrichedLink *)&fake).size(), 0);

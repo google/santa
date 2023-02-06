@@ -30,52 +30,49 @@
 - (BOOL)sync {
   [self performRequest:[self requestWithDictionary:nil]];
 
-  dispatch_group_t group = dispatch_group_create();
-  void (^replyBlock)(void) = ^{
-    dispatch_group_leave(group);
-  };
+  id<SNTDaemonControlXPC> rop = [self.daemonConn synchronousRemoteObjectProxy];
 
   // Set client mode if it changed
   if (self.syncState.clientMode) {
-    dispatch_group_enter(group);
-    [[self.daemonConn remoteObjectProxy] setClientMode:self.syncState.clientMode reply:replyBlock];
+    [rop setClientMode:self.syncState.clientMode
+                 reply:^{
+                 }];
   }
 
   // Remove clean sync flag if we did a clean sync
   if (self.syncState.cleanSync) {
-    dispatch_group_enter(group);
-    [[self.daemonConn remoteObjectProxy] setSyncCleanRequired:NO reply:replyBlock];
+    [rop setSyncCleanRequired:NO
+                        reply:^{
+                        }];
   }
 
   // Update allowlist/blocklist regexes
   if (self.syncState.allowlistRegex) {
-    dispatch_group_enter(group);
-    [[self.daemonConn remoteObjectProxy] setAllowedPathRegex:self.syncState.allowlistRegex
-                                                       reply:replyBlock];
+    [rop setAllowedPathRegex:self.syncState.allowlistRegex
+                       reply:^{
+                       }];
   }
   if (self.syncState.blocklistRegex) {
-    dispatch_group_enter(group);
-    [[self.daemonConn remoteObjectProxy] setBlockedPathRegex:self.syncState.blocklistRegex
-                                                       reply:replyBlock];
+    [rop setBlockedPathRegex:self.syncState.blocklistRegex
+                       reply:^{
+                       }];
   }
 
   if (self.syncState.blockUSBMount != nil) {
-    dispatch_group_enter(group);
-    [[self.daemonConn remoteObjectProxy] setBlockUSBMount:[self.syncState.blockUSBMount boolValue]
-                                                    reply:replyBlock];
+    [rop setBlockUSBMount:[self.syncState.blockUSBMount boolValue]
+                    reply:^{
+                    }];
   }
   if (self.syncState.remountUSBMode) {
-    dispatch_group_enter(group);
-    [[self.daemonConn remoteObjectProxy] setRemountUSBMode:self.syncState.remountUSBMode
-                                                     reply:replyBlock];
+    [rop setRemountUSBMode:self.syncState.remountUSBMode
+                     reply:^{
+                     }];
   }
 
   // Update last sync success
-  dispatch_group_enter(group);
-  [[self.daemonConn remoteObjectProxy] setFullSyncLastSuccess:[NSDate date] reply:replyBlock];
-
-  // Wait for dispatch group
-  dispatch_group_wait(group, dispatch_time(DISPATCH_TIME_NOW, 5 * NSEC_PER_SEC));
+  [rop setFullSyncLastSuccess:[NSDate date]
+                        reply:^{
+                        }];
 
   return YES;
 }

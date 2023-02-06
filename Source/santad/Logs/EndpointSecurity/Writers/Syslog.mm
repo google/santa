@@ -26,4 +26,8 @@ void Syslog::Write(std::vector<uint8_t> &&bytes) {
   os_log(OS_LOG_DEFAULT, "%{public}s", bytes.data());
 }
 
+void Syslog::Flush() {
+  // Nothing to do here
+}
+
 }  // namespace santa::santad::logs::endpoint_security::writers

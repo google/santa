@@ -53,6 +53,7 @@
   self.syncState.daemonConn = OCMClassMock([MOLXPCConnection class]);
   self.daemonConnRop = OCMProtocolMock(@protocol(SNTDaemonControlXPC));
   OCMStub([self.syncState.daemonConn remoteObjectProxy]).andReturn(self.daemonConnRop);
+  OCMStub([self.syncState.daemonConn synchronousRemoteObjectProxy]).andReturn(self.daemonConnRop);
 
   self.syncState.session = OCMClassMock([NSURLSession class]);
 

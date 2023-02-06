@@ -46,7 +46,7 @@ class Spool : public Writer, public std::enable_shared_from_this<Spool> {
   ~Spool();
 
   void Write(std::vector<uint8_t> &&bytes) override;
-  bool Flush();
+  void Flush() override;
 
   void BeginFlushTask();
 
@@ -54,6 +54,8 @@ class Spool : public Writer, public std::enable_shared_from_this<Spool> {
   friend class santa::santad::logs::endpoint_security::writers::SpoolPeer;
 
  private:
+  bool FlushLocked();
+
   dispatch_queue_t q_ = NULL;
   dispatch_source_t timer_source_ = NULL;
   ::fsspool::FsSpoolWriter spool_writer_;

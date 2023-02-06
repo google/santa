@@ -195,6 +195,13 @@
 @property(readonly, nonatomic) SNTEventLogType eventLogType;
 
 ///
+/// Returns the raw value of the EventLogType configuration key instead of being
+/// converted to the SNTEventLogType enum. If the key is not set, the default log
+/// type is returned.
+///
+@property(readonly, nonatomic) NSString *eventLogTypeRaw;
+
+///
 ///  If eventLogType is set to Filelog, eventLogPath will provide the path to save logs.
 ///  Defaults to /var/db/santa/santa.log.
 ///

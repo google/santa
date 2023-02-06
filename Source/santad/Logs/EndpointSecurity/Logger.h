@@ -65,6 +65,8 @@ class Logger {
     const santa::santad::event_providers::endpoint_security::EnrichedProcess &enriched_process,
     const std::string &target, FileAccessPolicyDecision decision);
 
+  void Flush();
+
   friend class santa::santad::logs::endpoint_security::LoggerPeer;
 
  private:

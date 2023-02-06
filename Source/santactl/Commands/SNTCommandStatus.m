@@ -46,116 +46,94 @@ REGISTER_COMMAND_NAME(@"status")
 
 - (void)runWithArguments:(NSArray *)arguments {
   dispatch_group_t group = dispatch_group_create();
+  id<SNTDaemonControlXPC> rop = [self.daemonConn synchronousRemoteObjectProxy];
 
   // Daemon status
   __block NSString *clientMode;
   __block uint64_t cpuEvents, ramEvents;
   __block double cpuPeak, ramPeak;
-  dispatch_group_enter(group);
-  [[self.daemonConn remoteObjectProxy] clientMode:^(SNTClientMode cm) {
+  [rop clientMode:^(SNTClientMode cm) {
     switch (cm) {
       case SNTClientModeMonitor: clientMode = @"Monitor"; break;
       case SNTClientModeLockdown: clientMode = @"Lockdown"; break;
       default: clientMode = [NSString stringWithFormat:@"Unknown (%ld)", cm]; break;
     }
-    dispatch_group_leave(group);
   }];
-  dispatch_group_enter(group);
-  [[self.daemonConn remoteObjectProxy] watchdogInfo:^(uint64_t wd_cpuEvents, uint64_t wd_ramEvents,
-                                                      double wd_cpuPeak, double wd_ramPeak) {
+
+  [rop watchdogInfo:^(uint64_t wd_cpuEvents, uint64_t wd_ramEvents, double wd_cpuPeak,
+                      double wd_ramPeak) {
     cpuEvents = wd_cpuEvents;
     cpuPeak = wd_cpuPeak;
     ramEvents = wd_ramEvents;
     ramPeak = wd_ramPeak;
-    dispatch_group_leave(group);
   }];
 
   BOOL fileLogging = ([[SNTConfigurator configurator] fileChangesRegex] != nil);
+  NSString *eventLogType = [[[SNTConfigurator configurator] eventLogTypeRaw] lowercaseString];
 
   SNTConfigurator *configurator = [SNTConfigurator configurator];
 
   // Cache status
   __block uint64_t rootCacheCount = -1, nonRootCacheCount = -1;
-  dispatch_group_enter(group);
-  [[self.daemonConn remoteObjectProxy] cacheCounts:^(uint64_t rootCache, uint64_t nonRootCache) {
+  [rop cacheCounts:^(uint64_t rootCache, uint64_t nonRootCache) {
     rootCacheCount = rootCache;
     nonRootCacheCount = nonRootCache;
-    dispatch_group_leave(group);
   }];
 
   // Database counts
   __block int64_t eventCount = -1, binaryRuleCount = -1, certRuleCount = -1, teamIDRuleCount = -1;
   __block int64_t compilerRuleCount = -1, transitiveRuleCount = -1;
-  dispatch_group_enter(group);
-  [[self.daemonConn remoteObjectProxy]
-    databaseRuleCounts:^(int64_t binary, int64_t certificate, int64_t compiler, int64_t transitive,
-                         int64_t teamID) {
-      binaryRuleCount = binary;
-      certRuleCount = certificate;
-      teamIDRuleCount = teamID;
-      compilerRuleCount = compiler;
-      transitiveRuleCount = transitive;
-      dispatch_group_leave(group);
-    }];
-  dispatch_group_enter(group);
-  [[self.daemonConn remoteObjectProxy] databaseEventCount:^(int64_t count) {
+  [rop databaseRuleCounts:^(int64_t binary, int64_t certificate, int64_t compiler,
+                            int64_t transitive, int64_t teamID) {
+    binaryRuleCount = binary;
+    certRuleCount = certificate;
+    teamIDRuleCount = teamID;
+    compilerRuleCount = compiler;
+    transitiveRuleCount = transitive;
+  }];
+  [rop databaseEventCount:^(int64_t count) {
     eventCount = count;
-    dispatch_group_leave(group);
   }];
 
   // Static rule count
   __block int64_t staticRuleCount = -1;
-  dispatch_group_enter(group);
-  [[self.daemonConn remoteObjectProxy] staticRuleCount:^(int64_t count) {
+  [rop staticRuleCount:^(int64_t count) {
     staticRuleCount = count;
-    dispatch_group_leave(group);
   }];
 
   // Sync status
   __block NSDate *fullSyncLastSuccess;
-  dispatch_group_enter(group);
-  [[self.daemonConn remoteObjectProxy] fullSyncLastSuccess:^(NSDate *date) {
+  [rop fullSyncLastSuccess:^(NSDate *date) {
     fullSyncLastSuccess = date;
-    dispatch_group_leave(group);
   }];
 
   __block NSDate *ruleSyncLastSuccess;
-  dispatch_group_enter(group);
-  [[self.daemonConn remoteObjectProxy] ruleSyncLastSuccess:^(NSDate *date) {
+  [rop ruleSyncLastSuccess:^(NSDate *date) {
     ruleSyncLastSuccess = date;
-    dispatch_group_leave(group);
   }];
 
   __block BOOL syncCleanReqd = NO;
-  dispatch_group_enter(group);
-  [[self.daemonConn remoteObjectProxy] syncCleanRequired:^(BOOL clean) {
+  [rop syncCleanRequired:^(BOOL clean) {
     syncCleanReqd = clean;
-    dispatch_group_leave(group);
   }];
 
   __block BOOL pushNotifications = NO;
   if ([[SNTConfigurator configurator] syncBaseURL]) {
-    dispatch_group_enter(group);
-    [[self.daemonConn remoteObjectProxy] pushNotifications:^(BOOL response) {
+    [rop pushNotifications:^(BOOL response) {
       pushNotifications = response;
-      dispatch_group_leave(group);
     }];
   }
 
   __block BOOL enableBundles = NO;
   if ([[SNTConfigurator configurator] syncBaseURL]) {
-    dispatch_group_enter(group);
-    [[self.daemonConn remoteObjectProxy] enableBundles:^(BOOL response) {
+    [rop enableBundles:^(BOOL response) {
       enableBundles = response;
-      dispatch_group_leave(group);
     }];
   }
 
   __block BOOL enableTransitiveRules = NO;
-  dispatch_group_enter(group);
-  [[self.daemonConn remoteObjectProxy] enableTransitiveRules:^(BOOL response) {
+  [rop enableTransitiveRules:^(BOOL response) {
     enableTransitiveRules = response;
-    dispatch_group_leave(group);
   }];
 
   __block BOOL watchItemsEnabled = NO;
@@ -163,20 +141,16 @@ REGISTER_COMMAND_NAME(@"status")
   __block NSString *watchItemsPolicyVersion = nil;
   __block NSString *watchItemsConfigPath = nil;
   __block NSTimeInterval watchItemsLastUpdateEpoch = 0;
-  dispatch_group_enter(group);
-  [[self.daemonConn remoteObjectProxy]
-    watchItemsState:^(BOOL enabled, uint64_t ruleCount, NSString *policyVersion,
-                      NSString *configPath, NSTimeInterval lastUpdateEpoch) {
-      watchItemsEnabled = enabled;
-      if (enabled) {
-        watchItemsRuleCount = ruleCount;
-        watchItemsPolicyVersion = policyVersion;
-        watchItemsConfigPath = configPath;
-        watchItemsLastUpdateEpoch = lastUpdateEpoch;
-      }
-
-      dispatch_group_leave(group);
-    }];
+  [rop watchItemsState:^(BOOL enabled, uint64_t ruleCount, NSString *policyVersion,
+                         NSString *configPath, NSTimeInterval lastUpdateEpoch) {
+    watchItemsEnabled = enabled;
+    if (enabled) {
+      watchItemsRuleCount = ruleCount;
+      watchItemsPolicyVersion = policyVersion;
+      watchItemsConfigPath = configPath;
+      watchItemsLastUpdateEpoch = lastUpdateEpoch;
+    }
+  }];
 
   // Wait a maximum of 5s for stats collected from daemon to arrive.
   if (dispatch_group_wait(group, dispatch_time(DISPATCH_TIME_NOW, NSEC_PER_SEC * 5))) {
@@ -205,6 +179,7 @@ REGISTER_COMMAND_NAME(@"status")
       @"daemon" : @{
         @"driver_connected" : @(YES),
         @"mode" : clientMode ?: @"null",
+        @"log_type" : eventLogType,
         @"file_logging" : @(fileLogging),
         @"watchdog_cpu_events" : @(cpuEvents),
         @"watchdog_ram_events" : @(ramEvents),
@@ -265,6 +240,7 @@ REGISTER_COMMAND_NAME(@"status")
   } else {
     printf(">>> Daemon Info\n");
     printf("  %-25s | %s\n", "Mode", [clientMode UTF8String]);
+    printf("  %-25s | %s\n", "Log Type", [eventLogType UTF8String]);
     printf("  %-25s | %s\n", "File Logging", (fileLogging ? "Yes" : "No"));
     printf("  %-25s | %s\n", "USB Blocking", (configurator.blockUSBMount ? "Yes" : "No"));
     if (configurator.blockUSBMount && configurator.remountUSBMode.count > 0) {
