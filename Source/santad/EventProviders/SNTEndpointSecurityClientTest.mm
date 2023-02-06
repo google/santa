@@ -369,6 +369,8 @@ using santa::santad::event_providers::endpoint_security::Message;
 
 - (void)testRespondToMessageWithAuthResultCacheable {
   es_message_t esMsg;
+  esMsg.event_type = ES_EVENT_TYPE_AUTH_EXEC;
+
   auto mockESApi = std::make_shared<MockEndpointSecurityAPI>();
   mockESApi->SetExpectationsRetainReleaseMessage();
 

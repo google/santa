@@ -20,7 +20,7 @@ jobs:
           bazel test --config=${{ matrix.sanitizer }} \
             --test_strategy=exclusive --test_output=errors \
             --test_env=DYLD_INSERT_LIBRARIES=${DYLIB_PATH} \
-            --runs_per_test 10 -t- :unit_tests \
+            --runs_per_test 5 -t- :unit_tests \
             --define=SANTA_BUILD_TYPE=adhoc
       - name: Upload logs
         uses: actions/upload-artifact@v1

@@ -89,30 +89,28 @@ class MockAuthResultCache : public AuthResultCache {
   es_process_t proc = MakeESProcess(&file);
   es_message_t esMsg = MakeESMessage(ES_EVENT_TYPE_AUTH_EXEC, &proc, ActionType::Auth);
 
-  auto mockESApi = std::make_shared<MockEndpointSecurityAPI>();
-  mockESApi->SetExpectationsESNewClient();
-  mockESApi->SetExpectationsRetainReleaseMessage();
-
-  // There is a benign leak of the mock object in this test.
-  // `handleMessage:recordEventMetrics:` will call `processMessage:handler:` in the parent
-  // class. This will dispatch to two blocks and create message copies. The block that
-  // handles `deadline` timeouts will not complete before the test finishes, and the
-  // mock object will think that it has been leaked.
-  ::testing::Mock::AllowLeak(mockESApi.get());
-
   dispatch_semaphore_t semaMetrics = dispatch_semaphore_create(0);
-
-  SNTEndpointSecurityAuthorizer *authClient =
-    [[SNTEndpointSecurityAuthorizer alloc] initWithESAPI:mockESApi
-                                                 metrics:nullptr
-                                          execController:self.mockExecController
-                                      compilerController:nil
-                                         authResultCache:nullptr];
-
-  id mockAuthClient = OCMPartialMock(authClient);
 
   // Test unhandled event type
   {
+    auto mockESApi = std::make_shared<MockEndpointSecurityAPI>();
+    mockESApi->SetExpectationsESNewClient();
+    mockESApi->SetExpectationsRetainReleaseMessage();
+
+    // There is a benign leak of the mock object in this test.
+    // `handleMessage:recordEventMetrics:` will call `processMessage:handler:` in the parent
+    // class. This will dispatch to two blocks and create message copies. The block that
+    // handles `deadline` timeouts will not complete before the test finishes, and the
+    // mock object will think that it has been leaked.
+    ::testing::Mock::AllowLeak(mockESApi.get());
+
+    SNTEndpointSecurityAuthorizer *authClient =
+      [[SNTEndpointSecurityAuthorizer alloc] initWithESAPI:mockESApi
+                                                   metrics:nullptr
+                                            execController:self.mockExecController
+                                        compilerController:nil
+                                           authResultCache:nullptr];
+
     // Temporarily change the event type
     esMsg.event_type = ES_EVENT_TYPE_NOTIFY_EXEC;
     XCTAssertThrows([authClient handleMessage:Message(mockESApi, &esMsg)
@@ -120,10 +118,25 @@ class MockAuthResultCache : public AuthResultCache {
                              XCTFail("Unhandled event types shouldn't call metrics recorder");
                            }]);
     esMsg.event_type = ES_EVENT_TYPE_AUTH_EXEC;
+    XCTBubbleMockVerifyAndClearExpectations(mockESApi.get());
   }
 
   // Test SNTExecutionController determines the event shouldn't be processed
   {
+    auto mockESApi = std::make_shared<MockEndpointSecurityAPI>();
+    mockESApi->SetExpectationsESNewClient();
+    mockESApi->SetExpectationsRetainReleaseMessage();
+    ::testing::Mock::AllowLeak(mockESApi.get());
+
+    SNTEndpointSecurityAuthorizer *authClient =
+      [[SNTEndpointSecurityAuthorizer alloc] initWithESAPI:mockESApi
+                                                   metrics:nullptr
+                                            execController:self.mockExecController
+                                        compilerController:nil
+                                           authResultCache:nullptr];
+
+    id mockAuthClient = OCMPartialMock(authClient);
+
     Message msg(mockESApi, &esMsg);
 
     OCMExpect([self.mockExecController synchronousShouldProcessExecEvent:msg])
@@ -145,11 +158,28 @@ class MockAuthResultCache : public AuthResultCache {
 
     XCTAssertSemaTrue(semaMetrics, 5, "Metrics not recorded within expected window");
     XCTAssertTrue(OCMVerifyAll(mockAuthClient));
+
+    [mockAuthClient stopMocking];
+    XCTBubbleMockVerifyAndClearExpectations(mockESApi.get());
   }
 
   // Test SNTExecutionController determines the event should be processed and
   // processMessage:handler: is called.
   {
+    auto mockESApi = std::make_shared<MockEndpointSecurityAPI>();
+    mockESApi->SetExpectationsESNewClient();
+    mockESApi->SetExpectationsRetainReleaseMessage();
+    ::testing::Mock::AllowLeak(mockESApi.get());
+
+    SNTEndpointSecurityAuthorizer *authClient =
+      [[SNTEndpointSecurityAuthorizer alloc] initWithESAPI:mockESApi
+                                                   metrics:nullptr
+                                            execController:self.mockExecController
+                                        compilerController:nil
+                                           authResultCache:nullptr];
+
+    id mockAuthClient = OCMPartialMock(authClient);
+
     Message msg(mockESApi, &esMsg);
 
     OCMExpect([self.mockExecController synchronousShouldProcessExecEvent:msg])
@@ -169,11 +199,10 @@ class MockAuthResultCache : public AuthResultCache {
 
     XCTAssertSemaTrue(semaMetrics, 5, "Metrics not recorded within expected window");
     XCTAssertTrue(OCMVerifyAll(mockAuthClient));
+
+    [mockAuthClient stopMocking];
+    XCTBubbleMockVerifyAndClearExpectations(mockESApi.get());
   }
-
-  XCTBubbleMockVerifyAndClearExpectations(mockESApi.get());
-
-  [mockAuthClient stopMocking];
 }
 
 - (void)testProcessMessageWaitThenAllow {
