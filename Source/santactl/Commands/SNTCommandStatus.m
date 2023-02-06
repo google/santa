@@ -69,8 +69,7 @@ REGISTER_COMMAND_NAME(@"status")
   }];
 
   BOOL fileLogging = ([[SNTConfigurator configurator] fileChangesRegex] != nil);
-  NSString *eventLogType =
-    [[[SNTConfigurator configurator] eventLogTypeRaw] lowercaseString] ?: @"unknown";
+  NSString *eventLogType = [[[SNTConfigurator configurator] eventLogTypeRaw] lowercaseString];
 
   SNTConfigurator *configurator = [SNTConfigurator configurator];
 
