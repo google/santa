@@ -69,6 +69,7 @@ REGISTER_COMMAND_NAME(@"status")
   }];
 
   BOOL fileLogging = ([[SNTConfigurator configurator] fileChangesRegex] != nil);
+  NSString *eventLogType = [[[SNTConfigurator configurator] eventLogTypeRaw] lowercaseString];
 
   SNTConfigurator *configurator = [SNTConfigurator configurator];
 
@@ -178,6 +179,7 @@ REGISTER_COMMAND_NAME(@"status")
       @"daemon" : @{
         @"driver_connected" : @(YES),
         @"mode" : clientMode ?: @"null",
+        @"log_type" : eventLogType,
         @"file_logging" : @(fileLogging),
         @"watchdog_cpu_events" : @(cpuEvents),
         @"watchdog_ram_events" : @(ramEvents),
@@ -238,6 +240,7 @@ REGISTER_COMMAND_NAME(@"status")
   } else {
     printf(">>> Daemon Info\n");
     printf("  %-25s | %s\n", "Mode", [clientMode UTF8String]);
+    printf("  %-25s | %s\n", "Log Type", [eventLogType UTF8String]);
     printf("  %-25s | %s\n", "File Logging", (fileLogging ? "Yes" : "No"));
     printf("  %-25s | %s\n", "USB Blocking", (configurator.blockUSBMount ? "Yes" : "No"));
     if (configurator.blockUSBMount && configurator.remountUSBMode.count > 0) {

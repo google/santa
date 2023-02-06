@@ -779,6 +779,10 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
   }
 }
 
+- (NSString *)eventLogTypeRaw {
+  return self.configState[kEventLogType] ?: @"file";
+}
+
 - (NSString *)eventLogPath {
   return self.configState[kEventLogPath] ?: @"/var/db/santa/santa.log";
 }
