@@ -46,7 +46,7 @@ sequenceDiagram
    server -->> client: eventupload response (200)
    end
    loop until all rules are downloaded
-   client ->> server: GET /ruledownload/<machine_id>
+   client ->> server: POST /ruledownload/<machine_id>
    server --> client: ruledownload response (200)
    end
    client ->> server: POST /postflight/<machine_id> request
