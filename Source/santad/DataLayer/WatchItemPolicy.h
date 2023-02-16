@@ -17,6 +17,7 @@
 
 #include <Kernel/kern/cs_blobs.h>
 
+#include <optional>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -36,18 +37,22 @@ static constexpr bool kWatchItemPolicyDefaultAuditOnly = true;
 struct WatchItemPolicy {
   struct Process {
     Process(std::string bp, std::string sid, std::string ti,
-            std::vector<uint8_t> cdh, std::string ch)
+            std::vector<uint8_t> cdh, std::string ch, std::optional<bool> pb)
         : binary_path(bp),
           signing_id(sid),
           team_id(ti),
           cdhash(std::move(cdh)),
-          certificate_sha256(ch) {}
+          certificate_sha256(ch),
+          platform_binary(pb) {}
 
     bool operator==(const Process &other) const {
       return binary_path == other.binary_path &&
              signing_id == other.signing_id && team_id == other.team_id &&
              cdhash == other.cdhash &&
-             certificate_sha256 == other.certificate_sha256;
+             certificate_sha256 == other.certificate_sha256 &&
+             platform_binary.has_value() == other.platform_binary.has_value() &&
+             platform_binary.value_or(false) ==
+                 other.platform_binary.value_or(false);
     }
 
     bool operator!=(const Process &other) const { return !(*this == other); }
@@ -57,6 +62,7 @@ struct WatchItemPolicy {
     std::string team_id;
     std::vector<uint8_t> cdhash;
     std::string certificate_sha256;
+    std::optional<bool> platform_binary;
   };
 
   WatchItemPolicy(std::string_view n, std::string_view p,

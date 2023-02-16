@@ -384,6 +384,7 @@ void ClearWatchItemPolicyProcess(WatchItemPolicy::Process &proc) {
   esProc.codesigning_flags = CS_SIGNED;
   esProc.team_id = MakeESStringToken(teamId);
   esProc.signing_id = MakeESStringToken(signingId);
+  esProc.is_platform_binary = true;
   std::memcpy(esProc.cdhash, cdhashBytes.data(), sizeof(esProc.cdhash));
 
   auto mockESApi = std::make_shared<MockEndpointSecurityAPI>();
@@ -405,7 +406,7 @@ void ClearWatchItemPolicyProcess(WatchItemPolicy::Process &proc) {
     .ignoringNonObjectArgs()
     .andReturn(@(instigatingCertHash));
 
-  WatchItemPolicy::Process policyProc("", "", "", {}, "");
+  WatchItemPolicy::Process policyProc("", "", "", {}, "", std::nullopt);
 
   {
     // Process policy matching single attribute - path
@@ -463,6 +464,15 @@ void ClearWatchItemPolicyProcess(WatchItemPolicy::Process &proc) {
   }
 
   {
+    // Process policy matching single attribute - platform binary
+    ClearWatchItemPolicyProcess(policyProc);
+    policyProc.platform_binary = std::make_optional(true);
+    XCTAssertTrue([accessClient policyProcess:policyProc matchesESProcess:&esProc]);
+    policyProc.platform_binary = std::make_optional(false);
+    XCTAssertFalse([accessClient policyProcess:policyProc matchesESProcess:&esProc]);
+  }
+
+  {
     // Process policy with only a subset of matching attributes
     ClearWatchItemPolicyProcess(policyProc);
     policyProc.binary_path = "foo";
@@ -486,7 +496,7 @@ void ClearWatchItemPolicyProcess(WatchItemPolicy::Process &proc) {
   const char *instigatingPath = "/path/to/proc";
   const char *instigatingTeamID = "my_teamid";
   const char *instigatingCertHash = "abc123";
-  WatchItemPolicy::Process policyProc(instigatingPath, "", "", {}, "");
+  WatchItemPolicy::Process policyProc(instigatingPath, "", "", {}, "", std::nullopt);
   std::array<uint8_t, 20> instigatingCDHash;
   instigatingCDHash.fill(0x41);
   es_file_t esFile = MakeESFile(instigatingPath);

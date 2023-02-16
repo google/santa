@@ -516,7 +516,7 @@ static NSString *RepeatedString(NSString *str, NSUInteger len) {
   XCTAssertTrue(std::holds_alternative<santatest::ProcessList>(proc_list));
   XCTAssertEqual(std::get<santatest::ProcessList>(proc_list).size(), 1);
   XCTAssertEqual(std::get<santatest::ProcessList>(proc_list)[0],
-                 WatchItemPolicy::Process("mypath", "", "", {}, ""));
+                 WatchItemPolicy::Process("mypath", "", "", {}, "", std::nullopt));
 
   // Test SigningID length limits
   proc_list = VerifyConfigWatchItemProcesses(@{
@@ -535,7 +535,7 @@ static NSString *RepeatedString(NSString *str, NSUInteger len) {
   XCTAssertTrue(std::holds_alternative<santatest::ProcessList>(proc_list));
   XCTAssertEqual(std::get<santatest::ProcessList>(proc_list).size(), 1);
   XCTAssertEqual(std::get<santatest::ProcessList>(proc_list)[0],
-                 WatchItemPolicy::Process("", "com.google.test", "", {}, ""));
+                 WatchItemPolicy::Process("", "com.google.test", "", {}, "", std::nullopt));
 
   // Test TeamID length limits
   proc_list = VerifyConfigWatchItemProcesses(@{
@@ -552,7 +552,7 @@ static NSString *RepeatedString(NSString *str, NSUInteger len) {
   XCTAssertTrue(std::holds_alternative<santatest::ProcessList>(proc_list));
   XCTAssertEqual(std::get<santatest::ProcessList>(proc_list).size(), 1);
   XCTAssertEqual(std::get<santatest::ProcessList>(proc_list)[0],
-                 WatchItemPolicy::Process("", "", "myvalidtid", {}, ""));
+                 WatchItemPolicy::Process("", "", "myvalidtid", {}, "", std::nullopt));
 
   // Test CDHash length limits
   proc_list = VerifyConfigWatchItemProcesses(@{
@@ -579,7 +579,7 @@ static NSString *RepeatedString(NSString *str, NSUInteger len) {
   XCTAssertTrue(std::holds_alternative<santatest::ProcessList>(proc_list));
   XCTAssertEqual(std::get<santatest::ProcessList>(proc_list).size(), 1);
   XCTAssertEqual(std::get<santatest::ProcessList>(proc_list)[0],
-                 WatchItemPolicy::Process("", "", "", cdhashBytes, ""));
+                 WatchItemPolicy::Process("", "", "", cdhashBytes, "", std::nullopt));
 
   // Test Cert Hash length limits
   proc_list = VerifyConfigWatchItemProcesses(@{
@@ -610,7 +610,22 @@ static NSString *RepeatedString(NSString *str, NSUInteger len) {
   XCTAssertTrue(std::holds_alternative<santatest::ProcessList>(proc_list));
   XCTAssertEqual(std::get<santatest::ProcessList>(proc_list).size(), 1);
   XCTAssertEqual(std::get<santatest::ProcessList>(proc_list)[0],
-                 WatchItemPolicy::Process("", "", "", {}, [certHash UTF8String]));
+                 WatchItemPolicy::Process("", "", "", {}, [certHash UTF8String], std::nullopt));
+
+  // Test valid invalid PlatformBinary type
+  proc_list = VerifyConfigWatchItemProcesses(
+    @{kWatchItemConfigKeyProcesses : @[ @{kWatchItemConfigKeyProcessesPlatformBinary : @"YES"} ]},
+    &err);
+  XCTAssertTrue(std::holds_alternative<Unit>(proc_list));
+
+  // Test valid valid PlatformBinary
+  proc_list = VerifyConfigWatchItemProcesses(
+    @{kWatchItemConfigKeyProcesses : @[ @{kWatchItemConfigKeyProcessesPlatformBinary : @(YES)} ]},
+    &err);
+  XCTAssertTrue(std::holds_alternative<santatest::ProcessList>(proc_list));
+  XCTAssertEqual(std::get<santatest::ProcessList>(proc_list).size(), 1);
+  XCTAssertEqual(std::get<santatest::ProcessList>(proc_list)[0],
+                 WatchItemPolicy::Process("", "", "", {}, "", std::make_optional(true)));
 
   // Test valid multiple attributes, multiple procs
   proc_list = VerifyConfigWatchItemProcesses(@{
@@ -621,6 +636,7 @@ static NSString *RepeatedString(NSString *str, NSUInteger len) {
         kWatchItemConfigKeyProcessesTeamID : @"validtid_1",
         kWatchItemConfigKeyProcessesCDHash : cdhash,
         kWatchItemConfigKeyProcessesCertificateSha256 : certHash,
+        kWatchItemConfigKeyProcessesPlatformBinary : @(YES),
       },
       @{
         kWatchItemConfigKeyProcessesBinaryPath : @"mypath2",
@@ -628,6 +644,7 @@ static NSString *RepeatedString(NSString *str, NSUInteger len) {
         kWatchItemConfigKeyProcessesTeamID : @"validtid_2",
         kWatchItemConfigKeyProcessesCDHash : cdhash,
         kWatchItemConfigKeyProcessesCertificateSha256 : certHash,
+        kWatchItemConfigKeyProcessesPlatformBinary : @(NO),
       },
     ]
   },
@@ -636,10 +653,10 @@ static NSString *RepeatedString(NSString *str, NSUInteger len) {
   XCTAssertEqual(std::get<santatest::ProcessList>(proc_list).size(), 2);
   XCTAssertEqual(std::get<santatest::ProcessList>(proc_list)[0],
                  WatchItemPolicy::Process("mypath1", "com.google.test1", "validtid_1", cdhashBytes,
-                                          [certHash UTF8String]));
+                                          [certHash UTF8String], std::make_optional(true)));
   XCTAssertEqual(std::get<santatest::ProcessList>(proc_list)[1],
                  WatchItemPolicy::Process("mypath2", "com.google.test2", "validtid_2", cdhashBytes,
-                                          [certHash UTF8String]));
+                                          [certHash UTF8String], std::make_optional(false)));
 }
 
 - (void)testIsWatchItemNameValid {
@@ -774,8 +791,8 @@ static NSString *RepeatedString(NSString *str, NSUInteger len) {
   // Test multiple paths, options, and processes
   policies.clear();
   std::vector<WatchItemPolicy::Process> procs = {
-    WatchItemPolicy::Process("pa", "", "", {}, ""),
-    WatchItemPolicy::Process("pb", "", "", {}, ""),
+    WatchItemPolicy::Process("pa", "", "", {}, "", std::nullopt),
+    WatchItemPolicy::Process("pb", "", "", {}, "", std::nullopt),
   };
 
   XCTAssertTrue(ParseConfigSingleWatchItem(@"rule", @{

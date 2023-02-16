@@ -319,6 +319,12 @@ void PopulatePathTargets(const Message &msg, std::vector<PathTarget> &targets) {
   // configured process exception while the check for a valid code signature
   // is more broad and applies whether or not process exceptions exist.
   if (esProc->codesigning_flags & CS_SIGNED) {
+    // Check whether or not the process is a platform binary if specified by the policy.
+    if (policyProc.platform_binary.has_value() &&
+        policyProc.platform_binary.value() != esProc->is_platform_binary) {
+      return false;
+    }
+
     // If the policy contains a team ID, check that the instigating process
     // also has a team ID and matches the policy.
     if (!policyProc.team_id.empty() &&
