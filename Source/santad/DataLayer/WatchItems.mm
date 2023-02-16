@@ -347,7 +347,8 @@ std::variant<Unit, ProcessList> VerifyConfigWatchItemProcesses(NSDictionary *wat
             std::string(
               [(process[kWatchItemConfigKeyProcessesCertificateSha256] ?: @"") UTF8String]),
             process[kWatchItemConfigKeyProcessesPlatformBinary]
-              ? std::make_optional([process[kWatchItemConfigKeyProcessesPlatformBinary] boolValue])
+              ? std::make_optional(
+                  (bool)[process[kWatchItemConfigKeyProcessesPlatformBinary] boolValue])
               : std::nullopt));
 
           return true;
