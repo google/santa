@@ -345,6 +345,7 @@ objc_library(
         "//Source/common:Platform",
         "//Source/common:SNTCommonEnums",
         "//Source/common:SNTConfigurator",
+        "//Source/common:SNTMetricSet",
         "//Source/common:SantaCache",
         "//Source/common:SantaVnode",
         "//Source/common:SantaVnodeHash",
