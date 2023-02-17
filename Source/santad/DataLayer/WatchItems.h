@@ -45,6 +45,7 @@ extern NSString *const kWatchItemConfigKeyProcessesCertificateSha256;
 extern NSString *const kWatchItemConfigKeyProcessesSigningID;
 extern NSString *const kWatchItemConfigKeyProcessesTeamID;
 extern NSString *const kWatchItemConfigKeyProcessesCDHash;
+extern NSString *const kWatchItemConfigKeyProcessesPlatformBinary;
 
 // Forward declarations
 namespace santa::santad::data_layer {

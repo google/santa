@@ -18,7 +18,6 @@
 #include <Kernel/kern/cs_blobs.h>
 #include <ctype.h>
 #include <glob.h>
-#include <objc/NSObjCRuntime.h>
 #include <sys/syslimits.h>
 
 #include <algorithm>
@@ -56,6 +55,7 @@ NSString *const kWatchItemConfigKeyProcessesCertificateSha256 = @"CertificateSha
 NSString *const kWatchItemConfigKeyProcessesSigningID = @"SigningID";
 NSString *const kWatchItemConfigKeyProcessesTeamID = @"TeamID";
 NSString *const kWatchItemConfigKeyProcessesCDHash = @"CDHash";
+NSString *const kWatchItemConfigKeyProcessesPlatformBinary = @"PlatformBinary";
 
 // https://developer.apple.com/help/account/manage-your-team/locate-your-team-id/
 static constexpr NSUInteger kMaxTeamIDLength = 10;
@@ -292,6 +292,8 @@ std::variant<Unit, PathList> VerifyConfigWatchItemPaths(NSArray<id> *paths, NSEr
 ///     <string>AAAA</string>
 ///     <key>TeamID</key>
 ///     <string>BBBB</string>
+///     <key>PlatformBinary</key>
+///     <true/>
 ///   </dict>
 ///   <dict>
 ///     <key>CertificateSha256</key>
@@ -319,7 +321,9 @@ std::variant<Unit, ProcessList> VerifyConfigWatchItemProcesses(NSDictionary *wat
                                false, HexValidator(CS_CDHASH_LEN * 2)) ||
               !VerifyConfigKey(process, kWatchItemConfigKeyProcessesCertificateSha256,
                                [NSString class], err, false,
-                               HexValidator(CC_SHA256_DIGEST_LENGTH * 2))) {
+                               HexValidator(CC_SHA256_DIGEST_LENGTH * 2)) ||
+              !VerifyConfigKey(process, kWatchItemConfigKeyProcessesPlatformBinary,
+                               [NSNumber class], err, false, nil)) {
             PopulateError(err, @"Failed to verify key content");
             return false;
           }
@@ -329,7 +333,8 @@ std::variant<Unit, ProcessList> VerifyConfigWatchItemProcesses(NSDictionary *wat
               !process[kWatchItemConfigKeyProcessesSigningID] &&
               !process[kWatchItemConfigKeyProcessesTeamID] &&
               !process[kWatchItemConfigKeyProcessesCDHash] &&
-              !process[kWatchItemConfigKeyProcessesCertificateSha256]) {
+              !process[kWatchItemConfigKeyProcessesCertificateSha256] &&
+              !process[kWatchItemConfigKeyProcessesPlatformBinary]) {
             PopulateError(err, @"No valid attributes set in process dictionary");
             return false;
           }
@@ -340,7 +345,11 @@ std::variant<Unit, ProcessList> VerifyConfigWatchItemProcesses(NSDictionary *wat
             std::string([(process[kWatchItemConfigKeyProcessesTeamID] ?: @"") UTF8String]),
             HexStringToBytes(process[kWatchItemConfigKeyProcessesCDHash]),
             std::string(
-              [(process[kWatchItemConfigKeyProcessesCertificateSha256] ?: @"") UTF8String])));
+              [(process[kWatchItemConfigKeyProcessesCertificateSha256] ?: @"") UTF8String]),
+            process[kWatchItemConfigKeyProcessesPlatformBinary]
+              ? std::make_optional(
+                  (bool)[process[kWatchItemConfigKeyProcessesPlatformBinary] boolValue])
+              : std::nullopt));
 
           return true;
         })) {
