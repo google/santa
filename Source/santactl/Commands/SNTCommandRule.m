@@ -45,6 +45,27 @@ REGISTER_COMMAND_NAME(@"rule")
   return @"Manually add/remove/check rules.";
 }
 
+- (BOOL)isWellformedSHA256:(NSString *)hash {
+  if (hash.length != 64) {
+    return NO;
+  }
+
+  NSCharacterSet *hexChars =
+    [NSCharacterSet characterSetWithCharactersInString:@"0123456789ABCDEF"];
+
+  return [@"" isEqualToString:[hash stringByTrimmingCharactersInSet:hexChars]];
+}
+
+- (BOOL)isWellformedTeamID:(NSString *)teamID {
+  if (teamID.length != 10) {
+    return NO;
+  }
+
+  NSCharacterSet *validChars = [NSCharacterSet alphanumericCharacterSet];
+
+  return [@"" isEqualToString:[teamID stringByTrimmingCharactersInSet:validChars]];
+}
+
 + (NSString *)longHelpText {
   return (@"Usage: santactl rule [options]\n"
           @"  One of:\n"
@@ -125,11 +146,13 @@ REGISTER_COMMAND_NAME(@"rule")
       if (++i > arguments.count - 1) {
         [self printErrorUsageAndExit:@"--identifier requires an argument"];
       }
+
       newRule.identifier = arguments[i];
     } else if ([arg caseInsensitiveCompare:@"--sha256"] == NSOrderedSame) {
       if (++i > arguments.count - 1) {
         [self printErrorUsageAndExit:@"--sha256 requires an argument"];
       }
+
       newRule.identifier = arguments[i];
     } else if ([arg caseInsensitiveCompare:@"--message"] == NSOrderedSame) {
       if (++i > arguments.count - 1) {
@@ -145,13 +168,23 @@ REGISTER_COMMAND_NAME(@"rule")
     }
   }
 
-  if (newRule.type == SNTRuleTypeBinary || newRule.type == SNTRuleTypeCertificate) {
-    NSCharacterSet *nonHex =
-      [[NSCharacterSet characterSetWithCharactersInString:@"0123456789ABCDEF"] invertedSet];
-    if ([[newRule.identifier uppercaseString] stringByTrimmingCharactersInSet:nonHex].length !=
-        64) {
-      [self printErrorUsageAndExit:@"BINARY or CERTIFICATE rules require a valid SHA-256"];
-    }
+  switch (newRule.type) {
+    case SNTRuleTypeBinary:
+    case SNTRuleTypeCertificate:
+      if (![self isWellformedSHA256:[newRule.identifier uppercaseString]] && !path) {
+        [self printErrorUsageAndExit:@"BINARY or CERTIFICATE rules require a valid SHA-256"];
+      }
+      break;
+    case SNTRuleTypeTeamID:
+      if (![self isWellformedTeamID:[newRule.identifier uppercaseString]] && !path) {
+        [self printErrorUsageAndExit:
+                @"Invalid Team ID supplied (must be 10 alphanumeric characters (e.g. EQHXZ8M8AV)"];
+      }
+      break;
+    default:
+      // This is a programming error.
+      [self printErrorUsageAndExit:@"Invalid rule type specified"];
+      break;
   }
 
   if (check) {
@@ -171,6 +204,13 @@ REGISTER_COMMAND_NAME(@"rule")
       MOLCodesignChecker *cs = [fi codesignCheckerWithError:NULL];
       newRule.identifier = cs.leafCertificate.SHA256;
     } else if (newRule.type == SNTRuleTypeTeamID) {
+      // Get the team ID from the binary.
+      MOLCodesignChecker *cs = [fi codesignCheckerWithError:NULL];
+      if (![self isWellformedTeamID:cs.signingInformation[@"teamid"]]) {
+        [self printErrorUsageAndExit:
+                @"Invalid Team ID in binary (must be 10 alphanumeric characters (e.g. EQHXZ8M8AV)"];
+      };
+      newRule.identifier = cs.signingInformation[@"teamid"];
     }
   }
 
@@ -220,6 +260,7 @@ REGISTER_COMMAND_NAME(@"rule")
   NSString *fileSHA256 = (rule.type == SNTRuleTypeBinary) ? rule.identifier : nil;
   NSString *certificateSHA256 = (rule.type == SNTRuleTypeCertificate) ? rule.identifier : nil;
   NSString *teamID = (rule.type == SNTRuleTypeTeamID) ? rule.identifier : nil;
+
   __block NSMutableString *output;
   [rop decisionForFilePath:nil
                 fileSHA256:fileSHA256
