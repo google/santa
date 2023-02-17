@@ -614,6 +614,8 @@ void WatchItems::UpdateCurrentState(
 
     last_update_time_ = [[NSDate date] timeIntervalSince1970];
 
+    LOGD(@"Changes to watch items detected, notifying registered clients.");
+
     for (const id<SNTEndpointSecurityDynamicEventHandler> &client : registerd_clients_) {
       // Note: Enable clients on an async queue in case they perform any
       // synchronous work that could trigger ES events. Otherwise they might
