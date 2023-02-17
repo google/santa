@@ -517,8 +517,10 @@ void PopulatePathTargets(const Message &msg, std::vector<PathTarget> &targets) {
 
   if (!self.isSubscribed) {
     self.isSubscribed = [super subscribe:events];
-    [super clearCache];
   }
+
+  // Always clear cache to ensure operations that were previously allowed are re-evaluated.
+  [super clearCache];
 }
 
 - (void)disable {
