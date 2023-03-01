@@ -146,8 +146,10 @@ REGISTER_COMMAND_NAME(@"rule")
   }
 
   if (newRule.type == SNTRuleTypeBinary || newRule.type == SNTRuleTypeCertificate) {
-    NSCharacterSet *nonHex = [[NSCharacterSet characterSetWithCharactersInString:@"0123456789ABCDEF"] invertedSet];
-    if ([[newRule.identifier uppercaseString] stringByTrimmingCharactersInSet:nonHex].length != 64) {
+    NSCharacterSet *nonHex =
+      [[NSCharacterSet characterSetWithCharactersInString:@"0123456789ABCDEF"] invertedSet];
+    if ([[newRule.identifier uppercaseString] stringByTrimmingCharactersInSet:nonHex].length !=
+        64) {
       [self printErrorUsageAndExit:@"BINARY or CERTIFICATE rules require a valid SHA-256"];
     }
   }
