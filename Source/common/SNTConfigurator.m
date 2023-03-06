@@ -1120,6 +1120,7 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
   for (id rule in staticRules) {
     if (![rule isKindOfClass:[NSDictionary class]]) return;
     SNTRule *r = [[SNTRule alloc] initWithDictionary:rule];
+    if (!r) continue;
     rules[r.identifier] = r;
   }
   self.cachedStaticRules = [rules copy];
