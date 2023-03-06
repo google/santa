@@ -30,7 +30,8 @@
     @"rule_type" : @"BINARY",
   }];
   XCTAssertNotNil(sut);
-  XCTAssertEqualObjects(sut.identifier, @"b7c1e3fd640c5f211c89b02c2c6122f78ce322aa5c56eb0bb54bc422a8f8b670");
+  XCTAssertEqualObjects(sut.identifier,
+                        @"b7c1e3fd640c5f211c89b02c2c6122f78ce322aa5c56eb0bb54bc422a8f8b670");
   XCTAssertEqual(sut.type, SNTRuleTypeBinary);
   XCTAssertEqual(sut.state, SNTRuleStateAllow);
 
@@ -40,7 +41,8 @@
     @"rule_type" : @"CERTIFICATE",
   }];
   XCTAssertNotNil(sut);
-  XCTAssertEqualObjects(sut.identifier, @"b7c1e3fd640c5f211c89b02c2c6122f78ce322aa5c56eb0bb54bc422a8f8b670");
+  XCTAssertEqualObjects(sut.identifier,
+                        @"b7c1e3fd640c5f211c89b02c2c6122f78ce322aa5c56eb0bb54bc422a8f8b670");
   XCTAssertEqual(sut.type, SNTRuleTypeCertificate);
   XCTAssertEqual(sut.state, SNTRuleStateBlock);
 
@@ -60,7 +62,8 @@
     @"rule_type" : @"BINARY",
   }];
   XCTAssertNotNil(sut);
-  XCTAssertEqualObjects(sut.identifier, @"b7c1e3fd640c5f211c89b02c2c6122f78ce322aa5c56eb0bb54bc422a8f8b670");
+  XCTAssertEqualObjects(sut.identifier,
+                        @"b7c1e3fd640c5f211c89b02c2c6122f78ce322aa5c56eb0bb54bc422a8f8b670");
   XCTAssertEqual(sut.type, SNTRuleTypeBinary);
   XCTAssertEqual(sut.state, SNTRuleStateAllowCompiler);
 

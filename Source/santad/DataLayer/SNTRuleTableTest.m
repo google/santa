@@ -125,12 +125,19 @@
           cleanSlate:NO
                error:nil];
 
-  SNTRule *r = [self.sut ruleForBinarySHA256:@"b7c1e3fd640c5f211c89b02c2c6122f78ce322aa5c56eb0bb54bc422a8f8b670" certificateSHA256:nil teamID:nil];
+  SNTRule *r = [self.sut
+    ruleForBinarySHA256:@"b7c1e3fd640c5f211c89b02c2c6122f78ce322aa5c56eb0bb54bc422a8f8b670"
+      certificateSHA256:nil
+                 teamID:nil];
   XCTAssertNotNil(r);
-  XCTAssertEqualObjects(r.identifier, @"b7c1e3fd640c5f211c89b02c2c6122f78ce322aa5c56eb0bb54bc422a8f8b670");
+  XCTAssertEqualObjects(r.identifier,
+                        @"b7c1e3fd640c5f211c89b02c2c6122f78ce322aa5c56eb0bb54bc422a8f8b670");
   XCTAssertEqual(r.type, SNTRuleTypeBinary);
 
-  r = [self.sut ruleForBinarySHA256:@"b6ee1c3c5a715c049d14a8457faa6b6701b8507efe908300e238e0768bd759c2" certificateSHA256:nil teamID:nil];
+  r = [self.sut
+    ruleForBinarySHA256:@"b6ee1c3c5a715c049d14a8457faa6b6701b8507efe908300e238e0768bd759c2"
+      certificateSHA256:nil
+                 teamID:nil];
   XCTAssertNil(r);
 }
 
@@ -139,12 +146,19 @@
           cleanSlate:NO
                error:nil];
 
-  SNTRule *r = [self.sut ruleForBinarySHA256:nil certificateSHA256:@"7ae80b9ab38af0c63a9a81765f434d9a7cd8f720eb6037ef303de39d779bc258" teamID:nil];
+  SNTRule *r = [self.sut
+    ruleForBinarySHA256:nil
+      certificateSHA256:@"7ae80b9ab38af0c63a9a81765f434d9a7cd8f720eb6037ef303de39d779bc258"
+                 teamID:nil];
   XCTAssertNotNil(r);
-  XCTAssertEqualObjects(r.identifier, @"7ae80b9ab38af0c63a9a81765f434d9a7cd8f720eb6037ef303de39d779bc258");
+  XCTAssertEqualObjects(r.identifier,
+                        @"7ae80b9ab38af0c63a9a81765f434d9a7cd8f720eb6037ef303de39d779bc258");
   XCTAssertEqual(r.type, SNTRuleTypeCertificate);
 
-  r = [self.sut ruleForBinarySHA256:nil certificateSHA256:@"5bdab1288fc16892fef50c658db54f1e2e19cf8f71cc55f77de2b95e051e2562" teamID:nil];
+  r = [self.sut
+    ruleForBinarySHA256:nil
+      certificateSHA256:@"5bdab1288fc16892fef50c658db54f1e2e19cf8f71cc55f77de2b95e051e2562"
+                 teamID:nil];
   XCTAssertNil(r);
 }
 
@@ -171,19 +185,31 @@
 
   // This test verifies that the implicit rule ordering we've been abusing is still working.
   // See the comment in SNTRuleTable#ruleForBinarySHA256:certificateSHA256:teamID
-  SNTRule *r = [self.sut ruleForBinarySHA256:@"b7c1e3fd640c5f211c89b02c2c6122f78ce322aa5c56eb0bb54bc422a8f8b670" certificateSHA256:@"7ae80b9ab38af0c63a9a81765f434d9a7cd8f720eb6037ef303de39d779bc258" teamID:@"teamID"];
+  SNTRule *r = [self.sut
+    ruleForBinarySHA256:@"b7c1e3fd640c5f211c89b02c2c6122f78ce322aa5c56eb0bb54bc422a8f8b670"
+      certificateSHA256:@"7ae80b9ab38af0c63a9a81765f434d9a7cd8f720eb6037ef303de39d779bc258"
+                 teamID:@"teamID"];
   XCTAssertNotNil(r);
-  XCTAssertEqualObjects(r.identifier, @"b7c1e3fd640c5f211c89b02c2c6122f78ce322aa5c56eb0bb54bc422a8f8b670");
+  XCTAssertEqualObjects(r.identifier,
+                        @"b7c1e3fd640c5f211c89b02c2c6122f78ce322aa5c56eb0bb54bc422a8f8b670");
   XCTAssertEqual(r.type, SNTRuleTypeBinary, @"Implicit rule ordering failed");
 
-  r = [self.sut ruleForBinarySHA256:@"b7c1e3fd640c5f211c89b02c2c6122f78ce322aa5c56eb0bb54bc422a8f8b670" certificateSHA256:@"unknowncert" teamID:@"teamID"];
+  r = [self.sut
+    ruleForBinarySHA256:@"b7c1e3fd640c5f211c89b02c2c6122f78ce322aa5c56eb0bb54bc422a8f8b670"
+      certificateSHA256:@"unknowncert"
+                 teamID:@"teamID"];
   XCTAssertNotNil(r);
-  XCTAssertEqualObjects(r.identifier, @"b7c1e3fd640c5f211c89b02c2c6122f78ce322aa5c56eb0bb54bc422a8f8b670");
+  XCTAssertEqualObjects(r.identifier,
+                        @"b7c1e3fd640c5f211c89b02c2c6122f78ce322aa5c56eb0bb54bc422a8f8b670");
   XCTAssertEqual(r.type, SNTRuleTypeBinary, @"Implicit rule ordering failed");
 
-  r = [self.sut ruleForBinarySHA256:@"unknown" certificateSHA256:@"7ae80b9ab38af0c63a9a81765f434d9a7cd8f720eb6037ef303de39d779bc258" teamID:@"teamID"];
+  r = [self.sut
+    ruleForBinarySHA256:@"unknown"
+      certificateSHA256:@"7ae80b9ab38af0c63a9a81765f434d9a7cd8f720eb6037ef303de39d779bc258"
+                 teamID:@"teamID"];
   XCTAssertNotNil(r);
-  XCTAssertEqualObjects(r.identifier, @"7ae80b9ab38af0c63a9a81765f434d9a7cd8f720eb6037ef303de39d779bc258");
+  XCTAssertEqualObjects(r.identifier,
+                        @"7ae80b9ab38af0c63a9a81765f434d9a7cd8f720eb6037ef303de39d779bc258");
   XCTAssertEqual(r.type, SNTRuleTypeCertificate, @"Implicit rule ordering failed");
 }
 
