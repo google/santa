@@ -13,6 +13,7 @@
 ///    limitations under the License.
 
 #import <Foundation/Foundation.h>
+#include "Source/common/SNTCommonEnums.h"
 #import <MOLCertificate/MOLCertificate.h>
 #import <MOLCodesignChecker/MOLCodesignChecker.h>
 #import <MOLXPCConnection/MOLXPCConnection.h>
@@ -64,6 +65,28 @@ REGISTER_COMMAND_NAME(@"rule")
   NSCharacterSet *validChars = [NSCharacterSet alphanumericCharacterSet];
 
   return [@"" isEqualToString:[teamID stringByTrimmingCharactersInSet:validChars]];
+}
+
+- (void) checkIfRuleIsWellformed:(SNTRule *)rule{
+  switch (rule.type) {
+    case SNTRuleTypeBinary:
+    case SNTRuleTypeCertificate:
+      if (![self isWellformedSHA256:[rule.identifier uppercaseString]]) {
+        [self printErrorUsageAndExit:@"BINARY or CERTIFICATE rules require a valid SHA-256"];
+      }
+      break;
+    case SNTRuleTypeTeamID:
+      if (![self isWellformedTeamID:[rule.identifier uppercaseString]]) {
+        [self printErrorUsageAndExit:
+                @"Invalid Team ID supplied (must be 10 alphanumeric characters (e.g. EQHXZ8M8AV)"];
+      }
+      break;
+    default:
+      // This is a programming error.
+      [self printErrorUsageAndExit:@"Invalid rule type specified"];
+      break;
+  }
+
 }
 
 + (NSString *)longHelpText {
@@ -168,29 +191,15 @@ REGISTER_COMMAND_NAME(@"rule")
     }
   }
 
-  switch (newRule.type) {
-    case SNTRuleTypeBinary:
-    case SNTRuleTypeCertificate:
-      if (![self isWellformedSHA256:[newRule.identifier uppercaseString]] && !path) {
-        [self printErrorUsageAndExit:@"BINARY or CERTIFICATE rules require a valid SHA-256"];
-      }
-      break;
-    case SNTRuleTypeTeamID:
-      if (![self isWellformedTeamID:[newRule.identifier uppercaseString]] && !path) {
-        [self printErrorUsageAndExit:
-                @"Invalid Team ID supplied (must be 10 alphanumeric characters (e.g. EQHXZ8M8AV)"];
-      }
-      break;
-    default:
-      // This is a programming error.
-      [self printErrorUsageAndExit:@"Invalid rule type specified"];
-      break;
-  }
+  // Check if the rule is wellformed.
+  [self checkIfRuleIsWellformed:newRule];
 
   if (check) {
     if (!newRule.identifier) return [self printErrorUsageAndExit:@"--check requires --identifier"];
     return [self printStateOfRule:newRule daemonConnection:self.daemonConn];
   }
+
+
 
   if (path) {
     SNTFileInfo *fi = [[SNTFileInfo alloc] initWithPath:path];
