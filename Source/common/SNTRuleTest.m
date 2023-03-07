@@ -25,22 +25,24 @@
   SNTRule *sut;
 
   sut = [[SNTRule alloc] initWithDictionary:@{
-    @"identifier" : @"some-sort-of-identifier",
+    @"identifier" : @"b7c1e3fd640c5f211c89b02c2c6122f78ce322aa5c56eb0bb54bc422a8f8b670",
     @"policy" : @"ALLOWLIST",
     @"rule_type" : @"BINARY",
   }];
   XCTAssertNotNil(sut);
-  XCTAssertEqualObjects(sut.identifier, @"some-sort-of-identifier");
+  XCTAssertEqualObjects(sut.identifier,
+                        @"b7c1e3fd640c5f211c89b02c2c6122f78ce322aa5c56eb0bb54bc422a8f8b670");
   XCTAssertEqual(sut.type, SNTRuleTypeBinary);
   XCTAssertEqual(sut.state, SNTRuleStateAllow);
 
   sut = [[SNTRule alloc] initWithDictionary:@{
-    @"sha256" : @"some-sort-of-identifier",
+    @"sha256" : @"b7c1e3fd640c5f211c89b02c2c6122f78ce322aa5c56eb0bb54bc422a8f8b670",
     @"policy" : @"BLOCKLIST",
     @"rule_type" : @"CERTIFICATE",
   }];
   XCTAssertNotNil(sut);
-  XCTAssertEqualObjects(sut.identifier, @"some-sort-of-identifier");
+  XCTAssertEqualObjects(sut.identifier,
+                        @"b7c1e3fd640c5f211c89b02c2c6122f78ce322aa5c56eb0bb54bc422a8f8b670");
   XCTAssertEqual(sut.type, SNTRuleTypeCertificate);
   XCTAssertEqual(sut.state, SNTRuleStateBlock);
 
@@ -55,12 +57,13 @@
   XCTAssertEqual(sut.state, SNTRuleStateSilentBlock);
 
   sut = [[SNTRule alloc] initWithDictionary:@{
-    @"identifier" : @"some-sort-of-identifier",
+    @"identifier" : @"b7c1e3fd640c5f211c89b02c2c6122f78ce322aa5c56eb0bb54bc422a8f8b670",
     @"policy" : @"ALLOWLIST_COMPILER",
     @"rule_type" : @"BINARY",
   }];
   XCTAssertNotNil(sut);
-  XCTAssertEqualObjects(sut.identifier, @"some-sort-of-identifier");
+  XCTAssertEqualObjects(sut.identifier,
+                        @"b7c1e3fd640c5f211c89b02c2c6122f78ce322aa5c56eb0bb54bc422a8f8b670");
   XCTAssertEqual(sut.type, SNTRuleTypeBinary);
   XCTAssertEqual(sut.state, SNTRuleStateAllowCompiler);
 
@@ -94,12 +97,19 @@
   XCTAssertNil(sut);
 
   sut = [[SNTRule alloc] initWithDictionary:@{
-    @"identifier" : @"an-identifier",
+    @"identifier" : @"b7c1e3fd640c5f211c89b02c2c6122f78ce322aa5c56eb0bb54bc422a8f8b670",
   }];
   XCTAssertNil(sut);
 
   sut = [[SNTRule alloc] initWithDictionary:@{
     @"identifier" : @"an-identifier",
+    @"policy" : @"ALLOWLIST",
+    @"rule_type" : @"BINARY",
+  }];
+  XCTAssertNil(sut);
+
+  sut = [[SNTRule alloc] initWithDictionary:@{
+    @"identifier" : @"b7c1e3fd640c5f211c89b02c2c6122f78ce322aa5c56eb0bb54bc422a8f8b670",
     @"policy" : @"OTHERPOLICY",
     @"rule_type" : @"BINARY",
   }];
