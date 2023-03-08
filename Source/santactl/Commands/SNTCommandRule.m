@@ -13,10 +13,10 @@
 ///    limitations under the License.
 
 #import <Foundation/Foundation.h>
-#include "Source/common/SNTCommonEnums.h"
 #import <MOLCertificate/MOLCertificate.h>
 #import <MOLCodesignChecker/MOLCodesignChecker.h>
 #import <MOLXPCConnection/MOLXPCConnection.h>
+#include "Source/common/SNTCommonEnums.h"
 
 #import "Source/common/SNTConfigurator.h"
 #import "Source/common/SNTDropRootPrivs.h"
@@ -67,7 +67,7 @@ REGISTER_COMMAND_NAME(@"rule")
   return [@"" isEqualToString:[teamID stringByTrimmingCharactersInSet:validChars]];
 }
 
-- (void) checkIfRuleIsWellformed:(SNTRule *)rule{
+- (void)checkIfRuleIsWellformed:(SNTRule *)rule {
   switch (rule.type) {
     case SNTRuleTypeBinary:
     case SNTRuleTypeCertificate:
@@ -86,7 +86,6 @@ REGISTER_COMMAND_NAME(@"rule")
       [self printErrorUsageAndExit:@"Invalid rule type specified"];
       break;
   }
-
 }
 
 + (NSString *)longHelpText {
@@ -198,8 +197,6 @@ REGISTER_COMMAND_NAME(@"rule")
     if (!newRule.identifier) return [self printErrorUsageAndExit:@"--check requires --identifier"];
     return [self printStateOfRule:newRule daemonConnection:self.daemonConn];
   }
-
-
 
   if (path) {
     SNTFileInfo *fi = [[SNTFileInfo alloc] initWithPath:path];
