@@ -126,7 +126,7 @@ REGISTER_COMMAND_NAME(@"rule")
 #else
   ) {
 #endif
-    printf("(SyncBaseURL/StaticRules is set, rules are managed centrally.)");
+    printf("(SyncBaseURL/StaticRules is set, rules are managed centrally.)\n");
     exit(1);
   }
 
