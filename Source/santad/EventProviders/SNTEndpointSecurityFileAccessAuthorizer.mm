@@ -33,6 +33,7 @@
 #import "Source/common/SNTCommonEnums.h"
 #import "Source/common/SNTConfigurator.h"
 #import "Source/common/SNTMetricSet.h"
+#import "Source/common/SNTStrengthify.h"
 #include "Source/common/SantaCache.h"
 #include "Source/common/SantaVnode.h"
 #include "Source/common/SantaVnodeHash.h"
@@ -191,7 +192,6 @@ void PopulatePathTargets(const Message &msg, std::vector<PathTarget> &targets) {
 @interface SNTEndpointSecurityFileAccessAuthorizer ()
 @property SNTDecisionCache *decisionCache;
 @property bool isSubscribed;
-@property SNTMetricBooleanGauge *famEnabled;
 @end
 
 @implementation SNTEndpointSecurityFileAccessAuthorizer {
@@ -220,10 +220,16 @@ void PopulatePathTargets(const Message &msg, std::vector<PathTarget> &targets) {
 
     _decisionCache = decisionCache;
 
-    _famEnabled = [[SNTMetricSet sharedInstance]
+    SNTMetricBooleanGauge *famEnabled = [[SNTMetricSet sharedInstance]
       booleanGaugeWithName:@"/santa/fam_enabled"
                 fieldNames:@[]
                   helpText:@"Whether or not the FAM client is enabled"];
+
+    WEAKIFY(self);
+    [[SNTMetricSet sharedInstance] registerCallback:^{
+      STRONGIFY(self);
+      [famEnabled set:self.isSubscribed forFieldValues:@[]];
+    }];
 
     [self establishClientOrDie];
 
@@ -531,7 +537,6 @@ void PopulatePathTargets(const Message &msg, std::vector<PathTarget> &targets) {
   if (!self.isSubscribed) {
     if ([super subscribe:events]) {
       self.isSubscribed = true;
-      [self.famEnabled set:YES forFieldValues:@[]];
     }
   }
 
@@ -543,7 +548,6 @@ void PopulatePathTargets(const Message &msg, std::vector<PathTarget> &targets) {
   if (self.isSubscribed) {
     if ([super unsubscribeAll]) {
       self.isSubscribed = false;
-      [self.famEnabled set:NO forFieldValues:@[]];
     }
     [super unmuteEverything];
   }
