@@ -6,7 +6,7 @@ jobs:
   start_vm:
     runs-on: e2e-host
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: Start VM
         run: python3 Testing/integration/actions/start_vm.py macOS_12.bundle.tar.gz
 
@@ -15,7 +15,7 @@ jobs:
     env:
       VM_PASSWORD: ${{ secrets.VM_PASSWORD }}
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: Install configuration profile
         run: bazel run //Testing/integration:install_profile -- Testing/integration/configs/default.mobileconfig
       - name: Add homebrew to PATH
