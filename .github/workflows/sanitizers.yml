@@ -11,7 +11,7 @@ jobs:
       matrix:
         sanitizer: [asan, tsan, ubsan]
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: ${{ matrix.sanitizer }}
         run: |
           CLANG_VERSION=$(clang --version | head -n 1 | cut -d' ' -f 4)
