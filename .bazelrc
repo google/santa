@@ -27,7 +27,7 @@ build:tsan --config=san-common
 build:tsan --copt="-fsanitize=thread"
 build:tsan --copt="-DTHREAD_SANITIZER=1"
 build:tsan --linkopt="-fsanitize=thread"
-build:asan --action_env="TSAN_OPTIONS=log_path=/tmp/san_out"
+build:tsan --action_env="TSAN_OPTIONS=log_path=/tmp/san_out:halt_on_error=true"
 
 build:ubsan --config=san-common
 build:ubsan --copt="-fsanitize=undefined"
