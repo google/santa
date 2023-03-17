@@ -337,6 +337,7 @@ objc_library(
         ":EndpointSecurityLogger",
         ":EndpointSecurityMessage",
         ":Metrics",
+        ":RateLimiter",
         ":SNTDecisionCache",
         ":SNTEndpointSecurityClient",
         ":SNTEndpointSecurityEventHandler",
@@ -384,6 +385,16 @@ objc_library(
         "//Source/common:SantaCache",
         "//Source/common:SantaVnode",
         "//Source/common:SantaVnodeHash",
+    ],
+)
+
+objc_library(
+    name = "RateLimiter",
+    srcs = ["EventProviders/RateLimiter.mm"],
+    hdrs = ["EventProviders/RateLimiter.h"],
+    deps = [
+        "//Source/common:BranchPrediction",
+        "//Source/common:SystemResources",
     ],
 )
 
@@ -960,6 +971,15 @@ santa_unit_test(
         "//Source/common:TestUtils",
         "@OCMock",
         "@com_google_googletest//:gtest",
+    ],
+)
+
+santa_unit_test(
+    name = "RateLimiterTest",
+    srcs = ["EventProviders/RateLimiterTest.mm"],
+    deps = [
+        ":RateLimiter",
+        "//Source/common:SystemResources",
     ],
 )
 

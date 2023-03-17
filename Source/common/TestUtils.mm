@@ -87,16 +87,6 @@ es_process_t MakeESProcess(es_file_t *file, audit_token_t tok, audit_token_t par
   };
 }
 
-static uint64_t AddMillisToMachTime(uint64_t ms, uint64_t machTime) {
-  uint64_t nanoTime = MachTimeToNanos(machTime);
-
-  // Add the ms offset
-  nanoTime += (ms * NSEC_PER_MSEC);
-
-  // Convert back to machTime
-  return NanosToMachTime(nanoTime);
-}
-
 uint32_t MaxSupportedESMessageVersionForCurrentOS() {
   // Note: ES message v3 was only in betas.
   if (@available(macOS 13.0, *)) {
@@ -115,7 +105,7 @@ uint32_t MaxSupportedESMessageVersionForCurrentOS() {
 es_message_t MakeESMessage(es_event_type_t et, es_process_t *proc, ActionType action_type,
                            uint64_t future_deadline_ms) {
   es_message_t es_msg = {
-    .deadline = AddMillisToMachTime(future_deadline_ms, mach_absolute_time()),
+    .deadline = AddNanosecondsToMachTime(future_deadline_ms * NSEC_PER_MSEC, mach_absolute_time()),
     .process = proc,
     .action_type =
       (action_type == ActionType::Notify) ? ES_ACTION_TYPE_NOTIFY : ES_ACTION_TYPE_AUTH,
