@@ -86,7 +86,7 @@ using santa::santad::event_providers::RateLimiterPeer;
 }
 
 - (void)testDecide {
-  // Create an object supporting 1 QPS, and a reset duration of 2s
+  // Create an object supporting 2 QPS, and a reset duration of 4s
   uint16_t maxQps = 2;
   NSTimeInterval resetDuration = 4;
   uint64_t allowedLogsPerDuration = maxQps * resetDuration;
@@ -122,7 +122,7 @@ using santa::santad::event_providers::RateLimiterPeer;
 }
 
 - (void)testShouldRateLimitAndCounts {
-  // Create an object supporting 1 QPS, and a reset duration of 2s
+  // Create an object supporting 2 QPS, and a reset duration of 4s
   uint16_t maxQps = 2;
   NSTimeInterval resetDuration = 4;
   uint64_t allowedLogsPerDuration = maxQps * resetDuration;
