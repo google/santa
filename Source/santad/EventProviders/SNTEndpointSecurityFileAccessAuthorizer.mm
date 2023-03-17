@@ -465,8 +465,6 @@ void PopulatePathTargets(const Message &msg, std::vector<PathTarget> &targets) {
                               self->_enricher->Enrich(*esMsg->process, EnrichOptions::kLocalOnly),
                               targetPathCopy, policyDecision);
                           }];
-    } else {
-      // TODO: Metrics
     }
   }
 
