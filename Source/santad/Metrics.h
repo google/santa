@@ -53,7 +53,8 @@ class Metrics : public std::enable_shared_from_this<Metrics> {
 
   Metrics(dispatch_queue_t q, dispatch_source_t timer_source, uint64_t interval,
           SNTMetricInt64Gauge *event_processing_times, SNTMetricCounter *event_counts,
-          SNTMetricSet *metric_set, void (^run_on_first_start)(Metrics *));
+          SNTMetricCounter *rate_limit_counts, SNTMetricSet *metric_set,
+          void (^run_on_first_start)(Metrics *));
 
   ~Metrics();
 
@@ -82,6 +83,7 @@ class Metrics : public std::enable_shared_from_this<Metrics> {
   uint64_t interval_;
   SNTMetricInt64Gauge *event_processing_times_;
   SNTMetricCounter *event_counts_;
+  SNTMetricCounter *rate_limit_counts_;
   SNTMetricSet *metric_set_;
   // Tracks whether or not the timer_source should be running.
   // This helps manage dispatch source state to ensure the source is not

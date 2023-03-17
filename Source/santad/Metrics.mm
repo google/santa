@@ -124,9 +124,14 @@ std::shared_ptr<Metrics> Metrics::Create(SNTMetricSet *metric_set, uint64_t inte
                      fieldNames:@[ @"Processor", @"Event", @"Disposition" ]
                        helpText:@"Events received and processed by each processor"];
 
+  SNTMetricCounter *rate_limit_counts =
+    [metric_set counterWithName:@"/santa/rate_limit_count"
+                     fieldNames:@[ @"Processor" ]
+                       helpText:@"Events rate limited by each processor"];
+
   std::shared_ptr<Metrics> metrics =
     std::make_shared<Metrics>(q, timer_source, interval, event_processing_times, event_counts,
-                              metric_set, ^(Metrics *metrics) {
+                              rate_limit_counts, metric_set, ^(Metrics *metrics) {
                                 SNTRegisterCoreMetrics();
                                 metrics->EstablishConnection();
                               });
@@ -146,12 +151,14 @@ std::shared_ptr<Metrics> Metrics::Create(SNTMetricSet *metric_set, uint64_t inte
 
 Metrics::Metrics(dispatch_queue_t q, dispatch_source_t timer_source, uint64_t interval,
                  SNTMetricInt64Gauge *event_processing_times, SNTMetricCounter *event_counts,
-                 SNTMetricSet *metric_set, void (^run_on_first_start)(Metrics *))
+                 SNTMetricCounter *rate_limit_counts, SNTMetricSet *metric_set,
+                 void (^run_on_first_start)(Metrics *))
     : q_(q),
       timer_source_(timer_source),
       interval_(interval),
       event_processing_times_(event_processing_times),
       event_counts_(event_counts),
+      rate_limit_counts_(rate_limit_counts),
       metric_set_(metric_set),
       run_on_first_start_(run_on_first_start) {
   SetInterval(interval_);
@@ -211,9 +218,16 @@ void Metrics::FlushMetrics() {
       [event_processing_times_ set:kv.second forFieldValues:@[ processorName, eventName ]];
     }
 
+    for (const auto &kv : rate_limit_counts_cache_) {
+      NSString *processorName = ProcessorToString(kv.first);
+
+      [rate_limit_counts_ incrementBy:kv.second forFieldValues:@[ processorName ]];
+    }
+
     // Reset the maps so the next cycle begins with a clean state
     event_counts_cache_ = {};
     event_times_cache_ = {};
+    rate_limit_counts_cache_ = {};
   });
 }
 

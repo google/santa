@@ -57,6 +57,7 @@ using santa::santad::logs::endpoint_security::Logger;
 NSString *kBadCertHash = @"BAD_CERT_HASH";
 
 static constexpr uint32_t kOpenFlagsIndicatingWrite = FWRITE | O_APPEND | O_TRUNC;
+static constexpr uint16_t kDefaultRateLimitQPS = 50;
 
 // Small structure to hold a complete event path target being operated upon and
 // a bool indicating whether the path is a readable target (e.g. a file being
@@ -223,8 +224,8 @@ void PopulatePathTargets(const Message &msg, std::vector<PathTarget> &targets) {
 
     _decisionCache = decisionCache;
 
-    _rateLimiter =
-      RateLimiter::Create(metrics, santa::santad::Processor::kFileAccessAuthorizer, 50);
+    _rateLimiter = RateLimiter::Create(metrics, santa::santad::Processor::kFileAccessAuthorizer,
+                                       kDefaultRateLimitQPS);
 
     SNTMetricBooleanGauge *famEnabled = [[SNTMetricSet sharedInstance]
       booleanGaugeWithName:@"/santa/fam_enabled"
