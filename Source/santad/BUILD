@@ -393,6 +393,7 @@ objc_library(
     srcs = ["EventProviders/RateLimiter.mm"],
     hdrs = ["EventProviders/RateLimiter.h"],
     deps = [
+        ":Metrics",
         "//Source/common:BranchPrediction",
         "//Source/common:SystemResources",
     ],
@@ -978,6 +979,7 @@ santa_unit_test(
     name = "RateLimiterTest",
     srcs = ["EventProviders/RateLimiterTest.mm"],
     deps = [
+        ":Metrics",
         ":RateLimiter",
         "//Source/common:SystemResources",
     ],
@@ -1315,6 +1317,7 @@ test_suite(
         ":EndpointSecurityWriterFileTest",
         ":EndpointSecurityWriterSpoolTest",
         ":MetricsTest",
+        ":RateLimiterTest",
         ":SNTApplicationCoreMetricsTest",
         ":SNTCompilerControllerTest",
         ":SNTDecisionCacheTest",

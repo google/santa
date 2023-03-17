@@ -68,6 +68,8 @@ class Metrics : public std::enable_shared_from_this<Metrics> {
   void SetEventMetrics(Processor processor, es_event_type_t event_type,
                        EventDisposition disposition, int64_t nanos);
 
+  void SetRateLimitingMetrics(Processor processor, int64_t events_rate_limited_count);
+
   friend class santa::santad::MetricsPeer;
 
  private:
@@ -94,6 +96,7 @@ class Metrics : public std::enable_shared_from_this<Metrics> {
   // Small caches for storing event metrics between metrics export operations
   std::map<EventCountTuple, int64_t> event_counts_cache_;
   std::map<EventTimesTuple, int64_t> event_times_cache_;
+  std::map<Processor, int64_t> rate_limit_counts_cache_;
 };
 
 }  // namespace santa::santad

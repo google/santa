@@ -263,4 +263,10 @@ void Metrics::SetEventMetrics(Processor processor, es_event_type_t event_type,
   });
 }
 
+void Metrics::SetRateLimitingMetrics(Processor processor, int64_t events_rate_limited_count) {
+  dispatch_sync(events_q_, ^{
+    rate_limit_counts_cache_[processor] += events_rate_limited_count;
+  });
+}
+
 }  // namespace santa::santad

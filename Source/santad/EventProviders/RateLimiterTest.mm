@@ -18,14 +18,21 @@
 #import <XCTest/XCTest.h>
 
 #include "Source/common/SystemResources.h"
+#include "Source/santad/Metrics.h"
 
 using santa::santad::event_providers::RateLimiter;
+
+static const santa::santad::Processor kDefaultProcessor =
+  santa::santad::Processor::kFileAccessAuthorizer;
 
 namespace santa::santad::event_providers {
 
 class RateLimiterPeer : public RateLimiter {
  public:
   using RateLimiter::RateLimiter;
+
+  using RateLimiter::EventsRateLimitedLocked;
+  using RateLimiter::ShouldRateLimitLocked;
   using RateLimiter::TryResetLocked;
 
   using RateLimiter::log_count_total_;
@@ -45,7 +52,7 @@ using santa::santad::event_providers::RateLimiterPeer;
   // Create an object supporting 1 QPS, and a reset duration of 2s
   uint16_t maxQps = 1;
   NSTimeInterval resetDuration = 2;
-  RateLimiterPeer rlp(maxQps, resetDuration);
+  RateLimiterPeer rlp(nullptr, kDefaultProcessor, maxQps, resetDuration);
 
   // Check the current reset_mach_time_ is 0 so that it gets
   // set when the first decision is made
@@ -83,7 +90,7 @@ using santa::santad::event_providers::RateLimiterPeer;
   uint16_t maxQps = 2;
   NSTimeInterval resetDuration = 4;
   uint64_t allowedLogsPerDuration = maxQps * resetDuration;
-  RateLimiterPeer rlp(maxQps, resetDuration);
+  RateLimiterPeer rlp(nullptr, kDefaultProcessor, maxQps, resetDuration);
 
   // Check the current log count is initially 0
   XCTAssertEqual(rlp.log_count_total_, 0);
@@ -112,6 +119,31 @@ using santa::santad::event_providers::RateLimiterPeer;
   XCTAssertEqual(gotDecision, RateLimiter::Decision::kAllowed);
   XCTAssertEqual(rlp.log_count_total_, 1);
   XCTAssertGreaterThan(rlp.reset_mach_time_, oldResetMachTime);
+}
+
+- (void)testShouldRateLimitAndCounts {
+  // Create an object supporting 1 QPS, and a reset duration of 2s
+  uint16_t maxQps = 2;
+  NSTimeInterval resetDuration = 4;
+  uint64_t allowedLogsPerDuration = maxQps * resetDuration;
+  uint64_t logsOverQPS = 5;
+  RateLimiterPeer rlp(nullptr, kDefaultProcessor, maxQps, resetDuration);
+
+  // Initially no rate limiting should apply
+  XCTAssertFalse(rlp.ShouldRateLimitLocked());
+  XCTAssertEqual(rlp.EventsRateLimitedLocked(), 0);
+
+  // Simulate a smmaller volume of logs received than QPS
+  rlp.log_count_total_ = allowedLogsPerDuration - 1;
+
+  XCTAssertFalse(rlp.ShouldRateLimitLocked());
+  XCTAssertEqual(rlp.EventsRateLimitedLocked(), 0);
+
+  // Simulate a larger volume of logs received than QPS
+  rlp.log_count_total_ = allowedLogsPerDuration + logsOverQPS;
+
+  XCTAssertTrue(rlp.ShouldRateLimitLocked());
+  XCTAssertEqual(rlp.EventsRateLimitedLocked(), logsOverQPS);
 }
 
 @end

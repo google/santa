@@ -20,6 +20,8 @@
 #include <atomic>
 #include <memory>
 
+#include "Source/santad/Metrics.h"
+
 // Forward declarations
 namespace santa::santad::event_providers {
 class RateLimiterPeer;
@@ -37,9 +39,13 @@ class RateLimiter {
  public:
   // Factory
   static std::shared_ptr<RateLimiter> Create(
-      uint16_t max_qps, NSTimeInterval reset_duration = kDefaultResetDuration);
+      std::shared_ptr<santa::santad::Metrics> metrics,
+      santa::santad::Processor processor, uint16_t max_qps,
+      NSTimeInterval reset_duration = kDefaultResetDuration);
 
-  RateLimiter(uint16_t max_qps, NSTimeInterval reset_duration);
+  RateLimiter(std::shared_ptr<santa::santad::Metrics> metrics,
+              santa::santad::Processor processor, uint16_t max_qps,
+              NSTimeInterval reset_duration);
 
   enum class Decision {
     kRateLimited = 0,
@@ -51,10 +57,14 @@ class RateLimiter {
   friend class santa::santad::event_providers::RateLimiterPeer;
 
  private:
+  bool ShouldRateLimitLocked();
+  size_t EventsRateLimitedLocked();
   void TryResetLocked(uint64_t cur_mach_time);
 
   static constexpr NSTimeInterval kDefaultResetDuration = 15.0;
 
+  std::shared_ptr<santa::santad::Metrics> metrics_;
+  santa::santad::Processor processor_;
   size_t log_count_total_ = 0;
   size_t max_log_count_total_;
   uint64_t reset_mach_time_;

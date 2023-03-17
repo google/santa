@@ -214,7 +214,7 @@ void PopulatePathTargets(const Message &msg, std::vector<PathTarget> &targets) {
          (std::shared_ptr<santa::santad::event_providers::endpoint_security::Enricher>)enricher
   decisionCache:(SNTDecisionCache *)decisionCache {
   self = [super initWithESAPI:std::move(esApi)
-                      metrics:std::move(metrics)
+                      metrics:metrics
                     processor:santa::santad::Processor::kFileAccessAuthorizer];
   if (self) {
     _watchItems = std::move(watchItems);
@@ -223,7 +223,8 @@ void PopulatePathTargets(const Message &msg, std::vector<PathTarget> &targets) {
 
     _decisionCache = decisionCache;
 
-    _rateLimiter = RateLimiter::Create(50);
+    _rateLimiter =
+      RateLimiter::Create(metrics, santa::santad::Processor::kFileAccessAuthorizer, 50);
 
     SNTMetricBooleanGauge *famEnabled = [[SNTMetricSet sharedInstance]
       booleanGaugeWithName:@"/santa/fam_enabled"
