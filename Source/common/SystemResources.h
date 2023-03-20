@@ -35,6 +35,9 @@ uint64_t MachTimeToNanos(uint64_t mach_time);
 // Convert nanoseconds to mach absolute time
 uint64_t NanosToMachTime(uint64_t nanos);
 
+// Add some number of nanoseconds to a given mach time and return the new result
+uint64_t AddNanosecondsToMachTime(uint64_t ns, uint64_t machTime);
+
 // Get the result of proc_pidinfo with the PROC_PIDTASKINFO flavor
 std::optional<SantaTaskInfo> GetTaskInfo();
 

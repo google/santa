@@ -41,11 +41,13 @@
 #include "Source/santad/DataLayer/WatchItems.h"
 #include "Source/santad/EventProviders/EndpointSecurity/EnrichedTypes.h"
 #include "Source/santad/EventProviders/EndpointSecurity/Message.h"
+#include "Source/santad/EventProviders/RateLimiter.h"
 
 using santa::santad::EventDisposition;
 using santa::santad::data_layer::WatchItemPathType;
 using santa::santad::data_layer::WatchItemPolicy;
 using santa::santad::data_layer::WatchItems;
+using santa::santad::event_providers::RateLimiter;
 using santa::santad::event_providers::endpoint_security::EndpointSecurityAPI;
 using santa::santad::event_providers::endpoint_security::Enricher;
 using santa::santad::event_providers::endpoint_security::EnrichOptions;
@@ -55,6 +57,7 @@ using santa::santad::logs::endpoint_security::Logger;
 NSString *kBadCertHash = @"BAD_CERT_HASH";
 
 static constexpr uint32_t kOpenFlagsIndicatingWrite = FWRITE | O_APPEND | O_TRUNC;
+static constexpr uint16_t kDefaultRateLimitQPS = 50;
 
 // Small structure to hold a complete event path target being operated upon and
 // a bool indicating whether the path is a readable target (e.g. a file being
@@ -198,6 +201,7 @@ void PopulatePathTargets(const Message &msg, std::vector<PathTarget> &targets) {
   std::shared_ptr<Logger> _logger;
   std::shared_ptr<WatchItems> _watchItems;
   std::shared_ptr<Enricher> _enricher;
+  std::shared_ptr<RateLimiter> _rateLimiter;
   SantaCache<SantaVnode, NSString *> _certHashCache;
 }
 
@@ -211,7 +215,7 @@ void PopulatePathTargets(const Message &msg, std::vector<PathTarget> &targets) {
          (std::shared_ptr<santa::santad::event_providers::endpoint_security::Enricher>)enricher
   decisionCache:(SNTDecisionCache *)decisionCache {
   self = [super initWithESAPI:std::move(esApi)
-                      metrics:std::move(metrics)
+                      metrics:metrics
                     processor:santa::santad::Processor::kFileAccessAuthorizer];
   if (self) {
     _watchItems = std::move(watchItems);
@@ -219,6 +223,9 @@ void PopulatePathTargets(const Message &msg, std::vector<PathTarget> &targets) {
     _enricher = std::move(enricher);
 
     _decisionCache = decisionCache;
+
+    _rateLimiter = RateLimiter::Create(metrics, santa::santad::Processor::kFileAccessAuthorizer,
+                                       kDefaultRateLimitQPS);
 
     SNTMetricBooleanGauge *famEnabled = [[SNTMetricSet sharedInstance]
       booleanGaugeWithName:@"/santa/fam_enabled"
@@ -443,8 +450,10 @@ void PopulatePathTargets(const Message &msg, std::vector<PathTarget> &targets) {
                                                     forTarget:target
                                                     toMessage:msg];
 
-  if (ShouldLogDecision(policyDecision)) {
-    if (optionalPolicy.has_value()) {
+  // Note: If ShouldLogDecision, it shouldn't be possible for optionalPolicy
+  // to not have a value. Performing the check just in case to prevent a crash.
+  if (ShouldLogDecision(policyDecision) && optionalPolicy.has_value()) {
+    if (_rateLimiter->Decide(msg->mach_time) == RateLimiter::Decision::kAllowed) {
       std::string policyNameCopy = optionalPolicy.value()->name;
       std::string policyVersionCopy = policyVersion;
       std::string targetPathCopy = target.path;
@@ -456,10 +465,6 @@ void PopulatePathTargets(const Message &msg, std::vector<PathTarget> &targets) {
                               self->_enricher->Enrich(*esMsg->process, EnrichOptions::kLocalOnly),
                               targetPathCopy, policyDecision);
                           }];
-
-    } else {
-      LOGE(@"Unexpectedly missing policy: Unable to log file access event: %s -> %s",
-           Path(msg->process->executable).data(), target.path.c_str());
     }
   }
 
