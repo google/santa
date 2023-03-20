@@ -70,9 +70,15 @@ class WatchItems : public std::enable_shared_from_this<WatchItems> {
   // Factory
   static std::shared_ptr<WatchItems> Create(NSString *config_path,
                                             uint64_t reapply_config_frequency_secs);
+  // Factory
+  static std::shared_ptr<WatchItems> Create(NSDictionary *config,
+                                            uint64_t reapply_config_frequency_secs);
 
-  WatchItems(NSString *config_path_, dispatch_queue_t q, dispatch_source_t timer_source,
+  WatchItems(NSString *config_path, dispatch_queue_t q, dispatch_source_t timer_source,
              void (^periodic_task_complete_f)(void) = nullptr);
+  WatchItems(NSDictionary *config, dispatch_queue_t q, dispatch_source_t timer_source,
+             void (^periodic_task_complete_f)(void) = nullptr);
+
   ~WatchItems();
 
   void BeginPeriodicTask();
@@ -80,6 +86,8 @@ class WatchItems : public std::enable_shared_from_this<WatchItems> {
   void RegisterClient(id<SNTEndpointSecurityDynamicEventHandler> client);
 
   void SetConfigPath(NSString *config_path);
+  void SetConfig(NSDictionary *config);
+
   VersionAndPolicies FindPolciesForPaths(const std::vector<std::string_view> &paths);
 
   std::optional<WatchItemsState> State();
@@ -87,6 +95,9 @@ class WatchItems : public std::enable_shared_from_this<WatchItems> {
   friend class santa::santad::data_layer::WatchItemsPeer;
 
  private:
+  static std::shared_ptr<WatchItems> CreateInternal(NSString *config_path, NSDictionary *config,
+                                                    uint64_t reapply_config_frequency_secs);
+
   NSDictionary *ReadConfig();
   NSDictionary *ReadConfigLocked() ABSL_SHARED_LOCKS_REQUIRED(lock_);
   void ReloadConfig(NSDictionary *new_config);
@@ -98,6 +109,7 @@ class WatchItems : public std::enable_shared_from_this<WatchItems> {
                        std::set<std::pair<std::string, WatchItemPathType>> &paths);
 
   NSString *config_path_;
+  NSDictionary *embedded_config_;
   dispatch_queue_t q_;
   dispatch_source_t timer_source_;
   void (^periodic_task_complete_f_)(void);

@@ -191,7 +191,7 @@ static NSString *RepeatedString(NSString *str, NSUInteger len) {
   // Changes in config dictionary will update policy info even if the
   // filesystem didn't change.
   {
-    WatchItemsPeer watchItems(nil, NULL, NULL);
+    WatchItemsPeer watchItems((NSString*)nil, NULL, NULL);
     [self pushd:@"a"];
     watchItems.ReloadConfig(configAllFilesOriginal);
 
@@ -212,7 +212,7 @@ static NSString *RepeatedString(NSString *str, NSUInteger len) {
 
   // Changes to fileystem structure are reflected when a config is reloaded
   {
-    WatchItemsPeer watchItems(nil, NULL, NULL);
+    WatchItemsPeer watchItems((NSString*)nil, NULL, NULL);
     [self pushd:@"a"];
     watchItems.ReloadConfig(configAllFilesOriginal);
     [self popd];
@@ -313,7 +313,7 @@ static NSString *RepeatedString(NSString *str, NSUInteger len) {
     }
   });
 
-  WatchItemsPeer watchItems(nil, NULL, NULL);
+  WatchItemsPeer watchItems((NSString*)nil, NULL, NULL);
   WatchItems::VersionAndPolicies policies;
 
   // Resultant vector is same size as input vector

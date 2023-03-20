@@ -217,7 +217,7 @@ REGISTER_COMMAND_NAME(@"status")
         @"enabled" : @(watchItemsEnabled),
         @"rule_count" : @(watchItemsRuleCount),
         @"policy_version" : watchItemsPolicyVersion,
-        @"config_path" : watchItemsConfigPath,
+        @"config_path" : watchItemsConfigPath ?: @"null",
         @"last_policy_update" : watchItemsLastUpdateStr ?: @"null",
       };
     } else {
@@ -272,7 +272,7 @@ REGISTER_COMMAND_NAME(@"status")
     if (watchItemsEnabled) {
       printf("  %-25s | %s\n", "Policy Version", watchItemsPolicyVersion.UTF8String);
       printf("  %-25s | %llu\n", "Rule Count", watchItemsRuleCount);
-      printf("  %-25s | %s\n", "Config Path", watchItemsConfigPath.UTF8String);
+      printf("  %-25s | %s\n", "Config Path", (watchItemsConfigPath ?: @"(embedded)").UTF8String);
       printf("  %-25s | %s\n", "Last Policy Update", watchItemsLastUpdateStr.UTF8String);
     }
 

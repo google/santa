@@ -97,6 +97,7 @@ static NSString *const kSpoolDirectoryFileSizeThresholdKB = @"SpoolDirectoryFile
 static NSString *const kSpoolDirectorySizeThresholdMB = @"SpoolDirectorySizeThresholdMB";
 static NSString *const kSpoolDirectoryEventMaxFlushTimeSec = @"SpoolDirectoryEventMaxFlushTimeSec";
 
+static NSString *const kFileAccessPolicy = @"FileAccessPolicy";
 static NSString *const kFileAccessPolicyPlist = @"FileAccessPolicyPlist";
 static NSString *const kFileAccessPolicyUpdateIntervalSec = @"FileAccessPolicyUpdateIntervalSec";
 
@@ -211,6 +212,7 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
       kSpoolDirectoryFileSizeThresholdKB : number,
       kSpoolDirectorySizeThresholdMB : number,
       kSpoolDirectoryEventMaxFlushTimeSec : number,
+      kFileAccessPolicy : dictionary,
       kFileAccessPolicyPlist : string,
       kFileAccessPolicyUpdateIntervalSec : number,
       kEnableMachineIDDecoration : number,
@@ -416,6 +418,10 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
 }
 
 + (NSSet *)keyPathsForValuesAffectingSpoolDirectoryEventMaxFlushTimeSec {
+  return [self configStateSet];
+}
+
++ (NSSet *)keyPathsForValuesAffectingFileAccessPolicy {
   return [self configStateSet];
 }
 
@@ -809,8 +815,17 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
            : 15.0;
 }
 
+- (NSDictionary *)fileAccessPolicy {
+  return self.configState[kFileAccessPolicy];
+}
+
 - (NSString *)fileAccessPolicyPlist {
-  return self.configState[kFileAccessPolicyPlist];
+  // This property is ignored when kFileAccessPolicy is set
+  if (self.configState[kFileAccessPolicy]) {
+    return nil;
+  } else {
+    return self.configState[kFileAccessPolicyPlist];
+  }
 }
 
 - (uint32_t)fileAccessPolicyUpdateIntervalSec {
