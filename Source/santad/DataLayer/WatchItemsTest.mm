@@ -61,8 +61,14 @@ extern std::variant<Unit, santatest::ProcessList> VerifyConfigWatchItemProcesses
   NSDictionary *watch_item, NSError **err);
 class WatchItemsPeer : public WatchItems {
  public:
-  using WatchItems::ReloadConfig;
   using WatchItems::WatchItems;
+
+  using WatchItems::ReloadConfig;
+  using WatchItems::SetConfig;
+  using WatchItems::SetConfigPath;
+
+  using WatchItems::config_path_;
+  using WatchItems::embedded_config_;
 };
 
 }  // namespace santa::santad::data_layer
@@ -191,7 +197,7 @@ static NSString *RepeatedString(NSString *str, NSUInteger len) {
   // Changes in config dictionary will update policy info even if the
   // filesystem didn't change.
   {
-    WatchItemsPeer watchItems((NSString*)nil, NULL, NULL);
+    WatchItemsPeer watchItems((NSString *)nil, NULL, NULL);
     [self pushd:@"a"];
     watchItems.ReloadConfig(configAllFilesOriginal);
 
@@ -212,7 +218,7 @@ static NSString *RepeatedString(NSString *str, NSUInteger len) {
 
   // Changes to fileystem structure are reflected when a config is reloaded
   {
-    WatchItemsPeer watchItems((NSString*)nil, NULL, NULL);
+    WatchItemsPeer watchItems((NSString *)nil, NULL, NULL);
     [self pushd:@"a"];
     watchItems.ReloadConfig(configAllFilesOriginal);
     [self popd];
@@ -313,7 +319,7 @@ static NSString *RepeatedString(NSString *str, NSUInteger len) {
     }
   });
 
-  WatchItemsPeer watchItems((NSString*)nil, NULL, NULL);
+  WatchItemsPeer watchItems((NSString *)nil, NULL, NULL);
   WatchItems::VersionAndPolicies policies;
 
   // Resultant vector is same size as input vector
@@ -840,6 +846,25 @@ static NSString *RepeatedString(NSString *str, NSUInteger len) {
   XCTAssertCStringEqual(state.policy_version.UTF8String, kVersion.data());
   XCTAssertEqual(state.config_path, configPath);
   XCTAssertGreaterThanOrEqual(state.last_config_load_epoch, startTime);
+}
+
+- (void)testSetConfigAndSetConfigPath {
+  // Test internal state when switching back and forth between path-based and
+  // dictionary-based config options.
+  WatchItemsPeer watchItems(@{}, NULL, NULL);
+
+  XCTAssertNil(watchItems.config_path_);
+  XCTAssertNotNil(watchItems.embedded_config_);
+
+  watchItems.SetConfigPath(@"/path/to/a/nonexistent/file/so/nothing/is/opened");
+
+  XCTAssertNotNil(watchItems.config_path_);
+  XCTAssertNil(watchItems.embedded_config_);
+
+  watchItems.SetConfig(@{});
+
+  XCTAssertNil(watchItems.config_path_);
+  XCTAssertNotNil(watchItems.embedded_config_);
 }
 
 @end
