@@ -37,14 +37,14 @@ objc_library(
 objc_library(
     name = "santactl_lib",
     srcs = [
+        "main.m",
         "Commands/SNTCommandFileInfo.m",
-        "Commands/SNTCommandMetrics.h",
-        "Commands/SNTCommandMetrics.m",
         "Commands/SNTCommandRule.m",
         "Commands/SNTCommandStatus.m",
-        "Commands/SNTCommandSync.m",
         "Commands/SNTCommandVersion.m",
-        "main.m",
+        "Commands/SNTCommandMetrics.h",
+        "Commands/SNTCommandMetrics.m",
+        "Commands/SNTCommandSync.m",
     ] + select({
         "//:opt_build": [],
         "//conditions:default": [
