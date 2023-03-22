@@ -21,20 +21,20 @@ build:asan --config=san-common
 build:asan --copt="-fsanitize=address"
 build:asan --copt="-DADDRESS_SANITIZER"
 build:asan --linkopt="-fsanitize=address"
-build:asan --action_env="ASAN_OPTIONS=log_path=/tmp/san_out"
+build:asan --test_env="ASAN_OPTIONS=log_path=/tmp/san_out"
 
 build:tsan --config=san-common
 build:tsan --copt="-fsanitize=thread"
 build:tsan --copt="-DTHREAD_SANITIZER=1"
 build:tsan --linkopt="-fsanitize=thread"
-build:tsan --action_env="TSAN_OPTIONS=log_path=/tmp/san_out:halt_on_error=true"
+build:tsan --test_env="TSAN_OPTIONS=log_path=/tmp/san_out:halt_on_error=true"
 
 build:ubsan --config=san-common
 build:ubsan --copt="-fsanitize=undefined"
 build:ubsan --copt="-DUNDEFINED_SANITIZER=1"
 build:ubsan --copt="-fno-sanitize=function" --copt="-fno-sanitize=vptr"
 build:ubsan --linkopt="-fsanitize=undefined"
-build:ubsan --action_env="UBSAN_OPTIONS=log_path=/tmp/san_out"
+build:ubsan --test_env="UBSAN_OPTIONS=log_path=/tmp/san_out"
 
 build:fuzz --config=san-common
 build:fuzz --@rules_fuzzing//fuzzing:cc_engine=@rules_fuzzing//fuzzing/engines:libfuzzer
