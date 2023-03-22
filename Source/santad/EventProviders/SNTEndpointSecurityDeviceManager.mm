@@ -248,13 +248,12 @@ NS_ASSUME_NONNULL_BEGIN
        @"isEjectable: %d",
        protocol, kind, isInternal, isRemovable, isEjectable);
 
-  
-  // if the device is internal, or virtual *AND* is not an SD Card, 
+  // if the device is internal, or virtual *AND* is not an SD Card,
   // then allow the mount. This is to ensure we block SD cards inserted into
   // the internal reader of some Macs, whilst also ensuring we don't block
   // the internal storage device.
   if ((isInternal || isVirtual) && !isSecureDigital) {
-    return ES_AUTH_RESULT_ALLOW; 
+    return ES_AUTH_RESULT_ALLOW;
   }
 
   // We are okay with operations for devices that are non-removable as long as
