@@ -259,7 +259,7 @@ NS_ASSUME_NONNULL_BEGIN
 
   // We are okay with operations for devices that are non-removable as long as
   // they are NOT a USB device, or an SD Card.
-  if !isRemovable && !isEjectable && !isUSB && !isSecureDigital {
+  if (!isRemovable && !isEjectable && !isUSB && !isSecureDigital) {
     return ES_AUTH_RESULT_ALLOW;
   }
 
