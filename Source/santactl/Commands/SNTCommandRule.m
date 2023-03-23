@@ -131,9 +131,6 @@ REGISTER_COMMAND_NAME(@"rule")
         [self printErrorUsageAndExit:@"--sha256 requires an argument"];
       }
       newRule.identifier = arguments[i];
-      if (newRule.identifier.length != 64) {
-        [self printErrorUsageAndExit:@"--sha256 requires a valid SHA-256 as the argument"];
-      }
     } else if ([arg caseInsensitiveCompare:@"--message"] == NSOrderedSame) {
       if (++i > arguments.count - 1) {
         [self printErrorUsageAndExit:@"--message requires an argument"];
@@ -145,6 +142,15 @@ REGISTER_COMMAND_NAME(@"rule")
 #endif
     } else {
       [self printErrorUsageAndExit:[@"Unknown argument: " stringByAppendingString:arg]];
+    }
+  }
+
+  if (newRule.type == SNTRuleTypeBinary || newRule.type == SNTRuleTypeCertificate) {
+    NSCharacterSet *nonHex =
+      [[NSCharacterSet characterSetWithCharactersInString:@"0123456789ABCDEF"] invertedSet];
+    if ([[newRule.identifier uppercaseString] stringByTrimmingCharactersInSet:nonHex].length !=
+        64) {
+      [self printErrorUsageAndExit:@"BINARY or CERTIFICATE rules require a valid SHA-256"];
     }
   }
 

@@ -53,7 +53,8 @@ class Metrics : public std::enable_shared_from_this<Metrics> {
 
   Metrics(dispatch_queue_t q, dispatch_source_t timer_source, uint64_t interval,
           SNTMetricInt64Gauge *event_processing_times, SNTMetricCounter *event_counts,
-          SNTMetricSet *metric_set, void (^run_on_first_start)(Metrics *));
+          SNTMetricCounter *rate_limit_counts, SNTMetricSet *metric_set,
+          void (^run_on_first_start)(Metrics *));
 
   ~Metrics();
 
@@ -68,6 +69,8 @@ class Metrics : public std::enable_shared_from_this<Metrics> {
   void SetEventMetrics(Processor processor, es_event_type_t event_type,
                        EventDisposition disposition, int64_t nanos);
 
+  void SetRateLimitingMetrics(Processor processor, int64_t events_rate_limited_count);
+
   friend class santa::santad::MetricsPeer;
 
  private:
@@ -80,6 +83,7 @@ class Metrics : public std::enable_shared_from_this<Metrics> {
   uint64_t interval_;
   SNTMetricInt64Gauge *event_processing_times_;
   SNTMetricCounter *event_counts_;
+  SNTMetricCounter *rate_limit_counts_;
   SNTMetricSet *metric_set_;
   // Tracks whether or not the timer_source should be running.
   // This helps manage dispatch source state to ensure the source is not
@@ -94,6 +98,7 @@ class Metrics : public std::enable_shared_from_this<Metrics> {
   // Small caches for storing event metrics between metrics export operations
   std::map<EventCountTuple, int64_t> event_counts_cache_;
   std::map<EventTimesTuple, int64_t> event_times_cache_;
+  std::map<Processor, int64_t> rate_limit_counts_cache_;
 };
 
 }  // namespace santa::santad

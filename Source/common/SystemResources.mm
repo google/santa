@@ -39,15 +39,26 @@ static mach_timebase_info_data_t GetTimebase() {
 }
 
 uint64_t MachTimeToNanos(uint64_t mach_time) {
-  mach_timebase_info_data_t timebase = GetTimebase();
+  static mach_timebase_info_data_t timebase = GetTimebase();
 
   return mach_time * timebase.numer / timebase.denom;
 }
 
 uint64_t NanosToMachTime(uint64_t nanos) {
-  mach_timebase_info_data_t timebase = GetTimebase();
+  static mach_timebase_info_data_t timebase = GetTimebase();
 
   return nanos * timebase.denom / timebase.numer;
+}
+
+uint64_t AddNanosecondsToMachTime(uint64_t ns, uint64_t machTime) {
+  // Convert machtime to nanoseconds
+  uint64_t nanoTime = MachTimeToNanos(machTime);
+
+  // Add the nanosecond offset
+  nanoTime += ns;
+
+  // Convert back to machTime
+  return NanosToMachTime(nanoTime);
 }
 
 std::optional<SantaTaskInfo> GetTaskInfo() {

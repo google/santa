@@ -33,6 +33,15 @@
     _type = type;
     _customMsg = customMsg;
     _timestamp = timestamp;
+
+    if (_type == SNTRuleTypeBinary || _type == SNTRuleTypeCertificate) {
+      NSCharacterSet *nonHex =
+        [[NSCharacterSet characterSetWithCharactersInString:@"0123456789ABCDEF"] invertedSet];
+      if ([[_identifier uppercaseString] stringByTrimmingCharactersInSet:nonHex].length != 64)
+        return nil;
+    } else if (_identifier.length == 0) {
+      return nil;
+    }
   }
   return self;
 }
@@ -55,52 +64,52 @@
 - (instancetype)initWithDictionary:(NSDictionary *)dict {
   if (![dict isKindOfClass:[NSDictionary class]]) return nil;
 
-  self = [super init];
-  if (self) {
-    _identifier = dict[kRuleIdentifier];
-    if (![_identifier isKindOfClass:[NSString class]] || !_identifier.length) {
-      _identifier = dict[kRuleSHA256];
-    }
-    if (![_identifier isKindOfClass:[NSString class]] || !_identifier.length) return nil;
-
-    NSString *policyString = dict[kRulePolicy];
-    if (![policyString isKindOfClass:[NSString class]]) return nil;
-    if ([policyString isEqual:kRulePolicyAllowlist] ||
-        [policyString isEqual:kRulePolicyAllowlistDeprecated]) {
-      _state = SNTRuleStateAllow;
-    } else if ([policyString isEqual:kRulePolicyAllowlistCompiler] ||
-               [policyString isEqual:kRulePolicyAllowlistCompilerDeprecated]) {
-      _state = SNTRuleStateAllowCompiler;
-    } else if ([policyString isEqual:kRulePolicyBlocklist] ||
-               [policyString isEqual:kRulePolicyBlocklistDeprecated]) {
-      _state = SNTRuleStateBlock;
-    } else if ([policyString isEqual:kRulePolicySilentBlocklist] ||
-               [policyString isEqual:kRulePolicySilentBlocklistDeprecated]) {
-      _state = SNTRuleStateSilentBlock;
-    } else if ([policyString isEqual:kRulePolicyRemove]) {
-      _state = SNTRuleStateRemove;
-    } else {
-      return nil;
-    }
-
-    NSString *ruleTypeString = dict[kRuleType];
-    if (![ruleTypeString isKindOfClass:[NSString class]]) return nil;
-    if ([ruleTypeString isEqual:kRuleTypeBinary]) {
-      _type = SNTRuleTypeBinary;
-    } else if ([ruleTypeString isEqual:kRuleTypeCertificate]) {
-      _type = SNTRuleTypeCertificate;
-    } else if ([ruleTypeString isEqual:kRuleTypeTeamID]) {
-      _type = SNTRuleTypeTeamID;
-    } else {
-      return nil;
-    }
-
-    NSString *customMsg = dict[kRuleCustomMsg];
-    if ([customMsg isKindOfClass:[NSString class]] && customMsg.length) {
-      _customMsg = customMsg;
-    }
+  NSString *identifier = dict[kRuleIdentifier];
+  if (![identifier isKindOfClass:[NSString class]] || !identifier.length) {
+    identifier = dict[kRuleSHA256];
   }
-  return self;
+  if (![identifier isKindOfClass:[NSString class]] || !identifier.length) return nil;
+
+  NSString *policyString = dict[kRulePolicy];
+  SNTRuleState state;
+  if (![policyString isKindOfClass:[NSString class]]) return nil;
+  if ([policyString isEqual:kRulePolicyAllowlist] ||
+      [policyString isEqual:kRulePolicyAllowlistDeprecated]) {
+    state = SNTRuleStateAllow;
+  } else if ([policyString isEqual:kRulePolicyAllowlistCompiler] ||
+             [policyString isEqual:kRulePolicyAllowlistCompilerDeprecated]) {
+    state = SNTRuleStateAllowCompiler;
+  } else if ([policyString isEqual:kRulePolicyBlocklist] ||
+             [policyString isEqual:kRulePolicyBlocklistDeprecated]) {
+    state = SNTRuleStateBlock;
+  } else if ([policyString isEqual:kRulePolicySilentBlocklist] ||
+             [policyString isEqual:kRulePolicySilentBlocklistDeprecated]) {
+    state = SNTRuleStateSilentBlock;
+  } else if ([policyString isEqual:kRulePolicyRemove]) {
+    state = SNTRuleStateRemove;
+  } else {
+    return nil;
+  }
+
+  NSString *ruleTypeString = dict[kRuleType];
+  SNTRuleType type;
+  if (![ruleTypeString isKindOfClass:[NSString class]]) return nil;
+  if ([ruleTypeString isEqual:kRuleTypeBinary]) {
+    type = SNTRuleTypeBinary;
+  } else if ([ruleTypeString isEqual:kRuleTypeCertificate]) {
+    type = SNTRuleTypeCertificate;
+  } else if ([ruleTypeString isEqual:kRuleTypeTeamID]) {
+    type = SNTRuleTypeTeamID;
+  } else {
+    return nil;
+  }
+
+  NSString *customMsg = dict[kRuleCustomMsg];
+  if (![customMsg isKindOfClass:[NSString class]] || customMsg.length == 0) {
+    customMsg = nil;
+  }
+
+  return [self initWithIdentifier:identifier state:state type:type customMsg:customMsg];
 }
 
 #pragma mark NSSecureCoding

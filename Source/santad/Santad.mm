@@ -297,12 +297,27 @@ void SantadMain(std::shared_ptr<EndpointSecurityAPI> esapi, std::shared_ptr<Logg
             selector:@selector(fileAccessPolicyPlist)
                 type:[NSString class]
             callback:^(NSString *oldValue, NSString *newValue) {
+              if ([configurator fileAccessPolicy]) {
+                // Ignore any changes to this key if fileAccessPolicy is set
+                return;
+              }
+
               if (oldValue != newValue || (newValue && ![oldValue isEqualToString:newValue])) {
                 LOGI(@"Filesystem monitoring policy config path changed: %@ -> %@", oldValue,
                      newValue);
                 watch_items->SetConfigPath(newValue);
               }
             }],
+    [[SNTKVOManager alloc] initWithObject:configurator
+                                 selector:@selector(fileAccessPolicy)
+                                     type:[NSDictionary class]
+                                 callback:^(NSDictionary *oldValue, NSDictionary *newValue) {
+                                   if (oldValue != newValue ||
+                                       (newValue && ![oldValue isEqualToDictionary:newValue])) {
+                                     LOGI(@"Filesystem monitoring policy embedded config changed");
+                                     watch_items->SetConfig(newValue);
+                                   }
+                                 }],
     [[SNTKVOManager alloc] initWithObject:configurator
                                  selector:@selector(staticRules)
                                      type:[NSArray class]

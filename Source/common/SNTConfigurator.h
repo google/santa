@@ -246,9 +246,19 @@
 @property(readonly, nonatomic) float spoolDirectoryEventMaxFlushTimeSec;
 
 ///
+///  If set, contains the filesystem access policy configuration.
+///
+///  @note: The property fileAccessPolicyPlist will be ignored if
+///         fileAccessPolicy is set.
+///  @note: This property is KVO compliant.
+///
+@property(readonly, nonatomic) NSDictionary *fileAccessPolicy;
+
+///
 ///  If set, contains the path to the filesystem access policy config plist.
 ///
-///  @note: This property is KVO compliant, but is only read once at santad startup.
+///  @note: This property will be ignored if fileAccessPolicy is set.
+///  @note: This property is KVO compliant.
 ///
 @property(readonly, nonatomic) NSString *fileAccessPolicyPlist;
 

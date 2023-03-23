@@ -48,6 +48,7 @@ class MetricsPeer : public Metrics {
 
   std::map<EventCountTuple, int64_t> &EventCounts() { return event_counts_cache_; };
   std::map<EventTimesTuple, int64_t> &EventTimes() { return event_times_cache_; };
+  std::map<Processor, int64_t> &RateLimitCounts() { return rate_limit_counts_cache_; };
 };
 
 }  // namespace santa::santad
@@ -72,10 +73,10 @@ using santa::santad::ProcessorToString;
 
 - (void)testStartStop {
   dispatch_source_t timer = dispatch_source_create(DISPATCH_SOURCE_TYPE_TIMER, 0, 0, self.q);
-  auto metrics =
-    std::make_shared<MetricsPeer>(self.q, timer, 100, nil, nil, nil, ^(santa::santad::Metrics *m) {
-      dispatch_semaphore_signal(self.sema);
-    });
+  auto metrics = std::make_shared<MetricsPeer>(self.q, timer, 100, nil, nil, nil, nil,
+                                               ^(santa::santad::Metrics *m) {
+                                                 dispatch_semaphore_signal(self.sema);
+                                               });
 
   XCTAssertFalse(metrics->IsRunning());
 
@@ -108,7 +109,7 @@ using santa::santad::ProcessorToString;
 
 - (void)testSetInterval {
   dispatch_source_t timer = dispatch_source_create(DISPATCH_SOURCE_TYPE_TIMER, 0, 0, self.q);
-  auto metrics = std::make_shared<MetricsPeer>(self.q, timer, 100, nil, nil, nil,
+  auto metrics = std::make_shared<MetricsPeer>(self.q, timer, 100, nil, nil, nil, nil,
                                                ^(santa::santad::Metrics *m){
                                                });
 
@@ -182,7 +183,7 @@ using santa::santad::ProcessorToString;
   int64_t nanos = 1234;
 
   dispatch_source_t timer = dispatch_source_create(DISPATCH_SOURCE_TYPE_TIMER, 0, 0, self.q);
-  auto metrics = std::make_shared<MetricsPeer>(self.q, timer, 100, nil, nil, nil,
+  auto metrics = std::make_shared<MetricsPeer>(self.q, timer, 100, nil, nil, nil, nil,
                                                ^(santa::santad::Metrics *m){
                                                  // This block intentionally left blank
                                                });
@@ -221,6 +222,32 @@ using santa::santad::ProcessorToString;
   XCTAssertEqual(metrics->EventTimes()[etOpen], nanos * 2);
 }
 
+- (void)testSetRateLimitingMetrics {
+  dispatch_source_t timer = dispatch_source_create(DISPATCH_SOURCE_TYPE_TIMER, 0, 0, self.q);
+  auto metrics = std::make_shared<MetricsPeer>(self.q, timer, 100, nil, nil, nil, nil,
+                                               ^(santa::santad::Metrics *m){
+                                                 // This block intentionally left blank
+                                               });
+
+  // Initial map is empty
+  XCTAssertEqual(metrics->RateLimitCounts().size(), 0);
+
+  metrics->SetRateLimitingMetrics(Processor::kFileAccessAuthorizer, 123);
+
+  // Check sizes after setting metrics once
+  XCTAssertEqual(metrics->RateLimitCounts().size(), 1);
+
+  metrics->SetRateLimitingMetrics(Processor::kFileAccessAuthorizer, 456);
+  metrics->SetRateLimitingMetrics(Processor::kAuthorizer, 789);
+
+  // Re-check expected counts. One was an update, so should only be 2 items
+  XCTAssertEqual(metrics->RateLimitCounts().size(), 2);
+
+  // Check map values
+  XCTAssertEqual(metrics->RateLimitCounts()[Processor::kFileAccessAuthorizer], 123 + 456);
+  XCTAssertEqual(metrics->RateLimitCounts()[Processor::kAuthorizer], 789);
+}
+
 - (void)testFlushMetrics {
   id mockEventProcessingTimes = OCMClassMock([SNTMetricInt64Gauge class]);
   id mockEventCounts = OCMClassMock([SNTMetricCounter class]);
@@ -240,7 +267,7 @@ using santa::santad::ProcessorToString;
 
   dispatch_source_t timer = dispatch_source_create(DISPATCH_SOURCE_TYPE_TIMER, 0, 0, self.q);
   auto metrics = std::make_shared<MetricsPeer>(self.q, timer, 100, mockEventProcessingTimes,
-                                               mockEventCounts, nil,
+                                               mockEventCounts, mockEventCounts, nil,
                                                ^(santa::santad::Metrics *m){
                                                  // This block intentionally left blank
                                                });
@@ -249,23 +276,28 @@ using santa::santad::ProcessorToString;
                            EventDisposition::kProcessed, nanos);
   metrics->SetEventMetrics(Processor::kAuthorizer, ES_EVENT_TYPE_AUTH_OPEN,
                            EventDisposition::kProcessed, nanos * 2);
+  metrics->SetRateLimitingMetrics(Processor::kFileAccessAuthorizer, 123);
 
   // First ensure we have the expected map sizes
   XCTAssertEqual(metrics->EventCounts().size(), 2);
   XCTAssertEqual(metrics->EventTimes().size(), 2);
+  XCTAssertEqual(metrics->RateLimitCounts().size(), 1);
 
   metrics->FlushMetrics();
 
   // After setting two different event metrics, we expect the sema to be hit
-  // four times - twice each for the event counts and event times maps
+  // five times - twice each for the event counts and event times maps, and
+  // once for the rate limit count map.
   XCTAssertSemaTrue(self.sema, 5, "Failed waiting for metrics to flush (1)");
   XCTAssertSemaTrue(self.sema, 5, "Failed waiting for metrics to flush (2)");
   XCTAssertSemaTrue(self.sema, 5, "Failed waiting for metrics to flush (3)");
   XCTAssertSemaTrue(self.sema, 5, "Failed waiting for metrics to flush (4)");
+  XCTAssertSemaTrue(self.sema, 5, "Failed waiting for metrics to flush (5)");
 
   // After a flush, map sizes should be reset to 0
   XCTAssertEqual(metrics->EventCounts().size(), 0);
   XCTAssertEqual(metrics->EventTimes().size(), 0);
+  XCTAssertEqual(metrics->RateLimitCounts().size(), 0);
 }
 
 @end

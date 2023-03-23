@@ -520,9 +520,24 @@ bool ParseConfig(NSDictionary *config, std::vector<std::shared_ptr<WatchItemPoli
 
 std::shared_ptr<WatchItems> WatchItems::Create(NSString *config_path,
                                                uint64_t reapply_config_frequency_secs) {
+  return CreateInternal(config_path, nil, reapply_config_frequency_secs);
+}
+
+std::shared_ptr<WatchItems> WatchItems::Create(NSDictionary *config,
+                                               uint64_t reapply_config_frequency_secs) {
+  return CreateInternal(nil, config, reapply_config_frequency_secs);
+}
+
+std::shared_ptr<WatchItems> WatchItems::CreateInternal(NSString *config_path, NSDictionary *config,
+                                                       uint64_t reapply_config_frequency_secs) {
   if (reapply_config_frequency_secs < kMinReapplyConfigFrequencySecs) {
     LOGW(@"Invalid watch item update interval provided: %llu. Min allowed: %llu",
          reapply_config_frequency_secs, kMinReapplyConfigFrequencySecs);
+    return nullptr;
+  }
+
+  if (config_path && config) {
+    LOGW(@"Invalid arguments creating WatchItems - both config and config_path cannot be set.");
     return nullptr;
   }
 
@@ -532,12 +547,26 @@ std::shared_ptr<WatchItems> WatchItems::Create(NSString *config_path,
   dispatch_source_set_timer(timer_source, dispatch_time(DISPATCH_TIME_NOW, 0),
                             NSEC_PER_SEC * reapply_config_frequency_secs, 0);
 
-  return std::make_shared<WatchItems>(config_path, q, timer_source);
+  if (config_path) {
+    return std::make_shared<WatchItems>(config_path, q, timer_source);
+  } else {
+    return std::make_shared<WatchItems>(config, q, timer_source);
+  }
 }
 
 WatchItems::WatchItems(NSString *config_path, dispatch_queue_t q, dispatch_source_t timer_source,
                        void (^periodic_task_complete_f)(void))
     : config_path_(config_path),
+      embedded_config_(nil),
+      q_(q),
+      timer_source_(timer_source),
+      periodic_task_complete_f_(periodic_task_complete_f),
+      watch_items_(std::make_unique<WatchItemsTree>()) {}
+
+WatchItems::WatchItems(NSDictionary *config, dispatch_queue_t q, dispatch_source_t timer_source,
+                       void (^periodic_task_complete_f)(void))
+    : config_path_(nil),
+      embedded_config_(config),
       q_(q),
       timer_source_(timer_source),
       periodic_task_complete_f_(periodic_task_complete_f),
@@ -688,7 +717,7 @@ void WatchItems::BeginPeriodicTask() {
       return;
     }
 
-    shared_watcher->ReloadConfig(shared_watcher->ReadConfig());
+    shared_watcher->ReloadConfig(embedded_config_ ?: shared_watcher->ReadConfig());
 
     if (shared_watcher->periodic_task_complete_f_) {
       shared_watcher->periodic_task_complete_f_();
@@ -718,9 +747,19 @@ void WatchItems::SetConfigPath(NSString *config_path) {
   {
     absl::MutexLock lock(&lock_);
     config_path_ = config_path;
+    embedded_config_ = nil;
     config = ReadConfigLocked();
   }
   ReloadConfig(config);
+}
+
+void WatchItems::SetConfig(NSDictionary *config) {
+  {
+    absl::MutexLock lock(&lock_);
+    config_path_ = nil;
+    embedded_config_ = config;
+  }
+  ReloadConfig(embedded_config_);
 }
 
 std::optional<WatchItemsState> WatchItems::State() {
