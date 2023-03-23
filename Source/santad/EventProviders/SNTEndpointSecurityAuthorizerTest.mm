@@ -85,6 +85,15 @@ class MockAuthResultCache : public AuthResultCache {
 }
 
 - (void)testHandleMessage {
+#ifdef THREAD_SANITIZER
+  // TSAN and this test do not get along in multiple ways.
+  // We get data race false positives in OCMock, and timeouts
+  // waiting for messages processing (presumably due to tsan's scheduling).
+  // Just skip it.
+  XCTSkip(@"TSAN enabled");
+  return;
+#endif
+
   es_file_t file = MakeESFile("foo");
   es_process_t proc = MakeESProcess(&file);
   es_message_t esMsg = MakeESMessage(ES_EVENT_TYPE_AUTH_EXEC, &proc, ActionType::Auth);
@@ -137,27 +146,31 @@ class MockAuthResultCache : public AuthResultCache {
 
     id mockAuthClient = OCMPartialMock(authClient);
 
-    Message msg(mockESApi, &esMsg);
+    // Scope so msg is destructed (and calls ReleaseMessage) before stopMocking is called.
+    {
+      Message msg(mockESApi, &esMsg);
 
-    OCMExpect([self.mockExecController synchronousShouldProcessExecEvent:msg])
-      .ignoringNonObjectArgs()
-      .andReturn(NO);
+      OCMExpect([self.mockExecController synchronousShouldProcessExecEvent:msg])
+        .ignoringNonObjectArgs()
+        .andReturn(NO);
 
-    OCMExpect([mockAuthClient postAction:SNTActionRespondDeny
+      OCMExpect([mockAuthClient postAction:SNTActionRespondDeny
+                                forMessage:Message(mockESApi, &esMsg)])
+        .ignoringNonObjectArgs();
+      OCMStub([mockAuthClient postAction:SNTActionRespondDeny
                               forMessage:Message(mockESApi, &esMsg)])
-      .ignoringNonObjectArgs();
-    OCMStub([mockAuthClient postAction:SNTActionRespondDeny forMessage:Message(mockESApi, &esMsg)])
-      .ignoringNonObjectArgs()
-      .andDo(nil);
+        .ignoringNonObjectArgs()
+        .andDo(nil);
 
-    [mockAuthClient handleMessage:std::move(msg)
-               recordEventMetrics:^(EventDisposition d) {
-                 XCTAssertEqual(d, EventDisposition::kDropped);
-                 dispatch_semaphore_signal(semaMetrics);
-               }];
+      [mockAuthClient handleMessage:std::move(msg)
+                 recordEventMetrics:^(EventDisposition d) {
+                   XCTAssertEqual(d, EventDisposition::kDropped);
+                   dispatch_semaphore_signal(semaMetrics);
+                 }];
 
-    XCTAssertSemaTrue(semaMetrics, 5, "Metrics not recorded within expected window");
-    XCTAssertTrue(OCMVerifyAll(mockAuthClient));
+      XCTAssertSemaTrue(semaMetrics, 5, "Metrics not recorded within expected window");
+      XCTAssertTrue(OCMVerifyAll(mockAuthClient));
+    }
 
     [mockAuthClient stopMocking];
     XCTBubbleMockVerifyAndClearExpectations(mockESApi.get());
@@ -180,25 +193,27 @@ class MockAuthResultCache : public AuthResultCache {
 
     id mockAuthClient = OCMPartialMock(authClient);
 
-    Message msg(mockESApi, &esMsg);
+    {
+      Message msg(mockESApi, &esMsg);
 
-    OCMExpect([self.mockExecController synchronousShouldProcessExecEvent:msg])
-      .ignoringNonObjectArgs()
-      .andReturn(YES);
+      OCMExpect([self.mockExecController synchronousShouldProcessExecEvent:msg])
+        .ignoringNonObjectArgs()
+        .andReturn(YES);
 
-    OCMExpect([mockAuthClient processMessage:Message(mockESApi, &esMsg)]).ignoringNonObjectArgs();
-    OCMStub([mockAuthClient processMessage:Message(mockESApi, &esMsg)])
-      .ignoringNonObjectArgs()
-      .andDo(nil);
+      OCMExpect([mockAuthClient processMessage:Message(mockESApi, &esMsg)]).ignoringNonObjectArgs();
+      OCMStub([mockAuthClient processMessage:Message(mockESApi, &esMsg)])
+        .ignoringNonObjectArgs()
+        .andDo(nil);
 
-    [mockAuthClient handleMessage:std::move(msg)
-               recordEventMetrics:^(EventDisposition d) {
-                 XCTAssertEqual(d, EventDisposition::kProcessed);
-                 dispatch_semaphore_signal(semaMetrics);
-               }];
+      [mockAuthClient handleMessage:std::move(msg)
+                 recordEventMetrics:^(EventDisposition d) {
+                   XCTAssertEqual(d, EventDisposition::kProcessed);
+                   dispatch_semaphore_signal(semaMetrics);
+                 }];
 
-    XCTAssertSemaTrue(semaMetrics, 5, "Metrics not recorded within expected window");
-    XCTAssertTrue(OCMVerifyAll(mockAuthClient));
+      XCTAssertSemaTrue(semaMetrics, 5, "Metrics not recorded within expected window");
+      XCTAssertTrue(OCMVerifyAll(mockAuthClient));
+    }
 
     [mockAuthClient stopMocking];
     XCTBubbleMockVerifyAndClearExpectations(mockESApi.get());

@@ -191,12 +191,12 @@ using santa::common::PrefixTree;
   uint32_t count = 4096;
   auto t = new PrefixTree<int>(count * (uint32_t)[NSUUID UUID].UUIDString.length);
 
-  NSMutableArray *UUIDs = [NSMutableArray arrayWithCapacity:count];
+  __block NSMutableArray *UUIDs = [NSMutableArray arrayWithCapacity:count];
   for (int i = 0; i < count; ++i) {
     [UUIDs addObject:[NSUUID UUID].UUIDString];
   }
 
-  __block BOOL stop = NO;
+  __block _Atomic BOOL stop = NO;
 
   // Create a bunch of background noise.
   dispatch_async(dispatch_get_global_queue(0, 0), ^{

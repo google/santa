@@ -34,10 +34,29 @@ class FilePeer : public File {
   using File::ShouldFlush;
   using File::WatchLogFile;
 
-  NSFileHandle *FileHandle() { return file_handle_; }
+  // Member accesses wrapped in a dispatch_sync to satisfy tsan.
+  NSFileHandle *FileHandle() {
+    __block NSFileHandle *h;
+    dispatch_sync(q_, ^{
+      h = file_handle_;
+    });
+    return h;
+  }
 
-  size_t InternalBufferSize() { return buffer_offset_; }
-  size_t InternalBufferCapacity() { return buffer_.capacity(); }
+  size_t InternalBufferSize() {
+    __block size_t s = 0;
+    dispatch_sync(q_, ^{
+      s = buffer_offset_;
+    });
+    return s;
+  }
+  size_t InternalBufferCapacity() {
+    __block size_t s = 0;
+    dispatch_sync(q_, ^{
+      s = buffer_.capacity();
+    });
+    return s;
+  }
 };
 
 }  // namespace santa::santad::logs::endpoint_security::writers
