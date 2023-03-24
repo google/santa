@@ -19,7 +19,7 @@ To enable this feature, the `FileAccessPolicyPlist` key in the main [Santa confi
 ## Configuration
 
 | Key                 | Parent       | Type       | Required | Santa Version | Description |
-| :------------------ | :----------- | :--------- | :------- | :-------------| :---------- |
+| :------------------ | :----------- | :--------- | :------- | :------------ | :---------- |
 | `Version`           | `<Root>`     | String     | Yes      | v2023.1+      | Version of the configuration. Will be reported in events. |
 | `WatchItems`        | `<Root>`     | Dictionary | No       | v2023.1+      | The set of configuration items that will be monitored by Santa. |
 | `<Name>`            | `WatchItems` | Dictionary | No       | v2023.1+      | A unique name that identifies a single watch item rule. This value will be reported in events. The name must be a legal C identifier (i.e., must conform to the regex `[A-Za-z_][A-Za-z0-9_]*`). |
