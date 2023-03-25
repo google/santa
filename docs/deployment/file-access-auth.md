@@ -18,22 +18,24 @@ To enable this feature, the `FileAccessPolicyPlist` key in the main [Santa confi
 
 ## Configuration
 
-| Key                 | Parent       | Type       | Required | Description |
-| ------------------- | ------------ | ---------- | -------- | ----------- |
-| `Version`           | `<Root>`     | String     | Yes      | Version of the configuration. Will be reported in events. |
-| `WatchItems`        | `<Root>`     | Dictionary | No       | The set of configuration items that will be monitored by Santa. |
-| `<Name>`            | `WatchItems` | Dictionary | No       | A unique name that identifies a single watch item rule. This value will be reported in events. The name must be a legal C identifier (i.e., must conform to the regex `[A-Za-z_][A-Za-z0-9_]*`). |
-| `Paths`             | `<Name>`     | Array      | Yes      | A list of either String or Dictionary types that contain path globs to monitor. String type entires will have default values applied for the attributes that can be manually set with the Dictionary type. |
-| `Path`              | `Paths`      | String     | Yes      | The path glob to monitor. |
-| `IsPrefix`          | `Paths`      | Boolean    | No       | Whether or not the path glob represents a prefix path. (Default = `false`) |
-| `Options`           | `<Name>`     | Dictionary | No       | Customizes the actions for a given rule. |
-| `AllowReadAccess`   | `Options`    | Boolean    | No       | If true, indicates the rule will **not** be applied to actions that are read-only access (e.g., opening a watched path for reading, or cloning a watched path). If false, the rule will apply both to read-only access and access that could modify the watched path. (Default = `false`) |
-| `AuditOnly`         | `Options`    | Boolean    | No       | If true, operations violating the rule will only be logged. If false, operations violating the rule will be denied and logged. (Default = `true`) |
-| `Processes`         | `<Name>`     | Array      | No       | A list of dictionaries defining processes that are allowed to access paths matching the globs defined with the `Paths` key. For a process performing the operation to be considered a match, it must match all defined attributes of at least one entry in the list. |
-| `BinaryPath`        | `Processes`  | String     | No       | A path literal that an instigating process must be executed from. |
-| `TeamID`            | `Processes`  | String     | No       | Team ID of the instigating process. |
-| `CertificateSha256` | `Processes`  | String     | No       | SHA256 of the leaf certificate of the instigating process. |
-| `CDHash`            | `Processes`  | String     | No       | CDHash of the instigating process. |
+| Key                 | Parent       | Type       | Required | Santa Version | Description |
+| :------------------ | :----------- | :--------- | :------- | :------------ | :---------- |
+| `Version`           | `<Root>`     | String     | Yes      | v2023.1+      | Version of the configuration. Will be reported in events. |
+| `WatchItems`        | `<Root>`     | Dictionary | No       | v2023.1+      | The set of configuration items that will be monitored by Santa. |
+| `<Name>`            | `WatchItems` | Dictionary | No       | v2023.1+      | A unique name that identifies a single watch item rule. This value will be reported in events. The name must be a legal C identifier (i.e., must conform to the regex `[A-Za-z_][A-Za-z0-9_]*`). |
+| `Paths`             | `<Name>`     | Array      | Yes      | v2023.1+      | A list of either String or Dictionary types that contain path globs to monitor. String type entires will have default values applied for the attributes that can be manually set with the Dictionary type. |
+| `Path`              | `Paths`      | String     | Yes      | v2023.1+      | The path glob to monitor. |
+| `IsPrefix`          | `Paths`      | Boolean    | No       | v2023.1+      | Whether or not the path glob represents a prefix path. (Default = `false`) |
+| `Options`           | `<Name>`     | Dictionary | No       | v2023.1+      | Customizes the actions for a given rule. |
+| `AllowReadAccess`   | `Options`    | Boolean    | No       | v2023.1+      | If true, indicates the rule will **not** be applied to actions that are read-only access (e.g., opening a watched path for reading, or cloning a watched path). If false, the rule will apply both to read-only access and access that could modify the watched path. (Default = `false`) |
+| `AuditOnly`         | `Options`    | Boolean    | No       | v2023.1+      | If true, operations violating the rule will only be logged. If false, operations violating the rule will be denied and logged. (Default = `true`) |
+| `Processes`         | `<Name>`     | Array      | No       | v2023.1+      | A list of dictionaries defining processes that are allowed to access paths matching the globs defined with the `Paths` key. For a process performing the operation to be considered a match, it must match all defined attributes of at least one entry in the list. |
+| `BinaryPath`        | `Processes`  | String     | No       | v2023.1+      | A path literal that an instigating process must be executed from. |
+| `TeamID`            | `Processes`  | String     | No       | v2023.1+      | Team ID of the instigating process. |
+| `CertificateSha256` | `Processes`  | String     | No       | v2023.1+      | SHA256 of the leaf certificate of the instigating process. |
+| `CDHash`            | `Processes`  | String     | No       | v2023.1+      | CDHash of the instigating process. |
+| `SigningID`         | `Processes`  | String     | No       | v2023.1+      | Signing ID of the instigating process. |
+| `PlatformBinary`    | `Processes`  | Boolean    | No       | v2023.2+      | Whether or not the instigating process is a platform binary. |
 
 ### Example Configuration
 
