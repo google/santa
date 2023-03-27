@@ -14,7 +14,8 @@
 
 #import <Foundation/Foundation.h>
 
-extern NSString *const kXSRFToken;
+extern NSString *const kDefaultXSRFTokenHeader;
+extern NSString *const kXSRFTokenHeader;
 
 extern NSString *const kSerialNumber;
 extern NSString *const kHostname;

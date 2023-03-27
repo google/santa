@@ -198,6 +198,49 @@
   XCTAssertEqualObjects(self.syncState.xsrfToken, @"my-xsrf-token");
 }
 
+- (void)testBaseFetchXSRFTokenHeaderRedirect {
+  // Stub initial failing request
+  NSURLResponse *resp = [self responseWithCode:403 headerDict:nil];
+  [self stubRequestBody:nil
+               response:resp
+                  error:nil
+          validateBlock:^BOOL(NSURLRequest *req) {
+            return ([req.URL.absoluteString containsString:@"/a/"] &&
+                    ![req valueForHTTPHeaderField:@"X-Client-Xsrf-Token"]);
+          }];
+
+  // Stub XSRF token request
+  resp = [self responseWithCode:200
+                     headerDict:@{
+                       @"X-XSRF-TOKEN" : @"my-xsrf-token",
+                       @"X-XSRF-TOKEN-HEADER" : @"X-Client-Xsrf-Token",
+                     }];
+  [self stubRequestBody:nil
+               response:resp
+                  error:nil
+          validateBlock:^BOOL(NSURLRequest *req) {
+            return [req.URL.absoluteString containsString:@"/xsrf/"];
+          }];
+
+  // Stub succeeding request
+  [self stubRequestBody:nil
+               response:nil
+                  error:nil
+          validateBlock:^BOOL(NSURLRequest *req) {
+            return ([req.URL.absoluteString containsString:@"/a/"] &&
+                    [[req valueForHTTPHeaderField:@"X-CLIENT-XSRF-TOKEN"]
+                      isEqualToString:@"my-xsrf-token"]);
+          }];
+
+  NSString *stageName = [@"a" stringByAppendingFormat:@"/%@", self.syncState.machineID];
+  NSURL *u1 = [NSURL URLWithString:stageName relativeToURL:self.syncState.syncBaseURL];
+
+  SNTSyncStage *sut = [[SNTSyncStage alloc] initWithState:self.syncState];
+  NSMutableURLRequest *req = [NSMutableURLRequest requestWithURL:u1];
+  XCTAssertTrue([sut performRequest:req]);
+  XCTAssertEqualObjects(self.syncState.xsrfToken, @"my-xsrf-token");
+}
+
 #pragma mark - SNTSyncPreflight Tests
 
 - (void)testPreflightBasicResponse {
