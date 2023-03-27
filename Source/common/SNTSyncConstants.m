@@ -14,7 +14,8 @@
 
 #import "Source/common/SNTSyncConstants.h"
 
-NSString *const kXSRFToken = @"X-XSRF-TOKEN";
+NSString *const kDefaultXSRFTokenHeader = @"X-XSRF-TOKEN";
+NSString *const kXSRFTokenHeader = @"X-XSRF-TOKEN-HEADER";
 
 NSString *const kSerialNumber = @"serial_num";
 NSString *const kHostname = @"hostname";

@@ -28,7 +28,6 @@
 @property(readwrite) NSURLSession *urlSession;
 @property(readwrite) SNTSyncState *syncState;
 @property(readwrite) MOLXPCConnection *daemonConn;
-@property BOOL xsrfFetched;
 
 @end
 
@@ -68,7 +67,7 @@
   NSMutableURLRequest *req = [[NSMutableURLRequest alloc] initWithURL:[self stageURL]];
   [req setHTTPMethod:@"POST"];
   [req setValue:@"application/json" forHTTPHeaderField:@"Content-Type"];
-  [req setValue:self.syncState.xsrfToken forHTTPHeaderField:kXSRFToken];
+  [req setValue:self.syncState.xsrfToken forHTTPHeaderField:self.syncState.xsrfTokenHeader];
 
   NSData *compressed = [requestBody zlibCompressed];
   if (compressed) {
@@ -105,7 +104,8 @@
          error.code == NSURLErrorCannotParseResponse) &&
         [self fetchXSRFToken]) {
       NSMutableURLRequest *mutableRequest = [request mutableCopy];
-      [mutableRequest setValue:self.syncState.xsrfToken forHTTPHeaderField:kXSRFToken];
+      [mutableRequest setValue:self.syncState.xsrfToken
+            forHTTPHeaderField:self.syncState.xsrfTokenHeader];
       request = mutableRequest;
       continue;
     }
@@ -189,8 +189,7 @@
 
 - (BOOL)fetchXSRFToken {
   BOOL success = NO;
-  if (!self.xsrfFetched) {  // only fetch token once per session
-    self.xsrfFetched = YES;
+  if (!self.syncState.xsrfToken.length) {  // only fetch token once per session
     NSString *stageName = [@"xsrf" stringByAppendingFormat:@"/%@", self.syncState.machineID];
     NSURL *u = [NSURL URLWithString:stageName relativeToURL:self.syncState.syncBaseURL];
     NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:u];
@@ -199,7 +198,10 @@
     [self performRequest:request timeout:10 response:&response error:NULL];
     if (response.statusCode == 200) {
       NSDictionary *headers = [response allHeaderFields];
-      self.syncState.xsrfToken = headers[kXSRFToken];
+      self.syncState.xsrfToken = headers[kDefaultXSRFTokenHeader];
+      NSString *xsrfTokenHeader = headers[kXSRFTokenHeader];
+      self.syncState.xsrfTokenHeader =
+        xsrfTokenHeader.length ? xsrfTokenHeader : kDefaultXSRFTokenHeader;
       SLOGD(@"Retrieved new XSRF token");
       success = YES;
     } else {

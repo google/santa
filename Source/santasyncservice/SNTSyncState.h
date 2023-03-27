@@ -35,6 +35,9 @@
 /// An XSRF token to send in the headers with each request.
 @property NSString *xsrfToken;
 
+/// The header name to use when sending the XSRF token back to the server.
+@property NSString *xsrfTokenHeader;
+
 /// Full sync interval in seconds, defaults to kDefaultFullSyncInterval. If push notifications are
 /// being used this interval will be ignored in favor of pushNotificationsFullSyncInterval.
 @property NSUInteger fullSyncInterval;
