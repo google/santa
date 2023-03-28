@@ -67,7 +67,8 @@
   NSMutableURLRequest *req = [[NSMutableURLRequest alloc] initWithURL:[self stageURL]];
   [req setHTTPMethod:@"POST"];
   [req setValue:@"application/json" forHTTPHeaderField:@"Content-Type"];
-  [req setValue:self.syncState.xsrfToken forHTTPHeaderField:self.syncState.xsrfTokenHeader];
+  NSString *xsrfHeader = self.syncState.xsrfTokenHeader ?: kDefaultXSRFTokenHeader;
+  [req setValue:self.syncState.xsrfToken forHTTPHeaderField:xsrfHeader];
 
   NSData *compressed = [requestBody zlibCompressed];
   if (compressed) {
@@ -104,8 +105,8 @@
          error.code == NSURLErrorCannotParseResponse) &&
         [self fetchXSRFToken]) {
       NSMutableURLRequest *mutableRequest = [request mutableCopy];
-      [mutableRequest setValue:self.syncState.xsrfToken
-            forHTTPHeaderField:self.syncState.xsrfTokenHeader];
+      NSString *xsrfHeader = self.syncState.xsrfTokenHeader ?: kDefaultXSRFTokenHeader;
+      [mutableRequest setValue:self.syncState.xsrfToken forHTTPHeaderField:xsrfHeader];
       request = mutableRequest;
       continue;
     }
@@ -200,8 +201,7 @@
       NSDictionary *headers = [response allHeaderFields];
       self.syncState.xsrfToken = headers[kDefaultXSRFTokenHeader];
       NSString *xsrfTokenHeader = headers[kXSRFTokenHeader];
-      self.syncState.xsrfTokenHeader =
-        xsrfTokenHeader.length ? xsrfTokenHeader : kDefaultXSRFTokenHeader;
+      self.syncState.xsrfTokenHeader = xsrfTokenHeader.length ? xsrfTokenHeader : nil;
       SLOGD(@"Retrieved new XSRF token");
       success = YES;
     } else {
