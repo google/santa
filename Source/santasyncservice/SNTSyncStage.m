@@ -105,8 +105,8 @@
          error.code == NSURLErrorCannotParseResponse) &&
         [self fetchXSRFToken]) {
       NSMutableURLRequest *mutableRequest = [request mutableCopy];
-      [mutableRequest setValue:self.syncState.xsrfToken
-            forHTTPHeaderField:self.syncState.xsrfTokenHeader];
+      NSString *xsrfHeader = self.syncState.xsrfTokenHeader ?: kDefaultXSRFTokenHeader;
+      [mutableRequest setValue:self.syncState.xsrfToken forHTTPHeaderField:xsrfHeader];
       request = mutableRequest;
       continue;
     }
