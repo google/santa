@@ -163,13 +163,13 @@
   }
  },
  "args": [
-  "exec_path",
-  "-l",
-  "--foo"
+  "ZXhlY19wYXRo",
+  "LWw=",
+  "LS1mb28="
  ],
  "envs": [
-  "ENV_PATH=/path/to/bin:/and/another",
-  "DEBUG=1"
+  "RU5WX1BBVEg9L3BhdGgvdG8vYmluOi9hbmQvYW5vdGhlcg==",
+  "REVCVUc9MQ=="
  ],
  "fds": [
   {
