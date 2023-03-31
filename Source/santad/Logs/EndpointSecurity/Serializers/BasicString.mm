@@ -153,14 +153,14 @@ static inline void AppendProcess(std::string &str, const es_process_t *es_proc) 
 static inline void AppendUserGroup(std::string &str, const audit_token_t &tok,
                                    const std::optional<std::shared_ptr<std::string>> &user,
                                    const std::optional<std::shared_ptr<std::string>> &group) {
-  str.append("|uid=");
-  str.append(std::to_string(RealUser(tok)));
   str.append("|user=");
   str.append(user.has_value() ? user->get()->c_str() : "(null)");
-  str.append("|gid=");
-  str.append(std::to_string(RealGroup(tok)));
+  str.append("|uid=");
+  str.append(std::to_string(RealUser(tok)));
   str.append("|group=");
   str.append(group.has_value() ? group->get()->c_str() : "(null)");
+  str.append("|gid=");
+  str.append(std::to_string(RealGroup(tok)));
 }
 
 static char *FormattedDateString(char *buf, size_t len) {
@@ -287,9 +287,6 @@ std::vector<uint8_t> BasicString::SerializeMessage(const EnrichedExec &msg, SNTC
   str.append("|ppid=");
   str.append(std::to_string(esm.event.exec.target->original_ppid));
 
-  AppendUserGroup(str, esm.event.exec.target->audit_token, msg.instigator().real_user(),
-                  msg.instigator().real_group());
-
   str.append("|mode=");
   str.append(GetModeString([configurator clientMode]));
   str.append("|path=");
@@ -312,6 +309,10 @@ std::vector<uint8_t> BasicString::SerializeMessage(const EnrichedExec &msg, SNTC
       str.append(SanitizableString(esapi_->ExecArg(&esm.event.exec, i)).Sanitized());
     }
   }
+
+  // N.B. Appending user/group field last to optimize for internal workflow
+  AppendUserGroup(str, esm.event.exec.target->audit_token, msg.instigator().real_user(),
+                  msg.instigator().real_group());
 
   return FinalizeString(str);
 }
@@ -456,9 +457,7 @@ std::vector<uint8_t> BasicString::SerializeAllowlist(const Message &msg,
 std::vector<uint8_t> BasicString::SerializeBundleHashingEvent(SNTStoredEvent *event) {
   std::string str = CreateDefaultString();
 
-  str.append("action=BUNDLE|sha256=");
-  str.append([NonNull(event.fileSHA256) UTF8String]);
-  str.append("|bundlehash=");
+  str.append("action=BUNDLE|bundlehash=");
   str.append([NonNull(event.fileBundleHash) UTF8String]);
   str.append("|bundlename=");
   str.append([NonNull(event.fileBundleName) UTF8String]);
@@ -468,6 +467,8 @@ std::vector<uint8_t> BasicString::SerializeBundleHashingEvent(SNTStoredEvent *ev
   str.append([NonNull(event.fileBundlePath) UTF8String]);
   str.append("|path=");
   str.append([NonNull(event.filePath) UTF8String]);
+  str.append("|sha256=");
+  str.append([NonNull(event.fileSHA256) UTF8String]);
 
   return FinalizeString(str);
 }

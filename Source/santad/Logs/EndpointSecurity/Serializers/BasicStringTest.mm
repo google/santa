@@ -116,9 +116,8 @@ std::string BasicStringSerializeMessage(es_message_t *esMsg) {
   esMsg.event.close.target = &file;
 
   std::string got = BasicStringSerializeMessage(&esMsg);
-  std::string want = "action=WRITE|path=close_file"
-                     "|pid=12|ppid=56|process=foo|processpath=foo"
-                     "|uid=-2|user=nobody|gid=-1|group=nogroup|machineid=my_id\n";
+  std::string want = "action=WRITE|path=close_file|pid=12|ppid=56|process=foo|processpath=foo|user="
+                     "nobody|uid=-2|group=nogroup|gid=-1|machineid=my_id\n";
 
   XCTAssertCppStringEqual(got, want);
 }
@@ -138,9 +137,8 @@ std::string BasicStringSerializeMessage(es_message_t *esMsg) {
   OCMStub([self.mockConfigurator enableMachineIDDecoration]).andReturn(NO);
 
   std::string got = BasicStringSerializeMessage(&esMsg);
-  std::string want = "action=EXCHANGE|path=exchange_1|newpath=exchange_2"
-                     "|pid=12|ppid=56|process=foo|processpath=foo"
-                     "|uid=-2|user=nobody|gid=-1|group=nogroup\n";
+  std::string want = "action=EXCHANGE|path=exchange_1|newpath=exchange_2|pid=12|ppid=56|process="
+                     "foo|processpath=foo|user=nobody|uid=-2|group=nogroup|gid=-1\n";
 
   XCTAssertCppStringEqual(got, want);
 }
@@ -164,11 +162,10 @@ std::string BasicStringSerializeMessage(es_message_t *esMsg) {
     .WillOnce(testing::Return(es_string_token_t{8, "-v\r--foo"}));
 
   std::string got = BasicStringSerializeMessage(mockESApi, &esMsg);
-  std::string want =
-    "action=EXEC|decision=ALLOW|reason=BINARY|explain=extra!|sha256=1234_hash|"
-    "cert_sha256=5678_hash|cert_cn=|quarantine_url=google.com|pid=12|pidversion="
-    "89|ppid=56|uid=-2|user=nobody|gid=-1|group=nogroup|mode=L|path=execpath<pipe>|"
-    "args=exec<pipe>path -l\\n-t -v\\r--foo|machineid=my_id\n";
+  std::string want = "action=EXEC|decision=ALLOW|reason=BINARY|explain=extra!|sha256=1234_hash|"
+                     "cert_sha256=5678_hash|cert_cn=|quarantine_url=google.com|pid=12|pidversion="
+                     "89|ppid=56|mode=L|path=execpath<pipe>|args=exec<pipe>path -l\\n-t "
+                     "-v\\r--foo|user=nobody|uid=-2|group=nogroup|gid=-1|machineid=my_id\n";
 
   XCTAssertCppStringEqual(got, want);
 }
@@ -210,9 +207,9 @@ std::string BasicStringSerializeMessage(es_message_t *esMsg) {
   esMsg.event.link.target_filename = MakeESStringToken("link_name");
 
   std::string got = BasicStringSerializeMessage(&esMsg);
-  std::string want = "action=LINK|path=link_src|newpath=link_dst/link_name"
-                     "|pid=12|ppid=56|process=foo|processpath=foo"
-                     "|uid=-2|user=nobody|gid=-1|group=nogroup|machineid=my_id\n";
+  std::string want = "action=LINK|path=link_src|newpath=link_dst/"
+                     "link_name|pid=12|ppid=56|process=foo|processpath=foo|user=nobody|uid=-2|"
+                     "group=nogroup|gid=-1|machineid=my_id\n";
 
   XCTAssertCppStringEqual(got, want);
 }
@@ -228,9 +225,8 @@ std::string BasicStringSerializeMessage(es_message_t *esMsg) {
   esMsg.event.rename.destination.existing_file = &dstFile;
 
   std::string got = BasicStringSerializeMessage(&esMsg);
-  std::string want = "action=RENAME|path=rename_src|newpath=rename_dst"
-                     "|pid=12|ppid=56|process=foo|processpath=foo"
-                     "|uid=-2|user=nobody|gid=-1|group=nogroup|machineid=my_id\n";
+  std::string want = "action=RENAME|path=rename_src|newpath=rename_dst|pid=12|ppid=56|process=foo|"
+                     "processpath=foo|user=nobody|uid=-2|group=nogroup|gid=-1|machineid=my_id\n";
 
   XCTAssertCppStringEqual(got, want);
 }
@@ -243,9 +239,8 @@ std::string BasicStringSerializeMessage(es_message_t *esMsg) {
   esMsg.event.unlink.target = &targetFile;
 
   std::string got = BasicStringSerializeMessage(&esMsg);
-  std::string want = "action=DELETE|path=deleted_file"
-                     "|pid=12|ppid=56|process=foo|processpath=foo"
-                     "|uid=-2|user=nobody|gid=-1|group=nogroup|machineid=my_id\n";
+  std::string want = "action=DELETE|path=deleted_file|pid=12|ppid=56|process=foo|processpath=foo|"
+                     "user=nobody|uid=-2|group=nogroup|gid=-1|machineid=my_id\n";
 
   XCTAssertCppStringEqual(got, want);
 }
@@ -294,10 +289,9 @@ std::string BasicStringSerializeMessage(es_message_t *esMsg) {
                             Enricher().Enrich(*esMsg.process), "file_target",
                             FileAccessPolicyDecision::kAllowedAuditOnly);
   std::string got(ret.begin(), ret.end());
-  std::string want =
-    "action=FILE_ACCESS|policy_version=v1.0|policy_name=pol_name|path=file_target|access_type=OPEN|"
-    "decision=AUDIT_ONLY|pid=12|ppid=56|"
-    "process=foo|processpath=foo|uid=-2|user=nobody|gid=-1|group=nogroup|machineid=my_id\n";
+  std::string want = "action=FILE_ACCESS|policy_version=v1.0|policy_name=pol_name|path=file_target|"
+                     "access_type=OPEN|decision=AUDIT_ONLY|pid=12|ppid=56|process=foo|processpath="
+                     "foo|user=nobody|uid=-2|group=nogroup|gid=-1|machineid=my_id\n";
   XCTAssertCppStringEqual(got, want);
 }
 
@@ -336,9 +330,9 @@ std::string BasicStringSerializeMessage(es_message_t *esMsg) {
   std::vector<uint8_t> ret = BasicString::Create(nullptr, false)->SerializeBundleHashingEvent(se);
   std::string got(ret.begin(), ret.end());
 
-  std::string want = "action=BUNDLE|sha256=file_hash"
-                     "|bundlehash=file_bundle_hash|bundlename=file_bundle_Name|bundleid="
-                     "|bundlepath=file_bundle_path|path=file_path|machineid=my_id\n";
+  std::string want =
+    "action=BUNDLE|bundlehash=file_bundle_hash|bundlename=file_bundle_Name|bundleid=|bundlepath="
+    "file_bundle_path|path=file_path|sha256=file_hash|machineid=my_id\n";
 
   XCTAssertCppStringEqual(got, want);
 }
