@@ -37,7 +37,7 @@ struct SNTDeviceMessageWindowView: View {
           Text("Device Name").bold()
           Text("Device BSD Path").bold()
 
-          if event!.remountArgs.count > 0 {
+          if event!.remountArgs?.count ?? 0 > 0 {
             Text("Remount Mode").bold()
           }
         }
@@ -46,7 +46,7 @@ struct SNTDeviceMessageWindowView: View {
           Text(event!.mntonname)
           Text(event!.mntfromname)
 
-          if event!.remountArgs.count > 0 {
+          if event!.remountArgs?.count ?? 0 > 0 {
             Text(event!.readableRemountArgs())
           }
         }
