@@ -183,9 +183,15 @@
 }
 
 - (NSData *)stripXssi:(NSData *)data {
-  static const char xssi[3] = {']', ')', '}'};
-  if (data.length < 3 || strncmp(data.bytes, xssi, 3)) return data;
-  return [data subdataWithRange:NSMakeRange(3, data.length - 3)];
+  static const char xssiOne[5] = {')', ']', '}', '\'', '\n'};
+  static const char xssiTwo[3] = {']', ')', '}'};
+  if (data.length >= 5 && strncmp(data.bytes, xssiOne, 5) == 0) {
+    return [data subdataWithRange:NSMakeRange(5, data.length - 5)];
+  }
+  if (data.length >= 3 && strncmp(data.bytes, xssiTwo, 3) == 0) {
+    return [data subdataWithRange:NSMakeRange(3, data.length - 3)];
+  }
+  return data;
 }
 
 - (BOOL)fetchXSRFToken {
