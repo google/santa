@@ -406,7 +406,7 @@ message Disk {
   optional string mount = 2;
 
   // Volume name
-  optional string volume = 3;
+  optional bytes volume = 3;
 
   // Media BSD name
   optional string bsd_name = 4;
@@ -418,7 +418,7 @@ message Disk {
   optional string model = 6;
 
   // Serial number of the device
-  optional string serial = 7;
+  optional bytes serial = 7;
 
   // Device protocol
   optional string bus = 8;
