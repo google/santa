@@ -39,6 +39,10 @@
 }
 @end
 
+@interface SNTSyncStage (XSSI)
+- (NSData *)stripXssi:(NSData *)data;
+@end
+
 @interface SNTSyncTest : XCTestCase
 @property SNTSyncState *syncState;
 @property id<SNTDaemonControlXPC> daemonConnRop;
@@ -155,6 +159,27 @@
 }
 
 #pragma mark - SNTSyncStage Tests
+
+- (void)testStripXssi {
+  SNTSyncStage *sut = [[SNTSyncStage alloc] initWithState:self.syncState];
+
+  char wantChar[3] = {'"', 'a', '"'};
+  NSData *want = [NSData dataWithBytes:wantChar length:3];
+
+  char dOne[8] = {')', ']', '}', '\'', '\n', '"', 'a', '"'};
+  XCTAssertEqualObjects([sut stripXssi:[NSData dataWithBytes:dOne length:8]], want, @"");
+
+  char dTwo[6] = {']', ')', '}', '"', 'a', '"'};
+  XCTAssertEqualObjects([sut stripXssi:[NSData dataWithBytes:dTwo length:6]], want, @"");
+
+  char dThree[5] = {')', ']', '}', '\'', '\n'};
+  XCTAssertEqualObjects([sut stripXssi:[NSData dataWithBytes:dThree length:5]], [NSData data], @"");
+
+  char dFour[3] = {']', ')', '}'};
+  XCTAssertEqualObjects([sut stripXssi:[NSData dataWithBytes:dFour length:3]], [NSData data], @"");
+
+  XCTAssertEqualObjects([sut stripXssi:want], want, @"");
+}
 
 - (void)testBaseFetchXSRFTokenSuccess {
   // NOTE: This test only works if the other tests don't return a 403 and run before this test.
