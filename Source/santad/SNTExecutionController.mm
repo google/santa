@@ -36,6 +36,7 @@
 #import "Source/common/SNTRule.h"
 #import "Source/common/SNTStoredEvent.h"
 #include "Source/common/SantaVnode.h"
+#include "Source/common/String.h"
 #import "Source/santad/DataLayer/SNTEventTable.h"
 #import "Source/santad/DataLayer/SNTRuleTable.h"
 #import "Source/santad/SNTDecisionCache.h"
@@ -360,7 +361,8 @@ static NSString *const kPrinterProxyPostMonterey =
 
 - (void)printMessage:(NSString *)msg toTTY:(const char *)path {
   int fd = open(path, O_WRONLY | O_NOCTTY);
-  write(fd, msg.UTF8String, msg.length);
+  std::string_view str = santa::common::NSStringToUTF8StringView(msg);
+  write(fd, str.data(), str.length());
   close(fd);
 }
 
