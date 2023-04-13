@@ -70,6 +70,11 @@ objc_library(
 )
 
 objc_library(
+    name = "String",
+    hdrs = ["String.h"],
+)
+
+objc_library(
     name = "SantaVnodeHash",
     srcs = ["SantaVnodeHash.mm"],
     hdrs = ["SantaVnodeHash.h"],
