@@ -34,8 +34,12 @@
 
 #import "Source/common/PrefixTree.h"
 #import "Source/common/SNTLogging.h"
+#import "Source/common/String.h"
 #import "Source/common/Unit.h"
 #include "Source/santad/DataLayer/WatchItemPolicy.h"
+
+using santa::common::NSStringToUTF8String;
+using santa::common::NSStringToUTF8StringView;
 using santa::common::PrefixTree;
 using santa::common::Unit;
 using santa::santad::data_layer::WatchItemPathType;
@@ -255,7 +259,7 @@ std::variant<Unit, PathList> VerifyConfigWatchItemPaths(NSArray<id> *paths, NSEr
         return Unit{};
       }
 
-      path_list.push_back({std::string(path_str.UTF8String, path_str.length), path_type});
+      path_list.push_back({NSStringToUTF8String(path_str), path_type});
     } else if ([path isKindOfClass:[NSString class]]) {
       if (!LenRangeValidator(1, PATH_MAX)(path, err)) {
         PopulateError(err, [NSString stringWithFormat:@"Invalid path length: %@",
@@ -264,8 +268,8 @@ std::variant<Unit, PathList> VerifyConfigWatchItemPaths(NSArray<id> *paths, NSEr
         return Unit{};
       }
 
-      path_list.push_back({std::string(((NSString *)path).UTF8String, ((NSString *)path).length),
-                           kWatchItemPolicyDefaultPathType});
+      path_list.push_back(
+        {NSStringToUTF8String(((NSString *)path)), kWatchItemPolicyDefaultPathType});
     } else {
       PopulateError(
         err, [NSString stringWithFormat:
@@ -340,12 +344,11 @@ std::variant<Unit, ProcessList> VerifyConfigWatchItemProcesses(NSDictionary *wat
           }
 
           proc_list.push_back(WatchItemPolicy::Process(
-            std::string([(process[kWatchItemConfigKeyProcessesBinaryPath] ?: @"") UTF8String]),
-            std::string([(process[kWatchItemConfigKeyProcessesSigningID] ?: @"") UTF8String]),
-            std::string([(process[kWatchItemConfigKeyProcessesTeamID] ?: @"") UTF8String]),
+            NSStringToUTF8String(process[kWatchItemConfigKeyProcessesBinaryPath] ?: @""),
+            NSStringToUTF8String(process[kWatchItemConfigKeyProcessesSigningID] ?: @""),
+            NSStringToUTF8String(process[kWatchItemConfigKeyProcessesTeamID] ?: @""),
             HexStringToBytes(process[kWatchItemConfigKeyProcessesCDHash]),
-            std::string(
-              [(process[kWatchItemConfigKeyProcessesCertificateSha256] ?: @"") UTF8String]),
+            NSStringToUTF8String(process[kWatchItemConfigKeyProcessesCertificateSha256] ?: @""),
             process[kWatchItemConfigKeyProcessesPlatformBinary]
               ? std::make_optional(
                   (bool)[process[kWatchItemConfigKeyProcessesPlatformBinary] boolValue])
@@ -423,8 +426,8 @@ bool ParseConfigSingleWatchItem(NSString *name, NSDictionary *watch_item,
 
   for (const PathAndTypePair &path_type_pair : std::get<PathList>(path_list)) {
     policies.push_back(std::make_shared<WatchItemPolicy>(
-      [name UTF8String], path_type_pair.first, path_type_pair.second, allow_read_access, audit_only,
-      std::get<ProcessList>(proc_list)));
+      NSStringToUTF8StringView(name), path_type_pair.first, path_type_pair.second,
+      allow_read_access, audit_only, std::get<ProcessList>(proc_list)));
   }
 
   return true;
@@ -645,7 +648,7 @@ void WatchItems::UpdateCurrentState(
     std::swap(currently_monitored_paths_, new_monitored_paths);
     current_config_ = new_config;
     if (new_config) {
-      policy_version_ = [new_config[kWatchItemConfigKeyVersion] UTF8String];
+      policy_version_ = NSStringToUTF8String(new_config[kWatchItemConfigKeyVersion]);
     } else {
       policy_version_ = "";
     }

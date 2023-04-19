@@ -51,8 +51,7 @@ class SanitizableString {
   friend std::ostream &operator<<(std::ostream &ss, const SanitizableString &sani_string);
 
  private:
-  const char *data_;
-  size_t length_;
+  std::string_view data_;
   mutable bool sanitized_ = false;
   mutable std::optional<std::string> sanitized_string_;
 };

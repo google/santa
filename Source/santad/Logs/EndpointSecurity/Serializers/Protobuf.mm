@@ -23,6 +23,7 @@
 #include <sys/wait.h>
 #include <time.h>
 
+#include <functional>
 #include <optional>
 #include <string_view>
 
@@ -30,6 +31,7 @@
 #import "Source/common/SNTConfigurator.h"
 #include "Source/common/SNTLogging.h"
 #import "Source/common/SNTStoredEvent.h"
+#import "Source/common/String.h"
 #include "Source/santad/EventProviders/EndpointSecurity/EndpointSecurityAPI.h"
 #include "Source/santad/Logs/EndpointSecurity/Serializers/Utilities.h"
 #import "Source/santad/SNTDecisionCache.h"
@@ -38,6 +40,7 @@
 using google::protobuf::Arena;
 using google::protobuf::Timestamp;
 
+using santa::common::NSStringToUTF8StringView;
 using santa::santad::event_providers::endpoint_security::EndpointSecurityAPI;
 using santa::santad::event_providers::endpoint_security::EnrichedClose;
 using santa::santad::event_providers::endpoint_security::EnrichedEventType;
@@ -94,15 +97,15 @@ static inline void EncodePath(std::string *buf, const es_file_t *es_file) {
   buf->append(std::string_view(es_file->path.data, es_file->path.length));
 }
 
-static inline void EncodeString(std::string *buf, NSString *value) {
+static inline void EncodeString(std::function<std::string *()> lazy_f, NSString *value) {
   if (value) {
-    buf->append(std::string_view([value UTF8String], [value length]));
+    lazy_f()->append(NSStringToUTF8StringView(value));
   }
 }
 
-static inline void EncodeString(std::string *buf, std::string_view value) {
+static inline void EncodeString(std::function<std::string *()> lazy_f, std::string_view value) {
   if (value.length() > 0) {
-    buf->append(std::string_view(value.data(), value.length()));
+    lazy_f()->append(value);
   }
 }
 
@@ -125,7 +128,7 @@ static inline void EncodeGroupInfo(::pbv1::GroupInfo *pb_group_info, gid_t gid,
 static inline void EncodeHash(::pbv1::Hash *pb_hash, NSString *sha256) {
   if (sha256) {
     pb_hash->set_type(::pbv1::Hash::HASH_ALGO_SHA256);
-    pb_hash->set_hash([sha256 UTF8String], [sha256 length]);
+    EncodeString([pb_hash] { return pb_hash->mutable_hash(); }, sha256);
   }
 }
 
@@ -162,7 +165,7 @@ static inline void EncodeFileInfo(::pbv1::FileInfo *pb_file, const es_file_t *es
 
 static inline void EncodeFileInfoLight(::pbv1::FileInfoLight *pb_file, std::string_view path,
                                        bool truncated) {
-  EncodeString(pb_file->mutable_path(), path);
+  EncodeString([pb_file] { return pb_file->mutable_path(); }, path);
   pb_file->set_truncated(truncated);
 }
 
@@ -262,9 +265,7 @@ static inline void EncodeCertificateInfo(::pbv1::CertificateInfo *pb_cert_info, 
     EncodeHash(pb_cert_info->mutable_hash(), cert_hash);
   }
 
-  if (common_name) {
-    pb_cert_info->set_common_name([common_name UTF8String], [common_name length]);
-  }
+  EncodeString([pb_cert_info] { return pb_cert_info->mutable_common_name(); }, common_name);
 }
 
 ::pbv1::Execution::Decision GetDecisionEnum(SNTEventState event_state) {
@@ -356,7 +357,7 @@ static inline void EncodeCertificateInfo(::pbv1::CertificateInfo *pb_cert_info, 
   ::pbv1::SantaMessage *santa_msg = Arena::CreateMessage<::pbv1::SantaMessage>(arena);
 
   if (EnabledMachineID()) {
-    EncodeString(santa_msg->mutable_machine_id(), MachineID());
+    EncodeString([santa_msg] { return santa_msg->mutable_machine_id(); }, MachineID());
   }
   EncodeTimestamp(santa_msg->mutable_event_time(), event_time);
   EncodeTimestamp(santa_msg->mutable_processed_time(), processed_time);
@@ -491,18 +492,11 @@ std::vector<uint8_t> Protobuf::SerializeMessage(const EnrichedExec &msg, SNTCach
     EncodeCertificateInfo(pb_exec->mutable_certificate_info(), cd.certSHA256, cd.certCommonName);
   }
 
-  if (cd.decisionExtra) {
-    pb_exec->set_explain([cd.decisionExtra UTF8String], [cd.decisionExtra length]);
-  }
-
-  if (cd.quarantineURL) {
-    pb_exec->set_quarantine_url([cd.quarantineURL UTF8String], [cd.quarantineURL length]);
-  }
+  EncodeString([pb_exec] { return pb_exec->mutable_explain(); }, cd.decisionExtra);
+  EncodeString([pb_exec] { return pb_exec->mutable_quarantine_url(); }, cd.quarantineURL);
 
   NSString *orig_path = Utilities::OriginalPathForTranslocation(msg.es_msg().event.exec.target);
-  if (orig_path) {
-    pb_exec->set_original_path([orig_path UTF8String], [orig_path length]);
-  }
+  EncodeString([pb_exec] { return pb_exec->mutable_original_path(); }, orig_path);
 
   return FinalizeProto(santa_msg);
 }
@@ -594,8 +588,9 @@ std::vector<uint8_t> Protobuf::SerializeFileAccess(const std::string &policy_ver
   EncodeProcessInfo(file_access->mutable_instigator(), msg->version, msg->process,
                     enriched_process);
   EncodeFileInfoLight(file_access->mutable_target(), target, false);
-  EncodeString(file_access->mutable_policy_version(), policy_version);
-  EncodeString(file_access->mutable_policy_name(), policy_name);
+  EncodeString([file_access] { return file_access->mutable_policy_version(); }, policy_version);
+  EncodeString([file_access] { return file_access->mutable_policy_name(); }, policy_name);
+
   file_access->set_access_type(GetAccessType(msg->event_type));
   file_access->set_policy_decision(GetPolicyDecision(decision));
 
@@ -629,10 +624,12 @@ std::vector<uint8_t> Protobuf::SerializeBundleHashingEvent(SNTStoredEvent *event
 
   EncodeHash(pb_bundle->mutable_file_hash(), event.fileSHA256);
   EncodeHash(pb_bundle->mutable_bundle_hash(), event.fileBundleHash);
-  pb_bundle->set_bundle_name([NonNull(event.fileBundleName) UTF8String]);
-  pb_bundle->set_bundle_id([NonNull(event.fileBundleID) UTF8String]);
-  pb_bundle->set_bundle_path([NonNull(event.fileBundlePath) UTF8String]);
-  pb_bundle->set_path([NonNull(event.filePath) UTF8String]);
+  EncodeString([pb_bundle] { return pb_bundle->mutable_bundle_name(); },
+               NonNull(event.fileBundleName));
+  EncodeString([pb_bundle] { return pb_bundle->mutable_bundle_id(); }, NonNull(event.fileBundleID));
+  EncodeString([pb_bundle] { return pb_bundle->mutable_bundle_path(); },
+               NonNull(event.fileBundlePath));
+  EncodeString([pb_bundle] { return pb_bundle->mutable_path(); }, NonNull(event.filePath));
 
   return FinalizeProto(santa_msg);
 }
@@ -652,14 +649,14 @@ static void EncodeDisk(::pbv1::Disk *pb_disk, ::pbv1::Disk_Action action, NSDict
     stringWithFormat:@"%@ %@", NonNull(props[@"DADeviceVendor"]), NonNull(props[@"DADeviceModel"])];
   model = [model stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
 
-  EncodeString(pb_disk->mutable_mount(), [props[@"DAVolumePath"] path]);
-  EncodeString(pb_disk->mutable_volume(), props[@"DAVolumeName"]);
-  EncodeString(pb_disk->mutable_bsd_name(), props[@"DAMediaBSDName"]);
-  EncodeString(pb_disk->mutable_fs(), props[@"DAVolumeKind"]);
-  EncodeString(pb_disk->mutable_model(), model);
-  EncodeString(pb_disk->mutable_serial(), serial);
-  EncodeString(pb_disk->mutable_bus(), props[@"DADeviceProtocol"]);
-  EncodeString(pb_disk->mutable_dmg_path(), dmg_path);
+  EncodeString([pb_disk] { return pb_disk->mutable_mount(); }, [props[@"DAVolumePath"] path]);
+  EncodeString([pb_disk] { return pb_disk->mutable_volume(); }, props[@"DAVolumeName"]);
+  EncodeString([pb_disk] { return pb_disk->mutable_bsd_name(); }, props[@"DAMediaBSDName"]);
+  EncodeString([pb_disk] { return pb_disk->mutable_fs(); }, props[@"DAVolumeKind"]);
+  EncodeString([pb_disk] { return pb_disk->mutable_model(); }, model);
+  EncodeString([pb_disk] { return pb_disk->mutable_serial(); }, serial);
+  EncodeString([pb_disk] { return pb_disk->mutable_bus(); }, props[@"DADeviceProtocol"]);
+  EncodeString([pb_disk] { return pb_disk->mutable_dmg_path(); }, dmg_path);
 
   if (props[@"DAAppearanceTime"]) {
     // Note: `DAAppearanceTime` is set via `CFAbsoluteTimeGetCurrent`, which uses the defined

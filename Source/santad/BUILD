@@ -49,6 +49,7 @@ objc_library(
         ":WatchItemPolicy",
         "//Source/common:PrefixTree",
         "//Source/common:SNTLogging",
+        "//Source/common:String",
         "//Source/common:Unit",
     ],
 )
@@ -232,6 +233,7 @@ objc_library(
         "//Source/common:SNTRule",
         "//Source/common:SNTStoredEvent",
         "//Source/common:SantaVnode",
+        "//Source/common:String",
         "@MOLCodesignChecker",
     ],
 )
@@ -468,6 +470,7 @@ objc_library(
     ],
     deps = [
         ":EndpointSecurityMessage",
+        "//Source/common:String",
     ],
 )
 
@@ -501,6 +504,7 @@ objc_library(
         "//Source/common:SNTConfigurator",
         "//Source/common:SNTLogging",
         "//Source/common:SNTStoredEvent",
+        "//Source/common:String",
         "//Source/common:santa_cc_proto_library_wrapper",
     ],
 )

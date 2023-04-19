@@ -14,37 +14,35 @@
 
 #include "Source/santad/Logs/EndpointSecurity/Serializers/SanitizableString.h"
 
+#include "Source/common/String.h"
+
+using santa::common::NSStringToUTF8StringView;
+
 namespace santa::santad::logs::endpoint_security::serializers {
 
 SanitizableString::SanitizableString(const es_file_t *file)
-    : data_(file->path.data), length_(file->path.length) {}
+    : data_(file->path.data, file->path.length) {}
 
-SanitizableString::SanitizableString(const es_string_token_t &tok)
-    : data_(tok.data), length_(tok.length) {}
+SanitizableString::SanitizableString(const es_string_token_t &tok) : data_(tok.data, tok.length) {}
 
-SanitizableString::SanitizableString(NSString *str)
-    : data_([str UTF8String]), length_([str length]) {}
+SanitizableString::SanitizableString(NSString *str) : data_(NSStringToUTF8StringView(str)) {}
 
-SanitizableString::SanitizableString(const char *str, size_t len) : data_(str), length_(len) {}
+SanitizableString::SanitizableString(const char *str, size_t len) : data_(str, len) {}
 
 std::string_view SanitizableString::String() const {
-  return std::string_view(data_, length_);
+  return data_;
 }
 
 std::string_view SanitizableString::Sanitized() const {
   if (!sanitized_) {
     sanitized_ = true;
-    sanitized_string_ = SanitizeString(data_, length_);
+    sanitized_string_ = SanitizeString(data_.data(), data_.length());
   }
 
   if (sanitized_string_.has_value()) {
     return sanitized_string_.value();
   } else {
-    if (data_) {
-      return std::string_view(data_, length_);
-    } else {
-      return "";
-    }
+    return data_;
   }
 }
 
