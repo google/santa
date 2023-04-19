@@ -292,6 +292,14 @@
 @property(readonly, nonatomic) BOOL enableSilentMode;
 
 ///
+///  When silent TTY mode is enabled, Santa will not emit TTY notifications for
+///  blocked processes.
+///
+///  Defaults to NO.
+///
+@property(readonly, nonatomic) BOOL enableSilentTTYMode;
+
+///
 /// The text to display when opening Santa.app.
 /// If unset, the default text will be displayed.
 ///
