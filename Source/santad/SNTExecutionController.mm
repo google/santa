@@ -294,7 +294,7 @@ static NSString *const kPrinterProxyPostMonterey =
         NSAttributedString *s = [SNTBlockMessage attributedBlockMessageForEvent:se
                                                                   customMessage:cd.customMsg];
 
-        if (targetProc->tty && targetProc->tty->path.length > 0) {
+        if (targetProc->tty && targetProc->tty->path.length > 0 && !config.enableSilentTTYMode) {
           NSMutableString *msg = [NSMutableString stringWithCapacity:1024];
           [msg appendFormat:@"\n\033[1mSanta\033[0m\n\n%@\n\n", s.string];
           [msg appendFormat:@"\033[1mPath:      \033[0m %@\n"
