@@ -172,17 +172,19 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)handleMessage:(Message &&)esMsg
    recordEventMetrics:(void (^)(EventDisposition))recordEventMetrics {
+  // Process the unmount event first so that caches are flushed before any
+  // other potential early returns.
+  if (esMsg->event_type == ES_EVENT_TYPE_NOTIFY_UNMOUNT) {
+    self->_authResultCache->FlushCache(FlushCacheMode::kNonRootOnly);
+    recordEventMetrics(EventDisposition::kProcessed);
+    return;
+  }
+
   if (!self.blockUSBMount) {
     // TODO: We should also unsubscribe from events when this isn't set, but
     // this is generally a low-volume event type.
     [self respondToMessage:esMsg withAuthResult:ES_AUTH_RESULT_ALLOW cacheable:false];
     recordEventMetrics(EventDisposition::kDropped);
-    return;
-  }
-
-  if (esMsg->event_type == ES_EVENT_TYPE_NOTIFY_UNMOUNT) {
-    self->_authResultCache->FlushCache(FlushCacheMode::kNonRootOnly);
-    recordEventMetrics(EventDisposition::kProcessed);
     return;
   }
 
