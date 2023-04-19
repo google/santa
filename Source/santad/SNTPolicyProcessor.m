@@ -41,7 +41,8 @@
 - (nonnull SNTCachedDecision *)decisionForFileInfo:(nonnull SNTFileInfo *)fileInfo
                                         fileSHA256:(nullable NSString *)fileSHA256
                                  certificateSHA256:(nullable NSString *)certificateSHA256
-                                            teamID:(nullable NSString *)teamID {
+                                            teamID:(nullable NSString *)teamID
+                                         signingID:(nullable NSString *)signingID {
   SNTCachedDecision *cd = [[SNTCachedDecision alloc] init];
   cd.sha256 = fileSHA256 ?: fileInfo.SHA256;
   cd.teamID = teamID;
@@ -74,7 +75,8 @@
 
   SNTRule *rule = [self.ruleTable ruleForBinarySHA256:cd.sha256
                                     certificateSHA256:cd.certSHA256
-                                               teamID:teamID];
+                                               teamID:teamID
+                                            signingID:signingID];
   if (rule) {
     switch (rule.type) {
       case SNTRuleTypeBinary:
@@ -171,8 +173,13 @@
   }
 }
 
-- (nonnull SNTCachedDecision *)decisionForFileInfo:(nonnull SNTFileInfo *)fileInfo {
-  return [self decisionForFileInfo:fileInfo fileSHA256:nil certificateSHA256:nil teamID:nil];
+- (nonnull SNTCachedDecision *)decisionForFileInfo:(nonnull SNTFileInfo *)fileInfo
+                                      andSigningID:(nullable NSString *)signingID {
+  return [self decisionForFileInfo:fileInfo
+                        fileSHA256:nil
+                 certificateSHA256:nil
+                            teamID:nil
+                         signingID:signingID];
 }
 
 // Used by `$ santactl fileinfo`.
@@ -187,7 +194,8 @@
   return [self decisionForFileInfo:fileInfo
                         fileSHA256:fileSHA256
                  certificateSHA256:certificateSHA256
-                            teamID:teamID];
+                            teamID:teamID
+                         signingID:nil];
 }
 
 ///

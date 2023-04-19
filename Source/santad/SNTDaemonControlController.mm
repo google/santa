@@ -147,7 +147,8 @@ double watchdogRAMPeak = 0;
                               reply:(void (^)(SNTRule *))reply {
   reply([[SNTDatabaseController ruleTable] ruleForBinarySHA256:binarySHA256
                                              certificateSHA256:certificateSHA256
-                                                        teamID:teamID]);
+                                                        teamID:teamID
+                                                     signingID:nil]);
 }
 
 - (void)staticRuleCount:(void (^)(int64_t count))reply {

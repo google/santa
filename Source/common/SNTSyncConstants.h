@@ -118,6 +118,7 @@ extern NSString *const kRuleType;
 extern NSString *const kRuleTypeBinary;
 extern NSString *const kRuleTypeCertificate;
 extern NSString *const kRuleTypeTeamID;
+extern NSString *const kRuleTypeSigningID;
 extern NSString *const kRuleCustomMsg;
 extern NSString *const kCursor;
 

@@ -272,6 +272,14 @@ static void addPathsFromDefaultMuteSet(NSMutableSet *criticalPaths) API_AVAILABL
   return count;
 }
 
+- (NSUInteger)signingIDRuleCount {
+  __block NSUInteger count = 0;
+  [self inDatabase:^(FMDatabase *db) {
+    count = [db longForQuery:@"SELECT COUNT(*) FROM rules WHERE type=4"];
+  }];
+  return count;
+}
+
 - (SNTRule *)ruleFromResultSet:(FMResultSet *)rs {
   return [[SNTRule alloc] initWithIdentifier:[rs stringForColumn:@"identifier"]
                                        state:[rs intForColumn:@"state"]
@@ -282,8 +290,15 @@ static void addPathsFromDefaultMuteSet(NSMutableSet *criticalPaths) API_AVAILABL
 
 - (SNTRule *)ruleForBinarySHA256:(NSString *)binarySHA256
                certificateSHA256:(NSString *)certificateSHA256
-                          teamID:(NSString *)teamID {
+                          teamID:(NSString *)teamID
+                       signingID:(NSString *)signingID {
   __block SNTRule *rule;
+
+  if (teamID.length == 0) {
+    signingID = nil;
+  } else {
+    signingID = [NSString stringWithFormat:@"%@:%@", teamID, signingID];
+  }
 
   // Look for a static rule that matches.
   NSDictionary *staticRules = [[SNTConfigurator configurator] staticRules];
@@ -294,6 +309,8 @@ static void addPathsFromDefaultMuteSet(NSMutableSet *criticalPaths) API_AVAILABL
     if (rule.type == SNTRuleTypeCertificate) return rule;
     rule = staticRules[teamID];
     if (rule.type == SNTRuleTypeTeamID) return rule;
+    rule = staticRules[signingID];
+    if (rule.type == SNTRuleTypeSigningID) return rule;
   }
 
   // Now query the database.
@@ -316,10 +333,12 @@ static void addPathsFromDefaultMuteSet(NSMutableSet *criticalPaths) API_AVAILABL
   // There is a test for this in SNTRuleTableTests in case SQLite behavior changes in the future.
   //
   [self inDatabase:^(FMDatabase *db) {
-    FMResultSet *rs =
-      [db executeQuery:@"SELECT * FROM rules WHERE (identifier=? and type=1) OR "
-                       @"(identifier=? AND type=2) OR (identifier=? AND type=3) LIMIT 1",
-                       binarySHA256, certificateSHA256, teamID];
+    FMResultSet *rs = [db executeQuery:@"SELECT * FROM rules WHERE "
+                                       @"   (identifier=? and type=1) "
+                                       @"OR (identifier=? AND type=4) "
+                                       @"OR (identifier=? AND type=2) "
+                                       @"OR (identifier=? AND type=3) LIMIT 1",
+                                       binarySHA256, signingID, certificateSHA256, teamID];
     if ([rs next]) {
       rule = [self ruleFromResultSet:rs];
     }

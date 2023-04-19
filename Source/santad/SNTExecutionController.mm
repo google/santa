@@ -200,7 +200,9 @@ static NSString *const kPrinterProxyPostMonterey =
   // TODO(markowsky): Maybe add a metric here for how many large executables we're seeing.
   // if (binInfo.fileSize > SomeUpperLimit) ...
 
-  SNTCachedDecision *cd = [self.policyProcessor decisionForFileInfo:binInfo];
+  NSString *signingID = [NSString stringWithCString:targetProc->signing_id.data
+                                           encoding:NSUTF8StringEncoding];
+  SNTCachedDecision *cd = [self.policyProcessor decisionForFileInfo:binInfo andSigningID:signingID];
 
   cd.vnodeId = SantaVnode::VnodeForFile(targetProc->executable);
 
