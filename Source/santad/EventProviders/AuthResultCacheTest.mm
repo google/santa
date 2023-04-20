@@ -31,6 +31,12 @@ using santa::santad::event_providers::AuthResultCache;
 using santa::santad::event_providers::FlushCacheMode;
 using santa::santad::event_providers::FlushCacheReason;
 
+namespace santa::santad::event_providers {
+extern NSString *const FlushCacheReasonToString(FlushCacheReason reason);
+}
+
+using santa::santad::event_providers::FlushCacheReasonToString;
+
 // Grab the st_dev number of the root volume to match the root cache
 static uint64_t RootDevno() {
   static dispatch_once_t once_token;
@@ -67,14 +73,14 @@ static inline void AssertCacheCounts(std::shared_ptr<AuthResultCache> cache, uin
 
 - (void)testEmptyCacheExpectedNumberOfCacheCounts {
   auto esapi = std::make_shared<MockEndpointSecurityAPI>();
-  auto cache = std::make_shared<AuthResultCache>(esapi);
+  std::shared_ptr<AuthResultCache> cache = AuthResultCache::Create(esapi, nil);
 
   AssertCacheCounts(cache, 0, 0);
 }
 
 - (void)testBasicOperation {
   auto esapi = std::make_shared<MockEndpointSecurityAPI>();
-  auto cache = std::make_shared<AuthResultCache>(esapi);
+  std::shared_ptr<AuthResultCache> cache = AuthResultCache::Create(esapi, nil);
 
   es_file_t rootFile = MakeCacheableFile(RootDevno(), 111);
   es_file_t nonrootFile = MakeCacheableFile(RootDevno() + 123, 222);
@@ -111,7 +117,7 @@ static inline void AssertCacheCounts(std::shared_ptr<AuthResultCache> cache, uin
 
 - (void)testFlushCache {
   auto mockESApi = std::make_shared<MockEndpointSecurityAPI>();
-  auto cache = std::make_shared<AuthResultCache>(mockESApi);
+  std::shared_ptr<AuthResultCache> cache = AuthResultCache::Create(mockESApi, nil);
 
   es_file_t rootFile = MakeCacheableFile(RootDevno(), 111);
   es_file_t nonrootFile = MakeCacheableFile(RootDevno() + 123, 111);
@@ -152,7 +158,7 @@ static inline void AssertCacheCounts(std::shared_ptr<AuthResultCache> cache, uin
 
 - (void)testCacheStateMachine {
   auto mockESApi = std::make_shared<MockEndpointSecurityAPI>();
-  auto cache = std::make_shared<AuthResultCache>(mockESApi);
+  std::shared_ptr<AuthResultCache> cache = AuthResultCache::Create(mockESApi, nil);
 
   es_file_t rootFile = MakeCacheableFile(RootDevno(), 111);
 
@@ -194,7 +200,7 @@ static inline void AssertCacheCounts(std::shared_ptr<AuthResultCache> cache, uin
   auto mockESApi = std::make_shared<MockEndpointSecurityAPI>();
   // Create a cache with a lowered cache expiry value
   uint64_t expiryMS = 250;
-  auto cache = std::make_shared<AuthResultCache>(mockESApi, expiryMS);
+  std::shared_ptr<AuthResultCache> cache = AuthResultCache::Create(mockESApi, nil, expiryMS);
 
   es_file_t rootFile = MakeCacheableFile(RootDevno(), 111);
 
@@ -214,6 +220,23 @@ static inline void AssertCacheCounts(std::shared_ptr<AuthResultCache> cache, uin
   // Now check the cache, which will remove the item
   XCTAssertEqual(cache->CheckCache(&rootFile), SNTActionUnset);
   AssertCacheCounts(cache, 0, 0);
+}
+
+- (void)testFlushCacheReasonToString {
+  std::map<FlushCacheReason, NSString *> reasonToString = {
+    {FlushCacheReason::kClientModeChanged, @"ClientModeChanged"},
+    {FlushCacheReason::kPathRegexChanged, @"PathRegexChanged"},
+    {FlushCacheReason::kRulesChanged, @"RulesChanged"},
+    {FlushCacheReason::kStaticRulesChanged, @"StaticRulesChanged"},
+    {FlushCacheReason::kExplicitCommand, @"ExplicitCommand"},
+    {FlushCacheReason::kFilesystemUnmounted, @"FilesystemUnmounted"},
+  };
+
+  for (const auto &kv : reasonToString) {
+    XCTAssertEqualObjects(FlushCacheReasonToString(kv.first), kv.second);
+  }
+
+  XCTAssertThrows(FlushCacheReasonToString((FlushCacheReason)12345));
 }
 
 @end

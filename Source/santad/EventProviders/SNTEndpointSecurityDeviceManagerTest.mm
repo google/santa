@@ -317,7 +317,7 @@ class MockAuthResultCache : public AuthResultCache {
   mockESApi->SetExpectationsESNewClient();
   mockESApi->SetExpectationsRetainReleaseMessage();
 
-  auto mockAuthCache = std::make_shared<MockAuthResultCache>(nullptr);
+  auto mockAuthCache = std::make_shared<MockAuthResultCache>(nullptr, nil);
   EXPECT_CALL(*mockAuthCache, FlushCache);
 
   SNTEndpointSecurityDeviceManager *deviceManager =

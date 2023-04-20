@@ -384,6 +384,7 @@ objc_library(
         ":EndpointSecurityClient",
         "//Source/common:SNTCommonEnums",
         "//Source/common:SNTLogging",
+        "//Source/common:SNTMetricSet",
         "//Source/common:SantaCache",
         "//Source/common:SantaVnode",
         "//Source/common:SantaVnodeHash",

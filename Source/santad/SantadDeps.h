@@ -49,6 +49,8 @@ class SantadDeps {
       std::unique_ptr<santa::santad::logs::endpoint_security::Logger> logger,
       std::shared_ptr<santa::santad::Metrics> metrics,
       std::shared_ptr<santa::santad::data_layer::WatchItems> watch_items,
+      std::shared_ptr<santa::santad::event_providers::AuthResultCache>
+          auth_result_cache,
       MOLXPCConnection *control_connection,
       SNTCompilerController *compiler_controller,
       SNTNotificationQueue *notifier_queue, SNTSyncdQueue *syncd_queue,

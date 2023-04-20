@@ -22,6 +22,7 @@
 #include <memory>
 
 #import "Source/common/SNTCommonEnums.h"
+#import "Source/common/SNTMetricSet.h"
 #include "Source/common/SantaCache.h"
 #import "Source/common/SantaVnode.h"
 #include "Source/santad/EventProviders/EndpointSecurity/EndpointSecurityAPI.h"
@@ -45,13 +46,17 @@ enum class FlushCacheReason {
 class AuthResultCache {
  public:
   // Santa currently only flushes caches when new DENY rules are added, not
-  // ALLOW rules. This means this value should be low enough so that if a
+  // ALLOW rules. This means cache_deny_time_ms should be low enough so that if a
   // previously denied binary is allowed, it can be re-executed by the user in a
   // timely manner. But the value should be high enough to allow the cache to be
   // effective in the event the binary is executed in rapid succession.
+  static std::unique_ptr<AuthResultCache> Create(
+    std::shared_ptr<santa::santad::event_providers::endpoint_security::EndpointSecurityAPI> esapi,
+    SNTMetricSet *metric_set, uint64_t cache_deny_time_ms = 1500);
+
   AuthResultCache(
     std::shared_ptr<santa::santad::event_providers::endpoint_security::EndpointSecurityAPI> esapi,
-    uint64_t cache_deny_time_ms = 1500);
+    SNTMetricCounter *flush_count, uint64_t cache_deny_time_ms = 1500);
   virtual ~AuthResultCache();
 
   AuthResultCache(AuthResultCache &&other) = delete;
@@ -75,6 +80,7 @@ class AuthResultCache {
   SantaCache<SantaVnode, uint64_t> *nonroot_cache_;
 
   std::shared_ptr<santa::santad::event_providers::endpoint_security::EndpointSecurityAPI> esapi_;
+  SNTMetricCounter *flush_count_;
   uint64_t root_devno_;
   uint64_t cache_deny_time_ns_;
   dispatch_queue_t q_;
