@@ -43,6 +43,7 @@ using santa::santad::Metrics;
 using santa::santad::data_layer::WatchItems;
 using santa::santad::event_providers::AuthResultCache;
 using santa::santad::event_providers::FlushCacheMode;
+using santa::santad::event_providers::FlushCacheReason;
 using santa::santad::event_providers::endpoint_security::EndpointSecurityAPI;
 using santa::santad::event_providers::endpoint_security::Enricher;
 using santa::santad::logs::endpoint_security::Logger;
@@ -141,34 +142,33 @@ void SantadMain(std::shared_ptr<EndpointSecurityAPI> esapi, std::shared_ptr<Logg
   EstablishSyncServiceConnection(syncd_queue);
 
   NSArray<SNTKVOManager *> *kvoObservers = @[
-    [[SNTKVOManager alloc] initWithObject:configurator
-                                 selector:@selector(clientMode)
-                                     type:[NSNumber class]
-                                 callback:^(NSNumber *oldValue, NSNumber *newValue) {
-                                   if ([oldValue longLongValue] == [newValue longLongValue]) {
-                                     // Note: This case apparently can happen and if not checked
-                                     // will result in excessive notification messages sent to the
-                                     // user when calling `postClientModeNotification` below
-                                     return;
-                                   }
+    [[SNTKVOManager alloc]
+      initWithObject:configurator
+            selector:@selector(clientMode)
+                type:[NSNumber class]
+            callback:^(NSNumber *oldValue, NSNumber *newValue) {
+              if ([oldValue longLongValue] == [newValue longLongValue]) {
+                // Note: This case apparently can happen and if not checked
+                // will result in excessive notification messages sent to the
+                // user when calling `postClientModeNotification` below
+                return;
+              }
 
-                                   SNTClientMode clientMode =
-                                     (SNTClientMode)[newValue longLongValue];
+              SNTClientMode clientMode = (SNTClientMode)[newValue longLongValue];
 
-                                   switch (clientMode) {
-                                     case SNTClientModeLockdown:
-                                       LOGI(@"Changed client mode to Lockdown, flushing cache.");
-                                       auth_result_cache->FlushCache(FlushCacheMode::kAllCaches);
-                                       break;
-                                     case SNTClientModeMonitor:
-                                       LOGI(@"Changed client mode to Monitor.");
-                                       break;
-                                     default: LOGW(@"Changed client mode to unknown value."); break;
-                                   }
+              switch (clientMode) {
+                case SNTClientModeLockdown:
+                  LOGI(@"Changed client mode to Lockdown, flushing cache.");
+                  auth_result_cache->FlushCache(FlushCacheMode::kAllCaches,
+                                                FlushCacheReason::kClientModeChanged);
+                  break;
+                case SNTClientModeMonitor: LOGI(@"Changed client mode to Monitor."); break;
+                default: LOGW(@"Changed client mode to unknown value."); break;
+              }
 
-                                   [[notifier_queue.notifierConnection remoteObjectProxy]
-                                     postClientModeNotification:clientMode];
-                                 }],
+              [[notifier_queue.notifierConnection remoteObjectProxy]
+                postClientModeNotification:clientMode];
+            }],
     [[SNTKVOManager alloc]
       initWithObject:configurator
             selector:@selector(syncBaseURL)
@@ -233,7 +233,8 @@ void SantadMain(std::shared_ptr<EndpointSecurityAPI> esapi, std::shared_ptr<Logg
               }
 
               LOGI(@"Changed allowlist regex, flushing cache");
-              auth_result_cache->FlushCache(FlushCacheMode::kAllCaches);
+              auth_result_cache->FlushCache(FlushCacheMode::kAllCaches,
+                                            FlushCacheReason::kPathRegexChanged);
             }],
     [[SNTKVOManager alloc]
       initWithObject:configurator
@@ -246,7 +247,8 @@ void SantadMain(std::shared_ptr<EndpointSecurityAPI> esapi, std::shared_ptr<Logg
               }
 
               LOGI(@"Changed denylist regex, flushing cache");
-              auth_result_cache->FlushCache(FlushCacheMode::kAllCaches);
+              auth_result_cache->FlushCache(FlushCacheMode::kAllCaches,
+                                            FlushCacheReason::kPathRegexChanged);
             }],
     [[SNTKVOManager alloc] initWithObject:configurator
                                  selector:@selector(blockUSBMount)
@@ -324,7 +326,9 @@ void SantadMain(std::shared_ptr<EndpointSecurityAPI> esapi, std::shared_ptr<Logg
                                  callback:^(NSArray *oldValue, NSArray *newValue) {
                                    if ([oldValue isEqual:newValue]) return;
                                    LOGI(@"StaticRules set has changed, flushing cache.");
-                                   auth_result_cache->FlushCache(FlushCacheMode::kAllCaches);
+                                   auth_result_cache->FlushCache(
+                                     FlushCacheMode::kAllCaches,
+                                     FlushCacheReason::kStaticRulesChanged);
                                  }],
     [[SNTKVOManager alloc]
       initWithObject:configurator

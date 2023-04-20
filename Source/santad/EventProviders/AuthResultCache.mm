@@ -118,7 +118,7 @@ SantaCache<SantaVnode, uint64_t> *AuthResultCache::CacheForVnodeID(SantaVnode vn
   return (vnode_id.fsid == root_devno_ || root_devno_ == 0) ? root_cache_ : nonroot_cache_;
 }
 
-void AuthResultCache::FlushCache(FlushCacheMode mode) {
+void AuthResultCache::FlushCache(FlushCacheMode mode, FlushCacheReason reason) {
   nonroot_cache_->clear();
   if (mode == FlushCacheMode::kAllCaches) {
     root_cache_->clear();

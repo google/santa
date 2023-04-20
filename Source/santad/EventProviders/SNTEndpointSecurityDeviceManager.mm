@@ -33,6 +33,7 @@
 using santa::santad::EventDisposition;
 using santa::santad::event_providers::AuthResultCache;
 using santa::santad::event_providers::FlushCacheMode;
+using santa::santad::event_providers::FlushCacheReason;
 using santa::santad::event_providers::endpoint_security::EndpointSecurityAPI;
 using santa::santad::event_providers::endpoint_security::Message;
 using santa::santad::logs::endpoint_security::Logger;
@@ -175,7 +176,8 @@ NS_ASSUME_NONNULL_BEGIN
   // Process the unmount event first so that caches are flushed before any
   // other potential early returns.
   if (esMsg->event_type == ES_EVENT_TYPE_NOTIFY_UNMOUNT) {
-    self->_authResultCache->FlushCache(FlushCacheMode::kNonRootOnly);
+    self->_authResultCache->FlushCache(FlushCacheMode::kNonRootOnly,
+                                       FlushCacheReason::kFilesystemUnmounted);
     recordEventMetrics(EventDisposition::kProcessed);
     return;
   }

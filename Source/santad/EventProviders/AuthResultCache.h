@@ -33,6 +33,15 @@ enum class FlushCacheMode {
   kAllCaches,
 };
 
+enum class FlushCacheReason {
+  kClientModeChanged,
+  kPathRegexChanged,
+  kRulesChanged,
+  kStaticRulesChanged,
+  kExplicitCommand,
+  kFilesystemUnmounted,
+};
+
 class AuthResultCache {
  public:
   // Santa currently only flushes caches when new DENY rules are added, not
@@ -55,7 +64,7 @@ class AuthResultCache {
   virtual SNTAction CheckCache(const es_file_t *es_file);
   virtual SNTAction CheckCache(SantaVnode vnode_id);
 
-  virtual void FlushCache(FlushCacheMode mode);
+  virtual void FlushCache(FlushCacheMode mode, FlushCacheReason reason);
 
   virtual NSArray<NSNumber *> *CacheCounts();
 

@@ -29,6 +29,7 @@
 
 using santa::santad::event_providers::AuthResultCache;
 using santa::santad::event_providers::FlushCacheMode;
+using santa::santad::event_providers::FlushCacheReason;
 
 // Grab the st_dev number of the root volume to match the root cache
 static uint64_t RootDevno() {
@@ -121,7 +122,7 @@ static inline void AssertCacheCounts(std::shared_ptr<AuthResultCache> cache, uin
   AssertCacheCounts(cache, 1, 1);
 
   // Flush non-root only
-  cache->FlushCache(FlushCacheMode::kNonRootOnly);
+  cache->FlushCache(FlushCacheMode::kNonRootOnly, FlushCacheReason::kClientModeChanged);
 
   AssertCacheCounts(cache, 1, 0);
 
@@ -138,7 +139,7 @@ static inline void AssertCacheCounts(std::shared_ptr<AuthResultCache> cache, uin
     dispatch_semaphore_signal(sema);
     return true;
   }));
-  cache->FlushCache(FlushCacheMode::kAllCaches);
+  cache->FlushCache(FlushCacheMode::kAllCaches, FlushCacheReason::kClientModeChanged);
 
   XCTAssertEqual(0,
                  dispatch_semaphore_wait(sema, dispatch_time(DISPATCH_TIME_NOW, 5 * NSEC_PER_SEC)),

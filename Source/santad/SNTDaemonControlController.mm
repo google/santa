@@ -39,6 +39,7 @@ using santa::santad::data_layer::WatchItems;
 using santa::santad::data_layer::WatchItemsState;
 using santa::santad::event_providers::AuthResultCache;
 using santa::santad::event_providers::FlushCacheMode;
+using santa::santad::event_providers::FlushCacheReason;
 using santa::santad::logs::endpoint_security::Logger;
 
 // Globals used by the santad watchdog thread
@@ -84,12 +85,9 @@ double watchdogRAMPeak = 0;
   reply([counts[0] unsignedLongLongValue], [counts[1] unsignedLongLongValue]);
 }
 
-- (void)flushAllCaches {
-  self->_authResultCache->FlushCache(FlushCacheMode::kAllCaches);
-}
-
 - (void)flushCache:(void (^)(BOOL))reply {
-  [self flushAllCaches];
+  self->_authResultCache->FlushCache(FlushCacheMode::kAllCaches,
+                                     FlushCacheReason::kExplicitCommand);
   reply(YES);
 }
 
@@ -125,7 +123,7 @@ double watchdogRAMPeak = 0;
   // The actual cache flushing happens after the new rules have been added to the database.
   if (flushCache) {
     LOGI(@"Flushing caches");
-    [self flushAllCaches];
+    self->_authResultCache->FlushCache(FlushCacheMode::kAllCaches, FlushCacheReason::kRulesChanged);
   }
 
   reply(error);
