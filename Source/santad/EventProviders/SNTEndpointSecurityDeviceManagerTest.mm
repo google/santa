@@ -39,13 +39,14 @@
 using santa::santad::EventDisposition;
 using santa::santad::event_providers::AuthResultCache;
 using santa::santad::event_providers::FlushCacheMode;
+using santa::santad::event_providers::FlushCacheReason;
 using santa::santad::event_providers::endpoint_security::Message;
 
 class MockAuthResultCache : public AuthResultCache {
  public:
   using AuthResultCache::AuthResultCache;
 
-  MOCK_METHOD(void, FlushCache, (FlushCacheMode mode));
+  MOCK_METHOD(void, FlushCache, (FlushCacheMode mode, FlushCacheReason reason));
 };
 
 @interface SNTEndpointSecurityDeviceManager (Testing)
@@ -316,7 +317,7 @@ class MockAuthResultCache : public AuthResultCache {
   mockESApi->SetExpectationsESNewClient();
   mockESApi->SetExpectationsRetainReleaseMessage();
 
-  auto mockAuthCache = std::make_shared<MockAuthResultCache>(nullptr);
+  auto mockAuthCache = std::make_shared<MockAuthResultCache>(nullptr, nil);
   EXPECT_CALL(*mockAuthCache, FlushCache);
 
   SNTEndpointSecurityDeviceManager *deviceManager =

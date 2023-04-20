@@ -105,7 +105,7 @@ class MockLogger : public Logger {
   auto mockEnricher = std::make_shared<MockEnricher>();
   EXPECT_CALL(*mockEnricher, Enrich).WillOnce(testing::Return(enrichedMsg));
 
-  auto mockAuthCache = std::make_shared<MockAuthResultCache>(nullptr);
+  auto mockAuthCache = std::make_shared<MockAuthResultCache>(nullptr, nil);
   EXPECT_CALL(*mockAuthCache, RemoveFromCache(&targetFile)).Times(1);
 
   dispatch_semaphore_t semaMetrics = dispatch_semaphore_create(0);

@@ -234,7 +234,7 @@ class MockAuthResultCache : public AuthResultCache {
   mockESApi->SetExpectationsESNewClient();
   mockESApi->SetExpectationsRetainReleaseMessage();
 
-  auto mockAuthCache = std::make_shared<MockAuthResultCache>(nullptr);
+  auto mockAuthCache = std::make_shared<MockAuthResultCache>(nullptr, nil);
   EXPECT_CALL(*mockAuthCache, CheckCache)
     .WillOnce(testing::Return(SNTActionRequestBinary))
     .WillOnce(testing::Return(SNTActionRequestBinary))
@@ -301,7 +301,7 @@ class MockAuthResultCache : public AuthResultCache {
   mockESApi->SetExpectationsESNewClient();
   mockESApi->SetExpectationsRetainReleaseMessage();
 
-  auto mockAuthCache = std::make_shared<MockAuthResultCache>(nullptr);
+  auto mockAuthCache = std::make_shared<MockAuthResultCache>(nullptr, nil);
   EXPECT_CALL(*mockAuthCache, AddToCache(&execFile, SNTActionRespondAllowCompiler))
     .WillOnce(testing::Return(true));
   EXPECT_CALL(*mockAuthCache, AddToCache(&execFile, SNTActionRespondAllow))

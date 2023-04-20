@@ -135,25 +135,31 @@ std::unique_ptr<SantadDeps> SantadDeps::Create(SNTConfigurator *configurator,
     exit(EXIT_FAILURE);
   }
 
-  return std::make_unique<SantadDeps>(
-    esapi, std::move(logger), std::move(metrics), std::move(watch_items), control_connection,
-    compiler_controller, notifier_queue, syncd_queue, exec_controller, prefix_tree);
+  std::shared_ptr<::AuthResultCache> auth_result_cache = AuthResultCache::Create(esapi, metric_set);
+  if (!auth_result_cache) {
+    LOGE(@"Failed to create auth result cache");
+    exit(EXIT_FAILURE);
+  }
+
+  return std::make_unique<SantadDeps>(esapi, std::move(logger), std::move(metrics),
+                                      std::move(watch_items), std::move(auth_result_cache),
+                                      control_connection, compiler_controller, notifier_queue,
+                                      syncd_queue, exec_controller, prefix_tree);
 }
 
-SantadDeps::SantadDeps(std::shared_ptr<EndpointSecurityAPI> esapi, std::unique_ptr<::Logger> logger,
-                       std::shared_ptr<::Metrics> metrics,
-                       std::shared_ptr<::WatchItems> watch_items,
-                       MOLXPCConnection *control_connection,
-                       SNTCompilerController *compiler_controller,
-                       SNTNotificationQueue *notifier_queue, SNTSyncdQueue *syncd_queue,
-                       SNTExecutionController *exec_controller,
-                       std::shared_ptr<::PrefixTree<Unit>> prefix_tree)
+SantadDeps::SantadDeps(
+  std::shared_ptr<EndpointSecurityAPI> esapi, std::unique_ptr<::Logger> logger,
+  std::shared_ptr<::Metrics> metrics, std::shared_ptr<::WatchItems> watch_items,
+  std::shared_ptr<santa::santad::event_providers::AuthResultCache> auth_result_cache,
+  MOLXPCConnection *control_connection, SNTCompilerController *compiler_controller,
+  SNTNotificationQueue *notifier_queue, SNTSyncdQueue *syncd_queue,
+  SNTExecutionController *exec_controller, std::shared_ptr<::PrefixTree<Unit>> prefix_tree)
     : esapi_(std::move(esapi)),
       logger_(std::move(logger)),
       metrics_(std::move(metrics)),
       watch_items_(std::move(watch_items)),
       enricher_(std::make_shared<::Enricher>()),
-      auth_result_cache_(std::make_shared<::AuthResultCache>(esapi_)),
+      auth_result_cache_(std::move(auth_result_cache)),
       control_connection_(control_connection),
       compiler_controller_(compiler_controller),
       notifier_queue_(notifier_queue),
