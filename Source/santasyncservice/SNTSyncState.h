@@ -13,6 +13,7 @@
 ///    limitations under the License.
 
 #import <Foundation/Foundation.h>
+#include <objc/NSObjCRuntime.h>
 
 #import "Source/common/SNTCommonEnums.h"
 
@@ -77,5 +78,8 @@
 /// The header value for ContentEncoding when sending compressed content.
 /// Either "deflate" (default) or "zlib".
 @property(copy) NSString *compressedContentEncoding;
+
+/// The compression type to use for the sync session.
+@property SNTSyncCompressionEncoding compressionEncoding;
 
 @end

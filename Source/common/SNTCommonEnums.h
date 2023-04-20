@@ -13,6 +13,7 @@
 ///    limitations under the License.
 
 #import <Foundation/Foundation.h>
+#include <objc/objc-api.h>
 
 ///
 ///  These enums are used in various places throughout the Santa client code.
@@ -127,6 +128,12 @@ typedef NS_ENUM(NSInteger, SNTSyncStatusType) {
   SNTSyncStatusTypeDaemonTimeout,
   SNTSyncStatusTypeSyncStarted,
   SNTSyncStatusTypeUnknown,
+};
+
+typedef NS_ENUM(NSInteger, SNTSyncCompressionEncoding) {
+  SNTSyncCompressionEncodingNone,
+  SNTSyncCompressionEncodingZlib,
+  SNTSyncCompressionEncodingGzip,
 };
 
 typedef NS_ENUM(NSInteger, SNTMetricFormatType) {

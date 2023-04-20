@@ -13,6 +13,7 @@
 ///    limitations under the License.
 
 #import "Source/santasyncservice/SNTSyncStage.h"
+#include "Source/common/SNTCommonEnums.h"
 
 #import <MOLXPCConnection/MOLXPCConnection.h>
 
@@ -70,10 +71,27 @@
   NSString *xsrfHeader = self.syncState.xsrfTokenHeader ?: kDefaultXSRFTokenHeader;
   [req setValue:self.syncState.xsrfToken forHTTPHeaderField:xsrfHeader];
 
-  NSData *compressed = [requestBody zlibCompressed];
+  NSData *compressed;
+  NSString *contentEncodingHeader;
+
+  switch (self.syncState.compressionEncoding) {
+    case SNTSyncCompressionEncodingNone: break;
+    case SNTSyncCompressionEncodingGzip:
+      compressed = [requestBody gzipCompressed];
+      contentEncodingHeader = @"gzip";
+      break;
+    case SNTSyncCompressionEncodingZlib:
+      compressed = [requestBody zlibCompressed];
+      contentEncodingHeader = @"deflate";
+      break;
+    default:
+      compressed = [requestBody zlibCompressed];
+      contentEncodingHeader = self.syncState.compressedContentEncoding;
+  }
+
   if (compressed) {
     requestBody = compressed;
-    [req setValue:self.syncState.compressedContentEncoding forHTTPHeaderField:@"Content-Encoding"];
+    [req setValue:contentEncodingHeader forHTTPHeaderField:@"Content-Encoding"];
   }
 
   [req setHTTPBody:requestBody];

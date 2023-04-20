@@ -13,6 +13,7 @@
 ///    limitations under the License.
 
 #import "Source/common/SNTConfigurator.h"
+#import "Source/common/SNTCommonEnums.h"
 
 #include <sys/stat.h>
 
@@ -110,6 +111,7 @@ static NSString *const kEnableDebugLogging = @"EnableDebugLogging";
 
 static NSString *const kEnableBackwardsCompatibleContentEncoding =
   @"EnableBackwardsCompatibleContentEncoding";
+static NSString *const kClientContentEncoding = @"SyncClientContentEncoding";
 
 static NSString *const kFCMProject = @"FCMProject";
 static NSString *const kFCMEntity = @"FCMEntity";
@@ -129,7 +131,6 @@ static NSString *const kBlockedPathRegexKeyDeprecated = @"BlacklistRegex";
 static NSString *const kEnableAllEventUploadKey = @"EnableAllEventUpload";
 static NSString *const kDisableUnknownEventUploadKey = @"DisableUnknownEventUpload";
 
-// TODO(markowsky): move these to sync server only.
 static NSString *const kMetricFormat = @"MetricFormat";
 static NSString *const kMetricURL = @"MetricURL";
 static NSString *const kMetricExportInterval = @"MetricExportInterval";
@@ -200,6 +201,7 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
       kClientAuthCertificatePasswordKey : string,
       kClientAuthCertificateCNKey : string,
       kClientAuthCertificateIssuerKey : string,
+      kClientContentEncoding : string,
       kServerAuthRootsDataKey : data,
       kServerAuthRootsFileKey : string,
       kMachineOwnerKey : string,
@@ -713,6 +715,20 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
 
 - (NSString *)syncClientAuthCertificateIssuer {
   return self.configState[kClientAuthCertificateIssuerKey];
+}
+
+- (SNTSyncCompressionEncoding)syncClientContentEncoding {
+  NSString *contentEncoding = [self.configState[kClientContentEncoding] lowercaseString];
+  if ([contentEncoding isEqualToString:@"zlib"]) {
+    return SNTSyncCompressionEncodingZlib;
+  } else if ([contentEncoding isEqualToString:@"gzip"]) {
+    return SNTSyncCompressionEncodingGzip;
+  } else if ([contentEncoding isEqualToString:@"none"]) {
+    return SNTSyncCompressionEncodingNone;
+  } else {
+    // Ensure we have the same
+    return SNTSyncCompressionEncodingZlib;
+  }
 }
 
 - (NSData *)syncServerAuthRootsData {
