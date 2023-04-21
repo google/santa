@@ -719,14 +719,14 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
 
 - (SNTSyncCompressionEncoding)syncClientContentEncoding {
   NSString *contentEncoding = [self.configState[kClientContentEncoding] lowercaseString];
-  if ([contentEncoding isEqualToString:@"zlib"]) {
+  if ([contentEncoding isEqualToString:@"deflate"]) {
     return SNTSyncCompressionEncodingZlib;
   } else if ([contentEncoding isEqualToString:@"gzip"]) {
     return SNTSyncCompressionEncodingGzip;
   } else if ([contentEncoding isEqualToString:@"none"]) {
     return SNTSyncCompressionEncodingNone;
   } else {
-    // Ensure we have the same
+    // Ensure we have the same default zlib behavior Santa's always had otherwise.
     return SNTSyncCompressionEncodingZlib;
   }
 }

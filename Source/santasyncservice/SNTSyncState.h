@@ -13,7 +13,6 @@
 ///    limitations under the License.
 
 #import <Foundation/Foundation.h>
-#include <objc/NSObjCRuntime.h>
 
 #import "Source/common/SNTCommonEnums.h"
 
