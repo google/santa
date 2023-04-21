@@ -1,4 +1,10 @@
-# Santa [![CI](https://github.com/google/santa/actions/workflows/ci.yml/badge.svg)](https://github.com/google/santa/actions/workflows/ci.yml)
+# Santa
+
+[![license](https://img.shields.io/github/license/google/santa)](https://github.com/google/santa/blob/main/LICENSE)
+[![CI](https://github.com/google/santa/actions/workflows/ci.yml/badge.svg)](https://github.com/google/santa/actions/workflows/ci.yml)
+[![latest release](https://img.shields.io/github/v/release/google/santa.svg)](https://github.com/google/santa/releases/latest)
+[![latest release date](https://img.shields.io/github/release-date/google/santa.svg)](https://github.com/google/santa/releases/latest)
+[![downloads](https://img.shields.io/github/downloads/google/santa/latest/total)](https://github.com/google/santa/releases/latest)
 
 <p align="center">
     <img src="https://raw.githubusercontent.com/google/santa/main/Source/gui/Resources/Images.xcassets/AppIcon.appiconset/santa-hat-icon-128.png" alt="Santa Icon" />
