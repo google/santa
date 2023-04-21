@@ -128,6 +128,28 @@ Run all the logic / unit tests
 bazel test :unit_tests --define=SANTA_BUILD_TYPE=adhoc --test_output=errors
 ```
 
+##### Testing Config Options Using `/var/db/santa/config-overrides.plist`
+
+Debug versions of Santa have the ability to set/override config settings using 
+
+1. Create a plist in `/var/db/santa/config-overrides.plist`
+  - Make sure it's readable. 
+  - For example to point Santa at a sync server running on localhost here would be the config-override file.
+
+  ```xml
+  <?xml version="1.0" encoding="UTF-8"?> <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+  <plist version="1.0">
+  <dict>    
+    <key>SyncBaseURL</key>
+    <string>http://localhost:8080/v1/santa/</string>
+    <key>SyncClientContentEncoding</key>
+    <string>gzip</string>
+  </dict>
+</plist>
+  ```
+
+2. run `bazel run //:reload` to rebuild and restart the Santa daemon.
+
 #### Releases
 
 Creates a release build of Santa with a version based of the newest tag. Also
@@ -136,5 +158,5 @@ interpreting future crashes much easier. Releases are handled by Google internal
 infrastructure.
 
 ```sh
-bazel build --apple_generate_dsym -c opt :release
+bazel build --apple_generate_dsym -c opt //:release
 ```
