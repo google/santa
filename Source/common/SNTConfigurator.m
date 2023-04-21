@@ -109,8 +109,6 @@ static NSString *const kEnableForkAndExitLogging = @"EnableForkAndExitLogging";
 static NSString *const kIgnoreOtherEndpointSecurityClients = @"IgnoreOtherEndpointSecurityClients";
 static NSString *const kEnableDebugLogging = @"EnableDebugLogging";
 
-static NSString *const kEnableBackwardsCompatibleContentEncoding =
-  @"EnableBackwardsCompatibleContentEncoding";
 static NSString *const kClientContentEncoding = @"SyncClientContentEncoding";
 
 static NSString *const kFCMProject = @"FCMProject";
@@ -223,7 +221,6 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
       kEnableForkAndExitLogging : number,
       kIgnoreOtherEndpointSecurityClients : number,
       kEnableDebugLogging : number,
-      kEnableBackwardsCompatibleContentEncoding : number,
       kFCMProject : string,
       kFCMEntity : string,
       kFCMAPIKey : string,
@@ -462,10 +459,6 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
 }
 
 + (NSSet *)keyPathsForValuesAffectingEnableDebugLogging {
-  return [self configStateSet];
-}
-
-+ (NSSet *)keyPathsForValuesAffectingEnableBackwardsCompatibleContentEncoding {
   return [self configStateSet];
 }
 
@@ -717,17 +710,17 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
   return self.configState[kClientAuthCertificateIssuerKey];
 }
 
-- (SNTSyncCompressionEncoding)syncClientContentEncoding {
+- (SNTSyncContentEncoding)syncClientContentEncoding {
   NSString *contentEncoding = [self.configState[kClientContentEncoding] lowercaseString];
   if ([contentEncoding isEqualToString:@"deflate"]) {
-    return SNTSyncCompressionEncodingZlib;
+    return SNTSyncContentEncodingZlib;
   } else if ([contentEncoding isEqualToString:@"gzip"]) {
-    return SNTSyncCompressionEncodingGzip;
+    return SNTSyncContentEncodingGzip;
   } else if ([contentEncoding isEqualToString:@"none"]) {
-    return SNTSyncCompressionEncodingNone;
+    return SNTSyncContentEncodingNone;
   } else {
     // Ensure we have the same default zlib behavior Santa's always had otherwise.
-    return SNTSyncCompressionEncodingZlib;
+    return SNTSyncContentEncodingZlib;
   }
 }
 
@@ -902,11 +895,6 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
 - (BOOL)enableDebugLogging {
   NSNumber *number = self.configState[kEnableDebugLogging];
   return [number boolValue] || self.debugFlag;
-}
-
-- (BOOL)enableBackwardsCompatibleContentEncoding {
-  NSNumber *number = self.configState[kEnableBackwardsCompatibleContentEncoding];
-  return number ? [number boolValue] : NO;
 }
 
 - (NSString *)fcmProject {

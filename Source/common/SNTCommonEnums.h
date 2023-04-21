@@ -129,10 +129,10 @@ typedef NS_ENUM(NSInteger, SNTSyncStatusType) {
   SNTSyncStatusTypeUnknown,
 };
 
-typedef NS_ENUM(NSInteger, SNTSyncCompressionEncoding) {
-  SNTSyncCompressionEncodingNone,
-  SNTSyncCompressionEncodingZlib,
-  SNTSyncCompressionEncodingGzip,
+typedef NS_ENUM(NSInteger, SNTSyncContentEncoding) {
+  SNTSyncContentEncodingNone,
+  SNTSyncContentEncodingZlib,
+  SNTSyncContentEncodingGzip,
 };
 
 typedef NS_ENUM(NSInteger, SNTMetricFormatType) {

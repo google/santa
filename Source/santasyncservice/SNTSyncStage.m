@@ -74,19 +74,19 @@
   NSData *compressed;
   NSString *contentEncodingHeader;
 
-  switch (self.syncState.compressionEncoding) {
-    case SNTSyncCompressionEncodingNone: break;
-    case SNTSyncCompressionEncodingGzip:
+  switch (self.syncState.contentEncoding) {
+    case SNTSyncContentEncodingNone: break;
+    case SNTSyncContentEncodingGzip:
       compressed = [requestBody gzipCompressed];
       contentEncodingHeader = @"gzip";
       break;
-    case SNTSyncCompressionEncodingZlib:
+    case SNTSyncContentEncodingZlib:
       compressed = [requestBody zlibCompressed];
       contentEncodingHeader = @"deflate";
       break;
     default:
-      compressed = [requestBody zlibCompressed];
-      contentEncodingHeader = self.syncState.compressedContentEncoding;
+      // This would be a programming error.
+      LOGD(@"Unexpected value for content encoding %ld", self.syncState.contentEncoding);
   }
 
   if (compressed) {

@@ -391,11 +391,7 @@ static void reachabilityHandler(SCNetworkReachabilityRef target, SCNetworkReacha
 
   syncState.session = [authURLSession session];
   syncState.daemonConn = self.daemonConn;
-  syncState.compressionEncoding = config.syncClientContentEncoding;
-
-  syncState.compressedContentEncoding =
-    config.enableBackwardsCompatibleContentEncoding ? @"zlib" : @"deflate";
-
+  syncState.contentEncoding = config.syncClientContentEncoding;
   syncState.pushNotificationsToken = self.pushNotifications.token;
 
   return syncState;

@@ -524,9 +524,9 @@
 
 ///
 /// If set, "santactl sync" will use the supplied "Content-Encoding", possible
-/// settings include gzip, deflate, none.
+/// settings include "gzip", "deflate", "none". If empty defaults to "deflate".
 ///
-@property(readonly, nonatomic) SNTSyncCompressionEncoding syncClientContentEncoding;
+@property(readonly, nonatomic) SNTSyncContentEncoding syncClientContentEncoding;
 
 ///
 ///  Contains the FCM project name.
