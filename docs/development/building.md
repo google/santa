@@ -130,7 +130,7 @@ bazel test :unit_tests --define=SANTA_BUILD_TYPE=adhoc --test_output=errors
 
 ##### Testing Config Options Using `/var/db/santa/config-overrides.plist`
 
-Debug versions of Santa have the ability to set/override config settings using 
+Debug versions of Santa have the ability to set/override config settings using an override file, that will be applied over the top of the configuration from a profile.
 
 1. Create a plist in `/var/db/santa/config-overrides.plist`
   - Make sure it's readable. 
