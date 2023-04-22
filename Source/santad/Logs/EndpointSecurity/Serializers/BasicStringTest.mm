@@ -39,6 +39,7 @@
 using santa::santad::event_providers::endpoint_security::Enricher;
 using santa::santad::event_providers::endpoint_security::Message;
 using santa::santad::logs::endpoint_security::serializers::BasicString;
+using santa::santad::logs::endpoint_security::serializers::ClientModeFunc;
 using santa::santad::logs::endpoint_security::serializers::Serializer;
 
 namespace santa::santad::logs::endpoint_security::serializers {
@@ -56,10 +57,12 @@ using santa::santad::logs::endpoint_security::serializers::GetModeString;
 using santa::santad::logs::endpoint_security::serializers::GetReasonString;
 
 std::string BasicStringSerializeMessage(std::shared_ptr<MockEndpointSecurityAPI> mockESApi,
-                                        es_message_t *esMsg) {
+                                        es_message_t *esMsg, SNTDecisionCache *decisionCache,
+                                        ClientModeFunc GetClientMode) {
   mockESApi->SetExpectationsRetainReleaseMessage();
 
-  std::shared_ptr<Serializer> bs = BasicString::Create(mockESApi, false);
+  std::shared_ptr<Serializer> bs =
+    BasicString::Create(mockESApi, decisionCache, std::move(GetClientMode), false);
   std::vector<uint8_t> ret = bs->SerializeMessage(Enricher().Enrich(Message(mockESApi, esMsg)));
 
   XCTBubbleMockVerifyAndClearExpectations(mockESApi.get());
@@ -69,7 +72,7 @@ std::string BasicStringSerializeMessage(std::shared_ptr<MockEndpointSecurityAPI>
 
 std::string BasicStringSerializeMessage(es_message_t *esMsg) {
   auto mockESApi = std::make_shared<MockEndpointSecurityAPI>();
-  return BasicStringSerializeMessage(mockESApi, esMsg);
+  return BasicStringSerializeMessage(mockESApi, esMsg, nil, nullptr);
 }
 
 @interface BasicStringTest : XCTestCase
@@ -163,7 +166,9 @@ std::string BasicStringSerializeMessage(es_message_t *esMsg) {
     .WillOnce(testing::Return(es_string_token_t{5, "-l\n-t"}))
     .WillOnce(testing::Return(es_string_token_t{8, "-v\r--foo"}));
 
-  std::string got = BasicStringSerializeMessage(mockESApi, &esMsg);
+  std::string got = BasicStringSerializeMessage(mockESApi, &esMsg, self.mockDecisionCache, ^{
+    return [self.mockConfigurator clientMode];
+  });
   std::string want =
     "action=EXEC|decision=ALLOW|reason=BINARY|explain=extra!|sha256=1234_hash|"
     "cert_sha256=5678_hash|cert_cn=|quarantine_url=google.com|pid=12|pidversion="
@@ -289,7 +294,7 @@ std::string BasicStringSerializeMessage(es_message_t *esMsg) {
   mockESApi->SetExpectationsRetainReleaseMessage();
 
   std::vector<uint8_t> ret =
-    BasicString::Create(nullptr, false)
+    BasicString::Create(nullptr, nil, nullptr, false)
       ->SerializeFileAccess("v1.0", "pol_name", Message(mockESApi, &esMsg),
                             Enricher().Enrich(*esMsg.process), "file_target",
                             FileAccessPolicyDecision::kAllowedAuditOnly);
@@ -310,7 +315,7 @@ std::string BasicStringSerializeMessage(es_message_t *esMsg) {
   auto mockESApi = std::make_shared<MockEndpointSecurityAPI>();
   mockESApi->SetExpectationsRetainReleaseMessage();
 
-  std::vector<uint8_t> ret = BasicString::Create(mockESApi, false)
+  std::vector<uint8_t> ret = BasicString::Create(mockESApi, nil, nullptr, false)
                                ->SerializeAllowlist(Message(mockESApi, &esMsg), "test_hash");
 
   XCTAssertTrue(testing::Mock::VerifyAndClearExpectations(mockESApi.get()),
@@ -333,7 +338,8 @@ std::string BasicStringSerializeMessage(es_message_t *esMsg) {
   se.fileBundlePath = @"file_bundle_path";
   se.filePath = @"file_path";
 
-  std::vector<uint8_t> ret = BasicString::Create(nullptr, false)->SerializeBundleHashingEvent(se);
+  std::vector<uint8_t> ret =
+    BasicString::Create(nullptr, nil, nullptr, false)->SerializeBundleHashingEvent(se);
   std::string got(ret.begin(), ret.end());
 
   std::string want = "action=BUNDLE|sha256=file_hash"
@@ -360,7 +366,8 @@ std::string BasicStringSerializeMessage(es_message_t *esMsg) {
   OCMStub([self.mockConfigurator configurator]).andReturn(self.mockConfigurator);
   OCMStub([self.mockConfigurator enableMachineIDDecoration]).andReturn(NO);
 
-  std::vector<uint8_t> ret = BasicString::Create(nullptr, false)->SerializeDiskAppeared(props);
+  std::vector<uint8_t> ret =
+    BasicString::Create(nullptr, nil, nullptr, false)->SerializeDiskAppeared(props);
   std::string got(ret.begin(), ret.end());
 
   std::string want = "action=DISKAPPEAR|mount=path|volume=|bsdname=bsd|fs=apfs"
@@ -376,7 +383,8 @@ std::string BasicStringSerializeMessage(es_message_t *esMsg) {
     @"DAMediaBSDName" : @"bsd",
   };
 
-  std::vector<uint8_t> ret = BasicString::Create(nullptr, false)->SerializeDiskDisappeared(props);
+  std::vector<uint8_t> ret =
+    BasicString::Create(nullptr, nil, nullptr, false)->SerializeDiskDisappeared(props);
   std::string got(ret.begin(), ret.end());
 
   std::string want = "action=DISKDISAPPEAR|mount=path|volume=|bsdname=bsd|machineid=my_id\n";

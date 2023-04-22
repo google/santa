@@ -103,26 +103,26 @@ class MockWriter : public Null {
   // Ensure that the factory method creates expected serializers/writers pairs
   auto mockESApi = std::make_shared<MockEndpointSecurityAPI>();
 
-  XCTAssertEqual(nullptr, Logger::Create(mockESApi, (SNTEventLogType)123, @"/tmp/temppy",
-                                         @"/tmp/spool", 1, 1, 1));
+  XCTAssertEqual(nullptr, Logger::Create(mockESApi, (SNTEventLogType)123, nil, nullptr,
+                                         @"/tmp/temppy", @"/tmp/spool", 1, 1, 1));
 
-  LoggerPeer logger(
-    Logger::Create(mockESApi, SNTEventLogTypeFilelog, @"/tmp/temppy", @"/tmp/spool", 1, 1, 1));
+  LoggerPeer logger(Logger::Create(mockESApi, SNTEventLogTypeFilelog, nil, nullptr, @"/tmp/temppy",
+                                   @"/tmp/spool", 1, 1, 1));
   XCTAssertNotEqual(nullptr, std::dynamic_pointer_cast<BasicString>(logger.Serializer()));
   XCTAssertNotEqual(nullptr, std::dynamic_pointer_cast<File>(logger.Writer()));
 
-  logger = LoggerPeer(
-    Logger::Create(mockESApi, SNTEventLogTypeSyslog, @"/tmp/temppy", @"/tmp/spool", 1, 1, 1));
+  logger = LoggerPeer(Logger::Create(mockESApi, SNTEventLogTypeSyslog, nil, nullptr, @"/tmp/temppy",
+                                     @"/tmp/spool", 1, 1, 1));
   XCTAssertNotEqual(nullptr, std::dynamic_pointer_cast<BasicString>(logger.Serializer()));
   XCTAssertNotEqual(nullptr, std::dynamic_pointer_cast<Syslog>(logger.Writer()));
 
-  logger = LoggerPeer(
-    Logger::Create(mockESApi, SNTEventLogTypeNull, @"/tmp/temppy", @"/tmp/spool", 1, 1, 1));
+  logger = LoggerPeer(Logger::Create(mockESApi, SNTEventLogTypeNull, nil, nullptr, @"/tmp/temppy",
+                                     @"/tmp/spool", 1, 1, 1));
   XCTAssertNotEqual(nullptr, std::dynamic_pointer_cast<Empty>(logger.Serializer()));
   XCTAssertNotEqual(nullptr, std::dynamic_pointer_cast<Null>(logger.Writer()));
 
-  logger = LoggerPeer(
-    Logger::Create(mockESApi, SNTEventLogTypeProtobuf, @"/tmp/temppy", @"/tmp/spool", 1, 1, 1));
+  logger = LoggerPeer(Logger::Create(mockESApi, SNTEventLogTypeProtobuf, nil, nullptr,
+                                     @"/tmp/temppy", @"/tmp/spool", 1, 1, 1));
   XCTAssertNotEqual(nullptr, std::dynamic_pointer_cast<Protobuf>(logger.Serializer()));
   XCTAssertNotEqual(nullptr, std::dynamic_pointer_cast<Spool>(logger.Writer()));
 }
