@@ -24,6 +24,7 @@
 #include "Source/santad/DataLayer/WatchItems.h"
 #include "Source/santad/EventProviders/EndpointSecurity/EndpointSecurityAPI.h"
 #import "Source/santad/SNTDatabaseController.h"
+#include "Source/santad/SNTDecisionCache.h"
 
 using santa::common::PrefixTree;
 using santa::common::Unit;
@@ -110,8 +111,12 @@ std::unique_ptr<SantadDeps> SantadDeps::Create(SNTConfigurator *configurator,
   uint64_t spool_flush_timeout_ms = [configurator spoolDirectoryEventMaxFlushTimeSec] * 1000;
 
   std::unique_ptr<::Logger> logger = Logger::Create(
-    esapi, [configurator eventLogType], [configurator eventLogPath], [configurator spoolDirectory],
-    spool_dir_threshold_bytes, spool_file_threshold_bytes, spool_flush_timeout_ms);
+    esapi, [configurator eventLogType], [SNTDecisionCache sharedCache],
+    ^{
+      return [configurator clientMode];
+    },
+    [configurator eventLogPath], [configurator spoolDirectory], spool_dir_threshold_bytes,
+    spool_file_threshold_bytes, spool_flush_timeout_ms);
   if (!logger) {
     LOGE(@"Failed to create logger.");
     exit(EXIT_FAILURE);

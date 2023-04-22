@@ -24,7 +24,8 @@ namespace es = santa::santad::event_providers::endpoint_security;
 
 namespace santa::santad::logs::endpoint_security::serializers {
 
-Serializer::Serializer() {
+Serializer::Serializer(SNTDecisionCache *decision_cache, ClientModeFunc GetClientMode)
+    : decision_cache_(decision_cache), GetClientMode_(std::move(GetClientMode)) {
   if ([[SNTConfigurator configurator] enableMachineIDDecoration]) {
     enabled_machine_id_ = true;
     machine_id_ = [[[SNTConfigurator configurator] machineID] UTF8String] ?: "";
@@ -39,6 +40,10 @@ std::string_view Serializer::MachineID() {
   return std::string_view(machine_id_);
 };
 
+SNTClientMode Serializer::GetClientMode() {
+  return GetClientMode_();
+}
+
 std::vector<uint8_t> Serializer::SerializeMessageTemplate(const es::EnrichedClose &msg) {
   return SerializeMessage(msg);
 }
@@ -46,17 +51,15 @@ std::vector<uint8_t> Serializer::SerializeMessageTemplate(const es::EnrichedExch
   return SerializeMessage(msg);
 }
 std::vector<uint8_t> Serializer::SerializeMessageTemplate(const es::EnrichedExec &msg) {
-  static SNTDecisionCache *decision_cache = [SNTDecisionCache sharedCache];
-
   SNTCachedDecision *cd;
   const es_message_t &es_msg = msg.es_msg();
   if (es_msg.action_type == ES_ACTION_TYPE_NOTIFY &&
       es_msg.action.notify.result.auth == ES_AUTH_RESULT_ALLOW) {
     // For allowed execs, cached decision timestamps must be updated
-    cd = [decision_cache
+    cd = [decision_cache_
       resetTimestampForCachedDecision:msg.es_msg().event.exec.target->executable->stat];
   } else {
-    cd = [decision_cache cachedDecisionForFile:msg.es_msg().event.exec.target->executable->stat];
+    cd = [decision_cache_ cachedDecisionForFile:msg.es_msg().event.exec.target->executable->stat];
   }
 
   return SerializeMessage(msg, cd);
