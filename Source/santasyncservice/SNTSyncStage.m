@@ -80,7 +80,7 @@
       compressed = [requestBody gzipCompressed];
       contentEncodingHeader = @"gzip";
       break;
-    case SNTSyncContentEncodingZlib:
+    case SNTSyncContentEncodingDeflate:
       compressed = [requestBody zlibCompressed];
       contentEncodingHeader = @"deflate";
       break;

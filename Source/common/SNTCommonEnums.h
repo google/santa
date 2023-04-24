@@ -131,7 +131,7 @@ typedef NS_ENUM(NSInteger, SNTSyncStatusType) {
 
 typedef NS_ENUM(NSInteger, SNTSyncContentEncoding) {
   SNTSyncContentEncodingNone,
-  SNTSyncContentEncodingZlib,
+  SNTSyncContentEncodingDeflate,
   SNTSyncContentEncodingGzip,
 };
 
