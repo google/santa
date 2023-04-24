@@ -129,6 +129,12 @@ typedef NS_ENUM(NSInteger, SNTSyncStatusType) {
   SNTSyncStatusTypeUnknown,
 };
 
+typedef NS_ENUM(NSInteger, SNTSyncContentEncoding) {
+  SNTSyncContentEncodingNone,
+  SNTSyncContentEncodingDeflate,
+  SNTSyncContentEncodingGzip,
+};
+
 typedef NS_ENUM(NSInteger, SNTMetricFormatType) {
   SNTMetricFormatTypeUnknown,
   SNTMetricFormatTypeRawJSON,

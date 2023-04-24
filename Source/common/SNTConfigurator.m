@@ -13,6 +13,7 @@
 ///    limitations under the License.
 
 #import "Source/common/SNTConfigurator.h"
+#import "Source/common/SNTCommonEnums.h"
 
 #include <sys/stat.h>
 
@@ -108,8 +109,7 @@ static NSString *const kEnableForkAndExitLogging = @"EnableForkAndExitLogging";
 static NSString *const kIgnoreOtherEndpointSecurityClients = @"IgnoreOtherEndpointSecurityClients";
 static NSString *const kEnableDebugLogging = @"EnableDebugLogging";
 
-static NSString *const kEnableBackwardsCompatibleContentEncoding =
-  @"EnableBackwardsCompatibleContentEncoding";
+static NSString *const kClientContentEncoding = @"SyncClientContentEncoding";
 
 static NSString *const kFCMProject = @"FCMProject";
 static NSString *const kFCMEntity = @"FCMEntity";
@@ -129,7 +129,6 @@ static NSString *const kBlockedPathRegexKeyDeprecated = @"BlacklistRegex";
 static NSString *const kEnableAllEventUploadKey = @"EnableAllEventUpload";
 static NSString *const kDisableUnknownEventUploadKey = @"DisableUnknownEventUpload";
 
-// TODO(markowsky): move these to sync server only.
 static NSString *const kMetricFormat = @"MetricFormat";
 static NSString *const kMetricURL = @"MetricURL";
 static NSString *const kMetricExportInterval = @"MetricExportInterval";
@@ -200,6 +199,7 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
       kClientAuthCertificatePasswordKey : string,
       kClientAuthCertificateCNKey : string,
       kClientAuthCertificateIssuerKey : string,
+      kClientContentEncoding : string,
       kServerAuthRootsDataKey : data,
       kServerAuthRootsFileKey : string,
       kMachineOwnerKey : string,
@@ -221,7 +221,6 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
       kEnableForkAndExitLogging : number,
       kIgnoreOtherEndpointSecurityClients : number,
       kEnableDebugLogging : number,
-      kEnableBackwardsCompatibleContentEncoding : number,
       kFCMProject : string,
       kFCMEntity : string,
       kFCMAPIKey : string,
@@ -460,10 +459,6 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
 }
 
 + (NSSet *)keyPathsForValuesAffectingEnableDebugLogging {
-  return [self configStateSet];
-}
-
-+ (NSSet *)keyPathsForValuesAffectingEnableBackwardsCompatibleContentEncoding {
   return [self configStateSet];
 }
 
@@ -715,6 +710,20 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
   return self.configState[kClientAuthCertificateIssuerKey];
 }
 
+- (SNTSyncContentEncoding)syncClientContentEncoding {
+  NSString *contentEncoding = [self.configState[kClientContentEncoding] lowercaseString];
+  if ([contentEncoding isEqualToString:@"deflate"]) {
+    return SNTSyncContentEncodingDeflate;
+  } else if ([contentEncoding isEqualToString:@"gzip"]) {
+    return SNTSyncContentEncodingGzip;
+  } else if ([contentEncoding isEqualToString:@"none"]) {
+    return SNTSyncContentEncodingNone;
+  } else {
+    // Ensure we have the same default zlib behavior Santa's always had otherwise.
+    return SNTSyncContentEncodingDeflate;
+  }
+}
+
 - (NSData *)syncServerAuthRootsData {
   return self.configState[kServerAuthRootsDataKey];
 }
@@ -886,11 +895,6 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
 - (BOOL)enableDebugLogging {
   NSNumber *number = self.configState[kEnableDebugLogging];
   return [number boolValue] || self.debugFlag;
-}
-
-- (BOOL)enableBackwardsCompatibleContentEncoding {
-  NSNumber *number = self.configState[kEnableBackwardsCompatibleContentEncoding];
-  return number ? [number boolValue] : NO;
 }
 
 - (NSString *)fcmProject {

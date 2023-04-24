@@ -410,6 +410,8 @@
 ///
 @property(nonatomic) BOOL syncCleanRequired;
 
+#pragma mark - USB Settings
+
 ///
 /// USB Mount Blocking. Defaults to false.
 ///
@@ -519,6 +521,12 @@
 ///  Defaults to false.
 ///
 @property(readonly, nonatomic) BOOL enableBackwardsCompatibleContentEncoding;
+
+///
+/// If set, "santactl sync" will use the supplied "Content-Encoding", possible
+/// settings include "gzip", "deflate", "none". If empty defaults to "deflate".
+///
+@property(readonly, nonatomic) SNTSyncContentEncoding syncClientContentEncoding;
 
 ///
 ///  Contains the FCM project name.

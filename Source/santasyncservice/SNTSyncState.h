@@ -74,8 +74,7 @@
 /// Array of bundle IDs to find binaries for.
 @property NSArray *bundleBinaryRequests;
 
-/// The header value for ContentEncoding when sending compressed content.
-/// Either "deflate" (default) or "zlib".
-@property(copy) NSString *compressedContentEncoding;
+/// The content-encoding to use for the client uploads during the sync session.
+@property SNTSyncContentEncoding contentEncoding;
 
 @end
