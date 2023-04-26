@@ -18,7 +18,7 @@ jobs:
           DYLIB_PATH="$(xcode-select -p)/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/${CLANG_VERSION}/lib/darwin/libclang_rt.${{ matrix.sanitizer }}_osx_dynamic.dylib"
 
           bazel test --config=${{ matrix.sanitizer }} \
-            --test_strategy=exclusive --test_output=errors \
+            --test_strategy=exclusive --test_output=all \
             --test_env=DYLD_INSERT_LIBRARIES=${DYLIB_PATH} \
             --runs_per_test 5 -t- :unit_tests \
             --define=SANTA_BUILD_TYPE=adhoc
