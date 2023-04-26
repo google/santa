@@ -414,6 +414,13 @@ using santa::santad::event_providers::endpoint_security::Message;
 
     [client processEnrichedMessage:enrichedMsg
                            handler:^(std::shared_ptr<EnrichedMessage> msg) {
+                             // reset the shared_ptr to drop the held message.
+                             // This is a workaround for a TSAN only false positive
+                             // which happens if we switch back to the sem wait
+                             // after signaling, but _before_ the implicit release
+                             // of msg. In that case, the mock verify and the
+                             // call of the mock's Release method can data race.
+                             msg.reset();
                              dispatch_semaphore_signal(sema);
                            }];
 
