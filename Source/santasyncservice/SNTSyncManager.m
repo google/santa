@@ -54,6 +54,7 @@ static const uint8_t kMaxEnqueuedSyncs = 2;
 @property NSUInteger eventBatchSize;
 
 @property NSString *xsrfToken;
+@property NSString *xsrfTokenHeader;
 
 @end
 
@@ -125,6 +126,7 @@ static void reachabilityHandler(SCNetworkReachabilityRef target, SCNetworkReacha
     [self startReachability];
   }
   self.xsrfToken = syncState.xsrfToken;
+  self.xsrfTokenHeader = syncState.xsrfTokenHeader;
 }
 
 - (void)postBundleEventToSyncServer:(SNTStoredEvent *)event
@@ -158,6 +160,7 @@ static void reachabilityHandler(SCNetworkReachabilityRef target, SCNetworkReacha
     [self startReachability];
   }
   self.xsrfToken = syncState.xsrfToken;
+  self.xsrfTokenHeader = syncState.xsrfTokenHeader;
 }
 
 - (void)isFCMListening:(void (^)(BOOL))reply {
@@ -229,6 +232,7 @@ static void reachabilityHandler(SCNetworkReachabilityRef target, SCNetworkReacha
     BOOL ret = [p sync];
     LOGD(@"Rule download %@", ret ? @"complete" : @"failed");
     self.xsrfToken = syncState.xsrfToken;
+    self.xsrfTokenHeader = syncState.xsrfTokenHeader;
   });
 }
 
@@ -254,6 +258,7 @@ static void reachabilityHandler(SCNetworkReachabilityRef target, SCNetworkReacha
   if ([p sync]) {
     SLOGD(@"Preflight complete");
     self.xsrfToken = syncState.xsrfToken;
+    self.xsrfTokenHeader = syncState.xsrfTokenHeader;
 
     // Clean up reachability if it was started for a non-network error
     [self stopReachability];
@@ -355,6 +360,7 @@ static void reachabilityHandler(SCNetworkReachabilityRef target, SCNetworkReacha
   }
 
   syncState.xsrfToken = self.xsrfToken;
+  syncState.xsrfTokenHeader = self.xsrfTokenHeader;
 
   NSURLSessionConfiguration *sessConfig = [NSURLSessionConfiguration defaultSessionConfiguration];
   sessConfig.connectionProxyDictionary = [[SNTConfigurator configurator] syncProxyConfig];
