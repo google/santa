@@ -186,7 +186,7 @@ sequenceDiagram
 | file_path | YES | string | Absolute file path to the executable that was blocked | "/tmp/foo" |
 | file_name | YES | string | Command portion of the path of the blocked executable | "foo" |
 | executing_user | YES | string | Username that executed the binary | "markowsky" |
-| execution_time | YES | int | Unix timestamp of when the execution occured | 23344234232 |
+| execution_time | YES | float64 | Unix timestamp of when the execution occured | 23344234232 |
 | loggedin_users | NO | List of strings | list of usernames logged in according to utmp | ["markowsky"] |
 | current_sessions | YES | List of strings | list of user sessions | ["markowsky@console", "markowsky@ttys000"] |
 | decision | YES | string | The decision Santa made for this binary, BUNDLE_BINARY is used to preemptively report binaries in a bundle. **Must be one of the examples**.| "ALLOW_BINARY", "ALLOW_CERTIFICATE", "ALLOW_SCOPE", "ALLOW_TEAMID", "ALLOW_UNKNOWN", "BLOCK_BINARY", "BLOCK_CERTIFICATE", "BLOCK_SCOPE", "BLOCK_TEAMID", "BLOCK_UNKNOWN", "BUNDLE_BINARY" |
