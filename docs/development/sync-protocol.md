@@ -197,13 +197,13 @@ sequenceDiagram
 | file_bundle_version | NO | string | The bundle version string | "9999.1.1" |
 | file_bundle_version_string | NO | string | Bundle short version string | "2.3.4" |
 | file_bundle_hash | NO | string | SHA256 hash of all executables in the bundle | "7466e3687f540bcb7792c6d14d5a186667dbe18a85021857b42effe9f0370805" |
-| file_bundle_hash_millis | NO | int | The time in milliseconds it took to find all of the binaries, hash and produce the bundle_hash | 1234775 |
+| file_bundle_hash_millis | NO | float64 | The time in milliseconds it took to find all of the binaries, hash and produce the bundle_hash | 1234775 |
 | pid | YES | int | Process id of the executable that was blocked | 1234 |
 | ppid | YES | int | Parent process id of the executable that was blocked | 456 |
 | parent_name | YES | Parent process short command name of the executable that was blocked | "bar" |
 | quarantine_data_url | NO | string |  The actual URL of the quarantined item from the quarantine database that this binary was downloaded from | https://dl.google.com/chrome/mac/stable/GGRO/googlechrome.dmg |
 | quarantine_referer_url | NO | string | Referring URL that lead to the binary being downloaded if known.  | https://www.google.com/chrome/downloads/ |
-| quarantine_timestamp | NO | int | Unix Timestamp of when the binary was downloaded or 0 if not quarantined | 0 |
+| quarantine_timestamp | NO | float64 | Unix Timestamp of when the binary was downloaded or 0 if not quarantined | 0 |
 | quarantine_agent_bundle_id | NO | string | The bundle ID of the software that quarantined the binary | "com.apple.Safari" |
 | signing_chain | NO | list of signing chain objects | Certs used to code sign the executable | See next section |
 
