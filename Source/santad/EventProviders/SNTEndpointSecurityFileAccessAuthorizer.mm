@@ -426,19 +426,34 @@ void PopulatePathTargets(const Message &msg, std::vector<PathTarget> &targets) {
     return specialCase;
   }
 
+  FileAccessPolicyDecision decision = FileAccessPolicyDecision::kDenied;
+
   for (const WatchItemPolicy::Process &process : policy->processes) {
     if ([self policyProcess:process matchesESProcess:msg->process]) {
-      return FileAccessPolicyDecision::kAllowed;
+      decision = FileAccessPolicyDecision::kAllowed;
+      break;
     }
   }
 
-  if (policy->audit_only) {
-    return FileAccessPolicyDecision::kAllowedAuditOnly;
-  } else {
-    // TODO(xyz): Write to TTY like in exec controller?
-    // TODO(xyz): Need new config item for custom message in UI
-    return FileAccessPolicyDecision::kDenied;
+  // If the `invert_process_exceptions` option is set, the decision should be
+  // inverted from allowed to denied or vice versa. Note that this inversion
+  // must be made prior to checking the policy's audit-only flag.
+  if (policy->invert_process_exceptions) {
+    if (decision == FileAccessPolicyDecision::kAllowed) {
+      decision = FileAccessPolicyDecision::kDenied;
+    } else {
+      decision = FileAccessPolicyDecision::kAllowed;
+    }
   }
+
+  if (decision == FileAccessPolicyDecision::kDenied && policy->audit_only) {
+    decision = FileAccessPolicyDecision::kAllowedAuditOnly;
+  }
+
+  // TODO(xyz): Write to TTY like in exec controller?
+  // TODO(xyz): Need new config item for custom message in UI
+
+  return decision;
 }
 
 - (FileAccessPolicyDecision)handleMessage:(const Message &)msg

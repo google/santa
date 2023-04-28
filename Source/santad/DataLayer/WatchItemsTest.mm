@@ -35,6 +35,7 @@
 using santa::common::Unit;
 using santa::santad::data_layer::kWatchItemPolicyDefaultAllowReadAccess;
 using santa::santad::data_layer::kWatchItemPolicyDefaultAuditOnly;
+using santa::santad::data_layer::kWatchItemPolicyDefaultInvertProcessExceptions;
 using santa::santad::data_layer::kWatchItemPolicyDefaultPathType;
 using santa::santad::data_layer::WatchItemPathType;
 using santa::santad::data_layer::WatchItemPolicy;
@@ -777,6 +778,17 @@ static NSString *RepeatedString(NSString *str, NSUInteger len) {
   },
                                            policies, &err));
 
+  XCTAssertFalse(ParseConfigSingleWatchItem(@"", @{
+    kWatchItemConfigKeyPaths : @[ @"a" ],
+    kWatchItemConfigKeyOptions : @{kWatchItemConfigKeyOptionsInvertProcessExceptions : @""}
+  },
+                                            policies, &err));
+  XCTAssertTrue(ParseConfigSingleWatchItem(@"", @{
+    kWatchItemConfigKeyPaths : @[ @"a" ],
+    kWatchItemConfigKeyOptions : @{kWatchItemConfigKeyOptionsInvertProcessExceptions : @(0)}
+  },
+                                           policies, &err));
+
   // If processes are specified, they must be valid format
   // Note: Full tests in `testVerifyConfigWatchItemProcesses`
   XCTAssertFalse(ParseConfigSingleWatchItem(
@@ -790,9 +802,11 @@ static NSString *RepeatedString(NSString *str, NSUInteger len) {
   XCTAssertTrue(
     ParseConfigSingleWatchItem(@"rule", @{kWatchItemConfigKeyPaths : @[ @"a" ]}, policies, &err));
   XCTAssertEqual(policies.size(), 1);
-  XCTAssertEqual(*policies[0].get(), WatchItemPolicy("rule", "a", kWatchItemPolicyDefaultPathType,
-                                                     kWatchItemPolicyDefaultAllowReadAccess,
-                                                     kWatchItemPolicyDefaultAuditOnly, {}));
+  XCTAssertEqual(
+    *policies[0].get(),
+    WatchItemPolicy("rule", "a", kWatchItemPolicyDefaultPathType,
+                    kWatchItemPolicyDefaultAllowReadAccess, kWatchItemPolicyDefaultAuditOnly,
+                    kWatchItemPolicyDefaultInvertProcessExceptions, {}));
 
   // Test multiple paths, options, and processes
   policies.clear();
@@ -806,7 +820,8 @@ static NSString *RepeatedString(NSString *str, NSUInteger len) {
       @[ @"a", @{kWatchItemConfigKeyPathsPath : @"b", kWatchItemConfigKeyPathsIsPrefix : @(YES)} ],
     kWatchItemConfigKeyOptions : @{
       kWatchItemConfigKeyOptionsAllowReadAccess : @(YES),
-      kWatchItemConfigKeyOptionsAuditOnly : @(NO)
+      kWatchItemConfigKeyOptionsAuditOnly : @(NO),
+      kWatchItemConfigKeyOptionsInvertProcessExceptions : @(YES),
     },
     kWatchItemConfigKeyProcesses : @[
       @{kWatchItemConfigKeyProcessesBinaryPath : @"pa"},
@@ -815,10 +830,10 @@ static NSString *RepeatedString(NSString *str, NSUInteger len) {
   },
                                            policies, &err));
   XCTAssertEqual(policies.size(), 2);
-  XCTAssertEqual(*policies[0].get(),
-                 WatchItemPolicy("rule", "a", kWatchItemPolicyDefaultPathType, true, false, procs));
-  XCTAssertEqual(*policies[1].get(),
-                 WatchItemPolicy("rule", "b", WatchItemPathType::kPrefix, true, false, procs));
+  XCTAssertEqual(*policies[0].get(), WatchItemPolicy("rule", "a", kWatchItemPolicyDefaultPathType,
+                                                     true, false, true, procs));
+  XCTAssertEqual(*policies[1].get(), WatchItemPolicy("rule", "b", WatchItemPathType::kPrefix, true,
+                                                     false, true, procs));
 }
 
 - (void)testState {
