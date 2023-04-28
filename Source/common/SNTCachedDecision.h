@@ -42,4 +42,6 @@
 @property NSString *customMsg;
 @property BOOL silentBlock;
 
+@property SNTClientMode decisionClientMode;
+
 @end

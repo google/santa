@@ -177,18 +177,13 @@ static char *FormattedDateString(char *buf, size_t len) {
 
 std::shared_ptr<BasicString> BasicString::Create(std::shared_ptr<EndpointSecurityAPI> esapi,
                                                  SNTDecisionCache *decision_cache,
-                                                 ClientModeFunc GetClientMode,
                                                  bool prefix_time_name) {
-  return std::make_shared<BasicString>(esapi, decision_cache, std::move(GetClientMode),
-                                       prefix_time_name);
+  return std::make_shared<BasicString>(esapi, decision_cache, prefix_time_name);
 }
 
 BasicString::BasicString(std::shared_ptr<EndpointSecurityAPI> esapi,
-                         SNTDecisionCache *decision_cache, ClientModeFunc GetClientMode,
-                         bool prefix_time_name)
-    : Serializer(std::move(decision_cache), std::move(GetClientMode)),
-      esapi_(esapi),
-      prefix_time_name_(prefix_time_name) {}
+                         SNTDecisionCache *decision_cache, bool prefix_time_name)
+    : Serializer(std::move(decision_cache)), esapi_(esapi), prefix_time_name_(prefix_time_name) {}
 
 std::string BasicString::CreateDefaultString(size_t reserved_size) {
   std::string str;
@@ -294,7 +289,7 @@ std::vector<uint8_t> BasicString::SerializeMessage(const EnrichedExec &msg, SNTC
                   msg.instigator().real_group());
 
   str.append("|mode=");
-  str.append(GetModeString(GetClientMode()));
+  str.append(GetModeString(cd.decisionClientMode));
   str.append("|path=");
   str.append(FilePath(esm.event.exec.target->executable).Sanitized());
 

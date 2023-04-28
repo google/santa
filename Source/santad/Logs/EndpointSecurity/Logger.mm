@@ -32,7 +32,6 @@ using santa::santad::event_providers::endpoint_security::EnrichedMessage;
 using santa::santad::event_providers::endpoint_security::EnrichedProcess;
 using santa::santad::event_providers::endpoint_security::Message;
 using santa::santad::logs::endpoint_security::serializers::BasicString;
-using santa::santad::logs::endpoint_security::serializers::ClientModeFunc;
 using santa::santad::logs::endpoint_security::serializers::Empty;
 using santa::santad::logs::endpoint_security::serializers::Protobuf;
 using santa::santad::logs::endpoint_security::writers::File;
@@ -52,26 +51,25 @@ static const size_t kMaxExpectedWriteSizeBytes = 4096;
 // Translate configured log type to appropriate Serializer/Writer pairs
 std::unique_ptr<Logger> Logger::Create(std::shared_ptr<EndpointSecurityAPI> esapi,
                                        SNTEventLogType log_type, SNTDecisionCache *decision_cache,
-                                       ClientModeFunc GetClientMode, NSString *event_log_path,
-                                       NSString *spool_log_path, size_t spool_dir_size_threshold,
+                                       NSString *event_log_path, NSString *spool_log_path,
+                                       size_t spool_dir_size_threshold,
                                        size_t spool_file_size_threshold,
                                        uint64_t spool_flush_timeout_ms) {
   switch (log_type) {
     case SNTEventLogTypeFilelog:
       return std::make_unique<Logger>(
-        BasicString::Create(esapi, std::move(decision_cache), std::move(GetClientMode)),
+        BasicString::Create(esapi, std::move(decision_cache)),
         File::Create(event_log_path, kFlushBufferTimeoutMS, kBufferBatchSizeBytes,
                      kMaxExpectedWriteSizeBytes));
     case SNTEventLogTypeSyslog:
-      return std::make_unique<Logger>(
-        BasicString::Create(esapi, std::move(decision_cache), std::move(GetClientMode), false),
-        Syslog::Create());
+      return std::make_unique<Logger>(BasicString::Create(esapi, std::move(decision_cache), false),
+                                      Syslog::Create());
     case SNTEventLogTypeNull: return std::make_unique<Logger>(Empty::Create(), Null::Create());
     case SNTEventLogTypeProtobuf:
       LOGW(@"The EventLogType value protobuf is currently in beta. The protobuf schema is subject "
            @"to change.");
       return std::make_unique<Logger>(
-        Protobuf::Create(esapi, std::move(decision_cache), std::move(GetClientMode)),
+        Protobuf::Create(esapi, std::move(decision_cache)),
         Spool::Create([spool_log_path UTF8String], spool_dir_size_threshold,
                       spool_file_size_threshold, spool_flush_timeout_ms));
     default: LOGE(@"Invalid log type: %ld", log_type); return nullptr;

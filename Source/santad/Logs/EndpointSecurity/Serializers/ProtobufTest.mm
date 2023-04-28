@@ -50,7 +50,6 @@ using santa::santad::event_providers::endpoint_security::EnrichedEventType;
 using santa::santad::event_providers::endpoint_security::EnrichedMessage;
 using santa::santad::event_providers::endpoint_security::Enricher;
 using santa::santad::event_providers::endpoint_security::Message;
-using santa::santad::logs::endpoint_security::serializers::ClientModeFunc;
 using santa::santad::logs::endpoint_security::serializers::Protobuf;
 using santa::santad::logs::endpoint_security::serializers::Serializer;
 
@@ -185,7 +184,7 @@ void CheckProto(const ::pbv1::SantaMessage &santaMsg,
 void SerializeAndCheck(es_event_type_t eventType,
                        void (^messageSetup)(std::shared_ptr<MockEndpointSecurityAPI>,
                                             es_message_t *),
-                       SNTDecisionCache *decisionCache, ClientModeFunc GetClientMode) {
+                       SNTDecisionCache *decisionCache) {
   std::shared_ptr<MockEndpointSecurityAPI> mockESApi = std::make_shared<MockEndpointSecurityAPI>();
 
   for (uint32_t cur_version = 1; cur_version <= MaxSupportedESMessageVersionForCurrentOS();
@@ -206,8 +205,7 @@ void SerializeAndCheck(es_event_type_t eventType,
 
     messageSetup(mockESApi, &esMsg);
 
-    std::shared_ptr<Serializer> bs =
-      Protobuf::Create(mockESApi, decisionCache, std::move(GetClientMode));
+    std::shared_ptr<Serializer> bs = Protobuf::Create(mockESApi, decisionCache);
     std::shared_ptr<EnrichedMessage> enrichedMsg = Enricher().Enrich(Message(mockESApi, &esMsg));
 
     std::vector<uint8_t> vec = bs->SerializeMessage(enrichedMsg);
@@ -229,7 +227,7 @@ void SerializeAndCheckNonESEvents(
                                         const Message &msg)) {
   std::shared_ptr<MockEndpointSecurityAPI> mockESApi = std::make_shared<MockEndpointSecurityAPI>();
   mockESApi->SetExpectationsRetainReleaseMessage();
-  std::shared_ptr<Serializer> bs = Protobuf::Create(mockESApi, nil, nullptr);
+  std::shared_ptr<Serializer> bs = Protobuf::Create(mockESApi, nil);
 
   for (uint32_t cur_version = 1; cur_version <= MaxSupportedESMessageVersionForCurrentOS();
        cur_version++) {
@@ -283,6 +281,7 @@ void SerializeAndCheckNonESEvents(
   self.testCachedDecision.sha256 = @"1234_file_hash";
   self.testCachedDecision.quarantineURL = @"google.com";
   self.testCachedDecision.certSHA256 = @"5678_cert_hash";
+  self.testCachedDecision.decisionClientMode = SNTClientModeLockdown;
 
   self.mockDecisionCache = OCMClassMock([SNTDecisionCache class]);
   OCMStub([self.mockDecisionCache sharedCache]).andReturn(self.mockDecisionCache);
@@ -299,9 +298,7 @@ void SerializeAndCheckNonESEvents(
 - (void)serializeAndCheckEvent:(es_event_type_t)eventType
                   messageSetup:(void (^)(std::shared_ptr<MockEndpointSecurityAPI>,
                                          es_message_t *))messageSetup {
-  SerializeAndCheck(eventType, messageSetup, self.mockDecisionCache, ^{
-    return [self.mockConfigurator clientMode];
-  });
+  SerializeAndCheck(eventType, messageSetup, self.mockDecisionCache);
 }
 
 - (void)testSerializeMessageClose {
@@ -628,8 +625,7 @@ void SerializeAndCheckNonESEvents(
   se.fileBundlePath = @"file_bundle_path";
   se.filePath = @"file_path";
 
-  std::vector<uint8_t> vec =
-    Protobuf::Create(nullptr, nil, nullptr)->SerializeBundleHashingEvent(se);
+  std::vector<uint8_t> vec = Protobuf::Create(nullptr, nil)->SerializeBundleHashingEvent(se);
   std::string protoStr(vec.begin(), vec.end());
 
   ::pbv1::SantaMessage santaMsg;
@@ -664,7 +660,7 @@ void SerializeAndCheckNonESEvents(
     @"DADeviceProtocol" : @"usb",
   };
 
-  std::vector<uint8_t> vec = Protobuf::Create(nullptr, nil, nullptr)->SerializeDiskAppeared(props);
+  std::vector<uint8_t> vec = Protobuf::Create(nullptr, nil)->SerializeDiskAppeared(props);
   std::string protoStr(vec.begin(), vec.end());
 
   ::pbv1::SantaMessage santaMsg;
@@ -701,8 +697,7 @@ void SerializeAndCheckNonESEvents(
     @"DADeviceProtocol" : @"usb",
   };
 
-  std::vector<uint8_t> vec =
-    Protobuf::Create(nullptr, nil, nullptr)->SerializeDiskDisappeared(props);
+  std::vector<uint8_t> vec = Protobuf::Create(nullptr, nil)->SerializeDiskDisappeared(props);
   std::string protoStr(vec.begin(), vec.end());
 
   ::pbv1::SantaMessage santaMsg;

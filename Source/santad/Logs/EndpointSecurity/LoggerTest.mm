@@ -103,26 +103,26 @@ class MockWriter : public Null {
   // Ensure that the factory method creates expected serializers/writers pairs
   auto mockESApi = std::make_shared<MockEndpointSecurityAPI>();
 
-  XCTAssertEqual(nullptr, Logger::Create(mockESApi, (SNTEventLogType)123, nil, nullptr,
-                                         @"/tmp/temppy", @"/tmp/spool", 1, 1, 1));
+  XCTAssertEqual(nullptr, Logger::Create(mockESApi, (SNTEventLogType)123, nil, @"/tmp/temppy",
+                                         @"/tmp/spool", 1, 1, 1));
 
-  LoggerPeer logger(Logger::Create(mockESApi, SNTEventLogTypeFilelog, nil, nullptr, @"/tmp/temppy",
-                                   @"/tmp/spool", 1, 1, 1));
+  LoggerPeer logger(
+    Logger::Create(mockESApi, SNTEventLogTypeFilelog, nil, @"/tmp/temppy", @"/tmp/spool", 1, 1, 1));
   XCTAssertNotEqual(nullptr, std::dynamic_pointer_cast<BasicString>(logger.Serializer()));
   XCTAssertNotEqual(nullptr, std::dynamic_pointer_cast<File>(logger.Writer()));
 
-  logger = LoggerPeer(Logger::Create(mockESApi, SNTEventLogTypeSyslog, nil, nullptr, @"/tmp/temppy",
-                                     @"/tmp/spool", 1, 1, 1));
+  logger = LoggerPeer(
+    Logger::Create(mockESApi, SNTEventLogTypeSyslog, nil, @"/tmp/temppy", @"/tmp/spool", 1, 1, 1));
   XCTAssertNotEqual(nullptr, std::dynamic_pointer_cast<BasicString>(logger.Serializer()));
   XCTAssertNotEqual(nullptr, std::dynamic_pointer_cast<Syslog>(logger.Writer()));
 
-  logger = LoggerPeer(Logger::Create(mockESApi, SNTEventLogTypeNull, nil, nullptr, @"/tmp/temppy",
-                                     @"/tmp/spool", 1, 1, 1));
+  logger = LoggerPeer(
+    Logger::Create(mockESApi, SNTEventLogTypeNull, nil, @"/tmp/temppy", @"/tmp/spool", 1, 1, 1));
   XCTAssertNotEqual(nullptr, std::dynamic_pointer_cast<Empty>(logger.Serializer()));
   XCTAssertNotEqual(nullptr, std::dynamic_pointer_cast<Null>(logger.Writer()));
 
-  logger = LoggerPeer(Logger::Create(mockESApi, SNTEventLogTypeProtobuf, nil, nullptr,
-                                     @"/tmp/temppy", @"/tmp/spool", 1, 1, 1));
+  logger = LoggerPeer(Logger::Create(mockESApi, SNTEventLogTypeProtobuf, nil, @"/tmp/temppy",
+                                     @"/tmp/spool", 1, 1, 1));
   XCTAssertNotEqual(nullptr, std::dynamic_pointer_cast<Protobuf>(logger.Serializer()));
   XCTAssertNotEqual(nullptr, std::dynamic_pointer_cast<Spool>(logger.Writer()));
 }
@@ -136,16 +136,19 @@ class MockWriter : public Null {
   es_message_t msg;
 
   mockESApi->SetExpectationsRetainReleaseMessage();
-  auto enrichedMsg = std::make_shared<EnrichedMessage>(
-    EnrichedClose(Message(mockESApi, &msg),
-                  EnrichedProcess(std::nullopt, std::nullopt, std::nullopt, std::nullopt,
-                                  EnrichedFile(std::nullopt, std::nullopt, std::nullopt)),
-                  EnrichedFile(std::nullopt, std::nullopt, std::nullopt)));
 
-  EXPECT_CALL(*mockSerializer, SerializeMessage(testing::A<const EnrichedClose &>())).Times(1);
-  EXPECT_CALL(*mockWriter, Write).Times(1);
+  {
+    auto enrichedMsg = std::make_shared<EnrichedMessage>(
+      EnrichedClose(Message(mockESApi, &msg),
+                    EnrichedProcess(std::nullopt, std::nullopt, std::nullopt, std::nullopt,
+                                    EnrichedFile(std::nullopt, std::nullopt, std::nullopt)),
+                    EnrichedFile(std::nullopt, std::nullopt, std::nullopt)));
 
-  Logger(mockSerializer, mockWriter).Log(enrichedMsg);
+    EXPECT_CALL(*mockSerializer, SerializeMessage(testing::A<const EnrichedClose &>())).Times(1);
+    EXPECT_CALL(*mockWriter, Write).Times(1);
+
+    Logger(mockSerializer, mockWriter).Log(enrichedMsg);
+  }
 
   XCTBubbleMockVerifyAndClearExpectations(mockESApi.get());
   XCTBubbleMockVerifyAndClearExpectations(mockSerializer.get());

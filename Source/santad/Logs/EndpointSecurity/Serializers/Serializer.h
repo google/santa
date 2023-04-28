@@ -30,11 +30,9 @@
 
 namespace santa::santad::logs::endpoint_security::serializers {
 
-using ClientModeFunc = std::function<SNTClientMode(void)>;
-
 class Serializer {
  public:
-  Serializer(SNTDecisionCache *decision_cache, ClientModeFunc GetClientMode);
+  Serializer(SNTDecisionCache *decision_cache);
   virtual ~Serializer() = default;
 
   std::vector<uint8_t> SerializeMessage(
@@ -45,7 +43,6 @@ class Serializer {
 
   bool EnabledMachineID();
   std::string_view MachineID();
-  SNTClientMode GetClientMode();
 
   virtual std::vector<uint8_t> SerializeMessage(
     const santa::santad::event_providers::endpoint_security::EnrichedClose &) = 0;
@@ -102,7 +99,6 @@ class Serializer {
   bool enabled_machine_id_ = false;
   std::string machine_id_;
   SNTDecisionCache *decision_cache_;
-  ClientModeFunc GetClientMode_;
 };
 
 }  // namespace santa::santad::logs::endpoint_security::serializers

@@ -24,8 +24,7 @@ namespace es = santa::santad::event_providers::endpoint_security;
 
 namespace santa::santad::logs::endpoint_security::serializers {
 
-Serializer::Serializer(SNTDecisionCache *decision_cache, ClientModeFunc GetClientMode)
-    : decision_cache_(decision_cache), GetClientMode_(std::move(GetClientMode)) {
+Serializer::Serializer(SNTDecisionCache *decision_cache) : decision_cache_(decision_cache) {
   if ([[SNTConfigurator configurator] enableMachineIDDecoration]) {
     enabled_machine_id_ = true;
     machine_id_ = [[[SNTConfigurator configurator] machineID] UTF8String] ?: "";
@@ -39,10 +38,6 @@ bool Serializer::EnabledMachineID() {
 std::string_view Serializer::MachineID() {
   return std::string_view(machine_id_);
 };
-
-SNTClientMode Serializer::GetClientMode() {
-  return GetClientMode_();
-}
 
 std::vector<uint8_t> Serializer::SerializeMessageTemplate(const es::EnrichedClose &msg) {
   return SerializeMessage(msg);

@@ -31,7 +31,7 @@ std::shared_ptr<Empty> Empty::Create() {
   return std::make_shared<Empty>();
 }
 
-Empty::Empty() : Serializer(nil, nullptr) {}
+Empty::Empty() : Serializer(nil) {}
 
 std::vector<uint8_t> Empty::SerializeMessage(const EnrichedClose &msg) {
   return {};

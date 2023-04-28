@@ -33,11 +33,11 @@ class Protobuf : public Serializer {
  public:
   static std::shared_ptr<Protobuf> Create(
     std::shared_ptr<santa::santad::event_providers::endpoint_security::EndpointSecurityAPI> esapi,
-    SNTDecisionCache *decision_cache, ClientModeFunc GetClientMode);
+    SNTDecisionCache *decision_cache);
 
   Protobuf(
     std::shared_ptr<santa::santad::event_providers::endpoint_security::EndpointSecurityAPI> esapi,
-    SNTDecisionCache *decision_cache, ClientModeFunc GetClientMode);
+    SNTDecisionCache *decision_cache);
 
   std::vector<uint8_t> SerializeMessage(
     const santa::santad::event_providers::endpoint_security::EnrichedClose &) override;
