@@ -98,7 +98,7 @@ The request consists of the following JSON keys:
 | transitive_rule_count | NO | int | Number of transitive rules the client has at the time of sync |
 | teamid_rule_count | NO | int | Number of TeamID rules the client has at the time of sync | 24 |
 | client_mode | YES | string | the mode the client is operating in, either "LOCKDOWN" or "MONITOR" | LOCKDOWN |
-| clean_sync | NO | bool | the client has requested that a clean sync of its rules from the server. | true |
+| request_clean_sync | NO | bool | the client has requested a clean sync of its rules from the server. | true |
 
 
 ### Example preflight request JSON Payload:
@@ -118,7 +118,7 @@ The request consists of the following JSON keys:
   "transitive_rule_count" : 0,
   "os_version" : "12.4",
   "model_identifier" : "MacBookPro15,1",
-  "clean_sync": true,
+  "request_clean_sync": true,
 }
 ```
 
