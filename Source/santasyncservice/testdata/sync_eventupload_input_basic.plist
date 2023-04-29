@@ -96,6 +96,11 @@
 				<key>CF$UID</key>
 				<integer>39</integer>
 			</dict>
+			<key>signingID</key>
+			<dict>
+				<key>CF$UID</key>
+				<integer>40</integer>
+			</dict>
 		</dict>
 		<integer>14887</integer>
 		<string>ff98fa0c0a1095fedcbe4d388a9760e71399a5c3c017a847ffa545663b57929a</string>
@@ -398,7 +403,8 @@
 				</dict>
 			</array>
 		</dict>
-	        <string>012345678910</string>
+		<string>012345678910</string>
+		<string>signing.id</string>
 	</array>
 	<key>$top</key>
 	<dict>

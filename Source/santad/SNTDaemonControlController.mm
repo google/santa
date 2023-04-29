@@ -98,10 +98,10 @@ double watchdogRAMPeak = 0;
 #pragma mark Database ops
 
 - (void)databaseRuleCounts:(void (^)(int64_t binary, int64_t certificate, int64_t compiler,
-                                     int64_t transitive, int64_t teamID))reply {
+                                     int64_t transitive, int64_t teamID, int64_t signingID))reply {
   SNTRuleTable *rdb = [SNTDatabaseController ruleTable];
   reply([rdb binaryRuleCount], [rdb certificateRuleCount], [rdb compilerRuleCount],
-        [rdb transitiveRuleCount], [rdb teamIDRuleCount]);
+        [rdb transitiveRuleCount], [rdb teamIDRuleCount], [rdb signingIDRuleCount]);
 }
 
 - (void)databaseRuleAddRules:(NSArray *)rules
@@ -144,11 +144,12 @@ double watchdogRAMPeak = 0;
 - (void)databaseRuleForBinarySHA256:(NSString *)binarySHA256
                   certificateSHA256:(NSString *)certificateSHA256
                              teamID:(NSString *)teamID
+                          signingID:(NSString *)signingID
                               reply:(void (^)(SNTRule *))reply {
   reply([[SNTDatabaseController ruleTable] ruleForBinarySHA256:binarySHA256
                                              certificateSHA256:certificateSHA256
                                                         teamID:teamID
-                                                     signingID:nil]);
+                                                     signingID:signingID]);
 }
 
 - (void)staticRuleCount:(void (^)(int64_t count))reply {
@@ -161,11 +162,13 @@ double watchdogRAMPeak = 0;
                  fileSHA256:(NSString *)fileSHA256
           certificateSHA256:(NSString *)certificateSHA256
                      teamID:(NSString *)teamID
+                  signingID:(NSString *)signingID
                       reply:(void (^)(SNTEventState))reply {
   reply([self.policyProcessor decisionForFilePath:filePath
                                        fileSHA256:fileSHA256
                                 certificateSHA256:certificateSHA256
-                                           teamID:teamID]
+                                           teamID:teamID
+                                        signingID:signingID]
           .decision);
 }
 

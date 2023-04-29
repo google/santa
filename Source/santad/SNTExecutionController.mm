@@ -200,9 +200,12 @@ static NSString *const kPrinterProxyPostMonterey =
   // TODO(markowsky): Maybe add a metric here for how many large executables we're seeing.
   // if (binInfo.fileSize > SomeUpperLimit) ...
 
-  NSString *signingID = [NSString stringWithCString:targetProc->signing_id.data
-                                           encoding:NSUTF8StringEncoding];
-  SNTCachedDecision *cd = [self.policyProcessor decisionForFileInfo:binInfo andSigningID:signingID];
+  // NSString *signingID = [NSString stringWithCString:targetProc->signing_id.data
+  //                                          encoding:NSUTF8StringEncoding];
+  // SNTCachedDecision *cd = [self.policyProcessor decisionForFileInfo:binInfo
+  // andSigningID:signingID];
+  SNTCachedDecision *cd = [self.policyProcessor decisionForFileInfo:binInfo
+                                                      targetProcess:targetProc];
 
   cd.vnodeId = SantaVnode::VnodeForFile(targetProc->executable);
 
@@ -239,6 +242,7 @@ static NSString *const kPrinterProxyPostMonterey =
 
     se.signingChain = cd.certChain;
     se.teamID = cd.teamID;
+    se.signingID = cd.signingID;
     se.pid = @(audit_token_to_pid(targetProc->audit_token));
     se.ppid = @(audit_token_to_pid(targetProc->parent_audit_token));
     se.parentName = @(esMsg.ParentProcessName().c_str());

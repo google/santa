@@ -39,10 +39,10 @@ typedef NS_ENUM(NSInteger, SNTAction) {
 typedef NS_ENUM(NSInteger, SNTRuleType) {
   SNTRuleTypeUnknown,
 
-  SNTRuleTypeBinary = 1,
-  SNTRuleTypeCertificate = 2,
-  SNTRuleTypeTeamID = 3,
-  SNTRuleTypeSigningID = 4,
+  SNTRuleTypeBinary = 100,
+  SNTRuleTypeSigningID = 200,
+  SNTRuleTypeCertificate = 300,
+  SNTRuleTypeTeamID = 400,
 };
 
 typedef NS_ENUM(NSInteger, SNTRuleState) {

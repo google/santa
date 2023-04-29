@@ -60,16 +60,28 @@ REGISTER_COMMAND_NAME(@"rule")
           @"                   Will add the hash of the file currently at that path.\n"
           @"                   Does not work with --check. Use the fileinfo verb to check.\n"
           @"                   the rule state of a file.\n"
-          @"    --identifier {sha256|teamID}: identifier to add/remove/check\n"
+          @"    --identifier {sha256|teamID|signingID}: identifier to add/remove/check\n"
           @"    --sha256 {sha256}: hash to add/remove/check [deprecated]\n"
           @"\n"
           @"  Optionally:\n"
           @"    --teamid: add or check a team ID rule instead of binary\n"
+          @"    --signingid: add or check a signing ID rule instead of binary (see notes)\n"
           @"    --certificate: add or check a certificate sha256 rule instead of binary\n"
 #ifdef DEBUG
           @"    --force: allow manual changes even when SyncBaseUrl is set\n"
 #endif
-          @"    --message {message}: custom message\n");
+          @"    --message {message}: custom message\n"
+          @"\n"
+          @"  Notes:\n"
+          @"    The format of `identifier` when adding/checking a `signingid` rule is:\n"
+          @"\n"
+          @"      `TeamID:SigningID`\n"
+          @"\n"
+          @"    Because signing IDs are controlled by the binary author, this ensures\n"
+          @"    that the signing ID is properly scoped to a developer. For the special\n"
+          @"    case of platform binaries, `TeamID` should be replaced with the string\n"
+          @"    \"platform\" (e.g. `platform:SigningID`). This allows for rules\n"
+          @"    targeting Apple-signed binaries that do not have a team ID.\n");
 }
 
 - (void)runWithArguments:(NSArray *)arguments {
@@ -116,6 +128,8 @@ REGISTER_COMMAND_NAME(@"rule")
       newRule.type = SNTRuleTypeCertificate;
     } else if ([arg caseInsensitiveCompare:@"--teamid"] == NSOrderedSame) {
       newRule.type = SNTRuleTypeTeamID;
+    } else if ([arg caseInsensitiveCompare:@"--signingid"] == NSOrderedSame) {
+      newRule.type = SNTRuleTypeSigningID;
     } else if ([arg caseInsensitiveCompare:@"--path"] == NSOrderedSame) {
       if (++i > arguments.count - 1) {
         [self printErrorUsageAndExit:@"--path requires an argument"];
@@ -156,7 +170,8 @@ REGISTER_COMMAND_NAME(@"rule")
     } else if (newRule.type == SNTRuleTypeCertificate) {
       MOLCodesignChecker *cs = [fi codesignCheckerWithError:NULL];
       newRule.identifier = cs.leafCertificate.SHA256;
-    } else if (newRule.type == SNTRuleTypeTeamID) {
+    } else if (newRule.type == SNTRuleTypeTeamID || newRule.type == SNTRuleTypeSigningID) {
+      // noop
     }
   }
 
@@ -220,11 +235,13 @@ REGISTER_COMMAND_NAME(@"rule")
   NSString *fileSHA256 = (rule.type == SNTRuleTypeBinary) ? rule.identifier : nil;
   NSString *certificateSHA256 = (rule.type == SNTRuleTypeCertificate) ? rule.identifier : nil;
   NSString *teamID = (rule.type == SNTRuleTypeTeamID) ? rule.identifier : nil;
+  NSString *signingID = (rule.type == SNTRuleTypeSigningID) ? rule.identifier : nil;
   __block NSMutableString *output;
   [rop decisionForFilePath:nil
                 fileSHA256:fileSHA256
          certificateSHA256:certificateSHA256
                     teamID:teamID
+                 signingID:signingID
                      reply:^(SNTEventState s) {
                        output =
                          (SNTEventStateAllow & s) ? @"Allowed".mutableCopy : @"Blocked".mutableCopy;
@@ -247,6 +264,10 @@ REGISTER_COMMAND_NAME(@"rule")
                            break;
                          case SNTEventStateAllowTeamID:
                          case SNTEventStateBlockTeamID: [output appendString:@" (TeamID)"]; break;
+                         case SNTEventStateAllowSigningID:
+                         case SNTEventStateBlockSigningID:
+                           [output appendString:@" (SigningID)"];
+                           break;
                          default: output = @"None".mutableCopy; break;
                        }
                        if (isatty(STDOUT_FILENO)) {
@@ -266,6 +287,7 @@ REGISTER_COMMAND_NAME(@"rule")
   [rop databaseRuleForBinarySHA256:fileSHA256
                  certificateSHA256:certificateSHA256
                             teamID:teamID
+                         signingID:signingID
                              reply:^(SNTRule *r) {
                                if (r.state == SNTRuleStateAllowTransitive) {
                                  NSDate *date =

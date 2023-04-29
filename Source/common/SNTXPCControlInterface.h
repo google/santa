@@ -35,6 +35,7 @@
 - (void)databaseRuleForBinarySHA256:(NSString *)binarySHA256
                   certificateSHA256:(NSString *)certificateSHA256
                              teamID:(NSString *)teamID
+                          signingID:(NSString *)signingID
                               reply:(void (^)(SNTRule *))reply;
 
 ///

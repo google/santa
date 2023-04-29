@@ -12,6 +12,7 @@
 ///    See the License for the specific language governing permissions and
 ///    limitations under the License.
 
+#include <EndpointSecurity/EndpointSecurity.h>
 #import <Foundation/Foundation.h>
 #import <MOLCertificate/MOLCertificate.h>
 
@@ -48,8 +49,12 @@
                                          signingID:(nullable NSString *)signingID;
 
 ///  Convenience initializer with nil hashes for both the file and certificate.
+// - (nonnull SNTCachedDecision *)decisionForFileInfo:(nonnull SNTFileInfo *)fileInfo
+//                                 teamID:(nullable NSString *)teamID
+//                                       signingID:(nullable NSString *)signingID
+//                                       isPlatformBinary:(BOOL)isPlatformBinary;
 - (nonnull SNTCachedDecision *)decisionForFileInfo:(nonnull SNTFileInfo *)fileInfo
-                                      andSigningID:(nullable NSString *)signingID;
+                                     targetProcess:(nonnull const es_process_t *)targetProc;
 
 ///
 ///  A wrapper for decisionForFileInfo:fileSHA256:certificateSHA256:. This method is slower as it
@@ -60,6 +65,7 @@
 - (nonnull SNTCachedDecision *)decisionForFilePath:(nonnull NSString *)filePath
                                         fileSHA256:(nullable NSString *)fileSHA256
                                  certificateSHA256:(nullable NSString *)certificateSHA256
-                                            teamID:(nullable NSString *)teamID;
+                                            teamID:(nullable NSString *)teamID
+                                         signingID:(nullable NSString *)signingID;
 
 @end
