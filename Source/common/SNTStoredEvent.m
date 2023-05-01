@@ -98,7 +98,7 @@
 
     _executingUser = DECODE(NSString, @"executingUser");
     _occurrenceDate = DECODE(NSDate, @"occurrenceDate");
-    _decision = (SNTEventState)[DECODE(NSNumber, @"decision") intValue];
+    _decision = (SNTEventState)[DECODE(NSNumber, @"decision") unsignedLongLongValue];
     _pid = DECODE(NSNumber, @"pid");
     _ppid = DECODE(NSNumber, @"ppid");
     _parentName = DECODE(NSString, @"parentName");

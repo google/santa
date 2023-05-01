@@ -335,7 +335,7 @@ void SerializeAndCheckNonESEvents(
   };
 
   for (const auto &kv : stateToDecision) {
-    XCTAssertEqual(GetDecisionEnum(kv.first), kv.second, @"Bad decision for state: %ld", kv.first);
+    XCTAssertEqual(GetDecisionEnum(kv.first), kv.second, @"Bad decision for state: %llu", kv.first);
   }
 }
 
@@ -360,7 +360,7 @@ void SerializeAndCheckNonESEvents(
   };
 
   for (const auto &kv : stateToReason) {
-    XCTAssertEqual(GetReasonEnum(kv.first), kv.second, @"Bad reason for state: %ld", kv.first);
+    XCTAssertEqual(GetReasonEnum(kv.first), kv.second, @"Bad reason for state: %llu", kv.first);
   }
 }
 
@@ -373,7 +373,7 @@ void SerializeAndCheckNonESEvents(
   };
 
   for (const auto &kv : clientModeToExecMode) {
-    XCTAssertEqual(GetModeEnum(kv.first), kv.second, @"Bad mode for state: %ld", kv.first);
+    XCTAssertEqual(GetModeEnum(kv.first), kv.second, @"Bad mode for client mode: %ld", kv.first);
   }
 }
 
