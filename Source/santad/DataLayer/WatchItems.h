@@ -39,6 +39,7 @@ extern NSString *const kWatchItemConfigKeyPathsIsPrefix;
 extern NSString *const kWatchItemConfigKeyOptions;
 extern NSString *const kWatchItemConfigKeyOptionsAllowReadAccess;
 extern NSString *const kWatchItemConfigKeyOptionsAuditOnly;
+extern NSString *const kWatchItemConfigKeyOptionsInvertProcessExceptions;
 extern NSString *const kWatchItemConfigKeyProcesses;
 extern NSString *const kWatchItemConfigKeyProcessesBinaryPath;
 extern NSString *const kWatchItemConfigKeyProcessesCertificateSha256;

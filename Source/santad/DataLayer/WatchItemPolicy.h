@@ -33,6 +33,7 @@ static constexpr WatchItemPathType kWatchItemPolicyDefaultPathType =
     WatchItemPathType::kLiteral;
 static constexpr bool kWatchItemPolicyDefaultAllowReadAccess = false;
 static constexpr bool kWatchItemPolicyDefaultAuditOnly = true;
+static constexpr bool kWatchItemPolicyDefaultInvertProcessExceptions = false;
 
 struct WatchItemPolicy {
   struct Process {
@@ -69,19 +70,23 @@ struct WatchItemPolicy {
                   WatchItemPathType pt = kWatchItemPolicyDefaultPathType,
                   bool ara = kWatchItemPolicyDefaultAllowReadAccess,
                   bool ao = kWatchItemPolicyDefaultAuditOnly,
+                  bool ipe = kWatchItemPolicyDefaultInvertProcessExceptions,
                   std::vector<Process> procs = {})
       : name(n),
         path(p),
         path_type(pt),
         allow_read_access(ara),
         audit_only(ao),
+        invert_process_exceptions(ipe),
         processes(std::move(procs)) {}
 
   bool operator==(const WatchItemPolicy &other) const {
     return name == other.name && path == other.path &&
            path_type == other.path_type &&
            allow_read_access == other.allow_read_access &&
-           audit_only == other.audit_only && processes == other.processes;
+           audit_only == other.audit_only &&
+           invert_process_exceptions == other.invert_process_exceptions &&
+           processes == other.processes;
   }
 
   bool operator!=(const WatchItemPolicy &other) const {
@@ -93,6 +98,7 @@ struct WatchItemPolicy {
   WatchItemPathType path_type;
   bool allow_read_access;
   bool audit_only;
+  bool invert_process_exceptions;
   std::vector<Process> processes;
 };
 

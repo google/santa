@@ -53,6 +53,7 @@ NSString *const kWatchItemConfigKeyPathsIsPrefix = @"IsPrefix";
 NSString *const kWatchItemConfigKeyOptions = @"Options";
 NSString *const kWatchItemConfigKeyOptionsAllowReadAccess = @"AllowReadAccess";
 NSString *const kWatchItemConfigKeyOptionsAuditOnly = @"AuditOnly";
+NSString *const kWatchItemConfigKeyOptionsInvertProcessExceptions = @"InvertProcessExceptions";
 NSString *const kWatchItemConfigKeyProcesses = @"Processes";
 NSString *const kWatchItemConfigKeyProcessesBinaryPath = @"BinaryPath";
 NSString *const kWatchItemConfigKeyProcessesCertificateSha256 = @"CertificateSha256";
@@ -376,6 +377,8 @@ std::variant<Unit, ProcessList> VerifyConfigWatchItemProcesses(NSDictionary *wat
 ///     <false/>
 ///     <key>AuditOnly</key>
 ///     <false/>
+///     <key>InvertProcessExceptions</key>
+///     <false/>
 ///   </dict>
 ///   <key>Processes</key>
 ///   <array>
@@ -410,6 +413,11 @@ bool ParseConfigSingleWatchItem(NSString *name, NSDictionary *watch_item,
     if (!VerifyConfigKey(options, kWatchItemConfigKeyOptionsAuditOnly, [NSNumber class], err)) {
       return false;
     }
+
+    if (!VerifyConfigKey(options, kWatchItemConfigKeyOptionsInvertProcessExceptions,
+                         [NSNumber class], err)) {
+      return false;
+    }
   }
 
   bool allow_read_access = options[kWatchItemConfigKeyOptionsAllowReadAccess]
@@ -418,6 +426,10 @@ bool ParseConfigSingleWatchItem(NSString *name, NSDictionary *watch_item,
   bool audit_only = options[kWatchItemConfigKeyOptionsAuditOnly]
                       ? [options[kWatchItemConfigKeyOptionsAuditOnly] boolValue]
                       : kWatchItemPolicyDefaultAuditOnly;
+  bool invert_process_exceptions =
+    options[kWatchItemConfigKeyOptionsInvertProcessExceptions]
+      ? [options[kWatchItemConfigKeyOptionsInvertProcessExceptions] boolValue]
+      : kWatchItemPolicyDefaultInvertProcessExceptions;
 
   std::variant<Unit, ProcessList> proc_list = VerifyConfigWatchItemProcesses(watch_item, err);
   if (std::holds_alternative<Unit>(proc_list)) {
@@ -427,7 +439,7 @@ bool ParseConfigSingleWatchItem(NSString *name, NSDictionary *watch_item,
   for (const PathAndTypePair &path_type_pair : std::get<PathList>(path_list)) {
     policies.push_back(std::make_shared<WatchItemPolicy>(
       NSStringToUTF8StringView(name), path_type_pair.first, path_type_pair.second,
-      allow_read_access, audit_only, std::get<ProcessList>(proc_list)));
+      allow_read_access, audit_only, invert_process_exceptions, std::get<ProcessList>(proc_list)));
   }
 
   return true;

@@ -532,8 +532,9 @@ void ClearWatchItemPolicyProcess(WatchItemPolicy::Process &proc) {
 
   // If no policy exists, the operation is allowed
   {
-    Message msg(mockESApi, &esMsg);
-    XCTAssertEqual([accessClient applyPolicy:std::nullopt forTarget:target toMessage:msg],
+    XCTAssertEqual([accessClient applyPolicy:std::nullopt
+                                   forTarget:target
+                                   toMessage:Message(mockESApi, &esMsg)],
                    FileAccessPolicyDecision::kNoPolicy);
   }
 
@@ -546,8 +547,9 @@ void ClearWatchItemPolicyProcess(WatchItemPolicy::Process &proc) {
   {
     OCMExpect([self.mockConfigurator enableBadSignatureProtection]).andReturn(YES);
     esMsg.process->codesigning_flags = CS_SIGNED;
-    Message msg(mockESApi, &esMsg);
-    XCTAssertEqual([accessClient applyPolicy:optionalPolicy forTarget:target toMessage:msg],
+    XCTAssertEqual([accessClient applyPolicy:optionalPolicy
+                                   forTarget:target
+                                   toMessage:Message(mockESApi, &esMsg)],
                    FileAccessPolicyDecision::kDeniedInvalidSignature);
   }
 
@@ -557,11 +559,12 @@ void ClearWatchItemPolicyProcess(WatchItemPolicy::Process &proc) {
   {
     OCMExpect([self.mockConfigurator enableBadSignatureProtection]).andReturn(NO);
     esMsg.process->codesigning_flags = CS_SIGNED;
-    Message msg(mockESApi, &esMsg);
     OCMExpect([accessClientMock policyProcess:policyProc matchesESProcess:&esProc])
       .ignoringNonObjectArgs()
       .andReturn(true);
-    XCTAssertEqual([accessClient applyPolicy:optionalPolicy forTarget:target toMessage:msg],
+    XCTAssertEqual([accessClient applyPolicy:optionalPolicy
+                                   forTarget:target
+                                   toMessage:Message(mockESApi, &esMsg)],
                    FileAccessPolicyDecision::kAllowed);
   }
 
@@ -574,8 +577,9 @@ void ClearWatchItemPolicyProcess(WatchItemPolicy::Process &proc) {
       .ignoringNonObjectArgs()
       .andReturn(false);
     policy->audit_only = false;
-    Message msg(mockESApi, &esMsg);
-    XCTAssertEqual([accessClient applyPolicy:optionalPolicy forTarget:target toMessage:msg],
+    XCTAssertEqual([accessClient applyPolicy:optionalPolicy
+                                   forTarget:target
+                                   toMessage:Message(mockESApi, &esMsg)],
                    FileAccessPolicyDecision::kDenied);
   }
 
@@ -585,8 +589,50 @@ void ClearWatchItemPolicyProcess(WatchItemPolicy::Process &proc) {
       .ignoringNonObjectArgs()
       .andReturn(false);
     policy->audit_only = true;
-    Message msg(mockESApi, &esMsg);
-    XCTAssertEqual([accessClient applyPolicy:optionalPolicy forTarget:target toMessage:msg],
+    XCTAssertEqual([accessClient applyPolicy:optionalPolicy
+                                   forTarget:target
+                                   toMessage:Message(mockESApi, &esMsg)],
+                   FileAccessPolicyDecision::kAllowedAuditOnly);
+  }
+
+  // The remainder of the tests set the policy's `invert_process_exceptions` option
+  policy->invert_process_exceptions = true;
+
+  // If no exceptions for inverted policy, operations are allowed
+  {
+    OCMExpect([accessClientMock policyProcess:policyProc matchesESProcess:&esProc])
+      .ignoringNonObjectArgs()
+      .andReturn(false);
+    policy->audit_only = false;
+    XCTAssertEqual([accessClient applyPolicy:optionalPolicy
+                                   forTarget:target
+                                   toMessage:Message(mockESApi, &esMsg)],
+                   FileAccessPolicyDecision::kAllowed);
+  }
+
+  // For audit only policies with no exception matches and inverted exceptions, operations are
+  // allowed
+  {
+    OCMExpect([accessClientMock policyProcess:policyProc matchesESProcess:&esProc])
+      .ignoringNonObjectArgs()
+      .andReturn(false);
+    policy->audit_only = true;
+    XCTAssertEqual([accessClient applyPolicy:optionalPolicy
+                                   forTarget:target
+                                   toMessage:Message(mockESApi, &esMsg)],
+                   FileAccessPolicyDecision::kAllowed);
+  }
+
+  // For audit only policies with exception match and inverted exceptions, operations are allowed
+  // audit only
+  {
+    OCMExpect([accessClientMock policyProcess:policyProc matchesESProcess:&esProc])
+      .ignoringNonObjectArgs()
+      .andReturn(true);
+    policy->audit_only = true;
+    XCTAssertEqual([accessClient applyPolicy:optionalPolicy
+                                   forTarget:target
+                                   toMessage:Message(mockESApi, &esMsg)],
                    FileAccessPolicyDecision::kAllowedAuditOnly);
   }
 
