@@ -63,32 +63,32 @@ typedef NS_ENUM(NSInteger, SNTClientMode) {
   SNTClientModeLockdown = 2,
 };
 
-typedef NS_ENUM(NSInteger, SNTEventState) {
+typedef NS_ENUM(uint64_t, SNTEventState) {
   // Bits 0-15 bits store non-decision types
   SNTEventStateUnknown = 0,
   SNTEventStateBundleBinary = 1,
 
-  // Bits 16-23 store deny decision types
-  SNTEventStateBlockUnknown = 1 << 16,
-  SNTEventStateBlockBinary = 1 << 17,
-  SNTEventStateBlockCertificate = 1 << 18,
-  SNTEventStateBlockScope = 1 << 19,
-  SNTEventStateBlockTeamID = 1 << 20,
-  SNTEventStateBlockLongPath = 1 << 21,
+  // Bits 16-39 store deny decision types
+  SNTEventStateBlockUnknown = 1ULL << 16,
+  SNTEventStateBlockBinary = 1ULL << 17,
+  SNTEventStateBlockCertificate = 1ULL << 18,
+  SNTEventStateBlockScope = 1ULL << 19,
+  SNTEventStateBlockTeamID = 1ULL << 20,
+  SNTEventStateBlockLongPath = 1ULL << 21,
 
-  // Bits 24-31 store allow decision types
-  SNTEventStateAllowUnknown = 1 << 24,
-  SNTEventStateAllowBinary = 1 << 25,
-  SNTEventStateAllowCertificate = 1 << 26,
-  SNTEventStateAllowScope = 1 << 27,
-  SNTEventStateAllowCompiler = 1 << 28,
-  SNTEventStateAllowTransitive = 1 << 29,
-  SNTEventStateAllowPendingTransitive = 1 << 30,
-  SNTEventStateAllowTeamID = 1 << 31,
+  // Bits 40-63 store allow decision types
+  SNTEventStateAllowUnknown = 1ULL << 40,
+  SNTEventStateAllowBinary = 1ULL << 41,
+  SNTEventStateAllowCertificate = 1ULL << 42,
+  SNTEventStateAllowScope = 1ULL << 43,
+  SNTEventStateAllowCompiler = 1ULL << 44,
+  SNTEventStateAllowTransitive = 1ULL << 45,
+  SNTEventStateAllowPendingTransitive = 1ULL << 46,
+  SNTEventStateAllowTeamID = 1ULL << 47,
 
   // Block and Allow masks
-  SNTEventStateBlock = 0xFF << 16,
-  SNTEventStateAllow = 0xFF << 24
+  SNTEventStateBlock = 0xFFFFFFULL << 16,
+  SNTEventStateAllow = 0xFFFFFFULL << 40,
 };
 
 typedef NS_ENUM(NSInteger, SNTRuleTableError) {
