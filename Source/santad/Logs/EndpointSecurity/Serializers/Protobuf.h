@@ -25,16 +25,19 @@
 #include "Source/common/santa_proto_include_wrapper.h"
 #include "Source/santad/EventProviders/EndpointSecurity/EndpointSecurityAPI.h"
 #include "Source/santad/Logs/EndpointSecurity/Serializers/Serializer.h"
+#import "Source/santad/SNTDecisionCache.h"
 
 namespace santa::santad::logs::endpoint_security::serializers {
 
 class Protobuf : public Serializer {
  public:
   static std::shared_ptr<Protobuf> Create(
-    std::shared_ptr<santa::santad::event_providers::endpoint_security::EndpointSecurityAPI> esapi);
+    std::shared_ptr<santa::santad::event_providers::endpoint_security::EndpointSecurityAPI> esapi,
+    SNTDecisionCache *decision_cache);
 
   Protobuf(
-    std::shared_ptr<santa::santad::event_providers::endpoint_security::EndpointSecurityAPI> esapi);
+    std::shared_ptr<santa::santad::event_providers::endpoint_security::EndpointSecurityAPI> esapi,
+    SNTDecisionCache *decision_cache);
 
   std::vector<uint8_t> SerializeMessage(
     const santa::santad::event_providers::endpoint_security::EnrichedClose &) override;

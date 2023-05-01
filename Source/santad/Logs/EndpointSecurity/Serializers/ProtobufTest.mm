@@ -183,7 +183,8 @@ void CheckProto(const ::pbv1::SantaMessage &santaMsg,
 
 void SerializeAndCheck(es_event_type_t eventType,
                        void (^messageSetup)(std::shared_ptr<MockEndpointSecurityAPI>,
-                                            es_message_t *)) {
+                                            es_message_t *),
+                       SNTDecisionCache *decisionCache) {
   std::shared_ptr<MockEndpointSecurityAPI> mockESApi = std::make_shared<MockEndpointSecurityAPI>();
 
   for (uint32_t cur_version = 1; cur_version <= MaxSupportedESMessageVersionForCurrentOS();
@@ -204,7 +205,7 @@ void SerializeAndCheck(es_event_type_t eventType,
 
     messageSetup(mockESApi, &esMsg);
 
-    std::shared_ptr<Serializer> bs = Protobuf::Create(mockESApi);
+    std::shared_ptr<Serializer> bs = Protobuf::Create(mockESApi, decisionCache);
     std::shared_ptr<EnrichedMessage> enrichedMsg = Enricher().Enrich(Message(mockESApi, &esMsg));
 
     std::vector<uint8_t> vec = bs->SerializeMessage(enrichedMsg);
@@ -226,7 +227,7 @@ void SerializeAndCheckNonESEvents(
                                         const Message &msg)) {
   std::shared_ptr<MockEndpointSecurityAPI> mockESApi = std::make_shared<MockEndpointSecurityAPI>();
   mockESApi->SetExpectationsRetainReleaseMessage();
-  std::shared_ptr<Serializer> bs = Protobuf::Create(mockESApi);
+  std::shared_ptr<Serializer> bs = Protobuf::Create(mockESApi, nil);
 
   for (uint32_t cur_version = 1; cur_version <= MaxSupportedESMessageVersionForCurrentOS();
        cur_version++) {
@@ -280,6 +281,7 @@ void SerializeAndCheckNonESEvents(
   self.testCachedDecision.sha256 = @"1234_file_hash";
   self.testCachedDecision.quarantineURL = @"google.com";
   self.testCachedDecision.certSHA256 = @"5678_cert_hash";
+  self.testCachedDecision.decisionClientMode = SNTClientModeLockdown;
 
   self.mockDecisionCache = OCMClassMock([SNTDecisionCache class]);
   OCMStub([self.mockDecisionCache sharedCache]).andReturn(self.mockDecisionCache);
@@ -293,25 +295,33 @@ void SerializeAndCheckNonESEvents(
   [self.mockDecisionCache stopMocking];
 }
 
+- (void)serializeAndCheckEvent:(es_event_type_t)eventType
+                  messageSetup:(void (^)(std::shared_ptr<MockEndpointSecurityAPI>,
+                                         es_message_t *))messageSetup {
+  SerializeAndCheck(eventType, messageSetup, self.mockDecisionCache);
+}
+
 - (void)testSerializeMessageClose {
   __block es_file_t file = MakeESFile("close_file", MakeStat(300));
 
-  SerializeAndCheck(ES_EVENT_TYPE_NOTIFY_CLOSE,
-                    ^(std::shared_ptr<MockEndpointSecurityAPI> mockESApi, es_message_t *esMsg) {
-                      esMsg->event.close.modified = true;
-                      esMsg->event.close.target = &file;
-                    });
+  [self serializeAndCheckEvent:ES_EVENT_TYPE_NOTIFY_CLOSE
+                  messageSetup:^(std::shared_ptr<MockEndpointSecurityAPI> mockESApi,
+                                 es_message_t *esMsg) {
+                    esMsg->event.close.modified = true;
+                    esMsg->event.close.target = &file;
+                  }];
 }
 
 - (void)testSerializeMessageExchange {
   __block es_file_t file1 = MakeESFile("exchange_file_1", MakeStat(300));
   __block es_file_t file2 = MakeESFile("exchange_file_1", MakeStat(400));
 
-  SerializeAndCheck(ES_EVENT_TYPE_NOTIFY_EXCHANGEDATA,
-                    ^(std::shared_ptr<MockEndpointSecurityAPI> mockESApi, es_message_t *esMsg) {
-                      esMsg->event.exchangedata.file1 = &file1;
-                      esMsg->event.exchangedata.file2 = &file2;
-                    });
+  [self serializeAndCheckEvent:ES_EVENT_TYPE_NOTIFY_EXCHANGEDATA
+                  messageSetup:^(std::shared_ptr<MockEndpointSecurityAPI> mockESApi,
+                                 es_message_t *esMsg) {
+                    esMsg->event.exchangedata.file1 = &file1;
+                    esMsg->event.exchangedata.file2 = &file2;
+                  }];
 }
 
 - (void)testGetDecisionEnum {
@@ -413,45 +423,48 @@ void SerializeAndCheckNonESEvents(
   procTarget.signing_id = MakeESStringToken("my_signing_id");
   procTarget.team_id = MakeESStringToken("my_team_id");
 
-  SerializeAndCheck(ES_EVENT_TYPE_NOTIFY_EXEC, ^(std::shared_ptr<MockEndpointSecurityAPI> mockESApi,
-                                                 es_message_t *esMsg) {
-    esMsg->event.exec.target = &procTarget;
-    esMsg->event.exec.cwd = &fileCwd;
-    esMsg->event.exec.script = &fileScript;
+  [self serializeAndCheckEvent:ES_EVENT_TYPE_NOTIFY_EXEC
+                  messageSetup:^(std::shared_ptr<MockEndpointSecurityAPI> mockESApi,
+                                 es_message_t *esMsg) {
+                    esMsg->event.exec.target = &procTarget;
+                    esMsg->event.exec.cwd = &fileCwd;
+                    esMsg->event.exec.script = &fileScript;
 
-    // For version 5, simulate a "truncated" set of FDs
-    if (esMsg->version == 5) {
-      esMsg->event.exec.last_fd = 123;
-    } else {
-      esMsg->event.exec.last_fd = 3;
-    }
+                    // For version 5, simulate a "truncated" set of FDs
+                    if (esMsg->version == 5) {
+                      esMsg->event.exec.last_fd = 123;
+                    } else {
+                      esMsg->event.exec.last_fd = 3;
+                    }
 
-    EXPECT_CALL(*mockESApi, ExecArgCount).WillOnce(testing::Return(3));
-    EXPECT_CALL(*mockESApi, ExecArg)
-      .WillOnce(testing::Return(MakeESStringToken("exec_path")))
-      .WillOnce(testing::Return(MakeESStringToken("-l")))
-      .WillOnce(testing::Return(MakeESStringToken("--foo")));
+                    EXPECT_CALL(*mockESApi, ExecArgCount).WillOnce(testing::Return(3));
+                    EXPECT_CALL(*mockESApi, ExecArg)
+                      .WillOnce(testing::Return(MakeESStringToken("exec_path")))
+                      .WillOnce(testing::Return(MakeESStringToken("-l")))
+                      .WillOnce(testing::Return(MakeESStringToken("--foo")));
 
-    EXPECT_CALL(*mockESApi, ExecEnvCount).WillOnce(testing::Return(2));
-    EXPECT_CALL(*mockESApi, ExecEnv)
-      .WillOnce(testing::Return(MakeESStringToken("ENV_PATH=/path/to/bin:/and/another")))
-      .WillOnce(testing::Return(MakeESStringToken("DEBUG=1")));
+                    EXPECT_CALL(*mockESApi, ExecEnvCount).WillOnce(testing::Return(2));
+                    EXPECT_CALL(*mockESApi, ExecEnv)
+                      .WillOnce(
+                        testing::Return(MakeESStringToken("ENV_PATH=/path/to/bin:/and/another")))
+                      .WillOnce(testing::Return(MakeESStringToken("DEBUG=1")));
 
-    if (esMsg->version >= 4) {
-      EXPECT_CALL(*mockESApi, ExecFDCount).WillOnce(testing::Return(3));
-      EXPECT_CALL(*mockESApi, ExecFD)
-        .WillOnce(testing::Return(&fd1))
-        .WillOnce(testing::Return(&fd2))
-        .WillOnce(testing::Return(&fd3));
-    }
-  });
+                    if (esMsg->version >= 4) {
+                      EXPECT_CALL(*mockESApi, ExecFDCount).WillOnce(testing::Return(3));
+                      EXPECT_CALL(*mockESApi, ExecFD)
+                        .WillOnce(testing::Return(&fd1))
+                        .WillOnce(testing::Return(&fd2))
+                        .WillOnce(testing::Return(&fd3));
+                    }
+                  }];
 }
 
 - (void)testSerializeMessageExit {
-  SerializeAndCheck(ES_EVENT_TYPE_NOTIFY_EXIT,
-                    ^(std::shared_ptr<MockEndpointSecurityAPI> mockESApi, es_message_t *esMsg) {
-                      esMsg->event.exit.stat = W_EXITCODE(1, 0);
-                    });
+  [self serializeAndCheckEvent:ES_EVENT_TYPE_NOTIFY_EXIT
+                  messageSetup:^(std::shared_ptr<MockEndpointSecurityAPI> mockESApi,
+                                 es_message_t *esMsg) {
+                    esMsg->event.exit.stat = W_EXITCODE(1, 0);
+                  }];
 }
 
 - (void)testEncodeExitStatus {
@@ -484,10 +497,11 @@ void SerializeAndCheckNonESEvents(
     MakeESProcess(&procFileChild, MakeAuditToken(12, 34), MakeAuditToken(56, 78));
   procChild.tty = &ttyFileChild;
 
-  SerializeAndCheck(ES_EVENT_TYPE_NOTIFY_FORK,
-                    ^(std::shared_ptr<MockEndpointSecurityAPI> mockESApi, es_message_t *esMsg) {
-                      esMsg->event.fork.child = &procChild;
-                    });
+  [self serializeAndCheckEvent:ES_EVENT_TYPE_NOTIFY_FORK
+                  messageSetup:^(std::shared_ptr<MockEndpointSecurityAPI> mockESApi,
+                                 es_message_t *esMsg) {
+                    esMsg->event.fork.child = &procChild;
+                  }];
 }
 
 - (void)testSerializeMessageLink {
@@ -495,12 +509,13 @@ void SerializeAndCheckNonESEvents(
   __block es_file_t fileTargetDir = MakeESFile("target_dir");
   es_string_token_t targetTok = MakeESStringToken("target_file");
 
-  SerializeAndCheck(ES_EVENT_TYPE_NOTIFY_LINK,
-                    ^(std::shared_ptr<MockEndpointSecurityAPI> mockESApi, es_message_t *esMsg) {
-                      esMsg->event.link.source = &fileSource;
-                      esMsg->event.link.target_dir = &fileTargetDir;
-                      esMsg->event.link.target_filename = targetTok;
-                    });
+  [self serializeAndCheckEvent:ES_EVENT_TYPE_NOTIFY_LINK
+                  messageSetup:^(std::shared_ptr<MockEndpointSecurityAPI> mockESApi,
+                                 es_message_t *esMsg) {
+                    esMsg->event.link.source = &fileSource;
+                    esMsg->event.link.target_dir = &fileTargetDir;
+                    esMsg->event.link.target_filename = targetTok;
+                  }];
 }
 
 - (void)testSerializeMessageRename {
@@ -508,30 +523,32 @@ void SerializeAndCheckNonESEvents(
   __block es_file_t fileTargetDir = MakeESFile("target_dir");
   es_string_token_t targetTok = MakeESStringToken("target_file");
 
-  SerializeAndCheck(ES_EVENT_TYPE_NOTIFY_RENAME,
-                    ^(std::shared_ptr<MockEndpointSecurityAPI> mockESApi, es_message_t *esMsg) {
-                      esMsg->event.rename.source = &fileSource;
-                      // Test new and existing destination types
-                      if (esMsg->version == 4) {
-                        esMsg->event.rename.destination.existing_file = &fileTargetDir;
-                        esMsg->event.rename.destination_type = ES_DESTINATION_TYPE_EXISTING_FILE;
-                      } else {
-                        esMsg->event.rename.destination.new_path.dir = &fileTargetDir;
-                        esMsg->event.rename.destination.new_path.filename = targetTok;
-                        esMsg->event.rename.destination_type = ES_DESTINATION_TYPE_NEW_PATH;
-                      }
-                    });
+  [self serializeAndCheckEvent:ES_EVENT_TYPE_NOTIFY_RENAME
+                  messageSetup:^(std::shared_ptr<MockEndpointSecurityAPI> mockESApi,
+                                 es_message_t *esMsg) {
+                    esMsg->event.rename.source = &fileSource;
+                    // Test new and existing destination types
+                    if (esMsg->version == 4) {
+                      esMsg->event.rename.destination.existing_file = &fileTargetDir;
+                      esMsg->event.rename.destination_type = ES_DESTINATION_TYPE_EXISTING_FILE;
+                    } else {
+                      esMsg->event.rename.destination.new_path.dir = &fileTargetDir;
+                      esMsg->event.rename.destination.new_path.filename = targetTok;
+                      esMsg->event.rename.destination_type = ES_DESTINATION_TYPE_NEW_PATH;
+                    }
+                  }];
 }
 
 - (void)testSerializeMessageUnlink {
   __block es_file_t fileTarget = MakeESFile("unlink_file", MakeStat(300));
   __block es_file_t fileTargetParent = MakeESFile("unlink_file_parent", MakeStat(400));
 
-  SerializeAndCheck(ES_EVENT_TYPE_NOTIFY_UNLINK,
-                    ^(std::shared_ptr<MockEndpointSecurityAPI> mockESApi, es_message_t *esMsg) {
-                      esMsg->event.unlink.target = &fileTarget;
-                      esMsg->event.unlink.parent_dir = &fileTargetParent;
-                    });
+  [self serializeAndCheckEvent:ES_EVENT_TYPE_NOTIFY_UNLINK
+                  messageSetup:^(std::shared_ptr<MockEndpointSecurityAPI> mockESApi,
+                                 es_message_t *esMsg) {
+                    esMsg->event.unlink.target = &fileTarget;
+                    esMsg->event.unlink.parent_dir = &fileTargetParent;
+                  }];
 }
 
 - (void)testGetAccessType {
@@ -608,7 +625,7 @@ void SerializeAndCheckNonESEvents(
   se.fileBundlePath = @"file_bundle_path";
   se.filePath = @"file_path";
 
-  std::vector<uint8_t> vec = Protobuf::Create(nullptr)->SerializeBundleHashingEvent(se);
+  std::vector<uint8_t> vec = Protobuf::Create(nullptr, nil)->SerializeBundleHashingEvent(se);
   std::string protoStr(vec.begin(), vec.end());
 
   ::pbv1::SantaMessage santaMsg;
@@ -643,7 +660,7 @@ void SerializeAndCheckNonESEvents(
     @"DADeviceProtocol" : @"usb",
   };
 
-  std::vector<uint8_t> vec = Protobuf::Create(nullptr)->SerializeDiskAppeared(props);
+  std::vector<uint8_t> vec = Protobuf::Create(nullptr, nil)->SerializeDiskAppeared(props);
   std::string protoStr(vec.begin(), vec.end());
 
   ::pbv1::SantaMessage santaMsg;
@@ -680,7 +697,7 @@ void SerializeAndCheckNonESEvents(
     @"DADeviceProtocol" : @"usb",
   };
 
-  std::vector<uint8_t> vec = Protobuf::Create(nullptr)->SerializeDiskDisappeared(props);
+  std::vector<uint8_t> vec = Protobuf::Create(nullptr, nil)->SerializeDiskDisappeared(props);
   std::string protoStr(vec.begin(), vec.end());
 
   ::pbv1::SantaMessage santaMsg;

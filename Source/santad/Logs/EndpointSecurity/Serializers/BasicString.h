@@ -24,6 +24,7 @@
 #import "Source/common/SNTCachedDecision.h"
 #include "Source/santad/EventProviders/EndpointSecurity/EndpointSecurityAPI.h"
 #include "Source/santad/Logs/EndpointSecurity/Serializers/Serializer.h"
+#import "Source/santad/SNTDecisionCache.h"
 
 namespace santa::santad::logs::endpoint_security::serializers {
 
@@ -31,11 +32,11 @@ class BasicString : public Serializer {
  public:
   static std::shared_ptr<BasicString> Create(
     std::shared_ptr<santa::santad::event_providers::endpoint_security::EndpointSecurityAPI> esapi,
-    bool prefix_time_name = true);
+    SNTDecisionCache *decision_cache, bool prefix_time_name = true);
 
   BasicString(
     std::shared_ptr<santa::santad::event_providers::endpoint_security::EndpointSecurityAPI> esapi,
-    bool prefix_time_name);
+    SNTDecisionCache *decision_cache, bool prefix_time_name);
 
   std::vector<uint8_t> SerializeMessage(
     const santa::santad::event_providers::endpoint_security::EnrichedClose &) override;

@@ -17,12 +17,14 @@
 
 #import <Foundation/Foundation.h>
 
+#include <functional>
 #include <memory>
 #include <vector>
 
 #import "Source/common/SNTCachedDecision.h"
 #import "Source/common/SNTCommonEnums.h"
 #include "Source/santad/EventProviders/EndpointSecurity/EnrichedTypes.h"
+#import "Source/santad/SNTDecisionCache.h"
 
 @class SNTStoredEvent;
 
@@ -30,7 +32,7 @@ namespace santa::santad::logs::endpoint_security::serializers {
 
 class Serializer {
  public:
-  Serializer();
+  Serializer(SNTDecisionCache *decision_cache);
   virtual ~Serializer() = default;
 
   std::vector<uint8_t> SerializeMessage(
@@ -96,6 +98,7 @@ class Serializer {
 
   bool enabled_machine_id_ = false;
   std::string machine_id_;
+  SNTDecisionCache *decision_cache_;
 };
 
 }  // namespace santa::santad::logs::endpoint_security::serializers

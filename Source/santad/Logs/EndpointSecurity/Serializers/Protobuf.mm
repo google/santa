@@ -28,7 +28,6 @@
 #include <string_view>
 
 #import "Source/common/SNTCachedDecision.h"
-#import "Source/common/SNTConfigurator.h"
 #include "Source/common/SNTLogging.h"
 #import "Source/common/SNTStoredEvent.h"
 #import "Source/common/String.h"
@@ -66,11 +65,13 @@ namespace pbv1 = ::santa::pb::v1;
 
 namespace santa::santad::logs::endpoint_security::serializers {
 
-std::shared_ptr<Protobuf> Protobuf::Create(std::shared_ptr<EndpointSecurityAPI> esapi) {
-  return std::make_shared<Protobuf>(esapi);
+std::shared_ptr<Protobuf> Protobuf::Create(std::shared_ptr<EndpointSecurityAPI> esapi,
+                                           SNTDecisionCache *decision_cache) {
+  return std::make_shared<Protobuf>(esapi, std::move(decision_cache));
 }
 
-Protobuf::Protobuf(std::shared_ptr<EndpointSecurityAPI> esapi) : esapi_(esapi) {}
+Protobuf::Protobuf(std::shared_ptr<EndpointSecurityAPI> esapi, SNTDecisionCache *decision_cache)
+    : Serializer(std::move(decision_cache)), esapi_(esapi) {}
 
 static inline void EncodeTimestamp(Timestamp *timestamp, struct timespec ts) {
   timestamp->set_seconds(ts.tv_sec);
@@ -423,9 +424,6 @@ std::vector<uint8_t> Protobuf::SerializeMessage(const EnrichedExec &msg, SNTCach
   Arena arena;
   ::pbv1::SantaMessage *santa_msg = CreateDefaultProto(&arena, msg);
 
-  // Only need to grab the shared instance once
-  static SNTConfigurator *configurator = [SNTConfigurator configurator];
-
   GetDecisionEnum(cd.decision);
 
   ::pbv1::Execution *pb_exec = santa_msg->mutable_execution();
@@ -486,7 +484,7 @@ std::vector<uint8_t> Protobuf::SerializeMessage(const EnrichedExec &msg, SNTCach
 
   pb_exec->set_decision(GetDecisionEnum(cd.decision));
   pb_exec->set_reason(GetReasonEnum(cd.decision));
-  pb_exec->set_mode(GetModeEnum([configurator clientMode]));
+  pb_exec->set_mode(GetModeEnum(cd.decisionClientMode));
 
   if (cd.certSHA256 || cd.certCommonName) {
     EncodeCertificateInfo(pb_exec->mutable_certificate_info(), cd.certSHA256, cd.certCommonName);

@@ -29,7 +29,6 @@
 #include <string>
 
 #import "Source/common/SNTCachedDecision.h"
-#import "Source/common/SNTConfigurator.h"
 #import "Source/common/SNTLogging.h"
 #import "Source/common/SNTStoredEvent.h"
 #include "Source/santad/Logs/EndpointSecurity/Serializers/SanitizableString.h"
@@ -177,12 +176,14 @@ static char *FormattedDateString(char *buf, size_t len) {
 }
 
 std::shared_ptr<BasicString> BasicString::Create(std::shared_ptr<EndpointSecurityAPI> esapi,
+                                                 SNTDecisionCache *decision_cache,
                                                  bool prefix_time_name) {
-  return std::make_shared<BasicString>(esapi, prefix_time_name);
+  return std::make_shared<BasicString>(esapi, decision_cache, prefix_time_name);
 }
 
-BasicString::BasicString(std::shared_ptr<EndpointSecurityAPI> esapi, bool prefix_time_name)
-    : esapi_(esapi), prefix_time_name_(prefix_time_name) {}
+BasicString::BasicString(std::shared_ptr<EndpointSecurityAPI> esapi,
+                         SNTDecisionCache *decision_cache, bool prefix_time_name)
+    : Serializer(std::move(decision_cache)), esapi_(esapi), prefix_time_name_(prefix_time_name) {}
 
 std::string BasicString::CreateDefaultString(size_t reserved_size) {
   std::string str;
@@ -245,9 +246,6 @@ std::vector<uint8_t> BasicString::SerializeMessage(const EnrichedExec &msg, SNTC
   const es_message_t &esm = msg.es_msg();
   std::string str = CreateDefaultString(1024);  // EXECs tend to be bigger, reserve more space.
 
-  // Only need to grab the shared instance once
-  static SNTConfigurator *configurator = [SNTConfigurator configurator];
-
   str.append("action=EXEC|decision=");
   str.append(GetDecisionString(cd.decision));
   str.append("|reason=");
@@ -291,7 +289,7 @@ std::vector<uint8_t> BasicString::SerializeMessage(const EnrichedExec &msg, SNTC
                   msg.instigator().real_group());
 
   str.append("|mode=");
-  str.append(GetModeString([configurator clientMode]));
+  str.append(GetModeString(cd.decisionClientMode));
   str.append("|path=");
   str.append(FilePath(esm.event.exec.target->executable).Sanitized());
 

@@ -161,7 +161,10 @@
     return cd;
   }
 
-  switch ([[SNTConfigurator configurator] clientMode]) {
+  SNTClientMode mode = [[SNTConfigurator configurator] clientMode];
+  cd.decisionClientMode = mode;
+
+  switch (mode) {
     case SNTClientModeMonitor: cd.decision = SNTEventStateAllowUnknown; return cd;
     case SNTClientModeLockdown: cd.decision = SNTEventStateBlockUnknown; return cd;
     default: cd.decision = SNTEventStateBlockUnknown; return cd;
