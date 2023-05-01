@@ -133,11 +133,11 @@ bazel test :unit_tests --define=SANTA_BUILD_TYPE=adhoc --test_output=errors
 Debug versions of Santa have the ability to set/override config settings using an override file, that will be applied over the top of the configuration from a profile.
 
 1. Create a plist in `/var/db/santa/config-overrides.plist`
-  
+ 
 For example to point Santa at a sync server running on localhost here would be the config-override file.
 
-  ```xml
-  <?xml version="1.0" encoding="UTF-8"?> <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+```xml
+<?xml version="1.0" encoding="UTF-8"?> <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
   <plist version="1.0">
   <dict>    
     <key>SyncBaseURL</key>
@@ -146,7 +146,7 @@ For example to point Santa at a sync server running on localhost here would be t
     <string>gzip</string>
   </dict>
 </plist>
-  ```
+```
 
 > :warning: Warning
 >  Make sure  the file is readable.
