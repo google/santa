@@ -450,6 +450,7 @@ void PopulatePathTargets(const Message &msg, std::vector<PathTarget> &targets) {
     decision = FileAccessPolicyDecision::kAllowedAuditOnly;
   }
 
+  // https://github.com/google/santa/issues/1084
   // TODO(xyz): Write to TTY like in exec controller?
   // TODO(xyz): Need new config item for custom message in UI
 
