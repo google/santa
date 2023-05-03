@@ -294,15 +294,6 @@ static void addPathsFromDefaultMuteSet(NSMutableSet *criticalPaths) API_AVAILABL
                        signingID:(NSString *)signingID {
   __block SNTRule *rule;
 
-  // if (teamID.length == 0) {
-  //   signingID = nil;
-  // } else {
-  //   signingID = [NSString stringWithFormat:@"%@:%@", teamID, signingID];
-  // }
-  // Validate signingID is well formed
-  if (teamID.length == 0) {
-  }
-
   // Look for a static rule that matches.
   NSDictionary *staticRules = [[SNTConfigurator configurator] staticRules];
   if (staticRules.count) {
