@@ -108,6 +108,8 @@ static NSString *const kPrinterProxyPostMonterey =
     case SNTEventStateAllowCertificate: eventTypeStr = kAllowCertificate; break;
     case SNTEventStateBlockTeamID: eventTypeStr = kBlockTeamID; break;
     case SNTEventStateAllowTeamID: eventTypeStr = kAllowTeamID; break;
+    case SNTEventStateBlockSigningID: eventTypeStr = kBlockSigningID; break;
+    case SNTEventStateAllowSigningID: eventTypeStr = kAllowSigningID; break;
     case SNTEventStateBlockScope: eventTypeStr = kBlockScope; break;
     case SNTEventStateAllowScope: eventTypeStr = kAllowScope; break;
     case SNTEventStateBlockUnknown: eventTypeStr = kBlockUnknown; break;
@@ -200,10 +202,6 @@ static NSString *const kPrinterProxyPostMonterey =
   // TODO(markowsky): Maybe add a metric here for how many large executables we're seeing.
   // if (binInfo.fileSize > SomeUpperLimit) ...
 
-  // NSString *signingID = [NSString stringWithCString:targetProc->signing_id.data
-  //                                          encoding:NSUTF8StringEncoding];
-  // SNTCachedDecision *cd = [self.policyProcessor decisionForFileInfo:binInfo
-  // andSigningID:signingID];
   SNTCachedDecision *cd = [self.policyProcessor decisionForFileInfo:binInfo
                                                       targetProcess:targetProc];
 

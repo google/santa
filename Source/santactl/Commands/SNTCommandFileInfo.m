@@ -360,7 +360,6 @@ REGISTER_COMMAND_NAME(@"fileinfo")
     dispatch_semaphore_t sema = dispatch_semaphore_create(0);
     NSError *err;
     MOLCodesignChecker *csc = [fileInfo codesignCheckerWithError:&err];
-    NSLog(@"csc.signingInformation: %@", csc.signingInformation);
 
     NSString *teamID =
       [csc.signingInformation objectForKey:(__bridge NSString *)kSecCodeInfoTeamIdentifier];
@@ -375,7 +374,7 @@ REGISTER_COMMAND_NAME(@"fileinfo")
         id platformID =
           [csc.signingInformation objectForKey:(__bridge NSString *)kSecCodeInfoPlatformIdentifier];
         if ([platformID isKindOfClass:[NSNumber class]] && [platformID intValue] != 0) {
-          signingID = [NSString stringWithFormat:@"platfornm:%@", identifier];
+          signingID = [NSString stringWithFormat:@"platform:%@", identifier];
         }
       }
     }

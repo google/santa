@@ -68,7 +68,9 @@
       cd.certSHA256 = csInfo.leafCertificate.SHA256;
       cd.certCommonName = csInfo.leafCertificate.commonName;
       cd.certChain = csInfo.certificates;
-      cd.teamID = teamID ?: [csInfo.signingInformation valueForKey:@"teamid"];
+      cd.teamID = teamID
+                    ?: [csInfo.signingInformation
+                         objectForKey:(__bridge NSString *)kSecCodeInfoTeamIdentifier];
       teamID = cd.teamID;
 
       // Ensure that if no teamID exists that the signing info confirms it is a
@@ -202,21 +204,23 @@
 - (nonnull SNTCachedDecision *)decisionForFileInfo:(nonnull SNTFileInfo *)fileInfo
                                      targetProcess:(nonnull const es_process_t *)targetProc {
   NSString *signingID;
+  NSString *teamID;
+
   if (targetProc->signing_id.length > 0) {
+    signingID = [NSString stringWithUTF8String:targetProc->signing_id.data];
+
     if (targetProc->is_platform_binary) {
-      signingID =
-        [NSString stringWithFormat:@"platfornm:%@",
-                                   [NSString stringWithUTF8String:targetProc->signing_id.data]];
+      signingID = [NSString stringWithFormat:@"platform:%@", signingID];
     } else if (targetProc->team_id.length > 0) {
-      signingID = [NSString
-        stringWithFormat:@"%@:%@", [NSString stringWithUTF8String:targetProc->team_id.data],
-                         [NSString stringWithUTF8String:targetProc->signing_id.data]];
+      teamID = [NSString stringWithUTF8String:targetProc->team_id.data];
+      signingID = [NSString stringWithFormat:@"%@:%@", teamID, signingID];
     }
   }
+
   return [self decisionForFileInfo:fileInfo
                         fileSHA256:nil
                  certificateSHA256:nil
-                            teamID:nil
+                            teamID:teamID
                          signingID:signingID];
 }
 

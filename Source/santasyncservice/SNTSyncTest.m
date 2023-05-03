@@ -330,8 +330,8 @@
   OCMStub([self.daemonConnRop
     databaseRuleCounts:([OCMArg invokeBlockWithArgs:OCMOCK_VALUE(bin), OCMOCK_VALUE(cert),
                                                     OCMOCK_VALUE(compiler),
-                                                    OCMOCK_VALUE(transitive), OCMOCK_VALUE(teamID), OCMOCK_VALUE(signingID),
-                                                    nil])]);
+                                                    OCMOCK_VALUE(transitive), OCMOCK_VALUE(teamID),
+                                                    OCMOCK_VALUE(signingID), nil])]);
 
   [self stubRequestBody:nil
                response:nil
