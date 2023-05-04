@@ -145,20 +145,6 @@ REGISTER_COMMAND_NAME(@"rule")
     }
   }
 
-  if (newRule.type == SNTRuleTypeBinary || newRule.type == SNTRuleTypeCertificate) {
-    NSCharacterSet *nonHex =
-      [[NSCharacterSet characterSetWithCharactersInString:@"0123456789ABCDEF"] invertedSet];
-    if ([[newRule.identifier uppercaseString] stringByTrimmingCharactersInSet:nonHex].length !=
-        64) {
-      [self printErrorUsageAndExit:@"BINARY or CERTIFICATE rules require a valid SHA-256"];
-    }
-  }
-
-  if (check) {
-    if (!newRule.identifier) return [self printErrorUsageAndExit:@"--check requires --identifier"];
-    return [self printStateOfRule:newRule daemonConnection:self.daemonConn];
-  }
-
   if (path) {
     SNTFileInfo *fi = [[SNTFileInfo alloc] initWithPath:path];
     if (!fi.path) {
@@ -172,6 +158,20 @@ REGISTER_COMMAND_NAME(@"rule")
       newRule.identifier = cs.leafCertificate.SHA256;
     } else if (newRule.type == SNTRuleTypeTeamID) {
     }
+  }
+
+  if (newRule.type == SNTRuleTypeBinary || newRule.type == SNTRuleTypeCertificate) {
+    NSCharacterSet *nonHex =
+      [[NSCharacterSet characterSetWithCharactersInString:@"0123456789ABCDEF"] invertedSet];
+    if ([[newRule.identifier uppercaseString] stringByTrimmingCharactersInSet:nonHex].length !=
+        64) {
+      [self printErrorUsageAndExit:@"BINARY or CERTIFICATE rules require a valid SHA-256"];
+    }
+  }
+
+  if (check) {
+    if (!newRule.identifier) return [self printErrorUsageAndExit:@"--check requires --identifier"];
+    return [self printStateOfRule:newRule daemonConnection:self.daemonConn];
   }
 
   if (newRule.state == SNTRuleStateUnknown) {
