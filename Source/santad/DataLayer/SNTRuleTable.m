@@ -312,7 +312,7 @@ static void addPathsFromDefaultMuteSet(NSMutableSet *criticalPaths) API_AVAILABL
   // NOTE: This code is written with the intention that the binary rule is searched for first
   // as Santa is designed to go with the most-specific rule possible.
   //
-  // The intended order of precedence is Binaries > Certificates > Team IDs.
+  // The intended order of precedence is Binaries > Signing IDs > Certificates > Team IDs.
   //
   // As such the query should have "ORDER BY type DESC" before the LIMIT, to ensure that is the
   // case. However, in all tested versions of SQLite that ORDER BY clause is unnecessary: the query

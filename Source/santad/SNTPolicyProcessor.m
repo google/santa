@@ -47,6 +47,7 @@
   SNTCachedDecision *cd = [[SNTCachedDecision alloc] init];
   cd.sha256 = fileSHA256 ?: fileInfo.SHA256;
   cd.teamID = teamID;
+  cd.signingID = signingID;
 
   // If the binary is a critical system binary, don't check its signature.
   // The binary was validated at startup when the rule table was initialized.
@@ -207,13 +208,15 @@
   NSString *teamID;
 
   if (targetProc->signing_id.length > 0) {
-    signingID = [NSString stringWithUTF8String:targetProc->signing_id.data];
-
     if (targetProc->is_platform_binary) {
-      signingID = [NSString stringWithFormat:@"platform:%@", signingID];
+      signingID =
+        [NSString stringWithFormat:@"platform:%@",
+                                   [NSString stringWithUTF8String:targetProc->signing_id.data]];
     } else if (targetProc->team_id.length > 0) {
       teamID = [NSString stringWithUTF8String:targetProc->team_id.data];
-      signingID = [NSString stringWithFormat:@"%@:%@", teamID, signingID];
+      signingID =
+        [NSString stringWithFormat:@"%@:%@", teamID,
+                                   [NSString stringWithUTF8String:targetProc->signing_id.data]];
     }
   }
 
