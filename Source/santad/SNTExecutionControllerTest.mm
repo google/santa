@@ -229,9 +229,9 @@ VerifyPostActionBlock verifyPostAction = ^PostActionBlock(SNTAction wantAction) 
   rule.state = SNTRuleStateAllow;
   rule.type = SNTRuleTypeBinary;
   OCMStub([self.mockRuleDatabase ruleForBinarySHA256:@"a"
+                                           signingID:nil
                                    certificateSHA256:nil
-                                              teamID:nil
-                                           signingID:nil])
+                                              teamID:nil])
     .andReturn(rule);
 
   [self validateExecEvent:SNTActionRespondAllow];
@@ -246,9 +246,9 @@ VerifyPostActionBlock verifyPostAction = ^PostActionBlock(SNTAction wantAction) 
   rule.state = SNTRuleStateBlock;
   rule.type = SNTRuleTypeBinary;
   OCMStub([self.mockRuleDatabase ruleForBinarySHA256:@"a"
+                                           signingID:nil
                                    certificateSHA256:nil
-                                              teamID:nil
-                                           signingID:nil])
+                                              teamID:nil])
     .andReturn(rule);
 
   [self validateExecEvent:SNTActionRespondDeny];
@@ -263,9 +263,9 @@ VerifyPostActionBlock verifyPostAction = ^PostActionBlock(SNTAction wantAction) 
   NSString *signingID = [NSString stringWithFormat:@"%s:%s", kExampleTeamID, kExampleSigningID];
 
   OCMStub([self.mockRuleDatabase ruleForBinarySHA256:nil
+                                           signingID:signingID
                                    certificateSHA256:nil
-                                              teamID:@(kExampleTeamID)
-                                           signingID:signingID])
+                                              teamID:@(kExampleTeamID)])
     .andReturn(rule);
 
   [self validateExecEvent:SNTActionRespondAllow
@@ -284,9 +284,9 @@ VerifyPostActionBlock verifyPostAction = ^PostActionBlock(SNTAction wantAction) 
   NSString *signingID = [NSString stringWithFormat:@"%s:%s", kExampleTeamID, kExampleSigningID];
 
   OCMStub([self.mockRuleDatabase ruleForBinarySHA256:nil
+                                           signingID:signingID
                                    certificateSHA256:nil
-                                              teamID:@(kExampleTeamID)
-                                           signingID:signingID])
+                                              teamID:@(kExampleTeamID)])
     .andReturn(rule);
 
   [self validateExecEvent:SNTActionRespondDeny
@@ -307,9 +307,9 @@ VerifyPostActionBlock verifyPostAction = ^PostActionBlock(SNTAction wantAction) 
   rule.type = SNTRuleTypeTeamID;
 
   OCMStub([self.mockRuleDatabase ruleForBinarySHA256:nil
+                                           signingID:nil
                                    certificateSHA256:nil
-                                              teamID:@(kExampleTeamID)
-                                           signingID:nil])
+                                              teamID:@(kExampleTeamID)])
     .andReturn(rule);
 
   [self validateExecEvent:SNTActionRespondAllow
@@ -329,9 +329,9 @@ VerifyPostActionBlock verifyPostAction = ^PostActionBlock(SNTAction wantAction) 
   rule.type = SNTRuleTypeTeamID;
 
   OCMStub([self.mockRuleDatabase ruleForBinarySHA256:nil
+                                           signingID:nil
                                    certificateSHA256:nil
-                                              teamID:@(kExampleTeamID)
-                                           signingID:nil])
+                                              teamID:@(kExampleTeamID)])
     .andReturn(rule);
 
   [self validateExecEvent:SNTActionRespondDeny
@@ -352,9 +352,9 @@ VerifyPostActionBlock verifyPostAction = ^PostActionBlock(SNTAction wantAction) 
   rule.state = SNTRuleStateAllow;
   rule.type = SNTRuleTypeCertificate;
   OCMStub([self.mockRuleDatabase ruleForBinarySHA256:nil
+                                           signingID:nil
                                    certificateSHA256:@"a"
-                                              teamID:nil
-                                           signingID:nil])
+                                              teamID:nil])
     .andReturn(rule);
 
   [self validateExecEvent:SNTActionRespondAllow];
@@ -372,9 +372,9 @@ VerifyPostActionBlock verifyPostAction = ^PostActionBlock(SNTAction wantAction) 
   rule.state = SNTRuleStateBlock;
   rule.type = SNTRuleTypeCertificate;
   OCMStub([self.mockRuleDatabase ruleForBinarySHA256:nil
+                                           signingID:nil
                                    certificateSHA256:@"a"
-                                              teamID:nil
-                                           signingID:nil])
+                                              teamID:nil])
     .andReturn(rule);
 
   OCMExpect([self.mockEventDatabase addStoredEvent:OCMOCK_ANY]);
@@ -394,9 +394,9 @@ VerifyPostActionBlock verifyPostAction = ^PostActionBlock(SNTAction wantAction) 
   rule.state = SNTRuleStateAllowCompiler;
   rule.type = SNTRuleTypeBinary;
   OCMStub([self.mockRuleDatabase ruleForBinarySHA256:@"a"
+                                           signingID:nil
                                    certificateSHA256:nil
-                                              teamID:nil
-                                           signingID:nil])
+                                              teamID:nil])
     .andReturn(rule);
 
   [self validateExecEvent:SNTActionRespondAllowCompiler];
@@ -412,9 +412,9 @@ VerifyPostActionBlock verifyPostAction = ^PostActionBlock(SNTAction wantAction) 
   rule.state = SNTRuleStateAllowCompiler;
   rule.type = SNTRuleTypeBinary;
   OCMStub([self.mockRuleDatabase ruleForBinarySHA256:@"a"
+                                           signingID:nil
                                    certificateSHA256:nil
-                                              teamID:nil
-                                           signingID:nil])
+                                              teamID:nil])
     .andReturn(rule);
 
   [self validateExecEvent:SNTActionRespondAllow];
@@ -430,9 +430,9 @@ VerifyPostActionBlock verifyPostAction = ^PostActionBlock(SNTAction wantAction) 
   rule.state = SNTRuleStateAllowTransitive;
   rule.type = SNTRuleTypeBinary;
   OCMStub([self.mockRuleDatabase ruleForBinarySHA256:@"a"
+                                           signingID:nil
                                    certificateSHA256:nil
-                                              teamID:nil
-                                           signingID:nil])
+                                              teamID:nil])
     .andReturn(rule);
 
   [self validateExecEvent:SNTActionRespondAllow];
@@ -449,9 +449,9 @@ VerifyPostActionBlock verifyPostAction = ^PostActionBlock(SNTAction wantAction) 
   rule.state = SNTRuleStateAllowTransitive;
   rule.type = SNTRuleTypeBinary;
   OCMStub([self.mockRuleDatabase ruleForBinarySHA256:@"a"
+                                           signingID:nil
                                    certificateSHA256:nil
-                                              teamID:nil
-                                           signingID:nil])
+                                              teamID:nil])
     .andReturn(rule);
 
   OCMExpect([self.mockEventDatabase addStoredEvent:OCMOCK_ANY]);
@@ -563,9 +563,9 @@ VerifyPostActionBlock verifyPostAction = ^PostActionBlock(SNTAction wantAction) 
   rule.state = SNTRuleStateAllow;
   rule.type = SNTRuleTypeBinary;
   OCMStub([self.mockRuleDatabase ruleForBinarySHA256:@"a"
+                                           signingID:nil
                                    certificateSHA256:nil
-                                              teamID:nil
-                                           signingID:nil])
+                                              teamID:nil])
     .andReturn(rule);
 
   [self validateExecEvent:SNTActionRespondAllow];

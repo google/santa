@@ -62,13 +62,13 @@
 - (NSUInteger)signingIDRuleCount;
 
 ///
-///  @return Rule for binary, signing ID, certificate or teamID or signing ID (in that order).
+///  @return Rule for binary, signingID, certificate or teamID (in that order).
 ///          The first matching rule found is returned.
 ///
 - (SNTRule *)ruleForBinarySHA256:(NSString *)binarySHA256
+                       signingID:(NSString *)signingID
                certificateSHA256:(NSString *)certificateSHA256
-                          teamID:(NSString *)teamID
-                       signingID:(NSString *)signingID;
+                          teamID:(NSString *)teamID;
 
 ///
 ///  Add an array of rules to the database. The rules will be added within a transaction and the

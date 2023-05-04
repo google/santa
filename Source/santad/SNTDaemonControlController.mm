@@ -147,9 +147,9 @@ double watchdogRAMPeak = 0;
                           signingID:(NSString *)signingID
                               reply:(void (^)(SNTRule *))reply {
   reply([[SNTDatabaseController ruleTable] ruleForBinarySHA256:binarySHA256
+                                                     signingID:signingID
                                              certificateSHA256:certificateSHA256
-                                                        teamID:teamID
-                                                     signingID:signingID]);
+                                                        teamID:teamID]);
 }
 
 - (void)staticRuleCount:(void (^)(int64_t count))reply {

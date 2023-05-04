@@ -289,9 +289,9 @@ static void addPathsFromDefaultMuteSet(NSMutableSet *criticalPaths) API_AVAILABL
 }
 
 - (SNTRule *)ruleForBinarySHA256:(NSString *)binarySHA256
+                       signingID:(NSString *)signingID
                certificateSHA256:(NSString *)certificateSHA256
-                          teamID:(NSString *)teamID
-                       signingID:(NSString *)signingID {
+                          teamID:(NSString *)teamID {
   __block SNTRule *rule;
 
   // Look for a static rule that matches.

@@ -90,9 +90,9 @@
   cd.quarantineURL = fileInfo.quarantineDataURL;
 
   SNTRule *rule = [self.ruleTable ruleForBinarySHA256:cd.sha256
+                                            signingID:signingID
                                     certificateSHA256:cd.certSHA256
-                                               teamID:teamID
-                                            signingID:signingID];
+                                               teamID:teamID];
   if (rule) {
     switch (rule.type) {
       case SNTRuleTypeBinary:
@@ -208,14 +208,14 @@
   NSString *teamID;
 
   if (targetProc->signing_id.length > 0) {
-    if (targetProc->is_platform_binary) {
-      signingID =
-        [NSString stringWithFormat:@"platform:%@",
-                                   [NSString stringWithUTF8String:targetProc->signing_id.data]];
-    } else if (targetProc->team_id.length > 0) {
+    if (targetProc->team_id.length > 0) {
       teamID = [NSString stringWithUTF8String:targetProc->team_id.data];
       signingID =
         [NSString stringWithFormat:@"%@:%@", teamID,
+                                   [NSString stringWithUTF8String:targetProc->signing_id.data]];
+    } else if (targetProc->is_platform_binary) {
+      signingID =
+        [NSString stringWithFormat:@"platform:%@",
                                    [NSString stringWithUTF8String:targetProc->signing_id.data]];
     }
   }

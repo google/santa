@@ -145,9 +145,9 @@ static constexpr std::string_view kIgnoredCompilerProcessPathPrefix = "/dev/";
     // alone, so that a allowlist or blocklist rule can't be overwritten by a transitive one.
     SNTRuleTable *ruleTable = [SNTDatabaseController ruleTable];
     SNTRule *prevRule = [ruleTable ruleForBinarySHA256:fi.SHA256
+                                             signingID:nil
                                      certificateSHA256:nil
-                                                teamID:nil
-                                             signingID:nil];
+                                                teamID:nil];
     if (!prevRule || prevRule.state == SNTRuleStateAllowTransitive) {
       // Construct a new transitive allowlist rule for the executable.
       SNTRule *rule = [[SNTRule alloc] initWithIdentifier:fi.SHA256

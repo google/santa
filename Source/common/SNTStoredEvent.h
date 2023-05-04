@@ -101,7 +101,7 @@
 @property NSString *teamID;
 
 ///
-/// If the executed file was signed, this is the Team ID if present in the signature information.
+/// If the executed file was signed, this is the Signing ID if present in the signature information.
 ///
 @property NSString *signingID;
 
