@@ -130,18 +130,22 @@ void SantadMain(std::shared_ptr<EndpointSecurityAPI> esapi, std::shared_ptr<Logg
   SNTEndpointSecurityTamperResistance *tamper_client =
     [[SNTEndpointSecurityTamperResistance alloc] initWithESAPI:esapi metrics:metrics logger:logger];
 
-  SNTEndpointSecurityFileAccessAuthorizer *access_authorizer_client =
-    [[SNTEndpointSecurityFileAccessAuthorizer alloc] initWithESAPI:esapi
-                                                           metrics:metrics
-                                                            logger:logger
-                                                        watchItems:watch_items
-                                                          enricher:enricher
-                                                     decisionCache:[SNTDecisionCache sharedCache]];
-  watch_items->RegisterClient(access_authorizer_client);
+  if (@available(macOS 13.0, *)) {
+    SNTEndpointSecurityFileAccessAuthorizer *access_authorizer_client =
+      [[SNTEndpointSecurityFileAccessAuthorizer alloc]
+        initWithESAPI:esapi
+              metrics:metrics
+               logger:logger
+           watchItems:watch_items
+             enricher:enricher
+        decisionCache:[SNTDecisionCache sharedCache]];
+    watch_items->RegisterClient(access_authorizer_client);
+  }
 
   EstablishSyncServiceConnection(syncd_queue);
 
-  NSArray<SNTKVOManager *> *kvoObservers = @[
+  NSMutableArray<SNTKVOManager *> *kvoObservers = [[NSMutableArray alloc] init];
+  [kvoObservers addObjectsFromArray:@[
     [[SNTKVOManager alloc]
       initWithObject:configurator
             selector:@selector(clientMode)
@@ -294,32 +298,6 @@ void SantadMain(std::shared_ptr<EndpointSecurityAPI> esapi, std::shared_ptr<Logg
                                         [newValue componentsJoinedByString:@","]);
                                    device_client.remountArgs = newValue;
                                  }],
-    [[SNTKVOManager alloc]
-      initWithObject:configurator
-            selector:@selector(fileAccessPolicyPlist)
-                type:[NSString class]
-            callback:^(NSString *oldValue, NSString *newValue) {
-              if ([configurator fileAccessPolicy]) {
-                // Ignore any changes to this key if fileAccessPolicy is set
-                return;
-              }
-
-              if (oldValue != newValue || (newValue && ![oldValue isEqualToString:newValue])) {
-                LOGI(@"Filesystem monitoring policy config path changed: %@ -> %@", oldValue,
-                     newValue);
-                watch_items->SetConfigPath(newValue);
-              }
-            }],
-    [[SNTKVOManager alloc] initWithObject:configurator
-                                 selector:@selector(fileAccessPolicy)
-                                     type:[NSDictionary class]
-                                 callback:^(NSDictionary *oldValue, NSDictionary *newValue) {
-                                   if (oldValue != newValue ||
-                                       (newValue && ![oldValue isEqualToDictionary:newValue])) {
-                                     LOGI(@"Filesystem monitoring policy embedded config changed");
-                                     watch_items->SetConfig(newValue);
-                                   }
-                                 }],
     [[SNTKVOManager alloc] initWithObject:configurator
                                  selector:@selector(staticRules)
                                      type:[NSArray class]
@@ -360,7 +338,40 @@ void SantadMain(std::shared_ptr<EndpointSecurityAPI> esapi, std::shared_ptr<Logg
               // Forcefully exit. The daemon will be restarted immediately.
               exit(EXIT_SUCCESS);
             }],
-  ];
+  ]];
+
+  if (@available(macOS 13.0, *)) {
+    // Only watch file access auth keys on mac 13 and newer
+    [kvoObservers addObjectsFromArray:@[
+      [[SNTKVOManager alloc]
+        initWithObject:configurator
+              selector:@selector(fileAccessPolicyPlist)
+                  type:[NSString class]
+              callback:^(NSString *oldValue, NSString *newValue) {
+                if ([configurator fileAccessPolicy]) {
+                  // Ignore any changes to this key if fileAccessPolicy is set
+                  return;
+                }
+
+                if ((oldValue && !newValue) || (newValue && ![oldValue isEqualToString:newValue])) {
+                  LOGI(@"Filesystem monitoring policy config path changed: %@ -> %@", oldValue,
+                       newValue);
+                  watch_items->SetConfigPath(newValue);
+                }
+              }],
+      [[SNTKVOManager alloc] initWithObject:configurator
+                                   selector:@selector(fileAccessPolicy)
+                                       type:[NSDictionary class]
+                                   callback:^(NSDictionary *oldValue, NSDictionary *newValue) {
+                                     if ((oldValue && !newValue) ||
+                                         (newValue && ![oldValue isEqualToDictionary:newValue])) {
+                                       LOGI(
+                                         @"Filesystem monitoring policy embedded config changed");
+                                       watch_items->SetConfig(newValue);
+                                     }
+                                   }],
+    ]];
+  }
 
   // Make the compiler happy. The variable is only used to ensure proper lifetime
   // of the SNTKVOManager objects it contains.
