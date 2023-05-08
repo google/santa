@@ -128,12 +128,6 @@ bool CompareTime(const Timestamp &timestamp, struct timespec ts) {
   return timestamp.seconds() == ts.tv_sec && timestamp.nanos() == ts.tv_nsec;
 }
 
-void CheckSantaMessage(const ::pbv1::SantaMessage &santaMsg, const es_message_t &esMsg,
-                       struct timespec enrichmentTime) {
-  XCTAssertTrue(CompareTime(santaMsg.processed_time(), enrichmentTime));
-  XCTAssertTrue(CompareTime(santaMsg.event_time(), esMsg.time));
-}
-
 const google::protobuf::Message &SantaMessageEvent(const ::pbv1::SantaMessage &santaMsg) {
   switch (santaMsg.event_case()) {
     case ::pbv1::SantaMessage::kExecution: return santaMsg.execution();
@@ -167,20 +161,6 @@ std::string ConvertMessageToJsonString(const ::pbv1::SantaMessage &santaMsg) {
   return json;
 }
 
-void CheckProto(const ::pbv1::SantaMessage &santaMsg,
-                std::shared_ptr<EnrichedMessage> enrichedMsg) {
-  return std::visit(
-    [santaMsg](const EnrichedEventType &enrichedEvent) {
-      CheckSantaMessage(santaMsg, enrichedEvent.es_msg(), enrichedEvent.enrichment_time());
-      NSString *wantData = LoadTestJson(EventTypeToFilename(enrichedEvent.es_msg().event_type),
-                                        enrichedEvent.es_msg().version);
-      std::string got = ConvertMessageToJsonString(santaMsg);
-
-      XCTAssertEqualObjects([NSString stringWithUTF8String:got.c_str()], wantData);
-    },
-    enrichedMsg->GetEnrichedMessage());
-}
-
 void SerializeAndCheck(es_event_type_t eventType,
                        void (^messageSetup)(std::shared_ptr<MockEndpointSecurityAPI>,
                                             es_message_t *),
@@ -206,15 +186,32 @@ void SerializeAndCheck(es_event_type_t eventType,
     messageSetup(mockESApi, &esMsg);
 
     std::shared_ptr<Serializer> bs = Protobuf::Create(mockESApi, decisionCache);
-    std::shared_ptr<EnrichedMessage> enrichedMsg = Enricher().Enrich(Message(mockESApi, &esMsg));
+    std::unique_ptr<EnrichedMessage> enrichedMsg = Enricher().Enrich(Message(mockESApi, &esMsg));
 
-    std::vector<uint8_t> vec = bs->SerializeMessage(enrichedMsg);
+    // Copy some values we need to check later before the object is moved out of this funciton
+    struct timespec enrichmentTime;
+    struct timespec msgTime;
+    NSString *wantData = std::visit(
+      [&msgTime, &enrichmentTime](const EnrichedEventType &enrichedEvent) {
+        msgTime = enrichedEvent.es_msg().time;
+        enrichmentTime = enrichedEvent.enrichment_time();
+
+        return LoadTestJson(EventTypeToFilename(enrichedEvent.es_msg().event_type),
+                            enrichedEvent.es_msg().version);
+      },
+      enrichedMsg->GetEnrichedMessage());
+
+    std::vector<uint8_t> vec = bs->SerializeMessage(std::move(enrichedMsg));
     std::string protoStr(vec.begin(), vec.end());
 
     ::pbv1::SantaMessage santaMsg;
     XCTAssertTrue(santaMsg.ParseFromString(protoStr));
 
-    CheckProto(santaMsg, enrichedMsg);
+    std::string gotData = ConvertMessageToJsonString(santaMsg);
+
+    XCTAssertTrue(CompareTime(santaMsg.processed_time(), enrichmentTime));
+    XCTAssertTrue(CompareTime(santaMsg.event_time(), msgTime));
+    XCTAssertEqualObjects([NSString stringWithUTF8String:gotData.c_str()], wantData);
   }
 
   XCTBubbleMockVerifyAndClearExpectations(mockESApi.get());

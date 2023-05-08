@@ -48,7 +48,7 @@ using santa::santad::logs::endpoint_security::Logger;
 
 class MockEnricher : public Enricher {
  public:
-  MOCK_METHOD(std::shared_ptr<EnrichedMessage>, Enrich, (Message &&));
+  MOCK_METHOD(std::unique_ptr<EnrichedMessage>, Enrich, (Message &&));
 };
 
 class MockAuthResultCache : public AuthResultCache {
@@ -62,7 +62,7 @@ class MockLogger : public Logger {
  public:
   using Logger::Logger;
 
-  MOCK_METHOD(void, Log, (std::shared_ptr<EnrichedMessage>));
+  MOCK_METHOD(void, Log, (std::unique_ptr<EnrichedMessage>));
 };
 
 @interface SNTEndpointSecurityRecorderTest : XCTestCase
@@ -100,10 +100,10 @@ class MockLogger : public Logger {
   mockESApi->SetExpectationsESNewClient();
   mockESApi->SetExpectationsRetainReleaseMessage();
 
-  std::shared_ptr<EnrichedMessage> enrichedMsg = std::shared_ptr<EnrichedMessage>(nullptr);
+  std::unique_ptr<EnrichedMessage> enrichedMsg = std::unique_ptr<EnrichedMessage>(nullptr);
 
   auto mockEnricher = std::make_shared<MockEnricher>();
-  EXPECT_CALL(*mockEnricher, Enrich).WillOnce(testing::Return(enrichedMsg));
+  EXPECT_CALL(*mockEnricher, Enrich).WillOnce(testing::Return(std::move(enrichedMsg)));
 
   auto mockAuthCache = std::make_shared<MockAuthResultCache>(nullptr, nil);
   EXPECT_CALL(*mockAuthCache, RemoveFromCache(&targetFile)).Times(1);

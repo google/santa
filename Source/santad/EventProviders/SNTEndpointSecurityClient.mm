@@ -236,9 +236,9 @@ constexpr std::string_view kProtectedFiles[] = {"/private/var/db/santa/rules.db"
   }
 }
 
-- (void)processEnrichedMessage:(std::shared_ptr<EnrichedMessage>)msg
-                       handler:(void (^)(std::shared_ptr<EnrichedMessage>))messageHandler {
-  __block std::shared_ptr<EnrichedMessage> msgTmp = std::move(msg);
+- (void)processEnrichedMessage:(std::unique_ptr<EnrichedMessage>)msg
+                       handler:(void (^)(std::unique_ptr<EnrichedMessage>))messageHandler {
+  __block std::unique_ptr<EnrichedMessage> msgTmp = std::move(msg);
   dispatch_async(_notifyQueue, ^{
     messageHandler(std::move(msgTmp));
   });

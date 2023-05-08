@@ -34,7 +34,7 @@ class Enricher {
  public:
   Enricher();
   virtual ~Enricher() = default;
-  virtual std::shared_ptr<EnrichedMessage> Enrich(Message &&msg);
+  virtual std::unique_ptr<EnrichedMessage> Enrich(Message &&msg);
   virtual EnrichedProcess Enrich(
       const es_process_t &es_proc,
       EnrichOptions options = EnrichOptions::kDefault);

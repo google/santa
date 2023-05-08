@@ -80,7 +80,7 @@ Logger::Logger(std::shared_ptr<serializers::Serializer> serializer,
                std::shared_ptr<writers::Writer> writer)
     : serializer_(std::move(serializer)), writer_(std::move(writer)) {}
 
-void Logger::Log(std::shared_ptr<EnrichedMessage> msg) {
+void Logger::Log(std::unique_ptr<EnrichedMessage> msg) {
   writer_->Write(serializer_->SerializeMessage(std::move(msg)));
 }
 

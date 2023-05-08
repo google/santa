@@ -406,14 +406,14 @@ using santa::santad::event_providers::endpoint_security::Message;
                                              metrics:nullptr
                                            processor:Processor::kUnknown];
   {
-    auto enrichedMsg = std::make_shared<EnrichedMessage>(
+    auto enrichedMsg = std::make_unique<EnrichedMessage>(
       EnrichedClose(Message(mockESApi, &esMsg),
                     EnrichedProcess(std::nullopt, std::nullopt, std::nullopt, std::nullopt,
                                     EnrichedFile(std::nullopt, std::nullopt, std::nullopt)),
                     EnrichedFile(std::nullopt, std::nullopt, std::nullopt)));
 
-    [client processEnrichedMessage:enrichedMsg
-                           handler:^(std::shared_ptr<EnrichedMessage> msg) {
+    [client processEnrichedMessage:std::move(enrichedMsg)
+                           handler:^(std::unique_ptr<EnrichedMessage> msg) {
                              // reset the shared_ptr to drop the held message.
                              // This is a workaround for a TSAN only false positive
                              // which happens if we switch back to the sem wait
