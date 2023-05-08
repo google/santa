@@ -72,9 +72,9 @@
 
 - (void)
   processEnrichedMessage:
-    (std::shared_ptr<santa::santad::event_providers::endpoint_security::EnrichedMessage>)msg
+    (std::unique_ptr<santa::santad::event_providers::endpoint_security::EnrichedMessage>)msg
                  handler:
-                   (void (^)(std::shared_ptr<
+                   (void (^)(std::unique_ptr<
                              santa::santad::event_providers::endpoint_security::EnrichedMessage>))
                      messageHandler;
 

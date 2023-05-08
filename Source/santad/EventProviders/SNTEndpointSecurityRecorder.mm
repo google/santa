@@ -110,11 +110,11 @@ es_file_t *GetTargetFileForPrefixTree(const es_message_t *msg) {
 
   // Enrich the message inline with the ES handler block to capture enrichment
   // data as close to the source event as possible.
-  std::shared_ptr<EnrichedMessage> sharedEnrichedMessage = _enricher->Enrich(std::move(esMsg));
+  std::unique_ptr<EnrichedMessage> enrichedMessage = _enricher->Enrich(std::move(esMsg));
 
   // Asynchronously log the message
-  [self processEnrichedMessage:std::move(sharedEnrichedMessage)
-                       handler:^(std::shared_ptr<EnrichedMessage> msg) {
+  [self processEnrichedMessage:std::move(enrichedMessage)
+                       handler:^(std::unique_ptr<EnrichedMessage> msg) {
                          self->_logger->Log(std::move(msg));
                          recordEventMetrics(EventDisposition::kProcessed);
                        }];

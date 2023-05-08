@@ -30,19 +30,19 @@ namespace santa::santad::event_providers::endpoint_security {
 
 Enricher::Enricher() : username_cache_(256), groupname_cache_(256) {}
 
-std::shared_ptr<EnrichedMessage> Enricher::Enrich(Message &&es_msg) {
+std::unique_ptr<EnrichedMessage> Enricher::Enrich(Message &&es_msg) {
   // TODO(mlw): Consider potential design patterns that could help reduce memory usage under load
   // (such as maybe the flyweight pattern)
   switch (es_msg->event_type) {
     case ES_EVENT_TYPE_NOTIFY_CLOSE:
-      return std::make_shared<EnrichedMessage>(EnrichedClose(
+      return std::make_unique<EnrichedMessage>(EnrichedClose(
         std::move(es_msg), Enrich(*es_msg->process), Enrich(*es_msg->event.close.target)));
     case ES_EVENT_TYPE_NOTIFY_EXCHANGEDATA:
-      return std::make_shared<EnrichedMessage>(EnrichedExchange(
+      return std::make_unique<EnrichedMessage>(EnrichedExchange(
         std::move(es_msg), Enrich(*es_msg->process), Enrich(*es_msg->event.exchangedata.file1),
         Enrich(*es_msg->event.exchangedata.file2)));
     case ES_EVENT_TYPE_NOTIFY_EXEC:
-      return std::make_shared<EnrichedMessage>(EnrichedExec(
+      return std::make_unique<EnrichedMessage>(EnrichedExec(
         std::move(es_msg), Enrich(*es_msg->process), Enrich(*es_msg->event.exec.target),
         (es_msg->version >= 2 && es_msg->event.exec.script)
           ? std::make_optional(Enrich(*es_msg->event.exec.script))
@@ -51,28 +51,28 @@ std::shared_ptr<EnrichedMessage> Enricher::Enrich(Message &&es_msg) {
           ? std::make_optional(Enrich(*es_msg->event.exec.cwd))
           : std::nullopt));
     case ES_EVENT_TYPE_NOTIFY_FORK:
-      return std::make_shared<EnrichedMessage>(EnrichedFork(
+      return std::make_unique<EnrichedMessage>(EnrichedFork(
         std::move(es_msg), Enrich(*es_msg->process), Enrich(*es_msg->event.fork.child)));
     case ES_EVENT_TYPE_NOTIFY_EXIT:
-      return std::make_shared<EnrichedMessage>(
+      return std::make_unique<EnrichedMessage>(
         EnrichedExit(std::move(es_msg), Enrich(*es_msg->process)));
     case ES_EVENT_TYPE_NOTIFY_LINK:
-      return std::make_shared<EnrichedMessage>(
+      return std::make_unique<EnrichedMessage>(
         EnrichedLink(std::move(es_msg), Enrich(*es_msg->process),
                      Enrich(*es_msg->event.link.source), Enrich(*es_msg->event.link.target_dir)));
     case ES_EVENT_TYPE_NOTIFY_RENAME: {
       if (es_msg->event.rename.destination_type == ES_DESTINATION_TYPE_NEW_PATH) {
-        return std::make_shared<EnrichedMessage>(EnrichedRename(
+        return std::make_unique<EnrichedMessage>(EnrichedRename(
           std::move(es_msg), Enrich(*es_msg->process), Enrich(*es_msg->event.rename.source),
           std::nullopt, Enrich(*es_msg->event.rename.destination.new_path.dir)));
       } else {
-        return std::make_shared<EnrichedMessage>(EnrichedRename(
+        return std::make_unique<EnrichedMessage>(EnrichedRename(
           std::move(es_msg), Enrich(*es_msg->process), Enrich(*es_msg->event.rename.source),
           Enrich(*es_msg->event.rename.destination.existing_file), std::nullopt));
       }
     }
     case ES_EVENT_TYPE_NOTIFY_UNLINK:
-      return std::make_shared<EnrichedMessage>(EnrichedUnlink(
+      return std::make_unique<EnrichedMessage>(EnrichedUnlink(
         std::move(es_msg), Enrich(*es_msg->process), Enrich(*es_msg->event.unlink.target)));
     default:
       // This is a programming error

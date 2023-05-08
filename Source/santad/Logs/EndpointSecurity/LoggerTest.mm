@@ -138,7 +138,7 @@ class MockWriter : public Null {
   mockESApi->SetExpectationsRetainReleaseMessage();
 
   {
-    auto enrichedMsg = std::make_shared<EnrichedMessage>(
+    auto enrichedMsg = std::make_unique<EnrichedMessage>(
       EnrichedClose(Message(mockESApi, &msg),
                     EnrichedProcess(std::nullopt, std::nullopt, std::nullopt, std::nullopt,
                                     EnrichedFile(std::nullopt, std::nullopt, std::nullopt)),
@@ -147,7 +147,7 @@ class MockWriter : public Null {
     EXPECT_CALL(*mockSerializer, SerializeMessage(testing::A<const EnrichedClose &>())).Times(1);
     EXPECT_CALL(*mockWriter, Write).Times(1);
 
-    Logger(mockSerializer, mockWriter).Log(enrichedMsg);
+    Logger(mockSerializer, mockWriter).Log(std::move(enrichedMsg));
   }
 
   XCTBubbleMockVerifyAndClearExpectations(mockESApi.get());

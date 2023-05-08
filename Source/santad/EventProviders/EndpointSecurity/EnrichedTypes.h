@@ -46,7 +46,11 @@ class EnrichedFile {
         group_(std::move(other.group_)),
         hash_(std::move(other.hash_)) {}
 
+  // Note: Move assignment could be safely implemented but not currently needed
+  EnrichedFile &operator=(EnrichedFile &&other) = delete;
+
   EnrichedFile(const EnrichedFile &other) = delete;
+  EnrichedFile &operator=(const EnrichedFile &other) = delete;
 
   const std::optional<std::shared_ptr<std::string>> &user() const {
     return user_;
@@ -87,7 +91,11 @@ class EnrichedProcess {
         real_group_(std::move(other.real_group_)),
         executable_(std::move(other.executable_)) {}
 
+  // Note: Move assignment could be safely implemented but not currently needed
+  EnrichedProcess &operator=(EnrichedProcess &&other) = delete;
+
   EnrichedProcess(const EnrichedProcess &other) = delete;
+  EnrichedProcess &operator=(const EnrichedProcess &other) = delete;
 
   const std::optional<std::shared_ptr<std::string>> &effective_user() const {
     return effective_user_;
@@ -123,7 +131,12 @@ class EnrichedEventType {
         instigator_(std::move(other.instigator_)),
         enrichment_time_(std::move(other.enrichment_time_)) {}
 
+  // Note: Move assignment could be safely implemented but not currently needed
+  // so no sense in implementing across all child classes
+  EnrichedEventType &operator=(EnrichedEventType &&other) = delete;
+
   EnrichedEventType(const EnrichedEventType &other) = delete;
+  EnrichedEventType &operator=(const EnrichedEventType &other) = delete;
 
   virtual ~EnrichedEventType() = default;
 
