@@ -48,11 +48,8 @@
                                             teamID:(nullable NSString *)teamID
                                          signingID:(nullable NSString *)signingID;
 
-///  Convenience initializer with nil hashes for both the file and certificate.
-// - (nonnull SNTCachedDecision *)decisionForFileInfo:(nonnull SNTFileInfo *)fileInfo
-//                                 teamID:(nullable NSString *)teamID
-//                                       signingID:(nullable NSString *)signingID
-//                                       isPlatformBinary:(BOOL)isPlatformBinary;
+///  Convenience initializer. Will obtain the teamID and construct the signingID
+///  identifier if able.
 - (nonnull SNTCachedDecision *)decisionForFileInfo:(nonnull SNTFileInfo *)fileInfo
                                      targetProcess:(nonnull const es_process_t *)targetProc;
 
