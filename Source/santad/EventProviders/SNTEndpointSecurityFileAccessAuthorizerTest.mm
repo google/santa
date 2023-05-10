@@ -61,7 +61,6 @@ extern es_auth_result_t CombinePolicyResults(es_auth_result_t result1, es_auth_r
 void SetExpectationsForFileAccessAuthorizerInit(
   std::shared_ptr<MockEndpointSecurityAPI> mockESApi) {
   EXPECT_CALL(*mockESApi, InvertTargetPathMuting).WillOnce(testing::Return(true));
-  EXPECT_CALL(*mockESApi, UnmuteAllPaths).WillOnce(testing::Return(true));
   EXPECT_CALL(*mockESApi, UnmuteAllTargetPaths).WillOnce(testing::Return(true));
 }
 
@@ -682,7 +681,6 @@ void ClearWatchItemPolicyProcess(WatchItemPolicy::Process &proc) {
                                                      decisionCache:nil];
 
   EXPECT_CALL(*mockESApi, UnsubscribeAll);
-  EXPECT_CALL(*mockESApi, UnmuteAllPaths).WillOnce(testing::Return(true));
   EXPECT_CALL(*mockESApi, UnmuteAllTargetPaths).WillOnce(testing::Return(true));
 
   accessClient.isSubscribed = true;

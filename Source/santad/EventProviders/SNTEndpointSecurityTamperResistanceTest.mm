@@ -65,7 +65,6 @@ static constexpr std::string_view kSantaKextIdentifier = "com.google.santa-drive
 
   // Setup mocks to handle inverting target path muting
   EXPECT_CALL(*mockESApi, InvertTargetPathMuting).WillOnce(testing::Return(true));
-  EXPECT_CALL(*mockESApi, UnmuteAllPaths).WillOnce(testing::Return(true));
   EXPECT_CALL(*mockESApi, UnmuteAllTargetPaths).WillOnce(testing::Return(true));
 
   // Setup mocks to handle muting the rules db and events db

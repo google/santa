@@ -173,3 +173,7 @@ action=FILE_ACCESS|policy_version=v0.1-experimental|policy_name=UserFoo|path=/Us
 ```
 
 When the `EventLogType` configuration key is set to `protobuf`, a log is emitted to match the `FileAccess` message in the [santa.proto](https://github.com/google/santa/blob/main/Source/common/santa.proto) schema.
+
+### Default Mute Set
+
+The EndpointSecurity framework maintains a set of paths dubbed the "default mute set" that are particularly difficult for ES clients to handle. Additionally, AUTH events from some of these paths have ES response deadline times set very low. In order to help increase stability of this feature, file accesses from binaries in the default mute set are not currently logged. A list of binaries that will not have operations logged can be found in [SNTRuleTable.m](https://github.com/google/santa/blob/2023.4/Source/santad/DataLayer/SNTRuleTable.m#L90-L105). This could be addressed in the future (see [Github Issue #1096](https://github.com/google/santa/issues/1096)).

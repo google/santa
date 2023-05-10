@@ -193,13 +193,12 @@ constexpr std::string_view kProtectedFiles[] = {"/private/var/db/santa/rules.db"
   return _esApi->UnsubscribeAll(_esClient);
 }
 
-- (bool)unmuteEverything {
-  bool result = _esApi->UnmuteAllPaths(_esClient);
-  result = _esApi->UnmuteAllTargetPaths(_esClient) && result;
-  return result;
+- (bool)unmuteAllTargetPaths {
+  return _esApi->UnmuteAllTargetPaths(_esClient);
 }
 
 - (bool)enableTargetPathWatching {
+  [self unmuteAllTargetPaths];
   return _esApi->InvertTargetPathMuting(_esClient);
 }
 
