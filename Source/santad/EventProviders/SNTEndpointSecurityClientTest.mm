@@ -300,9 +300,7 @@ using santa::santad::event_providers::endpoint_security::Message;
                                            processor:Processor::kUnknown];
 
   // UnmuteAllTargetPaths is always attempted.
-  EXPECT_CALL(*mockESApi, UnmuteAllTargetPaths)
-    .Times(2)
-    .WillRepeatedly(testing::Return(true));
+  EXPECT_CALL(*mockESApi, UnmuteAllTargetPaths).Times(2).WillRepeatedly(testing::Return(true));
 
   // Test the underlying invert nute impl returning both true and false
   EXPECT_CALL(*mockESApi, InvertTargetPathMuting)
