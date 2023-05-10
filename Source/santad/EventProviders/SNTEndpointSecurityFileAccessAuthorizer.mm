@@ -241,7 +241,6 @@ void PopulatePathTargets(const Message &msg, std::vector<PathTarget> &targets) {
     [self establishClientOrDie];
 
     [super enableTargetPathWatching];
-    [super unmuteEverything];
   }
   return self;
 }
@@ -570,7 +569,7 @@ void PopulatePathTargets(const Message &msg, std::vector<PathTarget> &targets) {
     if ([super unsubscribeAll]) {
       self.isSubscribed = false;
     }
-    [super unmuteEverything];
+    [super unmuteAllTargetPaths];
   }
 }
 

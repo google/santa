@@ -49,7 +49,7 @@
 - (bool)subscribeAndClearCache:(const std::set<es_event_type_t> &)events;
 
 - (bool)unsubscribeAll;
-- (bool)unmuteEverything;
+- (bool)unmuteAllTargetPaths;
 - (bool)enableTargetPathWatching;
 - (bool)muteTargetPaths:
   (const std::vector<std::pair<std::string, santa::santad::data_layer::WatchItemPathType>> &)paths;

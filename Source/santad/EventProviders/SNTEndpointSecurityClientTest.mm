@@ -274,23 +274,20 @@ using santa::santad::event_providers::endpoint_security::Message;
   XCTBubbleMockVerifyAndClearExpectations(mockESApi.get());
 }
 
-- (void)testUnmuteEverything {
+- (void)testUnmuteAllTargetPaths {
   auto mockESApi = std::make_shared<MockEndpointSecurityAPI>();
   SNTEndpointSecurityClient *client =
     [[SNTEndpointSecurityClient alloc] initWithESAPI:mockESApi
                                              metrics:nullptr
                                            processor:Processor::kUnknown];
 
-  // Test variations of underlying unmute impls returning both true and false
-  EXPECT_CALL(*mockESApi, UnmuteAllPaths)
-    .WillOnce(testing::Return(true))
-    .WillOnce(testing::Return(false));
+  // Test the underlying unmute impl returning both true and false
   EXPECT_CALL(*mockESApi, UnmuteAllTargetPaths)
     .WillOnce(testing::Return(true))
-    .WillOnce(testing::Return(true));
+    .WillOnce(testing::Return(false));
 
-  XCTAssertTrue([client unmuteEverything]);
-  XCTAssertFalse([client unmuteEverything]);
+  XCTAssertTrue([client unmuteAllTargetPaths]);
+  XCTAssertFalse([client unmuteAllTargetPaths]);
 
   XCTBubbleMockVerifyAndClearExpectations(mockESApi.get());
 }
@@ -301,6 +298,11 @@ using santa::santad::event_providers::endpoint_security::Message;
     [[SNTEndpointSecurityClient alloc] initWithESAPI:mockESApi
                                              metrics:nullptr
                                            processor:Processor::kUnknown];
+
+  // UnmuteAllTargetPaths is always attempted.
+  EXPECT_CALL(*mockESApi, UnmuteAllTargetPaths)
+    .Times(2)
+    .WillRepeatedly(testing::Return(true));
 
   // Test the underlying invert nute impl returning both true and false
   EXPECT_CALL(*mockESApi, InvertTargetPathMuting)

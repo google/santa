@@ -111,7 +111,6 @@ static constexpr std::string_view kSantaKextIdentifier = "com.google.santa-drive
 
 - (void)enable {
   [super enableTargetPathWatching];
-  [super unmuteEverything];
 
   // Get the set of protected paths
   std::set<std::string> protectedPaths = [SNTEndpointSecurityTamperResistance getProtectedPaths];
