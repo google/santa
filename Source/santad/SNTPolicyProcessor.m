@@ -15,6 +15,7 @@
 #import "Source/santad/SNTPolicyProcessor.h"
 
 #import <MOLCodesignChecker/MOLCodesignChecker.h>
+#import <Security/SecCode.h>
 
 #include "Source/common/SNTLogging.h"
 
@@ -41,10 +42,12 @@
 - (nonnull SNTCachedDecision *)decisionForFileInfo:(nonnull SNTFileInfo *)fileInfo
                                         fileSHA256:(nullable NSString *)fileSHA256
                                  certificateSHA256:(nullable NSString *)certificateSHA256
-                                            teamID:(nullable NSString *)teamID {
+                                            teamID:(nullable NSString *)teamID
+                                         signingID:(nullable NSString *)signingID {
   SNTCachedDecision *cd = [[SNTCachedDecision alloc] init];
   cd.sha256 = fileSHA256 ?: fileInfo.SHA256;
   cd.teamID = teamID;
+  cd.signingID = signingID;
 
   // If the binary is a critical system binary, don't check its signature.
   // The binary was validated at startup when the rule table was initialized.
@@ -66,13 +69,28 @@
       cd.certSHA256 = csInfo.leafCertificate.SHA256;
       cd.certCommonName = csInfo.leafCertificate.commonName;
       cd.certChain = csInfo.certificates;
-      cd.teamID = teamID ?: [csInfo.signingInformation valueForKey:@"teamid"];
+      cd.teamID = teamID
+                    ?: [csInfo.signingInformation
+                         objectForKey:(__bridge NSString *)kSecCodeInfoTeamIdentifier];
       teamID = cd.teamID;
+
+      // Ensure that if no teamID exists that the signing info confirms it is a
+      // platform binary. If not, remove the signingID.
+      if (!teamID && signingID) {
+        id platformID = [csInfo.signingInformation
+          objectForKey:(__bridge NSString *)kSecCodeInfoPlatformIdentifier];
+        if (![platformID isKindOfClass:[NSNumber class]] || [platformID intValue] == 0) {
+          signingID = nil;
+        }
+      }
+
+      cd.signingID = signingID;
     }
   }
   cd.quarantineURL = fileInfo.quarantineDataURL;
 
   SNTRule *rule = [self.ruleTable ruleForBinarySHA256:cd.sha256
+                                            signingID:signingID
                                     certificateSHA256:cd.certSHA256
                                                teamID:teamID];
   if (rule) {
@@ -105,6 +123,19 @@
             } else {
               rule.state = SNTRuleStateUnknown;
             }
+          default: break;
+        }
+        break;
+      case SNTRuleTypeSigningID:
+        switch (rule.state) {
+          case SNTRuleStateAllow: cd.decision = SNTEventStateAllowSigningID; return cd;
+          case SNTRuleStateSilentBlock:
+            cd.silentBlock = YES;
+            // intentional fallthrough
+          case SNTRuleStateBlock:
+            cd.customMsg = rule.customMsg;
+            cd.decision = SNTEventStateBlockSigningID;
+            return cd;
           default: break;
         }
         break;
@@ -171,15 +202,37 @@
   }
 }
 
-- (nonnull SNTCachedDecision *)decisionForFileInfo:(nonnull SNTFileInfo *)fileInfo {
-  return [self decisionForFileInfo:fileInfo fileSHA256:nil certificateSHA256:nil teamID:nil];
+- (nonnull SNTCachedDecision *)decisionForFileInfo:(nonnull SNTFileInfo *)fileInfo
+                                     targetProcess:(nonnull const es_process_t *)targetProc {
+  NSString *signingID;
+  NSString *teamID;
+
+  if (targetProc->signing_id.length > 0) {
+    if (targetProc->team_id.length > 0) {
+      teamID = [NSString stringWithUTF8String:targetProc->team_id.data];
+      signingID =
+        [NSString stringWithFormat:@"%@:%@", teamID,
+                                   [NSString stringWithUTF8String:targetProc->signing_id.data]];
+    } else if (targetProc->is_platform_binary) {
+      signingID =
+        [NSString stringWithFormat:@"platform:%@",
+                                   [NSString stringWithUTF8String:targetProc->signing_id.data]];
+    }
+  }
+
+  return [self decisionForFileInfo:fileInfo
+                        fileSHA256:nil
+                 certificateSHA256:nil
+                            teamID:teamID
+                         signingID:signingID];
 }
 
 // Used by `$ santactl fileinfo`.
 - (nonnull SNTCachedDecision *)decisionForFilePath:(nonnull NSString *)filePath
                                         fileSHA256:(nullable NSString *)fileSHA256
                                  certificateSHA256:(nullable NSString *)certificateSHA256
-                                            teamID:(nullable NSString *)teamID {
+                                            teamID:(nullable NSString *)teamID
+                                         signingID:(nullable NSString *)signingID {
   SNTFileInfo *fileInfo;
   NSError *error;
   fileInfo = [[SNTFileInfo alloc] initWithPath:filePath error:&error];
@@ -187,7 +240,8 @@
   return [self decisionForFileInfo:fileInfo
                         fileSHA256:fileSHA256
                  certificateSHA256:certificateSHA256
-                            teamID:teamID];
+                            teamID:teamID
+                         signingID:signingID];
 }
 
 ///

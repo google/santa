@@ -50,6 +50,7 @@
 
   ENCODE(self.signingChain, @"signingChain");
   ENCODE(self.teamID, @"teamID");
+  ENCODE(self.signingID, @"signingID");
 
   ENCODE(self.executingUser, @"executingUser");
   ENCODE(self.occurrenceDate, @"occurrenceDate");
@@ -95,6 +96,7 @@
 
     _signingChain = DECODEARRAY(MOLCertificate, @"signingChain");
     _teamID = DECODE(NSString, @"teamID");
+    _signingID = DECODE(NSString, @"signingID");
 
     _executingUser = DECODE(NSString, @"executingUser");
     _occurrenceDate = DECODE(NSDate, @"occurrenceDate");

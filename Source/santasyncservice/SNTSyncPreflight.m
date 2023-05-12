@@ -49,12 +49,13 @@
   // dispatch_group_t group = dispatch_group_create();
   // dispatch_group_enter(group);
   [rop databaseRuleCounts:^(int64_t binary, int64_t certificate, int64_t compiler,
-                            int64_t transitive, int64_t teamID) {
+                            int64_t transitive, int64_t teamID, int64_t signingID) {
     requestDict[kBinaryRuleCount] = @(binary);
     requestDict[kCertificateRuleCount] = @(certificate);
     requestDict[kCompilerRuleCount] = @(compiler);
     requestDict[kTransitiveRuleCount] = @(transitive);
     requestDict[kTeamIDRuleCount] = @(teamID);
+    requestDict[kSigningIDRuleCount] = @(signingID);
   }];
 
   [rop clientMode:^(SNTClientMode cm) {

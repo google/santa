@@ -42,6 +42,7 @@ static NSString *const kRule = @"Rule";
 static NSString *const kSigningChain = @"Signing Chain";
 static NSString *const kUniversalSigningChain = @"Universal Signing Chain";
 static NSString *const kTeamID = @"Team ID";
+static NSString *const kSigningID = @"Signing ID";
 
 // signing chain keys
 static NSString *const kCommonName = @"Common Name";
@@ -111,6 +112,7 @@ typedef id (^SNTAttributeBlock)(SNTCommandFileInfo *, SNTFileInfo *);
 @property(readonly, copy, nonatomic) SNTAttributeBlock downloadTimestamp;
 @property(readonly, copy, nonatomic) SNTAttributeBlock downloadAgent;
 @property(readonly, copy, nonatomic) SNTAttributeBlock teamID;
+@property(readonly, copy, nonatomic) SNTAttributeBlock signingID;
 @property(readonly, copy, nonatomic) SNTAttributeBlock type;
 @property(readonly, copy, nonatomic) SNTAttributeBlock pageZero;
 @property(readonly, copy, nonatomic) SNTAttributeBlock codeSigned;
@@ -184,8 +186,8 @@ REGISTER_COMMAND_NAME(@"fileinfo")
 + (NSArray<NSString *> *)fileInfoKeys {
   return @[
     kPath, kSHA256, kSHA1, kBundleName, kBundleVersion, kBundleVersionStr, kDownloadReferrerURL,
-    kDownloadURL, kDownloadTimestamp, kDownloadAgent, kTeamID, kType, kPageZero, kCodeSigned, kRule,
-    kSigningChain, kUniversalSigningChain
+    kDownloadURL, kDownloadTimestamp, kDownloadAgent, kTeamID, kSigningID, kType, kPageZero,
+    kCodeSigned, kRule, kSigningChain, kUniversalSigningChain
   ];
 }
 
@@ -218,6 +220,7 @@ REGISTER_COMMAND_NAME(@"fileinfo")
       kSigningChain : self.signingChain,
       kUniversalSigningChain : self.universalSigningChain,
       kTeamID : self.teamID,
+      kSigningID : self.signingID,
     };
 
     _printQueue = dispatch_queue_create("com.google.santactl.print_queue", DISPATCH_QUEUE_SERIAL);
@@ -357,15 +360,34 @@ REGISTER_COMMAND_NAME(@"fileinfo")
     dispatch_semaphore_t sema = dispatch_semaphore_create(0);
     NSError *err;
     MOLCodesignChecker *csc = [fileInfo codesignCheckerWithError:&err];
-    [[cmd.daemonConn remoteObjectProxy]
-      decisionForFilePath:fileInfo.path
-               fileSHA256:fileInfo.SHA256
-        certificateSHA256:err ? nil : csc.leafCertificate.SHA256
-                   teamID:[csc.signingInformation valueForKey:@"teamid"]
-                    reply:^(SNTEventState s) {
-                      state = s;
-                      dispatch_semaphore_signal(sema);
-                    }];
+
+    NSString *teamID =
+      [csc.signingInformation objectForKey:(__bridge NSString *)kSecCodeInfoTeamIdentifier];
+    NSString *identifier =
+      [csc.signingInformation objectForKey:(__bridge NSString *)kSecCodeInfoIdentifier];
+
+    NSString *signingID;
+    if (identifier) {
+      if (teamID) {
+        signingID = [NSString stringWithFormat:@"%@:%@", teamID, identifier];
+      } else {
+        id platformID =
+          [csc.signingInformation objectForKey:(__bridge NSString *)kSecCodeInfoPlatformIdentifier];
+        if ([platformID isKindOfClass:[NSNumber class]] && [platformID intValue] != 0) {
+          signingID = [NSString stringWithFormat:@"platform:%@", identifier];
+        }
+      }
+    }
+
+    [[cmd.daemonConn remoteObjectProxy] decisionForFilePath:fileInfo.path
+                                                 fileSHA256:fileInfo.SHA256
+                                          certificateSHA256:err ? nil : csc.leafCertificate.SHA256
+                                                     teamID:teamID
+                                                  signingID:signingID
+                                                      reply:^(SNTEventState s) {
+                                                        state = s;
+                                                        dispatch_semaphore_signal(sema);
+                                                      }];
     if (dispatch_semaphore_wait(sema, dispatch_time(DISPATCH_TIME_NOW, 5 * NSEC_PER_SEC))) {
       cmd.daemonUnavailable = YES;
       return kCommunicationErrorMsg;
@@ -470,6 +492,13 @@ REGISTER_COMMAND_NAME(@"fileinfo")
   return ^id(SNTCommandFileInfo *cmd, SNTFileInfo *fileInfo) {
     MOLCodesignChecker *csc = [fileInfo codesignCheckerWithError:NULL];
     return [csc.signingInformation valueForKey:@"teamid"];
+  };
+}
+
+- (SNTAttributeBlock)signingID {
+  return ^id(SNTCommandFileInfo *cmd, SNTFileInfo *fileInfo) {
+    MOLCodesignChecker *csc = [fileInfo codesignCheckerWithError:NULL];
+    return [csc.signingInformation objectForKey:(__bridge NSString *)kSecCodeInfoIdentifier];
   };
 }
 

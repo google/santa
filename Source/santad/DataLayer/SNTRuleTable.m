@@ -272,6 +272,14 @@ static void addPathsFromDefaultMuteSet(NSMutableSet *criticalPaths) API_AVAILABL
   return count;
 }
 
+- (NSUInteger)signingIDRuleCount {
+  __block NSUInteger count = 0;
+  [self inDatabase:^(FMDatabase *db) {
+    count = [db longForQuery:@"SELECT COUNT(*) FROM rules WHERE type=4"];
+  }];
+  return count;
+}
+
 - (SNTRule *)ruleFromResultSet:(FMResultSet *)rs {
   return [[SNTRule alloc] initWithIdentifier:[rs stringForColumn:@"identifier"]
                                        state:[rs intForColumn:@"state"]
@@ -281,6 +289,7 @@ static void addPathsFromDefaultMuteSet(NSMutableSet *criticalPaths) API_AVAILABL
 }
 
 - (SNTRule *)ruleForBinarySHA256:(NSString *)binarySHA256
+                       signingID:(NSString *)signingID
                certificateSHA256:(NSString *)certificateSHA256
                           teamID:(NSString *)teamID {
   __block SNTRule *rule;
@@ -294,6 +303,8 @@ static void addPathsFromDefaultMuteSet(NSMutableSet *criticalPaths) API_AVAILABL
     if (rule.type == SNTRuleTypeCertificate) return rule;
     rule = staticRules[teamID];
     if (rule.type == SNTRuleTypeTeamID) return rule;
+    rule = staticRules[signingID];
+    if (rule.type == SNTRuleTypeSigningID) return rule;
   }
 
   // Now query the database.
@@ -301,7 +312,7 @@ static void addPathsFromDefaultMuteSet(NSMutableSet *criticalPaths) API_AVAILABL
   // NOTE: This code is written with the intention that the binary rule is searched for first
   // as Santa is designed to go with the most-specific rule possible.
   //
-  // The intended order of precedence is Binaries > Certificates > Team IDs.
+  // The intended order of precedence is Binaries > Signing IDs > Certificates > Team IDs.
   //
   // As such the query should have "ORDER BY type DESC" before the LIMIT, to ensure that is the
   // case. However, in all tested versions of SQLite that ORDER BY clause is unnecessary: the query
@@ -316,10 +327,12 @@ static void addPathsFromDefaultMuteSet(NSMutableSet *criticalPaths) API_AVAILABL
   // There is a test for this in SNTRuleTableTests in case SQLite behavior changes in the future.
   //
   [self inDatabase:^(FMDatabase *db) {
-    FMResultSet *rs =
-      [db executeQuery:@"SELECT * FROM rules WHERE (identifier=? and type=1) OR "
-                       @"(identifier=? AND type=2) OR (identifier=? AND type=3) LIMIT 1",
-                       binarySHA256, certificateSHA256, teamID];
+    FMResultSet *rs = [db executeQuery:@"SELECT * FROM rules WHERE "
+                                       @"   (identifier=? and type=1) "
+                                       @"OR (identifier=? AND type=4) "
+                                       @"OR (identifier=? AND type=2) "
+                                       @"OR (identifier=? AND type=3) LIMIT 1",
+                                       binarySHA256, signingID, certificateSHA256, teamID];
     if ([rs next]) {
       rule = [self ruleFromResultSet:rs];
     }

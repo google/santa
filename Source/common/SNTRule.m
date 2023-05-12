@@ -100,6 +100,8 @@
     type = SNTRuleTypeCertificate;
   } else if ([ruleTypeString isEqual:kRuleTypeTeamID]) {
     type = SNTRuleTypeTeamID;
+  } else if ([ruleTypeString isEqual:kRuleTypeSigningID]) {
+    type = SNTRuleTypeSigningID;
   } else {
     return nil;
   }

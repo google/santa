@@ -81,13 +81,19 @@ REGISTER_COMMAND_NAME(@"status")
   }];
 
   // Database counts
-  __block int64_t eventCount = -1, binaryRuleCount = -1, certRuleCount = -1, teamIDRuleCount = -1;
-  __block int64_t compilerRuleCount = -1, transitiveRuleCount = -1;
+  __block int64_t eventCount = -1;
+  __block int64_t binaryRuleCount = -1;
+  __block int64_t certRuleCount = -1;
+  __block int64_t teamIDRuleCount = -1;
+  __block int64_t signingIDRuleCount = -1;
+  __block int64_t compilerRuleCount = -1;
+  __block int64_t transitiveRuleCount = -1;
   [rop databaseRuleCounts:^(int64_t binary, int64_t certificate, int64_t compiler,
-                            int64_t transitive, int64_t teamID) {
+                            int64_t transitive, int64_t teamID, int64_t signingID) {
     binaryRuleCount = binary;
     certRuleCount = certificate;
     teamIDRuleCount = teamID;
+    signingIDRuleCount = signingID;
     compilerRuleCount = compiler;
     transitiveRuleCount = transitive;
   }];
@@ -193,6 +199,8 @@ REGISTER_COMMAND_NAME(@"status")
       @"database" : @{
         @"binary_rules" : @(binaryRuleCount),
         @"certificate_rules" : @(certRuleCount),
+        @"teamid_rules" : @(teamIDRuleCount),
+        @"signingid_rules" : @(signingIDRuleCount),
         @"compiler_rules" : @(compilerRuleCount),
         @"transitive_rules" : @(transitiveRuleCount),
         @"events_pending_upload" : @(eventCount),
@@ -258,6 +266,7 @@ REGISTER_COMMAND_NAME(@"status")
     printf("  %-25s | %lld\n", "Binary Rules", binaryRuleCount);
     printf("  %-25s | %lld\n", "Certificate Rules", certRuleCount);
     printf("  %-25s | %lld\n", "TeamID Rules", teamIDRuleCount);
+    printf("  %-25s | %lld\n", "SigningID Rules", signingIDRuleCount);
     printf("  %-25s | %lld\n", "Compiler Rules", compilerRuleCount);
     printf("  %-25s | %lld\n", "Transitive Rules", transitiveRuleCount);
     printf("  %-25s | %lld\n", "Events Pending Upload", eventCount);

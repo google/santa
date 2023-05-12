@@ -37,6 +37,11 @@ using santa::santad::SantadDeps;
 using santa::santad::event_providers::endpoint_security::Message;
 
 NSString *testBinariesPath = @"santa/Source/santad/testdata/binaryrules";
+static const char *kAllowedSigningID = "com.google.allowed_signing_id";
+static const char *kBlockedSigningID = "com.google.blocked_signing_id";
+static const char *kNoRuleMatchSigningID = "com.google.no_rule_match_signing_id";
+static const char *kBlockedTeamID = "EQHXZ8M8AV";
+static const char *kNoRuleMatchTeamID = "ABC1234XYZ";
 
 @interface SantadTest : XCTestCase
 @property id mockSNTDatabaseController;
@@ -56,7 +61,8 @@ NSString *testBinariesPath = @"santa/Source/santad/testdata/binaryrules";
 
 - (BOOL)checkBinaryExecution:(NSString *)binaryName
                   wantResult:(es_auth_result_t)wantResult
-                  clientMode:(NSInteger)clientMode {
+                  clientMode:(NSInteger)clientMode
+                messageSetup:(void (^)(es_message_t *))messageSetupBlock {
   auto mockESApi = std::make_shared<MockEndpointSecurityAPI>();
   mockESApi->SetExpectationsESNewClient();
 
@@ -102,6 +108,7 @@ NSString *testBinariesPath = @"santa/Source/santad/testdata/binaryrules";
   lstat(binaryPath.UTF8String, &fileStat);
   es_file_t file = MakeESFile([binaryPath UTF8String], fileStat);
   es_process_t proc = MakeESProcess(&file);
+  proc.is_platform_binary = false;
   // Set a 6.5 second deadline for the message. The base SNTEndpointSecurityClient
   // class leaves a 5 second buffer to auto-respond to messages. A 6 second
   // deadline means there is a 1.5 second leeway given for the processing block
@@ -110,6 +117,10 @@ NSString *testBinariesPath = @"santa/Source/santad/testdata/binaryrules";
   // deadline block to run and release the message.
   es_message_t esMsg = MakeESMessage(ES_EVENT_TYPE_AUTH_EXEC, &proc, ActionType::Auth, 6500);
   esMsg.event.exec.target = &proc;
+
+  if (messageSetupBlock) {
+    messageSetupBlock(&esMsg);
+  }
 
   // The test must wait for the ES client async message processing to complete.
   // Otherwise, the `es_message_t` stack variable will go out of scope and will
@@ -144,6 +155,15 @@ NSString *testBinariesPath = @"santa/Source/santad/testdata/binaryrules";
                  "Failed waiting for message to be processed...");
 
   XCTBubbleMockVerifyAndClearExpectations(mockESApi.get());
+}
+
+- (BOOL)checkBinaryExecution:(NSString *)binaryName
+                  wantResult:(es_auth_result_t)wantResult
+                  clientMode:(NSInteger)clientMode {
+  return [self checkBinaryExecution:binaryName
+                         wantResult:wantResult
+                         clientMode:clientMode
+                       messageSetup:nil];
 }
 
 /**
@@ -209,6 +229,66 @@ NSString *testBinariesPath = @"santa/Source/santad/testdata/binaryrules";
   [self checkBinaryExecution:@"banned_teamid"
                   wantResult:ES_AUTH_RESULT_DENY
                   clientMode:SNTClientModeMonitor];
+}
+
+- (void)testBinaryWithSigningIDBlockRuleAndCertAllowedRuleIsBlockedInMonitorMode {
+  [self checkBinaryExecution:@"cert_hash_allowed_signingid_blocked"
+                  wantResult:ES_AUTH_RESULT_DENY
+                  clientMode:SNTClientModeMonitor
+                messageSetup:^(es_message_t *msg) {
+                  msg->event.exec.target->team_id = MakeESStringToken(kBlockedTeamID);
+                  msg->event.exec.target->signing_id = MakeESStringToken(kBlockedSigningID);
+                }];
+}
+
+- (void)testBinaryWithSigningIDNoRuleMatchAndCertAllowedRuleIsAllowedInMonitorMode {
+  [self checkBinaryExecution:@"cert_hash_allowed_signingid_not_matched"
+                  wantResult:ES_AUTH_RESULT_ALLOW
+                  clientMode:SNTClientModeMonitor
+                messageSetup:^(es_message_t *msg) {
+                  msg->event.exec.target->team_id = MakeESStringToken(kBlockedTeamID);
+                  msg->event.exec.target->signing_id = MakeESStringToken(kNoRuleMatchSigningID);
+                }];
+}
+
+- (void)testBinaryWithSigningIDBlockRuleMatchAndCertAllowedRuleIsAllowedInMonitorMode {
+  [self checkBinaryExecution:@"binary_hash_allowed_signingid_blocked"
+                  wantResult:ES_AUTH_RESULT_ALLOW
+                  clientMode:SNTClientModeMonitor
+                messageSetup:^(es_message_t *msg) {
+                  msg->event.exec.target->team_id = MakeESStringToken(kBlockedTeamID);
+                  msg->event.exec.target->signing_id = MakeESStringToken(kBlockedSigningID);
+                }];
+}
+
+- (void)testBinaryWithSigningIDNoRuleMatchIsAllowedInMonitorMode {
+  [self checkBinaryExecution:@"noop"
+                  wantResult:ES_AUTH_RESULT_ALLOW
+                  clientMode:SNTClientModeMonitor
+                messageSetup:^(es_message_t *msg) {
+                  msg->event.exec.target->team_id = MakeESStringToken(kNoRuleMatchTeamID);
+                  msg->event.exec.target->signing_id = MakeESStringToken(kNoRuleMatchSigningID);
+                }];
+}
+
+- (void)testBinaryWithSigningIDNoRuleMatchIsBlockedInLockdownMode {
+  [self checkBinaryExecution:@"noop"
+                  wantResult:ES_AUTH_RESULT_DENY
+                  clientMode:SNTClientModeLockdown
+                messageSetup:^(es_message_t *msg) {
+                  msg->event.exec.target->team_id = MakeESStringToken(kNoRuleMatchTeamID);
+                  msg->event.exec.target->signing_id = MakeESStringToken(kNoRuleMatchSigningID);
+                }];
+}
+
+- (void)testBinaryWithAllowedSigningIDRuleIsAllowedInLockdownMode {
+  [self checkBinaryExecution:@"noop"
+                  wantResult:ES_AUTH_RESULT_ALLOW
+                  clientMode:SNTClientModeLockdown
+                messageSetup:^(es_message_t *msg) {
+                  msg->event.exec.target->team_id = MakeESStringToken(kNoRuleMatchTeamID);
+                  msg->event.exec.target->signing_id = MakeESStringToken(kAllowedSigningID);
+                }];
 }
 
 - (void)testBinaryWithSHA256AllowRuleAndBlockedTeamIDRuleIsAllowedInLockdownMode {

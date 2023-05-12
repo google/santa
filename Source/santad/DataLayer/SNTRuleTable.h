@@ -57,10 +57,16 @@
 - (NSUInteger)teamIDRuleCount;
 
 ///
-///  @return Rule for binary or certificate with given SHA-256. The binary rule will be returned
-///          if it exists. If not, the certificate rule will be returned if it exists.
+/// @return Number of signing ID rules in the database
+///
+- (NSUInteger)signingIDRuleCount;
+
+///
+///  @return Rule for binary, signingID, certificate or teamID (in that order).
+///          The first matching rule found is returned.
 ///
 - (SNTRule *)ruleForBinarySHA256:(NSString *)binarySHA256
+                       signingID:(NSString *)signingID
                certificateSHA256:(NSString *)certificateSHA256
                           teamID:(NSString *)teamID;
 
