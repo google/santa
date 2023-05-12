@@ -125,6 +125,11 @@ class MockWriter : public Null {
                                      @"/tmp/spool", 1, 1, 1));
   XCTAssertNotEqual(nullptr, std::dynamic_pointer_cast<Protobuf>(logger.Serializer()));
   XCTAssertNotEqual(nullptr, std::dynamic_pointer_cast<Spool>(logger.Writer()));
+
+  logger = LoggerPeer(Logger::Create(mockESApi, SNTEventLogTypeJSON, nil, @"/tmp/temppy",
+                                     @"/tmp/spool", 1, 1, 1));
+  XCTAssertNotEqual(nullptr, std::dynamic_pointer_cast<Protobuf>(logger.Serializer()));
+  XCTAssertNotEqual(nullptr, std::dynamic_pointer_cast<File>(logger.Writer()));
 }
 
 - (void)testLog {

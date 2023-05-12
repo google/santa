@@ -121,6 +121,7 @@ typedef NS_ENUM(NSInteger, SNTEventLogType) {
   SNTEventLogTypeSyslog,
   SNTEventLogTypeFilelog,
   SNTEventLogTypeProtobuf,
+  SNTEventLogTypeJSON,
   SNTEventLogTypeNull,
 };
 

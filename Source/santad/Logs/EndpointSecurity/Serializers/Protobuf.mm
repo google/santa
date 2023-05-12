@@ -38,6 +38,8 @@
 
 using google::protobuf::Arena;
 using google::protobuf::Timestamp;
+using google::protobuf::util::JsonPrintOptions;
+using google::protobuf::util::MessageToJsonString;
 
 using santa::common::NSStringToUTF8StringView;
 using santa::santad::event_providers::endpoint_security::EndpointSecurityAPI;
@@ -66,12 +68,12 @@ namespace pbv1 = ::santa::pb::v1;
 namespace santa::santad::logs::endpoint_security::serializers {
 
 std::shared_ptr<Protobuf> Protobuf::Create(std::shared_ptr<EndpointSecurityAPI> esapi,
-                                           SNTDecisionCache *decision_cache) {
-  return std::make_shared<Protobuf>(esapi, std::move(decision_cache));
+                                           SNTDecisionCache *decision_cache, bool json) {
+  return std::make_shared<Protobuf>(esapi, std::move(decision_cache), json);
 }
 
-Protobuf::Protobuf(std::shared_ptr<EndpointSecurityAPI> esapi, SNTDecisionCache *decision_cache)
-    : Serializer(std::move(decision_cache)), esapi_(esapi) {}
+Protobuf::Protobuf(std::shared_ptr<EndpointSecurityAPI> esapi, SNTDecisionCache *decision_cache, bool json)
+    : Serializer(std::move(decision_cache)), esapi_(esapi), json_(json) {}
 
 static inline void EncodeTimestamp(Timestamp *timestamp, struct timespec ts) {
   timestamp->set_seconds(ts.tv_sec);
@@ -387,6 +389,26 @@ static inline void EncodeCertificateInfo(::pbv1::CertificateInfo *pb_cert_info, 
 }
 
 std::vector<uint8_t> Protobuf::FinalizeProto(::pbv1::SantaMessage *santa_msg) {
+  if (this->_) {
+    //TODO: Profile this. It's probably not the most efficient way to do this.
+    JsonPrintOptions options;
+    options.always_print_enums_as_ints = false;
+    options.always_print_primitive_fields = true;
+    options.preserve_proto_field_names = true;
+    std::string json;
+
+    google::protobuf::util::Status status = MessageToJsonString(*santa_msg, &json, options);
+
+    if (!status.ok()) {
+      LOG(ERROR) << "Failed to convert protobuf to JSON: " << status.error_message();
+    }
+
+    std::vector<uint8_t> vec(json.begin(), json.end());
+    // Add a newline to the end of the JSON row.
+    vec.push_back('\n');
+    return vec;
+  }
+
   std::vector<uint8_t> vec(santa_msg->ByteSizeLong());
   santa_msg->SerializeWithCachedSizesToArray(vec.data());
   return vec;

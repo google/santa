@@ -33,11 +33,11 @@ class Protobuf : public Serializer {
  public:
   static std::shared_ptr<Protobuf> Create(
     std::shared_ptr<santa::santad::event_providers::endpoint_security::EndpointSecurityAPI> esapi,
-    SNTDecisionCache *decision_cache);
+    SNTDecisionCache *decision_cache, bool json = false);
 
   Protobuf(
     std::shared_ptr<santa::santad::event_providers::endpoint_security::EndpointSecurityAPI> esapi,
-    SNTDecisionCache *decision_cache);
+    SNTDecisionCache *decision_cache, bool json = false);
 
   std::vector<uint8_t> SerializeMessage(
     const santa::santad::event_providers::endpoint_security::EnrichedClose &) override;
@@ -87,6 +87,9 @@ class Protobuf : public Serializer {
   std::vector<uint8_t> FinalizeProto(::santa::pb::v1::SantaMessage *santa_msg);
 
   std::shared_ptr<santa::santad::event_providers::endpoint_security::EndpointSecurityAPI> esapi_;
+  // Toggle for transforming protobuf output to its JSON form.
+  // See https://protobuf.dev/programming-guides/proto3/#json
+  bool json_;
 };
 
 }  // namespace santa::santad::logs::endpoint_security::serializers
