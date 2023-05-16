@@ -31,13 +31,13 @@ static NSString *const kEventsDatabaseName = @"events.db";
   return kDatabasePath;
 }
 
-+ (id)setupTable:(Class)cls name:(NSString*)name {
-  static id table;
-  static dispatch_once_t onceToken;
-  dispatch_once(&onceToken, ^{
++ (SNTEventTable *)eventTable {
+  static SNTEventTable *eventDatabase;
+  static dispatch_once_t eventDatabaseToken;
+  dispatch_once(&eventDatabaseToken, ^{
     [self createDatabasePath];
     NSString *fullPath =
-      [[SNTDatabaseController databasePath] stringByAppendingPathComponent:name];
+      [[SNTDatabaseController databasePath] stringByAppendingPathComponent:kEventsDatabaseName];
     FMDatabaseQueue *dbq = [[FMDatabaseQueue alloc] initWithPath:fullPath];
 
 #ifndef DEBUG
@@ -46,21 +46,36 @@ static NSString *const kEventsDatabaseName = @"events.db";
     }];
 #endif
 
-    table = [[cls alloc] initWithDatabaseQueue:dbq];
+    eventDatabase = [[SNTEventTable alloc] initWithDatabaseQueue:dbq];
 
     chown([fullPath UTF8String], 0, 0);
     chmod([fullPath UTF8String], 0600);
   });
 
-  return table;
-}
-
-+ (SNTEventTable *)eventTable {
-  return [SNTDatabaseController setupTable:[SNTEventTable class] name:kEventsDatabaseName];
+  return eventDatabase;
 }
 
 + (SNTRuleTable *)ruleTable {
-  return [SNTDatabaseController setupTable:[SNTRuleTable class] name:kRulesDatabaseName];
+  static SNTRuleTable *ruleDatabase;
+  static dispatch_once_t ruleDatabaseToken;
+  dispatch_once(&ruleDatabaseToken, ^{
+    [self createDatabasePath];
+    NSString *fullPath =
+      [[SNTDatabaseController databasePath] stringByAppendingPathComponent:kRulesDatabaseName];
+    FMDatabaseQueue *dbq = [[FMDatabaseQueue alloc] initWithPath:fullPath];
+
+#ifndef DEBUG
+    [dbq inDatabase:^(FMDatabase *db) {
+      db.logsErrors = NO;
+    }];
+#endif
+
+    ruleDatabase = [[SNTRuleTable alloc] initWithDatabaseQueue:dbq];
+
+    chown([fullPath UTF8String], 0, 0);
+    chmod([fullPath UTF8String], 0600);
+  });
+  return ruleDatabase;
 }
 
 #pragma mark - Private
