@@ -18,7 +18,13 @@
 
 #import "Source/common/SNTStoredEvent.h"
 
+static const uint32_t kEventTableCurrentVersion = 3;
+
 @implementation SNTEventTable
+
+- (uint32_t)currentSupportedVersion {
+  return kEventTableCurrentVersion;
+}
 
 - (uint32_t)initializeDatabase:(FMDatabase *)db fromVersion:(uint32_t)version {
   int newVersion = 0;

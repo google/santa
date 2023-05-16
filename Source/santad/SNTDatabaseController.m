@@ -31,16 +31,14 @@ static NSString *const kEventsDatabaseName = @"events.db";
   return kDatabasePath;
 }
 
-+ (SNTEventTable *)eventTable {
-  static SNTEventTable *eventDatabase;
-  static dispatch_once_t eventDatabaseToken;
-  dispatch_once(&eventDatabaseToken, ^{
++ (id)setupTable:(Class)cls name:(NSString*)name {
+  static id table;
+  static dispatch_once_t onceToken;
+  dispatch_once(&onceToken, ^{
     [self createDatabasePath];
     NSString *fullPath =
-      [[SNTDatabaseController databasePath] stringByAppendingPathComponent:kEventsDatabaseName];
+      [[SNTDatabaseController databasePath] stringByAppendingPathComponent:name];
     FMDatabaseQueue *dbq = [[FMDatabaseQueue alloc] initWithPath:fullPath];
-    chown([fullPath UTF8String], 0, 0);
-    chmod([fullPath UTF8String], 0600);
 
 #ifndef DEBUG
     [dbq inDatabase:^(FMDatabase *db) {
@@ -48,32 +46,21 @@ static NSString *const kEventsDatabaseName = @"events.db";
     }];
 #endif
 
-    eventDatabase = [[SNTEventTable alloc] initWithDatabaseQueue:dbq];
+    table = [[cls alloc] initWithDatabaseQueue:dbq];
+
+    chown([fullPath UTF8String], 0, 0);
+    chmod([fullPath UTF8String], 0600);
   });
 
-  return eventDatabase;
+  return table;
+}
+
++ (SNTEventTable *)eventTable {
+  return [SNTDatabaseController setupTable:[SNTEventTable class] name:kEventsDatabaseName];
 }
 
 + (SNTRuleTable *)ruleTable {
-  static SNTRuleTable *ruleDatabase;
-  static dispatch_once_t ruleDatabaseToken;
-  dispatch_once(&ruleDatabaseToken, ^{
-    [self createDatabasePath];
-    NSString *fullPath =
-      [[SNTDatabaseController databasePath] stringByAppendingPathComponent:kRulesDatabaseName];
-    FMDatabaseQueue *dbq = [[FMDatabaseQueue alloc] initWithPath:fullPath];
-    chown([fullPath UTF8String], 0, 0);
-    chmod([fullPath UTF8String], 0600);
-
-#ifndef DEBUG
-    [dbq inDatabase:^(FMDatabase *db) {
-      db.logsErrors = NO;
-    }];
-#endif
-
-    ruleDatabase = [[SNTRuleTable alloc] initWithDatabaseQueue:dbq];
-  });
-  return ruleDatabase;
+  return [SNTDatabaseController setupTable:[SNTRuleTable class] name:kRulesDatabaseName];
 }
 
 #pragma mark - Private
