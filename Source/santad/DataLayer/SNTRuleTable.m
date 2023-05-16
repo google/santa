@@ -210,10 +210,21 @@ static void addPathsFromDefaultMuteSet(NSMutableSet *criticalPaths) API_AVAILABL
     [db executeUpdate:@"ALTER TABLE 'rules' ADD 'timestamp' INTEGER"];
     newVersion = 3;
   }
+
   if (version < 4) {
     // Rename `shasum` column to `identifier`.
     [db executeUpdate:@"ALTER TABLE 'rules' RENAME COLUMN 'shasum' TO 'identifier'"];
     newVersion = 4;
+  }
+
+  if (version < 5) {
+    // Migrate SNTRuleType enum values
+    [db executeUpdate:@"UPDATE rules SET type = 1000 WHERE type = 1"];
+    [db executeUpdate:@"UPDATE rules SET type = 3000 WHERE type = 2"];
+    [db executeUpdate:@"UPDATE rules SET type = 4000 WHERE type = 3"];
+    [db executeUpdate:@"UPDATE rules SET type = 2000 WHERE type = 4"];
+
+    newVersion = 5;
   }
 
   // Save signing info for launchd and santad. Used to ensure they are always allowed.
@@ -236,20 +247,20 @@ static void addPathsFromDefaultMuteSet(NSMutableSet *criticalPaths) API_AVAILABL
   return count;
 }
 
-- (NSUInteger)binaryRuleCount {
+- (NSUInteger)ruleCountForRuleType:(SNTRuleType)ruleType {
   __block NSUInteger count = 0;
   [self inDatabase:^(FMDatabase *db) {
-    count = [db longForQuery:@"SELECT COUNT(*) FROM rules WHERE type=1"];
+    count = [db longForQuery:@"SELECT COUNT(*) FROM rules WHERE type=?", @(ruleType)];
   }];
   return count;
 }
 
+- (NSUInteger)binaryRuleCount {
+  return [self ruleCountForRuleType:SNTRuleTypeBinary];
+}
+
 - (NSUInteger)certificateRuleCount {
-  __block NSUInteger count = 0;
-  [self inDatabase:^(FMDatabase *db) {
-    count = [db longForQuery:@"SELECT COUNT(*) FROM rules WHERE type=2"];
-  }];
-  return count;
+  return [self ruleCountForRuleType:SNTRuleTypeCertificate];
 }
 
 - (NSUInteger)compilerRuleCount {
@@ -271,19 +282,11 @@ static void addPathsFromDefaultMuteSet(NSMutableSet *criticalPaths) API_AVAILABL
 }
 
 - (NSUInteger)teamIDRuleCount {
-  __block NSUInteger count = 0;
-  [self inDatabase:^(FMDatabase *db) {
-    count = [db longForQuery:@"SELECT COUNT(*) FROM rules WHERE type=3"];
-  }];
-  return count;
+  return [self ruleCountForRuleType:SNTRuleTypeTeamID];
 }
 
 - (NSUInteger)signingIDRuleCount {
-  __block NSUInteger count = 0;
-  [self inDatabase:^(FMDatabase *db) {
-    count = [db longForQuery:@"SELECT COUNT(*) FROM rules WHERE type=4"];
-  }];
-  return count;
+  return [self ruleCountForRuleType:SNTRuleTypeSigningID];
 }
 
 - (SNTRule *)ruleFromResultSet:(FMResultSet *)rs {
@@ -347,10 +350,10 @@ static void addPathsFromDefaultMuteSet(NSMutableSet *criticalPaths) API_AVAILABL
   //
   [self inDatabase:^(FMDatabase *db) {
     FMResultSet *rs = [db executeQuery:@"SELECT * FROM rules WHERE "
-                                       @"   (identifier=? and type=1) "
-                                       @"OR (identifier=? AND type=4) "
-                                       @"OR (identifier=? AND type=2) "
-                                       @"OR (identifier=? AND type=3) LIMIT 1",
+                                       @"   (identifier=? and type=1000) "
+                                       @"OR (identifier=? AND type=2000) "
+                                       @"OR (identifier=? AND type=3000) "
+                                       @"OR (identifier=? AND type=4000) LIMIT 1",
                                        binarySHA256, signingID, certificateSHA256, teamID];
     if ([rs next]) {
       rule = [self ruleFromResultSet:rs];
