@@ -40,7 +40,7 @@
           return;
         }
         [self closeDeleteReopenDatabase:db];
-      } else  if ([db userVersion] > [self currentSupportedVersion]) {
+      } else if ([db userVersion] > [self currentSupportedVersion]) {
         [self closeDeleteReopenDatabase:db];
       }
     }];
