@@ -39,9 +39,9 @@
           bail = YES;
           return;
         }
-        [db close];
-        [[NSFileManager defaultManager] removeItemAtPath:[db databasePath] error:NULL];
-        [db open];
+        [self closeDeleteReopenDatabase:db];
+      } else if ([db userVersion] > [self currentSupportedVersion]) {
+        [self closeDeleteReopenDatabase:db];
       }
     }];
 
@@ -58,7 +58,18 @@
   return nil;
 }
 
+- (void)closeDeleteReopenDatabase:(FMDatabase *)db {
+  [db close];
+  [[NSFileManager defaultManager] removeItemAtPath:[db databasePath] error:NULL];
+  [db open];
+}
+
 - (uint32_t)initializeDatabase:(FMDatabase *)db fromVersion:(uint32_t)version {
+  [self doesNotRecognizeSelector:_cmd];
+  return 0;
+}
+
+- (uint32_t)currentSupportedVersion {
   [self doesNotRecognizeSelector:_cmd];
   return 0;
 }

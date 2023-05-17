@@ -25,6 +25,8 @@
 #import "Source/common/SNTLogging.h"
 #import "Source/common/SNTRule.h"
 
+static const uint32_t kRuleTableCurrentVersion = 4;
+
 // TODO(nguyenphillip): this should be configurable.
 // How many rules must be in database before we start trying to remove transitive rules.
 static const NSUInteger kTransitiveRuleCullingThreshold = 500000;
@@ -171,6 +173,10 @@ static void addPathsFromDefaultMuteSet(NSMutableSet *criticalPaths) API_AVAILABL
     bins[binInfo.SHA256] = cd;
   }
   self.criticalSystemBinaries = bins;
+}
+
+- (uint32_t)currentSupportedVersion {
+  return kRuleTableCurrentVersion;
 }
 
 - (uint32_t)initializeDatabase:(FMDatabase *)db fromVersion:(uint32_t)version {

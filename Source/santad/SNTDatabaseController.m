@@ -39,8 +39,6 @@ static NSString *const kEventsDatabaseName = @"events.db";
     NSString *fullPath =
       [[SNTDatabaseController databasePath] stringByAppendingPathComponent:kEventsDatabaseName];
     FMDatabaseQueue *dbq = [[FMDatabaseQueue alloc] initWithPath:fullPath];
-    chown([fullPath UTF8String], 0, 0);
-    chmod([fullPath UTF8String], 0600);
 
 #ifndef DEBUG
     [dbq inDatabase:^(FMDatabase *db) {
@@ -49,6 +47,9 @@ static NSString *const kEventsDatabaseName = @"events.db";
 #endif
 
     eventDatabase = [[SNTEventTable alloc] initWithDatabaseQueue:dbq];
+
+    chown([fullPath UTF8String], 0, 0);
+    chmod([fullPath UTF8String], 0600);
   });
 
   return eventDatabase;
@@ -62,8 +63,6 @@ static NSString *const kEventsDatabaseName = @"events.db";
     NSString *fullPath =
       [[SNTDatabaseController databasePath] stringByAppendingPathComponent:kRulesDatabaseName];
     FMDatabaseQueue *dbq = [[FMDatabaseQueue alloc] initWithPath:fullPath];
-    chown([fullPath UTF8String], 0, 0);
-    chmod([fullPath UTF8String], 0600);
 
 #ifndef DEBUG
     [dbq inDatabase:^(FMDatabase *db) {
@@ -72,6 +71,9 @@ static NSString *const kEventsDatabaseName = @"events.db";
 #endif
 
     ruleDatabase = [[SNTRuleTable alloc] initWithDatabaseQueue:dbq];
+
+    chown([fullPath UTF8String], 0, 0);
+    chmod([fullPath UTF8String], 0600);
   });
   return ruleDatabase;
 }
