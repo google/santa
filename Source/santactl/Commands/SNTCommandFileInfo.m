@@ -403,6 +403,8 @@ REGISTER_COMMAND_NAME(@"fileinfo")
         case SNTEventStateBlockCertificate: [output appendString:@" (Certificate)"]; break;
         case SNTEventStateAllowTeamID:
         case SNTEventStateBlockTeamID: [output appendString:@" (TeamID)"]; break;
+        case SNTEventStateAllowSigningID:
+        case SNTEventStateBlockSigningID: [output appendString:@" (SigningID)"]; break;
         case SNTEventStateAllowScope:
         case SNTEventStateBlockScope: [output appendString:@" (Scope)"]; break;
         case SNTEventStateAllowCompiler: [output appendString:@" (Compiler)"]; break;
