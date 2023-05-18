@@ -303,14 +303,27 @@ static void addPathsFromDefaultMuteSet(NSMutableSet *criticalPaths) API_AVAILABL
   // Look for a static rule that matches.
   NSDictionary *staticRules = [[SNTConfigurator configurator] staticRules];
   if (staticRules.count) {
+    // IMPORTANT: The order static rules are checked here should be the same
+    // order as given by the SQL query for the rules database.
     rule = staticRules[binarySHA256];
-    if (rule.type == SNTRuleTypeBinary) return rule;
-    rule = staticRules[certificateSHA256];
-    if (rule.type == SNTRuleTypeCertificate) return rule;
-    rule = staticRules[teamID];
-    if (rule.type == SNTRuleTypeTeamID) return rule;
+    if (rule.type == SNTRuleTypeBinary) {
+      return rule;
+    }
+
     rule = staticRules[signingID];
-    if (rule.type == SNTRuleTypeSigningID) return rule;
+    if (rule.type == SNTRuleTypeSigningID) {
+      return rule;
+    }
+
+    rule = staticRules[certificateSHA256];
+    if (rule.type == SNTRuleTypeCertificate) {
+      return rule;
+    }
+
+    rule = staticRules[teamID];
+    if (rule.type == SNTRuleTypeTeamID) {
+      return rule;
+    }
   }
 
   // Now query the database.
