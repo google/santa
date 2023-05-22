@@ -16,6 +16,7 @@
 
 #include <EndpointSecurity/EndpointSecurity.h>
 
+#import "Source/common/SNTConfigurator.h"
 #import "Source/common/SNTLogging.h"
 #include "Source/santad/EventProviders/AuthResultCache.h"
 #include "Source/santad/EventProviders/EndpointSecurity/EnrichedTypes.h"
@@ -44,6 +45,7 @@ es_file_t *GetTargetFileForPrefixTree(const es_message_t *msg) {
 
 @interface SNTEndpointSecurityRecorder ()
 @property SNTCompilerController *compilerController;
+@property SNTConfigurator *configurator;
 @end
 
 @implementation SNTEndpointSecurityRecorder {
@@ -69,6 +71,7 @@ es_file_t *GetTargetFileForPrefixTree(const es_message_t *msg) {
     _compilerController = compilerController;
     _authResultCache = authResultCache;
     _prefixTree = prefixTree;
+    _configurator = [SNTConfigurator configurator];
 
     [self establishClientOrDie];
   }
@@ -95,6 +98,19 @@ es_file_t *GetTargetFileForPrefixTree(const es_message_t *msg) {
       }
 
       self->_authResultCache->RemoveFromCache(esMsg->event.close.target);
+
+      // Only log file changes that match the given regex
+      if (![[self.configurator fileChangesRegex]
+            numberOfMatchesInString:@(esMsg->event.close.target->path.data)
+                            options:0
+                              range:NSMakeRange(0, esMsg->event.close.target->path.length)]) {
+        // Note: Do not record metrics in this case. These are not considered "drops"
+        // because this is not a failure case.
+        // TODO(mlw): Consider changes to configuration that would allow muting paths
+        // to filter on the kernel side rather than in user space.
+        return;
+      }
+
       break;
     default: break;
   }
