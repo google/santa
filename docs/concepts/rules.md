@@ -4,17 +4,30 @@ parent: Concepts
 
 # Rules
 
-Rules provide the primary evaluation mechanism for allowing and blocking
-binaries with Santa on macOS. There are three types of rules: binary,
-certificate, and TeamID.
+## Rule Types
 
-##### Binary Rules
+Rules provide the primary evaluation mechanism for allowing and blocking
+binaries with Santa on macOS. There are four types of rules: binary, signing ID,
+certificate, and Team ID.
+
+### Binary Rules
 
 Binary rules use the SHA-256 hash of the entire binary as an identifier. This is
 the most specific rule in Santa. Even a small change in the binary will alter
 the SHA-256 hash, invalidating the rule.
 
-##### Certificate Rules
+### Signing ID Rules
+Signing IDs are arbitrary identifiers under developer control that are given to
+a binary at signing time. Typically, these use reverse domain name notation and
+include the name of the binary (e.g. `com.google.Chrome`). Because the signing
+IDs are arbitrary, the Santa rule identifier must be prefixed with the Team ID
+associated with the Apple developer certificate used to sign the application.
+For example, a signing ID identifier for Google Chrome would be:
+`EQHXZ8M8AV:com.google.Chrome`. For platform binaries (i.e. those binaries
+shipped by Apple with the OS) which do not have a Team ID, the string `platform`
+must be used (e.g. `platform:com.apple.curl`).
+
+### Certificate Rules
 
 Certificate rules are formed from the SHA-256 fingerprint of an X.509 leaf
 signing certificate. This is a powerful rule type that has a much broader reach
@@ -64,49 +77,87 @@ chain's intermediates or roots has no effect on binaries signing by a leaf.
 Santa ignores the chain and is only concerned with the leaf certificate's
 SHA-256 hash.
 
-##### Apple Developer Team ID Rules
+### Apple Developer Team ID Rules
 The Apple Developer Program Team ID is a 10-character identifier issued by Apple
 and tied to developer accounts/organizations. This is distinct from Certificates,
 as a single developer account can and frequently will request/rotate between
 multiple different signing certificates and entitlements. This is an even more
 powerful rule with broader reach than individual certificate rules.
 
-##### Rule Evaluation
+## Rule Evaluation
 
-When a process is trying to `execve()` `santad` retrieves information on the
-binary, including a hash of the entire file and the signing chain (if any). The
-hash and signing leaf certificate are then passed through the
+When a process is trying to `execve()`, `santad` retrieves information on the
+binary, including a hash of the entire file, signing ID, the signing chain (if
+any), and the team ID. The collected info is then passed through the
 [SNTPolicyProcessor](https://github.com/google/santa/blob/master/Source/santad/SNTPolicyProcessor.h).
-Rules are evaluated from most specific to least specific. First binary (either
-allow or block), then certificate (either allow or block), then team ID (either allow or block). If no rules are found
-that apply, scopes are then searched. See the [scopes.md](scopes.md) document
-for more information on scopes.
+
+Rules (both ALLOW and BLOCK) are evaluated in the following order, from most
+specific to least specific:
+
+```
+Most Specific                                  Least Specific
+
+Binary   -->   Signing ID   -->   Certificate   -->   Team ID
+```
+
+If no rules are found that apply, scopes are then searched. See the
+[scopes.md](scopes.md) document for more information on scopes.
+
+### Rule Examples
 
 You can use the `santactl fileinfo` command to check the status of any given
 binary on the filesystem.
 
-###### Allowed with a Binary Rule
+#### Allowed with a Binary Rule
 
 ```sh
 ⇒  santactl fileinfo /Applications/Hex\ Fiend.app --key Rule
 Allowed (Binary)
 ```
 
-###### Allowed with a Certificate Rule
+#### Allowed with a Signing ID Rule
+
+```sh
+⇒  santactl fileinfo /Applications/Example.app --key Rule
+Allowed (SigningID)
+```
+
+#### Allowed with a Certificate Rule
 
 ```sh
 ⇒  santactl fileinfo /Applications/Safari.app --key Rule
 Allowed (Certificate)
 ```
 
-###### Blocked with a Binary Rule
+#### Allowed with a Team ID rule
+
+```sh
+⇒ santactl fileinfo /Applications/Spotify.app --key Rule
+Allowed (TeamID)
+```
+
+For checking the Team ID of `/Applications/Microsoft\ Remote\ Desktop.app`
+
+```sh
+⇒  santactl fileinfo /Applications/Spotify.app --key "Team ID"
+2FNC3A47ZF
+```
+
+#### Blocked with a Binary Rule
 
 ```sh
 ⇒  santactl fileinfo /usr/bin/yes --key Rule
 Blocked (Binary)
 ```
 
-###### Blocked with a Certificate Rule
+#### Blocked with a Signing ID Rule
+
+```sh
+⇒  santactl fileinfo /Applications/Example.app --key Rule
+Blocked (SigningID)
+```
+
+#### Blocked with a Certificate Rule
 
 ```sh
 ⇒  santactl fileinfo /Applications/Malware.app --key Rule
@@ -130,20 +181,6 @@ For checking the SHA-256 hash of `/usr/bin/yes` signing certificate:
 Allowed (Certificate)
 ```
 
-##### Allowed with a Team ID rule
-
-```sh
-⇒ santactl fileinfo /Applications/Spotify.app --key Rule
-Allowed (TeamID)
-```
-
-For checking the Team ID of `/Applications/Microsoft\ Remote\ Desktop.app`
-
-```sh
-⇒  santactl fileinfo /Applications/Spotify.app --key "Team ID"
-2FNC3A47ZF
-```
-
 #### Blocked with a Team ID rule
 
 ```sh
@@ -158,7 +195,7 @@ For checking the Team ID of `/Applications/Microsoft\ Remote\ Desktop.app`
 UBF8T346G9
 ```
 
-##### Built-in rules
+### Built-in rules
 
 To avoid blocking any Apple system binaries or Santa binaries, `santad` will
 create 2 immutable certificate rules at startup:
