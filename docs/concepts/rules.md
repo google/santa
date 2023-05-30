@@ -17,12 +17,13 @@ the most specific rule in Santa. Even a small change in the binary will alter
 the SHA-256 hash, invalidating the rule.
 
 ### Signing ID Rules
+
 Signing IDs are arbitrary identifiers under developer control that are given to
 a binary at signing time. Typically, these use reverse domain name notation and
 include the name of the binary (e.g. `com.google.Chrome`). Because the signing
 IDs are arbitrary, the Santa rule identifier must be prefixed with the Team ID
 associated with the Apple developer certificate used to sign the application.
-For example, a signing ID identifier for Google Chrome would be:
+For example, a signing ID rule for Google Chrome would be:
 `EQHXZ8M8AV:com.google.Chrome`. For platform binaries (i.e. those binaries
 shipped by Apple with the OS) which do not have a Team ID, the string `platform`
 must be used (e.g. `platform:com.apple.curl`).
@@ -78,6 +79,7 @@ Santa ignores the chain and is only concerned with the leaf certificate's
 SHA-256 hash.
 
 ### Apple Developer Team ID Rules
+
 The Apple Developer Program Team ID is a 10-character identifier issued by Apple
 and tied to developer accounts/organizations. This is distinct from Certificates,
 as a single developer account can and frequently will request/rotate between
@@ -86,7 +88,7 @@ powerful rule with broader reach than individual certificate rules.
 
 ## Rule Evaluation
 
-When a process is trying to `execve()`, `santad` retrieves information on the
+When a process is trying to execute, `santad` retrieves information on the
 binary, including a hash of the entire file, signing ID, the signing chain (if
 any), and the team ID. The collected info is then passed through the
 [SNTPolicyProcessor](https://github.com/google/santa/blob/master/Source/santad/SNTPolicyProcessor.h).
