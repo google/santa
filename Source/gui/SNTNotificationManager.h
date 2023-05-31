@@ -17,6 +17,7 @@
 #import "Source/common/SNTXPCNotifierInterface.h"
 #import "Source/gui/SNTBinaryMessageWindowController.h"
 #import "Source/gui/SNTDeviceMessageWindowController.h"
+#import "Source/gui/SNTFileAccessMessageWindowController.h"
 #import "Source/gui/SNTMessageWindowController.h"
 
 ///

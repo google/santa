@@ -26,6 +26,7 @@
 #import "Source/common/SNTStrengthify.h"
 #import "Source/common/SNTSyncConstants.h"
 #import "Source/common/SNTXPCControlInterface.h"
+#import "Source/gui/SNTFileAccessMessageWindowController.h"
 #import "Source/gui/SNTMessageWindowController.h"
 
 @interface SNTNotificationManager ()
@@ -338,6 +339,19 @@ static NSString *const silencedNotificationsKey = @"SilencedNotifications";
   }
   SNTDeviceMessageWindowController *pendingMsg =
     [[SNTDeviceMessageWindowController alloc] initWithEvent:event message:message];
+
+  [self queueMessage:pendingMsg];
+}
+
+- (void)postFileAccessBlockNotification:(SNTFileAccessEvent *)event
+                      withCustomMessage:(NSString *)message API_AVAILABLE(macos(13.0)) {
+  if (!event) {
+    LOGI(@"Error: Missing event object in message received from daemon!");
+    return;
+  }
+
+  SNTFileAccessMessageWindowController *pendingMsg =
+    [[SNTFileAccessMessageWindowController alloc] initWithEvent:event message:message];
 
   [self queueMessage:pendingMsg];
 }
