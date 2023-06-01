@@ -102,7 +102,7 @@ struct WatchItemPolicy {
   std::vector<Process> processes;
 
   // WIP - No current way to control via config
-  bool silent = false;
+  bool silent = true;
   std::string version = "temp_version";
 };
 
