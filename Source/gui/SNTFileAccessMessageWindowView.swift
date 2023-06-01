@@ -67,24 +67,6 @@ struct EqualWidthHStack: Layout {
 }
 
 @available(macOS 13, *)
-struct LineItem : View {
-  var lbl: String
-  var val: String
-
-  var body: some View {
-
-    HStack {
-      HStack {
-        Text(lbl).multilineTextAlignment(.trailing).frame(width: 100)
-      }.multilineTextAlignment(.trailing)
-      Divider()
-      Text(val)
-    }
-
-  }
-}
-
-@available(macOS 13, *)
 struct Property : View {
   var lbl: String
   var val: String
