@@ -36,13 +36,20 @@ typedef NS_ENUM(NSInteger, SNTAction) {
 #define RESPONSE_VALID(x) \
   (x == SNTActionRespondAllow || x == SNTActionRespondDeny || x == SNTActionRespondAllowCompiler)
 
+// Supported Rule Types
+//
+// Note: These enum values should be in order of decreasing precedence as
+// evaluated by Santa. When adding new enum values, leave some space so that
+// additional rules can be added without violating this. The ordering isn't
+// strictly necessary but improves readability and may preemptively prevent
+// issues should SQLite behavior change.
 typedef NS_ENUM(NSInteger, SNTRuleType) {
-  SNTRuleTypeUnknown,
+  SNTRuleTypeUnknown = 0,
 
-  SNTRuleTypeBinary = 1,
-  SNTRuleTypeCertificate = 2,
-  SNTRuleTypeTeamID = 3,
-  SNTRuleTypeSigningID = 4,
+  SNTRuleTypeBinary = 1000,
+  SNTRuleTypeSigningID = 2000,
+  SNTRuleTypeCertificate = 3000,
+  SNTRuleTypeTeamID = 4000,
 };
 
 typedef NS_ENUM(NSInteger, SNTRuleState) {
