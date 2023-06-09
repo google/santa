@@ -25,7 +25,7 @@
 #import "Source/common/SNTLogging.h"
 #import "Source/common/SNTRule.h"
 
-static const uint32_t kRuleTableCurrentVersion = 4;
+static const uint32_t kRuleTableCurrentVersion = 5;
 
 // TODO(nguyenphillip): this should be configurable.
 // How many rules must be in database before we start trying to remove transitive rules.
@@ -219,6 +219,8 @@ static void addPathsFromDefaultMuteSet(NSMutableSet *criticalPaths) API_AVAILABL
 
   if (version < 5) {
     // Migrate SNTRuleType enum values
+    // Note: The reordering is intentional so that the type values are in order
+    // of precedence.
     [db executeUpdate:@"UPDATE rules SET type = 1000 WHERE type = 1"];
     [db executeUpdate:@"UPDATE rules SET type = 3000 WHERE type = 2"];
     [db executeUpdate:@"UPDATE rules SET type = 4000 WHERE type = 3"];

@@ -38,11 +38,11 @@ typedef NS_ENUM(NSInteger, SNTAction) {
 
 // Supported Rule Types
 //
-// IMPORTANT: These enum values should be in order of decreasing precedence as
-// evaluated by Santa. That is, the lowest enum value has the highest precedence.
-// When adding new rule types, be sure to leave appropriate space between
-// surrounding values so that additional rules can more easily be added in the
-// future.
+// Note: These enum values should be in order of decreasing precedence as
+// evaluated by Santa. When adding new enum values, leave some space so that
+// additional rules can be added without violating this. The ordering isn't
+// strictly necessary but improves readability and may preemptively prevent
+// issues should SQLite behavior change.
 typedef NS_ENUM(NSInteger, SNTRuleType) {
   SNTRuleTypeUnknown = 0,
 
