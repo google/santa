@@ -41,6 +41,7 @@
         }
         [self closeDeleteReopenDatabase:db];
       } else if ([db userVersion] > [self currentSupportedVersion]) {
+        LOGW(@"Database version newer than supported. Deleting.");
         [self closeDeleteReopenDatabase:db];
       }
     }];
