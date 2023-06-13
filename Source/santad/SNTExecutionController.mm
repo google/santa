@@ -15,6 +15,7 @@
 
 #import "Source/santad/SNTExecutionController.h"
 
+#import <MOLCodesignChecker/MOLCodesignChecker.h>
 #include <bsm/libbsm.h>
 #include <copyfile.h>
 #include <libproc.h>
@@ -22,7 +23,7 @@
 #include <sys/param.h>
 #include <utmpx.h>
 
-#import <MOLCodesignChecker/MOLCodesignChecker.h>
+#include <memory>
 
 #include "Source/common/BranchPrediction.h"
 #import "Source/common/SNTBlockMessage.h"
@@ -44,6 +45,7 @@
 #import "Source/santad/SNTPolicyProcessor.h"
 #import "Source/santad/SNTSyncdQueue.h"
 
+using santa::santad::TTYWriter;
 using santa::santad::event_providers::endpoint_security::Message;
 
 static const size_t kMaxAllowedPathLength = MAXPATHLEN - 1;  // -1 to account for null terminator
@@ -59,7 +61,9 @@ static const size_t kMaxAllowedPathLength = MAXPATHLEN - 1;  // -1 to account fo
 @property dispatch_queue_t eventQueue;
 @end
 
-@implementation SNTExecutionController
+@implementation SNTExecutionController {
+  std::shared_ptr<TTYWriter> _ttyWriter;
+}
 
 static NSString *const kPrinterProxyPreMonterey =
   (@"/System/Library/Frameworks/Carbon.framework/Versions/Current/"
@@ -74,13 +78,15 @@ static NSString *const kPrinterProxyPostMonterey =
 - (instancetype)initWithRuleTable:(SNTRuleTable *)ruleTable
                        eventTable:(SNTEventTable *)eventTable
                     notifierQueue:(SNTNotificationQueue *)notifierQueue
-                       syncdQueue:(SNTSyncdQueue *)syncdQueue {
+                       syncdQueue:(SNTSyncdQueue *)syncdQueue
+                        ttyWriter:(std::shared_ptr<TTYWriter>)ttyWriter {
   self = [super init];
   if (self) {
     _ruleTable = ruleTable;
     _eventTable = eventTable;
     _notifierQueue = notifierQueue;
     _syncdQueue = syncdQueue;
+    _ttyWriter = std::move(ttyWriter);
     _policyProcessor = [[SNTPolicyProcessor alloc] initWithRuleTable:_ruleTable];
 
     _eventQueue =
@@ -298,7 +304,8 @@ static NSString *const kPrinterProxyPostMonterey =
         NSAttributedString *s = [SNTBlockMessage attributedBlockMessageForEvent:se
                                                                   customMessage:cd.customMsg];
 
-        if (targetProc->tty && targetProc->tty->path.length > 0 && !config.enableSilentTTYMode) {
+        if (targetProc->tty && targetProc->tty->path.length > 0 && !config.enableSilentTTYMode &&
+            self->_ttyWriter) {
           NSMutableString *msg = [NSMutableString stringWithCapacity:1024];
           [msg appendFormat:@"\n\033[1mSanta\033[0m\n\n%@\n\n", s.string];
           [msg appendFormat:@"\033[1mPath:      \033[0m %@\n"
@@ -310,7 +317,9 @@ static NSString *const kPrinterProxyPostMonterey =
             [msg appendFormat:@"More info:\n%@\n\n", detailURL.absoluteString];
           }
 
-          [self printMessage:msg toTTY:targetProc->tty->path.data];
+          if (self->_ttyWriter) {
+            self->_ttyWriter->Write(targetProc->tty->path.data, msg);
+          }
         }
 
         [self.notifierQueue addEvent:se customMessage:cd.customMsg];
@@ -361,13 +370,6 @@ static NSString *const kPrinterProxyPostMonterey =
   SNTFileInfo *proxyInfo = [[SNTFileInfo alloc] initWithPath:kPrinterProxyPostMonterey];
   if (!proxyInfo) proxyInfo = [[SNTFileInfo alloc] initWithPath:kPrinterProxyPreMonterey];
   return proxyInfo;
-}
-
-- (void)printMessage:(NSString *)msg toTTY:(const char *)path {
-  int fd = open(path, O_WRONLY | O_NOCTTY);
-  std::string_view str = santa::common::NSStringToUTF8StringView(msg);
-  write(fd, str.data(), str.length());
-  close(fd);
 }
 
 - (void)loggedInUsers:(NSArray **)users sessions:(NSArray **)sessions {

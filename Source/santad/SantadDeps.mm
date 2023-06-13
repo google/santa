@@ -14,6 +14,7 @@
 
 #include "Source/santad/SantadDeps.h"
 
+#include <cstdlib>
 #include <memory>
 
 #import "Source/common/SNTLogging.h"
@@ -25,10 +26,12 @@
 #include "Source/santad/EventProviders/EndpointSecurity/EndpointSecurityAPI.h"
 #import "Source/santad/SNTDatabaseController.h"
 #include "Source/santad/SNTDecisionCache.h"
+#include "Source/santad/TTYWriter.h"
 
 using santa::common::PrefixTree;
 using santa::common::Unit;
 using santa::santad::Metrics;
+using santa::santad::TTYWriter;
 using santa::santad::data_layer::WatchItems;
 using santa::santad::event_providers::AuthResultCache;
 using santa::santad::event_providers::endpoint_security::EndpointSecurityAPI;
@@ -81,11 +84,18 @@ std::unique_ptr<SantadDeps> SantadDeps::Create(SNTConfigurator *configurator,
     exit(EXIT_FAILURE);
   }
 
+  std::shared_ptr<TTYWriter> tty_writer = TTYWriter::Create();
+  if (!tty_writer) {
+    LOGE(@"Failed to initialize TTY writer");
+    exit(EXIT_FAILURE);
+  }
+
   SNTExecutionController *exec_controller =
     [[SNTExecutionController alloc] initWithRuleTable:rule_table
                                            eventTable:event_table
                                         notifierQueue:notifier_queue
-                                           syncdQueue:syncd_queue];
+                                           syncdQueue:syncd_queue
+                                            ttyWriter:tty_writer];
   if (!exec_controller) {
     LOGE(@"Failed to initialize exec controller.");
     exit(EXIT_FAILURE);

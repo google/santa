@@ -95,7 +95,8 @@ VerifyPostActionBlock verifyPostAction = ^PostActionBlock(SNTAction wantAction) 
   self.sut = [[SNTExecutionController alloc] initWithRuleTable:self.mockRuleDatabase
                                                     eventTable:self.mockEventDatabase
                                                  notifierQueue:nil
-                                                    syncdQueue:nil];
+                                                    syncdQueue:nil
+                                                     ttyWriter:nullptr];
 }
 
 - (void)tearDown {
