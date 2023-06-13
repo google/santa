@@ -317,9 +317,7 @@ static NSString *const kPrinterProxyPostMonterey =
             [msg appendFormat:@"More info:\n%@\n\n", detailURL.absoluteString];
           }
 
-          if (self->_ttyWriter) {
-            self->_ttyWriter->Write(targetProc->tty->path.data, msg);
-          }
+          self->_ttyWriter->Write(targetProc->tty->path.data, msg);
         }
 
         [self.notifierQueue addEvent:se customMessage:cd.customMsg];

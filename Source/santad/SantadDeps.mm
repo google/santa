@@ -86,8 +86,7 @@ std::unique_ptr<SantadDeps> SantadDeps::Create(SNTConfigurator *configurator,
 
   std::shared_ptr<TTYWriter> tty_writer = TTYWriter::Create();
   if (!tty_writer) {
-    LOGE(@"Failed to initialize TTY writer");
-    exit(EXIT_FAILURE);
+    LOGW(@"Unable to initialize TTY writer");
   }
 
   SNTExecutionController *exec_controller =

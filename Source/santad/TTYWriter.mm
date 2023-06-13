@@ -14,6 +14,9 @@
 
 #include "Source/santad/TTYWriter.h"
 
+#include <string.h>
+#include <sys/errno.h>
+
 #import "Source/common/SNTLogging.h"
 #include "Source/common/String.h"
 
@@ -38,7 +41,7 @@ void TTYWriter::Write(const char *tty, NSString *msg) {
     @autoreleasepool {
       int fd = open(tty, O_WRONLY | O_NOCTTY);
       if (fd == -1) {
-        LOGW(@"Failed to open TTY for writing");
+        LOGW(@"Failed to open TTY for writing: %s", strerror(errno));
         return;
       }
 
