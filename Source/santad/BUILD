@@ -210,6 +210,16 @@ objc_library(
 )
 
 objc_library(
+    name = "TTYWriter",
+    srcs = ["TTYWriter.mm"],
+    hdrs = ["TTYWriter.h"],
+    deps = [
+        "//Source/common:SNTLogging",
+        "//Source/common:String",
+    ],
+)
+
+objc_library(
     name = "SNTExecutionController",
     srcs = ["SNTExecutionController.mm"],
     hdrs = ["SNTExecutionController.h"],
@@ -221,6 +231,7 @@ objc_library(
         ":SNTPolicyProcessor",
         ":SNTRuleTable",
         ":SNTSyncdQueue",
+        ":TTYWriter",
         "//Source/common:BranchPrediction",
         "//Source/common:SNTBlockMessage",
         "//Source/common:SNTCachedDecision",
@@ -706,6 +717,7 @@ objc_library(
         ":SNTNotificationQueue",
         ":SNTRuleTable",
         ":SNTSyncdQueue",
+        ":TTYWriter",
         ":WatchItems",
         "//Source/common:PrefixTree",
         "//Source/common:SNTConfigurator",
