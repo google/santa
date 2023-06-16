@@ -26,6 +26,8 @@
 #import "Source/common/SNTStrengthify.h"
 #import "Source/common/SNTSyncConstants.h"
 #import "Source/common/SNTXPCControlInterface.h"
+#import "Source/gui/SNTBinaryMessageWindowController.h"
+#import "Source/gui/SNTDeviceMessageWindowController.h"
 #import "Source/gui/SNTFileAccessMessageWindowController.h"
 #import "Source/gui/SNTMessageWindowController.h"
 

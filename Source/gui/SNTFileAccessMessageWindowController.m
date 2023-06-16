@@ -70,6 +70,8 @@
 }
 
 - (NSString *)messageHash {
+  // TODO(mlw): This is not the final form. As this feature is expanded this
+  // hash will need to be revisted to ensure it meets our needs.
   return [NSString stringWithFormat:@"%@|%@|%d", self.event.ruleName, self.event.ruleVersion,
                                     [self.event.pid intValue]];
 }

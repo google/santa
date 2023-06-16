@@ -114,10 +114,12 @@ struct SNTFileAccessMessageWindowView: View {
   }
 
   func publisherInfo() {
+    // TODO(mlw): Will hook up in a separate PR
     print("showing publisher popup...")
   }
 
   func openButton() {
+    // TODO(mlw): Will hook up in a separate PR
     print("opening event info...")
   }
 
