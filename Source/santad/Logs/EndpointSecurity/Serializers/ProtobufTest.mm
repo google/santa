@@ -46,6 +46,7 @@
 
 using google::protobuf::Timestamp;
 using google::protobuf::util::JsonPrintOptions;
+using google::protobuf::util::JsonStringToMessage;
 using santa::santad::event_providers::endpoint_security::EnrichedEventType;
 using santa::santad::event_providers::endpoint_security::EnrichedMessage;
 using santa::santad::event_providers::endpoint_security::Enricher;
@@ -164,7 +165,7 @@ std::string ConvertMessageToJsonString(const ::pbv1::SantaMessage &santaMsg) {
 void SerializeAndCheck(es_event_type_t eventType,
                        void (^messageSetup)(std::shared_ptr<MockEndpointSecurityAPI>,
                                             es_message_t *),
-                       SNTDecisionCache *decisionCache) {
+                       SNTDecisionCache *decisionCache, bool json=false) {
   std::shared_ptr<MockEndpointSecurityAPI> mockESApi = std::make_shared<MockEndpointSecurityAPI>();
 
   for (uint32_t cur_version = 1; cur_version <= MaxSupportedESMessageVersionForCurrentOS();
@@ -185,7 +186,7 @@ void SerializeAndCheck(es_event_type_t eventType,
 
     messageSetup(mockESApi, &esMsg);
 
-    std::shared_ptr<Serializer> bs = Protobuf::Create(mockESApi, decisionCache);
+    std::shared_ptr<Serializer> bs = Protobuf::Create(mockESApi, decisionCache, json);
     std::unique_ptr<EnrichedMessage> enrichedMsg = Enricher().Enrich(Message(mockESApi, &esMsg));
 
     // Copy some values we need to check later before the object is moved out of this funciton
@@ -204,10 +205,21 @@ void SerializeAndCheck(es_event_type_t eventType,
     std::vector<uint8_t> vec = bs->SerializeMessage(std::move(enrichedMsg));
     std::string protoStr(vec.begin(), vec.end());
 
+    // if we're checking against JSON then we should already have a jsonified string and just need to 
     ::pbv1::SantaMessage santaMsg;
-    XCTAssertTrue(santaMsg.ParseFromString(protoStr));
+    std::string gotData;
 
-    std::string gotData = ConvertMessageToJsonString(santaMsg);
+    if (json) {
+      gotData = protoStr;
+      // Parse the jsonified string into the protobuf
+      google::protobuf::util::JsonParseOptions options;
+      options.ignore_unknown_fields = true;
+      google::protobuf::util::Status status = JsonStringToMessage(gotData, &santaMsg, options);
+      XCTAssertTrue(status.ok(), @"Failed to parse JSONified protobuf");
+    } else {
+      XCTAssertTrue(santaMsg.ParseFromString(protoStr));
+      gotData = ConvertMessageToJsonString(santaMsg);
+    }
 
     XCTAssertTrue(CompareTime(santaMsg.processed_time(), enrichmentTime));
     XCTAssertTrue(CompareTime(santaMsg.event_time(), msgTime));
@@ -294,8 +306,9 @@ void SerializeAndCheckNonESEvents(
 
 - (void)serializeAndCheckEvent:(es_event_type_t)eventType
                   messageSetup:(void (^)(std::shared_ptr<MockEndpointSecurityAPI>,
-                                         es_message_t *))messageSetup {
-  SerializeAndCheck(eventType, messageSetup, self.mockDecisionCache);
+                                         es_message_t *))messageSetup 
+                                         json:(BOOL)json {
+  SerializeAndCheck(eventType, messageSetup, self.mockDecisionCache, (bool)json);
 }
 
 - (void)testSerializeMessageClose {
@@ -306,7 +319,8 @@ void SerializeAndCheckNonESEvents(
                                  es_message_t *esMsg) {
                     esMsg->event.close.modified = true;
                     esMsg->event.close.target = &file;
-                  }];
+                  }
+                  json: NO];
 }
 
 - (void)testSerializeMessageExchange {
@@ -318,7 +332,8 @@ void SerializeAndCheckNonESEvents(
                                  es_message_t *esMsg) {
                     esMsg->event.exchangedata.file1 = &file1;
                     esMsg->event.exchangedata.file2 = &file2;
-                  }];
+                  }
+                  json: NO];
 }
 
 - (void)testGetDecisionEnum {
@@ -455,15 +470,70 @@ void SerializeAndCheckNonESEvents(
                         .WillOnce(testing::Return(&fd2))
                         .WillOnce(testing::Return(&fd3));
                     }
-                  }];
+                  } 
+                  json: NO];
 }
+
+- (void)testSerializeMessageExecJSON {
+  es_file_t procFileTarget = MakeESFile("fooexec", MakeStat(300));
+  __block es_process_t procTarget =
+    MakeESProcess(&procFileTarget, MakeAuditToken(23, 45), MakeAuditToken(67, 89));
+  __block es_file_t fileCwd = MakeESFile("cwd", MakeStat(400));
+  __block es_file_t fileScript = MakeESFile("script.sh", MakeStat(500));
+  __block es_fd_t fd1 = {.fd = 1, .fdtype = PROX_FDTYPE_VNODE};
+  __block es_fd_t fd2 = {.fd = 2, .fdtype = PROX_FDTYPE_SOCKET};
+  __block es_fd_t fd3 = {.fd = 3, .fdtype = PROX_FDTYPE_PIPE, .pipe = {.pipe_id = 123}};
+
+  procTarget.codesigning_flags = CS_SIGNED | CS_HARD | CS_KILL;
+  memset(procTarget.cdhash, 'A', sizeof(procTarget.cdhash));
+  procTarget.signing_id = MakeESStringToken("my_signing_id");
+  procTarget.team_id = MakeESStringToken("my_team_id");
+
+  [self serializeAndCheckEvent:ES_EVENT_TYPE_NOTIFY_EXEC
+                  messageSetup:^(std::shared_ptr<MockEndpointSecurityAPI> mockESApi,
+                                 es_message_t *esMsg) {
+                    esMsg->event.exec.target = &procTarget;
+                    esMsg->event.exec.cwd = &fileCwd;
+                    esMsg->event.exec.script = &fileScript;
+
+                    // For version 5, simulate a "truncated" set of FDs
+                    if (esMsg->version == 5) {
+                      esMsg->event.exec.last_fd = 123;
+                    } else {
+                      esMsg->event.exec.last_fd = 3;
+                    }
+
+                    EXPECT_CALL(*mockESApi, ExecArgCount).WillOnce(testing::Return(3));
+                    EXPECT_CALL(*mockESApi, ExecArg)
+                      .WillOnce(testing::Return(MakeESStringToken("exec_path")))
+                      .WillOnce(testing::Return(MakeESStringToken("-l")))
+                      .WillOnce(testing::Return(MakeESStringToken("--foo")));
+
+                    EXPECT_CALL(*mockESApi, ExecEnvCount).WillOnce(testing::Return(2));
+                    EXPECT_CALL(*mockESApi, ExecEnv)
+                      .WillOnce(
+                        testing::Return(MakeESStringToken("ENV_PATH=/path/to/bin:/and/another")))
+                      .WillOnce(testing::Return(MakeESStringToken("DEBUG=1")));
+
+                    if (esMsg->version >= 4) {
+                      EXPECT_CALL(*mockESApi, ExecFDCount).WillOnce(testing::Return(3));
+                      EXPECT_CALL(*mockESApi, ExecFD)
+                        .WillOnce(testing::Return(&fd1))
+                        .WillOnce(testing::Return(&fd2))
+                        .WillOnce(testing::Return(&fd3));
+                    }
+                  } 
+                  json: YES];
+}
+
 
 - (void)testSerializeMessageExit {
   [self serializeAndCheckEvent:ES_EVENT_TYPE_NOTIFY_EXIT
                   messageSetup:^(std::shared_ptr<MockEndpointSecurityAPI> mockESApi,
                                  es_message_t *esMsg) {
                     esMsg->event.exit.stat = W_EXITCODE(1, 0);
-                  }];
+                  }
+                  json: NO];
 }
 
 - (void)testEncodeExitStatus {
@@ -500,7 +570,8 @@ void SerializeAndCheckNonESEvents(
                   messageSetup:^(std::shared_ptr<MockEndpointSecurityAPI> mockESApi,
                                  es_message_t *esMsg) {
                     esMsg->event.fork.child = &procChild;
-                  }];
+                  }
+                  json: NO];
 }
 
 - (void)testSerializeMessageLink {
@@ -514,7 +585,8 @@ void SerializeAndCheckNonESEvents(
                     esMsg->event.link.source = &fileSource;
                     esMsg->event.link.target_dir = &fileTargetDir;
                     esMsg->event.link.target_filename = targetTok;
-                  }];
+                  }
+                  json: NO];
 }
 
 - (void)testSerializeMessageRename {
@@ -535,7 +607,8 @@ void SerializeAndCheckNonESEvents(
                       esMsg->event.rename.destination.new_path.filename = targetTok;
                       esMsg->event.rename.destination_type = ES_DESTINATION_TYPE_NEW_PATH;
                     }
-                  }];
+                  }
+                  json: NO];
 }
 
 - (void)testSerializeMessageUnlink {
@@ -547,7 +620,8 @@ void SerializeAndCheckNonESEvents(
                                  es_message_t *esMsg) {
                     esMsg->event.unlink.target = &fileTarget;
                     esMsg->event.unlink.parent_dir = &fileTargetParent;
-                  }];
+                  }
+                  json: NO];
 }
 
 - (void)testGetAccessType {

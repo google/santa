@@ -35,6 +35,7 @@
 #include "Source/santad/Logs/EndpointSecurity/Serializers/Utilities.h"
 #import "Source/santad/SNTDecisionCache.h"
 #include "google/protobuf/timestamp.pb.h"
+#include <google/protobuf/util/json_util.h>
 
 using google::protobuf::Arena;
 using google::protobuf::Timestamp;
@@ -389,7 +390,7 @@ static inline void EncodeCertificateInfo(::pbv1::CertificateInfo *pb_cert_info, 
 }
 
 std::vector<uint8_t> Protobuf::FinalizeProto(::pbv1::SantaMessage *santa_msg) {
-  if (this->_) {
+  if (this->json_) {
     //TODO: Profile this. It's probably not the most efficient way to do this.
     JsonPrintOptions options;
     options.always_print_enums_as_ints = false;
@@ -400,7 +401,7 @@ std::vector<uint8_t> Protobuf::FinalizeProto(::pbv1::SantaMessage *santa_msg) {
     google::protobuf::util::Status status = MessageToJsonString(*santa_msg, &json, options);
 
     if (!status.ok()) {
-      LOG(ERROR) << "Failed to convert protobuf to JSON: " << status.error_message();
+      LOGE(@"Failed to convert protobuf to JSON: %s", status.ToString().c_str());
     }
 
     std::vector<uint8_t> vec(json.begin(), json.end());
