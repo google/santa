@@ -17,13 +17,16 @@
 #import "Source/common/SNTCommonEnums.h"
 #import "Source/common/SNTXPCBundleServiceInterface.h"
 
-@class SNTStoredEvent;
 @class SNTDeviceEvent;
+@class SNTFileAccessEvent;
+@class SNTStoredEvent;
 
 /// Protocol implemented by SantaGUI and utilized by santad
 @protocol SNTNotifierXPC
 - (void)postBlockNotification:(SNTStoredEvent *)event withCustomMessage:(NSString *)message;
 - (void)postUSBBlockNotification:(SNTDeviceEvent *)event withCustomMessage:(NSString *)message;
+- (void)postFileAccessBlockNotification:(SNTFileAccessEvent *)event
+                      withCustomMessage:(NSString *)message API_AVAILABLE(macos(13.0));
 - (void)postClientModeNotification:(SNTClientMode)clientmode;
 - (void)postRuleSyncNotificationWithCustomMessage:(NSString *)message;
 - (void)updateCountsForEvent:(SNTStoredEvent *)event

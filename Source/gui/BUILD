@@ -31,6 +31,17 @@ swift_library(
     ],
 )
 
+swift_library(
+    name = "SNTFileAccessMessageWindowView",
+    srcs = [
+        "SNTFileAccessMessageWindowView.swift",
+    ],
+    generates_header = 1,
+    deps = [
+        "//Source/common:SNTFileAccessEvent",
+    ],
+)
+
 objc_library(
     name = "SantaGUI_lib",
     srcs = [
@@ -44,6 +55,8 @@ objc_library(
         "SNTBinaryMessageWindowController.m",
         "SNTDeviceMessageWindowController.h",
         "SNTDeviceMessageWindowController.m",
+        "SNTFileAccessMessageWindowController.h",
+        "SNTFileAccessMessageWindowController.m",
         "SNTMessageWindowController.h",
         "SNTMessageWindowController.m",
         "SNTNotificationManager.h",
@@ -65,9 +78,11 @@ objc_library(
     deps = [
         ":SNTAboutWindowView",
         ":SNTDeviceMessageWindowView",
+        ":SNTFileAccessMessageWindowView",
         "//Source/common:SNTBlockMessage_SantaGUI",
         "//Source/common:SNTConfigurator",
         "//Source/common:SNTDeviceEvent",
+        "//Source/common:SNTFileAccessEvent",
         "//Source/common:SNTLogging",
         "//Source/common:SNTStoredEvent",
         "//Source/common:SNTStrengthify",

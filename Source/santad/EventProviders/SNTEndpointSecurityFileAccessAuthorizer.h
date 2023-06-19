@@ -16,6 +16,7 @@
 
 #include <memory>
 
+#import "Source/common/SNTFileAccessEvent.h"
 #include "Source/santad/DataLayer/WatchItems.h"
 #include "Source/santad/EventProviders/EndpointSecurity/EndpointSecurityAPI.h"
 #include "Source/santad/EventProviders/EndpointSecurity/Enricher.h"
@@ -24,6 +25,8 @@
 #include "Source/santad/Logs/EndpointSecurity/Logger.h"
 #include "Source/santad/Metrics.h"
 #import "Source/santad/SNTDecisionCache.h"
+
+typedef void (^SNTFileAccessBlockCallback)(SNTFileAccessEvent *event);
 
 @interface SNTEndpointSecurityFileAccessAuthorizer
     : SNTEndpointSecurityClient <SNTEndpointSecurityDynamicEventHandler>
@@ -37,5 +40,7 @@
        enricher:
          (std::shared_ptr<santa::santad::event_providers::endpoint_security::Enricher>)enricher
   decisionCache:(SNTDecisionCache *)decisionCache;
+
+@property SNTFileAccessBlockCallback fileAccessBlockCallback;
 
 @end

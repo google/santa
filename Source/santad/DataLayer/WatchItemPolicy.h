@@ -100,6 +100,10 @@ struct WatchItemPolicy {
   bool audit_only;
   bool invert_process_exceptions;
   std::vector<Process> processes;
+
+  // WIP - No current way to control via config
+  bool silent = true;
+  std::string version = "temp_version";
 };
 
 }  // namespace santa::santad::data_layer

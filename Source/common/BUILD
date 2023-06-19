@@ -134,6 +134,19 @@ objc_library(
 )
 
 objc_library(
+    name = "SNTFileAccessEvent",
+    srcs = ["SNTFileAccessEvent.m"],
+    hdrs = ["SNTFileAccessEvent.h"],
+    module_name = "santa_common_SNTFileAccessEvent",
+    sdk_frameworks = [
+        "Foundation",
+    ],
+    deps = [
+        "@MOLCertificate",
+    ],
+)
+
+objc_library(
     name = "SNTCommonEnums",
     textual_hdrs = ["SNTCommonEnums.h"],
 )

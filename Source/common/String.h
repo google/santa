@@ -30,6 +30,14 @@ static inline std::string NSStringToUTF8String(NSString *str) {
   return std::string(str.UTF8String, [str lengthOfBytesUsingEncoding:NSUTF8StringEncoding]);
 }
 
+static inline NSString *StringToNSString(const std::string &str) {
+  return [NSString stringWithUTF8String:str.c_str()];
+}
+
+static inline NSString *StringToNSString(const char *str) {
+  return [NSString stringWithUTF8String:str];
+}
+
 }  // namespace santa::common
 
 #endif

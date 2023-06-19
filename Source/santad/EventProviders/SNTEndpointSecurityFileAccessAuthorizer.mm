@@ -18,6 +18,7 @@
 #include <Kernel/kern/cs_blobs.h>
 #import <MOLCertificate/MOLCertificate.h>
 #import <MOLCodesignChecker/MOLCodesignChecker.h>
+#include <bsm/libbsm.h>
 #include <sys/fcntl.h>
 
 #include <algorithm>
@@ -32,17 +33,20 @@
 #include "Source/common/Platform.h"
 #import "Source/common/SNTCommonEnums.h"
 #import "Source/common/SNTConfigurator.h"
+#include "Source/common/SNTFileAccessEvent.h"
 #import "Source/common/SNTMetricSet.h"
 #import "Source/common/SNTStrengthify.h"
 #include "Source/common/SantaCache.h"
 #include "Source/common/SantaVnode.h"
 #include "Source/common/SantaVnodeHash.h"
+#include "Source/common/String.h"
 #include "Source/santad/DataLayer/WatchItemPolicy.h"
 #include "Source/santad/DataLayer/WatchItems.h"
 #include "Source/santad/EventProviders/EndpointSecurity/EnrichedTypes.h"
 #include "Source/santad/EventProviders/EndpointSecurity/Message.h"
 #include "Source/santad/EventProviders/RateLimiter.h"
 
+using santa::common::StringToNSString;
 using santa::santad::EventDisposition;
 using santa::santad::data_layer::WatchItemPathType;
 using santa::santad::data_layer::WatchItemPolicy;
@@ -480,6 +484,27 @@ void PopulatePathTargets(const Message &msg, std::vector<PathTarget> &targets) {
                               self->_enricher->Enrich(*esMsg->process, EnrichOptions::kLocalOnly),
                               targetPathCopy, policyDecision);
                           }];
+    }
+
+    if (!optionalPolicy.value()->silent && self.fileAccessBlockCallback) {
+      SNTCachedDecision *cd =
+        [self.decisionCache cachedDecisionForFile:msg->process->executable->stat];
+
+      SNTFileAccessEvent *event = [[SNTFileAccessEvent alloc] init];
+
+      event.accessedPath = StringToNSString(target.path);
+      event.ruleVersion = StringToNSString(optionalPolicy.value()->version);
+      event.ruleName = StringToNSString(optionalPolicy.value()->name);
+
+      event.fileSHA256 = cd.sha256 ?: @"<unknown sha>";
+      event.filePath = StringToNSString(msg->process->executable->path.data);
+      event.teamID = cd.teamID ?: @"<unknown team id>";
+      event.teamID = cd.signingID ?: @"<unknown signing id>";
+      event.pid = @(audit_token_to_pid(msg->process->audit_token));
+      event.ppid = @(audit_token_to_pid(msg->process->parent_audit_token));
+      event.parentName = StringToNSString(msg.ParentProcessName());
+
+      self.fileAccessBlockCallback(event);
     }
   }
 

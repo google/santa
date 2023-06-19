@@ -20,6 +20,7 @@
 #include "Source/common/PrefixTree.h"
 #import "Source/common/SNTCommonEnums.h"
 #import "Source/common/SNTConfigurator.h"
+#import "Source/common/SNTFileAccessEvent.h"
 #import "Source/common/SNTKVOManager.h"
 #import "Source/common/SNTLogging.h"
 #import "Source/common/SNTXPCNotifierInterface.h"
@@ -140,6 +141,12 @@ void SantadMain(std::shared_ptr<EndpointSecurityAPI> esapi, std::shared_ptr<Logg
              enricher:enricher
         decisionCache:[SNTDecisionCache sharedCache]];
     watch_items->RegisterClient(access_authorizer_client);
+
+    access_authorizer_client.fileAccessBlockCallback = ^(SNTFileAccessEvent *event) {
+      [[notifier_queue.notifierConnection remoteObjectProxy]
+        postFileAccessBlockNotification:event
+                      withCustomMessage:@"Access to the resource has been denied!"];
+    };
   }
 
   EstablishSyncServiceConnection(syncd_queue);

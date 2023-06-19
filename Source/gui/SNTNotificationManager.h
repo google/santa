@@ -15,8 +15,6 @@
 #import <Cocoa/Cocoa.h>
 
 #import "Source/common/SNTXPCNotifierInterface.h"
-#import "Source/gui/SNTBinaryMessageWindowController.h"
-#import "Source/gui/SNTDeviceMessageWindowController.h"
 #import "Source/gui/SNTMessageWindowController.h"
 
 ///
