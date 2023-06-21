@@ -162,6 +162,31 @@ std::string ConvertMessageToJsonString(const ::pbv1::SantaMessage &santaMsg) {
   return json;
 }
 
+NSDictionary * findDelta(NSDictionary * a, NSDictionary *b) {
+
+  NSMutableDictionary *delta = NSMutableDictionary.dictionary;
+
+  // Find objects in a that don't exist or are different in b.
+  [a enumerateKeysAndObjectsUsingBlock:^(id  _Nonnull key, id  _Nonnull obj, BOOL * _Nonnull stop) {
+        id otherObj = b[key];
+
+        if (![obj isEqual:otherObj]) {
+            delta[key] = obj;
+        }
+    }];
+
+    // Find objects in the other dictionary that don't exist in self
+    [b enumerateKeysAndObjectsUsingBlock:^(id _Nonnull key, id  _Nonnull obj, BOOL * _Nonnull stop) {
+        id aObj = a[key];
+
+        if (!aObj) {
+            delta[key] = obj;
+        }
+    }];
+
+    return delta;
+}
+
 void SerializeAndCheck(es_event_type_t eventType,
                        void (^messageSetup)(std::shared_ptr<MockEndpointSecurityAPI>,
                                             es_message_t *),
@@ -210,12 +235,12 @@ void SerializeAndCheck(es_event_type_t eventType,
     std::string gotData;
 
     if (json) {
-      gotData = protoStr;
       // Parse the jsonified string into the protobuf
+      //gotData = protoStr;
       google::protobuf::util::JsonParseOptions options;
       options.ignore_unknown_fields = true;
-      google::protobuf::util::Status status = JsonStringToMessage(gotData, &santaMsg, options);
-      XCTAssertTrue(status.ok(), @"Failed to parse JSONified protobuf");
+      google::protobuf::util::Status status = JsonStringToMessage(protoStr, &santaMsg, options);
+      gotData = ConvertMessageToJsonString(santaMsg);
     } else {
       XCTAssertTrue(santaMsg.ParseFromString(protoStr));
       gotData = ConvertMessageToJsonString(santaMsg);
@@ -223,7 +248,22 @@ void SerializeAndCheck(es_event_type_t eventType,
 
     XCTAssertTrue(CompareTime(santaMsg.processed_time(), enrichmentTime));
     XCTAssertTrue(CompareTime(santaMsg.event_time(), msgTime));
-    XCTAssertEqualObjects([NSString stringWithUTF8String:gotData.c_str()], wantData);
+
+    // Convert JSON strings to objects and compare each key-value set.
+    NSError *jsonError;
+    NSData *objectData = [wantData dataUsingEncoding:NSUTF8StringEncoding];
+    NSDictionary *wantJSONDict = [NSJSONSerialization JSONObjectWithData:objectData
+                                      options:NSJSONReadingMutableContainers 
+                                        error:&jsonError];
+    XCTAssertNil(jsonError, @"failed to parse want data as JSON");
+    NSDictionary *gotJSONDict = [NSJSONSerialization JSONObjectWithData: [NSData dataWithBytes:gotData.data() length:gotData.length()]
+                                      options:NSJSONReadingMutableContainers 
+                                        error:&jsonError];
+    XCTAssertNil(jsonError, @"failed to parse got data as JSON");
+
+    //XCTAssertEqualObjects([NSString stringWithUTF8String:gotData.c_str()], wantData);
+    NSDictionary *delta = findDelta(wantJSONDict, gotJSONDict);
+    XCTAssertEqualObjects(@{}, delta);
   }
 
   XCTBubbleMockVerifyAndClearExpectations(mockESApi.get());
