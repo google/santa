@@ -16,6 +16,8 @@
 #import <XCTest/XCTest.h>
 #include <dispatch/dispatch.h>
 
+#include <utility>
+
 #include "Source/santad/EventProviders/EndpointSecurity/Client.h"
 
 using santa::santad::event_providers::endpoint_security::Client;
