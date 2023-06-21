@@ -3,6 +3,9 @@ build --apple_generate_dsym --define=apple.propagate_embedded_extra_outputs=yes
 build --copt=-Werror
 build --copt=-Wall
 build --copt=-Wno-error=deprecated-declarations
+# Disable -Wunknown-warning-option because deprecated-non-prototype
+# isn't recognized on older SDKs
+build --copt=-Wno-unknown-warning-option
 build --copt=-Wno-error=deprecated-non-prototype
 build --per_file_copt=.*\.mm\$@-std=c++17
 build --cxxopt=-std=c++17
