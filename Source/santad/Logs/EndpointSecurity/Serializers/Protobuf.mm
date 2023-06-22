@@ -27,6 +27,7 @@
 #include <optional>
 #include <string_view>
 
+#include <google/protobuf/util/json_util.h>
 #import "Source/common/SNTCachedDecision.h"
 #include "Source/common/SNTLogging.h"
 #import "Source/common/SNTStoredEvent.h"
@@ -35,7 +36,6 @@
 #include "Source/santad/Logs/EndpointSecurity/Serializers/Utilities.h"
 #import "Source/santad/SNTDecisionCache.h"
 #include "google/protobuf/timestamp.pb.h"
-#include <google/protobuf/util/json_util.h>
 
 using google::protobuf::Arena;
 using google::protobuf::Timestamp;
@@ -73,7 +73,8 @@ std::shared_ptr<Protobuf> Protobuf::Create(std::shared_ptr<EndpointSecurityAPI> 
   return std::make_shared<Protobuf>(esapi, std::move(decision_cache), json);
 }
 
-Protobuf::Protobuf(std::shared_ptr<EndpointSecurityAPI> esapi, SNTDecisionCache *decision_cache, bool json)
+Protobuf::Protobuf(std::shared_ptr<EndpointSecurityAPI> esapi, SNTDecisionCache *decision_cache,
+                   bool json)
     : Serializer(std::move(decision_cache)), esapi_(esapi), json_(json) {}
 
 static inline void EncodeTimestamp(Timestamp *timestamp, struct timespec ts) {
@@ -391,7 +392,7 @@ static inline void EncodeCertificateInfo(::pbv1::CertificateInfo *pb_cert_info, 
 
 std::vector<uint8_t> Protobuf::FinalizeProto(::pbv1::SantaMessage *santa_msg) {
   if (this->json_) {
-    //TODO: Profile this. It's probably not the most efficient way to do this.
+    // TODO: Profile this. It's probably not the most efficient way to do this.
     JsonPrintOptions options;
     options.always_print_enums_as_ints = false;
     options.always_print_primitive_fields = true;

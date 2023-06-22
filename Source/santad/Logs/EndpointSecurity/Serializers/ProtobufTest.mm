@@ -162,35 +162,34 @@ std::string ConvertMessageToJsonString(const ::pbv1::SantaMessage &santaMsg) {
   return json;
 }
 
-NSDictionary * findDelta(NSDictionary * a, NSDictionary *b) {
-
+NSDictionary *findDelta(NSDictionary *a, NSDictionary *b) {
   NSMutableDictionary *delta = NSMutableDictionary.dictionary;
 
   // Find objects in a that don't exist or are different in b.
-  [a enumerateKeysAndObjectsUsingBlock:^(id  _Nonnull key, id  _Nonnull obj, BOOL * _Nonnull stop) {
-        id otherObj = b[key];
+  [a enumerateKeysAndObjectsUsingBlock:^(id _Nonnull key, id _Nonnull obj, BOOL *_Nonnull stop) {
+    id otherObj = b[key];
 
-        if (![obj isEqual:otherObj]) {
-            delta[key] = obj;
-        }
-    }];
+    if (![obj isEqual:otherObj]) {
+      delta[key] = obj;
+    }
+  }];
 
-    // Find objects in the other dictionary that don't exist in self
-    [b enumerateKeysAndObjectsUsingBlock:^(id _Nonnull key, id  _Nonnull obj, BOOL * _Nonnull stop) {
-        id aObj = a[key];
+  // Find objects in the other dictionary that don't exist in self
+  [b enumerateKeysAndObjectsUsingBlock:^(id _Nonnull key, id _Nonnull obj, BOOL *_Nonnull stop) {
+    id aObj = a[key];
 
-        if (!aObj) {
-            delta[key] = obj;
-        }
-    }];
+    if (!aObj) {
+      delta[key] = obj;
+    }
+  }];
 
-    return delta;
+  return delta;
 }
 
 void SerializeAndCheck(es_event_type_t eventType,
                        void (^messageSetup)(std::shared_ptr<MockEndpointSecurityAPI>,
                                             es_message_t *),
-                       SNTDecisionCache *decisionCache, bool json=false) {
+                       SNTDecisionCache *decisionCache, bool json = false) {
   std::shared_ptr<MockEndpointSecurityAPI> mockESApi = std::make_shared<MockEndpointSecurityAPI>();
 
   for (uint32_t cur_version = 1; cur_version <= MaxSupportedESMessageVersionForCurrentOS();
@@ -230,13 +229,14 @@ void SerializeAndCheck(es_event_type_t eventType,
     std::vector<uint8_t> vec = bs->SerializeMessage(std::move(enrichedMsg));
     std::string protoStr(vec.begin(), vec.end());
 
-    // if we're checking against JSON then we should already have a jsonified string and just need to 
+    // if we're checking against JSON then we should already have a jsonified string and just need
+    // to
     ::pbv1::SantaMessage santaMsg;
     std::string gotData;
 
     if (json) {
       // Parse the jsonified string into the protobuf
-      //gotData = protoStr;
+      // gotData = protoStr;
       google::protobuf::util::JsonParseOptions options;
       options.ignore_unknown_fields = true;
       google::protobuf::util::Status status = JsonStringToMessage(protoStr, &santaMsg, options);
@@ -252,16 +252,18 @@ void SerializeAndCheck(es_event_type_t eventType,
     // Convert JSON strings to objects and compare each key-value set.
     NSError *jsonError;
     NSData *objectData = [wantData dataUsingEncoding:NSUTF8StringEncoding];
-    NSDictionary *wantJSONDict = [NSJSONSerialization JSONObjectWithData:objectData
-                                      options:NSJSONReadingMutableContainers 
+    NSDictionary *wantJSONDict =
+      [NSJSONSerialization JSONObjectWithData:objectData
+                                      options:NSJSONReadingMutableContainers
                                         error:&jsonError];
     XCTAssertNil(jsonError, @"failed to parse want data as JSON");
-    NSDictionary *gotJSONDict = [NSJSONSerialization JSONObjectWithData: [NSData dataWithBytes:gotData.data() length:gotData.length()]
-                                      options:NSJSONReadingMutableContainers 
-                                        error:&jsonError];
+    NSDictionary *gotJSONDict = [NSJSONSerialization
+      JSONObjectWithData:[NSData dataWithBytes:gotData.data() length:gotData.length()]
+                 options:NSJSONReadingMutableContainers
+                   error:&jsonError];
     XCTAssertNil(jsonError, @"failed to parse got data as JSON");
 
-    //XCTAssertEqualObjects([NSString stringWithUTF8String:gotData.c_str()], wantData);
+    // XCTAssertEqualObjects([NSString stringWithUTF8String:gotData.c_str()], wantData);
     NSDictionary *delta = findDelta(wantJSONDict, gotJSONDict);
     XCTAssertEqualObjects(@{}, delta);
   }
@@ -346,8 +348,8 @@ void SerializeAndCheckNonESEvents(
 
 - (void)serializeAndCheckEvent:(es_event_type_t)eventType
                   messageSetup:(void (^)(std::shared_ptr<MockEndpointSecurityAPI>,
-                                         es_message_t *))messageSetup 
-                                         json:(BOOL)json {
+                                         es_message_t *))messageSetup
+                          json:(BOOL)json {
   SerializeAndCheck(eventType, messageSetup, self.mockDecisionCache, (bool)json);
 }
 
@@ -360,7 +362,7 @@ void SerializeAndCheckNonESEvents(
                     esMsg->event.close.modified = true;
                     esMsg->event.close.target = &file;
                   }
-                  json: NO];
+                          json:NO];
 }
 
 - (void)testSerializeMessageExchange {
@@ -373,7 +375,7 @@ void SerializeAndCheckNonESEvents(
                     esMsg->event.exchangedata.file1 = &file1;
                     esMsg->event.exchangedata.file2 = &file2;
                   }
-                  json: NO];
+                          json:NO];
 }
 
 - (void)testGetDecisionEnum {
@@ -510,8 +512,8 @@ void SerializeAndCheckNonESEvents(
                         .WillOnce(testing::Return(&fd2))
                         .WillOnce(testing::Return(&fd3));
                     }
-                  } 
-                  json: NO];
+                  }
+                          json:NO];
 }
 
 - (void)testSerializeMessageExecJSON {
@@ -562,10 +564,9 @@ void SerializeAndCheckNonESEvents(
                         .WillOnce(testing::Return(&fd2))
                         .WillOnce(testing::Return(&fd3));
                     }
-                  } 
-                  json: YES];
+                  }
+                          json:YES];
 }
-
 
 - (void)testSerializeMessageExit {
   [self serializeAndCheckEvent:ES_EVENT_TYPE_NOTIFY_EXIT
@@ -573,7 +574,7 @@ void SerializeAndCheckNonESEvents(
                                  es_message_t *esMsg) {
                     esMsg->event.exit.stat = W_EXITCODE(1, 0);
                   }
-                  json: NO];
+                          json:NO];
 }
 
 - (void)testEncodeExitStatus {
@@ -611,7 +612,7 @@ void SerializeAndCheckNonESEvents(
                                  es_message_t *esMsg) {
                     esMsg->event.fork.child = &procChild;
                   }
-                  json: NO];
+                          json:NO];
 }
 
 - (void)testSerializeMessageLink {
@@ -626,7 +627,7 @@ void SerializeAndCheckNonESEvents(
                     esMsg->event.link.target_dir = &fileTargetDir;
                     esMsg->event.link.target_filename = targetTok;
                   }
-                  json: NO];
+                          json:NO];
 }
 
 - (void)testSerializeMessageRename {
@@ -648,7 +649,7 @@ void SerializeAndCheckNonESEvents(
                       esMsg->event.rename.destination_type = ES_DESTINATION_TYPE_NEW_PATH;
                     }
                   }
-                  json: NO];
+                          json:NO];
 }
 
 - (void)testSerializeMessageUnlink {
@@ -661,7 +662,7 @@ void SerializeAndCheckNonESEvents(
                     esMsg->event.unlink.target = &fileTarget;
                     esMsg->event.unlink.parent_dir = &fileTargetParent;
                   }
-                  json: NO];
+                          json:NO];
 }
 
 - (void)testGetAccessType {
