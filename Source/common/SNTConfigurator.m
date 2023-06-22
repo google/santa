@@ -795,7 +795,7 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
   } else if ([logType isEqualToString:@"null"]) {
     return SNTEventLogTypeNull;
   } else if ([logType isEqualToString:@"json"]) {
-    return SNTEventLogTypeFilelog;
+    return SNTEventLogTypeJSON;
   } else if ([logType isEqualToString:@"file"]) {
     return SNTEventLogTypeFilelog;
   } else {
