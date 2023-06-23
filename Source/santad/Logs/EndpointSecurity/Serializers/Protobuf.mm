@@ -27,7 +27,6 @@
 #include <optional>
 #include <string_view>
 
-#include <google/protobuf/util/json_util.h>
 #import "Source/common/SNTCachedDecision.h"
 #include "Source/common/SNTLogging.h"
 #import "Source/common/SNTStoredEvent.h"
@@ -36,6 +35,7 @@
 #include "Source/santad/Logs/EndpointSecurity/Serializers/Utilities.h"
 #import "Source/santad/SNTDecisionCache.h"
 #include "google/protobuf/timestamp.pb.h"
+#include "google/protobuf/util/json_util.h"
 
 using google::protobuf::Arena;
 using google::protobuf::Timestamp;
