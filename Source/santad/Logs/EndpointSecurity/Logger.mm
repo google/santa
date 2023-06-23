@@ -72,6 +72,11 @@ std::unique_ptr<Logger> Logger::Create(std::shared_ptr<EndpointSecurityAPI> esap
         Protobuf::Create(esapi, std::move(decision_cache)),
         Spool::Create([spool_log_path UTF8String], spool_dir_size_threshold,
                       spool_file_size_threshold, spool_flush_timeout_ms));
+    case SNTEventLogTypeJSON:
+      return std::make_unique<Logger>(
+        Protobuf::Create(esapi, std::move(decision_cache), true),
+        File::Create(event_log_path, kFlushBufferTimeoutMS, kBufferBatchSizeBytes,
+                     kMaxExpectedWriteSizeBytes));
     default: LOGE(@"Invalid log type: %ld", log_type); return nullptr;
   }
 }
