@@ -62,7 +62,7 @@ class FsSpoolLogBatchWriter {
   absl::Mutex cache_mutex_;
   santa::fsspool::binaryproto::LogBatch cache_ ABSL_GUARDED_BY(cache_mutex_);
 
-  absl::Status FlushNoLock() ABSL_SHARED_LOCKS_REQUIRED(cache_mutex_);
+  absl::Status FlushNoLock() ABSL_EXCLUSIVE_LOCKS_REQUIRED(cache_mutex_);
 };
 
 }  // namespace fsspool
