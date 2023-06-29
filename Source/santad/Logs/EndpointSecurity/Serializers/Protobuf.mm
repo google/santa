@@ -17,6 +17,7 @@
 #include <EndpointSecurity/EndpointSecurity.h>
 #include <Kernel/kern/cs_blobs.h>
 #include <bsm/libbsm.h>
+#include <google/protobuf/stubs/status.h>
 #include <google/protobuf/util/json_util.h>
 #include <mach/message.h>
 #include <math.h>
