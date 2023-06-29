@@ -28,8 +28,6 @@
 # tool around the tool to use for notarization. The tool must take 2 flags:
 #    --file
 #        - pointing at a zip file containing the artifact to notarize
-#    --primary-bundle-id
-#        - specifying the CFBundleID of the artifact being notarized
 [[ -n "${NOTARIZATION_TOOL}" ]] || die "NOTARIZATION_TOOL unset"
 
 # ARTIFACTS_DIR is a required environment variable pointing at a directory to
@@ -92,7 +90,7 @@ for ARTIFACT in "${INPUT_SYSX}" "${INPUT_APP}"; do
 
   echo "notarizing ${BN}"
   PBID=$(/usr/bin/defaults read "${ARTIFACT}/Contents/Info.plist" CFBundleIdentifier)
-  "${NOTARIZATION_TOOL}" --file "${SCRATCH}/${BN}.zip" --primary-bundle-id "${PBID}"
+  "${NOTARIZATION_TOOL}" --file "${SCRATCH}/${BN}.zip"
 done
 
 # Staple the App.
@@ -166,8 +164,7 @@ echo "verifying pkg signature"
 /usr/sbin/pkgutil --check-signature "${SCRATCH}/${RELEASE_NAME}/${RELEASE_NAME}.pkg" || die "bad pkg signature"
 
 echo "notarizing pkg"
-"${NOTARIZATION_TOOL}" --file "${SCRATCH}/${RELEASE_NAME}/${RELEASE_NAME}.pkg" \
-    --primary-bundle-id "com.google.santa"
+"${NOTARIZATION_TOOL}" --file "${SCRATCH}/${RELEASE_NAME}/${RELEASE_NAME}.pkg"
 
 echo "stapling pkg"
 /usr/bin/xcrun stapler staple "${SCRATCH}/${RELEASE_NAME}/${RELEASE_NAME}.pkg" || die "failed to staple pkg"
@@ -179,7 +176,7 @@ echo "wrapping pkg in dmg"
     -srcfolder "${SCRATCH}/${RELEASE_NAME}/" "${DMG_PATH}" || die "failed to wrap pkg in dmg"
 
 echo "notarizing dmg"
-"${NOTARIZATION_TOOL}" --file "${DMG_PATH}" --primary-bundle-id "com.google.santa"
+"${NOTARIZATION_TOOL}" --file "${DMG_PATH}"
 
 echo "stapling dmg"
 /usr/bin/xcrun stapler staple "${DMG_PATH}" || die "failed to staple dmg"
