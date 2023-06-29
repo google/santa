@@ -56,7 +56,12 @@ absl::Status FsSpoolLogBatchWriter::FlushNoLock() {
       return status;
     }
   }
-  cache_.mutable_records()->Clear();
+  // We assign a new LogBatch() object here instead of calling Clear() method to
+  // make sure the memory used by the cache_ is actually freed. It seems that
+  // internal implementation of protobuf has some very generous way of managing
+  // memory allocations and in certain scenarios it keeps objects for a very
+  // long time (forever?).
+  cache_ = santa::fsspool::binaryproto::LogBatch();
   cache_.mutable_records()->Reserve(max_batch_size_);
   return absl::OkStatus();
 }
