@@ -17,6 +17,8 @@
 #include <EndpointSecurity/EndpointSecurity.h>
 #include <Kernel/kern/cs_blobs.h>
 #include <bsm/libbsm.h>
+#include <google/protobuf/stubs/status.h>
+#include <google/protobuf/util/json_util.h>
 #include <mach/message.h>
 #include <math.h>
 #include <sys/proc_info.h>
@@ -35,7 +37,6 @@
 #include "Source/santad/Logs/EndpointSecurity/Serializers/Utilities.h"
 #import "Source/santad/SNTDecisionCache.h"
 #include "google/protobuf/timestamp.pb.h"
-#include "google/protobuf/util/json_util.h"
 
 using google::protobuf::Arena;
 using google::protobuf::Timestamp;

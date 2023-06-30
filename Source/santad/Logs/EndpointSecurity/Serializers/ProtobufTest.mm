@@ -18,6 +18,7 @@
 #import <OCMock/OCMock.h>
 #import <XCTest/XCTest.h>
 #include <gmock/gmock.h>
+#include <google/protobuf/util/json_util.h>
 #include <gtest/gtest.h>
 #include <sys/proc_info.h>
 #include <sys/signal.h>
@@ -25,8 +26,6 @@
 #include <time.h>
 #include <uuid/uuid.h>
 #include <cstring>
-
-#include <google/protobuf/util/json_util.h>
 
 #import "Source/common/SNTCachedDecision.h"
 #include "Source/common/SNTCommonEnums.h"
