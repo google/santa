@@ -309,7 +309,13 @@ void SantadMain(std::shared_ptr<EndpointSecurityAPI> esapi, std::shared_ptr<Logg
                                  selector:@selector(staticRules)
                                      type:[NSArray class]
                                  callback:^(NSArray *oldValue, NSArray *newValue) {
-                                   if ([oldValue isEqual:newValue]) return;
+                                   NSSet *oldValueSet = [NSSet setWithArray:oldValue ?: @[]];
+                                   NSSet *newValueSet = [NSSet setWithArray:newValue ?: @[]];
+
+                                   if ([oldValueSet isEqualToSet:newValueSet]) {
+                                     return;
+                                   }
+
                                    LOGI(@"StaticRules set has changed, flushing cache.");
                                    auth_result_cache->FlushCache(
                                      FlushCacheMode::kAllCaches,
