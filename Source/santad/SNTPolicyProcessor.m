@@ -65,6 +65,8 @@
       csInfo = nil;
       cd.decisionExtra =
         [NSString stringWithFormat:@"Signature ignored due to error: %ld", (long)csInfoError.code];
+      cd.teamID = nil;
+      cd.signingID = nil;
     } else {
       cd.certSHA256 = csInfo.leafCertificate.SHA256;
       cd.certCommonName = csInfo.leafCertificate.commonName;
