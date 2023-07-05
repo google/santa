@@ -226,6 +226,43 @@ static const NSUInteger kExpectedTeamIDLength = 10;
   return self;
 }
 
+- (NSString *)ruleStateToPolicyString:(SNTRuleState)state {
+  switch (state) {
+    case SNTRuleStateAllow: return kRulePolicyAllowlist;
+    case SNTRuleStateAllowCompiler: return kRulePolicyAllowlistCompiler;
+    case SNTRuleStateBlock: return kRulePolicyBlocklist;
+    case SNTRuleStateSilentBlock: return kRulePolicySilentBlocklist;
+    case SNTRuleStateRemove: return kRulePolicyRemove;
+    case SNTRuleStateAllowTransitive: return @"AllowTransitive";
+    // This should never be hit. But is here for completion.
+    default: return @"Unknown";
+  }
+}
+
+- (NSString *)ruleTypeToString:(SNTRuleType)ruleType {
+  switch (ruleType) {
+    case SNTRuleTypeBinary: return kRuleTypeBinary;
+    case SNTRuleTypeCertificate: return kRuleTypeCertificate;
+    case SNTRuleTypeTeamID: return kRuleTypeTeamID;
+    case SNTRuleTypeSigningID: return kRuleTypeSigningID;
+    // This should never be hit. If we have rule types of Unknown then there's a
+    // coding error somewhere.
+    default: return @"Unknown";
+  }
+}
+
+// Returns an NSDictionary representation of the rule. Primarily use for
+// exporting rules.
+- (NSDictionary *)dictionaryRepresentation {
+  return @{
+    kRuleIdentifier : self.identifier,
+    kRulePolicy : [self ruleStateToPolicyString:self.state],
+    kRuleType : [self ruleTypeToString:self.type],
+    kRuleCustomMsg : self.customMsg ?: @"",
+    kRuleCustomURL : self.customURL ?: @""
+  };
+}
+
 #undef DECODE
 #undef ENCODE
 #pragma clang diagnostic pop

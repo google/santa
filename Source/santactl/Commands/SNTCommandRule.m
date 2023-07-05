@@ -54,6 +54,8 @@ REGISTER_COMMAND_NAME(@"rule")
           @"    --compiler: allow and mark as a compiler\n"
           @"    --remove: remove existing rule\n"
           @"    --check: check for an existing rule\n"
+          @"    --import: import rules from a JSON file\n"
+          @"    --export: export rules to a JSON file\n"
           @"\n"
           @"  One of:\n"
           @"    --path {path}: path of binary/bundle to add/remove.\n"
@@ -62,6 +64,7 @@ REGISTER_COMMAND_NAME(@"rule")
           @"                   the rule state of a file.\n"
           @"    --identifier {sha256|teamID|signingID}: identifier to add/remove/check\n"
           @"    --sha256 {sha256}: hash to add/remove/check [deprecated]\n"
+          @"    --json {path}: path to a JSON file containing a list of rules to add/remove\n"
           @"\n"
           @"  Optionally:\n"
           @"    --teamid: add or check a team ID rule instead of binary\n"
@@ -81,13 +84,27 @@ REGISTER_COMMAND_NAME(@"rule")
           @"    that the signing ID is properly scoped to a developer. For the special\n"
           @"    case of platform binaries, `TeamID` should be replaced with the string\n"
           @"    \"platform\" (e.g. `platform:SigningID`). This allows for rules\n"
-          @"    targeting Apple-signed binaries that do not have a team ID.\n");
+          @"    targeting Apple-signed binaries that do not have a team ID.\n"
+          @"\n"
+          @"  Import and Export or Rules:\n"
+          @"    If santa is not configured to use a sync server one can import\n"
+          @"    / export its non-static rules from JSON files using the \n"
+          @"    --import/--export flags. These files have the following form:\n"
+          @"    {\"rules\": [{rule-dictionaries}]}\n"
+          @"    e.g. {\"rules\": [\n"
+          @"                      {\"policy\": \"BLOCKLIST\",\n"
+          @"                       \"identifier\": "
+          @"\"84de9c61777ca36b13228e2446d53e966096e78db7a72c632b5c185b2ffe68a6\"\n"
+          @"                       \"custom_url\" : \"\",\n"
+          @"                       \"custom_msg\": \"/bin/ls block for demo\"}\n"
+          @"                      ]}\n");
 }
 
 - (void)runWithArguments:(NSArray *)arguments {
   SNTConfigurator *config = [SNTConfigurator configurator];
-  if ((config.syncBaseURL || config.staticRules.count) &&
-      ![arguments containsObject:@"--check"]
+  if ((config.syncBaseURL || config.staticRules.count) && ![arguments containsObject:@"--check"] &&
+      ![arguments containsObject:@"--import"] &&
+      ![arguments containsObject:@"--export"]
 #ifdef DEBUG
       // DEBUG builds add a --force flag to allow manually adding/removing rules during testing.
       && ![arguments containsObject:@"--force"]) {
@@ -103,7 +120,10 @@ REGISTER_COMMAND_NAME(@"rule")
   newRule.type = SNTRuleTypeBinary;
 
   NSString *path;
+  NSString *jsonFilePath;
   BOOL check = NO;
+  BOOL importRules = NO;
+  BOOL exportRules = NO;
 
   // Parse arguments
   for (NSUInteger i = 0; i < arguments.count; ++i) {
@@ -154,80 +174,112 @@ REGISTER_COMMAND_NAME(@"rule")
     } else if ([arg caseInsensitiveCompare:@"--force"] == NSOrderedSame) {
       // Don't do anything special.
 #endif
+    } else if ([arg caseInsensitiveCompare:@"--json"] == NSOrderedSame) {
+      if (++i > arguments.count - 1) {
+        [self printErrorUsageAndExit:@"--json requires an argument"];
+      }
+      jsonFilePath = arguments[i];
+    } else if ([arg caseInsensitiveCompare:@"--import"] == NSOrderedSame) {
+      importRules = YES;
+      if (++i > arguments.count - 1) {
+        [self printErrorUsageAndExit:@"--import requires an argument"];
+      }
+      jsonFilePath = arguments[i];
+    } else if ([arg caseInsensitiveCompare:@"--export"] == NSOrderedSame) {
+      exportRules = YES;
+      if (++i > arguments.count - 1) {
+        [self printErrorUsageAndExit:@"--export requires an argument"];
+      }
+      jsonFilePath = arguments[i];
+    } else if ([arg caseInsensitiveCompare:@"--help"] == NSOrderedSame ||
+               [arg caseInsensitiveCompare:@"-h"] == NSOrderedSame) {
+      printf("%s\n", self.class.longHelpText.UTF8String);
+      exit(0);
     } else {
       [self printErrorUsageAndExit:[@"Unknown argument: " stringByAppendingString:arg]];
     }
   }
 
-  if (path) {
-    SNTFileInfo *fi = [[SNTFileInfo alloc] initWithPath:path];
-    if (!fi.path) {
-      [self printErrorUsageAndExit:@"Provided path was not a plain file"];
+  if (![jsonFilePath isEqualToString:@""]) {
+    if (importRules) {
+      [self importJSONFile:jsonFilePath];
+      return;
+    } else if (exportRules) {
+      [self exportJSONFile:jsonFilePath];
+      return;
     }
 
-    if (newRule.type == SNTRuleTypeBinary) {
-      newRule.identifier = fi.SHA256;
-    } else if (newRule.type == SNTRuleTypeCertificate) {
-      MOLCodesignChecker *cs = [fi codesignCheckerWithError:NULL];
-      newRule.identifier = cs.leafCertificate.SHA256;
-    } else if (newRule.type == SNTRuleTypeTeamID || newRule.type == SNTRuleTypeSigningID) {
-      // noop
+    if (path) {
+      SNTFileInfo *fi = [[SNTFileInfo alloc] initWithPath:path];
+      if (!fi.path) {
+        [self printErrorUsageAndExit:@"Provided path was not a plain file"];
+      }
+
+      if (newRule.type == SNTRuleTypeBinary) {
+        newRule.identifier = fi.SHA256;
+      } else if (newRule.type == SNTRuleTypeCertificate) {
+        MOLCodesignChecker *cs = [fi codesignCheckerWithError:NULL];
+        newRule.identifier = cs.leafCertificate.SHA256;
+      } else if (newRule.type == SNTRuleTypeTeamID || newRule.type == SNTRuleTypeSigningID) {
+        // noop
+      }
     }
-  }
 
-  if (newRule.type == SNTRuleTypeBinary || newRule.type == SNTRuleTypeCertificate) {
-    NSCharacterSet *nonHex =
-      [[NSCharacterSet characterSetWithCharactersInString:@"0123456789ABCDEF"] invertedSet];
-    if ([[newRule.identifier uppercaseString] stringByTrimmingCharactersInSet:nonHex].length !=
-        64) {
-      [self printErrorUsageAndExit:@"BINARY or CERTIFICATE rules require a valid SHA-256"];
+    if (newRule.type == SNTRuleTypeBinary || newRule.type == SNTRuleTypeCertificate) {
+      NSCharacterSet *nonHex =
+        [[NSCharacterSet characterSetWithCharactersInString:@"0123456789ABCDEF"] invertedSet];
+      if ([[newRule.identifier uppercaseString] stringByTrimmingCharactersInSet:nonHex].length !=
+          64) {
+        [self printErrorUsageAndExit:@"BINARY or CERTIFICATE rules require a valid SHA-256"];
+      }
     }
-  }
 
-  if (check) {
-    if (!newRule.identifier) return [self printErrorUsageAndExit:@"--check requires --identifier"];
-    return [self printStateOfRule:newRule daemonConnection:self.daemonConn];
-  }
+    if (check) {
+      if (!newRule.identifier)
+        return [self printErrorUsageAndExit:@"--check requires --identifier"];
+      return [self printStateOfRule:newRule daemonConnection:self.daemonConn];
+    }
 
-  if (newRule.state == SNTRuleStateUnknown) {
-    [self printErrorUsageAndExit:@"No state specified"];
-  } else if (!newRule.identifier) {
-    [self printErrorUsageAndExit:@"Either SHA-256, team ID, or path to file must be specified"];
-  }
+    if (newRule.state == SNTRuleStateUnknown) {
+      [self printErrorUsageAndExit:@"No state specified"];
+    } else if (!newRule.identifier) {
+      [self printErrorUsageAndExit:@"Either SHA-256, team ID, or path to file must be specified"];
+    }
 
-  [[self.daemonConn remoteObjectProxy]
-    databaseRuleAddRules:@[ newRule ]
-              cleanSlate:NO
-                   reply:^(NSError *error) {
-                     if (error) {
-                       printf("Failed to modify rules: %s",
-                              [error.localizedDescription UTF8String]);
-                       LOGD(@"Failure reason: %@", error.localizedFailureReason);
-                       exit(1);
-                     } else {
-                       NSString *ruleType;
-                       switch (newRule.type) {
-                         case SNTRuleTypeCertificate:
-                         case SNTRuleTypeBinary: {
-                           ruleType = @"SHA-256";
-                           break;
-                         }
-                         case SNTRuleTypeTeamID: {
-                           ruleType = @"Team ID";
-                           break;
-                         }
-                         default: ruleType = @"(Unknown type)";
-                       }
-                       if (newRule.state == SNTRuleStateRemove) {
-                         printf("Removed rule for %s: %s.\n", [ruleType UTF8String],
-                                [newRule.identifier UTF8String]);
+    [[self.daemonConn remoteObjectProxy]
+      databaseRuleAddRules:@[ newRule ]
+                cleanSlate:NO
+                     reply:^(NSError *error) {
+                       if (error) {
+                         printf("Failed to modify rules: %s",
+                                [error.localizedDescription UTF8String]);
+                         LOGD(@"Failure reason: %@", error.localizedFailureReason);
+                         exit(1);
                        } else {
-                         printf("Added rule for %s: %s.\n", [ruleType UTF8String],
-                                [newRule.identifier UTF8String]);
+                         NSString *ruleType;
+                         switch (newRule.type) {
+                           case SNTRuleTypeCertificate:
+                           case SNTRuleTypeBinary: {
+                             ruleType = @"SHA-256";
+                             break;
+                           }
+                           case SNTRuleTypeTeamID: {
+                             ruleType = @"Team ID";
+                             break;
+                           }
+                           default: ruleType = @"(Unknown type)";
+                         }
+                         if (newRule.state == SNTRuleStateRemove) {
+                           printf("Removed rule for %s: %s.\n", [ruleType UTF8String],
+                                  [newRule.identifier UTF8String]);
+                         } else {
+                           printf("Added rule for %s: %s.\n", [ruleType UTF8String],
+                                  [newRule.identifier UTF8String]);
+                         }
+                         exit(0);
                        }
-                       exit(0);
-                     }
-                   }];
+                     }];
+  }
 }
 
 - (void)printStateOfRule:(SNTRule *)rule daemonConnection:(MOLXPCConnection *)daemonConn {
@@ -300,6 +352,95 @@ REGISTER_COMMAND_NAME(@"rule")
 
   printf("%s\n", output.UTF8String);
   exit(0);
+}
+
+- (void)importJSONFile:(NSString *)jsonFilePath {
+  // If the file exists parse it and then add the rules one at a time.
+  NSError *error;
+  NSData *data = [NSData dataWithContentsOfFile:jsonFilePath options:0 error:&error];
+  if (error) {
+    [self printErrorUsageAndExit:[NSString stringWithFormat:@"Failed to read %@: %@", jsonFilePath,
+                                                            error.localizedDescription]];
+  }
+
+  // We expect a JSON object with one key "rules". This is an array of rule
+  // objects.
+  // e.g.
+  // {"rules": [{
+  //  "policy" : "BLOCKLIST",
+  //    "rule_type" : "BINARY",
+  //    "identifier" : "84de9c61777ca36b13228e2446d53e966096e78db7a72c632b5c185b2ffe68a6"
+  //    "custom_url" : "",
+  //    "custom_msg" : "/bin/ls block for demo"
+  //  }]}
+  NSDictionary *rules = [NSJSONSerialization JSONObjectWithData:data options:0 error:&error];
+  if (error) {
+    [self printErrorUsageAndExit:[NSString stringWithFormat:@"Failed to parse %@: %@", jsonFilePath,
+                                                            error.localizedDescription]];
+  }
+
+  NSMutableArray<SNTRule *> *parsedRules = [[NSMutableArray alloc] init];
+
+  for (NSDictionary *jsonRule in rules[@"rules"]) {
+    SNTRule *rule = [[SNTRule alloc] initWithDictionary:jsonRule];
+    if (!rule) {
+      [self printErrorUsageAndExit:[NSString stringWithFormat:@"Invalid rule: %@", jsonRule]];
+    }
+    [parsedRules addObject:rule];
+  }
+
+  [[self.daemonConn remoteObjectProxy]
+    databaseRuleAddRules:parsedRules
+              cleanSlate:NO
+                   reply:^(NSError *error) {
+                     if (error) {
+                       printf("Failed to modify rules: %s",
+                              [error.localizedDescription UTF8String]);
+                       LOGD(@"Failure reason: %@", error.localizedFailureReason);
+                       exit(1);
+                     }
+                     exit(0);
+                   }];
+}
+
+- (void)exportJSONFile:(NSString *)jsonFilePath {
+  // Get the rules from the daemon and then write them to the file.
+  id<SNTDaemonControlXPC> rop = [self.daemonConn synchronousRemoteObjectProxy];
+  [rop retrieveAllRules:^(NSArray<NSDictionary *> *rules, NSError *error) {
+    if (error) {
+      printf("Failed to get rules: %s", [error.localizedDescription UTF8String]);
+      LOGD(@"Failure reason: %@", error.localizedFailureReason);
+      exit(1);
+    } else {
+      if (rules.count == 0) {
+        printf("No rules to export.\n");
+        exit(1);
+      }
+      NSError *error;
+      NSOutputStream *outputStream = [[NSOutputStream alloc] initToFileAtPath:jsonFilePath
+                                                                       append:NO];
+      [outputStream open];
+
+      // Write the rules to the file.
+      // File should look like the following JSON:
+      // {"rules": [{"policy": "ALLOWLIST", "identifier": hash, "rule_type: "BINARY"},}]}
+      NSMutableDictionary *jsonRules = [[NSMutableDictionary alloc] init];
+      jsonRules[@"rules"] = rules;
+      NSData *jsonData = [NSJSONSerialization dataWithJSONObject:jsonRules
+                                                         options:NSJSONWritingPrettyPrinted
+                                                           error:&error];
+      // Print error
+      if (error) {
+        printf("Failed to jsonify rules: %s", [error.localizedDescription UTF8String]);
+        LOGD(@"Failure reason: %@", error.localizedFailureReason);
+        exit(1);
+      }
+      // Write jsonData to the file
+      [outputStream write:jsonData.bytes maxLength:jsonData.length];
+      [outputStream close];
+      exit(0);
+    }
+  }];
 }
 
 @end

@@ -301,4 +301,25 @@
   [[NSFileManager defaultManager] removeItemAtPath:dbPath error:NULL];
 }
 
+- (void)testRetrieveAllRulesWithEmptyDatabase {
+  NSArray<SNTRule *> *rules = [self.sut retrieveAllRules];
+  XCTAssertEqual(rules.count, 0);
+}
+
+- (void)testRetrieveAllRulesWithMultipleRules {
+  [self.sut addRules:@[
+    [self _exampleCertRule], [self _exampleBinaryRule], [self _exampleTeamIDRule],
+    [self _exampleSigningIDRuleIsPlatform:NO]
+  ]
+          cleanSlate:NO
+               error:nil];
+
+  NSArray<SNTRule *> *rules = [self.sut retrieveAllRules];
+  XCTAssertEqual(rules.count, 4);
+  XCTAssertEqualObjects(rules[0], [self _exampleCertRule]);
+  XCTAssertEqualObjects(rules[1], [self _exampleBinaryRule]);
+  XCTAssertEqualObjects(rules[2], [self _exampleTeamIDRule]);
+  XCTAssertEqualObjects(rules[3], [self _exampleSigningIDRuleIsPlatform:NO]);
+}
+
 @end
