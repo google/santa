@@ -38,9 +38,12 @@
 // Pretty print C++ string match errors
 #define XCTAssertCppStringEqual(got, want) XCTAssertCStringEqual((got).c_str(), (want).c_str())
 
+// Note: Delta between local formatter and the one run on Github. Disable for now.
+// clang-format off
 #define XCTAssertSemaTrue(s, sec, m) \
   XCTAssertEqual(                    \
-    0, dispatch_semaphore_wait((s), dispatch_time(DISPATCH_TIME_NOW, (sec)*NSEC_PER_SEC)), m)
+    0, dispatch_semaphore_wait((s), dispatch_time(DISPATCH_TIME_NOW, (sec) * NSEC_PER_SEC)), m)
+// clang-format on
 
 // Helper to ensure at least `ms` milliseconds are slept, even if the sleep
 // function returns early due to interrupts.

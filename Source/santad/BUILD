@@ -299,6 +299,7 @@ objc_library(
         "//Source/common:PrefixTree",
         "//Source/common:SNTConfigurator",
         "//Source/common:SNTLogging",
+        "//Source/common:String",
         "//Source/common:Unit",
     ],
 )
