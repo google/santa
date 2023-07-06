@@ -194,6 +194,7 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
       kModeNotificationLockdown : string,
       kStaticRules : array,
       kSyncBaseURLKey : string,
+      kSyncEnableCleanSyncEventUpload : number,
       kSyncProxyConfigKey : dictionary,
       kClientAuthCertificateFileKey : string,
       kClientAuthCertificatePasswordKey : string,
@@ -311,6 +312,10 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
 }
 
 + (NSSet *)keyPathsForValuesAffectingSyncBaseURL {
+  return [self configStateSet];
+}
+
++ (NSSet *)keyPathsForValuesAffectingEnableCleanSyncEventUpload {
   return [self configStateSet];
 }
 
