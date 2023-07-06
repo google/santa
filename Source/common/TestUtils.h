@@ -40,7 +40,7 @@
 
 #define XCTAssertSemaTrue(s, sec, m) \
   XCTAssertEqual(                    \
-    0, dispatch_semaphore_wait((s), dispatch_time(DISPATCH_TIME_NOW, (sec)*NSEC_PER_SEC)), m)
+    0, dispatch_semaphore_wait((s), dispatch_time(DISPATCH_TIME_NOW, (sec) * NSEC_PER_SEC)), m)
 
 // Helper to ensure at least `ms` milliseconds are slept, even if the sleep
 // function returns early due to interrupts.

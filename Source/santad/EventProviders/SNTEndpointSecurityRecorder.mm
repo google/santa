@@ -18,6 +18,7 @@
 
 #import "Source/common/SNTConfigurator.h"
 #import "Source/common/SNTLogging.h"
+#include "Source/common/String.h"
 #include "Source/santad/EventProviders/AuthResultCache.h"
 #include "Source/santad/EventProviders/EndpointSecurity/EnrichedTypes.h"
 #include "Source/santad/EventProviders/EndpointSecurity/Message.h"
@@ -86,7 +87,7 @@ es_file_t *GetTargetFileForPrefixTree(const es_message_t *msg) {
    recordEventMetrics:(void (^)(EventDisposition))recordEventMetrics {
   // Pre-enrichment processing
   switch (esMsg->event_type) {
-    case ES_EVENT_TYPE_NOTIFY_CLOSE:
+    case ES_EVENT_TYPE_NOTIFY_CLOSE: {
       // TODO(mlw): Once we move to building with the macOS 13 SDK, we should also check
       // the `was_mapped_writable` field
       if (esMsg->event.close.modified == false) {
@@ -100,10 +101,11 @@ es_file_t *GetTargetFileForPrefixTree(const es_message_t *msg) {
       self->_authResultCache->RemoveFromCache(esMsg->event.close.target);
 
       // Only log file changes that match the given regex
+      NSString *targetPath = santa::common::StringToNSString(esMsg->event.close.target->path.data);
       if (![[self.configurator fileChangesRegex]
-            numberOfMatchesInString:@(esMsg->event.close.target->path.data)
+            numberOfMatchesInString:targetPath
                             options:0
-                              range:NSMakeRange(0, esMsg->event.close.target->path.length)]) {
+                              range:NSMakeRange(0, targetPath.length)]) {
         // Note: Do not record metrics in this case. These are not considered "drops"
         // because this is not a failure case.
         // TODO(mlw): Consider changes to configuration that would allow muting paths
@@ -112,6 +114,8 @@ es_file_t *GetTargetFileForPrefixTree(const es_message_t *msg) {
       }
 
       break;
+    }
+
     default: break;
   }
 
