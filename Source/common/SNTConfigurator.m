@@ -315,6 +315,10 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
   return [self configStateSet];
 }
 
++ (NSSet *)keyPathsForValuesAffectingSyncEnableCleanSyncEventUpload {
+  return [self configStateSet];
+}
+
 + (NSSet *)keyPathsForValuesAffectingEnablePageZeroProtection {
   return [self configStateSet];
 }
