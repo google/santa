@@ -21,6 +21,6 @@
 
 @property(nonatomic) MOLXPCConnection *notifierConnection;
 
-- (void)addEvent:(SNTStoredEvent *)event customMessage:(NSString *)message;
+- (void)addEvent:(SNTStoredEvent *)event customMessage:(NSString *)message url:(NSString *)url;
 
 @end

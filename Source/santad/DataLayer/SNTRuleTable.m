@@ -435,7 +435,7 @@ static void addPathsFromDefaultMuteSet(NSMutableSet *criticalPaths) API_AVAILABL
       } else {
         if (![db executeUpdate:@"INSERT OR REPLACE INTO rules "
                                @"(identifier, state, type, custommsg, customurl, timestamp) "
-                               @"VALUES (?, ?, ?, ?, ?);",
+                               @"VALUES (?, ?, ?, ?, ?, ?);",
                                rule.identifier, @(rule.state), @(rule.type), rule.customMsg,
                                rule.customURL, @(rule.timestamp)]) {
           [self fillError:error

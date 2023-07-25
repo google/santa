@@ -109,7 +109,11 @@
   return [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
 }
 
-+ (NSURL *)eventDetailURLForEvent:(SNTStoredEvent *)event {
++ (NSURL *)eventDetailURLForEvent:(SNTStoredEvent *)event customURL:(NSString *)url {
+  if (url.length) {
+    return [NSURL URLWithString:url];
+  }
+
   SNTConfigurator *config = [SNTConfigurator configurator];
 
   NSString *hostname = [SNTSystemInfo longHostname];

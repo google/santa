@@ -44,19 +44,19 @@
 
 - (instancetype)initWithEvent:(SNTStoredEvent *)event
                     customMsg:(NSString *)message
-                    customURL:(NSString *)url;
-self = [super initWithWindowNibName:@"MessageWindow"];
-if (self) {
-  _event = event;
-  _customMessage = message;
-  _customURL = url;
-  _progress = [NSProgress discreteProgressWithTotalUnitCount:1];
-  [_progress addObserver:self
-              forKeyPath:@"fractionCompleted"
-                 options:NSKeyValueObservingOptionNew
-                 context:NULL];
-}
-return self;
+                    customURL:(NSString *)url {
+  self = [super initWithWindowNibName:@"MessageWindow"];
+  if (self) {
+    _event = event;
+    _customMessage = message;
+    _customURL = url;
+    _progress = [NSProgress discreteProgressWithTotalUnitCount:1];
+    [_progress addObserver:self
+                forKeyPath:@"fractionCompleted"
+                   options:NSKeyValueObservingOptionNew
+                   context:NULL];
+  }
+  return self;
 }
 
 - (void)dealloc {
@@ -126,10 +126,7 @@ return self;
 }
 
 - (IBAction)openEventDetails:(id)sender {
-  NSURL *url = [SNTBlockMessage eventDetailURLForEvent:self.event];
-  if (self.customURL.length) {
-    url = self.customURL;
-  }
+  NSURL *url = [SNTBlockMessage eventDetailURLForEvent:self.event customURL:self.customURL];
 
   [self closeWindow:sender];
   [[NSWorkspace sharedWorkspace] openURL:url];

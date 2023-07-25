@@ -103,6 +103,7 @@
           case SNTRuleStateSilentBlock: cd.silentBlock = YES;
           case SNTRuleStateBlock:
             cd.customMsg = rule.customMsg;
+            cd.customURL = rule.customURL;
             cd.decision = SNTEventStateBlockBinary;
             return cd;
           case SNTRuleStateAllowCompiler:
@@ -136,6 +137,7 @@
             // intentional fallthrough
           case SNTRuleStateBlock:
             cd.customMsg = rule.customMsg;
+            cd.customURL = rule.customURL;
             cd.decision = SNTEventStateBlockSigningID;
             return cd;
           default: break;
@@ -149,6 +151,7 @@
             // intentional fallthrough
           case SNTRuleStateBlock:
             cd.customMsg = rule.customMsg;
+            cd.customURL = rule.customURL;
             cd.decision = SNTEventStateBlockCertificate;
             return cd;
           default: break;
@@ -162,6 +165,7 @@
             // intentional fallthrough
           case SNTRuleStateBlock:
             cd.customMsg = rule.customMsg;
+            cd.customURL = rule.customURL;
             cd.decision = SNTEventStateBlockTeamID;
             return cd;
           default: break;

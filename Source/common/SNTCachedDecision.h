@@ -42,6 +42,7 @@
 @property NSString *quarantineURL;
 
 @property NSString *customMsg;
+@property NSString *customURL;
 @property BOOL silentBlock;
 
 @end
