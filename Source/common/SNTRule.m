@@ -182,7 +182,14 @@ static const NSUInteger kExpectedTeamIDLength = 10;
     customMsg = nil;
   }
 
-  return [self initWithIdentifier:identifier state:state type:type customMsg:customMsg];
+  NSString *customURL = dict[kRuleCustomURL];
+  if (![customURL isKindOfClass:[NSString class]] || customURL.length == 0) {
+    customURL = nil;
+  }
+
+  SNTRule *r = [self initWithIdentifier:identifier state:state type:type customMsg:customMsg];
+  r.customURL = customURL;
+  return r;
 }
 
 #pragma mark NSSecureCoding
@@ -202,6 +209,7 @@ static const NSUInteger kExpectedTeamIDLength = 10;
   ENCODE(@(self.state), @"state");
   ENCODE(@(self.type), @"type");
   ENCODE(self.customMsg, @"custommsg");
+  ENCODE(self.customURL, @"customurl");
   ENCODE(@(self.timestamp), @"timestamp");
 }
 
@@ -212,6 +220,7 @@ static const NSUInteger kExpectedTeamIDLength = 10;
     _state = [DECODE(NSNumber, @"state") intValue];
     _type = [DECODE(NSNumber, @"type") intValue];
     _customMsg = DECODE(NSString, @"custommsg");
+    _customURL = DECODE(NSString, @"customurl");
     _timestamp = [DECODE(NSNumber, @"timestamp") unsignedIntegerValue];
   }
   return self;
