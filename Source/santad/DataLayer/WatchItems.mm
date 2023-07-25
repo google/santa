@@ -56,7 +56,7 @@ NSString *const kWatchItemConfigKeyOptionsAuditOnly = @"AuditOnly";
 NSString *const kWatchItemConfigKeyOptionsInvertProcessExceptions = @"InvertProcessExceptions";
 NSString *const kWatchItemConfigKeyOptionsEnableSilentMode = @"EnableSilentMode";
 NSString *const kWatchItemConfigKeyOptionsEnableSilentTTYMode = @"EnableSilentTTYMode";
-NSString *const kWatchItemConfigKeyOptionsCustomMessage = @"CustomMessage";
+NSString *const kWatchItemConfigKeyOptionsCustomMessage = @"BlockMessage";
 NSString *const kWatchItemConfigKeyProcesses = @"Processes";
 NSString *const kWatchItemConfigKeyProcessesBinaryPath = @"BinaryPath";
 NSString *const kWatchItemConfigKeyProcessesCertificateSha256 = @"CertificateSha256";
@@ -394,6 +394,8 @@ std::variant<Unit, ProcessList> VerifyConfigWatchItemProcesses(NSDictionary *wat
 ///     <true/>
 ///     <key>EnableSilentTTYMode</key>
 ///     <true/>
+///     <key>BlockMessage</key>
+///     <string>...</string>
 ///   </dict>
 ///   <key>Processes</key>
 ///   <array>
