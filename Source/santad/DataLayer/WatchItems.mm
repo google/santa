@@ -54,6 +54,9 @@ NSString *const kWatchItemConfigKeyOptions = @"Options";
 NSString *const kWatchItemConfigKeyOptionsAllowReadAccess = @"AllowReadAccess";
 NSString *const kWatchItemConfigKeyOptionsAuditOnly = @"AuditOnly";
 NSString *const kWatchItemConfigKeyOptionsInvertProcessExceptions = @"InvertProcessExceptions";
+NSString *const kWatchItemConfigKeyOptionsEnableSilentMode = @"EnableSilentMode";
+NSString *const kWatchItemConfigKeyOptionsEnableSilentTTYMode = @"EnableSilentTTYMode";
+NSString *const kWatchItemConfigKeyOptionsCustomMessage = @"CustomMessage";
 NSString *const kWatchItemConfigKeyProcesses = @"Processes";
 NSString *const kWatchItemConfigKeyProcessesBinaryPath = @"BinaryPath";
 NSString *const kWatchItemConfigKeyProcessesCertificateSha256 = @"CertificateSha256";
@@ -72,6 +75,10 @@ static constexpr NSUInteger kMaxSigningIDLength = 512;
 // Goal is to prevent a configuration setting that would cause too much
 // churn rebuilding glob paths based on the state of the filesystem.
 static constexpr uint64_t kMinReapplyConfigFrequencySecs = 15;
+
+// Semi-arbitrary max custom message length. The goal is to protect against
+// potential unbounded lengths, but no real reason this cannot be higher.
+static constexpr NSUInteger kWatchItemConfigOptionCustomMessageMaxLength = 2048;
 
 namespace santa::santad::data_layer {
 
@@ -124,6 +131,10 @@ static std::vector<uint8_t> HexStringToBytes(NSString *str) {
   }
 
   return bytes;
+}
+
+static inline bool GetBoolValue(NSDictionary *options, NSString *key, bool default_value) {
+  return options[key] ? [options[key] boolValue] : default_value;
 }
 
 // Given a length, returns a ValidatorBlock that confirms the
@@ -379,6 +390,10 @@ std::variant<Unit, ProcessList> VerifyConfigWatchItemProcesses(NSDictionary *wat
 ///     <false/>
 ///     <key>InvertProcessExceptions</key>
 ///     <false/>
+///     <key>EnableSilentMode</key>
+///     <true/>
+///     <key>EnableSilentTTYMode</key>
+///     <true/>
 ///   </dict>
 ///   <key>Processes</key>
 ///   <array>
@@ -405,31 +420,38 @@ bool ParseConfigSingleWatchItem(NSString *name, NSDictionary *watch_item,
 
   NSDictionary *options = watch_item[kWatchItemConfigKeyOptions];
   if (options) {
-    if (!VerifyConfigKey(options, kWatchItemConfigKeyOptionsAllowReadAccess, [NSNumber class],
-                         err)) {
-      return false;
+    NSArray<NSString *> *boolOptions = @[
+      kWatchItemConfigKeyOptionsAllowReadAccess,
+      kWatchItemConfigKeyOptionsAuditOnly,
+      kWatchItemConfigKeyOptionsInvertProcessExceptions,
+      kWatchItemConfigKeyOptionsEnableSilentMode,
+      kWatchItemConfigKeyOptionsEnableSilentTTYMode,
+    ];
+
+    for (NSString *key in boolOptions) {
+      if (!VerifyConfigKey(options, key, [NSNumber class], err)) {
+        return false;
+      }
     }
 
-    if (!VerifyConfigKey(options, kWatchItemConfigKeyOptionsAuditOnly, [NSNumber class], err)) {
-      return false;
-    }
-
-    if (!VerifyConfigKey(options, kWatchItemConfigKeyOptionsInvertProcessExceptions,
-                         [NSNumber class], err)) {
+    if (!VerifyConfigKey(options, kWatchItemConfigKeyOptionsCustomMessage, [NSString class], err,
+                         false,
+                         LenRangeValidator(0, kWatchItemConfigOptionCustomMessageMaxLength))) {
       return false;
     }
   }
 
-  bool allow_read_access = options[kWatchItemConfigKeyOptionsAllowReadAccess]
-                             ? [options[kWatchItemConfigKeyOptionsAllowReadAccess] boolValue]
-                             : kWatchItemPolicyDefaultAllowReadAccess;
-  bool audit_only = options[kWatchItemConfigKeyOptionsAuditOnly]
-                      ? [options[kWatchItemConfigKeyOptionsAuditOnly] boolValue]
-                      : kWatchItemPolicyDefaultAuditOnly;
+  bool allow_read_access = GetBoolValue(options, kWatchItemConfigKeyOptionsAllowReadAccess,
+                                        kWatchItemPolicyDefaultAllowReadAccess);
+  bool audit_only =
+    GetBoolValue(options, kWatchItemConfigKeyOptionsAuditOnly, kWatchItemPolicyDefaultAuditOnly);
   bool invert_process_exceptions =
-    options[kWatchItemConfigKeyOptionsInvertProcessExceptions]
-      ? [options[kWatchItemConfigKeyOptionsInvertProcessExceptions] boolValue]
-      : kWatchItemPolicyDefaultInvertProcessExceptions;
+    GetBoolValue(options, kWatchItemConfigKeyOptionsInvertProcessExceptions,
+                 kWatchItemPolicyDefaultInvertProcessExceptions);
+  bool enable_silent_mode = GetBoolValue(options, kWatchItemConfigKeyOptionsEnableSilentMode,
+                                         kWatchItemPolicyDefaultEnableSilentMode);
+  bool enable_silent_tty_mode = GetBoolValue(options, kWatchItemConfigKeyOptionsEnableSilentTTYMode,
+                                             kWatchItemPolicyDefaultEnableSilentTTYMode);
 
   std::variant<Unit, ProcessList> proc_list = VerifyConfigWatchItemProcesses(watch_item, err);
   if (std::holds_alternative<Unit>(proc_list)) {
@@ -439,7 +461,10 @@ bool ParseConfigSingleWatchItem(NSString *name, NSDictionary *watch_item,
   for (const PathAndTypePair &path_type_pair : std::get<PathList>(path_list)) {
     policies.push_back(std::make_shared<WatchItemPolicy>(
       NSStringToUTF8StringView(name), path_type_pair.first, path_type_pair.second,
-      allow_read_access, audit_only, invert_process_exceptions, std::get<ProcessList>(proc_list)));
+      allow_read_access, audit_only, invert_process_exceptions, enable_silent_mode,
+      enable_silent_tty_mode,
+      NSStringToUTF8StringView(options[kWatchItemConfigKeyOptionsCustomMessage]),
+      std::get<ProcessList>(proc_list)));
   }
 
   return true;

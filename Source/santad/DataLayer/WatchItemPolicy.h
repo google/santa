@@ -34,6 +34,8 @@ static constexpr WatchItemPathType kWatchItemPolicyDefaultPathType =
 static constexpr bool kWatchItemPolicyDefaultAllowReadAccess = false;
 static constexpr bool kWatchItemPolicyDefaultAuditOnly = true;
 static constexpr bool kWatchItemPolicyDefaultInvertProcessExceptions = false;
+static constexpr bool kWatchItemPolicyDefaultEnableSilentMode = false;
+static constexpr bool kWatchItemPolicyDefaultEnableSilentTTYMode = false;
 
 struct WatchItemPolicy {
   struct Process {
@@ -71,21 +73,29 @@ struct WatchItemPolicy {
                   bool ara = kWatchItemPolicyDefaultAllowReadAccess,
                   bool ao = kWatchItemPolicyDefaultAuditOnly,
                   bool ipe = kWatchItemPolicyDefaultInvertProcessExceptions,
-                  std::vector<Process> procs = {})
+                  bool esm = kWatchItemPolicyDefaultEnableSilentMode,
+                  bool estm = kWatchItemPolicyDefaultEnableSilentTTYMode,
+                  std::string_view cm = "", std::vector<Process> procs = {})
       : name(n),
         path(p),
         path_type(pt),
         allow_read_access(ara),
         audit_only(ao),
         invert_process_exceptions(ipe),
+        silent(esm),
+        silent_tty(estm),
+        custom_message(cm.length() == 0 ? std::nullopt
+                                        : std::make_optional<std::string>(cm)),
         processes(std::move(procs)) {}
 
   bool operator==(const WatchItemPolicy &other) const {
+    // Note: Custom message isn't currently considered for equality purposes
     return name == other.name && path == other.path &&
            path_type == other.path_type &&
            allow_read_access == other.allow_read_access &&
            audit_only == other.audit_only &&
            invert_process_exceptions == other.invert_process_exceptions &&
+           silent == other.silent && silent_tty == other.silent_tty &&
            processes == other.processes;
   }
 
@@ -99,10 +109,12 @@ struct WatchItemPolicy {
   bool allow_read_access;
   bool audit_only;
   bool invert_process_exceptions;
+  bool silent;
+  bool silent_tty;
+  std::optional<std::string> custom_message;
   std::vector<Process> processes;
 
   // WIP - No current way to control via config
-  bool silent = true;
   std::string version = "temp_version";
 };
 

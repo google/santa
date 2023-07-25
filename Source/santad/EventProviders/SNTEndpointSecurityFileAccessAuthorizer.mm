@@ -485,7 +485,7 @@ void PopulatePathTargets(const Message &msg, std::vector<PathTarget> &targets) {
                               targetPathCopy, policyDecision);
                           }];
     }
-
+#if 0
     if (!optionalPolicy.value()->silent && self.fileAccessBlockCallback) {
       SNTCachedDecision *cd =
         [self.decisionCache cachedDecisionForFile:msg->process->executable->stat];
@@ -506,6 +506,7 @@ void PopulatePathTargets(const Message &msg, std::vector<PathTarget> &targets) {
 
       self.fileAccessBlockCallback(event);
     }
+#endif
   }
 
   return policyDecision;
