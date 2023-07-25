@@ -25,6 +25,7 @@
 #include "Source/santad/Logs/EndpointSecurity/Logger.h"
 #include "Source/santad/Metrics.h"
 #import "Source/santad/SNTDecisionCache.h"
+#include "Source/santad/TTYWriter.h"
 
 typedef void (^SNTFileAccessBlockCallback)(SNTFileAccessEvent *event);
 
@@ -39,7 +40,8 @@ typedef void (^SNTFileAccessBlockCallback)(SNTFileAccessEvent *event);
      watchItems:(std::shared_ptr<santa::santad::data_layer::WatchItems>)watchItems
        enricher:
          (std::shared_ptr<santa::santad::event_providers::endpoint_security::Enricher>)enricher
-  decisionCache:(SNTDecisionCache *)decisionCache;
+  decisionCache:(SNTDecisionCache *)decisionCache
+      ttyWriter:(std::shared_ptr<santa::santad::TTYWriter>)ttyWriter;
 
 @property SNTFileAccessBlockCallback fileAccessBlockCallback;
 

@@ -56,6 +56,7 @@ using PathTargetsPair = std::pair<std::optional<std::string>, std::optional<std:
 extern void PopulatePathTargets(const Message &msg, std::vector<PathTarget> &targets);
 extern es_auth_result_t FileAccessPolicyDecisionToESAuthResult(FileAccessPolicyDecision decision);
 extern bool ShouldLogDecision(FileAccessPolicyDecision decision);
+extern bool ShouldNotifyUserDecision(FileAccessPolicyDecision decision);
 extern es_auth_result_t CombinePolicyResults(es_auth_result_t result1, es_auth_result_t result2);
 
 void SetExpectationsForFileAccessAuthorizerInit(
@@ -135,7 +136,8 @@ void ClearWatchItemPolicyProcess(WatchItemPolicy::Process &proc) {
                                                             logger:nullptr
                                                         watchItems:nullptr
                                                           enricher:nullptr
-                                                     decisionCache:self.dcMock];
+                                                     decisionCache:self.dcMock
+                                                         ttyWriter:nullptr];
 
   //
   // Test 1 - Not in local cache or decision cache, and code sig lookup fails
@@ -229,11 +231,27 @@ void ClearWatchItemPolicyProcess(WatchItemPolicy::Process &proc) {
     {FileAccessPolicyDecision::kAllowed, false},
     {FileAccessPolicyDecision::kAllowedReadAccess, false},
     {FileAccessPolicyDecision::kAllowedAuditOnly, true},
-    {(FileAccessPolicyDecision)5, false},
+    {(FileAccessPolicyDecision)123, false},
   };
 
   for (const auto &kv : policyDecisionToShouldLog) {
     XCTAssertEqual(ShouldLogDecision(kv.first), kv.second);
+  }
+}
+
+- (void)testShouldNotifyUserDecision {
+  std::map<FileAccessPolicyDecision, bool> policyDecisionToShouldLog = {
+    {FileAccessPolicyDecision::kNoPolicy, false},
+    {FileAccessPolicyDecision::kDenied, true},
+    {FileAccessPolicyDecision::kDeniedInvalidSignature, true},
+    {FileAccessPolicyDecision::kAllowed, false},
+    {FileAccessPolicyDecision::kAllowedReadAccess, false},
+    {FileAccessPolicyDecision::kAllowedAuditOnly, false},
+    {(FileAccessPolicyDecision)123, false},
+  };
+
+  for (const auto &kv : policyDecisionToShouldLog) {
+    XCTAssertEqual(ShouldNotifyUserDecision(kv.first), kv.second);
   }
 }
 
@@ -269,7 +287,8 @@ void ClearWatchItemPolicyProcess(WatchItemPolicy::Process &proc) {
                                                             logger:nullptr
                                                         watchItems:nullptr
                                                           enricher:nullptr
-                                                     decisionCache:nil];
+                                                     decisionCache:nil
+                                                         ttyWriter:nullptr];
 
   auto policy = std::make_shared<WatchItemPolicy>("foo_policy", "/foo");
 
@@ -397,7 +416,8 @@ void ClearWatchItemPolicyProcess(WatchItemPolicy::Process &proc) {
                                                             logger:nullptr
                                                         watchItems:nullptr
                                                           enricher:nullptr
-                                                     decisionCache:nil];
+                                                     decisionCache:nil
+                                                         ttyWriter:nullptr];
 
   id accessClientMock = OCMPartialMock(accessClient);
 
@@ -515,7 +535,8 @@ void ClearWatchItemPolicyProcess(WatchItemPolicy::Process &proc) {
                                                             logger:nullptr
                                                         watchItems:nullptr
                                                           enricher:nullptr
-                                                     decisionCache:nil];
+                                                     decisionCache:nil
+                                                         ttyWriter:nullptr];
 
   id accessClientMock = OCMPartialMock(accessClient);
 
@@ -678,7 +699,8 @@ void ClearWatchItemPolicyProcess(WatchItemPolicy::Process &proc) {
                                                             logger:nullptr
                                                         watchItems:nullptr
                                                           enricher:nullptr
-                                                     decisionCache:nil];
+                                                     decisionCache:nil
+                                                         ttyWriter:nullptr];
 
   EXPECT_CALL(*mockESApi, UnsubscribeAll);
   EXPECT_CALL(*mockESApi, UnmuteAllTargetPaths).WillOnce(testing::Return(true));

@@ -84,7 +84,7 @@ std::unique_ptr<SantadDeps> SantadDeps::Create(SNTConfigurator *configurator,
     exit(EXIT_FAILURE);
   }
 
-  std::shared_ptr<TTYWriter> tty_writer = TTYWriter::Create();
+  std::shared_ptr<::TTYWriter> tty_writer = TTYWriter::Create();
   if (!tty_writer) {
     LOGW(@"Unable to initialize TTY writer");
   }
@@ -152,10 +152,10 @@ std::unique_ptr<SantadDeps> SantadDeps::Create(SNTConfigurator *configurator,
     exit(EXIT_FAILURE);
   }
 
-  return std::make_unique<SantadDeps>(esapi, std::move(logger), std::move(metrics),
-                                      std::move(watch_items), std::move(auth_result_cache),
-                                      control_connection, compiler_controller, notifier_queue,
-                                      syncd_queue, exec_controller, prefix_tree);
+  return std::make_unique<SantadDeps>(
+    esapi, std::move(logger), std::move(metrics), std::move(watch_items),
+    std::move(auth_result_cache), control_connection, compiler_controller, notifier_queue,
+    syncd_queue, exec_controller, prefix_tree, std::move(tty_writer));
 }
 
 SantadDeps::SantadDeps(
@@ -164,7 +164,8 @@ SantadDeps::SantadDeps(
   std::shared_ptr<santa::santad::event_providers::AuthResultCache> auth_result_cache,
   MOLXPCConnection *control_connection, SNTCompilerController *compiler_controller,
   SNTNotificationQueue *notifier_queue, SNTSyncdQueue *syncd_queue,
-  SNTExecutionController *exec_controller, std::shared_ptr<::PrefixTree<Unit>> prefix_tree)
+  SNTExecutionController *exec_controller, std::shared_ptr<::PrefixTree<Unit>> prefix_tree,
+  std::shared_ptr<::TTYWriter> tty_writer)
     : esapi_(std::move(esapi)),
       logger_(std::move(logger)),
       metrics_(std::move(metrics)),
@@ -176,7 +177,8 @@ SantadDeps::SantadDeps(
       notifier_queue_(notifier_queue),
       syncd_queue_(syncd_queue),
       exec_controller_(exec_controller),
-      prefix_tree_(prefix_tree) {}
+      prefix_tree_(prefix_tree),
+      tty_writer_(std::move(tty_writer)) {}
 
 std::shared_ptr<::AuthResultCache> SantadDeps::AuthResultCache() {
   return auth_result_cache_;
@@ -223,6 +225,10 @@ SNTExecutionController *SantadDeps::ExecController() {
 
 std::shared_ptr<PrefixTree<Unit>> SantadDeps::PrefixTree() {
   return prefix_tree_;
+}
+
+std::shared_ptr<::TTYWriter> SantadDeps::TTYWriter() {
+  return tty_writer_;
 }
 
 }  // namespace santa::santad
