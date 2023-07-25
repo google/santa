@@ -356,12 +356,12 @@ downloading if the rules need to be downloaded in multiple batches.
 | Key | Required | Type | Meaning | Example Value |
 |---|---|---|---|---|
 | identifier | YES | string | The attribute of the binary the rule should match on e.g. the team ID of a binary or sha256 hash value | "ff2a7daa4c25cbd5b057e4471c6a22aba7d154dadfb5cce139c37cf795f41c9c" |
-| policy | YES | string | identifies the action to perform in response to the rule matching must be one of the examples. | "ALLOWLIST","ALLOWLIST_COMPILER", "BLOCKLIST", "REMOVE",  "SILENT_BLOCKLIST" |
-| rule_type | YES | string | identifies the type of rule must be one of he examples | "BINARY", "CERTIFICATE", "TEAMID" |
+| policy | YES | string | Identifies the action to perform in response to the rule matching (must be one of the examples) | "ALLOWLIST","ALLOWLIST_COMPILER", "BLOCKLIST", "REMOVE",  "SILENT_BLOCKLIST" |
+| rule_type | YES | string | Identifies the type of rule (must be one of the examples) | "BINARY", "CERTIFICATE", "SIGNINGID", "TEAMID" |
 | custom_msg | NO | string | A custom message to display when the rule matches | "Hello" |
-| creation_time | NO | float64 | time the rule was created | 1573543803.349378 |
+| creation_time | NO | float64 | Time the rule was created | 1573543803.349378 |
 | file_bundle_binary_count | NO | integer | The number of binaries in a bundle | 13 |
-| file_bundle_hash | NO | string | The SHA256 of all binaries in a bundle. | "7466e3687f540bcb7792c6d14d5a186667dbe18a85021857b42effe9f0370805" |
+| file_bundle_hash | NO | string | The SHA256 of all binaries in a bundle | "7466e3687f540bcb7792c6d14d5a186667dbe18a85021857b42effe9f0370805" |
 
 
 ##### Example `ruledownload` Response Payload
