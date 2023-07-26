@@ -143,6 +143,8 @@
          @":com.example",     // missing team ID
          @"ABCDEFGHIJ:",      // missing signing ID
          @"ABC:com.example",  // Invalid team id
+         @":",                // missing team and signing IDs
+         @"",                 // empty string
        ]) {
     sut = [[SNTRule alloc] initWithDictionary:@{
       @"identifier" : ident,

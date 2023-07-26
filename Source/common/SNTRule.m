@@ -59,9 +59,10 @@ static const NSUInteger kExpectedTeamIDLength = 10;
 
     } else if (type == SNTRuleTypeSigningID) {
       // SigningID rules are a combination of `TeamID:SigningID`. The TeamID should
-      // be forced to be uppercase, but very loose rules existing for SigningIDs, the
-      // case will be kept as-is. As an exception, platform binaries are expected to
-      // have the hardcoded string "platform" as the team ID.
+      // be forced to be uppercase, but because very loose rules exist for SigningIDs,
+      // their case will be kept as-is. However, platform binaries are expected to
+      // have the hardcoded string "platform" as the team ID and the case will be left
+      // as is.
       NSArray *sidComponents = [identifier componentsSeparatedByString:@":"];
       if (!sidComponents || sidComponents.count != 2) {
         return nil;
