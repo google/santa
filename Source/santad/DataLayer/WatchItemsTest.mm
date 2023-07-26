@@ -757,37 +757,66 @@ static NSString *RepeatedString(NSString *str, NSUInteger len) {
     &err));
 
   // Options keys must be valid types
-  XCTAssertFalse(ParseConfigSingleWatchItem(@"", @{
-    kWatchItemConfigKeyPaths : @[ @"a" ],
-    kWatchItemConfigKeyOptions : @{kWatchItemConfigKeyOptionsAllowReadAccess : @""}
-  },
-                                            policies, &err));
-  XCTAssertTrue(ParseConfigSingleWatchItem(@"", @{
-    kWatchItemConfigKeyPaths : @[ @"a" ],
-    kWatchItemConfigKeyOptions : @{kWatchItemConfigKeyOptionsAllowReadAccess : @(0)}
-  },
-                                           policies, &err));
-  XCTAssertFalse(ParseConfigSingleWatchItem(@"", @{
-    kWatchItemConfigKeyPaths : @[ @"a" ],
-    kWatchItemConfigKeyOptions : @{kWatchItemConfigKeyOptionsAuditOnly : @""}
-  },
-                                            policies, &err));
-  XCTAssertTrue(ParseConfigSingleWatchItem(@"", @{
-    kWatchItemConfigKeyPaths : @[ @"a" ],
-    kWatchItemConfigKeyOptions : @{kWatchItemConfigKeyOptionsAuditOnly : @(0)}
-  },
-                                           policies, &err));
+  {
+    // Check bool option keys
+    for (NSString *key in @[
+           kWatchItemConfigKeyOptionsAllowReadAccess,
+           kWatchItemConfigKeyOptionsAuditOnly,
+           kWatchItemConfigKeyOptionsInvertProcessExceptions,
+           kWatchItemConfigKeyOptionsEnableSilentMode,
+           kWatchItemConfigKeyOptionsEnableSilentTTYMode,
+         ]) {
+      // Parse bool option with invliad type
+      XCTAssertFalse(ParseConfigSingleWatchItem(
+        @"",
+        @{kWatchItemConfigKeyPaths : @[ @"a" ],
+          kWatchItemConfigKeyOptions : @{key : @""}},
+        policies, &err));
 
-  XCTAssertFalse(ParseConfigSingleWatchItem(@"", @{
-    kWatchItemConfigKeyPaths : @[ @"a" ],
-    kWatchItemConfigKeyOptions : @{kWatchItemConfigKeyOptionsInvertProcessExceptions : @""}
-  },
-                                            policies, &err));
-  XCTAssertTrue(ParseConfigSingleWatchItem(@"", @{
-    kWatchItemConfigKeyPaths : @[ @"a" ],
-    kWatchItemConfigKeyOptions : @{kWatchItemConfigKeyOptionsInvertProcessExceptions : @(0)}
-  },
-                                           policies, &err));
+      // Parse bool option with valid type
+      XCTAssertTrue(ParseConfigSingleWatchItem(
+        @"",
+        @{kWatchItemConfigKeyPaths : @[ @"a" ],
+          kWatchItemConfigKeyOptions : @{key : @(0)}},
+        policies, &err));
+    }
+
+    // Check other option keys
+
+    // kWatchItemConfigKeyOptionsCustomMessage - Invalid type
+    XCTAssertFalse(ParseConfigSingleWatchItem(
+      @"", @{
+        kWatchItemConfigKeyPaths : @[ @"a" ],
+        kWatchItemConfigKeyOptions : @{kWatchItemConfigKeyOptionsCustomMessage : @[]}
+      },
+      policies, &err));
+
+    // kWatchItemConfigKeyOptionsCustomMessage zero length
+    XCTAssertTrue(ParseConfigSingleWatchItem(
+      @"", @{
+        kWatchItemConfigKeyPaths : @[ @"a" ],
+        kWatchItemConfigKeyOptions : @{kWatchItemConfigKeyOptionsCustomMessage : @""}
+      },
+      policies, &err));
+
+    // kWatchItemConfigKeyOptionsCustomMessage valid "normal" length
+    XCTAssertTrue(ParseConfigSingleWatchItem(
+      @"", @{
+        kWatchItemConfigKeyPaths : @[ @"a" ],
+        kWatchItemConfigKeyOptions :
+          @{kWatchItemConfigKeyOptionsCustomMessage : @"This is a custom message"}
+      },
+      policies, &err));
+
+    // kWatchItemConfigKeyOptionsCustomMessage Invalid "long" length
+    XCTAssertFalse(ParseConfigSingleWatchItem(
+      @"", @{
+        kWatchItemConfigKeyPaths : @[ @"a" ],
+        kWatchItemConfigKeyOptions :
+          @{kWatchItemConfigKeyOptionsCustomMessage : RepeatedString(@"A", 4096)}
+      },
+      policies, &err));
+  }
 
   // If processes are specified, they must be valid format
   // Note: Full tests in `testVerifyConfigWatchItemProcesses`
@@ -822,6 +851,9 @@ static NSString *RepeatedString(NSString *str, NSUInteger len) {
       kWatchItemConfigKeyOptionsAllowReadAccess : @(YES),
       kWatchItemConfigKeyOptionsAuditOnly : @(NO),
       kWatchItemConfigKeyOptionsInvertProcessExceptions : @(YES),
+      kWatchItemConfigKeyOptionsEnableSilentMode : @(YES),
+      kWatchItemConfigKeyOptionsEnableSilentMode : @(NO),
+      kWatchItemConfigKeyOptionsCustomMessage : @"",
     },
     kWatchItemConfigKeyProcesses : @[
       @{kWatchItemConfigKeyProcessesBinaryPath : @"pa"},
@@ -829,11 +861,12 @@ static NSString *RepeatedString(NSString *str, NSUInteger len) {
     ]
   },
                                            policies, &err));
+
   XCTAssertEqual(policies.size(), 2);
   XCTAssertEqual(*policies[0].get(), WatchItemPolicy("rule", "a", kWatchItemPolicyDefaultPathType,
-                                                     true, false, true, procs));
+                                                     true, false, true, true, false, "", procs));
   XCTAssertEqual(*policies[1].get(), WatchItemPolicy("rule", "b", WatchItemPathType::kPrefix, true,
-                                                     false, true, procs));
+                                                     false, true, true, false, "", procs));
 }
 
 - (void)testState {
