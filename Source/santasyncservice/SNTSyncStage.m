@@ -115,7 +115,7 @@
       nanosleep(&ts, NULL);
     }
 
-    SLOGD(@"Performing request, attempt %d", attempt);
+    SLOGD(@"Performing request, attempt %d (of %d maximum)...", attempt, maxAttempts);
     data = [self performRequest:request timeout:timeout response:&response error:&error];
     if (response.statusCode == 200) break;
 
