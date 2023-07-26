@@ -106,13 +106,16 @@
   NSError *error;
   NSData *data;
 
-  for (int attempt = 1; attempt < 6; ++attempt) {
-    if (attempt > 1) {
-      struct timespec ts = {.tv_sec = (attempt * 2)};
+  int maxAttempts = 5;
+  for (int attempt = 1; attempt <= maxAttempts; ++attempt) {
+    if (attempt >= 2) {
+      // Exponentially back off with larger and larger delays.
+      int exponentialBackoffMultiplier = 2;  // E.g. 2^2 = 4, 2^3 = 8, 2^4 = 16...
+      struct timespec ts = {.tv_sec = pow(exponentialBackoffMultiplier, attempt)};
       nanosleep(&ts, NULL);
     }
 
-    SLOGD(@"Performing request, attempt %d", attempt);
+    SLOGD(@"Performing request, attempt %d (of %d maximum)...", attempt, maxAttempts);
     data = [self performRequest:request timeout:timeout response:&response error:&error];
     if (response.statusCode == 200) break;
 
