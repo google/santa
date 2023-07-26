@@ -13,7 +13,14 @@
 ///    limitations under the License.
 
 #import "Source/common/SNTRule.h"
+
+#include <CommonCrypto/CommonCrypto.h>
+#include <os/base.h>
+
 #import "Source/common/SNTSyncConstants.h"
+
+// https://developer.apple.com/help/account/manage-your-team/locate-your-team-id/
+static const NSUInteger kExpectedTeamIDLength = 10;
 
 @interface SNTRule ()
 @property(readwrite) NSUInteger timestamp;
@@ -28,20 +35,84 @@
                          timestamp:(NSUInteger)timestamp {
   self = [super init];
   if (self) {
+    if (identifier.length == 0) {
+      return nil;
+    }
+
+    NSCharacterSet *nonHex =
+      [[NSCharacterSet characterSetWithCharactersInString:@"0123456789abcdef"] invertedSet];
+    NSCharacterSet *nonUppercaseAlphaNumeric = [[NSCharacterSet
+      characterSetWithCharactersInString:@"ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"] invertedSet];
+
+    switch (type) {
+      case SNTRuleTypeBinary: OS_FALLTHROUGH;
+      case SNTRuleTypeCertificate: {
+        // For binary and certificate rules, force the hash identifier to be lowercase hex.
+        identifier = [identifier lowercaseString];
+
+        identifier = [identifier stringByTrimmingCharactersInSet:nonHex];
+        if (identifier.length != (CC_SHA256_DIGEST_LENGTH * 2)) {
+          return nil;
+        }
+
+        break;
+      }
+
+      case SNTRuleTypeTeamID: {
+        // TeamIDs are always [0-9A-Z], so enforce that the identifier is uppercase
+        identifier =
+          [[identifier uppercaseString] stringByTrimmingCharactersInSet:nonUppercaseAlphaNumeric];
+        if (identifier.length != kExpectedTeamIDLength) {
+          return nil;
+        }
+
+        break;
+      }
+
+      case SNTRuleTypeSigningID: {
+        // SigningID rules are a combination of `TeamID:SigningID`. The TeamID should
+        // be forced to be uppercase, but because very loose rules exist for SigningIDs,
+        // their case will be kept as-is. However, platform binaries are expected to
+        // have the hardcoded string "platform" as the team ID and the case will be left
+        // as is.
+        NSArray *sidComponents = [identifier componentsSeparatedByString:@":"];
+        if (!sidComponents || sidComponents.count < 2) {
+          return nil;
+        }
+
+        // The first component is the TeamID
+        NSString *teamID = sidComponents[0];
+
+        if (![teamID isEqualToString:@"platform"]) {
+          teamID =
+            [[teamID uppercaseString] stringByTrimmingCharactersInSet:nonUppercaseAlphaNumeric];
+          if (teamID.length != kExpectedTeamIDLength) {
+            return nil;
+          }
+        }
+
+        // The rest of the components are the Signing ID since ":" a legal character.
+        // Join all but the last element of the components to rebuild the SigningID.
+        NSString *signingID = [[sidComponents
+          subarrayWithRange:NSMakeRange(1, sidComponents.count - 1)] componentsJoinedByString:@":"];
+        if (signingID.length == 0) {
+          return nil;
+        }
+
+        identifier = [NSString stringWithFormat:@"%@:%@", teamID, signingID];
+        break;
+      }
+
+      default: {
+        break;
+      }
+    }
+
     _identifier = identifier;
     _state = state;
     _type = type;
     _customMsg = customMsg;
     _timestamp = timestamp;
-
-    if (_type == SNTRuleTypeBinary || _type == SNTRuleTypeCertificate) {
-      NSCharacterSet *nonHex =
-        [[NSCharacterSet characterSetWithCharactersInString:@"0123456789ABCDEF"] invertedSet];
-      if ([[_identifier uppercaseString] stringByTrimmingCharactersInSet:nonHex].length != 64)
-        return nil;
-    } else if (_identifier.length == 0) {
-      return nil;
-    }
   }
   return self;
 }

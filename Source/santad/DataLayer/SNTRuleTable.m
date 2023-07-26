@@ -25,7 +25,7 @@
 #import "Source/common/SNTLogging.h"
 #import "Source/common/SNTRule.h"
 
-static const uint32_t kRuleTableCurrentVersion = 5;
+static const uint32_t kRuleTableCurrentVersion = 6;
 
 // TODO(nguyenphillip): this should be configurable.
 // How many rules must be in database before we start trying to remove transitive rules.
@@ -227,6 +227,23 @@ static void addPathsFromDefaultMuteSet(NSMutableSet *criticalPaths) API_AVAILABL
     [db executeUpdate:@"UPDATE rules SET type = 2000 WHERE type = 4"];
 
     newVersion = 5;
+  }
+
+  if (version < 6) {
+    // Force hash identifiers for Binary and Certificate rules to always be lowercase
+    [db executeUpdate:@"UPDATE rules SET identifier = LOWER(identifier) WHERE type = ? OR type = ?",
+                      @(SNTRuleTypeBinary), @(SNTRuleTypeCertificate)];
+
+    // Force team ID identifiers for TeamID rules to always be uppercase
+    [db executeUpdate:@"UPDATE rules SET identifier = UPPER(identifier) WHERE type = ?",
+                      @(SNTRuleTypeTeamID)];
+
+    // Note: Intentionally not attempting to migrate exsting SigningID rules to enforce
+    // the TeamID component to be uppercase. Since this is a newer rule type, it is
+    // assumed to be unnecessary and we'd rather not maintain the SQL to perform this
+    // migration automatically.
+
+    newVersion = 6;
   }
 
   // Save signing info for launchd and santad. Used to ensure they are always allowed.
