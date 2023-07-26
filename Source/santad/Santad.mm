@@ -37,10 +37,12 @@
 #include "Source/santad/Logs/EndpointSecurity/Logger.h"
 #include "Source/santad/SNTDaemonControlController.h"
 #include "Source/santad/SNTDecisionCache.h"
+#include "Source/santad/TTYWriter.h"
 
 using santa::common::PrefixTree;
 using santa::common::Unit;
 using santa::santad::Metrics;
+using santa::santad::TTYWriter;
 using santa::santad::data_layer::WatchItems;
 using santa::santad::event_providers::AuthResultCache;
 using santa::santad::event_providers::FlushCacheMode;
@@ -79,7 +81,8 @@ void SantadMain(std::shared_ptr<EndpointSecurityAPI> esapi, std::shared_ptr<Logg
                 MOLXPCConnection *control_connection, SNTCompilerController *compiler_controller,
                 SNTNotificationQueue *notifier_queue, SNTSyncdQueue *syncd_queue,
                 SNTExecutionController *exec_controller,
-                std::shared_ptr<santa::common::PrefixTree<santa::common::Unit>> prefix_tree) {
+                std::shared_ptr<santa::common::PrefixTree<santa::common::Unit>> prefix_tree,
+                std::shared_ptr<TTYWriter> tty_writer) {
   SNTConfigurator *configurator = [SNTConfigurator configurator];
 
   SNTDaemonControlController *dc =
@@ -133,13 +136,13 @@ void SantadMain(std::shared_ptr<EndpointSecurityAPI> esapi, std::shared_ptr<Logg
 
   if (@available(macOS 13.0, *)) {
     SNTEndpointSecurityFileAccessAuthorizer *access_authorizer_client =
-      [[SNTEndpointSecurityFileAccessAuthorizer alloc]
-        initWithESAPI:esapi
-              metrics:metrics
-               logger:logger
-           watchItems:watch_items
-             enricher:enricher
-        decisionCache:[SNTDecisionCache sharedCache]];
+      [[SNTEndpointSecurityFileAccessAuthorizer alloc] initWithESAPI:esapi
+                                                             metrics:metrics
+                                                              logger:logger
+                                                          watchItems:watch_items
+                                                            enricher:enricher
+                                                       decisionCache:[SNTDecisionCache sharedCache]
+                                                           ttyWriter:tty_writer];
     watch_items->RegisterClient(access_authorizer_client);
 
     access_authorizer_client.fileAccessBlockCallback = ^(SNTFileAccessEvent *event) {

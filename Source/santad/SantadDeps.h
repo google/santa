@@ -34,6 +34,7 @@
 #import "Source/santad/SNTExecutionController.h"
 #import "Source/santad/SNTNotificationQueue.h"
 #import "Source/santad/SNTSyncdQueue.h"
+#include "Source/santad/TTYWriter.h"
 
 namespace santa::santad {
 
@@ -56,7 +57,8 @@ class SantadDeps {
       SNTNotificationQueue *notifier_queue, SNTSyncdQueue *syncd_queue,
       SNTExecutionController *exec_controller,
       std::shared_ptr<santa::common::PrefixTree<santa::common::Unit>>
-          prefix_tree);
+          prefix_tree,
+      std::shared_ptr<santa::santad::TTYWriter> tty_writer);
 
   std::shared_ptr<santa::santad::event_providers::AuthResultCache>
   AuthResultCache();
@@ -74,6 +76,7 @@ class SantadDeps {
   SNTSyncdQueue *SyncdQueue();
   SNTExecutionController *ExecController();
   std::shared_ptr<santa::common::PrefixTree<santa::common::Unit>> PrefixTree();
+  std::shared_ptr<santa::santad::TTYWriter> TTYWriter();
 
  private:
   std::shared_ptr<
@@ -93,6 +96,7 @@ class SantadDeps {
   SNTSyncdQueue *syncd_queue_;
   SNTExecutionController *exec_controller_;
   std::shared_ptr<santa::common::PrefixTree<santa::common::Unit>> prefix_tree_;
+  std::shared_ptr<santa::santad::TTYWriter> tty_writer_;
 };
 
 }  // namespace santa::santad

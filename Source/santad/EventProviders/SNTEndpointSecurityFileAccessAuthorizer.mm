@@ -48,6 +48,7 @@
 
 using santa::common::StringToNSString;
 using santa::santad::EventDisposition;
+using santa::santad::TTYWriter;
 using santa::santad::data_layer::WatchItemPathType;
 using santa::santad::data_layer::WatchItemPolicy;
 using santa::santad::data_layer::WatchItems;
@@ -116,6 +117,10 @@ bool ShouldLogDecision(FileAccessPolicyDecision decision) {
     case FileAccessPolicyDecision::kAllowedAuditOnly: return true;
     default: return false;
   }
+}
+
+bool ShouldNotifyUserDecision(FileAccessPolicyDecision decision) {
+  return ShouldLogDecision(decision) && decision != FileAccessPolicyDecision::kAllowedAuditOnly;
 }
 
 es_auth_result_t CombinePolicyResults(es_auth_result_t result1, es_auth_result_t result2) {
@@ -207,6 +212,7 @@ void PopulatePathTargets(const Message &msg, std::vector<PathTarget> &targets) {
   std::shared_ptr<Enricher> _enricher;
   std::shared_ptr<RateLimiter> _rateLimiter;
   SantaCache<SantaVnode, NSString *> _certHashCache;
+  std::shared_ptr<TTYWriter> _ttyWriter;
 }
 
 - (instancetype)
@@ -217,7 +223,8 @@ void PopulatePathTargets(const Message &msg, std::vector<PathTarget> &targets) {
      watchItems:(std::shared_ptr<WatchItems>)watchItems
        enricher:
          (std::shared_ptr<santa::santad::event_providers::endpoint_security::Enricher>)enricher
-  decisionCache:(SNTDecisionCache *)decisionCache {
+  decisionCache:(SNTDecisionCache *)decisionCache
+      ttyWriter:(std::shared_ptr<santa::santad::TTYWriter>)ttyWriter {
   self = [super initWithESAPI:std::move(esApi)
                       metrics:metrics
                     processor:santa::santad::Processor::kFileAccessAuthorizer];
@@ -225,8 +232,8 @@ void PopulatePathTargets(const Message &msg, std::vector<PathTarget> &targets) {
     _watchItems = std::move(watchItems);
     _logger = std::move(logger);
     _enricher = std::move(enricher);
-
     _decisionCache = decisionCache;
+    _ttyWriter = std::move(ttyWriter);
 
     _rateLimiter = RateLimiter::Create(metrics, santa::santad::Processor::kFileAccessAuthorizer,
                                        kDefaultRateLimitQPS);
@@ -567,7 +574,6 @@ void PopulatePathTargets(const Message &msg, std::vector<PathTarget> &targets) {
 }
 
 - (void)enable {
-  // TODO(xyz): Expand to support ES_EVENT_TYPE_AUTH_CREATE, ES_EVENT_TYPE_AUTH_TRUNCATE
   std::set<es_event_type_t> events = {
     ES_EVENT_TYPE_AUTH_CLONE,    ES_EVENT_TYPE_AUTH_CREATE, ES_EVENT_TYPE_AUTH_EXCHANGEDATA,
     ES_EVENT_TYPE_AUTH_LINK,     ES_EVENT_TYPE_AUTH_OPEN,   ES_EVENT_TYPE_AUTH_RENAME,
