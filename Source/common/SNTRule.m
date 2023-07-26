@@ -64,10 +64,11 @@ static const NSUInteger kExpectedTeamIDLength = 10;
       // have the hardcoded string "platform" as the team ID and the case will be left
       // as is.
       NSArray *sidComponents = [identifier componentsSeparatedByString:@":"];
-      if (!sidComponents || sidComponents.count != 2) {
+      if (!sidComponents || sidComponents.count < 2) {
         return nil;
       }
 
+      // The first component is the TeamID
       NSString *teamID = sidComponents[0];
 
       if (![teamID isEqualToString:@"platform"]) {
@@ -78,7 +79,10 @@ static const NSUInteger kExpectedTeamIDLength = 10;
         }
       }
 
-      NSString *signingID = sidComponents[1];
+      // The rest of the components are the Signing ID since ":" a legal character.
+      // Join all but the last element of the components to rebuild the SigningID.
+      NSString *signingID = [[sidComponents
+        subarrayWithRange:NSMakeRange(1, sidComponents.count - 1)] componentsJoinedByString:@":"];
       if (signingID.length == 0) {
         return nil;
       }

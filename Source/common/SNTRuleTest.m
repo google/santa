@@ -171,6 +171,22 @@
   }];
   XCTAssertNotNil(sut);
   XCTAssertEqualObjects(sut.identifier, @"platform:com.example");
+
+  // Signing ID can contain the TID:SID delimiter character (":")
+  for (NSString *ident in @[
+         @"ABCDEFGHIJ:com:",
+          @"ABCDEFGHIJ:com:example",
+          @"ABCDEFGHIJ::",
+          @"ABCDEFGHIJ:com:example:with:more:components:",
+       ]) {
+    sut = [[SNTRule alloc] initWithDictionary:@{
+      @"identifier" : ident,
+      @"policy" : @"ALLOWLIST",
+      @"rule_type" : @"SIGNINGID",
+    }];
+    XCTAssertNotNil(sut);
+    XCTAssertEqualObjects(sut.identifier, ident);
+  }
 }
 
 - (void)testInitWithDictionaryInvalid {
