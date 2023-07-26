@@ -85,8 +85,8 @@ SNTCachedDecision *MakeCachedDecision(struct stat sb, SNTEventState decision) {
 
   OCMExpect([self.mockRuleDatabase
     resetTimestampForRule:[OCMArg checkWithBlock:^BOOL(SNTRule *rule) {
-      return rule.identifier == cd.sha256 && rule.state == SNTRuleStateAllowTransitive &&
-             rule.type == SNTRuleTypeBinary;
+      return [rule.identifier isEqualToString:cd.sha256] &&
+             rule.state == SNTRuleStateAllowTransitive && rule.type == SNTRuleTypeBinary;
     }]]);
 
   [dc resetTimestampForCachedDecision:sb];

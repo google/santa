@@ -36,7 +36,7 @@
 
 - (SNTRule *)_exampleTeamIDRule {
   SNTRule *r = [[SNTRule alloc] init];
-  r.identifier = @"teamID";
+  r.identifier = @"ABCDEFGHIJ";
   r.state = SNTRuleStateBlock;
   r.type = SNTRuleTypeTeamID;
   r.customMsg = @"A teamID rule";
@@ -48,11 +48,11 @@
   if (isPlatformBinary) {
     r.identifier = @"platform:signingID";
   } else {
-    r.identifier = @"teamID:signingID";
+    r.identifier = @"ABCDEFGHIJ:signingID";
   }
   r.state = SNTRuleStateBlock;
   r.type = SNTRuleTypeSigningID;
-  r.customMsg = @"A teamID rule";
+  r.customMsg = @"A signingID rule";
   return r;
 }
 
@@ -187,9 +187,9 @@
   SNTRule *r = [self.sut ruleForBinarySHA256:nil
                                    signingID:nil
                            certificateSHA256:nil
-                                      teamID:@"teamID"];
+                                      teamID:@"ABCDEFGHIJ"];
   XCTAssertNotNil(r);
-  XCTAssertEqualObjects(r.identifier, @"teamID");
+  XCTAssertEqualObjects(r.identifier, @"ABCDEFGHIJ");
   XCTAssertEqual(r.type, SNTRuleTypeTeamID);
   XCTAssertEqual([self.sut teamIDRuleCount], 1);
 
@@ -211,12 +211,12 @@
   XCTAssertEqual([self.sut signingIDRuleCount], 2);
 
   SNTRule *r = [self.sut ruleForBinarySHA256:nil
-                                   signingID:@"teamID:signingID"
+                                   signingID:@"ABCDEFGHIJ:signingID"
                            certificateSHA256:nil
                                       teamID:nil];
 
   XCTAssertNotNil(r);
-  XCTAssertEqualObjects(r.identifier, @"teamID:signingID");
+  XCTAssertEqualObjects(r.identifier, @"ABCDEFGHIJ:signingID");
   XCTAssertEqual(r.type, SNTRuleTypeSigningID);
 
   r = [self.sut ruleForBinarySHA256:nil
@@ -243,9 +243,9 @@
   // See the comment in SNTRuleTable#ruleForBinarySHA256:certificateSHA256:teamID
   SNTRule *r = [self.sut
     ruleForBinarySHA256:@"b7c1e3fd640c5f211c89b02c2c6122f78ce322aa5c56eb0bb54bc422a8f8b670"
-              signingID:@"teamID:signingID"
+              signingID:@"ABCDEFGHIJ:signingID"
       certificateSHA256:@"7ae80b9ab38af0c63a9a81765f434d9a7cd8f720eb6037ef303de39d779bc258"
-                 teamID:@"teamID"];
+                 teamID:@"ABCDEFGHIJ"];
   XCTAssertNotNil(r);
   XCTAssertEqualObjects(r.identifier,
                         @"b7c1e3fd640c5f211c89b02c2c6122f78ce322aa5c56eb0bb54bc422a8f8b670");
@@ -253,9 +253,9 @@
 
   r = [self.sut
     ruleForBinarySHA256:@"b7c1e3fd640c5f211c89b02c2c6122f78ce322aa5c56eb0bb54bc422a8f8b670"
-              signingID:@"teamID:signingID"
+              signingID:@"ABCDEFGHIJ:signingID"
       certificateSHA256:@"unknowncert"
-                 teamID:@"teamID"];
+                 teamID:@"ABCDEFGHIJ"];
   XCTAssertNotNil(r);
   XCTAssertEqualObjects(r.identifier,
                         @"b7c1e3fd640c5f211c89b02c2c6122f78ce322aa5c56eb0bb54bc422a8f8b670");
@@ -265,26 +265,26 @@
     ruleForBinarySHA256:@"unknown"
               signingID:@"unknown"
       certificateSHA256:@"7ae80b9ab38af0c63a9a81765f434d9a7cd8f720eb6037ef303de39d779bc258"
-                 teamID:@"teamID"];
+                 teamID:@"ABCDEFGHIJ"];
   XCTAssertNotNil(r);
   XCTAssertEqualObjects(r.identifier,
                         @"7ae80b9ab38af0c63a9a81765f434d9a7cd8f720eb6037ef303de39d779bc258");
   XCTAssertEqual(r.type, SNTRuleTypeCertificate, @"Implicit rule ordering failed");
 
   r = [self.sut ruleForBinarySHA256:@"unknown"
-                          signingID:@"teamID:signingID"
+                          signingID:@"ABCDEFGHIJ:signingID"
                   certificateSHA256:@"unknown"
-                             teamID:@"teamID"];
+                             teamID:@"ABCDEFGHIJ"];
   XCTAssertNotNil(r);
-  XCTAssertEqualObjects(r.identifier, @"teamID:signingID");
+  XCTAssertEqualObjects(r.identifier, @"ABCDEFGHIJ:signingID");
   XCTAssertEqual(r.type, SNTRuleTypeSigningID, @"Implicit rule ordering failed (SigningID)");
 
   r = [self.sut ruleForBinarySHA256:@"unknown"
                           signingID:@"unknown"
                   certificateSHA256:@"unknown"
-                             teamID:@"teamID"];
+                             teamID:@"ABCDEFGHIJ"];
   XCTAssertNotNil(r);
-  XCTAssertEqualObjects(r.identifier, @"teamID");
+  XCTAssertEqualObjects(r.identifier, @"ABCDEFGHIJ");
   XCTAssertEqual(r.type, SNTRuleTypeTeamID, @"Implicit rule ordering failed (TeamID)");
 }
 
