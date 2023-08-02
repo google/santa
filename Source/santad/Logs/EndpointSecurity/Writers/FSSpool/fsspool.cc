@@ -16,6 +16,7 @@
 
 #include <fcntl.h>
 #include <sys/stat.h>
+#include <time.h>
 
 #include <functional>
 #include <limits>
@@ -156,6 +157,12 @@ std::string SpoolDirectory(absl::string_view base_dir) {
   return absl::StrCat(base_dir, PathSeparator(), kSpoolDirName);
 }
 
+bool operator==(struct timespec a, struct timespec b) {
+  return a.tv_sec == b.tv_sec && a.tv_nsec == b.tv_nsec;
+}
+
+bool operator!=(struct timespec a, struct timespec b) { return !(a == b); }
+
 }  // namespace
 
 FsSpoolWriter::FsSpoolWriter(absl::string_view base_dir, size_t max_spool_size)
@@ -197,6 +204,25 @@ std::string FsSpoolWriter::UniqueFilename() {
   return result;
 }
 
+absl::StatusOr<size_t> FsSpoolWriter::EstimateSpoolDirSize() {
+  struct stat stats;
+  if (stat(spool_dir_.c_str(), &stats) < 0) {
+    return absl::ErrnoToStatus(errno, "failed to stat spool directory");
+  }
+
+  if (stats.st_mtimespec != spool_dir_last_mtime_) {
+    // Store the updated mtime
+    spool_dir_last_mtime_ = stats.st_mtimespec;
+
+    // Recompute the current estimated size
+    return EstimateDirSize(spool_dir_);
+  } else {
+    // If the spool's last modification time hasn't changed then
+    // re-use the current estimate.
+    return spool_size_estimate_;
+  }
+}
+
 absl::Status FsSpoolWriter::WriteMessage(absl::string_view msg) {
   if (absl::Status status = BuildDirectoryStructureIfNeeded(); !status.ok()) {
     return status;  // << "can't create directory structure for writer";
@@ -209,7 +235,7 @@ absl::Status FsSpoolWriter::WriteMessage(absl::string_view msg) {
   // Recompute the spool size if we think we are
   // over the limit.
   if (spool_size_estimate_ > max_spool_size_) {
-    absl::StatusOr<size_t> estimate = EstimateDirSize(spool_dir_);
+    absl::StatusOr<size_t> estimate = EstimateSpoolDirSize();
     if (!estimate.ok()) {
       return estimate.status();  // failed to recompute spool size
     }

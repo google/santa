@@ -49,14 +49,17 @@
 // function returns early due to interrupts.
 void SleepMS(long ms);
 
-enum class ActionType {
-  Auth,
-  Notify,
-};
+// Helper to construct strings of a given length
+NSString *RepeatedString(NSString *str, NSUInteger len);
 
 //
 // Helpers to construct various ES structs
 //
+
+enum class ActionType {
+  Auth,
+  Notify,
+};
 
 audit_token_t MakeAuditToken(pid_t pid, pid_t pidver);
 

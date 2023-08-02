@@ -18,13 +18,31 @@
 
 #include <memory>
 
+#include "Source/common/TestUtils.h"
 #include "Source/santad/Logs/EndpointSecurity/Writers/FSSpool/fsspool.h"
 #include "Source/santad/Logs/EndpointSecurity/Writers/FSSpool/fsspool_log_batch_writer.h"
 #include "google/protobuf/any.pb.h"
 #include "google/protobuf/timestamp.pb.h"
 
+namespace fsspool {
+
+class FsSpoolWriterPeer : public FsSpoolWriter {
+ public:
+  // Constructors
+  using FsSpoolWriter::FsSpoolWriter;
+
+  // Private Methods
+  using FsSpoolWriter::BuildDirectoryStructureIfNeeded;
+  using FsSpoolWriter::EstimateSpoolDirSize;
+
+  // Private member variables
+  using FsSpoolWriter::spool_size_estimate_;
+};
+
+}  // namespace fsspool
+
 using fsspool::FsSpoolLogBatchWriter;
-using fsspool::FsSpoolWriter;
+using fsspool::FsSpoolWriterPeer;
 
 static constexpr size_t kSpoolSize = 1048576;
 
@@ -72,8 +90,65 @@ google::protobuf::Any TestAnyTimestamp(int64_t s, int32_t n) {
   XCTAssertTrue([self.fileMgr removeItemAtPath:self.testDir error:nil]);
 }
 
+- (void)testEstimateSpoolDirSize {
+  NSString *testData = @"What a day for some testing!";
+  NSString *largeTestData = RepeatedString(@"A", 10240);
+  NSString *path = [NSString stringWithFormat:@"%@/%@", self.spoolDir, @"temppy.log"];
+  NSString *emptyPath = [NSString stringWithFormat:@"%@/%@", self.spoolDir, @"empty.log"];
+  auto writer = std::make_unique<FsSpoolWriterPeer>([self.baseDir UTF8String], kSpoolSize);
+
+  // Create the spool dir structure and ensure no files exist
+  XCTAssertStatusOk(writer->BuildDirectoryStructureIfNeeded());
+  XCTAssertEqual([[self.fileMgr contentsOfDirectoryAtPath:self.spoolDir error:nil] count], 0);
+
+  // Ensure that the initial spool dir estimate is 0
+  auto status = writer->EstimateSpoolDirSize();
+  XCTAssertStatusOk(status);
+  XCTAssertEqual(*status, 0);
+
+  // Force the current estimate to be 0 since we're not recomputing on first write.
+  writer->spool_size_estimate_ = *status;
+
+  XCTAssertTrue([testData writeToFile:path atomically:YES encoding:NSUTF8StringEncoding error:nil]);
+
+  // Ensure the test file was created
+  XCTAssertEqual([[self.fileMgr contentsOfDirectoryAtPath:self.spoolDir error:nil] count], 1);
+
+  // Ensure the spool size estimate has grown at least as much as the content length
+  status = writer->EstimateSpoolDirSize();
+  XCTAssertStatusOk(status);
+  // Update the current estimate
+  writer->spool_size_estimate_ = *status;
+  XCTAssertGreaterThanOrEqual(writer->spool_size_estimate_, testData.length);
+
+  // Modify file contents without modifying spool directory mtime
+  NSFileHandle *fileHandle = [NSFileHandle fileHandleForWritingAtPath:path];
+  [fileHandle seekToEndOfFile];
+  [fileHandle writeData:[largeTestData dataUsingEncoding:NSUTF8StringEncoding]];
+  [fileHandle closeFile];
+
+  // Ensure only one file still exists
+  XCTAssertEqual([[self.fileMgr contentsOfDirectoryAtPath:self.spoolDir error:nil] count], 1);
+
+  // Ensure that the returned estimate is the same as the old since mtime didn't change
+  status = writer->EstimateSpoolDirSize();
+  XCTAssertStatusOk(status);
+  // Check that the current estimate is the same as the old estimate
+  XCTAssertEqual(*status, writer->spool_size_estimate_);
+
+  // Create a second file in the spool dir to bump mtime
+  XCTAssertTrue([@"" writeToFile:emptyPath atomically:YES encoding:NSUTF8StringEncoding error:nil]);
+  XCTAssertEqual([[self.fileMgr contentsOfDirectoryAtPath:self.spoolDir error:nil] count], 2);
+
+  status = writer->EstimateSpoolDirSize();
+  XCTAssertStatusOk(status);
+
+  // Ensure the newly returned size is appropriate
+  XCTAssertGreaterThanOrEqual(*status, testData.length + largeTestData.length);
+}
+
 - (void)testSimpleWrite {
-  auto writer = std::make_unique<FsSpoolWriter>([self.baseDir UTF8String], kSpoolSize);
+  auto writer = std::make_unique<FsSpoolWriterPeer>([self.baseDir UTF8String], kSpoolSize);
 
   XCTAssertFalse([self.fileMgr fileExistsAtPath:self.baseDir]);
   XCTAssertFalse([self.fileMgr fileExistsAtPath:self.spoolDir]);
@@ -90,7 +165,7 @@ google::protobuf::Any TestAnyTimestamp(int64_t s, int32_t n) {
 }
 
 - (void)testSpoolFull {
-  auto writer = std::make_unique<FsSpoolWriter>([self.baseDir UTF8String], kSpoolSize);
+  auto writer = std::make_unique<FsSpoolWriterPeer>([self.baseDir UTF8String], kSpoolSize);
   const std::string largeMessage(kSpoolSize + 1, '\x42');
 
   XCTAssertFalse([self.fileMgr fileExistsAtPath:self.baseDir]);
@@ -121,7 +196,7 @@ google::protobuf::Any TestAnyTimestamp(int64_t s, int32_t n) {
 }
 
 - (void)testWriteMessageNoFlush {
-  auto writer = std::make_unique<FsSpoolWriter>([self.baseDir UTF8String], kSpoolSize);
+  auto writer = std::make_unique<FsSpoolWriterPeer>([self.baseDir UTF8String], kSpoolSize);
   FsSpoolLogBatchWriter batch_writer(writer.get(), 10);
 
   // Ensure that writing in batch mode doesn't flsuh on individual writes.
@@ -134,7 +209,7 @@ google::protobuf::Any TestAnyTimestamp(int64_t s, int32_t n) {
 
 - (void)testWriteMessageFlushAtCapacity {
   static const int kCapacity = 5;
-  auto writer = std::make_unique<FsSpoolWriter>([self.baseDir UTF8String], kSpoolSize);
+  auto writer = std::make_unique<FsSpoolWriterPeer>([self.baseDir UTF8String], kSpoolSize);
   FsSpoolLogBatchWriter batch_writer(writer.get(), kCapacity);
 
   // Ensure batch flushed once capacity exceeded
@@ -153,7 +228,7 @@ google::protobuf::Any TestAnyTimestamp(int64_t s, int32_t n) {
   static const int kCapacity = 5;
   static const int kExpectedFlushes = 3;
 
-  auto writer = std::make_unique<FsSpoolWriter>([self.baseDir UTF8String], kSpoolSize);
+  auto writer = std::make_unique<FsSpoolWriterPeer>([self.baseDir UTF8String], kSpoolSize);
   FsSpoolLogBatchWriter batch_writer(writer.get(), kCapacity);
 
   // Ensure batch flushed expected number of times
@@ -173,7 +248,7 @@ google::protobuf::Any TestAnyTimestamp(int64_t s, int32_t n) {
   static const int kCapacity = 10;
   static const int kNumberOfWrites = 7;
 
-  auto writer = std::make_unique<FsSpoolWriter>([self.baseDir UTF8String], kSpoolSize);
+  auto writer = std::make_unique<FsSpoolWriterPeer>([self.baseDir UTF8String], kSpoolSize);
 
   {
     // Extra scope to enforce early destroy of batch_writer.

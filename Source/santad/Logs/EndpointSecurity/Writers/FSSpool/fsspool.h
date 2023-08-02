@@ -25,6 +25,11 @@
 #include "absl/status/statusor.h"
 #include "absl/strings/string_view.h"
 
+// Forward declarations
+namespace fsspool {
+class FsSpoolWriterPeer;
+}
+
 namespace fsspool {
 
 // Enqueues messages into the spool. Multiple concurrent writers can
@@ -42,10 +47,13 @@ class FsSpoolWriter {
   // returns the UNAVAILABLE canonical code (which is retryable).
   absl::Status WriteMessage(absl::string_view msg);
 
+  friend class fsspool::FsSpoolWriterPeer;
+
  private:
   const std::string base_dir_;
   const std::string spool_dir_;
   const std::string tmp_dir_;
+  struct timespec spool_dir_last_mtime_;
 
   // Approximate maximum size of the spooling area, in bytes. If a message is
   // being written to a spooling area which already contains more than
@@ -81,6 +89,10 @@ class FsSpoolWriter {
   // Generates a unique filename by combining the random ID of
   // this writer with a sequence number.
   std::string UniqueFilename();
+
+  // Estimate the size of the spool directory. However, only recompute a new
+  // estimate if the spool directory has has a change to its modification time.
+  absl::StatusOr<size_t> EstimateSpoolDirSize();
 };
 
 // This class is thread-unsafe.
