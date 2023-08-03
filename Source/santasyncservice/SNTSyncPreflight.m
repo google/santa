@@ -24,6 +24,15 @@
 #import "Source/santasyncservice/SNTSyncLogging.h"
 #import "Source/santasyncservice/SNTSyncState.h"
 
+// Return the given value or nil if not of the expected given class
+static id EnsureType(id val, Class c) {
+  if ([val isKindOfClass:c]) {
+    return val;
+  } else {
+    return nil;
+  }
+}
+
 @implementation SNTSyncPreflight
 
 - (NSURL *)stageURL {
@@ -82,44 +91,31 @@
 
   if (!resp) return NO;
 
-  NSNumber *enableBundles = resp[kEnableBundles];
-  if (!enableBundles) enableBundles = resp[kEnableBundlesDeprecated];
-  [rop setEnableBundles:[enableBundles boolValue]
-                  reply:^{
-                  }];
+  self.syncState.enableBundles = EnsureType(resp[kEnableBundles], [NSNumber class])
+                                   ?: EnsureType(resp[kEnableBundlesDeprecated], [NSNumber class]);
+  self.syncState.enableTransitiveRules = EnsureType(resp[kEnableTransitiveRules], [NSNumber class])
+                                   ?: EnsureType(resp[kEnableTransitiveRulesDeprecated], [NSNumber class])
+                                   ?: EnsureType(resp[kEnableTransitiveRulesSuperDeprecated], [NSNumber class]);
+  self.syncState.enableAllEventUpload = EnsureType(resp[kEnableAllEventUpload], [NSNumber class]);
+  self.syncState.disableUnknownEventUpload =
+    EnsureType(resp[kDisableUnknownEventUpload], [NSNumber class]);
 
-  NSNumber *enableTransitiveRules = resp[kEnableTransitiveRules];
-  if (!enableTransitiveRules) enableTransitiveRules = resp[kEnableTransitiveRulesDeprecated];
-  if (!enableTransitiveRules) enableTransitiveRules = resp[kEnableTransitiveRulesSuperDeprecated];
-  BOOL enabled = [enableTransitiveRules boolValue];
-  [rop setEnableTransitiveRules:enabled
-                          reply:^{
-                          }];
-
-  NSNumber *enableAllEventUpload = resp[kEnableAllEventUpload];
-  [rop setEnableAllEventUpload:[enableAllEventUpload boolValue]
-                         reply:^{
-                         }];
-
-  NSNumber *disableUnknownEventUpload = resp[kDisableUnknownEventUpload];
-  [rop setDisableUnknownEventUpload:[disableUnknownEventUpload boolValue]
-                              reply:^{
-                              }];
-
-  self.syncState.eventBatchSize = [resp[kBatchSize] unsignedIntegerValue] ?: kDefaultEventBatchSize;
+  self.syncState.eventBatchSize =
+    [EnsureType(resp[kBatchSize], [NSNumber class]) unsignedIntegerValue] ?: kDefaultEventBatchSize;
 
   // Don't let these go too low
-  NSUInteger FCMIntervalValue = [resp[kFCMFullSyncInterval] unsignedIntegerValue];
-  self.syncState.pushNotificationsFullSyncInterval = (FCMIntervalValue < kDefaultFullSyncInterval)
-                                                       ? kDefaultPushNotificationsFullSyncInterval
-                                                       : FCMIntervalValue;
-  FCMIntervalValue = [resp[kFCMGlobalRuleSyncDeadline] unsignedIntegerValue];
+  NSUInteger value =
+    [EnsureType(resp[kFCMFullSyncInterval], [NSNumber class]) unsignedIntegerValue];
+  self.syncState.pushNotificationsFullSyncInterval =
+    (value < kDefaultFullSyncInterval) ? kDefaultPushNotificationsFullSyncInterval : value;
+
+  value = [EnsureType(resp[kFCMGlobalRuleSyncDeadline], [NSNumber class]) unsignedIntegerValue];
   self.syncState.pushNotificationsGlobalRuleSyncDeadline =
-    (FCMIntervalValue < 60) ? kDefaultPushNotificationsGlobalRuleSyncDeadline : FCMIntervalValue;
+    (value < 60) ? kDefaultPushNotificationsGlobalRuleSyncDeadline : value;
 
   // Check if our sync interval has changed
-  NSUInteger intervalValue = [resp[kFullSyncInterval] unsignedIntegerValue];
-  self.syncState.fullSyncInterval = (intervalValue < 60) ? kDefaultFullSyncInterval : intervalValue;
+  value = [EnsureType(resp[kFullSyncInterval], [NSNumber class]) unsignedIntegerValue];
+  self.syncState.fullSyncInterval = (value < 60) ? kDefaultFullSyncInterval : value;
 
   if ([resp[kClientMode] isEqual:kClientModeMonitor]) {
     self.syncState.clientMode = SNTClientModeMonitor;
@@ -127,27 +123,18 @@
     self.syncState.clientMode = SNTClientModeLockdown;
   }
 
-  if ([resp[kAllowedPathRegex] isKindOfClass:[NSString class]]) {
-    self.syncState.allowlistRegex = resp[kAllowedPathRegex];
-  } else if ([resp[kAllowedPathRegexDeprecated] isKindOfClass:[NSString class]]) {
-    self.syncState.allowlistRegex = resp[kAllowedPathRegexDeprecated];
-  }
+  self.syncState.allowlistRegex =
+    EnsureType(resp[kAllowedPathRegex], [NSString class])
+      ?: EnsureType(resp[kAllowedPathRegexDeprecated], [NSString class]);
 
-  if ([resp[kBlockedPathRegex] isKindOfClass:[NSString class]]) {
-    self.syncState.blocklistRegex = resp[kBlockedPathRegex];
-  } else if ([resp[kBlockedPathRegexDeprecated] isKindOfClass:[NSString class]]) {
-    self.syncState.blocklistRegex = resp[kBlockedPathRegexDeprecated];
-  }
+  self.syncState.blocklistRegex =
+    EnsureType(resp[kBlockedPathRegex], [NSString class])
+      ?: EnsureType(resp[kBlockedPathRegexDeprecated], [NSString class]);
 
-  if ([resp[kBlockUSBMount] isKindOfClass:[NSNumber class]]) {
-    self.syncState.blockUSBMount = resp[kBlockUSBMount];
-  }
+  self.syncState.blockUSBMount = EnsureType(resp[kBlockUSBMount], [NSNumber class]);
+  self.syncState.remountUSBMode = EnsureType(resp[kRemountUSBMode], [NSArray class]);
 
-  if ([resp[kRemountUSBMode] isKindOfClass:[NSArray class]]) {
-    self.syncState.remountUSBMode = resp[kRemountUSBMode];
-  }
-
-  if ([resp[kCleanSync] boolValue]) {
+  if ([EnsureType(resp[kCleanSync], [NSNumber class]) boolValue]) {
     SLOGD(@"Clean sync requested by server");
     self.syncState.cleanSync = YES;
   }
