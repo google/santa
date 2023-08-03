@@ -57,6 +57,7 @@ static NSString *const kMobileConfigDomain = @"com.google.santa";
 static NSString *const kStaticRules = @"StaticRules";
 static NSString *const kSyncBaseURLKey = @"SyncBaseURL";
 static NSString *const kSyncProxyConfigKey = @"SyncProxyConfiguration";
+static NSString *const kSyncExtraHeadersKey = @"SyncExtraHeaders";
 static NSString *const kSyncEnableCleanSyncEventUpload = @"SyncEnableCleanSyncEventUpload";
 static NSString *const kClientAuthCertificateFileKey = @"ClientAuthCertificateFile";
 static NSString *const kClientAuthCertificatePasswordKey = @"ClientAuthCertificatePassword";
@@ -196,6 +197,7 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
       kSyncBaseURLKey : string,
       kSyncEnableCleanSyncEventUpload : number,
       kSyncProxyConfigKey : dictionary,
+      kSyncExtraHeadersKey : dictionary,
       kClientAuthCertificateFileKey : string,
       kClientAuthCertificatePasswordKey : string,
       kClientAuthCertificateCNKey : string,
@@ -312,6 +314,10 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
 }
 
 + (NSSet *)keyPathsForValuesAffectingSyncBaseURL {
+  return [self configStateSet];
+}
+
++ (NSSet *)keyPathsForValuesAffectingSyncExtraHeaders {
   return [self configStateSet];
 }
 
@@ -630,6 +636,10 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
 
 - (NSDictionary *)syncProxyConfig {
   return self.configState[kSyncProxyConfigKey];
+}
+
+- (NSDictionary *)syncExtraHeaders {
+  return self.configState[kSyncExtraHeadersKey];
 }
 
 - (BOOL)enablePageZeroProtection {
