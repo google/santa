@@ -68,7 +68,8 @@
                                    XCTAssertEqualObjects(userInfo[@"ppid"], @1);
                                    XCTAssertEqualObjects(userInfo[@"execution_time"], @1660221048);
                                    return YES;
-                                 }]]);
+                                 }]
+                       deliverImmediately:YES]);
 }
 
 @end

@@ -172,7 +172,8 @@ static NSString *const silencedNotificationsKey = @"SilencedNotifications";
 
   [dc postNotificationName:@"com.google.santa.notification.blockedeexecution"
                     object:@"com.google.santa"
-                  userInfo:userInfo];
+                  userInfo:userInfo
+        deliverImmediately:YES];
 }
 
 - (void)showQueuedWindow {
