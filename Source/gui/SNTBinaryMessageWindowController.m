@@ -80,7 +80,9 @@
 
 - (void)loadWindow {
   [super loadWindow];
-  if (![[SNTConfigurator configurator] eventDetailURL]) {
+  NSURL *url = [SNTBlockMessage eventDetailURLForEvent:self.event customURL:self.customURL];
+
+  if (!url) {
     [self.openEventButton removeFromSuperview];
   } else {
     NSString *eventDetailText = [[SNTConfigurator configurator] eventDetailText];

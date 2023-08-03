@@ -111,6 +111,7 @@
 
 + (NSURL *)eventDetailURLForEvent:(SNTStoredEvent *)event customURL:(NSString *)url {
   if (url.length) {
+    if ([url isEqualToString:@"null"]) return nil;
     return [NSURL URLWithString:url];
   }
 
