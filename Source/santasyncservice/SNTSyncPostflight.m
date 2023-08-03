@@ -69,6 +69,30 @@
                      }];
   }
 
+  if (self.syncState.enableBundles) {
+    [rop setEnableBundles:[self.syncState.enableBundles boolValue]
+                    reply:^{
+                    }];
+  }
+
+  if (self.syncState.enableTransitiveRules) {
+    [rop setEnableTransitiveRules:[self.syncState.enableTransitiveRules boolValue]
+                            reply:^{
+                            }];
+  }
+
+  if (self.syncState.enableAllEventUpload) {
+    [rop setEnableAllEventUpload:[self.syncState.enableAllEventUpload boolValue]
+                           reply:^{
+                           }];
+  }
+
+  if (self.syncState.disableUnknownEventUpload) {
+    [rop setDisableUnknownEventUpload:[self.syncState.disableUnknownEventUpload boolValue]
+                                reply:^{
+                                }];
+  }
+
   // Update last sync success
   [rop setFullSyncLastSuccess:[NSDate date]
                         reply:^{
