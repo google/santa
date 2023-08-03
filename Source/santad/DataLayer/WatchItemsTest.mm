@@ -93,10 +93,6 @@ static NSMutableDictionary *WrapWatchItemsConfig(NSDictionary *config) {
   return [@{@"Version" : @(kVersion.data()), @"WatchItems" : [config mutableCopy]} mutableCopy];
 }
 
-static NSString *RepeatedString(NSString *str, NSUInteger len) {
-  return [@"" stringByPaddingToLength:len withString:str startingAtIndex:0];
-}
-
 @interface WatchItemsTest : XCTestCase
 @property NSFileManager *fileMgr;
 @property NSString *testDir;

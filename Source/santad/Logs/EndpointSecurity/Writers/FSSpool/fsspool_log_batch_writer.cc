@@ -33,7 +33,6 @@ FsSpoolLogBatchWriter::~FsSpoolLogBatchWriter() {
   if (!s.ok()) {
     os_log(OS_LOG_DEFAULT, "Flush() failed with %s",
            s.ToString(absl::StatusToStringMode::kWithEverything).c_str());
-    // LOG(WARNING) << "Flush() failed with " << s;
   }
 }
 

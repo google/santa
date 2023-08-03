@@ -21,6 +21,10 @@
 #include <uuid/uuid.h>
 #include "Source/common/SystemResources.h"
 
+NSString *RepeatedString(NSString *str, NSUInteger len) {
+  return [@"" stringByPaddingToLength:len withString:str startingAtIndex:0];
+}
+
 audit_token_t MakeAuditToken(pid_t pid, pid_t pidver) {
   return audit_token_t{
     .val =

@@ -69,6 +69,7 @@ santa_unit_test(
     deps = [
         ":fsspool",
         ":fsspool_log_batch_writer",
+        "//Source/common:TestUtils",
         "@OCMock",
     ],
 )
