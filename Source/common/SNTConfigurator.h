@@ -392,7 +392,7 @@
 
 ///
 ///  Extra headers to include in all requests made during syncing.
-///  Keys and values must all be strings, another other type will be silently ignored.
+///  Keys and values must all be strings, any other type will be silently ignored.
 ///  Some headers cannot be set through this key, including:
 ///
 ///    * Content-Encoding
