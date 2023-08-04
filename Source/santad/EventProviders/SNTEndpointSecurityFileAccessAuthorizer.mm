@@ -674,6 +674,10 @@ void PopulatePathTargets(const Message &msg, std::vector<PathTarget> &targets) {
     // begin receiving events (if not already)
     [self enable];
   }
+
+  dispatch_sync(self.hotCacheQueue, ^{
+    self->_hotCache.clear();
+  });
 }
 
 @end
