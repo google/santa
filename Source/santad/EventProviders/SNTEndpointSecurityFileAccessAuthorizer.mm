@@ -20,14 +20,17 @@
 #import <MOLCodesignChecker/MOLCodesignChecker.h>
 #include <bsm/libbsm.h>
 #include <sys/fcntl.h>
+#include <sys/types.h>
 
 #include <algorithm>
 #include <array>
 #include <cstdlib>
+#include <map>
 #include <memory>
 #include <optional>
 #include <set>
 #include <type_traits>
+#include <utility>
 #include <variant>
 
 #include "Source/common/Platform.h"
@@ -70,6 +73,7 @@ static constexpr uint16_t kDefaultRateLimitQPS = 50;
 struct PathTarget {
   std::string path;
   bool isReadable;
+  std::optional<std::pair<dev_t, ino_t>> devnoIno;
 };
 
 static inline std::string Path(const es_file_t *esFile) {
@@ -83,14 +87,18 @@ static inline std::string Path(const es_string_token_t &tok) {
 static inline void PushBackIfNotTruncated(std::vector<PathTarget> &vec, const es_file_t *esFile,
                                           bool isReadable = false) {
   if (!esFile->path_truncated) {
-    vec.push_back({Path(esFile), isReadable});
+    vec.push_back({Path(esFile), isReadable,
+                   isReadable ? std::make_optional<std::pair<dev_t, ino_t>>(
+                                  {esFile->stat.st_dev, esFile->stat.st_ino})
+                              : std::nullopt});
   }
 }
 
+// Note: This variant of PushBackIfNotTruncated can never be marked "isReadable"
 static inline void PushBackIfNotTruncated(std::vector<PathTarget> &vec, const es_file_t *dir,
-                                          const es_string_token_t &name, bool isReadable = false) {
+                                          const es_string_token_t &name) {
   if (!dir->path_truncated) {
-    vec.push_back({Path(dir) + "/" + Path(name), isReadable});
+    vec.push_back({Path(dir) + "/" + Path(name), false, std::nullopt});
   }
 }
 
@@ -204,6 +212,7 @@ void PopulatePathTargets(const Message &msg, std::vector<PathTarget> &targets) {
 @interface SNTEndpointSecurityFileAccessAuthorizer ()
 @property SNTDecisionCache *decisionCache;
 @property bool isSubscribed;
+@property dispatch_queue_t hotCacheQueue;
 @end
 
 @implementation SNTEndpointSecurityFileAccessAuthorizer {
@@ -213,6 +222,7 @@ void PopulatePathTargets(const Message &msg, std::vector<PathTarget> &targets) {
   std::shared_ptr<RateLimiter> _rateLimiter;
   SantaCache<SantaVnode, NSString *> _certHashCache;
   std::shared_ptr<TTYWriter> _ttyWriter;
+  std::map<std::pair<pid_t, pid_t>, std::set<std::pair<dev_t, ino_t>>> _hotCache;
 }
 
 - (instancetype)
@@ -234,6 +244,11 @@ void PopulatePathTargets(const Message &msg, std::vector<PathTarget> &targets) {
     _enricher = std::move(enricher);
     _decisionCache = decisionCache;
     _ttyWriter = std::move(ttyWriter);
+
+    _hotCacheQueue = dispatch_queue_create(
+      "com.google.santa.daemon.faa.hotcache",
+      dispatch_queue_attr_make_with_qos_class(DISPATCH_QUEUE_SERIAL_WITH_AUTORELEASE_POOL,
+                                              QOS_CLASS_USER_INTERACTIVE, 0));
 
     _rateLimiter = RateLimiter::Create(metrics, santa::santad::Processor::kFileAccessAuthorizer,
                                        kDefaultRateLimitQPS);
@@ -427,6 +442,16 @@ void PopulatePathTargets(const Message &msg, std::vector<PathTarget> &targets) {
 
   std::shared_ptr<WatchItemPolicy> policy = optionalPolicy.value();
 
+  // If policy allows reading, add target to the hot cache
+  if (policy->allow_read_access && target.isReadable && target.devnoIno.has_value()) {
+    dispatch_sync(self.hotCacheQueue, ^{
+      std::pair<pid_t, pid_t> pidPidver = {audit_token_to_pid(msg->process->audit_token),
+                                           audit_token_to_pidversion(msg->process->audit_token)};
+      self->_hotCache[std::move(pidPidver)].insert(
+        {target.devnoIno->first, target.devnoIno->second});
+    });
+  }
+
   // Check if this action contains any special case that would produce
   // an immediate result.
   FileAccessPolicyDecision specialCase = [self specialCaseForPolicy:policy
@@ -566,6 +591,34 @@ void PopulatePathTargets(const Message &msg, std::vector<PathTarget> &targets) {
 
 - (void)handleMessage:(santa::santad::event_providers::endpoint_security::Message &&)esMsg
    recordEventMetrics:(void (^)(EventDisposition))recordEventMetrics {
+  // If the event type is read-only, check if this has previously been allowed
+  if (esMsg->event_type == ES_EVENT_TYPE_AUTH_OPEN &&
+      !(esMsg->event.open.fflag & kOpenFlagsIndicatingWrite)) {
+    std::pair<pid_t, pid_t> pidPidver = {audit_token_to_pid(esMsg->process->audit_token),
+                                         audit_token_to_pidversion(esMsg->process->audit_token)};
+    std::pair<dev_t, ino_t> devnoIno = {esMsg->event.open.file->stat.st_dev,
+                                        esMsg->event.open.file->stat.st_ino};
+
+    __block bool sendImmediateResponse = false;
+    dispatch_sync(self.hotCacheQueue, ^{
+      if (self->_hotCache[pidPidver].count(devnoIno) > 0) {
+        sendImmediateResponse = true;
+      }
+    });
+
+    if (sendImmediateResponse) {
+      [self respondToMessage:esMsg withAuthResult:ES_AUTH_RESULT_ALLOW cacheable:false];
+      return;
+    }
+  } else if (esMsg->event_type == ES_EVENT_TYPE_NOTIFY_EXIT) {
+    dispatch_sync(self.hotCacheQueue, ^{
+      std::pair<pid_t, pid_t> pidPidver = {audit_token_to_pid(esMsg->process->audit_token),
+                                           audit_token_to_pidversion(esMsg->process->audit_token)};
+      self->_hotCache.erase(std::move(pidPidver));
+    });
+    return;
+  }
+
   [self processMessage:std::move(esMsg)
                handler:^(const Message &msg) {
                  [self processMessage:msg];
@@ -577,7 +630,7 @@ void PopulatePathTargets(const Message &msg, std::vector<PathTarget> &targets) {
   std::set<es_event_type_t> events = {
     ES_EVENT_TYPE_AUTH_CLONE,    ES_EVENT_TYPE_AUTH_CREATE, ES_EVENT_TYPE_AUTH_EXCHANGEDATA,
     ES_EVENT_TYPE_AUTH_LINK,     ES_EVENT_TYPE_AUTH_OPEN,   ES_EVENT_TYPE_AUTH_RENAME,
-    ES_EVENT_TYPE_AUTH_TRUNCATE, ES_EVENT_TYPE_AUTH_UNLINK,
+    ES_EVENT_TYPE_AUTH_TRUNCATE, ES_EVENT_TYPE_AUTH_UNLINK, ES_EVENT_TYPE_NOTIFY_EXIT,
   };
 
 #if HAVE_MACOS_12
