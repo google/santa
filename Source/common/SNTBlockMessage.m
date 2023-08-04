@@ -109,19 +109,31 @@
   return [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
 }
 
+// Returns either the generated URL for the passed in event, or an NSURL from the passed in custom
+// URL string. If the custom URL string is the string "null", nil will be returned. If no custom
+// URL is passed and there is no configured EventDetailURL template, nil will be returned.
+// The following "format strings" will be replaced in the URL, if they are present:
+//
+//   %file_identifier%           - The SHA-256 of the binary being executed.
+//   %bundle_or_file_identifier% - The hash of the bundle containing this file or the file itself, 
+//                                 if no bundle hash is present.
+//   %username%                  - The executing user's name.
+//   %machine_id%                - The configured machine ID for this host.
+//   %hostname%                  - The machine's FQDN.
+//   %uuid%                      - The machine's UUID.
+//   %serial%                    - The machine's serial number.
+//
 + (NSURL *)eventDetailURLForEvent:(SNTStoredEvent *)event customURL:(NSString *)url {
-  if (url.length) {
-    if ([url isEqualToString:@"null"]) return nil;
-    return [NSURL URLWithString:url];
-  }
-
   SNTConfigurator *config = [SNTConfigurator configurator];
 
   NSString *hostname = [SNTSystemInfo longHostname];
   NSString *uuid = [SNTSystemInfo hardwareUUID];
   NSString *serial = [SNTSystemInfo serialNumber];
-  NSString *formatStr = config.eventDetailURL;
+
+  NSString *formatStr = url;
+  if (!url.length) formatStr = config.eventDetailURL;
   if (!formatStr.length) return nil;
+  if ([formatStr isEqualToString:@"null"]) return nil;
 
   if (event.fileSHA256) {
     // This key is deprecated, use %file_identifier% or %bundle_or_file_identifier%
@@ -153,7 +165,9 @@
     formatStr = [formatStr stringByReplacingOccurrencesOfString:@"%serial%" withString:serial];
   }
 
-  return [NSURL URLWithString:formatStr];
+  NSURL *u = [NSURL URLWithString:formatStr];
+  if (!u) LOGW(@"Unable to generate event detail URL for string '%@'", formatStr);
+  return u;
 }
 
 @end

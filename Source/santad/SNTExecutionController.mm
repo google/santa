@@ -320,7 +320,7 @@ static NSString *const kPrinterProxyPostMonterey =
           self->_ttyWriter->Write(targetProc->tty->path.data, msg);
         }
 
-        [self.notifierQueue addEvent:se customMessage:cd.customMsg url:cd.customURL];
+        [self.notifierQueue addEvent:se withCustomMessage:cd.customMsg andCustomURL:cd.customURL];
       }
     }
   }
