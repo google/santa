@@ -115,7 +115,7 @@
 // The following "format strings" will be replaced in the URL, if they are present:
 //
 //   %file_identifier%           - The SHA-256 of the binary being executed.
-//   %bundle_or_file_identifier% - The hash of the bundle containing this file or the file itself, 
+//   %bundle_or_file_identifier% - The hash of the bundle containing this file or the file itself,
 //                                 if no bundle hash is present.
 //   %username%                  - The executing user's name.
 //   %machine_id%                - The configured machine ID for this host.
