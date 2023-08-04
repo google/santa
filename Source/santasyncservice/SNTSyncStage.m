@@ -17,6 +17,7 @@
 
 #import <MOLXPCConnection/MOLXPCConnection.h>
 
+#import "Source/common/SNTConfigurator.h"
 #import "Source/common/SNTLogging.h"
 #import "Source/common/SNTSyncConstants.h"
 #import "Source/common/SNTXPCControlInterface.h"
@@ -94,9 +95,38 @@
     [req setValue:contentEncodingHeader forHTTPHeaderField:@"Content-Encoding"];
   }
 
+  [self addExtraRequestHeaders:req];
+
   [req setHTTPBody:requestBody];
 
   return req;
+}
+
+- (void)addExtraRequestHeaders:(NSMutableURLRequest *)req {
+  NSDictionary *extra = [[SNTConfigurator configurator] syncExtraHeaders];
+  [extra enumerateKeysAndObjectsWithOptions:0
+                                 usingBlock:^(id key, id object, BOOL *stop) {
+                                   if (![key isKindOfClass:[NSString class]] ||
+                                       ![object isKindOfClass:[NSString class]])
+                                     return;
+                                   NSString *k = (NSString *)key;
+                                   NSString *v = (NSString *)object;
+
+                                   // This is likely unnecessary as the docs for NSURLSession list
+                                   // most of these as being ignored but explicitly setting them
+                                   // here is an extra layer of protection.
+                                   if ([k isEqualToString:@"Content-Encoding"] ||
+                                       [k isEqualToString:@"Content-Length"] ||
+                                       [k isEqualToString:@"Content-Type"] ||
+                                       [k isEqualToString:@"Connection"] ||
+                                       [k isEqualToString:@"Host"] ||
+                                       [k isEqualToString:@"Proxy-Authenticate"] ||
+                                       [k isEqualToString:@"Proxy-Authorization"] ||
+                                       [k isEqualToString:@"WWW-Authenticate"])
+                                     return;
+
+                                   [req setValue:v forHTTPHeaderField:k];
+                                 }];
 }
 
 // Returns nil when there is a server connection issue.  For other errors, such as
