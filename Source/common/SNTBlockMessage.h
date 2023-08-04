@@ -42,7 +42,7 @@
 ///  Return a URL generated from the EventDetailURL configuration key
 ///  after replacing templates in the URL with values from the event.
 ///
-+ (NSURL *)eventDetailURLForEvent:(SNTStoredEvent *)event;
++ (NSURL *)eventDetailURLForEvent:(SNTStoredEvent *)event customURL:(NSString *)url;
 
 ///
 ///  Strip HTML from a string, replacing <br /> with newline.

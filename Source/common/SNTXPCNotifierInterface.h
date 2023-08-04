@@ -23,7 +23,9 @@
 
 /// Protocol implemented by SantaGUI and utilized by santad
 @protocol SNTNotifierXPC
-- (void)postBlockNotification:(SNTStoredEvent *)event withCustomMessage:(NSString *)message;
+- (void)postBlockNotification:(SNTStoredEvent *)event
+            withCustomMessage:(NSString *)message
+                 andCustomURL:(NSString *)url;
 - (void)postUSBBlockNotification:(SNTDeviceEvent *)event withCustomMessage:(NSString *)message;
 - (void)postFileAccessBlockNotification:(SNTFileAccessEvent *)event
                       withCustomMessage:(NSString *)message API_AVAILABLE(macos(13.0));

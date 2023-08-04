@@ -23,7 +23,9 @@
 ///
 @interface SNTBinaryMessageWindowController : SNTMessageWindowController
 
-- (instancetype)initWithEvent:(SNTStoredEvent *)event andMessage:(NSString *)message;
+- (instancetype)initWithEvent:(SNTStoredEvent *)event
+                    customMsg:(NSString *)message
+                    customURL:(NSString *)url;
 
 - (IBAction)showCertInfo:(id)sender;
 - (void)updateBlockNotification:(SNTStoredEvent *)event withBundleHash:(NSString *)bundleHash;

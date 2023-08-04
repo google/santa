@@ -125,6 +125,7 @@ NSString *const kRuleTypeCertificate = @"CERTIFICATE";
 NSString *const kRuleTypeTeamID = @"TEAMID";
 NSString *const kRuleTypeSigningID = @"SIGNINGID";
 NSString *const kRuleCustomMsg = @"custom_msg";
+NSString *const kRuleCustomURL = @"custom_url";
 NSString *const kCursor = @"cursor";
 
 NSString *const kBackoffInterval = @"backoff";

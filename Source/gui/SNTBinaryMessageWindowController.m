@@ -25,6 +25,9 @@
 ///  The custom message to display for this event
 @property(copy) NSString *customMessage;
 
+///  The custom URL to use for this event
+@property(copy) NSString *customURL;
+
 ///  A 'friendly' string representing the certificate information
 @property(readonly, nonatomic) NSString *publisherInfo;
 
@@ -39,11 +42,14 @@
 
 @implementation SNTBinaryMessageWindowController
 
-- (instancetype)initWithEvent:(SNTStoredEvent *)event andMessage:(NSString *)message {
+- (instancetype)initWithEvent:(SNTStoredEvent *)event
+                    customMsg:(NSString *)message
+                    customURL:(NSString *)url {
   self = [super initWithWindowNibName:@"MessageWindow"];
   if (self) {
     _event = event;
     _customMessage = message;
+    _customURL = url;
     _progress = [NSProgress discreteProgressWithTotalUnitCount:1];
     [_progress addObserver:self
                 forKeyPath:@"fractionCompleted"
@@ -74,7 +80,9 @@
 
 - (void)loadWindow {
   [super loadWindow];
-  if (![[SNTConfigurator configurator] eventDetailURL]) {
+  NSURL *url = [SNTBlockMessage eventDetailURLForEvent:self.event customURL:self.customURL];
+
+  if (!url) {
     [self.openEventButton removeFromSuperview];
   } else {
     NSString *eventDetailText = [[SNTConfigurator configurator] eventDetailText];
@@ -120,7 +128,8 @@
 }
 
 - (IBAction)openEventDetails:(id)sender {
-  NSURL *url = [SNTBlockMessage eventDetailURLForEvent:self.event];
+  NSURL *url = [SNTBlockMessage eventDetailURLForEvent:self.event customURL:self.customURL];
+
   [self closeWindow:sender];
   [[NSWorkspace sharedWorkspace] openURL:url];
 }

@@ -312,7 +312,7 @@ static NSString *const kPrinterProxyPostMonterey =
                             @"\033[1mIdentifier:\033[0m %@\n"
                             @"\033[1mParent:    \033[0m %@ (%@)\n\n",
                             se.filePath, se.fileSHA256, se.parentName, se.ppid];
-          NSURL *detailURL = [SNTBlockMessage eventDetailURLForEvent:se];
+          NSURL *detailURL = [SNTBlockMessage eventDetailURLForEvent:se customURL:cd.customURL];
           if (detailURL) {
             [msg appendFormat:@"More info:\n%@\n\n", detailURL.absoluteString];
           }
@@ -320,7 +320,7 @@ static NSString *const kPrinterProxyPostMonterey =
           self->_ttyWriter->Write(targetProc->tty->path.data, msg);
         }
 
-        [self.notifierQueue addEvent:se customMessage:cd.customMsg];
+        [self.notifierQueue addEvent:se withCustomMessage:cd.customMsg andCustomURL:cd.customURL];
       }
     }
   }

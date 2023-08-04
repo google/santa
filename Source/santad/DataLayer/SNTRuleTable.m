@@ -25,7 +25,7 @@
 #import "Source/common/SNTLogging.h"
 #import "Source/common/SNTRule.h"
 
-static const uint32_t kRuleTableCurrentVersion = 6;
+static const uint32_t kRuleTableCurrentVersion = 7;
 
 // TODO(nguyenphillip): this should be configurable.
 // How many rules must be in database before we start trying to remove transitive rules.
@@ -246,6 +246,11 @@ static void addPathsFromDefaultMuteSet(NSMutableSet *criticalPaths) API_AVAILABL
     newVersion = 6;
   }
 
+  if (version < 7) {
+    [db executeUpdate:@"ALTER TABLE 'rules' ADD 'customurl' TEXT"];
+    newVersion = 7;
+  }
+
   // Save signing info for launchd and santad. Used to ensure they are always allowed.
   self.santadCSInfo = [[MOLCodesignChecker alloc] initWithSelf];
   self.launchdCSInfo = [[MOLCodesignChecker alloc] initWithPID:1];
@@ -309,11 +314,13 @@ static void addPathsFromDefaultMuteSet(NSMutableSet *criticalPaths) API_AVAILABL
 }
 
 - (SNTRule *)ruleFromResultSet:(FMResultSet *)rs {
-  return [[SNTRule alloc] initWithIdentifier:[rs stringForColumn:@"identifier"]
-                                       state:[rs intForColumn:@"state"]
-                                        type:[rs intForColumn:@"type"]
-                                   customMsg:[rs stringForColumn:@"custommsg"]
-                                   timestamp:[rs intForColumn:@"timestamp"]];
+  SNTRule *r = [[SNTRule alloc] initWithIdentifier:[rs stringForColumn:@"identifier"]
+                                             state:[rs intForColumn:@"state"]
+                                              type:[rs intForColumn:@"type"]
+                                         customMsg:[rs stringForColumn:@"custommsg"]
+                                         timestamp:[rs intForColumn:@"timestamp"]];
+  r.customURL = [rs stringForColumn:@"customurl"];
+  return r;
 }
 
 - (SNTRule *)ruleForBinarySHA256:(NSString *)binarySHA256
@@ -427,10 +434,10 @@ static void addPathsFromDefaultMuteSet(NSMutableSet *criticalPaths) API_AVAILABL
         }
       } else {
         if (![db executeUpdate:@"INSERT OR REPLACE INTO rules "
-                               @"(identifier, state, type, custommsg, timestamp) "
-                               @"VALUES (?, ?, ?, ?, ?);",
+                               @"(identifier, state, type, custommsg, customurl, timestamp) "
+                               @"VALUES (?, ?, ?, ?, ?, ?);",
                                rule.identifier, @(rule.state), @(rule.type), rule.customMsg,
-                               @(rule.timestamp)]) {
+                               rule.customURL, @(rule.timestamp)]) {
           [self fillError:error
                      code:SNTRuleTableErrorInsertOrReplaceFailed
                   message:[db lastErrorMessage]];

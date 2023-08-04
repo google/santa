@@ -42,6 +42,11 @@
 @property(copy) NSString *customMsg;
 
 ///
+///  A custom URL to take the user to when this binary is blocked from executing.
+///
+@property(copy) NSString *customURL;
+
+///
 ///  The time when this rule was last retrieved from the rules database, if rule is transitive.
 ///  Stored as number of seconds since 00:00:00 UTC on 1 January 2001.
 ///

@@ -58,7 +58,7 @@
   id dncMock = OCMClassMock([NSDistributedNotificationCenter class]);
   OCMStub([dncMock defaultCenter]).andReturn(dncMock);
 
-  [sut postBlockNotification:ev withCustomMessage:@""];
+  [sut postBlockNotification:ev withCustomMessage:@"" andCustomURL:@""];
 
   OCMVerify([dncMock postNotificationName:@"com.google.santa.notification.blockedeexecution"
                                    object:@"com.google.santa"

@@ -357,11 +357,12 @@ downloading if the rules need to be downloaded in multiple batches.
 |---|---|---|---|---|
 | identifier | YES | string | The attribute of the binary the rule should match on e.g. the team ID of a binary or sha256 hash value | "ff2a7daa4c25cbd5b057e4471c6a22aba7d154dadfb5cce139c37cf795f41c9c" |
 | policy | YES | string | Identifies the action to perform in response to the rule matching (must be one of the examples) | "ALLOWLIST","ALLOWLIST_COMPILER", "BLOCKLIST", "REMOVE",  "SILENT_BLOCKLIST" |
-| rule_type | YES | string | Identifies the type of rule (must be one of the examples) | "BINARY", "CERTIFICATE", "SIGNINGID", "TEAMID" |
-| custom_msg | NO | string | A custom message to display when the rule matches | "Hello" |
-| creation_time | NO | float64 | Time the rule was created | 1573543803.349378 |
-| file_bundle_binary_count | NO | integer | The number of binaries in a bundle | 13 |
-| file_bundle_hash | NO | string | The SHA256 of all binaries in a bundle | "7466e3687f540bcb7792c6d14d5a186667dbe18a85021857b42effe9f0370805" |
+| rule\_type | YES | string | Identifies the type of rule (must be one of the examples) | "BINARY", "CERTIFICATE", "SIGNINGID", "TEAMID" |
+| custom\_msg | NO | string | A custom message to display when the rule matches | "Hello" |
+| custom\_url | NO | string | A custom URL to use for the open button when the rule matches | http://lmgtfy.app/?q=dont+download+malware |
+| creation\_time | NO | float64 | Time the rule was created | 1573543803.349378 |
+| file\_bundle\_binary\_count | NO | integer | The number of binaries in a bundle | 13 |
+| file\_bundle\_hash | NO | string | The SHA256 of all binaries in a bundle | "7466e3687f540bcb7792c6d14d5a186667dbe18a85021857b42effe9f0370805" |
 
 
 ##### Example `ruledownload` Response Payload
