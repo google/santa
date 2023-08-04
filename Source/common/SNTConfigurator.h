@@ -391,6 +391,27 @@
 @property(readonly, nonatomic) NSDictionary *syncProxyConfig;
 
 ///
+///  Extra headers to include in all requests made during syncing.
+///  Keys and values must all be strings, any other type will be silently ignored.
+///  Some headers cannot be set through this key, including:
+///
+///    * Content-Encoding
+///    * Content-Length
+///    * Content-Type
+///    * Connection
+///    * Host
+///    * Proxy-Authenticate
+///    * Proxy-Authorization
+///    * WWW-Authenticate
+///
+///  The header "Authorization" is also documented by Apple to be one that will
+///  be ignored but this is not really the case, at least at present. If you
+///  are able to use a different header for this that would be safest but if not
+///  using Authorization /should/ be fine.
+///
+@property(readonly, nonatomic) NSDictionary *syncExtraHeaders;
+
+///
 ///  The machine owner.
 ///
 @property(readonly, nonatomic) NSString *machineOwner;
