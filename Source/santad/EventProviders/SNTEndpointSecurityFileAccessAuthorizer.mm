@@ -25,11 +25,11 @@
 #include <algorithm>
 #include <array>
 #include <cstdlib>
-#include <map>
 #include <memory>
 #include <optional>
-#include <set>
 #include <type_traits>
+#include <unordered_map>
+#include <unordered_set>
 #include <utility>
 #include <variant>
 
@@ -62,10 +62,27 @@ using santa::santad::event_providers::endpoint_security::EnrichOptions;
 using santa::santad::event_providers::endpoint_security::Message;
 using santa::santad::logs::endpoint_security::Logger;
 
+struct PairHash {
+  template <typename T1, typename T2>
+  std::size_t operator()(const std::pair<T1, T2> &pair) const {
+    return std::hash<T1>()(pair.first) << 1 ^ std::hash<T2>()(pair.second);
+  }
+};
+
+using FileSet = std::unordered_set<std::pair<dev_t, ino_t>, PairHash>;
+
 NSString *kBadCertHash = @"BAD_CERT_HASH";
 
 static constexpr uint32_t kOpenFlagsIndicatingWrite = FWRITE | O_APPEND | O_TRUNC;
 static constexpr uint16_t kDefaultRateLimitQPS = 50;
+
+// Cache limits are merely meant to protect against unbounded growth. In practice,
+// the observed cache size is typically small for normal WatchItems rules (those
+// that do not target high-volume paths). The per entry size was observed to vary
+// quite dramatically based on the type of process (e.g. large, complex applications
+// were observed to frequently have several thousands of entries).
+static constexpr size_t kMaxCacheSize = 512;
+static constexpr size_t kMaxCacheEntrySize = 8192;
 
 // Small structure to hold a complete event path target being operated upon and
 // a bool indicating whether the path is a readable target (e.g. a file being
@@ -212,7 +229,7 @@ void PopulatePathTargets(const Message &msg, std::vector<PathTarget> &targets) {
 @interface SNTEndpointSecurityFileAccessAuthorizer ()
 @property SNTDecisionCache *decisionCache;
 @property bool isSubscribed;
-@property dispatch_queue_t hotCacheQueue;
+@property dispatch_queue_t allowReadsQueue;
 @end
 
 @implementation SNTEndpointSecurityFileAccessAuthorizer {
@@ -222,7 +239,7 @@ void PopulatePathTargets(const Message &msg, std::vector<PathTarget> &targets) {
   std::shared_ptr<RateLimiter> _rateLimiter;
   SantaCache<SantaVnode, NSString *> _certHashCache;
   std::shared_ptr<TTYWriter> _ttyWriter;
-  std::map<std::pair<pid_t, pid_t>, std::set<std::pair<dev_t, ino_t>>> _hotCache;
+  std::unordered_map<std::pair<pid_t, pid_t>, FileSet, PairHash> _allowReadsCache;
 }
 
 - (instancetype)
@@ -245,8 +262,8 @@ void PopulatePathTargets(const Message &msg, std::vector<PathTarget> &targets) {
     _decisionCache = decisionCache;
     _ttyWriter = std::move(ttyWriter);
 
-    _hotCacheQueue = dispatch_queue_create(
-      "com.google.santa.daemon.faa.hotcache",
+    _allowReadsQueue = dispatch_queue_create(
+      "com.google.santa.daemon.faa",
       dispatch_queue_attr_make_with_qos_class(DISPATCH_QUEUE_SERIAL_WITH_AUTORELEASE_POOL,
                                               QOS_CLASS_USER_INTERACTIVE, 0));
 
@@ -442,13 +459,25 @@ void PopulatePathTargets(const Message &msg, std::vector<PathTarget> &targets) {
 
   std::shared_ptr<WatchItemPolicy> policy = optionalPolicy.value();
 
-  // If policy allows reading, add target to the hot cache
+  // If policy allows reading, add target to the cache
   if (policy->allow_read_access && target.isReadable && target.devnoIno.has_value()) {
-    dispatch_sync(self.hotCacheQueue, ^{
+    dispatch_sync(self.allowReadsQueue, ^{
       std::pair<pid_t, pid_t> pidPidver = {audit_token_to_pid(msg->process->audit_token),
                                            audit_token_to_pidversion(msg->process->audit_token)};
-      self->_hotCache[std::move(pidPidver)].insert(
-        {target.devnoIno->first, target.devnoIno->second});
+
+      // If we hit the size limit, clear the cache to prevent unbounded growth
+      if (self->_allowReadsCache.size() >= kMaxCacheSize) {
+        self->_allowReadsCache.clear();
+      }
+
+      FileSet &fs = self->_allowReadsCache[std::move(pidPidver)];
+
+      // If we hit the per-entry size limit, clear the entry to prevent unbounded growth
+      if (fs.size() >= kMaxCacheEntrySize) {
+        fs.clear();
+      }
+
+      fs.insert({target.devnoIno->first, target.devnoIno->second});
     });
   }
 
@@ -591,17 +620,19 @@ void PopulatePathTargets(const Message &msg, std::vector<PathTarget> &targets) {
 
 - (void)handleMessage:(santa::santad::event_providers::endpoint_security::Message &&)esMsg
    recordEventMetrics:(void (^)(EventDisposition))recordEventMetrics {
-  // If the event type is read-only, check if this has previously been allowed
   if (esMsg->event_type == ES_EVENT_TYPE_AUTH_OPEN &&
       !(esMsg->event.open.fflag & kOpenFlagsIndicatingWrite)) {
+    // If the OPEN event type is read-only, check if this has previously been allowed
     std::pair<pid_t, pid_t> pidPidver = {audit_token_to_pid(esMsg->process->audit_token),
                                          audit_token_to_pidversion(esMsg->process->audit_token)};
     std::pair<dev_t, ino_t> devnoIno = {esMsg->event.open.file->stat.st_dev,
                                         esMsg->event.open.file->stat.st_ino};
 
     __block bool sendImmediateResponse = false;
-    dispatch_sync(self.hotCacheQueue, ^{
-      if (self->_hotCache[pidPidver].count(devnoIno) > 0) {
+    dispatch_sync(self.allowReadsQueue, ^{
+      const auto &iter = self->_allowReadsCache.find(pidPidver);
+
+      if (iter != self->_allowReadsCache.end() && iter->second.count(devnoIno) > 0) {
         sendImmediateResponse = true;
       }
     });
@@ -611,10 +642,11 @@ void PopulatePathTargets(const Message &msg, std::vector<PathTarget> &targets) {
       return;
     }
   } else if (esMsg->event_type == ES_EVENT_TYPE_NOTIFY_EXIT) {
-    dispatch_sync(self.hotCacheQueue, ^{
+    // On process exit, remove the cache entry
+    dispatch_sync(self.allowReadsQueue, ^{
       std::pair<pid_t, pid_t> pidPidver = {audit_token_to_pid(esMsg->process->audit_token),
                                            audit_token_to_pidversion(esMsg->process->audit_token)};
-      self->_hotCache.erase(std::move(pidPidver));
+      self->_allowReadsCache.erase(std::move(pidPidver));
     });
     return;
   }
@@ -675,8 +707,8 @@ void PopulatePathTargets(const Message &msg, std::vector<PathTarget> &targets) {
     [self enable];
   }
 
-  dispatch_sync(self.hotCacheQueue, ^{
-    self->_hotCache.clear();
+  dispatch_sync(self.allowReadsQueue, ^{
+    self->_allowReadsCache.clear();
   });
 }
 

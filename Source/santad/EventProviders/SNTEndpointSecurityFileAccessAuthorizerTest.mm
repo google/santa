@@ -20,6 +20,7 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 #include <sys/fcntl.h>
+#include <sys/types.h>
 #include <cstring>
 
 #include <array>
@@ -50,6 +51,7 @@ extern NSString *kBadCertHash;
 struct PathTarget {
   std::string path;
   bool isReadable;
+  std::optional<std::pair<dev_t, ino_t>> devnoIno;
 };
 
 using PathTargetsPair = std::pair<std::optional<std::string>, std::optional<std::string>>;
@@ -663,7 +665,7 @@ void ClearWatchItemPolicyProcess(WatchItemPolicy::Process &proc) {
   std::set<es_event_type_t> expectedEventSubs = {
     ES_EVENT_TYPE_AUTH_CLONE,    ES_EVENT_TYPE_AUTH_CREATE, ES_EVENT_TYPE_AUTH_EXCHANGEDATA,
     ES_EVENT_TYPE_AUTH_LINK,     ES_EVENT_TYPE_AUTH_OPEN,   ES_EVENT_TYPE_AUTH_RENAME,
-    ES_EVENT_TYPE_AUTH_TRUNCATE, ES_EVENT_TYPE_AUTH_UNLINK,
+    ES_EVENT_TYPE_AUTH_TRUNCATE, ES_EVENT_TYPE_AUTH_UNLINK, ES_EVENT_TYPE_NOTIFY_EXIT,
   };
 
 #if HAVE_MACOS_12
