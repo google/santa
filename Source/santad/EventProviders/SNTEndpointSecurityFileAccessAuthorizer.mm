@@ -104,9 +104,9 @@ es_auth_result_t FileAccessPolicyDecisionToESAuthResult(FileAccessPolicyDecision
     case FileAccessPolicyDecision::kAllowedAuditOnly: return ES_AUTH_RESULT_ALLOW;
     default:
       // This is a programming error. Bail.
-      LOGE(@"Invalid file access decision encountered: %d", decision);
+      LOGE(@"Invalid file access decision encountered: %d", static_cast<int>(decision));
       [NSException raise:@"Invalid FileAccessPolicyDecision"
-                  format:@"Invalid FileAccessPolicyDecision: %d", decision];
+                  format:@"Invalid FileAccessPolicyDecision: %d", static_cast<int>(decision)];
   }
 }
 
