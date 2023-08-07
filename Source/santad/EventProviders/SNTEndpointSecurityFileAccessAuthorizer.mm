@@ -74,14 +74,6 @@ NSString *kBadCertHash = @"BAD_CERT_HASH";
 static constexpr uint32_t kOpenFlagsIndicatingWrite = FWRITE | O_APPEND | O_TRUNC;
 static constexpr uint16_t kDefaultRateLimitQPS = 50;
 
-// Cache limits are merely meant to protect against unbounded growth. In practice,
-// the observed cache size is typically small for normal WatchItems rules (those
-// that do not target high-volume paths). The per entry size was observed to vary
-// quite dramatically based on the type of process (e.g. large, complex applications
-// were observed to frequently have several thousands of entries).
-static constexpr size_t kMaxCacheSize = 512;
-static constexpr size_t kMaxCacheEntrySize = 8192;
-
 // Small structure to hold a complete event path target being operated upon and
 // a bool indicating whether the path is a readable target (e.g. a file being
 // opened or cloned)
@@ -180,6 +172,14 @@ class ProcessFiles {
 
   dispatch_queue_t q_;
   std::unordered_map<std::pair<pid_t, pid_t>, FileSet, PairHash> cache_;
+
+  // Cache limits are merely meant to protect against unbounded growth. In practice,
+  // the observed cache size is typically small for normal WatchItems rules (those
+  // that do not target high-volume paths). The per entry size was observed to vary
+  // quite dramatically based on the type of process (e.g. large, complex applications
+  // were observed to frequently have several thousands of entries).
+  static constexpr size_t kMaxCacheSize = 512;
+  static constexpr size_t kMaxCacheEntrySize = 8192;
 };
 
 static inline std::string Path(const es_file_t *esFile) {
