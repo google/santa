@@ -84,9 +84,9 @@ struct PathTarget {
 };
 
 // This is a bespoke cache for mapping processes to a set of files the process
-// has previously been allowed to read as defined by policy. It has simialr
+// has previously been allowed to read as defined by policy. It has similar
 // semantics to SantaCache in terms of clearing the cache keys and values when
-// max sizs are reached.
+// max sizes are reached.
 // TODO: We need a proper LRU cache
 //
 // NB: SantaCache should not be used here.
