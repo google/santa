@@ -69,8 +69,6 @@ struct PairHash {
   }
 };
 
-using FileSet = std::unordered_set<std::pair<dev_t, ino_t>, PairHash>;
-
 NSString *kBadCertHash = @"BAD_CERT_HASH";
 
 static constexpr uint32_t kOpenFlagsIndicatingWrite = FWRITE | O_APPEND | O_TRUNC;
@@ -91,6 +89,97 @@ struct PathTarget {
   std::string path;
   bool isReadable;
   std::optional<std::pair<dev_t, ino_t>> devnoIno;
+};
+
+// This is a bespoke cache for mapping processes to a set of files the process
+// has previously been allowed to read as defined by policy. It has simialr
+// semantics to SantaCache in terms of clearing the cache keys and values when
+// max sizs are reached.
+// TODO: We need a proper LRU cache
+//
+// NB: SantaCache should not be used here.
+//     1.) It doesn't efficiently support non-primitive value types. Since the
+//     value of each key needs to be a set, we want to refrain from having to
+//     unnecessarily copy the value.
+//     2.) It doesn't support size limits on value types
+class ProcessFiles {
+  using FileSet = std::unordered_set<std::pair<dev_t, ino_t>, PairHash>;
+
+ public:
+  ProcessFiles() {
+    q_ = dispatch_queue_create(
+      "com.google.santa.daemon.faa",
+      dispatch_queue_attr_make_with_qos_class(DISPATCH_QUEUE_SERIAL_WITH_AUTORELEASE_POOL,
+                                              QOS_CLASS_USER_INTERACTIVE, 0));
+  };
+
+  // Add the given target to the set of files a process can read
+  void Set(const es_process_t *proc, const PathTarget &target) {
+    if (!target.devnoIno.has_value()) {
+      return;
+    }
+
+    std::pair<pid_t, pid_t> pidPidver = {audit_token_to_pid(proc->audit_token),
+                                         audit_token_to_pidversion(proc->audit_token)};
+
+    dispatch_sync(q_, ^{
+      // If we hit the size limit, clear the cache to prevent unbounded growth
+      if (cache_.size() >= kMaxCacheSize) {
+        ClearLocked();
+      }
+
+      FileSet &fs = cache_[std::move(pidPidver)];
+
+      // If we hit the per-entry size limit, clear the entry to prevent unbounded growth
+      if (fs.size() >= kMaxCacheEntrySize) {
+        fs.clear();
+      }
+
+      fs.insert(*target.devnoIno);
+    });
+  }
+
+  // Remove the given process from the cache
+  void Remove(const es_process_t *proc) {
+    std::pair<pid_t, pid_t> pidPidver = {audit_token_to_pid(proc->audit_token),
+                                         audit_token_to_pidversion(proc->audit_token)};
+    dispatch_sync(q_, ^{
+      cache_.erase(pidPidver);
+    });
+  }
+
+  // Check if the set of files for a given process contains the given file
+  bool Exists(const es_process_t *proc, const es_file_t *file) {
+    std::pair<pid_t, pid_t> pidPidver = {audit_token_to_pid(proc->audit_token),
+                                         audit_token_to_pidversion(proc->audit_token)};
+    std::pair<dev_t, ino_t> devnoIno = {file->stat.st_dev, file->stat.st_ino};
+
+    __block bool exists = false;
+
+    dispatch_sync(q_, ^{
+      const auto &iter = cache_.find(pidPidver);
+
+      if (iter != cache_.end() && iter->second.count(devnoIno) > 0) {
+        exists = true;
+      }
+    });
+
+    return exists;
+  }
+
+  // Clear all cache entries
+  void Clear() {
+    dispatch_sync(q_, ^{
+      ClearLocked();
+    });
+  }
+
+ private:
+  // Remove everything in the cache.
+  void ClearLocked() { cache_.clear(); }
+
+  dispatch_queue_t q_;
+  std::unordered_map<std::pair<pid_t, pid_t>, FileSet, PairHash> cache_;
 };
 
 static inline std::string Path(const es_file_t *esFile) {
@@ -229,7 +318,6 @@ void PopulatePathTargets(const Message &msg, std::vector<PathTarget> &targets) {
 @interface SNTEndpointSecurityFileAccessAuthorizer ()
 @property SNTDecisionCache *decisionCache;
 @property bool isSubscribed;
-@property dispatch_queue_t allowReadsQueue;
 @end
 
 @implementation SNTEndpointSecurityFileAccessAuthorizer {
@@ -239,7 +327,7 @@ void PopulatePathTargets(const Message &msg, std::vector<PathTarget> &targets) {
   std::shared_ptr<RateLimiter> _rateLimiter;
   SantaCache<SantaVnode, NSString *> _certHashCache;
   std::shared_ptr<TTYWriter> _ttyWriter;
-  std::unordered_map<std::pair<pid_t, pid_t>, FileSet, PairHash> _allowReadsCache;
+  ProcessFiles _readsCache;
 }
 
 - (instancetype)
@@ -261,11 +349,6 @@ void PopulatePathTargets(const Message &msg, std::vector<PathTarget> &targets) {
     _enricher = std::move(enricher);
     _decisionCache = decisionCache;
     _ttyWriter = std::move(ttyWriter);
-
-    _allowReadsQueue = dispatch_queue_create(
-      "com.google.santa.daemon.faa",
-      dispatch_queue_attr_make_with_qos_class(DISPATCH_QUEUE_SERIAL_WITH_AUTORELEASE_POOL,
-                                              QOS_CLASS_USER_INTERACTIVE, 0));
 
     _rateLimiter = RateLimiter::Create(metrics, santa::santad::Processor::kFileAccessAuthorizer,
                                        kDefaultRateLimitQPS);
@@ -460,25 +543,8 @@ void PopulatePathTargets(const Message &msg, std::vector<PathTarget> &targets) {
   std::shared_ptr<WatchItemPolicy> policy = optionalPolicy.value();
 
   // If policy allows reading, add target to the cache
-  if (policy->allow_read_access && target.isReadable && target.devnoIno.has_value()) {
-    dispatch_sync(self.allowReadsQueue, ^{
-      std::pair<pid_t, pid_t> pidPidver = {audit_token_to_pid(msg->process->audit_token),
-                                           audit_token_to_pidversion(msg->process->audit_token)};
-
-      // If we hit the size limit, clear the cache to prevent unbounded growth
-      if (self->_allowReadsCache.size() >= kMaxCacheSize) {
-        self->_allowReadsCache.clear();
-      }
-
-      FileSet &fs = self->_allowReadsCache[std::move(pidPidver)];
-
-      // If we hit the per-entry size limit, clear the entry to prevent unbounded growth
-      if (fs.size() >= kMaxCacheEntrySize) {
-        fs.clear();
-      }
-
-      fs.insert({target.devnoIno->first, target.devnoIno->second});
-    });
+  if (policy->allow_read_access && target.isReadable) {
+    self->_readsCache.Set(msg->process, target);
   }
 
   // Check if this action contains any special case that would produce
@@ -622,32 +688,13 @@ void PopulatePathTargets(const Message &msg, std::vector<PathTarget> &targets) {
    recordEventMetrics:(void (^)(EventDisposition))recordEventMetrics {
   if (esMsg->event_type == ES_EVENT_TYPE_AUTH_OPEN &&
       !(esMsg->event.open.fflag & kOpenFlagsIndicatingWrite)) {
-    // If the OPEN event type is read-only, check if this has previously been allowed
-    std::pair<pid_t, pid_t> pidPidver = {audit_token_to_pid(esMsg->process->audit_token),
-                                         audit_token_to_pidversion(esMsg->process->audit_token)};
-    std::pair<dev_t, ino_t> devnoIno = {esMsg->event.open.file->stat.st_dev,
-                                        esMsg->event.open.file->stat.st_ino};
-
-    __block bool sendImmediateResponse = false;
-    dispatch_sync(self.allowReadsQueue, ^{
-      const auto &iter = self->_allowReadsCache.find(pidPidver);
-
-      if (iter != self->_allowReadsCache.end() && iter->second.count(devnoIno) > 0) {
-        sendImmediateResponse = true;
-      }
-    });
-
-    if (sendImmediateResponse) {
+    if (self->_readsCache.Exists(esMsg->process, esMsg->event.open.file)) {
       [self respondToMessage:esMsg withAuthResult:ES_AUTH_RESULT_ALLOW cacheable:false];
       return;
     }
   } else if (esMsg->event_type == ES_EVENT_TYPE_NOTIFY_EXIT) {
     // On process exit, remove the cache entry
-    dispatch_sync(self.allowReadsQueue, ^{
-      std::pair<pid_t, pid_t> pidPidver = {audit_token_to_pid(esMsg->process->audit_token),
-                                           audit_token_to_pidversion(esMsg->process->audit_token)};
-      self->_allowReadsCache.erase(std::move(pidPidver));
-    });
+    self->_readsCache.Remove(esMsg->process);
     return;
   }
 
@@ -707,9 +754,7 @@ void PopulatePathTargets(const Message &msg, std::vector<PathTarget> &targets) {
     [self enable];
   }
 
-  dispatch_sync(self.allowReadsQueue, ^{
-    self->_allowReadsCache.clear();
-  });
+  self->_readsCache.Clear();
 }
 
 @end
