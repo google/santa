@@ -166,7 +166,7 @@ class ProcessFiles {
   void ClearLocked() { cache_.clear(); }
 
   dispatch_queue_t q_;
-  absl::flat_hash_map<std::pair<pid_t, pid_t>, FileSet, PairHash> cache_;
+  absl::flat_hash_map<std::pair<pid_t, pid_t>, FileSet> cache_;
 
   // Cache limits are merely meant to protect against unbounded growth. In practice,
   // the observed cache size is typically small for normal WatchItems rules (those
