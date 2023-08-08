@@ -48,6 +48,8 @@
 #include "Source/santad/EventProviders/EndpointSecurity/EnrichedTypes.h"
 #include "Source/santad/EventProviders/EndpointSecurity/Message.h"
 #include "Source/santad/EventProviders/RateLimiter.h"
+#include "absl/container/flat_hash_map.h"
+#include "absl/container/flat_hash_set.h"
 
 using santa::common::StringToNSString;
 using santa::santad::EventDisposition;
@@ -95,7 +97,7 @@ struct PathTarget {
 //     unnecessarily copy the value.
 //     2.) It doesn't support size limits on value types
 class ProcessFiles {
-  using FileSet = std::unordered_set<std::pair<dev_t, ino_t>, PairHash>;
+  using FileSet = absl::flat_hash_set<std::pair<dev_t, ino_t>, PairHash>;
 
  public:
   ProcessFiles() {
@@ -171,7 +173,7 @@ class ProcessFiles {
   void ClearLocked() { cache_.clear(); }
 
   dispatch_queue_t q_;
-  std::unordered_map<std::pair<pid_t, pid_t>, FileSet, PairHash> cache_;
+  absl::flat_hash_map<std::pair<pid_t, pid_t>, FileSet, PairHash> cache_;
 
   // Cache limits are merely meant to protect against unbounded growth. In practice,
   // the observed cache size is typically small for normal WatchItems rules (those

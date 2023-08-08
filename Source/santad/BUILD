@@ -374,6 +374,8 @@ objc_library(
         "//Source/common:String",
         "@MOLCertificate",
         "@MOLCodesignChecker",
+        "@com_google_absl//absl/container:flat_hash_map",
+        "@com_google_absl//absl/container:flat_hash_set",
     ],
 )
 
