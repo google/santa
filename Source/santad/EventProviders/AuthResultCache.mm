@@ -60,7 +60,8 @@ NSString *const FlushCacheReasonToString(FlushCacheReason reason) {
     case FlushCacheReason::kExplicitCommand: return kFlushCacheReasonExplicitCommand;
     case FlushCacheReason::kFilesystemUnmounted: return kFlushCacheReasonFilesystemUnmounted;
     default:
-      [NSException raise:@"Invalid reason" format:@"Unknown reason value: %d", reason];
+      [NSException raise:@"Invalid reason"
+                  format:@"Unknown reason value: %d", static_cast<int>(reason)];
       return nil;
   }
 }

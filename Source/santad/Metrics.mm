@@ -63,7 +63,8 @@ NSString *const ProcessorToString(Processor processor) {
     case Processor::kTamperResistance: return kProcessorTamperResistance;
     case Processor::kFileAccessAuthorizer: return kProcessorFileAccessAuthorizer;
     default:
-      [NSException raise:@"Invalid processor" format:@"Unknown processor value: %d", processor];
+      [NSException raise:@"Invalid processor"
+                  format:@"Unknown processor value: %d", static_cast<int>(processor)];
       return nil;
   }
 }
@@ -103,7 +104,8 @@ NSString *const EventDispositionToString(EventDisposition d) {
     case EventDisposition::kDropped: return kEventDispositionDropped;
     case EventDisposition::kProcessed: return kEventDispositionProcessed;
     default:
-      [NSException raise:@"Invalid disposition" format:@"Unknown disposition value: %d", d];
+      [NSException raise:@"Invalid disposition"
+                  format:@"Unknown disposition value: %d", static_cast<int>(d)];
       return nil;
   }
 }

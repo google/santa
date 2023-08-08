@@ -20,6 +20,7 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 #include <sys/fcntl.h>
+#include <sys/types.h>
 #include <cstring>
 
 #include <array>
@@ -50,6 +51,7 @@ extern NSString *kBadCertHash;
 struct PathTarget {
   std::string path;
   bool isReadable;
+  std::optional<std::pair<dev_t, ino_t>> devnoIno;
 };
 
 using PathTargetsPair = std::pair<std::optional<std::string>, std::optional<std::string>>;
@@ -58,6 +60,10 @@ extern es_auth_result_t FileAccessPolicyDecisionToESAuthResult(FileAccessPolicyD
 extern bool ShouldLogDecision(FileAccessPolicyDecision decision);
 extern bool ShouldNotifyUserDecision(FileAccessPolicyDecision decision);
 extern es_auth_result_t CombinePolicyResults(es_auth_result_t result1, es_auth_result_t result2);
+
+static inline std::pair<dev_t, ino_t> FileID(const es_file_t &file) {
+  return std::make_pair(file.stat.st_dev, file.stat.st_ino);
+}
 
 void SetExpectationsForFileAccessAuthorizerInit(
   std::shared_ptr<MockEndpointSecurityAPI> mockESApi) {
@@ -663,7 +669,7 @@ void ClearWatchItemPolicyProcess(WatchItemPolicy::Process &proc) {
   std::set<es_event_type_t> expectedEventSubs = {
     ES_EVENT_TYPE_AUTH_CLONE,    ES_EVENT_TYPE_AUTH_CREATE, ES_EVENT_TYPE_AUTH_EXCHANGEDATA,
     ES_EVENT_TYPE_AUTH_LINK,     ES_EVENT_TYPE_AUTH_OPEN,   ES_EVENT_TYPE_AUTH_RENAME,
-    ES_EVENT_TYPE_AUTH_TRUNCATE, ES_EVENT_TYPE_AUTH_UNLINK,
+    ES_EVENT_TYPE_AUTH_TRUNCATE, ES_EVENT_TYPE_AUTH_UNLINK, ES_EVENT_TYPE_NOTIFY_EXIT,
   };
 
 #if HAVE_MACOS_12
@@ -714,9 +720,9 @@ void ClearWatchItemPolicyProcess(WatchItemPolicy::Process &proc) {
 - (void)testGetPathTargets {
   // This test ensures that the `GetPathTargets` functions returns the
   // expected combination of targets for each handled event variant
-  es_file_t testFile1 = MakeESFile("test_file_1");
-  es_file_t testFile2 = MakeESFile("test_file_2");
-  es_file_t testDir = MakeESFile("test_dir");
+  es_file_t testFile1 = MakeESFile("test_file_1", MakeStat(100));
+  es_file_t testFile2 = MakeESFile("test_file_2", MakeStat(200));
+  es_file_t testDir = MakeESFile("test_dir", MakeStat(300));
   es_string_token_t testTok = MakeESStringToken("test_tok");
   std::string dirTok = std::string(testDir.path.data) + "/" + std::string(testTok.data);
 
@@ -737,6 +743,7 @@ void ClearWatchItemPolicyProcess(WatchItemPolicy::Process &proc) {
     XCTAssertEqual(targets.size(), 1);
     XCTAssertCStringEqual(targets[0].path.c_str(), testFile1.path.data);
     XCTAssertTrue(targets[0].isReadable);
+    XCTAssertEqual(targets[0].devnoIno.value(), FileID(testFile1));
   }
 
   {
@@ -751,8 +758,10 @@ void ClearWatchItemPolicyProcess(WatchItemPolicy::Process &proc) {
     XCTAssertEqual(targets.size(), 2);
     XCTAssertCStringEqual(targets[0].path.c_str(), testFile1.path.data);
     XCTAssertFalse(targets[0].isReadable);
+    XCTAssertFalse(targets[0].devnoIno.has_value());
     XCTAssertCppStringEqual(targets[1].path, dirTok);
     XCTAssertFalse(targets[1].isReadable);
+    XCTAssertFalse(targets[1].devnoIno.has_value());
   }
 
   {
@@ -769,8 +778,10 @@ void ClearWatchItemPolicyProcess(WatchItemPolicy::Process &proc) {
       XCTAssertEqual(targets.size(), 2);
       XCTAssertCStringEqual(targets[0].path.c_str(), testFile1.path.data);
       XCTAssertFalse(targets[0].isReadable);
+      XCTAssertFalse(targets[0].devnoIno.has_value());
       XCTAssertCStringEqual(targets[1].path.c_str(), testFile2.path.data);
       XCTAssertFalse(targets[1].isReadable);
+      XCTAssertFalse(targets[1].devnoIno.has_value());
     }
 
     {
@@ -784,8 +795,10 @@ void ClearWatchItemPolicyProcess(WatchItemPolicy::Process &proc) {
       XCTAssertEqual(targets.size(), 2);
       XCTAssertCStringEqual(targets[0].path.c_str(), testFile1.path.data);
       XCTAssertFalse(targets[0].isReadable);
+      XCTAssertFalse(targets[0].devnoIno.has_value());
       XCTAssertCppStringEqual(targets[1].path, dirTok);
       XCTAssertFalse(targets[1].isReadable);
+      XCTAssertFalse(targets[1].devnoIno.has_value());
     }
   }
 
@@ -799,6 +812,7 @@ void ClearWatchItemPolicyProcess(WatchItemPolicy::Process &proc) {
     XCTAssertEqual(targets.size(), 1);
     XCTAssertCStringEqual(targets[0].path.c_str(), testFile1.path.data);
     XCTAssertFalse(targets[0].isReadable);
+    XCTAssertFalse(targets[0].devnoIno.has_value());
   }
 
   {
@@ -813,8 +827,10 @@ void ClearWatchItemPolicyProcess(WatchItemPolicy::Process &proc) {
     XCTAssertEqual(targets.size(), 2);
     XCTAssertCStringEqual(targets[0].path.c_str(), testFile1.path.data);
     XCTAssertTrue(targets[0].isReadable);
+    XCTAssertEqual(targets[0].devnoIno.value(), FileID(testFile1));
     XCTAssertCppStringEqual(targets[1].path, dirTok);
     XCTAssertFalse(targets[1].isReadable);
+    XCTAssertFalse(targets[1].devnoIno.has_value());
   }
 
   {
@@ -828,8 +844,10 @@ void ClearWatchItemPolicyProcess(WatchItemPolicy::Process &proc) {
     XCTAssertEqual(targets.size(), 2);
     XCTAssertCStringEqual(targets[0].path.c_str(), testFile1.path.data);
     XCTAssertFalse(targets[0].isReadable);
+    XCTAssertFalse(targets[0].devnoIno.has_value());
     XCTAssertCStringEqual(targets[1].path.c_str(), testFile2.path.data);
     XCTAssertFalse(targets[1].isReadable);
+    XCTAssertFalse(targets[1].devnoIno.has_value());
   }
 
   {
@@ -844,6 +862,7 @@ void ClearWatchItemPolicyProcess(WatchItemPolicy::Process &proc) {
     XCTAssertEqual(targets.size(), 1);
     XCTAssertCppStringEqual(targets[0].path, dirTok);
     XCTAssertFalse(targets[0].isReadable);
+    XCTAssertFalse(targets[0].devnoIno.has_value());
   }
 
   {
@@ -856,6 +875,7 @@ void ClearWatchItemPolicyProcess(WatchItemPolicy::Process &proc) {
     XCTAssertEqual(targets.size(), 1);
     XCTAssertCStringEqual(targets[0].path.c_str(), testFile1.path.data);
     XCTAssertFalse(targets[0].isReadable);
+    XCTAssertFalse(targets[0].devnoIno.has_value());
   }
 
   if (@available(macOS 12.0, *)) {
@@ -874,8 +894,10 @@ void ClearWatchItemPolicyProcess(WatchItemPolicy::Process &proc) {
         XCTAssertEqual(targets.size(), 2);
         XCTAssertCStringEqual(targets[0].path.c_str(), testFile1.path.data);
         XCTAssertTrue(targets[0].isReadable);
+        XCTAssertEqual(targets[0].devnoIno.value(), FileID(testFile1));
         XCTAssertCppStringEqual(targets[1].path, dirTok);
         XCTAssertFalse(targets[1].isReadable);
+        XCTAssertFalse(targets[1].devnoIno.has_value());
       }
 
       {
@@ -887,8 +909,10 @@ void ClearWatchItemPolicyProcess(WatchItemPolicy::Process &proc) {
         XCTAssertEqual(targets.size(), 2);
         XCTAssertCStringEqual(targets[0].path.c_str(), testFile1.path.data);
         XCTAssertTrue(targets[0].isReadable);
+        XCTAssertEqual(targets[0].devnoIno.value(), FileID(testFile1));
         XCTAssertCStringEqual(targets[1].path.c_str(), testFile2.path.data);
         XCTAssertFalse(targets[1].isReadable);
+        XCTAssertFalse(targets[1].devnoIno.has_value());
       }
     }
   }
