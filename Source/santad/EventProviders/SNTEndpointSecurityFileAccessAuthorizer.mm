@@ -64,13 +64,6 @@ using santa::santad::event_providers::endpoint_security::EnrichOptions;
 using santa::santad::event_providers::endpoint_security::Message;
 using santa::santad::logs::endpoint_security::Logger;
 
-struct PairHash {
-  template <typename T1, typename T2>
-  std::size_t operator()(const std::pair<T1, T2> &pair) const {
-    return std::hash<T1>()(pair.first) << 1 ^ std::hash<T2>()(pair.second);
-  }
-};
-
 NSString *kBadCertHash = @"BAD_CERT_HASH";
 
 static constexpr uint32_t kOpenFlagsIndicatingWrite = FWRITE | O_APPEND | O_TRUNC;
@@ -97,7 +90,7 @@ struct PathTarget {
 //     unnecessarily copy the value.
 //     2.) It doesn't support size limits on value types
 class ProcessFiles {
-  using FileSet = absl::flat_hash_set<std::pair<dev_t, ino_t>, PairHash>;
+  using FileSet = absl::flat_hash_set<std::pair<dev_t, ino_t>>;
 
  public:
   ProcessFiles() {
