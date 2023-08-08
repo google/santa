@@ -20,14 +20,15 @@
 #import <MOLCodesignChecker/MOLCodesignChecker.h>
 #include <bsm/libbsm.h>
 #include <sys/fcntl.h>
+#include <sys/types.h>
 
 #include <algorithm>
 #include <array>
 #include <cstdlib>
 #include <memory>
 #include <optional>
-#include <set>
 #include <type_traits>
+#include <utility>
 #include <variant>
 
 #include "Source/common/Platform.h"
@@ -45,6 +46,8 @@
 #include "Source/santad/EventProviders/EndpointSecurity/EnrichedTypes.h"
 #include "Source/santad/EventProviders/EndpointSecurity/Message.h"
 #include "Source/santad/EventProviders/RateLimiter.h"
+#include "absl/container/flat_hash_map.h"
+#include "absl/container/flat_hash_set.h"
 
 using santa::common::StringToNSString;
 using santa::santad::EventDisposition;
@@ -70,6 +73,106 @@ static constexpr uint16_t kDefaultRateLimitQPS = 50;
 struct PathTarget {
   std::string path;
   bool isReadable;
+  std::optional<std::pair<dev_t, ino_t>> devnoIno;
+};
+
+// This is a bespoke cache for mapping processes to a set of files the process
+// has previously been allowed to read as defined by policy. It has similar
+// semantics to SantaCache in terms of clearing the cache keys and values when
+// max sizes are reached.
+// TODO: We need a proper LRU cache
+//
+// NB: SantaCache should not be used here.
+//     1.) It doesn't efficiently support non-primitive value types. Since the
+//     value of each key needs to be a set, we want to refrain from having to
+//     unnecessarily copy the value.
+//     2.) It doesn't support size limits on value types
+class ProcessFiles {
+  using FileSet = absl::flat_hash_set<std::pair<dev_t, ino_t>>;
+
+ public:
+  ProcessFiles() {
+    q_ = dispatch_queue_create(
+      "com.google.santa.daemon.faa",
+      dispatch_queue_attr_make_with_qos_class(DISPATCH_QUEUE_SERIAL_WITH_AUTORELEASE_POOL,
+                                              QOS_CLASS_USER_INTERACTIVE, 0));
+  };
+
+  // Add the given target to the set of files a process can read
+  void Set(const es_process_t *proc, const PathTarget &target) {
+    if (!target.devnoIno.has_value()) {
+      return;
+    }
+
+    std::pair<pid_t, pid_t> pidPidver = {audit_token_to_pid(proc->audit_token),
+                                         audit_token_to_pidversion(proc->audit_token)};
+
+    dispatch_sync(q_, ^{
+      // If we hit the size limit, clear the cache to prevent unbounded growth
+      if (cache_.size() >= kMaxCacheSize) {
+        ClearLocked();
+      }
+
+      FileSet &fs = cache_[std::move(pidPidver)];
+
+      // If we hit the per-entry size limit, clear the entry to prevent unbounded growth
+      if (fs.size() >= kMaxCacheEntrySize) {
+        fs.clear();
+      }
+
+      fs.insert(*target.devnoIno);
+    });
+  }
+
+  // Remove the given process from the cache
+  void Remove(const es_process_t *proc) {
+    std::pair<pid_t, pid_t> pidPidver = {audit_token_to_pid(proc->audit_token),
+                                         audit_token_to_pidversion(proc->audit_token)};
+    dispatch_sync(q_, ^{
+      cache_.erase(pidPidver);
+    });
+  }
+
+  // Check if the set of files for a given process contains the given file
+  bool Exists(const es_process_t *proc, const es_file_t *file) {
+    std::pair<pid_t, pid_t> pidPidver = {audit_token_to_pid(proc->audit_token),
+                                         audit_token_to_pidversion(proc->audit_token)};
+    std::pair<dev_t, ino_t> devnoIno = {file->stat.st_dev, file->stat.st_ino};
+
+    __block bool exists = false;
+
+    dispatch_sync(q_, ^{
+      const auto &iter = cache_.find(pidPidver);
+
+      if (iter != cache_.end() && iter->second.count(devnoIno) > 0) {
+        exists = true;
+      }
+    });
+
+    return exists;
+  }
+
+  // Clear all cache entries
+  void Clear() {
+    dispatch_sync(q_, ^{
+      ClearLocked();
+    });
+  }
+
+ private:
+  // Remove everything in the cache.
+  void ClearLocked() { cache_.clear(); }
+
+  dispatch_queue_t q_;
+  absl::flat_hash_map<std::pair<pid_t, pid_t>, FileSet> cache_;
+
+  // Cache limits are merely meant to protect against unbounded growth. In practice,
+  // the observed cache size is typically small for normal WatchItems rules (those
+  // that do not target high-volume paths). The per entry size was observed to vary
+  // quite dramatically based on the type of process (e.g. large, complex applications
+  // were observed to frequently have several thousands of entries).
+  static constexpr size_t kMaxCacheSize = 512;
+  static constexpr size_t kMaxCacheEntrySize = 8192;
 };
 
 static inline std::string Path(const es_file_t *esFile) {
@@ -83,14 +186,18 @@ static inline std::string Path(const es_string_token_t &tok) {
 static inline void PushBackIfNotTruncated(std::vector<PathTarget> &vec, const es_file_t *esFile,
                                           bool isReadable = false) {
   if (!esFile->path_truncated) {
-    vec.push_back({Path(esFile), isReadable});
+    vec.push_back({Path(esFile), isReadable,
+                   isReadable ? std::make_optional<std::pair<dev_t, ino_t>>(
+                                  {esFile->stat.st_dev, esFile->stat.st_ino})
+                              : std::nullopt});
   }
 }
 
+// Note: This variant of PushBackIfNotTruncated can never be marked "isReadable"
 static inline void PushBackIfNotTruncated(std::vector<PathTarget> &vec, const es_file_t *dir,
-                                          const es_string_token_t &name, bool isReadable = false) {
+                                          const es_string_token_t &name) {
   if (!dir->path_truncated) {
-    vec.push_back({Path(dir) + "/" + Path(name), isReadable});
+    vec.push_back({Path(dir) + "/" + Path(name), false, std::nullopt});
   }
 }
 
@@ -213,6 +320,7 @@ void PopulatePathTargets(const Message &msg, std::vector<PathTarget> &targets) {
   std::shared_ptr<RateLimiter> _rateLimiter;
   SantaCache<SantaVnode, NSString *> _certHashCache;
   std::shared_ptr<TTYWriter> _ttyWriter;
+  ProcessFiles _readsCache;
 }
 
 - (instancetype)
@@ -427,6 +535,11 @@ void PopulatePathTargets(const Message &msg, std::vector<PathTarget> &targets) {
 
   std::shared_ptr<WatchItemPolicy> policy = optionalPolicy.value();
 
+  // If policy allows reading, add target to the cache
+  if (policy->allow_read_access && target.isReadable) {
+    self->_readsCache.Set(msg->process, target);
+  }
+
   // Check if this action contains any special case that would produce
   // an immediate result.
   FileAccessPolicyDecision specialCase = [self specialCaseForPolicy:policy
@@ -566,6 +679,18 @@ void PopulatePathTargets(const Message &msg, std::vector<PathTarget> &targets) {
 
 - (void)handleMessage:(santa::santad::event_providers::endpoint_security::Message &&)esMsg
    recordEventMetrics:(void (^)(EventDisposition))recordEventMetrics {
+  if (esMsg->event_type == ES_EVENT_TYPE_AUTH_OPEN &&
+      !(esMsg->event.open.fflag & kOpenFlagsIndicatingWrite)) {
+    if (self->_readsCache.Exists(esMsg->process, esMsg->event.open.file)) {
+      [self respondToMessage:esMsg withAuthResult:ES_AUTH_RESULT_ALLOW cacheable:false];
+      return;
+    }
+  } else if (esMsg->event_type == ES_EVENT_TYPE_NOTIFY_EXIT) {
+    // On process exit, remove the cache entry
+    self->_readsCache.Remove(esMsg->process);
+    return;
+  }
+
   [self processMessage:std::move(esMsg)
                handler:^(const Message &msg) {
                  [self processMessage:msg];
@@ -577,7 +702,7 @@ void PopulatePathTargets(const Message &msg, std::vector<PathTarget> &targets) {
   std::set<es_event_type_t> events = {
     ES_EVENT_TYPE_AUTH_CLONE,    ES_EVENT_TYPE_AUTH_CREATE, ES_EVENT_TYPE_AUTH_EXCHANGEDATA,
     ES_EVENT_TYPE_AUTH_LINK,     ES_EVENT_TYPE_AUTH_OPEN,   ES_EVENT_TYPE_AUTH_RENAME,
-    ES_EVENT_TYPE_AUTH_TRUNCATE, ES_EVENT_TYPE_AUTH_UNLINK,
+    ES_EVENT_TYPE_AUTH_TRUNCATE, ES_EVENT_TYPE_AUTH_UNLINK, ES_EVENT_TYPE_NOTIFY_EXIT,
   };
 
 #if HAVE_MACOS_12
@@ -621,6 +746,8 @@ void PopulatePathTargets(const Message &msg, std::vector<PathTarget> &targets) {
     // begin receiving events (if not already)
     [self enable];
   }
+
+  self->_readsCache.Clear();
 }
 
 @end
