@@ -176,6 +176,7 @@ es_file_t targetFileMissesRegex = MakeESFile("/foo/misses");
 }
 
 - (void)testHandleMessageWithCloseMappedWriteable {
+  #if HAVE_MACOS_13
   if (@available(macOS 13.0, *)) {
     // CLOSE not modified, but was_mapped_writable, should remove from cache,
     // and matches fileChangesRegex
@@ -203,9 +204,11 @@ es_file_t targetFileMissesRegex = MakeESFile("/foo/misses");
 
     [self testHandleMessageWithMatchCalls:1 withMissCalls:0 withBlock:testBlock];
   }
+  #endif
 }
 
 - (void)testHandleEventCloseNotModifiedWithWasMappedWritable {
+  #if HAVE_MACOS_13
   if (@available(macOS 13.0, *)) {
     // CLOSE not modified, but was_mapped_writable, remove from cache, and does not match
     // fileChangesRegex
@@ -228,6 +231,7 @@ es_file_t targetFileMissesRegex = MakeESFile("/foo/misses");
 
     [self testHandleMessageWithMatchCalls:0 withMissCalls:1 withBlock:testBlock];
   }
+  #endif
 }
 
 - (void)testHandleMessage {

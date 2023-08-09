@@ -90,6 +90,7 @@ es_file_t *GetTargetFileForPrefixTree(const es_message_t *msg) {
     case ES_EVENT_TYPE_NOTIFY_CLOSE: {
       BOOL shouldLogClose = esMsg->event.close.modified;
 
+#if HAVE_MACOS_13
       if (@available(macOS 13.5, *)) {
         // As of macSO 13.0 we have a new field for if a file was mmaped with
         // write permissions on close events. However it did not work until
@@ -101,6 +102,7 @@ es_file_t *GetTargetFileForPrefixTree(const es_message_t *msg) {
         // account.
         shouldLogClose |= esMsg->event.close.was_mapped_writable;
       }
+#endif
 
       if (!shouldLogClose) {
         // Ignore unmodified files
