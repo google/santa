@@ -112,8 +112,8 @@ typedef void (^testHelperBlock)(es_message_t *message,
 es_file_t targetFileMatchesRegex = MakeESFile("/foo/matches");
 es_file_t targetFileMissesRegex = MakeESFile("/foo/misses");
 
-- (void)testHandleMessageWithMatchCalls:(NSUInteger)regexMatchCalls
-                          withMissCalls:(NSUInteger)regexFailsMatchCalls
+- (void)handleMessageWithMatchCalls:(BOOL)regexMatchCalls
+                          withMissCalls:(BOOL)regexFailsMatchCalls
                               withBlock:(testHelperBlock)testBlock {
   es_file_t file = MakeESFile("foo");
   es_process_t proc = MakeESProcess(&file);
@@ -127,7 +127,7 @@ es_file_t targetFileMissesRegex = MakeESFile("/foo/misses");
 
   auto mockEnricher = std::make_shared<MockEnricher>();
 
-  if (regexMatchCalls > 0) {
+  if (regexMatchCalls) {
     EXPECT_CALL(*mockEnricher, Enrich).WillOnce(testing::Return(std::move(enrichedMsg)));
   }
 
@@ -144,7 +144,7 @@ es_file_t targetFileMissesRegex = MakeESFile("/foo/misses");
   // test will mock the `Log` method that is called in the handler block.
   __block dispatch_semaphore_t sema = dispatch_semaphore_create(0);
   auto mockLogger = std::make_shared<MockLogger>(nullptr, nullptr);
-  if (regexMatchCalls > 0) {
+  if (regexMatchCalls) {
     EXPECT_CALL(*mockLogger, Log).WillOnce(testing::InvokeWithoutArgs(^() {
       dispatch_semaphore_signal(sema);
     }));
@@ -202,7 +202,7 @@ es_file_t targetFileMissesRegex = MakeESFile("/foo/misses");
         XCTAssertSemaTrue(*sema, 5, "Log wasn't called within expected time window");
       };
 
-    [self testHandleMessageWithMatchCalls:1 withMissCalls:0 withBlock:testBlock];
+    [self handleMessageWithMatchCalls:YES withMissCalls:NO withBlock:testBlock];
   }
 #endif
 }
@@ -229,7 +229,7 @@ es_file_t targetFileMissesRegex = MakeESFile("/foo/misses");
                                     }]);
       };
 
-    [self testHandleMessageWithMatchCalls:0 withMissCalls:1 withBlock:testBlock];
+    [self handleMessageWithMatchCalls:NO withMissCalls:YES withBlock:testBlock];
   }
 #endif
 }
@@ -250,7 +250,7 @@ es_file_t targetFileMissesRegex = MakeESFile("/foo/misses");
                                 }]);
   };
 
-  [self testHandleMessageWithMatchCalls:0 withMissCalls:0 withBlock:testBlock];
+  [self handleMessageWithMatchCalls:NO withMissCalls:NO withBlock:testBlock];
 
   // CLOSE modified, remove from cache, and matches fileChangesRegex
   testBlock = ^(
@@ -274,7 +274,7 @@ es_file_t targetFileMissesRegex = MakeESFile("/foo/misses");
     XCTAssertSemaTrue(*sema, 5, "Log wasn't called within expected time window");
   };
 
-  [self testHandleMessageWithMatchCalls:1 withMissCalls:0 withBlock:testBlock];
+  [self handleMessageWithMatchCalls:YES withMissCalls:NO withBlock:testBlock];
 
   // CLOSE modified, remove from cache, but doesn't match fileChangesRegex
   testBlock = ^(
@@ -291,7 +291,7 @@ es_file_t targetFileMissesRegex = MakeESFile("/foo/misses");
                                 }]);
   };
 
-  [self testHandleMessageWithMatchCalls:0 withMissCalls:1 withBlock:testBlock];
+  [self handleMessageWithMatchCalls:NO withMissCalls:YES withBlock:testBlock];
 
   // LINK, Prefix match, bail early
   testBlock =
@@ -316,7 +316,7 @@ es_file_t targetFileMissesRegex = MakeESFile("/foo/misses");
     XCTAssertSemaTrue(*semaMetrics, 5, "Metrics not recorded within expected window");
   };
 
-  [self testHandleMessageWithMatchCalls:0 withMissCalls:0 withBlock:testBlock];
+  [self handleMessageWithMatchCalls:NO withMissCalls:NO withBlock:testBlock];
 }
 
 - (void)testGetTargetFileForPrefixTree {
