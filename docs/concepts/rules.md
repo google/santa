@@ -7,8 +7,7 @@ parent: Concepts
 ## Rule Types
 
 Rules provide the primary evaluation mechanism for allowing and blocking
-binaries with Santa on macOS. There are four types of rules: binary, signing ID,
-certificate, and Team ID.
+binaries with Santa on macOS.
 
 ### Binary Rules
 
@@ -85,6 +84,16 @@ and tied to developer accounts/organizations. This is distinct from Certificates
 as a single developer account can and frequently will request/rotate between
 multiple different signing certificates and entitlements. This is an even more
 powerful rule with broader reach than individual certificate rules.
+
+### Compiler/Transitive Rules
+
+The transitive allowlist capability of Santa can automatically allowlist any files that are created by a set of specified binaries.  A typical use-case is allowing any binaries compiled with XCode on developer machines to execute, as it would be slow and impractical to use other rule types to permit these.
+
+To begin using transitive allowlisting, `EnableTransitiveRules` should be set to true and Compiler rules (rules with the policy `ALLOWLIST_COMPILER`) should be added to indicate the binaries which will be writing the new files to be allowlisted.  Santa will create and manage Transitive rules in its database automatically, they cannot be created directly.
+
+
+
+
 
 ## Rule Evaluation
 
