@@ -113,8 +113,8 @@ es_file_t targetFileMatchesRegex = MakeESFile("/foo/matches");
 es_file_t targetFileMissesRegex = MakeESFile("/foo/misses");
 
 - (void)handleMessageWithMatchCalls:(BOOL)regexMatchCalls
-                          withMissCalls:(BOOL)regexFailsMatchCalls
-                              withBlock:(testHelperBlock)testBlock {
+                      withMissCalls:(BOOL)regexFailsMatchCalls
+                          withBlock:(testHelperBlock)testBlock {
   es_file_t file = MakeESFile("foo");
   es_process_t proc = MakeESProcess(&file);
   es_message_t esMsg = MakeESMessage(ES_EVENT_TYPE_NOTIFY_CLOSE, &proc, ActionType::Auth);
