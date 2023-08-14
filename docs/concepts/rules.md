@@ -87,7 +87,7 @@ powerful rule with broader reach than individual certificate rules.
 
 ### Compiler/Transitive Rules
 
-The transitive whitelist capability of Santa can automatically whitelist any files that are created by a set of specified binaries.  A typical use-case is allowing any binaries compiled with XCode on developer machines to execute, as it would be slow and impractical to use other rule types to permit these.
+The transitive allowlist capability of Santa can automatically allowlist any files that are created by a set of specified binaries.  A typical use-case is allowing any binaries compiled with XCode on developer machines to execute, as it would be slow and impractical to use other rule types to permit these.
 
 To begin using transitive allowlisting, `EnableTransitiveRules` should be set to true and Compiler rules (rules with the policy `ALLOWLIST_COMPILER`) should be added to indicate the binaries which will be writing the new files to be allowlisted.  Santa will create and manage Transitive rules in its database automatically, they cannot be created directly.
 
