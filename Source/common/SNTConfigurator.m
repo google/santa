@@ -1073,7 +1073,11 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
   NSDictionary *overrides = [NSDictionary dictionaryWithContentsOfFile:kConfigOverrideFilePath];
   for (NSString *key in overrides) {
     id obj = overrides[key];
-    if (![obj isKindOfClass:self.forcedConfigKeyTypes[key]]) continue;
+    if (![obj isKindOfClass:self.forcedConfigKeyTypes[key]] ||
+        ([self.forcedConfigKeyTypes[key] isKindOfClass:[NSRegularExpression class]] &&
+         ![obj isKindOfClass:[NSString class]])) {
+      continue;
+    }
     forcedConfig[key] = obj;
     if (self.forcedConfigKeyTypes[key] == [NSRegularExpression class]) {
       NSString *pattern = [obj isKindOfClass:[NSString class]] ? obj : nil;
