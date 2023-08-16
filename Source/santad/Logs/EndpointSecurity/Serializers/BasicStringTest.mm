@@ -351,7 +351,7 @@ std::string BasicStringSerializeMessage(es_message_t *esMsg) {
     @"DADeviceVendor" : @"vendor",
     @"DADeviceModel" : @"model",
     @"DAAppearanceTime" : @(1252487349),  // 2009-09-09 09:09:09
-    @"DAVolumePath" : [NSURL URLWithString:@"path"],
+    @"DAVolumePath" : [NSURL URLWithString:@"/"],
     @"DAMediaBSDName" : @"bsd",
     @"DAVolumeKind" : @"apfs",
     @"DADeviceProtocol" : @"usb",
@@ -365,11 +365,11 @@ std::string BasicStringSerializeMessage(es_message_t *esMsg) {
   std::vector<uint8_t> ret = BasicString::Create(nullptr, nil, false)->SerializeDiskAppeared(props);
   std::string got(ret.begin(), ret.end());
 
-  std::string want = "action=DISKAPPEAR|mount=path|volume=|bsdname=bsd|fs=apfs"
+  std::string want = "action=DISKAPPEAR|mount=/|volume=|bsdname=bsd|fs=apfs"
                      "|model=vendor model|serial=|bus=usb|dmgpath="
-                     "|appearance=2040-09-09T09:09:09.000Z\n";
+                     "|appearance=2040-09-09T09:09:09.000Z|mountfrom=/";
 
-  XCTAssertCppStringEqual(got, want);
+  XCTAssertCppStringBeginsWith(got, want);
 }
 
 - (void)testSerializeDiskDisappeared {

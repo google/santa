@@ -59,6 +59,7 @@ using santa::santad::event_providers::endpoint_security::EnrichedUnlink;
 using santa::santad::event_providers::endpoint_security::Message;
 using santa::santad::logs::endpoint_security::serializers::Utilities::EffectiveGroup;
 using santa::santad::logs::endpoint_security::serializers::Utilities::EffectiveUser;
+using santa::santad::logs::endpoint_security::serializers::Utilities::MountFromName;
 using santa::santad::logs::endpoint_security::serializers::Utilities::NonNull;
 using santa::santad::logs::endpoint_security::serializers::Utilities::Pid;
 using santa::santad::logs::endpoint_security::serializers::Utilities::Pidversion;
@@ -682,6 +683,8 @@ static void EncodeDisk(::pbv1::Disk *pb_disk, ::pbv1::Disk_Action action, NSDict
   EncodeString([pb_disk] { return pb_disk->mutable_serial(); }, serial);
   EncodeString([pb_disk] { return pb_disk->mutable_bus(); }, props[@"DADeviceProtocol"]);
   EncodeString([pb_disk] { return pb_disk->mutable_dmg_path(); }, dmg_path);
+  EncodeString([pb_disk] { return pb_disk->mutable_mount_from(); },
+               MountFromName([props[@"DAVolumePath"] path]));
 
   if (props[@"DAAppearanceTime"]) {
     // Note: `DAAppearanceTime` is set via `CFAbsoluteTimeGetCurrent`, which uses the defined

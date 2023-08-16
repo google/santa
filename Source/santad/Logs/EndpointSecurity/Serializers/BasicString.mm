@@ -46,6 +46,7 @@ using santa::santad::event_providers::endpoint_security::EnrichedProcess;
 using santa::santad::event_providers::endpoint_security::EnrichedRename;
 using santa::santad::event_providers::endpoint_security::EnrichedUnlink;
 using santa::santad::event_providers::endpoint_security::Message;
+using santa::santad::logs::endpoint_security::serializers::Utilities::MountFromName;
 using santa::santad::logs::endpoint_security::serializers::Utilities::NonNull;
 using santa::santad::logs::endpoint_security::serializers::Utilities::Pid;
 using santa::santad::logs::endpoint_security::serializers::Utilities::Pidversion;
@@ -509,6 +510,8 @@ std::vector<uint8_t> BasicString::SerializeDiskAppeared(NSDictionary *props) {
   str.append([NonNull(dmg_path) UTF8String]);
   str.append("|appearance=");
   str.append([NonNull(appearanceDateString) UTF8String]);
+  str.append("|mountfrom=");
+  str.append([NonNull(MountFromName([props[@"DAVolumePath"] path])) UTF8String]);
 
   return FinalizeString(str);
 }
