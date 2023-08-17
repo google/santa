@@ -22,6 +22,8 @@
 #include <gtest/gtest.h>
 #include <sys/stat.h>
 
+#include <string>
+
 #define NOBODY_UID ((unsigned int)-2)
 #define NOGROUP_GID ((unsigned int)-1)
 
@@ -37,6 +39,10 @@
 
 // Pretty print C++ string match errors
 #define XCTAssertCppStringEqual(got, want) XCTAssertCStringEqual((got).c_str(), (want).c_str())
+
+#define XCTAssertCppStringBeginsWith(got, want)                                               \
+  XCTAssertTrue((got).rfind((want), 0) == 0, "\nPrefix not found.\n\t got: %s\n\twant: %s\n", \
+                (got).c_str(), (want).c_str())
 
 // Note: Delta between local formatter and the one run on Github. Disable for now.
 // clang-format off

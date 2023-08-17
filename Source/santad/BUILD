@@ -470,6 +470,7 @@ objc_library(
         "//Source/common:SantaCache",
         "//Source/common:SantaVnode",
         "//Source/common:SantaVnodeHash",
+        "//Source/common:String",
     ],
 )
 
