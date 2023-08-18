@@ -24,6 +24,7 @@
 
 using santa::santad::event_providers::endpoint_security::Message;
 using santa::santad::logs::endpoint_security::serializers::Utilities::GetAllowListTargetFile;
+using santa::santad::logs::endpoint_security::serializers::Utilities::MountFromName;
 
 @interface UtilitiesTest : XCTestCase
 @end
@@ -60,6 +61,14 @@ using santa::santad::logs::endpoint_security::serializers::Utilities::GetAllowLi
     Message msg(mockESApi, &esMsg);
     XCTAssertThrows(GetAllowListTargetFile(msg));
   }
+}
+
+- (void)testMountFromName {
+  XCTAssertNil(MountFromName(@""));
+  XCTAssertNil(MountFromName(nil));
+  XCTAssertNil(MountFromName(@"./this/path/should/not/ever/exist/"));
+
+  XCTAssertCppStringBeginsWith(std::string(MountFromName(@"/").UTF8String), std::string("/"));
 }
 
 @end

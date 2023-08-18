@@ -54,6 +54,8 @@ static inline NSString *NonNull(NSString *str) {
 NSString *OriginalPathForTranslocation(const es_process_t *es_proc);
 NSString *SerialForDevice(NSString *devPath);
 NSString *DiskImageForDevice(NSString *devPath);
+NSString *MountFromName(NSString *path);
+
 es_file_t *GetAllowListTargetFile(
   const santa::santad::event_providers::endpoint_security::Message &msg);
 

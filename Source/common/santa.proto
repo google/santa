@@ -429,6 +429,9 @@ message Disk {
 
   // Time device appeared/disappeared
   optional google.protobuf.Timestamp appearance = 10;
+
+  // Path mounted from
+  optional string mount_from = 11;
 }
 
 // Information emitted when Santa captures bundle information

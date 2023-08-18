@@ -767,7 +767,7 @@ void SerializeAndCheckNonESEvents(
     @"DADeviceVendor" : @"vendor",
     @"DADeviceModel" : @"model",
     @"DAAppearanceTime" : @(123456789),
-    @"DAVolumePath" : [NSURL URLWithString:@"path"],
+    @"DAVolumePath" : [NSURL URLWithString:@"/"],
     @"DAMediaBSDName" : @"bsd",
     @"DAVolumeKind" : @"apfs",
     @"DADeviceProtocol" : @"usb",
@@ -792,6 +792,7 @@ void SerializeAndCheckNonESEvents(
   XCTAssertEqualObjects(@(pbDisk.serial().c_str()), @"");
   XCTAssertEqualObjects(@(pbDisk.bus().c_str()), props[@"DADeviceProtocol"]);
   XCTAssertEqualObjects(@(pbDisk.dmg_path().c_str()), @"");
+  XCTAssertCppStringBeginsWith(pbDisk.mount_from(), std::string("/"));
 
   // Note: `DAAppearanceTime` is treated as a reference time since 2001 and is converted to a
   // reference time of 1970. Skip the calculation in the test here, just ensure the value is set.

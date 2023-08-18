@@ -14,9 +14,13 @@
 
 #include "Source/santad/Logs/EndpointSecurity/Serializers/Utilities.h"
 
+#include <sys/mount.h>
+#include <sys/param.h>
+
 #include "Source/common/SantaCache.h"
 #import "Source/common/SantaVnode.h"
 #include "Source/common/SantaVnodeHash.h"
+#include "Source/common/String.h"
 
 // These functions are exported by the Security framework, but are not included in headers
 extern "C" Boolean SecTranslocateIsTranslocatedURL(CFURLRef path, bool *isTranslocated,
@@ -112,6 +116,22 @@ NSString *SerialForDevice(NSString *devPath) {
   }
 
   return [serial stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
+}
+
+NSString *MountFromName(NSString *path) {
+  if (!path.length) {
+    return nil;
+  }
+
+  struct statfs sfs;
+
+  if (statfs(path.UTF8String, &sfs) != 0) {
+    return nil;
+  }
+
+  NSString *mntFromName = santa::common::StringToNSString(sfs.f_mntfromname);
+
+  return mntFromName.length > 0 ? mntFromName : nil;
 }
 
 NSString *DiskImageForDevice(NSString *devPath) {
