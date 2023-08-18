@@ -92,12 +92,16 @@
 
     uint32_t count = 0;
     for (NSDictionary *ruleDict in response[kRules]) {
+      self.syncState.rulesReceived++;
       SNTRule *rule = [[SNTRule alloc] initWithDictionary:ruleDict];
-      if (rule) {
-        [self processBundleNotificationsForRule:rule fromDictionary:ruleDict];
-        [newRules addObject:rule];
-        count++;
+      if (!rule) {
+        SLOGD(@"Ignoring bad rule: %@", ruleDict);
+        continue;
       }
+      [self processBundleNotificationsForRule:rule fromDictionary:ruleDict];
+      [newRules addObject:rule];
+      count++;
+      self.syncState.rulesProcessed++;
     }
     SLOGI(@"Received %u rules", count);
     cursor = response[kCursor];

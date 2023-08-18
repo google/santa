@@ -28,7 +28,10 @@
 }
 
 - (BOOL)sync {
-  [self performRequest:[self requestWithDictionary:nil]];
+  [self performRequest:[self requestWithDictionary:@{
+          kPostflightRulesReceived : @(self.syncState.rulesReceived),
+          kPostflightRulesProcessed : @(self.syncState.rulesProcessed),
+        }]];
 
   id<SNTDaemonControlXPC> rop = [self.daemonConn synchronousRemoteObjectProxy];
 

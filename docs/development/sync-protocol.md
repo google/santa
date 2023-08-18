@@ -49,7 +49,7 @@ sequenceDiagram
    client ->> server: POST /ruledownload/<machine_id>
    server --> client: ruledownload response (200)
    end
-   client ->> server: POST /postflight/<machine_id> request
+   client ->> server: POST /postflight/<machine_id>
    server -->> client: postflight response (200)
 ```
 
@@ -118,7 +118,7 @@ The request consists of the following JSON keys:
   "transitive_rule_count" : 0,
   "os_version" : "12.4",
   "model_identifier" : "MacBookPro15,1",
-  "request_clean_sync": true,
+  "request_clean_sync": true
 }
 ```
 
@@ -412,6 +412,22 @@ sequenceDiagram
 #### `postflight` Request
 
 The request is empty and should not be parsed by the sync server.
+The request consists of the following JSON keys:
+
+| Key | Required | Type | Meaning | Example Value |
+|---|---|---|---|---|
+| rules_received    | YES | int | The number of rules the client received from all ruledownlaod requests. | 211 |
+| rules_processed      | YES | int | The number of rules that were processed from all ruledownload requests. | 212 |
+
+### Example postflight request JSON Payload:
+
+```json
+{
+  "rules_received" : 211,
+  "rules_processed" : 212
+}
+```
+
 
 #### `postflight` Response
 

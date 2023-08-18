@@ -81,4 +81,8 @@
 /// The content-encoding to use for the client uploads during the sync session.
 @property SNTSyncContentEncoding contentEncoding;
 
+/// Counts of rules received and processed during rule download.
+@property int rulesReceived;
+@property int rulesProcessed;
+
 @end
