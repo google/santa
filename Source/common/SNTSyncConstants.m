@@ -135,6 +135,9 @@ NSString *const kRuleSync = @"rule_sync";
 NSString *const kConfigSync = @"config_sync";
 NSString *const kLogSync = @"log_sync";
 
+NSString *const kPostflightRulesReceived = @"rules_received";
+NSString *const kPostflightRulesProcessed = @"rules_processed";
+
 const NSUInteger kDefaultEventBatchSize = 50;
 const NSUInteger kDefaultFullSyncInterval = 600;
 const NSUInteger kDefaultPushNotificationsFullSyncInterval = 14400;

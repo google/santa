@@ -136,6 +136,9 @@ extern NSString *const kLogSync;
 
 extern const NSUInteger kDefaultEventBatchSize;
 
+extern NSString *const kPostflightRulesReceived;
+extern NSString *const kPostflightRulesProcessed;
+
 ///
 ///  kDefaultFullSyncInterval
 ///  kDefaultFCMFullSyncInterval
