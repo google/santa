@@ -82,7 +82,7 @@
 @property SNTSyncContentEncoding contentEncoding;
 
 /// Counts of rules received and processed during rule download.
-@property int rulesReceived;
-@property int rulesProcessed;
+@property NSUInteger rulesReceived;
+@property NSUInteger rulesProcessed;
 
 @end

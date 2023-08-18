@@ -411,7 +411,6 @@ sequenceDiagram
 
 #### `postflight` Request
 
-The request is empty and should not be parsed by the sync server.
 The request consists of the following JSON keys:
 
 | Key | Required | Type | Meaning | Example Value |

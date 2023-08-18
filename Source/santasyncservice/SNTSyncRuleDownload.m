@@ -79,6 +79,7 @@
 // Note that rules from the server are filtered.  We only keep those whose rule_type
 // is either BINARY or CERTIFICATE.  PACKAGE rules are dropped.
 - (NSArray<SNTRule *> *)downloadNewRulesFromServer {
+  self.syncState.rulesReceived = 0;
   NSMutableArray<SNTRule *> *newRules = [NSMutableArray array];
   NSString *cursor = nil;
   do {
@@ -90,9 +91,9 @@
       return nil;
     }
 
-    uint32_t count = 0;
-    for (NSDictionary *ruleDict in response[kRules]) {
-      self.syncState.rulesReceived++;
+    NSArray<NSDictionary *> *rules = response[kRules];
+
+    for (NSDictionary *ruleDict in rules) {
       SNTRule *rule = [[SNTRule alloc] initWithDictionary:ruleDict];
       if (!rule) {
         SLOGD(@"Ignoring bad rule: %@", ruleDict);
@@ -100,12 +101,14 @@
       }
       [self processBundleNotificationsForRule:rule fromDictionary:ruleDict];
       [newRules addObject:rule];
-      count++;
-      self.syncState.rulesProcessed++;
     }
-    SLOGI(@"Received %u rules", count);
+    SLOGI(@"Received %lu rules", (unsigned long)rules.count);
     cursor = response[kCursor];
+    self.syncState.rulesReceived += rules.count;
   } while (cursor);
+
+  self.syncState.rulesProcessed = newRules.count;
+
   return newRules;
 }
 
