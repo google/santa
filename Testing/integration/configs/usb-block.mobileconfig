@@ -27,8 +27,6 @@
 								<true/>
 								<key>EnablePageZeroProtection</key>
 								<false/>
-								<key>EnableSystemExtension</key>
-								<true/>
 								<key>EventDetailText</key>
 								<string>Open in moroz...</string>
 								<key>EventDetailURL</key>
