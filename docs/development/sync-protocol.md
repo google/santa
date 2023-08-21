@@ -198,6 +198,7 @@ sequenceDiagram
 | file_bundle_version_string | NO | string | Bundle short version string | "2.3.4" |
 | file_bundle_hash | NO | string | SHA256 hash of all executables in the bundle | "7466e3687f540bcb7792c6d14d5a186667dbe18a85021857b42effe9f0370805" |
 | file_bundle_hash_millis | NO | float64 | The time in milliseconds it took to find all of the binaries, hash and produce the bundle_hash | 1234775 |
+| file_bundle_binary_count | NO | integer | The number of binaries in a bundle | 13 |
 | pid | YES | int | Process id of the executable that was blocked | 1234 |
 | ppid | YES | int | Parent process id of the executable that was blocked | 456 |
 | parent_name | YES | Parent process short command name of the executable that was blocked | "bar" |
@@ -364,8 +365,6 @@ downloading if the rules need to be downloaded in multiple batches.
 | custom\_msg | NO | string | A custom message to display when the rule matches | "Hello" |
 | custom\_url | NO | string | A custom URL to use for the open button when the rule matches | http://lmgtfy.app/?q=dont+download+malware |
 | creation\_time | NO | float64 | Time the rule was created | 1573543803.349378 |
-| file\_bundle\_binary\_count | NO | integer | The number of binaries in a bundle | 13 |
-| file\_bundle\_hash | NO | string | The SHA256 of all binaries in a bundle | "7466e3687f540bcb7792c6d14d5a186667dbe18a85021857b42effe9f0370805" |
 
 
 ##### Example `ruledownload` Response Payload
@@ -383,18 +382,14 @@ downloading if the rules need to be downloaded in multiple batches.
     "rule_type": "BINARY",
     "policy": "ALLOWLIST",
     "custom_msg": "",
-    "creation_time": 1573572118.380034,
-    "file_bundle_binary_count": 13,
-    "file_bundle_hash": "7466e3687f540bcb7792c6d14d5a186667dbe18a85021857b42effe9f0370805"
+    "creation_time": 1573572118.380034
   },
   {
     "identifier": "EQHXZ8M8AV",
     "rule_type": "TEAMID",
     "policy": "ALLOWLIST",
     "custom_msg": "Allow Software Google's Team ID",
-    "creation_time": 1576623399.151607,
-    "file_bundle_binary_count": 7,
-    "file_bundle_hash": "e4736dd3a731f5f71850984175c0ec54dcde06021af18f476eb480c707fbecda"
+    "creation_time": 1576623399.151607
   }],
   "cursor": "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXzfmdvb2dsZS5jb206YXBwbm90aHJyYAsSCUJsb2NrYWJsZSJANGYyYTA2MjY1ZjRiODQ2M2Y2YjI0MmNiZTMwMTNkMGZhNjlkNDUxNmI4OTU3Y2I3ZDAxZDcyMTJkM2NhZmZiNAwLEgRSdWxlGICA8Kehk9MKDBgAIAA="
 }
