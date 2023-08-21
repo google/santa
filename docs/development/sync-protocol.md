@@ -234,11 +234,11 @@ sequenceDiagram
     ],
     "quarantine_timestamp": 0,
     "signing_chain": [{
-        "cn": "Apple Development: Google Development (XXXXXXXXXX)",
+        "cn": "Apple Development: Google Development (EQHXZ8M8AV)",
         "valid_until": 1678983513,
         "org": "Google LLC",
         "valid_from": 1647447514,
-        "ou": "XXXXXXXXXX",
+        "ou": "EQHXZ8M8AV",
         "sha256": "7ae80b9ab38af0c63a9a81765f434d9a7cd8f720eb6037ef303de39d779bc258"
       },
       {
@@ -275,8 +275,8 @@ sequenceDiagram
       "markowsky@ttys001",
       "markowsky@ttys003"
     ],
-    "team_id": "XXXXXXXXXX",
-    "signing_id": "XXXXXXXXXX:YYY"
+    "team_id": "EQHXZ8M8AV",
+    "signing_id": "EQHXZ8M8AV:com.google.santa"
   }]
 }
 ```
