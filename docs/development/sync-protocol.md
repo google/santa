@@ -206,6 +206,8 @@ sequenceDiagram
 | quarantine_timestamp | NO | float64 | Unix Timestamp of when the binary was downloaded or 0 if not quarantined | 0 |
 | quarantine_agent_bundle_id | NO | string | The bundle ID of the software that quarantined the binary | "com.apple.Safari" |
 | signing_chain | NO | list of signing chain objects | Certs used to code sign the executable | See next section |
+| signing_id | NO | string | Signing ID of the binary that was executed | "EQHXZ8M8AV:com.google.Chrome" |
+| team_id | NO | string | Team ID of the binary that was executed | "EQHXZ8M8AV" |
 
 ##### Signing Chain Objects
 
@@ -273,7 +275,8 @@ sequenceDiagram
       "markowsky@ttys001",
       "markowsky@ttys003"
     ],
-    "team_id": "XXXXXXXXXX"
+    "team_id": "XXXXXXXXXX",
+    "signing_id": "XXXXXXXXXX:YYY"
   }]
 }
 ```
