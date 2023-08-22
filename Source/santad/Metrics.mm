@@ -53,6 +53,16 @@ static NSString *const kEventTypeNotifyUnmount = @"NotifyUnmount";
 static NSString *const kEventDispositionDropped = @"Dropped";
 static NSString *const kEventDispositionProcessed = @"Processed";
 
+// Compat values
+static NSString *const kFileAccessMetricStatusOK = @"OK";
+static NSString *const kFileAccessMetricStatusBlockedUser = @"BLOCKED_USER";
+
+static NSString *const kFileAccessPolicyDecisionDenied = @"Denied";
+static NSString *const kFileAccessPolicyDecisionDeniedInvalidSignature = @"Denied";
+static NSString *const kFileAccessPolicyDecisionAllowedAuditOnly = @"AllowedAuditOnly";
+
+static NSString *const kFileAccessMetricsAccessType = @"access";
+
 namespace santa::santad {
 
 NSString *const ProcessorToString(Processor processor) {
@@ -110,6 +120,32 @@ NSString *const EventDispositionToString(EventDisposition d) {
   }
 }
 
+NSString *const FileAccessMetricStatusToString(FileAccessMetricStatus status) {
+  switch (status) {
+    case FileAccessMetricStatus::kOK: return kFileAccessMetricStatusOK;
+    case FileAccessMetricStatus::kBlockedUser: return kFileAccessMetricStatusBlockedUser;
+    default:
+      [NSException raise:@"Invalid file access metric status"
+                  format:@"Unknown file access metric status value: %d", static_cast<int>(status)];
+      return nil;
+  }
+}
+
+NSString *const FileAccessPolicyDecisionToString(FileAccessPolicyDecision decision) {
+  switch (decision) {
+    case FileAccessPolicyDecision::kDenied: return kFileAccessPolicyDecisionDenied;
+    case FileAccessPolicyDecision::kDeniedInvalidSignature:
+      return kFileAccessPolicyDecisionDeniedInvalidSignature;
+    case FileAccessPolicyDecision::kAllowedAuditOnly:
+      return kFileAccessPolicyDecisionAllowedAuditOnly;
+    default:
+      [NSException
+         raise:@"Invalid file access policy decision"
+        format:@"Unknown file access policy decision value: %d", static_cast<int>(decision)];
+      return nil;
+  }
+}
+
 std::shared_ptr<Metrics> Metrics::Create(SNTMetricSet *metric_set, uint64_t interval) {
   dispatch_queue_t q = dispatch_queue_create("com.google.santa.santametricsservice.q",
                                              DISPATCH_QUEUE_SERIAL_WITH_AUTORELEASE_POOL);
@@ -131,9 +167,16 @@ std::shared_ptr<Metrics> Metrics::Create(SNTMetricSet *metric_set, uint64_t inte
                      fieldNames:@[ @"Processor" ]
                        helpText:@"Events rate limited by each processor"];
 
+  SNTMetricCounter *faa_event_counts = [[SNTMetricSet sharedInstance]
+    counterWithName:@"/santa/file_access_authorizer/log/count"
+         fieldNames:@[
+           @"config_version", @"access_type", @"rule_id", @"status", @"operation", @"decision"
+         ]
+           helpText:@"Count of times a log is emitted from the File Access Authorizer client"];
+
   std::shared_ptr<Metrics> metrics =
     std::make_shared<Metrics>(q, timer_source, interval, event_processing_times, event_counts,
-                              rate_limit_counts, metric_set, ^(Metrics *metrics) {
+                              rate_limit_counts, faa_event_counts, metric_set, ^(Metrics *metrics) {
                                 SNTRegisterCoreMetrics();
                                 metrics->EstablishConnection();
                               });
@@ -153,14 +196,15 @@ std::shared_ptr<Metrics> Metrics::Create(SNTMetricSet *metric_set, uint64_t inte
 
 Metrics::Metrics(dispatch_queue_t q, dispatch_source_t timer_source, uint64_t interval,
                  SNTMetricInt64Gauge *event_processing_times, SNTMetricCounter *event_counts,
-                 SNTMetricCounter *rate_limit_counts, SNTMetricSet *metric_set,
-                 void (^run_on_first_start)(Metrics *))
+                 SNTMetricCounter *rate_limit_counts, SNTMetricCounter *faa_event_counts,
+                 SNTMetricSet *metric_set, void (^run_on_first_start)(Metrics *))
     : q_(q),
       timer_source_(timer_source),
       interval_(interval),
       event_processing_times_(event_processing_times),
       event_counts_(event_counts),
       rate_limit_counts_(rate_limit_counts),
+      faa_event_counts_(faa_event_counts),
       metric_set_(metric_set),
       run_on_first_start_(run_on_first_start) {
   SetInterval(interval_);
@@ -226,10 +270,25 @@ void Metrics::FlushMetrics() {
       [rate_limit_counts_ incrementBy:kv.second forFieldValues:@[ processorName ]];
     }
 
+    for (const auto &kv : faa_event_counts_cache_) {
+      NSString *policyVersion = @(std::get<0>(kv.first).c_str());  // FileAccessMetricsPolicyVersion
+      NSString *policyName = @(std::get<1>(kv.first).c_str());     // FileAccessMetricsPolicyName
+      NSString *eventName = EventTypeToString(std::get<es_event_type_t>(kv.first));
+      NSString *status = FileAccessMetricStatusToString(std::get<FileAccessMetricStatus>(kv.first));
+      NSString *decision =
+        FileAccessPolicyDecisionToString(std::get<FileAccessPolicyDecision>(kv.first));
+      [faa_event_counts_
+           incrementBy:kv.second
+        forFieldValues:@[
+          policyVersion, kFileAccessMetricsAccessType, policyName, status, eventName, decision
+        ]];
+    }
+
     // Reset the maps so the next cycle begins with a clean state
     event_counts_cache_ = {};
     event_times_cache_ = {};
     rate_limit_counts_cache_ = {};
+    faa_event_counts_cache_ = {};
   });
 }
 
@@ -282,6 +341,15 @@ void Metrics::SetEventMetrics(Processor processor, es_event_type_t event_type,
 void Metrics::SetRateLimitingMetrics(Processor processor, int64_t events_rate_limited_count) {
   dispatch_sync(events_q_, ^{
     rate_limit_counts_cache_[processor] += events_rate_limited_count;
+  });
+}
+
+void Metrics::SetFileAccessEventMetrics(std::string policy_version, std::string rule_name,
+                                        FileAccessMetricStatus status, es_event_type_t event_type,
+                                        FileAccessPolicyDecision decision) {
+  dispatch_sync(events_q_, ^{
+    faa_event_counts_cache_[FileAccessEventCountTuple{
+      std::move(policy_version), std::move(rule_name), status, event_type, decision}]++;
   });
 }
 

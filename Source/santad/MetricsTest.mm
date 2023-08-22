@@ -24,17 +24,19 @@
 #include "Source/common/TestUtils.h"
 #include "Source/santad/Metrics.h"
 
+using santa::santad::EventCountTuple;
 using santa::santad::EventDisposition;
+using santa::santad::EventTimesTuple;
+using santa::santad::FileAccessEventCountTuple;
 using santa::santad::Processor;
-
-using EventCountTuple = std::tuple<Processor, es_event_type_t, EventDisposition>;
-using EventTimesTuple = std::tuple<Processor, es_event_type_t>;
 
 namespace santa::santad {
 
 extern NSString *const ProcessorToString(Processor processor);
 extern NSString *const EventTypeToString(es_event_type_t eventType);
 extern NSString *const EventDispositionToString(EventDisposition d);
+extern NSString *const FileAccessMetricStatusToString(FileAccessMetricStatus status);
+extern NSString *const FileAccessPolicyDecisionToString(FileAccessPolicyDecision decision);
 
 class MetricsPeer : public Metrics {
  public:
@@ -49,12 +51,17 @@ class MetricsPeer : public Metrics {
   std::map<EventCountTuple, int64_t> &EventCounts() { return event_counts_cache_; };
   std::map<EventTimesTuple, int64_t> &EventTimes() { return event_times_cache_; };
   std::map<Processor, int64_t> &RateLimitCounts() { return rate_limit_counts_cache_; };
+
+  using Metrics::faa_event_counts_cache_;
 };
 
 }  // namespace santa::santad
 
 using santa::santad::EventDispositionToString;
 using santa::santad::EventTypeToString;
+using santa::santad::FileAccessMetricStatus;
+using santa::santad::FileAccessMetricStatusToString;
+using santa::santad::FileAccessPolicyDecisionToString;
 using santa::santad::MetricsPeer;
 using santa::santad::ProcessorToString;
 
@@ -73,7 +80,7 @@ using santa::santad::ProcessorToString;
 
 - (void)testStartStop {
   dispatch_source_t timer = dispatch_source_create(DISPATCH_SOURCE_TYPE_TIMER, 0, 0, self.q);
-  auto metrics = std::make_shared<MetricsPeer>(self.q, timer, 100, nil, nil, nil, nil,
+  auto metrics = std::make_shared<MetricsPeer>(self.q, timer, 100, nil, nil, nil, nil, nil,
                                                ^(santa::santad::Metrics *m) {
                                                  dispatch_semaphore_signal(self.sema);
                                                });
@@ -109,7 +116,7 @@ using santa::santad::ProcessorToString;
 
 - (void)testSetInterval {
   dispatch_source_t timer = dispatch_source_create(DISPATCH_SOURCE_TYPE_TIMER, 0, 0, self.q);
-  auto metrics = std::make_shared<MetricsPeer>(self.q, timer, 100, nil, nil, nil, nil,
+  auto metrics = std::make_shared<MetricsPeer>(self.q, timer, 100, nil, nil, nil, nil, nil,
                                                ^(santa::santad::Metrics *m){
                                                });
 
@@ -179,11 +186,46 @@ using santa::santad::ProcessorToString;
   XCTAssertThrows(EventDispositionToString((EventDisposition)12345));
 }
 
+- (void)testFileAccessMetricStatusToString {
+  std::map<FileAccessMetricStatus, NSString *> statusToString = {
+    {FileAccessMetricStatus::kOK, @"OK"},
+    {FileAccessMetricStatus::kBlockedUser, @"BLOCKED_USER"},
+  };
+
+  for (const auto &kv : statusToString) {
+    XCTAssertEqualObjects(FileAccessMetricStatusToString(kv.first), kv.second);
+  }
+
+  XCTAssertThrows(FileAccessMetricStatusToString((FileAccessMetricStatus)12345));
+}
+
+- (void)testFileAccessPolicyDecisionToString {
+  std::map<FileAccessPolicyDecision, NSString *> decisionToString = {
+    {FileAccessPolicyDecision::kDenied, @"Denied"},
+    {FileAccessPolicyDecision::kDeniedInvalidSignature, @"Denied"},
+    {FileAccessPolicyDecision::kDeniedInvalidSignature, @"Denied"},
+  };
+
+  for (const auto &kv : decisionToString) {
+    XCTAssertEqualObjects(FileAccessPolicyDecisionToString(kv.first), kv.second);
+  }
+
+  std::set<FileAccessPolicyDecision> decisionToStringThrows = {
+    FileAccessPolicyDecision::kNoPolicy,
+    FileAccessPolicyDecision::kAllowed,
+    FileAccessPolicyDecision::kAllowedReadAccess,
+    (FileAccessPolicyDecision)12345,
+  };
+  for (const auto &v : decisionToStringThrows) {
+    XCTAssertThrows(FileAccessPolicyDecisionToString(v));
+  }
+}
+
 - (void)testSetEventMetrics {
   int64_t nanos = 1234;
 
   dispatch_source_t timer = dispatch_source_create(DISPATCH_SOURCE_TYPE_TIMER, 0, 0, self.q);
-  auto metrics = std::make_shared<MetricsPeer>(self.q, timer, 100, nil, nil, nil, nil,
+  auto metrics = std::make_shared<MetricsPeer>(self.q, timer, 100, nil, nil, nil, nil, nil,
                                                ^(santa::santad::Metrics *m){
                                                  // This block intentionally left blank
                                                });
@@ -224,7 +266,7 @@ using santa::santad::ProcessorToString;
 
 - (void)testSetRateLimitingMetrics {
   dispatch_source_t timer = dispatch_source_create(DISPATCH_SOURCE_TYPE_TIMER, 0, 0, self.q);
-  auto metrics = std::make_shared<MetricsPeer>(self.q, timer, 100, nil, nil, nil, nil,
+  auto metrics = std::make_shared<MetricsPeer>(self.q, timer, 100, nil, nil, nil, nil, nil,
                                                ^(santa::santad::Metrics *m){
                                                  // This block intentionally left blank
                                                });
@@ -248,6 +290,42 @@ using santa::santad::ProcessorToString;
   XCTAssertEqual(metrics->RateLimitCounts()[Processor::kAuthorizer], 789);
 }
 
+- (void)testSetFileAccessEventMetrics {
+  dispatch_source_t timer = dispatch_source_create(DISPATCH_SOURCE_TYPE_TIMER, 0, 0, self.q);
+  auto metrics = std::make_shared<MetricsPeer>(self.q, timer, 100, nil, nil, nil, nil, nil,
+                                               ^(santa::santad::Metrics *m){
+                                                 // This block intentionally left blank
+                                               });
+
+  // Initial map is empty
+  XCTAssertEqual(metrics->faa_event_counts_cache_.size(), 0);
+
+  metrics->SetFileAccessEventMetrics("v1.0", "rule_abc", FileAccessMetricStatus::kOK,
+                                     ES_EVENT_TYPE_AUTH_OPEN, FileAccessPolicyDecision::kDenied);
+
+  // Check sizes after setting metrics once
+  XCTAssertEqual(metrics->faa_event_counts_cache_.size(), 1);
+
+  // Update the previous metric
+  metrics->SetFileAccessEventMetrics("v1.0", "rule_abc", FileAccessMetricStatus::kOK,
+                                     ES_EVENT_TYPE_AUTH_OPEN, FileAccessPolicyDecision::kDenied);
+
+  // Add a second metric
+  metrics->SetFileAccessEventMetrics("v1.0", "rule_xyz", FileAccessMetricStatus::kOK,
+                                     ES_EVENT_TYPE_AUTH_OPEN, FileAccessPolicyDecision::kDenied);
+
+  // Re-check expected counts. One was an update, so should only be 2 items
+  XCTAssertEqual(metrics->faa_event_counts_cache_.size(), 2);
+
+  FileAccessEventCountTuple ruleAbc{"v1.0", "rule_abc", FileAccessMetricStatus::kOK,
+                                    ES_EVENT_TYPE_AUTH_OPEN, FileAccessPolicyDecision::kDenied};
+  FileAccessEventCountTuple ruleXyz{"v1.0", "rule_xyz", FileAccessMetricStatus::kOK,
+                                    ES_EVENT_TYPE_AUTH_OPEN, FileAccessPolicyDecision::kDenied};
+
+  XCTAssertEqual(metrics->faa_event_counts_cache_[ruleAbc], 2);
+  XCTAssertEqual(metrics->faa_event_counts_cache_[ruleXyz], 1);
+}
+
 - (void)testFlushMetrics {
   id mockEventProcessingTimes = OCMClassMock([SNTMetricInt64Gauge class]);
   id mockEventCounts = OCMClassMock([SNTMetricCounter class]);
@@ -267,7 +345,7 @@ using santa::santad::ProcessorToString;
 
   dispatch_source_t timer = dispatch_source_create(DISPATCH_SOURCE_TYPE_TIMER, 0, 0, self.q);
   auto metrics = std::make_shared<MetricsPeer>(self.q, timer, 100, mockEventProcessingTimes,
-                                               mockEventCounts, mockEventCounts, nil,
+                                               mockEventCounts, mockEventCounts, nil, nil,
                                                ^(santa::santad::Metrics *m){
                                                  // This block intentionally left blank
                                                });

@@ -51,6 +51,8 @@
 
 using santa::common::StringToNSString;
 using santa::santad::EventDisposition;
+using santa::santad::FileAccessMetricStatus;
+using santa::santad::Metrics;
 using santa::santad::TTYWriter;
 using santa::santad::data_layer::WatchItemPathType;
 using santa::santad::data_layer::WatchItemPolicy;
@@ -321,12 +323,13 @@ void PopulatePathTargets(const Message &msg, std::vector<PathTarget> &targets) {
   SantaCache<SantaVnode, NSString *> _certHashCache;
   std::shared_ptr<TTYWriter> _ttyWriter;
   ProcessFiles _readsCache;
+  std::shared_ptr<Metrics> _metrics;
 }
 
 - (instancetype)
   initWithESAPI:
     (std::shared_ptr<santa::santad::event_providers::endpoint_security::EndpointSecurityAPI>)esApi
-        metrics:(std::shared_ptr<santa::santad::Metrics>)metrics
+        metrics:(std::shared_ptr<Metrics>)metrics
          logger:(std::shared_ptr<santa::santad::logs::endpoint_security::Logger>)logger
      watchItems:(std::shared_ptr<WatchItems>)watchItems
        enricher:
@@ -342,8 +345,9 @@ void PopulatePathTargets(const Message &msg, std::vector<PathTarget> &targets) {
     _enricher = std::move(enricher);
     _decisionCache = decisionCache;
     _ttyWriter = std::move(ttyWriter);
+    _metrics = std::move(metrics);
 
-    _rateLimiter = RateLimiter::Create(metrics, santa::santad::Processor::kFileAccessAuthorizer,
+    _rateLimiter = RateLimiter::Create(_metrics, santa::santad::Processor::kFileAccessAuthorizer,
                                        kDefaultRateLimitQPS);
 
     SNTMetricBooleanGauge *famEnabled = [[SNTMetricSet sharedInstance]
@@ -592,7 +596,15 @@ void PopulatePathTargets(const Message &msg, std::vector<PathTarget> &targets) {
   // Note: If ShouldLogDecision, it shouldn't be possible for optionalPolicy
   // to not have a value. Performing the check just in case to prevent a crash.
   if (ShouldLogDecision(policyDecision) && optionalPolicy.has_value()) {
-    if (_rateLimiter->Decide(msg->mach_time) == RateLimiter::Decision::kAllowed) {
+    RateLimiter::Decision decision = _rateLimiter->Decide(msg->mach_time);
+
+    self->_metrics->SetFileAccessEventMetrics(policyVersion, optionalPolicy.value()->name,
+                                              (decision == RateLimiter::Decision::kAllowed)
+                                                ? FileAccessMetricStatus::kOK
+                                                : FileAccessMetricStatus::kBlockedUser,
+                                              msg->event_type, policyDecision);
+
+    if (decision == RateLimiter::Decision::kAllowed) {
       std::string policyNameCopy = optionalPolicy.value()->name;
       std::string policyVersionCopy = policyVersion;
       std::string targetPathCopy = target.path;
