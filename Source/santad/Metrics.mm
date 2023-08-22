@@ -277,6 +277,7 @@ void Metrics::FlushMetrics() {
       NSString *status = FileAccessMetricStatusToString(std::get<FileAccessMetricStatus>(kv.first));
       NSString *decision =
         FileAccessPolicyDecisionToString(std::get<FileAccessPolicyDecision>(kv.first));
+
       [faa_event_counts_
            incrementBy:kv.second
         forFieldValues:@[
