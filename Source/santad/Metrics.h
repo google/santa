@@ -22,7 +22,9 @@
 
 #include <map>
 #include <memory>
+#include <string>
 
+#import "Source/common/SNTCommonEnums.h"
 #import "Source/common/SNTMetricSet.h"
 
 namespace santa::santad {
@@ -44,8 +46,18 @@ enum class Processor {
   kFileAccessAuthorizer,
 };
 
+enum class FileAccessMetricStatus {
+  kOK = 0,
+  kBlockedUser,
+};
+
 using EventCountTuple = std::tuple<Processor, es_event_type_t, EventDisposition>;
 using EventTimesTuple = std::tuple<Processor, es_event_type_t>;
+using FileAccessMetricsPolicyVersion = std::string;
+using FileAccessMetricsPolicyName = std::string;
+using FileAccessEventCountTuple =
+  std::tuple<FileAccessMetricsPolicyVersion, FileAccessMetricsPolicyName, FileAccessMetricStatus,
+             es_event_type_t, FileAccessPolicyDecision>;
 
 class Metrics : public std::enable_shared_from_this<Metrics> {
  public:
@@ -53,8 +65,8 @@ class Metrics : public std::enable_shared_from_this<Metrics> {
 
   Metrics(dispatch_queue_t q, dispatch_source_t timer_source, uint64_t interval,
           SNTMetricInt64Gauge *event_processing_times, SNTMetricCounter *event_counts,
-          SNTMetricCounter *rate_limit_counts, SNTMetricSet *metric_set,
-          void (^run_on_first_start)(Metrics *));
+          SNTMetricCounter *rate_limit_counts, SNTMetricCounter *faa_event_counts,
+          SNTMetricSet *metric_set, void (^run_on_first_start)(Metrics *));
 
   ~Metrics();
 
@@ -71,6 +83,10 @@ class Metrics : public std::enable_shared_from_this<Metrics> {
 
   void SetRateLimitingMetrics(Processor processor, int64_t events_rate_limited_count);
 
+  void SetFileAccessEventMetrics(std::string policy_version, std::string rule_name,
+                                 FileAccessMetricStatus status, es_event_type_t event_type,
+                                 FileAccessPolicyDecision decision);
+
   friend class santa::santad::MetricsPeer;
 
  private:
@@ -84,6 +100,7 @@ class Metrics : public std::enable_shared_from_this<Metrics> {
   SNTMetricInt64Gauge *event_processing_times_;
   SNTMetricCounter *event_counts_;
   SNTMetricCounter *rate_limit_counts_;
+  SNTMetricCounter *faa_event_counts_;
   SNTMetricSet *metric_set_;
   // Tracks whether or not the timer_source should be running.
   // This helps manage dispatch source state to ensure the source is not
@@ -99,6 +116,7 @@ class Metrics : public std::enable_shared_from_this<Metrics> {
   std::map<EventCountTuple, int64_t> event_counts_cache_;
   std::map<EventTimesTuple, int64_t> event_times_cache_;
   std::map<Processor, int64_t> rate_limit_counts_cache_;
+  std::map<FileAccessEventCountTuple, int64_t> faa_event_counts_cache_;
 };
 
 }  // namespace santa::santad
