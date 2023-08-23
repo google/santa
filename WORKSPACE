@@ -195,8 +195,8 @@ git_repository(
     shallow_since = "1594986926 -0400",
 )
 
-load("@io_bazel_rules_go//go:deps.bzl", "go_register_toolchains", "go_rules_dependencies")
 load("@bazel_gazelle//:deps.bzl", "gazelle_dependencies")
+load("@io_bazel_rules_go//go:deps.bzl", "go_register_toolchains", "go_rules_dependencies")
 load("//external_patches/moroz:deps.bzl", "moroz_dependencies")
 
 # gazelle:repository_macro external_patches/moroz/deps.bzl%moroz_dependencies

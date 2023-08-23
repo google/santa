@@ -1,5 +1,5 @@
-load("//:helper.bzl", "santa_unit_test")
 load("@rules_cc//cc:defs.bzl", "cc_proto_library")
+load("//:helper.bzl", "santa_unit_test")
 
 package(
     default_visibility = ["//:santa_package_group"],
