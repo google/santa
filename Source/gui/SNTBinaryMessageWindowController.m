@@ -84,7 +84,10 @@
 
   if (!url) {
     [self.openEventButton removeFromSuperview];
-  } else {
+  } else if (self.customURL.length == 0) {
+    // Set the button text only if a per-rule custom URL is not used. If a
+    // custom URL is used, it is assumed that the `EventDetailText` config value
+    // does not apply and the default text will be used.
     NSString *eventDetailText = [[SNTConfigurator configurator] eventDetailText];
     if (eventDetailText) {
       [self.openEventButton setTitle:eventDetailText];
