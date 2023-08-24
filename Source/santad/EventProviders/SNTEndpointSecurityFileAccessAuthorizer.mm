@@ -635,6 +635,7 @@ void PopulatePathTargets(const Message &msg, std::vector<PathTarget> &targets) {
       event.pid = @(audit_token_to_pid(msg->process->audit_token));
       event.ppid = @(audit_token_to_pid(msg->process->parent_audit_token));
       event.parentName = StringToNSString(msg.ParentProcessName());
+      event.signingChain = cd.certChain;
 
       self.fileAccessBlockCallback(event);
     }

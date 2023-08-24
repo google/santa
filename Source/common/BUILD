@@ -85,6 +85,15 @@ objc_library(
 )
 
 objc_library(
+    name = "CertificateHelpers",
+    srcs = ["CertificateHelpers.m"],
+    hdrs = ["CertificateHelpers.h"],
+    deps = [
+        "@MOLCertificate",
+    ],
+)
+
+objc_library(
     name = "SNTBlockMessage",
     srcs = ["SNTBlockMessage.m"],
     hdrs = ["SNTBlockMessage.h"],
@@ -142,6 +151,7 @@ objc_library(
         "Foundation",
     ],
     deps = [
+        ":CertificateHelpers",
         "@MOLCertificate",
     ],
 )

@@ -17,6 +17,7 @@
 #import <MOLCertificate/MOLCertificate.h>
 #import <SecurityInterface/SFCertificatePanel.h>
 
+#include "Source/common/CertificateHelpers.h"
 #import "Source/common/SNTBlockMessage.h"
 #import "Source/common/SNTConfigurator.h"
 #import "Source/common/SNTStoredEvent.h"
@@ -117,16 +118,11 @@
 
 - (IBAction)showCertInfo:(id)sender {
   // SFCertificatePanel expects an NSArray of SecCertificateRef's
-  NSMutableArray *certArray = [NSMutableArray arrayWithCapacity:[self.event.signingChain count]];
-  for (MOLCertificate *cert in self.event.signingChain) {
-    [certArray addObject:(id)cert.certRef];
-  }
-
   [[[SFCertificatePanel alloc] init] beginSheetForWindow:self.window
                                            modalDelegate:nil
                                           didEndSelector:nil
                                              contextInfo:nil
-                                            certificates:certArray
+                                            certificates:CertificateChain(self.event.signingChain)
                                                showGroup:YES];
 }
 
@@ -148,19 +144,7 @@
 }
 
 - (NSString *)publisherInfo {
-  MOLCertificate *leafCert = [self.event.signingChain firstObject];
-
-  if ([leafCert.commonName isEqualToString:@"Apple Mac OS Application Signing"]) {
-    return [NSString stringWithFormat:@"App Store (Team ID: %@)", self.event.teamID];
-  } else if (leafCert.commonName && leafCert.orgName) {
-    return [NSString stringWithFormat:@"%@ - %@", leafCert.orgName, leafCert.commonName];
-  } else if (leafCert.commonName) {
-    return leafCert.commonName;
-  } else if (leafCert.orgName) {
-    return leafCert.orgName;
-  } else {
-    return nil;
-  }
+  return Publisher(self.event.signingChain, self.event.teamID);
 }
 
 - (NSAttributedString *)attributedCustomMessage {

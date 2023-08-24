@@ -79,6 +79,7 @@ objc_library(
         ":SNTAboutWindowView",
         ":SNTDeviceMessageWindowView",
         ":SNTFileAccessMessageWindowView",
+        "//Source/common:CertificateHelpers",
         "//Source/common:SNTBlockMessage_SantaGUI",
         "//Source/common:SNTConfigurator",
         "//Source/common:SNTDeviceEvent",

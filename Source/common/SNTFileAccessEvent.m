@@ -14,6 +14,8 @@
 
 #import "Source/common/SNTFileAccessEvent.h"
 
+#include "Source/common/CertificateHelpers.h"
+
 @implementation SNTFileAccessEvent
 
 #define ENCODE(o)                               \
@@ -26,6 +28,12 @@
 #define DECODE(o, c)                                             \
   do {                                                           \
     _##o = [decoder decodeObjectOfClass:[c class] forKey:@(#o)]; \
+  } while (0)
+
+#define DECODEARRAY(o, c)                                                                        \
+  do {                                                                                           \
+    _##o = [decoder decodeObjectOfClasses:[NSSet setWithObjects:[NSArray class], [c class], nil] \
+                                   forKey:@(#o)];                                                \
   } while (0)
 
 - (instancetype)init {
@@ -51,6 +59,7 @@
   ENCODE(pid);
   ENCODE(ppid);
   ENCODE(parentName);
+  ENCODE(signingChain);
 }
 
 - (instancetype)initWithCoder:(NSCoder *)decoder {
@@ -67,6 +76,7 @@
     DECODE(pid, NSNumber);
     DECODE(ppid, NSNumber);
     DECODE(parentName, NSString);
+    DECODEARRAY(signingChain, MOLCertificate);
   }
   return self;
 }
@@ -74,6 +84,14 @@
 - (NSString *)description {
   return [NSString
     stringWithFormat:@"SNTFileAccessEvent: Accessed: %@, By: %@", self.accessedPath, self.filePath];
+}
+
+- (NSString *)publisherInfo {
+  return Publisher(self.signingChain, self.teamID);
+}
+
+- (NSArray *)signingChainCertRefs {
+  return CertificateChain(self.signingChain);
 }
 
 @end

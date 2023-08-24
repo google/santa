@@ -12,14 +12,15 @@
 /// See the License for the specific language governing permissions and
 /// limitations under the License.
 
+import SecurityInterface
 import SwiftUI
 
 import santa_common_SNTFileAccessEvent
 
 @available(macOS 13, *)
 @objc public class SNTFileAccessMessageWindowViewFactory : NSObject {
-  @objc public static func createWith(window: NSWindow, event: SNTFileAccessEvent, customMsg: NSAttributedString?) -> NSViewController {
-    return NSHostingController(rootView:SNTFileAccessMessageWindowView(window:window, event:event, customMsg:customMsg)
+  @objc public static func createWith(window: NSWindow, event: SNTFileAccessEvent, customMsg: NSAttributedString?, uiStateCallback: ((Bool) -> Void)?) -> NSViewController {
+    return NSHostingController(rootView:SNTFileAccessMessageWindowView(window:window, event:event, customMsg:customMsg, uiStateCallback:uiStateCallback)
       .frame(width:800, height:600))
   }
 }
@@ -28,16 +29,26 @@ import santa_common_SNTFileAccessEvent
 struct Property : View {
   var lbl: String
   var val: String
+  var propertyAction: (() -> Void)? = nil
 
   var body: some View {
     let width: CGFloat? = 150
 
     HStack(spacing: 5) {
-      Text(lbl + ":")
-        .frame(width: width, alignment: .trailing)
-        .lineLimit(1)
-        .font(.system(size: 12, weight: .bold))
-        .padding(Edge.Set.horizontal, 10)
+      HStack {
+        if let block = propertyAction {
+          Button(action: {
+            block()
+          }) {
+            Image(systemName: "info.circle.fill")
+          }.buttonStyle(BorderlessButtonStyle())
+        }
+        Text(lbl + ":")
+          .frame(alignment: .trailing)
+          .lineLimit(1)
+          .font(.system(size: 12, weight: .bold))
+          .padding(Edge.Set.horizontal, 10)
+      }.frame(width: width, alignment: .trailing)
 
       Text(val)
         .fixedSize(horizontal: false, vertical: true)
@@ -50,6 +61,7 @@ struct Property : View {
 @available(macOS 13, *)
 struct Event: View {
   let e: SNTFileAccessEvent
+  let window: NSWindow?
 
   var body: some View {
     VStack(spacing:10) {
@@ -62,6 +74,14 @@ struct Event: View {
 
       if let app = e.application {
         Property(lbl: "Application", val: app)
+      }
+
+      if let pub = e.publisherInfo {
+        Property(lbl: "Publisher", val: pub) {
+          SFCertificatePanel.shared()
+                .beginSheet(for: window,
+                            modalDelegate: nil, didEnd: nil, contextInfo: nil, certificates: e.signingChainCertRefs, showGroup: true)
+        }
       }
 
       Property(lbl: "Name", val: (e.filePath as NSString).lastPathComponent)
@@ -77,8 +97,9 @@ struct SNTFileAccessMessageWindowView: View {
   let window: NSWindow?
   let event: SNTFileAccessEvent?
   let customMsg: NSAttributedString?
+  let uiStateCallback: ((Bool) -> Void)?
 
-  @State private var checked = false
+  @State public var checked = false
 
   var body: some View {
     VStack(spacing:20.0) {
@@ -91,7 +112,7 @@ struct SNTFileAccessMessageWindowView: View {
         Text("Access to a protected resource was denied.").multilineTextAlignment(.center).padding(15.0)
       }
 
-      Event(e: event!)
+      Event(e: event!, window: window)
 
       Toggle(isOn: $checked) {
         Text("Prevent future notifications for this application for a day")
@@ -124,6 +145,9 @@ struct SNTFileAccessMessageWindowView: View {
   }
 
   func dismissButton() {
+    if let block = uiStateCallback {
+      block(self.checked)
+    }
     window?.close()
     print("close window")
   }
@@ -153,6 +177,6 @@ func testFileAccessEvent() -> SNTFileAccessEvent {
 @available(macOS 13, *)
 struct SNTFileAccessMessageWindowView_Previews: PreviewProvider {
   static var previews: some View {
-    SNTFileAccessMessageWindowView(window: nil, event: testFileAccessEvent(), customMsg: nil)
+    SNTFileAccessMessageWindowView(window: nil, event: testFileAccessEvent(), customMsg: nil, uiStateCallback: nil)
   }
 }
