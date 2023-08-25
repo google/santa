@@ -17,6 +17,7 @@
 
 #include <Foundation/Foundation.h>
 
+#include <optional>
 #include <string>
 #include <string_view>
 
@@ -36,6 +37,15 @@ static inline NSString *StringToNSString(const std::string &str) {
 
 static inline NSString *StringToNSString(const char *str) {
   return [NSString stringWithUTF8String:str];
+}
+
+static inline NSString *OptionalStringToNSString(const std::optional<std::string> &optional_str) {
+  std::string str = optional_str.value_or("");
+  if (str.length() == 0) {
+    return nil;
+  } else {
+    return StringToNSString(str);
+  }
 }
 
 }  // namespace santa::common

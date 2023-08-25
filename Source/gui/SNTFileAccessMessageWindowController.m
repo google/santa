@@ -26,7 +26,7 @@
 
 @implementation SNTFileAccessMessageWindowController
 
-- (instancetype)initWithEvent:(SNTFileAccessEvent *)event message:(nullable NSString *)message {
+- (instancetype)initWithEvent:(SNTFileAccessEvent *)event customMsg:(nullable NSString *)message {
   self = [super init];
   if (self) {
     _customMessage = message;
@@ -69,7 +69,8 @@
 }
 
 - (NSAttributedString *)attributedCustomMessage {
-  return [SNTBlockMessage formatMessage:self.customMessage];
+  return [SNTBlockMessage attributedBlockMessageForFileAccessEvent:self.event
+                                                     customMessage:self.customMessage];
 }
 
 - (NSString *)messageHash {

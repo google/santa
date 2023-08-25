@@ -82,6 +82,18 @@
   return [SNTBlockMessage formatMessage:message];
 }
 
++ (NSAttributedString *)attributedBlockMessageForFileAccessEvent:(SNTFileAccessEvent *)event
+                                                   customMessage:(NSString *)customMessage {
+  NSString *message = customMessage;
+  if (!message.length) {
+    message = [[SNTConfigurator configurator] fileAccessBlockMessage];
+    if (!message.length) {
+      message = @"Access to a file has been denied.";
+    }
+  }
+  return [SNTBlockMessage formatMessage:message];
+}
+
 + (NSString *)stringFromHTML:(NSString *)html {
   NSError *error;
   NSXMLDocument *xml = [[NSXMLDocument alloc] initWithXMLString:html options:0 error:&error];

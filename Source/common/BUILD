@@ -93,15 +93,25 @@ objc_library(
     ],
 )
 
+# Note: `srcs`/`hdrs` are left unspecified here because `defines` from the
+# `SNTBlockMessage_SantaGUI` target do not propagate to `deps`.
+objc_library(
+    name = "SNTBlockMessage_CommonDeps",
+    deps = [
+        ":SNTConfigurator",
+        ":SNTFileAccessEvent",
+        ":SNTLogging",
+        ":SNTStoredEvent",
+        ":SNTSystemInfo",
+    ],
+)
+
 objc_library(
     name = "SNTBlockMessage",
     srcs = ["SNTBlockMessage.m"],
     hdrs = ["SNTBlockMessage.h"],
     deps = [
-        ":SNTConfigurator",
-        ":SNTLogging",
-        ":SNTStoredEvent",
-        ":SNTSystemInfo",
+        ":SNTBlockMessage_CommonDeps",
     ],
 )
 
@@ -111,11 +121,7 @@ objc_library(
     hdrs = ["SNTBlockMessage.h"],
     defines = ["SANTAGUI"],
     deps = [
-        ":SNTConfigurator",
-        ":SNTDeviceEvent",
-        ":SNTLogging",
-        ":SNTStoredEvent",
-        ":SNTSystemInfo",
+        ":SNTBlockMessage_CommonDeps",
     ],
 )
 

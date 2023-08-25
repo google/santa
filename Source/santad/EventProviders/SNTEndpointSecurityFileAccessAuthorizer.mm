@@ -49,6 +49,7 @@
 #include "absl/container/flat_hash_map.h"
 #include "absl/container/flat_hash_set.h"
 
+using santa::common::OptionalStringToNSString;
 using santa::common::StringToNSString;
 using santa::santad::EventDisposition;
 using santa::santad::FileAccessMetricStatus;
@@ -596,16 +597,17 @@ void PopulatePathTargets(const Message &msg, std::vector<PathTarget> &targets) {
   // Note: If ShouldLogDecision, it shouldn't be possible for optionalPolicy
   // to not have a value. Performing the check just in case to prevent a crash.
   if (ShouldLogDecision(policyDecision) && optionalPolicy.has_value()) {
+    std::shared_ptr<WatchItemPolicy> policy = optionalPolicy.value();
     RateLimiter::Decision decision = _rateLimiter->Decide(msg->mach_time);
 
-    self->_metrics->SetFileAccessEventMetrics(policyVersion, optionalPolicy.value()->name,
+    self->_metrics->SetFileAccessEventMetrics(policyVersion, policy->name,
                                               (decision == RateLimiter::Decision::kAllowed)
                                                 ? FileAccessMetricStatus::kOK
                                                 : FileAccessMetricStatus::kBlockedUser,
                                               msg->event_type, policyDecision);
 
     if (decision == RateLimiter::Decision::kAllowed) {
-      std::string policyNameCopy = optionalPolicy.value()->name;
+      std::string policyNameCopy = policy->name;
       std::string policyVersionCopy = policyVersion;
       std::string targetPathCopy = target.path;
 
@@ -617,16 +619,17 @@ void PopulatePathTargets(const Message &msg, std::vector<PathTarget> &targets) {
                               targetPathCopy, policyDecision);
                           }];
     }
-#if 0
-    if (!optionalPolicy.value()->silent && self.fileAccessBlockCallback) {
+
+    // Notify users on block decisions
+    if (ShouldNotifyUserDecision(policyDecision) && !(policy->silent && policy->silent_tty)) {
       SNTCachedDecision *cd =
         [self.decisionCache cachedDecisionForFile:msg->process->executable->stat];
 
       SNTFileAccessEvent *event = [[SNTFileAccessEvent alloc] init];
 
       event.accessedPath = StringToNSString(target.path);
-      event.ruleVersion = StringToNSString(optionalPolicy.value()->version);
-      event.ruleName = StringToNSString(optionalPolicy.value()->name);
+      event.ruleVersion = StringToNSString(policy->version);
+      event.ruleName = StringToNSString(policy->name);
 
       event.fileSHA256 = cd.sha256 ?: @"<unknown sha>";
       event.filePath = StringToNSString(msg->process->executable->path.data);
@@ -637,9 +640,14 @@ void PopulatePathTargets(const Message &msg, std::vector<PathTarget> &targets) {
       event.parentName = StringToNSString(msg.ParentProcessName());
       event.signingChain = cd.certChain;
 
-      self.fileAccessBlockCallback(event);
+      if (!policy->silent && self.fileAccessBlockCallback) {
+        self.fileAccessBlockCallback(event, OptionalStringToNSString(policy->custom_message));
+      }
+
+      if (!policy->silent_tty) {
+        // TODO(mlw): Do this
+      }
     }
-#endif
   }
 
   return policyDecision;

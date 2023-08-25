@@ -102,6 +102,7 @@ static NSString *const kSpoolDirectoryEventMaxFlushTimeSec = @"SpoolDirectoryEve
 
 static NSString *const kFileAccessPolicy = @"FileAccessPolicy";
 static NSString *const kFileAccessPolicyPlist = @"FileAccessPolicyPlist";
+static NSString *const kFileAccessBlockMessage = @"FileAccessBlockMessage";
 static NSString *const kFileAccessPolicyUpdateIntervalSec = @"FileAccessPolicyUpdateIntervalSec";
 
 static NSString *const kEnableMachineIDDecoration = @"EnableMachineIDDecoration";
@@ -219,6 +220,7 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
       kSpoolDirectoryEventMaxFlushTimeSec : number,
       kFileAccessPolicy : dictionary,
       kFileAccessPolicyPlist : string,
+      kFileAccessBlockMessage : string,
       kFileAccessPolicyUpdateIntervalSec : number,
       kEnableMachineIDDecoration : number,
       kEnableForkAndExitLogging : number,
@@ -438,6 +440,10 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
 }
 
 + (NSSet *)keyPathsForValuesAffectingFileAccessPolicyPlist {
+  return [self configStateSet];
+}
+
++ (NSSet *)keyPathsForValuesAffectingFileAccessBlockMessage {
   return [self configStateSet];
 }
 
@@ -859,6 +865,10 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
   } else {
     return self.configState[kFileAccessPolicyPlist];
   }
+}
+
+- (NSString *)fileAccessBlockMessage {
+  return self.configState[kFileAccessBlockMessage];
 }
 
 - (uint32_t)fileAccessPolicyUpdateIntervalSec {
