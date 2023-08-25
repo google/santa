@@ -32,6 +32,7 @@
 #include <variant>
 
 #include "Source/common/Platform.h"
+#import "Source/common/SNTBlockMessage.h"
 #import "Source/common/SNTCommonEnums.h"
 #import "Source/common/SNTConfigurator.h"
 #include "Source/common/SNTFileAccessEvent.h"
@@ -578,10 +579,6 @@ void PopulatePathTargets(const Message &msg, std::vector<PathTarget> &targets) {
     decision = FileAccessPolicyDecision::kAllowedAuditOnly;
   }
 
-  // https://github.com/google/santa/issues/1084
-  // TODO(xyz): Write to TTY like in exec controller?
-  // TODO(xyz): Need new config item for custom message in UI
-
   return decision;
 }
 
@@ -621,7 +618,8 @@ void PopulatePathTargets(const Message &msg, std::vector<PathTarget> &targets) {
     }
 
     // Notify users on block decisions
-    if (ShouldNotifyUserDecision(policyDecision) && !(policy->silent && policy->silent_tty)) {
+    if (ShouldNotifyUserDecision(policyDecision) &&
+        (!policy->silent || (!policy->silent_tty && msg->process->tty->path.length > 0))) {
       SNTCachedDecision *cd =
         [self.decisionCache cachedDecisionForFile:msg->process->executable->stat];
 
@@ -644,8 +642,26 @@ void PopulatePathTargets(const Message &msg, std::vector<PathTarget> &targets) {
         self.fileAccessBlockCallback(event, OptionalStringToNSString(policy->custom_message));
       }
 
+      // TODO(mlw): Use messageHash to de-dupe TTY messages?
       if (!policy->silent_tty) {
-        // TODO(mlw): Do this
+        NSAttributedString *attrStr =
+          [SNTBlockMessage attributedBlockMessageForFileAccessEvent:event
+                                                      customMessage:OptionalStringToNSString(
+                                                                      policy->custom_message)];
+
+        NSMutableString *blockMsg = [NSMutableString stringWithCapacity:1024];
+        [blockMsg appendFormat:@"\n\033[1mSanta\033[0m\n\n%@\n\n", attrStr.string];
+        [blockMsg appendFormat:@"\033[1mAccessed Path:\033[0m %@\n"
+                               @"\033[1mRule Version: \033[0m %@\n"
+                               @"\033[1mRule Name:    \033[0m %@\n"
+                               @"\n"
+                               @"\033[1mProcess Path: \033[0m %@\n"
+                               @"\033[1mIdentifier:   \033[0m %@\n"
+                               @"\033[1mParent:       \033[0m %@\n",
+                               event.accessedPath, event.ruleVersion, event.ruleName,
+                               event.filePath, event.fileSHA256, event.parentName];
+
+        self->_ttyWriter->Write(msg->process->tty->path.data, blockMsg);
       }
     }
   }

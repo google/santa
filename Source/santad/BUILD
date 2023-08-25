@@ -363,6 +363,7 @@ objc_library(
         ":WatchItemPolicy",
         ":WatchItems",
         "//Source/common:Platform",
+        "//Source/common:SNTBlockMessage",
         "//Source/common:SNTCommonEnums",
         "//Source/common:SNTConfigurator",
         "//Source/common:SNTFileAccessEvent",
