@@ -27,6 +27,7 @@
 
 @interface SNTPolicyProcessor ()
 @property SNTRuleTable *ruleTable;
+@property SNTConfigurator *configurator;
 @end
 
 @implementation SNTPolicyProcessor
@@ -35,6 +36,7 @@
   self = [super init];
   if (self) {
     _ruleTable = ruleTable;
+    _configurator = [SNTConfigurator configurator];
   }
   return self;
 }
@@ -49,10 +51,16 @@
   cd.teamID = teamID;
   cd.signingID = signingID;
 
+  SNTClientMode mode = [self.configurator clientMode];
+  cd.decisionClientMode = mode;
+
   // If the binary is a critical system binary, don't check its signature.
   // The binary was validated at startup when the rule table was initialized.
   SNTCachedDecision *systemCd = self.ruleTable.criticalSystemBinaries[cd.sha256];
-  if (systemCd) return systemCd;
+  if (systemCd) {
+    systemCd.decisionClientMode = mode;
+    return systemCd;
+  }
 
   NSError *csInfoError;
   if (certificateSHA256.length) {
@@ -110,7 +118,7 @@
             // If transitive rules are enabled, then SNTRuleStateAllowListCompiler rules
             // become SNTEventStateAllowCompiler decisions.  Otherwise we treat the rule as if
             // it were SNTRuleStateAllow.
-            if ([[SNTConfigurator configurator] enableTransitiveRules]) {
+            if ([self.configurator enableTransitiveRules]) {
               cd.decision = SNTEventStateAllowCompiler;
             } else {
               cd.decision = SNTEventStateAllowBinary;
@@ -120,7 +128,7 @@
             // If transitive rules are enabled, then SNTRuleStateAllowTransitive
             // rules become SNTEventStateAllowTransitive decisions.  Otherwise, we treat the
             // rule as if it were SNTRuleStateUnknown.
-            if ([[SNTConfigurator configurator] enableTransitiveRules]) {
+            if ([self.configurator enableTransitiveRules]) {
               cd.decision = SNTEventStateAllowTransitive;
               return cd;
             } else {
@@ -197,9 +205,6 @@
     cd.decision = SNTEventStateAllowScope;
     return cd;
   }
-
-  SNTClientMode mode = [[SNTConfigurator configurator] clientMode];
-  cd.decisionClientMode = mode;
 
   switch (mode) {
     case SNTClientModeMonitor: cd.decision = SNTEventStateAllowUnknown; return cd;
