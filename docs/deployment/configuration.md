@@ -74,6 +74,7 @@ also known as mobileconfig files, which are in an Apple-specific XML format.
 | FileAccessPolicyPlist             | String      | (BETA) Path to a file access configuration plist. |
 | FileAccessPolicyUpdateIntervalSec | Integer     | (BETA) Number of seconds between re-reading the file access policy config and policies/monitored paths updated. |
 | SyncClientContentEncoding | String | Sets the Content-Encoding header for requests sent to the sync service. Acceptable values are "deflate", "gzip", "none" (Defaults to deflate.)  |
+| SyncExtraHeaders | Dictionary | Dictionary of additional headers to include in all requests made to the sync server. System managed headers such as Content-Length, Host, WWW-Authenticate etc will be ignored. |
 
 
 \*overridable by the sync server: run `santactl status` to check the current
@@ -159,6 +160,11 @@ A few key points to when creating your configuration profile:
 								<string>https://sync-server-hostname/api/santa/</string>
 								<key>UnknownBlockMessage</key>
 								<string>This application has been blocked from executing.</string>
+								<key>SyncExtraHeaders</key>
+								<dict>
+									<key>X-API-Key</key>
+									<string>da823De3Dsadq3234dqwe32kv</string>
+								</dict>
 							</dict>
 						</dict>
 					</array>
