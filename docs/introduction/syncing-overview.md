@@ -36,12 +36,10 @@ syncs, listen for push notifications and upload events.
     sending rules from the sync server to process.
 3.  The full sync starts. There are a number of stages to a full sync:
     1.  preflight: The sync server can set various settings for Santa.
-    2.  logupload (optional): The sync server can request that the Santa logs be
-        uploaded to an endpoint.
-    3.  eventupload (optional): If Santa has generated events, it will upload
+    2.  eventupload (optional): If Santa has generated events, it will upload
         them to the sync-server.
-    4.  ruledownload: Download rules from the sync server.
-    5.  postflight: Updates timestamps for successful syncs.
+    3.  ruledownload: Download rules from the sync server.
+    4.  postflight: Updates timestamps for successful syncs.
 4.  After the full sync completes a new full sync will be scheduled, by default
     this will be 10min. However there are a few ways to manipulate this:
     1.  The sync server can send down a configuration in the preflight to
