@@ -16,6 +16,7 @@
 
 #include <string.h>
 #include <sys/errno.h>
+#include <sys/param.h>
 
 #import "Source/common/SNTLogging.h"
 #include "Source/common/String.h"
@@ -24,7 +25,7 @@ namespace santa::santad {
 
 std::unique_ptr<TTYWriter> TTYWriter::Create() {
   dispatch_queue_t q = dispatch_queue_create_with_target(
-    "com.google.santa.ttywriter", DISPATCH_QUEUE_SERIAL,
+    "com.google.santa.ttywriter", DISPATCH_QUEUE_SERIAL_WITH_AUTORELEASE_POOL,
     dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_BACKGROUND, 0));
 
   if (!q) {
@@ -36,20 +37,30 @@ std::unique_ptr<TTYWriter> TTYWriter::Create() {
 
 TTYWriter::TTYWriter(dispatch_queue_t q) : q_(q) {}
 
-void TTYWriter::Write(const char *tty, NSString *msg) {
+bool TTYWriter::CanWrite(const es_process_t *proc) {
+  return proc && proc->tty && proc->tty->path.length > 0;
+}
+
+void TTYWriter::Write(const es_process_t *proc, NSString *msg) {
+  if (!CanWrite(proc)) {
+    return;
+  }
+
+  // Copy the data from the es_process_t so the ES message doesn't
+  // need to be retained
+  NSString *tty = santa::common::StringToNSString(proc->tty->path.data);
+
   dispatch_async(q_, ^{
-    @autoreleasepool {
-      int fd = open(tty, O_WRONLY | O_NOCTTY);
-      if (fd == -1) {
-        LOGW(@"Failed to open TTY for writing: %s", strerror(errno));
-        return;
-      }
-
-      std::string_view str = santa::common::NSStringToUTF8StringView(msg);
-      write(fd, str.data(), str.length());
-
-      close(fd);
+    int fd = open(tty.UTF8String, O_WRONLY | O_NOCTTY);
+    if (fd == -1) {
+      LOGW(@"Failed to open TTY for writing: %s", strerror(errno));
+      return;
     }
+
+    std::string_view str = santa::common::NSStringToUTF8StringView(msg);
+    write(fd, str.data(), str.length());
+
+    close(fd);
   });
 }
 

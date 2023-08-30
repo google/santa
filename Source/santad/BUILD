@@ -213,6 +213,9 @@ objc_library(
     name = "TTYWriter",
     srcs = ["TTYWriter.mm"],
     hdrs = ["TTYWriter.h"],
+    sdk_dylibs = [
+        "EndpointSecurity",
+    ],
     deps = [
         "//Source/common:SNTLogging",
         "//Source/common:String",

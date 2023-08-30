@@ -300,12 +300,11 @@ static NSString *const kPrinterProxyPostMonterey =
       }
 
       if (!cd.silentBlock) {
-        // Let the user know what happened, both on the terminal and in the GUI.
-        NSAttributedString *s = [SNTBlockMessage attributedBlockMessageForEvent:se
-                                                                  customMessage:cd.customMsg];
+        if (!config.enableSilentTTYMode && self->_ttyWriter && TTYWriter::CanWrite(targetProc)) {
+          // Let the user know what happenedon the terminal
+          NSAttributedString *s = [SNTBlockMessage attributedBlockMessageForEvent:se
+                                                                    customMessage:cd.customMsg];
 
-        if (targetProc->tty && targetProc->tty->path.length > 0 && !config.enableSilentTTYMode &&
-            self->_ttyWriter) {
           NSMutableString *msg = [NSMutableString stringWithCapacity:1024];
           [msg appendFormat:@"\n\033[1mSanta\033[0m\n\n%@\n\n", s.string];
           [msg appendFormat:@"\033[1mPath:      \033[0m %@\n"
@@ -317,9 +316,10 @@ static NSString *const kPrinterProxyPostMonterey =
             [msg appendFormat:@"More info:\n%@\n\n", detailURL.absoluteString];
           }
 
-          self->_ttyWriter->Write(targetProc->tty->path.data, msg);
+          self->_ttyWriter->Write(targetProc, msg);
         }
 
+        // Let the user know what happened in the GUI.
         [self.notifierQueue addEvent:se withCustomMessage:cd.customMsg andCustomURL:cd.customURL];
       }
     }

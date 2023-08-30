@@ -643,7 +643,7 @@ void PopulatePathTargets(const Message &msg, std::vector<PathTarget> &targets) {
       }
 
       // TODO(mlw): Use messageHash to de-dupe TTY messages?
-      if (!policy->silent_tty) {
+      if (!policy->silent_tty && TTYWriter::CanWrite(msg->process)) {
         NSAttributedString *attrStr =
           [SNTBlockMessage attributedBlockMessageForFileAccessEvent:event
                                                       customMessage:OptionalStringToNSString(
@@ -661,7 +661,7 @@ void PopulatePathTargets(const Message &msg, std::vector<PathTarget> &targets) {
                                event.accessedPath, event.ruleVersion, event.ruleName,
                                event.filePath, event.fileSHA256, event.parentName];
 
-        self->_ttyWriter->Write(msg->process->tty->path.data, blockMsg);
+        self->_ttyWriter->Write(msg->process, blockMsg);
       }
     }
   }
