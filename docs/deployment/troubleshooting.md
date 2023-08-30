@@ -44,7 +44,7 @@ Santa as well as its details and live connection state
 
 Looking into [logs](../concepts/logs.md) would be instructive for the majority
 of how Santa is operating, and the pages on [scopes](../concepts/scopes.md) and [rules](../concepts/rules.md) would assist in
-determining precendence and why decisions are made. Most helpful is the output of
+determining precedence and why decisions are made. Most helpful is the output of
 `/usr/local/bin/santactl`'s `fileinfo` verb when called with the path/binary in
 question as described on the [santactl](../binaries/santactl.md) page.
 
