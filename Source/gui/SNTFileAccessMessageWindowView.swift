@@ -19,8 +19,14 @@ import santa_common_SNTFileAccessEvent
 
 @available(macOS 13, *)
 @objc public class SNTFileAccessMessageWindowViewFactory : NSObject {
-  @objc public static func createWith(window: NSWindow, event: SNTFileAccessEvent, customMsg: NSAttributedString?, uiStateCallback: ((Bool) -> Void)?) -> NSViewController {
-    return NSHostingController(rootView:SNTFileAccessMessageWindowView(window:window, event:event, customMsg:customMsg, uiStateCallback:uiStateCallback)
+  @objc public static func createWith(window: NSWindow,
+                                      event: SNTFileAccessEvent,
+                                      customMsg: NSAttributedString?,
+                                      uiStateCallback: ((Bool) -> Void)?) -> NSViewController {
+    return NSHostingController(rootView:SNTFileAccessMessageWindowView(window:window,
+                                                                       event:event,
+                                                                       customMsg:customMsg,
+                                                                       uiStateCallback:uiStateCallback)
       .frame(width:800, height:600))
   }
 }
@@ -80,7 +86,11 @@ struct Event: View {
         Property(lbl: "Publisher", val: pub) {
           SFCertificatePanel.shared()
                 .beginSheet(for: window,
-                            modalDelegate: nil, didEnd: nil, contextInfo: nil, certificates: e.signingChainCertRefs, showGroup: true)
+                            modalDelegate: nil,
+                            didEnd: nil,
+                            contextInfo: nil,
+                            certificates: e.signingChainCertRefs,
+                            showGroup: true)
         }
       }
 
@@ -132,11 +142,6 @@ struct SNTFileAccessMessageWindowView: View {
       Spacer()
 
     }.frame(maxWidth:800.0).fixedSize()
-  }
-
-  func publisherInfo() {
-    // TODO(mlw): Will hook up in a separate PR
-    print("showing publisher popup...")
   }
 
   func openButton() {
