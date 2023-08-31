@@ -25,6 +25,7 @@
 #include <algorithm>
 #include <array>
 #include <cstdlib>
+#include <functional>
 #include <memory>
 #include <optional>
 #include <type_traits>
@@ -80,22 +81,23 @@ struct PathTarget {
   std::optional<std::pair<dev_t, ino_t>> devnoIno;
 };
 
-// This is a bespoke cache for mapping processes to a set of files the process
-// has previously been allowed to read as defined by policy. It has similar
-// semantics to SantaCache in terms of clearing the cache keys and values when
-// max sizes are reached.
+// This is a bespoke cache for mapping processes to a set of values. It has
+// similar semantics to SantaCache in terms of clearing the cache keys and
+// values when max sizes are reached.
+//
 // TODO: We need a proper LRU cache
 //
-// NB: SantaCache should not be used here.
-//     1.) It doesn't efficiently support non-primitive value types. Since the
-//     value of each key needs to be a set, we want to refrain from having to
-//     unnecessarily copy the value.
-//     2.) It doesn't support size limits on value types
-class ProcessFiles {
-  using FileSet = absl::flat_hash_set<std::pair<dev_t, ino_t>>;
+// NB: This exists instead of using SantaCache for two main reasons:
+//     1.) SantaCache doesn't efficiently support non-primitive value types.
+//         Since the value of each key needs to be a set, we want to refrain
+//         from having to unnecessarily copy the value.
+//     2.) SantaCache doesn't support size limits on value types
+template <typename ValueT>
+class ProcessSet {
+  using FileSet = absl::flat_hash_set<ValueT>;
 
  public:
-  ProcessFiles() {
+  ProcessSet() {
     q_ = dispatch_queue_create(
       "com.google.santa.daemon.faa",
       dispatch_queue_attr_make_with_qos_class(DISPATCH_QUEUE_SERIAL_WITH_AUTORELEASE_POOL,
@@ -103,28 +105,15 @@ class ProcessFiles {
   };
 
   // Add the given target to the set of files a process can read
-  void Set(const es_process_t *proc, const PathTarget &target) {
-    if (!target.devnoIno.has_value()) {
+  void Set(const es_process_t *proc, std::function<ValueT()> valueBlock) {
+    if (!valueBlock) {
       return;
     }
 
-    std::pair<pid_t, pid_t> pidPidver = {audit_token_to_pid(proc->audit_token),
-                                         audit_token_to_pidversion(proc->audit_token)};
-
     dispatch_sync(q_, ^{
-      // If we hit the size limit, clear the cache to prevent unbounded growth
-      if (cache_.size() >= kMaxCacheSize) {
-        ClearLocked();
-      }
-
-      FileSet &fs = cache_[std::move(pidPidver)];
-
-      // If we hit the per-entry size limit, clear the entry to prevent unbounded growth
-      if (fs.size() >= kMaxCacheEntrySize) {
-        fs.clear();
-      }
-
-      fs.insert(*target.devnoIno);
+      std::pair<pid_t, pid_t> pidPidver = {audit_token_to_pid(proc->audit_token),
+                                           audit_token_to_pidversion(proc->audit_token)};
+      SetLocked(pidPidver, valueBlock());
     });
   }
 
@@ -138,22 +127,14 @@ class ProcessFiles {
   }
 
   // Check if the set of files for a given process contains the given file
-  bool Exists(const es_process_t *proc, const es_file_t *file) {
-    std::pair<pid_t, pid_t> pidPidver = {audit_token_to_pid(proc->audit_token),
-                                         audit_token_to_pidversion(proc->audit_token)};
-    std::pair<dev_t, ino_t> devnoIno = {file->stat.st_dev, file->stat.st_ino};
+  bool Exists(const es_process_t *proc, std::function<ValueT()> valueBlock) {
+    return ExistsOrSet(proc, valueBlock, false);
+  }
 
-    __block bool exists = false;
-
-    dispatch_sync(q_, ^{
-      const auto &iter = cache_.find(pidPidver);
-
-      if (iter != cache_.end() && iter->second.count(devnoIno) > 0) {
-        exists = true;
-      }
-    });
-
-    return exists;
+  // Check if the ValueT set for a given process contains the given file, and
+  // if not, set it. Both steps are done atomically.
+  bool ExistsOrSet(const es_process_t *proc, std::function<ValueT()> valueBlock) {
+    return ExistsOrSet(proc, valueBlock, true);
   }
 
   // Clear all cache entries
@@ -166,6 +147,42 @@ class ProcessFiles {
  private:
   // Remove everything in the cache.
   void ClearLocked() { cache_.clear(); }
+
+  void SetLocked(std::pair<pid_t, pid_t> pidPidver, ValueT value) {
+    // If we hit the size limit, clear the cache to prevent unbounded growth
+    if (cache_.size() >= kMaxCacheSize) {
+      ClearLocked();
+    }
+
+    FileSet &fs = cache_[std::move(pidPidver)];
+
+    // If we hit the per-entry size limit, clear the entry to prevent unbounded growth
+    if (fs.size() >= kMaxCacheEntrySize) {
+      fs.clear();
+    }
+
+    fs.insert(value);
+  }
+
+  bool ExistsOrSet(const es_process_t *proc, std::function<ValueT()> valueBlock, bool shouldSet) {
+    std::pair<pid_t, pid_t> pidPidver = {audit_token_to_pid(proc->audit_token),
+                                         audit_token_to_pidversion(proc->audit_token)};
+
+    __block bool exists = false;
+
+    dispatch_sync(q_, ^{
+      ValueT value = valueBlock();
+      const auto &iter = cache_.find(pidPidver);
+
+      if (iter != cache_.end() && iter->second.count(value) > 0) {
+        exists = true;
+      } else if (shouldSet) {
+        SetLocked(pidPidver, value);
+      }
+    });
+
+    return exists;
+  }
 
   dispatch_queue_t q_;
   absl::flat_hash_map<std::pair<pid_t, pid_t>, FileSet> cache_;
@@ -312,6 +329,21 @@ void PopulatePathTargets(const Message &msg, std::vector<PathTarget> &targets) {
   }
 }
 
+bool ShouldMessageTTY(const std::shared_ptr<WatchItemPolicy> &policy, const Message &msg,
+                      ProcessSet<std::pair<std::string, std::string>> &ttyMessageCache) {
+  if (policy->silent_tty || !TTYWriter::CanWrite(msg->process)) {
+    return false;
+  }
+
+  // ExistsOrSet returns `true` if the item existed. However we want to invert
+  // this result as the return value for this function since we want to message
+  // the TTY only when `ExistsOrSet` was a "set" operation, meaning it was the
+  // first time this value was added.
+  return !ttyMessageCache.ExistsOrSet(msg->process, ^std::pair<std::string, std::string>() {
+    return {policy->version, policy->name};
+  });
+}
+
 @interface SNTEndpointSecurityFileAccessAuthorizer ()
 @property SNTDecisionCache *decisionCache;
 @property bool isSubscribed;
@@ -324,7 +356,8 @@ void PopulatePathTargets(const Message &msg, std::vector<PathTarget> &targets) {
   std::shared_ptr<RateLimiter> _rateLimiter;
   SantaCache<SantaVnode, NSString *> _certHashCache;
   std::shared_ptr<TTYWriter> _ttyWriter;
-  ProcessFiles _readsCache;
+  ProcessSet<std::pair<dev_t, ino_t>> _readsCache;
+  ProcessSet<std::pair<std::string, std::string>> _ttyMessageCache;
   std::shared_ptr<Metrics> _metrics;
 }
 
@@ -542,8 +575,10 @@ void PopulatePathTargets(const Message &msg, std::vector<PathTarget> &targets) {
   std::shared_ptr<WatchItemPolicy> policy = optionalPolicy.value();
 
   // If policy allows reading, add target to the cache
-  if (policy->allow_read_access && target.isReadable) {
-    self->_readsCache.Set(msg->process, target);
+  if (policy->allow_read_access && target.devnoIno.has_value()) {
+    self->_readsCache.Set(msg->process, ^{
+      return *target.devnoIno;
+    });
   }
 
   // Check if this action contains any special case that would produce
@@ -642,8 +677,7 @@ void PopulatePathTargets(const Message &msg, std::vector<PathTarget> &targets) {
         self.fileAccessBlockCallback(event, OptionalStringToNSString(policy->custom_message));
       }
 
-      // TODO(mlw): Use messageHash to de-dupe TTY messages?
-      if (!policy->silent_tty && TTYWriter::CanWrite(msg->process)) {
+      if (ShouldMessageTTY(policy, msg, self->_ttyMessageCache)) {
         NSAttributedString *attrStr =
           [SNTBlockMessage attributedBlockMessageForFileAccessEvent:event
                                                       customMessage:OptionalStringToNSString(
@@ -718,13 +752,17 @@ void PopulatePathTargets(const Message &msg, std::vector<PathTarget> &targets) {
    recordEventMetrics:(void (^)(EventDisposition))recordEventMetrics {
   if (esMsg->event_type == ES_EVENT_TYPE_AUTH_OPEN &&
       !(esMsg->event.open.fflag & kOpenFlagsIndicatingWrite)) {
-    if (self->_readsCache.Exists(esMsg->process, esMsg->event.open.file)) {
+    if (self->_readsCache.Exists(esMsg->process, ^std::pair<pid_t, pid_t> {
+          return std::pair<dev_t, ino_t>{esMsg->event.open.file->stat.st_dev,
+                                         esMsg->event.open.file->stat.st_ino};
+        })) {
       [self respondToMessage:esMsg withAuthResult:ES_AUTH_RESULT_ALLOW cacheable:false];
       return;
     }
   } else if (esMsg->event_type == ES_EVENT_TYPE_NOTIFY_EXIT) {
     // On process exit, remove the cache entry
     self->_readsCache.Remove(esMsg->process);
+    self->_ttyMessageCache.Remove(esMsg->process);
     return;
   }
 
