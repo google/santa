@@ -190,6 +190,7 @@ VerifyPostActionBlock verifyPostAction = ^PostActionBlock(SNTAction wantAction) 
   XCTBubbleMockVerifyAndClearExpectations(mockESApi.get());
 }
 
+
 - (void)validateExecEvent:(SNTAction)wantAction
              messageSetup:(void (^)(es_message_t *))messageSetupBlock {
   es_file_t file = MakeESFile("foo");
@@ -462,6 +463,26 @@ VerifyPostActionBlock verifyPostAction = ^PostActionBlock(SNTAction wantAction) 
   OCMVerifyAllWithDelay(self.mockEventDatabase, 1);
   [self checkMetricCounters:kAllowBinary expected:@0];
   [self checkMetricCounters:kAllowTransitive expected:@0];
+}
+
+- (void)testPlatformBinaryAllow {
+  OCMStub([self.mockFileInfo isMachO]).andReturn(YES);
+  OCMStub([self.mockFileInfo SHA256]).andReturn(@"a");
+
+  SNTRule *rule = [[SNTRule alloc] init];
+  rule.state = SNTRuleStateAllow;
+  rule.type = SNTRuleTypeBinary;
+  OCMStub([self.mockRuleDatabase ruleForBinarySHA256:@"a"
+                                           signingID:nil
+                                   certificateSHA256:nil
+                                              teamID:nil])
+    .andReturn(rule);
+  [self validateExecEvent:SNTActionRespondAllow
+             messageSetup:^(es_message_t *msg){
+              msg->event.exec.target->is_platform_binary = true;
+             }];
+  [self checkMetricCounters:kAllowBinary expected:@1];
+  [self checkMetricCounters:kAllowUnknown expected:@0];
 }
 
 - (void)testDefaultDecision {
