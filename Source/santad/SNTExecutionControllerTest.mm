@@ -190,7 +190,6 @@ VerifyPostActionBlock verifyPostAction = ^PostActionBlock(SNTAction wantAction) 
   XCTBubbleMockVerifyAndClearExpectations(mockESApi.get());
 }
 
-
 - (void)validateExecEvent:(SNTAction)wantAction
              messageSetup:(void (^)(es_message_t *))messageSetupBlock {
   es_file_t file = MakeESFile("foo");
@@ -465,24 +464,21 @@ VerifyPostActionBlock verifyPostAction = ^PostActionBlock(SNTAction wantAction) 
   [self checkMetricCounters:kAllowTransitive expected:@0];
 }
 
-- (void)testPlatformBinaryAllow {
+- (void)testThatPlatformBinaryCachedDecisionsSetModeCorrectly {
   OCMStub([self.mockFileInfo isMachO]).andReturn(YES);
   OCMStub([self.mockFileInfo SHA256]).andReturn(@"a");
+  OCMStub([self.mockConfigurator clientMode]).andReturn(SNTClientModeLockdown);
+  OCMStub([self.mockConfigurator enableTransitiveRules]).andReturn(NO);
 
-  SNTRule *rule = [[SNTRule alloc] init];
-  rule.state = SNTRuleStateAllow;
-  rule.type = SNTRuleTypeBinary;
-  OCMStub([self.mockRuleDatabase ruleForBinarySHA256:@"a"
-                                           signingID:nil
-                                   certificateSHA256:nil
-                                              teamID:nil])
-    .andReturn(rule);
-  [self validateExecEvent:SNTActionRespondAllow
-             messageSetup:^(es_message_t *msg){
-              msg->event.exec.target->is_platform_binary = true;
-             }];
+  SNTCachedDecision *cd = [[SNTCachedDecision alloc] init];
+  cd.decision = SNTEventStateAllowBinary;
+  OCMStub([self.mockRuleDatabase criticalSystemBinaries]).andReturn(@{@"a" : cd});
+
+  [self validateExecEvent:SNTActionRespondAllow];
   [self checkMetricCounters:kAllowBinary expected:@1];
   [self checkMetricCounters:kAllowUnknown expected:@0];
+
+  XCTAssertEqual(cd.decisionClientMode, SNTClientModeLockdown);
 }
 
 - (void)testDefaultDecision {
