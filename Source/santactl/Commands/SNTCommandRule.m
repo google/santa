@@ -86,10 +86,11 @@ REGISTER_COMMAND_NAME(@"rule")
           @"    \"platform\" (e.g. `platform:SigningID`). This allows for rules\n"
           @"    targeting Apple-signed binaries that do not have a team ID.\n"
           @"\n"
-          @"  Import and Export or Rules:\n"
-          @"    If santa is not configured to use a sync server one can import\n"
-          @"    / export its non-static rules from JSON files using the \n"
-          @"    --import/--export flags. These files have the following form:\n"
+          @"  Importing / Exporting Rules:\n"
+          @"    If santa is not configured to use a sync server one can export\n"
+          @"    & import its non-static rules to and from JSON files using the \n"
+          @"    --export/--import flags. These files have the following form:\n"
+          @"\n"
           @"    {\"rules\": [{rule-dictionaries}]}\n"
           @"    e.g. {\"rules\": [\n"
           @"                      {\"policy\": \"BLOCKLIST\",\n"
@@ -203,83 +204,80 @@ REGISTER_COMMAND_NAME(@"rule")
   if (![jsonFilePath isEqualToString:@""]) {
     if (importRules) {
       [self importJSONFile:jsonFilePath];
-      return;
     } else if (exportRules) {
       [self exportJSONFile:jsonFilePath];
-      return;
     }
-
-    if (path) {
-      SNTFileInfo *fi = [[SNTFileInfo alloc] initWithPath:path];
-      if (!fi.path) {
-        [self printErrorUsageAndExit:@"Provided path was not a plain file"];
-      }
-
-      if (newRule.type == SNTRuleTypeBinary) {
-        newRule.identifier = fi.SHA256;
-      } else if (newRule.type == SNTRuleTypeCertificate) {
-        MOLCodesignChecker *cs = [fi codesignCheckerWithError:NULL];
-        newRule.identifier = cs.leafCertificate.SHA256;
-      } else if (newRule.type == SNTRuleTypeTeamID || newRule.type == SNTRuleTypeSigningID) {
-        // noop
-      }
-    }
-
-    if (newRule.type == SNTRuleTypeBinary || newRule.type == SNTRuleTypeCertificate) {
-      NSCharacterSet *nonHex =
-        [[NSCharacterSet characterSetWithCharactersInString:@"0123456789ABCDEF"] invertedSet];
-      if ([[newRule.identifier uppercaseString] stringByTrimmingCharactersInSet:nonHex].length !=
-          64) {
-        [self printErrorUsageAndExit:@"BINARY or CERTIFICATE rules require a valid SHA-256"];
-      }
-    }
-
-    if (check) {
-      if (!newRule.identifier)
-        return [self printErrorUsageAndExit:@"--check requires --identifier"];
-      return [self printStateOfRule:newRule daemonConnection:self.daemonConn];
-    }
-
-    if (newRule.state == SNTRuleStateUnknown) {
-      [self printErrorUsageAndExit:@"No state specified"];
-    } else if (!newRule.identifier) {
-      [self printErrorUsageAndExit:@"Either SHA-256, team ID, or path to file must be specified"];
-    }
-
-    [[self.daemonConn remoteObjectProxy]
-      databaseRuleAddRules:@[ newRule ]
-                cleanSlate:NO
-                     reply:^(NSError *error) {
-                       if (error) {
-                         printf("Failed to modify rules: %s",
-                                [error.localizedDescription UTF8String]);
-                         LOGD(@"Failure reason: %@", error.localizedFailureReason);
-                         exit(1);
-                       } else {
-                         NSString *ruleType;
-                         switch (newRule.type) {
-                           case SNTRuleTypeCertificate:
-                           case SNTRuleTypeBinary: {
-                             ruleType = @"SHA-256";
-                             break;
-                           }
-                           case SNTRuleTypeTeamID: {
-                             ruleType = @"Team ID";
-                             break;
-                           }
-                           default: ruleType = @"(Unknown type)";
-                         }
-                         if (newRule.state == SNTRuleStateRemove) {
-                           printf("Removed rule for %s: %s.\n", [ruleType UTF8String],
-                                  [newRule.identifier UTF8String]);
-                         } else {
-                           printf("Added rule for %s: %s.\n", [ruleType UTF8String],
-                                  [newRule.identifier UTF8String]);
-                         }
-                         exit(0);
-                       }
-                     }];
   }
+
+  if (path) {
+    SNTFileInfo *fi = [[SNTFileInfo alloc] initWithPath:path];
+    if (!fi.path) {
+      [self printErrorUsageAndExit:@"Provided path was not a plain file"];
+    }
+
+    if (newRule.type == SNTRuleTypeBinary) {
+      newRule.identifier = fi.SHA256;
+    } else if (newRule.type == SNTRuleTypeCertificate) {
+      MOLCodesignChecker *cs = [fi codesignCheckerWithError:NULL];
+      newRule.identifier = cs.leafCertificate.SHA256;
+    } else if (newRule.type == SNTRuleTypeTeamID || newRule.type == SNTRuleTypeSigningID) {
+      // noop
+    }
+  }
+
+  if (newRule.type == SNTRuleTypeBinary || newRule.type == SNTRuleTypeCertificate) {
+    NSCharacterSet *nonHex =
+      [[NSCharacterSet characterSetWithCharactersInString:@"0123456789ABCDEF"] invertedSet];
+    if ([[newRule.identifier uppercaseString] stringByTrimmingCharactersInSet:nonHex].length !=
+        64) {
+      [self printErrorUsageAndExit:@"BINARY or CERTIFICATE rules require a valid SHA-256"];
+    }
+  }
+
+  if (check) {
+    if (!newRule.identifier) return [self printErrorUsageAndExit:@"--check requires --identifier"];
+    return [self printStateOfRule:newRule daemonConnection:self.daemonConn];
+  }
+
+  if (newRule.state == SNTRuleStateUnknown) {
+    [self printErrorUsageAndExit:@"No state specified"];
+  } else if (!newRule.identifier) {
+    [self printErrorUsageAndExit:@"Either SHA-256, team ID, or path to file must be specified"];
+  }
+
+  [[self.daemonConn remoteObjectProxy]
+    databaseRuleAddRules:@[ newRule ]
+              cleanSlate:NO
+                   reply:^(NSError *error) {
+                     if (error) {
+                       printf("Failed to modify rules: %s",
+                              [error.localizedDescription UTF8String]);
+                       LOGD(@"Failure reason: %@", error.localizedFailureReason);
+                       exit(1);
+                     } else {
+                       NSString *ruleType;
+                       switch (newRule.type) {
+                         case SNTRuleTypeCertificate:
+                         case SNTRuleTypeBinary: {
+                           ruleType = @"SHA-256";
+                           break;
+                         }
+                         case SNTRuleTypeTeamID: {
+                           ruleType = @"Team ID";
+                           break;
+                         }
+                         default: ruleType = @"(Unknown type)";
+                       }
+                       if (newRule.state == SNTRuleStateRemove) {
+                         printf("Removed rule for %s: %s.\n", [ruleType UTF8String],
+                                [newRule.identifier UTF8String]);
+                       } else {
+                         printf("Added rule for %s: %s.\n", [ruleType UTF8String],
+                                [newRule.identifier UTF8String]);
+                       }
+                       exit(0);
+                     }
+                   }];
 }
 
 - (void)printStateOfRule:(SNTRule *)rule daemonConnection:(MOLXPCConnection *)daemonConn {
