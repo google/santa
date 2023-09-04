@@ -464,6 +464,23 @@ VerifyPostActionBlock verifyPostAction = ^PostActionBlock(SNTAction wantAction) 
   [self checkMetricCounters:kAllowTransitive expected:@0];
 }
 
+- (void)testThatPlatformBinaryCachedDecisionsSetModeCorrectly {
+  OCMStub([self.mockFileInfo isMachO]).andReturn(YES);
+  OCMStub([self.mockFileInfo SHA256]).andReturn(@"a");
+  OCMStub([self.mockConfigurator clientMode]).andReturn(SNTClientModeLockdown);
+  OCMStub([self.mockConfigurator enableTransitiveRules]).andReturn(NO);
+
+  SNTCachedDecision *cd = [[SNTCachedDecision alloc] init];
+  cd.decision = SNTEventStateAllowBinary;
+  OCMStub([self.mockRuleDatabase criticalSystemBinaries]).andReturn(@{@"a" : cd});
+
+  [self validateExecEvent:SNTActionRespondAllow];
+  [self checkMetricCounters:kAllowBinary expected:@1];
+  [self checkMetricCounters:kAllowUnknown expected:@0];
+
+  XCTAssertEqual(cd.decisionClientMode, SNTClientModeLockdown);
+}
+
 - (void)testDefaultDecision {
   OCMStub([self.mockFileInfo isMachO]).andReturn(YES);
   OCMStub([self.mockFileInfo SHA256]).andReturn(@"a");
