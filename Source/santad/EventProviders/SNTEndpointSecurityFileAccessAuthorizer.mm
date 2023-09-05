@@ -238,6 +238,40 @@ es_auth_result_t FileAccessPolicyDecisionToESAuthResult(FileAccessPolicyDecision
   }
 }
 
+bool IsBlockDecision(FileAccessPolicyDecision decision) {
+  return decision == FileAccessPolicyDecision::kDenied ||
+         decision == FileAccessPolicyDecision::kDeniedInvalidSignature;
+}
+
+FileAccessPolicyDecision ApplyOverrideToDecision(FileAccessPolicyDecision decision,
+                                                 SNTOverrideFileAccessAction overrideAction) {
+  switch (overrideAction) {
+    // When no override should be applied, return the decision unmodified
+    case SNTOverrideFileAccessActionNone: return decision;
+
+    // When the decision should be overridden to be audit only, only change the
+    // decision if it was going to deny the operation.
+    case SNTOverrideFileAccessActionAuditOnly:
+      if (IsBlockDecision(decision)) {
+        return FileAccessPolicyDecision::kAllowedAuditOnly;
+      } else {
+        return decision;
+      }
+
+    // If the override action is to disable policy, return a decision that will
+    // be treated as if no policy applied to the operation.
+    case SNTOverrideFileAccessActionDiable: return FileAccessPolicyDecision::kNoPolicy;
+
+    default:
+      // This is a programming error. Bail.
+      LOGE(@"Invalid override file access action encountered: %d",
+           static_cast<int>(overrideAction));
+      [NSException
+         raise:@"Invalid SNTOverrideFileAccessAction"
+        format:@"Invalid SNTOverrideFileAccessAction: %d", static_cast<int>(overrideAction)];
+  }
+}
+
 bool ShouldLogDecision(FileAccessPolicyDecision decision) {
   switch (decision) {
     case FileAccessPolicyDecision::kDenied: return true;
@@ -345,6 +379,7 @@ bool ShouldMessageTTY(const std::shared_ptr<WatchItemPolicy> &policy, const Mess
 }
 
 @interface SNTEndpointSecurityFileAccessAuthorizer ()
+@property SNTConfigurator *configurator;
 @property SNTDecisionCache *decisionCache;
 @property bool isSubscribed;
 @end
@@ -381,6 +416,8 @@ bool ShouldMessageTTY(const std::shared_ptr<WatchItemPolicy> &policy, const Mess
     _decisionCache = decisionCache;
     _ttyWriter = std::move(ttyWriter);
     _metrics = std::move(metrics);
+
+    _configurator = [SNTConfigurator configurator];
 
     _rateLimiter = RateLimiter::Create(_metrics, santa::santad::Processor::kFileAccessAuthorizer,
                                        kDefaultRateLimitQPS);
@@ -565,7 +602,7 @@ bool ShouldMessageTTY(const std::shared_ptr<WatchItemPolicy> &policy, const Mess
 
   // If the process is signed but has an invalid signature, it is denied
   if (((msg->process->codesigning_flags & (CS_SIGNED | CS_VALID)) == CS_SIGNED) &&
-      [[SNTConfigurator configurator] enableBadSignatureProtection]) {
+      [self.configurator enableBadSignatureProtection]) {
     // TODO(mlw): Think about how to make stronger guarantees here to handle
     // programs becoming invalid after first being granted access. Maybe we
     // should only allow things that have hardened runtime flags set?
@@ -621,10 +658,10 @@ bool ShouldMessageTTY(const std::shared_ptr<WatchItemPolicy> &policy, const Mess
                                    target:(const PathTarget &)target
                                    policy:
                                      (std::optional<std::shared_ptr<WatchItemPolicy>>)optionalPolicy
-                            policyVersion:(const std::string &)policyVersion {
-  FileAccessPolicyDecision policyDecision = [self applyPolicy:optionalPolicy
-                                                    forTarget:target
-                                                    toMessage:msg];
+                            policyVersion:(const std::string &)policyVersion
+                           overrideAction:(SNTOverrideFileAccessAction)overrideAction {
+  FileAccessPolicyDecision policyDecision = ApplyOverrideToDecision(
+    [self applyPolicy:optionalPolicy forTarget:target toMessage:msg], overrideAction);
 
   // Note: If ShouldLogDecision, it shouldn't be possible for optionalPolicy
   // to not have a value. Performing the check just in case to prevent a crash.
@@ -704,7 +741,8 @@ bool ShouldMessageTTY(const std::shared_ptr<WatchItemPolicy> &policy, const Mess
   return policyDecision;
 }
 
-- (void)processMessage:(const Message &)msg {
+- (void)processMessage:(const Message &)msg
+        overrideAction:(SNTOverrideFileAccessAction)overrideAction {
   std::vector<PathTarget> targets;
   targets.reserve(2);
   PopulatePathTargets(msg, targets);
@@ -726,7 +764,8 @@ bool ShouldMessageTTY(const std::shared_ptr<WatchItemPolicy> &policy, const Mess
     FileAccessPolicyDecision curDecision = [self handleMessage:msg
                                                         target:targets[i]
                                                         policy:versionAndPolicies.second[i]
-                                                 policyVersion:versionAndPolicies.first];
+                                                 policyVersion:versionAndPolicies.first
+                                                overrideAction:overrideAction];
 
     policyResult =
       CombinePolicyResults(policyResult, FileAccessPolicyDecisionToESAuthResult(curDecision));
@@ -751,6 +790,16 @@ bool ShouldMessageTTY(const std::shared_ptr<WatchItemPolicy> &policy, const Mess
 
 - (void)handleMessage:(santa::santad::event_providers::endpoint_security::Message &&)esMsg
    recordEventMetrics:(void (^)(EventDisposition))recordEventMetrics {
+  SNTOverrideFileAccessAction overrideAction = [self.configurator overrideFileAccessAction];
+
+  // If the override action is set to Disable, return immediately.
+  if (overrideAction == SNTOverrideFileAccessActionDiable) {
+    if (esMsg->action_type == ES_ACTION_TYPE_AUTH) {
+      [self respondToMessage:esMsg withAuthResult:ES_AUTH_RESULT_ALLOW cacheable:false];
+    }
+    return;
+  }
+
   if (esMsg->event_type == ES_EVENT_TYPE_AUTH_OPEN &&
       !(esMsg->event.open.fflag & kOpenFlagsIndicatingWrite)) {
     if (self->_readsCache.Exists(esMsg->process, ^std::pair<pid_t, pid_t> {
@@ -769,7 +818,7 @@ bool ShouldMessageTTY(const std::shared_ptr<WatchItemPolicy> &policy, const Mess
 
   [self processMessage:std::move(esMsg)
                handler:^(const Message &msg) {
-                 [self processMessage:msg];
+                 [self processMessage:msg overrideAction:overrideAction];
                  recordEventMetrics(EventDisposition::kProcessed);
                }];
 }
