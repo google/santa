@@ -13,7 +13,6 @@
 ///    limitations under the License.
 
 #import "Source/common/SNTConfigurator.h"
-#import "Source/common/SNTCommonEnums.h"
 
 #include <sys/stat.h>
 
@@ -959,7 +958,11 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
 }
 
 - (void)setSyncServerOverrideFileAccessAction:(NSString *)action {
-  [self updateSyncStateForKey:kOverrideFileAccessActionKey value:action];
+  NSString *a = [action lowercaseString];
+  if ([a isEqualToString:@"auditonly"] || [a isEqualToString:@"disable"] ||
+      [a isEqualToString:@"none"] || [a isEqualToString:@""]) {
+    [self updateSyncStateForKey:kOverrideFileAccessActionKey value:action];
+  }
 }
 
 - (SNTOverrideFileAccessAction)overrideFileAccessAction {
