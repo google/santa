@@ -22,6 +22,7 @@
 #include <sys/fcntl.h>
 #include <sys/types.h>
 #include <cstring>
+#include <utility>
 
 #include <array>
 #include <cstddef>
@@ -32,6 +33,7 @@
 
 #include "Source/common/Platform.h"
 #include "Source/common/SNTCachedDecision.h"
+#include "Source/common/SNTCommonEnums.h"
 #import "Source/common/SNTConfigurator.h"
 #include "Source/common/TestUtils.h"
 #include "Source/santad/DataLayer/WatchItemPolicy.h"
@@ -60,6 +62,9 @@ extern es_auth_result_t FileAccessPolicyDecisionToESAuthResult(FileAccessPolicyD
 extern bool ShouldLogDecision(FileAccessPolicyDecision decision);
 extern bool ShouldNotifyUserDecision(FileAccessPolicyDecision decision);
 extern es_auth_result_t CombinePolicyResults(es_auth_result_t result1, es_auth_result_t result2);
+extern bool IsBlockDecision(FileAccessPolicyDecision decision);
+extern FileAccessPolicyDecision ApplyOverrideToDecision(FileAccessPolicyDecision decision,
+                                                        SNTOverrideFileAccessAction overrideAction);
 
 static inline std::pair<dev_t, ino_t> FileID(const es_file_t &file) {
   return std::make_pair(file.stat.st_dev, file.stat.st_ino);
@@ -259,6 +264,63 @@ void ClearWatchItemPolicyProcess(WatchItemPolicy::Process &proc) {
   for (const auto &kv : policyDecisionToShouldLog) {
     XCTAssertEqual(ShouldNotifyUserDecision(kv.first), kv.second);
   }
+}
+
+- (void)testIsBlockDecision {
+  std::map<FileAccessPolicyDecision, bool> policyDecisionToIsBlockDecision = {
+    {FileAccessPolicyDecision::kNoPolicy, false},
+    {FileAccessPolicyDecision::kDenied, true},
+    {FileAccessPolicyDecision::kDeniedInvalidSignature, true},
+    {FileAccessPolicyDecision::kAllowed, false},
+    {FileAccessPolicyDecision::kAllowedReadAccess, false},
+    {FileAccessPolicyDecision::kAllowedAuditOnly, false},
+    {(FileAccessPolicyDecision)123, false},
+  };
+
+  for (const auto &kv : policyDecisionToIsBlockDecision) {
+    XCTAssertEqual(ShouldNotifyUserDecision(kv.first), kv.second);
+  }
+}
+
+- (void)testApplyOverrideToDecision {
+  std::map<std::pair<FileAccessPolicyDecision, SNTOverrideFileAccessAction>,
+           FileAccessPolicyDecision>
+    decisionAndOverrideToDecision = {
+      // Override action: None - Policy shouldn't be changed
+      {{FileAccessPolicyDecision::kNoPolicy, SNTOverrideFileAccessActionNone},
+       FileAccessPolicyDecision::kNoPolicy},
+      {{FileAccessPolicyDecision::kDenied, SNTOverrideFileAccessActionNone},
+       FileAccessPolicyDecision::kDenied},
+
+      // Override action: AuditOnly - Policy should be changed only on blocked decisions
+      {{FileAccessPolicyDecision::kNoPolicy, SNTOverrideFileAccessActionAuditOnly},
+       FileAccessPolicyDecision::kNoPolicy},
+      {{FileAccessPolicyDecision::kAllowedAuditOnly, SNTOverrideFileAccessActionAuditOnly},
+       FileAccessPolicyDecision::kAllowedAuditOnly},
+      {{FileAccessPolicyDecision::kAllowedReadAccess, SNTOverrideFileAccessActionAuditOnly},
+       FileAccessPolicyDecision::kAllowedReadAccess},
+      {{FileAccessPolicyDecision::kDenied, SNTOverrideFileAccessActionAuditOnly},
+       FileAccessPolicyDecision::kAllowedAuditOnly},
+      {{FileAccessPolicyDecision::kDeniedInvalidSignature, SNTOverrideFileAccessActionAuditOnly},
+       FileAccessPolicyDecision::kAllowedAuditOnly},
+
+      // Override action: Disable - Always changes the decision to be no policy applied
+      {{FileAccessPolicyDecision::kAllowed, SNTOverrideFileAccessActionDiable},
+       FileAccessPolicyDecision::kNoPolicy},
+      {{FileAccessPolicyDecision::kDenied, SNTOverrideFileAccessActionDiable},
+       FileAccessPolicyDecision::kNoPolicy},
+      {{FileAccessPolicyDecision::kAllowedReadAccess, SNTOverrideFileAccessActionDiable},
+       FileAccessPolicyDecision::kNoPolicy},
+      {{FileAccessPolicyDecision::kAllowedAuditOnly, SNTOverrideFileAccessActionDiable},
+       FileAccessPolicyDecision::kNoPolicy},
+  };
+
+  for (const auto &kv : decisionAndOverrideToDecision) {
+    XCTAssertEqual(ApplyOverrideToDecision(kv.first.first, kv.first.second), kv.second);
+  }
+
+  XCTAssertThrows(
+    ApplyOverrideToDecision(FileAccessPolicyDecision::kAllowed, (SNTOverrideFileAccessAction)123));
 }
 
 - (void)testCombinePolicyResults {
@@ -717,7 +779,7 @@ void ClearWatchItemPolicyProcess(WatchItemPolicy::Process &proc) {
   XCTBubbleMockVerifyAndClearExpectations(mockESApi.get());
 }
 
-- (void)testGetPathTargets {
+- (void)testPopulatePathTargets {
   // This test ensures that the `GetPathTargets` functions returns the
   // expected combination of targets for each handled event variant
   es_file_t testFile1 = MakeESFile("test_file_1", MakeStat(100));

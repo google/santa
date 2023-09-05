@@ -12,6 +12,7 @@
 ///    See the License for the specific language governing permissions and
 ///    limitations under the License.
 
+#include <Foundation/Foundation.h>
 #import <XCTest/XCTest.h>
 
 #import <MOLXPCConnection/MOLXPCConnection.h>
@@ -281,6 +282,7 @@
   XCTAssertEqual(self.syncState.eventBatchSize, 100);
   XCTAssertNil(self.syncState.allowlistRegex);
   XCTAssertNil(self.syncState.blocklistRegex);
+  XCTAssertNil(self.syncState.overrideFileAccessAction);
 }
 
 - (void)testPreflightTurnOnBlockUSBMount {
@@ -316,6 +318,32 @@
 
   XCTAssertTrue([sut sync]);
   XCTAssertNil(self.syncState.blockUSBMount);
+}
+
+- (void)testPreflightOverrideFileAccessAction {
+  [self setupDefaultDaemonConnResponses];
+  SNTSyncPreflight *sut = [[SNTSyncPreflight alloc] initWithState:self.syncState];
+
+  NSData *respData = [@"{\"override_file_access_action\": \"AuditOnly\", \"client_mode\": "
+                      @"\"LOCKDOWN\", \"batch_size\": 100}" dataUsingEncoding:NSUTF8StringEncoding];
+
+  [self stubRequestBody:respData response:nil error:nil validateBlock:nil];
+
+  XCTAssertTrue([sut sync]);
+  XCTAssertEqualObjects(self.syncState.overrideFileAccessAction, @"AuditOnly");
+}
+
+- (void)testPreflightOverrideFileAccessActionAbsent {
+  [self setupDefaultDaemonConnResponses];
+  SNTSyncPreflight *sut = [[SNTSyncPreflight alloc] initWithState:self.syncState];
+
+  NSData *respData = [@"{\"client_mode\": \"LOCKDOWN\", \"batch_size\": 100}"
+    dataUsingEncoding:NSUTF8StringEncoding];
+
+  [self stubRequestBody:respData response:nil error:nil validateBlock:nil];
+
+  XCTAssertTrue([sut sync]);
+  XCTAssertNil(self.syncState.overrideFileAccessAction);
 }
 
 - (void)testPreflightDatabaseCounts {
@@ -603,6 +631,10 @@
   self.syncState.blockUSBMount = @0;
   XCTAssertTrue([sut sync]);
   OCMVerify([self.daemonConnRop setBlockUSBMount:NO reply:OCMOCK_ANY]);
+
+  self.syncState.overrideFileAccessAction = @"Disable";
+  XCTAssertTrue([sut sync]);
+  OCMVerify([self.daemonConnRop setOverrideFileAccessAction:@"Disable" reply:OCMOCK_ANY]);
 }
 
 @end
