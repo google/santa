@@ -54,6 +54,7 @@ extern NSString *const kEnableTransitiveRulesDeprecated;
 extern NSString *const kEnableTransitiveRulesSuperDeprecated;
 extern NSString *const kEnableAllEventUpload;
 extern NSString *const kDisableUnknownEventUpload;
+extern NSString *const kOverrideFileAccessAction;
 
 extern NSString *const kEvents;
 extern NSString *const kFileSHA256;

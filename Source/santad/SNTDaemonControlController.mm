@@ -252,6 +252,11 @@ double watchdogRAMPeak = 0;
   reply();
 }
 
+- (void)setOverrideFileAccessAction:(NSString *)action reply:(void (^)(void))reply {
+  [[SNTConfigurator configurator] setSyncServerOverrideFileAccessAction:action];
+  reply();
+}
+
 - (void)enableBundles:(void (^)(BOOL))reply {
   reply([SNTConfigurator configurator].enableBundles);
 }

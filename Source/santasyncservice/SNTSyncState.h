@@ -68,6 +68,7 @@
 @property NSNumber *blockUSBMount;
 // Array of mount args for the forced remounting feature.
 @property NSArray *remountUSBMode;
+@property NSString *overrideFileAccessAction;
 
 /// Clean sync flag, if True, all existing rules should be deleted before inserting any new rules.
 @property BOOL cleanSync;
