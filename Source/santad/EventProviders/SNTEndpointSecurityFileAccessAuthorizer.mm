@@ -684,6 +684,7 @@ bool ShouldMessageTTY(const std::shared_ptr<WatchItemPolicy> &policy, const Mess
                                                                       policy->custom_message)];
 
         NSMutableString *blockMsg = [NSMutableString stringWithCapacity:1024];
+        // Escape sequences `\033[1m` and `\033[0m` begin/end bold lettering
         [blockMsg appendFormat:@"\n\033[1mSanta\033[0m\n\n%@\n\n", attrStr.string];
         [blockMsg appendFormat:@"\033[1mAccessed Path:\033[0m %@\n"
                                @"\033[1mRule Version: \033[0m %@\n"

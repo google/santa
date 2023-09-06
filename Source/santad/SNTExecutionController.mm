@@ -306,6 +306,7 @@ static NSString *const kPrinterProxyPostMonterey =
                                                                     customMessage:cd.customMsg];
 
           NSMutableString *msg = [NSMutableString stringWithCapacity:1024];
+          // Escape sequences `\033[1m` and `\033[0m` begin/end bold lettering
           [msg appendFormat:@"\n\033[1mSanta\033[0m\n\n%@\n\n", s.string];
           [msg appendFormat:@"\033[1mPath:      \033[0m %@\n"
                             @"\033[1mIdentifier:\033[0m %@\n"
