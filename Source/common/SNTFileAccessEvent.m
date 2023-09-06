@@ -14,7 +14,7 @@
 
 #import "Source/common/SNTFileAccessEvent.h"
 
-#include "Source/common/CertificateHelpers.h"
+#import "Source/common/CertificateHelpers.h"
 
 @implementation SNTFileAccessEvent
 
