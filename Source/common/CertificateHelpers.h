@@ -12,9 +12,6 @@
 /// See the License for the specific language governing permissions and
 /// limitations under the License.
 
-#ifndef SANTA__COMMON__CERTIFICATEHELPERS_H
-#define SANTA__COMMON__CERTIFICATEHELPERS_H
-
 #include <Foundation/Foundation.h>
 #include <MOLCertificate/MOLCertificate.h>
 #include <sys/cdefs.h>
@@ -44,5 +41,3 @@ NSString *Publisher(NSArray<MOLCertificate *> *certs, NSString *teamID);
 NSArray<id> *CertificateChain(NSArray<MOLCertificate *> *certs);
 
 __END_DECLS
-
-#endif
