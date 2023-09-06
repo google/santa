@@ -691,7 +691,7 @@ bool ShouldMessageTTY(const std::shared_ptr<WatchItemPolicy> &policy, const Mess
                                @"\n"
                                @"\033[1mProcess Path: \033[0m %@\n"
                                @"\033[1mIdentifier:   \033[0m %@\n"
-                               @"\033[1mParent:       \033[0m %@\n",
+                               @"\033[1mParent:       \033[0m %@\n\n",
                                event.accessedPath, event.ruleVersion, event.ruleName,
                                event.filePath, event.fileSHA256, event.parentName];
 

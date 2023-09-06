@@ -42,7 +42,7 @@
 
   self.window =
     [[NSWindow alloc] initWithContentRect:NSMakeRect(0, 0, 0, 0)
-                                styleMask:NSWindowStyleMaskClosable | NSWindowStyleMaskTitled
+                                styleMask:NSWindowStyleMaskBorderless
                                   backing:NSBackingStoreBuffered
                                     defer:NO];
 
@@ -56,8 +56,8 @@
 
   self.window.delegate = self;
 
-  // Add app to Cmd+Tab and Dock.
-  NSApp.activationPolicy = NSApplicationActivationPolicyRegular;
+  // Make sure app doesn't appear in Cmd+Tab or Dock.
+  NSApp.activationPolicy = NSApplicationActivationPolicyAccessory;
 
   [super showWindow:sender];
 }
