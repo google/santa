@@ -27,7 +27,8 @@ __BEGIN_DECLS
   @param certs A certificate chain
   @param teamID A team ID to be displayed for apps from the App Store
 
-  @return A pretty string
+  @return A string that tries to be more helpful to users by extracting
+  appropriate information from the certificate chain.
 */
 NSString *Publisher(NSArray<MOLCertificate *> *certs, NSString *teamID);
 
