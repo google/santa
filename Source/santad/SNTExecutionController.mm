@@ -301,7 +301,7 @@ static NSString *const kPrinterProxyPostMonterey =
 
       if (!cd.silentBlock) {
         if (!config.enableSilentTTYMode && self->_ttyWriter && TTYWriter::CanWrite(targetProc)) {
-          // Let the user know what happenedon the terminal
+          // Let the user know what happened on the terminal
           NSAttributedString *s = [SNTBlockMessage attributedBlockMessageForEvent:se
                                                                     customMessage:cd.customMsg];
 
