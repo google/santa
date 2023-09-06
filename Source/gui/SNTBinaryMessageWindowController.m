@@ -17,7 +17,7 @@
 #import <MOLCertificate/MOLCertificate.h>
 #import <SecurityInterface/SFCertificatePanel.h>
 
-#include "Source/common/CertificateHelpers.h"
+#import "Source/common/CertificateHelpers.h"
 #import "Source/common/SNTBlockMessage.h"
 #import "Source/common/SNTConfigurator.h"
 #import "Source/common/SNTStoredEvent.h"
