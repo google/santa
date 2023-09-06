@@ -40,11 +40,10 @@
     [self.window orderOut:sender];
   }
 
-  self.window =
-    [[NSWindow alloc] initWithContentRect:NSMakeRect(0, 0, 0, 0)
-                                styleMask:NSWindowStyleMaskBorderless
-                                  backing:NSBackingStoreBuffered
-                                    defer:NO];
+  self.window = [[NSWindow alloc] initWithContentRect:NSMakeRect(0, 0, 0, 0)
+                                            styleMask:NSWindowStyleMaskBorderless
+                                              backing:NSBackingStoreBuffered
+                                                defer:NO];
 
   self.window.contentViewController = [SNTFileAccessMessageWindowViewFactory
     createWithWindow:self.window
