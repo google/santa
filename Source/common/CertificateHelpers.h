@@ -12,8 +12,8 @@
 /// See the License for the specific language governing permissions and
 /// limitations under the License.
 
-#include <Foundation/Foundation.h>
-#include <MOLCertificate/MOLCertificate.h>
+#import <Foundation/Foundation.h>
+#import <MOLCertificate/MOLCertificate.h>
 #include <sys/cdefs.h>
 
 __BEGIN_DECLS
