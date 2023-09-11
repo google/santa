@@ -18,28 +18,15 @@ http_archive(
 
 http_archive(
     name = "build_bazel_rules_apple",
-    sha256 = "f003875c248544009c8e8ae03906bbdacb970bc3e5931b40cd76cadeded99632",  # 1.1.0
-    urls = ["https://github.com/bazelbuild/rules_apple/releases/download/1.1.0/rules_apple.1.1.0.tar.gz"],
+    sha256 = "8ac4c7997d863f3c4347ba996e831b5ec8f7af885ee8d4fe36f1c3c8f0092b2c",
+    url = "https://github.com/bazelbuild/rules_apple/releases/download/2.5.0/rules_apple.2.5.0.tar.gz",
 )
 
 load("@build_bazel_rules_apple//apple:repositories.bzl", "apple_rules_dependencies")
 
 apple_rules_dependencies()
 
-load("@build_bazel_apple_support//lib:repositories.bzl", "apple_support_dependencies")
-
-apple_support_dependencies()
-
-http_archive(
-    name = "build_bazel_rules_swift",
-    sha256 = "84e2cc1c9e3593ae2c0aa4c773bceeb63c2d04c02a74a6e30c1961684d235593",
-    url = "https://github.com/bazelbuild/rules_swift/releases/download/1.5.1/rules_swift.1.5.1.tar.gz",
-)
-
-load(
-    "@build_bazel_rules_swift//swift:repositories.bzl",
-    "swift_rules_dependencies",
-)
+load("@build_bazel_rules_swift//swift:repositories.bzl", "swift_rules_dependencies")
 
 swift_rules_dependencies()
 
@@ -49,6 +36,10 @@ load(
 )
 
 swift_rules_extra_dependencies()
+
+load("@build_bazel_apple_support//lib:repositories.bzl", "apple_support_dependencies")
+
+apple_support_dependencies()
 
 # Hedron Bazel Compile Commands Extractor
 # Allows integrating with clangd
