@@ -140,6 +140,16 @@
       case SNTRuleTypeSigningID:
         switch (rule.state) {
           case SNTRuleStateAllow: cd.decision = SNTEventStateAllowSigningID; return cd;
+          case SNTRuleStateAllowCompiler:
+            // If transitive rules are enabled, then SNTRuleStateAllowListCompiler rules
+            // become SNTEventStateAllowCompiler decisions.  Otherwise we treat the rule as if
+            // it were SNTRuleStateAllowSigningID.
+            if ([self.configurator enableTransitiveRules]) {
+              cd.decision = SNTEventStateAllowCompiler;
+            } else {
+              cd.decision = SNTEventStateAllowSigningID;
+            }
+            return cd;
           case SNTRuleStateSilentBlock:
             cd.silentBlock = YES;
             // intentional fallthrough
