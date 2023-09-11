@@ -231,7 +231,7 @@ static NSString *const kPrinterProxyPostMonterey =
   // Respond with the decision.
   postAction(action);
 
-  // Increment counters;
+  // Increment metric counters
   [self incrementEventCounters:cd.decision];
 
   // Log to database if necessary.
