@@ -156,33 +156,19 @@ double watchdogRAMPeak = 0;
   reply([SNTConfigurator configurator].staticRules.count);
 }
 
-- (void)retrieveAllRules:(void (^)(NSArray *, NSError *))reply {
+- (void)retrieveAllRules:(void (^)(NSArray<SNTRule *> *, NSError *))reply {
   SNTConfigurator *config = [SNTConfigurator configurator];
 
-  // Do not return any rules if syncBaseURL is set and return an error
+  // Do not return any rules if syncBaseURL is set and return an error.
   if (config.syncBaseURL) {
     reply(@[], [NSError errorWithDomain:@"com.google.santad"
-                                   code:1  // TODO define error code
+                                   code:403  // (TODO) define error code
                                userInfo:@{NSLocalizedDescriptionKey : @"SyncBaseURL is set"}]);
     return;
   }
 
-  SNTRuleTable *rdb = [SNTDatabaseController ruleTable];
-  NSArray *rules = [rdb retrieveAllRules];
-
-  // Convert Rules to an NSDictionary.
-  NSMutableArray *rulesAsDicts = [[NSMutableArray alloc] init];
-
-  for (SNTRule *rule in rules) {
-    // Omit transitive and remove rules as they're not relevan.
-    if (rule.state == SNTRuleStateAllowTransitive || rule.state == SNTRuleStateRemove) {
-      continue;
-    }
-
-    [rulesAsDicts addObject:[rule dictionaryRepresentation]];
-  }
-
-  reply(rulesAsDicts, nil);
+  NSArray<SNTRule *> *rules = [[SNTDatabaseController ruleTable] retrieveAllRules];
+  reply(rules, nil);
 }
 
 #pragma mark Decision Ops

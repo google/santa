@@ -187,6 +187,9 @@ REGISTER_COMMAND_NAME(@"rule")
       }
       jsonFilePath = arguments[i];
     } else if ([arg caseInsensitiveCompare:@"--export"] == NSOrderedSame) {
+      if (importRules) {
+        [self printErrorUsageAndExit:@"--import and --export are mutually exclusive"];
+      }
       exportRules = YES;
       if (++i > arguments.count - 1) {
         [self printErrorUsageAndExit:@"--export requires an argument"];
@@ -207,6 +210,7 @@ REGISTER_COMMAND_NAME(@"rule")
     } else if (exportRules) {
       [self exportJSONFile:jsonFilePath];
     }
+    return;
   }
 
   if (path) {
@@ -404,40 +408,48 @@ REGISTER_COMMAND_NAME(@"rule")
 - (void)exportJSONFile:(NSString *)jsonFilePath {
   // Get the rules from the daemon and then write them to the file.
   id<SNTDaemonControlXPC> rop = [self.daemonConn synchronousRemoteObjectProxy];
-  [rop retrieveAllRules:^(NSArray<NSDictionary *> *rules, NSError *error) {
+  [rop retrieveAllRules:^(NSArray<SNTRule *> *rules, NSError *error) {
     if (error) {
       printf("Failed to get rules: %s", [error.localizedDescription UTF8String]);
       LOGD(@"Failure reason: %@", error.localizedFailureReason);
       exit(1);
-    } else {
-      if (rules.count == 0) {
-        printf("No rules to export.\n");
-        exit(1);
-      }
-      NSError *error;
-      NSOutputStream *outputStream = [[NSOutputStream alloc] initToFileAtPath:jsonFilePath
-                                                                       append:NO];
-      [outputStream open];
-
-      // Write the rules to the file.
-      // File should look like the following JSON:
-      // {"rules": [{"policy": "ALLOWLIST", "identifier": hash, "rule_type: "BINARY"},}]}
-      NSMutableDictionary *jsonRules = [[NSMutableDictionary alloc] init];
-      jsonRules[@"rules"] = rules;
-      NSData *jsonData = [NSJSONSerialization dataWithJSONObject:jsonRules
-                                                         options:NSJSONWritingPrettyPrinted
-                                                           error:&error];
-      // Print error
-      if (error) {
-        printf("Failed to jsonify rules: %s", [error.localizedDescription UTF8String]);
-        LOGD(@"Failure reason: %@", error.localizedFailureReason);
-        exit(1);
-      }
-      // Write jsonData to the file
-      [outputStream write:jsonData.bytes maxLength:jsonData.length];
-      [outputStream close];
-      exit(0);
     }
+
+    if (rules.count == 0 || !rules) {
+      printf("No rules to export.\n");
+      exit(1);
+    }
+    // Convert Rules to an NSDictionary.
+    NSMutableArray *rulesAsDicts = [[NSMutableArray alloc] init];
+
+    for (SNTRule *rule in rules) {
+      // Omit transitive and remove rules as they're not relevan.
+      if (rule.state == SNTRuleStateAllowTransitive || rule.state == SNTRuleStateRemove) {
+        continue;
+      }
+
+      [rulesAsDicts addObject:[rule dictionaryRepresentation]];
+    }
+
+    NSOutputStream *outputStream = [[NSOutputStream alloc] initToFileAtPath:jsonFilePath append:NO];
+    [outputStream open];
+
+    // Write the rules to the file.
+    // File should look like the following JSON:
+    // {"rules": [{"policy": "ALLOWLIST", "identifier": hash, "rule_type: "BINARY"},}]}
+    NSData *jsonData = [NSJSONSerialization dataWithJSONObject:@{@"rules" : rulesAsDicts}
+                                                       options:NSJSONWritingPrettyPrinted
+                                                         error:&error];
+    // Print error
+    if (error) {
+      printf("Failed to jsonify rules: %s", [error.localizedDescription UTF8String]);
+      LOGD(@"Failure reason: %@", error.localizedFailureReason);
+      exit(1);
+    }
+    // Write jsonData to the file
+    [outputStream write:jsonData.bytes maxLength:jsonData.length];
+    [outputStream close];
+    exit(0);
   }];
 }
 

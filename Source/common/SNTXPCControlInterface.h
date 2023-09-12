@@ -37,7 +37,7 @@
                              teamID:(NSString *)teamID
                           signingID:(NSString *)signingID
                               reply:(void (^)(SNTRule *))reply;
-- (void)retrieveAllRules:(void (^)(NSArray *rules, NSError *error))reply;
+- (void)retrieveAllRules:(void (^)(NSArray<SNTRule *> *rules, NSError *error))reply;
 
 ///
 ///  Config ops
