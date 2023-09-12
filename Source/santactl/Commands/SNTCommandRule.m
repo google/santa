@@ -180,6 +180,9 @@ REGISTER_COMMAND_NAME(@"rule")
       }
       jsonFilePath = arguments[i];
     } else if ([arg caseInsensitiveCompare:@"--import"] == NSOrderedSame) {
+      if (exportRules) {
+        [self printErrorUsageAndExit:@"--import and --export are mutually exclusive"];
+      }
       importRules = YES;
       if (++i > arguments.count - 1) {
         [self printErrorUsageAndExit:@"--import requires an argument"];
@@ -414,7 +417,7 @@ REGISTER_COMMAND_NAME(@"rule")
       exit(1);
     }
 
-    if (rules.count == 0 || !rules) {
+    if (rules.count == 0) {
       printf("No rules to export.\n");
       exit(1);
     }
