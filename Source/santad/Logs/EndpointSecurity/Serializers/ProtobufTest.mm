@@ -18,7 +18,7 @@
 #import <OCMock/OCMock.h>
 #import <XCTest/XCTest.h>
 #include <gmock/gmock.h>
-#include <google/protobuf/util/json_util.h>
+#include <google/protobuf/json/json.h>
 #include <gtest/gtest.h>
 #include <sys/proc_info.h>
 #include <sys/signal.h>
@@ -40,12 +40,15 @@
 #include "Source/santad/Logs/EndpointSecurity/Serializers/Protobuf.h"
 #include "Source/santad/Logs/EndpointSecurity/Serializers/Serializer.h"
 #import "Source/santad/SNTDecisionCache.h"
+#include "absl/status/status.h"
 #include "google/protobuf/any.pb.h"
 #include "google/protobuf/timestamp.pb.h"
 
 using google::protobuf::Timestamp;
-using google::protobuf::util::JsonPrintOptions;
-using google::protobuf::util::JsonStringToMessage;
+using JsonPrintOptions = google::protobuf::json::PrintOptions;
+using JsonParseOptions = ::google::protobuf::json::ParseOptions;
+using google::protobuf::json::JsonStringToMessage;
+using google::protobuf::json::MessageToJsonString;
 using santa::santad::event_providers::endpoint_security::EnrichedEventType;
 using santa::santad::event_providers::endpoint_security::EnrichedMessage;
 using santa::santad::event_providers::endpoint_security::Enricher;
@@ -157,7 +160,7 @@ std::string ConvertMessageToJsonString(const ::pbv1::SantaMessage &santaMsg) {
   const google::protobuf::Message &message = SantaMessageEvent(santaMsg);
 
   std::string json;
-  XCTAssertTrue(google::protobuf::util::MessageToJsonString(message, &json, options).ok());
+  XCTAssertTrue(MessageToJsonString(message, &json, options).ok());
   return json;
 }
 
@@ -236,9 +239,10 @@ void SerializeAndCheck(es_event_type_t eventType,
     if (json) {
       // Parse the jsonified string into the protobuf
       // gotData = protoStr;
-      google::protobuf::util::JsonParseOptions options;
+      JsonParseOptions options;
       options.ignore_unknown_fields = true;
-      google::protobuf::util::Status status = JsonStringToMessage(protoStr, &santaMsg, options);
+      absl::Status status = JsonStringToMessage(protoStr, &santaMsg, options);
+      XCTAssertTrue(status.ok());
       gotData = ConvertMessageToJsonString(santaMsg);
     } else {
       XCTAssertTrue(santaMsg.ParseFromString(protoStr));

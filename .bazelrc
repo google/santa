@@ -9,6 +9,7 @@ build --copt=-Wno-unknown-warning-option
 build --copt=-Wno-error=deprecated-non-prototype
 build --per_file_copt=.*\.mm\$@-std=c++17
 build --cxxopt=-std=c++17
+build --host_cxxopt=-std=c++17
 
 build --copt=-DSANTA_OPEN_SOURCE=1
 build --cxxopt=-DSANTA_OPEN_SOURCE=1

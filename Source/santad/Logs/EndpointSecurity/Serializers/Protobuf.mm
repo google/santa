@@ -17,8 +17,7 @@
 #include <EndpointSecurity/EndpointSecurity.h>
 #include <Kernel/kern/cs_blobs.h>
 #include <bsm/libbsm.h>
-#include <google/protobuf/stubs/status.h>
-#include <google/protobuf/util/json_util.h>
+#include <google/protobuf/json/json.h>
 #include <mach/message.h>
 #include <math.h>
 #include <sys/proc_info.h>
@@ -36,12 +35,13 @@
 #include "Source/santad/EventProviders/EndpointSecurity/EndpointSecurityAPI.h"
 #include "Source/santad/Logs/EndpointSecurity/Serializers/Utilities.h"
 #import "Source/santad/SNTDecisionCache.h"
+#include "absl/status/status.h"
 #include "google/protobuf/timestamp.pb.h"
 
 using google::protobuf::Arena;
 using google::protobuf::Timestamp;
-using google::protobuf::util::JsonPrintOptions;
-using google::protobuf::util::MessageToJsonString;
+using JsonPrintOptions = google::protobuf::json::PrintOptions;
+using google::protobuf::json::MessageToJsonString;
 
 using santa::common::NSStringToUTF8StringView;
 using santa::santad::event_providers::endpoint_security::EndpointSecurityAPI;
@@ -401,7 +401,7 @@ std::vector<uint8_t> Protobuf::FinalizeProto(::pbv1::SantaMessage *santa_msg) {
     options.preserve_proto_field_names = true;
     std::string json;
 
-    google::protobuf::util::Status status = MessageToJsonString(*santa_msg, &json, options);
+    absl::Status status = MessageToJsonString(*santa_msg, &json, options);
 
     if (!status.ok()) {
       LOGE(@"Failed to convert protobuf to JSON: %s", status.ToString().c_str());
