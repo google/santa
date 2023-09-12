@@ -464,6 +464,63 @@ VerifyPostActionBlock verifyPostAction = ^PostActionBlock(SNTAction wantAction) 
   [self checkMetricCounters:kAllowTransitive expected:@0];
 }
 
+- (void)testSigningIDAllowCompilerRule {
+  OCMStub([self.mockFileInfo isMachO]).andReturn(YES);
+  OCMStub([self.mockFileInfo SHA256]).andReturn(@"a");
+
+  OCMStub([self.mockConfigurator enableTransitiveRules]).andReturn(YES);
+
+  NSString *signingID = [NSString stringWithFormat:@"%s:%s", kExampleTeamID, kExampleSigningID];
+
+  SNTRule *rule = [[SNTRule alloc] init];
+  rule.state = SNTRuleStateAllowCompiler;
+  rule.type = SNTRuleTypeSigningID;
+
+  OCMStub([self.mockRuleDatabase ruleForBinarySHA256:@"a"
+                                           signingID:signingID
+                                   certificateSHA256:nil
+                                              teamID:@(kExampleTeamID)])
+    .andReturn(rule);
+
+  [self validateExecEvent:SNTActionRespondAllowCompiler
+             messageSetup:^(es_message_t *msg) {
+               msg->event.exec.target->team_id = MakeESStringToken(kExampleTeamID);
+               msg->event.exec.target->signing_id = MakeESStringToken(kExampleSigningID);
+             }];
+
+  [self checkMetricCounters:kAllowCompiler expected:@1];
+}
+
+- (void)testSigningIDAllowTransitiveRuleDisabled {
+  OCMStub([self.mockFileInfo isMachO]).andReturn(YES);
+  OCMStub([self.mockFileInfo SHA256]).andReturn(@"a");
+  OCMStub([self.mockConfigurator clientMode]).andReturn(SNTClientModeLockdown);
+  OCMStub([self.mockConfigurator enableTransitiveRules]).andReturn(NO);
+
+  SNTRule *rule = [[SNTRule alloc] init];
+  rule.state = SNTRuleStateAllowTransitive;
+  rule.type = SNTRuleTypeSigningID;
+
+  NSString *signingID = [NSString stringWithFormat:@"%s:%s", kExampleTeamID, kExampleSigningID];
+
+  OCMStub([self.mockRuleDatabase ruleForBinarySHA256:@"a"
+                                           signingID:signingID
+                                   certificateSHA256:nil
+                                              teamID:nil])
+    .andReturn(rule);
+
+  OCMExpect([self.mockEventDatabase addStoredEvent:OCMOCK_ANY]);
+
+  [self validateExecEvent:SNTActionRespondDeny
+             messageSetup:^(es_message_t *msg) {
+               msg->event.exec.target->signing_id = MakeESStringToken("com.google.santa.test");
+             }];
+
+  OCMVerifyAllWithDelay(self.mockEventDatabase, 1);
+  [self checkMetricCounters:kAllowSigningID expected:@0];
+  [self checkMetricCounters:kAllowTransitive expected:@0];
+}
+
 - (void)testThatPlatformBinaryCachedDecisionsSetModeCorrectly {
   OCMStub([self.mockFileInfo isMachO]).andReturn(YES);
   OCMStub([self.mockFileInfo SHA256]).andReturn(@"a");
