@@ -7,21 +7,20 @@ load(
 )
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
-# Abseil - Abseil LTS branch, June 2022, Patch 1
+# Abseil LTS branch, Aug 2023
 http_archive(
     name = "com_google_absl",
-    sha256 = "b9f490fae1c0d89a19073a081c3c588452461e5586e4ae31bc50a8f36339135e",
-    strip_prefix = "abseil-cpp-8c0b94e793a66495e0b1f34a5eb26bd7dc672db0",
-    urls = ["https://github.com/abseil/abseil-cpp/archive/8c0b94e793a66495e0b1f34a5eb26bd7dc672db0.zip"],
+    strip_prefix = "abseil-cpp-20230802.0",
+    urls = ["https://github.com/abseil/abseil-cpp/archive/refs/tags/20230802.0.tar.gz"],
 )
 
 http_archive(
     name = "com_google_protobuf",
     patch_args = ["-p1"],
-    patches = ["//external_patches/com_google_protobuf:10120.patch"],
-    sha256 = "73c95c7b0c13f597a6a1fec7121b07e90fd12b4ed7ff5a781253b3afe07fc077",
-    strip_prefix = "protobuf-3.21.6",
-    urls = ["https://github.com/protocolbuffers/protobuf/archive/v3.21.6.tar.gz"],
+    patches = ["//external_patches/com_google_protobuf:13636.patch"],
+    sha256 = "07d69502e58248927b58c7d7e7424135272ba5b2852a753ab6b67e62d2d29355",
+    strip_prefix = "protobuf-24.3",
+    urls = ["https://github.com/protocolbuffers/protobuf/archive/v24.3.tar.gz"],
 )
 
 # We don't directly use rules_python but several dependencies do and they disagree

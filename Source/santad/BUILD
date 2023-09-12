@@ -528,6 +528,8 @@ objc_library(
         "//Source/common:SNTStoredEvent",
         "//Source/common:String",
         "//Source/common:santa_cc_proto_library_wrapper",
+        "@com_google_absl//absl/status",
+        "@com_google_protobuf//src/google/protobuf/json",
     ],
 )
 
@@ -987,7 +989,9 @@ santa_unit_test(
         "//Source/common:TestUtils",
         "//Source/common:santa_cc_proto_library_wrapper",
         "@OCMock",
+        "@com_google_absl//absl/status",
         "@com_google_googletest//:gtest",
+        "@com_google_protobuf//src/google/protobuf/json",
     ],
 )
 

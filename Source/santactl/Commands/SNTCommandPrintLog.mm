@@ -13,7 +13,7 @@
 /// limitations under the License.
 
 #import <Foundation/Foundation.h>
-#include <google/protobuf/util/json_util.h>
+#include <google/protobuf/json/json.h>
 #include <stdlib.h>
 
 #include <iostream>
@@ -26,8 +26,8 @@
 #include "Source/santad/Logs/EndpointSecurity/Writers/FSSpool/binaryproto_proto_include_wrapper.h"
 #include "google/protobuf/any.pb.h"
 
-using google::protobuf::util::JsonPrintOptions;
-using google::protobuf::util::MessageToJsonString;
+using JsonPrintOptions = google::protobuf::json::PrintOptions;
+using google::protobuf::json::MessageToJsonString;
 using santa::fsspool::binaryproto::LogBatch;
 namespace pbv1 = ::santa::pb::v1;
 
