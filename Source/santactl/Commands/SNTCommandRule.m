@@ -204,7 +204,7 @@ REGISTER_COMMAND_NAME(@"rule")
     }
   }
 
-  if (![jsonFilePath isEqualToString:@""]) {
+  if (jsonFilePath != nil && ![jsonFilePath isEqualToString:@""]) {
     if (importRules) {
       [self importJSONFile:jsonFilePath];
     } else if (exportRules) {
