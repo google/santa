@@ -206,15 +206,6 @@ REGISTER_COMMAND_NAME(@"rule")
     }
   }
 
-  if (jsonFilePath != nil && ![jsonFilePath isEqualToString:@""]) {
-    if (importRules) {
-      [self importJSONFile:jsonFilePath];
-    } else if (exportRules) {
-      [self exportJSONFile:jsonFilePath];
-    }
-    return;
-  }
-
   if (path) {
     SNTFileInfo *fi = [[SNTFileInfo alloc] initWithPath:path];
     if (!fi.path) {
@@ -243,6 +234,16 @@ REGISTER_COMMAND_NAME(@"rule")
   if (check) {
     if (!newRule.identifier) return [self printErrorUsageAndExit:@"--check requires --identifier"];
     return [self printStateOfRule:newRule daemonConnection:self.daemonConn];
+  }
+
+  // Note this block needs to come after the check block above.
+  if (jsonFilePath.length > 0) {
+    if (importRules) {
+      [self importJSONFile:jsonFilePath];
+    } else if (exportRules) {
+      [self exportJSONFile:jsonFilePath];
+    }
+    return;
   }
 
   if (newRule.state == SNTRuleStateUnknown) {
