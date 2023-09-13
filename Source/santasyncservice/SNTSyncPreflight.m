@@ -134,6 +134,9 @@ static id EnsureType(id val, Class c) {
   self.syncState.blockUSBMount = EnsureType(resp[kBlockUSBMount], [NSNumber class]);
   self.syncState.remountUSBMode = EnsureType(resp[kRemountUSBMode], [NSArray class]);
 
+  self.syncState.overrideFileAccessAction =
+    EnsureType(resp[kOverrideFileAccessAction], [NSString class]);
+
   if ([EnsureType(resp[kCleanSync], [NSNumber class]) boolValue]) {
     SLOGD(@"Clean sync requested by server");
     self.syncState.cleanSync = YES;

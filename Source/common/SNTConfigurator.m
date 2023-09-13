@@ -13,7 +13,6 @@
 ///    limitations under the License.
 
 #import "Source/common/SNTConfigurator.h"
-#import "Source/common/SNTCommonEnums.h"
 
 #include <sys/stat.h>
 
@@ -130,6 +129,7 @@ static NSString *const kBlockedPathRegexKey = @"BlockedPathRegex";
 static NSString *const kBlockedPathRegexKeyDeprecated = @"BlacklistRegex";
 static NSString *const kEnableAllEventUploadKey = @"EnableAllEventUpload";
 static NSString *const kDisableUnknownEventUploadKey = @"DisableUnknownEventUpload";
+static NSString *const kOverrideFileAccessActionKey = @"OverrideFileAccessAction";
 
 static NSString *const kMetricFormat = @"MetricFormat";
 static NSString *const kMetricURL = @"MetricURL";
@@ -166,6 +166,7 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
       kRuleSyncLastSuccess : date,
       kSyncCleanRequired : number,
       kEnableAllEventUploadKey : number,
+      kOverrideFileAccessActionKey : string,
     };
     _forcedConfigKeyTypes = @{
       kClientModeKey : number,
@@ -236,6 +237,7 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
       kMetricExtraLabels : dictionary,
       kEnableAllEventUploadKey : number,
       kDisableUnknownEventUploadKey : number,
+      kOverrideFileAccessActionKey : string,
     };
     _defaults = [NSUserDefaults standardUserDefaults];
     [_defaults addSuiteNamed:@"com.google.santa"];
@@ -517,6 +519,10 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
 
 + (NSSet *)keyPathsForValuesAffectingUsbBlockMessage {
   return [self configStateSet];
+}
+
++ (NSSet *)keyPathsForValuesAffectingOverrideFileAccessActionKey {
+  return [self syncAndConfigStateSet];
 }
 
 #pragma mark Public Interface
@@ -949,6 +955,33 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
   if (n) return [n boolValue];
 
   return [self.configState[kBlockUSBMountKey] boolValue];
+}
+
+- (void)setSyncServerOverrideFileAccessAction:(NSString *)action {
+  NSString *a = [action lowercaseString];
+  if ([a isEqualToString:@"auditonly"] || [a isEqualToString:@"disable"] ||
+      [a isEqualToString:@"none"] || [a isEqualToString:@""]) {
+    [self updateSyncStateForKey:kOverrideFileAccessActionKey value:action];
+  }
+}
+
+- (SNTOverrideFileAccessAction)overrideFileAccessAction {
+  NSString *action = [self.syncState[kOverrideFileAccessActionKey] lowercaseString];
+
+  if (!action) {
+    action = [self.configState[kOverrideFileAccessActionKey] lowercaseString];
+    if (!action) {
+      return SNTOverrideFileAccessActionNone;
+    }
+  }
+
+  if ([action isEqualToString:@"auditonly"]) {
+    return SNTOverrideFileAccessActionAuditOnly;
+  } else if ([action isEqualToString:@"disable"]) {
+    return SNTOverrideFileAccessActionDiable;
+  } else {
+    return SNTOverrideFileAccessActionNone;
+  }
 }
 
 ///

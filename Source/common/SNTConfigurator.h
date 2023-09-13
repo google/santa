@@ -455,6 +455,25 @@
 @property(nonatomic) NSArray<NSString *> *remountUSBMode;
 
 ///
+/// If set, will override the action taken when a file access rule violation
+/// occurs. This setting will apply across all rules in the file access policy.
+///
+/// Possible values are
+///   * "AuditOnly": When a rule is violated, it will be logged, but the access
+///     will not be blocked
+///   * "Disable": No access will be logged or blocked.
+///
+/// If not set, no override will take place and the file acces spolicy will
+/// apply as configured.
+///
+@property(readonly, nonatomic) SNTOverrideFileAccessAction overrideFileAccessAction;
+
+///
+///  Set the action that will override file access policy config action
+///
+- (void)setSyncServerOverrideFileAccessAction:(NSString *)action;
+
+///
 ///  If set, this over-rides the default machine ID used for syncing.
 ///
 @property(readonly, nonatomic) NSString *machineID;

@@ -1244,6 +1244,7 @@ santa_unit_test(
         ":WatchItems",
         "//Source/common:Platform",
         "//Source/common:SNTCachedDecision",
+        "//Source/common:SNTCommonEnums",
         "//Source/common:SNTConfigurator",
         "//Source/common:TestUtils",
         "@MOLCertificate",

@@ -54,6 +54,7 @@
 - (void)setEnableTransitiveRules:(BOOL)enabled reply:(void (^)(void))reply;
 - (void)setEnableAllEventUpload:(BOOL)enabled reply:(void (^)(void))reply;
 - (void)setDisableUnknownEventUpload:(BOOL)enabled reply:(void (^)(void))reply;
+- (void)setOverrideFileAccessAction:(NSString *)action reply:(void (^)(void))reply;
 
 ///
 ///  Syncd Ops
