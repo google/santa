@@ -96,6 +96,12 @@
                                 }];
   }
 
+  if (self.syncState.overrideFileAccessAction) {
+    [rop setOverrideFileAccessAction:self.syncState.overrideFileAccessAction
+                               reply:^{
+                               }];
+  }
+
   // Update last sync success
   [rop setFullSyncLastSuccess:[NSDate date]
                         reply:^{

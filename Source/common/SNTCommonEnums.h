@@ -152,6 +152,12 @@ typedef NS_ENUM(NSInteger, SNTMetricFormatType) {
   SNTMetricFormatTypeMonarchJSON,
 };
 
+typedef NS_ENUM(NSInteger, SNTOverrideFileAccessAction) {
+  SNTOverrideFileAccessActionNone,
+  SNTOverrideFileAccessActionAuditOnly,
+  SNTOverrideFileAccessActionDiable,
+};
+
 #ifdef __cplusplus
 enum class FileAccessPolicyDecision {
   kNoPolicy,
