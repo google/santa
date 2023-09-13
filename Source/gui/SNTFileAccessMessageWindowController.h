@@ -26,7 +26,7 @@ NS_ASSUME_NONNULL_BEGIN
 API_AVAILABLE(macos(13.0))
 @interface SNTFileAccessMessageWindowController : SNTMessageWindowController <NSWindowDelegate>
 
-- (instancetype)initWithEvent:(SNTFileAccessEvent *)event message:(nullable NSString *)message;
+- (instancetype)initWithEvent:(SNTFileAccessEvent *)event customMsg:(nullable NSString *)message;
 
 @property(readonly) SNTFileAccessEvent *event;
 

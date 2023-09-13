@@ -27,7 +27,7 @@
 #import "Source/santad/SNTDecisionCache.h"
 #include "Source/santad/TTYWriter.h"
 
-typedef void (^SNTFileAccessBlockCallback)(SNTFileAccessEvent *event);
+typedef void (^SNTFileAccessBlockCallback)(SNTFileAccessEvent *event, NSString *customMsg);
 
 @interface SNTEndpointSecurityFileAccessAuthorizer
     : SNTEndpointSecurityClient <SNTEndpointSecurityDynamicEventHandler>
