@@ -156,6 +156,21 @@ double watchdogRAMPeak = 0;
   reply([SNTConfigurator configurator].staticRules.count);
 }
 
+- (void)retrieveAllRules:(void (^)(NSArray<SNTRule *> *, NSError *))reply {
+  SNTConfigurator *config = [SNTConfigurator configurator];
+
+  // Do not return any rules if syncBaseURL is set and return an error.
+  if (config.syncBaseURL) {
+    reply(@[], [NSError errorWithDomain:@"com.google.santad"
+                                   code:403  // (TODO) define error code
+                               userInfo:@{NSLocalizedDescriptionKey : @"SyncBaseURL is set"}]);
+    return;
+  }
+
+  NSArray<SNTRule *> *rules = [[SNTDatabaseController ruleTable] retrieveAllRules];
+  reply(rules, nil);
+}
+
 #pragma mark Decision Ops
 
 - (void)decisionForFilePath:(NSString *)filePath

@@ -14,6 +14,7 @@
 
 #import <XCTest/XCTest.h>
 #include "Source/common/SNTCommonEnums.h"
+#import "Source/common/SNTSyncConstants.h"
 
 #import "Source/common/SNTRule.h"
 
@@ -95,12 +96,14 @@
     @"policy" : @"ALLOWLIST",
     @"rule_type" : @"TEAMID",
     @"custom_msg" : @"A custom block message",
+    @"custom_url" : @"https://example.com",
   }];
   XCTAssertNotNil(sut);
   XCTAssertEqualObjects(sut.identifier, @"ABCDEFGHIJ");
   XCTAssertEqual(sut.type, SNTRuleTypeTeamID);
   XCTAssertEqual(sut.state, SNTRuleStateAllow);
   XCTAssertEqualObjects(sut.customMsg, @"A custom block message");
+  XCTAssertEqualObjects(sut.customURL, @"https://example.com");
 
   // TeamIDs must be 10 chars in length
   sut = [[SNTRule alloc] initWithDictionary:@{
@@ -221,5 +224,64 @@
   }];
   XCTAssertNil(sut);
 }
+
+- (void)testRuleDictionaryRepresentation {
+  NSDictionary *expectedTeamID = @{
+    @"identifier" : @"ABCDEFGHIJ",
+    @"policy" : @"ALLOWLIST",
+    @"rule_type" : @"TEAMID",
+    @"custom_msg" : @"A custom block message",
+    @"custom_url" : @"https://example.com",
+  };
+
+  SNTRule *sut = [[SNTRule alloc] initWithDictionary:expectedTeamID];
+  NSDictionary *dict = [sut dictionaryRepresentation];
+  XCTAssertEqualObjects(expectedTeamID, dict);
+
+  NSDictionary *expectedBinary = @{
+    @"identifier" : @"84de9c61777ca36b13228e2446d53e966096e78db7a72c632b5c185b2ffe68a6",
+    @"policy" : @"BLOCKLIST",
+    @"rule_type" : @"BINARY",
+    @"custom_msg" : @"",
+    @"custom_url" : @"",
+  };
+
+  sut = [[SNTRule alloc] initWithDictionary:expectedBinary];
+  dict = [sut dictionaryRepresentation];
+
+  XCTAssertEqualObjects(expectedBinary, dict);
+}
+
+- (void)testRuleStateToPolicyString {
+  NSDictionary *expected = @{
+    @"identifier" : @"84de9c61777ca36b13228e2446d53e966096e78db7a72c632b5c185b2ffe68a6",
+    @"policy" : @"ALLOWLIST",
+    @"rule_type" : @"BINARY",
+    @"custom_msg" : @"A custom block message",
+    @"custom_url" : @"https://example.com",
+  };
+
+  SNTRule *sut = [[SNTRule alloc] initWithDictionary:expected];
+  sut.state = SNTRuleStateBlock;
+  XCTAssertEqualObjects(kRulePolicyBlocklist, [sut dictionaryRepresentation][kRulePolicy]);
+  sut.state = SNTRuleStateSilentBlock;
+  XCTAssertEqualObjects(kRulePolicySilentBlocklist, [sut dictionaryRepresentation][kRulePolicy]);
+  sut.state = SNTRuleStateAllow;
+  XCTAssertEqualObjects(kRulePolicyAllowlist, [sut dictionaryRepresentation][kRulePolicy]);
+  sut.state = SNTRuleStateAllowCompiler;
+  XCTAssertEqualObjects(kRulePolicyAllowlistCompiler, [sut dictionaryRepresentation][kRulePolicy]);
+  // Invalid states
+  sut.state = SNTRuleStateRemove;
+  XCTAssertEqualObjects(kRulePolicyRemove, [sut dictionaryRepresentation][kRulePolicy]);
+}
+
+/*
+- (void)testRuleTypeToString {
+  SNTRule *sut = [[SNTRule alloc] init];
+  XCTAssertEqual(kRuleTypeBinary, [sut ruleTypeToString:@""]);//SNTRuleTypeBinary]);
+  XCTAssertEqual(kRuleTypeCertificate,[sut ruleTypeToString:SNTRuleTypeCertificate]);
+  XCTAssertEqual(kRuleTypeTeamID, [sut ruleTypeToString:SNTRuleTypeTeamID]);
+  XCTAssertEqual(kRuleTypeSigningID,[sut ruleTypeToString:SNTRuleTypeSigningID]);
+}*/
 
 @end

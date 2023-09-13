@@ -54,6 +54,8 @@ REGISTER_COMMAND_NAME(@"rule")
           @"    --compiler: allow and mark as a compiler\n"
           @"    --remove: remove existing rule\n"
           @"    --check: check for an existing rule\n"
+          @"    --import: import rules from a JSON file\n"
+          @"    --export: export rules to a JSON file\n"
           @"\n"
           @"  One of:\n"
           @"    --path {path}: path of binary/bundle to add/remove.\n"
@@ -62,6 +64,7 @@ REGISTER_COMMAND_NAME(@"rule")
           @"                   the rule state of a file.\n"
           @"    --identifier {sha256|teamID|signingID}: identifier to add/remove/check\n"
           @"    --sha256 {sha256}: hash to add/remove/check [deprecated]\n"
+          @"    --json {path}: path to a JSON file containing a list of rules to add/remove\n"
           @"\n"
           @"  Optionally:\n"
           @"    --teamid: add or check a team ID rule instead of binary\n"
@@ -81,7 +84,21 @@ REGISTER_COMMAND_NAME(@"rule")
           @"    that the signing ID is properly scoped to a developer. For the special\n"
           @"    case of platform binaries, `TeamID` should be replaced with the string\n"
           @"    \"platform\" (e.g. `platform:SigningID`). This allows for rules\n"
-          @"    targeting Apple-signed binaries that do not have a team ID.\n");
+          @"    targeting Apple-signed binaries that do not have a team ID.\n"
+          @"\n"
+          @"  Importing / Exporting Rules:\n"
+          @"    If santa is not configured to use a sync server one can export\n"
+          @"    & import its non-static rules to and from JSON files using the \n"
+          @"    --export/--import flags. These files have the following form:\n"
+          @"\n"
+          @"    {\"rules\": [{rule-dictionaries}]}\n"
+          @"    e.g. {\"rules\": [\n"
+          @"                      {\"policy\": \"BLOCKLIST\",\n"
+          @"                       \"identifier\": "
+          @"\"84de9c61777ca36b13228e2446d53e966096e78db7a72c632b5c185b2ffe68a6\"\n"
+          @"                       \"custom_url\" : \"\",\n"
+          @"                       \"custom_msg\": \"/bin/ls block for demo\"}\n"
+          @"                      ]}\n");
 }
 
 - (void)runWithArguments:(NSArray *)arguments {
@@ -103,7 +120,10 @@ REGISTER_COMMAND_NAME(@"rule")
   newRule.type = SNTRuleTypeBinary;
 
   NSString *path;
+  NSString *jsonFilePath;
   BOOL check = NO;
+  BOOL importRules = NO;
+  BOOL exportRules = NO;
 
   // Parse arguments
   for (NSUInteger i = 0; i < arguments.count; ++i) {
@@ -154,6 +174,33 @@ REGISTER_COMMAND_NAME(@"rule")
     } else if ([arg caseInsensitiveCompare:@"--force"] == NSOrderedSame) {
       // Don't do anything special.
 #endif
+    } else if ([arg caseInsensitiveCompare:@"--json"] == NSOrderedSame) {
+      if (++i > arguments.count - 1) {
+        [self printErrorUsageAndExit:@"--json requires an argument"];
+      }
+      jsonFilePath = arguments[i];
+    } else if ([arg caseInsensitiveCompare:@"--import"] == NSOrderedSame) {
+      if (exportRules) {
+        [self printErrorUsageAndExit:@"--import and --export are mutually exclusive"];
+      }
+      importRules = YES;
+      if (++i > arguments.count - 1) {
+        [self printErrorUsageAndExit:@"--import requires an argument"];
+      }
+      jsonFilePath = arguments[i];
+    } else if ([arg caseInsensitiveCompare:@"--export"] == NSOrderedSame) {
+      if (importRules) {
+        [self printErrorUsageAndExit:@"--import and --export are mutually exclusive"];
+      }
+      exportRules = YES;
+      if (++i > arguments.count - 1) {
+        [self printErrorUsageAndExit:@"--export requires an argument"];
+      }
+      jsonFilePath = arguments[i];
+    } else if ([arg caseInsensitiveCompare:@"--help"] == NSOrderedSame ||
+               [arg caseInsensitiveCompare:@"-h"] == NSOrderedSame) {
+      printf("%s\n", self.class.longHelpText.UTF8String);
+      exit(0);
     } else {
       [self printErrorUsageAndExit:[@"Unknown argument: " stringByAppendingString:arg]];
     }
@@ -187,6 +234,16 @@ REGISTER_COMMAND_NAME(@"rule")
   if (check) {
     if (!newRule.identifier) return [self printErrorUsageAndExit:@"--check requires --identifier"];
     return [self printStateOfRule:newRule daemonConnection:self.daemonConn];
+  }
+
+  // Note this block needs to come after the check block above.
+  if (jsonFilePath.length > 0) {
+    if (importRules) {
+      [self importJSONFile:jsonFilePath];
+    } else if (exportRules) {
+      [self exportJSONFile:jsonFilePath];
+    }
+    return;
   }
 
   if (newRule.state == SNTRuleStateUnknown) {
@@ -300,6 +357,103 @@ REGISTER_COMMAND_NAME(@"rule")
 
   printf("%s\n", output.UTF8String);
   exit(0);
+}
+
+- (void)importJSONFile:(NSString *)jsonFilePath {
+  // If the file exists parse it and then add the rules one at a time.
+  NSError *error;
+  NSData *data = [NSData dataWithContentsOfFile:jsonFilePath options:0 error:&error];
+  if (error) {
+    [self printErrorUsageAndExit:[NSString stringWithFormat:@"Failed to read %@: %@", jsonFilePath,
+                                                            error.localizedDescription]];
+  }
+
+  // We expect a JSON object with one key "rules". This is an array of rule
+  // objects.
+  // e.g.
+  // {"rules": [{
+  //  "policy" : "BLOCKLIST",
+  //    "rule_type" : "BINARY",
+  //    "identifier" : "84de9c61777ca36b13228e2446d53e966096e78db7a72c632b5c185b2ffe68a6"
+  //    "custom_url" : "",
+  //    "custom_msg" : "/bin/ls block for demo"
+  //  }]}
+  NSDictionary *rules = [NSJSONSerialization JSONObjectWithData:data options:0 error:&error];
+  if (error) {
+    [self printErrorUsageAndExit:[NSString stringWithFormat:@"Failed to parse %@: %@", jsonFilePath,
+                                                            error.localizedDescription]];
+  }
+
+  NSMutableArray<SNTRule *> *parsedRules = [[NSMutableArray alloc] init];
+
+  for (NSDictionary *jsonRule in rules[@"rules"]) {
+    SNTRule *rule = [[SNTRule alloc] initWithDictionary:jsonRule];
+    if (!rule) {
+      [self printErrorUsageAndExit:[NSString stringWithFormat:@"Invalid rule: %@", jsonRule]];
+    }
+    [parsedRules addObject:rule];
+  }
+
+  [[self.daemonConn remoteObjectProxy]
+    databaseRuleAddRules:parsedRules
+              cleanSlate:NO
+                   reply:^(NSError *error) {
+                     if (error) {
+                       printf("Failed to modify rules: %s",
+                              [error.localizedDescription UTF8String]);
+                       LOGD(@"Failure reason: %@", error.localizedFailureReason);
+                       exit(1);
+                     }
+                     exit(0);
+                   }];
+}
+
+- (void)exportJSONFile:(NSString *)jsonFilePath {
+  // Get the rules from the daemon and then write them to the file.
+  id<SNTDaemonControlXPC> rop = [self.daemonConn synchronousRemoteObjectProxy];
+  [rop retrieveAllRules:^(NSArray<SNTRule *> *rules, NSError *error) {
+    if (error) {
+      printf("Failed to get rules: %s", [error.localizedDescription UTF8String]);
+      LOGD(@"Failure reason: %@", error.localizedFailureReason);
+      exit(1);
+    }
+
+    if (rules.count == 0) {
+      printf("No rules to export.\n");
+      exit(1);
+    }
+    // Convert Rules to an NSDictionary.
+    NSMutableArray *rulesAsDicts = [[NSMutableArray alloc] init];
+
+    for (SNTRule *rule in rules) {
+      // Omit transitive and remove rules as they're not relevan.
+      if (rule.state == SNTRuleStateAllowTransitive || rule.state == SNTRuleStateRemove) {
+        continue;
+      }
+
+      [rulesAsDicts addObject:[rule dictionaryRepresentation]];
+    }
+
+    NSOutputStream *outputStream = [[NSOutputStream alloc] initToFileAtPath:jsonFilePath append:NO];
+    [outputStream open];
+
+    // Write the rules to the file.
+    // File should look like the following JSON:
+    // {"rules": [{"policy": "ALLOWLIST", "identifier": hash, "rule_type: "BINARY"},}]}
+    NSData *jsonData = [NSJSONSerialization dataWithJSONObject:@{@"rules" : rulesAsDicts}
+                                                       options:NSJSONWritingPrettyPrinted
+                                                         error:&error];
+    // Print error
+    if (error) {
+      printf("Failed to jsonify rules: %s", [error.localizedDescription UTF8String]);
+      LOGD(@"Failure reason: %@", error.localizedFailureReason);
+      exit(1);
+    }
+    // Write jsonData to the file
+    [outputStream write:jsonData.bytes maxLength:jsonData.length];
+    [outputStream close];
+    exit(0);
+  }];
 }
 
 @end

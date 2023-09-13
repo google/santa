@@ -79,4 +79,9 @@
 ///
 - (void)resetTimestamp;
 
+///
+///  Returns a dictionary representation of the rule.
+///
+- (NSDictionary *)dictionaryRepresentation;
+
 @end

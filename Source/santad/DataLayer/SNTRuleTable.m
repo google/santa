@@ -539,4 +539,19 @@ static void addPathsFromDefaultMuteSet(NSMutableSet *criticalPaths) API_AVAILABL
   return YES;
 }
 
+#pragma mark Querying
+
+// Retrieve all rules from the Database
+- (NSArray<SNTRule *> *)retrieveAllRules {
+  NSMutableArray<SNTRule *> *rules = [NSMutableArray array];
+  [self inDatabase:^(FMDatabase *db) {
+    FMResultSet *rs = [db executeQuery:@"SELECT * FROM rules"];
+    while ([rs next]) {
+      [rules addObject:[self ruleFromResultSet:rs]];
+    }
+    [rs close];
+  }];
+  return rules;
+}
+
 @end

@@ -102,6 +102,11 @@
 - (void)removeOutdatedTransitiveRules;
 
 ///
+///  Retrieve all rules from the database for export.
+///
+- (NSArray<SNTRule *> *)retrieveAllRules;
+
+///
 ///  A map of a file hashes to cached decisions. This is used to pre-validate and whitelist
 ///  certain critical system binaries that are integral to Santa's functionality.
 ///

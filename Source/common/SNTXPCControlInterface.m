@@ -53,6 +53,11 @@ NSString *const kBundleID = @"com.google.santa.daemon";
       forSelector:@selector(databaseRuleAddRules:cleanSlate:reply:)
     argumentIndex:0
           ofReply:NO];
+
+  [r setClasses:[NSSet setWithObjects:[NSArray class], [SNTRule class], nil]
+      forSelector:@selector(retrieveAllRules:)
+    argumentIndex:0
+          ofReply:YES];
 }
 
 + (NSXPCInterface *)controlInterface {
