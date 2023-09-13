@@ -26,7 +26,7 @@
 
 @implementation SNTFileAccessMessageWindowController
 
-- (instancetype)initWithEvent:(SNTFileAccessEvent *)event message:(nullable NSString *)message {
+- (instancetype)initWithEvent:(SNTFileAccessEvent *)event customMsg:(nullable NSString *)message {
   self = [super init];
   if (self) {
     _customMessage = message;
@@ -40,21 +40,23 @@
     [self.window orderOut:sender];
   }
 
-  self.window =
-    [[NSWindow alloc] initWithContentRect:NSMakeRect(0, 0, 0, 0)
-                                styleMask:NSWindowStyleMaskClosable | NSWindowStyleMaskTitled
-                                  backing:NSBackingStoreBuffered
-                                    defer:NO];
+  self.window = [[NSWindow alloc] initWithContentRect:NSMakeRect(0, 0, 0, 0)
+                                            styleMask:NSWindowStyleMaskBorderless
+                                              backing:NSBackingStoreBuffered
+                                                defer:NO];
 
-  self.window.contentViewController =
-    [SNTFileAccessMessageWindowViewFactory createWithWindow:self.window
-                                                      event:self.event
-                                                  customMsg:self.attributedCustomMessage];
+  self.window.contentViewController = [SNTFileAccessMessageWindowViewFactory
+    createWithWindow:self.window
+               event:self.event
+           customMsg:self.attributedCustomMessage
+     uiStateCallback:^(BOOL preventNotificationsForADay) {
+       self.silenceFutureNotifications = preventNotificationsForADay;
+     }];
 
   self.window.delegate = self;
 
-  // Add app to Cmd+Tab and Dock.
-  NSApp.activationPolicy = NSApplicationActivationPolicyRegular;
+  // Make sure app doesn't appear in Cmd+Tab or Dock.
+  NSApp.activationPolicy = NSApplicationActivationPolicyAccessory;
 
   [super showWindow:sender];
 }
@@ -66,14 +68,17 @@
 }
 
 - (NSAttributedString *)attributedCustomMessage {
-  return [SNTBlockMessage formatMessage:self.customMessage];
+  return [SNTBlockMessage attributedBlockMessageForFileAccessEvent:self.event
+                                                     customMessage:self.customMessage];
 }
 
 - (NSString *)messageHash {
-  // TODO(mlw): This is not the final form. As this feature is expanded this
-  // hash will need to be revisted to ensure it meets our needs.
-  return [NSString stringWithFormat:@"%@|%@|%d", self.event.ruleName, self.event.ruleVersion,
-                                    [self.event.pid intValue]];
+  // The hash for display de-duplication/silencing purposes is a combination of:
+  // 1. The current file access rule version
+  // 2. The name of the rule that was violated
+  // 3. The path of the process
+  return [NSString
+    stringWithFormat:@"%@|%@|%@", self.event.ruleVersion, self.event.ruleName, self.event.filePath];
 }
 
 @end

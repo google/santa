@@ -15,6 +15,7 @@
 #ifndef SANTA__SANTAD__TTYWRITER_H
 #define SANTA__SANTAD__TTYWRITER_H
 
+#include <EndpointSecurity/EndpointSecurity.h>
 #import <Foundation/Foundation.h>
 #include <dispatch/dispatch.h>
 
@@ -37,7 +38,9 @@ class TTYWriter {
   TTYWriter(const TTYWriter &other) = delete;
   TTYWriter &operator=(const TTYWriter &other) = delete;
 
-  void Write(const char *tty, NSString *msg);
+  static bool CanWrite(const es_process_t *proc);
+
+  void Write(const es_process_t *proc, NSString *msg);
 
  private:
   dispatch_queue_t q_;

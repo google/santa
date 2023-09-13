@@ -356,7 +356,7 @@ static NSString *const silencedNotificationsKey = @"SilencedNotifications";
   }
 
   SNTFileAccessMessageWindowController *pendingMsg =
-    [[SNTFileAccessMessageWindowController alloc] initWithEvent:event message:message];
+    [[SNTFileAccessMessageWindowController alloc] initWithEvent:event customMsg:message];
 
   [self queueMessage:pendingMsg];
 }

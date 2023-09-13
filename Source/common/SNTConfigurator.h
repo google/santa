@@ -263,6 +263,16 @@
 @property(readonly, nonatomic) NSString *fileAccessPolicyPlist;
 
 ///
+///  This is the message shown to the user when access to a file is blocked
+///  by a binary due to some rule in the current File Access policy if that rule
+///  doesn't provide a custom message. If this is not configured, a reasonable
+///  default is provided.
+///
+///  @note: This property is KVO compliant.
+///
+@property(readonly, nonatomic) NSString *fileAccessBlockMessage;
+
+///
 ///  If fileAccessPolicyPlist is set, fileAccessPolicyUpdateIntervalSec
 ///  sets the number of seconds between times that the configuration file is
 ///  re-read and policies reconstructed.

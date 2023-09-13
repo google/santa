@@ -145,11 +145,12 @@ void SantadMain(std::shared_ptr<EndpointSecurityAPI> esapi, std::shared_ptr<Logg
                                                            ttyWriter:tty_writer];
     watch_items->RegisterClient(access_authorizer_client);
 
-    access_authorizer_client.fileAccessBlockCallback = ^(SNTFileAccessEvent *event) {
-      [[notifier_queue.notifierConnection remoteObjectProxy]
-        postFileAccessBlockNotification:event
-                      withCustomMessage:@"Access to the resource has been denied!"];
-    };
+    access_authorizer_client.fileAccessBlockCallback =
+      ^(SNTFileAccessEvent *event, NSString *customMsg) {
+        [[notifier_queue.notifierConnection remoteObjectProxy]
+          postFileAccessBlockNotification:event
+                        withCustomMessage:customMsg];
+      };
   }
 
   EstablishSyncServiceConnection(syncd_queue);

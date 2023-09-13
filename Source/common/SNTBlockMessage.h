@@ -18,6 +18,9 @@
 #import <Foundation/Foundation.h>
 #endif
 
+#import "Source/common/SNTFileAccessEvent.h"
+#import "Source/common/SNTStoredEvent.h"
+
 @class SNTStoredEvent;
 
 @interface SNTBlockMessage : NSObject
@@ -37,6 +40,9 @@
 ///
 + (NSAttributedString *)attributedBlockMessageForEvent:(SNTStoredEvent *)event
                                          customMessage:(NSString *)customMessage;
+
++ (NSAttributedString *)attributedBlockMessageForFileAccessEvent:(SNTFileAccessEvent *)event
+                                                   customMessage:(NSString *)customMessage;
 
 ///
 ///  Return a URL generated from the EventDetailURL configuration key

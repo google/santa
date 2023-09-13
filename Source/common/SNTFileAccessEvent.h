@@ -77,7 +77,23 @@
 ///
 @property NSString *parentName;
 
-// TODO(mlw): Store signing chain info
-// @property NSArray<MOLCertificate*> *signingChain;
+///
+/// If the executed file was signed, this is an NSArray of MOLCertificate's
+/// representing the signing chain.
+///
+@property NSArray<MOLCertificate *> *signingChain;
+
+///
+/// A string representing the publisher based on the signingChain
+///
+@property(readonly) NSString *publisherInfo;
+
+///
+/// Return an array of the underlying SecCertificateRef's of the signingChain
+///
+/// WARNING: If the refs need to be used for a long time be careful to properly
+/// CFRetain/CFRelease the returned items.
+///
+@property(readonly) NSArray *signingChainCertRefs;
 
 @end
