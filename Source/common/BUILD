@@ -252,6 +252,7 @@ santa_unit_test(
     deps = [
         ":SNTCommonEnums",
         ":SNTRule",
+        ":SNTSyncConstants",
     ],
 )
 
