@@ -31,13 +31,6 @@ swift_library(
     ],
 )
 
-objc_library(
-    name = "SecurityInterfaceImport",
-    sdk_frameworks = [
-        "SecurityInterface",
-    ],
-)
-
 swift_library(
     name = "SNTFileAccessMessageWindowView",
     srcs = [
@@ -45,7 +38,6 @@ swift_library(
     ],
     generates_header = 1,
     deps = [
-        ":SecurityInterfaceImport",
         "//Source/common:SNTFileAccessEvent",
     ],
 )
