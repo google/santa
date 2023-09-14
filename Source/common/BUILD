@@ -251,8 +251,8 @@ santa_unit_test(
     srcs = ["SNTRuleTest.m"],
     deps = [
         ":SNTCommonEnums",
-        ":SNTSyncConstants",
         ":SNTRule",
+        ":SNTSyncConstants",
     ],
 )
 
