@@ -46,6 +46,8 @@ using santa::santad::data_layer::WatchItemPathType;
 using santa::santad::data_layer::WatchItemPolicy;
 
 NSString *const kWatchItemConfigKeyVersion = @"Version";
+NSString *const kWatchItemConfigKeyEventDetailURL = @"EventDetailURL";
+NSString *const kWatchItemConfigKeyEventDetailText = @"EventDetailText";
 NSString *const kWatchItemConfigKeyWatchItems = @"WatchItems";
 NSString *const kWatchItemConfigKeyPaths = @"Paths";
 NSString *const kWatchItemConfigKeyPathsPath = @"Path";
@@ -57,6 +59,8 @@ NSString *const kWatchItemConfigKeyOptionsInvertProcessExceptions = @"InvertProc
 NSString *const kWatchItemConfigKeyOptionsEnableSilentMode = @"EnableSilentMode";
 NSString *const kWatchItemConfigKeyOptionsEnableSilentTTYMode = @"EnableSilentTTYMode";
 NSString *const kWatchItemConfigKeyOptionsCustomMessage = @"BlockMessage";
+NSString *const kWatchItemConfigKeyOptionsEventDetailURL = kWatchItemConfigKeyEventDetailURL;
+NSString *const kWatchItemConfigKeyOptionsEventDetailText = kWatchItemConfigKeyEventDetailText;
 NSString *const kWatchItemConfigKeyProcesses = @"Processes";
 NSString *const kWatchItemConfigKeyProcessesBinaryPath = @"BinaryPath";
 NSString *const kWatchItemConfigKeyProcessesCertificateSha256 = @"CertificateSha256";
@@ -79,6 +83,18 @@ static constexpr uint64_t kMinReapplyConfigFrequencySecs = 15;
 // Semi-arbitrary max custom message length. The goal is to protect against
 // potential unbounded lengths, but no real reason this cannot be higher.
 static constexpr NSUInteger kWatchItemConfigOptionCustomMessageMaxLength = 2048;
+
+// Semi-arbitrary max event detail text length. The text has to fit on a button
+// and shouldn't be too large.
+static constexpr NSUInteger kWatchItemConfigEventDetailTextMaxLength = 48;
+
+// Servers are recommended to support up to 8000 octets.
+// https://www.rfc-editor.org/rfc/rfc9110#section-4.1-5
+//
+// Seems excessive but no good reason to not allow long URLs. However because
+// the URL supports pseudo-format strings that can extend the length, a smaller
+// max is used here.
+static constexpr NSUInteger kWatchItemConfigEventDetailURLMaxLength = 6000;
 
 namespace santa::santad::data_layer {
 
@@ -151,8 +167,8 @@ ValidatorBlock HexValidator(NSUInteger expected_length) {
   };
 }
 
-// Given a max length, returns a ValidatorBlock that confirms the
-// string is a not longer than the max.
+// Given a min and max length, returns a ValidatorBlock that confirms the
+// string is within the given bounds.
 ValidatorBlock LenRangeValidator(NSUInteger min_length, NSUInteger max_length) {
   return ^bool(NSString *val, NSError **err) {
     if (val.length < min_length) {
@@ -396,6 +412,10 @@ std::variant<Unit, ProcessList> VerifyConfigWatchItemProcesses(NSDictionary *wat
 ///     <true/>
 ///     <key>BlockMessage</key>
 ///     <string>...</string>
+///     <key>EventDetailURL</key>
+///     <string>...</string>
+///     <key>EventDetailText</key>
+///     <string>...</string>
 ///   </dict>
 ///   <key>Processes</key>
 ///   <array>
@@ -441,6 +461,16 @@ bool ParseConfigSingleWatchItem(NSString *name, NSDictionary *watch_item,
                          LenRangeValidator(0, kWatchItemConfigOptionCustomMessageMaxLength))) {
       return false;
     }
+
+    if (!VerifyConfigKey(options, kWatchItemConfigKeyOptionsEventDetailURL, [NSString class], err,
+                         false, LenRangeValidator(0, kWatchItemConfigEventDetailURLMaxLength))) {
+      return false;
+    }
+
+    if (!VerifyConfigKey(options, kWatchItemConfigKeyOptionsEventDetailText, [NSString class], err,
+                         false, LenRangeValidator(0, kWatchItemConfigEventDetailTextMaxLength))) {
+      return false;
+    }
   }
 
   bool allow_read_access = GetBoolValue(options, kWatchItemConfigKeyOptionsAllowReadAccess,
@@ -466,7 +496,8 @@ bool ParseConfigSingleWatchItem(NSString *name, NSDictionary *watch_item,
       allow_read_access, audit_only, invert_process_exceptions, enable_silent_mode,
       enable_silent_tty_mode,
       NSStringToUTF8StringView(options[kWatchItemConfigKeyOptionsCustomMessage]),
-      std::get<ProcessList>(proc_list)));
+      options[kWatchItemConfigKeyOptionsEventDetailURL],
+      options[kWatchItemConfigKeyOptionsEventDetailText], std::get<ProcessList>(proc_list)));
   }
 
   return true;
@@ -511,6 +542,16 @@ bool ParseConfig(NSDictionary *config, std::vector<std::shared_ptr<WatchItemPoli
   if ([(NSString *)config[kWatchItemConfigKeyVersion] length] == 0) {
     PopulateError(err, [NSString stringWithFormat:@"Top level key '%@' has empty value",
                                                   kWatchItemConfigKeyVersion]);
+    return false;
+  }
+
+  if (!VerifyConfigKey(config, kWatchItemConfigKeyEventDetailURL, [NSString class], err, false,
+                       LenRangeValidator(0, kWatchItemConfigEventDetailURLMaxLength))) {
+    return false;
+  }
+
+  if (!VerifyConfigKey(config, kWatchItemConfigKeyEventDetailText, [NSString class], err, false,
+                       LenRangeValidator(0, kWatchItemConfigEventDetailTextMaxLength))) {
     return false;
   }
 
@@ -688,8 +729,12 @@ void WatchItems::UpdateCurrentState(
     current_config_ = new_config;
     if (new_config) {
       policy_version_ = NSStringToUTF8String(new_config[kWatchItemConfigKeyVersion]);
+      policy_event_detail_url_ = new_config[kWatchItemConfigKeyEventDetailURL];
+      policy_event_detail_text_ = new_config[kWatchItemConfigKeyEventDetailText];
     } else {
       policy_version_ = "";
+      policy_event_detail_url_ = nil;
+      policy_event_detail_text_ = nil;
     }
 
     last_update_time_ = [[NSDate date] timeIntervalSince1970];
@@ -819,6 +864,27 @@ std::optional<WatchItemsState> WatchItems::State() {
   };
 
   return state;
+}
+
+std::pair<NSString *, NSString *> WatchItems::EventDetailLinkInfo(
+  const std::shared_ptr<WatchItemPolicy> &watch_item) {
+  absl::ReaderMutexLock lock(&lock_);
+  if (!watch_item) {
+    return {policy_event_detail_url_, policy_event_detail_text_};
+  }
+
+  NSString *url = watch_item->event_detail_url.value_or(@"");
+  NSString *text = watch_item->event_detail_text.value_or(@"");
+
+  if (!url.length) {
+    url = policy_event_detail_url_;
+  }
+
+  if (!text.length) {
+    text = policy_event_detail_text_;
+  }
+
+  return {url, text};
 }
 
 }  // namespace santa::santad::data_layer

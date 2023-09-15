@@ -711,7 +711,9 @@ bool ShouldMessageTTY(const std::shared_ptr<WatchItemPolicy> &policy, const Mess
       event.signingChain = cd.certChain;
 
       if (!policy->silent && self.fileAccessBlockCallback) {
-        self.fileAccessBlockCallback(event, OptionalStringToNSString(policy->custom_message));
+        std::pair<NSString *, NSString *> linkInfo = self->_watchItems->EventDetailLinkInfo(policy);
+        self.fileAccessBlockCallback(event, OptionalStringToNSString(policy->custom_message),
+                                     linkInfo.first, linkInfo.second);
       }
 
       if (ShouldMessageTTY(policy, msg, self->_ttyMessageCache)) {

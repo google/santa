@@ -15,6 +15,7 @@
 #ifndef SANTA__SANTAD__DATALAYER_WATCHITEMPOLICY_H
 #define SANTA__SANTAD__DATALAYER_WATCHITEMPOLICY_H
 
+#import <Foundation/Foundation.h>
 #include <Kernel/kern/cs_blobs.h>
 
 #include <optional>
@@ -29,8 +30,7 @@ enum class WatchItemPathType {
   kLiteral,
 };
 
-static constexpr WatchItemPathType kWatchItemPolicyDefaultPathType =
-    WatchItemPathType::kLiteral;
+static constexpr WatchItemPathType kWatchItemPolicyDefaultPathType = WatchItemPathType::kLiteral;
 static constexpr bool kWatchItemPolicyDefaultAllowReadAccess = false;
 static constexpr bool kWatchItemPolicyDefaultAuditOnly = true;
 static constexpr bool kWatchItemPolicyDefaultInvertProcessExceptions = false;
@@ -39,8 +39,8 @@ static constexpr bool kWatchItemPolicyDefaultEnableSilentTTYMode = false;
 
 struct WatchItemPolicy {
   struct Process {
-    Process(std::string bp, std::string sid, std::string ti,
-            std::vector<uint8_t> cdh, std::string ch, std::optional<bool> pb)
+    Process(std::string bp, std::string sid, std::string ti, std::vector<uint8_t> cdh,
+            std::string ch, std::optional<bool> pb)
         : binary_path(bp),
           signing_id(sid),
           team_id(ti),
@@ -49,13 +49,11 @@ struct WatchItemPolicy {
           platform_binary(pb) {}
 
     bool operator==(const Process &other) const {
-      return binary_path == other.binary_path &&
-             signing_id == other.signing_id && team_id == other.team_id &&
-             cdhash == other.cdhash &&
+      return binary_path == other.binary_path && signing_id == other.signing_id &&
+             team_id == other.team_id && cdhash == other.cdhash &&
              certificate_sha256 == other.certificate_sha256 &&
              platform_binary.has_value() == other.platform_binary.has_value() &&
-             platform_binary.value_or(false) ==
-                 other.platform_binary.value_or(false);
+             platform_binary.value_or(false) == other.platform_binary.value_or(false);
     }
 
     bool operator!=(const Process &other) const { return !(*this == other); }
@@ -74,8 +72,8 @@ struct WatchItemPolicy {
                   bool ao = kWatchItemPolicyDefaultAuditOnly,
                   bool ipe = kWatchItemPolicyDefaultInvertProcessExceptions,
                   bool esm = kWatchItemPolicyDefaultEnableSilentMode,
-                  bool estm = kWatchItemPolicyDefaultEnableSilentTTYMode,
-                  std::string_view cm = "", std::vector<Process> procs = {})
+                  bool estm = kWatchItemPolicyDefaultEnableSilentTTYMode, std::string_view cm = "",
+                  NSString *edu = nil, NSString *edt = nil, std::vector<Process> procs = {})
       : name(n),
         path(p),
         path_type(pt),
@@ -84,24 +82,21 @@ struct WatchItemPolicy {
         invert_process_exceptions(ipe),
         silent(esm),
         silent_tty(estm),
-        custom_message(cm.length() == 0 ? std::nullopt
-                                        : std::make_optional<std::string>(cm)),
+        custom_message(cm.length() == 0 ? std::nullopt : std::make_optional<std::string>(cm)),
+        event_detail_url(edu.length == 0 ? std::nullopt : std::make_optional<NSString *>(edu)),
+        event_detail_text(edt.length == 0 ? std::nullopt : std::make_optional<NSString *>(edt)),
         processes(std::move(procs)) {}
 
   bool operator==(const WatchItemPolicy &other) const {
-    // Note: Custom message isn't currently considered for equality purposes
-    return name == other.name && path == other.path &&
-           path_type == other.path_type &&
-           allow_read_access == other.allow_read_access &&
-           audit_only == other.audit_only &&
-           invert_process_exceptions == other.invert_process_exceptions &&
-           silent == other.silent && silent_tty == other.silent_tty &&
-           processes == other.processes;
+    // Note: custom_message, event_detail_url, and event_detail_text are not currently considered
+    // for equality purposes
+    return name == other.name && path == other.path && path_type == other.path_type &&
+           allow_read_access == other.allow_read_access && audit_only == other.audit_only &&
+           invert_process_exceptions == other.invert_process_exceptions && silent == other.silent &&
+           silent_tty == other.silent_tty && processes == other.processes;
   }
 
-  bool operator!=(const WatchItemPolicy &other) const {
-    return !(*this == other);
-  }
+  bool operator!=(const WatchItemPolicy &other) const { return !(*this == other); }
 
   std::string name;
   std::string path;
@@ -112,6 +107,8 @@ struct WatchItemPolicy {
   bool silent;
   bool silent_tty;
   std::optional<std::string> custom_message;
+  std::optional<NSString *> event_detail_url;
+  std::optional<NSString *> event_detail_text;
   std::vector<Process> processes;
 
   // WIP - No current way to control via config

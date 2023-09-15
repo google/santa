@@ -4,9 +4,7 @@ parent: Deployment
 nav_order: 4
 ---
 
-# (BETA) File Access Authorization
-
-> **IMPORTANT:** This feature is in beta. Configuration and log formats are subject to change.
+# File Access Authorization
 
 > **IMPORTANT:** This feature is only supported on macOS 13 and above.
 

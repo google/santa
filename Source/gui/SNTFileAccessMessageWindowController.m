@@ -21,16 +21,23 @@
 
 @interface SNTFileAccessMessageWindowController ()
 @property NSString *customMessage;
+@property NSString *customURL;
+@property NSString *customText;
 @property SNTFileAccessEvent *event;
 @end
 
 @implementation SNTFileAccessMessageWindowController
 
-- (instancetype)initWithEvent:(SNTFileAccessEvent *)event customMsg:(nullable NSString *)message {
+- (instancetype)initWithEvent:(SNTFileAccessEvent *)event
+                customMessage:(nullable NSString *)message
+                    customURL:(nullable NSString *)url
+                   customText:(nullable NSString *)text {
   self = [super init];
   if (self) {
-    _customMessage = message;
     _event = event;
+    _customMessage = message;
+    _customURL = url;
+    _customText = text;
   }
   return self;
 }
@@ -48,7 +55,9 @@
   self.window.contentViewController = [SNTFileAccessMessageWindowViewFactory
     createWithWindow:self.window
                event:self.event
-           customMsg:self.attributedCustomMessage
+       customMessage:self.attributedCustomMessage
+           customURL:self.customURL
+          customText:self.customText
      uiStateCallback:^(BOOL preventNotificationsForADay) {
        self.silenceFutureNotifications = preventNotificationsForADay;
      }];
