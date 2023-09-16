@@ -58,6 +58,7 @@
        customMessage:self.attributedCustomMessage
            customURL:[SNTBlockMessage eventDetailURLForFileAccessEvent:self.event
                                                              customURL:self.customURL]
+                       .absoluteString
           customText:self.customText
      uiStateCallback:^(BOOL preventNotificationsForADay) {
        self.silenceFutureNotifications = preventNotificationsForADay;

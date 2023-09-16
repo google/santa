@@ -29,8 +29,8 @@ import santa_common_SNTFileAccessEvent
     return NSHostingController(rootView:SNTFileAccessMessageWindowView(window:window,
                                                                        event:event,
                                                                        customMessage:customMessage,
-                                                                       customURL:customURL,
-                                                                       customText:customText,
+                                                                       customURL:customURL as String?,
+                                                                       customText:customText as String?,
                                                                        uiStateCallback:uiStateCallback)
       .frame(width:800, height:600))
   }
@@ -112,8 +112,8 @@ struct SNTFileAccessMessageWindowView: View {
   let window: NSWindow?
   let event: SNTFileAccessEvent?
   let customMessage: NSAttributedString?
-  let customURL: NSString?
-  let customText: NSString?
+  let customURL: String?
+  let customText: String?
   let uiStateCallback: ((Bool) -> Void)?
 
   @Environment(\.openURL) var openURL
@@ -140,7 +140,8 @@ struct SNTFileAccessMessageWindowView: View {
       VStack(spacing:15) {
           if customURL != nil {
             Button(action: openButton, label: {
-              Text((customText as? String) ?? "Open Event...").frame(maxWidth:.infinity)
+
+              Text(customText ?? "Open Event...").frame(maxWidth:.infinity)
             })
           }
           Button(action: dismissButton, label: {
@@ -160,7 +161,7 @@ struct SNTFileAccessMessageWindowView: View {
       return
     }
 
-    guard let url = URL(string: urlString as String) else {
+    guard let url = URL(string: urlString) else {
       print("Failed to create URL")
       return
     }
