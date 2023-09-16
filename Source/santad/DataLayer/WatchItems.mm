@@ -729,7 +729,13 @@ void WatchItems::UpdateCurrentState(
     current_config_ = new_config;
     if (new_config) {
       policy_version_ = NSStringToUTF8String(new_config[kWatchItemConfigKeyVersion]);
-      policy_event_detail_url_ = new_config[kWatchItemConfigKeyEventDetailURL];
+      // Non-existent kWatchItemConfigKeyEventDetailURL key or zero length value
+      // will both result in a nil global policy event detail URL.
+      if (((NSString *)new_config[kWatchItemConfigKeyEventDetailURL]).length) {
+        policy_event_detail_url_ = new_config[kWatchItemConfigKeyEventDetailURL];
+      } else {
+        policy_event_detail_url_ = nil;
+      }
       policy_event_detail_text_ = new_config[kWatchItemConfigKeyEventDetailText];
     } else {
       policy_version_ = "";
@@ -873,15 +879,19 @@ std::pair<NSString *, NSString *> WatchItems::EventDetailLinkInfo(
     return {policy_event_detail_url_, policy_event_detail_text_};
   }
 
-  NSString *url = watch_item->event_detail_url.value_or(@"");
-  NSString *text = watch_item->event_detail_text.value_or(@"");
+  NSString *url = watch_item->event_detail_url.has_value() ? watch_item->event_detail_url.value()
+                                                           : policy_event_detail_url_;
 
+  NSString *text = watch_item->event_detail_text.has_value() ? watch_item->event_detail_text.value()
+                                                             : policy_event_detail_text_;
+
+  // Ensure empty strings are repplaced with nil
   if (!url.length) {
-    url = policy_event_detail_url_;
+    url = nil;
   }
 
   if (!text.length) {
-    text = policy_event_detail_text_;
+    text = nil;
   }
 
   return {url, text};

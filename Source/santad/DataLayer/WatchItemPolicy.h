@@ -83,7 +83,9 @@ struct WatchItemPolicy {
         silent(esm),
         silent_tty(estm),
         custom_message(cm.length() == 0 ? std::nullopt : std::make_optional<std::string>(cm)),
-        event_detail_url(edu.length == 0 ? std::nullopt : std::make_optional<NSString *>(edu)),
+        // Note: Empty string considered valid for event_detail_url to allow rules
+        // overriding global setting in order to hide the button.
+        event_detail_url(edu == nil ? std::nullopt : std::make_optional<NSString *>(edu)),
         event_detail_text(edt.length == 0 ? std::nullopt : std::make_optional<NSString *>(edt)),
         processes(std::move(procs)) {}
 
