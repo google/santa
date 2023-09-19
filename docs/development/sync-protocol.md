@@ -92,13 +92,13 @@ The request consists of the following JSON keys:
 | model_identifier | NO | string | The model of the macOS system  | |
 | santa_version | YES | string | 2022.3 |
 | primary_user  | YES | string | The username | markowsky |
-| binary_rule_count | NO | int | Number of binary allow / deny rules the client has at time of sync| 1000 |
+| binary_rule_count | NO | int | Number of binary allow / deny rules the client has at time of sync | 1000 |
 | certificate_rule_count | NO | int | Number of certificate allow / deny rules the client has at time of sync | 3400 |
 | compiler_rule_count | NO | int | Number of compiler rules the client has time of sync |
 | transitive_rule_count | NO | int | Number of transitive rules the client has at the time of sync |
 | teamid_rule_count | NO | int | Number of TeamID rules the client has at the time of sync | 24 |
-| client_mode | YES | string | the mode the client is operating in, either "LOCKDOWN" or "MONITOR" | LOCKDOWN |
-| request_clean_sync | NO | bool | the client has requested a clean sync of its rules from the server. | true |
+| client_mode | YES | string | The mode the client is operating in, either "LOCKDOWN" or "MONITOR" | LOCKDOWN |
+| request_clean_sync | NO | bool | The client has requested a clean sync of its rules from the server | true |
 
 
 ### Example preflight request JSON Payload:
@@ -130,7 +130,7 @@ The JSON object has the following keys:
 
 | Key | Required | Type | Meaning | Example Value |
 |---|---|---|---|---|
-| enable_bundles | NO | boolean | Enabled bundle scanning  | true |
+| enable_bundles | NO | boolean | Enable bundle scanning  | true |
 | enable_transitive_rules | NO | boolean | Whether or not to enable transitive allowlisting | true |
 | batch_size | YES | integer | Number of events to upload at a time | 128 |
 | full_sync_interval | YES | integer | Number of seconds between full syncs | 600 |
@@ -140,7 +140,7 @@ The JSON object has the following keys:
 | block_usb_mount | NO | boolean | Block USB mass storage devices | true |
 | remount_usb_mode | NO | string | Force USB mass storage devices to be remounted with the following permissions (see [configuration](../deployment/configuration.md)) |  |
 | clean_sync | YES | boolean | Whether or not the rules should be dropped and synced entirely from the server | true |
-| override_file_access_action | NO | string | Override file access config policy action. Must be:<br />1.) "Disable" to not log or block any rule violations.<br />2.) "AuditOnly" to only log violations, not block anything.<br />3.) "" (empty string) or "None" to not override the config. | "Disable", or "AuditOnly", or "" (empty string) |
+| override_file_access_action | NO | string | Override file access config policy action. Must be:<br />1.) "Disable" to not log or block any rule violations.<br />2.) "AuditOnly" to only log violations, not block anything.<br />3.) "" (empty string) or "None" to not override the config | "Disable", or "AuditOnly", or "" (empty string) |
 
 #### Example Preflight Response Payload
 
@@ -183,28 +183,28 @@ sequenceDiagram
 
 | Key | Required | Type | Meaning | Example Value |
 |---|---|---|---|---|
-| file_sha256 | YES | string | sha256 of the executable that was executed | "fc6679da622c3ff38933220b8e73c7322ecdc94b4570c50ecab0da311b292682" |
+| file_sha256 | YES | string | SHA256 hash of the executable that was executed | "fc6679da622c3ff38933220b8e73c7322ecdc94b4570c50ecab0da311b292682" |
 | file_path | YES | string | Absolute file path to the executable that was blocked | "/tmp/foo" |
 | file_name | YES | string | Command portion of the path of the blocked executable | "foo" |
-| executing_user | YES | string | Username that executed the binary | "markowsky" |
-| execution_time | YES | float64 | Unix timestamp of when the execution occured | 23344234232 |
-| loggedin_users | NO | List of strings | list of usernames logged in according to utmp | ["markowsky"] |
-| current_sessions | YES | List of strings | list of user sessions | ["markowsky@console", "markowsky@ttys000"] |
-| decision | YES | string | The decision Santa made for this binary, BUNDLE_BINARY is used to preemptively report binaries in a bundle. **Must be one of the examples**.| "ALLOW_BINARY", "ALLOW_CERTIFICATE", "ALLOW_SCOPE", "ALLOW_TEAMID", "ALLOW_UNKNOWN", "BLOCK_BINARY", "BLOCK_CERTIFICATE", "BLOCK_SCOPE", "BLOCK_TEAMID", "BLOCK_UNKNOWN", "BUNDLE_BINARY" |
+| executing_user | NO | string | Username that executed the binary | "markowsky" |
+| execution_time | NO | float64 | Unix timestamp of when the execution occured | 23344234232 |
+| loggedin_users | NO | list of strings | List of usernames logged in according to utmp | ["markowsky"] |
+| current_sessions | NO | list of strings | List of user sessions | ["markowsky@console", "markowsky@ttys000"] |
+| decision | YES | string | The decision Santa made for this binary, BUNDLE_BINARY is used to preemptively report binaries in a bundle. **Must be one of the examples** | "ALLOW_BINARY", "ALLOW_CERTIFICATE", "ALLOW_SCOPE", "ALLOW_TEAMID", "ALLOW_UNKNOWN", "BLOCK_BINARY", "BLOCK_CERTIFICATE", "BLOCK_SCOPE", "BLOCK_TEAMID", "BLOCK_UNKNOWN", "BUNDLE_BINARY" |
 | file_bundle_id | NO | string |  The executable's containing bundle's identifier as specified in the Info.plist | "com.apple.safari" |
 | file_bundle_path | NO | string | The path that the bundle resids in | /Applications/Santa.app |
 | file_bundle_executable_rel_path | NO | string | The relative path of the binary within the Bundle | "Contents/MacOS/AppName" |
-| file_bundle_name | NO | string | The bundle's display name. | "Google Chrome" |
+| file_bundle_name | NO | string | The bundle's display name | "Google Chrome" |
 | file_bundle_version | NO | string | The bundle version string | "9999.1.1" |
 | file_bundle_version_string | NO | string | Bundle short version string | "2.3.4" |
 | file_bundle_hash | NO | string | SHA256 hash of all executables in the bundle | "7466e3687f540bcb7792c6d14d5a186667dbe18a85021857b42effe9f0370805" |
 | file_bundle_hash_millis | NO | float64 | The time in milliseconds it took to find all of the binaries, hash and produce the bundle_hash | 1234775 |
 | file_bundle_binary_count | NO | integer | The number of binaries in a bundle | 13 |
-| pid | YES | int | Process id of the executable that was blocked | 1234 |
-| ppid | YES | int | Parent process id of the executable that was blocked | 456 |
-| parent_name | YES | Parent process short command name of the executable that was blocked | "bar" |
+| pid | NO | int | Process id of the executable that was blocked | 1234 |
+| ppid | NO | int | Parent process id of the executable that was blocked | 456 |
+| parent_name | NO | Parent process short command name of the executable that was blocked | "bar" |
 | quarantine_data_url | NO | string |  The actual URL of the quarantined item from the quarantine database that this binary was downloaded from | https://dl.google.com/chrome/mac/stable/GGRO/googlechrome.dmg |
-| quarantine_referer_url | NO | string | Referring URL that lead to the binary being downloaded if known.  | https://www.google.com/chrome/downloads/ |
+| quarantine_referer_url | NO | string | Referring URL that lead to the binary being downloaded if known  | https://www.google.com/chrome/downloads/ |
 | quarantine_timestamp | NO | float64 | Unix Timestamp of when the binary was downloaded or 0 if not quarantined | 0 |
 | quarantine_agent_bundle_id | NO | string | The bundle ID of the software that quarantined the binary | "com.apple.Safari" |
 | signing_chain | NO | list of signing chain objects | Certs used to code sign the executable | See next section |
@@ -215,7 +215,7 @@ sequenceDiagram
 
 | Key | Required | Type | Meaning | Example Value |
 |---|---|---|---|---|
-| sha256 | YES | string | sha256 of the certificate used to sign | "7ae80b9ab38af0c63a9a81765f434d9a7cd8f720eb6037ef303de39d779bc258" |
+| sha256 | YES | string | SHA256 thumbprint of the certificate used to sign | "7ae80b9ab38af0c63a9a81765f434d9a7cd8f720eb6037ef303de39d779bc258" |
 | cn | YES | string | Common Name field of the certificate used to sign | "Apple Worldwide Developer Relations Certification Authority" |
 | org | YES | string | Org field of the certificate used to sign | "Google LLC" |
 | ou | YES | string | OU field of the certificate used to sign | "G3" |
