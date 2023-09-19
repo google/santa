@@ -408,10 +408,24 @@ santa_unit_test(
     ],
 )
 
+santa_unit_test(
+    name = "SNTBlockMessageTest",
+    srcs = ["SNTBlockMessageTest.m"],
+    deps = [
+        ":SNTBlockMessage",
+        ":SNTConfigurator",
+        ":SNTFileAccessEvent",
+        ":SNTStoredEvent",
+        ":SNTSystemInfo",
+        "@OCMock",
+    ],
+)
+
 test_suite(
     name = "unit_tests",
     tests = [
         ":PrefixTreeTest",
+        ":SNTBlockMessageTest",
         ":SNTCachedDecisionTest",
         ":SNTFileInfoTest",
         ":SNTKVOManagerTest",

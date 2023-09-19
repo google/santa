@@ -15,6 +15,7 @@
 #import "Source/common/SNTBlockMessage.h"
 
 #import "Source/common/SNTConfigurator.h"
+#import "Source/common/SNTFileAccessEvent.h"
 #import "Source/common/SNTLogging.h"
 #import "Source/common/SNTStoredEvent.h"
 #import "Source/common/SNTSystemInfo.h"
@@ -121,6 +122,21 @@
   return [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
 }
 
++ (NSString *)replaceFormatString:(NSString *)str
+                         withDict:(NSDictionary<NSString *, NSString * (^)()> *)replacements {
+  __block NSString *formatStr = str;
+
+  [replacements
+    enumerateKeysAndObjectsUsingBlock:^(NSString *key, NSString * (^computeValue)(), BOOL *stop) {
+      NSString *value = computeValue();
+      if (value) {
+        formatStr = [formatStr stringByReplacingOccurrencesOfString:key withString:value];
+      }
+    }];
+
+  return formatStr;
+}
+
 // Returns either the generated URL for the passed in event, or an NSURL from the passed in custom
 // URL string. If the custom URL string is the string "null", nil will be returned. If no custom
 // URL is passed and there is no configured EventDetailURL template, nil will be returned.
@@ -138,47 +154,94 @@
 + (NSURL *)eventDetailURLForEvent:(SNTStoredEvent *)event customURL:(NSString *)url {
   SNTConfigurator *config = [SNTConfigurator configurator];
 
-  NSString *hostname = [SNTSystemInfo longHostname];
-  NSString *uuid = [SNTSystemInfo hardwareUUID];
-  NSString *serial = [SNTSystemInfo serialNumber];
-
   NSString *formatStr = url;
-  if (!url.length) formatStr = config.eventDetailURL;
-  if (!formatStr.length) return nil;
-  if ([formatStr isEqualToString:@"null"]) return nil;
+  if (!formatStr.length) {
+    formatStr = config.eventDetailURL;
+    if (!formatStr.length) {
+      return nil;
+    }
+  }
 
-  if (event.fileSHA256) {
-    // This key is deprecated, use %file_identifier% or %bundle_or_file_identifier%
-    formatStr =
-      [formatStr stringByReplacingOccurrencesOfString:@"%file_sha%"
-                                           withString:event.fileBundleHash ?: event.fileSHA256];
+  if ([formatStr isEqualToString:@"null"]) {
+    return nil;
+  }
 
-    formatStr = [formatStr stringByReplacingOccurrencesOfString:@"%file_identifier%"
-                                                     withString:event.fileSHA256];
-    formatStr =
-      [formatStr stringByReplacingOccurrencesOfString:@"%bundle_or_file_identifier%"
-                                           withString:event.fileBundleHash ?: event.fileSHA256];
-  }
-  if (event.executingUser) {
-    formatStr = [formatStr stringByReplacingOccurrencesOfString:@"%username%"
-                                                     withString:event.executingUser];
-  }
-  if (config.machineID) {
-    formatStr = [formatStr stringByReplacingOccurrencesOfString:@"%machine_id%"
-                                                     withString:config.machineID];
-  }
-  if (hostname.length) {
-    formatStr = [formatStr stringByReplacingOccurrencesOfString:@"%hostname%" withString:hostname];
-  }
-  if (uuid.length) {
-    formatStr = [formatStr stringByReplacingOccurrencesOfString:@"%uuid%" withString:uuid];
-  }
-  if (serial.length) {
-    formatStr = [formatStr stringByReplacingOccurrencesOfString:@"%serial%" withString:serial];
-  }
+  // Disabling clang-format. See comment in `eventDetailURLForFileAccessEvent:customURL:`
+  // clang-format off
+  NSDictionary<NSString *, NSString * (^)()> *kvReplacements =
+    [NSDictionary dictionaryWithObjectsAndKeys:
+      // This key is deprecated, use %file_identifier% or %bundle_or_file_identifier%
+      ^{ return event.fileSHA256 ? event.fileBundleHash ?: event.fileSHA256 : nil; },
+                                                 @"%file_sha%",
+      ^{ return event.fileSHA256; },             @"%file_identifier%",
+      ^{ return event.fileSHA256 ? event.fileBundleHash ?: event.fileSHA256 : nil; },
+                                                 @"%bundle_or_file_identifier%",
+      ^{ return event.executingUser; },          @"%username%",
+      ^{ return config.machineID; },             @"%machine_id%",
+      ^{ return [SNTSystemInfo longHostname]; }, @"%hostname%",
+      ^{ return [SNTSystemInfo hardwareUUID]; }, @"%uuid%",
+      ^{ return [SNTSystemInfo serialNumber]; }, @"%serial%",
+      nil];
+  // clang-format on
+
+  formatStr = [SNTBlockMessage replaceFormatString:formatStr withDict:kvReplacements];
 
   NSURL *u = [NSURL URLWithString:formatStr];
-  if (!u) LOGW(@"Unable to generate event detail URL for string '%@'", formatStr);
+  if (!u) {
+    LOGW(@"Unable to generate event detail URL for string '%@'", formatStr);
+  }
+
+  return u;
+}
+
+// Returns either the generated URL for the passed in event, or an NSURL from the passed in custom
+// URL string. If the custom URL string is the string "null", nil will be returned. If no custom
+// URL is passed and there is no configured EventDetailURL template, nil will be returned.
+// The following "format strings" will be replaced in the URL, if they are present:
+//
+//   %rule_version%    - The version of the rule that was violated.
+//   %rule_name%       - The name of the rule that was violated.
+//   %file_identifier% - The SHA-256 of the binary being executed.
+//   %accessed_path%   - The path accessed by the binary.
+//   %username%        - The executing user's name.
+//   %machine_id%      - The configured machine ID for this host.
+//   %hostname%        - The machine's FQDN.
+//   %uuid%            - The machine's UUID.
+//   %serial%          - The machine's serial number.
+//
++ (NSURL *)eventDetailURLForFileAccessEvent:(SNTFileAccessEvent *)event customURL:(NSString *)url {
+  if (!url.length || [url isEqualToString:@"null"]) {
+    return nil;
+  }
+
+  SNTConfigurator *config = [SNTConfigurator configurator];
+
+  // Clang format goes wild here. If you use the container literal syntax `@{}` with a block value
+  // type, it seems to break the clang format on/off functionality and breaks formatting for the
+  // remainder of the file.
+  // Using `dictionaryWithObjectsAndKeys` and disabling clang format as a workaround.
+  // clang-format off
+  NSDictionary<NSString *, NSString * (^)()> *kvReplacements =
+    [NSDictionary dictionaryWithObjectsAndKeys:
+      ^{ return event.ruleVersion; },            @"%rule_version%",
+      ^{ return event.ruleName; },               @"%rule_name%",
+      ^{ return event.fileSHA256; },             @"%file_identifier%",
+      ^{ return event.accessedPath; },           @"%accessed_path%",
+      ^{ return event.executingUser; },          @"%username%",
+      ^{ return config.machineID; },             @"%machine_id%",
+      ^{ return [SNTSystemInfo longHostname]; }, @"%hostname%",
+      ^{ return [SNTSystemInfo hardwareUUID]; }, @"%uuid%",
+      ^{ return [SNTSystemInfo serialNumber]; }, @"%serial%",
+      nil];
+  // clang-format on
+
+  NSString *formatStr = [SNTBlockMessage replaceFormatString:url withDict:kvReplacements];
+
+  NSURL *u = [NSURL URLWithString:formatStr];
+  if (!u) {
+    LOGW(@"Unable to generate event detail URL for string '%@'", formatStr);
+  }
+
   return u;
 }
 
